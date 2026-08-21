@@ -1,0 +1,265 @@
+{
+  "packetId": "sw_29",
+  "results": [
+    {
+      "rowId": 1009,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "Regex に一致しないリンク文字列は旧実装ではフォームエラーになるが、現実装では最大長以内なら受理され、保存可否が変わる。",
+      "checked": "pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/Banner/BannerType.php:69-75 の link 用 Length/Regex と、ec-cube-enterprise/src/Eccube/Form/Type/Admin/TopBannerType.php:92-99 の Length のみの制約を確認。",
+      "reason": "入力検証結果と後続の永続化可否が変わるため外部観測可能。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 1010,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "リンク先URL等の入力欄に適用される 95% 幅指定がなく、管理画面の入力欄レイアウトが変わる。",
+      "checked": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Banner/banner.twig:9-14,88-92 の .bannerInput と width:95% を、ec-cube-enterprise/src/Eccube/Resource/template/admin/Data/top_banner.twig:21-90,182-189 の現スタイル・入力欄と比較。",
+      "reason": "CSS の有無は画面の描画結果に露出する。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 1011,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "ブラウザがアクセス・送信する URL が /banner/top 系から /data/top_banner 系へ変わり、絞り込みパス変数も html_class から base_info_digit に変わる。",
+      "checked": "pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/BannerServiceProvider.php:32-43 と ec-cube-enterprise/src/Eccube/Controller/Admin/Data/TopBannerController.php:54-55,183-184 の実ルートを確認。",
+      "reason": "HTTP パスは外部契約そのものであり、直接アクセスやリンク先が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 1012,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "店舗を選んでアップロードしても、現実装は常に店舗なし一覧へ 303 リダイレクトするため、アップロード後の店舗絞り込み表示が維持されない。",
+      "checked": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/BannerController.php:211-215,236-239 と 142-144 の店舗値を返す旧処理、および ec-cube-enterprise/src/Eccube/Controller/Admin/Data/TopBannerController.php:125-140 の常時 admin_data_top_banner へのリダイレクトを確認。",
+      "reason": "POST 後の Location と次画面の表示対象が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 1013,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "画面の主タイトルに「トップバナー管理」、サブタイトルに「データ管理」が表示され、設計の見出し階層と逆になる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Data/top_banner.twig:15-16 と messages.ja.yaml:6152-6153 の翻訳値を確認。",
+      "reason": "表示文言と配置の差は画面出力の差。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 1014,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "祝日一覧・追加・一括登録・削除の URL と HTTP メソッドが設計と異なり、設計の各エンドポイントへ送信しても同じ応答を得られない。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Admin/Data/HolidayController.php:47-49,68-116,119-164 の単一 GET/POST ルートと DELETE ルートを確認。",
+      "reason": "HTTP パス・メソッド・処理入口の差は外部 I/O に直接影響する。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 1015,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "画面の主タイトルが「祝日管理」、サブタイトルが「データ管理」となり、設計の表示順と逆になる。",
+      "checked": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Holiday/holiday.twig:3 の旧メニュー指定と、ec-cube-enterprise/src/Eccube/Resource/template/admin/Data/holiday.twig:13-16、messages.ja.yaml:6152,6182 を確認。",
+      "reason": "メニューキー自体は内部識別子でも、本行には実際の見出し表示差が含まれるため IMPACT。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 1016,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "日本語表示は同じだが、英語ロケールでは旧キーが日本語文言を表示する一方、現キーは「The entered date overlaps with an already registered holiday.」を表示する。",
+      "checked": "重複拒否経路は pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/HolidayController.php:93-100 と ec-cube-enterprise/src/Eccube/Form/Type/Admin/HolidayAddType.php:68-75、Controller/Admin/Data/HolidayController.php:119-125 で確認。旧 Resource/locale/message.en.yml:291-293 の hareruyaec.holiday.overlap は日本語、現 Resource/locale/messages.en.yaml:3533 の admin.data.holiday.overlap は英語で、現 Resource/template/admin/alert.twig:41-45 がフラッシュを |trans 表示することも確認。",
+      "reason": "キー名差がロケール別翻訳値の差に波及し、英語画面の表示文言として外部露出する。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 1017,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "日時欄の生成 HTML が DateTimePicker 用テキスト入力から type=datetime-local へ変わり、表示書式と入力 UI がブラウザネイティブになる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Data/mtg_master_data.twig:100-105,121-126 が datetime 列へ datetime-local を直接出力し、当該テンプレートに DateTimePicker 初期化がないことを確認。",
+      "reason": "input type、値書式、操作 UI の差はいずれも画面 I/O に露出する。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 1018,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "一覧と編集リンクの URL が /buy_price_list・/buy_price_list/{id} ではなく /data/buy_price_list・/data/buy_price_list/{id}/edit になる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Admin/Data/BuyPriceListController.php:47,85 と Resource/template/admin/Data/buy_price_list.twig:72-75 のルート生成を確認。",
+      "reason": "ブラウザに露出するリンク先と直接アクセス可能な HTTP パスが異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 1019,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "一覧画面のサブタイトルが設計の「一覧」ではなく「データ管理」と表示される。",
+      "checked": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Data/buy_price_list.twig:13-16 と Resource/locale/messages.ja.yaml:6152,6201 を確認。",
+      "reason": "メニューキー差だけでなく利用者に見えるサブタイトル文言が異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 1020,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "SP/MP/HP 以外のカード状態が一覧列から除外され、行は nmPrice・specialFlg と ksort による順序で表示される。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Admin/Data/BuyPriceListController.php:54-72 の ID 限定 findBy、nmPrice/specialFlg ORDER BY、ksort を確認。",
+      "reason": "DB 状態に応じて一覧の列集合と行順が変わり、画面出力に現れる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 1021,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "組み合わせ欠損時にも <td>-</td> が生成され、利用者にはハイフン付きセルとして見える。",
+      "checked": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Data/buy_price_list.twig:67-79 の二重ループと欠損時の <td>-</td> を確認。",
+      "reason": "セルの有無・表のセル数・表示文字がすべて生成 HTML の差になる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 1022,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "CardConditions が3件なら特別版見出しも colspan=3 となり、設計の colspan=4 と異なる表レイアウトになる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Admin/Data/BuyPriceListController.php:54-60 の3状態限定と Resource/template/admin/Data/buy_price_list.twig:53-63 の両見出し共通 CardConditions|length を確認。",
+      "reason": "colspan 属性は HTTP 応答 HTML とブラウザの表配置に露出する。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 1023,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "同じ /buy_price_list/{id} への GET/POST ではなく、GET は /edit、POST は /update の別パスへ送る必要がある。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Admin/Data/BuyPriceListController.php:85,112 と Resource/template/admin/Data/buy_price_list_edit.twig:42 の form action を確認。",
+      "reason": "フォーム送信先を含む HTTP パスの差は外部 I/O 差。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 1024,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "画面見出しが「買取価格対応表編集」/「データ管理」となり、戻る操作も type=button ではなく <a href=...> として出力される。",
+      "checked": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Data/buy_price_list_edit.twig:13-16,75-80 と Resource/locale/messages.ja.yaml:6201-6202 を確認。",
+      "reason": "表示文言・DOM 要素種別・操作方法が利用者と生成 HTML に露出する。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 1025,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "POST ボディのフィールド名と CSRF トークンのフォーム識別子が admin_buy_price_list[...] ではなく既定の buy_price_list_edit[...] になる。",
+      "checked": "旧 pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/BuyPriceList/BuyPriceListType.php:25-36 の getName と、現 ec-cube-enterprise/src/Eccube/Controller/Admin/Data/BuyPriceListController.php:89,116 および Form/Type/Admin/BuyPriceListEditType.php:25-49 の getBlockPrefix 不在を確認。",
+      "reason": "フォーム名は HTTP リクエストキーと CSRF 検証入力に露出する。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 1026,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "小数や負数の入力に対する変換・検証結果が、NumberType で追加範囲制約なしの旧フォームと、整数かつ0以上必須の現フォームで変わる。",
+      "checked": "pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/BuyPriceList/BuyPriceListType.php:25-30 の number と、ec-cube-enterprise/src/Eccube/Form/Type/Admin/BuyPriceListEditType.php:20,33-38 の IntegerType/GreaterThanOrEqual(0) を確認。",
+      "reason": "受理・エラーになる入力集合が異なるため、フォーム応答と保存可否が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 1027,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "買取減額率一覧の公開管理 URL が /buy_discount ではなく /data/buy_discount になる。",
+      "checked": "pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/BuyDiscountServiceProvider.php の admin_buy_discount_list と、ec-cube-enterprise/src/Eccube/Controller/Admin/Data/BuyDiscountController.php:40、app/config/eccube/packages/eccube_nav.yaml:368-370 を確認。",
+      "reason": "パス差が直接アクセス・ナビリンク・HTTP 応答に影響する。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 1028,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "タイトル帯は「買取減額率管理」/「買取減額率一覧」ではなく「買取減額率一覧」/「データ管理」と表示される。",
+      "checked": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/BuyDiscount/buy_discount.twig:5-6 と、ec-cube-enterprise/src/Eccube/Resource/template/admin/Data/buy_discount.twig:15-16、Resource/locale/messages.ja.yaml:6209 を比較。",
+      "reason": "タイトルとサブタイトルの表示文言差は外部観測可能。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 1029,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "現画面は追加 style と buy-discount-table クラスにより罫線・行背景色を上書きし、設計の既定 Bootstrap 表と描画が変わる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Data/buy_discount.twig:18-40,48-49 の固有 CSS とクラスを確認。",
+      "reason": "追加 CSS はレスポンス本文に含まれ、具体的な背景色・罫線の描画にも作用する。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 1030,
+      "authorVerdict": "UNSURE",
+      "verdict": "IMPACT",
+      "agree": false,
+      "observableEffect": "表頭行の生成 HTML から id=\"news_list_box__list_header\" が消え、DOM セレクタ・HTML 応答内容が変わる。",
+      "checked": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/BuyDiscount/buy_discount.twig:12-20 の id 付き <tr> と、ec-cube-enterprise/src/Eccube/Resource/template/admin/Data/buy_discount.twig:48-56 の id なし <tr> を比較。",
+      "reason": "見た目が同じでも DOM id はブラウザ・自動化・外部スクリプトから観測可能な HTTP/HTML 出力である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 1031,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "販売割引率一覧は /discount ではなく /data/discount で公開され、設計パスへの GET とナビリンク先が異なる。",
+      "checked": "pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/DiscountServiceProvider.php の admin_discount_list と、ec-cube-enterprise/src/Eccube/Controller/Admin/Data/DiscountController.php:40、app/config/eccube/packages/eccube_nav.yaml:362-364 を確認。",
+      "reason": "HTTP パスは外部に露出する。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 1032,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "タイトル帯は設計の「割引率管理」/「割引率一覧」ではなく「販売割引率一覧」/「データ管理」と表示される。",
+      "checked": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Discount/discount.twig:5-6 と、ec-cube-enterprise/src/Eccube/Resource/template/admin/Data/discount.twig:15-16、Resource/locale/messages.ja.yaml:6152,6180 を比較。",
+      "reason": "利用者に表示される文字列が異なるため IMPACT。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 1033,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "交差データ欠損セルに「未定義」ではなく「-」が表示される。",
+      "checked": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Discount/discount.twig:27-32 と、ec-cube-enterprise/src/Eccube/Resource/template/admin/Data/discount.twig:62-68 を比較。",
+      "reason": "固定表示文言の差は軽微でも画面出力差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 1034,
+      "authorVerdict": "UNSURE",
+      "verdict": "IMPACT",
+      "agree": false,
+      "observableEffect": "DB が主キー順以外で行を返し得る状態でも、現実装は id 昇順に固定するため一覧の行順が設計の findAll 結果と変わり得る。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Admin/Data/DiscountController.php:47-49 のうち割引マスタだけ findBy([], ['id' => 'ASC']) であることと、Resource/template/admin/Data/discount.twig:58-72 が取得順のまま描画することを確認。",
+      "reason": "ORDER BY の有無は条件次第で利用者に見える一覧順を変えるため、内部実装差だけには閉じない。",
+      "confidence": "medium"
+    }
+  ]
+}

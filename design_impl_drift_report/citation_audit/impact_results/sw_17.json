@@ -1,0 +1,365 @@
+{
+  "packetId": "sw_17",
+  "results": [
+    {
+      "rowId": 577,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "同じ商品でも詳細情報の有無によって goods 帯か価格帯別リストかが変わり、ピッキングリストの区分・商品名加工・数量集計が変わる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Admin/Order/ShippingStandbyController.php:394-432で、カテゴリIDではなくgetSubInfosByProductClassIdsの結果から$cを決めて出力配列へ格納することを確認した。",
+      "reason": "分岐結果が帳票用データへ直接入るため、内部的な判定方式だけの差ではない。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 578,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "閾値行の返却順がキー順と異なる場合や片方が欠ける場合に、価格帯分類または異常終了の有無が変わる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Repository/DtbShippingStandbyRepository.php:143-172で2キーを個別取得し、欠損時0をSQLのprice1/price2へ渡すことを確認した。",
+      "reason": "正常データでは一致し得るが、同一DB状態でも旧方式の無順序添字参照と現方式のキー指定では外部出力が異なり得る。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 579,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "出力CSVに配送先_住所3が1列増え、後続列の位置とCSV列数が設計から変わる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Admin/Order/OrderCsvController.php:95付近のCSV_HEADERと、src/Eccube/Repository/OrderRepository.php:1473-1534のgenerateResultCsvでs.addr03を確認した。",
+      "reason": "CSV本文と列順は外部I/Oそのものである。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 580,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "クライアントがPOSTするURLが設計の/uploadではなく/importになり、設計URLへのPOSTは当該処理へ到達しない。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Admin/Order/OrderCsvController.php:249-285とsrc/Eccube/Resource/template/admin/Order/shipping_result_csv_import.twig:45で/importを確認した。",
+      "reason": "ルート名だけでなくHTTPパスが異なるため外部契約差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 581,
+      "authorVerdict": "IMPACT",
+      "verdict": "NO_IMPACT",
+      "agree": false,
+      "observableEffect": "",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Admin/Order/OrderCsvController.php:350-390を実査し、更新受注をshippingCompleteOrdersへ積み、commit後にMailService::sendShippingCompleteMailを呼び、配送のmailSendDateも保存することを確認した。tests/Eccube/Tests/Web/Admin/Order/OrderCsvShippingResultImportTest.php:48以降にもメール1通と送信日時を検証する本体経路のテストがある。",
+      "reason": "パケットの『メール送信実装が不在』は現行コードでは事実でなく、設計どおり送信I/Oが存在するため、この指摘がいう乖離はない。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 582,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "PRE_DELIV以外の受注では親受注の状態・出荷日・送り状番号が更新されず、設計より更新対象が狭くなる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Service/Csv/OrderCsv.php:131-145でPRE_DELIVとshippingDate nullの両条件、および配送日時更新を確認した。",
+      "reason": "永続データの状態遷移と更新項目が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 583,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "POSTエンドポイントが/uploadではなく/importとして公開される。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Admin/Order/OrderCsvController.php:284でadmin_shipping_result_csv_uploadのpathが/importであることを確認した。",
+      "reason": "名前は一致してもURLパス差は外部から観測できる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 584,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "ポイント付与またはジョブ登録で例外が出ると、現実装はCSV取込更新までロールバックする一方、設計の独立実行では取込コミット後の失敗となる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Admin/Order/OrderCsvController.php:343-359でgainPointsとregisterGainPointJobがトランザクション内、377-400でメールとdispatchがcommit後であることを確認した。",
+      "reason": "メール部分は現行で改善済みだが、ポイント付与の失敗境界には永続結果の差が残る。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 585,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "設計列数のCSVはヘッダ照合で不一致になり得て、取込可否と各列の対応位置が変わる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Admin/Order/OrderCsvController.php:95および170付近でCSV_HEADERとNOT_REQUIRED_CSV_HEADERの双方に配送先_住所3があることを確認した。",
+      "reason": "CSV入力契約と検証結果の差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 586,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "0バイトファイル送信時、現実装は取込処理へ進まず一覧へリダイレクトするため、設計確認値の後続経路とレスポンスが変わる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Service/Csv/AbstractCsvService.php:128-136とsrc/Eccube/Controller/Admin/Order/OrderCsvController.php:299-305を確認した。",
+      "reason": "アップロード入力に対する制御フローとHTTP応答の差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 587,
+      "authorVerdict": "IMPACT",
+      "verdict": "NO_IMPACT",
+      "agree": false,
+      "observableEffect": "",
+      "checked": "ec-cube-enterprise/src/Eccube/Service/Csv/OrderCsv.php:112-116を実査し、CSV注文番号をsprintf('%08d', ...)で8桁化してorder_number検索していることを確認した。pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/OrderCsv.php:72-76では旧OrderSubから親Orderを得るが、現行は統合されたOrderを直接得る。tests/Eccube/Tests/Web/Admin/Order/OrderCsvShippingResultImportTest.php:48以降はゼロ埋めなしCSVが8桁order_numberへ一致して更新されることを検証している。",
+      "reason": "『桁埋めを行わない』は誤りで、旧OrderSub経由か現Order直接検索かはデータモデル上の実装場所の差に留まり、この行が主張する検索I/O差は確認できない。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 588,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "画面に示されるCSVフォーマットと実際の受理ヘッダに配送先_住所3が追加され、設計より1列多くなる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Admin/Order/OrderCsvController.php:95付近とsrc/Eccube/Resource/template/admin/Order/shipping_result_csv_import.twig:45以降のheaders表示経路を確認した。",
+      "reason": "表示内容とCSV入力形式の双方に現れる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 589,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "英字等を含む送り状No.も拒否されずOrder.invoice_numberへ保存され、数値整数制約時と取込可否・永続値が変わる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Service/Csv/OrderCsv.php:131-138で行値を無検証でsetInvoiceNumberへ渡し、src/Eccube/Entity/Order.php:699で文字列64桁カラムであることを確認した。",
+      "reason": "入力バリデーションとDB保存値の差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 590,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "削除確認ポップアップの本文と確定ボタンが設計の文言・OKではなく、共通削除文言・削除として表示される。",
+      "checked": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Order/waiting_tag.twig:121-160で共通メッセージとadmin.common.deleteボタンを確認した。",
+      "reason": "利用者に見える文字列と操作ラベルの差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 591,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "査定申込日時FromがToより後でもエラーにならず、相反する範囲条件で検索が実行される。",
+      "checked": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/OtcBuyOrder/OtcBuyOrderType.php:155付近、src/Eccube/Controller/Admin/SearchControllerTrait.php:100-205、src/Eccube/Repository/DtbOtcBuyOrderRepository.php:124付近を確認した。",
+      "reason": "エラー表示と検索実行可否・結果が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 592,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "買取日時FromがToより後でもエラーにならず、結果0件等の検索結果として処理される。",
+      "checked": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/OtcBuyOrder/OtcBuyOrderType.php:96-125、src/Eccube/Controller/Admin/SearchControllerTrait.php:100-205、src/Eccube/Repository/DtbOtcBuyOrderRepository.php:142付近を確認した。",
+      "reason": "相関バリデーションの欠如は画面応答と検索挙動に出る。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 593,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "検索件数N件に対してN行の1表ではなく、N行を含む表がN個描画され、HTML量と見える重複件数がN倍になる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Resource/template/admin/OtcBuyOrder/index.twig:193-234でpaginationの外側ループと内側ループの重複を確認した。",
+      "reason": "生成HTMLと画面表示が直接変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 594,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "チェック削除商品を一部キャンセルとして外部連携するAPI呼び出しが行われず、連携先のキャンセル状態が更新されない。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php:129-330とsrc/Eccube/Service/App/MTGBuyer/V1/Admin/OtcBuyOrder配下を確認し、更新APIは全明細更新等のみで一部キャンセル入口を確認できなかった。",
+      "reason": "外部API呼び出しと連携先副作用の欠如である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 595,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "買取成立ステータスでも端末取引IDがnullのリクエストを受理でき、設計ならエラーとなる入力で状態更新が進み得る。",
+      "checked": "ec-cube-enterprise/src/Eccube/Dto/App/MTGBuyer/V1/Admin/UpdateOtcBuyOrderDto.php:27-48とsrc/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php:129-160を確認した。",
+      "reason": "APIバリデーションと状態更新可否の差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 596,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "印刷済みでない注文でも買取成立・経理払い出し済みへの状態遷移を拒否できず、永続ステータスが変わり得る。",
+      "checked": "ec-cube-enterprise/src/Eccube/Dto/App/MTGBuyer/V1/Admin/UpdateOtcBuyOrderDto.php、src/Eccube/Service/App/MTGBuyer/V1/Admin/OtcBuyOrder/UpdateOtcBuyOrderAction.php、src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.phpの更新経路を確認し、印刷済み入力・検証を確認できなかった。",
+      "reason": "業務状態遷移の許可条件が異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 597,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "不正な価格入力時にAPI利用者へ返るバリデーション文言が『基準価格』ではなく『販売価格』になる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Dto/App/MTGBuyer/V1/Admin/UpdateOtcBuyOrderDetailDto.php:44付近で実際のAssertメッセージを確認した。",
+      "reason": "レスポンスに露出する表示文言は1語の差でもIMPACTである。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 598,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "CSRFトークンなしのPOSTはCSV出力を実行できず、設計上許可される同一認証済みリクエストの成否が変わる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Resource/template/admin/OtcBuyOrder/index.twig:152-155とsrc/Eccube/Controller/Admin/OtcBuyOrder/OtcBuyOrderController.php:184-194を確認した。",
+      "reason": "HTTPリクエスト必須項目とアクセス制御の差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 599,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "ITチーム以外でも汎用管理権限とルート設定次第でステータス変更画面へ到達でき、閲覧・更新可能者が設計より広がる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Admin/OtcBuyOrder/OtcBuyOrderController.php:322-414で汎用isAccessibleRouteのみを確認し、ITチーム所属を確認する条件はなかった。",
+      "reason": "画面の認可範囲は外部から観測できる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 600,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "経理以外のメンバーでも対象店舗編集権限と汎用ルート許可があれば経理払出し済み更新を実行できる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Admin/OtcBuyOrder/OtcBuyOrderController.php:439-510とsrc/Eccube/Resource/template/admin/OtcBuyOrder/detail.twig:14-17,471を確認した。",
+      "reason": "更新APIの認可主体と永続ステータス変更範囲が異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 601,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "買取管理機能の利用権限を持たない店舗編集可能ユーザーでも入庫済み更新を実行できる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Admin/OtcBuyOrder/OtcBuyOrderController.php:515-568でCSRF、認証、店舗編集権限はあるが買取管理利用権限判定がないことを確認した。",
+      "reason": "認可条件と状態更新可能者の差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 602,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "空白区切り語の一部だけが氏名に一致する申込者が検索結果から除外され、OR仕様より結果件数が減る。",
+      "checked": "ec-cube-enterprise/src/Eccube/Repository/DtbOtcBuyOrderStockHistoryRepository.php:99-125で、各語内は氏名4項目ORだが語ごとにandWhereを追加することを確認した。",
+      "reason": "検索結果集合が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 603,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "買取日時FromがToより後でもエラー表示されず検索が実行される。",
+      "checked": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/OtcBuyOrder/OtcBuyOrderHistoryType.php:103-120、src/Eccube/Controller/Admin/SearchControllerTrait.php:100-205、src/Eccube/Controller/Admin/OtcBuyOrder/OtcBuyOrderHistoryController.php:55-115を確認した。",
+      "reason": "画面エラーと検索実行の有無が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 604,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "日付入力UIがyyyy/mm/ddではなくYYYY-MM-DDを表示・入力し、送信値の書式も異なる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/OtcBuyOrder/OtcBuyOrderSummaryType.php:58-67とhtml/template/admin/assets/js/OtcBuyOrder/otc-buy-order-summary.js:1-7を確認した。",
+      "reason": "入力表示とHTTPフォーム値の書式差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 605,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "利用者が複数店舗を同時選択でき、検索条件が単一店舗一致ではなく店舗集合INになる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/OtcBuyOrder/OtcBuyOrderSummaryType.php:68-75でmultiple=trueと配列初期値を確認した。",
+      "reason": "フォームUI、送信値の型、検索結果が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 606,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "返却される印刷用HTMLにピッキングリスト作成日時が表示されない。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Admin/OtcBuyOrder/OtcBuyOrderController.php:755-769、src/Eccube/Service/Admin/OtcBuyOrder/OtcBuyOrderRestockListService.php:49-58、src/Eccube/Resource/template/admin/Purchase/restock_list.twig:1-120を確認した。",
+      "reason": "帳票HTMLの表示項目欠落である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 607,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "状態なし通常商品のCSVに基準価格・略称タグ・レアリティおよび実データの言語IDが出力され、設計の空欄・1固定と異なる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Repository/DtbOtcBuyOrderRepository.php:503-513とsrc/Eccube/Service/Csv/Exporter/OtcBuyOrderCsvExportService.php:80-125を確認した。",
+      "reason": "CSVセル値の差は直接的な外部I/O差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 608,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "検索画面ラベルが『AND/OR検索』ではなく『AND/OR選択』と表示される。",
+      "checked": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Purchase/index.twig:95-99とsrc/Eccube/Resource/locale/messages.ja.yaml:5569を確認した。",
+      "reason": "利用者向け表示文言の差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 609,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "チェックボックスの表示文言に『棚』が追加され、『戻し未完了のみ表示』と一致しない。",
+      "checked": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/Purchase/PurchaseListType.php:170-175とsrc/Eccube/Resource/locale/messages.ja.yaml:5537を確認した。",
+      "reason": "軽微でも画面文言差は外部観測可能である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 610,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "クリア操作後も買取状況以外の入力値が残り、次の検索条件に引き続き使われる。",
+      "checked": "ec-cube-enterprise/html/template/admin/assets/js/Purchase/purchase.js:7-10とsrc/Eccube/Resource/template/admin/Purchase/index.twig:70-155を確認した。",
+      "reason": "画面状態と後続検索結果が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 611,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "検索ボタンは『検索する >』ではなく共通の『検索』文言と矢印なしで表示される。",
+      "checked": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Purchase/index.twig:143-145でadmin.common.searchのみを描画することを確認した。",
+      "reason": "検索動作が同じでも生成HTMLの表示文言が異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 612,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "本人確認欄で確認中・未確認が文言ではなくアイコンのみとなり、簡易書留確認済みも『書留確認済み』と表示される。",
+      "checked": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Purchase/index.twig:245-256で各ステータスの実際のHTML分岐を確認した。",
+      "reason": "一覧画面に表示される内容が設計の4文言と異なる。",
+      "confidence": "high"
+    }
+  ]
+}

@@ -1,0 +1,165 @@
+{
+  "packetId": "rest_19",
+  "results": [
+    {
+      "rowId": 633,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:17576-17578 に「第一ソートとして承認情報単位で1-2の内容に従って」「在庫変動履歴ID降順」「入庫承認待ち在庫ID降順」とある。第一ソートの内容は同:17465-17468 の「承認日が空…登録日が古い順」「承認日が新しい順」「在庫編集承認ID…昇順」。",
+      "legacyEvidence": "旧4リポジトリで `approved_date` / `registered_date` と StockApproval・承認の orderBy を横断検索したが対応機能は存在しない（確認範囲: pf-api, pf-eccube3, pf-article, deck-api）。本件はExcel正本と現行実装だけで判定可能。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Repository/DtbStockApprovalListRepository.php:309-312 は `orderBy('...sort_approved_date', 'DESC')`, `sort_registered_date ASC`, `sort_sal_id ASC`, `sort_sad_id DESC`。内側も同:382-385 で `sal.approved_date DESC`, `sal.registered_date ASC`, `sal.id ASC`, `sad.id DESC` としており、現在は設計順を満たす。",
+      "note": "指摘時の sad.id ASC は現行スナップショットで DESC に修正済み。PostgreSQL の DESC では NULL が先頭となるため未承認優先も満たす。"
+    },
+    {
+      "rowId": 634,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:15243-15246 に「移動指示リスト詳細画面から、ピッキングリスト作成ボタンを押下してダイアログを表示」「実際に出庫される商品の情報を表示」「実際の移動点数が0枚の商品は表示されない」「金額閾値に応じたページへの振り分け」と明記され、同:15248-15260 に印刷プレビュー・表示条件・ソートもある。",
+      "legacyEvidence": "設計根拠が十分なため旧実装は判定に用いていない。`move-instruction` / `ピッキングリスト` / 機能名で pf-api, pf-eccube3, pf-article, deck-api を横断検索したが、この新しい在庫移動指示詳細機能に対応する実装は存在しない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/stock_move_instruction_detail.twig:82-89 の操作部は「登録」と「削除」ボタンだけで、ピッキングリスト作成ボタンがない。ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockMoveInstructionController.php:182-184 の詳細ルートと同:206-231 のPOST処理も詳細更新だけで、PDF/印刷処理へ分岐しない。",
+      "note": "Excel正本に直接裏付けがあり、現行の移動指示詳細画面に入口・生成処理とも見当たらない。"
+    },
+    {
+      "rowId": 635,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:1197 に「引き渡し後の受注情報に引き渡し前の注文番号を紐づけておき、引き渡し前の注文番号で検索した際に、引き渡し後の受注情報が検索できるようにする」と明記されている。",
+      "legacyEvidence": "旧実装の pf-eccube3/app/Plugin/HareruyaEc/Repository/OrderRepository.php:328-330 は `os.orderNumber LIKE :order_number` で旧側の注文番号を検索する。少なくとも注文番号検索自体は旧実装にも存在するが、判定根拠はExcel正本で十分。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php:268-272 は検索条件が `o.order_number LIKE :order_number` だけ。一方、ec-cube-enterprise/src/Eccube/Service/Smaregi/Webhook/Transaction/Handler/Pattern/EccubeOtcPatternHandler.php:115-121 は引き渡し前受注に `setNextOrderId($newOrder->getId())` を設定するため、紐付けは保存されるが旧注文番号から新受注を逆引きする検索条件がない。",
+      "note": "紐付け保存はあるが、設計が要求する引き渡し前注文番号での引き渡し後受注検索が欠ける。"
+    },
+    {
+      "rowId": 636,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:1188-1192 に、保存パターンを「リンクとして並べて表示」、クリックで検索、個々の「リロードアイコン」、更新前は件数に `*` を表示すると明記されている。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Order/OrderController.php:340 は旧画面にも `$arr['searchPatterns'] = ...findBy(...)` と検索パターン一覧を渡していた。現行踏襲の補助根拠だが、期待値はExcel正本に明記されている。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Order/index.twig:1046-1057 では選択中の分岐が `{{ SearchPattern.name }}` のみで、未選択分岐にだけ `<a ...>`, `(<span ...>*</span>)`, `get_count_pattern` の更新ボタンがある。",
+      "note": "選択中パターンだけリンク・件数表示・個別更新が欠落し、Excel正本の「各検索パターン」要件を満たさない。"
+    },
+    {
+      "rowId": 637,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:2169 に「件数のデフォルト値を300件とする」と明記されている。",
+      "legacyEvidence": "本件はExcel正本と現行設定で判定可能。旧画面の一覧自体は pf-eccube3/src/Eccube/Resource/template/admin/Order/index.twig:314-318 の `<table class=\"table table-striped\">` / 「受注日」から確認したが、旧実装値は現行の設定判定には用いていない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Order/OrderController.php:163-166 はセッション未設定時に `eccube_order_list_page_count` を取得し、ec-cube-enterprise/app/config/eccube/packages/eccube.yaml:142-143 で `eccube_order_list_page_count: 300` と設定されている。",
+      "note": "指摘の `eccube_default_page_count: 10` ではなく、受注一覧専用設定300が既に使用されている。"
+    },
+    {
+      "rowId": 638,
+      "verdict": "UNSUPPORTED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:2134 のExcel正本図 `data-excel-ref=\"...!B8\"` は受注日・注文番号等を固定見出しとして描き、同:2229 の項目表も「注文番号をクリックすると対象の注文編集画面へ遷移」とだけ記載する。sheet-4のExcel正本範囲（同:2115-2249）を `ソート` / `昇順` / `降順` / `sortkey` で確認したが、これら3列をソート可能にする要件は存在しない。",
+      "legacyEvidence": "pf-eccube3/src/Eccube/Resource/template/admin/Order/index.twig:318-323 は `<th ...>受注日</th>`, `<th ...>注文番号</th>`, `<th ...>発送日</th>` という固定見出しで、ソートリンクを持たない。旧受注一覧にも当該3キーのソート挙動はない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Order/index.twig:1181-1186 は `data-sortkey=\"order_date\"`, `order_number`, `order_commit_date` を送るが、ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php:65-67 の `COLUMNS` に3キーがなく、同:582-585 は `self::COLUMNS[$searchData['sortkey']]` を直接参照するため内部不整合は実在する。",
+      "note": "実装内の不整合ではあるが、この3列をソート可能にする設計期待値はExcel正本にも旧実装にもないため、設計vs実装の乖離としては根拠不足。"
+    },
+    {
+      "rowId": 639,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:2732-2737 に「非会員である場合、非会員と表現する」「※スマレジでの非会員による取引データを考慮」「識別ID:4『お名前(姓)』に非会員と表現する」と明記されている。",
+      "legacyEvidence": "Excel正本の直接根拠で判定可能。旧カスタムCSVは pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Order/OrderController.php:341-342 で `orderCsvExtensions` / `shippingCsvExtensions` を取得する構成だが、全非会員の固定表現を保証する旧出力補正は横断検索で確認できなかった（確認範囲: pf-eccube3 の OrderController, CSV extension, CSV export処理）。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/CsvExportService.php:418-425 はCSV定義に従い Order/OrderItem の保存値をそのまま取得する。スマレジguestは ec-cube-enterprise/src/Eccube/Service/Smaregi/Webhook/Transaction/SmaregiOrderFactory.php:83-89 で `setName01('非会員')` となる一方、通常の非会員購入は ec-cube-enterprise/src/Eccube/Controller/Front/NonMemberShoppingController.php:149-161 で入力姓 `customer_name01` を保存するため、全非会員を固定文言にする出力要件は満たさない。",
+      "note": "注記はスマレジ非会員を考慮した背景を示すが、要件本文は「非会員である場合」と限定なく記載される。スマレジguestだけの事前設定では全非会員を保証しない。"
+    },
+    {
+      "rowId": 640,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:2892 は受注詳細CSVの識別ID4を「店舗名」、説明を「本店、支店のデータを統合するため追加」と定義している。",
+      "legacyEvidence": "本件はExcel正本と現行migrationで判定可能。旧実装側の該当CSV機能は pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Order/OrderController.php:342 の `$arr['shippingCsvExtensions'] = ...findByCsvTypeId(CSV_TYPE_SHIPPING)` で確認したが、現行追加済みかの判定には用いていない。",
+      "currentImpl": "ec-cube-enterprise/app/DoctrineMigrations/Version20260724120000.php:37-49 は `[3, 4]` の各CSV種別に対し `Eccube\\\\Entity\\\\Order`, `BaseInfo`, `shop_name`, `'店舗名', 4` を INSERT する。",
+      "note": "指摘後に追加されたmigrationにより、csv_type_id=4の識別ID4「店舗名」は実装済み。"
+    },
+    {
+      "rowId": 641,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:2955 は受注詳細CSVの識別ID67を「送料ID」と明記している。",
+      "legacyEvidence": "旧リポジトリのCSV定義・送料IDを横断検索したが、現行移植先の初期seedに対応する定義以外に設計期待値を上書きする根拠はない（確認範囲: pf-eccube3 の dtb_csv import/migrations、pf-api, pf-article, deck-api）。Excel正本の直接根拠で判定した。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/doctrine/import_csv/ja/dtb_csv.csv:192-194 はお届け希望日(ID65)の次が `shipping_delivery_fee` の「送料」(ID67)で、送料IDがない。さらに ec-cube-enterprise/app/DoctrineMigrations/Version20210831190000.php:34-35 は `// delete 送料ID` としてID 122,193を削除し、Version20260226000001.php:95-97 も希望日を66、送料を68へ移すだけで送料IDを再追加しない。",
+      "note": "現行migration/seed全体で識別ID67「送料ID」の追加が確認できない。"
+    },
+    {
+      "rowId": 642,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:2889 は識別ID1を「注文番号」、同:2976 は識別ID88も「注文番号」と定義しており、Excel正本上は重複した2項目が存在する。",
+      "legacyEvidence": "設計根拠が十分なため旧実装は判定に用いていない。旧4リポジトリを `sort_no 88` / `注文番号` / dtb_csv で検索したが、識別ID88を明示的に生成する旧migrationは確認できなかった（確認範囲: pf-eccube3, pf-api, pf-article, deck-api）。",
+      "currentImpl": "ec-cube-enterprise/app/DoctrineMigrations/Version20260226000001.php:30-33 は既存「注文番号」をsort_no=1にするだけ。同:114-117 は86「注文備考」、87「注文国」、89「配送先国」、90「送り状No.」を作り、88の注文番号を作成しない。",
+      "note": "Excel正本の表自体にはID88「注文番号」が明記されるため、表記ミスの可能性はあっても現時点ではSPEC_BACKEDとした。"
+    },
+    {
+      "rowId": 643,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:3233-3238 に「非会員である場合、非会員と表現する」「※スマレジでの非会員による取引データを考慮」「識別ID:3『お名前(姓)』に非会員と表現する」と明記されている。",
+      "legacyEvidence": "Excel正本の直接根拠で判定可能。旧配送カスタムCSVの選択肢は pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Order/OrderController.php:342 の `shippingCsvExtensions` で取得されるが、全非会員の姓を固定文言へ置換する旧出力補正は確認できなかった（確認範囲: pf-eccube3 の Order/CSV出力・CSV extension処理）。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/CsvExportService.php:494-508 は各列をまずOrder、null時だけShippingから取得し、会員有無を判定しない。スマレジguestは ec-cube-enterprise/src/Eccube/Service/Smaregi/Webhook/Transaction/SmaregiOrderFactory.php:218-224 で `setName01('非会員')` だが、通常guestは ec-cube-enterprise/src/Eccube/Controller/Front/NonMemberShoppingController.php:149-161 で入力姓を保存する。",
+      "note": "スマレジguestだけは保存値で満たすが、設計本文が対象とする全非会員についてCSV出力時の固定表現が保証されない。"
+    },
+    {
+      "rowId": 644,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:3230-3245 のsheet-8 Excel正本は「本店・支店・スマレジ…CSVとして出力」「識別ID:3『お名前(姓)』に非会員」等の出力内容だけを記載する。sheet-8正本範囲（同:3093-3248）を `deleted_at` / `論理削除` / `フォーマット` / `プルダウン` で確認したが、削除済みカスタムCSV定義を選択肢から除外する記述は存在しない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Order/OrderController.php:340-342 は表示用に既存CSV拡張を取得する一方、pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Setting/Shop/CsvController.php:103-115 の削除処理は `remove($csvExtension)` と `flush()` で対象を物理削除する。したがって旧画面では削除済み定義が選択肢へ残らない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Order/OrderController.php:297-300 は `findBy(['CsvType' => ...])` を使い、ec-cube-enterprise/src/Eccube/Controller/Admin/CustomExportCsvController.php:74-80 も `find($csvExtensionId)` でdeleted_atを検査しない。`deleted_at IS NULL` を付ける専用メソッドは ec-cube-enterprise/src/Eccube/Repository/DtbCsvExtensionRepository.php:34-43 に存在するが、この経路から未使用。",
+      "note": "Excel正本の記述漏れはあるが、旧実装が維持していた「削除後は選択不能」という機能挙動の移植漏れとして根拠がある。"
+    },
+    {
+      "rowId": 645,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:3136 は受注詳細カスタムCSVの識別ID4を「店舗名」、説明を「本店、支店のデータを統合するため追加」と定義している。",
+      "legacyEvidence": "本件はExcel正本と現行migrationで判定可能。旧配送カスタムCSV選択肢は pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Order/OrderController.php:342 の `$arr['shippingCsvExtensions']` で確認したが、現行追加済みかの判定には用いていない。",
+      "currentImpl": "ec-cube-enterprise/app/DoctrineMigrations/Version20260724120000.php:37-49 は `[3, 4]` の双方に `Eccube\\\\Entity\\\\Order`, `BaseInfo`, `shop_name`, `'店舗名', 4` を追加するため、csv_type_id=4のカスタム出力候補にも店舗名が入る。",
+      "note": "指摘後のmigrationで実装済み。"
+    },
+    {
+      "rowId": 646,
+      "verdict": "UNSUPPORTED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:3414-3415 は「選択したメールテンプレートを元に、件名・本文を入力」「テンプレ選択を変更すると…件名、本文が変更」とだけ記載し、同:3428 の件名項目にも無効条件がない。sheet-9正本範囲（同:3365-3440）を `無効` / `disabled` / `選択まで` で確認したが、件名・確認ボタンを無効にする記述は存在しない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Order/manual_mail_all.twig:50-51 は通常の `form.template` と `form.subject` を描画し、同:73-75 の送信ボタンも `disabled` 条件なし。旧実装にも「テンプレ未選択時は件名・ボタン無効」の挙動はない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Order/manual_mail_all.twig:79-80 は件名を通常描画し、同:155-160 は確認ボタンだけ `{% if not id %}disabled{% endif %}`。ec-cube-enterprise/src/Eccube/Form/Type/Admin/OrderManualMailAllType.php:56-63 のsubjectにもdisabled/readonly条件はない。",
+      "note": "指摘された現行挙動は確認できるが、その状態を乖離とする期待値がExcel正本・旧実装のどちらにもない。"
+    },
+    {
+      "rowId": 647,
+      "verdict": "UNSUPPORTED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:3433 と同:3755 は表示項目を「注文番号」「ラベル」とするだけで、Order#getOrderNoや参照カラムを指定していない。sheet-9/10のExcel正本範囲を `getOrderNo` / `order_no` / `order_number` で確認したがgetter指定は存在しない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Util/OrderUtil.php:19-24 は旧DtbOrderSubの `$orderSub->getOrderNumber()` を一覧表示用に使い、pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Order/MailController.php:352-365 も本文変数へ `$orderSub->getOrderNumber()` を渡す。旧実装はgetOrderNoではなくorder_number系を根拠とする。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Util/OrderUtil.php:33-38 は `$order->getOrderNumber()` を使う。ec-cube-enterprise/src/Eccube/Entity/Order.php:648-649 は `order_number` をコメント「注文番号」として定義し、同:1769-1776 のgetOrderNumberが返す一方、同:465-466/888-890 のorder_no/getOrderNoは別フィールドである。",
+      "note": "設計は表示ラベルしか規定せず、旧実装もorder_numberを使用するため、getOrderNoを必須とする指摘は根拠が逆。"
+    },
+    {
+      "rowId": 648,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:3743-3744 に「送信ボタンを押下すると確認のダイアログを表示し、OKなら送信を実行」「成功/失敗に応じてメッセージを表示する」と明記されている。",
+      "legacyEvidence": "旧一括送信は pf-eccube3/app/Plugin/HareruyaEc/Service/MailService.php:150-165 で `$this->app->mail($message);` 後に履歴保存する構成。Excel正本の成功/失敗表示要件が直接の判定根拠であり、旧実装は補助確認に留めた。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Order/MailController.php:474-493 はループ内で送信した後、例外処理・失敗メッセージ分岐なしに `addSuccess('admin.order.mail_send_complete')` へ進む。ec-cube-enterprise/src/Eccube/Service/MailService.php:2318-2333 も `$this->mailer->send($message)` をcatchせず、成否を返さない。",
+      "note": "送信失敗を画面用メッセージへ変換する経路がなく、Excel正本の失敗時表示を満たさない。"
+    },
+    {
+      "rowId": 649,
+      "verdict": "UNSUPPORTED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:3433 は入力画面の項目7を「注文番号」、同:3755 は確認画面の項目4を「注文番号」とするだけで、メール本文にOrder#getOrderNoを用いるとの記述はない（確認範囲: sheet-9/10 Excel正本、検索語 `getOrderNo`, `order_no`, `order_number`）。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Order/MailController.php:352-365 は本文変数 `orderNumber` に `$orderSub->getOrderNumber()` を渡しており、旧実装もgetOrderNoではない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Order/MailController.php:545-560 は本文変数 `orderNumber` に `$Order->getOrderNumber()` を渡す。ec-cube-enterprise/src/Eccube/Entity/Order.php:648-649/1769-1776 ではこの値が「注文番号」コメントのorder_numberである。",
+      "note": "現行は旧実装のorder_number semanticsを移植しており、getOrderNoを期待する根拠がない。"
+    },
+    {
+      "rowId": 650,
+      "verdict": "UNSUPPORTED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:3433 は右欄の識別ID7を「注文番号」「ラベル」とだけ定義する。sheet-9 Excel正本（同:3365-3440）にgetter名・order_noカラムの指定は存在しない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Util/OrderUtil.php:19-24 は右欄用の注文番号配列を `$orderSub->getOrderNumber()` で作るため、旧実装もorder_number系を使用する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Util/OrderUtil.php:33-38 は現行Orderの `$order->getOrderNumber()` を使う。ec-cube-enterprise/src/Eccube/Entity/Order.php:648-649 はこのフィールドを `comment => '注文番号'` と定義し、getOrderNoは同:888-890 の別フィールドorder_noを返す。",
+      "note": "表示値をgetOrderNoへ変更すべきという指摘は、正本設計にも旧実装にも裏付けられない。"
+    },
+    {
+      "rowId": 651,
+      "verdict": "UNSUPPORTED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:3414-3436 のsheet-9 Excel正本はテンプレート・件名・本文・注文番号等の画面/送信仕様を列挙するが、メール履歴のcreator_idまたは操作者保存を記載しない（確認範囲: sheet-9/10正本、検索語 `creator`, `creator_id`, `作成者`, `操作者`, `履歴`）。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Service/MailService.php:150-165 は `saveUserMailHistory($message, $template, $data)` とcreatorを渡さず、同:1799-1806 はcreatorの既定値をnullとして `setCreator($creator)` する。旧実装も一括送信履歴のcreatorを保存していない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/MailService.php:2318-2333 は `saveUserMailHistory($message, $template, $order)` とcreatorなしで呼び、同:2341-2348 で既定nullのcreatorを `setCreator($creator)` する。",
+      "note": "現行がcreator_idを保存しない事実はあるが、正本設計にも旧実装にも「ログインMemberを保存する」という期待値がない。"
+    },
+    {
+      "rowId": 652,
+      "verdict": "UNSUPPORTED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:3414-3415 は「選択したメールテンプレートを元に、件名・本文を入力」「テンプレ選択を変更すると…件名、本文が変更」と記載し、同:3428 の件名項目にも無効条件がない。sheet-9正本を `無効` / `disabled` / `選択まで` で確認したが期待値は存在しない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Order/manual_mail_all.twig:50-51 はsubjectを通常描画し、同:73-75 の送信ボタンも無条件で有効。旧実装にもテンプレ未選択連動の無効化はない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Order/manual_mail_all.twig:79-80 はsubjectを通常描画し、同:155-160 は確認ボタンだけid未指定時にdisabled。ec-cube-enterprise/src/Eccube/Form/Type/Admin/OrderManualMailAllType.php:56-63 にもsubjectのdisabled/readonly条件はない。",
+      "note": "rowId 646と同一内容の重複指摘。期待値の出典が正本設計・旧実装のどちらにもないため同じUNSUPPORTED。"
+    }
+  ]
+}

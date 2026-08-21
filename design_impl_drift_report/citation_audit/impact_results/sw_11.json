@@ -1,0 +1,365 @@
+{
+  "packetId": "sw_11",
+  "results": [
+    {
+      "rowId": 361,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "画像追加の受付URL、空ファイル時のHTTP応答、成功レスポンス形式が変わる。実装は /image/process で先頭ファイル名だけを平文Responseとして返す。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Admin/Product/ProductController.php:389-433 を確認。Route、XHR/CSRF判定、count($images)、MIME/拡張子判定、array_shift($files) の Response を実査した。",
+      "reason": "HTTPパス・エラー応答・レスポンスボディはいずれも外部I/O契約である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 362,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "必須項目の空入力やサイズ・重量の過大値がサーバ側検証を通り、保存可否と表示される検証エラーが設計と変わる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/ProductType.php:91-95,165-245 を確認。name_en、SellGroup、size、weight、Discount、RegionRestriction は指摘された NotBlank/Length 制約を持たず、size/weight は required=false、empty_data=0、HTML attr の min/maxlength のみ。",
+      "reason": "受理する入力集合と永続化結果が変わるため、明確な挙動差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 363,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "廃止商品でも送信ボタン非表示を迂回して編集URLへPOSTすれば、商品・カテゴリ等を更新できる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Product/product.twig:817-828 と ec-cube-enterprise/src/Eccube/Controller/Admin/Product/ProductController.php:532,614-637,827-829 を確認。Twigはボタンを隠すが、GET/POST共用編集ルートには廃止状態の更新拒否がない。",
+      "reason": "サーバ側の更新可否とDB副作用が異なる。UIだけの抑止は同じ挙動を保証しない。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 364,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "商品更新後に支店システムへ通知が送られず、支店側の商品情報が更新契機を受け取らない。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Admin/Product/ProductController.php:614-889 を確認し、更新確定後の外部通知はなく、確認できる非同期連携は条件付きスマレジ upsert(:830-855)のみだった。",
+      "reason": "外部システム呼出しの有無はそのまま外部観測可能な副作用差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 365,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "商品を廃止へ更新しても、紐付くスマレジ商品規格にDELETE要求が送られず、スマレジ側データが残る。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Admin/Product/ProductController.php:614-889 を確認。更新経路は商品名変更時の dispatchUpsert(:830-855)のみ。別経路の削除実装 ec-cube-enterprise/src/Eccube/Service/Admin/Product/ProductClassDeleteAction.php:54-77 は商品編集から呼ばれない。",
+      "reason": "外部API呼出しと連携先データ状態が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 366,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "更新成功時、管理画面には「登録が完了しました。」ではなく「保存しました」と表示される。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Admin/Product/ProductController.php:868-889 と ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:1590,1966 を確認。addSuccess は admin.common.save_complete を使い、その訳文は「保存しました」。",
+      "reason": "1文字以上の表示文言差も画面出力差なのでIMPACTである。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 367,
+      "authorVerdict": "UNSURE",
+      "verdict": "IMPACT",
+      "agree": false,
+      "observableEffect": "CSVストリームが未実行・途中失敗でも、運用ログには出力ファイル名が先に記録され得る。ログと実送信完了の順序・対応関係が変わる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Service/Csv/ProductCardCsv.php:62-81 を確認。CSV書込みは StreamedResponse callback(:65-72)、log_info は callback 外で return 前(:77-79)。",
+      "reason": "運用ログはファイル/ログI/Oであり、完了前記録は外部から観測できる。UNSUREを維持する情報不足はない。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 368,
+      "authorVerdict": "UNSURE",
+      "verdict": "IMPACT",
+      "agree": false,
+      "observableEffect": "グッズCSV送信が実際には開始・完了しなくても、出力済みを示すファイル名ログが残り得る。",
+      "checked": "ec-cube-enterprise/src/Eccube/Service/Csv/ProductGoodsCsv.php:60-79 を確認。fputcsv/fclose は callback(:63-70)、log_info はその外側(:75-77)。",
+      "reason": "送信完了を表す運用ログの発生タイミングは観測可能なI/O差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 369,
+      "authorVerdict": "UNSURE",
+      "verdict": "IMPACT",
+      "agree": false,
+      "observableEffect": "価格変更CSVの書込み失敗・callback未実行時にもファイル名ログが残り得て、ログ上の完了記録が実送信結果と食い違う。",
+      "checked": "ec-cube-enterprise/src/Eccube/Service/Csv/ProductPriceCsv.php:53-71 を確認。CSV出力は callback(:55-64)、log_info は callback 外(:69)。",
+      "reason": "ログ出力の順序と成否対応が外部観測可能であるためIMPACT。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 370,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "ダウンロードされるカスタムCSVのヘッダ文字列が設計項目名と異なる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Service/ProductAllCsv.php:96-205,548-610 の label 定義と、ec-cube-enterprise/src/Eccube/Controller/Admin/Product/Csv/ProductCsvController.php:244-272 の column_name のみを columns に渡す経路を確認。",
+      "reason": "CSVヘッダは利用者・連携処理に露出するファイルI/Oである。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 371,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "削除後、dtb_csv_extension 行が deleted_at 付きで残らず物理的に消えるため、DB状態・復元可能性・参照結果が変わる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Admin/Setting/Shop/CustomerCsvController.php:114-138 を確認。関連削除後に entityManager->remove($CsvExtension) と flush。ec-cube-enterprise/src/Eccube/Entity/DtbCsvExtension.php:87-97 には deleted_at/setDeletedAt があるが、この経路は使用しない。",
+      "reason": "永続データの削除方式と残存行が異なるためIMPACT。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 372,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "画面で選んだ項目順と、保存される rank および後続CSVの列順が一致しない場合がある。",
+      "checked": "ec-cube-enterprise/src/Eccube/Service/Admin/Setting/Shop/CustomerCsvUpdateAction.php:73-84 を確認。POSTの csv_output から findBy(['id' => $csvIds]) を順序指定なしで取得し、その反復キーを rank として保存する。",
+      "reason": "保存順位とCSV列順を変え得るため、内部実装差に留まらない。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 373,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "商品本体が公開かつ visible=trueなら、規格Statusが非公開・廃止でもフロント商品取得対象に残り得る。",
+      "checked": "ec-cube-enterprise/src/Eccube/Repository/ProductRepository.php:121-143,155-205 を確認。フロント取得条件は p.Status、pc.visible、価格であり pc.Status 条件がない。ec-cube-enterprise/src/Eccube/Repository/ProductClassRepository.php:194-210 のUniSearch解決も規格Statusを見ない。",
+      "reason": "商品規格の表示有無は利用者が観測する画面挙動である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 374,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "管理者がアクセス・送信するURLパスが設計と異なり、設計URLでは404/405等になり得る。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Admin/Product/ProductClassController.php:76,116,156,233,271,360 を確認。実装は /product/product/class/{id} を基点に /store、/edit/{productClassId}、/update/{productClassId}、/delete/{productClassId}。",
+      "reason": "ルート名だけでなくHTTPパスとメソッド入口の差なのでIMPACT。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 375,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "検証失敗・成功時の表示文言が変わり、成功後は同規格編集画面でなく規格一覧へ遷移する。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Admin/Product/ProductClassController.php:180-227,294-357 を確認。失敗/成功は admin.common.save_error/save_complete、成功後 redirectToRoute は admin_product_product_class。",
+      "reason": "フラッシュ表示と画面遷移先はいずれも明白な外部挙動差。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 376,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "最後の1規格でも削除ボタンとDELETE入口が有効で、HTTP400にならず規格行が物理削除される。",
+      "checked": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Product/ProductClass/edit.twig:577-584、ec-cube-enterprise/src/Eccube/Controller/Admin/Product/ProductClassController.php:360-390、ec-cube-enterprise/src/Eccube/Service/Admin/Product/ProductClassDeleteAction.php:62-69 を確認。件数ガードなしで remove/flush。",
+      "reason": "ボタン表示、HTTP結果、DB削除方式の三点すべてが外部観測可能。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 377,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "カテゴリ画面のラベルが「フロント非表示フラグ」ではなく「フロント非表フラグ」と表示される。",
+      "checked": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/CategoryType.php:64-67、ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:2153、ec-cube-enterprise/src/Eccube/Resource/template/admin/Product/category.twig:352-353 を確認。翻訳キーが実際に form_label へ描画される。",
+      "reason": "誤字でも画面出力が1文字異なるためIMPACT。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 378,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "カテゴリ画面に「検索パラメータ」ではなく「検索パラメーター」と表示される。",
+      "checked": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/CategoryType.php:151-152、ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:2160、ec-cube-enterprise/src/Eccube/Resource/template/admin/Product/category.twig:401 を確認。",
+      "reason": "長音符1文字の差も利用者に見える画面出力差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 379,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "非表示指定カテゴリの商品が検索結果に残り得て、支店/フロント利用者が本来除外される商品を検索できる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Service/TopCategoryListBuilder.php:85-112 と CategoryTreeResponseBuilder.php:54-62 では表示ツリー除外を確認。一方 ec-cube-enterprise/src/Eccube/Repository/ProductRepository.php:767-784 の商品検索カテゴリ条件は front_search_hide_flg/branch_hide_flg を見ない。",
+      "reason": "検索結果の対象集合が変わるのでIMPACT。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 380,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "最上位カテゴリのParent列が一般値取得による空セルではなく文字列「0」としてCSV出力される。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Admin/Product/CategoryController.php:822-855 を確認。対象商品数に加え Parent も特例分岐し、親なしは '0'、他列だけ getData 後にnull/空文字を空セル化する。",
+      "reason": "CSVセル値の差はファイルI/Oの外部契約差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 381,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "名称(英)に全角文字を入れても検証エラーにならず、全角値をDBへ保存できる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/TagType.php:70-77 と ec-cube-enterprise/src/Eccube/Entity/Tag.php:176-186 を確認。NotBlank/Lengthのみで半角Regex等はなく、Entityも単なるstring列。",
+      "reason": "受理入力と永続値が変わるためIMPACT。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 382,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "タグのタイトル(日/英)を設定しても商品検索ページのHTML titleに反映されず、ブラウザ表示・SEO出力が変わる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Resource/template/default/default_frame.twig:17-34 のtitle生成を確認し、Controller/Front・default Twig・Service を getTitleJp/getTitleEn/title_jp/title_en で検索したが商品検索への利用はなかった。",
+      "reason": "HTML titleはクライアントへ返るレスポンス本文でありIMPACT。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 383,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "タグ説明(日/英)を設定しても商品検索ページのmeta descriptionに反映されず、返却HTMLが変わる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Resource/template/default/meta.twig:41-54 以降の商品一覧meta経路を確認し、Controller/Front・default Twig・Service を getDescriptionJp/getDescriptionEn/description_jp/description_en で検索したがタグ説明の利用はなかった。",
+      "reason": "meta descriptionもHTTPレスポンスに露出するためIMPACT。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 384,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "略称タグ一覧の件数選択に2000件・10000件・12000件が表示されず、その件数で一覧表示できない。",
+      "checked": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Product/storage_code.twig:110-119 を確認。選択肢は [10,50,100,300,500,1000] の固定配列。",
+      "reason": "選択肢の表示有無と一覧件数操作は画面挙動差。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 385,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "GET /product/storage_code/import では取込画面を表示できず、実装の別URL /product/storage_code/csv を利用する必要がある。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Admin/Product/StorageCodeController.php:284-305 を確認。画面表示は /csv のGET、/import はPOSTのみ。",
+      "reason": "利用者がアクセスするHTTPパスの差でありIMPACT。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 386,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "GET /product/storage_code/import は取込フォームを返さず405等となり、画面入口が設計と異なる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Admin/Product/StorageCodeController.php:277-326 を確認。GET専用 /csv がフォームをrenderし、/import Routeは methods=['POST']。",
+      "reason": "HTTPメソッド許可とレスポンスが異なるためIMPACT。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 387,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "非数値のID・並び順が整数キャストで0等へ変換され、エラーではなく新規登録/誤順位保存になり得る。",
+      "checked": "ec-cube-enterprise/src/Eccube/Service/Csv/StorageCodeCsv.php:84-122 を確認。必須/重複確認後、IDを(int)、rankを(int)へキャストし、is_numeric/ctype_digit等の拒否がない。",
+      "reason": "CSV受理可否とDB保存値が変わるためIMPACT。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 388,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "編集モードでも画面下部の送信ボタンが常に「登録」と表示される。",
+      "checked": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Product/section.twig:54-60,144-156 を確認。見出しはidで編集へ切替えるが、下部ボタンは常に admin.common.registration。",
+      "reason": "ボタンラベルは利用者に見える画面出力。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 389,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "スマレジ部門作成POSTのJSON本文に軽減税率IDのnullフィールドが含まれず、連携先が受信するキー集合が異なる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Service/Smaregi/Api/SmaregiSectionApiClient.php:62-88 を確認。create payloadは categoryCode/categoryName/displayFlag/taxDivision/pointNotApplicable のみ。",
+      "reason": "外部APIパラメータは、値がnullでも省略と明示nullでリクエスト本文が異なるためIMPACT。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 390,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "並び順セルを押しても編集フォームへ値が反映されず、利用者は設計された編集操作を実行できない。",
+      "checked": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Product/shelf_number.twig:126-146 を確認。ID・名称と編集ボタンには編集リンクがあるが、sortNo(:134-136)は平文でclick要素/handlerがない。",
+      "reason": "クリック操作とフォーム反映の有無は画面挙動差。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 391,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "CSVの並び順に32768以上を指定しても範囲エラーにならず、DBへ保存され得る。",
+      "checked": "ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/ShelfNumberMasterImportHandler.php:44-51 はNumericValidatorとIntConverterのみ。ec-cube-enterprise/src/Eccube/Entity/DtbShelfNumber.php:37-38 はunsigned INTEGERで32767上限を表さない。関連ファイルに32767/Range制約なし。",
+      "reason": "CSV入力の受理範囲と永続値が変わるためIMPACT。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 392,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "設計どおり商品削除フラグ列を含むCSVは列数/ヘッダ不一致になり、0/1による商品削除操作もできない。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Admin/Product/Csv/CardCsvController.php:319-332 を確認。「検索ワード」の次は「規格画像」で、getStructuredImportHeaders全体に商品削除フラグがない。",
+      "reason": "CSVフォーマット、取込成否、削除副作用が変わるのでIMPACT。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 393,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "既存規格のセールOFF時、CSV基準価格そのものではなく割引率・状態から再計算した値が販売価格に保存される。",
+      "checked": "ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/ProductCardImportHandler.php:656-680,686-706 を確認。standardPriceCalculatorでnewStandardPriceを算出し、saleFlg=falseなら price02=$newStandardPrice。",
+      "reason": "CSV入力に対する販売価格のDB保存値が異なるためIMPACT。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 394,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "許可された3ルート配下以外でもDBに存在するカテゴリIDならCSV検証を通り、商品へ不許可カテゴリを紐付け得る。",
+      "checked": "ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Validator/Repository/CategoryIdValidator.php:48-69 と ec-cube-enterprise/src/Eccube/Util/CategoryMap.php:47-56,157-183 を確認。検証は全dtb_categoryを読み込んだmapのcontainsのみ。",
+      "reason": "バリデーション条件と保存されるカテゴリ関連が変わるためIMPACT。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 395,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "新規規格ではCSV基準価格でなく販売価格列を元に割引計算した値がprice02へ保存され、基準価格と販売価格が異なる行でDB値が設計と変わる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/ProductCardImportHandler.php:656-680,744-763 を確認。insert分岐のprice02は事前計算したsellPriceで、更新分岐のsaleFlg=false上書き(:689-697)を通らない。",
+      "reason": "CSV取込後の販売価格という永続データ差なのでIMPACT。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 396,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "アップロードボタン押下で確認モーダルを挟まず即submit・ローディング表示となり、利用者の操作シーケンスが変わる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Product/base_csv_upload.twig:22-33,53-78 を確認。submit handlerはchangeLoading(true)のみで、buttonは直接submit。関連Twigをmodal/confirmで検索して該当なし。",
+      "reason": "モーダル有無は明白な画面挙動差。設計HTML内の相反記述は乖離成立の別問題だが、この差分が外部観測可能かという影響区分はIMPACT。",
+      "confidence": "medium"
+    }
+  ]
+}

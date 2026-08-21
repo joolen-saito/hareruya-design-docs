@@ -1,0 +1,149 @@
+{
+  "packetId": "rc_41",
+  "results": [
+    {
+      "rowId": 724,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0209 の全 src-cell を「0〜100」「0～100」「100以下」「整数」「数値書式」で検索した。税率設定シートの正本セルは 0209:税率設定!E76「消費税率」、M76「全角・半角」、T76/V76「-」で、0〜100・整数・数値書式の記載は0件。data-excel-ref=0209:税率設定!G7 のレイアウト画像（788x970）も確認したが、消費税率入力欄に範囲・上限の注意書きはない。",
+      "reason": "具体的な上限100はExcel正本にない。旧実装 /home/y-saito/Developments/pf-eccube3/src/Eccube/Form/Type/Admin/TaxRuleType.php の buildForm() は tax_rate に `new Assert\\Range(array('min' => 0, 'max' => 100))` を設定しており、期待値の直接根拠は旧実装なのでLEGACY_BACKEDで正しい。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Form/Type/Admin/TaxRuleType.php の buildForm()（47-56行）は `IntegerType::class`、`NotBlank`、`Range(['min' => 0])`、数値正規表現だけで `max => 100` がない。src/Eccube/Entity/TaxRule.php の tax_rate（73-74行）も DECIMAL(10,0) で、setTaxRate()（132-136行）に上限制御はない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 725,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "PARTIAL",
+      "checkedQuote": "0209 の全 src-cell を「既に同じ適用日時」「同一適用日時」「同時刻」「product_id」「ProductClass」で検索し、対象仕様は0件。税率設定シートの正本セル 0209:税率設定!E78 は「適用日時」、M78 は「全角・半角」、説明欄 AG78 は「-」。data-excel-ref=0209:税率設定!G7 のレイアウト画像（788x970）も確認したが、重複エラー文言や判定条件は描かれていない。",
+      "reason": "Excel正本に重複条件・文言はなく、文言差は旧実装由来なのでLEGACY_BACKEDは維持する。ただし先行指摘の条件部分は誤りがある。旧実装 /home/y-saito/Developments/pf-eccube3/src/Eccube/Controller/Admin/Setting/Shop/TaxRuleController.php の isValid()（218-235行）は `t.apply_date = :apply_date` だけで重複を数え、Product/ProductClassのNULL条件を付けていない。したがって「旧実装は共通税率行だけを重複判定し、新実装はProduct条件を欠落した」という部分は旧実装に裏付けられない。一方、旧文言「既に同じ適用日時で登録されています。」と現文言の差は実在するため、残る乖離は文言差のみ。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Form/Type/Admin/TaxRuleType.php の POST_SUBMIT リスナー（73-93行）は `t.apply_date = :apply_date` と `t.ProductClass IS NULL` で数え、`t.Product IS NULL` はない。エラーは同92行の `admin.setting.shop.tax.apply_date.available_error` を使い、src/Eccube/Resource/locale/messages.ja.yaml:3138 の実値は「同時刻の適用日時を設定できません。」。クエリの現状記述自体は正しいが、旧仕様との差として確実なのは文言変更だけである。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 726,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0209 の全 src-cell を「削除対象」「対象ID」「存在しない」「フラッシュ」「警告メッセージ」で検索し、対象不存在時の処理は0件。税率設定シート正本は 0209:税率設定!B62 に「カスタマイズ要件に記載の内容以外は現行踏襲とする」とだけ記載する。data-excel-ref=0209:税率設定!G7 のレイアウト画像（788x970）も確認したが、削除対象不存在時の警告表示はない。",
+      "reason": "具体的なフラッシュクリア＋警告＋一覧遷移は旧実装にのみある。/home/y-saito/Developments/pf-eccube3/src/Eccube/Controller/Admin/Setting/Shop/TaxRuleController.php の delete()（134-138行）は find() が空なら `$app->deleteMessage()` 後に一覧へredirectし、/home/y-saito/Developments/pf-eccube3/src/Eccube/Application/ApplicationTrait.php の deleteMessage()（51-55行）は clearMessage() と addWarning() を行う。よってLEGACY_BACKEDは正しい。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/Admin/Setting/Shop/TaxRuleController.php の delete()（147-166行）は `TaxRule $TaxRule` を必須引数として受け、メソッド内は非基本税率の削除・成功メッセージ・一覧redirectだけである。対象不存在の分岐、フラッシュクリア、警告追加はなく、エンティティ解決失敗はコントローラ到達前の404になる。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 727,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0209 の全 src-cell を「index.complete」「完了フック」「ADMIN_SETTING_SHOP_TAX_RULE_INDEX_COMPLETE」で検索し0件。税率設定シート正本は 0209:税率設定!C67「個別税率設定、共通税率設定を登録する」、C68「登録した税率を一覧表示する」までで、拡張イベント名は記載しない。",
+      "reason": "完了イベント契約は旧実装由来。/home/y-saito/Developments/pf-eccube3/src/Eccube/Controller/Admin/Setting/Shop/TaxRuleController.php の index() は新規・既存を同じ保存経路で処理し、persist/flush後の104行で `ADMIN_SETTING_SHOP_TAX_RULE_INDEX_COMPLETE` をdispatchする。Excel正本にはイベント契約がないためLEGACY_BACKEDで正しい。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/Admin/Setting/Shop/TaxRuleController.php の index() は新規保存経路で87行に同イベントdispatchがあるが、既存行の edit_inline 保存経路（111-124行）は persist、flush、addSuccess、redirectだけでdispatchしない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 728,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "REFUTED",
+      "correctedClass": "SPEC_BACKED",
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0209 sheet-9 の data-excel-ref=0209:自動送信メール!H7 のレイアウト画像（701x1051）を抽出して目視し、最上部のメイン見出し「自動送信メールテンプレート編集」が実在することを確認した。src-cell でも 0209:自動送信メール!AG4 に「自動送信メールテンプレートを編集」がある。画像範囲にはページタイトル「ショップ設定」とサブタイトル「メール管理」は含まれないが、3文言のうちメイン見出しはExcel正本画像に明記されている。",
+      "reason": "先行判定は正本文字セルだけを見てレイアウト画像を見落としている。少なくとも乖離対象のメイン見出しはExcel正本画像に実在するため、LEGACY_BACKEDではなくSPEC_BACKED。旧Twig /home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Setting/Shop/auto_mail.twig の同文言は補強根拠にすぎない。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Resource/template/admin/mall/AutoMail/detail.twig は title（5行）に `admin.setting.shop.custom_automail`、sub_title（6行）に `admin.setting.basic_info`、カード見出し（58行）に `admin.setting.shop.mail.mail_template_edit` を使う。src/Eccube/Resource/locale/messages.ja.yaml の実値は順に4196行「自動送信メール」、2984行「基本情報設定」、3144行「テンプレート編集」で、正本画像の「自動送信メールテンプレート編集」と一致しない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 729,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0209:自動送信メール!C78 の src-cell に「初期表示は識別ID:1-3『テンプレ選択』、識別ID:1-4『テンプレ名称』、識別ID:1-5『件名』のみ表示する」が実在する。sheet-9 のレイアウト画像（701x1051）も確認したが、画像はテンプレ選択済み状態で全項目を描くため初期状態の反証にはならない。",
+      "reason": "初期表示3項目はExcel正本セルが明記しておりSPEC_BACKEDで正しい。現実装はMail未指定時にテンプレ選択しか描画せず、テンプレ名称と件名を正本どおり初期表示しない。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/Admin/Mall/MallAutoMailController.php の index() は引数を `?MailTemplate $Mail = null`（51-56行）として未指定時はnullのまま返す（121-127行）。src/Eccube/Resource/template/admin/mall/AutoMail/detail.twig はテンプレ選択を60-69行で常時描画するが、71行の `{% if Mail and Mail.id %}` の内側にテンプレ名称（84-89行）と件名（91-96行）を置くため、初期表示では両項目が出ない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 730,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0209:自動送信メール!AG88 は「選択肢:自動送信メールとして設定されているメール（dtb_mail_template.is_auto_send = true）テンプレート」と明記する一方、必須セル T88 は「-」。0209 の全 src-cell を「名称昇順」「name ASC」で検索し0件。sheet-9 のレイアウト画像（701x1051）も確認したが、選択中の候補が1件見えるだけで必須性や候補順序は判断できない。",
+      "reason": "is_auto_send=true の候補制限は正本にあるが、これは現実装も満たしており乖離部分ではない。乖離として挙げられた必須・NotBlank・名称昇順は旧実装 /home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Form/Extension/Admin/MailTypeExtension.php の buildForm()（38-61行）の `required => true`、NotBlank、`orderBy('mt.name', 'ASC')` にだけ根拠があるため、findingの根拠区分はLEGACY_BACKEDでよい。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Form/Type/Admin/AutoMailType.php の buildForm()（46-54行）は template を `required => false`、isAutoSend=true、`orderBy('mt.id', 'ASC')` としNotBlankを持たない。src/Eccube/Resource/template/admin/mall/AutoMail/detail.twig:27 は空optionをブラウザ上でdisabledにするだけで、サーバ側必須制約と名称昇順はない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 731,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0209 の全 src-cell を「404」「URL指定」「直接指定」で検索し対象仕様は0件。正本の 0209:自動送信メール!C82 は「テンプレ選択で選択された自動送信メールテンプレートを入力フォームの値で登録する」、AG88 は候補を is_auto_send=true とするだけ。sheet-9 のレイアウト画像（701x1051）にもURL直指定時の応答はない。",
+      "reason": "URL引数を自動送信対象に限定し範囲外を404にする契約は旧実装由来。/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Setting/Shop/MailController.php の autoSendMail()（126-143行）は id と AUTO_SEND_MAILS の両方で検索し、空なら `throw new NotFoundHttpException()` とする。Excel正本は選択肢条件までなのでLEGACY_BACKEDは正しい。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/Admin/Mall/MallAutoMailController.php のルート（48-55行）は `{Mail}` をMailTemplateとして解決するだけで、index() 内に isAutoSend 検査がない。isAutoSend=true は src/Eccube/Form/Type/Admin/AutoMailType.php:49-54 の選択肢query_builderにしかなく、既存の自動送信対象外IDをURLで指定しても対象外判定をしない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 732,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0209 の全 src-cell を「POST」「null」「エラーフラッシュ」「リダイレクト」で検索したが、現在行null時の処理は0件。正本の 0209:自動送信メール!C82 は選択済みテンプレートの登録概要だけである。sheet-9 のレイアウト画像（701x1051）も確認したが、未選択POST時のエラー状態・遷移先は描かれていない。",
+      "reason": "具体的なaddError＋識別子なし画面へのredirectは旧実装 /home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Setting/Shop/MailController.php の autoSendMail()（156-164行）だけが裏付けるためLEGACY_BACKEDで正しい。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/Admin/Mall/MallAutoMailController.php の index() はPOST分岐の92行で、nullableな `$Mail` に対して直ちに `$Mail->getId()` を呼ぶ。Mail自体がnullならBadRequestHttpException分岐にも到達せずnullメソッド呼出しとなり、旧実装のフラッシュ追加と `admin_mall_auto_mail` へのredirectはない。画面側 detail.twig:39-45 はJS alertで通常送信を抑止し、同167-171行はMail.idがないとsubmitボタンを描画しないだけである。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 734,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "REFUTED",
+      "correctedClass": "SPEC_BACKED",
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0209 sheet-9 の data-excel-ref=0209:自動送信メール!H7 のレイアウト画像（701x1051）を目視した。件名の下に、罫線付きの本文上部入力欄（「いつも晴れる屋をご利用いただき…」）、その下に静的なTwig本文（`{{ data.name01 }} {{ data.name02 }} 様`、`{% for product in data.products %}` 等）、さらに罫線付きの本文下部入力欄が一続きの本文として配置されている。src-cell でも E91「本文上部」、E92「本文下部」、C79「テンプレ選択後に本文上部・本文下部を表示」が実在する。コメント除去・改行置換・include置換という内部手順名はsrc-cellにはない。",
+      "reason": "先行判定は変換アルゴリズムの文字セルだけを見て、Excel正本画像が要求する出力レイアウトを見落としている。少なくとも「本文上部入力欄＋静的本文＋本文下部入力欄を本文中に配置する」構造は正本画像に明記されるため、finding全体をLEGACY_BACKEDとする分類は誤りでSPEC_BACKED。コメント除去・改行変換・include置換の具体手順は旧実装 /home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Service/MailService.php の replaceBody()（1306-1368行）が補強する。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/Admin/Mall/MallAutoMailController.php の replaceBody()（138-160行）は `{{ header }}` と `{{ footer }}` を strpos/substr で分割するだけで、コメント、改行、注文内容includeを変換しない。src/Eccube/Resource/template/admin/mall/AutoMail/detail.twig はテンプレート前文をreadonly textarea（98-104行）、ヘッダー入力を別行（106-111行）、本文をreadonly form.tpl_data（113-120行）、フッター入力を別行（122-127行）、テンプレート後文を別のpre（129-135行）として描画し、正本画像の一体配置と異なる。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 736,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0209 の全 src-cell を「2018」で検索し0件。正本 0209:自動送信メール!C79 はテンプレ選択後に「最終更新者」「最終更新日」を表示すると記載するだけで、年の閾値はない。sheet-9 のレイアウト画像（701x1051）は「最終更新日: 2023-12-29 09:04:57」を表示しているが、2018年超という条件自体は画像から確認できない。",
+      "reason": "2018年超だけを表示する条件は旧Twig /home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Setting/Shop/auto_mail.twig:39-42 の `mail.updateDate|date('Y') > 2018` にだけある。最終更新情報の表示自体は正本にあるが、findingが指摘する閾値条件は旧実装由来なのでLEGACY_BACKEDが正しい。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Resource/template/admin/mall/AutoMail/detail.twig は `{% if Mail and Mail.id %}`（71行）の内側で最終更新者を75行、更新日時を81行の `Mail.update_date ? Mail.update_date|date('Y-m-d H:i:s') : ''` で表示し、年が2018を超えるかの条件はない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 737,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0209:メール設定!E60 の src-cell に「本文」、V60 に「65536文字」が実在する。data-excel-ref=0209:メール設定!E14 のレイアウト画像（1734x1208）も目視し、入力領域左の表示ラベルが「本文」であることを確認した。",
+      "reason": "ラベル「本文」と最大65536文字はExcel正本セルが直接規定し、画像もラベルを補強するためSPEC_BACKEDで正しい。現実装は表示ラベルと上限検証の両方が一致しない。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Resource/template/admin/mall/mail/detail.twig:197 は `admin.setting.shop.mail.mail_text` を表示し、src/Eccube/Resource/locale/messages.ja.yaml:3151 の値は「テキスト」。src/Eccube/Form/Type/Admin/MailType.php の tpl_data（71-78行）の制約は TwigLint だけでLength(65536)もmaxlengthもない。対象Form/Twig/Controllerで `65536` と `maxlength` を検索して0件で、src/Eccube/Controller/Admin/Mall/MallMailController.php の保存経路（145-152行）は入力をファイルへそのままdumpする。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    }
+  ]
+}

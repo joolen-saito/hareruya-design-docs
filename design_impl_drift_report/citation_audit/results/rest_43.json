@@ -1,0 +1,165 @@
+{
+  "packetId": "rest_43",
+  "results": [
+    {
+      "rowId": 1134,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0208_基本設計仕様書(カード管理).html:4242-4243 のExcel正本は「(4)並び順について」「登録した並び順で、フロント及び管理画面に表示する」とだけ規定し、同一rank時のID昇順は記載しない。ID昇順の記述はリバース詳細設計開始後の同ファイル:4458「並び順昇順、次に ID 昇順」にのみ存在する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/FormatController.php:26-31 に `public function index(...)`、`findBy([], ['rank' => 'ASC', 'id' => 'ASC'])` とあり、旧実装はrank昇順の次にID昇順で取得する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Card/FormatController.php:42-51 は `admin_format_list` で `'Formats' => $this->formatRepository->findBy([], ['rank' => 'ASC'])` のみを指定し、IDの第2ソートを持たない。",
+      "note": "Excel正本にIDタイブレークはなく、旧実装にのみ根拠があるためLEGACY_BACKED。"
+    },
+    {
+      "rowId": 1135,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0208_基本設計仕様書(カード管理).html:4330 のExcel正本は「入力チェックが正常に完了した場合は登録/更新」「エラーが発生した場合はエラーメッセージを画面に表示する」とだけ記載し、`admin.register.complete`、`admin.delete.complete`、`admin.register.failed` のキーはない。これらのキーはリバース詳細設計の同ファイル:4464-4467,4469 にのみ現れる。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/FormatController.php:94-102 は検証失敗時に `$app->addError('admin.register.failed', 'admin')`、同:139-142 は成功時に `$app->addSuccess('admin.register.complete', 'admin')`、同:172-177 は削除成功時に `$app->addSuccess('admin.delete.complete', 'admin')` を実行する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Card/FormatController.php:75-104 は有効時のみ処理して `addSuccess('admin.common.save_complete', 'admin')` とし、不正フォーム時のaddErrorを持たない。同:200-204 は削除成功時に `addSuccess('admin.common.delete_complete', 'admin')` を使う。",
+      "note": "具体的なフラッシュキーは旧実装由来。"
+    },
+    {
+      "rowId": 1136,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0208_基本設計仕様書(カード管理).html:4329 のExcel正本は削除ボタンの確認と実行のみを記載し、関連データ別の拒否メッセージや遷移先を規定しない。単一キーとRefererの記述はリバース詳細設計の同ファイル:4469「`admin.format.error.delete.event` を積み、`Referer` へリダイレクト」にのみ存在する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/FormatController.php:160-165 は大会・デッキ・アーキタイプのいずれかが紐付くと `$app->addError('admin.format.error.delete.event', 'admin')`、`redirect($request->headers->get('referer'))` を実行する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Card/FormatController.php:182-198 は `admin.product.format.error.delete.registered_event/deck/archetype` を個別に積み、各分岐で `redirectToRoute('admin_format_list')` とする。",
+      "note": "単一キーとReferer遷移は旧実装に明確な根拠がある。"
+    },
+    {
+      "rowId": 1137,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0208_基本設計仕様書(カード管理).html:4291-4292 のExcel正本は削除後の遷移・文言のみで、`dtb_card_format` の事前削除を記載しない。事前全削除はリバース詳細設計の同ファイル:4469「当該フォーマットの `dtb_card_format` をすべて削除する」にのみ存在する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/FormatController.php:167-174 は `foreach($format->getCardFormats() as $cardFormat)` で各行を`remove`した後、フォーマット本体を`remove`して`flush`する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Card/FormatController.php:200-201 は `$this->entityManager->remove($Format); $this->entityManager->flush();` のみ。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Entity/Master/MtbFormat.php:405-406 の`CardFormats`関連は `#[ORM\\OneToMany(...)]` でcascade removeがなく、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Entity/DtbCardFormat.php:55-57 のJoinColumnにもonDelete指定がない。",
+      "note": "DB制約の実環境設定は別として、旧アプリケーションコードに明示的な事前削除がある。"
+    },
+    {
+      "rowId": 1138,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0208_基本設計仕様書(カード管理).html:4329 のExcel正本は削除押下時に「この操作はあとから取り消すことができません。『{フォーマット名(日)}』を削除してよろしいですか？」を動的表示すると明記する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Format/format.twig:52-54 は `data-message=\"{{ trans('admin.confirm.delete')|format(format) }}\"` を用いる。旧実装のキーは異なるが、フォーマット表示名を渡す確認ダイアログである。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/app/template/admin/Format/format_list.twig:61-66 は `data-message=\"{{ 'admin.common.delete_modal__message'|trans({ \"%name%\" : Format.nameJp }) }}\"`、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:1790 は `この操作はあとから取り消すことができません。「%name%」を削除してよろしいですか？` で、Excel正本の期待を満たす。",
+      "note": "監査指摘はリバース詳細設計の旧キーを正本要件として扱っているが、現行の共通モーダル文言がExcel正本と一致する。"
+    },
+    {
+      "rowId": 1139,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0208_基本設計仕様書(カード管理).html:4264-4267 のExcel正本は「(18)イベントに表示」「選択したフォーマットのイベントのみを表示」「選択したフォーマットのみを検索可能とする」と明記する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Entity/MtbFormat.php:125-149 には `otherMetaFlg`、`productSearchFlg`、`arenaLegalFlg`、`includeBasicFlg`、`deckbuilderFlg` が並ぶが`is_shown_in_event`相当はない。確認範囲はpf-eccube3、pf-api、pf-article、deck-api全体の`is_shown_in_event`横断検索で0件。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/Master/MtbFormatRepository.php:119-128 のイベント用候補取得は `innerJoin('f.Events', 'e')` と `e.deletedAt IS NULL` のみ。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Block/EventDetailedSearchModalController.php:51-54 はその`getFormatsAssignedToEvents()`を検索候補に渡し、`isShownInEvent`を条件にしない。",
+      "note": "新規カスタマイズ要件としてExcel正本に明記され、保存フィールドはあるが利用側が未接続。"
+    },
+    {
+      "rowId": 1140,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0212_基本設計仕様書(デッキ管理).html:1118-1137 のExcel正本は検索実行と検索項目差替えを規定するが、POST先、ルート名、`page_no`制約は記載しない。これらはリバース詳細設計の同ファイル:1392 にのみ現れる。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/DeckServiceProvider.php:16-21 は `/{admin_route}/deck/search/{page_no}` を `^[1-9][0-9]*$` で制約し、bind名は`admin_deck_search`。/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Deck/deck.twig:35 は検索formのactionを `url('admin_deck_search', {'page_no': 1})` とする。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Deck/DeckController.php:76-79 は`admin_deck_list`をGET/POST、検索ルート`admin_deck_search`の`page_no`を`\\d+`とする。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Deck/index.twig:230 は検索formのactionを`url('admin_deck_list')`にする。",
+      "note": "URL契約と正の整数制約は旧実装に根拠がある。ただし指摘中のルート名`m15-01_admin_deck_deck_search`はリバース文書の機能IDで、旧コードの実際のbind名も`admin_deck_search`。"
+    },
+    {
+      "rowId": 1141,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0212_基本設計仕様書(デッキ管理).html:1118-1137 のExcel正本には検索フォームのCSRF有無を示す記述がない。`CSRFをかけない`はリバース詳細設計の同ファイル:1326,1352 にのみ存在する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/Deck/SearchDeckType.php:21-26 は `// disable CSRF protection for this form`、`'csrf_protection' => false` と明示する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/SearchDeckType.php:206-211 は `configureOptions` で `'csrf_protection' => true` を設定する。",
+      "note": "CSRF無効は旧実装由来で、Excel正本の根拠ではない。"
+    },
+    {
+      "rowId": 1142,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0212_基本設計仕様書(デッキ管理).html:1763 のExcel正本は「1ページあたりの表示件数のデフォルト値を『100件』とする」、同:1782も「デフォルト値を100件とする」と明記する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/SearchControllerTrait.php:65-71 は初期`page_count`に `$app['config']['default_page_count']` を使用し、/home/y-saito/Developments/pf-eccube3/src/Eccube/Resource/config/constant.yml.dist:242 は `default_page_count: 10`。これはカスタマイズ前の旧挙動である。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Deck/DeckController.php:120-130 は初期GETで `set('eccube.admin.deck.search.page_count', 100)` とし、Excel正本の100件要件を満たす。",
+      "note": "リバース詳細設計の旧default_page_countを優先した誤検出。Excel正本のカスタマイズ値100が優先される。"
+    },
+    {
+      "rowId": 1143,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0212_基本設計仕様書(デッキ管理).html:1149-1151 のExcel正本はフォーマット、カラー、アーキタイプを各マスタから選ぶサジェスト項目とするだけで、変更時のoption無効化ロジックは記載しない。詳細な連動処理はリバース詳細設計の同ファイル:1304にのみある。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/Deck/SearchDeckType.php:64-85 はアーキタイプoptionに`color_id_*`と`format_id_*`クラスを付与する。/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/assets/js/deck-search.js:49-89 はフォーマット・色でoptionをfilterし、対象外を`disabled`にする。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/SearchDeckType.php:84-91 はアーキタイプを通常の複数EntityTypeとして定義するだけ。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Deck/index.twig:51-90 のJSはselect2初期化等のみで、フォーマット・色変更によるoption filterを持たない（確認範囲:index.twig全体、検索語 archetype/formats/color/disabled）。",
+      "note": "具体的な連動フィルタは旧実装に存在する。"
+    },
+    {
+      "rowId": 1144,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0212_基本設計仕様書(デッキ管理).html:1171 のExcel正本は「カード名 文字列 100文字」とのみ記載し、候補リスト、`deck_card.js`、data-list URLは規定しない。これらはリバース詳細設計の同ファイル:1304,1324にのみ現れる。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/Deck/SearchDeckType.php:202-211 はcard欄に `'data-list' => ... '/list/cardNameList'` と`class => cardNameBox`を付与し、/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Deck/deck.twig:127-132 は `<ul class=\"cardNameList\"></ul>`、同:31は`deck_card.js`を読み込む。/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/assets/js/deck_card.js:24-45 はfocus時にdata-list URLへAjaxする。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/SearchDeckType.php:164-170 はcard欄を長さ制約付きTextTypeとして定義するだけ。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Deck/index.twig:346-356 も`form_widget(searchForm.card)`のみで、候補ulや資産読込がない。",
+      "note": "カード名候補UIは旧実装由来。"
+    },
+    {
+      "rowId": 1145,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0212_基本設計仕様書(デッキ管理).html:1785 のExcel正本は「チェックボックスを選択したデッキ情報のCSVがダウンロードされる」とだけ記載し、未選択時のalertを規定しない。クライアントalertはリバース詳細設計の同ファイル:1304にのみある。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/assets/js/deck-search.js:37-47 はCSVボタン押下時、選択0件なら `alert(\"CSV出力するデッキをひとつ以上選択してください。\")` を表示し`return false`で送信を止める。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Deck/index.twig:204-215 の一括form submit処理はCSRFトークン差替えだけで未選択チェックをしない。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Deck/DeckController.php:808-815 は送信後、ID空なら`admin.deck.csv_export_no_selection`を積んでリダイレクトする。",
+      "note": "未選択時の送信前alertは旧実装に明確な根拠がある。"
+    },
+    {
+      "rowId": 1146,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0212_基本設計仕様書(デッキ管理).html:1764-1767 のExcel正本は「識別ID:6『CSV出力(旧サイト仕様)』を除去する」、同:1786も当該ボタンを「項目を除去する」と明記する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Deck/deck.twig:172-174 は`csvexport_old`ボタンを表示し、/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/DeckServiceProvider.php:61-62 は`/deck/csvexport_old`ルートを持つ。これは正本が除去対象とした旧挙動である。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Deck/index.twig:397-406 の操作群はCSV出力・一括削除・一括編集のみで旧サイトCSVボタンを持たず、Excel正本の除去要件を満たす。",
+      "note": "旧実装の存在を移植要件と誤認した指摘。正本は明示的に除去を要求している。"
+    },
+    {
+      "rowId": 1147,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0212_基本設計仕様書(デッキ管理).html:1145-1147 のExcel正本は「CSV,TSV取り込み」ボタンから「デッキ登録CSV, TSVアップロード画面に遷移する」と明記する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Deck/deck_csv_import.twig:23-39 は「デッキ登録CSV, TSV」「CSV, TSVファイル選択」「CSV, TSVファイルのアップロード」と表示し、/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/AbstractCsvService.php:154-159 は拡張子`tsv`なら区切りをタブにする。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Deck/csv_import.twig:89-95 はacceptを`text/csv,.csv`に限定し、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Deck/DeckCsvController.php:100-103 は `if ($extension !== 'csv')` でTSVをエラーにする。",
+      "note": "Excel正本と旧実装の双方がCSV/TSV対応を裏付け、新実装はCSV専用。"
+    },
+    {
+      "rowId": 1148,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0212_基本設計仕様書(デッキ管理).html:1759-1762,1787-1788 のExcel正本は一括削除・一括編集の存在だけを規定し、URL、ルート名、formaction構造は記載しない。具体的な契約はリバース詳細設計に由来する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/DeckServiceProvider.php:48-50 はPOST `/{admin_route}/deck/delete` を`admin_deck_bulk_delete`にbindする。/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Deck/deck.twig:168-175 はformの既定actionを`admin_deck_bulk_update`とし、削除ボタンの`formaction`を`admin_deck_bulk_delete`にする。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Deck/DeckController.php:146-150 はPOST `/deck/bulk_delete`・`admin_deck_bulk_delete`。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Deck/index.twig:397-405 はformの既定actionが一括削除で、削除ボタンにはformactionがない。",
+      "note": "URL/form構造は旧実装由来。指摘中の`m15-03_admin_deck_deck_bulk_delete`は機能IDで、旧コードの実bind名は`admin_deck_bulk_delete`。"
+    },
+    {
+      "rowId": 1149,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0212_基本設計仕様書(デッキ管理).html:1756-1762 のExcel正本は一括削除可能とだけ記載し、CSRF不正時HTTP403、記事使用中Referer、成功キーを規定しない。これらはリバース詳細設計の同ファイル:1425,1433にのみ現れる。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/DeckController.php:372-375 は`checkCsrfValid`、同:387-393 は記事使用中に`admin.deck.is_used.article`を積んでRefererへ、同:406-408 は成功時`admin.delete.complete`を積んで検索ページまたは一覧へ戻す。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Deck/DeckController.php:149-157 はCSRF不正時に`admin.common.csrf_invalid`を積んで一覧へリダイレクトし、同:176-184 は削除例外時に検索ルートへ戻し、同:187-192 は成功時`admin.common.delete_complete`を使う。",
+      "note": "外部挙動の具体値は旧実装に根拠がある。"
+    },
+    {
+      "rowId": 1150,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0212_基本設計仕様書(デッキ管理).html:1755-1763 のExcel正本は検索結果表示と操作、100件既定を規定するが、検索ルート分離・メソッド・`page_no`正規表現は記載しない。詳細契約はリバース詳細設計の同ファイル:2053（埋込部）にのみある。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/DeckServiceProvider.php:16-21 は検索を`/{admin_route}/deck/search/{page_no}`（`^[1-9][0-9]*$`）にmatchし、一覧初期表示をGET `/{admin_route}/deck`に分離する。/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Deck/deck.twig:35 は検索POST先を`admin_deck_search`のpage 1とする。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Deck/DeckController.php:76-79 は`admin_deck_list`自体をGET/POSTにし、検索ルート制約を`\\d+`とする。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Deck/index.twig:230 は検索POST先を`admin_deck_list`にする。",
+      "note": "1140と同じ旧実装契約の重複指摘。ルート名`m15-01_admin_deck_deck_search`自体は旧コードのbind名ではない。"
+    },
+    {
+      "rowId": 1151,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0212_基本設計仕様書(デッキ管理).html:1751-1773 のExcel正本には初期GET時のセッション削除キーを示す記述がない。具体的な削除・維持ルールはリバース詳細設計の同ファイル:2053および埋込部のセッション節にのみ存在する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/SearchControllerTrait.php:49-60 は初期表示で`admin.deck.search`、`.search.page_no`、`.search.page_count`をremoveする。ソート・orderキーは同:97-99で別キーとして扱われ、indexではremoveされない。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Deck/DeckController.php:120-130 は初期GETで検索条件をremoveせず、`deck`と`deck.page_no`をsetし、`eccube.admin.deck.search.page_count`を100でsetする。",
+      "note": "セッション初期化の詳細は旧実装由来。"
+    },
+    {
+      "rowId": 1152,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0212_基本設計仕様書(デッキ管理).html:1755-1773 のExcel正本は検索結果画面のCSRF有無を規定しない。CSRF無効とSymfony制約の説明はリバース詳細設計の同ファイル:1326,1352にのみ存在する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/Deck/SearchDeckType.php:21-26 は検索フォームに`'csrf_protection' => false`を設定する。同:37-43等はLength/Regex制約を持つ。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/SearchDeckType.php:206-211 は`'csrf_protection' => true`。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Deck/DeckController.php:92-101 はPOST後にフォーム不正なら検索せず同画面データを返す。",
+      "note": "制約エラー時に検索しない部分は満たすが、指摘対象のCSRF無効は旧実装由来で未移植。"
+    },
+    {
+      "rowId": 1153,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0212_基本設計仕様書(デッキ管理).html:1131-1137 のExcel正本は「識別ID:17～22『勝利数』『敗北数』『引き分け数』を除去する」と明記し、同:1161-1166でも6項目すべてを「カスタマイズ対応、項目を除去する」とする。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/Deck/SearchDeckType.php:153-179 は`win_count_from/to`、`loss_count_from/to`、`draw_count_from/to`を定義し、/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Repository/DtbDeckRepository.php:200-206 は各上下限で検索する。これは正本が除去対象とした旧挙動である。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/SearchDeckType.php:132-148 は順位と成績の次に直接プレイヤー名へ進み、勝敗引分項目を持たない。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbDeckRepository.php:86-100 も「★カスタマイズ: winCount, lossCount, drawCount, dciNo を除去」としてソートキーから除外する。",
+      "note": "旧実装の検索項目を移植要件と誤認した指摘。新実装はExcel正本の明示的な除去要件を満たす。"
+    }
+  ]
+}

@@ -1,0 +1,346 @@
+{
+ "packetId": "rc_22",
+ "note": "rowId は drift_findings_list_final.tsv の行番号(ヘッダ除く1始まり)。mech は機械検証フラグ(手掛かりであって正解ではない)。",
+ "count": 12,
+ "findings": [
+  {
+   "rowId": 402,
+   "機能No": "M03-30",
+   "機能名": "M03-30 基準価格変更CSVアップロード",
+   "ドメイン": "m03",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "スマレジ連携について、条件を満たす場合スマレジ連携フラグを有効とし、連携対象の条件を満たしている場合に限りスマレジへ商品情報を連携する。",
+   "実装実態": "ProductStandardPriceImportHandler は既存の smaregi_alignment_flg を読み取り deferIfEligible に渡すだけで、ProductClassRepository::updateProductClassForStandardPriceCsv は standard_price/buy_price/price02 のみ更新する。deferIfEligible は既存フラグが有効かつスマレジ商品コードありの場合だけキューへ載せる。",
+   "差分内容": "設計はCSV価格登録/更新時に条件判定でスマレジ連携フラグを有効化する要求だが、実装は既にONの規格だけを連携候補にする。基準価格・状態などの条件で smaregi_alignment_flg をOFFからONへ更新する処理がない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/ProductStandardPriceImportHandler.php:175, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/ProductClassRepository.php:2719, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/SmaregiProductClassCsvImportUpsertCoordinator.php:47",
+   "設計書参照": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-42:9416-9418,9428",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:10383 のExcel正本は「条件を満たす場合スマレジ連携フラグを有効とする」、同:10384 は「連携対象の条件を満たしている場合に限り、スマレジへ商品情報を連携する」と明記する。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/Importer/Event/ProductPriceImportHandler.php:70-78 の旧列初期化には商品ID・言語・販売・買取・セール・帯URL・タグだけがあり、スマレジフラグ自動判定はない。本件の要件根拠はExcel正本のリニューアル要件である。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/ProductStandardPriceImportHandler.php:175-180 は既存の `smaregiAlignmentFlg` を読むだけ。ec-cube-enterprise/src/Eccube/Repository/ProductClassRepository.php:2720-2733 の更新SQLは `standard_price`、`buy_price`（非セール時は加えてprice02）だけでフラグを更新せず、ec-cube-enterprise/src/Eccube/Service/Smaregi/SmaregiProductClassCsvImportUpsertCoordinator.php:45-53 は既存フラグがONでなければreturnする。",
+   "根拠検証メモ": "正本が条件成立時のフラグ有効化を要求するが、現実装は既存ON規格の連携予約だけを行う。",
+   "対応の根拠(現develop)": "`src/Eccube/Service/Csv/Importer/Event/ProductStandardPriceImportHandler.php:175-180` は `$alignment = (int) ($pcRow['smaregiAlignmentFlg'] ?? 0);` と既存フラグを読み取って `deferIfEligible(...)` に渡すのみ。`src/Eccube/Service/Smaregi/SmaregiProductClassCsvImportUpsertCoordinator.php:49` `if ($smaregiAlignmentFlg !== Constant::ENABLED) { return; }` で既にONの規格しかキューに載せない。更新SQL `src/Eccube/Repository/ProductClassRepository.php:2730` `UPDATE dtb_product_class SET standard_price = ?, buy_price = ?, update_date = ? WHERE id = ?` および `:2742` `UPDATE dtb_product_class SET standard_price = ?, price02 = ?, buy_price = ?, update_date = ? WHERE id = ?` に smaregi_alignment_flg の更新は無く、条件判定でフラグをOFF→ONにする処理は develop に存在しない。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Repository/ProductClassRepository.php"
+    ]
+   }
+  },
+  {
+   "rowId": 408,
+   "機能No": "M03-32",
+   "機能名": "M03-32 高額商品価格変更CSVアップロード",
+   "ドメイン": "m03",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "親商品状態・高額コード・公開状態との SQL 完全一致は規格側リポジトリの文字列クエリにある。",
+   "実装実態": "高額商品価格変更CSV用の存在判定・更新SQLは product_code、sale_flg、high_price_code のみで対象を絞り、親商品の公開状態や規格の表示状態を条件に含めていない。",
+   "差分内容": "existsProductClassByProductCodeAndSaleFlg / replaceStandardPriceOnly / replaceStandardPriceAndPrice02 を確認したが、dtb_product へ join するだけで product_status_id、ProductStatus、pc.visible 等の公開状態条件が無い。SimpleHighPriceImportHandler 側にも公開状態での追加判定は無い。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/ProductClassRepository.php:2208, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/ProductClassRepository.php:2258, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/ProductClassRepository.php:2290",
+   "設計書参照": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-48:11203",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:12144 のExcel正本は「対象の商品コードから当該の商品データを検索。現在登録済の商品に設定されている『セールフラグ』を参照」とだけ記載し、親商品・規格の状態条件やSQL完全一致は書かない。状態条件はリバース詳細 hareruya-design-docs/functions/pf-eccube3/m03-32_admin_product_product_simple_high_price_csv_import.md:241,243 にのみある。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/Importer/Event/SimpleHighPriceImportHandler.php:171-192 の旧存在判定SQLは `pc.product_code = :productCode`、`pc.del_flg = :delFlg`、`p.del_flg = :delFlg`、`psc.high_price_code IS NOT NULL` を同時条件にする。同:211-224 の規格取得もproduct_code・pc.del_flg・high_price_codeを条件にする。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Repository/ProductClassRepository.php:2214-2222 の存在判定はproduct_code・sale_flg・high_price_codeだけで、同:2261-2270 と:2292-2302 の更新SQLにも親商品状態や規格表示状態の条件がない。",
+   "根拠検証メモ": "Excel正本は状態条件まで定めないが、旧SQLに削除状態・高額コードを含む対象限定があり、現SQLから状態条件が落ちているため旧実装由来の移植差。",
+   "対応の根拠(現develop)": "`src/Eccube/Repository/ProductClassRepository.php:2208` `existsProductClassByProductCodeAndSaleFlg()` の SQL は `INNER JOIN dtb_product p ON p.id = pc.product_id WHERE pc.product_code = ? {$saleFlgCondition} AND pc.high_price_code IS NOT NULL AND pc.high_price_code <> ''` のみ。`:2258` `replaceStandardPriceOnly()` と `:2290` `replaceStandardPriceAndPrice02()` も `FROM dtb_product p WHERE dtb_product_class.product_id = p.id AND dtb_product_class.product_code = ? ... AND dtb_product_class.high_price_code <> ''` で、product_status_id / ProductStatus / visible 等の公開状態条件を一切含まない。`src/Eccube/Service/Csv/Importer/Event/SimpleHighPriceImportHandler.php` 側にも公開状態判定は無い。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "NOT_FOUND",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Repository/ProductClassRepository.php"
+    ],
+    "quoteDetail": [
+     "対象の商品コードから当該の商品データを検索。現在登録済の商品に設定されている『セールフラグ』を参照"
+    ]
+   }
+  },
+  {
+   "rowId": 409,
+   "機能No": "M03-32",
+   "機能名": "M03-32 高額商品価格変更CSVアップロード",
+   "ドメイン": "m03",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "送信を管理者 CSV フォーム種別でバインドする。Symfony フォーム検証エラーがある場合、admin のエラーフラッシュにそれぞれ積んでリダイレクトだけ行い取込はしない。import_file が null であれば admin.common.csv_invalid_no_data を admin エラーフラッシュに載せてリダイレクトして終える。",
+   "実装実態": "import_file には子フィールドとして NotBlank と File(maxSize) 制約があるが、フォーム不正時のControllerは $form->getErrors() を deep=true なしで読む。未選択などの import_file 子フィールドエラーは admin フラッシュへ積まれず、NotBlank で isValid() が false になるため import_file === null の admin.common.csv_invalid_no_data 分岐にも到達しない。",
+   "差分内容": "同系CSV Controller には getErrors(true) を使う実装が存在する一方、この機能では子フィールドエラーを辿らないため、設計の「各フォーム検証エラーをadminフラッシュに積む」「import_file null なら csv_invalid_no_data」を満たさない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Product/Csv/ProductSimpleHighPriceCsvController.php:121, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Product/Csv/ProductSimpleHighPriceCsvController.php:131, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/CsvImportType.php:48",
+   "設計書参照": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-48:11194,11246",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:12162-12168 のExcel正本画面部品表は「CSVファイルのアップロードと入力チェックを実施」とするだけで、フォームエラー深掘りやnull時キーは記載しない。具体手順はリバース詳細 hareruya-design-docs/functions/pf-eccube3/m03-32_admin_product_product_simple_high_price_csv_import.md:65-66 にのみある。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Product/ProductCsvController.php:1125-1134 は管理者CSVフォームをbindし、不正時に `$form->getErrors(true)` で子フィールドを含む各エラーをadminへ積む。旧実装には `admin.common.csv_invalid_no_data` の独立null分岐はないが、深いエラー列挙によってimport_fileのNotBlankエラーは表示される。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Controller/Admin/Product/Csv/ProductSimpleHighPriceCsvController.php:130-145 は不正時に引数なし `$form->getErrors()` を読むため子フィールドエラーを辿らず、その後の `$formFile === null` 分岐はNotBlankでisValid=falseとなる未選択時に到達しない。ec-cube-enterprise/src/Eccube/Form/Type/Admin/CsvImportType.php:48-56 でNotBlankはimport_file子フィールドに付く。",
+   "根拠検証メモ": "null専用キー自体は旧実装で確認できないが、指摘の中核である子フィールド検証エラーのadmin表示は旧実装のgetErrors(true)に明確な根拠があり、現実装で退行している。",
+   "対応の根拠(現develop)": "`src/Eccube/Controller/Admin/Product/Csv/ProductSimpleHighPriceCsvController.php:134` `foreach ($form->getErrors() as $error) {` が deep 引数なしのまま（`getErrors(true)` になっていない）。`src/Eccube/Form/Type/Admin/CsvImportType.php:48-56` で import_file 子フィールドに NotBlank / File(maxSize) が付くため、未選択時のエラーはルートフォームに現れず admin フラッシュへ積まれない。また NotBlank により isValid() が false になるため `:143-144` `if ($formFile === null) { $this->addError('admin.common.csv_invalid_no_data', 'admin');` の分岐にも到達しない。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "UNCHANGED"
+   }
+  },
+  {
+   "rowId": 410,
+   "機能No": "M03-32",
+   "機能名": "M03-32 高額商品価格変更CSVフォーマット",
+   "ドメイン": "m03",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "CSVフォーマット識別ID 1「商品コード」は、文字型・必須で、最大文字数または最大値は 11 とする。",
+   "実装実態": "SimpleHighPriceImportHandler は商品コード列を ColumnDefinitions::productCode()->setRequired(true) として必須化しているが、productCode() は createStringColumn() を返すだけで 11 文字上限の Validator を付与していない。DB 側 product_code も length 255 である。",
+   "差分内容": "設計表は商品コードの最大を 11 としているが、実装は必須チェックと存在/重複チェックのみで、11 文字制限を行う StringMaxLengthValidator/Length(max=11)/専用検証がない。反証検索範囲: src/Eccube, html, app/config に対して SimpleHighPrice/simple_high_price/商品コード/NumericMaxLengthValidator(11)/StringMaxLengthValidator(11)/Length/max 11/productCode を検索。",
+   "実装参照": "src/Eccube/Service/Csv/Importer/Event/SimpleHighPriceImportHandler.php:132; src/Eccube/Service/Csv/Importer/Model/ColumnDefinitions.php:58; src/Eccube/Service/Csv/Importer/Model/ColumnDefinitions.php:663; src/Eccube/Entity/ProductClass.php:185",
+   "設計書参照": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-49:11303",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:12352 のExcel正本（高額商品価格変更CSVフォーマット!E8/P8/U8/W8）は商品コードを「文字型」「必須」「最大11」と明記する。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/Importer/Event/SimpleHighPriceImportHandler.php:55-60 は旧実装でも商品コードを必須にするだけで11文字validatorを付けない。11文字要件の根拠はExcel正本である。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/SimpleHighPriceImportHandler.php:130-133 は `ColumnDefinitions::productCode()->setRequired(true)`、ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Model/ColumnDefinitions.php:58-60 のproductCodeは `createStringColumn` のみ。同:663-665 はvalidatorなしのBaseCsvColumnを返し、ec-cube-enterprise/src/Eccube/Entity/ProductClass.php:184-185 のDB長も255である。",
+   "根拠検証メモ": "Excel正本の最大11文字に対し、現実装は必須・存在検証のみで長さ制限を実装していない。",
+   "対応の根拠(現develop)": "`src/Eccube/Service/Csv/Importer/Event/SimpleHighPriceImportHandler.php:132` `$this->productCodeColumn = ColumnDefinitions::productCode()->setRequired(true);` は必須化のみ。`src/Eccube/Service/Csv/Importer/Model/ColumnDefinitions.php:58-61` `public static function productCode(string $name = '商品コード'): BaseCsvColumn { return self::createStringColumn($name, '商品コード'); }` で、`:663-666` `createStringColumn()` は `return new BaseCsvColumn($name, $label);` を返すだけで最大文字数バリデータを付与しない。`SimpleHighPriceImportHandler::getRowValidators()`（:126-129）も `return [];` で追加検証が無く、11文字上限の検証は develop に存在しない。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "TOO_SHORT",
+    "stale": "UNCHANGED"
+   }
+  },
+  {
+   "rowId": 411,
+   "機能No": "M03-32",
+   "機能名": "M03-32 高額商品価格変更CSVフォーマット",
+   "ドメイン": "m03",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "CSVフォーマット識別ID 2「基準価格」は、数値(整数)・必須で、最大文字数または最大値は 11 とする。",
+   "実装実態": "SimpleHighPriceImportHandler は基準価格列を ColumnDefinitions::standardPrice()->setRequired(true) としており、standardPrice() は createUnsignedNumericColumn(..., 9) により NumericMaxLengthValidator(9) を付与している。",
+   "差分内容": "設計表は基準価格の最大を 11 としているが、実装は 9 桁制限で検証するため、設計上許容される 10〜11 桁相当の値を拒否する。反証検索範囲: src/Eccube, html, app/config に対して SimpleHighPrice/simple_high_price/基準価格/NumericMaxLengthValidator(11)/standardPrice(11)/max 11 を検索し、当該機能では NumericMaxLengthValidator(9) のみ確認。",
+   "実装参照": "src/Eccube/Service/Csv/Importer/Event/SimpleHighPriceImportHandler.php:133; src/Eccube/Service/Csv/Importer/Model/ColumnDefinitions.php:434; src/Eccube/Service/Csv/Importer/Model/ColumnDefinitions.php:436; src/Eccube/Service/Csv/Importer/Validator/NumericMaxLengthValidator.php:52",
+   "設計書参照": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-49:11304",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:12353 のExcel正本（高額商品価格変更CSVフォーマット!E9/P9/U9/W9）は基準価格を「数値(整数)」「必須」「最大11」と明記する。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/Importer/Event/SimpleHighPriceImportHandler.php:56-59 の旧機能は販売価格・買取価格・下代を列に持つ旧フォーマットで、基準価格11桁というリニューアル要件はExcel正本由来である。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/SimpleHighPriceImportHandler.php:132-133 は `ColumnDefinitions::standardPrice()->setRequired(true)` を使用し、ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Model/ColumnDefinitions.php:434-436 は `createUnsignedNumericColumn(..., 9)` とするため最大9桁で検証する。",
+   "根拠検証メモ": "正本の11桁と現実装の9桁が直接不一致で、設計上許容される10〜11桁を拒否する。",
+   "対応の根拠(現develop)": "`src/Eccube/Service/Csv/Importer/Event/SimpleHighPriceImportHandler.php:133` `$this->standardPriceColumn = ColumnDefinitions::standardPrice()->setRequired(true);` は監査時点と同一。`src/Eccube/Service/Csv/Importer/Model/ColumnDefinitions.php:434-437` `public static function standardPrice(string $name = '基準価格'): BaseCsvColumn { return self::createUnsignedNumericColumn($name, '基準価格', 9); }` で桁数は 9 のまま。`src/Eccube/Service/Csv/Importer/Model/ColumnDefinitions.php:722-724` `if (is_int($maxLength)) { $column->addValidator(new NumericMaxLengthValidator($maxLength)); }` により NumericMaxLengthValidator(9) が付与され、`src/Eccube/Service/Csv/Importer/Validator/NumericMaxLengthValidator.php:53` `return strlen($value) <= $this->maxLength;` で 10 桁以上を拒否する。設計の最大 11 への是正は未反映。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "UNCHANGED"
+   }
+  },
+  {
+   "rowId": 412,
+   "機能No": "M03-33",
+   "機能名": "M03-33 セール用高額商品価格変更CSVアップロード",
+   "ドメイン": "m03",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "CSVアップロードファイルは「商品コード、販売価格、買取価格、セールフラグ、帯URL、タグ(ID)、スマレジ連携フラグ」の列定義を持ち、買取価格とスマレジ連携フラグも必須列として扱う。",
+   "実装実態": "画面フォーマット/雛形のヘッダとハンドラ列定義は「商品コード、販売価格、セールフラグ、帯URL、タグ(ID)」の5列のみで、買取価格とスマレジ連携フラグを受け付けない。",
+   "差分内容": "設計のCSV外部契約は7列だが、getCsvHeader/getRequiredCsvHeader と SaleHighPriceImportHandler::getColumns は5列で固定されている。ColumnDefinitions には buyPrice/smaregiAlignmentFlg は存在するが、本ハンドラでは参照されない。",
+   "実装参照": "src/Eccube/Controller/Admin/Product/Csv/ProductSaleHighPriceCsvController.php:180; src/Eccube/Controller/Admin/Product/Csv/ProductSaleHighPriceCsvController.php:194; src/Eccube/Service/Csv/Importer/Event/SaleHighPriceImportHandler.php:51; src/Eccube/Service/Csv/Importer/Event/SaleHighPriceImportHandler.php:167",
+   "設計書参照": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-50:11630",
+   "根拠区分": "UNCERTAIN",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:12792-12798 の Excel 正本表には「商品コード」「販売価格」「買取価格」「セールフラグ」「帯URL」「タグ(ID)」「スマレジ連携フラグ」の7列があり、買取価格・スマレジ連携フラグにも必須の「◯」がある。一方、同じ正本セルの 12794 は「2026/6/3 石川 高額商品価格変更CSVフォーマットでも不要な項目のためこちらでも不要」、12798 も同じくスマレジ連携フラグを「不要」と注記しており、7列必須という表定義と相反する。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Product/ProductCsvController.php:2133-2140 は旧画面ヘッダを `商品コード`, `販売価格`, `買取価格`, `セールフラグ`, `帯URL`, `タグ(ID)` の6列としており、/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/Importer/Event/HighPriceImportHandler.php:134-143 も同じ6列を返す。旧実装には買取価格はあるがスマレジ連携フラグ列はない（確認範囲: pf-eccube3 の high_price_csv/HighPriceImportHandler、pf-api・pf-article・deck-api の `high_price_csv`, `スマレジ連携フラグ`, `smaregi_alignment_flg` 横断検索）。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Product/Csv/ProductSaleHighPriceCsvController.php:199-207 は `商品コード`, `販売価格`, `セールフラグ`, `帯URL`, `タグ(ID)` の5列のみを返し、同ファイル:213-219 の必須列も商品コード・販売価格・セールフラグだけである。",
+   "根拠検証メモ": "Excel正本内で、7列・必須記号と、2026/6/3付の「買取価格／スマレジ連携フラグは不要」という注記が衝突している。どちらが最終承認仕様かを確定できる版管理・変更承認情報が不足している。",
+   "対応の根拠(現develop)": "`src/Eccube/Controller/Admin/Product/Csv/ProductSaleHighPriceCsvController.php:201-207` の getCsvHeader() は `'商品コード' => '', '販売価格' => '', 'セールフラグ' => '0: セールではない, 1: セールあり', '帯URL' => '', 'タグ(ID)' => 'カンマ区切りで複数指定可能。'` の5列のまま。`同:215-219` getRequiredCsvHeader() も商品コード・販売価格・セールフラグの3件のみ。`src/Eccube/Service/Csv/Importer/Event/SaleHighPriceImportHandler.php:167-173` getColumns() も `$this->productCodeColumn, $this->sellPriceColumn, $this->saleFlgColumn, $this->beltUrlColumn, $this->productTagListColumn` の5列で、買取価格・スマレジ連携フラグ列は存在しない。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "UNCHANGED"
+   }
+  },
+  {
+   "rowId": 413,
+   "機能No": "M03-33",
+   "機能名": "M03-33 セール用高額商品価格変更CSVアップロード",
+   "ドメイン": "m03",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "買取価格は、セールフラグの組み合わせに依存せずCSV値を dtb_product_class.buy_price へ更新し、価格履歴にも新買取価格として渡す。",
+   "実装実態": "実装は販売価格のみCSVから読み、updateProductClassForHighPriceSaleCsv は price02/belt_url/sale_flg/update_date だけを更新する。価格履歴にも oldBuyPrice を新買取価格として渡している。",
+   "差分内容": "設計は全分岐で買取価格をCSV値に更新するが、実装コメントでも「買取価格・基準価格の更新はない」としており、buy_price のUPDATEもCSV買取価格の読取もない。",
+   "実装参照": "src/Eccube/Service/Csv/Importer/Event/SaleHighPriceImportHandler.php:96; src/Eccube/Service/Csv/Importer/Event/SaleHighPriceImportHandler.php:140; src/Eccube/Service/Csv/Importer/Event/SaleHighPriceImportHandler.php:147; src/Eccube/Repository/ProductClassRepository.php:2588",
+   "設計書参照": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-50:11517",
+   "根拠区分": "UNCERTAIN",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:12569,12575,12582,12590 の Excel 正本は各セール分岐で「買取価格を、CSVに設定されている買取価格に更新する」と明記する。一方、同ファイル:12794 のCSVフォーマット正本セルには買取価格を「2026/6/3 石川 高額商品価格変更CSVフォーマットでも不要な項目のためこちらでも不要」とする後日注記がある。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/Importer/Event/HighPriceImportHandler.php:427-440 は `$buyPrice = $this->buyPriceColumn->getValue($row);` を読み `buy_price = ?` に更新し、同ファイル:474-477 は履歴へ `setBuyPrice($newBuyPrice)->setOldBuyPrice($oldBuyPrice)` を設定している。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/SaleHighPriceImportHandler.php:147-156 は「今回のcsv登録では買取価格・基準価格の更新はない」とし、新買取価格にも `$oldBuyPrice` を渡す。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/ProductClassRepository.php:2596-2603 のUPDATE対象も `price02`, `belt_url`, `sale_flg`, `update_date` のみで `buy_price` はない。",
+   "根拠検証メモ": "処理概要の買取価格更新要求と、後日付のCSV列不要注記が矛盾する。2026/6/3注記が処理概要まで廃止した変更承認なのか判断できない。",
+   "対応の根拠(現develop)": "`src/Eccube/Service/Csv/Importer/Event/SaleHighPriceImportHandler.php:96` `$csvSellPrice = (int) bcfloor((string) $this->sellPriceColumn->getValue($row));` のみで買取価格のCSV読取はなく、`同:140-145` `$this->productClassRepository->updateProductClassForHighPriceSaleCsv($ProductClass->getId(), $newSellPrice, $beltUrl, $newSaleFlg,);` に buy_price 引数がない。`同:147` のコメント `// 今回のcsv登録では買取価格・基準価格の更新はないので一緒の値を入れる` と `同:148-157` の履歴呼び出しで新買取価格に `$oldBuyPrice` を渡す実装も変わっていない。`src/Eccube/Repository/ProductClassRepository.php:2596-2604` の UPDATE も `SET price02 = ?, belt_url = ?, sale_flg = ?, update_date = ? WHERE id = ?` で buy_price を含まない。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Repository/ProductClassRepository.php"
+    ]
+   }
+  },
+  {
+   "rowId": 414,
+   "機能No": "M03-33",
+   "機能名": "M03-33 セール用高額商品価格変更CSVアップロード",
+   "ドメイン": "m03",
+   "区分(画面種別)": "admin",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・未実装",
+   "設計期待値": "スマレジ連携フラグをCSVから読み、dtb_product_class.smaregi_alignment_flg を更新し、スマレジ連携コーディネータへ規格ID・CSVスマレジフラグ・スマレジ商品コードを渡して条件付きで後続処理を予約する。",
+   "実装実態": "SaleHighPriceImportHandler にはスマレジ連携コーディネータが注入されず、スマレジ連携フラグ列もなく、UPDATEにも smaregi_alignment_flg が含まれない。",
+   "差分内容": "他CSVハンドラには SmaregiProductClassCsvImportUpsertCoordinator/deferIfEligible の実装があるが、当機能の Controller/Handler/Repository には対応処理が存在しない。",
+   "実装参照": "不在（探索範囲: src/Eccube/Controller/Admin/Product/Csv/ProductSaleHighPriceCsvController.php, src/Eccube/Service/Csv/Importer/Event/SaleHighPriceImportHandler.php, src/Eccube/Repository/ProductClassRepository.php。反証検索語: SmaregiProductClassCsvImportUpsertCoordinator, deferIfEligible, smaregiAlignmentFlgColumn, smaregi_alignment_flg, sale_high_price）; 参考: src/Eccube/Controller/Admin/Product/Csv/ProductSaleHighPriceCsvController.php:137; src/Eccube/Service/Csv/Importer/Event/SaleHighPriceImportHandler.php:39; src/Eccube/Repository/ProductClassRepository.php:2588",
+   "設計書参照": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-50:11596",
+   "根拠区分": "UNCERTAIN",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:12547-12559 の Excel 正本は「スマレジ連携フラグの項目を追加」「商品スマレジ連携.xlsxを参照」とし、同ファイル:15238 の別添正本も「セール用高額商品価格変更CSV登録　スマレジ連携追加／シングルカードのみスマレジ連携フラグ自動判定追加」と記載する。しかし同ファイル:12798 のCSV項目セルには「2026/6/3 石川 高額商品価格変更CSVフォーマットでも不要な項目のためこちらでも不要」と相反する注記がある。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/Importer/Event/HighPriceImportHandler.php:134-143 の旧取込列は商品コード・販売価格・買取価格・セールフラグ・帯URL・タグのみで、同ファイル:416-425 の更新列も `buy_price`, `sale_flg`, `belt_url` のみである。旧4リポジトリを `high_price_csv`, `smaregi_alignment_flg`, `スマレジ連携フラグ` で横断したが、この旧ハンドラにスマレジ予約処理は存在しない。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/SaleHighPriceImportHandler.php:39-44 の依存は EntityManager/ProductRepository/ProductClassRepository/DtbPriceHistoryRepositoryだけで、同ファイル:51-55 の列定義にもスマレジ連携フラグがない。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Product/Csv/ProductSaleHighPriceCsvController.php:149-154 の生成時にもスマレジ連携コーディネータは渡されない。",
+   "根拠検証メモ": "正本の追加要求・別添改修一覧と、2026/6/3付の列不要注記が衝突している。また正本は連携の業務要件を示すが、指摘にある具体的なコーディネータ呼出方式までは規定していない。最終仕様の承認情報が必要。",
+   "対応の根拠(現develop)": "`src/Eccube/Controller/Admin/Product/Csv/ProductSaleHighPriceCsvController.php:41-49` のコンストラクタ引数は ProductClassRepository/ProductRepository/CsvExportService/PaginatorInterface/DtbPriceHistoryRepository/DtbCsvImportHistoryRepository のみでスマレジ関連の注入がなく、`同:149-154` の `new SaleHighPriceImportHandler($this->entityManager, $this->productRepository, $this->productClassRepository, $this->priceHistoryRepository,)` にもコーディネータを渡していない。`grep -n 'Smaregi\\|smaregi' src/Eccube/Service/Csv/Importer/Event/SaleHighPriceImportHandler.php src/Eccube/Controller/Admin/Product/Csv/ProductSaleHighPriceCsvController.php` は0件。`src/Eccube/Repository/ProductClassRepository.php:2596-2604` の UPDATE にも smaregi_alignment_flg はない。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Repository/ProductClassRepository.php"
+    ]
+   }
+  },
+  {
+   "rowId": 415,
+   "機能No": "M03-33",
+   "機能名": "M03-33 セール用高額商品価格変更CSVフォーマット",
+   "ドメイン": "m03",
+   "区分(画面種別)": "admin",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "CSVフォーマット、雛形、取込列は「商品コード、販売価格、買取価格、セールフラグ、帯URL、タグ(ID)、スマレジ連携フラグ」の7列で、商品コード・販売価格・買取価格・セールフラグ・スマレジ連携フラグを必須列とする。",
+   "実装実態": "getCsvHeader() は「商品コード、販売価格、セールフラグ、帯URL、タグ(ID)」の5列のみを返し、getRequiredCsvHeader() も商品コード・販売価格・セールフラグのみ必須。SaleHighPriceImportHandler::getColumns() も同じ5列のみを検証・取込対象にしている。",
+   "差分内容": "設計の外部CSV契約では買取価格とスマレジ連携フラグが必須列だが、画面フォーマット表、雛形CSV、取込列定義のいずれにも存在しない。反証として ColumnDefinitions::buyPrice()/smaregiAlignmentFlg() と類似 ProductPriceImportHandler を確認したが、対象ハンドラでは未使用。",
+   "実装参照": "src/Eccube/Controller/Admin/Product/Csv/ProductSaleHighPriceCsvController.php:178; src/Eccube/Service/Csv/Importer/Event/SaleHighPriceImportHandler.php:165",
+   "設計書参照": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-51:11720,11722,11723,11726,11834,11836",
+   "根拠区分": "UNCERTAIN",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:12792-12798 の Excel 正本表は7列を列挙し、商品コード・販売価格・買取価格・セールフラグ・スマレジ連携フラグに必須の「◯」を付ける。しかし同ファイル:12794,12798 の同じ正本セルに、買取価格とスマレジ連携フラグを「2026/6/3 石川 …不要」とする注記がある。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Product/ProductCsvController.php:2133-2140 の旧フォーマットは6列で、買取価格はあるがスマレジ連携フラグはない。/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/Importer/Event/HighPriceImportHandler.php:65-70 は商品コード・販売価格・買取価格を必須化し、タグも必須化している。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Product/Csv/ProductSaleHighPriceCsvController.php:199-219 は5列（商品コード、販売価格、セールフラグ、帯URL、タグ）・必須3列で、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/SaleHighPriceImportHandler.php:165-173 も同じ5列だけを取り込む。",
+   "根拠検証メモ": "CSV項目表の必須記号と後日付の不要注記の優先順位が不明。現行5列が旧要求の移植漏れか、承認済み仕様変更への追随かを確定できない。",
+   "対応の根拠(現develop)": "`src/Eccube/Controller/Admin/Product/Csv/ProductSaleHighPriceCsvController.php:199-208` getCsvHeader() は5列（商品コード/販売価格/セールフラグ/帯URL/タグ(ID)）、`同:213-220` getRequiredCsvHeader() は3列（商品コード/販売価格/セールフラグ）のまま。`src/Eccube/Service/Csv/Importer/Event/SaleHighPriceImportHandler.php:165-174` getColumns() も同5列で、`同:51-55` の onBeforeImport() でも buyPrice()/smaregiAlignmentFlg() は生成されていない。ColumnDefinitions には `src/Eccube/Service/Csv/Importer/Model/ColumnDefinitions.php:377` `public static function buyPrice(...)` と `同:444` `public static function smaregiAlignmentFlg(...)` が存在するが本ハンドラから未参照。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "NO_QUOTE",
+    "stale": "UNCHANGED"
+   }
+  },
+  {
+   "rowId": 416,
+   "機能No": "M03-33",
+   "機能名": "M03-33 セール用高額商品価格変更CSVフォーマット",
+   "ドメイン": "m03",
+   "区分(画面種別)": "admin",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・未実装",
+   "設計期待値": "買取価格は必須CSV列として読み込み、各セール分岐でCSV値を dtb_product_class.buy_price に更新し、価格履歴にも変更前後の買取価格を渡す。",
+   "実装実態": "SaleHighPriceImportHandler は buyPriceColumn を持たず、147行目に「今回のcsv登録では買取価格・基準価格の更新はない」とコメントし、価格履歴には oldBuyPrice を newBuyPrice として渡している。ProductClassRepository::updateProductClassForHighPriceSaleCsv() も price02/belt_url/sale_flg/update_date だけを更新し、buy_price を更新しない。",
+   "差分内容": "対象実装に買取価格列の読込、bcfloor整数化、buy_price更新、CSV買取価格を新買取価格として履歴へ渡す処理がない。ColumnDefinitions::buyPrice() と他CSVハンドラでの実装は存在するが、本機能の Controller/Handler/Repository から参照されていない。",
+   "実装参照": "不在（探索範囲: src/Eccube/Controller/Admin/Product/Csv/ProductSaleHighPriceCsvController.php, src/Eccube/Service/Csv/Importer/Event/SaleHighPriceImportHandler.php, src/Eccube/Repository/ProductClassRepository.php, src/Eccube/Repository/DtbPriceHistoryRepository.php）",
+   "設計書参照": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-51:11722,11759,11765,11773,11780,11821,11827,11836,11847,11850",
+   "根拠区分": "UNCERTAIN",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:12831,12837,12845,12852 の Excel 正本は全分岐で「買取価格を、CSVに設定されている買取価格に更新する」とする。一方、同ファイル:12794 のCSV項目セルは買取価格を「2026/6/3 石川 …不要」と注記している。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/Importer/Event/HighPriceImportHandler.php:367-372 はCSVの `$newBuyPrice` を読み、商品規格更新と価格履歴へ渡す。同ファイル:420-440 は `buy_price` をCSV値でUPDATEし、同ファイル:474-477 は新旧買取価格を履歴に設定する。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/SaleHighPriceImportHandler.php:147-156 は買取価格を更新せず履歴の新値にも `$oldBuyPrice` を渡す。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/ProductClassRepository.php:2596-2603 のUPDATEにも `buy_price` がない。",
+   "根拠検証メモ": "正本の処理分岐と後日付の列不要注記が矛盾するため、最終承認仕様が不足している。",
+   "対応の根拠(現develop)": "`src/Eccube/Service/Csv/Importer/Event/SaleHighPriceImportHandler.php:29-37` の列プロパティは productCodeColumn/sellPriceColumn/saleFlgColumn/beltUrlColumn/productTagListColumn のみで buyPriceColumn は存在しない。`同:147` のコメント `// 今回のcsv登録では買取価格・基準価格の更新はないので一緒の値を入れる` と `同:155` の新買取価格引数 `$oldBuyPrice` はそのまま。`src/Eccube/Repository/ProductClassRepository.php:2596-2604` の UPDATE も buy_price を更新しない。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Repository/ProductClassRepository.php"
+    ]
+   }
+  },
+  {
+   "rowId": 417,
+   "機能No": "M03-33",
+   "機能名": "M03-33 セール用高額商品価格変更CSVフォーマット",
+   "ドメイン": "m03",
+   "区分(画面種別)": "admin",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・未実装",
+   "設計期待値": "スマレジ連携フラグをCSV列として追加し、0/1を検証・真偽変換して dtb_product_class.smaregi_alignment_flg を更新し、スマレジ連携コーディネータへ規格ID・CSVスマレジフラグ・スマレジ商品コードを渡して条件一致時に後続処理を予約する。",
+   "実装実態": "ProductSaleHighPriceCsvController のコンストラクタは SmaregiProductClassCsvImportUpsertCoordinatorFactory を受け取らず、SaleHighPriceImportHandler 生成時にも渡していない。SaleHighPriceImportHandler は smaregiAlignmentFlgColumn を持たず、deferIfEligible()/afterCsvImportFinished() も呼ばない。updateProductClassForHighPriceSaleCsv() も smaregi_alignment_flg を更新しない。",
+   "差分内容": "スマレジ連携フラグのCSV列、必須検証、DB更新、連携予約が対象機能に存在しない。反証として SmaregiProductClassCsvImportUpsertCoordinator と類似 ProductPriceImportHandler の利用を確認したが、対象のセール用高額商品価格変更CSVには接続されていない。",
+   "実装参照": "不在（探索範囲: src/Eccube/Controller/Admin/Product/Csv/ProductSaleHighPriceCsvController.php, src/Eccube/Service/Csv/Importer/Event/SaleHighPriceImportHandler.php, src/Eccube/Repository/ProductClassRepository.php, src/Eccube/Service/Smaregi）",
+   "設計書参照": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-51:11726,11739,11748,11815,11821,11828,11836,11843,11847,11850",
+   "根拠区分": "UNCERTAIN",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:12810-12821 の Excel 正本はスマレジ連携フラグ追加と別紙参照を要求し、同ファイル:15238 は当機能に「スマレジ連携追加／シングルカードのみスマレジ連携フラグ自動判定追加」と明記する。一方、同ファイル:12798 の正本項目セルはスマレジ連携フラグを「2026/6/3 石川 …不要」と注記する。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/Importer/Event/HighPriceImportHandler.php:60-71,134-143 の旧列初期化・取込列にはスマレジ連携フラグがなく、同ファイル:416-425 のUPDATEにも `smaregi_alignment_flg` はない（確認範囲: 旧4リポジトリの `high_price_csv`, `smaregi_alignment_flg`, `deferIfEligible` 横断検索）。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/SaleHighPriceImportHandler.php:29-44 はスマレジ列・コーディネータを保持せず、同ファイル:165-173 の取込列も5列のみ。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/ProductClassRepository.php:2596-2603 のUPDATEにも `smaregi_alignment_flg` はない。",
+   "根拠検証メモ": "正本のスマレジ追加要求と後日付の不要注記が衝突する。さらに指摘の具体的なコーディネータAPIは正本に明記されないため、最終仕様と実装方式の確定資料が必要。",
+   "対応の根拠(現develop)": "`src/Eccube/Controller/Admin/Product/Csv/ProductSaleHighPriceCsvController.php:41-49` のコンストラクタに SmaregiProductClassCsvImportUpsertCoordinatorFactory はなく、`同:149-154` のハンドラ生成にも渡していない。`src/Eccube/Service/Csv/Importer/Event/SaleHighPriceImportHandler.php` 全207行に smaregiAlignmentFlgColumn / deferIfEligible / afterCsvImportFinished の記述は無く（grep 0件）、`同:167-173` getColumns() も5列のまま。`src/Eccube/Repository/ProductClassRepository.php:2596-2604` の UPDATE も smaregi_alignment_flg を含まない。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "NOT_FOUND",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Repository/ProductClassRepository.php"
+    ],
+    "quoteDetail": [
+     "スマレジ連携追加／シングルカードのみスマレジ連携フラグ自動判定追加"
+    ]
+   }
+  },
+  {
+   "rowId": 418,
+   "機能No": "M03-35",
+   "機能名": "M03-35 部門更新CSV登録",
+   "ドメイン": "m03",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "部門更新CSV登録画面は、ナビ「商品管理」→「商品CSV管理」→「部門更新CSV登録」から開き、sub_title は画面上「部門更新CSV登録」と表示する。カード見出しも部門更新CSV登録用のアップロード／フォーマット見出しで表示する。",
+   "実装実態": "部門更新CSV画面の Twig とナビは translation key admin.product.product_section_csv を使用しているが、日本語翻訳は「部門登録CSVアップロード」。カード見出しキーも「部門登録CSV」「部門登録CSVファイルフォーマット」と定義されている。",
+   "差分内容": "設計は利用者に見える名称を「部門更新CSV登録」としているが、実装の表示翻訳は「部門登録CSV」系になっている。反証検索として「部門更新CSV登録」「product_section_csv」「section_csv」「admin_product_section_import」「部門登録CSV」を src/Eccube・app/config・html（bundle除外）で再検索したが、画面／ナビ／カード見出しの翻訳値として「部門更新CSV登録」は存在せず、該当語はログ文言にしか確認できなかった。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Product/csv_product_section.twig:3,5; /home/y-saito/Developments/ec-cube-enterprise/app/config/eccube/packages/eccube_nav.yaml:67; /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:1980",
+   "設計書参照": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-52:12153,12156",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:12985-12987 の Excel 正本は機能No「M03-35」、機能名「部門更新CSV登録」とし、同ファイル:13032-13033 は画面部品「CSVファイルのアップロード」「部門更新CSVファイルフォーマット」を定義する。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/SidebarProvider.php:158-163 の旧ナビは `'name' => '部門更新CSV登録'`。/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Product/csv_product_section_update.twig:5-8 は `部門更新CSVアップロード` と `部門更新CSV` を表示する。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/app/config/eccube/packages/eccube_nav.yaml:67-69 はナビで `admin.product.product_section_csv` を使用し、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Product/csv_product_section.twig:3-5 も同キーをsub_titleに使う。しかし /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:2017-2019 の実値は「部門登録CSVアップロード」「部門登録CSV」「部門登録CSVファイルフォーマット」で、設計の「部門更新」と一致しない。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Resource/template/admin/Product/csv_product_section.twig:3,5` `{% set menus = ['product', 'product_csv_management', 'admin_product_section_import'] %}` / `{% block sub_title %}{{ 'admin.product.product_section_csv'|trans }}{% endblock %}` と `app/config/eccube/packages/eccube_nav.yaml:67-69` `admin_product_section_import: name: admin.product.product_section_csv` は監査時点と同一。`src/Eccube/Resource/locale/messages.ja.yaml:2017-2019` は `admin.product.product_section_csv: 部門登録CSVアップロード` / `admin.product.product_section_csv_upload_title: 部門登録CSV` / `admin.product.product_section_csv_format_title: 部門登録CSVファイルフォーマット` のままで「部門更新CSV登録」表示になっていない。src/ app/ 全体の `部門更新CSV` 一致は ProductSectionCsvController のログ文言・PHPDoc のみ。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Resource/locale/messages.ja.yaml"
+    ]
+   }
+  }
+ ]
+}

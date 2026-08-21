@@ -1,0 +1,166 @@
+{
+ "packetId": "bl_10",
+ "note": "1枚に複数の不具合がまとまっているチケットがある。itemCountに件数を書き工数は合計で。",
+ "findings": [
+  {
+   "issueKey": "ECCUBE_HARERUYA-2026",
+   "summary": "【実装乖離】在庫管理_在庫移動指示詳細_在庫移動指示詳細にて、●●円以上／未満の閾値が出庫元店舗の高額商品閾値の最も高い価格ではなく高額商品閾値1固定になっている",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "低",
+   "description": "# 基本情報【必須】\n分類：在庫管理\n機能：在庫移動指示詳細\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】在庫管理_在庫移動指示詳細_在庫移動指示詳細にて、●●円以上／未満の閾値が出庫元店舗の高額商品閾値の最も高い価格ではなく高額商品閾値1固定になっている\n設計書：0202_基本設計仕様書(在庫管理機能).xlsx\n\n# 期待される挙動【必須】\n- 在庫移動指示詳細の「●●円以上の商品の合計」「●●円未満の商品の合計」は、出庫元店舗の高額商品閾値のうち最も高い価格を取得して閾値とすること。\n- 項目名も当該閾値の値を用いて「●●円以上の商品」「●●円未満の商品」と表記すること。\n\n# 現在の挙動【必須】\n- 在庫移動指示の作成時に、出庫元店舗の高額商品閾値1（BaseInfo::expensive_threshold1）のみを moveFromPriceThreshold として保存しており、高額商品閾値2・3を含めた最大値の判定を行っていない。\n- 詳細画面のラベル表記および高額／通常の合計金額の集計は、この moveFromPriceThreshold（＝高額商品閾値1）をそのまま閾値として使用している。\n\n# 補足情報【任意】\n▼設計書該当箇所\nM04_stock_management_basedesign.md:3876-3878 の逐語引用「1-12 ●●円以上の商品の合計 ラベル - - - 出庫元店舗の高額商品閾値の最も高い価格を取得し閾値とする / 項目名も閾値の値を使って、●●円以上の商品と表記する / 商品の基準価格が●●円以上の商品の合計金額」\nM04_stock_management_basedesign.md:3879-3881 の逐語引用「1-13 ●●円未満の商品の合計 ラベル - - - 出庫元店舗の高額商品閾値の最も高い価格を取得し閾値とする / 項目名も閾値の値を使って、●●円未満の商品と表記する / 商品の基準価格が●●円未満の商品の合計金額」\n\n▼実装該当箇所\nsrc/Eccube/Service/EntityManager/StockMoveInstructionEntityManager.php:53 （expensive_threshold1 のみを閾値として保存）\nsrc/Eccube/Resource/template/admin/Stock/stock_move_instruction_detail.twig:69 （●●円以上のラベルに instruction.moveFromPriceThreshold を使用）\nsrc/Eccube/Resource/template/admin/Stock/stock_move_instruction_detail.twig:73 （●●円未満のラベルも同じ値を使用）\nsrc/Eccube/Controller/Admin/Stock/StockMoveInstructionController.php:200-203 （集計処理に moveFromPriceThreshold を渡す）\n\n▼備考\nBaseInfo には expensive_threshold1〜3 が存在し（src/Eccube/Entity/BaseInfo.php:1223, 1238, 1253）、ピック表側の RestockListCsvRowFormatter では3つをソートして最大値・区間を判定している。在庫移動指示側のみ閾値1固定であり、閾値1が最大値でない店舗設定では表示・集計が設計と乖離する。"
+  },
+  {
+   "issueKey": "ECCUBE_HARERUYA-2015",
+   "summary": "【実装乖離】在庫管理_在庫結合 登録編集_在庫結合の承認処理にて、承認後のステータスが「結合計画承認済み」ではなく「入庫済み」になり、却下時の在庫戻し原価が「移動総原価の按分」ではなく「原価単価×数量」で計算されている",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "低",
+   "description": "# 基本情報【必須】\n分類：在庫管理\n機能：在庫結合 登録編集\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】在庫管理_在庫結合 登録編集_在庫結合の承認処理にて、承認後のステータスが「結合計画承認済み」ではなく「入庫済み」になり、却下時の在庫戻し原価が「移動総原価の按分」ではなく「原価単価×数量」で計算されている\n設計書：0202_基本設計仕様書(在庫管理機能).xlsx\n\n# 期待される挙動【必須】\n- 結合計画承認画面で承認した場合、ステータスは「結合計画承認済み」となり、結合完了承認申請画面へ遷移すること（却下時は「却下」）。\n- 却下時は結合元商品の在庫を移動点数だけ戻し、欠品登録を行った商品については欠品点数分を除くこと。戻す仕入総価格は結合元商品それぞれの移動総原価とし、欠品がある場合は「結合元総原価 ×（（移動数 - 欠品数）/ 移動数）」とすること。\n- 却下処理確認モーダルで却下するボタンを押下した際、却下理由（最大65535byte）の入力がない場合はエラーとすること。\n\n# 現在の挙動【必須】\n- 却下理由の必須チェックは実装されている（rejectedMemo が空文字ならエラー admin.stock.join.approval_reject_reason_required）。却下メモは TEXT カラムに保存される。\n- 承認処理（StockJoinApprovalApproveAction）はステータスを RECEIPT_COMPLETED（入庫済み）に更新しており、「結合計画承認済み」ステータスは存在しない（マスタは6件のみで二段階承認が無い）。\n- 却下処理（StockJoinApprovalRejectAction）は結合元の戻し数量を「結合元在庫数 - 欠品点数」で算出しており、欠品分を除く点は設計どおりである。\n- 却下時に戻す総原価は「明細に保存された原価単価（costPrice）× 戻し数量」で計算されており、出庫時に減算した移動総原価（ProductStock::getMovementTotalCost() ＝ 総原価 ×（数量 ÷ 在庫数））の按分ではないため、端数分の誤差が生じ、設計の計算式と一致しない。\n\n# 補足情報【任意】\n▼設計書該当箇所\nM04_stock_management_basedesign.md:2654-2657 の逐語引用「* 承認処理 / * 承認ボタン押下時、承認確認モーダルを表示する / * 承認するボタン押下時、基本情報、結合先商品と結合元商品の承認を行う / * ステータスは結合計画承認済みとする」\nM04_stock_management_basedesign.md:2672-2677 の逐語引用「却下時になった際の原価の扱い（減算した在庫の戻し） / * 結合元商品 / * 在庫数： 結合元在庫数 / * 欠品登録を行った商品については欠品点数分を除く / * 仕入総価格：結合元商品のそれぞれの移動総原価 / * 欠品がある場合  結合元総原価 × （（移動数 - 欠品数）/ 移動数）とする」\nM04_stock_management_basedesign.md:2689 の逐語引用「8-1 却下理由 全角・半角 - 65535byte - 却下処理をこなう場合は必須」\n\n▼実装該当箇所\nsrc/Eccube/Service/Admin/Stock/StockJoinApprovalSubmitAction.php:60-67 （却下理由の必須チェック：実装済み）\nsrc/Eccube/Service/Admin/Stock/StockJoinApprovalApproveAction.php:58 （承認でステータスを RECEIPT_COMPLETED＝入庫済みに設定）\nsrc/Eccube/Service/Admin/Stock/StockJoinApprovalRejectAction.php:178-181 （戻し数量＝結合元在庫数−欠品点数）\nsrc/Eccube/Service/Admin/Stock/StockJoinApprovalRejectAction.php:101-106 （戻し原価＝原価単価 × 戻し数量）\nsrc/Eccube/Service/Admin/Stock/StockJoinMoveToShortageEntryAction.php:211-213 （出庫時の減算は getMovementTotalCost() による移動総原価。戻しと計算方式が非対称）\nsrc/Eccube/Entity/Master/MtbStockSplitJoinStatus.php:27-38 （結合計画承認済み・結合完了承認待ちのステータスが存在しない）\n\n▼備考\n却下理由必須は実装済み（65535byteの上限チェックは明示的には無いが、rejected_memo は TEXT 型のため実質許容される）。乖離は (1) 承認後ステータスが「結合計画承認済み」ではなく「入庫済み」（結合が単一承認フローで実装されているため。M04-12 一覧シート（2026-02-04更新）の結合ステータス5種とは整合するので、"
+  },
+  {
+   "issueKey": "ECCUBE_HARERUYA-2031",
+   "summary": "【実装乖離】在庫管理_棚卸（計画一覧/新規/編集/在庫確認/在庫反映/詳細CSV）_棚卸計画新規作成にて、在庫区分ラジオボタンの初期値「EC-CUBE」が設定されておらず初期表示が未選択になっている",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "低",
+   "description": "# 基本情報【必須】\n分類：在庫管理\n機能：棚卸（計画一覧/新規/編集/在庫確認/在庫反映/詳細CSV）\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】在庫管理_棚卸（計画一覧/新規/編集/在庫確認/在庫反映/詳細CSV）_棚卸計画新規作成にて、在庫区分ラジオボタンの初期値「EC-CUBE」が設定されておらず初期表示が未選択になっている\n設計書：0202_基本設計仕様書(在庫管理機能).xlsx\n\n# 期待される挙動【必須】\n- 棚卸計画新規作成画面の「在庫区分」はラジオボタン（選択肢: EC-CUBE / スマレジ）で必須項目であり、初期値として「EC-CUBE」が選択された状態で表示されること。\n\n# 現在の挙動【必須】\n- InventoryPlanType では stockLocationId を ChoiceType（expanded: true = ラジオボタン）かつ required / NotBlank で定義しているが、初期値（data・empty_data・preferred値）を指定していない。\n- エンティティ DtbInventoryPlan の $stockLocationId の初期値は null であり、新規登録画面のコントローラ（InventoryPlanController::newData）も店舗（BaseInfo）のデフォルト値のみを設定し、在庫区分は設定していない。\n- テンプレート inventory_plan.twig も form_row でそのまま描画しているだけで checked 指定はなく、画面初期表示ではEC-CUBE・スマレジのいずれも未選択となる。\n\n# 補足情報【任意】\n▼設計書該当箇所\nM04_stock_management_basedesign.md:4129 「| 3 | 在庫区分 | ラジオボタン | ◯ | - | EC-CUBE | 選択肢:EC-CUBE スマレジ |」\nM04_stock_management_basedesign.md:4121 「* 識別ID:3「在庫区分」を追加する」\n\n▼実装該当箇所\nsrc/Eccube/Form/Type/Admin/Stock/InventoryPlanType.php:93-105 （ChoiceType expanded=true・NotBlank のみで初期値指定なし）\nsrc/Eccube/Entity/DtbInventoryPlan.php:68 （stockLocationId の初期値は null）\nsrc/Eccube/Controller/Admin/Stock/InventoryPlanController.php:180-190 （新規作成時にBaseInfoのみ既定値設定、在庫区分は未設定）\nsrc/Eccube/Resource/template/admin/Stock/inventory_plan.twig:45-48 （form_row で描画するのみ。checked 指定なし）\n\n▼備考\nラジオボタン化（expanded: true）と必須（NotBlank）は実装済みで、乖離しているのは初期値「EC-CUBE」の未設定のみ。git log でも 2026-07-01 以降に初期値設定を追加したコミットは無い。"
+  },
+  {
+   "issueKey": "ECCUBE_HARERUYA-2154",
+   "summary": "【実装乖離】基本情報設定_CSV出力項目設定_CSV出力項目設定(M10-10)にて、CSV種別セレクトの選択肢が登録済みCSV全種になっておらず、3種類が除外されている",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "中",
+   "description": "# 基本情報【必須】\n分類：基本情報設定\n機能：CSV出力項目設定\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】基本情報設定_CSV出力項目設定_CSV出力項目設定(M10-10)にて、CSV種別セレクトの選択肢が登録済みCSV全種になっておらず、3種類が除外されている\n設計書：0209_基本設計仕様書(基本情報設定).xlsx\n\n# 期待される挙動【必須】\n- CSV出力項目設定画面の識別ID:1-1「CSV種別」は単一選択(セレクトボックス)で、初期値は受注CSV、選択肢は登録されているCSV全種であること。\n\n# 現在の挙動【必須】\n- 初期値は admin_setting_shop_csv ルートの defaults で CsvType::CSV_TYPE_ORDER（受注CSV, id=3）に設定されており、設計どおりである。\n- 一方で選択肢は query_builder により CSV_TYPE_CLASS_NAME(6)・CSV_TYPE_CLASS_CATEGORY(7)・CSV_TYPE_GMO_MEMBER(9) を除外しているため、mtb_csv_type に登録済みのCSV種別のうち3件が選択肢に現れず、「登録されているCSV全種」になっていない。\n\n# 補足情報【任意】\n▼設計書該当箇所\nM10_base_info_setting_basedesign.md:311 の逐語引用「**機能No**: M10-10 / **機能名**: CSV出力項目設定 / **概要**: CSVの出力項目を設定」\nM10_base_info_setting_basedesign.md:326 の逐語引用「1-1 CSV種別 単一選択(セレクトボックス) - - 受注CSV 選択肢:登録されているCSV全種」\n\n▼実装該当箇所\nsrc/Eccube/Controller/Admin/Setting/Shop/CsvController.php:46 （初期値 CSV_TYPE_ORDER。設計どおり）\nsrc/Eccube/Controller/Admin/Setting/Shop/CsvController.php:52 （除外するCSV種別IDの定義）\nsrc/Eccube/Controller/Admin/Setting/Shop/CsvController.php:68 （m.id NOT IN (:excludeIds) による選択肢の絞り込み）\napp/DoctrineMigrations/Version20251125141436.php:59 （mtb_csv_type のマスタ投入値）\n\n▼備考\n初期値（受注CSV）は設計と一致しているため、乖離は選択肢のみ。除外されている3種(規格名CSV・規格分類CSV・GMOメンバーCSV)は運用上意図的に隠している可能性があるが、設計書の「登録されているCSV全種」とは一致しない。"
+  },
+  {
+   "issueKey": "ECCUBE_HARERUYA-2155",
+   "summary": "【実装乖離】基本情報設定_カスタムCSV出力設定_カスタムCSV出力設定(M10-13)にて、CSV選択の選択肢に設計にない会員CSVが含まれており、設計の6種と一致しない",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "中",
+   "description": "# 基本情報【必須】\n分類：基本情報設定\n機能：カスタムCSV出力設定\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】基本情報設定_カスタムCSV出力設定_カスタムCSV出力設定(M10-13)にて、CSV選択の選択肢に設計にない会員CSVが含まれており、設計の6種と一致しない\n設計書：0209_基本設計仕様書(基本情報設定).xlsx\n\n# 期待される挙動【必須】\n- カスタムCSV出力設定のCSV選択の選択肢は、現行の選択肢に在庫関連CSV（在庫CSV・在庫移動/振替CSV・在庫分割結合CSV）を追加した「商品CSV・受注CSV・配送CSV・在庫CSV・在庫移動・振替CSV・在庫分割結合CSV」の6種であること。\n\n# 現在の挙動【必須】\n- CustomCsvType::CSV_TYPES には CSV_TYPE_PRODUCT(1)・CSV_TYPE_CUSTOMER(2)・CSV_TYPE_ORDER(3)・CSV_TYPE_SHIPPING(4)・CSV_TYPE_STOCK(10)・CSV_TYPE_STOCK_MOVE(11)・CSV_TYPE_STOCK_SPLIT(12) の7件が定義されている。\n- 在庫関連3種（在庫CSV・在庫移動・振替CSV・在庫分割結合CSV）の追加自体は実装済みであるが、設計に列挙されていない会員CSV(CSV_TYPE_CUSTOMER=2)が選択肢に含まれており、計7種が表示される。\n- 参照・設定・削除でURLを分ける要件は、admin_setting_shop_csv_custom(GET) / admin_setting_shop_csv_custom_update(POST) / admin_setting_shop_csv_custom_delete(DELETE) の3ルートで実装されている。\n\n# 補足情報【任意】\n▼設計書該当箇所\nM10_base_info_setting_basedesign.md:347 の逐語引用「CSV選択に在庫関連の以下のカスタムCSV出力項目を追加する」\nM10_base_info_setting_basedesign.md:348 の逐語引用「* 在庫CSV, 在庫移動・振替CSV, 在庫分割結合CSV」\nM10_base_info_setting_basedesign.md:355 の逐語引用「* 商品CSV 受注CSV 配送CSV 在庫CSV 在庫移動・振替情報 在庫分割結合情報」\n\n▼実装該当箇所\nsrc/Eccube/Form/Type/Admin/CustomCsvType.php:33 （CSV_TYPES 定数。会員CSVを含む7種）\nsrc/Eccube/Form/Type/Admin/CustomCsvType.php:87 （csv_type セレクトの query_builder で CSV_TYPES を使用）\nsrc/Eccube/Controller/Admin/Setting/Shop/CustomerCsvController.php:46 （参照用URL。設定・削除は 63行・90行で別URL）\napp/DoctrineMigrations/Version20251223173000.php:56 （在庫CSV(10)・在庫移動・振替CSV(11)・在庫分割結合CSV(12)のマスタ投入）\n\n▼備考\n在庫関連3種の追加・URL分割は実装済みであり、乖離は「会員CSVが選択肢に余分に含まれる」点のみ。"
+  },
+  {
+   "issueKey": "ECCUBE_HARERUYA-2156",
+   "summary": "【実装乖離】基本情報設定_カスタムCSV出力設定_カスタムCSV出力設定(M10-13)のCSV選択セレクトにて、選択肢が設計の6種ではなく会員CSVを含む7種になっている",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "中",
+   "description": "# 基本情報【必須】\n分類：基本情報設定\n機能：カスタムCSV出力設定\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】基本情報設定_カスタムCSV出力設定_カスタムCSV出力設定(M10-13)のCSV選択セレクトにて、選択肢が設計の6種ではなく会員CSVを含む7種になっている\n設計書：0209_基本設計仕様書(基本情報設定).xlsx\n\n# 期待される挙動【必須】\n- 識別ID:1-1「CSV選択」は単一選択(セレクトボックス)で、初期値は商品CSV、選択肢は「商品CSV 受注CSV 配送CSV 在庫CSV 在庫移動・振替CSV 在庫分割結合CSV」の6種であること。\n\n# 現在の挙動【必須】\n- 初期値は admin_setting_shop_csv_custom ルートの defaults で CsvType::CSV_TYPE_PRODUCT（商品CSV）に設定されており、設計どおりである。\n- 選択肢は CustomCsvType::CSV_TYPES（7種）を用いた query_builder で構築されており、設計に列挙のない会員CSV(id=2)が含まれる。\n\n# 補足情報【任意】\n▼設計書該当箇所\nM10_base_info_setting_basedesign.md:360 の逐語引用「1-1 CSV選択 単一選択(セレクトボックス) - - 商品CSV 選択肢:商品CSV 受注CSV 配送CSV 在庫CSV 在庫移動・振替CSV 在庫分割結合CSV」\n\n▼実装該当箇所\nsrc/Eccube/Controller/Admin/Setting/Shop/CustomerCsvController.php:46 （defaults: csvTypeId => CsvType::CSV_TYPE_PRODUCT。初期値は設計どおり）\nsrc/Eccube/Form/Type/Admin/CustomCsvType.php:33 （選択肢となる CSV_TYPES 定数に会員CSVを含む）\nsrc/Eccube/Form/Type/Admin/CustomCsvType.php:81 （csv_type セレクトの定義）\n\n▼備考\n初期値（商品CSV）は設計と一致。乖離は選択肢に会員CSVが含まれる点のみで、uid 05-4 と同一原因（CustomCsvType::CSV_TYPES）である。"
+  },
+  {
+   "issueKey": "ECCUBE_HARERUYA-2142",
+   "summary": "【実装乖離】基本情報設定_基本設定(旧ショップマスター)_基本設定(旧ショップマスター)にて、「仮会員を有効にする」の初期値が設計の「無効」ではなく「有効」になっている",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "中",
+   "description": "# 基本情報【必須】\n分類：基本情報設定\n機能：基本設定(旧ショップマスター)\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】基本情報設定_基本設定(旧ショップマスター)_基本設定(旧ショップマスター)にて、「仮会員を有効にする」の初期値が設計の「無効」ではなく「有効」になっている\n設計書：0209_基本設計仕様書(基本情報設定).xlsx\n\n# 期待される挙動【必須】\n- 基本設定(旧ショップマスター)画面の識別ID 3-1「仮会員を有効にする」は、無効／有効の二択を単一選択する部品として表示され、初期値は「無効」である。\n\n# 現在の挙動【必須】\n- エンティティ BaseInfo の option_customer_activate は ORM の default が true、PHP のプロパティ初期値も true で定義されており、初期状態は「有効」になっている。\n- マイグレーション Version20251127154224 の店舗データ投入でも option_customer_activate が全店舗 '1'（有効）で INSERT されており、初期値は「有効」で確定する。\n- 画面（shop_master.twig の会員設定カード）およびフォーム（ShopMasterType）には ToggleSwitchType として項目自体は存在するが、既定でONの状態で表示される。\n\n# 補足情報【任意】\n▼設計書該当箇所\nM10_base_info_setting_basedesign.md:55-56 の逐語引用: 「会員設定」「3-1 仮会員を有効にする 単一選択(ラジオボタン) - - 無効 選択肢:無効　有効」（初期値列が「無効」）\nM10_base_info_setting_basedesign.md:21-23 の逐語引用: 「* カスタマイズ要件\\nなし\\n* カスタマイズ要件に記載の内容以外は現行踏襲とする。」\n\n▼実装該当箇所\nsrc/Eccube/Entity/BaseInfo.php:132-133 （option_customer_activate の default が true）\napp/DoctrineMigrations/Version20251127154224.php:237 （投入値 'option_customer_activate' => '1' ＝有効。同ファイル内の全31店舗の投入値がすべて '1'）\nsrc/Eccube/Form/Type/Admin/ShopMasterType.php:261 （option_customer_activate を ToggleSwitchType で追加）\nsrc/Eccube/Resource/template/admin/Setting/Shop/shop_master.twig:353 （会員設定カード内で描画）\n\n▼備考\n同一画面の他のトグル（option_product_delivery_fee / option_multiple_shipping / option_nostock_hidden）は default=false で設計どおり「無効」なのに対し、option_customer_activate だけが default=true。マイグレーション投入値も '1' で一貫しており、初期値が設計と逆になっている。UI部品がトグルスイッチである点は他項目同様EC-CUBE標準（現行踏襲）のため乖離としない。"
+  },
+  {
+   "issueKey": "ECCUBE_HARERUYA-2137",
+   "summary": "【実装乖離】基本情報設定_基本設定(旧ショップマスター)_基本設定(旧ショップマスター)にて、設計で任意項目とされている「会社名」が必須入力になっている",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "中",
+   "description": "# 基本情報【必須】\n分類：基本情報設定\n機能：基本設定(旧ショップマスター)\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】基本情報設定_基本設定(旧ショップマスター)_基本設定(旧ショップマスター)にて、設計で任意項目とされている「会社名」が必須入力になっている\n設計書：0209_基本設計仕様書(基本情報設定).xlsx\n\n# 期待される挙動【必須】\n- 基本設定(旧ショップマスター)画面の識別ID 1-1「会社名」は、書式が全角・半角で、必須欄が「-」（＝任意入力）である。\n- 同画面の必須項目は識別ID 1-3「店名」および 1-10〜1-13 の各メールアドレスのみであり、会社名を未入力のままでも設定を登録できる。\n\n# 現在の挙動【必須】\n- ShopMasterType では company_name が 'required' => true かつ NotBlank 制約付きで定義されているため、未入力のまま登録するとバリデーションエラーになる。\n- shop_master.twig でも「会社名」の見出しに必須バッジ（admin.common.required）が表示されており、画面上も必須項目として扱われている。\n- 最大長は Length(max: eccube_stext_len=255) で、dtb_base_info.company_name の桁数 255 と一致しており、桁数面の乖離はない。\n\n# 補足情報【任意】\n▼設計書該当箇所\nM10_base_info_setting_basedesign.md:31 の逐語引用: 「| 識別ID | ラベル | 書式・制限 | 必須 | 最大値 | 初期値 | 画面部品の説明 |」\nM10_base_info_setting_basedesign.md:35 の逐語引用: 「1-1 会社名 全角・半角 - - - -」（必須列が「-」＝任意）\nM10_base_info_setting_basedesign.md:37 の逐語引用: 「1-3 店名 全角・半角 ○ - - -」（必須列に○が付くのは店名とメールアドレスのみ）\n\n▼実装該当箇所\nsrc/Eccube/Form/Type/Admin/ShopMasterType.php:57-65 （company_name に required=true と NotBlank を設定）\nsrc/Eccube/Resource/template/admin/Setting/Shop/shop_master.twig:38-39 （会社名の見出しに必須バッジを表示）\nsrc/Eccube/Entity/BaseInfo.php:54-55 （company_name カラムは length 255 / nullable: true）\n\n▼備考\n設計書は「カスタマイズ要件 なし」「カスタマイズ要件に記載の内容以外は現行踏襲とする」(md:21-23) と明記しており、EC-CUBE標準の ShopMasterType では company_name は任意（NotBlankなし）である。本フォークで required=true + NotBlank に変更されている点が乖離。git log では 2026-07-08 以降に当該箇所の変更なし。"
+  },
+  {
+   "issueKey": "ECCUBE_HARERUYA-2139",
+   "summary": "【実装乖離】基本情報設定_基本設定(旧ショップマスター)_基本設定(旧ショップマスター)にて、設計で任意項目とされている「住所」（郵便番号・都道府県・住所1・住所2）が必須入力になっている",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "中",
+   "description": "# 基本情報【必須】\n分類：基本情報設定\n機能：基本設定(旧ショップマスター)\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】基本情報設定_基本設定(旧ショップマスター)_基本設定(旧ショップマスター)にて、設計で任意項目とされている「住所」（郵便番号・都道府県・住所1・住所2）が必須入力になっている\n設計書：0209_基本設計仕様書(基本情報設定).xlsx\n\n# 期待される挙動【必須】\n- 基本設定(旧ショップマスター)画面の識別ID 1-6「住所」は、書式が全角・半角で、必須欄が「-」（＝任意入力）である。\n- 郵便番号・都道府県・住所を未入力のままでも基本設定を登録できる。\n\n# 現在の挙動【必須】\n- ShopMasterType では postal_code（PostalType）と address（AddressType）がいずれも 'required' => true で定義されている。\n- PostalType は required=true のとき NotBlank 制約を自動付与するため、郵便番号が未入力だとバリデーションエラーになる。\n- AddressType も required=true のとき addr01・addr02 に NotBlank 制約を自動付与するため、住所が未入力だとバリデーションエラーになる。\n- shop_master.twig でも「住所」の見出しに必須バッジが表示されており、画面上も必須項目として扱われている。\n\n# 補足情報【任意】\n▼設計書該当箇所\nM10_base_info_setting_basedesign.md:40 の逐語引用: 「1-6 住所 全角・半角 - - - -」（必須列が「-」＝任意）\nM10_base_info_setting_basedesign.md:21-23 の逐語引用: 「* カスタマイズ要件\\nなし\\n* カスタマイズ要件に記載の内容以外は現行踏襲とする。」\n\n▼実装該当箇所\nsrc/Eccube/Form/Type/Admin/ShopMasterType.php:88-97 （postal_code / address をいずれも required=true で追加）\nsrc/Eccube/Form/Type/PostalType.php:57-59 （required=true のとき NotBlank を追加）\nsrc/Eccube/Form/Type/AddressType.php:50-60 （required=true のとき addr01/addr02 に NotBlank を追加）\nsrc/Eccube/Resource/template/admin/Setting/Shop/shop_master.twig:88-89 （住所の見出しに必須バッジを表示）\n\n▼備考\nEC-CUBE標準の ShopMasterType では postal_code / address は required=false（任意）であり、設計書の必須列「-」と一致する。本フォークで required=true に変更されている点が乖離。"
+  },
+  {
+   "issueKey": "ECCUBE_HARERUYA-2138",
+   "summary": "【実装乖離】基本情報設定_基本設定(旧ショップマスター)_基本設定(旧ショップマスター)にて、設計で任意項目とされている「店名(英語表記)」が必須入力になっている",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "中",
+   "description": "# 基本情報【必須】\n分類：基本情報設定\n機能：基本設定(旧ショップマスター)\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】基本情報設定_基本設定(旧ショップマスター)_基本設定(旧ショップマスター)にて、設計で任意項目とされている「店名(英語表記)」が必須入力になっている\n設計書：0209_基本設計仕様書(基本情報設定).xlsx\n\n# 期待される挙動【必須】\n- 基本設定(旧ショップマスター)画面の識別ID 1-5「店名(英語表記)」は、書式が全角・半角で、必須欄が「-」（＝任意入力）である。\n- 店名(英語表記)を未入力のままでも基本設定を登録できる。\n\n# 現在の挙動【必須】\n- ShopMasterType では shop_name_eng が 'required' => true かつ NotBlank 制約付きで定義されているため、未入力のまま登録するとバリデーションエラーになる。\n- shop_master.twig でも「店名(英語表記)」の見出しに必須バッジが表示されており、画面上も必須項目として扱われている。\n- 併せて Length の最大値が eccube_mtext_len(=200) で設定されている一方、dtb_base_info.shop_name_eng のカラム長は 255 であり、バリデーション上限とDB定義が一致していない。\n\n# 補足情報【任意】\n▼設計書該当箇所\nM10_base_info_setting_basedesign.md:39 の逐語引用: 「1-5 店名(英語表記) 全角・半角 - - - -」（必須列が「-」＝任意、最大値列も「-」）\nM10_base_info_setting_basedesign.md:21-23 の逐語引用: 「* カスタマイズ要件\\nなし\\n* カスタマイズ要件に記載の内容以外は現行踏襲とする。」\n\n▼実装該当箇所\nsrc/Eccube/Form/Type/Admin/ShopMasterType.php:75-87 （shop_name_eng に required=true と NotBlank、Length max=eccube_mtext_len を設定）\nsrc/Eccube/Resource/template/admin/Setting/Shop/shop_master.twig:78-79 （店名(英語表記)の見出しに必須バッジを表示）\nsrc/Eccube/Entity/BaseInfo.php:93-94 （shop_name_eng カラムは length 255）\napp/config/eccube/packages/eccube.yaml:118 （eccube_mtext_len: 200）\n\n▼備考\n主たる乖離は必須／任意の相違。設計の最大値列は「-」（指定なし）のため 200 という上限自体は設計違反とは断定できないが、DBカラム長255とバリデーション200が不整合である点は付随課題として記載した。"
+  },
+  {
+   "issueKey": "ECCUBE_HARERUYA-2140",
+   "summary": "【実装乖離】基本情報設定_基本設定(旧ショップマスター)_基本設定(旧ショップマスター)にて、設計で任意項目とされている「電話番号」が必須入力になっている",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "中",
+   "description": "# 基本情報【必須】\n分類：基本情報設定\n機能：基本設定(旧ショップマスター)\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】基本情報設定_基本設定(旧ショップマスター)_基本設定(旧ショップマスター)にて、設計で任意項目とされている「電話番号」が必須入力になっている\n設計書：0209_基本設計仕様書(基本情報設定).xlsx\n\n# 期待される挙動【必須】\n- 基本設定(旧ショップマスター)画面の識別ID 1-7「電話番号」は、書式が全角・半角で、必須欄が「-」（＝任意入力）である。\n- 電話番号を未入力のままでも基本設定を登録できる。\n\n# 現在の挙動【必須】\n- ShopMasterType では phone_number（PhoneNumberType）が 'required' => true で定義されている。\n- PhoneNumberType は required=true のとき NotBlank 制約を自動付与するため、電話番号が未入力だとバリデーションエラーになる。\n- shop_master.twig でも「電話番号」の見出しに必須バッジが表示されており、画面上も必須項目として扱われている。\n- 最大長は Length(max: eccube_tel_len_max=14) で、dtb_base_info.phone_number の桁数 14 と一致しており、桁数面の乖離はない。\n\n# 補足情報【任意】\n▼設計書該当箇所\nM10_base_info_setting_basedesign.md:41 の逐語引用: 「1-7 電話番号 全角・半角 - - - -」（必須列が「-」＝任意）\nM10_base_info_setting_basedesign.md:21-23 の逐語引用: 「* カスタマイズ要件\\nなし\\n* カスタマイズ要件に記載の内容以外は現行踏襲とする。」\n\n▼実装該当箇所\nsrc/Eccube/Form/Type/Admin/ShopMasterType.php:110-112 （phone_number を required=true で追加）\nsrc/Eccube/Form/Type/PhoneNumberType.php:58-60 （required=true のとき NotBlank を追加）\nsrc/Eccube/Resource/template/admin/Setting/Shop/shop_master.twig:128-129 （電話番号の見出しに必須バッジを表示）\nsrc/Eccube/Entity/BaseInfo.php:69-70 （phone_number カラムは length 14）\n\n▼備考\nEC-CUBE標準の ShopMasterType では phone_number は required=false（任意）。桁数（14桁）は設計の最大値列「-」に反しないため、乖離は必須／任意の相違のみ。"
+  },
+  {
+   "issueKey": "ECCUBE_HARERUYA-2175",
+   "summary": "【実装乖離】基本情報設定_基本設定(旧ショップマスター)_基本設定(旧ショップマスター)の「商品ごとの送料設定を有効にする」が、設計・現行のラジオボタン(無効／有効)ではなくトグルスイッチ(チェックボックス)で実装されている",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "中",
+   "description": "# 基本情報【必須】\n分類：基本情報設定\n機能：基本設定(旧ショップマスター)\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】基本情報設定_基本設定(旧ショップマスター)_基本設定(旧ショップマスター)の「商品ごとの送料設定を有効にする」が、設計・現行のラジオボタン(無効／有効)ではなくトグルスイッチ(チェックボックス)で実装されている\n設計書：0209_基本設計仕様書(基本情報設定).xlsx\n\n# 期待される挙動【必須】\n- 基本設定(旧ショップマスター)の送料設定に「商品ごとの送料設定を有効にする」を単一選択(ラジオボタン)として配置すること（設計 M10-01 識別ID:2-3、選択肢: 無効／有効、初期値: 無効）。\n- M10-01 はカスタマイズ要件「なし」・「カスタマイズ要件に記載の内容以外は現行踏襲とする」と定めており、現行(pf-eccube3)は expanded=true の choice（無効／有効の2ラジオボタン）で実装されている。\n\n# 現在の挙動【必須】\n- ShopMasterType では option_product_delivery_fee が ToggleSwitchType で追加されており、ToggleSwitchType の親型は CheckboxType である。\n- 描画される HTML は toggle_switch_widget（input type=\"checkbox\" 1個 + on/off ラベルをJSで切り替えるトグルスイッチ）であり、無効／有効の2つのラジオボタンとしては描画されない。\n- 初期値は Entity の DB既定値・プロパティ初期値ともに false（無効）、マイグレーションの投入値も全店舗 '0'（無効）であり、初期値「無効」の要件は満たしている。乖離は画面部品の種類のみである。\n- CSS/JS・別Twig・Form拡張・Controller・EventListener を確認したが、当該部品をラジオボタンへ差し替える処理は存在しない。対象ファイルに 2026-07-08 以降の解消コミットも無い。\n\n# 補足情報【任意】\n▼設計書該当箇所\n.cursor/docs/MDfile/M10_base_info_setting_basedesign.md:53（M10-01 識別ID:2-3「商品ごとの送料設定を有効にする」単一選択(ラジオボタン) 初期値:無効 選択肢:無効　有効）\n.cursor/docs/MDfile/M10_base_info_setting_basedesign.md:19-21（カスタマイズ要件 なし／カスタマイズ要件に記載の内容以外は現行踏襲とする）\n\n▼実装該当箇所\nsrc/Eccube/Form/Type/Admin/ShopMasterType.php:258（->add('option_product_delivery_fee', ToggleSwitchType::class)）\nsrc/Eccube/Form/Type/ToggleSwitchType.php:52（getParent() は CheckboxType::class）\nsrc/Eccube/Resource/template/admin/Form/bootstrap_4_horizontal_layout.html.twig:12-25（toggle_switch_widget。input type=\"checkbox\" 1個 + JSでon/offラベル切替）\nsrc/Eccube/Resource/template/admin/Setting/Shop/shop_master.twig:330（送料設定カード内で form.option_product_delivery_fee を描画）\nsrc/Eccube/Entity/BaseInfo.php:123-124（DB既定値・プロパティ初期値ともに false ＝無効。初期値は設計どおり）\napp/DoctrineMigrations/Version20251127154224.php:235（投入値 'option_product_delivery_fee' => '0' ＝無効）\n/home/y-saito/Developments/pf-eccube3/src/Eccube/Form/Type/Admin/ShopMasterType.php:178-186（現行は choice + expanded=true + multiple=false ＝ 無効／有効の2ラジオボタン）\n\n▼AIレビューで判定が割れた理由\nClaude は「実装済み」、codex は「乖離あり」と判定し、第三者による再検証で codex の判定を採用した。\n実装事実（src/Eccube/Form/Type/Admin/ShopMasterType.php:258 が ToggleSwitchType、src/Eccube/Form/Type/ToggleSwitchType.php:52 の親型が CheckboxType、初期値は false）については両者の読みが完全に一致している。割れた"
+  },
+  {
+   "issueKey": "ECCUBE_HARERUYA-2176",
+   "summary": "【実装乖離】基本情報設定_基本設定(旧ショップマスター)_基本設定(旧ショップマスター)の「複数配送を有効にする」が、設計・現行のラジオボタン(無効／有効)ではなくトグルスイッチ(チェックボックス)で実装されている",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "中",
+   "description": "# 基本情報【必須】\n分類：基本情報設定\n機能：基本設定(旧ショップマスター)\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】基本情報設定_基本設定(旧ショップマスター)_基本設定(旧ショップマスター)の「複数配送を有効にする」が、設計・現行のラジオボタン(無効／有効)ではなくトグルスイッチ(チェックボックス)で実装されている\n設計書：0209_基本設計仕様書(基本情報設定).xlsx\n\n# 期待される挙動【必須】\n- 基本設定(旧ショップマスター)の送料設定に「複数配送を有効にする」を単一選択(ラジオボタン)として配置すること（設計 M10-01 識別ID:2-4、選択肢: 無効／有効、初期値: 無効）。\n- M10-01 はカスタマイズ要件「なし」・現行踏襲であり、現行(pf-eccube3)は expanded=true の choice（無効／有効の2ラジオボタン）で実装されている。\n\n# 現在の挙動【必須】\n- ShopMasterType では option_multiple_shipping が ToggleSwitchType（親型 CheckboxType）で追加されており、input type=\"checkbox\" のトグルスイッチとして描画される。無効／有効の2ラジオボタンにはならない。\n- 初期値は Entity のDB既定値・プロパティ初期値ともに false（無効）で、設計の初期値「無効」の要件は満たしている。乖離は画面部品の種類のみである。\n- 01-6（商品ごとの送料設定を有効にする）とまったく同じ事象で、同じ送料設定カード内の隣接項目である。\n- 対象ファイルに 2026-07-08 以降の解消コミットは無い。\n\n# 補足情報【任意】\n▼設計書該当箇所\n.cursor/docs/MDfile/M10_base_info_setting_basedesign.md:54（M10-01 識別ID:2-4「複数配送を有効にする」単一選択(ラジオボタン) 初期値:無効 選択肢:無効　有効）\n.cursor/docs/MDfile/M10_base_info_setting_basedesign.md:19-21（カスタマイズ要件 なし／カスタマイズ要件に記載の内容以外は現行踏襲とする）\n\n▼実装該当箇所\nsrc/Eccube/Form/Type/Admin/ShopMasterType.php:259（->add('option_multiple_shipping', ToggleSwitchType::class)）\nsrc/Eccube/Form/Type/ToggleSwitchType.php:52（getParent() は CheckboxType::class）\nsrc/Eccube/Resource/template/admin/Form/bootstrap_4_horizontal_layout.html.twig:12-25（toggle_switch_widget。input type=\"checkbox\"）\nsrc/Eccube/Resource/template/admin/Setting/Shop/shop_master.twig:339（送料設定カード内で form.option_multiple_shipping を描画）\nsrc/Eccube/Entity/BaseInfo.php:1623-1624（DB既定値・プロパティ初期値ともに false ＝無効。初期値は設計どおり）\n/home/y-saito/Developments/pf-eccube3/src/Eccube/Form/Type/Admin/ShopMasterType.php:187-195（現行は choice + expanded=true + multiple=false ＝ 無効／有効の2ラジオボタン）\n\n▼AIレビューで判定が割れた理由\nClaude は「実装済み」、codex は「乖離あり」と判定し、第三者による再検証で codex の判定を採用した。\n01-6 と同一構造の判定割れ。実装事実（src/Eccube/Form/Type/Admin/ShopMasterType.php:259 の ToggleSwitchType、src/Eccube/Form/Type/ToggleSwitchType.php:52 の親型 CheckboxType、src/Eccube/Entity/BaseInfo.php:1623-1624 の初期値 false）は両者とも正しく読んでいる。\nClaude は「UI部品がラジオボタンでない点のみ表記差だが、EC-CUBE標準UI（現行踏襲）であるため乖離とはしない」と結論したが、この『現行踏襲』の前提が事実誤認である。現行 /home/y-saito/Developments/pf-eccube3/src/Eccube/Form/Type/Admin/ShopMasterType.php:187-195 は `'choice'` + `'expanded' => true` のラジオボタンであり、トグルスイッチではない。設計 .cursor"
+  },
+  {
+   "issueKey": "ECCUBE_HARERUYA-2164",
+   "summary": "【実装乖離】基本情報設定_店舗登録_店舗登録(M10-15)にて、住所(英語表記)の最大文字数が512文字ではなく500文字であり、入力可能文字も半角英数・スペース以外を許容している",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "中",
+   "description": "# 基本情報【必須】\n分類：基本情報設定\n機能：店舗登録\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】基本情報設定_店舗登録_店舗登録(M10-15)にて、住所(英語表記)の最大文字数が512文字ではなく500文字であり、入力可能文字も半角英数・スペース以外を許容している\n設計書：0209_基本設計仕様書(基本情報設定).xlsx\n\n# 期待される挙動【必須】\n- 店舗登録画面の識別ID:1-11「住所(英語表記)」は半角英数とスペースが入力可能で、最大512文字であること（必須ではない）。\n\n# 現在の挙動【必須】\n- MallTenantShopType の address_en は Length(max: eccube_sltext_len) を設定しており、eccube_sltext_len は 500 のため、設計の512文字と一致しない（DBカラムも500文字）。\n- Regex は '/^[[:graph:][:space:]]+$/i' であり、半角英数・スペースに限らず記号も許容する。\n- required => false で NotBlank もないため、必須でない点は設計どおりである。\n\n# 補足情報【任意】\n▼設計書該当箇所\nM10_base_info_setting_basedesign.md:450 の逐語引用「1-11 住所(英語表記) 半角英数、スペース - 512文字 - 現行支店システムに準拠」\n\n▼実装該当箇所\nsrc/Eccube/Form/Type/Admin/Enterprise/MallTenantShopType.php:151 （address_en の定義）\nsrc/Eccube/Form/Type/Admin/Enterprise/MallTenantShopType.php:155 （Length max に eccube_sltext_len を指定）\nsrc/Eccube/Form/Type/Admin/Enterprise/MallTenantShopType.php:158 （graph+space の Regex）\napp/config/eccube/packages/eccube.yaml:138 （eccube_sltext_len: 500）\nsrc/Eccube/Entity/BaseInfo.php:1133 （address_en の実カラムは length: 500）\n\n▼備考\n設計の512文字を担保するにはフォームのLength上限とDBカラム長の双方を見直す必要がある。書式面（半角英数・スペースのみ）も現行のRegexでは担保できていない。"
+  },
+  {
+   "issueKey": "ECCUBE_HARERUYA-2163",
+   "summary": "【実装乖離】基本情報設定_店舗登録_店舗登録(M10-15)にて、住所の最大文字数が設計の32文字ではなく90文字になっている",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "中",
+   "description": "# 基本情報【必須】\n分類：基本情報設定\n機能：店舗登録\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】基本情報設定_店舗登録_店舗登録(M10-15)にて、住所の最大文字数が設計の32文字ではなく90文字になっている\n設計書：0209_基本設計仕様書(基本情報設定).xlsx\n\n# 期待される挙動【必須】\n- 店舗登録画面の識別ID:1-10「住所」は全角・半角入力の必須項目で、最大32文字であること。\n\n# 現在の挙動【必須】\n- MallTenantShopType の address（AddressType）には Length(max: eccube_address1_len) が指定されており、eccube_address1_len は 90 のため、設計の32文字と一致しない。\n- AddressType 側の既定でも addr01 は Length(max: eccube_address1_len = 90)、addr02 は Length(max: eccube_address2_len = 90) であり、いずれも32文字の制限は存在しない。\n- required => true により addr01/addr02 に NotBlank が付与されるため、必須の要件は満たしている。\n\n# 補足情報【任意】\n▼設計書該当箇所\nM10_base_info_setting_basedesign.md:449 の逐語引用「1-10 住所 全角・半角 ○ 32文字 - 現行支店システムに準拠」\n\n▼実装該当箇所\nsrc/Eccube/Form/Type/Admin/Enterprise/MallTenantShopType.php:138 （address フィールドの定義）\nsrc/Eccube/Form/Type/Admin/Enterprise/MallTenantShopType.php:143 （Length max に eccube_address1_len を指定）\nsrc/Eccube/Form/Type/AddressType.php:110 （addr01 の既定 Length max: eccube_address1_len）\napp/config/eccube/packages/eccube.yaml:174 （eccube_address1_len: 90）\nsrc/Eccube/Entity/BaseInfo.php:63 （addr01 の実カラムは length: 255）\n\n▼備考\n設計の「32文字」は住所欄としては極端に短く、設計書側の記載誤りの可能性もある（現行支店システム準拠との注記あり）。ただし現HEADの実効上限は90文字であり、設計値とは一致しない。必須制御は満たしている。"
+  },
+  {
+   "issueKey": "ECCUBE_HARERUYA-2166",
+   "summary": "【実装乖離】基本情報設定_店舗登録_店舗登録(M10-15)にて、取り扱い商品説明文の最大文字数が設計の4000文字ではなく3000文字になっている",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "中",
+   "description": "# 基本情報【必須】\n分類：基本情報設定\n機能：店舗登録\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】基本情報設定_店舗登録_店舗登録(M10-15)にて、取り扱い商品説明文の最大文字数が設計の4000文字ではなく3000文字になっている\n設計書：0209_基本設計仕様書(基本情報設定).xlsx\n\n# 期待される挙動【必須】\n- 店舗登録画面の識別ID:1-28「取り扱い商品説明文」は全角・半角入力で、最大4000文字であること。\n\n# 現在の挙動【必須】\n- MallTenantShopType の good_traded は Length(max: eccube_ltext_len) を設定しており、eccube_ltext_len は 3000 のため、設計の4000文字と一致しない。\n- BaseInfo の good_traded カラムは length: 4000 で定義されており、DB上は4000文字まで保存可能であるにもかかわらず、フォーム側で3000文字に制限されている。\n\n# 補足情報【任意】\n▼設計書該当箇所\nM10_base_info_setting_basedesign.md:467 の逐語引用「1-28 取り扱い商品説明文 全角・半角 - 4000文字 - EC-CUBEエンタプライズの標準に準拠」\n\n▼実装該当箇所\nsrc/Eccube/Form/Type/Admin/Enterprise/MallTenantShopType.php:283 （good_traded の定義）\nsrc/Eccube/Form/Type/Admin/Enterprise/MallTenantShopType.php:287 （Length max に eccube_ltext_len を指定）\napp/config/eccube/packages/eccube.yaml:114 （eccube_ltext_len: 3000）\nsrc/Eccube/Entity/BaseInfo.php:102 （good_traded の実カラムは length: 4000）\n\n▼備考\nDBカラムは4000文字を許容しているため、フォームの Length を4000に合わせれば設計を満たせる。"
+  },
+  {
+   "issueKey": "ECCUBE_HARERUYA-2158",
+   "summary": "【実装乖離】基本情報設定_店舗登録_店舗登録(M10-15)にて、店名(英語表記)の最大文字数が255文字ではなく200文字であり、入力可能文字も半角英字・スペース以外を許容している",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "中",
+   "description": "# 基本情報【必須】\n分類：基本情報設定\n機能：店舗登録\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】基本情報設定_店舗登録_店舗登録(M10-15)にて、店名(英語表記)の最大文字数が255文字ではなく200文字であり、入力可能文字も半角英字・スペース以外を許容している\n設計書：0209_基本設計仕様書(基本情報設定).xlsx\n\n# 期待される挙動【必須】\n- 店舗登録画面の識別ID:1-5「店名(英語表記)」は半角英字とスペースのみ入力可能で、必須項目かつ最大255文字であること。\n\n# 現在の挙動【必須】\n- MallTenantShopType の shop_name_eng は Length(max: eccube_mtext_len) を設定しており、eccube_mtext_len は 200 のため、設計の255文字と一致しない（DBカラムは255文字）。\n- 入力可能文字の Regex は '/^[[:graph:][:space:]]+$/i' であり、半角英字・スペースだけでなく数字や記号も許容してしまう。\n- 'required' => false であるが constraints に NotBlank があるため、必須の要件自体は満たしている。\n\n# 補足情報【任意】\n▼設計書該当箇所\nM10_base_info_setting_basedesign.md:442 の逐語引用「1-5 店名(英語表記) 半角英字、スペース ○ 255文字 - 現行支店システムに準拠」\n\n▼実装該当箇所\nsrc/Eccube/Form/Type/Admin/Enterprise/MallTenantShopType.php:81 （shop_name_eng の定義）\nsrc/Eccube/Form/Type/Admin/Enterprise/MallTenantShopType.php:86 （Length max に eccube_mtext_len を指定）\nsrc/Eccube/Form/Type/Admin/Enterprise/MallTenantShopType.php:89 （graph+space の Regex）\napp/config/eccube/packages/eccube.yaml:118 （eccube_mtext_len: 200）\nsrc/Eccube/Entity/BaseInfo.php:93 （shop_name_eng カラムは length: 255）\n\n▼備考\n必須(NotBlank)は満たしている。乖離は「最大文字数 200 ≠ 255」と「半角英字・スペース以外（数字・記号）も入力可能」の2点。"
+  },
+  {
+   "issueKey": "ECCUBE_HARERUYA-2167",
+   "summary": "【実装乖離】基本情報設定_店舗登録_店舗登録(M10-15)にて、店舗からのメッセージの最大文字数が設計の4000文字ではなく3000文字になっている",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "中",
+   "description": "# 基本情報【必須】\n分類：基本情報設定\n機能：店舗登録\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】基本情報設定_店舗登録_店舗登録(M10-15)にて、店舗からのメッセージの最大文字数が設計の4000文字ではなく3000文字になっている\n設計書：0209_基本設計仕様書(基本情報設定).xlsx\n\n# 期待される挙動【必須】\n- 店舗登録画面の識別ID:1-29「店舗からのメッセージ」は全角・半角入力で、最大4000文字であること。\n\n# 現在の挙動【必須】\n- MallTenantShopType の message は Length(max: eccube_ltext_len) を設定しており、eccube_ltext_len は 3000 のため、設計の4000文字と一致しない。\n- BaseInfo の message カラムは length: 4000 で定義されており、DB上は4000文字まで保存可能であるにもかかわらず、フォーム側で3000文字に制限されている。\n\n# 補足情報【任意】\n▼設計書該当箇所\nM10_base_info_setting_basedesign.md:468 の逐語引用「1-29 店舗からのメッセージ 全角・半角 - 4000文字 - EC-CUBEエンタプライズの標準に準拠」\n\n▼実装該当箇所\nsrc/Eccube/Form/Type/Admin/Enterprise/MallTenantShopType.php:291 （message の定義）\nsrc/Eccube/Form/Type/Admin/Enterprise/MallTenantShopType.php:295 （Length max に eccube_ltext_len を指定）\napp/config/eccube/packages/eccube.yaml:114 （eccube_ltext_len: 3000）\nsrc/Eccube/Entity/BaseInfo.php:105 （message の実カラムは length: 4000）\n\n▼備考\nuid 07-2（取り扱い商品説明文）と同一原因（eccube_ltext_len=3000 の流用）。"
+  },
+  {
+   "issueKey": "ECCUBE_HARERUYA-2160",
+   "summary": "【実装乖離】基本情報設定_店舗登録_店舗登録(M10-15)にて、店舗種別ラジオの選択肢の並び順が設計（支店→本店）と逆になっている",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "中",
+   "description": "# 基本情報【必須】\n分類：基本情報設定\n機能：店舗登録\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】基本情報設定_店舗登録_店舗登録(M10-15)にて、店舗種別ラジオの選択肢の並び順が設計（支店→本店）と逆になっている\n設計書：0209_基本設計仕様書(基本情報設定).xlsx\n\n# 期待される挙動【必須】\n- 店舗登録画面の識別ID:1-7「店舗種別」はラジオボタンで、初期値は支店、選択肢は「支店 本店」の順であること。\n\n# 現在の挙動【必須】\n- 初期値は BaseInfo エンティティの isMainShop の既定値 false（= BaseInfo::SHOP_BRANCH = 支店）であり、設計どおりである。\n- MallTenantShopType の is_main_shop の choices は「本店(SHOP_MAIN)」「支店(SHOP_BRANCH)」の順で定義されており、テンプレートは form_widget でそのまま描画するため、画面上のラジオも本店→支店の順に表示され、設計の列挙順と逆になる。\n\n# 補足情報【任意】\n▼設計書該当箇所\nM10_base_info_setting_basedesign.md:444 の逐語引用「1-7 店舗種別 ラジオボタン - - 支店 選択肢:支店 本店」\n\n▼実装該当箇所\nsrc/Eccube/Form/Type/Admin/Enterprise/MallTenantShopType.php:108 （is_main_shop の ChoiceType 定義）\nsrc/Eccube/Form/Type/Admin/Enterprise/MallTenantShopType.php:112 （choices が本店→支店の順）\nsrc/Eccube/Entity/BaseInfo.php:1534 （isMainShop の既定値 false = 支店。初期値は設計どおり）\nsrc/Eccube/Resource/template/admin/mall/tenant/detail.twig:325 （form_widget により定義順で描画）\n\n▼備考\n初期値（支店）および選択肢の内容（支店／本店）は設計と一致しており、乖離は画面上の表示順のみ。設計書の「選択肢:支店 本店」を並び順の指定と解釈した場合の乖離であり、重要度は低い。"
+  },
+  {
+   "issueKey": "ECCUBE_HARERUYA-2159",
+   "summary": "【実装乖離】基本情報設定_店舗登録_店舗登録(M10-15)にて、支店URLの最大文字数が255文字ではなく32文字であり、スペースが入力できない",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "中",
+   "description": "# 基本情報【必須】\n分類：基本情報設定\n機能：店舗登録\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】基本情報設定_店舗登録_店舗登録(M10-15)にて、支店URLの最大文字数が255文字ではなく32文字であり、スペースが入力できない\n設計書：0209_基本設計仕様書(基本情報設定).xlsx\n\n# 期待される挙動【必須】\n- 店舗登録画面の識別ID:1-6「支店URL」は半角英数とスペースが入力可能で、必須項目かつ最大255文字であること。\n\n# 現在の挙動【必須】\n- MallTenantShopType の html_class_name は Length(max: eccube_branch_url_max_len) を設定しており、eccube_branch_url_max_len は 32 のため、設計の255文字と大きく異なる。\n- Regex は '/^[A-Za-z0-9]+$/' であり、半角英数のみでスペースを許容しない。\n- NotBlank により必須の要件は満たしている。\n\n# 補足情報【任意】\n▼設計書該当箇所\nM10_base_info_setting_basedesign.md:443 の逐語引用「1-6 支店URL 半角英数、スペース ○ 255文字 - 現行支店システムのHTMLのclass属性名に準拠」\n\n▼実装該当箇所\nsrc/Eccube/Form/Type/Admin/Enterprise/MallTenantShopType.php:94 （html_class_name の定義）\nsrc/Eccube/Form/Type/Admin/Enterprise/MallTenantShopType.php:100 （Length max に eccube_branch_url_max_len を指定）\nsrc/Eccube/Form/Type/Admin/Enterprise/MallTenantShopType.php:103 （スペース不可の Regex）\napp/config/eccube/packages/eccube.yaml:200 （eccube_branch_url_max_len: 32）\n\n▼備考\n支店URLはHTMLのclass属性名として使う値であるため、実装側がスペースを禁止し32文字に制限しているのは合理的とも読める。ただし設計書の記載（半角英数・スペース／255文字）とは一致しない。"
+  }
+ ]
+}

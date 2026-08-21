@@ -1,0 +1,165 @@
+{
+  "packetId": "rest_33",
+  "results": [
+    {
+      "rowId": 923,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:2094 に「カスタマイズ要件に記載の内容以外は現行踏襲とする」とあるが、Excel正本のM12-02部分（同:2045-2118）にはファイル名や `report_summary_` の具体記述は存在しない。`report_summary_` はリバース詳細設計領域の同:2174「ファイル名は report_summary_ に出力日時（YmdHis）を付けた .csv」にのみ現れる。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Analysis/SummaryController.php:133-136 に `$filename = 'report_summary_' . $now->format('YmdHis') . '.csv';`、`Content-Disposition ... $filename` とあり、期待値は旧実装のファイル名そのものに一致する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Csv/Exporter/SummaryCsvExporterService.php:128-130 は `$filename = sprintf('summary_%s_%s.csv', $summaryType, (new \\DateTime())->format('YmdHis'));` としており、`report_summary_` ではない。",
+      "note": "Excel正本に具体的なファイル名はないため、旧実装由来の移植漏れと判定した。"
+    },
+    {
+      "rowId": 924,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:2094 のExcel正本は「カスタマイズ要件に記載の内容以外は現行踏襲とする」とするだけで、M12-02正本範囲（同:2045-2118）に検索条件セッションが空の場合の処理はない。「空の検索条件で集計し、出力する」はリバース詳細設計領域の同:2190 にのみ存在する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Analysis/SummaryController.php:103-110 は `$viewData = $session->get(self::VIEW_KEY, []);`、`FormUtil::submitAndGetData($searchForm, $viewData)` の後、空でも `getOrderSummary(...)` を実行しており、エラー終了しない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Analysis/SummaryController.php:163-168 は `if (!is_array($viewData))` の場合に `addError('検索条件がありません。先に検索を実行してください。', 'admin')` して `admin_summary_daily` へリダイレクトする。",
+      "note": "リバース詳細設計内には同HTML:2162のエラーメッセージ記述との不整合もあるが、旧実装コードは空配列を既定値として集計を続行するため、実コードを優先した。"
+    },
+    {
+      "rowId": 925,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:2113 のExcel正本セル（`data-excel-ref=...!E48`）に「最終行には『総合計』を追加。識別ID3～12各列のそれぞれの総合計を出力」と明記されている。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Analysis/SummaryController.php:118-129 は `foreach ($result['result'] as $data)` で明細行のみを `fputcsv` しており、旧実装にもCSV総合計行はない。したがってこの期待値の根拠は旧実装ではなくExcel正本である。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Csv/Exporter/SummaryCsvExporterService.php:93-101 は `build(...)` の戻り値から `$summary = $summaryData['summary'];` のみを取り出し、同:106-124 は `foreach ($summary as $row)` の明細行だけを出力している。`$summaryData['total']` は使用していない。",
+      "note": ""
+    },
+    {
+      "rowId": 926,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:2111 のExcel正本セル（`data-excel-ref=...!E46`）に「識別ID 11:『廃棄』を追加。在庫変動区分が『廃棄』となっているものを集計し廃棄コスト合計を出力」と明記されている。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Analysis/SummaryController.php:20-30 の旧実装 `COLUMN_NAMES` は来客数・注文・会員・出荷等で構成され、廃棄コスト列を持たない。期待値は旧実装ではなくExcel正本のカスタマイズ要件である。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Repository/DtbDailySummaryRepository.php:171-183 は `aggregateDisposalQuantityByBaseInfo` で `(0 - COALESCE(SUM(sh.stockChangeQuantity), 0)) AS waste_quantity` を算出する。ec-cube-enterprise/src/Eccube/Service/Admin/Analysis/AnalysisSummaryBuilder.php:101-102 はこれを `'discard_count' => (int) ($raw['waste_count'] ?? 0)` として渡すため、コストではなく数量である。",
+      "note": ""
+    },
+    {
+      "rowId": 927,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:2112 のExcel正本セル（`data-excel-ref=...!E47`）に「識別ID 12:『欠品』を追加。在庫変動区分が『欠品』となっているものを集計しコスト合計を出力」と明記されている。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Analysis/SummaryController.php:20-30 の旧実装 `COLUMN_NAMES` に欠品コスト列はなく、旧実装のCSVも同:118-129で選択列をそのまま出力するだけである。期待値はExcel正本の新規カスタマイズ要件である。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Repository/DtbDailySummaryRepository.php:204-214 は `aggregateShortageQuantityByBaseInfo` で `(0 - COALESCE(SUM(sh.stockChangeQuantity), 0)) AS shortage_quantity` を算出する。ec-cube-enterprise/src/Eccube/Service/Admin/Analysis/AnalysisSummaryBuilder.php:101-102 はこれを `'out_of_stock_count' => (int) ($raw['shortage_count'] ?? 0)` として渡すため、コストではなく数量である。",
+      "note": ""
+    },
+    {
+      "rowId": 928,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:2202-2388 のsheet-8 Excel正本と同:2727-2848のsheet-10 Excel正本に検索POSTのURLは記載されていない。`POST /{admin_route}/analysis/sales/result` はリバース詳細設計領域の同:2888,2897 にのみ存在する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/AnalysisServiceProvider.php:39-41 は `$app->match('/'.$app['config']['admin_route'].'/analysis/sales/result', ...SalesController::search)->bind('admin_sales_result');` を定義し、pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Analysis/sales.twig:45 は `action=\"{{ path('admin_sales_result') }}\"` としている。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Analysis/SalesAnalysisController.php:72-74 は `path: '/%eccube_admin_route%/analysis/sales/search'`、`name: 'admin_analysis_sales_search'` を定義し、ec-cube-enterprise/src/Eccube/Resource/template/admin/Analysis/sales.twig:105 は `action=\"{{ path('admin_analysis_sales_search') }}\"` としている。`analysis/sales/result` は新実装のsrc/html/app横断検索で0件だった。",
+      "note": "URL契約はExcel正本ではなく旧実装由来。"
+    },
+    {
+      "rowId": 929,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:2780-2784 のExcel正本は「出力結果項目について」「下記の項目を削除」「数量割合」「合計割合」「件数割合」と明記する。指摘の期待値は正本と逆である。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Repository/OrderDetailRepository.php:295-300 は旧実装で `sales_rate`、`total_rate`、`order_rate` を算出し、pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Analysis/sales.twig:211-229 は「数量割合」「合計割合」「件数割合」を表示する。誤った期待値は廃止前の旧実装に由来する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Analysis/sales.twig:268-277 のヘッダはカテゴリ/商品コード/商品名、平均単価、数量、合計、件数のみで、正本が削除指定した割合3列を表示しない。ec-cube-enterprise/src/Eccube/Repository/OrderItemRepository.php:331-344 も合計値のみを組み立て、割合を返さない。",
+      "note": "新実装はExcel正本の削除要件を既に満たす。"
+    },
+    {
+      "rowId": 930,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:2270 のExcel正本は「集計単位の選択肢を商品・カテゴリのみとし、支払方法、購入グループ、都道府県、性別、利用端末、年代(会員)は削除する」と明記し、同:2310 の項目定義も選択肢を「商品,カテゴリ」とする。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/Analysis/SalesType.php:21-30 の旧実装 `SUMMARY_TYPE` は商品・カテゴリに加えて支払方法、購入グループ、都道府県、性別、利用端末、年代を持つ。指摘の期待値はExcelで廃止された旧実装に由来する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/Analysis/SalesType.php:50-53 の `SUMMARY_TYPE` は `'product_id'` と `'class_category_name'` の2択のみ。ec-cube-enterprise/src/Eccube/Repository/OrderItemRepository.php:214-240 もカテゴリか商品の2分岐であり、Excel正本どおりである。",
+      "note": "新実装はExcel正本の集計単位削減を既に満たす。"
+    },
+    {
+      "rowId": 931,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:2277-2282 のExcel正本は「下記の項目を削除」として「生年月日」「性別」「都道府県」「利用端末」を列挙する。指摘が要求する4項目は正本では削除対象である。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/Analysis/SalesType.php:100-127 は旧フォームに `device_type`、`birth_from`、`birth_to` を定義し、pf-eccube3/app/Plugin/HareruyaEc/Repository/OrderDetailRepository.php:159-203 は `pref`、`sex`、誕生日、利用端末の条件を実装している。期待値は廃止前の旧実装に由来する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/Analysis/SalesType.php:159-218 はカテゴリ、状態、売上分析タグ、カードセット、平均単価、数量、通販・店舗を定義する一方、削除対象の `pref`、`sex`、`birth_from/to`、`device_type` は存在しない（確認範囲: 同ファイル全体および sales.twig）。正本の削除指定を満たす。",
+      "note": "新実装はExcel正本の検索項目削除を既に満たす。"
+    },
+    {
+      "rowId": 932,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:2289-2290 のExcel正本は「集計日(To)について、デフォルトの値を当月末日に設定」「例 2025-7-31 23:59:59」と明記するが、期間上限の比較演算子はsheet-8〜10のExcel正本（同:2202-2388,2495-2620,2727-2848）に記載がない。「集計日To未満」はリバース詳細設計領域の同:2901 にのみある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/Analysis/SalesType.php:65-92 は既定値用の `$toDate->modify('+ 1 month')` を設定し、pf-eccube3/app/Plugin/HareruyaEc/Repository/OrderDetailRepository.php:145-149 は `andWhere(\"{$searchDate} < :{$dateType}_to\")` と半開区間で絞り込む。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/Analysis/SalesType.php:106-112 は `data => new \\DateTime('last day of this month 23:59:59')` でExcel正本の既定値を満たす。一方、ec-cube-enterprise/src/Eccube/Repository/OrderItemRepository.php:264-267 は `o.{$dateType} <= :summaryDateTo` として旧実装の未満比較を移植していない。",
+      "note": "指摘のうち既定値差分は誤りだが、期間上限の半開区間は旧実装に根拠があり、新実装に差が残るため全体をLEGACY_BACKEDとした。"
+    },
+    {
+      "rowId": 933,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:2202-2388 のsheet-8 Excel正本には検索POST URLの記載がない。`POST /{admin_route}/analysis/sales/result` はリバース詳細設計領域の同:2888,2897 にのみ存在する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/AnalysisServiceProvider.php:39-41 は `/analysis/sales/result` を `SalesController::search` に割り当て、pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Analysis/sales.twig:45 はフォームactionに `path('admin_sales_result')` を指定する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Analysis/SalesAnalysisController.php:72-74 は検索POSTを `/analysis/sales/search` として公開し、ec-cube-enterprise/src/Eccube/Resource/template/admin/Analysis/sales.twig:105 も `path('admin_analysis_sales_search')` へ送信する。",
+      "note": "URL契約はExcel正本ではなく旧実装由来。"
+    },
+    {
+      "rowId": 935,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:2549-2553 のExcel正本は「下記の項目を削除」として「数量割合」「合計割合」「件数割合」を列挙する。割合表示を要求する指摘は正本と逆である。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Repository/OrderDetailRepository.php:295-300 は `sales_rate`、`total_rate`、`order_rate` を算出し、pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Analysis/sales.twig:211-229 は割合3列を表示する。期待値は廃止前の旧実装に由来する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Analysis/sales.twig:268-292 は平均単価・数量・合計・件数だけを表示し、割合3列を持たない。ec-cube-enterprise/src/Eccube/Repository/OrderItemRepository.php:331-344 も割合を算出しないため、Excel正本の削除要件を満たす。",
+      "note": "新実装はExcel正本どおり。"
+    },
+    {
+      "rowId": 936,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:2202-2388 のsheet-8 Excel正本には期間上限を未満とする記述はない。「集計日Fromから集計日To未満まで」はリバース詳細設計領域の同:2901 にのみ存在する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Repository/OrderDetailRepository.php:137-149 はFromを `>=`、Toを `andWhere(\"{$searchDate} < :{$dateType}_to\")` とし、旧実装が半開区間であることを直接確認できる。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Repository/OrderItemRepository.php:260-267 はFromを `>= :summaryDateFrom`、Toを `<= :summaryDateTo` とし、上限を含める。",
+      "note": "半開区間の要求は旧実装由来。"
+    },
+    {
+      "rowId": 937,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:2202-2388 のsheet-8 Excel正本に初期表示時のセッション破棄処理は記載されていない。同:2271 は「カスタマイズ要件に記載の内容以外は現行踏襲とする」とするのみで、具体的な破棄処理はリバース詳細設計領域の同:2895-2896 にある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Analysis/SalesController.php:25-28 は初期表示 `index()` 冒頭で `$request->getSession()->remove(self::VIEW_KEY);` を実行する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Analysis/SalesAnalysisController.php:47-66 の `index()` はフォーム生成と所属店舗初期値設定のみでセッションを削除しない。同:34,100,129 に `SESSION_KEY` の定義・set・getはあるが、同ファイル全体に `remove/clear/invalidate` は存在しない。",
+      "note": "具体的なセッション破棄は旧実装由来。"
+    },
+    {
+      "rowId": 938,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:2202-2388 のM12-03 Excel正本にはCSV再集計時の表示件数制限に関する記述はない。「CSVは表示件数の上限を適用しない」はリバース詳細設計領域の同:2915 にのみ存在する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Analysis/SalesController.php:97-99 はCSV時に `getQueryBuilderBySearchData($searchData, true)` とし、pf-eccube3/app/Plugin/HareruyaEc/Repository/OrderDetailRepository.php:271-279 は `$isExport` なら制限なしで返し、通常時だけ `$qb->setMaxResults($searchData['limit'])` を適用する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Csv/Exporter/SalesAnalysisCsvExporterService.php:35-39 はCSVでも `getAnalysisSummary($searchData)` をそのまま呼び、ec-cube-enterprise/src/Eccube/Repository/OrderItemRepository.php:326-329 は `page_count` が正数なら常に `$qb->setMaxResults($limit)` を適用する。",
+      "note": "CSV時の件数制限解除は旧実装由来。"
+    },
+    {
+      "rowId": 939,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:2495-2620 のsheet-9 Excel正本には検索POST URLの記載がない。`POST /{admin_route}/analysis/sales/result` はリバース詳細設計領域の同:2660,2669（同じM12-03リバース記述）にのみ存在する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/AnalysisServiceProvider.php:39-41 は `/analysis/sales/result` を `SalesController::search` に割り当て、pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Analysis/sales.twig:45 は `action=\"{{ path('admin_sales_result') }}\"` を使用する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Analysis/SalesAnalysisController.php:72-74 は `/analysis/sales/search`（`admin_analysis_sales_search`）を定義し、ec-cube-enterprise/src/Eccube/Resource/template/admin/Analysis/sales.twig:105 もそのルートへPOSTする。",
+      "note": "URL契約はExcel正本ではなく旧実装由来。"
+    },
+    {
+      "rowId": 940,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:2495-2620 のsheet-9 Excel正本には初期表示時のセッション破棄処理は記載されていない。具体的な「検索条件セッションを破棄する」はリバース詳細設計領域の同:2668 にのみ存在する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Analysis/SalesController.php:25-42 は `index()` 冒頭で `$request->getSession()->remove(self::VIEW_KEY);` を実行し、`'summary' => null` を返す。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Analysis/SalesAnalysisController.php:47-66 は `'searched' => false`、`'summary' => null` を返す点は満たすが、セッション削除を行わない。同:34,100,129 にSESSION_KEYの定義・set・getはあるが、同ファイル全体に削除呼び出しはない。",
+      "note": "指摘のうち集計結果なしは既に満たすが、旧実装にあるセッション破棄は未移植。"
+    },
+    {
+      "rowId": 941,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:2549-2553 のExcel正本は「下記の項目を削除」として「数量割合」「合計割合」「件数割合」を指定する。同:2564-2572 の項目定義も平均単価・数量・合計・件数と各累計のみで、割合列はない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Repository/OrderDetailRepository.php:295-300 は旧実装で3割合を計算し、pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Analysis/sales.twig:211-229 はそれらを表示する。指摘はExcelで廃止された旧挙動を期待値にしている。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Analysis/sales.twig:268-302 は商品コード/商品名、平均単価、数量、合計、件数と合計行のみを表示する。割合列を持たず、Excel正本の削除要件に一致する。",
+      "note": "新実装はExcel正本どおり。"
+    },
+    {
+      "rowId": 942,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:2277-2282 は生年月日・性別・都道府県・利用端末を削除するとし、同:2291,2310 は集計単位を商品・カテゴリのみにして支払方法・購入グループ・都道府県・性別・利用端末・年代を削除すると明記する。指摘の期待値は正本と逆である。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/Analysis/SalesType.php:21-30 は旧実装の8集計単位を定義し、同:100-127 は利用端末・誕生日項目を持つ。pf-eccube3/app/Plugin/HareruyaEc/Repository/OrderDetailRepository.php:94-106,159-203 も旧集計単位および都道府県・性別・誕生日・利用端末の条件を実装する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/Analysis/SalesType.php:50-53 は集計単位を商品・カテゴリの2択とし、同:159-218 の検索項目に削除対象の都道府県・性別・誕生日・利用端末はない。ec-cube-enterprise/src/Eccube/Repository/OrderItemRepository.php:214-240 も商品/カテゴリだけを集計する。",
+      "note": "新実装はExcel正本の削除要件を既に満たす。"
+    },
+    {
+      "rowId": 943,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:2289-2290 のExcel正本はTo既定値を「当月末日」「2025-7-31 23:59:59」とするが、sheet-9正本（同:2495-2620）に期間上限の比較演算子はない。「集計日To未満」はリバース詳細設計領域の同:2673 にのみ存在する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Repository/OrderDetailRepository.php:137-149 はFromを `>=`、Toを `<` とする。pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/Analysis/SalesType.php:65-92 はフォーム既定値として当月初日から1か月後をToに設定する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Repository/OrderItemRepository.php:260-267 はFromを `>=`、Toを `<=` として上限を含める。ec-cube-enterprise/src/Eccube/Form/Type/Admin/Analysis/SalesType.php:106-112 の `last day of this month 23:59:59` はExcel正本の既定値には一致する。",
+      "note": "既定値は正本どおりだが、半開区間の旧挙動が未移植のためLEGACY_BACKED。"
+    }
+  ]
+}

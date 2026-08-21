@@ -1,0 +1,1034 @@
+1	A01-01	実装違	high	設計はスマレジ→ECCUBEのWebhookだけでなく、管理画面操作によるECCUBE→スマレジ在庫反映（API個別/Patch一括）も連携方式として定義する。実装の SmaregiStockApiClient は getStockChange/listStocks/listStockChanges の参照系のみで、在庫相対値更新・一括相対値更新に相当する更新APIメソッドが確認できない。管理画面在庫編集・移動・分割結合でスマレジ在庫を即時/一括反映する設
+2	A01-01	未実装	med	StockApprovalStoreAction は ProductStock 更新と StockHistory/ApprovalList 登録のみ（/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Stock/StockApprovalStoreAction.php:95,105,128）。StockBulkApprovalStoreAction も明細登録と A
+3	A01-01	未実装	med	StockChangeCsvImportHandler は CSV行ごとに DtbStockEditApprovalDetail を作成し、onAfterImport で DtbStockApprovalList を作成する（/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/StockChangeCsvImportHandler.php:8
+4	A01-01	未実装	med	WebhookController は単一の smaregi_webhook ルートで受信し EventService に保存後、SmaregiWebhookEventMessage をdispatchする（/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Smaregi/WebhookController.php:41,92,102）。StockEventDispatc
+5	A01-02	実装違	high	設計は時間幅（X-Y hours、初期値相当として5時間前）を要求しているが、実装は SmaregiStockBackfillCommand の引数が target-date のみで、SmaregiStockBackfillAction は target_date/page/limit だけを listStockChanges に渡している。反証検索として src/Eccube/Command, src/Eccube/Service, src/Eccube
+6	A02-01	実装違	med	設計は jp/en を外部契約としているが、実装は ja/en を受け付ける。/api/popup/product/jp/{productId} は設計上有効な言語指定だが実装では404扱いになる。反証として popup_product_by_product_id、/api/popup/product、getPopupProductByProductId、言語変換、mtb_language を検索したが jp を受け付ける別ルート・別変換は見当たらない。
+7	A02-01	実装違	med	HTTPステータス404と Not Found 文言は実装されているが、レスポンス本文キーが設計の message ではなく errors 配列になっている。反証として NotFoundException、BaseApiException、ProductController の popup 例外処理、Not Found 文字列を検索したが、このAPIの404で {code, message} を返す経路は見当たらない。
+8	A02-01	実装違	med	設計は数値文字列を外部JSON契約としているが、実装は整数型に変換して返す。反証として PopupResponseBuilder、ProductRepository の findPopupProductByProductId、レスポンスフィールド名、price01/price02/weeklySold を検索したが、このAPIで文字列へ整形する別処理は見当たらない。
+9	A02-02	未実装	med	設計は foil_flg と price を外部契約のクエリ条件として定義しているが、Controllerシグネチャと呼び出しに Request/query 取得がなく、Repositoryのメソッド引数・SQLにもクエリ条件が存在しない。別キーワード（foil_flg, price, query->get, findPopupProductByCardId）で再検索しても、A02-02のController/Repository内にクエリ反映実装は見つか
+10	A02-02	実装違	med	設計の失敗レスポンス本文は {code, message} だが、実装のA02-02 Controllerは BaseApiException を {code, errors} へ整形している。NotFoundExceptionも errors 配列を保持する実装であり、messageキーを返す処理はA02-02経路に見つからなかった。
+11	A02-03	実装違	med	設計は本文キーを `message` とするが、実装は `errors` 配列を返す。HTTP 404 と "Not Found" 文言自体は実装済みだが、外部 JSON 契約のキーが異なる。
+12	A02-03	未実装	med	設計で必須の cardId が実装レスポンスに存在しない。一方で設計詳細のA02-03成功レスポンスにない subFileName/code/conditionCode/weeklySold/productUrl/beltUrl が返る。
+13	A02-03	実装違	med	設計は decimal 由来の数値文字列を外部契約としているが、実装は整数型に変換して返す。 / 期待:A02-03 詳細設計の成功レスポンスでは price01, price02, stock は string（Doctrine decimal 値のため数値文字列）で返す。
+14	A02-04	実装違	med	設計は jp/en を想定するが、実装は jp を JP として扱わず EN 扱いになる。また en 以外の任意文字列も EN 扱いになる。反証として popup_product_by_old_product_id、popup_card_by_old_product_id、oldProductId、old_product_id、mtb_language.code を検索し、該当ルートとリポジトリ実装を確認したが jp を JP に変換する実装は見当たらない
+15	A02-04	実装違	med	設計の本文キーは message だが、実装は errors 配列で返す。反証として NotFoundException/BaseApiException、ProductController の旧商品IDルート、'message' と 'errors' の使用箇所を検索し、当該ルートで {code,message} を返す分岐は見当たらない。
+16	A02-04	実装違	med	設計は数値文字列を外部契約としているが、実装は整数型で返す。反証として PopupResponseBuilder、ProductRepository の findPopupProductByOldProductId / WithoutLang、price01/price02/stock/weeklySold のマッピングを確認したが、旧商品IDレスポンスで文字列化する処理は見当たらない。
+17	A02-04	実装違	med	設計のレスポンス項目には foilFlg があるが、旧商品IDルートの実装レスポンスには含まれない。反証として foilFlg、beltUrl、PopupResponseBuilder、findPopupProductByOldProductId を検索し、商品IDルートでは foilFlg を返す実装がある一方、旧商品IDルートでは includeBeltUrl=true により foilFlg が除外されることを確認した。
+18	A02-05	実装違	med	設計HTMLのレスポンスフィールド名は `strageCodeId` だが、実装のJSONキーは `storageCodeId`。`strageCodeId` は src/Eccube と html 内で対象API実装として確認できず、別名検索でもキー変換層は見つからなかった。
+19	A02-05	実装違	med	詳細設計のレスポンス定義およびサンプルは在庫数・販売価格を文字列で示しているが、実装は整数型に変換して返す。対象API用のResponseBuilderや文字列キャストは反証検索でも確認できなかった。
+20	A02-05	実装違	med	設計は日時レスポンスをISO8601と明記しているが、実装はDB値を直接文字列化するだけで、`2026-06-01T10:00:00+09:00` 形式への整形保証がない。別キーワード（ATOM/ISO8601/format('c')/to_char/productClassUpdateDate）でも対象APIの日時整形は確認できなかった。
+21	A05-01	実装違	high	設計はパス /order/print/direct をGET・POST両方に割り当て、GET=GetRequest・POST=SetResponse とする。実装ルートは #[Route(path: '/api/order/prints/direct/{base_info_id}', methods: ['POST'])] で、(a) /api プレフィックス付き・print が prints・末尾に {base_info_id} 必須セグメントを持ちパス
+22	A05-01	未実装	med	設計はスムーズ店頭受取の受注で合計金額欄を文言「スムーズ店頭受取」に置換すると規定。実装 getPrintData(行129)は配送方法を判定せず常に $paymentTotal(payment_total の生値)を出力。加えて取得元リポジトリ(getPrintOrderListMainShop:1517 / getDirectPrintOrderList:1575,1597)も payment_total を生値SELECTするのみで配送方法を印刷側に
+23	A05-01	実装違	med	設計は印刷情報の「店頭注文番号欄」を dtb_order_number.value（待ち番号/waiting_number）から取得すると規定。実装は dtb_order_number も waiting_number も参照せず（両リポジトリのSELECTに該当列なし）、店頭注文番号欄(行94ラベル→行97値)・注文番号欄(行114ラベル→行117値)の双方に同じ $orderNumber(order_number) を出力。店頭注文番号欄に待ち番号でな
+24	A05-01	未実装	high	設計は GetRequest 成功時の副作用として印刷情報XMLの print_logs へのファイル書き出しを必須挙動と規定（本書で扱うこと:223・副作用:298・ログ監査:322で明記）。実装は当該ブロックが '// TODO :後ほど対応'（行57）で丸ごとコメントアウト（行58-67）されており、ログファイル書き出しの副作用が未実装。
+25	A05-01	実装違	med	設計は ConnectionType が想定値に一致しない場合『応答を組み立てず本文を返さない』と規定（バリデーション:302・エラー処理:319でも同旨）。実装(行91-96)は HTTP 400(BAD_REQUEST)・Content-Type text/plain の空 StreamedResponse を明示的に返しており、設計の『応答なし』と異なる。
+26	A05-01	実装違	high	設計は抽出条件を単一系統（店頭受取NEW＋スムーズ店頭受取条件群＋browser_print_flg、最大10件）として記述。実装(行44-48)は BaseInfo->isMainShop() で分岐し、本店は getPrintOrderListMainShop（OTC-NEW＋smoothOtc条件群＋browser_print_flg の3系統OR、設計相当）を使うが、支店は getDirectPrintOrderList を使い『スムーズ店頭受取(
+27	A05-01	実装違	med	設計は SetResponse でブラウザ印刷フラグが立たない場合『ステータスをピック中へ更新し確定日時(confirm_date)に現在時刻を設定』と規定。実装(行91-97)は BaseInfo->isMainShop() で分岐し、本店は setConfirmDate、支店は setPickingDate を設定する（設計に無い本店/支店分岐）。また設計DBカラム(:310)は picking_date・pick_finish_date を『ピック中
+28	A05-01	未実装	med	設計は GET /order/prints/{店舗ID} と店舗ID(shop_id)パス引数、および A05-02 とのエンドポイント分離を要求するが、実装は POST /api/order/prints/direct/{base_info_id} の単一路線で、GETルートも /order/prints/{店舗ID} ルートも存在しない。探索範囲: src/Eccube, html の order/prints, prints/direct, orde
+29	A05-01	未実装	med	設計は存在しない店舗IDを404とするが、実装には BaseInfo の存在チェック失敗時に404を返す分岐がない。OrderDirectPrintAction::handle は BaseInfo が無い場合も else 側で検索を続行する。
+30	A05-01	未実装	med	src/Eccube と html を print_logs, file_put_contents, 印刷不具合, print_*.xml, orderDirectPrint で再検索したが、A05-01の有効なXMLログ書き出し実装は見つからない。コメントアウトされたコードは実行されないため未実装。
+31	A05-01	実装違	high	実装は一部の分岐では o.smaregi_code IS NOT NULL を条件にしているが、全印刷対象に対してXML生成前のスマレジコード存在確認を保証していない。OrderDirectPrintAction は取得結果の smaregi_code をそのまま barcode に埋め込むため、空コードの印刷XMLが生成され得る。
+32	A05-01	未実装	med	SMOOTH_OTC/smoothOtc/スムーズ店頭/otc_rsv_date/receiptDate を再検索したところ、本店向け getPrintOrderListMainShop には smoothOtc 条件があるが、支店向け getDirectPrintOrderList には存在しない。印字生成側にも配送方法の入力・判定がないため、合計金額欄の文言置換を実行できない。
+33	A05-01	実装違	med	設計は応答を組み立てず本文を返さないとしているが、実装は明示的な400応答を組み立てる。ConnectionType, GetRequest, SetResponse, ResponseFile で再検索したが同ルート以外の代替実装は見つからない。
+34	A05-02	実装違	high	設計はパス `/order/print/direct` を GET と POST の両方で受け付け、GetRequest は GET・SetResponse は POST とする。実装のルートは `#[Route(path: '/api/order/prints/direct/{base_info_id}', name: 'order_direct_print', requirements: ['base_info_id' => '\d+'], metho
+35	A05-02	実装違	high	設計は単一の抽出条件(店頭受取+スムーズ店頭受取+ブラウザ印刷フラグ)を記述するが、実装は BaseInfo->isMainShop() で分岐し、本店は getPrintOrderListMainShop(スムーズ店頭受取ブランチ有)、支店は getDirectPrintOrderList を用いる。支店側クエリ(OrderRepository:1565)は『スムーズ店頭受取』抽出ブランチを持たず(OTC+NEW+smaregi_code IS NOT 
+36	A05-02	実装違	med	設計は印刷情報の『店頭注文番号欄』に dtb_order_number.value(待ち番号)を受注IDで引いて印字するとする。実装は抽出クエリで dtb_order_number を一切参照せず、店頭注文番号ラベル直後の欄(94-97行)に o.order_number(注文番号)を出力している。dtb_order_number.value は取得も印字もされない。
+37	A05-02	実装違	low	設計は ConnectionType がいずれにも一致しない場合『応答を組み立てず本文を返さない』とする。実装は StreamedResponse を組み立て、HTTP 400(Bad Request)・Content-Type text/plain の空応答を明示的に返す(91-96行)。応答を組み立てない設計に対し 400 応答を返す点が差分。
+38	A05-02	実装違	med	設計シート本体は A05-02 専用 URL `/order/prints/status/printed` とエンドポイント分離を要求しているが、実装は `/api/order/prints/direct/{base_info_id}` の単一入口で `ConnectionType` 分岐を継続している。探索範囲: src/Eccube, html（`order/prints/status/printed`, `prints/status`, `statu
+39	A05-02	実装違	high	設計はプリンタ応答内の失敗理由 code をログに追記すること、既存では印刷結果詳細を参照していない点の改善を要求している。実装コードには `PrintResponse`、`response` 属性、`success` 属性、`code` 属性、設計記載のエラーコード群を参照する処理がなく、失敗した ePOSPrint でも詳細エラーを判定せず更新対象として扱う。探索範囲: src/Eccube（`PrintResponse`, `Success`, `s
+40	A05-04	未実装	high	設計は言語識別子配下の固定パス `POST /{_locale}/smaregi/transaction`。実装は `#[Route('', name: 'smaregi_webhook', methods: ['POST'])]` で、routes.yaml(app/config/eccube/routes.yaml:9-12)の prefix `/%eccube_smaregi_webhook_route%`（秘匿パス）配下の単一Webhookエンドポ
+41	A05-04	実装違	med	設計は認証トークン不要／匿名許可／400・401は発生しない。実装は AuthenticationService->verify() 失敗時に HTTP 401(`{status:error,message:Authentication failed}`)を返し、`smaregi-event-id`ヘッダ欠落時は HTTP 400 を返す。設計と矛盾。
+42	A05-04	未実装	high	設計の成功レスポンスは `{result:[{TransactionHead: 更新件数}]}`。実装は `{status:'ok'}`(107-109行)または重複時 `{status:'ok',message:'Event is duplicate'}`(85-88行)を返すのみで、更新件数を集計・返却しない。result/TransactionHead スキーマは存在しない。
+43	A05-04	実装違	low	設計は同期実行し結果件数を応答。実装は SmaregiWebhookEvent を永続化し MessageBus へ SmaregiWebhookEventMessage を dispatch して即時200を返すのみで、取引取得・ポイント/受注反映は非同期ハンドラで後続実行。再実行性は smaregi-event-id 重複判定と updateDateTime stale判定に依存(設計に無い方式)。
+44	A05-04	実装違	low	設計はフォーム値`params`(JSON文字列)必須＋`proc_name`・`X_contract_id`/`X_access_token`ヘッダ。実装は `smaregi-event-id`ヘッダとボディ生JSON(`$request->getContent()`)を EventService で解釈し、body から contractId/event/action を抽出。`params`フォーム値・`proc_name`・`X_contract_
+45	A05-04	実装違	high	設計は取消・打消で取引IDに一致するポイント履歴を取得して削除。実装の SmaregiPointAdjustmentReverter は元履歴を削除せず監査用に残し、符号反転した逆仕訳ポイント履歴を追加登録して残高を戻す。DELETEではなく相殺INSERTで dtb_point_history の残存状態が設計と異なる。
+46	A05-04	未実装	med	設計は自店舗以外の明細を X_contract_id/X_access_token を引き継いで支店システムのスマレジ受信APIへ転送し件数合算/エラーログ記録。実装の取引Webhook処理経路(src/Eccube/Service/Smaregi/Webhook/Transaction 配下)に支店転送処理が無く、grepでも該当なし。設計の支店転送機能が未実装。
+47	A05-04	未実装	med	設計は通常取引で自店舗明細に対し注文サブ(dtb_order_sub)を特定し出荷完了反映。実装に dtb_order_sub 相当エンティティは存在せず(grep一致は 'OrderSubmit' の誤検出のみ)、created処理は PurchasePatternResolver で判定し既存受注の引渡し済み化＋新規Order作成を行う。永続化先・更新項目が設計と異なる（設計も『要確認』と明記）。
+48	A05-04	実装違	low	設計はコントローラで明示的try-catchを持たず標準例外ハンドラに委ねる。実装は index() 内で try/catch し、例外時に HTTP 500(`{status:error,message:'Error processing webhook'}`)を JsonResponse で自前返却。標準例外ハンドラ経由でなく本文形が設計前提と異なる。
+49	A05-04	実装違	low	設計は応答に Content-Type `application/json;charset=UTF-8`、キャッシュ抑止ヘッダ、`Access-Control-Allow-Origin: *` を明示。実装は標準 Symfony JsonResponse を返すのみで、コントローラ内でキャッシュ抑止/CORSヘッダの明示的付与は無い。ただしグローバルなレスポンスリスナ等での付与を短時間で網羅確認できず。
+50	A05-04	実装違	high	設計は連携ヘッダとCookieの完全値をログに出さないことを要求するが、実装は受信時・認証失敗時にheadersとcontentをログ出力する。X_access_token、Cookie、秘密ヘッダが混入し得る。
+51	A05-04	実装違	low	設計は明示ロックなしとするが、実装は会員ポイント更新でトランザクションとPESSIMISTIC_WRITEを使う。 / 期待:明示的な悲観/楽観ロックなしとする。
+52	A05-04	実装違	high	設計は認証方式をIP制限としているが、実装は secretHeader/secret のヘッダ認証であり、探索範囲（Controller/Smaregi、Service/Smaregi/Webhook、app/config/eccube、html）でスマレジWebhook用のIP制限実装は見当たらない。
+53	A05-04	実装違	med	設計は200かつ空レスポンスを要求するが、実装は成功時もJSON本文を返し、設計にない Smaregi-Event-Id ヘッダ必須チェックにより400を返す分岐を持つ。
+54	A05-04	実装違	med	設計サンプルは with_deposit_others=all を要求するが、実装は別名の with_payments=none を送る。取引詳細取得APIクライアント内の固定クエリ、関連キーワード with_deposit_others/with_payments の再検索でも design 値を送る実装は見当たらない。
+55	A06-01	実装違	high	設計にある /api/admin/login.json、/admin/login.json、/admin/login のいずれも実装ルートとして確認できず、実装はバージョン付き /api/v1/admin/login.json だけを提供している。反証検索として api_admin_login、/admin/login.json、/admin/login、api/admin/login.json、eccube_api_v1_route を src/Eccu
+56	A06-01	未実装	med	設計は既存管理ログインAPIへの中継とCookieファイル管理を必須フローにしているが、実装はEC-CUBE内部のビュー/パスワードハッシュ検証による直接認証に置き換わっている。
+57	A06-01	実装違	low	設計はpf-api側で必須検証しないことを明記しているが、実装は中継先へ委譲せずAPI入口で未入力を判定している。 / 期待:pf-api側では login_id/password の形式・必須検証を行わず、中継先の認証判定に委ね、未入力・誤りは認証拒否（HTTP 401）として扱うこと。
+58	A06-01	実装違	med	設計の失敗レスポンス契約 {code,message} と、実装の {code,errors} が一致しない。さらに設計は中継先画面エラー文言をそのまま使う指定だが、実装は独自文言を生成している。
+59	A06-01	実装違	med	署名方式HS256は一致するが、設計が要求する発行者と利用者IDのペイロード構造（iss/aud）ではなく、実装は sub のみを格納している。
+60	A06-01	実装違	med	店舗未紐付け時に空文字を返す分岐がない。base_info_id が null または対応BaseInfoなしの場合、非nullable引数/戻り値やBaseInfoメソッド呼び出しで例外化し、設計の shopName/shopAddr 空文字応答にならない。
+61	A06-02	実装違	high	設計の利用者向け契約にある URL と別名が実装されていない。反証として otcBuyOrders、api_admin_otc_buy_orders、Route 定義、設定 eccube_api_v1_route を検索したが、該当ルートは OtcBuyOrderController.php:69 の .json 付き api/v1 ルートのみだった。
+62	A06-02	実装違	med	抽出ステータスの外部契約が設計と異なる。反証として STATUS_BEFORE_PAY、STATUS_ACCOUNTING_PAYMENT_PENDING、ASSESSMENT_UNCOMPLETED_STATUSES、getOtcBuyOrdersByShopIdAndStatus の呼び出しを検索したが、この一覧 API に 7 を追加する別処理は見つからない。
+63	A06-02	実装違	med	設計が定める「店舗紐づきなしなら無絞り込み」の分岐が実装されていない。反証として getBaseInfo、default_search_base_info_id、member_base_info、isEditableShop、shopId null/empty 分岐を検索したが、この API の一覧取得では無絞り込み経路が見つからない。
+64	A06-02	実装違	med	レスポンス日時形式が設計と異なる。反証として format('c')、DATE_ATOM、ISO8601、日時整形処理を検索したが、この API の該当フィールドは OtcBuyOrderController.php:97 と :113 の固定フォーマットのみだった。
+65	A06-02	実装違	med	未登録時の既定値が設計の 0 ではなく null。反証として identificationId ?? 0、COALESCE、DTO/Formatter 側の補正を検索したが、この API のレスポンス整形では null のままだった。
+66	A06-02	実装違	med	設計は 401 本文なしを指定しているが、実装は JSON エラー本文を返す。反証として UnauthenticatedException、InvalidTokenException、BadCredentialsException、ExceptionListener、AuthenticationFailure を検索したが、App API では ExceptionListener の JSON 応答に集約される。
+67	A06-03	実装違	med	設計の外部契約はHTTP 400/401/404と本文形まで規定しているが、実装はDTO検証で422を返し得るうえ、401/404も本文なしではなく {code, errors} を返す。さらにステータスIDの検証条件・エラーメッセージが設計と異なる。
+68	A06-03	実装違	med	設計は任意項目かつnullサンプルを示しているが、実装は商品規格IDが空の個別入力商品を含む全明細で quantity/price null を拒否し、削除・登録処理へ進まない。
+69	A06-03	実装違	med	false を指定して未確認へ戻す更新が無視される。また、true の場合は受注側の適格請求書発行事業者フラグ確認なしに保存されるため、設計の『該当する場合のみ』『指定値で更新』と一致しない。
+70	A06-03	実装違	med	設計は成立以外をキャンセル日時設定対象としているが、実装は買取キャンセルステータスだけを対象にしており、経理払出し待ち等では設計どおりの日時更新にならない。
+71	A06-04	実装違	high	設計HTMLのシート本文は /api/admin/otcBuyOrder/{id}/freeComment.json を外部契約として示しているが、実装は /api/v1/admin/otcBuyOrder/{id}/freeComment.json に版数プレフィックスを挿入する。/api/admin/otcBuyOrder/{id}/freeComment.json の別ルートは src/Eccube, html, app/config の探索で確認で
+72	A06-04	未実装	med	詳細設計の利用者視点の入口では拡張子なしパスと拡張子あり別名を同一処理として定義しているが、実装 Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php には .json 付きルートしかなく、app/config の追加 route も存在しない。
+73	A06-05	実装違	low	設計はステータスID不正時の返却文言を「正しい店頭買取ステータスIDを入力してください」に固定しているが、店頭買取API実装は別文言を返す。ネット買取側 BuyOrderController には同文言があるが、OtcBuyOrderController では未採用であることを反証検索で確認した。
+74	A06-05	実装違	low	設計は「この受注は「（査定担当者名）」が査定中です。」を返す要求だが、店頭買取実装は鉤括弧と句点を含まない。反証としてネット買取側 UpdateStatusAction には設計どおりの鉤括弧・句点付き文言が存在するが、店頭買取側では異なる文言が実装されている。
+75	A06-05	実装違	med	設計は 401/404 の本文なしを明記しているが、共通例外リスナーは App API で必ず code と errors を含む JSON 本文を設定する。
+76	A06-05	未実装	med	設計は拡張子なし別名を明記しているが、属性ルートと routes.yaml の探索で該当ルートが存在しない。 / 期待:利用者視点の入口として、PUT /admin/otcBuyOrder/{id}/status の拡張子なし別名も /status.json と同一処理で提供する。
+77	A06-06	実装違	high	設計は /api/buying/{detailId}.json を外部契約として定義しているが、実装は API 版数プレフィックス /api/v1 を付けた別URLで公開している。設計HTML側に /api/v1 への読み替え指定は確認できない。
+78	A06-06	実装違	med	設計のレスポンス項目名は productCode だが、実装の外部JSONキーは productClassCode。別キーワード productCode、product_class_code、BuyingCardsFormatter、api_buying で再検索しても当該APIで productCode に変換する実装は確認できなかった。
+79	A06-07	実装違	med	設計は0件時の応答全体を [] とするが、実装は空配列ではなく cards キー付きのオブジェクトを返す。カード商品以外のIDのみで検索結果0件になる通常経路では {"cards":{}} となる。探索範囲: Controller/App/MTGBuyer/V1/Admin/BuyingController.php, Service/App/MTGBuyer/V1/BuyingCardsFormatter.php, Repository/Master/Mt
+80	A06-07	未実装	med	設計サンプルおよびレスポンス定義の外部フィールド名・型と、実装の formatter が生成するキー・型が一致しない。Repository は productClass.code AS productClassCode を選択し、formatter も productClassCode キーで返しているため productCode は不在。探索範囲: Service/App/MTGBuyer/V1/BuyingCardsFormatter.php, Dto
+81	A06-08	実装違	med	設計の詳細設計では GET /search のクエリパラメータ指定だが、実装は POST のフォームリクエストボディを読むため、MTGバイヤー側の外部API契約が一致しない。反証として api_search、/%eccube_api_v1_route%/search、request->query、QueryParam、ParamFetcher を検索したが、このAPIの GET/query 実装は確認できなかった。
+82	A06-08	実装違	med	設計は該当なしを 404 とするが、カード名検索実装には empty($cards) 時の NotFoundException 分岐がなく、空結果を成功レスポンスとして返す。反証として NotFoundException、empty($cards)、api_search、カードが見つかりませんを検索し、404 分岐はカード詳細ID取得にしか存在しなかった。
+83	A06-08	実装違	low	設計はワイルドカード文字をリテラルとして扱うことを要求しているが、実装では %/_ が LIKE ワイルドカードとして効く。反証として escapeLike、addcslashes、ESCAPE、LIKE :cardName、cardName.'%' を検索したが、当該 getBuyingCardsByCardName にエスケープ処理は無かった。
+84	A06-08	実装違	med	設計は検索結果順の1始まり連番キーを要求しているが、実装はDB上のカードIDをキーにしており、カードIDが 10001 なら cards.10001 になる。反証として formatter、array_values、連番、cardId キー周辺を確認したが、1始まりへのキー付け直しは確認できなかった。
+85	A06-08	実装違	high	設計のレスポンスフィールド名・型と実装のJSONキー/値型が一致しない。反証として BuyingCardsFormatter、GetBuyingCardsQueryResponseDto、productCode/productClassCode、stock キャストを確認したが、設計名 productCode および string 型への整形は確認できなかった。
+86	A06-11	実装違	high	設計HTMLはレスポンスデータとして code、message、sections を定義し、処理フローでもコード・メッセージ・部門一覧をJSONで返すとしている。一方、実装の SectionController は array_map で部門要素配列のみを生成し、new JsonResponse($payload) で裸配列を返している。反証検索として api_admin_sections、sections.json、section.json、get se
+87	A06-12	実装違	high	設計は {"code":200,"section_id":"1"} 形式の外部契約を要求している。一方、実装は code フィールドも section_id フィールドも作らず、固定価格部門IDの文字列そのものをレスポンス本文にしているため、MTGバイヤー向けAPIのレスポンス形が設計と異なる。反証検索では OptionController、SectionController、MTGBuyer配下Controller/Service/Dto、テストを確認し
+88	A06-12	未実装	med	設計の失敗レスポンスはHTTP 500だが、実装は例外を発生させず正常応答として空文字を返す。反証検索では fixedPriceSection.json、api_admin_fixed_price_section、FIXED_PRICE_SECTION、固定価格部門、section_id を Controller/Service/Dto/Tests/Migrations/html/template で確認したが、未設定時に500を返す固定価格部門APIの別
+89	A06-13	未実装	med	設計は「証明書IDが本人確認証明書マスタに存在しない（未指定を含む）」を HTTP 400 と規定している。実装は未指定のみ 400、マスタ不存在は /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php:288-290 で NotFoundException を投げ、/home/y
+90	A06-13	未実装	med	設計は拡張子なし入口と .json 別名を同一処理として列挙しているが、実装側で otcBuyOrder/{id}/identification、identification.json、api_admin_otc_buy_order_update_identification を検索して確認できた本人確認更新ルートは .json 付きのみ。Controller、Route属性、config/routes 系、Twig/JS 参照を再検索しても拡張子なし a
+91	A06-16	実装違	high	設計は /api/otcBuyOrder/{id}/doublecheck.json と member_id を要求する。実装ルートは /{api_v1_route}/admin/otcBuyOrder/{id}/doubleCheckMember.json で、さらにリクエストから double_check_member_id を読む。設計通りのパス・パラメータでは更新できない。
+92	A06-16	実装違	med	設計は店頭買取受注側の新規カラムにダブルチェック者を保存する前提だが、実装は承認者テーブルへ role=double_check として登録する方式で、保存先とデータ構造が異なる。
+93	A06-16	実装違	med	設計は /api/otcBuyOrder/{id}/doublecheck.json を指定しているが、実装は API 版数プレフィックスと /admin を含み、末尾も doubleCheckMember.json。反証検索で doublecheck.json / doubleCheckMember.json / api_admin_otc_buy_order_update_double_check_member を確認したが、設計URLそのもののルート
+94	A06-16	実装違	med	設計の外部契約は member_id だが、実装の必須パラメータ名は double_check_member_id。反証検索で member_id / doubleCheckMemberId / double_check_member_id を確認したが、この更新APIで member_id を受け付ける実装は確認できなかった。
+95	A06-16	実装違	low	設計はダブルチェック者を新規カラムへ追加する要求だが、実装は承認者テーブルを findOneBy(OtcBuyOrder, role=double_check) で検索し、なければ DtbOtcBuyOrderApprover を作成して保存する。Entity でもテーブル名 dtb_otc_buy_order_approver と approver_id / assigned_by_id / role が定義されているため、保存モデルが設計と異なる。
+96	A06-16	実装違	med	HTTPステータス200は一致するが、設計はレスポンスデータなしを指定しているのに対し、実装は JSON ボディに code: 200 を含める。
+97	A07-01	実装違	med	設計のレスポンス失敗・データ整合性・エラー処理では、まとめ買取商品ID設定が無い場合は値を取得できず処理失敗（HTTP 500相当）と定義されている。一方、実装は未設定を例外化せず空文字列の正常応答にしている。反証として `optionBulkPurchaseId`、`BULK_PURCHASE_ID`、`BulkPurchaseIdService`、`mtb_option` を検索し、BulkPurchaseIdService には未設定時例外があるが当
+98	A07-02	実装違	med	設計は整数型・ISO8601日時・null保持を外部契約として定義しているが、実装は文字列化、非ISO形式、空文字化を行っており、レスポンススキーマが一致しない。反証検索として `netBuyOrderId`、`applyDate`、`freeComment`、`memberName`、`serialize_null`、`findToAssessBuyOrders` を確認したが、当該GETレスポンスで別の正規化処理は見つからない。
+99	A07-02	実装違	med	設計は401で本文なしを要求しているが、実装のApp API共通例外処理は401でもJSON本文 `{code, errors}` を返す。反証検索として `JwtTokenHeaderExtractor`、`JwtTokenHandler`、`UnauthenticatedException`、`ExceptionListener`、security.yaml の access_token 設定を確認し、認証ヘッダ検証自体は存在するが、本文なし401を返
+100	A07-03	実装違	med	設計は500応答の errors に例外メッセージを返すことを要求しているが、実装は保存例外の実メッセージを破棄し、固定の汎用エラー文言に置き換えるため、外部契約が一致しない。
+101	A07-04	実装違	med	設計は401/404を「本文を持たない」と定義しているが、実装はisAppApi()配下でJsonResponse(['code' => $statusCode, 'errors' => $errors], $statusCode)を返すため、外部レスポンス契約が異なる。反証としてBuyOrderControllerのNotFoundException、認証例外、ExceptionListenerのAPI例外処理を確認したが、本文なしレスポンスに分岐する実
+102	A07-04	実装違	med	ロールバックは実装済みだが、設計が要求する「例外メッセージを返す」契約に対し、実装は固定文言へ隠蔽して返す。反証としてUpdateStatusAction、BuyOrderController、InternalException、ExceptionListenerを確認したが、previous例外のmessageをerrorsへ戻す実装は見つからなかった。
+103	A07-05	実装違	med	設計は入力検証失敗を HTTP 400 と明記しているが、実装は MapRequestPayload 既定により HTTP 422 を返す。
+104	A07-05	未実装	med	HTTP 400 で返す点は一致するが、設計指定のエラーメッセージではなく別文言を返す。反証検索でも MTGBuyer 実装内に「MtbBuyOrderStatusに（値）が見つかりません。」を返す経路は見つからなかった。
+105	A07-05	実装違	med	設計は errors に例外メッセージ配列を返す要求だが、実装は例外メッセージを外部応答に使わず固定の汎用メッセージを返す。
+106	A07-05	実装違	med	設計は 404 応答を本文なしとするが、実装は code/errors のJSON本文を返す。 / 期待:受注IDに該当するネット買取受注が無い場合は、該当なし（HTTP 404）とし、本文を持たない。
+107	A07-05	実装違	med	API入力仕様は最大65535を許容するが、個別入力商品として永続化する実装カラムは255文字上限のため、256〜65535文字の name を設計どおり保存できない。
+108	A07-05	実装違	med	設計は外部JSON契約として `[].foilFlg` を boolean と定義しているが、実装は `DtbBuyMainCard::FOIL_NONE=0`, `FOIL_NORMAL=1`, `FOIL_SPECIAL=2` の数値区分を変換せず返却している。反証として BuyMainCardController、DtbBuyMainCard、MTGBuyer DTO/Service を検索したが、本APIレスポンスで boolean へ変換する処理
+109	A07-05	実装違	low	設計は形式・件数の検証を行わないとしているが、実装は数値形式でフィルタリングしており、`ids` の形式を実質的に検証している。HTTP 400 は返さない点は設計と一致するが、非数値要素を検索配列から落とす挙動は「形式検証なし」と一致しない。反証として同Controller、リポジトリ、関連MTGBuyer APIを検索したが、このAPIで別の未検証パーサへ委譲する経路は確認できなかった。
+110	A07-06	実装違	high	設計は /api/admin/... を指定しているが、実装は api/v1 プレフィックス付きの /api/v1/admin/... で公開している。app/config/eccube/packages/eccube.yaml:6,55 で ECCUBE_API_V1_ROUTE の既定値が api/v1 であることも確認した。
+111	A07-06	実装違	med	設計では ids が必須指定だが、実装は ids 未指定・空文字を許容し、必須エラーにしない。実装コメントでも 400 ではなく空配列を返す旧システム互換挙動としている。
+112	A07-06	未実装	high	トークン認証は JwtTokenHeaderExtractor と security access_token で確認できる一方、IP アドレス allowlist / denylist / access_control / Request::getClientIp 相当の判定が当該 API ルートに存在しない。
+113	A14-01	未実装	med	設計HTMLはA14-01の入口を `GET /cards/{id}` と明記しているが、実装側の公開Controller/Route定義に同一パスが無い。反証として `/card`, `/card.json`, `/api/cards/{id}`, 管理画面カード系ルート、商品ポップアップ系ルートまで翻案検索したが、設計パスに一致する実装は見つからなかった。
+114	A14-01	未実装	med	設計はA14-01のJSON外部契約としてネストしたカード詳細・マスタ項目を列挙しているが、近似実装は汎用Entity正規化に依存しており、公開レスポンス用DTO/配列組み立てが存在しない。反証としてEntityの各プロパティ、DeckBuilder用ルート、App/CardController、MtbCardRepository、MtbCardDetail/MtbCardset/MtbCardtype/MtbCardImageを確認したが、設計フィールド
+115	A14-02	未実装	med	設計はクライアント向けJSON API GET /cardDetails/{id} を要求しているが、src/Eccube/Controller配下のルート一覧に /cardDetails/{id} がない。管理画面AJAXは src/Eccube/Controller/Admin/Product/ProductController.php:986 の別URLで、XHR前提かつ管理画面用途の部分情報のみを返すため、設計APIの実装ではない。/api/car
+116	A14-02	未実装	med	src/Eccube/Controller/Admin/Product/ProductController.php:1020-1034 の管理画面AJAXはカード詳細選択UI用の部分レスポンスで、設計が要求するカード詳細マスタ全体・関連オブジェクト・除外指定契約を満たさない。src/Eccube/Service/App/Article/ArticleResponseBuilder.php:175-281 にはカード詳細配列を組む private メソッドが
+117	A14-02	未実装	med	src/Eccube/Entity/Master/MtbCardDetail.php:278-319 でDB項目は保持しているが、設計はAPIレスポンス変換を要求している。src/Eccube/Service/App/Article/ArticleResponseBuilder.php:270-280 は近似のカード詳細JSONを作るが、foil_flg/promotion_flgを出力しframeを出力しないため、A14-02レスポンス契約の実装証跡にな
+118	A16-01	実装違	med	設計は失敗本文の形を {code, message} としているが、実装は message キーを返さず errors 配列を返す。NotFoundException は errors にメッセージを保持し、ContentController は getErrors() を errors キーで JSON 化している。反証検索では ContentController、BaseApiException、NotFoundException、ExceptionL
+119	A16-02	実装違	med	設計は「設定済みトップバナー」を対象とし、トップバナーマスタを設定状態・言語で絞り込む要求だが、実装は言語関連のみで絞り込み、非表示（disp_type=0）や画像URL空のトップバナーも Collection に含まれていればレスポンス対象になる。反証として topBanners ルート、TopBannersResponseBuilder、MtbTopBannerRepository::findWhereUrlIsNotEmpty、SHOW_BOTH、d
+120	A16-02	実装違	med	HTTP 404 自体は実装されているが、設計が指定する本文キー message とメッセージ 'Language code is not found' ではなく、実装は errors 配列に 'Not Found' を返す。反証として 'Language code is not found'、NotFoundException、errors/message、topBanners ルートを検索したが、A16-02 の 404 で設計文言・本文形を返す実装は
+121	A17-01	実装違	med	設計は削除済み記事を応答対象外とするが、実装の検索条件は ['wpPostId' => (int) $wpPostIdParam] のみ。DtbArticleRepository に単記事取得用の deletedAt IS NULL 条件もなく、ArticleResponseBuilder は取得済み Article をそのまま応答化するため、論理削除済み記事を除外する実装証跡がない。探索範囲: Controller/App/ArticleControll
+122	A17-01	実装違	med	設計は 404 本文を {code, message} かつ message は "Not Found" とするが、実装は errors 配列で日本語メッセージを返す。BaseApiException/NotFoundException も errors 配列を保持する構造で、message キーを返す単記事用実装は確認できない。
+123	A17-02	未実装	med	設計は基準記事・関連記事とも dtb_article.deleted_at による論理削除を応答対象外判定に用いることを要求しているが、実装の raw SQL には deleted_at 条件が存在しない。探索範囲: src/Eccube/Controller/App/ArticleController.php、src/Eccube/Repository/DtbArticleRepository.php、src/Eccube/Entity/DtbArtic
+124	A17-03	実装違	high	設計は受信した処理名・パラメータをスマレジ取引APIへ中継する外部契約を要求しているが、実装は固定成功レスポンスで中継していない。探索範囲: src/Eccube, html。検索語: postRegisterTransaction, postTransactions, transactions, transaction_upd, proc_name, PointGranter, point_granter。
+125	A17-03	実装違	med	シート本体のステータスコード表は必須項目欠落時404を要求しているが、実装は400を返す。なお同HTML内の埋め込み詳細設計にはHTTP 400の記載もあるため、設計内不整合はあるが、一次シート本文の404要求とは不一致。
+126	A17-04	実装違	med	設計は商品IDと言語の組み合わせで商品詳細を取得する要求だが、実装は商品IDと visible な商品規格の存在のみで抽出し、言語はレスポンス値の補完に使っている。反証として ProductController、ProductDetailResponseBuilder、ProductRepository、ProductSearchResponseBuilder を `languageCode` / `lang.code = :languageCode` /
+127	A17-04	実装違	med	設計の失敗レスポンス本文は `{code, message}` だが、実装の共通例外レスポンスは `{code, errors}`。反証として ProductController のローカル catch、BaseApiException、NotFoundException、ExceptionListener を確認したが、A17-04 詳細取得で `{code, message}` に変換する個別処理は確認できなかった。
+128	B02-01	未実装	med	設計の外部契約である実行コマンド名と実装コマンド名が一致しない。反証検索として `updateProductSummary`、`product:batch updateProductSummary`、`aggregate-sales`、`AggregateSalesCommand` を確認したが、設計コマンド名の実装入口は不在。
+129	B02-01	未実装	med	設計はスマレジ取引データを集計対象かつECCUBE分と分離集計する要求だが、実装はスマレジ実店舗販売を未実装として除外している。反証検索で Smaregi transaction 取込系は存在するが、DtbSalesQuantityRepository::getSalesForAggregate への連携や UNION はなく、同リポジトリにも `スマレジ受注が別テーブル管理の場合は UNION 等で本クエリを拡張すること` という TODO が残る。
+130	B02-01	実装違	med	設計は本店を支店ID=0として扱うが、実装は配送の base_info_id をそのまま使用し、本店定数は 1。さらに clearSalesQuantityForAggregate は base_info_id=0 を人気商品リコメンドとして削除対象から除外しており、B02-01 の本店集計IDとして扱っていない。
+131	B02-01	実装違	med	設計はキャンセルと処理中の両方を除外する要求だが、実装は OrderStatus::CANCEL だけをパラメータ化して除外している。`OrderStatus::PENDING`、`OrderStatus::PROCESSING`、`order_status_id NOT IN` 等で反証検索したが、B02-01 集計処理には処理中除外がない。
+132	B02-01	実装違	high	設計は対象なしなら更新しないことを要求するが、実装は対象有無を確認する前に既存集計行を削除する。getSalesForAggregate() が空でも foreach が回らないだけで、先行DELETEは実行済みになる。
+133	B02-01	未実装	med	設計は途中まで反映された行が残る部分反映モデルだが、実装は単一トランザクションで例外時に全体ロールバックする。`flush`、`clear`、`100`、`setSQLLogger`、`beginTransaction` を反証検索し、100件ごとの反映は別メソッド updateRecommend にのみ存在し、B02-01 handle にはない。
+134	B02-01	未実装	med	設計の処理フロー1番目の要求が B02-01 の実行経路に存在しない。別キーワード `set_time_limit`、`memory_limit`、`setSQLLogger`、`SQLLogger` で再検索したが、該当は updateRecommend のみ。
+135	B02-01	実装違	low	設計は開始と完了の両方を日時付きでコンソール出力する要求だが、実装は完了メッセージのみで日時なし。`date(`、`実行開始`、`実行終了`、`success(`、`error(` で確認し、B02-01 実行経路には日時付き開始・完了出力がない。
+136	B02-01	未実装	med	設計の移行先DB関連記述は ec-cube-enterprise を正とし、反映先を dtb_product_class の order_quantity_01〜08 としているが、実装は別補助表 dtb_sales_quantity を更新している。反証検索で ProductClassRepository に dtb_product_sub_class / order_quantity 更新のコメントアウトはあるが、B02-01 から実行される実装ではな
+137	B02-02	未実装	med	設計は外部契約として `product:batch deleteProductRequest` を指定しているが、実装の AsCommand name は `eccube:cancel-product-request`。反証検索として `deleteProductRequest`、`product:batch`、`cancel-product-request`、`CancelProductRequestCommand` を src/Eccube/html/
+138	B02-02	未実装	med	設計は商品規格の削除相当として `dtb_product_class.visible` を明記し、商品不存在も削除条件に含める。一方、実装は ProductClass に `visible` カラムがあるにもかかわらず条件に使わず、商品結合も INNER JOIN なので商品が存在しない ProductClass は抽出できない。反証検索で `pc.visible`、`deleteRequestByNonProduct`、`cancelRequestByP
+139	B02-02	未実装	med	設計は開始と完了の両方を日時付きでコンソール出力する要求。実装の execute() は try 直後に action を実行し、開始ログなし。成功メッセージにも日時が含まれない。反証検索で `開始`、`完了`、`DateTime`、`SymfonyStyle`、`cancel-product-request` 周辺を確認したが日時付き開始/完了出力は不在。
+140	B02-03	実装違	med	設計の外部契約である起動コマンド名と実装の AsCommand name が一致しない。探索範囲: src/Eccube/Command, src/Eccube/Service, src/Eccube/Repository, html。
+141	B02-03	実装違	high	設計は店舗に加えて在庫区分/在庫場所単位の集計・更新を要求するが、実装は商品規格ID・店舗ID単位に集約している。ProductStock には stock_location_id が存在するが、当該バッチの集計SQL・保存先には使われていない。
+142	B02-03	実装違	med	設計のスター付きカスタマイズ要求は親区分「入庫」「買取」のみだが、実装は「入庫」「棚卸/在庫調整」相当を対象にしており、買取対象が確認できない。
+143	B02-03	実装違	high	設計は対象なし時に更新しないことを要求するが、実装は対象有無判定の前に集計テーブルを全削除する。 / 期待:対象が無い場合は更新を行わずに終了する。
+144	B02-03	実装違	low	設計の部分反映・再実行回収モデルと、実装の全体トランザクション/全体ロールバックが一致しない。 / 期待:100件ごとに変更を反映しキャッシュをクリアしながら処理し、途中失敗時は反映済みの行のみ更新が残る。
+145	B02-03	未実装	med	「集計できなかった旨をメールで送信する」実装が当該コマンド・サービス・リポジトリ・MailService に存在しない。別キーワード（集計できなかった、期間別入庫、stock up、AggregateStockUp、MailService、send）でも反証できなかった。
+146	B02-03	未実装	med	設計が要求する開始出力と日時付き完了出力が実装されていない。AggregateStockUpCommand 内に日時生成や開始メッセージは見つからない。
+147	B02-03	未実装	med	外部契約である実行コマンド名が設計と異なる。反証検索として `product:batch updateProductSummaryForStockUp`, `updateProductSummaryForStockUp`, `AggregateStockUpCommand`, `aggregate-stock-up` を src/Eccube/html 配下で確認したが、設計コマンド名の登録は見つからなかった。
+148	B02-03	実装違	med	設計の対象区分は「入庫・マスタ更新」だが、実装は「入庫・棚卸」を条件にしている。`マスタ更新` へ翻案した検索でも B02-03 集計条件としての実装は確認できなかった。
+149	B02-03	実装違	med	設計では対象なし時に更新しないが、実装では対象なしでも既存の入庫数集計データを全削除してコミットする経路がある。対象なし分岐や空配列時の早期 return は確認できなかった。
+150	B02-03	実装違	med	設計は途中まで反映された行が残る部分反映モデルだが、実装は例外時に全体ロールバックするため反映済み行は残らない。`途中失敗`, `反映済み`, `rollBack`, `commit` で反証検索し、別経路での部分コミット実装は確認できなかった。
+151	B02-03	未実装	med	設計された100件単位の反映境界とキャッシュクリア処理が実装されていない。周辺の Command/Service/Repository で別名検索しても該当処理は確認できなかった。
+152	B02-03	未実装	med	設計は開始・完了の両方を日時付きで出力する要求だが、実装は完了文言のみ。`開始`, `日時`, `DateTime`, `now`, `success`, `writeln` で反証検索したが、B02-03 コマンドの日時付き開始・完了出力は確認できなかった。
+153	B02-03	実装違	med	設計HTML本文から独立再列挙した extractorMissed 要求。実装は店舗IDをそのまま使用し、本店を0として扱う変換がない。`本店`, `is_main_shop`, `TC_TOKYO_ID`, `base_info_id.*0`, `支店ID` で反証検索したが、B02-03 集計での0変換は確認できなかった。
+154	B02-05	実装違	med	src/Eccube/Command と src/Eccube/Service/Product を product:batch / saleNotification / FavoriteSaleNotification / favorite-sale-notification で再検索したが、product:batch saleNotification の AsCommand 定義は見つからず、別名コマンドのみ存在する。
+155	B02-05	実装違	med	DtbFavoriteProductRepository と DtbFavoriteProduct エンティティは存在するが、BatchFavoriteSaleNotificationAction の依存先は CustomerFavoriteProductRepository で、findSaleFavoriteProducts() も CustomerFavoriteProductRepository に実装されている。DtbFavoriteProduc
+156	B02-05	未実装	med	被監査範囲内で本バッチに紐づくスケジュール起動設定が確認できない。詳細設計の埋め込み部ではスケジュールを運用・ジョブ設定の対象とする記述もあるが、シート本文の material 要求として実行トリガーと時刻が明記されているため欠落として扱う。
+157	B02-05	未実装	med	BatchFavoriteSaleNotificationAction と関連 Repository を clear, detach, batch, limit, offset, chunk, memory, 一定件数 で確認したが、本処理に一定件数ごとのメモリ解放は見つからない。
+158	B02-05	実装違	low	Command 側には未捕捉例外の $io->error はあるが、設計が対象にする送信時エラーはサービス内で握りつぶされる。log_error はコンソール出力ではなく、設計の失敗時出力を満たさない。
+159	B02-05	実装違	low	FavoriteSaleNotificationCommand と BatchFavoriteSaleNotificationAction を 開始/完了/date/new DateTime/format/datetime/日時 で確認したが、日時付きの開始・完了出力は見つからない。
+160	B02-06	実装違	med	設計は複製元を「TC大阪(支店ID:1)」としているが、実装は TC_TOKYO_ID を基準店舗としている。設計上の店舗名と実装定数名が一致せず、設計どおり TC大阪を複製元にしている根拠がない。
+161	B02-06	実装違	med	設計HTMLのこの要求は materialGapRows に無く extractorMissed として確認した。実装は ProductStock 行の product_class_id と stock_location_id を複製しており、「商品規格コード」「拡張タイプ」を複製範囲にする処理や、それ以外を初期値にする項目対応が確認できない。
+162	B02-06	未実装	med	反証検索として product:batch insertStockHistory, insertStockHistory, 受注日より前, 最新在庫履歴, 受注後在庫, 注文番号と価格, 登録済み, stock_change_reason LIKE, order_date StockHistory を Command/Service/Repository に展開して検索したが、設計のバッチ入口と処理フローを満たす実装が確認できない。
+163	B02-07	未実装	low	設計の外部実行契約であるコマンド名が実装と一致しない。別名・旧名・説明文への翻案検索（product:batch, exportWeeklyStockHistoryCsv, weekly_stock_history.csv, eccube:update-weekly-stock-history）でも設計コマンド名の実装は不在。
+164	B02-07	未実装	med	設計は ECCUBE とスマレジ在庫の合算登録を要求しているが、実装は対象外としており未実装。反証検索では ProductStock に stock_location_id とスマレジ区分定数はあるが、B02-07 の集計処理内で stock_location_id=1/2 を合算する SQL/分岐は確認できない。
+165	B02-07	未実装	med	設計のCSV外部契約に対して、実装はDB洗い替え方式になっている。反証検索（weekly_stock_history.csv, csv_path, HareruyaEc.const.weekly_stock_history, fopen, fputcsv, SplFileObject）でも B02-07 のCSV生成実装は不在。
+166	B02-07	実装違	med	設計は商品在庫に存在する全商品規格IDを対象にし、履歴欠損週を0にする要求だが、実装は在庫履歴が存在する product_stock_id のみを集計対象にする。ProductStock 起点の LEFT JOIN などの反証実装は対象リポジトリ内に確認できない。
+167	B02-07	未実装	med	長時間バッチ向けの実行環境設定が設計にあるが、対象実装範囲で該当API呼び出しが確認できない。 / 期待:メモリ制限と実行時間制限を解除し、SQLロガーを無効化する。
+168	B02-07	実装違	low	設計は開始・完了の両方を日時付きでコンソール出力する要求だが、実装は完了のみで日時も含まない。反証検索では B02-07 コマンドに text/writeln/sprintf date 出力は確認できない。
+169	B02-07	実装違	med	設計TSV表の外部契約は項目名・列順そのものだが、実装ヘッダは設計外の category_name_en/search_word を追加し、branch_status を is_branch_published に変更している。反証検索として branch_status/is_branch_published/category_name_en/search_word を UniSearchExportService/ProductClassReposito
+170	B02-07	実装違	med	設計は在庫数の連携を要求しているが、実装は stock_unlimited または stock>=1 の base_info_id 集合を出力しており、数値の在庫数ではない。stock / stock_agg / base_info_id / UniSearchExportService の別キーワードで反証検索しても、stock列へ店舗EC在庫数を数値連携する処理は確認できない。
+171	B02-07	実装違	low	設計の利用者視点入口で指定されたコンソールコマンド名と実装の AsCommand 名が異なる。exportWeeklyStockHistoryCsv / product:batch / weekly_stock_history.csv / UpdateWeeklyStockHistoryCommand の別名検索でも設計コマンド名は見つからない。
+172	B02-07	実装違	low	設計はCSV生成・上書きかつDB非更新を要求するが、実装はDBテーブル更新方式でCSVを生成しない。weekly_stock_history.csv / HareruyaEc.const.weekly_stock_history / fputcsv / SplFileObject / dtb_weekly_stock_history の反証検索でも、設計CSV出力の実装は無い。
+173	B02-07	実装違	med	設計は商品在庫に存在する全商品規格IDを対象にし、履歴なしは0とする要求だが、実装はdtb_product_stockを起点にLEFT JOINしていないため、履歴が全く無い商品在庫を0行として出力・登録できない。product_stock / dtb_stock_history / getLastProductStockId / getStockData の反証検索でも全商品在庫を0埋めする処理は確認できない。
+174	B02-08	実装違	med	設計のB02-08は管理画面からフィードファイル作成可能、実行結果はTSV.gzとdoneファイルを指定ディレクトリに置くという作成処理の要求である。一方、実装は管理画面押下時に exportAndUpload(false) を渡しており、false は手動実行スキップではなくSFTP送信を実行する分岐になっている。別機能として設計されている送信処理まで管理画面の作成操作で実行されるため、設計の外部契約と異なる。反証として admin_product_un
+175	B02-09	未実装	med	設計はSCPでTSVファイルとdoneファイルを送信する外部契約だが、実装はSFTPライブラリで .tsv.gz とdoneファイルを送信している。反証検索として SCP/scp/feed_upload/SFTP/sftp/ssh_key/tsv.gz/gzipPath/upload を src/Eccube と html 配下で確認し、SCPコマンド実装は見つからず、SFTP実装のみ確認した。
+176	B02-09	未実装	med	設計のスケジュール起動契約は外部からの定期実行まで含むが、実装範囲内で確認できるのは手動実行可能なSymfony Consoleコマンドのみで、5分おき起動や feed_upload.sh/feed.log 相当の定義がない。別キーワードとしてcron/Step Functions/schedule/rate/feed_upload/unisearch:batchへ翻案して再検索したが反証なし。
+177	B05-01	実装違	med	設計は注文番号を8桁0埋めしてから末尾6桁を使うが、親バッチ実装は0埋めせず末尾6桁を切り出す。注文番号が6桁未満の場合、設計例のような13桁コードにならない。
+178	B05-01	実装違	med	設計は部門ID 6 固定だが、実装は設定値依存であり、6固定を保証していない。 / 期待:スマレジ商品登録APIへ送信する部門IDは `6: 店頭受取（固定）` とする。
+179	B05-01	未実装	med	設計が要求するエラーメール送信と追加設定メールアドレス参照が、OTCスマレジ連携コマンド・同期サービス・メッセージハンドラ周辺に存在しない。
+180	B05-02	未実装	med	`OrderRepository.php:1824` の抽出は `plg_sln_order_payment_status`、金額差分、`payment_date BETWEEN NOW() - INTERVAL '1 hour' AND NOW()` を条件にしており、設計のメール履歴なし・注文日時5分前〜1分前・対象ステータス条件を満たさない。
+181	B05-03	未実装	med	設計は利用者視点の入口として `order:batch truncateWaitingNumber` を外部契約化しているが、実装の `#[AsCommand]` 登録名は別名である。反証検索として `order:batch truncateWaitingNumber`、`truncateWaitingNumber`、`truncate-waiting-number`、`setAliases`、`aliases` を `src/Eccube`、`app`、
+182	B05-03	実装違	low	設計は削除とカウンタ初期化を1トランザクションにまとめないことを明記しているが、実装は `beginTransaction()` から `commit()` までの1トランザクション内で両テーブル操作と再登録をまとめている。
+183	B05-03	実装違	med	設計は例外を捕捉せずコンソールへ伝播するとしているが、実装は Command 層で Throwable を捕捉して終了コードへ変換している。対象 Command/Action/Repository を `catch`、`Throwable`、`error`、`通知`、`Mailer`、`MailService` で再検索し、設計どおりの非捕捉伝播経路は確認できない。
+184	B05-03	実装違	low	設計は起動ログに日時を含め、完了ログは出さないとしている。実装は起動ログに日時を含まず、かつ成功時の完了ログを出力している。`date(`、`DateTime`、`format(`、起動/完了文言を対象ファイルで再検索しても日時付与処理は確認できない。
+185	B05-05	未実装	med	設計の利用者視点の入口は order:batch deleteSmaregiProduct を外部契約としているが、実装の起動名が異なるため、設計どおりのコマンド名では本バッチに到達しない。反証として order:batch / deleteSmaregiProduct / SmaregiOtcDeleteCommand / AsCommand を検索したが、該当する別名・エイリアス実装は不在。
+186	B05-05	未実装	med	設計はスマレジ連携ごとの管理者メール通知を要求しているが、実装はログ出力とジョブ失敗状態の永続化に留まる。反証として 通信エラーメール / スマレジ通信エラー / 管理者に通知 / send*Smaregi / Smaregi*Mail / MailService / mailer->send を関連範囲で検索したが、B05-05 の失敗経路からメール送信へ到達するコードは不在。
+187	B05-05	実装違	low	設計は本バッチが楽観ロック・悲観ロックの対象を持たないと明記しているが、実装は MessengerJob に対して処理ロックを使用する。反証として B05-05 の Command/Dispatcher/MessageHandler/Service を確認し、該当ロックは削除メッセージ処理の本線に存在する。
+188	B05-06	未実装	med	設計は利用者視点の入口として `order:batch checkDuplicatePoint` を指定しているが、実装入口は `#[AsCommand(name: 'eccube:check-duplicate-point')]` のため、設計通りのコマンド名では起動できない。
+189	B05-06	実装違	med	取得エラーはコンソール出力され得る一方、送信時エラーは MailService 内でログ化されるだけで Command に伝播せず、設計が求めるコンソールへのエラーメッセージ出力にならない。
+190	B05-07	未実装	med	設計は利用者視点の入口として `order:batch checkNotReflectedPointUsage` を外部契約にしているが、実装の `AsCommand` は別名 `eccube:check-not-reflected-point-usage` で登録されているため、設計コマンド名では起動できない。
+191	B05-08	未実装	med	`src/Eccube/Command/SmaregiUpdatePointCommand.php:26` は `#[AsCommand(name: 'eccube:smaregi:update-point')]` で、`src/Eccube/Command` 配下に `smaregi:batch checkSmaregiErrorOrder` または同等のエラー受注再連携コマンドがない。
+192	B05-08	未実装	med	`src/Eccube/Repository/OrderRepository.php:877` に抽出メソッドはあるが、`rg getSmaregiErrorOrder\(` で利用箇所は定義のみ。`src/Eccube/Service/Smaregi/SmaregiUpdatePointAction.php:32` は `handle(int $orderId)` で単一受注を `find($orderId)` する実装。
+193	B05-08	実装違	med	`SmaregiUpdatePointAction.php:71-72` は `array_key_exists('result', $response)` の場合にそのまま `return` する。`setSmaregiErrorFlg(true)` は同ファイル57-58行、75-76行にあるが、成功時解除処理がない。
+194	B05-08	実装違	high	設計はユーザーのポイント残高を取得し絶対値で更新する要求。実装は `src/Eccube/Service/Smaregi/SmaregiUpdatePointAction.php:39` の使用ポイントを、同54行で負数として送信する差分連携である。
+195	B05-08	未実装	med	B05-08のバッチ本体が存在せず、抽出受注をループして `sleep`/`usleep` 等で待機する実装もない。`src/Eccube/Service/Smaregi/Api/SmaregiGuzzleClientFactory.php:90-94` の共通RateLimiterは見つかったが、未実装のB05-08再連携フローに組み込まれた受注ごとのインターバルではない。
+196	B05-09	未実装	med	設計は利用者視点の入口として特定コマンド名を外部契約化している。実装側には当該コマンド名・別名・取引再連携を示すCommandクラスがなく、Webhook由来の子ジョブ処理だけではバッチ入口要求を満たさない。
+197	B05-09	未実装	med	設計は時間窓検索をバッチの入力データ検索条件として定義しているが、実装には期間パラメータの組み立て、手動期間指定の受け口、一覧取得結果の処理ループがない。単一transactionHeadIdを取得する `getTransaction()` は `SmaregiTransactionProcessMessageHandler.php:158` で使われるが、時間窓で未連携取引を発見する処理ではない。
+198	B05-09	未実装	med	設計の再連携バッチはWebhook失敗時の救済処理であり、Webhookが届いていない/失敗した取引をAPI一覧から発見して処理する必要がある。実装はWebhookイベントまたは既存メッセージを前提にした処理で、失敗Webhookを発見する入口・条件判定が欠落している。
+199	B05-09	実装違	med	設計は接続設定の保持・利用元を `mtb_option` と明記している。実装は環境変数由来のDIパラメータを使用しており、設計のオプションマスタ契約と異なる。なお `mtb_option` に旧スマレジ設定を追加するmigrationや管理画面項目は存在するが、B05-09取引API呼び出し経路では参照されていない。
+200	B05-09	未実装	med	設計の外部契約はコンソールバッチの終了仕様である。実装には該当Command自体がなく、ログは子ジョブ内に閉じており、コンソール出力や戻り値1を保証する処理が確認できない。
+201	B06-01	実装違	high	設計は店頭買取の入庫待ちをステータス12と明記しているが、実装ではステータス12は未登録在庫あり、入庫待ちは13として扱われる。反証として BatchAutoStockAction、DtbOtcBuyOrderRepository、MtbOtcBuyOrderStatus、MtbBuyOrderStatus を検索・確認したが、店頭買取ステータス12を入庫待ちとして自動入庫対象にする実装はなかった。
+202	B06-01	実装違	high	設計はECCUBE在庫への登録を要求しているが、実装は stock_location_id = STOCK_LOCATION_ECCUBE で既存在庫を絞り込まず、同一店舗のスマレジ等の在庫行を拾う余地がある。反証として getProductStockByEccube、resolveEccubeProductStockForShop、STOCK_LOCATION_ECCUBE、OtcBuyOrderStockInbound、BuyOrderStockInb
+203	B06-01	未実装	low	設計は dtb_product_class.stock と dtb_product_stock.stock の両方の在庫数更新を要求している。実装では ProductStockEntityManager が ProductStock の stock だけを更新し、ProductClass 側の stock 更新または dtb_product_class.stock 更新SQLがない。反証として自動入庫サービス、EntityManager、Repositor
+204	B06-02	未実装	med	設計は外部契約として `otcBuyOrder:batch updateSummary [YYYY-MM-DD]` を指定しているが、実装の `#[AsCommand]` は別名で登録されており、設計コマンド名で起動できる根拠がない。探索範囲: src/Eccube, html。検索語: `otcBuyOrder:batch`, `updateSummary`, `aggregate-summary`, `AsCommand`, `alias`。
+205	B06-02	実装違	high	設計は部門未設定商品一覧を取得して通知することを要求しているが、実装の一覧取得 SQL が構文不正のため、通知判定・商品名/商品コード本文生成まで到達できない。加えて同メソッドには集計対象ステータス条件もなく、集計対象内の商品一覧という設計条件との対応が不足している。
+206	B06-02	未実装	med	設計の処理フローと排他制御・トランザクション節にある実行時間制限解除が、Command/Action/Aggregator/Repository のいずれにも実装されていない。検索語: `set_time_limit`, `max_execution_time`, `時間制限`。
+207	B06-02	未実装	low	設計で明示されたログ項目のうち件数だけが実装されていない。反証検索で `件数`、`count($products)`、部門未設定商品通知周辺のログを確認したが、該当ログは不在。
+208	B08-02	未実装	med	設計の利用者視点入口は customer:batch lostPoint だが、実装入口は eccube:customer:lost-points で外部契約が一致しない。反証として customer:batch/lostPoint/lost-point/lost-points/aliases を src/Eccube と html 配下で検索したが、該当する別名は LostPointsCommand.php:25 以外に存在しない。
+209	B08-02	実装違	high	設計は会員のスマレジIDと失効ポイントをポイント増減APIへ送信することを要求しているが、実装は送信先・送信ポイントを渡しておらず、サービス本体も固定成功レスポンスであるため、失効分のスマレジ差し引きと失敗時スキップの実効性がない。反証として postSmaregiPoint 呼び出し、SmaregiCustomerApiClient、失効ポイント/losePoint/ポイント増減/API 関連を検索したが、LostPointsAction から実APIに
+210	B08-02	未実装	med	設計は開始・完了のコンソール出力に日時付きであることを要求している。LostPointsCommand 内に DateTime/format 等を使った日時出力はなく、反証検索でも当該コマンドの開始・完了メッセージに日時を付ける実装は確認できない。
+211	B08-02	未実装	med	設計はスマレジ連携の流量制御として会員ごとの短いインターバルを要求しているが、対象バッチ実装内に待機処理が存在しない。反証として英日キーワードと sleep/usleep を検索したが、ポイント失効バッチ内のインターバル実装は確認できない。
+212	B08-03	未実装	med	設計は利用者視点の入口として `customer:batch pointExpireNotification` を指定しているが、実装入口は別名の `eccube:customer:point-expire-notification` で登録されている。反証検索として `pointExpireNotification` / `point-expire-notification` / `customer:batch` / `AsCommand(name:)`
+213	B08-03	実装違	med	設計は送信時エラーのコンソール出力を要求しているが、実装はメール送信例外を MailService 内でログ出力に変換して握りつぶす。反証検索として Command の catch、MailService の TransportException catch、logger/log_critical を確認したが、送信時エラーをコンソール出力する実装は確認できない。
+214	B08-03	実装違	low	設計は開始・完了のコンソール出力に日時を含めることを要求しているが、実装の Console 出力文字列は固定文言のみ。反証検索として Command の `$io->text` / `$io->success` と Action の logger 出力を確認したが、日時付きコンソール出力は確認できない。
+215	B08-05	実装違	med	設計の外部契約である実行コマンド名 customer:batch adjustPointVariance と、実装で登録される eccube:customer:adjust-point-variance が一致しない。別キーワード（adjustPointVariance / adjust-point-variance / ポイント差分発生通知 / customer:batch）で再検索したが、設計名のコマンド登録は確認できなかった。
+216	B08-05	実装違	low	設計は開始・完了のコンソール出力に日時付きであることを要求している。実装の開始・完了出力箇所および同コマンド内を確認したが、date/format/現在日時を付与する処理は確認できなかった。
+217	B08-05	実装違	med	設計は送信時エラーのコンソール出力を要求しているが、実装はメール送信例外をログ出力で握りつぶす。Command 側には Throwable をコンソール出力する catch があるものの、MailService が送信例外を再throwしないため送信時エラーには適用されない。
+218	B08-06	実装違	med	設計の外部契約は `smaregi:batch updatePoint <受注ID>` だが、Symfony コマンド登録名と呼び出し側が別名になっている。`smaregi:batch updatePoint` / `updatePoint` / `smaregi:batch` で src/Eccube と html を再検索したが、設計名の実装は見つからなかった。
+219	B08-06	実装違	low	設計は「受注IDが未指定・数値でない」どちらも処理を行わず終了する扱いだが、実装は非数値入力を失敗終了として扱う。 / 期待:入力はコマンド名と受注ID。受注IDが不正なら何もせず終了する。
+220	B08-06	未実装	med	設計は失敗記録だけでなく後続のスマレジEC受注連携エラー再連携バッチによる再試行可能性まで要求している。実装はエラー受注抽出メソッド止まりで、使用ポイント連携を再試行するバッチ入口・Action・呼び出しが不在。なお `SmaregiStockBackfillCommand` は在庫変動Webhook再連携であり、使用ポイント連携の再試行ではない。
+221	B13-01	未実装	high	PaymentStatusCheckAction::handle() は申込みごとに getApiResponse($paymentNo) を呼ぶが、同メソッド本体が「SP.LINKS取引照会API未実装」として例外を投げるため、設計上の取引照会・レスポンス判定・後続のステータス整合に到達できない。探索範囲: src/Eccube/Command, src/Eccube/Service/Admin/Payment, src/Eccube/Service/P
+222	B13-01	未実装	med	実装には orderBy('ee.paymentNo') はあるが、同一決済番号の検出、前回照会結果のキャッシュ、前回結果に基づく更新・削除・保留処理の流用が存在しない。
+223	B13-01	実装違	med	設計は想定外エラーを重複排除して1つにまとめ管理者へ通知することを要求しているが、実装は申込み単位の例外ごとに通知メールを送信するため、同一エラーが複数回通知され得る。
+224	B13-01	未実装	med	設計は失敗時出力として取引不在・未完了等のメッセージ収集を要求しているが、実装にはメッセージ配列や個別理由の蓄積がなく、削除件数だけを返す。
+225	B13-01	未実装	med	設計はバッチ全体で照会・更新を積み最後に確定することを要求しているが、実装は対象申込みごとにDB確定するため、途中エラー時に既処理分が確定済みになる。
+226	B16-04	実装違	low	設計本文例は tel01:[電話番号(1列目)]:tel02:[電話番号(2列目)]:tel03:[電話番号(3列目)] を要求しているが、実装は ':tel02:' + c.tel01 + ':tel02:' + c.tel02 となっている。反証検索でも src/Eccube/Repository/CustomerRepository.php、src/Eccube/Service/MailService.php、src/Eccube/Command、s
+227	B16-06	未実装	med	設計は月次商品情報スナップショット専用の外部契約（Step Functions月次起動、DB抽出、ZIP生成、stock_YYYYMMDD.txt.zip、s3://inventorycheck/アップロード）を要求しているが、実装範囲にはその入口・ファイル名生成・ZIP生成・S3アップロード呼び出しの連結処理が存在しない。S3サービス単体やデモCommand、管理画面CSVはこのバッチ契約を満たさない。なお設計HTMLの一時DBクラスタ作成/削除に関する
+228	B16-09	未実装	med	`SitemapController` は `#[Route(path: '/sitemap.xml')]` でXMLをHTTP出力し、`pageRepository`/`productRepository`/`categoryRepository`等からデータ取得して `sitemap_index.xml.twig` をレンダリングする実装。反証検索として `Sitemap-Generator-Crawler`/`SitemapGenerator`/`c
+229	B16-09	未実装	med	確認できたサイトマップ実装は `SitemapController` のGETルートとXML Twigのみで、前回ファイルの取得・比較・条件付きアップロードの状態管理がない。S3の `putObject` は汎用アップロードサービスとデモコマンドに限られ、サイトマップ差分判定から呼ばれていない。
+230	B16-09	未実装	med	`src/Eccube/Command` 配下のコマンド一覧にサイトマップ生成コマンドはなく、スケジュール検索で見つかるのはDependabot/Vaddy等のGitHub workflowと `eccube_sitemap_products_per_page` 設定のみ。B16-09を起動するEventBridge+Lambda/4:00設定の根拠がない。
+231	B16-09	未実装	med	設計はクローラー設定として階層制限なし取得と特定URL配下の除外を要求している。実装は `sitemap_page.xml`、`sitemap_product_{page}.xml`、`sitemap_purchase_{page}.xml`、`sitemap_deck.xml`、`sitemap_deck_show_{page}.xml` の固定生成であり、商品検索/カードリスト購入/デッキ検索/イベント情報の日本語・英語URLを巡回除外する設定は不在。
+232	B16-11	未実装	med	設計はバッチ外部契約として「スケジュール起動(Step Functions) 15分毎」「入力S3、出力メール」「指定S3パス5種」「種別別しきい値」「指定From/To/CC/BCC/件名/本文」を要求しているが、src/Eccube/Command の AsCommand 一覧に画像サイズチェック/ファイルサイズアラート相当の入口がなく、S3処理はアップロード/単体取得系のみ、MailServiceとMailテンプレートにも設計件名・宛先・本文に該当す
+233	F01-01	未実装	med	設計は5-5/5-6を『リンク』と定義し押下時の商品一覧遷移を明示要求。実装は href 無しの aria-disabled 非リンクで遷移ロジックが未配線のため機能要求(5-5)(5-6)が実現されていない。
+234	F01-01	実装違	med	英語版表示商品は Trending Now タグ由来なのに more リンク遷移先タグが NEW_ITEMS_ID にハードコードされ、押下すると表示中商品とは別の『最新入荷アイテム』タグ絞込一覧へ遷移する。設計要求(Trending Now タグ絞込一覧)と不一致。Tag.php:55 NEW_ITEMS_ID=1, MtbOption.php:100 SLIDER_EN_ONLY_TAG_ID 確認。
+235	F01-01	実装違	med	設計ブロック4は条件を1~6で明示列挙し在庫条件を意図的に含めていない(他ブロックは『在庫が1以上』を明記)。実装が独自に pc.stock>0 を付加するため在庫切れお気に入り商品が設計と異なりトップに出ない。docstring も『pf-eccube3 の stock 条件を踏襲』と旧仕様追随を明言。
+236	F01-02	実装違	med	ShopTopController→shop_top.twig:37-38→shop_best_sellers/shop_sale.twig(showFavoriteButton:false,isMainShop未指定)→_product_card.twig を追跡。add-cartボタンの表示条件がお気に入りボタン表示条件に内包されており支店では必ず非表示。app/html オーバーライドも無し。設計は店頭注文フローとしてカート追加ボタンを要求。
+237	F01-02	未実装	med	ShopTopController は search_items 用データを渡さず(PHPに search_items 参照なし)、app/html オーバーライドも無し。設計(6-5)(6-6)の『押下→商品一覧遷移』が aria-disabled のダミータグで実装されておらず遷移機能が不在。
+238	F01-02	未実装	med	shop_recommend を無パラメータで include(PHPに shop_recommend 参照なし)、動的URL/ブロック管理データを渡していない。app/html オーバーライドも無し。設計(8-1)の『押下→設定URLへ遷移』『ブロック管理の編集可能ブロック表示』が href="#" のプレースホルダで未実装。
+239	F01-02	実装違	low	shop_order_method.twig:23 が prefix1/prefix2/link_text/suffix を結合表示。messages.ja.yaml:1250 の文言が設計の引用文と一字相違(承っております/承っています)。利用者が直接目にする文言のため差異として計上(軽微)。
+240	F02-01	実装違	low	設計は現在表示中サイトの言語(ja→JP, en→EN)をラベルに出すと規定だが、実装は切替先(反対言語)を出しており表示が逆。翻訳値 front.nav.lang.jp='JP'/.en='EN' は正だが三項演算子の出し分け条件が設計と逆。
+241	F02-01	実装違	med	同一のデッキ構築導線は header.twig:92(/decks)・footer_sitemap.twig:36(/decks)では遷移先設定済みだが、mega_menu の当該項目のみ href="#" のまま未差し替えで遷移不可。
+242	F02-01	未実装	med	設計はFAQ押下でFAQ画面へ遷移を要求。実装はリンク要素はあるが遷移先が未設定(#)で、FAQ画面ルート未実装のため遷移不可。同ブロック他項目(deck_index/help_guide/event_top等)は実ルートを指すためFAQのみ差異。
+243	F02-02	実装違	med	同じ「デッキ構築」導線は header.twig:74,92 / header.en.twig:73,90 / footer_sitemap.twig:36 では /decks を指して実装済みだが、スマホ版メニュー mega_menu.twig の 4-6 だけが未設定("#")。設計は当該リンクの遷移先をデッキTOP画面と明記しており、遷移先が未設定=実装違い。
+244	F02-02	未実装	med	footer_sitemap.twig の他の全リンクは url() で遷移先実装済みだが、FAQ だけがプレースホルダ("#")。FAQ画面ルート(user_data/hareruya_faq 想定)も未実装のためTODOコメントが残り、設計が求める FAQ画面への遷移が未実装。
+245	F02-02	実装違	med	設計は en 時に買取・デッキ構築を非表示・選手一覧を追加すると規定するが、実装の en 用テンプレート header.en.twig にも標準 header.twig にも該当する locale 分岐が無く、両言語で同一のナビ項目を出す（pros はハンバーガー mega_menu.twig:50 のみで上部ナビに無い）。
+246	F02-04	実装違	low	BaseInfo エンティティに short_name_jp／short_name_en が実在し（src/Eccube/Entity/BaseInfo.php:1058-1083）、Contact/confirm.twig:105-107,189-191 では現に shortNameJp／shortNameEn を参照しているが、イベント店舗切替セレクトのみ正式店舗名を出力しており設計と不一致。Event 配下テンプレートに shortName 参照は 
+247	F02-04	未実装	med	php 全体で ShopPageElement 参照は Entity/Repository 定義以外 0 件。セクション名（初心者講習会・取り扱い商品・スタッフ 等）や末尾用クラス付与ロジックもテンプレートに不在。旧 shoppage 由来要素がリニューアルの ShopTop 再編時に未移植と見られる。
+248	F02-04	未実装	med	front テンプレートで『閲覧店舗を選択』は 0 件（admin/mall/tenant/index.twig のみ）。イベント側の店舗切替セレクト（Event/index.twig）は店舗紹介ページの店舗一覧ではなく別物。旧 shoppage 由来 UI が未移植と見られる。
+249	F03-01	未実装	low	設計指定文字列「ご指定の条件に一致する商品が見つかりませんでした。」は messages.ja.yaml・Twig・JS のいずれにも存在しない(grep 該当0件、同義文言はデッキ用 front.deck.result.empty_message:5749 にのみ存在)。実装は別文言「お探しの商品は見つかりませんでした」を出力しており、利用者が直接目にする0件時文言が設計と相違する。
+250	F03-02	実装違	med	設計は『該当なし』廃止＋空フォーマット非表示を要求するが、実装は現行同様に『該当なし』を出力し空フォーマットも表示する。
+251	F03-02	未実装	low	ロケール・IDを含むフルURLを共有し、短縮URL化が未対応。 / 期待:(2-22)SNSでシェアする共有内容のURLは短縮URLで表示する
+252	F03-03	未実装	med	front_search_hide_flg を src/Eccube 配下で全走査した結果、使用箇所は TopCategoryListBuilder.php・CategoryTreeResponseBuilder.php・Category.php(定義)・CategoryType.php・CSV系のみで、フロント詳細検索のカテゴリ EntityType choices 生成経路(SearchType/getList/Twig)に非表示親配下除外ロジックが存
+253	F03-05	未実装	med	src/ 全体で recommendProducts をセットする処理を grep したが不在。ProductRecommendController のみが RecommendService を呼ぶが、マイページからは context=mypage で呼び出されておらず、user_recommend_product.twig の mypage 分岐は死コード。マイページのおすすめ表示は未実装（TODO）。
+254	F03-05	実装違	med	controller の product_id==0 フォールバック（mypage/complete 向けの最新注文基準ロジック）が checkout(=カート) 文脈にも無差別適用される。設計はカート空で『基準商品なし＝0件』を要求しており挙動が異なる。
+255	F03-05	実装違	low	src/ 全体で recommend_no_items の使用箇所を grep すると Mypage/index.twig のみ。共通ブロック user_recommend_product.twig に0件時メッセージ分岐が存在せず、設計が要求する常時表示（0件文言）が detail/cart/complete で満たされない。
+256	F03-06	未実装	med	recently_viewed.twig / RecentlyViewedBlockPayloadBuilder.php / messages.ja.yaml / messages.en.yaml を確認。no_content 相当の翻訳キーは存在せず（recently_viewed 系は title のみ, ja.yaml:1199 / en.yaml:979）、履歴無し表示の描画分岐も無く未実装。
+257	F03-06	実装違	med	recently_viewed.twig の3レイアウト分岐と resolveLayout を確認。本店ECTOP(homepage=top)のみカルーセル/スライダー実装で設計の『スライダーなし』要求に不一致。
+258	F03-06	実装違	low	_product_card_simple.twig 全体を確認し foil 出現箇所は :28 の名称接頭辞のみ。画像 section・CSS フックにフォイル用装飾が無く設計の『サムネイルにフォイル装飾』と差異。
+259	F03-08	実装違	med	実通知バッチ（BatchFavoriteSaleNotificationAction／FavoriteSaleNotificationCommand）はセール通知であり設計もセール契機と明記するが、一覧の案内文言は入荷契機で説明しており設計・バッチ実挙動と食い違う。favorite.twig:51 と messages.ja.yaml:697、及びバッチを確認して裏取りした。
+260	F03-08	実装違	med	設計は解除時の選手情報なしを HTTP400（文言なし）と規定し追加時の nologin 応答と意図的に区別しているが、実装は追加時と同じ nologin JSON(200)＋文言を返しており HTTPステータス・文言有無ともに相違。ProductController.php removeFavorite/addFavorite を読み比べて確認した。
+261	F03-08	実装違	low	利用者が直接目にするH1見出しの文言差異。favorite.twig:49 と messages.ja.yaml:696 を確認。
+262	F03-08	実装違	low	利用者が目にする切替ラベル文言が設計と相違。favorite.twig:79 と messages.ja.yaml:698 を確認。
+263	F03-08	未実装	low	設計は一覧の表示要素として『会員氏名』を明記するが、favorite.twig を全文 grep しても Customer/会員/氏名/様/name01 のいずれも一致無く、当該画面枠で navi.twig（welcome=会員氏名）も include されないため会員氏名が表示されない。
+264	F04-02	未実装	low	index.twig:768 は固定 trans。支払方法選択(data-trigger=change)や支店で文言を変える処理が Twig にもJS(textContent書換なし)にも無く、localeに「コンビニ決済へ/クレジットカード決済へ」文言も不在。
+265	F04-03	未実装	med	ShoppingController.php:788-792 で404例外分岐を確認。messages.ja/en.yaml を grep し front.shopping.error.customer_address_max と当該文言が不在（common.customer_address_count_is_over のみ存在、文言・挙動が異なる）ことを確認。
+266	F04-03	未実装	low	shopping_shipping_edit ルートの描画テンプレートが Shopping/shipping_edit.twig であることを ShoppingController.php:761-763 で確認。同テンプレート全文を精読・grep し edit_notice/変更されません/弊社へご連絡 が無いことを確認。
+267	F04-03	未実装	low	shipping_edit.twig の住所セクション(231-288)を精読、および template を grep し当該注意文が無いことを確認。
+268	F04-03	未実装	low	shipping_edit.twig の見出し出力キーを特定し、messages.ja/en.yaml で当該キーの値を確認。設計指定文言（日英）を grep して実装に存在しないことを確認。
+269	F04-03	未実装	med	設計が指定する利用者向けの国・都道府県整合バリデーションエラー（国項目直下の指定文言表示）が実装に存在しない。国=日本＋都道府県=国外 の不整合入力が PrefType（フィルタ無し）で構造的に可能であり、CustomerAddressType の POST_SUBMIT や ShippingType にも整合検証が無く、メッセージキー form.country.error.invalid・文言も messages.ja.yaml/en.yaml に不在。
+270	F04-04	実装違	med	翻訳キーの文言を確認したところ、届かない場合の誘導先が設計の『当店のヘルプページを御覧ください』ではなく『お問い合わせ』となっており核心文言が相違。
+271	F05-01	未実装	med	設計の★カスタマイズ要件は当該コーナーを『強化買取』タグ商品と規定するが、実装は汎用の新着(NEW_ITEMS_ID=1)タグを表示対象にしており、コーナーは在るが表示対象タグが設計と異なる。
+272	F05-03	未実装	med	設計は識別ID8で『商品数が1の場合に押下すると、商品数を20にする』循環挙動を明示。実装は1で下限固定し20へ戻さない。card twig は .purchase-detail-qty を用い body_class に purchase_page を含むため当ハンドラが適用される。他JS（hareruya-products.js等）に循環処理は不在。
+273	F05-03	未実装	med	設計は買取一覧の表示要素として『買取特集タグ説明（該当時）』を挙げ1件指定時のフリーエリア表示を明記。入口(search)・テンプレート(search.twig)・買取Blockを探索したが該当表示は不在。Tagエンティティに free_area 列はあるが買取一覧で参照していない（getFreeArea 呼び出しが Front/Purchase 配下に0件）。
+274	F05-03	未実装	low	設計のエラー・警告メッセージ表は0件案内に買取最低保証・ヘルプ案内を含めることを明記。空結果描画(showEmptyResult)とロケール(search__product_not_found)を確認したが単一メッセージのみで導線が欠落。表示文言の内容が設計と相違。
+275	F05-04	未実装	med	設計はforward入口・処理フロー・画面遷移・エラー処理を明記するが、ルートもマッピング参照処理も全く存在しない。 / 期待:GET /{_locale}/purchase/forward/{oldCode} で旧商品コードを新商品コードにマッピングし、対応する買取商品詳細へリダイレクト。マッピング無し/商品取得不可はトップへリダイレクト。DBカラム mtb_product_code_mapping.old_product
+276	F05-06	実装違	med	fill.twig→Block/terms_modal.twig→net_purchase_terms_text.twig および messages.ja.yaml(front.agreement.s1〜s11/front.purchase.fill.terms_heading) を確認。共通利用規約の表示自体は実装されているが、★カスタマイズで明記された『冒頭からではなく買取に該当する箇所を表示する』が満たされず、モーダルは共通規約を冒頭(第1条 適用範
+277	F05-06	未実装	low	設計は『別ウィンドウでオンライン本人確認について画面に遷移する』と明記するが、実装のアンカーには target="_blank" が無く同一ウィンドウ遷移で別ウィンドウ要件を満たさない。加えて設計の部品種別は『画像』だが実装はテキストリンクで、意図する画像（QRコード）は complete.twig:63 の TODO で未実装。Purchase/complete.twig のみに当該アンカーが存在し JS 等での別ウィンドウ化も無いことを確認した上での判
+278	F06-01	実装違	low	設計はメール確認不一致メッセージを「同じメールアドレスを入力してください。」に固定するが、クライアント側の初出表示文言が別キー(email_mismatch=「メールアドレスが一致しません」)を参照しており乖離。
+279	F06-01	実装違	low	設計はパスワード確認不一致文言を「同じパスワードを入力してください。」に固定するが、クライアント側初出文言が別キー(password_mismatch=「パスワードが一致しません」)を参照しており乖離。
+280	F06-01	未実装	med	設計は deck_user_id を『一意』と要求するが、実装は一意性をアプリ側ベストエフォート照合のみで担保し、DB制約もトランザクション直列化も無く重複可能性を実装自身が認めている。
+281	F06-02	実装違	high	設計の判定順序表・副作用順序・エラーケースを正として実装を精査。会員ステータス更新(283-289)がスマレジ連携(302)より前に自動コミットされ連携失敗時にロールバックが無いため、失敗後に再度URLを開いても getProvisionalCustomerBySecretKey が null→already_activated となり設計要求の再試行が不可能。確定タイミング・ロールバック挙動が設計と逆転している。
+282	F06-02	未実装	med	設計の判定順序3を正として実装を精査。スマレジID保有時の分岐がエラー画面ではなく冪等スキップ+正常完了扱いになっている。『完了済み』判定は customer_status(273-279)でのみ行われ、設計指定のスマレジID保有による判定・画面出力は未実装(activate_error.twig の error_type にも該当ケース無し)。
+283	F06-02	実装違	low	設計の表示文言表(日英明記)を正として実装テンプレート(activate.twig:20-21)と翻訳キー値を突合。日本語完了案内および英語見出し・英語案内が設計値と相違。完了補足(ja)は一致。
+284	F06-02	実装違	low	設計のエラー表示文言表を正として activate_error.twig の描画キー('front.entry.activate_error.'~error_type~'.message')と messages.ja.yaml の値を突合。forbidden と activate_failed の本文が設計指定文言と相違することを確認。
+285	F06-03	未実装	med	設計は常時表示の静的案内として明記。login.twig 全体・messages.ja.yaml/validators.ja.yaml・src/Eccube/html 配下 grep で該当文言の描画箇所が見当たらない。
+286	F06-04	実装違	med	設計は再設定画面のメールを形式検証のみとし会員特定はリセットキー単独と明記するが、実装はリセットキー＋メール完全一致で特定しており、登録と異なるメール入力時に更新できない不一致エラーになる。
+287	F06-04	実装違	med	設計はキー不正・キー失効（表示時）に『アクセスできません』系の専用エラー画面/文言を求めるが、実装は表示時も含め全ケースを一律404で処理し E-1/E-2 専用画面や reset_error 文言を出力しない。
+288	F06-04	未実装	med	設計はパスワード更新完了時に会員ID・メール・接続元IPを含む完了ログの保存を要求するが、実装の更新成功パスにはログ出力がなく完了ログのみ欠落している。
+289	F06-05	未実装	med	実バーコードが全会員同一の固定値のため店頭POSで会員本人を識別できず、注文履歴登録・ポイント付与という設計要求を満たさない。
+290	F06-05	実装違	low	設計カスタマイズ要件本文が明示的に『買取一覧』への名称変更を指示しているのに実装ラベルが旧名『買取履歴』のまま。 / 期待:カスタマイズ要件: 買取履歴を『買取一覧』に名称変更する（画面部品16の遷移先も『買取一覧画面へ遷移する』）。
+291	F06-05	未実装	med	同コントローラ・Front配下・EventListener配下を previousUrl/戻り先/search_return/product_list_url 等で grep しても戻り先の保存・消費処理は不在。設計が現行踏襲として要求するリダイレクト挙動が未実装。
+292	F06-06	未実装	med	設計は要素13を画像と定義し状態別画像を表示する要求だが、実装は色付きテキストラベルで描画。twig/CSS双方に img/background-image 等の画像使用が無く、画像紐付けも未実装。
+293	F06-06	未実装	low	当該2行にスマレジ分岐が無く常に同一キーを描画。購入日/支払方法はスマレジ分岐を持つのにこの2列のみ欠落。翻訳キーも不在。
+294	F06-06	未実装	med	設計は上部(2件数/3ページング/4表示件数)と下部(15件数/16ページング/17表示件数)を対で列挙するが、実装下部はページャのみ。件数・表示件数プルダウンが下部で未実装。
+295	F06-07	未実装	low	shopping_history_detail.twig を grep しても注記文言・front.shopping.notice.point の出力がなく、locale に文言は存在するが detail 画面テンプレートで参照していない。Controller 側にもメッセージ生成がないため、設計が常時表示と規定する注記が画面に出ない（未実装確定）。
+296	F06-08	実装違	med	設計は『入荷通知を設定している規格のみ表示』かつ『登録ボタンはロード/再読込時に出さない』旨を明記。実装は未設定規格も表示しロード時に登録ボタンを描画しており挙動が異なる。CONFIRMED。
+297	F06-08	実装違	low	設計は商品画像押下→商品詳細遷移を要求。実装は画像がズーム用ボタンで商品詳細へ遷移しない。お気に入り一覧と共通のズーム踏襲の可能性は残るがPLAUSIBLE。
+298	F06-09	実装違	med	favorite.twig:51 が参照する翻訳キー front.mypage.favorite_list.lead が『入荷した際／back in stock』の入荷通知文言であり、設計が正とするセール通知案内『セール対象になった際／become on sale』と日英ともに意味が異なる。入荷通知の文言は別機能F06-08(入荷待ち商品一覧)の案内文であることを設計HTMLの2画面の部品/メッセージ表を対比して確認した。messages.ja.yaml:
+299	F06-09	実装違	low	favorite.twig の分岐（50行 if length>0 で lead 出力 / 53行 if length==0 で favorite_not_found 出力）を読み取り、0件時に lead 出力経路が無いことを確認。設計は『一覧表示時に常時』表示を規定するが、実装は取得件数1件以上のときのみ表示。
+300	F06-09	実装違	low	favorite.twig の img-section（144-156行、button+overlay+expand-icon、翻訳キー image_zoom_overlay『画像を拡大』/aria_zoom_image『商品画像を拡大』）と name リンク（159行 url('product_detail')）を確認し、画像押下は拡大表示（設計の画面部品一覧に無い挙動）で、画像→商品詳細遷移の実装が無いことを確認した。設計はF06-09画面部品表(6)
+301	F06-10	実装違	low	messages.ja.yaml:818のrange_info定義に%start%/%end%が含まれず、設計が常時表示を求める表示範囲が日本語で欠落。翻訳定義から確定（実機確認不要）。
+302	F06-10	実装違	low	point_history.twigの該当アンカーにtarget/新規タブ制御が無いことをgrepで確認（target/_blank/window.openいずれもヒットせず）。設計は2箇所で別タブを規定。
+303	F06-10	実装違	low	paginate呼び出し・pager.twig・knp既定値(5)・app/config未設定を確認。設計の前後4件に対し実装は前後2件で数値差。
+304	F06-11	実装違	low	設計の画面部品ラベル（利用者が直接目にする列見出し）と実装ロケール文言が3列で不一致（買取依頼日→依頼日、買取店舗→店舗、買取依頼内容→依頼内容）。低重要度の文言差。messages.ja.yaml と purchase_history.twig と設計HTMLを確認。
+305	F06-12	未実装	med	PurchaseHistoryController.php の全Route定義を確認したが、設計が『利用者視点の入口』『画面遷移』『処理フロー』で明記する統合詳細パス /purchase_history/detail/{id}・承諾パス /purchase_history/update/{id} は src/Eccube・html を全検索しても存在しない（grep 'purchase_history/detail' 0件、'purchase_histor
+306	F06-13	実装違	med	POST限定ルートへGETリダイレクトのため撮影画面の再表示(エラー状態反映)が成立せず、入力キー参照(identification_select/isError)とも不整合で設計の遷移・状態引き継ぎが機能しない。
+307	F06-13	実装違	low	確認中・オンライン確認済み・簡易書留確認済みの3ステータスで設計文言と表記が相違(「現在、確認中です」「オンラインで本人確認済み」「簡易書留で本人確認済み」)。
+308	F06-14	実装違	med	設計は(6)デッキステータスと(7)デッキ登録/編集の両方を4条件で非表示にするよう求めるが、実装ではボタンのみ条件付き非表示、ラベルは無条件描画。event_history.twig全体・DtbEventDetailを確認したがラベル行に非表示ガードは無い。
+309	F06-14	未実装	med	設計は開催日当日の終端(23:59:59)を基準とするが、実装は開催開始日時そのものを基準にしている。開催当日で開始時刻経過後（例:10:00開始を当日12:00閲覧）は設計上まだ終了表示すべきでないのにイベント終了となる。開催日終端やend_date基準の終了判定は他に存在しない。
+310	F06-14	実装違	med	設計は現在ページ±4（例8→4〜12の9リンク）を要求。実装はrange指定が無くKnpデフォルトの±2で描画される。page_range/pageRange設定箇所を全探索したが該当なし。
+311	F06-14	未実装	low	設計は明示的に『＜最初』『最後＞』の文言リンクを求めるが、共有pager.twigは数字ページ番号＋『…』のスタイル。利用者可視の文言・見た目が設計と異なる。
+312	F06-14	実装違	low	設計のパンくず末尾は『マイイベント・デッキ登録』だが、実装は別文言『大会デッキ登録』。ホームアイコン→homepage・現在ページ非リンクは満たすが、末尾クラムの文言が不一致。
+313	F06-14	実装違	low	設計は表示文言を『デッキ登録済み』『デッキ未登録』と明記するが、実装は『登録済み』『未登録』。値テキスト自体が設計の引用文言と不一致（利用者可視の文言差）。
+314	F06-14	実装違	med	設計は追加ステータスの表示文言を『未登録』と記載するが、実装は『未申込』。該当ケース(Entry is null)向けステータスは実装されているが文言が設計の引用と異なる。
+315	F06-16	未実装	med	設計は大会名の後ろに『(フォーマット)』を併記する要求。テンプレートにフォーマット連結処理がなく、Controller も併記文字列を渡していない。
+316	F06-16	未実装	med	設計はページング(最大20件/動的切替)・総数・表示件数の表示を明示。テンプレート/Controller に該当UI・データが無い。フォーマット絞り込み(select_format)のみ実装済み。
+317	F06-16	未実装	med	部分一致サジェストの中核要求に対し候補データ供給源が実装に存在しない。UIの器だけあり機能が空。hareruya-event.js の grep でも deckentry-card-suggest セレクタのみで fetch/api 呼び出しなし。
+318	F06-16	実装違	high	設計は『提出時に書式エラー→編集画面へ戻し登録しない』だが、実装は書式検証なしで常に登録し確認画面へ遷移。設計文言そのままのエラー span が未使用である点も裏付け。
+319	F06-16	実装違	med	設計はキャンセル遷移先をイベント一覧(/{_locale}/events)と明記するが、実装は mypage へ遷移。遷移先が相違。
+320	F06-17	未実装	med	設計は書式エラー時『保存せず入力保持でデッキ編集画面へ戻す』を利用者可視の中核挙動として複数の機能節（処理フロー・画面遷移・エラー処理・セッション・エッジケース）で明記するが、実装の更新確定フローには解析・エラー分岐・セッション保存・edit リダイレクトが全く無く、書式不正入力でもデッキが保存され完了画面へ遷移する。『実装詳細は要確認』のハッジはDB永続化詳細を対象とする文脈であり、書式エラー時の遷移・入力保持という機能挙動要求はハッジ対象外。
+321	F06-18	未実装	med	設計は 1-28/2-2 の戻る遷移先をECTOP画面(url('homepage'))と規定するが、両twigとも url('mypage') を指す。ChangeController・両twigを確認し homepage への戻り導線は不在。遷移先が設計と異なる実装違い。
+322	F06-18	未実装	med	設計は専用エラー画面への遷移かつフラッシュ非生成を規定するが、実装は画面遷移せずフラッシュ付き再描画する。ChangeController・change.twig・default_frame.twig を確認し会員情報変更用エラー画面は不在。遷移仕様とフラッシュ非生成方針の双方に反する。
+323	F06-18	実装違	high	設計の住所系変更トリガーの『住所』には addr03(dtb_customer.addr03、既定配送先へ 164 行で反映される正規の住所項目)が含まれるが、$isAddressChanged の比較に addr03 が欠落。海外住所3のみ変更時に未確認化が発火しない業務ルールの部分的不充足。
+324	F06-18	未実装	med	設計は国・都道府県の不整合を送信後検証で拒否し国欄にエラーを表示すると規定するが、実装は海外→PREF_ABROAD強制・日本→null判定のみで組み合わせ整合検証・国欄エラー付与を行わない。ChangeController・EntryType・AddressType を確認したが該当検証は不在。
+325	F06-20	未実装	med	会員登録(EntryController)・会員情報変更(ChangeController:116-127 で FindBlacklistByCustomer 照合)にはブラックリスト判定があるが、配送先登録フロー(DeliveryController)には全く無い。app/Customize/Controller は .gitkeep のみでオーバーライドも無い。設計は配送先の値((3-3)氏名等)を対象とした照合・エラー画面遷移を F06-20 固有に
+326	F06-21	未実装	med	退会確定の副作用として要求される dtb_player 該当行の削除／論理削除が実装のどこにも存在しない（Controller の complete 分岐・イベントリスナ・スマレジサービス・Entity cascade のいずれも該当なし）。よって選手情報の削除は未実装。
+327	F06-21	実装違	low	設計の完了メッセージ先頭行『退会を完了いたしました。』が画面に表示されない。withdraw_complete.twig(39) は body キーのみ出力し、対応する title キー(messages.ja.yaml:732, 未使用)を出力していないため、利用者が目にする完了メッセージが設計文言より1文欠落する。見出し『退会完了』は完了見出しであり完了メッセージ先頭行の代替にはならない。
+328	F06-22	未実装	med	設計はブラウザ履歴の直前ページへ遷移する指定。実装は homepage への固定リンクで遷移先が異なる。 / 期待:(1-10)戻る ボタン: 押下するとブラウザの履歴から1つ前のページに遷移する
+329	F06-22	実装違	low	設計はマイページを中間に持つ3階層。実装は2階層でマイページを欠く。 / 期待:パンくずリストは「⌂ > マイページ ＞お問い合わせ」の3階層
+330	F06-22	実装違	med	設計は4-5を『全店舗名』と4-2から意図的に書き分けているが、実装は eventShop にも公開かつ営業中フィルタを適用し閉店/非公開店舗が選択肢から欠落する。
+331	F06-22	未実装	med	設計指定の案内文が入力画面・確認画面いずれにも表示されておらず、翻訳キーにも該当文言が存在しない。 / 期待:案内文『当店へのご要望は、下記フォームにご記入のうえ送信してください。』(英: To contact the shop, please fill out the form below.)を入力画面・確認画面に常時表示する
+332	F06-23	実装違	low	設計は一覧の送信日時書式を『Y年m月d日 H:i』と規定するが、実装 history.twig の isLocaleJa 分岐は 'Y/m/d H:i' を用い年月日表記になっていない。書式は history.twig のみで決定され設計と差異がある。
+333	F06-23	実装違	low	設計は0件でも『0件』を表示すると業務ルール・エッジケースで二重明記。実装は0件を空状態メッセージへ分岐し件数を出さないため設計要求を満たさない。
+334	F06-23	未実装	med	設計は『戻る』を history.go(-1) によるブラウザ履歴戻り・サーバリクエストなしと明記。実装は一覧URLへの固定リンクでGETが発生し遷移機構が設計と異なる。
+335	F06-24	未実装	med	設計はクライアント側の履歴戻し（サーバリクエスト無し）を規定するが、実装は contact_history ルートへのサーバGETリンクで機構が異なる。なお同シート画面部品表No.6は『お問い合わせ履歴画面へ遷移する』とあり結果面では合致（設計内に機構の内部矛盾あり）。明示された無サーバ挙動要求に対しては実装違い。
+336	F06-24	未実装	med	設計オラクルは『明示エラーを出さず内容を表示しないだけ』を要求するが、実装は常に例外→404エラーページを明示表示する。ContactController::detail・history_detail.twig を精査し、静的な非表示フォールバックが無いことを確認。
+337	F06-26	未実装	med	設計は支店店内アカウントの遮断画面＝『店内アカウントの 1～22』＋『本店注文』と明記。実装は 1～22 の遮断を getShopFrontFlg()（本店店内 id=3 のみ true）でゲートしており、支店は branch_shop_front_flg 経由の本店注文遮断しか持たないため、支店アカウントに対する 1～22 の制限が実装されていない（部分実装＝実装違い）。DtbCustomerGroup(id=5) の shop_front_flg=0 
+338	F06-27	未実装	med	専用画面が無く当該ボタンも未実装。 / 期待:『TOPへ戻る』ボタン押下でTOP画面へ遷移する。
+339	F07-01	実装違	low	設計は5秒毎(5000ms)を明示するが、実装は4000ms(4秒毎)で1秒短い。grep で 5000/autoplaySpeed: 5000 は該当0件、autoplaySpeed: 4000 が2箇所。
+340	F07-01	未実装	med	index.twig:33-55 のパンくずは店舗名までの静的3段(position 1-3)。hareruya-event.js に breadcrumb/__current/日別/月別 のパンくず書換トークンは0件で、日別・月別セグメントの付与・更新処理が不在。
+341	F07-01	未実装	med	MtbBanner にイベントFK・開催日・公開状態カラムが存在せず、Repository/Controller にも日付/公開条件が無い。過去日・非公開イベント想定のバナーでも設定次第で常時表示され、設計の表示条件が未実装。
+342	F07-02	実装違	med	設計はボタン名を「リセット」とし挙動を「初期状態へ戻す（平日・休日はチェック済みに復帰、過去は未チェック）」と規定するが、実装は名称が「クリア」で挙動が全項目クリア（平日・休日も未チェックにする）。検索結果集合は isWeekday xor isHoliday 判定（DtbEventDetailRepository::buildFrontSearchQueryBuilder）のため平日/休日両オフでも両オンでも同一だが、表示文言（リセット→クリア）と復帰後
+343	F07-03	未実装	med	店舗名/フォーマットのhrefに shop/format 等のクエリが無く絞り込み結果に繋がらず素の検索一覧へ遷移。開催日付クラムが未生成でイベント名に置換されている。設計項目1-1の『それぞれ押下可能』『その内容での絞り込み結果画面に遷移』を満たさない。
+344	F07-03	実装違	low	detail.twig:135 が『¥』プレフィックス固定。設計は末尾『円』を要求。桁区切り自体は number_format で満たすが通貨表記の位置/記号が設計と相違し、ja ロケールでも『円』にならない。
+345	F07-03	実装違	med	エンティティは詳細値優先＋本体フォールバックを実装済みだがテンプレートとボタン判定が Event 本体値を使用。詳細レベルで capacity/entry_fee を上書きしたイベントでは設計と異なる本体値が表示・判定され、賞品(Detail優先)との整合も取れない。
+346	F07-03	実装違	med	_event_detail_actions.twig:60 のhrefが event_top 固定。設計の『遷移前のページに遷移』『遷移元のクエリにより戻り先を切り替える』を満たさない。
+347	F07-04	未実装	med	設計は others 有無で主(1-1)の変更可否を切替え、未選択時は遷移不可を要求するが、実装は常に disabled 固定かつ hidden で主対象を強制送信するため常に変更不可・常に含む。切替ロジックが不在。
+348	F07-04	未実装	med	「遷移させない」はボタン無効化で満たすが「エラーを動的に表示する」が未実装（表示要素・呼出しなし、専用メッセージ未参照）。
+349	F08-02	実装違	med	設計は明示的に『共通の利用規約のみ表示する』『個人情報の取り扱いについてを削除する』とカスタマイズを指示。terms_modal.twig:107-152にプライバシーポリシー(front.privacy)タブが依然存在し個人情報保護方針を表示している点、および同意ラベルが画面部品31『利用規約同意する』でなく『個人情報の取り扱い/利用規約に同意する』である点が設計と相違。実装確認済み(privacyタブ残存を根拠として特定)。
+350	F08-02	未実装	med	index.twig(ja/en)・otc_buy_order_js.twig を『自動入力|zip2addr|AjaxZip3|button|検索』で確認したが、ボタン・検索リンクは不在でblur自動起動に置換され、自動入力対象も住所2(addr02)が欠落。ユーザーが目にする操作要素・挙動が設計と相違。
+351	F08-03	未実装	med	被監査対象 OtcBuyController::complete()(OtcBuyController.php:455-496) が描画する complete.twig / complete.en.twig を全文精査し、設計が完了画面表示時に常時求める身分証明書用意案内が全く出力されないことを確認。grep でも OtcBuy テンプレートに該当文言なし。ゆえに未実装。
+352	M03-01	実装違	low	設計は商品マスター検索入力の検索条件ラベルを「プロモ」とする。実装は SearchProductType の promotion ラベルに admin.product.promotion を使い、messages.ja.yaml の値が「プロモ種別」になっているため、画面ラベルが設計より長い名称になる。
+353	M03-01	実装違	med	設計は商品名(日/英)の両方を検索対象にしているが、実装の visible な商品名検索は日本語名 p.name のみに一致する。英語商品名 p.name_en での検索要求が満たされない。
+354	M03-01	実装違	med	設計はカード名(日/英)を検索対象にする要求だが、実装は日本語カード名 name_jp のみを検索している。 / 期待:識別ID:3「カード名」は、検索押下時にカード名(日)・カード名(英)を検索対象にする。
+355	M03-01	未実装	med	設計で要求される棚番号昇順、および詳細仕様の p.update_date DESC 既定順が実装の orderBy に存在しない。
+356	M03-01	実装違	low	設計は商品一覧の表示データ選択ラベルを「表示データ切替え」とする。実装は Product/index.twig で admin.product.list_display_data__title を表示し、messages.ja.yaml の値が「表示データ切り替え」になっているため、漢字表記の「切替え」とひらがな混じりの「切り替え」で画面ラベルが一致しない。
+357	M03-01	実装違	low	設計の画面文言と実装の表示文言が一致しない。「切替え」が「切り替え」、全角の「＋」が半角の「+」になっている。 / 期待:表示データ切替え(ID:12)のラベルは「表示データ切替え」、選択項目は「販売数（通販＋TC東京）」「販売数（支店）」「入庫数」とする。
+358	M03-01	実装違	med	設計は同一言語内で通常状態の規格値を合算する表示を要求しているが、実装はProductClassごとの個別行・個別集計であり、言語単位や通常状態グループ単位の合算処理になっていない。
+359	M03-01	未実装	med	設計の棚番号昇順が一覧クエリのORDER BYに存在しない。別キーワード（ShelfNumber/shelf_number/sortNo）で確認しても、商品一覧の並び順として使われる実装根拠は見つからない。
+360	M03-02	実装違	med	設計の外部入出力契約と実装のルート名・フォーム名・送信フィールド名が一致しない。edit/update ルート、m03-02_admin_product_product_edit、rank_images は実装検索で確認できない。
+361	M03-02	実装違	med	設計のURL、HTTP400条件、JSONファイル名一覧返却が実装と一致しない。非画像MIMEのHTTP415のみ実装確認できる。
+362	M03-02	実装違	med	設計の必須・桁検証がSymfony FormTypeのconstraintsとして実装されていない。HTML attr の min/maxlength や empty_data=0 は設計のNotBlank/Length/max値検証を満たさない。
+363	M03-02	実装違	med	設計は廃止後の商品情報変更不可を求めるが、実装はUIの送信ボタン非表示に留まり、サーバ側更新禁止がない。DISPLAY_ABOLISHED の検索結果も編集POST経路ではなく一括ステータス/テンプレート表示に限られる。
+364	M03-02	未実装	med	設計の副作用/APIとして明記された支店システム更新通知が更新経路に存在しない。UniSearch関連は手動/バッチのフィード生成や一覧検索であり、ProductControllerの更新確定後通知を代替していない。
+365	M03-02	未実装	high	設計の『商品編集で廃止になった場合のスマレジ削除』が、商品編集Controllerの更新確定経路に存在しない。スマレジ削除機構は別経路に存在するが、本機能から呼ばれていない。
+366	M03-02	実装違	low	利用者に表示される成功メッセージが設計文言と異なる。遷移先は実装済みのため、差異はフラッシュキー/文言に限定される。 / 期待:更新成功時は「登録が完了しました。」の成功フラッシュを設定し、同じ商品の編集画面へリダイレクトする。
+367	M03-03	実装違	low	設計はログ記録タイミングを CSV 出力ストリーム送信後としているが、実装の log_info は StreamedResponse の callback が実行される前、つまり fputcsv/fclose によるストリーム送信完了前に実行される。反証検索として カード商品CSV出力ファイル名、log_info、setCallback、StreamedResponse、ProductCardCsv を確認したが、callback 完了後に同ログを出す実装
+368	M03-04	実装違	low	設計はストリーム送信処理後の監査ログを要求しているが、実装はレスポンス作成時点でログを出すため、実際に CSV ストリームが送信・完了したことの記録にならない。
+369	M03-05	実装違	low	設計はストリーム送信後または callback 完了後のログ記録を求めるが、実装は callback 外で log_info('価格変更CSV出力ファイル名', [$filename]) を実行しており、実際の CSV ストリーム送信完了を待たずに記録される。探索範囲: ProductPriceCsv.php の exportCsv callback とログ、ProductCsvController.php の admin_product_price_cs
+370	M03-06	実装違	med	設計HTMLのCSV項目一覧99件を ProductAllCsv::AVAILABLE_COLUMNS の label と突合したところ、13項目で表示ヘッダ名が相違する。コントローラは dtb_csv.column_name だけを columns として渡しており、dtb_csv.disp_name で設計項目名を補う経路はない。
+371	M03-06	実装違	med	設計は deleted_at による論理削除を要求しているが、実装は setDeletedAt() を呼ばず remove() と flush() により物理削除する。
+372	M03-06	実装違	med	findBy(['id' => $csvIds]) に orderBy がなく、POST配列順を保持する保証がない。画面で並べ替えた順序ではなくDB取得順で rank が保存され得る。
+373	M03-09	実装違	med	設計は商品規格の公開ステータスが公開の場合だけフロント表示、非公開・廃止は非表示とする要求。実装は checkVisibility で商品本体 Status のみを確認し、Product::getProductsByLanguage や ProductRepository/ProductClassRepository のフロント向け抽出で pc.Status/ProductClass.Status を除外条件にしていないため、非公開・廃止の規格でも vis
+374	M03-09	実装違	low	設計の利用者視点 URL と実装の Route パスが一致しない。特に product/{id}/class 形式ではなく product/class/{id} 形式で、登録/更新/削除の末尾も create/update/delete の設計順序と異なる。
+375	M03-09	実装違	med	設計の表示文言は admin.register.failed/admin.register.complete 相当だが、Controller は common save 系キーを使っている。また設計は同じ規格の編集画面へ戻す要求だが、実装は admin_product_product_class、つまり規格一覧へ戻す。
+376	M03-09	実装違	high	設計は削除可能性に応じたボタン表示、最後の1件の HTTP400、論理削除を要求している。実装は削除可能性の判定がなく、最後の1件ガードもなく、論理削除ではなく物理削除している。探索範囲: ProductClass edit.twig, ProductClassController::delete, ProductClassDeleteAction, ProductClassRepository の ProductClass 件数/削除可否関連。
+377	M03-11	実装違	low	設計はカテゴリ登録画面の識別ID:8を「フロント非表示フラグ」と表示する。実装は CategoryType の front_search_hide_flg の label に admin.product.category_front_search_hide を使い、messages.ja.yaml でその値が「フロント非表フラグ」になっているため、画面ラベルが「非表示」ではなく「非表」と表示される。
+378	M03-11	実装違	low	設計はカテゴリ登録画面の検索パラメータ項目を「検索パラメータ」と表示する。実装は CategoryType の search_parameters の label に admin.product.category_search_parameters を使い、messages.ja.yaml の値が「検索パラメーター」になっているため、長音符の有無が一致しない。
+379	M03-11	実装違	med	表示系の一部は実装済みだが、設計が求める検索対象からの除外が商品検索条件側に未反映。ProductController、SearchProductType、SearchProductBlockType、Front SearchType、ProductRepository、TopCategoryListBuilder、CategoryTreeResponseBuilder を別キーワードで確認したが、商品検索クエリ側の非表示フラグ除外条件は見つからなかった。
+380	M03-12	実装違	low	設計では対象商品数のみを特例列とし、それ以外は CsvExportService::getData() に渡して null/空文字を空セルに正規化する要求になっている。実装は Parent を別分岐にしており、親なしの場合も CsvExportService の一般列規則を通らず '0' を出力する。反証として CATEGORY_CSV_FIELD_PARENT、親カテゴリID、Parent、最上位、CSV出力、CsvExportService::getD
+381	M03-13	実装違	med	設計は名称(英)の書式を半角としているが、実装は全角文字もフォーム検証を通過する構成。探索範囲: TagType.php, TagController.php, tag.twig, Entity/Tag.php。
+382	M03-13	実装違	low	getTitleJp/getTitleEn/title_jp/title_en を Controller/Resource/template/Service/Util/html で再検索しても、商品検索ページのタイトルへ反映する実装がない。
+383	M03-13	実装違	med	getDescriptionJp/getDescriptionEn/description_jp/description_en を Controller/Resource/template/Service/Util/html で再検索しても、商品検索ページの meta description へ反映する実装がない。
+384	M03-14	未実装	med	StorageCodeController/Twig を確認し、page_count は storage_code.twig の固定配列から描画される。反証検索として storage_code.twig と StorageCodeController.php 内の 2000/10000/12000 を検索したが該当なし。なお同系の tag.twig:150、tag_sales_analysis.twig:86、shelf_number.twig:106 に
+385	M03-16	未実装	med	設計は利用者視点の入口として GET /product/storage_code/import にCSV取込フォーム表示を割り当てているが、実装はGET表示を /product/storage_code/csv に分離している。反証検索として storage_code/import、admin_product_storage_code_import、admin_product_storage_code_csv、product/storage_code/cs
+386	M03-16	実装違	low	設計は GET /product/storage_code/import を取込画面表示入口としているが、実装の import ルートは methods: ['POST'] のみで、GET は /product/storage_code/csv に分離されている。代替検索として m03-16_admin_product_product_storage_code_import、admin_product_storage_code_import、admin_p
+387	M03-16	実装違	med	設計のCSV外部契約は ID・並び順を数値(整数)としているが、実装は checkRequiredHeaders で空文字のみを検証し、StorageCodeCsv::register では ID と並び順を整数キャストするだけで非数値入力を拒否しない。代替検索として is_numeric、ctype_digit、Integer、数値、並び順、rank、StorageCodeCsv、AbstractCsvService、CsvImportType を確認し
+388	M03-18	実装違	low	section.twig:59 ではカード見出しを id 有無で「編集」へ切り替えているが、送信ボタン section.twig:154-155 は id を参照せず常に「登録」。設計の編集モード時ボタン名「編集」と異なる。反証として admin.common.edit は messages.ja.yaml:1446 に存在し一覧編集ボタンでは section.twig:129 で使われるが、下部送信ボタンには使われていない。
+389	M03-18	実装違	med	sheet-32 は連携対象/API詳細を別添資料参照としており、sheet-64 は軽減税率IDを新規登録時に null 連携する指定。実装の create payload には該当フィールドがなく、SmaregiSectionApiClient/SmaregiSectionUpsertMessageHandler/SmaregiSectionUpsertMessage/src/Eccube/Service/Smaregi を reduced/taxRa
+390	M03-21	実装違	low	設計は並び順列の押下で編集フォームへ反映することを要求しているが、実装では押下可能な要素が実装されていない。探索範囲: ShelfNumberController、shelf_number.twig、関連JS。
+391	M03-21	未実装	med	設計の 0〜32767 最大値が、CSVフォーマット表示、CSV取込バリデーション、エンティティ定義のいずれにも存在しない。反証検索として 32767, Range, LessThanOrEqual, PositiveOrZero, GreaterThanOrEqual を ShelfNumberController/ShelfNumberMasterImportHandler/ShelfNumberType/DtbShelfNumber/Twig/mes
+392	M03-26	未実装	med	設計は識別ID14として商品削除フラグ列を定義しているが、実装のカード商品CSV列定義は「検索ワード」の次が「規格画像」であり当該列が欠落している。設計フォーマットどおり31列で投入すると、ProductCardImportHandler 側の30列定義と列数不一致になる。
+393	M03-26	実装違	low	設計は「CSVの基準価格がそのまま販売価格へ反映」としているが、実装はカード状態と割引率により基準価格を再計算してから販売価格へ代入する。
+394	M03-26	実装違	med	設計は許容カテゴリを3ルートの subtree に限定する要求だが、実装は『マスタに存在する任意のカテゴリID』を存在チェックのみで許容する。subtree 外のカテゴリIDが検証を通過し得るため設計より検証が緩い実装違い。
+395	M03-26	実装違	high	新規登録は insert 分岐に入るが、insert 分岐には新規=セールフラグ無効扱いの price02←基準価格 反映処理が無く、販売価格を『販売価格』列(割引後)から取る。基準価格≠販売価格のCSV行で新規登録すると設計と異なる price02 が保存される。
+396	M03-27	未実装	med	画面構成表（UI仕様=正）はアップロード押下後に確認モーダルの表示を要求するが、実装はモーダルを介さず即 submit する。設計HTML内リバース詳細節には『送信前の確認ダイアログはない』(pf-eccube3現行挙動の記述)という相反記述があり要判断だが、画面構成表の element-level 要求との差異として挙げる。
+397	M03-27	実装違	high	設計の値1/2の意味が実装では逆。反証検索として「1: 非公開」「2:公開」「商品公開ステータス」「ProductStatus」「mtb_product_status」を確認したが、グッズCSV実装側に設計どおりの 1=非公開, 2=公開 の定義は見つからなかった。
+398	M03-27	未実装	med	設計は必須の数値項目として新規追加しているが、実装は任意表示かつ取り込み時に保存しない互換用列として扱う。反証検索として「原価単価」「costUnitPrice」「cost_unit_price」「wholesalePrice」「wholesale_price」を確認したが、グッズ商品CSV取込で原価単価を必須検証または保存する実装は見つからなかった。
+399	M03-28	実装違	med	設計は dtb_product_tag に base_info_id 列が無いこと、および書換対象列から base_info_id を除外することを明記しているが、実装は SQL と Entity の両方で base_info_id を扱っている。
+400	M03-28	実装違	med	設計は本機能で扱う dtb_product_tag の ec-cube-enterprise 列から base_info_id を除外しているが、実装は ProductRepository.php:1813 と 1835 で base_info_id を明示的に INSERT している。反証検索として dtb_product_tag/base_info_id/TenantTrait/ProductTag を確認したところ、Entity 側にも base_i
+401	M03-30	未実装	low	ProductStandardPriceCsvController は基準価格CSV用の form_action_route/template_download_route/history_page_route だけを渡しており、csv_product_standard_price.twig は base_csv_upload.twig の継承のみ。base_csv_upload.twig 側にも低価格帯カードCSV出力導線は無く、別キーワード検索でも低価
+402	M03-30	実装違	med	設計はCSV価格登録/更新時に条件判定でスマレジ連携フラグを有効化する要求だが、実装は既にONの規格だけを連携候補にする。基準価格・状態などの条件で smaregi_alignment_flg をOFFからONへ更新する処理がない。
+403	M03-30	未実装	med	設計は原価単価をCSV識別ID:5として新規追加する要求を持つ。一方、ProductStandardPriceCsvController::getCsvHeader は4列だけを返し、getRequiredCsvHeader も4列だけを必須化している。ProductStandardPriceImportHandler::getColumns/initializeColumnDefinitions も productId/languageId/standa
+404	M03-31	未実装	med	設計は取込成功時の支店システム通知を副作用として要求。実装は連携ブロックがコメントアウト＋TODO移植待ちで、BranchUpdateService 自体が enterprise 側に未移植のため通知が発生しない。スマレジ連携は別系統で本要求を満たさない。ProductPriceCsvController.php / ProductPriceImportHandler.php / src/Eccube/Service 全域を確認し不在を確認。
+405	M03-31	未実装	low	設計は成功フラッシュの表示文言を『表示メッセージ』節で正とし具体文言と翻訳キーを明記しているが、実装は汎用キー admin.register.complete（『登録が完了しました。』）を使用しており、利用者が目にする成功メッセージの文言が設計と相違する。
+406	M03-31	未実装	med	ProductPriceCsvController(送信先ルート admin_product_product_price_import)→CsvImportType→CsvImporter→messages.ja.yaml を探索したが、設計が必須とするサーバ側MIME検証と専用メッセージ(admin.csv.error.upload.mime)が実装に存在しない。ファイル必須(NotBlank)・サイズ上限(File maxSize)のみ実装済みでMIM
+407	M03-31	未実装	low	import()成功分岐(:176)と messages.ja.yaml を確認した結果、成功フラッシュの表示文言・翻訳キーが設計指定と一致しない。設計は表示文言を正と宣言しており利用者が目にする成功メッセージに差異がある。
+408	M03-32	実装違	med	existsProductClassByProductCodeAndSaleFlg / replaceStandardPriceOnly / replaceStandardPriceAndPrice02 を確認したが、dtb_product へ join するだけで product_status_id、ProductStatus、pc.visible 等の公開状態条件が無い。SimpleHighPriceImportHandler 側にも公開状態での追加判
+409	M03-32	実装違	med	同系CSV Controller には getErrors(true) を使う実装が存在する一方、この機能では子フィールドエラーを辿らないため、設計の「各フォーム検証エラーをadminフラッシュに積む」「import_file null なら csv_invalid_no_data」を満たさない。
+410	M03-32	実装違	med	設計表は商品コードの最大を 11 としているが、実装は必須チェックと存在/重複チェックのみで、11 文字制限を行う StringMaxLengthValidator/Length(max=11)/専用検証がない。反証検索範囲: src/Eccube, html, app/config に対して SimpleHighPrice/simple_high_price/商品コード/NumericMaxLengthValidator(11)/StringMaxLen
+411	M03-32	実装違	med	設計表は基準価格の最大を 11 としているが、実装は 9 桁制限で検証するため、設計上許容される 10〜11 桁相当の値を拒否する。反証検索範囲: src/Eccube, html, app/config に対して SimpleHighPrice/simple_high_price/基準価格/NumericMaxLengthValidator(11)/standardPrice(11)/max 11 を検索し、当該機能では NumericMaxLength
+412	M03-33	実装違	med	設計のCSV外部契約は7列だが、getCsvHeader/getRequiredCsvHeader と SaleHighPriceImportHandler::getColumns は5列で固定されている。ColumnDefinitions には buyPrice/smaregiAlignmentFlg は存在するが、本ハンドラでは参照されない。
+413	M03-33	実装違	med	設計は全分岐で買取価格をCSV値に更新するが、実装コメントでも「買取価格・基準価格の更新はない」としており、buy_price のUPDATEもCSV買取価格の読取もない。
+414	M03-33	未実装	med	他CSVハンドラには SmaregiProductClassCsvImportUpsertCoordinator/deferIfEligible の実装があるが、当機能の Controller/Handler/Repository には対応処理が存在しない。
+415	M03-33	未実装	med	設計の外部CSV契約では買取価格とスマレジ連携フラグが必須列だが、画面フォーマット表、雛形CSV、取込列定義のいずれにも存在しない。反証として ColumnDefinitions::buyPrice()/smaregiAlignmentFlg() と類似 ProductPriceImportHandler を確認したが、対象ハンドラでは未使用。
+416	M03-33	未実装	med	対象実装に買取価格列の読込、bcfloor整数化、buy_price更新、CSV買取価格を新買取価格として履歴へ渡す処理がない。ColumnDefinitions::buyPrice() と他CSVハンドラでの実装は存在するが、本機能の Controller/Handler/Repository から参照されていない。
+417	M03-33	未実装	med	スマレジ連携フラグのCSV列、必須検証、DB更新、連携予約が対象機能に存在しない。反証として SmaregiProductClassCsvImportUpsertCoordinator と類似 ProductPriceImportHandler の利用を確認したが、対象のセール用高額商品価格変更CSVには接続されていない。
+418	M03-35	実装違	low	設計は利用者に見える名称を「部門更新CSV登録」としているが、実装の表示翻訳は「部門登録CSV」系になっている。反証検索として「部門更新CSV登録」「product_section_csv」「section_csv」「admin_product_section_import」「部門登録CSV」を src/Eccube・app/config・html（bundle除外）で再検索したが、画面／ナビ／カード見出しの翻訳値として「部門更新CSV登録」は存在せず、該
+419	M03-35	実装違	low	設計は利用者表示を「部門更新CSV登録」としているが、実装の翻訳キーは部門更新ではなく部門登録を表示する。反証検索として「部門更新CSV登録」「部門更新CSV」「product_section_update」「product_section_csv」およびルート/翻訳キーを再検索したが、画面用翻訳値として部門更新CSV登録に対応する定義は見つからず、同キーは部門登録文言に解決される。
+420	M03-37	未実装	med	設計は5010件以上をエラーとする上限チェックを要求しているが、該当機能の実装には上限定数・行数カウント・admin.csv.error.upload.maxrecord 相当の処理がない。近傍実装では src/Eccube/Controller/Admin/Product/StorageCodeController.php:288-296 が取込前検証、src/Eccube/Service/Csv/AbstractCsvService.php:256-2
+421	M03-37	実装違	high	設計は商品IDをキーに商品情報側の略称タグIDを更新する要求だが、実装は略称タグマスタ mtb_storage_code の名称・並び順を登録/更新している。反証検索でも admin_product_storage_code_import 経路に ProductRepository 注入、Product::setStorageCode 呼び出し、dtb_product.storage_code_id 更新は見つからない。
+422	M03-37	実装違	high	設計フォーマットは商品IDと略称タグの2列必須だが、実装は略称タグマスタ登録用のID・名称・並び順フォーマットを受け付ける。商品ID/略称タグのCSVはヘッダ検証で期待ヘッダと一致せず、設計どおりに取り込めない。
+423	M03-37	実装違	high	設計HTMLのsheet-55先頭フォーマット表は「商品ID」「略称タグ」の2列をmaterialなCSV外部契約として示すが、実装のgetCsvHeader()/StorageCodeCsvは「ID」「名称」「並び順」を期待し、StorageCodeCsv::register()でMtbStorageCode#setName()/setRank()のみを更新する。反証検索として m03-37、略称タグ更新、product_storage_code、商品I
+424	M03-38	未実装	med	設計は識別ID2「CSVファイルのアップロード」に「押下後、確認モーダルを表示」と明記しているが、実装はフォームを直送する共通テンプレートで、確認ステップを起動するUI/JSがない。反証検索語: upload-button, upload-form, confirm, 確認, モーダル, modal, data-confirm, data-bs-toggle="modal", admin_product_status, status_csv。
+425	M03-38	未実装	med	設計の画面構成は識別ID5としてユーザー可視の「該当件数」を置くが、対象テンプレートに総件数表示がない。反証検索語: 該当件数, 検索結果, search_result, totalItemCount, getTotalItemCount, import_histories_pagination.totalItemCount。
+426	M03-38	実装違	high	設計HTMLの sheet-20 本文では識別ID 2 の商品公開ステータスを「0: 非公開 1:公開」と定義しているが、実装は非公開を 2 として出力・受理する。反証として ProductStatus 定数、ProductStatusCsvController の getCsvHeader、ProductStatusUpdateImportHandler の ChoiceValidator、および「0: 非公開」系キーワードを src/Eccube・ht
+427	M03-40	実装違	low	messages.ja.yaml では admin.product.product_shelf_number_csv が「棚番号登録CSVアップロード」、admin.product.product_shelf_number_csv_format_title が「棚番号登録CSVファイルフォーマット」。アップロードボタンも共通キー admin.common.csv_upload により「CSVファイルをアップロード」と表示され、設計の「CSVファイルのアップ
+428	M03-40	実装違	low	設計はナビ表示名を「棚番号更新CSV登録」と明記しているが、実装の翻訳値は「更新」ではなく「登録」、かつ「CSVアップロード」を含む別文言である。反証として棚番号更新CSV登録、product_shelf_number_csv、棚番号登録CSVを src/Eccube、app/config、html 配下で検索したが、該当翻訳キーの設計値は存在せず、同キーは eccube_nav.yaml:74 からナビに使用される。
+429	M03-41	未実装	med	設計は名称とパラメータの2項目追加を要求しているが、実装は search_parameters だけを CategoryCsvImportHandler で読み込み Category::setSearchParameters() に保存している。別キーワード・英語名・Twig・翻訳キー・Entity を再検索しても検索条件名の列または保存処理は見つからなかった。
+430	M03-45	実装違	med	設計はフロント非表示・親非表示・支店非表示を全般的な表示制御として要求するが、実装は一部導線だけのフィルタに留まる。反証検索範囲: CategoryController.php, category.twig, CategoryType.php, CategoryRepository.php, TopCategoryListBuilder.php, CategoryTreeResponseBuilder.php, SearchProductType.php,
+431	M03-45	実装違	low	設計は保存開始および完了の両方でカテゴリ id を配列入り記録する要求だが、開始ログだけ id が欠落している。反証検索範囲: CategoryController.php の completeCategorySave/log_info、関連する保存処理。
+432	M04-01	実装違	med	設計は検索パターン保存時に店舗条件を保存対象から除外すると規定する。実装 savePattern() は FormUtil::getViewData($searchForm) の全項目を $dataToStore にコピーし、_token だけを unset して serialize する。base_info は除外していないため、検索パターンへ店舗条件が保存され、設計の「店舗は保存対象に含めない」と異なる。
+433	M04-01	実装違	low	設計の画面表示要件は、初期表示時にメンバー管理のデフォルト検索表示店舗で絞り込んだ在庫一覧を表示するとする。実装は GET 初回（page_no/resume/検索クエリなし）で検索セッションを破棄し、pagination=[] の空一覧を返す。初期表示でデフォルト店舗絞り込み検索は実行されない。ただし同設計書のプロセスフローには「GETパラメータ無し・初回は空一覧」ともあり、設計内に揺れがあるため低重要度・要解釈差分として扱う。
+434	M04-01	実装違	med	設計は閉店店舗を選択肢から除外する要求だが、実装は BaseInfo 全体を候補にする EntityType のままで、SearchStockListType.php:131 に「閉店フラグが BaseInfo に追加された後、query_builder で絞り込む」とあり未対応。反証検索で BaseInfoRepository::getOpenShops() は見つかったが SearchStockListType の base_info 選択肢には使われ
+435	M04-01	実装違	low	設計は利用者可視のボタン活性制御を要求しているが、実装は常時押下可能で、未入力時にサーバエラー表示へ流す挙動になっている。反証検索でも savePatternBtn に対する disabled 制御や pattern_name 入力イベントは見つからなかった。
+436	M04-01	実装違	med	設計では店舗を検索条件保存から除外する必要があるが、実装は _token 以外を保存対象に残す。反証検索で base_info を unset する処理、保存前正規化、DtbSearchPattern 側の除外処理はいずれも確認できなかった。
+437	M04-01	未実装	med	設計は複数在庫区分選択時の遷移禁止を要求するが、実装の stockMoveBtn/stockTransferBtn クリック処理には isSameZone 相当の判定が存在しない。反証検索で「複数在庫区分」「data-zone」「stockLocationId」「isSameZone」等へ翻案して確認したが、該当する M04-01 一覧側制御は見つからなかった。
+438	M04-01	実装違	med	設計はデフォルト検索表示店舗で絞り込んだ在庫一覧の表示を要求している。実装はフォーム初期値だけ設定し、一覧本体は検索前空状態として返すため、利用者が初期表示で在庫一覧を見られない。確認範囲: StockListController, SearchStockListType, ProductStockRepository, stock_list_index.twig。
+439	M04-01	実装違	med	設計のID列は商品IDと定義されているため、表示順のID降順も商品ID降順として実装される必要がある。実装は ProductClass.id を降順にしており、表示IDとソートキーが一致しない。確認範囲: ProductStockRepository, stock_list_index.twig。
+440	M04-01	実装違	high	反証検索で stock_list_index.twig、StockListController、StockMoveController、StockTransferController、FormType/Service を isSameZone/複数の在庫区分/data-zone/stockLocationId で確認したが、遷移前に選択在庫区分の一意性を検査する実装は見つからない。StockMoveController/StockTransferContr
+441	M04-01	実装違	low	設計はリンク押下でリンク群を表示するUIを要求しているが、実装はプルダウン選択UIであり、各フォーマットや出力項目設定がリンクとして表示されない。確認範囲: stock_list_index.twig, StockListController, DtbCsvExtensionRepository, StockCustomCsvExportService。
+442	M04-01	実装違	low	設計は入力に応じたボタン活性制御を求めているが、実装は常時活性のままサーバーバリデーションで拒否している。反証検索範囲: stock_list_index.twig, StockListController, SearchStockListType の pattern_name/savePatternBtn/disabled/input。
+443	M04-01	実装違	med	設計は店舗を検索条件保存から除外する要求だが、実装は base_info を除外していない。反証検索で StockListController, SearchStockListType, Repository/Service を確認したが unset($dataToStore['base_info']) 相当の処理は見つからない。
+444	M04-02	未実装	med	設計は一日単位の原価スナップショットと呼び出しを要求するが、実装は現在値または変動イベント単位の原価しか保持していない。
+445	M04-02	実装違	med	設計の選択肢ソースは店舗の所属マスターデータだが、実装は所属マスターではなく対象店舗に紐づくメンバーの所属から選択肢を作るため、所属マスターに存在しても該当メンバーがいない所属は表示されず、マスターの並び順も保証されない。
+446	M04-03	実装違	med	設計は本機能の画面・処理フロー・表示メッセージの正を pf-eccube3（直接更新型）と明記し、登録成功時は一覧へ戻し「登録が完了しました。」を表示すると規定。永続化の承認ワークフロー化は遷移先・成功メッセージの変更を正当化しない。実装は遷移先が自ルート（編集画面再表示）、メッセージも admin.common.save_complete で不一致。
+447	M04-03	実装違	med	設計は商品未選択時に一覧へリダイレクトし「商品が選択されていません。」を表示すると規定。実装の new()/store() は一覧でなく自ルートへ戻し、表示文言も『指定された在庫が見つかりませんでした。』で不一致。自ルートへのID無しリダイレクトはループの懸念もある。
+448	M04-04	実装違	med	設計HTMLのCSV出力項目表では「原価単価」「総原価」「在庫」の順だが、実装のCSV_HEADERは「在庫」「原価単価」「総原価」の順であり、CSV列順が設計と一致しない。反証として StockListController、StockListCsvExportService、stock_list_index.twig、messages.ja.yaml、ProductStock を確認したが、M04-04 の通常CSV列順は StockListCsvExp
+449	M04-09	実装違	med	設計はCSV登録エラー後も検索項目と一覧選択状態を維持する要求だが、実装はエラー時リダイレクトに選択IDや resume=1 を渡さず、通常GETで検索セッションを初期化するため保持されない。materialGapRows にはこの個別要求が無く extractorMissed として補足した。
+450	M04-09	実装違	med	設計は詳細検索条件3-1〜3-9だけを空にする要求だが、実装は2-1〜2-9の基本検索条件（在庫移動・振替ID、店舗、在庫区分、移動タイプ、ステータス等）も消す。
+451	M04-09	実装違	med	設計の主キーは在庫移動振替ID降順だが、実装は登録日降順を優先するため、ID降順と登録日の前後が一致しないデータで表示順が設計と異なる。
+452	M04-09	実装違	med	作成条件自体は StockMoveInstructionCreateAction で実装されているが、成功後の遷移先が設計の一覧画面ではなく詳細画面になっている。
+453	M04-09	実装違	med	設計は戻しリストCSV/PDFを在庫移動のみに限定するが、実装の戻しリスト共通バリデーションには moveTransferType == MOVE_TRANSFER_TYPE_MOVE の判定がない。振替データでも許可ステータスに該当すれば型条件で止められない。
+454	M04-09	実装違	low	設計は在庫移動・振替登録編集（振替）のフッターリンクを「在庫移動・振替検索一覧」とする。実装は admin.stock.transfer.back_to_list の翻訳値が「在庫振替検索一覧へ」で、transfer_approval.twig と transfer_complete.twig がそのキーを表示するため、「移動・」がなく末尾に「へ」が付く。
+455	M04-09	未実装	med	設計は『振替点数>現在庫』で明示エラーとする要求だが、Controller/StoreAction/Form/Twig(JS) いずれにも現在庫超過を検知しユーザーへエラー表示する処理が無く、超過登録が成立し在庫がマイナスになる。書式範囲チェック(1〜1000000)とは別要求。
+456	M04-09	未実装	med	設計は移動元＝移動先商品コードが同一の場合をエラーとする要求。実装では同一コードでもそのまま登録されるガードが無いため未実装。(B)振替後商品コード非存在エラーのみ StockTransferStoreAction.php:92 で実装済との対比。
+457	M04-09	実装違	med	設計は当該入力フォームを直接入力可としているが、実装は readonly として直接入力を不可にしており、フォーム部品の入力可否が設計と相違。
+458	M04-09	未実装	med	設計は『商品コードを直接入力しフォーカスアウトした際』に振替先情報を表示する挙動を要求。blur 契機の情報表示処理が存在しないため未実装（モーダル選択契機の表示は実装済で別要求）。
+459	M04-10	未実装	med	設計はステータス到達日時の出力を要求しているが、実装は未設定の stock_at フィールドを出力している。反証として moveFromApprovalAt / MoveToApprovalAt / STATUS_MOVING / STATUS_INBOUND_APPROVED / SQLカラム名まで検索したが、CSV対象の moveFromStockAt / moveToStockAt への代入はテスト生成以外に存在しない。
+460	M04-12	実装違	low	設計は在庫分割結合検索一覧の結果列を「分割元 / 結合先商品名」とする。実装は stock_split_join_index.twig で admin.stock.split_join.list.source_destination_product を表示し、messages.ja.yaml の値が「分割元・結合先商品」になっているため、区切り記号と末尾の「名」が一致しない。
+461	M04-12	未実装	med	表示件数の単一選択(初期10件・標準マスタの選択肢)が実装に存在しない。件数制御自体が成立していない。 / 期待:識別ID 4-4「表示件数」: 単一選択、初期値10件、EC-CUBE標準のマスタデータ管理の最大ページ表示にて設定されている表示件数の選択肢を表示する
+462	M04-12	未実装	med	pager => null 固定でページ遷移リンクが機能・表示ともに不在。 / 期待:識別ID 5-13「ページングリンク」: 選択したページへ遷移する
+463	M04-12	未実装	med	行をチェック→各種出力ボタン活性化 の選択駆動UIが未実装。 / 期待:検索結果一覧テーブルで分割・結合をチェックした場合、各種出力ボタンが活性化する(選択した一覧の分割・結合について各種CSVを出力)
+464	M04-12	実装違	med	設計は選択駆動出力だが、実装は検索条件で全件出力。出力対象の決定方法が異なる。 / 期待:識別ID 4-3「在庫分割結合CSV出力ボタン」: 選択(チェック)した一覧の分割・結合についてCSVを出力する
+465	M04-12	実装違	med	セッションに検索条件は残るが resume を付けずに素の一覧へ戻すため画面へ復元されず検索項目が失われる。 / 期待:登録が行われなかった場合、検索項目および一覧の選択状態は失われない
+466	M04-12	実装違	med	分割4択・結合5択のタイプ別選択肢を要求するが、実装は全ステータス常時表示かつ文言が異なる。 / 期待:識別ID 2-7「ステータス」: 選択肢(分割)=新規登録・分割承認待ち・却下・入庫完了／選択肢(結合)=新規登録・結合元登録・結合承認待ち・却下・入庫完了（タイプ別・文言『入庫完了』）
+467	M04-12	実装違	med	設計は3-1〜3-4限定クリアだが実装は検索セッション全体を破棄。対象範囲が異なり部品もボタンでなくリンク。 / 期待:識別ID 3-7「検索条件をクリアボタン」: 押下すると3-1〜3-4(詳細検索の日付/登録者)の内容を空にする
+468	M04-12	実装違	med	設計は初期値 source(分割元・結合先)が選択済みを要求するが、実装の初期状態は無選択。 / 期待:識別ID 2-1「商品名・商品コード検索対象」: 初期値『分割元・結合先』(source)
+469	M04-13	実装違	low	Join側と非対称。分割CSVエラー表示経路（ハンドラ→Controller editDestinationCsvUpload→twig errs.join）を確認し、固定文言の付加が無いことを確認。
+470	M04-13	未実装	med	DtbStockSplitJoinDetail 全カラム・StockSplitApplyApprovalAction・StockSplitApprovalApproveAction を確認。設計は承認申請時に仕入総価格を計算・登録することを要求するが、計算タイミング（承認処理時）・格納先（明細に非永続）ともに不一致。
+471	M04-13	未実装	med	twig の qty change JS と合計表示、updateDestinationQuantity 戻り値を確認。フォーカスアウト時の即時再集計がクライアント側で未実装。
+472	M04-13	実装違	med	編集画面フッターリンクと index の resume 分岐を確認。検索状態維持が resume 未付与により満たされない。
+473	M04-13	実装違	med	設計HTML sheet-18 のCSV登録部・登録CSVテーブルで列名「分割先分割在庫数」を確認。実装のImportHandlerと雛形出力ヘッダは「分割先在庫数」で列名不一致。
+474	M04-13	未実装	med	設計2-11が明記する2つのバリデーション（最大値99999999・在庫数超過エラー）が実装に存在しない。Twig/Action/Controllerを直接確認し不在を確認。
+475	M04-13	未実装	med	設計の7区分と実装マスタ6区分が一致せず、『結合計画承認済み』『結合完了承認待ち』『入庫完了』が存在しない。二段階承認が単一承認→入庫済みに集約。migration/Entityを直接確認。
+476	M04-13	未実装	med	設計は店舗間移動時のみ必須の条件付き必須だが、実装はメンバーを条件無視で常時必須にし、所属は一度も必須化されない。店舗間移動判定自体が存在しない。Controller/Formを直接確認。
+477	M04-13	未実装	med	設計の10,000件上限がバックエンドで未実装。分割側は2,000件のMAX_ROWSがあるが結合側は上限定数自体が存在しない。両ハンドラを直接確認し行数チェック不在を確認。
+478	M04-13	実装違	med	設計7-14は0入力=即時行削除を要求するが、実装は0を保持したまま行を残す。編集画面のAjax更新Controllerを直接確認し0削除処理が呼ばれないことを確認。
+479	M04-16	未実装	med	設計別添の利用側CSV仕様には「販売価格」が言語IDと現在庫の間にあるが、実装のヘッダ定義および fputcsv 行生成に販売価格が存在しない。反証として StockRecommendCsvExportService、関連 Csv Exporter、Repository の「販売価格」「price02」「standard_price」「stock_recommend」を検索したが、本CSVに販売価格を追加する実装は確認できなかった。
+480	M04-17	実装違	med	設計は範囲を -99999999～99999999 と明記し負値を許容するが、実装は min=0 で下限を0に固定しており負の在庫増減数（在庫減算分）を検索できない。設計範囲と不一致。
+481	M04-17	未実装	med	StockHistoryType・StockHistoryController ともに getDefaultSearchBaseInfo / setData / PRE_SET_DATA を参照していない（grep で不在確認）。同一 Stock 配下の InventoryPlanController.php:181 では getDefaultSearchBaseInfo を使用しており、本機能では未適用。初期値として店舗が入力される挙動が未実装。
+482	M04-17	未実装	med	Controller/Form を first day of month・modify( で grep したが不在。初期値『当月1日』が設定されず初期表示時に登録日(from)は空欄となる。未実装。
+483	M04-17	未実装	med	status に data/empty_data・初期選択の設定がなく Controller に setData も無い（grep 確認）。初期値『公開』が未実装。
+484	M04-17	未実装	med	card_condition に初期選択(NM)の指定がなく Controller でも setData されない。初期値『NM』が未実装。
+485	M04-17	未実装	med	twig内JS・assets/js を grep したが disposal_search 変更ハンドラなし。欠品検索チェックに連動したフォーム項目の自動設定・活性/非活性・クリアというクライアント側動的挙動が未実装。
+486	M04-17	実装違	med	設計の基準日時は COALESCE(approvalAt, registeredAt) 降順であるべきだが、実装は createDate でソートしており承認済みレコードが承認日時で並び替わらない。findLatestByProductStockId(:358) には COALESCE(sh.approvalAt, sh.registeredAt, sh.createDate) 実装があるが一覧クエリでは未使用。
+487	M04-17	未実装	med	history.twig を grep しても「承認待ち」文言・ロジック不在。翻訳キー admin.stock.approval_list.approval_waiting=承認待ち は在庫編集承認一覧側でのみ使用され、本一覧では未使用。承認待ちレコードが一律「-」表示になり設計の3状態と差異。
+488	M04-17	実装違	low	設計は値なし時「-」だが実装は null→¥0。加えてデータソースが履歴時点の仕入単価でなく現在の ProductClass.buy_price のため設計とデータソースも相違の可能性。
+489	M04-18	実装違	med	設計の外部契約は GET /product/history/stock/export のリンク起動だが、実装は POST /product/stock/history/csv_export のフォーム送信であり、HTTP method・URL・起動形態が一致しない。反証として admin_product_stock_history_export、product/history/stock/export、exportStockHistory、getQuery
+490	M04-18	実装違	med	設計は admin.history.search を入力契約とする検索条件復元型のCSV出力だが、実装は hidden ids[] によるID指定型の出力で、CSV endpoint 内で検索条件セッションを読まず、フォーム復元も行わない。
+491	M04-18	実装違	low	設計の prefix は product_stock_history_、実装の prefix は stock_history_ で一致しない。createFileName 自体は yyyyMMddHHmmss.csv を付けるため時刻・拡張子部分は一致するが、ファイル名規則の先頭文字列が異なる。
+492	M04-18	実装違	med	設計のCSV列名は『在庫区分』だが、実装は『在庫場所』として出力するため、CSVヘッダーの外部契約が異なる。 / 期待:CSV出力項目の識別ID:7 は在庫区分である。
+493	M04-18	実装違	med	設計は『メモ優先、無ければ状態名』だが、実装はカード状態コードを固定的に出力している。dtb_product_sub_class、memo、CardCondition name、状態名フォールバックを検索したが、StockHistoryCsv の状態列変換に該当処理はなかった。
+494	M04-18	実装違	low	設計は0件を正常系としてヘッダ行のみのCSV出力にするが、実装はID未指定またはデータなしをエラー扱いし、CSVレスポンスを返さない。
+495	M04-18	実装違	low	設計は create_date を Y/m/d H:i で出力するが、実装は registeredAt を Y-m-d H:i で出力しており、参照カラム相当と日付区切り文字が一致しない。
+496	M04-19	実装違	med	DtbStockHistoryRepository、MtbStockChangeTypeDetail 定数、DoctrineMigrations を 欠品減算 / OUT_OF_STOCK / DISPOSAL / ORDER_STOCKOUT_DECREASE / MOVE_SHORTAGE_SUBTRACT で再検索したが、M04-19 の検索条件で id=19,21 を指定する実装はなく、廃棄親区分の一括抽出になっている。
+497	M04-19	実装違	med	DtbStockHistoryRepository と history.twig を registeredAt / createDate / orderBy で再検索した結果、第三ソートに sh.registeredAt を使う実装は確認できない。
+498	M04-19	未実装	med	history.twig、admin_stock_approval_new、stock_list_index.twig、ProductStock.id で再検索した。stock_list_index.twig には admin_stock_approval_new へのリンク実装があるが、M04-19 の history.twig 商品名列には適用されていない。
+499	M04-19	実装違	med	history.twig、StockHistoryDisposalCsv、DtbStockHistory::sell_price を再検索した。CSV は getSellPrice() を使うが、画面一覧だけ buy_price を表示している。
+500	M04-19	実装違	low	StockHistoryController と history.twig を has_errors / search_no_result / search_invalid_condition で再検索した。0件時に設計文言へ到達するには has_errors=false が必要だが、検索後の実装は true を返している。
+501	M04-19	実装違	low	history.twig と messages.ja.yaml を 在庫区分 / stock_location / locationName で再検索したが、M04-19 一覧列の見出しとして「在庫区分」を出す実装は確認できない。
+502	M04-20	実装違	med	設計のCSV列は16列だが、実装の欠品履歴CSVヘッダは15列。さらに設計の「在庫区分」が実装では「在庫場所」になっており、「登録元ID」は行データ側にあってもヘッダ欠落により出力対象外。
+503	M04-21	実装違	med	設計は負数による在庫減算を許可しているが、実装のサーバ検証は符号付き数値を受け付けない。フロントJSは負数を許可しているため、送信後にサーバで不整合になる。
+504	M04-21	実装違	med	設計は入庫時だけ必須、廃棄・減算時は任意かつ原価非参照だが、実装は全CSVで仕入単価を必須にしている。 / 期待:仕入単価は任意項目で、在庫変動区分の親区分が入庫の場合のみ必須入力とする。減算時は入力された原価を参照しない。
+505	M04-21	実装違	med	CSV以外エラーという設計に対し、TSVを受け付ける経路があり、サーバ側のサイズ/MIME制約も未設定。 / 期待:一括登録時、アップロードされたファイルがCSV以外の場合はエラーとする。CSVファイルはサイズ上限と形式（MIME）を検証する。
+506	M04-21	未実装	med	同名ファイル再取込の事前中止処理がこの機能に接続されていない。 / 期待:直近に同じファイル名で在庫変更CSVを取り込んでいれば「直近でアップロードされたファイル名です。ファイルを確認してください。」を表示して中止する。
+507	M04-21	実装違	med	設計は最終行まで検査して複数行エラーを列挙するが、サーバ実装は最初の重大エラーで中断する。 / 期待:登録処理のバリデーションはエラーの有無に関係なくCSV最終行まで確認し、エラーがあれば行番号とエラー内容を表示して登録処理を終了する。
+508	M04-21	実装違	high	重複商品コードとロック取得失敗の設計エラー経路が実装されていない。 / 期待:商品コードから規格を更新ロックして取得し、未存在・2件以上一致・ロック取得失敗をそれぞれエラーにする。
+509	M04-21	実装違	med	0行をスキップしないため、更新不要行が承認明細・件数・集計に残る。 / 期待:在庫増減数が0の行は更新不要としてスキップする。
+510	M04-21	実装違	high	廃棄系では設計上も後続承認処理上も申請時反映が前提だが、CSVアップロード経路では申請時の在庫減算・履歴作成が行われない。
+511	M04-21	実装違	med	設計が求める規格在庫・規格本体の同期更新が実装経路上で満たされない。 / 期待:規格在庫 dtb_product_stock.stock と規格本体 dtb_product_class.stock を同一更新で更新後在庫に揃え、更新成立した規格ごとに在庫変更履歴を1件作る。
+512	M04-21	未実装	med	設計で取込処理内の副作用とされる入荷通知・支店在庫通知が実装されていない。 / 期待:取込完了後、入荷対象があれば入荷通知メールを送り、更新後在庫を支店へ通知する。
+513	M04-21	実装違	low	設計のCSVアップロード完了メッセージと実装表示文言が異なる。 / 期待:取込がエラーなく完了したとき「商品登録CSVファイルをアップロードしました。」を表示する。
+514	M04-21	未実装	med	開始ログ以外の監査ログ要求が実装されていない。 / 期待:ログ・監査として、取込開始、件数付き取込完了、取込異常終了を記録する。
+515	M04-21	実装違	low	設計の基準日時ソートではなくID降順であり、承認日時の表示フォーマットも時刻が欠落している。 / 期待:在庫変更CSV登録履歴は登録日時と承認日時のうち後の日時を基準日時として降順表示し、承認日は YYYY/MM/DD HH:mm で表示する。
+516	M04-21	実装違	med	設計は増減額の合計を要求するが、実装は変更前総原価の合計を承認一覧に保存している。 / 期待:在庫編集承認一覧情報には合計総原価増減数を登録する。
+517	M04-21	実装違	high	複数選択の承認通知先配列を登録者IDとして保存するため、在庫編集承認ID配下の登録者が操作者と一致しない。 / 期待:登録日・登録者を在庫編集承認情報および履歴に登録し、登録者として操作者を保持する。
+518	M04-21	実装違	low	設計で指定された注意文の後半（問題がある場合はキャンセルしてCSV修正）が表示されず、文言も一致しない。 / 期待:100点以上の在庫増減がある場合の確認モーダルには「在庫増減数100点以上の商品がありますが内容問題ないでしょうか。※問題がある場合、キャンセルしてCSVファイルを修正してください。」を表示する。
+519	M04-22	未実装	med	mimeTypes / extensions / getClientOriginalExtension / text/csv / text/plain / csv_invalid_format / import_file を再検索したが、在庫移動CSV登録専用の csv 以外拒否処理は見つからない。Controller の admin.common.csv_invalid_format はファイル未指定時のみで、csv 以外でも内容がCSVとして読めれば取
+520	M04-22	実装違	med	ADMIN_CSV_IMPORT_MAX_ROWS / 10000 / maxrecord を再検索したが、StockMoveTransferController 側に10,000件用の上限オーバーライドはない。同じ10,000件上限の StockChangeCsvController には 10002 への個別オーバーライドがあるため、在庫移動CSV登録は設計値と異なる共通上限のまま。
+521	M04-22	実装違	med	999999999 / stockMoveQuantity / moveQuantityColumn / LessThanOrEqual / product_stock_change_quantity_max を再検索したが、在庫移動CSV登録の移動点数に 999999999 上限を適用する実装は見つからない。さらに設計の下限0に対し、実装は1以上を要求している。
+522	M04-22	未実装	med	設計は csv 以外のファイルを登録エラーにする要求だが、サーバ側の拡張子/MIME検証または専用エラー処理が存在しない。別キーワード（mimeTypes, extensions, getClientOriginalExtension, csv_invalid_format, upload_error_file_type, text/csv）でも在庫振替CSV用の拒否実装は確認できなかった。
+523	M04-22	実装違	med	設計の在庫振替CSV上限は2,000件だが、実装の判定値は5010行以上、画面ヒントは10,000件であり、振替専用の2,000件上限が実装されていない。反証検索でSTOCK_TRANSFER専用MAX/LIMITや2,000件の在庫振替CSV用定数・翻訳キーは見つからなかった。
+524	M04-22	未実装	med	同一CSV内で「振替元商品コード+振替先商品コード」の重複ペアを検出する状態管理・行バリデータ・エラーメッセージキーがない。duplicate/duplicated/重複/same/source/dest/from-to/rowValidators 等へ翻案して再検索しても在庫振替CSV用の重複行チェックは確認できなかった。
+525	M04-22	実装違	med	設計の最大値0~999999999に対応する NumericMaxLengthValidator(9) や上限値比較が在庫振替CSVの振替点数列に設定されていない。stockTransferQuantity/NumericMaxLengthValidator/999999999 などで反証検索したが、他箇所での上限検証は確認できなかった。
+526	M04-23	実装違	high	設計は店舗必須かつM11-03の編集可能店舗制御を要求するが、取込ルートはPOST値のstoreをサーバー側で必須検証せず、編集不可店舗IDも排除しない。反証検索範囲: StockSplitJoinController, StockSplitCsvUploadType, StockJoinCsvUploadTypeのstore/isEditableShop/getEditableBaseInfos。
+527	M04-23	実装違	med	設計の必須項目が取込ルートのサーバー側契約として enforced されていない。反証検索範囲: approval_notification_required/approval_notification_target_required/approval_notification_target_members/sendApprovalNotificationMails。
+528	M04-23	実装違	med	設計は選択店舗に紐づく所属を表示条件としているが、実装は初期店舗の所属に固定される経路がある。反証検索範囲: StockSplitCsvUploadType::getDepartmentChoices, stock_split_join_index.twig reloadApprovalMembers, stock_split_csv_modal_body.twig approval_department。
+529	M04-23	実装違	med	フォーム型にはMIME制約があるが、取込POSTでフォーム検証を行っていないため設計のcsv以外エラーがサーバー側で保証されない。反証検索範囲: getMimeType/getClientOriginalExtension/mimeTypes/text/csv/tsv/upload_error_file_type。
+530	M04-23	未実装	med	設計の数値範囲上限がCSV行バリデーションに存在しない。反証検索範囲: StockSplitListCsvImportHandler, StockSplitRegisterActionで999999999/上限定数/上限比較を検索。
+531	M04-23	未実装	med	設計はCSV登録処理内で承認申請まで行う要求だが、実装のCSV取込経路には StockJoinApplyApprovalAction 呼び出しが存在せず、承認申請は別画面の admin_stock_join_apply_approval ルートに分離されている。
+532	M04-23	実装違	high	在庫不足時にエラーにせず、要求数量を現在庫へ丸めて登録が進むため、設計の在庫数チェックと異なる。source_register_quantity_over_stock/source_exceeds_stock は一覧CSV取込経路では使用されていない。
+533	M04-23	未実装	med	サーバ側で「csv以外」を拒否する検証が実行されないため、TSV等の非CSVファイルが取込処理へ進める。 / 期待:アップロードされたファイルがcsv以外のファイルの場合は登録処理実行時のエラーとする
+534	M04-23	実装違	high	POST改ざんで編集不可店舗IDを送れる外部契約に対し、listJoinCsvImport のサーバ側で編集可能店舗処理が実行されない。
+535	M04-23	実装違	low	設計のカラム名/ラベルは「結合数」だが、画面表示は「結合元在庫数」で、2-5「結合元在庫数」と重複して利用者に誤ったCSV列名を示す。
+536	M04-23	実装違	med	設計の最大値1~999999999を超える10桁以上の数値を、CSV行バリデーションで拒否しない。 / 期待:登録CSV 2-2「結合数」および2-5「結合元在庫数」は数値必須で最大値1~999999999
+537	M04-24	実装違	low	設計は在庫移動指示検索で送り状番号の項目名を「送り状No.」とする。実装は admin.stock.move_instruction.tracking_no の翻訳値が「送り状No」で、一覧ヘッダと登録モーダルラベルにそのキーを表示するため、末尾のピリオドが欠落する。
+538	M04-24	未実装	med	設計は2,000件上限だが、実装に件数上限判定が存在せず、画面文言も10,000件と表示している。 / 期待:在庫移動実績CSV登録はCSV 2,000件を登録上限とし、超過時はエラーとする。
+539	M04-24	実装違	high	設計は『エラーがあれば登録処理を終了（全体未登録）』だが、実装は行単位スキップで成功行を確定コミットする。 / 期待:1件でもエラーがあれば登録処理を行わずに終了する（全体を登録しない）。
+540	M04-24	未実装	med	CSV系ファイル一式を確認したが、移動指示IDの重複検証は痕跡なし。 / 期待:在庫移動実績CSVで移動指示IDに重複がないことを検証する。
+541	M04-24	実装違	low	Controllerが参照する既定値がconfigで10。設計の初期値50と不一致。 / 期待:一覧の表示件数（3-4）の初期値は50件。
+542	M04-24	実装違	low	フォーム型がCheckboxType×2でTwigも個別チェックボックス描画。設計指定の『複数選択(セレクトボックス)』とは部品種別が異なる。
+543	M04-25	未実装	high	Controller のコンストラクタには MemberRepository 等の権限判定依存がなく、index/detail/delete/registerTracking は対象 DtbStockMoveInstruction をそのまま検索・更新している。Repository の検索QueryBuilderも店舗検索条件のみで、ログインメンバーの編集可能店舗制約を付与していない。
+544	M04-25	未実装	med	出庫承認済み/移動中/入庫完了以外といった移動ステータス条件が Twig、Controller、Action のいずれにも存在しない。
+545	M04-25	未実装	low	設計は変更時のみ活性だが、実装は未変更でも押下可能。 / 期待:送り状No.および備考の内容が変更された場合にのみ登録ボタンを活性化する
+546	M04-25	実装違	med	設計の「出庫待ち状態の場合のみ」または発送状態の業務ステータス条件に対し、実装は送り状No.未登録ならステータスを問わず削除する。
+547	M04-30	未実装	med	設計は価格変更発生期間の選択可能範囲を最大1か月に制限する要求。実装は /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/BarcodeReplacementListType.php:77-94 で From/To を比較し、From > To のみエラーにする。/home/y-saito/Developments/ec-cube-enterprise/src/
+548	M04-33	実装違	low	設計は「商品名から取り出した色とレアリティ」を出力源としているが、実装はカード色マスタとレアリティマスタを出力源にしている。反証として colorAndRarity、colorName、rarityCode、商品名から取り出した色、stripProductNameComponents、dtb_card_color を StockMoveTransferController / StockMoveTransferReturnListCsvExportServ
+549	M04-35	未実装	low	設計sheet-37のレイアウト識別IDテーブル 1-7 表示件数の初期値は100と明示。実装は共通既定件数10(eccube.yaml:140)を流用し専用の初期値100設定が無いため、初回表示件数が設計値と不一致。選択肢自体は一致(master確認済)。なお同sheet-37詳細設計の対象外節に検索・ページング内部仕様を共通処理へ委ねる旨があり設計内部で矛盾があるが、一次仕様のレイアウト表(初期値100)を正とすれば実装違い。
+550	M04-35	未実装	med	設計は棚卸計画に在庫区分を必須登録することを要求しているが、実装の棚卸計画データ構造・フォーム・登録処理に在庫区分を扱う証跡がない。
+551	M04-38	実装違	med	設計は単一選択(セレクトボックス)だが、実装は複数選択(multiple=true, select2)で構築。選択方式が相違。
+552	M04-38	実装違	med	設計は時刻(HH:mm)まで入力できる日時条件を要求するが、実装は日付のみのDateTypeで時分入力を受け付けず、時刻境界を00:00:00/23:59:59に固定。指定時刻での絞り込み不可。
+553	M04-38	実装違	low	設計の初期値100件に対し、実装のデフォルトが10件になっている。 / 期待:表示件数は初期値100件で、EC-CUBE標準の最大ページ表示に設定されている表示件数の選択肢を表示する。
+554	M04-38	未実装	med	設計上のスマレジ連携中/スマレジ連携失敗ステータスが実装ステータス体系・検索条件・操作条件に存在しない。 / 期待:承認状態は「未承認,承認済,スマレジ連携中,スマレジ連携失敗,却下済」を表示し、未承認・スマレジ連携失敗はチェックボックス/承認操作対象にする。
+555	M04-38	実装違	med	完了/却下レコードで承認日が同一の場合も登録日が ID より先に効き、サブソート対象も設計の在庫編集承認ID(history_source_id)ではなく承認一覧ID(a.id)。スマレジ系ステータスもソート条件に含まれない。
+556	M04-38	実装違	med	設計は在庫編集/一括編集/CSV登録の承認対象リンクで確認モーダル表示を要求しているが、実装は未承認かつ本人以外など一括操作可能な行に限定している。
+557	M04-38	実装違	med	設計で「それ以外の場合 '-'」とされた分割/結合に数値・区分を表示する実装になっている。 / 期待:合計在庫増減数・合計総原価増減数・在庫変動区分は、承認対象が「在庫編集」「在庫一括編集」「在庫変更CSV登録」の場合だけ表示し、それ以外は「-」を表示する。
+558	M04-38	実装違	med	設計ではCSV登録分を画面一覧から除外しCSVのみで参照するが、実装はCSV登録分もモーダルテーブルに表示対象としている。
+559	M04-38	実装違	med	設計の状態別/区分別表示制御を実装しておらず、承認済・却下・廃棄でも同一計算で値を表示する。 / 期待:確認モーダルの変更前/変更後在庫・仕入単価・総原価は、在庫変動区分の親区分と承認状態に応じて、一覧参照時の在庫数、承認ステータス変更時の値、在庫変動履歴の値、または「-」を出し分ける。
+560	M04-39	未実装	med	設計は在庫移動指示リスト詳細画面を入口にするが、実装の stock_move_instruction_detail.twig:82-89 には登録・削除ボタンのみで「ピッキングリスト作成」相当のボタンがない。StockMoveInstructionController:161-222 の詳細アクションは集計表示を返すのみ、同 Controller:317-368 以降も送り状CSV・実績CSV登録系であり、ピッキングリスト印刷ルートがない。反証として pi
+561	M05-01	未実装	med	引き渡し前/後、next_order_id、nextOrder、order_number、previous/original order を OrderRepository、SearchOrderType、OrderController、Smaregi handler、Order entity へ翻案して再検索したが、旧注文番号入力で移行先受注を返す検索経路は確認できない。なお本要求は materialGapRows に無く extractorMissed
+562	M05-01	実装違	low	search_pattern / SearchPattern / reload_all_pattern / get_count_pattern / admin_order_search_pattern / admin_order_count_pattern を再検索し、非選択パターンの実装は確認した。一方で現在選択中パターンだけは設計の「保存した検索パターン個々」のリンク・件数・リロード対象から外れている。
+563	M05-03	未実装	med	設計はCSV出力時の非会員表現を要求しているが、実装はCSV出力処理で非会員判定を行わずOrder.name01の保存値に依存している。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/CsvExportService.php:418-425 はOrder/OrderItemから値を取得するだけで、/home/y-saito/Developments/ec-cube-enter
+564	M05-04	未実装	med	設計は識別ID:67に送料ID、識別ID:68に送料を別列で要求している。実装は app/DoctrineMigrations/Version20260226000001.php:95 でお届け希望日をsort_no=66、同:96 で「送料」をsort_no=68へ変更するのみで、送料IDを追加していない。初期seedにも src/Eccube/Resource/doctrine/import_csv/ja/dtb_csv.csv:193 の送料(sor
+565	M05-04	未実装	med	設計表は識別ID:1と識別ID:88に注文番号を2回要求している。実装は app/DoctrineMigrations/Version20260226000001.php:31 で注文番号をsort_no=1へ設定し、同:117 ではsort_no=90の送り状No.へ進んでおり、sort_no=88の注文番号追加がない。別キーワード「sort_no = 88」「VALUES (4 ... 注文番号」「disp_name = '注文番号'」で再検索しても、
+566	M05-05	未実装	med	設計は非会員時にお名前(姓)を固定文言「非会員」として出力する要求だが、実装は列定義の field_name に対応する Order.name01 等の永続化値をそのまま出力するだけで、非会員判定・置換・CSV出力イベントによる補正が存在しない。探索範囲: Controller/Admin/CustomExportCsvController.php, Controller/Admin/Order/OrderController.php, Service/C
+567	M05-05	実装違	med	設計は dtb_csv_extension.deleted_at を拡張定義の論理削除カラムとし、ドロップダウンには登録済みフォーマット名だけを並べる前提だが、受注一覧・直接出力の双方で論理削除済み拡張行を除外していない。商品・在庫側では findActiveByCsvTypeId() や deleted_at 条件を使う実装が確認でき、受注配送カスタムCSVだけ条件が欠落している。
+568	M05-06	未実装	med	設計は送信実行後の成功/失敗メッセージ表示を要求しているが、実装は成功フラッシュのみで、送信失敗時の addError/失敗フラッシュ/失敗翻訳キー/確認画面再表示を確認できない。sendManualMailForBulk は mailer->send() を直接呼び、Controller 側にも try/catch がない。
+569	M05-11	実装違	med	設計はpf-eccube3挙動として『PurchaseFlowのprepare/commitは無い』(html:244)『validateもcalculate()＋$form->isValid()のみでEC-CUBE4系PurchaseFlowを用いない』(html:242)としているが、enterprise実装はorderPurchaseFlow->validate()(526)・prepare()(595)・commit()(596)を実行する。Pur
+570	M05-11	実装違	low	設計は受注情報編集の商品検索ダイアログを開くボタンを「商品の追加」とする。実装は Order/edit.twig で admin.order.add_product_item を表示し、messages.ja.yaml の値が「商品を追加」になっているため、助詞と語順が一致しない。
+571	M05-11	実装違	low	設計は受注情報編集の支払合計ラベルを「お支払合計」とする。実装は Order/edit.twig で admin.order.payment_total を表示し、messages.ja.yaml の値が「お支払い合計」になっているため、送り仮名の有無が一致しない。
+572	M05-11	実装違	med	履歴表示用に同テンプレートを読み取り専用化する分岐や disabled 制御がない。OrderType でも全体 disabled は設定されず、確認できた disabled は pointErrorMessage など一部に限られるため、設計の編集不可/非活性条件と異なる。
+573	M05-19	実装違	low	設計は「block javascript は空・#page_count_pulldown の change ハンドラは無く、選択だけでは遷移しない」とする（HTML:234『当テンプレート専用の block javascript は空』、HTML:255『change ハンドラが無く、選択だけでは遷移しない』も同旨）。しかし enterprise の index.twig は block javascript 内に $('#page_count_pulld
+574	M05-19	実装違	low	設計は option の value を admin_shipping_standby ルート（/{admin_route}/standby/search?page_no=1&page_count=…）形式とする。実装は path('admin_shipping_standby_page', {'page_no':1,'page_count':pageMax.name}) を出力し、生成URLは /{admin_route}/standby/page/1?
+575	M05-19	実装違	low	設計は0件時に固定文言『検索条件に該当するデータがありませんでした。』を出すとする。実装は翻訳キー admin.common.search_no_result（実文言『検索条件に合致するデータが見つかりませんでした』）と admin.common.search_try_change_condition（『検索条件を変えて、再度検索をお試しください』）の2行構成で表示し、さらに has_errors 分岐（admin.common.search_invali
+576	M05-19	実装違	low	設計は表示件数プルダウン選択だけでは自動遷移しないことを現行仕様としているが、実装は change イベントで即時遷移する。反証として ShippingStandby/index.twig、共通 function.js、ShippingStandby テンプレート配下を page_count_pulldown/location.href/change で再検索し、当該専用ハンドラが存在することを確認した。
+577	M05-21	実装違	med	設計(pf-eccube3を確認値とする処理フロー)は『最小カテゴリ MIN(ct.category_id) がグッズ定数(Category::GOODS_ID)/予約グッズ定数(Category::RESERVED_GOODS_ID)に一致するか』でサプライ(goods)帯への強制を決める。実装(ec-cube-enterprise)はカテゴリ定数を一切使わず、productClassRepository.getSubInfosByProductClas
+578	M05-21	実装違	low	設計(pf-eccube3を確認値とする)はクエリ側の閾値取得を『両キーを findByOptionKey で一括取得し返却順の[0]を:price1/[1]を:price2に結ぶ』とし、これに起因する取得順の食い違い・添字[0]/[1]参照による実行時異常(html:277)を論点とする。実装(ec-cube-enterprise)の generatePickingList は各キーを個別に findOneBy(['option_key'=>ORDER_
+579	M05-24	実装違	med	設計HTMLの項目一覧では ID52 が「配送先_住所1」、ID53 が「配送先_住所2」、ID54 が「配送先_TEL1」であり、配送先_住所3 は定義されていない。実装は OrderCsvController::CSV_HEADER と NOT_REQUIRED_CSV_HEADER に「配送先_住所3」を持ち、OrderRepository::generateResultCsv も s.addr03 を返すため、設計より1列多く、ID54以降の列位置
+580	M05-26	実装違	low	設計の外部HTTP契約はPOST /order/shipping_result_csv/uploadだが、実装ルート定義とフォームactionはいずれも /order/shipping_result_csv/import 系である。反証として shipping_result_csv/upload、admin_shipping_result_csv_upload、shipping_result_csv/import を検索し、uploadパス定義は見つからな
+581	M05-26	未実装	med	設計は更新された受注について出荷完了メール送信を要求するが、OrderCsvControllerの成功処理はPointService::gainPoints、flush、commit、成功フラッシュ、リダイレクトのみ。反証としてsendShippingNotifyMail、notifyMail、MailService、出荷完了を検索し、本インポート経路での送信実装は見つからなかった。
+582	M05-26	実装違	high	設計は親注文の状態差し替えを「サブ側出荷実施日時の既存有無のみ」でゲートし、受注ステータス条件は課さない（設計step15も同旨）。実装はOrderCsv.php:132で `$isPreDeliv = $order->getOrderStatus()?->getId() === OrderStatus::PRE_DELIV;` を追加し、133行 `if ($isPreDeliv && $order->getShippingDate() === null
+583	M05-26	未実装	low	設計はPOSTのパスを `.../shipping_result_csv/upload` とする。実装のPOSTルート(name=admin_shipping_result_csv_upload, methods=['POST'])は path が `/%eccube_admin_route%/order/shipping_result_csv/import`（265行）で、GET画面(240行 path=同 import, name=admin_ship
+584	M05-26	未実装	med	設計は成功後処理（ポイント付与・出荷完了メール・別系ポイント）を try の外側で独立実行する。実装はポイント付与(pointService->gainPoints)とスマレジ発生ポイント連携ジョブ登録を try 内かつ beginTransaction/commit の内側（315-320行付近、commit は322行）で実行し、失敗時は import 全体がロールバックされる。commit後(324-327行)に実行されるのは dispatchGai
+585	M05-26	実装違	low	設計（挙動の正=pf-eccube3プラグイン）では固定列一覧に `配送先_住所3` が含まれない。実装の CSV_HEADER(97行) / NOT_REQUIRED_CSV_HEADER(170行) には `配送先_住所3` が含まれ列数が1多い。ヘッダ照合(checkHeaderValues/checkHeaderSize)は必須外リスト差し引き後にサイズ一致を要求するため、pf-eccube3側の出力列数を想定したCSVでは列ズレ・取込失敗となり得
+586	M05-26	実装違	low	設計（pf-eccube3挙動）ではサイズ0判定の分岐が空で、サイズ0でも処理経路に残る。実装 getFormFile(AbstractCsvService.php:129-134)は `if ($formFile === null || $formFile->getSize() === 0) return null;` とサイズ0を明示ガードし、呼び出し元(OrderCsvController.php:272-276)で render+一覧リダイレクトへ
+587	M05-26	実装違	med	設計は桁埋め済み注文番号でサブ注文情報を検索するが、実装はCSV値をそのままorder_numberにfindOneByしており、桁埋めもサブ注文検索も行わない。
+588	M05-26	未実装	med	設計CSV表の配送先側は line 7837〜7849 で住所2の次が配送先_TEL1であり、配送先_住所3は存在しない。一方、実装は OrderCsvController::CSV_HEADER/NOT_REQUIRED_CSV_HEADER に配送先_住所3を定義し、テンプレートがその定義を表示する。別経路として admin_shipping_csv_import も確認したが3列の出荷CSVアップロードであり、本出荷実績登録CSVフォーマットの反証に
+589	M05-26	実装違	med	対象実装範囲（OrderCsvController、OrderCsv、AbstractCsvService、OrderRepository、shipping_result_csv_import.twig、別名の CsvImportController）を確認した。旧系の admin_shipping_csv_import には tracking_number の半角英数字ハイフン検証があるが、これは出荷ID/お問い合わせ番号/出荷日の3列CSVであり、sh
+590	M05-27	実装違	low	設計で指定された確認文言および確定操作名「OK」と、実装の共通削除モーダル文言および「削除」ボタンが一致しない。 / 期待:削除リンク押下でJavaScriptポップアップを表示し、「[店頭注文番号]を を削除してもよろしいですか？」を表示し、「OK」をクリックすると当該の店頭注文番号を一覧から除去する。
+591	M06-01	実装違	med	OtcBuyOrderType の application_date_from/application_date_to には単項目 Range 制約のみで相関チェックがなく、Controller/Repository/JS 側にも application_date_from > application_date_to の FormError/addError/検証分岐が見当たらない（探索範囲: src/Eccube/Form/Type/Admin/OtcB
+592	M06-01	実装違	med	OtcBuyOrderType の complete_date_from/complete_date_to には単項目 Range 制約のみで相関チェックがなく、Controller/Repository/JS 側にも complete_date_from > complete_date_to の FormError/addError/検証分岐が見当たらない（探索範囲: src/Eccube/Form/Type/Admin/OtcBuyOrder, src
+593	M06-01	実装違	med	設計は検索結果ボックス内に一覧テーブルを表示する要求であり、各買取情報はテーブル行として表示される想定。実装は index.twig:193-234 の外側ループと index.twig:212-229 の内側ループが重複しており、テーブル自体が件数分複製される。OtcBuyOrder/index.twig と関連JSを再検索しても、この重複を抑止する条件や別テンプレートはない。
+594	M06-01	未実装	med	実装済みの店頭買取API入口は OtcBuyOrderController.php:129,156,190,231,273 に限定され、店頭買取情報一部キャンセル情報連携に相当する route/action/service が見つからない。既存の UpdateOtcBuyOrderAction は明細全置換であり、チェック削除項目をキャンセル商品として連携する外部契約ではない。
+595	M06-01	実装違	high	設計は買取成立時に端末取引ID/出金コード未入力をエラーにする要求だが、実装は値がある場合の型・数値検証だけで、買取成立ステータス時の未入力を拒否しない。
+596	M06-01	未実装	med	設計はステータス更新前の印刷済みチェックを必須条件としているが、実装は印刷済み状態を永続化・入力・検証する証跡がなく、ステータス更新の可否判定に使えない。
+597	M06-01	実装違	low	設計は他箇所も含めて販売価格文言を基準価格へ変更する要求だが、利用者/連携元に返り得るバリデーションメッセージが旧文言のまま。
+598	M06-02	未実装	med	設計は古物台帳CSVエクスポートで CSRF フィールドなし・CSRF トークン検証なしを明記しているが、実装はテンプレートで Constant::TOKEN_NAME の csrf_token を埋め込み、コントローラで $this->isTokenValid() を実行しているため外部契約が異なる。反証検索として isTokenValid(), csrf_token, TOKEN_NAME, result_form, old_goods_account
+599	M06-04	未実装	high	設計はITチーム限定を要求しているが、実装は汎用の管理者ロールおよび deny-list 型のルート制限に留まり、M06-04 ステータス変更画面をITチームだけに限定する正の権限制約が存在しない。
+600	M06-04	未実装	high	設計は「経理のみ更新可能」を要求しているが、実装は店舗編集権限と汎用deny-url判定であり、経理ユーザだけに許可する判定・権限定義・マイグレーション登録が存在しない。
+601	M06-04	未実装	med	設計は買取管理を使えるユーザに更新を限定する要求だが、実装は編集可能店舗の確認のみで、買取管理機能の利用権限または該当ルートのアクセス権限を確認していない。
+602	M06-05	実装違	med	設計は空白分割した語のいずれかが一致すれば検索結果に出す仕様だが、実装は foreach でキーワードごとに andWhere を積むため、複数語入力時は全キーワードがいずれかの氏名項目に一致しないと出力されない。反証として customer_name、申込者名、lastName/firstName、PurchaseHistory 側の同種実装も検索したが、当該店頭買取履歴検索では OR 化する実装は見つからなかった。
+603	M06-05	未実装	med	設計は買取日時 From が To より後ならエラー表示を要求している。実装では FormType に相関バリデーションがなく、SearchControllerTrait も form isValid 判定や日付大小チェックを行わず、専用 JS も datetimepicker・全選択・CSV submit のみ。反証として complete_date_from/complete_date_to、completeDateFrom/completeDateT
+604	M06-08	実装違	low	設計は入力書式を yyyy/mm/dd と指定している。実装は DateType single_text に加え、otc-buy-order-summary.js の datetimepicker で format: "YYYY-MM-DD" を設定しており、スラッシュ区切りではなくハイフン区切りの入力UIになっている。
+605	M06-08	実装違	med	設計は買取店舗を単一選択セレクトボックスと指定している。実装は FormType で multiple => true を指定し、初期値も単一エンティティではなく配列 [$DefaultShop] として渡している。Repository も複数店舗を配列/Collectionとして受け、otcs.BaseInfo IN (:shop) で絞り込むため、設計より複数選択可能な挙動になっている。
+606	M06-11	未実装	med	設計は印刷ボタン押下日時を作成日時ラベルとして帳票に表示する要求だが、ControllerはrenderViewへbuildPdfViewDataの返却値だけを渡し、ServiceはrestockListSectionsのみ返却し、Twigは印刷ボタン・ページタイトル・明細表・小計だけを描画しているため、作成日時ラベルが未実装。
+607	M06-12	実装違	med	設計は「個別入力商品または状態がない場合」を空欄/固定値条件としているが、実装の状態なし商品 branch は基準価格・略称タグ・レアリティを空欄にせず、言語IDも1固定にしていない。反証検索として otc_buy_order_product_list、card_condition_id IS NULL、conditionCode、standardPrice、languageId、MtbLanguage::JP_ID、storageCode、rarityC
+608	M07-01	実装違	low	設計上の表示ラベルは「AND/OR検索」だが、実装の表示文言は「AND/OR選択」。PurchaseListType の product_name_select、Twig ラベル、翻訳キーを確認したが「AND/OR検索」を表示する実装はない。
+609	M07-01	実装違	low	設計上の表示文言は「戻し未完了のみ表示」だが、実装は「棚戻し未完了のみ表示」。online 用翻訳キー messages.ja.yaml:5538 には「戻し未完了のみ表示」が存在するが、PurchaseListType は store 用キーを参照している。
+610	M07-01	実装違	med	設計は各項目を空白化する要求だが、実装は買取状況 select2 だけをクリアする。Twig の search-clear ボタン、purchase.js、FormType の全検索項目を確認し、全項目クリア処理は見つからなかった。
+611	M07-01	実装違	low	POST 検索動作自体は admin_purchase_search で実装済みだが、利用者に見えるボタン文言が設計の「検索する >」と一致しない。Twig、翻訳キー、PurchaseController の検索ルートを確認した。
+612	M07-01	実装違	low	設計は4状態の利用者向け表示文言を指定している。実装は STATUS_NOW_CONFIRMING と未確認系でテキストを出さず、STATUS_REGISTERED_MAIL_CONFIRMED も設計およびマスタ値の「簡易書留確認済み」ではなく「書留確認済み」を出力する。反証検索では「本人確認」「STATUS_NOW_CONFIRMING」「STATUS_REGISTERED_MAIL_CONFIRMED」「簡易書留確認済み」「cb-warning」「c
+613	M07-01	実装違	med	設計のCSV外部契約上の列名は「販売価格」。実装は値として standard_price を使っており、設計備考の「商品規格に紐づく現在の基準価格」という値の由来とは整合するが、ヘッダ名が設計と異なる。反証検索では「販売価格」「基準価格」「standard_price」「csv_export_product_list」「csv_export_product_cancel」を CSV Exporter、Controller、Repository で確認したが
+614	M07-03	実装違	med	設計は本人確認状態として4つの区分名称が表示されると明記。実装(detail.twig:144-150)は確認済み2区分を「本人確認済み」に集約表示しており、設計の列挙ラベルと不一致。マスタ名称は app/DoctrineMigrations/Version20251125145047.php:65-80 に『未確認/確認中/オンライン本人確認済み/簡易書留確認済み』として存在し(定数は MtbIdentityConfirmStatus.php:31-34
+615	M07-04	実装違	med	設計は送信成功でメール履歴行がDBに増えることを求めるが、実装はUnitOfWorkへpersistするだけでSQL INSERTを発行する flush の証跡がない。送信元未設定・送信例外時に履歴を増やさない分岐は実装済みだが、成功時履歴INSERTが未達。
+616	M07-04	実装違	med	設計は履歴INSERTの確定と送信成功時の履歴行増加を要求しているが、買取手動メール送信経路では `persist` 後に `flush()` へ到達する実装証跡がない。反証検索では Controller/Admin/Purchase/MailController.php、Service/MailService.php、Service/EntityManager/MailHistoryEntityManager.php、EventListener 配下に 
+617	M07-05	未実装	med	設計は口座番号を「前ゼロあり」としているが、実装は dtb_bank_account.account_no を integer として保持し、入金CSVでもゼロ埋めせずその値を出力する。反証として accountNo / account_no / bank_account_no / %07d を検索し、画面表示では %07d のゼロ埋めがある一方、BuyOrderDepositCsvExportService のCSV出力経路にはゼロ埋め処理が存在しないこ
+618	M07-05	実装違	med	設計シート上の項目名は「販売価格」だが、実装の CSV_HEADER は同じ4列目相当を「基準価格」として出力する。反証として BuyOrderProductListCsvExportService、DtbBuyOrderRepository、PurchaseController、admin/Purchase Twig、Purchase JS、および Csv/Exporter 配下で「販売価格」「基準価格」「CSV_HEADER」「product_coun
+619	M07-05	実装違	med	設計のCSV項目名は「販売価格」だが、実装の外部出力ヘッダは「基準価格」。値の取得元が基準価格である点は備考と一致するが、CSV列名の外部契約が設計と異なる。反証検索で purchase_product_cancel_list、CSV_HEADER、販売価格、standard_price を確認したが、本CSVのヘッダを「販売価格」にする実装は見つからなかった。
+620	M07-05	実装違	med	設計は「状態がない場合」も言語IDを 1 固定とするが、実装は状態なし通常商品で買取明細の language_id をそのまま出力するため、bmc.language_id が 1 以外なら設計と異なるCSVになる。反証検索で language_id、card_condition_id IS NULL、CSV_HEADER、言語ID を確認したが、状態なしブランチで 1 固定へ補正する後段処理は見つからなかった。
+621	M07-05	実装違	med	設計は状態なしの場合も略称タグを空欄にする要求だが、実装は状態なし通常商品で mtb_storage_code.name を出力する。反証検索で storage_code、略称タグ、card_condition_id IS NULL、product_cancel を確認したが、状態なしブランチの略称タグを空欄へ補正する処理は見つからなかった。
+622	M07-05	実装違	med	設計は状態なしの場合もレアリティを空欄にする要求だが、実装は状態なし通常商品で mtb_rarity.code を出力する。反証検索で rarity_code、レアリティ、card_condition_id IS NULL、product_cancel を確認したが、状態なしブランチのレアリティを空欄へ補正する処理は見つからなかった。
+623	M07-08	未実装	med	設計上、利用者が帳票上で見る作成日時ラベルが必要だが、実装のテンプレート・ビュー生成・JSに作成日時表示の根拠がない。反証検索として 作成日時 / ピッキングリストを作成 / create_date / created / DateTime / now / date / printButton / restockListSections を対象範囲で確認し、帳票表示に使われる日時実装は見つからなかった。
+624	M07-10	実装違	med	設計は空白区切りの「いずれか」が一致すれば出力するOR検索を要求しているが、実装はforeach内でandWhereを繰り返すため、分割後の全キーワードがいずれかの姓名/カナ列に一致しないと出力されない。反証として買取一覧側の同仕様実装 src/Eccube/Repository/DtbBuyOrderRepository.php:133-142 と共通ユーティリティ src/Eccube/Util/SqlUtil.php:128-157 も確認したが、同
+625	M07-10	実装違	med	完全一致検索自体は実装されているが、設計の「半角数字(整数)」入力制限に対して IntegerType や半角数字バリデーションがなく、非数値文字列もフォーム入力として受け付けてから整数キャストされる。反証として FormType、DTO、SearchControllerTrait、FormUtil、Repositoryを確認したが、会員IDの半角数字制限を行う実装は見つからなかった。
+626	M07-10	実装違	med	設計は日付のみ yyyy/mm/dd を要求しているが、実装は年月日と時刻を入力・比較する日時検索で、表示フォーマットも YYYY-MM-DD HH:mm。反証としてTwig、FormType、Repository、翻訳キーを確認したが、yyyy/mm/ddの日付専用入力・日単位To終端補正は見つからなかった。
+627	M07-10	実装違	low	設計HTMLの項目表No.3は画面項目名を「CSVダウンロード」と定義しているが、実装は汎用翻訳キー admin.common.download を使うため利用者可視ラベルが「ダウンロード」になる。反証として admin.common.csv_download=CSVダウンロード は存在するが、このテンプレートでは使用されていない。店頭買取履歴テンプレートは同じ箇所で「CSVダウンロード」と直書きしているため、ネット買取側だけ表示文言が設計と異なる。
+628	M08-02	未実装	med	設計は利用者視点の入口と画面遷移で確認・送信・完了を独立URL/ルートとして規定しているが、実装は #[Route('/%eccube_admin_route%/customer/mail', name: 'admin_customer_mail', methods: ['POST'])] の単一路由で、確認画面も完了画面も同じ action に POST して mode で処理する。反証検索として customer/mail_confirm、custom
+629	M08-02	実装違	med	設計は dtb_user_mail_history を送信記録の正典と明記しているが、実装の保存先は dtb_mail_history。反証検索として DtbUserMailHistory、new DtbUserMailHistory、dtb_user_mail_history、MailHistoryEntityManager、setSubject、setMailBody、setCreator を src/Eccube と html 配下で検索したが、一括
+630	M08-02	未実装	med	設計は利用者視点のURLエンドポイントとして /customer/mail_confirm と /customer/mail_complete を明記し、画面遷移でも m08-02_admin_customer_customer_mail_all_confirm / execute / complete を要求している。実装は admin_customer_mail へのPOST内分岐で画面を出し分けており、別キーワード・設計ルート名・物理パスで再検索して
+631	M08-02	実装違	med	設計は dtb_user_mail_history を送信記録の正典としているが、実装は dtb_mail_history へ保存する。DtbUserMailHistory、dtb_user_mail_history、MailHistoryEntityManager、dtb_mail_history で反証検索しても、会員一括メール送信が dtb_user_mail_history に保存する経路は確認できなかった。
+632	M08-02	未実装	med	設計は確認・送信完了を別URLエンドポイントとして外部契約化しているが、実装は同一POSTルート内の mode 分岐で処理している。完了画面の GET 入口も実装されていないため、設計の画面遷移/API契約と一致しない。
+633	M08-02	実装違	med	設計は dtb_user_mail_history を正典とし customer_id・subject・mail_body・send_date・creator_id を記録対象としているが、実装は dtb_mail_history の mail_subject/mail_body/send_date/customer_id 等へ保存する。さらに設計列 creator_id は一括メール履歴保存時に設定されない。
+634	M08-04	実装違	med	設計は郵便番号の必須解除を要求しているが、実装は postalCode を必須扱いにし、空欄を許容する分岐や blank 時に Length を外す処理がない。探索範囲: CustomerType.php, SplitPostalType.php, Customer/edit.twig, messages.ja.yaml。
+635	M08-04	実装違	med	設計はSJIS換算上限を要求しているが、実装は通常の文字列長制約のみ。探索範囲: src/Eccube/Form, src/Eccube/Validator, src/Eccube/Service, src/Eccube/Controller/Admin/Customer。
+636	M08-04	未実装	med	未確認への降格処理は部分実装されているが、設計が求める身分証有効期限の同時クリアが保存経路に存在しない。setIdExpirationDate は本人確認完了専用処理側でのみ確認。
+637	M08-04	実装違	med	設計の遷移先は買取詳細だが、実装は受注管理編集画面へ遷移する route を使っている。別キーワード（買取詳細/admin_purchase_edit/BuyOrder）で再検索しても Customer/edit.twig 側のリンク先は admin_order_edit のまま。
+638	M08-04	未実装	med	PlayerType は smaregiId, IdentityConfirmStatus, CustomerGroup, mailMagazineFlg, firstNameEn, lastNameEn, id_expiration_date のみを追加しており、identificationFlg を追加していない。Twigにも本人確認フラグの form_widget がない。
+639	M08-04	未実装	low	設計の表示文言は会員情報を対象にした「会員情報を保存しました。」だが、実装は共通文言「保存しました」を表示する。別キー「会員情報を保存しました」は対象範囲に不在。
+640	M08-05	未実装	med	設計は POST エンドポイントを /customer/point/{id}/update/{type} と明記しているが、実装の Route 属性は GET と同じ /customer/point/{id}/{type} を POST に割り当てている。反証として admin_customer_point_update、customer/point/{id}/update、update/{type} を Controller/Twig/route 参照で
+641	M08-05	実装違	low	設計の画面遷移表は admin_customer_point_type_select を遷移先として明記しているが、実装に同名ルートはなく、admin_customer_point_select が使われている。反証として admin_customer_point_type_select、point_type_select、ポイント管理・履歴一覧を Controller/Twig/翻訳キーで検索したが、設計ルート名の実装は確認できなかった。
+642	M08-05	実装違	med	会員なしは ParamConverter/型解決により 404 になり得るが、選手情報なしの明示的な 404 分岐がない。nullable な Player を null チェックせず参照するため、設計の『会員・選手情報が無い場合は404』と異なる。反証として getPlayer、Player null、NotFoundHttpException、createNotFoundException を CustomerPointController と関連 T
+643	M08-05	実装違	low	設計は POST エンドポイントの外部契約として /update/{type} を含むパスを指定しているが、実装ルートとフォーム action は /{id}/{type} であり、パス構造が一致しない。反証として customer/point/{id}/update/{type}、admin_customer_point_update、point_update.twig を検索したが /update/{type} のルート定義は確認できなかった。
+644	M08-05	実装違	med	会員なしはParamConverter相当で404になり得るが、選手情報なしの場合の明示的な404処理が実装されていない。反証として getPlayer、Player === null、createNotFoundException、NotFoundHttpException、point_update.twig を検索したが、管理画面ポイント付与で選手情報欠落を404にする実装は確認できなかった。
+645	M08-05	実装違	low	設計の画面部品ラベルは保存ボタンだが、実装画面では登録ボタンとして表示される。反証として 保存、登録、admin.common.registration、point_update.twig を検索したが、当該フォームの送信ボタンに「保存」を表示する実装は見つからなかった。
+646	M08-05	実装違	low	設計のシート見出しと監査台帳上の機能名は「注文金額変更によるご返金」とする。実装は CustomerPointController が admin.customer.point_update.purchase を画面タイトル用キーとして選択し、messages.ja.yaml の値が「注文金額変更によるご送金」になっているため、返金と送金で意味が異なる。なお同じHTMLシート内の機能名欄には「ご送金」表記もあり、設計側にも表記揺れがある。
+647	M08-05	未実装	med	設計は POST URL を /customer/point/{id}/update/{type} と明記しているが、実装の Route は GET と同じ /customer/point/{id}/{type} に POST を割り当てている。反証として customer/point/{id}/update、update/{type}、admin_customer_point_update を Controller/Twig/Route 定義範囲で検索し
+648	M08-05	実装違	med	設計は会員または選手情報が無い場合の 404 を要求しているが、実装は Player null を 404 に変換せずメソッド呼び出しへ進む。反証として getPlayer, Player, notFound, createNotFoundException, 404 を CustomerPointController/Customer Entity 周辺で確認したが、選手情報なしを 404 とする処理は見つからなかった。
+649	M08-05	実装違	low	設計およびフォーム選択肢は「注文金額変更によるご返金」だが、画面タイトルの翻訳だけ「ご送金」になっており利用者表示文言が異なる。反証として ご返金, ご送金, point_update.purchase, NOTE_CHOICES_REFUND を翻訳/FormType/Controller 範囲で確認し、FormType の選択肢はご返金だがタイトル表示はご送金であることを確認した。
+650	M08-06	実装違	low	設計は付与 POST の外部契約として /customer/point/{id}/update/{type} を指定しているが、実装ルートとフォーム送信先はいずれも /customer/point/{id}/{type}。反証検索で customer/point/{id}/update/{type} または update/{type} の別ルートは見つからなかった。
+651	M08-06	未実装	med	会員 ID の不在は ParamConverter 側で 404 になり得るが、設計が明示する選手情報不在時の 404 は実装されていない。Player が null の場合は GET 表示または POST 保存で null 参照になり、設計どおりのページが見つからない扱いにならない。
+652	M08-06	未実装	med	設計は遷移先ルート名として admin_customer_point_type_select を明記しているが、実装には同名ルートが存在しない。反証検索でも admin_customer_point_type_select は翻訳キー admin.customer.point_type_select 以外に見つからなかった。URL /customer/point/{id}/select 自体は存在するため、差異はルート名契約に限定される。
+653	M08-07	実装違	med	設計は処理日・送信履歴の新しい順を要求しているが、実装の並び順キーは send_date ではなく id。id と送信日時の単調増加はDB上保証されず、設計値と実装値が一致しない。反証として mail_history.twig、CustomerMailHistoryType、MailHistoryRepository、MailHistory/DtbUserMailHistory エンティティを確認したが、send_date DESC で取得する実装は見つか
+654	M08-07	実装違	low	設計はURLエンドポイントを外部契約として /{admin_route}/customer/{id}/mail_history と記載しているが、実装は /{admin_route}/customer/mail/{id}/history。反証として Controller ルート、Customer/index.twig、Customer/edit.twig のリンク生成、ルート名 admin_customer_mail_history を検索したが、設計UR
+655	M08-07	実装違	med	設計は dtb_user_mail_history を一覧表示・絞り込みの対象テーブルとしているが、実装は dtb_mail_history の MailHistory エンティティを使用する。反証として DtbUserMailHistory、MailHistory、MailHistoryRepository、CustomerMailController、mail_history.twig、MailService の履歴保存処理を確認したが、当画面で dt
+656	M08-08	実装違	low	設計はクエリ指定の作成画面入口を外部契約として定義しているが、実装はパスパラメータ必須のルートに変更されている。再検索範囲: CustomerMailController.php、Customer/edit.twig、Customer/index.twig、Twig内 `admin_customer_manual_mail`、`customer/manual_mail`。
+657	M08-08	実装違	med	フォーム選択肢の query_builder は候補表示を絞るだけで、パス指定された非会員向けテンプレートIDを404にする実装証跡がない。再検索範囲: CustomerMailController.php、CustomerManualMailType.php、MailTemplateRepository.php。
+658	M08-08	未実装	low	設計のテンプレート未選択時非表示条件がTwigに存在しない。再検索範囲: Customer/mail_manual.twig、CustomerManualMailType.php、CustomerMailController.php。
+659	M08-08	実装違	low	設計されたフォームキーおよび hidden header/footer の外部契約と実装のSymfonyフォーム項目が一致しない。再検索範囲: CustomerManualMailType.php、Customer/mail_manual.twig、Customer/mail_manual_confirm.twig、`mail[header]`、`mail[footer]`、`form.header`、`form.footer`。
+660	M08-08	実装違	med	設計の永続化先テーブル・列名と実装の保存先が異なる。再検索範囲: MailHistoryEntityManager.php、MailHistory.php、DtbUserMailHistory.php、CustomerMailController.php、`dtb_user_mail_history`、`dtb_mail_history`。
+661	M08-08	実装違	low	個別の MailHistoryEntityManager は creator を明示設定していないが、共通の保存イベントにより作成者が記録される。設計の「作成者の記録は持たない」と異なる。
+662	M08-08	実装違	med	設計はフォーム送信内容の件名を送信メールの件名として扱うが、実装は送信時に件名を書き換える。履歴も Message の件名を保存するため、記録件名にもプレフィックスが入る。
+663	M08-08	実装違	low	設計の見出し文言と実装の表示文言が異なる。再検索範囲: Customer/mail_manual.twig、messages.ja.yaml、`手動メール送信`、`admin.customer.manual_mail`。
+664	M08-08	実装違	med	設計は確認画面から会員編集画面へ直接戻るボタンを要求しているが、実装は手動メール作成画面へ戻る動線になっている。 / 期待:確認画面の「会員編集画面へ戻る」ボタンは、当該の会員情報編集画面へ遷移する。
+665	M08-08	実装違	low	設計はテンプレート未選択時に件名・本文入力欄を非表示にする要求だが、実装は空の件名欄と本文textareaを表示する。 / 期待:テンプレート未選択で表示する場合、件名・本文の入力欄は出さず、本文textareaはテンプレート選択時のみ表示する。
+666	M08-08	実装違	med	設計はbase外テンプレートIDを404で拒否する要求だが、実装は存在するMailTemplateであれば表示処理へ進める。
+667	M08-08	実装違	med	設計はフォーム上の件名を送信メール件名として扱うが、実装は店舗名プレフィックスを強制付与するため、確認画面の件名と送信・履歴の件名が一致しない。
+668	M08-08	未実装	med	設計のPOST契約およびヘッダ・フッタ送信項目が実装と一致しない。 / 期待:入力項目のフォームキーは template、mail[subject]、mail_body、隠し入力 mail[header]・mail[footer] とし、ヘッダ・フッタを送信に含める。
+669	M08-08	未実装	med	設計のクエリID入口では対象会員の作成画面を表示できず、URL外部契約が設計と異なる。 / 期待:会員を指定して手動メールを開く入口として、GET /{admin_route}/customer/manual_mail（クエリで会員ID指定）を提供する。
+670	M08-08	実装違	med	設計の永続化先 dtb_user_mail_history ではなく dtb_mail_history に保存しており、件名列も subject ではなく mail_subject になる。
+671	M08-09	未実装	med	設計が外部契約として示すURL・ルート名に対し、実装のRoute属性とTwigリンクは別パス・別ルート名であり、設計上の一覧入口 m08-09_admin_customer_customer_delivery も見つからない。
+672	M08-09	未実装	low	設計が指定するロケールキーと実装が使用するキーが異なる。 / 期待:保存完了メッセージはロケールキー admin.customer.save.complete を使用する。
+673	M08-09	実装違	med	設計は削除後の遷移先を配送先一覧としているが、実装は会員編集画面へ戻す。実装には配送先一覧専用ルートも見つからない。 / 期待:削除後は配送先一覧へ戻る。
+674	M08-10	未実装	med	会員編集本体フォームの form._token は別フォームにあり、確認済変更用に動的生成されるフォームへ載らない。専用POST側にもCSRF検証が無い。
+675	M08-10	実装違	med	設計は選手情報なしを404として扱うが、実装は会員編集画面へ戻すエラーフラッシュ扱いになっている。 / 期待:会員IDから選手情報を取得し、存在しない場合はページが見つからない扱い（404）とする。
+676	M08-10	未実装	low	設計はモーダル表示時に画像を出さず文言表示する仕様だが、実装は画像タグを出した後に画像取得リクエストを拒否する方式で、利用者向け文言も欠落している。
+677	M08-10	未実装	med	設計されたサムネイル押下遷移と拡大表示モーダルが実装されていない。 / 期待:身分証画像のサムネイル押下で画像種別ごとの拡大表示モーダルを開き、サムネイルは縮小表示、拡大モーダルは大きめ表示にする。
+678	M08-10	実装違	low	設計の成功フラッシュ文言「会員情報を保存しました。」と、実装で表示される「保存しました」が一致しない。 / 期待:確認済への変更が成功したとき、フラッシュに「会員情報を保存しました。」を表示する。
+679	M08-12	未実装	med	設計の外部契約URLに対して、実装は customer/customer_group 配下かつ新規・更新を個別URLに分けない構成で、パスとPOSTエンドポイント粒度が一致しない。探索範囲: src/Eccube/Controller, src/Eccube/Resource/template/admin, html。
+680	M08-12	実装違	low	設計は初期表示と既存選択時でラベルを切り替える要求だが、実装Twigは固定翻訳キーを表示しており、関連Twig/翻訳キー/Controller内にも該当する条件分岐がない。
+681	M08-12	実装違	low	確認ダイアログ自体は実装済みだが、利用者に表示される文言が設計指定の文言と一致しない。 / 期待:削除確認ダイアログの表示メッセージは「[顧客グループ名称]を削除してもよろしいですか？」とする。
+682	M08-12	実装違	med	設計は登録済み支払方法をすべて表示する要求だが、実装は表示フラグと特定ID除外で候補を絞り込んでいる。 / 期待:支払方法は複数選択チェックボックスで、支払方法設定に登録されている支払方法をすべて表示する。
+683	M08-13	実装違	med	設計は項目 UI を単一選択チェックボックスとし、選択肢を住所、電話番号、氏名としているが、実装は select 表示で、並びも氏名、電話番号、住所となる。
+684	M08-13	実装違	low	設計が明示した成功メッセージキー admin.register.complete と、実装が使用する admin.common.save_complete が異なるため、利用者に表示される完了文言も異なる。
+685	M08-13	実装違	med	設計は買取時の会員登録も含めて登録不可時に登録エラー(ブラックリスト)画面を表示するとしているが、実装は買取申込完了画面上のメッセージ表示に留まる。
+686	M08-17	実装違	low	設計は sheet-26 の8列構成と各項目の書式・最大値・入力例・備考まで画面上のCSVフォーマットとして示す要求だが、実装は項目名と必須有無だけで、主キー・書式制限・最大文字数/最大値・入力例・備考を表示していない。
+687	M08-17	未実装	med	設計は表が画面幅に収まらない場合のスクロールを要求しているが、該当テンプレートには table-responsive 等のスクロール可能化が実装されていない。
+688	M09-04	未実装	low	設計は検索対象を(3)〜(6)に明示限定しているが、実装は tr 全体テキストを対象とするため設計に無い(7)レイアウト名列も部分一致検索の対象になる。(3)〜(6)のみに絞る実装は Twig/JS/Controller のいずれにも存在しない。
+689	M09-04	実装違	med	設計は日本語も .ja.twig を外部契約として示すが、実装コメントと分岐が「日本語は.jaなし」を明示しており、表示と保存ファイル名も不整合になっている。
+690	M09-04	未実装	med	設計が要求する操作メニュー形式と操作種別が実装されていない。 / 期待:一覧の操作はドロップダウンメニューで開き、各行にレイアウト編集・ページ編集・削除の操作を表示する。
+691	M09-04	実装違	low	設計はファイル名未設定ページの編集リンク無効化を要求するが、実装に条件分岐がない。 / 期待:指定ページの編集フォームを表示する。ファイル名が未設定のページではページ編集リンクを無効化する。
+692	M09-04	実装違	med	設計は通常の複数行入力欄を要求しているが、実装は専用コードエディタを前面に出している。 / 期待:テンプレート本文欄は行数15・等幅小サイズの複数行入力 textarea で表示し、専用のリッチエディタやプレビュー切替は持たない。
+693	M09-04	実装違	low	設計のページ管理専用確認文言と、実装の共通削除モーダル文言が一致しない。 / 期待:削除リンク押下時は確認ダイアログ「このページを削除してもよろしいですか？」を表示する。
+694	M09-04	実装違	high	画面上の削除ボタンは利用者作成ページに限定されるが、DELETEルート自体は初期投入ページのファイル削除を拒否せず、設計のサーバ側初期ページ制限に反する。
+695	M09-04	実装違	low	設計HTMLの個別表示文言が materialGapRows から漏れていたが、画面表示されるインラインエラー文言として実装差異がある。
+696	M09-04	実装違	med	設計は lltext_len=99999 をフォーム上限にする要求だが、実装は ltext_len=3000 を使っており、設計上限より短く拒否する。
+697	M09-07	未実装	med	設計は削除不可=403・対象なし=404 とHTTPステータスを区別するが、実装は両者とも404。BlockController.php を確認し403返却分岐が無いことを確認。
+698	M09-07	実装違	med	設計は専用リッチエディタを持たない素のtextarea行数15を明記するが、実装はACEエディタを組み込む。block_edit.twig を全読し確認。
+699	M09-07	実装違	low	設計指定の固定文言と共通キーの文言が不一致。block.twig の modal-body と messages.ja.yaml:1749 を確認。
+700	M09-07	実装違	med	BlockController.php を精読。新規時のみ他ロケールファイルを生成する分岐(197-204)が previousFileName===null に限定され、更新時の filename 変更処理(207-218)は選択ロケールの旧ファイル削除・新ファイル作成しか行わない。設計は「ファイル名を変更して更新する場合、日英2種類のtwigファイルを作成する」と明記。BlockType.php/block_edit.twig にも該当処理なし。
+701	M09-07	実装違	low	block_edit.twig:124 が title に tooltip.content.block_source_code を用いており、messages.ja.yaml:3609 の文言が設計指定文言と不一致。ブロック名(3607)・ファイル名(3608)tooltipは設計文言と一致するが、コード欄tooltipのみ第一文の動詞が相違（利用者がホバーで直接目にする文言）。
+702	M09-10	未実装	med	設計の integration/toppage_management/{id} ルートとURL末尾ID遷移が実装に存在しない。反証検索でも integration/toppage_management/toppage_management のController・route・Twig参照は見つからなかった。
+703	M09-10	未実装	med	設計のregister/{id}エンドポイントと302リダイレクトが未実装。RedirectResponse/redirectToRouteの登録後利用は確認できない。
+704	M09-10	実装違	med	設計の最大3件に対して実装は最大8件取得・表示する。 / 期待:支店トップ表示では各タイルの商品規格を最大3件取得する。
+705	M09-10	実装違	med	設計のピックアップフラグ検索ではなく、汎用商品一覧へ遷移する。反証検索でpick_up_flgはShopTopController用の商品取得Repositoryにのみ存在した。
+706	M09-10	未実装	med	設計が要求するフロント側の未設定タイル補完処理が実装範囲に存在しない。 / 期待:フロント表示時に未設定のタイル位置があれば、リニューアル後の4枠（上段左、上段右、下段左、下段右）を対象に補完する。
+707	M09-10	実装違	low	設計は既存画像削除後アップロードだが、実装はアップロード後削除で順序が逆。失敗時のS3副作用も設計と異なる。 / 期待:新規画像を選択した場合、既存画像がS3に存在すれば削除してから新規画像をアップロードする。
+708	M09-10	実装違	med	5MB制約は実装済みだが、許可拡張子/形式を環境設定から参照していない。反証検索でも本フォームのimage_file制約に環境設定由来の許可拡張子参照は見つからない。
+709	M10-01	実装違	med	設計では任意または条件付き必須とされる項目が実装では常時必須扱い、または画面上で必須表示になっている。さらに郵便番号・電話番号の入力形状が設計の分割入力と異なる。反証検索として ShopMasterType、shop_master.twig、PostalType、PhoneNumberType、AddressType、翻訳キーを確認したが、M10-01画面で設計どおりの分割任意入力を構成する実装は確認できなかった。
+710	M10-01	未実装	med	fax_number、FaxNumber、FAX番号、admin.common.fax_number を M10-01 の Controller/Form/Twig/locale へ反証検索したが、画面入力・検証・保存に接続する実装は確認できなかった。エンティティ列だけでは利用者が直接操作する設計要求を満たさない。
+711	M10-01	実装違	med	latitude、longitude、緯度、経度、google_map_url を Form/Twig/Entity/locale へ反証検索した結果、M10-01実装は緯度経度ではなく Google Map 埋め込みURLを扱っている。設計要求の項目名・入力数・検証契約が異なる。
+712	M10-01	実装違	med	設計は lltext_len=99999 を指定しているのに、実装は ltext_len=3000 を使っている。FormType、設定、Entity を反証確認しても当該2項目で lltext_len を使う実装はなかった。
+713	M10-01	実装違	med	設計の外部契約は8桁までの非負整数文字である一方、実装は金額共通型の Range 制約で、9桁以上の値を price_max まで許容し得る。delivery_free_amount、PriceType、price_len、price_max を反証確認しても、この項目に Length(price_len) と整数 Regex を付ける実装はなかった。
+714	M10-01	実装違	med	設計は明示的に単一選択(ラジオボタン)/展開ラジオ、無効0/有効1を要求しているが、実装はチェックボックス系トグルに置換されている。別キーワード（radio、ChoiceType、expanded、ToggleSwitchType、option_remember_me）で反証検索しても、M10-01の7項目をラジオとして構築する実装は確認できなかった。
+715	M10-02	実装違	low	設計はページ見出し「ショップ設定」、サブタイトル「特定商取引法管理」、ボックス見出し「特定商取引法」を要求しているが、実装表示文言はいずれも一致しない。TradeLawController/Twig/locale を確認し、設計文言そのものの表示箇所は確認できなかった。
+716	M10-02	実装違	low	設計は利用者に見える送信ボタン文言を「登録」としているが、実装は「保存」を表示する。tradelaw.twig と messages.ja.yaml を確認し、当画面専用で「登録」を表示する実装は確認できなかった。
+717	M10-03	実装違	med	設計の移行先仕様は dtb_help.customer_agreement ではなく help_agreement 固定ページ本文の保持・編集を正としている。実装は導線と対象ページ ID は存在するが、固定ページ編集画面の本文エディタを読み取り専用にしており、利用者が本文を入力して登録する要求を満たさない。反証として customer_agreement/dtb_help/HelpType/HelpController/shop_agreement/AGR
+718	M10-03	実装違	low	設定メニューから初回表示した時だけ利用規約設定として表示されるが、POST送信時と保存後GETでは return=agreement が失われ、テンプレートは content/page 管理側のメニュー・タイトル分岐へ落ちる。設計が求める「同一編集画面」および関連ヘッダの維持と一致しない。反証として shop_agreement、return=agreement、admin_content_page_edit、agreement_setting を検索し、
+719	M10-04	未実装	low	編集画面テンプレート(payment_edit.twig)と日本語ロケール(messages.ja.yaml)を確認。ロゴ補足文言が翻訳キー admin.setting.shop.payment.logo_image_size 経由で「推奨サイズ : 500px × 100px」と表示され、設計書の現行踏襲文言「620px以上推奨」と一致しない、利用者が直接目にする文言差分。twig は当該翻訳キー1つのみを出力しており動的な 620px 表示経路も存在し
+720	M10-07	未実装	med	TaxRuleController の税率設定ルートは /setting/shop/tax, /setting/shop/tax/new, /setting/shop/tax/{id}/delete のみ。tax_rule.twig は税率テーブルのみを描画し、商品別税率機能の入力を描画しない。EccubeEvents には edit.parameter の定数だけがあり、TaxRuleController からの dispatch は無い。
+721	M10-07	実装違	med	設計のブロック分割、見出し順、操作文言、入力種別、日時ピッカー、モーダル不使用がテンプレート/FormType と一致しない。
+722	M10-07	未実装	med	設計が外部入口として定義する GET 編集エンドポイントが実装されておらず、実装は同一ページ内インライン編集に置き換わっている。
+723	M10-07	実装違	med	現在有効な税率の丸め規則がID1以外の場合、新規行の初期値が設計のマスタID1ではなく現在値になる。 / 期待:新規共通税率行の課税規則の初期値はマスタID1とする。
+724	M10-07	実装違	med	設計の最大値100がフォーム制約として実装されていないため、101以上をフォーム制約で拒否できない。 / 期待:消費税率は必須、整数入力、0〜100の範囲、数値書式パターンを併用して検証する。
+725	M10-07	実装違	low	設計上の共通税率は product_id と product_class_id がともにNULLの行だが、実装は ProductClass だけで判定する。また、利用者に表示される重複エラー文言が設計文言と異なる。
+726	M10-07	実装違	low	ルートのエンティティ解決で対象が見つからないケースをコントローラ内で扱っておらず、設計された警告付き一覧リダイレクトにならない。
+727	M10-07	実装違	med	設計は共通税率保存成功後の拡張イベントを新規・編集の区別なく定義しているが、実装では既存税率編集時の差し込み点が欠落する。
+728	M10-08	実装違	low	設計が指定する3つの表示文言がTwig/翻訳キー上の実表示値と一致しない。代替キーワード「自動送信メールテンプレート編集」「メール管理」「ショップ設定」でも当機能テンプレート・翻訳に該当実装なし。
+729	M10-08	実装違	med	設計では初期表示でテンプレ名称・件名も表示対象だが、実装は選択済みMailがある場合だけそれらを表示する条件になっている。
+730	M10-08	実装違	med	候補の自動送信絞り込みはあるが、必須検証と名称昇順が設計と異なる。 / 期待:テンプレ選択は必須・空不可で、候補は自動送信対象のみ、画面では名称昇順で並ぶ。
+731	M10-08	実装違	med	直接URL指定されたMailTemplateに対する自動送信対象チェックと404分岐がないため、候補外テンプレートでもid解決されれば編集処理へ進む。
+732	M10-08	実装違	low	設計が求めるサーバ側のエラーフラッシュ＋識別子なし表示へのリダイレクト契約が実装されていない。 / 期待:POSTで現在行がnullの場合はエラーメッセージを積み、識別子なしの一覧相当表示へリダイレクトする。
+733	M10-08	未実装	med	探索範囲（MallAutoMailController、AutoMailType、AutoMail detail.twig、src/Eccube全体）でFormValidHelper/refreshToken/removeTokenは0件。SymfonyフォームCSRFはあるが、設計の不正時例外化と検証後更新の外部契約とは異なる。
+734	M10-08	実装違	med	本文プレビュー生成の変換手順と出力構造が設計より大幅に不足している。反証検索でも当機能内にpreg_replaceによるTwigコメント除去、nl2br/str_replace('<br>')、注文内容インクルード置換は見つからない。
+735	M10-08	未実装	med	設計が副作用として明記するTwigローダ追加ディレクトリ登録が実装されていない。 / 期待:本文ソース読み込み時にTwigローダへプラグイン既定本文ディレクトリを追加登録する。
+736	M10-08	実装違	low	設計にある「更新日の年が2018より大きい場合のみ日時表示」の条件がない。 / 期待:最終更新者（管理者名）・最終更新日時を、テンプレ行と更新日時が揃った場合に表示する条件があり、Twig上は更新日の年が2018より大きい場合のみ日時表示する。
+737	M10-09	実装違	med	設計の表示ラベル「本文」と最大値65536文字に対し、実装は表示ラベルが「テキスト」で、本文長の上限検証が実装されていない。
+738	M10-09	実装違	low	設計のメール4欄表示順と直下配置に対し、実装は追加項目を挟み、email02 を4番目に表示している。 / 期待:「基本情報編集」見出し直下のブロック内で、店舗営業時間の直下にメール4欄を、送信元メールアドレス（From）→問い合わせ受付メールアドレス（From, ReplyTo）→返信受付メールアドレス（ReplyTo）→送信エラー受付メールアドレス（ReturnPath）の順に表示する。
+739	M10-09	実装違	med	設計の固定ヘッダ割当と異なり、問い合わせ受付メールは email02 固定ではなく問い合わせ種別メールで上書きされ、管理画面からの仮会員確認メール再送は From が email03 ではなく email01 になっている。
+740	M10-10	実装違	med	設計は登録済みCSV種別を全て選択肢に出す要求だが、実装は3種別を明示的に除外しており、登録済みの全種ではない。反証として admin_setting_shop_csv、CsvType、csv_type、shop_csv、messages.ja.yaml、Twig を再検索したが、この通常CSV出力項目設定フォームで除外を解除する別実装は見つからなかった。
+741	M10-10	実装違	low	設計の上部タイトル帯は「システム設定／CSV出力項目設定」だが、実装は「基本情報設定／CSV出力項目設定」相当で、システム設定配下ではない。反証として nav 定義、翻訳キー、csv.twig を確認したが、当画面で sub_title を「システム設定」にする実装はない。
+742	M10-10	実装違	low	設計のボタン文言は「設定」だが、実装画面は「登録」を表示する。反証として csv.twig、messages.ja.yaml、admin.setting.shop.csv 関連翻訳キーを確認したが、このボタンに「設定」を表示する別キーや分岐はない。
+743	M10-10	実装違	low	設計は具体文言「CSV出力を設定しました。」を要求しているが、実装は共通メッセージ「保存しました」を表示する。反証として「CSV出力を設定しました」「admin.setting.shop.csv.save.complete」「addSuccess('admin.setting.shop.csv」を再検索したが、当該コントローラで設計文言を出す実装は見つからなかった。
+744	M10-13	実装違	med	設計で除外されている会員CSVが画面選択肢に出る。反証検索では custom_csv Twig、翻訳キー、別FormType、ルートに会員CSVを除外する処理は見つからなかった。
+745	M10-13	実装違	low	利用者に見える主要文言が設計指定と一致しない。反証検索で admin.setting.shop.custom_csv_setting（カスタムCSV出力項目設定）は存在するが、この画面 title/sub_title には使用されていない。
+746	M10-13	実装違	med	Doctrine findBy の IN 条件はPOST配列順を保証しないため、利用者が右リストで指定した列順ではなく、リポジトリ取得順で rank が採番され得る。反証検索で FIELD()、array_flip、入力配列順への復元処理は見つからなかった。
+747	M10-13	未実装	low	在庫移動・振替CSV、在庫分割結合CSVは設定候補としては出せるが、保存した定義を実ファイル出力する経路が実装されていない。別キーワード（CSV_TYPE_STOCK_MOVE、CSV_TYPE_STOCK_SPLIT、custom_csv、csvExtensionId、出力項目設定）でも出力経路は反証できなかった。
+748	M10-15	未実装	low	設計オラクルは成功フラッシュを固有キー admin.shop.save.complete＝『基本情報を保存しました。』と明記するが、実装は汎用キー admin.common.save_complete＝『保存しました』へ統合されており、保存成功時に表示される文言が設計と一致しない。ShopController.php・messages.ja.yaml とも設計指定キー/文言は不在。DB永続化・リダイレクトは設計どおり実装済み。
+749	M10-16	実装違	low	data_menu/config_list/add_system_setting/admin_setting_shop_additional_system の別名で再検索したが、この画面のテンプレートは「データ管理」配下ではなく「設定 > 基本情報設定」配下として選択状態を組んでいる。
+750	M10-16	実装違	low	同一パスPOST要件を route 名・URL・Twig action で反証検索したが、実装は /update 専用POSTルートへ送信している。
+751	M10-16	実装違	med	smaregi_contract_id/SMAREGI_CONTRACT_ID/form.smaregi_contract_id と smaregi_store_id/smaregi_category_id の両方で再検索した結果、契約IDの保存先が設計の論理キーではなく削除対象の店舗IDキーへ割り当てられている。
+752	M10-16	実装違	med	otcbuy_order_return_seconds/OTCBUY_ORDER_RETURN_SECONDS/自動遷移秒数で再検索したが、0以上を保証するバリデーションが当フィールドに実装されていない。
+753	M10-16	未実装	med	alert_shopping_error_mail_address/check_payment_error_mail_address/shopping_error_mail_address の翻訳キー・定数・Twigを再検索し、購入処理エラーのラベル欠落とイベント決済確認エラーのフォーム未描画を確認した。
+754	M10-16	実装違	med	otc_summary_mail_address/check_bric_mail_address/check_nrpu_mail_address/adjust_point_variance_mail_addr/shopping_error_mail_address/check_payment_error_mail_address/check_id_expired_mail_address で再検索したが、実装は単一メール形式の Email 制約である。
+755	M10-16	実装違	med	査定払出し/経理/accounting/otc_buy_order_accounting_payment_pending_mail_address で再検索し、項目自体は存在するが任意指定ではなく required=true になっていることを確認した。
+756	M10-16	実装違	low	admin.register.complete/admin.common.save_complete/addSuccess を再検索し、成功メッセージの翻訳キーが設計と異なることを確認した。リダイレクト自体は GET 初期表示へ戻るため一致。
+757	M10-16	実装違	low	update_date/setUpdateDate/MtbOption/保存ループで再検索し、当コントローラ内で update_date を明示更新していることを確認した。
+758	M11-01	未実装	med	設計は削除対象不在時の期待挙動を明示的に『404にはしない／警告メッセージ→一覧リダイレクト』と規定し（HTML L970/L983）、up/down の『無ければ404』（L979/L989）と対比して区別している。しかし実装 delete は型付きエンティティ引数解決に依存し、不在IDでは本体到達前に404となるため設計と差異。pf-eccube3→EC-CUBE4系(enterprise)のコントローラ署名変更に由来する未記載の挙動差。
+759	M11-02	未実装	med	設計はスマレジ用アカウントの全メンバー1件のみ有効という一意制約と、重複時のフラッシュ差し戻し（フラグ非反映）を業務ルール/データ整合性/画面文言として要求。Controller・Form・Create/EditAction・Entity・Migration・locale いずれにも該当の検証・エラーメッセージ・DB制約が無く未実装。
+760	M11-03	実装違	low	設計はテンプレート側から参照可能な AuthorityRoles グローバル配列を要求しているが、実装はナビゲーションを事前フィルタして eccubeNav のみを公開する方式であり、公開名と契約が異なる。
+761	M11-03	実装違	low	保存後リダイレクト自体は設計と一致するが、利用者に表示される成功メッセージが設計の「権限設定を保存しました。」ではなく共通文言「保存しました」になっている。
+762	M12-01	未実装	med	反証検索として delivery/shipping/店頭受取/スムーズ/OrderStatus/order_status/出荷完了/対応状況 を SummaryController・AnalysisSummaryBuilder・DtbDailySummaryRepository・DtbMonthlySummaryRepository・集計Command配下で確認したが、本機能の集計条件には存在しない。実装SQLの WHERE は o.base_info_i
+763	M12-01	実装違	med	反証検索として DatePeriod/CarbonPeriod/補完/0で/zero/fill/missing/empty/calendar を Analysis 配下と DtbDailySummaryRepository/DtbMonthlySummaryRepository で確認したが、期間内の日付・月を展開して0行を埋める処理は見つからない。
+764	M12-01	実装違	high	DtbDailySummaryRepository::aggregateOrderSummaryByBaseInfo は dtb_order の全ステータスを対象に subtotal + delivery_fee_total + charge を合算する。SummaryController、Analysis配下Service、DtbDailySummaryRepository、DtbMonthlySummaryRepositoryを OrderStatus
+765	M12-01	未実装	med	SummaryController、Analysis配下Service、DtbDailySummaryRepository、DtbMonthlySummaryRepository、summary.twig を 補完/DatePeriod/DateInterval/P1D/P1M/zero/0で で反証検索したが、欠落日付・欠落月を0で補う処理は見つからなかった。Twig の default(0) は既存行の欠落属性を0表示するだけで、存在しない日付・月の行
+766	M12-01	未実装	med	BatchAggregateDailySummaryAction.php:37 から同メソッドを呼び出す。DtbDailySummaryRepository.php / BatchAggregateDailySummaryAction.php / AnalysisSummaryBuilder.php / SummaryController.php を OrderStatus::DELIVERED、DELIVERED、出荷完了、order_status_id
+767	M12-01	実装違	high	MtbBuyOrderStatus::APPRAISAL_ACCEPTANCE と MtbOtcBuyOrderStatus::STATUS_COMPLETE、DtbOtcBuyOrder.completeDate は存在するが、同集計 SQL はそれらを参照しない。DtbDailySummaryRepository.php / DtbBuyOrderRepository.php / DtbOtcBuyOrderRepository.php を 査定承諾、
+768	M12-01	実装違	low	BaseInfo.rank は「並び順」カラムとして存在し、フォーム用店舗一覧は BaseInfoRepository::getPublicTenantShopsForSummary で bi.rank ASC を使う。一方、結果一覧用 fetchSummaryRowsByDateRangeAndTargets は b.id ASC のため、設計の店舗表示順昇順と一致しない。
+769	M12-01	未実装	med	DtbDailySummaryRepository.php / BatchAggregateDailySummaryAction.php / BatchAggregateMonthlySummaryAction.php / AnalysisSummaryBuilder.php を ProductStock、stockLocation、stock_location、STOCK_LOCATION、smaregi、SMAREGI、EC在庫、スマレジ在庫で反証検索
+770	M12-01	実装違	high	OrderStatus::DELIVERED / order_status_id / 出荷完了 へ翻案して再検索したが、M12-01の日次・月次集計元SQLでは出荷完了ステータスに限定する条件が見つからない。
+771	M12-01	実装違	med	MtbBuyOrderStatus / MtbOtcBuyOrderStatus / STATUS_COMPLETE / 買取成立 / buy_order_status_id / otc_buy_order_status_id へ翻案して再検索したが、M12-01集計SQLでは買取成立ステータス限定が見つからない。
+772	M12-01	実装違	med	その他 / store_name / base_info_id IS NULL / root_base_info / short_name_jp / shop_name で再検索したが、M12-01集計に通販・店舗外売上を「その他」として集計・表示する処理が見つからない。
+773	M12-01	実装違	med	廃棄コスト / shortage / waste / total_cost / stockChangeQuantity / DtbStockHistory を再検索したが、M12-01集計で廃棄・欠品のコスト金額を合算する実装は見つからない。
+774	M12-01	未実装	med	DatePeriod / modify('+1 month') / 補完 / zero / summary_month の別キーワードで再検索したが、M12-01の表示用ビルダーに期間内の欠落月を0行として生成する処理が見つからない。
+775	M12-02	実装違	low	設計は report_summary_YYYYmmddHHMMSS.csv を指定しているが、実装は summary_{daily|monthly}_YYYYmmddHHMMSS.csv を返す。
+776	M12-02	実装違	low	設計は空条件でCSV出力継続を要求しているが、実装はCSVを出力せずエラー付きリダイレクトに分岐する。 / 期待:検索条件セッションが空の場合、空の検索条件で集計し、出力する。
+777	M12-02	実装違	med	画面側は総合計行を表示しているが、CSV出力サービスは総合計行を組み立てず、識別ID3～12の総合計をCSV末尾へ出力しない。
+778	M12-02	実装違	med	設計は廃棄コスト合計の出力を要求しているが、実装は在庫変動数量の合計を waste_count/discard_count として出力する。total_cost_price_before/after や原価合計を用いた廃棄コスト算出は確認できない。
+779	M12-02	実装違	med	設計は欠品コスト合計の出力を要求しているが、実装は欠品数量の合計を shortage_count/out_of_stock_count として出力する。原価・コスト金額を用いた欠品コスト算出は確認できない。
+780	M12-03	未実装	med	設計の外部契約である検索実行URLが /result だが、Controller と Twig は /search を実装している。反証として admin_analysis_sales_result, analysis/sales/result, sales/result を検索したが該当ルートは無く、admin_analysis_sales_search のみ存在した。
+781	M12-03	実装違	low	設計は To 未満の半開区間だが、実装は <= で上限日時を含める。初期値も設計の翌月初日相当ではなく当月末日 23:59:59 を設定しているため、境界時刻の扱いが設計と異なる。summary_date_to, date_to, <=, < で反証検索しても該当箇所はこの実装のみ。
+782	M12-03	未実装	med	設計は /analysis/sales/result を外部契約として指定しているが、Controller/Twig の実装は /analysis/sales/search であり、result ルートは SalesAnalysisController 内に存在しない。反証として analysis/sales/result, admin_analysis_sales_result, sales/result を Controller/Twig/route 
+783	M12-03	実装違	low	設計は上限を「未満」とするが、実装は <= で上限日時を含める。date_to/summary_date_to の条件を Repository 内で確認し、未満比較（< :summaryDateTo）の実装は見つからなかった。
+784	M12-03	未実装	med	SalesAnalysisController 内で SESSION_KEY の remove/clear/invalidate を検索したが、検索条件セッション破棄処理がない。
+785	M12-03	実装違	med	設計はCSVで表示件数上限を適用しないとするが、実装は画面一覧と同じ getAnalysisSummary() を使い page_count 上限を除去していない。exportBySearchData, getAnalysisSummary, page_count, setMaxResults を確認した。
+786	M12-03	実装違	low	設計の外部契約は /analysis/sales/result だが、実装は /analysis/sales/search で公開している。別名 route/admin_analysis_sales_result や /analysis/sales/result の定義は探索範囲で確認できなかった。探索範囲: SalesAnalysisController, sales.twig, src/Eccube, html。
+787	M12-03	未実装	med	設計要求の「検索条件セッションを破棄する」に対応する session->remove(self::SESSION_KEY) 等が初期表示処理に存在しない。別キーワード clear/remove/invalidate/eccube.admin.analysis.sales.search/admin_analysis_sales で反証検索したが、当該キーを破棄する実装は確認できなかった。
+788	M12-03	実装違	low	設計はToを未満（排他的上限）としているが、実装はTo以下（包含上限）で条件化している。date_to/summary_date_to/less than/< で反証検索したが、本機能のTo未満条件は確認できなかった。
+789	M12-03	未実装	med	集計後HAVING条件は実装済みだが、設計の「0以上を入力補助で促す」に相当するHTML属性・制約がない。min/PositiveOrZero/GreaterThanOrEqual/Range/0以上 の別名で SalesType と関連locale/validatorを反証検索したが、本項目向けの0以上入力補助は確認できなかった。
+790	M12-04	実装違	low	設計はセッション保存なしの場合も空条件としてCSV出力処理へ進むことを要求しているが、実装は export() の冒頭で null を検出するとエラーリダイレクトして終了する。反証として admin_analysis_sales_export、SESSION_KEY、FormUtil::submitAndGetData、SalesAnalysisCsvExporterService、analysis/sales/export を検索したが、セッションなしを
+791	M12-04	実装違	med	設計はCSVでは一覧表示件数の上限を外して全件出力することを要求しているが、実装はCSV出力前に page_count を除去・無効化せず、一覧と同じ getAnalysisSummary() 内の setMaxResults により件数上限を適用する。反証として exportBySearchData、getAnalysisSummary、page_count、setMaxResults、CSV専用リポジトリ経路を検索したが、CSV時だけ上限を解除する実装
+792	M12-04	実装違	low	設計はセッション未保存時も空条件で集計してCSVを出力する仕様だが、実装は SalesAnalysisController::export() で session get 結果が null の場合に addError('検索条件がありません。先に検索を実行してください。') を行い、CSV出力サービスを呼ばずに redirectToRoute('admin_analysis_sales') を返す。反証として Controller/Admin/Analys
+793	M12-04	実装違	med	設計はCSVでは表示件数上限を外す仕様だが、実装は SalesAnalysisController.php:110-117 でセッション値から復元した検索条件をそのまま SalesAnalysisCsvExporterService に渡し、同サービスの 38 行目で getAnalysisSummary($searchData) を呼ぶ。OrderItemRepository.php:310-312 が page_count を limit として se
+794	M12-05	未実装	med	初期表示時に検索条件セッションを破棄する設計要求が Controller に存在しない。検索条件は search() で同じ SESSION_KEY に保存され、index() で消されないため、CSV 再抽出条件が残存しうる。
+795	M12-05	未実装	med	設計の初期表示時セッション破棄だけが実装にない。Controller では session set は検索時のみ存在し、index() に session->remove(self::SESSION_KEY) 相当の処理がない。別名 clear/search condition/session/remove でも M12-05 初期表示の破棄処理は確認できなかった。
+796	M12-06	実装違	low	設計は空条件でCSVを出力する仕様だが、実装はCSVを出力せず検索画面へ戻す。反証検索でも ProductRequestController 以外に空条件で出力する product_request CSV 入口は見つからない。
+797	M12-06	未実装	med	設計の外部表示名は「通知済み/削除」だが、CSVヘッダおよび画面表示は「削除」のみで、通知済みを含む項目名になっていない。反証検索でも product_request 実装内に「通知済み/削除」「通知済/削除」の表示は不在。
+798	M12-07	実装違	low	設計の外部URL契約は underscore の /analysis/format_sales と /analysis/format_sales/result だが、実装は hyphen の /analysis/format-sales と /analysis/format-sales/search であり、利用者視点のエンドポイントが一致しない。反証として format_sales/result、analysis/format_sales、admin_a
+799	M12-07	実装違	low	設計は項目表で初期値「-」、詳細設計で「空（初回表示時は未設定）」を指定しているが、実装は当月 yyyy-MM を初期投入する。反証として FormType/Twig/Controller の month 初期化、empty/null 設定、default data を検索したが、初期未設定にする実装は確認できなかった。
+800	M12-07	実装違	med	設計は検索条件・集計結果をセッションへ保存せず、CSVは送信された集計月で再集計するとしている。一方、実装は検索時のフォーム値をセッション保存し、CSV出力時は送信値ではなくセッション値を読む。さらに M12-07 はグラフ・表表示までを扱う設計だが、M12-07 Controller/Twig に CSV export ルートと導線がある。反証として format_sales/export、SESSION_KEY、session->set/get、CSV
+801	M12-07	実装違	low	設計はアンダースコア付き `format_sales` と `/result` を外部URL契約として明記しているが、実装はハイフン付き `format-sales` と `/search` で公開している。反証検索で `analysis/format_sales`、`format_sales/result`、`admin_analysis_format_sales_search`、`format-sales/search` を確認したが、設計どおりのルー
+802	M12-07	実装違	low	設計は初回表示時の集計月を未設定とするが、実装は現在年月を初期値として画面に表示する。反証検索で `month setData`、空文字初期化、テンプレート初期値を確認したが、空初期値にする処理は見つからなかった。
+803	M12-07	実装違	low	設計は検索条件セッション保存なしを明記しているが、実装は検索条件をセッションに保存し、CSVエクスポートでもそのセッションを参照している。反証検索で `SESSION_KEY`、`session->set`、`session->get`、`admin.analysis.format_sales.search` を確認し、保存処理の存在を確認した。
+804	M12-08	実装違	med	設計は POST /analysis/format_sales/export かつフォーム送信ボタンで集計月を送る仕様だが、実装は GET /analysis/format-sales/export のリンクで、クリック時にフォーム値を送信しない。admin_analysis_format_sales_export、format-sales/export、format_sales/export、CSVダウンロード、FormatSalesController
+805	M12-08	実装違	med	設計はCSVダウンロード送信値の集計月を唯一の入力とし、検索条件セッションを参照しない仕様だが、実装は検索フォームの viewData をセッション保存し、CSV出力がセッションに依存している。SESSION_KEY、session->set、session->get、FormUtil::getViewData、admin_analysis_format_sales_export を再検索し、送信値から直接集計月を取得するエクスポート実装は確認できなかった
+806	M12-08	実装違	low	設計のファイル名接頭辞は format_sales_report_ だが、実装の Content-Disposition は format_sales_ を使用している。format_sales_report、format_sales_、Content-Disposition、SalesAnalysisCsvExporterService を再検索し、本機能で設計接頭辞を使う実装は確認できなかった。
+807	M12-09	実装違	low	設計は underscore パスの検索画面と export/{mode} の GET CSV導線を要求しているが、実装は hyphen パスで検索フォーム POST が同一パスに直接CSV出力する。反証として used_card/admin_used_card/admin_analysis_used_card/used-card/export/{mode}/used_card_result を Controller/Twig/Service/Reposi
+808	M12-09	実装違	low	設計は検索POSTで結果表示と条件保持を行い、別導線でCSV出力する構造だが、実装は検索操作がCSVダウンロードそのものになっている。反証として UsedCardController/SearchUsedCardType/used_card.twig/UsedCardCsvExportService/DtbDeckRepository/getUsedCardsCsvExportData と admin Analysis 配下を検索したが、UsedCard 
+809	M12-09	実装違	med	設計は初期表示でセッション条件を消し、未指定フォームとCSRFトークン、CSV形式 mode を扱う要求だが、実装はセッション削除も mode もCSRFもなく、一部入力に必須・初期値を設定している。反証として UsedCardController/SearchUsedCardType/used_card.twig/locale/nav と export/{mode}, mode, csrf, session キーワードを再検索したが、UsedCard 用
+810	M12-10	未実装	med	設計の外部契約は underscore パスの GET export/{mode} と形式指定だが、実装は hyphen パスの POST 同一URLで mode なし。反証として admin_used_card_export/admin_analysis_used_card_export/analysis/used_card/export/analysis/used-card/export/mode を src/Eccube, app, html で検索
+811	M12-10	実装違	low	設計は検索表示フローとCSV出力フローを分離し、条件をセッションで引き継ぐことを要求している。実装はPOST即CSV出力で、SessionInterface/request session/set/remove/get、admin_used_card_result 相当のルート、集計結果表示テンプレートが確認できない。
+812	M13-01	未実装	med	設計のURL・bind名・新規登録遷移先と実装のルート契約が一致しない。 / 期待:イベント一覧の入口は GET /%admin_route%/event/list、検索は /event/search/{page_no}、ページ送りは /event/page/{page_no}、新規登録は /event/new、bind名は admin_event_list/admin_event
+813	M13-01	未実装	med	設計のフォーム名とCSRFなし契約に対し、実装は別名のCSRF付きフォームになっている。 / 期待:検索フォームはフォーム名 admin_event_list、CSRF保護なしで生成・POSTする。
+814	M13-01	実装違	low	設計のセッションキー名、初期化方法、保存対象が実装と一致しない。 / 期待:検索条件・表示件数・ソートキー・並び順・ページ番号は admin.event 系セッションに保存し、/event/list 初期表示では検索条件セッションを削除する。
+815	M13-01	実装違	low	設計の sort/order パラメータ、ASC/DESC値、エラー処理が実装されていない。 / 期待:ソートはリクエストの sort/order（ASC/DESC）を優先し、不正な並び順は admin.error.sort の並び順エラーを表示して初期表示へ戻す。
+816	M13-01	実装違	low	利用者に表示される日本語文言が設計の文言と一致しない。 / 期待:表示メッセージは、1件以上で「検索結果 N件が該当しました」、0件で「検索条件に該当するデータがありませんでした。」を表示する。
+817	M13-01	未実装	med	検索クエリに論理削除除外条件がなく、deleted_at 設定済みレコードを除外する実装根拠がない。 / 期待:deleted_at による論理削除レコードはイベント一覧検索の対象外にする。
+818	M13-01	未実装	med	設計で外部契約として定義された URL、ルート名、フォーム名、CSRFなし条件が実装の Controller/Twig/FormType と一致しない。設計ルート名・URLは対象範囲検索で見つからない。
+819	M13-01	未実装	med	設計のセッションキー名および初期表示時の削除動作と異なり、初期表示で検索条件セッションをクリアしない。sort/orderを設計どおりのキーで保持する実装もない。
+820	M13-01	実装違	low	設計が明示する「範囲整合性チェックなし」と異なり、実装はFrom/To逆転をフォームエラーにして検索結果0件表示に進まない。
+821	M13-01	未実装	med	設計のリクエストパラメータ名・値体系・不正値処理と実装が異なる。不正 order をエラーにせず DESC として処理する。
+822	M13-01	実装違	low	設計で指定されたユーザー表示ラベル・文言と実装の翻訳文言が一致しない。 / 期待:一覧の表示項目は開催店舗ラベルを表示し、検索結果文言は「検索結果 N件が該当しました」、0件時は「検索条件に該当するデータがありませんでした。」を表示する。
+823	M13-01	未実装	med	設計HTML本文にある専用CSS指定はハーネス候補に含まれていなかった extractorMissed 要求で、実装探索でも該当CSSの読込が見つからない。
+824	M13-02	実装違	med	EventController::create / EventType::buildForm / EventCreateAction::handle を精査した結果、新規時にクレジットカード決済を初期選択する処理が存在せず、真の新規では支払方法が全て未選択で表示される。設計の『新規時クレジットカード初期選択』と挙動が異なる。
+825	M13-02	実装違	low	edit.twig と messages.ja.yaml を確認した結果、削除確認ダイアログに埋め込まれる値がイベント名ではなくモジュール共通ラベル「イベント管理」であり、設計の『イベント名を埋め込んだ削除確認文言』要求と利用者に見える文言が異なる。
+826	M13-02	実装違	low	grep -rn で admin.event.delete.schedule_exists は EventController.php:314 のみに出現し locale 定義ゼロを確認。実在キー名は .not.schedule_exists で不一致。翻訳キー取り違えにより設計要求の日本語メッセージが露出しない。
+827	M13-02	実装違	low	grep で deckerror/entryerror は ScheduleController.php:146,152 のみに出現し locale 定義ゼロを確認。実在キー名は .not.deck_exists / .not.entry_exists で不一致。
+828	M13-03	未実装	med	設計は表示入口を GET /schedule/new（admin_schedule_new）、登録送信を POST /schedule/create と分けているが、実装のルート定義とリンクは /schedule/create の GET/POST 兼用で、設計上の画面遷移先 route/path が存在しない。反証検索でも admin_schedule_new と schedule/new は実装範囲に見つからなかった。
+829	M13-03	実装違	high	設計は「日程追加が可能」かどうかの権限制御を要求している。実装はイベント編集画面のリンク表示やボタン disabled では制御しているが、ScheduleController::create/edit の保存分岐自体は権限チェック前に実行されるため、直接POSTに対して日程追加・更新を拒否する実装になっていない。反証として RepeatScheduleController は保存前に権限NGをリダイレクトしており、同等のガードが ScheduleCont
+830	M13-03	実装違	low	設計は新規時のボタンラベルを「登録」、既存時のボタンラベルを「更新」としている。実装は両方とも「保存」であり、利用者が直接見るボタン文言が設計と異なる。
+831	M13-04	未実装	med	設計は event/repeatschedule/{eventId}/new と event/repeatschedule/{eventId}/create を利用者視点の外部契約として定義しているが、実装は event/{eventId}/repeatSchedule/create で、eventId の位置、repeatschedule の大小文字、new 入力画面ルートが異なる。反証検索として admin_repeat_schedule_new、ev
+832	M13-04	未実装	med	設計は申込受付有効時の支払い方法設定を本機能の前提確認としている。実装では RepeatScheduleType.php:157-174 で entryFlg とオンライン受付項目を定義し、RepeatScheduleStoreAction.php:49,84-87,98,102-103 で entryFlg を保存するが、その前に DtbEvent::getPayments() を確認してエラー化する処理が存在しない。ScheduleType.php:1
+833	M13-04	未実装	med	設計は本機能固有の保存失敗キーと支払い方法未設定キーを表示契約としているが、実装は共通キー admin.common.save_error のみを例外時に使用し、支払い方法未設定キーは未定義。rg で admin.schedule.save.failed、admin.schedule.error.payment.not.exists、not.exists、schedule_credit_payment_required を検索し、繰返日程側の該当実装は確認
+834	M13-04	実装違	low	設計は画面項目の初期値を明示している。実装フォームの add 定義を確認すると、該当初期値のうち 23:59 以外は data 未設定であり、Twig も form_widget をそのまま描画しているため、初期表示が設計値にならない。
+835	M13-04	未実装	med	設計は登録済みイベントに対する繰返日程追加画面で当該イベントページへのリンクを画面部品として定義している。実装は新規日程登録時の eventDetailId を null にしており、Twig の条件によりリンクを出さない。eventId からイベントページへ遷移する代替リンクも同テンプレートには存在しない。
+836	M13-05	未実装	med	設計のルート名・URL・パラメータ名と実装が一致しない。さらに設計は duplicateId を1以上の整数としているが、実装の \d+ は 0 も経路一致し得る。探索範囲: Controller/Twig/route名/翻訳キーを admin_event_duplicate, duplicate, copy, event/{duplicateId}/duplicate, event/{id}/copy で再検索。
+837	M13-05	実装違	med	非編集権限店舗の選択エラーは存在するが、設計が求める「編集権限のある店舗のみ表示」が未達。EventType/Controller/Twig/MemberBaseInfos 周辺を再検索したが、イベント登録フォームの店舗選択肢を権限店舗に絞る query_builder は見つからない。
+838	M13-05	未実装	med	設計はユーザー入力項目として会場必須選択と venue_id の複製対象を定義しているが、実装には form.venue、venue_id/ Venue プロパティ、保存・初期表示処理がない。
+839	M13-05	未実装	med	設計がユーザー可視の備考(日/英)項目と複製対象を定義しているのに対し、実装側に対応する FormType/Twig/Entity/EntityManager の経路がない。
+840	M13-05	実装違	low	設計が明示するフォーム名 admin_event_detail と、実装のフォームprefix admin_event が一致しない。フォーム名はリクエスト項目名・CSRFスコープに影響する外部契約であり、弱い文言差ではない。
+841	M13-06	実装違	med	設計は『フォームを全て空に変更』を要求するが、実装は検索モードのラジオ選択を初期化するのみで他の全入力を空にしない。SearchEntryType にもリセット手段は無い。
+842	M13-06	実装違	low	EntryController.php の order 判定は不正値を DESC に強制するのみで、設計が要求するフラッシュ表示(admin.error.sort)と初期表示戻しが実装されておらず挙動が異なる。
+843	M13-06	未実装	med	SearchEntryType.php の該当フィールド定義と index.twig の form_widget 呼び出しを確認したが、設計が要求する maxlength(64/255) が付与されておらず入力長制限が未実装で差異がある。（本件はM13-06 検索入力sheet-10側の同一所見と重複）
+844	M13-06	実装違	low	SearchEntryType.php のフィールド定義は Length のみで、設計が要求する『数字(Regex)』のフォームバリデーションが無い。非数字は form エラーを出さず repo が無視する挙動で、設計の検証仕様と差異がある（軽微）。
+845	M13-07	実装違	med	設計の利用者視点入口は /{admin_route}/entry/bulkupdate だが、実装は /{admin_route}/event/entry/bulk_update で、event セグメント追加と bulkupdate/bulk_update の差異がある。探索範囲: src/Eccube, html。検索語: entry/bulkupdate, entry/bulk_update, bulkupdate, admin_entry_bulk
+846	M13-07	未実装	med	設計は非XHRを失敗JSONにする要求だが、実装は非XHRを拒否せず、フォーム検証・ID取得・更新へ進む。反証検索でも Admin/Event/EntryController の一括更新周辺に isXmlHttpRequest / X-Requested-With 判定は存在しない。
+847	M13-07	実装違	low	設計指定の表示文言キー admin.register.failed/admin.register.complete と、実装が返すロケールキーが一致しない。
+848	M13-08	実装違	med	設計HTMLの入口URL・bind名と、Symfony Route/Twig の実装値が一致しない。反証として admin_entry_decklist、entry/deckList、deckList、admin_event_entry_decklist、event/entry/decklist を検索し、実装済みなのは新名称・新パスのみであることを確認した。
+849	M13-08	実装違	high	検索モーダル等では isEditableShop / getMemberBaseInfos による権限制御があるが、デッキ表示本体では同等の照合がない。セッションに権限外店舗が入った場合に除外する根拠が実装から確認できない。
+850	M13-08	実装違	med	設計は deck.player_name を第一候補、空時のみ会員カナ代替とするが、実装は会員カナを第一候補にしており優先順位が逆転している。
+851	M13-08	実装違	low	設計は dtb_event.name_en / イベント名（英）の表示を要求しているが、実装は日本語名 getNameJp() を表示している。getNameEn() の利用は当該デッキリスト表示経路では確認できない。
+852	M13-08	未実装	med	array_chunk/40/page split/BOARD_ID_SIDE/textSide/sideboard/サイドボード等へ翻案して再検索したが、デッキリスト表示経路ではメインカードの40枚分割とサイドボードページ制御が存在しない。
+853	M13-08	未実装	med	設計はメインとサイド双方のカード一覧・枚数見出しを要求しているが、実装の表示モデルとTwigはメインボード専用である。 / 期待:デッキごとのカードに、サイドボード見出しと枚数、サイドのカード一覧を表示する。メイン・サイドそれぞれの枚数を合計し、各見出しに表示する。
+854	M13-08	実装違	low	設計は0件時に印刷ボタンのみとするが、実装は検索結果なしメッセージを表示するため、利用者に見える出力が異なる。 / 期待:デッキが0件の場合、デッキリストに何も表示しない（印刷ボタンのみ）。
+855	M13-08	実装違	low	設計が明示する admin.event_entry.search ではなく、実装独自の eccube.enterprise.admin.entry.search を参照している。admin.event_entry.search への参照は実装検索で確認できない。
+856	M13-10	実装違	low	実装は存在するが、利用者が目にするフラッシュ文言が設計指定の文言と異なる。EntryController.php の edit() で共通の保存メッセージキー（save_complete/save_error）を用いており、設計が明示する「登録が完了しました。」「登録できませんでした。」を表示していない。
+857	M13-11	実装違	med	EntryRegistrationController は getDefaultSearchBaseInfo() を初期値に渡すだけで、検索対象をメンバーが権限保持する店舗集合へ常時制限していない。EntryRegisterSearchType の query_builder は BaseInfo を全件 orderBy し、DtbEventRepository::getQueryBuilderByEntryRegistrationSearchData()
+858	M13-11	実装違	med	設計は Entry/search_event.twig 由来の非同期モーダル検索を正としているが、EntryRegistrationController には /entry/search/event/html 系ルートも isXmlHttpRequest() によるイベント検索分岐もない。反証検索で admin_entry_event_html/admin_entry_search_event_by_id を確認したが、これはイベント申込一覧画面用の /e
+859	M13-11	未実装	med	設計は申込登録検索の外部契約としてイベントID直接検索を要求しているが、EntryRegistrationController のルートは index/new/search_player のみで、イベントID取得専用ルートが存在しない。反証として EntryController::searchEventByIdForEntryList を確認したが、対象画面・URLが異なり M13-11 の登録検索入力には接続されていない。
+860	M13-11	未実装	med	設計のエラー処理はイベント検索HTMLエンドポイントに対する非AJAX時の空モーダル返却を要求しているが、M13-11 のイベント検索実装自体が同期ページで、該当するモーダル枠・空結果返却処理が存在しない。反証として search_event_modal_list.twig と Event/EntryController のモーダルを確認したが、M13-11 EntryRegistrationController から非AJAX時にそれを返す経路は確認でき
+861	M13-11	未実装	med	設計が外部契約として示すURLパスおよび検索HTMLのHTTPメソッドと実装ルートが一致しない。さらに設計の「非同期リクエストでない場合は空の検索結果でモーダル枠のみ表示」に対応する isXmlHttpRequest 等の分岐が entryEventHtml に存在しない（探索範囲: Admin/Event/EntryController.php, Admin/Event/EntryRegistrationController.php, admin/Eve
+862	M13-11	実装違	med	登録処理入口では権限チェックがあるが、設計が求める検索結果一覧での「権限を保持している店舗のイベントのみ」表示、および新規登録ボタンの表示制御が実装されていない。FormType/Controller/Repository/Twig を確認しても、一覧検索結果を編集可能店舗へ常時制限する処理やボタン単位の isEditableShop 条件がない。
+863	M13-12	実装違	med	設計の外部契約URL・HTTPメソッドが実装ルートと一致しない。反証検索でも /entry/select、/entry/{eventDetailId}/create、/entry/search/player/html の実装ルートは見つからない。
+864	M13-12	実装違	med	登録処理の防御はあるが、設計が求める「権限を保持している店舗のイベントの申込のみ表示」が一覧・ボタン表示で満たされていない。
+865	M13-12	実装違	med	設計は登録した申込1件の編集画面への遷移を求めるが、実装は日程の申込一覧へ戻るため、成功後の遷移先が異なる。 / 期待:登録成功時は成功を表示し、登録した申込の編集画面（M13-10相当）へリダイレクトする。
+866	M13-12	実装違	high	重複検証が登録処理のサーバー側オラクルになっておらず、直接POST等では重複申込を弾けない。申込重複メッセージと新規画面リダイレクトも登録処理側にない。
+867	M13-12	実装違	low	利用者が直接見る登録ボタンの文言が設計の「登録」ではなく「保存」になっている。 / 期待:識別ID3-1のボタンはラベル「登録」で表示し、入力されたフォームの値で登録する。
+868	M13-12	実装違	low	遷移先は登録先選択画面に近いが、設計が求める前画面名表示ではなく汎用の「戻る」を表示している。 / 期待:「戻る」は、前の画面名を表示する。戻るボタンは登録先選択画面へ遷移する。
+869	M13-12	実装違	low	設計で指定されたフラッシュ文言と実装文言が異なり、未送信・金額不正の専用表示条件も登録処理に実装されていない。 / 期待:画面上部フラッシュは、成功時「登録が完了しました。」、未送信失敗時「登録できませんでした。」、支払金額不正時「半角数字で金額を入力してください。」を表示する。
+870	M13-13	未実装	med	設計指定の /entry/bulkentry、/entry/bulkentry/upload、/entry/entry_csv_template は Controller/Twig/nav で見つからず、POST 専用 upload ルートも存在しない。
+871	M13-13	未実装	med	設計の TSV 選択許可とアップロード中スピナーが画面実装にない。別キーワード ladda/spinner/admin.common.csv_upload_in_progress でも当該テンプレートへの適用は確認できない。
+872	M13-13	実装違	med	設計は 5000 行以上不可だが、実装は 5011 行以上で初めてエラーになり、上限値も 5010 として表示される。 / 期待:アップロードCSVは 5000 行以上を登録不可とし、上限行数エラーを表示する。
+873	M13-13	実装違	low	設計文言「イベント情報を登録しました。」は Controller/locale で見つからず、汎用CSVアップロード完了文言が表示される。
+874	M13-13	実装違	med	EventEntryBulkCsvController と関連 importer で「イベント一括登録 異常終了」および結果件数を含む完了ログが見つからない。
+875	M13-13	未実装	high	EventBulkCsvImportHandler.php:289 付近はクレジット列の値検証のみ、同:364 付近はオンライン受付日時検証のみ、同:453 付近は Payment 紐付けのみで、設計の横断条件を判定してエラー化する処理が存在しない。
+876	M13-13	実装違	med	設計のCSV外部契約と実装のヘッダー定義・必須定義が一致しない。代替語 venue/会場/チーム人数/備考/free input/public status schedule で検索しても、設計名の列および公開状態_日程任意扱いは確認できない。
+877	M13-13	未実装	med	AbstractCsvService にはゼロ幅除去ヘルパーがあるが、イベント一括登録の import 経路では呼ばれていない。設計のゼロ幅スペース正規化要求が取込処理に存在しない。
+878	M13-13	未実装	med	設計のPOST前提処理が本機能の Controller/Service に実装されていない。 / 期待:CSVアップロードPOST処理では実行時間制限を無効化する。
+879	M13-13	実装違	med	設計はヘッダ一致を前提条件にしているが、実装は半角スペース入り/半角括弧の別名を要求するため、設計フォーマットのCSVと一致しない。
+880	M13-13	未実装	med	設計の外部URL契約と実装ルートが一致せず、POST専用の /entry/bulkentry/upload も存在しない。
+881	M13-13	実装違	med	バックエンドにTSV分岐はあるが、利用者が直接触るファイル選択UIでは text/tsv/.tsv を受理対象として提示していない。
+882	M13-13	未実装	med	設計のアップロード中スピナー表示に対応するDOM・クラス・JS呼び出しが当該Twigに存在しない。 / 期待:アップロード時にスピナーを表示する。
+883	M13-13	未実装	med	同リポジトリの他CSV/集計系コントローラにはset_time_limit(0)があるが、本機能のCSV取込入口には存在しない。
+884	M13-13	実装違	med	設計は5000行以上不可だが、実装は5010超過のみ不可で、5000行以上を許容し得る。 / 期待:アップロードファイルの行数が上限（確認値5000行）以上のとき、上限超過エラーを表示し同画面を再描画する。
+885	M13-13	実装違	low	設計の成功メッセージはイベント登録完了を示す文言だが、実装は汎用CSVアップロード完了文言を表示する。 / 期待:取込成功時は「イベント情報を登録しました。」を画面上部のフラッシュに表示する。
+886	M13-13	未実装	low	catch時やresult->hasError()時にerrorsへ追加/表示するだけで、設計指定の情報ログを記録していない。
+887	M13-13	実装違	low	設計は完了ログに取込件数を含める要求だが、実装ログにはcountコンテキストがない。 / 期待:取込完了時は取込件数を情報ログに記録する。
+888	M13-13	未実装	med	本機能の取込経路ではゼロ幅スペースを除去・正規化する処理が確認できない。 / 期待:アップロード後にUTF-8へ変換して取り込み、改行・ゼロ幅スペースを正規化する。BOM・ゼロ幅スペースは除去する。
+889	M13-14	実装違	low	設計の外部URL契約は /banner/event 系だが、実装は /event/banner 系で、POST も /settings サブパスへ分離されている。別キーワード（admin_banner/admin_event_banner/banner/event/event/banner/バナー設定）で Controller/Twig/nav/locale を再検索したが、設計どおりの /banner/event 系ルートは確認できなかった。
+890	M13-15	未実装	med	設計の /banner/event 系ルートと同一POST振り分けが存在しない。反証検索として banner/event、admin_banner_event、event/banner、admin_event_banner、image/upload、settings、delete/{htmlClass} を src/Eccube/html/app で確認したが、実装証跡は /event/banner 系の分割ルートのみだった。
+891	M13-15	実装違	med	設計は banner/ または banner/{html_class}/ を外部的な画像ストレージパスとして定義しているが、実装は banner/event/ を固定プレフィックスとして追加している。反証検索で S3_BANNER_PREFIX、banner/event、banner/{html_class}、setS3Directory、getFiles、deleteFile を確認したが、設計パスでのイベントバナー実装は見つからなかった。
+892	M13-15	実装違	low	利用者に表示される日本語文言が設計文言と一致しない。反証検索で設計文言、admin.event.banner.*、admin.data.top_banner.*、validators.ja.yaml、data-message を確認したところ、設計と一致する削除確認文言はトップバナー用キーにのみ存在し、イベントバナー画面は別文言を使用していた。
+893	M14-01	実装違	low	設計は検索実行の外部契約を /card/search/1 としているが、実装UIのフォーム送信先は一覧初期表示ルート /card であり、検索ルート・page_no=1 固定送信になっていない。
+894	M14-01	実装違	low	設計は検索フォームの CSRF 無効を要求しているが、実装は CSRF 有効でフォームを構築している。 / 期待:検索フォームは CSRF 保護を明示的に無効化すること。
+895	M14-01	実装違	med	設計は初期表示で検索条件セッションを消去する仕様だが、実装は別キーを設定するだけで既存検索セッションの削除を実装していない。
+896	M14-01	実装違	med	設計が求める区切り文字分割と語間ANDが admin検索では実装されていない。splitSearchText は別API系処理であり、この検索フォームのQueryBuilderでは使用されていない。
+897	M14-01	実装違	med	設計はカード名自体を /card/{id} へのリンクにする要求だが、実装はカード名を非リンク表示し、別アイコンかつ /card/{id}/edit で遷移させている。
+898	M14-01	実装違	low	設計はalert後の全画面リロードまで要求しているが、実装はAJAX後に同一画面のままボタン状態を戻すだけである。 / 期待:カード名リスト作成ボタンのAJAX成功/失敗alert後、常に全画面リロードを行うこと。
+899	M14-01	未実装	med	設計で指定されたCSV出力クリック後の短時間無効化制御が、カード一覧Twigおよび管理画面JSに存在しない。function.js の token-for-anchor 用 pointer-events 制御はリンク用であり、このCSVボタンには適用されない。
+900	M14-01	実装違	med	設計は初期表示時に admin.card 系の検索関連キー削除を要求しているが、実装は `CardController::index` の初期表示分岐で set して返却するのみ。反証として Controller/Admin/Card、SearchControllerTrait、Twig、翻訳キーを `admin.card.search`、`eccube.admin.card`、`page_count`、`sort`、`remove` で再検索したが、当該
+901	M14-01	実装違	low	設計は検索フォームのCSRF無効を要求しているが、実装は有効。反証として SearchCardType、Card/index.twig、CardCsvController を `csrf_protection`、`_token`、`token-for-anchor`、`admin_search_card` で再検索したところ、一括操作ボタン用CSRF注入はあるが検索フォーム型のCSRF無効化は見つからなかった。
+902	M14-01	実装違	med	設計は50文字制限とトークン分割ANDを要求しているが、実装はどちらも満たさない。反証として `SearchCardType.php`、`MtbCardRepository.php`、messages、validators を `Length`、`maxlength`、`stext_len`、`multi`、`StringUtil`、分割語で再検索したが、M14-01の `multi` に対する50文字制約・空白/カンマ分割処理は確認できなかった。
+903	M14-01	実装違	low	設計はカード名またはID自体を編集画面への遷移入口としているが、実装は別アイコンのみ。反証として Card/index.twig とルート定義を `admin_card_edit`、`card.id`、`getNameJpWithEn`、`href` で再検索したが、IDセルまたはカード名セルをリンクにする実装は確認できなかった。
+904	M14-04	未実装	med	設計のURL/ルート名契約と実装ルートが異なる。CardController と Card/edit.twig のルート参照を再検索したが、設計通りの create/update/delete パスは存在しない。
+905	M14-04	実装違	low	利用者が見るタイトル/サブタイトルの表示順が設計と逆になっている。 / 期待:画面タイトルは「カード管理」、サブタイトルは「カード詳細」と表示する。
+906	M14-04	実装違	med	商品紐づき有無を add-detail ボタン表示条件に使っていない。detail_row.twig では行単位削除ボタン非表示は実装済みだが、設計が要求する追加ボタン非表示は未反映。
+907	M14-04	未実装	med	設計が要求するUIバリデーション処理が実装ファイルおよび関連JSに見つからない。 / 期待:レギュレーション追加時、同じフォーマットを選択した場合はアラートを表示し、選択状態を解除する。
+908	M14-04	実装違	low	確認文言と実行ボタン表示が設計指定と一致しない。 / 期待:カード削除時は確認ポップアップに「このカードを削除してもよろしいですか？」を表示し、「実行」で削除する。
+909	M14-04	実装違	low	削除成功時に利用者へ表示する完了メッセージが設計文言と異なる。 / 期待:カード削除後、カード一覧へ遷移し「削除が完了しました。」を表示する。
+910	M14-04	未実装	med	設計が外部契約として要求する登録/更新/削除後のHTTP通知副作用が確認できない。別キーワードで Smaregi/branch/notify 系も再検索したがカード処理に紐づく実装は見つからなかった。
+911	M14-05	実装違	low	設計の公開URL・ルート名 admin_card_csv / m14-05_admin_card_card_csv_import / card/csvimport が実装に存在せず、別URL・別ルート名で実装されている。反証検索: admin_card_csv\b, m14-05_admin_card_card_csv_import, card/csvimport, csvimport。
+912	M14-05	実装違	low	利用者が直接見る文言が設計値と異なる。messages.ja.yaml:1747 に「CSVファイル選択」はあるが、Card/csv_card.twig と base_csv_upload.twig から参照されていない。
+913	M14-05	未実装	med	反証検索で card-csvimport.js / spin.min.js / #upload-button disabled はカードCSV画面に存在しない。他CSV画面には disabled 実装があるが、本画面の継承元にはない。
+914	M14-05	未実装	med	CardCsv.php / AbstractCsvService.php / CsvImportType.php を Length, mb_strlen, strlen, string_max_length, 数値検証で再検索したが、該当CSV列の最大長・数値制約を設計どおり検証する処理がない。
+915	M14-05	未実装	med	反証検索では DtbBranchUpdateError エンティティ/Repository は存在するが、カードCSV取込経路からの呼び出しはない。BranchUpdateService は移植TODOコメントのみで、カードCSV成功後の通知実装が不在。
+916	M14-05	実装違	med	取込経路を setSQLLogger(null), SQLLogger, clearCache, entityManager->clear, rowIndex % 100 で再検索したが、カードCSV取込でのSQLロガー無効化・定期キャッシュ解放は確認できない。
+917	M14-06	実装違	med	設計の公開ルート名・URL パターンと実装の Symfony Route 定義が一致しない。テンプレートも実装側 route 名を使ってリンクを生成している（app/template/admin/Cardset/index.twig:97, 79, 191）。
+918	M14-06	実装違	med	設計のクエリ名・値ドメイン（sortSelect の4文言完全一致）と実装のクエリ名・検証単位（sort_key/sort_order）が異なる。pageCount も設計名ではなく page_count で実装されている。
+919	M14-06	実装違	med	設計が要求する resume によるセッション3キーのクリアと、pageCount/sortSelect キー保存が実装されていない。反証検索でも CardsetController、Cardset Twig、html 配下に resume / eccube.admin.cardset.pageCount / eccube.admin.cardset.sortSelect は見つからなかった。
+920	M14-06	実装違	low	設計の確認文言と実装の表示文言が一致しない。設計の「実行」ボタンではなく、実装は「削除」ボタンで DELETE アンカーを実行する。
+921	M14-06	実装違	med	設計は削除拒否時の戻り先を Referer とするが、実装は成功・失敗に関わらず一覧初期ルートへリダイレクトする。CardsetController 内に Referer/header('referer') の参照はない。
+922	M14-07	実装違	med	設計の外部契約であるルート名・URL パスと実装の Route/Twig が一致しない。反証検索では cardset_download_lang、download_lang、download_each_lang、download_each_lang の別名を探索し、実装済みなのは each_lang 版のみだった。
+923	M14-07	未実装	med	設計の個別エラーキー set_not_exist_card とページ番号付き admin_cardset_page 遷移が実装されていない。反証検索で set_not_exist_card、admin_cardset_page、download_no_images、admin_cardset_list を確認したが、設計キーと設計リダイレクト先は不在だった。
+924	M14-07	未実装	med	設計が要求するカード詳細単位の not_found フラッシュが Controller/Service/翻訳キーに存在しない。
+925	M14-07	未実装	med	設計の副作用である dead_link_flg 更新がダウンロード系実装に存在しない。 / 期待:オブジェクトストレージからの保存成否に応じて mtb_card_image.dead_link_flg を更新する。セット別は即時更新し、言語別は最後にまとめて更新する。
+926	M14-07	実装違	low	設計が外部出力契約として示す Content-Type と filename* 形式が実装に明示されていない。反証検索で Content-Disposition、filename*、aplication/octet-stream を確認したが、CardsetController には該当設定がなかった。
+927	M14-07	未実装	med	設計の終了後イベントによる download 配下掃除が実装されていない。 / 期待:イベント eccube.event.controller.admin_cardset_download.finish をフックし、セット別ルートの処理完了後に download 配下の内容を再度すべて削除する。言語別ルート名に対応する finish イベントは event 定義に無い。
+928	M14-07	実装違	med	設計の「不正 ID はダミープロモーション扱い」およびセット別エラー分岐と異なり、実装は不正値を除外、正の不存在 ID は無言 continue する。
+929	M14-07	未実装	med	設計が外部契約として示すルート名・URLパスと実装のルート名・URLパスが一致しない。反証検索として admin_cardset_download_lang、download_lang、download_each_lang、cardset/download_lang、cardset/download_each_lang を src/Eccube・app・html で検索し、設計名/設計パスは見つからず実装名/実装パスのみ確認した。
+930	M14-07	未実装	med	設計要求は取得成否に応じた dead_link_flg 更新を明示しているが、実装のダウンロード処理は /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Cardset/CardsetDownloadAction.php:140 で downloadCardImageToDirectory() を呼ぶだけで、失敗時・成功時のフラグ更新分岐が無い。反証検索として de
+931	M14-07	未実装	med	設計は状況別のフラッシュキーとセッションページ復帰を要求しているが、実装は汎用エラーキー1つへ集約し、リダイレクト先も admin_cardset_list 固定で eccube.admin.cardset.page_no を使わない。反証検索として設計キー3種、not_found、image_not_exist、set_not_exist、download_no_images、admin_cardset_page、admin_cardset_list_p
+932	M14-07	未実装	med	設計はセット別ルート完了後の finish イベント掃除を要求しているが、実装は Symfony レスポンスの ZIP削除と次回開始時掃除に置き換わっている。反証検索として eccube.event.controller.admin_cardset_download.finish、admin_cardset_download.finish、CardsetDownload、finish、download_each_lang、download_lang を s
+933	M14-08	実装違	med	設計の削除 URL と固定確認文言が実装と一致しない。別キーワード（このカードセットを削除してもよろしいですか、cardset/{id}/delete）でも該当の専用文言・専用パスは確認できない。
+934	M14-08	未実装	high	設計の削除可否判定、失敗キー、Referer 復帰、成功時のページ番号復帰が実装にない。さらに実装は削除不可でも試行前に画像削除を行う可能性がある。
+935	M14-08	実装違	low	設計の「新規タブ」指定がテンプレートに実装されていない。admin_card_edit へのリンク実装はあるため、遷移先ではなく開き方の差異。
+936	M14-08	実装違	low	一覧保持に近い実装はあるが、設計が指定する /cardset/{page_no}?resume=1 という遷移 URL ではない。
+937	M14-09	実装違	low	設計は rank ASC + id ASC を要求しているが、実装は rank ASC のみ。MtbFormatRepository 側にも一覧専用の rank/id 複合ソート実装は確認できない。
+938	M14-09	実装違	low	設計はフォーマット名自体のリンク化を要求しているが、実装では名前テキストを押下しても編集画面へ遷移できない。 / 期待:フォーマット名セルは「和名 / 英名」のテキストを編集 URL へのリンクとする。
+939	M14-09	実装違	low	設計のタイトル/サブタイトルと実装の割当が逆になっている。 / 期待:ページタイトルは「フォーマット管理」。サブタイトルは「フォーマット一覧」。
+940	M14-09	実装違	low	設計の外部HTTPパスは /format/{formatId}/delete だが、実装は /product/format/{id}/delete。一覧・編集テンプレートの削除URLもこの実装ルートを参照する。
+941	M14-09	実装違	low	設計の単一メッセージキー admin.format.error.delete.event と Referer 戻りが実装されていない。別キーワード（registered_event、registered_deck、registered_archetype、Referer、headers->get('referer')）でも FormatController 内に設計どおりの実装は確認できない。
+942	M14-09	実装違	med	設計が要求する dtb_card_format の事前削除処理が実装にない。FormatBoards には cascade remove があるが、CardFormats には cascade remove がないため、設計どおりの関連カードフォーマット行削除を確認できない。
+943	M14-09	実装違	low	設計は共通管理画面JSの data 属性処理に委ね、一覧テンプレート単体ではJS/モーダルを持たないとしているが、実装は一覧テンプレート側に専用JSと削除モーダルを持つ。
+944	M14-09	未実装	med	設計が指定する専用CSS読み込みが実装に存在しない。テンプレート、管理画面テンプレート、公開 html 配下を別キーワードで再検索しても該当読み込みは見つからなかった。
+945	M14-10	実装違	low	削除URLが設計の /format/{formatId}/delete ではなく /product/format/{id}/delete で、ID制約も 0 を許す正規表現になっている。
+946	M14-10	実装違	low	同一 rank の場合に ID 昇順で安定化する設計条件が実装されていない。 / 期待:フォーマット一覧は並び順昇順、次にID昇順で全件取得して表示する。
+947	M14-10	実装違	low	設計指定のフラッシュキーを使用せず、フォーム不正時の admin.register.failed も積まれていない。 / 期待:登録・更新成功時は admin.register.complete、削除成功時は admin.delete.complete、バリデーション失敗時は admin.register.failed を表示する。
+948	M14-10	実装違	low	削除拒否時のメッセージキーと遷移先が設計と異なる。 / 期待:大会・デッキ・アーキタイプのいずれかが紐付く状態で削除した場合、削除せず admin.format.error.delete.event を表示し Referer へリダイレクトする。
+949	M14-10	未実装	med	設計の dtb_card_format 事前全削除処理が Controller/Service/Entity/DB マッピングに存在しない。
+950	M14-10	実装違	med	保存した is_shown_in_event をフロントイベント一覧、検索可能候補、検索結果条件に利用していない。 / 期待:「イベントに表示」を選択して登録すると、フロントのイベント一覧で選択したフォーマットのイベントのみ表示し、選択したフォーマットのみ検索可能にする。
+951	M15-01	実装違	low	設計の検索URL契約、ルート名、page_no の 0 除外制約と実装が一致しない。 / 期待:検索フォームの送信先は常に page_no=1 の POST /{admin_route}/deck/search/1 とし、検索ルート名は m15-01_admin_deck_deck_search、page_no は 1 以上の整数に制限する。
+952	M15-01	実装違	low	設計は検索フォームのCSRF無効を明記しているが、実装はCSRF有効。 / 期待:検索フォームは CSRF をかけない。
+953	M15-01	未実装	med	別キーワード（archetype, formats, color, change, disabled）でも検索したが、設計の連動フィルタ実装を確認できない。
+954	M15-01	実装違	low	設計はクライアント側alertで中断する挙動だが、実装は送信後のサーバ側エラー処理。 / 期待:CSV出力は対象デッキ未選択時に JavaScript alert を表示し、送信しない。
+955	M15-01	実装違	low	設計はCSV/TSV両対応のアップロード画面を要求しているが、実装はCSV専用。 / 期待:「CSV,TSV取り込み」はデッキ登録CSV, TSVアップロード画面へ遷移する。
+956	M15-01	実装違	low	設計のURL、ルート名、form/action構造と実装が一致しない。 / 期待:一括削除は POST /{admin_route}/deck/delete、ルート名 m15-03_admin_deck_deck_bulk_delete を使い、検索結果 form のデフォルト action は一括編集、削除ボタンの formaction で一括削除へ送信する。
+957	M15-01	実装違	med	設計されたHTTPステータス、遷移先、メッセージキーの外部挙動と異なる。 / 期待:一括削除は CSRF不正時HTTP403、記事使用中は Referer へ戻し、成功時メッセージは admin.delete.complete とする。
+958	M15-01	実装違	med	設計の検索ルート名・POST先・page_no の1以上制約と一致しない。\d+ は 0 も許容し、検索POSTは /deck/search/{page_no} ではなく /deck に送信される。
+959	M15-01	実装違	med	SearchControllerTrait 側の検索条件キーは eccube.admin.deck.search / page_no / page_count だが、初期表示で remove されていない。page_count は削除ではなく100で上書きされる。
+960	M15-01	実装違	low	設計は検索フォームCSRFなしだが、実装はCSRFありのフォームとして生成される。 / 期待:検索フォームは CSRF 保護を無効にしている。サーバ側はフォーム制約により、桁・形式エラー時は検索処理に進まずフォームエラーとなる。
+961	M15-01	未実装	med	設計の連動フィルタ処理がテンプレートJS・フォーム属性・外部JSのいずれにも見つからない。 / 期待:フォーマットまたは色変更時、アーキタイプ選択肢をフォーマット ID・色クラスでフィルタし、無効オプションを切り替える。
+962	M15-01	実装違	low	設計はブラウザ alert による送信中断だが、実装はサーバ遷移後のエラー表示であり操作タイミングと表示方式が異なる。 / 期待:CSV 出力ボタンは未選択時に alert で中断する。
+963	M15-01	実装違	med	検索結果行メニューからの削除後に検索結果ページを維持しないため、設計の削除後リダイレクト条件を満たさない。 / 期待:削除完了後は、セッション admin.deck.search.page_no があればそのページへ、なければ admin_deck_list へリダイレクトする。ページ番号は削除結果に応じてトレイト側で減算されうる。
+964	M15-01	実装違	med	不正ソートキーで admin.error.sort が表示されず、並び順不正でも設計どおりの初期化処理になっていない。 / 期待:ソートキーが不正、または並び順パラメータ不正の場合、admin.error.sort を表示し、admin_deck_list と同じ処理で検索条件・ページ関連セッションのみ削除した初期画面を返す。
+965	M15-02	実装違	med	設計は無条件更新を規定するが、実装は既存代表カードを上書きしないガードを持つため、編集時にアーキタイプ変更しても代表カードが更新されないケースが生じる。
+966	M15-02	未実装	low	設計はクライアント側アラートによる送信前中断を明記するが、実装にはクライアントJSガードが無くサーバ往復後のフラッシュになりUXが異なる。
+967	M15-02	実装違	low	設計文言『5枚以上登録されています』は実装では『4枚を超えて登録されています』と別表現。『(1枚制限で)2枚以上登録されています』は制限カードには出ず『は制限カードです』が出るため条件と文言の対応が不一致。
+968	M15-02	実装違	med	★カスタマイズ要件の『登録/更新ロジック内のDCIナンバー除去』がUI除去のみで、保存系サービスに dciNo/oldDeckId 処理が残存。明示要件が未完了。
+969	M15-06	実装違	low	下位サービスにTSV分岐はあるが、当機能の画面とコントローラ入口でTSVが到達不能。設計にある accept 値と MIME 検証も不足している。
+970	M15-06	実装違	med	失敗時のHTTP 302 GETリダイレクトおよびフラッシュキュー利用が設計と異なる。 / 期待:成功および失敗のいずれも結果メッセージをフラッシュへ積み、HTTP 302でGET admin_deck_csv の取込画面へ戻る。フォーム検証エラーやCSV異常も同じGETへ転送する。
+971	M15-06	実装違	med	設計が明示している「既存削除なし/INSERTのみ」と逆に、実装は既存明細を削除してから再作成する。 / 期待:dtb_deck_card はリスト検証経路で新規オブジェクトを積むだけで、再取込時に既存明細を明示削除しない。DB操作にも不要な削除は含めない。
+972	M15-06	未実装	med	設計の送信中二重送信抑止とスピナー表示が実装されていない。 / 期待:spin.min.js と共通の card-csvimport.js を読み込み、フォーム submit で送信ボタンを無効化し、#spinner にインジケーターを出す。送信完了まで再有効化はページ全体の再読込に委ねる。
+973	M15-06	実装違	low	設計の画面文言・タイトル配置・TSV表記・説明行改行表示が実装と一致しない。 / 期待:デッキ登録CSV取込画面のページタイトルは「デッキ管理」、サブタイトルは「デッキ登録CSV, TSVアップロード」、アップロード箱は「デッキ登録CSV, TSV」、フォーマット表は「デッキ登録CSV, TSVファイルフォーマット」とし、説明行には日本語説明を nl2br で表示する。
+974	M15-06	実装違	med	設計の利用者視点パス /deck/csvimport および route name admin_deck_csv / m15-06_admin_deck_deck_csv_import と一致しない。反証検索でも deck/csvimport, admin_deck_csv, m15-06_admin_deck_deck_csv_import は当該実装範囲に存在しなかった。
+975	M15-06	未実装	med	設計は送信中の二重送信防止とスピナー表示を要求しているが、実装は選択後にボタンを有効化するだけで submit 時処理が無い。別キーワード（card-csvimport, spin.min, Spinner, #spinner, submit disabled）でも当該デッキCSV画面での実装を確認できなかった。
+976	M15-06	未実装	med	設計の MIME 検証が Symfony 制約にも Controller にも無い。拡張子チェックと HTML accept は MIME 検証の代替にならない。
+977	M15-06	実装違	med	設計はヘッダの並び完全一致を要求するが、実装は同じ列名セットなら順序を入れ替えたCSVも各ヘッダ名で読める構造。array_keys($expected) と $headers の順序比較実装は確認できなかった。
+978	M15-06	未実装	med	CSV取込ハンドラ内に getMainMaxCardCount/getMainMinCardCount/getSideMaxCardCount/getSideMinCardCount または validateBoardCounts の呼び出しが無く、設計の枚数上限下限エラーが発生しない。
+979	M15-06	実装違	med	設計は成功/失敗とも GET へのリダイレクトとフラッシュで状態を伝える契約だが、実装は失敗時 HTTP 200 再描画の errors 配列表示であり、成功メッセージキーも admin.register.complete ではない。
+980	M15-06	実装違	med	設計は削除・クリアなしの INSERT のみを前提にしているが、実装は既存明細を削除してから再作成する。非公開更新時も既存明細削除後に新規保存しない経路となる。
+981	M15-06	実装違	med	設計の外部ルート契約と実装の route name/path が一致しない。admin_deck_csv、m15-06_admin_deck_deck_csv_import、deck/csvimport を Controller/Twig/route で再検索したが該当実装はなく、admin_deck_csv_import と deck/csv_import のみ確認された。
+982	M15-06	未実装	med	設計の送信時 UI 制御が Deck CSV 画面に実装されていない。spin.min.js 自体は管理 assets に存在するが、当該 Twig からは読み込まれていない。
+983	M15-06	実装違	med	設計は dtb_deck_card の削除なしを明示するが、実装は既存明細を全削除してから再作成する。deleteDeckCards/remove/DtbDeckCard を ImportHandler と関連サービスで再検索し、当該削除処理を確認した。
+984	M15-06	実装違	low	設計の成功メッセージキーおよびログ短文と実装が一致しない。admin.register.complete/デッキCSV登録開始/デッキCSV登録完了 を DeckCsvController・messages.*.yaml で再検索したが、Deck CSV 経路では確認できなかった。
+985	M15-08	実装違	low	探索範囲: SearchDeckType.php、DtbArchetype エンティティ、Deck/index.twig、翻訳キー。設計は getNameWithFormatNameJp 相当の複合ラベルを要求するが、実装はアーキタイプ日本語名のみを選択肢ラベルにしている。
+986	M15-08	実装違	low	設計は ^[1-9][0-9]*$ により 1 以上の整数のみ許可する外部契約だが、実装は \d+ で 0 を許容する。
+987	M15-08	実装違	low	deck-search.js、archetypeFilter、allowClear、format_id_、color_id_ を src/Eccube と html 配下で再検索したが、M15-08/Deck 検索向けの連動実装は見つからず、汎用 select2 初期化だけだった。
+988	M15-08	実装違	low	admin_deck_search と m15-01_admin_deck_deck_search の別名、/deck/search/{page_no}、フォーム action を再検索したが、設計どおり POST /deck/search/1 固定で送る実装は確認できない。
+989	M15-08	実装違	low	SearchDeckType と csrf_protection を再検索し、当該検索フォームの CSRF 無効化設定は見つからなかった。
+990	M15-08	実装違	low	admin.deck.search と eccube.admin.deck.search の両方、DeckController と SearchControllerTrait を再確認した結果、設計値 admin.deck.* そのものの保存処理は確認できない。
+991	M15-08	実装違	low	getNameWithFormatNameJp、choice_label、archetypes を再検索したが、デッキ検索フォームでフォーマット名を含むラベル指定は確認できない。
+992	M15-09	実装違	med	設計で外部契約として示された admin_archetype_create/admin_archetype_update ルートが実装に無く、編集・更新・削除のパスおよび削除HTTPメソッドも設計値と異なる。反証検索: admin_archetype_create, admin_archetype_update, DELETE, _method を src/Eccube/Controller/Admin/Archetype, src/Eccube/Reso
+993	M15-09	未実装	med	設計のHTML断片返却API、GETページングAPI、ID解決API、セッション維持が実装されていない。反証検索: admin_archetype_main_card_html, admin_archetype_main_card_html_page, admin_archetype_search_main_card_by_id, search/main_card, admin.archetype.main_card を src/Eccube/Contro
+994	M15-09	未実装	med	無効フォーム再表示時に、送信された hidden の cardImageId を MtbCardImage へ解決してテンプレートへ渡す分岐が無い。探索範囲: ArchetypeController::save, ArchetypeStoreAction, edit.twig。
+995	M15-09	実装違	low	設計指定の成功メッセージキーと実装のフラッシュキーが異なるため、利用者に表示される成功文言が設計と一致しない。 / 期待:登録成功時は成功フラッシュに登録完了メッセージキー admin.register.complete を積み、編集URLへリダイレクトする。更新も新規送信と同様の保存・フラッシュ・リダイレクトを行う。
+996	M15-09	実装違	low	設計で分けられた一覧/詳細の確認文言キーと data-message 方式が実装されていない。反証検索: admin.confirm.archetype_delete, admin.confirm.delete, data-message を Archetype テンプレートと messages.*.yaml で確認。
+997	M15-09	実装違	med	削除の失敗時リダイレクト先、失敗時メッセージキー、成功時メッセージキー、成功時の検索ページ復帰、CSRF不正時のHTTPステータスが設計と異なる。
+998	M15-09	未実装	med	設計は deleted_at 更新による論理削除を要求しているが、実装証跡は remove による物理削除経路を示している。反証検索: DtbArchetype, SoftDeleteable, SoftDeleteableEntity, deletedAt を src/Eccube/Entity/DtbArchetype.php, app/config, src/Eccube で確認し、DtbArchetype への SoftDeleteable 指定は
+999	M15-10	実装違	med	設計の csvimport と実装の csv_import でURLパスが異なり、設計上のGET/POSTルート名も実装されていない。index.twig と csv_import.twig も実装側 route 名 admin_archetype_csv_import を参照している。
+1000	M15-10	実装違	med	画面の accept は text/csv,.csv に制限されているが、サーバ側検証で TSV をエラーにしておらず、むしろ .tsv を取り込む分岐が残っている。
+1001	M15-10	実装違	med	同じヘッダ名が揃っていれば、順序を入れ替えたCSVでも各列名で値を取得できるため、設計の『並び順も含め完全一致』になっていない。
+1002	M15-10	実装違	med	失敗時がHTTP 302リダイレクト＋フラッシュではなく、同一リクエストのテンプレート描画用 errors 配列表示になっている。
+1003	M15-10	実装違	low	設計の監査ログ文言と成功フラッシュキーが実装値と一致しない。 / 期待:完全成功時は log_info('アーキタイプCSV登録完了') を記録し、成功フラッシュは文言キー admin.register.complete を使う。送信取込処理の開始時は log_info('アーキタイプCSV登録開始') を記録する。
+1004	M15-10	未実装	med	共通 function.js の Ladda は存在するが、設計で指定された card-csvimport.js と #spinner によるスピナー表示は当画面実装にない。
+1005	M16-01	実装違	med	Controller の Route 属性、Twig の path('admin_data_top_banner') / path('admin_data_top_banner_filter')、delete 生成先を確認したが、設計にある /banner/top 系ルートは実装されていない。探索範囲: src/Eccube/Controller/Admin/Data/TopBannerController.php, src/Eccube/Resource
+1006	M16-01	実装違	low	TopBannerFileListAction、TopBannerUploadAction、TopBannerDeleteAction の定数がいずれも banner/top 系で、設計の banner/ 直下または banner/{html_class}/ 直下ではない。
+1007	M16-01	未実装	low	設計は送信前クライアント alert による中止を要求しているが、実装はサーバー側 FormError に置き換わっており、top_banner.twig の javascript ブロックにも該当処理がない。Event/banner.twig には類似 alert があるがトップバナー用テンプレートではない。
+1008	M16-01	実装違	low	設計はフラッシュメッセージを用いないとしているが、実装は保存・アップロード・削除の各経路で管理画面フラッシュを付与する。
+1009	M16-01	未実装	med	TopBannerType のリンク先URLフィールド定義を確認したが Regex がない。類似の EventBannerSettingType には link_url__regex_error があるものの、トップバナー用 TopBannerType には適用されていない。
+1010	M16-01	未実装	med	設計で指定された .bannerInput input の幅指定が実装にない。top_banner.twig の stylesheet ブロックを確認しても該当セレクタは未定義。
+1011	M16-02	実装違	med	設計の外部HTTPパス /banner/top 系を、Controller/Twig/Service/JS/ルート定義全体で検索したが該当ルートはなく、実装は /data/top_banner 系で公開している。店舗キー名も設計の html_class ではなく base_info_digit。
+1012	M16-02	実装違	med	TopBannerController の POST 分岐、handleUpload、TopBannerUploadAction を確認したが、アップロード時に選択店舗をリダイレクト先へ反映する処理がない。
+1013	M16-02	実装違	low	設計の画面表示文言と実装の title/sub_title 割当が逆。messages.ja.yaml では admin.data.top_banner は「トップバナー管理」、admin.data.data_management は「データ管理」。
+1014	M16-03	未実装	med	設計は /{admin_route}/holiday 配下の複数エンドポイントを外部契約として記載しているが、実装は /data/holiday 配下の単一POST処理と DELETE ルートに変更されている。反証検索として admin_holiday_list/admin_holiday_add/admin_holiday_load/admin_holiday_delete、/holiday/add、/holiday/load、/%eccube_admi
+1015	M16-03	未実装	med	設計の画面見出し階層とメニュー選択キーに対し、実装では title/sub_title が逆で、メニューキーも data_menu/holiday_list ではなく data_management/holiday_management である。data_menu と holiday_list は src/Eccube/html/app で反証検索したが祝日画面の実装キーとして不在。
+1016	M16-03	未実装	low	設計は重複エラーのメッセージキーを hareruyaec.holiday.overlap と明示しているが、実装は admin.data.holiday.overlap に置き換えている。hareruyaec.holiday.overlap を src/Eccube/html/app で反証検索したが該当なし。
+1017	M16-04	実装違	med	設計は Bootstrap DateTimePicker と hareruya-masterdata.js による YYYY-MM-DD HH:mm 形式の日時入力を要求しているが、実装はブラウザネイティブ datetime-local に置換している。探索範囲: src/Eccube/Resource/template/admin/Data/mtg_master_data.twig, html/template/admin/assets/js, html
+1018	M16-06	実装違	low	設計の利用者視点URLと遷移先ルートは /buy_price_list および /buy_price_list/{id} だが、実装は /data/buy_price_list および /data/buy_price_list/{id}/edit に変更されている。探索範囲: src/Eccube, html。検索語: admin_buy_price_list, admin_data_buy_price_list, /buy_price_list, dat
+1019	M16-06	実装違	low	タイトルは一致するが、設計で利用者に表示するサブタイトルは「一覧」なのに、実装は「データ管理」を表示している。メニューキーも設計の data_menu / buy_price_list ではなく data_management / buy_price_list_management である。探索範囲: src/Eccube/Resource/template/admin/Data, src/Eccube/Resource/locale/messages.j
+1020	M16-06	実装違	med	設計はマスタ全件取得・識別子順/findAll依存の取得順を前提にしているが、実装はカード状態を SP/MP/HP に限定し、買取価格対応表も id/findAll ではなく nmPrice/specialFlg と ksort による別順序を強制している。探索範囲: Controller, Repository, Entity。検索語: MtbCardCondition, findAll, findBy, nmPrice, specialFlg, kso
+1021	M16-06	未実装	med	設計は存在しない組み合わせについてセル自体を出さないとしているが、実装はセルを出したうえで '-' を表示するため、表のセル数と欠けの見え方が設計と異なる。探索範囲: src/Eccube/Resource/template/admin/Data/buy_price_list.twig。検索語: buyPriceForFlg, specialFlg, CardCondition.id, '-'.
+1022	M16-06	実装違	low	設計補足の静的 colspan 値（ノーマル3、FOil&プロモ4）に対し、実装は両ブロックとも同じ CardConditions|length を使う。カード状態が SP/MP/HP の3件なら特別版側も colspan=3 となり、設計の特別版 colspan=4 と一致しない。探索範囲: Twig, locale。検索語: normal_card, special_card, colspan, CardConditions|length。
+1023	M16-07	実装違	low	設計の利用者向けURLは /buy_price_list/{id} だが、実装は /data/buy_price_list/{id}/edit と /data/buy_price_list/{id}/update に分かれている。反証として admin_buy_price_list、admin_data_buy_price_list、buy_price_list/{id}、data/buy_price_list、edit/update で Controll
+1024	M16-07	実装違	low	設計の画面表示・操作要素と実装Twigのブロック/要素が一致しない。反証として title/sub_title、menus、back、type="button"、location.href、buy_price_list_management の別名検索を実施し、当該編集Twig上に設計通りの構成は確認できなかった。
+1025	M16-07	実装違	low	設計の admin_buy_price_list 名に合わせる createNamedBuilder('admin_buy_price_list', ...) や getBlockPrefix(): 'admin_buy_price_list' が実装に無い。反証として admin_buy_price_list[price]、admin_buy_price_list[_token]、getBlockPrefix、csrf_token_id、createNa
+1026	M16-07	実装違	low	設計は number 型で Range や整数限定の明示制約なしとしているが、実装は IntegerType により整数入力へ寄せ、さらに 0 以上制約を追加している。反証として NumberType、IntegerType、Range、GreaterThanOrEqual、Length を対象フォームと関連Twigで検索し、設計通りの NumberType かつ追加制約なしの実装は確認できなかった。
+1027	M16-08	実装違	low	設計のURL `/ {admin_route}/buy_discount` およびルート名 `admin_buy_discount_list` に対し、実装は `/ {admin_route}/data/buy_discount` および `admin_data_buy_discount`。反証検索として `admin_buy_discount_list`, `/%eccube_admin_route%/buy_discount`, `BuyDiscoun
+1028	M16-08	未実装	low	設計が指定する title/sub_title の文言配置と実装の翻訳キーが逆方向に異なる。親ナビ文言「買取減額率一覧」は `eccube_nav.yaml` と翻訳で確認できるが、タイトル帯の「買取減額率管理」は実装・翻訳キーに存在しない。
+1029	M16-08	実装違	low	設計は本テンプレート単体で追加スタイル指定なしとしているが、実装は画面固有の stylesheet ブロックと追加CSSクラスを持つ。`table-responsive with-border` は実装済みだが、追加スタイルなしの要求と一致しない。
+1030	M16-08	未実装	med	設計が明示するDOM id を `buy_discount.twig` と実装全体で再検索したが該当なし。表頭は `src/Eccube/Resource/template/admin/Data/buy_discount.twig:50` 以降に通常の `<thead><tr><th>` として出力されるだけで、指定idがない。
+1031	M16-08	未実装	med	設計は /{admin_route}/discount と admin_discount_list を外部入口として定義しているが、実装入口は /data/discount と admin_data_discount に変更されている。別名・旧名・ナビ定義を再検索しても admin_discount_list は存在しない。
+1032	M16-08	未実装	low	設計のタイトル帯文言「割引率管理」「割引率一覧」に対し、実装は親ナビ相当の「販売割引率一覧」とカテゴリ名「データ管理」を表示する。翻訳キーと Twig ブロックを再検索したが「割引率管理」「割引率一覧」は実装に不在。
+1033	M16-08	未実装	med	設計は利用者に見える欠損セルの固定文言を「未定義」と明記しているが、実装はハイフン表示。別テンプレートの buy_discount.twig には「未定義」があるものの、本対象の discount.twig では使われていないため反証不可。
+1034	M16-08	実装違	low	設計は mtb_discount を findAll() で取得し、明示 ORDER BY なしの集合として扱う要求だが、実装は id 昇順を明示して取得する。カード状態と交差テーブルは findAll() で、割引マスタだけ取得方法が設計と異なる。

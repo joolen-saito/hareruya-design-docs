@@ -1,0 +1,345 @@
+{
+ "packetId": "rc_35",
+ "note": "rowId は drift_findings_list_final.tsv の行番号(ヘッダ除く1始まり)。mech は機械検証フラグ(手掛かりであって正解ではない)。",
+ "count": 12,
+ "findings": [
+  {
+   "rowId": 624,
+   "機能No": "M07-10",
+   "機能名": "M07-10 【新規】買取商品履歴(検索入力)",
+   "ドメイン": "m07",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "申込者名検索は、空白が含まれている場合（姓と名の間に空白等）空白で区切ったいずれかの入力が一致していれば検索結果に出力する。",
+   "実装実態": "申込者名を空白・カンマで分割した後、各キーワードごとに andWhere(orX(...)) を追加しているため、複数キーワードはAND条件になる。各キーワード内では姓・名・姓カナ・名カナへのOR部分一致。",
+   "差分内容": "設計は空白区切りの「いずれか」が一致すれば出力するOR検索を要求しているが、実装はforeach内でandWhereを繰り返すため、分割後の全キーワードがいずれかの姓名/カナ列に一致しないと出力されない。反証として買取一覧側の同仕様実装 src/Eccube/Repository/DtbBuyOrderRepository.php:133-142 と共通ユーティリティ src/Eccube/Util/SqlUtil.php:128-157 も確認したが、同じくキーワード単位はANDであり、設計要求のORを満たす実装は見つからなかった。",
+   "実装参照": "src/Eccube/Repository/DtbBuyOrderStockHistoryRepository.php:89-107",
+   "設計書参照": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-14:3490-3492",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html:3952-3955 の src-cell に「空白で区切ったいずれかの入力が一致していれば検索結果に出力する」、対象は姓・名・姓カナ・名カナの部分一致と明記されている。",
+   "旧実装根拠": "旧実装は判定根拠として不要。pf-api、pf-eccube3、pf-article、deck-api 全域を機能名と「申込者名」で検索したが、この新規買取商品履歴検索に対応する旧処理は存在しない（確認範囲: 4リポジトリ全域）。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Repository/DtbBuyOrderStockHistoryRepository.php:89-107 は入力を `$keywords = preg_split(...)` で分割し、`foreach ($keywords as $keyword)` ごとに `$qb->andWhere($qb->expr()->orX(...))` を追加するため、キーワード間はAND条件になる。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Repository/DtbBuyOrderStockHistoryRepository.php:90-108` 申込者名は `:91-94` `preg_split(\"/[\\s,　]+/u\", trim($searchData->customerName))` で分割後、`:95` `foreach ($keywords as $i => $keyword)` の中で `:99` `$qb->andWhere($qb->expr()->orX(...))` を繰り返しており、キーワード間は依然 AND。OR は各キーワード内の lastName/firstName/lastNameKana/firstNameKana（:101-104）のみ。監査時点と同一。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Repository/DtbBuyOrderStockHistoryRepository.php"
+    ]
+   }
+  },
+  {
+   "rowId": 625,
+   "機能No": "M07-10",
+   "機能名": "M07-10 【新規】買取商品履歴(検索入力)",
+   "ドメイン": "m07",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "会員IDの書式・制限は「半角数字(整数)」で、完全一致検索とする。",
+   "実装実態": "会員IDフォームは TextType、DTOも ?string として受け取り、Repositoryで (int) $searchData->customerId にキャストして IDENTITY(bo.Customer) = :customerId の完全一致検索をしている。",
+   "差分内容": "完全一致検索自体は実装されているが、設計の「半角数字(整数)」入力制限に対して IntegerType や半角数字バリデーションがなく、非数値文字列もフォーム入力として受け付けてから整数キャストされる。反証として FormType、DTO、SearchControllerTrait、FormUtil、Repositoryを確認したが、会員IDの半角数字制限を行う実装は見つからなかった。",
+   "実装参照": "src/Eccube/Form/Type/Admin/Purchase/PurchaseHistoryType.php:60-63; src/Eccube/Dto/Admin/Purchase/HistorySearchDataDto.php:23-26; src/Eccube/Repository/DtbBuyOrderStockHistoryRepository.php:81-86",
+   "設計書参照": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-14:3487-3488,3511",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html:3950-3951 の src-cell は会員IDを「完全一致検索とする」とし、同:3974 は書式・制限を「半角数字(整数)」と定める。",
+   "旧実装根拠": "旧実装は判定根拠として不要。pf-api、pf-eccube3、pf-article、deck-api 全域を「買取商品履歴」「customerId」「会員ID」で検索したが、この新規検索画面に相当する旧処理は存在しない（確認範囲: 4リポジトリ全域）。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/Purchase/PurchaseHistoryType.php:60-63 は会員IDを制約なしの `TextType::class` で定義する。ec-cube-enterprise/src/Eccube/Dto/Admin/Purchase/HistorySearchDataDto.php:23-30 も `?string $customerId` であり、ec-cube-enterprise/src/Eccube/Repository/DtbBuyOrderStockHistoryRepository.php:81-86 で初めて `(int) $searchData->customerId` にキャストして完全一致検索する。",
+   "根拠検証メモ": "完全一致検索は満たすが、「半角数字(整数)」の入力制限を満たしていないため、指摘のうち未充足部分についてSPEC_BACKEDとした。",
+   "対応の根拠(現develop)": "`src/Eccube/Form/Type/Admin/Purchase/PurchaseHistoryType.php:60-63` `->add('customer_id', TextType::class, ['label' => ..., 'required' => false,])` と TextType のままで半角数字制約・constraints 指定なし（同 `:56` の buy_order_id は IntegerType）。`src/Eccube/Dto/Admin/Purchase/HistorySearchDataDto.php:25` `public ?string $customerId = null,`、`src/Eccube/Repository/DtbBuyOrderStockHistoryRepository.php:82-87` `if ($searchData->customerId !== null && $searchData->customerId !== '') { $qb->andWhere('IDENTITY(bo.Customer) = :customerId')->setParameter('customerId', (int) $searchData->customerId,); }` と整数キャストで完全一致。監査時点と同一。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Repository/DtbBuyOrderStockHistoryRepository.php"
+    ]
+   }
+  },
+  {
+   "rowId": 626,
+   "機能No": "M07-10",
+   "機能名": "M07-10 【新規】買取商品履歴(検索入力)",
+   "ドメイン": "m07",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "振込完了日(From)/(To)の書式・制限は「日付(yyyy/mm/dd)」で、振込が完了した日を買取が成立した日とみなし検索項目とする。",
+   "実装実態": "振込完了日は DateTimeType の single_text で実装され、画面JSは datetimepicker の format を 'YYYY-MM-DD HH:mm' にしている。Repositoryは振込完了ステータス履歴の MAX(createDate) に対して >= From / <= To のDateTime比較を行う。",
+   "差分内容": "設計は日付のみ yyyy/mm/dd を要求しているが、実装は年月日と時刻を入力・比較する日時検索で、表示フォーマットも YYYY-MM-DD HH:mm。反証としてTwig、FormType、Repository、翻訳キーを確認したが、yyyy/mm/ddの日付専用入力・日単位To終端補正は見つからなかった。",
+   "実装参照": "src/Eccube/Form/Type/Admin/Purchase/PurchaseHistoryType.php:82-103; src/Eccube/Resource/template/admin/Purchase/history.twig:28-41; src/Eccube/Repository/DtbBuyOrderStockHistoryRepository.php:123-145",
+   "設計書参照": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-14:3496-3497,3517-3518",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html:3959-3960 の src-cell は「振込が完了した日を買取が成立した日とみなし、検索項目とする」とし、同:3980-3981 はFrom/Toの書式を「日付(yyyy/mm/dd)」と定める。",
+   "旧実装根拠": "旧実装は判定根拠として不要。pf-api、pf-eccube3、pf-article、deck-api 全域を「買取商品履歴」「振込完了日」で検索したが、この新規検索画面に相当する旧処理は存在しない（確認範囲: 4リポジトリ全域）。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/Purchase/PurchaseHistoryType.php:82-103 はFrom/Toを `DateTimeType::class` の `single_text` で定義し、ec-cube-enterprise/src/Eccube/Resource/template/admin/Purchase/history.twig:28-41 はdatetimepickerを `format: 'YYYY-MM-DD HH:mm'` で初期化する。Repository同:123-145も日時で比較する。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "現 develop でも日付専用入力になっていない。`src/Eccube/Form/Type/Admin/Purchase/PurchaseHistoryType.php:82-92` `->add('transfer_complete_date_from', DateTimeType::class, [... 'input' => 'datetime', 'widget' => 'single_text', 'attr' => ['class' => 'datetimepicker-input', ...]])`、同 `:93-103` に `transfer_complete_date_to` も DateTimeType のまま（DateType 化されていない）。画面JSも `src/Eccube/Resource/template/admin/Purchase/history.twig:36-41` `$('.datetimepicker-input').datetimepicker({ locale: 'ja', format: 'YYYY-MM-DD HH:mm', ... })` で時刻付きフォーマットのまま（yyyy/mm/dd ではない）。Repository も `src/Eccube/Repository/DtbBuyOrderStockHistoryRepository.php:136-144` `if ($searchData->transferCompleteDateFrom !== null) { $qb->andWhere($createTcSubQuery('bosh_tc_from').' >= :transferCompleteDateFrom')...}` / `... .' <= :transferCompleteDateTo'` と MAX(createDate) への DateTime 比較のままで、To の日終端補正（23:59:59 等）は存在しない。横断確認として `transferCompleteDate` を含む全ファイル（Dto/Controller/CsvExportService/twig/FormType/Repository）を確認したが、`src/Eccube/Dto/Admin/Purchase/HistorySearchDataDto.php:29-30` `public ?\\DateTime $transferCompleteDateFrom = null,` / `public ?\\DateTime $transferCompleteDateTo = null,` および同 `:77-78` の素通し代入のみで、別クラスへの日付正規化の移管もない。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Repository/DtbBuyOrderStockHistoryRepository.php"
+    ]
+   }
+  },
+  {
+   "rowId": 627,
+   "機能No": "M07-10",
+   "機能名": "M07-10 【新規】買取商品履歴(検索結果)",
+   "ドメイン": "m07",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "CSVダウンロード操作の画面項目名は「CSVダウンロード」とする。",
+   "実装実態": "買取商品履歴(検索結果)のCSVメニュー見出しは history.twig で admin.common.download を表示しており、日本語表示は「ダウンロード」。同じ画面の選択肢「選択した商品履歴取得」「検索結果全件取得」とPOST先 admin_purchase_history_export は実装済み。",
+   "差分内容": "設計HTMLの項目表No.3は画面項目名を「CSVダウンロード」と定義しているが、実装は汎用翻訳キー admin.common.download を使うため利用者可視ラベルが「ダウンロード」になる。反証として admin.common.csv_download=CSVダウンロード は存在するが、このテンプレートでは使用されていない。店頭買取履歴テンプレートは同じ箇所で「CSVダウンロード」と直書きしているため、ネット買取側だけ表示文言が設計と異なる。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Purchase/history.twig:208, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Purchase/history.twig:210, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:1466",
+   "設計書参照": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-15:3628",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html:4117 の src-cell は画面項目名を明示的に「CSVダウンロード」と定める。",
+   "旧実装根拠": "旧実装は判定根拠として不要。pf-api、pf-eccube3、pf-article、deck-api 全域を「買取商品履歴」「CSVダウンロード」で検索したが、この新規画面に相当する旧処理は存在しない（確認範囲: 4リポジトリ全域）。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Purchase/history.twig:208-214 は見出しに `{{ 'admin.common.download'|trans }}` を使用し、ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:1656 は `admin.common.download: ダウンロード` と定義するため表示は「ダウンロード」になる。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Resource/template/admin/Purchase/history.twig:208-210` `<div id=\"result_list__custom_csv_menu\" class=\"d-inline-block dropdown\"> <button type=\"button\" class=\"btn btn-ec-regular dropdown-toggle\" ...> {{ 'admin.common.download'|trans }}` のままで、翻訳キーは汎用の `admin.common.download`。`src/Eccube/Resource/locale/messages.ja.yaml:1656` `admin.common.download: ダウンロード` のため利用者可視ラベルは「ダウンロード」で、設計の「CSVダウンロード」と不一致。`admin.common.csv_download: CSVダウンロード` は `src/Eccube/Resource/locale/messages.ja.yaml:1743` に存在するが当テンプレートでは未使用（`grep -n \"download\\|csv\" history.twig` のヒットは 15行目のCSS・208/210行のみ）。横断確認として `CSVダウンロード` 直書きを admin テンプレート全体で検索したが、`src/Eccube/Resource/template/admin/OtcBuyOrder/history.twig:187`（店頭買取）等の別画面のみで、ネット買取側 Purchase/history.twig への反映はない。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Resource/locale/messages.ja.yaml",
+     "src/Eccube/Resource/template/admin/OtcBuyOrder/history.twig"
+    ]
+   }
+  },
+  {
+   "rowId": 629,
+   "機能No": "M08-02",
+   "機能名": "M08-02 メール一括送信",
+   "ドメイン": "m08",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "送信記録の正典は会員メール送信履歴 dtb_user_mail_history（customer_id・subject・mail_body・send_date・creator_id）とし、メール送信履歴の記録に使用する。",
+   "実装実態": "一括メール送信後の履歴保存は MailHistoryEntityManager::save() を呼び、new MailHistory() を persist している。MailHistory は #[ORM\\Table(name: 'dtb_mail_history')] であり、dtb_user_mail_history ではない。DtbUserMailHistory エンティティは存在するが @deprecated コメント付きで、当該送信処理から参照・生成されていない。",
+   "差分内容": "設計は dtb_user_mail_history を送信記録の正典と明記しているが、実装の保存先は dtb_mail_history。反証検索として DtbUserMailHistory、new DtbUserMailHistory、dtb_user_mail_history、MailHistoryEntityManager、setSubject、setMailBody、setCreator を src/Eccube と html 配下で検索したが、一括メール送信処理が DtbUserMailHistory を保存する経路は見つからなかった。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/CustomerMailController.php:94-96; /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/EntityManager/MailHistoryEntityManager.php:39-44,67; /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Entity/MailHistory.php:25,53-57,70-72; /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Entity/DtbUserMailHistory.php:21-25",
+   "設計書参照": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-5:1740,1775,1779,1782,1794",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:1975 のExcel src-cellは「カスタマイズ要件に記載の内容以外は現行踏襲」とするだけで、`dtb_user_mail_history` や列名は記載しない。テーブル名の記述は同:2028以降のリバース詳細設計に限られる。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Service/MailService.php:614-631 は送信後に `$this->saveUserMailHistory($message, null, $customer)` を呼び、同:1799-1824 は履歴にsubject/mail_body/send_date/creator/customerを設定してpersistする。pf-eccube3/app/Plugin/HareruyaEc/Resource/doctrine/Plugin.HareruyaEc.Entity.DtbUserMailHistory.dcm.yml:1-4 は保存先を `table: dtb_user_mail_history` と定義し、同:15-35 にsend_date、subject、mail_body、customer_idを定義する。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/CustomerMailController.php:110-116 は送信後に `mailHistoryEntityManager->save(...)` を呼ぶ。同Manager:39-44 は `new MailHistory()` を作り、ec-cube-enterprise/src/Eccube/Entity/MailHistory.php:25 は保存先を `#[ORM\\Table(name: 'dtb_mail_history')]` と定義する。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Controller/Admin/Customer/CustomerMailController.php:115` `$this->mailHistoryEntityManager->save($message, $this->getMember()->getBaseInfo(), $Customer, null);` のまま。`src/Eccube/Service/EntityManager/MailHistoryEntityManager.php:39` `$MailHistory = new MailHistory();`／同:67 `$this->entityManager->persist($MailHistory);` で、`src/Eccube/Entity/MailHistory.php:25` `#[ORM\\Table(name: 'dtb_mail_history')]`。`src/Eccube/Entity/DtbUserMailHistory.php:21,24` は `#[ORM\\Table(name: 'dtb_user_mail_history')]` かつ `/* @deprecated dtb_mail_historyに統合されたため、使用しない */` で、当該送信処理から未参照。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "UNCHANGED"
+   }
+  },
+  {
+   "rowId": 631,
+   "機能No": "M08-02",
+   "機能名": "M08-02 メール一括送信確認",
+   "ドメイン": "m08",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "送信記録の正典は会員メール送信履歴 dtb_user_mail_history（customer_id・subject・mail_body・send_date・creator_id）とし、送信時にメール送信履歴を記録する。",
+   "実装実態": "送信時は MailHistoryEntityManager::save() が Eccube\\Entity\\MailHistory を生成して persist し、MailHistory は dtb_mail_history にマップされている。dtb_user_mail_history の DtbUserMailHistory Entity は存在するが deprecated コメント付きで、当該保存処理では使用されない。",
+   "差分内容": "設計は dtb_user_mail_history を送信記録の正典としているが、実装は dtb_mail_history へ保存する。DtbUserMailHistory、dtb_user_mail_history、MailHistoryEntityManager、dtb_mail_history で反証検索しても、会員一括メール送信が dtb_user_mail_history に保存する経路は確認できなかった。",
+   "実装参照": "src/Eccube/Controller/Admin/Customer/CustomerMailController.php:94,95,96 / src/Eccube/Service/EntityManager/MailHistoryEntityManager.php:39,41,43,44,55,67 / src/Eccube/Entity/MailHistory.php:25,53,56,66,70 / src/Eccube/Entity/DtbUserMailHistory.php:21,24",
+   "設計書参照": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-6:1889,1902,1937,1941,1944,1956",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html のExcel正本（メール一括送信確認シート）には送信確認の画面項目・遷移はあるが、`dtb_user_mail_history` とその列定義は存在しない。該当テーブル名は function-design-embed 内のリバース詳細設計にのみ存在する（確認範囲: sheet-6全src-cell）。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Service/MailService.php:630-631 はメール送信直後に `saveUserMailHistory` を呼び、同:1799-1824 は `new MailHistory()` にsubject/body/sendDate/creator/customerを設定して永続化する。pf-eccube3/app/Plugin/HareruyaEc/Resource/doctrine/Plugin.HareruyaEc.Entity.DtbUserMailHistory.dcm.yml:1-4 は `table: dtb_user_mail_history` と明記する。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Service/EntityManager/MailHistoryEntityManager.php:33-44 は `new MailHistory()` に件名・本文・送信日を設定し、同:55-67 でcustomerを設定してpersistするが、ec-cube-enterprise/src/Eccube/Entity/MailHistory.php:25 のテーブルは `dtb_mail_history` である。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Controller/Admin/Customer/CustomerMailController.php:115` `$this->mailHistoryEntityManager->save($message, $this->getMember()->getBaseInfo(), $Customer, null);`、`src/Eccube/Service/EntityManager/MailHistoryEntityManager.php:39,67` で `new MailHistory()` を persist、`src/Eccube/Entity/MailHistory.php:25` `#[ORM\\Table(name: 'dtb_mail_history')]` と監査時点から変化なし。dtb_user_mail_history への保存経路は develop に存在しない（DtbUserMailHistory は deprecated のまま未使用）。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EMBED_ONLY",
+    "stale": "UNCHANGED",
+    "quoteDetail": [
+     "dtb_user_mail_history"
+    ]
+   }
+  },
+  {
+   "rowId": 633,
+   "機能No": "M08-02",
+   "機能名": "M08-02 メール一括送信完了",
+   "ドメイン": "m08",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "送信記録の正典は会員メール送信履歴 dtb_user_mail_history（customer_id・subject・mail_body・send_date・creator_id）とし、メール送信履歴を記録する。",
+   "実装実態": "一括送信後の履歴作成は MailHistoryEntityManager->save() で Eccube\\Entity\\MailHistory を persist しており、保存先Entityは dtb_mail_history。DtbUserMailHistory は dtb_user_mail_history に対応するが deprecated コメント付きで、当処理から使用されていない。creator_id も当該 save() では設定されない。",
+   "差分内容": "設計は dtb_user_mail_history を正典とし customer_id・subject・mail_body・send_date・creator_id を記録対象としているが、実装は dtb_mail_history の mail_subject/mail_body/send_date/customer_id 等へ保存する。さらに設計列 creator_id は一括メール履歴保存時に設定されない。",
+   "実装参照": "src/Eccube/Controller/Admin/Customer/CustomerMailController.php:94,95,96 ／ src/Eccube/Service/EntityManager/MailHistoryEntityManager.php:39,41,43,44,55,67 ／ src/Eccube/Entity/MailHistory.php:25,53,56,66,70 ／ src/Eccube/Entity/DtbUserMailHistory.php:21,24",
+   "設計書参照": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-7:2051,2088,2091,2104",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html のExcel正本（メール一括送信完了シート）には履歴保存テーブル・列の記載がなく、`dtb_user_mail_history`、customer_id、creator_id等はfunction-design-embed内のリバース詳細設計にのみ存在する（確認範囲: sheet-7全src-cell）。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Service/MailService.php:1799-1824 は履歴にsubject、mail_body、send_date、creator、customerを設定してpersistする。pf-eccube3/app/Plugin/HareruyaEc/Resource/doctrine/Plugin.HareruyaEc.Entity.DtbUserMailHistory.dcm.yml:1-4 は `table: dtb_user_mail_history`、同:15-35 はsend_date、subject、mail_body、customer_idを定義する。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Service/EntityManager/MailHistoryEntityManager.php:39-44,55-67 は `MailHistory` に件名・本文・送信日・customerを設定するがcreatorを設定しない。ec-cube-enterprise/src/Eccube/Entity/MailHistory.php:25 はテーブルを `dtb_mail_history` とし、同:66-72 にCreator/Customer関連を持つ。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Service/EntityManager/MailHistoryEntityManager.php:39-44` `$MailHistory = new MailHistory(); $MailHistory->setMailSubject(...)->setBaseInfo(...)->setMailBody(...)->setSendDate(new \\DateTime());` と:67 persist のまま。creator_id 相当の設定も無い（`src/Eccube/Controller/Admin/Customer/CustomerMailController.php:115` は BaseInfo と Customer を渡すのみ）。保存先は `src/Eccube/Entity/MailHistory.php:25` `#[ORM\\Table(name: 'dtb_mail_history')]` で、`src/Eccube/Entity/DtbUserMailHistory.php:21,24` は deprecated のまま未使用。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EMBED_ONLY",
+    "stale": "UNCHANGED",
+    "quoteDetail": [
+     "dtb_user_mail_history"
+    ]
+   }
+  },
+  {
+   "rowId": 634,
+   "機能No": "M08-04",
+   "機能名": "M08-04 会員登録編集",
+   "ドメイン": "m08",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "名前（カナ）・郵便番号はプラグイン拡張で必須を解除する。郵便番号は任意入力として扱う。",
+   "実装実態": "admin_customer の postalCode は required=true で追加され、postalCode01/02 は空欄でも各3桁/4桁の Length(min=max) 制約を受ける。",
+   "差分内容": "設計は郵便番号の必須解除を要求しているが、実装は postalCode を必須扱いにし、空欄を許容する分岐や blank 時に Length を外す処理がない。探索範囲: CustomerType.php, SplitPostalType.php, Customer/edit.twig, messages.ja.yaml。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/CustomerType.php:79 /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/SplitPostalType.php:44",
+   "設計書参照": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-9:2619",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:2674 のsrc-cell表ヘッダはT列を「必須」と定義する。同:2680-2681 の名前カナ、同:2684-2685 の郵便番号1/2は必須欄が「-」であり、同:2678 の名前欄の「◯」と対照していずれも任意と確認できる。",
+   "旧実装根拠": "旧実装は判定根拠として不要。参考として pf-eccube3/app/Plugin/HareruyaEc/Form/Extension/Admin/CustomerEditTypeExtension.php の会員編集拡張を確認したが、正本の必須欄が直接の判定根拠である。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/CustomerType.php:65-81 はkanaを `'required' => false` とする一方、postalCodeを `'required' => true` とする。したがって名前カナは既に満たすが郵便番号は未充足である。",
+   "根拠検証メモ": "指摘のうち名前カナはALREADY_METだが、同一findingの郵便番号任意要件が未充足のため、finding全体はSPEC_BACKEDとした。",
+   "対応の根拠(現develop)": "`src/Eccube/Form/Type/Admin/CustomerType.php:79-83` `->add('postalCode', SplitPostalType::class, ['mapped' => false, 'required' => true, 'initial_postal_code' => $Customer->getPostalCode(),])` で required=true のまま。`src/Eccube/Form/Type/SplitPostalType.php:44-51,58-66` も `new Length(['max' => eccube_zip01_len, 'min' => eccube_zip01_len, ...])` （zip02 は zip02_len）を無条件付与で、必須解除・任意入力化の分岐は追加されていない。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "NO_QUOTE",
+    "stale": "UNCHANGED"
+   }
+  },
+  {
+   "rowId": 635,
+   "機能No": "M08-04",
+   "機能名": "M08-04 会員登録編集",
+   "ドメイン": "m08",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "住所1・住所2はSJIS換算の長さが上限を超える場合に超過エラーを付ける。",
+   "実装実態": "住所1/住所2は Symfony Assert\\Length(max=eccube_address1_len/eccube_address2_len) で検証している。SJIS/Shift_JIS/CP932換算のバイト長検証は見つからない。",
+   "差分内容": "設計はSJIS換算上限を要求しているが、実装は通常の文字列長制約のみ。探索範囲: src/Eccube/Form, src/Eccube/Validator, src/Eccube/Service, src/Eccube/Controller/Admin/Customer。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/AddressType.php:108",
+   "設計書参照": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-9:2594",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:2689-2690 のExcel src-cellは住所1/2を「全角・半角」、最大200文字とするだけで、SJIS/Shift_JIS換算の記述はない。SJIS換算要件はExcel正本全体に存在しない（検索語: SJIS、Shift_JIS、CP932）。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Form/Extension/Admin/CustomerEditTypeExtension.php:168-179 はPOST_SUBMIT時に `strlen(mb_convert_encoding($addr01, 'SJIS', 'auto'))` とaddr02の同式を上限比較し、超過時に `FormError` を追加する。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Form/Type/AddressType.php:103-120 は住所1/2にそれぞれ `new Assert\\Length(['max' => ...])` を設定するだけで、src/Eccube/Form・Validator・Customer Controller全域にSJIS換算処理は存在しない。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Form/Type/AddressType.php:110` `new Assert\\Length(['max' => $this->config['eccube_address1_len']]),`、同:119 `new Assert\\Length(['max' => $this->config['eccube_address2_len']]),` と通常の文字数制約のみ。src/Eccube/Form・src/Eccube/Validator・src/Eccube/Controller/Admin/Customer を sjis/shift_jis/cp932/mb_strwidth/mb_convert_encoding で grep してもヒット 0 件で、SJIS換算バイト長の超過検証は未実装。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "TOO_SHORT",
+    "stale": "UNCHANGED"
+   }
+  },
+  {
+   "rowId": 637,
+   "機能No": "M08-04",
+   "機能名": "M08-04 会員登録編集",
+   "ドメイン": "m08",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "買取履歴欄の買取番号リンク押下時、買取詳細画面に遷移する。",
+   "実装実態": "買取履歴の BuyOrder.id リンクは admin_order_edit を生成している。一方、買取詳細画面の route は admin_purchase_edit。",
+   "差分内容": "設計の遷移先は買取詳細だが、実装は受注管理編集画面へ遷移する route を使っている。別キーワード（買取詳細/admin_purchase_edit/BuyOrder）で再検索しても Customer/edit.twig 側のリンク先は admin_order_edit のまま。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Customer/edit.twig:961 /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Purchase/PurchaseController.php:199",
+   "設計書参照": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-9:2456",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:2801 のsrc-cellは「買取番号」「リンク」「リンク押下時、買取詳細画面に遷移する」と明記する。",
+   "旧実装根拠": "旧実装は判定根拠として不要。pf-api、pf-eccube3、pf-article、deck-api の会員編集・買取履歴リンクを確認したが、正本の明示的な遷移先が直接の判定根拠である。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Customer/edit.twig:957-964 はBuyOrder.idのリンクに `url('admin_order_edit', {'id': BuyOrder.id})` を使う。一方、買取詳細の正しいルートは ec-cube-enterprise/src/Eccube/Controller/Admin/Purchase/PurchaseController.php:215-222 の `name: 'admin_purchase_edit'` である。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Resource/template/admin/Customer/edit.twig:961` `<a href=\"{{ url('admin_order_edit', { 'id' : BuyOrder.id }) }}\">` のままで、買取詳細の route（admin_purchase_edit）へは変更されていない。同 twig 内の BuyOrder ループ(:957-968)にも他の遷移先リンクは無い。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "UNCHANGED"
+   }
+  },
+  {
+   "rowId": 638,
+   "機能No": "M08-04",
+   "機能名": "M08-04 会員登録編集",
+   "ドメイン": "m08",
+   "区分(画面種別)": "admin",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・未実装",
+   "設計期待値": "本人確認フラグは必須のラジオ（未確認／確認）として会員登録フォームで扱い、選手情報 dtb_player.identification_flg に保存する。",
+   "実装実態": "dtb_player.identification_flg のエンティティ列は存在するが、Admin Customer のフォーム項目・画面表示・保存用入力としては追加されていない。",
+   "差分内容": "PlayerType は smaregiId, IdentityConfirmStatus, CustomerGroup, mailMagazineFlg, firstNameEn, lastNameEn, id_expiration_date のみを追加しており、identificationFlg を追加していない。Twigにも本人確認フラグの form_widget がない。",
+   "実装参照": "不在（探索範囲: src/Eccube/Form/Type/Admin/CustomerType.php, src/Eccube/Form/Type/Admin/PlayerType.php, src/Eccube/Resource/template/admin/Customer/edit.twig, src/Eccube/Controller/Admin/Customer/CustomerEditController.php, src/Eccube/Resource/locale/messages.ja.yaml。DB列のみ src/Eccube/Entity/DtbPlayer.php:79）",
+   "設計書参照": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-9:2597",
+   "根拠区分": "UNCERTAIN",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:2712 のExcel正本セルは「本人確認ステータス」「単一選択(ラジオボタン)」「選択肢：未確認、確認中、オンライン本人確認済み、簡易書留確認済み」であり、別項目の「本人確認フラグ」必須・保存先は正本に存在しない。本人確認フラグの記述は function-design-embed 開始後の同HTML:3033「本人確認フラグ｜必須｜ラジオ（未確認／確認）…フォームキー identificationFlg、mapped 偽」にのみ存在する。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Form/Extension/Admin/CustomerEditTypeExtension.php:106-115 に `->add('identificationFlg', 'choice', [`、`'required' => true`、`'mapped' => false`、`'expanded' => true` があり、旧画面の必須ラジオ自体は確認できる。一方 pf-eccube3/app/Plugin/HareruyaEc/Event/Admin/AccountEvent.php:86-99 の保存処理は `setDciNo`、`setIdentityConfirmStatus`、`setCustomerGroup`、`setMailMagazineFlg` のみで `setIdentificationFlg` が無く、pf-eccube3 全体の横断検索でも保存呼出しは Entity の setter 定義以外に存在しない。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Entity/DtbPlayer.php:79-80 に `#[ORM\\Column(name: 'identification_flg'...)] private ?bool $identificationFlg = false;` はあるが、ec-cube-enterprise/src/Eccube/Form/Type/Admin/PlayerType.php:40-97 の追加項目に identificationFlg はなく、ec-cube-enterprise/src/Eccube/Resource/template/admin/Customer/edit.twig:620-635 も IdentityConfirmStatus と mailMagazineFlg のみを描画している。",
+   "根拠検証メモ": "旧実装で必須ラジオの表示根拠は確認できるが、期待値に含まれる identification_flg への保存処理を旧実装から確認できない。UI移植漏れとしては根拠がある一方、期待値全体の根拠が不足するため UNCERTAIN。",
+   "対応の根拠(現develop)": "`src/Eccube/Form/Type/Admin/PlayerType.php:40-97` の buildForm は smaregiId / IdentityConfirmStatus / CustomerGroup / mailMagazineFlg / firstNameEn / lastNameEn / id_expiration_date のみを add しており、`identificationFlg` の項目は依然存在しない。`src/Eccube/Entity/DtbPlayer.php:79` `#[ORM\\Column(name: 'identification_flg', ...)]` のDB列と `src/Eccube/Controller/Admin/Customer/CustomerEditController.php:281` `$Player->getIdentificationFlg(),`（既存値の素通し保存）はあるが、`src/Eccube/Resource/template/admin/Customer/edit.twig` に本人確認フラグの form_widget はなく（`grep -n \"identification\" edit.twig` のヒットは online_identification モーダルと identification_image のみ）、必須ラジオ（未確認／確認）としての入力項目は未実装。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Resource/locale/messages.ja.yaml"
+    ]
+   }
+  },
+  {
+   "rowId": 641,
+   "機能No": "M08-05",
+   "機能名": "M08-05 ポイント付与",
+   "ドメイン": "m08",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "種別選択時の遷移先は種別選択画面（admin_customer_point_type_select）とする。",
+   "実装実態": "種別選択画面のルート名は admin_customer_point_select で実装され、会員編集画面からも admin_customer_point_select へリンクしている。",
+   "差分内容": "設計の画面遷移表は admin_customer_point_type_select を遷移先として明記しているが、実装に同名ルートはなく、admin_customer_point_select が使われている。反証として admin_customer_point_type_select、point_type_select、ポイント管理・履歴一覧を Controller/Twig/翻訳キーで検索したが、設計ルート名の実装は確認できなかった。",
+   "実装参照": "src/Eccube/Controller/Admin/Customer/CustomerPointController.php:38 / src/Eccube/Resource/template/admin/Customer/edit.twig:1038",
+   "設計書参照": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-10:3155",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:3138-3139 のExcel正本はポイント種別リンクと遷移先画面だけを記載し、ルート名 `admin_customer_point_type_select` は記載しない。同ルート名はリバース詳細設計部の同HTML:3244 にのみ「種別選択画面（admin_customer_point_type_select）」として現れる。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/CustomerServiceProvider.php:83-85 に `/customer/point/{id}/select` と `->bind('admin_customer_point_type_select');` があり、旧ルート名を確認した。pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Customer/edit.twig:465 も `path('admin_customer_point_type_select', {id: Customer.id})` を使用する。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/CustomerPointController.php:43 は同じURLを `name: 'admin_customer_point_select'` で定義し、ec-cube-enterprise/src/Eccube/Resource/template/admin/Customer/edit.twig:1038 も `url('admin_customer_point_select', ...)` を使用する。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Controller/Admin/Customer/CustomerPointController.php:43` `name: 'admin_customer_point_select'` のままで、`src/Eccube/Resource/template/admin/Customer/edit.twig:1038` も `href=\"{{ url('admin_customer_point_select', { 'id': Customer.id}) }}\"`。`grep -rn \"admin_customer_point_type_select\" src/` は 0 件（`point_type_select` のヒットは翻訳キー `admin.customer.point_type_select: ポイント管理・履歴一覧` のみ）。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EMBED_ONLY",
+    "stale": "UNCHANGED",
+    "quoteDetail": [
+     "admin_customer_point_type_select",
+     "種別選択画面（admin_customer_point_type_select）"
+    ]
+   }
+  }
+ ]
+}

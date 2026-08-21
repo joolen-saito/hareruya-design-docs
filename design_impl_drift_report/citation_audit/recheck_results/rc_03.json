@@ -1,0 +1,149 @@
+{
+  "packetId": "rc_03",
+  "results": [
+    {
+      "rowId": 36,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0505正本の sheet-3 を src-cell/data-excel-ref で確認。`0505:注文印刷_印刷情報をプリンタへ送信!B62` と `R62` は実物として「店頭注文番号」、`E89` は `<text>店頭注文番号</text>`、`E92` は `<text width=\"5\" height=\"5\">{$order['order_number']}</text>`。一方、Excel正本の全 data-excel-ref 要素を `dtb_order_number`、`DtbOrderNumber`、`waiting_number`、`待ち番号` で検索して具体的DB取得元は0件だった。sheet-3/4 のDOMも確認し、`img.image-layer-img` と `.sheet-image img` はともに0件で、確認対象となるレイアウト画像は存在しなかった。具体的な `dtb_order_number.value` 対応は function-design-embed 内の記述だけ。",
+      "reason": "Excel正本は印刷欄とサンプル変数を定義するが、受注IDで待ち番号を引くDB契約までは定義していない。旧実装 `/home/y-saito/Developments/pf-api/src/Controller/Admin/OrderController.php` の `getPrintData()` は138-139行で `DtbWaitingNumber` を受注ID検索して `$waitingNumber` を得て、162-165行で店頭注文番号欄へ出力しているため、期待挙動の根は旧実装にある。なおパケットの `dtb_order_number.value` は旧コードの実テーブル名そのものではなく、埋込リバース設計による移行先名への投影である。",
+      "currentImpl": "現状 `/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Order/OrderDirectPrintAction.php` の `getPrintData()` は77行で `$Order['order_number']` を `$orderNumber` にし、94-97行の店頭注文番号欄と114-117行の注文番号欄の双方へ同じ値を出力する。`/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php` の `getPrintOrderListMainShop()`（1608行）と `getDirectPrintOrderList()`（1665行）も `o.order_number` だけを選択し、`DtbWaitingNumber`、`waiting_number`、`dtb_order_number` は参照しない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 37,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0505正本 sheet-4 の `B9` は `/order/prints/status/printed`、`L11` は `POST`、`AS11` は「なし(ステータスコードのみ)」、`C16` は「A05-02とエンドポイントを分ける」。sheet-4 の全 data-excel-ref 要素を `ConnectionType`、`GetRequest`、`SetResponse`、`一致しない`、`応答を組み立てない` で確認したが、不一致時挙動の正本記述は無かった。該当文「処理を行わず応答を組み立てない」は同HTML 1300行の function-design-embed 内にある。",
+      "reason": "不一致時に明示応答を作らないという期待は新しい専用エンドポイントのExcel正本ではなく、旧 `/home/y-saito/Developments/pf-api/src/Controller/Admin/OrderController.php` の `postPrintDirectAction()` が `GetRequest` と `SetResponse` の2分岐だけを持ち、どちらでもなければ65行のメソッド末尾へ到達する実装に由来するため、LEGACY_BACKEDは妥当。",
+      "currentImpl": "現状 `/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/OrderController.php` の `orderDirectPrint()` は79-84行で空の `StreamedResponse` を作り、HTTP 400と `Content-Type: text/plain; charset=utf-8` を設定して返す。不一致時400を期待するWebテストも `/home/y-saito/Developments/ec-cube-enterprise/tests/Eccube/Tests/Web/App/OrderControllerTest.php` の `testOrderDirectPrintInvalidConnectionTypeReturnsBadRequest()` に残っている。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 38,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0505正本 sheet-4 の実物を確認。`B9` は `/order/prints/status/printed`、`L11` は `POST`、`AH11` は `XML`、`AS11` は「なし(ステータスコードのみ)」、`C16` は「現状は…クエリ『ConnectionType』で処理が分岐しているので、A05-02とエンドポイントを分ける」。すべて src-cell/data-excel-ref 保持要素で、function-design-embed の外側にある。",
+      "reason": "専用URL、POST、XML、空応答、既存ConnectionType分岐からの分離がExcel正本に明記され、期待値を直接支持している。",
+      "currentImpl": "現状 `/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/OrderController.php` の `orderDirectPrint()` は43行の単一ルート `/api/order/prints/direct/{base_info_id}` の中で48行 `GetRequest`、64行 `SetResponse` を分岐する。`order/prints/status/printed`、`prints/status`、`status/printed` を `src` と `app/config` で検索して専用ルートは0件だった。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 39,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0505正本 sheet-4 の `C22` と `C32` は実物として「プリンタ側でエラーがあった場合…エラーコード…ログに追記する」、`E34` は「印刷結果の詳細を参照してエラーの有無を確認していない」。`D44` は成功(true)/失敗(false)、`D45` は失敗理由(code)、`G90-G91` は `success=\"false\" code=\"EX_BADPORT\"` のXML例で、いずれも src-cell/data-excel-ref を持つ正本要素。`F55` の `EX_BADPORT`、`F56` の `EX_TIMEOUT` も実在を確認した。",
+      "reason": "エラーコードのログ追記と印刷結果詳細の参照はExcel正本が明示する改修要求であり、SPEC_BACKEDは妥当。",
+      "currentImpl": "現状 `/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Order/UpdatePrintedOrderStatusAction.php` の `handle()` は48-58行でXML解析可否、`ServerDirectPrint`、`ePOSPrint` 件数だけを判定し、78-100行は各要素の `Parameter/printjobid` だけで受注を更新する。`PrintResponse`、`EX_BADPORT`、`EX_TIMEOUT`、`DeviceNotFound`、`attributes()`、`xpath()` を対象処理と周辺で検索して参照は0件だった。",
+      "severityOpinion": "high",
+      "confidence": "high"
+    },
+    {
+      "rowId": 41,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0505正本 sheet-6 の `S11` は「有」、`Y11` は「IP制限」であり、認証なしという期待を支持せず、むしろ反対の要求を持つ。`B128/J128` は正常時200空応答だが、400・401を発生させないとの正本記述は無い。「入力検証・認証判定を明示的に行わないため、400・401は発生しない」は同HTML 2028行の function-design-embed 内だけにある。",
+      "reason": "旧 `/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/SmaregiController.php` の `updateSmaregiTransaction()` は26-116行で認証判定や必須ヘッダ検証をせず、旧ルートも `/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/ControllerProvider/FrontControllerProvider.php` 287-289行のPOST登録だけである。認証なし・400/401なしは旧実装由来で、Excel正本由来ではない。",
+      "currentImpl": "現状 `/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Smaregi/WebhookController.php` の `index()` は52-64行で `AuthenticationService::verify()` 失敗時にHTTP 401、67-77行で `smaregi-event-id` 欠落時にHTTP 400を返す。`/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/Webhook/AuthenticationService.php` の `verify()` は33-45行で設定された秘密ヘッダを `hash_equals` 比較する。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 43,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0505正本 sheet-6 の `AS11` は「なし(ステータスコードのみ)」、`B128/J128` は「200」「レスポンスデータは空を返す」。Excel正本の data-excel-ref 要素を `更新件数`、`TransactionHead`、`result`、`合算` で確認したが、Webhook応答に更新件数を返す要求は無かった。更新件数応答は function-design-embed の2015行・2025行にのみ存在する。",
+      "reason": "旧 `/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/SmaregiController.php` の `updateSmaregiTransaction()` は51-74行で `$updateCount` を加算し、95-116行で `result[].TransactionHead` として200応答する。よって期待値は旧同期API由来で、LEGACY_BACKEDが妥当。",
+      "currentImpl": "現状 `/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Smaregi/WebhookController.php` の `index()` は91-109行でイベントを保存し、`SmaregiWebhookEventMessage` をdispatchして、更新件数を待たず `{'status':'ok'}` の200を返す。`/home/y-saito/Developments/ec-cube-enterprise/app/config/eccube/packages/messenger.yaml` 16行は同メッセージを `async` にルーティングする。`SmaregiTransactionProcessMessageHandler::isStaleUpdate()` も現存し、旧同期応答方式には戻っていない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 44,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0505正本 sheet-6 の `AH11` は `JSON`、`B114-B117` は契約ID・イベント名・アクション・取引IDリスト、`B120` は `contractId/event/action/transactionHeadIds` を持つraw JSON例。Excel正本の data-excel-ref 要素を `params`、`proc_name`、`X_contract_id`、`X_access_token`、`TransactionHead`、`TransactionDetail` で検索したが旧フォーム形式は0件だった。旧形式は function-design-embed の2022行だけにある。",
+      "reason": "旧 `/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/SmaregiController.php` の `updateSmaregiTransaction()` は28-44行でフォーム値 `params` をdecodeし、`data[].table_name` の `TransactionHead` / `TransactionDetail` を抽出する。期待値は廃止予定APIの旧実装由来で、LEGACY_BACKEDが妥当。",
+      "currentImpl": "現状 `/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/Webhook/EventService.php` の `createEventFromRequest()` は31行で `$request->getContent()` をraw JSON decodeし、40-45行で `contractId/event/action` と本文を保存する。`WebhookController::index()` は67行で `smaregi-event-id` ヘッダを読む。`params`、`proc_name`、`X_contract_id`、`X_access_token` を `src/Eccube/Controller/Smaregi` と `src/Eccube/Service/Smaregi/Webhook` で検索して旧入力の参照は0件だった。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 45,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "REFUTED",
+      "correctedClass": "SPEC_BACKED",
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0505正本 sheet-6 の `D51` は「通常処理かキャンセル処理か返品処理かの場合を判定し、ポイント関連を増減処理」、`E53` は「購入・キャンセル・返品で処理を分岐し、それぞれポイントの増減処理を実行」、`G105` は打消元取引ID検索、`G106` は取引ID検索。さらに関連するExcel正本 `/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html` の src-cell `0203:受注情報編集!E201` に実物として「キャンセル：キャンセル日を登録。在庫・使用ポイント・付与ポイントを戻す。ポイント履歴を削除する。」がある。0505単体には列名列挙は無いが、キャンセル時のポイント履歴削除は関連正本で明示されていた。",
+      "reason": "先行判定は0505 sheet-6だけを見て削除契約を旧実装由来としたが、関連する受注管理正本0203がキャンセル時のポイント戻しとポイント履歴削除を明記する。0505のキャンセル/返品時ポイント増減と取引ID検索の記述と合わせると、指摘の核心である「取消時に履歴を残したままにしない」は正本根拠を持つため、SPEC_BACKEDへ訂正する。列名 `point_change/note/issue_date/point_type_id/transaction_id` 自体は旧スキーマにも確認できるが、分類を決める削除契約は正本で裏付いた。",
+      "currentImpl": "現状、ポイント専用取引は `/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/Webhook/Transaction/SmaregiPointAdjustmentReverter.php` の `revert()` が67行で取引ID検索し、96-110行で元履歴を保持したまま逆符号履歴を追加する。さらに通常受注由来の取消/打消は `SmaregiTransactionProcessMessageHandler::processCanceled()` / `processDisposed()` が Reverter 非該当時に各Processorへ進むが、`SmaregiTransactionCanceledProcessor::process()` 97-105行と `SmaregiTransactionDisposedProcessor::process()` 109-117行は在庫rollback・CANCEL化・集計更新だけで、`PointService::cancelOrderPoints()` やポイント履歴削除を呼ばない。正本の削除方式は現状どちらの経路でも満たされない。",
+      "severityOpinion": "high",
+      "confidence": "high"
+    },
+    {
+      "rowId": 48,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0505正本 sheet-6 の `B128/J128` は正常時200空応答だが、Excel正本の data-excel-ref 要素を `try-catch`、`例外ハンドラ`、`Throwable`、`500` で検索して例外処理方式の指定は0件だった。「明示的なtry-catchは持たず、標準例外ハンドラに委ねる」は同HTML 2059行の function-design-embed 内だけに実在する。",
+      "reason": "旧 `/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/SmaregiController.php` の `updateSmaregiTransaction()` 26-116行にはtry-catchが無く、例外を上位へ伝播させる。期待値はその旧実装の構造を文章化したもので、LEGACY_BACKEDが妥当。",
+      "currentImpl": "現状 `/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Smaregi/WebhookController.php` の `index()` は91-120行でイベント保存・dispatchを `try` / `catch (\\Throwable $e)` で囲み、catch内で `{'status':'error','message':'Error processing webhook'}` のHTTP 500 JsonResponseを返す。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 49,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0505正本 sheet-6 の `AS11` は「なし(ステータスコードのみ)」、`B128/J128` は200空応答。Excel正本の全 data-excel-ref 要素を `application/json;charset=UTF-8`、`Cache-Control`、`no-store`、`Pragma`、`no-cache`、`Access-Control-Allow-Origin`、`CORS` で検索して0件だった。これらのヘッダ要求は同HTML 2040行の function-design-embed 内だけ。",
+      "reason": "旧 `/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/SmaregiController.php` の `updateSmaregiTransaction()` は111-116行で `Content-Type: application/json;charset=UTF-8`、`Cache-Control: no-store`、`Pragma: no-cache`、`Access-Control-Allow-Origin: *` を明示するため、期待値は旧実装由来。",
+      "currentImpl": "現状 `/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Smaregi/WebhookController.php` の `index()` は107-120行でヘッダ指定なしの `new JsonResponse(...)` を返す。リポジトリの `src` と `app/config` を `Access-Control-Allow-Origin|Cache-Control|no-store|no-cache|Pragma|nelmio_cors|KernelEvents::RESPONSE` で横断確認したところ、個別CORS付与や他画面のno-storeはあるがSmaregi Webhookへ適用するグローバル付与は見つからなかった。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 50,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0505正本 sheet-6 の data-excel-ref 要素を `Cookie値`、`セッションID`、`完全値`、`ログ出力しない`、`アクセストークン`、`X_access_token`、`マスキング` で検索してログ禁止規則は0件だった。`連携用ヘッダ（契約ID・アクセストークン）の値` と `Cookie値・セッションIDの完全値` をログに出してはいけないという文は同HTML 2061-2064行の function-design-embed 内だけに実在する。関連Excel正本全体の data-excel-ref 検索でも同じ禁止文は見つからなかった。",
+      "reason": "旧 `/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/SmaregiController.php` は78-84行で `X_contract_id` / `X_access_token` を転送用配列へ入れるが、ログ出力は98-99行の支店転送エラー結果だけで、受信ヘッダ全体やCookieをログに出さない。禁止規則はこの旧挙動を記述したリバース詳細設計由来なのでLEGACY_BACKEDが妥当。",
+      "currentImpl": "現状 `/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Smaregi/WebhookController.php` の `index()` は44-50行で受信直後、53-59行で認証失敗時、69-72行でイベントID欠落時に `$request->headers->all()` をマスキングせずログへ渡す。`AuthenticationService::verify()` が使う秘密ヘッダも同じ全ヘッダに含まれ得る。加えて `EventService::createEventFromRequest()` 44-45行は全ヘッダと本文をDBへ保存している。",
+      "severityOpinion": "high",
+      "confidence": "high"
+    },
+    {
+      "rowId": 51,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0505正本 sheet-6 の全 data-excel-ref 要素を `悲観ロック`、`楽観ロック`、`PESSIMISTIC`、`排他`、`トランザクション` で検索して0件だった。「明示的な悲観ロック・楽観ロックの取得は行わない」は同HTML 2066-2067行の function-design-embed 内だけに実在する。",
+      "reason": "旧 `/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/SmaregiController.php` 全体を `beginTransaction`、`LockMode`、`PESSIMISTIC`、`OPTIMISTIC`、`->lock(` で検索して0件で、ポイント更新はpersist/flushのみ。期待値は旧実装の非ロック挙動を記述したもので、LEGACY_BACKEDが妥当。",
+      "currentImpl": "現状 `/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/Webhook/Transaction/SmaregiOrderPointApplier.php` のポイント適用処理は99-101行で `beginTransaction()` 後に `lock($player, LockMode::PESSIMISTIC_WRITE)`、`SmaregiPointAdjustmentApplier.php` も132-134行で同じ悲観ロックを取得する。両シンボルは現在のHEADでも残存する。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    }
+  ]
+}

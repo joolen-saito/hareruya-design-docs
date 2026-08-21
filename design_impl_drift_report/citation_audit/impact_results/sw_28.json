@@ -1,0 +1,365 @@
+{
+  "packetId": "sw_28",
+  "results": [
+    {
+      "rowId": 973,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "取込画面のページタイトル、サブタイトル、アップロード箱、フォーマット表の文言と説明行の改行表示が設計と異なるHTMLとして利用者に表示される。",
+      "checked": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Deck/csv_import.twig:5-6,81-120 と src/Eccube/Resource/locale/messages.ja.yaml:4338,4447-4448を確認した。",
+      "reason": "表示文言・配置・改行はHTTPレスポンスHTMLと画面表示の差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 974,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "利用者がアクセス・送信するURLが設計の /deck/csvimport ではなく /deck/csv_import となり、設計URLへのHTTP到達性とPOST先が変わる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Admin/Deck/DeckCsvController.php:58 と src/Eccube/Resource/template/admin/Deck/csv_import.twig:89を確認した。",
+      "reason": "ルート名だけでなく外部公開パスも異なるためHTTP I/O差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 975,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "フォーム送信中もボタンが無効化されずスピナーも表示されないため、利用者の送信中UIと二重送信可能性が変わる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Deck/csv_import.twig:46-63,89-98を確認し、当該画面にはchange時の有効化だけがありsubmit処理と#spinnerがないことを確認した。",
+      "reason": "画面の活性状態・表示有無および送信操作の可否は外部観測可能である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 976,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "拡張子がcsvでもMIMEが不正なアップロードを設計なら検証エラーにするが、現実装ではMIME制約で拒否されず取込処理へ進み得る。",
+      "checked": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/CsvImportType.php:48-57はNotBlankと最大サイズのみ、src/Eccube/Controller/Admin/Deck/DeckCsvController.php:100-103は拡張子だけを検査することを確認した。",
+      "reason": "受理される入力集合と返される検証結果が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 977,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "列名セットが同じで順序だけ異なるCSVが、設計では即時拒否される一方、現実装ではヘッダ名で列を解決して取込対象になり得る。",
+      "checked": "ec-cube-enterprise/src/Eccube/Service/Csv/Importer/CsvImporter.php:219-239、Model/CsvRow.php:60-70、Event/BaseCsvImportHandler.php:65-90を確認した。",
+      "reason": "同一アップロードに対する成功・エラーおよびDB更新可否が異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 978,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "規定枚数を外れたメイン／サイドリストCSVが設計ではエラーになるが、取込経路ではその検証を通らず保存され得る。",
+      "checked": "ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/DeckUpdateImportHandler.php:260-364を確認し、横断検索で枚数検証はService/Deck/DeckValidationService.php:271-300にあるもののCSVハンドラからの呼出しがないことを確認した。",
+      "reason": "入力受理結果、エラー表示、永続化データが変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 979,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "失敗時の応答が設計の302リダイレクト＋フラッシュではなくHTTP 200の同画面再描画となり、成功時の表示メッセージも異なる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Admin/Deck/DeckCsvController.php:77-89,135-159 と src/Eccube/Resource/locale/messages.ja.yaml:1601,1966を確認した。",
+      "reason": "HTTPステータス、Location有無、画面メッセージが外部から観測できる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 980,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "再取込時に既存dtb_deck_card行を保持して追加する設計と異なり、現実装は既存行を削除して再作成し、非公開更新では明細が消える。",
+      "checked": "ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/DeckUpdateImportHandler.php:277-299,351-364,614-618を確認した。",
+      "reason": "DBの削除・保存内容と再取込後のデッキ明細が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 981,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "GET/POSTおよび完了後Locationが設計の /deck/csvimport ではなく /deck/csv_import になり、設計URLでは機能に到達できない。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Admin/Deck/DeckCsvController.php:58,157-159 と src/Eccube/Resource/template/admin/Deck/index.twig:226を確認した。",
+      "reason": "内部ルート名差に加えてURLパスとリダイレクト先も異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 982,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "Deck CSV送信中に設計のボタン無効化と#spinner表示が発生せず、利用者に見える進行状態と操作可能性が異なる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Deck/csv_import.twig:46-63,89-98を開き、spin.min.js/card-csvimport.js/#spinnerを横断検索して当該画面にないことを確認した。",
+      "reason": "送信中UIは画面の表示・活性状態の差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 983,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "同じデッキを再取込した後、設計では既存明細が残って重複し得るのに対し、現実装では既存明細が全削除され置換される。",
+      "checked": "ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/DeckUpdateImportHandler.php:357-364,614-618を確認した。",
+      "reason": "永続行の削除有無と再取込後のDB状態が異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 984,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "成功時に利用者へ表示されるフラッシュ文言が「登録が完了しました。」ではなく「CSVファイルをアップロードしました」となり、運用ログにも別の文字列が出力される。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Admin/Deck/DeckCsvController.php:110,147,157 と src/Eccube/Resource/locale/messages.ja.yaml:1601,1966を確認した。",
+      "reason": "表示文言とログ出力はいずれも外部観測可能なI/Oである。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 985,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "デッキ検索のアーキタイプ選択肢にフォーマット日本語名が表示されず、利用者が見る選択肢ラベルが設計より情報不足になる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/SearchDeckType.php:84-91でchoice_labelがnameJpのみであることを確認した。",
+      "reason": "フォーム選択肢の表示文言差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 986,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "設計ではルート不一致となる /deck/search/0 が現実装のルート要件では受理され、Controllerへ到達する。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Admin/Deck/DeckController.php:76-79でpage_no要件が\\d+であることを確認した。",
+      "reason": "受理するHTTPパス集合が異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 987,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "フォーマット・色を変更してもアーキタイプ候補の無効化・有効化・並べ替えが行われず、選択可能項目と表示順が設計どおり変化しない。",
+      "checked": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Deck/index.twig:51-64とsrc/Eccube/Form/Type/Admin/SearchDeckType.php:62-91を確認し、deck-search.js/archetypeFilter/format_id_/color_id_の当該実装がないことを横断検索した。",
+      "reason": "利用者が見る選択肢の活性状態・順序・操作結果が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 988,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "検索フォームのPOST先URLが設計の /deck/search/1 ではなく /deck となり、ブラウザが送るHTTPリクエストパスが異なる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Deck/index.twig:230とsrc/Eccube/Controller/Admin/Deck/DeckController.php:76-79,92-108を確認した。",
+      "reason": "Controller内でpage_noを1にしても、外部HTTPリクエストのパス差は残る。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 989,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "検索POSTにCSRFトークンが必要となり、設計なら受理されるトークンなし／不正トークンのリクエストが現実装ではフォームエラーになり得る。",
+      "checked": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/SearchDeckType.php:206-211でcsrf_protection=true、src/Eccube/Controller/Admin/Deck/DeckController.php:92-101でフォーム妥当性により応答が分岐することを確認した。",
+      "reason": "HTTP入力項目とリクエスト受理結果が異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 990,
+      "authorVerdict": "NO_IMPACT",
+      "verdict": "NO_IMPACT",
+      "agree": true,
+      "observableEffect": "",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Admin/SearchControllerTrait.php:104-118,127-194を開き、eccube.admin.{$sessionkey}.*を同じtrait内で一貫して読書きすることを確認した。src/Eccube/Controller/Admin/Deck/DeckController.php:67,92-135,159ではsessionKey=deckと別系統のdeck/deck.page_noも対応して読書きする。src・appを各キーで検索し、画面/API/業務DBへの露出や不整合な固定キー参照は見つからなかった。app/config/eccube/packages/framework.yaml:12-20ではブラウザへ出るCookie名はECCUBE_COOKIE_NAMEである。",
+      "reason": "差はRedis内のサーバ側セッション属性名に閉じ、同じ実装キーで保存・復元されるため、同じ操作に対する画面、HTTP、Cookie名、業務DB副作用は変わらない。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 991,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "アーキタイプ選択肢が日本語名だけで表示され、設計のフォーマット日本語名を含む複合ラベルにならない。",
+      "checked": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/SearchDeckType.php:84-91でchoice_label=nameJpを確認した。",
+      "reason": "利用者に表示される選択肢文言が異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 992,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "新規・編集・更新・削除でブラウザが使用するURLと削除メソッドが設計契約と異なり、設計のエンドポイントへ同じHTTP要求を送っても到達結果が変わる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Admin/Archetype/ArchetypeController.php:147-189とsrc/Eccube/Resource/template/admin/Archetype/edit.twig:336-339を確認した。",
+      "reason": "ルート名だけでなくHTTPパス・メソッドが異なるため外部契約差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 993,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "代表カード検索の通信が設計のHTML断片GET・ページングGET・ID解決APIではなく、単一のJSON POST APIとなり、リクエストパス／メソッド／レスポンス形式／セッション維持が異なる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Admin/Archetype/ArchetypeController.php:293-340とsrc/Eccube/Resource/template/admin/Archetype/edit.twig:124-169を確認し、指定された3エンドポイントとセッションキーがないことを横断検索した。",
+      "reason": "画面が代替実装されていてもXHRのHTTP I/O契約が外部観測可能に異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 994,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "新規登録で代表カードを選択後に別項目の検証エラーが起きると、再表示画面で送信済みcardImageIdに対応する画像・名称が復元されない。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Admin/Archetype/ArchetypeController.php:229-290ではcardImageId解決が有効送信時だけで、src/Eccube/Resource/template/admin/Archetype/edit.twig:229-236はArchetype.CardImageだけを表示することを確認した。",
+      "reason": "検証失敗時の再表示HTMLと利用者の入力保持状態が異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 995,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "保存成功後に表示される文言が設計の「登録が完了しました。」ではなく「保存しました」になる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Admin/Archetype/ArchetypeController.php:275-277とsrc/Eccube/Resource/locale/messages.ja.yaml:1590,1966を確認した。",
+      "reason": "フラッシュの翻訳キーが異なり、利用者向け表示文言が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 996,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "一覧・詳細とも設計指定の名称埋め込み／専用確認文言ではなく、同一の「このアーキタイプを削除してもよろしいですか？」というconfirmが表示される。",
+      "checked": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Archetype/index.twig:191-196、edit.twig:63-66、src/Eccube/Resource/locale/messages.ja.yaml:4471を確認した。",
+      "reason": "削除時の確認ダイアログ文言とHTML/JavaScriptの渡し方が利用者から観測できる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 997,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "関連デッキあり・削除成功・CSRF不正の各場合で、表示フラッシュ、遷移先、検索ページ復帰、HTTP 403の有無が設計と異なる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Admin/Archetype/ArchetypeController.php:189-221とsrc/Eccube/Service/Admin/Archetype/ArchetypeDeleteAction.php:34-55を確認した。",
+      "reason": "HTTPステータス、Location、画面文言、復帰ページはいずれも外部観測可能である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 998,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "削除後、設計ではdtb_archetype行が残ってdeleted_atが更新されるが、現実装ではDELETEされ行自体が失われる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Service/EntityManager/ArchetypeEntityManager.php:79-89、src/Eccube/Service/Admin/Archetype/ArchetypeDeleteAction.php:48-52、src/Eccube/Entity/DtbArchetype.php:29-32,87-88を確認した。",
+      "reason": "永続データの更新と物理削除は明確なDB副作用差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 999,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "アーキタイプCSVのGET/POSTおよび成功後Locationが設計の /archetype/csvimport ではなく /archetype/csv_import となる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Admin/Archetype/ArchetypeCsvController.php:47-49,106-108とsrc/Eccube/Resource/template/admin/Archetype/csv_import.twig:79を確認した。",
+      "reason": "ルート名だけでなく外部HTTPパスとリダイレクト先が異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 1000,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "画面選択制限を回避して.tsvを送ると、設計では検証エラーだが現実装はタブ区切りとして解析し取込処理を進める。",
+      "checked": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/CsvImportType.php:48-57、src/Eccube/Resource/template/admin/Archetype/csv_import.twig:79-87、src/Eccube/Service/Csv/Importer/CsvImporter.php:164-175を確認した。",
+      "reason": "サーバ側で受理されるファイル形式と取込結果が異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 1001,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "同じ列名を並べ替えたCSVが設計ではヘッダエラーになる一方、現実装では列名解決され取込対象になり得る。",
+      "checked": "ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Model/CsvRow.php:60-70とEvent/BaseCsvImportHandler.php:65-90を確認した。",
+      "reason": "同じ入力ファイルへの受理・拒否とDB更新結果が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 1002,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "失敗POSTへの応答が設計のHTTP 302＋Location＋フラッシュではなく、同一リクエストのHTTP 200画面再描画とerrors表示になる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Admin/Archetype/ArchetypeCsvController.php:58-71,92-108を確認した。",
+      "reason": "HTTPステータス、ヘッダ、画面エラーの伝達方式が異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 1003,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "成功時の画面文言が設計の登録完了文言ではなくCSVアップロード完了文言となり、設計の開始・完了ログも運用ログへ出力されない。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Admin/Archetype/ArchetypeCsvController.php:92-108とsrc/Eccube/Resource/locale/messages.ja.yaml:1601,1966を確認した。",
+      "reason": "表示メッセージと運用ログは外部観測可能なI/Oである。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 1004,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "アーキタイプCSV送信中に設計の送信ボタン無効化と#spinner表示が行われず、利用者の送信中UIと二重送信可能性が異なる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Archetype/csv_import.twig:36-53,79-88を開き、当該画面にcard-csvimport.jsと#spinnerがないことを横断検索した。",
+      "reason": "画面の表示有無・活性状態・操作可能性の差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 1005,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "トップバナー管理・絞込・削除のHTTPパスが設計の /banner/top 系ではなく /data/top_banner 系となり、設計URLでは同じ操作に到達できない。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Admin/Data/TopBannerController.php:54-56,183-185とsrc/Eccube/Resource/template/admin/Data/top_banner.twig:293-301,345-353を確認した。",
+      "reason": "ルート名ではなく外部公開URLそのものの差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 1006,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "一覧取得・アップロード・削除が設計のbanner/直下ではなくbanner/top/配下を対象とし、S3の保存キー、一覧に現れるファイル、削除可能対象が変わる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Service/Admin/Data/TopBannerFileListAction.php:22-41、TopBannerUploadAction.php:25,70-81、TopBannerDeleteAction.php:23,30-37を確認した。",
+      "reason": "外部ストレージの保存先とファイルI/O対象が異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 1007,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "空欄・重複の並び順入力で設計は送信前alertによりHTTP送信を中止するが、現実装はPOST後に各入力欄のFormErrorを表示する。",
+      "checked": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Data/top_banner.twig:92-145には並び順submit検査がなく、src/Eccube/Form/Type/Admin/TopBannerType.php:125-155でPOST_SUBMIT時に必須・重複エラーを付けることを確認した。",
+      "reason": "通信発生の有無、エラーUI、検証タイミングが利用者とHTTPから観測できる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 1008,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "保存・アップロード・削除後の遷移先画面に、設計にはない成功または失敗フラッシュメッセージが表示される。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Admin/Data/TopBannerController.php:138-140,165-167,200-222で各経路のaddSuccess/addErrorと303リダイレクトを確認した。",
+      "reason": "遷移後の画面表示文言は明確な外部出力差である。",
+      "confidence": "high"
+    }
+  ]
+}

@@ -1,0 +1,149 @@
+{
+  "packetId": "rc_36",
+  "results": [
+    {
+      "rowId": 642,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "excel_to_html/output 全HTMLの src-cell を「会員・選手」「選手情報」「ページが見つから」「404」で検索した。「会員・選手」「選手情報」「ページが見つから」は0件で、0207の正本セルにも404は0件。0207 sheet-10 の正本セル 0207:ポイント付与!B29 は「・カスタマイズ要件に記載の内容以外は現行踏襲とする。」までである。404の具体記述は同HTMLの function-design-embed 内にある一方、旧実装 pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/CustomerController.php の pointUpdate() では customer と player の各取得後に `return $app->abort(404);` を実物確認した。",
+      "reason": "Excel正本にPlayer不在時404の個別記述はなく、具体的根拠は旧実装であるため LEGACY_BACKED は妥当。現在の pointHistory() は Customer の型解決だけに依存し、nullableなPlayerを404へ変換していない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Entity/Customer.php の Player プロパティは `private ?DtbPlayer $Player = null`、getPlayer() は `public function getPlayer(): ?DtbPlayer`。src/Eccube/Controller/Admin/Customer/CustomerPointController.php の pointHistory() は POST成功時に `$Customer->getPlayer()->addPoint($PointHistory->getPointChange());` と直接呼ぶ。Controller/Twigを NotFound、createNotFoundException、Player null で検索しても404分岐はなく、point_update.twig は `{{ Customer.Player.point }}` を直接参照する。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 643,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "excel_to_html/output 全HTMLの src-cell を `customer/point`、`update/{type}`、`admin_customer_point_update` で検索して各0件。0207 sheet-11 正本には 0207:ポイント付与（キャンペーン、特別対応）!C49「識別ID:7「保存ボタン」押下時、フォーム内容の入力チェックをサーバ側で行う」と D50「入力チェック後、ポイント履歴にフォーム入力内容を登録し、画面を更新する」はあるがURLはない。旧実装 pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/CustomerServiceProvider.php で `/customer/point/{id}/update/{type}` と bind `admin_customer_point_update` を確認した。",
+      "reason": "登録処理自体は正本にあるが、指摘の核心である `/update/{type}` 付きPOSTパスは正本セルではなく旧実装に由来するため LEGACY_BACKED を維持する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/CustomerPointController.php の pointHistory() に付くPOSTルートは `/%eccube_admin_route%/customer/point/{id}/{type}`（name: admin_customer_point_update）。src/Eccube/Resource/template/admin/Customer/point_update.twig の form action も `url('admin_customer_point_update', { id : Customer.id, type: type })` であり、src/app を検索して `/update/{type}` の互換ルートは見つからない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 644,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0207 sheet-11 の src-cell を「会員・選手」「選手情報」「ページが見つから」「404」で確認したが該当0件。正本セル 0207:ポイント付与（キャンペーン、特別対応）!B42 は「・カスタマイズ要件に記載の内容以外は現行踏襲とする。」で、具体的な404は function-design-embed 内だけにある。旧実装 pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Customer/CustomerController.php の pointUpdate() では customer と player を別々に確認し、双方で `return $app->abort(404);` としている。",
+      "reason": "Player不在時404の個別根拠は旧実装だけなので分類は妥当。現実装には同等の分岐がない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/CustomerPointController.php の pointHistory() はPlayerの存在確認なしで、POST時に `$Customer->getPlayer()->addPoint(...)` を実行する。src/Eccube/Entity/Customer.php の getPlayer() は `?DtbPlayer`、point_update.twig は `{{ Customer.Player.point }}`。当該Controller/Twigに NotFound またはPlayer null判定はない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 645,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0207 sheet-11 のExcel正本セル 0207:ポイント付与（キャンペーン、特別対応）!C49 に「識別ID:7「保存ボタン」押下時」、同 !E61 に「保存ボタン」、!M61 に「ボタン」が実在する。さらに data-excel-ref `0207:ポイント付与（キャンペーン、特別対応）!A1` のレイアウト画像を実際に開き、送信ボタン表示が「保存」であることを確認した。",
+      "reason": "処理概要の識別IDは7、項目表では識別ID 6という番号揺れはあるが、正本セルと正本レイアウト画像の双方が表示ラベル「保存」を支持する。したがって SPEC_BACKED は妥当。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Customer/point_update.twig の送信buttonは `{{ 'admin.common.registration'|trans }}` を表示し、src/Eccube/Resource/locale/messages.ja.yaml の実値は `admin.common.registration: 登録`。正本画像の「保存」と一致しない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 646,
+      "originalClass": "UNCERTAIN",
+      "classVerdict": "REFUTED",
+      "correctedClass": "SPEC_BACKED",
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0207 sheet-12 の正本セルは、機能名セル 0207:ポイント付与（余剰入金へのご返金、注文金額変更によるご返金!N4 が「ポイント付与（余剰入金へのご返金、注文金額変更によるご送金）」、備考選択肢セル !AG60 が「選択肢:余剰入金へのご返金、注文金額変更によるご返金」である。表示文言の判断に必要な data-excel-ref `...!A1` のレイアウト画像も実際に開き、画面タイトルが「ポイント履歴追加（余剰入金へのご返金、注文金額変更によるご返金）」、ボタンが「保存」であることを確認した。",
+      "reason": "機能名セルには「ご送金」という表記揺れがあるが、本件は画面表示タイトルの指摘であり、正本レイアウト画像が表示値「注文金額変更によるご返金」を直接示す。よって根拠区分は UNCERTAIN ではなく SPEC_BACKED。なお画像上のタイトル接頭辞は「ポイント履歴追加」であり、指摘文の「ポイント付与」ではないが、「ご返金」対「ご送金」の表示乖離は残る。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/CustomerPointController.php の pointHistory() はpurchase時に `admin.customer.point_update.purchase` を pointTypeLabelKey として返し、point_update.twig は `{{ pointTypeLabelKey|trans }}` を表示する。src/Eccube/Resource/locale/messages.ja.yaml の現値は `ポイント履歴追加（余剰入金へのご返金、注文金額変更によるご送金）` で、正本レイアウト画像の「ご返金」と異なる。",
+      "severityOpinion": "low",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 648,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0207 sheet-12 の正本src-cellを「会員・選手」「選手情報」「ページが見つから」「404」で検索して該当0件。正本セル !B42 は「・カスタマイズ要件に記載の内容以外は現行踏襲とする。」までで、Player不在時404の具体記述は function-design-embed 内だけ。旧実装 pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Customer/CustomerController.php の pointUpdate() では player 不在時に `return $app->abort(404);` を実行する。",
+      "reason": "具体的な404要件の根拠は旧実装にあるため LEGACY_BACKED は妥当。現実装では欠落状態が続いている。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Entity/Customer.php の getPlayer() は nullable。src/Eccube/Controller/Admin/Customer/CustomerPointController.php の pointHistory() は `$Customer->getPlayer()->addPoint(...)` を直接実行し、Player不在時の404分岐を持たない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 649,
+      "originalClass": "UNCERTAIN",
+      "classVerdict": "REFUTED",
+      "correctedClass": "SPEC_BACKED",
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0207 sheet-12 の正本セル !N4 は「…注文金額変更によるご送金」、!AG60 は「選択肢:余剰入金へのご返金、注文金額変更によるご返金」と表記が分かれる。一方、表示文言の正本である data-excel-ref `...!A1` のレイアウト画像を実際に開くと、画面タイトルは「ポイント履歴追加（余剰入金へのご返金、注文金額変更によるご返金）」と描画されている。src-cellだけでなく画像まで確認した。",
+      "reason": "画面タイトルの表示値は正本レイアウト画像が直接示すため、表示文言の根拠を UNCERTAIN とするのは誤りで SPEC_BACKED。正本内の機能名セルの表記揺れは残るが、表示対象そのものは画像で判定できる。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/CustomerPointController.php の pointHistory() はpurchase時に `admin.customer.point_update.purchase` を選び、src/Eccube/Resource/template/admin/Customer/point_update.twig がこれを翻訳表示する。messages.ja.yaml の値は「ポイント履歴追加（余剰入金へのご返金、注文金額変更によるご送金）」。CustomerPointType::NOTE_CHOICES_REFUND の選択肢は「注文金額変更によるご返金」だが、タイトルだけは「ご送金」のままである。",
+      "severityOpinion": "low",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 650,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0207 sheet-13 のExcel正本は 0207:ポイント履歴確認 !C37「識別ID:1 「会員編集画面に戻るボタン」押下時…」、!C39「ポイント履歴はID降順でラベル表示する」までで、POST URLはない。excel_to_html/output 全HTMLの src-cell を `customer/point`、`update/{type}`、`admin_customer_point_update` で検索して各0件。旧実装 CustomerServiceProvider.php では `/customer/point/{id}/update/{type}` を確認した。",
+      "reason": "M08-06の埋め込み詳細にはPOST URLがあるが、Excel正本部分にはない。URL期待値の根拠は旧実装なので LEGACY_BACKED は妥当。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/CustomerPointController.php の admin_customer_point_update は `/%eccube_admin_route%/customer/point/{id}/{type}`。point_update.twig のformも同ルート名を生成し、`/update/{type}` の互換ルートはsrc/app全文検索で見つからない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 653,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0207 sheet-14 のExcel正本セル 0207:メール配信履歴!C60 に「メール配信履歴は処理日降順で表示する」が実在する。項目表 !E69 は「処理日」。function-design-embed外の src-cell で確認した。",
+      "reason": "処理日降順はExcel正本の明示要件であり SPEC_BACKED は妥当。現実装は別キーのidで降順取得している。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/CustomerMailController.php の history() は `$this->mailHistoryRepository->findBy($criteria, ['id' => 'DESC'])`。src/Eccube/Entity/MailHistory.php には別フィールド `send_date` があるが、history() のorderByには使われていない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 654,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0207 sheet-14 のExcel正本セルは処理日降順、テンプレート絞り込み、通知メール、件名・本文ポップアップを定義するがURLは記載しない。excel_to_html/output 全HTMLの src-cell を `customer/{id}/mail_history` と `mail_history` で検索し、前者は0件、後者は0408のDBテーブル名を含む3件だけで画面URLは0件。旧実装 CustomerServiceProvider.php で `/customer/{id}/mail_history` を確認した。",
+      "reason": "画面URLの具体値は旧実装に由来するため LEGACY_BACKED は妥当。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/CustomerMailController.php の history() は `/%eccube_admin_route%/customer/mail/{id}/history`（admin_customer_mail_history）。Customer/edit.twig、Customer/index.twig、mail_history.twig はすべて同ルート名を使い、src/appに旧 `/customer/{id}/mail_history` の互換ルートはない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 655,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "REFUTED",
+      "correctedClass": "SPEC_BACKED",
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0207 sheet-14 の正本セル 0207:メール配信履歴!AG4 は「顧客に配信したメールの履歴を確認できる」、!C61 はテンプレート絞り込み、項目表 !E69〜!E73 は「処理日」「通知メール」「件名」「件名」「本文」。data-excel-ref `0207:メール配信履歴!A1` のレイアウト画像も実際に開き、処理日・通知メール・件名の一覧と件名/本文ポップアップを確認した。さらに関連するExcel正本 0408:リニューアル時パスワードリセットメール送信!D25 に「メール送信後、データベース内にあるメール送信履歴データ(dtb_user_mail_history)に送信内容が保存される。」、!C119 に同テーブルへ下記情報を登録、!E120〜!E124 に「送信日時」「送信時のメール件名」「送信したメール本文の全文」「…テンプレートのファイル名」「送信した相手のユーザーID」が実在する。",
+      "reason": "0207単独にはテーブル名がないが、関連する会員バッチのExcel正本が会員宛メールの保存先を `dtb_user_mail_history` と明記し、M08-07正本がその会員メール履歴の表示・絞り込み項目を定義する。関連正本まで含めれば旧実装だけの根拠ではないため SPEC_BACKED に訂正する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/CustomerMailController.php の history() は MailHistoryRepository を注入し、`mailHistoryRepository->findBy(...)` の結果を表示する。src/Eccube/Entity/MailHistory.php は `#[ORM\\Table(name: 'dtb_mail_history')]`、件名列は `mail_subject`。mail_history.twig も `MailHistory.mail_subject` を表示する。src/Eccube/Entity/DtbUserMailHistory.php は `dtb_user_mail_history` にマップされるが `@deprecated dtb_mail_historyに統合されたため、使用しない` とされ、リポジトリ全文検索でも画面からの利用はない。",
+      "severityOpinion": "med",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 656,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0207 sheet-15 のExcel正本セルは確認画面追加、フォーム項目、ボタン遷移を定義し、!D53 のURLは流用元 `/admin/order/[受注ID]/mail` だけである。excel_to_html/output 全HTMLの src-cell を `customer/manual_mail`、`customerId`、`templateId` で検索し、`customer/manual_mail` と `templateId` は0件、`customerId` はAPI_その他の無関係な2件のみ。旧実装 CustomerServiceProvider.php ではGET `/customer/manual_mail` と `/customer/manual_mail/{customerId}/{templateId}` の2入口を確認した。",
+      "reason": "クエリ指定の手動メール入口はExcel正本にはなく旧実装に由来するため LEGACY_BACKED は妥当。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/CustomerMailController.php の manual_mail() に付くルートは `/%eccube_admin_route%/customer/manual_mail/{id}/{template_id}` のみで、template_idだけが既定値null、idは必須。src/appを `customer/manual_mail` で検索しても、会員IDをクエリで受ける引数なし入口はない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    }
+  ]
+}

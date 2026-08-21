@@ -1,0 +1,365 @@
+{
+  "packetId": "sw_02",
+  "results": [
+    {
+      "rowId": 37,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "想定外のConnectionTypeに対するHTTPステータスが400となり、Content-Typeもtext/plainで返る。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/App/OrderController.php:91-98を開き、空のStreamedResponseにHTTP 400とtext/plainを設定して返すことを確認。設計側はhareruya-design-docs/functions/pf-api/a05-02_api_order_print_direct.md:130,161で本文非返却・応答非組立を指定。",
+      "reason": "HTTPステータスとヘッダはクライアントから直接観測できるため。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 38,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "クライアントが専用URLへPOSTしても到達できず、実装の/api/order/prints/direct/{base_info_id}へConnectionType付きで送る必要がある。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/App/OrderController.php:43-46を開き、POST /api/order/prints/direct/{base_info_id}の単一路線とConnectionType分岐を確認。src/Eccubeとapp/configを専用パス語で検索し別ルートがないことも確認。",
+      "reason": "HTTPパスとリクエスト契約が異なるため。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 39,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "個別ePOSPrintの失敗codeが運用ログに残らず、失敗した印刷対象でも受注ステータス等が更新され得る。",
+      "checked": "ec-cube-enterprise/src/Eccube/Service/Admin/Order/UpdatePrintedOrderStatusAction.php:45-105を開き、XML全体のServerDirectPrintと要素数だけを確認し、各ePOSPrintのsuccess/codeを判定せず受注をpersist/flushすることを確認。",
+      "reason": "ログI/OとDB更新結果の双方に差が出るため。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 40,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "POST /{_locale}/smaregi/transactionではなく設定値による秘匿prefix直下へ送信しなければWebhookに到達しない。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Smaregi/WebhookController.php:41-42とapp/config/eccube/routes.yaml:9-12を開き、空のController相対パスと/%eccube_smaregi_webhook_route% prefixを確認。設計側はfunctions/pf-eccube3/a05-04_api_order_order_smaregi_receive.md:68を確認。",
+      "reason": "外部公開されるHTTPパスが異なるため。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 41,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "秘密ヘッダ不正時に401、smaregi-event-id欠落時に400のJSONエラーが返り、匿名・ヘッダ欠落リクエストは処理されない。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Smaregi/WebhookController.php:52-78とService/Smaregi/Webhook/AuthenticationService.php:33-46を開き、秘密ヘッダ検証および401/400分岐を確認。",
+      "reason": "受付可否、HTTPステータス、本文が変わるため。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 42,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "成功レスポンスがresult[].TransactionHeadを含まず、{status:'ok'}または重複メッセージになる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Smaregi/WebhookController.php:80-89,107-109を開き、重複時と通常成功時のJsonResponseキーを確認。設計側はfunctions/pf-eccube3/a05-04_api_order_order_smaregi_receive.md:126-147を確認。",
+      "reason": "レスポンスJSONのキーと値が外部契約と異なるため。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 43,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "HTTP 200返却時点では業務更新が完了しておらず、後続非同期処理の失敗・遅延がレスポンス件数へ反映されない。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Smaregi/WebhookController.php:80-109を開き、重複照合、イベント永続化、MessageBus dispatch後の即時200を確認。Service/Smaregi/Webhook/EventService.php:51-56でイベントID重複検索も確認。",
+      "reason": "応答時点、処理完了保証、再送時の副作用が変わるため。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 44,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "フォームparamsやX_contract_id等を送る設計クライアントのデータは解釈されず、生JSONとsmaregi-event-idを要求する実装契約で処理される。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Smaregi/WebhookController.php:67-74とService/Smaregi/Webhook/EventService.php:31-46を開き、getContent()のJSONからcontractId/event/actionを取り出す実装を確認。設計側はfunctions/pf-eccube3/a05-04_api_order_order_smaregi_receive.md:111-123を確認。",
+      "reason": "HTTPリクエストのキー、位置、必須ヘッダが異なるため。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 45,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "取消・打消後も元ポイント履歴がDBに残り、同一transaction_idの逆仕訳履歴が追加される。",
+      "checked": "ec-cube-enterprise/src/Eccube/Service/Smaregi/Webhook/Transaction/SmaregiPointAdjustmentReverter.php:60-116を開き、元履歴を削除せずnetの符号反転履歴をsaveすることを確認。設計側はfunctions/pf-eccube3/a05-04_api_order_order_smaregi_receive.md:89-103,192を確認。",
+      "reason": "永続レコードの件数・内容が異なるため。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 46,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "自店舗外明細が支店APIへ送信されず、転送先更新・件数合算・転送失敗ログが発生しない。",
+      "checked": "ec-cube-enterprise/src/Eccube/Service/Smaregi/Webhook/Transaction配下の全ファイル一覧を確認し、同配下とMessageHandlerをX_contract_id/X_access_token/支店/forward/transferで検索して転送経路がないことを確認。設計側はfunctions/pf-eccube3/a05-04_api_order_order_smaregi_receive.md:89-104,213-215を確認。",
+      "reason": "外部HTTP送信、転送先DB更新、応答件数、ログI/Oが欠落するため。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 47,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "出荷完了反映の永続化先・作成更新される受注レコードと項目が設計想定と異なる。",
+      "checked": "ec-cube-enterprise/src/Eccube/EntityとService/Smaregiをdtb_order_sub/OrderSubで検索して対応Entity不在を確認し、Service/Smaregi/Webhook/Transaction/PurchasePatternResolver.phpおよびHandler/Pattern配下の実装経路を確認。設計側はfunctions/pf-eccube3/a05-04_api_order_order_smaregi_receive.md:46,195を確認。",
+      "reason": "DBの保存先と更新内容は永続データとして観測可能であり、要確認表記でも影響自体は否定されないため。",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 48,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "処理例外時の本文がコントローラ独自の{status:'error',message:'Error processing webhook'}になる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Smaregi/WebhookController.php:92-121とEventListener/ExceptionListener.php:42-69を開き、前者のcatch本文と、標準Webhook例外時の500本文Internal server errorが異なることを確認。",
+      "reason": "同じ例外でもHTTPレスポンス本文が変わるため。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 49,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "成功応答にAccess-Control-Allow-Origin:*が付かず、ブラウザのクロスオリジン呼び出し可否と応答ヘッダが異なる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Smaregi/WebhookController.php:107-109を開き、ヘッダ指定なしのJsonResponseを確認。srcとapp/configをAccess-Control-Allow-Origin/Cache-Control/CORSで検索し、成功Webhookへ適用する共通処理がなく、個別Controller等だけに付与実装があることを確認。",
+      "reason": "少なくともCORSヘッダの欠落だけで外部観測可能な差が確定するため。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 50,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "受信ヘッダ全体と本文が通常ログ・認証失敗ログへ出力され、Cookieや資格情報がログ閲覧者に露出し得る。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Smaregi/WebhookController.php:44-58を開き、headers->all()とgetContent()をlog_info/log_warningへ渡すことを確認。AuthenticationService.php:20-45で秘密ヘッダも受信ヘッダの一つであることを確認。",
+      "reason": "ログファイルへの出力内容と秘密情報の露出が変わるため。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 51,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "同一会員・同一取引の並行Webhookが直列化され、二重ポイント付与を防ぐ一方、待機・ロック失敗・ロールバックが発生し得る。",
+      "checked": "ec-cube-enterprise/src/Eccube/Service/Smaregi/Webhook/Transaction/SmaregiOrderPointApplier.php:99-132とSmaregiPointAdjustmentApplier.php:132-169を開き、beginTransaction、PESSIMISTIC_WRITE、ロック後の冪等性確認、commit/rollbackを確認。",
+      "reason": "排他制御は競合時のDB結果と処理成否を変えるため、内部差に閉じない。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 52,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "許可IPでも秘密ヘッダがなければ401となり、逆にIP制限ではなくヘッダ値により受付可否が決まる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Smaregi/WebhookController.php:52-65とService/Smaregi/Webhook/AuthenticationService.php:20-46を開き、secretHeader/secretのhash_equals認証を確認。Controller/Smaregi、Service/Smaregi/Webhook、app/config/eccubeをIP関連語で検索しWebhook用IP制限がないことを確認。",
+      "reason": "認証方式の差は外部クライアントのアクセス可否を変えるため。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 53,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "成功時に空本文ではなくJSON本文が返り、Smaregi-Event-Id欠落時は200ではなく400になる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Smaregi/WebhookController.php:67-78,80-89,107-109を開き、必須ヘッダ分岐と成功・重複時のJSON本文を確認。",
+      "reason": "HTTPステータスとレスポンスボディが直接変わるため。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 54,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "スマレジ取引取得APIへwith_deposit_others=allではなくwith_payments=noneが送られ、返却される決済・預り金関連データが変わり得る。",
+      "checked": "ec-cube-enterprise/src/Eccube/Service/Smaregi/Api/SmaregiTransactionApiClient.php:27-34,50-64,126-153を開き、固定query配列がGuzzleのqueryとして外部送信されることを確認。",
+      "reason": "外部APIへのクエリパラメータが異なるため。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 55,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "既定設定ではクライアントは/api/v1/admin/login.jsonを呼ぶ必要があり、設計の各パスではログインできない。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/LoginController.php:45-46とapp/config/eccube/packages/eccube.yaml:6,72を開き、既定ECCUBE_API_V1_ROUTEがapi/v1であることを確認。src/app/config/htmlを各設計パスで検索し別名ルートがないことを確認。",
+      "reason": "既定のHTTPパスが外部契約と異なるため。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 56,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "管理ログインへのHTTP中継と/tmpのCookieファイル作成・削除が発生せず、ローカルDBのハッシュ検証結果で認証成否が決まる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/LoginController.php:48-70を開き、LoginMemberView検索、Member構築、UserPasswordHasherによる直接検証を確認。ファイル内にHTTPクライアントやCookieファイル操作がないことも確認。",
+      "reason": "下流HTTP I/O、ファイルI/O、認証の参照時点・障害条件が変わるため。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 57,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "空のlogin_id/passwordは中継先へ送信されず、API入口で直ちに独自UnauthenticatedExceptionとなる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/LoginController.php:48-53を開き、空文字判定と独自メッセージの例外送出を確認。ExceptionListener.php:72-145で{code,errors}応答への変換も確認。",
+      "reason": "下流リクエストの有無と失敗レスポンスが変わるため。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 58,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "認証失敗時のJSONが{code,message}ではなく{code,errors}となり、文言も実装固定の日本語になる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/LoginController.php:51-58とEventListener/ExceptionListener.php:72-145を開き、例外文言と共通JSONのcode/errorsキーを確認。設計側はfunctions/pf-api/a06-01_api_store_purchase_admin_login.md:136-141を確認。",
+      "reason": "レスポンスJSONのキーと値がクライアントから観測できるため。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 59,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "発行JWTをデコードするとpayloadはsubだけで、設計要求のiss/audが存在しない。",
+      "checked": "ec-cube-enterprise/src/Eccube/Security/AccessToken/JwtTokenService.php:73-90を開き、payload配列がsubのみ、署名algがHS256であることを確認。verifyAndGetMemberIdもsubを読むことを確認。",
+      "reason": "JWTはクライアントへ返すI/Oであり、ペイロードのクレーム差は外部露出するため。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 60,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "店舗未紐付け会員のログインではshopName/shopAddr空文字の200ではなく、null BaseInfoへのメソッド呼出しで500になり得る。",
+      "checked": "ec-cube-enterprise/src/Eccube/Entity/Views/LoginMemberView.php:58-64,111-114でbase_info_idがnullableであること、Controller/App/MTGBuyer/V1/Admin/LoginController.php:65-85でfind結果をnull確認せずgetAddr01/getShopNameすることを確認。",
+      "reason": "成功レスポンスとHTTP 500の差が生じるため。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 61,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "既定設定ではGET /api/v1/admin/otcBuyOrders.jsonだけが到達し、設計のURL・拡張子なし別名は利用できない。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php:69-70とapp/config/eccube/packages/eccube.yaml:6,72を開き、既定prefixと.json付きルートを確認。src/app/config/htmlをotcBuyOrdersで検索し別ルートがないことを確認。",
+      "reason": "HTTPパスの違いは呼出可否に直結するため。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 62,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "ステータス7の受注が一覧から除外され、返却件数と要素が設計より少なくなる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Entity/Master/MtbOtcBuyOrderStatus.php:82-87でASSESSMENT_UNCOMPLETED_STATUSESが5,6,8,9であること、OtcBuyOrderController.php:79でその配列を検索条件へ渡すこと、Repository.php:997-1048でIN条件に使うことを確認。",
+      "reason": "一覧APIの選択行が変わるため。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 63,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "店舗未紐付け会員では全店舗一覧を返す分岐に入らず、BaseInfo null参照で失敗する。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php:72-79を開き、getBaseInfo()->getId()を無条件実行することを確認。Repository.php:997-1048もshopId必須かつbaseInfo.id=:shopId固定であることを確認。",
+      "reason": "返却対象範囲またはHTTP成否が変わるため。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 64,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "applyDateはY/m/d H:i:s、birthはY-m-dで返り、ISO8601の時刻・オフセット表現にならない。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php:97,113を開き、固定format文字列を確認。設計側はfunctions/pf-api/a06-02_api_store_purchase_otc_buy_order_list.md:133,149を確認。",
+      "reason": "JSON文字列の値が直接異なるため。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 65,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "本人確認未登録のJSON値が0ではなくnullになる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Repository/DtbOtcBuyOrderRepository.php:1020-1041でIdentificationをleftJoinしidentification.idを選択すること、OtcBuyOrderController.php:105で?? nullのまま返すことを確認。",
+      "reason": "レスポンスの値とJSON型が異なるため。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 66,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "認証失敗401に{code:401,errors:[...]}のJSON本文が付く。",
+      "checked": "ec-cube-enterprise/src/Eccube/EventListener/ExceptionListener.php:72-145を開き、App APIのBaseApiException/HttpExceptionをcode/errors付きJsonResponseへ変換することを確認。InvalidTokenException.phpとUnauthenticatedException.phpで401指定も確認。",
+      "reason": "設計の空本文と実装のJSON本文はクライアントから観測できるため。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 67,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "入力不正のHTTPステータス・errors文言、401/404の本文、受け付けるorder_status集合が設計契約と異なる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php:129-151、Dto/App/MTGBuyer/V1/Admin/UpdateOtcBuyOrderDto.php:23-47、EventListener/ExceptionListener.php:72-145を開き、MapRequestPayload、Choiceが完了系ステータス限定、code/errors共通本文を確認。",
+      "reason": "検証条件、HTTPステータス、レスポンス本文はいずれも外部I/Oを変えるため。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 68,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "quantityまたはpriceがnullの明細は更新処理へ進めず、400エラーとなってDB再構築が行われない。",
+      "checked": "ec-cube-enterprise/src/Eccube/Dto/App/MTGBuyer/V1/Admin/UpdateOtcBuyOrderDetailDto.php:33-42とService/App/MTGBuyer/V1/Admin/OtcBuyOrder/BuildOtcBuyOrderDetailUpdatePlan.php:47-54を開き、null時にInvalidRequestParameterExceptionをthrowすることを確認。",
+      "reason": "受理可否、HTTP応答、DB更新有無が変わるため。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 69,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "false指定では確認済みフラグを解除できず、非該当受注でもtrue指定ならDBへ保存される。",
+      "checked": "ec-cube-enterprise/src/Eccube/Dto/App/MTGBuyer/V1/Admin/UpdateOtcBuyOrderDto.php:35-39、Service/EntityManager/OtcBuyOrderEntityManager.php:62-64、Entity/DtbOtcBuyOrder.php:689-722を開き、truthy時だけsetterを呼び、qualifiedInvoiceIssuerFlg条件を見ないことを確認。",
+      "reason": "永続フラグ値が入力と業務条件に応じて異なるため。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 70,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "成立以外でもキャンセルステータス2以外（例:10）ではcancel_dateが更新されない。",
+      "checked": "ec-cube-enterprise/src/Eccube/Service/EntityManager/OtcBuyOrderEntityManager.php:50-59を開き、complete時だけcompleteDate、isCancel時だけcancelDateを設定することを確認。Entity/Master/MtbOtcBuyOrderStatus.php:146-164でisCancelがID 2のみであることも確認。",
+      "reason": "DBに保存される日時の有無が変わるため。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 71,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "既定設定ではPUT /api/v1/admin/otcBuyOrder/{id}/freeComment.jsonだけが到達し、設計URLでは更新できない。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php:156-157とapp/config/eccube/packages/eccube.yaml:6,72を開き、api/v1既定prefixを確認。src/app/config/htmlをfreeCommentで検索し設計パスの別ルートがないことを確認。",
+      "reason": "HTTPパス差によりAPI呼出可否が変わるため。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 72,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "拡張子なしPUT /admin/otcBuyOrder/{id}/freeCommentでは同じ更新処理を呼べず、ルート不一致になる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php:156-157を開き、.json付き属性ルートのみを確認。src/Eccube、app/config、htmlをfreeCommentと拡張子なしパスで検索し追加ルート不在を確認。設計側はfunctions/pf-api/a06-04_api_store_purchase_otc_buy_order_free_comment.md:59-60を確認。",
+      "reason": "外部クライアントが利用できるURL集合が異なるため。",
+      "confidence": "high"
+    }
+  ]
+}

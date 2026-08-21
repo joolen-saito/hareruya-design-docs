@@ -1,0 +1,341 @@
+{
+ "packetId": "rc_18",
+ "note": "rowId は drift_findings_list_final.tsv の行番号(ヘッダ除く1始まり)。mech は機械検証フラグ(手掛かりであって正解ではない)。",
+ "count": 12,
+ "findings": [
+  {
+   "rowId": 330,
+   "機能No": "F06-22",
+   "機能名": "F06-22 お問い合わせ",
+   "ドメイン": "f06",
+   "区分(画面種別)": "front",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "(4-5)イベント実施店舗は店舗登録の『全店舗名』を選択肢とする（4-2 お問い合わせ店舗選択は閉店/非公開を除く と書き分け）",
+   "実装実態": "eventShop の query_builder が s.isPublicShop = true AND s.isOpenShop = true でフィルタしており、4-2 shop (133-134行) と全く同一のフィルタを適用している。",
+   "差分内容": "設計は4-5を『全店舗名』と4-2から意図的に書き分けているが、実装は eventShop にも公開かつ営業中フィルタを適用し閉店/非公開店舗が選択肢から欠落する。",
+   "実装参照": "src/Eccube/Form/Type/Front/ContactType.php:141-152 (query_builder 150-151)",
+   "設計書参照": "0306_基本設計仕様書(フロント_会員).html#sheet-18:88",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html:7370 は(4-2)お問い合わせ店舗を「閉店または非公開の店舗は選択肢から除く」とし、同:7373 は(4-5)イベント実施店舗を「店舗登録に登録されている全店舗名」と明確に書き分ける。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Form/Extension/Front/ContactTypeExtension.php:82-91 はeventShopのquery_builderを `createQueryBuilder('s')->orderBy('s.rank', 'ASC')` とし、公開・営業中フィルタを付けず全店舗を候補にしていた。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Form/Type/Front/ContactType.php:141-152 のeventShop query_builderは `where('s.isPublicShop = true')->andWhere('s.isOpenShop = true')` とし、非公開・閉店店舗を除外する。",
+   "根拠検証メモ": "Excel正本の直接要件で、旧実装も一致する。",
+   "対応の根拠(現develop)": "`src/Eccube/Form/Type/Front/ContactType.php:141-154` の eventShop の query_builder は `->where('s.isPublicShop = true')` `->andWhere('s.isOpenShop = true')`（147-152行）のままで、`同ファイル:124-137` の shop の query_builder（130-135行）と完全に同一フィルタ。閉店/非公開店舗が eventShop の選択肢から除外され続けている。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "UNCHANGED"
+   }
+  },
+  {
+   "rowId": 332,
+   "機能No": "F06-23",
+   "機能名": "F06-23 お問い合わせ履歴",
+   "ドメイン": "f06",
+   "区分(画面種別)": "front",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "日時書式：一覧は Y年m月d日 H:i で送信日時を表示する（詳細は Y/m/d H:i）。",
+   "実装実態": "一覧テンプレートは日本語ロケール時に {{ contactHistory.createDate|date('Y/m/d H:i') }}（33行）でスラッシュ区切り表示。詳細(history_detail.twig:18)は Y/m/d H:i で設計通り。",
+   "差分内容": "設計は一覧の送信日時書式を『Y年m月d日 H:i』と規定するが、実装 history.twig の isLocaleJa 分岐は 'Y/m/d H:i' を用い年月日表記になっていない。書式は history.twig のみで決定され設計と差異がある。",
+   "実装参照": "src/Eccube/Resource/template/default/Contact/history.twig:31-37",
+   "設計書参照": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-19",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html:7802 のExcel正本は一覧に「問い合わせ日時」を表示するとだけ記し、書式は指定しない。書式はリバース詳細設計 hareruya-design-docs/functions/pf-eccube3/f06-23_front_contact_history.md:75-78,126 の「一覧はY年m月d日 H:i、詳細はY/m/d H:i」にのみある。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Contact/history.twig:14-18 は一覧日時を `date('Y年m月d日 H:i')`、同/history_detail.twig:17-20 は詳細日時を `date('Y/m/d H:i')` で描画していた。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Resource/template/default/Contact/history.twig:31-36 は日本語一覧でも `date('Y/m/d H:i')` を使用する。詳細は同/history_detail.twig:16-21 で同じ `Y/m/d H:i` である。",
+   "根拠検証メモ": "一覧固有の年月日書式は旧テンプレート由来。",
+   "対応の根拠(現develop)": "`src/Eccube/Resource/template/default/Contact/history.twig:31-37` の一覧日時は `{% if isLocaleJa %}{{ contactHistory.createDate|date('Y/m/d H:i') }}{% else %}{{ contactHistory.createDate|date('m/d/Y H:i') }}{% endif %}`（33行が日本語分岐）でスラッシュ区切りのまま。設計の `Y年m月d日 H:i` になっていない。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "UNCHANGED"
+   }
+  },
+  {
+   "rowId": 333,
+   "機能No": "F06-23",
+   "機能名": "F06-23 お問い合わせ履歴",
+   "ドメイン": "f06",
+   "区分(画面種別)": "front",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "件数：総件数は当該会員のお問い合わせ件数。0件のときも見出しと総件数『0件』を表示し、明細を出さない。",
+   "実装実態": "contactHistories が空の場合は front.contact_history.empty『お問い合わせ履歴はありません。』(messages.ja.yaml:412)を表示(11-15行)。総件数 toolbar_count『N件』(messages.ja.yaml:413)は not empty ブロック内(17-25行)にあり0件時は出力されない。",
+   "差分内容": "設計は0件でも『0件』を表示すると業務ルール・エッジケースで二重明記。実装は0件を空状態メッセージへ分岐し件数を出さないため設計要求を満たさない。",
+   "実装参照": "src/Eccube/Resource/template/default/Contact/history.twig:11-25",
+   "設計書参照": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-19",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html:7801 のExcel正本は問い合わせ件数を「今まで問い合わせを行なった件数」とするが、0件時にも「0件」を出す条件はない。条件はリバース詳細設計 hareruya-design-docs/functions/pf-eccube3/f06-23_front_contact_history.md:82,124,134 の「0件でも見出しと総件数『0件』」にのみある。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Contact/history.twig:5-17 は見出しと `{{ contactHistories|length }} 件` をループの外で無条件表示するため、空配列でも0件を表示していた。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Resource/template/default/Contact/history.twig:10-24 は空時に「front.contact_history.empty」を表示し、件数表示を `{% if contactHistories is not empty %}` の内側に置くため0件を出さない。",
+   "根拠検証メモ": "0件時の表示条件は旧実装由来。",
+   "対応の根拠(現develop)": "`src/Eccube/Resource/template/default/Contact/history.twig:11-15` で `{% if contactHistories is empty %}` → `<p>{{ 'front.contact_history.empty'|trans }}</p>`（messages.ja.yaml:411『お問い合わせ履歴はありません。』）を表示し、総件数を出力する `{{ 'front.contact_history.toolbar_count'|trans({ '%count%': contactHistories|length }) }}`（22行、messages.ja.yaml:412 `\"%count%件\"`）は `{% if contactHistories is not empty %}`（17行）ブロック内のまま。0件時に『0件』は表示されない。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "UNCHANGED"
+   }
+  },
+  {
+   "rowId": 339,
+   "機能No": "F07-01",
+   "機能名": "F07-01 イベント大会TOP",
+   "ドメイン": "f07",
+   "区分(画面種別)": "front",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "バナースライダーは自動スクロールで5秒毎に左方向にスクロールする",
+   "実装実態": "SP(348行)・PC(368行)のslickカルーセル初期化がともに autoplaySpeed: 4000（4秒毎）。Twig・バンドルJSに5000指定は無し。",
+   "差分内容": "設計は5秒毎(5000ms)を明示するが、実装は4000ms(4秒毎)で1秒短い。grep で 5000/autoplaySpeed: 5000 は該当0件、autoplaySpeed: 4000 が2箇所。",
+   "実装参照": "src/Eccube/Resource/template/default/Event/index.twig:348, 368",
+   "設計書参照": "excel_to_html/output/0307_基本設計仕様書(フロント_イベント).html#sheet-3",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0307_基本設計仕様書(フロント_イベント).html:1215-1219 のExcel正本はバナースライダーを「自動スクロールで5秒毎に左方向にスクロール」と直接規定する。",
+   "旧実装根拠": "pf-eccube3のEventテンプレート・assetsを `autoplaySpeed`、`5000`、sliderで検索したが5秒指定を確認できないため、期待値の直接根拠はExcel正本である。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Resource/template/default/Event/index.twig:345-350 と同:363-370 はSP・PCの両slick初期化で `autoplay: true, autoplaySpeed: 4000` を指定する。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Resource/template/default/Event/index.twig:348` `autoplay: true, autoplaySpeed: 4000,`、同 `:368` `dots: false, speed: 800, autoplay: true, autoplaySpeed: 4000,` と監査時点のまま4秒。develop 全体で `autoplaySpeed` を grep しても index.twig / index.en.twig の計4箇所すべてが 4000 で、5000 指定は0件（バンドル済 `html/template/default/assets/hareruya/js/hareruya-event.js` にも autoplaySpeed の記述なし）。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "UNCHANGED"
+   }
+  },
+  {
+   "rowId": 342,
+   "機能No": "F07-02",
+   "機能名": "F07-02 大会詳細検索",
+   "ドメイン": "f07",
+   "区分(画面種別)": "front",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "部品 1-8 のラベルは「リセット」・説明は「入力項目をリセットする」。リセットボタンはフォームを初期状態へ戻し、初期状態では『平日のイベントを表示する』『休日のイベントを表示する』はチェック済み、『過去のイベントを表示する』は未チェックとなる。",
+   "実装実態": "詳細検索モーダルの当該ボタンは表示文言が「クリア」(front.event.search.modal_clear=クリア)。data-search-clear 押下時の JS は form 内の全 checkbox を cb.checked=false、全 text/search 入力を value=''（空）にする全消去処理で、平日/休日チェックも外れ全項目未入力状態になる。",
+   "差分内容": "設計はボタン名を「リセット」とし挙動を「初期状態へ戻す（平日・休日はチェック済みに復帰、過去は未チェック）」と規定するが、実装は名称が「クリア」で挙動が全項目クリア（平日・休日も未チェックにする）。検索結果集合は isWeekday xor isHoliday 判定（DtbEventDetailRepository::buildFrontSearchQueryBuilder）のため平日/休日両オフでも両オンでも同一だが、表示文言（リセット→クリア）と復帰後のチェック状態が設計と相違。event_detailed_search_modal.twig・messages.ja.yaml を実コードで確認済み。",
+   "実装参照": "src/Eccube/Resource/template/default/Block/event_detailed_search_modal.twig:135, :198-207 ／ src/Eccube/Resource/locale/messages.ja.yaml:6505",
+   "設計書参照": "excel_to_html/output/0307_基本設計仕様書(フロント_イベント).html#sheet-4",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0307_基本設計仕様書(フロント_イベント).html:2087 のExcel正本は識別ID1-8を「リセット」、説明を「入力項目をリセットする」と直接規定する。同:2067-2069 は平日・休日・過去の各条件名を記すが、チェック初期値までは正本にない。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Event/search.twig:80-88 は `isWeekday` と `isHoliday` に `checked` を付け、`isPast` には付けていない。初期チェック状態の具体値はリバース詳細設計 hareruya-design-docs/functions/pf-eccube3/f07-02_front_event_event_search.md:80-85 にも記載され、旧実装由来である。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Resource/template/default/Block/event_detailed_search_modal.twig:133-136 はラベルキーを表示し、その値は ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:6574 の「クリア」。同テンプレート:198-207 の押下処理は全checkboxを `cb.checked = false`、テキストを空にするため、平日・休日も未チェックになる。",
+   "根拠検証メモ": "複合期待値のうち「リセット」という名称はExcel正本で直接裏付けられ、これだけでSPEC_BACKED。初期チェック状態への復帰は旧実装由来の補強根拠である。",
+   "対応の根拠(現develop)": "`src/Eccube/Resource/template/default/Block/event_detailed_search_modal.twig:135` は `<button ... data-search-clear>{{ 'front.event.search.modal_clear'|trans }}</button>` のままで、`src/Eccube/Resource/locale/messages.ja.yaml:6574` `front.event.search.modal_clear: クリア`（`modal_reset` 等のリセット用キーは未定義）。挙動も同 twig の inline script（`const clearButton = form.querySelector('[data-search-clear]');` 以降）で `form.querySelectorAll('input[type=\"checkbox\"]').forEach(function (cb) { cb.checked = false; });` と `input.value = '';` の全消去のみで、平日/休日をチェック済みへ戻す初期状態復帰処理は無い。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Resource/locale/messages.ja.yaml"
+    ]
+   }
+  },
+  {
+   "rowId": 344,
+   "機能No": "F07-03",
+   "機能名": "F07-03 大会詳細",
+   "ドメイン": "f07",
+   "区分(画面種別)": "front",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "参加費は0円のとき「無料」、それ以外は金額を桁区切りで「（金額）円」（例: 1,000円）と表示する。",
+   "実装実態": "0円時は front.event.detail.info.entry_fee_free（=『無料』, messages.ja.yaml:6559）で正しい。非0円時は '¥{{ Event.entryFee|number_format }}'（135行）とハードコードされ『¥1,000』のように円記号プレフィックスで表示。",
+   "差分内容": "detail.twig:135 が『¥』プレフィックス固定。設計は末尾『円』を要求。桁区切り自体は number_format で満たすが通貨表記の位置/記号が設計と相違し、ja ロケールでも『円』にならない。",
+   "実装参照": "src/Eccube/Resource/template/default/Event/detail.twig:132-136",
+   "設計書参照": "0307_基本設計仕様書(フロント_イベント).html#sheet-5",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0307_基本設計仕様書(フロント_イベント).html:2408 のExcel正本は項目名「参加費」、説明「イベント参加費」とするだけで、0円時「無料」・非0円時「（金額）円」という書式は指定しない。具体書式はリバース詳細設計 hareruya-design-docs/functions/pf-eccube3/f07-03_front_event_event_detail.md:81-86 にのみある。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Event/show.twig:64-71 は `event.getEntryFee() == 0` なら「無料」、それ以外は `{{ event.getEntryFee()|number_format() }}円` と表示していた。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Resource/template/default/Event/detail.twig:129-136 は0円時はfree翻訳を使うが、非0円時は `¥{{ Event.entryFee|number_format }}` と円記号を前置する。",
+   "根拠検証メモ": "金額書式の具体値は旧実装由来。",
+   "対応の根拠(現develop)": "`src/Eccube/Resource/template/default/Event/detail.twig:132-135` は `{% if Event.entryFee == 0 %}{{ 'front.event.detail.info.entry_fee_free'|trans }}{% else %}¥{{ Event.entryFee|number_format }}{% endif %}` のままで、非0円時は `¥` プレフィックス固定。末尾『円』表記への修正は入っていない。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Resource/template/default/Event/detail.twig"
+    ]
+   }
+  },
+  {
+   "rowId": 345,
+   "機能No": "F07-03",
+   "機能名": "F07-03 大会詳細",
+   "ドメイン": "f07",
+   "区分(画面種別)": "front",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "定員・参加費の表示（および申込可否の定員判定）は、イベント詳細(dtb_event_detail)の値を用い、未設定時のみイベント本体(dtb_event)の値を用いる。",
+   "実装実態": "賞品は Detail.prizeJp（詳細値優先フォールバック付き）を使う一方、定員は Event.capacity(127行)、参加費は Event.entryFee(132,135行)とイベント本体値を直接参照。DtbEventDetail::getCapacity()(DtbEventDetail.php:250 = capacity ?? Event.getCapacity())・getEntryFee()(:262) が詳細値優先で用意されているのに未使用。申込可否判定も EventDetailButtonStateResolver.php:32 で $event->getCapacity() を使用。",
+   "差分内容": "エンティティは詳細値優先＋本体フォールバックを実装済みだがテンプレートとボタン判定が Event 本体値を使用。詳細レベルで capacity/entry_fee を上書きしたイベントでは設計と異なる本体値が表示・判定され、賞品(Detail優先)との整合も取れない。",
+   "実装参照": "src/Eccube/Resource/template/default/Event/detail.twig:127,132,135 / src/Eccube/Service/Front/Event/EventDetailButtonStateResolver.php:32",
+   "設計書参照": "0307_基本設計仕様書(フロント_イベント).html#sheet-5",
+   "根拠区分": "UNCERTAIN",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0307_基本設計仕様書(フロント_イベント).html:2407-2408 のExcel正本は「イベントに設定されている定員数」「イベント参加費」とだけ記し、dtb_event_detail優先・dtb_eventフォールバックを指定しない。具体記述はリバース詳細設計 hareruya-design-docs/functions/pf-eccube3/f07-03_front_event_event_detail.md:187-194 の「dtb_event_detail capacity/entry_fee…表示に用いる（未設定時はイベント本体の値）」にのみある。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Entity/DtbEventDetail.php:400-426 は `getCapacity()` と `getEntryFee()` を詳細値優先・本体フォールバックで実装し、同:836-842 の申込可否は `$this->getCapacity()` を使用する。一方、旧主表示 pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Event/show.twig:59-71 は `event.getCapacity()` と `event.getEntryFee()` を直接使用し、詳細値を優先していない。同:103-110 の事前予約参加費だけは `detail.getEntryFee()` を使う。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Entity/DtbEventDetail.php:248-262 には詳細値優先のgetterが残るが、同/Resource/template/default/Event/detail.twig:125-136 は `Event.capacity` / `Event.entryFee` を直接表示し、同/Service/Front/Event/EventDetailButtonStateResolver.php:28-33 も申込可否を `$event->getCapacity()` で判定する。",
+   "根拠検証メモ": "複合指摘のうち「申込可否は詳細定員を使う」は旧実装で裏付けられるが、「主画面の定員・参加費表示も詳細値を使う」は旧実装自身が反証している。Excel正本は参照テーブルを特定しないため、表示部分をLEGACY_BACKED/UNSUPPORTEDのどちらにするか確定できない。指摘を「申込可否」「主表示」「事前予約参加費」に分割した追加判定が必要。",
+   "対応の根拠(現develop)": "`src/Eccube/Resource/template/default/Event/detail.twig:127` `|trans({'%count%': Event.capacity})`、同 `:132` `{% if Event.entryFee == 0 %}`、`:135` `¥{{ Event.entryFee|number_format }}` と、いずれもイベント本体値を直接参照したまま（同 twig 内の `Detail.` 参照は :21 prize / :23,102 startDate / :105-111 entry日程 / :162 のみで capacity・entryFee は無い）。`src/Eccube/Service/Front/Event/EventDetailButtonStateResolver.php:32` も `&& $activeEntryCount < $event->getCapacity()` のまま。`src/Eccube/Entity/DtbEventDetail.php:249-251` `getCapacity(): int { return $this->capacity ?? $this->Event->getCapacity(); }` / `:261-263` `getEntryFee()` は用意されているが未使用。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Resource/template/default/Event/detail.twig",
+     "src/Eccube/Service/Front/Event/EventDetailButtonStateResolver.php"
+    ]
+   }
+  },
+  {
+   "rowId": 346,
+   "機能No": "F07-03",
+   "機能名": "F07-03 大会詳細",
+   "ドメイン": "f07",
+   "区分(画面種別)": "front",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "4-8 戻るボタン：遷移前のページに遷移する（遷移元のクエリにより戻り先を切り替える／日別画面などへ戻る）。",
+   "実装実態": "戻るボタンが常に url('event_top')（イベントTOP固定）へのリンク。遷移元や履歴を参照せず、どこから来ても一律でイベントTOPへ遷移する。EventDetailController も遷移元クエリの受け渡し/戻り先切替を持たず、JSによる history.back 等の上書きも無い。",
+   "差分内容": "_event_detail_actions.twig:60 のhrefが event_top 固定。設計の『遷移前のページに遷移』『遷移元のクエリにより戻り先を切り替える』を満たさない。",
+   "実装参照": "src/Eccube/Resource/template/default/Event/_event_detail_actions.twig:60",
+   "設計書参照": "0307_基本設計仕様書(フロント_イベント).html#sheet-5",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0307_基本設計仕様書(フロント_イベント).html:2783 の「一覧側へ戻る。遷移元のクエリにより戻り先を切り替える」は src-cell を持たず、同ファイル:2753 の `<!-- function-design-embed:start f07-03... -->` 以降にあるリバース詳細設計の記述。Excel正本部分（確認範囲: 同HTMLのF07-03シート、embed開始前）には戻り先切替の記述がない。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Event/show.twig:143-149 `if app.request.get('eventDate') == ''` の場合は `url('events_index')`、それ以外は `url('events_daily', {eventId: ..., eventDate: ...})` として「戻る」リンクを切り替えており、期待挙動を直接裏付ける。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Resource/template/default/Event/_event_detail_actions.twig:60 `<a ... href=\"{{ url('event_top') }}\">...back...</a>` とイベントTOP固定で、クエリによる切替がない。",
+   "根拠検証メモ": "設計書の記述は旧実装から生成されたリバース部のみ。旧実装には明確な根拠があり、新実装への移植漏れと判定した。",
+   "対応の根拠(現develop)": "`src/Eccube/Resource/template/default/Event/_event_detail_actions.twig:60` `<a class=\"c-hareruya-btn c-hareruya-btn--lg c-hareruya-btn--full\" href=\"{{ url('event_top') }}\">{{ 'front.event.detail.actions.back'|trans }}</a>` と、イベントTOP固定リンクのまま。遷移元クエリ参照や history.back の上書きは同ファイル・JSともに追加されていない。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EMBED_ONLY",
+    "stale": "UNCHANGED",
+    "quoteDetail": [
+     "一覧側へ戻る。遷移元のクエリにより戻り先を切り替える"
+    ]
+   }
+  },
+  {
+   "rowId": 349,
+   "機能No": "F08-02",
+   "機能名": "F08-02 店頭買取査定申込情報入力",
+   "ドメイン": "f08",
+   "区分(画面種別)": "front",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "共通の利用規約の表示: 現行は個人情報保護方針と利用規約を表示しているが、リニューアル後はサイト全体で共通の利用規約にまとめるため共通の利用規約のみ表示する。★利用規約について: 共通の利用規約のみ表示し、『個人情報の取り扱いについて』（画面部品29）を削除する。",
+   "実装実態": "利用規約詳細ボタン(index.twig:328)が開くotc-terms-modal(terms_modal.twig)は『利用規約』タブ(tab-otc-terms=front.agreement)と『プライバシーポリシー(個人情報保護方針)』タブ(tab-otc-privacy=front.privacy)の2タブ構成で、個人情報保護方針の本文(terms_modal.twig:108-152)が残存。個別の『個人情報の取り扱いについて』ボタン(ID29)は削除済みだが、モーダル内の個人情報保護方針コンテンツが未削除。同意ラベルも『個人情報の取り扱い/利用規約に同意する』(index.twig:339)で個人情報の取り扱い文言が残る。",
+   "差分内容": "設計は明示的に『共通の利用規約のみ表示する』『個人情報の取り扱いについてを削除する』とカスタマイズを指示。terms_modal.twig:107-152にプライバシーポリシー(front.privacy)タブが依然存在し個人情報保護方針を表示している点、および同意ラベルが画面部品31『利用規約同意する』でなく『個人情報の取り扱い/利用規約に同意する』である点が設計と相違。実装確認済み(privacyタブ残存を根拠として特定)。",
+   "実装参照": "src/Eccube/Resource/template/default/OtcBuy/index.twig:326-341,378-382 → src/Eccube/Resource/template/default/Block/terms_modal.twig:10-11,107-152",
+   "設計書参照": "excel_to_html/output/0308_基本設計仕様書(フロント_店頭買取).html#sheet-4",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0308_基本設計仕様書(フロント_店頭買取).html:1271,1274-1275 の src-cell に「共通の利用規約のみ表示する」「個人情報の取り扱いについてを削除する」と明記される。",
+   "旧実装根拠": "判定はExcel正本で確定。参考として旧実装 pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/OtcBuy/index.twig:192,204,218 は「個人情報の取り扱いについて」「利用規約」を別表示し、同意ラベルも「個人情報の取り扱い/利用規約に同意する」であり、正本が廃止対象とした現行挙動を確認できる。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Resource/template/default/Block/terms_modal.twig:10-11 は利用規約とprivacyの2タブを表示し、同:107-110 はprivacy本文を出力する。ec-cube-enterprise/src/Eccube/Resource/template/default/OtcBuy/index.twig:339-341 の同意ラベルにも「個人情報の取り扱い/利用規約」が残る。",
+   "根拠検証メモ": "個別ボタンの有無だけでなく、モーダル内privacyタブと同意文言が正本の削除要求に反する。",
+   "対応の根拠(現develop)": "現 develop でも `src/Eccube/Resource/template/default/Block/terms_modal.twig:11` に `<button ... data-tab-target=\"tab-otc-privacy\" ...>{{ 'front.privacy.title'|trans }}</button>` のプライバシーポリシータブが残り、同 `:107-153` に `front.privacy.heading` 以下の個人情報保護方針本文（`<div ... data-tab-id=\"tab-otc-privacy\" ...>` 〜 `front.privacy.s13.title`）が存在。同意ラベルも `src/Eccube/Resource/template/default/OtcBuy/index.twig:341` `<span class=\"c-hareruya-checkbox__label\">個人情報の取り扱い/利用規約に同意する</span>` のままで、監査時点と同一。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "UNCHANGED"
+   }
+  },
+  {
+   "rowId": 352,
+   "機能No": "M03-01",
+   "機能名": "M03-01 商品マスター(検索入力)",
+   "ドメイン": "m03",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "low",
+   "観点": "⑤画面表示・検索条件ラベル",
+   "設計期待値": "商品マスター検索入力のプロモーション検索条件は「プロモ」と表示する。",
+   "実装実態": "実装の翻訳キー admin.product.promotion は「プロモ種別」。SearchProductType が promotion の label に使い、Product/index.twig が form_label(searchForm.promotion) で表示する。",
+   "差分内容": "設計は商品マスター検索入力の検索条件ラベルを「プロモ」とする。実装は SearchProductType の promotion ラベルに admin.product.promotion を使い、messages.ja.yaml の値が「プロモ種別」になっているため、画面ラベルが設計より長い名称になる。",
+   "実装参照": "src/Eccube/Resource/locale/messages.ja.yaml:2161 / src/Eccube/Form/Type/Admin/SearchProductType.php:185,196 / src/Eccube/Resource/template/admin/Product/index.twig:307",
+   "設計書参照": "excel_to_html/output/0204_基本設計仕様書(商品管理).html:1081",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:1265 の src-cell は項目名を「プロモ」、選択肢を「チェック項目: プロモ、ノーマル」とする。",
+   "旧実装根拠": "判定はExcel正本で確定。旧実装 pf-eccube3/app/Plugin/HareruyaEc/Form/Extension/Admin/Product/SearchProductTypeExtension.php:66-73 も `promotion` のchoicesを `'promotion' => 'プロモ', 'nonpromo' => 'ノーマル'` と定義する。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/SearchProductType.php:185-199 はlabelに `admin.product.promotion` を使い、ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:2210 は同キーを「プロモ種別」とする。ec-cube-enterprise/src/Eccube/Resource/template/admin/Product/index.twig:307 がそのラベルを表示する。",
+   "根拠検証メモ": "正本・旧実装はいずれも「プロモ」だが、新実装だけ「プロモ種別」。",
+   "対応の根拠(現develop)": "現 develop でも `src/Eccube/Resource/locale/messages.ja.yaml:2210` `admin.product.promotion: プロモ種別` のままで、設計期待値の「プロモ」になっていない。ラベル参照側も未変更で `src/Eccube/Form/Type/Admin/SearchProductType.php:187` `'label' => 'admin.product.promotion',`（EntityType 側も同 :198 で同一キー）、`src/Eccube/Resource/template/admin/Product/index.twig:307` `{{ form_label(searchForm.promotion) }}` が表示している。なお `messages.ja.yaml:2211` の `admin.product.promotion_promo: プロモ` は選択肢の値であり検索条件ラベルではない。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Resource/locale/messages.ja.yaml"
+    ]
+   }
+  },
+  {
+   "rowId": 353,
+   "機能No": "M03-01",
+   "機能名": "M03-01 商品マスター(検索入力)",
+   "ドメイン": "m03",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "識別ID:1「商品名(日/英)」は、検索押下時に商品名(日)・商品名(英)を検索対象にする。",
+   "実装実態": "表示フィールド product_name の検索条件は p.name LIKE :adminSearchProductName のみで、p.name_en は別の hidden keyword/id 検索側にだけ含まれている。",
+   "差分内容": "設計は商品名(日/英)の両方を検索対象にしているが、実装の visible な商品名検索は日本語名 p.name のみに一致する。英語商品名 p.name_en での検索要求が満たされない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/ProductRepository.php:1019",
+   "設計書参照": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-3:1068",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:1252 の src-cell に「商品名(日/英)」および検索対象「商品名(日)・商品名(英)」が明記される。",
+   "旧実装根拠": "旧実装 pf-eccube3/app/Plugin/HareruyaEc/Repository/ProductRepository.php:118-126 は検索列を `'p' => ['name'], 'ps' => ['nameEn']` として日本語・英語名の両方を検索する。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Repository/ProductRepository.php:1088-1092 は商品名条件を `p.name LIKE :adminSearchProductName` のみに適用し、`p.name_en` を検索しない。",
+   "根拠検証メモ": "正本に直接根拠があり、旧実装にも両言語検索が存在する。",
+   "対応の根拠(現develop)": "`src/Eccube/Repository/ProductRepository.php:1091` `$qb->andWhere('p.name LIKE :adminSearchProductName')` のままで、`p.name_en` は依然として含まれない。英語名を含む OR 条件は隠し一括キーワード側の `src/Eccube/Repository/ProductRepository.php:1132` `'p.id = :id OR p.name LIKE :likeid OR p.name_en LIKE :likeid OR pc.code LIKE :likeid OR ca.name_jp LIKE :likeid OR ca.name_en LIKE :likeid'` にしか存在しない。`git grep adminSearchProductName da9c2ba276 -- src/` の結果は ProductRepository.php:1091,1092 のみで、別クラス・別サービスへの移管もない。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Repository/ProductRepository.php"
+    ]
+   }
+  },
+  {
+   "rowId": 354,
+   "機能No": "M03-01",
+   "機能名": "M03-01 商品マスター(検索入力)",
+   "ドメイン": "m03",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "識別ID:3「カード名」は、検索押下時にカード名(日)・カード名(英)を検索対象にする。",
+   "実装実態": "card_name の検索条件は ca_card.name_jp LIKE :adminSearchCardName のみ。MtbCard には name_en が存在するが、この検索条件では参照されない。",
+   "差分内容": "設計はカード名(日/英)を検索対象にする要求だが、実装は日本語カード名 name_jp のみを検索している。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/ProductRepository.php:1026",
+   "設計書参照": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-3:1070",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:1254 の src-cell に、カード名検索対象として「カード名(日)・カード名(英)」が明記される。",
+   "旧実装根拠": "旧実装 pf-eccube3/app/Plugin/HareruyaEc/Repository/ProductRepository.php:129-136 はカード検索列を `'c' => ['nameJp', 'nameEn']` と定義する。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Repository/ProductRepository.php:1095-1107 はカード名条件を `ca_card.name_jp LIKE :adminSearchCardName` のみに適用し、英語名を検索しない。",
+   "根拠検証メモ": "正本・旧実装の両方が日英検索を裏付け、新実装は日本語のみ。",
+   "対応の根拠(現develop)": "`src/Eccube/Repository/ProductRepository.php:1104` `->andWhere('ca_card.name_jp LIKE :adminSearchCardName');`（EXISTS サブクエリ内、:1098-1107）のままで `ca_card.name_en` は参照されていない。`git grep adminSearchCardName da9c2ba276 -- src/` の結果も ProductRepository.php:1104,1107 のみで、他所への実装移管はない。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Repository/ProductRepository.php"
+    ]
+   }
+  }
+ ]
+}

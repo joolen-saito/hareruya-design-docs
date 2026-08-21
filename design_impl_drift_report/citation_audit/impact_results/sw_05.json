@@ -1,0 +1,365 @@
+{
+  "packetId": "sw_05",
+  "results": [
+    {
+      "rowId": 145,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "集計失敗時に設計で要求された通知メールが送信されず、運用者が障害をメールで検知できない。",
+      "checked": "src/Eccube/Command/AggregateStockUpCommand.php:47-52 と src/Eccube/Service/Product/BatchAggregateStockUpAction.php:23-48 を確認。例外時はコンソール出力・ロールバック・再送出のみで、メールサービス依存も送信呼出しもない。",
+      "reason": "メール送信の有無は外部I/Oの差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 146,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "標準出力に開始行と日時が現れず、完了行にも日時が付かない。",
+      "checked": "src/Eccube/Command/AggregateStockUpCommand.php:43-57 を確認。出力は例外時 error と日時なしの完了 success のみ。",
+      "reason": "バッチのコンソール出力内容そのものが異なる境界事例(a)である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 147,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "運用者が設計コマンド product:batch updateProductSummaryForStockUp を実行しても対象バッチを起動できない。",
+      "checked": "src/Eccube/Command/AggregateStockUpCommand.php:32-35 を確認。登録名は eccube:aggregate-stock-up。",
+      "reason": "CLIコマンド名は外部から利用する起動契約であり、内部識別子だけではない。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 148,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "棚卸履歴が集計され、マスタ更新履歴は集計されないため、dtb_stock_up_quantity の永続値が変わる。",
+      "checked": "src/Eccube/Repository/DtbStockUpQuantityRepository.php:147-185 を確認。条件値は BE_STOCKED と INVENTORY_ADJUSTMENT。",
+      "reason": "集計対象条件の差はDB更新結果を変える。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 149,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "集計対象が0件でも既存 dtb_stock_up_quantity が全削除される。",
+      "checked": "src/Eccube/Service/Product/BatchAggregateStockUpAction.php:36-44 と src/Eccube/Repository/DtbStockUpQuantityRepository.php:99-103 を確認。取得前にDELETEし、空配列でもcommitする。",
+      "reason": "更新なしと全削除では永続DB副作用が正反対である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 150,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "途中例外時、設計では処理済み行が残るが実装では全変更がロールバックされる。",
+      "checked": "src/Eccube/Service/Product/BatchAggregateStockUpAction.php:36-47 を確認。全処理を単一トランザクションで囲み例外時 rollBack する。",
+      "reason": "トランザクション境界と障害後DB状態が異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 151,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "大量件数・途中失敗時のメモリ使用量、反映済み件数、再実行時の開始状態が変わり得る。",
+      "checked": "src/Eccube/Service/Product/BatchAggregateStockUpAction.php:34-48 を確認。全件foreachの後に1回commitし、100件ごとのflush/clear/commitはない。",
+      "reason": "単なる実装配置でなく、資源特性と部分反映という観測可能な挙動に関わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 152,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "処理開始と日時が標準出力されず、完了メッセージも日時なしになる。",
+      "checked": "src/Eccube/Command/AggregateStockUpCommand.php:43-57 を確認。日時生成・開始出力はなく、55行は日時なし完了文言。",
+      "reason": "標準出力の内容が変わるため、境界事例(a)として明確にIMPACT。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 153,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "本店の集計行が支店ID 0ではなく実店舗の base_info_id で保存・グループ化される。",
+      "checked": "src/Eccube/Repository/DtbStockUpQuantityRepository.php:150-187,195-248 を確認。sh.base_info_id をそのままGROUP BYし、同値をINSERT/UPDATEする。",
+      "reason": "識別子名だけでなくDBに保存されるキー値が異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 154,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "product:batch saleNotification ではバッチを起動できず、運用ジョブが通知メール処理を実行できない。",
+      "checked": "src/Eccube/Command/FavoriteSaleNotificationCommand.php:30-35 を確認。登録名は eccube:favorite-sale-notification。",
+      "reason": "CLI入口は運用者に露出する外部契約である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 155,
+      "authorVerdict": "UNSURE",
+      "verdict": "IMPACT",
+      "agree": false,
+      "observableEffect": "dtb_player/dtb_favorite_product のお気に入りではなく Customer/CustomerFavoriteProduct の会員・商品集合がメール宛先と本文商品を決めるため、送信対象・宛先・本文が変わる。",
+      "checked": "src/Eccube/Service/Product/BatchFavoriteSaleNotificationAction.php:18-58、src/Eccube/Repository/CustomerFavoriteProductRepository.php:230-254、src/Eccube/Repository/DtbFavoriteProductRepository.php:35-70 を確認。実行経路は前者を使い、後者のセール抽出はコメントアウト。",
+      "reason": "依存リポジトリ名だけの差ではなく、異なる永続テーブルの会員集合をメールI/Oに使用している。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 156,
+      "authorVerdict": "IMPACT",
+      "verdict": "UNSURE",
+      "agree": false,
+      "observableEffect": "",
+      "checked": "ec-cube-enterprise の src/Eccube、html、script、.github を確認し当該17:30設定は見つからなかったが、script/ops/stg-db-maintenance/restoresnapshot_stg_from_tmp.sh:17 は Step Functions のスケジュールを別管理と明記している。外部AWS設定は未確認。",
+      "reason": "リポジトリ内不在だけでは、別管理のStep Functionsが毎週水曜17:30に起動していないと確定できない。実システムの起動差は外部設定確認まで不明。",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 157,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "対象件数が多い環境でメモリ枯渇・処理失敗が起き、通知メール件数や完了ステータスが変わり得る。",
+      "checked": "src/Eccube/Service/Product/BatchFavoriteSaleNotificationAction.php:36-61 と src/Eccube/Repository/CustomerFavoriteProductRepository.php:230-254 を確認。全結果を配列取得・全件グループ化し、一定件数ごとのclear/detachはない。",
+      "reason": "資源量により実行結果が変わり得る境界事例(b)である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 158,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "個別メール送信失敗は標準エラー出力されず、コマンドが成功扱いの完了メッセージを出す。",
+      "checked": "src/Eccube/Service/Product/BatchFavoriteSaleNotificationAction.php:53-58 と src/Eccube/Command/FavoriteSaleNotificationCommand.php:47-61 を確認。送信例外をlog_error後に握りつぶすためCommandのerror分岐へ届かない。",
+      "reason": "コンソールI/Oと終了結果が設計と異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 159,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "標準出力に日時付き開始・完了行が現れず、結果件数だけの日時なし完了文言になる。",
+      "checked": "src/Eccube/Command/FavoriteSaleNotificationCommand.php:43-61 を確認。開始出力・日時生成はなく、完了出力にも日時がない。",
+      "reason": "標準出力差である境界事例(a)。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 160,
+      "authorVerdict": "NO_IMPACT",
+      "verdict": "NO_IMPACT",
+      "agree": true,
+      "observableEffect": "",
+      "checked": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html:1635 は複製元を支店ID 1と指定。src/Eccube/Service/Product/BatchInitialStockRegistrationAction.php:43 は BaseInfo::TC_TOKYO_ID を使い、src/Eccube/Entity/BaseInfo.php:45 で値は1。src/Eccube/Repository/ProductStockRepository.php:426-453 は名称でなく sourceBaseInfoId=1 をWHERE条件に使うため、入力・複製元行・DB副作用は同じ。",
+      "reason": "差は外部非露出の定数名（TOKYO）対設計ラベル（TC大阪）だけで、指定値は双方1。実コード上、名称文字列はI/Oへ出ない。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 161,
+      "authorVerdict": "IMPACT",
+      "verdict": "UNSURE",
+      "agree": false,
+      "observableEffect": "",
+      "checked": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html:1636 と src/Eccube/Repository/ProductStockRepository.php:426-453 を確認。実装は product_class_id と stock_location_id だけを元行から引継ぎ、stock/total_cost/pick_up_flg等を初期化する。",
+      "reason": "構造は設計の『識別2項目のみ複製、他は初期値』と一致するが、設計語『商品規格コード』『拡張タイプ』と現行列 product_class_id/stock_location_id の対応が資料から確定できない。差そのものが未立証なので推測でIMPACT/NO_IMPACTにしない。",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 162,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "指定日範囲から過去受注の在庫減算履歴を作るCLIが起動できず、dtb_stock_history が生成されない。",
+      "checked": "src/Eccube/Command、Service、Repository を insertStockHistory と設計コマンド名で検索し該当入口なし。近接する src/Eccube/Command/InitialStockRegistrationCommand.php は新店舗在庫複製の別処理。",
+      "reason": "バッチ入口とDB追加副作用の未実装は外部観測可能。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 163,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "設計コマンド名では起動できず、要求されたCSVファイルも生成されない。",
+      "checked": "src/Eccube/Command/UpdateWeeklyStockHistoryCommand.php:31-35 と src/Eccube/Service/Product/BatchUpdateWeeklyStockHistoryAction.php:33-76 を確認。入口は eccube:update-weekly-stock-history、処理はDB洗替。",
+      "reason": "CLI入口と成功時ファイルI/Oの双方が異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 164,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "スマレジ在庫が週間在庫履歴に加算されず、保存される週次在庫数が少なくなる。",
+      "checked": "src/Eccube/Service/Product/BatchUpdateWeeklyStockHistoryAction.php:41-46 を確認。スマレジ合算はTODOで未実装と明記。",
+      "reason": "DB集計値が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 165,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "既定パスのCSVが生成・上書きされず、代わりに週間在庫履歴DBテーブルが洗い替えされる。",
+      "checked": "src/Eccube/Service/Product/BatchUpdateWeeklyStockHistoryAction.php:50-76 と src/Eccube/Repository/DtbWeeklyStockHistoryTempRepository.php:113-168 を確認。DB TRUNCATE/INSERT経路でCSV書出しはない。",
+      "reason": "ファイル出力の欠落とDB更新の追加は明確なI/O差。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 166,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "在庫履歴が一件もない商品在庫は週次履歴に0埋め登録されず、出力対象自体から欠落する。",
+      "checked": "src/Eccube/Repository/DtbWeeklyStockHistoryTempRepository.php:45-105 を確認。dtb_stock_history 起点でGROUP BYするため履歴ゼロのproduct_stock行を生成できない。",
+      "reason": "DB出力行の有無と値が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 167,
+      "authorVerdict": "UNSURE",
+      "verdict": "IMPACT",
+      "agree": false,
+      "observableEffect": "データ量・PHP/DB設定次第でメモリ上限または実行時間上限に達して失敗し、DB洗替や終了コードが設計どおり完了しない可能性がある。SQLログ量もI/O・メモリを増やす。",
+      "checked": "src/Eccube/Command/UpdateWeeklyStockHistoryCommand.php、src/Eccube/Service/Product/BatchUpdateWeeklyStockHistoryAction.php、src/Eccube/Repository/DtbWeeklyStockHistoryTempRepository.php を確認。memory_limit解除、set_time_limit、SQLロガー無効化の処理はない。",
+      "reason": "資源制限・SQLロガーは資源条件によって結果を変え得るため、指定された境界事例(b)としてIMPACT。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 168,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "標準出力に開始行と日時がなく、完了行も日時なしになる。",
+      "checked": "src/Eccube/Command/UpdateWeeklyStockHistoryCommand.php:43-58 を確認。日時なしsuccessのみ。",
+      "reason": "コンソールI/Oが変わる境界事例(a)。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 169,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "生成TSVのヘッダ名・列数・列順が変わり、連携先が branch_status を読めず追加列を受け取る。",
+      "checked": "src/Eccube/Service/UniSearch/UniSearchExportService.php:129-172 を確認。category_name_en、is_branch_published、search_word を含み branch_status はない。",
+      "reason": "TSV列契約の差は直接のファイルI/O差。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 170,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "TSVのstock列が在庫数ではなく、在庫あり店舗のbase_info_id一覧になる。",
+      "checked": "src/Eccube/Repository/ProductClassRepository.php:357-384 を確認。stockはstock>=1のbase_info_idをstring_aggした値。",
+      "reason": "連携ファイルの値・型・意味が異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 171,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "product:batch exportWeeklyStockHistoryCsv では処理を起動できない。",
+      "checked": "src/Eccube/Command/UpdateWeeklyStockHistoryCommand.php:31-35 を確認。AsCommand名は eccube:update-weekly-stock-history。",
+      "reason": "運用者に露出するCLI起動名の差。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 172,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "weekly_stock_history.csv が作成されず、設計では更新しないDBがTRUNCATE・再登録される。",
+      "checked": "src/Eccube/Service/Product/BatchUpdateWeeklyStockHistoryAction.php:50-76 を確認。temp/本テーブルのDB洗替でCSV処理はない。",
+      "reason": "ファイル生成とDB副作用がともに設計と異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 173,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "履歴なしの商品在庫IDが0値行として登録・出力されず欠落する。",
+      "checked": "src/Eccube/Repository/DtbWeeklyStockHistoryTempRepository.php:69-105 を確認。FROM dtb_stock_historyで、dtb_product_stockからのLEFT JOINではない。",
+      "reason": "対象行の有無が外部DB/CSV結果を変える。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 174,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "管理画面の更新ボタン押下でローカルファイル作成だけでなく、既存リモートファイル削除とSFTPアップロードまで実行される。",
+      "checked": "src/Eccube/Resource/template/admin/Product/unisearch_feed.twig:19-23、src/Eccube/Controller/Admin/Product/UniSearchFeedController.php:41-54、src/Eccube/Service/Admin/Product/UniSearchFeedCreateAction.php:27-30、src/Eccube/Service/UniSearch/UniSearchExportService.php:99-112 を確認。画面POSTはexportAndUpload(false)へ到達し送信分岐に入る。",
+      "reason": "ボタン操作による外部サーバ削除・送信という追加副作用がある。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 175,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "連携先との転送プロトコルがSCPではなくSFTPとなり、許可プロトコル・サーバログ・接続互換性が変わる。",
+      "checked": "src/Eccube/Service/UniSearch/UniSearchExportService.php:99-109 と src/Eccube/Service/UniSearch/UniSearchSftpService.php:21-24,48-74 を確認。phpseclib SFTP::putで送信する。",
+      "reason": "外部通信プロトコルは観測可能な連携I/Oである。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 176,
+      "authorVerdict": "IMPACT",
+      "verdict": "UNSURE",
+      "agree": false,
+      "observableEffect": "",
+      "checked": "ec-cube-enterprise の src/Eccube、html、script、.github で feed_upload.sh、5分cron、当該Step Functions定義を確認したが見つからない。一方 script/ops/stg-db-maintenance/restoresnapshot_stg_from_tmp.sh:17 はStep Functionsスケジュールを別管理としており、外部AWS/運用設定は未確認。",
+      "reason": "リポジトリに定期実行定義がないことだけでは、外部管理の5分スケジュールが存在しないと立証できない。",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 177,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "6桁未満の注文番号では保存・API送信されるスマレジコードが13桁未満または異なるチェックディジットになる。",
+      "checked": "src/Eccube/Service/Smaregi/SmaregiOtcOrderPostAction.php:55-60,94-114 と src/Eccube/Service/Smaregi/Otc/SmaregiOtcOrderSyncService.php:75-79 を確認。親処理が0埋めなしコードをOrderへ保存し、同期処理は非空の保存値を再生成せず使う。別のSmaregiOtcProductCodeGenerator.php:70-78には正しい0埋めがあるがこの経路では呼ばれない。",
+      "reason": "DB保存値と外部APIの商品コードが変わる。近接する正しい生成器は誤値を補正しない。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 178,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "smaregi_category_id 設定が6以外に変更されると、その値がスマレジ商品登録APIの部門IDとして送信される。",
+      "checked": "src/Eccube/MessageHandler/SmaregiOtcSyncMessageHandler.php:96-117,153-160 と app/DoctrineMigrations/Version20251125161057.php:170-171 を確認。初期値は6だが実行時はMtbOptionの可変値を読む。",
+      "reason": "定数名の差ではなく外部APIパラメータが設定により設計固定値から変化し得る。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 179,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "スマレジAPI失敗時に設定済みエラー通知先へメールが送られず、DBの失敗状態・ログだけが残る。",
+      "checked": "src/Eccube/MessageHandler/SmaregiOtcSyncMessageHandler.php:120-127,163-175 と src/Eccube/Service/Smaregi/SmaregiOtcOrderPostAction.php:63-80 を確認。失敗はログ/Job状態/例外のみ。app/DoctrineMigrations/Version20251125161057.php:177 にメールアドレス設定自体はあるが当該経路からの送信呼出しはない。",
+      "reason": "要求されたメール外部I/Oが欠落している。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 180,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "起動時点から5分超6分未満前の注文も再送対象に含まれ得る。",
+      "checked": "src/Eccube/Repository/OrderRepository.php:1969-1992 を確認。実際の対象抽出はMailHistoryなし・3ステータスを満たすが、toDate=now-60秒の後にfromDateをさらに5分戻すため範囲はnow-6分〜now-1分。パケットが挙げた同:1941-1961のSQLは別機能であり根拠として不適切。",
+      "reason": "著者の引用箇所は誤りだが、実経路にも設計のnow-5分〜now-1分より1分広い時間窓があり、処理対象メールが変わるためIMPACTは維持する。",
+      "confidence": "high"
+    }
+  ]
+}

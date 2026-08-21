@@ -1,0 +1,331 @@
+{
+ "packetId": "sw_04",
+ "mode": "sweep",
+ "note": "著者はこれらの大半を IMPACT(外部から観測できる) と判定した。見落とし＝実は NO_IMPACT な行が無いかを独立に判定すること。",
+ "findings": [
+  {
+   "rowId": 109,
+   "機能No": "A07-05",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "`ids` は任意。カンマ区切り文字列として受け取り分解する。形式・件数の検証は行わない。未指定・空文字のときは0件となる。",
+   "差分内容": "設計は形式・件数の検証を行わないとしているが、実装は数値形式でフィルタリングしており、`ids` の形式を実質的に検証している。HTTP 400 は返さない点は設計と一致するが、非数値要素を検索配列から落とす挙動は「形式検証なし」と一致しない。反証として同Controller、リポジトリ、関連MTGBuyer APIを検索したが、このAPIで別の未検証パーサへ委譲する経路は確認できなかった。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyMainCardController.php:47"
+  },
+  {
+   "rowId": 110,
+   "機能No": "A07-06",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "エンドポイントURLは /api/admin/buyOrderIndivisualInputProduct.json とする。",
+   "差分内容": "設計は /api/admin/... を指定しているが、実装は api/v1 プレフィックス付きの /api/v1/admin/... で公開している。app/config/eccube/packages/eccube.yaml:6,55 で ECCUBE_API_V1_ROUTE の既定値が api/v1 であることも確認した。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderIndivisualInputProductController.php:37"
+  },
+  {
+   "rowId": 111,
+   "機能No": "A07-06",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "リクエストパラメータ ids は文字列・必須（〇）で、ネット買取IDをカンマ区切りで指定する。",
+   "差分内容": "設計では ids が必須指定だが、実装は ids 未指定・空文字を許容し、必須エラーにしない。実装コメントでも 400 ではなく空配列を返す旧システム互換挙動としている。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderIndivisualInputProductController.php:40"
+  },
+  {
+   "rowId": 112,
+   "機能No": "A07-06",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "認証方式は IP制限・トークン とする。",
+   "差分内容": "トークン認証は JwtTokenHeaderExtractor と security access_token で確認できる一方、IP アドレス allowlist / denylist / access_control / Request::getClientIp 相当の判定が当該 API ルートに存在しない。",
+   "実装参照": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube, /home/y-saito/Developments/ec-cube-enterprise/html, /home/y-saito/Developments/ec-cube-enterp"
+  },
+  {
+   "rowId": 113,
+   "機能No": "A14-01",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "GET /cards/{id} でカードIDをパスパラメータとして受け取り、カードIDに対応するカードマスタ情報をJSONで返す。該当が無い場合は404・「Not Found」のJSONを返す。",
+   "差分内容": "設計HTMLはA14-01の入口を `GET /cards/{id}` と明記しているが、実装側の公開Controller/Route定義に同一パスが無い。反証として `/card`, `/card.json`, `/api/cards/{id}`, 管理画面カード系ルート、商品ポップアップ系ルートまで翻案検索したが、設計パスに一致する実装は見つからなかった。",
+   "実装参照": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller, /home/y-saito/Developments/ec-cube-enterprise/config, /home/y-saito/Developments/e"
+  },
+  {
+   "rowId": 114,
+   "機能No": "A14-01",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "成功時レスポンスはカード情報JSONを返し、cardtypes.product_search_flg、color_identities、card_details配下の更新日時・作成日時・cardset.branch_display_flg・card_images.create_date、card_details.foil、card_details.frame、color_sequence.sort_no等を含め、promotion_flgは除去する。",
+   "差分内容": "設計はA14-01のJSON外部契約としてネストしたカード詳細・マスタ項目を列挙しているが、近似実装は汎用Entity正規化に依存しており、公開レスポンス用DTO/配列組み立てが存在しない。反証としてEntityの各プロパティ、DeckBuilder用ルート、App/CardController、MtbCardRepository、MtbCardDetail/MtbCardset/MtbCardtype/MtbCardImageを確認したが、設計フィールドをA14-01レスポンスとして整形する処理は見つからなかった。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/DeckBuilder/CardController.php:142-157; /home/y-saito/Developments/ec-cube-enterprise/sr"
+  },
+  {
+   "rowId": 115,
+   "機能No": "A14-02",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "GET /cardDetails/{id} でカード詳細IDを受け取り、カード詳細IDに対応するカード詳細情報をJSONで返す。該当が無い場合は404を返す。",
+   "差分内容": "設計はクライアント向けJSON API GET /cardDetails/{id} を要求しているが、src/Eccube/Controller配下のルート一覧に /cardDetails/{id} がない。管理画面AJAXは src/Eccube/Controller/Admin/Product/ProductController.php:986 の別URLで、XHR前提かつ管理画面用途の部分情報のみを返すため、設計APIの実装ではない。/api/cards/{id} は src/Eccube/Controller/App/DeckBuilder/CardController.php:142 でカードID取得、/card は sr",
+   "実装参照": "不在（探索範囲: src/Eccube/Controller, src/Eccube/Service, src/Eccube/Repository, src/Eccube/Entity, html。検索語: cardDetails, card_details, cardDetail, MtbCardDetail, mt"
+  },
+  {
+   "rowId": 116,
+   "機能No": "A14-02",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "成功時はHTTP 200でカード詳細情報を返し、id/cardId/backCardDetailId/cardsetId/rarityId/illustratorId/flavorJp/flavorEn/textJp/textEn/power/toughness/cardNo/foilFlg/promotionFlg/updateDate/createDate/cardLayout/rarity/cardset/illustrator/promotion/cardImages を含む。cardLayoutId・pr",
+   "差分内容": "src/Eccube/Controller/Admin/Product/ProductController.php:1020-1034 の管理画面AJAXはカード詳細選択UI用の部分レスポンスで、設計が要求するカード詳細マスタ全体・関連オブジェクト・除外指定契約を満たさない。src/Eccube/Service/App/Article/ArticleResponseBuilder.php:175-281 にはカード詳細配列を組む private メソッドがあるが、記事レスポンス内の card_details 用であり、GET /cardDetails/{id} の実装入口ではない。",
+   "実装参照": "不在（探索範囲: src/Eccube/Controller/App, src/Eccube/Controller/Front, src/Eccube/Controller/Admin, src/Eccube/Service/App, src/Eccube/Repository/Master。検索語: cardDeta"
+  },
+  {
+   "rowId": 117,
+   "機能No": "A14-02",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "レスポンスデータ内で foil_flg を foil に変更し、値は 0:なし / 1:あり / 2:特殊 とする。frame を追加し、promotion_flg は除去する。",
+   "差分内容": "src/Eccube/Entity/Master/MtbCardDetail.php:278-319 でDB項目は保持しているが、設計はAPIレスポンス変換を要求している。src/Eccube/Service/App/Article/ArticleResponseBuilder.php:270-280 は近似のカード詳細JSONを作るが、foil_flg/promotion_flgを出力しframeを出力しないため、A14-02レスポンス契約の実装証跡にならない。",
+   "実装参照": "不在（探索範囲: src/Eccube/Controller, src/Eccube/Service, src/Eccube/Repository, src/Eccube/Entity。検索語: foil, foil_flg, frame, frameFlg, promotion_flg, promotionFlg, "
+  },
+  {
+   "rowId": 118,
+   "機能No": "A16-01",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "レスポンス（失敗）は、該当IDのトップバナーが存在しない場合にHTTP 404で本文 {code, message}（\"Not Found\"）を返す。",
+   "差分内容": "設計は失敗本文の形を {code, message} としているが、実装は message キーを返さず errors 配列を返す。NotFoundException は errors にメッセージを保持し、ContentController は getErrors() を errors キーで JSON 化している。反証検索では ContentController、BaseApiException、NotFoundException、ExceptionListener を確認したが、この経路で {code,message} に変換する処理はない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/ContentController.php:70"
+  },
+  {
+   "rowId": 119,
+   "機能No": "A16-02",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "指定言語の設定済みトップバナー一覧を取得する。トップバナーマスタは設定状態・言語で絞り込み、取得対象は指定言語の設定済みトップバナーとする。",
+   "差分内容": "設計は「設定済みトップバナー」を対象とし、トップバナーマスタを設定状態・言語で絞り込む要求だが、実装は言語関連のみで絞り込み、非表示（disp_type=0）や画像URL空のトップバナーも Collection に含まれていればレスポンス対象になる。反証として topBanners ルート、TopBannersResponseBuilder、MtbTopBannerRepository::findWhereUrlIsNotEmpty、SHOW_BOTH、dispType を再検索したが、A16-02 の getTopBannersByLanguageCode から表示状態絞り込みを行う呼び出しは見つからなかった。",
+   "実装参照": "src/Eccube/Controller/App/ContentController.php:91,102; src/Eccube/Repository/Master/MtbTopBannerRepository.php:38"
+  },
+  {
+   "rowId": 120,
+   "機能No": "A16-02",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "一覧が空、または当該言語コードが言語マスタに存在しない場合はコード404のJSONを返す。失敗レスポンス本文は {code, message}（\"Language code is not found\"）。",
+   "差分内容": "HTTP 404 自体は実装されているが、設計が指定する本文キー message とメッセージ 'Language code is not found' ではなく、実装は errors 配列に 'Not Found' を返す。反証として 'Language code is not found'、NotFoundException、errors/message、topBanners ルートを検索したが、A16-02 の 404 で設計文言・本文形を返す実装は見つからなかった。",
+   "実装参照": "src/Eccube/Controller/App/ContentController.php:95,99,103,107,113; src/Eccube/Exception/App/NotFoundException.php:27; src/Eccube/Exception/App/BaseApiException."
+  },
+  {
+   "rowId": 121,
+   "機能No": "A17-01",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "記事は dtb_article.deleted_at による論理削除であり、削除済みは応答対象外とする。wp_post_id を検索条件に用いる。deleted_at は論理削除で、応答対象外。",
+   "差分内容": "設計は削除済み記事を応答対象外とするが、実装の検索条件は ['wpPostId' => (int) $wpPostIdParam] のみ。DtbArticleRepository に単記事取得用の deletedAt IS NULL 条件もなく、ArticleResponseBuilder は取得済み Article をそのまま応答化するため、論理削除済み記事を除外する実装証跡がない。探索範囲: Controller/App/ArticleController.php, Repository/DtbArticleRepository.php, Service/App/Article/ArticleResponseBuilder.ph",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/ArticleController.php:58"
+  },
+  {
+   "rowId": 122,
+   "機能No": "A17-01",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "該当記事なしの場合は HTTP 404 で {code, message}（\"Not Found\"）のJSONを返す。",
+   "差分内容": "設計は 404 本文を {code, message} かつ message は \"Not Found\" とするが、実装は errors 配列で日本語メッセージを返す。BaseApiException/NotFoundException も errors 配列を保持する構造で、message キーを返す単記事用実装は確認できない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/ArticleController.php:59"
+  },
+  {
+   "rowId": 123,
+   "機能No": "A17-02",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "記事は dtb_article.deleted_at による論理削除で削除済みは対象外とする。基準記事の特定（wp_post_id）と論理削除判定に用いる。",
+   "差分内容": "設計は基準記事・関連記事とも dtb_article.deleted_at による論理削除を応答対象外判定に用いることを要求しているが、実装の raw SQL には deleted_at 条件が存在しない。探索範囲: src/Eccube/Controller/App/ArticleController.php、src/Eccube/Repository/DtbArticleRepository.php、src/Eccube/Entity/DtbArticle.php、src/Eccube/Service/App/Article/ArticleResponseBuilder.php。別キーワード deleted_at/deleted",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbArticleRepository.php:75"
+  },
+  {
+   "rowId": 124,
+   "機能No": "A17-03",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "PointGranterから送られてきた端末販売APIの内容をスマレジ取引APIへ中継する。契約ID・アクセストークンを付与して、スマレジ顧客連携サービスへ処理名とパラメータを渡し、取引APIへ中継する。",
+   "差分内容": "設計は受信した処理名・パラメータをスマレジ取引APIへ中継する外部契約を要求しているが、実装は固定成功レスポンスで中継していない。探索範囲: src/Eccube, html。検索語: postRegisterTransaction, postTransactions, transactions, transaction_upd, proc_name, PointGranter, point_granter。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/SmaregiApiService.php:35"
+  },
+  {
+   "rowId": 125,
+   "機能No": "A17-03",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "下記の項目（X_contract_id、X_access_token、proc_name、params）がなければエラー404を返す。ステータスコード 404.0 は必須項目にデータがない場合。",
+   "差分内容": "シート本体のステータスコード表は必須項目欠落時404を要求しているが、実装は400を返す。なお同HTML内の埋め込み詳細設計にはHTTP 400の記載もあるため、設計内不整合はあるが、一次シート本文の404要求とは不一致。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/PointGranterController.php:53"
+  },
+  {
+   "rowId": 126,
+   "機能No": "A17-04",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "パスの商品IDと、クエリの言語を受け取り、商品IDと言語で商品詳細を取得する。指定言語に対応する商品詳細を返し、未指定時は日本語（JP）を既定とする。",
+   "差分内容": "設計は商品IDと言語の組み合わせで商品詳細を取得する要求だが、実装は商品IDと visible な商品規格の存在のみで抽出し、言語はレスポンス値の補完に使っている。反証として ProductController、ProductDetailResponseBuilder、ProductRepository、ProductSearchResponseBuilder を `languageCode` / `lang.code = :languageCode` / `pc.language_id` / `findProductById` で再検索したが、A17-04 詳細取得で言語を WHERE 条件に補正する実装は確認できなかった。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/ProductRepository.php:225"
+  },
+  {
+   "rowId": 127,
+   "機能No": "A17-04",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "商品IDに該当する商品詳細が無い場合は、HTTP 404 で `{code, message}`（\"Not Found\"）のJSONを返す。",
+   "差分内容": "設計の失敗レスポンス本文は `{code, message}` だが、実装の共通例外レスポンスは `{code, errors}`。反証として ProductController のローカル catch、BaseApiException、NotFoundException、ExceptionListener を確認したが、A17-04 詳細取得で `{code, message}` に変換する個別処理は確認できなかった。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/EventListener/ExceptionListener.php:136"
+  },
+  {
+   "rowId": 128,
+   "機能No": "B02-01",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "コンソールのバッチコマンドは `product:batch updateProductSummary` とし、コマンド名が一致しない場合は処理を行わずに終了する。",
+   "差分内容": "設計の外部契約である実行コマンド名と実装コマンド名が一致しない。反証検索として `updateProductSummary`、`product:batch updateProductSummary`、`aggregate-sales`、`AggregateSalesCommand` を確認したが、設計コマンド名の実装入口は不在。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/AggregateSalesCommand.php:35"
+  },
+  {
+   "rowId": 129,
+   "機能No": "B02-01",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "本店のほか支店やスマレジの販売情報も集計対象とし、スマレジの取引データも店舗ごとにECCUBEとスマレジで分けて販売数を集計する。",
+   "差分内容": "設計はスマレジ取引データを集計対象かつECCUBE分と分離集計する要求だが、実装はスマレジ実店舗販売を未実装として除外している。反証検索で Smaregi transaction 取込系は存在するが、DtbSalesQuantityRepository::getSalesForAggregate への連携や UNION はなく、同リポジトリにも `スマレジ受注が別テーブル管理の場合は UNION 等で本クエリを拡張すること` という TODO が残る。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/AggregateSalesCommand.php:28"
+  },
+  {
+   "rowId": 130,
+   "機能No": "B02-01",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "本店の支店IDは0として処理し、実行結果は商品規格ID・支店ID・期間別販売数を販売数集計データへ更新する。",
+   "差分内容": "設計は本店を支店ID=0として扱うが、実装は配送の base_info_id をそのまま使用し、本店定数は 1。さらに clearSalesQuantityForAggregate は base_info_id=0 を人気商品リコメンドとして削除対象から除外しており、B02-01 の本店集計IDとして扱っていない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbSalesQuantityRepository.php:438"
+  },
+  {
+   "rowId": 131,
+   "機能No": "B02-01",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "受注ステータスがキャンセル・処理中の受注は各期間の合計から除外する。",
+   "差分内容": "設計はキャンセルと処理中の両方を除外する要求だが、実装は OrderStatus::CANCEL だけをパラメータ化して除外している。`OrderStatus::PENDING`、`OrderStatus::PROCESSING`、`order_status_id NOT IN` 等で反証検索したが、B02-01 集計処理には処理中除外がない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbSalesQuantityRepository.php:451"
+  },
+  {
+   "rowId": 132,
+   "機能No": "B02-01",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "対象が無い場合は更新を行わずに終了／完了する。",
+   "差分内容": "設計は対象なしなら更新しないことを要求するが、実装は対象有無を確認する前に既存集計行を削除する。getSalesForAggregate() が空でも foreach が回らないだけで、先行DELETEは実行済みになる。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Product/BatchAggregateSalesAction.php:45"
+  },
+  {
+   "rowId": 133,
+   "機能No": "B02-01",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "途中失敗時は反映済みの行のみ更新が残る。100件ごとに変更を反映しキャッシュをクリアしながら処理し、部分反映は次回実行で回収される。",
+   "差分内容": "設計は途中まで反映された行が残る部分反映モデルだが、実装は単一トランザクションで例外時に全体ロールバックする。`flush`、`clear`、`100`、`setSQLLogger`、`beginTransaction` を反証検索し、100件ごとの反映は別メソッド updateRecommend にのみ存在し、B02-01 handle にはない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Product/BatchAggregateSalesAction.php:43"
+  },
+  {
+   "rowId": 134,
+   "機能No": "B02-01",
+   "指摘区分": "未実装",
+   "authorVerdict": "UNSURE",
+   "設計期待値": "長時間処理に備えて実行時間制限を解除し、SQLロガーを無効化する。",
+   "差分内容": "設計の処理フロー1番目の要求が B02-01 の実行経路に存在しない。別キーワード `set_time_limit`、`memory_limit`、`setSQLLogger`、`SQLLogger` で再検索したが、該当は updateRecommend のみ。",
+   "実装参照": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/AggregateSalesCommand.php, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Se"
+  },
+  {
+   "rowId": 135,
+   "機能No": "B02-01",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "開始・完了のコンソール出力を日時付きで行う。",
+   "差分内容": "設計は開始と完了の両方を日時付きでコンソール出力する要求だが、実装は完了メッセージのみで日時なし。`date(`、`実行開始`、`実行終了`、`success(`、`error(` で確認し、B02-01 実行経路には日時付き開始・完了出力がない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/AggregateSalesCommand.php:56"
+  },
+  {
+   "rowId": 136,
+   "機能No": "B02-01",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "移行先では補助表を設けず、商品規格 `dtb_product_class` の `order_quantity_01`〜`order_quantity_08` に販売数を反映する。",
+   "差分内容": "設計の移行先DB関連記述は ec-cube-enterprise を正とし、反映先を dtb_product_class の order_quantity_01〜08 としているが、実装は別補助表 dtb_sales_quantity を更新している。反証検索で ProductClassRepository に dtb_product_sub_class / order_quantity 更新のコメントアウトはあるが、B02-01 から実行される実装ではない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbSalesQuantityRepository.php:113"
+  },
+  {
+   "rowId": 137,
+   "機能No": "B02-02",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "コンソールのバッチコマンドは `product:batch deleteProductRequest` で実行する。コマンド名が一致しない場合は処理を行わずに終了する。",
+   "差分内容": "設計は外部契約として `product:batch deleteProductRequest` を指定しているが、実装の AsCommand name は `eccube:cancel-product-request`。反証検索として `deleteProductRequest`、`product:batch`、`cancel-product-request`、`CancelProductRequestCommand` を src/Eccube/html/config/app 配下で確認したが、設計コマンド名の別登録は不在。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/CancelProductRequestCommand.php:34"
+  },
+  {
+   "rowId": 138,
+   "機能No": "B02-02",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "未削除の入荷通知リクエストのうち、対応する商品規格が削除済み、または商品が存在しない・削除済みのものを対象に、削除日時を一括設定する。移行先の商品規格の削除相当は `dtb_product_class.visible`、商品の削除相当は商品が存在しない、または `dtb_product.product_status_id` で公開対象外であることを条件とする。",
+   "差分内容": "設計は商品規格の削除相当として `dtb_product_class.visible` を明記し、商品不存在も削除条件に含める。一方、実装は ProductClass に `visible` カラムがあるにもかかわらず条件に使わず、商品結合も INNER JOIN なので商品が存在しない ProductClass は抽出できない。反証検索で `pc.visible`、`deleteRequestByNonProduct`、`cancelRequestByProductStatus`、`DISPLAY_HIDE`、`DISPLAY_ABOLISHED` を確認したが、実行される B02-02 経路は `BatchCancelProdu",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbProductRequestRepository.php:473"
+  },
+  {
+   "rowId": 139,
+   "機能No": "B02-02",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "ログ・監査として、開始・完了のコンソール出力（日時付き）を行う。",
+   "差分内容": "設計は開始と完了の両方を日時付きでコンソール出力する要求。実装の execute() は try 直後に action を実行し、開始ログなし。成功メッセージにも日時が含まれない。反証検索で `開始`、`完了`、`DateTime`、`SymfonyStyle`、`cancel-product-request` 周辺を確認したが日時付き開始/完了出力は不在。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/CancelProductRequestCommand.php:47"
+  },
+  {
+   "rowId": 140,
+   "機能No": "B02-03",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "コンソールのバッチコマンドは product:batch updateProductSummaryForStockUp として実行する。",
+   "差分内容": "設計の外部契約である起動コマンド名と実装の AsCommand name が一致しない。探索範囲: src/Eccube/Command, src/Eccube/Service, src/Eccube/Repository, html。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/AggregateStockUpCommand.php:34"
+  },
+  {
+   "rowId": 141,
+   "機能No": "B02-03",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "指定の期間に入庫した在庫数を商品コード、店舗、在庫区分ごとに集計し、商品コード・店舗・在庫場所が一致する集計データを更新、なければ新規登録する。",
+   "差分内容": "設計は店舗に加えて在庫区分/在庫場所単位の集計・更新を要求するが、実装は商品規格ID・店舗ID単位に集約している。ProductStock には stock_location_id が存在するが、当該バッチの集計SQL・保存先には使われていない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbStockUpQuantityRepository.php:152"
+  },
+  {
+   "rowId": 142,
+   "機能No": "B02-03",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "取得対象（＝集計対象）の在庫変動区分は親区分が「入庫」「買取」のもののみとし、移動や分割などで入庫した在庫は集計に含まない。",
+   "差分内容": "設計のスター付きカスタマイズ要求は親区分「入庫」「買取」のみだが、実装は「入庫」「棚卸/在庫調整」相当を対象にしており、買取対象が確認できない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbStockUpQuantityRepository.php:147"
+  },
+  {
+   "rowId": 143,
+   "機能No": "B02-03",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "対象が無い場合は更新を行わずに終了する。",
+   "差分内容": "設計は対象なし時に更新しないことを要求するが、実装は対象有無判定の前に集計テーブルを全削除する。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Product/BatchAggregateStockUpAction.php:39"
+  },
+  {
+   "rowId": 144,
+   "機能No": "B02-03",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "100件ごとに変更を反映しキャッシュをクリアしながら処理し、途中失敗時は反映済みの行のみ更新が残る。",
+   "差分内容": "設計の部分反映・再実行回収モデルと、実装の全体トランザクション/全体ロールバックが一致しない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Product/BatchAggregateStockUpAction.php:36"
+  }
+ ]
+}

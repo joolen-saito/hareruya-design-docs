@@ -1,0 +1,165 @@
+{
+  "packetId": "rest_41",
+  "results": [
+    {
+      "rowId": 1091,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "excel_to_html/output/0208_基本設計仕様書(カード管理).html:1935-2332 の Excel 正本（`<section class=\"sheet-panel\" id=\"sheet-6\">`）にはタイトル/サブタイトルの指定がなく、同HTML:2333 の `<!-- function-design-embed:start m14-04-... -->` 以降だけに現れる。リバース文書 functions/pf-eccube3/m14-04_admin_card_card_register_update_delete.md:49 は `タイトルは「カード管理」、サブタイトル「カード詳細」` と記載する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Card/card_detail.twig:5-6 に `{% block title %}カード管理{% endblock %}`、`{% block sub_title %}カード詳細{% endblock %}` があり、期待値は旧実装そのものに一致する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Card/edit.twig:5-6 は title=`admin.product.card_detail`、sub_title=`admin.product.card_management`。messages.ja.yaml:4248,4250 はそれぞれ `カード管理`、`カード詳細` であり、default_frame.twig:194-196 は `<h2 ...>{{ block('title') }}</h2><span ...>{{ block('sub_title') }}</span>` と描画するため表示順が旧実装と逆。",
+      "note": "正本設計書ではなく旧実装由来の移植要件。"
+    },
+    {
+      "rowId": 1092,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "excel_to_html/output/0208_基本設計仕様書(カード管理).html:2154 の Excel セル C271 は `詳細情報が商品と紐づいている場合は、...(2-18)詳細情報を追加 を非表示にする`、同:2098 の項目2-18も `詳細情報が商品と紐づく場合、非表示にする` と明記する。",
+      "legacyEvidence": "旧実装は pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Card/card_detail.twig:387-390 で既存行の削除可否だけを分岐し、同:552 の `<button id=\"addDetail\" ...>詳細情報を追加</button>` は常時表示だった。正本のカスタマイズ要求が優先される。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Card/edit.twig:189-196 は `noDeletableCardDetailIds` を行の `is_deletable` にだけ使用し、同:199-200 は条件なしで `<button type=\"button\" id=\"add-detail\" ...>詳細情報を追加</button>` を描画する。",
+      "note": ""
+    },
+    {
+      "rowId": 1093,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "Excel 正本範囲 excel_to_html/output/0208_基本設計仕様書(カード管理).html:1935-2332 にはフォーマット重複時のアラート/選択解除の記述がない。記述はリバース文書 functions/pf-eccube3/m14-04_admin_card_card_register_update_delete.md:50 の `フォーマット select の重複時に alert と選択クリア` のみ。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/assets/js/card-detail.js:76-80 は変更時に `if(isSelectedFormatsValid()) { alert(\"同一のフォーマットは指定できません。\"); $(this).val(\"\"); }`、同:110-118 は選択値配列を重複判定する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Card/edit.twig:61-76 のリーガリティ追加処理は行追加と既定ラジオ選択だけで、同:38-102 のJS全体にも `.format` のchange、重複判定、alert、選択解除がない。",
+      "note": "正本設計書ではなく旧実装由来。"
+    },
+    {
+      "rowId": 1094,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "excel_to_html/output/0208_基本設計仕様書(カード管理).html:2177 の Excel セル AG292 は、実際には `この操作はあとから取り消すことができません。「{カード名}」を削除してよろしいですか？`、続けて `その後「実行」を選択すると、削除を実行する` と指定する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Card/card_detail.twig:576 は削除リンクに `data-message=\"{{ trans('admin.confirm.card_delete') }}\"` と `data-method=\"delete\"` を付与する。正本側はこの旧パターンを4系向けに明示している。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Card/edit.twig:217-220 は `admin.common.delete_modal__message` と `admin.common.delete` を使う。メッセージ自体は messages.ja.yaml:1790 の `この操作はあとから...` で正本と一致するが、delete_modal.twig:21-24 の確定アンカーは `{{ 'admin.common.delete'|trans }}`、messages.ja.yaml:1641 は `削除` であり、正本の「実行」と不一致。",
+      "note": "元 finding の期待文言「このカードを削除してもよろしいですか？」は正本にない。乖離として残るのは確定ボタン「実行」対「削除」の部分。"
+    },
+    {
+      "rowId": 1095,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "excel_to_html/output/0208_基本設計仕様書(カード管理).html:2156-2157 の Excel セル C274/D275 は `カードを削除すると、カード一覧画面へ遷移し以下の文言を表示する`、`「削除が完了しました。」` と明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/CardController.php:197-203 は削除後に `$app->addSuccess('admin.delete.complete', 'admin');` を積み、カード一覧/検索へ戻す旧経路である。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Card/CardController.php:347-349 は `$this->addSuccess('admin.common.delete_complete', 'admin');` 後に一覧へredirectするが、messages.ja.yaml:1597 の実文言は `admin.common.delete_complete: 削除しました`。",
+      "note": ""
+    },
+    {
+      "rowId": 1096,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "Excel 正本範囲 excel_to_html/output/0208_基本設計仕様書(カード管理).html:1935-2332 には支店へのHTTP通知や通知失敗ログ/エラー表の記述がない。記述はリバース文書 functions/pf-eccube3/m14-04_admin_card_card_register_update_delete.md:83 の `支店連携サービスで...更新通知` と同:201 の通知失敗時記録のみ。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/CardController.php:145-150 は保存成功後に `new BranchUpdateService($app)` と `$branchUpdate->noticeCardUpdate([$mtbCard->getId()]);`、同:197-201 は削除成功後にも `noticeCardUpdate($ids)`。BranchUpdateService.php:35-41 は失敗時に `$this->addBranchUpdateError(...)` と失敗ログを実行する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Card/CardController.php:271-291 は `persist/flush/commit`、成功フラッシュ、redirectのみ、同:329-349 の削除も `remove/flush`、成功フラッシュ、redirectのみ。`BranchUpdateService|noticeCardUpdate|支店システム` は同コントローラおよび src/Eccube/Service で該当0件。",
+      "note": "正本設計書の記述漏れを伴う旧機能の移植漏れ。"
+    },
+    {
+      "rowId": 1097,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "Excel 正本範囲 excel_to_html/output/0208_基本設計仕様書(カード管理).html:2445-2552 はCSV画面部品とTSV廃止を定義するが、URL/Route名は定義しない。エンドポイント記述はリバース文書 functions/pf-eccube3/m14-05_admin_card_card_csv_import.md:36-37 の `GET/POST /{admin_route}/card/csvimport` と同:54 の `admin_card_csv`。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/CardServiceProvider.php:44-48 は GET `/card/csvimport` を `admin_card_csv`、POST同パスを `admin_card_csv_import` にbindする。なお finding 記載のPOST名 `m14-05_admin_card_card_csv_import` は旧4リポジトリに0件で、旧コードの正確なbind名は `admin_card_csv_import`。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Card/CardCsvController.php:67-80 は GET `/card/csv_upload` name=`admin_card_csv_upload`、POST `/card/import` name=`admin_card_csv_import`。同:93-153 は失敗・成功とも `admin_card_csv_upload` へ戻す。",
+      "note": "URLとGET Route名の移植差は旧実装で裏付けられるが、元 finding のPOST Route名 `m14-05_admin_card_card_csv_import` はリバース文書の誤記。"
+    },
+    {
+      "rowId": 1098,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "excel_to_html/output/0208_基本設計仕様書(カード管理).html:2514-2517 の Excel 項目表は `CSVファイル選択`、`CSVファイルのアップロード`、`カード登録CSVフォーマット` を明記し、項目4は `シート「カード登録CSV」に対応する項目を表示する` と指定する。",
+      "legacyEvidence": "旧画面 pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Card/card_csv_import.twig:22,35,46 は `カード登録CSV, TSV`、`CSV, TSVファイルのアップロード`、`カード登録CSV, TSVファイルフォーマット`。正本はこの旧表記からTSVを除去するカスタマイズを要求する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Card/CardCsvController.php:211-213 は表示キーに `admin.card.card_csv_upload_title` / `admin.card.card_csv_format_title` を渡し、messages.ja.yaml:4520-4521 は `カードCSVアップロード` / `カードCSVフォーマット`。base_csv_upload.twig:73-75 のボタンは `admin.common.csv_upload`、messages.ja.yaml:1744 は `CSVファイルをアップロード`。同Twig:63-67 はファイルwidgetだけで `CSVファイル選択` ラベルを描画しない。",
+      "note": ""
+    },
+    {
+      "rowId": 1099,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "Excel 正本範囲 excel_to_html/output/0208_基本設計仕様書(カード管理).html:2445-2552 に `spin.min.js`、`card-csvimport.js`、submit時disabled、spinnerの記述はない。記述はリバース文書 functions/pf-eccube3/m14-05_admin_card_card_csv_import.md:46 のみ。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Card/card_csv_import.twig:11-12 は `spin.min.js` と `card-csvimport.js` を読み込む。assets/js/card-csvimport.js:24-28 はsubmit時に `$('#upload-button').attr('disabled', 'disabled');` と `ImageSpinner.spin(...)` を実行する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Product/base_csv_upload.twig:22-33 はインラインJSでsubmit時に `$.changeLoading(true);` のみを呼び、同:73-75 の `#upload-button` にdisabledを設定しない。Card/csv_card.twig:1-8 に専用JS読込もない。",
+      "note": "スピナー相当の共通ローディング表示はあるが、旧実装の二重送信防止（disabled）が移植されていない。"
+    },
+    {
+      "rowId": 1100,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "excel_to_html/output/0208_基本設計仕様書(カード管理).html:2692 はカード名(日)を文字型・最大255、同:2696 はルールテキスト(日)を文字型・最大1024、同:2718 はカードNoを `数値(整数)`・最大16とする。シート8の項目表:2692-2728 がCSV各列の書式・最大値を正本として列挙する。",
+      "legacyEvidence": "旧実装は pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/CardCsv.php:113-122 で行ごとにpersist/flushする実装で、正本の列制約が移植時の検証基準となる。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Csv/CardCsv.php:468-479 は列数・必須列後に `updateCard` へ渡し、同:569-586 は name/text/mana/power/toughness/loyalty を長さ検証なしでsetterへ渡す。同:758-766 も flavor/text/power/toughness/card_no をそのままsetterへ渡す。整数検証があるのは同:732-735 の card_detail_id と同:828-832 の back_card_detail_id。",
+      "note": ""
+    },
+    {
+      "rowId": 1101,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "Excel 正本範囲 excel_to_html/output/0208_基本設計仕様書(カード管理).html:2445-2768 に、取込後の支店通知・dtb_branch_update_error・通知失敗ログの記述はない。記述はリバース文書 functions/pf-eccube3/m14-05_admin_card_card_csv_import.md:75 の `更新対象になったカード ID...支店更新通知サービス`。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/CardCsvController.php:85-91 は成功フラッシュ後に `new BranchUpdateService($app)` と `$branchUpdate->noticeCardUpdate($updatedCardIds);`。BranchUpdateService.php:35-41 は失敗時に `addBranchUpdateError` とログを実行する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Card/CardCsvController.php:124-153 は `$this->cardCsv->register(...)`、完了イベント、成功フラッシュ、`admin_card_csv_upload` redirectのみ。register戻り値を受けず、更新ID収集や支店通知呼出しがない。",
+      "note": "正本設計書ではなく旧実装由来。"
+    },
+    {
+      "rowId": 1102,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "Excel 正本範囲 excel_to_html/output/0208_基本設計仕様書(カード管理).html:2445-2768 にSQLロガー無効化、100行ごとのORMキャッシュ解放、全行後解放の記述はない。記述はリバース文書 functions/pf-eccube3/m14-05_admin_card_card_csv_import.md:70-73。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/CardCsvController.php:69-73 は取込前に `setSQLLogger(null)`。Service/Csv/CardCsv.php:117-123 は `if ($rowIndex % 100 === 0) { $this->clearCache(); }` とループ後の `$this->clearCache();` を実行する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Csv/CardCsv.php:466-521 は行ごとpersist/flushしてcommitするがclear/clearCacheを呼ばない。Controller/Admin/Card/CardCsvController.php:171-172 の `setSQLLogger(null)` はCSV出力メソッド側で、取込の同:115-153 にはない。",
+      "note": "正本設計書ではなく旧実装由来。"
+    },
+    {
+      "rowId": 1103,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "Excel 正本のカードセット一覧 excel_to_html/output/0208_基本設計仕様書(カード管理).html:2769-2932 はページ送り/ダウンロードの画面動作を定義するがRoute名とURLパターンは記載しない。詳細はリバース文書 functions/pf-eccube3/m14-06_admin_card_cardset_list.md:32-42。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/CardsetServiceProvider.php:19-23 は `/cardset`=`admin_cardset`、`/cardset/{page_no}`=`admin_cardset_page`、同:42-43 は `/cardset/download_lang`=`admin_cardset_download_lang`。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Card/CardsetController.php:51-52 は `admin_cardset_list` `/cardset` と `admin_cardset_list_paged` `/cardset/page/{page_no}`、同:310-311 は `admin_cardset_download_each_lang` `/cardset/download_each_lang`。",
+      "note": "正本設計書ではなく旧実装の公開契約由来。"
+    },
+    {
+      "rowId": 1104,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "Excel 正本 excel_to_html/output/0208_基本設計仕様書(カード管理).html:2847-2848 は表示件数候補と並び順4文言を定義するが、クエリ名 pageCount/sortSelect やセッション検証規則はない。詳細はリバース文書 functions/pf-eccube3/m14-06_admin_card_cardset_list.md:63-66。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/CardSetController.php:56-65 は `pageCount` をmtb_page_max.nameと一致時のみ採用し、同:73-84 は固定4文言の `sortSelect` と完全一致時のみ採用する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Card/CardsetController.php:57-76 は `sort_key`/`sort_order`、同:87-99 は `page_count` を使用する。MtbCardsetRepository.php:170-173 は未知sort_keyを既定列へフォールバックする一方、orderは `$qb->addOrderBy($sortColumn, $order)` へ直接渡す。",
+      "note": "正本が定める選択肢自体は現行にもあるが、指摘対象のクエリ契約・検証方式は旧実装由来。"
+    },
+    {
+      "rowId": 1105,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "Excel 正本範囲 excel_to_html/output/0208_基本設計仕様書(カード管理).html:2769-2932 に resume または `eccube.admin.cardset.pageCount/sortSelect` の記述はない。詳細はリバース文書 functions/pf-eccube3/m14-06_admin_card_cardset_list.md:63-69。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/CardSetController.php:46-50 は `page_no`なし且つ`resume != 1`で3キーをremoveし、同:102-105 は `page_no/pageCount/sortSelect` を保存する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Card/CardsetController.php:54-110 はresumeを参照せずremove処理もなく、保存キーは同:57,66,87,109 の `eccube.admin.cardset.sort`、`.order`、`.search.page_count`、`.page_no`。",
+      "note": "正本設計書ではなく旧実装由来。"
+    },
+    {
+      "rowId": 1106,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "excel_to_html/output/0208_基本設計仕様書(カード管理).html:2860 の Excel セル AG70 は、実際には `この操作はあとから取り消すことができません。「{カードセット名}」を削除してよろしいですか？`、続けて `その後「実行」を選択すると、削除を実行する` と指定する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Cardset/card_set.twig:45-48 は言語別/セット別ボタンを個別Routeへ送る旧テンプレートで、削除を含む一覧UIが正本カスタマイズの基礎となっている。",
+      "currentImpl": "ec-cube-enterprise/app/template/admin/Cardset/index.twig:172-177 は `admin.common.delete_modal__message` を共通モーダルへ渡す。messages.ja.yaml:1790 の確認文言は正本と一致するが、Card/delete_modal.twig:21-24 の確定表示は `admin.common.delete`、messages.ja.yaml:1641 は `削除` で、正本の「実行」と不一致。",
+      "note": "元 finding の期待文言「このカードセットを削除してもよろしいですか？」は正本にない。確定できる乖離は「実行」対「削除」。"
+    },
+    {
+      "rowId": 1107,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "Excel 正本範囲 excel_to_html/output/0208_基本設計仕様書(カード管理).html:2769-2932 は削除確認のみで、子カード詳細存在時のReferer遷移を記載しない。この挙動はリバース詳細設計側の旧実装記述。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/CardSetController.php:259-264 は `if ($cardset->getCardDetails()->count() > 0)` でエラーを積み、`return $app->redirect($request->headers->get('referer'));` とする。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Card/CardsetController.php:261-265 はForeignKeyConstraintViolationExceptionでエラーを積むが、同:280 は成功/失敗共通で `return $this->redirectToRoute('admin_cardset_list');`。Refererを読まない。",
+      "note": "正本設計書ではなく旧実装由来。"
+    },
+    {
+      "rowId": 1108,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "Excel 正本 excel_to_html/output/0208_基本設計仕様書(カード管理).html:3031-3211 は画像ダウンロード処理を記すがRoute名/URLは記載しない。リバース文書 functions/pf-eccube3/m14-07_admin_card_cardset_image_download.md:35-36 が `POST /{admin_route}/cardset/download_lang` を記載する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/CardsetServiceProvider.php:42-43 はPOST `/cardset/download_lang` を `admin_cardset_download_lang` にbindし、Resource/template/admin/Cardset/card_set.twig:45-46 はformactionに同Routeを使う。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Card/CardsetController.php:310-311 はPOST `/cardset/download_each_lang` name=`admin_cardset_download_each_lang`。app/template/admin/Cardset/index.twig:76-81 もformactionに同名を使う。",
+      "note": "正本設計書ではなく旧実装の公開契約由来。"
+    },
+    {
+      "rowId": 1109,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "Excel 正本 excel_to_html/output/0208_基本設計仕様書(カード管理).html:3031-3211 に `set_not_exist_card`、`eccube.admin.cardset.page_no`、`admin_cardset_page` はない。記述はリバース文書 functions/pf-eccube3/m14-07_admin_card_cardset_image_download.md:73。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/CardSetController.php:323-328 はカード詳細0件時に `admin.cardset.download.failed.set_not_exist_card` をaddErrorし、セッションpage_no付き `admin_cardset_page` へ即時redirectする。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Admin/Cardset/CardsetDownloadAction.php:96-100 は0件時に `continue;`、同:168-174 は最終addedCount=0で `admin.card.cardset.error.download_no_images` をthrowする。Controller/Admin/Card/CardsetController.php:300-304 はcatch後 `admin_cardset_list` へredirectする。",
+      "note": "正本設計書ではなく旧実装由来。"
+    },
+    {
+      "rowId": 1111,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "Excel 正本 excel_to_html/output/0208_基本設計仕様書(カード管理).html:3031-3211 はZIP構成を定義するが `dead_link_flg` 更新を記載しない。記述はリバース文書 functions/pf-eccube3/m14-07_admin_card_cardset_image_download.md:77-78,85-88 のみ。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/CardSetController.php:343-350 はセット別で取得失敗/成功に応じ `setDeadLinkFlg(true/false)`、persist、flushを即時実行し、同:460-464 は言語別で更新リストをまとめてpersist/flushする。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Admin/Cardset/CardsetDownloadAction.php:96-173 は画像取得とZIP追加/0件例外のみで `setDeadLinkFlg`、persist、flushを呼ばない。Entity/Master/MtbCardImage.php:103-113 には列とsetter自体は存在するが、監査対象ダウンロードActionから未使用。",
+      "note": "正本設計書ではなく旧実装由来。"
+    }
+  ]
+}

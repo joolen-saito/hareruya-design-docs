@@ -1,0 +1,345 @@
+{
+ "packetId": "rc_43",
+ "note": "rowId は drift_findings_list_final.tsv の行番号(ヘッダ除く1始まり)。mech は機械検証フラグ(手掛かりであって正解ではない)。",
+ "count": 12,
+ "findings": [
+  {
+   "rowId": 752,
+   "機能No": "M10-16",
+   "機能名": "M10-16 追加システム設定",
+   "ドメイン": "m10",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "買取査定申込み完了画面の自動遷移秒数は、数値（整数）かつ0以上、任意、初期値15とする。",
+   "実装実態": "otcbuy_order_return_seconds は IntegerType required=false で初期値15はあるが、GreaterThanOrEqual(0) 制約がない。",
+   "差分内容": "otcbuy_order_return_seconds/OTCBUY_ORDER_RETURN_SECONDS/自動遷移秒数で再検索したが、0以上を保証するバリデーションが当フィールドに実装されていない。",
+   "実装参照": "src/Eccube/Form/Type/Admin/AdditionalSystemFormType.php:72",
+   "設計書参照": "excel_to_html/output/0209_基本設計仕様書(基本情報設定).html#sheet-14:3924,4032",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html:4428 の Excel 正本は「買取査定申込み完了画面の自動遷移秒数」「数値（整数）, 0以上」「必須 -」「初期値 15」と明記する。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/ConfigType.php:83-86 は当項目を `'integer'`、ラベル「買取査定申込み完了画面の自動遷移秒数」、既定値 `Option::OTCBUY_ORDER_RETURN_SECONDS_DEFAULT` としており、/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Entity/MtbOption.php:41-42 はキーと既定値15を定義する。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/AdditionalSystemFormType.php:72-75 は `IntegerType::class`、`'required' => false`、既定値15を満たすが、`new GreaterThanOrEqual(0)` 制約がない。したがって負数を拒否する正本要件だけが未充足である。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Form/Type/Admin/AdditionalSystemFormType.php:72-75` は現 develop でも `->add(Option::OTCBUY_ORDER_RETURN_SECONDS, IntegerType::class, ['required' => false, 'data' => $options['settings'][Option::OTCBUY_ORDER_RETURN_SECONDS] ?? Option::OTCBUY_ORDER_RETURN_SECONDS_DEFAULT,])` のみで `constraints` キー自体が無く、`GreaterThanOrEqual(0)` は付いていない（同ファイル :47-54 の ARRIVAL_ALERT_MAX 等には付与済み）。初期値15は `src/Eccube/Entity/Master/MtbOption.php:59` `OTCBUY_ORDER_RETURN_SECONDS_DEFAULT = 15` で担保されるが、0以上の検証は未実装。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "UNCHANGED"
+   }
+  },
+  {
+   "rowId": 754,
+   "機能No": "M10-16",
+   "機能名": "M10-16 追加システム設定",
+   "ドメイン": "m10",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "買取部門集計送信、必須項目空欄会員、ポイント未反映決済、ポイント差分、購入処理エラー、イベント決済確認エラー、身分証期限切れの各通知メールは、カンマ区切り複数メールの正規表現で検証する。",
+   "実装実態": "対象メール項目は Symfony Email 制約と Length 制約で実装されており、カンマ区切り複数メール用 Regex はない。",
+   "差分内容": "otc_summary_mail_address/check_bric_mail_address/check_nrpu_mail_address/adjust_point_variance_mail_addr/shopping_error_mail_address/check_payment_error_mail_address/check_id_expired_mail_address で再検索したが、実装は単一メール形式の Email 制約である。",
+   "実装参照": "src/Eccube/Form/Type/Admin/AdditionalSystemFormType.php:135,142,149,156,163,170,177",
+   "設計書参照": "excel_to_html/output/0209_基本設計仕様書(基本情報設定).html#sheet-14:4032",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html:4436-4442 の Excel 正本は対象メール項目をそれぞれ「Eメール形式で許容された文字」「最大255文字」「任意」と定めるが、「カンマ区切り複数メール」や具体的な正規表現は Excel 正本本文に記載していない。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/ConfigType.php:208-294 は買取部門集計、必須項目空欄会員、ポイント未反映、ポイント差分、購入処理、イベント決済確認、身分証期限切れの各フィールドに同じ `Assert\\Regex` を設定し、例として同:212-215 は `pattern => '/^((...@...+,)*)(...@...)$/'` とカンマ区切り複数アドレスを検証する。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/AdditionalSystemFormType.php:139-185 は対象各項目に単一値向け `new Email(...)` と `new Length(['max' => ...])` を設定しており、カンマ区切り複数メール用Regexを移植していない。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "現 develop でも 7項目すべてが単一メール用の Email + Length のみ。`src/Eccube/Form/Type/Admin/AdditionalSystemFormType.php:139-145` `->add(Option::OTC_SUMMARY_MAIL_ADDRESS, TextType::class, ['required' => false, 'constraints' => [new Email(null, null, ...), new Length(['max' => $this->eccubeConfig['eccube_stext_len']])]])`、同様に :146-152 CHECK_BLANK_REQUIRED_ITEM_CUSTOMER_MAIL_ADDRESS、:153-159 CHECK_NOT_REFLECTED_POINT_USAGE_MAIL_ADDRESS、:160-166 ADJUST_POINT_VARIANCE_MAIL_ADDRESS、:167-173 ALERT_SHOPPING_ERROR_MAIL_ADDRESS、:174-180 ALERT_CHECK_PAYMENT_ERROR_MAIL_ADDRESS、:181-187 CHECK_ID_EXPIRED_CUSTOMER_MAIL_ADDRESS。カンマ区切り複数メール用の Regex は存在しない（同ファイル内 Regex は :83,:89,:95,:102,:112 のスマレジ/時刻項目のみ）。`src/Eccube/Form/` 配下を MultipleEmail/カンマ区切り/explode(',') で横断検索しても複数メール検証の実装は無し。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "UNCHANGED"
+   }
+  },
+  {
+   "rowId": 755,
+   "機能No": "M10-16",
+   "機能名": "M10-16 追加システム設定",
+   "ドメイン": "m10",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "査定払出し連絡用経理部門メールアドレスは任意、Eメール形式、最大255文字の入力項目として18と19の間に追加する。",
+   "実装実態": "otc_buy_order_accounting_payment_pending_mail_address はフォーム上 required=true で定義されている。",
+   "差分内容": "査定払出し/経理/accounting/otc_buy_order_accounting_payment_pending_mail_address で再検索し、項目自体は存在するが任意指定ではなく required=true になっていることを確認した。",
+   "実装参照": "src/Eccube/Form/Type/Admin/AdditionalSystemFormType.php:191; src/Eccube/Resource/template/admin/Setting/Shop/additional_system.twig:202",
+   "設計書参照": "excel_to_html/output/0209_基本設計仕様書(基本情報設定).html#sheet-14:3939,3976",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html:4443 は Excel 正本セルとして「査定払出し連絡用経理部門メールアドレス」「Eメール形式で許容された文字」「必須 -」「255文字」と記載し、同:4480 は「(18と19の間に追加) 査定払出し連絡用経理部門メールアドレス」と位置も指定する。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/ConfigType.php:285-304 は「身分証の有効期限切れ会員送信メールアドレス」の直後に「Small packetが選択可能な合計金額の閾値」を追加しており、間に査定払出し連絡用項目がない。項目名および `otc_buy_order_accounting_payment_pending_mail_address` は旧実装4リポジトリに存在しない（確認範囲: pf-eccube3、pf-api、pf-article、deck-api の項目名・キー横断検索）。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/AdditionalSystemFormType.php:195-200 は `OTC_BUY_ORDER_ACCOUNTING_PAYMENT_PENDING_MAIL_ADDRESS` に `'required' => true` を設定する。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Setting/Shop/additional_system.twig:209-215 で項目自体は描画されるが、正本の任意指定と異なる。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Form/Type/Admin/AdditionalSystemFormType.php:195-201` `->add(Option::OTC_BUY_ORDER_ACCOUNTING_PAYMENT_PENDING_MAIL_ADDRESS, TextType::class, ['required' => true, 'constraints' => [new Email(...), new Length(['max' => $this->eccubeConfig['eccube_stext_len']])]])` と、監査時点と同じく required=true のまま（設計期待値は「任意」）。Email 形式・最大255(eccube_stext_len)は充足だが必須/任意の相違が残る。テンプレートも `src/Eccube/Resource/template/admin/Setting/Shop/additional_system.twig:209-217` に項目行があるのみで変更なし。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "UNCHANGED"
+   }
+  },
+  {
+   "rowId": 756,
+   "機能No": "M10-16",
+   "機能名": "M10-16 追加システム設定",
+   "ドメイン": "m10",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "保存成功時はフラッシュ成功メッセージ（翻訳キー admin.register.complete）を積み、リダイレクト後のGETで画面全体を再描画する。",
+   "実装実態": "保存成功時に addSuccess('admin.common.save_complete', 'admin') を実行する。admin.common.save_complete は「保存しました」、admin.register.complete は「登録が完了しました。」である。",
+   "差分内容": "admin.register.complete/admin.common.save_complete/addSuccess を再検索し、成功メッセージの翻訳キーが設計と異なることを確認した。リダイレクト自体は GET 初期表示へ戻るため一致。",
+   "実装参照": "src/Eccube/Controller/Admin/Setting/Shop/AdditionalSystemController.php:103; src/Eccube/Resource/locale/messages.ja.yaml:1559,1934",
+   "設計書参照": "excel_to_html/output/0209_基本設計仕様書(基本情報設定).html#sheet-14:4044,4061",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html:4447 の Excel 正本は登録ボタンと登録処理のみを記載し、成功時翻訳キー `admin.register.complete` やGETへのリダイレクトは Excel 正本本文（確認範囲: 同:4350-4532）にない。これらはリバース詳細設計の同:4570,4592 にのみ現れる。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/ConfigController.php:54-66 は変更行をpersist・flushした後に `$app->addSuccess('admin.register.complete', 'admin')` を実行し、`plugin_HareruyaEc_config` のGET相当へredirectする。/home/y-saito/Developments/pf-eccube3/src/Eccube/Resource/locale/message.ja.yml:83 は `admin.register.complete: 登録が完了しました。` と定義する。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Setting/Shop/AdditionalSystemController.php:121-125 は完了イベント後に `$this->addSuccess('admin.common.save_complete', 'admin')` を積みGETへredirectする。リダイレクトは満たすが、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:1595,1970 のとおり表示文言が「保存しました」と「登録が完了しました。」で異なる。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Controller/Admin/Setting/Shop/AdditionalSystemController.php:123` `$this->addSuccess('admin.common.save_complete', 'admin');` で監査時点と同一。翻訳は `src/Eccube/Resource/locale/messages.ja.yaml:1595` `admin.common.save_complete: 保存しました` / :1970 `admin.register.complete: 登録が完了しました。` であり、設計指定の `admin.register.complete` は使用されていない。リダイレクト自体は同 :125 `return $this->redirectToRoute('admin_setting_shop_additional_system');` で GET 再描画。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EMBED_ONLY",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Resource/locale/messages.ja.yaml"
+    ],
+    "quoteDetail": [
+     "admin.register.complete"
+    ]
+   }
+  },
+  {
+   "rowId": 757,
+   "機能No": "M10-16",
+   "機能名": "M10-16 追加システム設定",
+   "ドメイン": "m10",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "当画面の保存処理では mtb_option.update_date を現在時刻へ進める処理を同一メソッド内に持たず、option_value と member_id のみを更新対象として明示する。",
+   "実装実態": "変更検出時に option_value と member に加えて setUpdateDate(new \\DateTime()) を呼び出している。",
+   "差分内容": "update_date/setUpdateDate/MtbOption/保存ループで再検索し、当コントローラ内で update_date を明示更新していることを確認した。",
+   "実装参照": "src/Eccube/Controller/Admin/Setting/Shop/AdditionalSystemController.php:92,95; src/Eccube/Entity/Master/MtbOption.php:179,187",
+   "設計書参照": "excel_to_html/output/0209_基本設計仕様書(基本情報設定).html#sheet-14:4035,4048",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html:4407-4447 の Excel 正本機能仕様・入力項目表には `mtb_option.update_date` や更新対象列の指定がない。「同一メソッド内でupdate_dateを進めない」はリバース詳細設計の同:4583,4596 にのみ記載される。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/ConfigController.php:54-60 は変更時に `$option->setOptionValue(...) ->setMemberId(...)` とpersistするだけで、当メソッド内に `setUpdateDate` 呼出しがない。指摘の直接根拠はこの旧保存処理である。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Setting/Shop/AdditionalSystemController.php:101-109 は変更検出時に `setOptionValue`、`setMember` に加えて `$Option->setUpdateDate(new \\DateTime())` を明示的に呼ぶため、旧保存処理と異なる。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Controller/Admin/Setting/Shop/AdditionalSystemController.php:104-110` の変更検出ループ内で `$Option->setOptionValue(...); $Option->setMember($Member); $Option->setUpdateDate(new \\DateTime());` と、監査時点同様 update_date を同一メソッド内で明示更新している。`src/Eccube/Entity/Master/MtbOption.php` の setUpdateDate も存置。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "NOT_FOUND",
+    "stale": "UNCHANGED",
+    "quoteDetail": [
+     "mtb_option.update_date",
+     "同一メソッド内でupdate_dateを進めない"
+    ]
+   }
+  },
+  {
+   "rowId": 760,
+   "機能No": "M11-03",
+   "機能名": "M11-03 権限管理",
+   "ドメイン": "m11",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "管理画面の Twig グローバルとして AuthorityRoles を拒否URLのフルパス配列で登録し、同一リクエスト内の二重初期化を避ける。",
+   "実装実態": "TwigInitializeListener はログインメンバーの AuthorityRoles を取得して eccubeNav をフィルタし、Twig global には eccubeNav を登録する。AuthorityRoles という Twig global の登録、およびその二重初期化回避フラグは確認できない。",
+   "差分内容": "設計はテンプレート側から参照可能な AuthorityRoles グローバル配列を要求しているが、実装はナビゲーションを事前フィルタして eccubeNav のみを公開する方式であり、公開名と契約が異なる。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/EventListener/TwigInitializeListener.php:185",
+   "設計書参照": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-5:1859,1881",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0201_基本設計仕様書(システム設定).html:1945-2001 の Excel 正本はURL単位の拒否リスト生成・登録を規定するが、Twigグローバル名 `AuthorityRoles`、フルパス配列化、同一リクエスト内の初期化ガードは Excel 正本本文（確認範囲: 同:1908-2078）に記載しない。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-eccube3/src/Eccube/Application.php:361-366 は `twig_global_initialized` がtrueならreturnして二重初期化を避け、同:377-388 はログインメンバーのAuthorityRoleから `$request->getBaseUrl().'/'.$admin_route.$denyUrl` を作り、`$app['twig']->addGlobal('AuthorityRoles', $roles)` と登録する。同:417 で初期化済みフラグをtrueにする。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/EventListener/TwigInitializeListener.php:176-191 はAuthorityRoleを取得して `getDisplayEccubeNav(...)` でナビを事前フィルタし、Twigには `$this->twig->addGlobal('eccubeNav', $eccubeNav)` を登録する。`AuthorityRoles` というグローバル配列や旧 `twig_global_initialized` ガードは存在しない。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/EventListener/TwigInitializeListener.php:187` `$AuthorityRoles = $this->authorityRoleRepository->findBy(['Authority' => $Member->getAuthority()]);` → `:189` `$eccubeNav = $this->getDisplayEccubeNav($eccubeNav, $AuthorityRoles, $baseUrl);` → `:191` `$this->twig->addGlobal('eccubeNav', $eccubeNav);` と、監査時点と同じくナビを事前フィルタして eccubeNav のみを公開する方式のまま。スナップショット全体で `addGlobal('AuthorityRoles'` は 0 件で、Twig グローバル AuthorityRoles（拒否URLフルパス配列）は登録されていない。なお二重初期化回避フラグ自体は `:48` `protected bool $initialized = false;` / `:63` `if ($this->initialized) {` / `:78` `$this->initialized = true;` として存在するが、設計が求める公開名 AuthorityRoles の契約は未充足。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EMBED_ONLY",
+    "stale": "UNCHANGED",
+    "quoteDetail": [
+     "AuthorityRoles"
+    ]
+   }
+  },
+  {
+   "rowId": 761,
+   "機能No": "M11-03",
+   "機能名": "M11-03 権限管理",
+   "ドメイン": "m11",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "権限設定の保存成功後、画面に「権限設定を保存しました。」を表示する。",
+   "実装実態": "保存成功時は addSuccess('admin.common.save_complete') を呼び出し、翻訳文言は「保存しました」である。",
+   "差分内容": "保存後リダイレクト自体は設計と一致するが、利用者に表示される成功メッセージが設計の「権限設定を保存しました。」ではなく共通文言「保存しました」になっている。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Setting/System/AuthorityController.php:85; /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:1405",
+   "設計書参照": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-5:1854,1884",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0201_基本設計仕様書(システム設定).html:1979-2001 の Excel 正本は権限の登録処理を説明し、同:2025-2026 は画面下部の「登録」ボタンを記載するが、保存成功メッセージ「権限設定を保存しました。」は Excel 正本本文（確認範囲: 同:1908-2078）にない。リバース詳細設計の同:2129 も一般文言「保存しました」であり、厳密な期待文言の根拠は旧localeである。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-eccube3/src/Eccube/Controller/Admin/Setting/System/AuthorityController.php:94-107 は保存後に `$app->addSuccess('admin.system.authority.save.complete', 'admin')` を実行し、/home/y-saito/Developments/pf-eccube3/src/Eccube/Resource/locale/message.ja.yml:184 は `admin.system.authority.save.complete: 権限設定を保存しました。` と定義する。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Setting/System/AuthorityController.php:96-114 は保存成功後に `$this->addSuccess('admin.common.save_complete', 'admin')` を使い、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:1595 は同キーを「保存しました」と定義するため、旧固有文言と一致しない。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Controller/Admin/Setting/System/AuthorityController.php:108` `$this->addSuccess('admin.common.save_complete', 'admin');` のままで、`src/Eccube/Resource/locale/messages.ja.yaml:1595` `admin.common.save_complete: 保存しました` と共通文言。スナップショット src 配下に「権限設定を保存しました」は 0 件、locale の admin.setting.system.authority.* にも該当メッセージキーは無い（存在するのは `:3246 admin.setting.system.authority__card_title: 権限設定`、`:3251 ...exists_already_name` 等のみ）。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EMBED_ONLY",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Resource/locale/messages.ja.yaml"
+    ],
+    "quoteDetail": [
+     "権限設定を保存しました。",
+     "保存しました"
+    ]
+   }
+  },
+  {
+   "rowId": 763,
+   "機能No": "M12-01",
+   "機能名": "M12-01 日別・月別集計 集計一覧(検索項目-日別)",
+   "ドメイン": "m12",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "期間内で集計結果が無い日付・月は、表示項目の各列を0として一覧へ補完する。集計対象が0件でも集計結果が無い日付・月の列を0で補完する。",
+   "実装実態": "AnalysisSummaryBuilder はリポジトリが返した集計済み行だけを表示用配列へ変換する。リポジトリは dtb_daily_summary / dtb_monthly_summary に存在する行だけを期間条件で取得し、欠落日・欠落月の行生成をしない。summary が空の場合、Twig は結果表自体を描画しない。",
+   "差分内容": "反証検索として DatePeriod/CarbonPeriod/補完/0で/zero/fill/missing/empty/calendar を Analysis 配下と DtbDailySummaryRepository/DtbMonthlySummaryRepository で確認したが、期間内の日付・月を展開して0行を埋める処理は見つからない。",
+   "実装参照": "src/Eccube/Service/Admin/Analysis/AnalysisSummaryBuilder.php:75; src/Eccube/Repository/DtbDailySummaryRepository.php:329; src/Eccube/Repository/DtbMonthlySummaryRepository.php:106; src/Eccube/Resource/template/admin/Analysis/summary.twig:194",
+   "設計書参照": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-3:1055,1069,1096",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:1107 のExcel正本セルは「カスタマイズ要件に記載の内容以外は現行踏襲」とするが、欠落日・欠落月を0行で補完する具体記述は同:1197の埋込開始前には存在しない。同:1239 の具体文は埋込リバース詳細設計である。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Repository/OrderRepository.php:844-856 は「取得できなかった日の補正」としてFrom～Toをループし、不在キーに各表示列0の `$dummyRow` を追加する。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Analysis/AnalysisSummaryBuilder.php:75-106 はリポジトリ取得行だけを配列化して返し、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbDailySummaryRepository.php:329-342 も存在行だけを期間抽出する。日付系列を生成する処理がない。",
+   "根拠検証メモ": "正本は現行踏襲を包括指定するが、0補完の具体的根拠は旧実装で確認したためLEGACY_BACKED。",
+   "対応の根拠(現develop)": "`src/Eccube/Service/Admin/Analysis/AnalysisSummaryBuilder.php:75-77` `$rowsRaw = $this->dtbDailySummaryRepository->fetchSummaryRowsByDateRangeAndTargets(...); foreach ($rowsRaw as $raw) {` は取得行のみを整形しており、`src/Eccube/Repository/DtbDailySummaryRepository.php:329-330` `->where('s.summaryDate >= :from')->andWhere('s.summaryDate <= :to')`、`src/Eccube/Repository/DtbMonthlySummaryRepository.php:106-107` `WHERE s.summary_month >= :from AND s.summary_month <= :to` も既存行のSELECTのみ。`src/Eccube/Resource/template/admin/Analysis/summary.twig:194` は `{% if summary %}` で空なら表自体を描画しない。`DatePeriod|DateInterval|P1D|P1M` の反証検索も Analysis 配下・両Repository でヒット0件で、欠落日・欠落月の0補完は未実装のまま。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "UNCHANGED"
+   }
+  },
+  {
+   "rowId": 764,
+   "機能No": "M12-01",
+   "機能名": "M12-01 日別・月別集計 集計一覧(検索項目-月別)",
+   "ドメイン": "m12",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "集計は売上として計上できるもののみとし、注文ステータスが「出荷完了」の注文だけを集計対象とする。",
+   "実装実態": "日次集計バッチの受注集計SQLは dtb_order を order_date 範囲と base_info_id で集計しており、order_status_id や OrderStatus::DELIVERED の条件がない。",
+   "差分内容": "DtbDailySummaryRepository::aggregateOrderSummaryByBaseInfo は dtb_order の全ステータスを対象に subtotal + delivery_fee_total + charge を合算する。SummaryController、Analysis配下Service、DtbDailySummaryRepository、DtbMonthlySummaryRepositoryを OrderStatus/order_status/DELIVERED/出荷完了 で反証検索したが、本集計に適用されるステータス条件は見つからなかった。",
+   "実装参照": "src/Eccube/Repository/DtbDailySummaryRepository.php:42; src/Eccube/Repository/DtbDailySummaryRepository.php:62; src/Eccube/Service/Admin/Analysis/BatchAggregateDailySummaryAction.php:37",
+   "設計書参照": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4:1141",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:1343-1344 のExcel正本セルは「集計は売上として計上できるもの」「注文ステータスが『出荷完了』のみ集計対象」と明記する。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Repository/OrderRepository.php:712-716 の旧注文集計は `where o.order_id = od.order_id` のみで、全体を出荷完了に限定する新カスタマイズ条件はない。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbDailySummaryRepository.php:62-66 は `base_info_id` と日付範囲だけをWHEREに置き、`order_status_id = 出荷完了` を付けず全ステータスを集計する。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Repository/DtbDailySummaryRepository.php:42` `public function aggregateOrderSummaryByBaseInfo(...)` のSQLは `:62-66` で `o.base_info_id IS NOT NULL AND o.order_date >= :summaryDateFrom AND o.order_date <= :summaryDateTo` のみを条件とし、`order_status_id` / `OrderStatus::DELIVERED`（出荷完了）の絞り込みがない。`src/Eccube/Service/Admin/Analysis/BatchAggregateDailySummaryAction.php:37` `$orderRows = $this->dailySummaryRepository->aggregateOrderSummaryByBaseInfo($summaryDateFrom, $summaryDateTo);` も監査時点と同一。`OrderStatus|order_status|DELIVERED` の反証検索はヒット0件。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "UNCHANGED"
+   }
+  },
+  {
+   "rowId": 767,
+   "機能No": "M12-01",
+   "機能名": "M12-01 日別・月別集計 集計一覧(検索結果-日別)",
+   "ドメイン": "m12",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "買取関連の集計は買取データの買取ステータスが「買取成立」のみ計上し、それ以外の買取ステータスは計上しない。買取件数は、ネット買取は査定承諾日が入っているもの、店頭買取は買取成立日が入っているものを集計対象とし、キャンセル／管理者取消は含めない。",
+   "実装実態": "aggregatePurchaseSummaryByBaseInfo はネット買取を bo.auto_approval_flg = TRUE かつ bo.order_date 範囲で集計し、店頭買取を obo.cancel_date IS NULL かつ obo.apply_date 範囲で集計する。買取成立ステータス、査定承諾日、買取成立日による限定ではない。",
+   "差分内容": "MtbBuyOrderStatus::APPRAISAL_ACCEPTANCE と MtbOtcBuyOrderStatus::STATUS_COMPLETE、DtbOtcBuyOrder.completeDate は存在するが、同集計 SQL はそれらを参照しない。DtbDailySummaryRepository.php / DtbBuyOrderRepository.php / DtbOtcBuyOrderRepository.php を 査定承諾、買取成立、APPRAISAL_ACCEPTANCE、STATUS_COMPLETE、complete_date で反証検索しても M12-01 集計への適用は確認できない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbDailySummaryRepository.php:131",
+   "設計書参照": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-5:1363,1364,1366,1367,1388",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:1583-1587 のExcel正本セルはネット買取件数を「査定承諾日が入っているもの」「キャンセルは含まない」、店頭買取を「買取成立日が入っているもの」「管理者取消は含まない」とし、同:1608 は買取ステータス「買取成立」のみ計上と明記する。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Repository/OrderRepository.php:630-641 の旧M12-01集計は受注期間・表示列を入力とする旧方式で、買取データの新固定列条件は持たない。具体条件はExcel正本のカスタマイズ要求である。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbDailySummaryRepository.php:131-149 はネット買取を `bo.auto_approval_flg = TRUE` と `bo.order_date`、店頭買取を `obo.cancel_date IS NULL` と `obo.apply_date` で抽出し、査定承諾日・買取成立日および買取成立ステータスを条件にしていない。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Repository/DtbDailySummaryRepository.php:131-134` `WHERE bo.auto_approval_flg = TRUE AND bo.order_date >= :summaryDateFrom AND bo.order_date <= :summaryDateTo`（ネット買取）、`:144-148` `WHERE obo.base_info_id IS NOT NULL AND obo.cancel_date IS NULL AND obo.apply_date >= :summaryDateFrom AND obo.apply_date <= :summaryDateTo`（店頭買取）と現 develop でも監査時点と同一。買取成立ステータス（`MtbBuyOrderStatus::APPRAISAL_ACCEPTANCE` / `MtbOtcBuyOrderStatus::STATUS_COMPLETE`）や査定承諾日・買取成立日（`complete_date`）による限定は同SQLに存在しない。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "UNCHANGED"
+   }
+  },
+  {
+   "rowId": 768,
+   "機能No": "M12-01",
+   "機能名": "M12-01 日別・月別集計 集計一覧(検索結果-日別)",
+   "ドメイン": "m12",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "店舗の並び順は店舗の表示順の昇順。",
+   "実装実態": "集計結果取得は s.summaryDate ASC の後に b.id ASC で並べており、店舗表示順を表す BaseInfo.rank は使用していない。",
+   "差分内容": "BaseInfo.rank は「並び順」カラムとして存在し、フォーム用店舗一覧は BaseInfoRepository::getPublicTenantShopsForSummary で bi.rank ASC を使う。一方、結果一覧用 fetchSummaryRowsByDateRangeAndTargets は b.id ASC のため、設計の店舗表示順昇順と一致しない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbDailySummaryRepository.php:331",
+   "設計書参照": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-5:1383",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:1603 のExcel正本セルは「店舗の並び順は店舗の表示順の昇順」と明記する。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Repository/OrderRepository.php:799 は旧一覧を `order by buyer.order_date asc` とし、旧方式には店舗別行の並び契約がない。表示順要求はExcel正本の新固定集計仕様である。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbDailySummaryRepository.php:329-332 は結果を `orderBy('s.summaryDate', 'ASC')->addOrderBy('b.id', 'ASC')` とし、店舗の表示順 `rank` ではなくID昇順で並べる。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Repository/DtbDailySummaryRepository.php:331-332` `->orderBy('s.summaryDate', 'ASC')->addOrderBy('b.id', 'ASC')` のままで、店舗表示順 `BaseInfo.rank` による並び替えになっていない（月次側 `src/Eccube/Repository/DtbMonthlySummaryRepository.php:121` も `ORDER BY s.summary_month ASC, s.base_info_id ASC`）。`rank ASC` はフォーム用一覧 `BaseInfoRepository::getPublicTenantShopsForSummary`（`src/Eccube/Repository/BaseInfoRepository.php:208`）だけで使われており、結果一覧には適用されていない。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Repository/BaseInfoRepository.php"
+    ]
+   }
+  },
+  {
+   "rowId": 770,
+   "機能No": "M12-01",
+   "機能名": "M12-01 日別・月別集計 集計一覧(検索結果-月別)",
+   "ドメイン": "m12",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "販売関連の集計は注文データの注文ステータスが「出荷完了」のみ計上し、それ以外の注文ステータスは計上しない。",
+   "実装実態": "aggregateOrderSummaryByBaseInfo は order_date 範囲と base_info_id IS NOT NULL のみで dtb_order を集計し、order_status_id = 出荷完了 の条件を付けていない。",
+   "差分内容": "OrderStatus::DELIVERED / order_status_id / 出荷完了 へ翻案して再検索したが、M12-01の日次・月次集計元SQLでは出荷完了ステータスに限定する条件が見つからない。",
+   "実装参照": "src/Eccube/Repository/DtbDailySummaryRepository.php:62",
+   "設計書参照": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-6:1611",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:1855 のExcel正本セルは「販売関連の集計は注文データの注文ステータスが『出荷完了』のみ計上し、それ以外は計上しない」と明記する。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Repository/OrderRepository.php:712-716 の旧注文別SQLは受注と明細の結合のみで、全販売を出荷完了に限定する新固定集計条件を持たない。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbDailySummaryRepository.php:62-66 のWHEREは `o.base_info_id IS NOT NULL` と日付範囲のみで、`order_status_id` の出荷完了条件がない。この日次結果を同:232-251 が月次へ合算するため月次も未達である。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "月次は `src/Eccube/Repository/DtbDailySummaryRepository.php:232-252` `aggregateMonthlyTotalsByBaseInfo` が日次集計 `dtb_daily_summary` を合算する構造のままで、その元となる `:62-65` `WHERE o.base_info_id IS NOT NULL AND o.order_date >= :summaryDateFrom AND o.order_date <= :summaryDateTo` に出荷完了ステータス限定はない。`OrderStatus|order_status|DELIVERED` の反証検索は Analysis 配下・両Summary Repository でヒット0件。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "NOT_FOUND",
+    "stale": "UNCHANGED",
+    "quoteDetail": [
+     "販売関連の集計は注文データの注文ステータスが『出荷完了』のみ計上し、それ以外は計上しない"
+    ]
+   }
+  }
+ ]
+}

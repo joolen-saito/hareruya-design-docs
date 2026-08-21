@@ -1,0 +1,331 @@
+{
+ "packetId": "sw_23",
+ "mode": "sweep",
+ "note": "著者はこれらの大半を IMPACT(外部から観測できる) と判定した。見落とし＝実は NO_IMPACT な行が無いかを独立に判定すること。",
+ "findings": [
+  {
+   "rowId": 793,
+   "機能No": "M12-04",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "CSV出力では表示件数の上限を適用せず、集計結果の全件を出力する。",
+   "差分内容": "設計はCSVでは表示件数上限を外す仕様だが、実装は SalesAnalysisController.php:110-117 でセッション値から復元した検索条件をそのまま SalesAnalysisCsvExporterService に渡し、同サービスの 38 行目で getAnalysisSummary($searchData) を呼ぶ。OrderItemRepository.php:310-312 が page_count を limit として setMaxResults するため、CSVも一覧表示件数に制限される。反証として page_count の削除・0設定・CSV専用の全件取得処理を検索したが、SalesAnalysi",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/OrderItemRepository.php:310"
+  },
+  {
+   "rowId": 794,
+   "機能No": "M12-05",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "検索画面初期表示では検索条件セッションを破棄し、依頼日Fromに当月初日、依頼日Toに当月末日、並び順に昇順を設定する。一覧は無しとする。",
+   "差分内容": "初期表示時に検索条件セッションを破棄する設計要求が Controller に存在しない。検索条件は search() で同じ SESSION_KEY に保存され、index() で消されないため、CSV 再抽出条件が残存しうる。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Analysis/ProductRequestController.php:48"
+  },
+  {
+   "rowId": 795,
+   "機能No": "M12-05",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "検索画面初期表示では検索条件セッションを破棄し、依頼日Fromに当月初日、依頼日Toに当月末日、並び順に昇順を設定し、一覧は無しとする。",
+   "差分内容": "設計の初期表示時セッション破棄だけが実装にない。Controller では session set は検索時のみ存在し、index() に session->remove(self::SESSION_KEY) 相当の処理がない。別名 clear/search condition/session/remove でも M12-05 初期表示の破棄処理は確認できなかった。",
+   "実装参照": "不在（探索範囲: src/Eccube/Controller/Admin/Analysis/ProductRequestController.php, src/Eccube/Form/Type/Admin/Analysis/SearchProductRequestType.php, src/Eccube/Resourc"
+  },
+  {
+   "rowId": 796,
+   "機能No": "M12-06",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "検索条件セッションが空の場合は、空の検索条件で抽出し、出力する。",
+   "差分内容": "設計は空条件でCSVを出力する仕様だが、実装はCSVを出力せず検索画面へ戻す。反証検索でも ProductRequestController 以外に空条件で出力する product_request CSV 入口は見つからない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Analysis/ProductRequestController.php:95"
+  },
+  {
+   "rowId": 797,
+   "機能No": "M12-06",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "識別ID 5:「通知済み/削除」の追加。",
+   "差分内容": "設計の外部表示名は「通知済み/削除」だが、CSVヘッダおよび画面表示は「削除」のみで、通知済みを含む項目名になっていない。反証検索でも product_request 実装内に「通知済み/削除」「通知済/削除」の表示は不在。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Exporter/ProductRequestCsvExportService.php:29"
+  },
+  {
+   "rowId": 798,
+   "機能No": "M12-07",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "利用者視点の入口は GET /{admin_route}/analysis/format_sales で検索画面を表示し、検索ボタン押下は POST /{admin_route}/analysis/format_sales/result で同一画面にグラフと表を表示する。",
+   "差分内容": "設計の外部URL契約は underscore の /analysis/format_sales と /analysis/format_sales/result だが、実装は hyphen の /analysis/format-sales と /analysis/format-sales/search であり、利用者視点のエンドポイントが一致しない。反証として format_sales/result、analysis/format_sales、admin_analysis_format_sales_result、format-sales/search を Controller/Twig/route で検索したが、設計通りのパスは確認で",
+   "実装参照": "src/Eccube/Controller/Admin/Analysis/FormatSalesController.php:44,64; src/Eccube/Resource/template/admin/Analysis/format_sales.twig:94"
+  },
+  {
+   "rowId": 799,
+   "機能No": "M12-07",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "集計月の初期値は空（初回表示時は未設定）とする。",
+   "差分内容": "設計は項目表で初期値「-」、詳細設計で「空（初回表示時は未設定）」を指定しているが、実装は当月 yyyy-MM を初期投入する。反証として FormType/Twig/Controller の month 初期化、empty/null 設定、default data を検索したが、初期未設定にする実装は確認できなかった。",
+   "実装参照": "src/Eccube/Controller/Admin/Analysis/FormatSalesController.php:48,49"
+  },
+  {
+   "rowId": 800,
+   "機能No": "M12-07",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "本機能は検索条件をセッションへ保存しない。CSVダウンロードへ引き継ぐ状態は持たず、CSVダウンロードは送信に含まれる集計月で再集計する。CSVダウンロードはM12-08で扱う。",
+   "差分内容": "設計は検索条件・集計結果をセッションへ保存せず、CSVは送信された集計月で再集計するとしている。一方、実装は検索時のフォーム値をセッション保存し、CSV出力時は送信値ではなくセッション値を読む。さらに M12-07 はグラフ・表表示までを扱う設計だが、M12-07 Controller/Twig に CSV export ルートと導線がある。反証として format_sales/export、SESSION_KEY、session->set/get、CSVダウンロード導線、M12-08相当の送信月POSTを検索したが、設計通りに送信月でCSV再集計する導線は確認できなかった。",
+   "実装参照": "src/Eccube/Controller/Admin/Analysis/FormatSalesController.php:31,83,98,101,109,110,117; src/Eccube/Resource/template/admin/Analysis/format_sales.twig:136,138"
+  },
+  {
+   "rowId": 801,
+   "機能No": "M12-07",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "検索画面初期表示は GET /{admin_route}/analysis/format_sales、集計実行・一覧表示は POST /{admin_route}/analysis/format_sales/result とする。",
+   "差分内容": "設計はアンダースコア付き `format_sales` と `/result` を外部URL契約として明記しているが、実装はハイフン付き `format-sales` と `/search` で公開している。反証検索で `analysis/format_sales`、`format_sales/result`、`admin_analysis_format_sales_search`、`format-sales/search` を確認したが、設計どおりのルート定義は見つからなかった。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Analysis/FormatSalesController.php:44"
+  },
+  {
+   "rowId": 802,
+   "機能No": "M12-07",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "入力項目「集計月」の初期値は空（初回表示時は未設定）とする。",
+   "差分内容": "設計は初回表示時の集計月を未設定とするが、実装は現在年月を初期値として画面に表示する。反証検索で `month setData`、空文字初期化、テンプレート初期値を確認したが、空初期値にする処理は見つからなかった。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Analysis/FormatSalesController.php:49"
+  },
+  {
+   "rowId": 803,
+   "機能No": "M12-07",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "本機能は検索条件をセッションへ保存しない。副作用は無し（参照のみ。検索条件のセッション保存も行わない）。",
+   "差分内容": "設計は検索条件セッション保存なしを明記しているが、実装は検索条件をセッションに保存し、CSVエクスポートでもそのセッションを参照している。反証検索で `SESSION_KEY`、`session->set`、`session->get`、`admin.analysis.format_sales.search` を確認し、保存処理の存在を確認した。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Analysis/FormatSalesController.php:31"
+  },
+  {
+   "rowId": 804,
+   "機能No": "M12-08",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "集計結果の「CSVダウンロード」は POST /{admin_route}/analysis/format_sales/export に対して、検索と同じフォームの集計月をエクスポート先へ送信する。CSVダウンロードのボタンは集計フォームの送信ボタンとして配置される。",
+   "差分内容": "設計は POST /analysis/format_sales/export かつフォーム送信ボタンで集計月を送る仕様だが、実装は GET /analysis/format-sales/export のリンクで、クリック時にフォーム値を送信しない。admin_analysis_format_sales_export、format-sales/export、format_sales/export、CSVダウンロード、FormatSalesController、Analysis/format_sales.twig を再検索し、設計どおりのPOSTエクスポート入口は確認できなかった。",
+   "実装参照": "src/Eccube/Controller/Admin/Analysis/FormatSalesController.php:98, src/Eccube/Resource/template/admin/Analysis/format_sales.twig:136"
+  },
+  {
+   "rowId": 805,
+   "機能No": "M12-08",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "集計月はCSVダウンロードの送信値とする。検索条件セッションは参照しない。本機能は集計月のみを入力とする。",
+   "差分内容": "設計はCSVダウンロード送信値の集計月を唯一の入力とし、検索条件セッションを参照しない仕様だが、実装は検索フォームの viewData をセッション保存し、CSV出力がセッションに依存している。SESSION_KEY、session->set、session->get、FormUtil::getViewData、admin_analysis_format_sales_export を再検索し、送信値から直接集計月を取得するエクスポート実装は確認できなかった。",
+   "実装参照": "src/Eccube/Controller/Admin/Analysis/FormatSalesController.php:31, src/Eccube/Controller/Admin/Analysis/FormatSalesController.php:83, src/Eccube/Controller/Admi"
+  },
+  {
+   "rowId": 806,
+   "機能No": "M12-08",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "成功時出力は日別の売上表のCSVファイル。ファイル名は format_sales_report_ に出力日時（YmdHis）を付けた .csv。文字コード判別用のBOMを付与する。",
+   "差分内容": "設計のファイル名接頭辞は format_sales_report_ だが、実装の Content-Disposition は format_sales_ を使用している。format_sales_report、format_sales_、Content-Disposition、SalesAnalysisCsvExporterService を再検索し、本機能で設計接頭辞を使う実装は確認できなかった。",
+   "実装参照": "src/Eccube/Controller/Admin/Analysis/FormatSalesController.php:124, src/Eccube/Controller/Admin/Analysis/FormatSalesController.php:139"
+  },
+  {
+   "rowId": 807,
+   "機能No": "M12-09",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "出力条件を指定する画面は GET/POST /{admin_route}/analysis/used_card とし、CSVダウンロードは GET /{admin_route}/analysis/used_card/export/{mode} で、画面遷移上は admin_used_card / admin_used_card_result / admin_used_card_export を用いる。",
+   "差分内容": "設計は underscore パスの検索画面と export/{mode} の GET CSV導線を要求しているが、実装は hyphen パスで検索フォーム POST が同一パスに直接CSV出力する。反証として used_card/admin_used_card/admin_analysis_used_card/used-card/export/{mode}/used_card_result を Controller/Twig/Service/Repository/locale/nav で再検索したが、該当ルートは UsedCardController.php:39,52 の2本のみだった。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Analysis/UsedCardController.php:39,52"
+  },
+  {
+   "rowId": 808,
+   "機能No": "M12-09",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "「検索」ボタンの POST は、指定した出力条件で集計結果を表示し、条件をセッションに保持する。表示要素として出力条件の検索フォーム、集計結果、CSVダウンロードの導線を持つ。",
+   "差分内容": "設計は検索POSTで結果表示と条件保持を行い、別導線でCSV出力する構造だが、実装は検索操作がCSVダウンロードそのものになっている。反証として UsedCardController/SearchUsedCardType/used_card.twig/UsedCardCsvExportService/DtbDeckRepository/getUsedCardsCsvExportData と admin Analysis 配下を検索したが、UsedCard 用の searched/summary/result 返却、結果テンプレート、セッション保存は見つからなかった。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Analysis/UsedCardController.php:52,64; /home/y-saito/Developments/ec-cube-enterprise/s"
+  },
+  {
+   "rowId": 809,
+   "機能No": "M12-09",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "初期表示（GET）では保持していた出力条件を消去し、未指定の検索フォームを表示する。入力は出力条件、CSVの出力形式（mode）、なりすまし対策トークンを扱う。",
+   "差分内容": "設計は初期表示でセッション条件を消し、未指定フォームとCSRFトークン、CSV形式 mode を扱う要求だが、実装はセッション削除も mode もCSRFもなく、一部入力に必須・初期値を設定している。反証として UsedCardController/SearchUsedCardType/used_card.twig/locale/nav と export/{mode}, mode, csrf, session キーワードを再検索したが、UsedCard 用の該当実装は見つからなかった。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Analysis/UsedCardController.php:39,43; /home/y-saito/Developments/ec-cube-enterprise/s"
+  },
+  {
+   "rowId": 810,
+   "機能No": "M12-10",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "CSVダウンロード（形式指定）は GET /{admin_route}/analysis/used_card/export/{mode} で、保持した出力条件に従い、指定形式（特集タグ編集用など）でCSVを出力する。{mode} は出力形式を表し、指定形式のヘッダと各行をCSVとしてストリーミング出力する（ファイル名は形式と日時を含む）。",
+   "差分内容": "設計の外部契約は underscore パスの GET export/{mode} と形式指定だが、実装は hyphen パスの POST 同一URLで mode なし。反証として admin_used_card_export/admin_analysis_used_card_export/analysis/used_card/export/analysis/used-card/export/mode を src/Eccube, app, html で検索したが、該当GET export/{mode} ルートは不在。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Analysis/UsedCardController.php:52"
+  },
+  {
+   "rowId": 811,
+   "機能No": "M12-10",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "「検索」ボタン POST /{admin_route}/analysis/used_card は、指定した出力条件で集計結果を表示し、条件をセッションに保持する。初期表示 GET では保持していた出力条件を消去し、未指定の検索フォームを表示する。CSV出力では同じ出力条件を用いる。",
+   "差分内容": "設計は検索表示フローとCSV出力フローを分離し、条件をセッションで引き継ぐことを要求している。実装はPOST即CSV出力で、SessionInterface/request session/set/remove/get、admin_used_card_result 相当のルート、集計結果表示テンプレートが確認できない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Analysis/UsedCardController.php:39"
+  },
+  {
+   "rowId": 812,
+   "機能No": "M13-01",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "イベント一覧の入口は GET /%admin_route%/event/list、検索は /event/search/{page_no}、ページ送りは /event/page/{page_no}、新規登録は /event/new、bind名は admin_event_list/admin_event_search/admin_event_page とする。",
+   "差分内容": "設計のURL・bind名・新規登録遷移先と実装のルート契約が一致しない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Event/EventController.php:63,64,204; /home/y-saito/Developments/ec-cube-enterprise/src"
+  },
+  {
+   "rowId": 813,
+   "機能No": "M13-01",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "検索フォームはフォーム名 admin_event_list、CSRF保護なしで生成・POSTする。",
+   "差分内容": "設計のフォーム名とCSRFなし契約に対し、実装は別名のCSRF付きフォームになっている。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/SearchEventType.php:140; /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resou"
+  },
+  {
+   "rowId": 814,
+   "機能No": "M13-01",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "検索条件・表示件数・ソートキー・並び順・ページ番号は admin.event 系セッションに保存し、/event/list 初期表示では検索条件セッションを削除する。",
+   "差分内容": "設計のセッションキー名、初期化方法、保存対象が実装と一致しない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Event/EventController.php:44,46,48,90,105,106,185,188,189"
+  },
+  {
+   "rowId": 815,
+   "機能No": "M13-01",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "ソートはリクエストの sort/order（ASC/DESC）を優先し、不正な並び順は admin.error.sort の並び順エラーを表示して初期表示へ戻す。",
+   "差分内容": "設計の sort/order パラメータ、ASC/DESC値、エラー処理が実装されていない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Event/index.twig:24,28,29,130,132,133; /home/y-saito/Developments/ec-cube-enter"
+  },
+  {
+   "rowId": 816,
+   "機能No": "M13-01",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "表示メッセージは、1件以上で「検索結果 N件が該当しました」、0件で「検索条件に該当するデータがありませんでした。」を表示する。",
+   "差分内容": "利用者に表示される日本語文言が設計の文言と一致しない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Event/index.twig:102,103,209,211,212; /home/y-saito/Developments/ec-cube-enterp"
+  },
+  {
+   "rowId": 817,
+   "機能No": "M13-01",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "deleted_at による論理削除レコードはイベント一覧検索の対象外にする。",
+   "差分内容": "検索クエリに論理削除除外条件がなく、deleted_at 設定済みレコードを除外する実装根拠がない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbEventRepository.php:62,63,64; /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/En"
+  },
+  {
+   "rowId": 818,
+   "機能No": "M13-01",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "イベント一覧は GET /%admin_route%/event/list、POST/GET /%admin_route%/event/search/{page_no}、GET /%admin_route%/event/page/{page_no} を使い、フォーム名は admin_event_list、CSRFなしで検索する。",
+   "差分内容": "設計で外部契約として定義された URL、ルート名、フォーム名、CSRFなし条件が実装の Controller/Twig/FormType と一致しない。設計ルート名・URLは対象範囲検索で見つからない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Event/EventController.php:63; /home/y-saito/Developments/ec-cube-enterprise/src/Eccube"
+  },
+  {
+   "rowId": 819,
+   "機能No": "M13-01",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "初期表示では検索条件セッション admin.event.search、admin.event.search.page_no、admin.event.search.page_count を削除し、検索/ページングでは admin.event.search、admin.event.search.page_no、admin.event.sort、admin.event.order、admin.event.search.page_count を保持する。",
+   "差分内容": "設計のセッションキー名および初期表示時の削除動作と異なり、初期表示で検索条件セッションをクリアしない。sort/orderを設計どおりのキーで保持する実装もない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Event/EventController.php:44; /home/y-saito/Developments/ec-cube-enterprise/src/Eccube"
+  },
+  {
+   "rowId": 820,
+   "機能No": "M13-01",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "開催日時From/Toは yyyy-MM-dd の日付入力で、From/To逆転時も範囲整合性バリデーションは行わず、AND条件により検索結果0件として扱う。",
+   "差分内容": "設計が明示する「範囲整合性チェックなし」と異なり、実装はFrom/To逆転をフォームエラーにして検索結果0件表示に進まない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/SearchEventType.php:44; /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/T"
+  },
+  {
+   "rowId": 821,
+   "機能No": "M13-01",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "ソートは request の sort/order を優先し、order は ASC/DESC を使う。不正な order は admin.error.sort を出して初期表示へ戻す。",
+   "差分内容": "設計のリクエストパラメータ名・値体系・不正値処理と実装が異なる。不正 order をエラーにせず DESC として処理する。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Event/index.twig:24; /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/R"
+  },
+  {
+   "rowId": 822,
+   "機能No": "M13-01",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "一覧の表示項目は開催店舗ラベルを表示し、検索結果文言は「検索結果 N件が該当しました」、0件時は「検索条件に該当するデータがありませんでした。」を表示する。",
+   "差分内容": "設計で指定されたユーザー表示ラベル・文言と実装の翻訳文言が一致しない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Event/index.twig:103; /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/"
+  },
+  {
+   "rowId": 823,
+   "機能No": "M13-01",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "イベント一覧画面の専用CSSとして eventlist.css を使用する。",
+   "差分内容": "設計HTML本文にある専用CSS指定はハーネス候補に含まれていなかった extractorMissed 要求で、実装探索でも該当CSSの読込が見つからない。",
+   "実装参照": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Event, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resour"
+  },
+  {
+   "rowId": 824,
+   "機能No": "M13-02",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "新規登録画面を開くと空のフォームを表示し、支払方法にクレジットカード（決済）を初期選択（プリチェック）する。",
+   "差分内容": "EventController::create / EventType::buildForm / EventCreateAction::handle を精査した結果、新規時にクレジットカード決済を初期選択する処理が存在せず、真の新規では支払方法が全て未選択で表示される。設計の『新規時クレジットカード初期選択』と挙動が異なる。",
+   "実装参照": "src/Eccube/Form/Type/Admin/EventType.php:68-71,164; src/Eccube/Controller/Admin/Event/EventController.php:206-217; src/Eccube/Service/Admin/Event/EventCreateAct"
+  },
+  {
+   "rowId": 825,
+   "機能No": "M13-02",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "編集画面のイベント削除確認ダイアログは、当該イベント名（Event.nameJp）を埋め込んだ削除確認文言を表示する。",
+   "差分内容": "edit.twig と messages.ja.yaml を確認した結果、削除確認ダイアログに埋め込まれる値がイベント名ではなくモジュール共通ラベル「イベント管理」であり、設計の『イベント名を埋め込んだ削除確認文言』要求と利用者に見える文言が異なる。",
+   "実装参照": "src/Eccube/Resource/template/admin/Event/edit.twig:517; src/Eccube/Resource/locale/messages.ja.yaml:1749,5839"
+  },
+  {
+   "rowId": 826,
+   "機能No": "M13-02",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "イベント削除で日程情報が残る場合、削除不可メッセージ『日程情報が存在する場合、イベント情報を削除することができません。』を表示する。",
+   "差分内容": "grep -rn で admin.event.delete.schedule_exists は EventController.php:314 のみに出現し locale 定義ゼロを確認。実在キー名は .not.schedule_exists で不一致。翻訳キー取り違えにより設計要求の日本語メッセージが露出しない。",
+   "実装参照": "src/Eccube/Controller/Admin/Event/EventController.php:314"
+  },
+  {
+   "rowId": 827,
+   "機能No": "M13-02",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "日程削除の可否判定で、デッキ登録済み日程は『デッキ登録済みの場合、イベント情報を削除することができません。』(admin.event.delete.deckerror)、申込済み日程は『申込済みの場合、イベント情報を削除することができません。』(admin.event.delete.entryerror) を表示する。",
+   "差分内容": "grep で deckerror/entryerror は ScheduleController.php:146,152 のみに出現し locale 定義ゼロを確認。実在キー名は .not.deck_exists / .not.entry_exists で不一致。",
+   "実装参照": "src/Eccube/Controller/Admin/Event/ScheduleController.php:146,152"
+  },
+  {
+   "rowId": 828,
+   "機能No": "M13-03",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "「日程追加」は GET /{admin_route}/event/{eventId}/schedule/new で日程入力画面（admin_schedule_new）へ遷移し、「登録」ボタンは POST /{admin_route}/event/{eventId}/schedule/create で登録する。",
+   "差分内容": "設計は表示入口を GET /schedule/new（admin_schedule_new）、登録送信を POST /schedule/create と分けているが、実装のルート定義とリンクは /schedule/create の GET/POST 兼用で、設計上の画面遷移先 route/path が存在しない。反証検索でも admin_schedule_new と schedule/new は実装範囲に見つからなかった。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Event/ScheduleController.php:45, /home/y-saito/Developments/ec-cube-enterprise/src/Ecc"
+  }
+ ]
+}

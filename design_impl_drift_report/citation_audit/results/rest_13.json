@@ -1,0 +1,165 @@
+{
+  "packetId": "rest_13",
+  "results": [
+    {
+      "rowId": 509,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:3135 のExcel正本は「カスタマイズ要件に記載の内容以外は現行踏襲とする。」とのみ記載し、成功文言・遷移先を具体化していない。具体要件は同ファイル:3248-3251 の `<!-- function-design-embed:start ... -->`、`Source: functions/pf-eccube3/m04-03_admin_stock_stock_bulk_edit.md` 以降にあり、同:3290 に「『登録が完了しました。』を表示して、商品検索一覧の保持ページへリダイレクトする」と記載されるため、Excel正本ではなくリバース詳細設計由来である。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Product/ProductClassController.php:693-696 は `$app->addSuccess('admin.register.complete', 'admin');` の後に `return $app->redirect($app->url('admin_product_search', ['page_no' => ...]));` を実行する。文言は /home/y-saito/Developments/pf-eccube3/src/Eccube/Resource/locale/message.ja.yml:83 の `admin.register.complete: 登録が完了しました。` であり、期待挙動を直接裏付ける。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockBulkApprovalController.php:213-220 は `$this->addSuccess('admin.common.save_complete', 'admin');` の後、`redirectToRoute('admin_stock_bulk_approval_new', $params)` で自画面へ戻る。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:1595 は `admin.common.save_complete: 保存しました` であり、旧実装の文言・一覧遷移の双方を満たさない。",
+      "note": "具体要件はExcel正本にはなく、リバース詳細設計と旧実装に一致するため、旧挙動の移植漏れと判定した。"
+    },
+    {
+      "rowId": 510,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:3135 のExcel正本は「カスタマイズ要件に記載の内容以外は現行踏襲とする。」とのみ記載し、未選択時の文言・遷移先を明記しない。具体要件はリバース埋め込み開始後の同:3288 に「productIds が空のときは『商品が選択されていません。』を表示し、商品検索一覧の保持ページへリダイレクトする」とだけ存在する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Product/ProductController.php:861-866 は `if (empty($productIds))` で `$app->addError('admin.error.select_no_product', 'admin');` を行い、`admin_product_search` の保持ページへリダイレクトする。文言は /home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/locale/message.ja.yml:1189 の `select_no_product: 商品が選択されていません。` である。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockListController.php:510-515 は空選択時に一覧へ戻るが、`admin.stock.bulk_approval.no_product_stocks` を表示する。さらに /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockBulkApprovalController.php:60-65 は対象なしで同じキーを表示して `admin_stock_bulk_approval_new` へ自リダイレクトし、同:117-128 のstore空ID時も `admin.common.save_error` で自リダイレクトする。文言は /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:4556 の `指定された在庫が見つかりませんでした。` である。",
+      "note": "一覧側の遷移先だけは一致するが、指定文言が異なり、直接アクセス・storeの空ID分岐は自ルートへ戻るため、旧挙動を満たしていない。"
+    },
+    {
+      "rowId": 511,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:3396-3400 のExcel正本 `src-cell` は、買取価格の次を `原価単価`、`総原価`、`在庫` の順に定義し、その後を `当日販売数` とする。",
+      "legacyEvidence": "旧実装の近接CSVは /home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Product/ProductCsvController.php:2163-2168 の `商品コード`、`在庫増減数` の2列だけで、本件の19列CSVではない。旧4リポジトリを `原価単価|総原価|当日販売数` と在庫CSV機能名で確認したが同一レイアウトは見つからず、列順の根拠はExcel正本である。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Exporter/StockListCsvExportService.php:33-52 の `CSV_HEADER` は `buy_price` の後を `stock => 在庫`、`unit_cost => 原価単価`、`total_cost => 総原価` としており、正本の順序と一致しない。",
+      "note": "Excel正本の表順が直接のCSV列順であり、現行の固定ヘッダー配列が異なる。"
+    },
+    {
+      "rowId": 512,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:4718-4721 のExcel正本 `src-cell` は「CSVファイル登録時のエラー挙動」として「検索項目および一覧の選択状態は失われない」と明記する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/ProductServiceProvider.php:225-230 の旧在庫関連入口は `edit_bulk_update_stock` と `bulk_update_stock` であり、旧4リポジトリを `move_transfer|StockMoveTransfer|在庫移動振替` で横断検索しても該当一覧・CSV取込機能は存在しない。したがって根拠は旧実装ではなくExcel正本である。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:316-322 と :425-431 はCSV取込エラー時に `redirectToRoute('admin_stock_move_transfer')` を `resume` なしで返す。同:177-181 は検索条件復元を `resume` 指定時だけ行い、同:194-201 は通常GETでデフォルト値を保存し直す。一覧選択も /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/MoveTransfer/index.twig:714-718 の各行checkboxを復元する値を参照しない。",
+      "note": "検索セッションは存在するが、エラー時リダイレクトが復元分岐に入らず、選択IDも渡さないため、正本の保持要求を満たさない。"
+    },
+    {
+      "rowId": 513,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:4780 のExcel正本 `src-cell` は識別ID3-10について `押下すると3-1~3-9の内容を空にする` と対象範囲を限定する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/ProductServiceProvider.php:225-230 にある旧在庫一括更新ルートには在庫移動・振替検索フォームがなく、旧4リポジトリの `move_transfer|検索条件をクリア` 横断検索でも対応画面は見つからない。クリア範囲の根拠はExcel正本である。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/MoveTransfer/index.twig:447-471 は `#form_search_stock_move_transfer` 全体に対し、全checkbox、hidden等を除く全input、店舗・承認者を含むselectを一括で空にする。3-1〜3-9に限定するセレクタやフィールド指定はない。",
+      "note": "現行JSはフォーム全体を対象とするため、正本が残す2系統の基本検索条件まで消去する。"
+    },
+    {
+      "rowId": 514,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:4722-4724 のExcel正本 `src-cell` は「一覧は在庫移動振替IDを降順として表示する」と明記する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/ProductServiceProvider.php:225-230 の旧在庫ルートには移動振替一覧がなく、旧4リポジトリを `move_transfer|在庫移動振替ID` で横断検索しても対象QueryBuilderは見つからない。並び順の根拠はExcel正本である。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbStockMoveTransferRepository.php:48-57 は `orderBy('s.createDate', 'DESC')` を第1キー、`addOrderBy('s.id', 'DESC')` を第2キーにする。",
+      "note": "登録日とIDの順序が一致しないデータでは正本のID降順にならない。"
+    },
+    {
+      "rowId": 515,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:4727-4733 のExcel正本 `src-cell` は作成条件を列挙した上で「チェックされた移動をまとめて在庫移動指示を作成し、在庫移動指示一覧画面へ遷移する」と明記する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/ProductServiceProvider.php:225-230 の旧在庫ルートに移動指示作成はなく、旧4リポジトリの `move_instruction|在庫移動指示` 横断検索でも対応機能は見つからない。成功遷移先の根拠はExcel正本である。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:733-751 は作成成功後に `redirectToRoute('admin_stock_move_instruction_detail', ['id' => $Instruction->getId()])` で詳細へ遷移する。一覧ルートは /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockMoveInstructionController.php:68-69 の `admin_stock_move_instruction_list` として別に存在する。",
+      "note": "作成処理はあるが、成功後の遷移先が正本の一覧ではなく詳細である。"
+    },
+    {
+      "rowId": 516,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:4742-4748 のExcel正本 `src-cell` は、戻しリストCSV出力・PDF出力の双方について「在庫移動である場合にのみ出力を可能とする」と明記する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/ProductServiceProvider.php:225-230 の旧在庫ルートに戻しリスト出力はなく、旧4リポジトリを `return_list|戻しリスト|moveTransferType` で横断検索しても対応機能は見つからない。型制限の根拠はExcel正本である。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:592-616 はCSV/PDF共通で `validateReturnListExportIds` に委譲する。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Exporter/StockMoveTransferReturnListCsvExportService.php:115-159 は店舗・権限・ステータスだけを検証し、moveTransferTypeを判定しない。取得元 /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbStockMoveTransferRepository.php:326-339 も `transferId`, `shopId`, `statusId` だけをselectする。",
+      "note": "共通バリデーションに移動種別の情報自体が渡らず、振替を型条件で拒否できない。"
+    },
+    {
+      "rowId": 517,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:6908 と :6955 のExcel正本 `src-cell` は、フッターリンクを「在庫移動・振替検索一覧」へ変更すると明記し、項目ラベルも同文言で定義する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/ProductServiceProvider.php:225-230 の旧在庫入口には振替承認・完了画面がなく、旧4リポジトリの `在庫振替検索一覧へ|back_to_list|transfer_approval` 横断検索でも該当表示は見つからない。表示文言の根拠はExcel正本である。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:4799 は `admin.stock.transfer.back_to_list: 在庫振替検索一覧へ`。このキーを /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/transfer_approval.twig:226-229 と /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/transfer_complete.twig:184-187 が表示する。",
+      "note": "実表示は「移動・」がなく末尾に「へ」が付くため、正本ラベルと一致しない。"
+    },
+    {
+      "rowId": 518,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:6787-6788 のExcel正本 `src-cell` は、書式等とは別の入力チェックとして「振替点数が現在の最新の在庫よりも多かった場合はエラーとする」と明記する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/ProductServiceProvider.php:225-230 の旧在庫ルートに在庫振替登録はなく、旧4リポジトリを `振替点数|dest_product_code|StockTransferStore` で横断検索しても対応処理は見つからない。超過チェックの根拠はExcel正本である。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Stock/StockTransferStoreAction.php:77-105 は数量の正数・振替先存在だけを確認し、同:122-153 は現在庫比較なしで減算値を保存する。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/StockTransferNewDetailType.php:58-70 の制約も1以上・設定上限以下だけである。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Entity/ProductStock.php:328-332 の `getStockQuantityAfterChange` は単に `bcadd` を返す。",
+      "note": "Controller、StoreAction、Form、Entityを確認したが、最新在庫との比較と専用エラーがない。"
+    },
+    {
+      "rowId": 519,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:6787-6790 のExcel正本 `src-cell` は「振替対象の商品と振替後商品コードが同一の場合はエラーとする」と明記する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/ProductServiceProvider.php:225-230 の旧在庫ルートに在庫振替登録はなく、旧4リポジトリを `same_source_dest|振替後商品コード|dest_product_code` で横断検索しても対応処理は見つからない。同一判定の根拠はExcel正本である。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Stock/StockTransferStoreAction.php:86-103 は振替元在庫をIDで、振替先規格を商品コードで取得するが、両者の商品コードまたは在庫を比較せず処理を続ける。`admin.stock.transfer.same_source_dest_error` の利用箇所は /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Stock/StockSplitUpdateDestinationStockLocationAction.php:95 と StockJoinUpdateSourceStockLocationAction.php:102 だけで、振替StoreActionでは使われない。",
+      "note": "振替先コード非存在の検査はあるが、振替元と同一かを拒否する別要件は未実装である。"
+    },
+    {
+      "rowId": 520,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:6764-6768 のExcel正本 `src-cell` は「振替後商品コードの入力フォームは直接入力も可能」と明記する。項目表の同:6862 も `[振替先]商品コード` を半角英数・必須で「振替先の商品コードを入力する」と定義する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/ProductServiceProvider.php:225-230 の旧在庫ルートに振替入力画面はなく、旧4リポジトリを `dest_product_code|振替先商品コード` で横断検索しても該当フォームは見つからない。直接入力可の根拠はExcel正本である。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/transfer_new.twig:340-344 は `form_widget(detail.dest_product_code, {'attr': {'readonly': 'readonly'}})` として入力欄をreadonlyで描画する。値設定は同:110-144 の商品検索モーダル決定時に `window.currentTransferDestInput.val(...)` で行われる。",
+      "note": "FormTypeはTextTypeだが、実際の表示テンプレートがreadonlyを上書きするため利用者は直接入力できない。"
+    },
+    {
+      "rowId": 521,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:6759-6762 のExcel正本 `src-cell` は「[振替先]商品コードを入力し、フォームからカーソルが外れた際」に、商品名・言語・状態・Foil・基準価格を表示すると明記する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/ProductServiceProvider.php:225-230 の旧在庫ルートに振替入力画面はなく、旧4リポジトリを `blur|dest_product_code|振替先商品コード` で横断検索しても該当JSは見つからない。blur要件の根拠はExcel正本である。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/transfer_new.twig:110-144 は商品検索モーダルの `.add-order-item` click時だけAjaxで情報を取得し `applyDestToTransferRow` を呼ぶ。同:342 は入力欄をreadonlyにする。同テンプレート全体を `blur|change|keyup` と `dest_product_code` の組合せで確認したが、入力欄のフォーカスアウト処理は存在しない。",
+      "note": "モーダル選択時の表示は実装済みだが、正本が別途要求する直接入力後のblur契機はない。"
+    },
+    {
+      "rowId": 522,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:7537-7538 のExcel正本 `src-cell` は、出庫日を「移動の場合はステータスが移動中になった日時／振替の場合はステータスが出庫承認済みになった日時」、入庫日を「ステータスが入庫完了になった日時」と定義する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/ProductServiceProvider.php:225-230 の旧在庫ルートに移動振替CSVはなく、旧4リポジトリを `move_from_stock_at|move_to_stock_at|在庫移動振替情報CSV` で横断検索しても対応実装は見つからない。日時意味の根拠はExcel正本である。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Exporter/StockMoveTransferListCsvExportService.php:170-174 は `getMoveFromStockAt()` と `getMoveToStockAt()` をそのまま出力する。一方、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Stock/StockMoveInstructionTrackingRegisterAction.php:46-53 は移動中への更新時にstatusだけを設定し、日時を設定しない。`setMoveFromStockAt|setMoveToStockAt` の業務コード上の利用はなく、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Entity/DtbStockMoveTransfer.php:236-238,282-284 のsetter宣言だけである（確認範囲: src/Eccube と html、テスト除外）。",
+      "note": "CSV列はあるが、その値を正本のステータス到達時に記録する業務処理がないため、要求値を出力できない。"
+    },
+    {
+      "rowId": 523,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:7940 のExcel正本 `src-cell` は識別ID5-5のラベルを `分割元 / 結合先商品名` と定義する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/ProductServiceProvider.php:225-230 の旧在庫ルートに分割結合一覧はなく、旧4リポジトリを `split_join|在庫分割結合|分割元 / 結合先商品名` で横断検索しても該当画面は見つからない。文言の根拠はExcel正本である。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:4940 は `admin.stock.split_join.list.source_destination_product: 分割元・結合先商品`。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/stock_split_join_index.twig:308-313 が一覧ヘッダでこの翻訳キーを表示する。",
+      "note": "区切り記号と末尾の「名」が正本と一致しない。"
+    },
+    {
+      "rowId": 524,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:7934 のExcel正本 `src-cell` は識別ID4-4「表示件数」を単一選択、初期値 `10件`、説明を「EC-CUBE標準のマスタデータ管理の最大ページ表示にて、設定されている表示件数の選択肢を表示する」と定義する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/ProductServiceProvider.php:225-230 の旧在庫ルートに分割結合一覧はなく、旧4リポジトリを `split_join|page_count|在庫分割結合` で横断検索しても対応画面は見つからない。表示件数要件の根拠はExcel正本である。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:148-160 と :178-189 は常に `'pager' => null` を返し、検索結果を配列のまま渡す。SearchStockSplitJoinType.php、stock_split_join_index.twig、StockSplitJoinController.phpを `page_count|PageMax|disp_number` で確認したが選択UI・パラメータは存在せず、テンプレートの /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/stock_split_join_index.twig:409-412 のpager表示条件にも到達しない。",
+      "note": "表示件数選択だけでなくページング用データも生成されていない。"
+    },
+    {
+      "rowId": 526,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:7900-7903 のExcel正本 `src-cell` は「検索結果一覧テーブルで分割・結合をチェックした場合、各種出力ボタンが活性化する」と明記する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/ProductServiceProvider.php:225-230 の旧在庫ルートに分割結合一覧はなく、旧4リポジトリを `split_join|各種出力ボタン|在庫分割結合CSV` で横断検索しても対応UIは見つからない。選択駆動UIの根拠はExcel正本である。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/stock_split_join_index.twig:286-293 は検索実行後にCSV出力リンクを直ちに表示し、disabled制御を持たない。同:305-393 の一覧行には選択checkbox列がなく、行頭はIDリンクである。同テンプレートのcheckboxは :120,:154,:170,:190 の検索条件だけで、結果行選択用ではない。",
+      "note": "結果行を選択するUIと、その選択に連動する出力ボタン活性制御の双方がない。"
+    },
+    {
+      "rowId": 527,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:7883-7885 のExcel正本 `src-cell` は「選択した一覧の分割・結合について、各種CSVを出力することができる」と明記し、同:7901-7903 もチェック時の活性化と在庫分割結合CSV出力を規定する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/ProductServiceProvider.php:225-230 の旧在庫ルートに分割結合CSV出力はなく、旧4リポジトリを `split_join|csv-export|在庫分割結合CSV` で横断検索しても対応機能は見つからない。選択対象出力の根拠はExcel正本である。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:251-260 の `csvExport()` はGETでセッション検索条件を復元し、`exportBySearchData($searchData)` を呼ぶだけで、選択行IDを受け取らない。テンプレートも /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/stock_split_join_index.twig:291-293 でIDなしのCSVリンクを出す。",
+      "note": "出力対象は選択行ではなく、セッションの検索条件に一致する全件である。"
+    },
+    {
+      "rowId": 528,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:7893-7896 のExcel正本 `src-cell` は、CSV登録エラー時に「検索項目および一覧の選択状態は失われない」と明記する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/ProductServiceProvider.php:225-230 の旧在庫ルートに分割結合CSV取込はなく、旧4リポジトリを `split_join|list-split-csv-import|list-join-csv-import` で横断検索しても対応機能は見つからない。保持要求の根拠はExcel正本である。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:132-135 は検索条件を復元するのを `resume` 指定時だけとし、同:135-160 は通常GETで空検索・空一覧を返す。CSV取込エラーは同:282,:290,:298,:306,:313,:342 および :374,:382,:390,:397,:404,:433 で、いずれも `redirectToRoute('admin_stock_split_join_list')` と `resume` なしで戻る。",
+      "note": "セッションに検索条件が残っていても復元分岐へ入らず、結果行checkbox自体もないため、正本の保持要求を満たさない。"
+    },
+    {
+      "rowId": 529,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:7921 のExcel正本 `src-cell` は、ステータス選択肢を分割では「新規登録、分割承認待ち、却下、入庫完了」、結合では「新規登録、結合元登録、結合承認待ち、却下、入庫完了」とタイプ別に定義する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/ProductServiceProvider.php:225-230 の旧在庫ルートに分割結合検索はなく、旧4リポジトリを `MtbStockSplitJoinStatus|split_join_status|入庫完了` で横断検索しても対象マスタ・画面は見つからない。選択肢の根拠はExcel正本である。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/SearchStockSplitJoinType.php:147-158 は `MtbStockSplitJoinStatus` 全件をID昇順でEntityTypeへ渡し、タイプ条件を付けない。マスタ投入値は /home/y-saito/Developments/ec-cube-enterprise/app/DoctrineMigrations/Version20260519100000.php:63-72 の6件すべてで、ID5の文言は `入庫済み`。テンプレート /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/stock_split_join_index.twig:179-190 も全choiceを一律表示する。",
+      "note": "分割・結合別の絞り分けがなく、入庫ステータス文言も正本の「入庫完了」と一致しない。"
+    }
+  ]
+}

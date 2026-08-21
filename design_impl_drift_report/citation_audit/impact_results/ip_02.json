@@ -1,0 +1,75 @@
+{
+  "packetId": "ip_02",
+  "results": [
+    {
+      "rowId": 368,
+      "authorVerdict": "UNSURE",
+      "verdict": "IMPACT",
+      "agree": false,
+      "observableEffect": "CSVストリームのコールバックが未実行または書き込み途中で失敗しても、現実装では成功を示すファイル名ログが先に残る。設計どおり送信後に記録する場合とはログの有無・時刻・他ログとの順序が変わる。",
+      "checked": "設計HTML 0204_基本設計仕様書(商品管理).html:3781,3840 の『ストリーム送信後』要件、ProductGoodsCsv.php:63-70 の送信コールバック、同:72-79 のコールバック外ログ、ProductCsvController.php:147-159 のレスポンス返却経路を確認した。",
+      "reason": "運用者が観測するログI/Oのタイミングと、送信失敗時にログが残るかが異なるため、単なる内部的な処理順ではない。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 369,
+      "authorVerdict": "UNSURE",
+      "verdict": "IMPACT",
+      "agree": false,
+      "observableEffect": "CSVコールバックが未実行またはfputcsv/fclose中に失敗しても、現実装では『価格変更CSV出力ファイル名』ログが既に残る。送信完了後にだけ記録する設計とはログの有無・時刻・順序が変わる。",
+      "checked": "設計HTML 0204_基本設計仕様書(商品管理).html:2303,2360 のコールバック完了後ログ、ProductPriceCsv.php:55-64 の送信コールバックと同:66-71 のコールバック外ログ、ProductCsvController.php:213-225 のレスポンス返却経路を確認した。",
+      "reason": "ファイル出力ログは外部I/Oであり、送信完了を示す監査情報の意味も実際に変わるためIMPACT。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 641,
+      "authorVerdict": "NO_IMPACT",
+      "verdict": "NO_IMPACT",
+      "agree": true,
+      "observableEffect": "",
+      "checked": "CustomerPointController.php:43-45 で実ルート名とGETパスを、Customer/edit.twig:1037-1039 でリンク生成を確認した。実装全体を admin_customer_point_type_select、admin_customer_point_select、point_type_select で検索し、前者の実行時参照はなく、後者から生成されるリンク先は設計記載と同じ /customer/point/{id}/select だった。",
+      "reason": "差はSymfony内部のルート参照名だけで、HTTPパス・メソッド・表示先・生成hrefは同一。画面、API、DB、ログへのルート名露出も確認できない。URL差は本行の対象外である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 652,
+      "authorVerdict": "NO_IMPACT",
+      "verdict": "NO_IMPACT",
+      "agree": true,
+      "observableEffect": "",
+      "checked": "設計HTML 0207_基本設計仕様書(会員管理機能).html:3416,3454 でGETパスと遷移名を、CustomerPointController.php:43-45 で同じGETパスを、Customer/edit.twig:1037-1039 で admin_customer_point_select からのhref生成を確認した。app/src/plugin_repos/reposも両ルート名で検索し、設計名に依存する実行コードはなかった。",
+      "reason": "admin_customer_point_type_select が無いことは内部ルート名の差に限定され、利用者が辿るURLと画面は同じであるため、当該差分自体に外部観測可能な差はない。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 760,
+      "authorVerdict": "NO_IMPACT",
+      "verdict": "IMPACT",
+      "agree": false,
+      "observableEffect": "ある親メニュー自体は拒否せず、その配下の末端URLを全て個別拒否した権限では、設計のTwig判定は空の親メニューブロックをHTMLに残し得る一方、現実装は子が0件になった親をunsetするため、その親メニューをHTMLから消す。",
+      "checked": "設計HTML 0201_基本設計仕様書(システム設定).html:2123,2146 のAuthorityRoles配列と階層別Twig判定、TwigInitializeListener.php:204-215 の再帰フィルタと空親削除、同:238-245 の末端URL拒否、admin/nav.twig:20-64 のフィルタ済みeccubeNav描画を確認した。補助的に設計元の pf-eccube3/src/Eccube/Resource/template/admin/nav.twig:23-71 も開き、拒否された末端を飛ばしても親を削除しないことを確認した。",
+      "reason": "公開変数名だけの差ではなく、拒否URLの適用場所をTwigから事前フィルタへ変えたことで空親の扱いが変わり、同じ権限入力に対する生成HTMLが異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 855,
+      "authorVerdict": "NO_IMPACT",
+      "verdict": "NO_IMPACT",
+      "agree": true,
+      "observableEffect": "",
+      "checked": "EntryController.php:59 のキー定義、同:188-230 の検索条件・ページ・ソート保存/復元、同:403-414 のCSV参照、同:580-606 のデッキ表示参照を確認した。src/app/plugin_repos/reposを両キー名で検索し、実行コードは一貫して eccube.enterprise.admin.entry.search を使用し、admin.event_entry.search の参照はなかった。app/config/eccube/packages/framework.yaml:12-20 も確認し、Redisサーバ側セッションでCookieに設定されるのは別定義のセッション名であり、Twig/APIへのキー名出力もなかった。",
+      "reason": "検索元とデッキ表示側が同じ内部定数を共有しており、保持される検索値と検索結果は変わらない。差は外部非露出のサーバ側セッションキー名だけである。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 878,
+      "authorVerdict": "UNSURE",
+      "verdict": "IMPACT",
+      "agree": false,
+      "observableEffect": "処理が90秒を超えるCSV取込では現実装がPHPの実行時間上限で中断され得る一方、設計どおり制限を無効化すれば処理を継続できるため、HTTP応答、完了ログ、DB反映・ロールバック結果が変わり得る。",
+      "checked": "設計HTML 0214_基本設計仕様書(イベント管理).html:5925,6102 の実行時間制限無効化、EventEntryBulkCsvController.php:68-167 のPOST取込経路、CsvImporter/EventBulkCsvImportHandler内の time_limit 系不在、dockerbuild/php.ini:13 の max_execution_time=90、対照としてEntryController.php:392のset_time_limit(0)を確認した。",
+      "reason": "リポジトリ同梱PHP設定に有限の90秒上限があり、本機能だけ解除していないため、資源量・CSV内容次第で処理成否と副作用が実際に変わる。",
+      "confidence": "high"
+    }
+  ]
+}

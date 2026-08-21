@@ -1,0 +1,331 @@
+{
+ "packetId": "sw_13",
+ "mode": "sweep",
+ "note": "著者はこれらの大半を IMPACT(外部から観測できる) と判定した。見落とし＝実は NO_IMPACT な行が無いかを独立に判定すること。",
+ "findings": [
+  {
+   "rowId": 433,
+   "機能No": "M04-01",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "デフォルト表示 | メンバー管理で設定された「デフォルト検索表示店舗」で絞り込んだ在庫一覧を初期表示する（設計要件）。 / 旧根拠: function_spec_html_preview/ec-cube-enterprise/admin_stock_search_list.html:221",
+   "差分内容": "設計の画面表示要件は、初期表示時にメンバー管理のデフォルト検索表示店舗で絞り込んだ在庫一覧を表示するとする。実装は GET 初回（page_no/resume/検索クエリなし）で検索セッションを破棄し、pagination=[] の空一覧を返す。初期表示でデフォルト店舗絞り込み検索は実行されない。ただし同設計書のプロセスフローには「GETパラメータ無し・初回は空一覧」ともあり、設計内に揺れがあるため低重要度・要解釈差分として扱う。",
+   "実装参照": "src/Eccube/Controller/Admin/Stock/StockListController.php:180"
+  },
+  {
+   "rowId": 434,
+   "機能No": "M04-01",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "店舗検索条件の選択肢は、店舗管理に登録されており閉店となっていない店舗のみ取得する。",
+   "差分内容": "設計は閉店店舗を選択肢から除外する要求だが、実装は BaseInfo 全体を候補にする EntityType のままで、SearchStockListType.php:131 に「閉店フラグが BaseInfo に追加された後、query_builder で絞り込む」とあり未対応。反証検索で BaseInfoRepository::getOpenShops() は見つかったが SearchStockListType の base_info 選択肢には使われていない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/SearchStockListType.php:123"
+  },
+  {
+   "rowId": 435,
+   "機能No": "M04-01",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "検索パターン名を入力することで検索条件保存ボタンが活性化する。",
+   "差分内容": "設計は利用者可視のボタン活性制御を要求しているが、実装は常時押下可能で、未入力時にサーバエラー表示へ流す挙動になっている。反証検索でも savePatternBtn に対する disabled 制御や pattern_name 入力イベントは見つからなかった。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/stock_list_index.twig:369"
+  },
+  {
+   "rowId": 436,
+   "機能No": "M04-01",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "検索条件保存では、ボタン押下時に設定されている検索条件を保存する。ただし店舗は検索条件の保存に含めない。",
+   "差分内容": "設計では店舗を検索条件保存から除外する必要があるが、実装は _token 以外を保存対象に残す。反証検索で base_info を unset する処理、保存前正規化、DtbSearchPattern 側の除外処理はいずれも確認できなかった。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockListController.php:332"
+  },
+  {
+   "rowId": 437,
+   "機能No": "M04-01",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "在庫移動・振替登録では、複数在庫区分の在庫が選択された場合、アラートを表示し遷移させない。",
+   "差分内容": "設計は複数在庫区分選択時の遷移禁止を要求するが、実装の stockMoveBtn/stockTransferBtn クリック処理には isSameZone 相当の判定が存在しない。反証検索で「複数在庫区分」「data-zone」「stockLocationId」「isSameZone」等へ翻案して確認したが、該当する M04-01 一覧側制御は見つからなかった。",
+   "実装参照": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/stock_list_index.twig, /home/y-saito/Developments/ec-cube-enterp"
+  },
+  {
+   "rowId": 438,
+   "機能No": "M04-01",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "メンバー管理で設定されているデフォルト検索表示店舗の在庫一覧を初期表示する。",
+   "差分内容": "設計はデフォルト検索表示店舗で絞り込んだ在庫一覧の表示を要求している。実装はフォーム初期値だけ設定し、一覧本体は検索前空状態として返すため、利用者が初期表示で在庫一覧を見られない。確認範囲: StockListController, SearchStockListType, ProductStockRepository, stock_list_index.twig。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockListController.php:180"
+  },
+  {
+   "rowId": 439,
+   "機能No": "M04-01",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "一覧の表示順はID降順で表示する。ID列は商品IDを表示する。",
+   "差分内容": "設計のID列は商品IDと定義されているため、表示順のID降順も商品ID降順として実装される必要がある。実装は ProductClass.id を降順にしており、表示IDとソートキーが一致しない。確認範囲: ProductStockRepository, stock_list_index.twig。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/ProductStockRepository.php:314"
+  },
+  {
+   "rowId": 440,
+   "機能No": "M04-01",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "在庫移動・振替登録選択時、複数の在庫区分の在庫が選択されている場合はエラー文言/アラートを表示し、在庫移動・振替登録画面へ遷移させない。",
+   "差分内容": "反証検索で stock_list_index.twig、StockListController、StockMoveController、StockTransferController、FormType/Service を isSameZone/複数の在庫区分/data-zone/stockLocationId で確認したが、遷移前に選択在庫区分の一意性を検査する実装は見つからない。StockMoveController/StockTransferController も productStockIds を受け取り先頭在庫の在庫区分を使うだけで、複数在庫区分を一覧へ戻す判定はない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/stock_list_index.twig:815"
+  },
+  {
+   "rowId": 441,
+   "機能No": "M04-01",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "在庫情報カスタムCSV出力はリンクで、押下時に「カスタムCSVで作成した各種出力フォーマット」「出力項目設定」のリンクを表示する。",
+   "差分内容": "設計はリンク押下でリンク群を表示するUIを要求しているが、実装はプルダウン選択UIであり、各フォーマットや出力項目設定がリンクとして表示されない。確認範囲: stock_list_index.twig, StockListController, DtbCsvExtensionRepository, StockCustomCsvExportService。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/stock_list_index.twig:449"
+  },
+  {
+   "rowId": 442,
+   "機能No": "M04-01",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "検索パターン名を入力することで検索条件保存ボタンが活性化する。",
+   "差分内容": "設計は入力に応じたボタン活性制御を求めているが、実装は常時活性のままサーバーバリデーションで拒否している。反証検索範囲: stock_list_index.twig, StockListController, SearchStockListType の pattern_name/savePatternBtn/disabled/input。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/stock_list_index.twig:369"
+  },
+  {
+   "rowId": 443,
+   "機能No": "M04-01",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "店舗は検索条件の保存に含めない。",
+   "差分内容": "設計は店舗を検索条件保存から除外する要求だが、実装は base_info を除外していない。反証検索で StockListController, SearchStockListType, Repository/Service を確認したが unset($dataToStore['base_info']) 相当の処理は見つからない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockListController.php:337"
+  },
+  {
+   "rowId": 444,
+   "機能No": "M04-02",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "総原価及び商品ごとの原価単は一日単位で記録し、呼び出せるようにする",
+   "差分内容": "設計は一日単位の原価スナップショットと呼び出しを要求するが、実装は現在値または変動イベント単位の原価しか保持していない。",
+   "実装参照": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin"
+  },
+  {
+   "rowId": 445,
+   "機能No": "M04-02",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "識別ID:3-6 承認通知先（所属選択）は、共通処理識別ID1-1を参照し、編集している在庫を保持している店舗の所属マスターデータから取得し選択肢とする。共通処理では所属マスターから取得し、所属マスターデータの並び順項目の昇順で表示する。",
+   "差分内容": "設計の選択肢ソースは店舗の所属マスターデータだが、実装は所属マスターではなく対象店舗に紐づくメンバーの所属から選択肢を作るため、所属マスターに存在しても該当メンバーがいない所属は表示されず、マスターの並び順も保証されない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/StockApprovalType.php:224"
+  },
+  {
+   "rowId": 446,
+   "機能No": "M04-03",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "登録成功時は「登録が完了しました。」（admin.register.complete）を表示し、商品検索一覧（在庫一覧 admin_stock_list）の保持ページへリダイレクトする。",
+   "差分内容": "設計は本機能の画面・処理フロー・表示メッセージの正を pf-eccube3（直接更新型）と明記し、登録成功時は一覧へ戻し「登録が完了しました。」を表示すると規定。永続化の承認ワークフロー化は遷移先・成功メッセージの変更を正当化しない。実装は遷移先が自ルート（編集画面再表示）、メッセージも admin.common.save_complete で不一致。",
+   "実装参照": "src/Eccube/Controller/Admin/Stock/StockBulkApprovalController.php:177-184"
+  },
+  {
+   "rowId": 447,
+   "機能No": "M04-03",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "商品未選択で在庫一括編集を押下したときは「商品が選択されていません。」を表示し、商品検索一覧（保持ページ）へリダイレクトする。",
+   "差分内容": "設計は商品未選択時に一覧へリダイレクトし「商品が選択されていません。」を表示すると規定。実装の new()/store() は一覧でなく自ルートへ戻し、表示文言も『指定された在庫が見つかりませんでした。』で不一致。自ルートへのID無しリダイレクトはループの懸念もある。",
+   "実装参照": "src/Eccube/Controller/Admin/Stock/StockBulkApprovalController.php:60-64,95-106"
+  },
+  {
+   "rowId": 448,
+   "機能No": "M04-04",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "CSV出力項目は設計HTMLの順に、商品ID、商品名、商品コード、店舗名、在庫区分名、言語、状態、基準価格、販売価格、買取価格、原価単価、総原価、在庫、当日販売数、前日販売数、3日間販売数、1週間販売数、1ヶ月間販売数、90日間販売数として出力する。",
+   "差分内容": "設計HTMLのCSV出力項目表では「原価単価」「総原価」「在庫」の順だが、実装のCSV_HEADERは「在庫」「原価単価」「総原価」の順であり、CSV列順が設計と一致しない。反証として StockListController、StockListCsvExportService、stock_list_index.twig、messages.ja.yaml、ProductStock を確認したが、M04-04 の通常CSV列順は StockListCsvExportService::CSV_HEADER と headerKeys により固定されており、設計順へ並べ替える別実装は見つからなかった。",
+   "実装参照": "src/Eccube/Service/Csv/Exporter/StockListCsvExportService.php:33"
+  },
+  {
+   "rowId": 449,
+   "機能No": "M04-09",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "CSVファイル登録時のエラー挙動: 検索項目および一覧の選択状態は失われない",
+   "差分内容": "設計はCSV登録エラー後も検索項目と一覧選択状態を維持する要求だが、実装はエラー時リダイレクトに選択IDや resume=1 を渡さず、通常GETで検索セッションを初期化するため保持されない。materialGapRows にはこの個別要求が無く extractorMissed として補足した。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:301; /home/y-saito/Developments/ec-cube-enterpri"
+  },
+  {
+   "rowId": 450,
+   "機能No": "M04-09",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "検索条件をクリア（3-10）は、押下すると3-1〜3-9の内容を空にする",
+   "差分内容": "設計は詳細検索条件3-1〜3-9だけを空にする要求だが、実装は2-1〜2-9の基本検索条件（在庫移動・振替ID、店舗、在庫区分、移動タイプ、ステータス等）も消す。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/MoveTransfer/index.twig:448; /home/y-saito/Developments/ec-cube-enterpris"
+  },
+  {
+   "rowId": 451,
+   "機能No": "M04-09",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "一覧は在庫移動振替IDを降順として表示する",
+   "差分内容": "設計の主キーは在庫移動振替ID降順だが、実装は登録日降順を優先するため、ID降順と登録日の前後が一致しないデータで表示順が設計と異なる。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbStockMoveTransferRepository.php:56"
+  },
+  {
+   "rowId": 452,
+   "機能No": "M04-09",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "移動指示作成条件を満たす場合、チェックされた移動をまとめて在庫移動指示を作成し、在庫移動指示一覧画面へ遷移する",
+   "差分内容": "作成条件自体は StockMoveInstructionCreateAction で実装されているが、成功後の遷移先が設計の一覧画面ではなく詳細画面になっている。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:665; /home/y-saito/Developments/ec-cube-enterpri"
+  },
+  {
+   "rowId": 453,
+   "機能No": "M04-09",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "戻しリストCSV出力／戻しリストPDF出力は、在庫移動である場合にのみ出力を可能とする",
+   "差分内容": "設計は戻しリストCSV/PDFを在庫移動のみに限定するが、実装の戻しリスト共通バリデーションには moveTransferType == MOVE_TRANSFER_TYPE_MOVE の判定がない。振替データでも許可ステータスに該当すれば型条件で止められない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:474; /home/y-saito/Developments/ec-cube-enterpri"
+  },
+  {
+   "rowId": 454,
+   "機能No": "M04-09",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "振替画面の一覧戻りリンクは「在庫移動・振替検索一覧」。",
+   "差分内容": "設計は在庫移動・振替登録編集（振替）のフッターリンクを「在庫移動・振替検索一覧」とする。実装は admin.stock.transfer.back_to_list の翻訳値が「在庫振替検索一覧へ」で、transfer_approval.twig と transfer_complete.twig がそのキーを表示するため、「移動・」がなく末尾に「へ」が付く。",
+   "実装参照": "src/Eccube/Resource/locale/messages.ja.yaml:4737 / src/Eccube/Resource/template/admin/Stock/transfer_approval.twig:228 / src/Eccube/Resource/template/admin/Stoc"
+  },
+  {
+   "rowId": 455,
+   "機能No": "M04-09",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "在庫振替登録の入力チェック: 「振替点数が現在の最新の在庫よりも多かった場合はエラーとする」",
+   "差分内容": "設計は『振替点数>現在庫』で明示エラーとする要求だが、Controller/StoreAction/Form/Twig(JS) いずれにも現在庫超過を検知しユーザーへエラー表示する処理が無く、超過登録が成立し在庫がマイナスになる。書式範囲チェック(1〜1000000)とは別要求。",
+   "実装参照": "不在（src/Eccube/Service/Admin/Stock/StockTransferStoreAction.php:77-156, src/Eccube/Form/Type/Admin/StockTransferNewDetailType.php:58-72, src/Eccube/Entity/Produc"
+  },
+  {
+   "rowId": 456,
+   "機能No": "M04-09",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "在庫振替登録の入力チェック: 「振替対象の商品と振替後商品コードが同一の場合はエラーとする」",
+   "差分内容": "設計は移動元＝移動先商品コードが同一の場合をエラーとする要求。実装では同一コードでもそのまま登録されるガードが無いため未実装。(B)振替後商品コード非存在エラーのみ StockTransferStoreAction.php:92 で実装済との対比。",
+   "実装参照": "不在（src/Eccube/Service/Admin/Stock/StockTransferStoreAction.php:86-103）"
+  },
+  {
+   "rowId": 457,
+   "機能No": "M04-09",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "3-6 [振替先]商品コード（半角英数・必須）「振替先の商品コードを入力する」／「（振替後商品コードの入力フォームは直接入力も可能）」",
+   "差分内容": "設計は当該入力フォームを直接入力可としているが、実装は readonly として直接入力を不可にしており、フォーム部品の入力可否が設計と相違。",
+   "実装参照": "src/Eccube/Resource/template/admin/Stock/transfer_new.twig:342"
+  },
+  {
+   "rowId": 458,
+   "機能No": "M04-09",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "「[振替先]商品コードを入力し、フォームからカーソルが外れた際(blur)、入力した商品コードに紐づく振替先の商品名、言語、状態、Foil、基準価格を表示する」",
+   "差分内容": "設計は『商品コードを直接入力しフォーカスアウトした際』に振替先情報を表示する挙動を要求。blur 契機の情報表示処理が存在しないため未実装（モーダル選択契機の表示は実装済で別要求）。",
+   "実装参照": "不在（src/Eccube/Resource/template/admin/Stock/transfer_new.twig:16-231 JS全体）"
+  },
+  {
+   "rowId": 459,
+   "機能No": "M04-10",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "CSV出力項目の11列目「出庫日」は、移動の場合はステータスが移動中になった日時、振替の場合はステータスが出庫承認済みになった日時を出力し、12列目「入庫日」はステータスが入庫完了になった日時を出力する。",
+   "差分内容": "設計はステータス到達日時の出力を要求しているが、実装は未設定の stock_at フィールドを出力している。反証として moveFromApprovalAt / MoveToApprovalAt / STATUS_MOVING / STATUS_INBOUND_APPROVED / SQLカラム名まで検索したが、CSV対象の moveFromStockAt / moveToStockAt への代入はテスト生成以外に存在しない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Exporter/StockMoveTransferListCsvExportService.php:171, /home/y-saito/Developments/ec-cube-"
+  },
+  {
+   "rowId": 460,
+   "機能No": "M04-12",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "在庫分割結合検索一覧の結果列見出しは「分割元 / 結合先商品名」。",
+   "差分内容": "設計は在庫分割結合検索一覧の結果列を「分割元 / 結合先商品名」とする。実装は stock_split_join_index.twig で admin.stock.split_join.list.source_destination_product を表示し、messages.ja.yaml の値が「分割元・結合先商品」になっているため、区切り記号と末尾の「名」が一致しない。",
+   "実装参照": "src/Eccube/Resource/locale/messages.ja.yaml:4878 / src/Eccube/Resource/template/admin/Stock/stock_split_join_index.twig:312"
+  },
+  {
+   "rowId": 461,
+   "機能No": "M04-12",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "識別ID 4-4「表示件数」: 単一選択、初期値10件、EC-CUBE標準のマスタデータ管理の最大ページ表示にて設定されている表示件数の選択肢を表示する",
+   "差分内容": "表示件数の単一選択(初期10件・標準マスタの選択肢)が実装に存在しない。件数制御自体が成立していない。",
+   "実装参照": "不在 (SearchStockSplitJoinType.php, stock_split_join_index.twig, StockSplitJoinController.php:92-170, StockSplitJoinIndexAction.php)"
+  },
+  {
+   "rowId": 462,
+   "機能No": "M04-12",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "識別ID 5-13「ページングリンク」: 選択したページへ遷移する",
+   "差分内容": "pager => null 固定でページ遷移リンクが機能・表示ともに不在。",
+   "実装参照": "stock_split_join_index.twig:409-413 / StockSplitJoinController.php:131,161"
+  },
+  {
+   "rowId": 463,
+   "機能No": "M04-12",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "検索結果一覧テーブルで分割・結合をチェックした場合、各種出力ボタンが活性化する(選択した一覧の分割・結合について各種CSVを出力)",
+   "差分内容": "行をチェック→各種出力ボタン活性化 の選択駆動UIが未実装。",
+   "実装参照": "stock_split_join_index.twig:327-407, 291-293"
+  },
+  {
+   "rowId": 464,
+   "機能No": "M04-12",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "識別ID 4-3「在庫分割結合CSV出力ボタン」: 選択(チェック)した一覧の分割・結合についてCSVを出力する",
+   "差分内容": "設計は選択駆動出力だが、実装は検索条件で全件出力。出力対象の決定方法が異なる。",
+   "実装参照": "StockSplitJoinController.php:210-220 / StockSplitJoinCsvExportService.php"
+  },
+  {
+   "rowId": 465,
+   "機能No": "M04-12",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "登録が行われなかった場合、検索項目および一覧の選択状態は失われない",
+   "差分内容": "セッションに検索条件は残るが resume を付けずに素の一覧へ戻すため画面へ復元されず検索項目が失われる。",
+   "実装参照": "StockSplitJoinController.php:111-114, 230-402"
+  },
+  {
+   "rowId": 466,
+   "機能No": "M04-12",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "識別ID 2-7「ステータス」: 選択肢(分割)=新規登録・分割承認待ち・却下・入庫完了／選択肢(結合)=新規登録・結合元登録・結合承認待ち・却下・入庫完了（タイプ別・文言『入庫完了』）",
+   "差分内容": "分割4択・結合5択のタイプ別選択肢を要求するが、実装は全ステータス常時表示かつ文言が異なる。",
+   "実装参照": "SearchStockSplitJoinType.php:147-159 / stock_split_join_index.twig:178-196"
+  },
+  {
+   "rowId": 467,
+   "機能No": "M04-12",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "識別ID 3-7「検索条件をクリアボタン」: 押下すると3-1〜3-4(詳細検索の日付/登録者)の内容を空にする",
+   "差分内容": "設計は3-1〜3-4限定クリアだが実装は検索セッション全体を破棄。対象範囲が異なり部品もボタンでなくリンク。",
+   "実装参照": "stock_split_join_index.twig:270-273 / StockSplitJoinController.php:96-100"
+  },
+  {
+   "rowId": 468,
+   "機能No": "M04-12",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "識別ID 2-1「商品名・商品コード検索対象」: 初期値『分割元・結合先』(source)",
+   "差分内容": "設計は初期値 source(分割元・結合先)が選択済みを要求するが、実装の初期状態は無選択。",
+   "実装参照": "SearchStockSplitJoinType.php:96-106 / stock_split_join_index.twig:116-126"
+  }
+ ]
+}

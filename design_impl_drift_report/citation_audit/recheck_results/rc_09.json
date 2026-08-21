@@ -1,0 +1,149 @@
+{
+  "packetId": "rc_09",
+  "results": [
+    {
+      "rowId": 126,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0517 sheet-6 の src-cell を全件抽出して確認。D22 は「商品IDをもとに商品情報を検索しJSON出力する」、B27/J27/O27/V27 は「言語」「文字列」「〇」「JP」、C31 は「api/product/detail/62566?lang=JP」、B47/R47 は「language_code」「言語コード」。指定言語を入力に取り言語コードを返すことはExcel正本にある。一方「未指定時はJP」はsrc-cellにはなく、むしろO27は言語を必須（〇）としている。API挙動の指摘なのでレイアウト画像は対象外。",
+      "reason": "根拠区分は、指定された言語に対応する商品詳細を返すという中核部分についてSPEC_BACKEDで維持できる。ただし未指定時JPの既定値はExcel正本ではなく旧実装由来であり、設計期待値のその部分だけは正本根拠に含められない。旧実装 pf-api/src/Repository/DtbProductRepository.php の getProductDetailById() は `where('product.productId = :productId')` に続けて `andWhere('language.code = :languageCode')` としていた。",
+      "currentImpl": "ec-cube-enterprise 現状（HEAD 232d736128）: src/Eccube/Repository/ProductRepository.php の findProductById() は `LEFT JOIN mtb_language lang ON pc.language_id = lang.id AND lang.code = :languageCode` だが、WHEREは `p.id = :productId` と `pc.id IS NOT NULL` だけである。さらにSELECTは `COALESCE(lang.code, :languageCode) AS languageCode`。src/Eccube/Service/App/ProductDetail/ProductDetailResponseBuilder.php の build() は全 `$products` を走査して各行を product_classes に追加し、後段の言語絞り込みもないため、非指定言語の規格が指定言語の応答に混入し得る。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 127,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0517 sheet-6 のExcel正本ではB39/J39に「404 or 500」「異常」、レスポンス表B43/R43に「code」「レスポンス結果」があるが、同シートのsrc-cell全件に `message` と `Not Found` は0件。全Excel出力のsrc-cellも `Not Found`、`\"message\"`、`code...message` で検索し、該当APIを支持するセルは0件（唯一のNot Foundは0204の商品登録URLに関する別機能）。API応答契約なのでレイアウト画像は対象外。",
+      "reason": "HTTP 404自体は正本にあるが、指摘対象の `{code, message}` と `Not Found` は正本にない。旧実装 pf-api/src/Controller/ProductController.php の getProductDetailAction() は空結果時に実際に `['code' => Response::HTTP_NOT_FOUND, 'message' => 'Not Found']` を404で返すため、LEGACY_BACKEDが正しい。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/App/ProductController.php の getProductDetailByProductId() は空結果で `throw new NotFoundException('Not Found')`。src/Eccube/Exception/App/NotFoundException.php はこの文言を `errors: [$message]` に入れ、src/Eccube/EventListener/ExceptionListener.php の onKernelException() はApp APIを `['code' => $statusCode, 'errors' => $errors]` に変換する。`message` キーへ戻す個別処理はない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 130,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0404 sheet-3 のExcel正本src-cell C22に「本店の支店IDは0として処理する」、B43に「商品規格ID,支店ID,昨日の販売数,3日間の販売数,1週間の販売数,1か月の販売数,90日間の販売数,180日間の販売数,365日間の販売数」、B44に「以上の情報を販売数集計データへ更新を行う」を確認した。バッチのデータ処理指摘なのでレイアウト画像は対象外。",
+      "reason": "本店ID=0と集計結果の更新は、function-design-embed開始（HTML 1047行）より前のdata-excel-ref付き正本セルに明記されており、SPEC_BACKEDである。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Repository/DtbSalesQuantityRepository.php の getSalesForAggregate() は `s.base_info_id` をSELECTし、`GROUP BY oi.product_class_id, s.base_info_id` としてそのまま返す。本店を0へ写像するCASE等はない。src/Eccube/Entity/BaseInfo.php の `TC_TOKYO_ID` は1で、DtbSalesQuantityRepositoryの0は `POPULAR_PRODUCT_RECOMMEND_SHOP_ID` として予約され、clearSalesQuantityForAggregate() も `base_info_id != 0` だけを削除する。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 131,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0404 sheet-3 のsrc-cellを全件確認。受注ステータス条件はB38/S38の「受注データ.ステータス」「キャンセルを除外」のみで、「処理中」除外は0件。全Excel出力のsrc-cellを「処理中」「キャンセル...処理」で検索したが、B02-01の販売数集計を対象に処理中除外を定める関連セルはなかった。バッチ条件の指摘なのでレイアウト画像は対象外。",
+      "reason": "正本が要求するのはキャンセル除外のみで、新実装はそこを満たす。処理中も除外する根拠は、pf-eccube3/app/Plugin/HareruyaEc/Repository/OrderDetailRepository.php の getSaleForUpdateSummary() にある `OrderStatus::ORDER_CANCEL` と `OrderStatus::ORDER_PROCESSING` の配列、および各期間CASE内の `o.status NOT IN (...)` であるためLEGACY_BACKEDが正しい。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Repository/DtbSalesQuantityRepository.php の getSalesForAggregate() は `$cancelStatus = OrderStatus::CANCEL` の1値だけをバインドし、SQLも `AND o.order_status_id != :cancel_status` のみ。src/Eccube/Entity/Master/OrderStatus.php にはPENDING=7とPROCESSING=8があるが、この集計SQLからは参照されていない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 132,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0404 sheet-3 の全src-cellを「対象」「無い」「更新しない」「更新を行わず」「終了」「完了」で確認したが、「対象が無い場合は更新しない」に相当する正本セルは0件。全Excel出力のsrc-cellでも「対象...無い...更新」「更新しない...終了」の組合せに当該バッチを支持するセルはなかった。バッチ挙動の指摘なのでレイアウト画像は対象外。",
+      "reason": "対象なし時に無更新で終える挙動は正本にはない。旧実装 pf-eccube3/app/Plugin/HareruyaEc/Service/Product/UpdateProductSummary.php の execute() は先に取得した `$orderDetails` のforeach内だけで updateProductSummaryColumns() を呼ぶため、空配列なら更新せず終了する。したがってLEGACY_BACKEDを維持する。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Service/Product/BatchAggregateSalesAction.php の handle() は getSalesForAggregate() より先に clearSalesQuantityForAggregate() を実行する。src/Eccube/Repository/DtbSalesQuantityRepository.php の同クリア処理は `DELETE FROM dtb_sales_quantity WHERE base_info_id != :popular_shop_id` を実行するため、集計対象が0件でも既存集計行を削除してcommitする。",
+      "severityOpinion": "high",
+      "confidence": "high"
+    },
+    {
+      "rowId": 135,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0404 sheet-3 の正本src-cellで時刻に関する記載はB26/F26/AJ26/AO26の「実行トリガー」「スケジュール起動(Step Functions)」「実行タイミング」「毎日0:00」。同シートを「開始」「完了」「コンソール」「日時」で確認して該当出力仕様は0件。全Excel出力のsrc-cellでも「コンソール」「実行開始」「実行終了」「日時付」は0件だった。表示画面ではなくコンソール出力の指摘なのでレイアウト画像は対象外。",
+      "reason": "日時付き開始・完了出力はExcel正本にない。旧実装 pf-eccube3/app/Plugin/HareruyaEc/Command/ProductBatch.php の execute() は `$resultMessage = '[' . date('Y/m/d H:i') . '] ';` を作り、`Command start.` と `Command complete.` をechoしているためLEGACY_BACKEDが正しい。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Command/AggregateSalesCommand.php の execute() は処理開始前に出力せず、成功時は `$io->success('期間別販売数集計が完了しました。');` のみ。ファイル内に日時を組み立てるdate()/format()もない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 136,
+      "originalClass": "UNCERTAIN",
+      "classVerdict": "REFUTED",
+      "correctedClass": "LEGACY_BACKED",
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0404 sheet-3 の正本src-cell B43は期間別値の項目列挙、B44は「以上の情報を販売数集計データへ更新を行う」であり、`dtb_product_class`、`order_quantity_01`〜`08`、「補助表を設けず」は同シートにない。全Excel出力のsrc-cellを `order_quantity_0`、`dtb_product_class`、`dtb_sales_quantity`、「補助表」で検索しても0件。一方、実際に開いた旧実装 pf-eccube3/app/Plugin/HareruyaEc/Repository/DtbProductSubClassRepository.php の updateProductSummaryColumns() は `update dtb_product_sub_class set order_quantity_01 = 0, ... order_quantity_08 = :sales_365day` と明記する。バッチ保存先の指摘なのでレイアウト画像は対象外。",
+      "reason": "正本は保存先の物理表・列を指定していないためSPEC_BACKEDにはできないが、旧実装が期間別販売数をorder_quantity_01〜08へ書くことは明白である。したがって根拠不明のUNCERTAINではなくLEGACY_BACKEDへ訂正する。ただし「移行先では補助表を設けず、物理表はdtb_product_class」という表名決定そのものは旧実装からの移行推定であり、正本引用としては扱わない。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Repository/DtbSalesQuantityRepository.php の updateSalesQuantityColumns() は `INSERT INTO dtb_sales_quantity` / `UPDATE dtb_sales_quantity` で sales_quantity_01〜08を更新する。src/Eccube/Entity/ProductClass.php に order_quantity_01〜08列は存在するが、B02-01のhandle()経路はそこへ書かないため、旧実装のorder_quantity列更新との挙動差は現在も残る。",
+      "severityOpinion": "med",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 140,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0402 sheet-5 の正本src-cell B31/F31/AJ31/AO31は「実行トリガー」「スケジュール起動(Step Functions)」「実行タイミング」「手動実行」。同シートおよび全Excel出力のsrc-cellを `product:batch`、`updateProductSummaryForStockUp`、`eccube:aggregate-stock-up` で検索して0件。コマンド契約の指摘なのでレイアウト画像は対象外。",
+      "reason": "旧コマンド名は正本にはない。旧実装 pf-eccube3/app/Plugin/HareruyaEc/Command/ProductBatch.php はBATCH_NAMESに `updateProductSummaryForStockUp` を登録し、configure()で `setName('product:batch')` とするため、LEGACY_BACKEDが正しい。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Command/AggregateStockUpCommand.php は使用例を `bin/console eccube:aggregate-stock-up`、AsCommand名を `eccube:aggregate-stock-up` とする。`product:batch` / `updateProductSummaryForStockUp` の互換エイリアスは現行バッチ入口にない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 141,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0402 sheet-5 のExcel正本src-cell D9は「商品コードごと、店舗ごと、在庫区分ごとに集計を行う」、E17とE22も商品コード・店舗・在庫区分ごとの集計を明記し、E25は「商品コード、店舗、在庫場所が一致する集計データがすでに集計テーブルにある場合は更新を行う」、E26は「ない場合は新規登録を行う」。いずれもfunction-design-embed開始前のdata-excel-ref付きセル。バッチ集計キーの指摘なのでレイアウト画像は対象外。",
+      "reason": "在庫区分／在庫場所を集計・保存キーに含める要求はExcel正本に複数回明記されており、SPEC_BACKEDである。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Repository/DtbStockUpQuantityRepository.php の getStockUpForAggregate() は `ps.product_class_id, sh.base_info_id` だけをSELECT/GROUP BYする。updateStockUpQuantityColumns() のfindOneBy、INSERT、UPDATE条件も商品規格IDと店舗IDだけである。src/Eccube/Entity/DtbStockUpQuantity.php にもProductClassとBaseInfoはあるがstock_location_id属性はないため、在庫区分別の集計・保存は実装されていない。",
+      "severityOpinion": "high",
+      "confidence": "high"
+    },
+    {
+      "rowId": 142,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0402 sheet-5 のExcel正本src-cell E20に「取得対象（＝集計対象）の在庫変動区分は親区分が『入庫』『買取』のもののみとする」、E21に「※移動や分割などで入庫した在庫は集計に含まない」、B44/S44に「在庫変動履歴.在庫変動区分」「処理概要で定義した在庫変動区分」を確認した。バッチ抽出条件の指摘なのでレイアウト画像は対象外。",
+      "reason": "親区分「入庫」「買取」のみという条件はExcel正本に直接書かれており、SPEC_BACKEDである。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Repository/DtbStockUpQuantityRepository.php の getStockUpForAggregate() は `$beStocked = MtbStockChangeType::BE_STOCKED` と `$inventoryAdjustment = MtbStockChangeType::INVENTORY_ADJUSTMENT` を使い、SQLを `stock_change_type_id IN (:be_stocked, :inventory_adjustment)` とする。src/Eccube/Entity/Master/MtbStockChangeType.php には別定数 `PURCHASE = 2` があるが当該SQLで使われていない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 143,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0402 sheet-5 の全src-cellを「対象」「無い」「更新しない」「更新を行わず」「終了」で確認したが、「対象が無い場合は更新しない」に相当する正本セルは0件。全Excel出力のsrc-cellでも当該バッチを支持する同義記述は見つからなかった。バッチ挙動の指摘なのでレイアウト画像は対象外。",
+      "reason": "対象なし無更新は正本にない。旧実装 pf-eccube3/app/Plugin/HareruyaEc/Service/Product/UpdateProductSummaryForStockUp.php の execute() は先に `$stockHistories` を取得し、foreach内だけで updateProductSummaryColumnsForStockUp() を呼ぶため、空結果なら更新せず終了する。LEGACY_BACKEDが正しい。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Service/Product/BatchAggregateStockUpAction.php の handle() は集計取得より先に clearStockUpQuantityForAggregate() を呼ぶ。src/Eccube/Repository/DtbStockUpQuantityRepository.php の同メソッドは無条件で `DELETE FROM dtb_stock_up_quantity` を実行するため、対象0件でも既存集計を全削除してcommitする。",
+      "severityOpinion": "high",
+      "confidence": "high"
+    },
+    {
+      "rowId": 144,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0402 sheet-5 の全src-cellを「100件」「flush」「キャッシュ」「部分反映」「ロールバック」「トランザクション」で確認し、該当処理方針は0件。全Excel出力のsrc-cellでもB02-03を対象にする関連セルは0件。旧実装 pf-eccube3/app/Plugin/HareruyaEc/Service/Product/UpdateProductSummaryForStockUp.php は `if ($index % 100 === 0) { flush(); EntityManagerUtil::clearCache(...); }` と最後の `flush()` を実際に持つ。バッチ内部処理の指摘なのでレイアウト画像は対象外。",
+      "reason": "100件単位のflush/clearは正本でなく旧実装由来なのでLEGACY_BACKEDである。なお旧コードの配列indexが0始まりならflush/clearは初回と101件目以降にも走り、更新自体はupdateProductSummaryColumnsForStockUp()内のDBAL executeUpdateで各行実行されるため、「厳密に100件ごとに初めてDB反映」という意味ではない。それでも、新実装がキャッシュクリアをせず全体を明示トランザクション化したという差は残る。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Service/Product/BatchAggregateStockUpAction.php の handle() は `beginTransaction()` 後に全データをforeachし、最後に1回だけcommit、例外時は全体をrollBackする。100件単位のflush()/clear()や中間commitはない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    }
+  ]
+}

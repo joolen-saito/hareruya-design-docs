@@ -1,0 +1,149 @@
+{
+  "packetId": "rc_47",
+  "results": [
+    {
+      "rowId": 824,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0214_基本設計仕様書(イベント管理).html の sheet-5 Excel正本を「支払方法」「クレジットカード決済」「初期値」で確認。data-excel-ref=\"0214:イベント編集!E163\" は「支払方法」、同 Z163 は初期値「クレジットカード決済」。レイアウト画像 data-excel-ref=\"0214:イベント編集!E7\" も実見し、支払方法欄にクレジットカード決済チェックボックスがあることを確認した（画像は編集画面例でチェック状態は未選択）。",
+      "reason": "正本項目表が初期値を明記しているため SPEC_BACKED は妥当。画像の未選択表示は既存イベントを含む編集画面例であり、新規時の初期値を定義する Z163 の記載を反証しない。現行の新規 DtbEvent には支払方法が付与されず、フォームも既存 Payments の EC_CREDIT だけを data に戻すため、新規時のプリチェックは再現しない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Event/EventController.php の create()（217行付近）は `new DtbEvent()` とデフォルト店舗設定後に EventType を生成するだけ。src/Eccube/Form/Type/Admin/EventType.php の buildForm()（68行付近）は `$paymentsFormData = []` から既存 `$Event->getPayments()` の EC_CREDIT のみを追加し、payments フィールド（159行付近）の `data` に渡す。src/Eccube/Service/Admin/Event/EventCreateAction.php の handle() も送信された payment ID だけを保存する。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 825,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0214 HTML の sheet-5 Excel正本範囲（1548-1949行）を「削除してよろしい」「nameJp」「イベント名」「イベントを削除」で確認。data-excel-ref=\"0214:イベント編集!AG190\" の「イベントを削除」はあるが、イベント名を確認文へ埋め込む記述は0件。レイアウト画像 E7/AE89 も実見したが、削除ボタンはある一方、削除確認ダイアログやイベント名差し込みの表示はない。具体要件は function-design-embed 内にあり、旧 pf-eccube3 の eventdetail.twig 293行付近で `format(event.nameJp)` を実物確認した。",
+      "reason": "Excel正本は削除操作までしか定めず、Event.nameJp を確認文へ入れる具体要件は旧テンプレート由来なので LEGACY_BACKED は妥当。現行確認文は固定の「イベント管理」を差し込んでおり、旧挙動との差は残る。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Event/edit.twig のイベント削除モーダル（517行）は、削除可能時の `%name%` に `'admin.event.event_management'|trans` を渡す。src/Eccube/Resource/locale/messages.ja.yaml の `admin.event.event_management`（5908行）は「イベント管理」、`admin.common.delete_modal__message`（1785行）は `%name%` を含む確認文であり、Event.nameJp は表示経路に使われていない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 826,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0214 HTML の sheet-5/6 Excel正本範囲を「日程情報」「削除できない」「削除することができません」で確認。data-excel-ref=\"0214:イベント編集!D120\" は「日程情報がある場合、イベントの削除はできない」、data-excel-ref=\"0214:イベント削除!D18\" は「日程情報がある場合、削除はできない」だが、指定文言「日程情報が存在する場合、イベント情報を削除することができません。」は正本にない。sheet-6 自体にレイアウト画像はなく、関連する sheet-5 レイアウト画像 E7 も実見したが当該メッセージはない。指定文言は function-design-embed と旧 message.ja.yml の `admin.event.delete.failed` で実物確認した。",
+      "reason": "削除禁止という業務ルールは正本にあるが、finding が比較する具体的な日本語メッセージは旧実装だけにあるため LEGACY_BACKED は妥当。現行の直接削除経路は未定義キーをフラッシュへ積む状態が続く。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Event/EventController.php の delete()（362行）は日程ありで `addError('admin.event.delete.schedule_exists', 'admin')`。src/Eccube/Resource/locale/messages.ja.yaml にはそのキーがなく、6078行の定義は別キー `admin.event.delete.not.schedule_exists: 日程情報が登録されているため削除できません。先に日程を削除してください。` のみ。edit.twig 517行の通常モーダルはこの定義済み `.not.` キーを使うが、DELETE 到達時の Controller キー不一致は残る。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 827,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0214 HTML の sheet-5/6 Excel正本範囲を「デッキ登録済み」「申込済み」「deckerror」「entryerror」「削除することができません」で確認。data-excel-ref=\"0214:イベント編集!D121\" は「デッキ登録されている日程の削除はできない」、同 D122 は「申込されている日程の削除はできない」だが、指定キーと指定文言は正本にない。sheet-6 にレイアウト画像はなく、sheet-5 レイアウト画像 E7 も実見したが当該エラー文言はない。旧 EventController.php の `admin.event.delete.deckerror` / `.entryerror` 呼出しと旧 message.ja.yml の両日本語定義を実物確認した。",
+      "reason": "削除禁止そのものは正本要件だが、finding の比較対象である具体キー・具体文言は旧実装由来なので LEGACY_BACKED は妥当。現行 Controller のキーと locale のキーが一致しない状態は残る。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Event/ScheduleController.php の delete() はデッキありで `admin.event.delete.deckerror`（188行）、申込ありで `admin.event.delete.entryerror`（194行）を addError する。messages.ja.yaml に両キーはなく、6080-6081行にあるのは `admin.event.delete.not.deck_exists` と `admin.event.delete.not.entry_exists`。edit.twig 549-553行の通常モーダルは定義済みキーを使うが、DELETE 到達時の未定義キー問題は残る。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 829,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0214 HTML の sheet-7 Excel正本を「編集権限」「日程追加」「権限を保持」で確認。data-excel-ref=\"0214:日程登録!D45\" に「編集権限を保持している店舗のイベントのみ編集を可能とする」、同 E53 に「メンバーが権限を保持している店舗のイベントのみ日程追加が可能にする」を確認。日程登録レイアウト画像 B7 の3レイヤーも実見し、日程登録/更新ボタン配置を確認した。",
+      "reason": "店舗編集権限による日程追加制限は Excel正本に直接あるため SPEC_BACKED は妥当。現行は画面ボタンを disabled にするだけで、POST 保存前に同じ権限を拒否しないため、直接送信で制限を迂回できる。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Event/ScheduleController.php の create() は form valid 判定（67行）後に ScheduleStoreAction::handle()（73行）を呼び、`isEditableBaseInfo` の計算は保存処理後の93行。src/Eccube/Service/Admin/Event/ScheduleStoreAction.php の handle() に isEditableShop 検査はない。template/admin/Event/Schedule/edit.twig 264行はボタンを disabled にするだけである。",
+      "severityOpinion": "high",
+      "confidence": "high"
+    },
+    {
+      "rowId": 830,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0214 HTML の sheet-7 Excel正本項目表で data-excel-ref=\"0214:日程登録!E84\" の「登録」と AG84 の「新規日程登録時のみ表示」、E85 の「更新」と AG85 の「既存の日程更新時のみ表示」を実物確認。レイアウト画像 B7 の image 1-3 も実見し、右側ボタン表示は「日程登録」「日程更新」と状態別であることを確認した。正本の表と画像はいずれも新規/既存で異なる登録系文言を支持し、共通「保存」は示さない。",
+      "reason": "表では「登録」「更新」、画像では「日程登録」「日程更新」と接頭辞に差があるが、いずれも新規/既存で文言を切り替える設計であり、両方を「保存」とする現行との差は明確。SPEC_BACKED は妥当。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Event/Schedule/edit.twig は既存分岐の submit（258行）も新規分岐の submit（264行）も `admin.common.save` を表示する。messages.ja.yaml 1626行で同キーは「保存」。新規/既存の表示分岐はあるが文言は共通のまま。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 834,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "PARTIAL",
+      "checkedQuote": "0214 HTML の sheet-8 Excel正本項目表を「受付開始時間」「受付終了時間」「開始日前日数」「23:59」「オンライン受付」で確認。data-excel-ref=\"0214:繰返日程追加!AE73\" と同 AE74 は受付開始/終了「00:00」、同 AE76 は日前日数「0」、同 AE77 は締切時刻「23:59」、同 AE79 と AE81 はオンライン日前日数「0」、同 AE80 と AE82 はオンライン時刻「00:00」。レイアウト画像 C7 も実見し、これらの欄に 00:00・0・23:59 が表示されていることを確認した。",
+      "reason": "初期値一式は Excel正本の表と画像の双方にあるため SPEC_BACKED は妥当。ただし先行 finding の「日前日数にも data 初期値がない」は現状では古い。日前日数3項目と締切時刻は実装済みで、受付開始/終了とオンライン開始/終了の4時刻の 00:00 だけが未解消なので PARTIAL。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/RepeatScheduleType.php は deckRegistDeadlineDays（147-150行）、onlineEntryStartDays（163-165行）、onlineEntryEndDateDays（175-177行）に `data => 0`、deckRegistDeadlineTime（152-156行）に 23:59 を設定済み。一方、entryStartTime（132-136行）、entryEndTime（137-141行）、onlineEntryStartTime（171-174行）、onlineEntryEndTime（183-186行）には `data` がなく、00:00 の初期表示は未実装。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 837,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0214 HTML の sheet-9 Excel正本を「編集権限のある店舗のみ表示」「編集権限のない店舗」で確認。data-excel-ref=\"0214:複製新規!E99\" は「識別ID:1-3『店舗』は編集権限のある店舗のみ表示する」、E100 は権限外店舗選択時エラー、項目表 AG120 も同じ2要件を明記。レイアウト画像 D7/AF7 も実見し、店舗選択欄の存在と配置を確認した。",
+      "reason": "選択肢の絞り込みと不正選択時エラーの両方が正本に明記されるため SPEC_BACKED は妥当。現行は後者だけを実装し、前者は未実装。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/EventType.php の buildForm() は baseInfo（88行付近）の query_builder を BaseInfo 全件の id 昇順にする。POST_SUBMIT の Member::isEditableShop エラーは292行以降にあるが、選択肢生成時の権限絞り込みはない。EventController の copy ルートも同 EventType を生成する。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 840,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0214 HTML の sheet-9 Excel正本範囲（2874-3188行）を「admin_event_detail」「フォーム名」「複製元イベント」で確認。正本には data-excel-ref=\"0214:複製新規!D113\" の「複製元のイベントのものを複製して入力済みで画面を表示する」はあるが、内部フォーム名は0件。レイアウト画像 D7/AF7 も実見したが内部フォーム名は表示されない。`admin_event_detail` は function-design-embed の3240行と旧 EventController.php の `createBuilder('admin_event_detail', $event)` にのみ実物を確認した。",
+      "reason": "複製元データでフォームを表示する機能要件は正本にあるが、比較対象の内部フォーム名 `admin_event_detail` は旧実装由来なので LEGACY_BACKED は妥当。現行 prefix は引き続き異なる。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Event/EventController.php の copy ルートは edit() 内で EventType を生成する（281行）。src/Eccube/Form/Type/Admin/EventType.php の getBlockPrefix()（319-322行）は `return 'admin_event'`。イベント複製フォームで `admin_event_detail` は使われていない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 841,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0214 HTML の sheet-10 Excel正本を「検索条件をクリア」「フォームを全て空に変更」で確認。data-excel-ref=\"0214:イベント申込一覧(検索入力) !E81\" はリンク名「検索条件をクリア」、同 AG81 は「フォームを全て空に変更」。レイアウト画像 C7 も実見し、検索フォーム下部の「検索条件をクリア」リンクと各入力欄を確認した。",
+      "reason": "全フォーム値を空にする要求が正本に直接あるため SPEC_BACKED は妥当。現行クリック処理は検索モードを戻すだけで、入力値全体は消さない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Event/Entry/index.twig の `.search-clear` ハンドラ（114-119行）は searchMode を `event_entry` にして change を発火するだけ。applyEntryListSearchModeUi()（39-53行）は event_entry 時に3項目の disabled を解除するだけで、event_name、base_info、player_name、日付、event_detail_id、dci_no 等を空にする処理はない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 842,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0214 HTML の sheet-11 Excel正本範囲（3657-3909行）を「並び順エラー」「admin.error.sort」「ASC」「DESC」「フラッシュ」「初期表示」で確認したが該当する正本記述は0件。sheet-11 のレイアウト画像 C7/C69 の2枚も実見したが通常の並び替えUIだけでエラーフラッシュ仕様はない。具体記述は function-design-embed の4011行と旧 SearchControllerTrait.php の `addError('admin.error.sort')` / `return $this->index(...)` で実物確認した。",
+      "reason": "不正 order の具体的なエラー処理は旧共通 trait 由来で、Excel正本にはないため LEGACY_BACKED は妥当。現行 EntryController は不正値を DESC に丸めるだけで、旧挙動との差は残る。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Event/EntryController.php はバリデーションエラー経路（162-163行）と通常経路（226-227行）の両方で、order が ASC/DESC 以外なら `$order = 'DESC'` とする。Controller/Admin/Event 配下に `admin.error.sort` の呼出しはなく、フラッシュ表示や初期表示への差し戻しは行わない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 844,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0214 HTML の関連入力定義 sheet-10 を「イベント詳細ID」「数値(整数)」「10字」で確認。data-excel-ref=\"0214:イベント申込一覧(検索入力) !E78\" は「イベント詳細ID」、M78 は「数値(整数)」、V78 は「10字」。sheet-10 レイアウト画像 C7 も実見し、イベント詳細IDの入力欄を確認した。Regex という実装方式自体は正本ではなく旧 EntryListType.php にあるが、非数値を受理しない10字以内の整数制約は正本にある。",
+      "reason": "正本が数値（整数）・最大10字を明記しており、現行の Length だけでは数値制約を満たさないため SPEC_BACKED は妥当。非数字をフォームエラーにせず検索条件から黙って外す現行挙動も変わっていない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/SearchEntryType.php の event_detail_id（152-158行）は TextType に Length(max) だけを設定し、Regex/数字制約を持たない。src/Eccube/Repository/DtbEventEntryRepository.php の検索処理（122-128行）と DtbDeckRepository.php（783-789行）は `ctype_digit` の場合だけ条件を追加するため、非数字はバリデーションエラーにならず無視される。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    }
+  ]
+}

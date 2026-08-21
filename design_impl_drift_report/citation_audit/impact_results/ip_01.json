@@ -1,0 +1,75 @@
+{
+  "packetId": "ip_01",
+  "results": [
+    {
+      "rowId": 134,
+      "authorVerdict": "UNSURE",
+      "verdict": "IMPACT",
+      "agree": false,
+      "observableEffect": "有限の max_execution_time が設定された環境やSQLロガーが有効な環境では、大量集計が途中終了してコマンドが完了せず、dtb_sales_quantity の更新結果・終了コード・ログI/Oが、制限解除／ロガー無効化時と変わる。",
+      "checked": "設計HTML 0404_基本設計仕様書(バッチ_商品管理).html:1081,1114 の制限解除要求を確認。AggregateSalesCommand.php:44-58 と BatchAggregateSalesAction.php:36-49 には設定変更がなく、DtbSalesQuantityRepository.php:301-308 の set_time_limit(0)、memory_limit=-1、setSQLLogger(null) は別経路の updateRecommend() 内だけであることを確認した。",
+      "reason": "資源制限とSQLログ量は入力規模・実行環境次第で完走可否と外部I/Oを変えるため、単なる内部実装差ではない。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 155,
+      "authorVerdict": "UNSURE",
+      "verdict": "IMPACT",
+      "agree": false,
+      "observableEffect": "dtb_favorite_product にだけ存在するお気に入りと dtb_customer_favorite_product にだけ存在するお気に入りで通知対象・商品明細が変わり、実装は Customer のメールアドレスへ送るため、実際の送信先・本文・送信件数が変わる。",
+      "checked": "設計HTML 0404_基本設計仕様書(バッチ_商品管理).html:1558,1589 が dtb_favorite_product/player_id/language_id と dtb_player の氏名・emailを要求することを確認。BatchFavoriteSaleNotificationAction.php:24-54 は CustomerFavoriteProductRepository を呼び、CustomerFavoriteProductRepository.php:230-254 は cfp.Customer/cfp.Product をjoinする。DtbFavoriteProduct.php:23-44 と CustomerFavoriteProduct.php:24-51 は別テーブル・別関連で、MailService.php:2014-2038 は Customer::getEmail() 宛に送信することを確認した。",
+      "reason": "依存クラス名だけでなく検索元テーブル・会員キー・言語の保持元が異なり、その結果がメールI/Oへ直接使われている。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 160,
+      "authorVerdict": "NO_IMPACT",
+      "verdict": "NO_IMPACT",
+      "agree": true,
+      "observableEffect": "",
+      "checked": "設計HTML 0404_基本設計仕様書(バッチ_商品管理).html:1635 は複製元を支店ID 1と明記する。BatchInitialStockRegistrationAction.php:43-53 は BaseInfo::TC_TOKYO_ID を copyStockForNewShop に渡し、BaseInfo.php:45 で値は1。ProductStockRepository.php:426-453 は受け取った数値を base_info_id=:source_base_info_id のSQL条件にだけ使用する。Version20251127154224.php:209-226 ではID 1の店舗名が東京、同:505-522 では大阪がID 5だが、店舗名文字列はこの複製処理で参照されないことも確認した。",
+      "reason": "設計の店舗名表記と実装定数名／マスタ名称は矛盾するが、指摘された差分の実行値は双方とも1であり、同じDB行から同じ商品規格・在庫ロケーションを複製する。名称差だけでは生成DB行は変わらない。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 167,
+      "authorVerdict": "UNSURE",
+      "verdict": "IMPACT",
+      "agree": false,
+      "observableEffect": "有限のメモリ／実行時間で全件処理が上限を超えると、一時テーブルをTRUNCATEした後の分割INSERT途中でプロセスが終了し、週間在庫履歴の本テーブル更新が行われない一方、制限解除時は最後まで更新できる。SQLロガー有効時は追加のログI/Oとメモリ消費も発生する。",
+      "checked": "設計HTML 0402_基本設計仕様書(バッチ_在庫管理).html:1513,1547 のメモリ・時間制限解除とSQLロガー無効化要求を確認。UpdateWeeklyStockHistoryCommand.php:44-58 と BatchUpdateWeeklyStockHistoryAction.php:50-79、DtbWeeklyStockHistoryTempRepository.php、DtbWeeklyStockHistoryRepository.php を検索し該当設定は0件。Actionの53-76で一時表初期化、20,000件単位の反復INSERT、本表置換の順に実行されることを確認した。",
+      "reason": "上限到達時の完走可否だけでなく、一時表・本表の永続状態とコマンド結果が変わるため外部観測可能である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 199,
+      "authorVerdict": "UNSURE",
+      "verdict": "IMPACT",
+      "agree": false,
+      "observableEffect": "mtb_option と環境変数の値が異なると、mtb_option を変更してもB05-09のAPI呼び出しは変わらず、環境変数側のURL・契約ID・クライアント資格情報でスマレジへ送信されるため、接続先・認証成否・取得される取引と後続DB更新が変わる。",
+      "checked": "設計HTML 0405_基本設計仕様書(バッチ_受注管理).html:2238,2249,2262,2265 が mtb_option から接続設定を取得してAPIに使うことを確認。services.yaml:28-32,79-83 は SMAREGI_API_* 環境変数をコンストラクタ引数へ割り当て、SmaregiTransactionProcessMessageHandler.php:96-100,154-166 はその値をアクセストークン取得と取引API呼び出しへ渡す。MtbOption.php:42-44,68-71 に旧設定キーが存在するが、この経路から参照されないことを確認した。",
+      "reason": "保持場所の差は運用上の変更経路だけでなく、実際の外部HTTPリクエストのURL・契約・認証情報を決定する差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 206,
+      "authorVerdict": "UNSURE",
+      "verdict": "IMPACT",
+      "agree": false,
+      "observableEffect": "有限の max_execution_time が設定された環境で集計が上限を超えると、コマンドは完了メッセージと正常終了を返せず、集計DBの削除・再登録や部門未設定通知まで到達しない場合があるが、設計どおり制限を解除すれば処理を継続できる。",
+      "checked": "設計HTML 0406_基本設計仕様書(バッチ_店頭買取管理) .html:1233,1272 の実行時間制限解除要求を確認。OtcBuyOrderAggregateSummaryCommand.php:60-90、BatchAggregateSummaryAction.php:40-58、SummaryByDateAggregator.php:36-52、関連Repositoryを確認・検索し set_time_limit/max_execution_time は存在しない。DtbOtcBuyOrderSummaryRepository.php:80-92 で集計結果の削除・登録がトランザクション実行されることも確認した。",
+      "reason": "実行時間上限は大量データ時の終了状態、DB更新、メールI/Oを左右するため、閾値が未提示でも影響の有無はIMPACTと判定できる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 367,
+      "authorVerdict": "UNSURE",
+      "verdict": "IMPACT",
+      "agree": false,
+      "observableEffect": "CSVの fopen/fputcsv/fclose やクライアント送信が後で失敗しても、実装ではその前に成功したようなファイル名ログが残る。設計どおり送信後に記録する場合は失敗時に同ログは残らず、監査ログの有無・時系列が変わる。",
+      "checked": "設計HTML 0204_基本設計仕様書(商品管理).html:3061,3119 がコールバック完了／CSVストリーム送信後のログを要求することを確認。ProductCardCsv.php:62-81 はcallback登録後、実行せずにlog_infoを呼んでresponseを返す。ProductCsvController.php:89-101 もresponseを返すだけで、vendor/symfony/http-foundation/StreamedResponse.php:113-125 では後段の sendContent() でcallbackが初めて実行されることを確認した。",
+      "reason": "ログは運用者が観測するI/Oであり、送信失敗時の成功記録の有無と通常時の記録順序が変わる。",
+      "confidence": "high"
+    }
+  ]
+}

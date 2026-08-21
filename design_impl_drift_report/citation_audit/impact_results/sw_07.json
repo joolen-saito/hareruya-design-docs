@@ -1,0 +1,365 @@
+{
+  "packetId": "sw_07",
+  "results": [
+    {
+      "rowId": 217,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "メール送信失敗時、設計どおりならバッチ標準出力にエラーが出るが、現実装はログだけを出して成功メッセージと成功終了コードを返し得る。",
+      "checked": "ec-cube-enterprise/src/Eccube/Service/MailService.php:1466-1513 で sendAdjustPointVarianceMail() が TransportExceptionInterface を log_critical のみで握り、src/Eccube/Command/AdjustPointVarianceCommand.php:35-53 では伝播した例外だけをコンソールエラー・FAILUREにすることを確認。",
+      "reason": "コンソール内容と終了コードは運用者から観測できるバッチI/Oであり、ログへの置換は内部差ではない。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 218,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "運用側が設計名 smaregi:batch updatePoint で起動するとコマンド解決に失敗し、ポイント連携が実行されない。",
+      "checked": "ec-cube-enterprise/src/Eccube/Command/SmaregiUpdatePointCommand.php:26 の登録名が eccube:smaregi:update-point、src/Eccube/Service/Admin/Order/ResendMailAction.php:98 の起動文字列も同名であることを確認し、src/app/html/script/infra を smaregi:batch・updatePoint で検索した。",
+      "reason": "コマンド名はこのケースではCLIの外部入口そのもので、単なる内部識別子ではない。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 219,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "非数値の受注ID入力で、正常スキップではなくエラーメッセージと非ゼロ終了コードが返る。",
+      "checked": "ec-cube-enterprise/src/Eccube/Command/SmaregiUpdatePointCommand.php:46-57 で未入力は success/SUCCESS、非数値は error/FAILURE と分岐することを確認。",
+      "reason": "標準出力とプロセス終了コードが変わり、ジョブ監視結果にも直接影響する。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 220,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "ポイント連携失敗受注が自動再試行されず、スマレジ側ポイントとEC側のエラー状態が未解消のまま残り得る。",
+      "checked": "ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php:988 付近の getSmaregiErrorOrder() と src/Eccube/Command/SmaregiStockBackfillCommand.php:24-33 を開き、前者に呼出元がなく、後者は在庫変動Webhook再連携であることを確認。",
+      "reason": "再試行の有無は外部API呼出し、DB状態、業務結果を変える。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 221,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "SP.LINKSへの取引照会が行われず、対象申込は成功更新・保留・論理削除のいずれにも進まずエラー扱いになる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Service/Admin/Payment/PaymentStatusCheckAction.php:103-105 と 187-195 を開き、getApiResponse() が常に LogicException を投げることを確認。",
+      "reason": "外部API通信と申込DB状態が設計どおりに発生しないため明確な機能影響である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 222,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "同じ決済番号が複数件あると照会回数が増え、外部決済サービスの負荷・レート制限・時点差により各申込の処理結果も変わり得る。",
+      "checked": "ec-cube-enterprise/src/Eccube/Service/Admin/Payment/PaymentStatusCheckAction.php:84-173 の foreach を通読し、各 EventEntry で毎回 getApiResponse($paymentNo) を呼び、直前番号や照会結果を保持する変数・分岐がないことを確認。",
+      "reason": "外部API呼出し回数自体が観測可能で、結果流用の有無は副作用と処理結果にも波及する。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 223,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "同じ想定外エラーが複数申込で発生すると、管理者に1通の集約メールではなく申込ごとの複数メールが届く。",
+      "checked": "ec-cube-enterprise/src/Eccube/Service/Admin/Payment/PaymentStatusCheckAction.php:164-172 で foreach 内の catch ごとに sendEventPaymentErrorAlertMail() を即時実行し、ループ後に重複排除する処理がないことを確認。",
+      "reason": "メール送信件数・本文単位は外部I/Oの差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 224,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "取引不在・未完了の個別メッセージがバッチ標準出力に現れず、件数サマリだけになる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Service/Admin/Payment/PaymentStatusCheckAction.php:175-178 が件数 detail のみを返し、src/Eccube/Command/PaymentStatusCheckCommand.php:57-63 がその detail だけを出力することを確認。比較経路として pf-eccube3/app/Plugin/HareruyaEc/Service/Payment/AbstractCheckPaymentEntry.php:23-74 と AbstractPaymentService.php:56-60 で収集メッセージが戻り値になることも確認。",
+      "reason": "メッセージ収集は内部だけで終わらず旧バッチのコンソール結果に出るため、欠落は運用I/O差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 225,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "途中の申込で失敗しても、それ以前の申込更新は既にDBコミット済みとなり、バッチ全体を最後に確定する場合と永続状態が異なる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Service/Admin/Payment/PaymentStatusCheckAction.php:109-137 で foreach 内に beginTransaction・flush・commit があり、申込単位で確定することを確認。",
+      "reason": "トランザクション境界は途中障害時のDB確定範囲を変えるためIMPACTである。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 226,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "通知メール本文で電話番号1列目が tel01 ではなく最初の tel02 として出力され、tel02 ラベルが重複する。",
+      "checked": "ec-cube-enterprise/src/Eccube/Repository/CustomerRepository.php:643-655 の CONCAT に ':tel02:' + c.tel01、':tel02:' + c.tel02 があることと、src/Eccube/Service/MailService.php:1430-1449 が info をメール本文へそのまま連結することを確認。",
+      "reason": "メール本文のキー文字列は受信者が直接観測する出力差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 227,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "処理本体があっても毎月1日1時の起動定義が無ければ、所定時刻にS3の stock_YYYYMMDD.txt.zip が生成・更新されない。",
+      "checked": "現行の ec-cube-enterprise/script/ops/monthly-inventory-snapshot/inventory.sh:58-131 にRDS復元、TSV/ZIP生成、S3アップロードがあることを確認したうえで、infra/script/dockerbuild/.github/app/config を monthly-inventory-snapshot・StateMachine・Schedule で検索し当該定期起動定義を確認できなかった。",
+      "reason": "パケットの『処理本体不在』は古いが、残るスケジュール差はファイル生成時刻・有無を変えるためIMPACTを維持する。",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 228,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "リンク巡回で到達できるURL群ではなくDBの既定種別だけからXMLが作られ、S3にもアップロードされないため、サイトマップの掲載URLと配置先が変わる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Front/SitemapController.php:52-112 と 118-230 を開き、HTTPルートがRepository結果をTwigへ渡す固定生成であることを確認し、src/script/infra を crawler・SitemapGenerator・sitemap連携の putObject で検索した。",
+      "reason": "生成XMLの内容とS3書込みは外部出力そのものである。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 229,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "前日との差異に応じたS3更新が行われず、利用側が参照するS3サイトマップの更新有無・内容が設計と異なる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Front/SitemapController.php 全体でXML HTTP応答だけを生成することを確認し、src/Eccube と script/infra を sitemap・yesterday・diff・putObject で検索して比較からS3アップロードへつながる処理を確認できなかった。",
+      "reason": "条件付きファイル書込みの欠落は外部ストレージI/O差である。",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 230,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "毎日4時にサイトマップ生成が起動されず、日次成果物の作成・更新時刻と鮮度が変わる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Command の一覧と infra/script/app/config/.github を EventBridge・Lambda・sitemap・cron/Schedule で検索し、B16-09を4時起動するリポジトリ内定義を確認できなかった。SitemapController.php:52 はGET時生成であることを確認。",
+      "reason": "起動条件と実行時刻はバッチの外部動作を決めるため、内部設定差ではない。",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 231,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "巡回対象・除外対象のURL集合が設計と異なり、公開サイトマップに含まれるURLが増減する。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Front/SitemapController.php:118-230 に category/product/page/purchase/deck/deck-show の固定ルート別生成がある一方、階層無制限クロールや指定URL配下除外の設定がないことを確認。",
+      "reason": "サイトマップ本文のURL一覧は検索エンジン等から観測される出力である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 232,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "15分毎の起動が保証されず、さらに超過通知のBCCが設計宛先と異なるため、検知時刻と通知受信者が変わる。",
+      "checked": "現行の ec-cube-enterprise/script/ops/imgcheck/bigfilefinder.sh:13-108 に一覧取得・閾値判定・sendmail があること、config.sh:31-36 の MAIL_BCC が wakuwaku-impact.slack.com 宛であることを確認。infra/script/dockerbuild/.github/app/config に当該15分起動定義は確認できなかった。",
+      "reason": "パケットの『処理本体不在』は古いが、現在残るスケジュールとメール宛先の差はいずれも外部I/Oへ直接出る。",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 233,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "カテゴリやカードセットを押しても商品一覧へ遷移せず、リンクとして操作できない。",
+      "checked": "ec-cube-enterprise/src/Eccube/Resource/template/default/Block/search_items.twig:22-34,53-56,75 で対象a要素にhrefがなく aria-disabled=true であること、shop_top.twig:45 から表示されることを確認。",
+      "reason": "生成HTMLのhref有無とクリック後の画面遷移が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 234,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "英語版のmore押下時、表示商品のTrending NowタグではなくNEW_ITEMS_IDの商品一覧へ遷移する。",
+      "checked": "ec-cube-enterprise/src/Eccube/Resource/template/default/Block/new_items.en.twig:9,21 が Tag::NEW_ITEMS_ID をURLへ使い、src/Eccube/Service/Block/NewItemsBlockPayloadBuilder.php:56-66 が英語時のみ SLIDER_EN_ONLY_TAG_ID を商品取得に使うことを確認。",
+      "reason": "リンク先URLと遷移後の商品集合が利用者から観測できる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 235,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "在庫切れのお気に入り商品がトップのお気に入り欄から除外される。",
+      "checked": "ec-cube-enterprise/src/Eccube/Repository/CustomerFavoriteProductRepository.php:100-125 で ProductStock.stock > 0 のEXISTS条件、src/Eccube/Service/Block/FavoritesBlockPayloadBuilder.php:64-69 でそのメソッドを表示データに直接使うことを確認。",
+      "reason": "画面に表示される商品集合が変わるため、条件追加が軽微でもNO_IMPACTではない。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 236,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "支店トップの売れ筋・SALE商品カードにカート追加ボタンが描画されず、その場でカート追加できない。",
+      "checked": "ec-cube-enterprise/src/Eccube/Resource/template/default/Block/shop_best_sellers.twig:23 と shop_sale.twig:23 が showFavoriteButton:false で _product_card を読み、_product_card.twig:10,73-85 ではカートボタンが _show_customer_favorite ブロック内にあることを確認。",
+      "reason": "ボタン表示有無とカート操作可否は明確な画面・動作差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 237,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "支店トップでもカテゴリ・カードセット押下から絞込商品一覧へ遷移できない。",
+      "checked": "ec-cube-enterprise/src/Eccube/Resource/template/default/shop_top.twig:45 が search_items.twig を無引数includeし、search_items.twig:22-34,53-56,75 のリンク候補がhref無し・aria-disabledであることを確認。",
+      "reason": "支店画面のクリック遷移が欠けるためIMPACTである。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 238,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "管理画面のブロック設定を変更しても支店おすすめの画像・URLへ反映されず、固定6件のHTMLが表示され続ける。",
+      "checked": "現行の ec-cube-enterprise/src/Eccube/Resource/template/default/Block/shop_recommend.twig:18-75 はhrefが#から固定 product_list_tag に改善済みだが、画像・tagIdとも固定値であること、shop_top.twig:47 がデータなしincludeすることを確認。",
+      "reason": "パケットのプレースホルダURL説明は古いが、編集可能ブロック連携の欠落により生成HTMLと遷移先が外部設定に追随しないためIMPACTは残る。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 239,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "非会員向け画面に『承っています。』と表示され、設計の『承っております。』と1文字以上異なる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:1264 の実値と、src/Eccube/Resource/template/default/Block/shop_order_method.twig:20-23 の表示経路を確認。",
+      "reason": "軽微な文言差でも画面出力が変わるためIMPACTである。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 240,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "日本語ページでEN、英語ページでJPが表示され、設計が要求する現在言語ラベルと逆になる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Resource/template/default/Block/header.twig:102-109 と header.en.twig:75-82 の switchLabel 条件、および messages.ja.yaml:6392-6393 / messages.en.yaml:3979-3980 のJP・EN値を確認。",
+      "reason": "ナビに表示されるラベルは利用者が直接観測するHTML差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 241,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "ハンバーガーメニューのデッキ構築を押してもデッキTOPへ移動せず、同一ページ先頭の#へ遷移するだけになる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Resource/template/default/Block/mega_menu.twig:42-47 のTODOと href=#、header.twig:76,94 および footer_sitemap.twig:36 の /decks 導線を確認。",
+      "reason": "hrefとクリック後の遷移先が異なるためIMPACTである。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 242,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "サイトマップのFAQを押してもFAQ画面へ遷移できない。",
+      "checked": "ec-cube-enterprise/src/Eccube/Resource/template/default/Block/footer_sitemap.twig:50-52 にFAQ実装後差替えTODOと href=# があり、Controller/template全域を hareruya_faq・faq で検索してFAQ画面入口を確認できなかった。",
+      "reason": "画面リンクの到達先欠落は利用者操作に直接影響する。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 243,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "スマホ版メニューのデッキ構築リンクだけがデッキTOPへ遷移しない。",
+      "checked": "ec-cube-enterprise/src/Eccube/Resource/template/default/Block/mega_menu.twig:42-47 が href=#、header.twig:76,94 と footer_sitemap.twig:36 が /decks であることを確認。",
+      "reason": "端末別導線のクリック動作が変わるためIMPACTである。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 244,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "スマホを含むフッターサイトマップからFAQ画面へ到達できない。",
+      "checked": "ec-cube-enterprise/src/Eccube/Resource/template/default/Block/footer_sitemap.twig:44-52 で周辺リンクはurl()だがFAQだけhref=#であることを確認し、Controller/templateにFAQ入口がないことを検索確認。",
+      "reason": "リンク先未実装は画面遷移の外部差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 245,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "英語版上部ナビに選手一覧が表示されず、当該サイトへ上部ナビから遷移できない。",
+      "checked": "現行の ec-cube-enterprise/src/Eccube/Resource/template/default/Block/header.en.twig:58-85 は買取・デッキ構築を既に除外しているが、選手一覧リンクを含まないことを確認。mega_menu.twig:49-53 のprosリンクはハンバーガーメニュー側だけである。",
+      "reason": "パケットの『両言語で同一』は現行では古いが、英語上部ナビの選手一覧不足という外部表示・導線差が残る。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 246,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "イベント画面の店舗セレクトに短縮名ではなく正式店舗名が表示され、選択肢文言が変わる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Resource/template/default/Event/index.twig:102-105 が shopName/shopNameEng を出力し、src/Eccube/Entity/BaseInfo.php:1058-1083 に shortNameJp/shortNameEn が存在することを確認。Contact/confirm.twig:104-106,188-190 では短縮名の利用例も確認。",
+      "reason": "select optionの表示テキストは利用者から観測可能なHTML出力である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 247,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "スマホ店舗紹介ページに登録値連動のセクションナビが表示されず、アンカー移動や空セクション非表示も働かない。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Shop/ShopTopController.php と Resource/template/default/shop_top.twig/Block配下を確認し、ShopPageElement・初心者講習会・取り扱い商品等を検索したところ、DtbShopPageElementRepository.php の定義以外に表示経路を確認できなかった。",
+      "reason": "ナビの表示有無・順序・アンカー操作はいずれも画面上の外部挙動である。",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 248,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "店舗紹介ページのスマホ・タブレット表示で閲覧店舗一覧と選択状態が出ず、そこから別店舗ページへ切り替えられない。",
+      "checked": "ec-cube-enterprise/src/Eccube/Resource/template/default/shop_top.twig、Block/branch_header.twig、src/Eccube/Controller/Shop/ShopTopController.php を開き、フロント全域を『閲覧店舗を選択』で検索して店舗紹介用UIを確認できなかった。Event/index.twig:102-111 の店舗セレクトはイベント画面用であることも確認。",
+      "reason": "画面部品とGET遷移導線の欠落は外部から直接観測できる。",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 249,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "商品検索0件時に『お探しの商品は見つかりませんでした』が表示され、設計指定文言と異なる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:1103 の翻訳値と、src/Eccube/Resource/template/default/Product/list.twig:743,994 のDB検索・UniSearch双方の表示経路を確認。",
+      "reason": "画面文言差は軽微でも生成HTMLが変わるためIMPACTである。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 250,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "使用デッキが0件のフォーマットも商品詳細に見出し付きで表示され、『該当なし』文言が出る。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Front/ProductController.php:676-693 が全CardFormatをdecks空でも配列追加し、Resource/template/default/Product/detail.twig:507-517 が各形式を描画して空なら『該当なし』を出すことを確認。",
+      "reason": "セクションの表示有無と文言が画面上で変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 251,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "X・LINEの共有本文に短縮URLではなくロケール・商品IDを含む絶対URLが入る。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Front/ProductController.php:719-725 が ABSOLUTE_URL を生成して渡し、src/Eccube/Entity/Product.php:690-697 がそのURLを未加工で共有文へ連結することを確認。",
+      "reason": "外部SNSへ渡すURL文字列は明確な外部出力差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 252,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "front_search_hide_flg=true の親配下カテゴリも詳細検索の選択肢に現れ、利用者が選択・送信できる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Form/Type/Front/SearchType.php:93-112 が CategoryRepository::getList(null,true) を無加工でchoicesへ渡し、Repository/CategoryRepository.php:133-162 が全件ツリーを返すこと、Resource/template/default/Block/_product_search_form_fields.twig:28-42 がそのツリー用UIを描画することを確認。",
+      "reason": "フォーム選択肢と送信可能なカテゴリIDが変わるため画面・HTTP入力の双方に影響する。",
+      "confidence": "high"
+    }
+  ]
+}

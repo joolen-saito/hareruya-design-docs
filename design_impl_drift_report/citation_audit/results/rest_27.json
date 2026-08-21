@@ -1,0 +1,165 @@
+{
+  "packetId": "rest_27",
+  "results": [
+    {
+      "rowId": 798,
+      "verdict": "UNSUPPORTED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:4287-4289 のExcel正本は「※EC-CUBE標準機能『受注管理/メール通知』を流用」「確認ボタン押下時、フォーム内容の入力チェックをサーバ側で行う」とするが、同:4299 の件名行は「件名」「入力画面から引き継いだ件名を出力」のみで、最大文字数セルは空である。sheet-16のExcel正本全体に件名の最大長または eccube_stext_len の記述は存在しない（確認範囲: sheet-16のsrc-cell要素）。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/CustomerController.php:238-240 は旧手動メールで `->createBuilder('mail', $mail, ...)` を使用する。対応する pf-eccube3/src/Eccube/Form/Type/Admin/MailType.php:47-52 は件名に `new Assert\\NotBlank()` だけを設定し、Length制約を持たない。pf-api、pf-eccube3、pf-article、deck-apiを `mail_subject`、`subject`、`Length`、`eccube_stext_len` で横断検索したが、旧手動メール件名の最大長根拠は見つからない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/CustomerManualMailType.php:62-68 は `mail_subject` に `new NotBlank()` のみを設定する。一方、ec-cube-enterprise/src/Eccube/Form/Type/Admin/MailType.php:64-69 は `new Assert\\Length(['max' => $this->eccubeConfig['eccube_stext_len']])` を持つ。差そのものは存在するが、その一致を要求する正本・旧実装根拠がない。",
+      "note": "リバース詳細設計 functions/pf-eccube3/m08-08_admin_customer_customer_manual_mail.md:127-131 には「メール作成フォームに準ずる」「最大長はメール作成フォームの確認値」とあるが、これはExcel正本ではなく、実際の旧MailTypeにも最大長制約がないため根拠に採用できない。"
+    },
+    {
+      "rowId": 799,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:4464-4465 のExcel正本は機能名「配送先一覧」、概要「会員に紐づく配送先の一覧を表示することができる」とするが、URLは記載しない。さらに同:4511 は「配送先一覧画面に遷移 ECCUBE4系を踏襲するため削除する」と記載する。期待された3 URLはExcel正本には存在せず、同:4585以降のリバース詳細設計にのみ現れる（確認範囲: sheet-17のsrc-cell要素）。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/CustomerServiceProvider.php:102-110 に旧入口が実在し、`$app->get('/'.$app['config']['admin_route'].'/customer/{id}/delivery', ...)`、`$app->match('/'.$app['config']['admin_route'].'/customer/delivery/{id}/update', ...)`、`$app->delete('/'.$app['config']['admin_route'].'/customer/delivery/{id}/delete', ...)` と定義されている。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/CustomerDeliveryEditController.php:45-46,127 は `/customer/{id}/delivery/new`、`/customer/{id}/delivery/{did}/edit`、`/customer/{id}/delivery/{did}/delete` を定義する。ec-cube-enterprise/src/Eccube/Resource/template/admin/Customer/edit.twig:733-753 は `Customer.CustomerAddresses` を会員編集画面内で一覧化し、専用一覧URLではなく `admin_customer_delivery_edit` へリンクする。",
+      "note": "正本は専用一覧へ戻るUIの削除を明記しており、正本由来とはいえない。期待URLの真の所在は旧pf-eccube3である。"
+    },
+    {
+      "rowId": 800,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:4485-4486 のExcel正本は「フォーム内容の入力チェックをサーバ側で行う」「入力チェック後、表示している配送先のレコードをフォーム内容で更新する」とする。同:4502-4505 は日本用郵便番号1/2を「国が日本(Japan)の場合必須」、海外郵便番号を「国が日本(Japan)以外の場合必須」とするが、郵便番号と都道府県・住所の実在照合は記載しない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/CustomerController.php:474-476 は保存条件に `$this->zipCheck(...)` を含める。同:563-577 の `zipCheck` は、日本なら `zip01`/`zip02` の未入力をエラー、国外なら `zipcode` の未入力をエラーにする処理であり、郵便番号と住所の実在照合ではない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Form/Type/Front/CustomerAddressType.php:165-180 はPOST_SUBMITで、日本なら `postalCode01`/`postalCode02` の空値にFormErrorを追加し、国外なら `abroadPostalCode` の空値にFormErrorを追加する。ec-cube-enterprise/src/Eccube/Form/Type/SplitPostalType.php:40-65 は日本用2欄に数値型と3桁/4桁のLength制約を設定しており、旧実装の国別郵便番号チェックを満たしている。",
+      "note": "元指摘はリバース詳細設計の「郵便番号の整合」を住所との一致確認と解釈したが、根拠コードの整合確認は国別必須制御であり、新実装にも同等以上の処理がある。"
+    },
+    {
+      "rowId": 801,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:4485-4486 のExcel正本は保存時の入力チェックと更新を記載するが、完了メッセージまたは `admin.customer.save.complete` はsheet-17のsrc-cell要素に存在しない。同:4585以降はリバース詳細設計でありSPEC根拠ではない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/CustomerController.php:489-490 は配送先保存後に `$app->addSuccess('admin.customer.save.complete', 'admin');` を実行する。pf-eccube3/src/Eccube/Resource/locale/message.ja.yml:136 は `admin.customer.save.complete: 会員情報を保存しました。` と定義する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/CustomerDeliveryEditController.php:107 は `$this->addSuccess('admin.common.save_complete', 'admin');` を使用し、ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:1595 は `admin.common.save_complete: 保存しました` と定義する。",
+      "note": "ロケールキーの期待値は旧pf-eccube3由来である。"
+    },
+    {
+      "rowId": 802,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:4511 のExcel正本は「配送先一覧に戻る」に対して「配送先一覧画面に遷移 ECCUBE4系を踏襲するため削除する」と明記する。削除処理後の遷移先はExcel正本に記載されず、期待値は同:4585以降のリバース詳細設計にのみある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/CustomerController.php:606-609 は配送先を削除・flushした後、`return $app->redirect($app->path('admin_customer_delivery', ['id' => $customerAddress->getCustomer()->getId()]));` として旧配送先一覧へ戻す。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/CustomerDeliveryEditController.php:145-166 は削除後に `return $this->redirectToRoute('admin_customer_edit', ['id' => $Customer->getId()]);` として会員編集画面へ戻す。",
+      "note": "正本は専用一覧リンクの削除を示すためSPEC_BACKEDではないが、旧実装には期待遷移が実在する。"
+    },
+    {
+      "rowId": 803,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:4712,4737 のExcel正本は「確認済に変更するボタン押下時、会員情報の『本人確認ステータス』を『オンライン本人確認済み』に更新する」「本人確認ステータスを『オンライン本人確認済み』に変更し登録を行う」とするだけで、隠しトークン送信・CSRF検証は記載しない（確認範囲: sheet-18のsrc-cell要素）。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Customer/edit.twig:14-29 は動的POSTフォームに `id_expiration_date` と `_token`（値 `{{ csrf_token() }}`）をappendする。pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/CustomerController.php:507-510 は `completeIdentification` 冒頭で `$this->isTokenValid($app);` を実行する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Customer/edit.twig:82-94 の動的フォームは `id_expiration_date` だけをappendする。ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/CustomerEditController.php:231-235 はPOSTルートで値を読むが、同:231-312 のメソッド内に `_token`、`isTokenValid`、`isCsrfTokenValid` はない。",
+      "note": "トークン要件の真の根拠は旧pf-eccube3のフォームとコントローラである。"
+    },
+    {
+      "rowId": 804,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:4712,4737 のExcel正本は確認済へのステータス更新だけを記載し、選手情報不在時の404はsheet-18のsrc-cell要素に存在しない。404記述は同:4801以降のリバース詳細設計に属する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/CustomerController.php:511-516 はIDなしを `$app->abort(404)` とし、`findOneByCustomerId($id)` で選手を取得して `is_null($player)` の場合も `$app->abort(404)` とする。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/CustomerEditController.php:252-269 は `$Player = $Customer->getPlayer();` の後、nullなら `$this->addError('admin.common.system_error', 'admin');` を追加して `admin_customer_edit` へredirectする。",
+      "note": "選手情報不在時404は旧実装由来である。"
+    },
+    {
+      "rowId": 805,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:4731-4734 のExcel正本は本人顔写真・身分証明書（表・裏・斜め）を「画像」と定義するが、閲覧権限なし時の非表示や「閲覧不可」文言はsheet-18のsrc-cell要素に存在しない。これらは同:4801以降のリバース詳細設計のみの記述である。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Customer/edit.twig:578-600 は `hasAccessAuthority` を判定し、権限なしなら画像を取得せず `admin.customer.identification.access_denied` を表示する。同:610-645 も各画像枠で同じ分岐を持ち、pf-eccube3/app/Plugin/HareruyaEc/Resource/locale/message.ja.yml:1303-1305 は `access_denied: 閲覧不可` と定義する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Customer/edit.twig:242-255 は画像データがあれば常に `<img ... class=\"expand-image\">`、なければ `admin.customer.identification_image.no_image` を表示する。ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/CustomerEditController.php:320-326 は画像配信時に権限なしなら `AccessDeniedHttpException` を投げるだけで、Twig上の「閲覧不可」分岐はない。",
+      "note": "表示制御と文言の根拠は旧pf-eccube3にある。"
+    },
+    {
+      "rowId": 806,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:4731-4734 のExcel正本は4種の画像項目を定義するが、サムネイル押下・拡大モーダル・縮小/拡大サイズはsrc-cell本文に記載しない（確認範囲: sheet-18のsrc-cell要素）。詳細な挙動は同:4801以降のリバース詳細設計にのみある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Customer/edit.twig:94-105 は `.thumbnail` を最大300px、`.expand-image` を最大600pxに定義する。同:602-603 はサムネイルを `data-target=\"#identificationImageModal...\"` のリンクで囲み、同:675-690 は画像種別ごとのモーダルと拡大画像を描画する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Customer/edit.twig:251-266 は画像に `class=\"expand-image\"` を付けるだけでリンク・モーダルtargetを持たない。ec-cube-enterprise/html/template/admin/assets/css/customer.css:7-13 は本人確認モーダル幅と境界だけを定義する。`expand-image`、`identificationImageModal`、クリックハンドラを src/app/html で検索したが、上記img以外の実装はない。",
+      "note": "拡大表示仕様は旧pf-eccube3のTwig/CSS由来である。"
+    },
+    {
+      "rowId": 807,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:4712,4737 のExcel正本は確認済への更新を記載するが、成功フラッシュ文言「会員情報を保存しました。」はsheet-18のsrc-cell要素に存在しない。同文言はリバース詳細設計側だけにある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/CustomerController.php:535-539 は確認済ステータスを保存後、`$app->addSuccess('admin.customer.save.complete', 'admin');` を呼ぶ。pf-eccube3/src/Eccube/Resource/locale/message.ja.yml:136 は `admin.customer.save.complete: 会員情報を保存しました。` と定義する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/CustomerEditController.php:297-307 は保存後に `$this->addSuccess('admin.common.save_complete', 'admin');` を呼び、ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:1595 は `admin.common.save_complete: 保存しました` と定義する。",
+      "note": "成功文言の期待値は旧pf-eccube3由来である。"
+    },
+    {
+      "rowId": 808,
+      "verdict": "UNSUPPORTED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:4712,4737 のExcel正本は本人確認ステータスの更新・登録のみを記載し、監査ログ、ログ禁止項目、身分証有効期限更新の記録はsheet-18のsrc-cell要素に存在しない。ログ要件は同:4801以降のリバース詳細設計にのみある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/CustomerController.php:507-543 の旧 `completeIdentification` はトークン検証、選手取得、期限・ステータス更新、flush、成功表示、redirectを行うが、`log_info` や監査記録を呼ばない。pf-api、pf-eccube3、pf-article、deck-apiの非vendor PHP/Twig/YAMLを「本人確認ステータス」「身分証有効期限」「identity confirm」とlog/auditの組合せで検索したが、管理画面の確認済変更記録は見つからない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/CustomerEditController.php:272-307 は選手保存、flush、`ADMIN_CUSTOMER_EDIT_IDENTIFICATION_COMPLETE` のdispatch、成功表示を行うがログを記録しない。ec-cube-enterprise/src/Eccube/Event/EccubeEvents.php:259 はイベント名を定義するだけで、同イベントのリスナーはsrc/app内に見つからない。",
+      "note": "リバース詳細設計 functions/pf-eccube3/m08-10_admin_customer_customer_online_identification.md:273-285 にログ方針はあるが、Excel正本でも旧実装でも裏付けられないため誤検出の疑いと判定した。"
+    },
+    {
+      "rowId": 809,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:5207-5218 のExcel正本は初期表示、新規登録、更新、削除の各処理を記載するが、HTTPメソッドやURLは記載しない。期待された4 URLは同:5312以降のリバース詳細設計にのみある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/CustomerServiceProvider.php:55-66 は `GET /{admin_route}/customer_group/{id}`、`POST /customer_group/new`、`POST /customer_group/{id}/update`、`DELETE /customer_group/{id}/delete` に相当する4ルートをそのまま定義する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/CustomerGroupController.php:41-43 は `/customer/customer_group` と `/customer/customer_group/{id}` をGET/POST共用で定義し、同:92 は削除を `/customer/customer_group/{id}/delete` とする。旧 `/customer_group/new` と `/customer_group/{id}/update` の個別POST入口はない。",
+      "note": "URL契約の真の根拠は旧pf-eccube3である。"
+    },
+    {
+      "rowId": 810,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:5249 のExcel正本（0207:顧客グループ管理!E103/AG103）は「新規追加/編集」「初期表示は『新規追加』、既存の顧客グループ選択時は『編集』」と明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/CustomerGroup/index.twig:20-22 も `<h3 class=\"box-title\">{% if id != null %}編集{% else %}新規追加{% endif %}</h3>` として期待どおり切り替える。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/CustomerGroup/index.twig:5-6,20 はタイトルを常に `admin.customer.customer_group_edit`、サブ/カードタイトルを常に `admin.customer.customer_group_management` とする。ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:4134-4135 はそれぞれ「顧客グループ管理」「顧客グループ編集」であり、「新規追加」/「編集」の条件分岐がない。",
+      "note": ""
+    },
+    {
+      "rowId": 811,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:5216-5218 のExcel正本（0207:顧客グループ管理!C72/D73/D74）は「削除ボタン押下時、確認ダイアログを動的に表示する」「表示メッセージは『[顧客グループ名称]を削除してもよろしいですか？』」「『OK』押下時に該当の顧客グループを削除する」と明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/CustomerGroup/index.twig:90-92 は削除リンクの `data-message` に `trans('admin.confirm.delete')|format(customerGroup.name)` を設定し、名称を差し込んだ旧確認文言を使用する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/CustomerGroup/index.twig:110-112 は `admin.common.delete_modal__message` に顧客グループ名を渡す。ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:1790 の実文言は「この操作はあとから取り消すことができません。『%name%』を削除してよろしいですか？」で、設計指定より前置きと鉤括弧が増えている。",
+      "note": ""
+    },
+    {
+      "rowId": 812,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:5254 のExcel正本（0207:顧客グループ管理!E108/M108/AG108）は支払方法を「複数選択(チェックボックス)」「支払方法設定に登録されている支払方法をすべて表示する」と明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/CustomerGroup/index.twig:43-49 は旧フォームの `form.payments` をそのまま表示する。SPEC_BACKED判定には旧実装を要しない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/CustomerGroupType.php:54-64 は `expanded => true`、`multiple => true` とする一方、query_builderで `p.visible = true` に限定し、さらに `p.id NOT IN (:excludeIds)` と `[Payment::EC_CREDIT, Payment::EC_CVS]` を除外するため、登録済み支払方法をすべて表示しない。",
+      "note": ""
+    },
+    {
+      "rowId": 813,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:5460,5462 のExcel正本（0207:ブラックリスト管理!E68/M68/AG68、E70/M70/AG70）は新規・更新用項目を「単一選択(チェックボックス)」、選択肢を「住所、電話番号、氏名」と明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/Customer/BlacklistType.php:23-31 と BlacklistUpdateType.php:23-32 は旧実装でも `expanded => false`、`multiple => false` のentity選択を使っており、UI種別については正本のチェックボックス要求と一致しない。ただし本件はExcel正本が直接根拠であるためSPEC_BACKED判定を変えない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/BlacklistType.php:31-36 と BlacklistUpdateType.php:35-41 は `BlacklistTagType` を使用する。ec-cube-enterprise/src/Eccube/Form/Type/Master/BlacklistTagType.php:29-31,45-47 はid昇順の `MasterType`、ec-cube-enterprise/src/Eccube/Form/Type/MasterType.php:29-36 は `multiple => false`、`expanded => false` のためselect表示になる。ec-cube-enterprise/app/DoctrineMigrations/Version20251119060033.php:62-73 はid順を「氏名、電話番号、住所」と投入しており、設計順とも異なる。",
+      "note": ""
+    },
+    {
+      "rowId": 814,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:5433-5448 のExcel正本はブラックリストの登録・編集・削除処理を記載するが、完了メッセージまたは `admin.register.complete` はsheet-21のsrc-cell要素に存在しない。メッセージキー期待値は同:5505以降のリバース詳細設計にのみある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/BlacklistController.php:105-110 は更新内容をflush後、`$app->addSuccess('admin.register.complete', 'admin');` を実行する。pf-eccube3/src/Eccube/Resource/locale/message.ja.yml:83 は `admin.register.complete: 登録が完了しました。` と定義する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/BlacklistController.php:97-109 は更新成功時に `$this->addSuccess('admin.common.save_complete', 'admin');` を使用する。ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:1595,1970 は `admin.common.save_complete: 保存しました` と `admin.register.complete: 登録が完了しました。` を別々に定義する。",
+      "note": "完了メッセージキーの真の根拠は旧pf-eccube3である。"
+    },
+    {
+      "rowId": 815,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:5449-5452 のExcel正本（0207:ブラックリスト管理!C61/D62/D63/D64）は「会員登録、買取時の会員登録時に使用する」「ブラックリスト登録がある場合は会員登録不可」「登録不可の場合は登録エラー(ブラックリスト)画面を表示する」と明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/EntryController.php:103-112 は通常会員登録でブラックリスト該当時に `return $app->redirect($app->path('entry_regist_error'));` とする。一方、旧買取の pf-eccube3/app/Plugin/HareruyaEc/Controller/OtcBuyController.php:385-393 は該当時に `return false;` とするため、旧実装は通常登録だけが設計どおりで、買取側は設計要求を満たさない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Front/Purchase/OtcBuyController.php:552-560 は買取時にブラックリスト該当なら `return false` とし、同:377-380,435-441 は結果を `ENTRY_FAILED` として査定申込完了URLの `register` クエリへ載せる。ec-cube-enterprise/src/Eccube/Resource/template/default/OtcBuy/complete.twig:16-20 は専用登録エラー画面へ遷移せず、査定申込完了画面内に「ご入力いただいた内容では会員登録ができませんでした。」を表示する。",
+      "note": ""
+    },
+    {
+      "rowId": 816,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:5893,5905 のExcel正本は「フォーマットは『配送先情報登録CSV入力項目設定』シート参照」「CSVのファイルフォーマットをテーブルで表現」とする。参照先の同:5960（0207:配送先情報登録CSV入力項目設定!B5/E5/M5/P5/U5/W5/AA5/AH5）は列を「識別ID、項目名、主キー、書式・制限、必須、最大文字数または最大値、入力例、備考」と明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/CustomerAddressCsvController.php:73-78 は旧画面へ `self::CSV_HEADER` を `headers` として渡す。pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/CustomerAddress/customer_address_csv_import.twig:53-64 は `headers|keys` を列見出し、`headers` の値を制約説明として表に描画しており、旧実装にも項目名以外のフォーマット説明がある。",
+      "currentImpl": "ec-cube-enterprise/app/template/admin/Customer/customer_address_csv.twig:95-108 は `headers` をループして `header.name` と `header.required` バッジだけを表示し、2列目は空の `<td class=\"align-middle\"></td>` である。ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/CustomerAddressCsvImportHandler.php:215-224 は戻り型を `{name, required}` とし、実データも `['name' => ..., 'required' => ...]` のみである。",
+      "note": ""
+    },
+    {
+      "rowId": 817,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:5905 のExcel正本（0207:配送先情報CSV登録!AG65）はCSVフォーマットについて「画面に入りきれない場合はスクロールできるようにする」と明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/CustomerAddress/customer_address_csv_import.twig:48-51 は旧CSVフォーマット表を `<div ... class=\"table-responsive no-border table-menu table-responsive-overflow\">` で囲み、同:66-67 でそのラッパー内に表を閉じるため、旧実装にもスクロール可能化がある。",
+      "currentImpl": "ec-cube-enterprise/app/template/admin/Customer/customer_address_csv.twig:95-110 は `card-body` 直下に `<table class=\"table table-striped table-bordered\">` を置くだけで、`table-responsive` やoverflow指定を持たない。同テンプレート、src/Eccube/Resource/template/admin、htmlを `table-responsive`、`overflow`、`scroll`、`customer_address_csv` で検索したが、この表をスクロール可能にするラッパー/CSSは見つからない。",
+      "note": ""
+    }
+  ]
+}

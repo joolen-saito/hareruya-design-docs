@@ -1,0 +1,3335 @@
+Reading additional input from stdin...
+OpenAI Codex v0.146.0
+--------
+workdir: /home/y-saito/Developments
+model: gpt-5.6-sol
+provider: openai
+approval: never
+sandbox: workspace-write [workdir, /tmp, $TMPDIR]
+reasoning effort: high
+reasoning summaries: none
+session id: 019fc0b9-fb1c-7781-856d-b7a7c3f70ba6
+--------
+user
+設計書（正本Excel）を最新化する工数を見積もります。実装の修正工数ではありません。
+
+まず手順書を読んでください: /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/DOCUPDATE_TASK.md
+
+担当パケット: /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_packets/du_32.json
+出力先: /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_32.json
+
+厳守事項:
+- **正本はExcel** (/home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/*.xlsx)。
+  HTML(output/)は convert.py の生成物で、直接編集しても次の変換で消える。
+  見積もる対象は「Excelのどのシートのどの表/画像を、どう直すか」の作業量。
+- 根拠区分=SPEC_BACKED は原則 docWork=NONE（設計書は正しく実装が追いついていないだけ）。
+  記述が曖昧で明確化が要る場合だけ FIX。
+- 根拠区分=LEGACY_BACKED は原則 docWork=ADD（設計書の記述漏れ）。
+  ただし移行後に残さない挙動と読めるなら NONE。
+- 表示文言・画面項目は、テキストの表に足せば済むのか、
+  レイアウト**画像の描き直し**まで要るのか(IMAGE)を必ず区別する。
+- 同じシートの行が隣り合うよう並べてある。まとめて直せる分は2件目以降を安くしてよい。
+- HTML再生成と検証は書籍単位の固定費として別途集計するので、1件ごとの見積に含めない。
+- 引用・確認内容の捏造は絶対に禁止。実装側の修正工数と混同しない。
+
+findings 全件について docWork と docEffortDays をJSONで書き込んでください。
+最終メッセージは内訳1行のみ（例: 28件: NONE=14 ADD=10 FIX=2 IMAGE=2 / 計 1.8人日）。
+warning: Codex could not find bubblewrap on PATH. Install bubblewrap with your OS package manager. See the sandbox prerequisites: https://developers.openai.com/codex/concepts/sandboxing#prerequisites. Codex will use the bundled bubblewrap in the meantime.
+codex
+`design-impl-drift-audit` スキルを使い、手順書と担当パケットを確認したうえで、正本Excel上の更新作業だけを見積もります。HTML再生成や実装修正は工数に含めません。
+exec
+/bin/bash -lc "sed -n '1,240p' /home/y-saito/.codex/skills/design-impl-drift-audit/SKILL.md" in /home/y-saito/Developments
+ succeeded in 1437ms:
+---
+name: design-impl-drift-audit
+description: Compare HTML design specifications against an implementation to find functional drift and produce an evidence-backed HTML report. Use when Codex is asked to treat design docs as the source of truth, audit code such as controllers/services/forms/repositories/templates/batches/CSV definitions, continue a partially completed drift report, or update findings JSON/HTML for gaps between design and implementation.
+---
+
+# Design Impl Drift Audit
+
+## Purpose
+
+Use this skill to audit functional differences between HTML design specifications and an implementation repository, with the design docs treated as authoritative. Produce or continue a report that lists concrete differences with design locations, implementation locations, confidence, severity, and impact.
+
+## Repository Discovery
+
+1. Find the design-doc directory and implementation directory from the user request. If omitted, infer from nearby names such as `*-design-docs` and application repos.
+2. Look for an existing report before starting new work. Prefer directories named `design_impl_drift_report`, existing `findings.json`, per-function `findings/*.json`, and `index.html`.
+3. Count total target specs and audited specs so the report clearly states scope and remaining work.
+4. Preserve existing findings. Append or refine; do not overwrite unrelated prior work.
+
+## Audit Workflow
+
+For each target HTML spec:
+
+1. Identify the feature ID, route/action name, UI template, CSV/batch/API behavior, and acceptance rules from the HTML design spec.
+2. Extract a requirement inventory from the HTML spec before looking at code. This inventory must include not only route/screen names, but every concrete requirement in 処理概要, 図形・テキストボックス, 項目表, 表示メッセージ, 業務ルール・計算, 入力項目, エッジケース, データ整合性, API/バッチ結果, 入出力, DB操作, バリデーション, 権限・認可, 画面遷移, エラー処理, ログ・監査, セッション, Cookie, and 排他制御. Treat bullets such as "押下時", "場合", "登録/更新/保存", "遷移", "保持", "表示/非表示", "表示切り替え", "エリアを表示", "誘導", "エラー", "判定", "連携", time limits, thresholds, and retry/idempotency rules as auditable requirements. 秒後/分後, `画面を表示してから`, 自動遷移, タイマー, and store/kiosk/account-specific forced redirects are material requirements even if the route and template already exist.
+3. For every extracted requirement, create or mentally maintain a `requirementTrace` row with: `requirementId`, `designRef`, `designRequirement`, `implementationSearchTerms`, `implementationRefs`, `implementationActual`, `traceVerdict` (`MATCHED|DRIFT|NOT_FOUND|UNCERTAIN|PHASE2_EXCLUDED`), and `traceReason`. A feature cannot be marked no-drift until all material requirements have a trace verdict other than `NOT_FOUND` or unresolved `UNCERTAIN`.
+4. Search the implementation with `rg` across likely files: controllers, services, repositories, form types, entities, migrations, Twig/templates, commands/batches, route definitions, JavaScript, CSV exporters/importers, and PDF/print services. Search by business terms from the requirement, route names, translation keys, DB columns, state names, constants, statuses, time values, thresholds, and side-effect verbs. For timer or auto-navigation requirements, explicitly search client and server paths for `setTimeout`, `setInterval`, millisecond/second constants such as `60000` and `60 * 1000`, `location.href`, `location.assign`, `location.replace`, redirect routes, and the condition that limits the behavior. For a negative result, also search nearby implemented flows so the report can explain why they do not satisfy the design.
+5. Compare behavior and user-facing text, not just names. Check input fields, validation, defaults, search conditions, session persistence, buttons/actions, labels, button text, messages, translation keys/locales, permissions, status transitions, CSV columns, sort/order rules, scheduled timing, timeouts/expiration, thresholds, client-side timers, forced auto-navigation, side effects, idempotency, external integrations, conditional display toggles, alternate UI areas, and error handling.
+6. Do not treat "route/controller/template exists" as sufficient. Existence only satisfies the route/screen requirement. It does not satisfy individual rules inside the screen, such as timeout handling, cart retention, validation branches, status transitions, DB writes, logging prohibitions, conditional hide/show behavior, alternative contact/help areas, or external API retry behavior.
+7. For conditional display requirements, audit each side of the condition separately. If the HTML says "Aの場合はXを非表示、Yを表示 / A以外はXを表示、Yを非表示", record trace rows for the condition detector, X visibility, Y visibility, and the inverse condition. A nearby notice or route is not enough unless the cited template/JS actually renders the required area under the required condition.
+8. For labels, button text, messages, and translation keys, do a dedicated near-match pass. Extract user-visible Japanese text from the HTML item/message tables and compare it with implementation locale values and Twig/Form usage. Treat punctuation, okurigana, missing characters, long-vowel marks, wording changes such as `商品を追加` vs `商品の追加`, and business-term changes such as `返金` vs `送金` as audit targets.
+9. A text drift finding is complete only when it cites both the translation/source value and the display path that uses it, such as `messages.ja.yaml` plus the `FormType` label or Twig `|trans` call. If the implementation value exists but no display path is verified, mark it `UNCERTAIN` instead of presenting it as confirmed.
+10. Do not stamp all functions as if every standard aspect was fully checked. Separate "standard audit target aspects" from actual evidence. For each finding, list the aspects actually supported by evidence; for no-drift functions, include a requirement trace summary naming the concrete HTML requirements checked and implementation refs searched.
+11. Record only actionable drift. If evidence is incomplete, mark the finding `UNCERTAIN` and explain what remains ambiguous.
+12. For every drift finding, split the result into implementation-ready fields: `designExpectation`, `implementationActual`, `comparisonRows`, `comparisonSummary`, `mismatchReason`, `impact`, `fixTarget`, `requiredChange`, `implementationRefs`, and, when available, short design/implementation snippets from the cited lines. Do not rely on a generic prose paragraph alone.
+13. Each `comparisonRows` entry must answer all four questions explicitly: comparison item, exact design value/requirement, exact implementation value/behavior, and why those two do not match. If any of those four cells would be vague, continue investigating before recording the finding.
+14. Treat phase labels such as Ph2 as auxiliary context. They can be stored, but the main report must not use phase status as a substitute for concrete behavioral differences and exact implementation locations.
+15. If the HTML design spec explicitly says the whole function or scoped subfeature is `フェーズ2で実装する`, `Ph2で対応`, or `Ph1では実装しない`, do not report absence of that planned Phase 2 work as drift or as a clear implementation gap. You may keep a secondary audit note that non-implementation was confirmed, but exclude it from finding counts and implementation-gap counts. Only keep a finding when there is a concrete non-phase mismatch, such as an implemented Phase 1 path behaving differently from the design or user-facing text differing.
+16. When no drift is found, add the function to the audited set with an empty findings list only after the requirement trace gate passes. If material HTML requirements are untraced, do not mark `AUDITED_NO_DRIFT_FOUND`; mark the function as requiring review or add `UNCERTAIN` findings with the unresolved requirements.
+17. Do not let one confirmed finding hide other requirements in the same function. A function with `AUDITED_WITH_FINDINGS` can still have untraced material requirements; keep those requirements visible in the trace gate until each one is converted to a confirmed finding, an uncertain finding, a matched trace row, or a documented phase/design non-implementation exclusion.
+18. For explicitly registered critical requirements, the harness should carry a missing-finding template or an equivalent escalation rule. If the trace is not covered by an existing finding, promote it into findings automatically or fail the quality gate loudly. Do not rely on a hand-maintained `ADDITIONAL_FINDINGS` list as the only path for user-reported or high-risk missing behavior such as timeouts, cart retention, one-minute/30-minute limits, store-account auto redirects, conditional UI areas, status transitions, external calls, or destructive side effects.
+19. The HTML report must not expose broad source-signal candidates as if they were implementation gaps. A requirement-level list in the main report must be limited to confirmed or explicitly uncertain actionable drift derived from findings, such as `NOT_FOUND` or `DRIFT` requirement traces and concrete comparison rows. If a source-signal scan is used for triage, keep it out of the main HTML report unless each row has been verified against implementation source and written as a concrete finding.
+20. Do not hide time-based or automatic-navigation requirements merely because they are not confirmed findings yet. Requirements involving `画面を表示してから`, seconds/minutes after display, auto redirect/navigation, or timeout-to-cart/top behavior should appear in a separate focused untraced-requirement audit queue when they remain uncovered. This queue is not a confirmed defect count; it exists so these high-risk requirements are reviewed against Controller/Twig/JavaScript/Service source instead of being buried among broad requirement-trace failures.
+
+## Function-Level Implementation Gap Audit
+
+For every HTML spec sheet, maintain a function-level implementation audit even when no drift finding is confirmed yet.
+
+- Extract implementation search terms from the HTML design: route names, URL paths, translation keys, class/controller/service names, batch/API/CSV names, and high-signal business terms from the sheet title and requirement text.
+- Search implementation source by function across Controller, Form, Service, Repository, Entity, Migration, Twig, Command/Batch, CSV, PDF/print, API/webhook, locale/messages, JavaScript, and configuration files.
+- Store a `functionImplementationAudit` object with `verdict`, `designDerivedTerms`, `candidateRefs`, `candidateCount`, `strongSignalCount`, `searchedAreas`, and `auditNote`.
+- Use separate verdicts:
+  - `CONFIRMED_IMPLEMENTATION_GAP`: a concrete drift finding already proves missing implementation.
+  - `NO_IMPLEMENTATION_ENTRY_FOUND`: no entry candidate was found from design-derived terms; treat as an additional-review candidate, not an automatic confirmed defect.
+  - `IMPLEMENTATION_ENTRY_FOUND`: strong source evidence such as route, class, translation key, or path was found.
+  - `IMPLEMENTATION_CANDIDATE_FOUND`: weak business-term candidates were found but the entry point is not proven.
+  - `PHASE2_NONIMPLEMENTATION_EXPECTED`: HTML design explicitly scopes non-implementation to Phase 2/Ph1 exclusion.
+  - `DESIGN_NONIMPLEMENTATION_EXPECTED`: HTML design explicitly says the function or scoped behavior is not implemented by code, such as `実装しない`, `実装不要`, or infrastructure/external-service configuration replacing application code.
+- Use `DESIGN_NONIMPLEMENTATION_EXPECTED` as the function-level verdict only when the non-implementation statement applies to the whole function or the implementation entry itself, for example an external WordPress server, Docker image cron, Aurora parameter group, or a bare whole-sheet `実装しない`. If the text only excludes a scoped subfeature, UI alert, HTML hint, logging detail, partial Phase 2 item, or internal job, keep the function's source-entry verdict and mention the scoped exclusion only in the trace/audit note.
+- The report must show both confirmed implementation-gap findings and function-level no-entry candidates. Do not merge these counts: implementers need confirmed defects for fixing and no-entry candidates for review planning.
+- A function-level candidate is not enough to mark the detailed requirements as implemented. Requirement trace still controls no-drift status.
+- Do not set report metadata such as `auditComplete` or narrative notes to "complete" merely because every sheet has a function-level implementation audit. If any material requirement trace remains unresolved, state that all sheets have function-entry coverage but requirement-level audit is incomplete.
+- For infrastructure-oriented sheets such as Step Functions, Lambda, WAF/S3 jobs, cron configured outside the application, or managed database settings, distinguish "not found in the requested implementation repository" from "not implemented anywhere". A confirmed implementation-gap finding may be scoped to the audited repository, but the report must say when external infrastructure repositories or cloud configuration were not checked.
+
+## Requirement Trace Gate
+
+Before marking a function no-drift, verify the following:
+
+- Every material HTML requirement has a trace row. Material means it changes behavior, data, display, validation, permission, transition, side effect, external communication, schedule, retry/idempotency, logging/audit, CSV/API/PDF/batch I/O, or user-visible text.
+- Each trace row includes exact design text or a tight paraphrase plus line/anchor reference, not only the sheet title.
+- Each matched row cites the implementation path and line(s) that actually execute or render the behavior. A nearby class, route, or template is not enough unless the cited code contains the relevant condition/value/side effect.
+- Each missing row is converted to a confirmed or uncertain finding. Use confirmed only after searching the direct path and nearby alternative implementations.
+- Missing rows remain failures even if the function already has other findings. The gate is requirement-scoped, not function-scoped.
+- If an explicit critical requirement has a configured missing-finding template, regenerate the report from the harness and verify the promoted finding appears in both JSON and HTML with design value, implementation behavior, mismatch reason, fix target, and search evidence.
+- If a missing row does not yet have enough evidence for a confirmed or uncertain actionable finding, do not count it as an implementation gap and do not put it in the main HTML fix list. Keep the function in an incomplete requirement-trace state, and promote the row only after implementation source has been checked enough to state the exact design requirement, exact implementation behavior, and mismatch reason.
+- A generic `auditEvidence` string is not a substitute for requirement traces.
+- Negative searches must list the searched terms/areas and why nearby hits do not satisfy the design.
+
+## Finding Format
+
+Store findings in a machine-readable JSON structure. Use this shape for each finding:
+
+```json
+{
+  "id": "stable-feature-id-001",
+  "functionId": "m04-01_admin_stock_stock_search_list",
+  "functionName": "在庫一覧",
+  "severity": "high|med|low",
+  "dimension": "①機能/ルート未実装",
+  "confidence": "CONFIRMED|UNCERTAIN",
+  "design": {
+    "file": "path/to/spec.html",
+    "lines": "215-220",
+    "summary": "設計書に書かれている仕様"
+  },
+  "implementation": {
+    "file": "path/to/source.php or 不在",
+    "lines": "337-344",
+    "summary": "実装側の状態"
+  },
+  "difference": "設計と実装の具体的な差分",
+  "comparisonRows": [
+    {
+      "item": "比較項目名",
+      "design": "設計書の値・要求。列名、HTTPメソッド、パス、保存先、表示文言、条件、状態遷移などを具体値で書く",
+      "implementation": "実装の値・挙動。実際の列名、メソッド、パス、保存先、文言、条件、処理順を具体値で書く",
+      "mismatch": "なぜ一致しないのか。実装者が直すべき差分を一文で書く"
+    }
+  ],
+  "requirementTrace": [
+    {
+      "requirementId": "stable-requirement-id",
+      "designRef": "path/to/spec.html:123",
+      "designRequirement": "HTML設計書の個別要求",
+      "implementationSearchTerms": ["検索語", "route_name", "methodName"],
+      "implementationRefs": ["src/...php:123"],
+      "implementationActual": "実装で確認できた挙動、または不在判定",
+      "traceVerdict": "MATCHED|DRIFT|NOT_FOUND|UNCERTAIN|PHASE2_EXCLUDED",
+      "traceReason": "なぜその判定か"
+    }
+  ],
+  "comparisonSummary": "設計はX、実装はY、したがってZが違う",
+  "mismatchReason": "乖離と判断した具体的な理由",
+  "impact": "ユーザー・業務・データへの影響",
+  "fixTarget": "修正対象のファイル/ルート/サービス/不在箇所",
+  "requiredChange": "設計に合わせる場合に必要な修正",
+  "implementationRefs": ["src/...php:123"],
+  "implementationSnippets": ["123: 実装コードの短い断片"],
+  "evidence": ["短い根拠。ファイル名と行番号を含める"]
+}
+```
+
+The HTML report should make these fields visible as separate blocks so an implementer can answer: what exact value does the design require, what exact value does the code implement, why is that a mismatch, exactly where is the code, and what should be changed.
+
+Use stable IDs and Japanese text when the existing report is Japanese. Keep dimensions consistent with existing findings when continuing a report.
+
+## Severity Guidance
+
+- `high`: missing feature/route, wrong critical business rule, destructive or externally visible behavior, missing required import/export/batch/PDF flow.
+- `med`: partial implementation, wrong filtering/sorting/session behavior, missing non-critical columns or validation, incompatible screen behavior.
+- `low`: copy/display/default-state differences, ambiguous design wording, minor workflow variance.
+
+## Report Generation
+
+If the project already has a report generator, use it. Otherwise copy or adapt `scripts/build_report.py` from this skill into the report directory, then run it from the repository root or pass paths as needed.
+
+The HTML report must include:
+
+- summary counts: total findings, severities, audited functions, functions with drift
+- scope and remaining work
+- per-function sections
+- each finding with severity, confidence, dimension, audit aspects including label/message/translation-key differences when applicable, design reference, implementation reference, design expectation, implementation actual behavior, `comparisonRows`, mismatch reason, impact, fix target, required change, and evidence
+- a comparison table with columns: 比較項目 / 設計書の値・要求 / 実装の値・挙動 / 乖離理由
+- links or file paths precise enough for a developer to inspect
+- short cited design and implementation snippets when available
+- phase/Ph2 data only as hidden or secondary metadata, never as a report column or primary summary
+- a function-level implementation audit section showing verdict counts, no-entry candidates, candidate source references, and the search terms that produced them
+- a requirement-level difference list derived only from confirmed/uncertain findings, showing the exact design requirement, implementation behavior, mismatch reason, implementation refs, and a link back to the finding. Do not include broad unverified source-signal queues in the main HTML report.
+- a focused untraced-requirement section for small, high-risk classes such as display-time timers, automatic redirects, and timeout navigation. Keep it separate from confirmed difference and implementation-gap counts, and include search terms/candidate refs so the next audit step is concrete.
+
+After editing findings, validate JSON and regenerate HTML:
+
+```bash
+python3 -m json.tool path/to/design_impl_drift_report/findings.json
+python3 path/to/design_impl_drift_report/build_report.py
+```
+
+## Quality Bar
+
+- Treat the HTML design spec as source of truth even when implementation looks intentional.
+- Cite exact file paths and line numbers whenever available.
+- Distinguish `不在` from “not found yet”; use `不在` only after searching likely implementation areas.
+- Avoid broad claims such as “not implemented” without search evidence or contrasting nearby implemented features.
+- Do not classify Phase 2 planned non-implementation as a defect. A missing route, CSV, batch, API, table, or screen is only a drift finding when the design expects it in the audited implementation phase.
+- For label/message drift, prefer exact line evidence and a verified render path over fuzzy string similarity. Fuzzy or near-match scans are candidate generators; they are not findings until source and display usage are confirmed.
+- When an external reviewer or another agent reports candidates, verify each candidate against the HTML design and implementation source before adding it. Keep rejected or ambiguous candidates out of confirmed counts, or mark them `UNCERTAIN` with the unresolved reason.
+- For absent implementations, include the searched terms/areas, nearby implementation files with line numbers, and a concrete reason those nearby files do not satisfy the design. Do not leave `implRef` as only `不在` in the final report.
+- Reject vague findings. A finding is not complete until it names the exact design value and exact implementation value that differ.
+- Keep the report cumulative and resumable.
+
+exec
+/bin/bash -lc "sed -n '1,260p' /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/DOCUPDATE_TASK.md" in /home/y-saito/Developments
+ succeeded in 2136ms:
+# 設計書（正本Excel）の最新化工数の見積
+
+乖離指摘 1,007件（クローズ済を除く）について、**設計書側にどんな作業が発生し、何人日か**を見積もる。
+実装をどう直すかではなく、**設計書をどう直すか**だけを判断する。
+
+## 前提: 正本はExcel、HTMLは生成物
+
+| 役割 | パス |
+|---|---|
+| **正本Excel（編集対象）** | `/home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/*.xlsx` |
+| 生成HTML（読む用・編集対象ではない） | `/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/*.html` |
+| 変換ツール | `excel_to_html/convert.py`（`uv run python convert.py`）、検証は `verify.py` |
+| 実装 | `/home/y-saito/Developments/ec-cube-enterprise` |
+
+**HTMLを直接編集しても次の変換で消える。** 直すのは常にExcelのセル・図形・画像である。
+したがって見積もる対象は「該当シートの該当セル/表/画像をどう直すか」の作業量。
+
+HTML再生成と検証は書籍単位でまとめて行うため、**1件ごとの見積には含めない**（別途固定費として集計する）。
+
+## 判定する2つのこと
+
+### 1. `docWork` — 設計書側にどんな作業が要るか
+
+| 値 | 意味 |
+|---|---|
+| `NONE` | 設計書は現状で正しい。実装を直せば済み、**設計書は触らない** |
+| `ADD` | 設計書に記述が無い。項目表・処理概要などに**書き足す** |
+| `FIX` | 設計書に記述はあるが、採用する仕様と食い違う。**既存記述を直す** |
+| `IMAGE` | 画面レイアウト**画像の差し替え**が要る（Excelに貼られた画像の描き直し） |
+| `RESOLVE` | 正本の中で記述同士が矛盾している（項目表と画像、本文と注記など）。**どちらが正かを決めて片方を直す** |
+| `UNSURE` | 判断できない |
+
+**重要な原則:**
+- `根拠区分 = SPEC_BACKED`（設計書に裏付けがある）＝ 原則 `NONE`。
+  設計書は正しく、実装が追いついていないだけ。
+  ただし設計書の記述が曖昧・不完全で、実装に合わせて**明確化**が要るなら `FIX`。
+- `根拠区分 = LEGACY_BACKED`（設計書に記述が無く旧実装に根拠）＝ 原則 `ADD`。
+  移行後も必要な挙動なら、設計書の記述漏れとして書き足す必要がある。
+  ただし**その挙動を移行後に残さない**と読めるなら `NONE`。
+- 表示文言・ラベル・画面項目の追記は、テキストの表に足すだけで済むのか、
+  **レイアウト画像も描き直しになるのか**を区別する（後者は `IMAGE`）。
+
+### 2. `docEffortDays` — Excel編集の工数（人日）
+
+**この1件のために、該当シートを開いて直す作業**の量。目安:
+
+| 作業 | 目安 |
+|---|---|
+| 既存の表に1行足す／セルの文言を1つ直す | 0.05〜0.1 |
+| 項目表に複数行・条件付きの記述を足す | 0.1〜0.25 |
+| 処理概要・業務ルールの節を書き起こす | 0.25〜0.5 |
+| 画面レイアウト画像の差し替え（実画面の取得＋貼り直し＋位置調整） | 0.5〜1.0 |
+| 正本内部の矛盾解消（影響範囲の確認＋関係箇所の統一） | 0.25〜1.0 |
+| シート新設（機能ごと丸ごと無い） | 1.0〜3.0 |
+
+**同じシートに複数の指摘がまとまっている場合、2件目以降は安くなる**（シートを開く手間が1回で済む）。
+パケット内で同一 `設計書参照` の行が並んでいたら、その分を反映してよい（理由に書くこと）。
+
+`docWork = NONE` のときは `docEffortDays: 0`。
+`RESOLVE` は、裁定そのもの（どちらが正かを決める会議・確認）は含めず、**決まった後の反映作業**だけを見積もる。
+
+## 絶対の禁止事項
+
+- 引用・確認内容の捏造をしないこと。実際に開いて確認したものだけを書く。
+- 確認していないことを「確認した」と書かない。
+- 実装側の修正工数と混同しないこと。**ここで見積もるのは設計書の編集だけ**である。
+
+## 出力
+
+指示されたJSONファイルに **Write して** 書き込む。
+
+```json
+{
+  "packetId": "...",
+  "results": [
+    {
+      "rowId": 123,
+      "docWork": "ADD",
+      "docEffortDays": 0.1,
+      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫編集 シートの画面項目表",
+      "reason": "旧実装にしかない上限件数の扱いを、項目表の備考へ1行足す。既存の行構成をそのまま使える。",
+      "sharedWithRows": [124, 125],
+      "confidence": "high"
+    }
+  ]
+}
+```
+
+- `target`: 直す対象（ブック名 / シート名 / 表や図の位置）。分かる範囲で具体的に
+- `sharedWithRows`: 同じシートでまとめて直せる他の rowId（無ければ空配列）
+- `confidence`: `high` / `medium` / `low`
+
+findings 全件について返すこと（欠落禁止）。
+
+codex
+手順書を確認しました。次にパケット全件の根拠区分・設計参照・引用を整理し、必要な行だけ正本Excelのシート構成（表かレイアウト画像か）まで照合します。
+exec
+/bin/bash -lc "jq '.' /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_packets/du_32.json" in /home/y-saito/Developments
+ succeeded in 2090ms:
+{
+  "packetId": "du_32",
+  "note": "同じ設計書シートの行が隣り合うよう並べてある。まとめて直せる分は2件目以降を安く見積もってよい（sharedWithRowsに記す）。",
+  "findings": [
+    {
+      "rowId": 182,
+      "機能No": "B05-03",
+      "機能名": "B05-03 店頭注文番号初期化",
+      "区分(画面種別)": "batch",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-5:1349,1369",
+      "正本根拠": "正本の hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html:1461-1462 は「全件を物理削除」「IDをリセットして1から」とだけ記し、トランザクション境界は定めない。「別の文」「1トランザクションでまとめない」はリバース詳細設計の実体 hareruya-design-docs/functions/pf-eccube3/b05-03_batch_order_order_store_call_number_initialize.md:113-120 および同:168 の旧挙動記述にだけある。",
+      "設計期待値": "削除と採番カウンタ初期化は1トランザクションでまとめた更新ではなく、それぞれ独立した文として実行する。削除のみ成功してカウンタ初期化前に中断した場合でも、再実行で空テーブル・カウンタ1に収束する。",
+      "差分内容": "設計は削除とカウンタ初期化を1トランザクションにまとめないことを明記しているが、実装は `beginTransaction()` から `commit()` までの1トランザクション内で両テーブル操作と再登録をまとめている。",
+      "実装実態": "`handle()` は `beginTransaction()` 後に `dtb_waiting_number` と `dtb_waiting_number_counter` の TRUNCATE、カウンタ再登録、`flush()` を行い、最後に `commit()` する。例外時は `rollback()` する。"
+    },
+    {
+      "rowId": 186,
+      "機能No": "B05-05",
+      "機能名": "B05-05 スマレジ商品削除",
+      "区分(画面種別)": "batch",
+      "指摘区分": "未実装",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "要修正-設計準拠",
+      "設計書参照": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-7:1548,",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html:1714 の正本セルは「連携に失敗した場合はスマレジ通信エラーメール送信」、同:1730-1731 は「エラーが発生した場合、発生したスマレジ連携ごとにメールで管理者に通知」と明記する。",
+      "設計期待値": "連携に失敗した場合はスマレジ通信エラーメールを送信し、エラーが発生したスマレジ連携ごとにメールで管理者に通知する。",
+      "差分内容": "設計はスマレジ連携ごとの管理者メール通知を要求しているが、実装はログ出力とジョブ失敗状態の永続化に留まる。反証として 通信エラーメール / スマレジ通信エラー / 管理者に通知 / send*Smaregi / Smaregi*Mail / MailService / mailer->send を関連範囲で検索したが、B05-05 の失敗経路からメール送信へ到達するコードは不在。",
+      "実装実態": "スマレジ商品検索または削除APIが失敗した場合、SmaregiOtcDeleteService は logger->error して DELETE_FAILED を返し、SmaregiOtcDeleteMessageHandler は MessengerJob を FAILED に更新する。MailService 注入、mailer->send、スマレジ通信エラーメール用メソッド、メールテンプレー"
+    },
+    {
+      "rowId": 185,
+      "機能No": "B05-05",
+      "機能名": "B05-05 スマレジ商品削除",
+      "区分(画面種別)": "batch",
+      "指摘区分": "未実装",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-7:1596,",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html:1699 は「手続きが完了した店頭注文をスマレジ商品から削除する」、同:1715 はスケジュール起動を記すが、正本部（sheet-7:1684-1733）に `order:batch deleteSmaregiProduct` というコマンド名や不一致時終了の記述はない。",
+      "設計期待値": "コンソールのバッチコマンドは order:batch deleteSmaregiProduct で実行し、手続きが完了した店頭注文をスマレジ商品から削除する。コマンド名が一致しない場合は処理を行わずに終了する。",
+      "差分内容": "設計の利用者視点の入口は order:batch deleteSmaregiProduct を外部契約としているが、実装の起動名が異なるため、設計どおりのコマンド名では本バッチに到達しない。反証として order:batch / deleteSmaregiProduct / SmaregiOtcDeleteCommand / AsCommand を検索したが、該当する別名・エイリアス実装は不在。",
+      "実装実態": "実装されている Symfony Console コマンド名は eccube:smaregi:otc:delete。src/Eccube/Command 配下の AsCommand 名を再検索しても order:batch または deleteSmaregiProduct のコマンド定義は見つからない。"
+    },
+    {
+      "rowId": 187,
+      "機能No": "B05-05",
+      "機能名": "B05-05 スマレジ商品削除",
+      "区分(画面種別)": "batch",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-7:1632,",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html:1707-1731 の正本部は抽出・削除連携・エラー通知を記すが、楽観ロック・悲観ロックを「持たない」という記述は存在しない（確認範囲: sheet-7:1684-1733）。",
+      "設計期待値": "本バッチは削除連携が主であり、楽観ロック・悲観ロックの対象は持たない。",
+      "差分内容": "設計は本バッチが楽観ロック・悲観ロックの対象を持たないと明記しているが、実装は MessengerJob に対して処理ロックを使用する。反証として B05-05 の Command/Dispatcher/MessageHandler/Service を確認し、該当ロックは削除メッセージ処理の本線に存在する。",
+      "実装実態": "SmaregiOtcDeleteMessageHandler は SmaregiMessengerJobProcessingLock を注入し、tryBeginProcessingJob($Job) で同一ジョブの重複実行抑止ロックを取得してから削除処理を行う。"
+    },
+    {
+      "rowId": 188,
+      "機能No": "B05-06",
+      "機能名": "B05-06 ポイント二重登録チェック",
+      "区分(画面種別)": "batch",
+      "指摘区分": "未実装",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-8:1713,1717",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html:1819 はポイント二重登録検知と管理者通知、同:1830 はスケジュール起動を記すが、正本部（sheet-8:1804-1847）に `order:batch checkDuplicatePoint` というコマンド名はない。",
+      "設計期待値": "コンソールのバッチコマンドは `order:batch checkDuplicatePoint` として実行する。",
+      "差分内容": "設計は利用者視点の入口として `order:batch checkDuplicatePoint` を指定しているが、実装入口は `#[AsCommand(name: 'eccube:check-duplicate-point')]` のため、設計通りのコマンド名では起動できない。",
+      "実装実態": "実装の Symfony Console コマンド名は `eccube:check-duplicate-point`。`order:batch checkDuplicatePoint` のコマンド定義またはエイリアスは確認できない。"
+    },
+    {
+      "rowId": 189,
+      "機能No": "B05-06",
+      "機能名": "B05-06 ポイント二重登録チェック",
+      "区分(画面種別)": "batch",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-8:1732,1742",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html:1844-1845 の正本セルはエラーハンドリングを「外部システムとの連携もなく、外部から引数等も受け取っていないため、特になし」とし、「取得・送信時のエラーをコンソール出力」とは記載していない。",
+      "設計期待値": "取得・送信時のエラーはエラーメッセージをコンソールに出力する。",
+      "差分内容": "取得エラーはコンソール出力され得る一方、送信時エラーは MailService 内でログ化されるだけで Command に伝播せず、設計が求めるコンソールへのエラーメッセージ出力にならない。",
+      "実装実態": "Command 側は `handle()` から投げられた例外を `io->error()` で出力するが、メール送信時の `TransportExceptionInterface` は `MailService::sendOrderDuplicateNotificationMail()` 内で catch され、`log_critical($e->getMessage())` のみで再throw"
+    },
+    {
+      "rowId": 190,
+      "機能No": "B05-07",
+      "機能名": "B05-07 ポイント利用未反映チェック",
+      "区分(画面種別)": "batch",
+      "指摘区分": "未実装",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-9:1842,1846",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html:1936 は機能概要、同:1947 はスケジュール起動を記すが、正本部（sheet-9:1921-1976）に `order:batch checkNotReflectedPointUsage` というコマンド名はない。",
+      "設計期待値": "コンソールのバッチコマンドは `order:batch checkNotReflectedPointUsage` でポイント利用未反映チェックを実行する。",
+      "差分内容": "設計は利用者視点の入口として `order:batch checkNotReflectedPointUsage` を外部契約にしているが、実装の `AsCommand` は別名 `eccube:check-not-reflected-point-usage` で登録されているため、設計コマンド名では起動できない。",
+      "実装実態": "Symfony Console の登録名は `eccube:check-not-reflected-point-usage`。設計上の `order:batch checkNotReflectedPointUsage` または同名 alias は確認できない。"
+    },
+    {
+      "rowId": 205,
+      "機能No": "B06-02",
+      "機能名": "B06-02 買取集計バッチ",
+      "区分(画面種別)": "batch",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "要修正-設計準拠",
+      "設計書参照": "excel_to_html/output/0406_基本設計仕様書(バッチ_店頭買取管理) .html#sheet-4:1039",
+      "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0406_基本設計仕様書(バッチ_店頭買取管理) .html:1195 の正本セルは「部門が登録されていない商品が存在する場合は、エラーメールを送信する」と明記する。本文の商品名・商品コード一覧という具体化は旧実装にも一致する。",
+      "設計期待値": "部門が登録されていない商品が存在する場合は、エラーメールを送信する。部門未設定商品通知メールには商品名・商品コードの一覧を本文に載せる。",
+      "差分内容": "設計は部門未設定商品一覧を取得して通知することを要求しているが、実装の一覧取得 SQL が構文不正のため、通知判定・商品名/商品コード本文生成まで到達できない。加えて同メソッドには集計対象ステータス条件もなく、集計対象内の商品一覧という設計条件との対応が不足している。",
+      "実装実態": "`BatchAggregateSummaryAction` は `getNoSectionProducts()` の戻り値があれば `sendNoSectionAlertMail()` を呼ぶが、`getNoSectionProducts()` の SQL は `WHERE AND obo.complete_date ...` となっており、WHERE 直後の AND により SQL として実行不"
+    },
+    {
+      "rowId": 204,
+      "機能No": "B06-02",
+      "機能名": "B06-02 買取集計バッチ",
+      "区分(画面種別)": "batch",
+      "指摘区分": "未実装",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0406_基本設計仕様書(バッチ_店頭買取管理) .html#sheet-4:1074",
+      "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0406_基本設計仕様書(バッチ_店頭買取管理) .html:1179 の正本は引数の有無による集計日を定義するが、正本範囲（同:1154-1197）に `otcBuyOrder:batch` や `updateSummary` はない。コマンド名はリバース詳細設計にのみ記載される。",
+      "設計期待値": "入口はコンソールのバッチコマンド `otcBuyOrder:batch updateSummary [YYYY-MM-DD]` とし、引数に集計日（YYYY-MM-DD形式）を1つ指定できる。",
+      "差分内容": "設計は外部契約として `otcBuyOrder:batch updateSummary [YYYY-MM-DD]` を指定しているが、実装の `#[AsCommand]` は別名で登録されており、設計コマンド名で起動できる根拠がない。探索範囲: src/Eccube, html。検索語: `otcBuyOrder:batch`, `updateSummary`, `aggregate-summary`, `AsCommand`, `alias`。",
+      "実装実態": "Symfony コマンド名は `eccube:otc-buy-order:aggregate-summary`。`otcBuyOrder:batch` / `updateSummary` / alias 実装は `src/Eccube` と `html` の再検索でも不在。"
+    },
+    {
+      "rowId": 206,
+      "機能No": "B06-02",
+      "機能名": "B06-02 買取集計バッチ",
+      "区分(画面種別)": "batch",
+      "指摘区分": "未実装",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0406_基本設計仕様書(バッチ_店頭買取管理) .html#sheet-4:1079",
+      "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0406_基本設計仕様書(バッチ_店頭買取管理) .html:1178-1195 の正本範囲は集計・引数・DB更新・部門未設定メールを記載するが、`set_time_limit`、`max_execution_time`、実行時間制限解除はない。要件はリバース詳細設計の同:1293「長時間処理に備えて実行時間制限を解除する」にのみある。",
+      "設計期待値": "実行時間制限を解除する。長時間処理に備えて実行時間制限を解除する。",
+      "差分内容": "設計の処理フローと排他制御・トランザクション節にある実行時間制限解除が、Command/Action/Aggregator/Repository のいずれにも実装されていない。検索語: `set_time_limit`, `max_execution_time`, `時間制限`。",
+      "実装実態": "該当バッチ経路に `set_time_limit(0)`、`ini_set('max_execution_time', ...)`、同等の実行時間制限解除処理が見つからない。"
+    },
+    {
+      "rowId": 207,
+      "機能No": "B06-02",
+      "機能名": "B06-02 買取集計バッチ",
+      "区分(画面種別)": "batch",
+      "指摘区分": "未実装",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0406_基本設計仕様書(バッチ_店頭買取管理) .html#sheet-4:1110",
+      "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0406_基本設計仕様書(バッチ_店頭買取管理) .html:1195 の正本は部門未設定時のメール送信だけを要求し、正本範囲に送信開始・完了・件数・宛先未設定ログの指定はない。これらはリバース詳細設計のログ節にのみある。",
+      "設計期待値": "部門未設定商品通知メールは送信開始・送信完了・件数、宛先未設定時の送信せず終了をログに記録する。",
+      "差分内容": "設計で明示されたログ項目のうち件数だけが実装されていない。反証検索で `件数`、`count($products)`、部門未設定商品通知周辺のログを確認したが、該当ログは不在。",
+      "実装実態": "`sendNoSectionAlertMail()` は送信開始、宛先未設定、送信完了を `log_info` するが、部門未設定商品の件数をログ出力していない。"
+    },
+    {
+      "rowId": 209,
+      "機能No": "B08-02",
+      "機能名": "B08-02 ポイント失効",
+      "区分(画面種別)": "batch",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "一部解消-残差あり",
+      "設計書参照": "excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html#sheet-4:1134",
+      "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html:1288-1290 の正本セルは失効ポイントを算出して「スマレジのポイント増減APIに送信し、失効ポイント分を差し引く」と要求する。同:1300-1302 はAPI失敗時に当該ユーザーのスマレジ・ユーザーポイント増減を今回は行わず次ユーザーへ進み、翌日以降へ持ち越すと明記する。",
+      "設計期待値": "ユーザーの失効ポイントの値をスマレジのポイント増減APIに送信し、失効ポイント分を差し引く。連携が成功しない場合は当該会員をスキップする。",
+      "差分内容": "設計は会員のスマレジIDと失効ポイントをポイント増減APIへ送信することを要求しているが、実装は送信先・送信ポイントを渡しておらず、サービス本体も固定成功レスポンスであるため、失効分のスマレジ差し引きと失敗時スキップの実効性がない。反証として postSmaregiPoint 呼び出し、SmaregiCustomerApiClient、失効ポイント/losePoint/ポイント増減/API 関連を検索したが、LostPointsAction から実APIに失効値を渡す実装は確認できない。",
+      "実装実態": "LostPointsAction は $losePoint を算出するが、postSmaregiPoint() を引数なしで呼び出す。SmaregiCustomerService::postSmaregiPoint は smaregiId/point を受け取れるシグネチャだが、TODO コメントの固定成功レスポンスを返すのみで実API送信を行わない。"
+    },
+    {
+      "rowId": 208,
+      "機能No": "B08-02",
+      "機能名": "B08-02 ポイント失効",
+      "区分(画面種別)": "batch",
+      "指摘区分": "未実装",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html#sheet-4:1180",
+      "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html:1254-1265 の正本はポイント失効処理と毎日0:00のスケジュール起動を定義するが、正本範囲（同:1234-1304）に `customer:batch` や `lostPoint` はない。コマンド名はリバース詳細設計にのみある。",
+      "設計期待値": "コンソールのバッチコマンドは customer:batch lostPoint で実行する。",
+      "差分内容": "設計の利用者視点入口は customer:batch lostPoint だが、実装入口は eccube:customer:lost-points で外部契約が一致しない。反証として customer:batch/lostPoint/lost-point/lost-points/aliases を src/Eccube と html 配下で検索したが、該当する別名は LostPointsCommand.php:25 以外に存在しない。",
+      "実装実態": "実装の Symfony Console コマンド名は eccube:customer:lost-points。customer:batch lostPoint の AsCommand 名または aliases は確認できない。"
+    },
+    {
+      "rowId": 211,
+      "機能No": "B08-02",
+      "機能名": "B08-02 ポイント失効",
+      "区分(画面種別)": "batch",
+      "指摘区分": "未実装",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html#sheet-4:1185",
+      "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html:1286-1302 の正本は会員ごとの処理とAPI失敗時の次会員継続を定義するが、インターバル、流量制御、リクエスト上限はない。要件はリバース詳細設計の同:1370「流量制御のため会員ごとにインターバルを挟む」にのみある。",
+      "設計期待値": "リクエスト上限に配慮し、会員ごとに短いインターバルを挟む。流量制御のため会員ごとにインターバルを挟む。",
+      "差分内容": "設計はスマレジ連携の流量制御として会員ごとの短いインターバルを要求しているが、対象バッチ実装内に待機処理が存在しない。反証として英日キーワードと sleep/usleep を検索したが、ポイント失効バッチ内のインターバル実装は確認できない。",
+      "実装実態": "LostPointsAction は foreach で会員ごとに処理するが、会員間の sleep/usleep 等の待機処理はない。"
+    },
+    {
+      "rowId": 210,
+      "機能No": "B08-02",
+      "機能名": "B08-02 ポイント失効",
+      "区分(画面種別)": "batch",
+      "指摘区分": "未実装",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html#sheet-4:1210",
+      "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html:1234-1304 のポイント失効正本範囲に開始・完了コンソール出力や日時付きという記載はない。要件はリバース詳細設計の同:1365「開始・完了のコンソール出力（日時付き）」にのみある。",
+      "設計期待値": "開始・完了のコンソール出力（日時付き）。",
+      "差分内容": "設計は開始・完了のコンソール出力に日時付きであることを要求している。LostPointsCommand 内に DateTime/format 等を使った日時出力はなく、反証検索でも当該コマンドの開始・完了メッセージに日時を付ける実装は確認できない。",
+      "実装実態": "開始時は「ポイント失効バッチ開始」、完了時は「ポイント失効処理が完了しました。」を出力するが、日時を付与していない。 設計要求に対応する実装が見当たらない（未実装）。"
+    },
+    {
+      "rowId": 212,
+      "機能No": "B08-03",
+      "機能名": "B08-03 ポイント有効期限通知",
+      "区分(画面種別)": "batch",
+      "指摘区分": "未実装",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html#sheet-5:1342,1343,1346",
+      "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html:1388-1464 のB08-03正本範囲に `customer:batch` や `pointExpireNotification` はない。コマンド名と不一致時終了はリバース詳細設計の同:1497-1498 にのみある。",
+      "設計期待値": "コンソールのバッチコマンドは `customer:batch pointExpireNotification` として実行でき、コマンド名が一致しない場合は処理を行わずに終了する。",
+      "差分内容": "設計は利用者視点の入口として `customer:batch pointExpireNotification` を指定しているが、実装入口は別名の `eccube:customer:point-expire-notification` で登録されている。反証検索として `pointExpireNotification` / `point-expire-notification` / `customer:batch` / `AsCommand(name:)` / `setName(` を確認したが、設計コマンド名の登録は不在。",
+      "実装実態": "実装の Symfony Console コマンド名は `eccube:customer:point-expire-notification`。`customer:batch pointExpireNotification` の AsCommand 名・alias・setName 実装は `src/Eccube/Command` 全体の検索で見つからない。"
+    },
+    {
+      "rowId": 213,
+      "機能No": "B08-03",
+      "機能名": "B08-03 ポイント有効期限通知",
+      "区分(画面種別)": "batch",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html#sheet-5:1363,1373",
+      "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html:1463-1464 の正本エラーハンドリングは「該当処理なし」と記載し、送信エラーのコンソール出力を要求していない。該当要件はリバース詳細設計の同:1528「送信時のエラー／エラーメッセージをコンソールに出力する」にのみある。",
+      "設計期待値": "送信時のエラーはエラーメッセージをコンソールに出力する。",
+      "差分内容": "設計は送信時エラーのコンソール出力を要求しているが、実装はメール送信例外を MailService 内でログ出力に変換して握りつぶす。反証検索として Command の catch、MailService の TransportException catch、logger/log_critical を確認したが、送信時エラーをコンソール出力する実装は確認できない。",
+      "実装実態": "`sendPointExpireNotificationMail()` は `TransportExceptionInterface` を catch すると `log_critical($e->getMessage())` を実行して return する。例外は `PointExpireNotificationCommand` へ再throwされないため、コマンド側の `$io->error(."
+    },
+    {
+      "rowId": 214,
+      "機能No": "B08-03",
+      "機能名": "B08-03 ポイント有効期限通知",
+      "区分(画面種別)": "batch",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html#sheet-5:1375,1376",
+      "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html:1388-1464 のB08-03正本範囲に開始・完了コンソール出力や日時付きという記載はない。要件はリバース詳細設計の同:1531「開始・完了のコンソール出力（日時付き）」にのみある。",
+      "設計期待値": "開始・完了のコンソール出力は日時付きで行う。",
+      "差分内容": "設計は開始・完了のコンソール出力に日時を含めることを要求しているが、実装の Console 出力文字列は固定文言のみ。反証検索として Command の `$io->text` / `$io->success` と Action の logger 出力を確認したが、日時付きコンソール出力は確認できない。",
+      "実装実態": "開始時は `$io->text('ポイント有効期限通知バッチ開始')`、完了時は `$io->success('ポイント有効期限通知処理が完了しました。')` を出力するが、いずれのコンソール文言にも日時は含まれない。"
+    },
+    {
+      "rowId": 226,
+      "機能No": "B16-04",
+      "機能名": "B16-04 必須項目が空欄の会員発生通知",
+      "区分(画面種別)": "batch",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "要修正-設計準拠",
+      "設計書参照": "excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html#sheet-6:1438,1440,1468",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html:1580-1595 のExcel正本は電話番号(1列目)〜(3列目)を取得し、例を `tel01:[電話番号(1列目)]:tel02:[電話番号(2列目)]:tel03:[電話番号(3列目)]` と明記する。同:1622-1623 のメール本文例も `tel01:000:tel02:0000:tel03:0000` である。",
+      "設計期待値": "該当するユーザーがある場合、会員IDおよびユーザー情報抜粋データをコロン区切りで取得し、電話番号(1列目)は tel01 としてメール本文例どおり出力する。",
+      "差分内容": "設計本文例は tel01:[電話番号(1列目)]:tel02:[電話番号(2列目)]:tel03:[電話番号(3列目)] を要求しているが、実装は ':tel02:' + c.tel01 + ':tel02:' + c.tel02 となっている。反証検索でも src/Eccube/Repository/CustomerRepository.php、src/Eccube/Service/MailService.php、src/Eccube/Command、src/Eccube/Service/Admin/Customer、html/template、src/Eccube/Resource 内に、このメール本文用の ':tel01:' 出力実装は見つからなかった。",
+      "実装実態": "ユーザー情報抜粋データの CONCAT で、c.tel01 のラベルが ':tel02:' になっており、続く c.tel02 も ':tel02:' のため tel01 ラベルが出力されない。"
+    },
+    {
+      "rowId": 215,
+      "機能No": "B08-05",
+      "機能名": "B08-05 ポイント差分発生通知",
+      "区分(画面種別)": "batch",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html#sheet-7:1570",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html:1659-1666 のExcel正本は「ポイント履歴データから…」「実行トリガー スケジュール起動(Step Functions)」「毎日3:30」と記載するだけで、`customer:batch adjustPointVariance` というコマンド契約は記載していない。正本範囲（同:1629-1694）に `customer:batch` / `adjustPointVariance` は存在しない。",
+      "設計期待値": "コンソールのバッチコマンドは customer:batch adjustPointVariance として実行する。",
+      "差分内容": "設計の外部契約である実行コマンド名 customer:batch adjustPointVariance と、実装で登録される eccube:customer:adjust-point-variance が一致しない。別キーワード（adjustPointVariance / adjust-point-variance / ポイント差分発生通知 / customer:batch）で再検索したが、設計名のコマンド登録は確認できなかった。",
+      "実装実態": "Symfony Console コマンド名は #[AsCommand(name: 'eccube:customer:adjust-point-variance', ...)] として登録されている。"
+    },
+    {
+      "rowId": 217,
+      "機能No": "B08-05",
+      "機能名": "B08-05 ポイント差分発生通知",
+      "区分(画面種別)": "batch",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html#sheet-7:1599",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html:1691-1692 のExcel正本は「エラーハンドリング」「該当処理なし」であり、取得・送信エラーのコンソール出力を要求していない。該当文言はリバース詳細設計 hareruya-design-docs/functions/pf-eccube3/b08-05_batch_customer_customer_adjust_point_variance.md:146-152 の「取得・送信時のエラー」「エラーメッセージをコンソールに出力する」にのみ存在する。",
+      "設計期待値": "取得・送信時のエラーはエラーメッセージをコンソールに出力する。",
+      "差分内容": "設計は送信時エラーのコンソール出力を要求しているが、実装はメール送信例外をログ出力で握りつぶす。Command 側には Throwable をコンソール出力する catch があるものの、MailService が送信例外を再throwしないため送信時エラーには適用されない。",
+      "実装実態": "メール送信時の TransportExceptionInterface は MailService 内で catch され、log_critical($e->getMessage()) を呼ぶだけで再throwしないため、Command 側の $io->error() に到達しない。"
+    },
+    {
+      "rowId": 216,
+      "機能No": "B08-05",
+      "機能名": "B08-05 ポイント差分発生通知",
+      "区分(画面種別)": "batch",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html#sheet-7:1602",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html:1691-1692 のExcel正本は「エラーハンドリング」「該当処理なし」と記載して終わり、開始・完了の日時付きコンソール出力は記載していない。該当記述はリバース詳細設計 hareruya-design-docs/functions/pf-eccube3/b08-05_batch_customer_customer_adjust_point_variance.md:156-160 の「開始・完了」「開始・完了のコンソール出力（日時付き）」にのみ存在する。",
+      "設計期待値": "開始・完了のコンソール出力（日時付き）。",
+      "差分内容": "設計は開始・完了のコンソール出力に日時付きであることを要求している。実装の開始・完了出力箇所および同コマンド内を確認したが、date/format/現在日時を付与する処理は確認できなかった。",
+      "実装実態": "開始時は「ポイント差分発生通知バッチ開始」、完了時は「ポイント差分発生通知処理が完了しました。」を出力するが、日時は付与していない。"
+    },
+    {
+      "rowId": 218,
+      "機能No": "B08-06",
+      "機能名": "B08-06 スマレジ使用ポイント連携",
+      "区分(画面種別)": "batch",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html#sheet-8:1706,1710",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html:1797-1804 のExcel正本は「商品購入完了時」「注文IDの値をバッチに引き渡し」「スマレジ連携ポイント増減API」を記載するが、`smaregi:batch updatePoint` というコマンド文字列は記載していない。正本範囲（同:1768-1830）に `smaregi:batch` / `updatePoint` は存在しない。",
+      "設計期待値": "スマレジ使用ポイント連携を実行する（ smaregi:batch updatePoint <受注ID> ）",
+      "差分内容": "設計の外部契約は `smaregi:batch updatePoint <受注ID>` だが、Symfony コマンド登録名と呼び出し側が別名になっている。`smaregi:batch updatePoint` / `updatePoint` / `smaregi:batch` で src/Eccube と html を再検索したが、設計名の実装は見つからなかった。",
+      "実装実態": "実装コマンド名は `eccube:smaregi:update-point`。購入完了処理からの別プロセス呼び出しも `/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Front/ShoppingController.php:605` で `eccube:smaregi:update-point` を実行してい"
+    },
+    {
+      "rowId": 219,
+      "機能No": "B08-06",
+      "機能名": "B08-06 スマレジ使用ポイント連携",
+      "区分(画面種別)": "batch",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html#sheet-8:1711,1717,1733",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html:1824-1826 のExcel正本は「注文IDが未入力もしくは該当データなし」「処理を終了する(正常終了扱い[return終了])」だけを定義し、非数値IDの扱いは記載していない。非数値も処理しないという記述はリバース詳細設計 hareruya-design-docs/functions/pf-eccube3/b08-06_batch_customer_smaregi_update_point.md:60-62 にのみ存在する。",
+      "設計期待値": "入力はコマンド名と受注ID。受注IDが不正なら何もせず終了する。",
+      "差分内容": "設計は「受注IDが未指定・数値でない」どちらも処理を行わず終了する扱いだが、実装は非数値入力を失敗終了として扱う。",
+      "実装実態": "受注ID未入力時は成功終了するが、数値でない場合は `/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/SmaregiUpdatePointCommand.php:53-56` でエラーを出力し `Command::FAILURE` を返す。"
+    },
+    {
+      "rowId": 220,
+      "機能No": "B08-06",
+      "機能名": "B08-06 スマレジ使用ポイント連携",
+      "区分(画面種別)": "batch",
+      "指摘区分": "未実装",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "要修正-設計準拠",
+      "設計書参照": "excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html#sheet-8:1714,1730",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html:1827-1828 のExcel正本は通信失敗時に `point_error_message` と `smaregi_error_flg=True` を保存することまでは記載するが、後続の「スマレジEC受注連携エラー再連携バッチ」は記載していない。再試行の記述はリバース詳細設計 hareruya-design-docs/functions/pf-eccube3/b08-06_batch_customer_smaregi_update_point.md:127-132 にのみ存在する。",
+      "設計期待値": "失敗時はエラー状態を残し、スマレジEC受注連携エラー再連携バッチで再試行できる。",
+      "差分内容": "設計は失敗記録だけでなく後続のスマレジEC受注連携エラー再連携バッチによる再試行可能性まで要求している。実装はエラー受注抽出メソッド止まりで、使用ポイント連携を再試行するバッチ入口・Action・呼び出しが不在。なお `SmaregiStockBackfillCommand` は在庫変動Webhook再連携であり、使用ポイント連携の再試行ではない。",
+      "実装実態": "失敗時のエラー保存は `/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/SmaregiUpdatePointAction.php:57-60` と `/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/Sma"
+    },
+    {
+      "rowId": 221,
+      "機能No": "B13-01",
+      "機能名": "B13-01 決済処理中チェックバッチ",
+      "区分(画面種別)": "batch",
+      "指摘区分": "未実装",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "要修正-設計準拠",
+      "設計書参照": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-3:854,945",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html:1005-1008 のExcel正本に「SP.LINKSに取引照会を行い、照会結果に応じた処理を行う」、同:1013-1016 に入力元「SP.LINKS取引照会API」、同:1032-1048 にResponseCdに応じた更新・保留・論理削除が明記されている。",
+      "設計期待値": "SP.LINKSに取引照会を行い、照会結果に応じた処理を行う。決済サービスへ取引を照会し、結果でステータスを判定する。",
+      "差分内容": "PaymentStatusCheckAction::handle() は申込みごとに getApiResponse($paymentNo) を呼ぶが、同メソッド本体が「SP.LINKS取引照会API未実装」として例外を投げるため、設計上の取引照会・レスポンス判定・後続のステータス整合に到達できない。探索範囲: src/Eccube/Command, src/Eccube/Service/Admin/Payment, src/Eccube/Service/Payment, src/Eccube/Repository, html。検索語: SP.LINKS, 取引照会, ResponseCd, MerchantId, getApiResponse, payment-status-check。",
+      "実装実態": "getApiResponse() は SP.LINKS 取引照会APIを実行せず、常に LogicException を throw する。"
+    },
+    {
+      "rowId": 222,
+      "機能No": "B13-01",
+      "機能名": "B13-01 決済処理中チェックバッチ",
+      "区分(画面種別)": "batch",
+      "指摘区分": "未実装",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-3:936,939",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html:1005-1051 のExcel正本には取引照会と結果別処理はあるが、「直前と同じ決済番号」「前回結果の流用」は存在しない。該当記述はリバース詳細設計 hareruya-design-docs/functions/pf-eccube3/b13-01_batch_event_event_check_processing_payment.md:75-85,89-95 にのみ存在する。",
+      "設計期待値": "直前と同じ決済番号の申込みは、前回の照会結果に従って同様の処理を行う。同一決済番号は前回結果を流用する。",
+      "差分内容": "実装には orderBy('ee.paymentNo') はあるが、同一決済番号の検出、前回照会結果のキャッシュ、前回結果に基づく更新・削除・保留処理の流用が存在しない。",
+      "実装実態": "DtbEventEntryRepository::getBeforeMinutesEntry() は paymentNo 順に並べるが、PaymentStatusCheckAction::handle() は各 EventEntry ごとに getApiResponse($paymentNo) を呼び、前回の paymentNo/result を保持・再利用する変数や分岐がない。"
+    },
+    {
+      "rowId": 223,
+      "機能No": "B13-01",
+      "機能名": "B13-01 決済処理中チェックバッチ",
+      "区分(画面種別)": "batch",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-3:936,942,962",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html:1049-1051 のExcel正本は取引照会処理自体のエラー時に「イベント決済確認エラー通知メール」を送ることだけを要求し、重複排除・一括送信は記載していない。集約要件はリバース詳細設計 hareruya-design-docs/functions/pf-eccube3/b13-01_batch_event_event_check_processing_payment.md:98-104,158-165 にのみ存在する。",
+      "設計期待値": "取引不在・未完了以外の想定外エラーは1つにまとめ、管理者へ通知メールを送信する。取引不在・未完了以外のエラーは重複を除いてまとめ、管理者へ通知する。",
+      "差分内容": "設計は想定外エラーを重複排除して1つにまとめ管理者へ通知することを要求しているが、実装は申込み単位の例外ごとに通知メールを送信するため、同一エラーが複数回通知され得る。",
+      "実装実態": "各 EventEntry の catch 節で sendEventPaymentErrorAlertMail($EventEntry, $e->getMessage()) を即時送信し、cntError を加算する。エラー配列への蓄積、重複排除、ループ後の一括通知はない。"
+    }
+  ]
+}
+
+exec
+/bin/bash -lc "jq -r '.findings[] | [.rowId,.機能No,.機能名,.確定根拠区分,.設計書参照,.設計期待値] | @tsv' /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_packets/du_32.json" in /home/y-saito/Developments
+ exited 3 in 377ms:
+jq: error: syntax error, unexpected INVALID_CHARACTER (Unix shell quoting issues?) at <top-level>, line 1:
+.findings[] | [.rowId,.機能No,.機能名,.確定根拠区分,.設計書参照,.設計期待値] | @tsv                       
+jq: error: try .["field"] instead of .field for unusually named fields at <top-level>, line 1:
+.findings[] | [.rowId,.機能No,.機能名,.確定根拠区分,.設計書参照,.設計期待値] | @tsv                      
+jq: 2 compile errors
+
+exec
+/bin/bash -lc "jq -r '.findings[] | [.rowId,.[\"機能No\"],.[\"機能名\"],.[\"確定根拠区分\"],.[\"設計書参照\"],.[\"設計期待値\"]] | @tsv' /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_packets/du_32.json" in /home/y-saito/Developments
+ succeeded in 2454ms:
+182	B05-03	B05-03 店頭注文番号初期化	LEGACY_BACKED	excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-5:1349,1369	削除と採番カウンタ初期化は1トランザクションでまとめた更新ではなく、それぞれ独立した文として実行する。削除のみ成功してカウンタ初期化前に中断した場合でも、再実行で空テーブル・カウンタ1に収束する。
+186	B05-05	B05-05 スマレジ商品削除	SPEC_BACKED	excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-7:1548,	連携に失敗した場合はスマレジ通信エラーメールを送信し、エラーが発生したスマレジ連携ごとにメールで管理者に通知する。
+185	B05-05	B05-05 スマレジ商品削除	LEGACY_BACKED	excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-7:1596,	コンソールのバッチコマンドは order:batch deleteSmaregiProduct で実行し、手続きが完了した店頭注文をスマレジ商品から削除する。コマンド名が一致しない場合は処理を行わずに終了する。
+187	B05-05	B05-05 スマレジ商品削除	LEGACY_BACKED	excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-7:1632,	本バッチは削除連携が主であり、楽観ロック・悲観ロックの対象は持たない。
+188	B05-06	B05-06 ポイント二重登録チェック	LEGACY_BACKED	excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-8:1713,1717	コンソールのバッチコマンドは `order:batch checkDuplicatePoint` として実行する。
+189	B05-06	B05-06 ポイント二重登録チェック	LEGACY_BACKED	excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-8:1732,1742	取得・送信時のエラーはエラーメッセージをコンソールに出力する。
+190	B05-07	B05-07 ポイント利用未反映チェック	LEGACY_BACKED	excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-9:1842,1846	コンソールのバッチコマンドは `order:batch checkNotReflectedPointUsage` でポイント利用未反映チェックを実行する。
+205	B06-02	B06-02 買取集計バッチ	SPEC_BACKED	excel_to_html/output/0406_基本設計仕様書(バッチ_店頭買取管理) .html#sheet-4:1039	部門が登録されていない商品が存在する場合は、エラーメールを送信する。部門未設定商品通知メールには商品名・商品コードの一覧を本文に載せる。
+204	B06-02	B06-02 買取集計バッチ	LEGACY_BACKED	excel_to_html/output/0406_基本設計仕様書(バッチ_店頭買取管理) .html#sheet-4:1074	入口はコンソールのバッチコマンド `otcBuyOrder:batch updateSummary [YYYY-MM-DD]` とし、引数に集計日（YYYY-MM-DD形式）を1つ指定できる。
+206	B06-02	B06-02 買取集計バッチ	LEGACY_BACKED	excel_to_html/output/0406_基本設計仕様書(バッチ_店頭買取管理) .html#sheet-4:1079	実行時間制限を解除する。長時間処理に備えて実行時間制限を解除する。
+207	B06-02	B06-02 買取集計バッチ	LEGACY_BACKED	excel_to_html/output/0406_基本設計仕様書(バッチ_店頭買取管理) .html#sheet-4:1110	部門未設定商品通知メールは送信開始・送信完了・件数、宛先未設定時の送信せず終了をログに記録する。
+209	B08-02	B08-02 ポイント失効	SPEC_BACKED	excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html#sheet-4:1134	ユーザーの失効ポイントの値をスマレジのポイント増減APIに送信し、失効ポイント分を差し引く。連携が成功しない場合は当該会員をスキップする。
+208	B08-02	B08-02 ポイント失効	LEGACY_BACKED	excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html#sheet-4:1180	コンソールのバッチコマンドは customer:batch lostPoint で実行する。
+211	B08-02	B08-02 ポイント失効	LEGACY_BACKED	excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html#sheet-4:1185	リクエスト上限に配慮し、会員ごとに短いインターバルを挟む。流量制御のため会員ごとにインターバルを挟む。
+210	B08-02	B08-02 ポイント失効	LEGACY_BACKED	excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html#sheet-4:1210	開始・完了のコンソール出力（日時付き）。
+212	B08-03	B08-03 ポイント有効期限通知	LEGACY_BACKED	excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html#sheet-5:1342,1343,1346	コンソールのバッチコマンドは `customer:batch pointExpireNotification` として実行でき、コマンド名が一致しない場合は処理を行わずに終了する。
+213	B08-03	B08-03 ポイント有効期限通知	LEGACY_BACKED	excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html#sheet-5:1363,1373	送信時のエラーはエラーメッセージをコンソールに出力する。
+214	B08-03	B08-03 ポイント有効期限通知	LEGACY_BACKED	excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html#sheet-5:1375,1376	開始・完了のコンソール出力は日時付きで行う。
+226	B16-04	B16-04 必須項目が空欄の会員発生通知	SPEC_BACKED	excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html#sheet-6:1438,1440,1468	該当するユーザーがある場合、会員IDおよびユーザー情報抜粋データをコロン区切りで取得し、電話番号(1列目)は tel01 としてメール本文例どおり出力する。
+215	B08-05	B08-05 ポイント差分発生通知	LEGACY_BACKED	excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html#sheet-7:1570	コンソールのバッチコマンドは customer:batch adjustPointVariance として実行する。
+217	B08-05	B08-05 ポイント差分発生通知	LEGACY_BACKED	excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html#sheet-7:1599	取得・送信時のエラーはエラーメッセージをコンソールに出力する。
+216	B08-05	B08-05 ポイント差分発生通知	LEGACY_BACKED	excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html#sheet-7:1602	開始・完了のコンソール出力（日時付き）。
+218	B08-06	B08-06 スマレジ使用ポイント連携	LEGACY_BACKED	excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html#sheet-8:1706,1710	スマレジ使用ポイント連携を実行する（ smaregi:batch updatePoint <受注ID> ）
+219	B08-06	B08-06 スマレジ使用ポイント連携	LEGACY_BACKED	excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html#sheet-8:1711,1717,1733	入力はコマンド名と受注ID。受注IDが不正なら何もせず終了する。
+220	B08-06	B08-06 スマレジ使用ポイント連携	SPEC_BACKED	excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html#sheet-8:1714,1730	失敗時はエラー状態を残し、スマレジEC受注連携エラー再連携バッチで再試行できる。
+221	B13-01	B13-01 決済処理中チェックバッチ	SPEC_BACKED	excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-3:854,945	SP.LINKSに取引照会を行い、照会結果に応じた処理を行う。決済サービスへ取引を照会し、結果でステータスを判定する。
+222	B13-01	B13-01 決済処理中チェックバッチ	LEGACY_BACKED	excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-3:936,939	直前と同じ決済番号の申込みは、前回の照会結果に従って同様の処理を行う。同一決済番号は前回結果を流用する。
+223	B13-01	B13-01 決済処理中チェックバッチ	LEGACY_BACKED	excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-3:936,942,962	取引不在・未完了以外の想定外エラーは1つにまとめ、管理者へ通知メールを送信する。取引不在・未完了以外のエラーは重複を除いてまとめ、管理者へ通知する。
+
+exec
+/bin/bash -lc "rg --files /home/y-saito/Developments/hareruya-design-docs/excel_to_html/input | rg '0405_|0406_|0408_|0413_'" in /home/y-saito/Developments
+ succeeded in 225ms:
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/0406_基本設計仕様書(バッチ_店頭買取管理) .xlsx
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/0408_基本設計仕様書(バッチ_会員).xlsx
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/0413_基本設計仕様書(バッチ_イベント).xlsx
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/0405_基本設計仕様書(バッチ_受注管理).xlsx
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from openpyxl import load_workbook
+from pathlib import Path
+root=Path('/home/y-saito/Developments/hareruya-design-docs/excel_to_html/input')
+for pat in ['0405_*','0406_*','0408_*','0413_*']:
+    p=next(root.glob(pat))
+    wb=load_workbook(p, read_only=False, data_only=False)
+    print(p.name)
+    for i,ws in enumerate(wb.worksheets,1):
+        print(i, repr(ws.title), ws.max_row, ws.max_column, 'images',len(ws._images))
+PY" in /home/y-saito/Developments
+ exited 1 in 1473ms:
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+ModuleNotFoundError: No module named 'openpyxl'
+
+exec
+/bin/bash -lc "ls -la /home/y-saito/Developments/hareruya-design-docs/excel_to_html && sed -n '1,220p' /home/y-saito/Developments/hareruya-design-docs/excel_to_html/pyproject.toml" in /home/y-saito/Developments
+ succeeded in 831ms:
+total 304
+drwxr-sr-x  6 y-saito y-saito   4096 Jul 28 19:03 .
+drwxr-xr-x 23 y-saito y-saito   4096 Jul 28 18:09 ..
+drwxr-sr-x  4 y-saito y-saito   4096 Jun  3 15:12 .venv
+-rw-r--r--  1 y-saito y-saito   5759 Jun 10 13:02 README.md
+drwxr-sr-x  2 y-saito y-saito   4096 Jul 28 18:42 __pycache__
+-rw-r--r--  1 y-saito y-saito 185089 Jul 25 18:44 convert.py
+drwxr-sr-x  2 y-saito y-saito   4096 Jul 29 14:33 input
+drwxr-sr-x  2 y-saito y-saito   4096 Jul 28 19:03 output
+-rw-r--r--  1 y-saito y-saito    256 Jun  3 15:56 pyproject.toml
+-rw-r--r--  1 y-saito y-saito     31 Jun  3 15:56 requirements.txt
+-rw-r--r--  1 y-saito y-saito  31099 Jun  3 16:00 uv.lock
+-rw-r--r--  1 y-saito y-saito  45301 Jul 28 19:03 verify.py
+[project]
+name = "excel-to-html"
+version = "0.1.0"
+description = "Convert Excel workbooks to readable, self-contained tabbed HTML files."
+requires-python = ">=3.10"
+dependencies = [
+    "openpyxl>=3.1.0",
+    "Pillow>=10.0.0",
+]
+
+[tool.uv]
+package = false
+
+exec
+/bin/bash -lc "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/.venv/bin/python - <<'PY'
+from openpyxl import load_workbook
+from pathlib import Path
+root=Path('/home/y-saito/Developments/hareruya-design-docs/excel_to_html/input')
+for pat in ['0405_*','0406_*','0408_*','0413_*']:
+    p=next(root.glob(pat))
+    wb=load_workbook(p, read_only=False, data_only=False)
+    print(p.name)
+    for i,ws in enumerate(wb.worksheets,1):
+        print(i, repr(ws.title), ws.max_row, ws.max_column, 'images',len(ws._images))
+PY" in /home/y-saito/Developments
+exec
+/bin/bash -lc 'for f in /home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/0405_*xlsx /home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/0406_*xlsx /home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/0408_*xlsx /home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/0413_*xlsx; do basename "$f"; unzip -p "$f" xl/workbook.xml | sed '"'s/></>\\n</g' | rg '<sheet '; done" in /home/y-saito/Developments
+ succeeded in 1821ms:
+0405_基本設計仕様書(バッチ_受注管理).xlsx
+<sheet name="表紙" sheetId="1" r:id="rId1"/>
+<sheet name="目次" sheetId="29" r:id="rId2"/>
+<sheet name="注文番号登録" sheetId="62" r:id="rId3"/>
+<sheet name="購入完了手続き再処理" sheetId="63" r:id="rId4"/>
+<sheet name="店頭注文番号初期化" sheetId="64" r:id="rId5"/>
+<sheet name="スマレジ商品再連携" sheetId="65" r:id="rId6"/>
+<sheet name="スマレジ商品削除" sheetId="66" r:id="rId7"/>
+<sheet name="ポイント二重登録チェック" sheetId="67" r:id="rId8"/>
+<sheet name="ポイント利用未反映チェック" sheetId="68" r:id="rId9"/>
+<sheet name="スマレジEC受注連携エラー再連携" sheetId="69" r:id="rId10"/>
+<sheet name="スマレジ取引連携エラー再連携" sheetId="82" r:id="rId11"/>
+0406_基本設計仕様書(バッチ_店頭買取管理) .xlsx
+<sheet name="表紙" sheetId="1" r:id="rId1"/>
+<sheet name="目次" sheetId="29" r:id="rId2"/>
+<sheet name="【新規】買取自動入庫バッチ" sheetId="58" r:id="rId3"/>
+<sheet name="買取集計バッチ" sheetId="59" r:id="rId4"/>
+<sheet name="XXXCSV出力項目設定" sheetId="26" state="hidden" r:id="rId5"/>
+<sheet name="対応状況管理" sheetId="24" state="hidden" r:id="rId6"/>
+<sheet name="メール管理_商品予約完了" sheetId="23" state="hidden" r:id="rId7"/>
+<sheet name="機能A" sheetId="31" state="hidden" r:id="rId8"/>
+0408_基本設計仕様書(バッチ_会員).xlsx
+<sheet state="visible" name="表紙" sheetId="1" r:id="rId4"/>
+<sheet state="visible" name="目次" sheetId="2" r:id="rId5"/>
+<sheet state="visible" name="リニューアル時パスワードリセットメール送信" sheetId="3" r:id="rId6"/>
+<sheet state="visible" name="ポイント失効" sheetId="4" r:id="rId7"/>
+<sheet state="visible" name="ポイント有効期限通知" sheetId="5" r:id="rId8"/>
+<sheet state="visible" name="必須項目が空欄の会員発生通知" sheetId="6" r:id="rId9"/>
+<sheet state="visible" name="ポイント差分発生通知" sheetId="7" r:id="rId10"/>
+<sheet state="visible" name="スマレジ使用ポイント連携" sheetId="8" r:id="rId11"/>
+<sheet state="visible" name="身分証有効期限切れ通知" sheetId="9" r:id="rId12"/>
+<sheet state="hidden" name="XXXCSV出力項目設定" sheetId="10" r:id="rId13"/>
+<sheet state="hidden" name="対応状況管理" sheetId="11" r:id="rId14"/>
+<sheet state="hidden" name="メール管理_商品予約完了" sheetId="12" r:id="rId15"/>
+<sheet state="hidden" name="機能A" sheetId="13" r:id="rId16"/>
+0413_基本設計仕様書(バッチ_イベント).xlsx
+<sheet name="表紙" sheetId="1" r:id="rId1"/>
+<sheet name="目次" sheetId="2" r:id="rId2"/>
+<sheet name="決済処理中チェックバッチ" sheetId="23" r:id="rId3"/>
+<sheet name="コンビニ支払チェックバッチ" sheetId="24" r:id="rId4"/>
+<sheet name="XXXCSV出力項目設定" sheetId="25" state="hidden" r:id="rId5"/>
+<sheet name="対応状況管理" sheetId="26" state="hidden" r:id="rId6"/>
+<sheet name="メール管理_商品予約完了" sheetId="27" state="hidden" r:id="rId7"/>
+<sheet name="機能A" sheetId="28" state="hidden" r:id="rId8"/>
+
+exec
+/bin/bash -lc "sed -n '1430,1485p' '/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html'; sed -n '1680,1740p' '/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html'; sed -n '1800,1855p' '/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html'; sed -n '1915,1980p' '/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html'" in /home/y-saito/Developments
+ succeeded in 645ms:
+          </dl>
+          <nav class="sheet-jump" aria-label="シート内ジャンプ">
+            <a href="#sheet-5-spec-1">処理概要（★はカスタマイズ項目）</a>
+          </nav>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0"><span class="src-cell" data-excel-book="0405" data-excel-sheet="店頭注文番号初期化" data-excel-ref="0405:店頭注文番号初期化!B6">カスタマイズ説明</span></h3>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker"><span class="src-cell" data-excel-book="0405" data-excel-sheet="店頭注文番号初期化" data-excel-ref="0405:店頭注文番号初期化!B7">・</span></span><span><span class="src-cell" data-excel-book="0405" data-excel-sheet="店頭注文番号初期化" data-excel-ref="0405:店頭注文番号初期化!C7">カスタマイズ要件</span></span></div>
+            <h4 class="doc-h doc-h-sub" style="--lv:2"><span class="src-cell" data-excel-book="0405" data-excel-sheet="店頭注文番号初期化" data-excel-ref="0405:店頭注文番号初期化!D8">注文番号初期化処理について</span></h4>
+            <div class="doc-bullet" style="--lv:3"><span class="doc-marker"><span class="src-cell" data-excel-book="0405" data-excel-sheet="店頭注文番号初期化" data-excel-ref="0405:店頭注文番号初期化!E9">・</span></span><span><span class="src-cell" data-excel-book="0405" data-excel-sheet="店頭注文番号初期化" data-excel-ref="0405:店頭注文番号初期化!F9">本店だけではなく支店の店頭注文番号も初期化する</span></span></div>
+            <h3 class="doc-h doc-h-section doc-h-spec" id="sheet-5-spec-1" style="--lv:0"><span class="spec-badge">機能仕様</span><span class="src-cell" data-excel-book="0405" data-excel-sheet="店頭注文番号初期化" data-excel-ref="0405:店頭注文番号初期化!B12">処理概要（★はカスタマイズ項目）</span></h3>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker"><span class="src-cell" data-excel-book="0405" data-excel-sheet="店頭注文番号初期化" data-excel-ref="0405:店頭注文番号初期化!B13">★</span></span><span><span class="src-cell" data-excel-book="0405" data-excel-sheet="店頭注文番号初期化" data-excel-ref="0405:店頭注文番号初期化!C13">店頭受取番号を初期化</span></span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker"><span class="src-cell" data-excel-book="0405" data-excel-sheet="店頭注文番号初期化" data-excel-ref="0405:店頭注文番号初期化!D14">・</span></span><span><span class="src-cell" data-excel-book="0405" data-excel-sheet="店頭注文番号初期化" data-excel-ref="0405:店頭注文番号初期化!E14">本店＋支店の店頭受取番号を削除する</span></span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker"><span class="src-cell" data-excel-book="0405" data-excel-sheet="店頭注文番号初期化" data-excel-ref="0405:店頭注文番号初期化!D15">・</span></span><span><span class="src-cell" data-excel-book="0405" data-excel-sheet="店頭注文番号初期化" data-excel-ref="0405:店頭注文番号初期化!E15">店頭注文番号テーブルで店頭注文場号が発番される時に自動生成されるID (本店・支店共用)をリセットして、1からスタートし直すようにする</span></span></div>
+            <h3 class="doc-h doc-h-section" style="--lv:0"><span class="src-cell" data-excel-book="0405" data-excel-sheet="店頭注文番号初期化" data-excel-ref="0405:店頭注文番号初期化!B18">実行トリガー</span>　<span class="src-cell" data-excel-book="0405" data-excel-sheet="店頭注文番号初期化" data-excel-ref="0405:店頭注文番号初期化!H18">スケジュール起動(Step Functions)</span>　<span class="src-cell" data-excel-book="0405" data-excel-sheet="店頭注文番号初期化" data-excel-ref="0405:店頭注文番号初期化!AJ18">実行タイミング</span>　<span class="src-cell" data-excel-book="0405" data-excel-sheet="店頭注文番号初期化" data-excel-ref="0405:店頭注文番号初期化!AO18">毎日0時</span></h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0"><span class="src-cell" data-excel-book="0405" data-excel-sheet="店頭注文番号初期化" data-excel-ref="0405:店頭注文番号初期化!B20">入力データ元</span>　<span class="src-cell" data-excel-book="0405" data-excel-sheet="店頭注文番号初期化" data-excel-ref="0405:店頭注文番号初期化!G20">DB</span>　<span class="src-cell" data-excel-book="0405" data-excel-sheet="店頭注文番号初期化" data-excel-ref="0405:店頭注文番号初期化!AA20">出力先(フォーマット)</span>　<span class="src-cell" data-excel-book="0405" data-excel-sheet="店頭注文番号初期化" data-excel-ref="0405:店頭注文番号初期化!AH20">DB</span></h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0"><span class="src-cell" data-excel-book="0405" data-excel-sheet="店頭注文番号初期化" data-excel-ref="0405:店頭注文番号初期化!B22">入力データ詳細</span></h3>
+            <p class="doc-p" style="--lv:1"><span class="src-cell" data-excel-book="0405" data-excel-sheet="店頭注文番号初期化" data-excel-ref="0405:店頭注文番号初期化!C24">DBに保存されている店頭注文番号に登録されている全件データ</span></p>
+            <h3 class="doc-h doc-h-section" style="--lv:0"><span class="src-cell" data-excel-book="0405" data-excel-sheet="店頭注文番号初期化" data-excel-ref="0405:店頭注文番号初期化!B27">入力データ検索条件</span></h3>
+          </div>
+          <div class="item-table-wrap">
+            <table class="item-table">
+              <thead>
+                <tr><th><span class="src-cell" data-excel-book="0405" data-excel-sheet="店頭注文番号初期化" data-excel-ref="0405:店頭注文番号初期化!B28">項目名</span></th><th><span class="src-cell" data-excel-book="0405" data-excel-sheet="店頭注文番号初期化" data-excel-ref="0405:店頭注文番号初期化!S28">条件</span></th><th><span class="src-cell" data-excel-book="0405" data-excel-sheet="店頭注文番号初期化" data-excel-ref="0405:店頭注文番号初期化!AK28">備考</span></th></tr>
+              </thead>
+              <tbody>
+                <tr><td><span class="src-cell" data-excel-book="0405" data-excel-sheet="店頭注文番号初期化" data-excel-ref="0405:店頭注文番号初期化!B29">-</span></td><td><span class="src-cell" data-excel-book="0405" data-excel-sheet="店頭注文番号初期化" data-excel-ref="0405:店頭注文番号初期化!S29">-</span></td><td><span class="src-cell" data-excel-book="0405" data-excel-sheet="店頭注文番号初期化" data-excel-ref="0405:店頭注文番号初期化!AK29">-</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0"><span class="src-cell" data-excel-book="0405" data-excel-sheet="店頭注文番号初期化" data-excel-ref="0405:店頭注文番号初期化!B32">実行結果詳細  ※主にDBの登録・更新結果について記載</span></h3>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker"><span class="src-cell" data-excel-book="0405" data-excel-sheet="店頭注文番号初期化" data-excel-ref="0405:店頭注文番号初期化!B34">・</span></span><span><span class="src-cell" data-excel-book="0405" data-excel-sheet="店頭注文番号初期化" data-excel-ref="0405:店頭注文番号初期化!C34">DBに保存されている店頭注文番号の全件を物理削除</span></span></div>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker"><span class="src-cell" data-excel-book="0405" data-excel-sheet="店頭注文番号初期化" data-excel-ref="0405:店頭注文番号初期化!B35">・</span></span><span><span class="src-cell" data-excel-book="0405" data-excel-sheet="店頭注文番号初期化" data-excel-ref="0405:店頭注文番号初期化!C35">店頭注文番号を発番した際に自動採番される店頭注文番号のID (本店・支店共用)をリセットして、1からスタートするようにする</span></span></div>
+            <h3 class="doc-h doc-h-section" style="--lv:0"><span class="src-cell" data-excel-book="0405" data-excel-sheet="店頭注文番号初期化" data-excel-ref="0405:店頭注文番号初期化!B40">エラーハンドリング</span></h3>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker"><span class="src-cell" data-excel-book="0405" data-excel-sheet="店頭注文番号初期化" data-excel-ref="0405:店頭注文番号初期化!C42">・</span></span><span><span class="src-cell" data-excel-book="0405" data-excel-sheet="店頭注文番号初期化" data-excel-ref="0405:店頭注文番号初期化!D42">エラーが発生した場合、メールで管理者に通知</span></span></div>
+          </div>
+        </div>
+      <!-- function-design-embed:start b05-03-b05-03_batch_order_order_store_call_number_initialize -->
+      <section class="function-design-embed" id="function-design-b05-03-b05-03_batch_order_order_store_call_number_initialize" data-source="functions/pf-eccube3/b05-03_batch_order_order_store_call_number_initialize.md">
+        <header class="function-design-header">
+          <p class="function-design-source">Source:<br>functions/pf-eccube3/b05-03_batch_order_order_store_call_number_initialize.md</p>
+          <h3>詳細設計書</h3>
+          <h4>B05-03 店頭注文番号初期化 / バッチ 受注管理 — 店頭注文番号初期化</h4>
+        </header>
+        <div class="function-design-body">
+          <h2 id="function-design-b05-03-b05-03_batch_order_order_store_call_number_initialize-概要">概要</h2>
+          <p>店頭注文番号テーブルの全レコードを削除し、採番カウンタを初期値に戻すバッチである。コマンドライン（コンソールコマンド）から実行する。店頭販売で利用者へ提示する整理番号（店頭注文番号）は、店頭注文番号テーブルへ採番のたびに追加され、テーブルの自動採番値で連番が決まる。本バッチはこのテーブルを空にし、自動採番値を1へ戻すことで、次回以降の店頭注文番号を最初の番号から再採番できる状態にする。</p>
+          <p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインの受注バッチ（店頭注文番号初期化処理）、店頭注文番号を扱うリポジトリを正とする。カスタマイズ区分はカスタマイズであり、挙動の参照リポはpf-eccube3、DB関連はec-cube-enterpriseを正とする。</p>
+          <p>対象はコンソールコマンドであり、ブラウザ経由の画面を持たない。</p>
+          <p>本文ではフレームワークのコマンド型名やサービス型名を主説明としない。実行はコンソールのバッチコマンドで行う。</p>
+          <hr>
+          <h2 id="function-design-b05-03-b05-03_batch_order_order_store_call_number_initialize-本書で扱うこと">本書で扱うこと</h2>
+          <ul><li>バッチの起動方法（コンソールコマンド）</li><li>店頭注文番号テーブルの全削除と採番カウンタの初期化</li><li>初期化に伴うデータ消失と再採番の挙動</li></ul>
+          <hr>
+          <h2 id="function-design-b05-03-b05-03_batch_order_order_store_call_number_initialize-本書で扱わないこと">本書で扱わないこと</h2>
+          <p>以下は本書では仕様確定せず、実装または別機能・運用の設計を正とする。</p>
+        </div>
+      </section>
+      <!-- function-design-embed:end b05-04-b05-04_batch_order_order_resend_smaregi_product -->
+</section>
+      <section class="sheet-panel" id="sheet-7">
+        <div class="sheet-heading">
+          <h2>スマレジ商品削除</h2>
+        </div>
+        <div class="sheet-doc">
+          <dl class="doc-card">
+            <div class="kv"><dt><span class="src-cell" data-excel-book="0405" data-excel-sheet="スマレジ商品削除" data-excel-ref="0405:スマレジ商品削除!A1">ドキュメント名</span></dt><dd><span class="src-cell" data-excel-book="0405" data-excel-sheet="スマレジ商品削除" data-excel-ref="0405:スマレジ商品削除!I1">受注管理　基本設計</span></dd></div>
+            <div class="kv"><dt><span class="src-cell" data-excel-book="0405" data-excel-sheet="スマレジ商品削除" data-excel-ref="0405:スマレジ商品削除!U1">セクション</span></dt><dd>—</dd></div>
+            <div class="kv"><dt><span class="src-cell" data-excel-book="0405" data-excel-sheet="スマレジ商品削除" data-excel-ref="0405:スマレジ商品削除!A2">プロジェクト名</span></dt><dd><span class="src-cell" data-excel-book="0405" data-excel-sheet="スマレジ商品削除" data-excel-ref="0405:スマレジ商品削除!I2">受注管理機能</span></dd></div>
+            <div class="kv"><dt><span class="src-cell" data-excel-book="0405" data-excel-sheet="スマレジ商品削除" data-excel-ref="0405:スマレジ商品削除!U2">作成者</span></dt><dd><span class="src-cell" data-excel-book="0405" data-excel-sheet="スマレジ商品削除" data-excel-ref="0405:スマレジ商品削除!Y2">緑川</span></dd></div>
+            <div class="kv"><dt><span class="src-cell" data-excel-book="0405" data-excel-sheet="スマレジ商品削除" data-excel-ref="0405:スマレジ商品削除!AC2">作成日</span></dt><dd><span class="src-cell" data-excel-book="0405" data-excel-sheet="スマレジ商品削除" data-excel-ref="0405:スマレジ商品削除!AG2">2025-05-13</span></dd></div>
+            <div class="kv"><dt><span class="src-cell" data-excel-book="0405" data-excel-sheet="スマレジ商品削除" data-excel-ref="0405:スマレジ商品削除!AK2">更新者</span></dt><dd><span class="src-cell" data-excel-book="0405" data-excel-sheet="スマレジ商品削除" data-excel-ref="0405:スマレジ商品削除!AO2">堀部</span></dd></div>
+            <div class="kv"><dt><span class="src-cell" data-excel-book="0405" data-excel-sheet="スマレジ商品削除" data-excel-ref="0405:スマレジ商品削除!AS2">更新日</span></dt><dd><span class="src-cell" data-excel-book="0405" data-excel-sheet="スマレジ商品削除" data-excel-ref="0405:スマレジ商品削除!AW2">2025-10-03</span></dd></div>
+            <div class="kv"><dt><span class="src-cell" data-excel-book="0405" data-excel-sheet="スマレジ商品削除" data-excel-ref="0405:スマレジ商品削除!A4">機能No</span></dt><dd><span class="src-cell" data-excel-book="0405" data-excel-sheet="スマレジ商品削除" data-excel-ref="0405:スマレジ商品削除!D4">B05-05</span></dd></div>
+            <div class="kv"><dt><span class="src-cell" data-excel-book="0405" data-excel-sheet="スマレジ商品削除" data-excel-ref="0405:スマレジ商品削除!I4">機能名</span></dt><dd><span class="src-cell" data-excel-book="0405" data-excel-sheet="スマレジ商品削除" data-excel-ref="0405:スマレジ商品削除!N4">スマレジ商品削除</span></dd></div>
+            <div class="kv"><dt><span class="src-cell" data-excel-book="0405" data-excel-sheet="スマレジ商品削除" data-excel-ref="0405:スマレジ商品削除!AC4">概要</span></dt><dd><span class="src-cell" data-excel-book="0405" data-excel-sheet="スマレジ商品削除" data-excel-ref="0405:スマレジ商品削除!AG4">手続きが完了した店頭注文をスマレジ商品から削除する</span></dd></div>
+          </dl>
+          <nav class="sheet-jump" aria-label="シート内ジャンプ">
+            <a href="#sheet-7-spec-1">処理概要（★はカスタマイズ項目）</a>
+          </nav>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0"><span class="src-cell" data-excel-book="0405" data-excel-sheet="スマレジ商品削除" data-excel-ref="0405:スマレジ商品削除!B6">カスタマイズ説明</span></h3>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker"><span class="src-cell" data-excel-book="0405" data-excel-sheet="スマレジ商品削除" data-excel-ref="0405:スマレジ商品削除!C8">・</span></span><span><span class="src-cell" data-excel-book="0405" data-excel-sheet="スマレジ商品削除" data-excel-ref="0405:スマレジ商品削除!D8">スマレジ連携APIについて、呼び出しを廃止予定のスマレジAPIからプラットフォームAPIに変更</span></span></div>
+            <h3 class="doc-h doc-h-section doc-h-spec" id="sheet-7-spec-1" style="--lv:0"><span class="spec-badge">機能仕様</span><span class="src-cell" data-excel-book="0405" data-excel-sheet="スマレジ商品削除" data-excel-ref="0405:スマレジ商品削除!B11">処理概要（★はカスタマイズ項目）</span></h3>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker"><span class="src-cell" data-excel-book="0405" data-excel-sheet="スマレジ商品削除" data-excel-ref="0405:スマレジ商品削除!C13">・</span></span><span><span class="src-cell" data-excel-book="0405" data-excel-sheet="スマレジ商品削除" data-excel-ref="0405:スマレジ商品削除!D13">DBから下記に当てはまる注文データを取得する</span></span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker"><span class="src-cell" data-excel-book="0405" data-excel-sheet="スマレジ商品削除" data-excel-ref="0405:スマレジ商品削除!D14">・</span></span><span><span class="src-cell" data-excel-book="0405" data-excel-sheet="スマレジ商品削除" data-excel-ref="0405:スマレジ商品削除!E14">スマレジ商品コードが存在する</span></span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker"><span class="src-cell" data-excel-book="0405" data-excel-sheet="スマレジ商品削除" data-excel-ref="0405:スマレジ商品削除!D15">・</span></span><span><span class="src-cell" data-excel-book="0405" data-excel-sheet="スマレジ商品削除" data-excel-ref="0405:スマレジ商品削除!E15">スマレジ削除フラグが立っていない</span></span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker"><span class="src-cell" data-excel-book="0405" data-excel-sheet="スマレジ商品削除" data-excel-ref="0405:スマレジ商品削除!D16">★</span></span><span><span class="src-cell" data-excel-book="0405" data-excel-sheet="スマレジ商品削除" data-excel-ref="0405:スマレジ商品削除!E16">注文ステータスが「キャンセル」もしくは「引き渡し済み」</span></span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker"><span class="src-cell" data-excel-book="0405" data-excel-sheet="スマレジ商品削除" data-excel-ref="0405:スマレジ商品削除!C18">・</span></span><span><span class="src-cell" data-excel-book="0405" data-excel-sheet="スマレジ商品削除" data-excel-ref="0405:スマレジ商品削除!D18">取得した注文データをスマレジ連携をし、注文データの商品をスマレジから論理削除する</span></span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker"><span class="src-cell" data-excel-book="0405" data-excel-sheet="スマレジ商品削除" data-excel-ref="0405:スマレジ商品削除!D19">・</span></span><span><span class="src-cell" data-excel-book="0405" data-excel-sheet="スマレジ商品削除" data-excel-ref="0405:スマレジ商品削除!E19">当該の注文データの商品をスマレジ上で論理削除</span></span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker"><span class="src-cell" data-excel-book="0405" data-excel-sheet="スマレジ商品削除" data-excel-ref="0405:スマレジ商品削除!D20">・</span></span><span><span class="src-cell" data-excel-book="0405" data-excel-sheet="スマレジ商品削除" data-excel-ref="0405:スマレジ商品削除!E20">連携に失敗した場合はスマレジ通信エラーメール送信</span></span></div>
+            <h3 class="doc-h doc-h-section" style="--lv:0"><span class="src-cell" data-excel-book="0405" data-excel-sheet="スマレジ商品削除" data-excel-ref="0405:スマレジ商品削除!B23">実行トリガー</span>　<span class="src-cell" data-excel-book="0405" data-excel-sheet="スマレジ商品削除" data-excel-ref="0405:スマレジ商品削除!H23">スケジュール起動(Step Functions)</span>　<span class="src-cell" data-excel-book="0405" data-excel-sheet="スマレジ商品削除" data-excel-ref="0405:スマレジ商品削除!AJ23">実行タイミング</span>　<span class="src-cell" data-excel-book="0405" data-excel-sheet="スマレジ商品削除" data-excel-ref="0405:スマレジ商品削除!AO23">毎日4時</span></h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0"><span class="src-cell" data-excel-book="0405" data-excel-sheet="スマレジ商品削除" data-excel-ref="0405:スマレジ商品削除!B25">入力データ元</span>　<span class="src-cell" data-excel-book="0405" data-excel-sheet="スマレジ商品削除" data-excel-ref="0405:スマレジ商品削除!G25">DB</span>　<span class="src-cell" data-excel-book="0405" data-excel-sheet="スマレジ商品削除" data-excel-ref="0405:スマレジ商品削除!AA25">出力先(フォーマット)</span>　<span class="src-cell" data-excel-book="0405" data-excel-sheet="スマレジ商品削除" data-excel-ref="0405:スマレジ商品削除!AH25">DB, スマレジ</span></h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0"><span class="src-cell" data-excel-book="0405" data-excel-sheet="スマレジ商品削除" data-excel-ref="0405:スマレジ商品削除!B27">入力データ詳細</span></h3>
+            <p class="doc-p" style="--lv:1"><span class="src-cell" data-excel-book="0405" data-excel-sheet="スマレジ商品削除" data-excel-ref="0405:スマレジ商品削除!C29">DBから手続きが完了した店舗注文データを取得</span></p>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker"><span class="src-cell" data-excel-book="0405" data-excel-sheet="スマレジ商品削除" data-excel-ref="0405:スマレジ商品削除!C30">・</span></span><span><span class="src-cell" data-excel-book="0405" data-excel-sheet="スマレジ商品削除" data-excel-ref="0405:スマレジ商品削除!D30">スマレジ商品コードが登録されている</span></span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker"><span class="src-cell" data-excel-book="0405" data-excel-sheet="スマレジ商品削除" data-excel-ref="0405:スマレジ商品削除!C31">・</span></span><span><span class="src-cell" data-excel-book="0405" data-excel-sheet="スマレジ商品削除" data-excel-ref="0405:スマレジ商品削除!D31">スマレジ削除フラグが立っていない</span></span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker"><span class="src-cell" data-excel-book="0405" data-excel-sheet="スマレジ商品削除" data-excel-ref="0405:スマレジ商品削除!C32">・</span></span><span><span class="src-cell" data-excel-book="0405" data-excel-sheet="スマレジ商品削除" data-excel-ref="0405:スマレジ商品削除!D32">注文ステータスが「キャンセル」もしくは「引き渡し済み」</span></span></div>
+            <h3 class="doc-h doc-h-section" style="--lv:0"><span class="src-cell" data-excel-book="0405" data-excel-sheet="スマレジ商品削除" data-excel-ref="0405:スマレジ商品削除!B36">入力データ検索条件</span></h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0"><span class="src-cell" data-excel-book="0405" data-excel-sheet="スマレジ商品削除" data-excel-ref="0405:スマレジ商品削除!B37">項目名</span>　<span class="src-cell" data-excel-book="0405" data-excel-sheet="スマレジ商品削除" data-excel-ref="0405:スマレジ商品削除!S37">条件</span>　<span class="src-cell" data-excel-book="0405" data-excel-sheet="スマレジ商品削除" data-excel-ref="0405:スマレジ商品削除!AK37">備考</span></h3>
+            <p class="doc-p" style="--lv:0"><span class="src-cell" data-excel-book="0405" data-excel-sheet="スマレジ商品削除" data-excel-ref="0405:スマレジ商品削除!B38">スマレジ商品コード</span>　<span class="src-cell" data-excel-book="0405" data-excel-sheet="スマレジ商品削除" data-excel-ref="0405:スマレジ商品削除!S38">スマレジ商品コードが登録されている</span></p>
+            <p class="doc-p" style="--lv:0"><span class="src-cell" data-excel-book="0405" data-excel-sheet="スマレジ商品削除" data-excel-ref="0405:スマレジ商品削除!B39">スマレジ削除フラグ</span>　<span class="src-cell" data-excel-book="0405" data-excel-sheet="スマレジ商品削除" data-excel-ref="0405:スマレジ商品削除!S39">スマレジ削除フラグが立っていない</span></p>
+            <p class="doc-p" style="--lv:0"><span class="src-cell" data-excel-book="0405" data-excel-sheet="スマレジ商品削除" data-excel-ref="0405:スマレジ商品削除!B40">注文ステータス</span>　<span class="src-cell" data-excel-book="0405" data-excel-sheet="スマレジ商品削除" data-excel-ref="0405:スマレジ商品削除!S40">「キャンセル」もしくは「出荷完了」</span></p>
+            <h3 class="doc-h doc-h-section" style="--lv:0"><span class="src-cell" data-excel-book="0405" data-excel-sheet="スマレジ商品削除" data-excel-ref="0405:スマレジ商品削除!B43">実行結果詳細  ※主にDBの登録・更新結果について記載</span></h3>
+            <p class="doc-p" style="--lv:1"><span class="src-cell" data-excel-book="0405" data-excel-sheet="スマレジ商品削除" data-excel-ref="0405:スマレジ商品削除!C45">スマレジプラットフォームAPIでスマレジから取得した注文データの商品情報を論理削除する</span></p>
+            <p class="doc-p" style="--lv:1"><span class="src-cell" data-excel-book="0405" data-excel-sheet="スマレジ商品削除" data-excel-ref="0405:スマレジ商品削除!C46">スマレジ登録が成功したら、当該注文データのスマレジ削除フラグを立てる</span></p>
+            <h3 class="doc-h doc-h-section" style="--lv:0"><span class="src-cell" data-excel-book="0405" data-excel-sheet="スマレジ商品削除" data-excel-ref="0405:スマレジ商品削除!B51">エラーハンドリング</span></h3>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker"><span class="src-cell" data-excel-book="0405" data-excel-sheet="スマレジ商品削除" data-excel-ref="0405:スマレジ商品削除!C53">・</span></span><span><span class="src-cell" data-excel-book="0405" data-excel-sheet="スマレジ商品削除" data-excel-ref="0405:スマレジ商品削除!D53">エラーが発生した場合、発生したスマレジ連携ごとにメールで管理者に通知</span></span></div>
+          </div>
+        </div>
+      <!-- function-design-embed:start b05-05-b05-05_batch_order_order_delete_smaregi_product -->
+      <section class="function-design-embed" id="function-design-b05-05-b05-05_batch_order_order_delete_smaregi_product" data-source="functions/pf-eccube3/b05-05_batch_order_order_delete_smaregi_product.md">
+        <header class="function-design-header">
+          <p class="function-design-source">Source:<br>functions/pf-eccube3/b05-05_batch_order_order_delete_smaregi_product.md</p>
+          <h3>詳細設計書</h3>
+          <h4>B05-05 スマレジ商品削除 / バッチ 受注管理 — スマレジ商品削除</h4>
+        </header>
+        </div>
+      </section>
+      <!-- function-design-embed:end b05-05-b05-05_batch_order_order_delete_smaregi_product -->
+</section>
+      <section class="sheet-panel" id="sheet-8">
+        <div class="sheet-heading">
+          <h2>ポイント二重登録チェック</h2>
+        </div>
+        <div class="sheet-doc">
+          <dl class="doc-card">
+            <div class="kv"><dt><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント二重登録チェック" data-excel-ref="0405:ポイント二重登録チェック!A1">ドキュメント名</span></dt><dd><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント二重登録チェック" data-excel-ref="0405:ポイント二重登録チェック!I1">受注管理　基本設計</span></dd></div>
+            <div class="kv"><dt><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント二重登録チェック" data-excel-ref="0405:ポイント二重登録チェック!U1">セクション</span></dt><dd>—</dd></div>
+            <div class="kv"><dt><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント二重登録チェック" data-excel-ref="0405:ポイント二重登録チェック!A2">プロジェクト名</span></dt><dd><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント二重登録チェック" data-excel-ref="0405:ポイント二重登録チェック!I2">受注管理機能</span></dd></div>
+            <div class="kv"><dt><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント二重登録チェック" data-excel-ref="0405:ポイント二重登録チェック!U2">作成者</span></dt><dd><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント二重登録チェック" data-excel-ref="0405:ポイント二重登録チェック!Y2">緑川</span></dd></div>
+            <div class="kv"><dt><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント二重登録チェック" data-excel-ref="0405:ポイント二重登録チェック!AC2">作成日</span></dt><dd><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント二重登録チェック" data-excel-ref="0405:ポイント二重登録チェック!AG2">2025-05-13</span></dd></div>
+            <div class="kv"><dt><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント二重登録チェック" data-excel-ref="0405:ポイント二重登録チェック!AK2">更新者</span></dt><dd><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント二重登録チェック" data-excel-ref="0405:ポイント二重登録チェック!AO2">堀部</span></dd></div>
+            <div class="kv"><dt><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント二重登録チェック" data-excel-ref="0405:ポイント二重登録チェック!AS2">更新日</span></dt><dd><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント二重登録チェック" data-excel-ref="0405:ポイント二重登録チェック!AW2">2025-10-03</span></dd></div>
+            <div class="kv"><dt><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント二重登録チェック" data-excel-ref="0405:ポイント二重登録チェック!A4">機能No</span></dt><dd><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント二重登録チェック" data-excel-ref="0405:ポイント二重登録チェック!D4">B05-06</span></dd></div>
+            <div class="kv"><dt><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント二重登録チェック" data-excel-ref="0405:ポイント二重登録チェック!I4">機能名</span></dt><dd><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント二重登録チェック" data-excel-ref="0405:ポイント二重登録チェック!N4">ポイント二重登録チェック</span></dd></div>
+            <div class="kv"><dt><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント二重登録チェック" data-excel-ref="0405:ポイント二重登録チェック!AC4">概要</span></dt><dd><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント二重登録チェック" data-excel-ref="0405:ポイント二重登録チェック!AG4">ポイント二重登録を検知して管理者にメール通知する</span></dd></div>
+          </dl>
+          <nav class="sheet-jump" aria-label="シート内ジャンプ">
+            <a href="#sheet-8-spec-1">処理概要（★はカスタマイズ項目）</a>
+          </nav>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0"><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント二重登録チェック" data-excel-ref="0405:ポイント二重登録チェック!B6">カスタマイズ説明</span></h3>
+            <p class="doc-p" style="--lv:1"><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント二重登録チェック" data-excel-ref="0405:ポイント二重登録チェック!C8">なし</span></p>
+            <h3 class="doc-h doc-h-section doc-h-spec" id="sheet-8-spec-1" style="--lv:0"><span class="spec-badge">機能仕様</span><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント二重登録チェック" data-excel-ref="0405:ポイント二重登録チェック!B11">処理概要（★はカスタマイズ項目）</span></h3>
+            <p class="doc-p" style="--lv:1"><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント二重登録チェック" data-excel-ref="0405:ポイント二重登録チェック!C13">ポイント履歴から注文データIDとポイント増減量で検索し、重複している履歴を検索する</span></p>
+            <p class="doc-p" style="--lv:1"><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント二重登録チェック" data-excel-ref="0405:ポイント二重登録チェック!C14">重複している履歴があれば、注文IDから注文番号を取得し、管理者にメールを送信する</span></p>
+            <h3 class="doc-h doc-h-section" style="--lv:0"><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント二重登録チェック" data-excel-ref="0405:ポイント二重登録チェック!B18">実行トリガー</span>　<span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント二重登録チェック" data-excel-ref="0405:ポイント二重登録チェック!H18">スケジュール起動(Step Functions)</span>　<span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント二重登録チェック" data-excel-ref="0405:ポイント二重登録チェック!AJ18">実行タイミング</span>　<span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント二重登録チェック" data-excel-ref="0405:ポイント二重登録チェック!AO18">毎日4時</span></h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0"><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント二重登録チェック" data-excel-ref="0405:ポイント二重登録チェック!B20">入力データ元</span>　<span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント二重登録チェック" data-excel-ref="0405:ポイント二重登録チェック!G20">DB</span>　<span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント二重登録チェック" data-excel-ref="0405:ポイント二重登録チェック!AA20">出力先(フォーマット)</span>　<span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント二重登録チェック" data-excel-ref="0405:ポイント二重登録チェック!AH20">メール</span></h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0"><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント二重登録チェック" data-excel-ref="0405:ポイント二重登録チェック!B22">入力データ詳細</span></h3>
+            <p class="doc-p" style="--lv:1"><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント二重登録チェック" data-excel-ref="0405:ポイント二重登録チェック!C24">以下の条件のもと、ポイント履歴を取得する</span></p>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker"><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント二重登録チェック" data-excel-ref="0405:ポイント二重登録チェック!C25">・</span></span><span><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント二重登録チェック" data-excel-ref="0405:ポイント二重登録チェック!D25">バッチが動作している現在日時から1日分遡った期間のポイント履歴</span></span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker"><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント二重登録チェック" data-excel-ref="0405:ポイント二重登録チェック!C26">・</span></span><span><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント二重登録チェック" data-excel-ref="0405:ポイント二重登録チェック!D26">ポイントが付与された履歴(ポイント増減量がマイナスの履歴)</span></span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker"><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント二重登録チェック" data-excel-ref="0405:ポイント二重登録チェック!C27">・</span></span><span><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント二重登録チェック" data-excel-ref="0405:ポイント二重登録チェック!D27">注文データIDとポイント増減量の組み合わせで検索し、複数個重複している</span></span></div>
+            <h3 class="doc-h doc-h-section" style="--lv:0"><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント二重登録チェック" data-excel-ref="0405:ポイント二重登録チェック!B31">入力データ検索条件</span></h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0"><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント二重登録チェック" data-excel-ref="0405:ポイント二重登録チェック!B32">項目名</span>　<span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント二重登録チェック" data-excel-ref="0405:ポイント二重登録チェック!S32">条件</span>　<span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント二重登録チェック" data-excel-ref="0405:ポイント二重登録チェック!AK32">備考</span></h3>
+            <p class="doc-p" style="--lv:0"><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント二重登録チェック" data-excel-ref="0405:ポイント二重登録チェック!B33">ポイント履歴.ポイント発行日</span>　<span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント二重登録チェック" data-excel-ref="0405:ポイント二重登録チェック!S33">バッチが動作している現在日時から1日前までの期間</span></p>
+            <p class="doc-p" style="--lv:0"><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント二重登録チェック" data-excel-ref="0405:ポイント二重登録チェック!B34">ポイント履歴.ポイント増減量</span>　<span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント二重登録チェック" data-excel-ref="0405:ポイント二重登録チェック!S34">0より小さい</span></p>
+            <p class="doc-p" style="--lv:0"><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント二重登録チェック" data-excel-ref="0405:ポイント二重登録チェック!B35">ポイント履歴.注文ID, ポイント履歴.ポイント増減量</span>　<span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント二重登録チェック" data-excel-ref="0405:ポイント二重登録チェック!S35">注文IDとポイント増減量の組合せで同じ組合せがあるかどうか検索し、複数個存在している</span></p>
+            <h3 class="doc-h doc-h-section" style="--lv:0"><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント二重登録チェック" data-excel-ref="0405:ポイント二重登録チェック!B38">実行結果詳細  ※主にDBの登録・更新結果について記載</span></h3>
+            <p class="doc-p" style="--lv:1"><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント二重登録チェック" data-excel-ref="0405:ポイント二重登録チェック!C40">検索結果があれば、ポイント履歴にある注文IDから注文番号を取得し、管理者にメールで通知する</span></p>
+            <h3 class="doc-h doc-h-section" style="--lv:0"><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント二重登録チェック" data-excel-ref="0405:ポイント二重登録チェック!B46">エラーハンドリング</span></h3>
+            <p class="doc-p" style="--lv:1"><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント二重登録チェック" data-excel-ref="0405:ポイント二重登録チェック!C48">外部システムとの連携もなく、外部から引数等も受け取っていないため、特になし</span></p>
+          </div>
+        </div>
+      <!-- function-design-embed:start b05-06-b05-06_batch_order_order_check_duplicate_point -->
+      <section class="function-design-embed" id="function-design-b05-06-b05-06_batch_order_order_check_duplicate_point" data-source="functions/pf-eccube3/b05-06_batch_order_order_check_duplicate_point.md">
+        <header class="function-design-header">
+          <p class="function-design-source">Source:<br>functions/pf-eccube3/b05-06_batch_order_order_check_duplicate_point.md</p>
+          <h3>詳細設計書</h3>
+          <h4>B05-06 ポイント二重登録チェック / バッチ 受注管理 — ポイント二重登録チェック</h4>
+        </header>
+        <div class="function-design-body">
+          <h2 id="function-design-b05-06-b05-06_batch_order_order_check_duplicate_point-排他制御・トランザクション">排他制御・トランザクション</h2>
+          <p>本バッチは検知と通知が主であり、楽観ロック・悲観ロックの対象は持たない。</p>
+        </div>
+      </section>
+      <!-- function-design-embed:end b05-06-b05-06_batch_order_order_check_duplicate_point -->
+</section>
+      <section class="sheet-panel" id="sheet-9">
+        <div class="sheet-heading">
+          <h2>ポイント利用未反映チェック</h2>
+        </div>
+        <div class="sheet-doc">
+          <dl class="doc-card">
+            <div class="kv"><dt><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント利用未反映チェック" data-excel-ref="0405:ポイント利用未反映チェック!A1">ドキュメント名</span></dt><dd><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント利用未反映チェック" data-excel-ref="0405:ポイント利用未反映チェック!I1">受注管理　基本設計</span></dd></div>
+            <div class="kv"><dt><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント利用未反映チェック" data-excel-ref="0405:ポイント利用未反映チェック!U1">セクション</span></dt><dd>—</dd></div>
+            <div class="kv"><dt><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント利用未反映チェック" data-excel-ref="0405:ポイント利用未反映チェック!A2">プロジェクト名</span></dt><dd><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント利用未反映チェック" data-excel-ref="0405:ポイント利用未反映チェック!I2">受注管理機能</span></dd></div>
+            <div class="kv"><dt><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント利用未反映チェック" data-excel-ref="0405:ポイント利用未反映チェック!U2">作成者</span></dt><dd><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント利用未反映チェック" data-excel-ref="0405:ポイント利用未反映チェック!Y2">緑川</span></dd></div>
+            <div class="kv"><dt><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント利用未反映チェック" data-excel-ref="0405:ポイント利用未反映チェック!AC2">作成日</span></dt><dd><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント利用未反映チェック" data-excel-ref="0405:ポイント利用未反映チェック!AG2">2025-05-13</span></dd></div>
+            <div class="kv"><dt><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント利用未反映チェック" data-excel-ref="0405:ポイント利用未反映チェック!AK2">更新者</span></dt><dd><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント利用未反映チェック" data-excel-ref="0405:ポイント利用未反映チェック!AO2">堀部</span></dd></div>
+            <div class="kv"><dt><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント利用未反映チェック" data-excel-ref="0405:ポイント利用未反映チェック!AS2">更新日</span></dt><dd><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント利用未反映チェック" data-excel-ref="0405:ポイント利用未反映チェック!AW2">2025-10-03</span></dd></div>
+            <div class="kv"><dt><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント利用未反映チェック" data-excel-ref="0405:ポイント利用未反映チェック!A4">機能No</span></dt><dd><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント利用未反映チェック" data-excel-ref="0405:ポイント利用未反映チェック!D4">B05-07</span></dd></div>
+            <div class="kv"><dt><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント利用未反映チェック" data-excel-ref="0405:ポイント利用未反映チェック!I4">機能名</span></dt><dd><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント利用未反映チェック" data-excel-ref="0405:ポイント利用未反映チェック!N4">ポイント利用未反映チェック</span></dd></div>
+            <div class="kv"><dt><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント利用未反映チェック" data-excel-ref="0405:ポイント利用未反映チェック!AC4">概要</span></dt><dd><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント利用未反映チェック" data-excel-ref="0405:ポイント利用未反映チェック!AG4">過去1時間以内のGMO決済の受注でポイント利用が反映されていない決済をチェックする</span></dd></div>
+          </dl>
+          <nav class="sheet-jump" aria-label="シート内ジャンプ">
+            <a href="#sheet-9-spec-1">処理概要（★はカスタマイズ項目）</a>
+          </nav>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0"><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント利用未反映チェック" data-excel-ref="0405:ポイント利用未反映チェック!B6">カスタマイズ説明</span></h3>
+            <p class="doc-p" style="--lv:1"><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント利用未反映チェック" data-excel-ref="0405:ポイント利用未反映チェック!C8">決済会社のソニーペイメントへの変更に伴い、決済会社が出力する決済結果情報の参照方法を変更</span></p>
+            <h3 class="doc-h doc-h-section doc-h-spec" id="sheet-9-spec-1" style="--lv:0"><span class="spec-badge">機能仕様</span><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント利用未反映チェック" data-excel-ref="0405:ポイント利用未反映チェック!B11">処理概要（★はカスタマイズ項目）</span></h3>
+            <p class="doc-p" style="--lv:1"><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント利用未反映チェック" data-excel-ref="0405:ポイント利用未反映チェック!C13">注文データで、ポイント利用されているが、ポイント利用が正しく反映されていない注文を抽出</span></p>
+            <p class="doc-p" style="--lv:1"><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント利用未反映チェック" data-excel-ref="0405:ポイント利用未反映チェック!C15">抽出したデータの注文IDを管理者にメールで送信する</span></p>
+            <h3 class="doc-h doc-h-section" style="--lv:0"><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント利用未反映チェック" data-excel-ref="0405:ポイント利用未反映チェック!B18">実行トリガー</span>　<span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント利用未反映チェック" data-excel-ref="0405:ポイント利用未反映チェック!H18">スケジュール起動(Step Functions)</span>　<span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント利用未反映チェック" data-excel-ref="0405:ポイント利用未反映チェック!AJ18">実行タイミング</span>　<span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント利用未反映チェック" data-excel-ref="0405:ポイント利用未反映チェック!AO18">毎時10分</span></h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0"><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント利用未反映チェック" data-excel-ref="0405:ポイント利用未反映チェック!B20">入力データ元</span>　<span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント利用未反映チェック" data-excel-ref="0405:ポイント利用未反映チェック!G20">DB</span>　<span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント利用未反映チェック" data-excel-ref="0405:ポイント利用未反映チェック!AA20">出力先(フォーマット)</span>　<span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント利用未反映チェック" data-excel-ref="0405:ポイント利用未反映チェック!AH20">メール</span></h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0"><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント利用未反映チェック" data-excel-ref="0405:ポイント利用未反映チェック!B22">入力データ詳細</span></h3>
+            <p class="doc-p" style="--lv:1"><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント利用未反映チェック" data-excel-ref="0405:ポイント利用未反映チェック!C24">以下の条件を満たす注文データを取得する</span></p>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker"><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント利用未反映チェック" data-excel-ref="0405:ポイント利用未反映チェック!C25">・</span></span><span><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント利用未反映チェック" data-excel-ref="0405:ポイント利用未反映チェック!D25">バッチ動作時点の現在日時から直近1時間以内に支払われた </span></span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker"><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント利用未反映チェック" data-excel-ref="0405:ポイント利用未反映チェック!C26">・</span></span><span><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント利用未反映チェック" data-excel-ref="0405:ポイント利用未反映チェック!D26">注文の購入金額合計と支払合計が異なる </span></span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker"><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント利用未反映チェック" data-excel-ref="0405:ポイント利用未反映チェック!C27">・</span></span><span><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント利用未反映チェック" data-excel-ref="0405:ポイント利用未反映チェック!D27">注文番号がNULLでない </span></span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker"><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント利用未反映チェック" data-excel-ref="0405:ポイント利用未反映チェック!C28">・</span></span><span><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント利用未反映チェック" data-excel-ref="0405:ポイント利用未反映チェック!D28">備考がNULL </span></span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker"><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント利用未反映チェック" data-excel-ref="0405:ポイント利用未反映チェック!C29">・</span></span><span><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント利用未反映チェック" data-excel-ref="0405:ポイント利用未反映チェック!D29">購入金額割引(ポイント利用)が存在する </span></span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker"><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント利用未反映チェック" data-excel-ref="0405:ポイント利用未反映チェック!C30">・</span></span><span><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント利用未反映チェック" data-excel-ref="0405:ポイント利用未反映チェック!D30">紐づく欠品履歴がない </span></span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker"><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント利用未反映チェック" data-excel-ref="0405:ポイント利用未反映チェック!C31">・</span></span><span><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント利用未反映チェック" data-excel-ref="0405:ポイント利用未反映チェック!D31">購入金額合計と支払合計の大きい方と購入金額合計と支払合計の小さい方に割引分を加えたものが一致しない </span></span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker"><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント利用未反映チェック" data-excel-ref="0405:ポイント利用未反映チェック!C32">・</span></span><span><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント利用未反映チェック" data-excel-ref="0405:ポイント利用未反映チェック!D32">注文が論理削除されていない </span></span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker"><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント利用未反映チェック" data-excel-ref="0405:ポイント利用未反映チェック!C33">・</span></span><span><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント利用未反映チェック" data-excel-ref="0405:ポイント利用未反映チェック!D33"><span class="cell-strike">GMO決済メモに購入金額合計または支払合計のテキストが含まれる </span></span></span></div>
+            <p class="doc-p" style="--lv:2"><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント利用未反映チェック" data-excel-ref="0405:ポイント利用未反映チェック!E34">決済会社をソニーペイメントに変更するため、この部分の参照方法を変更する(現時点では詳細は未定)</span></p>
+            <h3 class="doc-h doc-h-section" style="--lv:0"><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント利用未反映チェック" data-excel-ref="0405:ポイント利用未反映チェック!B38">入力データ検索条件</span></h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0"><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント利用未反映チェック" data-excel-ref="0405:ポイント利用未反映チェック!B39">項目名</span>　<span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント利用未反映チェック" data-excel-ref="0405:ポイント利用未反映チェック!S39">条件</span>　<span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント利用未反映チェック" data-excel-ref="0405:ポイント利用未反映チェック!AK39">備考</span></h3>
+            <p class="doc-p" style="--lv:0"><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント利用未反映チェック" data-excel-ref="0405:ポイント利用未反映チェック!B40">注文データ.支払日時</span>　<span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント利用未反映チェック" data-excel-ref="0405:ポイント利用未反映チェック!S40">バッチ動作時点の現在日時から1時間前までの注文</span></p>
+            <p class="doc-p" style="--lv:0"><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント利用未反映チェック" data-excel-ref="0405:ポイント利用未反映チェック!B41">注文データ.注文番号</span>　<span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント利用未反映チェック" data-excel-ref="0405:ポイント利用未反映チェック!S41">注文番号が登録されている</span></p>
+            <p class="doc-p" style="--lv:0"><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント利用未反映チェック" data-excel-ref="0405:ポイント利用未反映チェック!B42">注文データ.備考</span>　<span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント利用未反映チェック" data-excel-ref="0405:ポイント利用未反映チェック!S42">備考に何も登録されていない</span></p>
+            <p class="doc-p" style="--lv:0"><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント利用未反映チェック" data-excel-ref="0405:ポイント利用未反映チェック!B43">注文データ.購入金額割引</span>　<span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント利用未反映チェック" data-excel-ref="0405:ポイント利用未反映チェック!S43">購入金額割引がある</span></p>
+            <p class="doc-p" style="--lv:0"><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント利用未反映チェック" data-excel-ref="0405:ポイント利用未反映チェック!B44">欠品履歴</span>　<span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント利用未反映チェック" data-excel-ref="0405:ポイント利用未反映チェック!S44">注文データに紐づく欠品履歴が存在しない</span></p>
+            <p class="doc-p" style="--lv:0"><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント利用未反映チェック" data-excel-ref="0405:ポイント利用未反映チェック!B45">注文データ.削除フラグ</span>　<span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント利用未反映チェック" data-excel-ref="0405:ポイント利用未反映チェック!S45">削除フラグが立っていない</span></p>
+            <p class="doc-p" style="--lv:0"><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント利用未反映チェック" data-excel-ref="0405:ポイント利用未反映チェック!B46">注文データ.購入金額合計と注文データ.支払合計の大きい方</span>　<span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント利用未反映チェック" data-excel-ref="0405:ポイント利用未反映チェック!S46">[注文データ.購入金額合計と注文データ.支払合計の小さい方] + 講習金額割引 の値と一致しない</span></p>
+            <p class="doc-p" style="--lv:0"><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント利用未反映チェック" data-excel-ref="0405:ポイント利用未反映チェック!B47">決済会社出力情報</span>　<span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント利用未反映チェック" data-excel-ref="0405:ポイント利用未反映チェック!S47">決済会社出力情報の中に、購入金額合計もしくは支払合計のテキストが含まれている</span></p>
+            <h3 class="doc-h doc-h-section" style="--lv:0"><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント利用未反映チェック" data-excel-ref="0405:ポイント利用未反映チェック!B50">実行結果詳細  ※主にDBの登録・更新結果について記載</span></h3>
+            <p class="doc-p" style="--lv:1"><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント利用未反映チェック" data-excel-ref="0405:ポイント利用未反映チェック!C52">条件を満たす注文データがあれば、それらを注文IDのリストにして管理者に送信する</span></p>
+            <h3 class="doc-h doc-h-section" style="--lv:0"><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント利用未反映チェック" data-excel-ref="0405:ポイント利用未反映チェック!B56">エラーハンドリング</span></h3>
+            <p class="doc-p" style="--lv:1"><span class="src-cell" data-excel-book="0405" data-excel-sheet="ポイント利用未反映チェック" data-excel-ref="0405:ポイント利用未反映チェック!C58">外部システムとの連携もなく、外部から引数等も受け取っていないため、特になし</span></p>
+          </div>
+        </div>
+      <!-- function-design-embed:start b05-07-b05-07_batch_order_order_check_not_reflected_point -->
+      <section class="function-design-embed" id="function-design-b05-07-b05-07_batch_order_order_check_not_reflected_point" data-source="functions/pf-eccube3/b05-07_batch_order_order_check_not_reflected_point.md">
+        <header class="function-design-header">
+          <p class="function-design-source">Source:<br>functions/pf-eccube3/b05-07_batch_order_order_check_not_reflected_point.md</p>
+
+exec
+/bin/bash -lc "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/.venv/bin/python - <<'PY'
+from openpyxl import load_workbook
+p='/home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/0405_基本設計仕様書(バッチ_受注管理).xlsx'
+wb=load_workbook(p, read_only=True, data_only=False)
+print(wb.sheetnames, flush=True)
+for sn in ['店頭注文番号初期化','スマレジ商品削除','ポイント二重登録チェック','ポイント利用未反映チェック']:
+ ws=wb[sn]; print('\\n##',sn,flush=True)
+ for row in ws.iter_rows():
+  vals=[f'{c.coordinate}={c.value}' for c in row if c.value not in (None,'')]
+  if vals: print(' | '.join(vals),flush=True)
+PY" in /home/y-saito/Developments
+ succeeded in 4074ms:
+['表紙', '目次', '注文番号登録', '購入完了手続き再処理', '店頭注文番号初期化', 'スマレジ商品再連携', 'スマレジ商品削除', 'ポイント二重登録チェック', 'ポイント利用未反映チェック', 'スマレジEC受注連携エラー再連携', 'スマレジ取引連携エラー再連携']
+
+## 店頭注文番号初期化
+A1=ドキュメント名 | I1=受注管理　基本設計 | U1=セクション
+A2=プロジェクト名 | I2=受注管理機能 | U2=作成者 | Y2=緑川 | AC2=作成日 | AG2=2025-05-13 00:00:00 | AK2=更新者 | AO2=堀部 | AS2=更新日 | AW2=2025-10-02 00:00:00
+A4=機能No | D4=B05-03 | I4=機能名 | N4=店頭注文番号初期化 | AC4=概要 | AG4=店頭注文番号テーブルを初期化する
+B6=カスタマイズ説明
+B7=・ | C7=カスタマイズ要件
+D8=注文番号初期化処理について
+E9=・ | F9=本店だけではなく支店の店頭注文番号も初期化する
+B12=処理概要（★はカスタマイズ項目）
+B13=★ | C13=店頭受取番号を初期化
+D14=・ | E14=本店＋支店の店頭受取番号を削除する
+D15=・ | E15=店頭注文番号テーブルで店頭注文場号が発番される時に自動生成されるID (本店・支店共用)をリセットして、1からスタートし直すようにする
+B18=実行トリガー | H18=スケジュール起動(Step Functions) | AJ18=実行タイミング | AO18=毎日0時
+B20=入力データ元 | G20=DB | AA20=出力先(フォーマット) | AH20=DB
+B22=入力データ詳細
+C24=DBに保存されている店頭注文番号に登録されている全件データ
+B27=入力データ検索条件
+B28=項目名 | S28=条件 | AK28=備考
+B29=- | S29=- | AK29=-
+B32=実行結果詳細  ※主にDBの登録・更新結果について記載
+B34=・ | C34=DBに保存されている店頭注文番号の全件を物理削除
+B35=・ | C35=店頭注文番号を発番した際に自動採番される店頭注文番号のID (本店・支店共用)をリセットして、1からスタートするようにする
+B40=エラーハンドリング
+C42=・ | D42=エラーが発生した場合、メールで管理者に通知
+
+## スマレジ商品削除
+A1=ドキュメント名 | I1=受注管理　基本設計 | U1=セクション
+A2=プロジェクト名 | I2=受注管理機能 | U2=作成者 | Y2=緑川 | AC2=作成日 | AG2=2025-05-13 00:00:00 | AK2=更新者 | AO2=堀部 | AS2=更新日 | AW2=2025-10-03 00:00:00
+A4=機能No | D4=B05-05 | I4=機能名 | N4=スマレジ商品削除 | AC4=概要 | AG4=手続きが完了した店頭注文をスマレジ商品から削除する
+B6=カスタマイズ説明
+C8=・ | D8=スマレジ連携APIについて、呼び出しを廃止予定のスマレジAPIからプラットフォームAPIに変更
+B11=処理概要（★はカスタマイズ項目）
+C13=・ | D13=DBから下記に当てはまる注文データを取得する
+D14=・ | E14=スマレジ商品コードが存在する
+D15=・ | E15=スマレジ削除フラグが立っていない
+D16=★ | E16=注文ステータスが「キャンセル」もしくは「引き渡し済み」
+C18=・ | D18=取得した注文データをスマレジ連携をし、注文データの商品をスマレジから論理削除する
+D19=・ | E19=当該の注文データの商品をスマレジ上で論理削除
+D20=・ | E20=連携に失敗した場合はスマレジ通信エラーメール送信
+B23=実行トリガー | H23=スケジュール起動(Step Functions) | AJ23=実行タイミング | AO23=毎日4時
+B25=入力データ元 | G25=DB | AA25=出力先(フォーマット) | AH25=DB, スマレジ
+B27=入力データ詳細
+C29=DBから手続きが完了した店舗注文データを取得
+C30=・ | D30=スマレジ商品コードが登録されている
+C31=・ | D31=スマレジ削除フラグが立っていない
+C32=・ | D32=注文ステータスが「キャンセル」もしくは「引き渡し済み」
+B36=入力データ検索条件
+B37=項目名 | S37=条件 | AK37=備考
+B38=スマレジ商品コード | S38=スマレジ商品コードが登録されている
+B39=スマレジ削除フラグ | S39=スマレジ削除フラグが立っていない
+B40=注文ステータス | S40=「キャンセル」もしくは「出荷完了」
+B43=実行結果詳細  ※主にDBの登録・更新結果について記載
+C45=スマレジプラットフォームAPIでスマレジから取得した注文データの商品情報を論理削除する
+C46=スマレジ登録が成功したら、当該注文データのスマレジ削除フラグを立てる
+B51=エラーハンドリング
+C53=・ | D53=エラーが発生した場合、発生したスマレジ連携ごとにメールで管理者に通知
+
+## ポイント二重登録チェック
+A1=ドキュメント名 | I1=受注管理　基本設計 | U1=セクション
+A2=プロジェクト名 | I2=受注管理機能 | U2=作成者 | Y2=緑川 | AC2=作成日 | AG2=2025-05-13 00:00:00 | AK2=更新者 | AO2=堀部 | AS2=更新日 | AW2=2025-10-03 00:00:00
+A4=機能No | D4=B05-06 | I4=機能名 | N4=ポイント二重登録チェック | AC4=概要 | AG4=ポイント二重登録を検知して管理者にメール通知する
+B6=カスタマイズ説明
+C8=なし
+B11=処理概要（★はカスタマイズ項目）
+C13=ポイント履歴から注文データIDとポイント増減量で検索し、重複している履歴を検索する
+C14=重複している履歴があれば、注文IDから注文番号を取得し、管理者にメールを送信する
+B18=実行トリガー | H18=スケジュール起動(Step Functions) | AJ18=実行タイミング | AO18=毎日4時
+B20=入力データ元 | G20=DB | AA20=出力先(フォーマット) | AH20=メール
+B22=入力データ詳細
+C24=以下の条件のもと、ポイント履歴を取得する
+C25=・ | D25=バッチが動作している現在日時から1日分遡った期間のポイント履歴
+C26=・ | D26=ポイントが付与された履歴(ポイント増減量がマイナスの履歴)
+C27=・ | D27=注文データIDとポイント増減量の組み合わせで検索し、複数個重複している
+B31=入力データ検索条件
+B32=項目名 | S32=条件 | AK32=備考
+B33=ポイント履歴.ポイント発行日 | S33=バッチが動作している現在日時から1日前までの期間
+B34=ポイント履歴.ポイント増減量 | S34=0より小さい
+B35=ポイント履歴.注文ID, ポイント履歴.ポイント増減量 | S35=注文IDとポイント増減量の組合せで同じ組合せがあるかどうか検索し、複数個存在している
+B38=実行結果詳細  ※主にDBの登録・更新結果について記載
+C40=検索結果があれば、ポイント履歴にある注文IDから注文番号を取得し、管理者にメールで通知する
+B46=エラーハンドリング
+C48=外部システムとの連携もなく、外部から引数等も受け取っていないため、特になし
+
+## ポイント利用未反映チェック
+A1=ドキュメント名 | I1=受注管理　基本設計 | U1=セクション
+A2=プロジェクト名 | I2=受注管理機能 | U2=作成者 | Y2=緑川 | AC2=作成日 | AG2=2025-05-13 00:00:00 | AK2=更新者 | AO2=堀部 | AS2=更新日 | AW2=2025-10-03 00:00:00
+A4=機能No | D4=B05-07 | I4=機能名 | N4=ポイント利用未反映チェック | AC4=概要 | AG4=過去1時間以内のGMO決済の受注でポイント利用が反映されていない決済をチェックする
+B6=カスタマイズ説明
+C8=決済会社のソニーペイメントへの変更に伴い、決済会社が出力する決済結果情報の参照方法を変更
+B11=処理概要（★はカスタマイズ項目）
+C13=注文データで、ポイント利用されているが、ポイント利用が正しく反映されていない注文を抽出
+C15=抽出したデータの注文IDを管理者にメールで送信する
+B18=実行トリガー | H18=スケジュール起動(Step Functions) | AJ18=実行タイミング | AO18=毎時10分
+B20=入力データ元 | G20=DB | AA20=出力先(フォーマット) | AH20=メール
+B22=入力データ詳細
+C24=以下の条件を満たす注文データを取得する
+C25=・ | D25=バッチ動作時点の現在日時から直近1時間以内に支払われた 
+C26=・ | D26=注文の購入金額合計と支払合計が異なる 
+C27=・ | D27=注文番号がNULLでない 
+C28=・ | D28=備考がNULL 
+C29=・ | D29=購入金額割引(ポイント利用)が存在する 
+C30=・ | D30=紐づく欠品履歴がない 
+C31=・ | D31=購入金額合計と支払合計の大きい方と購入金額合計と支払合計の小さい方に割引分を加えたものが一致しない 
+C32=・ | D32=注文が論理削除されていない 
+C33=・ | D33=GMO決済メモに購入金額合計または支払合計のテキストが含まれる 
+E34=決済会社をソニーペイメントに変更するため、この部分の参照方法を変更する(現時点では詳細は未定)
+B38=入力データ検索条件
+B39=項目名 | S39=条件 | AK39=備考
+B40=注文データ.支払日時 | S40=バッチ動作時点の現在日時から1時間前までの注文
+B41=注文データ.注文番号 | S41=注文番号が登録されている
+B42=注文データ.備考 | S42=備考に何も登録されていない
+B43=注文データ.購入金額割引 | S43=購入金額割引がある
+B44=欠品履歴 | S44=注文データに紐づく欠品履歴が存在しない
+B45=注文データ.削除フラグ | S45=削除フラグが立っていない
+B46=注文データ.購入金額合計と注文データ.支払合計の大きい方 | S46=[注文データ.購入金額合計と注文データ.支払合計の小さい方] + 講習金額割引 の値と一致しない
+B47=決済会社出力情報 | S47=決済会社出力情報の中に、購入金額合計もしくは支払合計のテキストが含まれている
+B50=実行結果詳細  ※主にDBの登録・更新結果について記載
+C52=条件を満たす注文データがあれば、それらを注文IDのリストにして管理者に送信する
+B56=エラーハンドリング
+C58=外部システムとの連携もなく、外部から引数等も受け取っていないため、特になし
+
+ succeeded in 68205ms:
+0405_基本設計仕様書(バッチ_受注管理).xlsx
+1 '表紙' 1000 51 images 0
+2 '目次' 763 51 images 0
+3 '注文番号登録' 300 55 images 0
+4 '購入完了手続き再処理' 227 60 images 0
+5 '店頭注文番号初期化' 226 54 images 0
+6 'スマレジ商品再連携' 251 57 images 0
+7 'スマレジ商品削除' 243 57 images 0
+8 'ポイント二重登録チェック' 242 57 images 0
+9 'ポイント利用未反映チェック' 249 57 images 0
+10 'スマレジEC受注連携エラー再連携' 239 57 images 0
+11 'スマレジ取引連携エラー再連携' 540 60 images 0
+0406_基本設計仕様書(バッチ_店頭買取管理) .xlsx
+1 '表紙' 1000 51 images 0
+2 '目次' 758 51 images 0
+3 '【新規】買取自動入庫バッチ' 545 60 images 0
+4 '買取集計バッチ' 525 55 images 0
+5 'XXXCSV出力項目設定' 799 54 images 0
+6 '対応状況管理' 824 54 images 0
+7 'メール管理_商品予約完了' 817 61 images 0
+8 '機能A' 279 54 images 0
+0408_基本設計仕様書(バッチ_会員).xlsx
+1 '表紙' 1000 26 images 0
+2 '目次' 1000 26 images 0
+3 'リニューアル時パスワードリセットメール送信' 1000 65 images 0
+4 'ポイント失効' 1000 57 images 0
+5 'ポイント有効期限通知' 1000 65 images 0
+6 '必須項目が空欄の会員発生通知' 997 65 images 0
+7 'ポイント差分発生通知' 1000 65 images 0
+8 'スマレジ使用ポイント連携' 1000 57 images 0
+9 '身分証有効期限切れ通知' 1000 65 images 0
+10 'XXXCSV出力項目設定' 231 54 images 0
+11 '対応状況管理' 220 54 images 0
+12 'メール管理_商品予約完了' 292 61 images 0
+13 '機能A' 1000 55 images 0
+0413_基本設計仕様書(バッチ_イベント).xlsx
+1 '表紙' 220 26 images 0
+2 '目次' 132 4 images 0
+3 '決済処理中チェックバッチ' 95 54 images 0
+4 'コンビニ支払チェックバッチ' 117 54 images 0
+5 'XXXCSV出力項目設定' 231 54 images 0
+6 '対応状況管理' 220 54 images 0
+7 'メール管理_商品予約完了' 292 61 images 0
+8 '機能A' 279 55 images 0
+
+exec
+/bin/bash -lc "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/.venv/bin/python - <<'PY'
+from openpyxl import load_workbook
+p='/home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/0406_基本設計仕様書(バッチ_店頭買取管理) .xlsx'
+wb=load_workbook(p, read_only=True, data_only=False)
+ws=wb['買取集計バッチ']
+for row in ws.iter_rows():
+ vals=[f'{c.coordinate}={c.value}' for c in row if c.value not in (None,'')]
+ if vals: print(' | '.join(vals))
+PY" in /home/y-saito/Developments
+ succeeded in 2438ms:
+A1=ドキュメント名 | I1=店頭買取管理　基本設計 | U1=セクション
+A2=プロジェクト名 | I2=店頭買取管理機能 | U2=作成者 | Y2=石川 | AC2=作成日 | AG2=2025-07-17 00:00:00 | AK2=更新者 | AO2=石川 | AS2=更新日 | AW2=2025-09-06 00:00:00
+A4=機能No | D4=B06-02 | I4=機能名 | N4=買取集計バッチ | AC4=概要 | AG4=店頭買取を部門ごとに集計する
+B7=カスタマイズ説明
+C9=・ | D9=新しく追加された買取ステータスを買取集計対象にする
+B12=処理概要（★はカスタマイズ項目）
+C14=・ | D14=店舗ごと、買取成立日ごと、部門ごとに店頭買取情報を集計する
+C15=・ | D15=集計対象日はバッチの引数があれば引数の日付、なければバッチ実行日の前日の00:00:00から23:59:59
+C16=★ | D16=集計対象のステータスは「買取成立」「入庫済み」「未登録在庫あり」「入庫待ち」とする
+C17=・ | D17=店頭買取注文詳細の金額、店頭買取注文個別入力商品の金額、買取合計金額から店頭買取注文詳細と店頭買取注文個別入力商品の金額をマイナスした端数の金額を集計する
+C18=・ | D18=集計対象日の集計データがすでにある場合は集計データを削除する
+C19=・ | D19=集計データを登録する
+B23=実行トリガー | F23=スケジュール起動(Step Functions) | AJ23=実行タイミング | AO23=毎日3時
+B25=入力データ元 | G25=DB | AA25=出力先(フォーマット) | AG25=DB
+B27=入力データ詳細
+C29=・ | D29=買取成立日が指定日またはバッチ実行日前日の00:00:00から23:59:59の店頭買取情報
+B33=入力データ検索条件
+B34=項目名 | S34=条件 | AK34=備考
+B35=店頭買取情報.買取成立日 | S35=指定日またはバッチ実行日前日の00:00:00から23:59:59
+B39=実行結果詳細  ※主にDBの登録・更新結果について記載
+C41=・ | D41=集計データの削除
+C42=・ | D42=集計データの登録
+B48=エラーハンドリング
+C50=・ | D50=部門が登録されていない商品が存在する場合は、エラーメールを送信する
+
+exec
+/bin/bash -lc "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/.venv/bin/python - <<'PY'
+from openpyxl import load_workbook
+p='/home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/0408_基本設計仕様書(バッチ_会員).xlsx'
+wb=load_workbook(p, read_only=True, data_only=False)
+for sn in ['ポイント失効','ポイント有効期限通知','必須項目が空欄の会員発生通知','ポイント差分発生通知','スマレジ使用ポイント連携']:
+ ws=wb[sn]; print('\\n##',sn)
+ for row in ws.iter_rows():
+  vals=[f'{c.coordinate}={c.value}' for c in row if c.value not in (None,'')]
+  if vals: print(' | '.join(vals))
+PY" in /home/y-saito/Developments
+ succeeded in 17040ms:
+
+## ポイント失効
+A1=ドキュメント名 | I1=='表紙'!$B$7 | U1=セクション
+A2=プロジェクト名 | I2=='表紙'!$B$5 | U2=作成者 | Y2=='表紙'!$D$11 | AC2=作成日 | AG2=='表紙'!$E$11 | AK2=更新者 | AO2=='表紙'!$D$12 | AS2=更新日 | AW2=='表紙'!$E$12
+A4=機能No | D4=B08-02 | I4=機能名 | N4=ポイント失効 | AC4=概要 | AG4=ポイント失効処理を行う
+B6=カスタマイズ説明
+B7=概要
+C8=ポイント失効処理を行う
+B10=機能
+C11=有効期限が切れたポイントを失効処理を行う。
+C12=併せて、スマレジ内のユーザー情報も同様にポイント失効をおこなう
+B15=処理概要（★はカスタマイズ項目）
+B16=処理内容
+C17=・ | D17=ポイントの有効期限は晴れる屋サイトで「ポイント発行日より6ヶ月(※)」と記載されており、それ以降のポイントは失効となる
+D18=※システムでのポイント有効期限は183日間と定義されているため、若干のズレは発生する
+C19=・ | D19=スマレジに失効ポイントを差し引くAPI通信を粉う
+C20=・ | D20=プレイヤーデータにあるポイント残高を失効ポイントを差し引いたポイントへ更新する
+C21=・ | D21=ポイントの有効期限は「ポイント発行日より6ヶ月」とし、それ以降はポイント失効となる
+C22=・ | D22=ポイント履歴データに失効ポイントのレコードを追加する
+B25=実行トリガー | F25=スケジュール起動(Step Functions) | AJ25=実行タイミング | AO25=毎日0:00
+B27=入力データ元 | G27=DB | AA27=出力先(フォーマット) | AG27=DB ・ スマレジAPI
+B29=入力データ詳細
+B30=・ | C30=ポイント履歴データ(dtb_point_history)からユーザー毎に「バッチ実行日から有効期限日(183日前)までのポイント累計(以下、ポイント累計)」と
+C31=プレイヤーデータ(dtb_player)にある「ポイント残高(point 以下、ポイント残高)」を一時的に取得
+C32=※  | D32=ポイント累計は加算ポイント(プラス値)のみ対象とし、失効や使用したポイント(マイナス値)は累計に含めない
+B33=・ | C33=ポイント累計とポイント残高を比較し、ポイント残高の方が多いものを本取得する
+B36=入力データ検索条件
+B37=項目名 | S37=条件 | AK37=備考
+B38=ポイント履歴データ.ポイント発行日 | S38=>= 183日前の日時 | AK38=有効期限は半年間(183日)
+B39=ポイント履歴データ.ポイント増減量 | S39=> 0 | AK39=加算ポイントのみ
+B40=プレイヤーデータ.ポイント残高 | S40=＞ ポイント履歴データ.ポイント増減量の合計 | AK40=上記2条件に該当するポイント増減量の合計
+B43=実行結果詳細  ※主にDBの登録・更新結果について記載
+B44=・ | C44=「入力データ詳細」で取得した一覧からユーザー毎に以下の処理を行う
+C45=・ | D45=「ポイント累計」からプレイヤーデータにある「ポイント残高」を差し引き、「失効ポイント」を算出する(計算結果はマイナス値になる)
+C46=・ | D46=ユーザーの「失効ポイント」の値をスマレジのポイント増減APIに送信し、失効ポイント分を差し引く
+C47=・ | D47=プレイヤーデータ(dtb_player)にあるポイント残高(point)を「ポイント累計」の値へ更新する
+C48=・ | D48=ポイント履歴データに下記の内容を登録する
+D49=・ | E49=会員ID:プレイヤーデータ(dtb_player)にある顧客ID(customer_id)
+D50=・ | E50=増減ポイント:失効ポイント
+D51=・ | E51=備考:「有効期限切れによる失効」に固定
+D52=・ | E52=有効期限:本日から183日間後の日時
+D53=・ | E53=登録日時:本日の日時
+D54=・ | E54=ポイント属性ID: 1(付与型)で登録
+D55=※ | E55=スマレジ取引IDという項目が存在するが、登録される処理が入っておらず未使用
+B59=エラーハンドリング
+B60=・ | C60=スマレジへのポイント増減API登録失敗(タイムアウト・レスポンスステータスが失敗扱いの場合)
+C61=エラーが発生したユーザーのポイント失効処理(スマレジ・ユーザーポイント増減含め)は今回は行わず、次のユーザーの処理を行う
+C62=(該当ユーザーのポイント失効処理は翌日以降に持ち越しとなる)
+
+## ポイント有効期限通知
+A1=ドキュメント名 | I1=='表紙'!$B$7 | U1=セクション
+A2=プロジェクト名 | I2=='表紙'!$B$5 | U2=作成者 | Y2=='表紙'!$D$11 | AC2=作成日 | AG2=='表紙'!$E$11 | AK2=更新者 | AO2=盛田 | AS2=更新日 | AW2=2026-02-04 00:00:00
+A4=機能No | D4=B08-03 | I4=機能名 | N4=ポイント有効期限通知 | AC4=概要 | AG4=ポイント有効期限が近付いている会員に通知を行う
+B6=カスタマイズ説明
+B7=概要
+C8=ポイント有効期限が近付いている会員に通知を行う
+B10=機能
+C11=ポイント有効期限切れ前にユーザーにお知らせメールを送信する
+B14=処理概要（★はカスタマイズ項目）
+B15=処理内容
+C16=・ | D16=ポイントの有効期限は晴れる屋サイトで「ポイント発行日より6ヶ月(※)」と記載されており、それ以降のポイントは失効となる
+D17=※システムでのポイント有効期限は183日間と定義されているため、若干のズレは発生する
+C18=・ | D18=ポイント有効期限メール通知は有効期限切れ「30日前」および「１週間前」の２回通知を行う
+C19=★ | D19=仮会員と退会済み会員は対象外とする
+B21=処理内容
+C22=・ | D22=ポイント有効期限メール通知対象者リストを取得する
+C23=・ | D23=指定された有効期限日に未使用のポイント残っている場合、ポイント有効期限メールを送信する
+B26=実行トリガー | F26=スケジュール起動(Step Functions) | AJ26=実行タイミング | AO26=毎日0:05
+B28=入力データ元 | G28=DB | AA28=出力先(フォーマット) | AG28=メール
+B30=入力データ詳細
+B31=・ | C31=ポイント履歴データ(dtb_point_history)から以下の条件にすべて該当するデータをユーザー毎に取得する
+C32=1. | D32=有効期限から指定日数(30日 or 7日)遡った日付に取得したポイントがある場合(以下 指定日獲得ポイント)
+D33=例 | E33=バッチ実行日が2025/9/30の場合、ポイント有効期限切れになる日は2025/4/1になる。
+E34=有効期限30日前は2025/5/1になり、その日に獲得したポイントの有無を確認し、ある場合には対象
+C35=2. | D35=有効期限から指定日数(30日 or 7日)遡った日付までで残ポイントがある場合(以下 残ポイント)
+D36=例 | E36=上記の同様の条件の場合
+E37=有効期限30日前は2025/5/1までの全獲得ポイント合計から使用ポイント合計を差し引いて、その結果がプラス(残ポイント)がある場合
+C38=3. | D38=会員の会員ステータスが、仮会員、退会済み会員のいずれでもない
+B42=入力データ検索条件
+B43=項目名 | S43=条件 | AK43=備考
+B44=ポイント履歴データ.ポイント発行日 | S44=>= 183日前の日時 + (30日 or 7日) | AK44=有効期限は半年間(183日)から30日前もしくは7日前
+B45=会員情報.会員ステータス | S45=仮会員ではない かつ 退会会員ではない
+B47=実行結果詳細  ※主にDBの登録・更新結果について記載
+B48=・ | C48=通知する有効期限間近ポイント数
+C49=いずれかの値のうち、最小ポイントのものを有効期限間近ポイントとして案内する
+C50=1. | D50=プレイヤーデータ(dtb_player)にある「ポイント残高」
+C51=2. | D51=入力データ詳細で取得したデータから「残ポイント」
+C52=3. | D52=入力データ詳細で取得したデータから「指定日獲得ポイント」
+C53=(通常は3が該当するが、該当の処理がコードに含まれているため記載)
+B55=・ | C55=メール送信
+C56=・ | D56=メール送信先は会員データにあるメールアドレス宛に送信する
+C57=・ | D57=メール送信元は[info@hareruyamtg.com]に設定
+C58=・ | D58=日本語メール本文
+D59=・ | E59=件名: | G59=※重要【晴れる屋】ポイント有効期限のお知らせ
+D60=・ | E60=本文
+D61=いつも晴れる屋をご利用いただき誠にありがとうございます。
+
+下記のポイントに関しまして有効期限が迫っていることをお知らせさせていただきます。
+
+---------------------------
+
+[有効期限間近ポイント] ポイント　有効期限　[有効期限日時]
+
+---------------------------
+
+※有効期限内にご利用いただけないポイントは失効となってしまいます。
+失効となったポイントの再加算はいたしかねますのでご注意ください。
+
+※こちらのメールは自動送信となっております。
+ご返信いただきましても、お問い合わせにはお答えできかねますのでご了承ください。
+お問い合わせにつきましてはこちらからお願いいたします
+https://www.hareruyamtg.com/ja/contact
+
+*************************************
+《晴れる屋/Hareruya》
+〒169-0075
+東京都新宿区高田馬場3-12-2 OCビル2F
+E-MAIL : info@hareruyamtg.com
+URL :https://www.hareruyamtg.com
+*************************************
+C88=・ | D88=英語メール本文
+D89=・ | E89=件名: | G89=【Hareruya】 Your points are about to expire
+D90=・ | E90=本文
+D91=We strongly recommend you to spend these points before expired.	
+										
+---------------------------
+Points nearing expiration:
+[有効期限間近ポイント]  points
+
+Expiration date:
+[有効期限日時(D/M/Y形式)]
+---------------------------
+										
+*This e-mail message was sent to you by an automated e-mail system.
+Please click the following link if you'd like to contact us.
+https://www.hareruyamtg.com/en/contact
+
+*************************************
+[Hareruya]
+〒169-0075
+3-12-2 OC Building 2F Takadanobaba Shinjuku-ku Tokyo-to
+E-MAIL : info@hareruyamtg.com
+URL :https://www.hareruyamtg.com/en/
+*************************************
+D111=※ | E111=テンプレート内に有効期限間近ポイント数および有効期限日を記載する箇所がないため追記
+B113=・ | C113=メール送信後処理(1通ごとに処理実行)
+C114=メール送信後、データベース内にあるメール送信履歴データ(dtb_mail_history)に下記情報が登録される
+D115=・ | E115=送信日時
+D116=・ | E116=送信時のメール件名
+D117=・ | E117=送信したメール本文の全文
+D118=・ | E118=メール送信時に使用したテンプレートのファイル名('Mail/point_expire_notification.twig' または 'Mail/point_expire_notification.en.twig')
+D119=・ | E119=送信した相手のユーザーID
+B123=エラーハンドリング
+B124=・ | C124=該当処理なし
+
+## 必須項目が空欄の会員発生通知
+A1=ドキュメント名 | I1=='表紙'!$B$7 | U1=セクション
+A2=プロジェクト名 | I2=='表紙'!$B$5 | U2=作成者 | Y2=='表紙'!$D$11 | AC2=作成日 | AG2=='表紙'!$E$11 | AK2=更新者 | AO2=='表紙'!$D$12 | AS2=更新日 | AW2=='表紙'!$E$12
+A4=機能No | D4=B16-04 | I4=機能名 | N4=必須項目が空欄の会員発生通知 | AC4=概要 | AG4=必須項目が空欄の会員について管理者あてにメールを送信する
+B6=カスタマイズ説明
+B7=概要
+C8=必須項目が空欄の会員について管理者あてにメールを送信する
+B10=機能
+C11=会員情報で必須項目に未記入があるユーザー一覧を取得し、
+C12=該当ユーザーがいる場合、管理者あてに該当ユーザー一覧を送信する。
+B14=備考
+C15=現システム(EC-CUBE)では、会員登録・編集時に必須事項の入力チェックは必ず行われるため
+C16=ECBeingからEC-CUBEへユーザーデータインポート後にユーザーデータの整合性を行うために作られた可能性があります。
+B19=処理概要（★はカスタマイズ項目）
+B20=処理内容
+C21=・ | D21=会員データのうち、下記項目で1つでも未入力の項目があるユーザーを取得する(退会者を除く)
+C22=・ | D22=該当者がいる場合、該当者一覧リストを作成し管理者のE-Mailにメールを送信する
+C23=・ | D23=該当者がいない場合にはバッチを終了
+B26=実行トリガー | F26=スケジュール起動(Step Functions) | AJ26=実行タイミング | AO26=毎日 4:05
+B28=入力データ元 | G28=DB | AA28=出力先(フォーマット) | AG28=メール
+B30=入力データ詳細
+B31=・ | C31=会員データのうち、下記項目で1つでも未設定の項目があるユーザーを取得する(退会者を除く)
+C32=・ | D32=国ID
+C33=・ | D33=都道府県ID
+C34=・ | D34=名前(姓)
+C35=・ | D35=名前(名)
+C36=・ | D36=電話番号(1列目)
+C37=・ | D37=電話番号(2列目)
+C38=・ | D38=電話番号(3列目)
+C39=・ | D39=メールアドレス
+C40=・ | D40=住所1
+C41=・ | D41=住所2
+C42=・ | D42=住所3
+C43=・ | D43=郵便番号
+B44=・ | C44=該当するユーザーがある場合、会員IDおよび上記項目全てをコロン(:)区切りを取得(以下 ユーザー情報抜粋データ)を取得する
+C45=・ | D45=取得例 
+C46=contory:[国名]:pref:[都道府県名]:name01:[名前(姓)]:name02:[名前(姓)]:tel01:[電話番号(1列目)]:tel02:[電話番号(2列目)]:tel03:[電話番号(3列目)]:email:[メールアドレス]:addr01:[住所1]:addr02:[住所2] :addr03:[住所3]:postal_code:[郵便番号]  
+C48=※ | D48=未設定項目がある箇所には、'null'という文字列に置き換わる
+C49=※ | D49=「国名」および「都道府県名」は各マスターデータから名称を取得した上で表示される
+B52=入力データ検索条件
+B53=項目名 | S53=条件 | AK53=備考
+B54=会員データ.国ID | S54=未設定(NULL)
+B55=会員データ.都道府県ID | S55=未設定(NULL)
+B56=会員データ.名前(姓) | S56=未設定(NULL)
+B57=会員データ.名前(名) | S57=未設定(NULL)
+B58=会員データ.電話番号(1列目) | S58=未設定(NULL)
+B59=会員データ.電話番号(2列目) | S59=未設定(NULL)
+B60=会員データ.メールアドレス | S60=未設定(NULL)
+B61=会員データ.住所1 | S61=未設定(NULL)
+B62=会員データ.住所2 | S62=未設定(NULL)
+B63=会員データ.住所3 | S63=未設定(NULL)
+B64=会員データ.郵便番号1(上3桁) | S64=未設定(NULL)
+B65=会員データ.郵便番号2(上4桁) | S65=未設定(NULL)
+B66=会員データ.郵便番号(ハイフン無し7桁) | S66=未設定(NULL)
+B67=会員データ.退会者フラグ | S67=無効 | AK67=退会者を除く
+B70=実行結果詳細  ※主にDBの登録・更新結果について記載
+B71=・ | C71=「入力データ詳細」で取得した一覧からユーザー毎に以下の処理を行う
+C72=「会員ID」・「ユーザー情報抜粋データ」を改行で区切りながら、該当ユーザー分を繰り返しながらメール本文を作成する
+B73=・ | C73=全ユーザー分の処理が完了し、必須項目の未設定ユーザーが存在した場合は晴れる屋システム管理者のメールアドレスに送信する
+C74=・ | D74=メール送信先は[it_common@hareruyamtg.com]に送信する
+D75=(メールの宛先はmtb_optionテーブルのcheck_bric_mail_addressカラムに設定されているメールアドレス)
+C76=・ | D76=メール送信元は本店IDを指定して取得
+D77=・ | E77=件名: | G77=必須項目が空欄である会員の存在を通知するメール
+D78=・ | E78=本文(例)
+D79=会員ID
+11111
+contory:日本:pref:東京都:name01:テスト:name02:ユーザー:tel01:000:tel02:0000:tel03:0000:email:test@test.com:addr01:新宿区:addr02:高田馬場3-12-2 :addr03:null:postal_code:null
+22222
+contory:日本:pref:東京都:name01:テスト:name02:ユーザー2:tel01:000:tel02:0000:tel03:0000:email:null:addr01:新宿区:addr02:高田馬場3-12-2 :addr03:OCビル2F:zip01:null :zip02:null :zipcode:null .
+.
+.
+(以下略)
+B96=エラーハンドリング
+B97=・ | C97=該当処理なし
+
+## ポイント差分発生通知
+A1=ドキュメント名 | I1=='表紙'!$B$7 | U1=セクション
+A2=プロジェクト名 | I2=='表紙'!$B$5 | U2=作成者 | Y2=='表紙'!$D$11 | AC2=作成日 | AG2=='表紙'!$E$11 | AK2=更新者 | AO2=='表紙'!$D$12 | AS2=更新日 | AW2=='表紙'!$E$12
+A4=機能No | D4=B08-05 | I4=機能名 | N4=ポイント差分発生通知 | AC4=概要 | AG4=ポイント履歴データの累計ポイントと会員データの所有ポイントに差異がないか確認
+B6=カスタマイズ説明
+B7=概要
+C8=ポイント履歴データの累計ポイントと会員データの所有ポイントに差異がないか確認
+B10=機能
+C11=ポイント履歴データの会員毎に全期間ポイント合計(履歴合計値)と会員データの現在のポイントを照らし合わせ、
+C12=誤差があった場合は会員データの現在のポイントに履歴合計値を上書きし、管理者にポイント差異メールを送信する
+B14=備考
+C15=ポイントのスマレジ連動処理は行っていないため、手動でスマレジポイントの更新が必要
+B18=処理概要（★はカスタマイズ項目）
+B19=処理内容
+C20=・ | D20=ポイント履歴データから全期限のユーザー別ポイント累計(履歴合計値)を算出し、会員データの現在のポイントと照らし合わせ差異がある
+D21=ユーザー情報および履歴合計値を取得し、一覧を作成する
+C22=・ | D22=会員データの現在のポイントに履歴合計値を上書きを行い、メール送信用のため更新情報を一時的に保存する
+C23=・ | D23=メール送信用更新情報を編集し、管理者メールアドレス宛にメール送信をする
+B26=実行トリガー | F26=スケジュール起動(Step Functions) | AJ26=実行タイミング | AO26=毎日3:30
+B28=入力データ元 | G28=DB | AA28=出力先(フォーマット) | AG28=DB / メール
+B30=入力データ詳細
+B31=・ | C31=全ユーザー毎に下記データを一時取得
+C32=1. | D32=ポイント履歴データ(dtb_point_history)のポイント増減量(point_change)の全期間合計
+C33=2. | D33=プレイヤーデータ(dtb_player)のポイント残高(point)
+B34=・ | C34=各ユーザーで、上記1と2の結果値が異なっているものだけを抽出
+B37=入力データ検索条件
+B38=項目名 | S38=条件 | AK38=備考
+B39=ポイント履歴データ.ポイント増減量の全期間合計 | S39=!= プレイヤーデータ.ポイント残高
+B43=実行結果詳細  ※主にDBの登録・更新結果について記載
+B44=・ | C44=「入力データ詳細」で取得した一覧からユーザー毎に以下の処理を行う
+C45=・ | D45=プレイヤーデータのポイント残高をポイント履歴データのポイント増減量全期間合計値へ更新する
+C46=・ | D46=メールでポイント差分一覧を送るために、下記の情報を変数に残しておく
+D47=1. | E47=ユーザID
+D48=2. | E48=ポイント履歴データのポイント増減量全期間合計値
+D49=3. | E49=プレイヤーデータのポイント残高(更新前)
+D50=4. | E50=上記3から2を差し引いだ差分値
+B51=・ | C51=全ユーザー分の処理が完了し、ポイント差分があった場合は晴れる屋システム管理者のメールアドレスに送信する
+C52=・ | D52=メールでポイント差分一覧をメール本文に含められるようにCSV形式に変換する
+C53=・ | D53=メール送信先は[it_common@hareruyamtg.com]に送信する
+D54=(メールの宛先はmtb_optionテーブルのadjust_point_variance_mail_addrカラムに設定されているメールアドレス)
+C55=・ | D55=メール送信元は[info@hareruyamtg.com]に設定
+D56=・ | E56=件名: | G56=ポイント差分発生通知メール
+D57=・ | E57=本文(例)
+D58=以下のポイント差分が発生したため自動調整されました。
+会員ID, 履歴合計値, 現在のポイント, 差分
+11111,5340,5310,-30
+22222,1362,1562,200
+.
+.
+(以下略)
+B70=エラーハンドリング
+B71=・ | C71=該当処理なし
+
+## スマレジ使用ポイント連携
+A1=ドキュメント名 | I1=='表紙'!$B$7 | U1=セクション
+A2=プロジェクト名 | I2=='表紙'!$B$5 | U2=作成者 | Y2=='表紙'!$D$11 | AC2=作成日 | AG2=='表紙'!$E$11 | AK2=更新者 | AO2=='表紙'!$D$12 | AS2=更新日 | AW2=='表紙'!$E$12
+A4=機能No | D4=B08-06 | I4=機能名 | N4=スマレジ使用ポイント連携 | AC4=概要 | AG4=通販購入時の使用ポイント情報をスマレジに反映する
+B6=カスタマイズ説明
+B7=概要
+C8=スマレジで使用したポイントを連携する
+B10=機能
+C11=通販購入時の使用ポイント情報をスマレジに反映する
+B14=処理概要（★はカスタマイズ項目）
+B15=前提条件
+C16=・ | D16=このバッチは通販での購入完了時に、ポイント使用されて購入されたときに本処理とは別の処理で実行されるバッチになる
+D17=別の処理にすることでサーバ負荷分散につながる
+C18=・ | D18=バッチの実行タイミングはデータベースに購入データが登録した際に発行される注文IDの値をバッチに引き渡したうえで実行する
+B20=処理内容
+C21=・ | D21=バッチ実行時に渡された注文IDを使って注文データから「使用ポイント」を取得する
+C22=・ | D22=スマレジ連携ポイント増減APIに「使用ポイント」を送信し、ポイント減算処理を行う。
+B25=実行トリガー | F25=商品購入完了処理中 | AJ25=実行タイミング | AO25=-
+B27=入力データ元 | G27=DB | AA27=出力先(フォーマット) | AG27=スマレジAPI
+B29=入力データ詳細
+B30=・ | C30=バッチを実行する際に送られる注文IDから注文サブデータ抽出し、購入したユーザーIDと注文で消費したポイントを取得する。
+B31=・ | C31=注文サブデータからユーザーIDからプレイヤーデータを抽出し、スマレジ用ユーザーIDを取得する。
+B34=入力データ検索条件
+B35=項目名 | S35=条件 | AK35=備考
+B36=注文サブデータ.注文ID | S36=注文ID | AK36=注文データ登録時に発行された注文ID
+B40=実行結果詳細  ※主にDBの登録・更新結果について記載
+B41=・ | C41=スマレジ連携ポイント増減APIに今回の消費ポイント情報を送信
+C42=正常に送信ができれば処理終了し、失敗した場合は注文サブデータに処理失敗情報を保存する(エラーハンドリング欄参照)
+B46=エラーハンドリング
+B47=・ | C47=注文IDが未入力もしくは該当データなし
+C48=処理を終了する(正常終了扱い[return終了])
+B49=・ | C49=スマレジ連携ポイント増減API通信失敗した場合
+C50=注文サブデータのスマレジエラーメッセージ(point_error_message)にエラー詳細JSONを、スマレジ仕様ポイントエラーフラグ(smaregi_error_flg)をTrueを設定し更新する
+
+exec
+/bin/bash -lc "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/.venv/bin/python - <<'PY'
+from openpyxl import load_workbook
+p='/home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/0413_基本設計仕様書(バッチ_イベント).xlsx'
+wb=load_workbook(p, read_only=True, data_only=False)
+ws=wb['決済処理中チェックバッチ']
+for row in ws.iter_rows():
+ vals=[f'{c.coordinate}={c.value}' for c in row if c.value not in (None,'')]
+ if vals: print(' | '.join(vals))
+PY" in /home/y-saito/Developments
+ succeeded in 4300ms:
+A1=ドキュメント名 | I1=イベント管理　基本設計仕様書 | U1=セクション
+A2=プロジェクト名 | I2=イベント管理機能 | U2=作成者 | Y2=畠山 | AC2=作成日 | AG2=2025-11-07 00:00:00 | AK2=更新者 | AS2=更新日
+A4=機能No | D4=B13-01 | I4=機能名 | N4=決済処理中チェックバッチ | AC4=概要 | AG4=イベント申込の決済状況を照会し、状況に応じた処理を行う
+B6=処理概要
+B8=・ | C8=イベント申込の決済状況を照会し、状況に応じた処理を行うバッチ
+C9=・ | D9=イベント申込のリンク型決済で、通信障害や決済画面からの離脱で申込完了画面へ遷移しなかった申込について
+D10=SP.LINKSに取引照会を行い、照会結果に応じた処理を行う
+B14=実行トリガー | J14=スケジュール起動(Step Functions) | AA14=実行タイミング | AH14=毎時 0/10/20/30/40/50 分
+B16=入力データ元 | J16=DB、SP.LINKS取引照会API | AA16=出力先(フォーマット) | AH16=DB、メール
+B18=入力データ詳細
+C20=・ | D20=処理対象として決済中のイベント申込を取得
+D21=・ | E21=申込ステータスが「決済中」
+D22=・ | E22=支払番号が登録済み
+D23=・ | E23=申込日時がバッチ起動時間の30分以上前
+B26=入力データ検索条件
+B27=項目名 | S27=条件 | AK27=備考
+B28=イベント申込.ステータス | S28=「決済中」
+B29=イベント申込.支払番号 | S29=登録済み
+B30=イベント申込.作成日時 | S30=バッチ起動時間の30分以上前
+B33=実行結果詳細  ※主にDBの登録・更新結果について記載
+B35=・ | C35=取引照会結果に応じた処理を行う
+C36=・ | D36=取引が成功している場合(=取引参照のResponseCdがOKの場合）
+D37=・ | E37=イベント申込の申込ステータスを「申込済み」にする
+D38=・ | E38=イベント申込履歴を「申込ステータス＝申込済み」として追加する
+D39=・ | E39=会員に対して「クレジット決済完了メール」を送信する
+C40=・取引参照自体のエラーのレスポンスコードが返ってくる場合
+D41=・取引参照自体のレスポンスコードが以下の場合は参照に失敗しているため決済結果はわからないため、イベント申し込みは保留とする
+F42=K02     MerchantId精査エラー
+F43=K03     MerchantPass精査エラー
+F44=K04     TenantId精査エラー
+F45=K05     TransactionTate精査エラー
+F46=K06     OperateId精査エラー
+F47=K86     ProcNo精査エラー
+F48=K88     元取引重複エラー
+F49=K99     その他例外エラー
+C50=・ | D50=取引が存在しない・失敗している場合（決済画面での離脱やキャンセルを含む）（＝上記以外のレスポンスの場合）
+D51=・ | E51=イベント申込を削除（論理削除）する
+B53=エラーハンドリング
+C55=・ | D55=取引照会の処理自体でエラーが発生した場合
+D56=・ | E56=エラーメッセージを記載した「イベント決済確認エラー通知メール」　を、イベント決済確認エラー通知メールアドレスに対して送信する
+
+exec
+/bin/bash -lc 'ls -1 /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results | tail -20 && for f in /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_{29,30,31}.json; do if [ -f "$f" ]; then echo "$f"; jq '"'{packetId, count:(.results|length), sums:(.results|group_by(.docWork)|map({key:.[0].docWork,n:length,days:(map(.docEffortDays)|add)}))}' \""'$f"; fi; done' in /home/y-saito/Developments
+ succeeded in 1927ms:
+du_23.json
+du_23.log
+du_24.json
+du_24.log
+du_25.json
+du_25.log
+du_26.log
+du_27.json
+du_27.log
+du_28.json
+du_28.log
+du_29.json
+du_29.log
+du_30.json
+du_30.log
+du_31.log
+du_32.log
+du_33.log
+du_34.log
+du_35.log
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_29.json
+{
+  "packetId": "du_29",
+  "count": 28,
+  "sums": [
+    {
+      "key": "ADD",
+      "n": 6,
+      "days": 0.55
+    },
+    {
+      "key": "FIX",
+      "n": 1,
+      "days": 0.05
+    },
+    {
+      "key": "IMAGE",
+      "n": 1,
+      "days": 0.7
+    },
+    {
+      "key": "NONE",
+      "n": 19,
+      "days": 0
+    },
+    {
+      "key": "RESOLVE",
+      "n": 1,
+      "days": 0.25
+    }
+  ]
+}
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_30.json
+{
+  "packetId": "du_30",
+  "count": 28,
+  "sums": [
+    {
+      "key": "ADD",
+      "n": 13,
+      "days": 0.9000000000000001
+    },
+    {
+      "key": "FIX",
+      "n": 3,
+      "days": 0.30000000000000004
+    },
+    {
+      "key": "NONE",
+      "n": 11,
+      "days": 0
+    },
+    {
+      "key": "RESOLVE",
+      "n": 1,
+      "days": 0.35
+    }
+  ]
+}
+
+exec
+/bin/bash -lc "jq '.results[] | select(.docWork==\"ADD\")' /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_30.json | sed -n '1,260p'" in /home/y-saito/Developments
+ succeeded in 557ms:
+{
+  "rowId": 167,
+  "docWork": "ADD",
+  "docEffortDays": 0.05,
+  "target": "0402_基本設計仕様書(バッチ_在庫管理).xlsx / 週間在庫履歴更新バッチ シート / 処理概要（C20付近）",
+  "reason": "正本にメモリ制限・実行時間制限の解除とSQLロガー無効化がないため、バッチ初期化処理として1項目追記する。同一シートを開いたまま行える連続編集分として割り引く。",
+  "sharedWithRows": [
+    166,
+    168,
+    173
+  ],
+  "confidence": "medium"
+}
+{
+  "rowId": 168,
+  "docWork": "ADD",
+  "docEffortDays": 0.05,
+  "target": "0402_基本設計仕様書(バッチ_在庫管理).xlsx / 週間在庫履歴更新バッチ シート / エラーハンドリング・ログ記載（B70:D72付近）",
+  "reason": "正本に開始・完了の日時付きコンソール出力がないため、ログ・監査の1項目として追記する。同一シートの処理概要更新とまとめて行う連続編集分として割り引く。",
+  "sharedWithRows": [
+    166,
+    167,
+    173
+  ],
+  "confidence": "medium"
+}
+{
+  "rowId": 136,
+  "docWork": "ADD",
+  "docEffortDays": 0.1,
+  "target": "0404_基本設計仕様書(バッチ_商品管理).xlsx / 期間別販売数集計 シート / 実行結果詳細（B43:B44付近）",
+  "reason": "正本は更新先を販売数集計データとだけ記しており、補助表を設けずdtb_product_class.order_quantity_01〜08へ反映する物理更新先がない。実行結果詳細へテーブル・列を追記する。同シートの他の追記とまとめて編集する。",
+  "sharedWithRows": [
+    128,
+    132,
+    134,
+    131,
+    133,
+    135
+  ],
+  "confidence": "medium"
+}
+{
+  "rowId": 128,
+  "docWork": "ADD",
+  "docEffortDays": 0.05,
+  "target": "0404_基本設計仕様書(バッチ_商品管理).xlsx / 期間別販売数集計 シート / 実行トリガー・処理概要（B26:AO26付近）",
+  "reason": "正本にコンソールコマンド名と不一致時の終了条件がないため、product:batch updateProductSummaryの起動契約を1項目追記する。同一シートの連続編集分として割り引く。",
+  "sharedWithRows": [
+    136,
+    132,
+    134,
+    131,
+    133,
+    135
+  ],
+  "confidence": "medium"
+}
+{
+  "rowId": 132,
+  "docWork": "ADD",
+  "docEffortDays": 0.05,
+  "target": "0404_基本設計仕様書(バッチ_商品管理).xlsx / 期間別販売数集計 シート / 処理概要（B18:C23付近）",
+  "reason": "正本に集計対象が0件の場合は更新せず終了する条件がないため、処理概要へ1項目追記する。同一シートを開いたまま行える連続編集分として割り引く。",
+  "sharedWithRows": [
+    136,
+    128,
+    134,
+    131,
+    133,
+    135
+  ],
+  "confidence": "medium"
+}
+{
+  "rowId": 134,
+  "docWork": "ADD",
+  "docEffortDays": 0.05,
+  "target": "0404_基本設計仕様書(バッチ_商品管理).xlsx / 期間別販売数集計 シート / 処理概要（B18:C23付近）",
+  "reason": "正本に実行時間制限解除とSQLロガー無効化がないため、バッチ初期化処理として1項目追記する。同一処理概要の連続編集分として割り引く。",
+  "sharedWithRows": [
+    136,
+    128,
+    132,
+    131,
+    133,
+    135
+  ],
+  "confidence": "medium"
+}
+{
+  "rowId": 131,
+  "docWork": "ADD",
+  "docEffortDays": 0.05,
+  "target": "0404_基本設計仕様書(バッチ_商品管理).xlsx / 期間別販売数集計 シート / 入力データ検索条件の受注ステータス行（B38:S38付近）",
+  "reason": "正本の除外条件はキャンセルだけなので、既存の受注ステータス条件セルへ処理中も除外する旨を追記する。1セルの条件修正で、同一シートの連続編集分として割り引く。",
+  "sharedWithRows": [
+    136,
+    128,
+    132,
+    134,
+    133,
+    135
+  ],
+  "confidence": "medium"
+}
+{
+  "rowId": 133,
+  "docWork": "ADD",
+  "docEffortDays": 0.2,
+  "target": "0404_基本設計仕様書(バッチ_商品管理).xlsx / 期間別販売数集計 シート / 処理概要・エラーハンドリング（B18:C23、B48付近）",
+  "reason": "正本に100件単位の反映・キャッシュクリア、途中失敗時の部分反映、次回実行での回収というトランザクション方針がない。条件付きの処理・障害時挙動を複数項目で追記する。シート共通の編集準備分は他行と共有済み。",
+  "sharedWithRows": [
+    136,
+    128,
+    132,
+    134,
+    131,
+    135
+  ],
+  "confidence": "medium"
+}
+{
+  "rowId": 135,
+  "docWork": "ADD",
+  "docEffortDays": 0.05,
+  "target": "0404_基本設計仕様書(バッチ_商品管理).xlsx / 期間別販売数集計 シート / エラーハンドリング・ログ記載（B48付近）",
+  "reason": "正本に開始・完了の日時付きコンソール出力がないため、ログ・監査の1項目として追記する。同一シートの連続編集分として割り引く。",
+  "sharedWithRows": [
+    136,
+    128,
+    132,
+    134,
+    131,
+    133
+  ],
+  "confidence": "medium"
+}
+{
+  "rowId": 137,
+  "docWork": "ADD",
+  "docEffortDays": 0.05,
+  "target": "0404_基本設計仕様書(バッチ_商品管理).xlsx / 入荷通知キャンセル シート / 実行トリガー・処理概要（B25:AO25付近）",
+  "reason": "正本にコンソールコマンド名と不一致時の終了条件がないため、product:batch deleteProductRequestの起動契約を追記する。同一シートの連続編集分として割り引く。",
+  "sharedWithRows": [
+    138,
+    139
+  ],
+  "confidence": "medium"
+}
+{
+  "rowId": 139,
+  "docWork": "ADD",
+  "docEffortDays": 0.05,
+  "target": "0404_基本設計仕様書(バッチ_商品管理).xlsx / 入荷通知キャンセル シート / エラーハンドリング・ログ記載（B50付近）",
+  "reason": "正本に開始・完了の日時付きコンソール出力がないため、ログ・監査の1項目として追記する。同一シートの条件修正とまとめて行う連続編集分として割り引く。",
+  "sharedWithRows": [
+    138,
+    137
+  ],
+  "confidence": "medium"
+}
+{
+  "rowId": 147,
+  "docWork": "ADD",
+  "docEffortDays": 0.05,
+  "target": "0404_基本設計仕様書(バッチ_商品管理).xlsx / 期間別入庫数集計 シート / 実行トリガー・処理概要（B25:AO25付近）",
+  "reason": "正本にコンソールコマンド名と不一致時の終了条件がないため、product:batch updateProductSummaryForStockUpの起動契約を追記する。同シートの処理方式追記とまとめて編集する。",
+  "sharedWithRows": [
+    151
+  ],
+  "confidence": "medium"
+}
+{
+  "rowId": 151,
+  "docWork": "ADD",
+  "docEffortDays": 0.1,
+  "target": "0404_基本設計仕様書(バッチ_商品管理).xlsx / 期間別入庫数集計 シート / 処理概要（B18:C22付近）",
+  "reason": "正本に100件ごとの変更反映とキャッシュクリアがないため、反映単位と処理方式を処理概要へ追記する。同一シートの起動契約追記とまとめて編集する。",
+  "sharedWithRows": [
+    147
+  ],
+  "confidence": "medium"
+}
+
+exec
+/bin/bash -lc "jq '.results[] | select(.docWork==\"NONE\")' /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_30.json | sed -n '1,180p'" in /home/y-saito/Developments
+ succeeded in 1085ms:
+{
+  "rowId": 164,
+  "docWork": "NONE",
+  "docEffortDays": 0,
+  "target": "0402_基本設計仕様書(バッチ_在庫管理).xlsx / 週間在庫履歴更新バッチ シート / 処理概要（D43:E44付近、変更なし）",
+  "reason": "正本は商品コード・店舗ごとに出力するためECCUBEとスマレジの在庫を合算して週間在庫履歴テーブルへ登録すると明記している。設計書は明確であり、実装側だけの差分なので更新不要。",
+  "sharedWithRows": [],
+  "confidence": "high"
+}
+{
+  "rowId": 163,
+  "docWork": "NONE",
+  "docEffortDays": 0,
+  "target": "0402_基本設計仕様書(バッチ_在庫管理).xlsx / 週間在庫履歴更新バッチ シート / カスタマイズ説明・処理概要・実行結果詳細（D9、E24、D65付近、変更なし）",
+  "reason": "正本は旧CSV連携を廃止し、統合後は週間在庫履歴テーブルへ保存するDB方式を採用すると明記している。名称にもCSV出力を含む旧コマンド契約は移行後に残す挙動ではないため追記しない。",
+  "sharedWithRows": [],
+  "confidence": "high"
+}
+{
+  "rowId": 165,
+  "docWork": "NONE",
+  "docEffortDays": 0,
+  "target": "0402_基本設計仕様書(バッチ_在庫管理).xlsx / 週間在庫履歴更新バッチ シート / カスタマイズ説明・処理概要・実行結果詳細（D9、E24、D65付近、変更なし）",
+  "reason": "正本は旧CSVの読込を不要とし、本店・支店ともDB集計結果を週間在庫履歴テーブルへ保存する方式を明記している。CSV生成・上書きとDB非更新は移行後仕様に残さない旧方式なので更新不要。",
+  "sharedWithRows": [],
+  "confidence": "high"
+}
+{
+  "rowId": 169,
+  "docWork": "NONE",
+  "docEffortDays": 0,
+  "target": "0404_基本設計仕様書(バッチ_商品管理).xlsx / ユニサーチフィードTSV シート / TSV項目表（B7:BI45、変更なし）",
+  "reason": "正本の項目表は37項目で、stock、branch_status、reservation_flgを含む列名と順序を明記し、category_name_enとsearch_wordは含まない。設計書側の外部契約は明確なので更新不要。",
+  "sharedWithRows": [],
+  "confidence": "high"
+}
+{
+  "rowId": 171,
+  "docWork": "NONE",
+  "docEffortDays": 0,
+  "target": "0402_基本設計仕様書(バッチ_在庫管理).xlsx / 週間在庫履歴更新バッチ シート / カスタマイズ説明・処理概要・実行結果詳細（D9、E24、D65付近、変更なし）",
+  "reason": "参照元のユニサーチフィードTSVシートには週間在庫履歴のコマンド契約はなく、週間在庫履歴更新の正本は旧CSV方式をDB保存方式へ変更すると明記している。旧CSV出力コマンドを正本へ戻す更新は不要。",
+  "sharedWithRows": [],
+  "confidence": "high"
+}
+{
+  "rowId": 172,
+  "docWork": "NONE",
+  "docEffortDays": 0,
+  "target": "0402_基本設計仕様書(バッチ_在庫管理).xlsx / 週間在庫履歴更新バッチ シート / カスタマイズ説明・処理概要・実行結果詳細（D9、E24、D65付近、変更なし）",
+  "reason": "週間在庫履歴更新の正本はDB洗い替え方式を採用し、旧CSV読込を不要としている。CSV生成・上書きかつDB非更新という旧方式は移行後に残さないため、設計書更新は発生しない。",
+  "sharedWithRows": [],
+  "confidence": "high"
+}
+{
+  "rowId": 175,
+  "docWork": "NONE",
+  "docEffortDays": 0,
+  "target": "0404_基本設計仕様書(バッチ_商品管理).xlsx / ユニサーチフィード送信 シート / 処理概要・入力データ詳細・実行結果詳細（D16、D18、D31、D42付近、変更なし）",
+  "reason": "正本は秘密鍵を指定したSCPでTSVファイルとdoneファイルを送信すると明記している。設計書側の送信方式と対象ファイルは明確なので更新不要。",
+  "sharedWithRows": [],
+  "confidence": "high"
+}
+{
+  "rowId": 176,
+  "docWork": "NONE",
+  "docEffortDays": 0,
+  "target": "0404_基本設計仕様書(バッチ_商品管理).xlsx / ユニサーチフィード送信 シート / 現行Cron・実行トリガー・実行タイミング（D20:D21、F25、AO25付近、変更なし）",
+  "reason": "正本は現行Cron、移行先のStep Functionsによるスケジュール起動、5分おきの実行タイミングを明記している。設計書は正しく、実装・外部設定側だけの差分なので更新不要。",
+  "sharedWithRows": [],
+  "confidence": "high"
+}
+{
+  "rowId": 130,
+  "docWork": "NONE",
+  "docEffortDays": 0,
+  "target": "0404_基本設計仕様書(バッチ_商品管理).xlsx / 期間別販売数集計 シート / 処理概要・実行結果詳細（C22、B43:B44付近、変更なし）",
+  "reason": "正本は本店の支店IDを0として処理し、商品規格ID・支店ID・期間別販売数を販売数集計データへ更新すると明記している。設計書側の更新は不要。",
+  "sharedWithRows": [],
+  "confidence": "high"
+}
+{
+  "rowId": 153,
+  "docWork": "NONE",
+  "docEffortDays": 0,
+  "target": "0404_基本設計仕様書(バッチ_商品管理).xlsx / 期間別入庫数集計 シート / 処理概要（C19:C22付近、変更なし）",
+  "reason": "正本は本店を含む店舗別集計に続けて、本店の支店IDを0として処理すると明記している。記述は具体的であり、設計書側の更新は不要。",
+  "sharedWithRows": [],
+  "confidence": "high"
+}
+{
+  "rowId": 148,
+  "docWork": "NONE",
+  "docEffortDays": 0,
+  "target": "0404_基本設計仕様書(バッチ_商品管理).xlsx / 期間別入庫数集計 シート / 入力データ詳細・検索条件（C31、B39:S41付近、変更なし）",
+  "reason": "正本は集計対象の入庫ステータスを入庫またはマスタ更新と、処理概要と検索条件の双方で明記している。設計書側の更新は不要。",
+  "sharedWithRows": [],
+  "confidence": "high"
+}
+
+exec
+/bin/bash -lc "rg -n '該当処理なし|特になし|エラーハンドリング' /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_*.json | head -80" in /home/y-saito/Developments
+ succeeded in 1023ms:
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_30.json:53:      "target": "0402_基本設計仕様書(バッチ_在庫管理).xlsx / 週間在庫履歴更新バッチ シート / エラーハンドリング・ログ記載（B70:D72付近）",
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_30.json:179:      "target": "0404_基本設計仕様書(バッチ_商品管理).xlsx / 期間別販売数集計 シート / 処理概要・エラーハンドリング（B18:C23、B48付近）",
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_30.json:188:      "target": "0404_基本設計仕様書(バッチ_商品管理).xlsx / 期間別販売数集計 シート / エラーハンドリング・ログ記載（B48付近）",
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_30.json:215:      "target": "0404_基本設計仕様書(バッチ_商品管理).xlsx / 入荷通知キャンセル シート / エラーハンドリング・ログ記載（B50付近）",
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_29.json:215:      "target": "0402_基本設計仕様書(バッチ_在庫管理).xlsx / 期間別入庫数集計バッチ シート / エラーハンドリングD56",
+
+exec
+/bin/bash -lc "sed -n '196,235p' /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_29.json && jq '.results[] | select((.reason|test(\"コンソール|ログ\")) and .docWork "'!= "NONE")'"' /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_29.json" in /home/y-saito/Developments
+ succeeded in 1796ms:
+      "docEffortDays": 0,
+      "target": "0402_基本設計仕様書(バッチ_在庫管理).xlsx / 期間別入庫数集計バッチ シート / カスタマイズ説明・処理概要D17:E26",
+      "reason": "商品コード・店舗・在庫区分での集計と、商品コード・店舗・在庫場所一致時の更新条件は正本に明記済み。設計書は変更不要。",
+      "sharedWithRows": [],
+      "confidence": "high"
+    },
+    {
+      "rowId": 142,
+      "docWork": "NONE",
+      "docEffortDays": 0,
+      "target": "0402_基本設計仕様書(バッチ_在庫管理).xlsx / 期間別入庫数集計バッチ シート / 処理概要E20:E21",
+      "reason": "親区分が入庫・買取の履歴だけを対象にし、移動・分割を除外する条件は正本に明記済み。設計書側の作業はない。",
+      "sharedWithRows": [],
+      "confidence": "high"
+    },
+    {
+      "rowId": 145,
+      "docWork": "NONE",
+      "docEffortDays": 0,
+      "target": "0402_基本設計仕様書(バッチ_在庫管理).xlsx / 期間別入庫数集計バッチ シート / エラーハンドリングD56",
+      "reason": "集計不能時にメール送信する要件が正本に明記済み。設計書は修正不要。",
+      "sharedWithRows": [],
+      "confidence": "high"
+    },
+    {
+      "rowId": 140,
+      "docWork": "ADD",
+      "docEffortDays": 0.05,
+      "target": "0402_基本設計仕様書(バッチ_在庫管理).xlsx / 期間別入庫数集計バッチ シート / 実行トリガー（31行付近）",
+      "reason": "旧実装で外部起動契約となるコンソールコマンド名が正本にないため、実行トリガー欄へ1セル追記する。同じシートのrow 143・144・146と一括編集できる。",
+      "sharedWithRows": [143, 144, 146],
+      "confidence": "high"
+    },
+    {
+      "rowId": 143,
+      "docWork": "ADD",
+      "docEffortDays": 0.05,
+      "target": "0402_基本設計仕様書(バッチ_在庫管理).xlsx / 期間別入庫数集計バッチ シート / 処理概要または実行結果詳細（49行付近）",
+      "reason": "対象0件時は更新せず終了する条件が正本にないため、既存の処理概要へ1項目追加する。同一シートの一括編集分として開閉・体裁調整の重複を控除した。",
+      "sharedWithRows": [140, 144, 146],
+{
+  "rowId": 285,
+  "docWork": "IMAGE",
+  "docEffortDays": 0.7,
+  "target": "0306_基本設計仕様書(フロント_会員).xlsx / ログイン シート / レイアウト画像（F9付近）および画面項目表（74行以降）",
+  "reason": "旧サイト会員向けパスワード再設定案内は正本の処理概要・画面項目表に無く、確認したログインの貼付画像にも表示領域がない。案内ブロックを含む実画面画像への差し替えと、対応する画面項目行の追加・ピン調整が必要。",
+  "sharedWithRows": [],
+  "confidence": "high"
+}
+{
+  "rowId": 140,
+  "docWork": "ADD",
+  "docEffortDays": 0.05,
+  "target": "0402_基本設計仕様書(バッチ_在庫管理).xlsx / 期間別入庫数集計バッチ シート / 実行トリガー（31行付近）",
+  "reason": "旧実装で外部起動契約となるコンソールコマンド名が正本にないため、実行トリガー欄へ1セル追記する。同じシートのrow 143・144・146と一括編集できる。",
+  "sharedWithRows": [
+    143,
+    144,
+    146
+  ],
+  "confidence": "high"
+}
+{
+  "rowId": 146,
+  "docWork": "ADD",
+  "docEffortDays": 0.05,
+  "target": "0402_基本設計仕様書(バッチ_在庫管理).xlsx / 期間別入庫数集計バッチ シート / 実行結果詳細またはログ出力欄",
+  "reason": "開始・完了時に日時付きでコンソール出力する要件が正本にないため、既存欄へ1項目追記する。同一シートの一括編集分として低減した。",
+  "sharedWithRows": [
+    140,
+    143,
+    144
+  ],
+  "confidence": "high"
+}
+
+exec
+/bin/bash -lc "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/.venv/bin/python - <<'PY'
+from openpyxl import load_workbook
+p='/home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/0405_基本設計仕様書(バッチ_受注管理).xlsx'
+wb=load_workbook(p, read_only=True, data_only=False)
+ws=wb['スマレジEC受注連携エラー再連携']
+for row in ws.iter_rows():
+ vals=[f'{c.coordinate}={c.value}' for c in row if c.value not in (None,'')]
+ if vals: print(' | '.join(vals))
+PY" in /home/y-saito/Developments
+ succeeded in 3159ms:
+A1=ドキュメント名 | I1=受注管理　基本設計 | U1=セクション
+A2=プロジェクト名 | I2=受注管理機能 | U2=作成者 | Y2=緑川 | AC2=作成日 | AG2=2025-05-13 00:00:00 | AK2=更新者 | AO2=堀部 | AS2=更新日 | AW2=2025-10-03 00:00:00
+A4=機能No | D4=B05-08 | I4=機能名 | N4=スマレジEC受注連携エラー再連携 | AC4=概要 | AG4=スマレジ連携エラーが起きているEC受注のスマレジ連携をリトライする
+B6=カスタマイズ説明
+B8=・ | C8=スマレジ連携APIについて、呼び出しを廃止予定のスマレジAPIからプラットフォームAPIに変更
+B11=処理概要（★はカスタマイズ項目）
+C13=スマレジ連携エラーフラグが立っている注文データとそのデータに紐づくスマレジ連携に必要なユーザー情報を取得する
+C15=取得した注文データのスマレジ連携をリトライする
+B18=実行トリガー | H18=スケジュール起動(Step Functions) | AJ18=実行タイミング | AO18=5分ごと
+B20=入力データ元 | G20=DB | AA20=出力先(フォーマット) | AH20=DB, スマレジ
+B22=入力データ詳細
+C24=スマレジ連携エラーフラグが立っている注文データとそのデータに紐づくスマレジ連携に必要なユーザー情報を取得する
+B28=入力データ検索条件
+B29=項目名 | S29=条件 | AK29=備考
+B30=注文データ.スマレジ連携エラーフラグ | S30=スマレジ連携エラーフラグが立っている
+B35=実行結果詳細  ※主にDBの登録・更新結果について記載
+C37=取得したスマレジ連携エラーフラグが立っている注文データに紐づくユーザーのスマレジIDとポイント残高を取得
+C38=取得したデータを使ってスマレジ連携を行い、ユーザーのポイント情報の更新を行う
+C39=・ | D39=ユーザーのポイント数は絶対値で更新を行う
+C40=リトライに成功したら、当該の注文データのスマレジ連携エラーフラグをオフにする
+B44=エラーハンドリング
+C46=スマレジ連携に失敗した場合、注文データのポイント連携エラーメッセージに、スマレジからのレスポンスデータを登録する
+D47=※開発申し送り レスポンスでーたをJSON形式に変換して登録
+
+codex
+正本Excelの対象シートとセルを照合しました。全件がバッチ仕様で画面レイアウト画像の更新はなく、SPEC_BACKED 6件は正本記述を維持、LEGACY_BACKED 22件は処理概要・実行トリガー・エラーハンドリング等へのテキスト追記として見積もります。
+exec
+/bin/bash -lc "for f in /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_*.json; do jq -c '.results[]? | select(.docWork==\"FIX\") | {file:input_filename,rowId,reason,target}' \""'$f" 2>/dev/null; done | head -30' in /home/y-saito/Developments
+ succeeded in 3132ms:
+{"file":"/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_01.json","rowId":444,"reason":"正本Excelの「一日単位で記録し、呼び出せる」は、日次スナップショット1件か日時付き変動履歴の日付検索かを判別できない。採用仕様決定後、記録粒度・保存対象・呼出条件を既存2行へ明確化する。","target":"0202_基本設計仕様書(在庫管理機能).xlsx / 在庫編集 / 処理概要 D58:D59"}
+{"file":"/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_17.json","rowId":934,"reason":"正本の削除説明は成功時の一覧遷移と完了文言だけで、削除不可条件と失敗時・成功時の復帰先が不完全である。既存の削除節を、cardDetails件数判定、失敗メッセージとReferer復帰、成功メッセージとセッションページ復帰まで明確化する。静的な画面部品は増えないため画像差し替えは不要。","target":"0208_基本設計仕様書(カード管理).xlsx / カードセット詳細（登録・編集・削除) シート / 処理概要173〜174行・削除項目AG183"}
+{"file":"/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_25.json","rowId":892,"reason":"正本はファイル必須・520000byte上限と削除確認文言を定めるが、未選択・サイズ超過・形式不正の完全な表示文言は定めていない。既存の制約記述を、各条件と表示文言が一意になるよう明確化する。エラーは一時表示でレイアウト画像に描かれていないため画像差し替えは不要。","target":"0214_基本設計仕様書(イベント管理).xlsx / 画像設定 シート / ファイル項目表（E64:AG64付近）および表示メッセージ記述（E70:AG70付近）"}
+{"file":"/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_26.json","rowId":259,"reason":"SPEC_BACKEDだが、正本は一覧表示までしか書かず、利用者向け案内文と通知契機を特定できない。既存のお気に入り一覧説明を、セール対象時にメール通知する正確な案内文まで明確化する。該当一覧のレイアウト画像は正本にないため表・本文の修正で足りる。row 260～263と同じシートを続けて編集する。","target":"0303_基本設計仕様書(フロント_商品).xlsx / お気に入り / お気に入り登録商品一覧の説明 C78:D78・B84:C84付近"}
+{"file":"/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_29.json","rowId":289,"reason":"注文履歴登録・ポイント付与という会員別用途は記載済みだが、バーコード化する値が明記されていない。既存の画面部品説明へ「各会員のスマレジ会員コードを表示する」と1文補い、固定共通値を許さない仕様に明確化する。","target":"0306_基本設計仕様書(フロント_会員).xlsx / マイページ シート / 画面部品(5)バーコードの説明セル（AG行相当）"}
+{"file":"/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_30.json","rowId":166,"reason":"正本には在庫ごとの履歴取得と一時テーブル保存があるが、商品在庫に存在する全商品規格を対象とすること、および履歴が一件もない商品を0として残すことが明確でない。既存処理概要へ対象範囲と0補完条件を追記して明確化する。同シートの関連更新とまとめて編集する。","target":"0402_基本設計仕様書(バッチ_在庫管理).xlsx / 週間在庫履歴更新バッチ シート / 週間在庫履歴取得処理（E25・E35付近）"}
+{"file":"/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_30.json","rowId":173,"reason":"ユニサーチフィードTSVシートではなく週間在庫履歴更新バッチの正本へ、全商品規格を対象とし履歴なしを0とする条件を明確化する。rowId 166と同じ記述修正で解消できるため、確認と関連箇所の整合だけを増分計上する。","target":"0402_基本設計仕様書(バッチ_在庫管理).xlsx / 週間在庫履歴更新バッチ シート / 週間在庫履歴取得処理（E25・E35付近）"}
+{"file":"/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_30.json","rowId":138,"reason":"正本は商品・商品規格の公開ステータスが非公開／廃止の場合だけを条件化しており、商品規格visibleによる削除相当と商品不存在時の扱いが明確でない。既存の条件表へ2条件を追加して対象範囲を明確化する。同シートの関連追記とまとめて編集する。","target":"0404_基本設計仕様書(バッチ_商品管理).xlsx / 入荷通知キャンセル シート / 入力データ詳細・検索条件（B29:S38付近）"}
+
+exec
+/bin/bash -lc "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/.venv/bin/python - <<'PY'
+import json,glob,os
+base='/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit'
+res={}
+for p in glob.glob(base+'/docupdate_results/du_*.json'):
+ try:
+  d=json.load(open(p));
+  for x in d.get('results',[]): res[x['rowId']]=(x['docWork'],x['reason'],os.path.basename(p))
+ except: pass
+for p in glob.glob(base+'/docupdate_packets/du_*.json'):
+ try:d=json.load(open(p))
+ except:continue
+ for f in d.get('findings',[]):
+  s=f.get('正本根拠','')
+  if ('該当処理なし' in s or '特になし' in s) and f['rowId'] in res:
+   print(f['rowId'],f.get('確定根拠区分'),res[f['rowId']][0],res[f['rowId']][2],res[f['rowId']][1])
+PY" in /home/y-saito/Developments
+ succeeded in 1494ms:
+apply patch
+patch: completed
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_32.json
+diff --git a/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_32.json b/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_32.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..f11ac02d4e2f0191aa2fd9d2d7f2efbafd21e996
+--- /dev/null
++++ b/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_32.json
+@@ -0,0 +1,257 @@
++{
++  "packetId": "du_32",
++  "results": [
++    {
++      "rowId": 182,
++      "docWork": "ADD",
++      "docEffortDays": 0.15,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / 店頭注文番号初期化 シート / 実行結果詳細（C34:C35付近）・エラーハンドリング（B40:D42付近）",
++      "reason": "正本は全件物理削除と採番IDリセットだけを記載しているため、両処理を別文で実行することと、途中中断後の再実行で空テーブル・カウンタ1へ収束する条件を追記する。処理境界と障害時挙動の複数項目を整える作業として見積もる。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 186,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / スマレジ商品削除 シート / 処理概要（E20付近）・エラーハンドリング（D53付近、変更なし）",
++      "reason": "正本は連携失敗時のスマレジ通信エラーメールと、発生したスマレジ連携ごとの管理者通知を明記している。設計書側は明確であり、実装側だけの差分なので更新不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 185,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / スマレジ商品削除 シート / 実行トリガー（B23:AO23付近）",
++      "reason": "正本にコンソールコマンド名と不一致時の終了条件がないため、order:batch deleteSmaregiProduct の起動契約を追記する。同一シートの排他・トランザクション記載と続けて編集する分として割り引く。",
++      "sharedWithRows": [187],
++      "confidence": "high"
++    },
++    {
++      "rowId": 187,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / スマレジ商品削除 シート / 処理概要（B11:E20付近）の排他・トランザクション注記",
++      "reason": "正本に楽観ロック・悲観ロックを持たないという処理条件がないため、処理概要へ1項目追記する。同一シートの起動契約追記とまとめて行う連続編集分として割り引く。",
++      "sharedWithRows": [185],
++      "confidence": "medium"
++    },
++    {
++      "rowId": 188,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / ポイント二重登録チェック シート / 実行トリガー（B18:AO18付近）",
++      "reason": "正本にコンソールコマンド名がないため、order:batch checkDuplicatePoint の起動契約を追記する。同一シートのエラー出力追記と続けて編集する分として割り引く。",
++      "sharedWithRows": [189],
++      "confidence": "high"
++    },
++    {
++      "rowId": 189,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / ポイント二重登録チェック シート / エラーハンドリング（B46:C48付近）",
++      "reason": "正本には取得・送信時エラーの扱いがないため、エラーメッセージをコンソール出力する条件を追記する。同一シートの起動契約追記とまとめて行う連続編集分として割り引く。",
++      "sharedWithRows": [188],
++      "confidence": "high"
++    },
++    {
++      "rowId": 190,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / ポイント利用未反映チェック シート / 実行トリガー（B18:AO18付近）",
++      "reason": "正本にコンソールコマンド名がないため、order:batch checkNotReflectedPointUsage の起動契約を1項目追記する。単独シートを開いてセル追加と体裁調整を行う作業として見積もる。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 205,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0406_基本設計仕様書(バッチ_店頭買取管理) .xlsx / 買取集計バッチ シート / エラーハンドリング（D50付近、変更なし）",
++      "reason": "正本は部門未設定商品が存在する場合にエラーメールを送ることを明記している。設計書側の要求は成立しており、実装側だけの差分なので更新不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 204,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0406_基本設計仕様書(バッチ_店頭買取管理) .xlsx / 買取集計バッチ シート / 実行トリガー（B23:AO23付近）・引数説明（D15付近）",
++      "reason": "正本は集計日の引数規則を記載しているがコマンド名がないため、otcBuyOrder:batch updateSummary [YYYY-MM-DD] の起動契約を追記する。同一シートの他の追記とまとめて編集する。",
++      "sharedWithRows": [206, 207],
++      "confidence": "high"
++    },
++    {
++      "rowId": 206,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0406_基本設計仕様書(バッチ_店頭買取管理) .xlsx / 買取集計バッチ シート / 処理概要（B12:D19付近）",
++      "reason": "正本に長時間処理へ備えた実行時間制限解除がないため、バッチ初期化条件として1項目追記する。同一シートを開いたまま行える連続編集分として割り引く。",
++      "sharedWithRows": [204, 207],
++      "confidence": "medium"
++    },
++    {
++      "rowId": 207,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0406_基本設計仕様書(バッチ_店頭買取管理) .xlsx / 買取集計バッチ シート / エラーハンドリング（B48:D50付近）のログ記載",
++      "reason": "正本に部門未設定商品通知メールの送信開始・完了・対象件数・宛先未設定時終了のログ要件がないため、複数のログ条件を追記する。シート共通の編集準備分はrow 204・206と共有する。",
++      "sharedWithRows": [204, 206],
++      "confidence": "high"
++    },
++    {
++      "rowId": 209,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0408_基本設計仕様書(バッチ_会員).xlsx / ポイント失効 シート / 実行結果詳細・エラーハンドリング（D46、C60:C62付近、変更なし）",
++      "reason": "正本は失効ポイントをスマレジのポイント増減APIへ送信して差し引くことと、連携失敗会員をスキップして翌日以降へ持ち越すことを明記している。設計書更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 208,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0408_基本設計仕様書(バッチ_会員).xlsx / ポイント失効 シート / 実行トリガー（B25:AO25付近）",
++      "reason": "正本にコンソールコマンド名がないため、customer:batch lostPoint の起動契約を追記する。同一シートの流量制御・ログ追記とまとめて編集する。",
++      "sharedWithRows": [211, 210],
++      "confidence": "high"
++    },
++    {
++      "rowId": 211,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0408_基本設計仕様書(バッチ_会員).xlsx / ポイント失効 シート / 実行結果詳細の会員単位処理（B44:D54付近）",
++      "reason": "正本にスマレジAPIのリクエスト上限へ配慮した会員ごとのインターバルがないため、繰返し処理の流量制御条件を追記する。同一シートの関連編集とまとめるが、条件説明と配置調整を要する。",
++      "sharedWithRows": [208, 210],
++      "confidence": "medium"
++    },
++    {
++      "rowId": 210,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0408_基本設計仕様書(バッチ_会員).xlsx / ポイント失効 シート / エラーハンドリング末尾（B59:C62付近）のログ記載",
++      "reason": "正本に開始・完了の日時付きコンソール出力がないため、ログ要件を1項目追記する。同一シートを開いたまま行える連続編集分として割り引く。",
++      "sharedWithRows": [208, 211],
++      "confidence": "high"
++    },
++    {
++      "rowId": 212,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0408_基本設計仕様書(バッチ_会員).xlsx / ポイント有効期限通知 シート / 実行トリガー（B26:AO26付近）",
++      "reason": "正本にコンソールコマンド名と不一致時の終了条件がないため、customer:batch pointExpireNotification の起動契約を追記する。同一シートのエラー・ログ追記とまとめて編集する。",
++      "sharedWithRows": [213, 214],
++      "confidence": "high"
++    },
++    {
++      "rowId": 213,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0408_基本設計仕様書(バッチ_会員).xlsx / ポイント有効期限通知 シート / エラーハンドリング（B123:C124付近）",
++      "reason": "正本に送信時エラーの扱いがないため、エラーメッセージをコンソール出力する条件を追記する。同一シートの起動契約・日時付きログと続けて編集する分として割り引く。",
++      "sharedWithRows": [212, 214],
++      "confidence": "high"
++    },
++    {
++      "rowId": 214,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0408_基本設計仕様書(バッチ_会員).xlsx / ポイント有効期限通知 シート / エラーハンドリング末尾（B123:C124付近）のログ記載",
++      "reason": "正本に開始・完了の日時付きコンソール出力がないため、ログ要件を1項目追記する。同一シートの連続編集分として割り引く。",
++      "sharedWithRows": [212, 213],
++      "confidence": "high"
++    },
++    {
++      "rowId": 226,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0408_基本設計仕様書(バッチ_会員).xlsx / 必須項目が空欄の会員発生通知 シート / 入力データ詳細・メール本文例（C36:C46、D79付近、変更なし）",
++      "reason": "正本は電話番号1〜3列目と tel01・tel02・tel03 の対応を取得例およびメール本文例で明記している。設計書は正しく、実装側だけのラベル差分なので更新不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 215,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0408_基本設計仕様書(バッチ_会員).xlsx / ポイント差分発生通知 シート / 実行トリガー（B26:AO26付近）",
++      "reason": "正本にコンソールコマンド名がないため、customer:batch adjustPointVariance の起動契約を追記する。同一シートのエラー・ログ追記とまとめて編集する。",
++      "sharedWithRows": [217, 216],
++      "confidence": "high"
++    },
++    {
++      "rowId": 217,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0408_基本設計仕様書(バッチ_会員).xlsx / ポイント差分発生通知 シート / エラーハンドリング（B70:C71付近）",
++      "reason": "正本に取得・送信時エラーの扱いがないため、エラーメッセージをコンソール出力する条件を追記する。同一シートを開いたまま行える連続編集分として割り引く。",
++      "sharedWithRows": [215, 216],
++      "confidence": "high"
++    },
++    {
++      "rowId": 216,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0408_基本設計仕様書(バッチ_会員).xlsx / ポイント差分発生通知 シート / エラーハンドリング末尾（B70:C71付近）のログ記載",
++      "reason": "正本に開始・完了の日時付きコンソール出力がないため、ログ要件を1項目追記する。同一シートの起動契約・エラー記載とまとめて編集する。",
++      "sharedWithRows": [215, 217],
++      "confidence": "high"
++    },
++    {
++      "rowId": 218,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0408_基本設計仕様書(バッチ_会員).xlsx / スマレジ使用ポイント連携 シート / 実行トリガー（B25:AO25付近）・前提条件（C16:D18付近）",
++      "reason": "正本にコンソールコマンド名がないため、smaregi:batch updatePoint <受注ID> の起動契約を追記する。同一シートの不正ID条件追記とまとめて編集する。",
++      "sharedWithRows": [219],
++      "confidence": "high"
++    },
++    {
++      "rowId": 219,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0408_基本設計仕様書(バッチ_会員).xlsx / スマレジ使用ポイント連携 シート / エラーハンドリング（B46:C50付近）",
++      "reason": "正本は受注ID未入力・該当データなしの正常終了だけを記載しているため、非数値の不正IDも処理せず正常終了する条件を追記する。同一シートの起動契約追記とまとめて行う連続編集分として割り引く。",
++      "sharedWithRows": [218],
++      "confidence": "high"
++    },
++    {
++      "rowId": 220,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0408_基本設計仕様書(バッチ_会員).xlsx / スマレジ使用ポイント連携 シート / エラーハンドリング（C49:C50付近、変更なし）、0405_基本設計仕様書(バッチ_受注管理).xlsx / スマレジEC受注連携エラー再連携 シート / 処理概要（C13:C15付近、変更なし）",
++      "reason": "正本は通信失敗時のエラー詳細・エラーフラグ保存を明記し、別シートでスマレジ連携エラーフラグが立った注文の再連携を明記している。設計書側の失敗記録と再試行経路は記載済みなので更新不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 221,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0413_基本設計仕様書(バッチ_イベント).xlsx / 決済処理中チェックバッチ シート / 処理概要・入力元・実行結果詳細（D10、J16、C35:E51付近、変更なし）",
++      "reason": "正本はSP.LINKS取引照会APIを入力元とし、取引照会結果に応じた申込済み・保留・論理削除の処理を明記している。設計書は明確であり、実装側だけの未実装差分なので更新不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 222,
++      "docWork": "ADD",
++      "docEffortDays": 0.15,
++      "target": "0413_基本設計仕様書(バッチ_イベント).xlsx / 決済処理中チェックバッチ シート / 実行結果詳細（B33:E51付近）",
++      "reason": "正本に同一決済番号の検出と直前照会結果の流用がないため、決済番号順の処理、前回結果の保持、同一番号時の照会省略と結果別処理の再利用を条件付きで追記する。複数の処理規則を整える作業として見積もる。",
++      "sharedWithRows": [223],
++      "confidence": "high"
++    },
++    {
++      "rowId": 223,
++      "docWork": "ADD",
++      "docEffortDays": 0.15,
++      "target": "0413_基本設計仕様書(バッチ_イベント).xlsx / 決済処理中チェックバッチ シート / 実行結果詳細・エラーハンドリング（B33:E56付近）",
++      "reason": "正本は取引照会エラー時のメール送信だけを記載しているため、取引不在・未完了以外の想定外エラーを蓄積し、重複排除して1通にまとめて管理者通知する規則を追記する。同一シートの照会結果流用追記とまとめて編集する。",
++      "sharedWithRows": [222],
++      "confidence": "high"
++    }
++  ]
++}
+
+diff --git a/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_32.json b/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_32.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..f11ac02d4e2f0191aa2fd9d2d7f2efbafd21e996
+--- /dev/null
++++ b/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_32.json
+@@ -0,0 +1,257 @@
++{
++  "packetId": "du_32",
++  "results": [
++    {
++      "rowId": 182,
++      "docWork": "ADD",
++      "docEffortDays": 0.15,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / 店頭注文番号初期化 シート / 実行結果詳細（C34:C35付近）・エラーハンドリング（B40:D42付近）",
++      "reason": "正本は全件物理削除と採番IDリセットだけを記載しているため、両処理を別文で実行することと、途中中断後の再実行で空テーブル・カウンタ1へ収束する条件を追記する。処理境界と障害時挙動の複数項目を整える作業として見積もる。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 186,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / スマレジ商品削除 シート / 処理概要（E20付近）・エラーハンドリング（D53付近、変更なし）",
++      "reason": "正本は連携失敗時のスマレジ通信エラーメールと、発生したスマレジ連携ごとの管理者通知を明記している。設計書側は明確であり、実装側だけの差分なので更新不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 185,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / スマレジ商品削除 シート / 実行トリガー（B23:AO23付近）",
++      "reason": "正本にコンソールコマンド名と不一致時の終了条件がないため、order:batch deleteSmaregiProduct の起動契約を追記する。同一シートの排他・トランザクション記載と続けて編集する分として割り引く。",
++      "sharedWithRows": [187],
++      "confidence": "high"
++    },
++    {
++      "rowId": 187,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / スマレジ商品削除 シート / 処理概要（B11:E20付近）の排他・トランザクション注記",
++      "reason": "正本に楽観ロック・悲観ロックを持たないという処理条件がないため、処理概要へ1項目追記する。同一シートの起動契約追記とまとめて行う連続編集分として割り引く。",
++      "sharedWithRows": [185],
++      "confidence": "medium"
++    },
++    {
++      "rowId": 188,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / ポイント二重登録チェック シート / 実行トリガー（B18:AO18付近）",
++      "reason": "正本にコンソールコマンド名がないため、order:batch checkDuplicatePoint の起動契約を追記する。同一シートのエラー出力追記と続けて編集する分として割り引く。",
++      "sharedWithRows": [189],
++      "confidence": "high"
++    },
++    {
++      "rowId": 189,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / ポイント二重登録チェック シート / エラーハンドリング（B46:C48付近）",
++      "reason": "正本には取得・送信時エラーの扱いがないため、エラーメッセージをコンソール出力する条件を追記する。同一シートの起動契約追記とまとめて行う連続編集分として割り引く。",
++      "sharedWithRows": [188],
++      "confidence": "high"
++    },
++    {
++      "rowId": 190,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / ポイント利用未反映チェック シート / 実行トリガー（B18:AO18付近）",
++      "reason": "正本にコンソールコマンド名がないため、order:batch checkNotReflectedPointUsage の起動契約を1項目追記する。単独シートを開いてセル追加と体裁調整を行う作業として見積もる。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 205,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0406_基本設計仕様書(バッチ_店頭買取管理) .xlsx / 買取集計バッチ シート / エラーハンドリング（D50付近、変更なし）",
++      "reason": "正本は部門未設定商品が存在する場合にエラーメールを送ることを明記している。設計書側の要求は成立しており、実装側だけの差分なので更新不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 204,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0406_基本設計仕様書(バッチ_店頭買取管理) .xlsx / 買取集計バッチ シート / 実行トリガー（B23:AO23付近）・引数説明（D15付近）",
++      "reason": "正本は集計日の引数規則を記載しているがコマンド名がないため、otcBuyOrder:batch updateSummary [YYYY-MM-DD] の起動契約を追記する。同一シートの他の追記とまとめて編集する。",
++      "sharedWithRows": [206, 207],
++      "confidence": "high"
++    },
++    {
++      "rowId": 206,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0406_基本設計仕様書(バッチ_店頭買取管理) .xlsx / 買取集計バッチ シート / 処理概要（B12:D19付近）",
++      "reason": "正本に長時間処理へ備えた実行時間制限解除がないため、バッチ初期化条件として1項目追記する。同一シートを開いたまま行える連続編集分として割り引く。",
++      "sharedWithRows": [204, 207],
++      "confidence": "medium"
++    },
++    {
++      "rowId": 207,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0406_基本設計仕様書(バッチ_店頭買取管理) .xlsx / 買取集計バッチ シート / エラーハンドリング（B48:D50付近）のログ記載",
++      "reason": "正本に部門未設定商品通知メールの送信開始・完了・対象件数・宛先未設定時終了のログ要件がないため、複数のログ条件を追記する。シート共通の編集準備分はrow 204・206と共有する。",
++      "sharedWithRows": [204, 206],
++      "confidence": "high"
++    },
++    {
++      "rowId": 209,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0408_基本設計仕様書(バッチ_会員).xlsx / ポイント失効 シート / 実行結果詳細・エラーハンドリング（D46、C60:C62付近、変更なし）",
++      "reason": "正本は失効ポイントをスマレジのポイント増減APIへ送信して差し引くことと、連携失敗会員をスキップして翌日以降へ持ち越すことを明記している。設計書更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 208,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0408_基本設計仕様書(バッチ_会員).xlsx / ポイント失効 シート / 実行トリガー（B25:AO25付近）",
++      "reason": "正本にコンソールコマンド名がないため、customer:batch lostPoint の起動契約を追記する。同一シートの流量制御・ログ追記とまとめて編集する。",
++      "sharedWithRows": [211, 210],
++      "confidence": "high"
++    },
++    {
++      "rowId": 211,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0408_基本設計仕様書(バッチ_会員).xlsx / ポイント失効 シート / 実行結果詳細の会員単位処理（B44:D54付近）",
++      "reason": "正本にスマレジAPIのリクエスト上限へ配慮した会員ごとのインターバルがないため、繰返し処理の流量制御条件を追記する。同一シートの関連編集とまとめるが、条件説明と配置調整を要する。",
++      "sharedWithRows": [208, 210],
++      "confidence": "medium"
++    },
++    {
++      "rowId": 210,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0408_基本設計仕様書(バッチ_会員).xlsx / ポイント失効 シート / エラーハンドリング末尾（B59:C62付近）のログ記載",
++      "reason": "正本に開始・完了の日時付きコンソール出力がないため、ログ要件を1項目追記する。同一シートを開いたまま行える連続編集分として割り引く。",
++      "sharedWithRows": [208, 211],
++      "confidence": "high"
++    },
++    {
++      "rowId": 212,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0408_基本設計仕様書(バッチ_会員).xlsx / ポイント有効期限通知 シート / 実行トリガー（B26:AO26付近）",
++      "reason": "正本にコンソールコマンド名と不一致時の終了条件がないため、customer:batch pointExpireNotification の起動契約を追記する。同一シートのエラー・ログ追記とまとめて編集する。",
++      "sharedWithRows": [213, 214],
++      "confidence": "high"
++    },
++    {
++      "rowId": 213,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0408_基本設計仕様書(バッチ_会員).xlsx / ポイント有効期限通知 シート / エラーハンドリング（B123:C124付近）",
++      "reason": "正本に送信時エラーの扱いがないため、エラーメッセージをコンソール出力する条件を追記する。同一シートの起動契約・日時付きログと続けて編集する分として割り引く。",
++      "sharedWithRows": [212, 214],
++      "confidence": "high"
++    },
++    {
++      "rowId": 214,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0408_基本設計仕様書(バッチ_会員).xlsx / ポイント有効期限通知 シート / エラーハンドリング末尾（B123:C124付近）のログ記載",
++      "reason": "正本に開始・完了の日時付きコンソール出力がないため、ログ要件を1項目追記する。同一シートの連続編集分として割り引く。",
++      "sharedWithRows": [212, 213],
++      "confidence": "high"
++    },
++    {
++      "rowId": 226,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0408_基本設計仕様書(バッチ_会員).xlsx / 必須項目が空欄の会員発生通知 シート / 入力データ詳細・メール本文例（C36:C46、D79付近、変更なし）",
++      "reason": "正本は電話番号1〜3列目と tel01・tel02・tel03 の対応を取得例およびメール本文例で明記している。設計書は正しく、実装側だけのラベル差分なので更新不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 215,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0408_基本設計仕様書(バッチ_会員).xlsx / ポイント差分発生通知 シート / 実行トリガー（B26:AO26付近）",
++      "reason": "正本にコンソールコマンド名がないため、customer:batch adjustPointVariance の起動契約を追記する。同一シートのエラー・ログ追記とまとめて編集する。",
++      "sharedWithRows": [217, 216],
++      "confidence": "high"
++    },
++    {
++      "rowId": 217,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0408_基本設計仕様書(バッチ_会員).xlsx / ポイント差分発生通知 シート / エラーハンドリング（B70:C71付近）",
++      "reason": "正本に取得・送信時エラーの扱いがないため、エラーメッセージをコンソール出力する条件を追記する。同一シートを開いたまま行える連続編集分として割り引く。",
++      "sharedWithRows": [215, 216],
++      "confidence": "high"
++    },
++    {
++      "rowId": 216,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0408_基本設計仕様書(バッチ_会員).xlsx / ポイント差分発生通知 シート / エラーハンドリング末尾（B70:C71付近）のログ記載",
++      "reason": "正本に開始・完了の日時付きコンソール出力がないため、ログ要件を1項目追記する。同一シートの起動契約・エラー記載とまとめて編集する。",
++      "sharedWithRows": [215, 217],
++      "confidence": "high"
++    },
++    {
++      "rowId": 218,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0408_基本設計仕様書(バッチ_会員).xlsx / スマレジ使用ポイント連携 シート / 実行トリガー（B25:AO25付近）・前提条件（C16:D18付近）",
++      "reason": "正本にコンソールコマンド名がないため、smaregi:batch updatePoint <受注ID> の起動契約を追記する。同一シートの不正ID条件追記とまとめて編集する。",
++      "sharedWithRows": [219],
++      "confidence": "high"
++    },
++    {
++      "rowId": 219,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0408_基本設計仕様書(バッチ_会員).xlsx / スマレジ使用ポイント連携 シート / エラーハンドリング（B46:C50付近）",
++      "reason": "正本は受注ID未入力・該当データなしの正常終了だけを記載しているため、非数値の不正IDも処理せず正常終了する条件を追記する。同一シートの起動契約追記とまとめて行う連続編集分として割り引く。",
++      "sharedWithRows": [218],
++      "confidence": "high"
++    },
++    {
++      "rowId": 220,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0408_基本設計仕様書(バッチ_会員).xlsx / スマレジ使用ポイント連携 シート / エラーハンドリング（C49:C50付近、変更なし）、0405_基本設計仕様書(バッチ_受注管理).xlsx / スマレジEC受注連携エラー再連携 シート / 処理概要（C13:C15付近、変更なし）",
++      "reason": "正本は通信失敗時のエラー詳細・エラーフラグ保存を明記し、別シートでスマレジ連携エラーフラグが立った注文の再連携を明記している。設計書側の失敗記録と再試行経路は記載済みなので更新不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 221,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0413_基本設計仕様書(バッチ_イベント).xlsx / 決済処理中チェックバッチ シート / 処理概要・入力元・実行結果詳細（D10、J16、C35:E51付近、変更なし）",
++      "reason": "正本はSP.LINKS取引照会APIを入力元とし、取引照会結果に応じた申込済み・保留・論理削除の処理を明記している。設計書は明確であり、実装側だけの未実装差分なので更新不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 222,
++      "docWork": "ADD",
++      "docEffortDays": 0.15,
++      "target": "0413_基本設計仕様書(バッチ_イベント).xlsx / 決済処理中チェックバッチ シート / 実行結果詳細（B33:E51付近）",
++      "reason": "正本に同一決済番号の検出と直前照会結果の流用がないため、決済番号順の処理、前回結果の保持、同一番号時の照会省略と結果別処理の再利用を条件付きで追記する。複数の処理規則を整える作業として見積もる。",
++      "sharedWithRows": [223],
++      "confidence": "high"
++    },
++    {
++      "rowId": 223,
++      "docWork": "ADD",
++      "docEffortDays": 0.15,
++      "target": "0413_基本設計仕様書(バッチ_イベント).xlsx / 決済処理中チェックバッチ シート / 実行結果詳細・エラーハンドリング（B33:E56付近）",
++      "reason": "正本は取引照会エラー時のメール送信だけを記載しているため、取引不在・未完了以外の想定外エラーを蓄積し、重複排除して1通にまとめて管理者通知する規則を追記する。同一シートの照会結果流用追記とまとめて編集する。",
++      "sharedWithRows": [222],
++      "confidence": "high"
++    }
++  ]
++}
+
+exec
+/bin/bash -lc "python3 -m json.tool /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_32.json >/dev/null && jq '{packetId, count:(.results|length), duplicateRowIds:(.results|group_by(.rowId)|map(select(length>1)|.[0].rowId)), workCounts:(.results|group_by(.docWork)|map({work:.[0].docWork,count:length,days:(map(.docEffortDays)|add)})), totalDays:(.results|map(.docEffortDays)|add)}' /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_32.json && comm -3 <(jq -r '.findings[].rowId' /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_packets/du_32.json | sort -n) <(jq -r '.results[].rowId' /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_32.json | sort -n)" in /home/y-saito/Developments
+ succeeded in 694ms:
+{
+  "packetId": "du_32",
+  "count": 28,
+  "duplicateRowIds": [],
+  "workCounts": [
+    {
+      "work": "ADD",
+      "count": 22,
+      "days": 1.55
+    },
+    {
+      "work": "NONE",
+      "count": 6,
+      "days": 0
+    }
+  ],
+  "totalDays": 1.55
+}
+
+diff --git a/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_32.json b/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_32.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..f11ac02d4e2f0191aa2fd9d2d7f2efbafd21e996
+--- /dev/null
++++ b/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_32.json
+@@ -0,0 +1,257 @@
++{
++  "packetId": "du_32",
++  "results": [
++    {
++      "rowId": 182,
++      "docWork": "ADD",
++      "docEffortDays": 0.15,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / 店頭注文番号初期化 シート / 実行結果詳細（C34:C35付近）・エラーハンドリング（B40:D42付近）",
++      "reason": "正本は全件物理削除と採番IDリセットだけを記載しているため、両処理を別文で実行することと、途中中断後の再実行で空テーブル・カウンタ1へ収束する条件を追記する。処理境界と障害時挙動の複数項目を整える作業として見積もる。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 186,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / スマレジ商品削除 シート / 処理概要（E20付近）・エラーハンドリング（D53付近、変更なし）",
++      "reason": "正本は連携失敗時のスマレジ通信エラーメールと、発生したスマレジ連携ごとの管理者通知を明記している。設計書側は明確であり、実装側だけの差分なので更新不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 185,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / スマレジ商品削除 シート / 実行トリガー（B23:AO23付近）",
++      "reason": "正本にコンソールコマンド名と不一致時の終了条件がないため、order:batch deleteSmaregiProduct の起動契約を追記する。同一シートの排他・トランザクション記載と続けて編集する分として割り引く。",
++      "sharedWithRows": [187],
++      "confidence": "high"
++    },
++    {
++      "rowId": 187,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / スマレジ商品削除 シート / 処理概要（B11:E20付近）の排他・トランザクション注記",
++      "reason": "正本に楽観ロック・悲観ロックを持たないという処理条件がないため、処理概要へ1項目追記する。同一シートの起動契約追記とまとめて行う連続編集分として割り引く。",
++      "sharedWithRows": [185],
++      "confidence": "medium"
++    },
++    {
++      "rowId": 188,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / ポイント二重登録チェック シート / 実行トリガー（B18:AO18付近）",
++      "reason": "正本にコンソールコマンド名がないため、order:batch checkDuplicatePoint の起動契約を追記する。同一シートのエラー出力追記と続けて編集する分として割り引く。",
++      "sharedWithRows": [189],
++      "confidence": "high"
++    },
++    {
++      "rowId": 189,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / ポイント二重登録チェック シート / エラーハンドリング（B46:C48付近）",
++      "reason": "正本には取得・送信時エラーの扱いがないため、エラーメッセージをコンソール出力する条件を追記する。同一シートの起動契約追記とまとめて行う連続編集分として割り引く。",
++      "sharedWithRows": [188],
++      "confidence": "high"
++    },
++    {
++      "rowId": 190,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / ポイント利用未反映チェック シート / 実行トリガー（B18:AO18付近）",
++      "reason": "正本にコンソールコマンド名がないため、order:batch checkNotReflectedPointUsage の起動契約を1項目追記する。単独シートを開いてセル追加と体裁調整を行う作業として見積もる。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 205,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0406_基本設計仕様書(バッチ_店頭買取管理) .xlsx / 買取集計バッチ シート / エラーハンドリング（D50付近、変更なし）",
++      "reason": "正本は部門未設定商品が存在する場合にエラーメールを送ることを明記している。設計書側の要求は成立しており、実装側だけの差分なので更新不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 204,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0406_基本設計仕様書(バッチ_店頭買取管理) .xlsx / 買取集計バッチ シート / 実行トリガー（B23:AO23付近）・引数説明（D15付近）",
++      "reason": "正本は集計日の引数規則を記載しているがコマンド名がないため、otcBuyOrder:batch updateSummary [YYYY-MM-DD] の起動契約を追記する。同一シートの他の追記とまとめて編集する。",
++      "sharedWithRows": [206, 207],
++      "confidence": "high"
++    },
++    {
++      "rowId": 206,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0406_基本設計仕様書(バッチ_店頭買取管理) .xlsx / 買取集計バッチ シート / 処理概要（B12:D19付近）",
++      "reason": "正本に長時間処理へ備えた実行時間制限解除がないため、バッチ初期化条件として1項目追記する。同一シートを開いたまま行える連続編集分として割り引く。",
++      "sharedWithRows": [204, 207],
++      "confidence": "medium"
++    },
++    {
++      "rowId": 207,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0406_基本設計仕様書(バッチ_店頭買取管理) .xlsx / 買取集計バッチ シート / エラーハンドリング（B48:D50付近）のログ記載",
++      "reason": "正本に部門未設定商品通知メールの送信開始・完了・対象件数・宛先未設定時終了のログ要件がないため、複数のログ条件を追記する。シート共通の編集準備分はrow 204・206と共有する。",
++      "sharedWithRows": [204, 206],
++      "confidence": "high"
++    },
++    {
++      "rowId": 209,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0408_基本設計仕様書(バッチ_会員).xlsx / ポイント失効 シート / 実行結果詳細・エラーハンドリング（D46、C60:C62付近、変更なし）",
++      "reason": "正本は失効ポイントをスマレジのポイント増減APIへ送信して差し引くことと、連携失敗会員をスキップして翌日以降へ持ち越すことを明記している。設計書更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 208,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0408_基本設計仕様書(バッチ_会員).xlsx / ポイント失効 シート / 実行トリガー（B25:AO25付近）",
++      "reason": "正本にコンソールコマンド名がないため、customer:batch lostPoint の起動契約を追記する。同一シートの流量制御・ログ追記とまとめて編集する。",
++      "sharedWithRows": [211, 210],
++      "confidence": "high"
++    },
++    {
++      "rowId": 211,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0408_基本設計仕様書(バッチ_会員).xlsx / ポイント失効 シート / 実行結果詳細の会員単位処理（B44:D54付近）",
++      "reason": "正本にスマレジAPIのリクエスト上限へ配慮した会員ごとのインターバルがないため、繰返し処理の流量制御条件を追記する。同一シートの関連編集とまとめるが、条件説明と配置調整を要する。",
++      "sharedWithRows": [208, 210],
++      "confidence": "medium"
++    },
++    {
++      "rowId": 210,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0408_基本設計仕様書(バッチ_会員).xlsx / ポイント失効 シート / エラーハンドリング末尾（B59:C62付近）のログ記載",
++      "reason": "正本に開始・完了の日時付きコンソール出力がないため、ログ要件を1項目追記する。同一シートを開いたまま行える連続編集分として割り引く。",
++      "sharedWithRows": [208, 211],
++      "confidence": "high"
++    },
++    {
++      "rowId": 212,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0408_基本設計仕様書(バッチ_会員).xlsx / ポイント有効期限通知 シート / 実行トリガー（B26:AO26付近）",
++      "reason": "正本にコンソールコマンド名と不一致時の終了条件がないため、customer:batch pointExpireNotification の起動契約を追記する。同一シートのエラー・ログ追記とまとめて編集する。",
++      "sharedWithRows": [213, 214],
++      "confidence": "high"
++    },
++    {
++      "rowId": 213,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0408_基本設計仕様書(バッチ_会員).xlsx / ポイント有効期限通知 シート / エラーハンドリング（B123:C124付近）",
++      "reason": "正本に送信時エラーの扱いがないため、エラーメッセージをコンソール出力する条件を追記する。同一シートの起動契約・日時付きログと続けて編集する分として割り引く。",
++      "sharedWithRows": [212, 214],
++      "confidence": "high"
++    },
++    {
++      "rowId": 214,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0408_基本設計仕様書(バッチ_会員).xlsx / ポイント有効期限通知 シート / エラーハンドリング末尾（B123:C124付近）のログ記載",
++      "reason": "正本に開始・完了の日時付きコンソール出力がないため、ログ要件を1項目追記する。同一シートの連続編集分として割り引く。",
++      "sharedWithRows": [212, 213],
++      "confidence": "high"
++    },
++    {
++      "rowId": 226,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0408_基本設計仕様書(バッチ_会員).xlsx / 必須項目が空欄の会員発生通知 シート / 入力データ詳細・メール本文例（C36:C46、D79付近、変更なし）",
++      "reason": "正本は電話番号1〜3列目と tel01・tel02・tel03 の対応を取得例およびメール本文例で明記している。設計書は正しく、実装側だけのラベル差分なので更新不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 215,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0408_基本設計仕様書(バッチ_会員).xlsx / ポイント差分発生通知 シート / 実行トリガー（B26:AO26付近）",
++      "reason": "正本にコンソールコマンド名がないため、customer:batch adjustPointVariance の起動契約を追記する。同一シートのエラー・ログ追記とまとめて編集する。",
++      "sharedWithRows": [217, 216],
++      "confidence": "high"
++    },
++    {
++      "rowId": 217,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0408_基本設計仕様書(バッチ_会員).xlsx / ポイント差分発生通知 シート / エラーハンドリング（B70:C71付近）",
++      "reason": "正本に取得・送信時エラーの扱いがないため、エラーメッセージをコンソール出力する条件を追記する。同一シートを開いたまま行える連続編集分として割り引く。",
++      "sharedWithRows": [215, 216],
++      "confidence": "high"
++    },
++    {
++      "rowId": 216,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0408_基本設計仕様書(バッチ_会員).xlsx / ポイント差分発生通知 シート / エラーハンドリング末尾（B70:C71付近）のログ記載",
++      "reason": "正本に開始・完了の日時付きコンソール出力がないため、ログ要件を1項目追記する。同一シートの起動契約・エラー記載とまとめて編集する。",
++      "sharedWithRows": [215, 217],
++      "confidence": "high"
++    },
++    {
++      "rowId": 218,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0408_基本設計仕様書(バッチ_会員).xlsx / スマレジ使用ポイント連携 シート / 実行トリガー（B25:AO25付近）・前提条件（C16:D18付近）",
++      "reason": "正本にコンソールコマンド名がないため、smaregi:batch updatePoint <受注ID> の起動契約を追記する。同一シートの不正ID条件追記とまとめて編集する。",
++      "sharedWithRows": [219],
++      "confidence": "high"
++    },
++    {
++      "rowId": 219,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0408_基本設計仕様書(バッチ_会員).xlsx / スマレジ使用ポイント連携 シート / エラーハンドリング（B46:C50付近）",
++      "reason": "正本は受注ID未入力・該当データなしの正常終了だけを記載しているため、非数値の不正IDも処理せず正常終了する条件を追記する。同一シートの起動契約追記とまとめて行う連続編集分として割り引く。",
++      "sharedWithRows": [218],
++      "confidence": "high"
++    },
++    {
++      "rowId": 220,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0408_基本設計仕様書(バッチ_会員).xlsx / スマレジ使用ポイント連携 シート / エラーハンドリング（C49:C50付近、変更なし）、0405_基本設計仕様書(バッチ_受注管理).xlsx / スマレジEC受注連携エラー再連携 シート / 処理概要（C13:C15付近、変更なし）",
++      "reason": "正本は通信失敗時のエラー詳細・エラーフラグ保存を明記し、別シートでスマレジ連携エラーフラグが立った注文の再連携を明記している。設計書側の失敗記録と再試行経路は記載済みなので更新不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 221,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0413_基本設計仕様書(バッチ_イベント).xlsx / 決済処理中チェックバッチ シート / 処理概要・入力元・実行結果詳細（D10、J16、C35:E51付近、変更なし）",
++      "reason": "正本はSP.LINKS取引照会APIを入力元とし、取引照会結果に応じた申込済み・保留・論理削除の処理を明記している。設計書は明確であり、実装側だけの未実装差分なので更新不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 222,
++      "docWork": "ADD",
++      "docEffortDays": 0.15,
++      "target": "0413_基本設計仕様書(バッチ_イベント).xlsx / 決済処理中チェックバッチ シート / 実行結果詳細（B33:E51付近）",
++      "reason": "正本に同一決済番号の検出と直前照会結果の流用がないため、決済番号順の処理、前回結果の保持、同一番号時の照会省略と結果別処理の再利用を条件付きで追記する。複数の処理規則を整える作業として見積もる。",
++      "sharedWithRows": [223],
++      "confidence": "high"
++    },
++    {
++      "rowId": 223,
++      "docWork": "ADD",
++      "docEffortDays": 0.15,
++      "target": "0413_基本設計仕様書(バッチ_イベント).xlsx / 決済処理中チェックバッチ シート / 実行結果詳細・エラーハンドリング（B33:E56付近）",
++      "reason": "正本は取引照会エラー時のメール送信だけを記載しているため、取引不在・未完了以外の想定外エラーを蓄積し、重複排除して1通にまとめて管理者通知する規則を追記する。同一シートの照会結果流用追記とまとめて編集する。",
++      "sharedWithRows": [222],
++      "confidence": "high"
++    }
++  ]
++}
+
+codex
+28件: NONE=6 ADD=22 FIX=0 IMAGE=0 / 計 1.55人日
+diff --git a/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_32.json b/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_32.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..f11ac02d4e2f0191aa2fd9d2d7f2efbafd21e996
+--- /dev/null
++++ b/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_32.json
+@@ -0,0 +1,257 @@
++{
++  "packetId": "du_32",
++  "results": [
++    {
++      "rowId": 182,
++      "docWork": "ADD",
++      "docEffortDays": 0.15,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / 店頭注文番号初期化 シート / 実行結果詳細（C34:C35付近）・エラーハンドリング（B40:D42付近）",
++      "reason": "正本は全件物理削除と採番IDリセットだけを記載しているため、両処理を別文で実行することと、途中中断後の再実行で空テーブル・カウンタ1へ収束する条件を追記する。処理境界と障害時挙動の複数項目を整える作業として見積もる。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 186,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / スマレジ商品削除 シート / 処理概要（E20付近）・エラーハンドリング（D53付近、変更なし）",
++      "reason": "正本は連携失敗時のスマレジ通信エラーメールと、発生したスマレジ連携ごとの管理者通知を明記している。設計書側は明確であり、実装側だけの差分なので更新不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 185,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / スマレジ商品削除 シート / 実行トリガー（B23:AO23付近）",
++      "reason": "正本にコンソールコマンド名と不一致時の終了条件がないため、order:batch deleteSmaregiProduct の起動契約を追記する。同一シートの排他・トランザクション記載と続けて編集する分として割り引く。",
++      "sharedWithRows": [187],
++      "confidence": "high"
++    },
++    {
++      "rowId": 187,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / スマレジ商品削除 シート / 処理概要（B11:E20付近）の排他・トランザクション注記",
++      "reason": "正本に楽観ロック・悲観ロックを持たないという処理条件がないため、処理概要へ1項目追記する。同一シートの起動契約追記とまとめて行う連続編集分として割り引く。",
++      "sharedWithRows": [185],
++      "confidence": "medium"
++    },
++    {
++      "rowId": 188,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / ポイント二重登録チェック シート / 実行トリガー（B18:AO18付近）",
++      "reason": "正本にコンソールコマンド名がないため、order:batch checkDuplicatePoint の起動契約を追記する。同一シートのエラー出力追記と続けて編集する分として割り引く。",
++      "sharedWithRows": [189],
++      "confidence": "high"
++    },
++    {
++      "rowId": 189,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / ポイント二重登録チェック シート / エラーハンドリング（B46:C48付近）",
++      "reason": "正本には取得・送信時エラーの扱いがないため、エラーメッセージをコンソール出力する条件を追記する。同一シートの起動契約追記とまとめて行う連続編集分として割り引く。",
++      "sharedWithRows": [188],
++      "confidence": "high"
++    },
++    {
++      "rowId": 190,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / ポイント利用未反映チェック シート / 実行トリガー（B18:AO18付近）",
++      "reason": "正本にコンソールコマンド名がないため、order:batch checkNotReflectedPointUsage の起動契約を1項目追記する。単独シートを開いてセル追加と体裁調整を行う作業として見積もる。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 205,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0406_基本設計仕様書(バッチ_店頭買取管理) .xlsx / 買取集計バッチ シート / エラーハンドリング（D50付近、変更なし）",
++      "reason": "正本は部門未設定商品が存在する場合にエラーメールを送ることを明記している。設計書側の要求は成立しており、実装側だけの差分なので更新不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 204,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0406_基本設計仕様書(バッチ_店頭買取管理) .xlsx / 買取集計バッチ シート / 実行トリガー（B23:AO23付近）・引数説明（D15付近）",
++      "reason": "正本は集計日の引数規則を記載しているがコマンド名がないため、otcBuyOrder:batch updateSummary [YYYY-MM-DD] の起動契約を追記する。同一シートの他の追記とまとめて編集する。",
++      "sharedWithRows": [206, 207],
++      "confidence": "high"
++    },
++    {
++      "rowId": 206,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0406_基本設計仕様書(バッチ_店頭買取管理) .xlsx / 買取集計バッチ シート / 処理概要（B12:D19付近）",
++      "reason": "正本に長時間処理へ備えた実行時間制限解除がないため、バッチ初期化条件として1項目追記する。同一シートを開いたまま行える連続編集分として割り引く。",
++      "sharedWithRows": [204, 207],
++      "confidence": "medium"
++    },
++    {
++      "rowId": 207,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0406_基本設計仕様書(バッチ_店頭買取管理) .xlsx / 買取集計バッチ シート / エラーハンドリング（B48:D50付近）のログ記載",
++      "reason": "正本に部門未設定商品通知メールの送信開始・完了・対象件数・宛先未設定時終了のログ要件がないため、複数のログ条件を追記する。シート共通の編集準備分はrow 204・206と共有する。",
++      "sharedWithRows": [204, 206],
++      "confidence": "high"
++    },
++    {
++      "rowId": 209,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0408_基本設計仕様書(バッチ_会員).xlsx / ポイント失効 シート / 実行結果詳細・エラーハンドリング（D46、C60:C62付近、変更なし）",
++      "reason": "正本は失効ポイントをスマレジのポイント増減APIへ送信して差し引くことと、連携失敗会員をスキップして翌日以降へ持ち越すことを明記している。設計書更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 208,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0408_基本設計仕様書(バッチ_会員).xlsx / ポイント失効 シート / 実行トリガー（B25:AO25付近）",
++      "reason": "正本にコンソールコマンド名がないため、customer:batch lostPoint の起動契約を追記する。同一シートの流量制御・ログ追記とまとめて編集する。",
++      "sharedWithRows": [211, 210],
++      "confidence": "high"
++    },
++    {
++      "rowId": 211,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0408_基本設計仕様書(バッチ_会員).xlsx / ポイント失効 シート / 実行結果詳細の会員単位処理（B44:D54付近）",
++      "reason": "正本にスマレジAPIのリクエスト上限へ配慮した会員ごとのインターバルがないため、繰返し処理の流量制御条件を追記する。同一シートの関連編集とまとめるが、条件説明と配置調整を要する。",
++      "sharedWithRows": [208, 210],
++      "confidence": "medium"
++    },
++    {
++      "rowId": 210,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0408_基本設計仕様書(バッチ_会員).xlsx / ポイント失効 シート / エラーハンドリング末尾（B59:C62付近）のログ記載",
++      "reason": "正本に開始・完了の日時付きコンソール出力がないため、ログ要件を1項目追記する。同一シートを開いたまま行える連続編集分として割り引く。",
++      "sharedWithRows": [208, 211],
++      "confidence": "high"
++    },
++    {
++      "rowId": 212,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0408_基本設計仕様書(バッチ_会員).xlsx / ポイント有効期限通知 シート / 実行トリガー（B26:AO26付近）",
++      "reason": "正本にコンソールコマンド名と不一致時の終了条件がないため、customer:batch pointExpireNotification の起動契約を追記する。同一シートのエラー・ログ追記とまとめて編集する。",
++      "sharedWithRows": [213, 214],
++      "confidence": "high"
++    },
++    {
++      "rowId": 213,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0408_基本設計仕様書(バッチ_会員).xlsx / ポイント有効期限通知 シート / エラーハンドリング（B123:C124付近）",
++      "reason": "正本に送信時エラーの扱いがないため、エラーメッセージをコンソール出力する条件を追記する。同一シートの起動契約・日時付きログと続けて編集する分として割り引く。",
++      "sharedWithRows": [212, 214],
++      "confidence": "high"
++    },
++    {
++      "rowId": 214,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0408_基本設計仕様書(バッチ_会員).xlsx / ポイント有効期限通知 シート / エラーハンドリング末尾（B123:C124付近）のログ記載",
++      "reason": "正本に開始・完了の日時付きコンソール出力がないため、ログ要件を1項目追記する。同一シートの連続編集分として割り引く。",
++      "sharedWithRows": [212, 213],
++      "confidence": "high"
++    },
++    {
++      "rowId": 226,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0408_基本設計仕様書(バッチ_会員).xlsx / 必須項目が空欄の会員発生通知 シート / 入力データ詳細・メール本文例（C36:C46、D79付近、変更なし）",
++      "reason": "正本は電話番号1〜3列目と tel01・tel02・tel03 の対応を取得例およびメール本文例で明記している。設計書は正しく、実装側だけのラベル差分なので更新不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 215,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0408_基本設計仕様書(バッチ_会員).xlsx / ポイント差分発生通知 シート / 実行トリガー（B26:AO26付近）",
++      "reason": "正本にコンソールコマンド名がないため、customer:batch adjustPointVariance の起動契約を追記する。同一シートのエラー・ログ追記とまとめて編集する。",
++      "sharedWithRows": [217, 216],
++      "confidence": "high"
++    },
++    {
++      "rowId": 217,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0408_基本設計仕様書(バッチ_会員).xlsx / ポイント差分発生通知 シート / エラーハンドリング（B70:C71付近）",
++      "reason": "正本に取得・送信時エラーの扱いがないため、エラーメッセージをコンソール出力する条件を追記する。同一シートを開いたまま行える連続編集分として割り引く。",
++      "sharedWithRows": [215, 216],
++      "confidence": "high"
++    },
++    {
++      "rowId": 216,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0408_基本設計仕様書(バッチ_会員).xlsx / ポイント差分発生通知 シート / エラーハンドリング末尾（B70:C71付近）のログ記載",
++      "reason": "正本に開始・完了の日時付きコンソール出力がないため、ログ要件を1項目追記する。同一シートの起動契約・エラー記載とまとめて編集する。",
++      "sharedWithRows": [215, 217],
++      "confidence": "high"
++    },
++    {
++      "rowId": 218,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0408_基本設計仕様書(バッチ_会員).xlsx / スマレジ使用ポイント連携 シート / 実行トリガー（B25:AO25付近）・前提条件（C16:D18付近）",
++      "reason": "正本にコンソールコマンド名がないため、smaregi:batch updatePoint <受注ID> の起動契約を追記する。同一シートの不正ID条件追記とまとめて編集する。",
++      "sharedWithRows": [219],
++      "confidence": "high"
++    },
++    {
++      "rowId": 219,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0408_基本設計仕様書(バッチ_会員).xlsx / スマレジ使用ポイント連携 シート / エラーハンドリング（B46:C50付近）",
++      "reason": "正本は受注ID未入力・該当データなしの正常終了だけを記載しているため、非数値の不正IDも処理せず正常終了する条件を追記する。同一シートの起動契約追記とまとめて行う連続編集分として割り引く。",
++      "sharedWithRows": [218],
++      "confidence": "high"
++    },
++    {
++      "rowId": 220,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0408_基本設計仕様書(バッチ_会員).xlsx / スマレジ使用ポイント連携 シート / エラーハンドリング（C49:C50付近、変更なし）、0405_基本設計仕様書(バッチ_受注管理).xlsx / スマレジEC受注連携エラー再連携 シート / 処理概要（C13:C15付近、変更なし）",
++      "reason": "正本は通信失敗時のエラー詳細・エラーフラグ保存を明記し、別シートでスマレジ連携エラーフラグが立った注文の再連携を明記している。設計書側の失敗記録と再試行経路は記載済みなので更新不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 221,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0413_基本設計仕様書(バッチ_イベント).xlsx / 決済処理中チェックバッチ シート / 処理概要・入力元・実行結果詳細（D10、J16、C35:E51付近、変更なし）",
++      "reason": "正本はSP.LINKS取引照会APIを入力元とし、取引照会結果に応じた申込済み・保留・論理削除の処理を明記している。設計書は明確であり、実装側だけの未実装差分なので更新不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 222,
++      "docWork": "ADD",
++      "docEffortDays": 0.15,
++      "target": "0413_基本設計仕様書(バッチ_イベント).xlsx / 決済処理中チェックバッチ シート / 実行結果詳細（B33:E51付近）",
++      "reason": "正本に同一決済番号の検出と直前照会結果の流用がないため、決済番号順の処理、前回結果の保持、同一番号時の照会省略と結果別処理の再利用を条件付きで追記する。複数の処理規則を整える作業として見積もる。",
++      "sharedWithRows": [223],
++      "confidence": "high"
++    },
++    {
++      "rowId": 223,
++      "docWork": "ADD",
++      "docEffortDays": 0.15,
++      "target": "0413_基本設計仕様書(バッチ_イベント).xlsx / 決済処理中チェックバッチ シート / 実行結果詳細・エラーハンドリング（B33:E56付近）",
++      "reason": "正本は取引照会エラー時のメール送信だけを記載しているため、取引不在・未完了以外の想定外エラーを蓄積し、重複排除して1通にまとめて管理者通知する規則を追記する。同一シートの照会結果流用追記とまとめて編集する。",
++      "sharedWithRows": [222],
++      "confidence": "high"
++    }
++  ]
++}
+
+tokens used
+105,216
+28件: NONE=6 ADD=22 FIX=0 IMAGE=0 / 計 1.55人日

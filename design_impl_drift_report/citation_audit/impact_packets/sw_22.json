@@ -1,0 +1,331 @@
+{
+ "packetId": "sw_22",
+ "mode": "sweep",
+ "note": "著者はこれらの大半を IMPACT(外部から観測できる) と判定した。見落とし＝実は NO_IMPACT な行が無いかを独立に判定すること。",
+ "findings": [
+  {
+   "rowId": 757,
+   "機能No": "M10-16",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "当画面の保存処理では mtb_option.update_date を現在時刻へ進める処理を同一メソッド内に持たず、option_value と member_id のみを更新対象として明示する。",
+   "差分内容": "update_date/setUpdateDate/MtbOption/保存ループで再検索し、当コントローラ内で update_date を明示更新していることを確認した。",
+   "実装参照": "src/Eccube/Controller/Admin/Setting/Shop/AdditionalSystemController.php:92,95; src/Eccube/Entity/Master/MtbOption.php:179,187"
+  },
+  {
+   "rowId": 758,
+   "機能No": "M11-01",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "存在しないIDで DELETE /%admin_route%/setting/system/member/{id}/delete を実行したとき、対象が見つからない場合は削除警告メッセージ（フラッシュ）を積み、一覧へリダイレクトする。404 にはしない。up/down の『無ければ404とする』とは明確に区別される。",
+   "差分内容": "設計は削除対象不在時の期待挙動を明示的に『404にはしない／警告メッセージ→一覧リダイレクト』と規定し（HTML L970/L983）、up/down の『無ければ404』（L979/L989）と対比して区別している。しかし実装 delete は型付きエンティティ引数解決に依存し、不在IDでは本体到達前に404となるため設計と差異。pf-eccube3→EC-CUBE4系(enterprise)のコントローラ署名変更に由来する未記載の挙動差。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Setting/System/MemberController.php:274-308"
+  },
+  {
+   "rowId": 759,
+   "機能No": "M11-02",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "有効なスマレジ用アカウントは全メンバーで1件まで。スマレジ用アカウントを有効化したが自身以外に有効な行が既に存在する場合、メンバー自体は保存済みのままエラーメッセージ「スマレジ用アカウントフラグが立っているアカウントが既に存在しています。」を積み、編集画面へ戻し、スマレジ用フラグは反映しない。",
+   "差分内容": "設計はスマレジ用アカウントの全メンバー1件のみ有効という一意制約と、重複時のフラッシュ差し戻し（フラグ非反映）を業務ルール/データ整合性/画面文言として要求。Controller・Form・Create/EditAction・Entity・Migration・locale いずれにも該当の検証・エラーメッセージ・DB制約が無く未実装。",
+   "実装参照": "不在（src/Eccube/Form/Type/Admin/MemberType.php:171,176-267 の全POST_SUBMITリスナ、src/Eccube/Controller/Admin/Setting/System/MemberController.php、src/Eccube/Service/Adm"
+  },
+  {
+   "rowId": 760,
+   "機能No": "M11-03",
+   "指摘区分": "実装違い",
+   "authorVerdict": "NO_IMPACT",
+   "設計期待値": "管理画面の Twig グローバルとして AuthorityRoles を拒否URLのフルパス配列で登録し、同一リクエスト内の二重初期化を避ける。",
+   "差分内容": "設計はテンプレート側から参照可能な AuthorityRoles グローバル配列を要求しているが、実装はナビゲーションを事前フィルタして eccubeNav のみを公開する方式であり、公開名と契約が異なる。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/EventListener/TwigInitializeListener.php:185"
+  },
+  {
+   "rowId": 761,
+   "機能No": "M11-03",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "権限設定の保存成功後、画面に「権限設定を保存しました。」を表示する。",
+   "差分内容": "保存後リダイレクト自体は設計と一致するが、利用者に表示される成功メッセージが設計の「権限設定を保存しました。」ではなく共通文言「保存しました」になっている。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Setting/System/AuthorityController.php:85; /home/y-saito/Developments/ec-cube-enterpri"
+  },
+  {
+   "rowId": 762,
+   "機能No": "M12-01",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "通販売上は配送方法が店頭受取（スムーズ店頭受取含む）・なし以外かつ対応状況が出荷完了、店舗売上は配送方法が店頭受取（スムーズ店頭受取含む）またはなし且つ対応状況が出荷完了のみを集計対象にする。",
+   "差分内容": "反証検索として delivery/shipping/店頭受取/スムーズ/OrderStatus/order_status/出荷完了/対応状況 を SummaryController・AnalysisSummaryBuilder・DtbDailySummaryRepository・DtbMonthlySummaryRepository・集計Command配下で確認したが、本機能の集計条件には存在しない。実装SQLの WHERE は o.base_info_id IS NOT NULL と o.order_date の範囲条件のみ。",
+   "実装参照": "src/Eccube/Repository/DtbDailySummaryRepository.php:42; src/Eccube/Repository/DtbDailySummaryRepository.php:62; src/Eccube/Repository/DtbDailySummaryRepository."
+  },
+  {
+   "rowId": 763,
+   "機能No": "M12-01",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "期間内で集計結果が無い日付・月は、表示項目の各列を0として一覧へ補完する。集計対象が0件でも集計結果が無い日付・月の列を0で補完する。",
+   "差分内容": "反証検索として DatePeriod/CarbonPeriod/補完/0で/zero/fill/missing/empty/calendar を Analysis 配下と DtbDailySummaryRepository/DtbMonthlySummaryRepository で確認したが、期間内の日付・月を展開して0行を埋める処理は見つからない。",
+   "実装参照": "src/Eccube/Service/Admin/Analysis/AnalysisSummaryBuilder.php:75; src/Eccube/Repository/DtbDailySummaryRepository.php:329; src/Eccube/Repository/DtbMonthlySummar"
+  },
+  {
+   "rowId": 764,
+   "機能No": "M12-01",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "集計は売上として計上できるもののみとし、注文ステータスが「出荷完了」の注文だけを集計対象とする。",
+   "差分内容": "DtbDailySummaryRepository::aggregateOrderSummaryByBaseInfo は dtb_order の全ステータスを対象に subtotal + delivery_fee_total + charge を合算する。SummaryController、Analysis配下Service、DtbDailySummaryRepository、DtbMonthlySummaryRepositoryを OrderStatus/order_status/DELIVERED/出荷完了 で反証検索したが、本集計に適用されるステータス条件は見つからなかった。",
+   "実装参照": "src/Eccube/Repository/DtbDailySummaryRepository.php:42; src/Eccube/Repository/DtbDailySummaryRepository.php:62; src/Eccube/Service/Admin/Analysis/BatchAggregate"
+  },
+  {
+   "rowId": 765,
+   "機能No": "M12-01",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "期間内で集計結果が無い日付・月は、表示項目の各列を0として一覧へ補完する。",
+   "差分内容": "SummaryController、Analysis配下Service、DtbDailySummaryRepository、DtbMonthlySummaryRepository、summary.twig を 補完/DatePeriod/DateInterval/P1D/P1M/zero/0で で反証検索したが、欠落日付・欠落月を0で補う処理は見つからなかった。Twig の default(0) は既存行の欠落属性を0表示するだけで、存在しない日付・月の行は作らない。",
+   "実装参照": "src/Eccube/Service/Admin/Analysis/AnalysisSummaryBuilder.php:75; src/Eccube/Service/Admin/Analysis/AnalysisSummaryBuilder.php:126; src/Eccube/Repository/DtbDail"
+  },
+  {
+   "rowId": 766,
+   "機能No": "M12-01",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "販売関連の集計は注文データの注文ステータスが「出荷完了」のみ計上し、それ以外の注文ステータスは計上しない。",
+   "差分内容": "BatchAggregateDailySummaryAction.php:37 から同メソッドを呼び出す。DtbDailySummaryRepository.php / BatchAggregateDailySummaryAction.php / AnalysisSummaryBuilder.php / SummaryController.php を OrderStatus::DELIVERED、DELIVERED、出荷完了、order_status_id で反証検索したが、日別・月別集計の販売集計条件に出荷完了限定は存在しない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbDailySummaryRepository.php:62"
+  },
+  {
+   "rowId": 767,
+   "機能No": "M12-01",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "買取関連の集計は買取データの買取ステータスが「買取成立」のみ計上し、それ以外の買取ステータスは計上しない。買取件数は、ネット買取は査定承諾日が入っているもの、店頭買取は買取成立日が入っているものを集計対象とし、キャンセル／管理者取消は含めない。",
+   "差分内容": "MtbBuyOrderStatus::APPRAISAL_ACCEPTANCE と MtbOtcBuyOrderStatus::STATUS_COMPLETE、DtbOtcBuyOrder.completeDate は存在するが、同集計 SQL はそれらを参照しない。DtbDailySummaryRepository.php / DtbBuyOrderRepository.php / DtbOtcBuyOrderRepository.php を 査定承諾、買取成立、APPRAISAL_ACCEPTANCE、STATUS_COMPLETE、complete_date で反証検索しても M12-01 集計への適用は確認できない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbDailySummaryRepository.php:131"
+  },
+  {
+   "rowId": 768,
+   "機能No": "M12-01",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "店舗の並び順は店舗の表示順の昇順。",
+   "差分内容": "BaseInfo.rank は「並び順」カラムとして存在し、フォーム用店舗一覧は BaseInfoRepository::getPublicTenantShopsForSummary で bi.rank ASC を使う。一方、結果一覧用 fetchSummaryRowsByDateRangeAndTargets は b.id ASC のため、設計の店舗表示順昇順と一致しない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbDailySummaryRepository.php:331"
+  },
+  {
+   "rowId": 769,
+   "機能No": "M12-01",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "廃棄・欠品は、通販は本店EC在庫、TC東京のみスマレジ在庫のみ、その他店舗はEC在庫とスマレジ在庫を集計する。廃棄はイベント商品・他事業移動を除外し、欠品は欠品減算（受注）・欠品加算（移動）を対象とし、在庫変動履歴のマイナス値はプラスに反転する。",
+   "差分内容": "DtbDailySummaryRepository.php / BatchAggregateDailySummaryAction.php / BatchAggregateMonthlySummaryAction.php / AnalysisSummaryBuilder.php を ProductStock、stockLocation、stock_location、STOCK_LOCATION、smaregi、SMAREGI、EC在庫、スマレジ在庫で反証検索したが、M12-01 集計条件への適用は不在。詳細区分・登録日・符号反転は実装済みだが、設計の在庫区分選別が欠落している。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbDailySummaryRepository.php:171"
+  },
+  {
+   "rowId": 770,
+   "機能No": "M12-01",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "販売関連の集計は注文データの注文ステータスが「出荷完了」のみ計上し、それ以外の注文ステータスは計上しない。",
+   "差分内容": "OrderStatus::DELIVERED / order_status_id / 出荷完了 へ翻案して再検索したが、M12-01の日次・月次集計元SQLでは出荷完了ステータスに限定する条件が見つからない。",
+   "実装参照": "src/Eccube/Repository/DtbDailySummaryRepository.php:62"
+  },
+  {
+   "rowId": 771,
+   "機能No": "M12-01",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "買取関連の集計は買取データの買取ステータスが「買取成立」のみ計上し、それ以外の買取ステータスは計上しない。",
+   "差分内容": "MtbBuyOrderStatus / MtbOtcBuyOrderStatus / STATUS_COMPLETE / 買取成立 / buy_order_status_id / otc_buy_order_status_id へ翻案して再検索したが、M12-01集計SQLでは買取成立ステータス限定が見つからない。",
+   "実装参照": "src/Eccube/Repository/DtbDailySummaryRepository.php:131"
+  },
+  {
+   "rowId": 772,
+   "機能No": "M12-01",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "識別ID 2: 「支店名」を追加。「通販」もしくは指定された「店舗名」または「その他」を出力する。※「その他」は通販・各店舗に該当しない売上を計上。",
+   "差分内容": "その他 / store_name / base_info_id IS NULL / root_base_info / short_name_jp / shop_name で再検索したが、M12-01集計に通販・店舗外売上を「その他」として集計・表示する処理が見つからない。",
+   "実装参照": "src/Eccube/Repository/DtbDailySummaryRepository.php:63"
+  },
+  {
+   "rowId": 773,
+   "機能No": "M12-01",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "識別ID 11「廃棄」は在庫変動区分が「廃棄」となっているものを集計し廃棄コスト合計を出力し、識別ID 12「欠品」は在庫変動区分が「欠品」となっているものを集計しコスト合計を出力する。",
+   "差分内容": "廃棄コスト / shortage / waste / total_cost / stockChangeQuantity / DtbStockHistory を再検索したが、M12-01集計で廃棄・欠品のコスト金額を合算する実装は見つからない。",
+   "実装参照": "src/Eccube/Repository/DtbDailySummaryRepository.php:177"
+  },
+  {
+   "rowId": 774,
+   "機能No": "M12-01",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "期間内で集計結果が無い日付・月は、件数等を0で補完して一覧に並べる。",
+   "差分内容": "DatePeriod / modify('+1 month') / 補完 / zero / summary_month の別キーワードで再検索したが、M12-01の表示用ビルダーに期間内の欠落月を0行として生成する処理が見つからない。",
+   "実装参照": "不在（探索範囲: src/Eccube/Service/Admin/Analysis/AnalysisSummaryBuilder.php, src/Eccube/Repository/DtbMonthlySummaryRepository.php, src/Eccube/Repository/DtbDailySumm"
+  },
+  {
+   "rowId": 775,
+   "機能No": "M12-02",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "集計結果のCSVファイル。ファイル名は report_summary_ に出力日時（ YmdHis ）を付けた .csv 。",
+   "差分内容": "設計は report_summary_YYYYmmddHHMMSS.csv を指定しているが、実装は summary_{daily|monthly}_YYYYmmddHHMMSS.csv を返す。",
+   "実装参照": "src/Eccube/Service/Csv/Exporter/SummaryCsvExporterService.php:107"
+  },
+  {
+   "rowId": 776,
+   "機能No": "M12-02",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "検索条件セッションが空の場合、空の検索条件で集計し、出力する。",
+   "差分内容": "設計は空条件でCSV出力継続を要求しているが、実装はCSVを出力せずエラー付きリダイレクトに分岐する。",
+   "実装参照": "src/Eccube/Controller/Admin/Analysis/SummaryController.php:160"
+  },
+  {
+   "rowId": 777,
+   "機能No": "M12-02",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "最終行には「総合計」を追加。識別ID3～12各列のそれぞれの総合計を出力。",
+   "差分内容": "画面側は総合計行を表示しているが、CSV出力サービスは総合計行を組み立てず、識別ID3～12の総合計をCSV末尾へ出力しない。",
+   "実装参照": "src/Eccube/Service/Csv/Exporter/SummaryCsvExporterService.php:83"
+  },
+  {
+   "rowId": 778,
+   "機能No": "M12-02",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "識別ID 11: 「廃棄」を追加。在庫変動区分が「廃棄」となっているものを集計し廃棄コスト合計を出力。",
+   "差分内容": "設計は廃棄コスト合計の出力を要求しているが、実装は在庫変動数量の合計を waste_count/discard_count として出力する。total_cost_price_before/after や原価合計を用いた廃棄コスト算出は確認できない。",
+   "実装参照": "src/Eccube/Repository/DtbDailySummaryRepository.php:171"
+  },
+  {
+   "rowId": 779,
+   "機能No": "M12-02",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "識別ID 12: 「欠品」を追加。在庫変動区分が「欠品」となっているものを集計しコスト合計を出力。",
+   "差分内容": "設計は欠品コスト合計の出力を要求しているが、実装は欠品数量の合計を shortage_count/out_of_stock_count として出力する。原価・コスト金額を用いた欠品コスト算出は確認できない。",
+   "実装参照": "src/Eccube/Repository/DtbDailySummaryRepository.php:204"
+  },
+  {
+   "rowId": 780,
+   "機能No": "M12-03",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "検索ボタン押下のURLエンドポイントは POST /{admin_route}/analysis/sales/result とする。",
+   "差分内容": "設計の外部契約である検索実行URLが /result だが、Controller と Twig は /search を実装している。反証として admin_analysis_sales_result, analysis/sales/result, sales/result を検索したが該当ルートは無く、admin_analysis_sales_search のみ存在した。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Analysis/SalesAnalysisController.php:62, /home/y-saito/Developments/ec-cube-enterprise"
+  },
+  {
+   "rowId": 781,
+   "機能No": "M12-03",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "集計期間は集計日Fromから集計日To未満まで、使用日付で選んだ日付列で絞り込む。集計日Toの初期値は当月末日（初期値は翌月初日相当）とする。",
+   "差分内容": "設計は To 未満の半開区間だが、実装は <= で上限日時を含める。初期値も設計の翌月初日相当ではなく当月末日 23:59:59 を設定しているため、境界時刻の扱いが設計と異なる。summary_date_to, date_to, <=, < で反証検索しても該当箇所はこの実装のみ。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/Analysis/SalesType.php:106, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Re"
+  },
+  {
+   "rowId": 782,
+   "機能No": "M12-03",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "検索ボタン押下は POST /{admin_route}/analysis/sales/result で集計し、同一画面に集計結果一覧を表示する。",
+   "差分内容": "設計は /analysis/sales/result を外部契約として指定しているが、Controller/Twig の実装は /analysis/sales/search であり、result ルートは SalesAnalysisController 内に存在しない。反証として analysis/sales/result, admin_analysis_sales_result, sales/result を Controller/Twig/route 定義で検索したが該当なし。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Analysis/SalesAnalysisController.php:62 /home/y-saito/Developments/ec-cube-enterprise/"
+  },
+  {
+   "rowId": 783,
+   "機能No": "M12-03",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "期間は集計日Fromから集計日To未満まで、使用日付で選んだ日付列で絞り込む。",
+   "差分内容": "設計は上限を「未満」とするが、実装は <= で上限日時を含める。date_to/summary_date_to の条件を Repository 内で確認し、未満比較（< :summaryDateTo）の実装は見つからなかった。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/OrderItemRepository.php:248"
+  },
+  {
+   "rowId": 784,
+   "機能No": "M12-03",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "検索画面初期表示では検索条件セッションを破棄する。",
+   "差分内容": "SalesAnalysisController 内で SESSION_KEY の remove/clear/invalidate を検索したが、検索条件セッション破棄処理がない。",
+   "実装参照": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Analysis/SalesAnalysisController.php の SESSION_KEY/session remove/invalidate/"
+  },
+  {
+   "rowId": 785,
+   "機能No": "M12-03",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "CSVダウンロードは同じセッションの検索条件で再集計する。ただしCSVは表示件数の上限を適用しない。",
+   "差分内容": "設計はCSVで表示件数上限を適用しないとするが、実装は画面一覧と同じ getAnalysisSummary() を使い page_count 上限を除去していない。exportBySearchData, getAnalysisSummary, page_count, setMaxResults を確認した。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Exporter/SalesAnalysisCsvExporterService.php:38 /home/y-saito/Developments/ec-cube-enterpri"
+  },
+  {
+   "rowId": 786,
+   "機能No": "M12-03",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "検索ボタン押下は POST /{admin_route}/analysis/sales/result で、入力された検索条件で集計し、同一画面に集計結果一覧を表示する。",
+   "差分内容": "設計の外部契約は /analysis/sales/result だが、実装は /analysis/sales/search で公開している。別名 route/admin_analysis_sales_result や /analysis/sales/result の定義は探索範囲で確認できなかった。探索範囲: SalesAnalysisController, sales.twig, src/Eccube, html。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Analysis/SalesAnalysisController.php:62; /home/y-saito/Developments/ec-cube-enterprise"
+  },
+  {
+   "rowId": 787,
+   "機能No": "M12-03",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "検索画面初期表示では検索条件セッションを破棄し、集計結果は無しとする。",
+   "差分内容": "設計要求の「検索条件セッションを破棄する」に対応する session->remove(self::SESSION_KEY) 等が初期表示処理に存在しない。別キーワード clear/remove/invalidate/eccube.admin.analysis.sales.search/admin_analysis_sales で反証検索したが、当該キーを破棄する実装は確認できなかった。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Analysis/SalesAnalysisController.php:43"
+  },
+  {
+   "rowId": 788,
+   "機能No": "M12-03",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "期間は集計日Fromから集計日To未満まで、使用日付で選んだ日付列で絞り込む。",
+   "差分内容": "設計はToを未満（排他的上限）としているが、実装はTo以下（包含上限）で条件化している。date_to/summary_date_to/less than/< で反証検索したが、本機能のTo未満条件は確認できなかった。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/OrderItemRepository.php:244; /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/T"
+  },
+  {
+   "rowId": 789,
+   "機能No": "M12-03",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "平均単価・数量のFrom・Toは任意の数値で、0以上を入力補助で促し、集計後の値に対する絞り込みとして適用する。",
+   "差分内容": "集計後HAVING条件は実装済みだが、設計の「0以上を入力補助で促す」に相当するHTML属性・制約がない。min/PositiveOrZero/GreaterThanOrEqual/Range/0以上 の別名で SalesType と関連locale/validatorを反証検索したが、本項目向けの0以上入力補助は確認できなかった。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/Analysis/SalesType.php:193; /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Re"
+  },
+  {
+   "rowId": 790,
+   "機能No": "M12-04",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "検索条件セッションから検索条件を取得する。保存が無い場合は空とする。",
+   "差分内容": "設計はセッション保存なしの場合も空条件としてCSV出力処理へ進むことを要求しているが、実装は export() の冒頭で null を検出するとエラーリダイレクトして終了する。反証として admin_analysis_sales_export、SESSION_KEY、FormUtil::submitAndGetData、SalesAnalysisCsvExporterService、analysis/sales/export を検索したが、セッションなしを空配列として処理する別経路は見つからない。",
+   "実装参照": "src/Eccube/Controller/Admin/Analysis/SalesAnalysisController.php:100"
+  },
+  {
+   "rowId": 791,
+   "機能No": "M12-04",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "CSV出力時に表示件数の上限を適用しないこと。CSV出力では表示件数の上限を適用せず、集計結果の全件を出力する。",
+   "差分内容": "設計はCSVでは一覧表示件数の上限を外して全件出力することを要求しているが、実装はCSV出力前に page_count を除去・無効化せず、一覧と同じ getAnalysisSummary() 内の setMaxResults により件数上限を適用する。反証として exportBySearchData、getAnalysisSummary、page_count、setMaxResults、CSV専用リポジトリ経路を検索したが、CSV時だけ上限を解除する実装は見つからない。",
+   "実装参照": "src/Eccube/Service/Csv/Exporter/SalesAnalysisCsvExporterService.php:38 / src/Eccube/Repository/OrderItemRepository.php:310"
+  },
+  {
+   "rowId": 792,
+   "機能No": "M12-04",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "検索条件セッションが空の場合は、空の検索条件で集計し、出力する。",
+   "差分内容": "設計はセッション未保存時も空条件で集計してCSVを出力する仕様だが、実装は SalesAnalysisController::export() で session get 結果が null の場合に addError('検索条件がありません。先に検索を実行してください。') を行い、CSV出力サービスを呼ばずに redirectToRoute('admin_analysis_sales') を返す。反証として Controller/Admin/Analysis、Service/Csv/Exporter、OrderItemRepository の SESSION_KEY、検索条件がありません、exportBySearchData を再",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Analysis/SalesAnalysisController.php:100"
+  }
+ ]
+}

@@ -1,0 +1,74 @@
+# sheet-14 A15-14 メタゲーム情報参照 ／ API デッキビルダー — メタゲーム情報参照 (HTML行 674-727 / 画像 0枚)
+
+Source:
+functions/pf-api/a15-14_api_deck_builder_deck_metagame.md
+A15-14 メタゲーム情報参照 ／ API デッキビルダー — メタゲーム情報参照
+業務ロジック
+集計対象
+format_id に一致するフォーマットを取得する。単一値・複数値のいずれも指定できる。各フォーマットについて、フォーマットのメタ範囲で区切った集計範囲内の公開・大会デッキを、アーキタイプ別に件数集計する。count を指定したときは、件数上位から最大 count 件のアーキタイプに絞る。アーキタイプ別集計は件数降順で返す。
+占有率の算出
+フォーマットごとに全アーキタイプの件数合計を求め、各アーキタイプの件数を合計で割って占有率を算出する。占有率は百分率で小数第2位までとする。
+認証と公開範囲
+本APIは認証を行わない。認証用のトークンヘッダの検証とプレイヤーの特定をいずれも行わず、誰でも呼び出せる参照系である。認証起因のHTTP 401は返さない。公開デッキのみを集計対象とし、利用者状態によらず同一の集計結果を返す。呼び出し可能なクライアントはデッキビルダーアプリ。
+値の扱い
+件数・ページ番号・表示順は既定と上限に従い、取得後に業務値を再計算しない。金額・ポイント・数量・ステータス・日時は永続化済みの値をそのまま返し、応答生成時の丸め・補正は行わない。条件に一致しない、または非公開のデータは空結果または既定のエラー形式で返す。
+エラー時の扱い
+エラー内容	処理
+format_id 未指定	入力不正（HTTP 400）とし、「invalid request parameter」を返す
+該当フォーマットなし	該当なし（HTTP 404）とし、「format not found」を返す
+集計処理中の異常	共通の異常処理に委ねる（HTTP 500相当）
+入出力
+種類	内容
+入力	クエリの format_id（整数または配列、必須）と count（整数、任意）。count 未指定のときは全件を返す
+成功時出力	HTTP 200。処理結果コードとフォーマットごとの集計結果を持つJSON。JSONキーはsnake_caseで組み立てる
+失敗時出力	HTTP 400（format_id 未指定）、HTTP 404（該当フォーマットなし）。いずれも {code, message} の形。HTTP 500 は共通の異常処理に委ねる
+出力: 応答フィールド
+フィールド	型	説明
+code	integer	処理結果コード。成功時は200。
+formats	array	フォーマットごとの集計結果の配列。
+formats[].id	integer	フォーマット識別子。
+formats[].name_jp	string	フォーマットの日本語名。
+formats[].name_en	string	フォーマットの英語名。
+formats[].from_date	string	集計範囲の開始日時。Y/m/d h:m:s書式の文字列。
+formats[].archetypes	array	アーキタイプ別の集計結果の配列。件数降順。
+formats[].archetypes[].id	integer	アーキタイプ識別子。
+formats[].archetypes[].name_jp	string	アーキタイプの日本語名。
+formats[].archetypes[].name_en	string	アーキタイプの英語名。
+formats[].archetypes[].card_image	string	アーキタイプを代表するカード画像のURL。未設定のときはnull。
+formats[].archetypes[].deck_count	integer	集計範囲内のデッキ件数。
+formats[].archetypes[].rate	number	フォーマット内での占有率（百分率、小数第2位まで）。
+成功時の応答例（実装確認値に基づく代表値）。
+{
+"code": 200,
+"formats": [
+{
+"id": 1,
+"name_jp": "スタンダード",
+"name_en": "Standard",
+"from_date": "2026/05/04 00:05:00",
+"archetypes": [
+{
+"id": 101,
+"name_jp": "白単アグロ",
+"name_en": "Mono White Aggro",
+"card_image": "https://example.invalid/images/101.jpg",
+"deck_count": 42,
+"rate": 35.0
+},
+{
+"id": 102,
+"name_jp": "青赤コントロール",
+"name_en": "Izzet Control",
+"card_image": null,
+"deck_count": 18,
+"rate": 15.0
+}
+]
+}
+]
+}
+リニューアル後の仕様
+表示メッセージ
+メッセージID	表示位置	画面上の文言	表示条件	後続処理
+—	API応答JSON	invalid request parameter	format_id が未指定のとき	HTTP 400 を返す
+—	API応答JSON	format not found	format_id に一致するフォーマットが1件も無いとき	HTTP 404 を返す

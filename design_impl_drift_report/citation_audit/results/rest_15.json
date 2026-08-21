@@ -1,0 +1,165 @@
+{
+  "packetId": "rest_15",
+  "results": [
+    {
+      "rowId": 551,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:11104-11107 のExcel正本は「第一ソートを商品コードの降順」「第二ソートを店舗のIDを降順」「第三ソートを各レコードの『登録日時』と『承認日時』のうち後の日時…の降順」、さらに「承認日時が未設定の場合は、登録日時を基準日時」と明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Repository/DtbStockHistoryRepository.php:131-139 の旧実装は商品ID指定時に `->orderBy('sh.createDate', 'DESC')->addOrderBy('psc.cardCondition', 'ASC')` としており、刷新後の三段ソート要件そのものは旧実装ではなくExcel正本にある。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Repository/DtbStockHistoryRepository.php:332-335 は一覧を `$qb->addOrderBy('pc.code', 'DESC'); $qb->addOrderBy('ps.baseInfo', 'DESC'); $qb->addOrderBy('sh.createDate', 'DESC');` とする。ec-cube-enterprise/src/Eccube/Entity/DtbStockHistory.php:326-358 は `approval_at` を「承認日時」、`registered_at` を「登録日時」と別列で定義しており、一覧第三ソートはどちらも参照していない。",
+      "note": "Excel正本が基準日時ソートを直接要求し、現一覧クエリが作成日時で並べるため真の乖離。"
+    },
+    {
+      "rowId": 552,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:11175 のExcel正本（在庫履歴検索一覧(検索結果)!AG160）は承認者列を「承認を押下した作業者」「在庫編集承認IDがあり、承認者の登録がない場合、”承認待ち”」「承認行為が発生しなかったデータについては”-”」の3状態で定義する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Product/historylist.twig:257-268 の旧一覧ヘッダは「商品コード」から「登録者」までの10列だけで承認者列を持たないため、この3状態要件の根拠は旧実装ではなくExcel正本である。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/history.twig:728-730 は承認日を `Stock.approvalAt ? ... : '-'`、承認者を `Stock.approvalMember ? Stock.approvalMember : '-'` と表示するだけで、在庫編集承認IDあり・承認者なしを「承認待ち」にする分岐がない。",
+      "note": "Excel正本の3状態のうち「承認待ち」が現実装に欠落している。"
+    },
+    {
+      "rowId": 553,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:11166 のExcel正本（在庫履歴検索一覧(検索結果)!AG151）は識別ID2-16「仕入単価」について「『在庫編集』シート識別ID:3-4仕入単価を参照」「値がない場合は\"-\"を表示」と明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Product/historylist.twig:257-282 の旧在庫履歴表は「状態」から「登録者」までを表示するが仕入単価列を持たない。値なし時の「-」は刷新後のExcel追加要件である。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/history.twig:704-706 は仕入単価を `{{ productClassSub.buy_price|price }}` と無条件出力する。ec-cube-enterprise/src/Eccube/Twig/Extension/EccubeExtension.php:178-186 のpriceフィルタは `formatCurrency((float) ($number ?? 0), $currency)` のため、nullを「-」ではなく0通貨表示へ変換する。",
+      "note": "Excel正本のnull表示規則と現Twig/priceフィルタが直接不一致。"
+    },
+    {
+      "rowId": 554,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:11443-11448 のExcel正本は「在庫変動履歴を検索した結果をCSVとして出力」「在庫履歴検索一覧(検索入力)の検索条件でデータを取得しCSV出力」とだけ定め、GETメソッド、`/product/history/stock/export`、通常リンクという具体契約は記載しない。同:11445 は未記載部分を「現行踏襲」とする。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/ProductServiceProvider.php:210-212 は旧ルートを `/$admin_route/product/history/stock/export`・`admin_product_stock_history_export` と定義し、pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Product/historylist.twig:247-249 は `<a href=\"{{ path('admin_product_stock_history_export') }}\">CSVダウンロード</a>` の通常リンクで起動する。pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Product/HistoryController.php:146-152 はセッション `admin.{$this->sessionKey}.search` を復元して検索クエリを作る。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockHistoryController.php:314-324 は `POST /%eccube_admin_route%/product/stock/history/csv_export` で `ids[]` を受ける。ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/history.twig:595-605 も `<form ...>` とsubmit buttonの`formaction=\"admin_stock_history_csv_export\"`を使い、検索結果全IDをhidden送信する。",
+      "note": "具体的なGET URL・通常リンク・セッション検索条件復元はExcel正本ではなく、同正本が「現行踏襲」とした旧実装に根拠がある。"
+    },
+    {
+      "rowId": 556,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:11410-11436 のExcel正本CSV項目表は27列を列挙するがファイル名を定義せず、同:11445 は「カスタマイズ要件に記載の内容以外は現行踏襲とする」と記載する。`product_stock_history_` はExcel正本部分に存在しない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/HistoryCsv.php:67-70 の旧実装は `$filename = \"product_{$type}_history_\" . $now->format('YmdHis') . '.csv';` としており、type=`stock` の実ファイル名は `product_stock_history_yyyyMMddHHmmss.csv` になる。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Csv/StockHistoryCsv.php:75-76 は `$filename = $this->createFileName('stock_history_');` を使うため、現行prefixは `stock_history_` である。",
+      "note": "ファイル名規則はExcel正本の個別記述ではなく旧実装由来で、現実装への移植差がある。"
+    },
+    {
+      "rowId": 557,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:11416 のExcel正本（在庫変動履歴CSV出力!B14/E14）は識別ID「7」、項目名「在庫区分」と明記し、同:11452 も「識別ID:7在庫区分を追加」と要求する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/HistoryCsv.php:21-24 の旧在庫履歴CSVヘッダは `['商品コード', '商品名', '言語', '状態', '変更前在庫数', ...]` の10列で在庫区分を持たない。本件はExcel正本で追加された列要件である。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockHistoryController.php:428-438 の現ヘッダは「店舗」の次を `'在庫場所' => ''` とし「在庫区分」を定義しない。ec-cube-enterprise/src/Eccube/Service/Csv/StockHistoryCsv.php:99-108 の行変換も `'在庫場所' => $ProductStock->getLocationName()` である。",
+      "note": "Excel正本の外部CSV列名「在庫区分」と現実装「在庫場所」が不一致。"
+    },
+    {
+      "rowId": 558,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:11413 のExcel正本はCSV識別ID4を「状態」とするだけで、メモ優先・状態名フォールバックの値決定規則は記載しない。同:11445 の正本記述は未記載部分を「現行踏襲」とする。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/HistoryCsv.php:101-108 の旧実装は状態列を `$row[] = !is_null($data['memo']) ? $data['memo'] : $data['condition'];` とし、規格拡張メモがあればメモ、なければ状態コードを出力する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Csv/StockHistoryCsv.php:99-104 は状態列を `'状態' => $ProductClass->getCardCondition()->getCode()` と固定し、メモ参照やフォールバック分岐を持たない。",
+      "note": "値決定規則は旧実装だけが支えるためLEGACY_BACKED。"
+    },
+    {
+      "rowId": 559,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:11443-11448 のExcel正本は検索結果のCSV出力と検索条件利用を定めるが、該当0件時の扱いは記載しない。同:11445 はそれ以外を「現行踏襲」とする。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/HistoryCsv.php:47-64 の旧実装はストリームを開いてBOMと `fputcsv(self::EXPORT_INFO[$type]['headers'])` を先に書き、その後 `foreach ($qb->getQuery()->iterate() ...)` する。結果0件でもヘッダ行は正常に返る。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Csv/StockHistoryCsv.php:60-68 は `$csvRows === []` なら `RuntimeException` を投げ、ヘッダ書込 `$this->csvExportService->fputcsv($headerKeys)` に到達しない。ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockHistoryController.php:351-360 は例外を捕捉して画面へリダイレクトする。",
+      "note": "0件時ヘッダのみ出力は旧実装由来で、現実装が継承していない。"
+    },
+    {
+      "rowId": 560,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:11431 のExcel正本は識別ID22を「登録日」とするだけで、`dtb_stock_history.create_date` や `Y/m/d H:i` をCSV値の元・書式として明記しない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/HistoryCsv.php:101-113 の旧行変換は登録日を `$data['createDate']->format('Y/m/d H:i')` と出力する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Csv/StockHistoryCsv.php:121-126 は登録日を `$StockHistory->getRegisteredAt()->format('Y-m-d H:i')` とする。ec-cube-enterprise/src/Eccube/Entity/DtbStockHistory.php:357-358 は`registered_at`を「登録日時」、同:404-405 は`create_date`を「作成日時」と別列定義している。",
+      "note": "参照列とスラッシュ書式の具体値は旧実装に根拠があり、現実装は別列・別書式。"
+    },
+    {
+      "rowId": 561,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:11636 のExcel正本（欠品履歴検索一覧(検索結果)!D44）は「在庫変動理由区分が『廃棄』（親区分）、『欠品減算（受注）』・『欠品減算（移動）』（子区分）の履歴を検索し表示」と明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Repository/DtbStockoutHistoryRepository.php:40-61 の旧欠品履歴は専用`DtbStockoutHistory`を検索し、`stockChangeType`や廃棄/欠品減算区分での絞り込みを持たない。刷新後の対象区分はExcel正本の新要件である。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Repository/DtbStockHistoryRepository.php:143-150 は欠品検索で `[MtbStockChangeType::DISPOSAL]` 配下だけを `IN` 条件にする。一方 ec-cube-enterprise/app/DoctrineMigrations/Version20260108130821.php:143-175,185-188 は廃棄子区分を親ID DISPOSAL、`欠品減算(受注)`と`欠品減算(移動)`を別親ID OUT_OF_STOCKに登録するため、後二者は検索対象から漏れる。",
+      "note": "Excel正本が三系統を明示し、現クエリはDISPOSAL配下だけを取得する。"
+    },
+    {
+      "rowId": 562,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:11641 のExcel正本（欠品履歴検索一覧(検索結果)!E49）は「第三ソートを各レコードの『登録日時』の降順（最新順）で表示する」と明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Repository/DtbStockoutHistoryRepository.php:11 は旧専用欠品履歴のsortKeysを `['soh.productClassId', 'soh.createDate']` としており、刷新後の`dtb_stock_history.registered_at`要件はExcel正本が根拠である。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Repository/DtbStockHistoryRepository.php:332-335 は第三ソートを `sh.createDate DESC` とする。ec-cube-enterprise/src/Eccube/Entity/DtbStockHistory.php:357-358 は`registered_at`を「登録日時」、同:404-405 は`create_date`を「作成日時」と別定義するため、設計の登録日時列を使っていない。",
+      "note": "「登録日時」はEntity上もregistered_atとして特定でき、createDateとは別列。"
+    },
+    {
+      "rowId": 563,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:11666 のExcel正本（欠品履歴検索一覧(検索結果)!AG72）は「商品名を押下すると、押下した商品在庫の在庫編集画面を別タブで表示」と明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Product/stockout_historylist.twig:103-108 の旧欠品一覧は商品名を `<a href=\"{{ path('admin_product_product_class_detail_edit', ...) }}\" target=\"_blank\">{{ row.name }}</a>` としており、Excel要件と同じ別タブリンクも確認できる。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/history.twig:656-662 は商品名セルを `<td ...>{{ productSub.name }}</td>` とプレーンテキスト表示し、`a`タグ・在庫編集route・`target=\"_blank\"`を持たない。",
+      "note": "Excel正本と旧実装の双方がリンクを支え、現一覧だけが未対応。SPEC_BACKEDを優先。"
+    },
+    {
+      "rowId": 564,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:11675 のExcel正本（欠品履歴検索一覧(検索結果)!AG81）は「欠品登録時の販売販売価格を表示」「受注の場合は、受注情報で保持している販売価格を参照」「移動の場合も、移動情報で保持している販売価格を参照」と明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Product/stockout_historylist.twig:89-119 の旧専用欠品一覧は商品・状態・個数・受注番号・登録日・登録者を表示するが、欠品時販売価格列を持たない。本件はExcel正本で追加された要件である。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/history.twig:711-714 は欠品時販売価格列に `{{ productClassSub.buy_price|price }}`、すなわち現在の仕入単価を出力する。一方 ec-cube-enterprise/src/Eccube/Service/Csv/StockHistoryDisposalCsv.php:109-112 はCSVでは `'欠品時販売価格' => $StockHistory->getSellPrice()` と履歴値を使っており、画面だけが異なる値を表示する。",
+      "note": "Excel正本は欠品登録時の販売価格を要求し、現画面は仕入単価を表示している。"
+    },
+    {
+      "rowId": 565,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:11681-11682 のExcel正本の画面下部項目は「ページング」のみで、0件見出しの文言をテキスト要件として記載しない。指定文言はリバース詳細 hareruya-design-docs/functions/pf-eccube3/m04-19_admin_stock_stock_shortage_history_search_list.md:258 の「0件見出し｜検索条件に該当するデータがありませんでした。｜件数が0件のとき」にのみある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Product/stockout_historylist.twig:127-133 の旧画面は0件分岐で `<h3 class=\"box-title\">検索条件に該当するデータがありませんでした。</h3>` を表示する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockHistoryController.php:240-249 は検索成功後も `'has_errors' => true` を返す。ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/history.twig:746-756 は0件かつhas_errors時に `admin.common.search_invalid_condition` を表示し、ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:1738-1739 の実値は「検索条件に誤りがあります」と「検索条件に合致するデータが見つかりませんでした」で、旧文言へ到達しない。",
+      "note": "正本Excelのテキスト要件としては確認できず、具体文言は旧Twigとそれを起こしたリバース詳細に由来する。"
+    },
+    {
+      "rowId": 566,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:11647 はExcel正本で「識別ID:2-7在庫区分を追加」とし、同:11671 の項目表も識別ID2-7の項目名を「在庫区分」と定義する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Product/stockout_historylist.twig:89-98 の旧ヘッダは「商品コード、商品名、言語、状態、個数、受注番号、登録日、登録者」で在庫区分を持たないため、列追加の根拠はExcel正本である。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/history.twig:623-626 は該当見出しに翻訳キー `admin.stock.history.stock_location` を使い、ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:4869 は同キーを「在庫場所」と定義する。セル値もhistory.twig:665-666で `Stock.ProductStock.locationName` を表示する。",
+      "note": "Excel正本の列名「在庫区分」に対し、現表示ラベルは「在庫場所」。"
+    },
+    {
+      "rowId": 567,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:11892-11907 のExcel正本は欠品履歴CSVを1〜16の16列で定義し、同:11898 は7列目「在庫区分」、同:11900 は9列目「登録元ID」と明記する。同:11923,11925 も両列の追加を要求する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Product/stockout_historylist.twig:60-140 の旧欠品履歴一覧は検索表だけでCSV出力導線を持たず、旧4リポジトリを「欠品履歴CSV」「stockout_history」「登録元ID」で横断して対応する旧CSV実装は見つからない。16列契約の根拠はExcel正本である。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockHistoryController.php:484-502 の欠品CSVヘッダは15列で、7列目が「在庫場所」、かつ「登録元ID」がない。ec-cube-enterprise/src/Eccube/Service/Csv/StockHistoryDisposalCsv.php:99-115 の行データには `'登録元ID' => $StockHistory->getHistorySourceId()` があるが、同:65-70 はヘッダキーだけで行を抽出するため登録元IDは出力されない。",
+      "note": "Excel正本の16列契約に対して現ヘッダは15列で、列名差と登録元ID欠落が確認できる。"
+    },
+    {
+      "rowId": 568,
+      "verdict": "UNSUPPORTED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:11914-11919 のExcel正本は「欠品履歴を検索した結果をCSVとして出力」「在庫履歴検索一覧(検索入力)の検索条件でデータを取得しCSV出力」と定めるが、行チェックボックス、選択行だけ、`ids[]` POSTは記載しない。同:11878 の概要も「在庫一覧で欠品のみを選択時の一覧CSV出力」であり、行選択ではなく欠品検索モードを指す。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Product/stockout_historylist.twig:31-59 の旧画面は検索フォーム、同:60-140 は結果表とページャだけで、CSVボタン・行checkbox・`ids[]`を持たない。旧4リポジトリを `ids[]`, `stockHistoryIds`, `欠品履歴CSV`, `disposal_csv` で横断したが、選択行CSV契約は見つからない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockHistoryController.php:237-249 は検索結果全件を`PaginationAll`として渡し、ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/history.twig:595-606 はその全件を `<input type=\"hidden\" name=\"ids[]\" value=\"{{ StockHistory.id }}\">` としてPOSTする。行選択checkboxはない。",
+      "note": "「チェック選択した行だけ」という期待値はExcel正本にも旧実装にも存在しない。正本の「検索結果をCSV出力」は現実装の全検索結果送信と整合し、この追加条件は誤検出の疑いが強い。"
+    },
+    {
+      "rowId": 569,
+      "verdict": "UNSUPPORTED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:11869-11929 のExcel正本シート26は機能概要、16列のCSV項目、検索条件での出力、追加列を定義するだけで、ID未指定時の現在ページ復帰、リファラ無し時の`admin_stock_history_new`、存在しないID/変換結果空の例外遷移を記載しない。実際の処理記述は同:11918 の「検索条件でデータを取得しCSV出力」に留まる。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Product/StockoutHistoryController.php:19-56 の旧欠品履歴機能は検索一覧の設定だけでCSV例外処理を持たず、pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Product/stockout_historylist.twig:60-140 にもCSV導線がない。旧4リポジトリを `admin_stock_history_new`, `stock_history_new`, `not_registered_stock_history_id`, `no_stock_history_data` で横断して該当契約は見つからない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockHistoryController.php:380-417 はID無しを`responseNoStockHistoryIdError()`、RuntimeException時をリファラまたは`admin_stock_history`へ遷移させる。同:505-510 はページ番号をセッション`eccube.admin.stock_history.search.page_no`から読み`admin_stock_history_page`へ戻すが、`admin_stock_history_new`というrouteは現Controller/template探索範囲に存在しない。",
+      "note": "指摘された例外遷移仕様は正本・旧実装の双方に根拠がない。現実装のエラー処理自体は存在するが、それと比較する期待遷移先が裏付けられないためUNSUPPORTED。"
+    },
+    {
+      "rowId": 570,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:12373 のExcel正本（在庫変更CSV登録!E191/P191/U191/W191）は登録CSVの「在庫増減数」を「数値」「○（必須）」「-99999999～99999999」と明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/Importer/Model/ColumnDefinitions.php:128-135 の旧実装は在庫増減数を `createSignedNumericColumn($name, '在庫増減数', 9)` として符号付きで検証し、pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/Importer/Event/ProductStockImportHandler.php:71-72 は同列を必須化する。旧実装も負数を許容している。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Model/ColumnDefinitions.php:617-620 は在庫増減数を `createUnsignedNumericColumn` で定義する。ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Validator/NumericValidator.php:22-43 は「0以上の整数」を`SqlUtil::isNumericParam`で検証し、ec-cube-enterprise/src/Eccube/Util/SqlUtil.php:67-75 の正規表現は `/^\\d+$/` のためマイナス符号を拒否する。",
+      "note": "Excel正本の負数許容範囲と現サーバ側unsigned検証が直接不一致。"
+    },
+    {
+      "rowId": 571,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:12374 のExcel正本（在庫変更CSV登録!E192/U192/AG192）は「仕入単価」の必須欄を「-」とし「在庫変動区分の親区分が入庫の場合必須入力」と明記する。同:12235-12237 も「在庫追加時は原価を必須入力」「在庫が減る場合は入力された原価は参照せず、総在庫のみ減」と定める。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Product/ProductCsvController.php:2163-2181 の旧在庫変更CSVヘッダは「商品コード」「在庫増減数」の2列だけで、仕入単価列を持たない。条件付き仕入単価はExcel正本で追加された刷新要件である。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockChangeCsvController.php:385-402 は仕入単価ヘッダを常時 `'required' => true` とし、ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/StockChangeCsvImportHandler.php:249-253 も `ColumnDefinitions::purchaseUnitPrice()->setRequired(true)` と全行必須化する。ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/change.twig:430-435 はrequired=trueなら必須バッジを常時表示する。",
+      "note": "Excel正本は入庫時だけ必須・減算時非参照、現実装は在庫変動区分に関係なく全CSV行で必須。"
+    }
+  ]
+}

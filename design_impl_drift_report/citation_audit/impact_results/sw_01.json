@@ -1,0 +1,365 @@
+{
+  "packetId": "sw_01",
+  "results": [
+    {
+      "rowId": 1,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "管理画面の在庫編集・移動・分割結合・棚卸しによる増減や一括変更がスマレジへ送られず、EC-CUBEとスマレジの在庫数が乖離し得る。",
+      "checked": "ec-cube-enterprise/src/Eccube/Service/Smaregi/Api/SmaregiStockApiClient.php:37-78,117-183 と同 Service/Smaregi/Otc/SmaregiOtcOrderSyncService.php:109-135 を確認。正数の add API は存在するが店頭受取商品登録時の数量1加算にだけ使われ、管理画面操作・減算・Patch一括の呼出経路は確認できない。",
+      "reason": "著者の『参照系のみ』という説明は現状コードには不正確だが、設計対象の管理画面在庫更新経路は未実装で、外部在庫への副作用が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 2,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "スマレジ在庫場所の編集結果が外部スマレジ在庫へ反映されず、件数超過時にもCSV登録を促すエラーが表示されない。",
+      "checked": "ec-cube-enterprise/src/Eccube/Service/Admin/Stock/StockApprovalStoreAction.php:70-146 と StockBulkApprovalStoreAction.php:70-155 を確認。EC側在庫・履歴・承認リスト更新はあるが SmaregiStockApiClient 呼出しと上限判定はない。",
+      "reason": "外部API更新と画面エラー表示の有無はいずれも観測可能な動作差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 3,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "CSV取込後にスマレジへの一括更新、100件単位の分割S3ファイル、外部処理結果を示すCSV履歴が生成されない。",
+      "checked": "ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/StockChangeCsvImportHandler.php:60-260 と Service/Smaregi/Api/SmaregiStockApiClient.php:37-183 を確認。取込行と承認リストのDB登録はあるが、在庫一括相対更新・S3保存・callback用処理はない。",
+      "reason": "外部API、S3ファイル、永続履歴という副作用が欠落するため IMPACT。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 4,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "スマレジ一括更新の非同期結果を受けても対象CSVをS3から取得してEC在庫・CSV履歴へ反映する処理が行われない。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Smaregi/WebhookController.php:41-109 と Service/Smaregi/Webhook/Stock/StockEventDispatcher.php:1-120 を確認。Webhookはイベント保存・dispatchと ids の分解を行うが、問合せID/callback URL/S3 CSVを扱わない。",
+      "reason": "非同期コールバック後のDB更新と履歴登録が欠け、永続データと処理結果が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 5,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "5時間の可変時間窓ではなく target_date 単位で在庫変動を取得するため、APIへ送る検索条件と再連携対象集合が変わる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Command/SmaregiStockBackfillCommand.php:41-58 と Service/Smaregi/Stock/SmaregiStockBackfillAction.php:155-180 を確認。入力は target-date のみで、API query は target_date/page/limit のみ。",
+      "reason": "取得期間はバッチ入力・外部API I/O・処理対象を直接変える。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 6,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "設計上有効な GET /api/popup/product/jp/{productId} が404になり、ja を指定した場合だけ日本語商品を返す。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/App/ProductController.php:150-176 を確認。言語 match は ja/en で、jp は default の NotFoundException。",
+      "reason": "URLパス入力に対するHTTP応答と選択言語が変わる外部契約差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 7,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "404 JSON が {\"code\":404,\"message\":\"Not Found\"} ではなく {\"code\":404,\"errors\":[\"Not Found\"]} になる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/App/ProductController.php:177-181、Exception/App/BaseApiException.php:20-50、NotFoundException.php:20-34 を確認。",
+      "reason": "レスポンス本文のキーと値型が変わり、APIクライアントから観測できる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 8,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "成功JSONの price01、price02、stock、weeklySold が数値文字列ではなくJSON数値になる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Repository/ProductRepository.php:2171-2183 と Service/App/Popup/PopupResponseBuilder.php:29-42 を確認。Repository は integer hydration、Builder も stock/weeklySold を int cast する。",
+      "reason": "JSON値の型は外部API契約そのものである。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 9,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "foil_flg と price クエリを変えても商品選択・並び順に反映されず、設計と異なる商品規格が返り得る。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/App/ProductController.php:265-290 と Repository/ProductRepository.php:2335-2412 を確認。Request/query取得もメソッド引数もなく、SQLは固定の foil 昇順等で選択する。",
+      "reason": "HTTPクエリ入力に対するレスポンス内容が変わる機能差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 10,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "A02-02の404本文が message 文字列ではなく errors 配列を返す。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/App/ProductController.php:278-295 と Exception/App/NotFoundException.php:27-34 を確認。",
+      "reason": "JSONレスポンスのキー・型が異なるため IMPACT。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 11,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "A02-03の404本文が {code,message} ではなく {code,errors:[...]} になる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/App/ProductController.php:317-349 と 361-399、Exception/App/BaseApiException.php:20-50 を確認。",
+      "reason": "APIレスポンス本文の構造差は外部観測可能である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 12,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "A02-03成功JSONに必須の cardId がなく、代わりに設計外の subFileName、code、conditionCode、weeklySold、productUrl、beltUrl が現れる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/App/ProductController.php:317-334、Service/App/Popup/PopupResponseBuilder.php:27-49、Repository/ProductRepository.php:2516-2588 を確認。旧ID検索は cardId をSELECTせずBuilderも返さない。",
+      "reason": "レスポンス項目の欠落・追加はJSON I/O差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 13,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "A02-03の price01、price02、stock が数値文字列でなくJSON数値になる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Repository/ProductRepository.php:2566-2578 と Service/App/Popup/PopupResponseBuilder.php:29-41 を確認。各値は integer hydration/int cast。",
+      "reason": "同じ数値でもJSON型が異なりクライアントの解析結果が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 14,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "旧商品ID APIで lang=jp が日本語ではなく英語扱いとなり、任意の不正言語も英語商品を返し得る。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/App/ProductController.php:361-371 を確認。ja のみJP、それ以外はすべてENへ変換する。",
+      "reason": "パス入力に対する検索条件と返却商品が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 15,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "A02-04の404 JSONが message キーでなく errors 配列を返す。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/App/ProductController.php:371-388 と Exception/App/NotFoundException.php:27-34 を確認。",
+      "reason": "HTTP本文の外部契約差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 16,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "A02-04成功JSONの price01、price02、stock、weeklySold が文字列でなく数値になる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Repository/ProductRepository.php:2481-2493 と Service/App/Popup/PopupResponseBuilder.php:29-42 を確認。integer hydration/int cast がある。",
+      "reason": "JSONの値型が外部から観測できる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 17,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "旧商品ID APIの成功JSONから設計項目 foilFlg が欠落し、クライアントがFoil区分を取得できない。",
+      "checked": "hareruya-design-docs/excel_to_html/output/0502_基本設計仕様書(API_商品管理).html:1670-1683 で正本項目表の foilFlg を確認。ec-cube-enterprise/src/Eccube/Controller/App/ProductController.php:383 と Service/App/Popup/PopupResponseBuilder.php:45-49 では includeBeltUrl=true 時に beltUrl のみ追加し foilFlg を除外する。",
+      "reason": "生成Markdownには記載漏れがあるがExcel正本に項目が実在し、実装JSONからの欠落は外部I/O差となる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 18,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "成功JSONの保管コードIDキーが strageCodeId ではなく storageCodeId となり、設計キーを読むクライアントでは値を取得できない。",
+      "checked": "ec-cube-enterprise/src/Eccube/Repository/ProductRepository.php:2210-2239 と 2258-2278 を確認。SELECT別名・hydration名とも storageCodeId。",
+      "reason": "綴り1文字の差でもJSONプロパティ名は外部契約なので IMPACT。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 19,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "result[].stock と result[].price02 が文字列ではなくJSON数値で返る。",
+      "checked": "ec-cube-enterprise/src/Eccube/Repository/ProductRepository.php:2258-2268 を確認。stock と price02 は integer としてhydrateされ、そのままControllerからJSON化される。",
+      "reason": "APIレスポンス値型の差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 20,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "result[].productClassUpdateDate/productUpdateDate が設計サンプルのISO8601整形ではなくDBネイティブ日時文字列として返り、区切りやオフセット表記が異なり得る。",
+      "checked": "ec-cube-enterprise/src/Eccube/Repository/ProductRepository.php:2238-2239 と 2277-2286 を確認。日時列を string hydrateして無加工で返し、format('c') は検索パラメータにだけ使われる。",
+      "reason": "日時文字列のレスポンス書式は外部I/Oであり、整形保証の欠落は影響する。",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 21,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "設計の GET/POST /order/print/direct では到達できず、実装は POST /api/order/prints/direct/{base_info_id} だけを受け付けるためGET印刷要求は404/405になる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/App/OrderController.php:36-44 を確認。Routeは異なるパス、必須ID、POST限定。",
+      "reason": "HTTPパス・メソッドの差は直接観測可能である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 22,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "スムーズ店頭受取の印刷XMLでも合計金額欄に金額が印字され、『スムーズ店頭受取』と表示されない。",
+      "checked": "ec-cube-enterprise/src/Eccube/Service/Admin/Order/OrderDirectPrintAction.php:71-129 と Repository/OrderRepository.php:1611-1621,1669-1678 を確認。payment_total を無条件出力し配送方法は印刷データへ渡していない。",
+      "reason": "プリンタ出力XML・紙面文言の差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 23,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "印刷XMLの『店頭注文番号』欄に待ち番号ではなく通常の order_number が印字される。",
+      "checked": "ec-cube-enterprise/src/Eccube/Service/Admin/Order/OrderDirectPrintAction.php:77-97 と Repository/OrderRepository.php:1611-1621,1669-1678 を確認。クエリは order_number だけを取得し、その値を店頭注文番号欄へ埋め込む。",
+      "reason": "印刷内容が異なるため IMPACT。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 24,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "GetRequest成功時にも var/log/print_logs 配下へ検証用XMLファイルが作成されない。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/App/OrderController.php:48-63 と Service/Admin/Order/OrderDirectPrintAction.php:37-60 を確認。XMLは応答へ出すだけでファイル保存処理がない。",
+      "reason": "ログファイル生成は運用者が観測するファイルI/Oである。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 25,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "不正なConnectionTypeに対し、実装はHTTP 400・text/plain・空本文を明示的に返す。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/App/OrderController.php:79-84 を確認。BAD_REQUESTとContent-Typeを設定したStreamedResponseを返す。",
+      "reason": "HTTPステータスとヘッダが設計の無応答扱いと異なり、呼出元から観測できる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 26,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "支店ではスムーズ店頭受取の受注が印刷対象から漏れ、返却XMLの対象件数・内容が変わる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Service/Admin/Order/OrderDirectPrintAction.php:42-48 と Repository/OrderRepository.php:1608-1655,1665-1733 を確認。本店queryには smoothOtc 分岐があるが支店queryはOTC NEWとbrowser_print_flgだけ。",
+      "reason": "印刷対象集合とXML出力が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 27,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "印刷完了後、本店はconfirm_dateだけ、支店はpicking_dateだけが更新され、設計で求める日時列の永続値と状態履歴が一致しない。",
+      "checked": "ec-cube-enterprise/src/Eccube/Service/Admin/Order/UpdatePrintedOrderStatusAction.php:87-100 を確認。PICKING状態設定後、isMainShopで setConfirmDate と setPickingDate を排他的に呼び、setPickFinishDateは呼ばない。",
+      "reason": "DB更新列と永続値が変わるため IMPACT。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 28,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "GET /order/prints/{店舗ID} では印刷情報を取得できず、POST限定の別パスを知らないクライアントは404/405となる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/App/OrderController.php:43-44 を確認。登録済みなのは POST /api/order/prints/direct/{base_info_id} のみ。",
+      "reason": "HTTP入口のパス・メソッド・パス引数契約が異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 29,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "存在しない数値の店舗IDでも404にせず支店用検索へ進み、通常は200の空印刷データを返す。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/App/OrderController.php:43-63 と Service/Admin/Order/OrderDirectPrintAction.php:42-51 を確認。非数値はroute要件で拒否されるが、BaseInfoがnullの場合はelseでgetDirectPrintOrderListを実行し空文字を返す。",
+      "reason": "少なくとも存在しない数値IDに対するHTTPステータス/本文が設計と異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 30,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "非空の印刷XMLでも print_logs へのタイムスタンプ付きファイル保存とディレクトリ作成が行われない。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/App/OrderController.php:48-63、Service/Admin/Order/OrderDirectPrintAction.php:50-60 を確認。非空XMLは応答へ返すだけで保存処理がない。",
+      "reason": "運用ログのファイルI/O欠落であり IMPACT。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 31,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "スマレジコードがnullの受注でも一部条件では印刷対象となり、空のJAN13 barcode要素を含むXMLが生成され得る。",
+      "checked": "ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php:1626-1644,1691-1706 と Service/Admin/Order/OrderDirectPrintAction.php:78,135 を確認。本店OTC NEWとbrowser_print_flg、本支店のbrowser分岐はsmaregi_code非nullを必須にせず、値をそのままbarcodeへ出す。",
+      "reason": "印刷対象とXMLバーコード内容が外部から観測できる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 32,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "支店のスムーズ店頭受取が印刷対象から漏れ、仮に対象になっても合計金額欄が指定文言へ置換されない。",
+      "checked": "ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php:1608-1655,1665-1733 と Service/Admin/Order/OrderDirectPrintAction.php:71-129 を確認。支店queryにsmoothOtc分岐がなく、印字側はpayment_total固定。",
+      "reason": "印刷対象集合と印刷XML本文の双方が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 33,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "未知のConnectionTypeにHTTP 400とtext/plainヘッダを返す。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/App/OrderController.php:79-84 を確認。明示的にBAD_REQUEST応答を構築する。",
+      "reason": "HTTP応答の有無・ステータス・ヘッダの差なので IMPACT。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 34,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "A05-02設計のGET/POST /order/print/direct と異なり、実装はPOSTの /api/order/prints/direct/{base_info_id} だけなので、所定URL/GETでは到達できない。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/App/OrderController.php:43-44 を確認。path・複数形・必須ID・methodsが設計と異なる。",
+      "reason": "HTTPルーティング契約の差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 35,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "A05-02でも支店のスムーズ店頭受取受注が印刷対象XMLから漏れる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Service/Admin/Order/OrderDirectPrintAction.php:42-48 と Repository/OrderRepository.php:1608-1655,1665-1733 を確認。本店/支店で異なるqueryを用い、支店queryにはsmoothOtc条件がない。",
+      "reason": "返却される印刷対象集合が変わるため IMPACT。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 36,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "A05-02の印刷XMLで『店頭注文番号』欄に dtb_order_number.value/待ち番号ではなく order_number が表示される。",
+      "checked": "ec-cube-enterprise/src/Eccube/Service/Admin/Order/OrderDirectPrintAction.php:77-97 と Repository/OrderRepository.php:1611-1621,1669-1678 を確認。取得・印字ともorder_numberで、dtb_order_numberのjoinはない。",
+      "reason": "プリンタへ渡すXMLの表示値が異なる。",
+      "confidence": "high"
+    }
+  ]
+}

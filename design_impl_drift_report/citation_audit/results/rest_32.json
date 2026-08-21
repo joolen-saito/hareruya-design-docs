@@ -1,0 +1,165 @@
+{
+  "packetId": "rest_32",
+  "results": [
+    {
+      "rowId": 902,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0201_基本設計仕様書(システム設定).html:1973-1975 のExcel正本セルは「権限の表示をマトリックスにする」「セル内のチェックボックスのチェックで権限を登録、解除する」と明記する。行単位の権限セレクト＋拒否URL入力は同:2078 の `<!-- function-design-embed:start ... -->` 以降のリバース詳細設計にだけある。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/src/Eccube/Form/Type/Admin/AuthorityRoleType.php:49-61 は `->add('Authority', 'entity'` と `->add('deny_url', 'text'` を定義し、同:68-72 は片入力時に「権限が選択されていません。」「拒否URLが入力されていません。」を付ける。これは旧実装の契約である。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Setting/System/AuthorityController.php:68-70 は `AuthorityMatrixType::class` でフォームを作り、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Setting/System/authority.twig:278-324 は権限名・権限グループを列見出しにして `name=\"authority[{{ Authority.id }}][{{ PermissionAccessUrl.id }}]\"` のチェックボックス行列を描画する。",
+      "note": "指摘は旧行フォームを設計期待値としているが、Excel正本はマトリックスへの刷新を要求し、新実装はそれを満たす。"
+    },
+    {
+      "rowId": 903,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0201_基本設計仕様書(システム設定).html:1982-1988 のExcel正本はチェックONをアクセス可とし、権限URLマスターから権限登録・削除を行うと規定する。同:1998-2001 はチェックONなら拒否URL削除、OFFなら拒否URL登録と明記するが、「既存行を全件削除して再persist」は正本にない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/src/Eccube/Controller/Admin/Setting/System/AuthorityController.php:74-82 は既存 `$AuthorityRoles` をすべて `remove` した後、有効な送信行を `persist` し、同:94 で `flush()` する。全件置換は旧実装由来である。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Setting/System/AuthorityIndexAction.php:114-135 はチェック状態から `$desiredDeniedUrls` を作り、不要な既存拒否URLだけ `delete`、不足するURLだけ `save` する。これはExcel正本のON=許可／OFF=拒否URL登録という最終状態を満たす。",
+      "note": "全件削除・再登録は正本要求ではなく旧実装の内部方式。新実装の差分更新は正本が要求する権限状態を実現している。"
+    },
+    {
+      "rowId": 904,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0201_基本設計仕様書(システム設定).html:2008-2009 のExcel正本項目表は画面下部の「登録」ボタンと「入力されたフォームの値で登録」を定義するが、専用成功文言「権限設定を保存しました。」は同:2078以降のリバース詳細設計にしかない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/src/Eccube/Controller/Admin/Setting/System/AuthorityController.php:105-107 は `addSuccess('admin.system.authority.save.complete', 'admin')` 後に同画面へredirectし、/home/y-saito/Developments/pf-eccube3/src/Eccube/Resource/locale/message.ja.yml:184 は同キーを「権限設定を保存しました。」と定義する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Setting/System/AuthorityController.php:108-114 は `addSuccess('admin.common.save_complete', 'admin')` 後に `admin_setting_system_authority` へredirectし、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:1595 は「保存しました」と定義する。正本が要求する登録と完了後再表示は実装済みである。",
+      "note": "専用文言は旧実装由来で正本要求ではない。新実装は正本の登録処理を満たし、成功通知と同画面redirectも備える。"
+    },
+    {
+      "rowId": 905,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0201_基本設計仕様書(システム設定).html:1991-1992 のExcel正本は「EC-CUBEエンタプライズの標準のアクセス制御を使用する」と規定する。Twigグローバル名 `AuthorityRoles` やnav.twig側の階層別条件は同:2078以降のリバース詳細設計にのみ現れる。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/src/Eccube/Application.php:377-388 はログインMemberの権限ロールからフルパス配列を作り `addGlobal('AuthorityRoles', $roles)` とする。/home/y-saito/Developments/pf-eccube3/src/Eccube/Resource/template/admin/nav.twig:23-43 はその配列で第1～第3階層を非表示にする。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/EventListener/TwigInitializeListener.php:183-191 はMemberのAuthorityRoleを取得し `getDisplayEccubeNav` でナビ配列を事前フィルタして `eccubeNav` をglobal化する。同:238-243 は拒否URLに前方一致する項目を `unset($parentNav[$key])` する。",
+      "note": "旧Twigグローバルの名称・配置は移植必須の正本契約ではない。新実装はエンタプライズ標準方式で同じナビ抑制目的を満たす。"
+    },
+    {
+      "rowId": 906,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:1091-1098 のExcel正本セルは通販売上を「店頭受取(スムーズ含む)・なし以外」かつ「出荷完了」、店舗売上を「店頭受取(スムーズ含む)またはなし」かつ「出荷完了」と明記する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Repository/OrderRepository.php:709-716 の旧M12-01注文別SQLは `dtb_order` と `dtb_order_detail` を結合するだけで配送方法別の通販／店舗分岐を持たない。具体条件は旧実装ではなくExcel正本の追加カスタマイズ要求である。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbDailySummaryRepository.php:52-66 の受注集計SQLのWHEREは `o.base_info_id IS NOT NULL` と `o.order_date` 範囲だけで、配送方法および `order_status_id` の条件がない。",
+      "note": ""
+    },
+    {
+      "rowId": 907,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:1107 のExcel正本セルは「カスタマイズ要件に記載の内容以外は現行踏襲」とするが、欠落日・欠落月を0行で補完する具体記述は同:1197の埋込開始前には存在しない。同:1239 の具体文は埋込リバース詳細設計である。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Repository/OrderRepository.php:844-856 は「取得できなかった日の補正」としてFrom～Toをループし、不在キーに各表示列0の `$dummyRow` を追加する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Analysis/AnalysisSummaryBuilder.php:75-106 はリポジトリ取得行だけを配列化して返し、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbDailySummaryRepository.php:329-342 も存在行だけを期間抽出する。日付系列を生成する処理がない。",
+      "note": "正本は現行踏襲を包括指定するが、0補完の具体的根拠は旧実装で確認したためLEGACY_BACKED。"
+    },
+    {
+      "rowId": 908,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:1343-1344 のExcel正本セルは「集計は売上として計上できるもの」「注文ステータスが『出荷完了』のみ集計対象」と明記する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Repository/OrderRepository.php:712-716 の旧注文集計は `where o.order_id = od.order_id` のみで、全体を出荷完了に限定する新カスタマイズ条件はない。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbDailySummaryRepository.php:62-66 は `base_info_id` と日付範囲だけをWHEREに置き、`order_status_id = 出荷完了` を付けず全ステータスを集計する。",
+      "note": ""
+    },
+    {
+      "rowId": 909,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:1100 のExcel正本セルは集計対象店舗を「店舗登録画面の公開状態が公開」であるものと具体化し、同:1122 はその検索項目出力用フラグを店舗管理に持たせると記載する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/Analysis/SummaryType.php:55-113 の旧フォームは `multi`、日付、`device_type`、表示列、集計タイプだけで店舗選択用フラグを参照しない。これは正本で追加された要求である。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/BaseInfoRepository.php:198-209 は「日次・月次集計画面の店舗売上チェックボックス用」として `bi.isPublicShop = true` の店舗を取得する。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Entity/BaseInfo.php:1548-1558 は店舗管理の `is_public_shop`（コメント「公開」）列とgetter/setterを実装する。",
+      "note": "指摘は売上集計専用の別フラグを要求しているが、正本は対象判定を店舗の「公開状態」と明記する。新実装はその公開フラグで集計候補を出力しており正本を満たす。"
+    },
+    {
+      "rowId": 910,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:1336 のExcel正本は「カスタマイズ要件に記載の内容以外は現行踏襲」とするが、各欠落期間を0補完する具体値は同:1427の埋込開始前にはない。同:1469 の具体記述はリバース詳細設計領域である。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Repository/OrderRepository.php:844-856 は日次／月次共通の `SUMMARY_DATE_FORMAT[$summaryType]` で期間を進め、不在期間に全列0の行を生成する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Analysis/AnalysisSummaryBuilder.php:120-155 は月範囲で取得した `$rowsRaw` だけを変換し、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbMonthlySummaryRepository.php:104-123 も存在する月次行のみを返す。",
+      "note": "0補完の具体契約は旧実装から裏付けられるためLEGACY_BACKED。"
+    },
+    {
+      "rowId": 912,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:1583-1587 のExcel正本セルはネット買取件数を「査定承諾日が入っているもの」「キャンセルは含まない」、店頭買取を「買取成立日が入っているもの」「管理者取消は含まない」とし、同:1608 は買取ステータス「買取成立」のみ計上と明記する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Repository/OrderRepository.php:630-641 の旧M12-01集計は受注期間・表示列を入力とする旧方式で、買取データの新固定列条件は持たない。具体条件はExcel正本のカスタマイズ要求である。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbDailySummaryRepository.php:131-149 はネット買取を `bo.auto_approval_flg = TRUE` と `bo.order_date`、店頭買取を `obo.cancel_date IS NULL` と `obo.apply_date` で抽出し、査定承諾日・買取成立日および買取成立ステータスを条件にしていない。",
+      "note": ""
+    },
+    {
+      "rowId": 913,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:1603 のExcel正本セルは「店舗の並び順は店舗の表示順の昇順」と明記する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Repository/OrderRepository.php:799 は旧一覧を `order by buyer.order_date asc` とし、旧方式には店舗別行の並び契約がない。表示順要求はExcel正本の新固定集計仕様である。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbDailySummaryRepository.php:329-332 は結果を `orderBy('s.summaryDate', 'ASC')->addOrderBy('b.id', 'ASC')` とし、店舗の表示順 `rank` ではなくID昇順で並べる。",
+      "note": ""
+    },
+    {
+      "rowId": 914,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:1590-1601 のExcel正本セルは通販=本店EC在庫、TC東京=スマレジのみ、その他店舗=EC＋スマレジ、廃棄のイベント商品・他事業移動除外、欠品の対象詳細区分、符号反転を具体的に規定する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Repository/OrderRepository.php:630-641 の旧M12-01は受注の動的列集計であり、廃棄・欠品の在庫ソース振分けはない。これはExcel正本の新カスタマイズである。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbDailySummaryRepository.php:175-189 は廃棄の符号反転と2詳細区分除外、同:208-219 は欠品の2詳細区分と符号反転を実装するが、どちらも単一の `DtbStockHistory` を店舗別に集計するだけでEC在庫／スマレジ在庫／TC東京の分岐がない。",
+      "note": "除外詳細区分と符号反転は実装済みだが、指摘の中心である在庫ソースの店舗別選別が未実装。"
+    },
+    {
+      "rowId": 915,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:1118-1126 のExcel正本セルは検索項目を集計タイプ・集計日・集計対象に固定し、「今回のカスタマイズに伴い」利用端末・表示項目(注文)・表示項目(詳細)を削除すると明記する。指摘の旧フォーム項目要求は同:1197以降のリバース詳細設計に由来する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/Analysis/SummaryType.php:55-102 は旧フォームに `multi`、`device_type`、`columns_order`、`columns_product` を定義する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/Analysis/SummaryType.php:61-86 は `summary_type`、From/To、`mail_order_enabled`、`store_sales_all`、`store_sales_targets` のみを定義し、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Analysis/SummaryController.php:42-54 は結果列を固定する。",
+      "note": "指摘は削除対象となった旧フォームを復活させる要求であり、正本と逆。新実装は正本の固定検索項目・固定結果列を満たす。"
+    },
+    {
+      "rowId": 916,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:1855 のExcel正本セルは「販売関連の集計は注文データの注文ステータスが『出荷完了』のみ計上し、それ以外は計上しない」と明記する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Repository/OrderRepository.php:712-716 の旧注文別SQLは受注と明細の結合のみで、全販売を出荷完了に限定する新固定集計条件を持たない。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbDailySummaryRepository.php:62-66 のWHEREは `o.base_info_id IS NOT NULL` と日付範囲のみで、`order_status_id` の出荷完了条件がない。この日次結果を同:232-251 が月次へ合算するため月次も未達である。",
+      "note": ""
+    },
+    {
+      "rowId": 917,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:1856 のExcel正本セルは「買取ステータスが『買取成立』のみ計上し、それ以外は計上しない」と明記する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Repository/OrderRepository.php:630-641 の旧M12-01は受注ベースの旧動的集計で、買取成立の固定列は正本追加仕様である。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbDailySummaryRepository.php:131-149 はネット買取を `auto_approval_flg = TRUE`、店頭買取を `cancel_date IS NULL` で集計し、買取成立ステータスIDを指定していない。",
+      "note": ""
+    },
+    {
+      "rowId": 918,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:1859-1860 のExcel正本セルは支店名を「通販」「店舗名」「その他」で出力し、「その他」は通販・各店舗に該当しない売上を計上すると明記する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Repository/OrderRepository.php:799-834 の旧一覧は日付をキーに受注集計行を作り、支店名・その他区分を出力しない。これはExcel正本の追加固定列である。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbDailySummaryRepository.php:62-66 は `o.base_info_id IS NOT NULL` で店舗外売上を除外する。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Analysis/AnalysisSummaryBuilder.php:201-212 は名称を「通販」またはshort_name_jp/shop_nameにするだけで「その他」を生成しない。",
+      "note": ""
+    },
+    {
+      "rowId": 919,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:1870-1871 のExcel正本セルは廃棄について「廃棄コスト合計」、欠品について「コスト合計」を出力すると明記する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Repository/OrderRepository.php:630-665 の旧M12-01は選択された受注・商品列を組み立てる方式で、廃棄・欠品コストの固定列はない。これはExcel正本の追加要求である。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbDailySummaryRepository.php:175-177 は `SUM(sh.stockChangeQuantity)` の符号反転を `waste_quantity`、同:208-210 は同じく `shortage_quantity` として数量だけを集計する。金額・単価との乗算によるコスト合計はない。",
+      "note": ""
+    },
+    {
+      "rowId": 920,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:1352-1355 のExcel正本セルはカスタマイズに伴い利用端末・表示項目(注文)・表示項目(詳細)を削除すると明記し、同:1358-1361 は残す検索項目を集計タイプ・日付・通販・各店舗とする。`multi/device_type/columns_*` の要求は同:1427以降のリバース詳細設計に由来する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/Analysis/SummaryType.php:55-102 は旧実装に `multi`、`device_type`、`columns_order`、`columns_product` を持つ。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/Analysis/SummaryType.php:61-86 は正本どおり集計タイプ、期間、通販、全店舗、対象店舗だけを定義し、旧4キーを持たない。",
+      "note": "旧フォーム項目の不在は移植漏れではなく、正本が明示した削除。"
+    },
+    {
+      "rowId": 921,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:1850 のExcel正本は「カスタマイズ要件に記載の内容以外は現行踏襲」とするが、欠落月を0行で補完する具体記述は同:1952の埋込開始前には存在しない。同:1994 の具体文はリバース詳細設計領域である。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Repository/OrderRepository.php:844-856 は月次時も `SUMMARY_DATE_FORMAT['monthly']` に従い期間を進め、結果にない月へ全列0のダミー行を追加する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbMonthlySummaryRepository.php:104-123 は存在する `dtb_monthly_summary` 行だけを返し、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Analysis/AnalysisSummaryBuilder.php:126-155 もその行だけを表示配列にする。",
+      "note": "具体的な0補完は旧実装からのみ確認できるためLEGACY_BACKED。"
+    },
+    {
+      "rowId": 922,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:1359 のExcel正本セルは月別の場合「集計月は『2か月前』から『当月』を自動入力」とし、同:1377 はFromを年月形式・初期値「2か月前の月初」と定義する。月別Toを日付として当月末日にする具体要求はリバース詳細設計由来で、正本の年月入力契約ではない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Analysis/SummaryController.php:45-54 は旧日付フォームのToを `new Datetime('last day of this month')`、月別Fromを2か月前としていた。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Analysis/SummaryController.php:304-317 は月次初期値を「2ヶ月前～当月」とし、Toを当月を表す月初日に正規化する。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/Analysis/SummaryType.php:46-53 は月次入力を `format => 'yyyy-MM'` とするため、画面上は正本どおり当月までの年月範囲になる。",
+      "note": "日付内部値の月初正規化を当月末日欠落とみなした誤検出。月次UI・検索範囲は正本の「2か月前～当月」を満たす。"
+    }
+  ]
+}

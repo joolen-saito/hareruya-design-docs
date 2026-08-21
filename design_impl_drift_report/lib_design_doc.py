@@ -124,7 +124,7 @@ def sheet_index(book_path: Path) -> list[Sheet]:
         (m.group(1), m.start()) for m in _SHEET_PANEL_RE.finditer(text)
     ]
     if not starts:
-        raise DesignDocError(f"シートセクションが1件も無い: {book_path.name}")
+        return _doc_section_index(book_path, text)
 
     titles: dict[str, str] = {}
     for match in _SHEET_HEADING_RE.finditer(text):
@@ -134,6 +134,32 @@ def sheet_index(book_path: Path) -> list[Sheet]:
     for i, (sheet_id, start) in enumerate(starts):
         end = starts[i + 1][1] if i + 1 < len(starts) else len(text)
         sheets.append(Sheet(sheet_id, titles.get(sheet_id, ""), start, end))
+    return sheets
+
+
+# Markdown起点の設計書（build_orphan_group_html.py 生成）は Excel 由来の sheet-panel を持たず、
+# `<section class="doc-section" id="m01-01">` で機能を区切る。セクションが1つも無い資料（0000_共通仕様）は
+# 本文全体を1シートとして扱う。いずれも sheet_id は sheet-N に振り直す（後段が連番IDを前提にするため）。
+_DOC_SECTION_RE = re.compile(r'<section class="doc-section"[^>]*id="([^"]+)"[^>]*>')
+_H1_RE = re.compile(r"<h1[^>]*>(.*?)</h1>", re.S)
+_BODY_RE = re.compile(r"<body[^>]*>", re.I)
+
+
+def _doc_section_index(book_path: Path, text: str) -> list["Sheet"]:
+    starts = [(m.group(1), m.start()) for m in _DOC_SECTION_RE.finditer(text)]
+    if not starts:
+        body = _BODY_RE.search(text)
+        start = body.end() if body else 0
+        h1 = _H1_RE.search(text, start)
+        title = strip_tags(h1.group(1)).strip() if h1 else book_path.stem
+        return [Sheet("sheet-1", title, start, len(text))]
+
+    sheets: list[Sheet] = []
+    for i, (_, start) in enumerate(starts):
+        end = starts[i + 1][1] if i + 1 < len(starts) else len(text)
+        h1 = _H1_RE.search(text, start, end)
+        title = strip_tags(h1.group(1)).strip() if h1 else starts[i][0]
+        sheets.append(Sheet(f"sheet-{i + 1}", title, start, end))
     return sheets
 
 

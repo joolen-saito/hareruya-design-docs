@@ -1,0 +1,382 @@
+{
+ "packetId": "rc2_02",
+ "note": "rowId は drift_findings_list_final.tsv の行番号(ヘッダ除く1始まり)。これらは分類の批判的レビュー済み(レビュー結果列)だが、検証後に実装が変更されている。classVerdict も再判定しつつ、driftVerdict を重点的に確認すること。",
+ "count": 12,
+ "findings": [
+  {
+   "rowId": 167,
+   "機能No": "B02-07",
+   "機能名": "B02-07 週間在庫履歴更新バッチ",
+   "ドメイン": "b02",
+   "区分(画面種別)": "batch",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・未実装",
+   "設計期待値": "メモリ制限と実行時間制限を解除し、SQLロガーを無効化する。",
+   "実装実態": "B02-07 のコマンド、アクション、関連リポジトリにはメモリ制限解除・実行時間制限解除・SQLロガー無効化の処理がない。",
+   "差分内容": "長時間バッチ向けの実行環境設定が設計にあるが、対象実装範囲で該当API呼び出しが確認できない。",
+   "実装参照": "不在（探索範囲: src/Eccube/Command/UpdateWeeklyStockHistoryCommand.php, src/Eccube/Service/Product/BatchUpdateWeeklyStockHistoryAction.php, src/Eccube/Repository/DtbWeeklyStockHistoryTempRepository.php, src/Eccube/Repository/DtbWeeklyStockHistoryRepository.php; 検索語: ini_set, memory_limit, set_time_limit, setSQLLogger, SQLLogger）",
+   "設計書参照": "excel_to_html/output/0402_基本設計仕様書(バッチ_在庫管理).html#sheet-6:1345",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "正本シート本文 hareruya-design-docs/excel_to_html/output/0402_基本設計仕様書(バッチ_在庫管理).html:1437-1467 の処理概要・トリガー・入出力には `memory_limit`、実行時間制限解除、SQLロガー無効化の記述がない。要求はリバース詳細設計の実体 hareruya-design-docs/functions/pf-eccube3/b02-07_batch_product_product_weekly_stock_history_update.md:73 の「メモリ制限と実行時間制限を解除し、SQLロガーを無効化する」にだけある。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Repository/DtbStockHistoryRepository.php:203-210 は `ini_set('memory_limit', '-1');`、`set_time_limit(0);`、`getConfiguration()->setSQLLogger(null);` を実行する。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Command/UpdateWeeklyStockHistoryCommand.php:44-56 はアクション呼出しと成否出力のみ、ec-cube-enterprise/src/Eccube/Service/Product/BatchUpdateWeeklyStockHistoryAction.php:50-79 はテーブル更新と例外メールのみである。確認範囲（この2ファイルおよび DtbWeeklyStockHistoryTempRepository.php / DtbWeeklyStockHistoryRepository.php）を `ini_set|memory_limit|set_time_limit|setSQLLogger|SQLLogger` で検索して0件。",
+   "根拠検証メモ": "実行環境設定は正本ではなく旧実装コードおよびリバース詳細設計が根拠。",
+   "対応の根拠(現develop)": "実行時間制限の解除のみ既存実装で充足: `bin/console:11` `set_time_limit(0);` がコンソール実行の入口にあり、`eccube:update-weekly-stock-history` を含む全バッチに適用される（監査時は探索範囲を src/ 配下3ファイルに限定していたため未検出）。残るメモリ制限解除とSQLロガー無効化は未実装で、`src/Eccube/Command/UpdateWeeklyStockHistoryCommand.php:43-59`、`src/Eccube/Service/Product/BatchUpdateWeeklyStockHistoryAction.php:50-81`、`src/Eccube/Repository/DtbWeeklyStockHistoryTempRepository.php`、`src/Eccube/Repository/DtbWeeklyStockHistoryRepository.php` のいずれにも `ini_set('memory_limit', ...)` / `setSQLLogger(null)` は無い（同種の実装例は `src/Eccube/Repository/DtbSalesQuantityRepository.php:315-320` `set_time_limit(0); ini_set('memory_limit', '-1'); … setSQLLogger(null);` に存在するが B02-07 の実行経路からは呼ばれない）。",
+   "再確認HEAD": "da9c2ba276",
+   "レビュー結果": "UPHELD",
+   "レビュー根拠": "3つの実行環境設定は旧実装で直接確認できるが、Excel正本の処理概要、トリガー、入出力、実行結果、エラー処理には記載がない。1479以降のfunction-design-embedは正本ではない。",
+   "mech": {
+    "quote": "EMBED_ONLY",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Repository/DtbSalesQuantityRepository.php"
+    ]
+   }
+  },
+  {
+   "rowId": 179,
+   "機能No": "B05-01",
+   "機能名": "B05-01 注文番号登録",
+   "ドメイン": "b05",
+   "区分(画面種別)": "batch",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・未実装",
+   "設計期待値": "スマレジ連携APIの実行に失敗した場合はエラーメールを送信し、送信先は追加設定のスマレジ通信エラー送信メールアドレスとする。",
+   "実装実態": "API失敗時は `smaregi_error_flg` を true にして logger/MessengerJob errorMessage に記録するのみで、メール送信処理と送信先設定の参照がない。",
+   "差分内容": "設計が要求するエラーメール送信と追加設定メールアドレス参照が、OTCスマレジ連携コマンド・同期サービス・メッセージハンドラ周辺に存在しない。",
+   "実装参照": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/OtcOrderSmaregiPostCommand.php, src/Eccube/Service/Smaregi, src/Eccube/MessageHandler/SmaregiOtcSyncMessageHandler.php, src/Eccube/Repository/OrderRepository.php; 検索語: スマレジ通信エラー, 通信エラー送信, エラーメール, smaregi mail, MailService, sendMail, send）",
+   "設計書参照": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3:972-979,1002-1004",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html:1126-1127 の正本セルは商品連携失敗時にエラーメールを送り、宛先を「追加設定のスマレジ通信エラー送信メールアドレス」とする。同:1132-1133 は在庫連携失敗にも同じ要求を置き、同:1157 もAPI失敗時のエラーメール送信を明記する。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Service/SmaregiService.php:53,65,78 は商品削除・商品更新・在庫更新失敗時に `sendSmaregiErrorMail(...)` を呼ぶ。pf-eccube3/app/Plugin/HareruyaEc/Service/MailService.php:1379-1386 は設定 `SMAREGI_ERROR_MAIL_ADDRESS` を取得して宛先にし、同:1414-1418 は件名「スマレジ通信エラー」で送信する。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Service/Smaregi/Otc/SmaregiOtcOrderSyncService.php:251-259 の `markError()` はlogger、`smaregi_error_flg=true`、flushのみ。ec-cube-enterprise/src/Eccube/MessageHandler/SmaregiOtcSyncMessageHandler.php:163-168 の `failJob()` もジョブ失敗状態とerrorMessageの保存である。OTC同期経路を `SMAREGI_ERROR_MAIL_ADDRESS|sendSmaregiError|MailerInterface|send\\(` で検索してメール呼出し0件。",
+   "根拠検証メモ": "MailServiceには別用途で同設定を読む処理があるが、OTC商品・在庫連携失敗経路から呼ばれていない。",
+   "対応の根拠(現develop)": "API失敗時は現 develop でも `src/Eccube/Service/Smaregi/Otc/SmaregiOtcOrderSyncService.php:251-260` `markError()` が `$this->logger->error($message, [...]); $Order->setSmaregiErrorFlg(true);` を行うのみ、`src/Eccube/MessageHandler/SmaregiOtcSyncMessageHandler.php:163-176` `failJob()` も `$Job->setStatus(MessengerJob::STATUS_FAILED); $Job->setErrorMessage($message);` のみでメール送信がない。`src/Eccube/Service/Smaregi/**`, `src/Eccube/MessageHandler/SmaregiOtcSyncMessageHandler.php`, `src/Eccube/Command/OtcOrderSmaregiPostCommand.php` を `MailService|mailer|sendMail|Email(` でgrepして0件。`MtbOption::SMAREGI_ERROR_SEND_MAILADDRESS`（`src/Eccube/Entity/Master/MtbOption.php:45`）は定数定義のみで参照ゼロ、`SMAREGI_ERROR_MAIL_ADDRESS` の唯一の参照は `src/Eccube/Service/MailService.php:2466` `->findOneBy(['option_key' => MtbOption::SMAREGI_ERROR_MAIL_ADDRESS])`（`sendOrderDuplicateNotificationMail()`＝ポイント重複登録通知）で本要件とは別機能。`script/ops/**`(db, imgcheck, monthly-inventory-snapshot, stg-db-maintenance)、`bin/`、`app/config/**`、`.github/workflows/**` にもスマレジ連携エラー通知の実体はない。",
+   "再確認HEAD": "da9c2ba276",
+   "レビュー結果": "UPHELD",
+   "レビュー根拠": "引用はいずれも1202のfunction-design-embed開始前にあるExcel正本セルで、API失敗時のメール送信と宛先を直接支持する。",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Repository/OrderRepository.php",
+     "src/Eccube/Service/MailService.php"
+    ]
+   }
+  },
+  {
+   "rowId": 180,
+   "機能No": "B05-02",
+   "機能名": "B05-02 購入完了手続き再処理",
+   "ドメイン": "b05",
+   "区分(画面種別)": "batch",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・未実装",
+   "設計期待値": "注文ステータスが「新規」「入金待ち」「ピック中」、注文完了メール送信履歴なし、注文日時がバッチ起動時間の5分前から1分前までの注文を処理対象として取得する。",
+   "実装実態": "受注完了メール送信履歴は `MailService::sendOrderMail()` で保存されるが、B05-02 用に「送信履歴なし」「注文日時5分前〜1分前」「新規・入金待ち・ピック中」を組み合わせて抽出する実装は見つからない。近接する `OrderRepository::getNotReflectedPointsUsage()` は決済・金額差分・直近1時間を条件にした通知用抽出で、メール未送信受注の抽出ではない。",
+   "差分内容": "`OrderRepository.php:1824` の抽出は `plg_sln_order_payment_status`、金額差分、`payment_date BETWEEN NOW() - INTERVAL '1 hour' AND NOW()` を条件にしており、設計のメール履歴なし・注文日時5分前〜1分前・対象ステータス条件を満たさない。",
+   "実装参照": "不在（探索範囲: src/Eccube/Repository/OrderRepository.php, src/Eccube/Command, src/Eccube/Service/Admin/Order, src/Eccube/Service。検索語: メール未送信 / MailHistories / MailHistory / dtb_mail_history / 5分前 / 1分前 / getNotReflectedPointsUsage / findTargetOrdersFor）",
+   "設計書参照": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-4:1136",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html:1320-1328 の正本セルは、対象を「新規・入金待ち・ピック中」「注文番号に紐づく送信履歴がない」「バッチ起動時間の5分前から1分前まで」と明記する。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Repository/OrderRepository.php:1443-1464 は送信履歴をLEFT JOINして `umh.id IS NULL`、3ステータスを指定する。ただし時刻は `toDate = now-60秒` の後に `fromDate = toDate-5分`（1445-1448行）なので、実質now-6分〜now-1分である。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php:1961-1982 に現在 `getNotSendMailOrders()` が存在し、`mh.id IS NULL` と NEW/PAY_WAIT/PICKING を満たす。しかし同:1963-1966 は `toDate` をnow-60秒にした後、そこからさらに5分引いて `fromDate` とするため、実質6分前〜1分前を抽出する。ec-cube-enterprise/src/Eccube/Service/Admin/Order/ResendMailAction.php:60-62 はこのメソッドを実際に呼ぶ。",
+   "根拠検証メモ": "パケットの「抽出実装不在」は現状では古い。ただし時間窓が正本の5分前〜1分前ではなく6分前〜1分前なので、要求はなお完全には満たさない。",
+   "対応の根拠(現develop)": "`src/Eccube/Repository/OrderRepository.php:1961-1985` に `getNotSendMailOrders()` が新規追加され、`:1970` `->join('o.OrderStatus', 'os', 'WITH', 'os.id IN (:statusList)')` ＋ `:1976-1980` `[OrderStatus::NEW, OrderStatus::PAY_WAIT, OrderStatus::PICKING]`（新規・入金待ち・ピック中）、`:1971-1972` `->leftJoin('Eccube\\Entity\\MailHistory', 'mh', 'WITH', 'o = mh.Order')->where('mh.id IS NULL')`（注文完了メール送信履歴なし）を満たす。ただし時間条件は `:1963-1966` `$toDate = new \\DateTime('now', new \\DateTimeZone('UTC')); $toDate->modify('-60 second'); $fromDate = clone $toDate; $fromDate->modify('-5 minute');` ＋ `:1973` `->andWhere('o.order_date > :fromDate AND o.order_date < :toDate')` で抽出下限が起動時刻の6分前となり、設計「注文日時がバッチ起動時間の5分前から1分前まで」と1分ずれる。",
+   "再確認HEAD": "da9c2ba276",
+   "レビュー結果": "UPHELD",
+   "レビュー根拠": "3条件すべてがExcel正本の入力データ詳細および検索条件に明記され、設計期待値を直接支持する。",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Repository/OrderRepository.php"
+    ]
+   }
+  },
+  {
+   "rowId": 186,
+   "機能No": "B05-05",
+   "機能名": "B05-05 スマレジ商品削除",
+   "ドメイン": "b05",
+   "区分(画面種別)": "batch",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・未実装",
+   "設計期待値": "連携に失敗した場合はスマレジ通信エラーメールを送信し、エラーが発生したスマレジ連携ごとにメールで管理者に通知する。",
+   "実装実態": "スマレジ商品検索または削除APIが失敗した場合、SmaregiOtcDeleteService は logger->error して DELETE_FAILED を返し、SmaregiOtcDeleteMessageHandler は MessengerJob を FAILED に更新する。MailService 注入、mailer->send、スマレジ通信エラーメール用メソッド、メールテンプレート呼び出しは関連処理に存在しない。",
+   "差分内容": "設計はスマレジ連携ごとの管理者メール通知を要求しているが、実装はログ出力とジョブ失敗状態の永続化に留まる。反証として 通信エラーメール / スマレジ通信エラー / 管理者に通知 / send*Smaregi / Smaregi*Mail / MailService / mailer->send を関連範囲で検索したが、B05-05 の失敗経路からメール送信へ到達するコードは不在。",
+   "実装参照": "不在（探索範囲: src/Eccube/Command, src/Eccube/MessageHandler, src/Eccube/Service/Smaregi, src/Eccube/Service/MailService.php, src/Eccube/Resource。関連実装は src/Eccube/Service/Smaregi/Otc/SmaregiOtcDeleteService.php:66, src/Eccube/Service/Smaregi/Otc/SmaregiOtcDeleteService.php:70, src/Eccube/Service/Smaregi/Otc/SmaregiOtcDeleteService.php:92, src/Eccube/Service/Smaregi/Otc/SmaregiOtcDeleteService.php:94, src/Eccube/MessageHandler/SmaregiOtcDeleteMessageHandler.php:100, src/Eccube/MessageHandler/SmaregiOtcDeleteMessageHandler.php:133）",
+   "設計書参照": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-7:1548,",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html:1714 の正本セルは「連携に失敗した場合はスマレジ通信エラーメール送信」、同:1730-1731 は「エラーが発生した場合、発生したスマレジ連携ごとにメールで管理者に通知」と明記する。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Service/Order/DeleteSmaregiProduct.php:34-36 は削除連携を `postSmaregiProcess(..., ['delete'])` へ渡し、pf-eccube3/app/Plugin/HareruyaEc/Service/SmaregiService.php:49-55 は削除API失敗時に `sendSmaregiErrorMail(...)` を呼ぶ。pf-eccube3/app/Plugin/HareruyaEc/Service/MailService.php:1414-1418 は件名「スマレジ通信エラー」で宛先へメールを設定する。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Service/Smaregi/Otc/SmaregiOtcDeleteService.php:65-76,92-101 は検索・削除API失敗時に `$this->logger->error(...)` と `DELETE_FAILED` を返すだけで、ec-cube-enterprise/src/Eccube/MessageHandler/SmaregiOtcDeleteMessageHandler.php:113-118,133-139 はジョブをFAILEDへ更新する。関連 Command/MessageHandler/Service と MailService を `スマレジ通信エラー`, `sendSmaregiErrorMail`, `MailService`, `mailer` で検索したが、この失敗経路からメール送信するコードは存在しない。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Service/Smaregi/Otc/SmaregiOtcDeleteService.php:70` `$this->logger->error('Smaregi product lookup failed', [...]);` / 同:76 `return SmaregiOtcDeleteResult::DELETE_FAILED;`、同:94 `$this->logger->error('Smaregi product delete failed', [...]);` / 同:101 `return SmaregiOtcDeleteResult::DELETE_FAILED;` と失敗時はログ＋結果返却のみ。`src/Eccube/MessageHandler/SmaregiOtcDeleteMessageHandler.php:136` `$Job->setStatus(MessengerJob::STATUS_FAILED);` でジョブ失敗を永続化するだけで、同ファイル群・Command を `MailService|mailer|->send(` で Grep してもメール送信は 0 件。スマレジ通信エラーメール用テンプレート・メソッドも不在。",
+   "再確認HEAD": "da9c2ba276",
+   "レビュー結果": "UPHELD",
+   "レビュー根拠": "両引用は1734のfunction-design-embed開始前のExcel正本セルで、失敗時メールと連携単位の管理者通知を直接支持する。",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Service/MailService.php"
+    ]
+   }
+  },
+  {
+   "rowId": 192,
+   "機能No": "B05-08",
+   "機能名": "B05-08 スマレジEC受注連携エラー再連携",
+   "ドメイン": "b05",
+   "区分(画面種別)": "batch",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・未実装",
+   "設計期待値": "スマレジ連携エラーのEC受注を取得し、受注ごとに会員のスマレジIDとポイントでスマレジポイント連携をリトライする。",
+   "実装実態": "`OrderRepository::getSmaregiErrorOrder()` は存在するが、呼び出し元が存在しない。実行される近接処理 `SmaregiUpdatePointAction::handle()` は `orderId` 指定の単一受注処理で、エラー受注抽出結果を走査しない。",
+   "差分内容": "`src/Eccube/Repository/OrderRepository.php:877` に抽出メソッドはあるが、`rg getSmaregiErrorOrder\\(` で利用箇所は定義のみ。`src/Eccube/Service/Smaregi/SmaregiUpdatePointAction.php:32` は `handle(int $orderId)` で単一受注を `find($orderId)` する実装。",
+   "実装参照": "不在（探索範囲: src/Eccube/Command, src/Eccube/Service, src/Eccube/Repository, src/Eccube/MessageHandler。検索語: getSmaregiErrorOrder, smaregi_error_flg, SmaregiUpdatePointAction, postSmaregiPoint）",
+   "設計書参照": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-10:1961",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html:2074-2075 は「スマレジ連携エラーフラグが立っている注文データと…ユーザー情報を取得」「取得した注文データのスマレジ連携をリトライ」、同:2079-2084 は同条件の抽出とユーザーのスマレジID・ポイント残高取得を明記する。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Repository/DtbOrderSubRepository.php:182-211 は `smaregiErrorFlg = 1` の受注サブと会員・Playerを抽出して配列化し、pf-eccube3/app/Plugin/HareruyaEc/Service/Smaregi/CheckSmaregiErrorOrder.php:31-36 は結果を全件走査して各PlayerのスマレジIDとポイントで連携する。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php:980-1013 に `getSmaregiErrorOrder()` はあるが、`rg 'getSmaregiErrorOrder\\(' ec-cube-enterprise/src ec-cube-enterprise/html` の呼び出しは定義のみ。実行される近接処理 ec-cube-enterprise/src/Eccube/Service/Smaregi/SmaregiUpdatePointAction.php:32-39 は `handle(int $orderId)` で単一受注を `find($orderId)` する。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Repository/OrderRepository.php:980` の `public function getSmaregiErrorOrder(): mixed`（同 `987` `->where('o.smaregi_error_flg = 1')`）は現存するが、スナップショット全体の `grep -rn getSmaregiErrorOrder`（php/sh/yml/yaml）のヒットは定義行1件のみで呼び出し元ゼロ。実行される近接処理 `src/Eccube/Service/Smaregi/SmaregiUpdatePointAction.php:32-34` は `public function handle(int $orderId): void { $order = $this->orderRepository->find($orderId); ... }` の単一受注処理で、エラー受注の抽出結果を走査するループは無い。",
+   "再確認HEAD": "da9c2ba276",
+   "レビュー結果": "UPHELD",
+   "レビュー根拠": "引用はいずれも2093のfunction-design-embed開始前のExcel正本セルであり、エラー受注抽出、ユーザー情報取得、受注ごとのポイント再連携という設計期待値を直接支持する。",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Repository/OrderRepository.php"
+    ]
+   }
+  },
+  {
+   "rowId": 207,
+   "機能No": "B06-02",
+   "機能名": "B06-02 買取集計バッチ",
+   "ドメイン": "b06",
+   "区分(画面種別)": "batch",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "部門未設定商品通知メールは送信開始・送信完了・件数、宛先未設定時の送信せず終了をログに記録する。",
+   "実装実態": "`sendNoSectionAlertMail()` は送信開始、宛先未設定、送信完了を `log_info` するが、部門未設定商品の件数をログ出力していない。",
+   "差分内容": "設計で明示されたログ項目のうち件数だけが実装されていない。反証検索で `件数`、`count($products)`、部門未設定商品通知周辺のログを確認したが、該当ログは不在。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/MailService.php:1190",
+   "設計書参照": "excel_to_html/output/0406_基本設計仕様書(バッチ_店頭買取管理) .html#sheet-4:1110",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0406_基本設計仕様書(バッチ_店頭買取管理) .html:1195 の正本は部門未設定時のメール送信だけを要求し、正本範囲に送信開始・完了・件数・宛先未設定ログの指定はない。これらはリバース詳細設計のログ節にのみある。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Service/MailService.php:1164-1166 は送信開始、同:1179-1186 は宛先未設定時の送信せず終了、同:1199-1201 は `$count = $this->app->mail($message);` と `log_info(..., ['count' => $count]);` を記録する。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/MailService.php:1279-1287 は開始と宛先未設定終了を記録し、同:1306-1310 は送信後に `log_info('部門未設定商品通知メール送信完了');` とするだけで、`count($products)` または送信件数をログコンテキストへ渡さない。",
+   "根拠検証メモ": "件数を含むログ契約は旧実装由来。",
+   "対応の根拠(現develop)": "`src/Eccube/Service/MailService.php:1279-1312` の `sendNoSectionAlertMail(array $products)` は `1281` `log_info('部門未設定商品通知メール送信開始');`、`1285` `log_info('部門未設定商品通知メールアドレス未設定のため送信せず終了');`、`1308` `log_info('部門未設定商品通知メール送信完了');` の3点のみで、`count($products)` 等の件数ログは現 develop にも存在しない（同メソッド内に `count(` なし）。",
+   "再確認HEAD": "da9c2ba276",
+   "レビュー結果": "UPHELD",
+   "レビュー根拠": "メール送信自体は正本要求だが、findingが問題にする開始・完了・件数・宛先未設定時のログ項目は正本にない。旧実装がそのログ契約を直接定義している。",
+   "mech": {
+    "quote": "NO_QUOTE",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Service/MailService.php"
+    ]
+   }
+  },
+  {
+   "rowId": 220,
+   "機能No": "B08-06",
+   "機能名": "B08-06 スマレジ使用ポイント連携",
+   "ドメイン": "b08",
+   "区分(画面種別)": "batch",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・未実装",
+   "設計期待値": "失敗時はエラー状態を残し、スマレジEC受注連携エラー再連携バッチで再試行できる。",
+   "実装実態": "失敗時のエラー保存は `/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/SmaregiUpdatePointAction.php:57-60` と `/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/SmaregiUpdatePointAction.php:75-78` にある。`smaregi_error_flg = 1` の受注取得メソッドは `/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php:877-885` にあるが、このメソッドを呼び出すコマンド/サービスは見つからない。",
+   "差分内容": "設計は失敗記録だけでなく後続のスマレジEC受注連携エラー再連携バッチによる再試行可能性まで要求している。実装はエラー受注抽出メソッド止まりで、使用ポイント連携を再試行するバッチ入口・Action・呼び出しが不在。なお `SmaregiStockBackfillCommand` は在庫変動Webhook再連携であり、使用ポイント連携の再試行ではない。",
+   "実装参照": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube, /home/y-saito/Developments/ec-cube-enterprise/html; 検索語: getSmaregiErrorOrder, point_error_message, smaregi_error_flg, エラー再連携, 再試行, retry, SmaregiUpdatePointAction）",
+   "設計書参照": "excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html#sheet-8:1714,1730",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html:1827-1828 のExcel正本は通信失敗時に `point_error_message` と `smaregi_error_flg=True` を保存することまでは記載するが、後続の「スマレジEC受注連携エラー再連携バッチ」は記載していない。再試行の記述はリバース詳細設計 hareruya-design-docs/functions/pf-eccube3/b08-06_batch_customer_smaregi_update_point.md:127-132 にのみ存在する。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Command/SmaregiBatch.php:15-16 は `updatePoint` に加え `'checkSmaregiErrorOrder' => '...CheckSmaregiErrorOrder'` を登録し、pf-eccube3/app/Plugin/HareruyaEc/Service/Smaregi/CheckSmaregiErrorOrder.php:31-49 は `getSmaregiErrorOrder()` で失敗受注を取得して再度 `postSmaregiPoint(...)` を実行し、成功時に `setSmaregiErrorFlg(false)` としてflushする。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Service/Smaregi/SmaregiUpdatePointAction.php:53-60,75-78 は失敗情報を保存する。ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php:977-989 に `getSmaregiErrorOrder()` もあるが、このメソッドの呼出しは定義箇所以外に0件で、`src/Eccube/Command` に再連携入口は存在しない（検索語: `getSmaregiErrorOrder(`, `checkSmaregiErrorOrder`, `SmaregiUpdatePointAction`）。",
+   "根拠検証メモ": "失敗記録は正本どおり実装済み。再連携入口の期待値だけが旧実装由来で、移植されていない。",
+   "対応の根拠(現develop)": "失敗時のエラー記録は維持・拡充されている（`src/Eccube/Service/Smaregi/SmaregiUpdatePointAction.php:57-58` `$order->setPointErrorMessage(json_encode(['message' => $e->getMessage()], JSON_UNESCAPED_UNICODE))->setSmaregiErrorFlg(true);`、同 `:75-76`、および新設の `src/Eccube/MessageHandler/SmaregiOrderUsePointMessageHandler.php:152-153` `$Order->setSmaregiErrorFlg(true)->setPointErrorMessage(...)`、成功時は同 `:129-130` `setSmaregiErrorFlg(false)->setPointErrorMessage(null)` でクリア）。一方、設計が要求する「スマレジEC受注連携エラー再連携バッチ」は依然不在で、エラー受注抽出 `src/Eccube/Repository/OrderRepository.php:980-987` `public function getSmaregiErrorOrder(): mixed { ... ->where('o.smaregi_error_flg = 1') ... }` の呼び出し元は src・tests 全体で0件（定義のみ）。`src/Eccube/Command/` 配下のスマレジ系コマンドは `eccube:smaregi:stock:backfill`（`SmaregiStockBackfillCommand.php:32`、在庫変動Webhook再連携）・`eccube:smaregi:otc:delete`・`eccube:order:otc-smaregi-post` 等で、使用ポイント連携の再連携バッチは存在しない。",
+   "再確認HEAD": "da9c2ba276",
+   "レビュー結果": "REFUTED",
+   "レビュー根拠": "[LEGACY_BACKED→SPEC_BACKEDに訂正] B08-06正本だけを見れば後続バッチ名は書かれていないが、B08-06は失敗時に同じエラーフラグを立て、Excel正本B05-08はそのフラグを検索条件としてポイント連携をリトライし、成功時に解除すると明記する。正本2シートを結ぶとfindingの再試行可能性を直接立証できるため、「正本に記述が無い」という不在主張は崩れる。",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Repository/OrderRepository.php"
+    ]
+   }
+  },
+  {
+   "rowId": 221,
+   "機能No": "B13-01",
+   "機能名": "B13-01 決済処理中チェックバッチ",
+   "ドメイン": "b13",
+   "区分(画面種別)": "batch",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・未実装",
+   "設計期待値": "SP.LINKSに取引照会を行い、照会結果に応じた処理を行う。決済サービスへ取引を照会し、結果でステータスを判定する。",
+   "実装実態": "getApiResponse() は SP.LINKS 取引照会APIを実行せず、常に LogicException を throw する。",
+   "差分内容": "PaymentStatusCheckAction::handle() は申込みごとに getApiResponse($paymentNo) を呼ぶが、同メソッド本体が「SP.LINKS取引照会API未実装」として例外を投げるため、設計上の取引照会・レスポンス判定・後続のステータス整合に到達できない。探索範囲: src/Eccube/Command, src/Eccube/Service/Admin/Payment, src/Eccube/Service/Payment, src/Eccube/Repository, html。検索語: SP.LINKS, 取引照会, ResponseCd, MerchantId, getApiResponse, payment-status-check。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Payment/PaymentStatusCheckAction.php:191",
+   "設計書参照": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-3:854,945",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html:1005-1008 のExcel正本に「SP.LINKSに取引照会を行い、照会結果に応じた処理を行う」、同:1013-1016 に入力元「SP.LINKS取引照会API」、同:1032-1048 にResponseCdに応じた更新・保留・論理削除が明記されている。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Service/Payment/SlnSearchHelper.php:59-67 は `$this->credit->SearchLinkPayment($this->app, $entry, $this->config)` で取引参照を実行し、例外がなければ `ES::ENTERED` を返す。同:68-90 はレスポンスエラーを削除対象または保留へ分類する。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Service/Admin/Payment/PaymentStatusCheckAction.php:103-105 は `$this->getApiResponse($paymentNo)` を呼ぶが、同:191-195 の本体は `throw new \\LogicException('SP.LINKS取引照会API未実装のため、決済処理中チェックはまだ実行できません。');` であり、API照会を実行しない。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Service/Admin/Payment/PaymentStatusCheckAction.php:191-195` は現 develop でも `public function getApiResponse(?string $paymentNo): ?string { // SP.LINKS取引照会API未実装のため、後続PRで実装予定 throw new \\LogicException('SP.LINKS取引照会API未実装のため、決済処理中チェックはまだ実行できません。'); // return 'OK'; // TODO: 後続PRでSP.LINKS APIのレスポンスを返す }` のまま。呼び出し側 `同ファイル:105` `$resultApi = $this->getApiResponse($paymentNo);  // TODO APIからのレスポンスから取得` も変わらず、必ず例外に落ちる。src 外も再探索済み：`script/ops/**`（db, imgcheck, monthly-inventory-snapshot, stg-db-maintenance の全ファイル）、`bin/`（console, template_jp.php）、`app/config/**`、`.github/workflows/**`、`infra`、`scripts`、`dev` を `SP.LINKS|SPLINKS|取引照会|payment-status-check` で Grep したが、ヒットは `app/config/eccube/packages/eccube.yaml:402` の `# SPLINKS リンク型決済（イベント申込等）` というコメント（接続情報の設定ブロック見出し）だけで、取引照会API呼び出しの実装は存在しない。",
+   "再確認HEAD": "da9c2ba276",
+   "レビュー結果": "UPHELD",
+   "レビュー根拠": "引用はすべて1054行のfunction-design-embed開始前にあるsrc-cell/data-excel-ref保持要素で、SP.LINKS照会と結果別ステータス処理を直接支持する。",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "app/config/eccube/packages/eccube.yaml"
+    ]
+   }
+  },
+  {
+   "rowId": 238,
+   "機能No": "F01-02",
+   "機能名": "F01-02 支店ECTOP",
+   "ドメイン": "f01",
+   "区分(画面種別)": "front",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・未実装",
+   "設計期待値": "(8-1)バナー画像押下でhtml内で各画像に設定しているURLに遷移。管理画面＞コンテンツ管理＞ブロック管理に設定されている編集可能なブロックを表示する。",
+   "実装実態": "shop_recommend.twig は6枚の固定バナーカード(ダミー画像 top-category-banner01〜06.webp、固定ラベル等)で全リンクが href=\"#\"。各画像設定URLへの遷移未実装。ブロック管理由来の編集可能コンテンツにも連携なし。shop_top.twig:47 からデータ無しで include。",
+   "差分内容": "shop_recommend を無パラメータで include(PHPに shop_recommend 参照なし)、動的URL/ブロック管理データを渡していない。app/html オーバーライドも無し。設計(8-1)の『押下→設定URLへ遷移』『ブロック管理の編集可能ブロック表示』が href=\"#\" のプレースホルダで未実装。",
+   "実装参照": "src/Eccube/Resource/template/default/Block/shop_recommend.twig:18,28,38,48,58,68; shop_top.twig:47",
+   "設計書参照": "excel_to_html/output/0301_基本設計仕様書(フロント_トップ).html#sheet-4",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0301_基本設計仕様書(フロント_トップ).html:3010-3011 のExcel正本セルは「新規機能として追加する」「管理画面＞コンテンツ管理＞ブロック管理に設定されている、編集可能なブロックを表示する」とし、同:3019 は8-1バナー画像について「押下すると、html内で各画像に設定しているURLに遷移する」と明記する。",
+   "旧実装根拠": "判定には不使用。hareruya-design-docs/design_impl_drift_report/citation_audit/CODEX_TASK.md:42-44 の「設計書に裏付けが無い、または不十分な場合、旧実装リポジトリを探索する」に従い、Excel正本だけで期待値を十分に裏付けられるため旧実装は必須探索対象外。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Resource/template/default/Block/shop_recommend.twig:18,28,38,48,58,68 は6件すべて `href=\"#\"` の固定リンクで、画像も同:20,30,40,50,60,70 の固定assetである。ec-cube-enterprise/src/Eccube/Resource/template/default/shop_top.twig:47 は `{% include 'Block/shop_recommend.twig' %}` とデータなしで読み込む。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Resource/template/default/Block/shop_recommend.twig` は6枚の固定バナーのまま。`:18,:28,:38,:48,:58,:68` がいずれも `<a class=\"p-hareruya-branch-top__recommend-link\" href=\"#\">`、画像も `:20,:30,:40,:50,:60,:70` の `assets/hareruya/img/branch/top-category-banner01〜06.webp` 固定。`src/Eccube/Resource/template/default/shop_top.twig:47` `{% include 'Block/shop_recommend.twig' %}`（shop_top.en.twig:47 も同様）とパラメータ無し include で、shop_recommend を参照する PHP は存在しない（grep ヒットは上記2 twig のみ）。(8-1) の各画像設定URLへの遷移もブロック管理由来の編集可能コンテンツ連携も未実装。",
+   "再確認HEAD": "da9c2ba276",
+   "レビュー結果": "UPHELD",
+   "レビュー根拠": "編集可能な管理ブロックの表示と、バナー画像に設定したURLへの遷移が、いずれもExcel正本に直接記載されている。",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Resource/template/default/Block/shop_recommend.twig"
+    ]
+   }
+  },
+  {
+   "rowId": 249,
+   "機能No": "F03-01",
+   "機能名": "F03-01 商品一覧",
+   "ドメイン": "f03",
+   "区分(画面種別)": "front",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "抽出件数が0件のとき、一覧領域に表示文言「ご指定の条件に一致する商品が見つかりませんでした。」を表示する",
+   "実装実態": "0件時に翻訳キー front.product.search__product_not_found を表示。その値は messages.ja.yaml:1096 で「お探しの商品は見つかりませんでした」。DB検索経路(list.twig:813 の {% else %}分岐)およびユニサーチ経路(product_list_unisearch_js.twig:22 emptyResultMsg → :114 numFound===0時に $shelf へ描画)の双方が同キーを使用。",
+   "差分内容": "設計指定文字列「ご指定の条件に一致する商品が見つかりませんでした。」は messages.ja.yaml・Twig・JS のいずれにも存在しない(grep 該当0件、同義文言はデッキ用 front.deck.result.empty_message:5749 にのみ存在)。実装は別文言「お探しの商品は見つかりませんでした」を出力しており、利用者が直接目にする0件時文言が設計と相違する。",
+   "実装参照": "src/Eccube/Resource/locale/messages.ja.yaml:1096, src/Eccube/Resource/template/default/Product/list.twig:813, src/Eccube/Resource/template/default/Block/js/product_list_unisearch_js.twig:22,114",
+   "設計書参照": "excel_to_html/output/0303_基本設計仕様書(フロント_商品).html#sheet-3",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "Excel正本のF03-01部分には0件時文言の指定がない。完全一致文言はリバース詳細設計開始位置 hareruya-design-docs/excel_to_html/output/0303_基本設計仕様書(フロント_商品).html:1679 より後の同:1770、および元文書 hareruya-design-docs/functions/pf-eccube3/f03-01_front_product_product_search_list.md:275-280 の「ご指定の条件に一致する商品が見つかりませんでした。」にのみ存在する（正本確認範囲: sheet-3開始1030〜embed直前1678）。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Product/product_list.twig:430 は `<strong>ご指定の条件に一致する商品が見つかりませんでした。</strong>`、product_list_unisearch.twig:441 も同じ文言を0件メッセージとして持つ。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:1104 は `front.product.search__product_not_found: お探しの商品は見つかりませんでした`。ec-cube-enterprise/src/Eccube/Resource/template/default/Product/list.twig:735 はUniSearchの `emptyResultMsg` に、同:991 はDB検索0件分岐に同じ翻訳キーを使う。",
+   "根拠検証メモ": "設計書の記述漏れが併存する。",
+   "対応の根拠(現develop)": "`src/Eccube/Resource/locale/messages.ja.yaml:1104` `front.product.search__product_not_found: お探しの商品は見つかりませんでした` のままで、設計文言「ご指定の条件に一致する商品が見つかりませんでした。」は src 配下に grep 0件（近似は :1107 `front.product.unisearch_results_exceeded_line1: ご指定の条件に一致する商品が多すぎます。` のみ）。DB検索経路 `src/Eccube/Resource/template/default/Product/list.twig:991` `<p class=\"ec-text ec-mb0\">{{ 'front.product.search__product_not_found'|trans }}</p>`、ユニサーチ経路 `同 list.twig:735` `emptyResultMsg: 'front.product.search__product_not_found'|trans,` の双方が監査時点と同じ翻訳キーを使用。",
+   "再確認HEAD": "da9c2ba276",
+   "レビュー結果": "REFUTED",
+   "レビュー根拠": "[LEGACY_BACKED→SPEC_BACKEDに訂正] 先行判定はテキスト抽出部分だけを見て正本文言の不在を主張したが、Excel正本に紐づく画像内に期待文言が完全一致で存在する。不在主張は画像正本の実査で崩れたため、正しい区分はSPEC_BACKEDである。",
+   "mech": {
+    "quote": "EMBED_ONLY",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Resource/locale/messages.ja.yaml",
+     "src/Eccube/Resource/template/default/Product/list.twig"
+    ]
+   }
+  },
+  {
+   "rowId": 251,
+   "機能No": "F03-02",
+   "機能名": "F03-02 商品詳細",
+   "ドメイン": "f03",
+   "区分(画面種別)": "front",
+   "指摘区分": "未実装",
+   "重要度": "low",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "(2-22)SNSでシェアする共有内容のURLは短縮URLで表示する",
+   "実装実態": "getSnsShareText は ABSOLUTE_URL で生成したフルURLをそのまま共有文に埋め込む。短縮URL化処理が存在しない。",
+   "差分内容": "ロケール・IDを含むフルURLを共有し、短縮URL化が未対応。",
+   "実装参照": "src/Eccube/Entity/Product.php:690-697, src/Eccube/Controller/Front/ProductController.php:655-661",
+   "設計書参照": "0303_基本設計仕様書(フロント_商品).html#sheet-4",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0303_基本設計仕様書(フロント_商品).html:1983 のExcel正本セルはSNS共有内容を「・URL（言語まで、実際には短縮URLを表示する）」と明記する。",
+   "旧実装根拠": "判定には不使用。hareruya-design-docs/design_impl_drift_report/citation_audit/CODEX_TASK.md:42-44 の「設計書に裏付けが無い、または不十分な場合、旧実装リポジトリを探索する」に従い、Excel正本だけで期待値を十分に裏付けられるため旧実装は必須探索対象外。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Controller/Front/ProductController.php:716-722 は `UrlGeneratorInterface::ABSOLUTE_URL` で生成したproductDetailUrlをそのまま `getSnsShareText` に渡す。ec-cube-enterprise/src/Eccube/Entity/Product.php:690-697 は受け取った `$productDetailUrl` を連結して返し、短縮処理を行わない。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Entity/Product.php:690-698` `getSnsShareText(...)` は `return $langTag.' '.$productName.' '.$productDetailUrl.' '.$hashTag.' '.$mention;` と受け取った URL をそのまま連結。呼び出し側 `src/Eccube/Controller/Front/ProductController.php:716-722` も `$productDetailUrl = $this->generateUrl('product_detail', ['id' => ..., 'lang' => ...], UrlGeneratorInterface::ABSOLUTE_URL);` のフルURLを渡すのみで短縮URL化処理は存在しない。",
+   "再確認HEAD": "da9c2ba276",
+   "レビュー結果": "UPHELD",
+   "レビュー根拠": "SNS共有対象のURLを短縮URLで表示する要求は、function-design-embed開始前のExcel正本に明記されている。",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Controller/Front/ProductController.php"
+    ]
+   }
+  },
+  {
+   "rowId": 252,
+   "機能No": "F03-03",
+   "機能名": "F03-03 商品詳細検索",
+   "ドメイン": "f03",
+   "区分(画面種別)": "front",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "カテゴリの選択肢は、フロント検索で非表示とする親配下（dtb_category.front_search_hide_flg=true の親カテゴリ配下）を除いて提示する。エッジケース『非表示親配下のカテゴリ→選択肢に出さない』を含め4箇所で明記。",
+   "実装実態": "SearchType.php:95 が CategoryRepository::getList(null, true) の全カテゴリを SearchType.php:111 で choices にそのまま渡す。getList (CategoryRepository.php:140-144) は orderBy('c.sort_no','DESC') のみで front_search_hide_flg フィルタが無く、getSelfAndDescendants() で非表示親配下も全件返す。Twig(_product_search_form_fields.twig:36-38) も無条件ループ。front_search_hide_flg は検索フォーム経路で未使用。",
+   "差分内容": "front_search_hide_flg を src/Eccube 配下で全走査した結果、使用箇所は TopCategoryListBuilder.php・CategoryTreeResponseBuilder.php・Category.php(定義)・CategoryType.php・CSV系のみで、フロント詳細検索のカテゴリ EntityType choices 生成経路(SearchType/getList/Twig)に非表示親配下除外ロジックが存在しない。実装は在るが設計の除外要件を満たさない。",
+   "実装参照": "src/Eccube/Form/Type/Front/SearchType.php:95,107-111 / src/Eccube/Repository/CategoryRepository.php:133-163 / src/Eccube/Resource/template/default/Block/_product_search_form_fields.twig:36-38",
+   "設計書参照": "excel_to_html/output/0303_基本設計仕様書(フロント_商品).html#sheet-5",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "Excel正本部分には`front_search_hide_flg`や非表示親配下除外の記述がない。該当記述はリバース詳細設計開始位置 hareruya-design-docs/excel_to_html/output/0303_基本設計仕様書(フロント_商品).html:2730 より後のみで、元文書 hareruya-design-docs/functions/pf-eccube3/f03-03_front_product_product_detail_search.md:118 は「フロント検索で非表示とする親カテゴリ配下の項目は選択肢から除外」、同:153 は「非表示親配下のカテゴリ｜選択肢に出さない」と記す（正本確認範囲: sheet-5開始2508〜embed直前2729）。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Front/Product/SearchType.php:45-51 はカテゴリ一覧を取得後、親カテゴリの `getFrontSearchHideFlg()` が真なら `unset($categoryList[$index])` で除外し、同:63-70 でそのcategoryListを選択肢に渡す。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Form/Type/Front/SearchType.php:93-112 は `CategoryRepository::getList(null, true)` の結果を無加工でchoicesに渡す。ec-cube-enterprise/src/Eccube/Repository/CategoryRepository.php:140-159 はsort_no降順の全カテゴリから全子孫を展開するだけで、front_search_hide_flg条件がない。",
+   "根拠検証メモ": "設計書の記述漏れが併存する。",
+   "対応の根拠(現develop)": "`src/Eccube/Form/Type/Front/SearchType.php:95` `$categories = $this->categoryRepository->getList(null, true);` → :111 `'choices' => $categories,` は現 develop でも front_search_hide_flg で絞っておらず、`src/Eccube/Repository/CategoryRepository.php:141` `->orderBy('c.sort_no', 'DESC')` の全件取得＋`getSelfAndDescendants()`(:158-161) のまま。UI は階層プルダウン化されたが、その供給元 `src/Eccube/Service/Front/Product/ProductSearchCategoryCascadeBuilder.php:36-63,68-100`（`buildTree()`/`buildNode()`）にも frontSearchHideFlg 判定が一切なく、非表示親配下も選択肢に出る（`src/Eccube/Resource/template/default/Block/_product_search_form_fields.twig:30` `data-category-tree=\"{{ product_search_category_tree|... }}\"`）。",
+   "再確認HEAD": "da9c2ba276",
+   "レビュー結果": "UPHELD",
+   "レビュー根拠": "正本はカテゴリUIの階層表示を規定するが、非表示親配下を選択肢から除外する条件は規定していない。期待値の具体条件は旧実装で確認できるため、LEGACY_BACKEDを維持する。",
+   "mech": {
+    "quote": "EMBED_ONLY",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Form/Type/Front/SearchType.php",
+     "src/Eccube/Resource/template/default/Block/_product_search_form_fields.twig"
+    ]
+   }
+  }
+ ]
+}

@@ -1,0 +1,149 @@
+{
+  "packetId": "rc_28",
+  "results": [
+    {
+      "rowId": 503,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0202_基本設計仕様書(在庫管理機能).html の sheet-27 を data-excel-ref 付き要素で確認。0202:在庫変更CSV登録!E191 は「在庫増減数」、P191 は「数値」、U191 は「○」、W191 は「-99999999～99999999」と実在した。",
+      "reason": "Excel正本の登録CSV項目表が負数を含む範囲を明記しており、根拠区分は正しい。現実装は負号を拒否するため、CSVで在庫減算できない乖離が残る。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Model/ColumnDefinitions.php の editQuantity() は `return self::createUnsignedNumericColumn($name, '在庫増減数');`。NumericValidator::validate() は SqlUtil::isNumericParam() を呼び、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Util/SqlUtil.php の isNumericParam() は `preg_match('/^\\d+$/', $sqlVal)` のため負号を拒否する。isSignedNumericParam() は存在するがこの列では使われていない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 504,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "sheet-27 のExcel正本で 0202:在庫変更CSV登録!E192「仕入単価」、U192「-」、AG192「在庫変動区分の親区分が入庫の場合必須入力」を確認。D61「在庫追加時は原価を必須入力とする」、D62「※在庫が減る場合は入力された原価は参照せず、総在庫のみ減となる」も確認した。C7のレイアウト画像も実見し、CSVフォーマット表の「仕入単価」には商品コード・在庫増減数と異なり必須バッジが付いていないことを確認した。",
+      "reason": "Excel正本の項目表、処理説明、レイアウト画像がいずれも入庫時だけ必須という期待値を支持する。現実装は親区分にかかわらず仕入単価を必須化している。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/StockChangeCsvImportHandler.php の initializeColumnDefinitions() は `ColumnDefinitions::purchaseUnitPrice()->setRequired(true)` を常時設定する。StockChangeCsvController::getStockChangeCsvHeader() も仕入単価を `'required' => true` とし、change.twig は key.required が真なら必須バッジを表示する。親区分による必須切替はない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 505,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "sheet-27 のExcel正本 0202:在庫変更CSV登録!AG168 に「アップロードされたファイルがcsv以外のファイルの場合」エラー、および許可カラム「商品コード、在庫増減数、仕入単価」を確認した。sheet-27 の全 data-excel-ref 要素ではサイズ上限値やMIME検証の記述は見つからなかったため、その具体化は正本根拠に含めない。C7レイアウト画像も確認したが、ファイル選択UIにサイズ/MIMEの表示はない。",
+      "reason": "サイズ上限・MIMEという具体的手段は旧実装由来だが、CSV以外をエラーにする中核要件はExcel正本に直接あるため SPEC_BACKED 分類は維持する。TSVを明示許可しサーバ形式制約を置かない現状は、その中核要件に反する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/StockChangeType.php の import_file は `constraints` が空配列。change.twig は `accept: 'text/csv,text/tsv'`、CsvImporter のファイル初期化は拡張子が tsv のとき区切りをタブにする。CSV以外を拒否する File/MIME 制約はない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 507,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "sheet-27 のExcel正本 0202:在庫変更CSV登録!C98 に「入力チェックはCSVファイルの最終行までチェックを行いエラーがある場合もチェックは最終行まで行う」、D99 に「行番号とエラーをセットにしたエラーメッセージを画面上に表示する」と実在することを確認した。",
+      "reason": "正本は全行検査を明記する。change.twig のブラウザ事前検証は数値範囲等を全行走査するようになったが、列数・ヘッダ名不一致やサーバ側でのみ起きるエラーは BaseCsvImportHandler/CsvImporter が最初の該当行で中断するため、登録処理全体としての要件は未充足。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/change.twig の dataRows.forEach() は一部検証を全行実行する。一方 BaseCsvImportHandler::onValidateRow() は列数不一致、列不存在、列検証失敗で `breakAll()` し、CsvImporter::importRows() は `if ($event->isBreakAll()) { ... break; }`。StockChangeCsvImportHandler::persistStockChange() も商品不存在等で breakAll() する。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 508,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "excel_to_html/output 配下の data-excel-ref 付き正本要素を「更新ロック」「ロック取得」「商品コード＋重複」「2件以上」で検索したが、M04-21の具体要件は0件。sheet-27 の正本は C66「カスタマイズ要件に記載の内容以外は現行踏襲とする」までである。具体文言は実際に開いた functions/pf-eccube3/m04-21_admin_stock_stock_csv_import.md の119-120行「商品コードから規格を更新ロックして取得」「2件以上見つかれば商品コード重複エラー、ロック取得失敗なら更新ロックタイムアウトエラー」にあった。",
+      "reason": "具体的な重複判定・更新ロック・ロック失敗分岐はリバース詳細設計と旧実装にのみあり、LEGACY_BACKED が妥当。現作業ツリーでも未存在以外の分岐は追加されていない。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/ProductStockRepository.php の getProductStockIdByProductCode() は `setMaxResults(1)` で1件だけを返す。StockChangeCsvImportHandler::persistStockChange() はそのIDを通常の find() で取得し、重複エラーも setLockMode/FOR UPDATE もない。CsvImporter::importRows() の lock timeout 設定はクエリ自体への更新ロック取得ではない。",
+      "severityOpinion": "high",
+      "confidence": "high"
+    },
+    {
+      "rowId": 509,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "sheet-27 のExcel正本セルを「在庫増減数」「0」「更新不要」「スキップ」で確認した。W191 は範囲を「-99999999～99999999」として0を含むが、0行をスキップする記述はなかった。具体文言は functions/pf-eccube3/m04-21_admin_stock_stock_csv_import.md の119行「在庫増減数が0」「更新不要として行をスキップする」および旧 ProductStockImportHandler::onReadRow() のコメント「在庫増減数が 0 の場合は更新不要。スキップする。」で確認した。",
+      "reason": "0行スキップの具体要件は正本でなく旧実装系にあるため LEGACY_BACKED が妥当。新実装は0を明細登録・件数加算から除外していない。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/StockChangeCsvImportHandler.php の persistStockChange() は editQuantity の0判定なしに insertStockChangeDetail() を呼び、`totalInventoryChange += ...` と `++$this->rowCount` を実行する。change.twig の事前検証も qty===0 をエラーにしないだけで、送信ファイルから行を削除しない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 510,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "sheet-27 のExcel正本で C119「在庫変動区分の親区分が廃棄の場合、在庫ロックするため下記の処理」、D120「ロック数量分（在庫増減数）減算し登録」、D122「在庫の総原価を計算し登録」、D124「在庫区分が『スマレジ』の場合スマレジに…算出した在庫数を登録」を確認。C148、F150、F151、F153、F154 には変更前後の在庫数・総原価を履歴登録する記述が実在した。",
+      "reason": "廃棄の申請時減算・履歴・スマレジ連携はいずれもExcel正本に直接ある。現CSV取込経路は承認親・明細・一覧・CSV履歴だけを作り、廃棄承認側も申請時反映済みを前提とするため、在庫と履歴が反映されない。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/StockChangeCsvImportHandler.php の persistStockChange() は DtbStockEditApprovalDetailRepository::insertStockChangeDetail() のみを呼ぶ。コンストラクタにも StockHistoryEntityManager やスマレジ連携サービスはなく、アップロード完了イベントの購読実装も検索で見つからない。StockEditApprovalLineItemApprover::approveDisposal() は「申請時に作成済みの在庫履歴」を検索し、見つからなければ return する。",
+      "severityOpinion": "high",
+      "confidence": "high"
+    },
+    {
+      "rowId": 511,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "sheet-27 と関連在庫シートの data-excel-ref 付き正本要素を `dtb_product_stock.stock`、`dtb_product_class.stock`、「同一更新」「規格ごとに在庫変更履歴」で検索したが、該当する具体テーブル同期記述は0件。具体文言は functions/pf-eccube3/m04-21_admin_stock_stock_csv_import.md の193-194行「同一更新で規格在庫 dtb_product_stock.stock と規格本体 dtb_product_class.stock を更新後在庫に揃える」「更新成立した規格ごとに在庫変更履歴を1件作る」にあった。旧 ProductStockImportHandler では updateProductStock()、updateProductClass()、addStockHistory() の実呼出しも確認した。",
+      "reason": "二重テーブル同期という物理要件はリバース詳細設計・旧スキーマ由来で、LEGACY_BACKED が妥当。現スキーマでは ProductClass に stock 列自体がなく、記載された旧挙動との差は現在も存在する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/EntityManager/ProductStockEntityManager.php の save() は ProductClass を引数に受けるが、在庫更新は `$ProductStock->setStock($stock)` のみ。src/Eccube/Entity/ProductClass.php には stock_unlimited はあるが stock プロパティ/列はない。CSV取込時は承認明細登録のみで、在庫履歴は作成しない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 513,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "excel_to_html/output 配下の data-excel-ref 付き正本要素を完全一致文言「商品登録CSVファイルをアップロードしました。」と「アップロードしました」で検索したが該当0件。sheet-27のC7レイアウト画像も実見したが成功フラッシュ状態は描かれていない。文言は functions/pf-eccube3/m04-21_admin_stock_stock_csv_import.md の109行と、pf-eccube3/src/Eccube/Resource/locale/message.ja.yml の `admin.product.csv_import.save.complete: 商品登録CSVファイルをアップロードしました。` で確認した。",
+      "reason": "完全一致の成功文言はExcel正本でなく旧実装系にのみあるため LEGACY_BACKED が妥当。現実装の表示経路は汎用「保存しました」のまま。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockChangeCsvController.php の csvStockChangeUpload() は成功時に `$this->addSuccess('admin.common.save_complete', 'admin');`。src/Eccube/Resource/locale/messages.ja.yaml の同キーは「保存しました」である。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 515,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "PARTIAL",
+      "checkedQuote": "sheet-27 のExcel正本 E74 に「登録日時」と「承認日時」のうち後の日時を基準日時として降順表示、E75 に承認日時未設定時は登録日時を基準とする記述を確認。M183 は承認日の書式を「日時(YYYY/MM/DD HH:mm)」とする。C7のレイアウト画像も実見し、承認済み行の承認日が「2025/07/08 16:30」等、時分付きで配置されていることを確認した。",
+      "reason": "分類は正しい。現在は基準日時ソートが実装され、元指摘のソート部分は解消した。一方、Twigの承認日は Y/m/d のままで時分が欠けるため、表示書式の乖離だけ残る。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbStockEditCsvRepository.php の getStockChangeHistoryQueryBuilder() は CASE 式の HIDDEN baseDate を `orderBy('baseDate', 'DESC')` としておりソート要件を満たす。src/Eccube/Resource/template/admin/Stock/change.twig は登録日を `date('Y/m/d H:i')`、承認日を `date('Y/m/d')` としている。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 516,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "sheet-27 のExcel正本 E110 に「合計総原価増減数を総原価増減数で登録」と実在することを確認した。項目表 E179 も項目名を「合計総原価増減数」とする。",
+      "reason": "Excel正本は増減額の合計を承認一覧へ登録する要件を明記する。現実装は各在庫の変更前総原価を合算して同じ表示項目へ保存しており、値の意味が異なる。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/StockChangeCsvImportHandler.php の persistStockChange() は `$this->totalCostPriceBefore += ...$ProductStock->getTotalCost()`、onAfterImport() はそれを StockApprovalListEntityManager::save() の TotalCostPriceBefore に渡す。明細の DtbStockEditApprovalDetailRepository::insertStockChangeDetail() は purchaseUnitPrice×editQuantity を outbound_total_cost に算出するが、親集計には使わない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 517,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "sheet-27 のExcel正本 E114「登録者」、E140「登録者」、E142「登録者と同じ値を更新者に登録」を確認。関連正本の 0202:在庫編集承認一覧(検索結果)!AG98 には「在庫CSV登録にて登録ボタンを押下したログイン時のユーザ名が表示される」と具体化されていた。C7レイアウト画像でも履歴一覧の登録者列に member1/member2/member3 が配置されていることを確認した。",
+      "reason": "関連Excel正本が登録者を操作時のログインユーザーと明記するため SPEC_BACKED が妥当。現実装は表示用 StockApprovalList とCSV履歴には操作者を渡す一方、dtb_stock_edit_approval の registered_member_id には通知先配列をint化した値を渡し、後続履歴作成もこの誤った親登録者を参照する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockChangeCsvController.php の csvStockChangeUpload() は multiple=true の approval_notification_target_members を `(int) $formData['approval_notification_target_members']` として StockChangeCsvImportInput に渡す。StockChangeCsvImportHandler::onBeforeImport() はその値を DtbStockEditApprovalRepository::insertStockChange() に渡し、同Repositoryは registered_member_id の第2バインドへ設定する。StockEditApprovalLineItemApprover::approveBeStocked() は履歴の RegisteredMember に `$StockEditApproval->getRegisteredMember()` を使う。",
+      "severityOpinion": "high",
+      "confidence": "high"
+    }
+  ]
+}

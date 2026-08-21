@@ -1,0 +1,165 @@
+{
+  "packetId": "rest_25",
+  "results": [
+    {
+      "rowId": 758,
+      "verdict": "UNCERTAIN",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:2712 のExcel正本セルは「本人確認ステータス」「単一選択(ラジオボタン)」「選択肢：未確認、確認中、オンライン本人確認済み、簡易書留確認済み」であり、別項目の「本人確認フラグ」必須・保存先は正本に存在しない。本人確認フラグの記述は function-design-embed 開始後の同HTML:3033「本人確認フラグ｜必須｜ラジオ（未確認／確認）…フォームキー identificationFlg、mapped 偽」にのみ存在する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Form/Extension/Admin/CustomerEditTypeExtension.php:106-115 に `->add('identificationFlg', 'choice', [`、`'required' => true`、`'mapped' => false`、`'expanded' => true` があり、旧画面の必須ラジオ自体は確認できる。一方 pf-eccube3/app/Plugin/HareruyaEc/Event/Admin/AccountEvent.php:86-99 の保存処理は `setDciNo`、`setIdentityConfirmStatus`、`setCustomerGroup`、`setMailMagazineFlg` のみで `setIdentificationFlg` が無く、pf-eccube3 全体の横断検索でも保存呼出しは Entity の setter 定義以外に存在しない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Entity/DtbPlayer.php:79-80 に `#[ORM\\Column(name: 'identification_flg'...)] private ?bool $identificationFlg = false;` はあるが、ec-cube-enterprise/src/Eccube/Form/Type/Admin/PlayerType.php:40-97 の追加項目に identificationFlg はなく、ec-cube-enterprise/src/Eccube/Resource/template/admin/Customer/edit.twig:620-635 も IdentityConfirmStatus と mailMagazineFlg のみを描画している。",
+      "note": "旧実装で必須ラジオの表示根拠は確認できるが、期待値に含まれる identification_flg への保存処理を旧実装から確認できない。UI移植漏れとしては根拠がある一方、期待値全体の根拠が不足するため UNCERTAIN。"
+    },
+    {
+      "rowId": 759,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:2636 のExcel正本セルは「カスタマイズ要件に記載の内容以外は現行踏襲とする。」のみで、「会員情報を保存しました。」という成功文言はsheet-9のExcel正本セルに存在しない（確認範囲: sheet-9のsrc-cell全件）。",
+      "legacyEvidence": "pf-eccube3/src/Eccube/Controller/Admin/Customer/CustomerEditController.php:136 に `$app->addSuccess('admin.customer.save.complete', 'admin');`、pf-eccube3/src/Eccube/Resource/locale/message.ja.yml:136 に `admin.customer.save.complete: 会員情報を保存しました。` があり、旧実装の表示文言が期待値の真の根拠である。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/CustomerEditController.php:211 は `$this->addSuccess('admin.common.save_complete', 'admin');`、ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:1595 は `admin.common.save_complete: 保存しました` で、旧文言を満たさない。",
+      "note": ""
+    },
+    {
+      "rowId": 760,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:3130 のExcel正本セルは「カスタマイズ要件に記載の内容以外は現行踏襲とする。」で、POST URLは正本に明記されない。`POST /{admin_route}/customer/point/{id}/update/{type}` は function-design-embed 開始後の同HTML:3206 にだけ記載される。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/CustomerServiceProvider.php:90-93 に `$app->post('/'.$app['config']['admin_route'].'/customer/point/{id}/update/{type}', ...)->bind('admin_customer_point_update');` があり、旧URLを直接確認した。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/CustomerPointController.php:63-64 は GET/POSTとも `/%eccube_admin_route%/customer/point/{id}/{type}`、ec-cube-enterprise/src/Eccube/Resource/template/admin/Customer/point_update.twig:17-18 は `action=\"{{ url('admin_customer_point_update', { id : Customer.id, type: type }) }}\"` で、`/update/` セグメントがない。",
+      "note": ""
+    },
+    {
+      "rowId": 761,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:3138-3139 のExcel正本はポイント種別リンクと遷移先画面だけを記載し、ルート名 `admin_customer_point_type_select` は記載しない。同ルート名はリバース詳細設計部の同HTML:3244 にのみ「種別選択画面（admin_customer_point_type_select）」として現れる。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/CustomerServiceProvider.php:83-85 に `/customer/point/{id}/select` と `->bind('admin_customer_point_type_select');` があり、旧ルート名を確認した。pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Customer/edit.twig:465 も `path('admin_customer_point_type_select', {id: Customer.id})` を使用する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/CustomerPointController.php:43 は同じURLを `name: 'admin_customer_point_select'` で定義し、ec-cube-enterprise/src/Eccube/Resource/template/admin/Customer/edit.twig:1038 も `url('admin_customer_point_select', ...)` を使用する。",
+      "note": ""
+    },
+    {
+      "rowId": 762,
+      "verdict": "UNSUPPORTED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:3301 のExcel正本は「ポイント履歴はID降順でラベル表示する」とだけ要求し、ポイント種別による絞り込みは記載しない。種別絞り込みはリバース詳細設計部の同HTML:3219「ポイント種別ごとにポイント履歴を表示する」にのみ存在する。",
+      "legacyEvidence": "旧実装は期待値を裏付けず、pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/CustomerController.php:307-308 で `$pointHistories = ...->findBy(['customer' => $id], ['pointHistoryId' => 'DESC']);` と会員だけで検索している。type条件は無く、同ファイル:310-318 で全履歴から注文番号を取得する。pf-api、pf-article、deck-api の `point_type_id`、`pointHistory`、当該URL横断検索にも別の管理画面絞り込み実装は存在しない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Entity/Customer.php:1330-1332 は PointHistories を `#[ORM\\OrderBy(['id' => Criteria::DESC])]` とし、ec-cube-enterprise/src/Eccube/Resource/template/admin/Customer/point_update.twig:123 は `{% for PointHistory in Customer.PointHistories %}` と全件表示する。これは旧実装および正本のID降順と一致する。",
+      "note": "「種別で絞り込む」という期待値は正本にも実際の旧コードにも根拠がなく、リバース詳細設計の誤記と判断した。"
+    },
+    {
+      "rowId": 763,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:3130 のExcel正本は「現行踏襲」とするだけで、会員・選手情報なしの404を明記しない。404記述は function-design-embed 後の同HTML:3216「会員・選手情報を取得する。いずれも無い場合は…404」にのみある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/CustomerController.php:341-348 は会員取得後 `if (empty($customer)) { return $app->abort(404); }`、Player取得後 `if (empty($player)) { return $app->abort(404); }` と明示的に両方を404化する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Entity/Customer.php:1014-1015 と1145-1147で Player は nullable (`private ?DtbPlayer $Player = null`, `getPlayer(): ?DtbPlayer`) だが、ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/CustomerPointController.php:107 は `$Customer->getPlayer()->addPoint(...)` とnull判定なしで呼ぶ。",
+      "note": ""
+    },
+    {
+      "rowId": 764,
+      "verdict": "UNSUPPORTED",
+      "specEvidence": "期待値と反対に、hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:3313 のExcel正本は備考を「単一選択(セレクトボックス)」「必須: ○」「初期値: キャンペーン」「選択肢:キャンペーン、特別対応」と定義する。「任意・初期値は空」はリバース詳細設計部の同HTML:3221 にだけある。",
+      "legacyEvidence": "旧実装も期待値と反対で、pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/Customer/CustomerPointType.php:16-18 は種別ごとの選択肢を定義し、同ファイル:43-49 は `->add('note', 'choice', [`、`'required' => true` とする。pf-api、pf-article、deck-api 横断検索にも任意入力の別管理フォームは存在しない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/CustomerPointType.php:85-93 は `ChoiceType`、`'required' => true`、`new NotBlank()`、ec-cube-enterprise/src/Eccube/Resource/template/admin/Customer/point_update.twig:67-74 は必須バッジと `form_widget(form.note)` を表示し、Excel正本と旧実装を満たしている。",
+      "note": "任意・空初期値という指摘側期待値が誤り。"
+    },
+    {
+      "rowId": 765,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:3294 のExcel正本は「カスタマイズ要件に記載の内容以外は現行踏襲」とし、URLを明記しない。POST `/update/{type}` は埋め込み詳細設計部の同HTML:3416 にのみ記載される。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/CustomerServiceProvider.php:90-93 に `customer/point/{id}/update/{type}` のPOSTと `admin_customer_point_update` bindが実在する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/CustomerPointController.php:64 は POSTを `/customer/point/{id}/{type}` に定義し、ec-cube-enterprise/src/Eccube/Resource/template/admin/Customer/point_update.twig:17-18 のform actionも同ルートを生成する。",
+      "note": ""
+    },
+    {
+      "rowId": 766,
+      "verdict": "UNSUPPORTED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:3301 のExcel正本要求は「ポイント履歴はID降順でラベル表示する」で、種別絞り込みは無い。種別ごとの履歴という文言は埋め込み詳細設計部の同HTML:3429 にのみある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/CustomerController.php:307-308 は `findBy(['customer' => $id], ['pointHistoryId' => 'DESC'])` で全種別を会員IDだけで取得し、旧実装にもpoint_type条件がない。確認範囲: pf-eccube3、pf-api、pf-article、deck-api の管理ポイント処理。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Entity/Customer.php:1330-1332 の関連はid DESCで、ec-cube-enterprise/src/Eccube/Resource/template/admin/Customer/point_update.twig:123 は `Customer.PointHistories` をそのままループする。正本と旧実装の挙動を踏襲している。",
+      "note": "リバース詳細設計の「種別ごと」が実コードと不整合。"
+    },
+    {
+      "rowId": 767,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:3294 のExcel正本は現行踏襲のみで、Player不在時404は正本セルに無い。埋め込み詳細設計部の同HTML:3426 に「会員・選手情報…いずれも無い場合は…404」とある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/CustomerController.php:341-348 は Customer と Player を個別に取得し、双方について `return $app->abort(404);` を実行する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Entity/Customer.php:1145-1147 は `getPlayer(): ?DtbPlayer` だが、ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/CustomerPointController.php:107 は `$Customer->getPlayer()->addPoint(...)` と直接呼び、404へ変換する分岐がない。テンプレートも ec-cube-enterprise/src/Eccube/Resource/template/admin/Customer/point_update.twig:105 で `Customer.Player.point` を直接参照する。",
+      "note": ""
+    },
+    {
+      "rowId": 768,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:3298 のExcel正本セルは `識別ID:7「保存ボタン」押下時`、同HTML:3314 の項目表も `E61「保存ボタン」`、`M61「ボタン」` と明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Customer/point_history.twig:71-73 は送信ボタンで `{{ trans('admin.btn.save') }}` を表示し、旧画面も保存ラベルを使用する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Customer/point_update.twig:82-83 は `<button ...>{{ 'admin.common.registration'|trans }}</button>`、ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:1633 は `admin.common.registration: 登録` で、正本の「保存ボタン」と異なる。",
+      "note": ""
+    },
+    {
+      "rowId": 769,
+      "verdict": "UNCERTAIN",
+      "specEvidence": "Excel正本内で矛盾する。hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:3486 の機能名セルN4は「ポイント付与（余剰入金へのご返金、注文金額変更によるご送金）」だが、同HTML:3523 の備考選択肢は「余剰入金へのご返金、注文金額変更によるご返金」。シート見出しも「…ご返金」であり、画面タイトルを「ご返金」「ご送金」のどちらとするか正本だけでは一意に決まらない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Customer/point_history.twig:30-34 は purchase時に `ポイント履歴追加（余剰入金へのご返金、注文金額変更によるご送金）` を表示し、旧実装は「ご送金」である。備考選択肢は pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/Customer/CustomerPointType.php:16-18 で「注文金額変更によるご返金」であり、旧実装内でもタイトルと選択肢が分かれる。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/CustomerPointController.php:136-138 が purchase用キーを選び、ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:2836 は `ポイント履歴追加（余剰入金へのご返金、注文金額変更によるご送金）` と旧タイトルを踏襲する。",
+      "note": "正本の機能名セルは「ご送金」、シート名・備考選択肢は「ご返金」で矛盾する。タイトルの正しい期待文言を確定する判断材料が不足。"
+    },
+    {
+      "rowId": 770,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:3504 のExcel正本は現行踏襲のみで、POST URLは正本に無い。`POST /{admin_route}/customer/point/{id}/update/{type}` は埋め込み詳細設計部の同HTML:3626 にだけ記載される。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/CustomerServiceProvider.php:90-93 は `/customer/point/{id}/update/{type}` のPOSTを `admin_customer_point_update` として定義する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/CustomerPointController.php:64 は POSTを `/customer/point/{id}/{type}` に定義し、ec-cube-enterprise/src/Eccube/Resource/template/admin/Customer/point_update.twig:17-18 もそのURLへ送信する。",
+      "note": ""
+    },
+    {
+      "rowId": 771,
+      "verdict": "UNSUPPORTED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:3511 のExcel正本は「ポイント履歴はID降順でラベル表示する」とし、種別絞り込みを要求しない。「ポイント種別ごと」は埋め込み詳細設計部の同HTML:3639 にのみある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/CustomerController.php:307-308 は `findBy(['customer' => $id], ['pointHistoryId' => 'DESC'])` で、type/point_type_idを条件にせず会員全履歴を取得する。旧4リポジトリ横断検索でも別の種別絞り込みは見つからない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Entity/Customer.php:1330-1332 は会員関連の履歴をid DESCにし、ec-cube-enterprise/src/Eccube/Resource/template/admin/Customer/point_update.twig:123 は `Customer.PointHistories` を全件ループするため、正本と実際の旧挙動に一致する。",
+      "note": "種別絞り込みの期待値に実装根拠がない。"
+    },
+    {
+      "rowId": 772,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:3504 のExcel正本にはPlayer不在時404の明記がなく、埋め込み詳細設計部の同HTML:3636 にのみ「会員・選手情報…いずれも無い場合は…404」とある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/CustomerController.php:341-348 は会員不在とPlayer不在をそれぞれ `return $app->abort(404);` で処理する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Entity/Customer.php:1145-1147 は nullableな `getPlayer(): ?DtbPlayer` を返すが、ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/CustomerPointController.php:107 はnull確認なしに `$Customer->getPlayer()->addPoint(...)` を実行する。",
+      "note": ""
+    },
+    {
+      "rowId": 773,
+      "verdict": "UNCERTAIN",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:3486 のExcel正本機能名は「ポイント付与（余剰入金へのご返金、注文金額変更によるご送金）」だが、同HTML:3523 の入力選択肢とシート名は「注文金額変更によるご返金」。期待値の「ご返金」タイトルと「ご送金」タイトルが正本内で競合する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Customer/point_history.twig:30-34 は旧画面タイトルを `ポイント履歴追加（余剰入金へのご返金、注文金額変更によるご送金）` とする一方、pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/Customer/CustomerPointType.php:16-18 の備考選択肢は「注文金額変更によるご返金」である。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/CustomerPointController.php:136-138 は purchaseキーをタイトルへ渡し、ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:2836 は `ポイント履歴追加（余剰入金へのご返金、注文金額変更によるご送金）` と表示する。",
+      "note": "正本内の「機能名」と「シート名・入力選択肢」が矛盾しており、どの文言を画面タイトルの正とするか不足。"
+    },
+    {
+      "rowId": 774,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:3714 のExcel正本は「現行踏襲」とするだけで、POST URLは記載しない。埋め込み詳細設計部の同HTML:3814 に `POST /{admin_route}/customer/point/{id}/update/{type}` がある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/CustomerServiceProvider.php:90-93 に旧POST `/customer/point/{id}/update/{type}` とbind `admin_customer_point_update` が実在する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/CustomerPointController.php:64 は POST `/customer/point/{id}/{type}`、ec-cube-enterprise/src/Eccube/Resource/template/admin/Customer/point_update.twig:17-18 のactionも同ルートで、`update` セグメントが無い。",
+      "note": ""
+    },
+    {
+      "rowId": 775,
+      "verdict": "UNSUPPORTED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:3717 のExcel正本は「ポイント履歴はID降順でラベル表示する」とだけ要求し、種別で絞るとは書かない。「ポイント種別ごと」は埋め込み詳細設計部の同HTML:3827 にのみ存在する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/CustomerController.php:307-308 は会員IDのみを条件に全履歴を `pointHistoryId DESC` で取得し、旧実装に種別条件はない。確認範囲: pf-eccube3、pf-api、pf-article、deck-api の point history管理処理。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Entity/Customer.php:1330-1332 は履歴をid DESCとし、ec-cube-enterprise/src/Eccube/Resource/template/admin/Customer/point_update.twig:123 は `Customer.PointHistories` を全件表示するため、Excel正本と実際の旧実装に合致する。",
+      "note": "リバース詳細設計の種別絞り込み記述は旧コードで裏付けられない。"
+    },
+    {
+      "rowId": 776,
+      "verdict": "UNSUPPORTED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:3730 のExcel正本はM08-06の「備考」を `ラベル` と定義し、入力項目ではない。「備考は任意、初期値は空」という入力仕様は埋め込み詳細設計部の同HTML:3829 にのみ存在する。",
+      "legacyEvidence": "旧履歴確認では pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Customer/point_history.twig:26-27 が追加フォームを granted/purchase の場合だけ表示し、history種別では入力フォームを表示しない。付与フォームを表示する場合の備考は pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/Customer/CustomerPointType.php:43-49 で choiceかつ `required => true`。旧4リポジトリ横断検索にもM08-06用の任意備考入力はない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/CustomerPointController.php:145 は `pointUpdateFlg => $type !== MtbPointType::HISTORY` とし、ec-cube-enterprise/src/Eccube/Resource/template/admin/Customer/point_update.twig:15 で履歴確認時は付与フォーム全体を非表示にする。付与時の備考は同フォーム型:85-93で必須ChoiceTypeだが、M08-06の表示項目としては同Twig:117,137-138で履歴の備考ラベル・値を表示する。",
+      "note": "M08-06正本は備考を表示ラベルとして定義しており、任意入力という指摘側期待値は機能の取り違え。"
+    },
+    {
+      "rowId": 777,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:3714 のExcel正本には会員・Player不在時404の個別記述がなく、埋め込み詳細設計部の同HTML:3824 と3852-3855 に「会員・選手情報…404」がある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/CustomerController.php:341-348 はポイント更新時に Customer と Player を取得し、どちらが空でも明示的に `$app->abort(404)` を返す。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Entity/Customer.php:1014-1015,1145-1147 は Player をnullableとするが、ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/CustomerPointController.php:107 はnull判定なしに `getPlayer()->addPoint(...)` を呼ぶ。ec-cube-enterprise/src/Eccube/Resource/template/admin/Customer/point_update.twig:105 も `Customer.Player.point` を直接参照する。",
+      "note": ""
+    }
+  ]
+}

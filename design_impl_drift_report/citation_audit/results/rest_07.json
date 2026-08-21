@@ -1,0 +1,165 @@
+{
+  "packetId": "rest_07",
+  "results": [
+    {
+      "rowId": 383,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0307_基本設計仕様書(フロント_イベント).html:2783 の「一覧側へ戻る。遷移元のクエリにより戻り先を切り替える」は src-cell を持たず、同ファイル:2753 の `<!-- function-design-embed:start f07-03... -->` 以降にあるリバース詳細設計の記述。Excel正本部分（確認範囲: 同HTMLのF07-03シート、embed開始前）には戻り先切替の記述がない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Event/show.twig:143-149 `if app.request.get('eventDate') == ''` の場合は `url('events_index')`、それ以外は `url('events_daily', {eventId: ..., eventDate: ...})` として「戻る」リンクを切り替えており、期待挙動を直接裏付ける。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/default/Event/_event_detail_actions.twig:60 `<a ... href=\"{{ url('event_top') }}\">...back...</a>` とイベントTOP固定で、クエリによる切替がない。",
+      "note": "設計書の記述は旧実装から生成されたリバース部のみ。旧実装には明確な根拠があり、新実装への移植漏れと判定した。"
+    },
+    {
+      "rowId": 384,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0307_基本設計仕様書(フロント_イベント).html:2962-2964 の src-cell に「別日程...選択済みの状態で変更可」「イベントが未選択の状態で次の画面には遷移させない」「別日程...存在しない場合...デフォルトでチェック...変更不可」と明記される。",
+      "legacyEvidence": "判定はExcel正本で確定。参考として旧実装 pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Event/entry.twig:27 は主イベントを `<input ... checked disabled />`、同:60-64 は別日程だけを `name=\"details[]\"` のチェックボックスにしており、主イベントの変更可要件は旧実装でも満たしていない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/default/Event/entry.twig:53-59 は主IDを hidden `name=\"detail\"` で常時送信し、主チェックボックスを `checked disabled` 固定にする。ec-cube-enterprise/src/Eccube/Controller/Front/Event/EventEntryController.php:100-104,119 も主IDを別日程IDから除外後、`array_merge([$Detail], $additionalDetails)` で必ず含める。",
+      "note": "Excel正本がothers有無による変更可否切替を要求するが、新実装は常時変更不可・常時選択である。"
+    },
+    {
+      "rowId": 385,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0307_基本設計仕様書(フロント_イベント).html:2965 の src-cell に「申込同意...チェックが入っていない状態で『支払いへ進む』を押しても次の画面には遷移させずエラーを動的に表示する」と明記される。",
+      "legacyEvidence": "判定はExcel正本で確定。参考として旧実装 pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Event/entry.twig:76-79 は単に `<button type=\"submit\" ...>支払方法選択に進む</button>` を表示しており、この新要件の動的エラー根拠にはならない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/default/Event/entry.twig:123-130 は同意checkboxと初期disabledのsubmitを置くがエラー表示ノードがない。ec-cube-enterprise/src/Eccube/Controller/Front/Event/EventEntryController.php:106-108 も未同意時は `redirectToRoute('event_entry', ...)` のみで、動的エラーを返さない。",
+      "note": "画面遷移防止はボタン無効化とサーバ側リダイレクトで行われるが、正本が要求する動的エラー表示が欠ける。"
+    },
+    {
+      "rowId": 386,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0308_基本設計仕様書(フロント_店頭買取).html:1271,1274-1275 の src-cell に「共通の利用規約のみ表示する」「個人情報の取り扱いについてを削除する」と明記される。",
+      "legacyEvidence": "判定はExcel正本で確定。参考として旧実装 pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/OtcBuy/index.twig:192,204,218 は「個人情報の取り扱いについて」「利用規約」を別表示し、同意ラベルも「個人情報の取り扱い/利用規約に同意する」であり、正本が廃止対象とした現行挙動を確認できる。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/default/Block/terms_modal.twig:10-11 は利用規約とprivacyの2タブを表示し、同:107-110 はprivacy本文を出力する。ec-cube-enterprise/src/Eccube/Resource/template/default/OtcBuy/index.twig:339-341 の同意ラベルにも「個人情報の取り扱い/利用規約」が残る。",
+      "note": "個別ボタンの有無だけでなく、モーダル内privacyタブと同意文言が正本の削除要求に反する。"
+    },
+    {
+      "rowId": 387,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0308_基本設計仕様書(フロント_店頭買取).html:1291-1292 の src-cell に、郵便番号から都道府県・住所1・住所2へ設定すると明記される。一方、同:1327 の最新注記は「デザイン上、ボタンなしで自動セットされるため不要」であり、ボタン表示自体は現行の正本期待ではない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/OtcBuy/index.twig:84-89 には旧UIとして「？郵便番号検索」リンクと「郵便番号から自動入力」ボタンが実在する。ただし、最新Excel注記によりボタン移植は不要とされている。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/default/Block/js/OtcBuy/otc_buy_order_js.twig:91-93 はblur時に `AjaxZip3.zip2addr(..., 'otc_buy_order[pref]', 'otc_buy_order[addr01]')` を呼ぶだけで、設計が指定する `addr02`（住所2）を設定先に含めない。テンプレートの郵便番号領域 ec-cube-enterprise/src/Eccube/Resource/template/default/OtcBuy/index.twig:126-155 にボタンはない。",
+      "note": "指摘のうち「ボタン・検索リンクを表示」は最新Excel注記により取り下げるべき。一方、住所2まで設定する正本要件は残り、新実装が未達なのでSPEC_BACKEDとした。"
+    },
+    {
+      "rowId": 388,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0308_基本設計仕様書(フロント_店頭買取).html:1727 の「身分証明書をご用意ください」は、同:1679 の `<!-- function-design-embed:start f08-03... -->` 以降にあるリバース詳細設計で src-cell を持たない。Excel正本部分（確認範囲: F08-03シートのembed開始前）には同文言がない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/OtcBuy/complete.twig:47-55 は完了画面に `<span>身分証明書</span>を<br>ご用意ください` を条件なしで表示し、期待値の根拠となる。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/default/OtcBuy/complete.twig:22-40 は完了見出し、スタッフ画像、未成年時だけの保護者同意書案内を表示するが、身分証明書案内を出力しない。",
+      "note": "正本ではなく旧実装に由来する移植漏れ。日本語旧テンプレートで常時表示を確認した。"
+    },
+    {
+      "rowId": 389,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:1265 の src-cell は項目名を「プロモ」、選択肢を「チェック項目: プロモ、ノーマル」とする。",
+      "legacyEvidence": "判定はExcel正本で確定。旧実装 pf-eccube3/app/Plugin/HareruyaEc/Form/Extension/Admin/Product/SearchProductTypeExtension.php:66-73 も `promotion` のchoicesを `'promotion' => 'プロモ', 'nonpromo' => 'ノーマル'` と定義する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/SearchProductType.php:185-199 はlabelに `admin.product.promotion` を使い、ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:2210 は同キーを「プロモ種別」とする。ec-cube-enterprise/src/Eccube/Resource/template/admin/Product/index.twig:307 がそのラベルを表示する。",
+      "note": "正本・旧実装はいずれも「プロモ」だが、新実装だけ「プロモ種別」。"
+    },
+    {
+      "rowId": 390,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:1252 の src-cell に「商品名(日/英)」および検索対象「商品名(日)・商品名(英)」が明記される。",
+      "legacyEvidence": "旧実装 pf-eccube3/app/Plugin/HareruyaEc/Repository/ProductRepository.php:118-126 は検索列を `'p' => ['name'], 'ps' => ['nameEn']` として日本語・英語名の両方を検索する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Repository/ProductRepository.php:1088-1092 は商品名条件を `p.name LIKE :adminSearchProductName` のみに適用し、`p.name_en` を検索しない。",
+      "note": "正本に直接根拠があり、旧実装にも両言語検索が存在する。"
+    },
+    {
+      "rowId": 391,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:1254 の src-cell に、カード名検索対象として「カード名(日)・カード名(英)」が明記される。",
+      "legacyEvidence": "旧実装 pf-eccube3/app/Plugin/HareruyaEc/Repository/ProductRepository.php:129-136 はカード検索列を `'c' => ['nameJp', 'nameEn']` と定義する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Repository/ProductRepository.php:1095-1107 はカード名条件を `ca_card.name_jp LIKE :adminSearchCardName` のみに適用し、英語名を検索しない。",
+      "note": "正本・旧実装の両方が日英検索を裏付け、新実装は日本語のみ。"
+    },
+    {
+      "rowId": 392,
+      "verdict": "UNSUPPORTED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:1396 の「フォーム既定値で検索ビューデータをセッションへ書き込み、ページ1を表示」は、同:1375 の `function-design-embed:start` 以降のリバース詳細設計で src-cell を持たない。Excel正本部分（確認範囲: 商品マスター(検索入力)/(検索結果)のembed開始前）にはGET初期表示時に1ページ目の商品一覧を出す記述がない。",
+      "legacyEvidence": "旧実装 pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/SearchControllerTrait.php:56-70 は初期表示で検索セッションを `remove` し、`'pagination' => []`, `'page_no' => 1` を返す。したがって「既定値をセッション設定して1ページ目の商品一覧を表示」という期待値を裏付けず、むしろ一覧非表示を示す。確認範囲: pf-eccube3の商品一覧controller/trait、pf-api、pf-article、deck-apiでURL・product index・sessionを横断検索。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Product/ProductController.php:222-240 は初期GETでフォームviewとpage_no=1をセッションへ保存する一方、`'pagination' => null` を即時返却し商品一覧を表示しない。",
+      "note": "期待値はリバース文書にしかなく、旧実装の実コードとも一致しない。新実装はセッション設定部分だけ満たすが、指摘の核心である初期一覧表示には根拠がないためUNSUPPORTED。"
+    },
+    {
+      "rowId": 393,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:1223 の src-cell に「表示順は、棚番号昇順とする」と明記される。未指定時 `p.update_date DESC, p.id DESC` はリバース詳細側の補足であり、正本根拠ではない。",
+      "legacyEvidence": "判定はExcel正本で確定。参考として旧実装 pf-eccube3/app/Plugin/HareruyaEc/Repository/ProductRepository.php:49-51 はdefault sortを `p.id` とし、棚番号昇順を実装していないため、旧実装踏襲ではなく刷新要件である。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Repository/ProductRepository.php:1385-1397 は指定sortkeyがなければ `orderBy('p.id', 'DESC')`、続いてLanguage/CardCondition順を追加するだけで、棚番号をORDER BYしない。",
+      "note": "正本の棚番号昇順要件が未達。指摘中のupdate_date/id順はリバース由来なので根拠として採用しない。"
+    },
+    {
+      "rowId": 394,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:1615 の src-cell は画面部品ID12の項目名を「表示データ切替え」とする。",
+      "legacyEvidence": "判定はExcel正本で確定。参考として旧実装 pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Product/index.twig:344-352 は商品規格行の組立を行う旧一覧であり、該当の「表示データ切替え」UIは確認できない（確認範囲: 同旧テンプレート全体）。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Product/index.twig:528-534 は `admin.product.list_display_data__title` を表示し、ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:2258 の値は「表示データ切り替え」で、正本の「切替え」と一致しない。",
+      "note": "表記差を明示したExcel正本根拠がある。"
+    },
+    {
+      "rowId": 395,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:1592 は「販売数（通販＋TC東京）、販売数（支店）、入庫数」、同:1615 の src-cell はラベル「表示データ切替え」と3選択肢を明記する。",
+      "legacyEvidence": "判定はExcel正本で確定。参考として旧実装 pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Product/index.twig:424-450 は規格ごとの在庫・販売数セルを直接出力し、該当する3択プルダウンを持たない（確認範囲: 同テンプレート全体）。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Product/index.twig:529-534 は3選択肢を翻訳キーで表示するが、ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:2258-2261 は「表示データ切り替え」「販売数（通販+TC東京）」「販売数（支店）」「入庫数」であり、「切替え」と全角「＋」が一致しない。",
+      "note": "選択肢の意味は実装済みだが、正本指定の表示文言に2箇所の差がある。"
+    },
+    {
+      "rowId": 396,
+      "verdict": "UNSUPPORTED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:1430 の「検索結果がありません」は、同:1375 の `function-design-embed:start` 以降のリバース詳細設計で src-cell を持たない。Excel正本部分（確認範囲: 商品マスター(検索結果)のembed開始前）には0件時の固定文言がない。",
+      "legacyEvidence": "旧実装 pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Product/index.twig:481-484 は0件時に「検索条件に該当するデータがありませんでした。」と表示し、期待する「検索結果がありません」と一致しない。確認範囲: pf-eccube3の商品一覧テンプレート、pf-api、pf-article、deck-apiで当該文言を横断検索。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Product/index.twig:821-825 は0件時に `admin.common.search_no_result` を表示し、ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:1739 の値は「検索条件に合致するデータが見つかりませんでした」。",
+      "note": "期待文言はリバース文書だけにあり、旧実装の実文言とも異なるため誤検出の疑いが強い。"
+    },
+    {
+      "rowId": 397,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:1220-1222 の src-cell に「通常のNM〜HP以外の状態(高額商品等)は分けて表示」「言語は分けて表示」「日本語版、英語などで分かれ、NM・SPなどの規格を同一言語内で合算する」と明記される。",
+      "legacyEvidence": "判定はExcel正本で確定。旧実装 pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Product/index.twig:344-348,424-447 はproductSubClassを個別に配列化し、各規格のstock/orderQuantityを行ごとに表示しており、合算はしていない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Product/index.twig:573-579 はProductClassを1件ずつ配列化し、同:710-736 は各productClassごとにstockSummaryと数量を参照するため、同一言語内の通常規格を合算しない。",
+      "note": "再生成後のExcel正本にも「同一言語内で合算する」が実在するため、旧実装踏襲ではなく真の刷新要件として判定した。"
+    },
+    {
+      "rowId": 398,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:1223 の src-cell に「表示順は、棚番号昇順とする」と明記される。",
+      "legacyEvidence": "判定はExcel正本で確定。旧実装 pf-eccube3/app/Plugin/HareruyaEc/Repository/ProductRepository.php:49-51 はdefault sortを `p.id` と定義しており、棚番号昇順は旧実装由来ではない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Repository/ProductRepository.php:1385-1397 は未指定時 `p.id DESC` とLanguage/CardCondition順で、棚番号昇順をORDER BYに含めない。",
+      "note": "row393と同じ正本要件を検索結果側から指摘した重複 finding だが、各finding単位では根拠・未達とも確認できる。"
+    },
+    {
+      "rowId": 399,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:2142,2159,2171 の更新URL・画像隠し項目・フォーム名は、同:2102 の `function-design-embed:start m03-02...` 以降のリバース詳細設計で src-cell を持たない。Excel正本部分（確認範囲: 商品登録編集シートのembed開始前）にはこれら外部契約の記述がない。",
+      "legacyEvidence": "旧実装 pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/ProductServiceProvider.php:25-33 はGET edit、POST `/{id}/edit/update`、POST `image/add` を定義する。pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Product/ProductController.php:665,698,764,795 は `add_images`, `copy_images`, `delete_images`, `rank_images` を読む。ただし pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/Product/ProductEditType.php:35-38 の実フォーム名は `admin_product_edit` であり、期待値の `m03-02_admin_product_product_edit` は裏付けられない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Product/ProductController.php:531-533 はGET/POST共用の `/{id}/edit`。ec-cube-enterprise/src/Eccube/Resource/template/admin/Product/product.twig:124 は `name=\"form1\"`。ec-cube-enterprise/src/Eccube/Form/Type/Admin/ProductType.php:312-332 はadd/delete/copy_imagesを持つがrank_imagesはなく、Controller:769-779 は `admin_product[product_image]` の順序を読む。",
+      "note": "更新URLと4画像フィールドは旧実装に根拠があるためLEGACY_BACKED。ただしフォーム名 `m03-02_admin_product_product_edit` はリバース生成時の誤りで、旧実装の実名は `admin_product_edit`。指摘はこの点を訂正する必要がある。"
+    },
+    {
+      "rowId": 400,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:2142,2153-2154 のimage/add契約は、同:2102 以降のリバース詳細設計で src-cell を持たない。Excel正本部分（確認範囲: 商品登録編集シートのembed開始前）にはXHRのURL・HTTP状態・JSON形式の記述がない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/ProductServiceProvider.php:32-34 はPOST `/product/product/image/add` を定義。pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Product/ProductController.php:273-302 は非XHRと空配列をBadRequest、非画像MIMEをUnsupportedMediaType、元拡張子付きファイル名を生成し、`$app->json(['files' => $files], 200)` を返す。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Product/ProductController.php:389-433 はURLを `/image/process` とし、XHR/トークン不正は400、非画像は415だが、`count($images)` 前に配列不在を明示判定せず、応答も `new Response(array_shift($files))` で先頭1件の文字列のみ返す。",
+      "note": "旧実装の外部契約を新実装が部分的にしか移植していない。"
+    },
+    {
+      "rowId": 401,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:2159 の必須・NotBlank・9桁・0〜999999999は、同:2102 以降のリバース詳細設計で src-cell を持たない。Excel正本部分（確認範囲: 商品登録編集シートのembed開始前）にはこれらのサーバ側制約一式の記述がない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/Product/ProductSubType.php:33-38 は商品名(英)required/NotBlank、同:52-60 は購入グループrequired、同:77-103 はサイズ・重量required/NotBlank/Length max 9/min 0/max 999999999、同:105-130 は割引率と販売制限required/NotBlank。pf-eccube3/app/Plugin/HareruyaEc/Form/Extension/Admin/Product/ProductTypeExtension.php:42-52 は商品カテゴリrequired/NotBlank。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/ProductType.php:91-95 はname_enにLengthのみ、同:165-208 はSellGroup・size・weight・Discountをrequired=false、同:223-255 はRegionRestrictionをrequired=false、CategoryにもNotBlankを置かない。size/weightはattrのmin/maxlengthのみでサーバ側Length/上限制約がない。",
+      "note": "「販売制限」は旧実装の `regionRestriction`（label「販売制限」）として確認できた。期待制約一式は旧実装に明確な根拠がある。"
+    },
+    {
+      "rowId": 402,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:1955 の src-cell に「商品公開ステータスが廃止で更新された場合、以降の商品情報を変更できなくする。参照は可能」と明記される。",
+      "legacyEvidence": "判定はExcel正本で確定。参考として旧実装の更新ルート pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/ProductServiceProvider.php:28-31 はPOST `/{id}/edit/update` を通常のupdateへ結び、当該ルート定義自体には廃止済み拒否条件がない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Product/product.twig:817-827 は廃止時にStatus欄と登録ボタンだけを隠す。ec-cube-enterprise/src/Eccube/Controller/Admin/Product/ProductController.php:614-617,827-828 はPOSTを受けてform validなら更新日時設定・flushまで進み、廃止済み商品を拒否する分岐がない。",
+      "note": "UI上のボタン非表示だけでは参照専用化にならず、サーバ側にも更新禁止がないため正本未達。"
+    }
+  ]
+}

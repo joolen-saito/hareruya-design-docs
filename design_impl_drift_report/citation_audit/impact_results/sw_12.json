@@ -1,0 +1,365 @@
+{
+  "packetId": "sw_12",
+  "results": [
+    {
+      "rowId": 397,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "同じ数値1/2を含む商品CSVでも公開・非公開の意味が逆になり、取込後の商品公開状態が変わる。",
+      "checked": "src/Eccube/Controller/Admin/Product/Csv/GoodsCsvController.php:261-264で商品公開ステータスが『1:公開 2:非公開 3:廃止』として画面上のCSV仕様に使われることを確認。",
+      "reason": "CSV値の意味と永続化される公開状態の差であり、外部I/Oと画面表示の双方に影響する。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 398,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "原価単価が空でもCSVを受理し、値を指定しても商品データへ保存されない。",
+      "checked": "src/Eccube/Controller/Admin/Product/Csv/GoodsCsvController.php:376-380で原価単価がrequired=falseかつ『入力しても更新されない』と定義され、src/Eccube/Service/Csv/Importer/Event/ProductGoodsImportHandler.php:114-115でも互換用・非更新列であることを確認。",
+      "reason": "必須性とDB更新有無が異なるため、CSV受理結果と永続データが変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 399,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "dtb_product_tagに設計外のbase_info_id列・値が必要となり、DBスキーマおよび保存レコードが変わる。",
+      "checked": "src/Eccube/Repository/ProductRepository.php:1885-1924でdtb_product_tagへのINSERTにbase_info_idと固定値1が含まれ、src/Eccube/Entity/ProductTag.php:30とsrc/Eccube/Entity/Traits/TenantTrait.php:25で同列がEntityマッピングされることを確認。",
+      "reason": "DBスキーマと永続値は明示的な外部I/Oであり、内部識別子だけの差ではない。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 400,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "タグ置換後の各dtb_product_tag行に設計外のbase_info_id=1が保存される。",
+      "checked": "src/Eccube/Repository/ProductRepository.php:1843-1849でDELETE後INSERTを呼び、同:1885-1924でINSERT列にbase_info_id、値に1を渡すことを確認。",
+      "reason": "入力配列から生成されるDB行の列と値が設計と異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 401,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "管理画面から低価格帯カード価格変更CSVをダウンロードできず、その専用フォーマットも閲覧できない。",
+      "checked": "src/Eccube/Controller/Admin/Product/Csv/ProductStandardPriceCsvController.php:109-122は基準価格CSV用の1組のルートだけを渡し、src/Eccube/Resource/template/admin/Product/csv_product_standard_price.twig:1-5は共通テンプレート継承のみ。src/Eccubeとapp/configを『低価格帯』『low_price』等で検索したが当該導線は確認できなかった。",
+      "reason": "要求された画面部品とダウンロードI/Oの欠落は利用者から直接観測できる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 402,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "条件を満たしても既存フラグがOFFならスマレジ連携が予約されず、外部システムへ商品更新が送られない。",
+      "checked": "src/Eccube/Service/Csv/Importer/Event/ProductStandardPriceImportHandler.php:175-181はDBから読んだ既存smaregiAlignmentFlgをそのままdeferIfEligibleへ渡し、src/Eccube/Service/Smaregi/SmaregiProductClassCsvImportUpsertCoordinator.php:47-55はOFFなら即returnすることを確認。",
+      "reason": "外部連携呼出しの有無が変わるためIMPACT。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 403,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "原価単価列を含む設計準拠CSVの契約を提供できず、必須検証も保存も行われない。",
+      "checked": "src/Eccube/Controller/Admin/Product/Csv/ProductStandardPriceCsvController.php:217-239のヘッダ・必須ヘッダは商品ID、言語ID、基準価格、買取価格の4列のみで、src/Eccube/Service/Csv/Importer/Event/ProductStandardPriceImportHandler.php:190-213の取込列も同じ4列のみ。",
+      "reason": "CSVの列構成・必須性・DB更新対象の差は外部I/O差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 404,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "CSV取込に成功しても支店システムへ商品更新通知が送信されない。",
+      "checked": "src/Eccube/Service/Csv/Importer/Event/ProductPriceImportHandler.php:81-94で支店連携ブロック全体がコメントアウトされ、TODOとして残っていることを確認。",
+      "reason": "外部システム通知という副作用の有無が異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 405,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "成功時に『商品登録CSVファイルをアップロードしました。』ではなく『登録が完了しました。』と画面表示される。",
+      "checked": "src/Eccube/Controller/Admin/Product/Csv/ProductPriceCsvController.php:182-189で成功時にadmin.register.completeを追加し、src/Eccube/Resource/locale/messages.ja.yaml:1966で同キーが『登録が完了しました。』に解決されることを確認。",
+      "reason": "利用者向けフラッシュ文言の差は一文字単位でも外部出力差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 406,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "CSV以外のMIMEを持つファイルが専用MIMEエラーで拒否されず、後段処理へ進み得る。",
+      "checked": "src/Eccube/Form/Type/Admin/CsvImportType.php:48-57の制約はNotBlankとmaxSizeだけを指定したAssert\\Fileで、mimeTypes指定がなく、src/Eccube/Resource/locale/messages.ja.yamlにもadmin.csv.error.upload.mime定義がないことを確認。",
+      "reason": "入力受理条件と表示エラーメッセージが変わるためIMPACT。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 407,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "取込成功後の画面上部フラッシュが設計指定文言ではなく汎用の『登録が完了しました。』になる。",
+      "checked": "src/Eccube/Controller/Admin/Product/Csv/ProductPriceCsvController.php:188でadmin.register.completeを使用し、src/Eccube/Resource/locale/messages.ja.yaml:1966の実文言を確認。",
+      "reason": "row 405と重複していても、当該差分自体はユーザー可視の出力差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 408,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "非公開の商品規格も高額商品CSVの更新対象になり得て、基準価格・販売価格が更新される。",
+      "checked": "src/Eccube/Repository/ProductClassRepository.php:2217-2234、2267-2290、2299-2324で商品テーブルJOINはあるがproduct_status_idやvisible条件がなく、商品コード・sale_flg・high_price_codeだけで存在判定とUPDATEを行うことを確認。",
+      "reason": "CSV処理対象と永続更新結果が公開状態によって設計と異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 409,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "import_file子フィールドの検証エラーがadminフラッシュへ積まれず、利用者に必要なエラー理由が表示されない場合がある。",
+      "checked": "src/Eccube/Controller/Admin/Product/Csv/ProductSimpleHighPriceCsvController.php:130-146で無効時の列挙が$form->getErrors()（deep=false）であり、子フィールドエラーを明示的に辿らないこと、null分岐だけはcsv_invalid_no_dataを出すことを確認。",
+      "reason": "検証時の画面メッセージという外部出力が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 410,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "11文字上限を超える商品コードでも列定義上受理され得る。",
+      "checked": "src/Eccube/Service/Csv/Importer/Event/SimpleHighPriceImportHandler.php:130-134はColumnDefinitions::productCode()を必須化するだけで、src/Eccube/Service/Csv/Importer/Model/ColumnDefinitions.php:58-61のproductCodeにも最大11文字検証がないことを確認。",
+      "reason": "CSVの受理・拒否条件が異なるためIMPACT。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 411,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "設計上許容される10～11桁の基準価格が9桁制限で拒否される。",
+      "checked": "src/Eccube/Service/Csv/Importer/Event/SimpleHighPriceImportHandler.php:133がstandardPrice列を利用し、src/Eccube/Service/Csv/Importer/Model/ColumnDefinitions.php:434-437で最大桁数9を渡すことを確認。",
+      "reason": "入力可能値の範囲が異なり、CSV処理結果が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 412,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "設計の7列CSVではなく5列CSVだけが画面・雛形・取込契約となり、買取価格とスマレジ連携フラグを入力できない。",
+      "checked": "src/Eccube/Controller/Admin/Product/Csv/ProductSaleHighPriceCsvController.php:199-219のヘッダは5列、src/Eccube/Service/Csv/Importer/Event/SaleHighPriceImportHandler.php:165-173の取込列も同じ5列であることを確認。",
+      "reason": "CSV外部契約の列数・列名・必須列が異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 413,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "CSVで買取価格を変更できず、dtb_product_class.buy_priceと価格履歴の新買取価格が更新されない。",
+      "checked": "src/Eccube/Service/Csv/Importer/Event/SaleHighPriceImportHandler.php:96-157で買取価格列を読まず、更新呼出しにも渡さず、履歴へoldBuyPriceを新値として再利用することを確認。",
+      "reason": "永続価格と履歴というDB副作用が設計と異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 414,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "CSVからスマレジ連携フラグを更新できず、対象商品のスマレジ後続連携も予約されない。",
+      "checked": "src/Eccube/Controller/Admin/Product/Csv/ProductSaleHighPriceCsvController.php:199-219とsrc/Eccube/Service/Csv/Importer/Event/SaleHighPriceImportHandler.php:81-173にスマレジ列・DB更新・coordinator呼出しがないことを確認。",
+      "reason": "DB更新および外部システム連携の有無が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 415,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "画面のフォーマット表と雛形・取込が5列になり、設計上必須の買取価格とスマレジ連携フラグ列が欠落する。",
+      "checked": "src/Eccube/Controller/Admin/Product/Csv/ProductSaleHighPriceCsvController.php:199-219で表示・雛形用ヘッダと必須ヘッダ、src/Eccube/Service/Csv/Importer/Event/SaleHighPriceImportHandler.php:165-173で取込列を確認。",
+      "reason": "利用者が扱うCSVの構造そのものが異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 416,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "買取価格をCSVから読み込まず、各セール分岐後もbuy_priceと価格履歴の買取価格が旧値のままになる。",
+      "checked": "src/Eccube/Service/Csv/Importer/Event/SaleHighPriceImportHandler.php:81-157を確認し、CSV買取価格列・bcfloor変換・buy_price更新がなく、履歴の新買取価格にoldBuyPriceを渡していることを確認。",
+      "reason": "row 413と重複していても、指摘された永続データ差は外部観測可能である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 417,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "CSV指定によるsmaregi_alignment_flg更新とスマレジ商品更新予約が一切行われない。",
+      "checked": "src/Eccube/Controller/Admin/Product/Csv/ProductSaleHighPriceCsvController.php:199-219とsrc/Eccube/Service/Csv/Importer/Event/SaleHighPriceImportHandler.php:165-173の列定義にスマレジ連携フラグがなく、Handler全体にもdeferIfEligible呼出しがないことを確認。",
+      "reason": "CSV入力、DB値、外部連携の三つの観測面が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 418,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "画面サブタイトル、ナビ、カード見出しが『部門更新CSV登録』ではなく『部門登録CSVアップロード』等と表示される。",
+      "checked": "src/Eccube/Resource/template/admin/Product/csv_product_section.twig:3-5で表示キーを使用し、src/Eccube/Resource/locale/messages.ja.yaml:2013-2015で実際の『部門登録CSV』系文言を確認。app/config/eccube/packages/eccube_nav.yaml:68-69でも同キーがナビに使われる。",
+      "reason": "利用者に表示される文言の差なのでIMPACT。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 419,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "同じ翻訳キーが設計文言ではなく『部門登録CSVアップロード』『部門登録CSV』等へ解決される。",
+      "checked": "src/Eccube/Resource/template/admin/Product/csv_product_section.twig:5、app/config/eccube/packages/eccube_nav.yaml:68-69、src/Eccube/Resource/locale/messages.ja.yaml:2013-2015の表示経路と値を確認。",
+      "reason": "row 418と重複するが、翻訳結果は画面に露出するため影響あり。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 420,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "5010件以上のCSVが上限エラーにならず、登録処理へ進む。",
+      "checked": "src/Eccube/Controller/Admin/Product/StorageCodeController.php:348-356はcheckDataSize後にregisterを呼び、src/Eccube/Service/Csv/AbstractCsvService.php:251-261のcheckDataSizeは0件だけを拒否する。対象3ファイルを5010、5009、maxrecordで検索して上限処理がないことも確認。",
+      "reason": "入力件数による受理・拒否とバッチ副作用が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 421,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "商品IDに紐づく略称タグは更新されず、代わりに略称タグマスタの名称・並び順が登録または更新される。",
+      "checked": "src/Eccube/Controller/Admin/Product/StorageCodeController.php:305-356がStorageCodeCsvを呼び、src/Eccube/Service/Csv/StorageCodeCsv.php:87-131が名称・ID・並び順を読みMtbStorageCode#setName/setRankして保存することを確認。",
+      "reason": "更新対象テーブルと永続データが根本的に異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 422,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "設計の『商品ID,略称タグ』2列CSVは期待ヘッダと一致せず取り込めず、実装は『ID,名称,並び順』を要求する。",
+      "checked": "src/Eccube/Controller/Admin/Product/StorageCodeController.php:329-356で実装ヘッダとの一致検証を行い、src/Eccube/Service/Csv/StorageCodeCsv.php:84-119が並び順・名称・ID列を参照することを確認。",
+      "reason": "CSV列契約と更新処理が外部から明確に異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 423,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "商品別略称タグ更新用2列CSVではなく、略称タグマスタ用3列CSVとして処理される。",
+      "checked": "src/Eccube/Controller/Admin/Product/StorageCodeController.php:349-356のヘッダ検証・登録呼出しと、src/Eccube/Service/Csv/StorageCodeCsv.php:87-131のMtbStorageCode更新を確認。",
+      "reason": "row 421/422と重複しても、CSV入出力およびDB更新対象の差はIMPACT。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 424,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "アップロードボタン押下で確認モーダルを経ず、そのままフォーム送信と取込が開始される。",
+      "checked": "src/Eccube/Resource/template/admin/Product/base_csv_upload.twig:22-33のJSはsubmit時にローディングを出すだけで、同:53-78のフォーム・ボタンは通常submit。modal/data-confirm等の確認処理はないことを確認。",
+      "reason": "クリック後の画面遷移・操作手順が利用者から観測できる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 425,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "CSVインポート履歴画面に該当件数が表示されない。",
+      "checked": "src/Eccube/Resource/template/admin/Product/csv_import_history.twig:1-60を確認し、ヘッダ・行はファイル名、日時、担当者の3項目だけで、totalItemCount等の件数表示がない。",
+      "reason": "画面表示項目の欠落は直接的な外部出力差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 426,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "設計の非公開値0は拒否され、実装では値2が非公開として受理・保存される。",
+      "checked": "src/Eccube/Controller/Admin/Product/Csv/ProductStatusCsvController.php:200-205は『2:非公開 1:公開』と表示し、src/Eccube/Entity/Master/ProductStatus.php:39,49の値は公開1・非公開2、src/Eccube/Service/Csv/Importer/Event/ProductStatusUpdateImportHandler.php:121-127も1/2だけを受理することを確認。",
+      "reason": "CSV値の受理条件と保存される公開状態が異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 427,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "ナビ・カード・ボタンに『棚番号登録CSVアップロード』『棚番号登録CSVファイルフォーマット』『CSVファイルをアップロード』と設計と異なる文言が表示される。",
+      "checked": "src/Eccube/Resource/locale/messages.ja.yaml:1739,2028-2030の実文言、app/config/eccube/packages/eccube_nav.yaml:74-75のナビ使用、src/Eccube/Resource/template/admin/Product/base_csv_upload.twig:73-75のボタン表示経路を確認。",
+      "reason": "複数のユーザー可視文言が変わるためIMPACT。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 428,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "ナビゲーションに『棚番号更新CSV登録』ではなく『棚番号登録CSVアップロード』と表示される。",
+      "checked": "app/config/eccube/packages/eccube_nav.yaml:74-75でadmin.product.product_shelf_number_csvがナビ名に使われ、src/Eccube/Resource/locale/messages.ja.yaml:2028で『棚番号登録CSVアップロード』に解決されることを確認。",
+      "reason": "ナビ表示名は利用者に露出するためIMPACT。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 429,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "CSVで検索条件名を指定・保存できず、検索パラメータだけがCategory.search_parametersへ保存される。",
+      "checked": "src/Eccube/Controller/Admin/Product/Csv/CategoryCsvController.php:207-222のヘッダには検索パラメータのみ、src/Eccube/Service/Csv/Importer/Event/CategoryCsvImportHandler.php:154-155,224-226も同列だけを読み、src/Eccube/Entity/Category.php:491-492にもsearch_parametersだけがあることを確認。",
+      "reason": "CSV列と永続データ項目の欠落は外部I/O差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 430,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "フロント検索のカテゴリ選択肢には非表示フラグ付きカテゴリやその子も残り、支店非表示も検索フォーム全般には適用されない。",
+      "checked": "src/Eccube/Form/Type/Front/SearchType.php:95-115はCategoryRepository::getList(null,true)の全カテゴリをchoicesへ渡し、src/Eccube/Repository/CategoryRepository.php:133-162のgetListは非表示フラグで絞り込まない。一方src/Eccube/Service/TopCategoryListBuilder.php:95-110等では一部導線だけ個別除外することを確認。",
+      "reason": "画面に出る検索選択肢と到達可能な検索動作が設計の全般制御と異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 431,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "運用ログの開始行にはカテゴリIDが記録されず、完了行だけにIDが出力される。",
+      "checked": "src/Eccube/Controller/Admin/Product/CategoryController.php:208で開始ログがメッセージのみ、同:289で完了ログには[$TargetCategory->getId()]を渡すことを確認。",
+      "reason": "ログファイルへの出力内容が変わるため、境界事例の基準どおりIMPACT。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 432,
+      "authorVerdict": "IMPACT",
+      "verdict": "NO_IMPACT",
+      "agree": false,
+      "observableEffect": "",
+      "checked": "src/Eccube/Controller/Admin/Stock/StockListController.php:357-378を実査。FormUtil::getViewData()の後、line 375でunset($dataToStore['_token'], $dataToStore['base_info'])を実行してからline 378でserializeしており、店舗条件は保存されない。git logでもcommit 6515b31cb2『検索パターンの保存内容から店舗を除外』を確認。",
+      "reason": "現行実装は設計どおり店舗条件を保存対象から除外しており、パケット記載の乖離は解消済み。同じ入力に対する保存副作用の差はない。",
+      "confidence": "high"
+    }
+  ]
+}

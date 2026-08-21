@@ -1,0 +1,149 @@
+{
+  "packetId": "rc_22",
+  "results": [
+    {
+      "rowId": 402,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0204_基本設計仕様書(商品管理).html の sheet-42 を「スマレジ連携」「連携フラグ」「条件を満たす」で検索し、Excel 正本 src-cell 0204:基準価格変更CSVアップロード!E79 に「条件を満たす場合スマレジ連携フラグを有効とする」、同 !E80 に「連携対象の条件を満たしている場合に限り、スマレジへ商品情報を連携する」が実在することを確認した。",
+      "reason": "引用は function-design-embed ではなく data-excel-ref を持つ Excel 正本で、フラグの条件付き有効化と対象限定連携を明記している。現行の基準価格CSV取込は既存フラグを読むだけで、OFFからONへ更新する処理がないため、分類・乖離とも維持する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/ProductStandardPriceImportHandler.php の ProductStandardPriceImportHandler::onReadRow() は `$alignment = (int) ($pcRow['smaregiAlignmentFlg'] ?? 0);` を SmaregiProductClassCsvImportUpsertCoordinator::deferIfEligible() に渡す。src/Eccube/Service/Smaregi/SmaregiProductClassCsvImportUpsertCoordinator.php の deferIfEligible() は `$smaregiAlignmentFlg !== Constant::ENABLED` なら return する。src/Eccube/Repository/ProductClassRepository.php の updateProductClassForStandardPriceCsv() は standard_price / buy_price / price02 の更新だけで、smaregi_alignment_flg を更新しない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 408,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "MISDESCRIBED",
+      "checkedQuote": "0204_基本設計仕様書(商品管理).html の sheet-48・sheet-49 の Excel 正本 src-cell を「商品公開ステータス」「公開状態」「表示状態」「visible」「del_flg」で検索し該当0件。「商品コード」「セールフラグ」では sheet-48 の 0204:高額商品価格変更CSVアップロード!D76 に「対象の商品コードから当該の商品データを検索。現在登録済の商品に設定されている『セールフラグ』を参照して処理を切り替える」を確認したが、公開・表示条件は書かれていない。",
+      "reason": "具体条件の根拠は旧実装だけなので LEGACY_BACKED は妥当。pf-eccube3 の SimpleHighPriceImportHandler::isProductExists() は `pc.del_flg = :delFlg`、`p.del_flg = :delFlg`、`psc.high_price_code IS NOT NULL`、findProductClass() は `pc.del_flg = :delFlg` と high_price_code 非NULLを条件にする。ただし旧SQLにも ProductStatus や「公開ステータス」の条件はない。現行で pc.visible の絞り込みがない差は残るが、元指摘の「親商品の公開状態や規格の表示状態を旧SQLが要求する」という説明は正確でないため MISDESCRIBED。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Repository/ProductClassRepository.php の existsProductClassByProductCodeAndSaleFlg() は product_code、sale_flg、high_price_code 非NULL・非空だけを条件とし、replaceStandardPriceOnly() / replaceStandardPriceAndPrice02() も同じ対象条件で、`pc.visible = true` はない。ProductClass エンティティには visible 列があり、ProductClassController::clearProductClasses() などは `setVisible(false)` を使用するため、非表示規格を除外しない差は実在する。一方、product_status_id / ProductStatus 条件が旧処理にあったという事実は確認できない。",
+      "severityOpinion": "med",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 409,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0204_基本設計仕様書(商品管理).html の sheet-48 の Excel 正本 src-cell を「入力チェック」「フォーム検証エラー」「csv_invalid_no_data」「CSVデータが存在しません」で検索し、0204:高額商品価格変更CSVアップロード!AB93 の「CSVファイルのアップロードと入力チェックを実施。」だけを確認、具体的な deep error 列挙と null 時キーは0件。sheet-48 のレイアウト画像1枚も目視し、通常状態のアップロード画面は確認したが、エラー表示手順や当該文言は描かれていなかった。",
+      "reason": "具体的な getErrors(true) の挙動は Excel 正本ではなく旧実装にあるため LEGACY_BACKED を維持する。pf-eccube3 の ProductCsvController::csvSimpleHighPriceUpload() は `$form->getErrors(true)` を列挙するが、現行は deep=false のままで、import_file 子フィールドの NotBlank エラーを admin フラッシュへ積めない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Product/Csv/ProductSimpleHighPriceCsvController.php の ProductSimpleHighPriceCsvController::import() はフォーム不正時に `foreach ($form->getErrors() as $error)` として直ちにリダイレクトする。src/Eccube/Form/Type/Admin/CsvImportType.php の buildForm() は子フィールド import_file に `new Assert\\NotBlank()` を付けるため、未選択時は isValid() が false となり、その後の `$formFile === null` / `admin.common.csv_invalid_no_data` 分岐には到達しない。CategoryCsvController 等には getErrors(true) の実装があるが対象Controllerは未修正。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 410,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0204_基本設計仕様書(商品管理).html の sheet-49 の Excel 正本 src-cell を商品コードの行で確認し、0204:高額商品価格変更CSVフォーマット!E8「商品コード」、!P8「文字型」、!U8「◯」、!W8「11」が実在した。",
+      "reason": "商品コードの文字型・必須・最大11は Excel 正本の同一行に揃っている。現行の当該ハンドラは必須化だけで11文字上限を付けていないため再現する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/SimpleHighPriceImportHandler.php の initializeColumnDefinitions() は `ColumnDefinitions::productCode()->setRequired(true)`。src/Eccube/Service/Csv/Importer/Model/ColumnDefinitions.php の productCode() は `createStringColumn()` を返し、createStringColumn() は validator を追加しない。SimpleHighPriceImportHandler の getRowValidators() も空配列で、src/Eccube/Entity/ProductClass.php の product_code は length 255。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 411,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0204_基本設計仕様書(商品管理).html の sheet-49 の Excel 正本 src-cell を基準価格の行で確認し、0204:高額商品価格変更CSVフォーマット!E9「販売価格 基準価格」、!P9「数値(整数)」、!U9「◯」、!W9「11」、!AG9「※カスタマイズ対応、販売価格 → 基準価格 に変更」が実在した。",
+      "reason": "基準価格の数値整数・必須・最大11は Excel 正本に明記される。現行の共通列定義は9桁上限なので、10～11桁を拒否する差が残る。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/SimpleHighPriceImportHandler.php の initializeColumnDefinitions() は `ColumnDefinitions::standardPrice()->setRequired(true)`。src/Eccube/Service/Csv/Importer/Model/ColumnDefinitions.php の standardPrice() は `createUnsignedNumericColumn($name, '基準価格', 9)` を返し、createUnsignedNumericColumn() は NumericMaxLengthValidator(9) を追加する。NumericMaxLengthValidator::validate() は `strlen($value) <= $this->maxLength` で判定する。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 412,
+      "originalClass": "UNCERTAIN",
+      "classVerdict": "REFUTED",
+      "correctedClass": "SPEC_BACKED",
+      "driftVerdict": "UNSURE",
+      "checkedQuote": "0204_基本設計仕様書(商品管理).html の sheet-51 の Excel 正本表を確認し、0204:セール用高額商品価格変更CSVフォーマット!E8～E14 に「商品コード」「販売価格」「買取価格」「セールフラグ」「帯URL」「タグ(ID)」「スマレジ連携フラグ」、!U8・!U9・!U10・!U11・!U14 に必須の「◯」が実在した。同時に !BA10 と !BA14 に「2026/6/3 石川 高額商品価格変更CSVフォーマットでも不要な項目のためこちらでも不要」が実在した。",
+      "reason": "根拠の所在という分類軸では、7列・必須指定はいずれも data-excel-ref を持つ Excel 正本なので UNCERTAIN ではなく SPEC_BACKED。ただし同じ正本に買取価格・スマレジ連携フラグを不要とする後日注記があり、現時点で有効な外部CSV契約を正本だけから一意に決められないため driftVerdict は UNSURE。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Product/Csv/ProductSaleHighPriceCsvController.php の getCsvHeader() は「商品コード、販売価格、セールフラグ、帯URL、タグ(ID)」の5列、getRequiredCsvHeader() は商品コード・販売価格・セールフラグの3列。src/Eccube/Service/Csv/Importer/Event/SaleHighPriceImportHandler.php の onBeforeImport() / getColumns() も同じ5列で、買取価格とスマレジ連携フラグを受け付けない。",
+      "severityOpinion": "med",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 413,
+      "originalClass": "UNCERTAIN",
+      "classVerdict": "REFUTED",
+      "correctedClass": "SPEC_BACKED",
+      "driftVerdict": "UNSURE",
+      "checkedQuote": "0204_基本設計仕様書(商品管理).html の sheet-50 の Excel 正本 src-cell を「買取価格を、CSVに設定されている買取価格に更新する」で検索し、0204:セール用高額商品価格変更CSVアップロード!G91・!G97・!G104・!G112 の4件を確認した。一方、関連 sheet-51 の !BA10 には「2026/6/3 石川 高額商品価格変更CSVフォーマットでも不要な項目のためこちらでも不要」が実在した。",
+      "reason": "全セール分岐の買取価格更新要求は Excel 正本にあるため、根拠区分は SPEC_BACKED。ただし後日注記は入力列自体を不要としており、処理分岐の記述と両立しない。どちらが最終承認仕様か確認できないので現行の非更新を drift と断定できず UNSURE。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/SaleHighPriceImportHandler.php の onReadRow() は sellPriceColumn だけから価格を読み、`// 今回のcsv登録では買取価格・基準価格の更新はないので一緒の値を入れる` として価格履歴の新買取価格にも `$oldBuyPrice` を渡す。src/Eccube/Repository/ProductClassRepository.php の updateProductClassForHighPriceSaleCsv() は price02 / belt_url / sale_flg / update_date だけを更新し、buy_price は更新しない。",
+      "severityOpinion": "med",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 414,
+      "originalClass": "UNCERTAIN",
+      "classVerdict": "REFUTED",
+      "correctedClass": "SPEC_BACKED",
+      "driftVerdict": "UNSURE",
+      "checkedQuote": "0204_基本設計仕様書(商品管理).html の Excel 正本を「スマレジ連携フラグの項目を追加」「セール用高額商品価格変更CSV登録」「スマレジ連携追加」で検索し、sheet-50 の 0204:セール用高額商品価格変更CSVアップロード!E66・!E79、sheet-68 の 0204:別添資料__スマレジ連携__機能改修一覧!B11・!C11 を確認した。一方、sheet-51 の !BA14 にはスマレジ連携フラグを「2026/6/3 石川 …不要」とする注記が実在した。",
+      "reason": "スマレジ項目追加・連携追加という機能要求は Excel 正本にあるため、出典分類は SPEC_BACKED。もっとも正本は特定の Coordinator API や引数までは規定せず、さらに後日不要注記と衝突する。最終仕様を確定できないため現行で未接続な事実は確認しても drift は UNSURE。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Product/Csv/ProductSaleHighPriceCsvController.php のコンストラクタと import() の SaleHighPriceImportHandler 生成には SmaregiProductClassCsvImportUpsertCoordinatorFactory がない。src/Eccube/Service/Csv/Importer/Event/SaleHighPriceImportHandler.php には smaregiAlignmentFlgColumn / deferIfEligible / afterCsvImportFinished がなく、src/Eccube/Repository/ProductClassRepository.php の updateProductClassForHighPriceSaleCsv() も smaregi_alignment_flg を更新しない。",
+      "severityOpinion": "med",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 415,
+      "originalClass": "UNCERTAIN",
+      "classVerdict": "REFUTED",
+      "correctedClass": "SPEC_BACKED",
+      "driftVerdict": "UNSURE",
+      "checkedQuote": "0204_基本設計仕様書(商品管理).html の sheet-51 の Excel 正本表で、0204:セール用高額商品価格変更CSVフォーマット!B8～B14 が識別ID 1～7、!E8～E14 が7項目、!U8・!U9・!U10・!U11・!U14 が必須「◯」であることを確認した。同じ行の !BA10・!BA14 には買取価格・スマレジ連携フラグを「2026/6/3 石川 …不要」とする注記が実在した。",
+      "reason": "7列・必須列の根拠自体は明確な Excel 正本なので、根拠区分 UNCERTAIN は SPEC_BACKED に訂正する。ただし同じ正本内の後日注記が2列を不要とするため、最終契約が7列か5列かは判定不能で driftVerdict は UNSURE。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Product/Csv/ProductSaleHighPriceCsvController.php の getCsvHeader() は5列、getRequiredCsvHeader() は3必須列を返す。src/Eccube/Service/Csv/Importer/Event/SaleHighPriceImportHandler.php の getColumns() も productCodeColumn / sellPriceColumn / saleFlgColumn / beltUrlColumn / productTagListColumn の5列だけである。",
+      "severityOpinion": "med",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 416,
+      "originalClass": "UNCERTAIN",
+      "classVerdict": "REFUTED",
+      "correctedClass": "SPEC_BACKED",
+      "driftVerdict": "UNSURE",
+      "checkedQuote": "0204_基本設計仕様書(商品管理).html の sheet-51 の Excel 正本 src-cell を「買取価格を、CSVに設定されている買取価格に更新する」で検索し、0204:セール用高額商品価格変更CSVフォーマット!G51・!G57・!G65・!G72 を確認した。CSV項目行 !E10・!U10 には「買取価格」・必須「◯」がある一方、!BA10 に「2026/6/3 石川 …不要」の注記が実在した。",
+      "reason": "買取価格の必須入力・全分岐更新は Excel 正本に書かれているので出典は SPEC_BACKED。ただし同じ正本の後日注記が入力列不要とするため、有効仕様を一意に決められず、現行の非更新が乖離かは UNSURE。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/SaleHighPriceImportHandler.php は buyPriceColumn を持たず、onReadRow() の価格履歴登録で新買取価格に `$oldBuyPrice` を渡す。src/Eccube/Repository/ProductClassRepository.php の updateProductClassForHighPriceSaleCsv() の UPDATE 対象は price02 / belt_url / sale_flg / update_date で、buy_price は含まれない。",
+      "severityOpinion": "med",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 417,
+      "originalClass": "UNCERTAIN",
+      "classVerdict": "REFUTED",
+      "correctedClass": "SPEC_BACKED",
+      "driftVerdict": "UNSURE",
+      "checkedQuote": "0204_基本設計仕様書(商品管理).html の Excel 正本で、sheet-51 の 0204:セール用高額商品価格変更CSVフォーマット!E27「スマレジ連携フラグの項目を追加」、!D39「識別ID:7 『スマレジ連携フラグ』を追加」、sheet-68 の !B11「セール用高額商品価格変更CSV登録」・!C11「スマレジ連携追加／シングルカードのみスマレジ連携フラグ自動判定追加」を確認した。一方、sheet-51 の !BA14 に「2026/6/3 石川 …不要」が実在した。",
+      "reason": "項目追加・自動判定・連携追加は Excel 正本にあるため根拠区分は SPEC_BACKED。ただし後日不要注記との矛盾が解けず、正本は具体的な Coordinator API も規定していない。実装に列・更新・連携予約がない事実は確認したが、最終仕様に対する乖離かは UNSURE。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Product/Csv/ProductSaleHighPriceCsvController.php はスマレジ連携Factoryを受け取らず、SaleHighPriceImportHandler を4依存だけで生成する。src/Eccube/Service/Csv/Importer/Event/SaleHighPriceImportHandler.php の列定義・getColumns() は5列で、スマレジ列や Coordinator 呼出しがない。src/Eccube/Repository/ProductClassRepository.php の updateProductClassForHighPriceSaleCsv() も smaregi_alignment_flg を更新しない。",
+      "severityOpinion": "med",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 418,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "MISDESCRIBED",
+      "checkedQuote": "0204_基本設計仕様書(商品管理).html の sheet-52 の Excel 正本 src-cell で、0204:部門更新CSV登録!N4「部門更新CSV登録」、!E48「部門更新CSVファイルフォーマット」を確認した。sheet-52 のレイアウト画像3枚をすべて目視し、主画像（data-excel-ref 0204:部門更新CSV登録!B7）ではパンくず「商品管理　部門更新CSVアップロード」、カード見出し「部門更新CSV」、フォーマット見出し「部門更新CSVファイルフォーマット」を確認した。",
+      "reason": "「部門更新」という利用者向け名称は Excel 正本テキストと画像の双方にあるため SPEC_BACKED は妥当で、現行の「部門登録」表示との差も残る。ただし元指摘が設計上の sub_title を「部門更新CSV登録」と断定した点は画像と不一致で、正本画像の実表示は「部門更新CSV」、パンくずは「部門更新CSVアップロード」。乖離は残るが期待文言の説明が誤っているため MISDESCRIBED。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Product/csv_product_section.twig は sub_title に `admin.product.product_section_csv` を使い、app/config/eccube/packages/eccube_nav.yaml の admin_product_section_import も同キーを使う。src/Eccube/Resource/locale/messages.ja.yaml の実値は `部門登録CSVアップロード`、upload_title は `部門登録CSV`、format_title は `部門登録CSVファイルフォーマット` で、正本画像の「部門更新」系と一致しない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    }
+  ]
+}

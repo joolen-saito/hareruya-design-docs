@@ -1,0 +1,353 @@
+{
+ "packetId": "rc_02",
+ "note": "rowId は drift_findings_list_final.tsv の行番号(ヘッダ除く1始まり)。mech は機械検証フラグ(手掛かりであって正解ではない)。",
+ "count": 12,
+ "findings": [
+  {
+   "rowId": 18,
+   "機能No": "A02-05",
+   "機能名": "A02-05 更新商品規格取得",
+   "ドメイン": "a02",
+   "区分(画面種別)": "api",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "レスポンス成功時の各商品規格行は保管コードIDを `result[].strageCodeId` として返す。",
+   "実装実態": "SQLは `sc.id AS storageCodeId` を返し、ResultSetMapping も `storageCodeId` に割り当てている。Controller はRepository結果をキー変換せず `result` に返す。",
+   "差分内容": "設計HTMLのレスポンスフィールド名は `strageCodeId` だが、実装のJSONキーは `storageCodeId`。`strageCodeId` は src/Eccube と html 内で対象API実装として確認できず、別名検索でもキー変換層は見つからなかった。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/ProductRepository.php:2130",
+   "設計書参照": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-7:1810",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0502_基本設計仕様書(API_商品管理).html:1869 はExcel原文の項目名を `result.strageCodeId` とし、同:1898 のサンプルも `\"strageCodeId\": 1449` と明記する。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-api/src/Repository/DtbProductClassRepository.php:34-54 は `storageCode.id AS strageCodeId` として旧APIでも同じ綴りを返す。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/ProductRepository.php:2218-2224 は `sc.id AS storageCodeId`、同:2257 は結果キーを `storageCodeId` にマップし、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/ProductController.php:232-237 は変換せずresultsを返す。",
+   "根拠検証メモ": "設計上の綴りは誤記に見えるが、旧API外部契約も `strageCodeId` であり、設計原文を優先すると真の乖離。",
+   "対応の根拠(現develop)": "現 develop でも `src/Eccube/Repository/ProductRepository.php:2218` の SELECT は `sc.id AS storageCodeId,` のままで、`src/Eccube/Repository/ProductRepository.php:2257` の ResultSetMapping も `$rsm->addScalarResult('storagecodeid', 'storageCodeId', 'integer');` と `storageCodeId` に割り当てている。Controller `src/Eccube/Controller/App/ProductController.php:232-237` は `$results = $this->productRepository->findProductClassesByUpdateDate($fromDate, $toDate);` の結果を `return $this->json(['count' => count($results), 'result' => $results], Response::HTTP_OK);` とキー変換なしでそのまま返す。スナップショット全体を `grep -rn 'strageCodeId' src/` で検索しても 0 件で、設計書側の `strageCodeId`（5箇所）に合わせるキー変換層は存在しない。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Repository/ProductRepository.php"
+    ]
+   }
+  },
+  {
+   "rowId": 19,
+   "機能No": "A02-05",
+   "機能名": "A02-05 更新商品規格取得",
+   "ドメイン": "a02",
+   "区分(画面種別)": "api",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "レスポンス成功時の `result[].stock` と `result[].price02` は string として返す。",
+   "実装実態": "Repository は `pc.stock AS stock`, `pc.price02 AS price02` を取得し、ResultSetMapping でどちらも `integer` としてマッピングしている。Controller はこの配列をそのままJSON化する。",
+   "差分内容": "詳細設計のレスポンス定義およびサンプルは在庫数・販売価格を文字列で示しているが、実装は整数型に変換して返す。対象API用のResponseBuilderや文字列キャストは反証検索でも確認できなかった。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/ProductRepository.php:2161",
+   "設計書参照": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-7:1810",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0502_基本設計仕様書(API_商品管理).html:1864-1865 のExcel型表はstock/price02を「数値(整数)」とする一方、同:1893-1894 のサンプルは `\"stock\": \"1\"`, `\"price02\": \"6000\"` と文字列で、設計書内で矛盾する。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-api/src/Resources/config/doctrine/DtbProductClass.orm.yml:54-80 はstock/price02をdecimalと定義し、/home/y-saito/Developments/pf-api/src/Repository/DtbProductClassRepository.php:34-54 は両値を無変換でSELECTして返す。旧Doctrine実装がサンプルの文字列を裏付ける。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/ProductRepository.php:2204-2205 はstock/price02を取得し、同:2252-2253 で両方を `integer` にマップする。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/ProductController.php:232-237 は結果をそのままJSON化する。",
+   "根拠検証メモ": "Excelの型表とJSON例が矛盾するため、旧実装を真の型根拠として採用した。",
+   "対応の根拠(現develop)": "`src/Eccube/Repository/ProductRepository.php:2252-2253` は `$rsm->addScalarResult('stock', 'stock', 'integer');` `$rsm->addScalarResult('price02', 'price02', 'integer');` と監査時点同様 integer 型のままマッピングしている（SQL は `src/Eccube/Repository/ProductRepository.php:2204-2205` の `pstock.stock AS stock,` `pc.price02 AS price02,`）。`src/Eccube/Controller/App/ProductController.php:234-237` は `$this->json(['count' => count($results), 'result' => $results], ...)` で配列をそのままJSON化しており、string キャストやResponseBuilderは介在しない。設計書は `result[].stock string 在庫数。` `result[].price02 string 販売価格列の値。`、サンプルも `\"stock\": \"5\", \"price02\": \"300\"` と文字列。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Repository/ProductRepository.php"
+    ]
+   }
+  },
+  {
+   "rowId": 20,
+   "機能No": "A02-05",
+   "機能名": "A02-05 更新商品規格取得",
+   "ドメイン": "a02",
+   "区分(画面種別)": "api",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "応答プロパティはcamelCase、日時はISO8601とする。`result[].productClassUpdateDate` と `result[].productUpdateDate` はISO8601日時文字列で返す。",
+   "実装実態": "SQLは `pc.update_date AS productClassUpdateDate`, `p.update_date AS productUpdateDate` をそのまま取得し、ResultSetMapping で string として返す。Controller側で `DateTimeInterface::ATOM` や `format('c')` による出力整形は行っていない。",
+   "差分内容": "設計は日時レスポンスをISO8601と明記しているが、実装はDB値を直接文字列化するだけで、`2026-06-01T10:00:00+09:00` 形式への整形保証がない。別キーワード（ATOM/ISO8601/format('c')/to_char/productClassUpdateDate）でも対象APIの日時整形は確認できなかった。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/ProductRepository.php:2135",
+   "設計書参照": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-7:1844",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0502_基本設計仕様書(API_商品管理).html:1874-1875 は両更新日時を文字列フィールドとして定義し、同:1903-1904 のExcel原文サンプルは `2025-08-01T20:20:00+09:00` と `2025-03-06T18:34:41+09:00` のISO8601形式を明示する。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-api/src/Repository/DtbProductClassRepository.php:34-54 はDoctrineの `productClass.updateDate AS productClassUpdateDate`, `product.updateDate AS productUpdateDate` を返し、/home/y-saito/Developments/pf-api/src/Resources/config/doctrine/DtbProductClass.orm.yml:87-94 はupdateDateを `datetime` としている。旧FOSRest経路はDateTime値を返す実装で、設計サンプルとも整合する。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/ProductRepository.php:2223-2224 はDB列 `update_date` を直接SELECTし、同:2262-2263 は単なる `string` にマップする。入力パラメータは同:2266-2267 で `format('c')` する一方、出力値に `DateTimeInterface::ATOM`/`format('c')` を適用する処理はなく、Controllerも /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/ProductController.php:232-237 で結果をそのまま返す。",
+   "根拠検証メモ": "実DB値のタイムゾーン設定にかかわらず、現行コードは設計例のT区切り・オフセット付きISO8601を保証する整形を行っていないためSPEC_BACKED。",
+   "対応の根拠(現develop)": "`src/Eccube/Repository/ProductRepository.php:2223-2224` の SQL は `pc.update_date AS productClassUpdateDate,` `p.update_date AS productUpdateDate` とDB値を素で取得し、`src/Eccube/Repository/ProductRepository.php:2262-2263` の `$rsm->addScalarResult('productclassupdatedate', 'productClassUpdateDate', 'string');` `$rsm->addScalarResult('productupdatedate', 'productUpdateDate', 'string');` で文字列化するのみ。`src/Eccube/Repository/ProductRepository.php:2266-2267` の `format('c')` は入力パラメータ（fromDate/toDate）の整形であり応答日時の整形ではない。`src/Eccube/Controller/App/ProductController.php:206-237` の `getUpdatedProductClasses()` にも `DateTimeInterface::ATOM` / `format('c')` 等による出力整形はなく、設計書の `\"productClassUpdateDate\": \"2026-06-01T10:00:00+09:00\"`（プロパティはcamelCase、日時はISO8601）というISO8601保証は依然として無い。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Repository/ProductRepository.php"
+    ]
+   }
+  },
+  {
+   "rowId": 21,
+   "機能No": "A05-01",
+   "機能名": "A05-01 注文印刷_印刷情報をプリンタへ送信",
+   "ドメイン": "a05",
+   "区分(画面種別)": "api",
+   "指摘区分": "実装違い",
+   "重要度": "high",
+   "観点": "①ルート/HTTPメソッド",
+   "設計期待値": "GET /order/print/direct（ConnectionTypeがGetRequest） ... POST /order/print/direct（ConnectionTypeがSetResponse） / 旧根拠: function_spec_html_preview/pf-api/a05-01_api_order_print_direct.html:238",
+   "実装実態": "設計はパス /order/print/direct をGET・POST両方に割り当て、GET=GetRequest・POST=SetResponse とする。実装ルートは #[Route(path: '/api/order/prints/direct/{base_info_id}', methods: ['POST'])] で、(a) /api プレフィックス付き・print が prints・末尾に {base_info_id} 必須セグメントを持ちパスが不一致、(b) methods が POST のみでGET未登録。GetRequest をGETで呼ぶと405となる。ただし設計は挙動参照リポを pf-api、DBを ec-cube-enterprise とする再現設計で、ルート差は一部アーキテクチャ差でもある。",
+   "差分内容": "設計はパス /order/print/direct をGET・POST両方に割り当て、GET=GetRequest・POST=SetResponse とする。実装ルートは #[Route(path: '/api/order/prints/direct/{base_info_id}', methods: ['POST'])] で、(a) /api プレフィックス付き・print が prints・末尾に {base_info_id} 必須セグメントを持ちパスが不一致、(b) methods が POST のみでGET未登録。GetRequest をGETで呼ぶと405となる。ただし設計は挙動参照リポを pf-api、DBを ec-cube-enterprise とする再現設計で、ルート差は一部アーキテクチャ差でもある。",
+   "実装参照": "src/Eccube/Controller/App/OrderController.php:43",
+   "設計書参照": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-3",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html:1052-1055 のExcel正本は `/order/print/direct?ConnectionType=GetRequest`（GET）と `...SetResponse`（POST）を「現状」と記載する一方、同:1040-1047 は新仕様を `/order/prints/{店舗ID}`、A05-02とのエンドポイント分離とする。したがって指摘の旧パスを移行後の期待値とする正本根拠はない。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-api/config/routes.yaml:73-80 は `path: /order/print/direct` をGET・POSTの2ルートで同じ `postPrintDirectAction` に割り当て、/home/y-saito/Developments/pf-api/src/Controller/Admin/OrderController.php:33-58 は `ConnectionType` の `GetRequest` / `SetResponse` で分岐する。旧経路期待の真の根拠は旧実装である。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/OrderController.php:43-48 は `#[Route(path: '/api/order/prints/direct/{base_info_id}', ... methods: ['POST'])]` のみを定義し、GetRequestもPOSTルート内で処理する。",
+   "根拠検証メモ": "旧実装との相違は確認できるが、Excel正本は旧経路を「現状」と明示して新経路への分離を要求している。LEGACY_BACKEDは根拠の所在を示す判定であり、旧URLへの復元を正本が要求するという意味ではない。",
+   "対応の根拠(現develop)": "`src/Eccube/Controller/App/OrderController.php:43` `#[Route(path: '/api/order/prints/direct/{base_info_id}', name: 'order_direct_print', requirements: ['base_info_id' => '\\d+'], methods: ['POST'])]` のまま。設計の GET /order/print/direct（GetRequest）ルートは存在せず methods は POST のみで、GetRequest/SetResponse は同ルート内の `:46` `$connectionType = $request->get('ConnectionType');` → `:48` `if ($connectionType === 'GetRequest')` / `:64` `elseif ($connectionType === 'SetResponse')` 分岐で処理。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "NOT_FOUND",
+    "stale": "UNCHANGED",
+    "quoteDetail": [
+     "...SetResponse"
+    ]
+   }
+  },
+  {
+   "rowId": 23,
+   "機能No": "A05-01",
+   "機能名": "A05-01 注文印刷_印刷情報をプリンタへ送信",
+   "ドメイン": "a05",
+   "区分(画面種別)": "api",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "④DBカラム・DB操作",
+   "設計期待値": "店頭注文番号dtb_order_number value（現行は補助表dtb_order_subのwaiting_number） 印刷情報の店頭注文番号欄。受注IDで引く。 / 旧根拠: function_spec_html_preview/pf-api/a05-01_api_order_print_direct.html:310",
+   "実装実態": "設計は印刷情報の「店頭注文番号欄」を dtb_order_number.value（待ち番号/waiting_number）から取得すると規定。実装は dtb_order_number も waiting_number も参照せず（両リポジトリのSELECTに該当列なし）、店頭注文番号欄(行94ラベル→行97値)・注文番号欄(行114ラベル→行117値)の双方に同じ $orderNumber(order_number) を出力。店頭注文番号欄に待ち番号でなく注文番号が印字される。",
+   "差分内容": "設計は印刷情報の「店頭注文番号欄」を dtb_order_number.value（待ち番号/waiting_number）から取得すると規定。実装は dtb_order_number も waiting_number も参照せず（両リポジトリのSELECTに該当列なし）、店頭注文番号欄(行94ラベル→行97値)・注文番号欄(行114ラベル→行117値)の双方に同じ $orderNumber(order_number) を出力。店頭注文番号欄に待ち番号でなく注文番号が印字される。",
+   "実装参照": "src/Eccube/Service/Admin/Order/OrderDirectPrintAction.php:97",
+   "設計書参照": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-3",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html:1100 はExcel正本に「店頭注文番号」欄を定義するが、`dtb_order_number.value` / `waiting_number` という取得元は記載しない。同:1132 のサンプルは同欄を `{$order['order_number']}`、同:1152 の通常注文番号欄を `{$order['order_no']}` と別変数で示すにとどまる。指摘の具体的なDBマッピングは正本では裏付けられない。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-api/src/Controller/Admin/OrderController.php:138-143 は受注IDで `DtbWaitingNumber` を引き `$waitingNumber` を得て、同:162-165 の「店頭注文番号」欄へ `{$waitingNumber}` を印字する。旧実装が待ち番号を使う根拠である。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Order/OrderDirectPrintAction.php:77-78 は受注の `order_number` だけを取得し、同:94-97 の店頭注文番号欄と同:114-117 の注文番号欄の双方へ同じ `$orderNumber` を出力する。",
+   "根拠検証メモ": "店頭注文番号欄そのものは正本にあるが、指摘の核心である `dtb_order_number.value`（旧 `waiting_number`）という取得元はリバース詳細設計・旧実装由来。",
+   "対応の根拠(現develop)": "`src/Eccube/Service/Admin/Order/OrderDirectPrintAction.php:94` `<text>店頭注文番号</text>` の値欄 `:97` `<text width=\"5\" height=\"5\">{$orderNumber}</text>` と注文番号欄 `:114`→`:117` `<text>{$orderNumber}</text>` が同一値で、`:77` `$orderNumber = htmlspecialchars((string) $Order['order_number'], ENT_XML1, 'UTF-8');` の通り order_number 由来。両リポジトリの SELECT（OrderRepository.php:1603-1614 / :1661-1670）に dtb_order_number・waiting_number 列は無い。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "UNCHANGED"
+   }
+  },
+  {
+   "rowId": 25,
+   "機能No": "A05-01",
+   "機能名": "A05-01 注文印刷_印刷情報をプリンタへ送信",
+   "ドメイン": "a05",
+   "区分(画面種別)": "api",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦エラー処理",
+   "設計期待値": "（応答なし） ConnectionTypeがGetRequest・SetResponseのいずれにも一致しない 応答を組み立てず本文を返さない。 / 旧根拠: function_spec_html_preview/pf-api/a05-01_api_order_print_direct.html:265",
+   "実装実態": "設計は ConnectionType が想定値に一致しない場合『応答を組み立てず本文を返さない』と規定（バリデーション:302・エラー処理:319でも同旨）。実装(行91-96)は HTTP 400(BAD_REQUEST)・Content-Type text/plain の空 StreamedResponse を明示的に返しており、設計の『応答なし』と異なる。",
+   "差分内容": "設計は ConnectionType が想定値に一致しない場合『応答を組み立てず本文を返さない』と規定（バリデーション:302・エラー処理:319でも同旨）。実装(行91-96)は HTTP 400(BAD_REQUEST)・Content-Type text/plain の空 StreamedResponse を明示的に返しており、設計の『応答なし』と異なる。",
+   "実装参照": "src/Eccube/Controller/App/OrderController.php:91",
+   "設計書参照": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-3",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html:1046-1047 のExcel正本はConnectionTypeで分岐する共通メソッドを「現状」とし、A05-02とエンドポイントを分けるとする。想定外ConnectionType時の「応答なし」はsheet-3のExcel由来範囲:1017-1186に記載がなく、埋込リバース詳細設計だけの記述である。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-api/src/Controller/Admin/OrderController.php:33-64 は `GetRequest` と `SetResponse` の2分岐だけを持ち、それ以外ではResponseを生成せずメソッド末尾へ到達する。旧実装が「応答を組み立てない」の根拠である。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/OrderController.php:79-84 は想定外値に対してStreamedResponseを作り、`Response::HTTP_BAD_REQUEST` と `text/plain; charset=utf-8` を設定して返す。",
+   "根拠検証メモ": "正本はConnectionType分岐自体を廃してエンドポイントを分離する設計であり、このエラー契約は旧共通エンドポイント由来。",
+   "対応の根拠(現develop)": "`src/Eccube/Controller/App/OrderController.php:79-84` `$response = new StreamedResponse(); $response->setCallback(function () { }); $response->setStatusCode(Response::HTTP_BAD_REQUEST); $response->headers->set('Content-Type', 'text/plain; charset=utf-8'); return $response;` のままで、設計の「応答を組み立てず本文を返さない」に対し HTTP 400・text/plain の応答を明示的に組み立てて返している。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "TOO_SHORT",
+    "stale": "UNCHANGED",
+    "implLine": "LINE_OUT"
+   }
+  },
+  {
+   "rowId": 26,
+   "機能No": "A05-01",
+   "機能名": "A05-01 注文印刷_印刷情報をプリンタへ送信",
+   "ドメイン": "a05",
+   "区分(画面種別)": "api",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "②業務ルール・計算",
+   "設計期待値": "印刷対象の受注一覧を取得する。店頭受取で注文受領の受注、スムーズ店頭受取で所定の支払方法かつ未確定・未出荷・未取消・未受領・店頭予約日なし・スマレジコードありの受注、ブラウザ印刷フラグが立つ受注を対象とし、最大10件を取得する。 / 旧根拠: function_spec_html_preview/pf-api/a05-01_api_order_print_direct.html:247",
+   "実装実態": "設計は抽出条件を単一系統（店頭受取NEW＋スムーズ店頭受取条件群＋browser_print_flg、最大10件）として記述。実装(行44-48)は BaseInfo->isMainShop() で分岐し、本店は getPrintOrderListMainShop（OTC-NEW＋smoothOtc条件群＋browser_print_flg の3系統OR、設計相当）を使うが、支店は getDirectPrintOrderList を使い『スムーズ店頭受取(smoothOtc)』の抽出ブランチが欠落（(OTC+NEW+smaregi) UNION (browser_print_flg) のみ）。設計に無い本店/支店分岐が存在し、支店ではスムーズ店頭受取受注が印刷対象から漏れる。",
+   "差分内容": "設計は抽出条件を単一系統（店頭受取NEW＋スムーズ店頭受取条件群＋browser_print_flg、最大10件）として記述。実装(行44-48)は BaseInfo->isMainShop() で分岐し、本店は getPrintOrderListMainShop（OTC-NEW＋smoothOtc条件群＋browser_print_flg の3系統OR、設計相当）を使うが、支店は getDirectPrintOrderList を使い『スムーズ店頭受取(smoothOtc)』の抽出ブランチが欠落（(OTC+NEW+smaregi) UNION (browser_print_flg) のみ）。設計に無い本店/支店分岐が存在し、支店ではスムーズ店頭受取受注が印刷対象から漏れる。",
+   "実装参照": "src/Eccube/Service/Admin/Order/OrderDirectPrintAction.php:44",
+   "設計書参照": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-3",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html:1065-1066 のExcel正本は「店舗IDからその店舗の未印刷の注文データを抽出」とだけ記載し、店頭受取・スムーズ店頭受取の列挙条件、支払方法、各日時NULL、browser_print_flg、最大10件という具体条件はsheet-3のExcel由来範囲:1017-1186に存在しない。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-api/src/Repository/DtbOrderRepository.php:38-60 はOTC+NEW、SMOOTH_OTC+支払方法+confirm/commit/shipping/cancel/receipt/otcRsv未設定+smaregiCodeあり、browserPrintFlgのOR条件を組み、`setMaxResults(10)` とする。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Order/OrderDirectPrintAction.php:42-48 は本店と支店で取得メソッドを分ける。本店側は /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php:1618-1644 にSMOOTH_OTC条件を持つが、支店側の同:1657-1700 はOTC+NEWとbrowser_print_flgの2系統だけでSMOOTH_OTC分岐を持たない。",
+   "根拠検証メモ": "未印刷データ抽出という上位要件は正本にあるが、指摘の核心である完全な抽出条件は旧実装由来。",
+   "対応の根拠(現develop)": "`src/Eccube/Service/Admin/Order/OrderDirectPrintAction.php:44-48` `if ($BaseInfo && $BaseInfo->isMainShop()) { $OrderDataList = $this->orderRepository->getPrintOrderListMainShop($base_info_id); } else { $OrderDataList = $this->orderRepository->getDirectPrintOrderList($base_info_id); }` の本店/支店分岐が残存。支店側 `src/Eccube/Repository/OrderRepository.php:1657-1701` は `s.delivery_id = :otc AND o.order_status_id = :orderNew AND o.smaregi_code IS NOT NULL`（:1676-1678）と `o.browser_print_flg = true`（:1697）の2系統 UNION のみで、smoothOtc 抽出ブランチが依然欠落（`'s.Delivery = :smoothOtc'` は本店側 :1624 のみ）。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Repository/OrderRepository.php"
+    ]
+   }
+  },
+  {
+   "rowId": 27,
+   "機能No": "A05-01",
+   "機能名": "A05-01 注文印刷_印刷情報をプリンタへ送信",
+   "ドメイン": "a05",
+   "区分(画面種別)": "api",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "④DBカラム・DB操作",
+   "設計期待値": "立っていない場合は受注のステータスをピック中へ更新し、補助情報の確定日時に現在時刻を設定する。 / 旧根拠: function_spec_html_preview/pf-api/a05-01_api_order_print_direct.html:249",
+   "実装実態": "設計は SetResponse でブラウザ印刷フラグが立たない場合『ステータスをピック中へ更新し確定日時(confirm_date)に現在時刻を設定』と規定。実装(行91-97)は BaseInfo->isMainShop() で分岐し、本店は setConfirmDate、支店は setPickingDate を設定する（設計に無い本店/支店分岐）。また設計DBカラム(:310)は picking_date・pick_finish_date を『ピック中へ更新する際に設定』とするが、実装は pick_finish_date を一切設定せず、支店では confirm_date を設定しない。設定される日時列が設計と一致しない。なお設計自体が処理フロー(confirm_date)とDBカラム(picking_date/pick_finish_date)で列指定に揺れがある点に留意。",
+   "差分内容": "設計は SetResponse でブラウザ印刷フラグが立たない場合『ステータスをピック中へ更新し確定日時(confirm_date)に現在時刻を設定』と規定。実装(行91-97)は BaseInfo->isMainShop() で分岐し、本店は setConfirmDate、支店は setPickingDate を設定する（設計に無い本店/支店分岐）。また設計DBカラム(:310)は picking_date・pick_finish_date を『ピック中へ更新する際に設定』とするが、実装は pick_finish_date を一切設定せず、支店では confirm_date を設定しない。設定される日時列が設計と一致しない。なお設計自体が処理フロー(confirm_date)とDBカラム(picking_date/pick_finish_date)で列指定に揺れがある点に留意。",
+   "実装参照": "src/Eccube/Service/Admin/Order/UpdatePrintedOrderStatusAction.php:91",
+   "設計書参照": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-3",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html:1328,1345-1347 のExcel正本は受注ステータスを「ピック中」にすることを要求するが、`confirm_date`、`picking_date`、`pick_finish_date` の設定要件はsheet-4のExcel由来範囲:1313-1420に存在しない。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-api/src/Controller/Admin/OrderController.php:116-123 はbrowserPrintFlgが偽なら `$order->setStatus(MtbOrderStatus::ORDER_PICKING);` と `$orderSub->setConfirmDate(new \\DateTime());` を常に実行する。旧実装は少なくともピック中＋確定日時の組を裏付ける。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Order/UpdatePrintedOrderStatusAction.php:87-100 はステータスをPICKINGへ更新する一方、本店だけ `setConfirmDate`、支店だけ `setPickingDate` と分岐し、`setPickFinishDate` は呼ばない。",
+   "根拠検証メモ": "`pick_finish_date` まで同時設定する期待はリバース詳細設計が移行先スキーマから補ったもので、旧pf-apiは直接裏付けない。ただし全店舗でconfirm_dateを設定する旧挙動の支店移植漏れは確認できるためLEGACY_BACKED。",
+   "対応の根拠(現develop)": "`src/Eccube/Service/Admin/Order/UpdatePrintedOrderStatusAction.php:90-97` `$Order->setOrderStatus($pickingStatus); if ($BaseInfo->isMainShop()) { // 本店の場合、注文確定日を更新 $Order->setConfirmDate(new \\DateTime()); } else { // 支店の場合、ピック開始日を更新 $Order->setPickingDate(new \\DateTime()); }` のままで、設計に無い本店/支店分岐が残り支店では confirm_date を設定しない。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EMBED_ONLY",
+    "stale": "UNCHANGED",
+    "quoteDetail": [
+     "confirm_date",
+     "picking_date",
+     "pick_finish_date"
+    ]
+   }
+  },
+  {
+   "rowId": 31,
+   "機能No": "A05-01",
+   "機能名": "A05-01 注文印刷_印刷情報をプリンタへ送信",
+   "ドメイン": "a05",
+   "区分(画面種別)": "api",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "バーコード未印刷を防ぐため、注文データをXML形式にする前に受注データにスマレジの商品コードが存在するか確認し、存在しない場合は何もしない。スマレジコードは印刷情報のバーコードにも用いる。",
+   "実装実態": "本店向け getPrintOrderListMainShop の店頭受取・注文受領分岐には o.smaregi_code IS NOT NULL 条件がない。ブラウザ印刷フラグ分岐にもスマレジコード必須条件がない。支店向け getDirectPrintOrderList でも browser_print_flg = true 分岐にスマレジコード必須条件がない。",
+   "差分内容": "実装は一部の分岐では o.smaregi_code IS NOT NULL を条件にしているが、全印刷対象に対してXML生成前のスマレジコード存在確認を保証していない。OrderDirectPrintAction は取得結果の smaregi_code をそのまま barcode に埋め込むため、空コードの印刷XMLが生成され得る。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php:1493",
+   "設計書参照": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-3:879",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html:1063-1064 のExcel正本はXML化前にスマレジ商品コードの存在を確認し、存在しなければ「何もしない」と明記する。同:1170 はバーコード値に `{$order['smaregi_code']}` を用いる。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-api/src/Repository/DtbOrderRepository.php:38-51 ではsmaregiCode必須条件がSMOOTH_OTC分岐にしかなく、OTC+NEWとbrowserPrintFlg分岐には適用されないため、旧実装も正本の全件事前確認を完全には満たさない。根拠はExcel正本である。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php:1618-1636 の本店クエリはOTC+NEWとbrowser_print_flg分岐にsmaregi_code必須条件がなく、同:1683-1698 の支店browser_print_flg分岐にもない。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Order/OrderDirectPrintAction.php:77-78,134-135 は取得した値を検証せずバーコードへ出力する。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Repository/OrderRepository.php:1618-1636` の本店側 OR 条件のうち、店頭受取分岐 `$qb->expr()->andX('s.Delivery = :otc', 'o.OrderStatus = :orderNew')`（:1619-1622）とブラウザ印刷分岐 `'o.browser_print_flg = true'`（:1635）に smaregi_code 条件が無く、`'o.smaregi_code IS NOT NULL'` は :1633 の smoothOtc 分岐のみ。支店側も `:1697` `AND o.browser_print_flg = true` 分岐に同条件が無い。`src/Eccube/Service/Admin/Order/OrderDirectPrintAction.php:78` `$smaregiCode = htmlspecialchars((string) $Order['smaregi_code'], ENT_XML1, 'UTF-8');` → `:135` `<barcode type=\"jan13\" hri=\"below\" font=\"font_b\" width=\"2\" height=\"50\">{$smaregiCode}</barcode>` と、XML 生成前の存在確認・スキップ処理なしで埋め込んでいる。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Repository/OrderRepository.php"
+    ]
+   }
+  },
+  {
+   "rowId": 33,
+   "機能No": "A05-01",
+   "機能名": "A05-01 注文印刷_印刷情報をプリンタへ送信",
+   "ドメイン": "a05",
+   "区分(画面種別)": "api",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "ConnectionType が GetRequest・SetResponse のいずれにも一致しない場合は処理を行わず応答を組み立てない。",
+   "実装実態": "ConnectionType が想定値以外の場合、StreamedResponse を作成し、HTTP 400 と Content-Type: text/plain; charset=utf-8 を設定して返している。",
+   "差分内容": "設計は応答を組み立てず本文を返さないとしているが、実装は明示的な400応答を組み立てる。ConnectionType, GetRequest, SetResponse, ResponseFile で再検索したが同ルート以外の代替実装は見つからない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/OrderController.php:91",
+   "設計書参照": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-3:1062",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html:1046-1047 はConnectionType共通分岐を「現状」としてエンドポイント分離を要求しており、想定外ConnectionType時の挙動はsheet-3のExcel由来範囲:1017-1186に記載しない。`応答を組み立てない` は埋込リバース詳細設計だけの期待である。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-api/src/Controller/Admin/OrderController.php:33-64 はGetRequest/SetResponse以外のelseやreturn Responseを持たず、応答を生成しないまま終了する。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/OrderController.php:79-84 は想定外値に対し明示的にHTTP 400・`text/plain; charset=utf-8` のStreamedResponseを返す。",
+   "根拠検証メモ": "rowId 25と同じ旧エラー契約の重複指摘。",
+   "対応の根拠(現develop)": "`src/Eccube/Controller/App/OrderController.php:79-84` で ConnectionType が GetRequest/SetResponse のいずれにも一致しない場合、`$response = new StreamedResponse(); $response->setCallback(function () { }); $response->setStatusCode(Response::HTTP_BAD_REQUEST); $response->headers->set('Content-Type', 'text/plain; charset=utf-8'); return $response;` と、現 develop でも明示的に 400 応答を組み立てて返している。設計の「応答を組み立てない」は未反映。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EMBED_ONLY",
+    "stale": "UNCHANGED",
+    "implLine": "LINE_OUT",
+    "quoteDetail": [
+     "応答を組み立てない"
+    ]
+   }
+  },
+  {
+   "rowId": 34,
+   "機能No": "A05-02",
+   "機能名": "A05-02 注文印刷_該当受注のステータスを印刷済みに変更",
+   "ドメイン": "a05",
+   "区分(画面種別)": "api",
+   "指摘区分": "実装違い",
+   "重要度": "high",
+   "観点": "①ルート/HTTPメソッド",
+   "設計期待値": "印刷情報をプリンタへ送信（A05-01） | `GET /order/print/direct`（`ConnectionType`が`GetRequest`） ... | `POST /order/print/direct`（`ConnectionType`が`SetResponse`） / 旧根拠: functions/pf-api/a05-02_api_order_print_direct.md:71",
+   "実装実態": "設計はパス `/order/print/direct` を GET と POST の両方で受け付け、GetRequest は GET・SetResponse は POST とする。実装のルートは `#[Route(path: '/api/order/prints/direct/{base_info_id}', name: 'order_direct_print', requirements: ['base_info_id' => '\\d+'], methods: ['POST'])]` で、(1)パスが `/api/` 接頭辞付き・`prints`(複数形)・末尾に `{base_info_id}` 必須セグメントを持つ、(2)methods は POST のみで GET を許可しない(GetRequest 分岐も POST でしか到達できず、GET リクエストは 405 となる)。設計に無い `base_info_id` を必須経路パラメータとして要求する点も差分。",
+   "差分内容": "設計はパス `/order/print/direct` を GET と POST の両方で受け付け、GetRequest は GET・SetResponse は POST とする。実装のルートは `#[Route(path: '/api/order/prints/direct/{base_info_id}', name: 'order_direct_print', requirements: ['base_info_id' => '\\d+'], methods: ['POST'])]` で、(1)パスが `/api/` 接頭辞付き・`prints`(複数形)・末尾に `{base_info_id}` 必須セグメントを持つ、(2)methods は POST のみで GET を許可しない(GetRequest 分岐も POST でしか到達できず、GET リクエストは 405 となる)。設計に無い `base_info_id` を必須経路パラメータとして要求する点も差分。",
+   "実装参照": "src/Eccube/Controller/App/OrderController.php:43",
+   "設計書参照": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-4",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html:1335-1339 のA05-02 Excel正本は新仕様を `POST /order/prints/status/printed` とし、現状のConnectionType共通メソッドからエンドポイントを分ける。したがって指摘の `GET/POST /order/print/direct` は移行後の正本期待ではない。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-api/config/routes.yaml:73-80 は `/order/print/direct` をGET/POSTの双方で同じControllerへ割り当て、/home/y-saito/Developments/pf-api/src/Controller/Admin/OrderController.php:33-58 はConnectionTypeでGetRequest/SetResponseを分岐する。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/OrderController.php:43-48 は `POST /api/order/prints/direct/{base_info_id}` のみを定義し、旧GETルートも正本の `/order/prints/status/printed` も持たない。",
+   "根拠検証メモ": "旧実装由来の経路差はあるが、Excel正本は旧経路を廃してA05-02専用経路へ分離する設計である。",
+   "対応の根拠(現develop)": "`src/Eccube/Controller/App/OrderController.php:43` は現 develop でも `#[Route(path: '/api/order/prints/direct/{base_info_id}', name: 'order_direct_print', requirements: ['base_info_id' => '\\d+'], methods: ['POST'])]` のまま。設計の `/order/print/direct`（`/api/` 無し・`{base_info_id}` 無し・GET+POST）は存在せず、`if ($connectionType === 'GetRequest')`（同:48）分岐も POST でしか到達できない。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "NO_QUOTE",
+    "stale": "UNCHANGED"
+   }
+  },
+  {
+   "rowId": 35,
+   "機能No": "A05-02",
+   "機能名": "A05-02 注文印刷_該当受注のステータスを印刷済みに変更",
+   "ドメイン": "a05",
+   "区分(画面種別)": "api",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "②業務ルール・抽出条件",
+   "設計期待値": "印刷対象の受注一覧を取得する。店頭受取で注文受領の受注、スムーズ店頭受取で所定の支払方法かつ未確定・未出荷・未取消・未受領・店頭予約日なし・スマレジコードありの受注、ブラウザ印刷フラグが立つ受注を対象とし、最大10件を取得する。 / 旧根拠: functions/pf-api/a05-02_api_order_print_direct.md:95",
+   "実装実態": "設計は単一の抽出条件(店頭受取+スムーズ店頭受取+ブラウザ印刷フラグ)を記述するが、実装は BaseInfo->isMainShop() で分岐し、本店は getPrintOrderListMainShop(スムーズ店頭受取ブランチ有)、支店は getDirectPrintOrderList を用いる。支店側クエリ(OrderRepository:1565)は『スムーズ店頭受取』抽出ブランチを持たず(OTC+NEW+smaregi_code IS NOT NULL の UNION browser_print_flg のみ)、支店ではスムーズ店頭受取受注が印刷対象から漏れる。設計に本店/支店分岐の記載は無い。",
+   "差分内容": "設計は単一の抽出条件(店頭受取+スムーズ店頭受取+ブラウザ印刷フラグ)を記述するが、実装は BaseInfo->isMainShop() で分岐し、本店は getPrintOrderListMainShop(スムーズ店頭受取ブランチ有)、支店は getDirectPrintOrderList を用いる。支店側クエリ(OrderRepository:1565)は『スムーズ店頭受取』抽出ブランチを持たず(OTC+NEW+smaregi_code IS NOT NULL の UNION browser_print_flg のみ)、支店ではスムーズ店頭受取受注が印刷対象から漏れる。設計に本店/支店分岐の記載は無い。",
+   "実装参照": "src/Eccube/Service/Admin/Order/OrderDirectPrintAction.php:44",
+   "設計書参照": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-4",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html:1313-1420 のA05-02 Excel正本はSetResponseによるステータス更新を扱い、GetRequestの印刷対象抽出条件を記載しない。A05-01側も同:1065 の「店舗IDから…未印刷の注文データ」までで、列挙された詳細条件は正本にない。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-api/src/Repository/DtbOrderRepository.php:38-60 はOTC+NEW、SMOOTH_OTC+支払方法・各日時・スマレジ条件、browserPrintFlgのORと最大10件を実装する。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Order/OrderDirectPrintAction.php:42-48 は本店/支店で検索を分け、支店側 /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php:1657-1700 はOTC+NEWとbrowser_print_flgだけでSMOOTH_OTC条件を持たない。",
+   "根拠検証メモ": "A05-02のfindingへA05-01のGetRequest要件が重複混入している。詳細条件の根拠は旧pf-api。",
+   "対応の根拠(現develop)": "`src/Eccube/Service/Admin/Order/OrderDirectPrintAction.php:44-48` は現 develop でも `if ($BaseInfo && $BaseInfo->isMainShop()) { $OrderDataList = $this->orderRepository->getPrintOrderListMainShop($base_info_id); } else { $OrderDataList = $this->orderRepository->getDirectPrintOrderList($base_info_id); }` と本店/支店分岐。支店側 `src/Eccube/Repository/OrderRepository.php:1657-1701` の getDirectPrintOrderList は `s.delivery_id = :otc AND o.order_status_id = :orderNew AND o.smaregi_code IS NOT NULL` の UNION `o.browser_print_flg = true` のみで、`Delivery::SMOOTH_OTC` 抽出ブランチを持たない（同ファイル 1623-1634 行の本店側にのみ `s.Delivery = :smoothOtc` 条件あり）。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "NOT_FOUND",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Repository/OrderRepository.php"
+    ],
+    "quoteDetail": [
+     "店舗IDから…未印刷の注文データ"
+    ]
+   }
+  }
+ ]
+}

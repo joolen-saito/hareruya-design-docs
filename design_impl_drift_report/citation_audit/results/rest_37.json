@@ -1,0 +1,165 @@
+{
+  "packetId": "rest_37",
+  "results": [
+    {
+      "rowId": 1004,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html:2412-2413 のExcel正本セルは、識別ID20を「登録」ボタン・「新規日程登録時のみ表示」、識別ID21を「更新」ボタン・「既存の日程更新時のみ表示」と明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Schedule/schedule.twig:220-224 も `{# 登録/更新 #}` に続き `<button ...>日程{{ eventDetailId ? '更新' : '登録' }}</button>` と新規・既存で文言を切り替える。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Event/Schedule/edit.twig:247-264 は既存/新規の分岐を持つが、両方のsubmitを `{{ 'admin.common.save'|trans }}` とする。ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:1631 は `admin.common.save: 保存` であり、表示は両方「保存」となる。",
+      "note": "Excel正本が新規時「登録」・既存時「更新」を明示し、現行は双方「保存」のため SPEC_BACKED。"
+    },
+    {
+      "rowId": 1005,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html:2578-2788 のsheet-8 Excel正本部には繰返日程追加の項目・処理概要はあるが、URL/bind名はない。`function-design-embed:start` 後の同:2819 に初めて `GET /{admin_route}/event/repeatschedule/{eventId}/new` と `POST .../create`、同:2859 に `admin_repeat_schedule_new` が現れるため、技術契約はリバース詳細設計由来。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/EventServiceProvider.php:78-84 は `$app->get('/'.$app['config']['admin_route'].'/event/repeatschedule/{eventId}/new', ...)` を `admin_repeat_schedule_new`、対応POSTを `/event/repeatschedule/{eventId}/create` の `admin_repeat_schedule_create` として登録する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Event/RepeatScheduleController.php:41-45 は `#[Route(path: '/%eccube_admin_route%/event/{eventId}/repeatSchedule/create', name: 'admin_repeat_schedule_create', ... methods: ['GET', 'POST'])]` の単一路由で、旧GET newルートと `admin_repeat_schedule_new` を持たない。",
+      "note": "正本設計の記述漏れを伴う旧ルート契約の移植差。"
+    },
+    {
+      "rowId": 1007,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html:2578-2788 のsheet-8 Excel正本部は支払方法未設定時の具体的ロケールキーを記さない。`function-design-embed:start` 後の同:2830 にだけ `admin.schedule.save.failed` と `admin.schedule.error.payment.not.exists` が記載される。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/RepeatScheduleController.php:62-75 は検証失敗で `$app->addError('admin.schedule.save.failed', 'admin')`、申込受付有効かつ支払方法なしで同キーと `$app->addError('admin.schedule.error.payment.not.exists', 'admin')` を追加する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Event/RepeatScheduleController.php:67-93 はvalid時だけ保存へ進み、例外時に `$this->addError('admin.common.save_error', 'admin')` を出す。指定2キーは `src/Eccube` 全体に存在せず、支払方法未設定専用分岐もこのControllerにはない。",
+      "note": "具体的なエラーキーと分岐は旧実装由来。"
+    },
+    {
+      "rowId": 1009,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html:2698 のExcel正本セルは識別ID4を「イベントページURL」「リンク」とし、説明を「フロントの当該イベントページへのリンク」と明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Schedule/repeatschedule.twig:61-67 は `{# イベントページURL #}` とラベルだけを描画し、値の `<div class=\"col-sm-8 col-md-8\"></div>` は空である。旧実装もこの正本要件を満たしていない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/RepeatScheduleType.php:64-77 は `is_new` 時の `eventDetailId` をnullにする。ec-cube-enterprise/src/Eccube/Resource/template/admin/Event/RepeatSchedule/create.twig:90-95 は `{% if form.eventDetailId.vars.value %}` のときだけ `event_detail` リンクを描画するため、繰返日程新規画面では空になる。",
+      "note": "Excel正本にフロントイベントページへのリンク要求があり、現行の新規画面ではリンク条件を満たせないため SPEC_BACKED。"
+    },
+    {
+      "rowId": 1010,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html:2874-3188 のsheet-9 Excel正本部には複製新規画面とボタンはあるが、URL・bind名・パス変数制約はない。`function-design-embed:start` 後の同:3232 にだけ `GET /%admin_route%/event/{duplicateId}/duplicate` が現れ、同:3303 に `admin_event_duplicate` が記される。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/EventServiceProvider.php:42-45 は `/event/{duplicateId}/duplicate` を `->assert('duplicateId', '^[1-9][0-9]*$')`、`->bind('admin_event_duplicate')` で登録する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Event/EventController.php:272-275 は複製を `/%eccube_admin_route%/event/{id}/copy`、`admin_event_copy`、制約 `\\d+` として定義するため、URL・route名・0除外制約が旧契約と異なる。ec-cube-enterprise/src/Eccube/Resource/template/admin/Event/edit.twig:491-497 も `url('admin_event_copy', {id: Event.id})` を使用する。",
+      "note": "具体URL・bind名・1以上制約は旧実装由来。"
+    },
+    {
+      "rowId": 1011,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html:3013-3014 のExcel正本セルは「識別ID:1-3『店舗』は編集権限のある店舗のみ表示する」「編集権限のない店舗が選択された場合エラー」と規定し、同:3035 の項目表も同文を再掲する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/Event/EventDetailType.php:80-89 は旧フォームに `shop` と `venue` のentity選択を実装する。ただしこの定義自体には権限店舗だけへ絞るquery_builderはない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/EventType.php:88-92 は `baseInfo` の選択肢を `BaseInfo` 全件の `orderBy('b.id', 'ASC')` とする一方、同:292-297 はPOST_SUBMITで `!$Member->isEditableShop($BaseInfo)` の場合にエラーを付ける。後半は満たすが「編集権限のある店舗のみ表示」は未達。",
+      "note": "現行は権限外店舗の送信時エラーを満たすが、正本が併記する「権限店舗のみ表示」は満たさないため SPEC_BACKED。"
+    },
+    {
+      "rowId": 1012,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html:3036 のExcel正本項目表は識別ID1-4「会場」を「単一選択」、必須「〇」、「選択肢:全会場」と明記する。複製新規シートの入力項目なので複製画面での初期表示対象である。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/Event/EventDetailType.php:80-90 は `->add('venue', 'entity', ['class' => 'Plugin\\HareruyaEc\\Entity\\MtbVenue', ...])` を実装する。pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/EventController.php:57-76 は複製元Eventを取得し、そのEventを `admin_event_detail` フォームの初期データにする。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Entity/DtbEvent.php:38-82 の主要項目はBaseInfo、Rel、名称、定員、参加費、賞品、公開状態、イベント規模で、Venue/venue_idを持たない。ec-cube-enterprise/src/Eccube/Form/Type/Admin/EventType.php:88-105 も `baseInfo` の次は `formats`、`eventScale` で会場欄がない（確認範囲: EventController/EventType/edit.twig/DtbEvent/EventEntityManager、検索語 venue/Venue/会場/venue_id）。",
+      "note": "Excel正本に必須の会場選択欄があり、現行のエンティティ・フォーム・画面に当該項目がないため SPEC_BACKED。"
+    },
+    {
+      "rowId": 1013,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html:3050-3051 のExcel正本項目表は、複製新規画面の識別ID2-3「備考(日)」と2-4「備考(英)」を各「全角・半角」、最大「4096字」と明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/Event/EventDetailType.php:186-206 は `detailJp` と `detailEn` のtextareaを定義し、双方に `new Assert\\Length(['max' => $textAreaLen])` を付ける。pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/EventController.php:57-76 は複製元Eventをフォーム初期データに使う。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Entity/DtbEvent.php:84-127 は備考ではなく `freeTextArea1..3` のラベル・内容・アコーディオン項目を持つ。EventType.php、edit.twig、DtbEvent.phpを「備考/remarks/detailJp/detailEn」で検索して該当なしであり、正本の備考(日/英)欄と複製経路は存在しない。",
+      "note": "同ブックのイベント編集側ではフリー入力エリアへの再編が見えるが、担当 finding が参照する複製新規sheet-9のExcel正本項目表には備考2項目が残っているため、当該シートを正として判定した。"
+    },
+    {
+      "rowId": 1014,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html:2874-3188 のsheet-9 Excel正本部は複製新規フォームを示すが、Symfony/Silexのフォーム名は記さない。`function-design-embed:start` 後の同:3240 にだけ「フォーム名 admin_event_detail」が現れる。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/EventController.php:57-76 は `$findEventId = $duplicateId ?? $id` で複製元を読み、`createBuilder('admin_event_detail', $event)` でフォームを生成する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Event/EventController.php:273-281 はcopyルートでEventTypeを生成し、ec-cube-enterprise/src/Eccube/Form/Type/Admin/EventType.php:319-322 の `getBlockPrefix()` は `return 'admin_event'`。旧フォーム名 `admin_event_detail` ではない。",
+      "note": "フォーム内部名は旧実装由来。"
+    },
+    {
+      "rowId": 1016,
+      "verdict": "UNSUPPORTED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html:3378-3379 のExcel正本は見出し「削除項目」の直下に「DCIナンバー」、説明「削除」と明記し、指摘の追加要求を明確に否定する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/Entry/EntryListType.php:87-94 は旧検索フォームに `->add('dci_no', 'textarea', ...)` を実装する。ただしExcel正本が刷新後の削除対象に指定しているため、この旧実装は移植期待の根拠にならない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/SearchEntryType.php:63-169 はイベント名、店舗、申込状況、支払方法、支払番号、プレイヤー名、日時、デッキ登録有無、イベント詳細ID、検索モードを定義するが `dci_no` はなく、これは正本の「削除」と一致する。",
+      "note": "旧実装とリバース詳細設計に削除前の項目が残るが、Excel正本の明示削除が優先されるため、移植漏れという指摘は誤検出。"
+    },
+    {
+      "rowId": 1017,
+      "verdict": "UNSUPPORTED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html:3378-3381 のExcel正本は「削除項目」に「チームメンバー確認状況」「複数選択」「削除」と明記する。指摘の `confirm_flg` 確認済/未確認フィルタはこの旧項目に相当し、正本は存続を要求していない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/Entry/EntryListType.php:117-130 は旧フォームに `confirm_flg` のexpanded/multiple choiceと、`true`/`false` の2選択肢を実装する。ただし正本の削除指定により移植対象ではない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/SearchEntryType.php:63-169 に `confirm_flg`/確認済フィールドはなく、日時の後は `is_deck_registered`、`event_detail_id`、`searchMode` が続く。これはExcel正本の削除指示と一致する。",
+      "note": "旧 `confirm_flg` は実在するが、正本がチームメンバー確認状況を削除しているため誤検出。"
+    },
+    {
+      "rowId": 1018,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html:3657-3909 のsheet-11 Excel正本部にASC/DESC不正時のフラッシュ・初期表示戻し・ロケールキーはない。`function-design-embed:start` 後の同:4011 にのみ「並び順エラー」「画面上部のフラッシュ領域」「admin.error.sort」が現れる。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/SearchControllerTrait.php:140-143 は `preg_match('/^(ASC|DESC|asc|desc)$/', $order)` 失敗時に `$app->addError('admin.error.sort', 'admin')` を行い `return $this->index($app, $request)` で初期表示へ戻す。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Event/EntryController.php:221-230 はorderがASC/DESC以外なら単に `$order = 'DESC'` としてセッションへ保存し、エラー表示も初期表示への差し戻しも行わない。",
+      "note": "具体的な不正sort処理は旧共通trait由来。"
+    },
+    {
+      "rowId": 1020,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html:3372 のExcel正本セルはイベント詳細IDを「数値(整数)」、最大「10字」と規定する。数字Regexという実装方式はリバース側の具体化だが、非数字を受理しないという要求自体は正本にある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/Entry/EntryListType.php:163-170 は `event_detail_id` をinteger型とし、`new Assert\\Regex(['pattern' => '/^[0-9]{0,10}$/'])` を付ける。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/SearchEntryType.php:152-158 はTextTypeに `new Length(['max' => ...])` だけを付け、数字制約がない。ec-cube-enterprise/src/Eccube/Repository/DtbDeckRepository.php:782-788 は非数字なら `ctype_digit` 分岐へ入らず検索条件を黙って追加しない。",
+      "note": "Excel正本の数値（整数）制約を現行の文字列長制約だけでは保証できないため SPEC_BACKED。"
+    },
+    {
+      "rowId": 1021,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html:4089-4100 のExcel正本は選択申込の申込状況一括変更を規定するが、URLとJSON契約はない。`function-design-embed:start` 後の同:4163 にだけ `POST /{admin_route}/entry/bulkupdate（非同期）` とJSON返却が現れる。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/EntryServiceProvider.php:74-76 は `/entry/bulkupdate` のPOSTを `admin_entry_bulk_update` として登録し、pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/EntryController.php:590-616 は一括更新後に `$app->json(...)` を返す。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Event/EntryController.php:341-354 はPOST/JSON自体を実装するが、routeは `/%eccube_admin_route%/event/entry/bulk_update`、nameは `admin_event_entry_bulk_update` で、旧 `/entry/bulkupdate` と一致しない。",
+      "note": "一括更新という業務機能は正本にあり現行も実装済み。残る指摘対象のURL契約は旧実装由来。"
+    },
+    {
+      "rowId": 1022,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html:4048-4131 のsheet-12 Excel正本部にXHR判定はない。`function-design-embed:start` 後の同:4164、4171 にだけ「非同期リクエストでない場合は失敗メッセージのJSONを返す」と記される。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/EntryController.php:590-597 は `if (!$request->isXmlHttpRequest()) { return $app->json(['message'=> $app->trans('admin.register.failed')]); }` と非XHRを拒否する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Event/EntryController.php:341-370 はフォーム検証後にID抽出・`entryStatusBulkUpdateAction->handle(...)` へ進むが、`isXmlHttpRequest()`/`X-Requested-With` 判定を持たない。通常POSTでもvalidなら更新される。",
+      "note": "XHR必須契約は旧実装由来。"
+    },
+    {
+      "rowId": 1023,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html:4048-4131 のsheet-12 Excel正本部は成功/失敗ロケールキーを指定しない。`function-design-embed:start` 後の同:4174 にだけ `admin.register.failed` と `admin.register.complete` がJSON文言として現れる。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/EntryController.php:595-616 は非XHR時に `$app->trans('admin.register.failed')`、成功時に `$app->trans('admin.register.complete')` をJSONで返す。pf-eccube3/src/Eccube/Resource/locale/message.ja.yml:83-84 は各文言を「登録が完了しました。」「登録できませんでした。」と定義する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Event/EntryController.php:347-359 は失敗時に `admin.common.error_invalid_request` または `admin.event.entry.bulk_update.nothing_selected`、同:383 は成功時に `admin.event.entry.bulk_update.success` を返す。ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:1970-1971 に旧2キー自体はあるが、このendpointでは使われない。",
+      "note": "具体的なJSONロケールキーは旧実装由来。"
+    },
+    {
+      "rowId": 1024,
+      "verdict": "UNSUPPORTED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html:4090-4091 のExcel正本は「申込状況を一括変更する」「変更された申込の申込履歴を追加する」と記す。ステータスが同一で変更されなかった申込にも更新要求ごとに必ず履歴を作る、とは書いていない。無条件の「一括更新ごとに1件」はリバース詳細設計の同:4193 にだけある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/EntryController.php:608-612 は各申込で `createEntryHistory(..., true)` を呼ぶが、pf-eccube3/app/Plugin/HareruyaEc/Repository/DtbEntryHistoryRepository.php:31-40 は直近履歴と同一ステータスなら `continue` し履歴を作らない。したがって無条件1件という期待値は旧実装にも裏付けられない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Admin/Entry/EntryStatusBulkUpdateAction.php:46-63 は各申込保存後に `createEntryHistory` を呼び、ec-cube-enterprise/src/Eccube/Repository/DtbEntryHistoryRepository.php:42-51 は旧実装と同じく直近ステータスが同一なら `continue`、変更時はnew/persistする。Excel正本の「変更された申込」には合致する。",
+      "note": "リバース詳細設計が旧実装の同一ステータスskipを落として一般化した誤検出。"
+    },
+    {
+      "rowId": 1025,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html:4218-4359 のsheet-13 Excel正本部はデッキ表示画面を定義するが、入口URL/bind名はない。`function-design-embed:start` 後の同:4403 に `GET /%admin_route%/entry/deckList`、同:4480 に `admin_entry_decklist` が初めて現れる。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/EntryServiceProvider.php:86-88 は `$app->get('/'.$app['config']['admin_route'].'/entry/deckList', ...)->bind('admin_entry_decklist')` と登録する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Event/EntryController.php:578-580 は `/%eccube_admin_route%/event/entry/decklist`、`admin_event_entry_decklist` を定義し、ec-cube-enterprise/src/Eccube/Resource/template/admin/Event/Entry/index.twig:381-382 もその新routeを使用する。",
+      "note": "URLとbind名は旧実装由来。"
+    },
+    {
+      "rowId": 1026,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html:4263-4265 のExcel正本セルはカスタマイズ要件として「権限を保持している店舗のイベントのデッキのみ表示を可能とする」と明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/EntryController.php:754-767 はセッション検索条件をそのまま `getEntryDeckData($searchData)` へ渡し、pf-eccube3/app/Plugin/HareruyaEc/Repository/DtbDeckRepository.php:683-686 は選択されたshopで絞るだけで管理者権限との照合は見当たらない。旧実装も正本要件を満たす根拠が弱い。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/SearchEntryType.php:68-78 は `base_info` 選択肢をBaseInfo全件とし、ec-cube-enterprise/src/Eccube/Controller/Admin/Event/EntryController.php:582-606 はセッション値をフォームへ投入して検索するだけで `Member::isEditableShop` を確認しない。ec-cube-enterprise/src/Eccube/Repository/DtbDeckRepository.php:756-760 も渡されたBaseInfo IDで絞るのみ。",
+      "note": "Excel正本が権限店舗のイベントだけに限定することを要求する一方、現行は全店舗選択肢と渡されたIDだけで検索するため SPEC_BACKED。"
+    },
+    {
+      "rowId": 1027,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html:4286 のExcel正本項目表は「Name」「プレイヤー名を表示」とだけ記し、値の優先順位・trim・カナfallbackはない。`function-design-embed:start` 後の同:4417 にだけ「デッキのプレイヤー名を前後空白除去」「空の場合は会員のカナ姓・カナ名」と記される。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/EntryController.php:786-794 は `$dispDecks[$i][$j]['player'] = trim($deck->getPlayerName()) ?: $deck->getPlayer()->getCustomer()->getKana01() . ' ' . ...getKana02();` と、deck.player_nameを最優先し空時だけ会員カナへfallbackする。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Admin/Event/EntryDeckListDisplayBuilder.php:338-356 はまずCustomerのカナを返し、次にPlayerの日本語氏名、最後にだけ `return trim((string) $deck->getPlayerName())` とするため、旧実装と優先順位が逆である。",
+      "note": "具体的な表示名解決順は旧実装由来。"
+    }
+  ]
+}

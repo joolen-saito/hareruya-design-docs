@@ -1,0 +1,165 @@
+{
+  "packetId": "rest_06",
+  "results": [
+    {
+      "rowId": 361,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html:5873-5884 のExcel正本は「カスタマイズ要件に記載の内容以外は現行踏襲」「(1-14)国について」としてJapan選択時の都道府県表示・国変更時の再読込を規定するが、国・都道府県の組合せをPOST後に拒否する記述はない。具体記述はリバース詳細設計 hareruya-design-docs/functions/pf-eccube3/f06-18_front_member_mypage_customer_edit.md:132,153 の「国が日本かつ都道府県が海外、または国が海外かつ都道府県が国内」「送信後の検証で拒否する」にのみある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Form/Extension/Front/EntryTypeExtension.php:149-162 はSUBMITリスナで、国IDと `Pref::PREF_ABROAD` の不整合2パターンを判定し、`$form->get('country')->addError(new FormError(...))` を実行していた。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Form/Type/Front/EntryType.php:209-228 のPOST_SUBMIT処理は、日本なら郵便番号必須を検証し、海外なら `setPref(...Pref::PREF_ABROAD)` と強制設定するだけで、組合せ不整合を国欄へ付す処理がない。",
+      "note": "具体的な組合せ検証はExcel正本ではなく旧実装を起こしたリバース詳細設計由来。旧実装4リポジトリをエンドポイント・country・pref・PREF_ABROADで横断し、根拠はpf-eccube3で確認した。"
+    },
+    {
+      "rowId": 362,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html:6554 のExcel正本は(3-14)「登録する」について「ブラックリストに以下1~3が登録されている場合…会員情報登録エラー画面に遷移する」とし、対象を「(3-3)配送先氏名」「(3-9)~(3-11)の住所」「(3-12)電話番号」と明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Repository/DtbBlacklistRepository.php:18-24 の旧メソッドは「会員情報の氏名・電話番号・住所からブラックリストを検索」する `findBlacklistByCustomer($customer)` である。pf-eccube3のMypage配送先Controller/Formをblacklist・CustomerAddressで検索したが、配送先登録時の呼出しは存在しないため、この要求は旧実装ではなくExcel正本に由来する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Front/Mypage/DeliveryController.php:216-226 はフォーム有効時に直ちに `persist($CustomerAddress)`、`flush()`、配送先一覧へのredirectを行う。ec-cube-enterprise/src/Eccube/Repository/DtbBlacklistRepository.php:34-41 も `FindBlacklistByCustomer(Customer $Customer)` のみで配送先値を受け取らない。",
+      "note": "Excel正本の直接要件であり、現行配送先登録経路に照合・エラー画面分岐がないため真の乖離。"
+    },
+    {
+      "rowId": 363,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html:7016-7025 のExcel正本は退会処理としてスマレジ削除、メールダミー化、会員削除フラグ、完了メール、ログアウトを列挙するが、選手情報/dtb_player削除は記載しない。具体記述はリバース詳細設計 hareruya-design-docs/functions/pf-eccube3/f06-21_front_member_mypage_withdraw.md:19-22 の「退会成立時の副作用（…選手情報の削除…）」にのみある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Mypage/WithdrawController.php:86-96 は退会complete分岐で `findOneByCustomer_id` によりdtb_playerを取得し、`$app['orm.em']->remove($dtbPlayer)`、会員のメールダミー化・削除フラグ設定、`flush()`、`commit()` を連続実行していた。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Front/Mypage/WithdrawController.php:123-144 は会員ステータス・メール・削除フラグを更新して `flush()` と完了イベント、メール送信を行うが、DtbPlayerの取得・remove・deleted_at更新を行わない。",
+      "note": "選手情報削除の具体的根拠は旧実装。Excel正本には記述漏れがある。"
+    },
+    {
+      "rowId": 364,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html:6997 のExcel正本は画面名「退会完了」、同:7024 は「退会完了メールを会員に送信する」と記すだけで、画面本文の指定文言はない。指定文言はリバース詳細設計 hareruya-design-docs/functions/pf-eccube3/f06-21_front_member_mypage_withdraw.md:140-141 の完了見出しと完了メッセージにのみある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/withdraw_complete.twig:9-18 は見出し「退会完了」と別に本文 `退会を完了いたしました。<br>ご利用ありがとうございました。またのご利用をお待ちしております。` を表示していた。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/withdraw_complete.twig:37-39 は見出しと `withdraw_complete_message__body` だけを描画する。ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:735-738 には未使用のtitle「退会が完了いたしました」とbody「ご利用ありがとうございました。／またのご利用をお待ちしております。」があるが、titleはテンプレートから参照されない。",
+      "note": "完了本文の具体文言は旧テンプレート由来。"
+    },
+    {
+      "rowId": 366,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html:7251-7253 のExcel正本レイアウトはお問い合わせのパンくずを「⌂ > マイページ ＞お問い合わせ」と直接記載する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Contact/index.twig:8-16 は問い合わせ見出し・案内・フォームを描画するがローカルなパンくずはなく、旧実装テンプレートから3階層を直接確認できない。pf-eccube3のContactテンプレートと共通ナビを「マイページ」「breadcrumb」で確認した範囲では、期待値の直接根拠はExcel正本である。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/default/breadcrumb_nav.twig:155-160 はcontact系で `current_li('front.contact.title', 2)` だけを出し、直後のcontact_history系とは異なり `link_li(url('mypage'), ...)` を挟まない。",
+      "note": ""
+    },
+    {
+      "rowId": 367,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html:7370 は(4-2)お問い合わせ店舗を「閉店または非公開の店舗は選択肢から除く」とし、同:7373 は(4-5)イベント実施店舗を「店舗登録に登録されている全店舗名」と明確に書き分ける。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Form/Extension/Front/ContactTypeExtension.php:82-91 はeventShopのquery_builderを `createQueryBuilder('s')->orderBy('s.rank', 'ASC')` とし、公開・営業中フィルタを付けず全店舗を候補にしていた。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Form/Type/Front/ContactType.php:141-152 のeventShop query_builderは `where('s.isPublicShop = true')->andWhere('s.isOpenShop = true')` とし、非公開・閉店店舗を除外する。",
+      "note": "Excel正本の直接要件で、旧実装も一致する。"
+    },
+    {
+      "rowId": 368,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html:7250-7623 のExcel正本範囲を「当店へのご要望」「下記フォーム」「To contact the shop」で検索したが指定案内文は存在しない。具体記述はリバース詳細設計 hareruya-design-docs/functions/pf-eccube3/f06-22_front_member_mypage_contact.md:80-83 の「当店へのご要望は、下記フォームにご記入のうえ送信してください。」にのみある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Contact/index.twig:10-14 と同/confirm.twig:5-9 は、入力・確認の両画面で `<p class=\"contact__message\">当店へのご要望は、下記フォームにご記入のうえ送信してください。</p>` を描画していた。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/default/Contact/index.twig:62-67 は見出し直後にフォームへ進み指定案内文を描画しない。同/confirm.twig:25-28 は別キー `front.contact.confirm_lead_before_br/after_br` を表示する。",
+      "note": "日英文言と両画面表示条件は旧実装由来。旧4リポジトリを文言とcontactで横断し、根拠はpf-eccube3にのみ確認した。"
+    },
+    {
+      "rowId": 369,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html:7802 のExcel正本は一覧に「問い合わせ日時」を表示するとだけ記し、書式は指定しない。書式はリバース詳細設計 hareruya-design-docs/functions/pf-eccube3/f06-23_front_contact_history.md:75-78,126 の「一覧はY年m月d日 H:i、詳細はY/m/d H:i」にのみある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Contact/history.twig:14-18 は一覧日時を `date('Y年m月d日 H:i')`、同/history_detail.twig:17-20 は詳細日時を `date('Y/m/d H:i')` で描画していた。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/default/Contact/history.twig:31-36 は日本語一覧でも `date('Y/m/d H:i')` を使用する。詳細は同/history_detail.twig:16-21 で同じ `Y/m/d H:i` である。",
+      "note": "一覧固有の年月日書式は旧テンプレート由来。"
+    },
+    {
+      "rowId": 370,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html:7801 のExcel正本は問い合わせ件数を「今まで問い合わせを行なった件数」とするが、0件時にも「0件」を出す条件はない。条件はリバース詳細設計 hareruya-design-docs/functions/pf-eccube3/f06-23_front_contact_history.md:82,124,134 の「0件でも見出しと総件数『0件』」にのみある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Contact/history.twig:5-17 は見出しと `{{ contactHistories|length }} 件` をループの外で無条件表示するため、空配列でも0件を表示していた。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/default/Contact/history.twig:10-24 は空時に「front.contact_history.empty」を表示し、件数表示を `{% if contactHistories is not empty %}` の内側に置くため0件を出さない。",
+      "note": "0件時の表示条件は旧実装由来。"
+    },
+    {
+      "rowId": 371,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html:7798-7803 のお問い合わせ履歴Excel正本は一覧部品だけを定義し、詳細の戻る機構や `history.go(-1)` を記載しない。具体記述はリバース詳細設計 hareruya-design-docs/functions/pf-eccube3/f06-23_front_contact_history.md:64-67,77-78 にのみある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Contact/history_detail.twig:33-37 は戻るを `<a href=\"javascript:history.go(-1);\" ...>戻る</a>` としていた。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/default/Contact/history_detail.twig:47-50 は戻るを `<a ... href=\"{{ url('contact_history') }}\">` とし、一覧URLへの通常GETリンクにしている。",
+      "note": "ブラウザ履歴を使うという具体的機構は旧実装由来。"
+    },
+    {
+      "rowId": 372,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html:8022 のExcel正本は「戻る」「押下すると、お問い合わせ履歴画面へ遷移する」とだけ規定し、`history.go(-1)` やサーバリクエストなしとは記載しない。具体記述はリバース詳細設計 hareruya-design-docs/functions/pf-eccube3/f06-24_front_contact_history.md:64-67,77-78 にのみある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Contact/history_detail.twig:33-37 は `<a href=\"javascript:history.go(-1);\" ...>戻る</a>` を使用していた。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/default/Contact/history_detail.twig:47-50 は `href=\"{{ url('contact_history') }}\"` の通常リンクでサーバへGETする。",
+      "note": "結果として履歴画面へ戻る点はExcel正本と整合する。ブラウザ履歴・無リクエストという追加期待値だけが旧実装由来。"
+    },
+    {
+      "rowId": 373,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html:8007 は「選択したお問い合わせ番号のお問い合わせ内容を表示する」とだけ記し、存在しないID・他会員IDのエラー処理を定義しない。具体的な扱いはリバース詳細設計 hareruya-design-docs/functions/pf-eccube3/f06-24_front_contact_history.md:115,130-136 の「エラー・警告…生成しない」「取得結果が無く…内容は表示しない」にのみある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/ContactController.php:153-161 は会員条件付き `findOneBy(['id' => $id, 'customer' => $customer])` の結果を、null判定や例外送出なしで `contact` としてテンプレートへ渡していた。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Front/ContactController.php:224-233 は会員条件付き検索結果がnullなら `throw $this->createNotFoundException();` として明示的な404へ遷移する。",
+      "note": "非存在時の厳密なレンダリング結果は旧Twigのnull許容設定にも依存するが、少なくとも旧実装に明示404分岐がなく、指摘の根拠は旧実装を起こしたリバース詳細設計にある。"
+    },
+    {
+      "rowId": 375,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html:8798 のExcel正本は識別ID5を「TOPへ戻る」ボタンとし、「押下すると、TOP画面へ遷移する」と直接規定する。",
+      "legacyEvidence": "pf-eccube3の `app/Plugin/HareruyaEc/{Controller,Resource/template,Form}` をpassword policy・password_change・TOPへ戻るで検索したが、ポリシー違反専用画面は存在しない。これは「【新規】」とされたExcel正本の新規要求である。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Front/Mypage/PasswordChangeController.php:50-76 には現在 `/mypage/password_change` 画面が実装済みであるが、同テンプレート Mypage/password_change.twig:82-87 は「変更する」ボタンだけを描画する。完了画面 password_change_complete.twig:22-24 も `url('mypage')` の「マイページへ戻る」だけでTOPリンクがない。",
+      "note": "パケットの「専用画面テンプレートが存在しない」は現スナップショットでは古い。ただし要求されたTOPボタンは入力・完了のいずれにもなく、乖離自体は残る。"
+    },
+    {
+      "rowId": 376,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0307_基本設計仕様書(フロント_イベント).html:1215-1219 のExcel正本はバナースライダーを「自動スクロールで5秒毎に左方向にスクロール」と直接規定する。",
+      "legacyEvidence": "pf-eccube3のEventテンプレート・assetsを `autoplaySpeed`、`5000`、sliderで検索したが5秒指定を確認できないため、期待値の直接根拠はExcel正本である。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/default/Event/index.twig:345-350 と同:363-370 はSP・PCの両slick初期化で `autoplay: true, autoplaySpeed: 4000` を指定する。",
+      "note": ""
+    },
+    {
+      "rowId": 377,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0307_基本設計仕様書(フロント_イベント).html:1204-1210 のExcel正本は、日別を「ホーム > イベントTOP > [店舗名] > 日別 > [現在表示している期間の最初の月日]」、月別を「… > 月別 > [現在表示している年月]」と直接示す。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Event/index.twig:145-188 は過去/今後のカレンダー表示を実装するが、当該テンプレート内に日別・月別連動パンくずの生成はない。旧Event Controller/templatesをbreadcrumb・日別・月別で確認した範囲では、期待値の根拠はExcel正本である。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/default/Event/index.twig:33-54 はパンくずをホーム、イベントTOP、店舗名の固定3階層で描画し、日別/月別と期間値を生成しない。",
+      "note": ""
+    },
+    {
+      "rowId": 378,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0307_基本設計仕様書(フロント_イベント).html:1215-1218 のExcel正本は「店舗と表示タイプが『スライド』で検索」し、「開催日当日または開催前で、かつ公開状態のイベントに登録されているバナー」を表示すると直接規定する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Repository/DtbEventRepository.php:137-153 は旧バナー検索で店舗、イベント公開、詳細公開、`ed.startDate >= :from`、バナーURL非空を条件にしていた。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Front/EventTopController.php:55-60 はMtbBanner検索を呼び、同/Repository/Master/MtbBannerRepository.php:57-70 は店舗・言語・表示タイプ・画像URL非空だけで抽出する。同/Entity/Master/MtbBanner.php:43-76 の属性にもイベント・開催日・公開状態への関連がない。",
+      "note": "Excel正本の直接要件で、旧実装も日付・公開条件を実装していた。"
+    },
+    {
+      "rowId": 379,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0307_基本設計仕様書(フロント_イベント).html:2087 のExcel正本は識別ID1-8を「リセット」、説明を「入力項目をリセットする」と直接規定する。同:2067-2069 は平日・休日・過去の各条件名を記すが、チェック初期値までは正本にない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Event/search.twig:80-88 は `isWeekday` と `isHoliday` に `checked` を付け、`isPast` には付けていない。初期チェック状態の具体値はリバース詳細設計 hareruya-design-docs/functions/pf-eccube3/f07-02_front_event_event_search.md:80-85 にも記載され、旧実装由来である。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/default/Block/event_detailed_search_modal.twig:133-136 はラベルキーを表示し、その値は ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:6574 の「クリア」。同テンプレート:198-207 の押下処理は全checkboxを `cb.checked = false`、テキストを空にするため、平日・休日も未チェックになる。",
+      "note": "複合期待値のうち「リセット」という名称はExcel正本で直接裏付けられ、これだけでSPEC_BACKED。初期チェック状態への復帰は旧実装由来の補強根拠である。"
+    },
+    {
+      "rowId": 380,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0307_基本設計仕様書(フロント_イベント).html:2391 のExcel正本は「ホーム > イベントTOP > [店舗名] > [フォーマット] > [イベント開催日付]」を示し、同:2399 は3項目を「それぞれ押下可能」「その内容での絞り込み結果画面に遷移する」と直接規定する。",
+      "legacyEvidence": "pf-eccube3のEvent/show.twigとEvent Controllerをbreadcrumb・event_search・formatで確認した範囲では、この絞り込みパンくずの直接実装は見つからないため、根拠はExcel正本である。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/default/Event/detail.twig:47-64 は店舗名・フォーマットの両方をパラメータなしの `url('event_search')` へリンクし、同:66-72 は開催日付ではなく `eventName` を非リンクの現在項目として描画する。",
+      "note": ""
+    },
+    {
+      "rowId": 381,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0307_基本設計仕様書(フロント_イベント).html:2408 のExcel正本は項目名「参加費」、説明「イベント参加費」とするだけで、0円時「無料」・非0円時「（金額）円」という書式は指定しない。具体書式はリバース詳細設計 hareruya-design-docs/functions/pf-eccube3/f07-03_front_event_event_detail.md:81-86 にのみある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Event/show.twig:64-71 は `event.getEntryFee() == 0` なら「無料」、それ以外は `{{ event.getEntryFee()|number_format() }}円` と表示していた。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/default/Event/detail.twig:129-136 は0円時はfree翻訳を使うが、非0円時は `¥{{ Event.entryFee|number_format }}` と円記号を前置する。",
+      "note": "金額書式の具体値は旧実装由来。"
+    },
+    {
+      "rowId": 382,
+      "verdict": "UNCERTAIN",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0307_基本設計仕様書(フロント_イベント).html:2407-2408 のExcel正本は「イベントに設定されている定員数」「イベント参加費」とだけ記し、dtb_event_detail優先・dtb_eventフォールバックを指定しない。具体記述はリバース詳細設計 hareruya-design-docs/functions/pf-eccube3/f07-03_front_event_event_detail.md:187-194 の「dtb_event_detail capacity/entry_fee…表示に用いる（未設定時はイベント本体の値）」にのみある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Entity/DtbEventDetail.php:400-426 は `getCapacity()` と `getEntryFee()` を詳細値優先・本体フォールバックで実装し、同:836-842 の申込可否は `$this->getCapacity()` を使用する。一方、旧主表示 pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Event/show.twig:59-71 は `event.getCapacity()` と `event.getEntryFee()` を直接使用し、詳細値を優先していない。同:103-110 の事前予約参加費だけは `detail.getEntryFee()` を使う。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Entity/DtbEventDetail.php:248-262 には詳細値優先のgetterが残るが、同/Resource/template/default/Event/detail.twig:125-136 は `Event.capacity` / `Event.entryFee` を直接表示し、同/Service/Front/Event/EventDetailButtonStateResolver.php:28-33 も申込可否を `$event->getCapacity()` で判定する。",
+      "note": "複合指摘のうち「申込可否は詳細定員を使う」は旧実装で裏付けられるが、「主画面の定員・参加費表示も詳細値を使う」は旧実装自身が反証している。Excel正本は参照テーブルを特定しないため、表示部分をLEGACY_BACKED/UNSUPPORTEDのどちらにするか確定できない。指摘を「申込可否」「主表示」「事前予約参加費」に分割した追加判定が必要。"
+    }
+  ]
+}

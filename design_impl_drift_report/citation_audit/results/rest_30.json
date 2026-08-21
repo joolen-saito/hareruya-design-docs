@@ -1,0 +1,165 @@
+{
+  "packetId": "rest_30",
+  "results": [
+    {
+      "rowId": 861,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html:2879 のExcel正本セルは「2-1 消費税率 全角・半角 - - - -」で、必須、整数、0〜100、数値書式パターンを明記しない。正本範囲は同:2821-2925で、同:2926から `<!-- function-design-embed:start ...tax -->` のリバース詳細設計になる。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/src/Eccube/Form/Type/Admin/TaxRuleType.php:50-59 は `->add('tax_rate', 'integer'`、`'required' => true`、`new Assert\\NotBlank()`、`new Assert\\Range(array('min' => 0, 'max' => 100))`、`new Assert\\Regex(... \"/^\\d+(\\.\\d+)?$/u\")` を併用している。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/TaxRuleType.php:47-55 は `IntegerType::class`、`new Assert\\NotBlank()`、`new Assert\\Range(['min' => 0])`、`new Assert\\Regex(...)` で、Rangeに `max => 100` がない。",
+      "note": "0〜100等の具体的制約はExcel正本ではなく旧実装に由来するためLEGACY_BACKED。"
+    },
+    {
+      "rowId": 862,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html:2881 のExcel正本は「2-3 適用日時 全角・半角 - - - -」とのみ記載し、重複条件やエラー文言は正本範囲:2821-2925に存在しない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/src/Eccube/Repository/TaxRuleRepository.php:219-223 は共通税率一覧を `where('t.Product IS NULL AND t.ProductClass IS NULL')` と定義する。旧保存時チェックは /home/y-saito/Developments/pf-eccube3/src/Eccube/Controller/Admin/Setting/Shop/TaxRuleController.php:218-235 で `where('t.apply_date = :apply_date')` を数え、重複時に `new FormError('既に同じ適用日時で登録されています。')` を付ける。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/TaxRuleType.php:79-92 は `where('t.apply_date = :apply_date')->andWhere('t.ProductClass IS NULL')` とし、ProductのNULL条件を持たず、`trans('admin.setting.shop.tax.apply_date.available_error')` を使用する。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:3139 は同キーを「同時刻の適用日時を設定できません。」と定義する。",
+      "note": "旧実装は共通税率をProduct/ProductClassともNULLと定義し、旧文言も確認できる。ただし旧重複クエリ自体はapply_date以外で絞らず、指摘の「共通税率行に限って」という厳密なクエリ条件までは実装していない。移植差として確実なのはProduct条件欠落と文言変更。"
+    },
+    {
+      "rowId": 864,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html:2866-2867 のExcel正本は「個別税率設定、共通税率設定を登録する」「登録した税率を一覧表示する」とだけ記載し、完了イベント名は正本範囲:2821-2925に存在しない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/src/Eccube/Controller/Admin/Setting/Shop/TaxRuleController.php:89-104 はPOST保存で `persist`、`flush` 後に `dispatch(EccubeEvents::ADMIN_SETTING_SHOP_TAX_RULE_INDEX_COMPLETE, $event)` を実行する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Setting/Shop/TaxRuleController.php:111-124 の `edit_inline` 成功分岐は `persist`、`flush`、`addSuccess`、redirectのみで、`ADMIN_SETTING_SHOP_TAX_RULE_INDEX_COMPLETE` のdispatchがない。一方、新規側は同:87で同イベントをdispatchする。",
+      "note": "完了イベント契約は旧実装由来。新実装では新規保存には残るがインライン編集には移植されていない。"
+    },
+    {
+      "rowId": 865,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html:3039-3052 のExcel正本文字情報はシート名「自動送信メール」と概要「自動送信メールテンプレートを編集」までで、「ショップ設定」「メール管理」「自動送信メールテンプレート編集」の3文言は正本のsrc-cell本文:3037-3145に存在しない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Setting/Shop/auto_mail.twig:5-6 は `{% block title %}ショップ設定{% endblock %}`、`{% block sub_title %}メール管理{% endblock %}`、同:34 は `<h3 class=\"box-title\">自動送信メールテンプレート編集</h3>` と表示する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/mall/AutoMail/detail.twig:5-6 はtitleに `admin.setting.shop.custom_automail`、sub_titleに `admin.setting.basic_info`、同:58は見出しに `admin.setting.shop.mail.mail_template_edit` を使う。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:2985,3145,4197 は順に「基本情報設定」「テンプレート編集」「自動送信メール」と定義する。",
+      "note": "3つの具体的表示文言は旧Twigに根拠があり、Excel正本の文字セルにはない。"
+    },
+    {
+      "rowId": 866,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html:3084 のExcel正本セルは「初期表示は識別ID:1-3『テンプレ選択』、識別ID:1-4『テンプレ名称』、識別ID:1-5『件名』のみ表示する」と明記する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Setting/Shop/auto_mail.twig:45-47 は `form_row(form.template)`、`form_row(form.name)`、`form_row(form.subject)` をMail有無の条件外で常時描画する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/mall/AutoMail/detail.twig:67-71 はテンプレ選択を描画した後に `{% if Mail and Mail.id %}` を開始し、同:85-95のテンプレ名称・件名をその条件内だけで描画する。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Mall/MallAutoMailController.php:55-56 は初期表示で `?MailTemplate $Mail = null` を許容する。",
+      "note": ""
+    },
+    {
+      "rowId": 867,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html:3097 のExcel正本はテンプレ選択を「選択肢:自動送信メールとして設定されているメール（dtb_mail_template.is_auto_send = true）テンプレート」とする一方、必須欄は「-」で、名称昇順の記載もない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Form/Extension/Admin/MailTypeExtension.php:38-50 はテンプレ選択を `'required' => true`、`new Assert\\NotBlank()`、自動送信ID群へのIN条件とし、同:60-61で `->orderBy('mt.name', 'ASC')` とする。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/AutoMailType.php:46-54 は `'required' => false`、`mt.isAutoSend = :isAutoSend`、`->orderBy('mt.id', 'ASC')` とする。自動送信対象の絞り込みは満たすが、旧実装の必須検証と名称昇順はない。",
+      "note": "自動送信対象の絞り込みは正本にもあり現実装済み。指摘のうち未達なのは旧実装由来の必須・名称昇順。"
+    },
+    {
+      "rowId": 868,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html:3087 のExcel正本は「テンプレ選択で選択された自動送信メールテンプレートを入力フォームの値で登録する」とだけ記載し、URL直指定時の404契約は正本範囲:3037-3145に存在しない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Setting/Shop/MailController.php:126-143 はid指定時に `id` 一致かつ `id IN MailTemplate::AUTO_SEND_MAILS` で検索し、該当しなければ `throw new NotFoundHttpException()` とする。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Mall/MallAutoMailController.php:48-55 は `{Mail}` を `?MailTemplate $Mail` としてルート引数解決し、同:81-87はidがあれば本文を読むが、`isAutoSend` の検査をしない。自動送信条件は /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/AutoMailType.php:49-54 の候補query_builderにだけある。",
+      "note": ""
+    },
+    {
+      "rowId": 869,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html:3086-3087 のExcel正本は登録処理の概要だけで、POST時に現在行がnullだった場合のエラーフラッシュや遷移先は正本範囲:3037-3145に存在しない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Setting/Shop/MailController.php:156-164 はPOST処理後、`if (is_null($mail))` なら `$app->addError('admin.shop.mail.save.error', 'admin')` を積み、`admin_setting_shop_auto_mail` へredirectする。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Mall/MallAutoMailController.php:91-98 はPOST時に最初に `if ($Mail->getId() === null)` を評価するため、Mail自体がnullならメソッド呼出しとなり、旧実装のaddError＋識別子なし画面へのredirectを行わない。",
+      "note": ""
+    },
+    {
+      "rowId": 870,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html:3082-3102 のExcel正本の処理概要・項目表にはCSRF検証方式、アクセス拒否例外、トークン更新の記載がない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Setting/Shop/MailController.php:11-18 は `FormValidHelper` をuseし、同:166で `isFormValid` を呼ぶ。/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/FormValidHelper.php:18-22,29-48 は `checkCsrfValid`、不正時 `throw new AccessDeniedHttpException('CSRF token is invalid.')`、検証後 `refreshToken($app, $form)` を実装する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/mall/AutoMail/detail.twig:52-53 は `form_widget(form._token)` を描画し、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Mall/MallAutoMailController.php:96-98 は `handleRequest` 後の `isSubmitted() && isValid()` に依存する。当Controller内に明示的なAccessDenied例外やrefreshToken処理はない。",
+      "note": "Symfonyフォーム標準CSRFの有無ではなく、旧FormValidHelperの明示的例外化・検証後更新という契約の移植差。"
+    },
+    {
+      "rowId": 871,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html:3100-3101 のExcel正本は「本文上部」「本文下部」と最大32768文字を定義するだけで、Twigコメント除去、改行変換、header/footer挿入、注文内容include置換の手順は正本範囲:3037-3145に存在しない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Service/MailService.php:1306-1321 は注文内容include文字列を設定済み文言へ置換し、`preg_replace(['\/\\n\/', '\/\\{#.*?#\\}\/'], ['<br>', ''], $body)` を行う。同:1324-1368はheader/footer用textareaまたは静的HTMLを作り、`{{ header }}`・`{{ footer }}` を置換する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Mall/MallAutoMailController.php:138-160 の `replaceBody` は `strpos` と `substr` で `{{ header }}`・`{{ footer }}` の前後を分割するだけで、コメント・改行・注文内容includeを変換しない。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/mall/AutoMail/detail.twig:107-125 はheader/footerを別フォーム欄、本文をreadonlyのtpl_data欄として描画する。",
+      "note": ""
+    },
+    {
+      "rowId": 872,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html:3082-3102 のExcel正本にはTwigローダの追加パス登録やプラグイン既定本文ディレクトリの記載がない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Setting/Shop/MailController.php:141-147 は対象確認後、`$app['twig.loader']->addLoader(new \\Twig_Loader_Filesystem([__DIR__.'/../../../../Resource/template/default']))` を行ってから `getSourceContext($mail->getFileName())` で本文を読む。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Mall/MallAutoMailController.php:81-87 は既存Twigローダで `getSourceContext($Mail->getFileName())->getCode()` を直接実行する。同ファイル全体を `addPath|prependPath|setPaths|addLoader` で確認したが追加登録処理は存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 873,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html:3085 のExcel正本はテンプレ選択後に「最終更新者」「最終更新日」を表示すると規定するが、更新年が2018より大きい場合だけ日時表示する条件は正本範囲:3037-3145に存在しない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Setting/Shop/auto_mail.twig:39-42 は更新者を `mail is not null and mail.creator is not null`、更新日を `mail is not null and mail.updateDate is not null and mail.updateDate|date('Y') > 2018` の条件で表示する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/mall/AutoMail/detail.twig:71-81 は `Mail and Mail.id` の内側で更新者を表示し、更新日時は `Mail.update_date ? Mail.update_date|date('Y-m-d H:i:s') : ''` とするだけで年条件がない。",
+      "note": "テンプレ選択後の更新情報表示自体は正本にあるが、指摘対象の2018年条件は旧Twig由来。"
+    },
+    {
+      "rowId": 874,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html:3318 の再生成後Excel正本セルはテンプレート選択肢を「自動送信メールとして設定されているメール（dtb_mail_template.is_auto_send = true）テンプレート以外」と明記する。指摘の「登録されているメールテンプレート全種」は現正本と一致しない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Setting/Shop/MailController.php:44-45 はフォームを `['autoMail' => false]` で作り、/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Form/Extension/Admin/MailTypeExtension.php:49-50 はfalse時に `mt.id NOT IN (:ids)`、idsを `MailTemplate::AUTO_SEND_MAILS` とする。旧実装も自動送信テンプレートを除外する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/MailType.php:49-56 はテンプレート候補を `mt.baseInfo = :baseInfo` かつ `mt.isAutoSend = false` で抽出するため、再生成後正本の「自動送信対象以外」を満たす。",
+      "note": "監査後の正本は自動送信対象外に訂正済みで、旧実装・新実装ともその契約に一致する。"
+    },
+    {
+      "rowId": 875,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html:3320 のExcel正本セルは「1-3 本文 全角・半角 - 65536文字 - -」と、ラベル「本文」および最大65536文字を明記する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Setting/Shop/MailController.php:38-45 は旧画面で本文ファイルを `getSourceContext(...)->getCode()` してプレビュー変換し、フォームを作成する。旧フォームの /home/y-saito/Developments/pf-eccube3/src/Eccube/Form/Type/Admin/MailType.php:39-68 はtemplate/subject/header/footerのみで、本文65536文字の直接入力制約は確認できない。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/mall/mail/detail.twig:197-202 は表示ラベルに `admin.setting.shop.mail.mail_text` を使い、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:3152 は「テキスト」と定義する。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/MailType.php:71-77 のtpl_data制約は `new TwigLint()` のみでLength(65536)がない。",
+      "note": ""
+    },
+    {
+      "rowId": 876,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html:3308-3321 のM10-09 Excel正本はメールテンプレート編集の4項目だけを定義し、店舗営業時間直下のemail01〜email04の配置・順序は正本範囲:3266-3356に存在しない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/src/Eccube/Resource/template/admin/Setting/Shop/shop_master.twig:109-115 は `form.business_hour` の直後に `form.email01`→`form.email02`→`form.email03`→`form.email04` の順で描画する。/home/y-saito/Developments/pf-eccube3/src/Eccube/Form/Type/Admin/ShopMasterType.php:99-125 は各ラベルを送信元、問い合わせ受付、返信受付、送信エラー受付と定義する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Setting/Shop/shop_master.twig:136-188 はbusiness_hourの後にbusiness_hour_enを挟み、email01(:150-158)→email03(:160-168)→email04(:170-178)→email02(:180-188)の順で描画する。",
+      "note": ""
+    },
+    {
+      "rowId": 877,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html:3308-3321 のM10-09 Excel正本はテンプレート・件名・本文・登録だけを規定し、MailServiceのメソッド別ヘッダ割当は正本範囲:3266-3356に存在しない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/src/Eccube/Service/MailService.php:205-212 の `sendContactMail` はFrom/Bcc/ReplyToすべてに `BaseInfo->getEmail02()` を使う。同:306-321 の `sendAdminCustomerConfirmMail` はFromに `BaseInfo->getEmail03()` を使う。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/MailService.php:336-360 の `sendContactMail` は問い合わせ種別emailがあれば `$adminEmail` としFrom/Bcc/ReplyToへ使う。同:540-546 の `sendAdminCustomerConfirmMail` はFromに `BaseInfo->getEmail01()` を使う。",
+      "note": "具体的なヘッダ割当は旧コアMailServiceに根拠があり、新実装では両メソッドとも変更されている。"
+    },
+    {
+      "rowId": 878,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html:3509 のExcel正本セルはCSV種別について「選択肢:登録されているCSV全種」と明記する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/src/Eccube/Controller/Admin/Setting/Shop/CsvController.php:42-56 はCsvTypeをidで取得し、csv_typeフォームにマスタ型をそのまま指定しており、特定種別を除外するquery_builderを持たない。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Setting/Shop/CsvController.php:52-71 は `CSV_TYPE_CLASS_NAME`、`CSV_TYPE_CLASS_CATEGORY`、`CSV_TYPE_GMO_MEMBER` を `$excludeCsvTypeIds` に入れ、query_builderを `m.id NOT IN (:excludeIds)` とする。",
+      "note": ""
+    },
+    {
+      "rowId": 879,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html:3457-3470 のExcel正本文字情報はシート名・機能名「CSV出力項目設定」と概要「CSVの出力項目を設定」までで、上部タイトル「システム設定」は正本のsrc-cell本文:3455-3554に存在しない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/src/Eccube/Resource/template/admin/Setting/Shop/csv.twig:24-27 はメニューを `['setting', 'shop', 'shop_csv']` とし、`{% block title %}システム設定{% endblock %}`、`{% block sub_title %}CSV出力項目設定{% endblock %}` と表示する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Setting/Shop/csv.twig:13-16 はメニューを `['setting', 'basic_info', 'shop_csv']`、titleを `admin.setting.shop.csv_setting`、sub_titleを `admin.setting.basic_info` とする。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:2985,2996 は「基本情報設定」「CSV出力項目設定」と定義する。",
+      "note": ""
+    },
+    {
+      "rowId": 880,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html:3515 のExcel正本セルはボタン、リンクの識別ID2-1をラベル「設定」、説明「入力されたフォームの値で編集」と明記する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/src/Eccube/Resource/template/admin/Setting/Shop/csv.twig:132-140 は右サイドのsubmitを `<button ... type=\"submit\">設定</button>` と表示する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Setting/Shop/csv.twig:198-201 はsubmit文言に `admin.common.registration` を使い、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:1633 は同キーを「登録」と定義する。",
+      "note": ""
+    },
+    {
+      "rowId": 881,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html:3499-3515 のExcel正本はCSV出力項目の設定処理と入力項目・ボタンを記載するが、保存成功フラッシュ「CSV出力を設定しました。」は正本範囲:3455-3554に存在しない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/src/Eccube/Controller/Admin/Setting/Shop/CsvController.php:117-131 はflushと完了イベント後に `$app->addSuccess('admin.shop.csv.save.complete', 'admin')` を呼ぶ。/home/y-saito/Developments/pf-eccube3/src/Eccube/Resource/locale/message.ja.yml:171 は同キーを「CSV出力を設定しました。」と定義する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Setting/Shop/CsvController.php:150-162 は完了イベント後に `$this->addSuccess('admin.common.save_complete', 'admin')` を呼ぶ。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:1595 は同キーを「保存しました」と定義する。",
+      "note": ""
+    }
+  ]
+}

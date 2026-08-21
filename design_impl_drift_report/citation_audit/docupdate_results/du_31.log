@@ -1,0 +1,2716 @@
+Reading additional input from stdin...
+OpenAI Codex v0.146.0
+--------
+workdir: /home/y-saito/Developments
+model: gpt-5.6-sol
+provider: openai
+approval: never
+sandbox: workspace-write [workdir, /tmp, $TMPDIR]
+reasoning effort: high
+reasoning summaries: none
+session id: 019fc0b8-ffc0-77b2-b311-a0ee19ea2a65
+--------
+user
+設計書（正本Excel）を最新化する工数を見積もります。実装の修正工数ではありません。
+
+まず手順書を読んでください: /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/DOCUPDATE_TASK.md
+
+担当パケット: /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_packets/du_31.json
+出力先: /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_31.json
+
+厳守事項:
+- **正本はExcel** (/home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/*.xlsx)。
+  HTML(output/)は convert.py の生成物で、直接編集しても次の変換で消える。
+  見積もる対象は「Excelのどのシートのどの表/画像を、どう直すか」の作業量。
+- 根拠区分=SPEC_BACKED は原則 docWork=NONE（設計書は正しく実装が追いついていないだけ）。
+  記述が曖昧で明確化が要る場合だけ FIX。
+- 根拠区分=LEGACY_BACKED は原則 docWork=ADD（設計書の記述漏れ）。
+  ただし移行後に残さない挙動と読めるなら NONE。
+- 表示文言・画面項目は、テキストの表に足せば済むのか、
+  レイアウト**画像の描き直し**まで要るのか(IMAGE)を必ず区別する。
+- 同じシートの行が隣り合うよう並べてある。まとめて直せる分は2件目以降を安くしてよい。
+- HTML再生成と検証は書籍単位の固定費として別途集計するので、1件ごとの見積に含めない。
+- 引用・確認内容の捏造は絶対に禁止。実装側の修正工数と混同しない。
+
+findings 全件について docWork と docEffortDays をJSONで書き込んでください。
+最終メッセージは内訳1行のみ（例: 28件: NONE=14 ADD=10 FIX=2 IMAGE=2 / 計 1.8人日）。
+warning: Codex could not find bubblewrap on PATH. Install bubblewrap with your OS package manager. See the sandbox prerequisites: https://developers.openai.com/codex/concepts/sandboxing#prerequisites. Codex will use the bundled bubblewrap in the meantime.
+codex
+設計・実装差分監査の手順に沿うため、`design-impl-drift-audit` スキルと指定の手順書を先に読み、パケット内の全 finding を正本Excel基準で見積もります。HTML再生成費や実装修正費は含めません。
+exec
+/bin/bash -lc "sed -n '1,240p' /home/y-saito/.codex/skills/design-impl-drift-audit/SKILL.md && sed -n '1,260p' /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/DOCUPDATE_TASK.md" in /home/y-saito/Developments
+ succeeded in 1087ms:
+---
+name: design-impl-drift-audit
+description: Compare HTML design specifications against an implementation to find functional drift and produce an evidence-backed HTML report. Use when Codex is asked to treat design docs as the source of truth, audit code such as controllers/services/forms/repositories/templates/batches/CSV definitions, continue a partially completed drift report, or update findings JSON/HTML for gaps between design and implementation.
+---
+
+# Design Impl Drift Audit
+
+## Purpose
+
+Use this skill to audit functional differences between HTML design specifications and an implementation repository, with the design docs treated as authoritative. Produce or continue a report that lists concrete differences with design locations, implementation locations, confidence, severity, and impact.
+
+## Repository Discovery
+
+1. Find the design-doc directory and implementation directory from the user request. If omitted, infer from nearby names such as `*-design-docs` and application repos.
+2. Look for an existing report before starting new work. Prefer directories named `design_impl_drift_report`, existing `findings.json`, per-function `findings/*.json`, and `index.html`.
+3. Count total target specs and audited specs so the report clearly states scope and remaining work.
+4. Preserve existing findings. Append or refine; do not overwrite unrelated prior work.
+
+## Audit Workflow
+
+For each target HTML spec:
+
+1. Identify the feature ID, route/action name, UI template, CSV/batch/API behavior, and acceptance rules from the HTML design spec.
+2. Extract a requirement inventory from the HTML spec before looking at code. This inventory must include not only route/screen names, but every concrete requirement in 処理概要, 図形・テキストボックス, 項目表, 表示メッセージ, 業務ルール・計算, 入力項目, エッジケース, データ整合性, API/バッチ結果, 入出力, DB操作, バリデーション, 権限・認可, 画面遷移, エラー処理, ログ・監査, セッション, Cookie, and 排他制御. Treat bullets such as "押下時", "場合", "登録/更新/保存", "遷移", "保持", "表示/非表示", "表示切り替え", "エリアを表示", "誘導", "エラー", "判定", "連携", time limits, thresholds, and retry/idempotency rules as auditable requirements. 秒後/分後, `画面を表示してから`, 自動遷移, タイマー, and store/kiosk/account-specific forced redirects are material requirements even if the route and template already exist.
+3. For every extracted requirement, create or mentally maintain a `requirementTrace` row with: `requirementId`, `designRef`, `designRequirement`, `implementationSearchTerms`, `implementationRefs`, `implementationActual`, `traceVerdict` (`MATCHED|DRIFT|NOT_FOUND|UNCERTAIN|PHASE2_EXCLUDED`), and `traceReason`. A feature cannot be marked no-drift until all material requirements have a trace verdict other than `NOT_FOUND` or unresolved `UNCERTAIN`.
+4. Search the implementation with `rg` across likely files: controllers, services, repositories, form types, entities, migrations, Twig/templates, commands/batches, route definitions, JavaScript, CSV exporters/importers, and PDF/print services. Search by business terms from the requirement, route names, translation keys, DB columns, state names, constants, statuses, time values, thresholds, and side-effect verbs. For timer or auto-navigation requirements, explicitly search client and server paths for `setTimeout`, `setInterval`, millisecond/second constants such as `60000` and `60 * 1000`, `location.href`, `location.assign`, `location.replace`, redirect routes, and the condition that limits the behavior. For a negative result, also search nearby implemented flows so the report can explain why they do not satisfy the design.
+5. Compare behavior and user-facing text, not just names. Check input fields, validation, defaults, search conditions, session persistence, buttons/actions, labels, button text, messages, translation keys/locales, permissions, status transitions, CSV columns, sort/order rules, scheduled timing, timeouts/expiration, thresholds, client-side timers, forced auto-navigation, side effects, idempotency, external integrations, conditional display toggles, alternate UI areas, and error handling.
+6. Do not treat "route/controller/template exists" as sufficient. Existence only satisfies the route/screen requirement. It does not satisfy individual rules inside the screen, such as timeout handling, cart retention, validation branches, status transitions, DB writes, logging prohibitions, conditional hide/show behavior, alternative contact/help areas, or external API retry behavior.
+7. For conditional display requirements, audit each side of the condition separately. If the HTML says "Aの場合はXを非表示、Yを表示 / A以外はXを表示、Yを非表示", record trace rows for the condition detector, X visibility, Y visibility, and the inverse condition. A nearby notice or route is not enough unless the cited template/JS actually renders the required area under the required condition.
+8. For labels, button text, messages, and translation keys, do a dedicated near-match pass. Extract user-visible Japanese text from the HTML item/message tables and compare it with implementation locale values and Twig/Form usage. Treat punctuation, okurigana, missing characters, long-vowel marks, wording changes such as `商品を追加` vs `商品の追加`, and business-term changes such as `返金` vs `送金` as audit targets.
+9. A text drift finding is complete only when it cites both the translation/source value and the display path that uses it, such as `messages.ja.yaml` plus the `FormType` label or Twig `|trans` call. If the implementation value exists but no display path is verified, mark it `UNCERTAIN` instead of presenting it as confirmed.
+10. Do not stamp all functions as if every standard aspect was fully checked. Separate "standard audit target aspects" from actual evidence. For each finding, list the aspects actually supported by evidence; for no-drift functions, include a requirement trace summary naming the concrete HTML requirements checked and implementation refs searched.
+11. Record only actionable drift. If evidence is incomplete, mark the finding `UNCERTAIN` and explain what remains ambiguous.
+12. For every drift finding, split the result into implementation-ready fields: `designExpectation`, `implementationActual`, `comparisonRows`, `comparisonSummary`, `mismatchReason`, `impact`, `fixTarget`, `requiredChange`, `implementationRefs`, and, when available, short design/implementation snippets from the cited lines. Do not rely on a generic prose paragraph alone.
+13. Each `comparisonRows` entry must answer all four questions explicitly: comparison item, exact design value/requirement, exact implementation value/behavior, and why those two do not match. If any of those four cells would be vague, continue investigating before recording the finding.
+14. Treat phase labels such as Ph2 as auxiliary context. They can be stored, but the main report must not use phase status as a substitute for concrete behavioral differences and exact implementation locations.
+15. If the HTML design spec explicitly says the whole function or scoped subfeature is `フェーズ2で実装する`, `Ph2で対応`, or `Ph1では実装しない`, do not report absence of that planned Phase 2 work as drift or as a clear implementation gap. You may keep a secondary audit note that non-implementation was confirmed, but exclude it from finding counts and implementation-gap counts. Only keep a finding when there is a concrete non-phase mismatch, such as an implemented Phase 1 path behaving differently from the design or user-facing text differing.
+16. When no drift is found, add the function to the audited set with an empty findings list only after the requirement trace gate passes. If material HTML requirements are untraced, do not mark `AUDITED_NO_DRIFT_FOUND`; mark the function as requiring review or add `UNCERTAIN` findings with the unresolved requirements.
+17. Do not let one confirmed finding hide other requirements in the same function. A function with `AUDITED_WITH_FINDINGS` can still have untraced material requirements; keep those requirements visible in the trace gate until each one is converted to a confirmed finding, an uncertain finding, a matched trace row, or a documented phase/design non-implementation exclusion.
+18. For explicitly registered critical requirements, the harness should carry a missing-finding template or an equivalent escalation rule. If the trace is not covered by an existing finding, promote it into findings automatically or fail the quality gate loudly. Do not rely on a hand-maintained `ADDITIONAL_FINDINGS` list as the only path for user-reported or high-risk missing behavior such as timeouts, cart retention, one-minute/30-minute limits, store-account auto redirects, conditional UI areas, status transitions, external calls, or destructive side effects.
+19. The HTML report must not expose broad source-signal candidates as if they were implementation gaps. A requirement-level list in the main report must be limited to confirmed or explicitly uncertain actionable drift derived from findings, such as `NOT_FOUND` or `DRIFT` requirement traces and concrete comparison rows. If a source-signal scan is used for triage, keep it out of the main HTML report unless each row has been verified against implementation source and written as a concrete finding.
+20. Do not hide time-based or automatic-navigation requirements merely because they are not confirmed findings yet. Requirements involving `画面を表示してから`, seconds/minutes after display, auto redirect/navigation, or timeout-to-cart/top behavior should appear in a separate focused untraced-requirement audit queue when they remain uncovered. This queue is not a confirmed defect count; it exists so these high-risk requirements are reviewed against Controller/Twig/JavaScript/Service source instead of being buried among broad requirement-trace failures.
+
+## Function-Level Implementation Gap Audit
+
+For every HTML spec sheet, maintain a function-level implementation audit even when no drift finding is confirmed yet.
+
+- Extract implementation search terms from the HTML design: route names, URL paths, translation keys, class/controller/service names, batch/API/CSV names, and high-signal business terms from the sheet title and requirement text.
+- Search implementation source by function across Controller, Form, Service, Repository, Entity, Migration, Twig, Command/Batch, CSV, PDF/print, API/webhook, locale/messages, JavaScript, and configuration files.
+- Store a `functionImplementationAudit` object with `verdict`, `designDerivedTerms`, `candidateRefs`, `candidateCount`, `strongSignalCount`, `searchedAreas`, and `auditNote`.
+- Use separate verdicts:
+  - `CONFIRMED_IMPLEMENTATION_GAP`: a concrete drift finding already proves missing implementation.
+  - `NO_IMPLEMENTATION_ENTRY_FOUND`: no entry candidate was found from design-derived terms; treat as an additional-review candidate, not an automatic confirmed defect.
+  - `IMPLEMENTATION_ENTRY_FOUND`: strong source evidence such as route, class, translation key, or path was found.
+  - `IMPLEMENTATION_CANDIDATE_FOUND`: weak business-term candidates were found but the entry point is not proven.
+  - `PHASE2_NONIMPLEMENTATION_EXPECTED`: HTML design explicitly scopes non-implementation to Phase 2/Ph1 exclusion.
+  - `DESIGN_NONIMPLEMENTATION_EXPECTED`: HTML design explicitly says the function or scoped behavior is not implemented by code, such as `実装しない`, `実装不要`, or infrastructure/external-service configuration replacing application code.
+- Use `DESIGN_NONIMPLEMENTATION_EXPECTED` as the function-level verdict only when the non-implementation statement applies to the whole function or the implementation entry itself, for example an external WordPress server, Docker image cron, Aurora parameter group, or a bare whole-sheet `実装しない`. If the text only excludes a scoped subfeature, UI alert, HTML hint, logging detail, partial Phase 2 item, or internal job, keep the function's source-entry verdict and mention the scoped exclusion only in the trace/audit note.
+- The report must show both confirmed implementation-gap findings and function-level no-entry candidates. Do not merge these counts: implementers need confirmed defects for fixing and no-entry candidates for review planning.
+- A function-level candidate is not enough to mark the detailed requirements as implemented. Requirement trace still controls no-drift status.
+- Do not set report metadata such as `auditComplete` or narrative notes to "complete" merely because every sheet has a function-level implementation audit. If any material requirement trace remains unresolved, state that all sheets have function-entry coverage but requirement-level audit is incomplete.
+- For infrastructure-oriented sheets such as Step Functions, Lambda, WAF/S3 jobs, cron configured outside the application, or managed database settings, distinguish "not found in the requested implementation repository" from "not implemented anywhere". A confirmed implementation-gap finding may be scoped to the audited repository, but the report must say when external infrastructure repositories or cloud configuration were not checked.
+
+## Requirement Trace Gate
+
+Before marking a function no-drift, verify the following:
+
+- Every material HTML requirement has a trace row. Material means it changes behavior, data, display, validation, permission, transition, side effect, external communication, schedule, retry/idempotency, logging/audit, CSV/API/PDF/batch I/O, or user-visible text.
+- Each trace row includes exact design text or a tight paraphrase plus line/anchor reference, not only the sheet title.
+- Each matched row cites the implementation path and line(s) that actually execute or render the behavior. A nearby class, route, or template is not enough unless the cited code contains the relevant condition/value/side effect.
+- Each missing row is converted to a confirmed or uncertain finding. Use confirmed only after searching the direct path and nearby alternative implementations.
+- Missing rows remain failures even if the function already has other findings. The gate is requirement-scoped, not function-scoped.
+- If an explicit critical requirement has a configured missing-finding template, regenerate the report from the harness and verify the promoted finding appears in both JSON and HTML with design value, implementation behavior, mismatch reason, fix target, and search evidence.
+- If a missing row does not yet have enough evidence for a confirmed or uncertain actionable finding, do not count it as an implementation gap and do not put it in the main HTML fix list. Keep the function in an incomplete requirement-trace state, and promote the row only after implementation source has been checked enough to state the exact design requirement, exact implementation behavior, and mismatch reason.
+- A generic `auditEvidence` string is not a substitute for requirement traces.
+- Negative searches must list the searched terms/areas and why nearby hits do not satisfy the design.
+
+## Finding Format
+
+Store findings in a machine-readable JSON structure. Use this shape for each finding:
+
+```json
+{
+  "id": "stable-feature-id-001",
+  "functionId": "m04-01_admin_stock_stock_search_list",
+  "functionName": "在庫一覧",
+  "severity": "high|med|low",
+  "dimension": "①機能/ルート未実装",
+  "confidence": "CONFIRMED|UNCERTAIN",
+  "design": {
+    "file": "path/to/spec.html",
+    "lines": "215-220",
+    "summary": "設計書に書かれている仕様"
+  },
+  "implementation": {
+    "file": "path/to/source.php or 不在",
+    "lines": "337-344",
+    "summary": "実装側の状態"
+  },
+  "difference": "設計と実装の具体的な差分",
+  "comparisonRows": [
+    {
+      "item": "比較項目名",
+      "design": "設計書の値・要求。列名、HTTPメソッド、パス、保存先、表示文言、条件、状態遷移などを具体値で書く",
+      "implementation": "実装の値・挙動。実際の列名、メソッド、パス、保存先、文言、条件、処理順を具体値で書く",
+      "mismatch": "なぜ一致しないのか。実装者が直すべき差分を一文で書く"
+    }
+  ],
+  "requirementTrace": [
+    {
+      "requirementId": "stable-requirement-id",
+      "designRef": "path/to/spec.html:123",
+      "designRequirement": "HTML設計書の個別要求",
+      "implementationSearchTerms": ["検索語", "route_name", "methodName"],
+      "implementationRefs": ["src/...php:123"],
+      "implementationActual": "実装で確認できた挙動、または不在判定",
+      "traceVerdict": "MATCHED|DRIFT|NOT_FOUND|UNCERTAIN|PHASE2_EXCLUDED",
+      "traceReason": "なぜその判定か"
+    }
+  ],
+  "comparisonSummary": "設計はX、実装はY、したがってZが違う",
+  "mismatchReason": "乖離と判断した具体的な理由",
+  "impact": "ユーザー・業務・データへの影響",
+  "fixTarget": "修正対象のファイル/ルート/サービス/不在箇所",
+  "requiredChange": "設計に合わせる場合に必要な修正",
+  "implementationRefs": ["src/...php:123"],
+  "implementationSnippets": ["123: 実装コードの短い断片"],
+  "evidence": ["短い根拠。ファイル名と行番号を含める"]
+}
+```
+
+The HTML report should make these fields visible as separate blocks so an implementer can answer: what exact value does the design require, what exact value does the code implement, why is that a mismatch, exactly where is the code, and what should be changed.
+
+Use stable IDs and Japanese text when the existing report is Japanese. Keep dimensions consistent with existing findings when continuing a report.
+
+## Severity Guidance
+
+- `high`: missing feature/route, wrong critical business rule, destructive or externally visible behavior, missing required import/export/batch/PDF flow.
+- `med`: partial implementation, wrong filtering/sorting/session behavior, missing non-critical columns or validation, incompatible screen behavior.
+- `low`: copy/display/default-state differences, ambiguous design wording, minor workflow variance.
+
+## Report Generation
+
+If the project already has a report generator, use it. Otherwise copy or adapt `scripts/build_report.py` from this skill into the report directory, then run it from the repository root or pass paths as needed.
+
+The HTML report must include:
+
+- summary counts: total findings, severities, audited functions, functions with drift
+- scope and remaining work
+- per-function sections
+- each finding with severity, confidence, dimension, audit aspects including label/message/translation-key differences when applicable, design reference, implementation reference, design expectation, implementation actual behavior, `comparisonRows`, mismatch reason, impact, fix target, required change, and evidence
+- a comparison table with columns: 比較項目 / 設計書の値・要求 / 実装の値・挙動 / 乖離理由
+- links or file paths precise enough for a developer to inspect
+- short cited design and implementation snippets when available
+- phase/Ph2 data only as hidden or secondary metadata, never as a report column or primary summary
+- a function-level implementation audit section showing verdict counts, no-entry candidates, candidate source references, and the search terms that produced them
+- a requirement-level difference list derived only from confirmed/uncertain findings, showing the exact design requirement, implementation behavior, mismatch reason, implementation refs, and a link back to the finding. Do not include broad unverified source-signal queues in the main HTML report.
+- a focused untraced-requirement section for small, high-risk classes such as display-time timers, automatic redirects, and timeout navigation. Keep it separate from confirmed difference and implementation-gap counts, and include search terms/candidate refs so the next audit step is concrete.
+
+After editing findings, validate JSON and regenerate HTML:
+
+```bash
+python3 -m json.tool path/to/design_impl_drift_report/findings.json
+python3 path/to/design_impl_drift_report/build_report.py
+```
+
+## Quality Bar
+
+- Treat the HTML design spec as source of truth even when implementation looks intentional.
+- Cite exact file paths and line numbers whenever available.
+- Distinguish `不在` from “not found yet”; use `不在` only after searching likely implementation areas.
+- Avoid broad claims such as “not implemented” without search evidence or contrasting nearby implemented features.
+- Do not classify Phase 2 planned non-implementation as a defect. A missing route, CSV, batch, API, table, or screen is only a drift finding when the design expects it in the audited implementation phase.
+- For label/message drift, prefer exact line evidence and a verified render path over fuzzy string similarity. Fuzzy or near-match scans are candidate generators; they are not findings until source and display usage are confirmed.
+- When an external reviewer or another agent reports candidates, verify each candidate against the HTML design and implementation source before adding it. Keep rejected or ambiguous candidates out of confirmed counts, or mark them `UNCERTAIN` with the unresolved reason.
+- For absent implementations, include the searched terms/areas, nearby implementation files with line numbers, and a concrete reason those nearby files do not satisfy the design. Do not leave `implRef` as only `不在` in the final report.
+- Reject vague findings. A finding is not complete until it names the exact design value and exact implementation value that differ.
+- Keep the report cumulative and resumable.
+# 設計書（正本Excel）の最新化工数の見積
+
+乖離指摘 1,007件（クローズ済を除く）について、**設計書側にどんな作業が発生し、何人日か**を見積もる。
+実装をどう直すかではなく、**設計書をどう直すか**だけを判断する。
+
+## 前提: 正本はExcel、HTMLは生成物
+
+| 役割 | パス |
+|---|---|
+| **正本Excel（編集対象）** | `/home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/*.xlsx` |
+| 生成HTML（読む用・編集対象ではない） | `/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/*.html` |
+| 変換ツール | `excel_to_html/convert.py`（`uv run python convert.py`）、検証は `verify.py` |
+| 実装 | `/home/y-saito/Developments/ec-cube-enterprise` |
+
+**HTMLを直接編集しても次の変換で消える。** 直すのは常にExcelのセル・図形・画像である。
+したがって見積もる対象は「該当シートの該当セル/表/画像をどう直すか」の作業量。
+
+HTML再生成と検証は書籍単位でまとめて行うため、**1件ごとの見積には含めない**（別途固定費として集計する）。
+
+## 判定する2つのこと
+
+### 1. `docWork` — 設計書側にどんな作業が要るか
+
+| 値 | 意味 |
+|---|---|
+| `NONE` | 設計書は現状で正しい。実装を直せば済み、**設計書は触らない** |
+| `ADD` | 設計書に記述が無い。項目表・処理概要などに**書き足す** |
+| `FIX` | 設計書に記述はあるが、採用する仕様と食い違う。**既存記述を直す** |
+| `IMAGE` | 画面レイアウト**画像の差し替え**が要る（Excelに貼られた画像の描き直し） |
+| `RESOLVE` | 正本の中で記述同士が矛盾している（項目表と画像、本文と注記など）。**どちらが正かを決めて片方を直す** |
+| `UNSURE` | 判断できない |
+
+**重要な原則:**
+- `根拠区分 = SPEC_BACKED`（設計書に裏付けがある）＝ 原則 `NONE`。
+  設計書は正しく、実装が追いついていないだけ。
+  ただし設計書の記述が曖昧・不完全で、実装に合わせて**明確化**が要るなら `FIX`。
+- `根拠区分 = LEGACY_BACKED`（設計書に記述が無く旧実装に根拠）＝ 原則 `ADD`。
+  移行後も必要な挙動なら、設計書の記述漏れとして書き足す必要がある。
+  ただし**その挙動を移行後に残さない**と読めるなら `NONE`。
+- 表示文言・ラベル・画面項目の追記は、テキストの表に足すだけで済むのか、
+  **レイアウト画像も描き直しになるのか**を区別する（後者は `IMAGE`）。
+
+### 2. `docEffortDays` — Excel編集の工数（人日）
+
+**この1件のために、該当シートを開いて直す作業**の量。目安:
+
+| 作業 | 目安 |
+|---|---|
+| 既存の表に1行足す／セルの文言を1つ直す | 0.05〜0.1 |
+| 項目表に複数行・条件付きの記述を足す | 0.1〜0.25 |
+| 処理概要・業務ルールの節を書き起こす | 0.25〜0.5 |
+| 画面レイアウト画像の差し替え（実画面の取得＋貼り直し＋位置調整） | 0.5〜1.0 |
+| 正本内部の矛盾解消（影響範囲の確認＋関係箇所の統一） | 0.25〜1.0 |
+| シート新設（機能ごと丸ごと無い） | 1.0〜3.0 |
+
+**同じシートに複数の指摘がまとまっている場合、2件目以降は安くなる**（シートを開く手間が1回で済む）。
+パケット内で同一 `設計書参照` の行が並んでいたら、その分を反映してよい（理由に書くこと）。
+
+`docWork = NONE` のときは `docEffortDays: 0`。
+`RESOLVE` は、裁定そのもの（どちらが正かを決める会議・確認）は含めず、**決まった後の反映作業**だけを見積もる。
+
+## 絶対の禁止事項
+
+- 引用・確認内容の捏造をしないこと。実際に開いて確認したものだけを書く。
+- 確認していないことを「確認した」と書かない。
+- 実装側の修正工数と混同しないこと。**ここで見積もるのは設計書の編集だけ**である。
+
+## 出力
+
+指示されたJSONファイルに **Write して** 書き込む。
+
+```json
+{
+  "packetId": "...",
+  "results": [
+    {
+      "rowId": 123,
+      "docWork": "ADD",
+      "docEffortDays": 0.1,
+      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫編集 シートの画面項目表",
+      "reason": "旧実装にしかない上限件数の扱いを、項目表の備考へ1行足す。既存の行構成をそのまま使える。",
+      "sharedWithRows": [124, 125],
+      "confidence": "high"
+    }
+  ]
+}
+```
+
+- `target`: 直す対象（ブック名 / シート名 / 表や図の位置）。分かる範囲で具体的に
+- `sharedWithRows`: 同じシートでまとめて直せる他の rowId（無ければ空配列）
+- `confidence`: `high` / `medium` / `low`
+
+findings 全件について返すこと（欠落禁止）。
+
+codex
+手順書を確認しました。次にパケットの根拠区分・設計書参照・差分内容を一覧化し、必要な行だけExcelのシート構成や表／画像の有無を実物で確認します。
+exec
+/bin/bash -lc "jq '.' hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_packets/du_31.json" in /home/y-saito/Developments
+ succeeded in 286ms:
+{
+  "packetId": "du_31",
+  "note": "同じ設計書シートの行が隣り合うよう並べてある。まとめて直せる分は2件目以降を安く見積もってよい（sharedWithRowsに記す）。",
+  "findings": [
+    {
+      "rowId": 149,
+      "機能No": "B02-03",
+      "機能名": "B02-03 期間別入庫数集計",
+      "区分(画面種別)": "batch",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-5:1168,",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html:1243-1285 のExcel正本部は対象なし時の挙動を記さず、同:1287 以降のリバース詳細設計だけが根拠である。hareruya-design-docs/functions/pf-eccube3/b02-03_batch_product_product_storage_period_summary.md:73-78 は「対象が無い場合は更新を行わずに終了する」と記す。",
+      "設計期待値": "対象が無い場合は更新を行わずに終了する。",
+      "差分内容": "設計では対象なし時に更新しないが、実装では対象なしでも既存の入庫数集計データを全削除してコミットする経路がある。対象なし分岐や空配列時の早期 return は確認できなかった。",
+      "実装実態": "実装は集計取得前に `DELETE FROM dtb_stock_up_quantity` を実行し、その後に集計データを取得する。対象なし判定前に既存集計行が削除される。"
+    },
+    {
+      "rowId": 150,
+      "機能No": "B02-03",
+      "機能名": "B02-03 期間別入庫数集計",
+      "区分(画面種別)": "batch",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-5:1177-1183",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html:1243-1285 のExcel正本部には途中失敗・部分反映・再実行の記述がなく、同:1287 以降のリバース詳細設計にのみ存在する。hareruya-design-docs/functions/pf-eccube3/b02-03_batch_product_product_storage_period_summary.md:104-112、127-133 は「途中失敗時は反映済みの行のみ更新が残る」「部分反映は次回実行で回収」と記す。",
+      "設計期待値": "途中失敗時は反映済みの行のみ更新が残る。部分反映は次回実行で回収される。",
+      "差分内容": "設計は途中まで反映された行が残る部分反映モデルだが、実装は例外時に全体ロールバックするため反映済み行は残らない。`途中失敗`, `反映済み`, `rollBack`, `commit` で反証検索し、別経路での部分コミット実装は確認できなかった。",
+      "実装実態": "実装はバッチ全体を単一トランザクションで囲み、例外時に `rollBack()` する。"
+    },
+    {
+      "rowId": 152,
+      "機能No": "B02-03",
+      "機能名": "B02-03 期間別入庫数集計",
+      "区分(画面種別)": "batch",
+      "指摘区分": "未実装",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-5:1195-1196",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html:1243-1285 のsheet-5 Excel正本部には開始・完了ログや日時の指定がない。同:1287 以降のリバース詳細設計の実体 hareruya-design-docs/functions/pf-eccube3/b02-03_batch_product_product_storage_period_summary.md:167-171 にだけ「開始・完了のコンソール出力（日時付き）」がある。",
+      "設計期待値": "処理開始・完了を日時付きでコンソール出力する。",
+      "差分内容": "設計は開始・完了の両方を日時付きで出力する要求だが、実装は完了文言のみ。`開始`, `日時`, `DateTime`, `now`, `success`, `writeln` で反証検索したが、B02-03 コマンドの日時付き開始・完了出力は確認できなかった。",
+      "実装実態": "`SymfonyStyle` で完了メッセージのみを出力する。開始メッセージ、および開始・完了日時の出力はない。 設計要求に対応する実装が見当たらない（未実装）。"
+    },
+    {
+      "rowId": 156,
+      "機能No": "B02-05",
+      "機能名": "B02-05 お気に入り商品セール通知",
+      "区分(画面種別)": "batch",
+      "指摘区分": "未実装",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "要再調査",
+      "設計書参照": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-7:1366",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html:1520 のExcel正本セルに「実行トリガー スケジュール起動(Step Functions)」「実行タイミング 毎週水曜17:30」と明記されている。",
+      "設計期待値": "実行トリガーはスケジュール起動（Step Functions）、実行タイミングは毎週水曜17:30。",
+      "差分内容": "被監査範囲内で本バッチに紐づくスケジュール起動設定が確認できない。詳細設計の埋め込み部ではスケジュールを運用・ジョブ設定の対象とする記述もあるが、シート本文の material 要求として実行トリガーと時刻が明記されているため欠落として扱う。",
+      "実装実態": "FavoriteSaleNotificationCommand にはスケジュール・Step Functions・水曜17:30に関する定義やコメントがない。該当検索では別バッチの Step Functions コメントのみヒットした。"
+    },
+    {
+      "rowId": 155,
+      "機能No": "B02-05",
+      "機能名": "B02-05 お気に入り商品セール通知",
+      "区分(画面種別)": "batch",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-7:1404",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html:1514-1531 のExcel正本はお気に入り商品抽出・会員別集約・メール送信を記すが、`dtb_favorite_product`、`player_id`、`language_id`、`dtb_player` の列名は記載しない。これらは同:1535 以降のリバース詳細設計（functions/pf-eccube3/b02-05_batch_product_product_favorite_sale_notification.md:131-138）にのみある。",
+      "設計期待値": "お気に入り商品は dtb_favorite_product（product_id・player_id・language_id）を使用し、会員（選手情報）は dtb_player（first_name_jp・last_name_jp・email）を通知メールの宛先・本文に使用する。",
+      "差分内容": "DtbFavoriteProductRepository と DtbFavoriteProduct エンティティは存在するが、BatchFavoriteSaleNotificationAction の依存先は CustomerFavoriteProductRepository で、findSaleFavoriteProducts() も CustomerFavoriteProductRepository に実装されている。DtbFavoriteProductRepository 側にはセール通知用 findSaleFavoriteProducts の実装がなくコメントのみだった。",
+      "実装実態": "バッチは CustomerFavoriteProductRepository::findSaleFavoriteProducts() を呼び、dtb_customer_favorite_product を表す CustomerFavoriteProduct と Customer を join して customer_id/name01/name02/email を取得している。dtb_favori"
+    },
+    {
+      "rowId": 154,
+      "機能No": "B02-05",
+      "機能名": "B02-05 お気に入り商品セール通知",
+      "区分(画面種別)": "batch",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-7:1410",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html:1510-1512、1514-1531 のExcel正本はセール中お気に入り商品の会員別メール送信と「現行踏襲」を要求するが、コマンド名は記載しない。同:1535 以降のリバース詳細設計の実体 hareruya-design-docs/functions/pf-eccube3/b02-05_batch_product_product_favorite_sale_notification.md:59-65 にだけ `product:batch saleNotification` がある。",
+      "設計期待値": "コンソールのバッチコマンドは product:batch saleNotification とし、セール中のお気に入り商品を会員ごとにまとめ、対象会員へセール通知メールを送信する。",
+      "差分内容": "src/Eccube/Command と src/Eccube/Service/Product を product:batch / saleNotification / FavoriteSaleNotification / favorite-sale-notification で再検索したが、product:batch saleNotification の AsCommand 定義は見つからず、別名コマンドのみ存在する。",
+      "実装実態": "実装コマンド名は eccube:favorite-sale-notification。クラスコメントの使用例も bin/console eccube:favorite-sale-notification であり、設計の product:batch saleNotification では起動できない。"
+    },
+    {
+      "rowId": 157,
+      "機能No": "B02-05",
+      "機能名": "B02-05 お気に入り商品セール通知",
+      "区分(画面種別)": "batch",
+      "指摘区分": "未実装",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-7:1416",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html:1514-1532 のExcel正本部には一定件数ごとのメモリ解放はない。同:1535 以降のリバース詳細設計の実体 hareruya-design-docs/functions/pf-eccube3/b02-05_batch_product_product_favorite_sale_notification.md:69-77、91-97 にのみ記載される。",
+      "設計期待値": "一定件数ごとに処理メモリを解放しながら集約する。",
+      "差分内容": "BatchFavoriteSaleNotificationAction と関連 Repository を clear, detach, batch, limit, offset, chunk, memory, 一定件数 で確認したが、本処理に一定件数ごとのメモリ解放は見つからない。",
+      "実装実態": "findSaleFavoriteProducts() の全結果を $rows に取得し、groupByCustomer() で全件を $grouped 配列へ集約してから送信している。一定件数ごとの clear/detach/flush/バッチ分割などの処理はない。 設計要求に対応する実装が見当たらない（未実装）。"
+    },
+    {
+      "rowId": 159,
+      "機能No": "B02-05",
+      "機能名": "B02-05 お気に入り商品セール通知",
+      "区分(画面種別)": "batch",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-7:1443",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html:1498-1532 のExcel正本部に開始・完了ログや日時指定はない。同:1535 以降のリバース詳細設計の実体 hareruya-design-docs/functions/pf-eccube3/b02-05_batch_product_product_favorite_sale_notification.md:159-163 にだけ「開始・完了のコンソール出力（日時付き）」がある。",
+      "設計期待値": "開始・完了のコンソール出力（日時付き）。",
+      "差分内容": "FavoriteSaleNotificationCommand と BatchFavoriteSaleNotificationAction を 開始/完了/date/new DateTime/format/datetime/日時 で確認したが、日時付きの開始・完了出力は見つからない。",
+      "実装実態": "完了相当の success メッセージは出力するが、開始メッセージはなく、出力に日時も付与していない。"
+    },
+    {
+      "rowId": 160,
+      "機能No": "B02-06",
+      "機能名": "B02-06 在庫初期化",
+      "区分(画面種別)": "batch",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "要再調査",
+      "設計書参照": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-8:1481",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html:1634-1635 のExcel正本セルに「店舗登録時、TC大阪(支店ID:1)の商品規格在庫全データを新規店舗用に…登録(複製)するバッチ」と明記されている。",
+      "設計期待値": "店舗登録時、TC大阪(支店ID:1)の商品規格在庫全データを新規店舗用にカスタマイズした上で登録(複製)するバッチ",
+      "差分内容": "設計は複製元を「TC大阪(支店ID:1)」としているが、実装は TC_TOKYO_ID を基準店舗としている。設計上の店舗名と実装定数名が一致せず、設計どおり TC大阪を複製元にしている根拠がない。",
+      "実装実態": "店舗登録時の初期在庫生成自体は GenerateInitialTenantStock から BatchInitialStockRegistrationAction::handle() が呼ばれるが、複製元は BaseInfo::TC_TOKYO_ID であり、BaseInfo.php:45 では TC_TOKYO_ID = 1 と定義されている。"
+    },
+    {
+      "rowId": 161,
+      "機能No": "B02-06",
+      "機能名": "B02-06 在庫初期化",
+      "区分(画面種別)": "batch",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "要再調査",
+      "設計書参照": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-8:1482",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html:1636 のExcel正本セルに「複製範囲は『商品規格コード』および『拡張タイプ』のみ。それ以外は初期値(在庫数0など)」と明記されている。",
+      "設計期待値": "複製範囲は「商品規格コード」および「拡張タイプ」のみ。それ以外は初期値(在庫数0など)が設定される。",
+      "差分内容": "設計HTMLのこの要求は materialGapRows に無く extractorMissed として確認した。実装は ProductStock 行の product_class_id と stock_location_id を複製しており、「商品規格コード」「拡張タイプ」を複製範囲にする処理や、それ以外を初期値にする項目対応が確認できない。",
+      "実装実態": "INSERT ... SELECT で dtb_product_stock の product_class_id, stock_location_id を複製し、stock=0, total_cost=0, pick_up_flg=false, create_date/update_date=now を設定している。商品規格コードおよび拡張タイプのみを複製する実装ではない。"
+    },
+    {
+      "rowId": 162,
+      "機能No": "B02-06",
+      "機能名": "B02-06 在庫初期化",
+      "区分(画面種別)": "batch",
+      "指摘区分": "未実装",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-8:1522",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html:1629-1644 のsheet-8 Excel正本部は店舗登録時の在庫複製だけを記し、`insertStockHistory`、開始日・終了日、過去受注からの履歴作成はない。同:1646 以降のリバース詳細設計の実体 hareruya-design-docs/functions/pf-eccube3/b02-06_batch_product_product_stock_initialize.md:60-80 にのみ当該フローがある。",
+      "設計期待値": "コンソールのバッチコマンド product:batch insertStockHistory <開始日> <終了日> で、指定した受注日範囲の受注をたどり、受注分の在庫減算の在庫履歴を作成する。引数不足時のメッセージ、受注日の昇順取得、受注日より前の最新在庫履歴参照、stock_change_reason による重複判定、登録済み/登録結果/開始完了のコンソール出力を含む。",
+      "差分内容": "反証検索として product:batch insertStockHistory, insertStockHistory, 受注日より前, 最新在庫履歴, 受注後在庫, 注文番号と価格, 登録済み, stock_change_reason LIKE, order_date StockHistory を Command/Service/Repository に展開して検索したが、設計のバッチ入口と処理フローを満たす実装が確認できない。",
+      "実装実態": "src/Eccube/Command 配下に product:batch insertStockHistory または insertStockHistory の Command は存在しない。B02-06 として存在する Command は InitialStockRegistrationCommand.php:35 の eccube:initial-stock-registration で、引数"
+    },
+    {
+      "rowId": 174,
+      "機能No": "B02-08",
+      "機能名": "B02-08 ユニサーチフィード作成",
+      "区分(画面種別)": "batch",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "要修正-設計準拠",
+      "設計書参照": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9:1643,",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html:1797-1800 の正本セルは「管理画面から実行」「管理画面の商品管理＞ユニサーチフィード作成メニューでフィードファイル作成可能」とする。同:1744 は作成結果をTSV.gzとdoneファイルの指定ディレクトリ出力とし、送信は別シートB02-09（同:1988-1992）として分離している。",
+      "設計期待値": "定時実行の他、管理画面の商品管理＞ユニサーチフィード作成メニューでフィードファイル作成可能。管理画面ユニサーチフィードメニューからのフィードファイル更新ボタン押下時はフィードファイル作成を行う。",
+      "差分内容": "設計のB02-08は管理画面からフィードファイル作成可能、実行結果はTSV.gzとdoneファイルを指定ディレクトリに置くという作成処理の要求である。一方、実装は管理画面押下時に exportAndUpload(false) を渡しており、false は手動実行スキップではなくSFTP送信を実行する分岐になっている。別機能として設計されている送信処理まで管理画面の作成操作で実行されるため、設計の外部契約と異なる。反証として admin_product_unisearch_feed、UniSearchFeedCreateAction、exportAndUpload、--manual、deleteRemoteByPrefixes、upload、unisearch_feed メニューを再検索したが",
+      "実装実態": "管理画面の「フィードファイルを更新する」POSTは UniSearchFeedCreateAction::handle() に入り、exportAndUpload(false) を呼ぶ。UniSearchExportService は false の場合に SFTP アップロードをスキップせず、既存リモート削除後に gz と done ファイルをアップロードする。"
+    },
+    {
+      "rowId": 194,
+      "機能No": "B05-08",
+      "機能名": "B05-08 スマレジEC受注連携エラー再連携",
+      "区分(画面種別)": "batch",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "要修正-設計準拠",
+      "設計書参照": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-10:1918",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html:2084-2086 の正本セルは「ユーザーのスマレジIDとポイント残高を取得」「ユーザーのポイント数は絶対値で更新を行う」と明記する。",
+      "設計期待値": "ユーザーのポイント数は絶対値で更新を行う。取得したユーザーのスマレジIDとポイント残高を使ってスマレジ連携を行う。",
+      "差分内容": "設計はユーザーのポイント残高を取得し絶対値で更新する要求。実装は `src/Eccube/Service/Smaregi/SmaregiUpdatePointAction.php:39` の使用ポイントを、同54行で負数として送信する差分連携である。",
+      "実装実態": "近接実装は受注の使用ポイント `getSpendedPoints()` を取得し、`postSmaregiPoint($player->getSmaregiId(), -$suspendPoint, false)` として差分値を送っている。`dtb_player.point` のポイント残高を絶対値として送っていない。"
+    },
+    {
+      "rowId": 191,
+      "機能No": "B05-08",
+      "機能名": "B05-08 スマレジEC受注連携エラー再連携",
+      "区分(画面種別)": "batch",
+      "指摘区分": "未実装",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "要修正-設計準拠",
+      "設計書参照": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-10:1957",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html:2065 は「スマレジ連携エラーが起きているEC受注のスマレジ連携をリトライする」、同:2074-2076 はエラー受注を取得してリトライし5分ごとに起動、同:2084-2087 はスマレジID・ポイント残高で更新し成功時にエラーフラグをオフと明記する。正本は機能本体を明確に要求する。",
+      "設計期待値": "コンソールのバッチコマンド `smaregi:batch checkSmaregiErrorOrder` で、スマレジ連携エラーのEC受注について会員ポイントの連携をリトライし、成否で状態を更新する。",
+      "差分内容": "`src/Eccube/Command/SmaregiUpdatePointCommand.php:26` は `#[AsCommand(name: 'eccube:smaregi:update-point')]` で、`src/Eccube/Command` 配下に `smaregi:batch checkSmaregiErrorOrder` または同等のエラー受注再連携コマンドがない。",
+      "実装実態": "指定コマンドは存在しない。近い実装は `eccube:smaregi:update-point` だが、任意の `orderId` 1件を受け取る別コマンドであり、設計の `smaregi:batch checkSmaregiErrorOrder` ではない。"
+    },
+    {
+      "rowId": 192,
+      "機能No": "B05-08",
+      "機能名": "B05-08 スマレジEC受注連携エラー再連携",
+      "区分(画面種別)": "batch",
+      "指摘区分": "未実装",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "要修正-設計準拠",
+      "設計書参照": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-10:1961",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html:2074-2075 は「スマレジ連携エラーフラグが立っている注文データと…ユーザー情報を取得」「取得した注文データのスマレジ連携をリトライ」、同:2079-2084 は同条件の抽出とユーザーのスマレジID・ポイント残高取得を明記する。",
+      "設計期待値": "スマレジ連携エラーのEC受注を取得し、受注ごとに会員のスマレジIDとポイントでスマレジポイント連携をリトライする。",
+      "差分内容": "`src/Eccube/Repository/OrderRepository.php:877` に抽出メソッドはあるが、`rg getSmaregiErrorOrder\\(` で利用箇所は定義のみ。`src/Eccube/Service/Smaregi/SmaregiUpdatePointAction.php:32` は `handle(int $orderId)` で単一受注を `find($orderId)` する実装。",
+      "実装実態": "`OrderRepository::getSmaregiErrorOrder()` は存在するが、呼び出し元が存在しない。実行される近接処理 `SmaregiUpdatePointAction::handle()` は `orderId` 指定の単一受注処理で、エラー受注抽出結果を走査しない。"
+    },
+    {
+      "rowId": 193,
+      "機能No": "B05-08",
+      "機能名": "B05-08 スマレジEC受注連携エラー再連携",
+      "区分(画面種別)": "batch",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "要修正-設計準拠",
+      "設計書参照": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-10:1962",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html:2087 の正本セルは「リトライに成功したら、当該の注文データのスマレジ連携エラーフラグをオフにする」と明記する。",
+      "設計期待値": "連携が成功した場合は受注サブ（移行先では `dtb_order`）のスマレジ連携エラーフラグを解除する。",
+      "差分内容": "`SmaregiUpdatePointAction.php:71-72` は `array_key_exists('result', $response)` の場合にそのまま `return` する。`setSmaregiErrorFlg(true)` は同ファイル57-58行、75-76行にあるが、成功時解除処理がない。",
+      "実装実態": "近接実装では成功レスポンス時に `return` するだけで、`smaregi_error_flg` を false に戻さない。実装全体検索でも `setSmaregiErrorFlg(false)` は見つからない。"
+    },
+    {
+      "rowId": 195,
+      "機能No": "B05-08",
+      "機能名": "B05-08 スマレジEC受注連携エラー再連携",
+      "区分(画面種別)": "batch",
+      "指摘区分": "未実装",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-10:1965",
+      "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html:2065 は正本で「スマレジ連携エラーが起きているEC受注のスマレジ連携をリトライする」とだけ記載し、正本範囲（同:2050-2092）にインターバル、1秒、リクエスト上限の記載はない。該当記述はリバース詳細設計開始後の同:2102「リクエスト数の上限に配慮し、受注ごとに短いインターバルを挟む」にのみ存在する。",
+      "設計期待値": "リクエスト数の上限に配慮し、受注ごとに短いインターバルを挟む。1秒あたりのリクエスト上限を超えないよう受注ごとにインターバルを挟む。",
+      "差分内容": "B05-08のバッチ本体が存在せず、抽出受注をループして `sleep`/`usleep` 等で待機する実装もない。`src/Eccube/Service/Smaregi/Api/SmaregiGuzzleClientFactory.php:90-94` の共通RateLimiterは見つかったが、未実装のB05-08再連携フローに組み込まれた受注ごとのインターバルではない。",
+      "実装実態": "B05-08の受注ごとの待機処理は見つからない。共通HTTPクライアント側にRateLimiter待機はあるが、設計が求めるエラー受注再連携バッチの受注ごとのインターバル実装ではない。"
+    },
+    {
+      "rowId": 197,
+      "機能No": "B05-09",
+      "機能名": "B05-09 スマレジ取引連携エラー再連携",
+      "区分(画面種別)": "batch",
+      "指摘区分": "未実装",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "要修正-設計準拠",
+      "設計書参照": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-11:2024,2025,2031,2041,2083,2089",
+      "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html:2190-2191 の正本セルは「APIでバッチ駆動時間から5時間前までの間の取引データを取得する」「手動でのバッチ実行時に期間指定されている場合はその期間内の取引データを取得する」と明記し、同:2207 も更新時間を `X-Y hours` の範囲とする。",
+      "設計期待値": "APIでバッチ駆動時間から5時間前まで、または手動実行時に指定された期間内のスマレジ取引データを取得すること。",
+      "差分内容": "設計は時間窓検索をバッチの入力データ検索条件として定義しているが、実装には期間パラメータの組み立て、手動期間指定の受け口、一覧取得結果の処理ループがない。単一transactionHeadIdを取得する `getTransaction()` は `SmaregiTransactionProcessMessageHandler.php:158` で使われるが、時間窓で未連携取引を発見する処理ではない。",
+      "実装実態": "`src/Eccube/Service/Smaregi/Api/SmaregiTransactionApiClient.php:99` に取引一覧API `listTransactions()` はあるが、コメントでページング未実装・期間指定クエリ正式名未確定とされている。同メソッドの使用箇所は検索上なく、現在時刻から5時間前または手動指定期間を組み立てるCommand/Serviceも見つからな"
+    },
+    {
+      "rowId": 198,
+      "機能No": "B05-09",
+      "機能名": "B05-09 スマレジ取引連携エラー再連携",
+      "区分(画面種別)": "batch",
+      "指摘区分": "未実装",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "要修正-設計準拠",
+      "設計書参照": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-11:2026,2027,2032-2037,2043,2057,2072,2083,2102",
+      "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html:2198-2203 の正本セルは対象を「Webhookが何らかの理由で失敗したスマレジ取引情報」とし、再連携条件を「ポイント処理に不整合」「スマレジ取引IDがECCUBE側に登録されていない」「登録済みで返品等による取引の更新日時差異」と列挙する。同:2209 は「スマレジ受信処理(A05-04)と同等の処理が完了した状態」を要求する。",
+      "設計期待値": "Webhookが失敗した可能性のある取引について、ポイント処理不整合、ECCUBE側にスマレジ取引ID未登録、登録済み取引の返品・キャンセル等による更新日時差異を検知し、スマレジ受信処理(A05-04)と同等の処理が完了した状態にすること。",
+      "差分内容": "設計の再連携バッチはWebhook失敗時の救済処理であり、Webhookが届いていない/失敗した取引をAPI一覧から発見して処理する必要がある。実装はWebhookイベントまたは既存メッセージを前提にした処理で、失敗Webhookを発見する入口・条件判定が欠落している。",
+      "実装実態": "Webhook起点の子ジョブ処理は `src/Eccube/MessageHandler/SmaregiTransactionProcessMessageHandler.php:57` 以降にあり、単一 `transactionHeadId` の取得、`updateDateTime` による重複スキップ、`created/canceled/disposed` の処理分岐は存在する。しかし時間窓で取"
+    },
+    {
+      "rowId": 199,
+      "機能No": "B05-09",
+      "機能名": "B05-09 スマレジ取引連携エラー再連携",
+      "区分(画面種別)": "batch",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-11:2072,2083,2092,2096",
+      "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html:2195 の正本は入力元を「スマレジプラットフォームAPI」とするだけで、正本範囲（同:2163-2213）に `mtb_option`、`option_key`、`option_value`、接続設定の保持先はない。該当DB指定はリバース詳細設計の同:2262「`mtb_option`（オプションマスタ）...接続設定...を保持し、API呼び出しに使用する」にのみある。",
+      "設計期待値": "スマレジ接続設定（接続先URL・契約ID・アクセストークン等）はオプションマスタ `mtb_option` の `option_key`・`option_value` に保持し、API呼び出しに使用すること。",
+      "差分内容": "設計は接続設定の保持・利用元を `mtb_option` と明記している。実装は環境変数由来のDIパラメータを使用しており、設計のオプションマスタ契約と異なる。なお `mtb_option` に旧スマレジ設定を追加するmigrationや管理画面項目は存在するが、B05-09取引API呼び出し経路では参照されていない。",
+      "実装実態": "取引処理ハンドラは `smaregiApiIdUrl`、`smaregiApiUrl`、`smaregiApiClientId`、`smaregiApiClientSecret`、`smaregiApiContractId` をコンストラクタ注入で受け、`SmaregiAccessTokenService::getAccessToken()` と `SmaregiTransactionApiCli"
+    },
+    {
+      "rowId": 196,
+      "機能No": "B05-09",
+      "機能名": "B05-09 スマレジ取引連携エラー再連携",
+      "区分(画面種別)": "batch",
+      "指摘区分": "未実装",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-11:2078,2082",
+      "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html:2178 は正本で概要を「スマレジ連携でwebhookで連携エラーになったものを再連携する」とするが、正本範囲（同:2163-2213）に `smaregi:batch` や `checkSmaregiTransaction` はない。コマンド名はリバース詳細設計の同:2244「`smaregi:batch checkSmaregiTransaction`」にのみある。",
+      "設計期待値": "スマレジ取引連携エラー再連携は、コンソールのバッチコマンド `smaregi:batch checkSmaregiTransaction` から実行できること。",
+      "差分内容": "設計は利用者視点の入口として特定コマンド名を外部契約化している。実装側には当該コマンド名・別名・取引再連携を示すCommandクラスがなく、Webhook由来の子ジョブ処理だけではバッチ入口要求を満たさない。",
+      "実装実態": "`src/Eccube/Command` の AsCommand 一覧には `eccube:smaregi:stock:backfill`、`eccube:smaregi:update-point`、`eccube:smaregi:otc:delete` 等は存在するが、設計コマンド `smaregi:batch checkSmaregiTransaction` または取引再連携バッチ相当のコマン"
+    },
+    {
+      "rowId": 200,
+      "機能No": "B05-09",
+      "機能名": "B05-09 スマレジ取引連携エラー再連携",
+      "区分(画面種別)": "batch",
+      "指摘区分": "未実装",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-11:2083,2089,2092,2106",
+      "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html:2211 の正本は「再連携時にエラーがあった場合、スマレジから返ってきているエラー内容をログに出力する」とだけ記載する。コンソール出力、戻り値1、空結果の正常終了は正本範囲に無く、リバース詳細設計の同:2255「結果が空なら何もせず完了する。取得失敗時は異常終了（戻り値1）」にある。",
+      "設計期待値": "取引情報取得に失敗した場合は、失敗内容をログとコンソールに出力して異常終了（戻り値1）すること。取得結果が空の場合は正常終了すること。",
+      "差分内容": "設計の外部契約はコンソールバッチの終了仕様である。実装には該当Command自体がなく、ログは子ジョブ内に閉じており、コンソール出力や戻り値1を保証する処理が確認できない。",
+      "実装実態": "単一取引取得失敗時は `src/Eccube/MessageHandler/SmaregiTransactionProcessMessageHandler.php:165` でDTOがない場合に例外を投げ、`src/Eccube/MessageHandler/SmaregiTransactionProcessMessageHandler.php:133` でジョブ失敗ログと状態保存を行う。これはM"
+    },
+    {
+      "rowId": 177,
+      "機能No": "B05-01",
+      "機能名": "B05-01 注文番号登録",
+      "区分(画面種別)": "batch",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "要修正-設計準拠",
+      "設計書参照": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3:950-956",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html:1104-1107 の正本セルは、`20 + 1 + スマレジ店舗ID3桁0埋め + 注文番号(8桁0埋め後、末尾6桁) + チェックディジット` と明記し、同:1110-1111 は注文番号12345の例を `2010010123451` とする。",
+      "設計期待値": "スマレジ用商品コードは `20 + 1 + スマレジ店舗ID3桁0埋め + 注文番号8桁0埋め後の末尾6桁 + チェックディジット` で採番する。",
+      "差分内容": "設計は注文番号を8桁0埋めしてから末尾6桁を使うが、親バッチ実装は0埋めせず末尾6桁を切り出す。注文番号が6桁未満の場合、設計例のような13桁コードにならない。",
+      "実装実態": "親バッチ側で `getProductBarcode('20','1',sprintf('%03d',$smaregiShopId),$orderNumber)` を呼び、`substr($orderNumber, -6)` をそのまま使う。同期サービスは既存 `smaregi_code` がある場合は再生成しない。"
+    },
+    {
+      "rowId": 178,
+      "機能No": "B05-01",
+      "機能名": "B05-01 注文番号登録",
+      "区分(画面種別)": "batch",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "要修正-設計準拠",
+      "設計書参照": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3:962-963",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html:1115-1119 の正本セルはスマレジ商品登録APIの送信データ「部門ID」を「6: 店頭受取（固定）」と明記する。",
+      "設計期待値": "スマレジ商品登録APIへ送信する部門IDは `6: 店頭受取（固定）` とする。",
+      "差分内容": "設計は部門ID 6 固定だが、実装は設定値依存であり、6固定を保証していない。",
+      "実装実態": "追加システム設定 `smaregi_category_id` から categoryId を取得し、商品登録リクエストの `categoryId` に設定している。"
+    },
+    {
+      "rowId": 179,
+      "機能No": "B05-01",
+      "機能名": "B05-01 注文番号登録",
+      "区分(画面種別)": "batch",
+      "指摘区分": "未実装",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "要修正-設計準拠",
+      "設計書参照": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3:972-979,1002-1004",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html:1126-1127 の正本セルは商品連携失敗時にエラーメールを送り、宛先を「追加設定のスマレジ通信エラー送信メールアドレス」とする。同:1132-1133 は在庫連携失敗にも同じ要求を置き、同:1157 もAPI失敗時のエラーメール送信を明記する。",
+      "設計期待値": "スマレジ連携APIの実行に失敗した場合はエラーメールを送信し、送信先は追加設定のスマレジ通信エラー送信メールアドレスとする。",
+      "差分内容": "設計が要求するエラーメール送信と追加設定メールアドレス参照が、OTCスマレジ連携コマンド・同期サービス・メッセージハンドラ周辺に存在しない。",
+      "実装実態": "API失敗時は `smaregi_error_flg` を true にして logger/MessengerJob errorMessage に記録するのみで、メール送信処理と送信先設定の参照がない。"
+    },
+    {
+      "rowId": 180,
+      "機能No": "B05-02",
+      "機能名": "B05-02 購入完了手続き再処理",
+      "区分(画面種別)": "batch",
+      "指摘区分": "未実装",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "一部解消-残差あり",
+      "設計書参照": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-4:1136",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html:1320-1328 の正本セルは、対象を「新規・入金待ち・ピック中」「注文番号に紐づく送信履歴がない」「バッチ起動時間の5分前から1分前まで」と明記する。",
+      "設計期待値": "注文ステータスが「新規」「入金待ち」「ピック中」、注文完了メール送信履歴なし、注文日時がバッチ起動時間の5分前から1分前までの注文を処理対象として取得する。",
+      "差分内容": "`OrderRepository.php:1824` の抽出は `plg_sln_order_payment_status`、金額差分、`payment_date BETWEEN NOW() - INTERVAL '1 hour' AND NOW()` を条件にしており、設計のメール履歴なし・注文日時5分前〜1分前・対象ステータス条件を満たさない。",
+      "実装実態": "受注完了メール送信履歴は `MailService::sendOrderMail()` で保存されるが、B05-02 用に「送信履歴なし」「注文日時5分前〜1分前」「新規・入金待ち・ピック中」を組み合わせて抽出する実装は見つからない。近接する `OrderRepository::getNotReflectedPointsUsage()` は決済・金額差分・直近1時間を条件にした通知用抽出で、メール"
+    },
+    {
+      "rowId": 181,
+      "機能No": "B05-03",
+      "機能名": "B05-03 店頭注文番号初期化",
+      "区分(画面種別)": "batch",
+      "指摘区分": "未実装",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-5:1330-1334",
+      "正本根拠": "正本シート hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html:1440-1464 は番号全削除・IDリセット・毎日0時を記すが、コンソールコマンド名を記さない。`order:batch truncateWaitingNumber` は同:1467 から始まるリバース詳細設計の実体 hareruya-design-docs/functions/pf-eccube3/b05-03_batch_order_order_store_call_number_initialize.md:55-67 にだけある。",
+      "設計期待値": "コンソールのバッチコマンド `order:batch truncateWaitingNumber` で店頭注文番号初期化を実行し、コマンド名が一致しない場合は処理を行わずに終了する。",
+      "差分内容": "設計は利用者視点の入口として `order:batch truncateWaitingNumber` を外部契約化しているが、実装の `#[AsCommand]` 登録名は別名である。反証検索として `order:batch truncateWaitingNumber`、`truncateWaitingNumber`、`truncate-waiting-number`、`setAliases`、`aliases` を `src/Eccube`、`app`、`html` で確認したが、設計コマンド名または alias は不在。",
+      "実装実態": "Symfony Console コマンドは `eccube:order:truncate-waiting-number` として登録されている。`order:batch truncateWaitingNumber` または alias 登録は確認できない。"
+    },
+    {
+      "rowId": 183,
+      "機能No": "B05-03",
+      "機能名": "B05-03 店頭注文番号初期化",
+      "区分(画面種別)": "batch",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-5:1342,1345,1360",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html:1463-1464 の正本セルは「エラーハンドリング」「エラーが発生した場合、メールで管理者に通知」と記載し、「例外を捕捉しない／通知しない／コンソールへ伝播する」という指摘期待値を裏付けず、むしろ通知しない点とは矛盾する。",
+      "設計期待値": "削除またはカウンタ初期化の途中で例外が発生した場合は処理が中断する。本バッチは例外捕捉や通知を行わない。例外発生時はコンソールへ例外が伝播する。",
+      "差分内容": "設計は例外を捕捉せずコンソールへ伝播するとしているが、実装は Command 層で Throwable を捕捉して終了コードへ変換している。対象 Command/Action/Repository を `catch`、`Throwable`、`error`、`通知`、`Mailer`、`MailService` で再検索し、設計どおりの非捕捉伝播経路は確認できない。",
+      "実装実態": "Command 側が `try` / `catch (\\Throwable $e)` で action の例外を捕捉し、`$io->error()` でエラーメッセージを出力して `Command::FAILURE` を返す。"
+    }
+  ]
+}
+
+exec
+/bin/bash -lc "jq -r '.findings[] | [.rowId, .機能No, .機能名, .確定根拠区分, .設計書参照, .設計期待値, .正本根拠] | @tsv' hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_packets/du_31.json" in /home/y-saito/Developments
+ exited 3 in 214ms:
+jq: error: syntax error, unexpected INVALID_CHARACTER (Unix shell quoting issues?) at <top-level>, line 1:
+.findings[] | [.rowId, .機能No, .機能名, .確定根拠区分, .設計書参照, .設計期待値, .正本根拠] | @tsv                        
+jq: error: try .["field"] instead of .field for unusually named fields at <top-level>, line 1:
+.findings[] | [.rowId, .機能No, .機能名, .確定根拠区分, .設計書参照, .設計期待値, .正本根拠] | @tsv                       
+jq: 2 compile errors
+
+exec
+/bin/bash -lc "jq -r '.findings[] | [.rowId, .[\"機能No\"], .[\"機能名\"], .[\"確定根拠区分\"], .[\"設計書参照\"], .[\"設計期待値\"], .[\"正本根拠\"]] | @tsv' hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_packets/du_31.json" in /home/y-saito/Developments
+ succeeded in 393ms:
+149	B02-03	B02-03 期間別入庫数集計	LEGACY_BACKED	excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-5:1168,	対象が無い場合は更新を行わずに終了する。	hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html:1243-1285 のExcel正本部は対象なし時の挙動を記さず、同:1287 以降のリバース詳細設計だけが根拠である。hareruya-design-docs/functions/pf-eccube3/b02-03_batch_product_product_storage_period_summary.md:73-78 は「対象が無い場合は更新を行わずに終了する」と記す。
+150	B02-03	B02-03 期間別入庫数集計	LEGACY_BACKED	excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-5:1177-1183	途中失敗時は反映済みの行のみ更新が残る。部分反映は次回実行で回収される。	hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html:1243-1285 のExcel正本部には途中失敗・部分反映・再実行の記述がなく、同:1287 以降のリバース詳細設計にのみ存在する。hareruya-design-docs/functions/pf-eccube3/b02-03_batch_product_product_storage_period_summary.md:104-112、127-133 は「途中失敗時は反映済みの行のみ更新が残る」「部分反映は次回実行で回収」と記す。
+152	B02-03	B02-03 期間別入庫数集計	LEGACY_BACKED	excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-5:1195-1196	処理開始・完了を日時付きでコンソール出力する。	hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html:1243-1285 のsheet-5 Excel正本部には開始・完了ログや日時の指定がない。同:1287 以降のリバース詳細設計の実体 hareruya-design-docs/functions/pf-eccube3/b02-03_batch_product_product_storage_period_summary.md:167-171 にだけ「開始・完了のコンソール出力（日時付き）」がある。
+156	B02-05	B02-05 お気に入り商品セール通知	SPEC_BACKED	excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-7:1366	実行トリガーはスケジュール起動（Step Functions）、実行タイミングは毎週水曜17:30。	hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html:1520 のExcel正本セルに「実行トリガー スケジュール起動(Step Functions)」「実行タイミング 毎週水曜17:30」と明記されている。
+155	B02-05	B02-05 お気に入り商品セール通知	LEGACY_BACKED	excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-7:1404	お気に入り商品は dtb_favorite_product（product_id・player_id・language_id）を使用し、会員（選手情報）は dtb_player（first_name_jp・last_name_jp・email）を通知メールの宛先・本文に使用する。	hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html:1514-1531 のExcel正本はお気に入り商品抽出・会員別集約・メール送信を記すが、`dtb_favorite_product`、`player_id`、`language_id`、`dtb_player` の列名は記載しない。これらは同:1535 以降のリバース詳細設計（functions/pf-eccube3/b02-05_batch_product_product_favorite_sale_notification.md:131-138）にのみある。
+154	B02-05	B02-05 お気に入り商品セール通知	LEGACY_BACKED	excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-7:1410	コンソールのバッチコマンドは product:batch saleNotification とし、セール中のお気に入り商品を会員ごとにまとめ、対象会員へセール通知メールを送信する。	hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html:1510-1512、1514-1531 のExcel正本はセール中お気に入り商品の会員別メール送信と「現行踏襲」を要求するが、コマンド名は記載しない。同:1535 以降のリバース詳細設計の実体 hareruya-design-docs/functions/pf-eccube3/b02-05_batch_product_product_favorite_sale_notification.md:59-65 にだけ `product:batch saleNotification` がある。
+157	B02-05	B02-05 お気に入り商品セール通知	LEGACY_BACKED	excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-7:1416	一定件数ごとに処理メモリを解放しながら集約する。	hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html:1514-1532 のExcel正本部には一定件数ごとのメモリ解放はない。同:1535 以降のリバース詳細設計の実体 hareruya-design-docs/functions/pf-eccube3/b02-05_batch_product_product_favorite_sale_notification.md:69-77、91-97 にのみ記載される。
+159	B02-05	B02-05 お気に入り商品セール通知	LEGACY_BACKED	excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-7:1443	開始・完了のコンソール出力（日時付き）。	hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html:1498-1532 のExcel正本部に開始・完了ログや日時指定はない。同:1535 以降のリバース詳細設計の実体 hareruya-design-docs/functions/pf-eccube3/b02-05_batch_product_product_favorite_sale_notification.md:159-163 にだけ「開始・完了のコンソール出力（日時付き）」がある。
+160	B02-06	B02-06 在庫初期化	SPEC_BACKED	excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-8:1481	店舗登録時、TC大阪(支店ID:1)の商品規格在庫全データを新規店舗用にカスタマイズした上で登録(複製)するバッチ	hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html:1634-1635 のExcel正本セルに「店舗登録時、TC大阪(支店ID:1)の商品規格在庫全データを新規店舗用に…登録(複製)するバッチ」と明記されている。
+161	B02-06	B02-06 在庫初期化	SPEC_BACKED	excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-8:1482	複製範囲は「商品規格コード」および「拡張タイプ」のみ。それ以外は初期値(在庫数0など)が設定される。	hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html:1636 のExcel正本セルに「複製範囲は『商品規格コード』および『拡張タイプ』のみ。それ以外は初期値(在庫数0など)」と明記されている。
+162	B02-06	B02-06 在庫初期化	LEGACY_BACKED	excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-8:1522	コンソールのバッチコマンド product:batch insertStockHistory <開始日> <終了日> で、指定した受注日範囲の受注をたどり、受注分の在庫減算の在庫履歴を作成する。引数不足時のメッセージ、受注日の昇順取得、受注日より前の最新在庫履歴参照、stock_change_reason による重複判定、登録済み/登録結果/開始完了のコンソール出力を含む。	hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html:1629-1644 のsheet-8 Excel正本部は店舗登録時の在庫複製だけを記し、`insertStockHistory`、開始日・終了日、過去受注からの履歴作成はない。同:1646 以降のリバース詳細設計の実体 hareruya-design-docs/functions/pf-eccube3/b02-06_batch_product_product_stock_initialize.md:60-80 にのみ当該フローがある。
+174	B02-08	B02-08 ユニサーチフィード作成	SPEC_BACKED	excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9:1643,	定時実行の他、管理画面の商品管理＞ユニサーチフィード作成メニューでフィードファイル作成可能。管理画面ユニサーチフィードメニューからのフィードファイル更新ボタン押下時はフィードファイル作成を行う。	hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html:1797-1800 の正本セルは「管理画面から実行」「管理画面の商品管理＞ユニサーチフィード作成メニューでフィードファイル作成可能」とする。同:1744 は作成結果をTSV.gzとdoneファイルの指定ディレクトリ出力とし、送信は別シートB02-09（同:1988-1992）として分離している。
+194	B05-08	B05-08 スマレジEC受注連携エラー再連携	SPEC_BACKED	excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-10:1918	ユーザーのポイント数は絶対値で更新を行う。取得したユーザーのスマレジIDとポイント残高を使ってスマレジ連携を行う。	hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html:2084-2086 の正本セルは「ユーザーのスマレジIDとポイント残高を取得」「ユーザーのポイント数は絶対値で更新を行う」と明記する。
+191	B05-08	B05-08 スマレジEC受注連携エラー再連携	SPEC_BACKED	excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-10:1957	コンソールのバッチコマンド `smaregi:batch checkSmaregiErrorOrder` で、スマレジ連携エラーのEC受注について会員ポイントの連携をリトライし、成否で状態を更新する。	hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html:2065 は「スマレジ連携エラーが起きているEC受注のスマレジ連携をリトライする」、同:2074-2076 はエラー受注を取得してリトライし5分ごとに起動、同:2084-2087 はスマレジID・ポイント残高で更新し成功時にエラーフラグをオフと明記する。正本は機能本体を明確に要求する。
+192	B05-08	B05-08 スマレジEC受注連携エラー再連携	SPEC_BACKED	excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-10:1961	スマレジ連携エラーのEC受注を取得し、受注ごとに会員のスマレジIDとポイントでスマレジポイント連携をリトライする。	hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html:2074-2075 は「スマレジ連携エラーフラグが立っている注文データと…ユーザー情報を取得」「取得した注文データのスマレジ連携をリトライ」、同:2079-2084 は同条件の抽出とユーザーのスマレジID・ポイント残高取得を明記する。
+193	B05-08	B05-08 スマレジEC受注連携エラー再連携	SPEC_BACKED	excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-10:1962	連携が成功した場合は受注サブ（移行先では `dtb_order`）のスマレジ連携エラーフラグを解除する。	hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html:2087 の正本セルは「リトライに成功したら、当該の注文データのスマレジ連携エラーフラグをオフにする」と明記する。
+195	B05-08	B05-08 スマレジEC受注連携エラー再連携	LEGACY_BACKED	excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-10:1965	リクエスト数の上限に配慮し、受注ごとに短いインターバルを挟む。1秒あたりのリクエスト上限を超えないよう受注ごとにインターバルを挟む。	/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html:2065 は正本で「スマレジ連携エラーが起きているEC受注のスマレジ連携をリトライする」とだけ記載し、正本範囲（同:2050-2092）にインターバル、1秒、リクエスト上限の記載はない。該当記述はリバース詳細設計開始後の同:2102「リクエスト数の上限に配慮し、受注ごとに短いインターバルを挟む」にのみ存在する。
+197	B05-09	B05-09 スマレジ取引連携エラー再連携	SPEC_BACKED	excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-11:2024,2025,2031,2041,2083,2089	APIでバッチ駆動時間から5時間前まで、または手動実行時に指定された期間内のスマレジ取引データを取得すること。	/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html:2190-2191 の正本セルは「APIでバッチ駆動時間から5時間前までの間の取引データを取得する」「手動でのバッチ実行時に期間指定されている場合はその期間内の取引データを取得する」と明記し、同:2207 も更新時間を `X-Y hours` の範囲とする。
+198	B05-09	B05-09 スマレジ取引連携エラー再連携	SPEC_BACKED	excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-11:2026,2027,2032-2037,2043,2057,2072,2083,2102	Webhookが失敗した可能性のある取引について、ポイント処理不整合、ECCUBE側にスマレジ取引ID未登録、登録済み取引の返品・キャンセル等による更新日時差異を検知し、スマレジ受信処理(A05-04)と同等の処理が完了した状態にすること。	/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html:2198-2203 の正本セルは対象を「Webhookが何らかの理由で失敗したスマレジ取引情報」とし、再連携条件を「ポイント処理に不整合」「スマレジ取引IDがECCUBE側に登録されていない」「登録済みで返品等による取引の更新日時差異」と列挙する。同:2209 は「スマレジ受信処理(A05-04)と同等の処理が完了した状態」を要求する。
+199	B05-09	B05-09 スマレジ取引連携エラー再連携	LEGACY_BACKED	excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-11:2072,2083,2092,2096	スマレジ接続設定（接続先URL・契約ID・アクセストークン等）はオプションマスタ `mtb_option` の `option_key`・`option_value` に保持し、API呼び出しに使用すること。	/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html:2195 の正本は入力元を「スマレジプラットフォームAPI」とするだけで、正本範囲（同:2163-2213）に `mtb_option`、`option_key`、`option_value`、接続設定の保持先はない。該当DB指定はリバース詳細設計の同:2262「`mtb_option`（オプションマスタ）...接続設定...を保持し、API呼び出しに使用する」にのみある。
+196	B05-09	B05-09 スマレジ取引連携エラー再連携	LEGACY_BACKED	excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-11:2078,2082	スマレジ取引連携エラー再連携は、コンソールのバッチコマンド `smaregi:batch checkSmaregiTransaction` から実行できること。	/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html:2178 は正本で概要を「スマレジ連携でwebhookで連携エラーになったものを再連携する」とするが、正本範囲（同:2163-2213）に `smaregi:batch` や `checkSmaregiTransaction` はない。コマンド名はリバース詳細設計の同:2244「`smaregi:batch checkSmaregiTransaction`」にのみある。
+200	B05-09	B05-09 スマレジ取引連携エラー再連携	LEGACY_BACKED	excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-11:2083,2089,2092,2106	取引情報取得に失敗した場合は、失敗内容をログとコンソールに出力して異常終了（戻り値1）すること。取得結果が空の場合は正常終了すること。	/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html:2211 の正本は「再連携時にエラーがあった場合、スマレジから返ってきているエラー内容をログに出力する」とだけ記載する。コンソール出力、戻り値1、空結果の正常終了は正本範囲に無く、リバース詳細設計の同:2255「結果が空なら何もせず完了する。取得失敗時は異常終了（戻り値1）」にある。
+177	B05-01	B05-01 注文番号登録	SPEC_BACKED	excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3:950-956	スマレジ用商品コードは `20 + 1 + スマレジ店舗ID3桁0埋め + 注文番号8桁0埋め後の末尾6桁 + チェックディジット` で採番する。	hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html:1104-1107 の正本セルは、`20 + 1 + スマレジ店舗ID3桁0埋め + 注文番号(8桁0埋め後、末尾6桁) + チェックディジット` と明記し、同:1110-1111 は注文番号12345の例を `2010010123451` とする。
+178	B05-01	B05-01 注文番号登録	SPEC_BACKED	excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3:962-963	スマレジ商品登録APIへ送信する部門IDは `6: 店頭受取（固定）` とする。	hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html:1115-1119 の正本セルはスマレジ商品登録APIの送信データ「部門ID」を「6: 店頭受取（固定）」と明記する。
+179	B05-01	B05-01 注文番号登録	SPEC_BACKED	excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3:972-979,1002-1004	スマレジ連携APIの実行に失敗した場合はエラーメールを送信し、送信先は追加設定のスマレジ通信エラー送信メールアドレスとする。	hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html:1126-1127 の正本セルは商品連携失敗時にエラーメールを送り、宛先を「追加設定のスマレジ通信エラー送信メールアドレス」とする。同:1132-1133 は在庫連携失敗にも同じ要求を置き、同:1157 もAPI失敗時のエラーメール送信を明記する。
+180	B05-02	B05-02 購入完了手続き再処理	SPEC_BACKED	excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-4:1136	注文ステータスが「新規」「入金待ち」「ピック中」、注文完了メール送信履歴なし、注文日時がバッチ起動時間の5分前から1分前までの注文を処理対象として取得する。	hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html:1320-1328 の正本セルは、対象を「新規・入金待ち・ピック中」「注文番号に紐づく送信履歴がない」「バッチ起動時間の5分前から1分前まで」と明記する。
+181	B05-03	B05-03 店頭注文番号初期化	LEGACY_BACKED	excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-5:1330-1334	コンソールのバッチコマンド `order:batch truncateWaitingNumber` で店頭注文番号初期化を実行し、コマンド名が一致しない場合は処理を行わずに終了する。	正本シート hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html:1440-1464 は番号全削除・IDリセット・毎日0時を記すが、コンソールコマンド名を記さない。`order:batch truncateWaitingNumber` は同:1467 から始まるリバース詳細設計の実体 hareruya-design-docs/functions/pf-eccube3/b05-03_batch_order_order_store_call_number_initialize.md:55-67 にだけある。
+183	B05-03	B05-03 店頭注文番号初期化	LEGACY_BACKED	excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-5:1342,1345,1360	削除またはカウンタ初期化の途中で例外が発生した場合は処理が中断する。本バッチは例外捕捉や通知を行わない。例外発生時はコンソールへ例外が伝播する。	hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html:1463-1464 の正本セルは「エラーハンドリング」「エラーが発生した場合、メールで管理者に通知」と記載し、「例外を捕捉しない／通知しない／コンソールへ伝播する」という指摘期待値を裏付けず、むしろ通知しない点とは矛盾する。
+
+exec
+/bin/bash -lc "jq '.findings | length' hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_packets/du_31.json && ls -l hareruya-design-docs/excel_to_html/input/0404_基本設計仕様書\\(バッチ_商品管理\\).xlsx hareruya-design-docs/excel_to_html/input/0405_基本設計仕様書\\(バッチ_受注管理\\).xlsx && python3 - <<'PY'
+from openpyxl import load_workbook
+from pathlib import Path
+for p in [Path('hareruya-design-docs/excel_to_html/input/0404_基本設計仕様書(バッチ_商品管理).xlsx'), Path('hareruya-design-docs/excel_to_html/input/0405_基本設計仕様書(バッチ_受注管理).xlsx')]:
+    wb=load_workbook(p, read_only=False, data_only=False)
+    print(p.name)
+    for i, ws in enumerate(wb.worksheets, 1):
+        if i in ({5,7,8,9} if p.name.startswith('0404') else {3,4,5,10,11}):
+            print(i, ws.title, ws.max_row, ws.max_column, 'images', len(ws._images), 'tables', list(ws.tables.keys()))
+PY" in /home/y-saito/Developments
+ exited 1 in 1712ms:
+28
+-rw-r--r-- 1 y-saito y-saito 1421614 Mar  6 20:26 hareruya-design-docs/excel_to_html/input/0404_基本設計仕様書(バッチ_商品管理).xlsx
+-rw-r--r-- 1 y-saito y-saito  510329 Oct 31  2025 hareruya-design-docs/excel_to_html/input/0405_基本設計仕様書(バッチ_受注管理).xlsx
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+ModuleNotFoundError: No module named 'openpyxl'
+
+exec
+/bin/bash -lc "ls -la hareruya-design-docs/excel_to_html && sed -n '1,180p' hareruya-design-docs/excel_to_html/pyproject.toml" in /home/y-saito/Developments
+ succeeded in 565ms:
+total 304
+drwxr-sr-x  6 y-saito y-saito   4096 Jul 28 19:03 .
+drwxr-xr-x 23 y-saito y-saito   4096 Jul 28 18:09 ..
+drwxr-sr-x  4 y-saito y-saito   4096 Jun  3 15:12 .venv
+-rw-r--r--  1 y-saito y-saito   5759 Jun 10 13:02 README.md
+drwxr-sr-x  2 y-saito y-saito   4096 Jul 28 18:42 __pycache__
+-rw-r--r--  1 y-saito y-saito 185089 Jul 25 18:44 convert.py
+drwxr-sr-x  2 y-saito y-saito   4096 Jul 29 14:33 input
+drwxr-sr-x  2 y-saito y-saito   4096 Jul 28 19:03 output
+-rw-r--r--  1 y-saito y-saito    256 Jun  3 15:56 pyproject.toml
+-rw-r--r--  1 y-saito y-saito     31 Jun  3 15:56 requirements.txt
+-rw-r--r--  1 y-saito y-saito  31099 Jun  3 16:00 uv.lock
+-rw-r--r--  1 y-saito y-saito  45301 Jul 28 19:03 verify.py
+[project]
+name = "excel-to-html"
+version = "0.1.0"
+description = "Convert Excel workbooks to readable, self-contained tabbed HTML files."
+requires-python = ">=3.10"
+dependencies = [
+    "openpyxl>=3.1.0",
+    "Pillow>=10.0.0",
+]
+
+[tool.uv]
+package = false
+
+exec
+/bin/bash -lc "uv run python - <<'PY'
+from openpyxl import load_workbook
+from pathlib import Path
+for p in [Path('input/0404_基本設計仕様書(バッチ_商品管理).xlsx'), Path('input/0405_基本設計仕様書(バッチ_受注管理).xlsx')]:
+    wb=load_workbook(p, read_only=False, data_only=False)
+    print(p.name)
+    selected={5,7,8,9} if p.name.startswith('0404') else {3,4,5,10,11}
+    for i, ws in enumerate(wb.worksheets, 1):
+        if i in selected:
+            print(i, ws.title, ws.max_row, ws.max_column, 'images', len(ws._images), 'tables', list(ws.tables.keys()))
+PY" in /home/y-saito/Developments/hareruya-design-docs/excel_to_html
+exec
+/bin/bash -lc "uv run python -c 'import openpyxl; print(openpyxl.__version__)'" in /home/y-saito/Developments/hareruya-design-docs/excel_to_html
+ succeeded in 1260ms:
+3.1.5
+
+exec
+/bin/bash -lc "uv run python -c \"from openpyxl import load_workbook; from pathlib import Path; ps=[Path('input/0404_基本設計仕様書(バッチ_商品管理).xlsx'),Path('input/0405_基本設計仕様書(バッチ_受注管理).xlsx')]; [(print(p.name),[(print(i,ws.title,ws.max_row,ws.max_column,'images',len(ws._images),'tables',list(ws.tables.keys()))) for i,ws in enumerate(load_workbook(p,read_only=False,data_only=False).worksheets,1) if i in ({5,7,8,9} if p.name.startswith('0404') else {3,4,5,10,11})]) for p in ps]\"" in /home/y-saito/Developments/hareruya-design-docs/excel_to_html
+codex
+対象は28件で、すべてバッチ設計書の同一2ブック内です。いま正本Excelから対象シート名・表の範囲・画像有無を抽出しており、同一シート内のまとめ編集を反映して単価を調整します。
+ succeeded in 46981ms:
+0404_基本設計仕様書(バッチ_商品管理).xlsx
+5 期間別入庫数集計 820 60 images 0 tables []
+7 お気に入り商品セール通知 817 60 images 0 tables []
+8 在庫初期化 820 60 images 0 tables []
+9 ユニサーチフィード作成 610 60 images 1 tables []
+0405_基本設計仕様書(バッチ_受注管理).xlsx
+3 注文番号登録 300 55 images 0 tables []
+4 購入完了手続き再処理 227 60 images 0 tables []
+5 店頭注文番号初期化 226 54 images 0 tables []
+10 スマレジEC受注連携エラー再連携 239 57 images 0 tables []
+11 スマレジ取引連携エラー再連携 540 60 images 0 tables []
+
+exec
+/bin/bash -lc "uv run python -c \"print('start', flush=True); from openpyxl import load_workbook; w=load_workbook('input/0404_基本設計仕様書(バッチ_商品管理).xlsx', read_only=False); print(w.sheetnames, flush=True)\"" in /home/y-saito/Developments/hareruya-design-docs/excel_to_html
+ succeeded in 44099ms:
+0404_基本設計仕様書(バッチ_商品管理).xlsx
+5 期間別入庫数集計 820 60 images 0 tables []
+7 お気に入り商品セール通知 817 60 images 0 tables []
+8 在庫初期化 820 60 images 0 tables []
+9 ユニサーチフィード作成 610 60 images 1 tables []
+0405_基本設計仕様書(バッチ_受注管理).xlsx
+3 注文番号登録 300 55 images 0 tables []
+4 購入完了手続き再処理 227 60 images 0 tables []
+5 店頭注文番号初期化 226 54 images 0 tables []
+10 スマレジEC受注連携エラー再連携 239 57 images 0 tables []
+11 スマレジ取引連携エラー再連携 540 60 images 0 tables []
+
+ succeeded in 28910ms:
+['表紙', '目次', '期間別販売数集計', '入荷通知キャンセル', '期間別入庫数集計', '商品部門未設定チェック', 'お気に入り商品セール通知', '在庫初期化', 'ユニサーチフィード作成', 'ユニサーチフィードTSV', 'ユニサーチフィード送信', 'XXXCSV出力項目設定', '対応状況管理', 'メール管理_商品予約完了', '機能A']
+
+exec
+/bin/bash -lc "uv run python -c \"from openpyxl import load_workbook; from pathlib import Path; p=Path('input/0404_基本設計仕様書(バッチ_商品管理).xlsx'); w=load_workbook(p,read_only=False,data_only=False); [print(i,ws.title,ws.max_row,ws.max_column,'images',len(ws._images),'tables',list(ws.tables.keys()),flush=True) for i,ws in enumerate(w.worksheets,1) if i in {5,7,8,9}]\" && uv run python -c \"from openpyxl import load_workbook; from pathlib import Path; p=Path('input/0405_基本設計仕様書(バッチ_受注管理).xlsx'); w=load_workbook(p,read_only=False,data_only=False); [print(i,ws.title,ws.max_row,ws.max_column,'images',len(ws._images),'tables',list(ws.tables.keys()),flush=True) for i,ws in enumerate(w.worksheets,1) if i in {3,4,5,10,11}]\"" in /home/y-saito/Developments/hareruya-design-docs/excel_to_html
+exec
+/bin/bash -lc "uv run python -c \"from openpyxl import load_workbook; w=load_workbook('input/0404_基本設計仕様書(バッチ_商品管理).xlsx',read_only=False); ws=w.worksheets[4]; print(ws.title,ws.max_row,ws.max_column,len(ws._images),flush=True)\"" in /home/y-saito/Developments/hareruya-design-docs/excel_to_html
+ succeeded in 47736ms:
+5 期間別入庫数集計 820 60 images 0 tables []
+7 お気に入り商品セール通知 817 60 images 0 tables []
+8 在庫初期化 820 60 images 0 tables []
+9 ユニサーチフィード作成 610 60 images 1 tables []
+3 注文番号登録 300 55 images 0 tables []
+4 購入完了手続き再処理 227 60 images 0 tables []
+5 店頭注文番号初期化 226 54 images 0 tables []
+10 スマレジEC受注連携エラー再連携 239 57 images 0 tables []
+11 スマレジ取引連携エラー再連携 540 60 images 0 tables []
+
+ succeeded in 31374ms:
+期間別入庫数集計 820 60 0
+
+exec
+/bin/bash -lc "uv run python -c \"exec('from openpyxl import load_workbook\\nw=load_workbook(\\\"input/0404_基本設計仕様書(バッチ_商品管理).xlsx\\\",read_only=False,data_only=False)\\nfor i in (5,7,8,9):\\n ws=w.worksheets[i-1]; print(i,ws.title,ws.max_row,ws.max_column,len(ws._images),flush=True)')\"" in /home/y-saito/Developments/hareruya-design-docs/excel_to_html
+ succeeded in 33433ms:
+5 期間別入庫数集計 820 60 0
+7 お気に入り商品セール通知 817 60 0
+8 在庫初期化 820 60 0
+9 ユニサーチフィード作成 610 60 1
+
+exec
+/bin/bash -lc "uv run python -c \"from openpyxl import load_workbook; w=load_workbook('input/0404_基本設計仕様書(バッチ_商品管理).xlsx',read_only=False,data_only=False); a=w.worksheets[4]; b=w.worksheets[6]; c=w.worksheets[7]; d=w.worksheets[8]; print(a.title,a.max_row,a.max_column,len(a._images)); print(b.title,b.max_row,b.max_column,len(b._images)); print(c.title,c.max_row,c.max_column,len(c._images)); print(d.title,d.max_row,d.max_column,len(d._images))\"" in /home/y-saito/Developments/hareruya-design-docs/excel_to_html
+ succeeded in 34515ms:
+期間別入庫数集計 820 60 0
+お気に入り商品セール通知 817 60 0
+在庫初期化 820 60 0
+ユニサーチフィード作成 610 60 1
+
+exec
+/bin/bash -lc "uv run python -c \"from openpyxl import load_workbook; w=load_workbook('input/0404_基本設計仕様書(バッチ_商品管理).xlsx',read_only=True,data_only=True); ws=w['期間別入庫数集計']; [(print(c.coordinate,str(c.value).replace(chr(10),' / ')[:240],flush=True)) for row in ws.iter_rows(min_row=1,max_row=140) for c in row if c.value not in (None,'')]\"" in /home/y-saito/Developments/hareruya-design-docs/excel_to_html
+ succeeded in 2239ms:
+A1 ドキュメント名
+I1 商品管理バッチ機能
+U1 セクション
+A2 プロジェクト名
+I2 サイトリニューアル
+U2 作成者
+Y2 高久
+AC2 作成日
+AG2 2025-06-27 00:00:00
+AK2 更新者
+AO2 堀部
+AS2 更新日
+AW2 2025-10-15 00:00:00
+A4 機能No
+D4 B02-03
+I4 機能名
+N4 期間別入庫数集計
+AC4 概要
+AG4 入庫数（前日〜365日間）を集計する
+B6 カスタマイズ説明
+B7 概要
+C8 入庫数（前日〜365日間）を集計する
+B10 機能
+C11 現行システムをベースに下記カスタマイズを行う
+C13 集計対象について
+D14 ・
+E14 支店と統合するため、支店ごとの入庫数も集計する
+D15 ・
+E15 閉店した店舗は集計の対象外とする
+B18 処理概要（★はカスタマイズ項目）
+B19 ・
+C19 定時処理で実行されて日付から下記期間範囲ごとの商品入庫数を本店を含む店舗ごとに行う
+C20 昨日の入庫数,3日間の入庫数,1週間の入庫数,1か月の入庫数,90日間の入庫数,180日間の入庫数,365日間の入庫数
+B21 ★
+C21 閉店した店舗は集計の対象外とする
+B22 ★
+C22 本店の支店IDは0として処理する
+B25 実行トリガー
+F25 スケジュール起動(Step Functions)
+AJ25 実行タイミング
+AO25 毎日 0:00
+B27 入力データ元
+G27 DB
+AA27 出力先(フォーマット)
+AG27 DB
+B29 入力データ詳細
+B31 ・
+C31 商品の入庫ステータスが入庫もしくマスタ更新の状況で366日の入庫数を集計
+C32 閉店した店舗は集計の対象外とする
+B37 入力データ検索条件
+B38 項目名
+S38 条件
+AK38 備考
+B39 在庫履歴データ.入庫日時
+S39 366日間の期間内
+B40 在庫履歴データ.入庫ステータス
+S40 入庫もしくはマスター更新
+B41 店舗情報.店舗閉店管理
+S41 店舗閉店管理が閉店でない
+B44 実行結果詳細  ※主にDBの登録・更新結果について記載
+B45 商品規格ID,支店ID,昨日の入庫数,3日間の入庫数,1週間の入庫数,1か月の入庫数,90日間の入庫数,180日間の入庫数,365日間の入庫数
+B46 以上の情報を入庫数集計データへ更新を行う
+B53 エラーハンドリング
+
+exec
+/bin/bash -lc "uv run python -c \"from openpyxl import load_workbook; w=load_workbook('input/0404_基本設計仕様書(バッチ_商品管理).xlsx',read_only=True,data_only=True); ss=['お気に入り商品セール通知','在庫初期化','ユニサーチフィード作成']; [(print('###',s,flush=True),[(print(c.coordinate,str(c.value).replace(chr(10),' / ')[:240],flush=True)) for row in w[s].iter_rows(min_row=1,max_row=120) for c in row if c.value not in (None,'')]) for s in ss]\"" in /home/y-saito/Developments/hareruya-design-docs/excel_to_html
+ succeeded in 2262ms:
+### お気に入り商品セール通知
+A1 ドキュメント名
+I1 商品管理バッチ機能
+U1 セクション
+A2 プロジェクト名
+I2 サイトリニューアル
+U2 作成者
+Y2 高久
+AC2 作成日
+AG2 2025-06-27 00:00:00
+AK2 更新者
+AO2 盛田
+AS2 更新日
+AW2 2026-02-04 00:00:00
+A4 機能No
+D4 B02-05
+I4 機能名
+N4 お気に入り商品セール通知
+AC4 概要
+AG4 お気に入り登録商品がセール中になった場合に会員にメールを送信する
+B6 カスタマイズ説明
+B7 概要
+C8 会員がお気に入りに登録した商品がセール中の場合、お知らせメールを送信する。
+B10 機能
+C11 現行システムから変更なし(現行踏襲)
+B14 処理概要（★はカスタマイズ項目）
+B15 ・
+C15 会員がお気に入りに登録した商品のうち、セールフラグが立っている商品の一覧を取得する。
+C16 (セール開始日に送信ではなく、セール商品がある場合は毎日送信する)
+B17 ★
+C17 仮会員と退会済み会員は対象外とする
+B18 ・
+C18 会員ごとに送り先、セール商品をまとめる
+B19 ・
+C19 会員住所が日本の会員には【お気に入り/日】お気に入り商品セール通知メールを送る。
+B20 ・
+C20 会員住所が国外の会員には【お気に入り/英】お気に入り商品セール通知メールを送る。
+B23 実行トリガー
+F23 スケジュール起動(Step Functions)
+AJ23 実行タイミング
+AO23 毎週水曜17:30
+B25 入力データ元
+G25 DB
+AA25 出力先(フォーマット)
+AG25 メール(該当ユーザー宛)
+B27 入力データ詳細
+C29 お気に入り登録商品の中で、セールフラグの立っているものを取得
+C30 お気に入り登録している会員の会員ステータスが仮会員・退会済み会員のいずれでもない
+B34 入力データ検索条件
+B35 項目名
+S35 条件
+AK35 備考
+B36 お気に入り登録商品.セールフラグ
+S36 セールフラグが立っている
+B37 会員情報.会員ステータス
+S37 仮会員ではない かつ 退会会員ではない
+B40 実行結果詳細  ※主にDBの登録・更新結果について記載
+C42 取得したセール中のお気に入り登録商品を会員ごとに纏め、会員の住所が日本か海外かを見て、送信する言語を選択
+C43 セール中のお気に入り商品の一覧を会員にメール送信
+B49 エラーハンドリング
+### 在庫初期化
+A1 ドキュメント名
+I1 商品管理バッチ機能
+U1 セクション
+A2 プロジェクト名
+I2 サイトリニューアル
+U2 作成者
+Y2 高久
+AC2 作成日
+AG2 2025-06-27 00:00:00
+AK2 更新者
+AO2 高久
+AS2 更新日
+AW2 2025-09-19 00:00:00
+A4 機能No
+D4 B02-06
+I4 機能名
+N4 在庫初期化
+AC4 概要
+AG4 店舗登録時、初期在庫データ作成を行う
+B6 カスタマイズ説明
+B7 概要
+C8 店舗登録時、初期在庫データ作成を行う
+B10 機能
+C11 現行システムから変更なし(現行踏襲)
+B14 処理概要（★はカスタマイズ項目）
+B15 ・
+C15 店舗登録時、TC大阪(支店ID:1)の商品規格在庫全データを新規店舗用にカスタマイズした上で登録(複製)するバッチ
+B16 ・
+C16 複製範囲は「商品規格コード」および「拡張タイプ」のみ。それ以外は初期値(在庫数0など)が設定される。
+B19 実行トリガー
+F19 -
+AJ19 実行タイミング
+AO19 -
+B21 入力データ元
+G21 DB
+AA21 出力先(フォーマット)
+AG21 DB
+B23 入力データ詳細
+B37 入力データ検索条件
+B38 項目名
+S38 条件
+AK38 備考
+B43 実行結果詳細  ※主にDBの登録・更新結果について記載
+B52 エラーハンドリング
+### ユニサーチフィード作成
+A1 ドキュメント名
+I1 ユニサーチ
+U1 セクション
+A2 プロジェクト名
+I2 サイトリニューアル
+U2 作成者
+Y2 石川
+AC2 作成日
+AG2 2025-09-11 00:00:00
+AK2 更新者
+AO2 石川
+AS2 更新日
+AW2 2025-09-11 00:00:00
+A4 機能No
+D4 B02-08
+I4 機能名
+N4 ユニサーチフィード作成
+AC4 概要
+AG4 ユニサーチ向けのフィードファイルを出力する
+B7 カスタマイズ説明
+C9 ・
+D9 フィードファイル内のカテゴリ項目をリニューアルのカテゴリに合わせる
+C10 ・
+D10 買取でユニサーチの検索ができるよう、項目を追加する
+C11 ・
+D11 支店でユニサーチの検索ができるよう、項目を追加する
+C12 ・
+D12 リニューアルで新規に追加になる項目を追加する
+B15 処理概要（★はカスタマイズ項目）
+C17 ・
+D17 詳細な連携仕様はユニサーチから提供されているフィード仕様書を参照
+D18 ・
+E18 商品情報を記載したTSVファイル（gzに固める）、出力が終わったことを示すdoneファイルを指定のディレクトリ以下に出力
+C20 ・
+D20 初期化処理
+D21 ・
+E21 前回作成したファイルを削除
+D22 ・
+E22 プロセスファイルを作成し、二重でファイルを作成するのを防ぐ
+C24 ・
+D24 ユニサーチに連携する対象の商品を取得する
+D25 ・
+E25 連携内容はユニサーチ要件質問票も参照
+E26 https://docs.google.com/spreadsheets/d/11HCPre5VJPVAQgVFKQptEEuRphYVsKhYVDkibxgGphg/edit?gid=785071458#gid=785071458
+D27 ・
+E27 取得条件は以下の通り
+F28 ・
+G28 販売価格が1円以上
+F29 ・
+G29 （高額商品でない場合）カード状態が同一商品、同一言語の中で最も状態がよいもの
+G30 →NMのみ送信される
+P30 ※在庫数はNM以外も合計して送る
+F31 ・
+G31 （高額商品の場合）状態関係なく高額商品コードが設定されているもの
+F32 ・
+G32 商品、商品規格が削除されていないもの
+F33 ・
+G33 公開ステータスが公開のもの
+D34 ・
+E34 出力内容は「ユニサーチフィードTSV」シートを参照
+C36 ★
+D36 リニューアルでのカスタマイズポイント
+D37 ・
+E37 Foilについて
+E38 ・
+F38 現行ではFoilはあり、なしをフラグで持つが、リニューアル後は通常（Foilなし）、あり、特殊を持つため、連携内容も通常（Foilなし）、あり、特殊を連携する
+E39 ・
+F39 フラグではなくなるので名称変更を行うかどうかは要相談
+D41 ・
+E41 在庫数について
+E42 ・
+F42 現行では本店のみユニサーチ対応を行っているため在庫数は本店ECの在庫数となるが、リニューアル後は支店ごとのECの在庫数を持つ必要がある
+E43 ・
+F43 支店の追加、廃止ごとにユニサーチのフィードの増減があるのは作業漏れの可能性があるため、在庫のカラムにすべての店舗のEC在庫数を連携する
+E44 ・
+F44 支店ID:在庫数[区切り文字]支店ID:在庫数の形式で指定可能であれば指定したい
+E45 ・
+F45 （在庫有無のみ検索できればよいので、数量は不要か）
+D47 ・
+E47 週間販売数について
+E48 ・
+F48 本店ECの週間販売数を参照する
+E49 ・
+F49 リニューアル後は支店やスマレジの週間販売数も集計するため、本店ECの週間販売数を明示して取得する
+D51 ・
+E51 カテゴリについて
+E52 ・
+F52 リニューアル後は現行のカテゴリとは異なり、[フォーマット＞シリーズ＞カードセット]（例: スタンダード＞エルドレインの森＞エルドレインの森ブースターファン）
+F53 の形でカテゴリを持つようになるが、現行のロジックと同様商品に紐づくカテゴリを階層で送る
+E54 ・
+F54 リニューアル後は[フォーマット＞シリーズ＞カードセット＞レアリティ等]の形でカテゴリを持つが、レアリティ等の部分には実際には商品は紐づかないため
+F55 フィードで送るのは[フォーマット＞シリーズ＞カードセット]までとなる
+F56 （検索APIの方でレアリティを指定し、取得したいカテゴリとレアリティで検索可能）
+D58 ・
+E58 カード状態について
+E59 ・
+F59 現行では買取に対応していないためカード状態での検索を行う必要はないが、リニューアル後は買取に対応するため、買取はNMのみ取得する
+E60 ・
+F60 ユニサーチ側の検索対象項目としてカード状態を指定する必要がある
+F61 https://docs.google.com/spreadsheets/d/11HCPre5VJPVAQgVFKQptEEuRphYVsKhYVDkibxgGphg/edit?gid=785071458#gid=785071458
+F62 上記ファイル内で、絞り込みパラメータ名列にパラメータ名を指定する、パラメータ名はfq.card_conditionとする
+D64 ・
+E64 支店表示フラグ
+E65 ・
+F65 リニューアルで支店にもユニサーチ対応を行うため、支店表示フラグを追加する
+E66 ・
+F66 支店で検索を行う際は、必ず支店表示フラグを公開で指定する
+D68 ・
+E68 フレーム
+E69 ・
+F69 リニューアルでフレームを検索条件に追加するため、連携を追加する
+D71 ・
+E71 買取金額
+E72 ・
+F72 リニューアルで買取側もユニサーチ対応するため、買取金額を追加する
+E73 ・
+F73 買取側で検索を行う際は、必ず買取金額>0円の条件を指定する
+D75 ・
+E75 カードテキスト英語
+E76 ・
+F76 カードテキスト英語でキーワード検索できるよう、フィード追加と、ユニサーチ側の設定を行う
+D78 ・
+E78 予約商品フラグ
+E79 ・
+F79 買取では予約商品を表示しないようにする
+E80 ・
+F80 予約商品であるかどうかは、商品に紐づく購入グループの予約商品フラグが立っているかどうかで判定する
+D82 ・
+E82 カードセットリリース日
+E83 ・
+F83 リニューアルのタイミングで新たに発売日順（降順）を実装するため、カードセットのリリース日を連携する
+C85 ・
+D85 管理画面から実行
+D86 ・
+E86 定時実行の他、管理画面の商品管理＞ユニサーチフィード作成メニューでフィードファイル作成可能
+D87 ・
+E87 リニューアル時、バッチ実行方法が変わる場合は修正が必要
+D88 ・
+E88 二重起動で実行できないときに画面でわかるようにしたい（StepFunctionを活用する）
+C106 ・
+D106 パフォーマンス改善
+D107 ・
+E107 フィードファイル作成に時間がかかっているので、今後作成時間が延びていくようならパフォーマンス改善を行う
+D108 ・
+E108 SQL取得結果に対して1行づつユニサーチ向けにデータ加工処理を行いファイルに書き込みをしているところで時間がかかっているので、
+E109 並列処理を行う等の対策を検討する
+B113 実行トリガー
+F113 スケジュール起動(Step Functions) / 管理画面ユニサーチフィードメニューからのフィードファイル更新ボタン押下時
+AJ113 実行タイミング
+AO113 毎時15分
+B115 入力データ元
+G115 DB
+AA115 出力先(フォーマット)
+AG115 TSVファイルをgzに圧縮
+B117 入力データ詳細
+C119 ・
+D119 取得条件を参照
+
+exec
+/bin/bash -lc "uv run python -c \"from openpyxl import load_workbook; w=load_workbook('input/0405_基本設計仕様書(バッチ_受注管理).xlsx',read_only=True,data_only=True); ss=['注文番号登録','購入完了手続き再処理','店頭注文番号初期化','スマレジEC受注連携エラー再連携','スマレジ取引連携エラー再連携']; [(print('###',s,flush=True),[(print(c.coordinate,str(c.value).replace(chr(10),' / ')[:240],flush=True)) for row in w[s].iter_rows(min_row=1,max_row=100) for c in row if c.value not in (None,'')]) for s in ss]\"" in /home/y-saito/Developments/hareruya-design-docs/excel_to_html
+ succeeded in 1877ms:
+### 注文番号登録
+A1 ドキュメント名
+I1 受注管理　基本設計
+U1 セクション
+A2 プロジェクト名
+I2 受注管理機能
+U2 作成者
+Y2 緑川
+AC2 作成日
+AG2 2025-05-13 00:00:00
+AK2 更新者
+AO2 石川
+AS2 更新日
+AW2 2025-09-29 00:00:00
+A4 機能No
+D4 B05-01
+I4 機能名
+N4 注文番号登録 / →店頭受取注文商品スマレジ連携（名称変更）
+AC4 概要
+AG4 スマレジ用商品コードの登録と連携を行う
+B6 カスタマイズ説明
+B8 ・
+C8 注文番号のコピー処理をバッチから除外する
+B9 ・
+C9 注文番号の採番処理を新たなデータベースに合わせて変更する（MySQL→PostgreSQL）
+B10 ・
+C10 スマレジ連携APIについて、呼び出しを廃止予定のスマレジAPIからプラットフォームAPIに変更
+B13 処理概要（★はカスタマイズ項目）
+B15 ・
+C15 現行でこのバッチは以下の2つの処理を行っている
+C16 ・
+D16 採番された注文番号を注文情報へコピーする処理
+D17 （注文ステータスが変更されたときに実行されるMySQLのトリガーで注文番号が注文番号採番専用テーブルにて採番されるため、コピーを行う）
+C18 ・
+D18 店頭受取注文の場合、スマレジ側に注文した商品の情報を連携する
+C21 現行
+C22 DB　Mysql
+C39 【開発申し送り】現在のトリガーSQL（MySQLに設定されている）
+C40 IF OLD.status IN (7, 8) AND NEW.status IN (1, 2) THEN
+C41   INSERT IGNORE INTO dtb_order_number(order_id) VALUES(OLD.order_id);
+C42 END IF;
+C44 上記の処理の理由とカスタマイズ理由
+C45 ・
+D45 注文が完了した順番で注文番号を付けたいため、注文IDとは別に注文番号を採番している
+C46 ・
+D46 注文番号を連番で採番する際、MySQLのPKを連番で採番する機能を使っているため、
+D47 新たなテーブル(dtb_order_number)を作成し採番を行っている
+A48 　
+C48 ・
+D48 採番用のテーブル(dtb_order_number)にデータ登録をする処理でデッドロックが起こる可能性はあるため、
+D49 データ登録の処理をなくした形にしたい
+C51 リニューアル後
+C52 DB　PostgreSQL
+C72 【開発申し送り】リニューアル後のトリガーSQL
+C73 IF OLD.status IN (7, 8) AND NEW.status IN (1, 2) THEN
+C74    NEW.order_number := nextval('order_number_seq');
+C75 END IF;
+C77 以上のカスタマイズにより、注文番号登録バッチから注文番号登録の処理を削除する
+C78 元々、注文番号登録バッチという名称であるがリニューアル後は注文番号登録を行わないため、
+C79 バッチ名称は「店頭受取注文商品スマレジ連携バッチ」に変更する。
+C80 支店側の「スマレジ商品登録バッチ」が同じ役割を持っており、今回本店で実装されるため不要になるので、実装を引き継ぐ形とする。
+D81 【開発申し送り】支店と本店のバッチを見比べながら作成する
+B83 ★
+C83 注文番号のコピー処理をバッチから除外する
+B85 ★
+C85 注文番号の採番処理（トリガー）を新たなデータベースに合わせて変更する（MySQL→PostgreSQL）
+B87 ★
+C87 以下の注文を対象にスマレジ商品コードの採番とスマレジ連携を行う
+C88 ※現行の支店のスマレジ商品連携バッチと同仕様にする
+C89 ※本店側のバッチは注文番号採番を行った注文に対してスマレジ連携を行っていたが、
+D90 注文番号採番の処理を除外するため、以下の条件でスマレジ商品を連携することにより、スマレジ商品再連携バッチが不要となる
+D91 （連携が成功しないとスマレジ連携済みフラグが立たないため。支店側はもともとスマレジ商品再連携バッチはない）
+C92 ・
+D92 バッチ起動から30分前以降の注文
+C93 ・
+D93 スマレジ店舗IDとスマレジ店舗コードが指定済みの店舗の注文
+C94 ・
+D94 スマレジ連携済みフラグが立っていない
+C95 ・
+D95 スマレジ在庫連携済みフラグが立っていない
+C96 ・
+D96 注文ステータスが「注文受領」「入金待ち」「入金済み」「ピック中」「ピック済み」
+B98 ・
+C98 スマレジ用商品コード（バーコード）の採番を行う
+C99 ・
+D99 採番ルールは以下の通り（インストアコードの採番ルールに従う）
+E100 20(固定) + 1(固定) + スマレジ店舗ID(3桁0埋め、スマレジ店舗IDの指定がない場合は000となる) + 注文番号(8桁0埋め後、末尾から6桁取得）
+### 購入完了手続き再処理
+A1 ドキュメント名
+I1 受注管理　基本設計
+U1 セクション
+A2 プロジェクト名
+I2 受注管理機能
+U2 作成者
+Y2 緑川
+AC2 作成日
+AG2 2025-05-13 00:00:00
+AK2 更新者
+AO2 石川
+AS2 更新日
+AW2 2025-09-29 00:00:00
+A4 機能No
+D4 B05-02
+I4 機能名
+N4 購入完了手続き再処理
+AC4 概要
+AG4 購入完了メールの再送信と完了画面処理の再実施
+B6 カスタマイズ説明
+B8 ・
+C8 DBがMySQLからPostgreSQLに変わることによるテーブルのロック取得方法の変更
+B9 ・
+C9 スマレジ連携APIについて、呼び出しを廃止予定のスマレジAPIからプラットフォームAPIに変更
+B12 処理概要（★はカスタマイズ項目）
+B14 ・
+C14 購入完了メールの再送信と完了画面処理の再実施を行うバッチ
+C15 ・
+D15 ポイント利用のクレカ決済で、購入完了画面へ遷移する前にブラウザバックするとポイント減算されない不具合のため
+B17 ・
+C17 MySQLの名前付きロック機能で注文テーブルにロック（同一バッチで同時に処理しないようにする）をかける
+C18 ・
+D18 毎分起動されるため、前の処理が終わっていない場合（ロックを取得できない場合）は処理を終了する
+C19 ★
+D19 PostgreSQLではアドバイザリロック（勧告的ロック）で実現する
+B21 ・
+C21 処理対象として注文完了メールが送られていない注文を取得
+C22 ・
+D22 注文ステータスが「新規」「入金待ち」「ピック中」
+C23 ・
+D23 注文に紐づく注文完了メールの送信履歴が存在しない
+C24 ・
+D24 注文日時がバッチ起動時間の5分前から1分前まで
+B26 ・
+C26 取得した処理対象の注文について、ポイント使用が注文に記録されているのにポイントの履歴がない場合はポイント処理を行う
+C27 ・
+D27 ポイント履歴を作成し、ポイント残高を減らす
+C28 ・
+D28 ポイント使用後のポイント残高をスマレジに連携する
+D29 ★
+E29 スマレジ連携APIについて、呼び出しを廃止予定のスマレジAPIからプラットフォームAPIに変更
+B31 ・
+C31 取得した処理対象の注文について、在庫履歴の登録を行う
+C32 ・
+D32 在庫履歴の登録は注文時に登録する内容と同様とする
+C33 ・
+D33 在庫自体は注文確認の時点で減らされているため、ここでは履歴の登録のみ行う
+D34 ※在庫を減らす処理は本体とGMOプラグインに入っているが、履歴の登録は晴れる屋様のカスタマイズなので、本体やプラグインに手を入れないよう
+E35 注文完了画面で行っている
+B37 ・
+C37 取得した処理対象の注文について、注文完了メールを送信する
+C38 ・
+D38 メール送信後、メール送信履歴を登録する
+B42 実行トリガー
+H42 スケジュール起動(Step Functions)
+AJ42 実行タイミング
+AO42 毎分
+B44 入力データ元
+G44 スマレジプラットフォームAPI
+AA44 出力先(フォーマット)
+AH44 DB、スマレジ、メール
+B46 入力データ詳細
+C48 注文完了メールが送られていない注文を取得
+D49 ・
+E49 注文ステータスが「新規」「入金待ち」「ピック中」
+D50 ・
+E50 注文に紐づく注文完了メールの送信履歴が存在しない
+D51 ・
+E51 注文日時がバッチ起動時間の5分前から1分前まで
+B54 入力データ検索条件
+B55 項目名
+S55 条件
+AK55 備考
+B56 注文.ステータス
+S56 「新規」「入金待ち」「ピック中」
+B57 ユーザーメール送信履歴
+S57 注文番号に紐づく送信履歴がない
+B58 注文.注文日時
+S58 バッチ起動時間の5分前から1分前まで
+B62 実行結果詳細  ※主にDBの登録・更新結果について記載
+C64 処理対象の注文に対して、以下の処理を行う
+D65 ・
+E65 ポイント使用があった場合ポイント残高を減らす
+D66 ・
+E66 ポイント使用があった場合ポイント履歴を登録する
+D67 ・
+E67 ポイントをスマレジに同期する
+D68 ・
+E68 在庫を減らす
+D69 ・
+E69 在庫履歴を登録する
+D70 ・
+E70 注文完了メールを再送する
+B74 エラーハンドリング
+C76 ・
+D76 注文テーブルの名前付きロックが取得できない場合、処理を終了する
+C77 ・
+D77 注文の更新時にエラーが発生した場合はロールバックを行う
+### 店頭注文番号初期化
+A1 ドキュメント名
+I1 受注管理　基本設計
+U1 セクション
+A2 プロジェクト名
+I2 受注管理機能
+U2 作成者
+Y2 緑川
+AC2 作成日
+AG2 2025-05-13 00:00:00
+AK2 更新者
+AO2 堀部
+AS2 更新日
+AW2 2025-10-02 00:00:00
+A4 機能No
+D4 B05-03
+I4 機能名
+N4 店頭注文番号初期化
+AC4 概要
+AG4 店頭注文番号テーブルを初期化する
+B6 カスタマイズ説明
+B7 ・
+C7 カスタマイズ要件
+D8 注文番号初期化処理について
+E9 ・
+F9 本店だけではなく支店の店頭注文番号も初期化する
+B12 処理概要（★はカスタマイズ項目）
+B13 ★
+C13 店頭受取番号を初期化
+D14 ・
+E14 本店＋支店の店頭受取番号を削除する
+D15 ・
+E15 店頭注文番号テーブルで店頭注文場号が発番される時に自動生成されるID (本店・支店共用)をリセットして、1からスタートし直すようにする
+B18 実行トリガー
+H18 スケジュール起動(Step Functions)
+AJ18 実行タイミング
+AO18 毎日0時
+B20 入力データ元
+G20 DB
+AA20 出力先(フォーマット)
+AH20 DB
+B22 入力データ詳細
+C24 DBに保存されている店頭注文番号に登録されている全件データ
+B27 入力データ検索条件
+B28 項目名
+S28 条件
+AK28 備考
+B29 -
+S29 -
+AK29 -
+B32 実行結果詳細  ※主にDBの登録・更新結果について記載
+B34 ・
+C34 DBに保存されている店頭注文番号の全件を物理削除
+B35 ・
+C35 店頭注文番号を発番した際に自動採番される店頭注文番号のID (本店・支店共用)をリセットして、1からスタートするようにする
+B40 エラーハンドリング
+C42 ・
+D42 エラーが発生した場合、メールで管理者に通知
+### スマレジEC受注連携エラー再連携
+A1 ドキュメント名
+I1 受注管理　基本設計
+U1 セクション
+A2 プロジェクト名
+I2 受注管理機能
+U2 作成者
+Y2 緑川
+AC2 作成日
+AG2 2025-05-13 00:00:00
+AK2 更新者
+AO2 堀部
+AS2 更新日
+AW2 2025-10-03 00:00:00
+A4 機能No
+D4 B05-08
+I4 機能名
+N4 スマレジEC受注連携エラー再連携
+AC4 概要
+AG4 スマレジ連携エラーが起きているEC受注のスマレジ連携をリトライする
+B6 カスタマイズ説明
+B8 ・
+C8 スマレジ連携APIについて、呼び出しを廃止予定のスマレジAPIからプラットフォームAPIに変更
+B11 処理概要（★はカスタマイズ項目）
+C13 スマレジ連携エラーフラグが立っている注文データとそのデータに紐づくスマレジ連携に必要なユーザー情報を取得する
+C15 取得した注文データのスマレジ連携をリトライする
+B18 実行トリガー
+H18 スケジュール起動(Step Functions)
+AJ18 実行タイミング
+AO18 5分ごと
+B20 入力データ元
+G20 DB
+AA20 出力先(フォーマット)
+AH20 DB, スマレジ
+B22 入力データ詳細
+C24 スマレジ連携エラーフラグが立っている注文データとそのデータに紐づくスマレジ連携に必要なユーザー情報を取得する
+B28 入力データ検索条件
+B29 項目名
+S29 条件
+AK29 備考
+B30 注文データ.スマレジ連携エラーフラグ
+S30 スマレジ連携エラーフラグが立っている
+B35 実行結果詳細  ※主にDBの登録・更新結果について記載
+C37 取得したスマレジ連携エラーフラグが立っている注文データに紐づくユーザーのスマレジIDとポイント残高を取得
+C38 取得したデータを使ってスマレジ連携を行い、ユーザーのポイント情報の更新を行う
+C39 ・
+D39 ユーザーのポイント数は絶対値で更新を行う
+C40 リトライに成功したら、当該の注文データのスマレジ連携エラーフラグをオフにする
+B44 エラーハンドリング
+C46 スマレジ連携に失敗した場合、注文データのポイント連携エラーメッセージに、スマレジからのレスポンスデータを登録する
+D47 ※開発申し送り レスポンスでーたをJSON形式に変換して登録
+### スマレジ取引連携エラー再連携
+A1 ドキュメント名
+I1 受注管理　基本設計
+U1 セクション
+A2 プロジェクト名
+I2 受注管理機能
+U2 作成者
+Y2 堀部
+AC2 作成日
+AG2 2025-06-11 00:00:00
+AK2 更新者
+AO2 堀部
+AS2 更新日
+AW2 2025-10-30 00:00:00
+A4 機能No
+D4 B05-09
+I4 機能名
+N4 スマレジ取引連携エラー再連携
+AC4 概要
+AG4 スマレジ連携でwebhookで連携エラーになったものを再連携する
+B6 カスタマイズ説明
+C8 本店・支店の処理を統合
+D9 全店舗のデータをともに処理対象とする
+C11 スマレジ受信処理(A05-04)で追加した連携項目も連携するようにする
+D12 ※
+E12 項目の詳細についてはスマレジ受信処理(A05-04)を参照のこと
+B16 処理概要（★はカスタマイズ項目）
+D19 1. APIでバッチ駆動時間から5時間前までの間の取引データを取得する
+E20 ※手動でのバッチ実行時に期間指定されている場合はその期間内の取引データを取得する
+D22 2. 取引連携されていないデータを再連携処理する
+D23 ★
+E23 処理内容は、スマレジ受信処理(A05-04)と処理概要2から手順と同様の処理を実行する
+B28 実行トリガー
+F28 スケジュール起動(Step Functions)
+AJ28 実行タイミング
+AO28 毎時1分
+B30 入力データ元
+G30 スマレジプラットフォームAPI
+AA30 出力先(フォーマット)
+AG30 DB
+B32 入力データ詳細
+C34 期間指定したい場合はバッチ実行時に日時を指定し実行する
+C36 Webhookが何らかの理由で失敗したスマレジ取引情報
+D37 スマレジ側のwebhookにはリトライ処理が実装されていないので、取引が連携済みか確認が必要
+E39 以下の条件下でwebhookに失敗している場合、再連携処理を実行
+E41 ・
+F41 ポイント処理に不整合がある場合
+E42 ・
+F42 スマレジ取引IDがECCUBE側に登録されていない場合
+E43 ・
+F43 スマレジ取引IDがECCUBE側に登録されている状態で返品(キャンセル)等、スマレジ側に更新があった場合(取引の更新日時に差異がある場合)
+G44 ※ キャンセルの場合は、対象の受注データをキャンセルにする
+B48 入力データ検索条件
+B49 項目名
+S49 条件
+AK49 備考
+B50 スマレジ取引データ.取引更新時間
+S50 バッチ駆動時間(X)からバッチ駆動時間よりY時間前(X-Y hours)の間
+B54 実行結果詳細  ※主にDBの登録・更新結果について記載
+C56 Webhookに失敗した処理が、スマレジ受信処理(A05-04)と同等の処理が完了した状態になる
+B63 エラーハンドリング
+C65 際連携時にエラーがあった場合、スマレジから返ってきているエラー内容をログに出力する
+
+codex
+正本Excelを確認したところ、対象はいずれもバッチ仕様のテキスト表で、画面レイアウト画像の描き直しはありません。SPEC_BACKED 14件は記載済みなので原則NONE、LEGACY_BACKEDは追記を基本にしつつ、既存のエラーハンドリング記述と正面から矛盾する1件はRESOLVEとして扱います。
+exec
+/bin/bash -lc 'ls hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results | tail -n 5 && for f in hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_2*.json; do test -f "$f" && jq -e '"'.results | length > 0' \""'$f" >/dev/null 2>&1 && { echo "$f"; jq '"'.results[0:2]' \""'$f"; break; }; done' in /home/y-saito/Developments
+ succeeded in 1590ms:
+du_32.log
+du_33.log
+du_34.log
+du_35.log
+du_36.log
+hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_20.json
+[
+  {
+    "rowId": 699,
+    "docWork": "NONE",
+    "docEffortDays": 0,
+    "target": "0210_基本設計仕様書(コンテンツ管理).xlsx / ブロック管理(一覧) シート（変更なし）",
+    "reason": "正本の処理概要D45は削除確認モーダルを示し、貼付画像にも共通形式の「この操作はあとから取り消すことができません。『テストブロック』を削除してよろしいですか？」が描かれている。旧実装の固定文言を移行後も残す設計とは読めず、テキスト表への追記も画像の描き直しも行わない。",
+    "sharedWithRows": [],
+    "confidence": "high"
+  },
+  {
+    "rowId": 700,
+    "docWork": "NONE",
+    "docEffortDays": 0,
+    "target": "0210_基本設計仕様書(コンテンツ管理).xlsx / ブロック管理(登録・編集) シート / 処理概要D61（変更なし）",
+    "reason": "正本D61に、ファイル名を変更して更新する場合も日英2種類のtwigファイルを作成すると明記済みである。SPEC_BACKEDのため設計書更新は不要。",
+    "sharedWithRows": [],
+    "confidence": "high"
+  }
+]
+
+exec
+/bin/bash -lc 'test -e hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_31.json; echo $?' in /home/y-saito/Developments
+ succeeded in 662ms:
+1
+
+apply patch
+patch: completed
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_31.json
+diff --git a/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_31.json b/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_31.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..4e3eb488c31f9ed458cc455356eecad18c4ea1c5
+--- /dev/null
++++ b/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_31.json
+@@ -0,0 +1,257 @@
++{
++  "packetId": "du_31",
++  "results": [
++    {
++      "rowId": 149,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0404_基本設計仕様書(バッチ_商品管理).xlsx / 期間別入庫数集計 シート / 処理概要・実行結果詳細",
++      "reason": "正本には対象データが0件の場合の扱いがないため、更新せず正常終了する分岐を処理概要または実行結果詳細へ追記する。同じシートのrowId 150・152とまとめて編集できる。",
++      "sharedWithRows": [150, 152],
++      "confidence": "high"
++    },
++    {
++      "rowId": 150,
++      "docWork": "ADD",
++      "docEffortDays": 0.15,
++      "target": "0404_基本設計仕様書(バッチ_商品管理).xlsx / 期間別入庫数集計 シート / エラーハンドリング",
++      "reason": "空欄のエラーハンドリング欄へ、途中失敗時は反映済み行が残り次回実行で回収するという部分反映・再実行ルールを追記する。条件と結果を複数文で明記する必要があるが、rowId 149・152と同時に編集できる。",
++      "sharedWithRows": [149, 152],
++      "confidence": "high"
++    },
++    {
++      "rowId": 152,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0404_基本設計仕様書(バッチ_商品管理).xlsx / 期間別入庫数集計 シート / 処理概要・実行結果詳細",
++      "reason": "正本にない日時付き開始・完了コンソール出力を1項目追記する。rowId 149・150と同じシートを開いたまま追加できるため割引した。",
++      "sharedWithRows": [149, 150],
++      "confidence": "high"
++    },
++    {
++      "rowId": 156,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0404_基本設計仕様書(バッチ_商品管理).xlsx / お気に入り商品セール通知 シート / 実行トリガー・実行タイミング（変更なし）",
++      "reason": "正本の実行トリガーと実行タイミングに、スケジュール起動（Step Functions）および毎週水曜17:30が明記済みである。SPEC_BACKEDのため設計書更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 155,
++      "docWork": "ADD",
++      "docEffortDays": 0.2,
++      "target": "0404_基本設計仕様書(バッチ_商品管理).xlsx / お気に入り商品セール通知 シート / 入力データ詳細・入力データ検索条件",
++      "reason": "現状は業務名だけのため、dtb_favorite_productとdtb_player、および通知に使う各列の対応を入力データ詳細・検索条件へ複数行追記する。rowId 154・157・159とまとめて編集できる。",
++      "sharedWithRows": [154, 157, 159],
++      "confidence": "high"
++    },
++    {
++      "rowId": 154,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0404_基本設計仕様書(バッチ_商品管理).xlsx / お気に入り商品セール通知 シート / 実行トリガーまたは処理概要",
++      "reason": "正本にないコンソールコマンド名 product:batch saleNotification を実行方法として1行追記する。rowId 155・157・159と同時編集できるため割引した。",
++      "sharedWithRows": [155, 157, 159],
++      "confidence": "high"
++    },
++    {
++      "rowId": 157,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0404_基本設計仕様書(バッチ_商品管理).xlsx / お気に入り商品セール通知 シート / 処理概要",
++      "reason": "会員別集約の記述に、一定件数ごとにメモリを解放する処理条件を追記する。既存箇条書きを拡張でき、rowId 154・155・159とまとめて編集できる。",
++      "sharedWithRows": [154, 155, 159],
++      "confidence": "high"
++    },
++    {
++      "rowId": 159,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0404_基本設計仕様書(バッチ_商品管理).xlsx / お気に入り商品セール通知 シート / 処理概要・実行結果詳細",
++      "reason": "日時付き開始・完了コンソール出力を1項目追記する。rowId 154・155・157と同じシートを開いたまま追加できるため割引した。",
++      "sharedWithRows": [154, 155, 157],
++      "confidence": "high"
++    },
++    {
++      "rowId": 160,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0404_基本設計仕様書(バッチ_商品管理).xlsx / 在庫初期化 シート / 処理概要（変更なし）",
++      "reason": "正本の処理概要に、TC大阪（支店ID:1）の商品規格在庫全データを新規店舗用に複製すると明記済みである。SPEC_BACKEDのため設計書更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 161,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0404_基本設計仕様書(バッチ_商品管理).xlsx / 在庫初期化 シート / 処理概要（変更なし）",
++      "reason": "正本の処理概要に、複製範囲を商品規格コード・拡張タイプに限定し、それ以外は在庫数0等の初期値にする旨が明記済みである。SPEC_BACKEDのため設計書更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 162,
++      "docWork": "ADD",
++      "docEffortDays": 0.5,
++      "target": "0404_基本設計仕様書(バッチ_商品管理).xlsx / 在庫初期化 シート / 過去受注からの在庫履歴作成に関する処理概要・入力条件・実行結果・エラーハンドリング",
++      "reason": "正本は店舗登録時の在庫複製だけであり、開始日・終了日を受ける別処理、受注の昇順取得、直前履歴参照、重複判定、各種コンソール出力が一式欠けている。複数表にまたがる業務フローを新たに書き起こすため0.5人日とした。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 174,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0404_基本設計仕様書(バッチ_商品管理).xlsx / ユニサーチフィード作成 シート / 管理画面から実行・実行トリガー（変更なし）",
++      "reason": "正本は管理画面の商品管理からフィードファイルを作成できること、更新ボタン押下を実行トリガーとすること、作成物をTSV.gzとdoneファイルにすることを既に記載している。SPEC_BACKEDのため設計書更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 194,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / スマレジEC受注連携エラー再連携 シート / 実行結果詳細（変更なし）",
++      "reason": "正本の実行結果詳細に、会員のスマレジIDとポイント残高を取得し、ポイント数を絶対値で更新する旨が明記済みである。SPEC_BACKEDのため設計書更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 191,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / スマレジEC受注連携エラー再連携 シート / 処理概要・実行タイミング・実行結果詳細（変更なし）",
++      "reason": "正本はスマレジ連携エラー受注の連携をリトライし、5分ごとに起動し、成功時にエラーフラグを解除する機能本体を明記済みである。SPEC_BACKEDのため設計書更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 192,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / スマレジEC受注連携エラー再連携 シート / 処理概要・入力データ詳細（変更なし）",
++      "reason": "正本はエラーフラグが立つ注文と会員情報を取得し、受注ごとにスマレジ連携をリトライする流れを明記済みである。SPEC_BACKEDのため設計書更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 193,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / スマレジEC受注連携エラー再連携 シート / 実行結果詳細（変更なし）",
++      "reason": "正本の実行結果詳細に、リトライ成功時は対象注文のスマレジ連携エラーフラグをオフにする旨が明記済みである。SPEC_BACKEDのため設計書更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 195,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / スマレジEC受注連携エラー再連携 シート / 処理概要",
++      "reason": "正本にはAPIリクエスト上限への配慮がないため、受注ごとに短いインターバルを挟む制御を処理概要へ1項目追記する。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 197,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / スマレジ取引連携エラー再連携 シート / 処理概要・入力データ詳細・入力データ検索条件（変更なし）",
++      "reason": "正本に、通常は起動時から5時間前まで、手動実行時は指定期間の取引データを取得することが明記済みである。SPEC_BACKEDのため設計書更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 198,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / スマレジ取引連携エラー再連携 シート / 入力データ詳細・実行結果詳細（変更なし）",
++      "reason": "正本はWebhook失敗候補の3条件と、スマレジ受信処理(A05-04)と同等の処理完了状態にする要求を列挙済みである。SPEC_BACKEDのため設計書更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 199,
++      "docWork": "ADD",
++      "docEffortDays": 0.15,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / スマレジ取引連携エラー再連携 シート / 入力データ詳細または接続設定注記",
++      "reason": "正本は入力元をAPIとするだけで接続設定の保持先を記載していないため、mtb_optionのoption_key・option_valueと接続先URL・契約ID・アクセストークン等の対応を複数行追記する。rowId 196・200とまとめて編集できる。",
++      "sharedWithRows": [196, 200],
++      "confidence": "high"
++    },
++    {
++      "rowId": 196,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / スマレジ取引連携エラー再連携 シート / 実行トリガーまたは処理概要",
++      "reason": "正本にないコンソールコマンド名 smaregi:batch checkSmaregiTransaction を実行方法として1行追記する。rowId 199・200と同じシートを開いたまま追加できるため割引した。",
++      "sharedWithRows": [199, 200],
++      "confidence": "high"
++    },
++    {
++      "rowId": 200,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / スマレジ取引連携エラー再連携 シート / エラーハンドリング",
++      "reason": "既存のログ出力記述に、取得失敗時のコンソール出力・戻り値1と、空結果時の正常終了を追記する。rowId 196・199とまとめて編集できる。",
++      "sharedWithRows": [196, 199],
++      "confidence": "high"
++    },
++    {
++      "rowId": 177,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / 注文番号登録 シート / スマレジ用商品コード採番ルール（変更なし）",
++      "reason": "正本に、固定値・店舗ID3桁0埋め・注文番号8桁0埋め後の末尾6桁・チェックディジットからなる採番ルールが明記済みである。SPEC_BACKEDのため設計書更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 178,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / 注文番号登録 シート / スマレジ商品登録API送信項目（変更なし）",
++      "reason": "正本に、スマレジ商品登録APIへ送る部門IDを6（店頭受取）固定とする旨が明記済みである。SPEC_BACKEDのため設計書更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 179,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / 注文番号登録 シート / エラーハンドリング（変更なし）",
++      "reason": "正本に、スマレジ連携API失敗時のエラーメール送信と、追加設定のスマレジ通信エラー送信メールアドレスを宛先とする要求が明記済みである。SPEC_BACKEDのため設計書更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 180,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / 購入完了手続き再処理 シート / 処理概要・入力データ詳細・入力データ検索条件（変更なし）",
++      "reason": "正本に、対象ステータス、メール送信履歴なし、注文日時が起動5分前から1分前までという抽出条件が処理概要と入力条件表の双方に明記済みである。SPEC_BACKEDのため設計書更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 181,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / 店頭注文番号初期化 シート / 実行トリガーまたは処理概要",
++      "reason": "正本にはスケジュール起動と毎日0時の記載はあるがコンソールコマンド名がないため、order:batch truncateWaitingNumber と不一致時の終了条件を追記する。rowId 183とまとめて編集できる。",
++      "sharedWithRows": [183],
++      "confidence": "high"
++    },
++    {
++      "rowId": 183,
++      "docWork": "RESOLVE",
++      "docEffortDays": 0.25,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / 店頭注文番号初期化 シート / エラーハンドリング",
++      "reason": "正本はエラー時に管理者へメール通知すると明記する一方、LEGACY_BACKEDの期待値は例外を捕捉・通知せずコンソールへ伝播するとしており、同時には成立しない。採用仕様の裁定後、エラーハンドリング欄を一方に統一する反映作業を見積もった。rowId 181と同じシートで編集できる。",
++      "sharedWithRows": [181],
++      "confidence": "high"
++    }
++  ]
++}
+
+diff --git a/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_31.json b/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_31.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..4e3eb488c31f9ed458cc455356eecad18c4ea1c5
+--- /dev/null
++++ b/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_31.json
+@@ -0,0 +1,257 @@
++{
++  "packetId": "du_31",
++  "results": [
++    {
++      "rowId": 149,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0404_基本設計仕様書(バッチ_商品管理).xlsx / 期間別入庫数集計 シート / 処理概要・実行結果詳細",
++      "reason": "正本には対象データが0件の場合の扱いがないため、更新せず正常終了する分岐を処理概要または実行結果詳細へ追記する。同じシートのrowId 150・152とまとめて編集できる。",
++      "sharedWithRows": [150, 152],
++      "confidence": "high"
++    },
++    {
++      "rowId": 150,
++      "docWork": "ADD",
++      "docEffortDays": 0.15,
++      "target": "0404_基本設計仕様書(バッチ_商品管理).xlsx / 期間別入庫数集計 シート / エラーハンドリング",
++      "reason": "空欄のエラーハンドリング欄へ、途中失敗時は反映済み行が残り次回実行で回収するという部分反映・再実行ルールを追記する。条件と結果を複数文で明記する必要があるが、rowId 149・152と同時に編集できる。",
++      "sharedWithRows": [149, 152],
++      "confidence": "high"
++    },
++    {
++      "rowId": 152,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0404_基本設計仕様書(バッチ_商品管理).xlsx / 期間別入庫数集計 シート / 処理概要・実行結果詳細",
++      "reason": "正本にない日時付き開始・完了コンソール出力を1項目追記する。rowId 149・150と同じシートを開いたまま追加できるため割引した。",
++      "sharedWithRows": [149, 150],
++      "confidence": "high"
++    },
++    {
++      "rowId": 156,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0404_基本設計仕様書(バッチ_商品管理).xlsx / お気に入り商品セール通知 シート / 実行トリガー・実行タイミング（変更なし）",
++      "reason": "正本の実行トリガーと実行タイミングに、スケジュール起動（Step Functions）および毎週水曜17:30が明記済みである。SPEC_BACKEDのため設計書更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 155,
++      "docWork": "ADD",
++      "docEffortDays": 0.2,
++      "target": "0404_基本設計仕様書(バッチ_商品管理).xlsx / お気に入り商品セール通知 シート / 入力データ詳細・入力データ検索条件",
++      "reason": "現状は業務名だけのため、dtb_favorite_productとdtb_player、および通知に使う各列の対応を入力データ詳細・検索条件へ複数行追記する。rowId 154・157・159とまとめて編集できる。",
++      "sharedWithRows": [154, 157, 159],
++      "confidence": "high"
++    },
++    {
++      "rowId": 154,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0404_基本設計仕様書(バッチ_商品管理).xlsx / お気に入り商品セール通知 シート / 実行トリガーまたは処理概要",
++      "reason": "正本にないコンソールコマンド名 product:batch saleNotification を実行方法として1行追記する。rowId 155・157・159と同時編集できるため割引した。",
++      "sharedWithRows": [155, 157, 159],
++      "confidence": "high"
++    },
++    {
++      "rowId": 157,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0404_基本設計仕様書(バッチ_商品管理).xlsx / お気に入り商品セール通知 シート / 処理概要",
++      "reason": "会員別集約の記述に、一定件数ごとにメモリを解放する処理条件を追記する。既存箇条書きを拡張でき、rowId 154・155・159とまとめて編集できる。",
++      "sharedWithRows": [154, 155, 159],
++      "confidence": "high"
++    },
++    {
++      "rowId": 159,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0404_基本設計仕様書(バッチ_商品管理).xlsx / お気に入り商品セール通知 シート / 処理概要・実行結果詳細",
++      "reason": "日時付き開始・完了コンソール出力を1項目追記する。rowId 154・155・157と同じシートを開いたまま追加できるため割引した。",
++      "sharedWithRows": [154, 155, 157],
++      "confidence": "high"
++    },
++    {
++      "rowId": 160,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0404_基本設計仕様書(バッチ_商品管理).xlsx / 在庫初期化 シート / 処理概要（変更なし）",
++      "reason": "正本の処理概要に、TC大阪（支店ID:1）の商品規格在庫全データを新規店舗用に複製すると明記済みである。SPEC_BACKEDのため設計書更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 161,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0404_基本設計仕様書(バッチ_商品管理).xlsx / 在庫初期化 シート / 処理概要（変更なし）",
++      "reason": "正本の処理概要に、複製範囲を商品規格コード・拡張タイプに限定し、それ以外は在庫数0等の初期値にする旨が明記済みである。SPEC_BACKEDのため設計書更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 162,
++      "docWork": "ADD",
++      "docEffortDays": 0.5,
++      "target": "0404_基本設計仕様書(バッチ_商品管理).xlsx / 在庫初期化 シート / 過去受注からの在庫履歴作成に関する処理概要・入力条件・実行結果・エラーハンドリング",
++      "reason": "正本は店舗登録時の在庫複製だけであり、開始日・終了日を受ける別処理、受注の昇順取得、直前履歴参照、重複判定、各種コンソール出力が一式欠けている。複数表にまたがる業務フローを新たに書き起こすため0.5人日とした。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 174,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0404_基本設計仕様書(バッチ_商品管理).xlsx / ユニサーチフィード作成 シート / 管理画面から実行・実行トリガー（変更なし）",
++      "reason": "正本は管理画面の商品管理からフィードファイルを作成できること、更新ボタン押下を実行トリガーとすること、作成物をTSV.gzとdoneファイルにすることを既に記載している。SPEC_BACKEDのため設計書更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 194,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / スマレジEC受注連携エラー再連携 シート / 実行結果詳細（変更なし）",
++      "reason": "正本の実行結果詳細に、会員のスマレジIDとポイント残高を取得し、ポイント数を絶対値で更新する旨が明記済みである。SPEC_BACKEDのため設計書更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 191,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / スマレジEC受注連携エラー再連携 シート / 処理概要・実行タイミング・実行結果詳細（変更なし）",
++      "reason": "正本はスマレジ連携エラー受注の連携をリトライし、5分ごとに起動し、成功時にエラーフラグを解除する機能本体を明記済みである。SPEC_BACKEDのため設計書更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 192,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / スマレジEC受注連携エラー再連携 シート / 処理概要・入力データ詳細（変更なし）",
++      "reason": "正本はエラーフラグが立つ注文と会員情報を取得し、受注ごとにスマレジ連携をリトライする流れを明記済みである。SPEC_BACKEDのため設計書更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 193,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / スマレジEC受注連携エラー再連携 シート / 実行結果詳細（変更なし）",
++      "reason": "正本の実行結果詳細に、リトライ成功時は対象注文のスマレジ連携エラーフラグをオフにする旨が明記済みである。SPEC_BACKEDのため設計書更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 195,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / スマレジEC受注連携エラー再連携 シート / 処理概要",
++      "reason": "正本にはAPIリクエスト上限への配慮がないため、受注ごとに短いインターバルを挟む制御を処理概要へ1項目追記する。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 197,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / スマレジ取引連携エラー再連携 シート / 処理概要・入力データ詳細・入力データ検索条件（変更なし）",
++      "reason": "正本に、通常は起動時から5時間前まで、手動実行時は指定期間の取引データを取得することが明記済みである。SPEC_BACKEDのため設計書更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 198,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / スマレジ取引連携エラー再連携 シート / 入力データ詳細・実行結果詳細（変更なし）",
++      "reason": "正本はWebhook失敗候補の3条件と、スマレジ受信処理(A05-04)と同等の処理完了状態にする要求を列挙済みである。SPEC_BACKEDのため設計書更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 199,
++      "docWork": "ADD",
++      "docEffortDays": 0.15,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / スマレジ取引連携エラー再連携 シート / 入力データ詳細または接続設定注記",
++      "reason": "正本は入力元をAPIとするだけで接続設定の保持先を記載していないため、mtb_optionのoption_key・option_valueと接続先URL・契約ID・アクセストークン等の対応を複数行追記する。rowId 196・200とまとめて編集できる。",
++      "sharedWithRows": [196, 200],
++      "confidence": "high"
++    },
++    {
++      "rowId": 196,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / スマレジ取引連携エラー再連携 シート / 実行トリガーまたは処理概要",
++      "reason": "正本にないコンソールコマンド名 smaregi:batch checkSmaregiTransaction を実行方法として1行追記する。rowId 199・200と同じシートを開いたまま追加できるため割引した。",
++      "sharedWithRows": [199, 200],
++      "confidence": "high"
++    },
++    {
++      "rowId": 200,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / スマレジ取引連携エラー再連携 シート / エラーハンドリング",
++      "reason": "既存のログ出力記述に、取得失敗時のコンソール出力・戻り値1と、空結果時の正常終了を追記する。rowId 196・199とまとめて編集できる。",
++      "sharedWithRows": [196, 199],
++      "confidence": "high"
++    },
++    {
++      "rowId": 177,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / 注文番号登録 シート / スマレジ用商品コード採番ルール（変更なし）",
++      "reason": "正本に、固定値・店舗ID3桁0埋め・注文番号8桁0埋め後の末尾6桁・チェックディジットからなる採番ルールが明記済みである。SPEC_BACKEDのため設計書更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 178,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / 注文番号登録 シート / スマレジ商品登録API送信項目（変更なし）",
++      "reason": "正本に、スマレジ商品登録APIへ送る部門IDを6（店頭受取）固定とする旨が明記済みである。SPEC_BACKEDのため設計書更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 179,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / 注文番号登録 シート / エラーハンドリング（変更なし）",
++      "reason": "正本に、スマレジ連携API失敗時のエラーメール送信と、追加設定のスマレジ通信エラー送信メールアドレスを宛先とする要求が明記済みである。SPEC_BACKEDのため設計書更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 180,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / 購入完了手続き再処理 シート / 処理概要・入力データ詳細・入力データ検索条件（変更なし）",
++      "reason": "正本に、対象ステータス、メール送信履歴なし、注文日時が起動5分前から1分前までという抽出条件が処理概要と入力条件表の双方に明記済みである。SPEC_BACKEDのため設計書更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 181,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / 店頭注文番号初期化 シート / 実行トリガーまたは処理概要",
++      "reason": "正本にはスケジュール起動と毎日0時の記載はあるがコンソールコマンド名がないため、order:batch truncateWaitingNumber と不一致時の終了条件を追記する。rowId 183とまとめて編集できる。",
++      "sharedWithRows": [183],
++      "confidence": "high"
++    },
++    {
++      "rowId": 183,
++      "docWork": "RESOLVE",
++      "docEffortDays": 0.25,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / 店頭注文番号初期化 シート / エラーハンドリング",
++      "reason": "正本はエラー時に管理者へメール通知すると明記する一方、LEGACY_BACKEDの期待値は例外を捕捉・通知せずコンソールへ伝播するとしており、同時には成立しない。採用仕様の裁定後、エラーハンドリング欄を一方に統一する反映作業を見積もった。rowId 181と同じシートで編集できる。",
++      "sharedWithRows": [181],
++      "confidence": "high"
++    }
++  ]
++}
+
+exec
+/bin/bash -lc "python3 -m json.tool hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_31.json >/dev/null && jq -n --slurpfile p hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_packets/du_31.json --slurpfile r hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_31.json '{packetCount:("'$p[0].findings|length), resultCount:($r[0].results|length), missing:([$p[0].findings[].rowId]-[$r[0].results[].rowId]), extra:([$r[0].results[].rowId]-[$p[0].findings[].rowId]), duplicateResultIds:([$r[0].results[].rowId]|group_by(.)|map(select(length>1)|.[0])), byWork:($r[0].results|group_by(.docWork)|map({key:.[0].docWork,value:length})|from_entries), totalDays:([$r[0].results[].docEffortDays]|add)}'"'" in /home/y-saito/Developments
+ succeeded in 1748ms:
+{
+  "packetCount": 28,
+  "resultCount": 28,
+  "missing": [],
+  "extra": [],
+  "duplicateResultIds": [],
+  "byWork": {
+    "ADD": 13,
+    "NONE": 14,
+    "RESOLVE": 1
+  },
+  "totalDays": 1.9500000000000004
+}
+
+diff --git a/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_31.json b/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_31.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..4e3eb488c31f9ed458cc455356eecad18c4ea1c5
+--- /dev/null
++++ b/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_31.json
+@@ -0,0 +1,257 @@
++{
++  "packetId": "du_31",
++  "results": [
++    {
++      "rowId": 149,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0404_基本設計仕様書(バッチ_商品管理).xlsx / 期間別入庫数集計 シート / 処理概要・実行結果詳細",
++      "reason": "正本には対象データが0件の場合の扱いがないため、更新せず正常終了する分岐を処理概要または実行結果詳細へ追記する。同じシートのrowId 150・152とまとめて編集できる。",
++      "sharedWithRows": [150, 152],
++      "confidence": "high"
++    },
++    {
++      "rowId": 150,
++      "docWork": "ADD",
++      "docEffortDays": 0.15,
++      "target": "0404_基本設計仕様書(バッチ_商品管理).xlsx / 期間別入庫数集計 シート / エラーハンドリング",
++      "reason": "空欄のエラーハンドリング欄へ、途中失敗時は反映済み行が残り次回実行で回収するという部分反映・再実行ルールを追記する。条件と結果を複数文で明記する必要があるが、rowId 149・152と同時に編集できる。",
++      "sharedWithRows": [149, 152],
++      "confidence": "high"
++    },
++    {
++      "rowId": 152,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0404_基本設計仕様書(バッチ_商品管理).xlsx / 期間別入庫数集計 シート / 処理概要・実行結果詳細",
++      "reason": "正本にない日時付き開始・完了コンソール出力を1項目追記する。rowId 149・150と同じシートを開いたまま追加できるため割引した。",
++      "sharedWithRows": [149, 150],
++      "confidence": "high"
++    },
++    {
++      "rowId": 156,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0404_基本設計仕様書(バッチ_商品管理).xlsx / お気に入り商品セール通知 シート / 実行トリガー・実行タイミング（変更なし）",
++      "reason": "正本の実行トリガーと実行タイミングに、スケジュール起動（Step Functions）および毎週水曜17:30が明記済みである。SPEC_BACKEDのため設計書更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 155,
++      "docWork": "ADD",
++      "docEffortDays": 0.2,
++      "target": "0404_基本設計仕様書(バッチ_商品管理).xlsx / お気に入り商品セール通知 シート / 入力データ詳細・入力データ検索条件",
++      "reason": "現状は業務名だけのため、dtb_favorite_productとdtb_player、および通知に使う各列の対応を入力データ詳細・検索条件へ複数行追記する。rowId 154・157・159とまとめて編集できる。",
++      "sharedWithRows": [154, 157, 159],
++      "confidence": "high"
++    },
++    {
++      "rowId": 154,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0404_基本設計仕様書(バッチ_商品管理).xlsx / お気に入り商品セール通知 シート / 実行トリガーまたは処理概要",
++      "reason": "正本にないコンソールコマンド名 product:batch saleNotification を実行方法として1行追記する。rowId 155・157・159と同時編集できるため割引した。",
++      "sharedWithRows": [155, 157, 159],
++      "confidence": "high"
++    },
++    {
++      "rowId": 157,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0404_基本設計仕様書(バッチ_商品管理).xlsx / お気に入り商品セール通知 シート / 処理概要",
++      "reason": "会員別集約の記述に、一定件数ごとにメモリを解放する処理条件を追記する。既存箇条書きを拡張でき、rowId 154・155・159とまとめて編集できる。",
++      "sharedWithRows": [154, 155, 159],
++      "confidence": "high"
++    },
++    {
++      "rowId": 159,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0404_基本設計仕様書(バッチ_商品管理).xlsx / お気に入り商品セール通知 シート / 処理概要・実行結果詳細",
++      "reason": "日時付き開始・完了コンソール出力を1項目追記する。rowId 154・155・157と同じシートを開いたまま追加できるため割引した。",
++      "sharedWithRows": [154, 155, 157],
++      "confidence": "high"
++    },
++    {
++      "rowId": 160,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0404_基本設計仕様書(バッチ_商品管理).xlsx / 在庫初期化 シート / 処理概要（変更なし）",
++      "reason": "正本の処理概要に、TC大阪（支店ID:1）の商品規格在庫全データを新規店舗用に複製すると明記済みである。SPEC_BACKEDのため設計書更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 161,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0404_基本設計仕様書(バッチ_商品管理).xlsx / 在庫初期化 シート / 処理概要（変更なし）",
++      "reason": "正本の処理概要に、複製範囲を商品規格コード・拡張タイプに限定し、それ以外は在庫数0等の初期値にする旨が明記済みである。SPEC_BACKEDのため設計書更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 162,
++      "docWork": "ADD",
++      "docEffortDays": 0.5,
++      "target": "0404_基本設計仕様書(バッチ_商品管理).xlsx / 在庫初期化 シート / 過去受注からの在庫履歴作成に関する処理概要・入力条件・実行結果・エラーハンドリング",
++      "reason": "正本は店舗登録時の在庫複製だけであり、開始日・終了日を受ける別処理、受注の昇順取得、直前履歴参照、重複判定、各種コンソール出力が一式欠けている。複数表にまたがる業務フローを新たに書き起こすため0.5人日とした。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 174,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0404_基本設計仕様書(バッチ_商品管理).xlsx / ユニサーチフィード作成 シート / 管理画面から実行・実行トリガー（変更なし）",
++      "reason": "正本は管理画面の商品管理からフィードファイルを作成できること、更新ボタン押下を実行トリガーとすること、作成物をTSV.gzとdoneファイルにすることを既に記載している。SPEC_BACKEDのため設計書更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 194,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / スマレジEC受注連携エラー再連携 シート / 実行結果詳細（変更なし）",
++      "reason": "正本の実行結果詳細に、会員のスマレジIDとポイント残高を取得し、ポイント数を絶対値で更新する旨が明記済みである。SPEC_BACKEDのため設計書更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 191,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / スマレジEC受注連携エラー再連携 シート / 処理概要・実行タイミング・実行結果詳細（変更なし）",
++      "reason": "正本はスマレジ連携エラー受注の連携をリトライし、5分ごとに起動し、成功時にエラーフラグを解除する機能本体を明記済みである。SPEC_BACKEDのため設計書更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 192,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / スマレジEC受注連携エラー再連携 シート / 処理概要・入力データ詳細（変更なし）",
++      "reason": "正本はエラーフラグが立つ注文と会員情報を取得し、受注ごとにスマレジ連携をリトライする流れを明記済みである。SPEC_BACKEDのため設計書更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 193,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / スマレジEC受注連携エラー再連携 シート / 実行結果詳細（変更なし）",
++      "reason": "正本の実行結果詳細に、リトライ成功時は対象注文のスマレジ連携エラーフラグをオフにする旨が明記済みである。SPEC_BACKEDのため設計書更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 195,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / スマレジEC受注連携エラー再連携 シート / 処理概要",
++      "reason": "正本にはAPIリクエスト上限への配慮がないため、受注ごとに短いインターバルを挟む制御を処理概要へ1項目追記する。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 197,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / スマレジ取引連携エラー再連携 シート / 処理概要・入力データ詳細・入力データ検索条件（変更なし）",
++      "reason": "正本に、通常は起動時から5時間前まで、手動実行時は指定期間の取引データを取得することが明記済みである。SPEC_BACKEDのため設計書更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 198,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / スマレジ取引連携エラー再連携 シート / 入力データ詳細・実行結果詳細（変更なし）",
++      "reason": "正本はWebhook失敗候補の3条件と、スマレジ受信処理(A05-04)と同等の処理完了状態にする要求を列挙済みである。SPEC_BACKEDのため設計書更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 199,
++      "docWork": "ADD",
++      "docEffortDays": 0.15,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / スマレジ取引連携エラー再連携 シート / 入力データ詳細または接続設定注記",
++      "reason": "正本は入力元をAPIとするだけで接続設定の保持先を記載していないため、mtb_optionのoption_key・option_valueと接続先URL・契約ID・アクセストークン等の対応を複数行追記する。rowId 196・200とまとめて編集できる。",
++      "sharedWithRows": [196, 200],
++      "confidence": "high"
++    },
++    {
++      "rowId": 196,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / スマレジ取引連携エラー再連携 シート / 実行トリガーまたは処理概要",
++      "reason": "正本にないコンソールコマンド名 smaregi:batch checkSmaregiTransaction を実行方法として1行追記する。rowId 199・200と同じシートを開いたまま追加できるため割引した。",
++      "sharedWithRows": [199, 200],
++      "confidence": "high"
++    },
++    {
++      "rowId": 200,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / スマレジ取引連携エラー再連携 シート / エラーハンドリング",
++      "reason": "既存のログ出力記述に、取得失敗時のコンソール出力・戻り値1と、空結果時の正常終了を追記する。rowId 196・199とまとめて編集できる。",
++      "sharedWithRows": [196, 199],
++      "confidence": "high"
++    },
++    {
++      "rowId": 177,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / 注文番号登録 シート / スマレジ用商品コード採番ルール（変更なし）",
++      "reason": "正本に、固定値・店舗ID3桁0埋め・注文番号8桁0埋め後の末尾6桁・チェックディジットからなる採番ルールが明記済みである。SPEC_BACKEDのため設計書更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 178,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / 注文番号登録 シート / スマレジ商品登録API送信項目（変更なし）",
++      "reason": "正本に、スマレジ商品登録APIへ送る部門IDを6（店頭受取）固定とする旨が明記済みである。SPEC_BACKEDのため設計書更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 179,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / 注文番号登録 シート / エラーハンドリング（変更なし）",
++      "reason": "正本に、スマレジ連携API失敗時のエラーメール送信と、追加設定のスマレジ通信エラー送信メールアドレスを宛先とする要求が明記済みである。SPEC_BACKEDのため設計書更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 180,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / 購入完了手続き再処理 シート / 処理概要・入力データ詳細・入力データ検索条件（変更なし）",
++      "reason": "正本に、対象ステータス、メール送信履歴なし、注文日時が起動5分前から1分前までという抽出条件が処理概要と入力条件表の双方に明記済みである。SPEC_BACKEDのため設計書更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 181,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / 店頭注文番号初期化 シート / 実行トリガーまたは処理概要",
++      "reason": "正本にはスケジュール起動と毎日0時の記載はあるがコンソールコマンド名がないため、order:batch truncateWaitingNumber と不一致時の終了条件を追記する。rowId 183とまとめて編集できる。",
++      "sharedWithRows": [183],
++      "confidence": "high"
++    },
++    {
++      "rowId": 183,
++      "docWork": "RESOLVE",
++      "docEffortDays": 0.25,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / 店頭注文番号初期化 シート / エラーハンドリング",
++      "reason": "正本はエラー時に管理者へメール通知すると明記する一方、LEGACY_BACKEDの期待値は例外を捕捉・通知せずコンソールへ伝播するとしており、同時には成立しない。採用仕様の裁定後、エラーハンドリング欄を一方に統一する反映作業を見積もった。rowId 181と同じシートで編集できる。",
++      "sharedWithRows": [181],
++      "confidence": "high"
++    }
++  ]
++}
+
+codex
+28件: NONE=14 ADD=13 FIX=0 IMAGE=0 RESOLVE=1 / 計 1.95人日
+diff --git a/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_31.json b/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_31.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..4e3eb488c31f9ed458cc455356eecad18c4ea1c5
+--- /dev/null
++++ b/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_31.json
+@@ -0,0 +1,257 @@
++{
++  "packetId": "du_31",
++  "results": [
++    {
++      "rowId": 149,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0404_基本設計仕様書(バッチ_商品管理).xlsx / 期間別入庫数集計 シート / 処理概要・実行結果詳細",
++      "reason": "正本には対象データが0件の場合の扱いがないため、更新せず正常終了する分岐を処理概要または実行結果詳細へ追記する。同じシートのrowId 150・152とまとめて編集できる。",
++      "sharedWithRows": [150, 152],
++      "confidence": "high"
++    },
++    {
++      "rowId": 150,
++      "docWork": "ADD",
++      "docEffortDays": 0.15,
++      "target": "0404_基本設計仕様書(バッチ_商品管理).xlsx / 期間別入庫数集計 シート / エラーハンドリング",
++      "reason": "空欄のエラーハンドリング欄へ、途中失敗時は反映済み行が残り次回実行で回収するという部分反映・再実行ルールを追記する。条件と結果を複数文で明記する必要があるが、rowId 149・152と同時に編集できる。",
++      "sharedWithRows": [149, 152],
++      "confidence": "high"
++    },
++    {
++      "rowId": 152,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0404_基本設計仕様書(バッチ_商品管理).xlsx / 期間別入庫数集計 シート / 処理概要・実行結果詳細",
++      "reason": "正本にない日時付き開始・完了コンソール出力を1項目追記する。rowId 149・150と同じシートを開いたまま追加できるため割引した。",
++      "sharedWithRows": [149, 150],
++      "confidence": "high"
++    },
++    {
++      "rowId": 156,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0404_基本設計仕様書(バッチ_商品管理).xlsx / お気に入り商品セール通知 シート / 実行トリガー・実行タイミング（変更なし）",
++      "reason": "正本の実行トリガーと実行タイミングに、スケジュール起動（Step Functions）および毎週水曜17:30が明記済みである。SPEC_BACKEDのため設計書更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 155,
++      "docWork": "ADD",
++      "docEffortDays": 0.2,
++      "target": "0404_基本設計仕様書(バッチ_商品管理).xlsx / お気に入り商品セール通知 シート / 入力データ詳細・入力データ検索条件",
++      "reason": "現状は業務名だけのため、dtb_favorite_productとdtb_player、および通知に使う各列の対応を入力データ詳細・検索条件へ複数行追記する。rowId 154・157・159とまとめて編集できる。",
++      "sharedWithRows": [154, 157, 159],
++      "confidence": "high"
++    },
++    {
++      "rowId": 154,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0404_基本設計仕様書(バッチ_商品管理).xlsx / お気に入り商品セール通知 シート / 実行トリガーまたは処理概要",
++      "reason": "正本にないコンソールコマンド名 product:batch saleNotification を実行方法として1行追記する。rowId 155・157・159と同時編集できるため割引した。",
++      "sharedWithRows": [155, 157, 159],
++      "confidence": "high"
++    },
++    {
++      "rowId": 157,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0404_基本設計仕様書(バッチ_商品管理).xlsx / お気に入り商品セール通知 シート / 処理概要",
++      "reason": "会員別集約の記述に、一定件数ごとにメモリを解放する処理条件を追記する。既存箇条書きを拡張でき、rowId 154・155・159とまとめて編集できる。",
++      "sharedWithRows": [154, 155, 159],
++      "confidence": "high"
++    },
++    {
++      "rowId": 159,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0404_基本設計仕様書(バッチ_商品管理).xlsx / お気に入り商品セール通知 シート / 処理概要・実行結果詳細",
++      "reason": "日時付き開始・完了コンソール出力を1項目追記する。rowId 154・155・157と同じシートを開いたまま追加できるため割引した。",
++      "sharedWithRows": [154, 155, 157],
++      "confidence": "high"
++    },
++    {
++      "rowId": 160,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0404_基本設計仕様書(バッチ_商品管理).xlsx / 在庫初期化 シート / 処理概要（変更なし）",
++      "reason": "正本の処理概要に、TC大阪（支店ID:1）の商品規格在庫全データを新規店舗用に複製すると明記済みである。SPEC_BACKEDのため設計書更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 161,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0404_基本設計仕様書(バッチ_商品管理).xlsx / 在庫初期化 シート / 処理概要（変更なし）",
++      "reason": "正本の処理概要に、複製範囲を商品規格コード・拡張タイプに限定し、それ以外は在庫数0等の初期値にする旨が明記済みである。SPEC_BACKEDのため設計書更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 162,
++      "docWork": "ADD",
++      "docEffortDays": 0.5,
++      "target": "0404_基本設計仕様書(バッチ_商品管理).xlsx / 在庫初期化 シート / 過去受注からの在庫履歴作成に関する処理概要・入力条件・実行結果・エラーハンドリング",
++      "reason": "正本は店舗登録時の在庫複製だけであり、開始日・終了日を受ける別処理、受注の昇順取得、直前履歴参照、重複判定、各種コンソール出力が一式欠けている。複数表にまたがる業務フローを新たに書き起こすため0.5人日とした。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 174,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0404_基本設計仕様書(バッチ_商品管理).xlsx / ユニサーチフィード作成 シート / 管理画面から実行・実行トリガー（変更なし）",
++      "reason": "正本は管理画面の商品管理からフィードファイルを作成できること、更新ボタン押下を実行トリガーとすること、作成物をTSV.gzとdoneファイルにすることを既に記載している。SPEC_BACKEDのため設計書更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 194,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / スマレジEC受注連携エラー再連携 シート / 実行結果詳細（変更なし）",
++      "reason": "正本の実行結果詳細に、会員のスマレジIDとポイント残高を取得し、ポイント数を絶対値で更新する旨が明記済みである。SPEC_BACKEDのため設計書更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 191,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / スマレジEC受注連携エラー再連携 シート / 処理概要・実行タイミング・実行結果詳細（変更なし）",
++      "reason": "正本はスマレジ連携エラー受注の連携をリトライし、5分ごとに起動し、成功時にエラーフラグを解除する機能本体を明記済みである。SPEC_BACKEDのため設計書更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 192,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / スマレジEC受注連携エラー再連携 シート / 処理概要・入力データ詳細（変更なし）",
++      "reason": "正本はエラーフラグが立つ注文と会員情報を取得し、受注ごとにスマレジ連携をリトライする流れを明記済みである。SPEC_BACKEDのため設計書更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 193,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / スマレジEC受注連携エラー再連携 シート / 実行結果詳細（変更なし）",
++      "reason": "正本の実行結果詳細に、リトライ成功時は対象注文のスマレジ連携エラーフラグをオフにする旨が明記済みである。SPEC_BACKEDのため設計書更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 195,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / スマレジEC受注連携エラー再連携 シート / 処理概要",
++      "reason": "正本にはAPIリクエスト上限への配慮がないため、受注ごとに短いインターバルを挟む制御を処理概要へ1項目追記する。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 197,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / スマレジ取引連携エラー再連携 シート / 処理概要・入力データ詳細・入力データ検索条件（変更なし）",
++      "reason": "正本に、通常は起動時から5時間前まで、手動実行時は指定期間の取引データを取得することが明記済みである。SPEC_BACKEDのため設計書更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 198,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / スマレジ取引連携エラー再連携 シート / 入力データ詳細・実行結果詳細（変更なし）",
++      "reason": "正本はWebhook失敗候補の3条件と、スマレジ受信処理(A05-04)と同等の処理完了状態にする要求を列挙済みである。SPEC_BACKEDのため設計書更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 199,
++      "docWork": "ADD",
++      "docEffortDays": 0.15,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / スマレジ取引連携エラー再連携 シート / 入力データ詳細または接続設定注記",
++      "reason": "正本は入力元をAPIとするだけで接続設定の保持先を記載していないため、mtb_optionのoption_key・option_valueと接続先URL・契約ID・アクセストークン等の対応を複数行追記する。rowId 196・200とまとめて編集できる。",
++      "sharedWithRows": [196, 200],
++      "confidence": "high"
++    },
++    {
++      "rowId": 196,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / スマレジ取引連携エラー再連携 シート / 実行トリガーまたは処理概要",
++      "reason": "正本にないコンソールコマンド名 smaregi:batch checkSmaregiTransaction を実行方法として1行追記する。rowId 199・200と同じシートを開いたまま追加できるため割引した。",
++      "sharedWithRows": [199, 200],
++      "confidence": "high"
++    },
++    {
++      "rowId": 200,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / スマレジ取引連携エラー再連携 シート / エラーハンドリング",
++      "reason": "既存のログ出力記述に、取得失敗時のコンソール出力・戻り値1と、空結果時の正常終了を追記する。rowId 196・199とまとめて編集できる。",
++      "sharedWithRows": [196, 199],
++      "confidence": "high"
++    },
++    {
++      "rowId": 177,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / 注文番号登録 シート / スマレジ用商品コード採番ルール（変更なし）",
++      "reason": "正本に、固定値・店舗ID3桁0埋め・注文番号8桁0埋め後の末尾6桁・チェックディジットからなる採番ルールが明記済みである。SPEC_BACKEDのため設計書更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 178,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / 注文番号登録 シート / スマレジ商品登録API送信項目（変更なし）",
++      "reason": "正本に、スマレジ商品登録APIへ送る部門IDを6（店頭受取）固定とする旨が明記済みである。SPEC_BACKEDのため設計書更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 179,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / 注文番号登録 シート / エラーハンドリング（変更なし）",
++      "reason": "正本に、スマレジ連携API失敗時のエラーメール送信と、追加設定のスマレジ通信エラー送信メールアドレスを宛先とする要求が明記済みである。SPEC_BACKEDのため設計書更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 180,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / 購入完了手続き再処理 シート / 処理概要・入力データ詳細・入力データ検索条件（変更なし）",
++      "reason": "正本に、対象ステータス、メール送信履歴なし、注文日時が起動5分前から1分前までという抽出条件が処理概要と入力条件表の双方に明記済みである。SPEC_BACKEDのため設計書更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 181,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / 店頭注文番号初期化 シート / 実行トリガーまたは処理概要",
++      "reason": "正本にはスケジュール起動と毎日0時の記載はあるがコンソールコマンド名がないため、order:batch truncateWaitingNumber と不一致時の終了条件を追記する。rowId 183とまとめて編集できる。",
++      "sharedWithRows": [183],
++      "confidence": "high"
++    },
++    {
++      "rowId": 183,
++      "docWork": "RESOLVE",
++      "docEffortDays": 0.25,
++      "target": "0405_基本設計仕様書(バッチ_受注管理).xlsx / 店頭注文番号初期化 シート / エラーハンドリング",
++      "reason": "正本はエラー時に管理者へメール通知すると明記する一方、LEGACY_BACKEDの期待値は例外を捕捉・通知せずコンソールへ伝播するとしており、同時には成立しない。採用仕様の裁定後、エラーハンドリング欄を一方に統一する反映作業を見積もった。rowId 181と同じシートで編集できる。",
++      "sharedWithRows": [181],
++      "confidence": "high"
++    }
++  ]
++}
+
+tokens used
+89,749
+28件: NONE=14 ADD=13 FIX=0 IMAGE=0 RESOLVE=1 / 計 1.95人日

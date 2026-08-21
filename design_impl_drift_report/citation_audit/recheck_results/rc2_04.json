@@ -1,0 +1,149 @@
+{
+  "packetId": "rc2_04",
+  "results": [
+    {
+      "rowId": 348,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "excel_to_html/output/0307_基本設計仕様書(フロント_イベント).html の data-excel-ref「0307:大会申込～完了!D170」を実際に開き、src-cell に「申込同意(1-10)にチェックが入っていない状態で『支払いへ進む』(1-11)を押しても次の画面には遷移させずエラーを動的に表示する」があることを確認した。sheet-6 の埋込レイアウト画像も展開して目視し、同意チェックと「支払いへ進む」ボタンの配置を確認した。",
+      "reason": "未同意時の遷移禁止だけでなく動的エラー表示までExcel正本が直接要求するため、SPEC_BACKED は妥当。現実装はボタンを disabled にして送信を抑止するが、エラー表示ノードも文言設定処理もなく、サーバ側も未同意なら入力画面へリダイレクトするだけなので、動的エラー表示の欠落は現在も再現する。",
+      "currentImpl": "ec-cube-enterprise HEAD da08bd65722b: Event/entry.twig の data-js-payment-confirm-checkbox と data-js-payment-submit は同意チェックと初期 disabled ボタンを出力するが、エラー表示要素を持たない。html/template/default/assets/hareruya/js/hareruya-event.js の該当処理は disabled の切替と disabled 時の preventDefault のみ。EventEntryController::confirm() は agree が偽なら event_entry へ redirectToRoute する。front.event.entry.error.agree_required は locale 定義以外の参照を src/・html/ で確認できなかった。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 355,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "excel_to_html/output/0204_基本設計仕様書(商品管理).html の data-excel-ref「0204:商品マスター(検索入力)!E76」を実際に開き、src-cell の実文が「表示順は、棚番号昇順とする」であることを確認した。未指定時の `p.update_date DESC, p.id DESC` は function-design-embed 内のリバース詳細であり、Excel正本の引用には採用していない。",
+      "reason": "主要な期待値である棚番号昇順はExcel正本に存在するため、SPEC_BACKED は妥当。ただし元指摘に併記された update_date/id 順はリバース詳細由来なので設計根拠から除外した。現行の商品一覧クエリは棚番号を絞込条件には使うが ORDER BY には使わず、未指定時は p.id DESC のため、正本との乖離は残る。",
+      "currentImpl": "ec-cube-enterprise HEAD da08bd65722b: ProductRepository::getQueryBuilderBySearchDataForAdmin() は shelf_number を pc.ShelfNumber の IN 条件として処理する。並び順は指定 sortkey があれば COLUMNS の列、未指定なら p.id DESC、その後に Language ASC と CardCondition ASC を追加する。COLUMNS に棚番号はない。SearchProductType の DtbShelfNumber::sortNo ASC は検索プルダウンの選択肢順であり、結果一覧の並び順ではない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 359,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "excel_to_html/output/0204_基本設計仕様書(商品管理).html の data-excel-ref「0204:商品マスター(検索入力)!E76」を実際に開き、Excel正本 src-cell に「表示順は、棚番号昇順とする」があることを確認した。",
+      "reason": "検索結果の表示順を規定する正本セルが実在するため、SPEC_BACKED は妥当。rowId 355 と同じ要求を検索結果側から指摘した重複だが、現行の結果クエリに棚番号 ORDER BY がないという事実も個別に再現する。",
+      "currentImpl": "ec-cube-enterprise HEAD da08bd65722b: ProductRepository::getQueryBuilderBySearchDataForAdmin() の既定順は p.id DESC、Language ASC、CardCondition ASC。ShelfNumber は検索条件だけで、結果の ORDER BY には入らない。SearchProductType の sortNo ASC は棚番号選択肢の表示順に限定される。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 365,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "excel_to_html/output/0204_基本設計仕様書(商品管理).html の data-excel-ref「0204:別添資料__スマレジ連携対象商品!G33」を実際に開き、「商品公開ステータスが廃止になった場合、紐付く商品規格についてスマレジに登録済みの場合削除を行う」を確認した。さらに data-excel-ref「0204:別添資料__スマレジ連携__呼び出しAPIについて!F2」の正本セルに DELETE API、同 G2 に「商品が廃止になった場合は紐付く規格を削除する」があることを確認した。",
+      "reason": "商品廃止時の紐付く規格削除とDELETE APIはExcel正本の関連資料が直接支持するため、SPEC_BACKED は妥当。現行にはスマレジ削除メッセージ機構自体はあるが、商品編集または商品ステータス一括変更の廃止遷移から呼ばれないため、外部スマレジ側の商品規格が残る乖離は再現する。",
+      "currentImpl": "ec-cube-enterprise HEAD da08bd65722b: ProductController::edit() はPOST前に以前の商品名だけを保持し、保存後は商品名変更時に SmaregiProductClassEventService::dispatchUpsert() を呼ぶ。以前の公開ステータス保持、DISPLAY_ABOLISHED への遷移判定、DELETE投入はない。ProductController::bulkProductStatus() も status を保存するだけ。dispatchDeleteMessage() の呼出しは商品規格削除系の ProductClassController / ProductClassDeleteAction にあり、商品廃止経路には接続されていない。",
+      "severityOpinion": "high",
+      "confidence": "high"
+    },
+    {
+      "rowId": 401,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "MISDESCRIBED",
+      "checkedQuote": "excel_to_html/output/0204_基本設計仕様書(商品管理).html の data-excel-ref「0204:基準価格変更CSVアップロード!E76」に、低価格帯用フォーマット表とダウンロードボタンを追加する記述があることを確認した。sheet-42 の埋込レイアウト画像も展開して、低価格帯カード価格変更CSVの表とダウンロードボタンを目視した。一方、専用正本シートの data-excel-ref「0204:低価格帯カード価格変更CSV出力!B6」と「0204:低価格帯カード価格変更CSVフォーマット!B6」には、いずれも図形テキストとして「Ph2で対応」と明記されていることも確認した。",
+      "reason": "要求そのものはExcel正本にあるため、SPEC_BACKED は妥当。しかし低価格帯CSVの出力・フォーマットという当該サブ機能全体が専用正本シートで Ph2 対応に明示されている。現コードに導線・表・ルートがないという実装観察は正しいが、Ph1の現行実装に対する未実装乖離として扱った元指摘はフェーズ条件を落としており、現時点の欠陥という記述は誤っている。",
+      "currentImpl": "ec-cube-enterprise HEAD da08bd65722b: csv_product_standard_price.twig は base_csv_upload.twig を継承するだけで、共通テンプレートは1つのCSVフォーマット表と雛形ダウンロードを表示する。ProductStandardPriceCsvController::csv() が渡すルートも基準価格CSV用だけ。src/Eccube・app/config・html を低価格帯CSV相当の日本語名、low_price、simple_low、SimpleLow、LowPrice で確認したが、当該管理CSVの導線・表・ルートは見つからなかった。ただし正本上はPh2予定のため、現在の不在だけでは現フェーズのdriftにならない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 403,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UNSURE",
+      "correctedClass": null,
+      "driftVerdict": "UNSURE",
+      "checkedQuote": "excel_to_html/output/0204_基本設計仕様書(商品管理).html の同一正本シートを実際に開いた。data-excel-ref「0204:基準価格変更CSVフォーマット!B12/E12/P12/U12/W12」は識別ID5・原価単価・数値(整数)・必須・999999999を示し、D46 は「識別ID:5『原価単価』を新規追加」とする。一方、同じ項目行の data-excel-ref「0204:基準価格変更CSVフォーマット!AG12」は「※カスタマイズ対応、新規追加→こちら対応なし」と明記している。sheet-43 には埋込レイアウト画像がなかった。",
+      "reason": "Excel正本内に追加指示と非対応指示が同時に存在し、どちらが最終仕様かをこの正本だけでは確定できない。したがって SPEC_BACKED を無条件に追認も否定もできず、classVerdict は UNSURE。現実装に原価単価列がないこと自体は確認できるが、それが未実装乖離か正本どおりの非対応か決められないため driftVerdict も UNSURE とする。",
+      "currentImpl": "ec-cube-enterprise HEAD da08bd65722b: ProductStandardPriceCsvController::getCsvHeader() / getRequiredCsvHeader() は商品ID・言語ID・基準価格・買取価格の4列のみ。ProductStandardPriceImportHandler::getColumns() / initializeColumnDefinitions() も同じ4列で、原価単価列を読み込まない。現実装の不在は明確だが、相反する正本指示の優先順位はコードからは判定できない。",
+      "severityOpinion": "med",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 405,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "excel_to_html/output/0204_基本設計仕様書(商品管理).html を実際に検索し、指定文言の出現は function-design-embed 内（11241行、埋込範囲11154-11264）のみで、sheet-44 のExcel正本領域にはないことを確認した。sheet-44 の埋込レイアウト画像も展開して目視したが成功フラッシュは描画されていない。旧 pf-eccube3 の ProductCsvController.php を実際に開き、取込成功時の addSuccess('admin.product.csv_import.save.complete', 'admin') を確認し、旧 message.ja.yml で同キーの実文言「商品登録CSVファイルをアップロードしました。」も確認した。",
+      "reason": "指定文言はExcel正本ではなくリバース詳細にしかないが、旧実装の表示呼出しと翻訳値の双方が実在するため LEGACY_BACKED は妥当。現実装は汎用の admin.register.complete を使用し、表示文言が「登録が完了しました。」へ変わっているため、旧表示との差は現在も再現する。",
+      "currentImpl": "ec-cube-enterprise HEAD da08bd65722b: ProductPriceCsvController::import() の成功分岐は `$this->addSuccess('admin.register.complete', 'admin')`。messages.ja.yaml の同キーは「登録が完了しました。」で、admin.product.csv_import.save.complete と旧実文言は現localeに存在しない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 407,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "excel_to_html/output/0204_基本設計仕様書(商品管理).html を実際に検索し、sheet-45に対応する指定文言の出現は function-design-embed 内（11453行、埋込範囲11366-11476）のみで、Excel正本フォーマット表にはないことを確認した。sheet-45 には埋込レイアウト画像がなかった。旧 pf-eccube3 の ProductCsvController.php で成功時の admin.product.csv_import.save.complete 使用を、旧 message.ja.yml で「商品登録CSVファイルをアップロードしました。」の定義を実際に確認した。",
+      "reason": "sheet-45の正本には成功文言がないためSPEC根拠にはできないが、旧実装の呼出しと翻訳値が実在するので LEGACY_BACKED は妥当。rowId 405 と同じ実装箇所・同じ表示差を別シートから重複指摘したfindingであり、現行の汎用成功文言との差は再現する。",
+      "currentImpl": "ec-cube-enterprise HEAD da08bd65722b: ProductPriceCsvController::import() は成功時に admin.register.complete を積み、messages.ja.yaml はこれを「登録が完了しました。」とする。旧キー admin.product.csv_import.save.complete は現localeにない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 437,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html のExcel正本を実際に開き、在庫移動登録と在庫振替登録の双方で「以下の場合は、アラートを表示し遷移させない」の条件に「複数の在庫区分が選択された場合」が含まれることを確認した。sheet-4 の埋込レイアウト画像群も展開し、在庫検索一覧、在庫移動登録・在庫振替登録ボタン、および一覧行選択の配置を目視した。",
+      "reason": "複数在庫区分時のアラートと遷移禁止はExcel正本が移動・振替の双方へ直接規定するため、SPEC_BACKED は妥当。現行Twigは行に data-zone を出すが、移動・振替ボタンのクリック処理は権限、店舗一意性、在庫0だけを判定し、data-zoneを読まない。遷移先Controllerも先頭在庫の区分を採用するため、乖離は再現する。",
+      "currentImpl": "ec-cube-enterprise HEAD da08bd65722b: stock_list_index.twig の row-check は data-zone=\"{{ Item.stockLocationId }}\" を持つ。一方 `$('#stockMoveBtn, #stockTransferBtn').on('click', ...)` が呼ぶ判定は hasUnauthorizedShop()、isSameShop()、hasZeroStock() のみで、data-zone の参照は行属性の出力箇所以外にない。StockTransferController::new()/store() は選択在庫を読み、FirstProductStock の店舗・在庫区分を画面と入力の基準にするが、選択された区分の一意性を検証しない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 456,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html の src-cell / data-excel-ref 付きExcel正本を実際に開き、「振替対象の商品と振替後商品コードが同一の場合はエラーとする」を確認した。sheet-15 の埋込レイアウト画像群も展開し、振替対象商品と振替後商品コードの入力領域を目視した。",
+      "reason": "同一商品コードを拒否する入力チェックはExcel正本が直接要求するため、SPEC_BACKED は妥当。現実装は振替先コードの存在確認と振替先在庫の検索を行うが、振替元商品規格またはコードとの同一性を比較しないため、同一商品への振替を拒否できず乖離は再現する。",
+      "currentImpl": "ec-cube-enterprise HEAD da08bd65722b: StockTransferStoreAction::handle() は move_from_product_stock_id から FromProductStock を取得し、dest_product_code から ProductClass、さらに ToProductStock を取得するが、FromProductStock の ProductClass/code と振替先を比較しない。StockTransferNewDetailType の dest_product_code は NotBlank のみ。admin.stock.transfer.same_source_dest_error は分割・結合系Actionで使われ、StockTransferStoreActionでは使われない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 459,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html のExcel正本 src-cell を実際に開き、出庫日を「移動の場合はステータスが移動中になった日時」「振替の場合はステータスが出庫承認済みになった日時」、入庫日を「ステータスが入庫完了になった日時」とする記述を確認した。対象sheet-16には埋込レイアウト画像がなかった。",
+      "reason": "CSV列名と値の意味をExcel正本が直接定義するため、SPEC_BACKED は妥当。現行CSVは専用日時フィールドを読むが、業務コードはステータス到達時にそのフィールドを設定しない。setter定義以外の代入がないため、要求された日時を通常フローから出力できない状態は再現する。",
+      "currentImpl": "ec-cube-enterprise HEAD da08bd65722b: StockMoveTransferListCsvExportService は出庫日・入庫日に getMoveFromStockAt()/getMoveToStockAt() を出力する。DtbStockMoveTransfer のsetterは存在するが、vendor・tests・varを除くリポジトリ全体で setMoveFromStockAt()/setMoveToStockAt() の呼出しは見つからなかった。StockMoveTransferEntityManager::save() も承認日時は設定するが stock_at は引数・代入対象にせず、STATUS_MOVING や STATUS_INBOUND_APPROVED へ更新する各Actionも stock_at を設定しない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 461,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html のExcel正本 data-excel-ref「0202:在庫分割結合検索一覧(検索・結果)!B150/E150/M150/Z150/AG150」を実際に開き、識別ID4-4「表示件数」、単一選択、初期値10件、標準マスタの最大ページ表示に設定された選択肢を使う仕様を確認した。sheet-17 の埋込レイアウト画像も展開して目視し、検索結果上部右側の「10件」セレクトと10行表示、ページャを確認した。",
+      "reason": "項目、形式、初期値、選択肢の由来がExcel正本とレイアウト画像の双方で確認できるため、SPEC_BACKED は妥当。現行フォーム・Twig・Controllerに表示件数の入力値がなく、Controllerは常に pager=null を渡すため、選択UIだけでなくページング自体も成立しておらず、乖離は再現する。",
+      "currentImpl": "ec-cube-enterprise HEAD da08bd65722b: SearchStockSplitJoinType、stock_split_join_index.twig、StockSplitJoinController、StockSplitJoinIndexAction を page_count、PageMax、disp_number、表示件数で確認したが、表示件数フィールド・選択肢は見つからなかった。StockSplitJoinController は初期表示と検索後の双方で `'pager' => null` を返す。Twigのpager includeは pager が非nullの場合だけなので到達せず、結果配列は全件表示される。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    }
+  ]
+}

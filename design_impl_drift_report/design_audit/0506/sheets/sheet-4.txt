@@ -1,0 +1,150 @@
+# sheet-4 店頭買取情報取得 (HTML行 1147-1288 / 画像 1枚)
+
+店頭買取情報取得
+ドキュメント名
+店頭買取管理　基本設計
+セクション
+—
+プロジェクト名
+店頭買取管理機能
+作成者
+石川
+作成日
+2025-07-17
+更新者
+石川
+更新日
+2025-09-06
+機能No
+A06-02
+機能名
+店頭買取情報取得
+概要
+MTGバイヤーで査定する対象の買取情報を取得する
+処理概要（★はカスタマイズ項目）
+店頭買取情報取得 / D24 / image 1
+GET　POST　PUT　DELETE　PATCH　OPTIONS　HEAD　有　無　〇
+エンドポイントURL
+/api/admin/otcBuyOrders.json
+プロトコル　HTTP　メソッド　GET　認証の有無　有　認証方式　IP制限
+トークン　リクエスト書式　クエリ　レスポンス書式　JSON
+カスタマイズ説明
+現行踏襲
+機能仕様処理概要（★はカスタマイズ項目）
+・MTGBuyerで以下の画面を出すための情報を取得するためのAPI
+・ログイン者の所属店舗に紐づく特定のステータスの査定情報を取得する
+・取得対象ステータスは「査定前」「査定中」「査定中断」「査定再開」
+リクエストパラメータ
+項目名　型　必須　最大文字数
+または最大値　入力例　備考
+なし
+リクエストパラメータサンプル
+ステータスコード
+コード　説明
+200
+レスポンスデータ
+名前	型	説明
+買取情報のJSON配列	配列	ログイン者の所属店舗に紐づく「査定前」「査定中」「査定中断」「査定再開」ステータスの買取情報のJSON配列
+otcBuyOrderId	文字列	店頭買取ID
+assessmentId	文字列	査定ID
+applyDate	文字列	査定申込日
+freeComment	文字列	フリーコメント
+memberName	文字列	査定担当者
+otcOrderStatusId	文字列	買取ステータスID
+returnSupply	文字列	返却サプライ
+callFlg	文字列	電話通知フラグ
+adultFlg	文字列	成人フラグ
+playingFlg	文字列	大会参加中フラグ
+orderStatusName	文字列	買取ステータス名
+identificationId	文字列	身分証明書ID
+qualifiedInvoiceIssuerFlg	文字列	適格請求書発行事業者フラグ
+qualifiedInvoiceIssuerConfirmationFlg	文字列	適格請求書発行事業者確認フラグ
+qualifiedInvoiceIssuerCode	文字列	適格請求書発行事業者ID
+customerInfo	オブジェクト	買取を申し込んだ顧客の情報が入ったオブジェクト
+firstName	文字列	名
+lastName	文字列	姓
+birth	文字列	生年月日
+telNo	文字列	電話番号
+zipcode	文字列	郵便番号
+jobName	文字列	職業名
+address	文字列	住所
+レスポンスデータサンプル
+Source:
+functions/pf-api/a06-02_api_store_purchase_otc_buy_order_list.md
+現行仕様
+A06-02 店頭買取受注一覧取得 / API 店頭買取管理 — 店頭買取受注一覧取得
+業務ロジック
+取得対象
+店頭買取ステータスが商品到着・査定中・振込前・保留・査定再開のいずれかである店頭買取受注を、受注ID昇順で返す。該当が無い場合は空配列を返す。
+店舗による絞り込み
+認証した管理者会員の会員サブ情報から所属店舗を決める。店舗が得られた場合はその店舗の受注に限定し、会員サブ情報が無い場合は店舗による絞り込みを行わず査定対象の受注を一律に返す。絞り込み対象の店舗はクライアントから指定できない。
+認証
+認証用トークンのヘッダを検証し、その利用者IDから管理者会員を特定する。署名方式はHS256である。ヘッダ欠落・署名不正・該当する管理者会員なしのいずれも認証拒否（HTTP 401）とする。呼び出し可能なクライアントは買取アプリである。トークン原値・署名シークレットは本書に記載しない。
+エラー時の扱い
+エラー内容	処理
+認証不可	認証拒否（HTTP 401）とする
+受注取得・整形処理中の例外	共通例外処理に委ねる（HTTP 500相当）
+入出力
+種類	内容
+入力	認証用トークンのヘッダのみ。ほかのリクエストパラメータを持たない
+成功時出力	HTTP 200。査定対象の店頭買取受注の配列。ラッパオブジェクトや件数フィールドを持たない。該当が無い場合は空配列
+失敗時出力	認証できないときはHTTP 401（本文を持たない）。取得・整形中の例外はHTTP 500として共通例外処理に委ねる
+出力: 受注ごとのフィールド
+フィールド	型	説明
+otcBuyOrderId	integer	店頭買取受注ID。
+assessmentId	integer	査定ID。
+applyDate	string	申込日時。ISO8601形式の日時文字列。
+freeComment	string	受注に付与されたフリーコメント。未設定の場合はnull。
+memberName	string	査定担当者の会員名。紐づく会員が無い場合はnull。
+otcOrderStatusId	integer	店頭買取ステータスのID。
+returnSupply	integer	返送品の扱いを表す区分値。
+callFlg	boolean	連絡要否のフラグ。
+adultFlg	boolean	成人区分のフラグ。
+playingFlg	boolean	プレイ用区分のフラグ。
+orderStatusName	string	店頭買取ステータスの名称。
+identificationId	integer	本人確認のID。未登録の場合は0。
+qualifiedInvoiceIssuerFlg	boolean	適格請求書発行事業者の該当フラグ。
+qualifiedInvoiceIssuerConfirmationFlg	boolean	適格請求書発行事業者の確認済みフラグ。
+qualifiedInvoiceIssuerCode	string	適格請求書発行事業者の登録番号。紐づく口座が無い場合はnull。
+customerInfo	object	申込者情報のオブジェクト。
+customerInfo.firstName	string	申込者の名。
+customerInfo.lastName	string	申込者の姓。
+customerInfo.birth	string	申込者の生年月日。ISO8601形式の日時文字列。
+customerInfo.telNo	string	申込者の電話番号。
+customerInfo.zipcode	string	申込者の郵便番号。
+customerInfo.jobName	string	申込者の職業名。
+customerInfo.address	string	申込者の住所。国に応じて都道府県名または国名と住所1・住所2を半角空白区切りで連結した文字列。
+成功時の応答例（実装確認値に基づく代表値。個人情報は最小限の代表値とする）。
+[
+{
+"otcBuyOrderId": 2001,
+"assessmentId": 30001,
+"applyDate": "2026-06-01T11:00:00+09:00",
+"freeComment": null,
+"memberName": "買取担当 太郎",
+"otcOrderStatusId": 6,
+"returnSupply": 0,
+"callFlg": false,
+"adultFlg": true,
+"playingFlg": false,
+"orderStatusName": "査定中",
+"identificationId": 0,
+"qualifiedInvoiceIssuerFlg": false,
+"qualifiedInvoiceIssuerConfirmationFlg": false,
+"qualifiedInvoiceIssuerCode": null,
+"customerInfo": {
+"firstName": "一郎",
+"lastName": "山田",
+"birth": "1990-01-01T00:00:00+09:00",
+"telNo": "0312345678",
+"zipcode": "1000001",
+"jobName": "会社員",
+"address": "東京都 千代田区千代田 1-1"
+}
+}
+]
+入出力: 永続化
+本APIは業務データを更新しない。
+リニューアル後の仕様
+表示メッセージ
+本APIは画面メッセージを扱わない。

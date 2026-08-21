@@ -1,0 +1,149 @@
+{
+  "packetId": "rc_10",
+  "results": [
+    {
+      "rowId": 148,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0404の「期間別入庫数集計」シートを「入庫」「マスタ更新」「マスター更新」で確認した。Excel正本の src-cell/data-excel-ref 保持要素として、0404_基本設計仕様書(バッチ_商品管理).html:1274（C31）に「商品の入庫ステータスが入庫もしくマスタ更新」、同:1279（S40）に「入庫もしくはマスター更新」が実在する。バッチ仕様であり、表示文言・画面レイアウト・項目配置の指摘ではないため画像確認対象外。",
+      "reason": "正本の対象区分は入庫・マスタ更新である。一方、現実装の DtbStockUpQuantityRepository::getStockUpForAggregate() は MtbStockChangeType::BE_STOCKED と INVENTORY_ADJUSTMENT を条件にし、Version20251125165619.php:80-81 はID 5を「棚卸」と定義する。正本と実装の区分差は現在も残る。",
+      "currentImpl": "ec-cube-enterprise 現HEAD 232d736128: src/Eccube/Repository/DtbStockUpQuantityRepository.php:147-148 は `$beStocked = MtbStockChangeType::BE_STOCKED;` と `$inventoryAdjustment = MtbStockChangeType::INVENTORY_ADJUSTMENT;`、同:177 は `stock_change_type_id IN (:be_stocked, :inventory_adjustment)`。src/Eccube/Entity/Master/MtbStockChangeType.php:31 は `INVENTORY_ADJUSTMENT = 5`、app/DoctrineMigrations/Version20251125165619.php:80-81 は名称「棚卸」。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 149,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0404のExcel正本部（同HTML:1243-1285）および関連する0402/0404の src-cell を「対象が無い場合」「対象なし」「更新を行わず」「処理不要」で検索したが、本機能の該当記述は0件。全HTML正本に対する完全一致検索でも該当なし。実在を確認できたのはリバース詳細設計 functions/pf-eccube3/b02-03_batch_product_product_storage_period_summary.md:75 の「対象が無い場合は更新を行わずに終了する」のみ。バッチ仕様のため画像確認対象外。",
+      "reason": "期待値はExcel正本ではなくリバース詳細設計と旧実装の空foreach挙動に基づくため LEGACY_BACKED は妥当。現実装は対象取得前に集計表を全削除し、空配列でもcommitするので旧挙動との差は残る。",
+      "currentImpl": "ec-cube-enterprise 現HEAD 232d736128: src/Eccube/Service/Product/BatchAggregateStockUpAction.php:39-44 は clearStockUpQuantityForAggregate()→getStockUpForAggregate()→commit() の順で、空判定はない。src/Eccube/Repository/DtbStockUpQuantityRepository.php:99-103 の clearStockUpQuantityForAggregate() は `DELETE FROM dtb_stock_up_quantity` を無条件実行する。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 150,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0404のExcel正本部（同HTML:1243-1285）と関連0402/0404の src-cell を「途中失敗」「反映済み」「部分反映」「次回実行」「再実行」で検索したが、本機能の途中失敗時の確定単位は0件。実在を確認した引用はリバース詳細設計 functions/pf-eccube3/b02-03_batch_product_product_storage_period_summary.md:111 の「途中失敗時は反映済みの行のみ更新が残る」と同:132 の「部分反映は次回実行で回収される」。バッチ仕様のため画像確認対象外。",
+      "reason": "部分反映・次回回収はExcel正本にはなく、旧実装の100件ごとのflushに由来するため LEGACY_BACKED は妥当。現実装はバッチ全体を単一トランザクションにし例外時に全rollbackするため、記載された旧挙動との差は現在もある。",
+      "currentImpl": "ec-cube-enterprise 現HEAD 232d736128: src/Eccube/Service/Product/BatchAggregateStockUpAction.php:37 で beginTransaction()、同:44 でcommit()、同:45-47で例外時にrollBack()して再throwする。行・件数単位のcommitはない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 153,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0404の「期間別入庫数集計」シートを「本店」「支店ID」「0として処理」で確認した。Excel正本の src-cell/data-excel-ref 保持要素 0404_基本設計仕様書(バッチ_商品管理).html:1270（C22）に「本店の支店IDは0として処理する」が実在する。バッチ仕様のため画像確認対象外。",
+      "reason": "正本は本店の支店IDを0として扱うことを明記する。現在の集計SQLは sh.base_info_id をそのままSELECT/GROUP BYし、その値を登録するため0変換がない。",
+      "currentImpl": "ec-cube-enterprise 現HEAD 232d736128: src/Eccube/Repository/DtbStockUpQuantityRepository.php:153 は `sh.base_info_id` をそのままSELECTし、同:179 は `GROUP BY ps.product_class_id, sh.base_info_id`。updateStockUpQuantityColumns() の同:199,205,219,246も受け取った base_info_id をそのまま検索・登録・更新に使い、CASE式や本店ID→0の変換はない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 154,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0404の「お気に入り商品セール通知」Excel正本部（同HTML:1493-1532）を「product:batch」「saleNotification」「コマンド」「現行踏襲」で確認した。src-cellとして実在するのは同:1512（C11）の「現行システムから変更なし(現行踏襲)」と同:1514-1531のメール送信要件で、コマンド名は0件。`product:batch saleNotification` はリバース詳細設計 functions/pf-eccube3/b02-05_batch_product_product_favorite_sale_notification.md:63,71 にのみ実在する。バッチ仕様のため画像確認対象外。",
+      "reason": "メール送信機能自体は正本にあるが、指摘対象の正確なCLI名は旧実装・リバース詳細設計だけが根拠なので LEGACY_BACKED は妥当。現実装は別名のAsCommandだけを登録しており旧CLI入口はない。",
+      "currentImpl": "ec-cube-enterprise 現HEAD 232d736128: src/Eccube/Command/FavoriteSaleNotificationCommand.php:32,34 は `bin/console eccube:favorite-sale-notification` / `AsCommand(name: 'eccube:favorite-sale-notification')`。src/Eccube、app/config、script、html/templateを `product:batch|saleNotification` で検索したが、本バッチの旧コマンド定義は0件（InventoryReflectionCommandの旧3系説明のみ別件でヒット）。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 155,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0404の「お気に入り商品セール通知」Excel正本部（同HTML:1493-1532）を `dtb_favorite_product`, `player_id`, `language_id`, `dtb_player`, `first_name_jp`, `last_name_jp` で検索し0件。全HTML正本の同語検索で得た dtb_player/language_id は0408ポイント系・0507買取API等の別機能だけだった。対象の表・列名はリバース詳細設計 functions/pf-eccube3/b02-05_batch_product_product_favorite_sale_notification.md:137-138 に実在する。バッチ仕様のため画像確認対象外。",
+      "reason": "対象表・列の期待値はExcel正本ではなく旧系資料に由来するため分類自体は LEGACY_BACKED でよい。ただし旧 DtbFavoriteProductRepository.php:28-49 は fp.playerId/productId/language と fp.player を使う一方、宛先氏名・メールは c.name01/name02/email（Playerに紐づくCustomer）から取得しており、リバース詳細設計の「dtb_player.first_name_jp/last_name_jp/emailを宛先・本文に使用」は過大記述である。この留保を付けても、現実装が旧お気に入り表・player/language単位を使わない差は残る。",
+      "currentImpl": "ec-cube-enterprise 現HEAD 232d736128: src/Eccube/Service/Product/BatchFavoriteSaleNotificationAction.php:25,38 は CustomerFavoriteProductRepository::findSaleFavoriteProducts() を呼ぶ。同Repository.php:230-254 は cfp.Customer/cfp.Productをjoinし、c.id/name01/name02/email と商品・言語を取得する。dtb_favorite_product の player_id/language_id を入口にする経路はこのバッチにない。",
+      "severityOpinion": "med",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 156,
+      "originalClass": "UNCERTAIN",
+      "classVerdict": "REFUTED",
+      "correctedClass": "SPEC_BACKED",
+      "driftVerdict": "UNSURE",
+      "checkedQuote": "0404の「お気に入り商品セール通知」シートを「実行トリガー」「Step Functions」「毎週水曜」「17:30」で確認した。Excel正本の src-cell/data-excel-ref 保持要素 0404_基本設計仕様書(バッチ_商品管理).html:1520（B23/F23/AJ23/AO23）に「実行トリガー」「スケジュール起動(Step Functions)」「実行タイミング」「毎週水曜17:30」が実在する。バッチ仕様のため画像確認対象外。",
+      "reason": "引用は曖昧ではなくExcel正本に明記されるため、根拠区分 UNCERTAIN は誤りで SPEC_BACKED。ただしStep Functionsのスケジュールはリポジトリ外のAWS/IaC設定で管理され得る。現在のアプリ作業ツリーに設定がないことだけでは、実環境にも未設定と断定できない。",
+      "currentImpl": "ec-cube-enterprise 現HEAD 232d736128: src/Eccube/Command/FavoriteSaleNotificationCommand.php:25-34 はCLI名のみで時刻・Step Functions記述なし。src/Eccube、app/config、script、html/templateを `Step Functions|StepFunctions|17:30|毎週水曜|favorite-sale-notification|saleNotification` で検索し、本バッチのスケジュール設定は0件。ヒットしたStep Functions記述は SmaregiStockBackfillCommand.php:30、SmaregiOtcDeleteCommand.php:37、別管理と明記する script/ops/stg-db-maintenance/restoresnapshot_stg_from_tmp.sh:17 の別件のみ。外部AWS設定は未確認。",
+      "severityOpinion": "med",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 158,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "REFUTED",
+      "correctedClass": "ALREADY_MET",
+      "driftVerdict": "RESOLVED",
+      "checkedQuote": "0404の「お気に入り商品セール通知」Excel正本部（同HTML:1493-1532）を「抽出」「送信」「エラー」「コンソール」「エラーメッセージ」で確認したが、本機能の正本は同:1532（B49）の見出し「エラーハンドリング」だけで処理記述は0件。引用「抽出・送信時のエラー」「エラーメッセージをコンソールに出力する」はリバース詳細設計 functions/pf-eccube3/b02-05_batch_product_product_favorite_sale_notification.md:154-155 に実在する。バッチ仕様のため画像確認対象外。",
+      "reason": "先行判定は `log_error` をファイル等へのログだけとみなし「コンソールには出ない」としたが誤り。log_error() はLoggerへERRORを送信し、prod/dev双方のMonolog設定にConsoleHandlerがある。Symfony ConsoleHandlerは通常verbosityでWARNING以上をCLIのerror outputへ出すため、送信例外のメッセージはコンソール出力される。例外を再throwせず処理継続する点はあるが、引用された要求は「コンソールに出力」であり満たしている。",
+      "currentImpl": "ec-cube-enterprise 現HEAD 232d736128: src/Eccube/Service/Product/BatchFavoriteSaleNotificationAction.php:53-58 は送信例外をcatchし `log_error('お気に入りセール通知メール送信失敗', ... 'message' => $e->getMessage())`。src/Eccube/Resource/functions/log.php:55-58 はこれをloggerのerror()へ渡す。app/config/eccube/packages/prod/monolog.yml:44-48 と dev/monolog.yml:35-38 は `type: console` handlerを設定し、vendor/symfony/monolog-bridge/Handler/ConsoleHandler.php:35-40,128-141 は通常verbosityでWARNING以上をConsoleOutputInterfaceのerror outputへ出す。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 159,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0404の「お気に入り商品セール通知」Excel正本部（同HTML:1493-1532）を「開始」「完了」「日時」「コンソール」で検索し該当仕様0件。引用「開始・完了のコンソール出力（日時付き）」はリバース詳細設計 functions/pf-eccube3/b02-05_batch_product_product_favorite_sale_notification.md:163 に実在する。旧 ProductBatch.php:45,54-56 の日時接頭辞付き start/complete も実物を確認した。バッチ仕様のため画像確認対象外。",
+      "reason": "日時付き開始・完了出力はExcel正本ではなく旧共通バッチ挙動なので LEGACY_BACKED は妥当。現在のコマンドには開始出力がなく、完了相当のsuccessにも日時がない。",
+      "currentImpl": "ec-cube-enterprise 現HEAD 232d736128: src/Eccube/Command/FavoriteSaleNotificationCommand.php:43-61 の execute() は処理前の開始出力なし。同:56,58 のsuccessは「セール中のお気に入り商品はありませんでした。」「お気に入り商品セール通知を%d名に送信しました。」で日時なし。Command/Actionを `DateTime|date(|format(|開始|Command start|Command complete|日時` で検索して0件。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 160,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "UNSURE",
+      "checkedQuote": "0404の「在庫初期化」シートを「店舗登録時」「TC大阪」「支店ID:1」「登録(複製)」で確認した。Excel正本の src-cell/data-excel-ref 保持要素 0404_基本設計仕様書(バッチ_商品管理).html:1635（C15）に「店舗登録時、TC大阪(支店ID:1)の商品規格在庫全データを新規店舗用にカスタマイズした上で登録(複製)するバッチ」が全文実在する。バッチ仕様のため画像確認対象外。",
+      "reason": "SPEC_BACKED は妥当。ただし実装が選ぶ数値IDは BaseInfo::TC_TOKYO_ID = 1 で、設計指定の支店ID 1とは一致する。コード上の名称はTC東京だが、実際の dtb_base_info のID 1がどの店舗データかは現在の作業ツリーだけでは確定できない。定数名の差だけでTC大阪以外を複製していると断定できないため drift は UNSURE。",
+      "currentImpl": "ec-cube-enterprise 現HEAD 232d736128: src/Eccube/Service/Product/BatchInitialStockRegistrationAction.php:43 は `$sourceBaseInfoId = BaseInfo::TC_TOKYO_ID`、src/Eccube/Entity/BaseInfo.php:45 は `TC_TOKYO_ID = 1`、同:1639-1645もID 1を本店(TC東京)として扱う。tests/Eccube/Tests/Service/Product/BatchInitialStockRegistrationActionTest.php:56-65 も複製元を同定数に固定する。一方、リポジトリ内に dtb_base_info ID 1の shop_name を確定する投入データは見つからず、実DBは未確認。",
+      "severityOpinion": "med",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 161,
+      "originalClass": "UNCERTAIN",
+      "classVerdict": "REFUTED",
+      "correctedClass": "SPEC_BACKED",
+      "driftVerdict": "UNSURE",
+      "checkedQuote": "0404の「在庫初期化」シートを「複製範囲」「商品規格コード」「拡張タイプ」「初期値」「在庫数0」で確認した。Excel正本の src-cell/data-excel-ref 保持要素 0404_基本設計仕様書(バッチ_商品管理).html:1636（C16）に「複製範囲は『商品規格コード』および『拡張タイプ』のみ。それ以外は初期値(在庫数0など)が設定される。」が実在する。全正本で「拡張タイプ」を検索した該当はこのセルのみ。バッチ仕様のため画像確認対象外。",
+      "reason": "要求は明確にExcel正本にあるため根拠区分 UNCERTAIN は誤りで SPEC_BACKED。実装SQLは複製元から product_class_id と stock_location_id の2列だけを引き継ぎ、残りを0/false/現在時刻等で初期化しており、構造は正本要求と一致する。しかし正本用語「拡張タイプ」と stock_location_id の対応表は正本・実装スキーマから確認できず、「商品規格コード」も実装ではコード値でなくProductClass FKを引き継ぐ。対応が確定しないため一致・乖離を断定せず UNSURE。",
+      "currentImpl": "ec-cube-enterprise 現HEAD 232d736128: src/Eccube/Repository/ProductStockRepository.php:427-454 の copyStockForNewShop() は sourceから `product_class_id` と `stock_location_id` のみをSELECTし、target base_info_id、creator_id=1、stock=0、total_cost=0、pick_up_flg=false、create/update_date=nowを設定する。src/Eccube/Entity/ProductStock.php:95-97 は product_class_id をProductClass FK、同:263-275は stock_location_id を「在庫場所（区分）」として定義するが、「拡張タイプ」という対応名はない。",
+      "severityOpinion": "med",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 163,
+      "originalClass": "UNCERTAIN",
+      "classVerdict": "REFUTED",
+      "correctedClass": "LEGACY_BACKED",
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0402の「週間在庫履歴更新バッチ」Excel正本部を `product:batch`, `exportWeeklyStockHistoryCsv`, `CSVファイルへ出力`, `出力パス` で検索し0件。正本の src-cell/data-excel-ref 保持要素は 0402_基本設計仕様書(バッチ_在庫管理).html:1448（E24）で旧CSV読込を「不要」とし、同:1458（E35）で一時テーブル保存、同:1467（AG50）で出力先を「DB」と明記する。旧コマンドとCSV出力はリバース詳細設計 functions/pf-eccube3/b02-07_batch_product_product_weekly_stock_history_update.md:63,71-79 にのみ実在する。バッチ仕様のため画像確認対象外。",
+      "reason": "指摘のCLI名・CSV出力はExcel正本ではなく旧実装だけの挙動であり、UNCERTAINではなく LEGACY_BACKED。しかも正本は現在方式としてDBへの週間在庫履歴保存を要求し、現実装はそのDB方式である。文字どおり旧CLI/CSVとの相違は現在も残るので drift軸は REPRODUCED とするが、これはExcel正本に対する欠陥を意味しない。",
+      "currentImpl": "ec-cube-enterprise 現HEAD 232d736128: src/Eccube/Command/UpdateWeeklyStockHistoryCommand.php:33,35 は `eccube:update-weekly-stock-history`。src/Eccube/Service/Product/BatchUpdateWeeklyStockHistoryAction.php:53-76 は一時テーブルを初期化し20,000件単位でINSERT後、本テーブルを置換する。src/Eccube、app/config、script、html/templateを `exportWeeklyStockHistoryCsv|weekly_stock_history.csv|product:batch` で検索し、本機能の旧CLI/CSV出力は0件。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    }
+  ]
+}

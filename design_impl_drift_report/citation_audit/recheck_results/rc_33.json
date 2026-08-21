@@ -1,0 +1,149 @@
+{
+  "packetId": "rc_33",
+  "results": [
+    {
+      "rowId": 592,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0205_基本設計仕様書(店頭買取管理).html の sheet-3 を「買取日時(From)」「買取日時(To)」「場合エラー」で検索し、Excel正本セル 0205:買取一覧(検索入力)!AG86 に「買取日時(From)>買取日時(To)の場合エラー」を確認した。",
+      "reason": "正本根拠は function-design-embed 外の src-cell 0205:買取一覧(検索入力)!AG86 に実在する。現実装では OtcBuyOrderType::buildForm() の complete_date_from に単項目の Assert\\Range があるだけで、complete_date_to との大小比較はなく、DtbOtcBuyOrderRepository の検索も入力された From/To をそのまま条件へ積むため、逆転入力をエラーにする要求は満たされない。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Form/Type/Admin/OtcBuyOrder/OtcBuyOrderType.php の OtcBuyOrderType::buildForm()（96-121行付近）は complete_date_from/to を追加するが相関制約はない。src/Eccube/Repository/DtbOtcBuyOrderRepository.php の検索クエリ（142-165行付近）は completeDate/cancelDate に >= / <= 条件を付けるだけである。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 593,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0205_基本設計仕様書(店頭買取管理).html の sheet-4 を「該当件数」「件数」「ダウンロード」「査定ID」「申込者」「買取金額」「買取店舗」「査定担当者」「最終更新者」「ステータス」「ページング」で検索し、Excel正本セル E111-E122 に各項目を確認した。レイアウト画像「買取一覧(検索結果) / B6 / image 1」も実見し、1つの結果ボックス内に1つの一覧テーブルとページャが描かれていることを確認した。",
+      "reason": "項目表だけでなく正本レイアウト画像も一覧テーブルを1つだけ示しており、結果件数分だけ同一テーブルを複製する根拠はない。現行 Twig には同一 pagination を回す外側ループと tbody の内側ループが残っているため、N件ならテーブル自体がN回描画される。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Resource/template/admin/OtcBuyOrder/index.twig の結果表示部は193行付近で `{% for OtcBuyOrder in pagination %}` を開始して table_list 全体を囲み、212行付近の tbody でも同じ `{% for OtcBuyOrder in pagination %}` を実行している。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 595,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0601_基本設計仕様書(その他_MTGBuyer).html の sheet-3 を「端末取引ID」「出金コード」「買取成立」で検索し、Excel正本セル D98 の「買取成立の際に端末取引IDを必須とする」、C106 の「買取成立ボタンを押した際、出金コードがなければエラーとする」、D107 の「端末取引IDがあれば店頭買取情報更新APIで出金コードを送り、ECCUBE側に連携する」を確認した。",
+      "reason": "引用はいずれも function-design-embed 外の src-cell に実在する。UpdateOtcBuyOrderDto の smaregi_transaction_id は nullable で、PositiveOrZero と Type しかなく、UpdateOtcBuyOrderAction の買取成立分岐にも null 拒否がないため、買取成立時の必須条件を実装していない。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Dto/App/MTGBuyer/V1/Admin/UpdateOtcBuyOrderDto.php の UpdateOtcBuyOrderDto::__construct()（42-45行）は `public ?int $smaregiTransactionId` に PositiveOrZero/Type のみを付ける。src/Eccube/Service/App/MTGBuyer/V1/Admin/OtcBuyOrder/UpdateOtcBuyOrderAction.php の handle() は73行付近で値をそのまま update() へ渡し、88行付近の `isComplete()` 分岐でも必須検査をしない。",
+      "severityOpinion": "high",
+      "confidence": "high"
+    },
+    {
+      "rowId": 597,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0601_基本設計仕様書(その他_MTGBuyer).html の sheet-3 を「販売価格」「基準価格」「文言変更」で検索し、Excel正本セル C45 に「(1)(2)(3)販売価格を基準価格に文言変更する」、D46 に「他にも販売価格の文言があれば基準価格に文言変更する」を確認した。レイアウト画像「MTGバイヤー店頭買取査定 / B7 / image 2」も実見し、変更対象の画面に「販売価格」表示があることを確認した。",
+      "reason": "正本の変更指示は表示箇所を限定せず、他箇所も基準価格へ変えるよう明記している。現行 API DTO の利用者向けバリデーションメッセージには「販売価格」が残っているため、指示どおり全箇所を変更できていない。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Dto/App/MTGBuyer/V1/Admin/UpdateOtcBuyOrderDetailDto.php の UpdateOtcBuyOrderDetailDto::__construct()（43-46行付近）は sell_price に `販売価格は、整数で入力してください。` を設定する。src/Eccube/Resource/template/admin/OtcBuyOrder/detail.twig の見出しは「基準価格」へ変更済みだが、DTOメッセージは未変更である。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 599,
+      "originalClass": "UNCERTAIN",
+      "classVerdict": "REFUTED",
+      "correctedClass": "SPEC_BACKED",
+      "driftVerdict": "UNSURE",
+      "checkedQuote": "0205_基本設計仕様書(店頭買取管理).html を「ITチーム」「権限エラー」「ステータス変更」で検索し、Excel正本セル 0205:ステータス変更!D58 に「ITチームのみが使用可能な画面とする（権限で設定）」、関連する正本セル 0205:買取詳細!AG136 に「ITチーム以外は権限エラーとなる」を確認した。sheet-11 のレイアウト画像「ステータス変更 / C7 / image 1」と sheet-10 の「買取詳細 / C7 / image 4」も実見した。",
+      "reason": "設計根拠は正本に明記されているため、根拠区分 UNCERTAIN は誤りで SPEC_BACKED が妥当。一方、現実装は status()/statusUpdate() でルート別の isAccessibleRoute() を実行し、AuthorityRole の deny_url により権限ごとに拒否できる。テストでも deny_url 設定時の403を確認している。ただし、ITチーム以外へ実際に deny_url が割り当てられているかはDB設定であり作業ツリーだけからは確認できず、現在の運用状態で違反が再現するとは断定できない。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/Admin/OtcBuyOrder/OtcBuyOrderController.php の status()（335行付近）と statusUpdate()（381行付近）はそれぞれ `isAccessibleRoute('admin_otcbuyorder_status')` / `isAccessibleRoute('admin_otcbuyorder_status_update')` を検査する。src/Eccube/Twig/Extension/IsAccessibleRouteExtension.php の isAccessibleRoute()（50-85行付近）はログインMemberのAuthorityRole.denyUrlに一致すれば false を返す。tests/Eccube/Tests/Web/Admin/OtcBuyOrder/OtcBuyOrderStatusUpdateControllerTest.php は deny_url 設定時に403となることを検証するが、ITチームへの本番割当はソースに固定されていない。",
+      "severityOpinion": "high",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 600,
+      "originalClass": "UNCERTAIN",
+      "classVerdict": "REFUTED",
+      "correctedClass": "SPEC_BACKED",
+      "driftVerdict": "UNSURE",
+      "checkedQuote": "0205_基本設計仕様書(店頭買取管理).html を「経理払い出し済み」「経理のみ」「経理以外は権限エラー」で検索し、Excel正本セル 0205:ステータス変更!E29 に「経理払い出し済みボタンを詳細画面につけて、経理のみ更新可能とする」、関連する正本セル 0205:買取詳細!E137/AG137 に「経理払い出し済」「経理以外は権限エラーとなる」を確認した。sheet-10 のレイアウト画像「買取詳細 / C7 / image 4」も実見し、「経理払い出し済」ボタンの配置を確認した。",
+      "reason": "設計根拠は正本セルとレイアウト画像に明確に存在するため、根拠区分 UNCERTAIN は誤りで SPEC_BACKED が妥当。現実装はボタンとPOST処理を持ち、ルート別 deny_url による拒否も実装・テストされている。経理以外への deny_url の実割当はDB設定依存で、作業ツリーには経理専用の固定判定も割当データもないため、権限制約が実運用で欠けているかは断定できない。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Resource/template/admin/OtcBuyOrder/detail.twig（471行付近）は「経理払出し済」ボタンを表示する。src/Eccube/Controller/Admin/OtcBuyOrder/OtcBuyOrderController.php の statusUpdateAccountTeamPaid()（447行付近）はCSRF、編集可能店舗、`isAccessibleRoute('admin_otcbuyorder_update_status_account_team_paid')`、現在ステータスを検査する。tests/Eccube/Tests/Web/Admin/OtcBuyOrder/OtcBuyOrderControllerTest.php はこのルートの deny_url 設定時に処理が拒否されることを検証するが、経理権限への本番割当はソースから確認できない。",
+      "severityOpinion": "high",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 602,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0205_基本設計仕様書(店頭買取管理).html の sheet-12 を「申込者名」「空白」「いずれか」「部分一致」で検索し、Excel正本セル 0205:買取商品履歴(検索入力)!D62 に「空白が含まれている場合（姓と名の間に空白等）空白で区切ったいずれかの入力が一致していれば検索結果に出力する」、D63 に姓・名・姓カナ・名カナへの部分一致を確認した。",
+      "reason": "正本は分割語の「いずれか」が一致すればよいと明記する。現行リポジトリは分割した各キーワードについて andWhere() を繰り返し、各キーワード内部だけを氏名4項目の OR にしているため、分割語間はANDとなる。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Repository/DtbOtcBuyOrderStockHistoryRepository.php の検索メソッド（104-129行付近）は `preg_split('/[\\s,　]+/u', ...)` 後、foreach 内で `$qb->andWhere($qb->expr()->orX(...))` を追加する。したがって複数キーワードの全てが一致しなければならない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 604,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "UNSURE",
+      "checkedQuote": "0205_基本設計仕様書(店頭買取管理).html の sheet-15 を「集計日(From)」「集計日(To)」「yyyy/mm/dd」で検索し、Excel正本セル M47/M48 に「日付(yyyy/mm/dd)」、T47/T48 に必須を示す「〇」を確認した。同シートのレイアウト画像「買取集計データ(検索入力) / B7 / image 1」も実見したところ、入力例は「2025-08-01」「2025-09-01」とハイフン区切りであり、項目表と画像が矛盾している。",
+      "reason": "SPEC_BACKED であること自体は項目表の src-cell で確認できる。しかし同じExcel正本のレイアウト画像が実装と同じハイフン区切りを示しており、正本内で期待書式が一意に定まらない。したがって現実装の YYYY-MM-DD を設計乖離と断定できない。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Form/Type/Admin/OtcBuyOrder/OtcBuyOrderSummaryType.php の buildForm()（58-67行付近）は summary_date_from/to を required=true の DateType single_text とする。html/template/admin/assets/js/OtcBuyOrder/otc-buy-order-summary.js（2-7行付近）は datetimepicker に `format: \"YYYY-MM-DD\"` を設定しており、正本レイアウト画像とは一致するが、正本項目表の yyyy/mm/dd とは一致しない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 605,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0205_基本設計仕様書(店頭買取管理).html の sheet-15 を「買取店舗」「単一選択」「デフォルト検索表示店舗」「店舗マスタ」で検索し、Excel正本セル E50/M50/Z50/AG50 に「買取店舗」「単一選択(セレクトボックス)」「ログインしているメンバーのデフォルト検索表示店舗」「リスト内容は店舗マスタから取得」を確認した。レイアウト画像「買取集計データ(検索入力) / B7 / image 1」も実見し、買取店舗欄の配置を確認した。",
+      "reason": "正本は買取店舗を単一選択と明記する。現行 FormType は初期値と店舗エンティティ取得は満たすが、`multiple => true` と配列初期値を使うため複数店舗を選択でき、単一選択要件を満たさない。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Form/Type/Admin/OtcBuyOrder/OtcBuyOrderSummaryType.php の buildForm()（68-74行付近）は shop を EntityType、`multiple => true`、`data => $DefaultShop !== null ? [$DefaultShop] : []` としている。getMemberDefaultSearchBaseInfo() はデフォルト店舗を返すが、選択方式は複数のままである。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 607,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0205_基本設計仕様書(店頭買取管理).html の sheet-6 を「個別入力商品または状態がない場合」「基準価格」「言語ID」「略称タグ」「レアリティ」「状態」で検索し、Excel正本セル M11 に基準価格を何も出力しない条件、M13 に言語IDを「[1: 日本語]固定」とする条件、M14-M16 に略称タグ・レアリティ・状態を何も出力しない条件を確認した。",
+      "reason": "CSV項目定義の正本セルに各出力条件が明記されている。現行SQLの状態なし通常商品分岐は conditionCode だけを空にし、standardPrice/languageId/storageCode/rarityCode は商品規格等から取得する。後段CSVサービスにも空欄化や日本語1固定の補正はない。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Repository/DtbOtcBuyOrderRepository.php の買取商品一覧CSV取得SQL（502-536行付近）の「通常商品（状態/Conditionなし）」分岐は `pc.standard_price`, `pc.language_id`, `sc.name`, `r.code` を出力し、`conditionCode` のみ空文字とする。src/Eccube/Service/Csv/Exporter/OtcBuyOrderCsvExportService.php（105-111行付近）は行をヘッダ順に並べてそのまま fputcsv() する。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 608,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0206_基本設計仕様書(ネット買取管理機能).html の sheet-3 を「AND/OR検索」「AND/OR選択」で検索し、Excel正本セル 0206:買取一覧(検索入力)!E85 に項目名「AND/OR検索」を確認した。レイアウト画像「買取一覧(検索入力) / B7 / image 1」も実見し、画面ラベルが「AND/OR検索」であることを確認した。",
+      "reason": "項目表と正本レイアウト画像がともに「AND/OR検索」を示す。現行 Twig の表示経路は online 用翻訳キーを使い、その値は「AND/OR選択」のままである。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Resource/template/admin/Purchase/index.twig（97行付近）は `admin.purchase.online.form.product_name_select.label` を trans 表示する。src/Eccube/Resource/locale/messages.ja.yaml（5569行付近）の値は `AND/OR選択` であり、「AND/OR検索」ではない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 609,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0206_基本設計仕様書(ネット買取管理機能).html の sheet-3 を「戻し未完了のみ表示」「棚戻し未完了のみ表示」で検索し、Excel正本セル C70 に「戻し未完了のみ表示チェックボックスを追加」、E107 に項目名「戻し未完了のみ表示」を確認した。レイアウト画像「買取一覧(検索入力) / B7 / image 1」も実見し、チェックボックスの表示ラベルが「戻し未完了のみ表示」であることを確認した。",
+      "reason": "正本テキストとレイアウト画像はいずれも「戻し未完了のみ表示」を示す。現行 FormType は store 用翻訳キーを指定し、表示値に余分な「棚」が付く。正しい online 用文言は翻訳ファイルに存在するが、このフォームから参照されていない。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Form/Type/Admin/Purchase/PurchaseListType.php の buildForm()（171-174行付近）は restock_incomplete_only の label に `admin.purchase.store.form.restock_incomplete_only.label` を指定する。src/Eccube/Resource/locale/messages.ja.yaml（5537行付近）の値は「棚戻し未完了のみ表示」。src/Eccube/Resource/template/admin/Purchase/index.twig（133-134行付近）はその form_label を表示する。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    }
+  ]
+}

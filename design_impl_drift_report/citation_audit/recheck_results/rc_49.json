@@ -1,0 +1,149 @@
+{
+  "packetId": "rc_49",
+  "results": [
+    {
+      "rowId": 863,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0214 HTMLのsheet-18 Excel正本部と同書の関連sheet-16〜18を、`entry/select`、`entry/{eventDetailId}/new`、`entry/{eventDetailId}/create`、`entry/search/player/html`で検索したが、function-design-embedを除くExcel領域は0件。実在を確認した具体契約は旧実装 pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/EntryServiceProvider.php の register() にある GET `/entry/select`、GET `/entry/{eventDetailId}/new`、POST `/entry/search/player/html`、POST `/entry/{eventDetailId}/create`。",
+      "reason": "URLとHTTPメソッドの具体値はExcel正本ではなく旧実装にのみ実在するためLEGACY_BACKEDは正しい。現作業ツリーをルート属性のシンボルで再確認しても、旧契約4本は復元されていない。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/Admin/Event/EntryRegistrationController.php の index() は `#[Route(path: '/%eccube_admin_route%/entry_registration', ... methods: ['GET', 'POST'])]`、create() は `/entry_registration/new/{eventDetailId}` のGET/POST、searchPlayer() は `/entry_registration/search_player` のGET。`/entry/select`、`/entry/{eventDetailId}/create`、`/entry/search/player/html`はsrc/app検索で0件。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 864,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0214 Excel正本で、sheet-17 `0214:イベント申込登録(検索結果) !D32` の「権限を保持している店舗のイベントのみ登録が可能とする」、同!E40の「識別ID:4『新規登録』ボタンは権限を保持している店舗のイベントのみ表示する」、同!AG54の「権限を保持している店舗のイベントのみ表示」を確認。sheet-18 !D39、!E52にも同趣旨が実在する。sheet-16/17/18のレイアウト画像も目視し、sheet-17画像では各結果行に「新規登録」ボタンが配置される画面であることを確認した。",
+      "reason": "先行記載のsheet-18だけでなく、関連する登録先検索結果sheet-17が一覧行ボタンの権限制御を直接規定しているためSPEC_BACKEDは確実。現実装は到達後の保存防御は持つが、一覧候補・検索結果・行ボタンを権限店舗に限定していない。",
+      "currentImpl": "ec-cube-enterprise 現状: EntryRegistrationController::create() は `if ($baseInfo === null || !$this->getMember()->isEditableShop($baseInfo))` で拒否する。一方 EntryRegisterSearchType::buildForm() のbase_info query_builderは全BaseInfoをID順で返し、DtbEventRepository::getQueryBuilderByEntryRegistrationSearchData() はbase_info未選択なら店舗条件を付けず、admin/Event/EntryRegistration/index.twig は全data行に `url('admin_entry_new', ...)` の新規登録リンクを無条件表示する。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 865,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0214のsheet-18 Excel正本部と関連sheet-16〜18を「登録した申込」「編集画面へリダイレクト」「登録完了後」「成功後」で検索したがExcel領域は0件。「登録した申込の編集画面へリダイレクト」はfunction-design-embed内だけにある。旧実装 pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/EntryController.php の create() では `$app->addSuccess('admin.register.complete', 'admin');` の直後に `admin_entry_edit` へ新規eventEntryIdを渡す実物を確認した。",
+      "reason": "成功後に登録した1件の編集画面へ送る具体要件は旧実装由来でありLEGACY_BACKEDは正しい。現実装はStoreActionの返却申込を受け取らず、日程別申込一覧へ遷移するままである。",
+      "currentImpl": "ec-cube-enterprise 現状: EntryRegistrationController::create() は `$this->entryRegistrationStoreAction->handle($input);` の戻り値を破棄し、成功後に `redirectToRoute('admin_event_entry_event_detail', ['event_detail_id' => ...])`。EntryController::edit() の `admin_event_entry_edit` ルートは存在するが、新規登録成功パスからは呼ばれない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 866,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0214のsheet-18 Excel正本と関連sheet-16〜18を「同一プレイヤー」「重複申込」「申込重複」「重複検証」で検索したがExcel領域は0件（単語「重複」の機械ヒットはpin台帳の列名「pin重複」で要件ではない）。旧実装 EntryDetailType::buildForm() のentryPlayerListに `required => true` と `new EntryDuplicate($this->app)`、EntryDuplicateValidator::validate() に `isEntriedByPlayerId()` と `buildViolation(...'form.entry.duplicate')` が実在することを確認した。",
+      "reason": "同一日程のプレイヤー重複をサーバー側で拒否する具体仕様と失敗遷移は旧実装だけが根拠。現実装はプレイヤー必須自体はNotBlankで満たすが、指摘対象の重複オラクルは検索モーダルのdisabled表示にしかなく、POST保存パスでは再検証しない。",
+      "currentImpl": "ec-cube-enterprise 現状: EventEntryDetailType::buildForm() のentryPlayer制約は `NotBlank` と正整数`Regex`のみ。EntryRegistrationStoreAction::handle() はplayerとCustomerの存在確認後にEventEntry/EntryPlayerを保存し、DtbEventDetail::isEntriedByPlayerId*を呼ばない。EntryRegistrationController::searchPlayer() の `isEntriedByPlayerIdExceptEntry()` は候補表示用entriedFlgsの生成だけに使われる。",
+      "severityOpinion": "high",
+      "confidence": "high"
+    },
+    {
+      "rowId": 867,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0214 Excel正本sheet-18で、図形 `0214:イベント新規申込登録!AS31` と!AP8の「登録」、項目表!E83のラベル「登録」、!AG83の「入力されたフォームの値で登録」を確認。レイアウト画像も目視し、元画面画像のボタンは「イベント申込を登録」、その上のExcel図形による変更表現は「登録」であることを確認した。",
+      "reason": "Excel正本の項目表と変更図形が「登録」を直接支持するためSPEC_BACKEDは正しい。元画像は長い「イベント申込を登録」だが、現実装の「保存」は正本表の「登録」にも元画像文言にも一致しないため、文言乖離は残る。",
+      "currentImpl": "ec-cube-enterprise 現状: admin/Event/EntryRegistration/edit.twig の新規時submitは `{{ 'admin.common.save'|trans }}`。messages.ja.yaml は `admin.common.save: 保存`、別キー `admin.common.registration: 登録` は編集時ブロックでのみ使用される。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 868,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0214 Excel正本sheet-18で図形 `0214:イベント新規申込登録!AT17` の「『戻る』は、前の画面名を表示する」と、項目表!E84「イベント申込登録」、!AG84「イベント申込登録（検索結果）画面へ遷移する」を確認。レイアウト画像も目視し、変更前画面のボタン自体は「戻る」と描かれていることを確認した。",
+      "reason": "画像は固定「戻る」の旧状態を示す一方、同じExcel正本の変更注記が前画面名表示を明示し、項目表がその前画面名を「イベント申込登録」と特定する。現実装はリンク先こそ登録先検索相当だが、表示は旧状態の「戻る」のまま。",
+      "currentImpl": "ec-cube-enterprise 現状: admin/Event/EntryRegistration/edit.twig の新規時リンクは `href=\"{{ url('admin_entry_registration') }}\"` だが表示は `admin.event.entry.back`。messages.ja.yaml の実値は `admin.event.entry.back: 戻る`。",
+      "severityOpinion": "low",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 869,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0214のsheet-18 Excel正本と関連sheet-16〜18を「登録が完了しました。」「登録できませんでした。」「半角数字で金額を入力してください。」で検索したがExcel領域は0件。sheet-18レイアウト画像も目視したがフラッシュ文言は描かれていない。正本!D41には逆に「支払金額の項目は参照のみとする」が実在する。3文言は旧実装のlocaleとEntryController::create()で実在確認した。",
+      "reason": "完全一致の3文言は旧実装だけが根拠で、LEGACY_BACKEDは正しい。特に金額不正文言は現行正本の参照専用化で現行設計要件ではないが、成功・失敗の旧文言についても現実装は別キーを使うため、旧実装との差は現在も再現する。",
+      "currentImpl": "ec-cube-enterprise 現状: EntryRegistrationController::create() は成功で `addSuccess('admin.common.save_complete', 'admin')`、一般例外で `addError('admin.common.save_error', 'admin')`。messages.ja.yamlの実値は「保存しました」「保存に失敗しました」。EventEntryDetailType::buildForm() のpriceは `disabled => true` で、金額不正専用分岐はない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 872,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0214のsheet-19 Excel正本全体と関連sheet-20を「5000行」「5000 行」「行数上限」「上限行数」で検索したがExcel領域は0件。sheet-19レイアウト画像も目視したが行数上限の表示はない。旧実装 EntryController の `const CSV_IMPORT_MAX = 5000` と `if ((int)exec('wc -l '.$file) >= self::CSV_IMPORT_MAX)` を実在確認した。",
+      "reason": "5000行以上を拒否する閾値はExcel正本ではなく旧実装由来で、LEGACY_BACKEDは正しい。現実装の閾値と比較演算子はいずれも旧契約と異なる。",
+      "currentImpl": "ec-cube-enterprise 現状: AbstractController の `ADMIN_CSV_IMPORT_MAX_ROWS = 5010`。EventEntryBulkCsvController::index() は `countCsvRows($formFile) > static::ADMIN_CSV_IMPORT_MAX_ROWS` の場合だけ拒否し、エラーの `%maxRecord%` にも5010を渡す。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 873,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0214のsheet-19 Excel正本全体と関連sheet-20を「イベント情報を登録しました。」で検索したがExcel領域は0件。sheet-19レイアウト画像も目視したが成功フラッシュは描かれていない。旧実装 EntryController::bulkEntryUpload() の `addSuccess('admin.event.save.complete', 'admin')` と、旧localeの `save.complete: イベント情報を登録しました。` を実在確認した。",
+      "reason": "成功文言は旧実装だけにあるためLEGACY_BACKEDは正しい。現実装は汎用CSVアップロード完了文言を表示するままで、旧文言との差は残る。",
+      "currentImpl": "ec-cube-enterprise 現状: EventEntryBulkCsvController::index() は成功時 `addSuccess('admin.common.csv_upload_complete', 'admin')`。messages.ja.yamlの実値は `admin.common.csv_upload_complete: CSVファイルをアップロードしました` で、「イベント情報を登録しました。」はsrc内0件。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 874,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0214のsheet-19 Excel正本全体と関連sheet-20を「イベント一括登録 異常終了」「異常終了ログ」「取込件数」「登録件数」で検索したがExcel領域は0件。旧実装 EntryController::bulkEntryUpload() では `log_info('イベント一括登録CSV登録開始')`、エラー時 `log_info('イベント一括登録 異常終了')`、成功時 `log_info('イベント一括登録', ['count' => $result->getCount()])` の3実物を確認した。",
+      "reason": "ログ内容は旧実装だけが根拠でLEGACY_BACKEDは正しい。現実装には開始ログしか同等物がなく、異常終了ログと件数付き完了ログは追加されていない。",
+      "currentImpl": "ec-cube-enterprise 現状: EventEntryBulkCsvController::index() は `log_info('イベント一括登録CSV登録開始')` と成功時 `log_info('イベント一括登録CSV登録完了')` のみ。catchは `$errors[] = $e->getMessage()`、resultエラー分岐もerrors代入だけで、異常終了ログも `$result->getCount()` を渡すログもない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 876,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0214 Excel正本sheet-20を確認すると、!E11「会場」には!BR11「2026/6/11 会場は不要のため削除」、!E17は「チーム戦」、!E22以降は「フリー入力エリア…」、!E49「公開状態_日程」の必須欄!Y49は「〇」。sheet-19レイアウト画像も目視し、画像には旧状態の「会場」列が描かれるが、Excelセルの更新注記が削除を指示している。旧実装のCSV_HEADERには「会場」「チーム人数」「備考（日/英）」があり、公開状態_日程に必須表記がないことを実物確認した。",
+      "reason": "指摘の期待値全体は更新後のExcel正本ではなく旧CSV形式に一致するためLEGACY_BACKEDは正しい。現実装は旧形式とは現在も異なるので旧実装互換の乖離はREPRODUCED。ただし現行正本は会場削除・チーム戦・フリー入力エリア・公開状態_日程必須を規定し、現実装はその更新内容に沿っているため、これは現行Excel正本違反ではない。",
+      "currentImpl": "ec-cube-enterprise 現状: EventBulkCsvImportHandler::ORDERED_HEADERS は「店舗」の次が「フォーマット」、人数は「チーム戦」、備考相当は「フリー入力エリア…」。initializeColumnDefinitions() は公開状態_日程を `setRequired(true)` とし、onValidateRow() も日程作成時に空値を形式エラーにする。旧列「会場」「チーム人数」「備考（日/英）」はORDERED_HEADERSにない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 879,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0214 Excel正本sheet-20のsrc-cellで、`0214:イベント一括登録CSV!E21`「賞品（日）」、!E22「賞品（英）」、!E50「賞品_日程（日）」、!E51「賞品_日程（英）」を実在確認。sheet-20にはレイアウト画像の埋め込み自体がなく、列名はExcel正本セル表で確認した。",
+      "reason": "4ヘッダはExcel正本が全角括弧で直接規定しているためSPEC_BACKEDは正しい。現実装は空白入り半角括弧または半角括弧を列キーとして参照し、ヘッダ名の正規化もBOM除去以外にないため、正本表記のCSVでは該当キーを解決できない。",
+      "currentImpl": "ec-cube-enterprise 現状: EventBulkCsvImportHandler::ORDERED_HEADERS と initializeColumnDefinitions() は `賞品 (日)`、`賞品 (英)`、`賞品_日程(日)`、`賞品_日程(英)`。BaseCsvColumn::find() はそのnameをCsvRow::getValue()へ渡し、CsvImportService::setColumnHeaders()はBOM除去だけで括弧・空白を正規化しない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    }
+  ]
+}

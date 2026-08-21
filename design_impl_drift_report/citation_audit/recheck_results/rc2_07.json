@@ -1,0 +1,149 @@
+{
+  "packetId": "rc2_07",
+  "results": [
+    {
+      "rowId": 583,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0203_基本設計仕様書(受注管理機能).html の sheet-25 Excel正本を「shipping_result_csv」「upload」「import」「POST」「GET」「URL」で検索し該当0件。関連する sheet-24 では `0203:出荷実績インポート登録!E55` の「CSVファイルのアップロード」だけを確認した。sheet-24 の埋め込みレイアウト画像1点も開いたがURL表記はない。具体的な `POST /{admin_route}/order/shipping_result_csv/upload` は functions/pf-eccube3/m05-26_admin_order_order_shipping_result_csv_import.md の利用者視点の入口と234-237行、および旧実装 OrderServiceProvider.php の `post('/.../shipping_result_csv/upload'...)` に実在した。",
+      "reason": "具体的なPOSTパスはExcel正本セルにもレイアウト画像にもなく、リバース詳細設計と旧実装にのみ実在するため LEGACY_BACKED は妥当。現行ルートは同じルート名を保持するが、パスはGETと同じ `/shipping_result_csv/import` のままである。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/Admin/Order/OrderCsvController.php の shippingResultCsv() は `#[Route(path: '/%eccube_admin_route%/order/shipping_result_csv/import', name: 'admin_shipping_result_csv_import', methods: ['GET'])]`、shippingResultImport() は `#[Route(path: '/%eccube_admin_route%/order/shipping_result_csv/import', name: 'admin_shipping_result_csv_upload', methods: ['POST'])]`。`shipping_result_csv/upload` を src・html・app/config・script・bin・.github で検索しても0件。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 584,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "PARTIAL",
+      "checkedQuote": "0203_基本設計仕様書(受注管理機能).html の関連 sheet-24 Excel正本で `0203:出荷実績インポート登録!D46`「更新された受注について以下の処理を行う。」、E47「ポイント付加処理を行う。」、E48「出荷完了メールを送信する。」、E49「スマレジへ付与ポイントを送信する。」を確認した。一方、「try」「commit」「トランザクション」で正本を検索して具体的な実行境界は0件。sheet-24 のレイアウト画像1点も確認したが処理境界の記載はない。try外という具体値は functions/pf-eccube3/m05-26_admin_order_order_shipping_result_csv_import.md:75 と旧 OrderCsvController.php:261-264 に実在した。",
+      "reason": "3つの副作用の存在はExcel正本にあるが、指摘の核心であるコミット後・try外という境界は旧実装由来なので LEGACY_BACKED は妥当。現行では出荷完了メールがコミット後に追加され、この部分は解消した。一方、PointService::gainPoints() とスマレジの registerGainPointJob() はトランザクション内に残るため全体解消ではない。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/Admin/Order/OrderCsvController.php の shippingResultImport() は beginTransaction() 後の foreach 内で `pointService->gainPoints()` と `smaregiOrderGainPointEventService->registerGainPointJob()` を実行し、その後 flush()/commit() する。現在は commit 後に `mailService->sendShippingCompleteMail()` を呼び、さらに別の try で `dispatchGainPointMessage()` を呼ぶ。先行メモの「出荷完了メール送信が存在しない」は現HEADでは解消済み。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 588,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0203_基本設計仕様書(受注管理機能).html の sheet-25 Excel正本で `0203:出荷実績登録CSVフォーマット!E59`「配送先_住所1」、E60「配送先_住所2」、E61「配送先_TEL1」、E62「配送先_TEL2」、E63「配送先_TEL3」、E69「送り状No.」を確認した。同シートの正本を「配送先_住所3」で検索して0件。sheet-25 内の埋め込み画像は0点だった。",
+      "reason": "住所2の直後がTEL1である列順と住所3列がないことはExcel正本のCSV項目表そのものにより確認でき、SPEC_BACKED は妥当。現行のヘッダ・出力SQL・画面表示経路には住所3が残る。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/Admin/Order/OrderCsvController.php の CSV_HEADER と NOT_REQUIRED_CSV_HEADER は「配送先_住所2」の直後に「配送先_住所3」を定義する。src/Eccube/Repository/OrderRepository.php のCSV用クエリも `s.addr03 AS shipping_addr03` を選択し、src/Eccube/Resource/template/admin/Order/shipping_result_csv_import.twig は `headers|keys` をそのまま表の見出しに描画する。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 603,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0205_基本設計仕様書(店頭買取管理).html の sheet-12 Excel正本で `0205:買取商品履歴(検索入力)!AG96`「・買取日時(From)>買取日時(To)の場合エラー・買取成立の場合は買取成立日、買取キャンセル日の場合は買取キャンセル日を検索する」を確認した。sheet-12 のレイアウト画像1点も開き、買取日時のFrom/To入力欄を確認した。",
+      "reason": "From>Toをエラーにする要求はExcel正本に直接あるため SPEC_BACKED は妥当。現行の対象フォーム・コントローラ・Repositoryには両値の相関検証がない。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Form/Type/Admin/OtcBuyOrder/OtcBuyOrderHistoryType.php の buildForm() は complete_date_from と complete_date_to を独立した DateTimeType として追加するだけで、Callback・GreaterThan・LessThan等を持たない。src/Eccube/Repository/DtbOtcBuyOrderStockHistoryRepository.php は completeDateFrom に `>=`、completeDateTo に `<=` を独立適用するため、From>Toでも検索条件として実行される。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 639,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0207_基本設計仕様書(会員管理機能).html の sheet-9 Excel正本を「会員情報を保存」「保存」「完了」で検索し、具体的な成功文言は0件。確認できたのは `0207:会員登録編集!C121` 等の「カスタマイズ要件に記載の内容以外は現行踏襲とする。」である。sheet-9 のレイアウト画像5点をすべて開いたが成功フラッシュ文言はない。具体文言は旧 message.ja.yml の `admin.customer.save.complete: 会員情報を保存しました。` と旧 CustomerEditController.php の利用箇所に実在した。",
+      "reason": "現行踏襲という一般条項はあるが、比較する具体文言は旧実装で初めて確定するため LEGACY_BACKED は妥当。現行は共通メッセージのままである。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/Admin/Customer/CustomerEditController.php の index() は保存成功時に `$this->addSuccess('admin.common.save_complete', 'admin')` を呼ぶ。src/Eccube/Resource/locale/messages.ja.yaml の値は `admin.common.save_complete: 保存しました` で、「会員情報を保存しました。」は同ロケールに存在しない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 672,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0207_基本設計仕様書(会員管理機能).html の sheet-17 Excel正本を「admin.customer.save.complete」「保存」「完了」で検索し、具体キー・完了文言は0件。確認できたのは `0207:配送先編集!B46`「・カスタマイズ要件に記載の内容以外は現行踏襲とする。」である。sheet-17 のレイアウト画像1点も開いたが完了メッセージはない。旧 app/Plugin/HareruyaEc/Controller/Admin/CustomerController.php の配送先保存処理には `$app->addSuccess('admin.customer.save.complete', 'admin')` が実在した。",
+      "reason": "具体的なロケールキーはExcel正本ではなく旧実装にあるため LEGACY_BACKED は妥当。現行は別キーを使用する。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/Admin/Customer/CustomerDeliveryEditController.php の index() は `$this->addSuccess('admin.common.save_complete', 'admin')` を呼ぶ。src/Eccube/Resource/locale/messages.ja.yaml は同キーを「保存しました」と定義し、`admin.customer.save.complete` は存在しない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 676,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0207_基本設計仕様書(会員管理機能).html の sheet-18 Excel正本を「閲覧不可」「権限」で検索して0件。`0207:オンライン本人確認!E72-E74` には身分証明書の各画像名、M71-M74には「画像」がある。sheet-18 のレイアウト画像1点も開き、4画像枠は確認したが「閲覧不可」表示はない。具体的な権限分岐と文言は旧 app/Plugin/HareruyaEc/Resource/template/admin/Customer/edit.twig の `if not hasAccessAuthority` と旧 locale の `access_denied: 閲覧不可` に実在した。",
+      "reason": "画像項目自体は正本にあるが、権限なし時に画像を出さず「閲覧不可」と表示する具体要件は旧実装由来なので LEGACY_BACKED は妥当。現行は配信ルートで拒否するだけで、Twig表示を切り替えない。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Resource/template/admin/Customer/edit.twig は各 IdentificationImage があれば無条件に `<img src=\"...admin_identification_image...\">` を出し、なければ `admin.customer.identification_image.no_image`（登録データなし）を出す。src/Eccube/Controller/Admin/Customer/CustomerEditController.php の identificationImage() は権限なしで AccessDeniedHttpException を投げるが、Twig側の権限分岐や「閲覧不可」翻訳キーはない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 710,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0209_基本設計仕様書(基本情報設定).html の sheet-3 Excel正本で `0209:基本設定(旧ショップマスター)!E145`「FAX番号」と `C133`「・フォームに入力された値で店舗情報を登録する」を確認した。sheet-3 のレイアウト画像2点を開き、主画面画像にも電話番号の直後に「FAX番号」の3分割入力欄が描かれていることを確認した。",
+      "reason": "FAX入力項目と登録要求はExcel正本セルおよび正本レイアウト画像にあるため SPEC_BACKED は妥当。3分割や部分入力禁止の詳細に旧実装由来の補足があっても、現行画面からFAX項目全体が欠落している中核指摘は正本で成立する。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Entity/BaseInfo.php には fax_number、getFaxNumber()、setFaxNumber() がある。一方、src/Eccube/Form/Type/Admin/ShopMasterType.php の buildForm() は phone_number を追加するが fax_number を追加せず、src/Eccube/Resource/template/admin/Setting/Shop/shop_master.twig にもFAXラベル・widget・errorsがない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 719,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "REFUTED",
+      "correctedClass": "SPEC_BACKED",
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0209_基本設計仕様書(基本情報設定).html の sheet-6 正本文では `0209:支払い方法　手数料設定!E92`「ロゴ画像」を確認した。さらに同シートの data-excel-ref 付きレイアウト画像2点を実際に開き、`0209:支払い方法　手数料設定!C25` の編集画面画像で「ロゴ画像」の直下に「620px以上推奨」と描かれていることを確認した。",
+      "reason": "先行判定はテキストセルだけを見ていたが、具体文言「620px以上推奨」はExcel正本の data-excel-ref 付きレイアウト画像に実在する。したがって LEGACY_BACKED は誤りで、正しくは SPEC_BACKED。現行表示は別の推奨サイズのままなので乖離は再現する。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Resource/template/admin/Setting/Shop/payment_edit.twig は `admin.setting.shop.payment.logo_image_size` を表示し、src/Eccube/Resource/locale/messages.ja.yaml はその値を「推奨サイズ : 500px × 100px」と定義する。`620px` は現行 src 内に存在しない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 747,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "REFUTED",
+      "correctedClass": "ALREADY_MET",
+      "driftVerdict": "RESOLVED",
+      "checkedQuote": "0209_基本設計仕様書(基本情報設定).html の sheet-12 Excel正本で `0209:カスタムCSV出力設定!B51`「CSV選択に在庫関連の以下のカスタムCSV出力項目を追加する」、D52「在庫CSV, 在庫移動・振替CSV, 在庫分割結合CSV」、AG67 の同3選択肢を確認し、レイアウト画像1点も開いた。さらに関連正本 0202_基本設計仕様書(在庫管理機能).html の目次で `0202:目次!C20`「M04-11在庫移動・振替情報カスタムCSV出力」に対する E20「2026/1/26 カスタムCSVは不要で通常のCSV出力のみ必要となったため削除」、C25「M04-15 在庫分割結合情報カスタムCSV出力」に対する E25 の同じ削除注記を確認した。sheet-16 と sheet-20 は通常CSV出力のみを規定する。",
+      "reason": "M10-13正本が要求する3つの設定選択肢は現行 CustomCsvType に存在し、既に満たされている。一方、指摘が欠落とした在庫移動・振替／在庫分割結合のカスタムCSV実出力は、関連する在庫管理正本で2026-01-26に明示的に不要・削除となっている。したがって missing custom export を SPEC_BACKED とした分類は誤りで、現行仕様に対しては ALREADY_MET。通常CSV出力は現行にも存在する。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Form/Type/Admin/CustomCsvType.php の CSV_TYPES は CSV_TYPE_STOCK、CSV_TYPE_STOCK_MOVE、CSV_TYPE_STOCK_SPLIT をすべて選択肢に含む。削除済みの後二者カスタム出力は CustomExportCsvController::FUNCTIONS にはないが、これは関連正本の削除注記と整合する。通常出力は StockMoveTransferController::exportMoveTransferCsv() と StockSplitJoinController::csvExport() に実装されている。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 748,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0209_基本設計仕様書(基本情報設定).html の sheet-13 Excel正本を「基本情報を保存しました」「admin.shop.save.complete」「保存」「完了」で検索し、具体キー・成功文言は0件。確認できたのは `0209:店舗登録!E250`「登録」等の登録操作である。sheet-13 の縦長レイアウト画像1点も開いたが成功フラッシュ文言はない。具体値は旧 ShopController.php の `$app->addSuccess('admin.shop.save.complete', 'admin')` と旧 message.ja.yml の `admin.shop.save.complete: 基本情報を保存しました。` に実在した。",
+      "reason": "登録処理自体は正本にあるが、比較する具体キーと文言は旧実装由来なので LEGACY_BACKED は妥当。現行は共通キー・共通文言のままである。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/Admin/Setting/Shop/ShopController.php の index() は保存成功時に `$this->addSuccess('admin.common.save_complete', 'admin')` を呼ぶ。src/Eccube/Resource/locale/messages.ja.yaml は `admin.common.save_complete: 保存しました` と定義し、`admin.shop.save.complete` と「基本情報を保存しました。」は存在しない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 753,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0209_基本設計仕様書(基本情報設定).html の sheet-14 Excel正本で `0209:追加システム設定!E110`「購入処理エラー通知先メールアドレス」と E111「イベント決済確認エラー通知メールアドレス」を別項目として確認した。sheet-14 のレイアウト画像1点も開き、独立した入力欄が並ぶ画面構成を確認した。",
+      "reason": "2項目を別々に扱う要求はExcel正本の連続する別項目として明示されるため SPEC_BACKED は妥当。現行FormTypeは2フィールドを持つが、Twigは一方しか描画せずラベルとの対応も誤っている。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Form/Type/Admin/AdditionalSystemFormType.php の buildForm() は shopping_error_mail_address と check_payment_error_mail_address を別々に追加する。しかし src/Eccube/Resource/template/admin/Setting/Shop/additional_system.twig は「イベント決済確認エラー通知メールアドレス」のラベルの下に `form.shopping_error_mail_address` を描画し、`form.check_payment_error_mail_address` のwidget/errorsは同テンプレートに存在しない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    }
+  ]
+}

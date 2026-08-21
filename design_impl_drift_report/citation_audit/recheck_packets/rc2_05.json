@@ -1,0 +1,380 @@
+{
+ "packetId": "rc2_05",
+ "note": "rowId は drift_findings_list_final.tsv の行番号(ヘッダ除く1始まり)。これらは分類の批判的レビュー済み(レビュー結果列)だが、検証後に実装が変更されている。classVerdict も再判定しつつ、driftVerdict を重点的に確認すること。",
+ "count": 12,
+ "findings": [
+  {
+   "rowId": 477,
+   "機能No": "M04-13",
+   "機能名": "M04-13 在庫分割結合登録編集（結合)",
+   "ドメイン": "m04",
+   "区分(画面種別)": "admin",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "結合元商品CSV登録はCSVを10,000件を登録上限とする（上限超過は登録不可）。",
+   "実装実態": "UI文言は『登録上限は 10,000 件』と表示するが、結合元CSV取込ハンドラには行数上限(MAX_ROWS)判定が無く全行を処理する。MAX_ERROR_COUNT=20のみ実装。",
+   "差分内容": "設計の10,000件上限がバックエンドで未実装。分割側は2,000件のMAX_ROWSがあるが結合側は上限定数自体が存在しない。両ハンドラを直接確認し行数チェック不在を確認。",
+   "実装参照": "src/Eccube/Service/Csv/Importer/Event/StockJoinCsvImportHandler.php:141 / src/Eccube/Service/Csv/Importer/Event/StockJoinEditReplaceSourcesImportHandler.php:46,206 / src/Eccube/Resource/locale/messages.ja.yaml:5046",
+   "設計書参照": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-19",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:9442 のExcel正本（data-excel-ref=\"0202:在庫分割結合登録編集（結合)!E242\"）に「CSVは10,000件を登録上限とする」と明記されている。",
+   "旧実装根拠": "旧4リポジトリを `stock_split_join|StockSplit|StockJoin|在庫分割|在庫結合|結合元在庫数` で横断検索したが0件であり、この結合元CSV取込の旧実装は存在しない（確認範囲: pf-api、pf-eccube3、pf-article、deck-api全域、vendor/node_modules/cache/minified JS除外）。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/StockJoinCsvImportHandler.php:36-44 は上限定数として `MAX_ERROR_COUNT = 20` だけを持ち、同:141-153 は行を無制限に反復する。編集取込も ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/StockJoinEditReplaceSourcesImportHandler.php:42-46 に `MAX_ERROR_COUNT = 20` しかなく、同:202-218 のループに10,000件判定がない。一方UI文言は ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:5101 に「1ファイルの登録上限は 10,000 件です」と存在する。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "結合元CSV取込ハンドラに行数上限が無い。`src/Eccube/Service/Csv/Importer/Event/StockJoinCsvImportHandler.php:38` は `private const MAX_ERROR_COUNT = 20;` のみで MAX_ROWS 定数なし、`:141-195` のループ内にも行数判定がなく全行処理。`src/Eccube/Service/Csv/Importer/Event/StockJoinEditReplaceSourcesImportHandler.php:44-46` も `COLUMN_PRODUCT_CODE / COLUMN_SOURCE_QTY / MAX_ERROR_COUNT = 20` のみで MAX_ROWS 不在。一方 UI 文言は `src/Eccube/Resource/locale/messages.ja.yaml:5101` `admin.stock.join.new_source_csv_modal.csv_file: CSVファイル選択（1ファイルの登録上限は 10,000 件です）` および `:5124` と表示するのみ。分割側は `StockSplitEditReplaceDestinationsImportHandler.php:250-252` に `if ($rowIndex > self::MAX_ROWS) { $errors[] = '登録上限（'.self::MAX_ROWS.'件）を超えています。'; break; }` があるが結合側には同等処理なし。",
+   "再確認HEAD": "da9c2ba276",
+   "レビュー結果": "UPHELD",
+   "レビュー根拠": "10,000件というCSV登録上限がExcel正本に直接明記されており、上限を強制する期待値を支持する。",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Resource/locale/messages.ja.yaml"
+    ]
+   }
+  },
+  {
+   "rowId": 481,
+   "機能No": "M04-17",
+   "機能名": "M04-17 在庫履歴検索一覧(検索入力)",
+   "ドメイン": "m04",
+   "区分(画面種別)": "admin",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・未実装",
+   "設計期待値": "識別ID1-2 店舗 初期値『ログインしているメンバーのデフォルト検索表示店舗』。アクセス時(1-1)に初期値が入力された状態で表示する。",
+   "実装実態": "base_info は placeholder 'common.select__unspecified' の未選択状態で生成され、初期表示分岐(new())は FormUtil::getViewData($searchForm) の空フォーム値をそのまま表示する。Member::getDefaultSearchBaseInfo をセットする処理がない。",
+   "差分内容": "StockHistoryType・StockHistoryController ともに getDefaultSearchBaseInfo / setData / PRE_SET_DATA を参照していない（grep で不在確認）。同一 Stock 配下の InventoryPlanController.php:181 では getDefaultSearchBaseInfo を使用しており、本機能では未適用。初期値として店舗が入力される挙動が未実装。",
+   "実装参照": "不在。StockHistoryType.php:78-85(base_info) / StockHistoryController.php:179-204(初期表示分岐)",
+   "設計書参照": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-22",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:10732 のExcel正本（data-excel-ref=\"0202:在庫履歴検索一覧(検索入力)!AC107\"）は、識別ID 1-2「店舗」の初期値を「ログインしているメンバーのデフォルト検索表示店舗」と明記している。参照先の共通処理も同:1180 に「初期表示時…選択されている状態」と記載する。",
+   "旧実装根拠": "旧pf-eccube3の履歴フォーム pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/Product/HistoryType.php:34-65 に店舗フィールドはなく、旧履歴Controller pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Product/HistoryController.php:70-83 もフォームデータから検索するだけでデフォルト店舗を設定しない。新設計で追加された要件である。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/StockHistoryType.php:78-85 は `base_info` を複数選択・任意・placeholder付きで定義するが初期`data`を設定しない。ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockHistoryController.php:190-201 は初期表示時に空フォームの `FormUtil::getViewData($searchForm)` をそのまま保存・submitし、`getDefaultSearchBaseInfo()`を参照しない。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Form/Type/Admin/StockHistoryType.php:78-85` `->add('base_info', EntityType::class, ['label' => 'admin.stock.history.base_info_name', 'class' => BaseInfo::class, 'choice_label' => 'shop_name', 'required' => false, 'multiple' => true, 'placeholder' => 'common.select__unspecified'])` と初期データ未設定のまま。StockHistoryType.php / StockHistoryController.php を getDefaultSearchBaseInfo・setData・PRE_SET_DATA で grep してもヒット0件（同 Type の FormEvents 利用は `:486` の POST_SUBMIT 日付相関チェックのみ）。初期表示分岐 `src/Eccube/Controller/Admin/Stock/StockHistoryController.php:190-201` も `$pageNo = 1; // submit default value` `$viewData = FormUtil::getViewData($searchForm);` `$searchData = FormUtil::submitAndGetData($searchForm, $viewData);` と空フォーム値をそのまま表示している。",
+   "再確認HEAD": "da9c2ba276",
+   "レビュー結果": "UPHELD",
+   "レビュー根拠": "店舗の初期値と初期表示時の選択状態がExcel正本および正本内の参照先に明記されている。",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Form/Type/Admin/StockHistoryType.php"
+    ]
+   }
+  },
+  {
+   "rowId": 482,
+   "機能No": "M04-17",
+   "機能名": "M04-17 在庫履歴検索一覧(検索入力)",
+   "ドメイン": "m04",
+   "区分(画面種別)": "admin",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・未実装",
+   "設計期待値": "識別ID2-1 登録日(from) 初期値『ページを表示した日の月の1日』（当月1日）を初期表示時に入力済みとする。",
+   "実装実態": "create_date_from は DateType(single_text)で初期データ未設定。初期表示は空フォームの view data を表示する。当月1日を算出・設定する処理が存在しない。",
+   "差分内容": "Controller/Form を first day of month・modify( で grep したが不在。初期値『当月1日』が設定されず初期表示時に登録日(from)は空欄となる。未実装。",
+   "実装参照": "不在。StockHistoryType.php:339-356(create_date_from) / StockHistoryController.php:179-204",
+   "設計書参照": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-22",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:10735 のExcel正本（data-excel-ref=\"0202:在庫履歴検索一覧(検索入力)!AC110\"）は、識別ID 2-1「登録日(from)」の初期値を「ページを表示した日の月の1日」と明記している。",
+   "旧実装根拠": "旧pf-eccube3のフォーム pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/Product/HistoryType.php:39-53 は `date_from/to` を定義するが初期`data`を持たず、旧Controller pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Product/HistoryController.php:70-83 に当月1日の設定処理もない。新設計で追加された初期値である。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/StockHistoryType.php:339-356 は `create_date_from` を任意の`DateType`として定義するが初期`data`を設定しない。ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockHistoryController.php:190-201 の初期表示も空フォーム値をそのまま使用し、当月1日を算出しない。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Form/Type/Admin/StockHistoryType.php:339-356` `->add('create_date_from', DateType::class, ['label' => 'admin.common.create_date__start', 'required' => false, 'input' => 'datetime', 'widget' => 'single_text', 'placeholder' => ['year' => '----', 'month' => '--', 'day' => '--'], 'constraints' => [new Assert\\Range(['min' => '1900-01-01', ...])], 'attr' => [...]])` に `'data'` 指定はなく、同ファイルを `'data'` / `first day of` / `modify(` で grep してもヒット0件。`src/Eccube/Controller/Admin/Stock/StockHistoryController.php:196-197` の初期表示も空の view data を submit するだけで当月1日を算出・設定する処理は不在。",
+   "再確認HEAD": "da9c2ba276",
+   "レビュー結果": "UPHELD",
+   "レビュー根拠": "登録日(from)の初期値として当月1日を設定する要求がExcel正本の初期値列に明記されている。",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Form/Type/Admin/StockHistoryType.php"
+    ]
+   }
+  },
+  {
+   "rowId": 483,
+   "機能No": "M04-17",
+   "機能名": "M04-17 在庫履歴検索一覧(検索入力)",
+   "ドメイン": "m04",
+   "区分(画面種別)": "admin",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・未実装",
+   "設計期待値": "識別ID2-6 公開種別 初期値『公開』を初期表示時に選択済みとする。",
+   "実装実態": "status は ProductStatusType(multiple/expanded)で初期データ未設定。Controllerも空フォームを表示するのみで『公開』を既定選択しない。",
+   "差分内容": "status に data/empty_data・初期選択の設定がなく Controller に setData も無い（grep 確認）。初期値『公開』が未実装。",
+   "実装参照": "不在。StockHistoryType.php:126-131(status)",
+   "設計書参照": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-22",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:10740 のExcel正本（data-excel-ref=\"0202:在庫履歴検索一覧(検索入力)!AC115\"）は、識別ID 2-6「公開種別」の初期値を「公開」と明記している。",
+   "旧実装根拠": "旧pf-eccube3の履歴画面は pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Product/historylist.twig:56-60 で埋込商品フォームの`status`を表示するが、旧履歴フォーム pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/Product/HistoryType.php:34-65 自体に公開初期値の設定はない。新設計で明文化された要件である。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/StockHistoryType.php:126-131 は `status` を複数・展開表示で定義するだけで、初期`data`を設定しない。親型 ec-cube-enterprise/src/Eccube/Form/Type/Master/ProductStatusType.php:27-32 も`class`と`expanded`しか既定化せず、Controllerの初期表示は ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockHistoryController.php:190-201 の空フォーム値である。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Form/Type/Admin/StockHistoryType.php:126-131` `->add('status', ProductStatusType::class, ['label' => 'admin.product.display_status', 'multiple' => true, 'required' => false, 'expanded' => true])` のままで、『公開』を既定選択する `'data'` / `'empty_data'` 指定がない（同ファイル grep で `'data'` は0件）。Controller 側にも setData / PRE_SET_DATA は不在で、`StockHistoryController.php:196-197` は空フォームの view data を表示するだけ。",
+   "再確認HEAD": "da9c2ba276",
+   "レビュー結果": "UPHELD",
+   "レビュー根拠": "公開種別の初期値が『公開』であることをExcel正本の初期値列が直接支持する。",
+   "mech": {
+    "quote": "NOT_FOUND",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Form/Type/Admin/StockHistoryType.php"
+    ]
+   }
+  },
+  {
+   "rowId": 484,
+   "機能No": "M04-17",
+   "機能名": "M04-17 在庫履歴検索一覧(検索入力)",
+   "ドメイン": "m04",
+   "区分(画面種別)": "admin",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・未実装",
+   "設計期待値": "識別ID2-10 状態 初期値『NM』を初期表示時に選択済みとする。",
+   "実装実態": "card_condition は ChoiceType(multiple/expanded, 選択肢NM/SP/MP/HP/その他)で初期データ未設定。初期表示は未選択。",
+   "差分内容": "card_condition に初期選択(NM)の指定がなく Controller でも setData されない。初期値『NM』が未実装。",
+   "実装参照": "不在。StockHistoryType.php:161-173(card_condition)",
+   "設計書参照": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-22",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:10744 のExcel正本（data-excel-ref=\"0202:在庫履歴検索一覧(検索入力)!AC119\"）は、識別ID 2-10「状態」の初期値を「NM」と明記している。",
+   "旧実装根拠": "旧pf-eccube3の履歴テンプレート pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Product/historylist.twig:92-103 はリクエストの`code`と一致した状態だけをチェックし、初期NM固定ではない。旧履歴フォーム pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/Product/HistoryType.php:34-65 にもNM初期値はないため、新設計で追加された要件である。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/StockHistoryType.php:161-173 は `card_condition` の選択肢NM/SP/MP/HP/その他を定義するが初期`data`を持たない。ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockHistoryController.php:190-201 は初期表示で空フォーム値を使用するため、NMは選択されない。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Form/Type/Admin/StockHistoryType.php:161-173` `->add('card_condition', ChoiceType::class, ['label' => 'admin.product.card_condition', 'required' => false, 'multiple' => true, 'expanded' => true, 'choices' => ['admin.stock.history.card_condition.nm' => 1, ... 'admin.stock.history.card_condition.other' => 5]])` に初期選択(NM=1)の `'data'` 指定なし。Controller 側の setData も不在（grep 0件）。",
+   "再確認HEAD": "da9c2ba276",
+   "レビュー結果": "UPHELD",
+   "レビュー根拠": "引用は function-design-embed 開始（10899行）より前のExcel正本項目表にあり、状態の初期値NMという設計期待値を直接支持する。",
+   "mech": {
+    "quote": "NOT_FOUND",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Form/Type/Admin/StockHistoryType.php"
+    ]
+   }
+  },
+  {
+   "rowId": 485,
+   "機能No": "M04-17",
+   "機能名": "M04-17 在庫履歴検索一覧(検索入力)",
+   "ドメイン": "m04",
+   "区分(画面種別)": "admin",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・未実装",
+   "設計期待値": "識別ID2-4 欠品検索 チェック時の画面動的挙動: 2-3在庫変動理由区分を『欠品/欠品減算(受注)』『欠品/欠品減算(移動)』に変更し非活性化、欠品履歴で『－』の検索対象項目を空にし非活性化、2-37欠品理由を活性化。チェック解除時は欠品理由をクリア、及びチェック済→解除で2-3在庫変動理由区分の内容を空にする。",
+   "実装実態": "disposal_search は ChoiceType のチェックボックスとして存在し、サーバ側(StockHistoryController)で has_search_disposal による結果テーブルの列切替に使われるのみ。history.twig の JS に disposal_search の変更を監視して stock_change_type_detail を自動設定・非活性化したり stock_change_reason を活性/クリアする処理は存在しない。",
+   "差分内容": "twig内JS・assets/js を grep したが disposal_search 変更ハンドラなし。欠品検索チェックに連動したフォーム項目の自動設定・活性/非活性・クリアというクライアント側動的挙動が未実装。",
+   "実装参照": "不在。history.twig:8-176(JSブロック) / StockHistoryType.php:108-115(disposal_search)",
+   "設計書参照": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-22",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:10738 のExcel正本は、欠品検索選択時に2-3を欠品2区分へ固定・非活性化し、欠品履歴で「－」の項目を空・非活性化し、2-37を活性化すること、未選択時は2-37を空・非活性化し、チェック解除時は2-3を空にすることを明記している。",
+   "旧実装根拠": "旧pf-eccube3の履歴フォーム pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/Product/HistoryType.php:34-65 に `disposal_search` や欠品理由フィールドはなく、旧4リポジトリ全域を `disposal_search|欠品検索` で検索しても0件である。これはExcel正本で新設された動的UI要件である。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/StockHistoryType.php:94-115 は `stock_change_type_detail` と `disposal_search` を別々のフォーム項目として定義するだけで連動処理を持たない。ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/history.twig:8-159 のJSはページ件数変更と結果行の理由編集のみで、`disposal_search`変更監視や入力の活性/非活性・クリア処理がない。Controllerも ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockHistoryController.php:229-245 で`disposal_search`を結果表示モード判定に使うだけである。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Form/Type/Admin/StockHistoryType.php:108-115` `->add('disposal_search', ChoiceType::class, [... 'choices' => ['admin.stock.history.disposal_search_select' => true], 'placeholder' => 'common.select__unspecified'])` のまま。`src/Eccube/Resource/template/admin/Stock/history.twig` 内の disposal_search 出現は `:259-262` の `<label class=\"fw mb-3\">{{ 'admin.stock.history.disposal_search'|trans }}</label>` / `{{ form_widget(form.disposal_search) }}` / `{{ form_errors(form.disposal_search) }}` の3行のみで（src/Eccube/Resource/assets/js/ の grep も0件）、change を監視して stock_change_type_detail を自動設定・非活性化したり stock_change_reason を活性化/クリアする JS は存在しない。サーバ側も `src/Eccube/Controller/Admin/Stock/StockHistoryController.php:131` `$hasSearchDisposal = !empty($searchForm['disposal_search']) ? true : false;` による結果テーブル列切替のみ。",
+   "再確認HEAD": "da9c2ba276",
+   "レビュー結果": "UPHELD",
+   "レビュー根拠": "該当記述は function-design-embed 開始（10899行）より前の src-cell であり、指摘された動的挙動の各分岐をExcel正本が直接定義している。",
+   "mech": {
+    "quote": "NO_QUOTE",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Form/Type/Admin/StockHistoryType.php",
+     "src/Eccube/Resource/template/admin/Stock/history.twig"
+    ]
+   }
+  },
+  {
+   "rowId": 487,
+   "機能No": "M04-17",
+   "機能名": "M04-17 在庫履歴検索一覧(検索結果)",
+   "ドメイン": "m04",
+   "区分(画面種別)": "admin",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "承認者列は3状態: 承認者名 / 在庫編集承認IDあり かつ 承認者未登録→「承認待ち」/ 承認行為なし→「-」。",
+   "実装実態": "{{ Stock.approvalMember ? Stock.approvalMember : '-' }} で承認者名か「-」の2値のみ。「承認待ち」分岐が無い。",
+   "差分内容": "history.twig を grep しても「承認待ち」文言・ロジック不在。翻訳キー admin.stock.approval_list.approval_waiting=承認待ち は在庫編集承認一覧側でのみ使用され、本一覧では未使用。承認待ちレコードが一律「-」表示になり設計の3状態と差異。",
+   "実装参照": "src/Eccube/Resource/template/admin/Stock/history.twig:730",
+   "設計書参照": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-23",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:11175 のExcel正本（在庫履歴検索一覧(検索結果)!AG160）は承認者列を「承認を押下した作業者」「在庫編集承認IDがあり、承認者の登録がない場合、”承認待ち”」「承認行為が発生しなかったデータについては”-”」の3状態で定義する。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Product/historylist.twig:257-268 の旧一覧ヘッダは「商品コード」から「登録者」までの10列だけで承認者列を持たないため、この3状態要件の根拠は旧実装ではなくExcel正本である。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/history.twig:728-730 は承認日を `Stock.approvalAt ? ... : '-'`、承認者を `Stock.approvalMember ? Stock.approvalMember : '-'` と表示するだけで、在庫編集承認IDあり・承認者なしを「承認待ち」にする分岐がない。",
+   "根拠検証メモ": "Excel正本の3状態のうち「承認待ち」が現実装に欠落している。",
+   "対応の根拠(現develop)": "`src/Eccube/Resource/template/admin/Stock/history.twig:730` `<td class=\"align-top\">{{ Stock.approvalMember ? Stock.approvalMember : '-' }}</td>` のままで承認者名/「-」の2値のみ。同ファイルを 承認待ち / approval_waiting で grep してもヒット0件で、「承認待ち」分岐は追加されていない。",
+   "再確認HEAD": "da9c2ba276",
+   "レビュー結果": "UPHELD",
+   "レビュー根拠": "引用は当該シートの function-design-embed 開始（11267行）より前のExcel正本セルで、承認者列の3状態をそのまま支持する。",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Resource/template/admin/Stock/history.twig"
+    ]
+   }
+  },
+  {
+   "rowId": 498,
+   "機能No": "M04-19",
+   "機能名": "M04-19 欠品履歴検索一覧(検索結果)",
+   "ドメイン": "m04",
+   "区分(画面種別)": "admin",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・未実装",
+   "設計期待値": "商品名を押下すると、押下した商品在庫の在庫編集画面を別タブで表示する。",
+   "実装実態": "商品名列は {{ productSub.name }} のプレーンテキスト表示で、在庫編集画面への a タグや target=\"_blank\" がない。 設計要求に対応する実装が見当たらない（未実装）。",
+   "差分内容": "history.twig、admin_stock_approval_new、stock_list_index.twig、ProductStock.id で再検索した。stock_list_index.twig には admin_stock_approval_new へのリンク実装があるが、M04-19 の history.twig 商品名列には適用されていない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/history.twig:661",
+   "設計書参照": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25:10762",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:11666 のExcel正本（欠品履歴検索一覧(検索結果)!AG72）は「商品名を押下すると、押下した商品在庫の在庫編集画面を別タブで表示」と明記する。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Product/stockout_historylist.twig:103-108 の旧欠品一覧は商品名を `<a href=\"{{ path('admin_product_product_class_detail_edit', ...) }}\" target=\"_blank\">{{ row.name }}</a>` としており、Excel要件と同じ別タブリンクも確認できる。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/history.twig:656-662 は商品名セルを `<td ...>{{ productSub.name }}</td>` とプレーンテキスト表示し、`a`タグ・在庫編集route・`target=\"_blank\"`を持たない。",
+   "根拠検証メモ": "Excel正本と旧実装の双方がリンクを支え、現一覧だけが未対応。SPEC_BACKEDを優先。",
+   "対応の根拠(現develop)": "`src/Eccube/Resource/template/admin/Stock/history.twig:661` `<td class=\"align-top fixed-cell-col2\">{{ productSub.name }}</td>` のままで、商品名列はプレーンテキスト。在庫編集画面への a タグや `target=\"_blank\"` は無い（同ファイルで target=\"_blank\" を持つのは `:670` の登録元IDリンクのみ）。",
+   "再確認HEAD": "da9c2ba276",
+   "レビュー結果": "UPHELD",
+   "レビュー根拠": "11666行は function-design-embed 開始（11748行）より前の src-cell であり、商品名リンクの遷移先と別タブ表示をExcel正本が直接定義している。",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Resource/template/admin/Stock/history.twig"
+    ]
+   }
+  },
+  {
+   "rowId": 506,
+   "機能No": "M04-21",
+   "機能名": "M04-21 在庫変更CSV登録",
+   "ドメイン": "m04",
+   "区分(画面種別)": "admin",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・未実装",
+   "設計期待値": "直近に同じファイル名で在庫変更CSVを取り込んでいれば「直近でアップロードされたファイル名です。ファイルを確認してください。」を表示して中止する。",
+   "実装実態": "汎用の DtbCsvImportHistoryRepository::getRecentCsvImportHistory は存在するが、在庫変更CSVコントローラには注入・呼び出しがなく、アップロード処理は行数確認後すぐ取込に進む。該当エラーメッセージキーも確認できない。",
+   "差分内容": "同名ファイル再取込の事前中止処理がこの機能に接続されていない。",
+   "実装参照": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockChangeCsvController.php:76-278, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbStockEditCsvRepository.php:51-158, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbCsvImportHistoryRepository.php:79-93, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml）",
+   "設計書参照": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27:11518",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:12240 のExcel正本は「カスタマイズ要件に記載の内容以外は現行踏襲」とだけ記載し、直近同名ファイルの判定期間・文言・中止処理を具体的に記載しない。具体記述はリバース詳細設計 hareruya-design-docs/functions/pf-eccube3/m04-21_admin_stock_stock_csv_import.md:102-105 の「直近に同じファイル名…表示して中止する」にある。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Product/ProductCsvController.php:1220-1225 は `getRecentCsvImportHistory(..., $file->getClientOriginalName())` が真ならduplicateエラーを表示して中止する。pf-eccube3/app/Plugin/HareruyaEc/Repository/DtbCsvImportHistoryRepository.php:46-60 は同一種別・ファイル名・直近1か月を検索し、pf-eccube3/app/Plugin/HareruyaEc/Resource/locale/message.ja.yml:1098 は「直近でアップロードされたファイル名です。ファイルを確認してください。」を定義する。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockChangeCsvController.php:256-269 はファイル取得後、同名履歴を照会せず行数チェックから `log_info('在庫変更CSV登録開始')` へ進む（確認範囲: 同Controller:216-361、DtbStockEditCsvRepository.php:45-120、検索語: `getRecentCsvImportHistory`, `duplicate`, `直近でアップロード`）。",
+   "根拠検証メモ": "具体的期待値はExcel正本の一般的な「現行踏襲」を旧実装で具体化したもの。",
+   "対応の根拠(現develop)": "`grep -rn \"getRecentCsvImportHistory\" src/` のヒットは定義側の `src/Eccube/Repository/DtbCsvImportHistoryRepository.php:79` `public function getRecentCsvImportHistory(int $csvImportType, string $fileName): array` のみで、呼び出し箇所は0件。`src/Eccube/Controller/Admin/Stock/StockChangeCsvController.php:88-103` のコンストラクタに `DtbCsvImportHistoryRepository` の注入はなく、`:260` `if ($this->countCsvRows($file) >= static::ADMIN_CSV_IMPORT_MAX_ROWS) {` の行数チェック後、`:323` `$result = $importer->import($file);` へ直行する。「直近でアップロードされたファイル名です。」相当のメッセージも `src/Eccube/Resource/locale/messages.ja.yaml` に存在しない（grep 0件）。",
+   "再確認HEAD": "da9c2ba276",
+   "レビュー結果": "UPHELD",
+   "レビュー根拠": "Excel正本には一般的なファイル名登録・履歴表示と「カスタマイズ要件に記載の内容以外は現行踏襲とする。」しかなく、期待値の具体的な同名判定は旧実装にのみ根拠がある。リバース詳細設計の記述は正本根拠として数えていない。",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Resource/locale/messages.ja.yaml"
+    ]
+   }
+  },
+  {
+   "rowId": 522,
+   "機能No": "M04-22",
+   "機能名": "M04-22 在庫振替CSV登録",
+   "ドメイン": "m04",
+   "区分(画面種別)": "admin",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・未実装",
+   "設計期待値": "アップロードされたファイルがcsv以外のファイルの場合は登録処理実行時のエラーとする。",
+   "実装実態": "StockTransferCsvImportType.php:105-115 の import_file は NotBlank と File(maxSize) のみで mimeTypes/extensions 制約がない。MoveTransfer/index.twig:950 の accept='text/csv,.csv,text/plain' はクライアント属性のみで、CsvImporter.php:172-175 も tsv 以外を通常CSV区切りで読むだけで非CSVを拒否していない。",
+   "差分内容": "設計は csv 以外のファイルを登録エラーにする要求だが、サーバ側の拡張子/MIME検証または専用エラー処理が存在しない。別キーワード（mimeTypes, extensions, getClientOriginalExtension, csv_invalid_format, upload_error_file_type, text/csv）でも在庫振替CSV用の拒否実装は確認できなかった。",
+   "実装参照": "不在（探索範囲: src/Eccube/Form/Type/Admin/StockTransferCsvImportType.php, src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php, src/Eccube/Service/Csv/Importer, src/Eccube/Resource/template/admin/Stock/MoveTransfer/index.twig, src/Eccube/Resource/locale/messages.ja.yaml）",
+   "設計書参照": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-29:11980",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:12973-12976 のExcel正本は在庫振替CSV登録で「アップロードされたファイルがcsv以外のファイルの場合」を登録処理エラーと明記する。",
+   "旧実装根拠": "hareruya-design-docs/functions/ec-cube-enterprise/m04-22_admin_stock_stock_move_transfer_csv_import.md:9,18,27 は本機能を新規実装とし、対応する現行pf-eccube3実装はないと明記する。旧4リポジトリを `transfer_csv_import` / `StockTransferCsvImport` / `stock_transfer.csv` で横断検索しても対応実装はない。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/StockTransferCsvImportType.php:105-115 は必須・最大サイズだけを検証し、MIME/拡張子制約を持たない。ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/MoveTransfer/index.twig:942-951 のaccept属性はクライアント側の選択ヒントだけで、CSV以外のサーバ拒否にならない。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Form/Type/Admin/StockTransferCsvImportType.php:105-115` の import_file は現在も `new Assert\\NotBlank(),` (111行) と `new Assert\\File(['maxSize' => $this->csvMaxSize.'M',])` (112-114行) のみで mimeTypes/extensions 制約がない。`grep -rn \"mimeTypes|getClientOriginalExtension|extensions\" src/Eccube/Form/Type/Admin/ src/Eccube/Controller/Admin/Stock/ src/Eccube/Service/Csv/Importer/` の結果に StockTransferCsvImportType は含まれない。`src/Eccube/Resource/template/admin/Stock/MoveTransfer/index.twig:950` は依然 `{{ form_widget(stockTransferCsvImportForm.import_file, { attr: { class: 'd-none', accept: 'text/csv,.csv,text/plain' } }) }}` のクライアント属性のみ。`src/Eccube/Service/Csv/Importer/CsvImporter.php:172-173` も `$fileExtension = $file->getClientOriginalExtension(); $delimiter = ($fileExtension === 'tsv') ? \"\\t\" : ...` と区切り文字判定に使うだけで非CSVを拒否しない。",
+   "再確認HEAD": "da9c2ba276",
+   "レビュー結果": "UPHELD",
+   "レビュー根拠": "引用は当該シートの function-design-embed 開始（13059行）より前のExcel正本で、非CSV拒否の期待値を直接支持する。",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Resource/locale/messages.ja.yaml"
+    ]
+   }
+  },
+  {
+   "rowId": 524,
+   "機能No": "M04-22",
+   "機能名": "M04-22 在庫振替CSV登録",
+   "ドメイン": "m04",
+   "区分(画面種別)": "admin",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・未実装",
+   "設計期待値": "振替元商品と振替先商品がまったく同一の行が複数あった場合はエラーとする。",
+   "実装実態": "StockTransferCsvImportHandler.php:153-169 の onValidateRow は商品存在チェックと振替点数チェックのみ。getRowValidators() は StockTransferCsvImportHandler.php:292-295 で空配列を返す。onReadRow は StockTransferCsvImportHandler.php:178-270 で各行を明細化して在庫減算するが、既出の振替元/振替先ペアを保持・照合しない。",
+   "差分内容": "同一CSV内で「振替元商品コード+振替先商品コード」の重複ペアを検出する状態管理・行バリデータ・エラーメッセージキーがない。duplicate/duplicated/重複/same/source/dest/from-to/rowValidators 等へ翻案して再検索しても在庫振替CSV用の重複行チェックは確認できなかった。",
+   "実装参照": "不在（探索範囲: src/Eccube/Service/Csv/Importer/Event/StockTransferCsvImportHandler.php, src/Eccube/Service/Csv/Importer/Extension/StockMoveTransfer, src/Eccube/Service/Csv/Importer/Validator, src/Eccube/Resource/locale/messages.ja.yaml）",
+   "設計書参照": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-29:11990",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:12983-12984 のExcel正本セルは「振替元商品コードは同じ商品が複数行あっても許容する」に続けて「振替元商品と振替先商品がまったく同一の行が複数あった場合はエラーとする」と明記する。",
+   "旧実装根拠": "判定には不使用。hareruya-design-docs/design_impl_drift_report/citation_audit/CODEX_TASK.md:47-50 の「設計書に裏付けが無い、または不十分な場合、旧実装リポジトリを探索する」に従い、Excel正本だけで期待値を十分に裏付けられるため旧実装は必須探索対象外。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/StockTransferCsvImportHandler.php:153-169 の `onValidateRow()` は `validateProductExists()` と `validateTransferQuantity()` だけを呼び、同:178-183 は行ごとの振替元・振替先コードを読むだけで既出ペアを保持しない。同:292-295 の `getRowValidators()` も `return [];` である。ファイル全体を `duplicate|duplicated|重複|same|from.*to|to.*from` で確認したがペア重複検証は存在しない。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Service/Csv/Importer/Event/StockTransferCsvImportHandler.php:153-169` の `onValidateRow()` は現在も `if (!$this->validateProductExists($event)) { $event->breakAll(); }` と `if (!$this->validateTransferQuantity($event)) { $event->breakAll(); }` の2つのみ。`src/Eccube/Service/Csv/Importer/Event/StockTransferCsvImportHandler.php:292-295` の `protected function getRowValidators(): array { return []; }` も空配列のまま。同ファイルの関数一覧（grep 'function '）にも重複ペア検出用のメソッドは存在せず、duplicate/重複 のヒットもゼロ。",
+   "再確認HEAD": "da9c2ba276",
+   "レビュー結果": "UPHELD",
+   "レビュー根拠": "引用は function-design-embed 開始（13059行）より前のExcel正本にあり、許容する重複とエラーにする同一ペア重複を明確に区別している。",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Resource/locale/messages.ja.yaml"
+    ]
+   }
+  },
+  {
+   "rowId": 531,
+   "機能No": "M04-23",
+   "機能名": "M04-23 在庫結合CSV登録",
+   "ドメイン": "m04",
+   "区分(画面種別)": "admin",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・未実装",
+   "設計期待値": "選択した条件に対して、CSVの結合先商品コード、結合数、結合元商品コード、結合元在庫区分、結合元在庫数をもとに在庫結合の登録および承認申請を行う",
+   "実装実態": "CSV取込は在庫結合登録後に欠品入力まで進めるだけで、承認申請アクションは呼ばない。成功文言も「%count% 件の結合を登録し、欠品入力まで進めました。」となっている（messages.ja.yaml:4844）。",
+   "差分内容": "設計はCSV登録処理内で承認申請まで行う要求だが、実装のCSV取込経路には StockJoinApplyApprovalAction 呼び出しが存在せず、承認申請は別画面の admin_stock_join_apply_approval ルートに分離されている。",
+   "実装参照": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php::listJoinCsvImport, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/StockJoinListCsvImportHandler.php。反証語: StockJoinApplyApprovalAction, StockJoinApplyApprovalInput, admin_stock_join_apply_approval）",
+   "設計書参照": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-31:12678",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:13715 のExcel正本は「CSVの結合先商品コード、結合数、結合元商品コード、結合元在庫区分、結合元在庫数をもとに在庫結合の登録および承認申請を行う」と明記する。",
+   "旧実装根拠": "判定には不使用。hareruya-design-docs/design_impl_drift_report/citation_audit/CODEX_TASK.md:47-50 の旧実装探索条件に照らし、Excel正本に承認申請までの処理が直接記載されているため旧実装は必須探索対象外。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:407-415 はCSVハンドラへ `stockJoinRegisterAction` と `stockJoinMoveToShortageEntryAction` だけを渡す。ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/StockJoinListCsvImportHandler.php:401-430 も登録後に `stockJoinMoveToShortageEntryAction->handle(...)` までしか呼ばず、`StockJoinApplyApprovalAction` は同ファイルおよびCSV POST経路に存在しない。同:259-260 の成功文言も「結合を登録し、欠品入力まで進めました。」である。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "結合CSV取込ルート `src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:407-414` は `new StockJoinListCsvImportHandler($this->productStockRepository, $this->stockJoinRegisterAction, $this->stockJoinMoveToShortageEntryAction, ...)` を組み立てており、承認申請アクションを注入していない。ハンドラ側も `src/Eccube/Service/Csv/Importer/Event/StockJoinListCsvImportHandler.php:78` `private readonly StockJoinMoveToShortageEntryAction $stockJoinMoveToShortageEntryAction,` / `StockJoinListCsvImportHandler.php:423` `$this->stockJoinMoveToShortageEntryAction->handle(` までで、成功文言は `StockJoinListCsvImportHandler.php:260` `trans('admin.stock.split_join.list_csv_join_import_done', ...)` = `src/Eccube/Resource/locale/messages.ja.yaml:4899` `'%count% 件の結合を登録し、欠品入力まで進めました。'`。`grep -rn StockJoinApplyApprovalAction src/Eccube/` の該当は `src/Eccube/Service/Admin/Stock/StockJoinApplyApprovalAction.php` 本体と `src/Eccube/Controller/Admin/Stock/StockJoinController.php:41,78` のみで、CSV取込経路からの呼び出しは存在しない。",
+   "再確認HEAD": "da9c2ba276",
+   "レビュー結果": "UPHELD",
+   "レビュー根拠": "引用は当該シートの function-design-embed 開始（13811行）より前のExcel正本で、CSV登録経路に承認申請まで含む期待値を直接支持する。",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Resource/locale/messages.ja.yaml"
+    ]
+   }
+  }
+ ]
+}

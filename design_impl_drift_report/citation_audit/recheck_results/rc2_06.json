@@ -1,0 +1,149 @@
+{
+  "packetId": "rc2_06",
+  "results": [
+    {
+      "rowId": 538,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0202_基本設計書(管理画面_在庫・移動・棚卸・倉庫・承認・商品履歴).html の Excel正本 src-cell `0202:在庫移動指示検索!E86`（14279行）を実際に開き、「CSVは2,000件を登録上限とする」を確認した。sheet-32 のレイアウト画像2点も開いて確認したが、2,000件上限を覆す表示はなかった。",
+      "reason": "Excel正本に2,000件上限が明記されているため SPEC_BACKED は妥当。現行の専用CSV取込処理にはデータ行数の上限検証がなく、画面注記も10,000件のままなので乖離を再現した。",
+      "currentImpl": "src/Eccube/Service/Csv/Importer/Event/StockMoveInstructionCsvImportHandler.php の StockMoveInstructionCsvImportHandler::onValidateRow() は列数・必須値・列Validatorだけを検証し、getRowValidators() は空配列を返す。src/Eccube/Service/Admin/Stock/StockMoveInstructionCsvImporter.php の validateBeforeImport() はヘッダ検証のみ。src/Eccube/Resource/locale/messages.ja.yaml の admin.stock.move_instruction.csv_registration_file_limit は「1ファイルの登録上限は10,000件」と定義され、在庫移動指示一覧テンプレートから表示される。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 540,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0202_基本設計書(管理画面_在庫・移動・棚卸・倉庫・承認・商品履歴).html の Excel正本 src-cell `0202:在庫移動指示検索!E90`（14283行）を実際に開き、「移動指示IDに重複がないこと」を確認した。",
+      "reason": "Excel正本にCSV内の移動指示ID重複チェックが明記されているため SPEC_BACKED は妥当。現行実装には同一ファイル内で既出IDを記録・拒否する処理がない。",
+      "currentImpl": "src/Eccube/Service/Csv/Importer/Event/StockMoveInstructionCsvImportHandler.php では移動指示ID列に必須・整数・数値Validatorを設定するが、onReadRow() はIDで対象を検索して店舗・追跡番号を検証するだけで、既出ID集合を保持しない。getRowValidators() も空配列を返す。専用Importer/Handler内に重複行検証は確認できない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 543,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0202_基本設計書(管理画面_在庫・移動・棚卸・倉庫・承認・商品履歴).html の Excel正本 src-cell `0202:在庫移動指示詳細!E52`（14879行）を実際に開き、編集可能店舗は M11-03 の条件を参照する旨を確認した。参照先の 0201_基本設計書(管理画面_ログイン・ホーム・権限・メンバー・店舗・取置期限設定).html の Excel正本 `0201:メンバー登録・編集!D19`（2234行）では、在庫・受注等のデータを「メンバーに紐づいている編集可能店舗」のものに限って編集可能とし、同 `D22`（2237行）では編集不可店舗の更新時は権限エラーとする記述を確認した。",
+      "reason": "根拠はリバース詳細設計ではなくExcel正本とその正本参照先に存在し、SPEC_BACKED は妥当。現行の在庫移動指示一覧・詳細・更新・削除経路ではメンバーの編集可能店舗による認可を確認できず、乖離を再現した。",
+      "currentImpl": "src/Eccube/Controller/Admin/Stock/StockMoveInstructionController.php の index() は検索フォーム条件だけでRepositoryへ問い合わせ、detail()、registerTracking()、delete() はIDでDtbStockMoveInstructionを取得して処理するが Member::isEditableShop() 等の認可判定を行わない。src/Eccube/Repository/DtbStockMoveInstructionRepository.php の検索QueryBuilderも、検索画面で明示された移動元・移動先条件以外にログインメンバーの編集可能店舗を絞り込まない。Member::isEditableShop() は他機能では使用されているが、在庫移動指示経路での使用は確認できない。",
+      "severityOpinion": "high",
+      "confidence": "high"
+    },
+    {
+      "rowId": 544,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0202_基本設計書(管理画面_在庫・移動・棚卸・倉庫・承認・商品履歴).html の Excel正本 src-cell `0202:在庫移動指示詳細!E63`（14888行）を実際に開き、メモを登録できるのはグループ内の移動ステータスが「出庫承認済」または「移動中」の場合だけとする記述を確認した。sheet-33 のレイアウト画像2点も開き、詳細画面のメモ欄を確認した。",
+      "reason": "Excel正本にステータス条件が明記されているため SPEC_BACKED は妥当。現行画面と更新Actionはいずれも対象ステータスを検証せずメモを更新できる。",
+      "currentImpl": "html/template/admin/Stock/stock_move_instruction_detail.twig は form.memo をステータス条件なしで表示する。src/Eccube/Controller/Admin/Stock/StockMoveInstructionController.php の detail() は有効なフォームを StockMoveInstructionDetailUpdateAction::handle() に渡すが、移動ステータスを検証しない。src/Eccube/Service/Admin/Stock/StockMoveInstructionDetailUpdateAction.php の handle() も追跡番号とメモを反映してflushするだけでステータス制約がない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 545,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0202_基本設計書(管理画面_在庫・移動・棚卸・倉庫・承認・商品履歴).html の Excel正本 src-cell `0202:在庫移動指示詳細!E67`（14891行）を実際に開き、追跡番号またはメモに変更がある場合のみ登録ボタンを活性化する記述を確認した。sheet-33 のレイアウト画像2点も実際に開き、初期状態の登録ボタンが淡色の非活性表現になっていることを確認した。",
+      "reason": "Excel正本のセル記述とレイアウト画像が一致しており、SPEC_BACKED は妥当。現行テンプレートは変更有無にかかわらず通常のsubmitボタンを表示し、活性制御用JavaScriptもない。",
+      "currentImpl": "html/template/admin/Stock/stock_move_instruction_detail.twig の登録ボタンは常時 `<button type=\"submit\" class=\"btn btn-ec-conversion\">` として出力され、disabled属性や変更検知処理がない。同テンプレート内に追跡番号・メモの変更に応じてボタン状態を切り替えるJavaScriptもない。src/Eccube/Form/Type/Admin/StockMoveInstructionDetailType.php にも初期無効化の設定はない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 547,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0202_基本設計書(管理画面_在庫・移動・棚卸・倉庫・承認・商品履歴).html の Excel正本 src-cell `0202:値札差し替えリスト!E35`（15694行）を実際に開き、価格変更期間は最大1か月とする記述を確認した。sheet-36 のレイアウト領域も確認し、このシートには埋め込みレイアウト画像がないことを確認した。",
+      "reason": "Excel正本に最大1か月の入力制約が明記されているため SPEC_BACKED は妥当。現行フォームは開始日が終了日を超える場合だけを拒否し、期間長を1か月以内に制限しない。",
+      "currentImpl": "src/Eccube/Form/Type/Admin/BarcodeReplacementListType.php の buildForm() は期間開始・終了を定義し、POST_SUBMITでは開始日が終了日より後の場合だけエラーにする。src/Eccube/Controller/Admin/Stock/BarcodeReplacementListController.php の csvExport() は開始を00:00、終了を23:59に補正するだけで、1か月超を拒否しない。対象機能に1か月上限のValidatorまたはDateInterval判定は確認できない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 549,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "UNSURE",
+      "checkedQuote": "0202_基本設計書(管理画面_在庫・移動・棚卸・倉庫・承認・商品履歴).html の Excel正本 item table `0202:在庫計画!Z73`（16032行）を実際に開き、初期表示件数「100」を確認した。一方、同じExcel正本 sheet-37 のレイアウト画像7点を実際に開くと、主要画面画像の件数プルダウンは「10件」と表示されていた。",
+      "reason": "Excel正本のitem tableに明示的な「初期100」があるため、指摘の根拠区分自体は SPEC_BACKED として維持する。ただし同じ正本のレイアウト画像は現行実装と同じ「10件」であり、設計正本内で期待値が矛盾する。どちらを優先すべきか本資料だけでは確定できないため、乖離の存否は UNSURE とした。",
+      "currentImpl": "src/Eccube/Controller/Admin/Stock/InventoryPlanController.php の index() は page_count に eccube_default_page_count を渡す。app/config/eccube/packages/eccube.yaml の eccube_default_page_count は10で、html/template/admin/Stock/inventory_plan.twig は渡された page_count を選択状態にするため、現行初期値は10件。",
+      "severityOpinion": "low",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 554,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "MISDESCRIBED",
+      "checkedQuote": "0202_基本設計書(管理画面_在庫・移動・棚卸・倉庫・承認・商品履歴).html の Excel正本 item table `0202:在庫承認一覧!AG90`（17519行）を実際に開き、承認ステータス候補「未承認,承認済,スマレジ連携中,スマレジ連携失敗,却下済」を確認した。同 `AG89`（17518行）は未承認またはスマレジ連携失敗時のチェックボックス、同 `AG226`（17620行）は同条件での承認ボタンを記述する。sheet-45 のレイアウト画像4点も開き、確認モーダル画像であり、このitem tableの状態候補を覆す表示ではないことを確認した。",
+      "reason": "Excel正本に5状態と「スマレジ連携失敗」時の再操作条件があるため SPEC_BACKED は妥当。現行実装が3状態しか持たず失敗状態の再承認に未対応という乖離は残る。ただし元指摘の実装説明にある「スマレジ連携失敗はTODOコメントだけがある」というTODOは現在の対象コードおよび対象ソース検索で確認できず、その説明部分が現状と異なるため MISDESCRIBED とした。",
+      "currentImpl": "src/Eccube/Entity/DtbStockApprovalList.php の承認状態定数・表示名は未承認、承認済、却下済の3種類のみ。src/Eccube/Form/Type/Admin/SearchStockApprovalListType.php の選択肢も同じ3種類。src/Eccube/Service/Admin/Stock/ApprovalListRowBuilder.php は actionAllowed を APPROVAL_STATUS_UNAPPROVED の場合だけtrueにする。スマレジ連携中・連携失敗の状態定義と失敗時再操作は確認できず、元指摘が述べるTODOコメントも現行ファイルにはない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 560,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0202_基本設計書(管理画面_在庫・移動・棚卸・倉庫・承認・商品履歴).html の Excel正本 src-cell `0202:在庫移動指示詳細!E120` 以降（15243-15260行）を実際に開き、ピックリストへの入口、実出庫商品、0点商品の非表示、数量条件、印刷プレビュー、棚・タグ絞込、並び順の仕様を確認した。sheet-34 のレイアウト画像4点も実際に開き、印刷ボタン、商品・棚・数量等の列、合計を含むピックリスト帳票を確認した。",
+      "reason": "Excel正本のセル記述とレイアウト画像の両方にピックリスト機能が具体化されているため SPEC_BACKED は妥当。現行の在庫移動指示詳細にはピックリストへの入口、生成・印刷経路、帳票がなく、乖離を再現した。",
+      "currentImpl": "src/Eccube/Controller/Admin/Stock/StockMoveInstructionController.php のルートは一覧、ページング、詳細、追跡番号登録、削除、ラベル、CSVテンプレート、追跡番号CSV取込で、ピックリスト生成・印刷・PDFルートを持たない。html/template/admin/Stock/stock_move_instruction_detail.twig にもピックリストへのボタンや帳票出力がない。対象語と印刷/PDF経路を現行src・html・app・testsで検索しても、この在庫移動指示ピックリストの実装は確認できない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 561,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0203_基本設計書(管理画面_受注管理・出荷管理).html の Excel正本 src-cell `0203:受注一覧!E173`（1197行）を実際に開き、前回注文番号を入力した場合はその番号を次回注文番号として保持する受注を検索結果に表示する旨を確認した。",
+      "reason": "Excel正本に前回注文番号から次回注文を引く検索規則が明記されているため SPEC_BACKED は妥当。現行の管理受注検索は入力値を現受注の注文番号にLIKE検索するだけで、nextOrderIdを逆引きしない。",
+      "currentImpl": "src/Eccube/Repository/OrderRepository.php の OrderRepository::getQueryBuilderBySearchDataForAdmin() は注文番号条件を `o.order_number LIKE :order_number` としており、前回注文番号に対応する `nextOrderId` の逆引きを行わない。同Repositoryの findOrderIdsReferencedAsNextOrder() と findOtcOrderNumbersByNextOrderIds() はフロントのマイページ経路から使われるが、管理受注検索QueryBuilderには接続されていない。Smaregi連携側は旧受注に新受注IDを setNextOrderId() で保存する。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 568,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "RESOLVED",
+      "checkedQuote": "0203_基本設計書(管理画面_受注管理・出荷管理).html の Excel正本 src-cell `0203:メール一括通知!C61` と `C62`（3743-3744行）を実際に開き、確認後にメール送信し、成功時と失敗時にそれぞれメッセージを表示する記述を確認した。sheet-10 のレイアウト領域も確認し、このシートには埋め込みレイアウト画像がないことを確認した。",
+      "reason": "Excel正本に送信成否メッセージが明記されているため SPEC_BACKED は妥当。現行実装は一括送信の成功・失敗を判定して対応するメッセージを表示し、TransportExceptionもfalseとして呼出元へ返すため、この乖離は解消済み。",
+      "currentImpl": "src/Eccube/Controller/Admin/Order/MailController.php の manualMailAll() は確認済みフォームで各受注を送信し、本文生成例外または MailService::sendManualMailForBulk() のfalse時に admin.order.mail_send_failed_partial、全件成功時に admin.order.mail_send_complete を表示する。src/Eccube/Service/MailService.php の sendManualMailForBulk() は TransportExceptionInterface をcatchしてログ記録しfalseを返す。対応するメッセージ定義と、MailControllerTest/MailServiceTestの失敗系テストも現行ツリーに存在する。対象PHP3ファイルは php -l で構文エラーなしを確認したが、選択テスト実行は環境の REDIS_HOST 未設定で開始前に失敗したため、テスト成功は確認していない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 581,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "RESOLVED",
+      "checkedQuote": "0203_基本設計書(管理画面_受注管理・出荷管理).html の Excel正本 src-cell `0203:出荷実績取込!D46` から `E48`（8541-8544行）を実際に開き、更新対象の受注処理として出荷完了メールを送信する記述を確認した。",
+      "reason": "Excel正本に出荷完了メール送信が明記されているため SPEC_BACKED は妥当。現行の出荷実績取込はコミット後に更新対象受注へ出荷完了メールを送信し、送信日時も保存するため、この乖離は解消済み。",
+      "currentImpl": "src/Eccube/Controller/Admin/Order/OrderCsvController.php の shippingResultImport() は更新対象を shippingCompleteOrders に蓄積し、DBコミット後に各Orderへ MailService::sendShippingCompleteMail() を呼び、Shippingのmail_send_dateを設定してflushする。src/Eccube/Service/MailService.php の sendShippingCompleteMail() は国内・海外向けテンプレートを切り替えて送信する。tests/Eccube/Tests/Web/Admin/Order/OrderCsvShippingResultImportTest.php には日本語・英語メール送信と既出荷時の重複防止ケースがある。対象PHP3ファイルは php -l で構文エラーなしを確認したが、選択テスト実行は環境の REDIS_HOST 未設定で開始前に失敗したため、テスト成功は確認していない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    }
+  ]
+}

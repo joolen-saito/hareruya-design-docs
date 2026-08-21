@@ -1,0 +1,379 @@
+{
+ "packetId": "rc2_08",
+ "note": "rowId は drift_findings_list_final.tsv の行番号(ヘッダ除く1始まり)。これらは分類の批判的レビュー済み(レビュー結果列)だが、検証後に実装が変更されている。classVerdict も再判定しつつ、driftVerdict を重点的に確認すること。",
+ "count": 12,
+ "findings": [
+  {
+   "rowId": 759,
+   "機能No": "M11-02",
+   "機能名": "M11-02 メンバー管理",
+   "ドメイン": "m11",
+   "区分(画面種別)": "admin",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・未実装",
+   "設計期待値": "有効なスマレジ用アカウントは全メンバーで1件まで。スマレジ用アカウントを有効化したが自身以外に有効な行が既に存在する場合、メンバー自体は保存済みのままエラーメッセージ「スマレジ用アカウントフラグが立っているアカウントが既に存在しています。」を積み、編集画面へ戻し、スマレジ用フラグは反映しない。",
+   "実装実態": "smaregiMemberFlg は MemberType.php:171 で制約なしの CheckboxType として保存されるのみ。POST_SUBMIT リスナはテナント baseInfo・非稼働 Work・login_id 重複のみ検証しスマレジ一意性検証は無い。Create/EditAction にも一意チェック・差し戻し処理無し。UniqueEntity(Member.php:37) は login_id のみ、DB部分ユニーク制約も無い。エラーメッセージキー exist_smaregi_member_error は messages.ja.yaml に不在。SmaregiTransactionEditedProcessor.php:100 は findOneBy で先頭1件を取るだけで一意性を前提としない。複数メンバーが smaregi_member_flg=true を同時保持可能。",
+   "差分内容": "設計はスマレジ用アカウントの全メンバー1件のみ有効という一意制約と、重複時のフラッシュ差し戻し（フラグ非反映）を業務ルール/データ整合性/画面文言として要求。Controller・Form・Create/EditAction・Entity・Migration・locale いずれにも該当の検証・エラーメッセージ・DB制約が無く未実装。",
+   "実装参照": "不在（src/Eccube/Form/Type/Admin/MemberType.php:171,176-267 の全POST_SUBMITリスナ、src/Eccube/Controller/Admin/Setting/System/MemberController.php、src/Eccube/Service/Admin/Setting/System/MemberCreateAction.php、MemberEditAction.php、src/Eccube/Entity/Member.php:37,622-632、app/DoctrineMigrations、src/Eccube/Resource/locale/messages.ja.yaml を探索）",
+   "設計書参照": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-4",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0201_基本設計仕様書(システム設定).html:1668-1670 の Excel 正本は「現行仕様通りスマレジ用アカウントを指定できるようにする」、同:1715 は入力項目「スマレジ用アカウント」を要求するが、「全メンバーで1件まで」、重複時の保存順、フラグ非反映、厳密なエラー文言は Excel 正本本文（確認範囲: 同:1610-1778）に記載していない。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/MemberController.php:66-81 はメンバー本体保存後、送信フラグが真かつ他の有効行が存在すれば `admin.member.save.exist_smaregi_member_error` を積んで編集画面へ戻し、`setSmaregiMemberFlg` 前に終了する。同:112-118 は `smaregiMemberFlg = 1` かつ自身以外を検索し、/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/locale/message.ja.yml:1324 は「スマレジ用アカウントフラグが立っているアカウントが既に存在しています。」と定義する。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/MemberType.php:171-174 は制約なしのCheckboxとして `smaregiMemberFlg` を追加し、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Entity/Member.php:34-38 の `UniqueEntity` は `login_id` のみである。さらに /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/Webhook/Transaction/SmaregiOrderFactory.php:391-405 は「smaregi_member_flg は一意保証が無い」「複数該当は...最小id」と明記しており、旧一意性ルールは未移植である。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Form/Type/Admin/MemberType.php:171` `->add('smaregiMemberFlg', CheckboxType::class, [` は制約なしのまま。POST_SUBMIT リスナは `:176`（テナント baseInfo 未選択→`:188` `$form['baseInfo']->addError(...tenant_not_selected)`）、`:226`（非稼働 Work / `:251` login_id 重複）、`:256` の3本のみでスマレジ一意性検証は無い。`src/Eccube/Entity/Member.php:37` `#[UniqueEntity(fields: 'login_id', message: 'form_error.member_already_exists')]` は login_id のみで、`:622` `#[ORM\\Column(name: 'smaregi_member_flg', type: Types::BOOLEAN, options: ['default' => false, ...])]` に一意制約は無い。`app/DoctrineMigrations` 配下に smaregi_member_flg のユニークインデックス追加は無し。`MemberCreateAction.php`/`MemberEditAction.php` に smaregi の文字列は 0 件。`src/Eccube/Resource/locale/messages.ja.yaml` に exist_smaregi_member_error / 「スマレジ用アカウントフラグが立っているアカウントが既に存在しています。」は不在。",
+   "再確認HEAD": "da9c2ba276",
+   "レビュー結果": "UPHELD",
+   "レビュー根拠": "正本が裏付けるのは設定項目の存在までで、指摘の核心である全体1件制約、重複時の処理順、フラグ非反映、指定文言は旧実装由来である。",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Resource/locale/messages.ja.yaml"
+    ]
+   }
+  },
+  {
+   "rowId": 838,
+   "機能No": "M13-05",
+   "機能名": "M13-05 複製新規",
+   "ドメイン": "m13",
+   "区分(画面種別)": "admin",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・未実装",
+   "設計期待値": "識別ID1-4「会場」は単一選択・必須で、選択肢は全会場。複製時は会場（venue_id）を複製元の値として初期表示する。",
+   "実装実態": "イベント登録・編集フォーム、DtbEvent エンティティ、保存処理、テンプレートに会場項目が存在しない。",
+   "差分内容": "設計はユーザー入力項目として会場必須選択と venue_id の複製対象を定義しているが、実装には form.venue、venue_id/ Venue プロパティ、保存・初期表示処理がない。",
+   "実装参照": "不在（探索範囲: src/Eccube/Controller/Admin/Event/EventController.php, src/Eccube/Form/Type/Admin/EventType.php, src/Eccube/Resource/template/admin/Event/edit.twig, src/Eccube/Entity/DtbEvent.php, src/Eccube/Service/EntityManager/EventEntityManager.php, src/Eccube/Resource/locale/messages.ja.yaml; 検索語: venue, Venue, 会場, venue_id, admin.event.venue）",
+   "設計書参照": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html#sheet-9:2637,2779,2797",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html:3036 のExcel正本項目表は識別ID1-4「会場」を「単一選択」、必須「〇」、「選択肢:全会場」と明記する。複製新規シートの入力項目なので複製画面での初期表示対象である。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/Event/EventDetailType.php:80-90 は `->add('venue', 'entity', ['class' => 'Plugin\\HareruyaEc\\Entity\\MtbVenue', ...])` を実装する。pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/EventController.php:57-76 は複製元Eventを取得し、そのEventを `admin_event_detail` フォームの初期データにする。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Entity/DtbEvent.php:38-82 の主要項目はBaseInfo、Rel、名称、定員、参加費、賞品、公開状態、イベント規模で、Venue/venue_idを持たない。ec-cube-enterprise/src/Eccube/Form/Type/Admin/EventType.php:88-105 も `baseInfo` の次は `formats`、`eventScale` で会場欄がない（確認範囲: EventController/EventType/edit.twig/DtbEvent/EventEntityManager、検索語 venue/Venue/会場/venue_id）。",
+   "根拠検証メモ": "Excel正本に必須の会場選択欄があり、現行のエンティティ・フォーム・画面に当該項目がないため SPEC_BACKED。",
+   "対応の根拠(現develop)": "`grep -rni \"venue\" src/Eccube/Entity/ src/Eccube/Form/Type/Admin/ src/Eccube/Controller/Admin/Event/` はヒット0件。`src/Eccube/Form/Type/Admin/EventType.php` に `->add('venue', ...)` は無く、`src/Eccube/Entity/DtbEvent.php` に venue/venueId プロパティも無い。locale の「会場」は `src/Eccube/Resource/locale/messages.ja.yaml:6647-6648` の front.event.header.venue.* のみでイベント登録項目ではない。複製時の初期表示処理も存在しない。",
+   "再確認HEAD": "da9c2ba276",
+   "レビュー結果": "UPHELD",
+   "レビュー根拠": "必須の全会場単一選択と、複製元の入力項目を入力済みにする要求の双方がExcel正本に明記されている。",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Resource/locale/messages.ja.yaml"
+    ]
+   }
+  },
+  {
+   "rowId": 839,
+   "機能No": "M13-05",
+   "機能名": "M13-05 複製新規",
+   "ドメイン": "m13",
+   "区分(画面種別)": "admin",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・未実装",
+   "設計期待値": "識別ID2-3「備考(日)」と識別ID2-4「備考(英)」は最大4096字の入力項目として表示し、複製時は複製元の値を初期表示する。",
+   "実装実態": "イベントフォームには賞品とフリー入力エリア1-3はあるが、備考(日)・備考(英)としての入力欄、エンティティ項目、保存処理は存在しない。",
+   "差分内容": "設計がユーザー可視の備考(日/英)項目と複製対象を定義しているのに対し、実装側に対応する FormType/Twig/Entity/EntityManager の経路がない。",
+   "実装参照": "不在（探索範囲: src/Eccube/Form/Type/Admin/EventType.php, src/Eccube/Resource/template/admin/Event/edit.twig, src/Eccube/Entity/DtbEvent.php, src/Eccube/Service/EntityManager/EventEntityManager.php, src/Eccube/Resource/locale/messages.ja.yaml; 検索語: 備考, remarks, note, detailJp, detailEn, admin.event.remarks）",
+   "設計書参照": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html#sheet-9:2651,2652,2779,2781",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html:3050-3051 のExcel正本項目表は、複製新規画面の識別ID2-3「備考(日)」と2-4「備考(英)」を各「全角・半角」、最大「4096字」と明記する。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/Event/EventDetailType.php:186-206 は `detailJp` と `detailEn` のtextareaを定義し、双方に `new Assert\\Length(['max' => $textAreaLen])` を付ける。pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/EventController.php:57-76 は複製元Eventをフォーム初期データに使う。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Entity/DtbEvent.php:84-127 は備考ではなく `freeTextArea1..3` のラベル・内容・アコーディオン項目を持つ。EventType.php、edit.twig、DtbEvent.phpを「備考/remarks/detailJp/detailEn」で検索して該当なしであり、正本の備考(日/英)欄と複製経路は存在しない。",
+   "根拠検証メモ": "同ブックのイベント編集側ではフリー入力エリアへの再編が見えるが、担当 finding が参照する複製新規sheet-9のExcel正本項目表には備考2項目が残っているため、当該シートを正として判定した。",
+   "対応の根拠(現develop)": "`grep -rn \"remarks|remarkJp|noteJp\" src/Eccube/Entity/DtbEvent.php src/Eccube/Form/Type/Admin/EventType.php` はヒット0件で、備考(日)/備考(英) に対応する FormType 項目・エンティティプロパティは develop に存在しない。`src/Eccube/Form/Type/Admin/EventType.php` の add 定義には賞品・フリー入力エリアのみで備考欄は無く、複製時の初期表示経路も無い。",
+   "再確認HEAD": "da9c2ba276",
+   "レビュー結果": "UPHELD",
+   "レビュー根拠": "備考2項目、その最大文字数、複製時の初期表示要求がExcel正本から直接確認できる。",
+   "mech": {
+    "quote": "TOO_SHORT",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Resource/locale/messages.ja.yaml"
+    ]
+   }
+  },
+  {
+   "rowId": 875,
+   "機能No": "M13-13",
+   "機能名": "M13-13 イベント一括登録",
+   "ドメイン": "m13",
+   "区分(画面種別)": "admin",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・未実装",
+   "設計期待値": "親イベントのクレジットカード支払い設定が未設定で、日程のオンライン受付が「あり」かつ有料の場合はエラーにする。",
+   "実装実態": "クレジットカード支払い列の選択肢検証と Payment 紐付け、オンライン受付の From/To 入力検証はあるが、クレジット未設定・オンライン受付あり・有料日程の組合せ検証はない。",
+   "差分内容": "EventBulkCsvImportHandler.php:289 付近はクレジット列の値検証のみ、同:364 付近はオンライン受付日時検証のみ、同:453 付近は Payment 紐付けのみで、設計の横断条件を判定してエラー化する処理が存在しない。",
+   "実装参照": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/EventBulkCsvImportHandler.php, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Importer/CsvImporter.php, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Event/EventEntryBulkCsvController.php, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml。検索語: クレジット, credit, Payment, オンライン受付, onlineReception, 参加費）",
+   "設計書参照": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html#sheet-19:5036",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html:5838 のExcel正本（0214:イベント一括登録!D44）に「親イベント情報に支払方法（クレジットカード決済）の設定がないのに日程情報のオンライン受付が『あり』かつ参加費が有料とされている場合はエラーとする。」と明記される。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/Importer/Event/BulkEntryImportHandler.php:228-237 の行横断検証は受付・オンライン受付の時刻必須のみで、同:349-351 は「あり」ならPaymentを付与するだけ。旧実装にもこの3条件組合せエラーは見つからない。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/EventBulkCsvImportHandler.php:289-305 はクレジット/受付列の選択肢を個別検証し、同:364-400 はオンライン受付時刻を検証、同:453-458 はクレジット「あり」ならPaymentを紐付けるだけで、クレジット未設定×オンライン受付あり×有料の横断エラーがない。",
+   "根拠検証メモ": "旧実装にもない、Excel正本で追加された要件。",
+   "対応の根拠(現develop)": "`src/Eccube/Service/Csv/Importer/Event/EventBulkCsvImportHandler.php:289-295` は `$credit !== '' && !\\in_array($credit, [self::LABEL_OPTION_YES, self::LABEL_OPTION_NO], true)` のクレジット列選択肢検証のみ、同 `:364-400` は `$online === self::LABEL_OPTION_YES` 時の From/To 必須・書式・前後関係検証のみ、同 `:453-458` は `$payments = new ArrayCollection(... Payment::EC_CREDIT ...)` の紐付けのみ。クレジット未設定かつオンライン受付「あり」かつ有料（参加費>0 / 参加費_日程>0）を横断判定してエラー化する処理は `onValidateRow`（:213-434）全体に存在しない。",
+   "再確認HEAD": "da9c2ba276",
+   "レビュー結果": "UPHELD",
+   "レビュー根拠": "親イベントのクレジットカード決済未設定・オンライン受付あり・参加費有料という3条件とエラー化がExcel正本に直接明記されている。該当要素はfunction-design-embed開始前の正本領域にある。",
+   "mech": {
+    "quote": "NOT_FOUND",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Resource/locale/messages.ja.yaml"
+    ]
+   }
+  },
+  {
+   "rowId": 886,
+   "機能No": "M13-13",
+   "機能名": "M13-13 イベント一括登録CSV",
+   "ドメイン": "m13",
+   "区分(画面種別)": "admin",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・未実装",
+   "設計期待値": "取込結果にエラーがあれば、「イベント一括登録 異常終了」を情報ログに記録する。",
+   "実装実態": "開始ログ「イベント一括登録CSV登録開始」と完了ログ「イベント一括登録CSV登録完了」はあるが、エラー時の異常終了ログがない。",
+   "差分内容": "catch時やresult->hasError()時にerrorsへ追加/表示するだけで、設計指定の情報ログを記録していない。",
+   "実装参照": "不在（探索範囲: src/Eccube/Controller/Admin/Event/EventEntryBulkCsvController.php:125-141; src/Eccube/Service/Csv/Importer/Event/EventBulkCsvImportHandler.php; src/Eccube/Resource/locale/messages.ja.yaml。検索語: イベント一括登録 異常終了, 異常終了, log_info）",
+   "設計書参照": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html#sheet-20:5284,5335",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html:5994-6057 のsheet-20 Excel正本にはログ仕様がなく、「イベント一括登録 異常終了」も存在しない（確認範囲: sheet-20 Excel正本全体）。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/EntryController.php:678-685 はimport結果の `$result->hasError()` 時に `log_info('イベント一括登録 異常終了');` を記録してエラー一覧を再描画する。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Event/EventEntryBulkCsvController.php:135-146 は例外または`hasError()`を `$errors` に追加するだけでログを出さず、同:147-149 のログは成功時 `イベント一括登録CSV登録完了` のみ。確認範囲: 同Controller全体とEventBulkCsvImportHandler。",
+   "根拠検証メモ": "異常終了ログは旧実装に明示される。",
+   "対応の根拠(現develop)": "`src/Eccube/Controller/Admin/Event/EventEntryBulkCsvController.php:136-146` は `try { $result = $importer->import($formFile); } catch (\\Exception $e) { $errors[] = $e->getMessage(); }` および `if ($errors === [] && $result->hasError()) { $errors = array_map(...); }` と errors への詰め替えのみで log_info 呼び出しがない。`log_info` は同ファイル 114 行 `log_info('イベント一括登録CSV登録開始');` と 148 行 `log_info('イベント一括登録CSV登録完了');` の2箇所だけで、`イベント一括登録 異常終了`/`異常終了` は src/Eccube 配下・EventBulkCsvImportHandler.php・messages.ja.yaml のいずれにも存在しない。",
+   "再確認HEAD": "da9c2ba276",
+   "レビュー結果": "UPHELD",
+   "レビュー根拠": "エラー時の情報ログ文言と発火条件はExcel正本のCSV列仕様にはなく、旧コントローラの実処理が根拠である。",
+   "mech": {
+    "quote": "EMBED_ONLY",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Resource/locale/messages.ja.yaml"
+    ]
+   }
+  },
+  {
+   "rowId": 924,
+   "機能No": "M14-07",
+   "機能名": "M14-07 画像ダウンロード(セット別)",
+   "ドメイン": "m14",
+   "区分(画面種別)": "admin",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・未実装",
+   "設計期待値": "セット別でカード詳細はあるが画像取得に一切成功しない詳細がある場合、admin.download.card.not_found を表示しつつ処理は続行し得る。",
+   "実装実態": "S3 取得失敗時は S3AccessService が null を返し、CardsetDownloadAction はそのカード詳細単位のフラッシュを積まない。翻訳キー admin.download.card.not_found も見当たらない。",
+   "差分内容": "設計が要求するカード詳細単位の not_found フラッシュが Controller/Service/翻訳キーに存在しない。",
+   "実装参照": "不在（探索範囲: src/Eccube/Controller/Admin/Card/CardsetController.php, src/Eccube/Service/Admin/Cardset/CardsetDownloadAction.php, src/Eccube/Service/S3AccessService.php, src/Eccube/Resource/locale/messages.ja.yaml, app/template/admin/Cardset/index.twig。検索語: admin.download.card.not_found, not_found, downloadCardImageToDirectory, addError, addFlash）",
+   "設計書参照": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-10:3069,3114",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0208_基本設計仕様書(カード管理).html:3212 の `function-design-embed:start m14-07...` より後のリバース詳細設計にのみ具体的な `admin.download.card.not_found` が現れ（同:3244,3292）、それ以前の当該sheetのExcel正本にはこのカード詳細単位エラーの記載がない。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/CardSetController.php:329-360 はカード詳細ごとに画像を試し、成功時は `continue 2`、すべて失敗したときは `$app->addError(sprintf($app->trans('admin.download.card.not_found'), $cardImage->getCardDetailId()), 'admin');` として外側処理を続ける。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Service/Admin/Cardset/CardsetDownloadAction.php:115-163 は詳細単位で画像を試すが失敗時フラッシュがなく、同:168-174 は全体の `$addedCount === 0` の場合だけ `admin.card.cardset.error.download_no_images` 例外を投げる。ec-cube-enterprise/src/Eccube/Service/S3AccessService.php:152-161 もS3例外時はログ後 `return null;` のみ。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Service/Admin/Cardset/CardsetDownloadAction.php:140-161` は `$fileName = $this->s3AccessService->downloadCardImageToDirectory(...)` の戻りが偽値の場合に何もせず次画像へ進むだけで、カード詳細単位のフラッシュ追加は無い（同クラスに addError/addFlash は存在しない）。翻訳キー `admin.download.card.not_found` は src/app 配下の grep でヒット 0（messages.ja.yaml に存在するカードセットDL系エラーは :4514 `admin.card.cardset.error.download_no_images` のみ）。監査時点と同一。",
+   "再確認HEAD": "da9c2ba276",
+   "レビュー結果": "UPHELD",
+   "レビュー根拠": "カード詳細単位で全画像取得に失敗してもエラーを積んで外側処理を続ける挙動は、Excel正本のZIP一般仕様からは確定できず、旧実装由来である。",
+   "mech": {
+    "quote": "EMBED_ONLY",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Resource/locale/messages.ja.yaml"
+    ]
+   }
+  },
+  {
+   "rowId": 931,
+   "機能No": "M14-07",
+   "機能名": "M14-07 画像ダウンロード(言語別)",
+   "ドメイン": "m14",
+   "区分(画面種別)": "admin",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "エラー時は admin.cardset.download.failed.set_not_exist_card、admin.download.card.not_found、admin.cardset.download.failed.image_not_exist を状況別に表示し、admin_cardset_page のセッションページへリダイレクトする。",
+   "実装実態": "カード詳細0件は continue でスキップされ、ZIP追加件数が0件なら admin.card.cardset.error.download_no_images を throw する。コントローラは例外メッセージを addError し、admin_cardset_list へリダイレクトする。設計の3キーは探索範囲内で不在。",
+   "差分内容": "設計は状況別のフラッシュキーとセッションページ復帰を要求しているが、実装は汎用エラーキー1つへ集約し、リダイレクト先も admin_cardset_list 固定で eccube.admin.cardset.page_no を使わない。反証検索として設計キー3種、not_found、image_not_exist、set_not_exist、download_no_images、admin_cardset_page、admin_cardset_list_paged を検索した。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Cardset/CardsetDownloadAction.php:97; /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Cardset/CardsetDownloadAction.php:168; /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Cardset/CardsetDownloadAction.php:173; /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Card/CardsetController.php:242; /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Card/CardsetController.php:245; /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Card/CardsetController.php:261; /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Card/CardsetController.php:264; /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:4220",
+   "設計書参照": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-11:3069,3073,3110,3112,3115,3127",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0208_基本設計仕様書(カード管理).html:3401 は「現行踏襲」とするが、Excel正本範囲 sheet-11（3322-3502）には3種のメッセージキー、`admin_cardset_page`、セッションページ復帰の具体記述はない。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/CardSetController.php:323-327 は0件時に `admin.cardset.download.failed.set_not_exist_card` と `admin_cardset_page`、同:360 は `admin.download.card.not_found`、同:368-371 は `admin.cardset.download.failed.image_not_exist` とセッションの `eccube.admin.cardset.page_no` を使う。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Cardset/CardsetDownloadAction.php:96-100 はカード詳細0件を `continue`、同:168-173 は追加0件を `admin.card.cardset.error.download_no_images` に集約する。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Card/CardsetController.php:300-304,322-326 は例外メッセージを積んで固定の `admin_cardset_list` へ戻す。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Service/Admin/Cardset/CardsetDownloadAction.php:98-100` `if ($cardDetails === []) { continue; }`、同168-174行 `if ($addedCount === 0) { ... throw new \\RuntimeException('admin.card.cardset.error.download_no_images'); }` のまま。`src/Eccube/Controller/Admin/Card/CardsetController.php:322-326` `catch (\\Exception $e) { $this->addError(trans($e->getMessage()), 'admin'); return $this->redirectToRoute('admin_cardset_list'); }` で汎用キー1つ・リダイレクト先固定。設計の3キーは `grep -rn \"set_not_exist_card|admin.download.card.not_found|image_not_exist\" src/Eccube app html` で0件、セッション `eccube.admin.cardset.page_no` はダウンロード系では未使用（`CardsetController.php:109,163,221` の一覧/編集画面のみ）。",
+   "再確認HEAD": "da9c2ba276",
+   "レビュー結果": "UPHELD",
+   "レビュー根拠": "3状況のメッセージキーとセッションページへの復帰は正本の言語別ZIP記述から確定できず、旧実装由来である。",
+   "mech": {
+    "quote": "EMBED_ONLY",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Resource/locale/messages.ja.yaml"
+    ]
+   }
+  },
+  {
+   "rowId": 934,
+   "機能No": "M14-08",
+   "機能名": "M14-08 カードセット詳細（登録・編集・削除)",
+   "ドメイン": "m14",
+   "区分(画面種別)": "admin",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "削除時は cardDetails コレクション件数を事前判定し、1 件以上なら admin.cardset.delete.failed（第1引数に日本語セット名）をエラーフラッシュに積んで Referer へ戻す。成功時は admin.delete.complete を積み、セッションの eccube.admin.cardset.page_no（既定1）の一覧ページへ戻す。",
+   "実装実態": "実装は cardDetails 件数を事前判定せず、シンボル画像を削除してから repository->delete() を試み、外部キー制約例外で admin.card.cardset.error.delete_has_cards 相当の文言を積む。成功・失敗とも最後は admin_cardset_list へ戻る。",
+   "差分内容": "設計の削除可否判定、失敗キー、Referer 復帰、成功時のページ番号復帰が実装にない。さらに実装は削除不可でも試行前に画像削除を行う可能性がある。",
+   "実装参照": "src/Eccube/Controller/Admin/Card/CardsetController.php:198; src/Eccube/Controller/Admin/Card/CardsetController.php:208; src/Eccube/Controller/Admin/Card/CardsetController.php:211; src/Eccube/Controller/Admin/Card/CardsetController.php:213; src/Eccube/Controller/Admin/Card/CardsetController.php:216; src/Eccube/Controller/Admin/Card/CardsetController.php:224; src/Eccube/Resource/locale/messages.ja.yaml:1561; src/Eccube/Resource/locale/messages.ja.yaml:4473; 不在（探索範囲: src/Eccube/Controller/Admin/Card/CardsetController.php; getCardDetails/count, admin.cardset.delete.failed, Referer）",
+   "設計書参照": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-12:3392,3395,3404,3407,3422",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0208_基本設計仕様書(カード管理).html:3877 の `function-design-embed:start m14-08...` より後のリバース詳細設計（同:3908）にだけ、cardDetails件数・`admin.cardset.delete.failed`・Referer・セッションページ復帰の具体手順がある。Excel正本部分にはこの削除分岐の記述がない。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/CardSetController.php:259-272 は `getCardDetails()->count() > 0` なら日本語名を渡した `admin.cardset.delete.failed` を積んでRefererへ戻し、成功時は `admin.delete.complete` を積み、セッション `eccube.admin.cardset.page_no`（既定1）の `admin_cardset_page` へ戻す。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Controller/Admin/Card/CardsetController.php:246-280 は先にシンボル画像を削除し、`cardsetRepository->delete()` 後の外部キー例外で `admin.card.cardset.error.delete_has_cards` を出す。成功・失敗とも `admin_cardset_list` へ戻り、事前件数判定・Referer・セッションページ復帰はない。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Controller/Admin/Card/CardsetController.php:240-281` の delete() は cardDetails 件数の事前判定を持たず、246-253行で先に `$fileAdapter->delete($symbolImage, []);`（シンボル画像削除）を実行してから 256-257行 `$this->cardsetRepository->delete($Cardset); $this->entityManager->flush();` を試み、261-265行 `catch (\\Doctrine\\DBAL\\Exception\\ForeignKeyConstraintViolationException $e) { ... $message = trans('admin.card.cardset.error.delete_has_cards', ['%name%' => $Cardset->getNameJp()]); $this->addError($message, 'admin'); }` で処理する。成功時は259行 `$this->addSuccess('admin.common.delete_complete', 'admin');`、最後は成功・失敗とも280行 `return $this->redirectToRoute('admin_cardset_list');` で Referer 復帰もセッション `eccube.admin.cardset.page_no` によるページ復帰も無い。設計キー `admin.cardset.delete.failed` は `grep -rn \"admin.cardset.delete.failed\" src/Eccube app html` で0件。",
+   "再確認HEAD": "da9c2ba276",
+   "レビュー結果": "REFUTED",
+   "レビュー根拠": "[LEGACY_BACKED→SPEC_BACKEDに訂正] 子件数事前判定、専用失敗キー、Referer、旧page_noルートは旧実装由来だが、「正本部分にはこの削除分岐の記述がない」という一括の不在主張は成立しない。削除成功後の一覧遷移と表示文言はExcel正本が直接規定し、現実装の「削除しました」は正本文言「削除が完了しました。」と一致しないため、少なくともこの中核比較はSPEC_BACKEDである。",
+   "mech": {
+    "quote": "EMBED_ONLY",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Resource/locale/messages.ja.yaml"
+    ]
+   }
+  },
+  {
+   "rowId": 966,
+   "機能No": "M15-02",
+   "機能名": "M15-02 デッキ編集",
+   "ドメイン": "m15",
+   "区分(画面種別)": "admin",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "一覧でチェックなしのままCSV出力ボタンを押すと、送信前にクライアントのアラート alert('CSV出力するデッキをひとつ以上選択してください。') を出して送信を中止する。",
+   "実装実態": "index.twig の submit ハンドラは CSRFトークン差し替えのみで未選択ガードが無い。0件でも一旦POSTされサーバ側が admin.deck.csv_export_no_selection でフラッシュ＋リダイレクトする。設計の翻訳キー admin.csv.error.export.require も存在しない。",
+   "差分内容": "設計はクライアント側アラートによる送信前中断を明記するが、実装にはクライアントJSガードが無くサーバ往復後のフラッシュになりUXが異なる。",
+   "実装参照": "src/Eccube/Resource/template/admin/Deck/index.twig:205-215, DeckController.php:693-703, messages.ja.yaml:4336",
+   "設計書参照": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-5",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0212_基本設計仕様書(デッキ管理).html:1785 は選択済みデッキのCSV出力だけを記載し、未選択時のクライアント alert 文言は正本部分にない。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/assets/js/deck-search.js:38-42 は `alert('CSV出力するデッキをひとつ以上選択してください。'); return false;` を実装する。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Deck/index.twig:204-215 のsubmit処理には未選択判定がなく、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Deck/DeckController.php:812-815 でサーバ側フラッシュ＋リダイレクトとなる。",
+   "根拠検証メモ": "rowId 1157 と同一の旧実装根拠を別findingとして監査した。",
+   "対応の根拠(現develop)": "`src/Eccube/Resource/template/admin/Deck/index.twig:205-215` の submit ハンドラは CSRF トークン差し替えのみで `alert('CSV出力するデッキをひとつ以上選択してください。')` 相当のクライアントガードが無い。サーバ側は `src/Eccube/Controller/Admin/Deck/DeckController.php:813-815`/`:819-821` `$this->addError('admin.deck.csv_export_no_selection', 'admin');` → `redirectToRoute('admin_deck_search', ...)` のままで、`src/Eccube/Resource/locale/messages.ja.yaml:4385` `admin.deck.csv_export_no_selection: CSV出力対象のデッキが選択されていません。` は存在するが設計の `admin.csv.error.export.require` は grep で 0 件。",
+   "再確認HEAD": "da9c2ba276",
+   "レビュー結果": "UPHELD",
+   "レビュー根拠": "選択済みデッキを出力することは正本にあるが、未選択時の具体的なクライアント警告と中止処理は旧実装にのみある。対象の詳細契約について LEGACY_BACKED が妥当。",
+   "mech": {
+    "quote": "NO_QUOTE",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Resource/locale/messages.ja.yaml"
+    ]
+   }
+  },
+  {
+   "rowId": 1007,
+   "機能No": "M16-01",
+   "機能名": "M16-01 バナー設定",
+   "ドメイン": "m16",
+   "区分(画面種別)": "admin",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・未実装",
+   "設計期待値": "バナー設定送信前に eccube.setModeAndSubmitBanner が hareruyaec_banner_sort_no_* を走査し、空欄と数値重複を alert で拒否してから hareruyaec_banner を submit する。",
+   "実装実態": "トップバナー画面にはアップロード未選択のクライアント検査と URL コピー処理のみがあり、並び順の alert 検査はない。並び順の空欄・重複は TopBannerType の POST_SUBMIT でフォームエラーとして検査される。",
+   "差分内容": "設計は送信前クライアント alert による中止を要求しているが、実装はサーバー側 FormError に置き換わっており、top_banner.twig の javascript ブロックにも該当処理がない。Event/banner.twig には類似 alert があるがトップバナー用テンプレートではない。",
+   "実装参照": "不在（探索範囲: src/Eccube/Resource/template/admin/Data/top_banner.twig, src/Eccube/Resource/template/admin/Event/banner.twig, src/Eccube/Resource/locale/messages.ja.yaml, html/template/default/assets/hareruya/js; 検索語: setModeAndSubmitBanner, hareruyaec_banner, alert_sort_no, sort_no_duplicate, sort_no_required）",
+   "設計書参照": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0213_基本設計仕様書(データ管理).html#sheet-3:953",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0213_基本設計仕様書(データ管理).html:1090 は「並び順」「少ないほど優先的に表示」、同:1091 は「バナー設定を反映」とだけ記載し、正本範囲 sheet-3:1029-1136 に `eccube.setModeAndSubmitBanner`、空欄/重複の送信前alert、DOM名 `hareruyaec_banner_sort_no_*` はない。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Banner/banner.twig:21-31 は `eccube.setModeAndSubmitBanner` と `[id^=\"hareruyaec_banner_sort_no_\"]` 走査を定義し、同:32-41 は空欄で `alert('並び順が空フォームがあります。')` 後return、同:44-53 は重複で `alert('同じ並び順があります(...)')` 後returnし、問題なければ `document.hareruyaec_banner.submit()` する。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Data/top_banner.twig:92-108 のJSはアップロードファイル未選択の送信阻止だけ。ec-cube-enterprise/src/Eccube/Form/Type/Admin/TopBannerType.php:131-153 はPOST_SUBMITで空欄・重複をFormErrorにする。確認範囲 `top_banner.twig`、Event/banner.twig、locale、assetsでトップバナー用 `setModeAndSubmitBanner|hareruyaec_banner` は該当なし。",
+   "根拠検証メモ": "空欄・重複の業務検証自体は新実装にもあるが、findingが要求する送信前alert方式はpf-eccube3由来で未移植。",
+   "対応の根拠(現develop)": "`src/Eccube/Resource/template/admin/Data/top_banner.twig:92` からの `{% block javascript %}` 内は `$('form[name=\"top_banner_upload\"]').on('submit', ...)` のアップロード未選択チェックと `copyString` / `.js-copy-url` の URL コピー処理のみで、並び順の alert 検査はない。並び順の空欄・重複は依然 `src/Eccube/Form/Type/Admin/TopBannerType.php:131` `$builder->addEventListener(FormEvents::POST_SUBMIT, ...)` 内の `:139` `trans('admin.data.top_banner.sort_no_required', [], 'validators')` / `:150` `trans('admin.data.top_banner.sort_no_duplicate', [], 'validators')` というサーバー側 FormError。src/Eccube・html・app を `setModeAndSubmitBanner` / `hareruyaec_banner` で横断検索したがヒット0件。",
+   "再確認HEAD": "da9c2ba276",
+   "レビュー結果": "UPHELD",
+   "レビュー根拠": "正本は並び順の意味と反映ボタンを記すだけで、空欄・重複をクライアント側alertで拒否する手順やDOM名はない。指摘の具体値は旧Twigにのみある。",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Resource/locale/messages.ja.yaml"
+    ]
+   }
+  },
+  {
+   "rowId": 1016,
+   "機能No": "M16-03",
+   "機能名": "M16-03 祝日管理",
+   "ドメイン": "m16",
+   "区分(画面種別)": "admin",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "日付重複時はプラグイン定義メッセージ鍵 hareruyaec.holiday.overlap を積み、一覧へリダイレクトする。",
+   "実装実態": "重複検証は HolidayAddType で admin.data.holiday.overlap を violation として追加し、Controller も admin.data.holiday.overlap を判定して同キーを addError する。messages.ja.yaml にも admin.data.holiday.overlap が定義されている。hareruyaec.holiday.overlap は不在。",
+   "差分内容": "設計は重複エラーのメッセージキーを hareruyaec.holiday.overlap と明示しているが、実装は admin.data.holiday.overlap に置き換えている。hareruyaec.holiday.overlap を src/Eccube/html/app で反証検索したが該当なし。",
+   "実装参照": "src/Eccube/Form/Type/Admin/HolidayAddType.php:73, src/Eccube/Controller/Admin/Data/HolidayController.php:102, src/Eccube/Resource/locale/messages.ja.yaml:6136",
+   "設計書参照": "excel_to_html/output/0213_基本設計仕様書(データ管理).html#sheet-5:1370",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0213_基本設計仕様書(データ管理).html:1518 のExcel正本は「カスタマイズ要件に記載の内容以外は現行踏襲とする。」とするが、重複時のメッセージキーは記載しない。具体値はリバース詳細設計 hareruya-design-docs/functions/pf-eccube3/m16-03_admin_data_data_holiday_add_delete.md:64「プラグイン定義メッセージ鍵 `hareruyaec.holiday.overlap` を積み、一覧へリダイレクトする」にだけある。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/HolidayController.php:93-100 は同一日付を検索し、重複時に `$app->addError('hareruyaec.holiday.overlap', 'admin');` の後 `admin_holiday_list` へリダイレクトする。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/HolidayAddType.php:73-74 は `buildViolation('admin.data.holiday.overlap')`、ec-cube-enterprise/src/Eccube/Controller/Admin/Data/HolidayController.php:122-125 は同キーを `addError` して一覧へ戻す。`hareruyaec.holiday.overlap` は ec-cube-enterprise/src/Eccube、app、html の検索で0件。",
+   "根拠検証メモ": "メッセージキー自体は旧実装由来。重複判定と遷移は新実装にも存在するが、キーが移植されていない。",
+   "対応の根拠(現develop)": "`src/Eccube/Form/Type/Admin/HolidayAddType.php:74` `$context->buildViolation('admin.data.holiday.overlap')->addViolation();`、`src/Eccube/Controller/Admin/Data/HolidayController.php:122-123` `if ($error->getMessageTemplate() === 'admin.data.holiday.overlap') { $this->addError('admin.data.holiday.overlap', 'admin');`、`src/Eccube/Resource/locale/messages.ja.yaml:6200` `admin.data.holiday.overlap: 入力した日付が、登録済みの祝日と重複しています。` と監査時点から不変。`hareruyaec.holiday` を src/app/html 全体で grep したが 0 件で、設計期待のキー hareruyaec.holiday.overlap は現 develop にも存在しない。",
+   "再確認HEAD": "da9c2ba276",
+   "レビュー結果": "UPHELD",
+   "レビュー根拠": "Excel正本は祝日登録を要求するが、重複時の特定メッセージキーと遷移は指定しない。その具体値は旧Controllerにのみある。",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Resource/locale/messages.ja.yaml"
+    ]
+   }
+  },
+  {
+   "rowId": 1028,
+   "機能No": "M16-08",
+   "機能名": "M16-08 買取減額率一覧",
+   "ドメイン": "m16",
+   "区分(画面種別)": "admin",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "Twig の `{% block title %}` は「買取減額率管理」、`{% block sub_title %}` は「買取減額率一覧」。親ナビの項目名は「買取減額率一覧」であり、タイトル帯の「買取減額率管理」とは文言が一部異なる。",
+   "実装実態": "`block title` は `admin.data.buy_discount_management` で、翻訳値は「買取減額率一覧」。`block sub_title` は `admin.data.data_management` で、翻訳値は「データ管理」。",
+   "差分内容": "設計が指定する title/sub_title の文言配置と実装の翻訳キーが逆方向に異なる。親ナビ文言「買取減額率一覧」は `eccube_nav.yaml` と翻訳で確認できるが、タイトル帯の「買取減額率管理」は実装・翻訳キーに存在しない。",
+   "実装参照": "src/Eccube/Resource/template/admin/Data/buy_discount.twig:15 / src/Eccube/Resource/template/admin/Data/buy_discount.twig:16 / src/Eccube/Resource/locale/messages.ja.yaml:5824 / src/Eccube/Resource/locale/messages.ja.yaml:5881",
+   "設計書参照": "excel_to_html/output/0213_基本設計仕様書(データ管理).html#sheet-10:2314",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "Excel正本の該当本文（hareruya-design-docs/excel_to_html/output/0213_基本設計仕様書(データ管理).html:2590-2604）は現行踏襲・一覧表示・項目表を記すが、block title/sub_titleの文言配置は明記しない。具体値はリバース詳細設計 hareruya-design-docs/functions/pf-eccube3/m16-08_admin_data_data_buy_discount_list.md:36「titleは『買取減額率管理』、sub_titleは『買取減額率一覧』」にだけある。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/BuyDiscount/buy_discount.twig:3-6 は menus=`['data_menu','buy_discount_list']`、title「買取減額率管理」、sub_title「買取減額率一覧」とする。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Data/buy_discount.twig:13-16 は title=`admin.data.buy_discount_management`、sub_title=`admin.data.data_management`。ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:6152,6209 はそれぞれ「データ管理」「買取減額率一覧」であり、表示は title「買取減額率一覧」/ sub_title「データ管理」となる。「買取減額率管理」は同localeに存在しない。",
+   "根拠検証メモ": "タイトル配置の具体値は旧Twig由来。",
+   "対応の根拠(現develop)": "`src/Eccube/Resource/template/admin/Data/buy_discount.twig:15` `{% block title %}{{ 'admin.data.buy_discount_management'|trans }}{% endblock %}`、同 `:16` `{% block sub_title %}{{ 'admin.data.data_management'|trans }}{% endblock %}` で監査時点と同一。翻訳は `src/Eccube/Resource/locale/messages.ja.yaml:6209` `admin.data.buy_discount_management: 買取減額率一覧`、`:6152` `admin.data.data_management: データ管理`。`src`,`app`,`html` 横断で「買取減額率管理」の文字列はヒット0件（title 帯の設計文言は実装・翻訳に存在しない）。",
+   "再確認HEAD": "da9c2ba276",
+   "レビュー結果": "REFUTED",
+   "レビュー根拠": "[LEGACY_BACKED→SPEC_BACKEDに訂正] Twigブロック名自体は正本にないが、設計期待値のtitle/sub_title相当の文言配置はExcel正本画像に直接描かれている。具体文言は旧Twigだけにあるとした分類は誤りである。",
+   "mech": {
+    "quote": "NOT_FOUND",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Resource/locale/messages.ja.yaml"
+    ]
+   }
+  }
+ ]
+}

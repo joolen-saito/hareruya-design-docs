@@ -1,0 +1,365 @@
+{
+  "packetId": "sw_24",
+  "results": [
+    {
+      "rowId": 829,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "権限外店舗のイベントでも直接POSTが妥当なら日程行が新規保存・更新される。",
+      "checked": "ScheduleController.php:67-88,133-152では保存後にしか権限表示用フラグを計算せず、ScheduleStoreAction.php:33-64とScheduleUpdateAction.php:32-59にもisEditableShop判定がないことを確認。",
+      "reason": "画面ボタンのdisabledだけではHTTP入口の権限制御にならず、DB副作用が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 830,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "新規・更新のどちらでも送信ボタンが「保存」と表示され、設計の「登録」「更新」と画面文言が異なる。",
+      "checked": "Resource/template/admin/Event/Schedule/edit.twig:247-264で両分岐がadmin.common.saveを描画することを確認。",
+      "reason": "利用者が見るボタンラベルの差は軽微でも出力差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 831,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "設計URLのGET /event/repeatschedule/{eventId}/new とPOST /event/repeatschedule/{eventId}/createでは画面表示・登録できず、実装URL /event/{eventId}/repeatSchedule/createを使う必要がある。",
+      "checked": "RepeatScheduleController.php:41-43でGET/POST共用の実装パスとadmin_repeat_schedule_createを確認し、create.twig:63も同ルートへ送信することを確認。",
+      "reason": "ルート名だけでなくHTTPパス構造と画面入口の有無が異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 832,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "参加費0のイベントでは、申込受付を有効にして支払方法が未設定でも検証を通過し、日程が保存される。",
+      "checked": "RepeatScheduleType.php:187-194を開き、現実装には支払方法チェック自体はあるがentryFlgかつentryFee>0のときだけであること、RepeatScheduleController.php:67-89が有効フォームを保存することを確認。",
+      "reason": "著者の『チェック不在』は現コードには当たらないが、設計は参加費条件を付けていないため無料イベントで外部挙動差が残る。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 833,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "通常のフォーム検証失敗では設計の保存失敗フラッシュが表示されず、支払方法未設定時は入力欄直下のvalidator文言だけが表示される。",
+      "checked": "RepeatScheduleController.php:67-93では例外時だけadmin.common.save_errorを追加し、RepeatScheduleType.php:190-194はform_error.schedule_credit_payment_requiredをentryFlg欄へ追加することを確認。messages.ja.yaml:1590-1591とvalidators.ja.yaml:62-64の実文言も確認。",
+      "reason": "ロケールキー名だけの差ではなく、表示条件と表示位置・メッセージ出力の有無が異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 834,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "新規画面で受付開始・終了時刻とオンライン受付開始・終了時刻が空欄になり、設計の00:00が初期表示されない。",
+      "checked": "RepeatScheduleType.php:132-140,147-186を確認。日前日数0と締切23:59は実装済みだが、4つのTimeTypeにはdataがなく、create.twig:145-152,185-209はform_widgetをそのまま描画する。",
+      "reason": "著者説明より実装済み既定値は多いが、時刻入力の表示値差が残る。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 835,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "繰返日程の新規画面ではイベントページURL欄が空になり、利用者は当該ページへ遷移できない。",
+      "checked": "RepeatScheduleType.php:63-80で新規時eventDetailIdがnullになること、create.twig:89-96でeventDetailIdがある場合だけリンクを出すことを確認。",
+      "reason": "リンクの表示有無と遷移可否は画面出力・操作差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 836,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "設計のGET /event/{duplicateId}/duplicateは到達せず、実装のGET /event/{id}/copyだけが複製画面を返す。",
+      "checked": "EventController.php:272-280でadmin_event_copyと/event/{id}/copyを、Event/edit.twig:491-498でボタンがそのURLを生成することを確認。",
+      "reason": "パラメータ名・ルート名だけでなくブラウザから観測できるURLパスが異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 837,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "イベントフォームの店舗プルダウンに権限外店舗も表示され、選択後の送信時に初めてエラーになる。",
+      "checked": "EventType.php:88-92でBaseInfoを全件取得するquery_builderを、同:292-297でPOST_SUBMIT時の権限エラーだけを確認。edit.twig:95-105がその選択肢を描画する。",
+      "reason": "表示選択肢と操作タイミングが設計と異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 838,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "登録・複製画面に必須の会場選択欄が出ず、venue_idも送信・保存・複製されない。",
+      "checked": "EventType.php:60-300、Event/edit.twig:70-470、Entity/DtbEvent.phpを開き、venue/Venueフィールド・描画・プロパティがないことを確認。",
+      "reason": "ユーザー入力項目と永続値の欠落は画面・HTTP・DBへの影響を持つ。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 839,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "登録・複製画面に備考(日)/(英)が表示されず、値を入力・保存・複製できない。",
+      "checked": "EventType.php、Event/edit.twig、Entity/DtbEvent.php、Service/EntityManager/EventEntityManager.phpを開き、対応する備考フィールドと保存経路がないことを確認。",
+      "reason": "可視入力項目と保存対象の未実装は外部挙動差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 840,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "生成HTMLとPOSTキーがadmin_event_detail[...]ではなくadmin_event[...]になり、設計名で送信したリクエストはフォームに束縛されない。",
+      "checked": "EventController.php:281-293でEventTypeを生成し、EventType.php:318-322のgetBlockPrefixがadmin_eventを返すこと、edit.twig内のIDもadmin_event_*であることを確認。",
+      "reason": "フォームprefixはinput name/idとCSRFフォームスコープに現れる外部I/Oである。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 841,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "「検索条件をクリア」を押しても店舗・支払番号・プレイヤー名・日付などの入力値が残る。",
+      "checked": "Entry/index.twig:114-119,317-320でclick時にsearchModeだけをevent_entryへ戻し、リンク遷移もpreventDefaultすることを確認。",
+      "reason": "フォームの可視状態が設計の全項目空と異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 842,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "orderに不正値を送るとエラー表示なしでDESC検索が続行され、設計の『並び順エラー』と初期表示戻しが起きない。",
+      "checked": "EntryController.php:157-168,221-230でASC/DESC以外をDESCへ置換してセッション保存するだけで、admin.error.sortのフラッシュがないことを確認。",
+      "reason": "HTTP入力に対する画面メッセージと検索結果が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 843,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "支払番号とプレイヤー名のinputにmaxlengthが生成されず、ブラウザで64/255文字を超えて入力できる。",
+      "checked": "SearchEntryType.php:98-105にattr maxlengthもLength制約もなく、Entry/index.twig:271-281がform_widgetでそのまま描画することを確認。",
+      "reason": "生成HTML属性と受理可能な入力長が異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 844,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "イベント詳細IDへ非数字を入力してもフォームエラーにならず、その条件だけ無視した検索結果が返る。",
+      "checked": "SearchEntryType.php:152-158はLengthのみでRegexがなく、DtbEventEntryRepository.php:122-129はctype_digitでない値を無条件に検索条件から外すことを確認。",
+      "reason": "入力検証結果と返る一覧が設計と異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 845,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "設計のPOST /entry/bulkupdateでは一括更新できず、実装のPOST /event/entry/bulk_updateへ送る必要がある。",
+      "checked": "EntryController.php:341-342で実装パス・メソッドを、Entry/index.twig:146-153,549でそのURLへAJAX送信することを確認。",
+      "reason": "ルート名のみでなくHTTPパスが異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 846,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "X-Requested-Withを付けない通常POSTでも検証を通れば申込ステータスが一括更新され、失敗JSONにはならない。",
+      "checked": "EntryController.php:341-383を開き、isXmlHttpRequest判定なしでフォーム検証後にEntryStatusBulkUpdateActionを実行することを確認。",
+      "reason": "非同期か否かというHTTP入力条件でDB更新の有無が設計と逆になる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 847,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "成功JSONは「N 件の申込状況を更新しました。」、失敗JSONは個別検証文言となり、設計の「登録が完了しました。」「登録できませんでした。」とレスポンス本文が異なる。",
+      "checked": "EntryController.php:347-383で実際のJSON message生成を、messages.ja.yaml:1966-1967,6143-6146で設計キーと実装キーの表示値を確認。",
+      "reason": "ロケールキーの内部名差ではなくJSONに入る翻訳済み文字列が異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 848,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "設計のGET /entry/deckListは到達せず、画面ボタンはGET /event/entry/decklistを開く。",
+      "checked": "EntryController.php:578-580でadmin_event_entry_decklistの実装パスを、Entry/index.twig:59-63のwindow.open経路を確認。",
+      "reason": "ルート名だけでなくブラウザURLが異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 849,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "権限外店舗を含む検索条件がセッションに入ると、その店舗の申込デッキも印刷一覧へ出力され得る。",
+      "checked": "SearchEntryType.php:68-78が店舗全件を選択肢にし、EntryController.php:582-606がセッション条件を権限照合せずgetEntryDeckDataへ渡し、DtbDeckRepository.php:757-762も渡された店舗IDだけで絞ることを確認。",
+      "reason": "デッキ一覧本体に権限店舗集合との交差がなく、閲覧内容が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 850,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "deck.player_nameが設定されていても会員カナがあれば会員カナを表示し、設計のプレイヤー名を表示しない。",
+      "checked": "EntryDeckListDisplayBuilder.php:338-356でcustomerカナ、player日本語名、deck.playerNameの順に返すことを確認。",
+      "reason": "表示値の優先順位が逆で、同一データに対する印刷出力が異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 851,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "デッキ印刷のEvent欄に英語名ではなく日本語名が表示される。",
+      "checked": "EntryDeckListDisplayBuilder.php:137-147でeventNameにgetNameJp()を格納し、decklist.twig:322-326がpage.eventNameを描画することを確認。",
+      "reason": "利用者が見るイベント名の値が異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 852,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "カードが40枚を超えてもデッキ単位の複数ページへ分割されず、全メインカードを1ページのモデルへ載せる。",
+      "checked": "EntryDeckListDisplayBuilder.php:45-78,127-147,186-235で1デッキ1pageを構築し全mainCardsを分類するだけでchunk処理がないこと、decklist.twig:303-403でpages単位に印刷することを確認。",
+      "reason": "印刷ページ数・改ページ位置・掲載内容が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 853,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "印刷結果にサイドボード見出し、合計枚数、サイドカード一覧が一切表示されない。",
+      "checked": "EntryDeckListDisplayBuilder.php:129-147はresolveMainCards/buildMainboardだけをモデル化し、同:151-177はBOARD_ID_MAIN以外を除外すること、decklist.twig:333-401もmainboardだけを描画することを確認。",
+      "reason": "印刷I/Oの項目と値が欠落する。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 854,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "デッキ0件時に印刷ボタンだけでなく検索結果なしメッセージも表示される。",
+      "checked": "EntryDeckListDisplayBuilder.php:47-50が空配列を返し、decklist.twig:295-301が印刷ボタンの下にadmin.common.search_no_resultを描画することを確認。",
+      "reason": "0件時の生成HTMLが設計と異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 855,
+      "authorVerdict": "NO_IMPACT",
+      "verdict": "NO_IMPACT",
+      "agree": true,
+      "observableEffect": "",
+      "checked": "EntryController.php:59のprivate constだけがeccube.enterprise.admin.entry.searchを定義し、同:127-230,403-410,582-600が同じ定数で読み書きすることを確認。ec-cube-enterprise全体を両キーで検索し、設計キーadmin.event_entry.searchの本体参照、HTML/API/DB露出、Cookie名への利用はなく、実装キーの本体参照もこのprivate定数だけだった。",
+      "reason": "サーバ内部のセッション配列キー名だけが異なり、同じ入力から同じ検索条件・デッキ出力になる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 856,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "更新成功時は「保存しました」、例外時は「保存に失敗しました」と表示され、設計の「登録が完了しました。」「登録できませんでした。」と異なる。",
+      "checked": "EntryController.php:297-324でadmin.common.save_complete/save_errorをフラッシュすること、messages.ja.yaml:1590-1591,1966-1967で双方の実文言を確認。",
+      "reason": "画面上部に出る翻訳済み文言が明確に異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 857,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "店舗未指定で検索すると権限外店舗のイベントも検索結果へ表示され、新規登録ボタンも出る。",
+      "checked": "EntryRegistrationController.php:73-78,128-145は既定店舗を初期値にするだけで、EntryRegisterSearchType.php:41-51は店舗全件を選択肢にし、DtbEventRepository.php:151-201はbase_infoが空なら店舗条件を付けないことを確認。",
+      "reason": "検索結果の表示範囲と操作可能に見える対象が権限要件と異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 858,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "申込登録のイベント検索はPOST後の同期ページ全体更新となり、設計URLの非同期モーダルHTML検索・GETページ送りを利用できない。",
+      "checked": "EntryRegistrationController.php:66-151とEntryRegistration/index.twig:29-72,76-130で同期フォーム検索を確認。EntryController.php:437-515のモーダルは/event/entry/search_eventという別画面用経路だった。",
+      "reason": "HTTPパス・メソッド・レスポンス形態・画面更新方式が異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 859,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "POST /entry/search/event/idでイベントIDを直接検索できず、該当エンドポイントのレスポンスを得られない。",
+      "checked": "EntryRegistrationController.phpの全ルート（66-67,159,232）を確認し、専用ID検索がないことを確認。EntryController.php:521-537のPOST /event/entry/search_event/setは別URL・別画面の選択確定処理だった。",
+      "reason": "設計されたHTTP機能入口が存在しない。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 860,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "設計対象のイベント検索HTMLへ非XHRでアクセスした際の空モーダル応答が存在せず、同期の申込登録検索ページとして処理される。",
+      "checked": "EntryRegistrationController.php:66-151にisXmlHttpRequest分岐もモーダル断片返却もないことを確認。非XHR空結果分岐がある同:232-253はプレイヤー検索であり、イベント検索ではない。",
+      "reason": "非同期ヘッダ有無に対するレスポンス本文が設計と異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 861,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "設計のPOST /entry/search/event/html、GET同/{page_no}、POST /entry/search/event/idはいずれも利用できず、実装の別画面用GET /event/entry/search_event系は非XHRでも通常検索結果断片を返す。",
+      "checked": "EntryController.php:437-515,521-537とEntryRegistrationController.php:66-159を確認。entryEventHtmlにはisXmlHttpRequest判定がなく、設計3 URL・メソッドの組合せも存在しない。",
+      "reason": "URL・HTTPメソッド・非XHR時レスポンスという複数の外部契約が異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 862,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "検索結果に権限外店舗の日程と「イベント申込を登録」ボタンが表示され、押下後に404で拒否される。",
+      "checked": "EntryRegistration/index.twig:92-111が全datasへ無条件でadmin_entry_newリンクを出すこと、EntryRegistrationController.php:163-166で遷移後に初めて権限外を404にすること、検索側は同:128-145で権限絞込がないことを確認。",
+      "reason": "最終保存防御があっても一覧の表示対象・ボタン表示・遷移結果が設計と異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 863,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "設計の/entry/select、/entry/{eventDetailId}/new、POST /create、POST /entry/search/player/htmlは使えず、実装は/entry_registration、/entry_registration/new/{id}のGET/POST共用、GET /search_playerを使う。",
+      "checked": "EntryRegistrationController.php:66-67,159-160,232-233で実装パスとメソッドを、EntryRegistration/edit.twig:21,126-151,208-216で生成URLと送信方法を確認。",
+      "reason": "HTTPパスとメソッドが外部契約として異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 864,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "権限外店舗のイベント日程も申込登録候補一覧に表示され、登録ボタン押下後に404となる。",
+      "checked": "EntryRegistrationController.php:128-145の検索は権限店舗条件を追加せず、index.twig:92-111は全行に登録リンクを表示し、Controller:163-166で登録画面入口だけが権限を検査することを確認。",
+      "reason": "保存時防御だけでは『権限店舗の申込のみ表示』を満たさず、画面出力と遷移が変わる。",
+      "confidence": "high"
+    }
+  ]
+}

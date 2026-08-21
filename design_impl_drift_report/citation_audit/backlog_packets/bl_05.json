@@ -1,0 +1,166 @@
+{
+ "packetId": "bl_05",
+ "note": "1枚に複数の不具合がまとまっているチケットがある。itemCountに件数を書き工数は合計で。",
+ "findings": [
+  {
+   "issueKey": "ECCUBE_HARERUYA-2169",
+   "summary": "【一部実装】基本情報設定_追加システム設定_追加システム設定(M10-16)にて、買取査定申込み完了画面の自動遷移秒数に「0以上」のバリデーションが実装されていない",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "中",
+   "description": "# 基本情報【必須】\n分類：基本情報設定\n機能：追加システム設定\n課題カテゴリ：不具合（バグ）\n課題：【一部実装】基本情報設定_追加システム設定_追加システム設定(M10-16)にて、買取査定申込み完了画面の自動遷移秒数に「0以上」のバリデーションが実装されていない\n設計書：0209_基本設計仕様書(基本情報設定).xlsx\n\n# 期待される挙動【必須】\n- 追加システム設定の識別ID:4「買取査定申込み完了画面の自動遷移秒数」は数値（整数）かつ0以上であり、初期値は15であること（必須ではない）。\n\n# 現在の挙動【必須】\n- AdditionalSystemFormType の otcbuy_order_return_seconds は IntegerType・required=false で定義され、data に MtbOption::OTCBUY_ORDER_RETURN_SECONDS_DEFAULT（=15）が設定されており、初期値15は設計どおりである。\n- しかし constraints が一切設定されておらず、GreaterThanOrEqual(0) が無いため、負数（例: -10）を入力しても登録できてしまい「0以上」の要件を満たさない。\n- 同画面の他の整数項目（入荷通知最大数、レコメンドの検索期間、Small packet閾値、英語サイト専用タグID、管理画面自動ログアウト時間）には GreaterThanOrEqual(0) が設定されており、本項目のみ欠落している。\n\n# 補足情報【任意】\n▼設計書該当箇所\nM10_base_info_setting_basedesign.md:538 の逐語引用「4 買取査定申込み完了画面の自動遷移秒数 数値（整数）, 0以上 - 変更なし 15 完了画面の自動遷移秒数 2025/12/08 田所」\n\n▼実装該当箇所\nsrc/Eccube/Form/Type/Admin/AdditionalSystemFormType.php:72 （otcbuy_order_return_seconds の定義。constraints なし）\nsrc/Eccube/Entity/Master/MtbOption.php:59 （OTCBUY_ORDER_RETURN_SECONDS_DEFAULT = 15）\nsrc/Eccube/Form/Type/Admin/AdditionalSystemFormType.php:51 （比較対象: 入荷通知最大数には GreaterThanOrEqual(0) がある）\nsrc/Eccube/Resource/template/admin/Setting/Shop/additional_system.twig:59 （画面上の入力欄）\n\n▼備考\n初期値15・任意入力は設計どおり。乖離は「0以上」の検証が無い点のみ。IntegerType のため整数以外は弾かれるが、負数は通過する。"
+  },
+  {
+   "issueKey": "ECCUBE_HARERUYA-2092",
+   "summary": "【一部実装】店頭買取管理_a 買取商品履歴(検索入力)_店頭買取管理＞買取商品履歴(検索入力)にて、買取日時(From)が買取日時(To)より後でもエラーにならず検索が実行される",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "中",
+   "description": "# 基本情報【必須】\n分類：店頭買取管理\n機能：a 買取商品履歴(検索入力)\n課題カテゴリ：不具合（バグ）\n課題：【一部実装】店頭買取管理_a 買取商品履歴(検索入力)_店頭買取管理＞買取商品履歴(検索入力)にて、買取日時(From)が買取日時(To)より後でもエラーにならず検索が実行される\n設計書：0205_基本設計仕様書(店頭買取管理).xlsx\n\n# 期待される挙動【必須】\n- 買取商品履歴(検索入力)で買取日時(From)>買取日時(To)の場合はエラーとすること。\n- 買取日時の検索は、買取成立の場合は買取成立日、買取キャンセルの場合は買取キャンセル日を対象とすること。\n\n# 現在の挙動【必須】\n- 買取成立日／買取キャンセル日を切り替えて検索する処理は DtbOtcBuyOrderStockHistoryRepository に実装済みである。\n- 一方、検索フォーム OtcBuyOrderHistoryType の complete_date_from / complete_date_to には大小比較バリデーションが一切設定されておらず（制約は空）、From>To でもエラーにならない。\n- 買取商品履歴画面のテンプレート(history.twig)およびリポジトリにも From>To を検出してエラーとする処理が無く、条件がそのまま AND 結合されて0件の結果が返る。\n\n# 補足情報【任意】\n▼設計書該当箇所\nM06_otc_buy_management_basedesign.md:808 「| 9 | 買取日時(From) | 日付(yyyy/mm/dd) | - | - | - | ・買取日時(From)>買取日時(To)の場合エラー<br>・買取成立の場合は買取成立日、買取キャンセル日の場合は買取キャンセル日を検索する |」\n\n▼実装該当箇所\nsrc/Eccube/Form/Type/Admin/OtcBuyOrder/OtcBuyOrderHistoryType.php:103-122 （complete_date_from / complete_date_to に constraints が無い）\nsrc/Eccube/Repository/DtbOtcBuyOrderStockHistoryRepository.php:189-212 （買取成立日/キャンセル日の切替は実装済み。From>To のエラー処理は無し）\n\n▼備考\n設計の2要件のうち「買取成立日/キャンセル日の切替検索」は実装済み、「From>Toのエラー」のみ未実装のため一部実装と判定。他画面(SearchEventType 等)には admin.common.date_range_error を用いた POST_SUBMIT の比較実装例がある。"
+  },
+  {
+   "issueKey": "ECCUBE_HARERUYA-2240",
+   "summary": "【実装乖離】イベント管理_イベント申込詳細・編集(＋プレイヤー検索)_イベント申込詳細・編集(M13-10)の「支払金額」が、設計指定の「ラベル(参照表示)」ではなく disabled 入力欄として描画されている",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "中",
+   "description": "# 基本情報【必須】\n分類：イベント管理\n機能：イベント申込詳細・編集(＋プレイヤー検索)\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】イベント管理_イベント申込詳細・編集(＋プレイヤー検索)_イベント申込詳細・編集(M13-10)の「支払金額」が、設計指定の「ラベル(参照表示)」ではなく disabled 入力欄として描画されている\n設計書：0214_基本設計仕様書(イベント管理).xlsx\n\n# 期待される挙動【必須】\n- 設計書(M13-10 識別ID 2025-01-09)では「支払金額」の画面部品は「ラベル」であり、参照専用のテキスト表示であること。\n- カスタマイズ要件「識別ID:1-9「支払金額」は参照のみのため操作不可」のとおり、編集不可であること。\n- 同一画面の他の参照専用項目（支払会員・支払番号など）と同じく、テキスト（col-form-plain）として表示されること。\n\n# 現在の挙動【必須】\n- 支払金額は EventEntryDetailType で IntegerType の入力フィールドとして定義され（src/Eccube/Form/Type/Admin/EventEntryDetailType.php:109-116）、'disabled' => true が指定されている。\n- テンプレート src/Eccube/Resource/template/admin/Event/EntryRegistration/edit.twig:314-320 では form_widget(form.price) で描画されるため、画面上は「グレーアウトした入力ボックス」として表示される。\n- 同テンプレート内の参照専用項目（支払会員: edit.twig:291-299、支払番号: edit.twig:322-326）は col-form-plain のテキスト表示となっており、支払金額だけが表示形式で揃っていない。\n- 操作不可という機能要件自体は満たしている（Symfony の disabled フィールドはリクエスト値を無視するため改ざんによる更新も不可）。乖離は画面部品の表示形式に限定される。\n\n# 補足情報【任意】\n▼設計書該当箇所\n.cursor/docs/MDfile/M13_event_management_basedesign.md:835 （M13-10 識別ID 2025-01-09「支払金額 ラベル」）\n.cursor/docs/MDfile/M13_event_management_basedesign.md:811 （★入力項目の変更について「識別ID:1-9「支払金額」は参照のみのため操作不可」）\n.cursor/docs/MDfile/M13_event_management_basedesign.md:834 （比較: 識別ID 2025-01-08「支払方法 単一選択 … 操作不可」＝こちらは disabled のセレクトで正しい）\n\n▼実装該当箇所\nsrc/Eccube/Form/Type/Admin/EventEntryDetailType.php:109-116 （price を IntegerType + 'disabled' => true で定義）\nsrc/Eccube/Resource/template/admin/Event/EntryRegistration/edit.twig:314-320 （form_widget(form.price) により disabled な入力欄として描画）\nsrc/Eccube/Resource/template/admin/Event/EntryRegistration/edit.twig:291-299, 322-326 （支払会員・支払番号は col-form-plain のラベル表示。支払金額のみ形式が異なる）\nsrc/Eccube/Controller/Admin/Event/EntryController.php:260-268 （M13-10 は @admin/Event/EntryRegistration/edit.twig と EventEntryDetailType を使用）\n\n▼AIレビューで判定が割れた理由\nClaude は「実装済み」、codex は「乖離あり」と判定し、第三者による再検証で codex の判定を採用した。\n両者とも事実認識は一致しており（src/Eccube/Form/Type/Admin/EventEntryDetailType.php:112 の disabled=true、src/Eccube/Resource/template/admin/Event/EntryRegistration/edit.twig:317 の form_widget 描画）、割れたのは「設計の画面部品指定『ラベル』を要件として扱うか否か」という解釈の違いである。\nClaude は設計の★注記（.cursor/docs/MDfile/M13_event_management_basedesign.md:811「参照のみのため操作不可」）だけを要件と読み、disabled 入力欄で充足"
+  },
+  {
+   "issueKey": "ECCUBE_HARERUYA-2208",
+   "summary": "【実装乖離】イベント管理_イベント編集 / イベント削除_イベント編集の「イベント名(日)」はフォーム上255文字まで入力できるが、DB列が155文字のため156文字以上を登録するとDB書き込みエラーになる",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "中",
+   "description": "# 基本情報【必須】\n分類：イベント管理\n機能：イベント編集 / イベント削除\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】イベント管理_イベント編集 / イベント削除_イベント編集の「イベント名(日)」はフォーム上255文字まで入力できるが、DB列が155文字のため156文字以上を登録するとDB書き込みエラーになる\n設計書：0214_基本設計仕様書(イベント管理).xlsx\n\n# 期待される挙動【必須】\n- イベント編集画面の識別ID:1-1「イベント名(日)」は必須項目であり、最大255文字まで登録できること。\n\n# 現在の挙動【必須】\n- フォーム EventType の nameJp には NotBlank と Length(max = eccube_stext_len = 255) が設定されており、255文字までバリデーションを通過する。\n- しかしエンティティ DtbEvent の name_jp 列は length: 155 で定義されており、DB列長は155文字しかない。\n- その結果、156文字以上255文字以下のイベント名(日)を入力するとバリデーションは通過するがDB書き込み時に失敗し、EventController::create / edit の catch により「admin.common.save_error」が表示される。\n\n# 補足情報【任意】\n▼設計書該当箇所\nM13_event_management_basedesign.md:146 「2025-01-01 イベント名(日) 全角・半角 〇 255字 - -」（識別ID:1-1、必須・最大255字）\n\n▼実装該当箇所\nsrc/Eccube/Form/Type/Admin/EventType.php:76-81 （nameJp に NotBlank と Length(max: eccube_stext_len)）\napp/config/eccube/packages/eccube.yaml:137 （eccube_stext_len: 255）\nsrc/Eccube/Entity/DtbEvent.php:46 （name_jp 列 length: 155）\nsrc/Eccube/Controller/Admin/Event/EventController.php:227-229 （保存失敗時は save_error を表示するのみ）\n\n▼備考\n必須（NotBlank）の要件自体は満たしている。乖離は最大文字数のみ。app/DoctrineMigrations 配下に dtb_event の name_jp 列長を変更するマイグレーションは存在せず（dtb_event を触るのは Version20260514110000 と Version20260611000000 のみ）、DB列長は155のままである。"
+  },
+  {
+   "issueKey": "ECCUBE_HARERUYA-2209",
+   "summary": "【実装乖離】イベント管理_イベント編集 / イベント削除_イベント編集の「イベント名(英)」はフォーム上255文字まで入力できるが、DB列が155文字のため156文字以上を登録するとDB書き込みエラーになる",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "中",
+   "description": "# 基本情報【必須】\n分類：イベント管理\n機能：イベント編集 / イベント削除\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】イベント管理_イベント編集 / イベント削除_イベント編集の「イベント名(英)」はフォーム上255文字まで入力できるが、DB列が155文字のため156文字以上を登録するとDB書き込みエラーになる\n設計書：0214_基本設計仕様書(イベント管理).xlsx\n\n# 期待される挙動【必須】\n- イベント編集画面の識別ID:1-2「イベント名(英)」は必須項目であり、最大255文字まで登録できること。\n\n# 現在の挙動【必須】\n- フォーム EventType の nameEn には NotBlank と Length(max = eccube_stext_len = 255) が設定されており、255文字までバリデーションを通過する。\n- しかしエンティティ DtbEvent の name_en 列は length: 155 で定義されており、DB列長は155文字しかない。\n- その結果、156文字以上255文字以下のイベント名(英)を入力するとバリデーションは通過するがDB書き込み時に失敗し、保存エラーとなる。\n\n# 補足情報【任意】\n▼設計書該当箇所\nM13_event_management_basedesign.md:147 「2025-01-02 イベント名(英) 全角・半角 〇 255字 - -」（識別ID:1-2、必須・最大255字）\n\n▼実装該当箇所\nsrc/Eccube/Form/Type/Admin/EventType.php:82-87 （nameEn に NotBlank と Length(max: eccube_stext_len)）\napp/config/eccube/packages/eccube.yaml:137 （eccube_stext_len: 255）\nsrc/Eccube/Entity/DtbEvent.php:49 （name_en 列 length: 155）\n\n▼備考\n必須（NotBlank）の要件および画面上の必須バッジ表示は実装済み。乖離は最大文字数のみ。DB列は nullable: true だがフォーム側 NotBlank により必須は担保されている。"
+  },
+  {
+   "issueKey": "ECCUBE_HARERUYA-2212",
+   "summary": "【実装乖離】イベント管理_イベント編集 / イベント削除_イベント編集の「イベント規模」は設計上は任意項目だが、実装では NotBlank により必須項目になっている",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "中",
+   "description": "# 基本情報【必須】\n分類：イベント管理\n機能：イベント編集 / イベント削除\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】イベント管理_イベント編集 / イベント削除_イベント編集の「イベント規模」は設計上は任意項目だが、実装では NotBlank により必須項目になっている\n設計書：0214_基本設計仕様書(イベント管理).xlsx\n\n# 期待される挙動【必須】\n- イベント編集画面の識別ID:1-8「イベント規模」は単一選択の任意項目であり、未選択のままでもイベントを登録・更新できること。\n- 選択肢は大型イベント・特別イベント・デイリーイベント・おすすめイベントであること。\n\n# 現在の挙動【必須】\n- フォーム EventType の eventScale（EntityType）に NotBlank 制約が設定されており、未選択の場合はバリデーションエラーとなって保存できない。\n- テンプレート admin/Event/edit.twig でもイベント規模の項目に「必須」バッジが表示されている。\n- エンティティ DtbEvent の EventScale プロパティは nullable（?MtbEventScale $EventScale = null）で、DB上は NULL 許容であるにもかかわらず、フォームで必須化されている。\n\n# 補足情報【任意】\n▼設計書該当箇所\nM13_event_management_basedesign.md:156 「2025-01-08 イベント規模 単一選択 - - - 選択肢:大型イベント 特別イベント デイリーイベント おすすめイベント」（必須列が「-」＝任意）\nM13_event_management_basedesign.md:135 「* 識別ID:1-8 「イベント規模」を追加する、おすすめイベント、デイリーイベント、特別イベント、大型イベントから選択」\n\n▼実装該当箇所\nsrc/Eccube/Form/Type/Admin/EventType.php:100-109 （eventScale に NotBlank 制約）\nsrc/Eccube/Resource/template/admin/Event/edit.twig:151-156 （イベント規模に必須バッジを表示）\nsrc/Eccube/Entity/DtbEvent.php:81-82 （EventScale は nullable）\n\n▼備考\n設計書の表では「必須」列が「-」であり、任意項目と読み取れる。実装は NotBlank により必須化しているため、イベント規模を設定しないイベント（通常イベント）が登録できない。既存データで event_scale_id が NULL のイベントは、編集画面で保存し直すとエラーになる点にも注意。"
+  },
+  {
+   "issueKey": "ECCUBE_HARERUYA-2213",
+   "summary": "【実装乖離】イベント管理_イベント編集 / イベント削除_イベント編集の「定員」の最大桁数が、設計書の8字に対して実装では9字まで入力できる",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "中",
+   "description": "# 基本情報【必須】\n分類：イベント管理\n機能：イベント編集 / イベント削除\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】イベント管理_イベント編集 / イベント削除_イベント編集の「定員」の最大桁数が、設計書の8字に対して実装では9字まで入力できる\n設計書：0214_基本設計仕様書(イベント管理).xlsx\n\n# 期待される挙動【必須】\n- イベント編集画面の識別ID:1-11「定員」は必須の数値（整数）項目であり、最大8字まで入力できること。\n\n# 現在の挙動【必須】\n- フォーム EventType の capacity には Length(max: eccube_int_len) が設定されており、eccube_int_len は 9 と定義されている。\n- そのため9桁（999,999,999まで）の定員が登録でき、設計書の最大8字を1桁超過している。\n- 同じ画面の参加費（entryFee）は eccube_price_len（=8）を使用しており、設計書の8字と一致している。\n\n# 補足情報【任意】\n▼設計書該当箇所\nM13_event_management_basedesign.md:159 「2025-01-11 定員 数値(整数) 〇 8字 - 接尾辞はチーム戦オフの時「人」、オンの時「組」」（識別ID:1-11、最大8字）\n\n▼実装該当箇所\nsrc/Eccube/Form/Type/Admin/EventType.php:149-154 （capacity に Range(min: eccube_capacity_min) と Length(max: eccube_int_len)）\napp/config/eccube/packages/eccube.yaml:111 （eccube_int_len: 9）\napp/config/eccube/packages/eccube.yaml:126 （eccube_price_len: 8。参加費側はこちらを使用）\n\n▼備考\n必須表示（画面上の必須バッジ）と「1以上」（Range min: eccube_capacity_min = 1）は実装済み。乖離は最大桁数のみで、影響は軽微。"
+  },
+  {
+   "issueKey": "ECCUBE_HARERUYA-2229",
+   "summary": "【実装乖離】イベント管理_デッキ表示_デッキ表示画面の「Event」欄に、設計書のイベント名（英）ではなくイベント名（日）が表示されている",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "中",
+   "description": "# 基本情報【必須】\n分類：イベント管理\n機能：デッキ表示\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】イベント管理_デッキ表示_デッキ表示画面の「Event」欄に、設計書のイベント名（英）ではなくイベント名（日）が表示されている\n設計書：0214_基本設計仕様書(イベント管理).xlsx\n\n# 期待される挙動【必須】\n- デッキ表示画面の識別ID:6「Event」には、イベント名（英）を表示すること。\n\n# 現在の挙動【必須】\n- デッキ表示の表示データを組み立てる EntryDeckListDisplayBuilder が、eventName に DtbEvent::getNameJp()（イベント名 日本語）を設定している。\n- テンプレート Event/Entry/decklist.twig の「Event:」欄はこの eventName をそのまま出力するため、英語名ではなく日本語名が表示される。\n- DtbEvent には getNameEn() が存在するが、デッキ表示では使用されていない。\n\n# 補足情報【任意】\n▼設計書該当箇所\nM13_event_management_basedesign.md:707 「| 6 | Event | ラベル | - | - | - | イベント名（英）を表示 |」\n\n▼実装該当箇所\nsrc/Eccube/Service/Admin/Event/EntryDeckListDisplayBuilder.php:144 （eventName に getNameJp() を設定）\nsrc/Eccube/Resource/template/admin/Event/Entry/decklist.twig:324-325 （Event 欄に eventName を出力）\nsrc/Eccube/Entity/DtbEvent.php:49 （name_en 列は存在し getNameEn() で取得可能）\n\n▼備考\nデッキ表示は英語表記のレイアウト（Name / First Letter of Last Name / Event / Date）であり、設計書もイベント名（英）を指定している。カード名については日本語名の後に英語名を表示する実装（decklist.twig:356-357 等）が入っており、Event 欄のみ日本語名のままになっている。"
+  },
+  {
+   "issueKey": "ECCUBE_HARERUYA-2218",
+   "summary": "【実装乖離】イベント管理_日程登録_日程登録の「参加費」の最大桁数が設計書の50文字に対して8桁であり、初期値も設計書の0ではなく親イベントの参加費が設定される",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "中",
+   "description": "# 基本情報【必須】\n分類：イベント管理\n機能：日程登録\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】イベント管理_日程登録_日程登録の「参加費」の最大桁数が設計書の50文字に対して8桁であり、初期値も設計書の0ではなく親イベントの参加費が設定される\n設計書：0214_基本設計仕様書(イベント管理).xlsx\n\n# 期待される挙動【必須】\n- 日程登録画面の識別ID:16「参加費」は必須の数値（整数）項目であり、最大50文字まで入力できること。\n- 参加費の初期値は 0 であること。\n\n# 現在の挙動【必須】\n- ScheduleType の entryFee には Length(max: eccube_price_len) が設定されており、eccube_price_len は 8 のため最大8桁に制限されている（設計書は50文字）。\n- 新規日程作成時は DtbEventDetail::__construct で親イベントの参加費（$event->getEntryFee()）がセットされるため、初期値は 0 ではなく親イベントの参加費になる。\n- 0以上であることのチェック（PositiveOrZero）と画面上の必須バッジ表示は実装済みである。\n\n# 補足情報【任意】\n▼設計書該当箇所\nM13_event_management_basedesign.md:300 「| 16 | 参加費 | 数値(整数) | 〇 | 50文字 | 0 |」\n\n▼実装該当箇所\nsrc/Eccube/Form/Type/Admin/ScheduleType.php:143-148 （entryFee に Length(max: eccube_price_len) と PositiveOrZero）\napp/config/eccube/packages/eccube.yaml:126 （eccube_price_len: 8）\nsrc/Eccube/Entity/DtbEventDetail.php:137 （コンストラクタで親イベントの参加費をセット）\nsrc/Eccube/Entity/DtbEventDetail.php:262 （getEntryFee は未設定時に親イベントの参加費へフォールバック）\nsrc/Eccube/Resource/template/admin/Event/Schedule/edit.twig:208-211 （必須バッジ表示）\n\n▼備考\n識別ID:15（定員）と同様、初期値は繰返日程追加（設計書330行「定員、参加費、公開状態、商品（日・英）は、親イベントのものがセットされる」）と同じ親イベント継承の実装になっている。最大文字数（50文字）は設計書の記載自体が数値項目としては不自然だが、設計書を正とすれば乖離。"
+  },
+  {
+   "issueKey": "ECCUBE_HARERUYA-2217",
+   "summary": "【実装乖離】イベント管理_日程登録_日程登録の「定員」の最大桁数が設計書の50文字に対して9桁であり、初期値も設計書の10ではなく親イベントの定員が設定される",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "中",
+   "description": "# 基本情報【必須】\n分類：イベント管理\n機能：日程登録\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】イベント管理_日程登録_日程登録の「定員」の最大桁数が設計書の50文字に対して9桁であり、初期値も設計書の10ではなく親イベントの定員が設定される\n設計書：0214_基本設計仕様書(イベント管理).xlsx\n\n# 期待される挙動【必須】\n- 日程登録画面の識別ID:15「定員」は必須の数値（整数）項目であり、最大50文字まで入力できること。\n- 定員の初期値は 10 であること。\n- 定員は 1 以上であること。\n\n# 現在の挙動【必須】\n- ScheduleType の capacity には Length(max: eccube_int_len) が設定されており、eccube_int_len は 9 のため最大9桁に制限されている（設計書は50文字）。\n- 新規日程作成時は DtbEventDetail::__construct で親イベントの定員（$event->getCapacity()）がセットされるため、初期値は 10 ではなく親イベントの定員値になる。\n- 「1以上であること」は Range(min: eccube_capacity_min = 1) で実装済みであり、画面上の必須バッジも表示されている。\n\n# 補足情報【任意】\n▼設計書該当箇所\nM13_event_management_basedesign.md:299 「| 15 | 定員 | 数値(整数) | 〇 | 50文字 | 10 | 1以上であること<br>接尾辞は、親イベントの設定でチーム戦オフの時「人」、オンの時「組」 |」\n\n▼実装該当箇所\nsrc/Eccube/Form/Type/Admin/ScheduleType.php:137-142 （capacity に Range(min: eccube_capacity_min) と Length(max: eccube_int_len)）\napp/config/eccube/packages/eccube.yaml:111 （eccube_int_len: 9）\napp/config/eccube/packages/eccube.yaml:124 （eccube_capacity_min: 1）\nsrc/Eccube/Entity/DtbEventDetail.php:136 （コンストラクタで親イベントの定員をセット）\nsrc/Eccube/Entity/DtbEventDetail.php:250 （getCapacity は未設定時に親イベントの定員へフォールバック）\nsrc/Eccube/Resource/template/admin/Event/Schedule/edit.twig:188-190 （必須バッジ表示）\n\n▼備考\n初期値については、設計書の日程登録（M13-03）は「10」と定義しているが、繰返日程追加（M13-04）の処理概要には「定員、参加費、公開状態、商品（日・英）は、親イベントのものがセットされる」（設計書330行）とあり、実装は繰返日程追加と同じ挙動になっている。設計書間の整合性確認が必要だが、M13-03 の記述を正とすれば乖離である。"
+  },
+  {
+   "issueKey": "ECCUBE_HARERUYA-2236",
+   "summary": "【実装乖離】イベント管理_画像設定_画像設定のS3アップロード先フォルダが、設計書の /banner/{店舗識別子} ではなく banner/event/{店舗識別子} になっている",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "中",
+   "description": "# 基本情報【必須】\n分類：イベント管理\n機能：画像設定\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】イベント管理_画像設定_画像設定のS3アップロード先フォルダが、設計書の /banner/{店舗識別子} ではなく banner/event/{店舗識別子} になっている\n設計書：0214_基本設計仕様書(イベント管理).xlsx\n\n# 期待される挙動【必須】\n- 画像設定でアップロードするイベントバナー画像の保存先は /banner/{選択店舗の識別子（tc など）} のフォルダであること。\n- イベントバナーの参照先・アップロード先は、TOPバナー用フォルダとは別のイベントバナー用フォルダであること。\n\n# 現在の挙動【必須】\n- EventBannerStorageService の S3 プレフィックスは 'banner/event/' と定義されており、アップロード先ディレクトリは banner/event/{BaseInfo.htmlClassName}/ となる（設計書の /banner/{店舗識別子} に対し event/ が1階層余分）。\n- ファイル一覧の取得（loadSortedFileList / resolveListPrefix）、削除キーの検証（normalizeObjectKey / isObjectKeyUnderNarrowShop）もすべて同じ banner/event/ プレフィックスを前提としており、参照先とアップロード先は一貫している。\n- S3AccessService::putFile はセットされたディレクトリ文字列をそのままキーの先頭に付与するため、実際の S3 オブジェクトキーは banner/event/{店舗識別子}/{ファイル名} となる。\n- TOPバナーの保存先は 'banner/top/'（TopBannerUploadAction 等）であり、イベントバナー用フォルダと分離されているという要件自体は満たされている。\n\n# 補足情報【任意】\n▼設計書該当箇所\nM13_event_management_basedesign.md:1174 「* アップロード先は /banner/{選択店舗の識別子（tc など）} のフォルダ」\nM13_event_management_basedesign.md:1171 「* S3のイベントバナー画像参照先、アップロード先をイベントバナー用フォルダに変更する（TOPバナー用フォルダとは別）」\nM13_event_management_basedesign.md:1159 「* S3のイベントバナー画像参照先を、イベントバナー用フォルダに変更する」\n\n▼実装該当箇所\nsrc/Eccube/Service/Admin/Event/EventBannerStorageService.php:26 （private const S3_BANNER_PREFIX = 'banner/event/';）\nsrc/Eccube/Service/Admin/Event/EventBannerStorageService.php:92 （アップロード先は S3_BANNER_PREFIX + htmlClassName + '/'）\nsrc/Eccube/Service/Admin/Event/EventBannerStorageService.php:128-146 （一覧・削除も同一プレフィックスを前提）\nsrc/Eccube/Service/S3AccessService.php:49-52 （setS3Directory の値をキーの先頭に付与）\nsrc/Eccube/Service/Admin/Data/TopBannerUploadAction.php:25 （TOPバナーは 'banner/top'）\n\n▼備考\n「TOPバナー用フォルダ（banner/top/）とは別のイベントバナー用フォルダに保存する」「店舗識別子ごとのフォルダに分ける」という要件は満たされており、参照・アップロード・削除で同一プレフィックスを使うため機能的な不具合は生じない。乖離は設計書が明記するパス /banner/{店舗識別子} に対して event/ が1階層挟まる点のみであり、設計書の記載が実装より後に整理されていない可能性もあるため confidence は medium とした。運用上は既存 S3 オブジェクトの配置とも関わるため、設計書側の追記で解消するのが妥当と考えられる。"
+  },
+  {
+   "issueKey": "ECCUBE_HARERUYA-2235",
+   "summary": "【実装乖離】イベント管理_画像設定_画像設定の削除リンクの確認メッセージが、設計書で指定された文言と異なる",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "中",
+   "description": "# 基本情報【必須】\n分類：イベント管理\n機能：画像設定\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】イベント管理_画像設定_画像設定の削除リンクの確認メッセージが、設計書で指定された文言と異なる\n設計書：0214_基本設計仕様書(イベント管理).xlsx\n\n# 期待される挙動【必須】\n- 画像設定の識別ID:8「削除」は編集権限のある店舗の画像のみ表示すること。\n- 削除リンク押下時に「一度削除したデータは元に戻せません。削除してもよろしいですか？」を表示し、「OK」を選択で削除すること。\n\n# 現在の挙動【必須】\n- 削除リンクの確認メッセージには翻訳キー admin.event.banner.delete_confirm が使われており、その文言は「この画像を削除します。よろしいですか？」で、設計書指定の「一度削除したデータは元に戻せません。削除してもよろしいですか？」と異なる。\n- 設計書と同じ文言は admin.data.top_banner.delete_confirm（TOPバナー用）にのみ存在し、イベントの画像設定では使われていない。\n- 「編集権限のある店舗の画像のみ削除リンクを表示する」という要件は、banner.twig で app.user.isEditableShop(selectedBaseInfo) および bannerDeletableHtmlClasses による出し分けとして実装済みであり、削除処理側（BannerController::delete）でも canMemberDeleteObject による権限チェックが行われている。\n\n# 補足情報【任意】\n▼設計書該当箇所\nM13_event_management_basedesign.md:1185 「| 8 | 削除 | リンク | - | - | - | 編集権限のある店舗の画像のみ表示<br>「一度削除したデータは元に戻せません。削除してもよろしいですか？」<br>を表示し「OK」を選択で削除 |」\nM13_event_management_basedesign.md:1168 「* 識別ID:8 「削除」はメンバーが権限を保持している画像のみ表示する」\n\n▼実装該当箇所\nsrc/Eccube/Resource/template/admin/Event/banner.twig:327 （data-message に admin.event.banner.delete_confirm を指定）\nsrc/Eccube/Resource/template/admin/Event/banner.twig:329-330 （権限のある店舗の画像のみ削除リンクを表示）\nsrc/Eccube/Resource/locale/messages.ja.yaml:5961 （admin.event.banner.delete_confirm: この画像を削除します。よろしいですか？）\nsrc/Eccube/Resource/locale/messages.ja.yaml:6135 （設計書と同一文言は admin.data.top_banner.delete_confirm にのみ存在）\nsrc/Eccube/Controller/Admin/Event/BannerController.php:150-154 （削除時の権限チェック）\n\n▼備考\n権限による削除リンクの表示制御と、削除処理側の権限チェックは実装済み。乖離は確認ダイアログの文言のみで、影響は軽微。文言を設計書に合わせるか、設計書側を実装文言に合わせるかの判断が必要。"
+  },
+  {
+   "issueKey": "ECCUBE_HARERUYA-2221",
+   "summary": "【実装乖離】イベント管理_繰返日程追加_繰返日程追加の「曜日選択」は設計上は任意項目だが、実装では NotBlank により必須項目になっている",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "中",
+   "description": "# 基本情報【必須】\n分類：イベント管理\n機能：繰返日程追加\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】イベント管理_繰返日程追加_繰返日程追加の「曜日選択」は設計上は任意項目だが、実装では NotBlank により必須項目になっている\n設計書：0214_基本設計仕様書(イベント管理).xlsx\n\n# 期待される挙動【必須】\n- 繰返日程追加画面の識別ID:7「曜日選択」は複数選択の任意項目であり、未選択のままでも登録できること。\n\n# 現在の挙動【必須】\n- RepeatScheduleType の week（ChoiceType, multiple: true, expanded: true）に NotBlank 制約が設定されており、曜日を1つも選択しないとバリデーションエラーになる。\n- 設計書では識別ID:7「曜日選択」の必須列は「-」（任意）である。\n\n# 補足情報【任意】\n▼設計書該当箇所\nM13_event_management_basedesign.md:339 「| 7 | 曜日選択 | 複数選択 | - | - | - |」（必須列が「-」＝任意）\nM13_event_management_basedesign.md:329 「* 指定した期間のうち、選択した曜日に該当する日に日程登録する。」\n\n▼実装該当箇所\nsrc/Eccube/Form/Type/Admin/RepeatScheduleType.php:103-119 （week に NotBlank 制約）\n\n▼備考\n曜日未選択時に「指定期間の全日に日程を作成する」のか「1件も作成しない」のかは設計書に明記が無く、実装は必須化することで曖昧さを回避している。設計書の必須列を正とすれば乖離。運用上は必須の方が妥当な可能性があるため、要件確認が望ましい。"
+  },
+  {
+   "issueKey": "ECCUBE_HARERUYA-2241",
+   "summary": "【実装乖離】カード管理_カード一覧(検索結果)_カード一覧(検索結果)にて、3点リーダーによる削除メニューが実装されておらず、削除確認ポップアップの文言も設計と異なる",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "中",
+   "description": "# 基本情報【必須】\n分類：カード管理\n機能：カード一覧(検索結果)\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】カード管理_カード一覧(検索結果)_カード一覧(検索結果)にて、3点リーダーによる削除メニューが実装されておらず、削除確認ポップアップの文言も設計と異なる\n設計書：0208_基本設計仕様書(カード管理).xlsx\n\n# 期待される挙動【必須】\n- カード一覧(検索結果)の各行には3点リーダー(識別ID 12)を配置し、押下すると削除ボタン(識別ID 13)を表示する。\n- 削除ボタン(識別ID 13)を押下すると、動的に「このカードを削除してもよろしいですか？」という文言のポップアップを表示し、「実行」を選択すると削除を実行する。\n\n# 現在の挙動【必須】\n- カード一覧の各行には3点リーダーが存在せず、編集アイコン(鉛筆)と削除アイコン(×)が直接並べて表示されている。\n- 削除アイコンを押下すると共通削除モーダルが開き、表示される文言は「この操作はあとから取り消すことができません。「{カード名}」を削除してよろしいですか？」(admin.common.delete_modal__message)であり、設計の「このカードを削除してもよろしいですか？」と一致しない。\n- 同一管理画面のデッキ一覧(admin/Deck/index.twig:593)では3点リーダー(fa-ellipsis + dropdown)が実装されており、カード一覧のみ実装パターンが異なる。\n\n# 補足情報【任意】\n▼設計書該当箇所\nM14_card_management_basedesign.md:139 「| 12 | 3点リーダー | カード削除表示ボタン | - | - | - | ・押下すると、(13)を表示する |」\nM14_card_management_basedesign.md:140 「| 13 | 削除 | カード削除ボタン | - | - | - | ・押下すると、動的に以下文言のポップアップを表示<br>「このカードを削除してもよろしいですか？」<br>その後「実行」を選択すると、削除を実行する |」\n\n▼実装該当箇所\nsrc/Eccube/Resource/template/admin/Card/index.twig:426-437 （一覧行のアクション列。3点リーダーを介さず編集アイコンと削除アイコンを直接表示）\nsrc/Eccube/Resource/template/admin/Card/index.twig:434 （削除モーダルへ渡す data-message に admin.common.delete_modal__message を使用）\nsrc/Eccube/Resource/locale/messages.ja.yaml:1780 （admin.common.delete_modal__message の実文言）\nsrc/Eccube/Resource/template/admin/Card/delete_modal.twig:15 （モーダル本文はJSで data-message を差し込む）\n\n▼備考\nカード一覧のTwigはHEAD(2026-07-13)時点で 2026-07-08 以降のコミットなし(git log --since=\"2026-07-08\" で該当なし)。管理画面テンプレートは *.en.twig の二重管理は無く、翻訳キー経由の1ファイル構成であることを確認済み。カード詳細(編集)画面の削除ボタン(edit.twig:217-221)も同じ admin.common.delete_modal__message を使用しており、設計(7)削除の「このカードを削除してもよろしいですか？」と不一致。"
+  },
+  {
+   "issueKey": "ECCUBE_HARERUYA-2254",
+   "summary": "【実装乖離】カード管理_フォーマット一覧_フォーマット一覧にて、フォーマット名がリンクになっておらずプレーンテキストで表示されている",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "中",
+   "description": "# 基本情報【必須】\n分類：カード管理\n機能：フォーマット一覧\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】カード管理_フォーマット一覧_フォーマット一覧にて、フォーマット名がリンクになっておらずプレーンテキストで表示されている\n設計書：0208_基本設計仕様書(カード管理).xlsx\n\n# 期待される挙動【必須】\n- フォーマット一覧の識別ID 2「フォーマット名」はリンクの画面部品である。\n\n# 現在の挙動【必須】\n- フォーマット一覧のフォーマット名セルは {{ Format.nameJp }} / {{ Format.nameEn }} をそのまま出力するだけのプレーンテキストであり、アンカー要素(a タグ)が存在しない。\n- フォーマット詳細への遷移は行末の鉛筆アイコン(編集リンク)からのみ可能である。\n- 同一設計書内のカード一覧(識別ID 11 カード名 リンク)も同様にカード名がリンクになっていないが、フォーマット一覧については設計上リンクと明記されている。\n\n# 補足情報【任意】\n▼設計書該当箇所\nM14_card_management_basedesign.md:749 「| 2 | フォーマット名 | リンク | - | - | - | - |」\n\n▼実装該当箇所\napp/template/admin/Format/format_list.twig:48 （フォーマット名セル。テキスト出力のみでリンクなし）\napp/template/admin/Format/format_list.twig:56-59 （フォーマット詳細への遷移は鉛筆アイコンの編集リンクのみ）\n\n▼備考\nフォーマット一覧のテンプレートは app/template/admin/Format/format_list.twig のみ（管理画面に *.en.twig の二重管理はなく、翻訳キー経由）。CSS/JS 側でセルをクリック可能にする実装も存在しない（format_list.twig の script ブロックは削除モーダル制御のみ）。git log --since=\"2026-07-08\" -- app/template/admin/Format/ は該当コミットなし。"
+  },
+  {
+   "issueKey": "ECCUBE_HARERUYA-2134",
+   "summary": "【実装乖離】コンテンツ管理_a ページ管理(登録・編集)_ページ管理(登録・編集)にて、titleタグのサフィックス固定文言のカギカッコが設計書の『晴れる屋』と異なり「晴れる屋」になっている",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "中",
+   "description": "# 基本情報【必須】\n分類：コンテンツ管理\n機能：a ページ管理(登録・編集)\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】コンテンツ管理_a ページ管理(登録・編集)_ページ管理(登録・編集)にて、titleタグのサフィックス固定文言のカギカッコが設計書の『晴れる屋』と異なり「晴れる屋」になっている\n設計書：0210_基本設計仕様書(コンテンツ管理).xlsx\n\n# 期待される挙動【必須】\n- コード内に {% set noShopName = true %} を設定すると、titleタグのサフィックス(末尾)に固定文言「 | 日本最大級 MTG通販サイト『晴れる屋』」が追加されないようにする。\n- noShopNameの設定はページ管理で行うが、固定文言をつけるかどうかの判定はフロントで行う。\n\n# 現在の挙動【必須】\n- フロントの default_frame.twig で noShopName が未定義または空の場合のみ shopNameSuffix を title に連結しており、noShopName による固定文言の非表示判定はフロント側で設計どおり実装されている。\n- ただし固定文言の実値は翻訳キー front.seo.title_suffix の '日本最大級 MTG通販サイト「晴れる屋」' であり、設計書が記載する『晴れる屋』(二重カギカッコ)ではなく「晴れる屋」(カギカッコ)が使われている。\n\n# 補足情報【任意】\n▼設計書該当箇所\nM09_content_management_basedesign.md:107-109 「(1-9)コード内に{% set noShopName = true %}を設定すると、titleタグのサフィックス（末尾）に以下の固定文言が追加されない / 固定文言:  | 日本最大級 MTG通販サイト『晴れる屋』 / ※: noShopNameの設定はページ管理で行うが、固定文言をつけるかどうかの判定はフロントで行う」\nM09_content_management_basedesign.md:155-156 「・コード内に{% set noShopName = true %}を設定すると、titleタグのサフィックス（末尾）に以下の固定文言が追加されない　固定文言:  | 日本最大級 MTG通販サイト『晴れる屋』」\n\n▼実装該当箇所\nsrc/Eccube/Resource/template/default/default_frame.twig:25-33 （noShopName による固定文言の付与判定。フロントで判定しており設計どおり）\nsrc/Eccube/Resource/template/default/default_frame.twig:17 （shopNameSuffix は front.seo.title_suffix の翻訳）\nsrc/Eccube/Resource/locale/messages.ja.yaml:6660 （front.seo.title_suffix: '日本最大級 MTG通販サイト「晴れる屋」'）\n\n▼備考\nnoShopName による固定文言の非表示ロジック自体は設計どおり実装済み。差異はカギカッコの種類(「」 vs 『』)のみで、設計書側の表記ゆれの可能性が高いため確信度は low とした。実運用の文言を正とするなら設計書の修正が必要。"
+  },
+  {
+   "issueKey": "ECCUBE_HARERUYA-2131",
+   "summary": "【実装乖離】コンテンツ管理_a ページ管理(登録・編集)_ページ管理(登録・編集)にて、日本語ページのtwigファイル名に言語識別子(.ja)が付与されず、画面表示の拡張子(.ja.twig)と実ファイル名が一致しない",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "中",
+   "description": "# 基本情報【必須】\n分類：コンテンツ管理\n機能：a ページ管理(登録・編集)\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】コンテンツ管理_a ページ管理(登録・編集)_ページ管理(登録・編集)にて、日本語ページのtwigファイル名に言語識別子(.ja)が付与されず、画面表示の拡張子(.ja.twig)と実ファイル名が一致しない\n設計書：0210_基本設計仕様書(コンテンツ管理).xlsx\n\n# 期待される挙動【必須】\n- (1-7)twigファイルのテキストボックス右横のファイル拡張子に、言語に応じた識別子を追加する。日本語の場合は .ja.twig、英語の場合は .en.twig とする。\n\n# 現在の挙動【必須】\n- PageController::edit は $localeSuffix を、日本語の場合は空文字、英語の場合は '.en' としているため、実際に生成・読込されるファイルは日本語が「<ファイル名>.twig」、英語が「<ファイル名>.en.twig」となる。\n- 一方 page_edit.twig は入力欄の右横に「.{{ locale }}.twig」を表示するため、日本語選択時は「.ja.twig」と表示され、実ファイル名(サフィックスなし)と一致しない。\n- 実ファイルでも app/template/user_data 配下には .en.twig が74件存在する一方、.ja.twig は0件であり、日本語版はサフィックスなしで運用されている。\n\n# 補足情報【任意】\n▼設計書該当箇所\nM09_content_management_basedesign.md:90-92 「(1-7)twigファイルのテキストボックス右横のファイル拡張子に、言語に応じた識別子を追加する / 日本語の場合: .ja.twig / 英語の場合: .en.twig」\nM09_content_management_basedesign.md:132-135 「1-7 twigファイル 半角・全角 〇 255 - ・テキストボックス右横のファイル拡張子に、言語に応じた識別子を追加する　例　日本語： .ja.twig　英語： .en.twig」\n\n▼実装該当箇所\nsrc/Eccube/Controller/Admin/Content/PageController.php:99-100 （日本語はサフィックスなし、英語のみ '.en' を付与）\nsrc/Eccube/Resource/template/admin/Content/page_edit.twig:186 （画面上は「.{{ locale }}.twig」＝日本語選択時は .ja.twig と表示）\nsrc/Eccube/Resource/template/admin/Content/page_edit.twig:189 （保存先パスの表示も {{ page_file_name }}.{{ locale }}.twig）\nsrc/Eccube/Controller/Admin/Content/BlockController.php:97-98 （ブロック管理側は ja も '.ja' を付与しており、ページ管理と実装方針が異なる）\n\n▼備考\napp/template/user_data 配下の実ファイルは .en.twig が74件、.ja.twig が0件で、日本語版はサフィックスなしの .twig で保存されている。画面表示(.ja.twig)と実ファイル名(.twig)が不一致のため、運用者がファイル名を誤認するおそれがある。"
+  },
+  {
+   "issueKey": "ECCUBE_HARERUYA-2195",
+   "summary": "【実装乖離】システム設定_メンバー管理_メンバー管理にて、権限グループの選択肢が「登録されている全権限」になっていない",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "中",
+   "description": "# 基本情報【必須】\n分類：システム設定\n機能：メンバー管理\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】システム設定_メンバー管理_メンバー管理にて、権限グループの選択肢が「登録されている全権限」になっていない\n設計書：0201_基本設計仕様書(システム設定).xlsx\n\n# 期待される挙動【必須】\n- メンバー管理の識別ID:1-7「権限グループ」は単一選択のセレクトボックスで必須であり、選択肢として登録されている全権限を表示すること。\n\n# 現在の挙動【必須】\n- Authority の query_builder が「a.id >= :current_member_level」で絞り込んでおり、ログイン中メンバー自身の権限レベル以上（=IDが同値以上の下位権限）の権限しか選択肢に表示されない。\n- さらに「a.isViewable = true」で絞り込むため、mtb_authority で is_viewable=0 の「顧客」「ゲスト」は選択肢から除外される。\n- current_member_level はコントローラでログインメンバーの権限IDが渡されるため、例えば店舗オペレーター(ID=5)でログインした場合、システム管理者(ID=1)やモールオーナー(ID=2)等の権限は選択できない。\n- 必須（NotBlank）および単一選択（expanded=false / multiple=false）の要件は満たしている。\n\n# 補足情報【任意】\n▼設計書該当箇所\nM11_system_setting_basedesign.md:121 の逐語引用: 「1-7 権限グループ 単一選択(セレクトボックス) ○ - - 選択肢:登録されている全権限」\n\n▼実装該当箇所\nsrc/Eccube/Form/Type/Admin/MemberType.php:115 （query_builder で a.id >= :current_member_level かつ a.isViewable = true に限定）\nsrc/Eccube/Controller/Admin/Setting/System/MemberController.php:99 （current_member_level にログインメンバーの権限IDを設定）\nsrc/Eccube/Resource/doctrine/import_csv/ja/mtb_authority.csv:7 （顧客は is_viewable=0）\nsrc/Eccube/Entity/Master/Authority.php:51 （is_viewable カラム定義）\n\n▼備考\n自分より上位の権限を付与できないようにする権限昇格防止の意図と推測され、顧客/ゲストの除外（NotEqualTo制約も併存: MemberType.php:106-113）は妥当と考えられる。ただし設計書の「選択肢:登録されている全権限」の記述とは一致しないため乖離として報告。運用上許容の可能性があるため confidence: medium。"
+  },
+  {
+   "issueKey": "ECCUBE_HARERUYA-2197",
+   "summary": "【実装乖離】システム設定_メンバー管理_メンバー管理の新規登録時に、稼働ラジオボタンの初期値「非稼働」が選択されていない",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "中",
+   "description": "# 基本情報【必須】\n分類：システム設定\n機能：メンバー管理\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】システム設定_メンバー管理_メンバー管理の新規登録時に、稼働ラジオボタンの初期値「非稼働」が選択されていない\n設計書：0201_基本設計仕様書(システム設定).xlsx\n\n# 期待される挙動【必須】\n- メンバー管理の識別ID:1-10「稼働」は単一選択(ラジオボタン)で、初期値として「非稼働」が選択された状態で表示されること。\n\n# 現在の挙動【必須】\n- MemberType の 'Work' は EntityType（expanded=true のラジオボタン）で定義されているが、'data' や既定値の指定がなく、初期選択値が設定されていない。\n- MemberController::create() は new Member() を生成した後に setBaseInfo() のみを実行しており、setWork() を呼び出していない（リポジトリ全体を grep しても Member エンティティ以外に setWork( の呼び出しは存在しない）。\n- Member エンティティの $Work プロパティ初期値は null であり、コンストラクタでも設定されないため、新規登録画面ではラジオボタンがどちらも未選択の状態で表示される。\n- その結果、稼働/非稼働を選択せずに登録しようとすると NotBlank でエラーとなり、設計の「初期値: 非稼働」を満たしていない。\n\n# 補足情報【任意】\n▼設計書該当箇所\nM11_system_setting_basedesign.md:124 の逐語引用: 「1-10 稼働 単一選択(ラジオボタン) - - 非稼働 -」\n\n▼実装該当箇所\nsrc/Eccube/Form/Type/Admin/MemberType.php:130 （'Work' EntityType。expanded=true・NotBlank のみで data 未指定）\nsrc/Eccube/Controller/Admin/Setting/System/MemberController.php:95 （new Member() 後に setWork() を実行していない）\nsrc/Eccube/Entity/Member.php:169 （$Work の初期値は null）\nsrc/Eccube/Resource/doctrine/import_csv/ja/mtb_work.csv:2 （非稼働は id=0）\n\n▼備考\n反証として Entity のコンストラクタ(Member.php:40-43)、EventListener、Form の PRE_SET_DATA リスナ、Service(MemberCreateAction) を確認したが、Work の初期値を「非稼働(Work::NON_ACTIVE=0)」に設定する処理は存在しない。git log --since=2026-07-08 で MemberType.php / MemberController.php / Member.php に変更なし。"
+  },
+  {
+   "issueKey": "ECCUBE_HARERUYA-2198",
+   "summary": "【実装乖離】システム設定_権限管理_権限管理画面にて、複製操作が設計書指定の「リンク」ではなく通常ボタン（button要素）で実装されている",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "中",
+   "description": "# 基本情報【必須】\n分類：システム設定\n機能：権限管理\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】システム設定_権限管理_権限管理画面にて、複製操作が設計書指定の「リンク」ではなく通常ボタン（button要素）で実装されている\n設計書：0201_基本設計仕様書(システム設定).xlsx\n\n# 期待される挙動【必須】\n- 権限管理画面（M11-03）の識別ID:1-9「複製リンク」は、画面部品としてリンクであること。\n- クリック時に該当行と同権限の複製行（1-10）を追加し、複製行には権限名入力（1-11、必須・重複不可）を設けること。\n\n# 現在の挙動【必須】\n- 複製操作は <button type=\"button\" class=\"btn btn-ec-regular btn-copy\"> として描画されており、アンカー（a要素）のリンクではなく通常ボタン表示である。管理画面Twig・バンドルCSS/JS のいずれにも、このボタンをリンク表示へ変換する実装は存在しない。\n- 機能面では、handleCopyClick() が対象行を cloneNode して権限チェック状態を引き継いだ複製行を tbody 末尾に追加し（1-9/1-10 充足）、複製行の先頭セルに required 付きの権限名テキスト入力を動的生成する。\n- 権限名の重複は AuthorityIndexAction で、同一リクエスト内の重複および既存 mtb_authority の同名レコードを検出して例外送出により拒否している（1-11 の重複不可は充足）。\n- ただし権限名の必須チェックはクライアント側の required 属性のみで、サーバ側に NotBlank 相当のチェックがなく、空文字を直接POSTした場合は空名の権限が作成され得る。\n\n# 補足情報【任意】\n▼設計書該当箇所\n.cursor/docs/MDfile/M11_system_setting_basedesign.md:220（1-9 複製リンク リンク - - - クリック時、該当の行と同権限の複製行を追加する）\n.cursor/docs/MDfile/M11_system_setting_basedesign.md:221-222（1-10 複製行／1-11 権限名入力 テキスト ○ 権限名の重複は不可能）\n.cursor/docs/MDfile/M11_system_setting_basedesign.md:185-189（複製について／権限名は必須かつ重複は不可とする）\n\n▼実装該当箇所\nsrc/Eccube/Resource/template/admin/Setting/System/authority.twig:329-331（複製操作を button 要素（btn-copy）で描画）\nsrc/Eccube/Resource/template/admin/Setting/System/authority.twig:165-208（handleCopyClick。cloneNode による行複製と tbody への追加）\nsrc/Eccube/Resource/template/admin/Setting/System/authority.twig:182（複製行に required 付きの権限名テキスト入力を生成）\nsrc/Eccube/Service/Admin/Setting/System/AuthorityIndexAction.php:73-75（同一リクエスト内および既存権限名との重複を検出し例外送出）\n\n▼AIレビューで判定が割れた理由\nClaude は「実装済み」、codex は「乖離あり」と判定し、第三者による再検証で codex の判定を採用した。\n両者とも同一の事実（src/Eccube/Resource/template/admin/Setting/System/authority.twig:329 が a要素ではなく button 要素であること、複製・必須・重複不可の機能は実装済みであること）を確認しており、事実認定に相違はない。割れたのは「画面部品の種類の相違を乖離とするか」の評価軸のみである。\nClaude は「機能・挙動は満たしているため部品種別の相違は乖離としない」として FALSE_POSITIVE、codex は .cursor/docs/MDfile/M11_system_setting_basedesign.md:220 が明示的に「リンク」と指定している点を根拠に FACT とした。\n裁定としては codex を採る。同設計書の同じ表で 2-1 登録は「ボタン」（:224）と書き分けられており、1-9 の「リンク」は意図的な部品指定と解される。本監査は他項目でも部品種別の相違（例: ADJ_07 の M10-07 課税規則）を乖離として計上しており、一貫性の観点からも本項目のみを免除する理由がない。\nあわせて、権限名の必須検証がクライアント側 required 属性のみで、src/Eccube/Service/Admin/Setting/System/AuthorityIndexAction.php:73-"
+  }
+ ]
+}

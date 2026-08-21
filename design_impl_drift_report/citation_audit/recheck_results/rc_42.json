@@ -1,0 +1,149 @@
+{
+  "packetId": "rc_42",
+  "results": [
+    {
+      "rowId": 738,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "REFUTED",
+      "correctedClass": "SPEC_BACKED",
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0209_基本設計仕様書(基本情報設定).html の関連正本 sheet-3「基本設定(旧ショップマスター)」を「店舗営業時間／送信元メールアドレス／問い合わせ受付メールアドレス／返信受付メールアドレス／送信エラー受付メールアドレス」で確認した。data-excel-ref=0209:基本設定(旧ショップマスター)!L7 のレイアウト画像2枚を抽出して目視し、主画像は「店舗営業時間」の直後に「送信元メールアドレス(From)」→「問い合わせ受付メールアドレス(From, ReplyTo)」→「返信受付メールアドレス(ReplyTo)」→「送信エラー受付メールアドレス(ReturnPath)」をこの順で描いていた。sheet-10のレイアウト画像2枚も確認したが、こちらはメールテンプレート編集画面であり4欄配置を扱わない。",
+      "reason": "先行判定は M10-09 の sheet-10 本文だけを根拠範囲にし、メールアドレス4欄を実際に定義する関連正本 sheet-3 のレイアウト画像を見落としている。配置・順序はExcel正本画像に直接あるため、LEGACY_BACKEDではなくSPEC_BACKEDである。現行は問い合わせ欄を4番目に置き、さらに営業時間(英語表記)を間に挟むため乖離は残る。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Resource/template/admin/Setting/Shop/shop_master.twig は店舗営業時間の後に form.business_hour_en を描画し、その後を form.email01 → form.email03 → form.email04 → form.email02 の順で描画する。正本画像の email01 → email02 → email03 → email04 とは一致しない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 739,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0209 のExcel正本 src-cell を `sendContactMail|sendAdminCustomerConfirmMail|Bcc|仮会員登録再送|From|ReplyTo` で確認した。sheet-3の正本画像には各メール欄の一般的な From/ReplyTo/ReturnPath 表示はあるが、問い合わせメールのBccを含む固定割当や仮会員再送のメソッド別Fromは記載されていない。sheet-10のレイアウト画像2枚も目視したがテンプレート・件名・本文・登録だけだった。旧 pf-eccube3/src/Eccube/Service/MailService.php の sendContactMail() は email02 をFrom/Bcc/ReplyToに、sendAdminCustomerConfirmMail() は email03 をFromに設定している実物を確認した。",
+      "reason": "メソッド別ヘッダ割当の具体値はExcel正本ではなく旧MailServiceにのみ実在するため、LEGACY_BACKEDは妥当。現行の両メソッドは旧割当と異なるままである。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Service/MailService.php の sendContactMail() は MtbContactSubject::getEmail() が非空ならそれを、空なら BaseInfo::getEmail02() を $adminEmail とし、From/Bcc/Reply-Toへ設定する。sendAdminCustomerConfirmMail() はFromとBccに BaseInfo::getEmail01()、Reply-Toに email03、Return-Pathに email04を設定する。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 740,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0209 sheet-11 のExcel正本 src-cell 0209:CSV出力項目設定 !AG72 に実物「選択肢:登録されているCSV全種」を確認した。data-excel-ref=0209:CSV出力項目設定 !D7 のレイアウト画像2枚も目視し、CSV種別セレクト自体は確認できたが、閉じた状態のため全選択肢は画像には表示されていなかった。",
+      "reason": "期待値はfunction-design-embed外のExcel正本セルに直接あるためSPEC_BACKEDで正しい。現行フォームは登録済みマスタの一部IDを明示的に除外する。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/Admin/Setting/Shop/CsvController.php の index() は CsvType::CSV_TYPE_CLASS_NAME、CSV_TYPE_CLASS_CATEGORY、CSV_TYPE_GMO_MEMBER を $excludeCsvTypeIds に入れ、csv_type の query_builder で `m.id NOT IN (:excludeIds)` を適用する。src/Eccube/Resource/doctrine/import_csv/ja/mtb_csv_type.csv とマイグレーションには該当種別に対応する登録行がある。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 741,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0209 sheet-11 の正本 src-cell を `システム設定|CSV出力項目設定` で確認した。機能名「CSV出力項目設定」はあるが、同画面の親タイトルを「システム設定」とするセルはなく、0209内の `システム設定` src-cell ヒットは「追加システム設定」の部分一致だけだった。data-excel-ref=0209:CSV出力項目設定 !D7 のレイアウト画像2枚も目視したが、画像範囲はカード見出し「CSV出力項目」以下で上部タイトル帯を含まない。旧 pf-eccube3/src/Eccube/Resource/template/admin/Setting/Shop/csv.twig で `{% block title %}システム設定{% endblock %}` と `{% block sub_title %}CSV出力項目設定{% endblock %}` を確認した。",
+      "reason": "「システム設定／CSV出力項目設定」という組合せはExcel正本から確定できず、旧Twigに実在するためLEGACY_BACKEDは妥当。現行は基本情報設定配下のままである。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Resource/template/admin/Setting/Shop/csv.twig は menus=['setting','basic_info','shop_csv']、title=admin.setting.shop.csv_setting、sub_title=admin.setting.basic_info。src/Eccube/Resource/locale/messages.ja.yaml の実値は「CSV出力項目設定」と「基本情報設定」で、app/config/eccube/packages/eccube_nav.yaml でも shop_csv は setting > basic_info 配下にある。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 742,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "UNSURE",
+      "checkedQuote": "0209 sheet-11 のExcel正本項目表 src-cell 0209:CSV出力項目設定 !E78 に実物「設定」、同 !AG78 に「入力されたフォームの値で編集」を確認した。一方、data-excel-ref=0209:CSV出力項目設定 !D7 のレイアウト画像2枚を抽出して目視すると、右下ボタンの表示は現実装と同じ「登録」だった。",
+      "reason": "項目表に期待文言「設定」が直接あるため、根拠区分SPEC_BACKED自体は正しい。しかし同じExcel正本のレイアウト画像は「登録」で項目表と矛盾し、現実装も「登録」である。どちらを採用仕様とするか判断できないため、乖離再現はUNSUREとする。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Resource/template/admin/Setting/Shop/csv.twig の送信ボタンは `admin.common.registration|trans` を表示し、src/Eccube/Resource/locale/messages.ja.yaml の admin.common.registration は「登録」。これは正本項目表とは異なるが正本レイアウト画像とは一致する。",
+      "severityOpinion": "low",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 743,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0209のExcel正本 src-cell を完全一致文言 `CSV出力を設定しました。` で検索し0件。sheet-11の正本範囲とレイアウト画像2枚も確認したが、画像は入力画面で成功フラッシュ状態を含まない。具体文言はfunction-design-embed内にあり、旧 pf-eccube3/src/Eccube/Resource/locale/message.ja.yml の `admin.shop.csv.save.complete: CSV出力を設定しました。` と旧 CsvController の addSuccess('admin.shop.csv.save.complete','admin') で実物を確認した。",
+      "reason": "固定成功文言はExcel正本ではなく旧実装にのみ実在するためLEGACY_BACKEDは妥当。現行通常CSV設定は別の共通メッセージを使う。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/Admin/Setting/Shop/CsvController.php の index() は保存後に addSuccess('admin.common.save_complete','admin') を呼ぶ。src/Eccube/Resource/locale/messages.ja.yaml の表示値は「保存しました」。`admin.setting.shop.csv.save.complete` の「CSV出力項目を保存しました。」は存在するが、通常CsvControllerでは使用されない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 744,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0209 sheet-12 のExcel正本 src-cell 0209:カスタムCSV出力設定!D61-D62 と !AG67 を開き、選択肢が「商品CSV 受注CSV 配送CSV 在庫CSV 在庫移動・振替CSV 在庫分割結合CSV」である実物を確認した。data-excel-ref=0209:カスタムCSV出力設定!L7 のレイアウト画像も目視し、先頭セレクトは「商品CSV」を表示していたが、閉じた状態のため候補一覧までは画像で確認できなかった。",
+      "reason": "正本セルは許可するCSV種別を具体的に列挙し、会員CSVとカテゴリCSVを含めていないためSPEC_BACKEDで正しい。現行候補配列は会員CSVを追加している。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Form/Type/Admin/CustomCsvType.php の CSV_TYPES は CSV_TYPE_PRODUCT、CSV_TYPE_CUSTOMER、CSV_TYPE_ORDER、CSV_TYPE_SHIPPING、CSV_TYPE_STOCK、CSV_TYPE_STOCK_MOVE、CSV_TYPE_STOCK_SPLIT を含み、csv_type の query_builder はこの配列を `c.id IN (:csvIds)` にそのまま使う。会員CSVを除外する追加条件はない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 745,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "REFUTED",
+      "correctedClass": "SPEC_BACKED",
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0209 sheet-12 のExcel正本 src-cell 0209:カスタムCSV出力設定!E76 に「設定」、同 !AG76 に「入力されたフォームの値で編集」を確認した。data-excel-ref=0209:カスタムCSV出力設定!L7 のレイアウト画像も抽出して目視し、右下に青い「設定」ボタンが実在した。画像の中央移動ボタンはアイコン表示で、先行期待の「進む／全進／戻る／全戻」という文字列は画像には無い。正本セルも「項目移動」「順序入替」までで、ページタイトル「システム設定」や出力名プレースホルダ「名称」は確認できなかった。",
+      "reason": "複合期待値の一部は旧実装由来だが、少なくとも指摘対象の送信ボタン「設定」はExcel正本の項目表とレイアウト画像の双方に直接ある。完結した表示文言乖離が正本で裏付けられるため、finding全体をLEGACY_BACKEDとする分類は誤りでSPEC_BACKEDに訂正する。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Resource/template/admin/Setting/Shop/custom_csv.twig は title=admin.setting.shop.custom_csv（「カスタムCSV」）、sub_title=admin.setting.basic_info（「基本情報設定」）、送信ボタン=admin.common.registration（「登録」）。src/Eccube/Form/Type/Admin/CustomCsvType.php の name フィールドplaceholderは「カスタムCSV名称」。移動操作は messages.ja.yaml の「出力／解除／すべて出力／すべて解除」を表示する。少なくとも正本の「設定」ボタンとは一致しない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 746,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0209 sheet-12 のExcel正本を `csv_output|rank|0起算|0始まり|setRank` で検索し、src-cell該当0件。正本セル !E72「項目移動」、!E73「順序入替」とレイアウト画像の順序操作UIは確認したが、POST配列の添字をrankへ保存する内部規約は記載されていない。旧 pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Setting/Shop/CsvController.php を開き、「設定された順番通り」として `$csvIds` 自体を foreach し `setRank($key)` する実物を確認した。",
+      "reason": "POST配列順を0起算rankへ写すという具体的な内部契約は旧実装由来なのでLEGACY_BACKEDは妥当。現行は入力配列順を保証しない再取得結果の順をrankにしている。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Service/Admin/Setting/Shop/CustomerCsvUpdateAction.php の handle() は `$csvIds = $requestData['csv_output']` の後、CsvRepository->findBy(['id' => $csvIds]) の戻り値を foreach し、そのkeyを CsvCsvExtensionEntityManager::save() へ渡す。findBy() にorderByはなく、入力ID配列順へ並べ直す処理もない。save() は渡された値をそのまま DtbCsvCsvExtension::setRank() する。",
+      "severityOpinion": "med",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 749,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0209 sheet-14 のExcel正本を `データ管理|data_menu|config_list` で検索し該当src-cellは0件。関連書籍0213_基本設計仕様書(データ管理).html も `追加システム設定|config_list` でsrc-cell検索し0件だった。data-excel-ref=0209:追加システム設定!L9 のレイアウト画像も目視したが、画像範囲は設定フォーム本体のみでサイドメニューを含まない。旧 pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/SidebarProvider.php は data_menu「データ管理」の子に config_list「追加システム設定」を登録し、旧 config.twig は menus=['data_menu','config_list'] とする実物を確認した。",
+      "reason": "親メニューと選択状態の具体値はExcel正本には無く旧実装に実在するためLEGACY_BACKEDは妥当。現行ナビとTwigは基本情報設定配下のままである。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Resource/template/admin/Setting/Shop/additional_system.twig は menus=['setting','basic_info','add_system_setting']、sub_title=admin.setting.basic_info。app/config/eccube/packages/eccube_nav.yaml でも add_system_setting は setting > basic_info の子で、data_menu/config_list は定義されていない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 750,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0209 sheet-14 のExcel正本を `method=\"post\"|同じパス|同一パス|/update` でsrc-cell検索し該当0件。正本 !E117/!AG117 は「登録」「入力されたフォームの値で登録」とだけ記載し、レイアウト画像にも登録ボタンはあるがURLやHTTPメソッドは表示されない。旧 pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/ConfigServiceProvider.php はGETとPOSTを同じ `/hareruya-ec/config` に登録し、旧 config.twig のform actionもGET側名 plugin_HareruyaEc_config を指す実物を確認した。",
+      "reason": "同一URLへPOSTする契約はExcel正本ではなく旧実装由来なのでLEGACY_BACKEDは妥当。現行はGET表示とPOST更新を別パスに分離している。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/Admin/Setting/Shop/AdditionalSystemController.php は index() をGET `/setting/shop/additional_system`、update() をPOST `/setting/shop/additional_system/update` に割り当てる。src/Eccube/Resource/template/admin/Setting/Shop/additional_system.twig のform actionも admin_setting_shop_additional_system_update を指す。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 751,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0209 sheet-14 のExcel正本 src-cell 0209:追加システム設定!E68-E69 と !E84-E85 に削除対象「スマレジ店舗ID」「スマレジ部門ID」、同 !E99/!AG99 に残す入力項目「スマレジ契約ID」「スマレジAPIで使用」を確認した。data-excel-ref=0209:追加システム設定!L9 のレイアウト画像も目視し、pin No.5がスマレジ契約ID、続いてアクセストークンと送信URLを示し、店舗ID・部門IDの欄は描かれていないことを確認した。",
+      "reason": "契約IDを残し店舗ID・部門IDを削除する要件はExcel正本セルとレイアウト画像の双方に直接あるためSPEC_BACKEDで正しい。現行は契約IDのoption行を編集せず、店舗IDキーを契約IDというラベルで表示・保存し、部門IDキーも画面に残す。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Entity/Master/MtbOption.php には SMAREGI_CONTRACT_ID、SMAREGI_STORE_ID、SMAREGI_CATEGORY_ID の各定数がある。しかし src/Eccube/Form/Type/Admin/AdditionalSystemFormType.php は SMAREGI_STORE_ID と SMAREGI_CATEGORY_ID をaddし、SMAREGI_CONTRACT_IDをaddしない。src/Eccube/Resource/template/admin/Setting/Shop/additional_system.twig は form.smaregi_store_id を messages.ja.yaml のラベル「スマレジ契約ID」で描画し、form.smaregi_category_id も描画する。AdditionalSystemController::update() はフォームキーと同名のMtbOptionを更新するため、入力値はsmaregi_contract_idではなくsmaregi_store_idへ保存される。weekly_stock_history_error_mail_address と unisearch_sftp_host もForm/Twigに残る。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    }
+  ]
+}

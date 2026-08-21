@@ -1,0 +1,381 @@
+{
+ "packetId": "rc2_07",
+ "note": "rowId は drift_findings_list_final.tsv の行番号(ヘッダ除く1始まり)。これらは分類の批判的レビュー済み(レビュー結果列)だが、検証後に実装が変更されている。classVerdict も再判定しつつ、driftVerdict を重点的に確認すること。",
+ "count": 12,
+ "findings": [
+  {
+   "rowId": 583,
+   "機能No": "M05-26",
+   "機能名": "M05-26 出荷実績登録CSVフォーマット",
+   "ドメイン": "m05",
+   "区分(画面種別)": "admin",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "①ルート/HTTPメソッド",
+   "設計期待値": "`admin_shipping_result_csv_upload` … `POST` … `/{admin_route}/order/shipping_result_csv/upload` / 旧根拠: functions/pf-eccube3/m05-26_admin_order_order_shipping_result_csv_import.md:229",
+   "実装実態": "設計はPOSTのパスを `.../shipping_result_csv/upload` とする。実装のPOSTルート(name=admin_shipping_result_csv_upload, methods=['POST'])は path が `/%eccube_admin_route%/order/shipping_result_csv/import`（265行）で、GET画面(240行 path=同 import, name=admin_shipping_result_csv_import)と同一パスをHTTPメソッドで分岐している。ルート名は一致するがURLパスが `upload` ではなく `import`。ソース全体を検索しても `shipping_result_csv/upload` パスは存在しない。",
+   "差分内容": "設計はPOSTのパスを `.../shipping_result_csv/upload` とする。実装のPOSTルート(name=admin_shipping_result_csv_upload, methods=['POST'])は path が `/%eccube_admin_route%/order/shipping_result_csv/import`（265行）で、GET画面(240行 path=同 import, name=admin_shipping_result_csv_import)と同一パスをHTTPメソッドで分岐している。ルート名は一致するがURLパスが `upload` ではなく `import`。ソース全体を検索しても `shipping_result_csv/upload` パスは存在しない。",
+   "実装参照": "src/Eccube/Controller/Admin/Order/OrderCsvController.php:265",
+   "設計書参照": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-25",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:8698-8724 のsheet-25 Excel正本はCSV項目表を定義するが、HTTPルートを記載しない。同:8792 から同じ `functions/pf-eccube3/m05-26...md` のリバース詳細設計であり、POST `/shipping_result_csv/upload` の出所は hareruya-design-docs/functions/pf-eccube3/m05-26_admin_order_order_shipping_result_csv_import.md:234-237 である。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/OrderServiceProvider.php:137-139 は `post('/.../order/shipping_result_csv/upload', ...)->bind('admin_shipping_result_csv_upload')` と定義する。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Controller/Admin/Order/OrderCsvController.php:286-287 は同じルート名のPOSTを `/order/shipping_result_csv/import` に定義する。リポジトリ内の `shipping_result_csv/upload` 検索では旧互換パス定義は見つからない（確認範囲: ec-cube-enterprise/src/Eccube/Controller, Resource/template）。",
+   "根拠検証メモ": "rowId 685と同じURL差分の重複指摘。根拠は旧実装。",
+   "対応の根拠(現develop)": "`src/Eccube/Controller/Admin/Order/OrderCsvController.php:286` `#[Route(path: '/%eccube_admin_route%/order/shipping_result_csv/import', name: 'admin_shipping_result_csv_upload', methods: ['POST'], ),]` と `:250-254` の GET ルート（同一パス、`name: 'admin_shipping_result_csv_import'`, `methods: ['GET']`）が監査時点と同一構成で、同一パスをHTTPメソッドで分岐する形が残る。スナップショット全体の `grep -rn \"shipping_result_csv/upload\" .` はヒット0で、`upload` パス定義は `script/`・`bin/`・`app/config/**`・`.github/workflows/**` にも存在しない。",
+   "再確認HEAD": "da9c2ba276",
+   "レビュー結果": "UPHELD",
+   "レビュー根拠": "Excel正本が規定するのはアップロード画面部品とCSV内容であり、期待値の具体的なPOSTパスは規定していない。具体値は旧実装に実在するためLEGACY_BACKEDが妥当。",
+   "mech": {
+    "quote": "NO_QUOTE",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Controller/Admin/Order/OrderCsvController.php"
+    ]
+   }
+  },
+  {
+   "rowId": 584,
+   "機能No": "M05-26",
+   "機能名": "M05-26 出荷実績登録CSVフォーマット",
+   "ドメイン": "m05",
+   "区分(画面種別)": "admin",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑧バッチ/API入出力・再実行性",
+   "設計期待値": "続けて try の外側でポイント付与・出荷完了メール送信・別系ポイント付与が呼び出され、それらでの例外処理はサービス側の try と独立している確認値となる。 / 旧根拠: functions/pf-eccube3/m05-26_admin_order_order_shipping_result_csv_import.md:75",
+   "実装実態": "設計は成功後処理（ポイント付与・出荷完了メール・別系ポイント）を try の外側で独立実行する。実装はポイント付与(pointService->gainPoints)とスマレジ発生ポイント連携ジョブ登録を try 内かつ beginTransaction/commit の内側（315-320行付近、commit は322行）で実行し、失敗時は import 全体がロールバックされる。commit後(324-327行)に実行されるのは dispatchGainPointMessage のみ。設計の「トランザクションと独立」ではない。加えて出荷完了メール送信に相当する処理が実装に存在しない（controllerに mail/MailService 参照が皆無）。",
+   "差分内容": "設計は成功後処理（ポイント付与・出荷完了メール・別系ポイント）を try の外側で独立実行する。実装はポイント付与(pointService->gainPoints)とスマレジ発生ポイント連携ジョブ登録を try 内かつ beginTransaction/commit の内側（315-320行付近、commit は322行）で実行し、失敗時は import 全体がロールバックされる。commit後(324-327行)に実行されるのは dispatchGainPointMessage のみ。設計の「トランザクションと独立」ではない。加えて出荷完了メール送信に相当する処理が実装に存在しない（controllerに mail/MailService 参照が皆無）。",
+   "実装参照": "src/Eccube/Controller/Admin/Order/OrderCsvController.php:313",
+   "設計書参照": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-25",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:8541-8544 のExcel正本は更新後にポイント・メール・スマレジ送信を行うことを規定するが、それらをトランザクション外で独立実行する順序までは記載しない。同:8603 以降のリバース詳細設計にだけ具体的境界がある。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/OrderCsv.php:107-111 はサービス内で `flush(); commit();` 後に更新一覧を返し、pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Order/OrderCsvController.php:251-265 はtry/catch終了後に `gainPoints`、`sendShippingCompleteMail`、`gainSmaregiPoint` を呼ぶ。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Controller/Admin/Order/OrderCsvController.php:340-354 はトランザクション内で `gainPoints` とスマレジジョブ登録を行ってからcommitし、同:368-375 はcommit後にスマレジメッセージdispatchだけを独立実行する。メール送信は同CSV経路に存在しない。",
+   "根拠検証メモ": "副作用そのものは正本にもあるが、「try外・commit後」という具体的実行境界の根拠は旧実装。",
+   "対応の根拠(現develop)": "`src/Eccube/Controller/Admin/Order/OrderCsvController.php:341` `$this->entityManager->beginTransaction();` の内側かつ try 内で `:345-352` `foreach ($updatedOrders as $updateOrder) { $this->pointService->gainPoints($updateOrder['order']); ... $gainPointJob = $this->smaregiOrderGainPointEventService->registerGainPointJob(...); }` を実行し、`:354` `$this->entityManager->commit();`、`:355-359` の `catch (\\Throwable $e)` で `$this->entityManager->rollback();` する構造は監査時点と同一。commit 後(`:370-376`)に実行されるのは `dispatchGainPointMessage` のみ。出荷完了メール送信は依然存在せず、controller に MailService 参照は皆無（`:35-43` の注入一覧に MailService なし）。",
+   "再確認HEAD": "da9c2ba276",
+   "レビュー結果": "UPHELD",
+   "レビュー根拠": "副作用の存在は正本にあるが、指摘の核心であるcommit後・try/catch外という境界は正本にない。旧実装だけがその順序を裏付ける。",
+   "mech": {
+    "quote": "NO_QUOTE",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Controller/Admin/Order/OrderCsvController.php"
+    ]
+   }
+  },
+  {
+   "rowId": 588,
+   "機能No": "M05-26",
+   "機能名": "M05-26 出荷実績登録CSVフォーマット",
+   "ドメイン": "m05",
+   "区分(画面種別)": "admin",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "出荷実績登録CSVフォーマットは、識別ID43〜64の配送先項目として「配送先_住所1」「配送先_住所2」の後に「配送先_TEL1」「配送先_TEL2」「配送先_TEL3」「配送先_FAX1」「配送先_FAX2」「配送先_FAX3」「配送方法(ID)」「配送方法(名称)」「送り状No.」「お届け時間ID」「お届け時間(名称)」を並べ、配送先_住所3列は定義しない。",
+   "実装実態": "実装のCSV_HEADERは「配送先_住所2」の後に設計にない「配送先_住所3」を追加し、画面のフォーマット表も headers|keys をそのまま表示する。出力SQLも s.addr03 AS shipping_addr03 を含むため、設計64列に対して実装は配送先_住所3を含む65列の契約になる。",
+   "差分内容": "設計CSV表の配送先側は line 7837〜7849 で住所2の次が配送先_TEL1であり、配送先_住所3は存在しない。一方、実装は OrderCsvController::CSV_HEADER/NOT_REQUIRED_CSV_HEADER に配送先_住所3を定義し、テンプレートがその定義を表示する。別経路として admin_shipping_csv_import も確認したが3列の出荷CSVアップロードであり、本出荷実績登録CSVフォーマットの反証にはならない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Order/OrderCsvController.php:95, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php:1418, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Order/shipping_result_csv_import.twig:82",
+   "設計書参照": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-25:7837",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:8775-8777 のExcel正本セル E59-E61 は「配送先_住所1」「配送先_住所2」の直後を「配送先_TEL1」とし、同:8785 のE69を「送り状No.」とする。配送先_住所3は正本の当CSV項目表に存在しない。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Order/OrderCsvController.php:67-79 も旧CSVヘッダを「配送先_住所1」「配送先_住所2」「配送先_TEL1」…「送り状No.」の順で定義し、配送先_住所3を持たない。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Order/OrderCsvController.php:97-100 は「配送先_住所1」「配送先_住所2」の後に設計外の「配送先_住所3」を定義する。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Order/shipping_result_csv_import.twig:82-84 は `{% for header in headers|keys %}` でそのヘッダを表示し、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php:1525 も `'s.addr03 AS shipping_addr03'` を出力対象にする。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Controller/Admin/Order/OrderCsvController.php:97-100` は `'配送先_住所1' / '配送先_住所2' / '配送先_住所3' => '配送先_住所3', / '配送先_TEL1'` の順で、設計にない `配送先_住所3` が住所2とTEL1の間に定義されたまま（NOT_REQUIRED 側も `:170-173` で同様）。`src/Eccube/Repository/OrderRepository.php:1525` `'s.addr03 AS shipping_addr03',` も出力SQLに残存。`src/Eccube/Resource/template/admin/Order/shipping_result_csv_import.twig:82` `{% for header in headers|keys %}` が CSV_HEADER 定義をそのまま表示する構造も未変更で、実装は65列契約のまま。",
+   "再確認HEAD": "da9c2ba276",
+   "レビュー結果": "UPHELD",
+   "レビュー根拠": "期待する列順と住所3列の不在は、function-design-embedではなくExcel正本のCSV項目表そのものから確認できる。",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Controller/Admin/Order/OrderCsvController.php",
+     "src/Eccube/Repository/OrderRepository.php"
+    ]
+   }
+  },
+  {
+   "rowId": 603,
+   "機能No": "M06-05",
+   "機能名": "M06-05 買取商品履歴(検索入力)",
+   "ドメイン": "m06",
+   "区分(画面種別)": "admin",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・未実装",
+   "設計期待値": "買取日時(From)>買取日時(To)の場合エラーにする。",
+   "実装実態": "complete_date_from / complete_date_to は DateTimeType の単一テキスト入力として定義されるが、From と To の大小関係を検証する Callback/Constraint/Controller 判定/JS 判定がない。Repository は From 条件と To 条件を独立に追加するだけで、From > To の場合もエラーにせず検索条件として実行する。",
+   "差分内容": "設計は買取日時 From が To より後ならエラー表示を要求している。実装では FormType に相関バリデーションがなく、SearchControllerTrait も form isValid 判定や日付大小チェックを行わず、専用 JS も datetimepicker・全選択・CSV submit のみ。反証として complete_date_from/complete_date_to、completeDateFrom/completeDateTo、Callback、GreaterThan/LessThan、買取日時、From/To の別キーワードで検索したが当該チェックは不在。",
+   "実装参照": "不在（探索範囲: src/Eccube/Form/Type/Admin/OtcBuyOrder/OtcBuyOrderHistoryType.php, src/Eccube/Controller/Admin/OtcBuyOrder/OtcBuyOrderHistoryController.php, src/Eccube/Controller/Admin/SearchControllerTrait.php, src/Eccube/Repository/DtbOtcBuyOrderStockHistoryRepository.php, html/template/admin/assets/js/OtcBuyOrder/otc-buy-order-history.js, src/Eccube/Resource/locale）",
+   "設計書参照": "excel_to_html/output/0205_基本設計仕様書(店頭買取管理).html#sheet-12:3429",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0205_基本設計仕様書(店頭買取管理).html:3853 のExcel正本セル AG96 は「買取日時(From)>買取日時(To)の場合エラー」と明記する。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/OtcBuyOrder/OtcBuyOrderHistoryType.php:58-70 の旧 `complete_date_from/to` は日時書式だけを設定し相関制約を持たず、/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Repository/DtbOtcBuyOrderStockHistoryRepository.php:68-75 はFrom/Toを独立条件として追加するだけであった。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/OtcBuyOrder/OtcBuyOrderHistoryType.php:103-121 は `complete_date_from/to` をDateTimeTypeとして定義するだけでCallback/RelationDate等を持たない。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbOtcBuyOrderStockHistoryRepository.php のFrom/To条件も個別に適用され、FormType・Controller・Repository・専用JSを探索してもFrom>Toエラー化処理は存在しない。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Form/Type/Admin/OtcBuyOrder/OtcBuyOrderHistoryType.php:103-122` は `->add('complete_date_from', DateTimeType::class, ['required' => false, 'input' => 'datetime', 'widget' => 'single_text', ...])` / 同 `complete_date_to` のみで、Callback や GreaterThan/LessThan 等の相関制約は無い（`grep -n \"Callback|GreaterThan|LessThan\" src/Eccube/Form/Type/Admin/OtcBuyOrder/ src/Eccube/Controller/Admin/OtcBuyOrder/` はヒット0）。`src/Eccube/Controller/Admin/OtcBuyOrder/OtcBuyOrderHistoryController.php:130-137` の `getQueryBuilder()` も `HistorySearchDataDto::fromFormData($args['searchData'])` を Repository に渡すだけで大小判定なし、`src/Eccube/Controller/Admin/SearchControllerTrait.php` にも form isValid による日付相関エラーは無い。`html/template/admin/assets/js/OtcBuyOrder/otc-buy-order-history.js:1-25` も datetimepicker・全選択・CSV submit のみ。`src/Eccube/Repository/DtbOtcBuyOrderStockHistoryRepository.php:191-200` は From 条件を独立に追加するのみ。",
+   "再確認HEAD": "da9c2ba276",
+   "レビュー結果": "UPHELD",
+   "レビュー根拠": "FromとToの相関バリデーションはExcel正本に直接記載されている。",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Controller/Admin/OtcBuyOrder/OtcBuyOrderHistoryController.php",
+     "src/Eccube/Repository/DtbOtcBuyOrderStockHistoryRepository.php"
+    ]
+   }
+  },
+  {
+   "rowId": 639,
+   "機能No": "M08-04",
+   "機能名": "M08-04 会員登録編集",
+   "ドメイン": "m08",
+   "区分(画面種別)": "admin",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "保存成功時は表示文言「会員情報を保存しました。」を表示する。",
+   "実装実態": "保存成功時は admin.common.save_complete を addSuccess し、翻訳文言は「保存しました」。",
+   "差分内容": "設計の表示文言は会員情報を対象にした「会員情報を保存しました。」だが、実装は共通文言「保存しました」を表示する。別キー「会員情報を保存しました」は対象範囲に不在。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/CustomerEditController.php:211 /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:1559",
+   "設計書参照": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-9:2633",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:2636 のExcel正本セルは「カスタマイズ要件に記載の内容以外は現行踏襲とする。」のみで、「会員情報を保存しました。」という成功文言はsheet-9のExcel正本セルに存在しない（確認範囲: sheet-9のsrc-cell全件）。",
+   "旧実装根拠": "pf-eccube3/src/Eccube/Controller/Admin/Customer/CustomerEditController.php:136 に `$app->addSuccess('admin.customer.save.complete', 'admin');`、pf-eccube3/src/Eccube/Resource/locale/message.ja.yml:136 に `admin.customer.save.complete: 会員情報を保存しました。` があり、旧実装の表示文言が期待値の真の根拠である。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/CustomerEditController.php:211 は `$this->addSuccess('admin.common.save_complete', 'admin');`、ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:1595 は `admin.common.save_complete: 保存しました` で、旧文言を満たさない。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Controller/Admin/Customer/CustomerEditController.php:211` `$this->addSuccess('admin.common.save_complete', 'admin');` のままで、`src/Eccube/Resource/locale/messages.ja.yaml:1595` `admin.common.save_complete: 保存しました`。「会員情報を保存しました。」に相当する翻訳キーは messages.ja.yaml に存在しない（grep で該当なし）。",
+   "再確認HEAD": "da9c2ba276",
+   "レビュー結果": "UPHELD",
+   "レビュー根拠": "成功時の具体的な表示文言はExcel正本に無く、旧実装のロケール定義とその利用箇所にのみ存在する。",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Resource/locale/messages.ja.yaml"
+    ]
+   }
+  },
+  {
+   "rowId": 672,
+   "機能No": "M08-09",
+   "機能名": "M08-09 配送先編集",
+   "ドメイン": "m08",
+   "区分(画面種別)": "admin",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "保存完了メッセージはロケールキー admin.customer.save.complete を使用する。",
+   "実装実態": "保存成功時は admin.common.save_complete を addSuccess しており、messages.ja.yaml には admin.common.save_complete: 保存しました がある。admin.customer.save.complete は見つからない。",
+   "差分内容": "設計が指定するロケールキーと実装が使用するキーが異なる。",
+   "実装参照": "src/Eccube/Controller/Admin/Customer/CustomerDeliveryEditController.php:107 / src/Eccube/Resource/locale/messages.ja.yaml:1405 / 不在（探索範囲: src/Eccube/Resource/locale, src/Eccube/Controller/Admin/Customer。検索語: admin.customer.save.complete）",
+   "設計書参照": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-17:4004-4005",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:4485-4486 のExcel正本は保存時の入力チェックと更新を記載するが、完了メッセージまたは `admin.customer.save.complete` はsheet-17のsrc-cell要素に存在しない。同:4585以降はリバース詳細設計でありSPEC根拠ではない。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/CustomerController.php:489-490 は配送先保存後に `$app->addSuccess('admin.customer.save.complete', 'admin');` を実行する。pf-eccube3/src/Eccube/Resource/locale/message.ja.yml:136 は `admin.customer.save.complete: 会員情報を保存しました。` と定義する。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/CustomerDeliveryEditController.php:107 は `$this->addSuccess('admin.common.save_complete', 'admin');` を使用し、ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:1595 は `admin.common.save_complete: 保存しました` と定義する。",
+   "根拠検証メモ": "ロケールキーの期待値は旧pf-eccube3由来である。",
+   "対応の根拠(現develop)": "`src/Eccube/Controller/Admin/Customer/CustomerDeliveryEditController.php:107` は `$this->addSuccess('admin.common.save_complete', 'admin');` のまま。`src/Eccube/Resource/locale` を `admin.customer.save` で再探索しても `messages.ja.yaml:2806 admin.customer.save_pattern: 検索条件保存` のみで、`admin.customer.save.complete` キーは存在しない。",
+   "再確認HEAD": "da9c2ba276",
+   "レビュー結果": "UPHELD",
+   "レビュー根拠": "完了メッセージのキーも表示文言もExcel正本に無く、旧実装に直接の根拠がある。",
+   "mech": {
+    "quote": "EMBED_ONLY",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Resource/locale/messages.ja.yaml"
+    ]
+   }
+  },
+  {
+   "rowId": 676,
+   "機能No": "M08-10",
+   "機能名": "M08-10 オンライン本人確認",
+   "ドメイン": "m08",
+   "区分(画面種別)": "admin",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "本人確認の閲覧権限が無い場合は身分証画像を表示せず、各画像枠に「閲覧不可」を表示する。",
+   "実装実態": "Twigは画像データがあれば常に img を出し、無ければ「登録データなし」を出す。画像配信ルート側では閲覧不可権限を検出すると AccessDenied を投げるが、モーダル内に「閲覧不可」を表示する分岐や翻訳キーは無い。",
+   "差分内容": "設計はモーダル表示時に画像を出さず文言表示する仕様だが、実装は画像タグを出した後に画像取得リクエストを拒否する方式で、利用者向け文言も欠落している。",
+   "実装参照": "src/Eccube/Resource/template/admin/Customer/edit.twig:251; src/Eccube/Resource/template/admin/Customer/edit.twig:253; src/Eccube/Resource/template/admin/Customer/edit.twig:255; src/Eccube/Controller/Admin/Customer/CustomerEditController.php:312; src/Eccube/Resource/locale/messages.ja.yaml:2744; 不在（探索範囲: src/Eccube, html の 閲覧不可/identification_image.*view/authority 判定付きTwig分岐）",
+   "設計書参照": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-18:4182,4186,4191,4197,4216,4219,4226,4230",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:4731-4734 のExcel正本は本人顔写真・身分証明書（表・裏・斜め）を「画像」と定義するが、閲覧権限なし時の非表示や「閲覧不可」文言はsheet-18のsrc-cell要素に存在しない。これらは同:4801以降のリバース詳細設計のみの記述である。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Customer/edit.twig:578-600 は `hasAccessAuthority` を判定し、権限なしなら画像を取得せず `admin.customer.identification.access_denied` を表示する。同:610-645 も各画像枠で同じ分岐を持ち、pf-eccube3/app/Plugin/HareruyaEc/Resource/locale/message.ja.yml:1303-1305 は `access_denied: 閲覧不可` と定義する。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Customer/edit.twig:242-255 は画像データがあれば常に `<img ... class=\"expand-image\">`、なければ `admin.customer.identification_image.no_image` を表示する。ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/CustomerEditController.php:320-326 は画像配信時に権限なしなら `AccessDeniedHttpException` を投げるだけで、Twig上の「閲覧不可」分岐はない。",
+   "根拠検証メモ": "表示制御と文言の根拠は旧pf-eccube3にある。",
+   "対応の根拠(現develop)": "`src/Eccube/Resource/template/admin/Customer/edit.twig:253,266,281,294` は今も `<img src=\"{{ path('admin_identification_image', {'imageUrl': IdentificationImage.url}) }}\" class=\"expand-image\" ...>` を無条件に出力し、else 側は `:255,268,283,296` の `<span>{{ 'admin.customer.identification_image.no_image'|trans }}</span>`（登録データなし）のみ。`grep -rn 閲覧不可 src/Eccube html` は 0 件で、閲覧権限判定による分岐も翻訳キーも存在しない。権限拒否は依然 `src/Eccube/Controller/Admin/Customer/CustomerEditController.php:315` の identificationImage 内 `if (!empty($AccessDeniedAuthorityRole)) { throw new AccessDeniedHttpException(); }` のみ。",
+   "再確認HEAD": "da9c2ba276",
+   "レビュー結果": "UPHELD",
+   "レビュー根拠": "画像項目は正本にあるが、権限なし時に画像を出さず「閲覧不可」と表示する具体的要件は旧Twigと旧ロケールに由来する。",
+   "mech": {
+    "quote": "TOO_SHORT",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Resource/locale/messages.ja.yaml"
+    ]
+   }
+  },
+  {
+   "rowId": 710,
+   "機能No": "M10-01",
+   "機能名": "M10-01 基本設定(旧ショップマスター)",
+   "ドメイン": "m10",
+   "区分(画面種別)": "admin",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・未実装",
+   "設計期待値": "FAX番号は基本情報の表示要素・入力項目として画面に表示し、電話と同じ3分割任意入力および部分入力禁止ルールで検証し、dtb_base_info.fax_number を読み書きする。",
+   "実装実態": "BaseInfo エンティティには fax_number 列・getter/setter があるが、M10-01の ShopMasterType に fax_number/FaxNumberType のフィールド追加がなく、shop_master.twig に FAX番号のラベル・widget・エラー表示がない。",
+   "差分内容": "fax_number、FaxNumber、FAX番号、admin.common.fax_number を M10-01 の Controller/Form/Twig/locale へ反証検索したが、画面入力・検証・保存に接続する実装は確認できなかった。エンティティ列だけでは利用者が直接操作する設計要求を満たさない。",
+   "実装参照": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Setting/Shop/ShopController.php, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/ShopMasterType.php, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Setting/Shop/shop_master.twig, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml; 参考: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Entity/BaseInfo.php:1148 に fax_number 列のみ存在）",
+   "設計書参照": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html#sheet-3:938",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html:1131 のExcel正本項目表は「1-8 FAX番号」を表示項目として列挙し、必須欄を「-」としている。同:1115 は「フォームに入力された値で店舗情報を登録する」と明記する。",
+   "旧実装根拠": "旧実装 pf-eccube3/src/Eccube/Form/Type/Admin/ShopMasterType.php:84-89 は電話とFAXをともに任意の `tel` 型で追加し、pf-eccube3/src/Eccube/Resource/template/admin/Setting/Shop/shop_master.twig:98-106 はFAXを `fax01`・`fax02`・`fax03` の3分割widgetとして描画する。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Entity/BaseInfo.php:1148-1158 には `fax_number` 列とsetter/getterだけは存在するが、ec-cube-enterprise/src/Eccube/Form/Type/Admin/ShopMasterType.php:54-325 のフォーム定義にはFAXフィールドがなく、shop_master.twigにもFAX widgetがない（同テンプレート:128-133 は電話のみ）。",
+   "根拠検証メモ": "3分割・部分入力禁止の詳細は旧実装由来だが、FAX入力項目そのものはExcel正本が明示するためSPEC_BACKED。",
+   "対応の根拠(現develop)": "`src/Eccube/Entity/BaseInfo.php:1148-1149` `#[ORM\\Column(name: 'fax_number', type: Types::STRING, length: 14, nullable: true, options: ['comment' => 'FAX番号'])] private ?string $fax_number = null;` は現 develop にも存在するが、`ShopMasterType.php` 全体を grep しても `fax_number`/`FaxNumber` の add は0件、`src/Eccube/Resource/template/admin/Setting/Shop/shop_master.twig` にも `fax` を含む行は0件、`src/Eccube/Controller/Admin/Setting/Shop/ShopController.php` にも該当なし。locale は `src/Eccube/Resource/locale/messages.ja.yaml:1826` `admin.common.fax_number: FAX番号` の定義が残るのみで、M10-01画面から参照されていない。3分割任意入力・部分入力禁止検証の実装も不在。",
+   "再確認HEAD": "da9c2ba276",
+   "レビュー結果": "UPHELD",
+   "レビュー根拠": "3分割・部分入力禁止・物理列の詳細は旧実装で補われるが、現実装から欠落したFAX入力項目とその登録要求自体はExcel正本に明記されているため、指摘の中核はSPEC_BACKEDである。",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Resource/locale/messages.ja.yaml"
+    ]
+   }
+  },
+  {
+   "rowId": 719,
+   "機能No": "M10-04",
+   "機能名": "M10-04 支払い方法　手数料設定",
+   "ドメイン": "m10",
+   "区分(画面種別)": "admin",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "編集画面のロゴ画像欄で、ラベル「ロゴ画像」に加え補足として「620px以上推奨」を表示する。カスタマイズ区分は「なし／現行踏襲」であり、補足文言も現行(pf-eccube3)の推奨表記を踏襲すべき。",
+   "実装実態": "payment_edit.twig:197 で {{ 'admin.setting.shop.payment.logo_image_size'|trans }} を出力し、messages.ja.yaml:3055 の翻訳値は「推奨サイズ : 500px × 100px」。ラベル「ロゴ画像」(messages.ja.yaml:3054) は一致するが補足文言が設計の「620px以上推奨」と一致しない。",
+   "差分内容": "編集画面テンプレート(payment_edit.twig)と日本語ロケール(messages.ja.yaml)を確認。ロゴ補足文言が翻訳キー admin.setting.shop.payment.logo_image_size 経由で「推奨サイズ : 500px × 100px」と表示され、設計書の現行踏襲文言「620px以上推奨」と一致しない、利用者が直接目にする文言差分。twig は当該翻訳キー1つのみを出力しており動的な 620px 表示経路も存在しない。",
+   "実装参照": "src/Eccube/Resource/template/admin/Setting/Shop/payment_edit.twig:197 / src/Eccube/Resource/locale/messages.ja.yaml:3055",
+   "設計書参照": "excel_to_html/output/0209_基本設計仕様書(基本情報設定).html#sheet-6",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "Excel正本M10-04は hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html:2440-2445 でカスタマイズなし・現行踏襲とし、同:2475 は「ロゴ画像」を項目化するが、「620px以上推奨」という具体文言は記載しない。具体文言は同:2532 以後のリバース詳細設計で補われたもの。",
+   "旧実装根拠": "旧実装 pf-eccube3/src/Eccube/Resource/template/admin/Setting/Shop/payment_edit.twig:167-172 はロゴ画像ラベル直下に `<span class=\"small\">620px以上推奨</span>` を表示する。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Setting/Shop/payment_edit.twig:193-198 は `admin.setting.shop.payment.logo_image_size` を表示し、messages.ja.yaml:3103-3104 の翻訳値は「ロゴ画像」「推奨サイズ : 500px × 100px」である。",
+   "根拠検証メモ": "620px文言はExcel正本ではなく旧実装に所在する。",
+   "対応の根拠(現develop)": "`src/Eccube/Resource/template/admin/Setting/Shop/payment_edit.twig:196-197` `<span>{{ 'admin.setting.shop.payment.logo_image'|trans }}</span><i class=\"fa fa-question-circle fa-lg ms-1\"></i>` `<br>{{ 'admin.setting.shop.payment.logo_image_size'|trans }}` のままで、翻訳値は `src/Eccube/Resource/locale/messages.ja.yaml:3103` `admin.setting.shop.payment.logo_image: ロゴ画像` / `:3104` `admin.setting.shop.payment.logo_image_size: \"推奨サイズ : 500px × 100px\"`。設計の現行踏襲文言「620px以上推奨」への修正はなく、twig は当該翻訳キー1つのみを出力しており動的な620px表示経路も存在しない。",
+   "再確認HEAD": "da9c2ba276",
+   "レビュー結果": "UPHELD",
+   "レビュー根拠": "現行踏襲という一般条項は正本にあるが、比較対象となる具体値「620px以上推奨」は正本に無く、旧実装を見なければ確定できない。",
+   "mech": {
+    "quote": "EMBED_ONLY",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Resource/locale/messages.ja.yaml"
+    ]
+   }
+  },
+  {
+   "rowId": 747,
+   "機能No": "M10-13",
+   "機能名": "M10-13 カスタムCSV出力設定",
+   "ドメイン": "m10",
+   "区分(画面種別)": "admin",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・未実装",
+   "設計期待値": "CSV選択に在庫CSV・在庫移動／振替CSV・在庫分割結合CSVを追加し、保存済み csv_extension_id を指定してカスタムCSVをストリーミング出力できる。",
+   "実装実態": "設定画面の選択肢定数には STOCK_MOVE/STOCK_SPLIT があるが、CustomExportCsvController::FUNCTIONS は PRODUCT/ORDER/SHIPPING/STOCK のみ。StockListController のカスタムCSV出力も CSV_TYPE_STOCK のみを許可し、在庫移動・振替/在庫分割結合のカスタムCSV出力導線・サービス・テンプレート参照は見つからない。dtb_csv 登録も csv_type_id=10 の在庫CSVのみ確認できる。",
+   "差分内容": "在庫移動・振替CSV、在庫分割結合CSVは設定候補としては出せるが、保存した定義を実ファイル出力する経路が実装されていない。別キーワード（CSV_TYPE_STOCK_MOVE、CSV_TYPE_STOCK_SPLIT、custom_csv、csvExtensionId、出力項目設定）でも出力経路は反証できなかった。",
+   "実装参照": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Exporter, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/CustomExportCsvController.php:30）",
+   "設計書参照": "excel_to_html/output/0209_基本設計仕様書(基本情報設定).html#sheet-12:3300,3307,3380,3392",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html:3714-3721 の Excel 正本は「CSV選択に在庫関連の以下のカスタムCSV出力項目を追加する」「在庫CSV, 在庫移動・振替CSV, 在庫分割結合CSV」とし、同:3730 でもこの3種類を選択肢に明記する。単なる名称追加ではなく「カスタムCSV出力項目」として追加する要求である。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/SettingServiceProvider.php:47-50 は `custom_csv/export/{csvExtensionId}` を `CustomExportCsvController::index` に結び、/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/CustomExportCsvController.php:51-80 は保存済みIDを取得して `new StreamedResponse()` でCSVを返す。ただし旧 `FUNCTIONS`（同:25-41）も商品・受注・配送のみで、在庫移動・分割結合自体の出力は旧実装にもない。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/CustomCsvType.php:38-40 は設定候補に `CSV_TYPE_STOCK`、`CSV_TYPE_STOCK_MOVE`、`CSV_TYPE_STOCK_SPLIT` を含める一方、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/CustomExportCsvController.php:32-53 の `FUNCTIONS` は PRODUCT/ORDER/SHIPPING/STOCK のみで、STOCK_MOVE/STOCK_SPLITのqueryBuilder・exporter・fileNameがない。設定はできても後二者を出力できない。",
+   "根拠検証メモ": "ストリーミングという実装方式は旧実装由来だが、在庫関連3種をカスタムCSV出力項目へ追加する要求そのものはExcel正本に明記される。",
+   "対応の根拠(現develop)": "`src/Eccube/Controller/Admin/CustomExportCsvController.php:32-52` の `public const FUNCTIONS` は `CSV_TYPE_PRODUCT`/`CSV_TYPE_ORDER`/`CSV_TYPE_SHIPPING`/`CSV_TYPE_STOCK` の4件のみで、在庫移動・振替／在庫分割結合の queryBuilder・exporter エントリが無い（同 :90 が `self::FUNCTIONS[$CsvType->getId()]['queryBuilder']` を引くため未定義キーになる）。`src/Eccube/Controller/Admin/Stock/StockListController.php:315` も `if ($csvExtension === null || $csvExtension->getCsvType()?->getId() !== CsvType::CSV_TYPE_STOCK)` で在庫CSV以外を弾き、同 :117,478 の `findActiveByCsvTypeId(CsvType::CSV_TYPE_STOCK)` のみ。`CSV_TYPE_STOCK_MOVE|CSV_TYPE_STOCK_SPLIT` の全ヒットは `src/Eccube/Entity/Master/CsvType.php:82,87`（定数定義）と `src/Eccube/Form/Type/Admin/CustomCsvType.php:39,40`（設定画面の選択肢）の4箇所のみ。`exportStockMove|StockMoveQueryBuilder|exportStockSplit|StockSplitQueryBuilder` は0件。",
+   "再確認HEAD": "da9c2ba276",
+   "レビュー結果": "UPHELD",
+   "レビュー根拠": "保存済みIDやストリーミング方式は旧実装由来だが、在庫関連3種を単なる名称でなく「カスタムCSV出力項目」として追加する要求はExcel正本が明示しており、出力経路欠落という指摘の中核を支持する。",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Controller/Admin/Stock/StockListController.php"
+    ]
+   }
+  },
+  {
+   "rowId": 748,
+   "機能No": "M10-15",
+   "機能名": "M10-15 店舗登録",
+   "ドメイン": "m10",
+   "区分(画面種別)": "admin",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "「登録」押下（POST、検証成功）時、成功フラッシュにメッセージキー admin.shop.save.complete を積む。文言はロケールで「基本情報を保存しました。」。",
+   "実装実態": "保存成功時に addSuccess('admin.common.save_complete', 'admin') を積む。messages.ja.yaml:1554 で admin.common.save_complete=「保存しました」。設計指定キー admin.shop.save.complete と文言「基本情報を保存しました。」は enterprise の locale に不在（grep 確認）。",
+   "差分内容": "設計オラクルは成功フラッシュを固有キー admin.shop.save.complete＝『基本情報を保存しました。』と明記するが、実装は汎用キー admin.common.save_complete＝『保存しました』へ統合されており、保存成功時に表示される文言が設計と一致しない。ShopController.php・messages.ja.yaml とも設計指定キー/文言は不在。DB永続化・リダイレクトは設計どおり実装済み。",
+   "実装参照": "ec-cube-enterprise/src/Eccube/Controller/Admin/Setting/Shop/ShopController.php:87 / src/Eccube/Resource/locale/messages.ja.yaml:1554",
+   "設計書参照": "excel_to_html/output/0209_基本設計仕様書(基本情報設定).html#sheet-13",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html:4091-4092 の Excel 正本は「6-1 登録」「入力されたフォームの値で編集」とのみ記載し、成功フラッシュキー `admin.shop.save.complete` や文言「基本情報を保存しました。」は Excel 正本本文（確認範囲: 同:3905-4225）にない。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-eccube3/src/Eccube/Controller/Admin/Setting/Shop/ShopController.php:58-73 は保存・flush後に `$app->addSuccess('admin.shop.save.complete', 'admin')` を実行し、/home/y-saito/Developments/pf-eccube3/src/Eccube/Resource/locale/message.ja.yml:159 は `admin.shop.save.complete: 基本情報を保存しました。` と定義する。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Setting/Shop/ShopController.php:84-89 は保存成功時に `$this->addSuccess('admin.common.save_complete', 'admin')` を使い、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:1595 は同キーを「保存しました」と定義するため、旧実装の固有メッセージが移植されていない。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Controller/Admin/Setting/Shop/ShopController.php:87` は現 develop でも `$this->addSuccess('admin.common.save_complete', 'admin');`（同ファイル内 addSuccess はこの1箇所のみ）で、`src/Eccube/Resource/locale/messages.ja.yaml:1595` `admin.common.save_complete: 保存しました`。設計指定キー `admin.shop.save.complete` と文言「基本情報を保存しました」は `grep -rn 'admin.shop.save.complete|基本情報を保存しました' src/Eccube/Resource/locale/` で0件。",
+   "再確認HEAD": "da9c2ba276",
+   "レビュー結果": "UPHELD",
+   "レビュー根拠": "登録操作自体は正本にあるが、成功フラッシュキーと具体文言は正本に記述されず、旧実装にのみ確認できる。",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Resource/locale/messages.ja.yaml"
+    ]
+   }
+  },
+  {
+   "rowId": 753,
+   "機能No": "M10-16",
+   "機能名": "M10-16 追加システム設定",
+   "ドメイン": "m10",
+   "区分(画面種別)": "admin",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "購入処理エラー通知先メールアドレスとイベント決済確認エラー通知メールアドレスを、それぞれ別項目として表示・編集できる。",
+   "実装実態": "Twig はイベント決済確認エラー通知メールアドレスのラベルを出しながら、widget/errors は shopping_error_mail_address を描画している。check_payment_error_mail_address の widget はテンプレート内に存在しない。",
+   "差分内容": "alert_shopping_error_mail_address/check_payment_error_mail_address/shopping_error_mail_address の翻訳キー・定数・Twigを再検索し、購入処理エラーのラベル欠落とイベント決済確認エラーのフォーム未描画を確認した。",
+   "実装参照": "src/Eccube/Entity/Master/MtbOption.php:87,89; src/Eccube/Resource/locale/messages.ja.yaml:4188,4189; src/Eccube/Resource/template/admin/Setting/Shop/additional_system.twig:175,178",
+   "設計書参照": "excel_to_html/output/0209_基本設計仕様書(基本情報設定).html#sheet-14:3936-3937,4032",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html:4440-4441 の Excel 正本は項目16「購入処理エラー通知先メールアドレス」と項目17「イベント決済確認エラー通知メールアドレス」を別々の入力項目として列挙する。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/ConfigType.php:263-283 は `ALERT_SHOPPING_ERROR_MAIL_ADDRESS` と `ALERT_CHECK_PAYMENT_ERROR_MAIL_ADDRESS` を別フィールドとして追加し、それぞれ「購入処理エラー通知先メールアドレス」「イベント決済確認エラー通知メールアドレス」とラベル付けする。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/AdditionalSystemFormType.php:167-179 は両方のフォーム子を作るが、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Setting/Shop/additional_system.twig:182-189 はイベント決済確認エラーのラベル `alert_check_payment_error_mail_address` の下に `form.shopping_error_mail_address` を描画するだけで、`form.check_payment_error_mail_address` の描画箇所がない（当該Twig全体を検索）。2項目を別々に編集できない。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Resource/template/admin/Setting/Shop/additional_system.twig:184-188` は `<span>{{ 'admin.setting.shop.add_system.alert_check_payment_error_mail_address'|trans }}</span>`（`messages.ja.yaml:4233` = 「イベント決済確認エラー通知メールアドレス」）というラベルに対して `{{ form_widget(form.shopping_error_mail_address) }}` / `{{ form_errors(form.shopping_error_mail_address) }}` を描画したままで、`form.check_payment_error_mail_address` の widget は同テンプレートに存在しない（twig 内 `error_mail_address|shopping_error|check_payment` grep のヒットは 184,187,188 と weekly_stock_history 系 202,205,206 のみ）。フォーム側は `src/Eccube/Form/Type/Admin/AdditionalSystemFormType.php:167,174` が `Option::ALERT_SHOPPING_ERROR_MAIL_ADDRESS`（`src/Eccube/Entity/Master/MtbOption.php:90` = `shopping_error_mail_address`）と `Option::ALERT_CHECK_PAYMENT_ERROR_MAIL_ADDRESS`（同 :92 = `check_payment_error_mail_address`）の2項目を持つが、購入処理エラー側ラベル `admin.setting.shop.add_system.alert_shopping_error_mail_address`（`messages.ja.yaml:4232`）は画面に出ておらず、2項目を別項目として表示・編集できない。",
+   "再確認HEAD": "da9c2ba276",
+   "レビュー結果": "UPHELD",
+   "レビュー根拠": "期待される2項目は、function-design-embedではなくExcel正本の別々の入力項目として明記されている。",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Resource/locale/messages.ja.yaml"
+    ]
+   }
+  }
+ ]
+}

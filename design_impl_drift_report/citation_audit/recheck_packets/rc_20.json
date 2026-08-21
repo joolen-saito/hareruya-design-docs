@@ -1,0 +1,367 @@
+{
+ "packetId": "rc_20",
+ "note": "rowId は drift_findings_list_final.tsv の行番号(ヘッダ除く1始まり)。mech は機械検証フラグ(手掛かりであって正解ではない)。",
+ "count": 12,
+ "findings": [
+  {
+   "rowId": 371,
+   "機能No": "M03-06",
+   "機能名": "M03-06 商品情報カスタムCSV出力",
+   "ドメイン": "m03",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "拡張の削除方式は dtb_csv_extension.deleted_at による論理削除とする。",
+   "実装実態": "削除時は deleteByCsvExtensionId() で中間行を DELETE し、entityManager->remove($CsvExtension) で dtb_csv_extension 本体も物理削除している。",
+   "差分内容": "設計は deleted_at による論理削除を要求しているが、実装は setDeletedAt() を呼ばず remove() と flush() により物理削除する。",
+   "実装参照": "src/Eccube/Controller/Admin/Setting/Shop/CustomerCsvController.php:95",
+   "設計書参照": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-7:2208",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:2528 が「function-design-embed:start m03-06」で、deleted_at による論理削除はその後の同:2545 にのみ「拡張の削除方式 dtb_csv_extension.deleted_at による論理削除」とある。Excel正本範囲（sheet-7の同:2384-2527）には削除方式がない。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/doctrine/Plugin.HareruyaEc.Entity.DtbCsvExtension.dcm.yml:16-20 は「soft_deleteable: field_name: deletedAt」、同:50-55 は「column: deleted_at」と定義する。/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Setting/Shop/CsvController.php:111-115 の「remove($csvExtension)」はこのSoftDelete設定下で論理削除になる。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Entity/DtbCsvExtension.php:87-99 は deleted_at プロパティを持つだけでSoftDeleteable指定がなく、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Setting/Shop/CustomerCsvController.php:119-121 は「deleteByCsvExtensionId」「entityManager->remove($CsvExtension)」「flush()」として物理削除する。",
+   "根拠検証メモ": "正本記載漏れだが、旧Doctrineマッピングが論理削除を明確に裏付ける。",
+   "対応の根拠(現develop)": "`src/Eccube/Controller/Admin/Setting/Shop/CustomerCsvController.php:119-121` は `$this->csvCsvExtensionRepository->deleteByCsvExtensionId($CsvExtension->getId()); $this->entityManager->remove($CsvExtension); $this->entityManager->flush();` のままで、`setDeletedAt()` による論理削除は追加されていない（同ファイル内に deleted_at 設定なし）。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EMBED_ONLY",
+    "stale": "UNCHANGED",
+    "quoteDetail": [
+     "拡張の削除方式 dtb_csv_extension.deleted_at による論理削除"
+    ]
+   }
+  },
+  {
+   "rowId": 372,
+   "機能No": "M03-06",
+   "機能名": "M03-06 商品情報カスタムCSV出力",
+   "ドメイン": "m03",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "設定画面の「出力する項目」は画面上の順序が dtb_csv_csv_extension.rank になる。",
+   "実装実態": "POSTされた csv_output のID配列を CsvRepository::findBy(['id' => $csvIds]) で取得し、その取得結果の foreach インデックスを rank として保存している。",
+   "差分内容": "findBy(['id' => $csvIds]) に orderBy がなく、POST配列順を保持する保証がない。画面で並べ替えた順序ではなくDB取得順で rank が保存され得る。",
+   "実装参照": "src/Eccube/Service/Admin/Setting/Shop/CustomerCsvUpdateAction.php:77",
+   "設計書参照": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-7:2238",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:2528 のリバース埋め込み開始後、同:2575 に「画面上の順序が dtb_csv_csv_extension.rank になる」とある。Excel正本範囲（同:2384-2527）には保存順・rankの規則がない。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Setting/Shop/CsvController.php:73-86 は「設定された順番通り」として送信配列 $csvIds を順に回し「->setRank($key)」する。/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/doctrine/Plugin.HareruyaEc.Entity.DtbCsvCsvExtension.dcm.yml:23-29 は rank 列を定義する。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Setting/Shop/CustomerCsvUpdateAction.php:77-83 は送信順配列を「findBy(['id' => $csvIds])」でDB取得結果へ変換し、その結果の foreach キーをrankへ保存するため、送信UI順を直接保持していない。",
+   "根拠検証メモ": "旧実装は送信ID配列の順番を明示的にrankへ写しており、現実装の取得順依存は移植差分。",
+   "対応の根拠(現develop)": "`src/Eccube/Service/Admin/Setting/Shop/CustomerCsvUpdateAction.php:77-83` は `$csvIds = isset($requestData['csv_output']) ? $requestData['csv_output'] : []; $Csvs = $this->csvRepository->findBy(['id' => $csvIds]);` の後 `foreach ($Csvs as $key => $Csv) { ... $this->csvCsvExtensionEntityManager->save($CsvCsvExtension, $CsvExtension, $Csv, $key); }` と、orderBy 無しの findBy 取得順インデックスを rank に使う実装のまま。POST 配列順で並べ替える処理は追加されていない。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EMBED_ONLY",
+    "stale": "UNCHANGED",
+    "quoteDetail": [
+     "画面上の順序が dtb_csv_csv_extension.rank になる"
+    ]
+   }
+  },
+  {
+   "rowId": 373,
+   "機能No": "M03-09",
+   "機能名": "M03-09 商品規格登録編集",
+   "ドメイン": "m03",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "フロント表示制御としては”公開”の場合は表示、”非公開（廃止）”の場合は非表示とする",
+   "実装実態": "フロントの商品詳細・一覧系の規格抽出は商品本体の公開状態と ProductClass.visible を見ているが、ProductClass.Status が公開かどうかを条件にしていない。",
+   "差分内容": "設計は商品規格の公開ステータスが公開の場合だけフロント表示、非公開・廃止は非表示とする要求。実装は checkVisibility で商品本体 Status のみを確認し、Product::getProductsByLanguage や ProductRepository/ProductClassRepository のフロント向け抽出で pc.Status/ProductClass.Status を除外条件にしていないため、非公開・廃止の規格でも visible=true なら表示対象に残る。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/ProductRepository.php:103, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Front/ProductController.php:1361, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Entity/Product.php:1342, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/ProductClassRepository.php:3147",
+   "設計書参照": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22:5291",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:5842 の正本セル（商品規格登録編集!D93）は「フロント表示制御としては”公開”の場合は表示、”非公開（廃止）”の場合は非表示とする」と明記する。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Repository/DtbProductSubClassRepository.php:268-283 はカード状態NMのCSV取得であり、本件のフロント商品詳細公開制御を裏付ける直接コードではない。pf-api/pf-eccube3/pf-article/deck-api を product_status_id・visible・フロント表示制御で横断確認したが、正本以上に判定を変える旧根拠は見つからない。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/ProductRepository.php:119-138 の findForFrontDetail() は「p.Status = :status」と「pc.visible = :visible」を条件にするが pc.Status は条件にしない。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Entity/ProductClass.php:202-203 と同:300-302 は visible と Status が別フィールドであるため、visible=trueの非公開・廃止規格を除外できない。",
+   "根拠検証メモ": "商品本体Statusだけでなく商品規格Statusも公開に限定するという正本要件に対する真の乖離。",
+   "対応の根拠(現develop)": "フロント商品詳細取得 `src/Eccube/Repository/ProductRepository.php:132-138` `->andWhere('p.Status = :status')->andWhere('pc.visible = :visible')->andWhere('pc.price02 > :minPrice')` は商品本体 Status と `pc.visible` のみで、`pc.Status`（ProductClass の公開ステータス）を条件にしていない。`src/Eccube/Entity/Product.php:1356-1359` `foreach ($this->getProductClasses() as $ProductClass) { if (!$ProductClass->isVisible()) { continue; }` も visible のみ。`src/Eccube/Controller/Front/ProductController.php:1633-1653` `checkVisibility()` も `$Product->getStatus()->getId() !== ProductStatus::DISPLAY_SHOW` と商品本体のみ検査。`pc.Status != :abolishedStatus` を条件化しているのは管理画面向けの `src/Eccube/Repository/ProductRepository.php:1080-1085`（getQueryBuilderBySearchDataForAdmin）や `src/Eccube/Repository/ProductClassRepository.php:92-99`（getActiveProductClasses）のみで、フロント抽出経路には未適用。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Controller/Front/ProductController.php",
+     "src/Eccube/Repository/ProductClassRepository.php",
+     "src/Eccube/Repository/ProductRepository.php"
+    ]
+   }
+  },
+  {
+   "rowId": 374,
+   "機能No": "M03-09",
+   "機能名": "M03-09 商品規格登録編集",
+   "ドメイン": "m03",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "利用者視点の入口 URL は、規格一覧 /{admin_route}/product/product/{id}/class/list、新規 /{admin_route}/product/product/{id}/class/new、登録 POST /{admin_route}/product/product/{id}/class/new/create、編集 /{admin_route}/product/product/{id}/class/{classId}/edit、更新 POST /{admin_route}/product/product/{id}/class/{classId}/edit/update、削除 DELETE /{admin_route}/product/product/{id}/class/{classId}/edit/delete とする。",
+   "実装実態": "実装ルートは /product/product/class/{id}, /product/product/class/{id}/new, /product/product/class/{id}/store, /product/product/class/{id}/edit/{productClassId}, /product/product/class/{id}/update/{productClassId}, /product/product/class/{id}/delete/{productClassId}。",
+   "差分内容": "設計の利用者視点 URL と実装の Route パスが一致しない。特に product/{id}/class 形式ではなく product/class/{id} 形式で、登録/更新/削除の末尾も create/update/delete の設計順序と異なる。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Product/ProductClassController.php:72, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Product/ProductClassController.php:102, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Product/ProductClassController.php:125, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Product/ProductClassController.php:174, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Product/ProductClassController.php:199, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Product/ProductClassController.php:262",
+   "設計書参照": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22:5478",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:6046 が「function-design-embed:start m03-09」で、6本の正確なURLはその後の同:6077 にのみ列挙される。Excel正本範囲（sheet-22の同:5758-6045）にはURLパスやHTTPメソッドの記載がない。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/ProductServiceProvider.php:58-83 は実際に「.../{id}/class/list」「.../{id}/class/new」「.../{id}/class/new/create」「.../{id}/class/{classId}/edit」「.../edit/update」「.../edit/delete」をGET/POST/DELETEで登録する。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Product/ProductClassController.php:74、114、153、228、265、352 は現行パスをそれぞれ「.../product/product/class/{id}」「.../{id}/new」「.../{id}/store」「.../{id}/edit/{productClassId}」「.../{id}/update/{productClassId}」「.../{id}/delete/{productClassId}」と定義し、旧URL契約と一致しない。",
+   "根拠検証メモ": "URL契約は正本ではなく旧ルーティング実装に由来するが、6入口すべてで移植差分が確認できる。",
+   "対応の根拠(現develop)": "`src/Eccube/Controller/Admin/Product/ProductClassController.php` の Route は監査時点と同一: `:74` `'/%eccube_admin_route%/product/product/class/{id}'`、`:114` `.../class/{id}/new`、`:153` `.../class/{id}/store`、`:228` `.../class/{id}/edit/{productClassId}`、`:265` `.../class/{id}/update/{productClassId}`、`:352` `.../class/{id}/delete/{productClassId}`。設計の `product/{id}/class/...` 形式・create/update/delete 末尾には変更されていない。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "NOT_FOUND",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Controller/Admin/Product/ProductClassController.php"
+    ],
+    "quoteDetail": [
+     "function-design-embed:start m03-09"
+    ]
+   }
+  },
+  {
+   "rowId": 375,
+   "機能No": "M03-09",
+   "機能名": "M03-09 商品規格登録編集",
+   "ドメイン": "m03",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "検証失敗時は「登録できませんでした。」を設定し、成功時は「登録が完了しました。」を設定して同じ規格の編集画面へリダイレクトする。",
+   "実装実態": "検証失敗時は admin.common.save_error（保存に失敗しました）、成功時は admin.common.save_complete（保存しました）を使う。保存成功後は新規/更新とも商品規格一覧へリダイレクトする。",
+   "差分内容": "設計の表示文言は admin.register.failed/admin.register.complete 相当だが、Controller は common save 系キーを使っている。また設計は同じ規格の編集画面へ戻す要求だが、実装は admin_product_product_class、つまり規格一覧へ戻す。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Product/ProductClassController.php:134, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Product/ProductClassController.php:166, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Product/ProductClassController.php:168, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Product/ProductClassController.php:212, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Product/ProductClassController.php:257, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Product/ProductClassController.php:259, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:1405, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:1406",
+   "設計書参照": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22:5488,",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:6046 のリバース埋め込み後、同:6087、6133 に「登録できませんでした。」「登録が完了しました。」および同じ規格編集画面への遷移が記載される。Excel正本範囲（同:5758-6045）に固定文言・遷移先の指定はない。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Product/ProductClassController.php:437-448 は検証失敗時「$app->addError('admin.register.failed', 'admin')」で同Twigを返し、同:553-558 は成功時「admin.register.complete」を設定して同規格の detail_edit へ戻す。/home/y-saito/Developments/pf-eccube3/src/Eccube/Resource/locale/message.ja.yml:83-84 が両日本語文言を定義する。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Product/ProductClassController.php:291-303 は失敗時「admin.common.save_error」、同:347-349 は成功時「admin.common.save_complete」を使って規格一覧 admin_product_product_class へ戻す。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:1595-1596 は「保存しました」「保存に失敗しました」である。",
+   "根拠検証メモ": "文言と成功時遷移先の双方が旧実装契約から変わっている。",
+   "対応の根拠(現develop)": "`src/Eccube/Controller/Admin/Product/ProductClassController.php:178` `$this->addError('admin.common.save_error', 'admin');`、`:220` および `:347` `$this->addSuccess('admin.common.save_complete', 'admin');`、`:222` および `:349` `return $this->redirectToRoute('admin_product_product_class', ['id' => $Product->getId()]);`（規格一覧へのリダイレクト）のまま。翻訳も `src/Eccube/Resource/locale/messages.ja.yaml:1595` `admin.common.save_complete: 保存しました` / `:1596` `admin.common.save_error: 保存に失敗しました` で、設計の「登録が完了しました。」「登録できませんでした。」および同一規格の編集画面への復帰は未実装。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EMBED_ONLY",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Controller/Admin/Product/ProductClassController.php",
+     "src/Eccube/Resource/locale/messages.ja.yaml"
+    ],
+    "quoteDetail": [
+     "登録できませんでした。",
+     "登録が完了しました。"
+    ]
+   }
+  },
+  {
+   "rowId": 376,
+   "機能No": "M03-09",
+   "機能名": "M03-09 商品規格登録編集",
+   "ドメイン": "m03",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "編集時かつ規格が削除可能な場合は削除ボタンを表示し、削除可能でない（最後の1件）場合は不正要求（HTTP400）とする。削除可能なら規格を論理削除し、永続化を確定する。",
+   "実装実態": "削除ボタンは ProductClass.id があれば常に表示される。削除処理は最後の1件かどうかを検査せず ProductClassDeleteAction::handle に渡し、Action は entityManager->remove($ProductClass) で物理削除する。",
+   "差分内容": "設計は削除可能性に応じたボタン表示、最後の1件の HTTP400、論理削除を要求している。実装は削除可能性の判定がなく、最後の1件ガードもなく、論理削除ではなく物理削除している。探索範囲: ProductClass edit.twig, ProductClassController::delete, ProductClassDeleteAction, ProductClassRepository の ProductClass 件数/削除可否関連。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Product/ProductClass/edit.twig:568, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Product/ProductClass/edit.twig:571, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Product/ProductClassController.php:262, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Product/ProductClassController.php:272, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Product/ProductClassDeleteAction.php:39, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Product/ProductClassDeleteAction.php:66",
+   "設計書参照": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22:5486,",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:5929 の Excel 正本は項目「25 商品規格を削除 ボタン」を載せるだけで、最後の1件のHTTP400・削除可否表示・論理削除は sheet-22 の Excel 部分（同:5758-6158）に記載がない。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Product/ProductClassController.php:414-416 は `isDeletable` を view へ渡し、pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Product/product_class_detail.twig:138-144 はその時だけ削除ボタンを表示する。同 Controller:570-580 は最後の1件なら `BadRequestHttpException`、削除時は `setDelFlg(Constant::ENABLED)` とする。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Product/ProductClass/edit.twig:577-582 は `ProductClass.id` だけで削除ボタンを表示する。ec-cube-enterprise/src/Eccube/Service/Admin/Product/ProductClassDeleteAction.php:62-67 は関連行削除後に `entityManager->remove($ProductClass)` と `flush()` を実行し、物理削除する。",
+   "根拠検証メモ": "詳細な削除契約は旧実装由来。新実装には最後の1件ガードと論理削除がない。",
+   "対応の根拠(現develop)": "`src/Eccube/Resource/template/admin/Product/ProductClass/edit.twig:577-582` は `{% if ProductClass.id %}` のみで削除ボタンを描画し、削除可否（最後の1件か）の判定は無い。`src/Eccube/Controller/Admin/Product/ProductClassController.php:353-363` の `delete()` も `$this->isTokenValid(); try { $deleteAction->handle($ProductClass);` と件数検査・HTTP400 が無い。`src/Eccube/Service/Admin/Product/ProductClassDeleteAction.php:66-67` `$this->entityManager->remove($ProductClass); $this->entityManager->flush();` で物理削除のままで、論理削除（deleted_at 等）への変更はない。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Controller/Admin/Product/ProductClassController.php",
+     "src/Eccube/Resource/template/admin/Product/ProductClass/edit.twig"
+    ]
+   }
+  },
+  {
+   "rowId": 377,
+   "機能No": "M03-11",
+   "機能名": "M03-11 カテゴリ登録",
+   "ドメイン": "m03",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "low",
+   "観点": "⑤画面表示・ラベル文言",
+   "設計期待値": "カテゴリ登録画面のフロント表示制御チェック項目は「フロント非表示フラグ」と表示する。",
+   "実装実態": "実装の翻訳キー admin.product.category_front_search_hide は「フロント非表フラグ」。CategoryType がこのキーを front_search_hide_flg のラベルに使い、category.twig が form_label で表示する。",
+   "差分内容": "設計はカテゴリ登録画面の識別ID:8を「フロント非表示フラグ」と表示する。実装は CategoryType の front_search_hide_flg の label に admin.product.category_front_search_hide を使い、messages.ja.yaml でその値が「フロント非表フラグ」になっているため、画面ラベルが「非表示」ではなく「非表」と表示される。",
+   "実装参照": "src/Eccube/Resource/locale/messages.ja.yaml:2108 / src/Eccube/Form/Type/Admin/CategoryType.php:64-65 / src/Eccube/Resource/template/admin/Product/category.twig:275-276",
+   "設計書参照": "excel_to_html/output/0204_基本設計仕様書(商品管理).html:6157",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:6822 の正本セル（カテゴリ登録!E162）は項目名を「フロント非表示フラグ」と定義する。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Form/Extension/Admin/Product/CategoryTypeExtension.php:59-63 も「'label' => 'フロント非表示フラグ'」としており、旧表示も正本と一致する。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/CategoryType.php:64-66 はラベルキー admin.product.category_front_search_hide を使用し、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:2157 は「フロント非表フラグ」と定義するため「示」が欠ける。",
+   "根拠検証メモ": "正本の固定ラベルと現表示値の直接的な文言乖離。",
+   "対応の根拠(現develop)": "`src/Eccube/Resource/locale/messages.ja.yaml:2157` `admin.product.category_front_search_hide: フロント非表フラグ` のまま（「非表示」になっていない）。`src/Eccube/Form/Type/Admin/CategoryType.php:64-66` `->add('front_search_hide_flg', CheckboxType::class, ['label' => 'admin.product.category_front_search_hide',` が同キーを使用し、`src/Eccube/Resource/template/admin/Product/category.twig:353` `{{ form_label(form.front_search_hide_flg, null, ...) }}` で表示する経路も監査時点と同一。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Resource/locale/messages.ja.yaml"
+    ]
+   }
+  },
+  {
+   "rowId": 378,
+   "機能No": "M03-11",
+   "機能名": "M03-11 カテゴリ登録",
+   "ドメイン": "m03",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "low",
+   "観点": "⑤画面表示・ラベル文言",
+   "設計期待値": "カテゴリ登録画面の検索パラメータ項目は「検索パラメータ」と表示する。",
+   "実装実態": "実装の翻訳キー admin.product.category_search_parameters は「検索パラメーター」。CategoryType が search_parameters のラベルに使い、category.twig が form_row で表示する。",
+   "差分内容": "設計はカテゴリ登録画面の検索パラメータ項目を「検索パラメータ」と表示する。実装は CategoryType の search_parameters の label に admin.product.category_search_parameters を使い、messages.ja.yaml の値が「検索パラメーター」になっているため、長音符の有無が一致しない。",
+   "実装参照": "src/Eccube/Resource/locale/messages.ja.yaml:2115 / src/Eccube/Form/Type/Admin/CategoryType.php:131-133 / src/Eccube/Resource/template/admin/Product/category.twig:369",
+   "設計書参照": "excel_to_html/output/0204_基本設計仕様書(商品管理).html:6165",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:6830 の正本セル（カテゴリ登録!E170）は項目名を「検索パラメータ」と定義する。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Product/CategoryController.php:58-67 の旧編集フォーム拡張データには nameEn、priorityProducts、displaySideMenuFlg、frontSearchHideFlg だけがあり検索パラメータ項目は未実装だった。pf-api/pf-eccube3/pf-article/deck-api の「検索パラメータ」横断検索でも本画面の旧ラベルは見つからない。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/CategoryType.php:151-153 は search_parameters に admin.product.category_search_parameters を使い、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:2164 は「検索パラメーター」と長音付きで定義する。",
+   "根拠検証メモ": "項目自体は移植済みだが、正本の「パラメータ」に対して画面は「パラメーター」。",
+   "対応の根拠(現develop)": "`src/Eccube/Resource/locale/messages.ja.yaml:2164` `admin.product.category_search_parameters: 検索パラメーター` のままで長音符が残る。`src/Eccube/Form/Type/Admin/CategoryType.php:151-152` `->add('search_parameters', TextType::class, ['label' => 'admin.product.category_search_parameters',` / `src/Eccube/Resource/template/admin/Product/category.twig:401` `{{ form_row(form.search_parameters) }}` も監査時点と同一。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Resource/locale/messages.ja.yaml"
+    ]
+   }
+  },
+  {
+   "rowId": 379,
+   "機能No": "M03-11",
+   "機能名": "M03-11 カテゴリ登録",
+   "ドメイン": "m03",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "支店非表示フラグが立っている場合は支店側のカテゴリ表示に表示させず検索対象からも除外し、フロント非表示フラグが立っている場合は支店側も含めて検索やフロントTOPのカテゴリ表示で非表示にする。",
+   "実装実態": "TopCategoryListBuilder やカテゴリツリーAPIでは front_search_hide_flg / branch_hide_flg を見て表示除外する。一方、商品検索フォームは CategoryRepository->getList(null, true) の全カテゴリを choices にし、カテゴリID付きURLも request query へそのまま category_id を設定する。ProductRepository の商品検索は選択カテゴリと子孫で絞るだけで、front_search_hide_flg / branch_hide_flg 条件を付けない。",
+   "差分内容": "表示系の一部は実装済みだが、設計が求める検索対象からの除外が商品検索条件側に未反映。ProductController、SearchProductType、SearchProductBlockType、Front SearchType、ProductRepository、TopCategoryListBuilder、CategoryTreeResponseBuilder を別キーワードで確認したが、商品検索クエリ側の非表示フラグ除外条件は見つからなかった。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/TopCategoryListBuilder.php:99,102; /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/SearchProductType.php:68; /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/SearchProductBlockType.php:48; /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Front/SearchType.php:95; /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Front/ProductController.php:142; /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/ProductRepository.php:764",
+   "設計書参照": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-25:6129,6131,6132,6157,6158",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:6794 の正本セルは「支店非表示フラグが立っている場合、支店側のカテゴリ表示に表示させず、検索対象からも除外する」、同:6796-6797 は「フロント非表示フラグが立っていると、支店ページも含めて全て非表示」「支店側も含めて検索やフロントTOPのカテゴリ表示で非表示」と定める。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Form/Extension/Admin/Product/CategoryTypeExtension.php:59-63 は旧管理フォームに「フロント非表示フラグ」を持つが、旧リポジトリを front_search_hide_flg・branch_hide_flg・商品検索で横断した範囲では、今回の正本要件を完全に実装する検索クエリ条件は確認できない。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/TopCategoryListBuilder.php:95-100 はTOP表示で両フラグを除外する一方、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Front/SearchType.php:93-107 は「getList(null, true)」の全カテゴリを選択肢にし、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/ProductRepository.php:763-773 は選択カテゴリと子孫だけで絞り、front_search_hide_flg／branch_hide_flg条件を付けない。",
+   "根拠検証メモ": "TOP表示側は一部実装済みだが、正本が明記する検索対象からの除外が商品検索経路にない。",
+   "対応の根拠(現develop)": "表示側は `src/Eccube/Service/TopCategoryListBuilder.php:96` `if ($Category->getFrontSearchHideFlg()) {` `:99` `if ($isBranch && $Category->getBranchHideFlg()) {` で除外するのみ。検索側の `src/Eccube/Repository/ProductRepository.php:763-775` のカテゴリ条件は `$Categories = $searchData['category']->getSelfAndDescendants();` … `->andWhere($qb->expr()->in('pct.Category', ':Categories'))` だけで非表示フラグ条件を持たない。`front_search_hide_flg|branch_hide_flg|FrontSearchHide|BranchHide` を src/Eccube 全体で再検索しても ProductRepository / SearchProductType / SearchProductBlockType / Front SearchType / Front ProductController には出現せず、監査時点と同状態。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Controller/Front/ProductController.php",
+     "src/Eccube/Form/Type/Front/SearchType.php",
+     "src/Eccube/Repository/ProductRepository.php"
+    ]
+   }
+  },
+  {
+   "rowId": 380,
+   "機能No": "M03-12",
+   "機能名": "M03-12 カテゴリCSV出力",
+   "ドメイン": "m03",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "対象商品数以外のCSV項目はCSV出力サービスの一般セル値取得に渡し、得られた値がnullまたは空文字のときは空セルに正規化する。一般列は項目定義のエンティティ名・フィールド名に基づいて値を取り出し、関連エンティティは参照フィールド名でスカラ化する。",
+   "実装実態": "CategoryController::export() は target_product_count だけでなく Parent フィールドも特例扱いし、親カテゴリが無いカテゴリの親カテゴリID列に空セルではなく文字列 '0' を出力する。",
+   "差分内容": "設計では対象商品数のみを特例列とし、それ以外は CsvExportService::getData() に渡して null/空文字を空セルに正規化する要求になっている。実装は Parent を別分岐にしており、親なしの場合も CsvExportService の一般列規則を通らず '0' を出力する。反証として CATEGORY_CSV_FIELD_PARENT、親カテゴリID、Parent、最上位、CSV出力、CsvExportService::getData、カテゴリCSV登録/アップロード関連を src/Eccube と app/DoctrineMigrations で再検索したが、sheet-26内の出力仕様として Parent を対象商品数と同様の特例列にする根拠は見つからなかった。",
+   "実装参照": "src/Eccube/Controller/Admin/Product/CategoryController.php:557",
+   "設計書参照": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-26:6415,6426",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:7065 はExcel正本の列として「5 親カテゴリID」、同:7072 は「12 対象商品数」、同:7083 はカスタマイズを「カテゴリに紐づいている対象商品数を出力する」と記すが、Excel正本範囲（sheet-26:7031-7096）には親なし時を空セルにする規則や「対象商品数以外は一般セル値取得に渡す」との記述はない。具体的な一般列規則はリバース詳細設計 hareruya-design-docs/functions/pf-eccube3/m03-12_admin_product_product_category_csv_export.md:61,91 の「それ以外はCSV出力サービス…nullまたは空文字のときは空セル」「関連エンティティは参照フィールド名でスカラ化」にのみある。",
+   "旧実装根拠": "pf-eccube3/src/Eccube/Controller/Admin/Product/CategoryController.php:229-245 は全列を一律に `$csvService->getData($Csv, $Category)`、`$ExportCsvRow->pushData()` へ渡す。pf-eccube3/src/Eccube/Service/CsvExportService.php:266-298 はフィールドを `offsetGet` し、関連Entityなら参照フィールドを返し、値が無ければ最終的に `return null;` とする。旧実装にはParentだけを文字列'0'にする分岐がなく、期待挙動の根拠になる。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Controller/Admin/Product/CategoryController.php:846-855 は `target_product_count` に加えて `Parent` も特例分岐し、親なし時に `$row[] = ... : '0';` とする一方、一般列だけを `getData()` に渡してnull/空文字を空セル化する。",
+   "根拠検証メモ": "Excel正本には親なし時のセル値が明記されていない。具体的な空セル挙動は旧実装に存在し、新実装でParent特例が加わったためLEGACY_BACKED。",
+   "対応の根拠(現develop)": "`src/Eccube/Controller/Admin/Product/CategoryController.php:850-851` `$Parent = $Category->getParent();` / `$row[] = $Parent !== null ? (string) $Parent->getId() : '0';` が残っており、Parent 列は `:853` `$cell = $this->csvExportService->getData($Csv, $Category);` の一般列経路を通らず、親なしで文字列 '0' を出力する。定数 `:50` `private const CATEGORY_CSV_FIELD_PARENT = 'Parent';` も健在。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "UNCHANGED"
+   }
+  },
+  {
+   "rowId": 381,
+   "機能No": "M03-13",
+   "機能名": "M03-13 タグ登録",
+   "ドメイン": "m03",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "名称(英)は半角で入力する",
+   "実装実態": "nameEn は TextType で、Length(255) と NotBlank のみを設定している。半角制約の Regex / pattern / 正規化処理はない。",
+   "差分内容": "設計は名称(英)の書式を半角としているが、実装は全角文字もフォーム検証を通過する構成。探索範囲: TagType.php, TagController.php, tag.twig, Entity/Tag.php。",
+   "実装参照": "src/Eccube/Form/Type/Admin/TagType.php:70",
+   "設計書参照": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27:6575",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:7284 のExcel正本セル（0204:タグ登録!B81/E81/M81/T81）は「2 名称(英) 半角 ◯」と明記する。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/Product/TagType.php:34-40 の旧フォームも `nameEn` に `Length` と `NotBlank` だけを設定しており、半角Regexはない。したがって要件の所在は旧実装ではなくExcel正本である。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/TagType.php:70-77 は `nameEn` をTextTypeとし、制約は `new Length(...)` と `new NotBlank()` のみで、半角制約を実装していない。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Form/Type/Admin/TagType.php:70-77` `->add('nameEn', TextType::class, ['label' => '名称(英)', 'required' => true, 'constraints' => [new Length(['max' => $lengthSettings['name']]), new NotBlank(),],])` のままで、半角制約の Regex / pattern / 正規化は追加されていない。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "UNCHANGED"
+   }
+  },
+  {
+   "rowId": 382,
+   "機能No": "M03-13",
+   "機能名": "M03-13 タグ登録",
+   "ドメイン": "m03",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "タイトル(日)/(英)に値がある場合、それぞれ日本語/英語の商品検索ページのページタイトルとする",
+   "実装実態": "管理画面では titleJp/titleEn を入力・保存できるが、商品検索ページのタイトルは default_frame.twig が BaseInfo.shop_name と subtitle/title から生成し、ProductController::getPageTitle は商品名検索・カテゴリ・全商品だけを返す。タグの title_jp/title_en は参照されない。",
+   "差分内容": "getTitleJp/getTitleEn/title_jp/title_en を Controller/Resource/template/Service/Util/html で再検索しても、商品検索ページのタイトルへ反映する実装がない。",
+   "実装参照": "src/Eccube/Controller/Front/ProductController.php:1170; src/Eccube/Resource/template/default/default_frame.twig:17",
+   "設計書参照": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27:6583,6585",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:7292,7294 のExcel正本は「タイトル(日)…値がある場合、日本語の商品検索ページのページタイトルとする」「タイトル(英)…値がある場合、英語の商品検索ページのページタイトルとする」と明記する。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Product/product_list.twig:98-99 は `tagSub.getTitleJp` があれば `defaultTitle` に設定し、英語版 pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Product/product_list.en.twig:21-22 は `tagSub.getTitleEn` を設定していた。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Controller/Front/ProductController.php:1296-1312 の `getPageTitle()` は商品検索、カテゴリ、全商品の分岐だけでTagのtitleを参照しない。ec-cube-enterprise/src/Eccube/Resource/template/default/default_frame.twig:17-23 も `page_title`、`subtitle`、`title` からタイトルを組み立てるだけで、`getTitleJp/getTitleEn` はController/Resource/template全域に表示経路が存在しない。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Controller/Front/ProductController.php:1296-1313` `protected function getPageTitle(?array $searchData): string` は `trans('front.product.search_result')` / カテゴリパス連結 / `trans('front.product.all_products')` のみを返し、`:428` `'subtitle' => $this->getPageTitle($searchData),` で渡される。`title_jp|title_en|getTitleJp|getTitleEn` を src/Eccube の php/twig 全体で再検索しても `src/Eccube/Entity/Tag.php:266-292`（カラム定義とゲッタ/セッタ）以外にヒットがなく、商品検索ページタイトルへの反映は未実装。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "NOT_FOUND",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Controller/Front/ProductController.php",
+     "src/Eccube/Resource/template/default/default_frame.twig"
+    ],
+    "quoteDetail": [
+     "タイトル(日)…値がある場合、日本語の商品検索ページのページタイトルとする",
+     "タイトル(英)…値がある場合、英語の商品検索ページのページタイトルとする"
+    ]
+   }
+  }
+ ]
+}

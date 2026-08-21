@@ -1,0 +1,165 @@
+{
+  "packetId": "rest_03",
+  "results": [
+    {
+      "rowId": 300,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html:1570-1581 のExcel正本は「SEO対策として、タグやカテゴリの検索条件は『/tag/category』のようにURLのパスに含め」「それ以外の検索条件は『?key=value』のようにGETパラメータとして扱う」と記載し、`https://~/purchase/search/New%20Items/Single%20Cards` を例示する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/ControllerProvider/Front/PurchaseControllerProvider.php:42-48 は旧実装について `$c->match('/search', ...)->bind('purchase_search')` と旧コード転送ルートだけを登録し、タグ・カテゴリ用の検索パスは持たない。したがって元の指摘時点の挙動は旧実装とも整合するが、現実装は更新済みである。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Front/Purchase/PurchaseController.php:399-411 は通常の `/purchase/search` に加え、`/purchase/search/cate/{categoryId}/tag/{tagId}`、カテゴリ単独、タグ単独のGETルートを定義し、パス値を `category` / `tags` の検索条件へ変換する。ec-cube-enterprise/src/Eccube/Resource/template/default/Block/js/product_list_search_path_form_submit_js.twig:89-90 も `purchase_search_category` / `purchase_search_tag` のURLをフォーム送信に使用する。",
+      "note": "正本の主要求である「タグ・カテゴリをパス、それ以外をクエリ」は現実装で満たす。正本例は名称スラッグだが、例示であり固定URL契約とは記載されていないため、IDパスによる実装を充足と判定した。"
+    },
+    {
+      "rowId": 301,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html:1944 のExcel正本の画面部品ID8は「押下すると、商品数を1つ減らす」「商品数が1の場合に押下すると、商品数を20にする」と明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Block/purchase_product.twig:29-31 は減算ボタンを `qty_spin(...,'m',20,1)` で呼び、pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/assets/js/ec.js:288-310 は減算後が1未満かつ `min !== 0` なら `qtyval = max`、すなわち20へ循環させる。旧実装も正本と一致する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/default/Block/js/Purchase/purchase_js.twig:16-26 は `if (v > 1) { v--; ... }` のみで、コメントも「1で止める」と明記する。数量1で押しても20へ循環しない。",
+      "note": ""
+    },
+    {
+      "rowId": 302,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html:2092-2093 でExcel正本部分が終わり、`Source: functions/pf-eccube3/f05-03_front_online_purchase_buy_product_list.md` の埋め込みが開始する。期待値は同リバース詳細設計 hareruya-design-docs/functions/pf-eccube3/f05-03_front_online_purchase_buy_product_list.md:141 の「買取特集タグが1件指定のときは、タグの説明文（フリーエリア）を一覧上部に表示する」にのみ存在し、Excel正本範囲には記載がない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/PurchaseController.php:505-508,530-540 は指定タグを `findByTagId` で取得して `tagSubs` をテンプレートへ渡す。pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Purchase/product_list.twig:125-127 は `{% if tagSubs is defined and tagSubs|length == 1 %}` のとき `{{ tagSubs[0].getFreeAreaJp|raw }}` を一覧上部へ表示する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Front/Purchase/PurchaseController.php:399-432 の検索処理はUniSearch一覧を組み立てるだけでタグのフリーエリアを取得せず、ec-cube-enterprise/src/Eccube/Resource/template/default/Purchase/search.twig:42-62 も一覧設定とコンテナのみで `tagSubs` / `getFreeArea` を描画しない（確認範囲: Front/Purchase Controller、Purchase/search.twig、Purchase系Block、検索語 `getFreeArea` / `tagSubs`）。",
+      "note": "期待値はExcel正本ではなく、旧実装を起こしたリバース詳細設計由来。"
+    },
+    {
+      "rowId": 303,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html:2092-2093 からリバース詳細設計の埋め込みであり、期待文は hareruya-design-docs/functions/pf-eccube3/f05-03_front_online_purchase_buy_product_list.md:139 の「お探しのカードは見つかりませんでした。（買取最低保証・ヘルプへの案内を含む）」にのみ存在する。Excel正本範囲には0件時のこの文言・導線の記載がない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Purchase/product_list.twig:342-349 は0件時に「お探しのカードは見つかりませんでした。」「『買取最低保証』として価格が付く場合がございます」と表示し、`/ja/user_data/help_buying#block4` のヘルプへリンクする。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/default/Purchase/search.twig:56 は空結果文言を `front.product.search__product_not_found` に設定し、ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:1104 の値は「お探しの商品は見つかりませんでした」。ec-cube-enterprise/html/template/default/assets/hareruya/js/hareruya-unisearch-list-client-core.js:290-297 はその一文だけを単一の`<p>`として描画し、最低保証・ヘルプ導線を持たない。",
+      "note": "期待値は旧テンプレートを根拠にした移植要件で、Excel正本には記述がない。"
+    },
+    {
+      "rowId": 304,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html:2535-2538 でExcel正本が終了し、`Source: functions/pf-eccube3/f05-04_front_online_purchase_buy_product_detail.md` の埋め込みが始まる。期待するURLは同リバース詳細設計 hareruya-design-docs/functions/pf-eccube3/f05-04_front_online_purchase_buy_product_detail.md:68 の `GET /{_locale}/purchase/forward/{oldCode}` にのみあり、Excel正本にはない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/ControllerProvider/Front/PurchaseControllerProvider.php:47-48 は `/forward/{oldCode}` を `PurchaseController::forward` に結び付ける。pf-eccube3/app/Plugin/HareruyaEc/Controller/PurchaseController.php:626-645 は `findOneByOldProductCode($oldCode)`、`findProductByCode($mapping->getProductCode())` を実行し、欠落時は`top`、成功時は`purchase_detail`へリダイレクトする。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Front/Purchase/PurchaseController.php:399-402 の検索ルートおよび同Controller全体に `forward` ルートは存在しない。ec-cube-enterprise/src/Eccube/Repository/Master/MtbProductCodeMappingRepository.php:25-30 もコンストラクタだけで、旧商品コード検索メソッドを持たない（確認範囲: ec-cube-enterprise/src、検索語 `purchase/forward` / `findOneByOldProductCode` / `MtbProductCodeMappingRepository` 呼出し）。",
+      "note": "旧コード転送は旧実装由来で、Excel正本への記述漏れと現実装への移植漏れが併存する。"
+    },
+    {
+      "rowId": 306,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html:2380-2383 の最新Excel正本は「セット名: リンク」「ブロック: ラベル」「イラストレーター: リンク」「使用可能フォーマット: ラベル」とする。ブロックと使用可能フォーマットには「2026/7/17木村：カスタマイズ要件にないため現行通りリンクからラベルに修正」と明記され、元指摘の「全てリンク」は正本更新で否定されている。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Purchase/detail.twig:249-283 の旧テンプレートはカード情報を主に静的表示していた。もっとも本判定は旧挙動ではなく、更新後Excel正本と現実装の一致による。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/default/Purchase/detail.twig:423-450 はセット名を `path('purchase_search', {cardset: ...})`、イラストレーターを `path('purchase_search', {illustrator: ...})` のリンクとして表示し、同:434-438 のブロックと同:451-458 の使用可能フォーマットはリンクなしのラベルとして表示する。更新後正本の4項目と一致する。",
+      "note": "監査後に正本が修正され、現実装もその修正内容を満たしているため元指摘は解消済み。"
+    },
+    {
+      "rowId": 307,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html:2346 の最新Excel正本は「査定例はこちらボタン」の書式を「リンク」、説明を「査定例ページのリンク」とし、「2026/7/17木村：デザイン上はリンクかつ現行もリンクでカスタマイズ要件にないためモーダルという記載を削除」と明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Purchase/detail.twig:143-146 も査定例を通常の`<a>`リンクとして実装しており、モーダルではない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/default/Purchase/detail.twig:200-204 は「査定例はこちら」を `<a ... href=\"{{ url('user_data', { route: 'purchase_example' }) }}\">` と通常リンクで表示し、最新正本の要求どおりである。",
+      "note": "元のモーダル期待値は正本から明示的に削除されている。"
+    },
+    {
+      "rowId": 308,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html:2688-2690 の最新Excel正本は空カート案内を「下の『TOPへ戻る』をクリックしてください」とし、「2026/7/16木村：商品一覧ではなくTOPに修正」と記載する。同:2709 も部品名を「TOPへ戻るボタン」とする。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Purchase/cart.twig:89-102 の旧テンプレートは「商品一覧へ戻る」を表示しており、元指摘の期待値は旧実装由来だった。ただし最新Excel正本はこの文言を明示的に変更している。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:147,166 は空カート案内とボタンをともに「TOPへ戻る」と定義する。ec-cube-enterprise/src/Eccube/Resource/template/default/Purchase/cart.twig:135-143 はその2キーを表示し、ボタンのリンク先も `path('purchase_index')` で買取TOPである。",
+      "note": "旧実装由来の「商品一覧へ戻る」ではなく、監査後に更新された正本の「TOPへ戻る」を現実装が満たす。"
+    },
+    {
+      "rowId": 309,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html:2932-2941 のExcel正本は「共通の利用規約を表示する」「冒頭からではなく買取に該当する箇所を表示する」と明記し、同:2992 の部品23も「共通の利用規約を表示」「買取に該当する箇所を表示」とする。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Purchase/confirm.twig:259-264 は旧実装でも買取専用規約を確認画面へ直接記載しており、共通規約の該当箇所表示ではない。したがってこれはExcel正本で追加されたカスタマイズ要件である。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/default/Purchase/fill.twig:420-431 はモーダル本文として `Purchase/include/net_purchase_terms_text.twig` を直接includeする。ec-cube-enterprise/src/Eccube/Resource/template/default/Purchase/include/net_purchase_terms_text.twig:1-52 は「晴れる屋 ネット買取利用規約」を第1条から表示する買取専用本文で、サイト共通利用規約の買取該当箇所ではない。",
+      "note": ""
+    },
+    {
+      "rowId": 310,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html:3249 のExcel正本は部品3「オンライン本人確認について」を書式「画像」とし、「別ウィンドウでオンライン本人確認について画面に遷移する」と明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Purchase/complete.twig:47-57 は本人確認リンク内に `mypage_identification.png` の`<img>`を表示しており、画像要件は旧実装にも存在したが、正本自身が明示するため判定根拠はExcel正本である。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/default/Purchase/complete.twig:62-65 は「TODO: デザインタスク QRコード画像を表示する」のまま、`<a href=\"{{ path('mypage_identification') }}\">` のテキストリンクだけを表示する。`target=\"_blank\"` もなく、画像・別ウィンドウの双方を満たさない。",
+      "note": ""
+    },
+    {
+      "rowId": 311,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html:1234 のExcel正本はメールアドレス確認不一致時に「同じメールアドレスを入力してください。」と表示すると明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/locale/message.ja.yml:715 も確認メール不一致の `invalid` を「同じメールアドレスを入力してください。」と定義する。旧実装も正本と一致する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/default/Entry/index.twig:281-290 はクライアント検証の `data-error-match` に `front.entry.error.email_mismatch` を割り当て、ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:481 の値は「メールアドレスが一致しません」。送信前に表示される文言が正本と異なる。",
+      "note": "サーバ側validatorsには正本文言もあるが、同意ボタン押下時はクライアント検証が先に不一致を表示するため乖離は残る。"
+    },
+    {
+      "rowId": 312,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html:1236 のExcel正本はパスワード確認について「パスワードと同じ入力かチェックを行う」とだけ記載し、不一致時の固定文言「同じパスワードを入力してください。」は定めていない。正本範囲にこの完全一致文言は存在せず、埋め込み開始は同:1659である。",
+      "legacyEvidence": "pf-eccube3/src/Eccube/Resource/locale/message.ja.yml:34 は `form.member.password.invalid: 同じパスワードを入力してください。`、pf-eccube3/app/Plugin/HareruyaEc/Resource/locale/message.ja.yml:717 も `invalid: 同じパスワードを入力してください。` と定義する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/default/Entry/index.twig:330-341 は `data-error-match` に `front.entry.error.password_mismatch` を割り当て、ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:485 は「パスワードが一致しません」。旧実装の固定文言と異なる。",
+      "note": "同値チェック自体は正本にあるが、指摘対象である厳密な表示文言の根拠は旧実装にしかない。"
+    },
+    {
+      "rowId": 313,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html:1404 のExcel正本は登録情報として「デッキ登録用ユーザーID（英数字の8文字のランダム文字列で一意）」を明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/config.yml:344-345 は旧設定でも `deck_user_id.length: 8` とする。一意性までの根拠はExcel正本が明示しているため、旧実装の有無にかかわらず正本要件である。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/PlayerService.php:28-46 は8文字をランダム生成して既存照合するが、同:28-31 に「カラム自体にユニーク制約はついていない」「厳密には重複が発生する可能性がゼロではない」と明記する。ec-cube-enterprise/src/Eccube/Entity/DtbPlayer.php:114 の `deck_user_id` 定義も `length: 8` のみで `unique: true` がなく、並行登録時の一意性を保証しない。",
+      "note": ""
+    },
+    {
+      "rowId": 314,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html:1957-1960 のExcel正本は「スマレジに新規ユーザー登録」「連携に失敗した場合、E-3」「スマレジへのユーザー新規登録が成功した場合」「ユーザーのステータスを『本会員』にして、ユーザー情報を保存する」の順序を明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/EntryController.php:235-250 はCustomerをACTIVEに設定した後、スマレジAPIを呼び、失敗時はエラー画面をreturnし、成功時に初めて `persist`・`flush`・`commit` する。旧実装も「連携成功後に確定」という正本の順序を実装していた。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Front/EntryController.php:297-317 は先に `UPDATE registration_view SET customer_status_id = REGULAR` を実行してから `linkSmaregiCustomer` を呼ぶ。同:384-408 はスマレジ失敗時に失敗フラグをcommitして例外を投げ、ログも「本会員化は完了済み」とするため、本会員化前へロールバックされず再試行できない。",
+      "note": ""
+    },
+    {
+      "rowId": 315,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html:1951-1955 のExcel正本は「スマレジIDを持っていたら、すでに会員登録済みとみなしエラーとする」および判定2・3のエラー時に「E-2.ユーザー存在チェックエラー画面を表示」と明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/EntryController.php:226-232 は「スマレジIDがある=一度本登録を行った会員」と判断し、`error_messages.already_activated.title/message` を渡したエラー画面をreturnする。旧実装も正本と一致する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Front/EntryController.php:358-366 はPlayerの `smaregiId` が非空なら「既に連携済みなら何もしない (冪等)」として `$Customer` を正常返却する。同:319-330 の完了メール送信・ログインへ進むため、正本指定の完了済みエラー画面で終了しない。",
+      "note": ""
+    },
+    {
+      "rowId": 316,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html:2099 から `Source: functions/pf-eccube3/f06-02_front_member_entry_activate.md` の埋め込みが始まる。厳密な日英文言は同リバース詳細設計 hareruya-design-docs/functions/pf-eccube3/f06-02_front_member_entry_activate.md:121-122 の「本登録完了 / Main registration complete」「本登録が完了いたしました。 / Main registration is completed.」にのみあり、Excel正本範囲には固定文言の記載がない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Entry/activate.twig:11-16 は「本登録完了」「本登録が完了いたしました。」、pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Entry/activate.en.twig:11-16 は `Main registration complete` と `Main registration is completed.` を直接表示する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:432-444 は見出し「本登録完了」に対して本文を「会員登録が完了いたしました。」とし、ec-cube-enterprise/src/Eccube/Resource/locale/messages.en.yaml:316,323-325 は `Sign-up completed` / `Your registration is now complete.` とする。旧実装の固定文言と一致しない。",
+      "note": "厳密な表示文言は旧テンプレート由来で、Excel正本の記述漏れがある。"
+    },
+    {
+      "rowId": 317,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html:1954-1958 のExcel正本はE-1/E-2/E-3の各画面を指定するが、その本文の完全一致文字列は記載しない。厳密な本文は埋め込み後のリバース詳細設計 hareruya-design-docs/functions/pf-eccube3/f06-02_front_member_entry_activate.md:129,131 にのみ存在する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/locale/message.ja.yml:242-244 はforbiddenを「アクセスできません。／お探しのページはアクセスができない状況にあるか、移動もしくは削除された可能性があります。」、同:260-262 はactivate_failedを「会員情報の有効化に失敗しました。／大変お手数ですが、サイト管理者までご連絡ください。」と定義する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:450-455 はforbidden本文を「このURLは無効です。」、activate_failed本文を「時間を置いて再度お試しいただくか、お問い合わせください。」とする。ec-cube-enterprise/src/Eccube/Resource/template/default/Entry/activate_error.twig:22-23 はこれらのtitle/messageキーを表示するため、旧実装の本文と異なる。",
+      "note": "エラー種別自体は正本にあるが、指摘対象の完全一致本文は旧実装由来。"
+    },
+    {
+      "rowId": 318,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html:2333-2336 から `Source: functions/pf-eccube3/f06-03_front_member_customer_login.md` の埋め込みが始まる。入力欄を隠す期待値は同リバース詳細設計 hareruya-design-docs/functions/pf-eccube3/f06-03_front_member_customer_login.md:171 の「フォーム位置に入力欄に代えて表示」「制限中は入力欄を表示しない」にのみあり、Excel正本範囲にはない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/login.twig:19-30 は制限日時が未来なら「誤ったメールアドレスやパスワードを繰り返し入力されたため、ログインを制限しました」とだけ表示し、`{% else %}` の内側にメール・パスワード入力欄を置くため、制限中は入力欄を描画しない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/login.twig:37-68 は常にフォームとメール・パスワード欄を描画し、同:78-83 でエラー文を追加表示するだけである。制限中に入力欄を隠す条件分岐は同テンプレートおよび ec-cube-enterprise/src/Eccube/Controller/Front/MypageController.php:84-118 に存在しない。",
+      "note": "ロックアウト時の表示制御は旧実装由来で、Excel正本には記述がない。"
+    },
+    {
+      "rowId": 319,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html:2333-2336 から旧実装由来のリバース詳細設計が始まる。旧サイト会員向け告知は hareruya-design-docs/functions/pf-eccube3/f06-03_front_member_customer_login.md:163 の「旧サイトで会員登録がお済みの方へ、パスワード再設定のお願い…」にのみ存在し、Excel正本範囲に記載がない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/login.twig:76-80 は「旧サイトで会員登録がお済みの方へ、パスワード再設定のお願い」「新サイトに初めてログインする際には『パスワード』の再設定をお願いします。」を表示し、`path('forgot')` へリンクする。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/login.twig:32-102 は会員ログインフォームと「パスワードをお忘れの方」リンクを表示するが、旧サイト移行告知を持たない。ec-cube-enterprise/src と html/template を期待文言「旧サイトで会員登録」「システムの移行に伴い」で検索しても該当表示は存在しない。",
+      "note": "移行告知は旧実装に存在するが、Excel正本へは記載されていない。"
+    },
+    {
+      "rowId": 320,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html:2612-2615 のExcel正本はURLのリセットキーで「ユーザー情報を検索」し、存在・期限・本会員を確認すると記載する。同:2630 の入力メールアドレス要件は未入力/RFC形式チェックだけで、リセット対象とのメール一致を追加検索条件にしていない。",
+      "legacyEvidence": "pf-eccube3/src/Eccube/Controller/ForgotController.php:124-157 はURLの`$reset_key`だけで `getActiveCustomerByResetKey($reset_key)` を呼び、pf-eccube3/src/Eccube/Repository/CustomerRepository.php:403-410 も `reset_key`・本会員状態・期限だけで対象を取得する。旧実装も正本のリセットキー単独特定と一致する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Front/ForgotController.php:189-207 はGET時はリセットキーだけで取得する一方、POST時に `getRegularCustomerByResetKey($reset_key, login_email)` とメールも渡す。ec-cube-enterprise/src/Eccube/Repository/Views/RegisterCustomerViewRepository.php:143-155 はメールがあると `andWhere('c.email = :email')` を加えるため、正本にないメール一致を更新条件にしている。",
+      "note": ""
+    }
+  ]
+}

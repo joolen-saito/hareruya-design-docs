@@ -1,0 +1,149 @@
+{
+  "packetId": "rc_13",
+  "results": [
+    {
+      "rowId": 213,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0408_基本設計仕様書(バッチ_会員).html の sheet-5「ポイント有効期限通知」を `送信時のエラー/エラーメッセージをコンソール/コンソール` で検索した。Excel正本範囲1388-1464行では B123「エラーハンドリング」、C124「該当処理なし」を確認し、要求文は0件。function-design-embed は1467行から始まり、1528行にだけ「送信時のエラー」「エラーメッセージをコンソールに出力する」がある。バッチ仕様であり画面レイアウト画像の対象外。",
+      "reason": "対象機能のExcel正本は送信エラー時のコンソール出力を定めず、正確な要求文はリバース詳細設計にしかない。旧実装 pf-eccube3/app/Plugin/HareruyaEc/Service/MailService.php の sendPointExpireNotificationMail() 1150-1152行は mail() をcatchせず、CustomerBatch::execute() 49-52行も例外を捕捉しないため、LEGACY_BACKED は妥当。現行は送信例外をログへ変換してreturnするため差は残る。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Service/MailService.php の sendPointExpireNotificationMail() 1119-1125行は `catch (TransportExceptionInterface $e) { log_critical($e->getMessage()); return; }`。src/Eccube/Command/PointExpireNotificationCommand.php の execute() 40-48行には Throwable を `$io->error(...)` へ出すcatchがあるが、メール送信例外は再throwされないため到達しない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 214,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0408_基本設計仕様書(バッチ_会員).html の sheet-5 Excel正本範囲1388-1464行を `開始/完了/コンソール/日時付き` で確認したが、開始・完了ログの要求は0件。function-design-embed 内1531行でのみ「開始・完了のコンソール出力（日時付き）」を確認した。バッチ仕様であり画面レイアウト画像の対象外。",
+      "reason": "日時付きコンソール出力はExcel正本ではなく、旧 CustomerBatch::execute() の `Command start/complete` と `date('Y/m/d H:i:s')` を起こしたリバース詳細設計の要求である。LEGACY_BACKED は妥当で、現行固定文言には日時がない。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Command/PointExpireNotificationCommand.php の execute() 38行は `$io->text('ポイント有効期限通知バッチ開始')`、51行は `$io->success('ポイント有効期限通知処理が完了しました。')`。同メソッドに日時生成・format処理はない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 215,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0408_基本設計仕様書(バッチ_会員).html の sheet-7 Excel正本範囲1629-1694行を `customer:batch/adjustPointVariance/コマンド` で検索し、コマンド名は0件。正本には1665行の「スケジュール起動(Step Functions)」「毎日3:30」はある。function-design-embed は1695行から始まり、1725行にだけ `customer:batch adjustPointVariance` がある。バッチ仕様であり画面レイアウト画像の対象外。",
+      "reason": "具体的な外部コマンド名はExcel正本に無く、旧 pf-eccube3/app/Plugin/HareruyaEc/Command/CustomerBatch.php 12-18行のバッチ名対応と24-28行の `setName('customer:batch')` に実在するため、LEGACY_BACKED は妥当。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Command/AdjustPointVarianceCommand.php のクラス属性は25行で `#[AsCommand(name: 'eccube:customer:adjust-point-variance', ...)]`。src/app/config/script/infra/html を `customer:batch|adjustPointVariance` で検索した結果、旧名のコマンド登録・aliasは0件で、ヒットは同クラスのDIプロパティ名とhandle呼出しだけ。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 216,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0408_基本設計仕様書(バッチ_会員).html の sheet-7 Excel正本範囲1629-1694行を `開始/完了/コンソール/日時付き` で検索し、1691-1692行は「エラーハンドリング」「該当処理なし」で、該当ログ要求は0件。function-design-embed 内1758行にだけ「開始・完了のコンソール出力（日時付き）」がある。バッチ仕様であり画面レイアウト画像の対象外。",
+      "reason": "日時付き出力は旧 CustomerBatch::execute() 49-52行の `Command start/complete` と `date('Y/m/d H:i:s')` に実在し、Excel正本には無いのでLEGACY_BACKEDは妥当。現行は日時なしの固定文言である。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Command/AdjustPointVarianceCommand.php の execute() 38行は `$io->text('ポイント差分発生通知バッチ開始')`、51行は `$io->success('ポイント差分発生通知処理が完了しました。')`。同ファイルに日付・時刻を組み立てるコードはない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 217,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0408_基本設計仕様書(バッチ_会員).html の sheet-7 Excel正本範囲1629-1694行を `取得・送信時のエラー/エラーメッセージ/コンソール` で検索し該当0件。1691-1692行の正本は「エラーハンドリング」「該当処理なし」。要求文はfunction-design-embed内1755行にだけ存在する。バッチ仕様であり画面レイアウト画像の対象外。",
+      "reason": "コンソールへ伝播する契約は、旧 CustomerBatch::execute() が処理例外をcatchせず、旧 MailService::sendAdjustPointVarianceMail() 1603-1605行も mail() をcatchしない挙動に由来する。Excel正本は明示的に「該当処理なし」なのでLEGACY_BACKEDは妥当。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Service/MailService.php の sendAdjustPointVarianceMail() 1447-1452行は送信時の TransportExceptionInterface をcatchし、`log_critical($e->getMessage())` のみで再throwしない。src/Eccube/Command/AdjustPointVarianceCommand.php の execute() 40-48行の `$io->error(...)` にはこの送信例外が到達しない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 218,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0408_基本設計仕様書(バッチ_会員).html の sheet-8 Excel正本範囲1768-1830行を `smaregi:batch/updatePoint/コマンド名` で検索し0件。正本1797-1803行には購入完了時に注文IDを別処理へ渡してスマレジAPI連携する要求はあるが、具体的コマンド名はない。function-design-embed は1831行から始まり、1861・1865行にだけ `smaregi:batch updatePoint <受注ID>` がある。バッチ仕様であり画面レイアウト画像の対象外。",
+      "reason": "差分対象である具体的なコマンド名は、旧 pf-eccube3/app/Plugin/HareruyaEc/Command/SmaregiBatch.php 12-16行の `updatePoint` と22-26行の `setName('smaregi:batch')` に由来する。一般的な注文ID連携は正本にもあるが、名称差の根拠区分はLEGACY_BACKEDで妥当。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Command/SmaregiUpdatePointCommand.php 26行は `#[AsCommand(name: 'eccube:smaregi:update-point', ...)]`。src/Eccube/Service/Admin/Order/ResendMailAction.php 96-100行も `bin/console eccube:smaregi:update-point` を起動する。src/app/config/script/infra/html を旧名で検索してaliasは0件。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 219,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0408_基本設計仕様書(バッチ_会員).html の sheet-8 Excel正本を `注文ID/受注ID/未入力/該当データなし/数値` で確認した。1825-1826行の src-cell は「注文IDが未入力もしくは該当データなし」「処理を終了する(正常終了扱い[return終了])」だが、非数値IDの規定は0件。function-design-embed内1862・1866行にのみ未指定または数値でない場合の終了がある。バッチ仕様であり画面レイアウト画像の対象外。",
+      "reason": "現行との差になっている「非数値も何もせず終了」はExcel正本に無く、旧 pf-eccube3/app/Plugin/HareruyaEc/Service/Smaregi/UpdatePoint.php の execute() 32-34行 `empty($options) || !is_numeric($options[0])` でreturnする挙動に実在するため、LEGACY_BACKEDは妥当。正本が定める未入力・存在しない数値IDは現行も満たす。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Command/SmaregiUpdatePointCommand.php の execute() 47-50行は未入力をSUCCESSにする一方、53-56行は非数値で `$io->error('orderId は数値で指定してください')` を出しFAILUREを返す。src/Eccube/Service/Smaregi/SmaregiUpdatePointAction.php の handle() 34-37行は存在しない数値IDを何もせずreturnする。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 223,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0413_基本設計仕様書(バッチ_イベント).html の sheet-3 Excel正本範囲を `重複を除いて/1つにまとめ/エラー集約/管理者へ通知` で検索した。1049-1051行の src-cell は「取引照会の処理自体でエラー」「エラーメッセージを記載したイベント決済確認エラー通知メールを送信」までで、集約・重複排除は0件。function-design-embed は1054行から始まり、1090・1096・1116行にだけ集約要求がある。バッチ仕様であり画面レイアウト画像の対象外。",
+      "reason": "Excel正本はエラー通知の存在を要求するが通知単位や重複排除を定めない。集約方式は旧 pf-eccube3/app/Plugin/HareruyaEc/Service/Payment/AbstractCheckPaymentEntry.php 45-56行の `!in_array` による蓄積と62-69行のループ後1回送信に実在するため、指摘対象の根拠区分はLEGACY_BACKEDで妥当。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Service/Admin/Payment/PaymentStatusCheckAction.php の handle() 164-172行は各EventEntryのcatch内で `sendEventPaymentErrorAlertMail($EventEntry, $e->getMessage())` を即時実行する。ループ後175-178行は件数resultの作成だけで、エラー配列の蓄積・重複排除・一括通知はない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 226,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0408_基本設計仕様書(バッチ_会員).html の sheet-6を `tel01/電話番号(1列目)/コロン/本文(例)` で確認した。Excel正本 src-cell の1593行は会員IDと全項目のコロン区切り、1595行は `tel01:[電話番号(1列目)]:tel02:[電話番号(2列目)]:tel03:[電話番号(3列目)]`、1622-1623行のメール本文例は `tel01:000:tel02:0000:tel03:0000` と明記する。バッチメール本文仕様であり画面レイアウト画像の対象外。",
+      "reason": "期待値はfunction-design-embedではなくExcel正本の実データ例で直接支持されるためSPEC_BACKEDは正しい。現行CONCATはtel01値の前に誤ってtel02ラベルを置く。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Repository/CustomerRepository.php の getBlankRequiredItemCustomers() 649-655行は `':tel02:', COALESCE(c.tel01, 'null'), ':tel02:', COALESCE(c.tel02, 'null'), ':tel03:'`。同メソッドの結果をsrc/Eccube/Service/Admin/Customer/CheckBlankRequiredItemCustomerAction.phpがメール送信へ渡しており、本文用の代替`:tel01:`生成経路はない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 227,
+      "originalClass": "UNCERTAIN",
+      "classVerdict": "REFUTED",
+      "correctedClass": "SPEC_BACKED",
+      "driftVerdict": "PARTIAL",
+      "checkedQuote": "0416_基本設計仕様書(バッチ_インフラ).html の sheet-8を `月初/全店舗/stock_YYYYMMDD/inventorycheck/Step Functions/毎月1日/午前1時` で確認した。Excel正本 src-cell の1178-1179行は月初・全店舗、1192-1209行はDB抽出・ZIP・`stock_YYYYMMDD.txt.zip`・`s3://inventorycheck/`、1211行は「スケジュール起動(Step Functions)」「毎月1日 午前1時」を明記する。バッチ仕様であり画面レイアウト画像の対象外。",
+      "reason": "期待値全体がExcel正本に直接記載されているためUNCERTAINではなくSPEC_BACKED。先行の「専用Command/Serviceが不在」は探索範囲漏れで、現行には専用シェル処理がある。処理本体は解消済みだが、現在の作業ツリー内には月次1時のStep Functions/EventBridge起動定義が無く、外部AWS設定は確認できないためPARTIALとした。",
+      "currentImpl": "ec-cube-enterprise 現状: script/ops/monthly-inventory-snapshot/inventory.sh の inventory処理は59-89行で最新RDSスナップショット復元、115-126行で `stock_$(date +%Y%m%d).txt` のSQL出力・zip・S3アップロードを行う。config.sh 15行はinventorycheck例、21-22行は一時DB名、query.sql 4-18行は設計の6列・公開/営業中条件・店舗/在庫場所順を実装する。infra/script/dockerbuild/.githubを `monthly-inventory-snapshot|inventorycheck|stepfunctions|statemachine|schedule` で検索したが対象起動定義はなく、infra/lib/constructs/datastore.ts 79-94行のScheduleはAWS Backupの日次ルール、dockerbuild/eccube/crontab 2行はfile_syncだけ。",
+      "severityOpinion": "med",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 232,
+      "originalClass": "UNCERTAIN",
+      "classVerdict": "REFUTED",
+      "correctedClass": "SPEC_BACKED",
+      "driftVerdict": "PARTIAL",
+      "checkedQuote": "0416_基本設計仕様書(バッチ_インフラ).html の sheet-13を `15分毎/S3/ファイル名/ファイルサイズ/規定サイズ/管理者メール/BCC` で確認した。Excel正本 src-cell の1545-1549行は一覧取得・種別別判定・メール・Step Functions 15分毎、1551-1574行は5種のパスと250/400/500/400/5kB、1576-1583行はFrom/To/CC/BCC/件名/本文を明記する。バッチ仕様であり画面レイアウト画像の対象外。",
+      "reason": "要求はExcel正本に直接かつ具体値付きで存在するためUNCERTAINではなくSPEC_BACKED。先行のConsole/Service探索だけでは不十分で、現行シェルが本体を実装済み。ただし作業ツリーにStep Functionsの15分起動定義がなく、さらにBCC既定値が正本と異なるため、乖離は一部だけ残るPARTIAL。",
+      "currentImpl": "ec-cube-enterprise 現状: script/ops/imgcheck/bigfilefinder.sh 16-31行は設計対象S3パスの一覧を作り、42-80行は256000/409600/512000/409600/5120バイト以上を抽出、83-108行は一覧を公開URLへ変換してFrom/To/CC/BCC・件名「画像ファイルサイズ超過アラート」・本文をsendmail送信する。一方config.sh 36行のMAIL_BCC既定値は `ex-hareruya-eccube-al-aaaat4a5x3pzbmyj2q2bc6gd5u@wakuwaku-impact.slack.com` で、正本B61の `r9y9k6q2h2i8d9b5@sekappy-dev.slack.com` と不一致。infra/script/dockerbuild/.githubに本処理の15分起動定義はなく、dockerbuild/eccube/crontabはfile_syncの1行のみ。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 234,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0301_基本設計仕様書(フロント_トップ).html の sheet-3を `Trending Now/(2-17)/(2-18)/more` で確認した。Excel正本 src-cell の1322-1329行は英語版商品をTrending Nowタグ由来、1330-1332行は(2-17)(2-18)moreから同タグ絞込一覧へ遷移、項目表1360-1361行も同じ遷移を明記する。レイアウト画像は data-excel-ref `0301:ECTOP!B270` のimage 37-43をbase64から実際に展開して開き、image 37/38/40で見出し横とカルーセル末尾のmore配置を確認した。image 41-43は透明差分レイヤーで単体では英語文字を判読できなかったため、英語文言と遷移は上記src-cellおよび同レイアウトのshape-text `Trending Now`/`more`、pin (2-17)/(2-18)で確認した。",
+      "reason": "英語版の表示元タグと2つのmoreリンクの遷移先はExcel正本セルで直接指定され、レイアウト上の対象位置も確認できるためSPEC_BACKEDは妥当。現行は表示データだけTrending Now設定値を使い、両リンクはNEW_ITEMS_IDに固定したまま。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Service/Block/NewItemsBlockPayloadBuilder.php の build() 56-66行はlocale=enでMtbOption::SLIDER_EN_ONLY_TAG_IDの値を商品取得タグに使う。一方src/Eccube/Resource/template/default/Block/new_items.en.twig 9行と21行は両moreリンクを `Tag::NEW_ITEMS_ID` に固定し、src/Eccube/Entity/Tag.php 55行は `NEW_ITEMS_ID = 1`。表示商品と遷移先タグの不一致は残る。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    }
+  ]
+}

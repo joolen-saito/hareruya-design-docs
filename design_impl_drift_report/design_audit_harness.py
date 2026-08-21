@@ -1,0 +1,690 @@
+#!/usr/bin/env python3
+"""HTML設計書を正とした実装乖離監査ハーネス（母数TSV非依存・新規調査用）。
+
+`recheck_harness.py` との違い:
+  recheck_harness は既存の指摘一覧(`drift_findings_list_remaining.tsv`)を再判定する。
+  本ハーネスは**その一覧を一切読まない**。正本HTML設計書から要求を機械抽出して母集合を作り、
+  1要求ずつ `ec-cube-enterprise`(ee) 実装と突き合わせる。出力は新規のMD/TSV。
+
+絶対規約:
+  1. 入力は正本HTML(`excel_to_html/output/*.html`)と ee リポジトリだけ。
+     既存の指摘一覧・findings.json の類は読まない（読む実装を置かない）。
+  2. **正本HTMLに書かれていないことは指摘にできない。**
+     判定行の `設計根拠_引用` は該当シート本文に実在すること（空白を詰めた部分一致で機械照合）。
+     不一致は RuntimeError で build を落とす。
+  3. `実装参照` は ee 内に実在するファイル:行のみ。存在しない・行数超過は RuntimeError。
+  4. **判定漏れ0**: 抽出した全要求に判定が付くまで build は成功しない。
+     取り込まない要求も OUT_OF_SCOPE / UNVERIFIABLE として理由付きで必ず残す。
+
+使い方:
+  python3 design_audit_harness.py inventory --doc 0203   # 要求母集合 + 画像を書き出す
+  python3 design_audit_harness.py build     --doc 0203   # verdicts.tsv を検証してMD/TSVを出力
+"""
+
+from __future__ import annotations
+
+import argparse
+import base64
+import csv
+import re
+import subprocess
+import sys
+import unicodedata
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import lib_design_doc as L  # noqa: E402
+
+ROOT = Path(__file__).resolve().parent
+WORKSPACE = ROOT.parent.parent
+IMPL_ROOT = WORKSPACE / "ec-cube-enterprise"
+AUDIT_DIR = ROOT / "design_audit"
+
+# 書籍番号だけでは一意に決まらない設計書のエイリアス（0211 は基本設計と詳細設計の2冊ある）
+DOC_ALIAS = {
+    "0211": "0211_基本設計仕様書(分析・集計管理機能)",
+    "0211_詳細設計": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計",
+}
+
+
+def resolve_doc(doc_key: str) -> Path:
+    return L.resolve_book(DOC_ALIAS.get(doc_key, doc_key))
+
+# ---- 要求抽出 ---------------------------------------------------------------
+
+SECTION_MARKS = [
+    (re.compile(r"^処理概要（★はカスタマイズ項目）$"), "OVERVIEW"),
+    (re.compile(r"^レイアウト図$"), "LAYOUT"),
+    (re.compile(r"^(カスタマイズ説明|機能について|機能仕様)"), "SPEC"),
+    # 「要件説明」はレイアウト図の直後に置かれることが多く、LAYOUT のまま捨てると
+    # 要件そのものが母集合から落ちる（0201 だけで 30行）。独立した節として拾う。
+    (re.compile(r"^要件説明"), "REQUIREMENT"),
+    (re.compile(r"^識別ID\t"), "ITEMS"),
+    (re.compile(r"^(番号pin対応台帳|コネクタ解決台帳)"), "LEDGER"),
+    (re.compile(r"^Source:$"), "SOURCE"),
+    (re.compile(r"^現行仕様$"), "CURRENT"),
+    (re.compile(r"^リニューアル後の仕様$"), "RENEWED"),
+    (re.compile(r"^表示メッセージ$"), "MESSAGES"),
+    (re.compile(r"^メッセージID\t"), "MESSAGES"),
+]
+
+# 見出し・体裁だけの行（要求ではない）
+NOISE = re.compile(
+    r"^(ドキュメント名|セクション|プロジェクト名|作成者|作成日|更新者|更新日|機能No|機能名|概要|"
+    r"受注管理　基本設計|—|・カスタマイズ要件|カスタマイズ説明|レイアウト図|Source:|現行仕様|"
+    r"リニューアル後の仕様|表示メッセージ|業務ロジック|入出力|処理概要（★はカスタマイズ項目）|"
+    r"機能仕様機能について|機能仕様処理概要（★はカスタマイズ項目）|機能について)\s*$"
+)
+# レイアウト図のピン番号・画像キャプション
+PIN = re.compile(r"^\(?\d+(-\d+)?\)?$")
+IMG_CAPTION = re.compile(r"/ [A-Z]{1,3}\d+ / image \d+$|^画像レイヤー（\d+枚）:")
+DATE_LIKE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+
+
+def classify_sections(lines: list[str]) -> list[str]:
+    """行ごとのセクション名を返す。
+
+    `Source:` は取り込み元の明示であって、それ以降が要求でないという意味ではない。
+    見出し行とその次の1行（取り込み元パス）だけを SOURCE とし、以降は本文として拾い直す。
+    ここを「以降ずっと SOURCE」にすると、Markdown起点の設計書（節見出しが業務ロジック等で
+    SECTION_MARKS に無い）で本文が丸ごと母集合から落ちる。
+    """
+    out, cur = [], "HEADER"
+    src_left = 0
+    for line in lines:
+        matched = None
+        for rx, name in SECTION_MARKS:
+            if rx.match(line):
+                matched = name
+                break
+        if matched == "SOURCE":
+            cur, src_left = "SOURCE", 1
+            out.append(cur)
+            continue
+        if cur == "SOURCE":
+            if matched:
+                cur = matched
+            elif src_left:
+                src_left -= 1
+                out.append(cur)
+                continue
+            else:
+                cur = "BODY"
+        elif matched:
+            cur = matched
+        out.append(cur)
+    return out
+
+
+def extract_requirements(sheet_id: str, title: str, lines: list[str]) -> list[dict]:
+    """1シートから要求候補を切り出す。落とした行は理由付きで別途数える。
+
+    節見出し（処理概要／カスタマイズ説明／識別ID表／現行仕様…）を1つも持たないシートは、
+    セクション判定が HEADER のまま進み全行が落ちる。別添資料のように本文だけのシートが
+    丸ごと素通りするため、その場合は HEADER 以降を「本文」として拾い直す。
+    """
+    secs = classify_sections(lines)
+    if all(s == "HEADER" for s in secs):
+        secs = ["HEADER"] + ["BODY"] * (len(lines) - 1)
+    else:
+        # 冒頭のメタ情報（ドキュメント名〜機能名〜概要）より後ろは、節見出しが現れるまで本文として拾う。
+        # 節見出しを持たない「処理」「要件説明」等の塊が HEADER 扱いで丸ごと落ちるのを防ぐ。
+        meta_end = 0
+        for i, line in enumerate(lines[:40]):
+            if line.strip() in ("概要", "機能名"):
+                meta_end = i + 1  # ラベル行の次（値）まで
+        for i in range(meta_end + 1, len(lines)):
+            if secs[i] == "HEADER":
+                secs[i] = "BODY"
+            else:
+                break
+    reqs: list[dict] = []
+    seq = 0
+    for i, (line, sec) in enumerate(zip(lines, secs), start=1):
+        if sec in ("HEADER", "LAYOUT", "LEDGER", "SOURCE"):
+            continue
+        if NOISE.match(line) or PIN.match(line) or IMG_CAPTION.search(line) or DATE_LIKE.match(line):
+            continue
+        if not line.strip(" 　\t-"):
+            continue
+        kind = {
+            "OVERVIEW": "処理概要",
+            "SPEC": "機能仕様",
+            "ITEMS": "項目定義",
+            "CURRENT": "現行仕様",
+            "RENEWED": "刷新仕様",
+            "MESSAGES": "表示メッセージ",
+            "REQUIREMENT": "要件説明",
+            "BODY": "本文",
+        }.get(sec, sec)
+        if sec == "ITEMS" and line.startswith("識別ID\t"):
+            continue
+        if sec == "MESSAGES" and line.startswith("メッセージID\t"):
+            continue
+        seq += 1
+        reqs.append({
+            "要求ID": f"{sheet_id}-R{seq:03d}",
+            "シート": sheet_id,
+            "シート名": title,
+            "区分": kind,
+            "シート内行": str(i),
+            "要求文": line,
+        })
+    return reqs
+
+
+def sheet_line_offset(book: Path, sheet) -> tuple[int, int]:
+    raw = book.read_text(encoding="utf-8", errors="ignore")
+    offs, pos = [], 0
+    for line in raw.splitlines():
+        offs.append(pos)
+        pos += len(line) + 1
+    lo = next(i for i, o in enumerate(offs, 1) if o >= sheet.start)
+    hi = max(i for i, o in enumerate(offs, 1) if o < sheet.end)
+    return lo, hi
+
+
+def cmd_inventory(doc_key: str) -> None:
+    book = resolve_doc(doc_key)
+    raw = book.read_text(encoding="utf-8", errors="ignore")
+    outdir = AUDIT_DIR / doc_key
+    (outdir / "sheets").mkdir(parents=True, exist_ok=True)
+    (outdir / "images").mkdir(parents=True, exist_ok=True)
+
+    all_reqs: list[dict] = []
+    sheet_rows: list[dict] = []
+    for s in L.sheet_index(book):
+        text = L.sheet_text(book, s)
+        lines = text.splitlines()
+        lo, hi = sheet_line_offset(book, s)
+        frag = raw[s.start:s.end]
+        imgs = re.findall(r'<img[^>]+src="data:image/(\w+);base64,([^"]+)"', frag)
+        (outdir / "sheets" / f"{s.sheet_id}.txt").write_text(
+            f"# {s.sheet_id} {s.title} (HTML行 {lo}-{hi} / 画像 {len(imgs)}枚)\n\n" + text,
+            encoding="utf-8")
+        for n, (ext, b64) in enumerate(imgs, start=1):
+            path = outdir / "images" / f"{s.sheet_id}_img{n}.{ext}"
+            path.write_bytes(base64.b64decode(b64))
+        reqs = extract_requirements(s.sheet_id, s.title, lines)
+        if not reqs and imgs:
+            # 本文テキストを持たず画像だけのシート。判定漏れで素通りしないよう1件立てる。
+            reqs = [{
+                "要求ID": f"{s.sheet_id}-R001", "シート": s.sheet_id, "シート名": s.title,
+                "区分": "画像のみ", "シート内行": "1",
+                "要求文": f"本シートは本文テキストを持たない。埋め込み画像{len(imgs)}枚を目視し、"
+                          f"実装対象の要求が描かれていないかを確認すること。",
+            }]
+        for r in reqs:
+            r["HTML行"] = str(lo + int(r["シート内行"]) - 1)  # 参考値（本文行と一致しない場合あり）
+        all_reqs.extend(reqs)
+        sheet_rows.append({
+            "シート": s.sheet_id, "シート名": s.title,
+            "HTML行範囲": f"{lo}-{hi}", "本文行数": str(len(lines)),
+            "画像": str(len(imgs)), "要求候補": str(len(reqs)),
+        })
+
+    cols = ["要求ID", "シート", "シート名", "区分", "シート内行", "HTML行", "要求文"]
+    with (outdir / "requirements.tsv").open("w", encoding="utf-8", newline="") as fh:
+        w = csv.DictWriter(fh, fieldnames=cols, delimiter="\t", lineterminator="\n")
+        w.writeheader()
+        for r in all_reqs:
+            w.writerow({c: r.get(c, "") for c in cols})
+    with (outdir / "sheets.tsv").open("w", encoding="utf-8", newline="") as fh:
+        w = csv.DictWriter(fh, fieldnames=list(sheet_rows[0]), delimiter="\t", lineterminator="\n")
+        w.writeheader()
+        w.writerows(sheet_rows)
+    print(f"inventory: {len(all_reqs)}要求 / {len(sheet_rows)}シート -> {outdir}")
+    for r in sheet_rows:
+        print(f"  {r['シート']}\t{r['要求候補']:>4}件\t画像{r['画像']}\t{r['シート名']}")
+
+
+# ---- 判定の検証・出力 -------------------------------------------------------
+
+VERDICT_COLUMNS = [
+    "要求ID", "判定", "重要度", "指摘区分", "乖離種別",
+    "設計根拠_引用", "設計期待値", "実装参照", "実装実態", "判定根拠", "画像確認メモ", "確信度",
+]
+VALID = {
+    "MATCHED",        # 設計どおり実装されている
+    "DRIFT",          # 実装はあるが設計と違う
+    "NOT_IMPLEMENTED",# 設計の要求に対応する実装が無い
+    "DESIGN_ISSUE",   # 正本内部で記述が矛盾し、設計裁定待ち
+    "UNVERIFIABLE",   # 静的解析では判定できない（理由必須）
+    "OUT_OF_SCOPE",   # 実装対象の要求ではない（見出し・凡例・他機能の記述など。理由必須）
+}
+FINDING = {"DRIFT", "NOT_IMPLEMENTED"}
+
+# ---- 指摘ポリシー（利用者指示 2026-08-19 / 機械ゲート化） -------------------
+#
+# 1. ★書きの識別IDずれは指摘にしない。
+#    カスタマイズ説明の「★識別ID:N「X」を追加」が項目表の識別IDとずれている件は、
+#    どの列を足すかは項目表で決まっており実装は追随済みのため、指摘対象にしない。
+#    → 該当行は build 時に自動で OUT_OF_SCOPE へ落とす（人が判定を書いても上書きする）。
+#
+# 2. 実装手段の差は指摘にしない。
+#    通信方式・認可設定・受付先・内部配線・検証順序・トランザクション境界・
+#    セッションキー・ルート名・join の種類などは、それ自体を設計期待値にしない。
+#    → 設計期待値がこれらの語で書かれていたら build を落とす。結果の言葉へ書き直す。
+#
+# 3. 実装違いは I/O とふるまいに限る。
+#    → DRIFT / NOT_IMPLEMENTED には 乖離種別（IO か ふるまい）の明示を必須にする。
+#
+# 「原因」を判定根拠や実装実態に書くのは可。禁じるのは設計期待値を実装手段で書くこと。
+
+STAR_ID_SHIFT_RE = re.compile(r"^★?\s*識別ID[:：]\s*\d+")
+
+DRIFT_KINDS = {"IO", "ふるまい"}
+
+IMPL_MEANS_RE = re.compile(
+    r"トランザクション|セッションキー|ルート名|ルート定義|"
+    r"inner\s*join|left\s*join|leftJoin|innerJoin|"
+    r"通信方式|認可設定|受付先|エンドポイント|内部配線|呼び出し順|"
+    r"クラス名|メソッド名|パラメータ名|DIコンテナ|イベント|キャッシュを持つ",
+    re.IGNORECASE,
+)
+REPORTED = {"DRIFT", "NOT_IMPLEMENTED", "DESIGN_ISSUE"}  # 成果物に載せる判定
+QUOTE_REQUIRED = REPORTED  # 載るものだけ逐語引用を必須にする（捏造ゲート）
+
+
+def norm(text: str) -> str:
+    t = unicodedata.normalize("NFKC", text or "").replace("　", "")
+    t = re.sub(r"\s+", "", t)
+    t = t.replace("｢", "「").replace("｣", "」")
+    return re.sub(r"[\"'`´’‘“”]", "", t)
+
+
+# 重要度は業務影響で P1/P2/P3 に分類する（利用者指示 2026-08-20）。
+#   P1 業務が回らず商売が止まる／データ整合性が壊れる／手作業でも代替できない
+#   P2 迂回すれば回る（手作業・再実行・別経路で完了できるが、正しさ・効率・顧客体験を損なう）
+#   P3 業務は回る（見出し・文言・列名・並び順・桁区切りなど、完了・データ・判断に影響しない）
+# 成果物に出す判定の表記（判定TSVの入力値は英字のまま。出力だけ日本語にする）
+VERDICT_JA = {
+    "NOT_IMPLEMENTED": "未実装",
+    "DRIFT": "実装違い",
+    "DESIGN_ISSUE": "設計裁定待ち",
+    "MATCHED": "設計どおり",
+    "OUT_OF_SCOPE": "対象外",
+    "UNVERIFIABLE": "確定不能",
+}
+
+SEVERITY_LEVELS = ("P1", "P2", "P3")
+SEVERITY_ORDER = {"P1": 0, "P2": 1, "P3": 2}
+
+
+# 代表を選ぶときの区分の優先順。ラベル・項目の定義は項目表（項目定義）が正本のため先に採る。
+SECTION_ORDER = {"項目定義": 0, "機能仕様": 1, "処理概要": 2, "現行仕様": 3}
+
+
+def dedupe_by_impl_actual(reported: list[dict], reqs: dict) -> tuple[list[dict], dict[str, list[str]], int]:
+    """実装実態が同一の指摘は重複とみなし、代表1件だけを成果物に載せる（利用者指示 2026-08-20）。
+
+    代表は 重要度(P1>P2>P3) → 区分(項目定義を優先) → 要求ID の順で選ぶ。折り畳んだ要求IDは代表行に持たせ、
+    成果物にも必ず出す（黙って落とさない）。DESIGN_ISSUE は実装実態を持たないため対象外。
+    """
+    groups: dict[str, list[dict]] = {}
+    passthrough: list[dict] = []
+    for v in reported:
+        actual = norm(v.get("実装実態", ""))
+        if v["判定"] not in FINDING or actual == "":
+            passthrough.append(v)
+            continue
+        groups.setdefault(actual, []).append(v)
+
+    kept: list[dict] = list(passthrough)
+    folded: dict[str, list[str]] = {}
+    folded_count = 0
+    for members in groups.values():
+        members.sort(key=lambda x: (SEVERITY_ORDER.get(x.get("重要度", ""), 9),
+                                    SECTION_ORDER.get(reqs[x["要求ID"]]["区分"], 9),
+                                    x["要求ID"]))
+        rep, rest = members[0], members[1:]
+        kept.append(rep)
+        if rest:
+            folded[rep["要求ID"]] = [x["要求ID"] for x in rest]
+            folded_count += len(rest)
+
+    return kept, folded, folded_count
+
+
+_IMPL_REF_RE = re.compile(r"^([\w./\-]+\.[A-Za-z0-9]+)(?::(\d+)(?:-(\d+))?)?$")
+
+
+def verify_impl_ref(ref: str) -> list[str]:
+    bad = []
+    for part in re.split(r"[;、]", ref or ""):
+        part = part.strip()
+        if not part:
+            continue
+        m = _IMPL_REF_RE.match(part)
+        if not m:
+            bad.append(f"{part}(書式不正)")
+            continue
+        path = IMPL_ROOT / m.group(1)
+        if not path.is_file():
+            bad.append(f"{part}(ファイル無し)")
+            continue
+        if m.group(2):
+            total = sum(1 for _ in path.open(encoding="utf-8", errors="ignore"))
+            if int(m.group(3) or m.group(2)) > total:
+                bad.append(f"{part}(行数超過: 実{total}行)")
+    return bad
+
+
+def impl_head() -> str:
+    return subprocess.run(["git", "-C", str(IMPL_ROOT), "rev-parse", "--short=10", "HEAD"],
+                          capture_output=True, text=True, check=True).stdout.strip()
+
+
+class Sheets:
+    def __init__(self, doc_key: str):
+        self.book = resolve_doc(doc_key)
+        self.index = {s.sheet_id: s for s in L.sheet_index(self.book)}
+        self._norm: dict[str, str] = {}
+
+    def norm_text(self, sheet_id: str) -> str:
+        if sheet_id not in self._norm:
+            self._norm[sheet_id] = norm(L.sheet_text(self.book, self.index[sheet_id]))
+        return self._norm[sheet_id]
+
+    def title(self, sheet_id: str) -> str:
+        return self.index[sheet_id].title
+
+
+def cmd_build(doc_key: str, partial: bool = False) -> None:
+    outdir = AUDIT_DIR / doc_key
+    req_path, ver_path = outdir / "requirements.tsv", outdir / "verdicts.tsv"
+    if not req_path.is_file():
+        raise RuntimeError(f"先に inventory を実行すること: {req_path} が無い")
+    if not ver_path.is_file():
+        raise RuntimeError(f"判定TSVが無い: {ver_path}")
+
+    with req_path.open(encoding="utf-8") as fh:
+        reqs = {r["要求ID"]: r for r in csv.DictReader(fh, delimiter="\t")}
+    with ver_path.open(encoding="utf-8") as fh:
+        reader = csv.DictReader(fh, delimiter="\t")
+        missing = [c for c in VERDICT_COLUMNS if c not in (reader.fieldnames or [])]
+        if missing:
+            raise RuntimeError(f"verdicts.tsv の列不足: {missing}")
+        verdicts = list(reader)
+
+    sheets = Sheets(doc_key)
+    errors: list[str] = []
+    seen: set[str] = set()
+    policy_star = 0
+    for v in verdicts:
+        rid = (v.get("要求ID") or "").strip()
+        if rid not in reqs:
+            errors.append(f"{rid}: requirements.tsv に無い要求ID")
+            continue
+        if rid in seen:
+            errors.append(f"{rid}: 重複行")
+        seen.add(rid)
+        req = reqs[rid]
+        verdict = (v.get("判定") or "").strip()
+        if verdict not in VALID:
+            errors.append(f"{rid}: 判定が不正 {verdict!r} (許可: {sorted(VALID)})")
+            continue
+
+        # --- ポリシー1: ★識別IDずれは自動で対象外へ落とす ---
+        if STAR_ID_SHIFT_RE.match(req["要求文"].strip()) and req["区分"] == "機能仕様":
+            if verdict != "OUT_OF_SCOPE":
+                v["判定"] = verdict = "OUT_OF_SCOPE"
+                v["判定根拠"] = ("[policy] カスタマイズ説明の★識別IDずれは指摘対象外（利用者指示 2026-08-19）。"
+                               "追加すべき列は項目表側の識別IDで決まり、実装は追随済み。"
+                               + (v.get("判定根拠") or ""))
+                policy_star += 1
+
+        quote = (v.get("設計根拠_引用") or "").strip()
+        if verdict in QUOTE_REQUIRED:
+            if not quote:
+                errors.append(f"{rid}: {verdict} には 設計根拠_引用 が必須")
+            elif norm(quote) not in sheets.norm_text(req["シート"]):
+                errors.append(f"{rid}: 引用が {req['シート']} 本文に存在しない（捏造ゲート）: {quote[:60]!r}")
+        if verdict in FINDING:
+            # --- ポリシー3: I/O かふるまいかの明示を必須にする ---
+            kind = (v.get("乖離種別") or "").strip()
+            if kind not in DRIFT_KINDS:
+                errors.append(f"{rid}: 乖離種別は {sorted(DRIFT_KINDS)} のいずれか"
+                              "（実装違いは I/O とふるまいに限る）")
+            # --- ポリシー2: 設計期待値を実装手段の語で書かない ---
+            hit = IMPL_MEANS_RE.search(v.get("設計期待値") or "")
+            if hit:
+                errors.append(f"{rid}: 設計期待値が実装手段の語で書かれている（{hit.group(0)!r}）。"
+                              "結果・ふるまいの言葉へ書き直すか、指摘を取り下げること")
+            impl = (v.get("実装参照") or "").strip()
+            if not impl:
+                errors.append(f"{rid}: {verdict} には 実装参照 が必須（不在なら探索したファイルを書く）")
+            else:
+                bad = verify_impl_ref(impl)
+                if bad:
+                    errors.append(f"{rid}: 実装参照が実在しない: {', '.join(bad)}")
+            if (v.get("重要度") or "").strip() not in SEVERITY_LEVELS:
+                errors.append(f"{rid}: 重要度は {'/'.join(SEVERITY_LEVELS)}")
+            if (v.get("指摘区分") or "").strip() not in ("未実装", "実装違い"):
+                errors.append(f"{rid}: 指摘区分は 未実装/実装違い")
+            if not (v.get("設計期待値") or "").strip():
+                errors.append(f"{rid}: 設計期待値 が空")
+            if not (v.get("実装実態") or "").strip():
+                errors.append(f"{rid}: 実装実態 が空")
+        if not (v.get("判定根拠") or "").strip():
+            errors.append(f"{rid}: 判定根拠 が空")
+        if (v.get("確信度") or "").strip() not in ("high", "med", "low"):
+            errors.append(f"{rid}: 確信度は high/med/low")
+
+    unjudged = sorted(set(reqs) - seen)
+    if unjudged and not partial:
+        errors.append(f"判定漏れ {len(unjudged)}件（全要求に判定が要る）: {unjudged[:20]}"
+                      + (" ..." if len(unjudged) > 20 else ""))
+    if unjudged and partial:
+        # --partial: 完全性だけ警告に落とす。捏造ゲート・実装参照の実在チェックはそのまま効かせる。
+        print(f"[partial] 未判定 {len(unjudged)}件を残したまま途中経過を出力する")
+    if errors:
+        raise RuntimeError("監査ゲート違反 %d件:\n  - %s" % (len(errors), "\n  - ".join(errors)))
+
+    if policy_star:
+        print(f"[policy] ★識別IDずれ {policy_star}件を自動で対象外にした")
+
+    head = impl_head()
+    # TSV の列は利用者指示（2026-08-20）で絞る。
+    # HTML行・要求文・実装参照・画像確認メモ・確信度・重複要求ID・ee_HEAD は出力しない
+    # 設計要件 列は verdicts.tsv の 設計期待値 をそのまま出す（利用者指示 2026-08-21）
+    # （いずれも AUDIT_*.md と design_audit/<doc>/verdicts.tsv には残る）。
+    # 判定（未実装／実装違い）と 指摘区分 は同じ値になるため、判定だけを残す
+    outcols = ["要求ID", "シート名", "区分",
+               "判定", "重要度", "乖離種別", "設計要件", "実装実態", "判定根拠"]
+    # 掲載しないもの: 実装実態が空欄 / 区分が「表示メッセージ」（いずれも利用者指示 2026-08-20）
+    reported_all = [v for v in verdicts
+                    if v["判定"] in REPORTED and (v.get("実装実態") or "").strip()
+                    and reqs[v["要求ID"]]["区分"] != "表示メッセージ"]
+    no_actual = [v for v in verdicts
+                 if v["判定"] in REPORTED and not (v.get("実装実態") or "").strip()]
+    msg_excluded = [v for v in verdicts
+                    if v["判定"] in REPORTED and (v.get("実装実態") or "").strip()
+                    and reqs[v["要求ID"]]["区分"] == "表示メッセージ"]
+    reported, folded, folded_count = dedupe_by_impl_actual(reported_all, reqs)
+    tsv_out = ROOT / f"AUDIT_{doc_key}.tsv"
+    with tsv_out.open("w", encoding="utf-8", newline="") as fh:
+        w = csv.DictWriter(fh, fieldnames=outcols, delimiter="\t", lineterminator="\n")
+        w.writeheader()
+        for v in sorted(reported, key=lambda x: x["要求ID"]):
+            r = reqs[v["要求ID"]]
+            row = dict(v)
+            row.update({"判定": VERDICT_JA.get(v["判定"], v["判定"]),
+                        "設計要件": v.get("設計期待値", ""),
+                        "要求ID": v["要求ID"], "シート": r["シート"], "シート名": r["シート名"],
+                        "区分": r["区分"], "HTML行": r["HTML行"], "要求文": r["要求文"],
+                        "重複要求ID": ";".join(folded.get(v["要求ID"], [])),
+                        "ee_HEAD": head})
+            w.writerow({c: row.get(c, "") for c in outcols})
+
+    md_out = ROOT / f"AUDIT_{doc_key}.md"
+    write_markdown(md_out, doc_key, sheets, reqs, verdicts, head, unjudged=len(unjudged),
+                   folded=folded, folded_count=folded_count, no_actual=len(no_actual),
+                   msg_excluded=len(msg_excluded))
+    print(f"build 完了: {tsv_out}\n           {md_out}")
+    print(f"  判定済 {len(verdicts)}要求 / 成果物に載せた指摘 {len(reported)}件"
+          f"（実装実態が同一の {folded_count}件は重複として代表へ折り畳み、"
+          f"実装実態が空欄の {len(no_actual)}件と区分「表示メッセージ」の {len(msg_excluded)}件は掲載しない。"
+          f"MATCHED・OUT_OF_SCOPE・UNVERIFIABLE も利用者指示により出力しない）")
+
+
+def write_markdown(path: Path, doc_key: str, sheets: Sheets, reqs: dict,
+                   verdicts: list[dict], head: str, unjudged: int = 0,
+                   folded: dict[str, list[str]] | None = None, folded_count: int = 0,
+                   no_actual: int = 0, msg_excluded: int = 0) -> None:
+    """成果物は指摘（DRIFT / NOT_IMPLEMENTED / DESIGN_ISSUE）だけを載せる。
+
+    MATCHED・OUT_OF_SCOPE・UNVERIFIABLE は利用者指示により出力しない。ただし
+    「何件を判定した結果その指摘に絞られたか」が分からないと網羅性を確認できないため、
+    母数と内訳件数だけはサマリに残す。
+    """
+    counts: dict[str, int] = {}
+    for v in verdicts:
+        counts[v["判定"]] = counts.get(v["判定"], 0) + 1
+    folded = folded or {}
+    folded_ids = {i for ids in folded.values() for i in ids}
+    findings = [v for v in verdicts
+                if v["判定"] in ("DRIFT", "NOT_IMPLEMENTED")
+                and v["要求ID"] not in folded_ids
+                and (v.get("実装実態") or "").strip()
+                and reqs[v["要求ID"]]["区分"] != "表示メッセージ"]
+    findings.sort(key=lambda v: (SEVERITY_ORDER.get(v.get("重要度", ""), 9), v["要求ID"]))
+
+    A: list[str] = []
+    a = A.append
+    a(f"# 実装乖離監査 — {sheets.book.name}")
+    a("")
+    a(f"- 正本: `excel_to_html/output/{sheets.book.name}`（HTML設計書。**これだけを正とする**）")
+    a(f"- 実装: `ec-cube-enterprise` HEAD `{head}`")
+    a(f"- 母数: 正本HTMLから機械抽出した **{len(reqs)}要求**（既存の指摘一覧は参照していない）")
+    if unjudged:
+        a(f"- **⚠ 途中経過。未判定 {unjudged}要求が残っている**"
+          f"（判定済 {len(verdicts)} / {len(reqs)}、{len(verdicts) * 100 // len(reqs)}%）。"
+          "未着手のシートからは指摘が出ていないだけで、無いとは限らない")
+    a("- 規約: 正本HTMLに逐語で存在する記述だけを根拠に採る。"
+      "HTMLに書かれていないことは指摘にできない（harness が引用の実在を機械照合し、"
+      "不一致・判定漏れがあれば build を落とす）")
+    a("- 本書には**指摘だけ**を載せる。設計どおり(MATCHED)・対象外(OUT_OF_SCOPE)・"
+      "静的解析では確定不能(UNVERIFIABLE)は利用者指示により掲載しない")
+    a("- 指摘ポリシー（harness が機械で強制）: "
+      "①★書きの識別IDずれは対象外に自動で落とす ②設計期待値を実装手段の語で書いた指摘は build を落とす "
+      "③実装違いは I/O とふるまいに限り、どちらかの明示を必須にする "
+      "④実装実態が同一の指摘は重複とみなし代表1件だけを載せる（折り畳んだ要求IDは代表に併記する） "
+      "⑤実装実態が空欄の指摘は載せない ⑥区分が「表示メッセージ」の指摘は載せない")
+    a("")
+    a("## 母数の内訳")
+    a("")
+    a("| 判定 | 意味 | 件数 | 掲載 |")
+    a("| --- | --- | ---: | :---: |")
+    meaning = [
+        ("NOT_IMPLEMENTED", "設計の要求に対応する実装が無い", "○"),
+        ("DRIFT", "実装はあるが設計と違う", "○"),
+        ("DESIGN_ISSUE", "正本内部で記述が矛盾し設計裁定待ち", "—"),
+        ("MATCHED", "設計どおり実装されている", "—"),
+        ("OUT_OF_SCOPE", "見出し・表示メッセージ節など実装対象の記述でない", "—"),
+        ("UNVERIFIABLE", "実データ・実行時挙動に依存し静的解析では確定できない", "—"),
+    ]
+    for k, m, shown in meaning:
+        a(f"| {VERDICT_JA.get(k, k)} | {m} | {counts.get(k, 0)} | {shown} |")
+    a(f"| **合計** | | **{len(verdicts)}** | |")
+    a("")
+    sev: dict[str, int] = {}
+    for f in findings:
+        sev[f["重要度"]] = sev.get(f["重要度"], 0) + 1
+    a(f"## 不具合 {len(findings)}件"
+      f"（P1 {sev.get('P1', 0)} / P2 {sev.get('P2', 0)} / P3 {sev.get('P3', 0)}）")
+    a("")
+    a("- **P1**: 業務が回らず商売が止まる、またはデータの整合性が壊れる。手作業でも代替できない")
+    a("- **P2**: 迂回すれば回る。手作業・再実行・別経路で業務は完了できるが、"
+      "コア業務の正しさ・効率、または顧客体験を損なう")
+    a("- **P3**: 業務は回る。業務の完了・データ・判断に影響しない"
+      "（見出し・ボタン文言・列名の相違／並び順・桁区切りの相違など）")
+    a("")
+    if folded_count:
+        a(f"実装実態が同一の指摘 {folded_count}件は重複として代表へ折り畳んだ"
+          f"（判定そのものは {len(findings) + folded_count}件。折り畳んだ要求IDは各指摘の"
+          "「同じ実装実態でまとまる要求」に全件を書く）。")
+        a("")
+    if findings:
+        a("| 要求ID | 機能 | 区分 | 種別 | 重要度 | 内容 |")
+        a("| --- | --- | --- | --- | --- | --- |")
+        for f in findings:
+            r = reqs[f["要求ID"]]
+            summ = (f.get("設計期待値") or "").replace("|", "／").replace("\n", " ")
+            a(f"| {f['要求ID']} | {r['シート名']} | {f.get('指摘区分','')} | "
+              f"{f.get('乖離種別','')} | {f.get('重要度','')} | {summ[:100]} |")
+        a("")
+        for f in findings:
+            r = reqs[f["要求ID"]]
+            a(f"### {f['要求ID']} {r['シート名']} — {f.get('指摘区分','')}／{f.get('乖離種別','')}／{f.get('重要度','')}")
+            a("")
+            a(f"- 正本: {r['シート']}（{r['シート名']}） HTML行 {r['HTML行']} 付近")
+            a(f"- 正本引用: 「{f.get('設計根拠_引用','')}」")
+            a(f"- 設計期待値: {f.get('設計期待値','')}")
+            if f.get("画像確認メモ"):
+                a(f"- 画像確認: {f['画像確認メモ']}")
+            a(f"- 実装参照: `{f.get('実装参照','')}`")
+            a(f"- 実装実態: {f.get('実装実態','')}")
+            if folded.get(f["要求ID"]):
+                by_id = {v["要求ID"]: v for v in verdicts}
+                parts = []
+                for i in folded[f["要求ID"]]:
+                    ref = (by_id.get(i, {}).get("実装参照") or "").strip()
+                    label = f"{i}（{reqs[i]['シート名']}"
+                    if ref and ref != (f.get("実装参照") or "").strip():
+                        label += f" / 実装参照 `{ref}`"
+                    parts.append(label + "）")
+                a(f"- 同じ実装実態でまとまる要求: {'、'.join(parts)}")
+            a(f"- 判定根拠: {f.get('判定根拠','')}")
+            a(f"- 確信度: {f.get('確信度','')}")
+            a("")
+
+    if no_actual or msg_excluded:
+        a("## 掲載しなかった判定")
+        a("")
+        if no_actual:
+            a(f"- 実装実態が空欄の判定 {no_actual}件（正本内部の記述が食い違い、実装と突き合わせる前に"
+              "設計裁定が要るもの）")
+        if msg_excluded:
+            a(f"- 区分が「表示メッセージ」の指摘 {msg_excluded}件")
+        a("")
+        a("いずれも利用者指示により本書に載せない。判定そのものは "
+          f"`design_audit/{doc_key}/verdicts.tsv` に残している。")
+        a("")
+
+    a("## シート別の網羅状況")
+    a("")
+    a("判定の件数で数える。実装実態が同一で折り畳んだ指摘も、折り畳み前の判定として数えている"
+      "（掲載件数は「不具合」の節を見ること）。")
+    a("")
+    a("| シート | 機能 | 要求 | 未実装 | 実装違い | 裁定待ち | 掲載外 |")
+    a("| --- | --- | ---: | ---: | ---: | ---: | ---: |")
+    by_sheet: dict[str, list[dict]] = {}
+    for v in verdicts:
+        by_sheet.setdefault(reqs[v["要求ID"]]["シート"], []).append(v)
+    for sid in sorted(by_sheet, key=lambda x: int(x.split("-")[1])):
+        rows = by_sheet[sid]
+        c = {k: sum(1 for x in rows if x["判定"] == k) for k in VALID}
+        a(f"| {sid} | {reqs[rows[0]['要求ID']]['シート名']} | {len(rows)} | "
+          f"{c['NOT_IMPLEMENTED']} | {c['DRIFT']} | {c['DESIGN_ISSUE']} | "
+          f"{c['MATCHED'] + c['OUT_OF_SCOPE'] + c['UNVERIFIABLE']} |")
+    a("")
+    path.write_text("\n".join(A) + "\n", encoding="utf-8")
+
+
+def main() -> None:
+    ap = argparse.ArgumentParser(description=__doc__,
+                                 formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("command", choices=["inventory", "build"])
+    ap.add_argument("--doc", required=True)
+    ap.add_argument("--partial", action="store_true",
+                    help="未判定を残したまま途中経過を出力する（捏造ゲートは効かせる）")
+    args = ap.parse_args()
+    if args.command == "inventory":
+        cmd_inventory(args.doc)
+    else:
+        cmd_build(args.doc, partial=args.partial)
+
+
+if __name__ == "__main__":
+    main()

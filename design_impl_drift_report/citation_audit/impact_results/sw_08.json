@@ -1,0 +1,365 @@
+{
+  "packetId": "sw_08",
+  "results": [
+    {
+      "rowId": 253,
+      "authorVerdict": "IMPACT",
+      "verdict": "NO_IMPACT",
+      "agree": false,
+      "observableEffect": "",
+      "checked": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/index.twig:23-35,238 で mypage 用カルーセル初期化と context=mypage のブロック描画を確認。ProductRecommendController.php:50-75 で product_id 未指定時に最新注文の基準商品を取得して RecommendService を呼ぶ処理、OrderItemRepository.php:136-154 で最新注文日・価格降順の取得、user_recommend_product.twig:26-47 で商品または空メッセージの描画を確認した。",
+      "reason": "パケット記載の『マイページから呼ばれず死コード』は現行実装では成立せず、設計された取得・推薦・スライダー・0件表示の経路が接続済みであるため、指摘された乖離はない。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 254,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "ログイン会員の空カートでも最新注文商品を基準におすすめ商品が画面へ表示され得る。",
+      "checked": "ec-cube-enterprise/src/Eccube/Resource/template/default/Cart/index.twig:339-349 と ProductRecommendController.php:50-63 を確認。",
+      "reason": "空カートは product_id なしでブロックを呼び、Controller が会員の最新注文商品へフォールバックするため、設計の0件表示と画面出力が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 255,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "英語ページの0件文言が設計の「No recommended items to display yet.」ではなく「No recommended products to display.」と表示される。",
+      "checked": "ec-cube-enterprise/src/Eccube/Resource/template/default/Block/user_recommend_product.twig:45-47 と messages.en.yaml:1020-1021 を確認。",
+      "reason": "共通0件分岐自体は現在実装済みだが、設計が指定する英語表示値との差が残り、生成HTMLが変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 256,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "history Cookie が無い利用者には見出しも履歴無しメッセージも出力されず、設計画面と表示内容が変わる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Service/Block/RecentlyViewedBlockPayloadBuilder.php:50-68 と Resource/template/default/Block/recently_viewed.twig:1-58 を確認。",
+      "reason": "空配列時はテンプレート全体を囲む if が偽になり、要求メッセージの描画分岐も翻訳キーもない。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 257,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "TOPでは最近見た商品がカルーセルのナビゲーション付きスライダーとして表示される。",
+      "checked": "ec-cube-enterprise/src/Eccube/Service/Block/RecentlyViewedBlockPayloadBuilder.php:87-93 と Resource/template/default/Block/recently_viewed.twig:19-42 を確認。",
+      "reason": "homepage は layout=top となり slider 属性と前後ボタンを持つHTMLを生成するため、『スライダーなし』との差は画面操作として観測できる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 258,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "フォイル商品でもサムネイル画像にはフォイル装飾が付かず、商品名にだけフォイル接頭辞が出る。",
+      "checked": "ec-cube-enterprise/src/Eccube/Resource/template/default/Block/_product_card_simple.twig:5-20,24-31 を確認。",
+      "reason": "画像領域に foil_flg 条件のクラス・要素がなく、利用者が見る画像表現が設計と異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 259,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "お気に入り一覧で通知契機をセールではなく入荷と案内する文言が表示される。",
+      "checked": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/favorite.twig:49-52、Resource/locale/messages.ja.yaml:698-700、Command/FavoriteSaleNotificationCommand.php:26-58 を確認。",
+      "reason": "実際に描画される lead が入荷通知を説明し、セール通知バッチおよび設計の通知契機と食い違うため、利用者への表示に影響する。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 260,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "選手情報なしでお気に入り解除すると、HTTP 400・本文なしではなく HTTP 200 の nologin JSONとメッセージが返る。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Front/ProductController.php:920-958 を確認。",
+      "reason": "HTTPステータスとレスポンスボディはいずれも外部I/Oであり、設計値と明確に異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 261,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "H1に「お気に入り商品一覧」と表示され、「お気に入り登録商品一覧」にならない。",
+      "checked": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/favorite.twig:44-51 と Resource/locale/messages.ja.yaml:698 を確認。",
+      "reason": "利用者向け見出しの文字列差は生成HTMLの差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 262,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "絞り込みラベルが「セール対象のみ」と表示され、「セール対象商品のみ表示する」とならない。",
+      "checked": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/favorite.twig:69-80 と Resource/locale/messages.ja.yaml:700 を確認。",
+      "reason": "チェックボックスに付く利用者向け文言が異なるため画面出力に影響する。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 263,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "お気に入り一覧の画面内容にログイン会員の氏名が表示されない。",
+      "checked": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/favorite.twig 全文、Mypage/navi.twig:33-36、default_frame.twig:151-195、Block/header.twig:124-130 を確認。favorite.twig は navi.twig を include せず、共通ヘッダーもポイントだけを描画する。",
+      "reason": "氏名を出す既存 navi の表示経路がこの画面に接続されておらず、要求された表示要素が欠落する。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 264,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "支店等の既定分岐ではボタンが「購入する」ではなく「注文する」と表示される。",
+      "checked": "ec-cube-enterprise/src/Eccube/Resource/template/default/Shopping/index.twig:135-151,855-859 と Resource/locale/messages.ja.yaml:1533-1535 を確認。",
+      "reason": "クレジット・コンビニの分岐は現行で追加済みだが、支店向けの既定値はなお設計文言と異なり、ボタン表示に影響する。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 265,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "住所登録上限時に注文画面のエラー領域へ指定文言を表示せず、404応答になる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Front/ShoppingController.php:733-749,887-895 と Resource/locale/messages.ja.yaml:110 を確認。",
+      "reason": "HTTP応答・遷移先・表示メッセージが設計と異なる外部挙動である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 266,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "配送先編集画面に、既存注文は変更されない旨の注意文が表示されない。",
+      "checked": "ec-cube-enterprise/src/Eccube/Resource/template/default/Shopping/shipping_edit.twig 全文と Resource/locale/messages.ja.yaml:746 を確認。翻訳値は存在するがテンプレートから参照されていない。",
+      "reason": "画面へ出るべき常時表示文が生成HTMLに含まれない。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 267,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "配送先編集画面の住所欄下に町名・番地の入力注意が表示されない。",
+      "checked": "ec-cube-enterprise/src/Eccube/Resource/template/default/Shopping/shipping_edit.twig:220-248 と Resource/locale/messages.ja.yaml:747 を確認。翻訳値はあるが住所欄で描画されていない。",
+      "reason": "利用者向け注意文の表示有無は画面出力の差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 268,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "英語画面の見出しが「Register / Change Delivery Address」と表示され、設計の「Register New/Change Address」と異なる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Resource/template/default/Shopping/shipping_edit.en.twig:50-67、Resource/locale/messages.en.yaml:1404 と messages.ja.yaml:1552 を確認。日本語は一致するが英語値は不一致。",
+      "reason": "一言でも表示文言が異なれば生成HTMLに影響し、NO_IMPACTにはできない。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 269,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "国と都道府県の不整合時に国項目直下の指定エラーが表示されず、海外選択では都道府県が国外へ上書きされる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Form/Type/Front/CustomerAddressType.php:150-186、EntryType.php:209-229 と Resource/locale/messages.ja.yaml/en.yaml の form.country.error.invalid 検索結果を確認。",
+      "reason": "要求された検証分岐・エラー付与・文言がなく、受理・再表示されるフォーム状態が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 270,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "完了画面には設計文そのものではなく、確認メール未着時の問い合わせ案内と別行のヘルプページ案内が表示される。",
+      "checked": "ec-cube-enterprise/src/Eccube/Resource/template/default/Shopping/complete.twig:114-120 と Resource/locale/messages.ja.yaml:1538-1543 を確認。",
+      "reason": "誘導文の語句・構成が設計指定と異なり、利用者が見る本文が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 271,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "買取TOPの2番目は複数の買取特集タグ群で、後段には「目玉買取商品」が表示され、設計の「強化買取」商品コーナーと内容・順序が異なる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Resource/template/default/Purchase/index.twig:30-60、Block/purchase_special_corner.twig:3-38、Block/purchase_feature_product.twig:1-25、Controller/Front/Purchase/PurchaseController.php:98-109 を確認。",
+      "reason": "タグにより抽出される商品集合と画面上のコーナー構成が変わるため外部表示に影響する。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 272,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "数量1でマイナスボタンを押しても1のままで、20へ循環しない。",
+      "checked": "ec-cube-enterprise/src/Eccube/Resource/template/default/Block/js/Purchase/purchase_js.twig:1-27 と Block/_purchase_product_card_common.twig:48-49 を確認。",
+      "reason": "クリック後の入力値・表示値が設計と異なる直接的なUI動作差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 273,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "タグを1件指定しても、そのタグのフリーエリア説明が買取商品一覧上部に表示されない。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Front/Purchase/PurchaseController.php:399-465、Resource/template/default/Purchase/search.twig:33-140、Entity/Tag.php:191-216 を確認し、Purchase経路に getFreeAreaJp/getFreeAreaEn の参照がないことを確認。",
+      "reason": "DBに保持される説明値の画面描画経路がなく、要求表示が欠落する。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 274,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "検索0件時は「お探しの商品は見つかりませんでした」だけが表示され、カード向け文言・買取最低保証・ヘルプ導線が出ない。",
+      "checked": "ec-cube-enterprise/src/Eccube/Resource/template/default/Purchase/search.twig:39-59 と Resource/locale/messages.ja.yaml:1103 を確認。",
+      "reason": "0件レスポンスで利用者が受け取るメッセージとリンクの有無が設計と異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 275,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "GET /purchase/forward/{oldCode} の入口がなく、旧コードから商品詳細またはTOPへの設計どおりのリダイレクトを受けられない。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Front/Purchase/PurchaseController.php の Route 全件と Repository/Master/MtbProductCodeMappingRepository.php:1-31、Entity/Master/MtbProductCodeMapping.php:23-60 を確認。",
+      "reason": "HTTPルートとリダイレクト結果の欠落は外部から観測できる機能差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 276,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "買取確認の規約モーダルには共通利用規約の買取該当箇所ではなく、独立した「ネット買取利用規約」が第1条から全文表示される。",
+      "checked": "ec-cube-enterprise/src/Eccube/Resource/template/default/Purchase/fill.twig:420-434 と Purchase/include/net_purchase_terms_text.twig:1-52、Block/terms_modal.twig:17-45 を確認。",
+      "reason": "利用者が読む規約の出典・内容・開始位置が設計と異なるため画面出力に影響する。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 277,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "PCでは画像リンクが別タブ化された一方、スマートフォン表示ではテキストボタンが同一ウィンドウで遷移し、設計の画像・別ウィンドウ要件を満たさない。",
+      "checked": "ec-cube-enterprise/src/Eccube/Resource/template/default/Purchase/complete.twig:58-72 を確認。64-66はPC限定画像＋target=_blank、71はSP限定テキストリンクで target がない。",
+      "reason": "パケット後にPC経路は修正済みだが、SPで部品種別と遷移先ウィンドウの観測可能な差が残る。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 278,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "確認メール不一致時のクライアント初出エラーが「メールアドレスが一致しません」と表示される。",
+      "checked": "ec-cube-enterprise/src/Eccube/Resource/template/default/Entry/index.twig:274-294 と Resource/locale/messages.ja.yaml:477-484 を確認。",
+      "reason": "ブラウザで表示される検証文言が設計の「同じメールアドレスを入力してください。」と異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 279,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "確認パスワード不一致時のクライアント初出エラーが「パスワードが一致しません」と表示される。",
+      "checked": "ec-cube-enterprise/src/Eccube/Resource/template/default/Entry/index.twig:323-348 と Resource/locale/messages.ja.yaml:481-484 を確認。",
+      "reason": "ブラウザで表示される検証文言が設計の「同じパスワードを入力してください。」と異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 280,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "並行登録で同じ8文字が生成された場合、同一 deck_user_id が複数選手に永続化され得る。",
+      "checked": "ec-cube-enterprise/src/Eccube/Service/PlayerService.php:28-48 と Entity/DtbPlayer.php:111-115、Entity内のUniqueConstraint検索結果を確認。",
+      "reason": "事前検索とINSERTの間に排他・DB一意制約がなく、競合時の永続データが設計の一意性要求と変わり得る。発生確率の低さはNO_IMPACTの根拠にならない。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 281,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "スマレジ連携失敗後も customer_status_id が本会員のまま残り、同じURLの再試行が already_activated になる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Front/EntryController.php:284-318,350-413 を確認。ステータス更新はスマレジ用トランザクション開始前に実行される。",
+      "reason": "DB状態・失敗画面後の再アクセス結果が設計と異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 282,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "選手が既にスマレジIDを持つ場合、完了済みエラー画面ではなく連携をスキップして正常完了へ進む。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Front/EntryController.php:350-367 と Resource/template/default/Entry/activate_error.twig:15-27 を確認。",
+      "reason": "条件分岐後の表示画面・処理結果が設計と異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 283,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "本登録完了画面は日本語で「会員登録が完了いたしました。」、英語で「Sign-up completed」「Your registration is now complete.」を表示する。",
+      "checked": "ec-cube-enterprise/src/Eccube/Resource/template/default/Entry/activate.twig:15-22、Resource/locale/messages.ja.yaml:431-443、messages.en.yaml:316-325 を確認。",
+      "reason": "設計指定の日本語・英語見出し／本文と異なる利用者向け表示である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 284,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "秘密キー不正時は「このURLは無効です。」、連携失敗時は「時間を置いて再度お試しいただくか、お問い合わせください。」と表示される。",
+      "checked": "ec-cube-enterprise/src/Eccube/Resource/template/default/Entry/activate_error.twig:15-27 と Resource/locale/messages.ja.yaml:449-454 を確認。",
+      "reason": "設計指定の各エラー本文と画面に出る文言が異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 285,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "会員ログイン画面に旧サイト会員向けのパスワード再設定案内が常時表示されない。",
+      "checked": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/login.twig:19-123 と Resource/locale/messages.ja.yaml、validators.ja.yaml を該当文言で検索し、描画箇所がないことを確認。",
+      "reason": "利用者への移行案内が画面から欠落するため外部表示に影響する。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 286,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "有効なリセットキーでも登録メールと異なるメールを入力するとパスワードを更新できず、「入力内容を確認してください。」になる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Front/ForgotController.php:189-233 と Repository/Views/RegisterCustomerViewRepository.php:143-159 を確認。",
+      "reason": "POST時に reset_key と email の完全一致を検索条件へ加えており、入力に対する更新可否が設計と異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 287,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "不正キー・失効キーの双方で専用E-1/E-2画面ではなく404応答になる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Front/ForgotController.php:164-195、Resource/locale/messages.ja.yaml:504-508、Resource/template/default/Forgot のファイル一覧を確認。",
+      "reason": "HTTPステータス、エラー画面、本文のすべてが設計の判定別応答と異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 288,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "パスワード更新成功時に会員ID・メールアドレス・アクセス元IPを含む完了ログがログI/Oへ出力されない。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Front/ForgotController.php:204-229 と同ファイルの log_ 呼び出しを確認。送信開始時のログは97-105にあるが、更新成功経路には完了ログがない。",
+      "reason": "運用要件として指定されたログ保存の有無は外部I/O差であり、内部実装差ではない。",
+      "confidence": "high"
+    }
+  ]
+}

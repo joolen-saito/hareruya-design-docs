@@ -1,0 +1,149 @@
+{
+  "packetId": "rc_20",
+  "results": [
+    {
+      "rowId": 371,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "excel_to_html/output 全HTMLの src-cell を「拡張の削除方式」「dtb_csv_extension」で抽出検索し、いずれも0件。0204 sheet-7 のExcel正本領域（HTML 2384-2527）も開き、同シートにはレイアウト画像（figure）自体が無いことを確認した。引用「拡張の削除方式 dtb_csv_extension.deleted_at による論理削除」は function-design-embed 開始（2528）後の2545にのみ実在する。",
+      "reason": "LEGACY_BACKEDは妥当。Excel正本には削除方式がなく、リバース詳細設計だけに記載がある。一方、旧実装の pf-eccube3/app/Plugin/HareruyaEc/Resource/doctrine/Plugin.HareruyaEc.Entity.DtbCsvExtension.dcm.yml は soft_deleteable の field_name を deletedAt とし、同 Controller/Admin/Setting/Shop/CsvController.php::customDelete() は remove() を呼ぶため、旧挙動としての論理削除根拠は実在する。現行はその設定を持たず物理削除のまま。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Entity/DtbCsvExtension.php のクラスには Gedmo SoftDeleteable 指定がなく deleted_at の通常カラムだけがある。src/Eccube/Controller/Admin/Setting/Shop/CustomerCsvController.php::delete() は deleteByCsvExtensionId() 後に entityManager->remove($CsvExtension) と flush() を実行し、setDeletedAt() は呼ばない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 372,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "excel_to_html/output 全HTMLの src-cell を「画面上の順序」「dtb_csv_csv_extension.rank」で抽出検索し、いずれも0件。0204 sheet-7 のExcel正本には D121「ソート順は0202_基本設計仕様書(在庫管理機能).xlsxの納品書印刷（日本語）シートと同様になる」はあるが、設定画面のPOST順をrankへ保存する規則は無い。同シートにレイアウト画像は無い。期待文は function-design-embed 内の2575にのみ実在する。",
+      "reason": "LEGACY_BACKEDは妥当。旧実装 pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Setting/Shop/CsvController.php は「設定された順番通り」として送信配列 $csvIds 自体を順に回し setRank($key) する。正本のD121はCSVデータのソート順の話であり、設定画面の列順保存を裏付けない。現行の findBy() にはORDER BYもPOST配列順の再構成もないため、順序保証の欠落は残る。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Service/Admin/Setting/Shop/CustomerCsvUpdateAction.php::handle() は $csvIds = $requestData['csv_output'] の後、CsvRepository->findBy(['id' => $csvIds]) の戻り値を foreach し、そのキーを rank として CsvCsvExtensionEntityManager::save() へ渡す。findBy() に orderBy はなく、送信配列をキーに並べ直す処理もない。",
+      "severityOpinion": "med",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 373,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0204 HTML のExcel正本セル 0204:商品規格登録編集!D93 を実際に開き、「フロント表示制御としては”公開”の場合は表示、”非公開（廃止）”の場合は非表示とする」を確認した。全src-cell抽出検索でも同文はこの1件のみ。",
+      "reason": "SPEC_BACKEDは妥当。現行のフロント詳細取得条件は商品本体StatusとProductClass.visibleであり、ProductClass.Statusを公開に限定しない。さらに新規保存時にStatusとは無関係にvisible=trueを設定するため、非公開・廃止Statusでも表示対象になり得る。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Repository/ProductRepository.php::findForFrontDetail() は p.Status = DISPLAY_SHOW、pc.visible = true、pc.price02 > 0 を条件にするが pc.Status を条件にしない。src/Eccube/Service/Admin/Product/ProductClassStoreAction.php::handle() は ProductClass->setVisible(true) を無条件で実行し、src/Eccube/Entity/Product.php::getProductsByLanguage() も isVisible() だけで絞る。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 374,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0204 sheet-22 のExcel正本領域を開き、全src-cellから旧URL断片（class/new/create、class/{classId}/edit/update、class/{classId}/edit/delete）を検索したが0件。商品規格登録編集のレイアウト画像1枚も実見したがURL/HTTPメソッドの記載はない。6本のURLは function-design-embed 開始（6046）後の6077に実在する。",
+      "reason": "LEGACY_BACKEDは妥当。旧URLは pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/ProductServiceProvider.php にGET/POST/DELETEとして実在するが、Excel正本には無い。現行リポジトリ全体で旧パスのルート別名も検索したが見つからず、パス契約の差は残る。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/Admin/Product/ProductClassController.php のRouteは /product/product/class/{id}、同/{id}/new、同/{id}/store、同/{id}/edit/{productClassId}、同/{id}/update/{productClassId}、同/{id}/delete/{productClassId}。旧形式 product/{id}/class/... のRoute定義は存在しない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 375,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "excel_to_html/output 全HTMLの src-cell を「登録できませんでした。」「登録が完了しました。」で抽出検索し、どちらも0件。0204 商品規格登録編集のレイアウト画像1枚も実見したが、静的画面にフラッシュ文言や保存後遷移先は無い。両文言と編集画面への遷移は function-design-embed 内の6087等にのみ実在する。",
+      "reason": "LEGACY_BACKEDは妥当。旧実装 pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Product/ProductClassController.php::detailUpdate() は失敗時 admin.register.failed、成功時 admin.register.complete を使い、同一規格の detail_edit へ戻す。旧localeの実値も「登録できませんでした。」「登録が完了しました。」である。現行は文言と遷移先の両方が異なる。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/Admin/Product/ProductClassController.php::store()/update() は検証失敗時 admin.common.save_error、成功時 admin.common.save_complete を設定し、成功後は admin_product_product_class 一覧へredirectする。src/Eccube/Resource/locale/messages.ja.yaml の実値は「保存に失敗しました」「保存しました」。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 376,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "全src-cell抽出で「最後の1件」は0件。0204:商品規格登録編集!E189 の正本項目は「商品規格を削除」ボタンを載せ、同!D95 は公開ステータスの「廃止は論理削除」と記すが、削除ボタンの表示条件、最後の1件のHTTP400、削除操作の論理削除は正本に無い。レイアウト画像1枚も実見し、編集画面右上の「商品規格を削除」ボタンは確認したが条件分岐は画像から確認できない。詳細条件はfunction-design-embed内6085、6089にある。",
+      "reason": "LEGACY_BACKEDは妥当。正本の「廃止は論理削除」は公開ステータスを廃止へ変更する説明で、削除ボタン操作の仕様ではない。旧実装は Controller::detailEdit() で isDeletable を渡しTwigが条件表示、detailDelete() で最後の1件ならBadRequestHttpException、削除可能なら setDelFlg(ENABLED) としており、期待値は旧挙動に基づく。現行では3点とも満たさない。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Resource/template/admin/Product/ProductClass/edit.twig は ProductClass.id があれば削除ボタンを表示する。src/Eccube/Controller/Admin/Product/ProductClassController.php::delete() は最後の1件を検査せず ProductClassDeleteAction::handle() を呼ぶ。同Actionは関連行削除後に entityManager->remove($ProductClass) と flush() を実行し、ProductClassにはSoftDeleteable指定もdel_flgもない。",
+      "severityOpinion": "high",
+      "confidence": "high"
+    },
+    {
+      "rowId": 377,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0204:カテゴリ登録!E162 のsrc-cell実値「フロント非表示フラグ」を確認した。カテゴリ登録のレイアウト画像1枚も実見し、チェック項目の画面ラベルが「フロント非表示フラグ」と描かれていることを確認した。",
+      "reason": "SPEC_BACKEDは妥当。正本セルとレイアウト画像が同じ固定ラベルを示す。現行フォームからTwigまでの表示経路も確認でき、翻訳値だけが「示」欠落のまま。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Form/Type/Admin/CategoryType.php::buildForm() は front_search_hide_flg のlabelに admin.product.category_front_search_hide を指定し、src/Eccube/Resource/template/admin/Product/category.twig は form_label() で表示する。src/Eccube/Resource/locale/messages.ja.yaml の値は「フロント非表フラグ」。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 378,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0204:カテゴリ登録!E170 のsrc-cell実値「検索パラメータ」を確認した。カテゴリ登録のレイアウト画像1枚も実見し、入力欄の画面ラベルが「検索パラメータ」と描かれていることを確認した。",
+      "reason": "SPEC_BACKEDは妥当。正本セルとレイアウト画像はいずれも長音なし。現行フォームからTwigまでの表示経路は確認でき、翻訳値だけが長音付きのまま。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Form/Type/Admin/CategoryType.php::buildForm() は search_parameters のlabelに admin.product.category_search_parameters を指定し、src/Eccube/Resource/template/admin/Product/category.twig は form_row() で表示する。src/Eccube/Resource/locale/messages.ja.yaml の値は「検索パラメーター」。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 379,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0204:カテゴリ登録!D134 の「支店非表示フラグが立っている場合、支店側のカテゴリ表示に表示させず、検索対象からも除外する」、同!D137 の「支店ページも含めて全て非表示」、同!D138 の「支店側も含めて検索やフロントTOPのカテゴリ表示で非表示にする」をsrc-cellで確認した。カテゴリ登録レイアウト画像では両フラグのチェック項目配置も実見した。",
+      "reason": "SPEC_BACKEDは妥当。現行はTOPカテゴリ表示とカテゴリツリーAPIにはフラグ除外があるが、フロント検索フォームのカテゴリ候補と商品検索条件には無い。したがって一部実装済みでも、正本が明記する検索対象除外は残存する。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Service/TopCategoryListBuilder.php は getFrontSearchHideFlg() と支店時getBranchHideFlg()で表示除外する。一方 src/Eccube/Repository/CategoryRepository.php::getList() は全カテゴリを取得し、src/Eccube/Form/Type/Front/SearchType.php と SearchProductBlockType.php は getList(null, true) をchoicesにする。src/Eccube/Repository/ProductRepository.php::getQueryBuilderBySearchData() のカテゴリ条件は選択カテゴリと子孫だけで、両フラグ条件がない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 380,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0204:カテゴリCSV出力!E12 の「親カテゴリID」、同!E19 の「対象商品数」、同!D37 の追加列説明を確認したが、「対象商品数以外はgetData」「null/空文字は空セル」は正本に無い。具体規則は functions/pf-eccube3/m03-12_admin_product_product_category_csv_export.md の61行・91行に実在する。関連正本も検索し、0204:カテゴリ登録CSVアップロード!F85/F88 には「親カテゴリID が 0 の場合は 1（階層）」とあり、取込側では最上位を0で表すことも確認した。",
+      "reason": "LEGACY_BACKEDは妥当。旧実装 pf-eccube3/src/Eccube/Controller/Admin/Product/CategoryController.php のCSVループは全列を CsvExportService::getData() に渡し、同Service::getData() は関連Entityが無い場合nullを返すため、旧出力では親なしが空になる。現行はParentだけを特例化して0を出すので旧挙動との差は再現する。ただし関連するExcel正本の取込仕様は最上位の親カテゴリIDを0として扱っており、現行の0には正本上の合理性があるため、この指摘の修正優先度は低い。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/Admin/Product/CategoryController.php::export() は CATEGORY_CSV_FIELD_TARGET_PRODUCT_COUNT に加え CATEGORY_CSV_FIELD_PARENT を分岐し、$Category->getParent() がnullなら文字列 '0' をrowへ追加する。Parent列は CsvExportService::getData() の一般列経路を通らない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 381,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0204:タグ登録!E81 の「名称(英)」、同!M81 の「半角」、同!T81 の必須「◯」をsrc-cellで確認した。タグ登録のレイアウト画像は16層を確認し、上部レイヤーに「名称(英)」入力欄が描かれていることも実見した。",
+      "reason": "SPEC_BACKEDは妥当。正本の書式・制限列が半角を明記する。現行のTagフォームとEntity/Controller/templateを確認したが、半角Regex、pattern、コールバック検証、正規化はない。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Form/Type/Admin/TagType.php::buildForm() の nameEn は TextType で、constraintsは Length(max) と NotBlank のみ。src/Eccube/Entity/Tag.php、TagController.php、admin/Product/tag.twigにもnameEnの半角検証処理はない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 382,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0204:タグ登録!E89/AG89 の「タイトル(日)」「値がある場合、日本語の商品検索ページのページタイトルとする」、同!E91/AG91 の英語版をsrc-cellで確認した。タグ登録レイアウト画像の16層も確認し、C24/C30のレイヤーに「タイトル(日)」「タイトル(英)」の配置があることを実見した。",
+      "reason": "SPEC_BACKEDは妥当。現行はTagのtitle_jp/title_enを保存できるが、商品検索ページのタイトル生成経路へ渡していない。タグ検索時にTagを取得する処理は名称一覧とタグログ用に限られ、タイトル値を参照しない。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/Front/ProductController.php::getPageTitle() は商品名検索、カテゴリパス、全商品の3分岐だけで、index() はその戻り値をsubtitleへ渡す。src/Eccube/Resource/template/default/Product/list.twig はsubtitleへ共通suffixを付け、default_frame.twigがpage_title/subtitle/titleからtitle要素を作る。getTitleJp/getTitleEnの利用はフロントController/Twigに存在せず、Entity/Tag.phpのアクセサだけ。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    }
+  ]
+}

@@ -1,0 +1,101 @@
+# sheet-13 A15-13 デッキ情報検索 ／ API デッキビルダー — デッキ情報検索 (HTML行 643-673 / 画像 0枚)
+
+Source:
+functions/pf-api/a15-13_api_deck_builder_deck_search.md
+A15-13 デッキ情報検索 ／ API デッキビルダー — デッキ情報検索
+業務ロジック
+検索モードと対象範囲
+検索モードは公開検索と自分のデッキ検索の 2 種類で、既定は公開検索とする。
+モード	認証	対象
+公開検索	不要。認証なしで成功する	公開デッキ
+自分のデッキ検索	必須。認証できないときは認証拒否とする	認証したプレイヤーが所有するデッキだけ
+自分のデッキ検索のときだけ認証用トークンを検証し、トークンが持つ顧客IDからプレイヤーを特定する。トークン欠落・署名不正・該当プレイヤーなしのいずれの場合も認証拒否とする。呼び出せるクライアントはデッキビルダーアプリに限る。トークン原値・署名シークレットは本書に記載しない。
+絞り込み
+大会デッキを含めるかとユーザーデッキを含めるかは個別に指定でき、どちらも対象外にしたときは空の一覧と総件数 0 を返す。
+条件	絞り込み方
+フォーマット・アーキタイプ・デッキタグ・キャンペーンタグ	配列を指定したときだけ、その識別子のいずれかに一致する行に限る
+デッキ利用者ID	完全一致
+大会デッキのプレイヤー名	部分一致
+大会名	日本語名・英語名のいずれかへの部分一致
+作成日時・更新日時・大会日付	下限は以上、上限は以下
+参加人数	下限は以上、上限は以下
+優勝	指定が真かつ上位 8 の指定が偽のときだけ、順位 1 位に限る
+上位 8	指定が真のとき、順位 8 位以内に限る
+レギュレーション違反	指定が偽のとき、違反デッキを除く
+直近デッキの件数	指定した件数ぶんのデッキID範囲に限る
+採用カード	カードと配置ボードの組をすべて満たす行に限る
+並び順と件数
+作成日時の降順に並べ、指定されたページ番号と 1 ページあたりの件数で 1 ページ分だけを返す。ページ番号の既定は 1、1 ページあたりの件数の既定は 20 で、100 を超える指定は 100 に丸める。どちらも数字だけを受け付ける。
+総件数は条件に一致するデッキを重複排除した件数であり、ページ番号と 1 ページあたりの件数の指定によって変わらない。
+値の取り方
+条件に一致した行の値をそのまま返し、金額・ポイント・数量・ステータス・日時の再計算と丸めは行わない。限定公開トークンは自分のデッキ検索のときだけ応答に含める。キャンペーンタグの開催状況は開催前 0・開催中 1・開催後 2 のいずれかで返す。
+入出力
+種類	内容
+入力	検索条件・検索モード・ページ番号・1 ページあたりの件数・キャッシュキー。自分のデッキ検索のときは認証用トークンを伴う
+成功時出力	HTTP 200。処理結果コード 200、処理結果メッセージ「Deck search success」、総件数、1 ページ分のデッキ一覧
+失敗時出力	自分のデッキ検索で認証できないときは HTTP 401。本文は処理結果コードとメッセージで、メッセージは「Access Token is incorrect」または「Authentication failed」。公開検索は条件に一致しないときも HTTP 200 で空の一覧と総件数 0 を返す
+入出力: 検索条件
+パラメータ	位置	型	必須／任意	説明
+jwt-token	ヘッダ	string	条件付き必須	認証用トークン。自分のデッキ検索のときだけ必須
+mode	クエリ	string	任意（既定 public）	public は公開検索、private は自分のデッキ検索
+format	クエリ	array	任意	フォーマットIDの配列
+archetype	クエリ	array	任意	アーキタイプIDの配列
+event_deck_flag	クエリ	string	任意（既定 1）	0・false のときは大会デッキを除く
+user_deck_flag	クエリ	string	任意（既定 1）	0・false のときはユーザーデッキを除く
+create_from	クエリ	string	任意	作成日時の下限。指定した日時以上
+create_to	クエリ	string	任意	作成日時の上限。指定した日時以下
+update_from	クエリ	string	任意	更新日時の下限。指定した日時以上
+update_to	クエリ	string	任意	更新日時の上限。指定した日時以下
+tag	クエリ	array	任意	デッキタグIDの配列
+campaign_tag_ids	クエリ	array	任意	キャンペーンタグIDの配列
+user_id	クエリ	string	任意	デッキ利用者IDの完全一致
+user_name	クエリ	string	任意	大会デッキのプレイヤー名の部分一致
+event_name	クエリ	string	任意	大会名の部分一致。日本語名と英語名の両方が対象
+event_date_from	クエリ	string	任意	大会日付の下限。指定した日付以上
+event_date_to	クエリ	string	任意	大会日付の上限。指定した日付以下
+participants_from	クエリ	integer	任意	参加人数の下限。指定した人数以上
+participants_to	クエリ	integer	任意	参加人数の上限。指定した人数以下
+champion_flag	クエリ	string	任意（既定 0）	真かつ上位 8 の指定が偽のときだけ順位 1 位に限る
+top8_flag	クエリ	string	任意（既定 0）	真のときは順位 8 位以内に限る
+regulation_violation_flag	クエリ	string	任意（既定 0）	偽のときはレギュレーション違反デッキを除く
+search_decks_count	クエリ	integer	任意	直近のデッキID範囲に限るときの件数
+per_page	クエリ	integer	任意（既定 20）	1 ページあたりの件数。数字だけを受け付け、100 を超えるときは 100 とする
+page	クエリ	integer	任意（既定 1）	ページ番号。数字だけを受け付ける
+cards	クエリ	array	任意	採用カード条件の配列。各要素は card_id・board_id
+cache_key	クエリ	string	任意	指定があるときだけ一覧と総件数をキャッシュに保存する
+入出力: デッキ一覧の項目
+フィールド	型	説明
+id	integer	デッキID
+deck_name	string	デッキ名
+format_id	integer	フォーマットの識別子
+format_name_jp	string	フォーマット名（日本語）
+format_name_en	string	フォーマット名（英語）
+archetype_id	integer	アーキタイプの識別子
+archetype_name_jp	string	アーキタイプ名（日本語）
+archetype_name_en	string	アーキタイプ名（英語）
+card_id	integer	代表カード画像の識別子
+card_image	string	代表カード画像のURL
+deck_type	string	デッキ種別
+event_name_jp	string	大会名（日本語）
+event_name_en	string	大会名（英語）
+event_date	string	大会日付
+player_name	string	プレイヤー名。大会デッキのときに入る
+result	string	成績
+ranking	integer	順位
+participants	integer	参加人数
+deck_user_id	string	デッキ利用者ID
+nickname	string	ニックネーム。ユーザーデッキのときに入る
+scope_id	integer	公開範囲
+deck_private_flag	boolean	非公開フラグ
+create_date	string	作成日時
+update_date	string	更新日時
+display_token	string	限定公開トークン。自分のデッキ検索のときだけ含める
+deck_tags	array	デッキタグの配列。各要素は id・name_jp・name_en
+campaign_tags	array	キャンペーンタグの配列。各要素は id・name_jp・name_en・is_during
+入出力: 永続化
+操作	契機
+キャッシュへの保存	キャッシュキーの指定があるとき、一覧と総件数を保存する
+デッキ情報は更新しない。
+リニューアル後の仕様
+表示メッセージ
+本APIは画面へ文言を表示しない。応答に含める処理結果メッセージは入出力の節に示す。

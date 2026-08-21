@@ -1,0 +1,166 @@
+{
+ "packetId": "bl_08",
+ "note": "1枚に複数の不具合がまとまっているチケットがある。itemCountに件数を書き工数は合計で。",
+ "findings": [
+  {
+   "issueKey": "ECCUBE_HARERUYA-1892",
+   "summary": "【実装乖離】フロント会員_会員情報変更_会員情報変更にて、ブラックリスト該当時に会員情報更新エラー画面へ遷移しない",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "中",
+   "description": "# 基本情報【必須】\n分類：フロント会員\n機能：会員情報変更\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】フロント会員_会員情報変更_会員情報変更にて、ブラックリスト該当時に会員情報更新エラー画面へ遷移しない\n設計書：0306_基本設計仕様書(フロント_会員).xlsx\n\n# 期待される挙動【必須】\n- 設計書では、お名前（1-2〜1-3）、住所（1-17〜1-19）、電話番号（1-20）がブラックリストに該当する内容に変更されている場合、「変更する」押下時に会員情報更新エラー画面へ遷移することとしている。\n\n# 現在の挙動【必須】\n- ChangeController::index() はブラックリスト該当を検出すると、flash メッセージ（「ブラックリスト登録があるため会員情報を変更できません。」）を追加したうえで、会員情報変更フォーム（Mypage/change.twig）をそのまま再表示している。\n- 会員情報更新エラー画面に相当する専用テンプレートは Mypage 配下に存在せず、専用ルートへのリダイレクトも行われていない。\n- change.twig 側は app.flashes をフォーム上部のアラート領域に表示するだけで、エラー画面としての遷移は発生しない。\n\n# 補足情報【任意】\n▼設計書該当箇所\nF06_customer_basedesign.md:1019-1024 「* ブラックリストに以下1~3に変更されている場合に(1-26)変更するを押下すると、会員情報更新エラー画面に遷移する」「**1**: (1-2)～(1-3)お名前」「**2**: (1-17)~(1-19)の住所」「**3**: (1-20)電話番号」「**※**: 会員情報更新エラー画面は、以下を参照」\n\n▼実装該当箇所\nsrc/Eccube/Controller/Front/Mypage/ChangeController.php:116-133 （ブラックリスト検出後に flash を出してフォームを再表示するだけ）\nsrc/Eccube/Resource/template/default/Mypage/change.twig:76-79 （flash をフォーム上部に表示）\nsrc/Eccube/Resource/locale/messages.ja.yaml:820 （front.mypage.change.error.blacklisted: ブラックリスト登録があるため会員情報を変更できません。）\n\n▼備考\nブラックリスト検出自体（DtbBlacklistRepository::FindBlacklistByCustomer）は実装済みで、氏名・住所・電話番号を対象としている。乖離は「専用のエラー画面へ遷移する」点のみ。設計書が参照する会員情報更新エラー画面のレイアウトはExcelの画像であり本文に変換されていないため、画面仕様の細部までは突き合わせできず confidence は medium とした。src/Eccube/Resource/template/default/Mypage 配下に該当テンプレートは存在しない。"
+  },
+  {
+   "issueKey": "ECCUBE_HARERUYA-1890",
+   "summary": "【実装乖離】フロント会員_会員情報変更_会員情報変更にて、メールアドレスの最大文字数が255ではなく254で、RFC準拠チェックも無効化されている",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "中",
+   "description": "# 基本情報【必須】\n分類：フロント会員\n機能：会員情報変更\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】フロント会員_会員情報変更_会員情報変更にて、メールアドレスの最大文字数が255ではなく254で、RFC準拠チェックも無効化されている\n設計書：0306_基本設計仕様書(フロント_会員).xlsx\n\n# 期待される挙動【必須】\n- 設計書では、会員情報変更のメールアドレス（1-10）およびメールアドレス（確認）（1-11）の最大文字数を255としている。\n- 設計書では、「変更する」押下時にRFC準拠の形式チェックを行い、不正な形式の場合は「有効なメールアドレスではありません。」とエラーメッセージを表示することとしている。\n\n# 現在の挙動【必須】\n- 会員情報変更は EntryType の email（RepeatedEmailType）を利用しており、最大文字数は eccube_email_len の値で制限される。eccube.yaml の設定値は 254 であり、設計値の255と一致しない。\n- RepeatedEmailType は eccube_rfc_email_check が true のときだけ Email 制約のモードを 'strict'（RFC準拠チェック）にするが、eccube.yaml の eccube_rfc_email_check は false であるため、RFC準拠チェックは行われない。\n- 設定ファイル上も「メールアドレスをRFC準拠でチェックするか true: チェックする、false: チェックしない」というコメントとともに false が指定されている。\n\n# 補足情報【任意】\n▼設計書該当箇所\nF06_customer_basedesign.md:1036 「| 1-10 | メールアドレス | 半角 | ◯ | 255 | - | …・(1-27)変更するを押下すると、RFC準拠の形式チェックを行い、不正な形式の場合は「有効なメールアドレスではありません。」とエラーメッセージを表示する |」\nF06_customer_basedesign.md:1017-1018 「* (1-26)変更するを押下すると、RFC準拠の形式チェックを行い、不正な形式の場合は「有効なメールアドレスではありません。」とエラーメッセージを表示する」\n\n▼実装該当箇所\nsrc/Eccube/Form/Type/Front/EntryType.php:122-125 （会員情報変更フォームの email は RepeatedEmailType）\nsrc/Eccube/Form/Type/RepeatedEmailType.php:46 （eccube_rfc_email_check が false のときモード未指定＝RFC準拠チェックなし）\nsrc/Eccube/Form/Type/RepeatedEmailType.php:48 （Length の max に eccube_email_len を使用）\napp/config/eccube/packages/eccube.yaml:234-235 （eccube_rfc_email_check: false / eccube_email_len: 254）\n\n▼備考\n会員登録（F06-01）と同一のフォーム型（EntryType / RepeatedEmailType）を共有しているため、同種の乖離が会員登録側にも存在する。.env 等での上書きは無く、eccube.yaml のリテラル値が実効値。"
+  },
+  {
+   "issueKey": "ECCUBE_HARERUYA-1889",
+   "summary": "【実装乖離】フロント会員_大会デッキ登録確認～完了_大会デッキ登録確認～完了の「大会一覧に戻る」ボタンの遷移先がイベント・大会トップページになっていない",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "中",
+   "description": "# 基本情報【必須】\n分類：フロント会員\n機能：大会デッキ登録確認～完了\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】フロント会員_大会デッキ登録確認～完了_大会デッキ登録確認～完了の「大会一覧に戻る」ボタンの遷移先がイベント・大会トップページになっていない\n設計書：0306_基本設計仕様書(フロント_会員).xlsx\n\n# 期待される挙動【必須】\n- 設計書では、「大会一覧に戻る」ボタンを押下するとイベント・大会のトップページに遷移することとしている。\n\n# 現在の挙動【必須】\n- Mypage/deck_entry_check.twig の「大会一覧に戻る」ボタンのリンク先は url('mypage_event_history') であり、マイページのマイイベント・デッキ登録一覧へ遷移する。\n- イベント・大会トップへのルート event_top は存在し他画面（Mypage/event_history.twig の「イベントを探す」）で使用されているが、本ボタンでは使用されていない。\n\n# 補足情報【任意】\n▼設計書該当箇所\nF06_customer_basedesign.md:974 「| 15 | 大会一覧に戻る | ボタン | - | - | - | イベント・大会のトップページに遷移する |」\n\n▼実装該当箇所\nsrc/Eccube/Resource/template/default/Mypage/deck_entry_check.twig:92 （遷移先が mypage_event_history）\nsrc/Eccube/Resource/template/default/Mypage/event_history.twig:163 （event_top ルートは存在し他画面で使用されている）\n\n▼備考\n英語版テンプレート（deck_entry_check.en.twig）は存在しないため、日英二重管理の問題は無い。"
+  },
+  {
+   "issueKey": "ECCUBE_HARERUYA-1883",
+   "summary": "【実装乖離】フロント会員_大会デッキ登録編集_大会デッキ登録編集にて、削除要件である「MTGアリーナからデッキリストをインポートする方法」が残存している",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "中",
+   "description": "# 基本情報【必須】\n分類：フロント会員\n機能：大会デッキ登録編集\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】フロント会員_大会デッキ登録編集_大会デッキ登録編集にて、削除要件である「MTGアリーナからデッキリストをインポートする方法」が残存している\n設計書：0306_基本設計仕様書(フロント_会員).xlsx\n\n# 期待される挙動【必須】\n- 設計書のカスタマイズ要件では、大会デッキ登録編集画面から「MTGアリーナからデッキリストをインポートする方法」を削除することとしている。\n\n# 現在の挙動【必須】\n- Mypage/deck_entry_edit.twig は id=\"how-to-import\" のフリースペースで Block/deck_entry_how_to_import.twig をインクルードしており、「MTGアリーナからデッキリストをインポートする方法」の見出しと手順解説がそのまま表示される。\n- 「2.カード選択」内の「使い方（ヘルプアイコン）」リンクも #how-to-import へのページ内リンクとして残っており、インラインJSでスクロール処理まで実装されている。\n\n# 補足情報【任意】\n▼設計書該当箇所\nF06_customer_basedesign.md:833 「* 「MTGアリーナからデッキリストをインポートする方法」を削除」（大会デッキ登録編集のカスタマイズ要件）\n\n▼実装該当箇所\nsrc/Eccube/Resource/template/default/Mypage/deck_entry_edit.twig:316-318 （how-to-import ブロックのインクルード）\nsrc/Eccube/Resource/template/default/Mypage/deck_entry_edit.twig:219 （#how-to-import へのページ内リンク）\nsrc/Eccube/Resource/template/default/Mypage/deck_entry_edit.twig:128-136 （#how-to-import へのスクロール処理）\nsrc/Eccube/Resource/template/default/Block/deck_entry_how_to_import.twig:33-35 （見出し「MTGアリーナからデッキリストをインポートする方法」）\n\n▼備考\n設計書内に矛盾がある点に注意。カスタマイズ要件（833行）は削除を指示する一方、同じ画面の画面項目表には「| 10 | 使い方 | リンク |…(23)MTGアリーナからデッキリストをインポートする方法 へのページ内リンク |」（872行）「| 23 | MTGアリーナからデッキリストをインポートする方法 |…」（885行）が残っている。カスタマイズ要件を正として FACT と判定したが、設計側の意図確認が必要なため confidence は medium。"
+  },
+  {
+   "issueKey": "ECCUBE_HARERUYA-1864",
+   "summary": "【実装乖離】フロント会員_新規会員登録_新規会員登録にて、メールアドレスのRFC準拠チェックが無効化されており、RFC上不正なメールアドレスが登録できてしまう",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "中",
+   "description": "# 基本情報【必須】\n分類：フロント会員\n機能：新規会員登録\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】フロント会員_新規会員登録_新規会員登録にて、メールアドレスのRFC準拠チェックが無効化されており、RFC上不正なメールアドレスが登録できてしまう\n設計書：0306_基本設計仕様書(フロント_会員).xlsx\n\n# 期待される挙動【必須】\n- 新規会員登録画面(F06-01)で(1-26)同意するを押下したとき、(1-10)メールアドレスおよび(1-11)メールアドレス(確認)に対して RFC 準拠の形式チェックを行うこと。\n- RFC 上不正な形式のメールアドレスの場合、「有効なメールアドレスではありません。」というエラーメッセージを表示すること。\n\n# 現在の挙動【必須】\n- 設定値 eccube_rfc_email_check が false のため、Email 制約の mode に strict が渡されず、RFC 準拠(Symfony の strict モード)ではなく独自の緩いチェック(NoRFCEmailValidator)が使用される。\n- RepeatedEmailType が追加している Assert\\Regex により「..」「.@」を含むアドレスは拒否されるが、RFC 上不正な user@-example.com（ハイフン始まりのドメイン）や user@exam_ple.com（アンダースコアを含むドメイン）は現実装では有効と判定される（vendor の Egulias RFCValidation では invalid）。\n- エラーメッセージ自体は「有効なメールアドレスではありません。」が表示されるため、メッセージ文言は設計どおりである。\n\n# 補足情報【任意】\n▼設計書該当箇所\nF06_customer_basedesign.md:61-62 「(1-26)同意するを押下すると、RFC準拠の形式チェックを行い、不正な形式の場合は「有効なメールアドレスではありません。」とエラーメッセージを表示する」\nF06_customer_basedesign.md:74 「| 1-10 | メールアドレス | ... ・(1-26)同意するを押下すると、RFC準拠の形式チェックを行い、不正な形式の場合は「有効なメールアドレスではありません。」とエラーメッセージを表示する |」\n\n▼実装該当箇所\napp/config/eccube/packages/eccube.yaml:234 （eccube_rfc_email_check: false）\nsrc/Eccube/Form/Type/RepeatedEmailType.php:46 （$this->eccubeConfig['eccube_rfc_email_check'] ? 'strict' : null）\nsrc/Eccube/Form/Validator/EmailValidator.php:45-69 （strict 以外は NoRFCEmailValidator による緩いチェックにフォールバック）\nsrc/Eccube/Validator/EmailValidator/NoRFCEmailValidator.php:33-53 （携帯メール向けに緩和した独自正規表現）\nsrc/Eccube/Form/Type/RepeatedEmailType.php:50-54 （「..」「.@」のみを追加で禁止する Assert\\Regex）\n\n▼備考\n現HEADのコードを実際に読み込んで検証した（php -r で NoRFCEmailValidator と Egulias RFCValidation を突き合わせ）。RepeatedEmailType の Assert\\Regex により「..」「.@」は救済されているため、RFC非準拠アドレスの多くは弾かれるが、ドメイン部の不正(ハイフン始まり・アンダースコア)は素通りする。eccube_rfc_email_check は MailService:967-971 のアドレス変換にも影響するため、単純な true 化ではなく影響範囲の確認が必要。同じ設定は ForgotType/PasswordResetType/CustomerLoginType 等も参照している。"
+  },
+  {
+   "issueKey": "ECCUBE_HARERUYA-1863",
+   "summary": "【実装乖離】フロント会員_新規会員登録_新規会員登録にて、メールアドレスの最大文字数が設計の255文字ではなく254文字になっている",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "中",
+   "description": "# 基本情報【必須】\n分類：フロント会員\n機能：新規会員登録\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】フロント会員_新規会員登録_新規会員登録にて、メールアドレスの最大文字数が設計の255文字ではなく254文字になっている\n設計書：0306_基本設計仕様書(フロント_会員).xlsx\n\n# 期待される挙動【必須】\n- 新規会員登録画面(F06-01)の(1-10)メールアドレスおよび(1-11)メールアドレス(確認)は、必須入力かつ最大文字数255文字であること。\n- 255文字のメールアドレスを入力しても文字数超過エラーにならずに登録できること。\n\n# 現在の挙動【必須】\n- メールアドレスの最大文字数チェックは Assert\\Length の max に eccube_email_len を渡しており、その設定値は 254 になっている。\n- そのため255文字のメールアドレスを入力すると、設計上は許容されるはずが文字数超過エラーとなり登録できない。\n- 必須入力チェック(NotBlank)およびメールアドレス(確認)との一致チェックは実装されている。\n\n# 補足情報【任意】\n▼設計書該当箇所\nF06_customer_basedesign.md:74 「| 1-10 | メールアドレス | 半角 | ◯ | 255 | - |」\nF06_customer_basedesign.md:75 「| 1-11 | メールアドレス(確認) | 半角 | ◯ | 255 | - |」\n\n▼実装該当箇所\nsrc/Eccube/Form/Type/RepeatedEmailType.php:47-49 （Assert\\Length の max に eccube_email_len を指定）\napp/config/eccube/packages/eccube.yaml:235 （eccube_email_len: 254）\nsrc/Eccube/Form/Type/Front/EntryType.php:122-125 （email に RepeatedEmailType を使用）\n\n▼備考\n必須チェックは RepeatedEmailType::configureOptions のノーマライザで NotBlank が first/second 双方に付与されており実装済み。乖離は最大文字数(254 vs 255)のみ。RFC準拠チェックについては uid F06_customer__01-4 を参照。git log --since=2026-07-08 で当該ファイル・設定値の修正コミットは無し。"
+  },
+  {
+   "issueKey": "ECCUBE_HARERUYA-1893",
+   "summary": "【実装乖離】フロント会員_配送先新規登録・変更_配送先新規登録・変更画面にて、会社名の最大文字数が設計の100文字ではなく255文字になっている",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "中",
+   "description": "# 基本情報【必須】\n分類：フロント会員\n機能：配送先新規登録・変更\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】フロント会員_配送先新規登録・変更_配送先新規登録・変更画面にて、会社名の最大文字数が設計の100文字ではなく255文字になっている\n設計書：0306_基本設計仕様書(フロント_会員).xlsx\n\n# 期待される挙動【必須】\n- 配送先新規登録・変更(入力・変更)画面の「会社名」(識別ID 2-15)は、任意入力で最大文字数100文字であること。\n- 101文字以上を入力して確認画面へ進もうとした場合は、文字数超過のバリデーションエラーとなること。\n\n# 現在の挙動【必須】\n- 配送先フォーム(Eccube\\Form\\Type\\Front\\CustomerAddressType)の company_name には Assert\\Length の max として設定値 eccube_stext_len が指定されており、その実値は 255 である。\n- テンプレート Mypage/delivery_edit.twig および delivery_edit.en.twig の会社名入力欄には maxlength 属性が付与されておらず、画面側でも100文字での入力制限は行われていない。\n- 結果として、会社名は101文字以上255文字までがエラーにならずに登録できる。\n\n# 補足情報【任意】\n▼設計書該当箇所\nF06_customer_basedesign.md:1156 「| 2-15 | 会社名 | 半角・全角 | - | 100 | - | - |」\n\n▼実装該当箇所\nsrc/Eccube/Form/Type/Front/CustomerAddressType.php:95-102 （company_name の Length 制約に eccube_stext_len を指定）\napp/config/eccube/packages/eccube.yaml:137 （eccube_stext_len: 255）\nsrc/Eccube/Resource/template/default/Mypage/delivery_edit.twig:458-462 （会社名入力欄に maxlength 属性なし）\nsrc/Eccube/Resource/template/default/Mypage/delivery_edit.en.twig:396-400 （英語版も同様に maxlength 属性なし）\nsrc/Eccube/Entity/CustomerAddress.php:107 （company_name カラム定義 length: 255）\n\n▼備考\n配送先フォームの他項目（配送先名称=eccube_customer_address_length_address_name: 128、フリガナ=eccube_kana_len: 25）は設計値と一致しており、会社名のみ汎用定数 eccube_stext_len(255) を流用している点が乖離の原因。git log では 2026-07-08 以降に CustomerAddressType.php の変更コミットはない。"
+  },
+  {
+   "issueKey": "ECCUBE_HARERUYA-1938",
+   "summary": "【実装乖離】フロント店頭買取_会員登録フォーム_店頭買取の会員登録フォームにて、パスワードの文字数チェックが設計の8〜32文字ではなく12〜50文字になっている",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "中",
+   "description": "# 基本情報【必須】\n分類：フロント店頭買取\n機能：会員登録フォーム\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】フロント店頭買取_会員登録フォーム_店頭買取の会員登録フォームにて、パスワードの文字数チェックが設計の8〜32文字ではなく12〜50文字になっている\n設計書：0308_基本設計仕様書(フロント_店頭買取).xlsx\n\n# 期待される挙動【必須】\n- 会員登録フォーム画面（F08-04）のパスワード（項目4）およびパスワード（確認用）（項目5）は、最大文字数32文字であること。\n- パスワードは8〜32文字であるかのチェックを行うこと。\n\n# 現在の挙動【必須】\n- パスワード欄は OtcBuyRepeatedPasswordType が使われており、Assert\\Length の min に eccube_password_min_len（12）、max に eccube_password_max_len（50）が設定されている。\n- そのため 8〜11 文字のパスワードは設計上は許容されるのにエラーとなり、逆に 33〜50 文字のパスワードは設計上は不可のはずが登録できてしまう。\n- 入力欄に maxlength 属性は付与されておらず、32文字を超える入力を抑止する仕組みもない。\n\n# 補足情報【任意】\n▼設計書該当箇所\nF08_otc_buy_basedesign.md:187 「| 4 | パスワード | ボタン | ◯ | 32 | - | 8～32文字であるかチェックを行う |」\nF08_otc_buy_basedesign.md:188 「| 5 | パスワード(確認用) | ボタン | ◯ | 32 | - | パスワードと同一かチェックを行う |」\n\n▼実装該当箇所\nsrc/Eccube/Form/Type/Front/OtcBuy/OtcBuyRepeatedPasswordType.php:44-55 （Assert\\Length に min=eccube_password_min_len, max=eccube_password_max_len）\napp/config/eccube/packages/eccube.yaml:195-196 （eccube_password_min_len: 12 / eccube_password_max_len: 50）\nsrc/Eccube/Form/Type/Front/OtcBuy/OtcBuyOrderType.php:255-257 （password フィールドに OtcBuyRepeatedPasswordType を適用）\nsrc/Eccube/Resource/template/default/OtcBuy/register_customer.twig:55,69 （パスワード／確認用の入力欄。maxlength 指定なし）\n\n▼備考\neccube_password_min_len / eccube_password_max_len はサイト共通のパラメータであり、店頭買取の会員登録フォームだけを 8〜32 に変えるには FormType 側で値を上書きする必要がある。なお設計の下限8文字は現行のパスワードポリシー（12文字以上）より弱いため、修正方針は業務側との調整が必要。"
+  },
+  {
+   "issueKey": "ECCUBE_HARERUYA-1939",
+   "summary": "【実装乖離】フロント店頭買取_会員登録フォーム_店頭買取の会員登録フォームにて、パスワードの注意書き（12文字以上32文字以内）と実際のバリデーション（12〜50文字）が一致していない",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "中",
+   "description": "# 基本情報【必須】\n分類：フロント店頭買取\n機能：会員登録フォーム\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】フロント店頭買取_会員登録フォーム_店頭買取の会員登録フォームにて、パスワードの注意書き（12文字以上32文字以内）と実際のバリデーション（12〜50文字）が一致していない\n設計書：0308_基本設計仕様書(フロント_店頭買取).xlsx\n\n# 期待される挙動【必須】\n- 会員登録フォーム画面（F08-04）のパスワードは最大32文字であり、8〜32文字であるかのチェックを行うこと。\n- 画面の注意書きは実際に適用されるチェック内容と一致していること。\n\n# 現在の挙動【必須】\n- 日本語版の注意書きは「（半角英数字記号 12文字以上,32文字以内で入力してください。IDと同様のパスワードは入力できません。）」と固定文言でハードコードされている。\n- 英語版の注意書きも「Please enter your password using 12 - 32 half-width alphanumeric symbols.」と同じ内容でハードコードされている。\n- 一方で実際に適用される Assert\\Length は min=12 / max=50 であり、33〜50文字のパスワードが注意書きに反して登録できてしまう。\n- 注意書きの下限「12文字以上」も設計の「8〜32文字」と一致していない。\n\n# 補足情報【任意】\n▼設計書該当箇所\nF08_otc_buy_basedesign.md:187 「| 4 | パスワード | ボタン | ◯ | 32 | - | 8～32文字であるかチェックを行う |」\n\n▼実装該当箇所\nsrc/Eccube/Resource/template/default/OtcBuy/register_customer.twig:56 （注意書き「半角英数字記号 12文字以上,32文字以内で入力してください。」）\nsrc/Eccube/Resource/template/default/OtcBuy/register_customer.en.twig:56 （英語版の注意書き「12 - 32 half-width alphanumeric symbols」）\nsrc/Eccube/Form/Type/Front/OtcBuy/OtcBuyRepeatedPasswordType.php:44-55 （実際の制約は min=12 / max=50）\napp/config/eccube/packages/eccube.yaml:195-196 （eccube_password_min_len: 12 / eccube_password_max_len: 50）\n\n▼備考\nOtcBuyRepeatedPasswordType の first_options には設定値から動的生成した placeholder（半角英数字記号12～50文字）が用意されているが、register_customer.twig:55 / register_customer.en.twig:55 の form_widget で placeholder を '(例)password' / 'password' に上書きしているため利用されていない。注意書きは twig にハードコードされており、設定値変更に追随しない。02-6（パスワード桁数の設計乖離）とセットで是正が必要。"
+  },
+  {
+   "issueKey": "ECCUBE_HARERUYA-1932",
+   "summary": "【実装乖離】フロント店頭買取_店頭買取査定申込前ログイン_店頭買取査定申込前ログインにて、メールアドレス入力欄の最大文字数が設計値320文字ではなく255文字になっている",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "中",
+   "description": "# 基本情報【必須】\n分類：フロント店頭買取\n機能：店頭買取査定申込前ログイン\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】フロント店頭買取_店頭買取査定申込前ログイン_店頭買取査定申込前ログインにて、メールアドレス入力欄の最大文字数が設計値320文字ではなく255文字になっている\n設計書：0308_基本設計仕様書(フロント_店頭買取).xlsx\n\n# 期待される挙動【必須】\n- 店頭買取査定申込前ログイン画面（F08-01）のメールアドレス欄は、最大320文字まで入力できること。\n- 同画面のパスワード欄も最大320文字まで入力できること。\n\n# 現在の挙動【必須】\n- ログインフォームは CustomerLoginType を利用しており、login_email・login_pass の maxlength 属性に eccube_stext_len が設定されている。\n- eccube_stext_len は 255 のため、メールアドレス欄・パスワード欄とも 255 文字を超える入力ができず、設計の 320 文字を満たしていない。\n\n# 補足情報【任意】\n▼設計書該当箇所\nF08_otc_buy_basedesign.md:38 「| 2 | メールアドレス | 全角・半角 | △ | 320 | - | ・ログインをする場合は必須項目 |」\nF08_otc_buy_basedesign.md:39 「| 3 | パスワード | 全角・半角 | △ | 320 | - | ・ログインをする場合は必須項目 |」\n\n▼実装該当箇所\nsrc/Eccube/Controller/Front/Purchase/OtcBuyController.php:225-227 （entry アクションが CustomerLoginType でログインフォームを生成）\nsrc/Eccube/Form/Type/Front/CustomerLoginType.php:39-56 （login_email / login_pass の maxlength に eccube_stext_len を設定）\napp/config/eccube/packages/eccube.yaml:137 （eccube_stext_len: 255）\nsrc/Eccube/Resource/template/default/OtcBuy/entry.twig:31-37 （form.login_email.vars.attr をマージしてそのまま出力）\nsrc/Eccube/Resource/template/default/OtcBuy/entry.en.twig:30-36 （英語版も同一）\n\n▼備考\nサーバ側には Assert\\Length による長さ制限はなく、制限はクライアント側 maxlength のみ。maxlength=255 のため 320 文字の入力そのものが不可能で、設計値と乖離する。日本語版・英語版テンプレートとも同じフォームを使っており差異はない。"
+  },
+  {
+   "issueKey": "ECCUBE_HARERUYA-1819",
+   "summary": "【実装乖離】フロント注文_ご注文方法指定_ご注文方法指定画面の「使用ポイント」の初期値が、設計の「会員の保有ポイント」ではなく保有ポイントと支払上限の小さい方になっている",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "中",
+   "description": "# 基本情報【必須】\n分類：フロント注文\n機能：ご注文方法指定\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】フロント注文_ご注文方法指定_ご注文方法指定画面の「使用ポイント」の初期値が、設計の「会員の保有ポイント」ではなく保有ポイントと支払上限の小さい方になっている\n設計書：0304_基本設計仕様書(フロント_注文).xlsx\n\n# 期待される挙動【必須】\n- ご注文方法指定画面の使用ポイント（識別ID 6-6）の初期値は、会員の保有ポイントとすること。\n- 使用ポイント入力欄は、ポイント使用ラジオボタンで「ポイントを使う」を選択した場合のみ活性化すること。\n\n# 現在の挙動【必須】\n- OrderType::getDefaultUsePoint() が max(0, min(保有ポイント, 商品小計＋送料＋手数料)) を返すため、保有ポイントが支払総額を上回るケースでは初期値が保有ポイントではなく支払総額になる。\n- 設計が求める初期値「会員の保有ポイント」と、実装の初期値「保有ポイントと支払上限の小さい方」に差異がある。\n- 一方、「ポイントを使う」選択時のみ活性化する制御はバンドルJS（hareruya-checkout.js）が [data-point-use] / [data-point-save] の change を監視して [data-point-input] の readOnly を切り替えており、初期表示時にも実行されるため、こちらは設計どおり動作する。\n\n# 補足情報【任意】\n▼設計書該当箇所\nF04_order_basedesign.md:315 「| 6-6 | 使用ポイント | 数値（整数） | △ | - | 会員の保有ポイント | ・ECの場合のみ表示する<br>・ポイント使用ラジオボタンで「ポイントを使う」を選択した場合のみ活性化する |」\nF04_order_basedesign.md:303 「使用ポイントに入力した値を「ご注文内容の確認」の（４）に反映する」\n\n▼実装該当箇所\nsrc/Eccube/Form/Type/Shopping/OrderType.php:407 （初期値 = max(0, min(保有ポイント, 支払上限))）\nsrc/Eccube/Form/Type/Shopping/OrderType.php:410 （支払上限 = 商品小計＋送料＋手数料）\nsrc/Eccube/Form/Type/Shopping/OrderType.php:136 （use_point 未設定時に getDefaultUsePoint() を初期値として設定）\nsrc/Eccube/Resource/template/default/Shopping/index.twig:553 （max 属性も min(保有ポイント, 支払上限) で算出）\nsrc/Eccube/Resource/template/default/Shopping/index.twig:576 （使用ポイント入力欄。data-point-input）\nhtml/template/default/assets/hareruya/js/hareruya-checkout.js:1 （[data-point-use]/[data-point-save] の change で [data-point-input] の readOnly を切替。活性制御は実装済み）\n\n▼備考\n差異が顕在化するのは「会員の保有ポイント > 商品小計＋送料＋手数料」のケースのみで、それ以外は設計値と一致する。実装側の min() は OrderType::POST_SUBMIT の purchase_flow.over_payment_total バリデーション（OrderType.php:192-196）と整合させるための丸めと推測されるが、設計原文の初期値は「会員の保有ポイント」であるため実装乖離として計上した。活性/readonly 切替は hareruya-checkout.js に実装済みで設計を満たす（なお同ファイルには [data-js-point-save] 等を参照する別ブロックも存在するが、テンプレート側に該当属性がなくガードで抜けるだけの死んだコードであり、動作には影響しない）。"
+  },
+  {
+   "issueKey": "ECCUBE_HARERUYA-1822",
+   "summary": "【実装乖離】フロント注文_注文購入履歴一覧_注文購入履歴一覧にて、処理状態が別添資料の画像ではなく3色のテキストバッジで表示されている",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "中",
+   "description": "# 基本情報【必須】\n分類：フロント注文\n機能：注文購入履歴一覧\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】フロント注文_注文購入履歴一覧_注文購入履歴一覧にて、処理状態が別添資料の画像ではなく3色のテキストバッジで表示されている\n設計書：0304_基本設計仕様書(フロント_注文).xlsx\n\n# 期待される挙動【必須】\n- 注文購入履歴一覧の「処理状態」は書式「画像」であり、注文ステータスと表示画像の紐付けは別添「注文ステータスと表示画像の紐付け」シートに従って表示する。\n- ステータス表示の画像は現行から変更し、BOステータスと注文種別（通常注文／スムーズ店頭受取／店舗受取注文／スマレジからのデータ／予約）の組み合わせで表示可否・表示画像を切り替える。\n\n# 現在の挙動【必須】\n- Mypage/shopping_history.twig では OrderStatus の ID だけを見て completed / cancelled / pending の3種のCSS修飾子を決め、注文ステータス名をテキストのバッジ（span 要素）として表示している。\n- バンドルCSS（hareruya-common.css）の .c-hareruya-label--status-* は background-color のみを定義しており、背景画像やアイコン画像は一切設定されていない。\n- 注文種別（通常注文／スムーズ店頭受取／店舗受取注文／予約）による表示画像の切り替えは実装されておらず、スマレジ取引時に非表示とする制御のみが実装されている。\n\n# 補足情報【任意】\n▼設計書該当箇所\nF04_order_basedesign.md:522 「* ステータス表示の画像を変更する」\nF04_order_basedesign.md:569 「| 13 | 処理状態 | 画像 | - | - | - | <html>スマレジの取引データの場合は処理状態を非表示とする<br>注文ステータスと表示画像の紐付けは<b>「注文ステータスと表示画像の紐付け」シート</b>を参照</html> |」\nF04_order_basedesign.md:763-772 「別添資料_注文ステータスと表示画像の紐付け（カテゴリ／BOステータス／フロント表示画像／通常注文／スムーズ店頭受取／店舗受取注文／スマレジからのデータ／予約）」\n\n▼実装該当箇所\nsrc/Eccube/Resource/template/default/Mypage/shopping_history.twig:84-95 （OrderStatus ID から3種のCSS修飾子を決定）\nsrc/Eccube/Resource/template/default/Mypage/shopping_history.twig:194-201 （EC/店頭受取受注のみ、テキストのステータスバッジを出力）\nhtml/template/default/assets/hareruya/css/hareruya-common.css:1 （.c-hareruya-label--status-pending/completed/cancelled は background-color のみ。画像指定なし）\nhtml/template/default/assets/img/mypage/ （存在する svg は買取用の reception_completed / assessing / assessment_completed / transfer_pending / purchase_completed / canceled のみで、注文ステータス用画像は無い）\n\n▼備考\n「スマレジの取引データの場合は処理状態を非表示」の要件のみ実装済み（shopping_history.twig:194 の条件）。別添シートのBOステータス×注文種別の画像マップは未実装（uid F04_cart_order__04-3 と同根）。買取用の PurchaseHistoryStatusMapper（src/Eccube/Service/Front/Mypage/PurchaseHistory/PurchaseHistoryStatusMapper.php:95-127）は買取履歴専用で注文購入履歴では使用されていない。"
+  },
+  {
+   "issueKey": "ECCUBE_HARERUYA-1823",
+   "summary": "【実装乖離】フロント注文_注文購入履歴一覧_注文購入履歴一覧の購入日にて、店頭受取受注→スマレジ取引で複数取引した場合に最も新しい注文日が表示される（設計は一番若い＝最古の注文日）",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "中",
+   "description": "# 基本情報【必須】\n分類：フロント注文\n機能：注文購入履歴一覧\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】フロント注文_注文購入履歴一覧_注文購入履歴一覧の購入日にて、店頭受取受注→スマレジ取引で複数取引した場合に最も新しい注文日が表示される（設計は一番若い＝最古の注文日）\n設計書：0304_基本設計仕様書(フロント_注文).xlsx\n\n# 期待される挙動【必須】\n- 「店頭受取受注→スマレジ取引」の注文データの場合、購入日には店頭受取したデータの注文日を表示する。\n- 複数取引した場合は一番若い（＝最も古い）注文日を表示する。\n\n# 現在の挙動【必須】\n- OrderRepository::findNewestOtcOrderDatesByNextOrderIds() は MAX(o.order_date) で統合グループ内の最も新しい注文日を取得しており、メソッド名・PHPDoc も「order_date の最大値（最も新しい日付）」と明記されている。\n- 取得した最新日付が Order::setOtcSmaregiLinkedPurchaseDate() に設定され、Mypage/shopping_history.twig の購入日にそのまま表示される。\n- 統合受注自身の order_date には統合元受注の最古日が入っている（OrderRepository.php:2159 のコメント）が、購入日表示にはあえて使わない実装になっている。\n\n# 補足情報【任意】\n▼設計書該当箇所\nF04_order_basedesign.md:561 「| 5 | 購入日 | ラベル | - | - | - | ・「店頭受取受注→スマレジ取引」の注文データの場合は店頭受取したデータの注文日を表示し、複数取引した場合は一番若い注文日を表示する |」\nF04_order_basedesign.md:539 「* 注文日を購入日に変更」\n\n▼実装該当箇所\nsrc/Eccube/Repository/OrderRepository.php:2247-2261 （findNewestOtcOrderDatesByNextOrderIds。MAX(o.order_date) で最新日を取得）\nsrc/Eccube/Repository/OrderRepository.php:2216-2218 （取得した最新日を otcSmaregiLinkedPurchaseDate へ設定）\nsrc/Eccube/Resource/template/default/Mypage/shopping_history.twig:102-104 （購入日として otcSmaregiLinkedPurchaseDate を表示）\n\n▼備考\n「一番若い注文日」を日本語の通例どおり「最も古い（最小の）注文日」と解釈した場合、実装（MAX＝最新）は設計と逆になる。実装側は最古日をあえて避けて MAX を採用しており（OrderRepository.php:2159 のコメント）、設計の解釈が分かれている可能性があるため確信度は medium。仕様確認が必要。"
+  },
+  {
+   "issueKey": "ECCUBE_HARERUYA-2119",
+   "summary": "【実装乖離】会員管理_ポイント付与(キャンペーン/返金)_ポイント付与にて、ポイント増減量の最大値999999999のチェックが実装されていない",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "中",
+   "description": "# 基本情報【必須】\n分類：会員管理\n機能：ポイント付与(キャンペーン/返金)\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】会員管理_ポイント付与(キャンペーン/返金)_ポイント付与にて、ポイント増減量の最大値999999999のチェックが実装されていない\n設計書：0207_基本設計仕様書(会員管理機能).xlsx\n\n# 期待される挙動【必須】\n- ポイント付与（キャンペーン、特別対応）およびポイント付与（返金）の識別ID:3「ポイント増減量」は数値・必須で、最大値は999999999(スマレジ連携に合わせる)とする。\n\n# 現在の挙動【必須】\n- ポイント増減量(pointChange)は IntegerType で required=true・NotBlank が付与されており、必須要件は満たしている。\n- 制約は NotBlank と整数書式の Regex('/^[-]?([1-9]\\d*|0)$/') のみで、最大値999999999を制限する Range や LessThanOrEqual などの上限制約が存在しない。\n- POST_SUBMIT では「会員の保有ポイント＋増減量が負値になる場合」のエラーのみを追加しており、上限のチェックは行っていない。\n\n# 補足情報【任意】\n▼設計書該当箇所\nM08_customer_management_basedesign.md:571 「| 3 | ポイント増減量 | 数値 | ○ | 999999999 | - | 最大値はスマレジ連携に合わせる |」\nM08_customer_management_basedesign.md:612 「| 3 | ポイント増減量 | 数値 | ○ | 999999999 | 最大値はスマレジ連携に合わせる |」（ポイント付与（返金）画面）\n\n▼実装該当箇所\nsrc/Eccube/Form/Type/Admin/CustomerPointType.php:74-84 （pointChange の制約は NotBlank と整数Regexのみで上限制約が無い）\nsrc/Eccube/Form/Type/Admin/CustomerPointType.php:129-132 （POST_SUBMIT のチェックは残高が負になる場合のみ）\n\n▼備考\n必須チェックは実装済み。乖離は最大値999999999の上限バリデーションが存在しない点。スマレジ連携の上限を超える値が登録可能となる。"
+  },
+  {
+   "issueKey": "ECCUBE_HARERUYA-2120",
+   "summary": "【実装乖離】会員管理_メール配信履歴_メール配信履歴にて、並び順が処理日(送信日)降順ではなくID降順になっている",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "中",
+   "description": "# 基本情報【必須】\n分類：会員管理\n機能：メール配信履歴\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】会員管理_メール配信履歴_メール配信履歴にて、並び順が処理日(送信日)降順ではなくID降順になっている\n設計書：0207_基本設計仕様書(会員管理機能).xlsx\n\n# 期待される挙動【必須】\n- メール配信履歴は処理日降順で表示する。\n\n# 現在の挙動【必須】\n- CustomerMailController::history では mailHistoryRepository->findBy($criteria, ['id' => 'DESC']) としており、ソートキーがメール履歴のIDになっている。\n- 画面(mail_history.twig)で「処理日」として表示しているのは MailHistory.send_date であり、ソートキー(id)と表示している日付項目(send_date)が一致していない。\n- send_date はメール履歴登録時に new \\DateTime() で設定されるため通常はID降順＝処理日降順となるが、send_date がずれるデータ(移行データ等)では設計どおりの並び順にならない。\n\n# 補足情報【任意】\n▼設計書該当箇所\nM08_customer_management_basedesign.md:674 「メール配信履歴は処理日降順で表示する」\nM08_customer_management_basedesign.md:682 「| 2 | 処理日 | ラベル(yyyy/mm/dd) | - | - | - |」\n\n▼実装該当箇所\nsrc/Eccube/Controller/Admin/Customer/CustomerMailController.php:135-138 （findBy の orderBy が ['id' => 'DESC']）\nsrc/Eccube/Resource/template/admin/Customer/mail_history.twig:62 （処理日として send_date を表示）\nsrc/Eccube/Service/EntityManager/MailHistoryEntityManager.php:44 （send_date は登録時刻を設定）\n\n▼備考\n通常運用ではID降順と処理日降順は一致するため実害は限定的だが、設計が指定するソートキー(処理日)とは異なる。修正は orderBy を ['send_date' => 'DESC'] にするだけで済む。"
+  },
+  {
+   "issueKey": "ECCUBE_HARERUYA-2104",
+   "summary": "【実装乖離】会員管理_会員検索一覧(検索入力/検索結果)_会員検索一覧(検索入力)にて、会員ID・メールアドレス・お名前の統合検索欄の最大文字数が設計値100文字ではなく255文字になっている",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "中",
+   "description": "# 基本情報【必須】\n分類：会員管理\n機能：会員検索一覧(検索入力/検索結果)\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】会員管理_会員検索一覧(検索入力/検索結果)_会員検索一覧(検索入力)にて、会員ID・メールアドレス・お名前の統合検索欄の最大文字数が設計値100文字ではなく255文字になっている\n設計書：0207_基本設計仕様書(会員管理機能).xlsx\n\n# 期待される挙動【必須】\n- 会員検索一覧(検索入力)の識別ID:1「会員ID・メールアドレス・お名前」は全角・半角入力で最大文字数100文字とする。\n\n# 現在の挙動【必須】\n- 統合検索フィールド multi は実装されており、会員ID・氏名・カナ・メールアドレスを横断して検索できる。\n- 入力上限は Assert\\Length の max に eccube_stext_len (実値255) が指定されており、設計値100文字と相違している。\n\n# 補足情報【任意】\n▼設計書該当箇所\nM08_customer_management_basedesign.md:87 「| 1 | 会員ID・メールアドレス・お名前 | 全角・半角 | - | 100 | - |」\n\n▼実装該当箇所\nsrc/Eccube/Form/Type/Admin/SearchCustomerType.php:60-66 （multi の Assert\\Length max に eccube_stext_len を指定）\napp/config/eccube/packages/eccube.yaml:137 （eccube_stext_len: 255）\nsrc/Eccube/Repository/CustomerRepository.php:156-169 （会員ID・氏名・カナ・メールの統合検索は実装済み）\n\n▼備考\n統合検索機能自体は設計どおり。乖離は最大文字数のみ(255 vs 100)。"
+  },
+  {
+   "issueKey": "ECCUBE_HARERUYA-2105",
+   "summary": "【実装乖離】会員管理_会員検索一覧(検索入力/検索結果)_会員検索一覧(検索入力)にて、購入商品名・コードの最大文字数が設計値50文字ではなく255文字になっている",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "中",
+   "description": "# 基本情報【必須】\n分類：会員管理\n機能：会員検索一覧(検索入力/検索結果)\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】会員管理_会員検索一覧(検索入力/検索結果)_会員検索一覧(検索入力)にて、購入商品名・コードの最大文字数が設計値50文字ではなく255文字になっている\n設計書：0207_基本設計仕様書(会員管理機能).xlsx\n\n# 期待される挙動【必須】\n- 会員検索一覧(検索入力)の識別ID:18「購入商品名・コード」は全角・半角入力で最大文字数50文字とする。\n\n# 現在の挙動【必須】\n- 購入商品名・コード検索(buy_product_name)は実装されており、受注明細の商品名・商品コードを部分一致で検索する。\n- 入力上限は Assert\\Length の max に eccube_stext_len (実値255) が指定されており、設計値50文字と相違している。\n\n# 補足情報【任意】\n▼設計書該当箇所\nM08_customer_management_basedesign.md:104 「| 18 | 購入商品名・コード | 全角・半角 | - | 50 | - |」\n\n▼実装該当箇所\nsrc/Eccube/Form/Type/Admin/SearchCustomerType.php:134-139 （buy_product_name の Assert\\Length max に eccube_stext_len を指定）\napp/config/eccube/packages/eccube.yaml:137 （eccube_stext_len: 255）\nsrc/Eccube/Repository/CustomerRepository.php:447-456 （商品名・商品コードの部分一致検索は実装済み）\n\n▼備考\n検索処理自体は設計どおり。乖離は最大文字数のみ(255 vs 50)。"
+  },
+  {
+   "issueKey": "ECCUBE_HARERUYA-2111",
+   "summary": "【実装乖離】会員管理_会員登録編集_会員登録編集にて、パスワードの初期値マスク文字列と最大文字数が設計値(**********／32文字)と異なる",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "中",
+   "description": "# 基本情報【必須】\n分類：会員管理\n機能：会員登録編集\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】会員管理_会員登録編集_会員登録編集にて、パスワードの初期値マスク文字列と最大文字数が設計値(**********／32文字)と異なる\n設計書：0207_基本設計仕様書(会員管理機能).xlsx\n\n# 期待される挙動【必須】\n- 識別ID:23「パスワード」・識別ID:24「パスワード（確認）」は設定ファイルに定義されたデフォルトパスワード（**********）を編集時の初期値とする。\n- 入力値がデフォルトパスワードの場合はサーバ側で保持している暗号化済みパスワードを設定し、変更なしと判断する。\n- パスワード・パスワード（確認）の最大文字数は32文字とする。\n\n# 現在の挙動【必須】\n- CustomerEditController は編集画面表示時に eccube_default_password を plain_password にセットし、保存時に入力値がデフォルトパスワードと一致する場合は再ハッシュしない実装になっており、「変更なしと判断する」ロジックは設計どおりである。\n- デフォルトパスワードの実値は eccube.yaml の eccube_default_password: 'abc********123' であり、設計書が指定する「**********」と異なる文字列が初期表示される。\n- パスワードの最大文字数は RepeatedPasswordType の Assert\\Length max に eccube_password_max_len(実値50)が指定されており、設計値32文字と相違している(最小長は12文字)。\n\n# 補足情報【任意】\n▼設計書該当箇所\nM08_customer_management_basedesign.md:391-396 「識別ID:23「パスワード」識別ID:24「パスワード（確認）」は設定ファイルに定義されたデフォルトパスワード（**********）を初期値とする … デフォルトパスワードの場合、サーバ側で保持している暗号化されたパスワードの値を設定する（変更なしと判断する）」\nM08_customer_management_basedesign.md:431-432 「| 23 | パスワード | 半角 | ◯ | 32 | **********（編集時のみ） | … | 24 | パスワード（確認） | 半角 | ◯ | 32 | **********（編集時のみ）」\n\n▼実装該当箇所\nsrc/Eccube/Controller/Admin/Customer/CustomerEditController.php:82 （初期値として eccube_default_password をセット）\nsrc/Eccube/Controller/Admin/Customer/CustomerEditController.php:159-162 （デフォルトパスワードと同一なら再ハッシュしない＝変更なし判定。ロジックは実装済み）\napp/config/eccube/packages/eccube.yaml:105 （eccube_default_password: 'abc********123'）\nsrc/Eccube/Form/Type/RepeatedPasswordType.php:49-52 （min: eccube_password_min_len, max: eccube_password_max_len）\napp/config/eccube/packages/eccube.yaml:196 （eccube_password_max_len: 50）\n\n▼備考\n「未変更なら再暗号化しない」要件は満たしている。乖離はデフォルトパスワードの文字列('abc********123' vs '**********')と最大文字数(50 vs 32)の2点。"
+  },
+  {
+   "issueKey": "ECCUBE_HARERUYA-2115",
+   "summary": "【実装乖離】会員管理_会員登録編集_会員登録編集にて、メールアドレスの最大文字数が設計値85文字ではなく254文字になっている",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "中",
+   "description": "# 基本情報【必須】\n分類：会員管理\n機能：会員登録編集\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】会員管理_会員登録編集_会員登録編集にて、メールアドレスの最大文字数が設計値85文字ではなく254文字になっている\n設計書：0207_基本設計仕様書(会員管理機能).xlsx\n\n# 期待される挙動【必須】\n- 会員登録編集の識別ID:16「メールアドレス」は半角入力・必須で、最大文字数85文字とする。\n\n# 現在の挙動【必須】\n- メールアドレス(email)は required=true かつ NotBlank 制約付きで実装されており、必須要件は満たしている。\n- 最大文字数は Assert\\Length の max に eccube_email_len が指定されており、その実値は 254 のため、設計値85文字と相違している。\n\n# 補足情報【任意】\n▼設計書該当箇所\nM08_customer_management_basedesign.md:424 「| 16 | メールアドレス | 半角 | ◯ | 85 | - |」\n\n▼実装該当箇所\nsrc/Eccube/Form/Type/Admin/CustomerType.php:93-105 （email の required=true / NotBlank / Assert\\Length max=eccube_email_len）\napp/config/eccube/packages/eccube.yaml:235 （eccube_email_len: 254）\n\n▼備考\n必須要件は満たしている。乖離は最大文字数のみ(254 vs 85)。RFC上のメールアドレス長(254)を採用しているため、設計書の85は要確認。"
+  },
+  {
+   "issueKey": "ECCUBE_HARERUYA-2112",
+   "summary": "【実装乖離】会員管理_会員登録編集_会員登録編集にて、任意項目であるはずの「お名前名」が必須入力になっている",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "中",
+   "description": "# 基本情報【必須】\n分類：会員管理\n機能：会員登録編集\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】会員管理_会員登録編集_会員登録編集にて、任意項目であるはずの「お名前名」が必須入力になっている\n設計書：0207_基本設計仕様書(会員管理機能).xlsx\n\n# 期待される挙動【必須】\n- 会員登録編集の識別ID:2「お名前姓」は必須(最大16文字)、識別ID:3「お名前名」は任意(最大16文字)とする。\n- 識別ID:4「お名前姓（カナ）」・識別ID:5「お名前名（カナ）」は任意で最大25文字とする。\n\n# 現在の挙動【必須】\n- CustomerType では name フィールドに NameType を required=true で追加しており、NameType は required=true の場合に姓(lastname)と名(firstname)の双方へ NotBlank 制約を付与する。\n- その結果「お名前名」も未入力ではエラーとなり、設計上は任意項目であるはずの識別ID:3が必須化されている。\n- 最大文字数は姓・名ともに eccube_name_len(16)、カナは eccube_kana_len(25)で設計と一致している。\n\n# 補足情報【任意】\n▼設計書該当箇所\nM08_customer_management_basedesign.md:410-413 「| 2 | お名前姓 | 全角・半角 | ◯ | 16 | - | / | 3 | お名前名 | 全角・半角 | - | 16 | - | / | 4 | お名前姓（カナ） | 全角・半角 | - | 25 | - | / | 5 | お名前名（カナ） | 全角・半角 | - | 25 | - |」\n\n▼実装該当箇所\nsrc/Eccube/Form/Type/Admin/CustomerType.php:65-67 （name を NameType, required=true で追加）\nsrc/Eccube/Form/Type/NameType.php:46-56 （required=true のとき lastname_options と firstname_options の双方に NotBlank を付与）\napp/config/eccube/packages/eccube.yaml:171-172 （eccube_name_len: 16 / eccube_kana_len: 25 は設計と一致）\n\n▼備考\n最大文字数(姓16/名16/カナ25)は設計と一致。乖離は「お名前名」の必須/任意の扱いのみ。"
+  }
+ ]
+}

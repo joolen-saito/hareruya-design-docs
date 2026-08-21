@@ -1,0 +1,165 @@
+{
+  "packetId": "rest_02",
+  "results": [
+    {
+      "rowId": 280,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0303_基本設計仕様書(フロント_商品).html:3141-3147 のExcel正本は「商品IDが取得できない場合はおすすめ商品を表示しない」、マイページ/注文完了は「直近の注文…販売価格が最も高い商品」、カートは「カートに入っている商品のうち販売価格が最も高い商品」と文脈を分けて明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Block/RecommendController.php:47-62 は `recommend_type` を分岐し、カート分岐では `$cartItems = ...getCartItems(); if (empty($cartItems)) { return $productId; }` と空文字の基準IDを返す。同:64-73 は価格配列を `SORT_DESC` で並べ、最高額商品のIDを採用する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/default/Cart/index.twig:339-349 はカート最高額商品の `cartBaseProductId` を渡すが、空なら `{'context': 'checkout'}` だけで同じブロックを呼ぶ。ec-cube-enterprise/src/Eccube/Controller/Block/ProductRecommendController.php:55-63 は文脈を見ず、ログイン会員かつID 0なら `findLatestExpensiveItem($Customer)` にフォールバックするため、空カートでもおすすめ0件にならない。",
+      "note": "カート内最高額の選択自体は現行で実装済み。未達は空カート時にもマイページ/注文完了向けフォールバックを適用する点。"
+    },
+    {
+      "rowId": 281,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0303_基本設計仕様書(フロント_商品).html:3157-3158 のExcel正本は0件時に「表示するおすすめ商品はまだありません。」を表示すると定めるが、英語文言は記載しない。英語 `No recommended items to display yet.` はリバース埋込開始後の同:3223 にだけ現れる。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Block/recommend_detail.twig:21-23 は0件時に `trans('hareruyaec.product.no_recommend')` を描画し、pf-eccube3/app/Plugin/HareruyaEc/Resource/locale/message.ja.yml:327 は「表示するおすすめ商品はまだありません。」、message.en.yml:310 は `No recommended items to display yet.` と定義する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/default/Block/user_recommend_product.twig:26-47 は現在else分岐で `front.product.recommend_no_items` を常時描画し、messages.ja.yaml:1189 も日本語を満たす。一方 messages.en.yaml:1018 は `No recommended products to display.` で、旧実装由来の指定英語文言とは一致しない。",
+      "note": "パケット作成後に0件分岐と日本語は実装済み。残る英語の完全一致要求だけがExcel正本ではなく旧実装に由来するためLEGACY_BACKED。"
+    },
+    {
+      "rowId": 282,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0303_基本設計仕様書(フロント_商品).html:3325-3333 のExcel正本は「カスタマイズ要件に記載の内容以外は現行踏襲」と対象画面・最大15件を記すだけで、空Cookie時の見出し/文言は記載しない。具体文言はリバース埋込開始後の同:3467 にのみある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Block/history.twig:13-17 は履歴なしのelseで `trans('hareruyaec.history.no_content')` を描画する。pf-eccube3/app/Plugin/HareruyaEc/Resource/locale/message.ja.yml:328-330 は見出し「最近チェックした商品」と「最近見た商品はありません。」、message.en.yml:312-314 は `Recently Viewed` と `No Recently Seen Items` を定義する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Block/RecentlyViewedBlockPayloadBuilder.php:50-54 はhistory Cookieが空なら `ProductClasses => []` を返す。ec-cube-enterprise/src/Eccube/Resource/template/default/Block/recently_viewed.twig:1-4,58 は全体を `if ProductClasses|length > 0` で囲み、履歴なしのelseがないため見出しも文言も出ない。",
+      "note": "空履歴時の具体表示は旧画面の踏襲要件に由来する。"
+    },
+    {
+      "rowId": 283,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0303_基本設計仕様書(フロント_商品).html:3327-3333 のExcel正本は表示対象を「本店ECTOP」「商品一覧」「商品詳細」とし、「最大15件をスライダーなしで表示する、表示順は最近見た順（新しい順）」と明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Block/history.twig:5-12 の旧表示は `{% for product in history %}` の単純なリストで、同:13-17 の履歴なし分岐まで含めてスライダー部品を使用していない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Block/RecentlyViewedBlockPayloadBuilder.php:87-93 はhomepageを `top` に振り分ける。ec-cube-enterprise/src/Eccube/Resource/template/default/Block/recently_viewed.twig:19-40 のtop分岐は `p-hareruya-product-carousel`、`data-js-target=\"product-carousel-slider\"`、前後ナビボタンを持つため、本店ECTOPだけスライダーなし要件に反する。",
+      "note": "商品一覧・商品詳細のグリッド表示は要件を満たすため、本店ECTOPの表示方式だけが未達。"
+    },
+    {
+      "rowId": 284,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0303_基本設計仕様書(フロント_商品).html:3325-3333 のExcel正本は最近チェック商品について「現行踏襲」と表示件数・順序を記すが、フォイル装飾の具体指定はない。`foilImg` の説明はリバース埋込開始後の同:3418 にのみ現れる。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Block/history.twig:6-8 は各履歴商品画像を `<div class=\"itemImg {{ product.foil_flg ? 'foilImg' : '' }}\">` で描画し、フォイル商品のサムネイルに専用CSSクラスを付与する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/default/Block/_product_card_simple.twig:5-20 の画像領域にはfoil判定や装飾クラスがなく、同:28-30 で商品名に `front.product.foil_prefix` を付けるだけである。",
+      "note": "具体的なサムネイル装飾は旧実装由来の踏襲事項。"
+    },
+    {
+      "rowId": 285,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0303_基本設計仕様書(フロント_商品).html:4018-4022 のExcel正本は対象画面「お気に入り登録商品一覧」と登録商品の一覧表示を記すが、通知案内文や通知契機は指定しない。指定文言はリバース埋込開始後の同:4215 にのみある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/favorite_list.twig:25-30 は一覧上部に「お気に入り登録した商品がセール対象になった際、ご登録されているメールアドレスにお知らせをお送りいたします。」を直接描画する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/favorite.twig:49-52 は `front.mypage.favorite_list.lead` を描画し、ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:700 の値は「下記の商品が入荷した際、ご登録されているメールアドレスにお知らせをお送りいたします。」で通知契機が入荷になっている。",
+      "note": "案内文の具体内容はExcel正本ではなく旧お気に入り画面に由来する。"
+    },
+    {
+      "rowId": 286,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0303_基本設計仕様書(フロント_商品).html:4018-4024 のExcel正本はお気に入り画面と登録表示を説明するが、解除時にPlayerがない場合のHTTPステータス・レスポンス本文は定めない。HTTP400の具体手順はリバース埋込開始後の同:4221,4232 にのみある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/ProductController.php:405-414 の旧 `removeFavorite` はPlayer取得後、`if (empty($player)) { return $app->abort(400); }` としてメッセージ本文を返さずHTTP400にする。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Front/ProductController.php:868-889 の現行解除処理はPlayerが空のとき `return $this->json(['status' => 'nologin', 'message' => trans('front.product.favorite_product.favorite_notlogin.message')]);` とし、明示的な400指定なしのJSONメッセージを返す。",
+      "note": "HTTP400・画面文言なしという詳細契約は旧実装由来。"
+    },
+    {
+      "rowId": 287,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0303_基本設計仕様書(フロント_商品).html:4018-4022 のExcel正本には機能対象名として「お気に入り登録商品一覧」があるが、この文字列をH1として表示する指定はない。H1との対応はリバース埋込開始後の同:4214 にのみある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/favorite_list.twig:23-28 は `<h1 class=\"common-headline\">お気に入り登録商品一覧</h1>` と、直後に会員氏名を描画する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/favorite.twig:48-51 はH1に `front.mypage.favorite_list.page_title` を使い、ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:699 の値は「お気に入り商品一覧」で「登録」がない。",
+      "note": "画面名からH1完全一致までを要求する根拠は旧テンプレート。"
+    },
+    {
+      "rowId": 288,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0303_基本設計仕様書(フロント_商品).html:4018-4024 のExcel正本にはお気に入り一覧のセール絞り込みラベル文言の指定がない。指定ラベルはリバース埋込開始後の同:4214 にのみ記載される。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/favorite_list.twig:38-43 のセール切替画像は `alt=\"セール対象商品のみ表示する\"` とする。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/favorite.twig:75-80 はラベルに `front.mypage.favorite_list.sale_only` を使い、ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:701 は「セール対象のみ」と短縮している。",
+      "note": "ラベル完全一致は旧実装由来。"
+    },
+    {
+      "rowId": 289,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0303_基本設計仕様書(フロント_商品).html:4018-4022 のExcel正本はお気に入り登録商品のマイページ一覧表示を定めるが、会員氏名を表示要素に含める記載はない。表示要素としての会員氏名はリバース埋込開始後の同:4214 にのみある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/favorite_list.twig:25-30 はH1直下で `<div class=\"loginname\">{{ app.user.name01 }} {{ app.user.name02 }} 様</div>` を描画する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/favorite.twig:44-80 はH1、案内文、件数、セール絞り込みを描画するが、`Customer`、氏名、`name01`/`name02` の出力が存在しない。",
+      "note": "会員氏名は旧画面で実在するが、Excel正本の表示項目には記載されていない。"
+    },
+    {
+      "rowId": 290,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0304_基本設計仕様書(フロント_注文).html:1460-1463 のExcel正本は「支払方法によって『注文する』ボタンに表示する文言を変更する」に続け、コンビニは「コンビニ決済へ」、クレジットカードは「クレジットカード決済へ」、支店は「購入する」と明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Shopping/index.twig:327-340 の旧テンプレートはPC/SPとも `<button id=\"order-button\" ...>注文する</button>` 固定であり、この期待は旧挙動ではなくExcel正本のカスタマイズ要件に由来する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/default/Shopping/index.twig:127-142 はクレジットカードとコンビニで専用キーを選ぶが、それ以外は `front.shopping.checkout` にする。同:846-848 がそのラベルをボタンに描画し、messages.ja.yaml:1538-1540 は専用2文言を持つ一方、支店向け「購入する」の分岐・キーがない。",
+      "note": "パケット作成後にコンビニ・クレジットカードは対応済み。支店時だけ明示要件が未達。"
+    },
+    {
+      "rowId": 291,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0304_基本設計仕様書(フロント_注文).html:2264-2267 のExcel正本は配送先の新規登録について「配送先を20件登録している場合、配送先の新規登録はできない」とだけ定め、エラー文言・表示領域・戻り先は指定しない。具体UXはリバース埋込開始後の同:2408 にのみある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Service/DeliveryService.php:78-89 は新規時に件数が上限以上なら `$app->addError('front.shopping.error.customer_address_max'); return false;` とし、message.ja.yml:1462 は「お届け先登録数の上限を超えています。」。pf-eccube3/app/Plugin/HareruyaEc/Controller/ShoppingController.php:947-952 はfalse時に `path('shopping')` へ戻す。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Front/ShoppingController.php:733-749 は新規登録で件数が `eccube_deliv_addr_max` 以上なら `throw new NotFoundHttpException()` とし、注文方法指定画面へのエラー表示・リダイレクトを行わない。",
+      "note": "20件で登録不可という中核は正本どおりだが、指摘された文言・表示場所・遷移の残存差分は旧実装由来。"
+    },
+    {
+      "rowId": 292,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0304_基本設計仕様書(フロント_注文).html:2186-2267 のsheet-5 Excel正本全体には、既存注文の注文者・配送先情報が変更されない旨の注意文はない。指定文言はリバース埋込開始後の同:2405 にのみ現れる。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Shopping/delivery_edit.twig:20-22 は「既にいただいています（準備中も含む）ご注文の注文者ならびに配送先の情報は変更されませんので、変更が必要な場合は弊社へご連絡をお願い致します。」を常時描画する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/default/Shopping/shipping_edit.twig:64-69 はH1直後にフォームを開始し、注意文を描画しない。文言自体は ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:747 の `front.mypage.delivery.edit_notice` に残るが、本Shoppingテンプレートから参照されない。",
+      "note": "旧Shoppingテンプレートの踏襲漏れ。"
+    },
+    {
+      "rowId": 293,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0304_基本設計仕様書(フロント_注文).html:2186-2267 のsheet-5 Excel正本全体には、住所欄下の「町名・番地」注意文の指定がない。具体文言はリバース埋込開始後の同:2405 にのみ現れる。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Shopping/delivery_edit.twig:146-150 は住所入力欄の直後に `<p class=\"regist-usrdata__data__attention\">※町名・番地の入力漏れにご注意ください。</p>` を描画する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/default/Shopping/shipping_edit.twig:220-277 の住所ブロックには注意文出力がない。ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:463 には `front.entry.address.note: 町名・番地の入力漏れにご注意ください。` があるが当該テンプレートでは未使用。",
+      "note": "日本語注意文は翻訳資産に残るが、Shopping編集画面への配置根拠は旧実装。"
+    },
+    {
+      "rowId": 294,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0304_基本設計仕様書(フロント_注文).html:2200 のExcel正本は機能名「配送先の新規登録・変更」を示すが、これを画面H1にすることや英語 `Register New/Change Address` は記載しない。具体見出しはリバース埋込開始後の同:2405 にのみある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Shopping/delivery_edit.twig:13-16 は `<h1 class=\"common-headline\">配送先の新規登録・変更</h1>`、delivery_edit.en.twig:18-21 は `<h1 class=\"common-headline\">Register New/Change Address</h1>` とする。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/default/Shopping/shipping_edit.twig:26,58,66 は `front.shopping.shipping_edit_title_management` をH1にも使う。messages.ja.yaml:1557 は日本語を満たすが、messages.en.yaml:1403 は `Register / Change Delivery Address` であり、旧英語見出しと一致しない。",
+      "note": "パケット作成後に日本語H1は対応済み。残る英語完全一致要件が旧実装由来。"
+    },
+    {
+      "rowId": 295,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0304_基本設計仕様書(フロント_注文).html:2471-2591 のsheet-6 Excel正本は国・都道府県入力項目を持つが、組合せ整合性検証や `form.country.error.invalid` を記載しない。具体条件はリバース埋込開始後の同:2638 にのみある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Service/DeliveryService.php:47-60 は日本かつ `Pref::PREF_ABROAD`、または日本以外かつ国外でない組合せを検出し、`$form->get('country')->addError(new FormError($app->trans('form.country.error.invalid')));` とする。pf-eccube3/app/Plugin/HareruyaEc/Resource/locale/message.en.yml:659-662 は同キーを `The combination of country and region is incorrect.` と定義する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Form/Type/Front/CustomerAddressType.php:165-185 のPOST_SUBMITは日本の郵便番号を検証し、海外なら `setPref(...Pref::PREF_ABROAD)` と強制設定するだけで、国フィールドへの組合せエラーを追加しない。現行locale・Form全域で `form.country.error.invalid` は0件。",
+      "note": "検証条件・エラー付与先・英語文言はいずれも旧実装にのみ根拠がある。"
+    },
+    {
+      "rowId": 296,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0304_基本設計仕様書(フロント_注文).html:2827 のExcel正本図形セルBA16は「文言変更　注文完了メールをお送りしました。届かない場合はお手数ですが当店のヘルプページを御覧ください。」と完全な期待文言を明記する。同:2810 も「ヘルプページ」への遷移を指定する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Shopping/complete.twig:49-53 は「注文完了メールをお送りしました。」に続け、「届かない場合はお手数ですが当店の」＋ヘルプページリンク＋「を御覧ください。」を描画する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/default/Shopping/complete.twig:114-120 は本文とhelp文を連続描画する。messages.ja.yaml:1544-1548 は本文に従来の長い確認メール・問い合わせ誘導を残したうえで「届かない場合はお手数ですが当店の%link%をご覧ください。」も追加しており、設計指定の単一文言とは一致しない。",
+      "note": "パケット作成後にヘルプページ誘導は追加済みだが、問い合わせ誘導を含む旧本文が併記され、設計指定文言への置換は完了していない。"
+    },
+    {
+      "rowId": 297,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html:1179-1191 のExcel正本は「強化買取商品コーナーの表示」、タグ「強化買取」、各タグ/本店公開/NM/買取価格1円以上、最大60件を明記する。ただし同:1189 の「優先表示商品」の商品コード順は取消線付きで、同:1190 がユニサーチ商品一覧のソートへ置換しているため、その旧並び順は本判定根拠から除外する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/PurchaseController.php:58-72 の旧TOP取得は `Tag::FEATURE_PURCHASE_ID` の1タグを使い、pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Purchase/index.twig:25-37 も見出し「目玉買取商品」だけを表示する。強化買取コーナーは旧実装にもなく、Excel正本の追加要件である。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/default/Purchase/index.twig:30-39 は先に `purchase_new_product.twig`、次に特集コーナーを配置する。ec-cube-enterprise/src/Eccube/Resource/template/default/Block/purchase_new_product.twig:1-7 は `Tag::NEW_ITEMS_ID` と見出し「買取新着商品」を使い、ec-cube-enterprise/src/Eccube/Entity/Tag.php:55-64 にも強化買取専用定数がない。",
+      "note": "指摘のうち、正本で撤回済みの優先表示商品順は要求から除外した。それでも強化買取タグの専用コーナー・条件・最大60件という正本要件は未実装。"
+    },
+    {
+      "rowId": 298,
+      "verdict": "UNSUPPORTED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html:1189-1190 は「優先表示商品」の商品コード順を取消線で抹消し、「ユニサーチの検索となるためソート順はシート『ネット買取商品一覧』を参照」へ置換する。同:1236-1237 の各特集コーナー条件も同じ取消線・置換を持ち、指摘の期待値を正本が明示的に撤回している。",
+      "legacyEvidence": "旧実装には一般的なタグ優先機構が実在する。pf-eccube3/app/Plugin/HareruyaEc/Repository/DtbProductSubClassRepository.php:885-887 は「優先表示商品対応」として `addSortForPriority($qb, $tags)` を呼び、同:910-915 で他の並び順を追加する。ただし移行正本がこの旧順序を取消しているため、移植期待の根拠にはならない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Twig/Extension/TaggedUnisearchRequestExtension.php:67-74 は買取タグ検索に `$query['sort'] = 'release_date'` を指定し、ec-cube-enterprise/src/Eccube/Service/UniSearch/UniSearchService.php:323-325 は `release_date desc,product desc,language asc,foil_flg asc` をユニサーチへ渡す。これは正本の置換後方針に沿う。",
+      "note": "旧実装の優先表示機構を根拠に起こされた古い期待値だが、最新Excel正本が取消線と修正注記で明示的に撤回しているため誤検出。"
+    },
+    {
+      "rowId": 299,
+      "verdict": "UNSUPPORTED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html:1253 のExcel正本は項目「週間販売数」「PCのみ表示」に対し、同じセルで「2026/6/15木村：買取ではのちに不要な項目になったため削除」と明記しており、指摘の追加要求を明確に否定する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Purchase/index.twig:25-37 の旧買取TOPカード列は「目玉買取商品」の商品ループだけで、pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Block/purchase_product.twig:5-23 も画像・商品名・買取価格のみを描画し、週間販売数を持たない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/default/Block/purchase_product_list_unisearch.twig:5-42 の現行買取カードも画像・言語・商品名・買取価格だけを描画し、週間販売数要素がない。この不在は正本の削除指示と一致する。",
+      "note": "リバース側に削除前の項目が残っているが、Excel正本の明示的な削除注記が優先される。現行は真の設計期待を満たしており、指摘は誤検出。"
+    }
+  ]
+}

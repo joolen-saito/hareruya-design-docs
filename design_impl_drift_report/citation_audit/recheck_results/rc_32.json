@@ -1,0 +1,149 @@
+{
+  "packetId": "rc_32",
+  "results": [
+    {
+      "rowId": 576,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0203 HTML の sheet-19 から src-cell 170件を抽出し「表示件数」「page_count_pulldown」「プルダウン」「自動遷移」で確認したが、Excel正本セルには該当記述なし。正本レイアウト画像（出荷指示リスト編集、1012x623）も目視したが表示件数UIは描かれていない。記述「表示件数プルダウン…プルダウンだけでは自動遷移しない」は functions/pf-eccube3/m05-19_admin_order_order_shipping_standby_list_search.md:30,128 と function-design-embed 内にのみ実在した。",
+      "reason": "Excel正本にもレイアウト画像にも当該挙動の指定はなく、LEGACY_BACKED の区分は妥当。旧 pf-eccube3 の app/Plugin/HareruyaEc/Resource/template/admin/ShippingStandby/index.twig:118-131 は select ではなく検索URLへの anchor 群で、専用JS shipping-standby-index.js に page_count の change 処理はない。現行実装には明示的な change 遷移があるため、リバース詳細設計に記録された非遷移挙動との差は残る。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Resource/template/admin/ShippingStandby/index.twig の block javascript（24-29行）で `$('#page_count_pulldown').on('change', ...)` を登録し、選択値があれば `window.location.href = targetUrl;` を実行する。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 577,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0203 HTML sheet-20 のExcel正本で `0203:ピッキングリスト印刷!D45`「カードの価格帯、サプライ品でグループ分けして表示する。」および E46-E49 の4区分を確認した。一方、`GOODS_ID`、`RESERVED_GOODS_ID`、最小カテゴリIDによる判定手順は src-cell に存在せず、function-design-embed は同シートのリバース詳細設計領域。レイアウト画像2枚も埋め込まれているが、本件は内部判定方式の指摘であり画像からカテゴリ定数方式は確認できない。",
+      "reason": "正本が規定するのは4グループの結果で、カテゴリ定数による具体的判定方式ではない。旧実装 app/Plugin/HareruyaEc/Controller/Admin/Order/ShippingStandbyController.php の pickingList() は `intval($item['categoryId']) !== Category::GOODS_ID` および `RESERVED_GOODS_ID` を使用するため、具体方式の根拠は旧実装側だけである。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/Admin/Order/ShippingStandbyController.php の pickingList()（395-400, 426-428行）は ProductClassRepository::getSubInfosByProductClassIds() の返却有無を `$hasSubInfo` とし、falseなら `$c = 'goods'`。ProductClassRepository.php の同メソッド（3071-3098行）は Language/CardCondition/Product/CardDetail を join する。DtbShippingStandbyRepository::generatePickingList() は `MIN(ct.category_id) AS categoryId`（168行）を取得するが、この分類分岐では使っていない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 578,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0203 HTML sheet-20 のExcel正本で E46「商品単位_980円未満」、E47「商品単位_980円以上_4800円未満」、E48「商品単位_4800円以上」を確認した。`findByOptionKey`、2行一括取得、返却順の `[0]`/`[1]` を price1/price2 に結ぶという内部手順は src-cell に存在せず、リバース詳細設計にのみある。",
+      "reason": "価格帯の結果は正本にあるが、指摘対象である option 取得・添字割当方式は旧実装固有なので LEGACY_BACKED は妥当。旧 app/Plugin/HareruyaEc/Repository/DtbShippingStandbyRepository.php の generatePickingList() は2キーを一括取得し `$thresholdPrices[0]` と `[1]` をパラメータへ設定する。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Repository/DtbShippingStandbyRepository.php の generatePickingList()（141-151行）は2キーを別々の `findOneBy` で取得し、nullなら0へフォールバックする。214-215行で個別値を `price1`/`price2` に設定しており、一括取得＋返却順添字方式には戻っていない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 579,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0203 HTML sheet-23 のExcel正本で E59「配送先_住所1」、E60「配送先_住所2」、E61「配送先_TEL1」、B71「64」を実在確認した。「配送先_住所3」の src-cell は同シートに0件。sheet-23 にはレイアウト画像の埋め込み自体がなく、列順は正本セル表で確認した。",
+      "reason": "Excel正本が住所1、住所2、TEL1の連続と全64列を明示しており、SPEC_BACKED は妥当。現行CSV定義は住所3を挿入して65列である。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/Admin/Order/OrderCsvController.php の CSV_HEADER（99-102行）は `配送先_住所1`、`配送先_住所2`、`配送先_住所3`、`配送先_TEL1` の順で、キー数を実数確認すると65。src/Eccube/Repository/OrderRepository.php の generateResultCsv()（1531-1534行）も `s.addr03 AS shipping_addr03` を選択する。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 580,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0203 HTML sheet-24 のExcel正本 src-cell 59件を「URL」「POST」「upload」「shipping_result_csv」で確認したがエンドポイント指定は0件。`/{admin_route}/order/shipping_result_csv/upload` は同シートの function-design-embed 内、functions/pf-eccube3/m05-26_admin_order_order_shipping_result_csv_import.md にのみ実在する。",
+      "reason": "正本はインポートの業務処理を規定するがURLは規定しないため、旧ルート由来という分類は妥当。旧 app/Plugin/HareruyaEc/ServiceProvider/Admin/OrderServiceProvider.php は POST `/order/shipping_result_csv/upload` を `admin_shipping_result_csv_upload` に bind する。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/Admin/Order/OrderCsvController.php の shippingResultImport() は `admin_shipping_result_csv_upload` というルート名だが path は `/order/shipping_result_csv/import`（284行）。shipping_result_csv_import.twig の upload-form（45行）も `admin_shipping_result_csv_import` の `/import` へPOSTする。リポジトリを `shipping_result_csv/upload` で検索してヒットなし。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 582,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0203 HTML sheet-24 のExcel正本で D42「指定した注文番号に該当する受注情報データの「出荷日」が登録済みでなければデータを更新する。」、E43「受注のステータスを「発送済み」にする。」、E44「受注情報の「出荷日」と「送り状No.」を登録する。」、E45「配送情報の「出荷日」を登録する。」を実在確認した。更新前ステータスが PRE_DELIV であることを条件にする src-cell はない。",
+      "reason": "機械フラグ NOT_FOUND は引用符表記等による見落としで、Excel正本セル D42-E45 が要件を直接支持するため SPEC_BACKED は妥当。現行コードの PRE_DELIV 条件は正本にない追加ゲートである。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Service/Csv/OrderCsv.php の registerShippingResult()（133-138行）は `$isPreDeliv = ... === OrderStatus::PRE_DELIV` とし、`$isPreDeliv && $order->getShippingDate() === null` の場合だけ親受注の status、shippingDate、invoiceNumber を更新する。配送情報の shippingDate は144-145行で別途更新する。",
+      "severityOpinion": "high",
+      "confidence": "high"
+    },
+    {
+      "rowId": 585,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "MISDESCRIBED",
+      "checkedQuote": "0203 HTML sheet-25 のExcel正本で E59「配送先_住所1」、E60「配送先_住所2」、E61「配送先_TEL1」、B71「64」を実在確認し、「配送先_住所3」は src-cell に0件。sheet-25 にはレイアウト画像の埋め込み自体がなく、列順は正本セル表で確認した。",
+      "reason": "正本根拠と、現行の固定ヘッダ一覧に住所3が1列多い差は残る。一方、指摘にある「64列CSVでは列ズレ・取込失敗となり得る」という実装説明は不正確。AbstractCsvService::checkHeaderValues() は NOT_REQUIRED_CSV_HEADER の全64項目を両側から除外し、実質的に必須の「注文番号」だけを比較する。checkHeaderSize() も各CSV自身のヘッダ列数とデータ行列数の一致を見るだけなので、整合した64列CSVは住所3欠如を理由に失敗しない。",
+      "currentImpl": "ec-cube-enterprise 現状: OrderCsvController.php の CSV_HEADER は65列で `配送先_住所3` を含む（101行）。NOT_REQUIRED_CSV_HEADER は注文番号以外の64列を含む（172行に住所3）。AbstractCsvService.php の checkHeaderValues()（242-248行）は `array_diff(..., $notRequiredHeaders)` 後を比較し、checkHeaderSize()（270-278行）は入力ヘッダ数と同じ入力行の列数のみを比較する。したがって固定一覧の乖離は再現するが、旧64列CSVが必ず不適合になるとの説明は再現しない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 586,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0203 HTML sheet-24/25 のExcel正本を「0バイト」「サイズ0」「getSize」「空ファイル」で確認したが該当 src-cell は0件。サイズ0でも後続へ残す記述は functions/pf-eccube3/m05-26_admin_order_order_shipping_result_csv_import.md のリバース詳細設計にのみ存在する。",
+      "reason": "0バイトファイルの具体的な制御フローは正本要件でなく旧実装由来。旧 app/Plugin/HareruyaEc/Service/Csv/AbstractCsvService.php の getFormFile() は `if ($formFile->getSize() == 0) {}` が空で、そのまま返す。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Service/Csv/AbstractCsvService.php の getFormFile()（129-138行）は null または `getSize() === 0` なら null を返す。OrderCsvController::shippingResultImport()（302-307行）は null 時に描画処理後、import画面へリダイレクトする。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 587,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "PARTIAL",
+      "checkedQuote": "0203 HTML sheet-25 のExcel正本で E8「注文番号」、P8「数値(整数)」、Z8「01234567」、AG8「更新のキー項目」を確認したが、受信値を `sprintf('%08d', ...)` で補正してサブ注文を検索する手順は正本セルにない。その手順は functions/pf-eccube3/m05-26_admin_order_order_shipping_result_csv_import.md と旧 app/Plugin/HareruyaEc/Service/Csv/OrderCsv.php の registerShippingResult() に実在する。",
+      "reason": "内部検索手順は旧実装だけのため LEGACY_BACKED は妥当。ただし先行メモの「桁埋めも行わない」は現行ツリーでは解消済み。残る差は、桁埋め後も旧実装の DtbOrderSub 相当ではなく親 Order.order_number を直接検索する点である。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Service/Csv/OrderCsv.php の registerShippingResult() は112行で `$orderNumber = sprintf('%08d', $row['注文番号']);` と8桁化し、113行で OrderRepository を `findOneBy(['order_number' => $orderNumber])` 検索する。src/Eccube/Service/Csv、Controller/Admin/Order、Entity を OrderSub/order_sub で検索して当該サブ注文経路はない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 589,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0203 HTML sheet-25 のExcel正本で `0203:出荷実績登録CSVフォーマット!E69`「送り状No.」、P69「数値(整数)」、Z69「12345」を実在確認した。",
+      "reason": "Excel正本が送り状No.の書式を数値(整数)と直接規定しており SPEC_BACKED は妥当。現行取込経路には空チェック以外の整数検証がない。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Service/Csv/OrderCsv.php の registerShippingResult()（131,138行）は `$row['送り状No.']` をそのまま setInvoiceNumber() へ渡す。src/Eccube/Entity/Order.php（699-700行）は invoice_number を STRING(64) と定義。AbstractCsvService.php を `送り状|invoiceNumber|is_numeric|ctype_digit|numeric` で確認したが、送り状No.検証はなく、is_numeric はCMC変換（117-118行）のみ。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 590,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0203 HTML sheet-26 のExcel正本セル AG70 で「リンク押下でJavaScriptポップアップを表示」「「[店頭注文番号]を を削除してもよろしいですか？」」「「OK」をクリックすると、当該の店頭注文番号を一覧から除去する」を実在確認した。正本レイアウト画像（801x511）も目視し、一覧各行右側に「削除」ボタンが配置されていることを確認したが、ポップアップ本文・OKボタンは画像には描かれていない。",
+      "reason": "文言と確定ボタンの指定はExcel正本セルに明記され、画像でも削除操作の配置を確認できるため SPEC_BACKED は妥当。現行はJavaScriptを使うBootstrapモーダルではあるが、本文と確定ボタン文言が正本指定と異なる。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Resource/template/admin/Order/waiting_tag.twig の削除リンク（121-124行）は `#DeleteModal` と `admin.common.delete_modal__message` を使い、確定ボタン（156-158行）は `admin.common.delete`。messages.ja.yaml は同キーを「この操作はあとから取り消すことができません。「%name%」を削除してよろしいですか？」（1785行）と「削除」（1636行）に定義する。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 591,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0205 HTML sheet-3 のExcel正本セル AG84 で「・査定申込日時(From)>査定申込日時(To)の場合エラー・1か月前の日付の0時を初期表示する」を実在確認した。",
+      "reason": "From>To の相関エラーはExcel正本に直接あり SPEC_BACKED は妥当。現行フォーム、DTO、リポジトリ、対象コントローラ、対象JSを application_date_from/applicationDateFrom/addError/FormError で横断確認したが、相関エラー処理はない。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Form/Type/Admin/OtcBuyOrder/OtcBuyOrderType.php（155-181行）は from に単項目 Range 制約を置くだけで、toとの比較制約はない。src/Eccube/Dto/Admin/OtcBuyOrder/SearchDataDto.php は値を保持するのみ。DtbOtcBuyOrderRepository.php（124-138行）は `applyDate >= From` と `applyDate <= To` を独立にAND追加するだけで、From>Toをフォームエラー化しない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    }
+  ]
+}

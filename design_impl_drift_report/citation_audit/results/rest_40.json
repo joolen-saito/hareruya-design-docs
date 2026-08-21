@@ -1,0 +1,165 @@
+{
+  "packetId": "rest_40",
+  "results": [
+    {
+      "rowId": 1071,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html:6419 に「S3のイベントバナー画像参照先を、イベントバナー用フォルダに変更する」、同:6429-6431 に「イベントバナー用の画像ファイルをS3にアップロードできる」「アップロード先は /banner/{選択店舗の識別子（tc など）} のフォルダ」とあるが、Excel正本部分には /banner/event のHTTPメソッド・ルートや同一POSTでの振り分けは記載されていない（確認範囲: sheet-22 の src-cell、6381-6447）。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/BannerServiceProvider.php:19-30 に `$app->get(...'/banner/event'...)`、`$app->post(...'/banner/event'...)`、`$app->delete(...'/banner/event/delete'...)` と各 `{html_class}` 版が定義され、pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/BannerController.php:236-240 に `if ($isUpload = $request->files->has('form')) { ... upload(...) } else { ... }` と同一POSTの振り分けがある。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Event/BannerController.php:59-60 は `/%eccube_admin_route%/event/banner`、同:81-83 は `/event/banner/.../settings`、同:110-112 は `/event/banner/.../image/upload` を別ルートとして定義しており、旧実装の入口契約は移植されていない。",
+      "note": "期待値の正確なルート契約と同一POST振り分けはリバース詳細設計／旧実装由来。"
+    },
+    {
+      "rowId": 1072,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html:6427-6431 のExcel正本に「画像参照先、画像アップロード先の変更」「アップロード先は /banner/{選択店舗の識別子（tc など）} のフォルダ」と明記されている。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/BannerController.php:20-21 は `const S3_DIRCTORY = 'banner/'`、同:72-75 は一覧を `banner/` または `banner/$htmlClass/` から取得し、同:202-205 はアップロード先を `banner/` または `banner/{htmlClass}/` にしている。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Admin/Event/EventBannerStorageService.php:26 は `private const S3_BANNER_PREFIX = 'banner/event/'`、同:92-93 は `banner/event/{htmlClass}/` へアップロードし、同:172-178 は一覧にも同プレフィックスを使う。",
+      "note": "Excel正本の店舗別パスに対し `/event/` が追加されているため、少なくとも店舗指定時の差分は設計根拠を持つ。"
+    },
+    {
+      "rowId": 1073,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html:6440 のExcel正本は店舗を必須「〇」、初期値を「デフォルト表示の店舗」、説明を「編集権限のある店舗のみ表示」としている。店舗未指定を許すことやフォームキー `shops` は正本にない（確認範囲: sheet-22 の src-cell、6381-6447）。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/BannerController.php:168-180 の旧アップロードフォームは `shops` を追加し `empty_value => '未選択'`、同:202-205 は未指定なら `banner/`、指定時は店舗別パスへ分岐する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/Event/EventBannerUploadType.php:42-53 は `baseInfos` を `required => true`、`NotBlank` とし、ec-cube-enterprise/src/Eccube/Controller/Admin/Event/BannerController.php:205-214 は編集可能店舗だけを選択肢にし、店舗絞り込み時はその店舗を初期値にする。",
+      "note": "指摘は旧実装の任意 `shops` を期待値にしているが、Excel正本は店舗必須・編集可能店舗限定であり、新実装はその設計を満たす。"
+    },
+    {
+      "rowId": 1074,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html:6441 はファイル必須・上限 `520000byte`、同:6447 は削除時に「一度削除したデータは元に戻せません。削除してもよろしいですか？」を表示すると明記する。3種類のアップロードエラーの完全一致文言は正本部分にない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/BannerController.php:190-213 は未選択で `admin.error.select_no_file`、サイズ超過で `admin.error.size_over`、画像種別不正で `admin.error.not_image` を使う。旧実装由来の完全一致文言はリバース詳細設計にのみ展開されている。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Event/banner.twig:323-330 は削除リンクに `admin.event.banner.delete_confirm` を表示し、ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:5997 の値は「この画像を削除します。よろしいですか？」で、正本の削除確認文言と一致しない。同:5988-5990 のアップロード文言も指摘記載の文言とは異なる。",
+      "note": "アップロード3文言の完全一致根拠は旧実装側だが、削除確認文言はExcel正本に明記され、新実装が未充足のため SPEC_BACKED。"
+    },
+    {
+      "rowId": 1075,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "excel_to_html/output/0208_基本設計仕様書(カード管理).html:1169 のExcel正本は検索ボタンについて「入力項目一覧で設定された値を基に検索する」とだけ記載し、`POST /card/search/1` やフォームactionは記載していない（確認範囲: sheet-3 の src-cell、1043-1169）。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/CardServiceProvider.php:16-20 は `/card/search/{page_no}` と `/card` を別ルートにし、pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Card/card.twig:31 は `<form ... action=\"{{ url('admin_card_search', { 'page_no': 1}) }}\">` としている。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Card/index.twig:176 は `form_start(searchForm, { 'action': url('admin_card_list'), 'method': 'POST' ... })`、ec-cube-enterprise/src/Eccube/Controller/Admin/Card/CardController.php:66-67 は `/card` と `/card/search/{page_no}` を同じ `index()` に割り当てる。",
+      "note": "page_no=1固定actionは旧実装にのみ具体的根拠がある。"
+    },
+    {
+      "rowId": 1076,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "excel_to_html/output/0208_基本設計仕様書(カード管理).html:1169 のExcel正本は検索実行だけを記載し、CSRF有効／無効の指定はない（確認範囲: sheet-3 の src-cell、1043-1169）。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/Card/SearchCardType.php:21-26 に `// disable CSRF protection for this form`、`'csrf_protection' => false` と明記されている。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/SearchCardType.php:208-213 は `configureOptions()` で `'csrf_protection' => true` を設定している。",
+      "note": "CSRF無効化は旧フォーム実装由来。"
+    },
+    {
+      "rowId": 1077,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "excel_to_html/output/0208_基本設計仕様書(カード管理).html:1100 のExcel正本には「カスタマイズ要件に記載の内容以外は現行踏襲とする」とあるが、削除するセッションキー名や初期表示時の remove 処理は具体的に記載されていない（確認範囲: sheet-3 の src-cell、1043-1169）。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/SearchControllerTrait.php:49-59 は初期表示で `$session->remove(\"admin.{$sessionkey}.search\")`、`.page_no`、`.page_count` を削除し、CardController.php:35-37 は sessionKey=`card`、formName=`admin_search_card` とする。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Card/CardController.php:97-117 の初期GET分岐は `card` と `card.page_no` を set して返すだけで remove を行わない。ec-cube-enterprise/src/Eccube/Controller/Admin/SearchControllerTrait.php:110-118 に旧系の永続キーは定義されるが、この初期分岐での削除はない。",
+      "note": "具体的なセッションクリア契約は旧実装が根拠。"
+    },
+    {
+      "rowId": 1078,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "excel_to_html/output/0208_基本設計仕様書(カード管理).html:1113-1118 のExcel正本は「カード名・テキスト」検索をカード名(日/英)・ルールテキスト(日/英)の4項目で行うことを示すが、空白・カンマ分割やトークン間ANDは記載していない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Repository/MtbCardRepository.php:65-73 は `preg_split('/[\\s,　]+/u', $multi)` で分割し4列を `SqlUtil::multiTextQuery` に渡す。pf-eccube3/app/Plugin/HareruyaEc/Util/SqlUtil.php:100-114 は各トークンの列条件を `Orx` にし、それぞれを `andWhere` で追加する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Repository/Master/MtbCardRepository.php:224-228 は入力全体を一つの `:multi` とし、`name_jp OR name_en OR text_jp OR text_en` に同じ `%...%` を適用する。",
+      "note": "4列検索は正本にもあるが、指摘の核心である分割・語間ANDは旧実装由来。"
+    },
+    {
+      "rowId": 1079,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "excel_to_html/output/0208_基本設計仕様書(カード管理).html:1661 のExcel正本はカード名の書式を「リンク」、説明を「押下すると、カード詳細画面へ遷移する」と明記する。具体URL `/card/{id}` は正本にはない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Card/card.twig:238-244 はカード名を `<a href=\"{{ url('admin_card_edit', {id: card.id}) }}\">` にし、pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/CardServiceProvider.php:22-24 はそのURLを `/card/{id}` と定義する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Card/index.twig:422-429 はIDとカード名をプレーン表示し、`admin_card_edit` リンクは別の鉛筆アイコンだけに付けている。",
+      "note": "URL形状は旧実装由来だが、カード名自体をリンクにする要求はExcel正本にあり未充足。"
+    },
+    {
+      "rowId": 1080,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "excel_to_html/output/0208_基本設計仕様書(カード管理).html:1106-1112 および:1149 のExcel正本は確認モーダルとサジェスト用ファイル作成を要求するが、AJAX完了後の画面リロードは記載していない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/assets/js/card-search.js:55-68 はAJAX成功時に `alert(data.message); location.reload(true);` を実行する。ただし同:69-71 の失敗時は `document.body.innerHTML = jqXHR.responseText` で、指摘の「成功/失敗後に常にリロード」までは旧実装にも存在しない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Card/index.twig:131-146 は成功・失敗で alert し、`.always()` ではボタンを再有効化するだけで `location.reload()` を実行しない。",
+      "note": "成功時リロードの移植漏れは旧実装で裏付けられるが、「失敗時も常に」は過大記述。判定は裏付けのある成功時リロード部分に基づく。"
+    },
+    {
+      "rowId": 1081,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "excel_to_html/output/0208_基本設計仕様書(カード管理).html:1628-1635 および:1652 のExcel正本は選択カードのCSV出力と未選択時エラーを記載するが、`type=submit`、pointer-events、500msは記載していない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Card/card.twig:175-177 はCSVボタンを `<button type=\"submit\" id=\"csvexport\" ...>` とし、pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/assets/js/card-search.js:43-46 は500ms後に `$('[type=submit]').css('pointer-events', '')` を実行する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Card/index.twig:343-352 はCSV出力を `type=\"button\"` の共通 `action-submit` としており、当該テンプレートのカードCSV処理には500msの `pointer-events` 復帰コードがない（確認範囲: index.twig:1-445）。",
+      "note": "二重実行防止の具体的実装方式は旧実装由来。"
+    },
+    {
+      "rowId": 1082,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "excel_to_html/output/0208_基本設計仕様書(カード管理).html:1100 のExcel正本は「カスタマイズ要件に記載の内容以外は現行踏襲」とするだけで、`admin.card.*` の具体キー削除は記載していない（確認範囲: sheet-4 を含むExcel正本 src-cell）。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/SearchControllerTrait.php:49-59 は `admin.card.search`、`.page_no`、`.page_count` を初期表示で remove し、同:91-99 は検索時に page_count/page_no/search/sort/order の各キーを組み立てる。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Card/CardController.php:97-117 は初期表示で `card` と `card.page_no` を set するだけで、ec-cube-enterprise/src/Eccube/Controller/Admin/SearchControllerTrait.php:110-118 の `eccube.admin.card.*` を remove しない。",
+      "note": "rowId 1077 と同根の重複指摘で、具体根拠は旧実装。"
+    },
+    {
+      "rowId": 1083,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "excel_to_html/output/0208_基本設計仕様書(カード管理).html:1169 のExcel正本は検索ボタンの動作のみで、検索フォームのCSRF設定は記載していない（確認範囲: sheet-3/4 の src-cell）。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/Card/SearchCardType.php:21-26 は `csrf_protection => false` を明示する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/SearchCardType.php:208-213 は `csrf_protection => true`、ec-cube-enterprise/src/Eccube/Resource/template/admin/Card/index.twig:176 は通常の `form_start(searchForm, ...)` で描画する。",
+      "note": "rowId 1076 と同根の重複指摘。"
+    },
+    {
+      "rowId": 1084,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "excel_to_html/output/0208_基本設計仕様書(カード管理).html:1150 のExcel正本は「カード名・テキスト」の最大値を「-」とし、同:1113-1118 は検索対象4項目だけを示す。50文字上限、空白・カンマ分割、トークン間ANDは正本にない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/Card/SearchCardType.php:38-47 は `multi` に `Assert\\Length(['max' => $config['stext_len']])`、pf-eccube3/app/Plugin/HareruyaEc/Repository/MtbCardRepository.php:65-73 は空白・カンマ分割、pf-eccube3/app/Plugin/HareruyaEc/Util/SqlUtil.php:100-114 は列間OR・語間ANDを実装する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/SearchCardType.php:45-51 の `multi` にLength制約はなく、ec-cube-enterprise/src/Eccube/Repository/Master/MtbCardRepository.php:224-228 は入力全体を単一LIKE値にする。",
+      "note": "50文字とトークン検索方式は旧実装由来。Excel正本の最大値「-」とも整合しないため SPEC_BACKED ではない。"
+    },
+    {
+      "rowId": 1085,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "excel_to_html/output/0208_基本設計仕様書(カード管理).html:1099 は「マナ・コストは『数値範囲入力』から『テキストボックス』の検索に変更する」、同:1119 と:1153 も同じ変更を明記する。したがって `cmc_start/cmc_end` の範囲検索は設計期待値ではない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/Card/SearchCardType.php:77-86 は `cmc_start`/`cmc_end`、pf-eccube3/app/Plugin/HareruyaEc/Repository/MtbCardRepository.php:130-141 は `c.cmc >=` / `<=` を実装しており、指摘期待値は旧実装そのもの。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/SearchCardType.php:70-79 は単一の `cmc` TextType、ec-cube-enterprise/src/Eccube/Repository/Master/MtbCardRepository.php:238-242 は `c.cmc = :cmc` で検索し、Excel正本のテキストボックス化を実装している。",
+      "note": "旧範囲検索を期待値にした誤検出。新実装は変更後の正本設計を満たす。"
+    },
+    {
+      "rowId": 1086,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "excel_to_html/output/0208_基本設計仕様書(カード管理).html:1102-1105 は旧「禁止カードも表示する」を除去し「(16)リーガリティで同機能を実装」とし、同:1130-1135 と:1161-1163 は使用可能フォーマット選択時にリーガリティ（使用可・制限・禁止）を選択する新仕様を明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/Card/SearchCardType.php:139-154 は `format` と単一 `legalFlg`、pf-eccube3/app/Plugin/HareruyaEc/Repository/MtbCardRepository.php:144-156 はオフ時LEGAL/RESTRICTION、オン時BAN追加を実装する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/SearchCardType.php:152-173 は `format` と `restriction` の複数選択、ec-cube-enterprise/src/Eccube/Repository/Master/MtbCardRepository.php:306-317 は選択した `cf.Restriction IN (:restrictions)` で絞り込む。index.twig:105-120 はフォーマット未選択時にリーガリティ入力をdisabledにする。",
+      "note": "旧 `legalFlg` は正本で除去対象。新実装は変更後のリーガリティ選択仕様を満たす。"
+    },
+    {
+      "rowId": 1087,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "excel_to_html/output/0208_基本設計仕様書(カード管理).html:1136-1138 のExcel正本は「以下1~3を選択して検索する場合、選択したものをOR条件」とし、その対象に「(6)カラー」を含める。選択色ごとのANDは正本にない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Repository/MtbCardRepository.php:106-127 は旧カラー検索で選択色ごとに別joinと `andWhere` を追加し、AND検索を実装する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Repository/Master/MtbCardRepository.php:231-235 は単一joinに `color IN (:colors)` を適用し、複数色をOR相当で検索するためExcel正本と一致する。",
+      "note": "旧AND検索を期待値にした誤検出。"
+    },
+    {
+      "rowId": 1088,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "excel_to_html/output/0208_基本設計仕様書(カード管理).html:1660-1661 のExcel正本ではカードIDは「ラベル」だがカード名は「リンク」で、「押下すると、カード詳細画面へ遷移する」と明記する。したがってIDリンクまでは根拠がないが、カード名リンク要求は正本にある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Card/card.twig:238-244 はIDをテキスト、カード名を `admin_card_edit` へのリンクとして表示する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Card/index.twig:422-429 はIDとカード名をともにプレーン表示し、編集リンクは右端の鉛筆アイコンだけに付ける。",
+      "note": "指摘の「IDまたは」のうちIDリンクは過大だが、カード名リンク欠落だけで正本に裏付けられた乖離が成立する。"
+    },
+    {
+      "rowId": 1089,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "excel_to_html/output/0208_基本設計仕様書(カード管理).html:1663 のExcel正本は削除ポップアップ文言を「この操作はあとから取り消すことができません。『{カード名}』を削除してよろしいですか？」とし、その後「実行」で削除すると明記する。「このカードを削除してもよろしいですか？」ではない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Card/card.twig:244 は `trans('admin.confirm.delete')|format(card.getMixName)` を削除リンクの `data-message` に使い、旧実装もカード名入り共通文言を表示する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Card/index.twig:432-435 は `admin.common.delete_modal__message` にカード名を渡し、ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:1790 の値は「この操作はあとから取り消すことができません。『%name%』を削除してよろしいですか？」で、正本と一致する。",
+      "note": "指摘側の設計文言が誤っており、新実装はExcel正本の文言を既に満たす。"
+    },
+    {
+      "rowId": 1090,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "excel_to_html/output/0208_基本設計仕様書(カード管理).html:1949-1950 のExcel正本はカード情報の登録・編集・削除機能を要求し、同:2100-2102 と:2155-2159 は一覧遷移・新規登録・削除挙動を記載するが、POST `/card`、GET/POST/DELETE `/card/{id}` という外部ルート契約は記載していない（確認範囲: sheet-6 の src-cell、1942-2179）。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/CardServiceProvider.php:22-41 は GET `/card/{id}`、POST `/card/{id}`、DELETE `/card/{id}`、GET `/card/new`、POST `/card` をそれぞれ `admin_card_edit/update/delete/new/create` として定義する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Card/CardController.php:205-218 はGET/POST `/card/new` とGET/POST `/card/{id}/edit`、同:308-309 はDELETE `/card/{id}/delete` を定義し、旧ルート契約のPOST `/card`・GET/POST/DELETE `/card/{id}` はない。",
+      "note": "登録・編集・削除機能自体は正本にあるが、指摘対象の正確なURL/HTTPメソッド契約は旧実装由来。"
+    }
+  ]
+}

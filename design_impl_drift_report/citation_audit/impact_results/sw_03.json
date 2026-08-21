@@ -1,0 +1,365 @@
+{
+  "packetId": "sw_03",
+  "results": [
+    {
+      "rowId": 73,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "不正なstatusに対するHTTP 400のerrorsが、設計文言ではなく「ステータスが不正です」または「ステータスが見つかりません」になる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php:198-206で入力分岐と例外文言、src/Eccube/EventListener/ExceptionListener.php:84-88,140-143でerrorsのJSON出力を確認。",
+      "reason": "APIレスポンス本文の文字列が変わり、クライアントから直接観測できる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 74,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "他担当者が査定中の場合のerrorsが「この受注は担当者名が査定中です」となり、設計の鉤括弧と句点が欠ける。",
+      "checked": "ec-cube-enterprise/src/Eccube/Service/App/MTGBuyer/V1/Admin/OtcBuyOrder/UpdateStatusAction.php:95-102の実際の例外文言と、src/Eccube/EventListener/ExceptionListener.php:84-88,140-143の出力経路を確認。",
+      "reason": "句読点だけの差でもAPI本文の実値が異なるため、軽微だがIMPACTである。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 75,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "401/404応答が空本文ではなく、codeとerrorsを持つJSON本文になる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Request/Context.php:74-97でApp API判定、src/Eccube/EventListener/ExceptionListener.php:73-106,140-153で全App API例外にJSON本文を設定する処理を確認。",
+      "reason": "HTTPレスポンスボディの有無とJSONスキーマが外部契約として変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 76,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "PUT /admin/otcBuyOrder/{id}/status（拡張子なし）では設計された処理に到達できない。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php:190の登録ルートが/%eccube_api_v1_route%/admin/otcBuyOrder/{id}/status.jsonのみであることを確認し、src・app/config・htmlを同パス断片で検索して別名がないことを確認。",
+      "reason": "ルート名ではなく、利用者が呼ぶHTTPパスそのものの欠落である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 77,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "実際の入口は/api/v1/buying/{cardDetailId}.jsonとなり、設計の/api/buying/{detailId}.jsonとは別URLになる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyingController.php:46のRouteと、app/config/eccube/packages/eccube.yaml:6,72のeccube_api_v1_route既定値api/v1を確認。",
+      "reason": "HTTPパスの差は呼出可否に直結し、外部から観測できる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 78,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "conditionClasses内のJSONキーがproductCodeではなくproductClassCodeとして返る。",
+      "checked": "ec-cube-enterprise/src/Eccube/Service/App/MTGBuyer/V1/BuyingCardsFormatter.php:112-120で出力キー、src/Eccube/Repository/Master/MtbCardRepository.php:192-194で取得別名を確認。",
+      "reason": "JSONレスポンスのキー名はクライアントが参照する外部I/Oである。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 79,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "有効な商品ID入力で検索結果0件のとき、応答全体[]ではなく{\"cards\":{}}になる。入力ID自体が空の場合も{\"cards\":[]}である。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyingController.php:79-93と、src/Eccube/Service/App/MTGBuyer/V1/BuyingCardsFormatter.php:55-57,123で0件時のstdClassラップを確認。",
+      "reason": "JSONのトップレベル型とキー有無が異なり、レスポンス利用側から観測できる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 80,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "応答はproductCodeではなくproductClassCodeを持ち、price・stockはstringではなく数値、foilFlgもbooleanではなく整数になる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Service/App/MTGBuyer/V1/BuyingCardsFormatter.php:27-50,83-120、src/Eccube/Dto/Repository/Master/GetBuyingCardsQueryResponseDto.php:31,41-46,82-109で出力名と型変換を確認。",
+      "reason": "APIレスポンスのフィールド名とJSON値型が複数箇所で変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 81,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "GET /search?name=...ではなくPOST /api/v1/searchのフォーム本文nameでなければ検索できない。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyingController.php:99-103でPOST限定Routeと$request->request参照を確認し、同APIのGET/query参照がないことを検索確認。",
+      "reason": "HTTPメソッドと入力位置（query対body）は外部API契約そのものである。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 82,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "カード名に一致する商品がなくてもHTTP 404にならず、HTTP 200で{\"cards\":{}}が返る。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyingController.php:99-117に検索後のempty分岐がないこと、src/Eccube/Service/App/MTGBuyer/V1/BuyingCardsFormatter.php:123の空結果形式を確認。",
+      "reason": "HTTPステータスとレスポンス本文がともに変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 83,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "nameに%または_を含めるとリテラル文字ではなくLIKEワイルドカードとして一致し、検索結果集合が変わる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Repository/Master/MtbCardRepository.php:130-141で入力をそのまま$cardName.'%'としてLIKEへ渡し、ESCAPEや事前エスケープがないことを確認。",
+      "reason": "同じ検索入力に対して返る商品が変わるため、明確なふるまい差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 84,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "cards配下のキーが1始まりの連番ではなくDBのcardIdとなる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Service/App/MTGBuyer/V1/BuyingCardsFormatter.php:68-81,123で$cardIdを配列キーにしたままJsonResponseへ渡す構造を確認。",
+      "reason": "生成JSONのプロパティ名が変わり、クライアントの走査・参照結果に影響する。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 85,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "検索APIでもconditionClassesのproductCodeがproductClassCodeになり、priceとstockがstringではなく数値として返る。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyingController.php:115-117が共通formatterを使用し、src/Eccube/Service/App/MTGBuyer/V1/BuyingCardsFormatter.php:112-120とDto:41-46でキー・型を確認。",
+      "reason": "外部JSONのキーと値型の差なので、検索結果の利用側から直接観測できる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 86,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "成功応答が{code:200,message:\"get sections success\",sections:[...]}ではなく部門要素の裸配列になる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/SectionController.php:38-49でarray_mapの結果をそのままJsonResponseへ渡し、code・message・sectionsラッパーを生成していないことを確認。",
+      "reason": "レスポンスのトップレベル型と必須キーが異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 87,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "成功応答は{code:200,section_id:\"...\"}ではなく、部門IDのJSON文字列単体になる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/OptionController.php:50-59でoption_valueを直接new JsonResponse($value)に渡し、code/section_idを組み立てていないことを確認。",
+      "reason": "JSONオブジェクトとスカラーの差は外部レスポンス形式の差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 88,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "固定価格部門設定がない場合、HTTP 500ではなくHTTP 200で空文字列のJSONが返る。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/OptionController.php:53-59でnullsafe参照後に?? ''とし、例外を投げずJsonResponseを返すことを確認。",
+      "reason": "設定欠落時の成功・失敗とレスポンス本文が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 89,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "未指定は400だが、存在しない証明書IDは設計の400ではなく404になる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php:281-290で未指定と不存在の例外クラスが異なること、src/Eccube/Exception/App/NotFoundException.php:27-33で404を確認。",
+      "reason": "同じ入力不正カテゴリに対するHTTPステータスが外部から異なって見える。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 90,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "PUT /admin/otcBuyOrder/{id}/identification（拡張子なし）では本人確認更新処理を呼び出せない。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php:273の.json付きRouteのみを確認し、src・app/config・htmlで拡張子なし別名がないことを検索確認。",
+      "reason": "内部ルート名ではなくHTTP入口の欠落なので、呼出結果が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 91,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "設計のPUT /api/otcBuyOrder/{id}/doublecheck.jsonとmember_idでは更新できず、/api/v1/admin/.../doubleCheckMember.jsonとdouble_check_member_idが必要になる。",
+      "checked": "hareruya-design-docs/functions/ec-cube-enterprise/a06-16_api_store_purchase_otc_buy_order_double_check_member_update.md:131-151で原典抽出値、ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php:231-241で実装Routeと入力キーを確認。",
+      "reason": "HTTPパスとリクエストキーの両方が外部契約として異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 92,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "ダブルチェック者は受注の新規カラムではなくdtb_otc_buy_order_approverへrole=double_checkの行として永続化される。",
+      "checked": "ec-cube-enterprise/src/Eccube/Service/EntityManager/OtcBuyOrderApproverEntityManager.php:29-45の検索・作成・persistと、src/Eccube/Entity/DtbOtcBuyOrderApprover.php:24-60のテーブル・列定義を確認。",
+      "reason": "単なる責務配置ではなく、永続DBの保存先テーブル・行構造が変わるため判定基準上IMPACTである。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 93,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "実装URLは/api/v1/admin/otcBuyOrder/{id}/doubleCheckMember.jsonで、設計URL/api/otcBuyOrder/{id}/doublecheck.jsonとは一致しない。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php:231のRoute、app/config/eccube/packages/eccube.yaml:6のapi/v1既定値を確認し、設計URLの別Routeがないことを検索確認。",
+      "reason": "HTTPエンドポイントの差により、設計URLへの要求は同じ処理に到達しない。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 94,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "member_idを送っても必須値として読まれず、double_check_member_idを送る必要がある。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php:239-253でrequest本文のdouble_check_member_idだけを取得・検証することを確認。",
+      "reason": "フォーム/inputのキーはHTTPリクエストI/Oであり、受付可否を変える。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 95,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "ダブルチェック者情報が受注の新規列ではなく、approver_id・assigned_by_id・role・approved_atを持つ承認テーブル行として保存される。",
+      "checked": "ec-cube-enterprise/src/Eccube/Service/App/MTGBuyer/V1/Admin/OtcBuyOrder/UpdateDoubleCheckMemberAction.php:40-50、src/Eccube/Service/EntityManager/OtcBuyOrderApproverEntityManager.php:29-45、src/Eccube/Entity/DtbOtcBuyOrderApprover.php:24-60を確認。",
+      "reason": "DBスキーマと永続化I/Oが異なるため、内部識別子だけの差ではない。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 96,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "成功時HTTP 200の本文が空ではなく{\"code\":200}になる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php:267で明示的にcode=200のJsonResponseを生成していることを確認。",
+      "reason": "レスポンスデータの有無は外部から直接観測できる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 97,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "まとめ買取商品ID設定がない場合、HTTP 500ではなくHTTP 200で空文字列のJSONが返る。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/OptionController.php:35-44でnullsafe参照と?? ''による正常JsonResponseを確認。",
+      "reason": "欠損設定時のHTTPステータスと本文が異なるため、明確なふるまい差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 98,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "netBuyOrderId/netOrderStatusIdは文字列、applyDateはY/m/d H:i:s、欠損freeComment/memberNameは空文字として返り、設計のinteger・ISO8601・nullと異なる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderController.php:62-87で各キャスト、日時format、null合体の実値を確認。",
+      "reason": "成功JSONの値型・日時書式・null表現がクライアントから観測できる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 99,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "認証失敗時の401に空本文ではなく{code:401,errors:[...]}のJSONが付く。",
+      "checked": "ec-cube-enterprise/src/Eccube/Exception/App/UnauthenticatedException.php:27-33の401と、src/Eccube/EventListener/ExceptionListener.php:73-106,140-143のJSON出力を確認。",
+      "reason": "認証応答の本文有無と形式は外部HTTP契約である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 100,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "保存時の元例外メッセージではなく、固定の「システムエラーが発生しました」が500のerrorsに返る。",
+      "checked": "ec-cube-enterprise/src/Eccube/Service/App/MTGBuyer/V1/Admin/BuyOrder/UpdateFreeCommentAction.php:41-44で元例外を固定RuntimeExceptionへ置換し、Controller:111-117とExceptionListener:84-88,140-143で固定文言を返す経路を確認。",
+      "reason": "HTTP 500本文のerrors値が異なり、外部I/Oに差が出る。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 101,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "401/404が空本文ではなくcode/errorsを含むJSON本文になる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderController.php:126-148のNotFound/Unauthenticated例外と、src/Eccube/EventListener/ExceptionListener.php:73-106,140-153の共通JSON化を確認。",
+      "reason": "HTTPレスポンスボディの有無とスキーマが外部から観測できる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 102,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "保存失敗時、元例外メッセージではなく固定の「システムエラーが発生しました」がerrorsに返る。",
+      "checked": "ec-cube-enterprise/src/Eccube/Service/App/MTGBuyer/V1/Admin/BuyOrder/UpdateStatusAction.php:99-115でrollback後に固定InternalExceptionを生成し、src/Eccube/EventListener/ExceptionListener.php:84-88,140-143でそのerrorsを返すことを確認。",
+      "reason": "ロールバックが一致していても、外部レスポンス本文の値が異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 103,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "DTO入力検証失敗時のHTTPステータスが400ではなく422になる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderController.php:170-171で引数なしMapRequestPayloadを使用し、vendor/symfony/http-kernel/Attribute/MapRequestPayload.php:37-43で既定validationFailedStatusCode=422を確認。",
+      "reason": "HTTPステータスの差はクライアントの分岐・再試行判断に影響する。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 104,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "存在しないorder_statusへの400 errorsが設計文言ではなく「正しい買取ステータスIDを入力してください」になる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderController.php:183-186の実際の例外文言と、src/Eccube/Exception/App/InvalidParameterException.php:27-33の400を確認。",
+      "reason": "エラーメッセージの実値が外部JSONで異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 105,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "更新例外の実メッセージではなく、固定の「システムエラーが発生しました」が500 errorsに返る。",
+      "checked": "ec-cube-enterprise/src/Eccube/Service/App/MTGBuyer/V1/Admin/BuyOrder/UpdateBuyOrderAction.php:120-138でrollbackと固定InternalException、src/Eccube/EventListener/ExceptionListener.php:84-88,140-143でerrors出力を確認。",
+      "reason": "トランザクション動作が一致しても、レスポンス本文の値が外部から異なって見える。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 106,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "存在しない受注IDへの404が空本文ではなく{code:404,errors:[\"買取情報が見つかりません\"]}になる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderController.php:173-175のNotFoundExceptionと、src/Eccube/EventListener/ExceptionListener.php:84-88,140-143のJSON本文生成を確認。",
+      "reason": "404のレスポンスボディ有無と内容は外部I/O差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 107,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "256～65535文字の個別入力商品名はDTO検証を通る一方、VARCHAR(255)の永続列へ保存されるため、DBエラーまたは切り詰めとなり設計どおり保持できない。",
+      "checked": "ec-cube-enterprise/src/Eccube/Dto/App/MTGBuyer/V1/Admin/UpdateBuyOrderDetailDto.php:30-33のmax=65535、src/Eccube/Service/App/MTGBuyer/V1/Admin/BuyOrder/UpdateBuyOrderAction.php:216-228のsetName保存経路、src/Eccube/Entity/DtbBuyOrderIndivisualInputProduct.php:35-36のlength=255を確認。",
+      "reason": "受理可能範囲と永続化結果が変わり、成功可否または保存値に外部観測可能な差が出る。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 108,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "foilFlgがboolean/nullではなく0・1・2の整数区分/nullとしてJSONに返る。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyMainCardController.php:61-84でgetFoilFlgを無変換出力し、src/Eccube/Entity/DtbBuyMainCard.php:36-38,63-64,139-141で整数定数と戻り型を確認。",
+      "reason": "JSON値の型と取り得る値が外部API契約と異なる。",
+      "confidence": "high"
+    }
+  ]
+}

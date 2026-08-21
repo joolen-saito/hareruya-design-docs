@@ -1,0 +1,313 @@
+{
+  "packetId": "ef_13",
+  "results": [
+    {
+      "rowId": 360,
+      "authorCat": "2",
+      "verdict": "REFUTED",
+      "correctedCat": "1",
+      "effortDays": 1.5,
+      "effortBasis": "ProductController の更新ルートを GET と POST に分け、ProductType のフォームプレフィックス、product.twig/product_js.twig のフォーム名・画像隠し項目・並び順送信を設計契約へ合わせる。既存JSには admin_product 固定セレクタもあるため、Controller/Form/Twig/JSの複数箇所を整合させる必要がある。",
+      "needsDecision": false,
+      "reason": "差分の中心は見た目や並び順表示ではなく、POST先URL、フォーム名、送信フィールド名という入出力契約であるため①。画面表示②は軽すぎる分類。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 361,
+      "authorCat": "1",
+      "verdict": "UPHELD",
+      "correctedCat": null,
+      "effortDays": 1.0,
+      "effortBasis": "ProductController::imageProcess() のRoute、XHR/空配列時の400、JSON配列レスポンスを修正し、FilePond側でJSONからserverIdを受け取る処理も合わせる。アップロード・MIME検査・一時保存の既存処理は流用できる。",
+      "needsDecision": false,
+      "reason": "URL、HTTPステータス、レスポンス本文形式を直すため、外部インタフェース契約①が妥当。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 362,
+      "authorCat": "4",
+      "verdict": "UPHELD",
+      "correctedCat": null,
+      "effortDays": 1.0,
+      "effortBasis": "ProductType の7項目へ NotBlank を追加し、サイズ・重量へ桁数と0〜999999999のサーバ側制約を追加する。主に1 FormTypeだが、数値型・empty_dataとの整合を項目ごとに調整する必要がある。",
+      "needsDecision": false,
+      "reason": "必須・桁数・数値範囲の追加は入力検証④そのもの。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 363,
+      "authorCat": "2",
+      "verdict": "REFUTED",
+      "correctedCat": "5",
+      "effortDays": 1.0,
+      "effortBasis": "ProductController でPOST前の公開ステータスを保持し、既に廃止済みの商品への更新をサーバ側で拒否する分岐を追加する。併せて product.twig またはフォーム設定を参照専用化し、直接POSTでも更新できない状態にする。",
+      "needsDecision": false,
+      "reason": "ボタン非表示だけでは要求を満たさず、更新可否を決めるサーバ側ステータス分岐が主改修になるため、画面表示②ではなく業務ロジック⑤。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 364,
+      "authorCat": "7",
+      "verdict": "UPHELD",
+      "correctedCat": null,
+      "effortDays": 5.0,
+      "effortBasis": "新実装には BranchUpdateService がなく、HTTPクライアント、支店API設定/JWT、成功失敗ログ、DtbBranchUpdateErrorへの失敗記録を移植・実装し、ProductControllerの更新確定後から呼び出す必要がある。旧実装の BranchUpdateService と既存エラーEntityは参照できるが、Symfony向けの作り直しが必要。",
+      "needsDecision": false,
+      "reason": "支店システムへの更新通知APIと失敗時副作用を新たに組み込む改修であり、外部連携・副作用⑦が妥当。",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 365,
+      "authorCat": "7",
+      "verdict": "UPHELD",
+      "correctedCat": null,
+      "effortDays": 1.5,
+      "effortBasis": "ProductController で廃止への遷移を検出し、対象ProductClassを列挙して既存の registerDeleteJob()/dispatchDeleteMessage() を呼ぶ。ProductClass削除処理にあるコミット前ジョブ登録・コミット後dispatchの実装を流用し、更新確定との整合を取る。",
+      "needsDecision": false,
+      "reason": "既存機構はあるが、本経路からスマレジDELETEの非同期副作用を追加する改修なので⑦が正しい。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 366,
+      "authorCat": "2",
+      "verdict": "UPHELD",
+      "correctedCat": null,
+      "effortDays": 0.1,
+      "effortBasis": "ProductController の成功フラッシュキーを既存の admin.register.complete に差し替える1箇所の修正。リダイレクト先と翻訳定義は既に存在する。",
+      "needsDecision": false,
+      "reason": "残る差分は利用者向け成功文言だけであり、画面表示②が妥当。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 367,
+      "authorCat": "7",
+      "verdict": "UPHELD",
+      "correctedCat": null,
+      "effortDays": 0.2,
+      "effortBasis": "ProductCardCsv でファイル名生成をcallbackより前へ移し、filenameをuseで渡してfclose後に既存 log_info を実行する。1サービス内の局所修正。",
+      "needsDecision": false,
+      "reason": "変更対象はCSV生成内容ではなく、出力完了を記録する運用・監査ログという副作用のタイミングであり⑦。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 368,
+      "authorCat": "7",
+      "verdict": "UPHELD",
+      "correctedCat": null,
+      "effortDays": 0.2,
+      "effortBasis": "ProductGoodsCsv の既存 log_info をStreamedResponse callback内のfclose後へ移し、filenameをcallbackへ渡す。row 367と同じ修正パターンを流用できる。",
+      "needsDecision": false,
+      "reason": "CSV送信完了ログの記録タイミングを直す副作用改修なので⑦が妥当。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 369,
+      "authorCat": "7",
+      "verdict": "UPHELD",
+      "correctedCat": null,
+      "effortDays": 0.2,
+      "effortBasis": "ProductPriceCsv の既存 log_info をcallback内のfclose後へ移す。row 367・368と同型で、1ファイルの局所修正で済む。",
+      "needsDecision": false,
+      "reason": "修正対象は価格計算ではなくCSV送信完了の運用・監査ログであり⑦。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 370,
+      "authorCat": "1",
+      "verdict": "UPHELD",
+      "correctedCat": null,
+      "effortDays": 0.4,
+      "effortBasis": "ProductAllCsv::AVAILABLE_COLUMNS の相違する13 labelを設計ヘッダ名へ修正する。ヘッダ生成経路は既存のgetCsvHeaders()をそのまま使え、主に1ファイルの定数修正。",
+      "needsDecision": false,
+      "reason": "CSVヘッダ名という外部出力契約を直すため①が正しい。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 371,
+      "authorCat": "3",
+      "verdict": "REFUTED",
+      "correctedCat": "5",
+      "effortDays": 0.5,
+      "effortBasis": "DtbCsvExtension には deleted_at とsetDeletedAt()が既にあり、DtbCsvExtensionRepositoryにも有効行だけを返す条件がある。CustomerCsvController::delete() を remove() から削除日時設定へ変え、中間行の扱いを既存論理削除方針に合わせる。",
+      "needsDecision": false,
+      "reason": "新しい保存列・マイグレーション・既存データ移行は不要で、既存列へ値を設定する削除分岐の修正であるため③ではなく⑤。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 372,
+      "authorCat": "1",
+      "verdict": "REFUTED",
+      "correctedCat": "5",
+      "effortDays": 0.5,
+      "effortBasis": "CustomerCsvUpdateAction でPOSTされたID順の位置マップを作り、findBy結果をその順に並べ直すか、IDからCsvを解決しながらrankを保存する。EntityやDB列の追加は不要。",
+      "needsDecision": false,
+      "reason": "CSV列やURL契約ではなく、画面順から永続化するrankを決める並び替えロジックの修正なので⑤。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 373,
+      "authorCat": "2",
+      "verdict": "REFUTED",
+      "correctedCat": "5",
+      "effortDays": 2.0,
+      "effortBasis": "ProductRepository のフロント詳細・一覧取得、ProductClassRepositoryのフロント用解決、必要なUniSearch結果解決でProductClass.Status=公開を条件に加える。既に一部メソッドにはStatus結合があるため流用できるが、複数取得経路を揃える必要がある。",
+      "needsDecision": false,
+      "reason": "Twigの非表示ではなく、フロントへ渡す商品規格をRepository段階で除外する抽出条件の改修であり、画面表示②ではなく⑤。",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 374,
+      "authorCat": "1",
+      "verdict": "UPHELD",
+      "correctedCat": null,
+      "effortDays": 0.75,
+      "effortBasis": "ProductClassController の一覧・新規・登録・編集・更新・削除のRoute pathを設計形へ変更する。route nameを維持すればTwig呼出しの多くは流用できるが、URL直書き・テスト・引数順の参照を複数経路で合わせる必要がある。",
+      "needsDecision": false,
+      "reason": "利用者が到達する複数URLとHTTP入口の契約変更なので①が妥当。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 375,
+      "authorCat": "2",
+      "verdict": "REFUTED",
+      "correctedCat": "1",
+      "effortDays": 0.25,
+      "effortBasis": "ProductClassController の成功・失敗フラッシュキーを既存register系へ差し替え、成功時redirectを既存の同一規格編集Routeへ変更する。主にControllerの数行で完結する。",
+      "needsDecision": false,
+      "reason": "文言差も含むが、同じ規格の編集URLではなく一覧URLへ返している遷移先契約が主要差分なので①。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 376,
+      "authorCat": "3",
+      "verdict": "UPHELD",
+      "correctedCat": null,
+      "effortDays": 5.0,
+      "effortBasis": "ProductClassにはdeleted_atがないため、Entityとマイグレーションを追加し、ProductClassDeleteActionを論理削除へ変更し、各Repositoryの有効行条件を整備する。さらに最後の1件判定、HTTP400、edit.twigの削除ボタン表示条件も追加する必要がある。",
+      "needsDecision": false,
+      "reason": "主改修は商品規格の物理削除を、列追加を伴う論理削除へ変えるデータ永続化であり③が妥当。UIと削除可否ガードだけでは要求を満たさない。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 377,
+      "authorCat": "2",
+      "verdict": "UPHELD",
+      "correctedCat": null,
+      "effortDays": 0.1,
+      "effortBasis": "messages.ja.yaml の admin.product.category_front_search_hide を「フロント非表示フラグ」へ直す1行の翻訳修正。表示経路は既存CategoryType/Twigをそのまま使える。",
+      "needsDecision": false,
+      "reason": "画面ラベルの誤字だけなので②。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 378,
+      "authorCat": "2",
+      "verdict": "UPHELD",
+      "correctedCat": null,
+      "effortDays": 0.1,
+      "effortBasis": "messages.ja.yaml の admin.product.category_search_parameters から末尾の長音符を除く1行修正。FormType/Twigは変更不要。",
+      "needsDecision": false,
+      "reason": "利用者向けラベル文言だけの差分であり②。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 379,
+      "authorCat": "5",
+      "verdict": "UPHELD",
+      "correctedCat": null,
+      "effortDays": 2.0,
+      "effortBasis": "SearchProductType等のカテゴリ選択肢を表示店舗に応じて絞り、URLから直接渡されたcategory_idもProductControllerで拒否または無効化し、ProductRepositoryの商品検索条件にもfront_search_hide_flg/branch_hide_flgを反映する。既存TopCategoryListBuilderの店舗判定は参考にできるが複数検索入口を揃える。",
+      "needsDecision": false,
+      "reason": "画面にカテゴリを出すだけでなく、検索候補と商品抽出対象から除外する条件改修が必要なため⑤が妥当。",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 380,
+      "authorCat": "5",
+      "verdict": "REFUTED",
+      "correctedCat": "1",
+      "effortDays": 0.15,
+      "effortBasis": "CategoryController::export() のParent専用分岐を削除し、既存CsvExportService::getData()と空値正規化へ通す局所修正。CSV生成ロジックの新設は不要。",
+      "needsDecision": false,
+      "reason": "修正結果は親なしカテゴリのCSVセル値という外部出力契約で、実装も既存の一般列経路へ戻すだけであるため⑤ではなく①。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 381,
+      "authorCat": "4",
+      "verdict": "UPHELD",
+      "correctedCat": null,
+      "effortDays": 0.25,
+      "effortBasis": "TagType のnameEnへ半角文字を許可するRegex制約とエラーメッセージを追加する。既存Length/NotBlankと同じフィールド内で完結する。",
+      "needsDecision": false,
+      "reason": "入力文字種の制約追加なので④。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 382,
+      "authorCat": "2",
+      "verdict": "REFUTED",
+      "correctedCat": "5",
+      "effortDays": 0.5,
+      "effortBasis": "ProductControllerの商品検索で対象Tagを解決し、localeに応じてtitleJp/titleEnを選んでpage_titleとしてテンプレートへ渡す。既存のタグ列挙とresolveSearchListBannerHtmlの言語選択パターンを流用できる。",
+      "needsDecision": false,
+      "reason": "Twig文言の固定表示ではなく、検索条件のタグとlocaleから表示タイトル値を取得・選択する処理が欠けているため②ではなく⑤。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 383,
+      "authorCat": "2",
+      "verdict": "REFUTED",
+      "correctedCat": "5",
+      "effortDays": 0.5,
+      "effortBasis": "row 382と同じTag解決・locale選択を利用し、descriptionJp/descriptionEnを商品一覧のmeta_descriptionへ渡してmeta.twigで既定値より優先する。row 382と同時改修なら取得処理を共用できる。",
+      "needsDecision": false,
+      "reason": "固定HTMLの表示修正ではなく、検索対象タグからSEO値を取得して言語別に選ぶデータ選択処理が必要なため⑤。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 384,
+      "authorCat": "2",
+      "verdict": "UPHELD",
+      "correctedCat": null,
+      "effortDays": 0.1,
+      "effortBasis": "storage_code.twig の固定件数配列へ2000、10000、12000を追加する1行修正。同系Twigの既存配列をそのまま流用できる。",
+      "needsDecision": false,
+      "reason": "件数プルダウンの表示選択肢だけを直すため②。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 385,
+      "authorCat": "1",
+      "verdict": "UPHELD",
+      "correctedCat": null,
+      "effortDays": 0.15,
+      "effortBasis": "StorageCodeController の既存csv()表示処理へGET /product/storage_code/importのRouteを付けるか、既存GET pathを変更する。POST import処理は既にあり、row 386と同じRoute修正で同時解消できる。",
+      "needsDecision": false,
+      "reason": "CSV取込画面のGET入口URLとHTTPメソッド契約の差なので①。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 386,
+      "authorCat": "1",
+      "verdict": "UPHELD",
+      "correctedCat": null,
+      "effortDays": 0.15,
+      "effortBasis": "row 385と同一のStorageCodeController Route修正で、GET /product/storage_code/importをcsv()表示処理へ割り当てる。新しい画面や取込処理は不要。",
+      "needsDecision": false,
+      "reason": "GET入口URLの外部契約を直すため①が妥当。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 387,
+      "authorCat": "4",
+      "verdict": "UPHELD",
+      "correctedCat": null,
+      "effortDays": 0.5,
+      "effortBasis": "StorageCodeCsv::register() でID（空欄許可）と並び順（必須）に整数文字列検査を追加し、行番号付きの既存CSVエラー形式で拒否する。キャスト・登録処理は流用できる。",
+      "needsDecision": false,
+      "reason": "CSV入力値の型・必須検証を追加する改修であり④。",
+      "confidence": "high"
+    }
+  ]
+}

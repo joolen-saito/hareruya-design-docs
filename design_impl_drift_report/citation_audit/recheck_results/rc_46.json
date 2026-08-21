@@ -1,0 +1,149 @@
+{
+  "packetId": "rc_46",
+  "results": [
+    {
+      "rowId": 804,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0211 の Excel 正本を format_sales/export、format-sales/export、POST、formaction、submit で検索したが該当セルは0件。sheet-17 のレイアウト画像を実際に確認し「CSVダウンロード」ボタンは見えたが、HTTPメソッドや同一フォーム送信を示す情報はなかった。正本テキストは sheet-17 の 0211:フォーマット売上分析 集計一覧(検索結果) !E65「CSVダウンロード」と sheet-18 の C31「カスタマイズ要件に記載の内容以外は現行踏襲とする」まで。旧実装 pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Analysis/format_sales.twig:23,60 の `method=\"post\"` と `formaction=\"{{ path('admin_format_sales_analysis_export') }}\"` は実物を確認した。",
+      "reason": "具体的な POST URL・同一フォーム submit は Excel 正本の src-cell/data-excel-ref にない。関連する sheet-17 画像も確認したが、ボタン配置しか示さない。一方、旧実装の ServiceProvider/Admin/AnalysisServiceProvider.php:63 と format_sales.twig:23,59-61 がその方式を直接裏付けるため、LEGACY_BACKED は妥当。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/Admin/Analysis/FormatSalesController.php の export() は `#[Route(.../analysis/format-sales/export, ..., methods: ['GET'])]`（127行）で、src/Eccube/Resource/template/admin/Analysis/format_sales.twig は検索フォームを94行で閉じないまま結果を描画するが、CSV導線自体は136行の `<a href=\"{{ path('admin_analysis_format_sales_export') }}\">`。POST submit ではなく GET リンクのまま。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 805,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "Excel 正本領域を「セッション」「送信値」「session」「month」で検索し、本件のセッション非参照を示すセルは0件。sheet-16/17 のレイアウト画像も確認し、検索入力画像には「集計月」と「集計対象 通販/店舗」、結果画像には「CSVダウンロード」があるが、CSV条件の受渡し方式は記載されていない。旧実装 pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Analysis/FormatSalesController.php:157-158 の `$form...->handleRequest($request)` と `$inputDate = $form['month']->getData()` を確認した。",
+      "reason": "集計月をリクエストから直接読む具体方式とセッション非参照は旧実装だけが根拠。なお現行 Excel の検索入力画像・src-cell は集計月だけでなく通販/店舗も入力対象にしており、finding の「集計月のみ」は現行正本の全入力項目を表してはいないが、根拠区分自体は LEGACY_BACKED。",
+      "currentImpl": "ec-cube-enterprise 現状: FormatSalesController::search() は src/Eccube/Controller/Admin/Analysis/FormatSalesController.php:103 で `session->set(self::SESSION_KEY, FormUtil::getViewData($form))`、export() は130行で `session->get(self::SESSION_KEY)`、138-140行でフォームへ再投入して month を得る。セッションが配列でなければ132-135行で検索画面へ戻すため、記載された差は残る。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 806,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "全 Excel 正本領域を `format_sales_report_`、BOM、YmdHis で検索し、`format_sales_report_` と BOM は0件、YmdHis は別機能 0214:CSVダウンロード!D61 の event_entry 用1件のみ。sheet-18 にはレイアウト画像自体がない。該当文「ファイル名はformat_sales_report_に出力日時（YmdHis）を付けた.csv。文字コード判別用のBOMを付与する」は 0211 HTML の function-design-embed 開始（4325行）後にのみ存在する。旧実装 FormatSalesController.php:165 の `putBOM()` と185行の `'format_sales_report_' . $now->format('YmdHis')` を確認した。",
+      "reason": "ファイル名接頭辞と BOM の具体値は Excel 正本でなくリバース詳細設計・旧実装にのみあるため、LEGACY_BACKED は正しい。",
+      "currentImpl": "ec-cube-enterprise 現状: FormatSalesController::export() は src/Eccube/Controller/Admin/Analysis/FormatSalesController.php:162 で `fwrite($handle, \"\\xEF\\xBB\\xBF\")` と BOM を出力済みだが、177行は `$filename = 'format_sales_'.(new \\DateTime())->format('YmdHis').'.csv';`。`format_sales_report_` は src/app 全体で0件で、接頭辞差だけが残る。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 807,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "Excel 正本領域を used_card、used-card、export/{mode}、admin_used_card、admin_used_card_result で全冊検索し0件。sheet-19 のレイアウト画像を実際に確認し、入力欄と「特集タグ編集CSVダウンロード」ボタンはあるが URL・route 名・mode はない。旧実装 pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/AnalysisServiceProvider.php:67-73 の `/analysis/used_card`、`admin_used_card_result`、`/analysis/used_card/export/{mode}` を確認した。",
+      "reason": "underscore URL、3 route 名、mode パラメータは旧実装だけにある具体契約。Excel 正本は D37「採用枚数略式CSVダウンロードは…廃止」、D38「特集タグ編集用CSVダウンロードは現行踏襲」と画面項目を示すだけなので、LEGACY_BACKED は妥当。",
+      "currentImpl": "ec-cube-enterprise 現状: UsedCardController::index()/export() は src/Eccube/Controller/Admin/Analysis/UsedCardController.php:41,62 の同一 `/analysis/used-card` に GET/POST 2本だけを定義する。src/app 全体を検索しても UsedCard 用 `/analysis/used_card/export/{mode}` と `admin_used_card_result` はなく、旧 route 契約との差は再現する。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 808,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "Excel 正本領域を「条件を保持」「セッション」「検索結果」「isPosted」「VIEW_KEY」で検索し、M12-09 の該当セルは0件。sheet-19 のレイアウト画像を実際に確認すると、集計期間・フォーマット・基本土地の入力の下に単一の「特集タグ編集CSVダウンロード」ボタンがあり、結果領域や別CSV導線は描かれていない。旧実装 UsedCardController.php:100-106 の session set と `isPosted => true`、used_card.twig:93-101 の条件付きCSVリンクを確認した。",
+      "reason": "検索POST→条件保持→別CSVリンクという二段階フローは旧実装にのみある。機械フラグ EXCEL は「検索」等の一般語に反応したものとみられ、具体フローを支持しない。むしろ正本画像は単一ダウンロード導線を描くが、旧実装が期待値を裏付けるため分類は LEGACY_BACKED のまま。",
+      "currentImpl": "ec-cube-enterprise 現状: UsedCardController::export() は src/Eccube/Controller/Admin/Analysis/UsedCardController.php:65-82 で POST フォームを検証後 `exportBySearchData($searchForm->getData())` を直ちに返す。used_card.twig:28,63 は同一 POST フォームの submit ボタンで、結果用変数・結果領域・UsedCard 用 session 処理はない。旧二段階フローとの差は残る。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 809,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "Excel 正本領域を「セッション」「CSRF」「なりすまし」「mode」「未指定」で検索し本機能の該当は0件。sheet-19 レイアウト画像を実際に確認し、開始日は `2025-07-01` と表示され、src-cell 0211:特集タグ編集CSVダウンロード(検索項目)!Z42 は「当月1日」だったため、finding の「未指定」は正本に反する。旧実装も UsedCardType.php:33-40 で startDate 必須かつ `new \\Datetime('2 week ago')`。一方、旧 UsedCardController.php:80 の VIEW_KEY remove、118-125 の `$mode` と `csrf_protection => true` は実物を確認した。",
+      "reason": "セッション消去・mode・export 用 CSRF フォームは旧実装に根拠があり、全体の根拠区分は LEGACY_BACKED。ただし「未指定フォーム」は Excel 正本にも旧実装にもなく誤りで、正しい正本期待値は開始日「当月1日」。この誤りを除いても旧実装由来の session/mode/CSRF 差は現存する。",
+      "currentImpl": "ec-cube-enterprise 現状: UsedCardController::index() は src/Eccube/Controller/Admin/Analysis/UsedCardController.php:43-55 でフォームを作るだけで session remove なし。SearchUsedCardType::configureOptions()/buildForm() は src/Eccube/Form/Type/Admin/Analysis/SearchUsedCardType.php:34-36 で `csrf_protection => false`、43-48行で start_date 必須・`new \\DateTime('2 weeks ago')`、55-64行で formats 必須、mode フィールドなし。正本の「当月1日」とも一致しない。",
+      "severityOpinion": "med",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 811,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "sheet-20 Excel 正本領域を「セッション」「保持」「消去」「検索結果」「VIEW_KEY」で検索し該当なし。正本は 0211:特集タグ編集CSVダウンロード CSV出力!C36「現行機能から変更なし」のみで、sheet-20 にレイアウト画像はない。関連 sheet-19 のレイアウト画像も確認したが、単一の「特集タグ編集CSVダウンロード」ボタンだけで二段階フローを示さない。旧実装 UsedCardController.php:80,100-106,122-125 の remove/set/get を確認した。",
+      "reason": "GETで条件削除、POSTで条件保持、別CSVで再利用する具体フローはリバース詳細設計・旧実装だけが根拠なので LEGACY_BACKED は妥当。",
+      "currentImpl": "ec-cube-enterprise 現状: UsedCardController::index()（src/Eccube/Controller/Admin/Analysis/UsedCardController.php:43-55）はフォーム表示のみ、export()（63-82行）は同じリクエストのフォーム値で即CSVを返す。used_card.twig:28-65 も単一POSTフォームで、結果画面・session set/remove/get はないため旧フローとの差は残る。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 814,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "MISDESCRIBED",
+      "checkedQuote": "Excel 正本領域を admin.event.search、admin.event.sort、admin.event.order、セッション、page_no、page_count で検索し本件の具体キーは0件。sheet-3 レイアウト画像も確認したが検索項目とボタンだけでセッション仕様はない。旧実装 SearchControllerTrait.php:56-59 の remove と91-99/191-196 の検索・ページ・sort/order各キー保存を確認した。",
+      "reason": "具体セッションキーと保存方式は旧実装由来なので分類は妥当。ただし現実装の説明「sort/order を保存しない」は不正確。SearchEventType の hidden `sortkey`/`sorttype` は検索フォームの一部で、EventController::index() が `FormUtil::getViewData($searchForm)` 全体を SESSION_SEARCH_KEY に保存する。FormUtil.php:32-38 は全子フォームを再帰取得するため sortkey/sorttype も同じ検索セッションに入る。また初期GETは remove でなくデフォルト viewData を上書きし、以前の検索条件を実質リセットする。旧実装との内部キー・保存形状の差は残るため MISDESCRIBED。",
+      "currentImpl": "ec-cube-enterprise 現状: EventController の定数は src/Eccube/Controller/Admin/Event/EventController.php:44-48 の `eccube.admin.event.search` 系。検索時113-114行、初期GET時192-197行で検索フォーム全体と pageNo を set する。SearchEventType.php:107-114 に hidden `sortkey`/`sorttype` があり、FormUtil.php:23-41 が全フォーム要素を viewData 化するため、sort/order 相当値は専用キーではなく検索条件内に保存される。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 815,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "MISDESCRIBED",
+      "checkedQuote": "Excel 正本の 0214:イベント一覧(検索結果)!E55/AG55 は「並べ替え: 項目」「選択肢:イベントID イベント名」、E56/AG56 は「並べ替え: ソート順」「選択肢:昇順 降順」だが、sort/order、ASC/DESC、admin.error.sort は Excel 正本全冊検索で0件。sheet-4 レイアウト画像も確認し「並びかえ イベントID 昇順」のUIはあるがパラメータ名・不正値エラーはない。旧実装 SearchControllerTrait.php:121-142 と eventlist.twig:135-136 の sort/order・ASC/DESC を確認した。",
+      "reason": "具体パラメータ契約と不正値エラーは旧実装だけのため LEGACY_BACKED は正しい。ただし「admin.error.sort は develop の Controller に存在しない」は誤りで、現ツリーの src/Eccube/Controller/Admin/SearchControllerTrait.php:142-145 に同じ検証と `addError('admin.error.sort', 'admin')` がある。EventController はこの trait を使わないためイベント一覧の実挙動は依然 DtbEventRepository のフォールバックであり、乖離の場所説明が不正確な MISDESCRIBED。",
+      "currentImpl": "ec-cube-enterprise 現状: Event/index.twig:24-30 が hidden sortkey/sorttype をPOSTし、127-133行の値は default/eventName と a/d。DtbEventRepository::getQueryBuilderBySearchData() は src/Eccube/Repository/DtbEventRepository.php:134-139 で a 以外を DESC、不明キーを e.id DESC にする。汎用 SearchControllerTrait.php:142-145 には admin.error.sort があるが EventController extends AbstractController のみで利用していない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 816,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "REFUTED",
+      "correctedClass": "SPEC_BACKED",
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "sheet-3 の src-cell テキストだけでは具体文言を確認できなかったため、関連する Excel 正本 sheet-4「イベント一覧(検索結果)」の data-excel-ref D8 に紐づくレイアウト画像を実際に開いた。画像上部に実在する文言は「検索結果　14件が該当しました」で、正本が1件以上時の文言を直接示す。0件文言「検索条件に該当するデータがありませんでした。」は正本テキスト・画像では確認できず、旧実装 eventlist.twig:182 にのみ実在した。",
+      "reason": "先行判定はテキストセルだけを見て正本不在としたが、Excel 正本のレイアウト画像に件数文言が明記されている。したがって finding の少なくとも主要な件数表示差は SPEC_BACKED。0件文言部分だけは LEGACY_BACKED だが、全体を LEGACY_BACKED とした分類は反証される。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Resource/template/admin/Event/index.twig:103 が `admin.common.search_result` を表示し、src/Eccube/Resource/locale/messages.ja.yaml:1730 は `検索結果：%count%件が該当しました`。正本画像の「検索結果 14件が該当しました」と異なり全角コロンが入る。0件時も index.twig:211-212 と messages.ja.yaml:1734-1735 により「検索条件に合致するデータが見つかりませんでした」＋補助文のまま。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 820,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "Excel 正本 0214:イベント一覧(検索入力)!AG55 を実際に確認し、引用は「開催日(From)>開催日(To)の場合エラー」。sheet-3 レイアウト画像も確認したが通常入力状態のみでエラー表示例はない。「範囲整合のバリデーションは行わない」は Excel 正本全冊検索で0件で、function-design-embed 内と旧実装 EventListType.php:44-60 / DtbEventRepository.php:72-84 の相互制約なし＋AND条件にのみ対応していた。",
+      "reason": "「逆転時もチェックしない」という期待値は旧実装にだけ根拠があり LEGACY_BACKED は妥当。ただし最新 Excel 正本は正反対に逆転エラーを明記し、現実装は正本を満たしている。旧挙動との差そのものは現コードでも残るため REPRODUCED だが、設計正本に対する修正対象ではない。",
+      "currentImpl": "ec-cube-enterprise 現状: SearchEventType::buildForm() は src/Eccube/Form/Type/Admin/SearchEventType.php:115-126 の POST_SUBMIT で `if ($startDateFrom > $startDateTo)` のとき `admin.common.date_range_error` を追加する。EventController::index() はフォーム不正時144-152行で `has_errors => true` を返し検索へ進めない。旧実装の「ANDで0件」とは異なるが Excel 正本どおり。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 822,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "Excel 正本の src-cell 0214:イベント一覧(検索結果)!D33/D45 は「表示項目に『開催店舗』と『開催日時』を追加する」、E59 は「開催店舗」、AG59 は「イベントを開催する店舗名を表示する」。さらに data-excel-ref D8 のレイアウト画像を実際に確認し、列見出し「開催店舗」と件数文言「検索結果　14件が該当しました」が実在した。0件文言は正本画像・テキストでは確認できず、旧実装 eventlist.twig:182 のみ。",
+      "reason": "開催店舗ラベルと1件以上時の検索結果文言は Excel 正本のセルおよびレイアウト画像が直接裏付けるため SPEC_BACKED は妥当。0件文言部分だけは旧実装由来。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Resource/template/admin/Event/index.twig:146 は `admin.event.base_info`、messages.ja.yaml:6009 は `店舗` で、正本の「開催店舗」ではない。件数は index.twig:103 と messages.ja.yaml:1730 の `検索結果：%count%件が該当しました`、0件時は index.twig:211-212 と messages.ja.yaml:1734-1735 の別文言＋補助文で、指摘された表示差は残る。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    }
+  ]
+}

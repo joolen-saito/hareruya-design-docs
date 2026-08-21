@@ -1,0 +1,165 @@
+{
+  "packetId": "rest_34",
+  "results": [
+    {
+      "rowId": 944,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:2542 のExcel正本セルは「カスタマイズ要件に記載の内容以外は現行踏襲とする」とするが、0以上の入力補助は同:2621の `<!-- function-design-embed:start ... -->` より後のリバース詳細設計にだけある。sheet-9正本セルの確認範囲:2495-2620。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/Analysis/SalesType.php:179-203 は `price_from`、`price_to`、`sales_from`、`sales_to` の全てに `attr => ['min' => 0]` を付ける。同Repository/OrderDetailRepository.php:238-259 は平均単価と数量を `andHaving('price >= ...')`、`andHaving('sales >= ...')` 等で集計後に絞り込む。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/Analysis/SalesType.php:193-203 は4項目を `IntegerType::class` とするだけで `attr['min']` や0以上制約がない。一方、同Repository/OrderItemRepository.php:305-315 は `andHaving` により集計後絞り込みを実装済み。",
+      "note": "集計後HAVINGは移植済みだが、旧実装にあった0以上の入力補助だけが欠落している。"
+    },
+    {
+      "rowId": 945,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:2998 のExcel正本は「カスタマイズ要件に記載の内容以外は現行踏襲」とするが、「保存が無い場合は空」は同:3014の埋込開始以降にしかない。sheet-11正本セルの確認範囲:2955-3013。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Analysis/SalesController.php:89-98 は `$viewData = $session->get(self::VIEW_KEY, []);` と空配列を既定値にし、`submitAndGetData` 後に `getQueryBuilderBySearchData($searchData, true)` を実行する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Analysis/SalesAnalysisController.php:129-134 はセッション値がnullなら「検索条件がありません。先に検索を実行してください。」を追加して `admin_analysis_sales` へredirectし、CSVを出力しない。",
+      "note": "空条件フォールバックの具体契約は旧実装にあり、新実装で挙動が変わっている。"
+    },
+    {
+      "rowId": 946,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:2998 のExcel正本は「カスタマイズ要件に記載の内容以外は現行踏襲」とするが、CSV時の件数上限解除は同:3014以降のリバース詳細設計にだけある。sheet-11正本セルの確認範囲:2955-3013。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Analysis/SalesController.php:97-98 はCSV時に `getQueryBuilderBySearchData($searchData, true)` を呼び、同Repository/OrderDetailRepository.php:271-279 は `$isExport` 時に件数制限なしで取得し、画面時だけ `$qb->setMaxResults($searchData['limit'])` を行う。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Exporter/SalesAnalysisCsvExporterService.php:35-39 は検索条件を変更せず `getAnalysisSummary($searchData)` に渡し、同Repository/OrderItemRepository.php:326-329 は `page_count > 0` ならCSV経路でも `$qb->setMaxResults($limit)` を適用する。",
+      "note": "CSV全件出力の具体契約は旧実装にあり、移植先では一覧の表示件数が残る。"
+    },
+    {
+      "rowId": 947,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:3141 のExcel正本は「カスタマイズ要件に記載の内容以外は現行踏襲」とするが、セッション未保存時に空条件で出力する記述は同:3158以降のリバース詳細設計だけにある。sheet-12正本セルの確認範囲:3099-3157。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Analysis/SalesController.php:89-98 は商品・カテゴリ共通のexportで `$session->get(self::VIEW_KEY, [])` とし、空配列からフォームデータを作って集計を続行する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Analysis/SalesAnalysisController.php:129-134 は共通exportでセッション値nullを検出するとエラーredirectするため、カテゴリCSVも空条件では出力されない。",
+      "note": "カテゴリ専用経路ではなく共通CSV経路の旧挙動として裏付けられる。"
+    },
+    {
+      "rowId": 948,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:3141 のExcel正本は「カスタマイズ要件に記載の内容以外は現行踏襲」とするが、カテゴリCSVの件数上限解除は同:3158以降のリバース詳細設計にだけある。sheet-12正本セルの確認範囲:3099-3157。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Analysis/SalesController.php:93-98 は `summary_type` を含む検索条件をCSV用の第2引数trueでRepositoryへ渡し、同Repository/OrderDetailRepository.php:271-279 は集計単位を問わずexport時は件数制限を付けない。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Exporter/SalesAnalysisCsvExporterService.php:35-39 はカテゴリでも同じ `getAnalysisSummary($searchData)` を使い、同Repository/OrderItemRepository.php:326-329 が `page_count` を `setMaxResults` にする。",
+      "note": "旧実装では商品・カテゴリ共通でCSV時の上限を解除していた。"
+    },
+    {
+      "rowId": 949,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:3293 は正本で「カスタマイズ要件に記載の内容以外は現行踏襲」、同:3300-3302 は商品単位・言語指定の入荷通知出力を要求するが、`/analysis/request` というURLは同:3376以降のリバース詳細設計にだけある。sheet-13正本セルの確認範囲:3243-3375。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/AnalysisServiceProvider.php:46-54 は旧URL `/analysis/request`、`/analysis/request/result`、`/analysis/request/export` を登録し、同ServiceProvider/Admin/SidebarProvider.php:324-328 は「入荷通知依頼」を `admin_request` に結ぶ。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Analysis/ProductRequestController.php:48-49,72-73 はGET `/analysis/product-request` とPOST `/analysis/product-request/search` を実装し、/home/y-saito/Developments/ec-cube-enterprise/app/config/eccube/packages/eccube_nav.yaml:291-293 はメニューを `admin_analysis_product_request` に結ぶ。",
+      "note": "旧URL文字列は正本の外部契約ではない。新URLでもサイドメニュー入口と検索送信は実装済みで、機能要求は満たす。"
+    },
+    {
+      "rowId": 950,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能).html:3210 はExcel正本で「キーワード検索から『会員名』での検索を削除」、同:3221-3222 は商品ごとの集計のため会員名検索を削除すると明記する。購入日・購入状況は正本の新検索項目表にない。旧詳細は /home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:3376以降のリバース記述である。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/Analysis/RequestType.php:10-17,46-117 は旧フォームに会員名ソート、`order_date_from/to`、`bought`、`limit`、`tagSalesAnalyses` を持ち、同Repository/DtbProductRequestRepository.php:157-169 は会員姓名もmulti検索対象にする。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/Analysis/SearchProductRequestType.php:33-36,50-119 は正本の刷新後項目である商品名、依頼日、価格、言語、商品名/価格ソート、昇降順、表示件数、売上分析タグを定義する。同Repository/DtbProductRequestRepository.php:403-407 は商品名日英だけを検索する。",
+      "note": "指摘は商品単位集計への刷新で削除された旧会員・購入実績条件を要求しており、正本と逆。"
+    },
+    {
+      "rowId": 951,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:3542-3547 のExcel正本は結果列を「商品ID」「言語」「商品名」「通知待ち」「削除」とし、通知待ち/削除を商品単位で数える。依頼ID単位の10列明細は同:3601以降のリバース詳細設計に由来する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Repository/DtbProductRequestRepository.php:128-155 は旧一覧を `groupBy('pr.id')` で依頼単位にし、同Resource/template/admin/Analysis/request.twig:143-175 は商品コードから通知日/削除日までの明細列と行操作を描画する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbProductRequestRepository.php:381-401 は商品ID×言語で `pending_count` と `deleted_count` を集計し、同Resource/template/admin/Analysis/product_request.twig:127-145 は正本どおり5列を表示する。",
+      "note": "旧依頼明細の不在は移植漏れではなく、商品×言語集約への正本カスタマイズを実装した結果。"
+    },
+    {
+      "rowId": 952,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:3542-3547 のExcel正本は商品ごとの通知待ち・削除件数を要求し、会員別購入注文との結合や最早購入日は正本範囲3481-3600に存在せず、同:3601以降のリバース詳細設計だけにある。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Repository/DtbProductRequestRepository.php:128-155 は会員・注文明細・注文を結合し、`pr.deletedAt < o.order_date`、`min(date_format(o.order_date, ...)) as order_date` を実装する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbProductRequestRepository.php:381-401 は商品ID×言語の通知待ち/削除集計を行い、会員・注文は結合しない。これは同Resource/template/admin/Analysis/product_request.twig:130-145 の正本5列表示に対応する。",
+      "note": "購入実績結合は旧依頼明細画面の内部処理であり、正本の集約画面には要求されていない。"
+    },
+    {
+      "rowId": 953,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:3542-3547 のExcel正本結果項目は5列とCSVリンクで、規格編集・依頼削除の行操作は正本範囲3481-3600にない。行操作の具体記述は同:3601以降のリバース詳細設計である。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Analysis/request.twig:169-176 は規格編集リンクと、`deletedAt is null` のときCSRFトークン・DELETE・確認文言付き削除リンクを描画する。削除routeは同ServiceProvider/Admin/ProductServiceProvider.php:232-234。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Analysis/product_request.twig:127-145 は正本の集約5列を描画し、行操作を持たない。同:119-122 は正本項目にあるCSVダウンロードを実装する。",
+      "note": "旧依頼単位の操作メニューは商品×言語の集計表へ引き継ぐ正本要求ではない。"
+    },
+    {
+      "rowId": 954,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:3293 のExcel正本は「カスタマイズ要件に記載の内容以外は現行踏襲」とし、同:3310付近の正本項目表は依頼日From/Toの初期値を当月1日/末日とする。セッション破棄の具体記述は同:3376以降のリバース領域にある。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Analysis/RequestController.php:24-39 は初期表示で `$request->getSession()->remove(self::VIEW_KEY)`、当月初日/末日、`asc` を設定し、`summary => null` を返す。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Analysis/ProductRequestController.php:50-66 は `searched => false`、`summary => null` を返すが `SESSION_KEY` をremoveしない。日付とASC既定値は同Form/Type/Admin/Analysis/SearchProductRequestType.php:54-64,91-102にある。",
+      "note": "表示上の初期値と一覧なしは実装済み。旧実装にあった初期表示時セッション破棄だけが欠落する。"
+    },
+    {
+      "rowId": 955,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:3532 のExcel正本は現行踏襲、同:3542-3547 は商品×言語の集計結果を要求するが、`/analysis/request` と `/result` のURLは同:3601以降のリバース詳細設計にだけある。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/AnalysisServiceProvider.php:46-51 は旧GET `/analysis/request` と検索 `/analysis/request/result` を `admin_request`、`admin_request_result` にbindする。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Analysis/ProductRequestController.php:48-49,72-90 はGET `/analysis/product-request` とPOST `/analysis/product-request/search` で同一画面の検索・一覧を実装する。",
+      "note": "URL文字列の維持は正本要求ではなく、現行は刷新後の検索機能を実装済み。"
+    },
+    {
+      "rowId": 956,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能).html:3210,3221-3222 のExcel正本は商品ごとの集計のため会員名検索を削除する。同:3230付近の正本項目表は商品名、依頼日、価格、言語、並び替え、昇降順、タグ、表示件数を定義し、購入日・購入状況は含めない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/Analysis/RequestType.php:10-17,46-117 は旧キー `order_date_from/to`、`bought`、`limit`、`tagSalesAnalyses` と会員名ソートを定義する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/Analysis/SearchProductRequestType.php:50-119 は刷新後の `multi/create_date_from/create_date_to/price_from/price_to/language/sort_key/asc_desc/page_count/tag_sales_analysis` を定義する。",
+      "note": "旧フォームキーの名称・削除項目を期待値にした指摘。現行は正本の刷新後検索項目を満たす。"
+    },
+    {
+      "rowId": 957,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:3542-3547 のExcel正本は商品ID・言語追加と商品ごとの通知待ち/削除カウントを定義する。依頼ID単位・会員/注文結合は同:3601以降のリバース詳細設計にだけある。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Repository/DtbProductRequestRepository.php:128-155 は旧一覧で会員・商品規格・商品・注文を結合し、`groupBy('pr.id')` とする。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbProductRequestRepository.php:381-401 は `COUNT(DISTINCT ... player_id)` を商品ID×言語で集計し、正本の通知待ち/削除カウントを実装する。",
+      "note": "依頼ID単位の旧クエリは正本カスタマイズにより商品×言語集計へ置換されている。"
+    },
+    {
+      "rowId": 958,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:3542-3547 のExcel正本項目表は「商品ID・言語・商品名・通知待ち・削除」とCSV出力リンクを定義する。10列明細と行操作は同:3601以降のリバース領域にだけある。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Analysis/request.twig:143-175 は旧10列明細と規格編集・条件付き削除メニューを描画する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Analysis/product_request.twig:121-145 はCSVリンクと「商品ID・言語・商品名・通知待ち・削除」の5列を正本どおり描画する。",
+      "note": "正本が要求する集約テーブルは既に実装済みで、旧明細列の不在を乖離とした誤検出。"
+    },
+    {
+      "rowId": 959,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:3532 のExcel正本は「カスタマイズ要件に記載の内容以外は現行踏襲」とする。セッション破棄の具体記述は同:3601以降のリバース詳細設計で、正本は依頼日初期値と集計列を定義する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Analysis/RequestController.php:24-39 は初期表示でセッションを `remove(self::VIEW_KEY)` し、当月初日/末日・asc・`summary => null` を設定する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Analysis/ProductRequestController.php:50-66 は一覧なしで返すがセッションを削除しない。同Form/Type/Admin/Analysis/SearchProductRequestType.php:54-64,91-102 は日付とASC初期値を実装する。",
+      "note": "rowId 954と同じ初期表示要件。欠落はセッション破棄のみ。"
+    },
+    {
+      "rowId": 960,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:3739-3762 のExcel正本は入荷通知CSVの5項目とカスタマイズを定義するが、`/analysis/request/export` というURLは同:3767以降のリバース詳細設計にだけある。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/AnalysisServiceProvider.php:52-54 は旧GET `/analysis/request/export` を `admin_request_export` にbindし、同Resource/template/admin/Analysis/request.twig:132-134 のCSVリンクがこれを使う。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Analysis/ProductRequestController.php:111-134 はGET `/analysis/product-request/export` でCSVを返し、同Resource/template/admin/Analysis/product_request.twig:119-122 の「CSVダウンロード」がそのrouteを参照する。",
+      "note": "正本が要求するCSV入口は存在する。旧URL文字列自体は正本契約ではない。"
+    },
+    {
+      "rowId": 961,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:3749 のExcel正本は「カスタマイズ要件に記載の内容以外は現行踏襲」とするが、未保存時に空条件で抽出する具体記述は同:3767以降のリバース詳細設計にだけある。sheet-15正本セルの確認範囲:3706-3766。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Analysis/RequestController.php:85-91 は `$session->get(self::VIEW_KEY, [])` と空配列を既定値にし、フォーム確定後そのままRepositoryで抽出を続行する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Analysis/ProductRequestController.php:114-120 はセッション値がnullなら「検索条件がありません。先に検索を実行してください。」を追加し、検索画面へredirectしてCSVを出力しない。",
+      "note": "空条件CSVの具体契約は旧実装で確認でき、新実装は明示的に拒否する。"
+    },
+    {
+      "rowId": 962,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:3734-3739 のExcel正本項目表はCSVを「商品ID・言語ID・商品名・通知待ち・通知済み/削除」の5列とする。旧10列依頼明細は同:3767以降のリバース詳細設計に由来し、正本と異なる。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Analysis/RequestController.php:14-15,97-113 は旧CSVを商品コードから通知日/通知設定削除日までの10列にし、依頼を1件ずつ出力する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Exporter/ProductRequestCsvExportService.php:24-30,43-55 は商品ID・言語ID・商品名・通知待ち・削除の5列を定義し、同Repository/DtbProductRequestRepository.php:381-401 の商品×言語集計行を出力する。",
+      "note": "旧10列CSVを期待した指摘は誤検出。正本の5列構成は実装済みで、5列目の文言差だけはrowId 963で別判定する。"
+    },
+    {
+      "rowId": 963,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:3739 のExcel正本セルは識別ID 5を「通知済み/削除」、同:3762 は「識別ID 5:『通知済み/削除』の追加」と明記する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Analysis/RequestController.php:14-15 の旧CSVは10列明細で、末尾は「通知日/通知設定削除日」。商品×言語集計の「通知済み/削除」列は旧実装ではなくExcel正本のカスタマイズ要求である。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Exporter/ProductRequestCsvExportService.php:24-30 は5列目を `'deleted_count' => '削除'` とし、同Resource/template/admin/Analysis/product_request.twig:130-145 も見出しを「削除」と表示する。",
+      "note": ""
+    }
+  ]
+}

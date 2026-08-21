@@ -1,0 +1,331 @@
+{
+ "packetId": "sw_18",
+ "mode": "sweep",
+ "note": "著者はこれらの大半を IMPACT(外部から観測できる) と判定した。見落とし＝実は NO_IMPACT な行が無いかを独立に判定すること。",
+ "findings": [
+  {
+   "rowId": 613,
+   "機能No": "M07-01",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "買取商品一覧CSVおよび買取商品（キャンセル）CSVの4列目は「販売価格」として出力すること。",
+   "差分内容": "設計のCSV外部契約上の列名は「販売価格」。実装は値として standard_price を使っており、設計備考の「商品規格に紐づく現在の基準価格」という値の由来とは整合するが、ヘッダ名が設計と異なる。反証検索では「販売価格」「基準価格」「standard_price」「csv_export_product_list」「csv_export_product_cancel」を CSV Exporter、Controller、Repository で確認したが、このCSVヘッダを「販売価格」に変換する実装は見つからなかった。",
+   "実装参照": "src/Eccube/Service/Csv/Exporter/BuyOrderProductListCsvExportService.php:30; src/Eccube/Service/Csv/Exporter/BuyOrderProductListCsvExportService.php:70"
+  },
+  {
+   "rowId": 614,
+   "機能No": "M07-03",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "画面部品No.2「基本情報」: 当該会員の本人確認状態を表示。未確認、確認中、オンライン本人確認済み、簡易書留確認済みが表示される（本人確認状態マスタ MtbIdentityConfirmStatus の4区分の名称が表示される想定）。",
+   "差分内容": "設計は本人確認状態として4つの区分名称が表示されると明記。実装(detail.twig:144-150)は確認済み2区分を「本人確認済み」に集約表示しており、設計の列挙ラベルと不一致。マスタ名称は app/DoctrineMigrations/Version20251125145047.php:65-80 に『未確認/確認中/オンライン本人確認済み/簡易書留確認済み』として存在し(定数は MtbIdentityConfirmStatus.php:31-34: STATUS_UNCONFIRMED=1, STATUS_NOW_CONFIRMING=2, STATUS_CONFIRMED=3, STATUS_REGISTERED_MAI",
+   "実装参照": "src/Eccube/Resource/template/admin/Purchase/detail.twig:144-150"
+  },
+  {
+   "rowId": 615,
+   "機能No": "M07-04",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "送信成功時はメール履歴 INSERT が中心であり、送信が成功した場合のみ履歴行が増える。HTTP経由ではリクエスト終了までに flush される前提。",
+   "差分内容": "設計は送信成功でメール履歴行がDBに増えることを求めるが、実装はUnitOfWorkへpersistするだけでSQL INSERTを発行する flush の証跡がない。送信元未設定・送信例外時に履歴を増やさない分岐は実装済みだが、成功時履歴INSERTが未達。",
+   "実装参照": "src/Eccube/Service/MailService.php:1588; src/Eccube/Service/EntityManager/MailHistoryEntityManager.php:67; src/Eccube/EventListener/TransactionListener.php:119"
+  },
+  {
+   "rowId": 616,
+   "機能No": "M07-04",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "送信成功時のみ `dtb_mail_history` の履歴行が増え、条件が整えばメール送信とメール履歴 INSERT、成功フラッシュ、Doctrine の永続化キューへの追加が行われる。DB操作は persist/flush による即時反映で確定する。",
+   "差分内容": "設計は履歴INSERTの確定と送信成功時の履歴行増加を要求しているが、買取手動メール送信経路では `persist` 後に `flush()` へ到達する実装証跡がない。反証検索では Controller/Admin/Purchase/MailController.php、Service/MailService.php、Service/EntityManager/MailHistoryEntityManager.php、EventListener 配下に sendManualPurchaseMail 後の flush は見つからなかった。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/MailService.php:1588; /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/EntityMa"
+  },
+  {
+   "rowId": 617,
+   "機能No": "M07-05",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "入金CSV出力項目の「口座番号」は前ゼロありで出力する。",
+   "差分内容": "設計は口座番号を「前ゼロあり」としているが、実装は dtb_bank_account.account_no を integer として保持し、入金CSVでもゼロ埋めせずその値を出力する。反証として accountNo / account_no / bank_account_no / %07d を検索し、画面表示では %07d のゼロ埋めがある一方、BuyOrderDepositCsvExportService のCSV出力経路にはゼロ埋め処理が存在しないことを確認した。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Exporter/BuyOrderDepositCsvExportService.php:123"
+  },
+  {
+   "rowId": 618,
+   "機能No": "M07-05",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "買取商品一覧CSV出力項目の識別ID 4 は、CSV項目名を「販売価格」として出力する。備考は「商品規格に紐づく現在の基準価格、個別入力商品または状態がない場合は何も出力しない」。",
+   "差分内容": "設計シート上の項目名は「販売価格」だが、実装の CSV_HEADER は同じ4列目相当を「基準価格」として出力する。反証として BuyOrderProductListCsvExportService、DtbBuyOrderRepository、PurchaseController、admin/Purchase Twig、Purchase JS、および Csv/Exporter 配下で「販売価格」「基準価格」「CSV_HEADER」「product_count」等を再検索したが、本機能のヘッダを「販売価格」とする実装は確認できなかった。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Exporter/BuyOrderProductListCsvExportService.php:34"
+  },
+  {
+   "rowId": 619,
+   "機能No": "M07-05",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "CSV出力項目4は「販売価格」として出力する。備考: 商品規格に紐づく現在の基準価格、個別入力商品または状態がない場合は何も出力しない。",
+   "差分内容": "設計のCSV項目名は「販売価格」だが、実装の外部出力ヘッダは「基準価格」。値の取得元が基準価格である点は備考と一致するが、CSV列名の外部契約が設計と異なる。反証検索で purchase_product_cancel_list、CSV_HEADER、販売価格、standard_price を確認したが、本CSVのヘッダを「販売価格」にする実装は見つからなかった。",
+   "実装参照": "src/Eccube/Service/Csv/Exporter/BuyOrderProductListCsvExportService.php:34"
+  },
+  {
+   "rowId": 620,
+   "機能No": "M07-05",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "CSV出力項目6「言語ID」は、個別入力商品または状態がない場合は [1: 日本語] 固定。",
+   "差分内容": "設計は「状態がない場合」も言語IDを 1 固定とするが、実装は状態なし通常商品で買取明細の language_id をそのまま出力するため、bmc.language_id が 1 以外なら設計と異なるCSVになる。反証検索で language_id、card_condition_id IS NULL、CSV_HEADER、言語ID を確認したが、状態なしブランチで 1 固定へ補正する後段処理は見つからなかった。",
+   "実装参照": "src/Eccube/Repository/DtbBuyOrderRepository.php:637"
+  },
+  {
+   "rowId": 621,
+   "機能No": "M07-05",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "CSV出力項目7「略称タグ」は、個別入力商品または状態がない場合は何も出力しない。",
+   "差分内容": "設計は状態なしの場合も略称タグを空欄にする要求だが、実装は状態なし通常商品で mtb_storage_code.name を出力する。反証検索で storage_code、略称タグ、card_condition_id IS NULL、product_cancel を確認したが、状態なしブランチの略称タグを空欄へ補正する処理は見つからなかった。",
+   "実装参照": "src/Eccube/Repository/DtbBuyOrderRepository.php:637"
+  },
+  {
+   "rowId": 622,
+   "機能No": "M07-05",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "CSV出力項目8「レアリティ」は、個別入力商品または状態がない場合は何も出力しない。",
+   "差分内容": "設計は状態なしの場合もレアリティを空欄にする要求だが、実装は状態なし通常商品で mtb_rarity.code を出力する。反証検索で rarity_code、レアリティ、card_condition_id IS NULL、product_cancel を確認したが、状態なしブランチのレアリティを空欄へ補正する処理は見つからなかった。",
+   "実装参照": "src/Eccube/Repository/DtbBuyOrderRepository.php:637"
+  },
+  {
+   "rowId": 623,
+   "機能No": "M07-08",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "4 作成日時ラベル: ピッキングリストを作成した日時。※「ピッキングリスト印刷」ボタンを押した日時",
+   "差分内容": "設計上、利用者が帳票上で見る作成日時ラベルが必要だが、実装のテンプレート・ビュー生成・JSに作成日時表示の根拠がない。反証検索として 作成日時 / ピッキングリストを作成 / create_date / created / DateTime / now / date / printButton / restockListSections を対象範囲で確認し、帳票表示に使われる日時実装は見つからなかった。",
+   "実装参照": "不在（探索範囲: src/Eccube/Resource/template/admin/Purchase/restock_list.twig, src/Eccube/Service/Admin/Purchase/BuyOrderRestockListService.php, src/Eccube/Service/Csv"
+  },
+  {
+   "rowId": 624,
+   "機能No": "M07-10",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "申込者名検索は、空白が含まれている場合（姓と名の間に空白等）空白で区切ったいずれかの入力が一致していれば検索結果に出力する。",
+   "差分内容": "設計は空白区切りの「いずれか」が一致すれば出力するOR検索を要求しているが、実装はforeach内でandWhereを繰り返すため、分割後の全キーワードがいずれかの姓名/カナ列に一致しないと出力されない。反証として買取一覧側の同仕様実装 src/Eccube/Repository/DtbBuyOrderRepository.php:133-142 と共通ユーティリティ src/Eccube/Util/SqlUtil.php:128-157 も確認したが、同じくキーワード単位はANDであり、設計要求のORを満たす実装は見つからなかった。",
+   "実装参照": "src/Eccube/Repository/DtbBuyOrderStockHistoryRepository.php:89-107"
+  },
+  {
+   "rowId": 625,
+   "機能No": "M07-10",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "会員IDの書式・制限は「半角数字(整数)」で、完全一致検索とする。",
+   "差分内容": "完全一致検索自体は実装されているが、設計の「半角数字(整数)」入力制限に対して IntegerType や半角数字バリデーションがなく、非数値文字列もフォーム入力として受け付けてから整数キャストされる。反証として FormType、DTO、SearchControllerTrait、FormUtil、Repositoryを確認したが、会員IDの半角数字制限を行う実装は見つからなかった。",
+   "実装参照": "src/Eccube/Form/Type/Admin/Purchase/PurchaseHistoryType.php:60-63; src/Eccube/Dto/Admin/Purchase/HistorySearchDataDto.php:23-26; src/Eccube/Repository/DtbBuyOrd"
+  },
+  {
+   "rowId": 626,
+   "機能No": "M07-10",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "振込完了日(From)/(To)の書式・制限は「日付(yyyy/mm/dd)」で、振込が完了した日を買取が成立した日とみなし検索項目とする。",
+   "差分内容": "設計は日付のみ yyyy/mm/dd を要求しているが、実装は年月日と時刻を入力・比較する日時検索で、表示フォーマットも YYYY-MM-DD HH:mm。反証としてTwig、FormType、Repository、翻訳キーを確認したが、yyyy/mm/ddの日付専用入力・日単位To終端補正は見つからなかった。",
+   "実装参照": "src/Eccube/Form/Type/Admin/Purchase/PurchaseHistoryType.php:82-103; src/Eccube/Resource/template/admin/Purchase/history.twig:28-41; src/Eccube/Repository/DtbBuy"
+  },
+  {
+   "rowId": 627,
+   "機能No": "M07-10",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "CSVダウンロード操作の画面項目名は「CSVダウンロード」とする。",
+   "差分内容": "設計HTMLの項目表No.3は画面項目名を「CSVダウンロード」と定義しているが、実装は汎用翻訳キー admin.common.download を使うため利用者可視ラベルが「ダウンロード」になる。反証として admin.common.csv_download=CSVダウンロード は存在するが、このテンプレートでは使用されていない。店頭買取履歴テンプレートは同じ箇所で「CSVダウンロード」と直書きしているため、ネット買取側だけ表示文言が設計と異なる。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Purchase/history.twig:208, /home/y-saito/Developments/ec-cube-enterprise/src/Ec"
+  },
+  {
+   "rowId": 628,
+   "機能No": "M08-02",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "確認画面・送信実行・完了画面はそれぞれ POST /{admin_route}/customer/mail_confirm、POST /{admin_route}/customer/mail_complete、GET /{admin_route}/customer/mail_complete の独立エンドポイントで扱う。画面遷移は入力→確認→送信→完了の多段構成とする。",
+   "差分内容": "設計は利用者視点の入口と画面遷移で確認・送信・完了を独立URL/ルートとして規定しているが、実装は #[Route('/%eccube_admin_route%/customer/mail', name: 'admin_customer_mail', methods: ['POST'])] の単一路由で、確認画面も完了画面も同じ action に POST して mode で処理する。反証検索として customer/mail_confirm、customer/mail_complete、mail_confirm、mail_complete、m08-02_admin_customer_customer_mail_all_*、admi",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/CustomerMailController.php:50,77,83,99; /home/y-saito/Developments/ec-cube-en"
+  },
+  {
+   "rowId": 629,
+   "機能No": "M08-02",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "送信記録の正典は会員メール送信履歴 dtb_user_mail_history（customer_id・subject・mail_body・send_date・creator_id）とし、メール送信履歴の記録に使用する。",
+   "差分内容": "設計は dtb_user_mail_history を送信記録の正典と明記しているが、実装の保存先は dtb_mail_history。反証検索として DtbUserMailHistory、new DtbUserMailHistory、dtb_user_mail_history、MailHistoryEntityManager、setSubject、setMailBody、setCreator を src/Eccube と html 配下で検索したが、一括メール送信処理が DtbUserMailHistory を保存する経路は見つからなかった。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/CustomerMailController.php:94-96; /home/y-saito/Developments/ec-cube-enterpri"
+  },
+  {
+   "rowId": 630,
+   "機能No": "M08-02",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "確認画面は POST /{admin_route}/customer/mail_confirm、送信は POST /{admin_route}/customer/mail_complete、送信完了画面は GET /{admin_route}/customer/mail_complete として入力→確認→送信→完了の多段フローを持つ。",
+   "差分内容": "設計は利用者視点のURLエンドポイントとして /customer/mail_confirm と /customer/mail_complete を明記し、画面遷移でも m08-02_admin_customer_customer_mail_all_confirm / execute / complete を要求している。実装は admin_customer_mail へのPOST内分岐で画面を出し分けており、別キーワード・設計ルート名・物理パスで再検索しても独立ルートは確認できなかった。",
+   "実装参照": "src/Eccube/Controller/Admin/Customer/CustomerMailController.php:50,71,72,83,99 / src/Eccube/Resource/template/admin/Customer/mail_confirm.twig:33,99,104 / 不在（探索"
+  },
+  {
+   "rowId": 631,
+   "機能No": "M08-02",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "送信記録の正典は会員メール送信履歴 dtb_user_mail_history（customer_id・subject・mail_body・send_date・creator_id）とし、送信時にメール送信履歴を記録する。",
+   "差分内容": "設計は dtb_user_mail_history を送信記録の正典としているが、実装は dtb_mail_history へ保存する。DtbUserMailHistory、dtb_user_mail_history、MailHistoryEntityManager、dtb_mail_history で反証検索しても、会員一括メール送信が dtb_user_mail_history に保存する経路は確認できなかった。",
+   "実装参照": "src/Eccube/Controller/Admin/Customer/CustomerMailController.php:94,95,96 / src/Eccube/Service/EntityManager/MailHistoryEntityManager.php:39,41,43,44,55,67 / src"
+  },
+  {
+   "rowId": 632,
+   "機能No": "M08-02",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "「確認」ボタンは POST /{admin_route}/customer/mail_confirm で確認画面を表示し、「送信」ボタンは POST /{admin_route}/customer/mail_complete で送信後に完了画面へ遷移し、送信完了画面は GET /{admin_route}/customer/mail_complete で表示する。",
+   "差分内容": "設計は確認・送信完了を別URLエンドポイントとして外部契約化しているが、実装は同一POSTルート内の mode 分岐で処理している。完了画面の GET 入口も実装されていないため、設計の画面遷移/API契約と一致しない。",
+   "実装参照": "src/Eccube/Controller/Admin/Customer/CustomerMailController.php:50,71,77,83,99 ／ 不在（探索範囲: src/Eccube, html; 検索語: customer/mail_confirm, customer/mail_complete, "
+  },
+  {
+   "rowId": 633,
+   "機能No": "M08-02",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "送信記録の正典は会員メール送信履歴 dtb_user_mail_history（customer_id・subject・mail_body・send_date・creator_id）とし、メール送信履歴を記録する。",
+   "差分内容": "設計は dtb_user_mail_history を正典とし customer_id・subject・mail_body・send_date・creator_id を記録対象としているが、実装は dtb_mail_history の mail_subject/mail_body/send_date/customer_id 等へ保存する。さらに設計列 creator_id は一括メール履歴保存時に設定されない。",
+   "実装参照": "src/Eccube/Controller/Admin/Customer/CustomerMailController.php:94,95,96 ／ src/Eccube/Service/EntityManager/MailHistoryEntityManager.php:39,41,43,44,55,67 ／ src"
+  },
+  {
+   "rowId": 634,
+   "機能No": "M08-04",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "名前（カナ）・郵便番号はプラグイン拡張で必須を解除する。郵便番号は任意入力として扱う。",
+   "差分内容": "設計は郵便番号の必須解除を要求しているが、実装は postalCode を必須扱いにし、空欄を許容する分岐や blank 時に Length を外す処理がない。探索範囲: CustomerType.php, SplitPostalType.php, Customer/edit.twig, messages.ja.yaml。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/CustomerType.php:79 /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/"
+  },
+  {
+   "rowId": 635,
+   "機能No": "M08-04",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "住所1・住所2はSJIS換算の長さが上限を超える場合に超過エラーを付ける。",
+   "差分内容": "設計はSJIS換算上限を要求しているが、実装は通常の文字列長制約のみ。探索範囲: src/Eccube/Form, src/Eccube/Validator, src/Eccube/Service, src/Eccube/Controller/Admin/Customer。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/AddressType.php:108"
+  },
+  {
+   "rowId": 636,
+   "機能No": "M08-04",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "本人確認ステータスが未確認以外から未確認に変更、かつ身分証有効期限が入力済みの場合に身分証有効期限を空欄で更新する。",
+   "差分内容": "未確認への降格処理は部分実装されているが、設計が求める身分証有効期限の同時クリアが保存経路に存在しない。setIdExpirationDate は本人確認完了専用処理側でのみ確認。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Customer/edit.twig:37 /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/"
+  },
+  {
+   "rowId": 637,
+   "機能No": "M08-04",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "買取履歴欄の買取番号リンク押下時、買取詳細画面に遷移する。",
+   "差分内容": "設計の遷移先は買取詳細だが、実装は受注管理編集画面へ遷移する route を使っている。別キーワード（買取詳細/admin_purchase_edit/BuyOrder）で再検索しても Customer/edit.twig 側のリンク先は admin_order_edit のまま。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Customer/edit.twig:961 /home/y-saito/Developments/ec-cube-enterprise/src/Eccube"
+  },
+  {
+   "rowId": 638,
+   "機能No": "M08-04",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "本人確認フラグは必須のラジオ（未確認／確認）として会員登録フォームで扱い、選手情報 dtb_player.identification_flg に保存する。",
+   "差分内容": "PlayerType は smaregiId, IdentityConfirmStatus, CustomerGroup, mailMagazineFlg, firstNameEn, lastNameEn, id_expiration_date のみを追加しており、identificationFlg を追加していない。Twigにも本人確認フラグの form_widget がない。",
+   "実装参照": "不在（探索範囲: src/Eccube/Form/Type/Admin/CustomerType.php, src/Eccube/Form/Type/Admin/PlayerType.php, src/Eccube/Resource/template/admin/Customer/edit.twig, src/Eccu"
+  },
+  {
+   "rowId": 639,
+   "機能No": "M08-04",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "保存成功時は表示文言「会員情報を保存しました。」を表示する。",
+   "差分内容": "設計の表示文言は会員情報を対象にした「会員情報を保存しました。」だが、実装は共通文言「保存しました」を表示する。別キー「会員情報を保存しました」は対象範囲に不在。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/CustomerEditController.php:211 /home/y-saito/Developments/ec-cube-enterprise/"
+  },
+  {
+   "rowId": 640,
+   "機能No": "M08-05",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "「登録」ボタン（付与）は POST /{admin_route}/customer/point/{id}/update/{type} へ送信し、入力したポイント変動を履歴に追加してポイント履歴画面へ戻る。",
+   "差分内容": "設計は POST エンドポイントを /customer/point/{id}/update/{type} と明記しているが、実装の Route 属性は GET と同じ /customer/point/{id}/{type} を POST に割り当てている。反証として admin_customer_point_update、customer/point/{id}/update、update/{type} を Controller/Twig/route 参照で検索したが、/update セグメントを持つ実装は確認できなかった。",
+   "実装参照": "src/Eccube/Controller/Admin/Customer/CustomerPointController.php:51 / src/Eccube/Resource/template/admin/Customer/point_update.twig:18"
+  },
+  {
+   "rowId": 641,
+   "機能No": "M08-05",
+   "指摘区分": "実装違い",
+   "authorVerdict": "NO_IMPACT",
+   "設計期待値": "種別選択時の遷移先は種別選択画面（admin_customer_point_type_select）とする。",
+   "差分内容": "設計の画面遷移表は admin_customer_point_type_select を遷移先として明記しているが、実装に同名ルートはなく、admin_customer_point_select が使われている。反証として admin_customer_point_type_select、point_type_select、ポイント管理・履歴一覧を Controller/Twig/翻訳キーで検索したが、設計ルート名の実装は確認できなかった。",
+   "実装参照": "src/Eccube/Controller/Admin/Customer/CustomerPointController.php:38 / src/Eccube/Resource/template/admin/Customer/edit.twig:1038"
+  },
+  {
+   "rowId": 642,
+   "機能No": "M08-05",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "会員・選手情報を取得する。いずれも無い場合はページが見つからない扱い（404）とする。",
+   "差分内容": "会員なしは ParamConverter/型解決により 404 になり得るが、選手情報なしの明示的な 404 分岐がない。nullable な Player を null チェックせず参照するため、設計の『会員・選手情報が無い場合は404』と異なる。反証として getPlayer、Player null、NotFoundHttpException、createNotFoundException を CustomerPointController と関連 Twig で検索したが、選手情報なし404は確認できなかった。",
+   "実装参照": "src/Eccube/Entity/Customer.php:1107 / src/Eccube/Controller/Admin/Customer/CustomerPointController.php:85 / src/Eccube/Resource/template/admin/Customer/point_up"
+  },
+  {
+   "rowId": 643,
+   "機能No": "M08-05",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "「登録」ボタン（付与）は POST /{admin_route}/customer/point/{id}/update/{type} に送信し、入力したポイント変動を履歴に追加してポイント履歴画面へ戻る。",
+   "差分内容": "設計は POST エンドポイントの外部契約として /update/{type} を含むパスを指定しているが、実装ルートとフォーム action は /{id}/{type} であり、パス構造が一致しない。反証として customer/point/{id}/update/{type}、admin_customer_point_update、point_update.twig を検索したが /update/{type} のルート定義は確認できなかった。",
+   "実装参照": "src/Eccube/Controller/Admin/Customer/CustomerPointController.php:51; src/Eccube/Resource/template/admin/Customer/point_update.twig:18"
+  },
+  {
+   "rowId": 644,
+   "機能No": "M08-05",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "会員・選手情報が無い場合は404。",
+   "差分内容": "会員なしはParamConverter相当で404になり得るが、選手情報なしの場合の明示的な404処理が実装されていない。反証として getPlayer、Player === null、createNotFoundException、NotFoundHttpException、point_update.twig を検索したが、管理画面ポイント付与で選手情報欠落を404にする実装は確認できなかった。",
+   "実装参照": "src/Eccube/Controller/Admin/Customer/CustomerPointController.php:53; src/Eccube/Controller/Admin/Customer/CustomerPointController.php:85; src/Eccube/Resource/te"
+  },
+  {
+   "rowId": 645,
+   "機能No": "M08-05",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "識別ID:6「保存ボタン」はボタンとして表示される。",
+   "差分内容": "設計の画面部品ラベルは保存ボタンだが、実装画面では登録ボタンとして表示される。反証として 保存、登録、admin.common.registration、point_update.twig を検索したが、当該フォームの送信ボタンに「保存」を表示する実装は見つからなかった。",
+   "実装参照": "src/Eccube/Resource/template/admin/Customer/point_update.twig:82; src/Eccube/Resource/locale/messages.ja.yaml:1443"
+  },
+  {
+   "rowId": 646,
+   "機能No": "M08-05",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "ポイント付与（余剰入金へのご返金、注文金額変更によるご返金）として表示する。",
+   "差分内容": "設計のシート見出しと監査台帳上の機能名は「注文金額変更によるご返金」とする。実装は CustomerPointController が admin.customer.point_update.purchase を画面タイトル用キーとして選択し、messages.ja.yaml の値が「注文金額変更によるご送金」になっているため、返金と送金で意味が異なる。なお同じHTMLシート内の機能名欄には「ご送金」表記もあり、設計側にも表記揺れがある。",
+   "実装参照": "src/Eccube/Resource/locale/messages.ja.yaml:2780 / src/Eccube/Controller/Admin/Customer/CustomerPointController.php:108-110"
+  },
+  {
+   "rowId": 647,
+   "機能No": "M08-05",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "「登録」ボタン（付与）は POST /{admin_route}/customer/point/{id}/update/{type} に送信し、入力したポイント変動を履歴に追加してポイント履歴画面へ戻る。",
+   "差分内容": "設計は POST URL を /customer/point/{id}/update/{type} と明記しているが、実装の Route は GET と同じ /customer/point/{id}/{type} に POST を割り当てている。反証として customer/point/{id}/update、update/{type}、admin_customer_point_update を Controller/Twig/Route 定義範囲で検索したが、/update/{type} の実装は見つからなかった。",
+   "実装参照": "src/Eccube/Controller/Admin/Customer/CustomerPointController.php:51, src/Eccube/Resource/template/admin/Customer/point_update.twig:17"
+  },
+  {
+   "rowId": 648,
+   "機能No": "M08-05",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "会員・選手情報が無い場合はページが見つからない扱い（404）とする。",
+   "差分内容": "設計は会員または選手情報が無い場合の 404 を要求しているが、実装は Player null を 404 に変換せずメソッド呼び出しへ進む。反証として getPlayer, Player, notFound, createNotFoundException, 404 を CustomerPointController/Customer Entity 周辺で確認したが、選手情報なしを 404 とする処理は見つからなかった。",
+   "実装参照": "src/Eccube/Controller/Admin/Customer/CustomerPointController.php:53, src/Eccube/Controller/Admin/Customer/CustomerPointController.php:85, src/Eccube/Entity/Cust"
+  }
+ ]
+}

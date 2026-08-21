@@ -1,0 +1,165 @@
+{
+  "packetId": "rest_44",
+  "results": [
+    {
+      "rowId": 1154,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0212_基本設計仕様書(デッキ管理).html:1133,1136 の正本セルは「識別ID:25『イベントID』を『イベント詳細ID』に差し替える」「検索項目『イベントID』を『イベント詳細ID』に差し替える」と明記する。private/event_id というフォーム物理キーの指定は正本部分（sheet-3 の埋め込み開始前）に存在しない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/Deck/SearchDeckType.php:94-103 は `->add('private', 'choice', [...])`、同:223-230 は `->add('event_id', 'text', [...])`。/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Repository/DtbDeckRepository.php:279-282 は `SqlUtil::searchByIds($qb, $searchData['event_id'], 'ed', 'eventId');` であり、指摘の期待値は旧実装には存在するが、正本の差替要件とは逆である。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/SearchDeckType.php:171-178 は `->add('event_detail_id', TextType::class, [...])`、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbDeckRepository.php:295-298 は `SqlUtil::searchByIds($qb, $searchData['event_detail_id'], 'ed', 'id');`。正本どおりイベント詳細IDへ差替済みである。",
+      "note": "private_flg はフォーム内部キーの改名にすぎず、正本に private という物理キー契約はない。指摘は旧実装の物理名を設計期待値にしており、イベントIDについては正本と正反対。"
+    },
+    {
+      "rowId": 1155,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0212_基本設計仕様書(デッキ管理).html:1130 は「カード名が指定された場合は、カード名（日）・カード名（英）から完全一致検索」、同:1171 の項目表は「カード名／文字列／100文字」とだけ記載し、data-list、ul.cardNameList、deck_card.js の具体記述は正本部分にない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/Deck/SearchDeckType.php:208-210 は `'data-list' => ... '/list/cardNameList', 'class' => 'cardNameBox'`、/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Deck/deck.twig:31 は `<script src=\"{{ url('assets', {path: 'js/deck_card.js'}) }}\">`、同:131-132 は `form_row(searchForm.card)` と `<ul class=\"cardNameList\"></ul>` を実装している。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/SearchDeckType.php:164-170 は通常の `TextType` で data-list 属性がなく、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Deck/index.twig:346-356 は `form_widget(searchForm.card)` のみ。確認範囲 `src/Eccube/Resource/template/admin/Deck,index.twig` と `src/Eccube/Form/Type/Admin/SearchDeckType.php` で `cardNameList|deck_card.js|data-list` は該当なし。",
+      "note": "具体的な候補UIの根拠は正本ではなく pf-eccube3。正本の「カスタマイズ要件以外は現行踏襲」という一般記述だけでは、この個別DOM/資産契約の直接根拠とは扱わなかった。"
+    },
+    {
+      "rowId": 1157,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0212_基本設計仕様書(デッキ管理).html:1785 は「一覧左側のチェックボックスを選択したデッキ情報のCSVがダウンロードされる」とするが、未選択時の alert 文言・送信中断は正本部分に記載がない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/assets/js/deck-search.js:38-42 は `if ($('.searched_deck_id:checked').length === 0) { alert('CSV出力するデッキをひとつ以上選択してください。'); return false; }` と実装する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Deck/index.twig:204-215 の `#bulk_form` submit はCSRFトークン差替のみで未選択ガードがない。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Deck/DeckController.php:812-815 はPOST後に `addError('admin.deck.csv_export_no_selection')` してリダイレクトする。",
+      "note": "alert による送信前中断の直接根拠は旧実装。"
+    },
+    {
+      "rowId": 1158,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0212_基本設計仕様書(デッキ管理).html:1791 は個別メニューについて「削除　確認ダイアログを表示し、OKを選択したらデッキを削除する」とだけ記載し、削除後のセッション page_no による戻り先は正本部分にない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/DeckController.php:372-380 は `$pageNo = $request->getSession()->get('admin.deck.search.page_no')` を読み、同:406-408 は削除成功後 `!empty($pageNo) ? ... admin_deck_search ... : ... admin_deck_list` を返す。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Deck/DeckController.php:389-390 は個別削除ルート、同:424-426 は成功後に常に `return $this->redirectToRoute('admin_deck_list');` とする。",
+      "note": "検索ページ維持条件の根拠は pf-eccube3 の削除処理。"
+    },
+    {
+      "rowId": 1159,
+      "verdict": "UNCERTAIN",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0212_基本設計仕様書(デッキ管理).html:1784 はソート順を「選択肢: 昇順 降順」とするだけで、不正 sort/order 時の admin.error.sort やセッション初期化は正本部分に記載がない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/SearchControllerTrait.php:140-143 は不正 order に対し `$app->addError('admin.error.sort', 'admin'); return $this->index($app, $request);` とする。一方、/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Repository/DtbDeckRepository.php:296-299 は不正 sort を検証せず `$sortKey[$searchData['sort']]` を直接参照しており、「不正ソートキーでも admin.error.sort」の根拠は確認できない。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/SearchControllerTrait.php:142-145 は不正 order で `addError('admin.error.sort')` 後に同じ Request で `index()` を呼ぶ。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbDeckRepository.php:315-320 は不正 sort/order を既定値へフォールバックする。",
+      "note": "複合期待値のうち不正 order は旧実装で裏付くが、不正 sortKey に admin.error.sort を出す挙動は旧実装にもない。さらに現行の同一Requestでの index 再呼出しが最終的に初期画面・再帰・別応答のどれになるか実行確認が不足しているため、finding 全体を単一判定できない。"
+    },
+    {
+      "rowId": 1160,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0212_基本設計仕様書(デッキ管理).html:1766 の正本セルは「識別ID:6『CSV出力(旧サイト仕様)』を除去する」と明記する。したがって旧サイトCSVの2系統化は設計期待値ではなく、除去対象である。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/DeckServiceProvider.php:59-62 は通常 `csvexport` と `csvexport_old` の2ルート、/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Deck/deck.twig:172-173 は `csvexport` と `csvexport_old` の2ボタンを持つ。これは正本で除去指定された旧挙動である。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Deck/index.twig:401-405 は `admin_deck_csv_export` のボタン1つだけ。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Exporter/DeckCsvExporterService.php:30-55 は `CSV_TYPES = ['deck' => ...]` の1系統で、正本の除去要件を満たす。",
+      "note": "旧サイトCSVが無いこと自体が正本要件どおり。誤検出。"
+    },
+    {
+      "rowId": 1162,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0212_基本設計仕様書(デッキ管理).html:1785 は選択済みデッキのCSV出力だけを記載し、未選択時のクライアント alert 文言は正本部分にない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/assets/js/deck-search.js:38-42 は `alert('CSV出力するデッキをひとつ以上選択してください。'); return false;` を実装する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Deck/index.twig:204-215 のsubmit処理には未選択判定がなく、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Deck/DeckController.php:812-815 でサーバ側フラッシュ＋リダイレクトとなる。",
+      "note": "rowId 1157 と同一の旧実装根拠を別findingとして監査した。"
+    },
+    {
+      "rowId": 1163,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0212_基本設計仕様書(デッキ管理).html:2158-2159 の正本セルは「4枚制限…『n 行目の {カード名} が5枚以上登録されています』」「1枚制限…『n 行目の {カード名} 2枚以上登録されています』」と条件・文言を明記する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/locale/message.ja.yml:1426-1427 は `more_than_four: %d 行目の %s が5枚以上登録されています`、`not_highlander: %d 行目の %s が2枚以上登録されています`。旧実装にも正本文言が存在する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Deck/DeckValidationService.php:247-259 は1枚制限を `restricted`、4枚超過を `more_than_max` に割り当てる。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:4408-4410 はそれぞれ「は制限カードです」「が2枚以上登録されています（Highlander用）」「が%count%枚を超えて登録されています」で、正本文言・条件と一致しない。",
+      "note": ""
+    },
+    {
+      "rowId": 1164,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0212_基本設計仕様書(デッキ管理).html:2185-2186 の正本セルは「★画面の変更にあわせて、登録/更新ロジック内に記載されている」「項目『DCIナンバー』を除去する」と明記する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/DeckController.php:328-332 の旧保存マッピングは `'dciNo' => 'setDciNo'` を持つため、正本はこの旧ロジックからの除去を指示している。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Deck/DeckStoreAction.php:102-105 は保存入力へ `dciNo: $Deck->getDciNo()` を渡し、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/EntityManager/DeckEntityManager.php:86-88 は `$Deck->setDciNo($dciNo);` と永続化する。複製も /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Deck/DeckCopyAction.php:50-53 で `dciNo` を引き継ぐ。",
+      "note": "正本が明示するDCIナンバー除去に限定して SPEC_BACKED。finding本文に併記された旧デッキIDについても正本の別セルに除去指示があるが、本判定の成立に不要。"
+    },
+    {
+      "rowId": 1165,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0212_基本設計仕様書(デッキ管理).html:2758 は「カスタマイズ要件に記載の内容以外は現行踏襲」とするが、GET/POSTルート名 `admin_deck_csv`、パス `/deck/csvimport` の具体記述は正本部分にない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/DeckServiceProvider.php:53-57 は `GET .../deck/csvimport` を `admin_deck_csv`、`POST .../deck/csvimport` を `admin_deck_csv_import` にbindする。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Deck/DeckCsvController.php:58-59 は `/{admin_route}/deck/csv_import`、route name `admin_deck_csv_import` のGET/POST共通ルート。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Deck/index.twig:225-226 のリンクも `admin_deck_csv_import` を参照する。",
+      "note": "具体的URL・route name の根拠は旧実装。packet記載のPOST名 `m15-06_admin_deck_deck_csv_import` はリバース文書上の調査補助名で、pf-eccube3実コードのbind名は `admin_deck_csv_import`。"
+    },
+    {
+      "rowId": 1166,
+      "verdict": "UNCERTAIN",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0212_基本設計仕様書(デッキ管理).html:2755,2773,2777 の正本セルは「TSVアップロードを廃止」「『TSV』の文言を除去」「ファイル拡張子『TSV』をエラー扱い」と明記し、findingのTSV許容期待と正反対である。一方、MIME許可セットの具体指定は正本部分にない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Deck/deck_csv_import.twig:27-29 は `accept: '.csv, text/csv, .tsv, text/tsv'`、/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/CsvMimeTypeValidator.php:19-30 は `text/plain,text/csv,text/tab-separated-values,application/vnd.ms-excel` を許可する。TSV/MIME期待は旧実装由来。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Deck/DeckCsvController.php:100-103 は拡張子がcsv以外をエラーにし、正本のTSV廃止を満たす。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/CsvImportType.php:52-57 の `Assert\\File` はmaxSizeのみでMIME制約はない。",
+      "note": "単一finding内で、TSV許容は正本に明示的に否定され新実装が既に満たす一方、MIME検証は旧実装にあり新実装にない。どちらを主たる指摘とするか分離されていないため単一 verdict を確定できない。findingを「TSV許容」と「CSV MIME検証」に分割すれば前者ALREADY_MET、後者LEGACY_BACKED。"
+    },
+    {
+      "rowId": 1167,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0212_基本設計仕様書(デッキ管理).html:2756,2774,2778 の正本セルは「厳密にチェックするチェックボックスは不要のため削除」「識別ID:3…を除去」「有効な場合に実行されている処理を除去」と明記する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/DeckCsvController.php:53-63 は `->add('strict', 'checkbox', ...)` と `$deckCsv->setIsStrict($form['strict']->getData())` を実装するが、これは正本で除去指定された旧挙動である。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/CsvImportType.php:47-73 の項目は `import_file/force_file_to_db/is_split_csv/csv_file_no` でstrictがなく、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Deck/csv_import.twig:89-98 にもstrict入力がない。正本の除去要件を満たす。",
+      "note": "strictが無いこと自体が設計どおり。誤検出。"
+    },
+    {
+      "rowId": 1168,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0212_基本設計仕様書(デッキ管理).html:2775,2779 は勝敗引分列と旧デッキID/DCIの除去を指示し、同:2984-2986,2989,3003 の各列備考も「項目除去する」と明記する。同:2990 は「タグ…※カスタマイズ対応、項目追加」。したがって正本は旧24列ではなく、5列除去＋tags追加後の20列を要求する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/DeckCsvController.php:182-209 は `win_count/loss_count/draw_count/dci_no/old_deck_id` を含む旧24列ヘッダを返す。findingの24列期待は旧実装由来で、正本のカスタマイズ指示前の状態である。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Deck/DeckCsvController.php:177-200 は勝敗引分/DCI/旧デッキIDを除き `tags` を加えた20列を返す。正本の列除去・追加要件と一致する。",
+      "note": "旧24列を期待する指摘は正本のカスタマイズ差分を逆に読んだ誤検出。"
+    },
+    {
+      "rowId": 1169,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0212_基本設計仕様書(デッキ管理).html:2761-2763 は「エラーがあれば登録を中止してメッセージを表示する」とするが、成功・失敗ともHTTP 302でGETへ戻すことやフラッシュキュー利用は正本部分に明記されない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/DeckCsvController.php:64-70,94-106 は失敗時も成功時も `$deckCsv->render()` を返し、/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/DeckCsv.php:369-380 の `render()` は `return $this->app->redirect($this->app->url('admin_deck_csv'));` とする。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Deck/DeckCsvController.php:77-83,135-145 はフォーム無効・例外・取込エラーで `renderWithErrors()` を直接返し、同:157-159 は成功時だけ `addSuccess` 後に `redirectToRoute('admin_deck_csv_import')` とする。",
+      "note": "失敗時もPRG（POST-Redirect-GET）にする具体挙動の根拠は旧実装。"
+    },
+    {
+      "rowId": 1170,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0212_基本設計仕様書(デッキ管理).html:2769 は「デッキリスト公開の場合はデッキリストをDtbDeckCardに登録する」とするが、再取込時に既存明細を削除しない、INSERTのみという具体記述は正本部分にない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/DeckCsv.php:153-162 は公開時に `CardUtil::setDeckCards(...)` で新規明細を積み、同ファイルの取込登録経路には既存 `DtbDeckCard` の `remove` がない（確認範囲: 同ファイル:90-170、検索語 `remove|deckCards|setDeckCards`）。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/DeckUpdateImportHandler.php:357-363 は保存前に `$this->deleteDeckCards($Deck);`、同:614-618 は既存明細を `findBy(['Deck' => $Deck])` して `$this->em->remove($DeckCard);` とする。",
+      "note": "「既存削除なし」は旧実装の実際の処理構造に由来し、正本には明示されない。"
+    },
+    {
+      "rowId": 1171,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0212_基本設計仕様書(デッキ管理).html:2760-2763 はCSVアップロードと入力チェックを要求するが、spin.min.js、card-csvimport.js、#spinner、submit時無効化の具体記述は正本部分にない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Deck/deck_csv_import.twig:11-13 は `spin.min.js` と `card-csvimport.js` を読み、同:36 は `<div id=\"spinner\"></div>`。/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/assets/js/card-csvimport.js:21-27 はsubmit時にupload/downloadボタンをdisabledにしてspinnerを開始する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Deck/csv_import.twig:46-63 はファイル選択・ファイル名表示・upload-button有効化だけで、同:89-98 に#spinnerがない。確認範囲 `src/Eccube/Resource/template/admin/Deck`, `html` で `card-csvimport|spin.min|#spinner` は当画面に該当なし。",
+      "note": "二重送信抑止・spinnerの具体実装根拠は旧実装。"
+    },
+    {
+      "rowId": 1172,
+      "verdict": "UNCERTAIN",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0212_基本設計仕様書(デッキ管理).html:2755,2773 は「TSVアップロードを廃止」「表記されている『TSV』の文言を除去」と明記し、findingのCSV, TSV表記期待を否定する。一方、title/sub_title の配置と `nl2br` は正本部分に文字で指定されていない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Deck/deck_csv_import.twig:5-6 は title「デッキ管理」/sub_title「デッキ登録CSV, TSVアップロード」、同:23,27,39,50 はCSV, TSV表記を持つ。このうちTSV表記は正本で明示的に除去対象となった旧挙動である。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Deck/csv_import.twig:5-6 は title=`admin.deck.csv_upload_title`、sub_title=`admin.deck.deck_management`、同:119-120 は説明値をそのまま表示する。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:4448-4450 は「デッキ登録CSVアップロード」「デッキ登録CSV」「デッキ登録CSVファイルフォーマット」でTSV表記がなく、正本のTSV除去は満たす。",
+      "note": "findingは、正本に反する旧TSV文言と、正本に明記のないtitle配置/nl2brを一つに混在させている。TSV部分はALREADY_METだが、title配置/nl2brを移植対象とみなすかは旧実装以外の判断材料がないため、全体はUNCERTAIN。"
+    },
+    {
+      "rowId": 1173,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0212_基本設計仕様書(デッキ管理).html:2758 は「カスタマイズ要件に記載の内容以外は現行踏襲」とするが、URL `/deck/csvimport` やroute nameは正本部分に具体記載がない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/DeckServiceProvider.php:53-57 はGET/POSTとも `.../deck/csvimport` を登録し、GET bind=`admin_deck_csv`、POST bind=`admin_deck_csv_import` とする。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Deck/DeckCsvController.php:58-59 はGET/POST共通の `.../deck/csv_import`、name=`admin_deck_csv_import`。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Deck/csv_import.twig:89 も `url('admin_deck_csv_import')` をform actionにする。",
+      "note": "rowId 1165 と同じURL契約の重複finding。packetのPOST補助名は実コードのbind名とは一致しないが、パス差分とGET名は旧実装で裏付く。"
+    },
+    {
+      "rowId": 1174,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0212_基本設計仕様書(デッキ管理).html:2760-2763 はCSVアップロードと入力チェックを記載するが、spin.min.js/card-csvimport.js/#spinner/submit無効化は正本部分に記載がない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Deck/deck_csv_import.twig:11-13,36 は2本のJS読込と `<div id=\"spinner\"></div>`、/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/assets/js/card-csvimport.js:24-27 はsubmit時のボタンdisabledとspinner開始を実装する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Deck/csv_import.twig:46-63 はファイル選択後のボタン有効化まででsubmitハンドラがなく、同:89-98 にspinner要素・外部JS読込がない。",
+      "note": "rowId 1171 と同一の旧実装根拠を別findingとして監査した。"
+    },
+    {
+      "rowId": 1175,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0212_基本設計仕様書(デッキ管理).html:2760-2763 は「各項目の入力チェックを行い、エラーがあれば登録を中止」とするが、MIME許可セットや翻訳付きMIMEエラーの具体記述は正本部分にない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/CsvImportType.php:28-38 は必須・maxSizeに加えて `new CsvMimeType($this->app)` を指定し、/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/CsvMimeTypeValidator.php:19-31 は許可MIMEを照合して `admin.csv.error.upload.mime` のviolationを追加する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/CsvImportType.php:48-57 は `NotBlank` とmaxSize付き `Assert\\File` のみでmimeTypes指定なし。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Deck/DeckCsvController.php:100-103 はクライアント拡張子だけをcsv判定し、MIMEを検証しない。",
+      "note": "具体的MIME検証の根拠は旧実装。正本のTSV廃止後もCSVとして許容するMIMEの検証要否は別論点であり、このfindingはMIME検証単独なのでLEGACY_BACKED。"
+    }
+  ]
+}

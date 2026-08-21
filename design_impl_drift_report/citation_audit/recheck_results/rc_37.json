@@ -1,0 +1,149 @@
+{
+  "packetId": "rc_37",
+  "results": [
+    {
+      "rowId": 657,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0207 sheet-15 のExcel正本領域を「404」「会員英語」「会員（英語）」「ベースなし」「BASE_CUSTOMER」で検索し0件。src-cell の 0207:手動メール通知(入力画面)!AG59 は「選択すると画面を更新して、当該のテンプレートを呼び出す」とだけ記載する。sheet-15のレイアウト画像（840x620）も実物確認したが、テンプレート種別制限・404条件の記載はない。",
+      "reason": "Excel正本には具体的な3ベース制限と範囲外IDの404がない。一方、旧実装 /home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/CustomerController.php の manualMail()（214-225行）は file_name を BASE_CUSTOMER、BASE_CUSTOMER_EN、BASE_NO_BASE に限定し、不一致時に `throw new NotFoundHttpException();` とするため、LEGACY_BACKEDが妥当。現実装では選択肢だけを絞っており、URL引数のMailTemplateを拒否しない。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/Admin/Customer/CustomerMailController.php の manual_mail()（188-235行）は `#[MapEntity(id: 'template_id')] ?MailTemplate $MailTemplate` を受け、存在すれば `$this->renderView($MailTemplate->getFileName(), ...)` を実行する。src/Eccube/Form/Type/Admin/CustomerManualMailType.php の buildForm()（34-59行）は選択肢query_builderを file_name で絞るだけ。関連イベントの購読実装も src/app 横断検索で0件で、範囲外テンプレートを404にする分岐はない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 658,
+      "originalClass": "UNCERTAIN",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0207 sheet-15 のExcel正本セル AG60/AG61（HTML 4101-4102行）を確認し、未選択時は件名・本文の「初期値を空欄にする」とあるが、入力欄を非表示にする記載はない。sheet-15のレイアウト画像（840x620）も確認し、件名欄と本文領域が描かれている。旧Twigも実物確認し、件名は常時、本文textareaだけが `{% if mail is not null %}` 内だった。",
+      "reason": "「件名も本文も非表示」という一体の期待値はExcel正本にも旧実装にも裏付けられないが、本文textareaのテンプレート選択時のみ表示は旧実装が裏付ける。単一findingのままではSPEC_BACKED/LEGACY_BACKED/UNSUPPORTEDのいずれにも確定できず、元のUNCERTAINは妥当。現在も入力画面は両欄を常時描画するため、記載された現行挙動自体は再現する。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Resource/template/admin/Customer/mail_manual.twig は `form.mail_subject`（78行）と `form.body`（85行）をMailTemplate条件なしで常時描画する。CustomerMailController::manual_mail()（213-224行）はMailTemplateがある場合だけ値を設定するが、表示条件は変更しない。",
+      "severityOpinion": "low",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 659,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0207 sheet-15 のExcel正本領域を `mail[subject]`、`mail_body`、`mail[header]`、`mail[footer]` で検索し全て0件。正本項目表は E60「件名」、E61「メール本文」と画面項目を定義するだけ。旧Twig 45-52行で `form.subject`、`name=\"mail[header]\"`、`name=\"mail[footer]\"`、`name=\"mail_body\"` を実物確認した。",
+      "reason": "POSTキーとheader/footer hiddenという具体契約はExcel正本に書かれず、旧実装だけが根拠なのでLEGACY_BACKEDを維持する。現実装は別のフォームキーと、レンダリング済み本文を送る構成であり、旧契約との差は残る。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Form/Type/Admin/CustomerManualMailType.php の getBlockPrefix()（92-96行）は `admin_customer_manual_mail`、buildForm()（62-78行）は `mail_subject` と `body` のみを定義する。src/Eccube/Resource/template/admin/Customer/mail_manual.twig（36-86行）にもheader/footer hiddenはない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 660,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0207 sheet-15/16 のExcel正本領域を `dtb_user_mail_history`、`customer_id`、`template_id`、`subject`、`mail_body`、`send_date` で確認したが、対象テーブル・列を定義するsrc-cellはない。関連する0408正本では別機能「リニューアル時パスワードリセットメール送信」の D25/C119 に dtb_user_mail_history があり、別機能「ポイント有効期限通知」の C114 には dtb_mail_history があるため、前者を手動メールの直接根拠にはできない。",
+      "reason": "手動メールの保存先と列契約は旧実装のMailService::saveUserMailHistory()およびDoctrine定義が直接根拠で、手動メール正本にはない。関連バッチ正本は機能ごとに保存先が異なり、手動メールの期待値を確定しないためLEGACY_BACKEDを維持する。現実装はdtb_mail_historyへ保存する。",
+      "currentImpl": "ec-cube-enterprise 現状: CustomerMailController::manual_mail()（263-267行）は MailHistoryEntityManager::save() を呼ぶ。同 save()（src/Eccube/Service/EntityManager/MailHistoryEntityManager.php 33-67行）は `new MailHistory()` をpersistし、src/Eccube/Entity/MailHistory.php 25行は `#[ORM\\Table(name: 'dtb_mail_history')]`、53-57行は `mail_subject`/`mail_body` を定義する。DtbUserMailHistoryは定義以外の参照がない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 661,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "REFUTED",
+      "correctedClass": "UNSUPPORTED",
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0207 sheet-15/16 のExcel正本領域を「作成者」「creator_id」「送信履歴」で確認したが、手動メール履歴の作成者を記録しないというsrc-cellは0件。旧実装の MailService::saveUserMailHistory() 1801-1806行は一旦 `setCreator($creator)`（既定null）を呼ぶが、旧EC-CUBE3本体 src/Eccube/Doctrine/EventSubscriber/SaveEventSubscriber.php の prePersist() 66-69行は管理画面かつsetCreatorを持つエンティティにログインMemberを設定することを実物確認した。",
+      "reason": "先行判定は旧MailServiceの既定nullだけを見ており、flush時の旧SaveEventSubscriberを見落としている。旧実装でも管理者操作ならcreatorが設定されるため、「旧仕様は作成者を持たない」は旧実装にもExcel正本にも根拠がなくUNSUPPORTED。現実装でもcreator設定は再現するが、これは有効な設計乖離の再現を意味しない。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Entity/MailHistory.php（66-68、181-193行）は creator_id と setCreator() を持つ。src/Eccube/Doctrine/EventSubscriber/SaveEventSubscriber.php の prePersist()（51-55行）は現在のMemberを解決できれば `setCreator($creator)` を呼ぶため、管理画面からpersistされるMailHistoryにはcreatorが設定される。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 662,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0207 sheet-15/16 のExcel正本領域を「店舗名プレフィックス」「プレフィックス」で検索し0件。正本 C45/C46（HTML 4084-4085行）は「手動メール送信の送信前プレビュー機能」「メール送信確認画面でプレビュー」と記すが、送信件名を無加工にするとは明記しない。旧 MailService::sendManualMail() 93-102行の `setSubject($content['mail']['subject'])` を実物確認した。",
+      "reason": "無加工の件名という具体値は旧実装だけが直接裏付ける。プレビュー要件から同一性は推測できるが、厳密な店舗名プレフィックス禁止まではExcel正本に明記されないためLEGACY_BACKEDを維持する。現実装のプレフィックス付与は残る。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Service/MailService.php の sendCustomerManualMail()（1085-1105行）は `->subject('['.$this->BaseInfo->getShopName().'] '.$formData['mail_subject'])` として送信する。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 663,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "REFUTED",
+      "correctedClass": "SPEC_BACKED",
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0207 sheet-15 のExcel正本テキストでは C45/C46/B51 に「手動メール送信」が実在する。さらに data-excel-ref `0207:手動メール通知(入力画面)!A1` のレイアウト画像（840x620）を抽出して実物確認し、画面カード見出しが明確に「手動メール送信」と表示されている。先行の「項目表にない」という確認だけでは画像を見落としていた。",
+      "reason": "表示見出しはExcel正本のレイアウト画像に明記されているため、LEGACY_BACKEDではなくSPEC_BACKED。旧Twigの同文言は補強証拠にすぎない。現実装は同じ表示位置で「手動メール通知」を使うため、乖離は現在も再現する。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Resource/template/admin/Customer/mail_manual.twig のカードタイトル（43-45行）とページタイトル（5行）は `admin.customer.manual_mail` を表示し、src/Eccube/Resource/locale/messages.ja.yaml 2746行の値は「手動メール通知」。会員手動メール入力画面で「手動メール送信」を表示する経路はない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 664,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0207 sheet-16 のExcel正本セル E68/AG68（HTML 4301行）に「会員編集画面へ戻る」「当該の会員情報編集画面へ遷移する」が実在する。sheet-16のレイアウト画像（840x727）も実物確認し、上部ボタンは「会員編集画面に戻る」と描かれている。",
+      "reason": "Excel正本のセルとレイアウト画像の両方が、確認画面から会員編集画面へ戻る動線を要求するためSPEC_BACKEDは正しい。現実装の確認画面はbackをPOSTして入力画面を再表示する。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Resource/template/admin/Customer/mail_manual_confirm.twig（13-18、91行）は `id=\"back\"` でmode=backをPOSTし、文言は `admin.customer.manual_mail`。CustomerMailController::manual_mail()（242-284行）のswitchはconfirm/completeのみで、backはdefault後に288-292行の入力画面データ返却へ進む。confirm側にadmin_customer_editリンクはない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 665,
+      "originalClass": "UNCERTAIN",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "MISDESCRIBED",
+      "checkedQuote": "0207 sheet-16 のExcel正本セル E66/AG66、E67/AG67（HTML 4299-4300行）は確認画面で件名・本文を「入力画面から引き継いだ」値として出力すると定義する。sheet-16レイアウト画像（840x727）も確認し、件名と本文は表示値として描かれている。テンプレート未選択時の非表示条件はない。sheet-15のAG60/AG61も未選択時は「初期値を空欄にする」とだけ記す。",
+      "reason": "findingは確認画面を対象にしながら、実装実態には入力画面mail_manual.twigのtextarea描画を混在させている。旧実装に新規確認画面はなく、件名非表示も裏付けないためUNCERTAINは妥当。現確認画面は入力欄を常時表示するのではなく、値をテキスト表示しフォーム要素をhidden化しており、記載された実装実態は対象画面について誤り。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Resource/template/admin/Customer/mail_manual_confirm.twig（66-81行）は件名を `form.mail_subject.vars.data`、本文を `form.body.vars.data` で表示し、mail_subjectはhidden type、body widgetは`display:none`内に置く。rows=20の常時表示textareaは入力画面 mail_manual.twig 85行であり、確認画面ではない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 666,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0207 sheet-16 のExcel正本領域を「404」「会員英語」「会員（英語）」「ベースなし」「BASE_CUSTOMER」で検索し0件。sheet-16のレイアウト画像（840x727）も実物確認したが、テンプレート種別制限・404条件の記載はない。旧 CustomerController::manualMail() 214-225行の3ベース限定とNotFoundHttpExceptionを実物確認した。",
+      "reason": "3ベース限定と範囲外IDの404は旧実装由来であり、確認画面正本にはないのでLEGACY_BACKEDを維持する。現行の同一manual_mail()は入力・確認をmodeで処理するが、URL引数のMailTemplateを拒否しない。",
+      "currentImpl": "ec-cube-enterprise 現状: CustomerMailController::manual_mail()（188-235行）は任意IDをMapEntityで取得し、存在すればfile_nameをrenderViewする。CustomerManualMailType::buildForm()（34-59行）の3系統相当のfile_name絞り込みは選択肢query_builderだけで、直接URLの404検証ではない。イベント購読実装も見つからない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 667,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0207 sheet-16 のExcel正本セル AG66/AG67（HTML 4299-4300行）は「入力画面から引き継いだ件名」「入力画面から引き継いだメール本文」を確認画面に出力すると記す。C52/B57等は送信前プレビューを要求するが、実送信件名への店舗名プレフィックス禁止は明記しない。旧 MailService::sendManualMail() 93-102行は入力件名を無加工でsetSubjectすることを実物確認した。",
+      "reason": "確認表示値はSPEC_BACKEDだが、「実送信も必ず無加工」というfindingの厳密な期待値は旧実装が直接根拠なのでLEGACY_BACKEDを維持する。現実装は確認表示後に店舗名を追加し、その件名を履歴にも保存するため差は残る。",
+      "currentImpl": "ec-cube-enterprise 現状: mail_manual_confirm.twig 73行は入力件名をそのまま表示するが、MailService::sendCustomerManualMail()（1089-1096行）は送信時に `[店舗名] ` を前置する。MailHistoryEntityManager::save()（39-44行）はそのEmailのgetSubject()を履歴へ保存する。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 670,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0207 sheet-16 のExcel正本領域を `dtb_user_mail_history`、`customer_id`、`template_id`、`subject`、`mail_body`、`send_date` で確認したが、対象テーブル・列を定義するsrc-cellはない。関連0408正本ではパスワードリセットメールだけがdtb_user_mail_history、ポイント有効期限通知はdtb_mail_historyを指定しており、手動メール確認画面の直接根拠にはならない。",
+      "reason": "確認画面からの送信後保存先という具体契約は旧MailServiceと旧Doctrine定義だけが直接裏付けるためLEGACY_BACKEDを維持する。現在も保存先はdtb_mail_historyで、旧テーブルは未使用。",
+      "currentImpl": "ec-cube-enterprise 現状: CustomerMailController::manual_mail()（259-267行）はcomplete時にMailHistoryEntityManager::save()を呼ぶ。同save()（39-67行）はMailHistoryをpersistし、MailHistory.php 25行はdtb_mail_history、53-57行はmail_subject/mail_bodyへマップする。DtbUserMailHistory.php 21-24行はdtb_user_mail_historyかつdeprecatedで、src/app/tests横断検索では定義以外の利用0件。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    }
+  ]
+}

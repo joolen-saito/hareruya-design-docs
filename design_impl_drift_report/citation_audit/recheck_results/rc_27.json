@@ -1,0 +1,149 @@
+{
+  "packetId": "rc_27",
+  "results": [
+    {
+      "rowId": 490,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0202_基本設計仕様書(在庫管理機能).html の sheet-24 を `admin.history.search`、`検索条件`、`CSV出力` で確認した。Excel正本の 0202:在庫変動履歴CSV出力!D45 には「在庫履歴検索一覧(検索入力)の検索条件でデータを取得しCSV出力する」とあるが、`admin.history.search` とフォーム復元手順は正本領域にはなく、function-design-embed 内の記述だった。",
+      "reason": "Excel正本は検索条件に一致する結果という外部契約を定めるだけで、セッションキーと復元手順までは定めない。具体手順は旧実装 pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Product/HistoryController.php の getQueryBuilderForExport() に由来するため、LEGACY_BACKED は妥当。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/Admin/Stock/StockHistoryController.php の csvStockHistoryExport() は POST の `ids` を整数配列にし、StockHistoryCsv::exportCsv($stockHistoryIds) に渡す。src/Eccube/Resource/template/admin/Stock/history.twig の form_bulk は PaginationAll を反復して `<input type=\"hidden\" name=\"ids[]\" value=\"{{ StockHistory.id }}\">` を生成する。CSV endpoint 内で検索セッションを復元する処理はない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 491,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "sheet-24 の Excel正本領域を `product_stock_history_`、`ファイル名`、`年月日時分秒` で確認したが具体的ファイル名は0件。正本 0202:在庫変動履歴CSV出力!C41 は「カスタマイズ要件に記載の内容以外は現行踏襲とする。」であり、`product_stock_history_` は function-design-embed 内にのみ存在した。",
+      "reason": "具体的な prefix は旧実装 pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/HistoryCsv.php の exportCsv() にある `$filename = \"product_{$type}_history_\" . $now->format('YmdHis') . '.csv';` に由来する。したがって分類はLEGACY_BACKEDのままでよい。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Service/Csv/StockHistoryCsv.php の exportCsv() は `$filename = $this->createFileName('stock_history_');` のままで、prefix は `stock_history_`。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 492,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "sheet-24 の src-cell を確認し、0202:在庫変動履歴CSV出力!B14 が「7」、同!E14 が「在庫区分」、同!E52 が「識別ID:7在庫区分を追加」と実在することを確認した。",
+      "reason": "識別ID 7 の列名はExcel正本が直接定義しており、SPEC_BACKED は正しい。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/Admin/Stock/StockHistoryController.php の getStockHistoryCsvHeader() は7列目を `'在庫場所' => ''` とする。src/Eccube/Service/Csv/StockHistoryCsv.php の convertExportCsvRows() も `'在庫場所' => $ProductStock->getLocationName()` を出力し、「在庫区分」ヘッダーはない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 493,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "sheet-24 の Excel正本領域を `状態`、`メモ`、`memo`、`状態名` で確認した。正本 0202:在庫変動履歴CSV出力!E11 は列名「状態」のみで、メモ優先の値決定規則はない。規則は function-design-embed 内だけにあった。",
+      "reason": "具体規則は旧実装 pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/HistoryCsv.php の convertStockHistoryCsvRow() にある `$row[] = !is_null($data['memo']) ? $data['memo'] : $data['condition'];` が根拠であり、LEGACY_BACKED は妥当。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Service/Csv/StockHistoryCsv.php の convertExportCsvRows() は `'状態' => $ProductClass->getCardCondition()->getCode()` を無条件で使用し、規格拡張メモを優先する分岐はない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 494,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "sheet-24 の Excel正本領域を `0件`、`該当0件`、`ヘッダ行`、`対象なし` で確認したが0件時の扱いは記載されていない。0202:在庫変動履歴CSV出力!C41 の「カスタマイズ要件に記載の内容以外は現行踏襲とする。」のみで、ヘッダのみ出力の具体記述は function-design-embed 内だった。",
+      "reason": "0件でも先にヘッダを書き出す挙動は旧実装 pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/HistoryCsv.php の exportCsv() で確認できるため、LEGACY_BACKED は妥当。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/Admin/Stock/StockHistoryController.php の csvStockHistoryExport() はID配列が空なら responseNoStockHistoryIdError() へ返す。src/Eccube/Service/Csv/StockHistoryCsv.php の exportCsv() もID不在・履歴不在または変換行0件で RuntimeException を投げ、ヘッダ書込コールバックに到達しない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 495,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "sheet-24 の Excel正本領域を `登録日`、`create_date`、`registered_at`、`Y/m/d H:i` で確認した。0202:在庫変動履歴CSV出力!E29 は列名「登録日」のみで、`dtb_stock_history.create_date` と書式は正本にない。両者は function-design-embed 内だけに存在した。",
+      "reason": "参照列と書式は旧実装 pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/HistoryCsv.php の convertStockHistoryCsvRow() にある `$data['createDate']->format('Y/m/d H:i')` が根拠であり、LEGACY_BACKED は正しい。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Service/Csv/StockHistoryCsv.php の convertExportCsvRows() は登録日を `$StockHistory->getRegisteredAt()->format('Y-m-d H:i')` とする。src/Eccube/Entity/DtbStockHistory.php では registered_at（登録日時）と create_date（作成日時）は別プロパティである。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 496,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "PARTIAL",
+      "checkedQuote": "sheet-25 の src-cell 0202:欠品履歴検索一覧(検索結果)!D44 を開き、「在庫変動理由区分が『廃棄』（親区分）、『欠品減算（受注）』・『欠品減算（移動）』（子区分）の履歴を検索し表示」と実在することを確認した。",
+      "reason": "SPEC_BACKED は正しい。現実装は監査時点から変更され、欠品減算（受注）・欠品減算（移動）の2子区分は取得するようになった。一方、正本が併記する「廃棄」（親区分）配下は現在の固定ID配列に含まれないため、要求全体としては一部だけ解消している。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Repository/DtbStockHistoryRepository.php の getQueryBuilderBySearchDataForAdmin() は disposal_search 時に `MtbStockChangeTypeDetail::ORDER_STOCKOUT_DECREASE` と `MtbStockChangeTypeDetail::MOVE_SHORTAGE_SUBTRACT` だけを stock_change_type_detail_ids に設定する。以前の DISPOSAL 配下一括取得ではないが、MtbStockChangeType::DISPOSAL 配下の履歴を加える処理もない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 497,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "PARTIAL",
+      "checkedQuote": "sheet-25 の src-cell 0202:欠品履歴検索一覧(検索結果)!E49 を開き、「第三ソートを各レコードの『登録日時』の降順（最新順）で表示する」と実在することを確認した。",
+      "reason": "SPEC_BACKED は正しい。第三ソートは監査時点の sh.createDate 固定から変更されたが、現在は登録日時固定ではなく approvalAt、registeredAt、createDate の優先順によるCOALESCEである。registeredAt がある未承認等の行では要求に近づいた一方、approvalAt がある行は承認日時で並ぶため完全解消ではない。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Repository/DtbStockHistoryRepository.php の getQueryBuilderBySearchDataForAdmin() は `COALESCE(sh.approvalAt, sh.registeredAt, sh.createDate) AS HIDDEN sortDate` を選択し、第三ソートを `sortDate DESC` とする。src/Eccube/Entity/DtbStockHistory.php の registeredAt は独立した「登録日時」列であり、現在も `sh.registeredAt DESC` 固定ではない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 499,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "sheet-25 の src-cell 0202:欠品履歴検索一覧(検索結果)!E81「欠品時販売価格」と同!AG81「欠品登録時の販売販売価格を表示」「受注の場合は、受注情報で保持している販売価格を参照」「移動の場合も、移動情報で保持している販売価格を参照」を確認した。Excel正本レイアウト画像 0202:欠品履歴検索一覧(検索結果)!B8 も目視し、「欠品時販売価格」列と価格例を確認した。",
+      "reason": "表示項目名と値の参照規則をExcel正本が直接定義しているため、SPEC_BACKED は正しい。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Resource/template/admin/Stock/history.twig の has_search_disposal 側は「欠品時販売価格」列に `{{ productClassSub.buy_price|price }}` を表示する。履歴の `Stock.sell_price` は通常モード側でのみ使われ、欠品モードでは使われない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 500,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "sheet-25 の Excel正本 src-cell を `0件`、`検索条件に該当`、`データがありませんでした`、`見出し` で検索したが指定文言は0件。Excel正本レイアウト画像 0202:欠品履歴検索一覧(検索結果)!B8 も目視したが、データあり一覧だけで0件時文言はない。指定文言は function-design-embed と functions/pf-eccube3/m04-19_admin_stock_stock_shortage_history_search_list.md にのみ存在した。",
+      "reason": "具体文言は旧Twig pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Product/stockout_historylist.twig の0件分岐に由来し、Excel正本では確認できないため、LEGACY_BACKED は妥当。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/Admin/Stock/StockHistoryController.php の検索成功後の返却値は `'has_errors' => true`。src/Eccube/Resource/template/admin/Stock/history.twig は0件時に has_errors 分岐へ入り `admin.common.search_invalid_condition` を表示し、messages.ja.yaml の実値は「検索条件に誤りがあります」。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 501,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "sheet-25 の src-cell 0202:欠品履歴検索一覧(検索結果)!E57「識別ID:2-7在庫区分を追加」と同!E77「在庫区分」を確認した。Excel正本レイアウト画像 0202:欠品履歴検索一覧(検索結果)!B8 も目視し、店舗の右隣の列見出しが「在庫区分」であることを確認した。",
+      "reason": "列名と配置はExcel正本テキストおよびレイアウト画像の双方で確認でき、SPEC_BACKED は正しい。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Resource/template/admin/Stock/history.twig は当該見出しに `admin.stock.history.stock_location` を使用し、src/Eccube/Resource/locale/messages.ja.yaml は同キーを「在庫場所」と定義する。セル値は `Stock.ProductStock.locationName`。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 502,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "sheet-26 の src-cell を確認し、0202:欠品履歴CSV出力!B8〜B23 が1〜16、同!E14 が7列目「在庫区分」、同!E16 が9列目「登録元ID」と実在することを確認した。同!D40 と同!D42 にも両列の追加要求がある。",
+      "reason": "16列の列契約と対象列名はExcel正本が直接定義しているため、SPEC_BACKED は正しい。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/Admin/Stock/StockHistoryController.php の getStockHistoryDisposalCsvHeader() は15列で、7列目は「在庫場所」、かつ「登録元ID」がない。src/Eccube/Service/Csv/StockHistoryDisposalCsv.php の convertExportCsvRows() は登録元IDを組み立てるが、exportCsv() はヘッダキーだけで行を抽出するため、その列は出力されない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    }
+  ]
+}

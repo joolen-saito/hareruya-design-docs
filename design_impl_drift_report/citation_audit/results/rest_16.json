@@ -1,0 +1,165 @@
+{
+  "packetId": "rest_16",
+  "results": [
+    {
+      "rowId": 572,
+      "verdict": "UNSUPPORTED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:12343-12345 のExcel正本は登録・雛形の列をいずれも「商品コード、在庫増減数、仕入単価」とする。正本範囲（同:12174-12446）に「在庫変動理由」をCSV列とする記述はなく、同:12339 は在庫変動理由を画面部品として定義する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Product/ProductCsvController.php:2163-2168 の旧実装も `getProductStockCsvHeader()` を「商品コード」「在庫増減数」の2列だけで返し、4列雛形の根拠にならない（確認範囲: pf-api、pf-eccube3、pf-article、deck-api。検索語: `在庫変動理由`, `getProductStockCsvHeader`, `product_stock_csv_upload`）。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockChangeCsvController.php:385-403 は `getStockChangeCsvHeader()` に商品コード・在庫増減数・仕入単価の3定義だけを置く。これはExcel正本の3列とは一致するが、指摘の4列期待値とは一致しない。",
+      "note": "「在庫変動理由を含む4列」という期待値はExcel正本にも旧実装にもなく、正本は理由を画面入力とするため誤検出の疑いが強い。"
+    },
+    {
+      "rowId": 573,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:12342-12343 のExcel正本は「csvファイルをアップロード」「アップロードされたファイルがcsv以外のファイルの場合」エラーと明記する。サイズ/MIMEの具体的検証値は正本範囲（同:12174-12446）にない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/CsvImportType.php:28-39 は旧実装で `Assert\\File(['maxSize' => ...])` と `new CsvMimeType($this->app)` を設定し、CSVのサイズ・MIMEをサーバ側検証していた。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/StockChangeType.php:154-160 は `import_file` の `constraints` を空にする。ec-cube-enterprise/src/Eccube/Service/Csv/Importer/CsvImporter.php:172-175 は拡張子tsvだけをタブ区切りにし、それ以外はCSV区切りで読むため、CSV以外を拒否するサーバ側形式制約がない。",
+      "note": "CSV以外をエラーにする要件はExcel正本で明確。サイズ/MIMEの具体化は旧実装由来だが、正本に裏付けられたCSV限定要件だけでも未充足である。"
+    },
+    {
+      "rowId": 574,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:12240 のExcel正本は「カスタマイズ要件に記載の内容以外は現行踏襲」とだけ記載し、直近同名ファイルの判定期間・文言・中止処理を具体的に記載しない。具体記述はリバース詳細設計 hareruya-design-docs/functions/pf-eccube3/m04-21_admin_stock_stock_csv_import.md:102-105 の「直近に同じファイル名…表示して中止する」にある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Product/ProductCsvController.php:1220-1225 は `getRecentCsvImportHistory(..., $file->getClientOriginalName())` が真ならduplicateエラーを表示して中止する。pf-eccube3/app/Plugin/HareruyaEc/Repository/DtbCsvImportHistoryRepository.php:46-60 は同一種別・ファイル名・直近1か月を検索し、pf-eccube3/app/Plugin/HareruyaEc/Resource/locale/message.ja.yml:1098 は「直近でアップロードされたファイル名です。ファイルを確認してください。」を定義する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockChangeCsvController.php:256-269 はファイル取得後、同名履歴を照会せず行数チェックから `log_info('在庫変更CSV登録開始')` へ進む（確認範囲: 同Controller:216-361、DtbStockEditCsvRepository.php:45-120、検索語: `getRecentCsvImportHistory`, `duplicate`, `直近でアップロード`）。",
+      "note": "具体的期待値はExcel正本の一般的な「現行踏襲」を旧実装で具体化したもの。"
+    },
+    {
+      "rowId": 575,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:12269-12270 のExcel正本は「エラーがある場合もチェックは最終行まで」「行番号とエラーをセットにしたエラーメッセージ」を要求する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/Importer/Event/BaseCsvImportHandler.php:57-80 は列数・列検証エラーで `breakAll()` を呼び、pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/Importer/CsvImporter.php:243-247 はその時点でループを `break` する。旧実装も全行列挙を満たさない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/change.twig:169-224 はブラウザ側の一部検証を全行実行するよう改善済みだが、ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/BaseCsvImportHandler.php:71-96 は列数・必須/形式エラーで `breakAll()`、ec-cube-enterprise/src/Eccube/Service/Csv/Importer/CsvImporter.php:239-243 は最初の該当行でループを中断する。サーバ登録処理として全条件を最終行まで検証する保証はない。",
+      "note": "パケット作成後にクライアント事前検証は追加されたが、正本が求める登録処理全体の全行検証は未充足。"
+    },
+    {
+      "rowId": 576,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:12240 のExcel正本は「現行踏襲」とするだけで、商品コード重複・更新ロック・ロックタイムアウトを具体記載しない。これらはリバース詳細設計 hareruya-design-docs/functions/pf-eccube3/m04-21_admin_stock_stock_csv_import.md:117-123 の「商品コードから規格を更新ロックして取得」「2件以上…重複エラー、ロック取得失敗…タイムアウトエラー」にのみ具体化される。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/Importer/Event/ProductStockImportHandler.php:283-315 は `NonUniqueResultException` を重複エラーにし、`tryLockAndGetByProductClassId` の失敗を更新ロックタイムアウトエラーにする。同:354-380 は商品コード検索を `LIMIT 2` と `getOneOrNullResult()` で行う。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Repository/ProductStockRepository.php:536-551 は商品コード検索を `setMaxResults(1)` で1件に限定し、重複を判定しない。ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/StockChangeCsvImportHandler.php:291-301 はそのIDを通常の `find()` で取得し、更新ロックもロック失敗分岐も持たない。",
+      "note": "商品コードの未存在エラーだけは現実装にあるが、旧実装由来の重複・更新ロック要件が欠ける。"
+    },
+    {
+      "rowId": 577,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:12240 のExcel正本は「現行踏襲」とするが、0行スキップを明記しない。CSV入力範囲は同:12373 で `-99999999～99999999` とされ、0自体は範囲内である。具体的スキップはリバース詳細設計 hareruya-design-docs/functions/pf-eccube3/m04-21_admin_stock_stock_csv_import.md:117-120 の「在庫増減数が0／更新不要として行をスキップ」にのみある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/Importer/Event/ProductStockImportHandler.php:136-142 は `$diffStock === 0` の場合に「更新不要。スキップする」として即時returnする。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/StockChangeCsvImportHandler.php:278-323 は0判定をせず、`editQuantity` を明細へ渡して `insertStockChangeDetail()` を呼び、合計値と `rowCount` に加算する。ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/change.twig:186-198 も0をエラーにしないままサーバ送信対象から外すだけで、登録行自体は除外しない。",
+      "note": "具体的な0行スキップ期待値は旧実装由来。"
+    },
+    {
+      "rowId": 578,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:12290-12296 のExcel正本は、廃棄時に在庫増減数を減算し総原価を計算・登録し、スマレジ在庫なら算出在庫数をスマレジへ登録すると明記する。同:12319-12325 は変更前後の在庫・総原価を履歴に登録する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/Importer/Event/ProductStockImportHandler.php:196-211 は旧取込で規格在庫・規格本体を更新し、`DtbStockHistory` に変更前後在庫を登録するが、親区分別の承認フローや仕入原価項目は旧スキーマにない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/StockChangeCsvImportHandler.php:303-323 はCSV取込時に承認明細を作るだけでProductStock更新・履歴作成・スマレジ呼出しを行わない。一方 ec-cube-enterprise/src/Eccube/Service/Admin/Stock/Util/StockEditApprovalLineItemApprover.php:54-81 は廃棄承認時に「申請時に作成済みの在庫履歴を更新」「在庫情報は申請時に反映済み」と仮定しており、申請時処理の欠落が残る。",
+      "note": ""
+    },
+    {
+      "rowId": 579,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:12240 のExcel正本は現行踏襲を指示し、同:12271-12325 は在庫・履歴登録を述べるが、`dtb_product_stock.stock` と `dtb_product_class.stock` の同値更新という具体的テーブル要件は正本範囲（同:12174-12446）にない。具体記述はリバース詳細設計 hareruya-design-docs/functions/pf-eccube3/m04-21_admin_stock_stock_csv_import.md:191-194 の「同一更新で…更新後在庫に揃える」「規格ごとに在庫変更履歴を1件作る」にある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/Importer/Event/ProductStockImportHandler.php:196-211 は `updateProductStock` と `updateProductClass` に同じ `$stockAfter` を渡し、更新ごとに `DtbStockHistory` を作る。同:431-459 は規格本体・規格在庫の各更新と履歴INSERTを実行する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/EntityManager/ProductStockEntityManager.php:29-49 は `ProductClass` を引数に受けるが更新するのは `$ProductStock->setStock($stock)` のみで、ProductClass.stockを書かない。ec-cube-enterprise/src/Eccube/Service/Admin/Stock/Util/StockEditApprovalLineItemApprover.php:111-132 の入庫承認経路もこのsaveと履歴作成を使う。",
+      "note": "具体的な二重テーブル同期要件は旧実装由来。"
+    },
+    {
+      "rowId": 580,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:12239 は条件付きスマレジ商品連携を述べるが、CSV取込完了後の入荷通知メール・支店在庫通知はExcel正本範囲（同:12174-12446）に明記しない。具体記述はリバース詳細設計 hareruya-design-docs/functions/pf-eccube3/m04-21_admin_stock_stock_csv_import.md:102-110 の「取込完了後、入荷対象があれば入荷通知メールを送り、更新後在庫を支店へ通知する」にのみある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/Importer/Event/ProductStockImportHandler.php:109-127 は成功かつ入荷対象ありで `sendNotificationOfArrivalMail` を呼び、その後 `noticeStockUpdate($this->productStocks)` で支店へ通知する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/StockChangeCsvImportHandler.php:124-199 の取込後処理は承認一覧・S3ファイル履歴の保存だけで、入荷通知・支店通知を呼ばない。ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockChangeCsvController.php:333-340 の成功後メールも承認者向け `sendStockApprovalAlertMail` だけである。",
+      "note": "具体的な副作用は旧実装由来。"
+    },
+    {
+      "rowId": 581,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:12174-12446 のExcel正本範囲には成功文言「商品登録CSVファイルをアップロードしました。」が存在しない。具体文言はリバース詳細設計 hareruya-design-docs/functions/pf-eccube3/m04-21_admin_stock_stock_csv_import.md:106-110 の成功時手順にのみある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Product/ProductCsvController.php:1240-1244 は成功時に `admin.product.csv_import.save.complete` を表示し、pf-eccube3/src/Eccube/Resource/locale/message.ja.yml:133 はその値を「商品登録CSVファイルをアップロードしました。」と定義する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockChangeCsvController.php:357-361 は成功時に `admin.common.save_complete` を表示し、ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:1595 はその値を「保存しました」と定義する。",
+      "note": "成功文言の完全一致要求は旧実装由来。"
+    },
+    {
+      "rowId": 582,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:12174-12446 のExcel正本範囲には取込開始・件数付き完了・異常終了というログ要件がない。具体記述はリバース詳細設計 hareruya-design-docs/functions/pf-eccube3/m04-21_admin_stock_stock_csv_import.md:102-109 の取込開始・異常終了・件数付き完了手順にのみある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Product/ProductCsvController.php:1234-1244 は `log_info('在庫変更CSV登録開始')`、エラー時 `log_info('在庫変更CSV登録 異常終了')`、成功時 `log_info('在庫変更CSV登録完了', ['count' => ...])` を記録する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockChangeCsvController.php:269 は現在 `log_info('在庫変更CSV登録開始')` を記録する。一方、同:323-361 のエラー・例外・成功分岐には件数付き完了ログと異常終了ログがない（確認範囲: 同Controller全体、StockChangeCsvImportHandler.php全体。検索語: `在庫変更CSV登録完了`, `異常終了`）。",
+      "note": "パケット作成後に開始ログだけは実装済み。残る2種のログの根拠は旧実装にある。"
+    },
+    {
+      "rowId": 583,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:12244-12247 のExcel正本は登録日時・承認日時の後の日時を基準日時として降順表示すると定め、同:12358 は承認日を書式 `YYYY/MM/DD HH:mm` とする。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Product/ProductCsvController.php:1198-1249 の旧機能は即時在庫更新型で、刷新後の承認日時を持つ履歴一覧要件に対応しない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Repository/DtbStockEditCsvRepository.php:100-120 は現在CASE式の `baseDate` を降順にしておりソート要件は満たす。しかし ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/change.twig:507-513 は登録日を `Y/m/d H:i`、承認日を `Y/m/d` だけで表示し、承認日の時分が欠ける。",
+      "note": "基準日時ソートはパケット作成後に実装済み。書式差分だけが残る。"
+    },
+    {
+      "rowId": 584,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:12274-12283 のExcel正本は在庫編集承認一覧へ「合計総原価増減数を総原価増減数で登録」と明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/Importer/Event/ProductStockImportHandler.php:196-211 の旧機能は即時更新・履歴作成型で、在庫編集承認一覧や合計総原価増減数を登録する承認親レコードを持たない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/StockChangeCsvImportHandler.php:55-57,86-88 は変数を `$totalCostPriceBefore` として初期化し、同:321-323 で各商品の現在総原価 `getTotalCost()` を加算する。同:133-148 はその値を `TotalCostPriceBefore` として承認一覧へ保存するため、総原価の増減額を集計していない。",
+      "note": ""
+    },
+    {
+      "rowId": 585,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:12284-12285 は在庫編集承認一覧へ「登録日」「登録者」を登録するとし、同:12310-12313 は履歴側にも登録日・登録者および同値の更新日・更新者を登録すると明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/Importer/Event/ProductStockImportHandler.php:202-211 は旧在庫履歴に `setMemberId($event->getUpdateUser()->getId())` で操作者を登録する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Repository/DtbStockEditApprovalRepository.php:48-78 は `registered_member_id` と `registered_at` をINSERTするが、登録者値に `$stockChange['approvalNotificationTargetMembers']` を渡す。呼出元 ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/StockChangeCsvImportHandler.php:90-95 はその値を承認通知先メンバーとして渡しており、操作者ではない。一方、明細側は同:315-317 で `$this->Member->getId()` を保持する。",
+      "note": "登録日は保持されるが、承認親の登録者が操作者ではなく承認通知先になっているため期待値未充足。"
+    },
+    {
+      "rowId": 586,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:12249-12251 は±100件以上で確認モーダルを表示すると定め、同:12409 のExcel図形抽出は「在庫増減数100点以上の商品がありますが内容問題ないでしょうか。※問題がある場合、キャンセルしてCSVファイルを修正してください。」と文言を明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/Importer/Event/ProductStockImportHandler.php:134-222 の旧実装は0判定後そのまま在庫更新へ進み、100点閾値の確認モーダル処理を持たない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/change.twig:289-304 は確認モーダルを実装済みだが、本文は「100点以上の在庫変動がある商品が含まれています。このまま登録してよろしいですか？」であり、Excel正本の指定文言と一致しない。",
+      "note": "モーダル機能自体は現在実装済みで、残る乖離は表示文言。"
+    },
+    {
+      "rowId": 587,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:12613-12616 のExcel正本は在庫移動CSV登録で「アップロードされたファイルがcsv以外のファイルの場合」を登録処理エラーと明記する。",
+      "legacyEvidence": "hareruya-design-docs/functions/ec-cube-enterprise/m04-22_admin_stock_stock_move_transfer_csv_import.md:9,18,27 は本機能を「新規実装」とし「対応する現行（pf-eccube3）実装は無い」と明記する。pf-api、pf-eccube3、pf-article、deck-apiを `move_csv_import` / `StockMoveCsvImport` / `stock_move.csv` で横断検索しても対応実装はない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/StockMoveCsvImportType.php:110-120 はファイル必須・最大サイズだけを設定し、MIME/拡張子制約を持たない。ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/MoveTransfer/index.twig:845-854 の `accept: 'text/csv,.csv,text/plain'` はブラウザヒントに留まり、サーバ拒否を保証しない。",
+      "note": ""
+    },
+    {
+      "rowId": 588,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:12613-12617 のExcel正本は在庫移動CSVについて「１ファイルあたりに登録できる商品点数の上限を10,000件に設定」と明記する。",
+      "legacyEvidence": "hareruya-design-docs/functions/ec-cube-enterprise/m04-22_admin_stock_stock_move_transfer_csv_import.md:27 は「対応する現行（pf-eccube3）実装は無い」と明記する（旧4リポジトリ横断検索語: `move_csv_import`, `StockMoveCsvImport`, `stock_move.csv`）。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:273-276 は `ADMIN_CSV_IMPORT_MAX_ROWS` 以上をエラーにし、ec-cube-enterprise/src/Eccube/Controller/AbstractController.php:360-364 はその共通値を `5010` と定義する。10,000件ではない。",
+      "note": ""
+    },
+    {
+      "rowId": 589,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:12644-12648 のExcel正本は「移動点数」を数値・必須・最大値 `0~999999999` と定義する。",
+      "legacyEvidence": "hareruya-design-docs/functions/ec-cube-enterprise/m04-22_admin_stock_stock_move_transfer_csv_import.md:27 は本機能に対応する旧pf-eccube3実装がないと明記する（旧4リポジトリ横断検索語: `移動点数`, `stockMoveQuantity`, `StockMoveCsvImport`）。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Model/ColumnDefinitions.php:68-71 は移動点数を `createUnsignedNumericColumn` で作るが最大桁数を渡さず、同:716-726 はmaxLengthが指定された場合だけ上限検証を追加する。ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/StockMoveCsvImportHandler.php:276-289 は `(int)$moveQuantity <= 0` をエラーにするため0を拒否し、999999999上限も保証しない。",
+      "note": "必須・数値は実装済みだが、0の扱いと上限値が正本と異なる。"
+    },
+    {
+      "rowId": 590,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:12973-12976 のExcel正本は在庫振替CSV登録で「アップロードされたファイルがcsv以外のファイルの場合」を登録処理エラーと明記する。",
+      "legacyEvidence": "hareruya-design-docs/functions/ec-cube-enterprise/m04-22_admin_stock_stock_move_transfer_csv_import.md:9,18,27 は本機能を新規実装とし、対応する現行pf-eccube3実装はないと明記する。旧4リポジトリを `transfer_csv_import` / `StockTransferCsvImport` / `stock_transfer.csv` で横断検索しても対応実装はない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/StockTransferCsvImportType.php:105-115 は必須・最大サイズだけを検証し、MIME/拡張子制約を持たない。ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/MoveTransfer/index.twig:942-951 のaccept属性はクライアント側の選択ヒントだけで、CSV以外のサーバ拒否にならない。",
+      "note": ""
+    },
+    {
+      "rowId": 591,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:12973-12977 のExcel正本は在庫振替CSVについて「１ファイルあたりに登録できる商品点数の上限を2,000件に設定」と明記する。",
+      "legacyEvidence": "hareruya-design-docs/functions/ec-cube-enterprise/m04-22_admin_stock_stock_move_transfer_csv_import.md:27 は本機能に対応する旧pf-eccube3実装がないと明記する（旧4リポジトリ横断検索語: `transfer_csv_import`, `StockTransferCsvImport`, `stock_transfer.csv`）。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:381-384 は振替にも共通 `ADMIN_CSV_IMPORT_MAX_ROWS` を使い、ec-cube-enterprise/src/Eccube/Controller/AbstractController.php:360-364 はその値を `5010` と定義するため、2,000件上限になっていない。",
+      "note": ""
+    }
+  ]
+}

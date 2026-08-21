@@ -1,0 +1,365 @@
+{
+  "packetId": "sw_25",
+  "results": [
+    {
+      "rowId": 865,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "登録成功後に、登録した申込の編集画面ではなく当該日程の申込一覧がブラウザへ返される。",
+      "checked": "functions/pf-eccube3/m13-12_admin_event_event_entry_register.md:111-120 と ec-cube-enterprise/src/Eccube/Controller/Admin/Event/EntryRegistrationController.php:188-205 を開き、成功時の実装が admin_event_entry_event_detail へリダイレクトすることを確認。",
+      "reason": "HTTPリダイレクト先と利用者が次に見る画面が異なるため外部観測可能。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 866,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "同一日程・同一プレイヤーの直接POSTが登録処理で拒否されず、重複した申込と参加者行がDBへ保存され得る。",
+      "checked": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/EventEntryDetailType.php:60-71、src/Eccube/Controller/Admin/Event/EntryRegistrationController.php:183-210、src/Eccube/Service/Admin/Event/EntryRegistrationStoreAction.php:39-75 を開いた。参加者必須制約はある一方、登録時の既存申込照会・重複判定なしに申込と参加者を保存していることを確認。",
+      "reason": "指摘のうち必須制約欠落は当たらないが、重複防止欠落だけで永続データとエラー応答が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 867,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "新規申込画面の送信ボタンに「登録」ではなく「保存」と表示される。",
+      "checked": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Event/EntryRegistration/edit.twig:357-360 と src/Eccube/Resource/locale/messages.ja.yaml:1626,1628 を開き、新規時に admin.common.save（保存）が描画されることを確認。",
+      "reason": "表示文言は1語の差でも生成HTML上で利用者に直接見える。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 868,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "戻り先を示す前画面名ではなく、汎用文言「戻る」がリンクに表示される。",
+      "checked": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Event/EntryRegistration/edit.twig:337-343 と src/Eccube/Resource/locale/messages.ja.yaml:5928 を開き、新規時リンクが admin.event.entry.back を描画し、その値が「戻る」であることを確認。",
+      "reason": "リンクラベルは画面出力そのものであり外部観測可能。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 869,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "成功時は「保存しました」が表示され、未送信・金額不正時も設計指定の専用フラッシュではなくフォーム再表示または汎用エラーになる。",
+      "checked": "functions/pf-eccube3/m13-12_admin_event_event_entry_register.md:223-239、ec-cube-enterprise/src/Eccube/Controller/Admin/Event/EntryRegistrationController.php:183-226、src/Eccube/Resource/locale/messages.ja.yaml:1590 を開き、成功キーと失敗分岐を確認。",
+      "reason": "フラッシュ文言と表示条件・失敗時応答が利用者から観測できる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 870,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "設計URLへのGET/POSTは目的の画面・アップロード処理・雛形応答に到達せず、実装URLを使う必要がある。",
+      "checked": "functions/pf-eccube3/m13-13_admin_event_event_entry_csv_import.md:65-67 と ec-cube-enterprise/src/Eccube/Controller/Admin/Event/EventEntryBulkCsvController.php:61-68,176-180 を開き、実装が /event/entry/bulk_csv_import と /event/entry/bulk_csv_template の別契約であることを確認。",
+      "reason": "HTTPパス・メソッド構成の差はクライアントから直接観測できる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 871,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "ファイル選択UIがTSVを受理対象として提示せず、送信中もスピナーが表示されずボタン無効化だけが行われる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Event/Entry/event_bulk_csv_import.twig:10-31,64-72 を開き、accept が text/csv,.csv だけで、submit処理がボタンdisabledのみであることを確認。",
+      "reason": "ファイル選択ダイアログの受理候補とアップロード中表示はいずれもブラウザUIに現れる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 872,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "5000～5010行のファイルが拒否されず取り込まれ得て、超過時メッセージにも上限5010が表示される。",
+      "checked": "functions/pf-eccube3/m13-13_admin_event_event_entry_csv_import.md:92-98,116-120、ec-cube-enterprise/src/Eccube/Controller/AbstractController.php:360-369、src/Eccube/Controller/Admin/Event/EventEntryBulkCsvController.php:90-104 を開き、実装が count > 5010 のときだけ拒否することを確認。",
+      "reason": "受理される入力範囲、DB取込の有無、表示エラー値が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 873,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "成功時フラッシュが「イベント情報を登録しました。」ではなく「CSVファイルをアップロードしました」と表示される。",
+      "checked": "functions/pf-eccube3/m13-13_admin_event_event_entry_csv_import.md:235-242、ec-cube-enterprise/src/Eccube/Controller/Admin/Event/EventEntryBulkCsvController.php:147-160、src/Eccube/Resource/locale/messages.ja.yaml:1601 を開き、実際の翻訳キーと値を確認。",
+      "reason": "画面上部の表示文言が異なるため外部観測可能。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 874,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "異常終了時に指定ログが残らず、正常完了ログにも取込件数が含まれないため、運用者がログから成否と処理件数を確認できない。",
+      "checked": "functions/pf-eccube3/m13-13_admin_event_event_entry_csv_import.md:288-294 と ec-cube-enterprise/src/Eccube/Controller/Admin/Event/EventEntryBulkCsvController.php:114-160 を開き、開始・固定文言の完了ログだけで、エラー分岐ログと件数コンテキストがないことを確認。",
+      "reason": "設計された運用ログはファイルI/Oであり、その有無・内容は運用者から観測できる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 875,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "親イベントでカード支払未設定でも、オンライン受付ありかつ有料の日程を含むCSV行がエラーにならず保存され得る。",
+      "checked": "ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/EventBulkCsvImportHandler.php:289-305,364-433,448-458,498-561 を開き、クレジット値・オンライン時刻・金額を個別処理するだけで三条件を組み合わせた拒否がないことを確認。",
+      "reason": "CSVの受理可否と保存されるイベント・日程データが変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 876,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "設計フォーマットの列名・必須性で作ったCSVがヘッダ不一致または必須エラーになり、実装雛形にも別の列名・必須表示が出る。",
+      "checked": "functions/pf-eccube3/m13-13_admin_event_event_entry_csv_import.md:122-143、ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/EventBulkCsvImportHandler.php:55-111,676-818 を開き、「チーム戦」「フリー入力エリア…」等の実装列と公開状態_日程の required=true を確認。",
+      "reason": "CSVヘッダと必須性は外部ファイル契約および画面のフォーマット表に露出する。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 877,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "ゼロ幅スペースを含むヘッダやセル値が除去されず、ヘッダ不一致・マスタ不一致または不可視文字を含む永続値になり得る。",
+      "checked": "ec-cube-enterprise/src/Eccube/Service/Csv/Importer/CsvImporter.php:164-175、src/Eccube/Service/CsvImportService.php:95-118,174-180、src/Eccube/Service/Csv/AbstractCsvService.php:399-410 を開いた。取込経路は改行・文字コードとヘッダBOMを処理するが、別クラスの removeWhite を呼んでいないことを確認。",
+      "reason": "不可視文字でも検証結果・保存文字列というI/Oが変化する。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 878,
+      "authorVerdict": "UNSURE",
+      "verdict": "IMPACT",
+      "agree": false,
+      "observableEffect": "既定のPHP実行時間を超える大きなCSVでは、処理がタイムアウトして成功応答・コミットまで到達しない可能性がある。",
+      "checked": "functions/pf-eccube3/m13-13_admin_event_event_entry_csv_import.md:90-98、ec-cube-enterprise/src/Eccube/Controller/Admin/Event/EventEntryBulkCsvController.php:61-173 を開き、POST取込経路に set_time_limit(0) がないことを確認。併せて src/Eccube/Controller/Admin/AbstractCsvImportController.php:44,57 など他CSV入口には同設定があることを検索確認。",
+      "reason": "実行時間制限は資源条件次第でHTTP結果とDB副作用を変え得るため、境界基準(b)によりIMPACT。",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 879,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "設計ヘッダのCSVは実装が要求する半角スペース・半角括弧入り名称と一致せず、フォーマットエラーになる。",
+      "checked": "functions/pf-eccube3/m13-13_admin_event_event_entry_csv_import.md:116,134,141 と ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/EventBulkCsvImportHandler.php:68-69,97-98,692-698,812-818 を開き、実装の正確なヘッダ文字列を確認。",
+      "reason": "句読・空白差でもCSVヘッダ照合結果が変わるため外部I/O差。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 880,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "設計の /entry/bulkentry 系URLでは画面表示・アップロード・雛形取得ができず、実装の /event/entry/bulk_csv_* 系へアクセスする必要がある。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Admin/Event/EventEntryBulkCsvController.php:61-68,176-180 と同Twig:64,89 を開き、画面フォームと雛形リンクも実装側ルートへ出力されることを確認。",
+      "reason": "外部URL、許可メソッド、生成HTMLのaction/hrefが異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 881,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "ブラウザのファイル選択UIがTSVを候補として受理せず、設計どおりのTSV選択導線にならない。",
+      "checked": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Event/Entry/event_bulk_csv_import.twig:64-70 と src/Eccube/Service/Csv/Importer/CsvImporter.php:169-175 を開き、UIは text/csv,.csv のみだがバックエンドにはtsv区切り分岐があることを確認。",
+      "reason": "バックエンド能力があってもinput accept属性は生成HTMLとファイル選択挙動に露出する。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 882,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "アップロード送信中にスピナーが現れず、利用者にはボタンが無効になるだけに見える。",
+      "checked": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Event/Entry/event_bulk_csv_import.twig:10-31,64-72 を開き、submitハンドラはdisabled属性だけを設定し、スピナーDOM・クラス追加がないことを確認。",
+      "reason": "送信中の画面表示は利用者から直接観測できる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 883,
+      "authorVerdict": "UNSURE",
+      "verdict": "IMPACT",
+      "agree": false,
+      "observableEffect": "CSV処理時間が環境のmax_execution_timeを超えると、取込完了画面・ログ・DB結果に到達しない可能性がある。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Admin/Event/EventEntryBulkCsvController.php:90-160 と src/Eccube/Service/Csv/Importer/CsvImporter.php:245-295 を開き、取込とトランザクション処理の入口に実行時間無制限化がないことを確認。リポジトリ検索では他CSVコントローラに set_time_limit(0) が多数存在した。",
+      "reason": "環境依存でも処理結果を変え得る資源制限差は境界基準(b)のIMPACTに該当する。",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 884,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "5000行以上という設計境界でも5010行まではアップロードが進み、エラー再描画にならない。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/AbstractController.php:360-369 と src/Eccube/Controller/Admin/Event/EventEntryBulkCsvController.php:90-105 を開き、定数5010に対する厳密な「超過」判定を確認。",
+      "reason": "入力受理範囲と画面応答、取込副作用が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 885,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "取込成功後に汎用文言「CSVファイルをアップロードしました」が表示され、設計のイベント登録完了文言にならない。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Admin/Event/EventEntryBulkCsvController.php:147-160 と src/Eccube/Resource/locale/messages.ja.yaml:1601 を開き、フラッシュの実値を確認。",
+      "reason": "画面表示テキストの差は軽微でもIMPACT。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 886,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "CSV取込エラー時に「イベント一括登録 異常終了」という情報ログが出ず、運用監視・調査で異常終了を識別できない。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Admin/Event/EventEntryBulkCsvController.php:135-160 と src/Eccube/Service/Csv/Importer/Event/EventBulkCsvImportHandler.php、src/Eccube/Service/Csv/Importer/CsvImporter.php を開いてログ呼出しを検索し、開始・正常完了以外の当該ログがないことを確認。",
+      "reason": "運用要件として指定されたログ出力の欠落は外部I/O差。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 887,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "正常完了ログから取込件数を取得できず、運用者が何件登録されたか確認できない。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Admin/Event/EventEntryBulkCsvController.php:147-149 と src/Eccube/Service/Csv/Importer/CsvImporter.php:277-286 を開き、結果オブジェクトにはcountがあるのに完了log_infoへ渡していないことを確認。",
+      "reason": "ログ本文・コンテキストというファイル出力内容が異なるためIMPACT。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 888,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "ゼロ幅スペース付きCSVが正規化されず、ヘッダ検証失敗や不可視文字付きデータの登録につながり得る。",
+      "checked": "ec-cube-enterprise/src/Eccube/Service/CsvImportService.php:95-118,174-180、src/Eccube/Service/Csv/Importer/CsvImporter.php:164-175、src/Eccube/Service/Csv/AbstractCsvService.php:399-410 を開き、BOM処理はあるがこのimport経路にゼロ幅除去が接続されていないことを確認。",
+      "reason": "正規化の有無がCSV受理結果と永続文字列を変える。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 889,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "設計の /banner/event 系URLは利用できず、実装では /event/banner と /event/banner/settings を使うためHTTP要求先が変わる。",
+      "checked": "functions/pf-eccube3/m13-14_admin_event_event_banner.md:55-62 と ec-cube-enterprise/src/Eccube/Controller/Admin/Event/BannerController.php:59-82,148-149 を開き、GET/POST/DELETEの実装パスを確認。",
+      "reason": "ルート名ではなく外部HTTPパスとPOST構造そのものの差。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 890,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "同一URLへPOSTしてファイル有無で振り分ける設計クライアントは動作せず、設定保存と画像アップロードで別URLへ送る必要がある。",
+      "checked": "functions/pf-eccube3/m13-15_admin_event_event_image_setting.md:59-70 と ec-cube-enterprise/src/Eccube/Controller/Admin/Event/BannerController.php:59-60,81-83,110-112,148-149、同Twig:147-159,254-256 を開き、分割されたactionを確認。",
+      "reason": "HTTPパス・メソッドと生成フォームactionが異なり、利用者・クライアントから観測できる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 891,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "画像が banner/{店舗}/ ではなく banner/event/{店舗}/ に保存・一覧・削除され、S3オブジェクトキーと公開URLが変わる。",
+      "checked": "functions/pf-eccube3/m13-15_admin_event_event_image_setting.md:89-108 と ec-cube-enterprise/src/Eccube/Service/Admin/Event/EventBannerStorageService.php:24-26,41-45,90-97,122-145,162-178 を開き、固定プレフィックスが全I/O経路に使われることを確認。",
+      "reason": "内部定数名ではなく永続ストレージキー、一覧対象、削除対象、URLに露出する値の差。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 892,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "未選択・サイズ超過・種別不正・削除確認で、設計とは異なる日本語メッセージが画面または確認ダイアログに表示される。",
+      "checked": "ec-cube-enterprise/src/Eccube/Service/Admin/Event/EventBannerStorageService.php:61-88、src/Eccube/Resource/template/admin/Event/banner.twig:254-266,323-330、src/Eccube/Resource/locale/messages.ja.yaml:5988-5997,6168-6171 を開き、イベント画面の表示キーと実値を確認。",
+      "reason": "表示文言は利用者に直接露出し、トップバナー用に一致文言があっても当該画面では使われない。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 893,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "検索フォームは /card/search/1 ではなく /card へPOSTし、ブラウザ・アクセスログ・HTTPクライアントから送信先の差を観測できる。",
+      "checked": "functions/pf-eccube3/m14-01_admin_card_card_search.md:34-38 と ec-cube-enterprise/src/Eccube/Resource/template/admin/Card/index.twig:176、src/Eccube/Controller/Admin/Card/CardController.php:66-69,81-96 を開き、フォームactionと実処理を確認。",
+      "reason": "結果ページ番号を内部で1にしても、HTTPリクエストパスという外部契約は一致しない。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 894,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "実装HTMLにはCSRFトークンが含まれ、トークンなし・不正トークンのPOSTは設計と異なり検証失敗になる。",
+      "checked": "functions/pf-eccube3/m14-01_admin_card_card_search.md:171 と ec-cube-enterprise/src/Eccube/Form/Type/Admin/SearchCardType.php:208-213、src/Eccube/Resource/template/admin/Card/index.twig:176-184 を開き、csrf_protection=true のフォームが描画されることを確認。",
+      "reason": "inputの有無とPOST受理可否が変わるため明確な外部I/O差。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 895,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "初期表示後も eccube.admin.card.search 系の旧条件・ページ・件数がセッションに残り、後続の検索URL再開時に過去条件が復元され得る。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Admin/Card/CardController.php:53-58,97-117 と src/Eccube/Controller/Admin/SearchControllerTrait.php:104-118,154-176,189-194 を開いた。初期表示は card と card.page_no をsetするだけで、traitが使う eccube.admin.card.* をremoveしていないことを確認。",
+      "reason": "セッションキー名だけの差ではなく、後続画面の検索条件・結果に残存状態が露出する。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 896,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "複数語入力が分割されず文字列全体の部分一致として検索されるため、返るカード集合が設計の語間AND検索と異なる。",
+      "checked": "functions/pf-eccube3/m14-01_admin_card_card_search.md:119-122 と ec-cube-enterprise/src/Eccube/Repository/Master/MtbCardRepository.php:219-229 を開き、multi全体を単一LIKEパラメータにしていることを確認。",
+      "reason": "同じ検索入力に対する一覧結果が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 897,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "カード名自体はクリックできず、別の鉛筆アイコンから /card/{id}/edit へ移動するため、リンク表示と遷移URLが設計と異なる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Card/index.twig:422-430 と src/Eccube/Controller/Admin/Card/CardController.php:212-221 を開き、カード名がテキストで編集リンクが別セル・/edit付きであることを確認。",
+      "reason": "生成HTMLのリンク有無・クリック対象・hrefはいずれも利用者から観測できる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 898,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "AJAX成功・失敗のalert後もページ全体が再読み込みされず、画面状態やサーバからの最新表示が更新されない。",
+      "checked": "functions/pf-eccube3/m14-01_admin_card_card_search.md:47-48 と ec-cube-enterprise/src/Eccube/Resource/template/admin/Card/index.twig:122-147 を開き、always処理がボタン復元だけで location.reload 等を呼ばないことを確認。",
+      "reason": "画面遷移・再読込と表示状態の差はブラウザから直接観測できる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 899,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "CSV出力ボタンを短時間に複数回押せて、複数の出力POST・ダウンロードが発生し得る。",
+      "checked": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Card/index.twig:50-94,345-352 と ec-cube-enterprise/html/template/admin/assets/js/function.js:132-168 を開いた。CSVボタンはtype=buttonの独自form submitで、共通Laddaのsubmitボタン制御にもa[token-for-anchor]制御にも該当しないことを確認。",
+      "reason": "ボタン活性状態と二重HTTP実行の可否が利用者・サーバ双方から観測できる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 900,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "一覧初期表示後も検索条件・ページ数・ソート等がセッションに残り、再開アクセスで古い検索状態が使われ得る。",
+      "checked": "functions/pf-eccube3/m14-01_admin_card_card_search.md:57-60,286-294,320-321、ec-cube-enterprise/src/Eccube/Controller/Admin/Card/CardController.php:97-117、src/Eccube/Controller/Admin/SearchControllerTrait.php:104-118,168-194 を開き、初期表示分岐に対象キーのremoveがないことを確認。",
+      "reason": "内部識別子差ではなくセッション状態の寿命と後続検索結果が変わるためIMPACT。",
+      "confidence": "high"
+    }
+  ]
+}

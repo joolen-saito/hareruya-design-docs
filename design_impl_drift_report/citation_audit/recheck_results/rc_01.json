@@ -1,0 +1,149 @@
+{
+  "packetId": "rc_01",
+  "results": [
+    {
+      "rowId": 1,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "MISDESCRIBED",
+      "checkedQuote": "0501_基本設計仕様書(API_在庫管理).html の sheet-3 を `ECCUBE ->/スマレジ/API個別/Patch一括/在庫編集/在庫移動指示/分割結合/棚卸し` で検索し、Excel正本の src-cell で 1057-1058 行に「ECCUBE -> スマレジ(API個別)」「ECCUBE -> スマレジ連携(Patch一括)」、1073-1082 行に在庫編集・一括編集・CSV・移動・分割結合・棚卸し、1230 行に「在庫相対値更新API」を確認した。API仕様の指摘であり画面レイアウト画像の対象外。",
+      "reason": "根拠区分は正しい。ただし先行の実装実態「SmaregiStockApiClient は参照系のみ」は現状と一致しない。同クライアントには add() がある。一方、add() は正数加算専用で、管理在庫操作への接続、減算、相対値更新、Patch一括は確認できず、設計との実質的な乖離は残るため MISDESCRIBED とした。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Service/Smaregi/Api/SmaregiStockApiClient.php の add() は `if ($quantity <= 0)` で非正数を拒否し、`/pos/stock/{productId}/add` へPOSTする。呼出しは src/Eccube/Service/Smaregi/Otc/SmaregiOtcOrderSyncService.php の SmaregiOtcOrderSyncService::sync() 内の店頭受取在庫1件加算だけ。src/Eccube/Service/Admin/Stock/StockApprovalStoreAction.php の handle() は ProductStock/履歴のDB保存のみで、SmaregiStockApiClient 依存はない。管理在庫系ディレクトリを `SmaregiStockApiClient|stockApiClient` で検索して0件。",
+      "severityOpinion": "high",
+      "confidence": "high"
+    },
+    {
+      "rowId": 5,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0501_基本設計仕様書(API_在庫管理).html の sheet-4 を `5時間前/取得する期間は可変/X-Y hours/取引更新時間` で検索し、Excel正本 src-cell の 1593 行に「バッチ駆動時間から5時間前まで」、1598 行に「取得する期間は可変で実装」、1612 行に「バッチ駆動時間(X)から…Y時間前(X-Y hours)の間」を確認した。API・バッチ仕様であり画面レイアウト画像の対象外。",
+      "reason": "引用はいずれも function-design-embed:start（1618行）より前の src-cell で、時間窓はExcel正本に明記されている。現行は日付単位の target_date しか扱わず、5時間/Y時間の可変窓を実装していない。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Command/SmaregiStockBackfillCommand.php の configure() は `target-date` だけを引数にし、execute() はその日付だけを SmaregiStockBackfillAction::handle() へ渡す。src/Eccube/Service/Smaregi/Stock/SmaregiStockBackfillAction.php の handle() は未指定時を当日 `Y-m-d` にし、backfillPair() は listStockChanges() へ `target_date`, `page`, `limit` のみを渡す。時間幅の引数・計算はない。",
+      "severityOpinion": "high",
+      "confidence": "high"
+    },
+    {
+      "rowId": 6,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "MISDESCRIBED",
+      "checkedQuote": "0502_基本設計仕様書(API_商品管理).html の sheet-3 を `lang=jp/jpで表記/jaもしくはen/api/popup/product/ja` で検索し、Excel正本 src-cell の 1055-1056 行に外部EC-CUBE URL `...get_goods?...&lang=jp` と「EC-CUBEサーバURLではjpで表記する(EC-CUBEサーバ→APIサーバ通信時にjaに差し替えられる)」、1067行に内部入力「jaもしくはen」、1074行に `/api/popup/product/ja/180498` を確認した。API契約であり画面レイアウト画像の対象外。",
+      "reason": "外部EC-CUBE URLで jp を使う期待自体はExcel正本にあるので SPEC_BACKED は正しい。しかし先行指摘は外部URLと内部APIを混同し、内部 `/api/popup/product/jp/...` まで有効とした点が誤り。正本は内部APIを ja/en と明記する。現行では外部 `goods_api/get_goods` 変換層が不在という別の欠落が残るため、乖離の所在を MISDESCRIBED とした。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/App/ProductController.php の getPopupProductByProductId() は内部 `/api/popup/product/{lang}/{productId}` で `ja => JP`, `en => EN` を受け、これは正本の内部契約どおり。`goods_api|get_goods` を src/app/tests で検索したところ旧 `get_goods` 相当はなく、src/Eccube/Controller/Front/GoodsApiController.php の redirectGoodsByCardId() は `/goods_api/redirect_goods/{cardId}` の302リダイレクトだけで、外部 `lang=jp` を内部 `ja` に変換する入口ではない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 7,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0502_基本設計仕様書(API_商品管理).html の sheet-3 と全Excel由来行を `src-cell.*(message|Not Found|errors)` で検索し、失敗本文キーの該当は0件。1075-1078行の正本は「404」「該当データがない場合」までだった。旧 pf-api/src/Controller/ProductController.php の getPopupProductAction() 67-73行で実物 `\"code\" => 404, \"message\" => 'Not Found'` を確認した。API応答仕様であり画面レイアウト画像の対象外。",
+      "reason": "Excel正本は404条件だけで `{code,message}` を定義しておらず、messageキーの期待は旧実装に実在するため LEGACY_BACKED は妥当。現行は同じ404でも errors 配列を返す。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/App/ProductController.php の getPopupProductByProductId() は BaseApiException 捕捉時に `['code' => $e->getStatusCode(), 'errors' => $e->getErrors()]` を返す。src/Eccube/Exception/App/NotFoundException.php の __construct() は `errors: [$message]` であり、messageキーはない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 8,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "REFUTED",
+      "correctedClass": "SPEC_BACKED",
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0502_基本設計仕様書(API_商品管理).html の sheet-3 を `price01/price02/stock/weeklySold/レスポンスデータサンプル` で確認した。Excel正本の型表 1090-1099行は4項目を「数値(整数)」とする一方、正本サンプル 1111-1112,1119行は `\"price02\": \"50\"`, `\"stock\": \"17\"`, `\"weeklySold\": \"1\"` と引用符付きで示す。price01 の例は1110行で null。API応答仕様であり画面レイアウト画像の対象外。",
+      "reason": "正本内に矛盾はあるが、文字列値を示すJSONサンプルもExcel正本そのものなので、「文字列契約は旧実装だけ」という LEGACY_BACKED は成立しない。少なくとも price02/stock/weeklySold は正本サンプルで直接支持されるため SPEC_BACKED に訂正する。price01 の非null時型は正本だけでは確定しないので信頼度はmedium。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Repository/ProductRepository.php の findPopupProductByProductId() は ResultSetMapping で price01/price02/stock/weeklySold をすべて `integer` にする。src/Eccube/Service/App/Popup/PopupResponseBuilder.php の build() は price01/price02をそのまま、stock/weeklySoldを `(int)` でJSON応答へ入れるため、非null値は数値として出力される。",
+      "severityOpinion": "med",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 10,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0502_基本設計仕様書(API_商品管理).html の sheet-4 と全Excel由来行を `src-cell.*(message|Not Found|errors)` で検索し、失敗本文キーの該当は0件。1271-1274行の正本は「404 該当データがない場合」まで。旧 pf-api/src/Controller/ProductController.php の getPopupCardProductAction() 95-101行で `\"code\" => 404, \"message\" => 'Not Found'` を確認した。API応答仕様であり画面レイアウト画像の対象外。",
+      "reason": "本文の message キーはExcel正本に無く旧実装に実在するので、LEGACY_BACKED は妥当。現行カードID経路は errors 配列のままである。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/App/ProductController.php の getPopupProductByCardId() は該当なしで NotFoundException('Not Found') を投げ、BaseApiException 捕捉時に `['code' => ..., 'errors' => ...]` を返す。NotFoundException::__construct() も `errors: [$message]` で、messageキーはない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 11,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0502_基本設計仕様書(API_商品管理).html の sheet-5 と全Excel由来行を `src-cell.*(message|Not Found|errors)` で検索し、失敗本文キーの該当は0件。1472-1475行の正本は404条件だけ。旧 pf-api/src/Controller/ProductController.php の getPopupProductOldAction() 119-125行と getPopupOldProductAction() 143-149行で `\"code\" => 404, \"message\" => 'Not Found'` を確認した。API応答仕様であり画面レイアウト画像の対象外。",
+      "reason": "A02-03のExcel正本は404を要求するが本文形を定義しない。`{code,message}` は旧実装由来なので LEGACY_BACKED は妥当。現行の言語あり旧商品ID経路は errors 配列を返す。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/App/ProductController.php の getPopupProductByOldProductId() は該当なしで NotFoundException('Not Found') を投げ、catch (BaseApiException) で `['code' => $e->getStatusCode(), 'errors' => $e->getErrors()]` を返す。messageキーはない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 13,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "REFUTED",
+      "correctedClass": "SPEC_BACKED",
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0502_基本設計仕様書(API_商品管理).html の sheet-5 を `price01/price02/stock/レスポンスデータサンプル` で確認した。Excel正本型表 1487-1489行は3項目を「数値(整数)」とする一方、正本サンプル 1508-1509行は `\"price02\": \"50\"`, `\"stock\": \"17\"` と文字列で示す。price01 は1507行で null。API応答仕様であり画面レイアウト画像の対象外。",
+      "reason": "型表との矛盾はあるが、price02/stock の文字列例がExcel正本に実在するため「旧実装だけが根拠」という分類は誤り。SPEC_BACKED に訂正する。price01 の非null時型はサンプルから確定できないため信頼度はmedium。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Repository/ProductRepository.php の findPopupProductByOldProductId() は price01/price02/stock を ResultSetMapping の `integer` とし、src/Eccube/Service/App/Popup/PopupResponseBuilder.php の build() は price01/price02をその値のまま、stockを `(int)` で返す。文字列化処理はない。",
+      "severityOpinion": "med",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 14,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0502_基本設計仕様書(API_商品管理).html の sheet-5/6 を `jp|ja|en|言語コード|lang|popup/old` で確認した。A02-04のsheet-6正本 1627-1629行は `/popup/old/{旧商品ID}` の言語なし経路、1649行の入力も旧商品IDだけ。関連sheet-5は1462行で内部言語を `'ja'もしくは'en'` とするが、jp/enではない。旧 pf-api/config/routes.yaml 101-107行には `/popup/old/{lang}/{oldProductId}`、pf-api/src/Repository/DtbProductSubClassRepository.php 17,168-170行には `LANG_RANK = ['jp' => 2, 'en' => 1]` とその参照を確認した。API仕様であり画面レイアウト画像の対象外。",
+      "reason": "A02-04正本に言語パスはなく、関連A02-03正本の内部言語も ja/en である。jp/en期待の実物根拠は旧pf-apiなので LEGACY_BACKED は妥当。現行の言語あり旧ID経路では jp がJPにならず、旧契約との差は残る。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/App/ProductController.php の getPopupProductByOldProductId() は `match (strtolower($lang)) { 'ja' => 'JP', default => 'EN' }` で、jpはdefaultのEN、未知値もENになる。別の getPopupCardByOldProductId() は正本A02-04どおり言語なし経路である。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 15,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0502_基本設計仕様書(API_商品管理).html の sheet-6 と全Excel由来行を `src-cell.*(message|Not Found|errors)` で検索し、失敗本文キーの該当は0件。1658-1661行の正本は「404 該当データがない場合」まで。旧 pf-api/src/Controller/ProductController.php の getPopupProductOldAction() 119-125行と getPopupOldProductAction() 143-149行で `\"code\" => 404, \"message\" => 'Not Found'` を確認した。API応答仕様であり画面レイアウト画像の対象外。",
+      "reason": "Excel正本は404条件だけで本文の message キーを定義しないため、本文形の根拠は旧実装であり LEGACY_BACKED は妥当。現行は errors 配列を返す。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/App/ProductController.php の getPopupCardByOldProductId() と getPopupProductByOldProductId() はいずれも BaseApiException 捕捉時に `['code' => ..., 'errors' => ...]` を返す。src/Eccube/Exception/App/NotFoundException.php も `errors: [$message]`。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 16,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "REFUTED",
+      "correctedClass": "SPEC_BACKED",
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0502_基本設計仕様書(API_商品管理).html の sheet-6 を `price01/price02/stock/weeklySold/レスポンスデータサンプル` で確認した。Excel正本型表 1673-1682行は4項目を「数値(整数)」とする一方、正本サンプル 1694-1695,1702行は `\"price02\": \"50\"`, `\"stock\": \"17\"`, `\"weeklySold\": \"1\"` と文字列で示す。price01 は1693行で null。API応答仕様であり画面レイアウト画像の対象外。",
+      "reason": "正本の型表とサンプルは矛盾するが、price02/stock/weeklySold の文字列値はExcel正本に明記されているため、文字列期待を旧実装だけの根拠とする分類は誤り。SPEC_BACKED に訂正する。price01 の非null時型は確定しないので信頼度はmedium。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Repository/ProductRepository.php の findPopupProductByOldProductId() と findPopupProductByOldProductIdWithoutLang() は price01/price02/stock/weeklySold をすべて ResultSetMapping の `integer` とする。PopupResponseBuilder::build() も stock/weeklySoldを `(int)` にし、文字列化しない。",
+      "severityOpinion": "med",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 17,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0502_基本設計仕様書(API_商品管理).html の sheet-6 を `foilFlg/Foilフラグ/beltUrl/レスポンスデータ` で確認し、Excel正本 src-cell の1681行に `foilFlg`・「Foilフラグ」を確認した。正本サンプル1701行は代わりに `beltUrl` を示し foilFlg を省くため正本内の不整合も確認したが、レスポンス項目表のfoilFlg記載は実在する。API応答仕様であり画面レイアウト画像の対象外。",
+      "reason": "foilFlg は function-design-embed:start（1707行）より前のExcel正本レスポンス項目表に明記されるため SPEC_BACKED は妥当。サンプルとの不整合はあるものの、現行は項目表の要求を満たさず、コードとテストで意図的な除外が確認できる。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/App/ProductController.php の getPopupProductByOldProductId() と getPopupCardByOldProductId() は PopupResponseBuilder::build(..., true) を呼ぶ。src/Eccube/Service/App/Popup/PopupResponseBuilder.php の build() は includeBeltUrl=true ならbeltUrlだけを追加し、foilFlgはelse側だけ。ProductRepository の旧ID2メソッドもSELECTにfoilFlgを含めない。tests/Eccube/Tests/Web/App/ProductControllerTest.php は旧ID経路で `assertArrayNotHasKey('foilFlg', ...)` を置く。",
+      "severityOpinion": "med",
+      "confidence": "medium"
+    }
+  ]
+}

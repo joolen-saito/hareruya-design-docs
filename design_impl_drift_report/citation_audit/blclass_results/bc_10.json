@@ -1,0 +1,225 @@
+{
+  "packetId": "bc_10",
+  "results": [
+    {
+      "issueKey": "ECCUBE_HARERUYA-1780",
+      "shitekiKubun": "実装違い",
+      "harm": "med",
+      "basis": "SPEC_BACKED",
+      "docWork": "NONE",
+      "docEffortDays": 0,
+      "docTarget": "0301_基本設計仕様書(フロント_トップ).xlsx / 支店ECTOP シート E89・C155（支店公開状態による表示制御）",
+      "reason": "正本Excel 0301_基本設計仕様書(フロント_トップ).xlsx の支店ECTOP!E89/C155は、支店の公開ステータスに応じて支店サイトを表示／非表示にすると規定する。現行実装 ec-cube-enterprise/src/Eccube/Controller/Shop/ShopTopController.php:67-71 は支店トップだけを isOpenShop で404にする一方、src/Eccube/Service/BaseInfoService.php:63-76 と src/Eccube/EventListener/InvalidShopRedirectListener.php:87-90 は他の支店配下要求を店舗レコードの存在だけで有効とし、src/Eccube/Service/ShopRouteConditionService.php:29-36 も公開状態を見ない。制御自体は存在するが適用条件・範囲が設計と異なり、非公開支店の配下ページが外部表示されるためmedとした。",
+      "confidence": "high"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1781",
+      "shitekiKubun": "実装違い",
+      "harm": "med",
+      "basis": "SPEC_BACKED",
+      "docWork": "NONE",
+      "docEffortDays": 0,
+      "docTarget": "0301_基本設計仕様書(フロント_トップ).xlsx / 支店ECTOP シート D290（SALE中の商品・条件1）",
+      "reason": "正本Excel 0301_基本設計仕様書(フロント_トップ).xlsx の支店ECTOP!D290は、SALE中の商品を「支店の商品公開ステータスが公開」で絞ると規定する。現行実装 ec-cube-enterprise/src/Eccube/Repository/ProductRepository.php:405-460 の findTopSaleProductsByBaseInfo は商品公開・在庫・セールタグ・sale_flg・価格等で抽出するが、SQLにも後段DQLにも isBranchPublished 条件がない。SALE取得機能は存在するものの抽出条件が設計より不足し、支店で非公開の商品が表示され得るため実装違い・medとした。",
+      "confidence": "high"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1782",
+      "shitekiKubun": "実装違い",
+      "harm": "med",
+      "basis": "SPEC_BACKED",
+      "docWork": "NONE",
+      "docEffortDays": 0,
+      "docTarget": "0301_基本設計仕様書(フロント_トップ).xlsx / 支店ECTOP シート C506（タイルの商品公開制御）",
+      "reason": "正本Excel 0301_基本設計仕様書(フロント_トップ).xlsx の支店ECTOP!C506は、タイルの商品ごとに支店の商品公開ステータスを取得して公開／非公開を制御すると規定する。現行実装 ec-cube-enterprise/src/Eccube/Repository/ProductRepository.php:486-522 のピックアップ商品取得と同ファイル:569-594のタグ商品QueryBuilderは、商品状態・支店在庫・地域制限等を使うが isBranchPublished を条件にしない。タイル用取得処理は存在するが公開条件が違い、非公開商品が表示され得るため実装違い・medとした。",
+      "confidence": "high"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1819",
+      "shitekiKubun": "実装違い",
+      "harm": "low",
+      "basis": "SPEC_BACKED",
+      "docWork": "NONE",
+      "docEffortDays": 0,
+      "docTarget": "0304_基本設計仕様書(フロント_注文).xlsx / ご注文方法指定 シート Z450（識別ID 6-6 使用ポイントの初期値）",
+      "reason": "正本Excel 0304_基本設計仕様書(フロント_注文).xlsx のご注文方法指定!Z450は使用ポイントの初期値を「会員の保有ポイント」とする。現行実装 ec-cube-enterprise/src/Eccube/Form/Type/Shopping/OrderType.php:131-137 は未設定時に getDefaultUsePoint を使い、同ファイル:403-414 は保有ポイントと商品小計＋送料＋手数料の小さい方を返す。入力機能は存在して初期値だけが異なり、支払上限を超える保有ポイント時の初期表示差に限られるためlowとした。",
+      "confidence": "high"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1822",
+      "shitekiKubun": "実装違い",
+      "harm": "low",
+      "basis": "SPEC_BACKED",
+      "docWork": "NONE",
+      "docEffortDays": 0,
+      "docTarget": "0304_基本設計仕様書(フロント_注文).xlsx / 注文購入履歴一覧 シート AG139・別添資料_注文ステータスと表示画像の紐付け シート C2:C10",
+      "reason": "正本Excel 0304_基本設計仕様書(フロント_注文).xlsx の注文購入履歴一覧!AG139は別添シート参照を指示し、別添資料シートA1:H10はBOステータス×注文種別の表示可否を定義する。さらに同Excelの埋め込み画像 xl/media/image34.png〜image40.png（C2:C10に配置）を開き、「入金待ち」「ご来店待ち」「予約済み」「出荷準備」「出荷完了」「キャンセル」「受け取り済み」の画像を確認した。現行実装 ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/shopping_history.twig:84-95,193-201 は注文状態IDを3種のCSS色へ写して状態名テキストをspan表示するだけで、注文種別別の画像マッピングではない。表示形式の差なのでlowとした。",
+      "confidence": "high"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1823",
+      "shitekiKubun": "実装違い",
+      "harm": "low",
+      "basis": "SPEC_BACKED",
+      "docWork": "FIX",
+      "docEffortDays": 0.05,
+      "docTarget": "0304_基本設計仕様書(フロント_注文).xlsx / 注文購入履歴一覧 シート AG131（「一番若い注文日」の明確化）",
+      "reason": "正本Excel 0304_基本設計仕様書(フロント_注文).xlsx の注文購入履歴一覧!AG131は、複数取引時に「一番若い注文日」を表示すると記載する。これを最古日と解釈すると、現行実装 ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php:2248-2268 の MAX(o.order_date)（最新日）と逆で、同ファイル:2210-2226から shopping_history.twig:100-104へ最新日が表示されるため実装違いである。購入履歴の表示日だけの差なのでlowとしたが、「一番若い」が最古／最新のどちらとも読めるため、正本1セルを「最古の注文日」等へ明確化するFIXを計上しconfidenceはmedとした。",
+      "confidence": "med"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1865",
+      "shitekiKubun": "未実装",
+      "harm": "high",
+      "basis": "SPEC_BACKED",
+      "docWork": "NONE",
+      "docEffortDays": 0,
+      "docTarget": "0306_基本設計仕様書(フロント_会員).xlsx / 本会員登録 シート D38・E39・D43",
+      "reason": "正本Excel 0306_基本設計仕様書(フロント_会員).xlsx の本会員登録!D38/E39は、仮会員が既にスマレジIDを持つ場合に登録済みエラーとし、D43はE-2画面を表示すると規定する。現行実装 ec-cube-enterprise/src/Eccube/Controller/Front/EntryController.php:284-304 は仮会員の存在だけを確認して本会員へ更新し、同ファイル:350-365は既存スマレジIDを冪等正常終了として扱う。必要な保有判定・拒否処理が存在せず、本会員化・メール送信・ログインまで進んで会員／外部連携状態を不整合にし得るため未実装・highとした。",
+      "confidence": "high"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1866",
+      "shitekiKubun": "未実装",
+      "harm": "high",
+      "basis": "SPEC_BACKED",
+      "docWork": "NONE",
+      "docEffortDays": 0,
+      "docTarget": "0306_基本設計仕様書(フロント_会員).xlsx / 本会員登録 シート C119・C120・B94・E124",
+      "reason": "正本Excel 0306_基本設計仕様書(フロント_会員).xlsx の本会員登録!C119/C120は、仮会員不在または既存スマレジID保有時にE-2画面を表示するとし、B94/E124はE-2画面とトップページへボタンを定義する。現行実装 ec-cube-enterprise/src/Eccube/Resource/template/default/Entry/activate_error.twig:15-27 にエラー画面・トップリンクはあるが、src/Eccube/Controller/Front/EntryController.php:284-317,350-365には既存スマレジID時のエラー分岐がなく正常処理へ進む。該当条件の判定とE-2遷移が未実装で、会員／スマレジ連携状態へ影響するためhighとした。",
+      "confidence": "high"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1868",
+      "shitekiKubun": "実装違い",
+      "harm": "med",
+      "basis": "SPEC_BACKED",
+      "docWork": "NONE",
+      "docEffortDays": 0,
+      "docTarget": "0306_基本設計仕様書(フロント_会員).xlsx / パスワード再発行 シート E99（リセットキー有効時間）",
+      "reason": "正本Excel 0306_基本設計仕様書(フロント_会員).xlsx のパスワード再発行!E99はリセットキーの有効時間を24時間と規定する。現行実装 ec-cube-enterprise/src/Eccube/Controller/Front/ForgotController.php:75-85 は app/config/eccube/packages/eccube.yaml:152 の値10を分として加算するため実期限は10分だが、src/Eccube/Resource/template/default/Mail/Mall/forgot_mail.twig:2 と forgot_mail.en.twig:2 は同じ値を10時間と案内する。期限切れで再発行が必要になり得るが再試行可能なのでmedとした。",
+      "confidence": "high"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1875",
+      "shitekiKubun": "実装違い",
+      "harm": "low",
+      "basis": "SPEC_BACKED",
+      "docWork": "NONE",
+      "docEffortDays": 0,
+      "docTarget": "0306_基本設計仕様書(フロント_会員).xlsx / ポイント履歴 シート C65（表示順）",
+      "reason": "正本Excel 0306_基本設計仕様書(フロント_会員).xlsx のポイント履歴!C65はポイント履歴ID降順を規定する。現行実装 ec-cube-enterprise/src/Eccube/Repository/DtbPointHistoryRepository.php:83-89 は第1キーを issueDate DESC、第2キーを id DESCとしており、過去日付の後入れデータ等では設計と異なる順になる。履歴データ自体は欠落せず表示順だけの差なのでlowとした。",
+      "confidence": "high"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1879",
+      "shitekiKubun": "実装違い",
+      "harm": "med",
+      "basis": "SPEC_BACKED",
+      "docWork": "NONE",
+      "docEffortDays": 0,
+      "docTarget": "0306_基本設計仕様書(フロント_会員).xlsx / マイイベント・デッキ登録 シート C68（イベント終了判定）",
+      "reason": "正本Excel 0306_基本設計仕様書(フロント_会員).xlsx のマイイベント・デッキ登録!C68は、開催日の23:59:59を過ぎた場合にだけ「イベント終了」と表示すると規定する。現行実装 ec-cube-enterprise/src/Eccube/Entity/DtbEventDetail.php:551-557 は startDateが現在時刻より前なら終了とし、src/Eccube/Resource/template/default/Mypage/event_history.twig:88-116 がその値で終了表示を決める。そのため開催当日の開始後から終了扱いとなり、同じ判定でデッキ登録・編集の機会も失われ得るためmedとした。",
+      "confidence": "high"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1887",
+      "shitekiKubun": "未実装",
+      "harm": "high",
+      "basis": "SPEC_BACKED",
+      "docWork": "NONE",
+      "docEffortDays": 0,
+      "docTarget": "0306_基本設計仕様書(フロント_会員).xlsx / 大会デッキ登録編集 シート D291・D293（デッキ／カード保存）",
+      "reason": "正本Excel 0306_基本設計仕様書(フロント_会員).xlsx の大会デッキ登録編集!D291/D293は、デッキ本体とデッキを構築するカード情報を保存すると規定する。現行実装 ec-cube-enterprise/src/Eccube/Service/Front/Mypage/DeckEntryAction.php:37-82 はDtbDeck本体だけをpersist/flushし、DtbDeckCardを作らない。カード保存処理は src/Eccube/Service/Deck/CardListParserService.php:97-122 に存在するが、呼出しは src/Eccube/Service/Admin/Deck/DeckStoreAction.php:128-136 の管理画面経路だけである。大会提出デッキの構成データが欠落するため未実装・highとした。",
+      "confidence": "high"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1894",
+      "shitekiKubun": "未実装",
+      "harm": "high",
+      "basis": "SPEC_BACKED",
+      "docWork": "NONE",
+      "docEffortDays": 0,
+      "docTarget": "0306_基本設計仕様書(フロント_会員).xlsx / 配送先新規登録・変更 シート C471・AG498（ブラックリスト判定）",
+      "reason": "正本Excel 0306_基本設計仕様書(フロント_会員).xlsx の配送先新規登録・変更!C471/AG498は、登録押下時に配送先氏名・住所・電話番号をブラックリスト照合し、該当時は会員情報登録エラー画面へ遷移すると規定する。現行実装 ec-cube-enterprise/src/Eccube/Controller/Front/Mypage/DeliveryController.php:188-229 はフォーム成功後にCustomerAddressを直ちに保存し、ブラックリストを参照しない。src/Eccube/Repository/DtbBlacklistRepository.php:34-68の照合もCustomer専用で配送先経路から未使用である。取引拒否対象の配送先を保存・利用できる業務統制欠落のため未実装・highとした。",
+      "confidence": "high"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1904",
+      "shitekiKubun": "実装違い",
+      "harm": "low",
+      "basis": "SPEC_BACKED",
+      "docWork": "NONE",
+      "docEffortDays": 0,
+      "docTarget": "0306_基本設計仕様書(フロント_会員).xlsx / 本会員登録 シート D42・D43・B62・B94（E-1/E-2エラー画面）",
+      "reason": "正本Excel 0306_基本設計仕様書(フロント_会員).xlsx の本会員登録!D42/D43は書式エラーをE-1、仮会員不在・既存スマレジIDをE-2へ分岐し、同Excelの貼付画像Q66とQ99もE-1を「アクセスできません」、E-2を「完了済みです」と別文面で定義することを実画像で確認した。現行実装 ec-cube-enterprise/src/Eccube/Controller/Front/EntryController.php:233-274 と src/Eccube/Resource/template/default/Entry/activate_error.twig:15-27 は単一テンプレートでも forbidden/already_activated の文言出し分け自体は行うが、仮会員不在の EntryInvalidSecretKeyException を forbidden（E-1相当）へ誤配分し、secret_key欠落URLは必須ルート変数のため画面へ到達しない。画面機能は存在するが条件分岐が設計と異なるため実装違い、無効URL時の案内差なのでlowとした。",
+      "confidence": "high"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1907",
+      "shitekiKubun": "実装違い",
+      "harm": "low",
+      "basis": "SPEC_BACKED",
+      "docWork": "NONE",
+      "docEffortDays": 0,
+      "docTarget": "0307_基本設計仕様書(フロント_イベント).xlsx / イベント大会TOP シート I122・N470・AG510（イベントグループ）",
+      "reason": "正本Excel 0307_基本設計仕様書(フロント_イベント).xlsx のイベント大会TOP!I122は定番／特別／おすすめの3群を規定し、N470は特別群を「特別イベントまたは大型イベント」、AG510はそれ以外を定番群とする。現行実装 ec-cube-enterprise/html/template/default/assets/hareruya/js/hareruya-event.js:1 は event_scale_id=1/2/4/その他を large/special/recommend/regularの4配列へ分け、各タブで「大型イベント」「特別イベント」「おすすめイベント」「デイリーイベント」の4見出しを描画する。全イベントは表示されるがグループと見出しが違うためlowとした。",
+      "confidence": "high"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1908",
+      "shitekiKubun": "実装違い",
+      "harm": "low",
+      "basis": "SPEC_BACKED",
+      "docWork": "NONE",
+      "docEffortDays": 0,
+      "docTarget": "0307_基本設計仕様書(フロント_イベント).xlsx / イベント大会TOP シート I123・E162（大型イベントの表示優先度）",
+      "reason": "正本Excel 0307_基本設計仕様書(フロント_イベント).xlsx のイベント大会TOP!I123/E162は、大型イベントを特別イベントグループ内の最上位に表示すると規定する。現行実装 ec-cube-enterprise/html/template/default/assets/hareruya/js/hareruya-event.js:1 は大型をlarge配列、特別をspecial配列に分離し、Q(large,「大型イベント」)をQ(special,「特別イベント」)とは別セクションとして先に連結する。表示対象は欠落しないが所属ブロックが設計と違うためlowとした。",
+      "confidence": "high"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1909",
+      "shitekiKubun": "実装違い",
+      "harm": "low",
+      "basis": "SPEC_BACKED",
+      "docWork": "NONE",
+      "docEffortDays": 0,
+      "docTarget": "0307_基本設計仕様書(フロント_イベント).xlsx / イベント大会TOP シート I125・D161（イベント表示順）",
+      "reason": "正本Excel 0307_基本設計仕様書(フロント_イベント).xlsx のイベント大会TOP!I125/D161は、開催日時昇順の次にフォーマット昇順で表示すると規定する。現行実装 ec-cube-enterprise/src/Eccube/Repository/DtbEventRepository.php:287-310 は ed.startDate ASCの次をe.id ASCとし、ec-cube-enterprise/html/template/default/assets/hareruya/js/hareruya-event.js:1 のセクション描画も受信配列をフォーマットで再ソートしない。並べ替え処理は存在するが第2キーが異なり、表示順だけの差なのでlowとした。",
+      "confidence": "high"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1910",
+      "shitekiKubun": "実装違い",
+      "harm": "low",
+      "basis": "SPEC_BACKED",
+      "docWork": "NONE",
+      "docEffortDays": 0,
+      "docTarget": "0307_基本設計仕様書(フロント_イベント).xlsx / イベント大会TOP シート D570・AG590・AG593（日別表示期間）",
+      "reason": "正本Excel 0307_基本設計仕様書(フロント_イベント).xlsx のイベント大会TOP!D570は現在日から10日間表示、AG590/AG593は前後10日単位の取得を規定する。現行実装 ec-cube-enterprise/html/template/default/assets/hareruya/js/hareruya-event.js:1 は日付ボタンをfor(...<14...)で14個生成し、getDateRangeForPeriodも14×currentPeriodIndexとH(e,14)を使う。日別機能は存在するが期間値が14日であり、表示・操作単位の差なのでlowとした。",
+      "confidence": "high"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1912",
+      "shitekiKubun": "実装違い",
+      "harm": "med",
+      "basis": "SPEC_BACKED",
+      "docWork": "NONE",
+      "docEffortDays": 0,
+      "docTarget": "0307_基本設計仕様書(フロント_イベント).xlsx / イベント大会TOP シート D151・E152・E153・D154（初期データ取得）",
+      "reason": "正本Excel 0307_基本設計仕様書(フロント_イベント).xlsx のイベント大会TOP!D151/E152は初期に現在月日から1ヶ月分を全件取得し、E153/D154はページ読込等も同様に取得済みデータを非同期絞込みすると規定する。現行実装 ec-cube-enterprise/html/template/default/assets/hareruya/js/hareruya-event.js:1 のlist/daily initはloadEventsだけを呼び、getDateRangeForPeriodのH(e,14)で14日分を取得する。loadFullRangeInBackgroundは期間変更後にだけ呼ばれ、src/Eccube/Controller/App/EventScheduleController.php:58-70も渡されたdate_from/date_to範囲だけを返すため、初期一覧から15日目以降のイベントが欠落し得る。期間移動で回避可能なのでmedとした。",
+      "confidence": "high"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1914",
+      "shitekiKubun": "実装違い",
+      "harm": "med",
+      "basis": "SPEC_BACKED",
+      "docWork": "NONE",
+      "docEffortDays": 0,
+      "docTarget": "0307_基本設計仕様書(フロント_イベント).xlsx / イベント大会TOP シート D230・D231（バナースライダー抽出条件）",
+      "reason": "正本Excel 0307_基本設計仕様書(フロント_イベント).xlsx のイベント大会TOP!D230/D231は、店舗・表示タイプがスライドで、開催当日または開催前かつ公開状態のイベントに登録されたバナーを表示すると規定する。現行実装 ec-cube-enterprise/src/Eccube/Controller/Front/EventTopController.php:55-65 は MtbBannerRepository::findWhereUrlIsNotEmptyを使い、同Repository.php:52-70の条件は店舗・言語・表示タイプ・画像URLだけでイベント日／公開状態を見ない。一方、src/Eccube/Repository/DtbEventRepository.php:220-243には公開・開催日・イベントバナー条件を持つgetEventBannersがあるが呼出し箇所がない。スライダーは存在するが取得元と条件が異なり、終了済み・非対象バナーを外部表示し得るためmedとした。",
+      "confidence": "high"
+    }
+  ]
+}

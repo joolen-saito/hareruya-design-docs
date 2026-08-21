@@ -1,0 +1,165 @@
+{
+  "packetId": "rest_38",
+  "results": [
+    {
+      "rowId": 1028,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html:4290 のExcel正本項目表は、識別ID6「Event」の説明を「イベント名（英）を表示」と明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Entry/decklist.twig:23-26 は Event 欄を `<p class=\"event\">{{ deckDetail.detail.event.nameEn }}</p>` とし、旧実装も英語名を表示する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Admin/Event/EntryDeckListDisplayBuilder.php:140-146 はページデータの `eventName` に `$eventDetail?->getEvent()?->getNameJp()` を設定し、ec-cube-enterprise/src/Eccube/Resource/template/admin/Event/Entry/decklist.twig:324-325 は `{{ page.eventName }}` を表示する。",
+      "note": "Excel正本が英語名を明示する一方、現行は日本語名を表示するため SPEC_BACKED。"
+    },
+    {
+      "rowId": 1029,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html:4218-4359 のsheet-13 Excel正本部には「1ページ40枚」や「サイドボードは先頭ページのみ」の具体記述がなく、同:4269 は「カスタマイズ要件に記載の内容以外は現行踏襲とする」とだけ記す。これらの具体値は `function-design-embed:start` 後のリバース詳細設計、hareruya-design-docs/functions/pf-eccube3/m13-08_admin_event_event_deck_view.md:104-110 に初めて現れる。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/EntryController.php:783-792 は `$chunks = array_chunk($deckText['main'], 40);` とし、`$j === 0` のときだけ `$deckText['side']`、それ以外は空配列を設定する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Admin/Event/EntryDeckListDisplayBuilder.php:127-146 は1デッキから1ページだけを組み立て、`pageNo`/`totalPages` を各1、内容を `mainboard` のみにする。同:71-74 はその後 `totalPages` を全デッキ横断のページ総数へ置換しており、40枚単位のデッキ内分割ではない。",
+      "note": "40枚分割と先頭ページだけのサイド表示は旧実装由来で、現行への移植がない。"
+    },
+    {
+      "rowId": 1030,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html:4218-4359 のsheet-13 Excel正本部は識別ID8を単に「カード一覧」とし、メイン・サイド別の見出し、各枚数合計、サイド一覧までは記さない。具体仕様は埋め込み元 hareruya-design-docs/functions/pf-eccube3/m13-08_admin_event_event_deck_view.md:128-135 の「メイン・サイドそれぞれの枚数を合計し、各見出しに表示する」にのみある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/EntryController.php:775-781 は `textMain`/`textSide` の双方を復号し `array_sum` で各枚数を算出、同:796-798 はmain/sideと両countを表示モデルへ格納する。pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Entry/decklist.twig:30-46 は `Main Deck` と `Sideboard` の見出し・枚数・各カード一覧を描画する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Admin/Event/EntryDeckListDisplayBuilder.php:129-151 は `resolveMainCards()` と `buildMainboard()` だけを呼び、ec-cube-enterprise/src/Eccube/Resource/template/admin/Event/Entry/decklist.twig:333-336 も `メインボード({{ page.mainboard.totalCount }})` のみを描画する（確認範囲: 当該Builder/Twig、検索語 textSide/getTextSide/BOARD_ID_SIDE/sideboard は該当なし）。",
+      "note": "サイド一覧と両ボード枚数の具体的な表示契約は旧実装由来。"
+    },
+    {
+      "rowId": 1031,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html:4218-4359 のsheet-13 Excel正本部に0件時表示の規定はない。具体的な「デッキリストに何も表示しない（印刷ボタンのみ）」は埋め込み元 hareruya-design-docs/functions/pf-eccube3/m13-08_admin_event_event_deck_view.md:139-147 にだけ記載される。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Entry/decklist.twig:9-14 は印刷ボタンを常時描画した後に `{% for dispDeck in dispDecks %}` を開始し、空配列向けのelseやメッセージを持たないため、0件時は印刷ボタンだけになる。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Event/Entry/decklist.twig:299-301 は `{% if pages is empty %}` で `<p class=\"decklist-empty\">{{ 'admin.common.search_no_result'|trans }}</p>` を印刷ボタンに加えて表示する。",
+      "note": "0件時の表示細目は旧実装由来で、現行は検索結果なし文言を追加している。"
+    },
+    {
+      "rowId": 1032,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html:4218-4359 のsheet-13 Excel正本部は「イベント申込一覧の検索結果に紐づくデッキリスト」までで、セッションキーを記さない。`admin.event_entry.search` は埋め込み元 hareruya-design-docs/functions/pf-eccube3/m13-08_admin_event_event_deck_view.md:73-74、104-105 にのみ現れる。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/EntryController.php:754-767 はdeckListで `$viewData = $session->get('admin.event_entry.search', []);` と読み、検索フォームへ渡してデッキを取得する。この処理内に当該セッションへのsetはない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Event/EntryController.php:57-60 は `SESSION_KEY = 'eccube.enterprise.admin.entry.search'` と定義し、同:580-600 のdeckListは `$session->get(self::SESSION_KEY, [])` を読む。`admin.event_entry.search` は現行リポジトリの当該経路に存在しない。",
+      "note": "内部セッションキーの具体値は旧実装由来。現行は別キーを用いる。"
+    },
+    {
+      "rowId": 1033,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html:4656-4940 のsheet-15 Excel正本部に成功・失敗の完全一致文言はなく、同:4941 の `function-design-embed:start` 後にだけ現れる。埋め込み元 hareruya-design-docs/functions/pf-eccube3/m13-10_admin_event_event_entry_edit.md:227-228 は「登録が完了しました。」「登録できませんでした。」を規定する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/EntryController.php:501-514 は未送信・その他検証失敗で `admin.register.failed`、同:579-581 は更新成功で `admin.register.complete` を使う。pf-eccube3/src/Eccube/Resource/locale/message.ja.yml:83-84 は各キーを「登録が完了しました。」「登録できませんでした。」と定義する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Event/EntryController.php:297-323 は成功時 `admin.common.save_complete`、例外時 `admin.common.save_error` を使う。ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:1595-1596 は「保存しました」「保存に失敗しました」であり、同:1970-1971 に旧キーは定義されるが本フローでは未使用。",
+      "note": "完全一致するフラッシュ文言は旧実装由来で、現行の保存文言へ置き換わっている。"
+    },
+    {
+      "rowId": 1034,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html:5081 のExcel正本セルは「権限を保持している店舗のイベントの情報のみ表示を可能とする」と明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/EntryController.php:194-205 の旧検索条件はリクエストの `search_shop` をそのまま `shop` に設定するだけで、管理者の権限店舗集合との照合はない。旧実装もこのカスタマイズ要件を満たしていたとは確認できない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/EntryRegisterSearchType.php:41-51 はBaseInfo全件を選択肢にし、ec-cube-enterprise/src/Eccube/Repository/DtbEventRepository.php:189-197 は選択値が空なら店舗条件を追加しない。ec-cube-enterprise/src/Eccube/Controller/Admin/Event/EntryRegistrationController.php:73-78 はデフォルト店舗を初期値にするだけで権限店舗へ常時限定しない。",
+      "note": "Excel正本に権限店舗だけの表示要求があり、現行のM13-11検索は満たさない。"
+    },
+    {
+      "rowId": 1035,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html:5049-5141 のsheet-16 Excel正本部は検索画面を記述するが、URL・HTTPメソッド・XHRモーダル契約はない。これらは同:5142 の埋め込み後、hareruya-design-docs/functions/pf-eccube3/m13-11_admin_event_event_entry_search.md:54-62 にのみ記載される。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/EntryServiceProvider.php:34-42 はPOST `/entry/search/event/html`、GET `/entry/search/event/html/{page_no}`、POST `/entry/search/event/id` を登録する。pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/EntryController.php:176-188、259-263 はXHR判定を行い `Entry/search_event.twig` をモーダル用に描画する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Event/EntryRegistrationController.php:66-69 はM13-11をGET/POST `/entry_registration` とGET/POST `/entry_registration/page/{page_no}` の同期ページとして実装する。別機能の ec-cube-enterprise/src/Eccube/Controller/Admin/Event/EntryController.php:437-439 はGET `/event/entry/search_event` であり、要求されたURL・POST契約と異なる。",
+      "note": "非同期モーダル検索のURL・メソッド契約は旧実装由来。"
+    },
+    {
+      "rowId": 1036,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html:5049-5141 のsheet-16 Excel正本部に直接検索のURLはなく、埋め込み元 hareruya-design-docs/functions/pf-eccube3/m13-11_admin_event_event_entry_search.md:58-62 にだけ `POST /{admin_route}/entry/search/event/id` が記載される。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/EntryServiceProvider.php:40-42 はPOST `/entry/search/event/id` を `searchEventById` にbindし、pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/EntryController.php:273-301 は `detail` でイベント日程を取得してイベント情報JSONを返す。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Event/EntryRegistrationController.php:66-69、159-160、232-233 のM13-11/M13-12ルートはindex/new/search_playerだけで、`/entry/search/event/id` は存在しない。別機能の ec-cube-enterprise/src/Eccube/Controller/Admin/Event/EntryController.php:521-522 はPOST `/event/entry/search_event/set` でパスが異なる。",
+      "note": "イベントID直接検索の具体的エンドポイントは旧実装由来。"
+    },
+    {
+      "rowId": 1037,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html:5049-5141 のsheet-16 Excel正本部に非XHR時の処理はない。埋め込み元 hareruya-design-docs/functions/pf-eccube3/m13-11_admin_event_event_entry_search.md:78-84、189-193 にだけ「空の検索結果でモーダル枠のみ表示する」とある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/EntryController.php:176-188 は `!$request->isXmlHttpRequest()` の場合、空の`pagination`とモーダル指定を `Entry/search_event.twig` へ渡して直ちにrenderする。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Event/EntryRegistrationController.php:66-145 のイベント検索は通常ページ全体を返し、イベント検索に `isXmlHttpRequest()` 分岐を持たない。同:232-252 の非XHR空モーダル分岐はプレイヤー検索専用である。",
+      "note": "イベント検索の非XHR時フォールバックは旧実装由来で、現行M13-11にはない。"
+    },
+    {
+      "rowId": 1038,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html:5229-5328 のsheet-17 Excel正本部に3エンドポイントと非XHR処理はなく、同:5329 の埋め込み後にのみ現れる。埋め込み元 hareruya-design-docs/functions/pf-eccube3/m13-11_admin_event_event_entry_search.md:54-62、78-94 がPOST検索、GETページ、POST直接検索、非XHR時空モーダルを列挙する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/EntryServiceProvider.php:35-42 は3ルートを指定どおり登録し、pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/EntryController.php:182-188、273-301 は非XHR空HTMLとID検索JSONを実装する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Event/EntryController.php:437-439、521-522 はGET `/event/entry/search_event[/page/{page_no}]` とPOST `/event/entry/search_event/set` を定義し、検索HTML側にXHR判定がない。M13-11本体は ec-cube-enterprise/src/Eccube/Controller/Admin/Event/EntryRegistrationController.php:66-69 の同期 `/entry_registration` である。",
+      "note": "1035-1037をまとめた複合指摘であり、いずれの具体契約も旧実装には存在し現行とは異なる。"
+    },
+    {
+      "rowId": 1039,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html:5269-5273 のExcel正本は「権限を保持している店舗のイベントのみ登録が可能」とし、「識別ID:4『新規登録』ボタンは権限を保持している店舗のイベントのみ表示する」と明記する。同:5290 の項目表も「権限を保持している店舗のイベントのみ表示」と再掲する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Entry/search_event.twig:35-43 は非modal行に権限条件なしで「新規登録」ボタンを描画する。旧実装にも表示制御は確認できない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Event/EntryRegistration/index.twig:92-111 は全`datas`行に無条件で `admin_entry_new` リンクを表示する。ec-cube-enterprise/src/Eccube/Controller/Admin/Event/EntryRegistrationController.php:163-165 は遷移後に `isEditableShop` で拒否するが、一覧表示とボタン表示の正本要件は満たさない。",
+      "note": "登録処理入口の認可はあるが、Excel正本が明記する検索結果とボタンの表示制御が未実装。"
+    },
+    {
+      "rowId": 1040,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html:5416-5683 のsheet-18 Excel正本部は新規申込画面と処理を規定するが、URL・HTTPメソッドはない。具体契約は同:5684 の埋め込み後、hareruya-design-docs/functions/pf-eccube3/m13-12_admin_event_event_entry_register.md:74-83 にのみ記載される。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/EntryServiceProvider.php:53-69 はGET `/entry/{eventDetailId}/new`、POST `/entry/search/player/html`、POST `/entry/{eventDetailId}/create` を登録する。pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/EntryController.php:311-318 は登録先選択画面を返し、その入口は同ServiceProvider.php:20-22 のGET `/entry/select` である。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Event/EntryRegistrationController.php:66-68、159-160、232-233 は `/entry_registration`、GET/POST `/entry_registration/new/{eventDetailId}`、GET `/entry_registration/search_player` を使い、create専用POSTとプレイヤー検索POSTを持たない。",
+      "note": "入口URLとHTTPメソッドの具体値は旧実装由来。"
+    },
+    {
+      "rowId": 1042,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html:5416-5683 のsheet-18 Excel正本部は登録成功後の編集画面遷移を明記せず、埋め込み元 hareruya-design-docs/functions/pf-eccube3/m13-12_admin_event_event_entry_register.md:111-120、169-175 にだけ「登録した申込の編集画面へリダイレクト」とある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/EntryController.php:466-481 は新規申込IDを取得してプレイヤーを保存し、成功メッセージ後に `admin_entry_edit` へ `eventEntryId` を渡してリダイレクトする。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Event/EntryRegistrationController.php:188-205 はStoreActionの返却申込を利用せず、成功後に `admin_event_entry_event_detail` へ `event_detail_id` を渡して申込一覧へ遷移する。",
+      "note": "成功後の申込編集画面遷移は旧実装由来で、現行は日程別申込一覧へ戻る。"
+    },
+    {
+      "rowId": 1043,
+      "verdict": "UNSUPPORTED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html:5510-5513、5520-5522 のExcel正本は「席順の編集は廃止」「チームメンバー確認済の項目を廃止」、識別ID4-1席順・4-3確認済を「削除する」と明記する。埋め込み元 hareruya-design-docs/functions/pf-eccube3/m13-12_admin_event_event_entry_register.md:41-49 も、旧リバース記述のチーム人数・席順・確認フラグは「刷新後は実装不要」と明示する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/EntryController.php:356-377 は旧実装でチーム人数分の行と `{id, confirm, seat}` のJSONを生成し、同:439-475 はJSON各要素を申込プレイヤーとして保存する。ただしこれらはExcel正本で廃止された旧仕様であり、刷新後の移植根拠にはならない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/EventEntryDetailType.php:60-71 は単一の `entryPlayer` hiddenを持ち、ec-cube-enterprise/src/Eccube/Service/Admin/Event/EntryRegistrationStoreAction.php:43-69 は1プレイヤーを `confirmFlg: false, seatOrder: 1` で保存する。ec-cube-enterprise/src/Eccube/Resource/template/admin/Event/EntryRegistration/edit.twig:269-285 も1行固定で、正本が廃止した編集UIは持たない。",
+      "note": "指摘内容は旧実装には実在するが、Excel正本とリバース文書自身が刷新後不要と明記している。旧仕様の移植漏れという期待は根拠として採用できず UNSUPPORTED。"
+    },
+    {
+      "rowId": 1044,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html:5416-5683 のsheet-18 Excel正本部はプレイヤー検索・登録を示すが、必須JSON、同一日程重複検証、失敗メッセージと新規画面リダイレクトを具体化しない。これらは埋め込み元 hareruya-design-docs/functions/pf-eccube3/m13-12_admin_event_event_entry_register.md:137-155、204-210 にのみ記載される。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/Entry/EntryDetailType.php:73-78 は`entryPlayerList`をrequiredかつ`EntryDuplicate`制約付きにする。pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/Entry/EntryDuplicateValidator.php:30-42 は各playerIdを同日程の既存申込と照合して `form.entry.duplicate` 違反を作り、pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/EntryController.php:428-435 は重複メッセージ後に新規画面へredirectする。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/EventEntryDetailType.php:60-71 は単一playerIdにNotBlank/Regexだけを付ける。ec-cube-enterprise/src/Eccube/Service/Admin/Event/EntryRegistrationStoreAction.php:39-69 はplayer存在確認後そのまま申込と申込プレイヤーを保存し、同一日程の重複検証を行わない。",
+      "note": "重複検証と失敗時遷移の具体挙動は旧実装由来で、現行の登録サーバー処理にはない。"
+    },
+    {
+      "rowId": 1045,
+      "verdict": "UNSUPPORTED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html:5536-5539 のExcel正本項目表には旧行「会場」が残る一方、同:5538 の同じ正本セル注記は「2026/7/17木村：会場の概念はなくなったため項目削除」と明記する。最新注記が会場表示要求を明示的に取り消している。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Entry/entrydetail.twig:44-67 は旧実装でイベント名・店舗・会場・フォーマットを読み取り専用表示し、会場は `getVenue` を出力する。ただし正本の最新削除注記により移植対象ではない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Event/EntryRegistration/edit.twig:240-257 はイベント名・店舗・フォーマットを表示し、会場行を持たない。これはExcel正本の「会場の概念はなくなったため項目削除」と一致する。",
+      "note": "旧項目名だけを拾った指摘で、同じ正本行の最新削除注記を見落としているため UNSUPPORTED。"
+    },
+    {
+      "rowId": 1046,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html:5486-5488 のExcel図形はボタンを「登録」と表示し、同:5550 のExcel正本項目表も識別ID3-1のラベルを「登録」、説明を「入力されたフォームの値で登録」と明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Entry/entrydetail.twig:200-206 は新規時のsubmit valueを `イベント申込を登録` とする。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Event/EntryRegistration/edit.twig:356-360 は新規時submitに `admin.common.save` を使い、ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:1631 は同キーを「保存」と定義する。同:1633 の「登録」キーはこのボタンで未使用。",
+      "note": "利用者に見えるボタン文言をExcel正本が「登録」と指定するため SPEC_BACKED。"
+    },
+    {
+      "rowId": 1047,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html:5487、5610 のExcel正本図形・図形表は「『戻る』は、前の画面名を表示する」と明記する。同:5551 は戻り先を「イベント申込登録（検索結果）画面へ遷移する」と規定する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Entry/entrydetail.twig:219-227 は新規時に `admin_entry_select` へ戻るが、表示は固定の「戻る」であり、旧実装も前画面名表示を満たさない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Event/EntryRegistration/edit.twig:337-343 は新規時リンク先を `admin_entry_registration` とする一方、表示キーは `admin.event.entry.back`。ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:5928 は同キーを「戻る」と定義する。",
+      "note": "遷移先は検索結果画面相当だが、Excel正本が要求する前画面名の表示が未達のため SPEC_BACKED。"
+    },
+    {
+      "rowId": 1048,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html:5416-5683 のsheet-18 Excel正本部に3つの完全一致フラッシュ文言はない。具体文言は埋め込み元 hareruya-design-docs/functions/pf-eccube3/m13-12_admin_event_event_entry_register.md:229-230 と、埋め込みHTML同:5770 付近にのみ記載される。なおExcel正本の同:5511 は支払金額を「参照のみ」としており、刷新後の金額入力エラー要件は適用対象外である。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/EntryController.php:420-435、479-481 は未送信で`admin.register.failed`、金額不正で`form.price.message`、成功で`admin.register.complete`を使う。pf-eccube3/src/Eccube/Resource/locale/message.ja.yml:83-84 は「登録が完了しました。」「登録できませんでした。」、pf-eccube3/app/Plugin/HareruyaEc/Resource/locale/message.ja.yml:557-559 は `form.price.message: 半角数字で金額を入力してください。` と定義する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Event/EntryRegistrationController.php:188-210 は成功時 `admin.common.save_complete`、例外時 `admin.common.save_error` を使い、ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:1595-1596 では「保存しました」「保存に失敗しました」となる。ec-cube-enterprise/src/Eccube/Form/Type/Admin/EventEntryDetailType.php:109-116 はpriceをdisabledにしている。",
+      "note": "成功・未送信失敗の完全一致文言は旧実装由来で現行に未移植。金額エラー部分はExcel正本の参照専用化により刷新後対象外だが、残る2文言の移植差を根拠に LEGACY_BACKED。"
+    }
+  ]
+}

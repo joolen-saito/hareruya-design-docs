@@ -1,0 +1,365 @@
+{
+  "packetId": "sw_23",
+  "results": [
+    {
+      "rowId": 793,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "一覧の表示件数上限より多い集計行がある場合、CSVのデータ行が設計より少なくなる。",
+      "checked": "SalesAnalysisController.php:129-155でセッション検索条件を復元してexportBySearchDataへ渡すこと、SalesAnalysisCsvExporterService.php:35-52で同条件のgetAnalysisSummary結果を全行出力すること、OrderItemRepository.php:326-329でpage_countをsetMaxResultsへ適用することを確認。",
+      "reason": "CSVの行数という外部I/Oが変わるため。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 794,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "過去に検索した後で初期画面を開いても、エクスポートURLへアクセスすると過去条件のCSVが出力され、設計の条件なし状態にならない。",
+      "checked": "ProductRequestController.php:50-66のindexにセッション削除がなく、同:87-88で検索条件を保存し、同:114-134でその残存値をCSV出力に使用することを確認。",
+      "reason": "残存セッションが後続CSVの内容とエラー有無を変えるため。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 795,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "初期表示後にも以前の検索条件が残り、CSV直アクセス時に条件なしエラーではなく以前の条件のCSVが返る。",
+      "checked": "ProductRequestController.php:50-66、87-88、114-134を開き、indexではSESSION_KEYをremoveせず、searchでsetし、exportでgetしていることを確認。",
+      "reason": "内部キー名の差だけでなく、削除欠如が外部レスポンスを変える。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 796,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "検索条件がない場合、設計ではCSVファイルが返るが、実装ではエラーフラッシュを設定して検索画面へリダイレクトする。",
+      "checked": "ProductRequestController.php:111-120でセッション値がnullならエラー追加後にredirectToRouteし、同:122-134のCSV生成へ進まないことを確認。",
+      "reason": "HTTPレスポンス種別とファイル出力有無が異なるため。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 797,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "CSVの第5列ヘッダが「通知済み/削除」ではなく「削除」としてダウンロードされる。",
+      "checked": "ProductRequestCsvExportService.php:24-30でdeleted_countのヘッダが「削除」、同:47-55でCSVヘッダとして実際に書き出されることを確認。",
+      "reason": "CSVの表示文字列が1項目でも異なれば外部I/O差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 798,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "設計の /analysis/format_sales と /result では画面・検索を利用できず、実装は /analysis/format-sales と /search を公開する。",
+      "checked": "FormatSalesController.php:46-47、74-75のRoute path/methodとformat_sales.twig:94のフォームactionを確認。",
+      "reason": "ルート名だけでなくHTTPパス自体が異なるため。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 799,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "初回画面の集計月inputに空ではなく現在年月（YYYY-MM）が表示される。",
+      "checked": "FormatSalesController.php:48-52で作成直後のmonthへ現在年月をsetDataし、format_sales.twig:98-105でそのフィールドを描画することを確認。",
+      "reason": "初期表示のHTMLフォーム値が外部から観測できるため。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 800,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "CSVはクリック時の送信月ではなく直前に検索した月・対象区分で出力され、画面にも設計範囲外のCSVリンクが現れる。",
+      "checked": "FormatSalesController.php:103でフォーム値をセッション保存し、同:127-146でGET exportがセッション値から再集計すること、format_sales.twig:129-139で結果時にCSVリンクを描画することを確認。",
+      "reason": "CSVの入力元・内容と生成HTMLの導線が変わるため。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 801,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "GET/POSTの到達先が設計のunderscore＋resultではなくhyphen＋searchになる。",
+      "checked": "FormatSalesController.php:46、74の公開Route pathを開いて確認。",
+      "reason": "外部URL契約の相違であり、内部ルート名のみの差ではない。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 802,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "初回表示時の集計月欄に当月が表示され、未設定表示にならない。",
+      "checked": "FormatSalesController.php:50-52のmonth setDataとformat_sales.twig:98-105のform_widget表示を確認。",
+      "reason": "画面に出るinput値が異なるため。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 803,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "検索後のCSV出力が保存済み検索条件に依存し、セッションがなければエラーリダイレクト、あれば保存月のCSVになる。",
+      "checked": "FormatSalesController.php:33のキー定義、同:103のset、同:130-146のgetとCSV再集計を確認。",
+      "reason": "セッションキー名そのものではなく、その保存・参照がHTTP/CSV挙動を変える。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 804,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "CSV操作は設計のPOSTフォーム送信ではなくGETリンクになり、クリック時の集計月をリクエストに含めない。",
+      "checked": "FormatSalesController.php:127でexportがGET限定、format_sales.twig:136-139でbuttonではなくhrefのa要素であることを確認。",
+      "reason": "HTTPメソッドとリクエスト入力が異なるため。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 805,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "検索結果表示後に集計月欄を変更してCSVを押しても変更後の月は送られず、保存済みの旧月でCSVが作られる。",
+      "checked": "FormatSalesController.php:103で検索時viewDataを保存し、同:130-146でexportがRequest入力ではなくsessionのviewDataをsubmitしていることを確認。",
+      "reason": "同じ画面操作でもCSV対象月が設計と変わり得るため。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 806,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "ダウンロード時のContent-Dispositionファイル名が format_sales_report_*.csv ではなく format_sales_*.csv になる。",
+      "checked": "FormatSalesController.php:177-179で実際のfilename生成とContent-Disposition設定を確認。",
+      "reason": "HTTPヘッダに露出するファイル名の差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 807,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "設計の /analysis/used_card とGET export/{mode}は利用できず、実装では /analysis/used-card へのPOSTが直ちにCSVを返す。",
+      "checked": "UsedCardController.php:41-43のGET画面ルートと同:62-82の同一hyphenパスPOST即CSV処理を確認。",
+      "reason": "パス、メソッド、レスポンスフローがいずれも外部契約として異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 808,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "検索ボタンに相当する送信で集計結果HTMLは表示されず、CSVダウンロードレスポンスが直接返る。",
+      "checked": "UsedCardController.php:62-82で有効POSTがcsvExportServiceのResponseを直接返すこと、used_card.twig:28-65に結果表や別CSV導線がなく送信ボタン自体がCSVダウンロードであることを確認。",
+      "reason": "画面出力とダウンロードの有無が変わるため。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 809,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "初期フォームは開始日が2週間前で必須、formatsも必須となり、mode入力とCSRFトークンを持たないため、表示・受付リクエスト・検証結果が設計と異なる。",
+      "checked": "SearchUsedCardType.php:34-36でCSRF無効、同:43-64でstart_date初期値・必須とformats必須、同全体にmodeなしを確認し、used_card.twig:28-65の描画・POSTを確認。",
+      "reason": "フォーム値、HTTPキー、CSRF保護、バリデーションが外部観測可能。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 810,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "GET /analysis/used_card/export/{mode}で形式を選んだCSVを取得できず、POST /analysis/used-cardの単一形式しか利用できない。",
+      "checked": "UsedCardController.php:41、62の2ルートとSearchUsedCardType.php:40-69のフィールドを開き、export/{mode}ルートおよびmode入力がないことを確認。",
+      "reason": "利用可能なURL・HTTPメソッド・CSV形式が異なるため。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 811,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "検索結果画面や条件保持を経ず、POST直後にCSVが返り、後続CSVで同条件を再利用するフローがない。",
+      "checked": "UsedCardController.php:43-55のGETはフォームのみ、同:63-82のPOSTは直接CSVで、クラス内にSessionInterfaceやsession set/get/removeがないことを確認。",
+      "reason": "HTMLレスポンス、セッション状態、CSV導線が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 812,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "イベント一覧は /event/list ではなく /event、新規登録は /event/new ではなく /event/create となり、設計URLから到達できない。",
+      "checked": "EventController.php:63-65の一覧/pageルート、同:212-214のcreateルート、index.twig:39、56、120、181の生成リンク・actionを確認。",
+      "reason": "bind名だけでなく公開パスと生成リンクが異なるため。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 813,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "POSTのinput名接頭辞は admin_event_list ではなく admin_search_event で、さらに _token が必須のフォームHTML・リクエストになる。",
+      "checked": "SearchEventType.php:130-143でblock prefixがadmin_search_event、configureOptionsにcsrf_protection無効化がないこと、index.twig:39-42で_tokenを描画することを確認。",
+      "reason": "フォーム名はHTTPキーに、CSRFは受理可否に露出する。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 814,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "初期表示後も以前選択した表示件数が残り、設計の既定件数へ戻らない。また実装は初期フォーム条件をセッションへ再保存する。",
+      "checked": "EventController.php:44-48の実キー、同:87-99でpage_countを既存セッションから復元、同:192-198で初期GET時に検索条件とpage_noをsetする一方page_countをremoveしないことを確認。",
+      "reason": "キー名だけなら内部差だが、初期化方法の差が一覧の表示件数と復元条件へ露出する。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 815,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "ソート送信キー・値がsort/order＋ASC/DESCではなくフォーム内sortkey/sorttype＋a/dとなり、不正値でもエラーを表示せず降順扱いになる。",
+      "checked": "index.twig:24-30、41-42、126-134で送信キーとa/d値を確認し、DtbEventRepository.php:133-140でa以外をDESCとしてエラーなく処理することを確認。",
+      "reason": "HTTP入力契約、並び順、エラー表示が変わるため。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 816,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "件数文言は「検索結果：N件が該当しました」、0件文言は「検索条件に合致するデータが見つかりませんでした」等になり、設計文言と一致しない。",
+      "checked": "index.twig:102-104、206-213の翻訳キー使用とmessages.ja.yaml:1730、1734の実値を確認。",
+      "reason": "利用者表示文言は1文字・句読点差でもIMPACTである。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 817,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "deleted_atが設定されたイベントも検索クエリの候補に入り、一覧件数・行へ現れ得る。",
+      "checked": "DtbEventRepository.php:59-64、66-140の一覧QueryBuilder全体にe.deletedAt IS NULL条件がないこと、DtbEvent.php:28-31にSoftDeleteable指定がなく同:135-136に通常列としてdeletedAtがあることを確認。",
+      "reason": "検索結果の件数・表示行が変わるため。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 818,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "設計のlist/search URLとadmin_event_list形式のCSRFなしPOSTではなく、/eventへのadmin_search_event形式かつCSRF付きPOSTを要求する。",
+      "checked": "EventController.php:63-65、SearchEventType.php:130-143、index.twig:39-42を開いてパス、フォームprefix、_token描画を確認。",
+      "reason": "外部URLとHTTPフォームボディ・受理条件が異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 819,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "一覧初期表示で以前のpage_countが消えず表示件数選択に残り、検索条件も削除ではなく初期値で上書き保存される。",
+      "checked": "EventController.php:87-99でpage_count復元・保存、同:192-198で初期GETがsearch/page_noをsetするだけでremoveしないことを確認。",
+      "reason": "セッションキー名自体より、クリアされない値が後続画面の件数・条件に影響する。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 820,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "FromがToより後の場合、設計の0件結果画面ではなく日付範囲エラー付きフォームが返る。",
+      "checked": "SearchEventType.php:115-125でPOST_SUBMIT時にfrom>toならstart_date_toへFormErrorを追加し、EventController.php:109-153で無効フォームは検索せずhas_errors付きで返すことを確認。",
+      "reason": "バリデーション有無と画面出力が異なるため。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 821,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "orderではなくsorttypeを受け、値aだけを昇順、それ以外はエラーなしで降順として一覧表示する。",
+      "checked": "index.twig:24-30、130-134とDtbEventRepository.php:133-140を確認し、admin.error.sortを出す分岐がないことを確認。",
+      "reason": "リクエストキー・不正値応答・行順が外部から観測できる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 822,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "一覧列ラベルは「開催店舗」ではなく「店舗」となり、検索結果・0件メッセージも設計と異なる日本語で表示される。",
+      "checked": "index.twig:103、146、211-212の翻訳使用とmessages.ja.yaml:1730、1734、6009の「店舗」を確認。",
+      "reason": "生成HTML上のラベル・文言差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 823,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "イベント一覧のHTMLにeventlist.cssのstylesheet参照が出力されず、設計された専用スタイルが適用されない。",
+      "checked": "Event/index.twig:1-219を開いてstylesheet/eventlist.cssの読込ブロックがないことを確認し、ec-cube-enterprise全体のファイル検索でもeventlist.css実体・参照がないことを確認。",
+      "reason": "CSSファイル名自体ではなく、生成HTMLと画面スタイルへの非適用が観測可能。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 824,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "新規イベント画面でクレジットカード決済チェックが初期選択されず、未選択で表示・送信される。",
+      "checked": "EventController.php:217-223で空のDtbEventからフォームを作り、EventType.php:67-73で既存paymentsからのみ初期dataを作るため新規時は空、同:159-168でその空配列をpaymentsへ設定することを確認。",
+      "reason": "フォームの初期チェック状態と送信値が異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 825,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "削除確認ダイアログには個別イベント名ではなく共通文字列「イベント管理」が埋め込まれる。",
+      "checked": "edit.twig:517で%name%へadmin.event.event_management翻訳を渡し、messages.ja.yaml:5908でその値が「イベント管理」、同:1785で削除確認本文に%name%を表示することを確認。",
+      "reason": "モーダルの利用者表示文言が異なるため。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 826,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "日程ありイベントを削除すると、要求された日本語ではなく未定義翻訳キー admin.event.delete.schedule_exists がフラッシュ表示される。",
+      "checked": "EventController.php:361-364でaddErrorにadmin.event.delete.schedule_existsを渡すこと、messages.ja.yamlにはadmin.event.delete.not.schedule_exists（6078）のみで前者の定義がないことを確認。",
+      "reason": "未定義翻訳キーが利用者向けエラー出力に露出するため。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 827,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "デッキ・申込がある日程の削除時、要求された日本語ではなく未定義キー admin.event.delete.deckerror / entryerror がフラッシュ表示される。",
+      "checked": "ScheduleController.php:187-196で両キーをaddErrorに渡すこと、messages.ja.yamlにはnot.deck_exists/not.entry_exists（6080-6081）のみでdeckerror/entryerror定義がないことを確認。",
+      "reason": "エラーメッセージという外部出力が変わるため。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 828,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "日程追加画面のGET URLは設計の /schedule/new ではなく /schedule/create で、設計URLは到達不能になる。",
+      "checked": "ScheduleController.php:47-49で/schedule/createがGET/POST兼用、Event/edit.twig:492の追加リンクとEvent/Schedule/edit.twig:82の新規フォームactionが同じadmin_schedule_createを使うことを確認。",
+      "reason": "登録POST先は一致しても、画面表示用GETパスが外部URLとして異なる。",
+      "confidence": "high"
+    }
+  ]
+}

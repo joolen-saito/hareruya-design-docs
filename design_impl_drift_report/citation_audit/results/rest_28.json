@@ -1,0 +1,165 @@
+{
+  "packetId": "rest_28",
+  "results": [
+    {
+      "rowId": 818,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:5975 の Excel 正本セル E18/P18/W18 は「海外郵便番号」「数字」「10」と記載している。指摘の期待値「100」は再生成後の正本にはなく、正本上限は10である。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/CustomerAddressCsvController.php:27-30 は旧CSVヘッダに「'郵便番号1'」「'郵便番号2'」「'海外郵便番号'」を定義する。旧実装で上限100を示す記述は見つからない（確認範囲: pf-eccube3/app/Plugin/HareruyaEc の「海外郵便番号」「NumericMaxLengthValidator」、および pf-api・pf-article・deck-api の同語検索）。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/CustomerAddressCsvImportHandler.php:296-298 は `$this->abroadPostalCodeColumn = (new BaseCsvColumn('海外郵便番号', '海外郵便番号'))` に `new NumericValidator(), new NumericMaxLengthValidator(10)` を設定しており、正本の数字・最大10桁を既に満たす。",
+      "note": "指摘は正本の値を100と誤読している。"
+    },
+    {
+      "rowId": 819,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0210_基本設計仕様書(コンテンツ管理).html:1082 の Excel 正本セル C49 は「(2)検索ボックスに入力すると、ページを(3)~(6)で部分一致検索し、対象ページのみを画面に表示する」、同:1106 は「入力すると、ページを(3)~(6)で部分一致検索」と明記する。同:1107-1111 で (3)ページ名、(4)ルーティング名、(5)URL、(6)ファイル名、(7)レイアウト名が別項目として列挙されるため、(7)は検索対象外である。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/src/Eccube/Controller/Admin/Content/PageController.php:40-58 の旧 `index()` は `getPageList($DeviceType)` の結果をそのまま描画し、旧テンプレート /home/y-saito/Developments/pf-eccube3/src/Eccube/Resource/template/admin/Content/page.twig:45-60 もページ名・URL・ファイル名を表示するだけで検索処理を持たない。旧実装は本判定の根拠ではない。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Content/page.twig:20-23 は `searchWord($(this).val(), $('table.table tbody tr'))` と行全体を渡す。同:80-90 の同じ `tr` 内には `{{ Layout.name }}` が含まれ、/home/y-saito/Developments/ec-cube-enterprise/html/template/admin/assets/js/function.js:285-293 は `targetText = $(this).text()` に対して部分一致判定するため、設計対象外のレイアウト名も検索対象になる。",
+      "note": ""
+    },
+    {
+      "rowId": 821,
+      "verdict": "UNSUPPORTED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0210_基本設計仕様書(コンテンツ管理).html:1082 の Excel 正本は「ページを(3)~(6)で部分一致検索」とし、レイアウト名(7)を含めない。GETリクエストやセッション不使用の記載も Excel 正本範囲 sheet-3:1025-1528、sheet-4:2097-2306 に存在しない。期待値の「レイアウト名を含む」「GETで扱う」は同:2307 以降のリバース詳細設計にのみ現れる。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/src/Eccube/Controller/Admin/Content/PageController.php:40-58 の旧 `index(Application $app, Request $request)` はリクエスト検索値を読まず、`getPageList($DeviceType)` を無条件に呼ぶ。/home/y-saito/Developments/pf-eccube3/src/Eccube/Resource/template/admin/Content/page.twig:31-88 にも検索入力・GETフォーム・クライアント検索がない（確認範囲: pf-eccube3 の PageController/PageLayoutRepository/page.twig、ならびに pf-api・pf-article・deck-api の `content/page`, `PageLayout`, `searchWord` 横断検索）。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Content/PageController.php:61-65 は GET ルートだが `getPageList()` を無条件実行し、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Content/page.twig:20-23 は URLに残らないクライアント側 `searchWord` だけを呼ぶ。",
+      "note": "設計期待値は Excel 正本と矛盾し、指定された旧実装にも該当挙動がない。リバース詳細設計の生成時に混入した記述と判断した。"
+    },
+    {
+      "rowId": 822,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0210_基本設計仕様書(コンテンツ管理).html:1107 の Excel 正本はページ名を「リンク」「押下すると、ページ管理（編集）画面へ遷移」、同:1112 は削除を「削除確認モーダル表示ボタン」と記載するが、操作ドロップダウンやレイアウト編集操作は sheet-3:1025-1528 と sheet-4:2097-2306 の Excel 正本本文に記載されていない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/src/Eccube/Resource/template/admin/Content/page.twig:61-82 は `<div ... class=\"dropdown\">` と `<ul ... class=\"dropdown-menu\">` の中に「レイアウト編集」「ページ編集」「削除」の3操作を実装している。期待値の所在は旧実装である。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Content/page.twig:63-64 はページ名を直接編集リンクにし、同:93-122 の操作列は利用者作成ページの削除アイコン/モーダルだけで、レイアウト編集を含むドロップダウンを持たない。",
+      "note": "設計書の記述漏れと旧UIの移植漏れが併存する。"
+    },
+    {
+      "rowId": 823,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0210_基本設計仕様書(コンテンツ管理).html:1077 の Excel 正本は「すべてのページで(3)ページ名を押下すると、内容を閲覧できる」、同:1107 もページ名を編集画面へのリンクとする。ファイル名未設定時にページ編集リンクを無効化する条件は Excel 正本本文に存在せず、同:2307 以降のリバース詳細設計にのみ現れる。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/src/Eccube/Resource/template/admin/Content/page.twig:69-73 は `{% if PageLayout.filename|length >= 1 %}` の場合だけ編集URLを付け、未設定時は `<a>ページ編集</a>` として無効化する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Content/page.twig:61-65 は `Page.file_name` の有無を判定せず、常に `url('admin_content_page_edit', {id : Page.id})` へのページ名リンクを出力する。同:76-78 のファイル名列だけが未設定時に空になる。",
+      "note": "期待値は旧テンプレート由来である。"
+    },
+    {
+      "rowId": 824,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0210_基本設計仕様書(コンテンツ管理).html:2207 の Excel 正本セル B114/E114/M114 は項目を「1-9」「コード」「半角・全角」とし、必須・Twig構文チェック等を記載するが、textarea、15行、等幅小サイズ、専用エディタ非使用は記載していない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/src/Eccube/Form/Type/Admin/MainEditType.php:87-92 は `tpl_data` を `'textarea'` で定義し、/home/y-saito/Developments/pf-eccube3/src/Eccube/Resource/template/admin/Content/page_edit.twig:80-85 は `form_widget(form.tpl_data, { attr : { 'rows' : 15, style : 'font-size:12px' } })` と描画する。旧テンプレートにAce等の専用エディタ初期化はない。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Content/page_edit.twig:45-55 は `ace.edit('editor')`、Twig mode、補完・snippet等を初期化し、同:198-209 は高さ480pxの `div#editor` を表示して実textareaを `display: none` で隠す。",
+      "note": ""
+    },
+    {
+      "rowId": 825,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0210_基本設計仕様書(コンテンツ管理).html:1083-1097 の Excel 正本は削除押下時に確認モーダルを表示して削除するフロー、同:1112 は「削除確認モーダルを表示」とだけ記載し、「このページを削除してもよろしいですか？」という固定文言は Excel 正本本文に存在しない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/src/Eccube/Resource/template/admin/Content/page.twig:76-77 は削除リンクに `data-message=\"このページを削除してもよろしいですか？\"` を直接設定する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Content/page.twig:111-117 は共通キー `admin.common.delete_modal__message` をページ名付きで描画し、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:1790 の実値は「この操作はあとから取り消すことができません。「%name%」を削除してよろしいですか？」である。",
+      "note": ""
+    },
+    {
+      "rowId": 826,
+      "verdict": "UNSUPPORTED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0210_基本設計仕様書(コンテンツ管理).html:1083-1097 と同:1112 の Excel 正本は通常の削除確認・削除完了フローのみで、削除対象不在時に「削除に失敗しました」を表示する記載は sheet-3:1025-1528、sheet-4:2097-2306 に存在しない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/src/Eccube/Controller/Admin/Content/PageController.php:173-182 は対象不在時に `$app->deleteMessage()` を呼ぶ。/home/y-saito/Developments/pf-eccube3/src/Eccube/Application/ApplicationTrait.php:56-60 はこれを `admin.delete.warning` とし、/home/y-saito/Developments/pf-eccube3/src/Eccube/Resource/locale/message.ja.yml:87 の実値は「既に削除されています。」である。旧実装も期待文言を裏付けない。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Content/PageController.php:350-358 は対象不在時に `deleteMessage()` を呼び、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/AbstractController.php:174-178 は `admin.common.delete_error_already_deleted` を警告に設定する。同ロケール /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:1600 は「既に削除されています」。",
+      "note": "正本・旧実装とも「削除に失敗しました」を削除対象不在時の文言としていない。"
+    },
+    {
+      "rowId": 827,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0210_基本設計仕様書(コンテンツ管理).html:1079-1081 の Excel 正本は「開発者が追加したページは削除できない」「管理画面ログインユーザーが追加したページは削除できる」と明記し、同:1073 は編集・削除可否をDB設定で判定するとする。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/src/Eccube/Controller/Admin/Content/PageController.php:173-186 は対象ページをサーバ側で取得し、`getEditFlg() == PageLayout::EDIT_FLG_USER` の場合だけ削除へ進む。同:187-205 でその場合に限りファイル・レコードを削除する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Content/PageController.php:364-373 は利用者作成ページを削除する一方、同:394-400 の `else` は初期投入ページでも `DEFAULT_PAGE_PATH` のS3ファイルを `delete` する。DELETEルート自体に初期投入ページを拒否する分岐がない。",
+      "note": ""
+    },
+    {
+      "rowId": 828,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0210_基本設計仕様書(コンテンツ管理).html:2202 の Excel 正本のURL欄説明は最大255、正規表現、必須、編集可否を記載するが、URL重複時の固定文言「※ 同じURLのデータが存在しています。別のURLを入力してください。」は記載していない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/src/Eccube/Form/Type/Admin/MainEditType.php:148-169 は同一URL・端末種別を検索し、重複時に `$form['url']->addError(new FormError('※ 同じURLのデータが存在しています。別のURLを入力してください。'));` を実行する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/MainEditType.php:210-213 は重複時に `trans('admin.content.page_url_exists')` を付与し、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:2924 の実値は「既にURLが存在しています。」である。",
+      "note": ""
+    },
+    {
+      "rowId": 829,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0210_基本設計仕様書(コンテンツ管理).html:2222 の Excel 正本セル B129/E129/M129 は「3-8」「metatag」「半角・全角」とするが、最大文字数セルは空で、99999やlltext_lenの指定は Excel 正本にない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/src/Eccube/Form/Type/Admin/MainEditType.php:128-135 は追加metaタグを `textarea`、任意、`'max' => $app['config']['lltext_len']` と定義し、/home/y-saito/Developments/pf-eccube3/src/Eccube/Resource/config/constant.yml.dist:99 は `lltext_len: 99999` とする。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/MainEditType.php:127-133 は `meta_tags` の最大長に `eccube_ltext_len` を使用し、/home/y-saito/Developments/ec-cube-enterprise/app/config/eccube/packages/eccube.yaml:113-114 は `eccube_lltext_len: 99999` に対し `eccube_ltext_len: 3000` と定義する。さらに /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Entity/Page.php:102-103 のDB列長は4000である。",
+      "note": ""
+    },
+    {
+      "rowId": 830,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0210_基本設計仕様書(コンテンツ管理).html:2481 の Excel 正本は削除不可ブロックを編集不可にし、同:2745 は「編集、削除できないブロックの場合、この画面にアクセスできないようにする」と記載するが、HTTP 403と対象不在404のステータス区別は明記しない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Content/BlockController.php:184-190 の旧編集処理は対象初期化後、`!$this->resource->getDeletableFlg()` なら `return $app->abort(403);` とする。同:245-251 の更新処理も同じ403分岐を持つ。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Content/BlockController.php:103-120 は対象なしを `NotFoundHttpException` とし、削除不可の場合も `if ($id && !$Block->isDeletable()) { throw new NotFoundHttpException(); }` として両方HTTP 404にする。",
+      "note": "アクセス不可という正本要求はあるが、403/404の厳密な区別は旧実装由来。"
+    },
+    {
+      "rowId": 831,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0210_基本設計仕様書(コンテンツ管理).html:2760 の Excel 正本セル E74/M74 は項目を「コード」「半角・全角」としTwig構文チェックを記載するが、textarea、15行、等幅小サイズ、専用エディタ非使用は記載していない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/src/Eccube/Form/Type/Admin/BlockType.php:74-79 は `block_html` を `'textarea'` で定義し、/home/y-saito/Developments/pf-eccube3/src/Eccube/Resource/template/admin/Content/block_edit.twig:69-74 は `form_widget(form.block_html, { attr : { 'rows' : 15, style : 'font-size:12px' } })` と描画する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Content/block_edit.twig:29-50 は `ace.edit('editor')`、Twig mode、補完・snippet・リサイズ・submit時同期を実装し、同:122-134 は高さ480pxのAce表示領域を使い、実textareaを `d-none` で隠す。",
+      "note": ""
+    },
+    {
+      "rowId": 832,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0210_基本設計仕様書(コンテンツ管理).html:2488-2502 と同:2515 の Excel 正本は削除確認モーダルを表示して削除するフローを記載するが、固定文言「このブロックを削除してもよろしいですか？」は Excel 正本本文にない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/src/Eccube/Resource/template/admin/Content/block.twig:58-60 は削除リンクに `data-message=\"このブロックを削除してもよろしいですか？\"` を直接設定する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Content/block.twig:101-117 は共通削除モーダルを使い、同:112 で `admin.common.delete_modal__message` にブロック名を渡す。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:1790 の実値は「この操作はあとから取り消すことができません。「%name%」を削除してよろしいですか？」である。",
+      "note": ""
+    },
+    {
+      "rowId": 833,
+      "verdict": "UNSUPPORTED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0210_基本設計仕様書(コンテンツ管理).html:2488-2502 と同:2515 の Excel 正本は通常の削除確認・削除完了フローのみで、存在しないIDに「削除に失敗しました」を表示して一覧へ戻る記載は sheet-5:2433-2555、sheet-6:2685-2810 に存在しない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/src/Eccube/Controller/Admin/Content/BlockController.php:164-171 は対象不在時に `$app->deleteMessage()` 後一覧へ戻すが、その文言は /home/y-saito/Developments/pf-eccube3/src/Eccube/Application/ApplicationTrait.php:56-60 の `admin.delete.warning`、/home/y-saito/Developments/pf-eccube3/src/Eccube/Resource/locale/message.ja.yml:87 の「既に削除されています。」であり、「削除に失敗しました」ではない。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Content/BlockController.php:246-248 は `delete(..., Block $Block, ...)` とEntity引数を要求し、存在しないIDはコントローラ本文に入らず404になる。本文の戻り先は同:298 の `redirectToRoute('admin_content_block')` だが、対象不在用メッセージ分岐はない。",
+      "note": "旧実装は一覧へ戻る点だけ一致するが、指摘された文言は正本・旧実装の双方にないため、期待値全体を支える根拠がない。"
+    },
+    {
+      "rowId": 834,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0210_基本設計仕様書(コンテンツ管理).html:2744 の Excel 正本セル D61 は「(6)ファイル名を変更して更新する場合、日英2種類のtwigファイルを作成する」と明記する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/src/Eccube/Controller/Admin/Content/BlockController.php:114-129 の旧コアは選択言語を持たない単一 `.twig` を保存・リネームする実装で、日英2ファイル要件は旧 pf-eccube3 の該当コードには存在しない（確認範囲: pf-eccube3 の BlockController/BlockType/block_edit.twig、pf-api・pf-article・deck-api のブロックファイル更新検索）。本判定は Excel 正本を根拠とする。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Content/BlockController.php:174-189 は更新時に選択中の `$localeFileName` 1本だけを作成する。同:196-204 の他言語ファイル生成は `$previousFileName === null` の新規時だけで、同:206-218 のリネーム時削除も選択ロケールの旧ファイル1本だけである。",
+      "note": ""
+    },
+    {
+      "rowId": 835,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0210_基本設計仕様書(コンテンツ管理).html:2759 の Excel 正本セル E73/AG73 は「コードのヘルプ」について「マウスオーバーすると、以下の文言を表示する『テンプレートファイルを記述します。Twigで記述します。』」と明記する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/src/Eccube/Resource/template/admin/Content/block_edit.twig:69-74 はコードtextareaを描画するがツールチップを持たず、旧 pf-eccube3 の `block_source_code`/期待文言検索でも一致しない。本判定は Excel 正本を根拠とする。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Content/block_edit.twig:122-125 は `title=\"{{ 'tooltip.content.block_source_code'|trans }}\"` で表示経路を持ち、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:3658 の実値は「テンプレートファイルを編集します。twigで記述します。」である。「記述します/編集します」と「Twig/twig」が相違する。",
+      "note": ""
+    },
+    {
+      "rowId": 836,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0210_基本設計仕様書(コンテンツ管理).html:3007-3010 の Excel 正本は支店選択で選択支店の編集画面へ遷移すること、同:3081 は選択すると読み込みが発生して対応画面を表示することを記載するが、`GET /integration/toppage_management/{id}` や id省略時0というURL仕様は sheet-7:2940-3153 の Excel 正本にない。",
+      "legacyEvidence": "/home/y-saito/Developments/ec-cube/app/Customize/Controller/Admin/Integration/TopPageController.php:37-44 の移行元参考コードは `@Route(\"/%eccube_admin_route%/integration/toppage_management/{id}\", ... defaults={\"id\" = 0})` で対象を取得する。/home/y-saito/Developments/ec-cube/app/template/admin/Integration/toppage_management.twig:28-32 は支店変更時にそのルートへ `+'/'+id` を付けて遷移する。指定4旧リポジトリでは同ルートは0件だったが、リバース詳細設計 /home/y-saito/Developments/hareruya-design-docs/functions/pf-eccube3/m09-10_admin_content_content_branch_top_page.md:73-74 と参考ec-cubeコードが一致しており、期待値の生成元を特定できる。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Content/BranchTopPageController.php:47-68 のGET入口は `/content/branch_toppage` でIDを持たず、同:78-92 の支店選択は `/content/branch_toppage/select` へのPOST後に `renderPage($BaseInfo)` で再描画する。",
+      "note": "根拠コードは指定4旧リポジトリではなく、手順書で参考扱いの ec-cube リポジトリに存在するが、pf-eccube3由来リバース詳細設計の記載と完全一致するため旧系統根拠と判定した。"
+    },
+    {
+      "rowId": 837,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0210_基本設計仕様書(コンテンツ管理).html:3091 の Excel 正本は登録ボタン押下で検証後に登録/更新し、エラーを画面表示すると記載するが、`POST /integration/toppage_management/register/{id}`、成功/失敗時の302、同一IDへのリダイレクトは sheet-7:2940-3153 の Excel 正本本文にない。",
+      "legacyEvidence": "/home/y-saito/Developments/ec-cube/app/Customize/Controller/Admin/Integration/TopPageController.php:56-64 の移行元参考コードは `@Route(\"/%eccube_admin_route%/integration/toppage_management/register/{id}\", ... methods={\"POST\"})` を定義する。同:70-75、81-85、88-100、114-119 は成功・各エラーで `redirectToRoute('admin_integration_toppage_management', ['id' => $BaseInfo->getId()])` を返す。リバース詳細設計 /home/y-saito/Developments/hareruya-design-docs/functions/pf-eccube3/m09-10_admin_content_content_branch_top_page.md:75 も同一仕様を記載する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Content/BranchTopPageController.php:101-104 はIDなしの `/content/branch_toppage/register` POSTを定義し、成功時も同:124-134 と同:153-167 で `renderPage($BaseInfo)` を返す。検証エラーも同:143-150 で同画面を直接描画し、302リダイレクトしない。",
+      "note": "row 836と同様、直接の根拠コードは参考ec-cubeにあり、指定4旧リポジトリには同ルートがない。"
+    },
+    {
+      "rowId": 838,
+      "verdict": "UNSUPPORTED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0210_基本設計仕様書(コンテンツ管理).html:3091 の Excel 正本は登録/更新とエラー表示だけを規定し、成功文言「登録しました。」は sheet-7:2940-3153 の Excel 正本本文に存在しない。",
+      "legacyEvidence": "/home/y-saito/Developments/ec-cube/app/Customize/Controller/Admin/Integration/TopPageController.php:70-75 と同:114-119 の移行元参考コードは成功時に `addSuccess('admin.common.save_complete', 'admin')` を使い、/home/y-saito/Developments/ec-cube/src/Eccube/Resource/locale/messages.ja.yaml:401 の実値は「保存しました」である。指定4旧リポジトリの「支店トップページ」「toppage_management」「登録しました。」横断検索でも該当実装は存在しない。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Content/BranchTopPageController.php:121-125 と同:153-157 は成功時に `addSuccess('admin.common.save_complete', 'admin')` を使い、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:1595 の実値は「保存しました」である。",
+      "note": "正本に固定成功文言がなく、確認できた移行元参考実装も新実装も「保存しました」で一致するため、「登録しました。」の根拠がない。"
+    }
+  ]
+}

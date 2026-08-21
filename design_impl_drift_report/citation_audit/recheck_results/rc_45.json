@@ -1,0 +1,149 @@
+{
+  "packetId": "rc_45",
+  "results": [
+    {
+      "rowId": 788,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0211正本の受注売上分析シート群を「集計日To」「未満」「当月末日」「23:59:59」で確認した。src-cell `0211:受注売上分析 集計一覧(検索項目)!D89` は「識別ID 7:集計日(To)について、デフォルトの値を当月末日に設定」、同 E90 は「2025-7-31 23:59:59」だが、To未満の比較指定は正本セルにない。sheet-8のレイアウト画像（807x967）も実物確認し、From「2025-07-31 00:00:00」・To「2025-07-31 23:59:59」と描かれていた。sheet-9画像（791x814）にも比較演算子の記載はない。",
+      "reason": "半開区間の直接根拠はリバース詳細設計ではなく、旧実装 /home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Repository/OrderDetailRepository.php の getQueryBuilderBySearchData()（137-149行）の `>=` と `<` である。Excel正本はむしろ当月末日の23:59:59を示すだけなので、具体的な排他的上限をLEGACY_BACKEDとした分類は妥当。現在の新実装は上限を含めるため、旧挙動との差は残る。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Repository/OrderItemRepository.php の getAnalysisSummary()（260-267行）はFromを `>= :summaryDateFrom`、Toを `<= :summaryDateTo` とする。src/Eccube/Form/Type/Admin/Analysis/SalesType.php の buildForm()（99-112行）はToの初期値を `last day of this month 23:59:59` にする。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 790,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0211の受注売上分析 CSV出力(商品)正本領域を「検索条件」「セッション」「保存が無い場合」「空」で確認したが、未保存時フォールバックを定義するsrc-cellはない。`0211:受注売上分析 CSV出力(商品)!C20` は「カスタマイズ要件に記載の内容以外は現行踏襲とする」とだけ記載する。「検索条件セッションから検索条件を取得する。保存が無い場合は空とする。」はfunction-design-embed内でのみ確認した。",
+      "reason": "具体契約は旧 SalesController::export()（/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Analysis/SalesController.php 85-98行）の `$session->get(self::VIEW_KEY, [])` によってのみ直接裏付けられるため、LEGACY_BACKEDは妥当。現実装はnullを空条件へ変換せず、CSV処理前に終了する。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/Admin/Analysis/SalesAnalysisController.php の export()（127-155行）は `$this->session->get(self::SESSION_KEY)` がnullなら「検索条件がありません。先に検索を実行してください。」を追加し、`admin_analysis_sales` へリダイレクトする。空条件でSalesAnalysisCsvExporterServiceを呼ぶ別経路やCSVイベント購読者はsrc/app横断検索で見つからない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 791,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0211の受注売上分析 CSV出力(商品)正本領域を「全件」「件数制限」「表示件数」「上限」で確認したが、CSV時の上限解除を定義するsrc-cellはない。`0211:受注売上分析 CSV出力(商品)!C20` は「カスタマイズ要件に記載の内容以外は現行踏襲とする」とだけ記載し、「CSVでは表示件数の上限を適用しない」はfunction-design-embed内だけにある。",
+      "reason": "全件出力の具体挙動は旧 OrderDetailRepository::getQueryBuilderBySearchData()（/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Repository/OrderDetailRepository.php 271-279行）が `$isExport` のときsetMaxResultsを行わないことで裏付けられるためLEGACY_BACKEDを維持する。現実装では検索フォーム既定値10を含むpage_countがCSV経路にも残る。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Form/Type/Admin/Analysis/SalesType.php の buildForm()（152-158行）はpage_countの初期値を10とする。SalesAnalysisController::export()（139-155行）は復元したsearchDataを変更せずSalesAnalysisCsvExporterService::exportBySearchData()へ渡し、同サービス（35-39行）はOrderItemRepository::getAnalysisSummary()を呼ぶ。同Repository（326-329行）はpage_countが正なら `setMaxResults($limit)` を適用する。CSV経路でpage_countを除去または0にする処理はない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 792,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0211の受注売上分析 CSV出力(カテゴリ)正本領域を「検索条件」「セッション」「保存が無い場合」「空条件」で確認したが、未保存時に空条件で出力するsrc-cellはない。`0211:受注売上分析 CSV出力(カテゴリ)!C20` は「カスタマイズ要件に記載の内容以外は現行踏襲とする」とだけ記載し、具体的な空配列フォールバックはfunction-design-embed内だけにある。",
+      "reason": "旧 SalesController::export()（/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Analysis/SalesController.php 85-98行）は商品・カテゴリ共通で `$session->get(self::VIEW_KEY, [])` を用いるため、期待値は旧実装には存在するがExcel正本には具体化されず、LEGACY_BACKEDが妥当。現実装の共通exportはnullで終了する。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/Admin/Analysis/SalesAnalysisController.php の export()（127-155行）はsummary_typeに関係なく、セッション値nullならエラーを追加して `admin_analysis_sales` へリダイレクトする。カテゴリ用の空条件CSV入口はsrc/app横断検索で見つからない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 793,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0211の受注売上分析 CSV出力(カテゴリ)正本領域を「全件」「件数制限」「表示件数」「上限」で確認したが、カテゴリCSVの上限解除を定義するsrc-cellはない。`0211:受注売上分析 CSV出力(カテゴリ)!C20` は「カスタマイズ要件に記載の内容以外は現行踏襲とする」とだけ記載する。上限解除の記述はfunction-design-embed内でのみ確認した。",
+      "reason": "旧 OrderDetailRepository::getQueryBuilderBySearchData()（/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Repository/OrderDetailRepository.php 271-279行）は集計単位を問わず `$isExport` 時に件数制限を付けないため、LEGACY_BACKEDは妥当。現実装のカテゴリCSVも商品CSVと同じRepository経路を通り、page_count制限を受ける。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Service/Csv/Exporter/SalesAnalysisCsvExporterService.php の exportBySearchData()（35-39行）はsummary_typeがカテゴリでもOrderItemRepository::getAnalysisSummary($searchData)を使う。同Repository（326-329行）はpage_countが正なら `setMaxResults($limit)` を適用し、SalesAnalysisController::export()（139-155行）もpage_countを除去しない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 796,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0211の入荷通知依頼 CSV出力正本領域を「検索条件」「セッション」「保存が無い場合」「空条件」で確認した。`0211:入荷通知依頼 CSV出力!C20` は「カスタマイズ要件に記載の内容以外は現行踏襲とする」と記載するが、未保存時に空条件で抽出するsrc-cellはない。具体記述はfunction-design-embed内だけにある。このCSV出力シートにはレイアウト画像自体がないこともHTMLから確認した。",
+      "reason": "旧 RequestController::export()（/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Analysis/RequestController.php 81-92行）は `$session->get(self::VIEW_KEY, [])` で空配列を既定にして抽出を続けるため、期待値は旧実装で裏付けられ、LEGACY_BACKEDが妥当。現実装はセッション未保存を明示的に拒否する。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/Admin/Analysis/ProductRequestController.php の export()（112-134行）はセッション値nullの場合に「検索条件がありません。先に検索を実行してください。」を追加し、`admin_analysis_product_request` へリダイレクトする。ProductRequestCsvExportServiceへ進む別入口やCSVイベント購読者はsrc/app横断検索で見つからない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 798,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0211のフォーマット売上分析 sheet-16正本を「format_sales」「result」「URL」「集計月」で確認した。src-cell `0211:フォーマット売上分析 集計一覧(検索項目)!C47` は「カスタマイズ要件に記載の内容以外は現行踏襲とする」、E67/M67は「集計月」「年月(yyyy-mm)」だが、URLは正本セルにない。GET `/analysis/format_sales` とPOST `/analysis/format_sales/result` はfunction-design-embed内でのみ確認した。",
+      "reason": "URLの具体値は旧 AnalysisServiceProvider（/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/AnalysisServiceProvider.php 56-64行）と旧format_sales.twig（23行）に存在し、Excel正本には明記されないためLEGACY_BACKEDが妥当。新実装は別パスを公開しており、互換ルートもない。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/Admin/Analysis/FormatSalesController.php の index()ルート（46行）はGET `/analysis/format-sales`、search()ルート（74行）はPOST `/analysis/format-sales/search`。src/Eccube/Resource/template/admin/Analysis/format_sales.twig（94行）も `admin_analysis_format_sales_search` へPOSTする。src/app/tests横断検索でもunderscore付き `/analysis/format_sales` または `/result` の互換ルートはない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 799,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0211 sheet-16正本セル `0211:フォーマット売上分析 集計一覧(検索項目)!E67` は「集計月」、M67は「年月(yyyy-mm)」、Z67の初期値は「-」であり、「空（初回表示時は未設定）」というsrc-cellはない。sheet-16のレイアウト画像（797x187）も実物確認し、集計月入力欄には「2025-07」と描かれており、空初期表示を支持しない。空未設定の文言はfunction-design-embed内だけにある。",
+      "reason": "空初期値の直接根拠は、旧 FormatSalesController::index()（/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Analysis/FormatSalesController.php 20-27行）が値を設定せず、旧 FormatSalesType::buildForm()（20-28行）にもdata指定がないことだけである。正本画像はむしろ年月例を表示するため、SPEC_BACKEDにはできずLEGACY_BACKEDが妥当。現在は当月を明示設定する。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/Admin/Analysis/FormatSalesController.php の index()（48-53行）はフォーム生成直後に `$form->get('month')->setData((new \\DateTime())->format('Y-m'));` を実行する。src/Eccube/Form/Type/Admin/Analysis/FormatSalesType.php の month定義（40-47行）やイベント購読者に、これを空へ戻す処理はない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 800,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "PARTIAL",
+      "checkedQuote": "0211 sheet-16/17/18正本を「検索条件」「セッション」「CSVダウンロード」「M12-08」で確認した。セッション非保存・送信月POSTのsrc-cellはない。一方、sheet-17の `0211:フォーマット売上分析 集計一覧(検索結果) !E65` は「CSVダウンロード」、M65は「ボタン」で、sheet-17レイアウト画像（793x1021）にも結果画面の「CSVダウンロード」ボタンが明記される。sheet-18の `0211:フォーマット売上分析 CSV出力!B6` は「M12-08 フォーマット売上分析 CSVダウンロード」と記載する。",
+      "reason": "セッション非保存と送信フォームのmonthで再集計する具体挙動は、旧 FormatSalesController::search()/export()（/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Analysis/FormatSalesController.php 37-51、152-161行）および旧format_sales.twig（23、59-61行）が直接根拠であり、核心部分のLEGACY_BACKED分類は妥当。現在はセッション保存・GETリンクなのでこの差は再現する。ただしfinding中の「M12-07 Controller/TwigにCSV導線があること自体が乖離」という部分は誤りである。Excel正本のM12-07結果画面自身がCSVボタンを配置し、旧Twigも同じ画面にexportボタンを持つ。したがって複合指摘は一部のみ成立する。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/Admin/Analysis/FormatSalesController.php の search()（98-104行）はFormUtil::getViewData($form)をSESSION_KEYへ保存し、export()（127-146行）はGETルートでそのセッションを復元して再集計する。src/Eccube/Resource/template/admin/Analysis/format_sales.twig（136-139行）はGETリンクを表示する。M12-07画面内にCSVボタンがある点は正本・旧実装と一致しており、残る乖離は状態の受け渡し方式である。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 801,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0211のフォーマット売上分析 sheet-17正本を「format_sales」「result」「URL」「検索画面」で確認した。src-cell `0211:フォーマット売上分析 集計一覧(検索結果) !C46` は「カスタマイズ要件に記載の内容以外は現行踏襲とする」だけで、URLは正本セルにない。sheet-17レイアウト画像（793x1021）も実物確認したがURL表記はない。具体的なunderscoreパスと/resultはfunction-design-embed内だけにある。",
+      "reason": "旧 AnalysisServiceProvider（/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/AnalysisServiceProvider.php 56-64行）がGET `/analysis/format_sales` とmatch `/analysis/format_sales/result` を定義し、旧Twig（23行）がresultへ送信するため、LEGACY_BACKEDが妥当。現在の検索結果経路もhyphenと/searchのままである。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/Admin/Analysis/FormatSalesController.php のindex/searchルート（46、74行）は `/analysis/format-sales` と `/analysis/format-sales/search`。src/Eccube/Resource/template/admin/Analysis/format_sales.twig（94行）もsearchルートにPOSTする。underscore付きルートや/result互換定義はsrc/app/tests横断検索で見つからない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 802,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0211 sheet-17正本では項目表見出しZ60が「初期値」だが、結果項目の各初期値は「-」で、入力項目「集計月」の空初期値を定義するsrc-cellはない。「空（初回表示時は未設定）」はfunction-design-embed内だけにある。sheet-17レイアウト画像（793x1021）も実物確認し、検索入力部分は「検索入力項目(記載省略)」、結果タイトルは「2025年7月 月別売上」と描かれており、空初期表示の根拠にはならない。関連sheet-16画像の集計月欄は「2025-07」である。",
+      "reason": "空初期値は旧 FormatSalesController::index()（/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Analysis/FormatSalesController.php 20-27行）と旧 FormatSalesType::buildForm()（20-28行）の無指定状態にのみ裏付けられるため、LEGACY_BACKEDが妥当。現在のindexは当月を明示設定する。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/Admin/Analysis/FormatSalesController.php の index()（48-53行）はmonthへ現在年月 `Y-m` を設定する。src/Eccube/Resource/template/admin/Analysis/format_sales.twig（98-105行）はそのmonthフィールドを描画し、値を空にするテンプレート処理はない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 803,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0211 sheet-17正本領域を「検索条件」「セッション」「保存しない」「副作用」で確認した。src-cell `0211:フォーマット売上分析 集計一覧(検索結果) !C46` は「カスタマイズ要件に記載の内容以外は現行踏襲とする」だけで、「副作用 無し（検索条件のセッション保存も行わない）」に相当するsrc-cellはない。この文言はfunction-design-embed内だけにある。",
+      "reason": "セッションへ保存しない具体挙動は旧 FormatSalesController::search()（/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Analysis/FormatSalesController.php 37-51行）がフォーム値から集計して描画するだけでsession setを行わないことにより裏付けられる。Excel正本に明記はないためLEGACY_BACKEDが妥当。現実装には明示的なsession setがある。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/Admin/Analysis/FormatSalesController.php はSESSION_KEYを定義し、search()（98-104行）で `$this->session->set(self::SESSION_KEY, FormUtil::getViewData($form));` を実行する。export()（127-146行）も同セッションを読む。関連イベント名の購読実装はsrc/app横断検索で見つからず、この保存を打ち消す処理はない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    }
+  ]
+}

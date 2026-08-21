@@ -1,0 +1,149 @@
+{
+  "packetId": "rc_54",
+  "results": [
+    {
+      "rowId": 952,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0212 HTML の全 src-cell/data-excel-ref を「CSRF」「csrf」「トークン」「なりすまし」で検索して0件。sheet-3 Excel正本の処理概要（1118-1137行）と項目表にもCSRF指定はない。sheet-3レイアウト画像 C7 も実見したが検索項目と検索ボタンの配置だけでCSRF指定はない。具体値は旧 pf-eccube3 の SearchDeckType::configureOptions()（21-26行）にある「disable CSRF protection」「'csrf_protection' => false」を実物確認した。",
+      "reason": "検索フォームのCSRF無効という具体要件はExcel正本ではなく旧実装にのみあるため、LEGACY_BACKED は妥当。現行は明示的にCSRFを有効化しており、旧挙動との差は残る。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Form/Type/Admin/SearchDeckType.php の configureOptions()（206-211行）は `'csrf_protection' => true`。src/Eccube/Controller/Admin/Deck/DeckController.php のコンストラクタ（67-69行）は同FormTypeを指定し、index()（81行）は SearchControllerTrait::getForm() を使うため、この既定値が適用される。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 954,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0212 HTML の全 src-cell/data-excel-ref を「alert」「アラート」「未選択」「ひとつ以上選択」「送信しない」で検索。デッキCSV出力に関する未選択時記述は0件で、sheet-4 の正本セル AB97 は「一覧左側のチェックボックスを選択したデッキ情報のCSVがダウンロードされる」まで。sheet-3画像 C7 と sheet-4画像 C7 も実見し、CSV登録/CSV出力ボタンはあるが未選択alertは描かれていない。旧 deck-search.js（37-47行）には `alert(\"CSV出力するデッキをひとつ以上選択してください。\")` と `return false` を実物確認した。",
+      "reason": "未選択時にブラウザalertで送信を止める具体挙動は旧実装由来であり、LEGACY_BACKED は妥当。現行は送信前ガードを持たず、送信後のサーバ側エラーに変わっている。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Resource/template/admin/Deck/index.twig の bulk_form submitハンドラ（204-215行）はformaction別のCSRFトークン差替えのみで、CSV未選択の判定・alert・preventDefaultはない。CSVボタン（404行）は通常submitし、DeckController::csvExport()（808-815行）がID空時に `admin.deck.csv_export_no_selection` を積んで検索画面へリダイレクトする。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 955,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "REFUTED",
+      "correctedClass": "ALREADY_MET",
+      "driftVerdict": "RESOLVED",
+      "checkedQuote": "0212 HTML の全 src-cell/data-excel-ref を「CSV,TSV」「TSVアップロード」「TSV」「CSVファイル」で検索。sheet-3 の E77/AB77 には確かに「CSV,TSV取り込み」「デッキ登録CSV, TSVアップロード画面に遷移する」がある一方、直接のアップロード仕様である sheet-6 は E33 に「・TSVアップロードを廃止」、C41 に「CSVファイルをアップロードして一括でデッキの新規登録・更新ができる。」、D55 に「・表記されている『TSV』の文言を除去する」、D59 に「・ファイル拡張子『TSV』をエラー扱いにする処理を追加」と明記する。sheet-3画像 C7 はボタン表示が「CSV登録」、sheet-6画像 B8 はTSV文言が取り消し線で、CSVファイル選択/アップロードを示すことも実見した。",
+      "reason": "先行判定は古い一覧項目表だけを採用し、より具体的なアップロード正本のカスタマイズ要件を見落としている。正本の最終要求はTSV廃止・CSV限定で、現行実装はその要求を満たすため、CSV/TSV両対応の乖離指摘は誤りで ALREADY_MET。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Resource/template/admin/Deck/index.twig（226行）は `admin.deck.csv_import` を表示し、messages.ja.yaml（4382行）の値は「CSV登録」。csv_import.twig（83-94行）は「デッキ登録CSV」「CSVファイル選択」とaccept `text/csv,.csv`、DeckCsvController::import()（100-103行）は拡張子がcsv以外ならエラーにする。これはsheet-6のTSV廃止要件どおり。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 956,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0212 HTML の全 src-cell/data-excel-ref を「deck/delete」「bulk_delete」「formaction」「admin_deck_bulk_delete」「m15-03_admin」で検索して0件。正本セル E75/E76 と AB99/AB100 は一括削除・一括編集の存在だけを定める。sheet-4レイアウト画像 C7 も実見し、CSV出力・一括削除・一括編集の並びはあるがURLやform actionはない。旧 DeckServiceProvider.php（48-50行）にPOST `/deck/delete`・bind名 `admin_deck_bulk_delete`、旧 deck.twig（168-175行）に既定action `admin_deck_bulk_update` と削除ボタンformaction `admin_deck_bulk_delete` を実物確認した。",
+      "reason": "URLとform/action構造は旧実装由来なので LEGACY_BACKED は妥当。ただしfinding中のルート名 `m15-03_admin_deck_deck_bulk_delete` は旧実装のbind名ではなく、旧実物も現行も `admin_deck_bulk_delete` である。この誤記を除いて、URLとform構造の差は残る。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/Admin/Deck/DeckController.php の bulkDelete()（149-150行）はPOST `/deck/bulk_delete`・route名 `admin_deck_bulk_delete`。src/Eccube/Resource/template/admin/Deck/index.twig（397-405行）はbulk_formの既定actionを一括削除にし、削除ボタンにはformactionがない。一括編集実行ボタンは517行でformaction `admin_deck_bulk_update` を持つ。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 957,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0212 HTML の全 src-cell/data-excel-ref を「HTTP 403」「Referer」「admin.delete.complete」「admin.common.delete_complete」「CSRF」で検索して0件。正本は E75/AB99 の一括削除機能までで、sheet-4画像 C7 も一括削除ボタンの配置だけを示す。旧 DeckController::delete()（372-408行）には `checkCsrfValid`、記事使用中の `admin.deck.is_used.article` とRefererリダイレクト、成功時 `admin.delete.complete` を実物確認した。",
+      "reason": "CSRF失敗時のHTTP応答、記事使用中の戻り先、成功メッセージキーという具体契約は旧実装由来で、LEGACY_BACKED は妥当。現行は3点とも別挙動のまま。",
+      "currentImpl": "ec-cube-enterprise 現状: DeckController::bulkDelete()（149-192行）はCSRF不正時に `admin.common.csrf_invalid` を積んで `admin_deck_list` へリダイレクトし、DeckBulkDeleteActionのRuntimeException（記事使用時を含む）は検索ページへ戻し、成功時は `admin.common.delete_complete` を使う。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 958,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0212 HTML の全 src-cell/data-excel-ref を「page_no」「deck/search」「admin_deck_search」「m15-01_admin」で検索して0件。正本は検索結果表示・操作と100件既定を定めるが、URL・HTTPメソッド・ページ番号正規表現はない。sheet-3画像 C7 と sheet-4画像 C7 も実見したがURL情報はない。旧 DeckServiceProvider.php（16-21行）にGET一覧とmatch `/deck/search/{page_no}`、制約 `^[1-9][0-9]*$`、旧 deck.twig（35行）に検索POST先 `admin_deck_search` page 1を実物確認した。",
+      "reason": "一覧/検索ルートの分離、HTTPメソッド、page_no制約は旧実装由来なので LEGACY_BACKED は妥当。ただしfinding中の `m15-01_admin_deck_deck_search` は旧実装のbind名ではなく、旧実物は `admin_deck_search`。この誤記を除いたルート契約の差は現存する。",
+      "currentImpl": "ec-cube-enterprise 現状: DeckController::index() の属性（76-77行）は `admin_deck_list` もGET/POSTを受け、`admin_deck_search` のpage_no制約は `\\d+`。index.twig（230行）の検索フォームは `admin_deck_list` へPOSTするため、旧実装の検索POST先・一覧GET専用・1以上制約とは一致しない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 959,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0212 HTML の全 src-cell/data-excel-ref を「セッション」「session」「admin.deck.search」「page_count」で検索して0件。sheet-3/4の正本処理概要・項目表と両レイアウト画像も実見したが内部セッションキーは示されない。旧 SearchControllerTrait::index()（49-60行）に `admin.deck.search`、`.search.page_no`、`.search.page_count` のremoveを実物確認し、同trait（97-99行）ではsort/orderが別キーであることも確認した。",
+      "reason": "初期表示時に削除する具体セッションキーは旧実装由来であり、LEGACY_BACKED は妥当。現行初期GETはremoveせず別キーをsetし、共通traitの検索セッションも残す。",
+      "currentImpl": "ec-cube-enterprise 現状: DeckController::index() の初期GET分岐（120-130行）は `deck`、`deck.page_no` をsetし、`eccube.admin.deck.search.page_count` を100でsetしてreturnする。SearchControllerTrait::search() が使用する `eccube.admin.deck.search` / `.search.page_no` / `.search.page_count`（110-118行）をremoveする処理はこの分岐にない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 960,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0212 HTML の全 src-cell/data-excel-ref を「CSRF」「csrf」「トークン」「なりすまし」で検索して0件。sheet-4正本とレイアウト画像 C7 も実見したが検索フォームのCSRF設定はない。旧 SearchDeckType::configureOptions()（21-26行）には `'csrf_protection' => false`、同FormType（37-43行ほか）にはLength/Regex制約を実物確認した。",
+      "reason": "複合期待値のうちフォーム制約によるエラー処理は現行にもあるが、findingが差分として比較するCSRF無効は旧実装由来なので LEGACY_BACKED は妥当。現行はCSRF有効のまま。",
+      "currentImpl": "ec-cube-enterprise 現状: SearchDeckType::configureOptions()（206-211行）は `'csrf_protection' => true`。DeckController::index()（81,92-101行）はこのFormTypeを生成してPOSTを処理し、不正フォームなら検索せず画面データを返す。SearchControllerTrait::getForm()（373-376行）にもCSRFをfalseへ上書きするオプションはない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 962,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0212 HTML の全 src-cell/data-excel-ref を「alert」「アラート」「未選択」「ひとつ以上選択」「送信しない」で検索し、デッキCSV出力の未選択時記述は0件。正本セル AB97 は「一覧左側のチェックボックスを選択したデッキ情報のCSVがダウンロードされる」まで。sheet-4レイアウト画像 C7 も実見しCSV出力ボタンはあるが未選択時alertはない。旧 deck-search.js（38-42行）には選択0件判定、alert、`return false` を実物確認した。",
+      "reason": "未選択時alertと送信中断は旧実装由来なので LEGACY_BACKED は妥当。現行はクライアント側ガードを持たず、送信後にflash errorで戻る。",
+      "currentImpl": "ec-cube-enterprise 現状: index.twig の `#bulk_form` submit処理（204-215行）とCSVボタン（404行）に未選択チェックはない。DeckController::csvExport()（808-815行）がPOST後に空IDを検出し、`admin.deck.csv_export_no_selection` を積んで `admin_deck_search` へリダイレクトする。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 963,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0212 HTML の全 src-cell/data-excel-ref を「セッション」「page_no」「admin_deck_search」「リダイレクト」で検索し、削除後ページ維持の記述は0件。正本セル AB103 は「削除　確認ダイアログを表示し、OKを選択したらデッキを削除する」まで。sheet-4レイアウト画像 C7 も実見し、行のポップアップメニューはあるが削除後遷移は示さない。旧 DeckController::delete()（372-380,406-408行）には `admin.deck.search.page_no` を読み、あれば検索ページ、なければ一覧へ戻す処理を実物確認した。",
+      "reason": "個別削除後のページ維持条件は旧実装由来なので LEGACY_BACKED は妥当。現行の個別削除だけは常に一覧へ戻り、旧挙動との差が残る。",
+      "currentImpl": "ec-cube-enterprise 現状: DeckController::delete()（389-426行）は成功時 `admin.common.delete_complete` を積み、常に `admin_deck_list` へリダイレクトする。対して bulkDelete()（159,192行）は `deck.page_no` を読み `admin_deck_search` へ戻るため、個別削除だけ検索ページを維持しない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 964,
+      "originalClass": "UNCERTAIN",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0212 HTML の全 src-cell/data-excel-ref を「admin.error.sort」「不正ソート」「不正な並び」「並び順パラメータ」「セッション」で検索して0件。正本セル AB96 は「選択肢: 昇順 降順」までで、sheet-4レイアウト画像 C7 も並べかえUIだけを示す。旧 SearchControllerTrait::search()（130-143行）は不正orderで `admin.error.sort` 後にindex()を呼ぶ一方、旧 DtbDeckRepository（296-300行）はsortキーを配列へ直接参照し、不正sortにも同エラーを出す根拠はないことを実物確認した。",
+      "reason": "不正orderの扱いは旧実装で裏付くが、不正sortKeyでも `admin.error.sort` とする期待は正本にも旧実装にもなく、複合期待値を単一のSPEC_BACKED/LEGACY_BACKEDへ確定できないため元のUNCERTAINが妥当。現行コードの記載事実と、少なくとも不正order時に旧index初期化と一致しない差は残る。",
+      "currentImpl": "ec-cube-enterprise 現状: SearchControllerTrait::search()（128-145行）はqueryのorderが不正なら `admin.error.sort` を積み、同じRequestで DeckController::index() を再呼出しするが、セッションremoveはない。DtbDeckRepository::getQueryBuilderBySearchData()（315-321行）は不正sortOrderを既定値へし、不正sortKeyも既定列へ黙ってフォールバックする。Deck画面のsortKey/sortOrderはSearchDeckTypeのHiddenType（197-202行）からPOSTされる。",
+      "severityOpinion": "med",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 965,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0212 HTML の src-cell/data-excel-ref で、sheet-5 D80 に「(5) アーキタイプを選択変更すると、JSで(8)代表カードが更新される。」を実物確認した。sheet-5レイアウト画像 C8 も実見し、(5)アーキタイプと(8)代表カードの配置を確認した。旧 deck-detail.js（24-40行）はアーキタイプ側に画像があれば既存代表カードIDを条件にせず代表カードID・画像・名称を更新することも実物確認した。",
+      "reason": "アーキタイプ変更時に代表カードを更新する要求はExcel正本に直接あるため SPEC_BACKED は妥当。現行は既存代表カードがある編集時だけ要求された更新を抑止する。",
+      "currentImpl": "ec-cube-enterprise 現状: edit.twig のアーキタイプchangeハンドラ（100-117行）は `currentCardImageId` が存在し0でなければ早期returnする。DeckController::edit()（312-318行）は既存デッキの代表カードIDをこのhidden項目へ設定するため、代表カード設定済みデッキでアーキタイプを変更してもAjax更新されない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    }
+  ]
+}

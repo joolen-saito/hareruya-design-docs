@@ -1,0 +1,365 @@
+{
+  "packetId": "sw_14",
+  "results": [
+    {
+      "rowId": 469,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "20件到達時も上限案内文が付かず、画面には個別エラー20件だけが改行表示される。",
+      "checked": "StockSplitEditReplaceDestinationsImportHandler.php:246-309で20件打切り後に個別errorsのみ返すこと、StockSplitController.php:716-748でその配列をそのままJSON化すること、stock_split_edit.twig:637-640でerrs.join('\\n')のみ表示することを確認。",
+      "reason": "固定案内文の有無は画面表示I/Oの差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 470,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "承認申請後の分割明細に、数量と買取金額比率から算出した仕入総価格ではなく分割先在庫の既存totalCostが保存される。",
+      "checked": "StockSplitApplyApprovalAction.php:91-104でtotalCostにDestPs->getTotalCost()を渡すこと、DtbStockSplitJoinDetail.php:61-63でtotal_costが永続カラムであることを確認。",
+      "reason": "著者の『明細に非永続』という説明は誤りだが、永続される値が設計の按分計算値ではないためDB結果に影響する。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 471,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "分割先数量を変更しても、画面上部の分割点数合計はその場で再計算・再表示されない。",
+      "checked": "stock_split_edit.twig:177で合計を静的表示し、503-534のchangeハンドラは入力値だけ更新して合計DOMを更新しないこと、StockSplitController.php:566-580の応答もquantityだけであることを確認。",
+      "reason": "フォーカスアウト相当のchangeはあるが、要求された再集計表示が欠けるため観測可能な画面差になる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 472,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "編集画面から一覧へ戻ると保存済み検索条件による結果一覧ではなく、未検索の初期画面が表示される。",
+      "checked": "stock_split_edit.twig:418相当のフッターリンクがresumeなしでadmin_stock_split_join_listへ遷移し、StockSplitJoinController.php:132-160はresumeがないGETを未検索画面として返すことを確認。",
+      "reason": "検索状態と表示結果が変わる画面遷移差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 473,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "設計どおりの第2列名を持つCSVが列名エラーになり、雛形のヘッダーも異なる。",
+      "checked": "StockSplitEditReplaceDestinationsImportHandler.php:246-247で『分割先在庫数』を必須キーとしていることを確認。",
+      "reason": "CSVヘッダーは入力契約かつファイル出力であり、文言差も外部観測可能である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 474,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "99999999超または現在庫超の結合数を送信しても、その上限理由では拒否されず登録され得る。",
+      "checked": "stock_join_new.twig:128はmin=1のみ、StockJoinRegisterAction.php:43-64は正数判定後に値を保存し、99999999・現在庫との比較がないことを確認。",
+      "reason": "受付可能な入力範囲と永続値が変わるバリデーション差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 475,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "設計の7状態を画面・業務フローで表現できず、承認済み・完了承認待ち・入庫完了を区別できない。",
+      "checked": "Version20260519100000.php:65-72のマスタ6件とMtbStockSplitJoinStatus.php:27-38の定数6件を確認。",
+      "reason": "表示候補だけでなく状態遷移・永続値の集合が異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 476,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "店舗間移動か否かにかかわらずメンバー必須となり、所属は必須にならないため、送信可否が設計と変わる。",
+      "checked": "StockSplitJoinType.php:53-76で所属required=false、メンバーrequiredがapproval_required依存であること、StockJoinController.php:668で同オプションをtrueにすることを確認。",
+      "reason": "条件付き必須の相違はフォームの受付結果とエラー表示に影響する。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 477,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "10,000件を超える結合元CSVが上限超過として拒否されず処理され得る。",
+      "checked": "StockJoinCsvImportHandler.php:125-180とStockJoinEditReplaceSourcesImportHandler.php:42-180を確認し、後者にはMAX_ERROR_COUNTしかなく行数上限がないことを確認。",
+      "reason": "CSVの受付件数と処理負荷・登録対象が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 478,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "編集画面で結合元在庫数を0にしても行が即時削除されず、0の行がセッションと画面に残る。",
+      "checked": "StockJoinController.php:1282-1320で0をセッションへ保存してquantityを返すこと、StockJoinApplyPostedSourceStocks.php:34-56の削除ユーティリティは当該Ajax経路から呼ばれていないことを確認。",
+      "reason": "画面の行有無と保持データが異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 479,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "出力CSVから販売価格列と各行の販売価格値が欠落する。",
+      "checked": "StockRecommendCsvExportService.php:40-55のヘッダーと73-88の行出力がともに14項目で、販売価格を含まないことを確認。",
+      "reason": "CSV列・順序・値の欠落は直接の外部I/O差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 480,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "負の在庫増減数を検索条件に入力するとブラウザのmin制約で送信できず、減算履歴を負値範囲で検索できない。",
+      "checked": "StockHistoryType.php:258-271でstock_change_from/toのattr minが0であることを確認。",
+      "reason": "検索可能範囲という画面動作・結果集合の差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 481,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "在庫履歴の初期画面でログインメンバーのデフォルト店舗が選択済みにならず空欄になる。",
+      "checked": "StockHistoryType.php:83-91のbase_infoに初期dataがなく、StockHistoryController.php:190-214の初期表示もFormViewの空値をそのまま使うことを確認。",
+      "reason": "初期表示値はユーザーから観測でき、その後の検索入力にも影響する。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 482,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "初期画面の登録日fromが当月1日ではなく空欄になる。",
+      "checked": "StockHistoryType.php:363-380のcreate_date_fromにdata/empty_dataがなく、StockHistoryController.php:190-214でも日付を設定しないことを確認。",
+      "reason": "フォーム初期値の違いは表示と検索条件に影響する。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 483,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "初期画面で公開ステータスが選択済みにならず、全状態未選択になる。",
+      "checked": "StockHistoryType.php:132-137に初期dataがなく、親のProductStatusType.php:27-32にも既定選択がないことを確認。",
+      "reason": "初期選択状態と検索条件が外部から観測可能に変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 484,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "初期画面で状態NMが選択済みにならず、状態未選択になる。",
+      "checked": "StockHistoryType.php:167-179のcard_conditionに初期dataがなく、Controller初期表示でも設定しないことを確認。",
+      "reason": "初期選択状態と検索対象が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 485,
+      "authorVerdict": "IMPACT",
+      "verdict": "NO_IMPACT",
+      "agree": false,
+      "observableEffect": "なし。指摘された動的挙動は実装済みである。",
+      "checked": "history.twig:176-195で欠品2子区分とクリア対象を定義し、218-235でチェック時に子区分設定・非活性・対象項目クリア/非活性、解除時に子区分クリア・再活性化し、238-248でchangeハンドラと初期適用を行うことを確認。欠品理由相当のstock_change_reasonはクリア/非活性対象に含まれず活性のまま。DtbStockHistoryRepository.php:140-151でも同2子区分を検索条件に適用する。",
+      "reason": "著者の『変更ハンドラなし』は実コードと矛盾し、設計された画面挙動と検索条件が同じため、この指摘に基づく外部差はない。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 486,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "承認日時・登録日時がともにNULLの履歴では、設計のNULL基準ではなくcreateDateを基準に並ぶ。",
+      "checked": "DtbStockHistoryRepository.php:329-333は著者説明のcreateDate単独ではなくCOALESCE(approvalAt, registeredAt, createDate)を第三ソートに使うこと、DtbStockHistory.php:326-358でapprovalAtとregisteredAtがnullableであることを確認。",
+      "reason": "著者の実装説明は誤りで通常ケースは設計どおりだが、設計にないcreateDateフォールバックがNULL行の表示順を変え得るためIMPACTは維持する。",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 487,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "承認IDがあり承認者未登録の行でも『承認待ち』ではなく『-』と表示される。",
+      "checked": "history.twig:803-804で承認者欄がapprovalMemberの有無だけで名称または'-'を出し分けることを確認。",
+      "reason": "一覧表示文言・状態表現の差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 488,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "仕入単価がない場合に『-』ではなく通貨0が表示され、さらに現在の商品規格buy_priceが表示される。",
+      "checked": "history.twig:779でproductClassSub.buy_price|priceを使用し、EccubeExtension.php:180-188でnullを0に変換して通貨整形することを確認。",
+      "reason": "表示値とデータソースが異なるため画面I/Oに影響する。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 489,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "CSV起動契約がGETの指定URLではなくPOST /product/stock/history/csv_exportとなり、通常リンクや外部クライアントから同じ方法で取得できない。",
+      "checked": "StockHistoryController.php:314-315のPOSTルートとhistory.twig:669-680のPOSTフォーム送信を確認。",
+      "reason": "HTTPメソッド・パス・起動形態は外部契約そのものである。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 490,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "保持検索条件ではなく画面に埋め込まれたids[]だけがCSV対象となるため、対象決定方式と結果行が変わり得る。",
+      "checked": "history.twig:678-680で全結果IDをhidden送信し、StockHistoryController.php:317-325でidsのみを読み取ることを確認。",
+      "reason": "CSV入力契約と出力対象集合の差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 491,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "ダウンロードファイル名がproduct_stock_history_*.csvではなくstock_history_*.csvになる。",
+      "checked": "StockHistoryCsv.php:75-76でcreateFileName('stock_history_')をContent-Dispositionへ設定することを確認。",
+      "reason": "レスポンスヘッダー上のファイル名は外部観測可能なI/O差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 492,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "CSVの第7列ヘッダーが『在庫区分』ではなく『在庫場所』になる。",
+      "checked": "StockHistoryController.php:428-456のヘッダー定義で第7列が『在庫場所』であることを確認。",
+      "reason": "CSVヘッダー文字列は外部ファイル契約である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 493,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "状態列に規格拡張メモや状態名ではなくカード状態コードが固定出力される。",
+      "checked": "StockHistoryCsv.php:94-104で状態にProductClass->getCardCondition()->getCode()を設定し、メモ優先や名称フォールバックがないことを確認。",
+      "reason": "CSVセル値が異なる直接の外部I/O差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 494,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "0件時にヘッダーだけのCSVが返らず、エラー表示付きで履歴画面へリダイレクトされる。",
+      "checked": "StockHistoryController.php:317-325でids空をエラー応答にし、StockHistoryCsv.php:55-62でもデータなしをRuntimeExceptionにすることを確認。",
+      "reason": "正常CSVレスポンスとエラー遷移の差は明確な外部動作差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 495,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "CSV登録日がcreate_dateのY/m/d H:iではなくregisteredAtのY-m-d H:iで出力される。",
+      "checked": "StockHistoryCsv.php:121でgetRegisteredAt()->format('Y-m-d H:i')を使用することを確認。",
+      "reason": "参照日時と文字列書式の双方がCSV値を変える。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 496,
+      "authorVerdict": "IMPACT",
+      "verdict": "NO_IMPACT",
+      "agree": false,
+      "observableEffect": "なし。欠品検索は設計対象の2子区分に限定される。",
+      "checked": "history.twig:176-180でORDER_STOCKOUT_DECREASEとMOVE_SHORTAGE_SUBTRACTを選択値として設定し、DtbStockHistoryRepository.php:133-151でその選択値（または欠品検索時の同じ2定数）をIDENTITY(sh.StockChangeTypeDetail)条件へ適用することを確認。",
+      "reason": "著者の『id=19,21指定なし・廃棄親区分の一括抽出』は実装と反対で、検索結果集合に指摘された差はない。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 497,
+      "authorVerdict": "IMPACT",
+      "verdict": "NO_IMPACT",
+      "agree": false,
+      "observableEffect": "なし。M04-19の検索対象行では実装のsortDateは登録日時と同値になる。",
+      "checked": "DtbStockHistoryRepository.php:329-333で第三ソートがCOALESCE(approvalAt, registeredAt, createDate)であることを確認。対象定数の生成箇所を全検索し、StockDiffProcessor.php:237-255の欠品減算(受注)とStockMoveOutboundApprovalApproveAction.php:182-200の欠品減算(移動)はいずれもregisteredAtを必ず渡しapprovalAtを渡さない。StockHistoryEntityManager.php:47-52,105-117でもregisteredAtは必須引数、approvalAtは省略時NULLである。",
+      "reason": "著者の『registeredAtを使う実装なし』は誤り。対象2区分ではCOALESCEが常にregisteredAtへ評価され、設計の登録日時降順と同じ表示順になる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 498,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "欠品履歴の商品名をクリックして在庫編集画面を別タブで開くことができない。",
+      "checked": "history.twig:733-735で商品名がリンクなしのテキストとして出力されることを確認。",
+      "reason": "リンク有無・遷移先・targetは画面操作の差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 499,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "欠品時販売価格欄に履歴のsell_priceではなく現在の商品規格buy_priceが表示される。",
+      "checked": "history.twig:785-787で欠品モードの価格セルがproductClassSub.buy_price|priceである一方、StockHistoryDisposalCsv.php:110は履歴getSellPrice()を使うことを確認。",
+      "reason": "画面に表示される価格値と履歴時点データが異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 500,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "検索0件時に該当なし文言ではなく『検索条件に誤りがあります』が表示される。",
+      "checked": "StockHistoryController.php:240-252で検索後はhas_errors=trueを返し、history.twig:820-831でtrue時にsearch_invalid_condition、false時だけsearch_no_resultを表示することを確認。",
+      "reason": "利用者向け表示文言の明確な差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 501,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "欠品履歴一覧の指定列見出しが『在庫区分』ではなく在庫場所ラベルになる。",
+      "checked": "history.twig:692-700で該当列見出しにadmin.stock.history.stock_locationを使用することを確認。",
+      "reason": "一覧の列名は画面出力であり、文言差は軽微でもIMPACTである。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 502,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "欠品CSVが15列となり、第7列名が『在庫場所』、登録元ID列は出力されない。",
+      "checked": "StockHistoryController.php:484-502のヘッダーが15列で『在庫場所』かつ『登録元ID』なし、StockHistoryDisposalCsv.php:65-71がヘッダーキーだけで行を射影するため行データ側の登録元IDが落ちることを確認。",
+      "reason": "CSV列数・ヘッダー・出力項目の差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 503,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "負数の在庫増減CSVはフロント検査を通ってもサーバで数値エラーとなり登録できない。",
+      "checked": "StockChangeCsvImportHandler.php:251-253がeditQuantityを必須化し、ColumnDefinitions.php:617-620が符号なし数値列を返し、NumericValidator.php:42-47とSqlUtil.php:73-75が/^\\d+$/で検証することを確認。change.twig:181-190は負数を許容する。",
+      "reason": "サーバの受付範囲と登録可否が設計およびフロントと異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 504,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "廃棄・減算CSVでも仕入単価が空だと必須エラーになり、登録処理へ進めない。",
+      "checked": "StockChangeCsvImportHandler.php:251-254でstockChangeTypeDetailIdに関係なくpurchaseUnitPriceColumnをsetRequired(true)にすることを確認。",
+      "reason": "条件付き必須ではなく常時必須であり、入力可否とエラー結果が変わる。",
+      "confidence": "high"
+    }
+  ]
+}

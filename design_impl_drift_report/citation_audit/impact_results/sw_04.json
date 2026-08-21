@@ -1,0 +1,365 @@
+{
+  "packetId": "sw_04",
+  "results": [
+    {
+      "rowId": 109,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "不正形式を含む ids がリポジトリへ渡らず除去されるため、DB照会時の型変換・エラーまたは検索結果が、無検証で渡す場合と変わり得る。",
+      "checked": "src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyMainCardController.php:40-56 の数値フィルタと、src/Eccube/Repository/DtbBuyMainCardRepository.php:142-152 の IN 検索を確認。",
+      "reason": "HTTP入力の検索配列を変更する差であり、内部識別子だけの差ではない。全不正入力で同一応答になることも確認できないため IMPACT。",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 110,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "クライアントが設計URL /api/admin/... を呼ぶ場合と実装URL /api/v1/admin/... を呼ぶ場合で到達可否が変わる。",
+      "checked": "src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderIndivisualInputProductController.php:37 と app/config/eccube/packages/eccube.yaml:6,72 を確認。",
+      "reason": "HTTPパスは外部契約そのものである。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 111,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "ids 未指定・空文字でも必須エラーではなく HTTP 200 の空配列が返る。",
+      "checked": "src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderIndivisualInputProductController.php:40-45 を確認。",
+      "reason": "必須入力の受付可否とHTTPレスポンスが変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 112,
+      "authorVerdict": "IMPACT",
+      "verdict": "UNSURE",
+      "agree": false,
+      "observableEffect": "IP許可/拒否リストが設定されていれば要求元IPにより到達可否が変わるが、実運用の環境変数値が未確認。",
+      "checked": "app/config/eccube/packages/security.yaml:32-39 でトークン認証、src/Eccube/EventListener/IpAddrListener.php:32-67 で全メインリクエストへのIP制限、src/Eccube/Request/Context.php:33-53 で /api/v1/admin/... がフロント側判定になることを確認。app/config/eccube/packages/eccube.yaml:8-11 の既定リストは空。",
+      "reason": "著者の『IP判定が存在しない』は誤りで共通IP制限が存在する。ただし対象APIに適用されるフロント許可/拒否リストのデプロイ値が不明なため、設計どおり常時制限されるかは断定できない。",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 113,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "GET /cards/{id} に到達できず、設計のカードJSONまたは404応答を得られない。",
+      "checked": "src/Eccube/Controller/App/DeckBuilder/CardController.php:142-157 の近似 /api/cards/{id} と、ルート定義全体の検索結果を確認。",
+      "reason": "公開HTTPエンドポイントの欠落は外部動作差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 114,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "カード取得レスポンスのキー、ネスト、含有・除外項目が設計契約と一致しない。",
+      "checked": "src/Eccube/Controller/App/DeckBuilder/CardController.php:149-157 が Entity の toNormalizedArray() を直接返すことを確認。",
+      "reason": "JSONレスポンスの項目・値は外部I/Oである。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 115,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "GET /cardDetails/{id} を呼び出せず、カード詳細ID単位のJSON/404契約が利用できない。",
+      "checked": "src/Eccube/Controller/Admin/Product/ProductController.php:1012-1029 の別管理画面AJAXルートと、Controller配下の Route 検索を確認。",
+      "reason": "公開API入口の未実装は観測可能。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 116,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "設計されたカード詳細マスタ全体のJSON項目をクライアントが取得できない。",
+      "checked": "src/Eccube/Controller/Admin/Product/ProductController.php:1012-1043 の部分情報用入口と src/Eccube/Service/App/Article/ArticleResponseBuilder.php:175-281 の記事内private整形を確認。",
+      "reason": "レスポンス本文の欠落は外部I/O差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 117,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "foil/frame/promotion のレスポンスキーと値表現が設計どおり提供されない。",
+      "checked": "src/Eccube/Entity/Master/MtbCardDetail.php:278-319 と src/Eccube/Service/App/Article/ArticleResponseBuilder.php:257-280 を確認し、近似出力が foil_flg/promotion_flg を含み frame を含まないことを確認。",
+      "reason": "JSONキーの改名・追加・除去は外部契約差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 118,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "404本文が {code,message} ではなく {code,errors} となり、APIクライアントの解析結果が変わる。",
+      "checked": "src/Eccube/Controller/App/ContentController.php:70-74 と src/Eccube/Exception/App/NotFoundException.php:27-34 を確認。",
+      "reason": "HTTPレスポンス本文のキー差は明確な外部I/O差。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 119,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "非表示または画像URL空のトップバナーが一覧JSONに含まれ得る。",
+      "checked": "src/Eccube/Controller/App/ContentController.php:91-110 は Language->getTopBanners() を直接使用し、src/Eccube/Service/App/Content/TopBannersResponseBuilder.php:34-41 は全件を出力することを確認。絞込可能な src/Eccube/Repository/Master/MtbTopBannerRepository.php:38-55 はこの経路で未使用。",
+      "reason": "レスポンス対象レコード集合が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 120,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "404本文が指定 message 文言ではなく errors 配列の Not Found となる。",
+      "checked": "src/Eccube/Controller/App/ContentController.php:95-117 と src/Eccube/Exception/App/NotFoundException.php:27-34 を確認。",
+      "reason": "エラー本文のキーと文言はいずれも外部可観測。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 121,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "論理削除済み記事が wpPostId 検索で取得・応答され得る。",
+      "checked": "src/Eccube/Controller/App/ArticleController.php:58-63 の findOneBy 条件が wpPostId のみであることを確認。",
+      "reason": "応答対象データ集合が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 122,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "該当記事なし時の404本文が {code,message:'Not Found'} ではなく {code,errors:['記事が見つかりません']} となる。",
+      "checked": "src/Eccube/Controller/App/ArticleController.php:59-69 を確認。",
+      "reason": "JSONキーと表示文言の差は外部可観測。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 123,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "削除済みの基準記事または関連記事が関連一覧の判定・応答に混入し得る。",
+      "checked": "src/Eccube/Repository/DtbArticleRepository.php:44-116 のSQLに a1/a2.deleted_at 条件が無いことを確認。",
+      "reason": "APIの返却対象と順位が変わるデータ条件差。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 124,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "スマレジ取引APIへ要求が送信されず、固定成功応答だけが返り、外部システム側の取引副作用が発生しない。",
+      "checked": "src/Eccube/Service/Smaregi/SmaregiApiService.php:33-45 の固定レスポンスを確認。",
+      "reason": "外部連携呼出しの有無は重大な動作差。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 125,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "必須項目欠落時のHTTPステータスが、シート本文の404ではなく400になる。",
+      "checked": "src/Eccube/Controller/App/PointGranterController.php:65-84 を確認。",
+      "reason": "設計内に400記載もあり要求自体は矛盾するが、404と400の差そのものは外部可観測。",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 126,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "指定言語に一致しない商品規格も商品詳細結果に残り、languageCode は指定値で補完されるため、返却明細が言語選択と一致しない場合がある。",
+      "checked": "src/Eccube/Controller/App/ProductController.php:50-70 と src/Eccube/Repository/ProductRepository.php:261-344 を確認。lang.code 条件は LEFT JOIN にだけあり、WHERE は productId と pc存在のみ。",
+      "reason": "APIの返却対象行と値が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 127,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "商品なし時のJSONが {code,message} ではなく {code,errors} になる。",
+      "checked": "src/Eccube/Controller/App/ProductController.php:60-64 と src/Eccube/EventListener/ExceptionListener.php:140-151 を確認。",
+      "reason": "HTTPレスポンス本文キーの差。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 128,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "設計コマンド product:batch updateProductSummary ではバッチを起動できず、実装コマンド eccube:aggregate-sales が必要になる。",
+      "checked": "src/Eccube/Command/AggregateSalesCommand.php:31-35 を確認。",
+      "reason": "コマンド名は運用者が入力する外部インターフェース。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 129,
+      "authorVerdict": "IMPACT",
+      "verdict": "NO_IMPACT",
+      "agree": false,
+      "observableEffect": "",
+      "checked": "src/Eccube/Repository/DtbSalesQuantityRepository.php:451-567 を開き、smaregi_transaction_id/smaregi_code によるスマレジ判定、統合受注のECCUBE分・スマレジ分の分割、sales_location 別 UNION と、同:569-581 の product_class_id/base_info_id/sales_location 単位集計を確認。src/Eccube/Command/AggregateSalesCommand.php:29 の『未実装』コメントは現行SQLと不一致だが実行動作には使われない。",
+      "reason": "パケット作成後の現行実装はスマレジ取引を店舗・販売場所別に集計しており、指摘された機能差は解消済み。残るのは実行に影響しない古いコメントだけ。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 130,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "本店集計行の base_info_id が設計の0ではなく配送元店舗IDとなり、保存・参照されるDB行が変わる。",
+      "checked": "src/Eccube/Repository/DtbSalesQuantityRepository.php:477-490 で s.base_info_id を採用し、同:95-100 で base_info_id=0 を別用途として除外することを確認。",
+      "reason": "永続化キーの値が異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 131,
+      "authorVerdict": "IMPACT",
+      "verdict": "NO_IMPACT",
+      "agree": false,
+      "observableEffect": "",
+      "checked": "src/Eccube/Repository/DtbSalesQuantityRepository.php:443-449 を開き、order_status_id NOT IN (:cancel_status, :processing_status) を確認し、同:590-603 で CANCEL と PROCESSING が各パラメータへ設定されることを確認。",
+      "reason": "現行実装はキャンセルと処理中を両方除外しており、指摘された対象件数・集計値の差は存在しない。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 132,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "集計対象0件でも既存 dtb_sales_quantity 行が先に削除される。",
+      "checked": "src/Eccube/Service/Product/BatchAggregateSalesAction.php:38-47 と src/Eccube/Repository/DtbSalesQuantityRepository.php:95-100 を確認。",
+      "reason": "対象なし時のDB副作用が設計と異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 133,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "途中失敗時、設計では反映済み行が残るのに、実装では削除・挿入全体がロールバックされる。",
+      "checked": "src/Eccube/Service/Product/BatchAggregateSalesAction.php:38-47 の単一トランザクションを確認。",
+      "reason": "障害時に残る永続データが異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 134,
+      "authorVerdict": "UNSURE",
+      "verdict": "IMPACT",
+      "agree": false,
+      "observableEffect": "大規模データやSQLログ量次第で、処理が時間上限・メモリ上限に達して失敗し、完了ステータスやDB更新結果が変わり得る。",
+      "checked": "src/Eccube/Command/AggregateSalesCommand.php:44-58 と src/Eccube/Service/Product/BatchAggregateSalesAction.php:36-49 を確認。set_time_limit/ini_set/setSQLLogger は無い。src/Eccube/Repository/DtbSalesQuantityRepository.php:303-308 の同設定は別の updateRecommend 経路のみ。",
+      "reason": "判定基準の境界事例(b)どおり、資源制限・SQLロガー設定は資源条件によりバッチ成否と永続化結果を変え得るため IMPACT。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 135,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "標準出力に日時付き開始・完了行が出ず、完了文言だけが日時なしで出る。",
+      "checked": "src/Eccube/Command/AggregateSalesCommand.php:44-58 を確認。",
+      "reason": "判定基準の境界事例(a)どおりコンソール出力内容はI/O差。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 136,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "販売数が dtb_product_class の order_quantity_01〜08 ではなく dtb_sales_quantity に保存され、DB参照結果が変わる。",
+      "checked": "src/Eccube/Repository/DtbSalesQuantityRepository.php:104-145 の INSERT 先を確認。",
+      "reason": "DB保存先・カラムの差は外部可観測な永続I/O差。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 137,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "設計コマンド product:batch deleteProductRequest では起動できず、eccube:cancel-product-request が必要。",
+      "checked": "src/Eccube/Command/CancelProductRequestCommand.php:30-34 を確認。",
+      "reason": "バッチ起動名は運用者向けI/O。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 138,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "商品規格 visible=false や商品不存在の入荷通知リクエストが論理削除対象から漏れ得る。",
+      "checked": "src/Eccube/Repository/DtbProductRequestRepository.php:566-595 を確認。pc.product_status_id と p.product_status_id のみを見ており、pc.visible を見ず商品JOINはINNER。",
+      "reason": "削除対象行と deleted_at 更新の有無が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 139,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "標準出力に日時付き開始・完了が出ず、日時なし完了行のみとなる。",
+      "checked": "src/Eccube/Command/CancelProductRequestCommand.php:43-57 を確認。",
+      "reason": "コンソールログの内容差は運用者が観測するI/O差。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 140,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "設計コマンド product:batch updateProductSummaryForStockUp では起動できず、eccube:aggregate-stock-up が必要。",
+      "checked": "src/Eccube/Command/AggregateStockUpCommand.php:30-34 を確認。",
+      "reason": "コマンド名は外部の起動契約。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 141,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "異なる在庫場所の入庫数が商品規格・店舗単位に合算され、在庫場所別の集計行を取得できない。",
+      "checked": "src/Eccube/Repository/DtbStockUpQuantityRepository.php:150-180 で SELECT/GROUP BY が product_class_id と base_info_id のみ、同:195-230 で保存キーも同2項目のみと確認。",
+      "reason": "集計粒度と永続データが変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 142,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "買取由来の入庫が漏れ、棚卸/在庫調整由来の増加が含まれるため期間別入庫数が変わる。",
+      "checked": "src/Eccube/Repository/DtbStockUpQuantityRepository.php:147-148,172-187 で BE_STOCKED と INVENTORY_ADJUSTMENT を対象にしていることを確認。",
+      "reason": "バッチの処理対象と集計値の差。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 143,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "集計対象0件でも既存 dtb_stock_up_quantity 全行が削除される。",
+      "checked": "src/Eccube/Service/Product/BatchAggregateStockUpAction.php:36-44 と src/Eccube/Repository/DtbStockUpQuantityRepository.php:99-103 を確認。",
+      "reason": "対象なし時にもDB削除副作用がある。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 144,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "途中失敗時、100件単位の部分反映ではなく削除・全更新がまとめてロールバックされる。",
+      "checked": "src/Eccube/Service/Product/BatchAggregateStockUpAction.php:36-47 の単一トランザクションと全件ループを確認。",
+      "reason": "障害時の永続データ状態が異なる。",
+      "confidence": "high"
+    }
+  ]
+}

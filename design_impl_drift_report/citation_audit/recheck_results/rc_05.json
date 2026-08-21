@@ -1,0 +1,149 @@
+{
+  "packetId": "rc_05",
+  "results": [
+    {
+      "rowId": 65,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0506_基本設計仕様書(API_店頭買取管理).html の sheet-4 と関連する店頭買取正本4冊を `identificationId|身分証明書ID|本人確認.*未登録|未登録.*本人確認` で検索した。Excel正本の data-excel-ref 保持要素は1269行の `identificationId`／`身分証明書ID` と1296行の登録済みサンプル `'identificationId':1` だけで、未登録時0は0件。sheet-4のレイアウト画像1枚も目視し、本人確認未登録時のAPI値を補う記載はなかった。",
+      "reason": "Excel正本は項目の存在だけを定義し、0補正は定義しない。実物の旧実装 pf-api/src/Repository/DtbOtcBuyOrderRepository.php の findUncompleteBuyOrderByShopId() 83行には `case when identification.id is null then 0 else identification.id end as identificationId` があるため、0期待の根拠は旧実装であり LEGACY_BACKED は妥当。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Repository/DtbOtcBuyOrderRepository.php の getOtcBuyOrdersByShopIdAndStatus() は Identification をleftJoinし、1041行で `identification.id as identificationId` を選択する。src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php の getUncompletedOtcBuyOrders() は106行で `'identificationId' => $otcBuyOrder['identificationId'] ?? null` と返し、0補正はない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 66,
+      "originalClass": "UNCERTAIN",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0506 sheet-4 と関連する店頭買取正本4冊の data-excel-ref 保持行を `本文を持たない|本文なし|空本文|認証拒否|該当なし` で検索して0件。sheet-4正本1246-1248行は成功コード`200`のみ。sheet-4のレイアウト画像1枚も目視したが失敗応答本文の記載はなかった。",
+      "reason": "Excel正本に401空本文契約はない。旧 pf-api/src/Controller/BaseController.php の authAdminToken() は認証失敗時に `throw new UnauthorizedHttpException('')` とするが、config/packages/fos_rest.yaml はJSON format/view設定だけで、旧テストは401ステータスしかassertしていない。実行時本文が空だったことまでは確認できないため、先行の UNCERTAIN を維持する。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/EventListener/ExceptionListener.php の onKernelException() は isAppApi() で401を `['認証エラー']` にし、140-143行で `new JsonResponse(['code' => $statusCode, 'errors' => $errors], $statusCode)` を設定する。現在の401が本文付きであるという新実装側の主張は再現する。",
+      "severityOpinion": "med",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 67,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "REFUTED",
+      "correctedClass": "LEGACY_BACKED",
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0506 sheet-5正本を `order_status|マスター|ステータスコード|errors|401|404` で確認した。1604行の実物は `店頭買取注文ステータス、マスターにあるステータス以外はエラー` だが、1555-1563行はこのAPIを買取成立・買取キャンセル・経理払い出し待ち用とし、正本のステータスコードは1621行の`200`だけ。HTTP 400、全errors、401/404空本文、個別文言は正本にない。sheet-5のレイアウト画像1枚も目視し、これらの失敗契約を補う記載はなかった。",
+      "reason": "「マスタ外はエラー」は必要条件を示すだけで、全マスタIDを受け付けるとは書いておらず、同じ正本は対象ステータスを1・2・10に限定している。したがって ASSESSMENT_COMPLETED_STATUSES=[1,2,10] へのChoice自体を正本違反とはできない。HTTP 400・全メッセージ・個別文言と全マスタIDを受ける挙動は、pf-api/src/Entity/Api/OtcBuyOrderEdit.php の MasterValue、MasterValueValidator::validate()、OtcBuyOrderController::putAction() の400 errors配列に実在する旧実装由来なので、分類は LEGACY_BACKED が正しい。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php の updateOtcBuyOrder() は引数に指定なしの #[MapRequestPayload] を使い、vendor/symfony/http-kernel/Attribute/MapRequestPayload.php::__construct() の既定 validationFailedStatusCode は422。UpdateOtcBuyOrderDto::__construct() は orderStatusId を ASSESSMENT_COMPLETED_STATUSES のChoiceに限定し、文言は `order_status is invalid`。ExceptionListener::onKernelException() は401/404もcode/errors JSONにするため、旧実装契約との差は現在も残る。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 68,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0506 sheet-5正本のリクエスト表1610-1611行を確認し、quantity/price は数値(整数)だが必須欄が空欄。data-excel-ref=`0506:店頭買取情報更新!B97` の正本リクエストサンプル1636行には、product_class_id=null の明細で実物 `\"quantity\": null`, `\"price\": null` がある。APIリクエスト契約の指摘だが、sheet-5のレイアウト画像1枚も併せて目視した。",
+      "reason": "nullを含むリクエストサンプルは function-design-embed:start（1642行）より前の data-excel-ref 保持要素であり、Excel正本の直接根拠。任意項目とnullサンプルの両方が期待を支持するため SPEC_BACKED は妥当。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Dto/App/MTGBuyer/V1/Admin/UpdateOtcBuyOrderDetailDto.php::__construct() は quantity/price をnullableで受けるが、src/Eccube/Service/App/MTGBuyer/V1/Admin/OtcBuyOrder/BuildOtcBuyOrderDetailUpdatePlan.php の build() は全明細ループ先頭で `if ($detail->price === null || $detail->quantity === null)` とし、`価格または数量が指定されていません` を投げる。productClassIdによる分類より前なので個別入力商品も拒否される。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 69,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0506 sheet-5正本1569-1581行で送信情報を登録し、店頭買取情報の `⑤-7適格請求書発行事業者確認フラグ` を含むことを確認。1605行の data-excel-ref 保持セルは必須欄が空欄で、備考に `適格請求書発行事業者確認フラグ、trueまたはfalse`、1636行の正本サンプルには `\"qualified_invoice_issuer_confirmation_flg\": true` が実在する。sheet-5のレイアウト画像1枚も目視した。",
+      "reason": "「該当受注の場合のみ」という条件は旧実装由来だが、正本は任意パラメータとしてtrueとfalseの両値を定義し、送信値を登録するとしている。false指定を無視する現行挙動は正本だけで乖離が成立するため SPEC_BACKED は妥当。",
+      "currentImpl": "ec-cube-enterprise 現状: UpdateOtcBuyOrderDto::__construct() は qualifiedInvoiceIssuerConfirmationFlg を ?bool で受け、UpdateOtcBuyOrderAction::handle() はその値をそのまま OtcBuyOrderEntityManager::update() に渡す。しかし OtcBuyOrderEntityManager::update() は62-64行の `if ($qualifiedInvoiceIssuerConfirmationFlg)` 内でだけsetterを呼ぶためfalse指定を保存しない。getQualifiedInvoiceIssuerFlg() の条件判定もこの経路にない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 70,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0506 sheet-5と関連する店頭買取正本を `成立以外|キャンセル日時|キャンセル日` で検索した。0506正本1579-1580行は `買取成立の場合は買取成立日` と `買取キャンセルの場合は買取キャンセル日` を別条件で記載し、0205正本のステータス変更3578行も `買取キャンセル日を登録` は買取キャンセル時だけ。成立以外を一律キャンセル日にする記載は0件。sheet-5のレイアウト画像1枚も目視した。",
+      "reason": "Excel正本は成立・キャンセルを個別条件にし、経理払出し待ちでキャンセル日を付ける根拠はない。一方、旧 pf-api/src/Controller/Admin/OtcBuyOrderController.php の updateOtcBuyOrder() 208-212行は STATUS_COMPLETE 以外をelseで一律 setCancelDate() にする。期待の根拠は旧実装なので LEGACY_BACKED は妥当。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Service/EntityManager/OtcBuyOrderEntityManager.php の update() は isComplete() のときcompleteDate、elseif isCancel() のときだけcancelDateを設定する。MtbOtcBuyOrderStatus::ASSESSMENT_COMPLETED_STATUSES に含まれる STATUS_ACCOUNTING_PAYMENT_PENDING=10 はどちらでもなく、旧実装の「成立以外はcancelDate」との差は残る。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 71,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0506 sheet-6正本1773-1775行の data-excel-ref 保持セルで、実物 `エンドポイントURL`、`/api/admin/otcBuyOrder/{id}/freeComment.json`、メソッド`PUT`を確認した。sheet-6のレイアウト画像1枚も目視したが、URLを/api/v1へ読み替える注記はない。",
+      "reason": "URLとメソッドは function-design-embed:start（1819行）より前のExcel正本に直接あるため SPEC_BACKED は妥当。現行の既定ルートは版数プレフィックス付きで、設計URLの別ルートや書換設定は作業ツリー内にない。",
+      "currentImpl": "ec-cube-enterprise 現状: OtcBuyOrderController::updateFreeComment() のRouteは `/%eccube_api_v1_route%/admin/otcBuyOrder/{id}/freeComment.json`。app/config/eccube/packages/eccube.yaml は ECCUBE_API_V1_ROUTE の既定を `api/v1` とし、全リポジトリ検索でも無版数の別ルートはなく、結合テストも `/api/v1/admin/otcBuyOrder/.../freeComment.json` を呼ぶ。",
+      "severityOpinion": "high",
+      "confidence": "high"
+    },
+    {
+      "rowId": 73,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0506 sheet-7と関連する店頭買取正本を `正しい店頭買取ステータスIDを入力してください|ステータスID|マスターにあるステータス以外はエラー` で確認した。Excel正本1966行に実在するのは `マスターにあるステータス以外はエラー` までで、指定文言はdata-excel-ref保持要素に0件。sheet-7はレイアウト画像0枚で、正本図形B58も `{ \"status\": 1 }` だけ。",
+      "reason": "マスタ外をエラーにする業務条件は正本にあるが、指摘対象の固定文言はない。旧 pf-api/src/Controller/Admin/OtcBuyOrderStatusController.php の putAction() 39-45行には実物 `正しい店頭買取ステータスIDを入力してください` があるため、文言差の分類は LEGACY_BACKED が妥当。",
+      "currentImpl": "ec-cube-enterprise 現状: OtcBuyOrderController::updateStatus() は未指定・空・非数字で `ステータスが不正です`、マスタ不在で `ステータスが見つかりません` を投げる。旧文言はネット買取側 BuyOrderController にだけあり、店頭買取側にはない。両例外はHTTP 400。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 74,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0506 sheet-7と関連する店頭買取正本を `この受注は「|査定担当者名|査定中です。|査定者本人` で確認した。Excel正本1955行に実在するのは `査定者本人を除き、査定中または査定再開のものは査定開始できない` という業務条件だけで、鉤括弧・句点付き文言はdata-excel-ref保持要素に0件。sheet-7はレイアウト画像0枚で、正本図形B58もリクエストJSONだけ。",
+      "reason": "業務条件は正本にあるが、指摘対象である句読点を含む完全一致文言はない。旧 pf-api/src/Controller/Admin/OtcBuyOrderStatusController.php の putAction() 61-71行には `この受注は「{$otcBuyOrder->getMember()->getName()}」が査定中です。` が実在するため、文言差は LEGACY_BACKED で正しい。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Service/App/MTGBuyer/V1/Admin/OtcBuyOrder/UpdateStatusAction.php の handle() は他担当者かつ双方が査定アクティブのとき `この受注は{$input->OtcBuyOrder->getMember()->getName()}が査定中です` を投げる。鉤括弧と末尾句点はなく、InvalidStatusTransitionException::__construct() によりHTTP 400となる。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 75,
+      "originalClass": "UNCERTAIN",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0506 sheet-7と関連する店頭買取正本のdata-excel-ref保持行を `本文を持たない|本文なし|空本文|認証拒否|該当なし` で検索して0件。sheet-7正本1974-1977行は成功コード`200`とレスポンスデータ`なし`だけ。sheet-7はレイアウト画像0枚で、図形B58にも失敗本文の記載はない。",
+      "reason": "Excel正本に401/404空本文契約はない。旧 pf-api の BaseController::authAdminToken() は UnauthorizedHttpException('')、OtcBuyOrderStatusController::putAction() は NotFoundHttpException() を投げるが、旧テストはステータスだけをassertし、FOSRest/Symfonyで整形された実本文は確認できない。よって先行の UNCERTAIN を維持する。",
+      "currentImpl": "ec-cube-enterprise 現状: ExceptionListener::onKernelException() はApp APIでBaseApiExceptionのstatus/errorsを取り、140-143行のJsonResponseで必ずcode/errors本文を付ける。UnauthenticatedExceptionは401、NotFoundExceptionは404とerrorsを持つため、現在の本文付き実装という主張は再現する。",
+      "severityOpinion": "med",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 77,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0506 sheet-8正本2118-2120行の data-excel-ref 保持セルで `エンドポイントURL`、`/api/buying/{detailId}.json`、メソッド`GET`を確認し、2149行には実物 `https://stg-api.hareruyamtg.com/api/buying/173634.json` がある。sheet-8のレイアウト画像1枚も目視したが/api/v1への読み替え注記はない。",
+      "reason": "無版数URLはExcel正本の項目と具体例の双方に直接あるため SPEC_BACKED は妥当。現行の既定・テスト済みURLは/api/v1であり、無版数の別ルートは作業ツリー内にない。",
+      "currentImpl": "ec-cube-enterprise 現状: BuyingController::getByCardDetailId() のRouteは `/%eccube_api_v1_route%/buying/{cardDetailId}.json`。app/config/eccube/packages/eccube.yaml のECCUBE_API_V1_ROUTE既定は`api/v1`で、BuyingControllerTest::testGetByCardDetailIdSuccess() も `/api/v1/buying/{id}.json` を呼ぶ。無版数ルートや書換設定は検索で確認できない。",
+      "severityOpinion": "high",
+      "confidence": "high"
+    },
+    {
+      "rowId": 78,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0506 sheet-8正本2182-2185行の data-excel-ref 保持項目表で conditionClasses配下に `productClassId` と実物 `productCode`／`商品コード` を確認。正本図形B97のレスポンスサンプル2205行にも複数の `\"productCode\": ...` がある。APIレスポンス項目の指摘だが、sheet-8のレイアウト画像1枚も併せて目視した。",
+      "reason": "productCodeは function-design-embed:start（2211行）より前のExcel正本項目表とレスポンスサンプルの双方に明記されるため SPEC_BACKED は妥当。",
+      "currentImpl": "ec-cube-enterprise 現状: MtbCardRepository の買取用クエリは productClass.code を productClassCode としてDTO化し、BuyingCardsFormatter::format() は113-120行で外部配列キーを `'productClassCode' => $dto->productClassCode` とする。BuyingController::getByCardDetailId() はformatter結果を直接JsonResponseに渡し、productCodeへの後段変換はない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    }
+  ]
+}

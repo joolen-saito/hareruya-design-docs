@@ -1,0 +1,331 @@
+{
+ "packetId": "sw_14",
+ "mode": "sweep",
+ "note": "著者はこれらの大半を IMPACT(外部から観測できる) と判定した。見落とし＝実は NO_IMPACT な行が無いかを独立に判定すること。",
+ "findings": [
+  {
+   "rowId": 469,
+   "機能No": "M04-13",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "分割先商品CSV登録モーダルで、エラー20件到達時に固定文言「エラーは20件まで表示されます」（実装ロケール「エラーを最大20件まで表示しています。」）をエラーメッセージの上に表示する",
+   "差分内容": "Join側と非対称。分割CSVエラー表示経路（ハンドラ→Controller editDestinationCsvUpload→twig errs.join）を確認し、固定文言の付加が無いことを確認。",
+   "実装参照": "src/Eccube/Service/Csv/Importer/Event/StockSplitEditReplaceDestinationsImportHandler.php:307-309"
+  },
+  {
+   "rowId": 470,
+   "機能No": "M04-13",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "承認申請時に分割先商品の仕入総価格（1商品について数量分の仕入価格＝買取金額比率での按分値）を計算し、分割先商品情報に登録する",
+   "差分内容": "DtbStockSplitJoinDetail 全カラム・StockSplitApplyApprovalAction・StockSplitApprovalApproveAction を確認。設計は承認申請時に仕入総価格を計算・登録することを要求するが、計算タイミング（承認処理時）・格納先（明細に非永続）ともに不一致。",
+   "実装参照": "src/Eccube/Service/Admin/Stock/StockSplitApplyApprovalAction.php:96-104 ／ src/Eccube/Entity/DtbStockSplitJoinDetail.php:53-75"
+  },
+  {
+   "rowId": 471,
+   "機能No": "M04-13",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "分割点数（分割先在庫数の合計）は分割先在庫数が変更されるたびに再集計を行う（登録フォームのフォーカスアウトで再集計）",
+   "差分内容": "twig の qty change JS と合計表示、updateDestinationQuantity 戻り値を確認。フォーカスアウト時の即時再集計がクライアント側で未実装。",
+   "実装参照": "src/Eccube/Resource/template/admin/Stock/stock_split_edit.twig:508-534 ／ :177"
+  },
+  {
+   "rowId": 472,
+   "機能No": "M04-13",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "分割先登録（編集）画面のフッターリンクは「在庫分割・結合検索一覧」へ検索状態を維持したまま遷移する",
+   "差分内容": "編集画面フッターリンクと index の resume 分岐を確認。検索状態維持が resume 未付与により満たされない。",
+   "実装参照": "src/Eccube/Resource/template/admin/Stock/stock_split_edit.twig:418 ／ src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:111-114"
+  },
+  {
+   "rowId": 473,
+   "機能No": "M04-13",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "分割先商品CSVの第2列カラム名は「分割先分割在庫数」でカラム名一致チェックを行い、雛形も同カラムで出力する",
+   "差分内容": "設計HTML sheet-18 のCSV登録部・登録CSVテーブルで列名「分割先分割在庫数」を確認。実装のImportHandlerと雛形出力ヘッダは「分割先在庫数」で列名不一致。",
+   "実装参照": "src/Eccube/Service/Csv/Importer/Event/StockSplitEditReplaceDestinationsImportHandler.php:246-247 ／ src/Eccube/Controller/Admin/Stock/StockSplitController.php:64"
+  },
+  {
+   "rowId": 474,
+   "機能No": "M04-13",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "結合先商品の結合数(2-11)は必須○・最大値1～99999999。在庫数を超える数値が入力された場合はエラーとする。",
+   "差分内容": "設計2-11が明記する2つのバリデーション（最大値99999999・在庫数超過エラー）が実装に存在しない。Twig/Action/Controllerを直接確認し不在を確認。",
+   "実装参照": "src/Eccube/Resource/template/admin/Stock/stock_join_new.twig:128 / src/Eccube/Service/Admin/Stock/StockJoinRegisterAction.php:43-45,64 / src/Eccube/Controller/A"
+  },
+  {
+   "rowId": 475,
+   "機能No": "M04-13",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "基本情報ステータス(1-5)の表示候補は7区分『新規登録／結合元登録／結合計画承認待ち／却下／結合計画承認済み／結合完了承認待ち／入庫完了』。",
+   "差分内容": "設計の7区分と実装マスタ6区分が一致せず、『結合計画承認済み』『結合完了承認待ち』『入庫完了』が存在しない。二段階承認が単一承認→入庫済みに集約。migration/Entityを直接確認。",
+   "実装参照": "app/DoctrineMigrations/Version20260519100000.php:66-72 / src/Eccube/Entity/Master/MtbStockSplitJoinStatus.php:27-35"
+  },
+  {
+   "rowId": 476,
+   "機能No": "M04-13",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "承認通知先の所属(6-1)・メンバー(6-2)は店舗間移動時は必須（店舗間移動時のみ通知先を必須入力）。",
+   "差分内容": "設計は店舗間移動時のみ必須の条件付き必須だが、実装はメンバーを条件無視で常時必須にし、所属は一度も必須化されない。店舗間移動判定自体が存在しない。Controller/Formを直接確認。",
+   "実装参照": "src/Eccube/Controller/Admin/Stock/StockJoinController.php:583,773-778 / src/Eccube/Form/Type/Admin/StockSplitJoinType.php:53-77"
+  },
+  {
+   "rowId": 477,
+   "機能No": "M04-13",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "結合元商品CSV登録はCSVを10,000件を登録上限とする（上限超過は登録不可）。",
+   "差分内容": "設計の10,000件上限がバックエンドで未実装。分割側は2,000件のMAX_ROWSがあるが結合側は上限定数自体が存在しない。両ハンドラを直接確認し行数チェック不在を確認。",
+   "実装参照": "src/Eccube/Service/Csv/Importer/Event/StockJoinCsvImportHandler.php:141 / src/Eccube/Service/Csv/Importer/Event/StockJoinEditReplaceSourcesImportHandler.php:46,"
+  },
+  {
+   "rowId": 478,
+   "機能No": "M04-13",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "結合元在庫数(7-14)は0を許容し、0が入力された場合は商品行を削除する。",
+   "差分内容": "設計7-14は0入力=即時行削除を要求するが、実装は0を保持したまま行を残す。編集画面のAjax更新Controllerを直接確認し0削除処理が呼ばれないことを確認。",
+   "実装参照": "src/Eccube/Controller/Admin/Stock/StockJoinController.php:1068-1082,1104-1117 / src/Eccube/Service/Admin/Stock/Util/StockJoinApplyPostedSourceStocks.php:26"
+  },
+  {
+   "rowId": 479,
+   "機能No": "M04-16",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "別添資料_リコメンドCSV出力仕様のCSVヘッダは「店舗名, 商品コード, 商品名, 商品ID, 言語ID, 販売価格, 現在庫, 一週前在庫, 二週前在庫, 三週前在庫, 一月前在庫, 週間販売数, 週間入庫数, 月間販売数, 月間入庫数」とする。",
+   "差分内容": "設計別添の利用側CSV仕様には「販売価格」が言語IDと現在庫の間にあるが、実装のヘッダ定義および fputcsv 行生成に販売価格が存在しない。反証として StockRecommendCsvExportService、関連 Csv Exporter、Repository の「販売価格」「price02」「standard_price」「stock_recommend」を検索したが、本CSVに販売価格を追加する実装は確認できなかった。",
+   "実装参照": "src/Eccube/Service/Csv/Exporter/StockRecommendCsvExportService.php:40"
+  },
+  {
+   "rowId": 480,
+   "機能No": "M04-17",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "識別ID2-15/2-16 在庫増減数(from/to) 書式・制限『-99999999～99999999』。負値（在庫減算分）を含めて検索できる数値項目である。",
+   "差分内容": "設計は範囲を -99999999～99999999 と明記し負値を許容するが、実装は min=0 で下限を0に固定しており負の在庫増減数（在庫減算分）を検索できない。設計範囲と不一致。",
+   "実装参照": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/StockHistoryType.php:240-255"
+  },
+  {
+   "rowId": 481,
+   "機能No": "M04-17",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "識別ID1-2 店舗 初期値『ログインしているメンバーのデフォルト検索表示店舗』。アクセス時(1-1)に初期値が入力された状態で表示する。",
+   "差分内容": "StockHistoryType・StockHistoryController ともに getDefaultSearchBaseInfo / setData / PRE_SET_DATA を参照していない（grep で不在確認）。同一 Stock 配下の InventoryPlanController.php:181 では getDefaultSearchBaseInfo を使用しており、本機能では未適用。初期値として店舗が入力される挙動が未実装。",
+   "実装参照": "不在。StockHistoryType.php:78-85(base_info) / StockHistoryController.php:179-204(初期表示分岐)"
+  },
+  {
+   "rowId": 482,
+   "機能No": "M04-17",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "識別ID2-1 登録日(from) 初期値『ページを表示した日の月の1日』（当月1日）を初期表示時に入力済みとする。",
+   "差分内容": "Controller/Form を first day of month・modify( で grep したが不在。初期値『当月1日』が設定されず初期表示時に登録日(from)は空欄となる。未実装。",
+   "実装参照": "不在。StockHistoryType.php:339-356(create_date_from) / StockHistoryController.php:179-204"
+  },
+  {
+   "rowId": 483,
+   "機能No": "M04-17",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "識別ID2-6 公開種別 初期値『公開』を初期表示時に選択済みとする。",
+   "差分内容": "status に data/empty_data・初期選択の設定がなく Controller に setData も無い（grep 確認）。初期値『公開』が未実装。",
+   "実装参照": "不在。StockHistoryType.php:126-131(status)"
+  },
+  {
+   "rowId": 484,
+   "機能No": "M04-17",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "識別ID2-10 状態 初期値『NM』を初期表示時に選択済みとする。",
+   "差分内容": "card_condition に初期選択(NM)の指定がなく Controller でも setData されない。初期値『NM』が未実装。",
+   "実装参照": "不在。StockHistoryType.php:161-173(card_condition)"
+  },
+  {
+   "rowId": 485,
+   "機能No": "M04-17",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "識別ID2-4 欠品検索 チェック時の画面動的挙動: 2-3在庫変動理由区分を『欠品/欠品減算(受注)』『欠品/欠品減算(移動)』に変更し非活性化、欠品履歴で『－』の検索対象項目を空にし非活性化、2-37欠品理由を活性化。チェック解除時は欠品理由をクリア、及びチェック済→解除で2-3在庫変動理由区分の内容を空にする。",
+   "差分内容": "twig内JS・assets/js を grep したが disposal_search 変更ハンドラなし。欠品検索チェックに連動したフォーム項目の自動設定・活性/非活性・クリアというクライアント側動的挙動が未実装。",
+   "実装参照": "不在。history.twig:8-176(JSブロック) / StockHistoryType.php:108-115(disposal_search)"
+  },
+  {
+   "rowId": 486,
+   "機能No": "M04-17",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "第三ソートは各レコードの登録日時と承認日時のうち後の日時（基準日時=COALESCE(承認日時,登録日時)）の降順。第一=商品コード降順、第二=店舗ID降順。",
+   "差分内容": "設計の基準日時は COALESCE(approvalAt, registeredAt) 降順であるべきだが、実装は createDate でソートしており承認済みレコードが承認日時で並び替わらない。findLatestByProductStockId(:358) には COALESCE(sh.approvalAt, sh.registeredAt, sh.createDate) 実装があるが一覧クエリでは未使用。",
+   "実装参照": "src/Eccube/Repository/DtbStockHistoryRepository.php:333-335"
+  },
+  {
+   "rowId": 487,
+   "機能No": "M04-17",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "承認者列は3状態: 承認者名 / 在庫編集承認IDあり かつ 承認者未登録→「承認待ち」/ 承認行為なし→「-」。",
+   "差分内容": "history.twig を grep しても「承認待ち」文言・ロジック不在。翻訳キー admin.stock.approval_list.approval_waiting=承認待ち は在庫編集承認一覧側でのみ使用され、本一覧では未使用。承認待ちレコードが一律「-」表示になり設計の3状態と差異。",
+   "実装参照": "src/Eccube/Resource/template/admin/Stock/history.twig:730"
+  },
+  {
+   "rowId": 488,
+   "機能No": "M04-17",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "仕入単価は値がない場合「-」を表示する。",
+   "差分内容": "設計は値なし時「-」だが実装は null→¥0。加えてデータソースが履歴時点の仕入単価でなく現在の ProductClass.buy_price のため設計とデータソースも相違の可能性。",
+   "実装参照": "src/Eccube/Resource/template/admin/Stock/history.twig:705"
+  },
+  {
+   "rowId": 489,
+   "機能No": "M04-18",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "在庫一覧でCSVダウンロードを押下すると、GET /%eccube_admin_route%/product/history/stock/export の通常リンクから起動し、保持した在庫履歴検索条件でCSVをストリーム出力する。",
+   "差分内容": "設計の外部契約は GET /product/history/stock/export のリンク起動だが、実装は POST /product/stock/history/csv_export のフォーム送信であり、HTTP method・URL・起動形態が一致しない。反証として admin_product_stock_history_export、product/history/stock/export、exportStockHistory、getQueryBuilderForExport、admin.history.search を検索したが、当該ルートは存在しなかった。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockHistoryController.php:267"
+  },
+  {
+   "rowId": 490,
+   "機能No": "M04-18",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "CSV出力は、在庫履歴の検索条件セッション（admin.history.search）から保持中の検索条件を読み、フォームに流し込んで検索条件を復元し、その条件で在庫変更履歴の検索用クエリを組み立てる。",
+   "差分内容": "設計は admin.history.search を入力契約とする検索条件復元型のCSV出力だが、実装は hidden ids[] によるID指定型の出力で、CSV endpoint 内で検索条件セッションを読まず、フォーム復元も行わない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockHistoryController.php:88"
+  },
+  {
+   "rowId": 491,
+   "機能No": "M04-18",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "CSVファイル名は product_stock_history_ に出力時刻（年月日時分秒）を付け、拡張子 .csv とする。",
+   "差分内容": "設計の prefix は product_stock_history_、実装の prefix は stock_history_ で一致しない。createFileName 自体は yyyyMMddHHmmss.csv を付けるため時刻・拡張子部分は一致するが、ファイル名規則の先頭文字列が異なる。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/StockHistoryCsv.php:75"
+  },
+  {
+   "rowId": 492,
+   "機能No": "M04-18",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "CSV出力項目の識別ID:7 は在庫区分である。",
+   "差分内容": "設計のCSV列名は『在庫区分』だが、実装は『在庫場所』として出力するため、CSVヘッダーの外部契約が異なる。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockHistoryController.php:371"
+  },
+  {
+   "rowId": 493,
+   "機能No": "M04-18",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "状態列の値は、規格拡張のメモがあればメモ、無ければ状態名を出力する。",
+   "差分内容": "設計は『メモ優先、無ければ状態名』だが、実装はカード状態コードを固定的に出力している。dtb_product_sub_class、memo、CardCondition name、状態名フォールバックを検索したが、StockHistoryCsv の状態列変換に該当処理はなかった。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/StockHistoryCsv.php:103"
+  },
+  {
+   "rowId": 494,
+   "機能No": "M04-18",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "該当0件の場合はヘッダ行のみのCSVを正常に出力する。",
+   "差分内容": "設計は0件を正常系としてヘッダ行のみのCSV出力にするが、実装はID未指定またはデータなしをエラー扱いし、CSVレスポンスを返さない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockHistoryController.php:276"
+  },
+  {
+   "rowId": 495,
+   "機能No": "M04-18",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "登録日は dtb_stock_history.create_date を Y/m/d H:i 書式で出力する。",
+   "差分内容": "設計は create_date を Y/m/d H:i で出力するが、実装は registeredAt を Y-m-d H:i で出力しており、参照カラム相当と日付区切り文字が一致しない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/StockHistoryCsv.php:121"
+  },
+  {
+   "rowId": 496,
+   "機能No": "M04-19",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "検索した結果の在庫変動履歴の内、在庫変動理由区分が「廃棄」（親区分）、「欠品減算（受注）」・「欠品減算（移動）」（子区分）の履歴を検索し表示する。",
+   "差分内容": "DtbStockHistoryRepository、MtbStockChangeTypeDetail 定数、DoctrineMigrations を 欠品減算 / OUT_OF_STOCK / DISPOSAL / ORDER_STOCKOUT_DECREASE / MOVE_SHORTAGE_SUBTRACT で再検索したが、M04-19 の検索条件で id=19,21 を指定する実装はなく、廃棄親区分の一括抽出になっている。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbStockHistoryRepository.php:143"
+  },
+  {
+   "rowId": 497,
+   "機能No": "M04-19",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "第三ソートを各レコードの「登録日時」の降順（最新順）で表示する。",
+   "差分内容": "DtbStockHistoryRepository と history.twig を registeredAt / createDate / orderBy で再検索した結果、第三ソートに sh.registeredAt を使う実装は確認できない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbStockHistoryRepository.php:332"
+  },
+  {
+   "rowId": 498,
+   "機能No": "M04-19",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "商品名を押下すると、押下した商品在庫の在庫編集画面を別タブで表示する。",
+   "差分内容": "history.twig、admin_stock_approval_new、stock_list_index.twig、ProductStock.id で再検索した。stock_list_index.twig には admin_stock_approval_new へのリンク実装があるが、M04-19 の history.twig 商品名列には適用されていない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/history.twig:661"
+  },
+  {
+   "rowId": 499,
+   "機能No": "M04-19",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "欠品時販売価格は、欠品登録時の販売価格を表示し、受注の場合は受注情報で保持している販売価格、移動の場合も移動情報で保持している販売価格を参照する。",
+   "差分内容": "history.twig、StockHistoryDisposalCsv、DtbStockHistory::sell_price を再検索した。CSV は getSellPrice() を使うが、画面一覧だけ buy_price を表示している。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/history.twig:713"
+  },
+  {
+   "rowId": 500,
+   "機能No": "M04-19",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "検索結果0件時は「検索条件に該当するデータがありませんでした。」の見出しを表示する。",
+   "差分内容": "StockHistoryController と history.twig を has_errors / search_no_result / search_invalid_condition で再検索した。0件時に設計文言へ到達するには has_errors=false が必要だが、検索後の実装は true を返している。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockHistoryController.php:220"
+  },
+  {
+   "rowId": 501,
+   "機能No": "M04-19",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "識別ID:2-7 として「在庫区分」列を表示する。",
+   "差分内容": "history.twig と messages.ja.yaml を 在庫区分 / stock_location / locationName で再検索したが、M04-19 一覧列の見出しとして「在庫区分」を出す実装は確認できない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/history.twig:624"
+  },
+  {
+   "rowId": 502,
+   "機能No": "M04-20",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "欠品履歴CSV出力のCSV出力項目は16列で、7列目は「在庫区分」、9列目は「登録元ID」を出力する。Excelの列要件を正とし、実装のdisposalヘッダ15列は是正対象。",
+   "差分内容": "設計のCSV列は16列だが、実装の欠品履歴CSVヘッダは15列。さらに設計の「在庫区分」が実装では「在庫場所」になっており、「登録元ID」は行データ側にあってもヘッダ欠落により出力対象外。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockHistoryController.php:438 /home/y-saito/Developments/ec-cube-enterprise/src"
+  },
+  {
+   "rowId": 503,
+   "機能No": "M04-21",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "登録CSV「在庫増減数」は数値必須で、許容範囲は -99999999～99999999 とする。",
+   "差分内容": "設計は負数による在庫減算を許可しているが、実装のサーバ検証は符号付き数値を受け付けない。フロントJSは負数を許可しているため、送信後にサーバで不整合になる。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/StockChangeCsvImportHandler.php:160; /home/y-saito/Developments/ec-cube-ente"
+  },
+  {
+   "rowId": 504,
+   "機能No": "M04-21",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "仕入単価は任意項目で、在庫変動区分の親区分が入庫の場合のみ必須入力とする。減算時は入力された原価を参照しない。",
+   "差分内容": "設計は入庫時だけ必須、廃棄・減算時は任意かつ原価非参照だが、実装は全CSVで仕入単価を必須にしている。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockChangeCsvController.php:314; /home/y-saito/Developments/ec-cube-enterprise/"
+  }
+ ]
+}

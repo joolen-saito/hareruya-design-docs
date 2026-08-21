@@ -1,0 +1,165 @@
+{
+  "packetId": "rest_17",
+  "results": [
+    {
+      "rowId": 592,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:12983-12984 のExcel正本セルは「振替元商品コードは同じ商品が複数行あっても許容する」に続けて「振替元商品と振替先商品がまったく同一の行が複数あった場合はエラーとする」と明記する。",
+      "legacyEvidence": "判定には不使用。hareruya-design-docs/design_impl_drift_report/citation_audit/CODEX_TASK.md:47-50 の「設計書に裏付けが無い、または不十分な場合、旧実装リポジトリを探索する」に従い、Excel正本だけで期待値を十分に裏付けられるため旧実装は必須探索対象外。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/StockTransferCsvImportHandler.php:153-169 の `onValidateRow()` は `validateProductExists()` と `validateTransferQuantity()` だけを呼び、同:178-183 は行ごとの振替元・振替先コードを読むだけで既出ペアを保持しない。同:292-295 の `getRowValidators()` も `return [];` である。ファイル全体を `duplicate|duplicated|重複|same|from.*to|to.*from` で確認したがペア重複検証は存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 593,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:13011 のExcel正本の登録CSV 2-4は「振替点数」「数値」「必須○」「0~999999999」と明記する。",
+      "legacyEvidence": "判定には不使用。hareruya-design-docs/design_impl_drift_report/citation_audit/CODEX_TASK.md:47-50 の旧実装探索条件に照らし、Excel正本に数値範囲が直接記載されているため旧実装は必須探索対象外。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Model/ColumnDefinitions.php:98-100 は振替点数を `createUnsignedNumericColumn($name, '振替点数')` と最大桁数なしで作り、ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/StockTransferCsvImportHandler.php:299-301 で必須化する。同:350-364 の独自検証は `(int) $transferQuantity <= 0` だけで、999999999超過を拒否しない（0も拒否する）。両ファイルを `999999999|NumericMaxLengthValidator|最大|上限` で確認したが上限検証は存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 594,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:13338 のExcel正本はM11-03「2.編集可能店舗処理」に応じた権限制御を要求し、同:13359 は店舗を単一選択かつ必須「○」とする。参照先の hareruya-design-docs/excel_to_html/output/0201_基本設計仕様書(システム設定).html:2234-2235 は「在庫管理…のデータはメンバーに紐づいている編集可能店舗の店舗データのみ編集可能」と定義する。",
+      "legacyEvidence": "判定には不使用。hareruya-design-docs/design_impl_drift_report/citation_audit/CODEX_TASK.md:47-50 の旧実装探索条件に照らし、Excel正本と参照先M11-03で要求が具体的に定義されているため旧実装は必須探索対象外。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:277-298 の分割CSV POSTはフォームを検証せず、`store` が無ければ0として同:293-294 で既定 `baseInfoRepository->get()` を採用する。指定IDも `find($storeId)` のみである。一方、同:489-492 の `isEditableShop($BaseInfo)` は承認メンバーJSON経路だけにあり、CSV POSTにはない。",
+      "note": ""
+    },
+    {
+      "rowId": 595,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:13362 のExcel正本は承認通知先（メンバー選択）を「複数選択(セレクトボックス)」、必須「○」とし、「承認を行う担当者にメール通知を送るため」のフォームと明記する。",
+      "legacyEvidence": "判定には不使用。hareruya-design-docs/design_impl_drift_report/citation_audit/CODEX_TASK.md:47-50 の旧実装探索条件に照らし、Excel正本だけで項目種別・必須性・メール用途を十分に裏付けられるため旧実装は必須探索対象外。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/StockSplitCsvUploadType.php:56-58,85-99 はオプション有効時だけ `NotBlank` を付ける。初回画面は StockSplitJoinController.php:138-142 で `approval_notification_required => true` だが、検索後のフォーム再生成は同:169-172 で同オプションを渡さない。さらにCSV POSTの同:275-363 はフォームの `handleRequest()/isValid()` を一度も呼ばず、同:355-358 は送信先配列が空でも取込成功を維持し、同:462-466 の送信処理も空配列ならそのまま `return` する。",
+      "note": ""
+    },
+    {
+      "rowId": 596,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:13361 のExcel正本は承認通知先（所属選択）の選択肢を「編集している在庫を保持している店舗の所属マスターデータから取得」と明記する。",
+      "legacyEvidence": "判定には不使用。hareruya-design-docs/design_impl_drift_report/citation_audit/CODEX_TASK.md:47-50 の旧実装探索条件に照らし、Excel正本に選択肢の取得条件が直接記載されているため旧実装は必須探索対象外。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/StockSplitCsvUploadType.php:78-83 は所属選択肢を `getDepartmentChoices($allBaseInfos[0])` で初期店舗から固定生成する。ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/stock_split_join_index.twig:466-482 の店舗変更処理は承認メンバーのnative selectだけを再構築し、所属selectを更新しない。",
+      "note": ""
+    },
+    {
+      "rowId": 597,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:13340 のExcel正本は登録処理実行時のエラーとして「アップロードされたファイルがcsv以外のファイルの場合」を明記する。",
+      "legacyEvidence": "判定には不使用。hareruya-design-docs/design_impl_drift_report/citation_audit/CODEX_TASK.md:47-50 の旧実装探索条件に照らし、Excel正本に非CSV拒否が直接記載されているため旧実装は必須探索対象外。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:275-291 はUploadedFileの存在と `isValid()` だけを確認してフォーム検証を行わない。フォーム側には StockSplitCsvUploadType.php:100-109 のMIME制約があるがこのPOST経路では実行されない。ec-cube-enterprise/src/Eccube/Service/Csv/Importer/CsvImporter.php:164-175 は拡張子が `tsv` ならタブ区切りで読み込むため、非CSVを明示的に拒否していない。",
+      "note": ""
+    },
+    {
+      "rowId": 598,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:13377,13379 のExcel正本は登録CSV 2-2「分割数」と2-4「分割在庫数」をともに数値・必須「○」・範囲「0~999999999」とする。",
+      "legacyEvidence": "判定には不使用。hareruya-design-docs/design_impl_drift_report/citation_audit/CODEX_TASK.md:47-50 の旧実装探索条件に照らし、Excel正本に両列の数値範囲が直接記載されているため旧実装は必須探索対象外。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/StockSplitListCsvImportHandler.php:147-155 は分割数を `ctype_digit` かつ0超で検証し、同:158-164 は分割先在庫数を `ctype_digit` かつ1以上で検証するだけで、999999999以下の判定がない（0も拒否する）。同ファイル全体を `999999999|1000000000|上限|MAX.*QTY` で確認したが上限検証は存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 599,
+      "verdict": "UNSUPPORTED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:13348-13349 のExcel正本は「モーダルを表示する元画面でエラーを扱う」「本モーダルの選択内容はリセットされる」とだけ記載し、findingが追加する「一覧の検索条件・状態は維持される」はsheet-30のExcel正本範囲（13288-13428）に存在しない。検索状態維持の文言はリバース詳細設計側の同HTML:8062-8080 にだけあるためSPEC_BACKEDの根拠にはできない。",
+      "legacyEvidence": "旧実装4リポジトリ `pf-api`, `pf-eccube3`, `pf-article`, `deck-api` 全域を `M04-23|在庫分割CSV|在庫結合CSV|stock.?split.?join|split_join|list.?split.?csv`（PHP/Twig/YAML/JS/Markdown/SQL）で横断検索したが0件で、検索状態維持を裏付ける旧実装も存在しない。探索基準は hareruya-design-docs/design_impl_drift_report/citation_audit/CODEX_TASK.md:47-50 の「エンドポイントURL・メソッド名・テーブル名・カラム名・機能名で横断検索する」。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:345-363 はエラーをflashへ積み、引数なしで `admin_stock_split_join_list` へリダイレクトするためモーダル選択はリセットされ、正本の明示要求は満たす。同:132-160 は検索条件の復元を `resume` 指定時だけ行い、通常GETは空一覧を返すため、findingが主張する追加の検索状態維持は実装されていない。",
+      "note": "正本に明記された「元画面でエラーを扱う」「モーダル選択をリセット」は現実装で満たす。未達とされた検索状態維持だけが正本にも旧実装にもなく、リバース詳細設計による推論のためUNSUPPORTED。"
+    },
+    {
+      "rowId": 600,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:13715 のExcel正本は「CSVの結合先商品コード、結合数、結合元商品コード、結合元在庫区分、結合元在庫数をもとに在庫結合の登録および承認申請を行う」と明記する。",
+      "legacyEvidence": "判定には不使用。hareruya-design-docs/design_impl_drift_report/citation_audit/CODEX_TASK.md:47-50 の旧実装探索条件に照らし、Excel正本に承認申請までの処理が直接記載されているため旧実装は必須探索対象外。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:407-415 はCSVハンドラへ `stockJoinRegisterAction` と `stockJoinMoveToShortageEntryAction` だけを渡す。ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/StockJoinListCsvImportHandler.php:401-430 も登録後に `stockJoinMoveToShortageEntryAction->handle(...)` までしか呼ばず、`StockJoinApplyApprovalAction` は同ファイルおよびCSV POST経路に存在しない。同:259-260 の成功文言も「結合を登録し、欠品入力まで進めました。」である。",
+      "note": ""
+    },
+    {
+      "rowId": 601,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:13726 のExcel正本は「結合元商品の在庫数が結合元在庫数以上であることをそれぞれチェック」と明記する。",
+      "legacyEvidence": "判定には不使用。hareruya-design-docs/design_impl_drift_report/citation_audit/CODEX_TASK.md:47-50 の旧実装探索条件に照らし、Excel正本に在庫量の比較条件が直接記載されているため旧実装は必須探索対象外。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/StockJoinListCsvImportHandler.php:361-393 は結合元在庫を解決してCSV数量を合算するが、`getStock()` との大小比較をしない。その後呼ばれる ec-cube-enterprise/src/Eccube/Service/Admin/Stock/StockJoinMoveToShortageEntryAction.php:179-190 は `$quantity = min(max(0, $data['quantity']), (int) ($SrcPs->getStock() ?? 0));` と要求数量を現在庫まで丸め、在庫不足エラーにしない。",
+      "note": ""
+    },
+    {
+      "rowId": 602,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:13720 のExcel正本は登録処理実行時のエラーとして「アップロードされたファイルがcsv以外のファイルの場合」を明記する。",
+      "legacyEvidence": "判定には不使用。hareruya-design-docs/design_impl_drift_report/citation_audit/CODEX_TASK.md:47-50 の旧実装探索条件に照らし、Excel正本に非CSV拒否が直接記載されているため旧実装は必須探索対象外。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:366-383 は結合CSV POSTでUploadedFileの存在と `isValid()` だけを確認し、StockJoinCsvUploadType.php:67-76 のMIME制約を実行する `handleRequest()/isValid()` がない。ec-cube-enterprise/src/Eccube/Service/Csv/Importer/CsvImporter.php:164-175 は拡張子 `tsv` をタブ区切りとして受け入れる。",
+      "note": ""
+    },
+    {
+      "rowId": 603,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:13718 のExcel正本はM11-03「2.編集可能店舗処理」に応じた権限制御を要求する。参照先の hareruya-design-docs/excel_to_html/output/0201_基本設計仕様書(システム設定).html:2234-2235 は「在庫管理…のデータはメンバーに紐づいている編集可能店舗の店舗データのみ編集可能」と定義する。",
+      "legacyEvidence": "判定には不使用。hareruya-design-docs/design_impl_drift_report/citation_audit/CODEX_TASK.md:47-50 の旧実装探索条件に照らし、Excel正本と参照先M11-03で要求が具体的に定義されているため旧実装は必須探索対象外。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:385-390 の結合CSV POSTは送信store IDを `baseInfoRepository->find($storeId)` するだけで、ログインMemberの編集可能店舗かを検証しない。一方、同:489-492 の `isEditableShop($BaseInfo)` は承認メンバーJSON経路だけにある。画面の選択肢は同:551-563 の編集可能店舗一覧から作るが、POST改ざんをサーバ側で拒否しない。",
+      "note": ""
+    },
+    {
+      "rowId": 604,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:13756 のExcel正本の登録CSV 2-2はラベル「結合数」、数値・必須「○」・範囲「1~999999999」と明記する。同:13759 の2-5は別項目「結合元在庫数」である。",
+      "legacyEvidence": "判定には不使用。hareruya-design-docs/design_impl_drift_report/citation_audit/CODEX_TASK.md:47-50 の旧実装探索条件に照らし、Excel正本に2列のラベルが直接区別して記載されているため旧実装は必須探索対象外。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/stock_join_csv_modal_body.twig:51-53 は2列目に翻訳キー `admin.stock.join_csv_modal.format_join_quantity` を表示し、ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:4997 はその値を `結合元在庫数` と定義する。同Twig:63-65 も5列目の別キーで結合元在庫数を表示するため、2列目と5列目が同じラベルになる。",
+      "note": ""
+    },
+    {
+      "rowId": 605,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:13756,13759 のExcel正本は2-2「結合数」と2-5「結合元在庫数」をともに数値・必須「○」・範囲「1~999999999」とする。",
+      "legacyEvidence": "判定には不使用。hareruya-design-docs/design_impl_drift_report/citation_audit/CODEX_TASK.md:47-50 の旧実装探索条件に照らし、Excel正本に両列の数値範囲が直接記載されているため旧実装は必須探索対象外。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/StockJoinListCsvImportHandler.php:152-160 は結合数を `ctype_digit` かつ0超、同:162-171 は結合元在庫数を `ctype_digit` かつ1以上とするだけで、999999999以下の判定がない。同ファイル全体を `999999999|1000000000|上限|MAX.*QTY` で確認したが件数上限 `MAX_ROWS` 以外の数量上限検証は存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 607,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:14279 のExcel正本は在庫移動実績CSVについて「CSVは2,000件を登録上限とする」と明記する。",
+      "legacyEvidence": "判定には不使用。hareruya-design-docs/design_impl_drift_report/citation_audit/CODEX_TASK.md:47-50 の旧実装探索条件に照らし、Excel正本に登録上限が直接記載されているため旧実装は必須探索対象外。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/StockMoveInstructionCsvImportHandler.php:35-109 はクラス定数や行カウンタを持たず、行検証も列数・列定義・空値検証だけで2,000件超過を判定しない。専用Importerの ec-cube-enterprise/src/Eccube/Service/Admin/Stock/StockMoveInstructionCsvImporter.php:50-88 もヘッダー検証と区切り設定だけで上限なし。さらに ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:5313 は画面文言を「（1ファイルの登録上限は10,000件です）」と定義する。",
+      "note": ""
+    },
+    {
+      "rowId": 608,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:14285 のExcel正本は「エラーがある場合、登録処理を終了」しエラーを表示すると定め、同:14287（直後の正本セル）は「エラーがなければ登録処理を行う」とするため、エラーを含むCSVの正常行だけを登録する仕様ではない。",
+      "legacyEvidence": "判定には不使用。hareruya-design-docs/design_impl_drift_report/citation_audit/CODEX_TASK.md:47-50 の旧実装探索条件に照らし、Excel正本にエラー時終了とエラー無し時のみ登録が直接記載されているため旧実装は必須探索対象外。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/StockMoveInstructionCsvImportHandler.php:69-107 はエラー行で `breakAll()` せず `skipRow()` を使い、同:114-171 の業務エラーもfalseを返すだけで全体中断しない。ec-cube-enterprise/src/Eccube/Service/Csv/Importer/CsvImporter.php:231-272 はskip行があっても `$hasBreak` がfalseのままで、`$isSuccessful = $messageStore->count() === 0 || !$hasBreak;` により正常行をcommitする。",
+      "note": ""
+    },
+    {
+      "rowId": 609,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:14283 のExcel正本は在庫移動実績CSVの入力チェックとして「移動指示IDに重複がないこと」と明記する。",
+      "legacyEvidence": "判定には不使用。hareruya-design-docs/design_impl_drift_report/citation_audit/CODEX_TASK.md:47-50 の旧実装探索条件に照らし、Excel正本に重複禁止が直接記載されているため旧実装は必須探索対象外。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/StockMoveInstructionCsvImportHandler.php:194-204 は `getRowValidators()` が `return [];` で、移動指示ID列にはRequiredとNumericだけを設定する。同:114-171 の行処理もID存在・店舗名・送り状No.だけを検証し、既出ID集合を保持しない。同ファイル、StockMoveInstructionCsvImporter.php、StockMoveInstructionCsvImportService.phpを `duplicate|duplicated|重複|seen|instructionIds` で確認したがCSV内重複検証は存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 610,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:14342 のExcel正本は一覧3-4「表示件数」の初期値を「50」、説明を「１ページあたりの表示件数」と明記する。",
+      "legacyEvidence": "判定には不使用。hareruya-design-docs/design_impl_drift_report/citation_audit/CODEX_TASK.md:47-50 の旧実装探索条件に照らし、Excel正本に初期値が直接記載されているため旧実装は必須探索対象外。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockMoveInstructionController.php:87-91 はセッション未設定時に `eccube_default_page_count` を採用し、ec-cube-enterprise/app/config/eccube/packages/eccube.yaml:142 はこれを `10` と定義する。ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/stock_move_instruction_index.twig:170-173 はこの `page_count` とPageMax一覧で選択状態を描画するため初期表示は50ではなく10件。",
+      "note": ""
+    },
+    {
+      "rowId": 611,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:14336 のExcel正本は検索条件2-7「発送状況」を「複数選択(セレクトボックス)」、選択肢を「未、済」と明記する。",
+      "legacyEvidence": "判定には不使用。hareruya-design-docs/design_impl_drift_report/citation_audit/CODEX_TASK.md:47-50 の旧実装探索条件に照らし、Excel正本に部品種別と選択肢が直接記載されているため旧実装は必須探索対象外。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/SearchStockMoveInstructionType.php:142-149 は発送状況を `shipment_status_not_done` と `shipment_status_done` の独立した `CheckboxType` 2項目として定義する。ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/stock_move_instruction_index.twig:125-136 も2つの `form-check` として個別描画し、複数選択セレクトボックスではない。",
+      "note": ""
+    },
+    {
+      "rowId": 612,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:14879 のExcel正本は在庫移動指示詳細にM11-03「2.編集可能店舗処理」に応じた権限制御を要求する。参照先の hareruya-design-docs/excel_to_html/output/0201_基本設計仕様書(システム設定).html:2234-2235 は「在庫管理…のデータはメンバーに紐づいている編集可能店舗の店舗データのみ編集可能」と定義する。",
+      "legacyEvidence": "判定には不使用。hareruya-design-docs/design_impl_drift_report/citation_audit/CODEX_TASK.md:47-50 の旧実装探索条件に照らし、Excel正本と参照先M11-03で要求が具体的に定義されているため旧実装は必須探索対象外。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockMoveInstructionController.php:45-60 の依存には編集可能店舗判定用サービスがなく、同:184-189 の詳細はIDを `find($id)` してそのまま表示する。同:269-302 の送り状登録と同:308-336 の削除も同様にID取得後の編集可能店舗判定がない。ec-cube-enterprise/src/Eccube/Repository/DtbStockMoveInstructionRepository.php:37-57 の一覧QueryBuilderも利用者の編集可能店舗ではなく、任意の検索条件 `move_from_base_info` / `move_to_base_info` だけを適用する。これらを `isEditableShop|getEditableBaseInfos|memberBaseInfos|editable` で確認したが0件。",
+      "note": ""
+    }
+  ]
+}

@@ -1,0 +1,365 @@
+{
+  "packetId": "sw_18",
+  "results": [
+    {
+      "rowId": 613,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "ダウンロードした買取商品CSVの4列目ヘッダが、設計の「販売価格」ではなく「基準価格」になる。",
+      "checked": "src/Eccube/Service/Csv/Exporter/BuyOrderProductListCsvExportService.php:30-40,69-85でCSV_HEADERが実際に先頭行へ出力されることを確認。",
+      "reason": "CSVヘッダは外部I/Oであり、値の取得元が同じでも列名の差は観測できる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 614,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "本人確認済みの2区分が、画面では個別マスタ名でなく一律「本人確認済み」と表示される。",
+      "checked": "src/Eccube/Resource/template/admin/Purchase/detail.twig:144-150とapp/DoctrineMigrations/Version20251125145047.php:62-83を確認。",
+      "reason": "マスタ上の「オンライン本人確認済み」「簡易書留確認済み」が画面出力で集約され、利用者可視表示が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 615,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "手動買取メールの送信が成功しても、対応するメール履歴行がDBにINSERTされない。",
+      "checked": "src/Eccube/Controller/Admin/Purchase/MailController.php:118-144、src/Eccube/Service/MailService.php:1704-1738、src/Eccube/Service/EntityManager/MailHistoryEntityManager.php:33-68、src/Eccube/EventListener/TransactionListener.php:103-125を確認。",
+      "reason": "当該経路はsave()のpersist後にflushせず、終端リスナーもcommitのみでUnitOfWorkをflushしないため、永続データ差になる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 616,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "送信成功後にdtb_mail_historyの履歴件数が増えず、送信履歴画面・DB照会結果が設計と異なる。",
+      "checked": "src/Eccube/Service/MailService.php:1727-1738で成功時のsave後にflushがないこと、src/Eccube/EventListener/TransactionListener.php:114-120がcommitのみであることを確認。",
+      "reason": "persistとSQL INSERT確定は同一ではなく、当該HTTP経路にflushがない差は永続I/Oへ影響する。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 617,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "先頭ゼロを含む7桁口座番号がCSVでは整数化された短い桁数で出力される。",
+      "checked": "src/Eccube/Entity/DtbBankAccount.php:42-43,97-104、src/Eccube/Service/Csv/Exporter/BuyOrderDepositCsvExportService.php:116-127、src/Eccube/Resource/template/default/Purchase/fill.twig:270-274を確認。",
+      "reason": "画面経路には%07d補正がある一方、CSV経路は整数値を無補正で渡しておりファイル内容が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 618,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "買取商品一覧CSVの4列目ヘッダが「販売価格」ではなく「基準価格」になる。",
+      "checked": "src/Eccube/Service/Csv/Exporter/BuyOrderProductListCsvExportService.php:30-40,75-85を確認。",
+      "reason": "CSV列名は外部契約であり文字列差そのものが観測可能。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 619,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "キャンセル用CSVでも4列目ヘッダが「販売価格」ではなく「基準価格」になる。",
+      "checked": "src/Eccube/Service/Csv/Exporter/BuyOrderProductListCsvExportService.php:30-40,66-73で通常・キャンセルが同じヘッダ定義を使うことを確認。",
+      "reason": "キャンセル時に差し替えるのはproduct_countだけで、standard_priceの外部ヘッダ差が残る。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 620,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "状態なし通常商品の言語IDが固定値1でなく、bmc.language_idの値としてCSVに出る。",
+      "checked": "src/Eccube/Repository/DtbBuyOrderRepository.php:635-650とsrc/Eccube/Service/Csv/Exporter/BuyOrderProductListCsvExportService.php:73-85を確認。",
+      "reason": "該当SELECTがbmc.language_idを返し、その行が後段補正なくCSV化されるため出力値が変わり得る。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 621,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "状態なし通常商品の略称タグ列が空欄でなく、mtb_storage_code.nameになる。",
+      "checked": "src/Eccube/Repository/DtbBuyOrderRepository.php:635-663で状態なし分岐がsc.name AS storage_codeを選ぶことを確認。",
+      "reason": "CSVセル値の差であり、商品に保管コードがあれば直接観測される。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 622,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "状態なし通常商品のレアリティ列が空欄でなく、mtb_rarity.codeになる。",
+      "checked": "src/Eccube/Repository/DtbBuyOrderRepository.php:635-663で状態なし分岐がr.code AS rarity_codeを選ぶことを確認。",
+      "reason": "CSVセル値の差であり、レアリティを持つ商品では外部出力が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 623,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "印刷用棚戻しリストに、ボタン押下日時を示す作成日時が表示されない。",
+      "checked": "src/Eccube/Resource/template/admin/Purchase/restock_list.twig:1-106とsrc/Eccube/Service/Admin/Purchase/BuyOrderRestockListService.php:42-63を確認。",
+      "reason": "テンプレートに日時欄がなく、ビュー変数もrestockListSectionsのみなので帳票HTMLの表示差になる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 624,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "空白区切りで複数語を入力すると、いずれか1語一致ではなく全語一致した申込者だけが検索結果に残る。",
+      "checked": "src/Eccube/Repository/DtbBuyOrderStockHistoryRepository.php:90-108で各キーワード条件をandWhere追加していることを確認。",
+      "reason": "同じ検索入力に対する結果集合が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 625,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "会員ID欄に非数値文字列を入力しても入力エラーにならず、整数キャストしたIDで検索される。",
+      "checked": "src/Eccube/Form/Type/Admin/Purchase/PurchaseHistoryType.php:60-63、src/Eccube/Dto/Admin/Purchase/HistorySearchDataDto.php:23-30、src/Eccube/Repository/DtbBuyOrderStockHistoryRepository.php:82-88を確認。",
+      "reason": "バリデーション結果と検索条件が設計の半角整数限定と異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 626,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "振込完了日の検索欄で時分まで指定・比較され、同じ暦日のレコードが時刻条件で除外され得る。",
+      "checked": "src/Eccube/Form/Type/Admin/Purchase/PurchaseHistoryType.php:82-103、src/Eccube/Resource/template/admin/Purchase/history.twig:28-41,119-129、src/Eccube/Repository/DtbBuyOrderStockHistoryRepository.php:136-145を確認。",
+      "reason": "入力UIと検索境界の双方が日付専用仕様と異なるため結果集合が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 627,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "画面の操作ラベルが「CSVダウンロード」ではなく「ダウンロード」と表示される。",
+      "checked": "src/Eccube/Resource/template/admin/Purchase/history.twig:208-215とsrc/Eccube/Resource/locale/messages.ja.yaml:1651,1738を確認。",
+      "reason": "実際のTwigはadmin.common.downloadを使用し、表示文言が1語異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 628,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "確認・送信・完了を設計の独立URLで呼べず、すべてPOST /customer/mailへのmode付き送信になる。",
+      "checked": "src/Eccube/Controller/Admin/Customer/CustomerMailController.php:52-54,78-103,128-129とsrc/Eccube/Resource/template/admin/Customer/mail_confirm.twig:33-36,99-105を確認。",
+      "reason": "HTTPパス・メソッド・画面遷移の外部契約が異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 629,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "一括メール送信履歴がdtb_user_mail_historyではなくdtb_mail_historyへ保存される。",
+      "checked": "src/Eccube/Controller/Admin/Customer/CustomerMailController.php:110-117、src/Eccube/Service/EntityManager/MailHistoryEntityManager.php:33-68、src/Eccube/Entity/DtbUserMailHistory.php:21-56、src/Eccube/Entity/MailHistory.php:25-76を確認。",
+      "reason": "永続先テーブルが異なり、DB照会・連携対象が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 630,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "POST /customer/mail_confirmおよびPOST/GET /customer/mail_completeが存在せず、URL単位の多段フローを利用できない。",
+      "checked": "src/Eccube/Controller/Admin/Customer/CustomerMailController.php:52-54,82-130とsrc/Eccube/Resource/template/admin/Customer/mail_confirm.twig:33-36を確認。",
+      "reason": "内部ルート名だけでなく物理HTTPエンドポイントが異なるため外部挙動差。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 631,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "一括送信後の履歴行が設計対象テーブルではなく統合メール履歴テーブルに増える。",
+      "checked": "src/Eccube/Controller/Admin/Customer/CustomerMailController.php:110-117、src/Eccube/Service/EntityManager/MailHistoryEntityManager.php:39-67、src/Eccube/Entity/DtbUserMailHistory.php:21-25を確認。",
+      "reason": "保存先テーブルの差は永続I/Oとして観測可能。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 632,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "確認ボタン・送信ボタンが別エンドポイントへ遷移せず、同じURLにmodeを付けてPOSTする。完了画面のGET入口もない。",
+      "checked": "src/Eccube/Resource/template/admin/Customer/mail_confirm.twig:33-36,95-110とsrc/Eccube/Controller/Admin/Customer/CustomerMailController.php:52-54,103-130を確認。",
+      "reason": "ブラウザから観測できるリクエスト先と完了画面の到達方法が設計と異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 633,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "送信履歴はdtb_mail_historyに保存され、creator_idは設定されないため、設計の履歴テーブル・記録内容と異なる。",
+      "checked": "src/Eccube/Service/EntityManager/MailHistoryEntityManager.php:39-67、src/Eccube/Entity/MailHistory.php:53-72,178-193、src/Eccube/Controller/Admin/Customer/CustomerMailController.php:110-117を確認。",
+      "reason": "保存先と永続カラム値の差はいずれもDBから観測できる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 634,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "郵便番号を空欄にすると長さ検証に失敗し、任意項目として会員情報を保存できない。",
+      "checked": "src/Eccube/Form/Type/Admin/CustomerType.php:79-83,209-220とsrc/Eccube/Form/Type/SplitPostalType.php:39-67を確認。",
+      "reason": "親フィールドがrequired=trueで、子にも最小3桁・4桁のLength制約があるため入力可否が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 635,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "同じ文字数でもSJISで多バイトになる住所が、設計上の換算上限を超えても通常文字数内なら受理される。",
+      "checked": "src/Eccube/Form/Type/AddressType.php:103-129でaddr01/addr02が通常のAssert\\Lengthのみであることを確認し、src/Eccube/Form・Validator・Controller/Admin/CustomerでSJIS換算処理を検索した。",
+      "reason": "入力受理・エラー有無が文字種によって変わるバリデーション差。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 636,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "本人確認ステータスを未確認へ戻しても、既存の身分証有効期限がDBに残る。",
+      "checked": "src/Eccube/Controller/Admin/Customer/CustomerEditController.php:156-176,231-275、src/Eccube/Form/Type/Admin/PlayerType.php:79-95、src/Eccube/Resource/template/admin/Customer/edit.twig:33-45,90-94,305-311を確認。",
+      "reason": "通常保存経路に有効期限クリアがなく、id_expiration_dateはmapped=falseで本人確認完了専用経路だけが明示処理するため永続値が異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 637,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "会員画面の買取番号リンクが買取詳細ではなく受注編集URLへ遷移し、別画面または該当受注なしになる。",
+      "checked": "src/Eccube/Resource/template/admin/Customer/edit.twig:957-964とsrc/Eccube/Controller/Admin/Purchase/PurchaseController.php:220のadmin_purchase_edit定義を確認。",
+      "reason": "クリック後のHTTP遷移先が明確に異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 638,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "会員登録編集画面に本人確認フラグの必須ラジオが出ず、フォームからdtb_player.identification_flgを更新できない。",
+      "checked": "src/Eccube/Form/Type/Admin/PlayerType.php:38-95、src/Eccube/Entity/DtbPlayer.php:79-80,229-238、src/Eccube/Resource/template/admin/Customer/edit.twigでidentificationFlgの描画有無を確認。",
+      "reason": "DBプロパティは存在するが入力フィールドと表示経路がなく、画面I/Oと保存値に影響する。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 639,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "保存成功時のフラッシュ表示が「会員情報を保存しました。」ではなく「保存しました」になる。",
+      "checked": "src/Eccube/Controller/Admin/Customer/CustomerEditController.php:200-215とsrc/Eccube/Resource/locale/messages.ja.yaml:1590を確認。",
+      "reason": "利用者可視メッセージの文言差は軽微でも外部出力差。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 640,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "設計のPOST /customer/point/{id}/update/{type}ではポイント登録できず、実装はPOST /customer/point/{id}/{type}を要求する。",
+      "checked": "src/Eccube/Controller/Admin/Customer/CustomerPointController.php:63-66とsrc/Eccube/Resource/template/admin/Customer/point_update.twig:17-20を確認。",
+      "reason": "ルート名ではなくHTTPパス構造そのものが異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 641,
+      "authorVerdict": "NO_IMPACT",
+      "verdict": "NO_IMPACT",
+      "agree": true,
+      "observableEffect": "",
+      "checked": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:3625-3626,3663-3664で外部入口がGET /{admin_route}/customer/point/{id}/selectであること、src/Eccube/Controller/Admin/Customer/CustomerPointController.php:43-45で実装パスも同一であること、src/Eccube/Resource/template/admin/Customer/edit.twig:1035-1039でその実装ルートから同URLを生成することを確認。",
+      "reason": "差はadmin_customer_point_type_select対admin_customer_point_selectというサーバ内部のルート名だけで、HTTPパス・メソッド・遷移画面・生成HTML上のhrefは同じ。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 642,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "会員にPlayerがない場合、GETでは画面を表示し、POSTではnullへのaddPoint呼び出しで500相当となり、設計の404にならない。",
+      "checked": "src/Eccube/Entity/Customer.php:1145-1148とsrc/Eccube/Controller/Admin/Customer/CustomerPointController.php:66-107,140-146を確認。",
+      "reason": "nullableなPlayerを事前検査する404分岐がなく、HTTPステータスと応答挙動が異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 643,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "登録フォームの送信先href/actionにupdateセグメントがなく、設計URLへPOSTしても同じ処理に到達しない。",
+      "checked": "src/Eccube/Controller/Admin/Customer/CustomerPointController.php:63-65とsrc/Eccube/Resource/template/admin/Customer/point_update.twig:17-20を確認。",
+      "reason": "実際にブラウザが送るHTTPパスが設計と異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 644,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "Player欠落時に404応答にならず、GETは通常画面、登録POSTは実行時エラーになり得る。",
+      "checked": "src/Eccube/Entity/Customer.php:1145-1148とsrc/Eccube/Controller/Admin/Customer/CustomerPointController.php:66-107を確認。",
+      "reason": "選手情報のnullチェックとNotFound例外がなく、外部HTTP結果が設計と異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 645,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "ポイント付与画面の送信ボタンが「保存」ではなく「登録」と表示される。",
+      "checked": "src/Eccube/Resource/template/admin/Customer/point_update.twig:78-84とsrc/Eccube/Resource/locale/messages.ja.yaml:1628を確認。",
+      "reason": "ボタンの利用者可視ラベルが異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 646,
+      "authorVerdict": "IMPACT",
+      "verdict": "UNSURE",
+      "agree": false,
+      "observableEffect": "実装画面は「注文金額変更によるご送金」と表示するが、設計のシート見出し・目次は「ご返金」、同シートの機能名・遷移説明は「ご送金」で相互矛盾している。",
+      "checked": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:976,1040,3139,3472-3487で両表記を確認し、src/Eccube/Controller/Admin/Customer/CustomerPointController.php:136-145、src/Eccube/Resource/template/admin/Customer/point_update.twig:21-25、src/Eccube/Resource/locale/messages.ja.yaml:2835で実表示経路を確認。",
+      "reason": "実装の外部表示は確定しているが、設計自身が返金・送金の双方を要求しており、どちらを正とするか決めない限り乖離を一意に確定できない。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 647,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "設計の/update/{type}付きPOST URLが未提供で、実装フォームは/{id}/{type}へ送信する。",
+      "checked": "src/Eccube/Controller/Admin/Customer/CustomerPointController.php:63-65とsrc/Eccube/Resource/template/admin/Customer/point_update.twig:17-20を確認。",
+      "reason": "HTTPパス差は連携・ブラウザ操作から観測可能。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 648,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "選手情報なしでも404にならず、登録時はnull Playerへのメソッド呼び出しに進む。",
+      "checked": "src/Eccube/Entity/Customer.php:1145-1148とsrc/Eccube/Controller/Admin/Customer/CustomerPointController.php:66-107を確認。",
+      "reason": "欠落データに対するHTTPステータスと処理結果が設計と異なる。",
+      "confidence": "high"
+    }
+  ]
+}

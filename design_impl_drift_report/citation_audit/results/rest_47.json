@@ -1,0 +1,165 @@
+{
+  "packetId": "rest_47",
+  "results": [
+    {
+      "rowId": 1216,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0213_基本設計仕様書(データ管理).html:1074 のExcel正本は「カスタマイズ要件に記載の内容以外は現行踏襲とする。」とのみ記載し、フラッシュ不使用の明記はない。具体記述はリバース詳細設計 hareruya-design-docs/functions/pf-eccube3/m16-01_admin_data_top_banner.md:210「フラッシュメッセージや検索条件セッションは当機能では用いない。リダイレクト先は URL とハッシュのみで決まる。」にだけ存在する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/BannerController.php:283-288 はアップロード成功時に `return $app->redirect(... '#upload_wrap');`、同:329-332 は保存成功時に `return $app->redirect(...)` とし、このファイル全体に `addSuccess` / `addError` は存在しない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Data/TopBannerController.php:138-140 は `$this->addSuccess('admin.common.upload_complete', 'admin');` の後にリダイレクトし、同:165-167 は `$this->addSuccess('admin.common.save_complete', 'admin');`、同:200-208 は削除時に `addSuccess` / `addError` を呼ぶ。",
+      "note": "フラッシュ不使用という具体要件はExcel正本ではなく旧実装由来。旧実装からの移植差としては成立する。"
+    },
+    {
+      "rowId": 1218,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0213_基本設計仕様書(データ管理).html:1074 のExcel正本は「カスタマイズ要件に記載の内容以外は現行踏襲とする。」のみで、`.bannerInput` や幅95%は記載しない。具体値はリバース詳細設計 hareruya-design-docs/functions/pf-eccube3/m16-01_admin_data_top_banner.md:41「`.bannerInput input { width: 95%; }` のみ追加。Bootstrap 横型レイアウトはバナー設定フォームに適用。」にだけある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Banner/banner.twig:8-13 に `{% form_theme form 'Form/bootstrap_3_horizontal_layout.html.twig' %}` と `.bannerInput input { width: 95%; }` が実在する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Data/top_banner.twig:18-19 はBootstrap横型テーマを適用する一方、同:21-48 のstylesheetは `.top-banner-table` / `.top-banner-upload-table` / `.top-banner-filter` のみ。`bannerInput` は ec-cube-enterprise/src/Eccube/Resource/template/admin、src/Eccube/Resource/template/admin、html/template/default/assets の横断検索で0件。",
+      "note": "95%指定は旧Twig固有であり、Excel正本の直接根拠ではない。"
+    },
+    {
+      "rowId": 1219,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0213_基本設計仕様書(データ管理).html:1288 のExcel正本は「カスタマイズ要件に記載の内容以外は現行踏襲とする」とするが、HTTPパスや `html_class` は明記しない。具体値はリバース詳細設計 hareruya-design-docs/functions/pf-eccube3/m16-02_admin_data_data_top_banner.md:27-34 の `GET /{admin_route}/banner/top`、`GET .../{html_class}`、`DELETE .../delete/{html_class}` にだけある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/BannerServiceProvider.php:32-43 に GET/POST `/{admin_route}/banner/top[/{html_class}]` と DELETE `/{admin_route}/banner/top/delete[/{html_class}]` が登録されている。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Data/TopBannerController.php:54-55 は `/%eccube_admin_route%/data/top_banner[/{base_info_digit}]`、同:183-184 は `.../data/top_banner/delete` と `.../data/top_banner/{base_info_digit}/delete` を定義する。旧 `/banner/top` ルートは src/Eccube、app、html の検索で0件。",
+      "note": "具体的なURLとパラメータ名は旧実装に一致する。"
+    },
+    {
+      "rowId": 1220,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0213_基本設計仕様書(データ管理).html:1291-1292 のExcel正本は「S3のトップバナー用フォルダは、下記のようなURLとする」「https://files.hareruyamtg.com/banner/top/{各支店の省略名}」と明記する。パケット記載の `banner/` / `banner/{html_class}/` は正本と逆である。",
+      "legacyEvidence": "旧実装は pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/BannerController.php:20 の `const S3_DIRCTORY = 'banner/';` と同:203-205 の `self::S3_DIRCTORY . $data['shops']->getHtmlClassName() . '/'` であり、これは現行Excel正本の `banner/top/` 要件より前の挙動である。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Admin/Data/TopBannerFileListAction.php:22,35-38 は `TOP_BANNER_S3_DIRECTORY = 'banner/top/'` と店舗別 `$shopDigit.'/'`、ec-cube-enterprise/src/Eccube/Service/Admin/Data/TopBannerUploadAction.php:25,70-81 は `banner/top` または `banner/top/$shopDigit` を保存先にする。削除側も TopBannerDeleteAction.php:23-33 で `banner/top/` プレフィックスを要求する。",
+      "note": "正本は旧実装から保存先を `banner/top/` へ変更するカスタマイズを明記しており、新実装はその変更を満たす。"
+    },
+    {
+      "rowId": 1221,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0213_基本設計仕様書(データ管理).html:1288 のExcel正本は現行踏襲とするが、アップロード後に店舗識別子を返して絞り込み先へ戻す手順は明記しない。具体記述はリバース詳細設計 hareruya-design-docs/functions/pf-eccube3/m16-02_admin_data_data_top_banner.md:82-83「店舗未選択なら `null`、選択済みなら `htmlClassName` を返し、リダイレクト先の絞り込み判定に使う」「`#upload_wrap` を付けてリダイレクト」にだけある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/BannerController.php:211 は `return [true, is_null($data['shops']) ? null : $data['shops']->getHtmlClassName()];`、同:283-288 は返却された `$urlHtmlClass` に応じて `admin_top_banner` または `admin_top_banner_narrow` へリダイレクトする。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Data/TopBannerController.php:128-140 は `handleUpload(...)` 後、常に `generateUrl('admin_data_top_banner').'#upload_wrap'` へ303を返す。同:241-249 の `handleUpload(...): void` は店舗別リダイレクト値を返さない。",
+      "note": "店舗選択をリダイレクト先へ反映する具体挙動は旧実装由来。"
+    },
+    {
+      "rowId": 1222,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "Excel正本の該当シート本文（hareruya-design-docs/excel_to_html/output/0213_基本設計仕様書(データ管理).html:1288-1310）は画像設定項目と現行踏襲を記すが、title/sub_titleの割当は記載しない。具体値はリバース詳細設計 hareruya-design-docs/functions/pf-eccube3/m16-02_admin_data_data_top_banner.md:42「ページタイトルは『データ管理』。サブタイトルは『トップバナー管理』」にだけある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Banner/banner.twig:5-6 は `{% block title %}データ管理{% endblock %}`、`{% block sub_title %}...トップ...バナー管理{% endblock %}`。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Data/top_banner.twig:15-16 は title=`admin.data.top_banner`、sub_title=`admin.data.data_management`。ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:6152-6153 はそれぞれ「データ管理」「トップバナー管理」なので、表示は title「トップバナー管理」/ sub_title「データ管理」となる。",
+      "note": "タイトル配置の具体値は旧Twigに一致する。"
+    },
+    {
+      "rowId": 1225,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0213_基本設計仕様書(データ管理).html:1518 のExcel正本は「カスタマイズ要件に記載の内容以外は現行踏襲とする。」とするが、重複時のメッセージキーは記載しない。具体値はリバース詳細設計 hareruya-design-docs/functions/pf-eccube3/m16-03_admin_data_data_holiday_add_delete.md:64「プラグイン定義メッセージ鍵 `hareruyaec.holiday.overlap` を積み、一覧へリダイレクトする」にだけある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/HolidayController.php:93-100 は同一日付を検索し、重複時に `$app->addError('hareruyaec.holiday.overlap', 'admin');` の後 `admin_holiday_list` へリダイレクトする。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/HolidayAddType.php:73-74 は `buildViolation('admin.data.holiday.overlap')`、ec-cube-enterprise/src/Eccube/Controller/Admin/Data/HolidayController.php:122-125 は同キーを `addError` して一覧へ戻す。`hareruyaec.holiday.overlap` は ec-cube-enterprise/src/Eccube、app、html の検索で0件。",
+      "note": "メッセージキー自体は旧実装由来。重複判定と遷移は新実装にも存在するが、キーが移植されていない。"
+    },
+    {
+      "rowId": 1226,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0213_基本設計仕様書(データ管理).html:1742 のExcel正本には更新記録付きで「2026/7/15 お問合せ件名はidとnameだけの構成のマスタではないので、標準機能のマスターデータ管理では扱えないため、そのままMTGマスターデータに残す」と明記される。パケットの「システム設定へ移動」はこの追記で撤回されている。",
+      "legacyEvidence": "旧実装も pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/HareruyaMasterdata/HareruyaMasterdataType.php:39-42 で `'Plugin-HareruyaEc-Entity-MtbContactSubject' => 'お問い合わせ件名'` をMTGマスターデータの選択肢に含める。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Data/MtgMasterDataController.php:242-252 は `'contact_subject'` をラベル「お問い合わせ件名」として `subject`、`subject_en`、`email`、`shop_flg` 等の列付きで保持する。ec-cube-enterprise/src/Eccube/Form/Type/Admin/MasterdataType.php:63-67 の汎用マスタ条件は `id` / `name` / `sort_no` 必須で、MtbContactSubject.php:50-80 は `subject` / `subject_en` を持ち `name` を持たない。",
+      "note": "2026-07-15の正本追記どおり、現実装はお問い合わせ件名をMTGマスターデータに残している。"
+    },
+    {
+      "rowId": 1227,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "Excel正本のMTGマスターデータ本文（hareruya-design-docs/excel_to_html/output/0213_基本設計仕様書(データ管理).html:1737-1786）は現行踏襲や項目追加を記すが、DateTimePicker、`calendar`、日時書式は明記しない。具体値はリバース詳細設計 hareruya-design-docs/functions/pf-eccube3/m16-04_admin_data_hareruya_mtg_masterdata.md:41「`class=\"calendar\"` 付き入力に Bootstrap DateTimePicker を `YYYY-MM-DD HH:mm` 形式で適用」にだけある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/HareruyaMasterdata/index.twig:11 は `hareruya-masterdata.js` を読み、同:70-75 は日時列へ `class: 'calendar'` を付ける。pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/assets/js/hareruya-masterdata.js:2-13 は `moment.locale('ja', { week: { dow: 1 }})` と `$('.calendar').datetimepicker({ locale: 'ja', format: 'YYYY-MM-DD HH:mm', ... })` を実行する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Data/mtg_master_data.twig:101,122 は日時列を `type=\"datetime-local\"` として描画する。`hareruya-masterdata.js`、`datetimepicker`、`class=\"calendar\"` の当画面での読み込みは ec-cube-enterprise/src/Eccube/Resource/template/admin/Data と html/template/admin/assets の検索で0件。",
+      "note": "DateTimePickerの具体要件は旧Twig/JSに一致する。"
+    },
+    {
+      "rowId": 1228,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0213_基本設計仕様書(データ管理).html:2199-2200 のExcel正本は一覧表示と価格クリックで編集へ遷移することだけを記し、URL/ルート名は明記しない。具体値はリバース詳細設計 hareruya-design-docs/functions/pf-eccube3/m16-06_admin_data_data_buy_price_list.md:29-30 の `GET /{admin_route}/buy_price_list` と `GET /{admin_route}/buy_price_list/{id}` にだけある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/BuyPriceListServiceProvider.php:14-19 は `/buy_price_list` を `admin_buy_price_list`、`/buy_price_list/{id}` をGET `admin_buy_price_list_edit` / POST `admin_buy_price_list_update` として登録する。旧Twig pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/BuyPriceList/buy_price_list.twig:40 は `path('admin_buy_price_list_edit', {id: buyPrice.id})` を使う。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Data/BuyPriceListController.php:47 は GET `/data/buy_price_list`、同:85 は GET `/data/buy_price_list/{id}/edit` を定義し、ec-cube-enterprise/src/Eccube/Resource/template/admin/Data/buy_price_list.twig:73 は `admin_data_buy_price_list_edit` を参照する。",
+      "note": "具体的URL/ルート名は旧実装由来。"
+    },
+    {
+      "rowId": 1229,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "Excel正本の該当本文（hareruya-design-docs/excel_to_html/output/0213_基本設計仕様書(データ管理).html:2197-2215）は現行踏襲・一覧表示・項目表を記すが、block title/sub_titleやmenuキーは明記しない。具体値はリバース詳細設計 hareruya-design-docs/functions/pf-eccube3/m16-06_admin_data_data_buy_price_list.md:38「titleは『買取価格対応表』。サブタイトルは『一覧』。menus = ['data_menu', 'buy_price_list']」にだけある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/BuyPriceList/buy_price_list.twig:3-6 に `{% set menus = ['data_menu', 'buy_price_list'] %}`、title「買取価格対応表」、sub_title「一覧」が実在する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Data/buy_price_list.twig:13-16 は menus=`['data_management', 'buy_price_list_management']`、title=`admin.data.buy_price_list_management`、sub_title=`admin.data.data_management`。messages.ja.yaml:6152,6201 により表示は title「買取価格対応表」/ sub_title「データ管理」。",
+      "note": "タイトル・メニューの具体配置は旧Twig由来。"
+    },
+    {
+      "rowId": 1230,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0213_基本設計仕様書(データ管理).html:2199-2200 のExcel正本は一覧表示と編集遷移のみで、取得APIや並び順は明記しない。具体値はリバース詳細設計 hareruya-design-docs/functions/pf-eccube3/m16-06_admin_data_data_buy_price_list.md:52-55 の「カード状態マスタを識別子昇順で全件取得」「買取価格対応表マスタを…`findAll`」「行の並びは…NM価格の列挙順」にだけある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/BuyPriceListController.php:21-26 は `$cardConditions = ...->findAll();`、`$buyPriceList = ...->findAll();` の結果を取得順に `$buyPriceMap[$buyPrice->getNmPrice()]...` へ格納し、追加ソートを行わない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Data/BuyPriceListController.php:54-60 はカード状態を SP/MP/HP のIDに限定し、同:62 は `findBy([], ['nmPrice' => 'ASC', 'specialFlg' => 'ASC'])`、同:72 は `ksort($buyPriceMap, SORT_NUMERIC)` を実行する。",
+      "note": "全件取得・findAll依存順という詳細は旧Controllerに一致する。"
+    },
+    {
+      "rowId": 1231,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "Excel正本の項目表（hareruya-design-docs/excel_to_html/output/0213_基本設計仕様書(データ管理).html:2205-2215）は各価格セルを列挙するが、欠損組み合わせの表示方法は明記しない。具体値はリバース詳細設計 hareruya-design-docs/functions/pf-eccube3/m16-06_admin_data_data_buy_price_list.md:78「マスタに存在しない組み合わせはセル自体が無い。欠けの検知や警告は一覧では行わない。」にだけある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/BuyPriceList/buy_price_list.twig:35-42 は `buyPriceMap` に実在する `specialFlg` / `conditionId` だけをループして `<td>...price...</td>` を出し、欠損用elseやプレースホルダセルを持たない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Data/buy_price_list.twig:70-76 は全 `[0,1] × CardConditions` をループし、組み合わせが無い場合に `{% else %}<td>-</td>` を描画する。",
+      "note": "欠損セルを出さない挙動は旧Twig由来。"
+    },
+    {
+      "rowId": 1232,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "Excel正本の項目表（hareruya-design-docs/excel_to_html/output/0213_基本設計仕様書(データ管理).html:2205-2215）は通常版3価格・Foil/プロモ版3価格を列挙するが、`colspan` の値は本文にない。具体値はリバース詳細設計 hareruya-design-docs/functions/pf-eccube3/m16-06_admin_data_data_buy_price_list.md:43「ノーマルカードに `colspan=\"3\"`、FOil&プロモ版カードに `colspan=\"4\"` が静的に書かれている」にだけある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/BuyPriceList/buy_price_list.twig:21-30 は「ノーマルカード」に `colspan=\"3\"`、「FOil&プロモ版カード」に `colspan=\"4\"` を静的指定し、`condition.id > 1` の見出しを二回描画する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Data/buy_price_list.twig:53-63 は通常版・特別版の両方に `colspan=\"{{ CardConditions|length }}\"` を指定する。Controller.php:54-60 がSP/MP/HPの3件に限定するため、両方とも3列になる。",
+      "note": "不整合を含む静的colspan値は旧Twigそのものに由来する。"
+    },
+    {
+      "rowId": 1233,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0213_基本設計仕様書(データ管理).html:2393 のExcel正本は「買取価格対応表一覧表示で指定した買取価格の修正」とのみ記し、HTTPパスは明記しない。具体値はリバース詳細設計 hareruya-design-docs/functions/pf-eccube3/m16-07_admin_data_data_buy_price_list_edit.md:29-31 のGET/POST `/{admin_route}/buy_price_list/{id}` と戻り先 `/{admin_route}/buy_price_list` にだけある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/BuyPriceListServiceProvider.php:14-19 は一覧GET `/buy_price_list`、編集GETと更新POSTを同じ `/buy_price_list/{id}` に登録する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Data/BuyPriceListController.php:47 は一覧GET `/data/buy_price_list`、同:85 は編集GET `/data/buy_price_list/{id}/edit`、同:112 は更新POST `/data/buy_price_list/{id}/update` を定義する。",
+      "note": "具体的HTTPパスは旧実装由来。"
+    },
+    {
+      "rowId": 1234,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "Excel正本の項目表 hareruya-design-docs/excel_to_html/output/0213_基本設計仕様書(データ管理).html:2405-2406 は「更新」「戻る」をボタンとして記すが、title/sub_title、menuキー、HTMLのbutton型までは明記しない。具体構成はリバース詳細設計 hareruya-design-docs/functions/pf-eccube3/m16-07_admin_data_data_buy_price_list_edit.md:41 にだけある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/BuyPriceList/buy_price_list_detail.twig:3-6 は menus=`['data_menu','buy_price_list']`、title「買取価格対応表」、sub_title「編集」。同:46-50 は「戻る」を `<button ... onclick=\"location.href = ...\" type=\"button\">` で描画する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Data/buy_price_list_edit.twig:13-16 は menus=`['data_management','buy_price_list_management']`、title=`admin.data.buy_price_list_edit`、sub_title=`admin.data.data_management`。messages.ja.yaml:6152,6202 により「買取価格対応表編集」/「データ管理」となり、Twig:79 の戻るは `<a ... href=\"...\">`。",
+      "note": "Excel正本は戻る操作の存在を裏付けるが、指摘された具体的表示・要素種別は旧Twig由来。"
+    },
+    {
+      "rowId": 1235,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "Excel正本の編集項目表（hareruya-design-docs/excel_to_html/output/0213_基本設計仕様書(データ管理).html:2398-2406）はフォーム名やPOSTキー、CSRF IDを記載しない。具体値はリバース詳細設計 hareruya-design-docs/functions/pf-eccube3/m16-07_admin_data_data_buy_price_list_edit.md:56「フォーム種別名 `admin_buy_price_list`」、同:134「POSTは `admin_buy_price_list[_token]` と `admin_buy_price_list[price]`」にだけある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/BuyPriceListController.php:47,68-70 は `createBuilder('admin_buy_price_list', $mtbBuyPriceList)` を使い、pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/BuyPriceList/BuyPriceListType.php:34-37 は `getName()` で `'admin_buy_price_list'` を返す。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Data/BuyPriceListController.php:89,116 は `createBuilder(BuyPriceListEditType::class, ...)` を使う。BuyPriceListEditType.php:25-49 に `getBlockPrefix()` はなく、vendor/symfony/form/AbstractType.php:62-65 はクラス名を `StringUtil::fqcnToBlockPrefix` へ渡し、StringUtil.php:52-56 はCamelCaseをsnake_case化するため既定名は `buy_price_list_edit` となる。",
+      "note": "フォーム名 `admin_buy_price_list` は旧Symfonyフォーム型由来。"
+    },
+    {
+      "rowId": 1236,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0213_基本設計仕様書(データ管理).html:2404 のExcel正本は「買取価格(円)※」「数値」「必須〇」と記すが、NumberType、整数限定なし、Range制約なしとは記載しない。後者はリバース詳細設計 hareruya-design-docs/functions/pf-eccube3/m16-07_admin_data_data_buy_price_list_edit.md:167「`required => true` の `number` 型。Range や整数限定の明示制約は…無く」にだけある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/BuyPriceList/BuyPriceListType.php:25-30 は `$builder->add('price', 'number', ['required' => true, 'label' => '買取価格(円)'])` のみで、constraintsを追加しない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/BuyPriceListEditType.php:20,31-39 は `IntegerType::class` を使い、`'required' => true` に加えて `new Assert\\GreaterThanOrEqual(0)` を指定する。",
+      "note": "正本が直接裏付けるのは数値・必須まで。型と追加制約の不在は旧フォーム由来。"
+    },
+    {
+      "rowId": 1237,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0213_基本設計仕様書(データ管理).html:2590-2592 のExcel正本は現行踏襲と「買取減額率一覧を表示します」のみで、URLやルート名は明記しない。具体値はリバース詳細設計 hareruya-design-docs/functions/pf-eccube3/m16-08_admin_data_data_buy_discount_list.md:27-28,231 の `GET /{admin_route}/buy_discount` / `admin_buy_discount_list` にだけある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/BuyDiscountServiceProvider.php:12-14 は `$app->get('/'.$app['config']['admin_route'].'/buy_discount', ...)` を `admin_buy_discount_list` として登録する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Data/BuyDiscountController.php:40 は `#[Route(path: '/%eccube_admin_route%/data/buy_discount', name: 'admin_data_buy_discount', methods: ['GET'])]`。旧ルート名/パスは ec-cube-enterprise/src/Eccube、app、html の検索で0件。",
+      "note": "具体的URL/ルート名は旧実装由来。"
+    },
+    {
+      "rowId": 1238,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "Excel正本の該当本文（hareruya-design-docs/excel_to_html/output/0213_基本設計仕様書(データ管理).html:2590-2604）は現行踏襲・一覧表示・項目表を記すが、block title/sub_titleの文言配置は明記しない。具体値はリバース詳細設計 hareruya-design-docs/functions/pf-eccube3/m16-08_admin_data_data_buy_discount_list.md:36「titleは『買取減額率管理』、sub_titleは『買取減額率一覧』」にだけある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/BuyDiscount/buy_discount.twig:3-6 は menus=`['data_menu','buy_discount_list']`、title「買取減額率管理」、sub_title「買取減額率一覧」とする。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Data/buy_discount.twig:13-16 は title=`admin.data.buy_discount_management`、sub_title=`admin.data.data_management`。ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:6152,6209 はそれぞれ「データ管理」「買取減額率一覧」であり、表示は title「買取減額率一覧」/ sub_title「データ管理」となる。「買取減額率管理」は同localeに存在しない。",
+      "note": "タイトル配置の具体値は旧Twig由来。"
+    }
+  ]
+}

@@ -1,0 +1,149 @@
+{
+  "packetId": "rc_17",
+  "results": [
+    {
+      "rowId": 306,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "REFUTED",
+      "correctedClass": "SPEC_BACKED",
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0306_基本設計仕様書(フロント_会員).html の sheet-11 Excel正本を「エラー」「撮影画面」「isError」で確認。src-cell 0306:オンライン本人確認!AG206 に「エラーが発生した場合はエラーメッセージを画面に表示する」が実在した。!AG119 にも同じ結果要件がある。一方、`isError`、身分証種別の引継ぎ方法、リダイレクト方法は正本src-cellにない。正本レイアウト画像 I9/N63/O125/N212 の4枚も確認し、撮影画面と申請完了画面はあるが具体的な引継ぎキーは描かれていない。",
+      "reason": "具体的なキー名と遷移手段は旧実装由来だが、指摘の中核である「検証エラー時に画面へエラーメッセージを表示する」はExcel正本の 0306:オンライン本人確認!AG206 が直接要求する。現実装はそのエラー表示に到達せずGETでPOST限定ルートへ送るため、LEGACY_BACKED ではなく SPEC_BACKED が妥当。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Front/Mypage/IdentificationController.php の complete() は無効時に `redirectToRoute('mypage_identification_photograph', ['mypage_identification' => ..., 'isError' => 1])` を返す。identificationPhotograph() の Route は `methods: ['POST']` で、同メソッドは `$request->request->all('identification_select')` と `$request->request->get('isError')` を読む。302後のGETとPOST限定、ならびに query の `mypage_identification` とPOSTの `identification_select` の不整合は現存する。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 307,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0306 sheet-11 のExcel正本で src-cell 0306:オンライン本人確認!C48、!C106、!C240 を開き、いずれも「ステータスは『未確認』『現在、確認中です』『オンラインで本人確認済み』『簡易書留で本人確認済み』のいずれかが表示される」と確認した。正本レイアウト画像 I9/N63/O125/N212 も確認し、I9/N63 は「未確認」、N212 は「現在、確認中です」を表示している。",
+      "reason": "4種類の表示文言はリバース詳細設計ではなくExcel正本src-cellで完全に特定されているため SPEC_BACKED は正しい。現行テンプレートはマスタ日本語名を直接表示し、後3値が正本文言と一致しない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/online_identification.twig は `{{ Customer.Player.IdentityConfirmStatus.nameJp }}` を描画する。app/DoctrineMigrations/Version20251125145047.php の getRecords() は `未確認`、`確認中`、`オンライン本人確認済み`、`簡易書留確認済み` で、後3件は正本の `現在、確認中です`、`オンラインで本人確認済み`、`簡易書留で本人確認済み` と異なる。後続の更新migrationも検索したが該当なし。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 308,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0306 sheet-12 のExcel正本で src-cell 0306:マイイベント・デッキ登録!C70 に「(6)デッキステータス、(7)デッキ登録/編集は、以下のいずれかに該当する場合は表示しない」、!D71-!D74 に「イベント終了」「デッキ登録締切の日時を過ぎている」「デッキ登録を終了するにチェック」「デッキ登録ありにチェックがついていない」を確認した。正本レイアウト画像 C9 も確認し、「イベント終了」の例ではデッキ状態と登録・編集ボタンが描画されていない。",
+      "reason": "非表示対象と4条件はExcel正本に直接記載され、画像例もイベント終了時の非表示を支持するため SPEC_BACKED は妥当。現実装は操作ボタンだけを条件付きにし、デッキ状態行を常時描画する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/event_history.twig はデッキ状態の `<dt>`/`<dd>` を無条件で描画し、その後のボタンだけを `{% if not isFinished and detail.canBeRegisteredDeck() %}` で囲む。DtbEventDetail::canBeRegisteredDeck() は deckRegistFlg、deadlineFlg、deckRegistDeadline を判定するが、状態行には適用されない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 310,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0306 sheet-12 のExcel正本で src-cell 0306:マイイベント・デッキ登録!AG89 を開き、「前後に4ページ分のリンクを表示する」「8ページを選択している場合は4〜12ページのリンクを表示する」を確認した。正本レイアウト画像 C9 も確認したが、例示画面にはページャ自体が写っておらず、この数値要件は項目表で確認した。",
+      "reason": "9リンク相当の範囲はExcel正本に明記されるため SPEC_BACKED は妥当。現行はKnpPaginatorの範囲を上書きせず、既定5リンクを pager.twig でそのまま描画する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Front/Mypage/EventHistoryController.php の index() は `$paginator->paginate($EventDetails, $pageNo, $dispNumber)` とし page_range を渡さない。app/config と src を `page_range`/`pageRange` で検索して対象設定はなく、vendor/knplabs/knp-paginator-bundle/src/Pagination/SlidingPagination.php の既定値は `private int $pageRange = 5`。pager.twig は `pages.pagesInRange` を列挙する。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 312,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0306 sheet-12 のExcel正本で src-cell 0306:マイイベント・デッキ登録!E8 のパンくず「> マイページ > マイイベント・デッキ登録」を確認した。正本レイアウト画像 C9 も開き、画面見出しが「マイイベント・デッキ登録」であることを確認した。",
+      "reason": "パンくず末尾はExcel正本のレイアウト座標付きsrc-cellに明記されるため SPEC_BACKED は妥当。現行のパンくず表示キーは別文言のまま。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/default/breadcrumb_nav.twig の `route == 'mypage_event_history'` 分岐は `front.mypage.event_history.breadcrumb_title` を current_li に渡す。messages.ja.yaml の同キーは `大会デッキ登録` で、別キー `front.mypage.nav__event_history` の `マイイベント・デッキ登録` はこの分岐で使われない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 313,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "UNSURE",
+      "checkedQuote": "0306 sheet-12 のExcel正本項目表 src-cell 0306:マイイベント・デッキ登録!AG86 に「イベントのデッキを登録されている場合は『デッキ登録済み』、未登録の場合は『デッキ未登録』と表示する」を確認した。同じExcel正本のレイアウト画像 C9 も確認したところ、デッキ登録列の実表示例は接頭辞なしの「登録済み」「未登録」だった。",
+      "reason": "項目表には指摘どおりの文言が実在するので SPEC_BACKED という根拠区分自体は正しい。しかし同じExcel正本のレイアウト画像は現実装と同じ「登録済み／未登録」を示し、正本内で矛盾する。どちらを優先すべきか確定できないため、現在の乖離は UNSURE とする。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/event_history.twig は `front.mypage.event_history.deck__registered` / `deck__not_registered` を表示し、messages.ja.yaml の値は `登録済み` / `未登録`。実装事実は先行記述どおりだが、これはExcel正本レイアウト画像 C9 とは一致し、Excel正本項目表 !AG86 とは一致しない。",
+      "severityOpinion": "low",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 314,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0306 sheet-12 のExcel正本で src-cell 0306:マイイベント・デッキ登録!AG84 に「デッキ登録済みの大会の表示追加のため、『未登録』を追加」を確認した。正本レイアウト画像 C9 では、デッキ列が「登録済み」で申込がない例の処理状態が実際に「未登録」と描かれている。",
+      "reason": "項目表の追加指示だけでなくレイアウト画像の具体例も、デッキ登録済み・申込なしの処理状態を「未登録」とするため SPEC_BACKED は妥当。現行は同じ分岐を「未申込」と表示する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/event_history.twig の `Entry is null` 分岐は `front.mypage.event_history.status__not_applied` を出力し、messages.ja.yaml の値は `未申込`。controllerはデッキだけがあるEventDetailも一覧対象へ含めるため、この分岐は設計画像の対象ケースで実行される。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 318,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0306 sheet-13 のExcel正本で src-cell 0306:大会デッキ登録編集!D290 の「メインボード・サイドボードそれぞれに対し入力形式チェックを行い、エラーがある場合は画面遷移せずエラーメッセージを表示する」を確認した。正本の編集画面レイアウト画像 B9/B159 とインポート画像 D328/T328 も開き、メイン・サイド入力欄と提出操作を確認した。",
+      "reason": "検証対象、エラー時の非遷移、メッセージ表示がExcel正本に直接記載されるため SPEC_BACKED は妥当。現行はPOST処理中に書式検証せず保存とメール送信を行った後、確認画面で初めて検証する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Front/Mypage/DeckEntryController.php の entry() は deckMain/deckSide を DeckEntryInput に入れ、DeckEntryAction::handle() を直ちに呼び、完了メール送信後 `mypage_deckentry_check` へredirectする。DeckEntryAction::handle() は textMain/textSide をpersist・flushする。DeckValidationService::getCheckData() は遷移後の check() でのみ呼ばれる。deck_entry_edit.twig の `errorMain`/`errorSide` は `hidden` のままで、参照する表示制御も検索できない。",
+      "severityOpinion": "high",
+      "confidence": "high"
+    },
+    {
+      "rowId": 319,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0306 sheet-13 のExcel正本を「キャンセル」「イベント一覧」「events」で確認し、src-cell 0306:大会デッキ登録編集!E321 にボタン名「キャンセル」はあるが、対応する説明欄は「-」でイベント一覧への遷移指定はなかった。正本レイアウト画像 B9/B159 も確認しキャンセルボタンはあるがリンク先は画像から特定できない。旧実装 pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/deckentry.twig の該当リンクは実際に `url('events_index')` だった。",
+      "reason": "イベント一覧を遷移先とする根拠はExcel正本ではなく旧テンプレートにのみあるため LEGACY_BACKED は妥当。現行リンクはマイページのままで旧挙動との差は残る。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/deck_entry_edit.twig の提出領域はキャンセルを `<a ... href=\"{{ url('mypage') }}\">` とする。現在のイベントTOPは EventTopController::index() の `#[Route(path: '/events', name: 'event_top', methods: ['GET'])]` だが、キャンセルリンクはそこを参照していない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 323,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0306 sheet-15 のExcel正本を「住所3」「本人確認」「未確認」「ステータス」で確認。src-cell 0306:会員情報変更!E212/!E213、!E294/!AG294 は海外住所用3カラム目の表示・登録を規定するが、住所3変更時に本人確認ステータスを未確認へ戻す記述は見つからなかった。正本レイアウト画像 F11 も確認し、住所欄に都道府県・住所1・住所2・3行目が配置されていることを確認した。旧実装 pf-eccube3/.../ChangeController.php は国・郵便番号・都道府県・addr01・addr02 の住所変更時に未確認へ戻す処理を持つ。",
+      "reason": "addr03が正規の住所項目であることはExcel正本にあるが、「住所変更なら本人確認を未確認へ戻す」という業務ルール自体はExcel正本では確認できず、旧実装に依存する。したがって、旧ルールを新設addr03へ拡張する期待値の分類は LEGACY_BACKED のままが妥当。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Front/Mypage/ChangeController.php の index() はフォーム処理前にCustomerをcloneするが、`$isAddressChanged` の比較対象は country、postal code、pref、addr01、addr02だけでaddr03を含まない。後段ではdefault addressへ `setAddr03($Customer->getAddr03())` も行うため、addr03のみの変更は保存される一方、`$needsResetByAddress` はfalseのままとなる。",
+      "severityOpinion": "high",
+      "confidence": "high"
+    },
+    {
+      "rowId": 327,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "REFUTED",
+      "correctedClass": "SPEC_BACKED",
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0306 sheet-17 のExcel正本テキストsrc-cellでは画面本文を抽出できなかったため、退会完了の正本レイアウト画像 0306:退会!D135（image 3）を実際に開いた。画像には見出し「退会完了」と別に本文「退会を完了いたしました。」「ご利用ありがとうございました。またのご利用をお待ちしております。」が実在した。旧実装テンプレートにも同じ本文があるが、画像だけで正本根拠が成立する。",
+      "reason": "先行判定はテキストgrepだけで本文不在としたが、Excel正本レイアウト画像に指定文言が明確に存在するため LEGACY_BACKED は誤りで、SPEC_BACKED に訂正する。現行画面は本文先頭文を描画していない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/withdraw_complete.twig は h1 に `withdraw_complete_page__title`、本文pに `withdraw_complete_message__body` だけを描画する。messages.ja.yaml の body は「ご利用ありがとうございました。」「またのご利用をお待ちしております。」で、`withdraw_complete_message__title: 退会が完了いたしました` は src/app 全体で定義行以外に参照がなく、正本画像の「退会を完了いたしました。」は表示されない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 329,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0306 sheet-18 のExcel正本で src-cell 0306:お問い合わせ!E10/!F10 の「⌂」「> マイページ ＞お問い合わせ」と、!C118 の「パンくずの表示を追加する」を確認した。正本レイアウト画像 J12/L70 も開いて問い合わせ画面レイアウトを確認した。",
+      "reason": "3階層のパンくずはExcel正本のレイアウト座標付きsrc-cellに直接記載されるため SPEC_BACKED は妥当。現行contact系分岐はホーム直後にお問い合わせだけを置き、マイページを挟まない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/default/breadcrumb_nav.twig は全体で `home_li(1, ...)` を出した後、contact/contact_confirm/contact_complete 分岐で `current_li('front.contact.title', 2)` だけを追加する。直後のcontact_history分岐には `link_li(url('mypage'), ..., 2)` とcurrent位置3があるが、contact系には同リンクがなく2階層のまま。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    }
+  ]
+}

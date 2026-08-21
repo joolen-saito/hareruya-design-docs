@@ -1,0 +1,149 @@
+{
+  "packetId": "rc_44",
+  "results": [
+    {
+      "rowId": 771,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0211 の正本セルを「買取成立」「買取ステータス」「買取関連」で検索した。excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:1856 の data-excel-ref=0211:日別・月別集計 集計一覧(検索結果-月別)!E54 に「買取関連の集計は買取データの買取ステータスが「買取成立」のみ計上し、それ以外の買取ステータスは計上しない」が実在する。これは function-design-embed 開始行1952より前のExcel正本領域である。",
+      "reason": "期待値はExcel正本セル E54 が直接規定するためSPEC_BACKEDで正しい。現実装では買取ステータスを保持するモデル自体は存在し、src/Eccube/Entity/Master/MtbOtcBuyOrderStatus.php:45 に `STATUS_COMPLETE = 1` があるが、集計メソッドはそのステータスを条件に使っていない。",
+      "currentImpl": "ec-cube-enterprise 現状（HEAD da08bd6572）: src/Eccube/Repository/DtbDailySummaryRepository.php の aggregatePurchaseSummaryByBaseInfo() はネット買取を132行の `bo.auto_approval_flg = TRUE`、店頭買取を146行の `obo.cancel_date IS NULL` で抽出する。`bo.BuyOrderStatus`、`obo.OtcBuyOrderStatus`、`STATUS_COMPLETE` の条件は同メソッドに無く、買取成立だけに限定されていない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 772,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0211 の正本セルを「支店名」「通販」「店舗名」「その他」で検索した。対象HTML:1859 の data-excel-ref=...!E58 に「識別ID 2: 「支店名」を追加。「通販」もしくは指定された「店舗名」または「その他」を出力」、:1860 の ...!F59 に「※「その他」は通販・各店舗に該当しない売上を計上」が実在する。data-excel-ref=...!E7 のレイアウト画像1枚（1075x704）も抽出して目視し、表に「店舗名」列と「通販」「TC東京」等に加えて「その他」の行が描かれていることを確認した。",
+      "reason": "支店名の三分類と「その他」の意味は正本セルが明記し、正本レイアウト画像も「その他」行を描くためSPEC_BACKEDで正しい。反証として現実装の店舗マスタ投入値も検索したが、app/DoctrineMigrations/Version20251127154224.php の short_name_jp 一覧に「その他」は無く、resolveStoreName() にも合成分岐がない。したがって現作業ツリー内には正本の「通販・各店舗に該当しない売上」を「その他」として残す経路を確認できない。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Repository/DtbDailySummaryRepository.php の aggregateOrderSummaryByBaseInfo() は63行で `o.base_info_id IS NOT NULL` とし、aggregatePurchaseSummaryByBaseInfo() の店頭買取側も145行で `obo.base_info_id IS NOT NULL` とする。src/Eccube/Service/Admin/Analysis/AnalysisSummaryBuilder.php の resolveStoreName() は203-212行でroot店舗なら「通販」、それ以外は short_name_jp または shop_name を返すだけで、「その他」を生成する条件がない。",
+      "severityOpinion": "med",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 773,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0211 の正本セルを「廃棄コスト」「欠品」「コスト合計」で検索した。対象HTML:1870 の data-excel-ref=...!E69 に「識別ID 11: 「廃棄」を追加。在庫変動区分が「廃棄」となっているものを集計し廃棄コスト合計を出力」、:1871 の ...!E70 に「識別ID 12: 「欠品」を追加。在庫変動区分が「欠品」となっているものを集計しコスト合計を出力」が実在する。data-excel-ref=...!E7 のレイアウト画像（1075x704）も目視し、結果表の列見出しに「廃棄」「欠品」が配置されていることを確認した。",
+      "reason": "廃棄・欠品について数量ではなくコスト合計を出す要求はExcel正本セルが直接規定するためSPEC_BACKEDで正しい。現実装の集計・保存・表示経路を追うと、いずれも stockChangeQuantity の合計を count 系フィールドへ渡しており、原価との乗算や金額合計はない。",
+      "currentImpl": "ec-cube-enterprise 現状: DtbDailySummaryRepository::aggregateDisposalQuantityByBaseInfo() は177行で `(0 - COALESCE(SUM(sh.stockChangeQuantity), 0)) AS waste_quantity`、aggregateShortageQuantityByBaseInfo() は210行で同様に shortage_quantity を算出する。BatchAggregateDailySummaryAction::handle() は85・98・132-133行でこれらを waste_count/shortage_count として保存し、AnalysisSummaryBuilder は101-102行および150-151行で discard_count/out_of_stock_count として表示用に渡す。コスト金額の算出はない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 775,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "excel_to_html/output 全体を正確な文字列「report_summary_」と「YmdHis」「ファイル名」「出力日時」で検索した。「report_summary_」は0211の function-design-embed 内（対象HTML:2119-2200）の:2174にだけ現れ、src-cell/data-excel-ref 要素には0件だった。sheet-7正本は:2094の「カスタマイズ要件に記載の内容以外は現行踏襲とする」とCSV項目要件だけで、具体ファイル名はない。sheet-7には埋め込みレイアウト画像が0枚であることも確認した。",
+      "reason": "具体名 `report_summary_YYYYmmddHHMMSS.csv` はExcel正本にはなく、旧実装 /home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Analysis/SummaryController.php の export() 133-136行の `$filename = 'report_summary_' . $now->format('YmdHis') . '.csv';` が直接根拠であるためLEGACY_BACKEDで正しい。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Service/Csv/Exporter/SummaryCsvExporterService.php の export() 128-130行は `$filename = sprintf('summary_%s_%s.csv', $summaryType, (new \\DateTime())->format('YmdHis'));` を Content-Disposition に設定する。src/app/config/script/bin/.github を `report_summary_` で検索しても別名・互換経路は0件だった。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 776,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "excel_to_html/output 全体を「空の検索条件で集計し、出力する」「検索条件セッションが空」「先に検索を実行」で検索した。期待文言は対象HTMLの function-design-embed 内:2190（および別CSV機能のリバース記述）にだけあり、sheet-7の src-cell/data-excel-ref 領域:2045-2118にはセッション空時の分岐記述が0件だった。正本で確認できた関連文は:2094の「カスタマイズ要件に記載の内容以外は現行踏襲とする」のみ。sheet-7にレイアウト画像は0枚だった。",
+      "reason": "セッション未保存でも出力を続ける具体挙動はExcel正本に明記されず、旧実装 /home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Analysis/SummaryController.php の export() 103-110行が `$session->get(self::VIEW_KEY, [])` の空配列をフォームへ取り込み、そのまま集計するため、LEGACY_BACKEDで正しい。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/Admin/Analysis/SummaryController.php の export() は163行でセッション値を取得し、164-168行で配列でなければ `検索条件がありません。先に検索を実行してください。` を追加して admin_summary_daily へredirectする。CSV出力処理には到達しない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 777,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0211 sheet-7正本を「最終行」「総合計」「識別ID3～12」で検索した。対象HTML:2113 の data-excel-ref=0211:日別・月別集計 CSV出力!E48 に「最終行には「総合計」を追加。識別ID3～12各列のそれぞれの総合計を出力」が実在し、function-design-embed開始行2119より前である。CSVシートには埋め込みレイアウト画像が0枚で、追加確認できる画像が存在しないことも確認した。",
+      "reason": "CSV末尾の総合計行はExcel正本セル E48 が直接規定するためSPEC_BACKEDで正しい。画面用Builderはtotalを作るが、CSVサービスは戻り値のsummaryしか利用しない。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Service/Csv/Exporter/SummaryCsvExporterService.php の export() は93-101行で build() の戻り値から `$summary = $summaryData['summary'];` のみを取得し、106-124行のコールバックはヘッダと `foreach ($summary as $row)` の明細だけをfputcsvする。`$summaryData['total']` や総合計行の出力はない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 778,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0211 sheet-7正本を「廃棄」「廃棄コスト合計」「在庫変動区分」で検索した。対象HTML:2111 の data-excel-ref=0211:日別・月別集計 CSV出力!E46 に「識別ID 11: 「廃棄」を追加。在庫変動区分が「廃棄」となっているものを集計し廃棄コスト合計を出力」が実在する。sheet-7に埋め込みレイアウト画像は0枚だった。",
+      "reason": "廃棄コスト合計のCSV出力は正本セル E46 が直接要求するためSPEC_BACKEDで正しい。現実装は数量を waste_count/discard_count としてCSVへ渡しており、コスト金額へ変換していない。",
+      "currentImpl": "ec-cube-enterprise 現状: DtbDailySummaryRepository::aggregateDisposalQuantityByBaseInfo() 177行は `SUM(sh.stockChangeQuantity)` の符号反転を waste_quantity とする。BatchAggregateDailySummaryAction::handle() 85・132行がその値を waste_count として保存し、AnalysisSummaryBuilder 101行が discard_count に写し、SummaryCsvExporterService::export() 121行が整数値として出力する。関連Analysis/Exporter/Repositoryを cost/amount/price と waste/廃棄の組合せで検索してもコスト算出は0件だった。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 779,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0211 sheet-7正本を「欠品」「コスト合計」「在庫変動区分」で検索した。対象HTML:2112 の data-excel-ref=0211:日別・月別集計 CSV出力!E47 に「識別ID 12: 「欠品」を追加。在庫変動区分が「欠品」となっているものを集計しコスト合計を出力」が実在する。sheet-7に埋め込みレイアウト画像は0枚だった。",
+      "reason": "欠品コスト合計のCSV出力は正本セル E47 が直接要求するためSPEC_BACKEDで正しい。現実装は欠品数量を shortage_count/out_of_stock_count としてCSVへ渡すだけである。",
+      "currentImpl": "ec-cube-enterprise 現状: DtbDailySummaryRepository::aggregateShortageQuantityByBaseInfo() 210行は `SUM(sh.stockChangeQuantity)` の符号反転を shortage_quantity とする。BatchAggregateDailySummaryAction::handle() 98・133行がその値を shortage_count として保存し、AnalysisSummaryBuilder 102行が out_of_stock_count に写し、SummaryCsvExporterService::export() 122行が整数値として出力する。関連Analysis/Exporter/Repositoryに欠品コスト算出はない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 781,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "PARTIAL",
+      "checkedQuote": "0211正本セルを「集計日(To)」「当月末日」「未満」「上限」で検索した。対象HTML:2289 の data-excel-ref=0211:受注売上分析 集計一覧(検索項目)!D89 に「識別ID 7:集計日(To)について、デフォルトの値を当月末日に設定」、:2290 の ...!E90 に実例「2025-7-31  23:59:59」が実在する。一方「集計日Fromから集計日To未満まで」は function-design-embed 内:2901等にだけあり、src-cellには0件だった。sheet-8のレイアウト画像2枚を目視し、画像1（807x967）のTo欄にも「2025-07-31 23:59:59」が描かれていることを確認した。",
+      "reason": "残存する比較演算子 `<` の期待値は、旧実装 /home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Repository/OrderDetailRepository.php の getQueryBuilderBySearchData() 145-149行とリバース記述にだけ根拠があるため、乖離部分の分類はLEGACY_BACKEDでよい。ただし先行指摘が初期値まで乖離とした点は誤りで、Excel正本は明確に当月末日23:59:59を要求し、現実装はそこを満たす。したがって複合指摘のうち残るのは上限比較 `<` と `<=` の差だけでありPARTIAL。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Form/Type/Admin/Analysis/SalesType.php の buildForm() 106-112行は summary_date_to の初期値を `new \\DateTime('last day of this month 23:59:59')` とし、正本セル・画像と一致する。一方、src/Eccube/Repository/OrderItemRepository.php の getAnalysisSummary() 264-267行は `o.{$dateType} <= :summaryDateTo` を使い、旧実装の `< :..._to` とは異なる。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 783,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0211 sheet-8正本の src-cell を「集計日To未満」「未満」「上限」「集計日(To)」で検索した。正本にあるのは対象HTML:2289-2290の当月末日23:59:59という初期値で、比較演算子や「未満」は0件。「集計日Fromから集計日To未満まで」は function-design-embed 内:2901等にのみ実在した。sheet-8のレイアウト画像2枚も目視し、画像1はTo値23:59:59、画像2は結果表を描くが、期間比較を未満とする注意書きはない。",
+      "reason": "半開区間はExcel正本に明記されず、旧実装 /home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Repository/OrderDetailRepository.php の getQueryBuilderBySearchData() 137-149行がFromを `>=`、Toを `<` とすることが直接根拠なのでLEGACY_BACKEDで正しい。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Repository/OrderItemRepository.php の getAnalysisSummary() は260-266行でFromを `>= :summaryDateFrom`、Toを `<= :summaryDateTo` とする。同メソッド内に `< :summaryDateTo` の代替分岐はなく、上限を含める差が残る。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 785,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "excel_to_html/output 全体を正確な文言「CSVは表示件数の上限を適用しない」と、0211正本セルを「CSV」「表示件数」「件数制限」「上限」「全件」で検索した。正確な文言は対象HTMLの function-design-embed 内:2915等だけで、sheet-8正本:2202-2388にはCSV時の件数制限解除が0件だった。sheet-8のレイアウト画像2枚も目視し、画像1には表示件数10とCSVダウンロードが描かれるが、CSVが上限を外すという説明はなく、画像2にもない。",
+      "reason": "CSV時だけ件数制限を外す契約は旧実装 /home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Analysis/SalesController.php の export() 97-99行が `$isExport=true` を渡し、同Repository/OrderDetailRepository.php:271-279 がexportなら制限なし、通常時だけsetMaxResultsとすることに根拠がある。Excel正本には具体記述がないためLEGACY_BACKEDで正しい。",
+      "currentImpl": "ec-cube-enterprise 現状: SalesAnalysisController::search() 99-106行はFormUtil::getViewData()でpage_countを含む検索条件をセッションへ保存し、export() 139-155行はそれを復元してそのままSalesAnalysisCsvExporterService::exportBySearchData()へ渡す。同サービス38行は getAnalysisSummary($searchData) を呼び、OrderItemRepository::getAnalysisSummary() 326-329行は page_count が正数ならCSV経路でも `setMaxResults($limit)` を実行する。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 786,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "excel_to_html/output 全体を「analysis/sales/result」「analysis/sales/search」「POST」「検索ボタン」で検索した。`POST /{admin_route}/analysis/sales/result` は0211の function-design-embed 内（対象HTML:2660,2669,2888,2897等）にだけあり、sheet-8〜10の src-cell/data-excel-ref 正本領域にはURL/ルートの記載が0件だった。",
+      "reason": "resultルートの契約はExcel正本ではなく、旧実装 /home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/AnalysisServiceProvider.php:39-41 の `/analysis/sales/result` → SalesController::search と、旧Twig app/Plugin/HareruyaEc/Resource/template/admin/Analysis/sales.twig:45 の `path('admin_sales_result')` が直接根拠であるためLEGACY_BACKEDで正しい。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/Admin/Analysis/SalesAnalysisController.php の search() は72-74行で `/%eccube_admin_route%/analysis/sales/search`（admin_analysis_sales_search）を定義し、src/Eccube/Resource/template/admin/Analysis/sales.twig:105 も同ルートへPOSTする。src/Eccubeとapp/configを `admin_analysis_sales_result` および `/analysis/sales/result` で検索しても定義・aliasは0件だった。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    }
+  ]
+}

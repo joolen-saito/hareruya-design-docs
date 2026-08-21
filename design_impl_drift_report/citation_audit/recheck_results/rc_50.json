@@ -1,0 +1,149 @@
+{
+  "packetId": "rc_50",
+  "results": [
+    {
+      "rowId": 881,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0214のExcel正本src-cellを「text/csv」「text/tsv」「TSV」「CSVファイル選択」「ファイル選択」で検索した。text/csv・text/tsv・TSVは0件で、0214:イベント一括登録!E48の「CSVファイル選択」だけを確認した。sheet-19のレイアウト画像（イベント一括登録 / C8 / image 1）も実見し、「CSVファイル選択」「ファイルを選択」はあるがTSV表記はなかった。sheet-20はレイアウト画像を持たず列定義表のみだった。",
+      "reason": "Excel正本はCSVの選択・一括登録を示すだけで、TSVの受理タイプを要求していない。対して旧実装 /home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Entry/bulkentry.twig のアップロードフォームを開き、`accept: 'text/csv,text/tsv'` を確認したため、TSV受理契約は旧実装由来という分類が正しい。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Event/Entry/event_bulk_csv_import.twig のupload-form内は `accept: 'text/csv,.csv'`。一方 /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Importer/CsvImporter.php の createCsvImportService() は `$delimiter = ($fileExtension === 'tsv') ? \"\\t\" : ...` のままで、バックエンドだけTSV分岐を持つ。現行src/app全体の反証検索では他機能にtext/tsv指定はあるが、このイベント一括登録フォームにはない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 884,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0214のExcel正本src-cellを「5000」「5010」「行数」「上限」「レコード」で検索し、このイベント管理正本ではいずれも0件だった。sheet-19のレイアウト画像も実見したが行数上限表示はなく、sheet-20正本はCSV列定義だけである。HTML:5957等の「5000行以上は登録不可」はfunction-design-embed内であり正本には数えなかった。",
+      "reason": "5000行と比較条件はExcel正本ではなく旧実装にある。/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/EntryController.php を開き、`const CSV_IMPORT_MAX = 5000;` と bulk CSV処理の `if ((int)exec('wc -l '.$file) >= self::CSV_IMPORT_MAX)` を確認した。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/AbstractController.php の ADMIN_CSV_IMPORT_MAX_ROWS は5010。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Event/EventEntryBulkCsvController.php の index() は `countCsvRows($formFile) > static::ADMIN_CSV_IMPORT_MAX_ROWS` のときだけエラーとし、メッセージ引数にも5010を渡す。旧実装の5000以上拒否との差は現存する。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 885,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0214のExcel正本src-cellを「イベント情報を登録しました」「登録しました」「完了」「成功メッセージ」で検索し、対象文言は0件だった。sheet-19レイアウト画像も実見したが成功フラッシュ文言は描かれていない。完全一致文言はHTML:5964/6141のfunction-design-embed内でのみ確認した。",
+      "reason": "成功文言は旧実装由来である。/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/EntryController.php の成功分岐で `$app->addSuccess('admin.event.save.complete', 'admin')`、/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/locale/message.ja.yml で `save.complete: イベント情報を登録しました。` を実際に確認した。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Event/EventEntryBulkCsvController.php の index() は成功時に `$this->addSuccess('admin.common.csv_upload_complete', 'admin')` を呼ぶ。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml の実値は `admin.common.csv_upload_complete: CSVファイルをアップロードしました` で、現行src/app全体にも「イベント情報を登録しました」はない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 887,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0214のExcel正本src-cellを「取込件数」「件数」「情報ログ」「ログ」「完了」で検索した。対象機能の取込件数・ログ記載は0件で、見つかった「完了」は目次の別機能「メール管理_商品予約完了」だけだった。HTML:5978/6155の「取込件数を情報ログに記録」はfunction-design-embed内である。",
+      "reason": "件数付き完了ログは旧実装にのみ具体的根拠がある。/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/EntryController.php で `log_info('イベント一括登録', ['count' => $result->getCount()]);`、同Service/Csv/Importer/CsvImporter.phpでImportResultへのcount設定を確認した。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Importer/CsvImporter.php は importRows() で `$importResult->setCount($importCount)` を行うが、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Event/EventEntryBulkCsvController.php の index() の完了ログは `log_info('イベント一括登録CSV登録完了');` だけで、第2引数に件数を渡していない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 889,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "sheet-21のExcel正本src-cellを「banner/event」「event/banner」「GET」「POST」「DELETE」「URLエンドポイント」で検索し、ルート・HTTPメソッドの記載は0件だった。正本では0214:バナー設定!D41「イベントバナー設定15件を一覧表示し、設定できる。」、D44「『バナー設定』ボタン…すべてのバナー設定を保存する。」等だけを確認した。sheet-21のレイアウト画像2枚も実見したがURLは描かれていない。/banner/eventはHTML:6319以降のfunction-design-embed内にのみあった。",
+      "reason": "URL形状は旧実装由来である。/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/BannerServiceProvider.php を開き、GET/POSTの `/banner/event` と `/banner/event/{html_class}`、DELETEの `/banner/event/delete` を確認した。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Event/BannerController.php の index() はGET `/event/banner` 系、saveSettings()はPOST `/event/banner/settings` 系、delete()はDELETE `/event/banner/delete`。現行src/app全体を `banner/event` で再検索した結果、ルートはなく、EventBannerStorageServiceのS3文字列だけだった。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 891,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "sheet-22のExcel正本src-cellを「/banner」「アップロード先」「参照先」「イベントバナー用フォルダ」「TOPバナー」で検索した。0214:画像設定!D53「画像参照先、画像アップロード先の変更」、E54「S3のイベントバナー画像参照先、アップロード先をイベントバナー用フォルダに変更する（TOPバナー用フォルダとは別）」、D58「アップロード先は /banner/{選択店舗の識別子（tc など）} のフォルダ」を実在確認した。sheet-22レイアウト画像も実見し、一覧の画像URL例は `/banner/` 配下で、`/event/` は描かれていなかった。",
+      "reason": "少なくとも店舗指定時の具体的なアップロード先はExcel正本D58が直接規定しているためSPEC_BACKEDは妥当。なお正本E54の「TOPバナー用フォルダとは別」とD58の具体パスには解釈上の緊張があるが、D58は `/banner/{店舗識別子}` と明記しており、現行の追加階層 `/event/` を支持しない。旧実装BannerController.phpでもS3_DIRCTORY=`banner/`と店舗別`banner/{htmlClass}/`を確認した。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Event/EventBannerStorageService.php は `S3_BANNER_PREFIX = 'banner/event/'`。processUpload()は `banner/event/{htmlClass}/`、resolveListPrefix()は全体で`banner/event/`・店舗別で`banner/event/{htmlClass}/`を返し、normalizeObjectKey()/削除権限判定も同プレフィックスに固定されている。",
+      "severityOpinion": "med",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 892,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "sheet-22のExcel正本src-cellを完全一致文言3種と「520000byte」「一度削除したデータは元に戻せません」で検索した。アップロードエラー3文言は0件だが、0214:画像設定!V64「520000byte」とAG70「『一度削除したデータは元に戻せません。削除してもよろしいですか？』を表示し『OK』を選択で削除」を実在確認した。sheet-22レイアウト画像も実見し、ファイル選択・アップロード・削除リンクの配置はあるがエラー文言や確認文言自体は画像内にはない。",
+      "reason": "このfindingは混合根拠だが、削除確認文言の不一致がExcel正本AG70に直接裏付けられ、現実装で未充足なのでSPEC_BACKEDは維持できる。アップロード3文言の完全一致は旧実装 /home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/locale/message.ja.yml の `select_no_file`、`size_over`、`not_image` で確認したもので、正本に完全一致文言があるとは扱っていない。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Event/EventBannerStorageService.php の processUpload() は admin.event.banner.upload_no_file/size_over/not_imageを返し、messages.ja.yamlの値は「ファイルを選択してください。」「ファイルサイズが大きすぎます（最大 %max% バイト）。」「画像ファイル（JPEG/PNG/GIF）を指定してください。」。banner.twigの削除リンクはadmin.event.banner.delete_confirmを表示し、その値は「この画像を削除します。よろしいですか？」である。正本文言はtop_banner用キーにはあるがイベント画面から参照されていない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 893,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0208のExcel正本src-cellを「/card/search/1」「page_no」「action」「POST」「検索ルート」で検索し、URL/actionの具体記載は0件だった。正本の検索ボタン説明は入力値を基に検索する旨のみ。sheet-3レイアウト画像2枚も実見し、「検索する」ボタンはあるが送信先URLは画像にない。`POST /card/search/1` はfunction-design-embed内だけで確認した。",
+      "reason": "page_no=1固定のフォームactionは旧実装由来。/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Card/card.twig の `<form ... action=\"{{ url('admin_card_search', { 'page_no': 1}) }}\">` と、CardServiceProvider.phpの`/card/search/{page_no}`を確認した。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Card/index.twig の検索form_startはaction=`url('admin_card_list')`、method=POST。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Card/CardController.php の index() はPOST時に内部でpage_noを1へ設定するが、実際の送信URLは`/card`である。admin_card_searchは表示件数とページャに使われ、検索フォームactionには使われない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 894,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0208の全Excel正本src-cellを「CSRF」「csrf」「csrf_protection」「トークン」で検索し、対象フォームの有効・無効指定は0件だった。sheet-3の検索入力レイアウト画像2枚も実見したがCSRFに関する表示はない。",
+      "reason": "CSRF無効化は旧実装にのみある。/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/Card/SearchCardType.php の configureOptions()を開き、コメント`disable CSRF protection for this form`と`'csrf_protection' => false`を確認した。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/SearchCardType.php の configureOptions() は `'csrf_protection' => true`。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Card/index.twig のsearchFormにこのフォーム型がそのまま使用されている。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 895,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0208のExcel正本src-cellを「セッション」「session」「admin.card.search」「page_no」「page_count」「削除」で検索し、具体的な検索セッション削除は0件だった。0208:カード一覧(検索入力)!C69の「カスタマイズ要件に記載の内容以外は現行踏襲とする」は確認したが、削除キーやremove処理は明記しない。sheet-3レイアウト画像にもセッション情報はない。",
+      "reason": "具体的な初期表示時のremove契約は旧実装由来。/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/SearchControllerTrait.php の index()で`admin.card.search`、`.search.page_no`、`.search.page_count`の3キーをremoveするコードを確認した。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Card/CardController.php の index()の通常初期GET分岐は`card`と`card.page_no`をsetしてreturnし、removeを行わない。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/SearchControllerTrait.php の search()は`eccube.admin.card.search`系キーを使用するが、現行src/appをremoveとcardの組合せで再検索しても初期表示時の削除処理は見つからなかった。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 896,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0208のExcel正本src-cellを「半角スペース」「全角スペース」「カンマ」「語同士」「AND」「OR」で検索した。区切り文字・語間ANDは0件。正本では0208:カード一覧(検索入力)!D87「入力して検索する場合、以下1~4のカード情報で絞り込み検索される」とE88-E91のカード名(日/英)・ルールテキスト(日/英)、M120「半角・全角」を確認したが、M120は入力書式でありスペース分割指定ではない。sheet-3レイアウト画像も実見し、複合欄は1欄だけで区切り説明はなかった。",
+      "reason": "4列検索自体は正本にあるが、findingの核心であるスペース・カンマ分割とトークン間ANDは旧実装由来。/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Repository/MtbCardRepository.php の`preg_split('/[\\s,　]+/u', $multi)`とSqlUtil::multiTextQuery()の各語ごとのandWhere(Orx)を確認した。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/Master/MtbCardRepository.php の getQueryBuilderBySearchData() は`$multi = $searchData['multi']`を分割せず、4列ORへ単一の`%$multi%`を設定する。splitSearchText()は同クラスにあるが、別のAPI検索params[name]/params[text]からのみ呼ばれ、管理画面検索メソッドからは呼ばれない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 897,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "sheet-4のExcel正本で0208:カード一覧(検索結果)!E70「カード名」、M70「リンク」、AG70「押下すると、カード詳細画面へ遷移する」を実在確認した。sheet-4レイアウト画像（カード一覧(検索結果) / E8 / image 1）も実見し、カード名が青いリンクとして配置されていることを確認した。具体URL `/card/{id}` はExcel正本src-cellにはなく、function-design-embedと旧実装由来である。",
+      "reason": "具体URLは旧実装由来でも、findingの中核である「カード名自体をリンクにして詳細へ遷移」はExcel正本の項目表とレイアウト画像の両方が直接支持するためSPEC_BACKEDは妥当。旧実装card.twigでもカード名をadmin_card_editへのa要素にしていることを確認した。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Card/index.twig の一覧行はカード名セルを`{{ card.getNameJpWithEn }}`だけで描画し、a要素ではない。編集リンクは別の鉛筆アイコンにのみあり、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Card/CardController.php の edit()ルートは`/card/{id}/edit`。現行Card配下の反証検索でもカード名をリンクにする別テンプレートは見つからなかった。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    }
+  ]
+}

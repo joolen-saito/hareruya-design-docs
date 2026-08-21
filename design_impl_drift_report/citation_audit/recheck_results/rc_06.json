@@ -1,0 +1,149 @@
+{
+  "packetId": "rc_06",
+  "results": [
+    {
+      "rowId": 79,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0506_基本設計仕様書(API_店頭買取管理).html の sheet-9 と全Excel由来行を `空配列/カード商品以外/0件/該当なし` で検索した。Excel正本は2382行の `200 成功` と2397行の「レスポンスについてはカード詳細IDから買取用商品情報を取得APIと全く同様…シート参照」までで、0件時の本文形は無い。function-design-embed:start は2405行で、2414行の「カード商品以外のID…0件…エラーとはしない」以降はリバース詳細設計。旧 pf-api/src/Controller/ProductController.php の postBuyingProductsAction() 190-192行は同条件でエラーにせず結果を返し、pf-api/src/Repository/HierarchicalDataTrait.php の makeHierarchy() 21-27行は入力0件なら空の `$tree` を返す。API応答仕様であり画面レイアウト画像の対象外。",
+      "reason": "0件正常応答と応答全体の空配列を直接裏付けるのは旧実装で、Excel正本には空結果の本文形が無いため LEGACY_BACKED は妥当。現行は数値の商品IDで検索0件となる経路を formatter に渡し、応答全体の `[]` ではなく `{\"cards\":{}}` を返す。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyingController.php の getByProductIds() は、数字として採用できるIDが0件なら `new JsonResponse(['cards' => []])`、数値IDがあれば MtbCardRepository::getBuyingCardsByProductIds() の結果を BuyingCardsFormatter::format() へ渡す。src/Eccube/Service/App/MTGBuyer/V1/BuyingCardsFormatter.php の format() は空結果を `return ['cards' => empty($cards) ? new \\stdClass() : $cards];` とするため、カード商品以外の数値IDだけで検索0件なら本文は `{\"cards\":{}}` になる。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 81,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0506_基本設計仕様書(API_店頭買取管理).html の sheet-10 を `/api/search.json/メソッド/POST/GET /search/クエリ/name` で確認した。Excel正本 src-cell の2774行は `/api/search.json`、2775行は `メソッド POST` と `リクエスト書式 クエリ`、2797行は必須項目 `name`。`GET /search` は function-design-embed:start（2840行）より後の2864,2868行だけ。旧 pf-api/config/routes.yaml 133-140行は `/search.json` と `/search` を GET にし、pf-api/src/Controller/ProductController.php の findBuyingProductsByParamsAction() 197-204行は `@QueryParam(name=\"name\")` と ParamFetcher を使う。API契約であり画面レイアウト画像の対象外。",
+      "reason": "GETという期待はExcel正本と矛盾し、旧pf-apiにだけ実在するので LEGACY_BACKED は正しい。現行の当該ルートは現在もPOSTで、nameをクエリではなくフォームリクエストボディから読むため、旧API契約との差は残る。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyingController.php の getByCardName() は `#[Route('/%eccube_api_v1_route%/search', name: 'api_search', methods: ['POST'])]` で、`$request->request->get('name', '')` を読む。src/Eccube/Controller/App 配下を `api_search`、`/search`、`request->query` で確認したが、このAPIのGET・クエリ取得版は無い。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 82,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0506_基本設計仕様書(API_店頭買取管理).html の sheet-10 を `404/指定された名称/見つからなかった場合/標準の例外応答JSON` で確認した。Excel正本 src-cell の2806行に `404` と「指定された名称に紐づく商品が見つからなかった場合」が実在する。具体的な「標準の例外応答（メッセージを含むJSON）」は function-design-embed:start（2840行）より後の2884行だけ。API応答仕様であり画面レイアウト画像の対象外。",
+      "reason": "該当商品なし時の404要求はExcel正本が直接支持するため SPEC_BACKED は妥当。失敗本文の具体形はリバース詳細設計由来だが、404対200という中心的な乖離は正本だけで成立し、現行にも404分岐が無い。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyingController.php の getByCardName() は空のnameを `new JsonResponse(['cards' => []])` で200応答し、MtbCardRepository::getBuyingCardsByCardName() の検索結果が空でも例外を投げず BuyingCardsFormatter::format() を返す。format() は空を `['cards' => new \\stdClass()]` にする。NotFoundException 分岐は同Controllerの getByCardDetailId() にだけあり、カード名検索の該当なしは200のまま。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 83,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0506_基本設計仕様書(API_店頭買取管理).html の sheet-10 と全Excel由来行を `前方一致/%/_/エスケープ/addcslashes` で検索した。Excel正本 src-cell の2783行には「商品情報の商品名の前方一致で検索を行う」があるが、`%`・`_` のエスケープ指示は無い。明示的な「`%`と`_`はエスケープして扱う」は function-design-embed:start（2840行）より後の2876行だけ。旧 pf-api/src/Repository/DtbProductRepository.php の getProductsByParams() 246行は実物 `addcslashes($params['name'], '%_')`、262,265行は `LIKE :cardName` と `\"{$cardName}%\"` を確認した。API検索仕様であり画面レイアウト画像の対象外。",
+      "reason": "前方一致自体は正本にもあるが、現行との差であるLIKEワイルドカードのエスケープ要求は旧実装だけが直接支持するため LEGACY_BACKED は妥当。現行の当該シンボルには入力値のエスケープが無く、`%` と `_` はワイルドカードとして働く。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Repository/Master/MtbCardRepository.php の getBuyingCardsByCardName() は `->andWhere('product.name LIKE :cardName')` と `->setParameter('cardName', $cardName.'%')` をそのまま使う。同ファイル内の別検索には addcslashes があるが、このメソッドの入力には適用されない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 84,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0506_基本設計仕様書(API_店頭買取管理).html の sheet-10 と全Excel由来行を `1始まり/連番/索引/キー付け/cards` で検索した。Excel正本の2821行は応答を「カード詳細IDから買取用商品情報を取得シート参照」とし、参照先の2205行は `cards` をカードID `43675` でキー付けしたサンプルで、1始まり再採番は書かれていない。1始まり連番は function-design-embed:start（2840行）より後の2869,2880-2881行だけ。旧 pf-api/src/Controller/ProductController.php の findBuyingProductsByParamsAction() 210-216行は `$index = 1` と `$returnProducts['cards'][$index++] = $value` を確認した。API応答仕様であり画面レイアウト画像の対象外。",
+      "reason": "1始まり再採番はExcel正本ではなく旧実装に実在し、正本の参照先サンプルはむしろカードIDキーなので LEGACY_BACKED は妥当。現行formatterはカードIDをキーにしており、旧検索APIの連番契約との差が残る。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Service/App/MTGBuyer/V1/BuyingCardsFormatter.php の format() は `$cardId = $dto->cardId` とし、`$cards[$cardId]` にカード情報を構築して返す。検索APIだけを1,2,3...へ再採番する処理はControllerにもformatterにも無い。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 85,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0506_基本設計仕様書(API_店頭買取管理).html の sheet-10 を `レスポンス/カード詳細ID/同様`、参照先sheet-8を `productCode/price/stock/基準価格` で確認した。正本の2821行はA06-08応答をカード詳細ID取得シートと同一とし、参照先のExcel正本 src-cell 2185行は `productCode`、2187行は `price`・型`文字列`、2188行は `stock`・型`文字列`。正本サンプル2205行も `productCode` と引用符付きのprice/stockを示す。API応答仕様であり画面レイアウト画像の対象外。",
+      "reason": "応答フィールド名と型はExcel正本の参照先に直接定義されるため SPEC_BACKED は妥当。現行はフィールド名を productClassCode に変え、priceとstockを整数で出力しており、複数の契約差が残る。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Service/App/MTGBuyer/V1/BuyingCardsFormatter.php の format() は conditionClasses 配下を `'productClassCode' => $dto->productClassCode`, `'price' => $dto->standardPrice`, `'stock' => $dto->stock` とする。src/Eccube/Dto/Repository/Master/GetBuyingCardsQueryResponseDto.php のコンストラクタ型は productClassCodeがstring、standardPriceが`?int`、stockが`int`で、fromDqlResult() もstockを`(int)`へ変換する。したがってJSONはproductCodeを持たず、price/stockは非null時に数値になる。",
+      "severityOpinion": "high",
+      "confidence": "high"
+    },
+    {
+      "rowId": 86,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0506_基本設計仕様書(API_店頭買取管理).html の sheet-11 を `code/message/get sections success/sections/section_id` で確認した。Excel正本 src-cell の3226-3231行はトップレベル `code`、`message`、`sections` と各要素の `section_id/name/code` を定義し、3227行は「必ずget sections successが入る」、正本図形抽出3247行も同じラッパーのJSON例を示す。function-design-embed:start は3253行。API応答仕様であり画面レイアウト画像の対象外。",
+      "reason": "code・message・sectionsのラッパーはExcel正本の項目表とサンプルに直接あるため SPEC_BACKED は妥当。現行は要素配列だけをトップレベルに返し、ラッパーが無い。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/App/MTGBuyer/V1/Admin/SectionController.php の getSections() は visible=trueをcode昇順で取得し、各要素を `section_id/name/code` にした `$payload` を `return new JsonResponse($payload);` で裸配列として返す。MTGBuyer配下を `get sections success`、`'sections' =>`、`'message' =>` で確認しても本APIを包む別処理は無い。",
+      "severityOpinion": "high",
+      "confidence": "high"
+    },
+    {
+      "rowId": 87,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0506_基本設計仕様書(API_店頭買取管理).html の sheet-12 を `code/section_id/固定価格商品部門ID/レスポンスデータサンプル` で確認した。Excel正本 src-cell の3392行は `code` と「必ず200が入る」、3393行は `section_id`・型`文字列`・「固定価格商品部門ID」を定義する。正本図形抽出3409行にも `\"code\":200` と `\"section_id\":30` がある。function-design-embed:start は3415行。API応答仕様であり画面レイアウト画像の対象外。",
+      "reason": "成功応答のcodeとsection_idはExcel正本に直接定義されるため SPEC_BACKED は妥当。現行は設定値の文字列だけをJSON本文にし、両フィールドを返していない。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/App/MTGBuyer/V1/Admin/OptionController.php の getFixedPriceSection() は MtbOption::FIXED_PRICE_SECTION のoption_valueを `$value` に取り、`return new JsonResponse($value);` と値単体を返す。tests/Eccube/Tests/Web/App/MTGBuyer/V1/Admin/OptionControllerTest.php の testGetFixedPriceSection() も本文を `json_encode($expectedValue)` と期待し、code/section_idオブジェクトを期待していない。",
+      "severityOpinion": "high",
+      "confidence": "high"
+    },
+    {
+      "rowId": 91,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0506_基本設計仕様書(API_店頭買取管理).html の sheet-15 を `doublecheck.json/member_id/メソッド PUT` で確認した。Excel正本 src-cell の3914行は `/api/otcBuyOrder/{id}/doublecheck.json`、3915行は `メソッド PUT`、3937行は必須項目 `member_id`、正本図形抽出3964行は `{ \"member_id\": \"1000\" }` を示す。いずれも function-design-embed:start（3970行）より前。API契約であり画面レイアウト画像の対象外。",
+      "reason": "URLとリクエスト項目の両方がExcel正本に直接あるため SPEC_BACKED は妥当。現行のupdateDoubleCheckMember() はURL末尾・admin/版数プレフィックス・パラメータ名のすべてが正本と異なる。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php の updateDoubleCheckMember() は `/%eccube_api_v1_route%/admin/otcBuyOrder/{id}/doubleCheckMember.json` をPUTで公開し、`$request->request->get('double_check_member_id')` を読む。app/config/eccube/packages/eccube.yaml の既定値は `env(ECCUBE_API_V1_ROUTE): 'api/v1'`。リポジトリ内に正本URLまたはmember_idを受ける同機能の別ルートは無い。",
+      "severityOpinion": "high",
+      "confidence": "high"
+    },
+    {
+      "rowId": 92,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0506_基本設計仕様書(API_店頭買取管理).html の sheet-15 を `ダブルチェック者/新規のカラム/approver/role` で確認した。Excel正本 src-cell の3928行に実物「ダブルチェック者は新規のカラムに追加する」があり、正本内にapproverテーブルやrole方式の記載は無い。function-design-embed:start は3970行で、dtb_otc_buy_order_approverとrole=double_checkの比較記述は4006行のリバース詳細設計側。DB保存仕様であり画面レイアウト画像の対象外。",
+      "reason": "専用の新規カラムへ追加する要求はExcel正本に実在するため SPEC_BACKED は妥当。正本はテーブル名・カラム名までは明記しないためその点は限定して解釈したが、現行はダブルチェック者専用カラムではなく、別の承認者テーブルの汎用approver_idをrole行で識別する構造であり、正本が示す保存構造とは一致しない。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Service/App/MTGBuyer/V1/Admin/OtcBuyOrder/UpdateDoubleCheckMemberAction.php の handle() は OtcBuyOrderApproverEntityManager::saveDoubleCheckApproval() を呼ぶ。同メソッドは `OtcBuyOrder + role=double_check` の行を検索・作成し、approver/assignedBy/approvedAtを設定する。src/Eccube/Entity/DtbOtcBuyOrderApprover.php は別テーブル `dtb_otc_buy_order_approver` の `approver_id/assigned_by_id/role/approved_at` を定義し、src/Eccube/Entity/DtbOtcBuyOrder.php にはダブルチェック者専用JoinColumnはなくOneToMany関連だけがある。",
+      "severityOpinion": "med",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 93,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0506_基本設計仕様書(API_店頭買取管理).html の sheet-15 を `エンドポイントURL/doublecheck.json/PUT` で確認した。Excel正本 src-cell の3913-3915行は「エンドポイントURL」「/api/otcBuyOrder/{id}/doublecheck.json」「メソッド PUT」を明記し、function-design-embed:start は3970行。API契約であり画面レイアウト画像の対象外。",
+      "reason": "正本URLはExcel正本に直接あるため SPEC_BACKED は妥当。staleフラグ対象のeccube.yamlも現状を確認したが、api_v1_routeの定義は残っており、変更差分は別の在庫設定だけだった。正本URLを公開する別ルートも無い。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php の updateDoubleCheckMember() は `#[Route('/%eccube_api_v1_route%/admin/otcBuyOrder/{id}/doubleCheckMember.json', ..., methods: ['PUT'])]` のまま。app/config/eccube/packages/eccube.yaml は `env(ECCUBE_API_V1_ROUTE): 'api/v1'` と `eccube_api_v1_route: '%env(ECCUBE_API_V1_ROUTE)%'` を定義するため既定の実URLは `/api/v1/admin/.../doubleCheckMember.json` で、正本の `/api/otcBuyOrder/{id}/doublecheck.json` と一致しない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 94,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0506_基本設計仕様書(API_店頭買取管理).html の sheet-15 を `member_id/double_check_member_id/数値(整数)/1000/メンバーID` で確認した。Excel正本 src-cell の3937行は `member_id`、`数値(整数)`、必須`〇`、入力例`1000`、備考`メンバーID` を同じ行で定義し、正本図形抽出3964行も `{ \"member_id\": \"1000\" }`。function-design-embed:start は3970行。API契約であり画面レイアウト画像の対象外。",
+      "reason": "パラメータ名member_idはExcel正本に直接あるため SPEC_BACKED は妥当。現行の当該メソッドはdouble_check_member_idだけを必須として読み、member_idを受け付けない。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php の updateDoubleCheckMember() は `$raw = $request->request->get('double_check_member_id');` とし、nullなら MissingRequiredParameterException、値は`(int)`へ変換する。同メソッド内にmember_idを読む分岐は無く、tests/Eccube/Tests/Web/App/MTGBuyer/V1/Admin/OtcBuyOrderControllerTest.php もdouble_check_member_idで当該URLを呼ぶ。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    }
+  ]
+}

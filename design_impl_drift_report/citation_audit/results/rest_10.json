@@ -1,0 +1,165 @@
+{
+  "packetId": "rest_10",
+  "results": [
+    {
+      "rowId": 446,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:2702 のExcel正本は「新規登録の場合、セールフラグ無効(セール外)の処理を行う」、同:2705 はパターン1-1について「CSVフォーマット 識別ID 25:『基準価格』の値を、商品データ『販売価格』『基準価格』に反映させる」と明記している。既存規格のセールOFFもこのパターン1-1に含まれる。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/Importer/Event/ProductCardImportHandler.php:720-731 は旧実装を `$sellPrice = PriceUtil::discount($baseSellPrice, ...)`、`'price02' => $sellPrice` としており、基準価格列導入前の旧挙動は正本の新要件を直接は満たさない。判定根拠は旧実装ではなくExcel正本である。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/ProductCardImportHandler.php:676-692 は `$newStandardPrice = $this->standardPriceCalculator->calculate(...)` の結果をセールOFF時の `$sellPrice` に代入する。ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/Util/StandardPriceCalculator.php:39-40 は「SP/MP/HP: 基準価格 × 割引率」と明記しており、CSV基準価格そのものではない値が `price02` へ入る。",
+      "note": "Excel正本がCSV基準価格の販売価格・基準価格への反映を直接要求しているため、状態別再計算を挟む現実装は真の乖離。"
+    },
+    {
+      "rowId": 447,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:3188 のExcel正本は商品カテゴリ(ID)を「商品カテゴリIDを指定/カンマ区切りで複数指定可能」とするだけで、単体カード・予約シングル・インフォメーション商品のsubtree限定は記載しない。限定記述はリバース詳細 hareruya-design-docs/functions/pf-eccube3/m03-26_admin_product_product_card_csv_import.md:154 の「単体カード・予約シングル・インフォメーション商品の subtree に入る ID のみ許容」にのみ存在する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/Importer/Event/ProductCardImportHandler.php:341-354 は `getDescendantAndSelfCategories(Category::SINGLE_ID, Category::RESERVED_SINGLE_ID, Category::INFORMATION_PRODUCT_ID)` の結果を `ChoiceValidator` に渡しており、3ルートのsubtree限定を直接実装している。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Validator/Repository/CategoryIdValidator.php:55-57 は `$this->categoryMap->contains((int) $v)` の存在確認だけで、ec-cube-enterprise/src/Eccube/Util/CategoryMap.php:53-56 の `contains()` は `array_key_exists` のみ。同:157-167 は `dtb_category` 全件をSELECTしており3ルート限定がない。",
+      "note": "Excel正本には複数指定だけがあり限定条件はないが、旧実装に限定ロジックが明確に存在するため移植漏れと判定した。"
+    },
+    {
+      "rowId": 448,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:2702 のExcel正本は「新規登録の場合、セールフラグ無効(セール外)の処理を行う」、同:2705 はセールOFF時にCSV「基準価格」を商品データ「販売価格」「基準価格」に反映すると明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/Importer/Event/ProductCardImportHandler.php:755-765 の旧INSERTは `'price02' => $sellPrice` としており基準価格列導入前の実装である。新規時に基準価格を販売価格へ入れる要件の根拠はExcel正本にある。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/ProductCardImportHandler.php:670 は `$sellPrice = PriceUtil::discount($baseSellPrice, ...)` とし、同:745-756 の新規INSERTは `'price02' => $sellPrice` と `'standardPrice' => $newStandardPrice` を別々に保存する。更新分岐だけは同:689-692 でセールOFF時に `$sellPrice = $newStandardPrice` とする。",
+      "note": "正本が新規登録をセールOFF扱いと明記しているのに、現実装の新規分岐には基準価格から販売価格への上書きがない。"
+    },
+    {
+      "rowId": 449,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:3482 のExcel正本（グッズ商品CSV登録!AG147）は「CSVファイルのアップロード」ボタンについて「押下後、確認モーダルを表示」と明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Product/base_csv_upload.twig:16-36 は通常のformと `type=\"submit\"` ボタンのみを描画し、同:8-11 のJS読込にも確認処理はない。旧実装にモーダルはないが、本件はExcel正本の追加UI要件に基づく。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Product/base_csv_upload.twig:29-31 はsubmit時に `$.changeLoading(true)` を呼ぶだけで、同:73-75 は単純な `type=\"submit\"` ボタン。確認範囲 `base_csv_upload.twig`、`csv_product_goods.twig`、`csv_import_history.twig` を `modal|confirm|確認` で検索して0件だった。",
+      "note": "リバース詳細には確認ダイアログなしとの旧挙動もあるが、src-cellを持つExcel正本の個別画面部品要求を優先した。"
+    },
+    {
+      "rowId": 450,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:3897 のExcel正本（グッズ商品CSVフォーマット!AG11）は「1: 非公開 2:公開 3:廃止(追加)」と明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Product/ProductCsvController.php:2036-2049 の旧必須ヘッダは「公開ステータス(ID)」とだけ定義し1/2の意味を記載しない。3値の新定義の根拠はExcel正本である。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Product/Csv/GoodsCsvController.php:261-264 は「商品公開ステータス」を `1:公開 2:非公開 3:廃止` と表示する。ec-cube-enterprise/src/Eccube/Entity/Master/ProductStatus.php:39,49,61 も `DISPLAY_SHOW = 1`、`DISPLAY_HIDE = 2`、`DISPLAY_ABOLISHED = 3` で、正本の1/2と逆である。",
+      "note": "Excel正本のコード値定義と現実装の表示・定数が直接不一致。"
+    },
+    {
+      "rowId": 451,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:3921 のExcel正本（グッズ商品CSVフォーマット!E35/P35/U35）は識別ID28「原価単価」を「数値(整数※)」「〇（必須）」とし、備考を「新規項目追加」とする。同:3942 も「『原価単価』を新規追加」と明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Product/ProductCsvController.php:2036-2049 の旧グッズCSV必須ヘッダには原価単価がなく、旧実装由来ではなくExcel正本で追加された要件である。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Product/Csv/GoodsCsvController.php:376-379 は原価単価を「入力しても更新されない」「required=false」とする。ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Model/ColumnDefinitions.php:635-639 も `costUnitPrice()` を `dummyColumn` としている。",
+      "note": "正本は必須の新規取込項目、現実装は任意の無視列であり真の乖離。"
+    },
+    {
+      "rowId": 452,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:4085-4205 のExcel正本シート14は「商品IDでタグを削除＆登録する」とだけ記載し、dtb_product_tagの列定義やbase_info_id不存在を記載しない。不存在の記述はリバース詳細 hareruya-design-docs/functions/pf-eccube3/m03-28_admin_product_product_product_tag_csv_import.md:25,171 にのみある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/Importer/Event/ProductTagUpdateImportHandler.php:231-246 の旧SQLは `INSERT INTO dtb_product_tag (product_id, tag, creator_id, create_date)` で、`base_info_id` を含まない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Repository/ProductRepository.php:1875-1904 は `dtb_product_tag` INSERT列に `base_info_id` を含め値 `1` を渡す。ec-cube-enterprise/src/Eccube/Entity/ProductTag.php:28-30 は `TenantTrait` をuseし、同Traits/TenantTrait.php:24-26 は `JoinColumn(name: 'base_info_id', nullable: false)` を定義する。",
+      "note": "正本ExcelにはDB列要件がないが、旧実装のINSERTにbase_info_idがないため、旧実装由来の移植差として根拠がある。"
+    },
+    {
+      "rowId": 454,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:10381 のExcel正本は「低価格帯カード価格変更CSVファイルフォーマットのテーブルを追加し、低価格帯カード価格変更CSVファイルをダウンロードするボタンを追加」、同:10423 は画面部品を「低価格帯カード価格変更CSVを出力する」と明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Product/ProductCsvController.php:869-875 の旧価格CSV画面は `getProductPriceCsvHeader()` と単一の価格CSVテンプレートを返す構成で、低価格帯専用導線はこの旧画面経路にない。判定根拠はExcel正本の追加要件である。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Product/Csv/ProductStandardPriceCsvController.php:107-118 は基準価格CSVのheaders・取込route・雛形routeだけを渡し、ec-cube-enterprise/src/Eccube/Resource/template/admin/Product/csv_product_standard_price.twig:1-5 は共通テンプレートを継承するだけ。共通テンプレート同:80-113 にも雛形ボタンと1表しかない。指定探索範囲を「低価格帯カード価格変更CSV|low_price|simple_low」で検索して該当実装0件。",
+      "note": "Excel正本に画面部品と出力動作が直接あり、現実装には専用導線・表・ルートがない。"
+    },
+    {
+      "rowId": 455,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:10383 のExcel正本は「条件を満たす場合スマレジ連携フラグを有効とする」、同:10384 は「連携対象の条件を満たしている場合に限り、スマレジへ商品情報を連携する」と明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/Importer/Event/ProductPriceImportHandler.php:70-78 の旧列初期化には商品ID・言語・販売・買取・セール・帯URL・タグだけがあり、スマレジフラグ自動判定はない。本件の要件根拠はExcel正本のリニューアル要件である。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/ProductStandardPriceImportHandler.php:175-180 は既存の `smaregiAlignmentFlg` を読むだけ。ec-cube-enterprise/src/Eccube/Repository/ProductClassRepository.php:2720-2733 の更新SQLは `standard_price`、`buy_price`（非セール時は加えてprice02）だけでフラグを更新せず、ec-cube-enterprise/src/Eccube/Service/Smaregi/SmaregiProductClassCsvImportUpsertCoordinator.php:45-53 は既存フラグがONでなければreturnする。",
+      "note": "正本が条件成立時のフラグ有効化を要求するが、現実装は既存ON規格の連携予約だけを行う。"
+    },
+    {
+      "rowId": 456,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:10833 のExcel正本は識別ID5「原価単価」を「数値(整数)」「◯」「999999999」と定義し、同:10871 は「識別ID:5『原価単価』を新規追加」と明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/Importer/Event/ProductPriceImportHandler.php:70-78 の旧価格CSV列定義には原価単価がなく、旧機能にはないリニューアル追加要件である。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Product/Csv/ProductStandardPriceCsvController.php:217-224 と:232-239 は商品ID・言語ID・基準価格・買取価格の4列のみ。ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/ProductStandardPriceImportHandler.php:97-101 も基準価格・買取価格だけを読み、ec-cube-enterprise/src/Eccube/Repository/ProductClassRepository.php:2729-2733 のSQLは `wholesale_price` を更新しない。",
+      "note": "Excel正本の必須第5列がヘッダ・列定義・更新SQLのすべてで欠落。"
+    },
+    {
+      "rowId": 457,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:11106-11112 のExcel正本画面部品表にはアップロード・フォーマット・雛形・履歴・ページングしかなく支店通知は記載されない。要求はリバース詳細 hareruya-design-docs/functions/pf-eccube3/m03-31_admin_product_product_sale_price_csv_import.md:105 の「取込が成功した場合、支店システムへ取込対象の商品更新を通知する」にのみある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/Importer/Event/ProductPriceImportHandler.php:82-90 は成功時にcommit後 `new BranchUpdateService(...)` と `$branchUpdate->noticeProductUpdate(array_unique($this->importedIds))` を実行している。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/ProductPriceImportHandler.php:87-93 は支店連携ブロック全体をコメントアウトし、「TODO: BranchUpdateService の移植が必要」としている。enterprise全域の `BranchUpdate|noticeProductUpdate` の該当はこの種のコメントだけで実行実装がない。",
+      "note": "Excel正本にはないが旧実装に成功後通知が明確にあり、現実装自身も移植TODOを残しているため移植漏れ。"
+    },
+    {
+      "rowId": 458,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:11106-11112 のExcel正本には成功メッセージ文言・翻訳キーの記載がない。指定文言はリバース詳細 hareruya-design-docs/functions/pf-eccube3/m03-31_admin_product_product_sale_price_csv_import.md:279 の「商品登録CSVファイルをアップロードしました。」「admin.product.csv_import.save.complete」にのみある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Product/ProductCsvController.php:920-924 は成功時 `$app->addSuccess('admin.product.csv_import.save.complete', 'admin')` を呼び、pf-eccube3/src/Eccube/Resource/locale/message.ja.yml:133 は同キーを「商品登録CSVファイルをアップロードしました。」と定義する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Product/Csv/ProductPriceCsvController.php:182-189 は成功時 `$this->addSuccess('admin.register.complete', 'admin')` を呼び、ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:1970 は「登録が完了しました。」と定義する。旧キーは同localeに存在しない。",
+      "note": "正本Excelにはないが、旧実装で表示経路と翻訳値の両方を確認できるため文言の移植差。"
+    },
+    {
+      "rowId": 459,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:11266-11365 のExcel正本フォーマット表はCSV列仕様のみで、MIME検証や専用メッセージを記載しない。要求はリバース詳細 hareruya-design-docs/functions/pf-eccube3/m03-31_admin_product_product_sale_price_csv_import.md:224,282 の「MIMEはCSVであること」と `admin.csv.error.upload.mime` にのみある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/CsvImportType.php:32-39 はNotBlank・Fileに加えて `new CsvMimeType(...)` を付与する。pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/CsvMimeTypeValidator.php:19-31 は許可MIMEを照合し不一致時 `admin.csv.error.upload.mime` のviolationを追加し、同Resource/locale/message.ja.yml:1096 は「ファイル形式が異なります。CSVファイルをアップロードしてください。」と定義する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/CsvImportType.php:48-57 は `Assert\\NotBlank` と `Assert\\File(maxSize)` のみでMIME制約がない。ProductPriceCsvController・CsvImporter・messages.ja.yamlを `mime|admin.csv.error.upload.mime` で検索して当該サーバ検証・キーは0件。",
+      "note": "MIME要件は正本ではなく旧実装由来だが、旧制約・validator・文言が一式確認でき、現実装から欠落している。"
+    },
+    {
+      "rowId": 460,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:11266-11365 のExcel正本フォーマット表には取込成功フラッシュの文言・キーがない。指定はリバース詳細 hareruya-design-docs/functions/pf-eccube3/m03-31_admin_product_product_sale_price_csv_import.md:279 の「商品登録CSVファイルをアップロードしました。」「admin.product.csv_import.save.complete」にのみある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Product/ProductCsvController.php:920-924 は取込成功時 `admin.product.csv_import.save.complete` をsuccessフラッシュへ積み、pf-eccube3/src/Eccube/Resource/locale/message.ja.yml:133 は実文言を「商品登録CSVファイルをアップロードしました。」とする。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Product/Csv/ProductPriceCsvController.php:182-189 は成功時 `admin.register.complete` を使用し、ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:1970 の実文言は「登録が完了しました。」である。",
+      "note": "rowId 458と設計参照シートだけが異なる重複指摘。どちらも旧実装に根拠があり現表示は異なる。"
+    },
+    {
+      "rowId": 461,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:12144 のExcel正本は「対象の商品コードから当該の商品データを検索。現在登録済の商品に設定されている『セールフラグ』を参照」とだけ記載し、親商品・規格の状態条件やSQL完全一致は書かない。状態条件はリバース詳細 hareruya-design-docs/functions/pf-eccube3/m03-32_admin_product_product_simple_high_price_csv_import.md:241,243 にのみある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/Importer/Event/SimpleHighPriceImportHandler.php:171-192 の旧存在判定SQLは `pc.product_code = :productCode`、`pc.del_flg = :delFlg`、`p.del_flg = :delFlg`、`psc.high_price_code IS NOT NULL` を同時条件にする。同:211-224 の規格取得もproduct_code・pc.del_flg・high_price_codeを条件にする。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Repository/ProductClassRepository.php:2214-2222 の存在判定はproduct_code・sale_flg・high_price_codeだけで、同:2261-2270 と:2292-2302 の更新SQLにも親商品状態や規格表示状態の条件がない。",
+      "note": "Excel正本は状態条件まで定めないが、旧SQLに削除状態・高額コードを含む対象限定があり、現SQLから状態条件が落ちているため旧実装由来の移植差。"
+    },
+    {
+      "rowId": 462,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:12162-12168 のExcel正本画面部品表は「CSVファイルのアップロードと入力チェックを実施」とするだけで、フォームエラー深掘りやnull時キーは記載しない。具体手順はリバース詳細 hareruya-design-docs/functions/pf-eccube3/m03-32_admin_product_product_simple_high_price_csv_import.md:65-66 にのみある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Product/ProductCsvController.php:1125-1134 は管理者CSVフォームをbindし、不正時に `$form->getErrors(true)` で子フィールドを含む各エラーをadminへ積む。旧実装には `admin.common.csv_invalid_no_data` の独立null分岐はないが、深いエラー列挙によってimport_fileのNotBlankエラーは表示される。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Product/Csv/ProductSimpleHighPriceCsvController.php:130-145 は不正時に引数なし `$form->getErrors()` を読むため子フィールドエラーを辿らず、その後の `$formFile === null` 分岐はNotBlankでisValid=falseとなる未選択時に到達しない。ec-cube-enterprise/src/Eccube/Form/Type/Admin/CsvImportType.php:48-56 でNotBlankはimport_file子フィールドに付く。",
+      "note": "null専用キー自体は旧実装で確認できないが、指摘の中核である子フィールド検証エラーのadmin表示は旧実装のgetErrors(true)に明確な根拠があり、現実装で退行している。"
+    },
+    {
+      "rowId": 463,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:12352 のExcel正本（高額商品価格変更CSVフォーマット!E8/P8/U8/W8）は商品コードを「文字型」「必須」「最大11」と明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/Importer/Event/SimpleHighPriceImportHandler.php:55-60 は旧実装でも商品コードを必須にするだけで11文字validatorを付けない。11文字要件の根拠はExcel正本である。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/SimpleHighPriceImportHandler.php:130-133 は `ColumnDefinitions::productCode()->setRequired(true)`、ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Model/ColumnDefinitions.php:58-60 のproductCodeは `createStringColumn` のみ。同:663-665 はvalidatorなしのBaseCsvColumnを返し、ec-cube-enterprise/src/Eccube/Entity/ProductClass.php:184-185 のDB長も255である。",
+      "note": "Excel正本の最大11文字に対し、現実装は必須・存在検証のみで長さ制限を実装していない。"
+    },
+    {
+      "rowId": 464,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:12353 のExcel正本（高額商品価格変更CSVフォーマット!E9/P9/U9/W9）は基準価格を「数値(整数)」「必須」「最大11」と明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/Importer/Event/SimpleHighPriceImportHandler.php:56-59 の旧機能は販売価格・買取価格・下代を列に持つ旧フォーマットで、基準価格11桁というリニューアル要件はExcel正本由来である。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/SimpleHighPriceImportHandler.php:132-133 は `ColumnDefinitions::standardPrice()->setRequired(true)` を使用し、ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Model/ColumnDefinitions.php:434-436 は `createUnsignedNumericColumn(..., 9)` とするため最大9桁で検証する。",
+      "note": "正本の11桁と現実装の9桁が直接不一致で、設計上許容される10〜11桁を拒否する。"
+    },
+    {
+      "rowId": 465,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "最新Excel正本 hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:12794 は「買取価格」行に「2026/6/3 石川 高額商品価格変更CSVフォーマットでも不要な項目のためこちらでも不要」、同:12798 は「スマレジ連携フラグ」行にも同じ不要注記を持つ。したがって有効列は商品コード・販売価格・セールフラグ・帯URL・タグ(ID)の5列であり、「7列を要求」は更新前リバース詳細の読み取りである。",
+      "legacyEvidence": "リバース詳細 hareruya-design-docs/functions/pf-eccube3/admin_product_sale_high_price_csv_export.md:63-77 は更新前の7列（買取価格・スマレジ連携フラグを含む）を列挙する。一方、実旧コード pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Product/ProductCsvController.php:2131-2140 はスマレジ連携フラグを含まない6列であり、リバース詳細自体も旧コードと完全一致していない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Product/Csv/ProductSaleHighPriceCsvController.php:199-207 は正本で不要指定された買取価格・スマレジ連携フラグを除く5列をheadersとして返す。ec-cube-enterprise/src/Eccube/Resource/template/admin/Product/base_csv_upload.twig:95-107 はこのheadersをそのまま全行描画する。",
+      "note": "監査後に正本へ不要注記が追加され、現実装5列が最新要求を満たすため、旧7列前提の指摘は解消済み。"
+    },
+    {
+      "rowId": 466,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "最新Excel正本 hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:12794 は買取価格を「不要」、同:12798 はスマレジ連携フラグも「不要」と明記する。したがって取込列は商品コード・販売価格・セールフラグ・帯URL・タグ(ID)の5列が最新仕様である。",
+      "legacyEvidence": "更新前リバース詳細 hareruya-design-docs/functions/pf-eccube3/admin_product_sale_high_price_csv_export.md:67-77 は7列を期待するが、旧コード pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Product/ProductCsvController.php:2131-2140 は6列、pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/Importer/Event/HighPriceImportHandler.php:64-70 も商品コード・販売価格・買取価格・セール・帯URL・タグの6列で、スマレジ列は実装していない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/SaleHighPriceImportHandler.php:51-55 は正本で有効な5列を初期化し、同:165-173 のgetColumns()も商品コード・販売価格・セールフラグ・帯URL・タグ(ID)の同じ5列を同順で返す。",
+      "note": "最新正本の不要注記により、取込ハンドラ5列は既に設計期待値を満たす。更新前リバース詳細を根拠にした指摘は誤検出。"
+    }
+  ]
+}

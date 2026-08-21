@@ -1,0 +1,3507 @@
+Reading additional input from stdin...
+OpenAI Codex v0.147.0
+--------
+workdir: /home/y-saito/Developments
+model: gpt-5.6-sol
+provider: openai
+approval: never
+sandbox: read-only
+reasoning effort: high
+reasoning summaries: none
+session id: 01a018cc-637b-7842-a572-23861a0d2f04
+--------
+user
+**重要（最初に読むこと）**
+- スキル `design-impl-drift-audit` は**使わないこと**。本作業は新規の乖離監査でもレポート生成でもなく、
+  **既に出来上がった27件の再判定結果を検証するレビュー**である。findings.json や HTML レポートを作ってはならない。
+- 手順は「27件を順に読み、正本テキストと実コードで裏取りし、誤りだけを列挙する」だけでよい。
+- 最後に必ず**指定の出力形式で結論を書く**こと。途中で終わらせない。
+
+# 敵対レビュー依頼: 0203_基本設計仕様書(受注管理機能) の実装乖離「再調査」結果
+
+あなたはレビュアーである。著者ではない。以下の成果物を批判的に検証し、事実の誤りを挙げよ。
+
+## 成果物（レビュー対象）
+- /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/RECHECK_0203.md
+- /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/recheck_findings_0203.tsv
+（同一データ。TSVが機械可読な正本）
+
+## 正本（オラクル）
+1. **設計書の正本は HTML 1本のみ**:
+   /home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html
+   （2026-08-19 に再生成済み。5.6MB。シート単位で `<section class="sheet-panel" id="sheet-N">`）
+   **HTMLを直接grepすると遅い。全27シートの本文をテキスト化した写しを用意してある:**
+   `/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/recheck/0203/review/sheets/sheet-N.txt`
+   （表構造を保持した抽出。1行目に対応するHTML行範囲と埋め込み画像の枚数を記載。まずこれを読み、
+   引用の実在確認など逐語の裏取りが要るときだけ元HTMLの該当行を見ればよい）
+2. **実装の正本**: /home/y-saito/Developments/ec-cube-enterprise （HEAD d86fc600e1）
+
+## 正本でないもの（重要）
+- `functions/pf-eccube3/*.md` や `function_spec_html_preview/pf-eccube3/*.html` は**正本ではない**。
+  ただし上記HTMLの各シート末尾に「Source: functions/pf-eccube3/...」として**取り込まれている本文**は、
+  HTMLの一部なので正本として扱ってよい。
+- `drift_findings_list_remaining.tsv`（旧指摘の母数）は入力であって正本ではない。書き換え禁止。
+
+## 判定規約（これに違反していないかを見る）
+- **HTML設計書に書かれていないことを指摘に含めてはならない。** 書かれていない要求は判定 `NOT_IN_DESIGN` として取り下げる。
+- 判定は次の5値: UPHELD(維持) / RESTATED(内容訂正のうえ維持) / RESOLVED(現HEADで実装済み・解消) /
+  NOT_IN_DESIGN(正本に根拠なし・取り下げ) / DESIGN_ISSUE(正本内部で記述が矛盾・設計裁定待ち)
+- UPHELD/RESTATED/RESOLVED/DESIGN_ISSUE には正本HTMLの**逐語引用**が必須。
+
+## 重点観点（この順で見よ）
+1. **NOT_IN_DESIGN と判定した8件（0203-007/009/013/014/016/018/023）は本当に正本HTMLに記述が無いか。**
+   該当シートの全文（項目表・カスタマイズ説明・「現行仕様」節・表示メッセージ表）を実際に読んで確認せよ。
+   記述があるのに取り下げているなら、それが最も重い誤りである。
+2. **RESOLVED と判定した3件（0203-008/019/024）は本当に現HEADで実装されているか。** 実コードで確認せよ。
+3. **UPHELD/RESTATED と判定した16件は、現HEAD d86fc600e1 で本当に乖離が再現するか。**
+   実コード（file:line）を開いて確認せよ。解消済みを維持していないか。
+4. `設計書根拠_引用` が該当シートに逐語で実在するか。`現実装_参照` の file:line が実在し、書かれた内容と一致するか。
+5. `設計書期待値` が引用の内容を**超えて**いないか（引用に書かれていないことを期待値にしていないか）。
+
+## 対象外（指摘しなくてよい）
+- 母数27件に含まれない**新規の**乖離の発見。本作業は既存27件の再判定である。
+- 文体・体裁・優先度/工数の妥当性。
+- 「設計書をこう直すべき」という設計書修正提案。
+
+## 出力形式
+指摘が無ければ `NONE` の 1 語だけを出力せよ。あるなら1件ずつ次の4行で書け。
+
+- 対象: <通番>
+- 主張: <成果物の記述>
+- 実際: <file:line と実際の内容>
+- 判定: 事実の誤り / 事実の欠落 / 判定の誤り
+- 修正案: <結論から1文>
+warning: Codex could not find bubblewrap on PATH. Install bubblewrap with your OS package manager. See the sandbox prerequisites: https://developers.openai.com/codex/concepts/sandboxing#prerequisites. Codex will use the bundled bubblewrap in the meantime.
+codex
+指定どおり `design-impl-drift-audit` は使用せず、既存27件の検証だけを行います。まずTSVの全行と対応シート本文を照合し、次に各 `file:line` と現HEADの実コードを確認します。成果物の作成・変更はしません。
+  → TSV 27件の主張・判定・引用・参照先を整理する
+  • 全件について該当シート本文と逐語引用・期待値を照合する
+  • 全件について現HEADの実コードと参照行・再現性を照合する
+  • 誤りだけを指定形式でまとめる
+exec
+/bin/bash -lc "git rev-parse HEAD && wc -l design_impl_drift_report/recheck_findings_0203.tsv && sed -n '1,35p' design_impl_drift_report/recheck_findings_0203.tsv" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 10ms:
+65dda143c60209a6f5a015a78ae2597d64abc8c5
+28 design_impl_drift_report/recheck_findings_0203.tsv
+通番	機能No	機能名	再調査判定	再調査後_指摘区分	再調査後_重要度	設計書	設計書根拠_シート	設計書根拠_シート名	引用種別	設計書根拠_引用	設計書根拠_行	設計書期待値	現実装_参照	現実装_実態	判定根拠	画像確認メモ	確信度	ee_HEAD	旧_指摘区分	旧_重要度	旧_トリアージ区分	旧_設計書参照	旧_再確認HEAD
+0203-001	M05-01	M05-01 受注情報検索 一覧(検索入力)	UPHELD	未実装	med	0203_基本設計仕様書(受注管理機能).html	sheet-3	受注情報検索 一覧(検索入力)	TEXT	・引き渡し後の受注情報に引き渡し前の注文番号を紐づけておき、引き渡し前の注文番号で検索した際に、引き渡し後の受注情報が検索できるようにする	1180	受注検索の注文番号条件に引き渡し前(旧)の注文番号を入力したとき、その番号が紐づく引き渡し後(新)の受注情報が検索結果に出ること。	src/Eccube/Repository/OrderRepository.php:275; src/Eccube/Repository/OrderRepository.php:591	管理受注検索 getQueryBuilderBySearchDataForAdmin() の注文番号条件は o.order_number LIKE :order_number のみで、next_order_id を辿る join/subquery が無い。さらに同メソッドは o.nextOrderId IS NULL を無条件に付けるため、引き渡し前の旧受注そのものも検索結果から除外される。	旧注文番号→新受注の逆引き経路が現HEAD(d86fc600e1)にも存在せず、設計要求は未実装のまま。next_order_id の逆引きは findOrderIdsReferencedAsNextOrder()/findOtcOrderNumbersByNextOrderIds() にあるがフロント購入履歴用で、管理受注検索からは呼ばれない。		high	d86fc600e1	未実装	med	要修正-設計準拠	excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3:1012	da9c2ba276
+0203-002	M05-01	M05-01 受注情報検索 一覧(検索入力)	UPHELD	実装違い	low	0203_基本設計仕様書(受注管理機能).html	sheet-3	受注情報検索 一覧(検索入力)	TEXT	・また保存した検索パターン個々にリロードアイコンがあり、クリックするとその検索条件に該当する受注件数がその場で表示される	1173	保存した検索パターンは「個々に」リンク・該当件数(未更新時は*)・リロードアイコンを持つこと(同シート1171・1176も同旨)。	src/Eccube/Resource/template/admin/Order/index.twig:1054; src/Eccube/Resource/template/admin/Order/index.twig:1057	index.twig 1054-1055 で pattern_id と一致する(=現在適用中の)検索パターンは {{ SearchPattern.name }} を出すだけ。リンク(admin_order_search_pattern)・件数span(pattern_id_*)・個別リロードボタン(get_count_pattern)は 1057-1062 の else 側にしかない。	現HEADでも選択中パターンだけ3要素を欠くため、設計の「個々に」を満たさない。ただし全件更新ボタンは存在し、非選択パターンでは満たされるため実害は限定的。		high	d86fc600e1	実装違い	med	要修正-設計準拠	excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3:1003,1004,1005,1007,1109,1110	da9c2ba276
+0203-003	M05-03	M05-03 受注一覧カスタムCSV出力	UPHELD	未実装	med	0203_基本設計仕様書(受注管理機能).html	sheet-6	受注一覧カスタムCSV出力	TEXT	★非会員である場合、識別ID:4「お名前(姓)」に非会員と表現する	1939	受注一覧カスタムCSV出力で、非会員の受注は「お名前(姓)」列に「非会員」と出力すること。	src/Eccube/Service/CsvExportService.php:410	CsvExportService::exportOrder は各CSV定義について getData() の生値を出すだけで、Order.Customer が null のとき name01 を「非会員」へ置換する分岐が無い。スマレジ経由の guest 受注のみ SmaregiOrderFactory:120 が Order::NON_MEMBER_NAME01 を事前設定するため結果的に「非会員」になるが、フロントの非会員購入では入力された実姓がそのまま出力される。	出力経路に非会員判定が無いことを現HEADで再確認。設計は出力側の表現規則として要求しているため未実装。		high	d86fc600e1	未実装	med	要修正-設計準拠	/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-6:2331,2401,2405	da9c2ba276
+0203-004	M05-04	M05-04 受注詳細CSV出力	UPHELD	未実装	med	0203_基本設計仕様書(受注管理機能).html	sheet-7	受注詳細CSV出力	TEXT	67 送料ID	2081	受注詳細CSV出力項目設定に識別ID:67「送料ID」を持ち、CSV出力項目として出力できること。	app/DoctrineMigrations/Version20210831190000.php:34; app/DoctrineMigrations/Version20260226000001.php:96	Version20210831190000 が dtb_csv から 送料ID 行(id 122,193)を DELETE している。配送CSV(csv_type_id=4)の出力項目設定を再構成する Version20260226000001 でも sort_no=66 が お届け希望日、68 が 送料(shipping_delivery_fee)で、67 は欠番のまま「送料ID」を追加していない。	dtb_csv 初期データ・全マイグレーション(csv_type_id=4 を触るのは 20260226000001 / 20260513140000 / 20260724120000 の3本)を通して「送料ID」が存在しないことを確認。設計の識別ID:67は未実装。		high	d86fc600e1	未実装	med	要修正-設計準拠	excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-7:2623	da9c2ba276
+0203-005	M05-04	M05-04 受注詳細CSV出力	UPHELD	未実装	med	0203_基本設計仕様書(受注管理機能).html	sheet-7	受注詳細CSV出力	TEXT	88 注文番号	2102	受注詳細CSV出力項目設定に識別ID:88「注文番号」を持ち、CSV出力項目として出力できること(識別ID:1の注文番号とは別列)。	app/DoctrineMigrations/Version20260226000001.php:115; app/DoctrineMigrations/Version20260226000001.php:116	配送CSV(csv_type_id=4)の注文番号は sort_no=1 の1列のみ。Version20260226000001 は sort_no=87 に 注文国、89 に 配送先国 を INSERT し、88 は欠番のまま2つ目の注文番号列を作っていない。	設計の識別ID:88に対応する出力項目が dtb_csv 初期データにもマイグレーションにも無いことを現HEADで確認。		high	d86fc600e1	未実装	med	要修正-設計準拠	excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-7:2644	da9c2ba276
+0203-006	M05-05	M05-05 受注詳細カスタムCSV出力	UPHELD	未実装	med	0203_基本設計仕様書(受注管理機能).html	sheet-8	受注詳細カスタムCSV出力	TEXT	★非会員である場合、識別ID:3「お名前(姓)」に非会員と表現する	2301	受注詳細カスタムCSV出力で、非会員の受注は「お名前(姓)」列に「非会員」と出力すること。	src/Eccube/Service/CsvExportService.php:494	CsvExportService::exportShipping は Order から getData()、null のときだけ Shipping へフォールバックする構造で、Order.Customer の有無を見て「非会員」へ置換する処理が無い。	0203-003 と同じ欠落がカスタム配送CSV経路にもあることを現HEADで再確認。		high	d86fc600e1	未実装	med	要修正-設計準拠	/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-8:2806,2924	da9c2ba276
+0203-007	M05-05	M05-05 受注詳細カスタムCSV出力	NOT_IN_DESIGN			0203_基本設計仕様書(受注管理機能).html									旧指摘の期待値「拡張定義の論理削除(deleted_at)を除外してドロップダウンに出す」は、再生成後のsheet-8(受注詳細カスタムCSV出力)の全文(項目表・カスタマイズ説明・現行仕様の業務ロジック/入出力/表示メッセージ)を通読しても記述が無い(「削除」の語はシート内で機能名見出し1件のみ)。設計書に無い要求のため指摘から外す。実装(OrderController.php:299 が findBy で deleted_at 未考慮)自体は事実だが、正本の裏付けが無い。		high	d86fc600e1	実装違い	med	要修正-設計準拠	/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-8:2933,2937	da9c2ba276
+0203-008	M05-06	M05-06 【新規】手動メール通知(確認画面)	RESOLVED			0203_基本設計仕様書(受注管理機能).html	sheet-10	【新規】手動メール通知(確認画面)	TEXT	・送信ボタンを押下すると確認のダイアログを表示し、OKなら送信を実行する。	2524	送信ボタン押下→確認ダイアログ→OKで送信実行、成功/失敗に応じてメッセージを表示すること。	src/Eccube/Controller/Admin/Order/MailController.php:564; src/Eccube/Controller/Admin/Order/MailController.php:473	html/template/admin/assets/js/manual_mail.js:3-4 が #send_mail の click で confirm('お客様にメールを送信します。よろしいですか？') を出し、キャンセル時は送信しない。MailController::manualMailAll は成功時に admin.order.mail_send_complete(564行)、失敗時に admin.order.mail_send_failed 等(473・503・505・511・528・540行)を addError する。	確認ダイアログ・成功メッセージ・失敗メッセージがいずれも現HEADに存在し、設計要求を満たすため解消済み。		high	d86fc600e1	未実装	med	解消済-クローズ	excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-10:3383	da9c2ba276
+0203-009	M05-11	M05-11 受注情報編集	NOT_IN_DESIGN			0203_基本設計仕様書(受注管理機能).html									旧指摘の期待値は function_spec_html_preview/pf-eccube3/m05-11_admin_order_order_edit.html:242,244 由来で、「現行実装に PurchaseFlow の prepare/commit は無い」という旧実装の内部挙動を確認値としている。再生成後のsheet-15(受注情報編集)には PurchaseFlow / prepare / commit / persist / flush / トランザクション のいずれの語も無く、永続化方式の要求記述が存在しない。HTML設計書を正とする本再調査では指摘に含めない。		high	d86fc600e1	実装違い	high	要修正-移植漏れ(設計書追記も要)	excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-15	da9c2ba276
+0203-010	M05-11	M05-11 受注情報編集	UPHELD	実装違い	low	0203_基本設計仕様書(受注管理機能).html	sheet-15	受注情報編集	TEXT	6-17 商品の追加 ボタン - - - 商品検索ダイアログを開く	3650	受注情報編集画面の識別ID 6-17 のボタン表示名は「商品の追加」であること(同シート1097行『「商品の追加」ボタンを押下すると商品検索ダイアログが開き』も同旨)。	src/Eccube/Resource/locale/messages.ja.yaml:2519; src/Eccube/Resource/template/admin/Order/edit.twig:1251	翻訳キー admin.order.add_product_item の値が「商品を追加」。edit.twig 1251/1253/1258 のボタンとモーダルタイトルが同キーを描画する。	設計の「商品の追加」に対し実装は「商品を追加」で助詞が異なる。現HEADでも一致していない。		high	d86fc600e1	実装違い	low	要修正-設計準拠	excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:4885	da9c2ba276
+0203-011	M05-11	M05-11 受注情報編集	UPHELD	実装違い	low	0203_基本設計仕様書(受注管理機能).html	sheet-15	受注情報編集	TEXT	6-27 お支払合計 ラベル	3687	受注情報編集画面の識別ID 6-27 のラベルは「お支払合計」であること。	src/Eccube/Resource/locale/messages.ja.yaml:2533; src/Eccube/Resource/template/admin/Order/edit.twig:1325	翻訳キー admin.order.payment_total の値が「お支払い合計」。edit.twig 1325 が支払合計行のラベルとして描画する。	設計の「お支払合計」に対し実装は「お支払い合計」で送り仮名が異なる。現HEADでも一致していない。		high	d86fc600e1	実装違い	low	要修正-設計準拠	excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:4895	da9c2ba276
+0203-012	M05-11	M05-11 【新規】受注情報履歴	RESTATED	実装違い	low	0203_基本設計仕様書(受注管理機能).html	sheet-16	【新規】受注情報履歴	TEXT	・欠品登録以外のボタンは非活性とする	4427	受注情報履歴の明細部では、欠品登録ボタンだけは非活性にせず(識別ID 4-3 の備考欄は空欄で、4-15削除・4-17商品の追加・4-18受注情報を登録には『非活性』と明記)、それ以外のボタンを非活性にすること。	src/Eccube/Resource/template/admin/Order/edit.twig:1164; src/Eccube/Controller/Admin/Order/HistoryController.php:63	HistoryController(GETのみ・form disabled=true・isHistoryView=true)が edit.twig を表示専用で再利用し、登録ボタン・リンク・商品の追加は disabled / order-history-inert 化されている。一方 edit.twig:1164 の欠品登録ボタンにも history_disabled_attr が付き、履歴表示では欠品登録も disabled になる。	旧指摘「履歴画面が丸ごと編集可能」は現HEADで解消済み。ただし設計が唯一の例外として活性を求める欠品登録ボタンまで非活性になっており、残差として維持する(内容を訂正)。		high	d86fc600e1	実装違い	med	一部解消-残差あり	excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-16:5558-5561,5574,5578-5597,5602-5605,5655-5658,5680,5682-5683	da9c2ba276
+0203-013	M05-19	M05-19 出荷指示リスト編集	NOT_IN_DESIGN			0203_基本設計仕様書(受注管理機能).html									旧指摘の期待値は function_spec_html_preview/pf-eccube3/m05-19_...html:231 由来で「当 index.twig の javascript ブロックは空」「プルダウンだけでは自動遷移しない」という旧実装の内部挙動である。再生成後のsheet-19(M05-19)には表示件数プルダウンの記述自体が無く、sheet-18 にも表示件数はラベル(識別ID 11)とセッション保持の説明があるだけで、change時の自動遷移の有無を定めていない。設計書に無いため指摘に含めない。		high	d86fc600e1	実装違い	med	要修正-移植漏れ(設計書追記も要)	excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-19	da9c2ba276
+0203-014	M05-19	M05-19 出荷指示リスト編集	NOT_IN_DESIGN			0203_基本設計仕様書(受注管理機能).html									旧指摘の期待値(option の value を /{admin_route}/standby/search?page_no=1&page_count=… 形式のURL文字列とする)は pf-eccube3 逆生成資料由来。再生成後のsheet-18/sheet-19 にはルート名・URL・option値の形式を定める記述が無い。設計書に無いため指摘に含めない。		high	d86fc600e1	実装違い	med	要修正-移植漏れ(設計書追記も要)	excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-19	da9c2ba276
+0203-015	M05-21	M05-21 ピッキングリスト印刷	RESTATED	実装違い	high	0203_基本設計仕様書(受注管理機能).html	sheet-20	ピッキングリスト印刷	TEXT	明細をサプライ品とそれ以外に分ける。サプライ品はグッズと予約グッズのカテゴリの明細とし、まとめて 1 グループにする。	5419	ピッキングリストのグループ分けで、サプライ品(=グッズカテゴリ・予約グッズカテゴリの明細)を1グループにまとめ、それ以外を価格しきい値で3グループに分けること。	src/Eccube/Controller/Admin/Order/ShippingStandbyController.php:395; src/Eccube/Controller/Admin/Order/ShippingStandbyController.php:397; src/Eccube/Controller/Admin/Order/ShippingStandbyController.php:400	printPickingList はカテゴリ定数(Category::GOODS_ID=2 / RESERVED_GOODS_ID=4)を一切参照せず、productClassRepository->getSubInfosByProductClassIds([productClassId]) の返却有無($hasSubInfo)だけで分岐し、サブ情報が無い明細を一律 goods(サプライ)帯へ入れている。	設計はカテゴリでサプライ品を定義するのに対し、実装は商品規格サブ情報の有無で判定する。カテゴリがグッズ/予約グッズでもサブ情報を持つ明細は価格帯側へ、逆にサブ情報を持たないカード明細は goods 側へ入るため、グループ分けの結果が設計と一致しない。旧指摘の期待値はpf-eccube3の処理ステップ表現だったため、HTML設計書の文言に置き換えて維持する。		high	d86fc600e1	実装違い	high	要修正-移植漏れ(設計書追記も要)	excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20	da9c2ba276
+0203-016	M05-21	M05-21 ピッキングリスト印刷	NOT_IN_DESIGN			0203_基本設計仕様書(受注管理機能).html									旧指摘の期待値(mtb_option を findBy で両キー一括取得し返却順の[0]/[1]を:price1/:price2に結ぶ)は pf-eccube3 のクエリ実装そのものであり、再生成後のsheet-20 には取得方法の記述が無い。sheet-20 が定めるのは『しきい値は受注一覧しきい値金額の 1 と 2 で、既定はそれぞれ 980 円と 4800 円』のみで、この既定値は Version20251125161057.php:86-97 が order_list_threshold_price_1=980 / _2=4800 を投入して満たしている。設計書に無い要求のため指摘から外す。		high	d86fc600e1	実装違い	low	要修正-移植漏れ(設計書追記も要)	excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20	da9c2ba276
+0203-017	M05-24	M05-24 出荷実績入力用CSV出力	UPHELD	実装違い	med	0203_基本設計仕様書(受注管理機能).html	sheet-23	出荷実績入力用CSV出力	TEXT	52 配送先_住所1 53 配送先_住所2 54 配送先_TEL1	5662	出荷実績入力用CSV出力項目設定は識別ID 1〜64 の64列で、配送先_住所2 の次は 配送先_TEL1 であり 配送先_住所3 列を持たないこと。	src/Eccube/Controller/Admin/Order/OrderCsvController.php:101; src/Eccube/Repository/OrderRepository.php:1616	OrderCsvController::CSV_HEADER は65列で、52 配送先_住所1 / 53 配送先_住所2 の次(54)に 配送先_住所3 を挟んでから 配送先_TEL1 が続く。出力SQL generateResultCsv も s.addr03 AS shipping_addr03 を選択して行に含める。	CSV_HEADER のキーを機械列挙して65列・54番目が配送先_住所3であることを現HEADで確認。設計の64列定義と列構成が一致しない。		high	d86fc600e1	実装違い	med	要修正-設計準拠	excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23:7474	da9c2ba276
+0203-018	M05-26	M05-26 出荷実績インポート登録	NOT_IN_DESIGN			0203_基本設計仕様書(受注管理機能).html									旧指摘の期待値はルート名 admin_shipping_result_csv_upload とパス /{admin_route}/order/shipping_result_csv/upload の対応を問うもの。再生成後のsheet-24(出荷実績インポート登録)にはルート名・URLパスを定めた記述が無い(旧指摘が参照していた行7757は再生成後のHTMLに存在せず、当該エンドポイント表は現行の正本に含まれない)。設計書に無いため指摘に含めない。なお実装はパス /order/shipping_result_csv/import・ルート名 admin_shipping_result_csv_upload で整合しており、フォームの送信先とも一致する。		high	d86fc600e1	実装違い	med	要修正-移植漏れ(設計書追記も要)	excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-24:7757	da9c2ba276
+0203-019	M05-26	M05-26 出荷実績インポート登録	RESOLVED			0203_基本設計仕様書(受注管理機能).html	sheet-24	出荷実績インポート登録	TEXT	・出荷完了メールを送信する。	5754	出荷実績インポートで更新された受注について、出荷完了メールを送信すること。	src/Eccube/Controller/Admin/Order/OrderCsvController.php:381	OrderCsvController::shippingResultImport は commit 後(379-390行)に $this->mailService->sendShippingCompleteMail($Order) を更新受注ごとに呼び、送信できた受注の全配送先へ mail_send_date を記録する。	旧指摘時に存在しなかった出荷完了メール送信が現HEADで実装されており、設計要求を満たすため解消済み。		high	d86fc600e1	未実装	med	解消済-クローズ	excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-24:7636	da9c2ba276
+0203-020	M05-26	M05-26 出荷実績登録CSVフォーマット	UPHELD	実装違い	high	0203_基本設計仕様書(受注管理機能).html	sheet-24	出荷実績インポート登録	TEXT	受注に出荷日がまだ入っていないときだけ、対応状況を出荷完了に変え、出荷日と送り状No.を設定する。	5819	対応状況・出荷日・送り状No.の更新可否は「受注に出荷日が入っていないこと」だけで決まり、更新前の対応状況を条件にしないこと(同シートの入出力:永続化『対応状況・出荷日・送り状No.の更新／受注に出荷日が入っていないときだけ』も同旨)。	src/Eccube/Service/Csv/OrderCsv.php:133; src/Eccube/Service/Csv/OrderCsv.php:134	OrderCsv::registerShippingResult は $isPreDeliv = 対応状況が PRE_DELIV(出荷指示) か を求め、if ($isPreDeliv && $order->getShippingDate() === null) の両成立時だけ対応状況・出荷日・送り状No.を更新する。	設計に無い対応状況条件が追加されているため、出荷指示以外の対応状況で出荷日未設定の受注は取り込んでも更新されず、$updatedOrders にも入らないためポイント付与・出荷完了メール・スマレジ連携の対象からも外れる。現HEADで再現。		high	d86fc600e1	実装違い	high	要修正-設計準拠	excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-25	da9c2ba276
+0203-021	M05-26	M05-26 出荷実績登録CSVフォーマット	RESTATED	実装違い	med	0203_基本設計仕様書(受注管理機能).html	sheet-24	出荷実績インポート登録	TEXT	これらは受注の更新を確定したあとに動くため、途中で失敗したときも取り消されない。	5825	登録後の処理(1 ポイント付与 / 2 出荷完了メール / 3 スマレジ側ポイント加算)は受注更新の確定後に実行し、途中で失敗しても確定済みの受注更新や付与済みポイントは取り消されないこと。	src/Eccube/Controller/Admin/Order/OrderCsvController.php:344; src/Eccube/Controller/Admin/Order/OrderCsvController.php:349; src/Eccube/Controller/Admin/Order/OrderCsvController.php:359	beginTransaction(344行)〜commit(359行)の内側で pointService->gainPoints(349行)を呼ぶため、ポイント付与で例外が出ると catch(359-374行)が rollback し、受注更新ごと取り消される。出荷完了メール(381行)とスマレジ発生ポイント連携(398-404行)は commit 後に移されており設計どおり。	旧指摘は3処理すべてがトランザクション内という内容だったが、現HEADではメールとスマレジ連携がcommit後に是正済み。残るのはポイント付与のみのため範囲を訂正して維持する。		high	d86fc600e1	未実装	med	一部解消-残差あり	excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-25	da9c2ba276
+0203-022	M05-26	M05-26 出荷実績登録CSVフォーマット	RESTATED	実装違い	med	0203_基本設計仕様書(受注管理機能).html	sheet-25	出荷実績登録CSVフォーマット	TEXT	52 配送先_住所1 文字型 新宿区高田馬場 53 配送先_住所2 文字型 3-12-2 54 配送先_TEL1 数値(整数) 03	5920	出荷実績登録CSVの取り込みが想定する項目一式に 配送先_住所3 を含めないこと(配送先_住所2 の次は 配送先_TEL1)。	src/Eccube/Controller/Admin/Order/OrderCsvController.php:101; src/Eccube/Controller/Admin/Order/OrderCsvController.php:172	取り込みのヘッダ照合に使う CSV_HEADER(101行)と NOT_REQUIRED_CSV_HEADER(172行)の双方に 配送先_住所3 が入り、想定項目が65列になっている。checkHeaderValues は想定項目に無い項目名を弾き、checkHeaderSize は行の列数をヘッダ行と一致させる。	設計64列の定義で出力したCSVをそのまま取り込む運用を想定すると、実装側の想定項目が1列多い。0203-025 と同一の CSV_HEADER 定義に起因する同根の指摘であり、修正は1箇所で足りる(旧指摘の『pf-eccube3プラグインでは載らない』という根拠をHTML設計書の項目表に置き換えて維持)。		high	d86fc600e1	実装違い	med	要再起票(記述が事実と相違)	excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-25	da9c2ba276
+0203-023	M05-26	M05-26 出荷実績登録CSVフォーマット	NOT_IN_DESIGN			0203_基本設計仕様書(受注管理機能).html									旧指摘の期待値『サイズ判定の分岐は空であり、サイズが0でもオブジェクト経路に残りうる(実装上の注意)』は functions/pf-eccube3/m05-26_...md:61 由来の旧実装の内部挙動メモである。再生成後のsheet-24/sheet-25 にはアップロードファイルのサイズ0時の扱いを定めた記述が無い。設計書に無いため指摘に含めない。		high	d86fc600e1	実装違い	low	要修正-移植漏れ(設計書追記も要)	excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-25	da9c2ba276
+0203-024	M05-26	M05-26 出荷実績登録CSVフォーマット	RESOLVED			0203_基本設計仕様書(受注管理機能).html	sheet-24	出荷実績インポート登録	TEXT	注文番号を 8 桁のゼロ埋めに整えて受注を探し、見つからないときはエラーとする	5817	取り込み行の注文番号を8桁ゼロ埋めに整形したうえで受注を検索し、見つからないときは行を示してエラーとすること。	src/Eccube/Service/Csv/OrderCsv.php:112; src/Eccube/Service/Csv/OrderCsv.php:113	OrderCsv::registerShippingResult は $orderNumber = sprintf('%08d', $row['注文番号']) で8桁ゼロ埋めし、orderRepository->findOneBy(['order_number' => $orderNumber]) で受注を引き、null のとき admin.csv.error.data.not_registered を投げる。	設計が要求する8桁ゼロ埋め検索は現HEADで実装済み。旧指摘が併記していた『サブ注文情報を検索する』は再生成後のsheet-24/25 に記述が無く、正本の裏付けが無いため採らない。		high	d86fc600e1	実装違い	med	一部解消-残差あり	function_spec_html_preview/pf-eccube3/m05-26_admin_order_order_shipping_result_csv_import.html:69,98	da9c2ba276
+0203-025	M05-26	M05-26 出荷実績登録CSVフォーマット	UPHELD	未実装	med	0203_基本設計仕様書(受注管理機能).html	sheet-25	出荷実績登録CSVフォーマット	TEXT	53 配送先_住所2 文字型 3-12-2 54 配送先_TEL1 数値(整数) 03	5920	出荷実績登録CSVフォーマットは識別ID 1〜64 の64列で、配送先項目は 配送先_住所1(52)・配送先_住所2(53) の次が 配送先_TEL1(54) であり、配送先_住所3 列を定義しないこと。	src/Eccube/Controller/Admin/Order/OrderCsvController.php:101; src/Eccube/Resource/template/admin/Order/shipping_result_csv_import.twig:82	CSV_HEADER は65列で54番目に 配送先_住所3 を持つ。取り込み画面のフォーマット表(shipping_result_csv_import.twig:82 の headers|keys)もこの65列をそのまま見出しとして表示する。	設計の64列定義に対し実装の契約は65列。CSV_HEADER のキーを機械列挙して現HEADで確認。0203-022 と同根(CSV_HEADER定義)。		high	d86fc600e1	未実装	med	要修正-設計準拠	excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-25:7837	da9c2ba276
+0203-026	M05-26	M05-26 出荷実績登録CSVフォーマット	UPHELD	実装違い	low	0203_基本設計仕様書(受注管理機能).html	sheet-25	出荷実績登録CSVフォーマット	TEXT	62 送り状No. 数値(整数) 12345	5945	出荷実績登録CSVの「送り状No.」は書式・制限が数値(整数)であること。	src/Eccube/Service/Csv/OrderCsv.php:131; src/Eccube/Entity/Order.php:679	OrderCsv::registerShippingResult は $invoiceNumber = $row['送り状No.'] と文字列のまま受け取り setInvoiceNumber へ渡す。Order::$invoice_number は length=64 の string 定義で、数値かどうかの検査は行われない(AbstractCsvService も必須項目の空検査のみ)。	設計が書式・制限として数値(整数)を定めるのに対し、実装には整数検査が無く任意の文字列を登録できる。現HEADで再現。実害は限定的だが設計の制限が実装されていない。		med	d86fc600e1	実装違い	med	要修正-設計準拠	excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-25:7847	da9c2ba276
+0203-027	M05-27	M05-27 店頭注文番号札管理	DESIGN_ISSUE			0203_基本設計仕様書(受注管理機能).html	sheet-26	店頭注文番号札管理	TEXT	リンク押下でJavaScriptポップアップを表示	6033	(正本内で記述が矛盾)項目表(識別ID 6 削除ボタン)は『リンク押下でJavaScriptポップアップを表示』『「[店頭注文番号]を を削除してもよろしいですか？」』とする一方、同じシートの表示メッセージ表 M05-27-MSG-001 は表示位置『画面中央(ダイアログ/モーダル)』・文言『この操作はあとから取り消すことができません。「%name%」を削除してよろしいですか？』とする。	src/Eccube/Resource/template/admin/Order/waiting_tag.twig:121; src/Eccube/Resource/template/admin/Order/waiting_tag.twig:123; src/Eccube/Resource/locale/messages.ja.yaml:1786	waiting_tag.twig は Bootstrap モーダル(#DeleteModal)を開き、本文に admin.common.delete_modal__message(『この操作はあとから取り消すことができません。「%name%」を削除してよろしいですか？』)を挿す。	実装は同一シートの表示メッセージ表 M05-27-MSG-001 と完全に一致し、矛盾するのは項目表の備考欄のみ。どちらを正とするかは設計側の裁定事項であり、実装乖離としては起票しない。		high	d86fc600e1	実装違い	med	要修正-設計準拠	/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-26:8016	da9c2ba276
+
+exec
+/bin/bash -lc 'git rev-parse HEAD && git status --short && rg --files /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/recheck/0203/review/sheets | sort -V' in /home/y-saito/Developments/ec-cube-enterprise
+ succeeded in 107ms:
+d86fc600e109f236a379b11609a5674d8b5dc967
+ M composer.json
+ M composer.lock
+ M src/Eccube/Command/Seeder/SeedUnisearchPurchaseTagCommand.php
+?? app/config/eccube/packages/prod/eccube_e2e_login_throttling.yaml
+?? var/tmp/crop.php
+?? var/tmp/crop_confirm_en.png
+?? var/tmp/crop_header_en.png
+?? var/tmp/crop_header_ja.png
+?? var/tmp/crop_index_top.png
+?? var/tmp/crop_mobile_ja.png
+?? var/tmp/crop_search_top.png
+?? var/tmp/crop_venue_en.png
+?? var/tmp/screenshots/
+?? var/tmp/seed-eccube-1416.php
+?? var/tmp/seed-eccube-1439.php
+?? var/tmp/seed-eccube-1516.php
+?? var/tmp/seed-eccube-1521.php
+?? var/tmp/seed-eccube-1525.php
+?? var/tmp/seed-eccube-1526.php
+?? var/tmp/seed-eccube-1527-images4.sql
+?? var/tmp/seed-eccube-1527.php
+?? var/tmp/seed-eccube-1528.php
+?? var/tmp/seed-eccube-capture.php
+?? var/tmp/seed-eccube-hareruya-1494.php
+?? var/tmp/seed-eccube-purchase-categories.php
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/recheck/0203/review/sheets/sheet-1.txt
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/recheck/0203/review/sheets/sheet-2.txt
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/recheck/0203/review/sheets/sheet-3.txt
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/recheck/0203/review/sheets/sheet-4.txt
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/recheck/0203/review/sheets/sheet-5.txt
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/recheck/0203/review/sheets/sheet-6.txt
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/recheck/0203/review/sheets/sheet-7.txt
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/recheck/0203/review/sheets/sheet-8.txt
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/recheck/0203/review/sheets/sheet-9.txt
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/recheck/0203/review/sheets/sheet-10.txt
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/recheck/0203/review/sheets/sheet-11.txt
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/recheck/0203/review/sheets/sheet-12.txt
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/recheck/0203/review/sheets/sheet-13.txt
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/recheck/0203/review/sheets/sheet-14.txt
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/recheck/0203/review/sheets/sheet-15.txt
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/recheck/0203/review/sheets/sheet-16.txt
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/recheck/0203/review/sheets/sheet-17.txt
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/recheck/0203/review/sheets/sheet-18.txt
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/recheck/0203/review/sheets/sheet-19.txt
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/recheck/0203/review/sheets/sheet-20.txt
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/recheck/0203/review/sheets/sheet-21.txt
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/recheck/0203/review/sheets/sheet-22.txt
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/recheck/0203/review/sheets/sheet-23.txt
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/recheck/0203/review/sheets/sheet-24.txt
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/recheck/0203/review/sheets/sheet-25.txt
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/recheck/0203/review/sheets/sheet-26.txt
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/recheck/0203/review/sheets/sheet-27.txt
+
+codex
+実装リポジトリのHEADは指定どおり `d86fc600e1` です。作業ツリーには既存の未コミット変更がありますが、本レビューは読み取りだけなので一切触れません。なお成果物上の `NOT_IN_DESIGN` は列挙どおり7件で、依頼文の「8件」は件数表記だけが不一致です。対象IDはその7件すべてを確認します。
+exec
+/bin/bash -lc "python3 - <<'PY'
+import csv, pathlib
+base=pathlib.Path('/home/y-saito/Developments/hareruya-design-docs')
+tsv=base/'design_impl_drift_report/recheck_findings_0203.tsv'
+rows=list(csv.DictReader(tsv.open(),delimiter='\\t'))
+for x in rows:
+    sid=x['設計書根拠_シート'].removeprefix('sheet-')
+    q=x['設計書根拠_引用']
+    hit='-'
+    if sid and q:
+      s=(base/f'design_impl_drift_report/recheck/0203/review/sheets/sheet-{sid}.txt').read_text()
+      hit=str(q in s)
+    print(x['通番'], x['再調査判定'], x['設計書根拠_シート'] or '-', 'quote='+hit, x['現実装_参照'] or '-')
+PY" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 23ms:
+0203-001 UPHELD sheet-3 quote=True src/Eccube/Repository/OrderRepository.php:275; src/Eccube/Repository/OrderRepository.php:591
+0203-002 UPHELD sheet-3 quote=True src/Eccube/Resource/template/admin/Order/index.twig:1054; src/Eccube/Resource/template/admin/Order/index.twig:1057
+0203-003 UPHELD sheet-6 quote=True src/Eccube/Service/CsvExportService.php:410
+0203-004 UPHELD sheet-7 quote=False app/DoctrineMigrations/Version20210831190000.php:34; app/DoctrineMigrations/Version20260226000001.php:96
+0203-005 UPHELD sheet-7 quote=False app/DoctrineMigrations/Version20260226000001.php:115; app/DoctrineMigrations/Version20260226000001.php:116
+0203-006 UPHELD sheet-8 quote=True src/Eccube/Service/CsvExportService.php:494
+0203-007 NOT_IN_DESIGN - quote=- -
+0203-008 RESOLVED sheet-10 quote=True src/Eccube/Controller/Admin/Order/MailController.php:564; src/Eccube/Controller/Admin/Order/MailController.php:473
+0203-009 NOT_IN_DESIGN - quote=- -
+0203-010 UPHELD sheet-15 quote=False src/Eccube/Resource/locale/messages.ja.yaml:2519; src/Eccube/Resource/template/admin/Order/edit.twig:1251
+0203-011 UPHELD sheet-15 quote=False src/Eccube/Resource/locale/messages.ja.yaml:2533; src/Eccube/Resource/template/admin/Order/edit.twig:1325
+0203-012 RESTATED sheet-16 quote=True src/Eccube/Resource/template/admin/Order/edit.twig:1164; src/Eccube/Controller/Admin/Order/HistoryController.php:63
+0203-013 NOT_IN_DESIGN - quote=- -
+0203-014 NOT_IN_DESIGN - quote=- -
+0203-015 RESTATED sheet-20 quote=True src/Eccube/Controller/Admin/Order/ShippingStandbyController.php:395; src/Eccube/Controller/Admin/Order/ShippingStandbyController.php:397; src/Eccube/Controller/Admin/Order/ShippingStandbyController.php:400
+0203-016 NOT_IN_DESIGN - quote=- -
+0203-017 UPHELD sheet-23 quote=False src/Eccube/Controller/Admin/Order/OrderCsvController.php:101; src/Eccube/Repository/OrderRepository.php:1616
+0203-018 NOT_IN_DESIGN - quote=- -
+0203-019 RESOLVED sheet-24 quote=True src/Eccube/Controller/Admin/Order/OrderCsvController.php:381
+0203-020 UPHELD sheet-24 quote=True src/Eccube/Service/Csv/OrderCsv.php:133; src/Eccube/Service/Csv/OrderCsv.php:134
+0203-021 RESTATED sheet-24 quote=True src/Eccube/Controller/Admin/Order/OrderCsvController.php:344; src/Eccube/Controller/Admin/Order/OrderCsvController.php:349; src/Eccube/Controller/Admin/Order/OrderCsvController.php:359
+0203-022 RESTATED sheet-25 quote=False src/Eccube/Controller/Admin/Order/OrderCsvController.php:101; src/Eccube/Controller/Admin/Order/OrderCsvController.php:172
+0203-023 NOT_IN_DESIGN - quote=- -
+0203-024 RESOLVED sheet-24 quote=True src/Eccube/Service/Csv/OrderCsv.php:112; src/Eccube/Service/Csv/OrderCsv.php:113
+0203-025 UPHELD sheet-25 quote=False src/Eccube/Controller/Admin/Order/OrderCsvController.php:101; src/Eccube/Resource/template/admin/Order/shipping_result_csv_import.twig:82
+0203-026 UPHELD sheet-25 quote=False src/Eccube/Service/Csv/OrderCsv.php:131; src/Eccube/Entity/Order.php:679
+0203-027 DESIGN_ISSUE sheet-26 quote=True src/Eccube/Resource/template/admin/Order/waiting_tag.twig:121; src/Eccube/Resource/template/admin/Order/waiting_tag.twig:123; src/Eccube/Resource/locale/messages.ja.yaml:1786
+
+exec
+/bin/bash -lc "wc -l design_impl_drift_report/recheck/0203/review/sheets/sheet-{8,15,18,19,20,24,25}.txt && rg -n -i 'deleted_at|削除|PurchaseFlow|prepare|commit|persist|flush|トランザクション|表示件数|page_count|standby/search|URL|ルート|mtb_option|しきい値|閾値|980|4800|shipping_result_csv|upload|import|サイズ|0バイト|ゼロ|空ファイル|注文番号|サブ注文' design_impl_drift_report/recheck/0203/review/sheets/sheet-{8,15,18,19,20,24,25}.txt" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 104ms:
+   174 design_impl_drift_report/recheck/0203/review/sheets/sheet-8.txt
+   890 design_impl_drift_report/recheck/0203/review/sheets/sheet-15.txt
+   134 design_impl_drift_report/recheck/0203/review/sheets/sheet-18.txt
+   159 design_impl_drift_report/recheck/0203/review/sheets/sheet-19.txt
+   162 design_impl_drift_report/recheck/0203/review/sheets/sheet-20.txt
+   109 design_impl_drift_report/recheck/0203/review/sheets/sheet-24.txt
+   115 design_impl_drift_report/recheck/0203/review/sheets/sheet-25.txt
+  1743 total
+design_impl_drift_report/recheck/0203/review/sheets/sheet-20.txt:50:商品単位_980円未満
+design_impl_drift_report/recheck/0203/review/sheets/sheet-20.txt:51:商品単位_980円以上_4800円未満
+design_impl_drift_report/recheck/0203/review/sheets/sheet-20.txt:52:商品単位_4800円以上
+design_impl_drift_report/recheck/0203/review/sheets/sheet-20.txt:116:サプライ品以外は、受注明細の価格を 2 つのしきい値と比べて 3 グループに分ける。しきい値は受注一覧しきい値金額の 1 と 2 で、既定はそれぞれ 980 円と 4800 円である。
+design_impl_drift_report/recheck/0203/review/sheets/sheet-20.txt:118:低額	しきい値 1 未満
+design_impl_drift_report/recheck/0203/review/sheets/sheet-20.txt:119:中額	しきい値 1 以上、しきい値 2 未満
+design_impl_drift_report/recheck/0203/review/sheets/sheet-20.txt:120:高額	しきい値 2 以上
+design_impl_drift_report/recheck/0203/review/sheets/sheet-20.txt:121:しきい値 1 をしきい値 2 以上に設定したときは、しきい値 1 未満かつしきい値 2 以上になる価格が生じ、その明細はどのグループにも入らない。
+design_impl_drift_report/recheck/0203/review/sheets/sheet-20.txt:158:出荷指示リストの情報、グループごとの明細と数量の合計、しきい値金額 2 種を印刷用の画面に表示する。グループの見出しにはしきい値金額を入れる。
+design_impl_drift_report/recheck/0203/review/sheets/sheet-18.txt:21:出荷指示リスト詳細編集_削除
+design_impl_drift_report/recheck/0203/review/sheets/sheet-18.txt:49:・ポップアップメニューの「削除」をクリックすると、確認のJSダイアログを表示し、OKなら当該出荷指示データを削除して、
+design_impl_drift_report/recheck/0203/review/sheets/sheet-18.txt:50:削除完了メッセージを表示する。
+design_impl_drift_report/recheck/0203/review/sheets/sheet-18.txt:54:2	注文番号	数値（整数）	-	-	-
+design_impl_drift_report/recheck/0203/review/sheets/sheet-18.txt:63:11	表示件数	ラベル	-	-	-
+design_impl_drift_report/recheck/0203/review/sheets/sheet-18.txt:69:17	ポップアップメニュー	リンク	-	-	-	「編集」「削除」のメニューを表示する
+design_impl_drift_report/recheck/0203/review/sheets/sheet-18.txt:99:注文番号	その注文番号を持つ受注を含む出荷指示リストに限定
+design_impl_drift_report/recheck/0203/review/sheets/sheet-18.txt:106:注文番号は完全一致だけで、部分一致では絞り込めない。指定した注文番号を持つ受注が無いときは、該当なしになる。
+design_impl_drift_report/recheck/0203/review/sheets/sheet-18.txt:113:初期表示では、保持していた検索条件・ページ番号・表示件数を破棄し、空の検索フォームと空の一覧を表示する。並び替えの指定は破棄しない。
+design_impl_drift_report/recheck/0203/review/sheets/sheet-18.txt:117:表示件数とページ番号
+design_impl_drift_report/recheck/0203/review/sheets/sheet-18.txt:118:表示件数はセッションに保持した値を使い、未設定のときは既定値を使う。指定した表示件数は、表示件数マスタに登録された値のいずれかと一致するときだけ採用し、セッションへ保存する。一致しない値は無視する。
+design_impl_drift_report/recheck/0203/review/sheets/sheet-18.txt:119:ページ番号が 2 以上で、かつ総件数が 1 つ前のページまでの表示件数の合計と厳密に一致するときだけ、ページ番号を 1 減らす。最終ページのデータが消えて表示対象が無くなったとき、1 つ前のページを表示する。この比較は値だけでなく型も一致することを求める。
+design_impl_drift_report/recheck/0203/review/sheets/sheet-8.txt:28:1	注文番号	本店、支店、スマレジの注文データを出力対象とする
+design_impl_drift_report/recheck/0203/review/sheets/sheet-8.txt:115:88	注文番号
+design_impl_drift_report/recheck/0203/review/sheets/sheet-8.txt:148:一覧のページ番号と表示件数は出力対象に影響しない。表示していたページの受注だけに絞られることはなく、条件に一致する限りすべての受注を出力する。
+design_impl_drift_report/recheck/0203/review/sheets/sheet-8.txt:154:受注サブ情報	項目名に対応する値。注文番号と送り状No.だけを出力でき、どちらにも対応しない項目名を登録したときは空欄になる
+design_impl_drift_report/recheck/0203/review/sheets/sheet-25.txt:27:1	注文番号		数値(整数)	〇		01234567	更新のキー項目
+design_impl_drift_report/recheck/0203/review/sheets/sheet-25.txt:92:functions/pf-eccube3/m05-26_admin_order_order_shipping_result_csv_format.md
+design_impl_drift_report/recheck/0203/review/sheets/sheet-25.txt:97:出荷実績入力用CSV出力と出荷実績インポート登録は、同じ 63 項目だけを使う。注文番号で始まり、お届け時間の名称で終わる。出力したファイルに出荷日と送り状No.を書き込んだときは、そのまま取り込める。
+design_impl_drift_report/recheck/0203/review/sheets/sheet-25.txt:101:必須の項目は注文番号だけである。注文番号で受注を特定するため、値が空のときはその行でエラーになる。
+design_impl_drift_report/recheck/0203/review/sheets/sheet-25.txt:106:必須の注文番号がヘッダ行に無いとき	取り込まない
+design_impl_drift_report/recheck/0203/review/sheets/sheet-24.txt:31:・TSVの文言を削除する
+design_impl_drift_report/recheck/0203/review/sheets/sheet-24.txt:34:・指定した注文番号に該当する受注情報データの「出荷日」が登録済みでなければデータを更新する。
+design_impl_drift_report/recheck/0203/review/sheets/sheet-24.txt:42:★TSVの文言を削除する
+design_impl_drift_report/recheck/0203/review/sheets/sheet-24.txt:46:2	CSVファイルのアップロード	ボタン				TSVの文言を削除する
+design_impl_drift_report/recheck/0203/review/sheets/sheet-24.txt:60:functions/pf-eccube3/m05-26_admin_order_order_shipping_result_csv_import.md
+design_impl_drift_report/recheck/0203/review/sheets/sheet-24.txt:71:ヘッダ行の項目が想定の 63 項目と一致すること。必須は注文番号だけで、それ以外は無くてもよい。
+design_impl_drift_report/recheck/0203/review/sheets/sheet-24.txt:77:2	注文番号が空のときはエラーとする
+design_impl_drift_report/recheck/0203/review/sheets/sheet-24.txt:78:3	注文番号を 8 桁のゼロ埋めに整えて受注を探し、見つからないときはエラーとする
+design_impl_drift_report/recheck/0203/review/sheets/sheet-24.txt:94:処理を終えるとき、取り込みに使った一時ファイルを削除する。削除に失敗しても処理は続ける。
+design_impl_drift_report/recheck/0203/review/sheets/sheet-19.txt:51:出荷指示リストのエクスポート、削除、備考の編集ができる。
+design_impl_drift_report/recheck/0203/review/sheets/sheet-19.txt:53:リスト削除ボタンを押下すると、確認のダイアログを表示し、OKなら当該出荷指示リストを削除して出荷指示リスト検索画面へ遷移する。
+design_impl_drift_report/recheck/0203/review/sheets/sheet-19.txt:68:7	リスト削除	ボタン	-	-	-
+design_impl_drift_report/recheck/0203/review/sheets/sheet-19.txt:76:15	注文番号	リンク	-	-	-	当該注文の編集画面に遷移する
+design_impl_drift_report/recheck/0203/review/sheets/sheet-19.txt:111:M05-20 出荷指示リスト詳細編集/削除 / 受注管理 — 出荷指示リスト詳細編集/削除
+design_impl_drift_report/recheck/0203/review/sheets/sheet-19.txt:117:削除	数字だけを受け付ける	出荷指示リストを削除し、検索結果へ戻る
+design_impl_drift_report/recheck/0203/review/sheets/sheet-19.txt:121:削除だけは削除専用の要求方法を用い、なりすまし対策トークンを検証する。トークンが不正なときは削除しない。
+design_impl_drift_report/recheck/0203/review/sheets/sheet-19.txt:124:最終更新者は、削除済みの担当者であっても名前を表示できるように、削除済みを除外する絞り込みを外して読み出す。担当者が見つからないときは名前欄を空にする。
+design_impl_drift_report/recheck/0203/review/sheets/sheet-19.txt:125:含まれる受注は、受注IDから注文番号をまとめて引き直して表示する。注文番号を持たない受注が含まれるときは、その行の注文番号だけが空になる。登録日と更新日は 年/月/日 時:分:秒 で表示し、値が無いときは空にする。
+design_impl_drift_report/recheck/0203/review/sheets/sheet-19.txt:130:削除
+design_impl_drift_report/recheck/0203/review/sheets/sheet-19.txt:131:削除は次の順で行う。
+design_impl_drift_report/recheck/0203/review/sheets/sheet-19.txt:132:指定した出荷指示リストを読み出す。IDが無いか見つからないときは、見つからない旨の応答を返して削除しない。
+design_impl_drift_report/recheck/0203/review/sheets/sheet-19.txt:134:出荷指示リストを削除する。
+design_impl_drift_report/recheck/0203/review/sheets/sheet-19.txt:135:受注そのものは削除しない。対応状況も元に戻さないため、削除した出荷指示リストに紐づいていた受注は、対応状況が出荷指示のまま出荷指示日だけが空になる。
+design_impl_drift_report/recheck/0203/review/sheets/sheet-19.txt:136:削除後の戻り先は、検索時のページ番号をセッションに保持しているかどうかで決まる。
+design_impl_drift_report/recheck/0203/review/sheets/sheet-19.txt:151:出荷指示リストの削除	削除
+design_impl_drift_report/recheck/0203/review/sheets/sheet-19.txt:152:受注の出荷指示日の消去	削除。出荷指示リストを消す前に、含まれる受注すべてを対象に行う
+design_impl_drift_report/recheck/0203/review/sheets/sheet-19.txt:159:M05-20-MSG-003	管理画面上部	削除しました	出荷指示リストを削除したとき	出荷指示リスト検索画面に遷移する
+design_impl_drift_report/recheck/0203/review/sheets/sheet-19.txt:160:M05-20-MSG-004	ブラウザ確認ダイアログ（window.confirm）	削除してもよろしいですか?	出荷指示リストの削除を実行しようとしたとき（削除前確認）	確認後に削除処理へ進み、キャンセル時は出荷指示リスト詳細画面に留まる
+design_impl_drift_report/recheck/0203/review/sheets/sheet-15.txt:111:「ピック中、入金日、出荷指示日、出荷日、キャンセル、店頭予約」のそれぞれの日付は、右側の「クリア」をクリックすると個別に削除できる。
+design_impl_drift_report/recheck/0203/review/sheets/sheet-15.txt:131:キャンセル：キャンセル日を登録。在庫・使用ポイント・付与ポイントを戻す。ポイント履歴を削除する。
+design_impl_drift_report/recheck/0203/review/sheets/sheet-15.txt:253:3-1	注文番号	ラベル	-	-	-	注文番号を表示しスマレジ受注の場合は（）の中にEC受注時の注文番号を表示する
+design_impl_drift_report/recheck/0203/review/sheets/sheet-15.txt:254:店頭受取時の注文番号が複数存在する場合はカンマ区切り
+design_impl_drift_report/recheck/0203/review/sheets/sheet-15.txt:328:・商品価格 0円～980円未満、980円以上4800円未満、4800円以上 に分けて表示する。
+design_impl_drift_report/recheck/0203/review/sheets/sheet-15.txt:336:・商品を個別に削除できる。
+design_impl_drift_report/recheck/0203/review/sheets/sheet-15.txt:357:6-15	削除	ボタン	-	-	-	-
+design_impl_drift_report/recheck/0203/review/sheets/sheet-15.txt:748:画面には、受注時の価格と現在の価格が違う商品の一覧、明細ごとの棚番号、明細ごとの商品名と言語・状態・Foil、店頭注文番号、配送業者ごとのお届け時間、受注一覧しきい値金額の 1 と 2 をあわせて渡す。
+design_impl_drift_report/recheck/0203/review/sheets/sheet-15.txt:752:店頭注文番号は受注IDから探し、見つからないときは渡さない。新規登録のときは探さない。
+design_impl_drift_report/recheck/0203/review/sheets/sheet-15.txt:753:担当者は、削除済みであっても表示できるように読み出す。
+design_impl_drift_report/recheck/0203/review/sheets/sheet-15.txt:763:1 ページの件数は既定の表示件数とする。画面から件数を変えることはできない。
+design_impl_drift_report/recheck/0203/review/sheets/sheet-15.txt:783:画面から取り除かれた明細を削除する。数量が 0 の明細は削除しない。
+design_impl_drift_report/recheck/0203/review/sheets/sheet-15.txt:794:受注全体の更新では、配送先が持つ配送商品をすべて削除してから、更新後の明細をもとに作り直す。数量を変えただけのときも作り直す。
+design_impl_drift_report/recheck/0203/review/sheets/sheet-15.txt:824:明細ごとに在庫を戻す。在庫変動メモには注文番号を含む定型文を残す。
+design_impl_drift_report/recheck/0203/review/sheets/sheet-15.txt:827:当該受注のポイント履歴をすべて削除し、削除した変動量の合計を求める。
+design_impl_drift_report/recheck/0203/review/sheets/sheet-15.txt:846:配送商品の削除と再登録	受注全体の更新。既存の配送商品をすべて消してから明細から作り直す
+design_impl_drift_report/recheck/0203/review/sheets/sheet-15.txt:851:ポイント履歴の削除と会員保持ポイントの更新	キャンセル日を新たに入れたとき
+design_impl_drift_report/recheck/0203/review/sheets/sheet-15.txt:872:M05-11-MSG-016	画面中央(ダイアログ)	一部キャンセル時、在庫数等は以下のように変動します。 キャンセルしてもよろしいですか？ 在庫数：キャンセル分増加 使用ポイント：変動なし 付与予定ポイント：再計算 付与済みポイント：変動なし	明細を削除して受注を保存しようとしたとき	キャンセル時は送信せず受注情報編集画面に留まる
+design_impl_drift_report/recheck/0203/review/sheets/sheet-15.txt:875:M05-11-MSG-019	画面中央(ダイアログ)	全ての商品を削除または数量を0に変更する場合、キャンセルしてください。	すべての商品を削除するか、数量を0にして保存しようとしたとき	送信せず受注情報編集画面に留まる
+design_impl_drift_report/recheck/0203/review/sheets/sheet-15.txt:887:M05-11-MSG-031	画面中央(ダイアログ)	明細は注文から削除されます。「%name%」を削除してよろしいですか？	受注編集または出荷編集で商品明細の削除を確定しようとしたとき	確認後に対象明細を画面上のフォームから削除し、保存時に削除を反映する
+
+exec
+/bin/bash -lc "sed -n '1,180p' design_impl_drift_report/recheck/0203/review/sheets/sheet-8.txt; sed -n '1,180p' design_impl_drift_report/recheck/0203/review/sheets/sheet-18.txt; sed -n '1,190p' design_impl_drift_report/recheck/0203/review/sheets/sheet-19.txt; sed -n '1,190p' design_impl_drift_report/recheck/0203/review/sheets/sheet-20.txt; sed -n '1,150p' design_impl_drift_report/recheck/0203/review/sheets/sheet-24.txt; sed -n '1,150p' design_impl_drift_report/recheck/0203/review/sheets/sheet-25.txt" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 13ms:
+# sheet-8 受注詳細カスタムCSV出力  (HTML行 2167-2347 / 画像 0枚)
+
+受注詳細カスタムCSV出力
+ドキュメント名
+受注管理　基本設計
+セクション
+—
+プロジェクト名
+受注管理機能
+作成者
+緑川
+作成日
+2025-05-13
+更新者
+—
+更新日
+—
+機能No
+M05-05
+機能名
+出荷実績入力用CSV出力
+概要
+カスタムCSV機能より配送情報CSV出力の項目を変更した状態で出力することができます。
+機能について
+処理概要（★はカスタマイズ項目）
+受注詳細カスタムCSV出力項目設定
+識別ID	項目名	備考
+1	注文番号	本店、支店、スマレジの注文データを出力対象とする
+2	注文ID
+3	店舗ID	本店、支店のデータを統合するため追加
+4	店舗名	本店、支店のデータを統合するため追加
+5	会員ID
+6	お名前(姓)	非会員である場合は非会員と表示する
+7	お名前(名)
+8	お名前(セイ)
+9	お名前(メイ)
+10	会社名
+11	郵便番号1
+12	郵便番号2
+13	都道府県(ID)
+14	都道府県(名称)
+15	住所1
+16	住所2
+17	住所3	海外住所用で住所３を追加
+18	メールアドレス
+19	TEL1
+20	TEL2
+21	TEL3
+22	FAX1
+23	FAX2
+24	FAX3
+25	性別(ID)
+26	性別(名称)
+27	職業(ID)
+28	職業(名称)
+29	誕生日
+30	ショップ用メモ欄
+31	小計
+32	値引き
+33	送料
+34	税金
+35	合計
+36	支払合計
+37	対応状況(ID)
+38	対応状況(名称)
+39	支払方法(ID)
+40	支払方法(名称)
+41	受注日
+42	入金日
+43	出荷指示日
+44	配送ID
+45	配送先_お名前(姓)
+46	配送先_お名前(名)
+47	配送先_お名前(セイ)
+48	配送先_お名前(メイ)
+49	配送先_会社名
+50	配送先_郵便番号1
+51	配送先_郵便番号2
+52	配送先_都道府県(ID)
+53	配送先_都道府県(名称)
+54	配送先_住所1
+55	配送先_住所2
+56	配送先_TEL1
+57	配送先_TEL2
+58	配送先_TEL3
+59	配送先_FAX1
+60	配送先_FAX2
+61	配送先_FAX3
+62	配送業者(ID)
+63	配送業者(名称)
+64	お届け時間ID
+65	お届け時間(名称)
+66	お届け希望日
+67	送料ID
+68	送料
+69	出荷日
+70	スマレジ取引ID	スマレジ連携
+71	小計値引き/割引区分	スマレジ連携
+72	クーポン値引き	スマレジ連携
+73	スマレジメモ	スマレジ連携
+74	免税額	スマレジ連携
+75	配送商品ID
+76	商品ID
+77	商品規格ID
+78	商品名
+79	商品コード
+80	規格名1
+81	規格名2
+82	規格分類名1
+83	規格分類名2
+84	価格
+85	個数
+86	注文備考
+87	注文国
+88	注文番号
+89	配送先国
+90	送り状No.
+カスタマイズ説明
+概要
+本店・支店・スマレジ（実店頭）の受注情報をCSVとして出力することが可能
+機能仕様機能について
+現行機能の"受注詳細CSV出力”をベースに下記カスタマイズを行う
+・出力データについて
+・本店のほか、支店の受注およびEC-CUBEで保持されているスマレジの取引データをCSV出力することが可能
+・非会員である場合、非会員と表現する
+※スマレジでの非会員による取引データを考慮
+機能仕様処理概要（★はカスタマイズ項目）
+★本店のほか、支店の受注およびEC-CUBEで保持されているスマレジの取引データをCSV出力する
+★非会員である場合、識別ID:3「お名前(姓)」に非会員と表現する
+★識別ID:14「住所3」を追加。
+★識別ID:83「店舗ID」を追加。
+★識別ID:84「取引ID」を追加。
+★識別ID:85「小計値引き/割引区分」を追加。
+★識別ID:86「クーポン値引き」を追加。
+★識別ID:87「メモ」を追加。
+★識別ID:88「免税額」を追加。
+Source:
+functions/pf-eccube3/m05-05_admin_order_order_shipping_custom_csv_export.md
+現行仕様
+M05-05 配送カスタムCSV出力 / 受注管理 — カスタム配送CSVダウンロード
+業務ロジック
+出力形式の選択
+一覧で選んだカスタムCSV定義を出力形式とする。指定したIDのカスタムCSV定義が存在しないときは、出力せず未検出として応答する。
+出力する項目は、その定義に登録した項目とする。並びは定義に登録した表示順の昇順とし、表示順が同じ項目は出力項目そのものの表示順の昇順で並ぶ。見出し行には各項目の表示名を出力する。出力項目の有効・無効は問わず、配送CSVダウンロードと違い、出力項目設定で無効にした項目も定義に登録されている限り出力する。
+出力対象の受注
+セッションに保持した受注検索条件で検索し直し、一致した受注をすべて出力する。一覧で最後に実行した検索と同じ条件になる。検索条件を保持していないときは、条件を空にして検索する。対応状況を条件に含めないときは購入処理中を除いた全対応状況が対象になるため、条件が空でも購入処理中の受注は出力しない。
+保持した検索条件は検索フォームへ入れ直してから使う。フォームの検証結果は出力の可否に影響せず、検証エラーがあっても、フォームが受け取れた条件だけで出力する。
+一覧のページ番号と表示件数は出力対象に影響しない。表示していたページの受注だけに絞られることはなく、条件に一致する限りすべての受注を出力する。
+出力順は注文日の降順に固定である。明細を複数持つ受注は検索の結果に複数回現れる。同じ受注が続けて返ったときは 2 件目以降を出力しないが、続かない位置に同じ受注が現れたときは、その受注を重ねて出力する。
+行の作り方
+受注 1 件につき、その受注の配送先の件数だけ行を出力する。配送CSVダウンロードが先頭の配送先だけを出力するのに対し、こちらは配送先を複数持つ受注をその件数だけ行にする。配送先を 1 件も持たない受注は行を出力しない。
+値の取り方
+出力項目が紐づく情報	出力する値
+受注サブ情報	項目名に対応する値。注文番号と送り状No.だけを出力でき、どちらにも対応しない項目名を登録したときは空欄になる
+上記以外	受注の値。受注から取った値が空のときだけ、同じ項目名でその行の配送先から取り直す
+受注・配送先のどちらからも取れないときは空欄とする。出力項目に指定した種別が受注・配送先のいずれとも一致しないとき、項目名がどちらにも無いときも空欄とする。受注サブ情報を持たない受注では、受注サブ情報に紐づく列が空欄になる。
+値の種類	出力する形
+他のデータを 1 件だけ参照する値	参照先の、出力項目に指定した項目の値
+他のデータを複数参照する値	参照先の、出力項目に指定した項目の値を , で連結する。同じ値が複数あるときは 1 つにまとめ、参照先が見つからない要素は連結しない
+日時	Y-m-d H:i:s の形式の文字列
+上記以外	取り出した値のまま
+入出力
+出力: CSVファイル
+項目	内容
+文字コード	SJIS-win。UTF-8 から変換し、変換できない文字は環境に設定した代替文字に置き換わる
+区切り文字	,
+引用符	値が ,・"・改行のいずれかを含むときだけ、値全体を " で囲む。値の中の " は 2 個続けて出力する
+ファイル名	shipping_ に出力日時を YmdHis の形式でつなぎ、.csv を付けた名前
+応答	ダウンロードとして返す
+ファイルの先頭にバイトオーダーマークを 1 個出力する。配送CSVダウンロードと違い、2 個続けて出力することはない。見出し行の次の行からデータ行を出力する。
+入出力: 永続化
+更新しない。
+リニューアル後の仕様
+表示メッセージ
+本機能は画面メッセージを持たない。# sheet-18 出荷指示リスト検索  (HTML行 4954-5107 / 画像 2枚)
+
+出荷指示リスト検索
+ドキュメント名
+受注管理　基本設計
+セクション
+—
+プロジェクト名
+受注管理機能
+作成者
+緑川
+作成日
+2025-05-13
+更新者
+—
+更新日
+—
+機能No
+M08-02
+機能名
+出荷指示リスト詳細編集_削除
+概要
+一覧から選択した顧客に対してメールを一括で送信することができる
+処理概要（★はカスタマイズ項目）
+レイアウト図
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+18
+17
+画像レイヤー（2枚）: 出荷指示リスト検索 / C7 / image 1 + 出荷指示リスト検索 / AQ40 / image 2
+カスタマイズ説明
+機能仕様処理概要（★はカスタマイズ項目）
+・入力した条件に合致する出荷指示リストを検索して一覧表示する
+・一覧の出荷指示番号をクリック、またはポップアップメニューの「編集」をクリックすると当該出荷指示データの編集画面へ遷移する。
+・ポップアップメニューの「削除」をクリックすると、確認のJSダイアログを表示し、OKなら当該出荷指示データを削除して、
+削除完了メッセージを表示する。
+識別ID	ラベル	書式・制限	必須	最大文字数
+または最大値	初期値	画面部品の説明
+1	出荷指示番号	数値（整数）	-	-	-
+2	注文番号	数値（整数）	-	-	-
+3	登録日(From)	カレンダー	-	-	-
+4	登録日(To)	カレンダー	-	-	-
+5	更新日(From)	カレンダー	-	-	-
+6	更新日(To)	カレンダー	-	-	-
+7	注文区分	複数選択(チェックボックス)	-	-	-	チェック項目：通常、予約、大量
+8	検索条件をクリア	リンク	-	-	-	入力した検索条件をクリアする
+9	検索する	ボタン	-	-	-	検索を実行する
+10	検索結果（該当件数）	ラベル	-	-	-
+11	表示件数	ラベル	-	-	-
+12	出荷指示番号	リンク	-	-	-	当該出荷指示の編集画面に遷移する
+13	区分	ラベル	-	-	-
+14	注文件数	ラベル	-	-	-
+15	登録日	ラベル	-	-	-
+16	最終更新日	ラベル	-	-	-
+17	ポップアップメニュー	リンク	-	-	-	「編集」「削除」のメニューを表示する
+18	ページング	リンク	-	-	-	選択したページへ遷移する
+番号pin対応台帳（18件）
+pin	アンカー	画像割当	対応状態	項目定義候補	pin重複
+(1)	0203:出荷指示リスト検索!B17	image 1	matched	0203:出荷指示リスト検索!B68
+(2)	0203:出荷指示リスト検索!W17	image 1	matched	0203:出荷指示リスト検索!B69
+(3)	0203:出荷指示リスト検索!B20	image 1	matched	0203:出荷指示リスト検索!B70
+(4)	0203:出荷指示リスト検索!M20	image 1	matched	0203:出荷指示リスト検索!B71
+(5)	0203:出荷指示リスト検索!X20	image 1	matched	0203:出荷指示リスト検索!B72
+(6)	0203:出荷指示リスト検索!AH20	image 1	matched	0203:出荷指示リスト検索!B73
+(7)	0203:出荷指示リスト検索!C23	image 1	matched	0203:出荷指示リスト検索!B74
+(8)	0203:出荷指示リスト検索!S25	image 1	matched	0203:出荷指示リスト検索!B75
+(9)	0203:出荷指示リスト検索!P27	image 1	matched	0203:出荷指示リスト検索!B76
+(10)	0203:出荷指示リスト検索!B32	image 1	matched	0203:出荷指示リスト検索!B77
+(11)	0203:出荷指示リスト検索!AN35	image 1	matched	0203:出荷指示リスト検索!B78
+(12)	0203:出荷指示リスト検索!F39	image 1	matched	0203:出荷指示リスト検索!B79
+(13)	0203:出荷指示リスト検索!M39	image 1	matched	0203:出荷指示リスト検索!B80
+(14)	0203:出荷指示リスト検索!R38	image 1	matched	0203:出荷指示リスト検索!B81
+(15)	0203:出荷指示リスト検索!Z38	image 1	matched	0203:出荷指示リスト検索!B82
+(16)	0203:出荷指示リスト検索!AK38	image 1	matched	0203:出荷指示リスト検索!B83
+(18)	0203:出荷指示リスト検索!U49	image 1	matched	0203:出荷指示リスト検索!B85
+(17)	0203:出荷指示リスト検索!AO38	image 1	matched	0203:出荷指示リスト検索!B84
+Source:
+functions/pf-eccube3/m05-19_admin_order_order_shipping_standby_list_search.md
+現行仕様
+M05-19 出荷指示リスト検索 / 受注管理 — 出荷指示リスト検索
+業務ロジック
+検索条件
+画面上の項目	検索条件
+出荷指示番号	出荷指示リストの番号に一致
+注文番号	その注文番号を持つ受注を含む出荷指示リストに限定
+登録日（開始）	指定した日の 00:00:00 以上
+登録日（終了）	指定した日の 23:59:59 以下
+最終更新日（開始）	指定した日の 00:00:00 以上
+最終更新日（終了）	指定した日の 23:59:59 以下
+区分	選択したいずれかの注文区分に一致
+いずれの条件も、値が空とみなされるときは条件が付かない。区分は選択が 1 件も無いときに条件が付かない。
+注文番号は完全一致だけで、部分一致では絞り込めない。指定した注文番号を持つ受注が無いときは、該当なしになる。
+検索条件は受注検索とは別に保持し、ページを送るあいだ維持する。
+並び順
+登録日の降順で並べ、同じ登録日のときは出荷指示番号の降順で並べる。並び替えできる項目は登録日だけで、他の列では並び替えできない。
+並び順が昇順・降順のいずれの表記にも一致しないときは、エラーを出して初期表示に戻る。
+並び替えの指定はリクエスト・セッション・既定値の順で決まる。リクエストに指定が無いときはセッションに保持した値を使い、セッションにも無いときは登録日の降順とする。
+初期表示
+初期表示では、保持していた検索条件・ページ番号・表示件数を破棄し、空の検索フォームと空の一覧を表示する。並び替えの指定は破棄しない。
+検索の成立条件
+検索フォームの検証結果は検索実行の可否に影響しない。検証エラーがあっても、フォームが受け取れた条件のまま検索する。
+検索条件を受け取れないときは、保持していた前回の検索条件で検索する。保持していないときは検索せず初期表示に戻る。
+表示件数とページ番号
+表示件数はセッションに保持した値を使い、未設定のときは既定値を使う。指定した表示件数は、表示件数マスタに登録された値のいずれかと一致するときだけ採用し、セッションへ保存する。一致しない値は無視する。
+ページ番号が 2 以上で、かつ総件数が 1 つ前のページまでの表示件数の合計と厳密に一致するときだけ、ページ番号を 1 減らす。最終ページのデータが消えて表示対象が無くなったとき、1 つ前のページを表示する。この比較は値だけでなく型も一致することを求める。
+一覧からの操作
+一覧から出荷指示リストの編集へ移れる。出荷指示リストを作成する条件の入力欄も同じ画面に置く。
+入出力
+出力: 一覧の列
+列	内容
+出荷指示番号	出荷指示リストの番号
+区分	注文区分
+注文件数	含まれる受注の件数
+登録日	作成した日時
+最終更新日	最後に更新した日時
+操作	編集への遷移
+入出力: 永続化
+更新しない。
+リニューアル後の仕様
+表示メッセージ
+採番されたメッセージを持たない。並び順の指定が正しくないときはエラーを表示するが、棚卸しに採番が無いため表に載せない。# sheet-19 出荷指示リスト編集  (HTML行 5108-5277 / 画像 0枚)
+
+出荷指示リスト編集
+ドキュメント名
+受注管理　基本設計
+セクション
+—
+プロジェクト名
+受注管理機能
+作成者
+緑川
+作成日
+2025-05-13
+更新者
+—
+更新日
+—
+機能No
+M05-19
+機能名
+出荷指示リスト検索
+概要
+出荷指示リストの検索および一覧表示が行えます。
+処理概要（★はカスタマイズ項目）
+レイアウト図
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+出荷指示リスト編集 / C8 / image 1
+カスタマイズ説明
+機能仕様処理概要（★はカスタマイズ項目）
+出荷指示リストのエクスポート、削除、備考の編集ができる。
+登録ボタンを押下すると、備考、更新日、最終更新者を更新する。
+リスト削除ボタンを押下すると、確認のダイアログを表示し、OKなら当該出荷指示リストを削除して出荷指示リスト検索画面へ遷移する。
+一覧でチェックされた注文について、各ボタンに応じた出力処理を実行する。
+ピッキングリスト印刷
+納品書印刷（日本語）
+納品書印刷（英語）
+出荷委実績入力用CSVダウンロード
+送り状CSVダウンロード
+識別ID	ラベル	書式・制限	必須	最大文字数
+または最大値	初期値	画面部品の説明
+1	出荷指示番号	ラベル	-	-	-
+2	登録日	ラベル	-	-	-
+3	更新日	ラベル	-	-	-
+4	最終更新者	ラベル	-	-	-
+5	備考	全角・半角	-	-	-
+6	登録	ボタン	-	-	-
+7	リスト削除	ボタン	-	-	-
+8	ピッキングリスト印刷	ボタン	-	-	-
+9	納品書印刷（日本語）	ボタン	-	-	-
+10	納品書印刷（英語）	ボタン	-	-	-
+11	出荷委実績入力用CSVダウンロード	ボタン	-	-	-
+12	送り状CSVダウンロード	ボタン	-	-	-
+13	（全件選択）	複数選択(チェックボックス)	-	-	-	一覧の全レコードの選択チェックボックスをオン/オフする
+14	（選択）	複数選択(チェックボックス)	-	-	-
+15	注文番号	リンク	-	-	-	当該注文の編集画面に遷移する
+16	お名前	ラベル	-	-	-
+17	支払方法	ラベル	-	-	-
+18	購入金額（円）	ラベル	-	-	-
+19	合計点数	ラベル	-	-	-
+20	受注日	ラベル	-	-	-
+21	出荷指示日	ラベル	-	-	-
+22	対応状況	ラベル	-	-	-
+番号pin対応台帳（22件）
+pin	アンカー	画像割当	対応状態	項目定義候補	pin重複
+(1)	0203:出荷指示リスト編集!B11	image 1	matched	0203:出荷指示リスト編集!B54
+(2)	0203:出荷指示リスト編集!B12	image 1	matched	0203:出荷指示リスト編集!B55
+(3)	0203:出荷指示リスト編集!B13	image 1	matched	0203:出荷指示リスト編集!B56
+(4)	0203:出荷指示リスト編集!B15	image 1	matched	0203:出荷指示リスト編集!B57
+(5)	0203:出荷指示リスト編集!Y11	image 1	matched	0203:出荷指示リスト編集!B58
+(6)	0203:出荷指示リスト編集!U20	image 1	matched	0203:出荷指示リスト編集!B59
+(7)	0203:出荷指示リスト編集!AN20	image 1	matched	0203:出荷指示リスト編集!B60
+(8)	0203:出荷指示リスト編集!C23	image 1	matched	0203:出荷指示リスト編集!B61
+(9)	0203:出荷指示リスト編集!K23	image 1	matched	0203:出荷指示リスト編集!B62
+(10)	0203:出荷指示リスト編集!S23	image 1	matched	0203:出荷指示リスト編集!B63
+(11)	0203:出荷指示リスト編集!AA23	image 1	matched	0203:出荷指示リスト編集!B64
+(12)	0203:出荷指示リスト編集!AL23	image 1	matched	0203:出荷指示リスト編集!B65
+(13)	0203:出荷指示リスト編集!B27	image 1	matched	0203:出荷指示リスト編集!B66
+(14)	0203:出荷指示リスト編集!B28	image 1	matched	0203:出荷指示リスト編集!B67
+(15)	0203:出荷指示リスト編集!E28	image 1	matched	0203:出荷指示リスト編集!B68
+(16)	0203:出荷指示リスト編集!J28	image 1	matched	0203:出荷指示リスト編集!B69
+(17)	0203:出荷指示リスト編集!P28	image 1	matched	0203:出荷指示リスト編集!B70
+(18)	0203:出荷指示リスト編集!W28	image 1	matched	0203:出荷指示リスト編集!B71
+(19)	0203:出荷指示リスト編集!AB29	image 1	matched	0203:出荷指示リスト編集!B72
+(20)	0203:出荷指示リスト編集!AF28	image 1	matched	0203:出荷指示リスト編集!B73
+(21)	0203:出荷指示リスト編集!AL28	image 1	matched	0203:出荷指示リスト編集!B74
+(22)	0203:出荷指示リスト編集!AR28	image 1	matched	0203:出荷指示リスト編集!B75
+Source:
+functions/pf-eccube3/m05-20_admin_order_order_shipping_standby_detail_edit_delete.md
+現行仕様
+M05-20 出荷指示リスト詳細編集/削除 / 受注管理 — 出荷指示リスト詳細編集/削除
+業務ロジック
+操作の種類
+操作	出荷指示リストIDの制限	結果
+詳細の表示	数字だけを受け付ける	出荷指示リストと含まれる受注を表示する
+更新	数字だけを受け付ける	備考と最終更新者を書き換え、同じ詳細画面へ戻る
+削除	数字だけを受け付ける	出荷指示リストを削除し、検索結果へ戻る
+ピッキングリスト印刷	数字だけを受け付ける	ピッキングリスト印刷の設計書を正とする
+納品書印刷	数字だけを受け付け、言語は日本語と英語のいずれかに限る	出荷指示：納品書印刷の設計書を正とする
+取込用CSV出力・送り状CSV出力	制限なし	それぞれの設計書を正とする
+削除だけは削除専用の要求方法を用い、なりすまし対策トークンを検証する。トークンが不正なときは削除しない。
+詳細の表示
+指定した出荷指示リストが見つからないときは、見つからない旨の応答を返して画面を出さない。
+最終更新者は、削除済みの担当者であっても名前を表示できるように、削除済みを除外する絞り込みを外して読み出す。担当者が見つからないときは名前欄を空にする。
+含まれる受注は、受注IDから注文番号をまとめて引き直して表示する。注文番号を持たない受注が含まれるときは、その行の注文番号だけが空になる。登録日と更新日は 年/月/日 時:分:秒 で表示し、値が無いときは空にする。
+更新
+備考の入力値でそのまま置き換え、最終更新者を操作した本人に付け替える。更新できたときは同じ出荷指示リストの詳細画面へ戻る。
+備考は複数行の入力で、最大長の制限を設けていない。値が空のときも登録できる。
+備考と最終更新者以外は更新しない。含まれる受注の構成も変わらない。指定した出荷指示リストが見つからないときは更新しない。
+削除
+削除は次の順で行う。
+指定した出荷指示リストを読み出す。IDが無いか見つからないときは、見つからない旨の応答を返して削除しない。
+含まれる受注の出荷指示日をすべて消す。
+出荷指示リストを削除する。
+受注そのものは削除しない。対応状況も元に戻さないため、削除した出荷指示リストに紐づいていた受注は、対応状況が出荷指示のまま出荷指示日だけが空になる。
+削除後の戻り先は、検索時のページ番号をセッションに保持しているかどうかで決まる。
+セッションのページ番号	戻り先
+保持している	そのページ番号の出荷指示リスト検索結果
+保持していない	出荷指示リスト検索の初期表示
+入出力
+出力: 画面の項目
+項目	内容	書式
+登録日	出荷指示リストの登録日時	年/月/日 時:分:秒。未設定のときは空
+更新日	出荷指示リストの更新日時	年/月/日 時:分:秒。未設定のときは空
+最終更新者	最後に更新した担当者の名前	担当者が取得できないときは空
+備考	入力できる唯一の項目	複数行の入力。最大長の制限は無く、空のときも登録できる
+含まれる受注は一覧で表示する。購入金額は桁区切りで表示し、日付は未設定のときだけ空にする。列の構成は基本設計の画面項目定義による。
+入出力: 永続化
+操作	契機
+出荷指示リストの備考・最終更新者の更新	更新
+出荷指示リストの削除	削除
+受注の出荷指示日の消去	削除。出荷指示リストを消す前に、含まれる受注すべてを対象に行う
+受注そのもの、受注明細、対応状況は更新しない。
+リニューアル後の仕様
+表示メッセージ
+メッセージID	表示位置	画面上の文言	表示条件	後続処理
+M05-20-MSG-001	管理画面上部	保存に失敗しました	備考を保存するとき、入力内容に不備があるとき	出荷指示リスト詳細画面に遷移する
+M05-20-MSG-002	管理画面上部	保存しました	備考を保存したとき	出荷指示リスト詳細画面に遷移する
+M05-20-MSG-003	管理画面上部	削除しました	出荷指示リストを削除したとき	出荷指示リスト検索画面に遷移する
+M05-20-MSG-004	ブラウザ確認ダイアログ（window.confirm）	削除してもよろしいですか?	出荷指示リストの削除を実行しようとしたとき（削除前確認）	確認後に削除処理へ進み、キャンセル時は出荷指示リスト詳細画面に留まる# sheet-20 ピッキングリスト印刷  (HTML行 5278-5449 / 画像 2枚)
+
+ピッキングリスト印刷
+ドキュメント名
+受注管理　基本設計
+セクション
+—
+プロジェクト名
+受注管理機能
+作成者
+緑川
+作成日
+2025-05-13
+更新者
+—
+更新日
+—
+機能No
+M05-21
+機能名
+ピッキングリスト印刷
+概要
+ピッキングリストの印刷ができるようピッキングリストがポップアップ表示されます。
+処理概要（★はカスタマイズ項目）
+レイアウト図
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+14
+15
+12
+13
+16
+画像レイヤー（2枚）: ピッキングリスト印刷 / C8 / image 1 + ピッキングリスト印刷 / B28 / image 2
+中略
+ピッキングリストのグループごとにページを繰り返し
+カスタマイズ説明
+機能仕様処理概要（★はカスタマイズ項目）
+・ピッキングリスト印刷用画面を表示する。
+・「印刷する」ボタンを押下するとブラウザの印刷ダイアログを開く。
+・カードの価格帯、サプライ品でグループ分けして表示する。
+商品単位_980円未満
+商品単位_980円以上_4800円未満
+商品単位_4800円以上
+サプライ
+・ソート順
+カード→サプライ
+棚番号の並び順
+言語ID
+カード状態
+フォイル（無→有）
+略称タグの並び順
+レアリティ（無→有）
+レアリティID（「レア」と「神話」は同値とみなす）
+色の順序
+略称タグのアルファベット順ソートフラグが0 or カード番号無し なら後
+略称タグのアルファベット順ソートフラグが1 → ソートフラグが0ならカード番号順
+略称タグのアルファベット順ソートフラグが１ならカード名（英）のアルファベット順→ソートフラグ0
+カード番号
+識別ID	ラベル	書式・制限	必須	最大文字数
+または最大値	初期値	画面部品の説明
+1	印刷する	ボタン				画面最上部にのみ表示
+2	ピッキングリスト
+3	リストのグループ名
+4	ページ表示
+5	出荷指示リスト番号
+6	作成日
+7	No.					グループごとに1から振る
+8	棚番号
+9	言語/状態					（Foilなら「Foil」＋）言語コードと状態コード
+10	略称
+11	色/R					色名とレアリティコード
+12	数					ピック数
+13	商品名					受注詳細の商品名に含まれる略称・言語・状態・色・レアリティを取り除く
+14	価格
+15	備考
+16	全 X 点					グループの最終頁最終行にグループの合計ピック数を表示
+番号pin対応台帳（16件）
+pin	アンカー	画像割当	対応状態	項目定義候補	pin重複
+(1)	0203:ピッキングリスト印刷!S7	image 1	matched	0203:ピッキングリスト印刷!B67
+(2)	0203:ピッキングリスト印刷!J9	image 1	matched	0203:ピッキングリスト印刷!B68
+(3)	0203:ピッキングリスト印刷!T9	image 1	matched	0203:ピッキングリスト印刷!B69
+(4)	0203:ピッキングリスト印刷!AF9	image 1	matched	0203:ピッキングリスト印刷!B70
+(5)	0203:ピッキングリスト印刷!E10	image 1	matched	0203:ピッキングリスト印刷!B71
+(6)	0203:ピッキングリスト印刷!AG11	image 1	matched	0203:ピッキングリスト印刷!B72
+(7)	0203:ピッキングリスト印刷!D13	image 1	matched	0203:ピッキングリスト印刷!B73
+(8)	0203:ピッキングリスト印刷!F13	image 1	matched	0203:ピッキングリスト印刷!B74
+(9)	0203:ピッキングリスト印刷!I13	image 1	matched	0203:ピッキングリスト印刷!B75
+(10)	0203:ピッキングリスト印刷!L13	image 1	matched	0203:ピッキングリスト印刷!B76
+(11)	0203:ピッキングリスト印刷!O13	image 1	matched	0203:ピッキングリスト印刷!B77
+(14)	0203:ピッキングリスト印刷!AK13	image 1	matched	0203:ピッキングリスト印刷!B80
+(15)	0203:ピッキングリスト印刷!AN13	image 1	matched	0203:ピッキングリスト印刷!B81
+(16)	0203:ピッキングリスト印刷!P30	image 2	matched	0203:ピッキングリスト印刷!B82
+(12)	0203:ピッキングリスト印刷!Q13	image 1	matched	0203:ピッキングリスト印刷!B78
+(13)	0203:ピッキングリスト印刷!S13	image 1	matched	0203:ピッキングリスト印刷!B79
+Source:
+functions/pf-eccube3/m05-21_admin_order_order_shipping_standby_picking_list_print.md
+現行仕様
+M05-21 ピッキングリスト印刷 / 受注管理 — ピッキングリスト印刷
+業務ロジック
+印刷対象
+指定した出荷指示リストで選択した受注だけを対象とする。指定した出荷指示リストが存在しないときは、ピッキングリストを作らず未検出として応答する。
+対象になるのは、その出荷指示リストに属する受注だけである。出荷指示リストに含まれない受注を選んだときは、その受注の明細を出さない。受注を 1 件も選ばないときは、どのグループも空になる。
+商品・商品規格・商品サブ情報・商品規格サブ情報・カテゴリのいずれかを持たない明細は出さない。
+同じ商品規格で同じ商品名の明細は 1 行にまとめる。受注をまたいでもまとめるため、行数は選んだ受注の件数では決まらない。
+グループ分け
+明細をサプライ品とそれ以外に分ける。サプライ品はグッズと予約グッズのカテゴリの明細とし、まとめて 1 グループにする。
+サプライ品以外は、受注明細の価格を 2 つのしきい値と比べて 3 グループに分ける。しきい値は受注一覧しきい値金額の 1 と 2 で、既定はそれぞれ 980 円と 4800 円である。
+グループ	受注明細の価格
+低額	しきい値 1 未満
+中額	しきい値 1 以上、しきい値 2 未満
+高額	しきい値 2 以上
+しきい値 1 をしきい値 2 以上に設定したときは、しきい値 1 未満かつしきい値 2 以上になる価格が生じ、その明細はどのグループにも入らない。
+グループ分けに使うのは受注明細の価格である。画面に出す単価は商品規格の販売価格なので、受注のあとに販売価格を変えたときは、単価とグループが食い違う。
+数量
+明細の数量の合計を、色数とカテゴリ数で割った値をその明細の数量とする。色が紐づかない明細は色数を 1、カテゴリが紐づかない明細はカテゴリ数を 1 として扱う。
+グループごとに、その数量を合計して表示する。
+商品名の整形
+サプライ品以外は、印刷用に商品名を次の順で整形する。サプライ品は商品名を整形しない。
+順	整形
+1	商品名に略称タグが含まれるときはその略称タグを取り除く。含まれないときは、最初の角括弧で囲まれた部分を取り除く
+2	言語コードと状態コードを 【言語/状態】 の形で取り除く
+3	色とレアリティの表記を取り除き、別の項目として持つ
+色とレアリティの取り出し方は、表記が現れる位置で切り替える。上から順に当てはめ、最初に一致した 1 つだけを適用する。
+位置	取り出し方
+商品名の末尾	一致した部分をそのまま取り出し、商品名から取り除く
+開き括弧の直前	括弧を除いた部分を取り出し、商品名では開き括弧だけを残す
+商品名の途中	前後の空白を除いた部分を取り出し、商品名では空白 1 個に置き換える
+角括弧の直前	角括弧を除いた部分を取り出し、商品名では角括弧だけを残す
+明細の並び
+明細は次の順で並べる。上の条件が同じときだけ、下の条件で比べる。
+順	並べる条件	向き
+1	カード情報を持つかどうか	持つものが先
+2	棚番号の並び順	昇順
+3	言語	昇順
+4	状態	昇順
+5	Foil	昇順。Foilの指定が無い明細は 0 として扱う
+6	略称の並び順	昇順
+7	レアリティを持つかどうか	持つものが先
+8	レアリティ	降順。レアと神話レアは同じ順位として扱う
+9	色	昇順。色の指定が無い明細は 0 として扱う
+10	カード番号を持つかどうか	持つものが先。略称に英字並びの指定があるとき、カード番号が空のときは持たない扱いとする
+11	カード番号	昇順。略称に英字並びの指定があるときは 0 として扱う
+12	英字表記	昇順。略称に英字並びの指定が無いときは zzz として扱う
+13	カードNo.	昇順
+改ページ
+グループごとに明細 30 行で改ページする。各ページに現在のページ番号と総ページ数を出す。ページの行数が 30 行に満たないときは、空行で埋めて高さを揃える。
+入出力
+出力: ピッキングリスト
+出荷指示リストの情報、グループごとの明細と数量の合計、しきい値金額 2 種を印刷用の画面に表示する。グループの見出しにはしきい値金額を入れる。
+入出力: 永続化
+更新しない。
+リニューアル後の仕様
+表示メッセージ
+本機能は画面メッセージを持たない。# sheet-24 出荷実績インポート登録  (HTML行 5710-5841 / 画像 0枚)
+
+出荷実績インポート登録
+ドキュメント名
+受注管理　基本設計
+セクション
+—
+プロジェクト名
+受注管理機能
+作成者
+緑川
+作成日
+2025-05-13
+更新者
+—
+更新日
+—
+機能No
+M05-26
+機能名
+出荷実績インポート登録
+概要
+出荷日時や問い合わせ番号（出荷伝票番号）をCSVで登録することができます。
+処理概要（★はカスタマイズ項目）
+レイアウト図
+1
+2
+3
+出荷実績インポート登録 / C8 / image 1
+カスタマイズ説明
+・TSVの文言を削除する
+機能仕様処理概要（★はカスタマイズ項目）
+・インポートファイルで「出荷日」が設定されていない行は無視する。
+・指定した注文番号に該当する受注情報データの「出荷日」が登録済みでなければデータを更新する。
+・受注のステータスを「発送済み」にする。
+・受注情報の「出荷日」と「送り状No.」を登録する。
+・配送情報の「出荷日」を登録する。
+・更新された受注について以下の処理を行う。
+・ポイント付加処理を行う。
+・出荷完了メールを送信する。
+・スマレジへ付与ポイントを送信する。
+★TSVの文言を削除する
+識別ID	ラベル	書式・制限	必須	最大文字数
+または最大値	初期値	画面部品の説明
+1	ファイルを選択	ボタン				インポートファイル選択ダイアログを開く
+2	CSVファイルのアップロード	ボタン				TSVの文言を削除する
+3	ファイルフォーマット
+番号pin対応台帳（3件）
+pin	アンカー	画像割当	対応状態	項目定義候補	pin重複
+(1)	0203:出荷実績インポート登録!O14	image 1	matched	0203:出荷実績インポート登録!B54
+(2)	0203:出荷実績インポート登録!Q17	image 1	matched	0203:出荷実績インポート登録!B55
+(3)	0203:出荷実績インポート登録!C23	image 1	matched	0203:出荷実績インポート登録!B56
+コネクタ解決台帳（記録 4件 / 未解決 0件）
+connector id	アンカー	理由	状態
+7	0203:出荷実績インポート登録!U18	no_connection	soft
+9	0203:出荷実績インポート登録!G15	no_connection	soft
+10	0203:出荷実績インポート登録!K22	no_connection	soft
+11	0203:出荷実績インポート登録!R8	no_connection	soft
+Source:
+functions/pf-eccube3/m05-26_admin_order_order_shipping_result_csv_import.md
+現行仕様
+M05-26 出荷実績インポート登録 / 受注管理 — 出荷実績インポート登録
+業務ロジック
+受け付けるファイル
+カンマ区切りとタブ区切りの両方を受け付ける。拡張子が tsv のときはタブ区切りとして読み、それ以外は設定の区切り文字で読む。
+二重実行の防止
+同じ取り込みが同時に走らないよう実行権を取る。すでに別の取り込みが動いているときは登録せず、実行中である旨を伝える。実行権を取れなかったときも登録しない。
+実行権を取るのは、ファイルの受け取りと行データの生成が終わったあとだけである。ファイルの読み込みまでは同時に走りうる。
+取り込み前の検査
+実行権を取ったあと、順に次を確かめる。引っかかったときは 1 件も登録しない。
+ヘッダ行の項目が想定の 63 項目と一致すること。必須は注文番号だけで、それ以外は無くてもよい。
+データ行が 1 行以上あること。
+行ごとの処理
+各行について上から順に判定し、引っかかったときはその行を示してエラーとし、取り込み全体を取り消す。
+順	判定
+1	列数がヘッダ行と一致しないときはエラーとする
+2	注文番号が空のときはエラーとする
+3	注文番号を 8 桁のゼロ埋めに整えて受注を探し、見つからないときはエラーとする
+4	出荷日が空のときは、この行を読み飛ばす。読み飛ばした行は何も更新しない
+5	注文者が会員でないときはエラーとする
+6	出荷日が日時として解釈できないときはエラーとする
+受注の更新
+受注に出荷日がまだ入っていないときだけ、対応状況を出荷完了に変え、出荷日と送り状No.を設定する。この受注は登録後の処理の対象になる。
+受注にすでに出荷日が入っているときは、対応状況も出荷日も送り状No.も更新しない。登録後の処理の対象にもならない。
+配送先の発送日は、受注に出荷日が入っているときも入っていないときも、取り込んだ出荷日で更新する。更新するのはその受注のすべての配送先である。
+登録後の処理
+受注の更新を確定したあと、更新した受注ごとに上から順に次を行う。
+順	処理
+1	ポイントを付与する。付与ポイントが空のとき、0 のときは付与しない
+2	出荷完了メールを送信する
+3	スマレジ側のポイントを加算する。外部からの応答に成功の結果が無いときは、加算完了とせずエラーとして記録する
+これらは受注の更新を確定したあとに動くため、途中で失敗したときも取り消されない。確定済みの受注更新、先行する受注へ付与済みのポイント、送信済みのメールは戻らない。
+一時ファイル
+処理を終えるとき、取り込みに使った一時ファイルを削除する。削除に失敗しても処理は続ける。
+入出力
+出力: メール
+更新した受注ごとに出荷完了メールを送信する。受注にすでに出荷日が入っていたときは送信しない。
+入出力: 永続化
+操作	契機
+対応状況・出荷日・送り状No.の更新	受注に出荷日が入っていないときだけ
+配送先の発送日の更新	出荷日の有無にかかわらず、その受注のすべての配送先
+ポイントの付与	更新した受注のうち、付与ポイントが空でも 0 でもないとき
+スマレジ側のポイント加算	更新した受注ごと
+リニューアル後の仕様
+表示メッセージ
+メッセージID	表示位置	画面上の文言	表示条件	後続処理
+M05-26-MSG-001	管理画面上部	CSVファイルをアップロードしました	出荷実績CSVの取込が正常に完了したとき	出荷実績インポート登録画面に留まる
+M05-26-MSG-002	管理画面上部	既に %csvName% インポートが実行中です。	出荷実績CSVの取込がすでに実行中のとき	出荷実績インポート登録画面に遷移する
+M05-26-MSG-003	管理画面上部	登録が完了しました。	出荷実績CSVの取込が正常に完了したとき	出荷実績インポート登録画面に遷移する
+列数の不一致・必須項目の未入力・ヘッダ行の不一致・データ行なし・非会員の行にもエラーを表示して取り込み画面へ戻るが、棚卸しに採番が無いため表に載せない。# sheet-25 出荷実績登録CSVフォーマット  (HTML行 5842-5965 / 画像 0枚)
+
+出荷実績登録CSVフォーマット
+ドキュメント名
+受注管理　基本設計
+セクション
+—
+プロジェクト名
+出荷実績登録CSV
+作成者
+緑川
+作成日
+2025-05-07
+更新者
+—
+更新日
+—
+機能No
+M05-26
+機能名
+出荷実績登録CSV
+概要
+—
+出荷実績登録CSV
+識別ID	項目名 ※	主キー	書式・制限	必須	最大文字数
+または最大値	入力例	備考
+1	注文番号		数値(整数)	〇		01234567	更新のキー項目
+2	会員ID		数値(整数)			123456
+3	お名前(姓)		文字型			晴屋
+4	お名前(名)		文字型			太郎
+5	お名前(セイ)		文字型			ハレルヤ
+6	お名前(メイ)		文字型			タロウ
+7	会社名		文字型			株式会社　Hareruya
+8	郵便番号1		数値(整数)			169
+9	郵便番号2		数値(整数)			0075
+10	都道府県(ID)		数値(整数)			13
+11	都道府県(名称)		文字型			東京都
+12	住所1		文字型			新宿区高田馬場
+13	住所2		文字型			3-12-2
+14	住所3		文字型			XXビル1F	海外住所用で住所３を追加
+15	メールアドレス		文字型			test@example.com
+16	TEL1		数値(整数)			03
+17	TEL2		数値(整数)			5332
+18	TEL3		数値(整数)			7517
+19	FAX1		数値(整数)			03
+20	FAX2		数値(整数)			5332
+21	FAX3		数値(整数)			7545
+22	性別(ID)		数値(整数)			1
+23	性別(名称)		文字型			男性
+24	職業(ID)		数値(整数)			18
+25	職業(名称)		文字型			その他/Other
+26	誕生日		日時（YYYY/MM/DD HH:MM）			1987/8/18  0:00:00
+27	ショップ用メモ欄		文字型			メモ
+28	小計		数値(整数)			2400
+29	値引き		数値(整数)			0
+30	送料合計		数値(整数)			550
+31	税金		数値(整数)			0
+32	合計		数値(整数)			2950
+33	支払合計		数値(整数)			2950
+34	対応状況(ID)		数値(整数)			9
+35	対応状況(名称)		文字型			出荷指示
+36	支払方法(ID)		数値(整数)			9
+37	支払方法(名称)		文字型			コンビニ決済
+38	注文日		日時（YYYY/MM/DD HH:MM）			2025/08/06 16:59:42
+39	注文確定日		日時（YYYY/MM/DD HH:MM）			2025/08/06 16:59:42
+40	入金日		日時（YYYY/MM/DD HH:MM）			2025/08/07 09:34:43
+41	出荷指示日		日時（YYYY/MM/DD HH:MM）			2025/08/08 09:34:43
+42	出荷日		日時（YYYY/MM/DD HH:MM）			2025/08/08 12:34:43
+43	配送先_お名前(姓)		文字型			晴屋
+44	配送先_お名前(名)		文字型			太郎
+45	配送先_お名前(セイ)		文字型			ハレルヤ
+46	配送先_お名前(メイ)		文字型			タロウ
+47	配送先_会社名		文字型			株式会社　Hareruya
+48	配送先_郵便番号1		数値(整数)			169
+49	配送先_郵便番号2		数値(整数)			0075
+50	配送先_都道府県(ID)		数値(整数)			13
+51	配送先_都道府県(名称)		文字型			東京都
+52	配送先_住所1		文字型			新宿区高田馬場
+53	配送先_住所2		文字型			3-12-2
+54	配送先_TEL1		数値(整数)			03
+55	配送先_TEL2		数値(整数)			5332
+56	配送先_TEL3		数値(整数)			7517
+57	配送先_FAX1		数値(整数)			03
+58	配送先_FAX2		数値(整数)			5332
+59	配送先_FAX3		数値(整数)			7545
+60	配送方法(ID)		数値(整数)			3
+61	配送方法(名称)		文字型			ゆうパック
+62	送り状No.		数値(整数)			12345
+63	お届け時間ID		数値(整数)			7
+64	お届け時間(名称)		文字型			18～20時
+Source:
+functions/pf-eccube3/m05-26_admin_order_order_shipping_result_csv_format.md
+現行仕様
+M05-26 出荷実績登録CSVフォーマット / 受注管理 — 出荷実績登録CSVフォーマット
+業務ロジック
+項目の構成
+出荷実績入力用CSV出力と出荷実績インポート登録は、同じ 63 項目だけを使う。注文番号で始まり、お届け時間の名称で終わる。出力したファイルに出荷日と送り状No.を書き込んだときは、そのまま取り込める。
+お届け希望日は項目一式に含まれない。実装では定義が無効にしてあるため、取り込み画面の項目一覧にも出ない。
+取り込み画面には、この 63 項目を定義した順に見出しとして表示する。
+必須と任意
+必須の項目は注文番号だけである。注文番号で受注を特定するため、値が空のときはその行でエラーになる。
+それ以外の 62 項目は任意で、ヘッダ行に無いときも取り込める。
+ヘッダ行の扱い
+条件	扱い
+想定の 63 項目に無い項目名があるとき	取り込まない
+必須の注文番号がヘッダ行に無いとき	取り込まない
+想定の項目だけで並び順が違うとき	並び順は問わず取り込む
+データ行が 1 行も無いとき	取り込まない
+受け付けるファイル形式
+カンマ区切りとタブ区切りの両方を受け付ける。拡張子が tsv のときはタブ区切りとして読み、それ以外のときは設定の区切り文字で読む。
+入出力
+入出力: 永続化
+更新しない。本書はファイル形式の定義であり、単独では読み書きを行わない。
+リニューアル後の仕様
+表示メッセージ
+本書はファイル形式の定義であり、画面メッセージを持たない。取り込みのメッセージは出荷実績インポート登録に書く。
+exec
+/bin/bash -lc "nl -ba src/Eccube/Repository/OrderRepository.php | sed -n '250,295p;570,615p;1590,1640p'
+nl -ba src/Eccube/Resource/template/admin/Order/index.twig | sed -n '1038,1070p'
+nl -ba src/Eccube/Service/CsvExportService.php | sed -n '390,430p;470,515p'
+nl -ba app/DoctrineMigrations/Version20210831190000.php | sed -n '20,45p'
+nl -ba app/DoctrineMigrations/Version20260226000001.php | sed -n '80,125p'
+nl -ba src/Eccube/Controller/Admin/Order/MailController.php | sed -n '450,580p'
+nl -ba html/template/admin/assets/js/manual_mail.js | sed -n '1,30p'" in /home/y-saito/Developments/ec-cube-enterprise
+ succeeded in 18ms:
+   390	                        $card = $cardDetail !== null ? $cardDetail->getCard() : null;
+   391	                        $ExportCsvRow->setData($card !== null ? $csvExportService->getData($Csv, $card) : null);
+   392	                        break;
+   393	                    default:
+   394	                        $ExportCsvRow->setData(null);
+   395	                        break;
+   396	                }
+   397	                $ExportCsvRow->pushData();
+   398	            }
+   399	            $csvExportService->fputcsv($ExportCsvRow->getRow());
+   400	        }
+   401	    }
+   402	
+   403	    /**
+   404	     * 受注カスタムCSV用
+   405	     *
+   406	     * @param Order $Order
+   407	     * @param CsvExportService $csvExportService
+   408	     * @param Request $request
+   409	     */
+   410	    public function exportOrder(Order $Order, CsvExportService $csvExportService, Request $request): void
+   411	    {
+   412	        $OrderDetails = $Order->getOrderItems();
+   413	        $Shipping = $Order->getShippings()[0];
+   414	
+   415	        foreach ($OrderDetails as $OrderDetail) {
+   416	            $ExportCsvRow = new \Eccube\Entity\ExportCsvRow();
+   417	            // CSV出力項目と合致するデータを取得.
+   418	            foreach ($csvExportService->getCsvs() as $Csv) {
+   419	                if (str_replace('\\\\', '\\', $Csv->getEntityName()) === 'Eccube\Entity\Shipping') {
+   420	                    $ExportCsvRow->setData($csvExportService->getData($Csv, $Shipping));
+   421	                } else {
+   422	                    $ExportCsvRow->setData($csvExportService->getData($Csv, $Order));
+   423	                    if ($ExportCsvRow->isDataNull()) {
+   424	                        $ExportCsvRow->setData($csvExportService->getData($Csv, $OrderDetail));
+   425	                    }
+   426	                }
+   427	                $ExportCsvRow->pushData();
+   428	            }
+   429	            $csvExportService->fputcsv($ExportCsvRow->getRow());
+   430	        }
+   470	                    $ExportCsvRow->setData($csvExportService->getData($Csv, $Product));
+   471	                    break;
+   472	                case 'Eccube\Entity\Master\MtbCardDetail':
+   473	                    $ExportCsvRow->setData($cardDetail !== null ? $csvExportService->getData($Csv, $cardDetail) : null);
+   474	                    break;
+   475	                case 'Eccube\Entity\Master\MtbCard':
+   476	                    $ExportCsvRow->setData($card !== null ? $csvExportService->getData($Csv, $card) : null);
+   477	                    break;
+   478	                default:
+   479	                    $ExportCsvRow->setData(null);
+   480	                    break;
+   481	            }
+   482	            $ExportCsvRow->pushData();
+   483	        }
+   484	        $csvExportService->fputcsv($ExportCsvRow->getRow());
+   485	    }
+   486	
+   487	    /**
+   488	     * 配送カスタムCSV用
+   489	     *
+   490	     * @param Order $Order
+   491	     * @param CsvExportService $csvExportService
+   492	     * @param Request $request
+   493	     */
+   494	    public function exportShipping(Order $Order, CsvExportService $csvExportService, Request $request): void
+   495	    {
+   496	        $Shippings = $Order->getShippings();
+   497	
+   498	        foreach ($Shippings as $Shipping) {
+   499	            $ExportCsvRow = new \Eccube\Entity\ExportCsvRow();
+   500	            // CSV出力項目と合致するデータを取得.
+   501	            foreach ($csvExportService->getCsvs() as $Csv) {
+   502	                $ExportCsvRow->setData($csvExportService->getData($Csv, $Order));
+   503	                if ($ExportCsvRow->isDataNull()) {
+   504	                    $ExportCsvRow->setData($csvExportService->getData($Csv, $Shipping));
+   505	                }
+   506	                $ExportCsvRow->pushData();
+   507	            }
+   508	            $csvExportService->fputcsv($ExportCsvRow->getRow());
+   509	        }
+   510	    }
+   511	}
+    20	
+    21	/**
+    22	 * Auto-generated Migration: Please modify to your needs!
+    23	 */
+    24	final class Version20210831190000 extends AbstractMigration
+    25	{
+    26	    #[\Override]
+    27	    public function up(Schema $schema): void
+    28	    {
+    29	        // update お届け時間ID
+    30	        $this->addSql("UPDATE dtb_csv
+    31	                SET field_name = 'time_id', reference_field_name = NULL
+    32	                WHERE id IN (119, 190)");
+    33	
+    34	        // delete 送料ID
+    35	        $this->addSql('DELETE FROM dtb_csv WHERE id IN (122, 193)');
+    36	    }
+    37	
+    38	    #[\Override]
+    39	    public function down(Schema $schema): void
+    40	    {
+    41	        // this down() migration is auto-generated, please modify it to your needs
+    42	    }
+    43	}
+    80	        $this->addSql("INSERT INTO dtb_csv (csv_type_id, creator_id, entity_name, field_name, reference_field_name, disp_name, sort_no, enabled, create_date, update_date) VALUES (4,NULL,'Eccube\\\\Entity\\\\Shipping', 'postal_code02',NULL,'配送先_郵便番号2',51, True,NOW(),NOW());");
+    81	        $this->addSql("UPDATE dtb_csv SET sort_no = 52 WHERE csv_type_id = 4 AND disp_name = '配送先_都道府県(ID)';");
+    82	        $this->addSql("UPDATE dtb_csv SET sort_no = 53 WHERE csv_type_id = 4 AND disp_name = '配送先_都道府県(名称)';");
+    83	        $this->addSql("UPDATE dtb_csv SET sort_no = 54 WHERE csv_type_id = 4 AND disp_name = '配送先_住所1';");
+    84	        $this->addSql("UPDATE dtb_csv SET sort_no = 55 WHERE csv_type_id = 4 AND disp_name = '配送先_住所2';");
+    85	        $this->addSql("INSERT INTO dtb_csv (csv_type_id, creator_id, entity_name, field_name, reference_field_name, disp_name, sort_no, enabled, create_date, update_date) VALUES (4,NULL,'Eccube\\\\Entity\\\\Shipping', 'tel01',NULL,'配送先_TEL1',56, True,NOW(),NOW());");
+    86	        $this->addSql("INSERT INTO dtb_csv (csv_type_id, creator_id, entity_name, field_name, reference_field_name, disp_name, sort_no, enabled, create_date, update_date) VALUES (4,NULL,'Eccube\\\\Entity\\\\Shipping', 'tel02',NULL,'配送先_TEL2',57, True,NOW(),NOW());");
+    87	        $this->addSql("INSERT INTO dtb_csv (csv_type_id, creator_id, entity_name, field_name, reference_field_name, disp_name, sort_no, enabled, create_date, update_date) VALUES (4,NULL,'Eccube\\\\Entity\\\\Shipping', 'tel03',NULL,'配送先_TEL3',58, True,NOW(),NOW());");
+    88	        $this->addSql("INSERT INTO dtb_csv (csv_type_id, creator_id, entity_name, field_name, reference_field_name, disp_name, sort_no, enabled, create_date, update_date) VALUES (4,NULL,'Eccube\\\\Entity\\\\Shipping', 'fax01',NULL,'配送先_FAX1',59, True,NOW(),NOW());");
+    89	        $this->addSql("INSERT INTO dtb_csv (csv_type_id, creator_id, entity_name, field_name, reference_field_name, disp_name, sort_no, enabled, create_date, update_date) VALUES (4,NULL,'Eccube\\\\Entity\\\\Shipping', 'fax02',NULL,'配送先_FAX2',60, True,NOW(),NOW());");
+    90	        $this->addSql("INSERT INTO dtb_csv (csv_type_id, creator_id, entity_name, field_name, reference_field_name, disp_name, sort_no, enabled, create_date, update_date) VALUES (4,NULL,'Eccube\\\\Entity\\\\Shipping', 'fax03',NULL,'配送先_FAX3',61, True,NOW(),NOW());");
+    91	        $this->addSql("UPDATE dtb_csv SET sort_no = 62 WHERE csv_type_id = 4 AND disp_name = '配送業者(ID)';");
+    92	        $this->addSql("UPDATE dtb_csv SET sort_no = 63 WHERE csv_type_id = 4 AND disp_name = '配送業者(名称)';");
+    93	        $this->addSql("UPDATE dtb_csv SET sort_no = 64 WHERE csv_type_id = 4 AND disp_name = 'お届け時間ID';");
+    94	        $this->addSql("UPDATE dtb_csv SET sort_no = 65 WHERE csv_type_id = 4 AND disp_name = 'お届け時間(名称)';");
+    95	        $this->addSql("UPDATE dtb_csv SET sort_no = 66 WHERE csv_type_id = 4 AND disp_name = 'お届け希望日';");
+    96	        $this->addSql("UPDATE dtb_csv SET sort_no = 68 WHERE csv_type_id = 4 AND disp_name = '送料' AND field_name = 'shipping_delivery_fee';");
+    97	        $this->addSql("INSERT INTO dtb_csv (csv_type_id, creator_id, entity_name, field_name, reference_field_name, disp_name, sort_no, enabled, create_date, update_date) VALUES (4,NULL,'Eccube\\\\Entity\\\\Order', 'shipping_date',NULL,'出荷日',69, True,NOW(),NOW());");
+    98	        $this->addSql("INSERT INTO dtb_csv (csv_type_id, creator_id, entity_name, field_name, reference_field_name, disp_name, sort_no, enabled, create_date, update_date) VALUES (4,NULL,'Eccube\\\\Entity\\\\Order', 'smaregi_transaction_id',NULL,'スマレジ取引ID',70, True,NOW(),NOW());");
+    99	        $this->addSql("INSERT INTO dtb_csv (csv_type_id, creator_id, entity_name, field_name, reference_field_name, disp_name, sort_no, enabled, create_date, update_date) VALUES (4,NULL,'Eccube\\\\Entity\\\\Order', 'subtotal_discount_division',NULL,'小計値引き/割引区分',71, True,NOW(),NOW());");
+   100	        $this->addSql("INSERT INTO dtb_csv (csv_type_id, creator_id, entity_name, field_name, reference_field_name, disp_name, sort_no, enabled, create_date, update_date) VALUES (4,NULL,'Eccube\\\\Entity\\\\Order', 'coupon_discount',NULL,'クーポン値引き',72, True,NOW(),NOW());");
+   101	        $this->addSql("INSERT INTO dtb_csv (csv_type_id, creator_id, entity_name, field_name, reference_field_name, disp_name, sort_no, enabled, create_date, update_date) VALUES (4,NULL,'Eccube\\\\Entity\\\\Order', 'smaregi_memo',NULL,'スマレジメモ',73, True,NOW(),NOW());");
+   102	        $this->addSql("INSERT INTO dtb_csv (csv_type_id, creator_id, entity_name, field_name, reference_field_name, disp_name, sort_no, enabled, create_date, update_date) VALUES (4,NULL,'Eccube\\\\Entity\\\\Order', 'tax_free',NULL,'免税額',74, True,NOW(),NOW());");
+   103	        $this->addSql("INSERT INTO dtb_csv (csv_type_id, creator_id, entity_name, field_name, reference_field_name, disp_name, sort_no, enabled, create_date, update_date) VALUES (4,NULL,'Eccube\\\\Entity\\\\Shipping', 'Product','id','配送商品ID',75, True,NOW(),NOW());");
+   104	        $this->addSql("UPDATE dtb_csv SET sort_no = 76 WHERE csv_type_id = 4 AND disp_name = '商品ID';");
+   105	        $this->addSql("UPDATE dtb_csv SET sort_no = 77 WHERE csv_type_id = 4 AND disp_name = '商品規格ID';");
+   106	        $this->addSql("UPDATE dtb_csv SET sort_no = 78 WHERE csv_type_id = 4 AND disp_name = '商品名';");
+   107	        $this->addSql("UPDATE dtb_csv SET sort_no = 79 WHERE csv_type_id = 4 AND disp_name = '商品コード';");
+   108	        $this->addSql("UPDATE dtb_csv SET sort_no = 80 WHERE csv_type_id = 4 AND disp_name = '規格名1';");
+   109	        $this->addSql("UPDATE dtb_csv SET sort_no = 81 WHERE csv_type_id = 4 AND disp_name = '規格名2';");
+   110	        $this->addSql("UPDATE dtb_csv SET sort_no = 82 WHERE csv_type_id = 4 AND disp_name = '規格分類名1';");
+   111	        $this->addSql("UPDATE dtb_csv SET sort_no = 83 WHERE csv_type_id = 4 AND disp_name = '規格分類名2';");
+   112	        $this->addSql("UPDATE dtb_csv SET sort_no = 84 WHERE csv_type_id = 4 AND disp_name = '価格';");
+   113	        $this->addSql("UPDATE dtb_csv SET sort_no = 85 WHERE csv_type_id = 4 AND disp_name = '個数';");
+   114	        $this->addSql("INSERT INTO dtb_csv (csv_type_id, creator_id, entity_name, field_name, reference_field_name, disp_name, sort_no, enabled, create_date, update_date) VALUES (4,NULL,'Eccube\\\\Entity\\\\Order', 'note',NULL,'注文備考',86, True,NOW(),NOW());");
+   115	        $this->addSql("INSERT INTO dtb_csv (csv_type_id, creator_id, entity_name, field_name, reference_field_name, disp_name, sort_no, enabled, create_date, update_date) VALUES (4,NULL,'Eccube\\\\Entity\\\\Order', 'Country','name','注文国',87, True,NOW(),NOW());");
+   116	        $this->addSql("INSERT INTO dtb_csv (csv_type_id, creator_id, entity_name, field_name, reference_field_name, disp_name, sort_no, enabled, create_date, update_date) VALUES (4,NULL,'Eccube\\\\Entity\\\\Shipping', 'Country','name','配送先国',89, True,NOW(),NOW());");
+   117	        $this->addSql("INSERT INTO dtb_csv (csv_type_id, creator_id, entity_name, field_name, reference_field_name, disp_name, sort_no, enabled, create_date, update_date) VALUES (4,NULL,'Eccube\\\\Entity\\\\Order', 'invoice_number',NULL,'送り状No.',90, True,NOW(),NOW());");
+   118	        // 不要な項目を削除
+   119	        $this->addSql("DELETE FROM dtb_csv WHERE csv_type_id = 4 AND disp_name = 'TEL';");
+   120	        $this->addSql("DELETE FROM dtb_csv WHERE csv_type_id = 4 AND disp_name = '注文詳細ID';");
+   121	        $this->addSql("DELETE FROM dtb_csv WHERE csv_type_id = 4 AND disp_name = '税率';");
+   122	        $this->addSql("DELETE FROM dtb_csv WHERE csv_type_id = 4 AND disp_name = '税率ルール(ID)';");
+   123	        $this->addSql("DELETE FROM dtb_csv WHERE csv_type_id = 4 AND disp_name = '明細区分(ID)';");
+   124	        $this->addSql("DELETE FROM dtb_csv WHERE csv_type_id = 4 AND disp_name = '明細区分(名称)';");
+   125	        $this->addSql("DELETE FROM dtb_csv WHERE csv_type_id = 4 AND disp_name = '配送先_TEL';");
+   450	        }
+   451	
+   452	        if ('POST' === $request->getMethod()) {
+   453	            $form->handleRequest($request);
+   454	            $mode = $request->get('mode');
+   455	
+   456	            $header = $form->get('header')->getData();
+   457	            $footer = $form->get('footer')->getData();
+   458	
+   459	            switch ($mode) {
+   460	                // 確認画面
+   461	                case 'confirm':
+   462	                    if ($form->isSubmitted() && $form->isValid() && $mail) {
+   463	                        try {
+   464	                            $firstOrder = reset($Orders) ?: null;
+   465	                            $previewBody = $firstOrder
+   466	                                ? $this->createManualBody($mail, $firstOrder, $header, $footer)
+   467	                                : '';
+   468	                        } catch (\Throwable $e) {
+   469	                            log_error('manual mail all confirm body build failed', [
+   470	                                'exception' => $e->getMessage(),
+   471	                                'templateId' => $templateId,
+   472	                            ]);
+   473	                            $this->addError('admin.order.mail_send_failed', 'admin');
+   474	                            break;
+   475	                        }
+   476	
+   477	                        $event = new EventArgs(
+   478	                            [
+   479	                                'form' => $form,
+   480	                                'Orders' => $Orders,
+   481	                                'mail' => $mail,
+   482	                            ],
+   483	                            $request
+   484	                        );
+   485	                        $this->eventDispatcher->dispatch($event, EccubeEvents::ADMIN_ORDER_MAIL_MAIL_ALL_CONFIRM);
+   486	
+   487	                        return $this->render('@admin/Order/manual_mail_all_confirm.twig', [
+   488	                            'form' => $form->createView(),
+   489	                            'id' => $templateId,
+   490	                            'Orders' => $Orders,
+   491	                            'firstOrder' => $firstOrder,
+   492	                            'previewSubject' => $form->get('subject')->getData(),
+   493	                            'previewBody' => $previewBody,
+   494	                            'mail' => $mail,
+   495	                            'orderNumbers' => $orderNumbers,
+   496	                            'shippingIds' => $shippingIds,
+   497	                        ]);
+   498	                    }
+   499	                    foreach ($form->getErrors(true) as $error) {
+   500	                        $this->addError($error->getMessage(), 'admin');
+   501	                    }
+   502	                    if (!$mail) {
+   503	                        $this->addError('admin.order.mail_send_failed', 'admin');
+   504	                    } elseif (!$form->isSubmitted() || !$form->getErrors(true)->count()) {
+   505	                        $this->addError('admin.order.mail_send_failed', 'admin');
+   506	                    }
+   507	                    break;
+   508	                    // 送信する
+   509	                case 'complete':
+   510	                    if (!($form->isSubmitted() && $form->isValid() && $mail)) {
+   511	                        $this->addError('admin.order.mail_send_failed', 'admin');
+   512	                        break;
+   513	                    }
+   514	
+   515	                    $sentCount = 0;
+   516	                    $totalCount = count($Orders);
+   517	                    foreach ($Orders as $Order) {
+   518	                        try {
+   519	                            $body = $this->createManualBody($mail, $Order, $header, $footer);
+   520	                        } catch (\Throwable $e) {
+   521	                            log_error('manual mail all complete body build failed', [
+   522	                                'exception' => $e->getMessage(),
+   523	                                'templateId' => $templateId,
+   524	                                'order_id' => $Order->getId(),
+   525	                                'sent' => $sentCount,
+   526	                                'total' => $totalCount,
+   527	                            ]);
+   528	                            $this->addError(
+   529	                                $this->translator->trans('admin.order.mail_send_failed_partial', [
+   530	                                    '%sent%' => $sentCount,
+   531	                                    '%total%' => $totalCount,
+   532	                                    '%order_id%' => (string) $Order->getId(),
+   533	                                ]),
+   534	                                'admin'
+   535	                            );
+   536	
+   537	                            return $this->redirectToRoute('admin_order');
+   538	                        }
+   539	                        if (!$this->mailService->sendManualMailForBulk($Order, $mail, $body, $request->request->all())) {
+   540	                            $this->addError(
+   541	                                $this->translator->trans('admin.order.mail_send_failed_partial', [
+   542	                                    '%sent%' => $sentCount,
+   543	                                    '%total%' => $totalCount,
+   544	                                    '%order_id%' => (string) $Order->getId(),
+   545	                                ]),
+   546	                                'admin'
+   547	                            );
+   548	
+   549	                            return $this->redirectToRoute('admin_order');
+   550	                        }
+   551	                        ++$sentCount;
+   552	                    }
+   553	
+   554	                    $event = new EventArgs(
+   555	                        [
+   556	                            'form' => $form,
+   557	                            'Orders' => $Orders,
+   558	                            'mail' => $mail,
+   559	                        ],
+   560	                        $request
+   561	                    );
+   562	                    $this->eventDispatcher->dispatch($event, EccubeEvents::ADMIN_ORDER_MAIL_MAIL_ALL_COMPLETE);
+   563	
+   564	                    $this->addSuccess('admin.order.mail_send_complete', 'admin');
+   565	
+   566	                    return $this->redirectToRoute('admin_order');
+   567	            }
+   568	        }
+   569	
+   570	        return $this->render('@admin/Order/manual_mail_all.twig', [
+   571	            'form' => $form->createView(),
+   572	            'id' => $templateId,
+   573	            'Orders' => $Orders,
+   574	            'body' => $templateBody,
+   575	            'mail' => $mail,
+   576	            'orderNumbers' => $orderNumbers,
+   577	            'shippingIds' => $shippingIds,
+   578	        ]);
+   579	    }
+   580	
+     1	$(function() {
+     2	    // メール送信前の意思確認
+     3	    $('#send_mail').on('click', function (event) {
+     4	        if (!confirm('お客様にメールを送信します。よろしいですか？')) {
+     5	            event.preventDefault();
+     6	        }
+     7	    });
+     8	
+     9	    // 件名入力中はEnterで送信を実行させない
+    10	    $('#mail_subject, #customer_mail_all_subject').on('keydown', function (event) {
+    11	        if (event.key === 'Enter') {
+    12	            event.preventDefault();
+    13	        }
+    14	    });
+    15	});
+
+exec
+/bin/bash -lc "nl -ba src/Eccube/Resource/locale/messages.ja.yaml | sed -n '2508,2540p'
+nl -ba src/Eccube/Resource/template/admin/Order/edit.twig | sed -n '1145,1175p;1238,1270p;1315,1335p'
+nl -ba src/Eccube/Controller/Admin/Order/HistoryController.php | sed -n '1,100p'
+nl -ba src/Eccube/Controller/Admin/Order/ShippingStandbyController.php | sed -n '370,425p'
+rg -n \"function getSubInfosByProductClassIds|getSubInfosByProductClassIds\" src
+nl -ba src/Eccube/Controller/Admin/Order/OrderCsvController.php | sed -n '75,190p;320,420p'
+nl -ba src/Eccube/Service/Csv/OrderCsv.php | sed -n '85,155p'
+nl -ba src/Eccube/Entity/Order.php | sed -n '665,690p'
+nl -ba src/Eccube/Resource/template/admin/Order/shipping_result_csv_import.twig | sed -n '70,95p'
+nl -ba src/Eccube/Resource/template/admin/Order/waiting_tag.twig | sed -n '105,135p'
+nl -ba src/Eccube/Resource/locale/messages.ja.yaml | sed -n '1778,1792p'" in /home/y-saito/Developments/ec-cube-enterprise
+ succeeded in 46ms:
+    75	        '小計' => '小計',
+    76	        '値引き' => '値引き',
+    77	        '送料合計' => '送料合計',
+    78	        '税金' => '税金',
+    79	        '合計' => '合計',
+    80	        '支払合計' => '支払合計',
+    81	        '対応状況(ID)' => '対応状況(ID)',
+    82	        '対応状況(名称)' => '対応状況(名称)',
+    83	        '支払方法(ID)' => '支払方法(ID)',
+    84	        '支払方法(名称)' => '支払方法(名称)',
+    85	        '注文日' => '注文日',
+    86	        '注文確定日' => '注文確定日',
+    87	        '入金日' => '入金日',
+    88	        '出荷指示日' => '出荷指示日',
+    89	        '出荷日' => '出荷日',
+    90	        '配送先_お名前(姓)' => '配送先_お名前(姓)',
+    91	        '配送先_お名前(名)' => '配送先_お名前(名)',
+    92	        '配送先_お名前(セイ)' => '配送先_お名前(セイ)',
+    93	        '配送先_お名前(メイ)' => '配送先_お名前(メイ)',
+    94	        '配送先_会社名' => '配送先_会社名',
+    95	        '配送先_郵便番号1' => '配送先_郵便番号1',
+    96	        '配送先_郵便番号2' => '配送先_郵便番号2',
+    97	        '配送先_都道府県(ID)' => '配送先_都道府県(ID)',
+    98	        '配送先_都道府県(名称)' => '配送先_都道府県(名称)',
+    99	        '配送先_住所1' => '配送先_住所1',
+   100	        '配送先_住所2' => '配送先_住所2',
+   101	        '配送先_住所3' => '配送先_住所3',
+   102	        '配送先_TEL1' => '配送先_TEL1',
+   103	        '配送先_TEL2' => '配送先_TEL2',
+   104	        '配送先_TEL3' => '配送先_TEL3',
+   105	        '配送先_FAX1' => '配送先_FAX1',
+   106	        '配送先_FAX2' => '配送先_FAX2',
+   107	        '配送先_FAX3' => '配送先_FAX3',
+   108	        '配送方法(ID)' => '配送方法(ID)',
+   109	        '配送方法(名称)' => '配送方法(名称)',
+   110	        '送り状No.' => '送り状No.',
+   111	        'お届け時間ID' => 'お届け時間ID',
+   112	        'お届け時間(名称)' => 'お届け時間(名称)',
+   113	    ];
+   114	
+   115	    public const REQUIRED_CSV_HEADER = [
+   116	        '注文番号' => '注文番号',
+   117	    ];
+   118	
+   119	    public const NOT_REQUIRED_CSV_HEADER = [
+   120	        '会員ID' => '会員ID',
+   121	        'お名前(姓)' => 'お名前(姓)',
+   122	        'お名前(名)' => 'お名前(名)',
+   123	        'お名前(セイ)' => 'お名前(セイ)',
+   124	        'お名前(メイ)' => 'お名前(メイ)',
+   125	        '会社名' => '会社名',
+   126	        '郵便番号1' => '郵便番号1',
+   127	        '郵便番号2' => '郵便番号2',
+   128	        '都道府県(ID)' => '都道府県(ID)',
+   129	        '都道府県(名称)' => '都道府県(名称)',
+   130	        '住所1' => '住所1',
+   131	        '住所2' => '住所2',
+   132	        '住所3' => '住所3',
+   133	        'メールアドレス' => 'メールアドレス',
+   134	        'TEL1' => 'TEL1',
+   135	        'TEL2' => 'TEL2',
+   136	        'TEL3' => 'TEL3',
+   137	        'FAX1' => 'FAX1',
+   138	        'FAX2' => 'FAX2',
+   139	        'FAX3' => 'FAX3',
+   140	        '性別(ID)' => '性別(ID)',
+   141	        '性別(名称)' => '性別(名称)',
+   142	        '職業(ID)' => '職業(ID)',
+   143	        '職業(名称)' => '職業(名称)',
+   144	        '誕生日' => '誕生日',
+   145	        'ショップ用メモ欄' => 'ショップ用メモ欄',
+   146	        '小計' => '小計',
+   147	        '値引き' => '値引き',
+   148	        '送料合計' => '送料合計',
+   149	        '税金' => '税金',
+   150	        '合計' => '合計',
+   151	        '支払合計' => '支払合計',
+   152	        '対応状況(ID)' => '対応状況(ID)',
+   153	        '対応状況(名称)' => '対応状況(名称)',
+   154	        '支払方法(ID)' => '支払方法(ID)',
+   155	        '支払方法(名称)' => '支払方法(名称)',
+   156	        '注文日' => '注文日',
+   157	        '注文確定日' => '注文確定日',
+   158	        '入金日' => '入金日',
+   159	        '出荷指示日' => '出荷指示日',
+   160	        '出荷日' => '出荷日',
+   161	        '配送先_お名前(姓)' => '配送先_お名前(姓)',
+   162	        '配送先_お名前(名)' => '配送先_お名前(名)',
+   163	        '配送先_お名前(セイ)' => '配送先_お名前(セイ)',
+   164	        '配送先_お名前(メイ)' => '配送先_お名前(メイ)',
+   165	        '配送先_会社名' => '配送先_会社名',
+   166	        '配送先_郵便番号1' => '配送先_郵便番号1',
+   167	        '配送先_郵便番号2' => '配送先_郵便番号2',
+   168	        '配送先_都道府県(ID)' => '配送先_都道府県(ID)',
+   169	        '配送先_都道府県(名称)' => '配送先_都道府県(名称)',
+   170	        '配送先_住所1' => '配送先_住所1',
+   171	        '配送先_住所2' => '配送先_住所2',
+   172	        '配送先_住所3' => '配送先_住所3',
+   173	        '配送先_TEL1' => '配送先_TEL1',
+   174	        '配送先_TEL2' => '配送先_TEL2',
+   175	        '配送先_TEL3' => '配送先_TEL3',
+   176	        '配送先_FAX1' => '配送先_FAX1',
+   177	        '配送先_FAX2' => '配送先_FAX2',
+   178	        '配送先_FAX3' => '配送先_FAX3',
+   179	        '配送方法(ID)' => '配送方法(ID)',
+   180	        '配送方法(名称)' => '配送方法(名称)',
+   181	        '送り状No.' => '送り状No.',
+   182	        'お届け時間ID' => 'お届け時間ID',
+   183	        'お届け時間(名称)' => 'お届け時間(名称)',
+   184	    ];
+   185	
+   186	    /**
+   187	     * 出荷実績インポート用CSVエクスポート
+   188	     *
+   189	     * @param Request $request
+   190	     *
+   320	
+   321	            return $this->redirectToRoute('admin_shipping_result_csv_import');
+   322	        }
+   323	
+   324	        $lockName = 'registerShippingResult';
+   325	        $gainPointDispatch = [];
+   326	        $shippingCompleteOrders = [];
+   327	        $locked = false;
+   328	        try {
+   329	            if (!$this->orderRepository->getLock($lockName)) {
+   330	                throw new \RuntimeException(trans('admin.csv.error.data.lock_failed'));
+   331	            }
+   332	            $locked = true;
+   333	            // ヘッダーの値が一致するかチェック
+   334	            $headers = self::CSV_HEADER;
+   335	            $notRequiredCsvHeader = self::NOT_REQUIRED_CSV_HEADER;
+   336	            $columnHeaders = $data->getColumnHeaders();
+   337	            $this->orderCsv->checkHeaderValues(array_keys($headers), $columnHeaders, array_keys($notRequiredCsvHeader));
+   338	            $headerSize = count($columnHeaders);
+   339	
+   340	            // CSVデータが空でないかチェック
+   341	            $this->orderCsv->checkDataSize($data);
+   342	
+   343	            $this->entityManager->getConfiguration()->setSQLLogger(null);
+   344	            $this->entityManager->beginTransaction();
+   345	
+   346	            // CSVファイルの登録処理
+   347	            $updatedOrders = $this->orderCsv->registerShippingResult($headers, $headerSize, $data);
+   348	            foreach ($updatedOrders as $updateOrder) {
+   349	                $this->pointService->gainPoints($updateOrder['order']);
+   350	                // 出荷完了メールは commit 後に送る（ロールバック時に送信しない）.
+   351	                $shippingCompleteOrders[] = $updateOrder['order'];
+   352	                // 発生ポイントのスマレジ連携ジョブを同一トランザクションで積む（dispatch は commit 後）.
+   353	                $gainPointJob = $this->smaregiOrderGainPointEventService->registerGainPointJob($updateOrder['order']);
+   354	                if ($gainPointJob !== null) {
+   355	                    $gainPointDispatch[] = ['job' => $gainPointJob, 'order' => $updateOrder['order']];
+   356	                }
+   357	            }
+   358	            $this->entityManager->flush();
+   359	            $this->entityManager->commit();
+   360	        } catch (\Throwable $e) {
+   361	            if ($this->entityManager->getConnection()->isTransactionActive()) {
+   362	                // トランザクション内でエラーが発生した場合はロールバック
+   363	                $this->entityManager->rollback();
+   364	            }
+   365	
+   366	            $this->addError($e->getMessage(), 'admin');
+   367	
+   368	            $this->orderCsv->render();
+   369	
+   370	            return $this->redirectToRoute('admin_shipping_result_csv_import');
+   371	        } finally {
+   372	            if ($locked) {
+   373	                $this->orderRepository->releaseLock($lockName);
+   374	            }
+   375	        }
+   376	
+   377	        // commit 成功後に出荷完了メールを送信し、送信日時を記録する.
+   378	        $mailSendDateUpdated = false;
+   379	        foreach ($shippingCompleteOrders as $Order) {
+   380	            // pf: sendShippingCompleteMail(Order) — 受注単位・国内外テンプレ分岐
+   381	            if (!$this->mailService->sendShippingCompleteMail($Order)) {
+   382	                continue;
+   383	            }
+   384	            foreach ($Order->getShippings() as $Shipping) {
+   385	                $Shipping->setMailSendDate(new \DateTime());
+   386	            }
+   387	            $mailSendDateUpdated = true;
+   388	        }
+   389	        if ($mailSendDateUpdated) {
+   390	            $this->entityManager->flush();
+   391	        }
+   392	
+   393	        // commit 成功後に発生ポイント連携メッセージを送信する（アウトボックス的な順序）。
+   394	        // 送信は取込結果と切り離し、失敗しても取込自体は成功として扱う（取込はコミット済み）。
+   395	        try {
+   396	            foreach ($gainPointDispatch as $gainPointEntry) {
+   397	                $this->smaregiOrderGainPointEventService->dispatchGainPointMessage($gainPointEntry['job'], $gainPointEntry['order']);
+   398	            }
+   399	        } catch (\Throwable $e) {
+   400	            log_error('スマレジ発生ポイント連携メッセージの送信に失敗しました', ['error' => $e->getMessage()]);
+   401	        }
+   402	
+   403	        $event = new EventArgs(
+   404	            [
+   405	                'form' => $form,
+   406	            ],
+   407	            $request
+   408	        );
+   409	        $this->eventDispatcher->dispatch($event, EccubeEvents::ADMIN_ORDER_CSV_SHIPPING_RESULT_IMPORT_COMPLETE);
+   410	
+   411	        $this->addSuccess('admin.register.complete', 'admin');
+   412	
+   413	        $this->orderCsv->render();
+   414	
+   415	        return $this->redirectToRoute('admin_shipping_result_csv_import');
+   416	    }
+   417	}
+    85	        log_info('CSV出力ファイル名', [$filename]);
+    86	
+    87	        return $response;
+    88	    }
+    89	
+    90	    /**
+    91	     * 出荷実績登録処理
+    92	     * 対応状況が出荷指示かつ出荷日が入力されている受注情報を更新
+    93	     *
+    94	     * @param array<string, string> $headers
+    95	     * @param CsvImportService<int, array<int|string, string>> $data
+    96	     *
+    97	     * @return array<int, array{order: Order, player: \Eccube\Entity\DtbPlayer|null}>
+    98	     */
+    99	    public function registerShippingResult(array $headers, int $headerSize, CsvImportService $data): array
+   100	    {
+   101	        $requiredHeaders = $this->requiredCsvHeader;
+   102	
+   103	        $updatedOrders = [];
+   104	        foreach ($data as $row) {
+   105	            $rowIndex = $data->key() + 1;
+   106	
+   107	            // ヘッダーサイズチェック
+   108	            $this->checkHeaderSize($headerSize, $row, $rowIndex);
+   109	            // CSV必須項目入力チェック
+   110	            $this->checkRequiredHeaders($requiredHeaders, $row, $rowIndex);
+   111	
+   112	            $orderNumber = sprintf('%08d', $row['注文番号']);
+   113	            $order = $this->orderRepository->findOneBy(['order_number' => $orderNumber]);
+   114	
+   115	            if ($order === null) {
+   116	                throw new \RuntimeException(sprintf($this->translator->trans('admin.csv.error.data.not_registered'), '注文番号', $row['注文番号'], $rowIndex));
+   117	            }
+   118	            if (empty($row['出荷日'])) {
+   119	                continue;
+   120	            }
+   121	            // 非会員の場合エラーを出力
+   122	            if ($order->isNonMember()) {
+   123	                throw new \RuntimeException($this->translator->trans('admin.csv.error.customer.not_member', ['%row%' => $rowIndex]));
+   124	            }
+   125	            try {
+   126	                $shippingDate = new \DateTime($row['出荷日']);
+   127	            } catch (\Exception $e) {
+   128	                $message = $this->translator->trans('admin.csv.error.exception.datetime', ['%row%' => $rowIndex, '%column%' => '出荷日']);
+   129	                throw new \RuntimeException($message, $rowIndex, $e);
+   130	            }
+   131	            $invoiceNumber = $row['送り状No.'];
+   132	            $newStatus = $this->orderStatusRepository->find(OrderStatus::DELIVERED);
+   133	            $isPreDeliv = $order->getOrderStatus()?->getId() === OrderStatus::PRE_DELIV;
+   134	            if ($isPreDeliv && $order->getShippingDate() === null) {
+   135	                $order->setOrderStatus($newStatus);
+   136	                $order
+   137	                    ->setShippingDate($shippingDate)
+   138	                    ->setInvoiceNumber($invoiceNumber);
+   139	                $updatedOrders[] = [
+   140	                    'order' => $order,
+   141	                    'player' => $this->playerRepository->findOneByCustomer($order->getCustomer()),
+   142	                ];
+   143	            }
+   144	            foreach ($order->getShippings() as $shipping) {
+   145	                $shipping->setShippingDate($shippingDate);
+   146	            }
+   147	        }
+   148	
+   149	        $this->entityManager->flush();
+   150	
+   151	        return $updatedOrders;
+   152	    }
+   153	
+   154	    /**
+   155	     * 登録、更新時の画面表示
+   665	
+   666	        #[ORM\ManyToOne(targetEntity: DeviceType::class)]
+   667	        #[ORM\JoinColumn(name: 'device_type_id', referencedColumnName: 'id')]
+   668	        private ?DeviceType $DeviceType = null;
+   669	
+   670	        /**
+   671	         * OrderStatusより先にプロパティを定義しておかないとセットされなくなる
+   672	         */
+   673	        #[ORM\ManyToOne(targetEntity: CustomerOrderStatus::class)]
+   674	        #[ORM\JoinColumn(name: 'order_status_id', referencedColumnName: 'id')]
+   675	        private ?CustomerOrderStatus $CustomerOrderStatus = null;
+   676	
+   677	        /**
+   678	         * OrderStatusより先にプロパティを定義しておかないとセットされなくなる
+   679	         */
+   680	        #[ORM\ManyToOne(targetEntity: OrderStatusColor::class)]
+   681	        #[ORM\JoinColumn(name: 'order_status_id', referencedColumnName: 'id')]
+   682	        private ?OrderStatusColor $OrderStatusColor = null;
+   683	
+   684	        #[ORM\ManyToOne(targetEntity: OrderStatus::class)]
+   685	        #[ORM\JoinColumn(name: 'order_status_id', referencedColumnName: 'id')]
+   686	        private ?OrderStatus $OrderStatus = null;
+   687	
+   688	        #[ORM\Column(name: 'waiting_number', type: Types::INTEGER, nullable: true, options: ['unsigned' => true, 'comment' => '店舗販売用整理番号'])]
+   689	        private ?int $waitingNumber = null;
+   690	
+    70	                        </div>
+    71	                    </div>
+    72	                </form>
+    73	            </div>
+    74	            <div id="file_format" class="card rounded border-0 mb-4" style="min-width: 0; max-width: 100%;">
+    75	                <div class="card-header">
+    76	                    <h3 class="box-title mb-12">出荷実績登録CSVファイルフォーマット</h3>
+    77	                </div>
+    78	                <div id="file_format_box__body_inner" class="card-body p-0 w-100" style="min-width: 0; max-width: 100%; overflow-x: auto;">
+    79	                    <table class="table table-striped mb-12" style="width: max-content; max-width: none;">
+    80	                        <thead>
+    81	                            <tr id="file_format_box__header" class="text-nowrap">
+    82	                                {% for header in headers|keys %}
+    83	                                    <th id="file_format_box__header--{{ loop.index }}">{{ header }}</th>
+    84	                                {% endfor %}
+    85	                            </tr>
+    86	                        </thead>
+    87	                        <tbody>
+    88	                            <tr id="file_format_box__list" class="text-nowrap">
+    89	                                {% for key, value in headers %}
+    90	                                    <td id="file_format_box__{{ key }}">{{ value|nl2br }}</td>
+    91	                                {% endfor %}
+    92	                            </tr>
+    93	                        </tbody>
+    94	                    </table>
+    95	                </div>
+   105	                            <tr>
+   106	                                <th class="align-middle text-left" style="width: 80%;">{{ 'admin.order.waiting_tag.list'|trans }}</th>
+   107	                                <th class="align-middle text-center" style="width: 20%;"></th>
+   108	                            </tr>
+   109	                            </thead>
+   110	                            {% if WaitingTags|length > 0 %}
+   111	                                <tbody class="sortable-container">
+   112	                                    {% for WaitingTag in WaitingTags %}
+   113	                                        <tr class="sortable-item" data-id="{{ WaitingTag .id }}"">
+   114	                                            <td class="align-middle text-left">
+   115	                                                {{ WaitingTag.waiting_tag }}
+   116	                                            </td>
+   117	                                            <td class="align-middle text-center">
+   118	                                            {% if WaitingTag.BaseInfo is not null and app.user.isEditableShop(WaitingTag.BaseInfo) %}
+   119	                                                <div class="btn-group" role="group">
+   120	                                                    <a class="btn btn-sm btn-ec-conversion"
+   121	                                                        data-bs-toggle="modal" data-bs-target="#DeleteModal"
+   122	                                                        data-url="{{ url('admin_order_waiting_tag_delete', {id: WaitingTag.id}) }}"
+   123	                                                        data-message="{{ 'admin.common.delete_modal__message'|trans({ "%name%" : WaitingTag.waiting_tag }) }}">
+   124	                                                        {{ 'admin.common.delete'|trans }}
+   125	                                                    </a>
+   126	                                                </div>
+   127	                                            {% endif %}
+   128	                                            </td>
+   129	                                        </tr>
+   130	                                    {% endfor %}
+   131	                                </tbody>
+   132	                            {% endif %}
+   133	                        </table>
+   134	                    </div>
+   135	                </div>
+  1778	admin.common.csv_import_error: CSVインポートエラー
+  1779	admin.common.csv_file_select: CSVファイル選択
+  1780	admin.common.csv_import: CSV取り込み
+  1781	admin.common.csv_id_optional: (新規登録時は入力不要)
+  1782	admin.common.csv_export_guide: '<a href="%url%" class="text-muted text-decoration-underline">登録済みのデータをCSV出力</a>して、フォーマットを確認・編集してからアップロードすることをお勧めします。'
+  1783	admin.common.drag_and_drop_description: 項目の順番はドラッグ＆ドロップでも変更可能です。
+  1784	admin.common.drag_and_drop_image_description: 画像をドラッグ＆ドロップまたは
+  1785	admin.common.delete_modal__title: 削除します
+  1786	admin.common.delete_modal__message: "この操作はあとから取り消すことができません。「%name%」を削除してよろしいですか？"
+  1787	admin.common.delete_confirm_message: "%name%を削除してもよろしいですか？"
+  1788	admin.confirm.delete: "%s を削除してもよろしいですか？"
+  1789	admin.confirm.copy: "%s を複製してもよろしいですか？"
+  1790	admin.common.move_to_confirm_title: ページを移動します
+  1791	admin.common.move_to_confirm_message: "%name%に移動します。編集内容を保存してから移動しますか？"
+  1792	admin.common.move_to_confirm_move_only: 保存せずに移動
+
+exec
+/bin/bash -lc "rg -n \"invoice_number|invoiceNumber\" src/Eccube/Entity/Order.php
+nl -ba src/Eccube/Controller/Admin/Order/OrderCsvController.php | sed -n '45,120p'
+nl -ba src/Eccube/Repository/ProductClassRepository.php | sed -n '3055,3105p'
+nl -ba src/Eccube/Controller/Admin/Order/ShippingStandbyController.php | sed -n '420,470p'
+rg -n \"csv_type_id\\s*=\\s*4|csv_type_id,.*4|WHERE csv_type_id = 4|VALUES \\(4\" app/DoctrineMigrations | cut -d: -f1 | sort -u
+rg -n \"送料ID|('注文番号'|, '注文番号'|,'注文番号')\" app/DoctrineMigrations src/Eccube/Resource/doctrine src/Eccube/Resource/sql 2>/dev/null" in /home/y-saito/Developments/ec-cube-enterprise
+ exited 2 in 48ms:
+app/DoctrineMigrations/Version20220603074035.php
+app/DoctrineMigrations/Version20260108204509.php
+app/DoctrineMigrations/Version20260224000000.php
+app/DoctrineMigrations/Version20260226000001.php
+app/DoctrineMigrations/Version20260513140000.php
+app/DoctrineMigrations/Version20260724120000.php
+app/DoctrineMigrations/Version20260513140000.php:31:        $this->addSql("UPDATE dtb_csv SET field_name = 'order_number', reference_field_name = NULL WHERE csv_type_id = 3 AND disp_name = '注文番号';");
+app/DoctrineMigrations/Version20260513140000.php:33:        $this->addSql("UPDATE dtb_csv SET field_name = 'order_number', reference_field_name = NULL WHERE csv_type_id = 4 AND disp_name = '注文番号';");
+app/DoctrineMigrations/Version20260513140000.php:38:        $this->addSql("UPDATE dtb_csv SET field_name = 'order_no', reference_field_name = NULL WHERE csv_type_id = 3 AND disp_name = '注文番号';");
+app/DoctrineMigrations/Version20260513140000.php:39:        $this->addSql("UPDATE dtb_csv SET field_name = 'order_no', reference_field_name = NULL WHERE csv_type_id = 4 AND disp_name = '注文番号';");
+app/DoctrineMigrations/Version20251125141030.php:69:                'attached_info_name' => '注文番号',
+app/DoctrineMigrations/Version20260224000000.php:31:        $this->addSql("UPDATE dtb_csv SET sort_no = 1 WHERE csv_type_id = 3 AND disp_name = '注文番号';");
+app/DoctrineMigrations/Version20260224000000.php:124:        $this->addSql("UPDATE dtb_csv SET sort_no = 2 WHERE csv_type_id = 3 AND disp_name = '注文番号';");
+app/DoctrineMigrations/Version20260226000001.php:31:        $this->addSql("UPDATE dtb_csv SET sort_no = 1 WHERE csv_type_id = 4 AND disp_name = '注文番号';");
+app/DoctrineMigrations/Version20260226000001.php:135:        $this->addSql("UPDATE dtb_csv SET sort_no = 2 WHERE csv_type_id = 4 AND disp_name = '注文番号';");
+app/DoctrineMigrations/Version20210831190000.php:34:        // delete 送料ID
+
+exec
+/bin/bash -lc 'for f in app/DoctrineMigrations/Version20220603074035.php app/DoctrineMigrations/Version20260108204509.php app/DoctrineMigrations/Version20260224000000.php app/DoctrineMigrations/Version20260226000001.php app/DoctrineMigrations/Version20260513140000.php app/DoctrineMigrations/Version20260724120000.php; do echo "$f"; rg -n "csv_type_id = 4|VALUES '"\\(4|送料ID|注文番号\" \""'$f"; done' in /home/y-saito/Developments/ec-cube-enterprise
+ succeeded in 0ms:
+app/DoctrineMigrations/Version20220603074035.php
+app/DoctrineMigrations/Version20260108204509.php
+app/DoctrineMigrations/Version20260224000000.php
+31:        $this->addSql("UPDATE dtb_csv SET sort_no = 1 WHERE csv_type_id = 3 AND disp_name = '注文番号';");
+124:        $this->addSql("UPDATE dtb_csv SET sort_no = 2 WHERE csv_type_id = 3 AND disp_name = '注文番号';");
+app/DoctrineMigrations/Version20260226000001.php
+31:        $this->addSql("UPDATE dtb_csv SET sort_no = 1 WHERE csv_type_id = 4 AND disp_name = '注文番号';");
+32:        $this->addSql("UPDATE dtb_csv SET sort_no = 2 WHERE csv_type_id = 4 AND disp_name = '注文ID';");
+33:        $this->addSql("INSERT INTO dtb_csv (csv_type_id, creator_id, entity_name, field_name, reference_field_name, disp_name, sort_no, enabled, create_date, update_date) VALUES (4,NULL,'Eccube\\\\Entity\\\\Order', 'BaseInfo','id','店舗ID',3, True,NOW(),NOW());");
+34:        $this->addSql("UPDATE dtb_csv SET sort_no = 5 WHERE csv_type_id = 4 AND disp_name = '会員ID';");
+35:        $this->addSql("UPDATE dtb_csv SET sort_no = 6 WHERE csv_type_id = 4 AND disp_name = 'お名前(姓)';");
+36:        $this->addSql("UPDATE dtb_csv SET sort_no = 7 WHERE csv_type_id = 4 AND disp_name = 'お名前(名)';");
+37:        $this->addSql("UPDATE dtb_csv SET sort_no = 8 WHERE csv_type_id = 4 AND disp_name = 'お名前(セイ)';");
+38:        $this->addSql("UPDATE dtb_csv SET sort_no = 9 WHERE csv_type_id = 4 AND disp_name = 'お名前(メイ)';");
+39:        $this->addSql("UPDATE dtb_csv SET sort_no = 10 WHERE csv_type_id = 4 AND disp_name = '会社名';");
+40:        $this->addSql("UPDATE dtb_csv SET sort_no = 11, field_name = 'postal_code01', disp_name = '郵便番号1' WHERE csv_type_id = 4 AND disp_name = '郵便番号';");
+41:        $this->addSql("INSERT INTO dtb_csv (csv_type_id, creator_id, entity_name, field_name, reference_field_name, disp_name, sort_no, enabled, create_date, update_date) VALUES (4,NULL,'Eccube\\\\Entity\\\\Order', 'postal_code02',NULL,'郵便番号2',12, True,NOW(),NOW());");
+42:        $this->addSql("UPDATE dtb_csv SET sort_no = 13 WHERE csv_type_id = 4 AND disp_name = '都道府県(ID)';");
+43:        $this->addSql("UPDATE dtb_csv SET sort_no = 14 WHERE csv_type_id = 4 AND disp_name = '都道府県(名称)';");
+44:        $this->addSql("UPDATE dtb_csv SET sort_no = 15 WHERE csv_type_id = 4 AND disp_name = '住所1';");
+45:        $this->addSql("UPDATE dtb_csv SET sort_no = 16 WHERE csv_type_id = 4 AND disp_name = '住所2';");
+46:        $this->addSql("INSERT INTO dtb_csv (csv_type_id, creator_id, entity_name, field_name, reference_field_name, disp_name, sort_no, enabled, create_date, update_date) VALUES (4,NULL,'Eccube\\\\Entity\\\\Order', 'addr03',NULL,'住所3',17, True,NOW(),NOW());");
+47:        $this->addSql("UPDATE dtb_csv SET sort_no = 18 WHERE csv_type_id = 4 AND disp_name = 'メールアドレス';");
+48:        $this->addSql("INSERT INTO dtb_csv (csv_type_id, creator_id, entity_name, field_name, reference_field_name, disp_name, sort_no, enabled, create_date, update_date) VALUES (4,NULL,'Eccube\\\\Entity\\\\Order', 'tel01',NULL,'TEL1',19, True,NOW(),NOW());");
+49:        $this->addSql("INSERT INTO dtb_csv (csv_type_id, creator_id, entity_name, field_name, reference_field_name, disp_name, sort_no, enabled, create_date, update_date) VALUES (4,NULL,'Eccube\\\\Entity\\\\Order', 'tel02',NULL,'TEL2',20, True,NOW(),NOW());");
+50:        $this->addSql("INSERT INTO dtb_csv (csv_type_id, creator_id, entity_name, field_name, reference_field_name, disp_name, sort_no, enabled, create_date, update_date) VALUES (4,NULL,'Eccube\\\\Entity\\\\Order', 'tel03',NULL,'TEL3',21, True,NOW(),NOW());");
+51:        $this->addSql("INSERT INTO dtb_csv (csv_type_id, creator_id, entity_name, field_name, reference_field_name, disp_name, sort_no, enabled, create_date, update_date) VALUES (4,NULL,'Eccube\\\\Entity\\\\Order', 'fax01',NULL,'FAX1',22, True,NOW(),NOW());");
+52:        $this->addSql("INSERT INTO dtb_csv (csv_type_id, creator_id, entity_name, field_name, reference_field_name, disp_name, sort_no, enabled, create_date, update_date) VALUES (4,NULL,'Eccube\\\\Entity\\\\Order', 'fax02',NULL,'FAX2',23, True,NOW(),NOW());");
+53:        $this->addSql("INSERT INTO dtb_csv (csv_type_id, creator_id, entity_name, field_name, reference_field_name, disp_name, sort_no, enabled, create_date, update_date) VALUES (4,NULL,'Eccube\\\\Entity\\\\Order', 'fax03',NULL,'FAX3',24, True,NOW(),NOW());");
+54:        $this->addSql("UPDATE dtb_csv SET sort_no = 25, field_name = 'Sex', disp_name = '性別(ID)' WHERE csv_type_id = 4 AND disp_name = '性別(ID)';");
+55:        $this->addSql("UPDATE dtb_csv SET sort_no = 26, field_name = 'Sex', disp_name = '性別(名称)' WHERE csv_type_id = 4 AND disp_name = '性別(名称)';");
+56:        $this->addSql("UPDATE dtb_csv SET sort_no = 27 WHERE csv_type_id = 4 AND disp_name = '職業(ID)';");
+57:        $this->addSql("UPDATE dtb_csv SET sort_no = 28 WHERE csv_type_id = 4 AND disp_name = '職業(名称)';");
+58:        $this->addSql("UPDATE dtb_csv SET sort_no = 29 WHERE csv_type_id = 4 AND disp_name = '誕生日';");
+59:        $this->addSql("UPDATE dtb_csv SET sort_no = 30 WHERE csv_type_id = 4 AND disp_name = 'ショップ用メモ欄';");
+60:        $this->addSql("UPDATE dtb_csv SET sort_no = 31 WHERE csv_type_id = 4 AND disp_name = '小計';");
+61:        $this->addSql("UPDATE dtb_csv SET sort_no = 32 WHERE csv_type_id = 4 AND disp_name = '値引き';");
+62:        $this->addSql("UPDATE dtb_csv SET sort_no = 33 WHERE csv_type_id = 4 AND disp_name = '送料' AND field_name = 'delivery_fee_total';");
+63:        $this->addSql("UPDATE dtb_csv SET sort_no = 34 WHERE csv_type_id = 4 AND disp_name = '税金';");
+64:        $this->addSql("UPDATE dtb_csv SET sort_no = 35 WHERE csv_type_id = 4 AND disp_name = '合計';");
+65:        $this->addSql("UPDATE dtb_csv SET sort_no = 36 WHERE csv_type_id = 4 AND disp_name = '支払合計';");
+66:        $this->addSql("UPDATE dtb_csv SET sort_no = 37 WHERE csv_type_id = 4 AND disp_name = '対応状況(ID)';");
+67:        $this->addSql("UPDATE dtb_csv SET sort_no = 38 WHERE csv_type_id = 4 AND disp_name = '対応状況(名称)';");
+68:        $this->addSql("UPDATE dtb_csv SET sort_no = 39 WHERE csv_type_id = 4 AND disp_name = '支払方法(ID)';");
+69:        $this->addSql("UPDATE dtb_csv SET sort_no = 40 WHERE csv_type_id = 4 AND disp_name = '支払方法(名称)';");
+70:        $this->addSql("UPDATE dtb_csv SET sort_no = 41 WHERE csv_type_id = 4 AND disp_name = '受注日';");
+71:        $this->addSql("UPDATE dtb_csv SET sort_no = 42 WHERE csv_type_id = 4 AND disp_name = '入金日';");
+72:        $this->addSql("INSERT INTO dtb_csv (csv_type_id, creator_id, entity_name, field_name, reference_field_name, disp_name, sort_no, enabled, create_date, update_date) VALUES (4,NULL,'Eccube\\\\Entity\\\\Order', 'commit_date',NULL,'出荷指示日',43, True,NOW(),NOW());");
+73:        $this->addSql("UPDATE dtb_csv SET sort_no = 44, disp_name = '配送ID' WHERE csv_type_id = 4 AND disp_name = '出荷ID';");
+74:        $this->addSql("UPDATE dtb_csv SET sort_no = 45 WHERE csv_type_id = 4 AND disp_name = '配送先_お名前(姓)';");
+75:        $this->addSql("UPDATE dtb_csv SET sort_no = 46 WHERE csv_type_id = 4 AND disp_name = '配送先_お名前(名)';");
+76:        $this->addSql("UPDATE dtb_csv SET sort_no = 47 WHERE csv_type_id = 4 AND disp_name = '配送先_お名前(セイ)';");
+77:        $this->addSql("UPDATE dtb_csv SET sort_no = 48 WHERE csv_type_id = 4 AND disp_name = '配送先_お名前(メイ)';");
+78:        $this->addSql("UPDATE dtb_csv SET sort_no = 49 WHERE csv_type_id = 4 AND disp_name = '配送先_会社名';");
+79:        $this->addSql("UPDATE dtb_csv SET sort_no = 50, field_name = 'postal_code01', disp_name = '配送先_郵便番号1' WHERE csv_type_id = 4 AND disp_name = '配送先_郵便番号';");
+80:        $this->addSql("INSERT INTO dtb_csv (csv_type_id, creator_id, entity_name, field_name, reference_field_name, disp_name, sort_no, enabled, create_date, update_date) VALUES (4,NULL,'Eccube\\\\Entity\\\\Shipping', 'postal_code02',NULL,'配送先_郵便番号2',51, True,NOW(),NOW());");
+81:        $this->addSql("UPDATE dtb_csv SET sort_no = 52 WHERE csv_type_id = 4 AND disp_name = '配送先_都道府県(ID)';");
+82:        $this->addSql("UPDATE dtb_csv SET sort_no = 53 WHERE csv_type_id = 4 AND disp_name = '配送先_都道府県(名称)';");
+83:        $this->addSql("UPDATE dtb_csv SET sort_no = 54 WHERE csv_type_id = 4 AND disp_name = '配送先_住所1';");
+84:        $this->addSql("UPDATE dtb_csv SET sort_no = 55 WHERE csv_type_id = 4 AND disp_name = '配送先_住所2';");
+85:        $this->addSql("INSERT INTO dtb_csv (csv_type_id, creator_id, entity_name, field_name, reference_field_name, disp_name, sort_no, enabled, create_date, update_date) VALUES (4,NULL,'Eccube\\\\Entity\\\\Shipping', 'tel01',NULL,'配送先_TEL1',56, True,NOW(),NOW());");
+86:        $this->addSql("INSERT INTO dtb_csv (csv_type_id, creator_id, entity_name, field_name, reference_field_name, disp_name, sort_no, enabled, create_date, update_date) VALUES (4,NULL,'Eccube\\\\Entity\\\\Shipping', 'tel02',NULL,'配送先_TEL2',57, True,NOW(),NOW());");
+87:        $this->addSql("INSERT INTO dtb_csv (csv_type_id, creator_id, entity_name, field_name, reference_field_name, disp_name, sort_no, enabled, create_date, update_date) VALUES (4,NULL,'Eccube\\\\Entity\\\\Shipping', 'tel03',NULL,'配送先_TEL3',58, True,NOW(),NOW());");
+88:        $this->addSql("INSERT INTO dtb_csv (csv_type_id, creator_id, entity_name, field_name, reference_field_name, disp_name, sort_no, enabled, create_date, update_date) VALUES (4,NULL,'Eccube\\\\Entity\\\\Shipping', 'fax01',NULL,'配送先_FAX1',59, True,NOW(),NOW());");
+89:        $this->addSql("INSERT INTO dtb_csv (csv_type_id, creator_id, entity_name, field_name, reference_field_name, disp_name, sort_no, enabled, create_date, update_date) VALUES (4,NULL,'Eccube\\\\Entity\\\\Shipping', 'fax02',NULL,'配送先_FAX2',60, True,NOW(),NOW());");
+90:        $this->addSql("INSERT INTO dtb_csv (csv_type_id, creator_id, entity_name, field_name, reference_field_name, disp_name, sort_no, enabled, create_date, update_date) VALUES (4,NULL,'Eccube\\\\Entity\\\\Shipping', 'fax03',NULL,'配送先_FAX3',61, True,NOW(),NOW());");
+91:        $this->addSql("UPDATE dtb_csv SET sort_no = 62 WHERE csv_type_id = 4 AND disp_name = '配送業者(ID)';");
+92:        $this->addSql("UPDATE dtb_csv SET sort_no = 63 WHERE csv_type_id = 4 AND disp_name = '配送業者(名称)';");
+93:        $this->addSql("UPDATE dtb_csv SET sort_no = 64 WHERE csv_type_id = 4 AND disp_name = 'お届け時間ID';");
+94:        $this->addSql("UPDATE dtb_csv SET sort_no = 65 WHERE csv_type_id = 4 AND disp_name = 'お届け時間(名称)';");
+95:        $this->addSql("UPDATE dtb_csv SET sort_no = 66 WHERE csv_type_id = 4 AND disp_name = 'お届け希望日';");
+96:        $this->addSql("UPDATE dtb_csv SET sort_no = 68 WHERE csv_type_id = 4 AND disp_name = '送料' AND field_name = 'shipping_delivery_fee';");
+97:        $this->addSql("INSERT INTO dtb_csv (csv_type_id, creator_id, entity_name, field_name, reference_field_name, disp_name, sort_no, enabled, create_date, update_date) VALUES (4,NULL,'Eccube\\\\Entity\\\\Order', 'shipping_date',NULL,'出荷日',69, True,NOW(),NOW());");
+98:        $this->addSql("INSERT INTO dtb_csv (csv_type_id, creator_id, entity_name, field_name, reference_field_name, disp_name, sort_no, enabled, create_date, update_date) VALUES (4,NULL,'Eccube\\\\Entity\\\\Order', 'smaregi_transaction_id',NULL,'スマレジ取引ID',70, True,NOW(),NOW());");
+99:        $this->addSql("INSERT INTO dtb_csv (csv_type_id, creator_id, entity_name, field_name, reference_field_name, disp_name, sort_no, enabled, create_date, update_date) VALUES (4,NULL,'Eccube\\\\Entity\\\\Order', 'subtotal_discount_division',NULL,'小計値引き/割引区分',71, True,NOW(),NOW());");
+100:        $this->addSql("INSERT INTO dtb_csv (csv_type_id, creator_id, entity_name, field_name, reference_field_name, disp_name, sort_no, enabled, create_date, update_date) VALUES (4,NULL,'Eccube\\\\Entity\\\\Order', 'coupon_discount',NULL,'クーポン値引き',72, True,NOW(),NOW());");
+101:        $this->addSql("INSERT INTO dtb_csv (csv_type_id, creator_id, entity_name, field_name, reference_field_name, disp_name, sort_no, enabled, create_date, update_date) VALUES (4,NULL,'Eccube\\\\Entity\\\\Order', 'smaregi_memo',NULL,'スマレジメモ',73, True,NOW(),NOW());");
+102:        $this->addSql("INSERT INTO dtb_csv (csv_type_id, creator_id, entity_name, field_name, reference_field_name, disp_name, sort_no, enabled, create_date, update_date) VALUES (4,NULL,'Eccube\\\\Entity\\\\Order', 'tax_free',NULL,'免税額',74, True,NOW(),NOW());");
+103:        $this->addSql("INSERT INTO dtb_csv (csv_type_id, creator_id, entity_name, field_name, reference_field_name, disp_name, sort_no, enabled, create_date, update_date) VALUES (4,NULL,'Eccube\\\\Entity\\\\Shipping', 'Product','id','配送商品ID',75, True,NOW(),NOW());");
+104:        $this->addSql("UPDATE dtb_csv SET sort_no = 76 WHERE csv_type_id = 4 AND disp_name = '商品ID';");
+105:        $this->addSql("UPDATE dtb_csv SET sort_no = 77 WHERE csv_type_id = 4 AND disp_name = '商品規格ID';");
+106:        $this->addSql("UPDATE dtb_csv SET sort_no = 78 WHERE csv_type_id = 4 AND disp_name = '商品名';");
+107:        $this->addSql("UPDATE dtb_csv SET sort_no = 79 WHERE csv_type_id = 4 AND disp_name = '商品コード';");
+108:        $this->addSql("UPDATE dtb_csv SET sort_no = 80 WHERE csv_type_id = 4 AND disp_name = '規格名1';");
+109:        $this->addSql("UPDATE dtb_csv SET sort_no = 81 WHERE csv_type_id = 4 AND disp_name = '規格名2';");
+110:        $this->addSql("UPDATE dtb_csv SET sort_no = 82 WHERE csv_type_id = 4 AND disp_name = '規格分類名1';");
+111:        $this->addSql("UPDATE dtb_csv SET sort_no = 83 WHERE csv_type_id = 4 AND disp_name = '規格分類名2';");
+112:        $this->addSql("UPDATE dtb_csv SET sort_no = 84 WHERE csv_type_id = 4 AND disp_name = '価格';");
+113:        $this->addSql("UPDATE dtb_csv SET sort_no = 85 WHERE csv_type_id = 4 AND disp_name = '個数';");
+114:        $this->addSql("INSERT INTO dtb_csv (csv_type_id, creator_id, entity_name, field_name, reference_field_name, disp_name, sort_no, enabled, create_date, update_date) VALUES (4,NULL,'Eccube\\\\Entity\\\\Order', 'note',NULL,'注文備考',86, True,NOW(),NOW());");
+115:        $this->addSql("INSERT INTO dtb_csv (csv_type_id, creator_id, entity_name, field_name, reference_field_name, disp_name, sort_no, enabled, create_date, update_date) VALUES (4,NULL,'Eccube\\\\Entity\\\\Order', 'Country','name','注文国',87, True,NOW(),NOW());");
+116:        $this->addSql("INSERT INTO dtb_csv (csv_type_id, creator_id, entity_name, field_name, reference_field_name, disp_name, sort_no, enabled, create_date, update_date) VALUES (4,NULL,'Eccube\\\\Entity\\\\Shipping', 'Country','name','配送先国',89, True,NOW(),NOW());");
+117:        $this->addSql("INSERT INTO dtb_csv (csv_type_id, creator_id, entity_name, field_name, reference_field_name, disp_name, sort_no, enabled, create_date, update_date) VALUES (4,NULL,'Eccube\\\\Entity\\\\Order', 'invoice_number',NULL,'送り状No.',90, True,NOW(),NOW());");
+119:        $this->addSql("DELETE FROM dtb_csv WHERE csv_type_id = 4 AND disp_name = 'TEL';");
+120:        $this->addSql("DELETE FROM dtb_csv WHERE csv_type_id = 4 AND disp_name = '注文詳細ID';");
+121:        $this->addSql("DELETE FROM dtb_csv WHERE csv_type_id = 4 AND disp_name = '税率';");
+122:        $this->addSql("DELETE FROM dtb_csv WHERE csv_type_id = 4 AND disp_name = '税率ルール(ID)';");
+123:        $this->addSql("DELETE FROM dtb_csv WHERE csv_type_id = 4 AND disp_name = '明細区分(ID)';");
+124:        $this->addSql("DELETE FROM dtb_csv WHERE csv_type_id = 4 AND disp_name = '明細区分(名称)';");
+125:        $this->addSql("DELETE FROM dtb_csv WHERE csv_type_id = 4 AND disp_name = '配送先_TEL';");
+126:        $this->addSql("DELETE FROM dtb_csv WHERE csv_type_id = 4 AND disp_name = '発送日';");
+127:        $this->addSql("DELETE FROM dtb_csv WHERE csv_type_id = 4 AND disp_name = '出荷伝票番号';");
+128:        $this->addSql("DELETE FROM dtb_csv WHERE csv_type_id = 4 AND disp_name = '配達用メモ';");
+129:        $this->addSql("DELETE FROM dtb_csv WHERE csv_type_id = 4 AND disp_name = '出荷メール送信日';");
+135:        $this->addSql("UPDATE dtb_csv SET sort_no = 2 WHERE csv_type_id = 4 AND disp_name = '注文番号';");
+136:        $this->addSql("UPDATE dtb_csv SET sort_no = 1 WHERE csv_type_id = 4 AND disp_name = '注文ID';");
+137:        $this->addSql("DELETE FROM dtb_csv WHERE csv_type_id = 4 AND disp_name = '店舗ID';");
+138:        $this->addSql("UPDATE dtb_csv SET sort_no = 3 WHERE csv_type_id = 4 AND disp_name = '会員ID';");
+139:        $this->addSql("UPDATE dtb_csv SET sort_no = 4 WHERE csv_type_id = 4 AND disp_name = 'お名前(姓)';");
+140:        $this->addSql("UPDATE dtb_csv SET sort_no = 5 WHERE csv_type_id = 4 AND disp_name = 'お名前(名)';");
+141:        $this->addSql("UPDATE dtb_csv SET sort_no = 6 WHERE csv_type_id = 4 AND disp_name = 'お名前(セイ)';");
+142:        $this->addSql("UPDATE dtb_csv SET sort_no = 7 WHERE csv_type_id = 4 AND disp_name = 'お名前(メイ)';");
+143:        $this->addSql("UPDATE dtb_csv SET sort_no = 8 WHERE csv_type_id = 4 AND disp_name = '会社名';");
+144:        $this->addSql("UPDATE dtb_csv SET sort_no = 9, field_name = 'postal_code', disp_name = '郵便番号' WHERE csv_type_id = 4 AND disp_name = '郵便番号1';");
+145:        $this->addSql("DELETE FROM dtb_csv WHERE csv_type_id = 4 AND disp_name = '郵便番号2';");
+146:        $this->addSql("UPDATE dtb_csv SET sort_no = 10 WHERE csv_type_id = 4 AND disp_name = '都道府県(ID)';");
+147:        $this->addSql("UPDATE dtb_csv SET sort_no = 11 WHERE csv_type_id = 4 AND disp_name = '都道府県(名称)';");
+148:        $this->addSql("UPDATE dtb_csv SET sort_no = 12 WHERE csv_type_id = 4 AND disp_name = '住所1';");
+149:        $this->addSql("UPDATE dtb_csv SET sort_no = 13 WHERE csv_type_id = 4 AND disp_name = '住所2';");
+150:        $this->addSql("DELETE FROM dtb_csv WHERE csv_type_id = 4 AND disp_name = '住所3';");
+151:        $this->addSql("UPDATE dtb_csv SET sort_no = 14 WHERE csv_type_id = 4 AND disp_name = 'メールアドレス';");
+152:        $this->addSql("DELETE FROM dtb_csv WHERE csv_type_id = 4 AND disp_name = 'TEL1';");
+153:        $this->addSql("DELETE FROM dtb_csv WHERE csv_type_id = 4 AND disp_name = 'TEL2';");
+154:        $this->addSql("DELETE FROM dtb_csv WHERE csv_type_id = 4 AND disp_name = 'TEL3';");
+155:        $this->addSql("DELETE FROM dtb_csv WHERE csv_type_id = 4 AND disp_name = 'FAX1';");
+156:        $this->addSql("DELETE FROM dtb_csv WHERE csv_type_id = 4 AND disp_name = 'FAX2';");
+157:        $this->addSql("DELETE FROM dtb_csv WHERE csv_type_id = 4 AND disp_name = 'FAX3';");
+158:        $this->addSql("UPDATE dtb_csv SET sort_no = 16 WHERE csv_type_id = 4 AND disp_name = '性別(ID)';");
+159:        $this->addSql("UPDATE dtb_csv SET sort_no = 17 WHERE csv_type_id = 4 AND disp_name = '性別(名称)';");
+160:        $this->addSql("UPDATE dtb_csv SET sort_no = 18 WHERE csv_type_id = 4 AND disp_name = '職業(ID)';");
+161:        $this->addSql("UPDATE dtb_csv SET sort_no = 19 WHERE csv_type_id = 4 AND disp_name = '職業(名称)';");
+162:        $this->addSql("UPDATE dtb_csv SET sort_no = 20 WHERE csv_type_id = 4 AND disp_name = '誕生日';");
+163:        $this->addSql("UPDATE dtb_csv SET sort_no = 21 WHERE csv_type_id = 4 AND disp_name = 'ショップ用メモ欄';");
+164:        $this->addSql("UPDATE dtb_csv SET sort_no = 22 WHERE csv_type_id = 4 AND disp_name = '小計';");
+165:        $this->addSql("UPDATE dtb_csv SET sort_no = 23 WHERE csv_type_id = 4 AND disp_name = '値引き';");
+166:        $this->addSql("UPDATE dtb_csv SET sort_no = 24 WHERE csv_type_id = 4 AND disp_name = '送料' AND field_name = 'delivery_fee_total';");
+167:        $this->addSql("UPDATE dtb_csv SET sort_no = 25 WHERE csv_type_id = 4 AND disp_name = '税金';");
+168:        $this->addSql("UPDATE dtb_csv SET sort_no = 26 WHERE csv_type_id = 4 AND disp_name = '合計';");
+169:        $this->addSql("UPDATE dtb_csv SET sort_no = 27 WHERE csv_type_id = 4 AND disp_name = '支払合計';");
+170:        $this->addSql("UPDATE dtb_csv SET sort_no = 28 WHERE csv_type_id = 4 AND disp_name = '対応状況(ID)';");
+171:        $this->addSql("UPDATE dtb_csv SET sort_no = 29 WHERE csv_type_id = 4 AND disp_name = '対応状況(名称)';");
+172:        $this->addSql("UPDATE dtb_csv SET sort_no = 30 WHERE csv_type_id = 4 AND disp_name = '支払方法(ID)';");
+173:        $this->addSql("UPDATE dtb_csv SET sort_no = 31 WHERE csv_type_id = 4 AND disp_name = '支払方法(名称)';");
+174:        $this->addSql("UPDATE dtb_csv SET sort_no = 32 WHERE csv_type_id = 4 AND disp_name = '受注日';");
+175:        $this->addSql("UPDATE dtb_csv SET sort_no = 33 WHERE csv_type_id = 4 AND disp_name = '入金日';");
+176:        $this->addSql("DELETE FROM dtb_csv WHERE csv_type_id = 4 AND disp_name = '出荷指示日';");
+177:        $this->addSql("UPDATE dtb_csv SET sort_no = 49, disp_name = '出荷ID' WHERE csv_type_id = 4 AND disp_name = '配送ID';");
+178:        $this->addSql("UPDATE dtb_csv SET sort_no = 50 WHERE csv_type_id = 4 AND disp_name = '配送先_お名前(姓)';");
+179:        $this->addSql("UPDATE dtb_csv SET sort_no = 51 WHERE csv_type_id = 4 AND disp_name = '配送先_お名前(名)';");
+180:        $this->addSql("UPDATE dtb_csv SET sort_no = 52 WHERE csv_type_id = 4 AND disp_name = '配送先_お名前(セイ)';");
+181:        $this->addSql("UPDATE dtb_csv SET sort_no = 53 WHERE csv_type_id = 4 AND disp_name = '配送先_お名前(メイ)';");
+182:        $this->addSql("UPDATE dtb_csv SET sort_no = 54 WHERE csv_type_id = 4 AND disp_name = '配送先_会社名';");
+183:        $this->addSql("UPDATE dtb_csv SET sort_no = 55, field_name = 'postal_code', disp_name = '配送先_郵便番号' WHERE csv_type_id = 4 AND disp_name = '配送先_郵便番号1';");
+184:        $this->addSql("DELETE FROM dtb_csv WHERE csv_type_id = 4 AND disp_name = '配送先_郵便番号2';");
+185:        $this->addSql("UPDATE dtb_csv SET sort_no = 56 WHERE csv_type_id = 4 AND disp_name = '配送先_都道府県(ID)';");
+186:        $this->addSql("UPDATE dtb_csv SET sort_no = 57 WHERE csv_type_id = 4 AND disp_name = '配送先_都道府県(名称)';");
+187:        $this->addSql("UPDATE dtb_csv SET sort_no = 58 WHERE csv_type_id = 4 AND disp_name = '配送先_住所1';");
+188:        $this->addSql("UPDATE dtb_csv SET sort_no = 59 WHERE csv_type_id = 4 AND disp_name = '配送先_住所2';");
+189:        $this->addSql("DELETE FROM dtb_csv WHERE csv_type_id = 4 AND disp_name = '配送先_TEL1';");
+190:        $this->addSql("DELETE FROM dtb_csv WHERE csv_type_id = 4 AND disp_name = '配送先_TEL2';");
+191:        $this->addSql("DELETE FROM dtb_csv WHERE csv_type_id = 4 AND disp_name = '配送先_TEL3';");
+192:        $this->addSql("DELETE FROM dtb_csv WHERE csv_type_id = 4 AND disp_name = '配送先_FAX1';");
+193:        $this->addSql("DELETE FROM dtb_csv WHERE csv_type_id = 4 AND disp_name = '配送先_FAX2';");
+194:        $this->addSql("DELETE FROM dtb_csv WHERE csv_type_id = 4 AND disp_name = '配送先_FAX3';");
+195:        $this->addSql("UPDATE dtb_csv SET sort_no = 61 WHERE csv_type_id = 4 AND disp_name = '配送業者(ID)';");
+196:        $this->addSql("UPDATE dtb_csv SET sort_no = 62 WHERE csv_type_id = 4 AND disp_name = '配送業者(名称)';");
+197:        $this->addSql("UPDATE dtb_csv SET sort_no = 63 WHERE csv_type_id = 4 AND disp_name = 'お届け時間ID';");
+198:        $this->addSql("UPDATE dtb_csv SET sort_no = 64 WHERE csv_type_id = 4 AND disp_name = 'お届け時間(名称)';");
+199:        $this->addSql("UPDATE dtb_csv SET sort_no = 65 WHERE csv_type_id = 4 AND disp_name = 'お届け希望日';");
+200:        $this->addSql("UPDATE dtb_csv SET sort_no = 67 WHERE csv_type_id = 4 AND disp_name = '送料' AND field_name = 'shipping_delivery_fee';");
+201:        $this->addSql("DELETE FROM dtb_csv WHERE csv_type_id = 4 AND disp_name = '出荷日';");
+202:        $this->addSql("DELETE FROM dtb_csv WHERE csv_type_id = 4 AND disp_name = 'スマレジ取引ID';");
+203:        $this->addSql("DELETE FROM dtb_csv WHERE csv_type_id = 4 AND disp_name = '小計値引き/割引区分';");
+204:        $this->addSql("DELETE FROM dtb_csv WHERE csv_type_id = 4 AND disp_name = 'クーポン値引き';");
+205:        $this->addSql("DELETE FROM dtb_csv WHERE csv_type_id = 4 AND disp_name = 'スマレジメモ';");
+206:        $this->addSql("DELETE FROM dtb_csv WHERE csv_type_id = 4 AND disp_name = '免税額';");
+207:        $this->addSql("DELETE FROM dtb_csv WHERE csv_type_id = 4 AND disp_name = '配送商品ID';");
+208:        $this->addSql("UPDATE dtb_csv SET sort_no = 35 WHERE csv_type_id = 4 AND disp_name = '商品ID';");
+209:        $this->addSql("UPDATE dtb_csv SET sort_no = 36 WHERE csv_type_id = 4 AND disp_name = '商品規格ID';");
+210:        $this->addSql("UPDATE dtb_csv SET sort_no = 37 WHERE csv_type_id = 4 AND disp_name = '商品名';");
+211:        $this->addSql("UPDATE dtb_csv SET sort_no = 38 WHERE csv_type_id = 4 AND disp_name = '商品コード';");
+212:        $this->addSql("UPDATE dtb_csv SET sort_no = 39 WHERE csv_type_id = 4 AND disp_name = '規格名1';");
+213:        $this->addSql("UPDATE dtb_csv SET sort_no = 40 WHERE csv_type_id = 4 AND disp_name = '規格名2';");
+214:        $this->addSql("UPDATE dtb_csv SET sort_no = 41 WHERE csv_type_id = 4 AND disp_name = '規格分類名1';");
+215:        $this->addSql("UPDATE dtb_csv SET sort_no = 42 WHERE csv_type_id = 4 AND disp_name = '規格分類名2';");
+216:        $this->addSql("UPDATE dtb_csv SET sort_no = 43 WHERE csv_type_id = 4 AND disp_name = '価格';");
+217:        $this->addSql("UPDATE dtb_csv SET sort_no = 44 WHERE csv_type_id = 4 AND disp_name = '個数';");
+218:        $this->addSql("DELETE FROM dtb_csv WHERE csv_type_id = 4 AND disp_name = '注文備考';");
+219:        $this->addSql("DELETE FROM dtb_csv WHERE csv_type_id = 4 AND disp_name = '注文国';");
+220:        $this->addSql("DELETE FROM dtb_csv WHERE csv_type_id = 4 AND disp_name = '配送先国';");
+221:        $this->addSql("DELETE FROM dtb_csv WHERE csv_type_id = 4 AND disp_name = '送り状No.';");
+223:        $this->addSql("INSERT INTO dtb_csv (csv_type_id, creator_id, entity_name, field_name, reference_field_name, disp_name, sort_no, enabled, create_date, update_date) VALUES (4,NULL,'Eccube\\\\Entity\\\\Order', 'phone_number',NULL,'TEL',15, True,NOW(),NOW());");
+224:        $this->addSql("INSERT INTO dtb_csv (csv_type_id, creator_id, entity_name, field_name, reference_field_name, disp_name, sort_no, enabled, create_date, update_date) VALUES (4,NULL,'Eccube\\\\Entity\\\\OrderItem', 'id',NULL,'注文詳細ID',34, True,NOW(),NOW());");
+225:        $this->addSql("INSERT INTO dtb_csv (csv_type_id, creator_id, entity_name, field_name, reference_field_name, disp_name, sort_no, enabled, create_date, update_date) VALUES (4,NULL,'Eccube\\\\Entity\\\\OrderItem', 'tax_rate',NULL,'税率',45, True,NOW(),NOW());");
+226:        $this->addSql("INSERT INTO dtb_csv (csv_type_id, creator_id, entity_name, field_name, reference_field_name, disp_name, sort_no, enabled, create_date, update_date) VALUES (4,NULL,'Eccube\\\\Entity\\\\OrderItem', 'tax_rule',NULL,'税率ルール(ID)',46, True,NOW(),NOW());");
+227:        $this->addSql("INSERT INTO dtb_csv (csv_type_id, creator_id, entity_name, field_name, reference_field_name, disp_name, sort_no, enabled, create_date, update_date) VALUES (4,NULL,'Eccube\\\\Entity\\\\OrderItem', 'OrderItemType',NULL,'明細区分(ID)',47, True,NOW(),NOW());");
+228:        $this->addSql("INSERT INTO dtb_csv (csv_type_id, creator_id, entity_name, field_name, reference_field_name, disp_name, sort_no, enabled, create_date, update_date) VALUES (4,NULL,'Eccube\\\\Entity\\\\OrderItem', 'OrderItemType',NULL,'明細区分(名称)',48, True,NOW(),NOW());");
+229:        $this->addSql("INSERT INTO dtb_csv (csv_type_id, creator_id, entity_name, field_name, reference_field_name, disp_name, sort_no, enabled, create_date, update_date) VALUES (4,NULL,'Eccube\\\\Entity\\\\Shipping', 'phone_number',NULL,'配送先_TEL',60, True,NOW(),NOW());");
+230:        $this->addSql("INSERT INTO dtb_csv (csv_type_id, creator_id, entity_name, field_name, reference_field_name, disp_name, sort_no, enabled, create_date, update_date) VALUES (4,NULL,'Eccube\\\\Entity\\\\Shipping', 'shipping_date',NULL,'発送日',68, True,NOW(),NOW());");
+231:        $this->addSql("INSERT INTO dtb_csv (csv_type_id, creator_id, entity_name, field_name, reference_field_name, disp_name, sort_no, enabled, create_date, update_date) VALUES (4,NULL,'Eccube\\\\Entity\\\\Shipping', 'tracking_number',NULL,'出荷伝票番号',69, True,NOW(),NOW());");
+232:        $this->addSql("INSERT INTO dtb_csv (csv_type_id, creator_id, entity_name, field_name, reference_field_name, disp_name, sort_no, enabled, create_date, update_date) VALUES (4,NULL,'Eccube\\\\Entity\\\\Shipping', 'note',NULL,'配達用メモ',70, True,NOW(),NOW());");
+233:        $this->addSql("INSERT INTO dtb_csv (csv_type_id, creator_id, entity_name, field_name, reference_field_name, disp_name, sort_no, enabled, create_date, update_date) VALUES (4,NULL,'Eccube\\\\Entity\\\\Shipping', 'mail_send_date',NULL,'出荷メール送信日',71, True,NOW(),NOW());");
+app/DoctrineMigrations/Version20260513140000.php
+31:        $this->addSql("UPDATE dtb_csv SET field_name = 'order_number', reference_field_name = NULL WHERE csv_type_id = 3 AND disp_name = '注文番号';");
+33:        $this->addSql("UPDATE dtb_csv SET field_name = 'order_number', reference_field_name = NULL WHERE csv_type_id = 4 AND disp_name = '注文番号';");
+38:        $this->addSql("UPDATE dtb_csv SET field_name = 'order_no', reference_field_name = NULL WHERE csv_type_id = 3 AND disp_name = '注文番号';");
+39:        $this->addSql("UPDATE dtb_csv SET field_name = 'order_no', reference_field_name = NULL WHERE csv_type_id = 4 AND disp_name = '注文番号';");
+app/DoctrineMigrations/Version20260724120000.php
+22: * 受注一覧CSV（csv_type_id = 3）・受注詳細CSV（csv_type_id = 4）に「店舗名」列を追加する.
+
+exec
+/bin/bash -lc "sed -n '1,240p' design_impl_drift_report/recheck/0203/review/sheets/sheet-3.txt
+sed -n '1,240p' design_impl_drift_report/recheck/0203/review/sheets/sheet-6.txt
+sed -n '1,260p' design_impl_drift_report/recheck/0203/review/sheets/sheet-7.txt" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 31ms:
+# sheet-3 受注情報検索 一覧(検索入力)  (HTML行 1045-1448 / 画像 0枚)
+
+受注情報検索 一覧(検索入力)
+ドキュメント名
+受注管理　基本設計
+セクション
+—
+プロジェクト名
+受注管理機能
+作成者
+緑川
+作成日
+2025-06-01
+更新者
+石川
+更新日
+2025-10-22
+機能No
+M05-01
+機能名
+受注検索一覧(検索入力)
+概要
+受注情報の検索、一覧表示が行えます。
+処理概要（★はカスタマイズ項目）
+レイアウト図
+1-2
+1-3
+1-4
+2-1
+2-2
+2-3
+2-4
+2-5
+2-6
+2-7
+2-8
+2-12
+2-11
+2-10
+2-9
+2-13-1
+2-14-1
+2-13-2
+2-14-2
+2-13-3
+2-13-4
+2-14-3
+2-14-4
+2-14-5
+2-15-1
+2-15-2
+2-15-3
+2-15-4
+2-15-5
+2-16-1
+2-16-2
+2-16-3
+2-16-4
+2-16-5
+2-17-1
+2-17-2
+2-17-3
+2-17-4
+2-17-5
+2-18-1
+2-18-2
+2-18-3
+2-18-4
+2-18-5
+2-19-1
+2-19-2
+2-19-3
+2-19-4
+2-19-5
+2-20-1
+2-20-2
+2-20-3
+2-20-4
+2-20-5
+2-21-1
+2-21-2
+2-21-3
+2-21-4
+2-21-5
+2-22
+2-23
+2-24-1
+2-24-2
+2-24-3
+2-25
+2-26
+3-1
+1-5
+4-6
+5-1
+5-2
+3-2
+4-1
+4-2
+4-3
+4-4
+4-5
+5-3
+5-4
+6-1
+6-2
+6-3
+1-1
+受注情報検索 一覧(検索入力) / B8 / image 1
+カスタマイズ説明
+・カスタマイズ要件
+検索について
+・本店のほか、支店やスマレジの受注を検索を可能とする
+・データ参照時、スマレジとEC-CUBE間にてデータが重複になるものは除いて参照される
+・デフォルトでメンバー管理で設定されている店舗にて絞り込まれている状態とする
+スマレジ連携について
+・スマレジの取引データを定期的に取得し、受注としてEC-CUBEに取りこむ
+・カスタマイズ要件に記載の内容以外は現行踏襲とする
+機能仕様処理概要（★はカスタマイズ項目）
+・条件を指定した受注の検索ができる。
+・指定した詳細な検索条件は任意の「検索パターン名（識別ID 5）」をつけて保存（識別ID 6）ができる。
+・保存した検索パターンは、検索条件を入力するフォームと検索結果一覧の間にリンクとして並べて表示され（識別ID 82）、
+クリックするとその検索条件での受注検索がおこなわれる
+・また保存した検索パターン個々にリロードアイコンがあり、クリックするとその検索条件に該当する受注件数がその場で表示される
+・「全件更新」ボタンをクリックすると保存した検索パターン全てに対してそれぞれの検索条件に該当する受注件数が一括で求められて表示される
+・各検索パターンごとの該当件数は全件更新か個々にリロードしない限り該当する受注件数に"*"が表示される
+★検索時について
+・検索する際、本店、支店、スマレジの受注情報を検索する
+・ステータスが「引き渡し済み」になっている受注は表示をしない
+・取引ID項目にて指定なし・取引IDありの場合はスマレジの取引データを表示する
+・引き渡し後の受注情報に引き渡し前の注文番号を紐づけておき、引き渡し前の注文番号で検索した際に、引き渡し後の受注情報が検索できるようにする
+・ステータスを未選択時のデフォルト検索の場合はキャンセル、引き渡し済み以外の受注を検索対象とする
+★画面の初期表示について
+・店舗のセレクトボックスはメンバー管理で設定されているデフォルト検索表示店舗が選択されている状態とする
+・店舗選択は必須、全店の選択項目を追加
+・複数店舗が選択されている場合はOR条件とする
+・全店＋個別店舗が選択されたら、全店検索となる
+★検索パターン保存時について
+検索パターンを保存する場合は店舗は除いた条件で保存する
+識別ID	ラベル	書式・制限	必須	最大文字数
+または最大値	初期値	画面部品の説明
+1-1	店舗	複数選択（セレクトボックス）	◯	-	メンバー管理で設定されている店舗	デフォルトでメンバー管理で設定されている店舗にて選択されている状態とする
+複数選択された場合はOR条件とする。
+店舗選択で全店を追加し、全店が選択されている場合は開店しているすべての店舗を検索対象とする。
+全店と店舗が選択されている場合は開店しているすべての店舗を検索対象とする。
+1-2	注文番号	半角・全角	-	-	-
+1-3	注文者名	半角・全角	-	-	-
+1-4	注文者会社名・受注備考	半角・全角	-	-	-
+1-5	検索条件の開閉ボタン1	ボタン	-	-	-	(5)~(67)の検索条件を表示/非表示させる
+2-1	検索パターン名	半角・全角	△	-	-	検索パターン保存ボタン押下時に未入力の場合エラー
+2-2	検索パターン保存ボタン	ボタン	-	-	-
+2-3	対応状況	複数選択(チェックボックス)	-	-	-	※カスタマイズ対応：選択肢追加
+チェック項目：決済処理中、注文受領、入金待ち、入金済み、キャンセル、出荷指示、出荷完了、購入処理中、ピック中、ピック完了、店頭予約
+2-4	支払方法	複数選択(チェックボックス)	-	-	-	支払方法設定画面で定めたものをマスターとして参照して表示
+2-5	配送方法	複数選択(チェックボックス)	-	-	-	配送方法設定画面で定めたものをマスターとして参照して表示
+2-6	顧客グループ	複数選択(チェックボックス)	-	-	-	顧客グループ設定画面で定めたものをマスターとして参照して表示
+2-7	注文備考	複数選択(チェックボックス)	-	-	-	チェック項目：注文備考なし、注文備考あり
+2-8	電話番号	半角・全角	-	-	-
+2-9	メールアドレス	半角・全角	-	-	-
+2-10	お名前	半角・全角	-	-	-
+2-11	お名前（フリガナ）	半角・全角	-	-	-
+2-12	性別	複数選択(チェックボックス)	-	-	-	チェック項目：男性、女性
+2-13-1	出荷日（From）	日時(yyyy/mm/dd HH:MM)	-	-	-
+2-13-2	出荷日（To）	日時(yyyy/mm/dd HH:MM)	-	-	-
+2-13-3	出荷日-過去日（From）	数値（整数）	-	-	-
+2-13-4	出荷日-過去日（To）	数値（整数）	-	-	-
+2-14-1	キャンセル日（From）	日時(yyyy/mm/dd HH:MM)	-	-	-
+2-14-2	キャンセル日（To）	日時(yyyy/mm/dd HH:MM)	-	-	-
+2-14-3	キャンセル日-過去日（From）	数値（整数）	-	-	-
+2-14-4	キャンセル日-過去日（To）	数値（整数）	-	-	-
+2-14-5	キャンセル日-入力状態	複数選択(チェックボックス)	-	-	-	チェック項目：未入力、入力済
+2-15-1	入金日（From）	日時(yyyy/mm/dd HH:MM)	-	-	-
+2-15-2	入金日（To）	日時(yyyy/mm/dd HH:MM)	-	-	-
+2-15-3	入金日-過去日（From）	数値（整数）	-	-	-
+2-15-4	入金日-過去日（To）	数値（整数）	-	-	-
+2-15-5	入金日-入力状態	複数選択(チェックボックス)	-	-	-	チェック項目：未入力、入力済
+2-16-1	出荷指示日（From）	日時(yyyy/mm/dd HH:MM)	-	-	-
+2-16-2	出荷指示日（To）	日時(yyyy/mm/dd HH:MM)	-	-	-
+2-16-3	出荷指示日-過去日（From）	数値（整数）	-	-	-
+2-16-4	出荷指示日-過去日（To）	数値（整数）	-	-	-
+2-16-5	出荷指示日-入力状態	複数選択(チェックボックス)	-	-	-	チェック項目：未入力、入力済
+2-17-1	出荷日（From）	日時(yyyy/mm/dd HH:MM)	-	-	-
+2-17-2	出荷日（To）	日時(yyyy/mm/dd HH:MM)	-	-	-
+2-17-3	出荷日-過去日（From）	数値（整数）	-	-	-
+2-17-4	出荷日-過去日（To）	数値（整数）	-	-	-
+2-17-5	出荷日-入力状態	複数選択(チェックボックス)	-	-	-	チェック項目：未入力、入力済
+2-18-1	キャンセル日（From）	日時(yyyy/mm/dd HH:MM)	-	-	-
+2-18-2	キャンセル日（To）	日時(yyyy/mm/dd HH:MM)	-	-	-
+2-18-3	キャンセル日-過去日（From）	数値（整数）	-	-	-
+2-18-4	キャンセル日-過去日（To）	数値（整数）	-	-	-
+2-18-5	キャンセル日-入力状態	複数選択(チェックボックス)	-	-	-	チェック項目：未入力、入力済
+2-19-1	売上確定日（From）	日時(yyyy/mm/dd HH:MM)	-	-	-
+2-19-2	売上確定日（To）	日時(yyyy/mm/dd HH:MM)	-	-	-
+2-19-3	売上確定日-過去日（From）	数値（整数）	-	-	-
+2-19-4	売上確定日-過去日（To）	数値（整数）	-	-	-
+2-19-5	売上確定日-入力状態	複数選択(チェックボックス)	-	-	-	チェック項目：未入力、入力済
+2-20-1	店頭予約（From）	日時(yyyy/mm/dd HH:MM)	-	-	-
+2-20-2	店頭予約（To）	日時(yyyy/mm/dd HH:MM)	-	-	-
+2-20-3	店頭予約-過去日（From）	数値（整数）	-	-	-
+2-20-4	店頭予約-過去日（To）	数値（整数）	-	-	-
+2-20-5	店頭予約-入力状態	複数選択(チェックボックス)	-	-	-	チェック項目：未入力、入力済
+2-21-1	更新日（From）	日時(yyyy/mm/dd HH:MM)	-	-	-
+2-21-2	更新日（To）	日時(yyyy/mm/dd HH:MM)	-	-	-
+2-21-3	更新日-過去日（From）	数値（整数）	-	-	-
+2-21-4	更新日-過去日（To）	数値（整数）	-	-	-
+2-21-5	更新日-入力状態	複数選択(チェックボックス)	-	-	-	チェック項目：未入力、入力済
+2-22	購入金額（From）	半角・全角	-	-	-
+2-23	購入金額（To）	半角・全角	-	-	-
+2-24-1	購入商品名1	半角・全角	-	-	-
+2-24-2	購入商品名2	半角・全角	-	-	-
+2-24-3	購入商品名3	半角・全角	-	-	-
+2-25	AND/OR選択	単一選択（ラジオボタン）	-	-	-	購入商品名1〜購入商品名３をANDもしくはOR条件で検索
+選択項目：AND検索、OR検索
+2-26	購入商品コード	半角・全角	-	-	-
+3-1	配送先氏名・住所・送り状No	半角・全角	-	-	-
+3-2	検索条件の開閉ボタン2	ボタン	-	-	-	(71)~(76)の検索条件を表示/非表示させる
+4-1	配送先-お名前	半角・全角	-	-	-
+4-2	配送先-お名前（フリガナ）	半角・全角	-	-	-
+4-3	配送先-郵便番号	半角・全角	-	-	-
+4-4	配送先-電話番号	半角・全角	-	-	-
+4-5	配送先-国、地域	半角・全角	-	-	-
+4-6	配送先-都道府県	半角・全角	-	-	-
+5-1	店頭注文番号	半角・全角	-	-	-
+5-2	スマレジ取引ID	半角・全角	-	-	-
+5-3	検索条件クリアボタン	ボタン	-	-	-
+5-4	検索するボタン	ボタン	-	-	-
+6-1	全件更新	ボタン	-	-	-	全検索パターンに対して、件数更新を実行する。
+6-2	検索パターン名（該当件数）	リンク	-	-	-	検索パターンでの検索結果に遷移する。
+6-3	検索パターン該当件数更新	ボタン	-	-	-
+番号pin対応台帳（83件）
+pin	アンカー	画像割当	対応状態	項目定義候補	pin重複
+(1-2)	0203:受注情報検索 一覧(検索入力)!B8	image 1	matched	0203:受注情報検索 一覧(検索入力)!B188
+(1-3)	0203:受注情報検索 一覧(検索入力)!B8	image 1	matched	0203:受注情報検索 一覧(検索入力)!B189
+(1-4)	0203:受注情報検索 一覧(検索入力)!B8	image 1	matched	0203:受注情報検索 一覧(検索入力)!B190
+(2-1)	0203:受注情報検索 一覧(検索入力)!B8	image 1	matched	0203:受注情報検索 一覧(検索入力)!B192
+(2-2)	0203:受注情報検索 一覧(検索入力)!B8	image 1	matched	0203:受注情報検索 一覧(検索入力)!B193
+(2-3)	0203:受注情報検索 一覧(検索入力)!B8	image 1	matched	0203:受注情報検索 一覧(検索入力)!B194
+(2-4)	0203:受注情報検索 一覧(検索入力)!B8	image 1	matched	0203:受注情報検索 一覧(検索入力)!B195
+(2-5)	0203:受注情報検索 一覧(検索入力)!B8	image 1	matched	0203:受注情報検索 一覧(検索入力)!B196
+(2-6)	0203:受注情報検索 一覧(検索入力)!B8	image 1	matched	0203:受注情報検索 一覧(検索入力)!B197
+# sheet-6 受注一覧カスタムCSV出力  (HTML行 1831-1985 / 画像 0枚)
+
+受注一覧カスタムCSV出力
+ドキュメント名
+受注管理　基本設計
+セクション
+—
+プロジェクト名
+受注管理機能
+作成者
+緑川
+作成日
+2025-05-13
+更新者
+—
+更新日
+—
+機能No
+M05-03
+機能名
+受注一覧カスタムCSV出力
+概要
+カスタムCSV機能より受注情報CSV出力の項目を変更した状態で出力することができます。
+機能について
+処理概要（★はカスタマイズ項目）
+受注一覧カスタムCSV出力項目設定
+識別ID	項目名	備考
+1	注文番号	本店、支店、スマレジの注文データを出力対象とする
+2	注文ID
+3	店舗ID	本店、支店のデータを統合するため追加
+4	店舗名	本店、支店のデータを統合するため追加
+5	会員ID
+6	お名前(姓)	非会員である場合は非会員と表示する
+7	お名前(名)
+8	お名前(セイ)
+9	お名前(メイ)
+10	郵便番号1
+11	郵便番号2
+12	都道府県(ID)
+13	都道府県(名称)
+14	住所1
+15	住所2
+16	住所3	海外住所用で住所３を追加
+17	メールアドレス
+18	TEL1
+19	TEL2
+20	TEL3
+21	FAX1
+22	FAX2
+23	FAX3
+24	性別(ID)
+25	性別(名称)
+26	職業(ID)
+27	職業(名称)
+28	誕生日
+29	ショップ用メモ欄
+30	小計
+31	値引き
+32	送料
+33	税金
+34	合計
+35	支払合計
+36	対応状況(ID)
+37	対応状況(名称)
+38	支払方法(ID)
+39	支払方法(名称)
+40	受注日
+41	入金日
+42	出荷指示日
+43	注文詳細ID
+44	商品ID
+45	商品規格ID
+46	商品名
+47	商品コード
+48	規格名1
+49	規格名2
+50	規格分類名1
+51	規格分類名2
+52	価格
+53	個数
+54	注文備考
+55	配送方法
+56	配送先国
+57	会社名
+58	税率ルール(ID)
+59	税率
+60	スマレジ取引ID	スマレジ連携
+61	小計値引き/割引区分	スマレジ連携
+62	クーポン値引き	スマレジ連携
+63	スマレジメモ	スマレジ連携
+64	免税額	スマレジ連携
+カスタマイズ説明
+概要
+本店・支店・スマレジ（実店頭）の受注情報をCSVとして出力することが可能
+機能仕様機能について
+現行機能の"受注一覧カスタムCSV出力”をベースに下記カスタマイズを行う
+・出力データについて
+・本店のほか、支店の受注およびEC-CUBEで保持されているスマレジの取引データをCSV出力することが可能
+・非会員である場合、非会員と表現する
+※スマレジでの非会員による取引データを考慮
+機能仕様処理概要（★はカスタマイズ項目）
+★本店のほか、支店の受注およびEC-CUBEで保持されているスマレジの取引データをCSV出力する
+★非会員である場合、識別ID:4「お名前(姓)」に非会員と表現する
+★識別ID:14「住所3」を追加。
+★識別ID:58「店舗ID」を追加。
+★識別ID:59「取引ID」を追加。
+★識別ID:60「小計値引き/割引区分」を追加。
+★識別ID:61「クーポン値引き」を追加。
+★識別ID:62「メモ」を追加。
+★識別ID:63「免税額」を追加。
+Source:
+functions/pf-eccube3/m05-03_admin_order_order_custom_csv_export.md
+現行仕様
+M05-03 受注情報カスタムCSV出力 / 受注管理 — カスタム受注CSVダウンロード
+業務ロジック
+出力形式の選択
+一覧で選んだカスタムCSV定義を出力形式とする。指定したIDのカスタムCSV定義が存在しないときは、出力せず未検出として応答する。
+出力する項目は、その定義に登録した項目とする。並びは定義に登録した表示順の昇順とし、表示順が同じ項目は出力項目そのものの表示順の昇順で並ぶ。見出し行には各項目の表示名を出力する。出力項目の有効・無効は問わず、受注CSVダウンロードと違い、出力項目設定で無効にした項目も定義に登録されている限り出力する。
+出力対象の受注
+セッションに保持した受注検索条件で検索し直し、一致した受注をすべて出力する。一覧で最後に実行した検索と同じ条件になる。検索条件を保持していないときは、条件を空にして検索する。対応状況を条件に含めないときは購入処理中を除いた全対応状況が対象になるため、条件が空でも購入処理中の受注は出力しない。
+保持した検索条件は検索フォームへ入れ直してから使う。フォームの検証結果は出力の可否に影響せず、検証エラーがあっても、フォームが受け取れた条件だけで出力する。
+一覧のページ番号と表示件数は出力対象に影響しない。表示していたページの受注だけに絞られることはなく、条件に一致する限りすべての受注を出力する。
+出力順は注文日の降順に固定である。明細を複数持つ受注は検索の結果に複数回現れる。同じ受注が続けて返ったときは 2 件目以降を出力しないが、続かない位置に同じ受注が現れたときは、その受注を重ねて出力する。
+行の作り方
+受注 1 件につき、その受注の明細の件数だけ行を出力する。明細が 3 件ある受注は 3 行になり、明細を 1 件も持たない受注は行を出力しない。
+値の取り方
+出力項目が紐づく情報	出力する値
+受注サブ情報	注文番号。受注サブ情報の項目を複数登録したときも、いずれの列にも注文番号を出力する
+配送先	先頭の配送先の値。2 件目以降の配送先は使わない
+上記以外	受注の値。受注から取った値が空のときだけ、同じ項目名で受注明細から取り直す
+受注サブ情報を持たない受注では受注サブ情報に紐づく列が空欄になり、配送先を持たない受注では配送先に紐づく列が空欄になる。受注・受注明細のどちらからも取れないときも空欄とする。出力項目に指定した種別が受注・受注明細のいずれとも一致しないとき、項目名がどちらにも無いときも空欄とする。
+値の種類	出力する形
+他のデータを 1 件だけ参照する値	参照先の、出力項目に指定した項目の値
+他のデータを複数参照する値	参照先の、出力項目に指定した項目の値を , で連結する。同じ値が複数あるときは 1 つにまとめ、参照先が見つからない要素は連結しない
+日時	Y-m-d H:i:s の形式の文字列
+上記以外	取り出した値のまま
+入出力
+出力: CSVファイル
+項目	内容
+文字コード	SJIS-win。UTF-8 から変換し、変換できない文字は環境に設定した代替文字に置き換わる
+区切り文字	,
+引用符	値が ,・"・改行のいずれかを含むときだけ、値全体を " で囲む。値の中の " は 2 個続けて出力する
+ファイル名	order_ に出力日時を YmdHis の形式でつなぎ、.csv を付けた名前
+応答	ダウンロードとして返す
+ファイルの先頭にバイトオーダーマークを 1 個出力する。受注CSVダウンロードと違い、2 個続けて出力することはない。見出し行の次の行からデータ行を出力する。
+入出力: 永続化
+更新しない。
+リニューアル後の仕様
+表示メッセージ
+本機能は画面メッセージを持たない。# sheet-7 受注詳細CSV出力  (HTML行 1986-2166 / 画像 0枚)
+
+受注詳細CSV出力
+ドキュメント名
+受注管理　基本設計
+セクション
+—
+プロジェクト名
+受注管理機能
+作成者
+緑川
+作成日
+2025-05-13
+更新者
+—
+更新日
+—
+機能No
+M05-04
+機能名
+受注詳細CSV出力
+概要
+出荷実績入力用のCSVを出力できる
+機能について
+処理概要（★はカスタマイズ項目）
+受注詳細CSV出力項目設定
+識別ID	項目名	備考
+1	注文番号	本店、支店、スマレジの注文データを出力対象とする
+2	注文ID
+3	店舗ID	本店、支店のデータを統合するため追加
+4	店舗名	本店、支店のデータを統合するため追加
+5	会員ID
+6	お名前(姓)	非会員である場合は非会員と表示する
+7	お名前(名)
+8	お名前(セイ)
+9	お名前(メイ)
+10	会社名
+11	郵便番号1
+12	郵便番号2
+13	都道府県(ID)
+14	都道府県(名称)
+15	住所1
+16	住所2
+17	住所3	海外住所用で住所３を追加
+18	メールアドレス
+19	TEL1
+20	TEL2
+21	TEL3
+22	FAX1
+23	FAX2
+24	FAX3
+25	性別(ID)
+26	性別(名称)
+27	職業(ID)
+28	職業(名称)
+29	誕生日
+30	ショップ用メモ欄
+31	小計
+32	値引き
+33	送料
+34	税金
+35	合計
+36	支払合計
+37	対応状況(ID)
+38	対応状況(名称)
+39	支払方法(ID)
+40	支払方法(名称)
+41	受注日
+42	入金日
+43	出荷指示日
+44	配送ID
+45	配送先_お名前(姓)
+46	配送先_お名前(名)
+47	配送先_お名前(セイ)
+48	配送先_お名前(メイ)
+49	配送先_会社名
+50	配送先_郵便番号1
+51	配送先_郵便番号2
+52	配送先_都道府県(ID)
+53	配送先_都道府県(名称)
+54	配送先_住所1
+55	配送先_住所2
+56	配送先_TEL1
+57	配送先_TEL2
+58	配送先_TEL3
+59	配送先_FAX1
+60	配送先_FAX2
+61	配送先_FAX3
+62	配送業者(ID)
+63	配送業者(名称)
+64	お届け時間ID
+65	お届け時間(名称)
+66	お届け希望日
+67	送料ID
+68	送料
+69	出荷日
+70	スマレジ取引ID	スマレジ連携
+71	小計値引き/割引区分	スマレジ連携
+72	クーポン値引き	スマレジ連携
+73	スマレジメモ	スマレジ連携
+74	免税額	スマレジ連携
+75	配送商品ID
+76	商品ID
+77	商品規格ID
+78	商品名
+79	商品コード
+80	規格名1
+81	規格名2
+82	規格分類名1
+83	規格分類名2
+84	価格
+85	個数
+86	注文備考
+87	注文国
+88	注文番号
+89	配送先国
+90	送り状No.
+カスタマイズ説明
+概要
+本店・支店・スマレジ（実店頭）の受注情報をCSVとして出力することが可能
+機能仕様機能について
+現行機能の"受注詳細CSV出力”をベースに下記カスタマイズを行う
+・出力データについて
+・本店のほか、支店の受注およびEC-CUBEで保持されているスマレジの取引データをCSV出力することが可能
+・非会員である場合、非会員と表現する
+※スマレジでの非会員による取引データを考慮
+機能仕様処理概要（★はカスタマイズ項目）
+★本店のほか、支店の受注およびEC-CUBEで保持されているスマレジの取引データをCSV出力する
+★非会員である場合、識別ID:3「お名前(姓)」に非会員と表現する
+★識別ID:14「住所3」を追加。
+★識別ID:83「店舗ID」を追加。
+★識別ID:84「取引ID」を追加。
+★識別ID:85「小計値引き/割引区分」を追加。
+★識別ID:86「クーポン値引き」を追加。
+★識別ID:87「メモ」を追加。
+★識別ID:88「免税額」を追加。
+Source:
+functions/pf-eccube3/m05-04_admin_order_order_shipping_csv_export.md
+現行仕様
+M05-04 配送CSV出力 / 受注管理 — 配送CSVダウンロード
+業務ロジック
+出力対象の受注
+セッションに保持した受注検索条件で検索し直し、一致した受注をすべて出力する。一覧で最後に実行した検索と同じ条件になる。検索条件を保持していないときは、条件を空にして検索する。対応状況を条件に含めないときは購入処理中を除いた全対応状況が対象になるため、条件が空でも購入処理中の受注は出力しない。
+保持した検索条件は検索フォームへ入れ直してから使う。フォームの検証結果は出力の可否に影響せず、検証エラーがあっても、フォームが受け取れた条件だけで出力する。
+一覧のページ番号と表示件数は出力対象に影響しない。表示していたページの受注だけに絞られることはなく、条件に一致する限りすべての受注を出力する。
+出力順は注文日の降順に固定である。明細を複数持つ受注は検索の結果に複数回現れる。同じ受注が続けて返ったときは 2 件目以降を出力しないが、続かない位置に同じ受注が現れたときは、その受注を重ねて出力する。
+出力する列
+配送CSVの出力項目のうち、有効なものだけを出力する。並びは出力項目に設定した表示順の昇順とする。見出し行には各出力項目の表示名を出力し、有効な出力項目が 1 件も無いときは、見出し行もデータ行も列を持たない空の行になる。
+行の作り方
+受注 1 件につき 1 行を出力する。受注CSVダウンロードと違い、明細の件数は行数に影響しない。
+値を取るのは先頭の配送先だけである。配送先を複数持つ受注でも、2 件目以降の配送先は出力しない。配送先を持たない受注では、配送先から取る列がすべて空欄になる。
+値の取り方
+出力項目ごとに、まず受注から値を取る。受注から取った値が空のときだけ、同じ項目名で先頭の配送先から取り直し、どちらからも取れないときは空欄とする。
+出力項目に指定したデータの種別が受注・配送先のいずれとも一致しないときは空欄とする。項目名が受注・配送先のどちらにも無いときも空欄とする。
+値の種類	出力する形
+他のデータを 1 件だけ参照する値	参照先の、出力項目に指定した項目の値
+他のデータを複数参照する値	参照先の、出力項目に指定した項目の値を , で連結する。同じ値が複数あるときは 1 つにまとめ、参照先が見つからない要素は連結しない
+日時	Y-m-d H:i:s の形式の文字列
+上記以外	取り出した値のまま
+入出力
+出力: CSVファイル
+項目	内容
+文字コード	SJIS-win。UTF-8 から変換し、変換できない文字は環境に設定した代替文字に置き換わる
+区切り文字	,
+引用符	値が ,・"・改行のいずれかを含むときだけ、値全体を " で囲む。値の中の " は 2 個続けて出力する
+ファイル名	shipping_ に出力日時を YmdHis の形式でつなぎ、.csv を付けた名前
+応答	ダウンロードとして返す
+ファイルの先頭にバイトオーダーマークを 2 個出力する。見出し行を出力するときにも同じ印を付ける。見出し行の次の行からデータ行を出力する。
+入出力: 永続化
+更新しない。
+リニューアル後の仕様
+表示メッセージ
+本機能は画面メッセージを持たない。
+exec
+/bin/bash -lc "rg -n \"manual_mail\\.js|send_mail\" src/Eccube/Resource/template/admin/Order html/template/admin -g '*.twig' -g '*.js'
+rg -n \"sendShippingCompleteMail|shippingCompleteOrders\" src/Eccube/Controller/Admin/Order/OrderCsvController.php
+rg -n \"admin_shipping_result_csv_import|shipping_result_csv\" src/Eccube/Controller/Admin/Order/OrderCsvController.php src/Eccube/Resource/template/admin/Order/shipping_result_csv_import.twig
+rg -n \"function checkHeaderValues|function checkHeaderSize\" src/Eccube/Service/Csv -g '*.php' && nl -ba src/Eccube/Service/Csv/AbstractCsv.php 2>/dev/null | sed -n '1,180p'" in /home/y-saito/Developments/ec-cube-enterprise
+ succeeded in 0ms:
+src/Eccube/Resource/template/admin/Order/manual_mail.twig:9:    <script nonce="{{ csp_nonce }}" src="{{ asset('assets/js/manual_mail.js', 'admin') }}"></script>
+src/Eccube/Resource/template/admin/Order/manual_mail_confirm.twig:41:    <script nonce="{{ csp_nonce }}" src="{{ asset('assets/js/manual_mail.js', 'admin') }}"></script>
+src/Eccube/Resource/template/admin/Order/manual_mail_confirm.twig:118:                                        id="send_mail"
+src/Eccube/Resource/template/admin/Order/shipping.twig:227:                            <div class="fw-bold mb-2 notificationMail">{{ 'admin.order.to_shipped__confirm_send_mail'|trans }}</div>
+src/Eccube/Resource/template/admin/Order/shipping.twig:231:                                    {{ 'admin.order.to_shipped__confirm_send_mail_in_same_time'|trans }}
+src/Eccube/Resource/template/admin/Order/manual_mail_all_confirm.twig:45:    <script nonce="{{ csp_nonce }}" src="{{ asset('assets/js/manual_mail.js', 'admin') }}"></script>
+src/Eccube/Resource/template/admin/Order/manual_mail_all_confirm.twig:165:                                        id="send_mail"
+src/Eccube/Resource/template/admin/Order/index.twig:1308:                                    <div class="fw-bold mb-2 notificationMail">{{ 'admin.order.to_shipped__confirm_send_mail'|trans }}</div>
+src/Eccube/Resource/template/admin/Order/index.twig:1312:                                            {{ 'admin.order.to_shipped__confirm_send_mail_in_same_time'|trans }}
+html/template/admin/assets/js/manual_mail.js:3:    $('#send_mail').on('click', function (event) {
+326:        $shippingCompleteOrders = [];
+351:                $shippingCompleteOrders[] = $updateOrder['order'];
+379:        foreach ($shippingCompleteOrders as $Order) {
+380:            // pf: sendShippingCompleteMail(Order) — 受注単位・国内外テンプレ分岐
+381:            if (!$this->mailService->sendShippingCompleteMail($Order)) {
+src/Eccube/Resource/template/admin/Order/shipping_result_csv_import.twig:13:{% set menus = ['order', 'admin_shipping_result_csv_import'] %}
+src/Eccube/Resource/template/admin/Order/shipping_result_csv_import.twig:45:                <form id="upload-form" method="post" action="{{ url('admin_shipping_result_csv_import') }}" enctype="multipart/form-data">
+src/Eccube/Controller/Admin/Order/OrderCsvController.php:249:        path: '/%eccube_admin_route%/order/shipping_result_csv/import',
+src/Eccube/Controller/Admin/Order/OrderCsvController.php:250:        name: 'admin_shipping_result_csv_import',
+src/Eccube/Controller/Admin/Order/OrderCsvController.php:253:    #[Template(template: '@admin/Order/shipping_result_csv_import.twig')]
+src/Eccube/Controller/Admin/Order/OrderCsvController.php:269:        return $this->render('@admin/Order/shipping_result_csv_import.twig', [
+src/Eccube/Controller/Admin/Order/OrderCsvController.php:284:    #[Route(path: '/%eccube_admin_route%/order/shipping_result_csv/import', name: 'admin_shipping_result_csv_upload', methods: ['POST'], ),]
+src/Eccube/Controller/Admin/Order/OrderCsvController.php:305:            return $this->redirectToRoute('admin_shipping_result_csv_import');
+src/Eccube/Controller/Admin/Order/OrderCsvController.php:312:            return $this->redirectToRoute('admin_shipping_result_csv_import');
+src/Eccube/Controller/Admin/Order/OrderCsvController.php:321:            return $this->redirectToRoute('admin_shipping_result_csv_import');
+src/Eccube/Controller/Admin/Order/OrderCsvController.php:370:            return $this->redirectToRoute('admin_shipping_result_csv_import');
+src/Eccube/Controller/Admin/Order/OrderCsvController.php:415:        return $this->redirectToRoute('admin_shipping_result_csv_import');
+src/Eccube/Service/Csv/AbstractCsvService.php:242:    public function checkHeaderValues(array $keys, array $columnHeaders, array $notRequiredHeaders): void
+src/Eccube/Service/Csv/AbstractCsvService.php:270:    protected function checkHeaderSize(int $headerSize, array $row, int $rowIndex): void
+
+exec
+/bin/bash -lc "sed -n '1,240p' design_impl_drift_report/recheck/0203/review/sheets/sheet-10.txt
+sed -n '1,220p' design_impl_drift_report/recheck/0203/review/sheets/sheet-16.txt
+sed -n '1,180p' design_impl_drift_report/recheck/0203/review/sheets/sheet-23.txt
+sed -n '1,180p' design_impl_drift_report/recheck/0203/review/sheets/sheet-26.txt" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+# sheet-10 【新規】手動メール通知(確認画面)  (HTML行 2476-2562 / 画像 0枚)
+
+【新規】手動メール通知(確認画面)
+ドキュメント名
+受注管理　基本設計
+セクション
+—
+プロジェクト名
+受注管理機能
+作成者
+緑川
+作成日
+2025-05-13
+更新者
+—
+更新日
+—
+機能No
+M05-06
+機能名
+【新規】手動メール通知(確認画面)
+概要
+メールを一括で送信することができます。
+機能について
+処理概要（★はカスタマイズ項目）
+レイアウト図
+1
+2
+3
+6
+7
+4
+5
+【新規】手動メール通知(確認画面) / G9 / image 1
+カスタマイズ説明
+・カスタマイズ要件
+機能仕様機能について
+メール一括送信プレビュー画面を新規機能として実装する
+・メール一括送信機能にプレビュー画面を追加
+・プレビュー内容について
+・変数は先頭ユーザの情報で表示する
+機能仕様処理概要（★はカスタマイズ項目）
+・メール一括送信画面で入力したメール内容のプレビューを行う。
+・送信ボタンを押下すると確認のダイアログを表示し、OKなら送信を実行する。
+・成功/失敗に応じてメッセージを表示する
+識別ID	ラベル	書式・制限	必須	最大文字数
+または最大値	初期値	画面部品の説明
+1	テンプレ選択	テキスト	-	-	-
+2	件名	テキスト	-	-	-
+3	メッセージ本文	ラベル	-	-	-
+4	注文番号	ラベル	-	-	-
+5	注文者氏名	ラベル	-	-	-
+6	手動メール通知画面に戻る	リンク	-	-	-
+7	送信	ボタン	-	-	-
+番号pin対応台帳（7件）
+pin	アンカー	画像割当	対応状態	項目定義候補	pin重複
+(1)	0203:【新規】手動メール通知(確認画面)!L13	image 1	matched	0203:【新規】手動メール通知(確認画面)!B66
+(2)	0203:【新規】手動メール通知(確認画面)!L15	image 1	matched	0203:【新規】手動メール通知(確認画面)!B67
+(3)	0203:【新規】手動メール通知(確認画面)!L16	image 1	matched	0203:【新規】手動メール通知(確認画面)!B68
+(6)	0203:【新規】手動メール通知(確認画面)!G42	image 1	matched	0203:【新規】手動メール通知(確認画面)!B71
+(7)	0203:【新規】手動メール通知(確認画面)!AJ42	image 1	matched	0203:【新規】手動メール通知(確認画面)!B72
+(4)	0203:【新規】手動メール通知(確認画面)!AI12	image 1	matched	0203:【新規】手動メール通知(確認画面)!B69
+(5)	0203:【新規】手動メール通知(確認画面)!AL12	image 1	matched	0203:【新規】手動メール通知(確認画面)!B70# sheet-16 【新規】受注情報履歴  (HTML行 4250-4834 / 画像 0枚)
+
+【新規】受注情報履歴
+ドキュメント名
+受注管理　基本設計
+セクション
+—
+プロジェクト名
+受注管理機能
+作成者
+緑川
+作成日
+2025-05-13
+更新者
+—
+更新日
+—
+機能No
+M05-11
+機能名
+【新規】受注情報履歴
+概要
+受注情報の履歴を確認できます
+処理概要（★はカスタマイズ項目）
+処理概要（★はカスタマイズ項目）
+処理概要（★はカスタマイズ項目）
+処理概要（★はカスタマイズ項目）
+処理概要（★はカスタマイズ項目）
+処理概要（★はカスタマイズ項目）
+レイアウト図
+1-1
+1-2
+1-3
+1-4
+1-6
+1-7
+1-8
+1-9
+1-10
+1-11
+1-12
+1-13
+1-14
+1-15
+1-16
+1-18
+1-19
+1-17
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+1-20
+1-21
+1-22
+1-24
+1-23
+2
+13
+1-5
+14
+【新規】受注情報履歴 / E9 / image 1
+カスタマイズ説明
+・カスタマイズ要件
+・受注データ更新履歴について
+・履歴データ表示する
+機能仕様処理概要（★はカスタマイズ項目）
+・履歴データ表示について
+・データは編集不可とする
+・ボタンは非活性とする
+・リンクは非活性とする
+識別ID	ラベル	書式・制限	必須	最大文字数
+または最大値	初期値	画面部品の説明
+1-1	注文番号	ラベル	-	-	-	・注文番号を表示しスマレジ受注の場合は（）の中にEC受注時の注文番号を表示する
+・店頭受取時の注文番号が複数存在する場合はカンマ区切りにし、リンクとする
+・リンクを選択すると受注詳細に遷移する
+1-2	店頭販売用整理番号	リンク	-	-		店頭販売用整理番号が存在する場合のみ表示する
+1-3	スマレジ取引ID	ラベル	-	-	-	スマレジ受注の場合にIDを表示する
+1-4	注文者	ラベル	-	-	-
+1-5	受注ステータス	ラベル	-	-	-
+1-6	変更後のステータス	単一選択（セレクトボックス）	-	-	-	非活性
+1-7	店舗	ラベル	-	-	-
+1-8	注文日	ラベル	-	-	-
+1-9	ピック中	ラベル	-	-	-
+1-10	クリア	リンク	-	-	-	非活性
+1-11	入金日	ラベル	-	-	-
+1-12	クリア	リンク	-	-	-	非活性
+1-13	出荷指示日	ラベル	-	-	-
+1-14	クリア	リンク	-	-	-	非活性
+1-15	出荷日	ラベル	-	-	-
+1-16	クリア	リンク	-	-	-	非活性
+1-17	キャンセル日	ラベル	-	-	-
+1-18	クリア	リンク	-	-	-	非活性
+1-19	売上確定日	ラベル	-	-	-
+1-20	店頭予約	ラベル	-	-	-
+1-21	クリア	リンク	-	-	-	非活性
+1-22	更新日	ラベル	-	-	-
+1-23	最終更新者	ラベル	-	-	-
+1-24	スマレジメモ	半角・全角	-	-	-	非活性
+2	受注ステータスを更新	ボタン	-	-	-	非活性
+3	戻る	リンク	-	-	-	非活性
+4	受注商品情報	-	-	-	-	受注商品情報を参照
+5	受注情報を登録	ボタン	-	-	-	非活性
+6	戻る	リンク	-	-	-	非活性
+7	期限通知情報	-	-	-	-	期限通知情報を参照
+8	注文者情報	-	-	-	-	注文者情報を参照
+9	お支払情報	-	-	-	-	お支払情報を参照
+10	お届け先情報	-	-	-	-	お届け先情報を参照
+11	ショップ用メモ欄	半角・全角	-	-	-	非活性
+12	ポイント連携エラー	半角・全角	-	-	-	非活性
+13	受注情報を登録	ボタン	-	-	-	非活性
+14	戻る	リンク	-	-	-	非活性
+レイアウト図
+4-1
+4-2
+4-3
+4-4
+4-5
+4-6
+4-7
+4-9
+4-10
+4-11
+4-12
+4-14
+4-15
+4-16
+4-17
+4-18
+4-19
+4-20
+4-21
+4-13
+4-22
+4-23
+4-24
+4-25
+4-8
+4-26
+4-16
+4-27
+【新規】受注情報履歴 / E160 / image 2
+カスタマイズ説明
+・カスタマイズ要件
+・受注データ更新履歴について
+・履歴データ表示する
+機能仕様処理概要（★はカスタマイズ項目）
+★対象会員の購入履歴を取得する
+★履歴データ表示について
+・データは編集不可とする
+・欠品登録以外のボタンは非活性とする
+・リンクは非活性とする
+識別ID	ラベル	書式・制限	必須	最大値	初期値	画面部品の説明
+4-1	商品画像	画像	-	-	-	-
+4-2	数量	ラベル	-	-	-	-
+4-3	欠品登録	ボタン	-	-	-	-
+4-4	欠品数量	ラベル	-	-	-	-
+4-5	担当者	ラベル	-	-	-	-
+4-6	言語	ラベル	-	-	-	-
+4-7	状態	ラベル	-	-	-	-
+4-8	Foil	ラベル	-	-	-	Foilカードの時のみ表示
+4-9	フレーム	ラベル	-	-	-	特殊フレームの場合のみ表示
+4-10	商品名	ラベル	-	-	-	-
+4-11	棚番号	ラベル	-	-	-	-
+4-12	商品コード	ラベル	-	-	-	-
+4-13	価格	ラベル	-	-	-	-
+4-14	小計	ラベル	-	-	-	-
+4-15	削除	ボタン	-	-	-	非活性
+4-16	商品価格エリア	ラベル	-	-	-	-
+4-17	商品の追加	ボタン	-	-	-	非活性
+4-18	受注情報を登録	ボタン	-	-	-	非活性
+4-19	小計	ラベル	-	-	-	-
+4-20	小計値引き/割引区分	ラベル	-	-	-	-
+4-21	クーポン値引き	ラベル	-	-	-	-
+4-22	免税額	ラベル	-	-	-	-
+4-23	値引き	ラベル	-	-	-	-
+4-24	送料	ラベル	-	-	-	-
+4-25	手数料	ラベル	-	-	-	-
+4-26	合計	ラベル	-	-	-	-
+4-27	お支払合計	ラベル	-	-	-	-
+レイアウト図
+1
+2
+【新規】受注情報履歴 / C268 / image 6
+カスタマイズ説明
+・カスタマイズ要件
+・受注データ更新履歴について
+・履歴データ表示する
+機能仕様処理概要（★はカスタマイズ項目）
+★履歴データ表示について
+・データは編集不可とする
+・ボタンは非活性とする
+・リンクは非活性とする
+識別ID	ラベル	書式・制限	必須	最大値	初期値	画面部品の説明
+1	入金期限	カレンダー	-	-	-	-
+2	受け取り期限	カレンダー	-	-	-	-
+レイアウト図
+8-1
+8-2
+8-3
+8-4
+8-5
+8-7
+8-8
+8-6
+8-9
+8-10
+8-11
+8-12
+8-13
+8-14
+8-15
+8-16
+8-17
+# sheet-23 出荷実績入力用CSV出力  (HTML行 5584-5709 / 画像 0枚)
+
+出荷実績入力用CSV出力
+ドキュメント名
+受注管理　基本設計
+セクション
+—
+プロジェクト名
+受注管理機能
+作成者
+緑川
+作成日
+2025-05-13
+更新者
+—
+更新日
+—
+機能No
+M05-24
+機能名
+出荷実績入力用CSV出力
+概要
+出荷実績入力用のCSVを出力できる
+出荷実績入力用CSV出力項目設定
+識別ID	項目名	備考
+1	注文番号
+2	会員ID
+3	お名前(姓)
+4	お名前(名)
+5	お名前(セイ)
+6	お名前(メイ)
+7	会社名
+8	郵便番号1
+9	郵便番号2
+10	都道府県(ID)
+11	都道府県(名称)
+12	住所1
+13	住所2
+14	住所3	海外住所用で住所３を追加
+15	メールアドレス
+16	TEL1
+17	TEL2
+18	TEL3
+19	FAX1
+20	FAX2
+21	FAX3
+22	性別(ID)
+23	性別(名称)
+24	職業(ID)
+25	職業(名称)
+26	誕生日
+27	ショップ用メモ欄
+28	小計
+29	値引き
+30	送料合計
+31	税金
+32	合計
+33	支払合計
+34	対応状況(ID)
+35	対応状況(名称)
+36	支払方法(ID)
+37	支払方法(名称)
+38	注文日
+39	注文確定日
+40	入金日
+41	出荷指示日
+42	出荷日
+43	配送先_お名前(姓)
+44	配送先_お名前(名)
+45	配送先_お名前(セイ)
+46	配送先_お名前(メイ)
+47	配送先_会社名
+48	配送先_郵便番号1
+49	配送先_郵便番号2
+50	配送先_都道府県(ID)
+51	配送先_都道府県(名称)
+52	配送先_住所1
+53	配送先_住所2
+54	配送先_TEL1
+55	配送先_TEL2
+56	配送先_TEL3
+57	配送先_FAX1
+58	配送先_FAX2
+59	配送先_FAX3
+60	配送方法(ID)
+61	配送方法(名称)
+62	送り状No.
+63	お届け時間ID
+64	お届け時間(名称)
+Source:
+functions/pf-eccube3/m05-24_admin_order_order_shipping_export_for_import.md
+現行仕様
+M05-24 出荷実績入力用CSV出力 / 受注管理 — 出荷実績入力用CSV出力
+業務ロジック
+出力対象
+一覧で選択した受注だけを対象とする。検索条件は使わず、選択していない受注は条件に一致していても出力しない。
+受注を 1 件も選択していないときは出力せず、操作の起点になった画面へ戻る。起点が分からないときは受注一覧へ戻る。
+選択した受注から出力行を 1 行も作れなかったときも出力せず、操作の起点になった画面へ戻る。
+選択した受注のうち、受注サブ情報・都道府県・会員・会員の都道府県・会員の国・支払方法・対応状況・配送先の都道府県・配送方法・配送方法サブ情報のいずれかを持たない受注は出力しない。性別・職業・お届け時間・国は持たない受注も出力する。
+受注 1 件につき 1 行を出力する。配送先を複数持つ受注でも 1 行にまとめるため、2 件目以降の配送先は出力されない。
+出力する値
+注文者の氏名・住所・連絡先は、受注に記録した値ではなく会員の現在の値を出力する。受注のあとに会員情報を変えたときは、変えた後の値が出る。日時は Y/m/d H:i:s の形式で出力し、未設定のときは空欄とする。
+出力する列
+出力する列は固定で、出力項目を選ぶことはできない。列の構成は基本設計の出荷実績登録CSVによる。出力したファイルに出荷日と送り状No.を書き込むと、そのまま出荷実績インポート登録に取り込める。
+入出力
+出力: CSVファイル
+項目	内容
+文字コード	CSV出力の設定に従う。応答に載せる文字コード名は、設定が SJIS-win のときだけ windows-31j へ読み替える
+区切り文字	,
+引用符	値が ,・"・改行のいずれかを含むときだけ、値全体を " で囲む。値の中の " は 2 個続けて出力する
+ファイル名	order_ に出力日時を YmdHis の形式でつなぎ、.csv を付けた名前
+応答	ダウンロードとして返す
+ファイルの先頭にバイトオーダーマークを 1 個出力する。見出し行の次の行からデータ行を出力する。
+入出力: 永続化
+更新しない。
+リニューアル後の仕様
+表示メッセージ
+メッセージID	表示位置	画面上の文言	表示条件	後続処理
+M05-24-MSG-001	管理画面上部	選択してください	出力する注文を選択せずにCSV出力したとき	エラーを表示し、遷移元画面に遷移する（Refererがない場合は受注一覧画面）
+M05-24-MSG-002	管理画面上部	存在しないカードIDが含まれています。	選択した注文の出荷実績入力用CSVを出力するとき	エラーを表示し、遷移元画面に遷移する（Refererがない場合は受注一覧画面）# sheet-26 店頭注文番号札管理  (HTML行 5966-6087 / 画像 0枚)
+
+店頭注文番号札管理
+ドキュメント名
+受注管理　基本設計
+セクション
+—
+プロジェクト名
+受注管理機能
+作成者
+緑川
+作成日
+2025-05-13
+更新者
+—
+更新日
+—
+機能No
+M05-27
+機能名
+店頭注文番号札管理
+概要
+店頭注文番号札管理
+処理概要（★はカスタマイズ項目）
+レイアウト図
+1
+2
+3
+5
+4
+6
+店頭注文番号札管理 / D9 / image 1
+カスタマイズ説明
+・カスタマイズ要件
+・番号札表示について
+・メンバー管理で設定されているデフォルト検索表示店舗で絞り込まれている状態とする
+・編集権限について
+・ユーザーが編集権限を保持している店舗に関連付けられたデータを編集可能とする
+・仕様について
+・店頭注文番号札の登録が本店支店で異なるが、本店の仕様に寄せる
+・カスタマイズ要件に記載の内容以外は現行踏襲とする
+機能仕様処理概要（★はカスタマイズ項目）
+★店舗検索
+・初期表示時はメンバーのデフォルト検索表示店舗を表示する
+・デフォルト検索表示店舗が「ALL」のメンバーは「TC東京」を表示する
+・店舗に紐づいている店頭注文番号札を一覧に表示する
+・セレクトボックスの値を変更すると同時に検索を行う
+・店頭注文番号札登録
+・店頭注文番号札に値を入力し「登録」ボタンを押下する
+★本店の仕様に寄せ半角英字のみ登録可能
+識別ID	ラベル	書式・制限	必須	最大文字数
+または最大値	初期値	画面部品の説明
+1	検索店舗	単一選択(セレクトボックス)	◯	-	デフォルト検索表示店舗	メンバーのデフォルト検索表示店舗が「全店」の場合は「TC東京」をデフォルト表示する
+2	店頭注文番号札	全角・半角	◯	10文字	-
+3	登録ボタン	ボタン	-	-	-	店頭注文番号札項目に値を入力していない状態で登録ボタンをクリックした場合はエラーメッセージを表示する
+本店の機能に寄せるため半角英字以外が入力されている場合はエラー
+4	確認ボタン	ボタン	-	-	-	選択している店舗のフロント側で表示する店頭注文番号札一覧を別タブで表示する
+5	注文番号札	ラベル	-	-	-	初期表示はデフォルト検索表示店舗で絞り込まれている状態で表示
+6	削除ボタン	ボタン	-	-	-	メンバーが編集権限を保持している店舗に関連付けられたデータに対して「削除ボタン」を表示
+リンク押下でJavaScriptポップアップを表示
+「[店頭注文番号]を を削除してもよろしいですか？」
+「OK」をクリックすると、当該の店頭注文番号を一覧から除去する
+番号pin対応台帳（6件）
+pin	アンカー	画像割当	対応状態	項目定義候補	pin重複
+(1)	0203:店頭注文番号札管理!E12	image 1	matched	0203:店頭注文番号札管理!B65
+(2)	0203:店頭注文番号札管理!D17	image 1	matched	0203:店頭注文番号札管理!B66
+(3)	0203:店頭注文番号札管理!AL15	image 1	matched	0203:店頭注文番号札管理!B67
+(5)	0203:店頭注文番号札管理!D22	image 1	matched	0203:店頭注文番号札管理!B69
+(4)	0203:店頭注文番号札管理!AL17	image 1	matched	0203:店頭注文番号札管理!B68
+(6)	0203:店頭注文番号札管理!AJ22	image 1	matched	0203:店頭注文番号札管理!B70
+Source:
+functions/pf-eccube3/m05-27_admin_order_order_waiting_tag.md
+現行仕様
+M05-27 店頭注文番号札管理 / 受注管理 — 店頭注文番号札管理
+業務ロジック
+一覧の表示
+登録済みの店頭注文番号札をすべて表示する。絞り込みも並び替えもページ送りも無いため、登録した件数だけ行が並ぶ。
+登録
+店頭注文番号札を 1 件ずつ登録する。入力できるのは番号札の値だけで、空のときは登録しない。
+値は半角英字だけを受け付ける。半角英字以外の文字が 1 文字でも含まれるときは登録せず、同じ画面に留まる。数字・記号・空白・全角英字のいずれも受け付けない。
+同じ値がすでに登録されているときも重ねて登録できる。値の重複は確かめない。
+登録できたときは一覧へ戻る。登録できなかったときは一覧へ戻らず、入力した値を残したまま同じ画面を表示する。
+削除
+一覧から 1 件ずつ削除する。削除の要求には偽造防止のトークンを付け、番号札を探す前に検証する。トークンが不正なときは削除しない。
+指定した番号札が存在しないときは削除しない。IDの指定が無いときも削除しない。
+削除しても、その番号札を使っている受注には影響しない。受注が持つ店頭注文番号は変わらない。
+入出力
+出力: 一覧の列
+列	内容
+注文番号札	登録済みの番号札の値
+操作	削除
+入出力: 永続化
+操作	契機
+店頭注文番号札の登録	入力に不備が無いときだけ
+店頭注文番号札の削除	トークンが正しく、指定した番号札が存在するときだけ
+受注側のデータは更新しない。
+リニューアル後の仕様
+表示メッセージ
+メッセージID	表示位置	画面上の文言	表示条件	後続処理
+M05-27-MSG-001	画面中央(ダイアログ/モーダル)	この操作はあとから取り消すことができません。「%name%」を削除してよろしいですか？	自店の注文番号札の削除を選び、確認画面を開いたとき	削除でモーダルを閉じて店頭注文番号札管理画面に遷移、キャンセルでモーダルを閉じる
+M05-27-MSG-002	管理画面上部	登録できませんでした。	注文番号札を登録しようとして、入力内容に不備があるとき	店頭注文番号札管理画面に留まる
+M05-27-MSG-003	管理画面上部	登録が完了しました。	注文番号札を登録したとき	店頭注文番号札管理画面に遷移する
+M05-27-MSG-004	管理画面上部	削除に失敗しました	注文番号札を削除しようとして、処理でエラーが起きたとき	店頭注文番号札管理画面に遷移する
+M05-27-MSG-005	入力項目直下	半角英字のみで入力してください	注文番号札に半角英字以外を入力して登録したとき	登録せず店頭注文番号札管理画面に留まる
+exec
+/bin/bash -lc "nl -ba src/Eccube/Service/Csv/AbstractCsvService.php | sed -n '225,290p'
+nl -ba src/Eccube/Controller/Admin/Order/OrderCsvController.php | sed -n '185,285p'
+rg -n \"CSV_HEADER|generateResultCsv|exportShippingResult|NOT_REQUIRED\" tests src/Eccube -g '*Test.php' -g '*.php' | head -120" in /home/y-saito/Developments/ec-cube-enterprise
+ succeeded in 58ms:
+   225	        if ($form->isSubmitted() && $form->isValid()) {
+   226	            return true;
+   227	        }
+   228	        foreach ($form->getErrors(true) as $error) {
+   229	            $this->addErrors($error->getMessage());
+   230	        }
+   231	
+   232	        return false;
+   233	    }
+   234	
+   235	    /**
+   236	     * CSVヘッダーの値が一致するかチェック
+   237	     *
+   238	     * @param array<int, string> $keys 期待するヘッダーキー
+   239	     * @param array<int, string> $columnHeaders CSVのヘッダー行
+   240	     * @param array<int, string> $notRequiredHeaders 必須外ヘッダー（比較から除外）
+   241	     */
+   242	    public function checkHeaderValues(array $keys, array $columnHeaders, array $notRequiredHeaders): void
+   243	    {
+   244	        $keysFiltered = array_values(array_diff($keys, $notRequiredHeaders));
+   245	        $headersFiltered = array_values(array_diff($columnHeaders, $notRequiredHeaders));
+   246	        if ($keysFiltered !== $headersFiltered) {
+   247	            throw new \RuntimeException($this->translator->trans('admin.csv.error.format.header'));
+   248	        }
+   249	    }
+   250	
+   251	    /**
+   252	     * CSVデータが空でないかチェック
+   253	     *
+   254	     * @param \Countable $data
+   255	     */
+   256	    public function checkDataSize(\Countable $data): void
+   257	    {
+   258	        if ($data->count() < 1) {
+   259	            throw new \RuntimeException($this->translator->trans('admin.csv.error.data.empty'));
+   260	        }
+   261	    }
+   262	
+   263	    /**
+   264	     * CSV ヘッダー列数とデータ列数が一致するかチェック
+   265	     *
+   266	     * @param int $headerSize
+   267	     * @param array<string, string> $row
+   268	     * @param int $rowIndex
+   269	     */
+   270	    protected function checkHeaderSize(int $headerSize, array $row, int $rowIndex): void
+   271	    {
+   272	        if ($headerSize !== count($row)) {
+   273	            $message = sprintf(
+   274	                $this->translator->trans('admin.csv.error.format.body', [], 'messages'),
+   275	                $rowIndex
+   276	            );
+   277	            throw new \RuntimeException($message);
+   278	        }
+   279	    }
+   280	
+   281	    /**
+   282	     * 必須項目が入力されているかチェック
+   283	     *
+   284	     * @param array<string, string> $requiredHeaders 必須ヘッダー（表示名 => キー）
+   285	     * @param array<string, string> $row
+   286	     * @param int $rowIndex
+   287	     */
+   288	    protected function checkRequiredHeaders(array $requiredHeaders, array $row, int $rowIndex): void
+   289	    {
+   290	        foreach ($requiredHeaders as $key => $label) {
+   185	
+   186	    /**
+   187	     * 出荷実績インポート用CSVエクスポート
+   188	     *
+   189	     * @param Request $request
+   190	     *
+   191	     * @return Response
+   192	     */
+   193	    #[Route(path: '/%eccube_admin_route%/order/export/order', name: 'admin_order_export_for_input', methods: ['GET', 'POST'])]
+   194	    public function exportForInput(Request $request)
+   195	    {
+   196	        // タイムアウトを無効にする
+   197	        set_time_limit(0);
+   198	        // SQL Loggerを無効にする
+   199	        $em = $this->entityManager;
+   200	        $em->getConfiguration()->setSQLLogger(null);
+   201	        // 注文情報IDを取得する
+   202	        $rawOrderIds = $request->get('order_ids', []);
+   203	        if (!is_array($rawOrderIds) || empty($rawOrderIds)) {
+   204	            $this->addError('admin.common.select', 'admin');
+   205	
+   206	            $referer = $request->headers->get('referer');
+   207	            if ($referer !== null && $referer !== '') {
+   208	                return $this->redirect($referer);
+   209	            }
+   210	
+   211	            return $this->redirectToRoute('admin_order');
+   212	        }
+   213	        $orderIdList = array_keys($rawOrderIds);
+   214	
+   215	        // CSVを出力する
+   216	        try {
+   217	            $response = $this->orderCsv->exportCsv($orderIdList);
+   218	        } catch (\RuntimeException $e) {
+   219	            $this->addError($e->getMessage(), 'admin');
+   220	
+   221	            $referer = $request->headers->get('referer');
+   222	            if ($referer !== null && $referer !== '') {
+   223	                return $this->redirect($referer);
+   224	            }
+   225	
+   226	            return $this->redirectToRoute('admin_order');
+   227	        }
+   228	
+   229	        $event = new EventArgs(
+   230	            [
+   231	                'orderIdList' => $orderIdList,
+   232	                'response' => $response,
+   233	            ],
+   234	            $request
+   235	        );
+   236	        $this->eventDispatcher->dispatch($event, EccubeEvents::ADMIN_ORDER_CSV_FOR_INPUT_EXPORT);
+   237	
+   238	        return $response;
+   239	    }
+   240	
+   241	    /**
+   242	     * 出荷実績CSVアップロード画面
+   243	     *
+   244	     * @param Request $request
+   245	     *
+   246	     * @return Response
+   247	     */
+   248	    #[Route(
+   249	        path: '/%eccube_admin_route%/order/shipping_result_csv/import',
+   250	        name: 'admin_shipping_result_csv_import',
+   251	        methods: ['GET'])
+   252	    ]
+   253	    #[Template(template: '@admin/Order/shipping_result_csv_import.twig')]
+   254	    public function shippingResultCsv(Request $request)
+   255	    {
+   256	        $builder = $this->formFactory->createBuilder(CsvImportType::class);
+   257	
+   258	        $event = new EventArgs(
+   259	            [
+   260	                'builder' => $builder,
+   261	            ],
+   262	            $request
+   263	        );
+   264	        $this->eventDispatcher->dispatch($event, EccubeEvents::ADMIN_ORDER_CSV_SHIPPING_RESULT_CSV_INITIALIZE);
+   265	
+   266	        $form = $builder->getForm();
+   267	        $headers = self::CSV_HEADER;
+   268	
+   269	        return $this->render('@admin/Order/shipping_result_csv_import.twig', [
+   270	            'form' => $form->createView(),
+   271	            'headers' => $headers,
+   272	            'errors' => [],
+   273	            'warnings' => [],
+   274	        ]);
+   275	    }
+   276	
+   277	    /**
+   278	     * 出荷実績CSVアップロード
+   279	     *
+   280	     * @param Request $request
+   281	     *
+   282	     * @return Response
+   283	     */
+   284	    #[Route(path: '/%eccube_admin_route%/order/shipping_result_csv/import', name: 'admin_shipping_result_csv_upload', methods: ['POST'], ),]
+   285	    public function shippingResultImport(Request $request)
+src/Eccube/Controller/Admin/Stock/InventoryPlanController.php:61:    public const REGISTER_CSV_HEADER = [
+src/Eccube/Controller/Admin/Stock/InventoryPlanController.php:66:    public const REQUIRED_REGISTER_CSV_HEADER = [
+src/Eccube/Controller/Admin/Stock/InventoryPlanController.php:71:    public const NOT_REQUIRED_CSV_HEADER = [];
+src/Eccube/Controller/Admin/Stock/InventoryPlanController.php:74:    public const EXPORT_CSV_HEADER = [
+src/Eccube/Controller/Admin/Stock/InventoryPlanController.php:88:    public const QUANTITY_CSV_HEADER = [
+src/Eccube/Controller/Admin/Stock/InventoryPlanController.php:94:    public const REQUIRED_QUANTITY_CSV_HEADER = [
+src/Eccube/Controller/Admin/Stock/InventoryPlanController.php:430:            $headers = self::REGISTER_CSV_HEADER;
+src/Eccube/Controller/Admin/Stock/InventoryPlanController.php:432:            $this->inventoryPlanCsv->checkHeaderValues(array_keys($headers), $columnHeaders, self::NOT_REQUIRED_CSV_HEADER);
+src/Eccube/Controller/Admin/Stock/InventoryPlanController.php:446:                self::REQUIRED_REGISTER_CSV_HEADER
+src/Eccube/Controller/Admin/Stock/InventoryPlanController.php:509:            $headers = self::QUANTITY_CSV_HEADER;
+src/Eccube/Controller/Admin/Stock/InventoryPlanController.php:511:            $this->inventoryPlanCsv->checkHeaderValues(array_keys($headers), $columnHeaders, self::NOT_REQUIRED_CSV_HEADER);
+src/Eccube/Controller/Admin/Stock/InventoryPlanController.php:525:                self::REQUIRED_QUANTITY_CSV_HEADER
+src/Eccube/Controller/Admin/Stock/InventoryPlanController.php:575:                self::EXPORT_CSV_HEADER,
+src/Eccube/Controller/Admin/Order/OrderCsvController.php:47:    public const CSV_HEADER = [
+src/Eccube/Controller/Admin/Order/OrderCsvController.php:115:    public const REQUIRED_CSV_HEADER = [
+src/Eccube/Controller/Admin/Order/OrderCsvController.php:119:    public const NOT_REQUIRED_CSV_HEADER = [
+src/Eccube/Controller/Admin/Order/OrderCsvController.php:267:        $headers = self::CSV_HEADER;
+src/Eccube/Controller/Admin/Order/OrderCsvController.php:334:            $headers = self::CSV_HEADER;
+src/Eccube/Controller/Admin/Order/OrderCsvController.php:335:            $notRequiredCsvHeader = self::NOT_REQUIRED_CSV_HEADER;
+src/Eccube/Repository/OrderRepository.php:1556:    public function generateResultCsv(array $orderIdList): array
+tests/Eccube/Tests/Service/Csv/BuyOrderHistoryCsvExportServiceTest.php:30:    private const CSV_HEADER_LABELS = [
+tests/Eccube/Tests/Service/Csv/BuyOrderHistoryCsvExportServiceTest.php:73:        foreach (self::CSV_HEADER_LABELS as $headerLabel) {
+tests/Eccube/Tests/Service/Csv/BuyOrderHistoryCsvExportServiceTest.php:153:        foreach (self::CSV_HEADER_LABELS as $headerLabel) {
+tests/Eccube/Tests/Service/Csv/StockApprovalLineItemsCsvExportServiceTest.php:205:        $headerKeys = array_keys(StockApprovalLineItemsCsvExportService::CSV_HEADER);
+tests/Eccube/Tests/Service/Csv/StockApprovalLineItemsCsvExportServiceTest.php:227:        foreach (StockApprovalLineItemsCsvExportService::CSV_HEADER as $messageKey) {
+tests/Eccube/Tests/Service/Csv/StockApprovalLineItemsCsvExportServiceTest.php:248:        $headerKeys = array_keys(StockApprovalLineItemsCsvExportService::CSV_HEADER);
+tests/Eccube/Tests/Service/Csv/StockMoveTransferReturnListCsvExportServiceTest.php:370:        $expectedHeader = array_values(StockMoveTransferReturnListCsvExportService::CSV_HEADER);
+tests/Eccube/Tests/Service/Csv/StorageCodeCsvTest.php:83:     * csvHeader / requiredCsvHeader に [] を渡すと DEFAULT_CSV_HEADER / DEFAULT_REQUIRED_CSV_HEADER が使われること
+tests/Eccube/Tests/Service/Csv/BuyOrderRestockListCsvExportServiceTest.php:149:        $expectedHeader = array_values(BuyOrderRestockListCsvExportService::CSV_HEADER);
+tests/Eccube/Tests/Service/Csv/Exporter/StockSplitJoinCsvExportServiceTest.php:171:            array_values(StockSplitJoinCsvExportService::CSV_HEADER),
+tests/Eccube/Tests/Service/Csv/Exporter/StockSplitJoinCsvExportServiceTest.php:227:        $this->assertSame(array_values(StockSplitJoinCsvExportService::CSV_HEADER), $headerCells);
+tests/Eccube/Tests/Service/Csv/Exporter/StockMoveInboundApprovalRequestCsvExportServiceTest.php:87:        $this->assertSame(StockMoveInboundApprovalRequestCsvExportService::CSV_HEADER, $csvRows[0]);
+tests/Eccube/Tests/Service/Csv/Exporter/StockListCsvExportServiceTest.php:56:     * exportBySearchInput() が CSV_HEADER の値をヘッダー行として出力すること
+tests/Eccube/Tests/Service/Csv/Exporter/StockListCsvExportServiceTest.php:64:        $this->assertSame(array_values(StockListCsvExportService::CSV_HEADER), $rows[0]);
+tests/Eccube/Tests/Service/Csv/Exporter/StockListCsvExportServiceTest.php:85:        $keys = array_keys(StockListCsvExportService::CSV_HEADER);
+tests/Eccube/Tests/Service/Csv/Exporter/StockListCsvExportServiceTest.php:102:        $this->assertSame(array_values(StockListCsvExportService::CSV_HEADER), $rows[0]);
+tests/Eccube/Tests/Service/Csv/Exporter/StockListCsvExportServiceTest.php:119:        $keys = array_keys(StockListCsvExportService::CSV_HEADER);
+tests/Eccube/Tests/Service/Csv/Exporter/StockListCsvExportServiceTest.php:152:        $keys = array_keys(StockListCsvExportService::CSV_HEADER);
+tests/Eccube/Tests/Service/Csv/Exporter/StockRecommendCsvExportServiceTest.php:347:        $this->assertSame(array_values(StockRecommendCsvExportService::CSV_HEADER), $headerCells, 'ヘッダーが期待どおり出力されること');
+tests/Eccube/Tests/Service/Csv/Exporter/StockMoveOutboundApprovalRequestCsvExportServiceTest.php:86:        $this->assertSame(StockMoveOutboundApprovalRequestCsvExportService::CSV_HEADER, $csvRows[0]);
+tests/Eccube/Tests/Service/Csv/Exporter/BarcodeReplacementListCsvExportServiceTest.php:68:        $this->assertSame(array_values(BarcodeReplacementListCsvExportService::CSV_HEADER), $headerCells);
+tests/Eccube/Tests/Service/Csv/StockMoveTransferListCsvExportServiceTest.php:87:        $expectedHeader = array_values(StockMoveTransferListCsvExportService::CSV_HEADER);
+tests/Eccube/Tests/Service/Csv/StockApprovalListCsvExportServiceTest.php:122:        $expectedHeader = array_values(StockApprovalListCsvExportService::CSV_HEADER);
+tests/Eccube/Tests/Service/Csv/OtcBuyOrderHistoryCsvExportServiceTest.php:30:    private const CSV_HEADER_LABELS = [
+tests/Eccube/Tests/Service/Csv/OtcBuyOrderHistoryCsvExportServiceTest.php:98:        foreach (self::CSV_HEADER_LABELS as $headerLabel) {
+tests/Eccube/Tests/Service/Csv/Importer/Event/StockMoveShortageImportHandlerTest.php:130:        $row->setHeaders(StockMoveShortageImportHandler::CSV_HEADER);
+tests/Eccube/Tests/Service/Csv/Importer/Event/StockMoveShortageImportHandlerTest.php:156:        $header = implode(',', StockMoveShortageImportHandler::CSV_HEADER);
+tests/Eccube/Tests/Service/Csv/Importer/Event/StockMoveShortageImportHandlerTest.php:433:        $header = implode(',', StockMoveShortageImportHandler::CSV_HEADER);
+tests/Eccube/Tests/Service/Csv/Importer/Event/StockMoveDifferentialImportHandlerTest.php:161:        $row->setHeaders(StockMoveDifferentialImportHandler::CSV_HEADER);
+tests/Eccube/Tests/Service/Csv/Importer/Event/StockMoveDifferentialImportHandlerTest.php:187:        $header = implode(',', StockMoveDifferentialImportHandler::CSV_HEADER);
+tests/Eccube/Tests/Service/Csv/Importer/Event/StockMoveDifferentialImportHandlerTest.php:509:        $header = implode(',', StockMoveDifferentialImportHandler::CSV_HEADER);
+tests/Eccube/Tests/Service/Csv/BuyOrderProductListCsvExportServiceTest.php:106:        $expectedHeader = array_values(BuyOrderProductListCsvExportService::CSV_HEADER);
+src/Eccube/Service/Csv/StorageCodeCsv.php:33:    private const DEFAULT_CSV_HEADER = ['ID' => 'ID', '名称' => '名称', '並び順' => '並び順'];
+src/Eccube/Service/Csv/StorageCodeCsv.php:36:    private const DEFAULT_REQUIRED_CSV_HEADER = ['名称' => '名称', '並び順' => '並び順'];
+src/Eccube/Service/Csv/StorageCodeCsv.php:53:        $csvHeader = $csvHeader !== [] ? $csvHeader : self::DEFAULT_CSV_HEADER;
+src/Eccube/Service/Csv/StorageCodeCsv.php:54:        $requiredCsvHeader = $requiredCsvHeader !== [] ? $requiredCsvHeader : self::DEFAULT_REQUIRED_CSV_HEADER;
+tests/Eccube/Tests/Web/Admin/Stock/StockMoveControllerCsvTest.php:181:            implode(',', StockMoveShortageImportHandler::CSV_HEADER)."\n"
+tests/Eccube/Tests/Web/Admin/Stock/StockMoveControllerCsvTest.php:322:            implode(',', StockMoveDifferentialImportHandler::CSV_HEADER)."\n"
+tests/Eccube/Tests/Web/Admin/Stock/StockMoveControllerCsvTest.php:481:        $header = implode(',', StockMoveShortageImportHandler::CSV_HEADER);
+tests/Eccube/Tests/Web/Admin/Stock/StockMoveControllerCsvTest.php:492:        $header = implode(',', StockMoveDifferentialImportHandler::CSV_HEADER);
+src/Eccube/Service/Csv/Importer/Event/StockMoveDifferentialImportHandler.php:35:    public const CSV_HEADER = [
+src/Eccube/Service/Csv/Importer/Event/StockMoveDifferentialImportHandler.php:284:        [$productCode, $productName, $actualMoveQty, $differenceQty] = self::CSV_HEADER;
+src/Eccube/Service/Csv/Importer/Event/StockMoveShortageImportHandler.php:34:    public const CSV_HEADER = [
+src/Eccube/Service/Csv/Importer/Event/StockMoveShortageImportHandler.php:270:        [$productCode, $productName, $moveQty, $shortageQty] = self::CSV_HEADER;
+src/Eccube/Service/Csv/OrderCsv.php:47:            OrderCsvController::CSV_HEADER,
+src/Eccube/Service/Csv/OrderCsv.php:48:            OrderCsvController::REQUIRED_CSV_HEADER,
+src/Eccube/Service/Csv/OrderCsv.php:59:        if (!$csvRows = $this->orderRepository->generateResultCsv($orderIdList)) {
+src/Eccube/Service/Csv/Exporter/BuyOrderHistoryCsvExportService.php:32:    private const CSV_HEADER = [
+src/Eccube/Service/Csv/Exporter/BuyOrderHistoryCsvExportService.php:86:            $this->csvExportService->fputcsv(array_values(self::CSV_HEADER));
+src/Eccube/Service/Csv/Exporter/BuyOrderHistoryCsvExportService.php:91:                    array_keys(self::CSV_HEADER),
+src/Eccube/Service/Csv/Exporter/BuyOrderProductListCsvExportService.php:30:    public const CSV_HEADER = [
+src/Eccube/Service/Csv/Exporter/BuyOrderProductListCsvExportService.php:69:        $header = self::CSV_HEADER;
+src/Eccube/Service/Csv/Exporter/ProductRequestCsvExportService.php:24:    private const CSV_HEADER = [
+src/Eccube/Service/Csv/Exporter/ProductRequestCsvExportService.php:48:            $this->csvExportService->fputcsv(array_values(self::CSV_HEADER));
+src/Eccube/Service/Csv/Exporter/ProductRequestCsvExportService.php:53:                    array_keys(self::CSV_HEADER),
+src/Eccube/Service/Csv/Exporter/UsedCardCsvExportService.php:24:    private const CSV_HEADER = [
+src/Eccube/Service/Csv/Exporter/UsedCardCsvExportService.php:63:            $this->csvExportService->fputcsv(array_values(self::CSV_HEADER));
+src/Eccube/Service/Csv/Exporter/UsedCardCsvExportService.php:68:                    array_keys(self::CSV_HEADER),
+src/Eccube/Service/Csv/Exporter/OtcBuyOrderSummaryCsvExportService.php:36:    private const CSV_HEADER = [
+src/Eccube/Service/Csv/Exporter/OtcBuyOrderSummaryCsvExportService.php:92:            $this->csvExportService->fputcsv(array_values(self::CSV_HEADER));
+src/Eccube/Service/Csv/Exporter/OtcBuyOrderSummaryCsvExportService.php:98:                    array_keys(self::CSV_HEADER),
+src/Eccube/Service/Csv/Exporter/StockApprovalLineItemsCsvExportService.php:37:    public const CSV_HEADER = [
+src/Eccube/Service/Csv/Exporter/StockApprovalLineItemsCsvExportService.php:78:        $headerKeys = array_keys(self::CSV_HEADER);
+src/Eccube/Service/Csv/Exporter/StockApprovalLineItemsCsvExportService.php:85:            foreach (self::CSV_HEADER as $messageKey) {
+src/Eccube/Service/Csv/Exporter/StockApprovalListCsvExportService.php:34:    public const CSV_HEADER = [
+src/Eccube/Service/Csv/Exporter/StockApprovalListCsvExportService.php:72:        $header = self::CSV_HEADER;
+src/Eccube/Service/Csv/Exporter/StockRecommendCsvExportService.php:40:    public const CSV_HEADER = [
+src/Eccube/Service/Csv/Exporter/StockRecommendCsvExportService.php:70:            $this->csvExportService->fputcsv(self::CSV_HEADER);
+src/Eccube/Service/Csv/Exporter/BarcodeReplacementListCsvExportService.php:33:    public const CSV_HEADER = [
+src/Eccube/Service/Csv/Exporter/BarcodeReplacementListCsvExportService.php:56:        $header = self::CSV_HEADER;
+src/Eccube/Service/Csv/Exporter/BuyOrderCsvExportService.php:36:    public const CSV_HEADER = [
+src/Eccube/Service/Csv/Exporter/BuyOrderCsvExportService.php:82:        $header = self::CSV_HEADER;
+src/Eccube/Service/Csv/Exporter/BuyOrderDepositCsvExportService.php:30:    public const CSV_HEADER = [
+src/Eccube/Service/Csv/Exporter/BuyOrderDepositCsvExportService.php:69:        $header = self::CSV_HEADER;
+src/Eccube/Service/Csv/Exporter/StockMoveOutboundApprovalRequestCsvExportService.php:32:    public const CSV_HEADER = [
+src/Eccube/Service/Csv/Exporter/StockMoveOutboundApprovalRequestCsvExportService.php:58:                $this->csvExportService->fputcsv(self::CSV_HEADER);
+src/Eccube/Service/Csv/Exporter/StockMoveInboundApprovalRequestCsvExportService.php:31:    public const CSV_HEADER = [
+src/Eccube/Service/Csv/Exporter/StockMoveInboundApprovalRequestCsvExportService.php:57:                $this->csvExportService->fputcsv(self::CSV_HEADER);
+src/Eccube/Service/Csv/Exporter/StockListCsvExportService.php:33:    public const CSV_HEADER = [
+src/Eccube/Service/Csv/Exporter/StockListCsvExportService.php:77:        $header = self::CSV_HEADER;
+src/Eccube/Service/Csv/Exporter/OtcBuyOrderHistoryCsvExportService.php:35:    private const CSV_HEADER = [
+src/Eccube/Service/Csv/Exporter/OtcBuyOrderHistoryCsvExportService.php:87:            $this->csvExportService->fputcsv(array_values(self::CSV_HEADER));
+src/Eccube/Service/Csv/Exporter/OtcBuyOrderHistoryCsvExportService.php:93:                    array_keys(self::CSV_HEADER),
+src/Eccube/Service/Csv/Exporter/BuyOrderRestockListCsvExportService.php:33:    public const CSV_HEADER = [
+src/Eccube/Service/Csv/Exporter/BuyOrderRestockListCsvExportService.php:57:        $header = self::CSV_HEADER;
+src/Eccube/Service/Csv/Exporter/StockSplitJoinCsvExportService.php:29:    public const CSV_HEADER = [
+src/Eccube/Service/Csv/Exporter/StockSplitJoinCsvExportService.php:65:        $header = self::CSV_HEADER;
+src/Eccube/Service/Csv/Exporter/StockMoveTransferBarcodeCsvExportService.php:41:        $header = BarcodeReplacementListCsvExportService::CSV_HEADER;
+src/Eccube/Service/Csv/Exporter/StockMoveTransferListCsvExportService.php:36:    public const CSV_HEADER = [
+src/Eccube/Service/Csv/Exporter/StockMoveTransferListCsvExportService.php:69:        $header = self::CSV_HEADER;
+src/Eccube/Service/Csv/Exporter/StockMoveTransferReturnListCsvExportService.php:33:    public const CSV_HEADER = [
+src/Eccube/Service/Csv/Exporter/StockMoveTransferReturnListCsvExportService.php:63:        $header = self::CSV_HEADER;
+

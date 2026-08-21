@@ -1,0 +1,351 @@
+{
+ "packetId": "rc_17",
+ "note": "rowId は drift_findings_list_final.tsv の行番号(ヘッダ除く1始まり)。mech は機械検証フラグ(手掛かりであって正解ではない)。",
+ "count": 12,
+ "findings": [
+  {
+   "rowId": 306,
+   "機能No": "F06-13",
+   "機能名": "F06-13 オンライン本人確認",
+   "ドメイン": "f06",
+   "区分(画面種別)": "front",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "申請(POST /mypage/identification/complete)で撮影フォーム検証失敗時は、身分証種別とエラー状態を引き継ぎ、エラー状態を付けて撮影画面を再表示する。",
+   "実装実態": "complete() は検証失敗時に redirectToRoute('mypage_identification_photograph', ['mypage_identification'=>['identification'=>$identificationId],'isError'=>1]) で302リダイレクト。ブラウザはGET再要求するが photograph ルートは methods:['POST'] のみで405となる。photograph() は POSTボディの 'identification_select' と 'isError' を参照するが、リダイレクトは 'mypage_identification' キーの query で渡すため再生成条件も満たさない。",
+   "差分内容": "POST限定ルートへGETリダイレクトのため撮影画面の再表示(エラー状態反映)が成立せず、入力キー参照(identification_select/isError)とも不整合で設計の遷移・状態引き継ぎが機能しない。",
+   "実装参照": "src/Eccube/Controller/Front/Mypage/IdentificationController.php:155-159, :72, :82-90",
+   "設計書参照": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-11",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html:4307 のExcel正本はボタン押下時について「入力内容に対してバリデーションを実施し、エラーが発生した場合はエラーメッセージを画面に表示する」と規定するが、身分証種別・`isError` の引継ぎや撮影画面への戻し方は正本範囲に記載しない。具体手順はリバース詳細設計 hareruya-design-docs/functions/pf-eccube3/f06-13_front_member_mypage_online_identification.md:102,110,265 にのみある。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Mypage/IdentificationController.php:60-76 は撮影画面で `$request->get('identification_select')` と `$request->get('isError')` を取得してテンプレートへ渡し、同:107-115 は検証失敗時に `identification_select.identification` と `isError => 1` を付けて `mypage_identification_photograph` へリダイレクトする。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Controller/Front/Mypage/IdentificationController.php:72-74 は撮影ルートを `methods: ['POST']` のみにし、同:82-90 はPOSTの `identification_select` と `isError` を読む。一方、同:155-159 は失敗時に `mypage_identification` という別キーと `isError` をクエリ指定して同ルートへリダイレクトするため、リダイレクト後のGETはPOST限定ルートに一致せず、参照キーも不一致である。",
+   "根拠検証メモ": "正本はエラー表示までしか規定せず、指摘の具体的な状態引継ぎ・再表示方式は旧実装由来。",
+   "対応の根拠(現develop)": "`src/Eccube/Controller/Front/Mypage/IdentificationController.php:155-159` は依然 `return $this->redirectToRoute('mypage_identification_photograph', ['mypage_identification' => ['identification' => $identificationId], 'isError' => 1]);` の302リダイレクト。リダイレクト先 `:72` は `#[Route(path: '/mypage/identification/photograph', name: 'mypage_identification_photograph', methods: ['POST'])]` とPOST限定のまま、`:82-89` も `$request->request->all('identification_select')` / `$request->request->get('isError')` とPOSTボディ参照のままでクエリキー不整合も未解消。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "NOT_FOUND",
+    "stale": "UNCHANGED",
+    "quoteDetail": [
+     "入力内容に対してバリデーションを実施し、エラーが発生した場合はエラーメッセージを画面に表示する",
+     "isError"
+    ]
+   }
+  },
+  {
+   "rowId": 307,
+   "機能No": "F06-13",
+   "機能名": "F06-13 オンライン本人確認",
+   "ドメイン": "f06",
+   "区分(画面種別)": "front",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "本人確認状況のステータスは「未確認」「現在、確認中です」「オンラインで本人確認済み」「簡易書留で本人確認済み」のいずれかが表示される。",
+   "実装実態": "twig:54 で Customer.Player.IdentityConfirmStatus.nameJp をそのまま表示。マスタ name_jp は id1='未確認'/id2='確認中'/id3='オンライン本人確認済み'/id4='簡易書留確認済み'。",
+   "差分内容": "確認中・オンライン確認済み・簡易書留確認済みの3ステータスで設計文言と表記が相違(「現在、確認中です」「オンラインで本人確認済み」「簡易書留で本人確認済み」)。",
+   "実装参照": "src/Eccube/Resource/template/default/Mypage/online_identification.twig:54, app/DoctrineMigrations/Version20251125145047.php:62-83",
+   "設計書参照": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-11",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html:4251 のExcel正本は「ステータスは『未確認』『現在、確認中です』『オンラインで本人確認済み』『簡易書留で本人確認済み』のいずれかを表示する」と明記する。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/online_identification_start.twig:34-45 は `オンラインで本人確認済み`、`簡易書留で本人確認済み`、未確認の分岐を持ち、pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/online_identification_done.twig:31 は `現在、確認中です` と表示する。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/online_identification.twig:53-54 は `Customer.IdentityConfirmStatus.nameJp` をそのまま表示するが、ec-cube-enterprise/app/DoctrineMigrations/Version20251125145047.php:63-81 のマスタ値は「未確認」「確認中」「オンライン本人確認済み」「簡易書留確認済み」であり、後3件が正本文言と一致しない。",
+   "根拠検証メモ": "文言はExcel正本で完全に特定されている。",
+   "対応の根拠(現develop)": "`src/Eccube/Resource/template/default/Mypage/online_identification.twig:54` `{{ Customer.Player.IdentityConfirmStatus.nameJp }}` のまま。マスタ値も `app/DoctrineMigrations/Version20251125145047.php:63-82` の `'name_jp' => '未確認' / '確認中' / 'オンライン本人確認済み' / '簡易書留確認済み'` から変更されておらず（mtb_identity_confirm_status に触れる後続マイグレーションは Version20260108204509.php のみで name_jp のUPDATEなし）、設計文言「現在、確認中です」「オンラインで本人確認済み」「簡易書留で本人確認済み」と相違。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "NOT_FOUND",
+    "stale": "UNCHANGED",
+    "quoteDetail": [
+     "ステータスは『未確認』『現在、確認中です』『オンラインで本人確認済み』『簡易書留で本人確認済み』のいずれかを表示する"
+    ]
+   }
+  },
+  {
+   "rowId": 308,
+   "機能No": "F06-14",
+   "機能名": "F06-14 マイイベント・デッキ登録",
+   "ドメイン": "f06",
+   "区分(画面種別)": "front",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "★(6)デッキステータス（デッキ登録状況）と(7)デッキ登録/編集は、(4)ステータスが「イベント終了」／デッキ登録締切日時超過／「デッキ登録を終了する」チェック／「デッキ登録あり」未チェックのいずれかで表示しない。",
+   "実装実態": "デッキ登録/編集ボタンは `{% if not isFinished and detail.canBeRegisteredDeck() %}` で4条件を網羅して非表示になるが、デッキ登録状況ラベル（登録済み/未登録）にはガードが無く常時表示される。",
+   "差分内容": "設計は(6)デッキステータスと(7)デッキ登録/編集の両方を4条件で非表示にするよう求めるが、実装ではボタンのみ条件付き非表示、ラベルは無条件描画。event_history.twig全体・DtbEventDetailを確認したがラベル行に非表示ガードは無い。",
+   "実装参照": "src/Eccube/Resource/template/default/Mypage/event_history.twig:143-145（ラベル無条件描画）, :148-150（ボタンはガード有）, src/Eccube/Entity/DtbEventDetail.php:508-511 canBeRegisteredDeck",
+   "設計書参照": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-12",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html:4663-4667 のExcel正本は「(6)デッキステータス」「(7)登録・編集」について、イベント終了、登録期限超過、イベント終了チェックあり、デッキ登録なしの各場合に「表示しない」と規定する。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/deckentry_list.twig:71-79,125-143 は旧デッキ一覧で登録期限等に応じてボタンを分岐していたが、旧画面はイベント履歴とデッキ登録が分離されており、正本の新しい統合表示条件そのものは存在しない。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/event_history.twig:139-147 はデッキ状態 `eventDetail.status` を条件外で常に表示し、登録・編集ボタンだけを `{% if not eventDetail.isFinished and eventDetail.detail.canBeRegisteredDeck() %}` で隠す。ec-cube-enterprise/src/Eccube/Entity/DtbEventDetail.php:508-510 の `canBeRegisteredDeck()` は登録可否・期限を判定するが、状態表示には適用されない。",
+   "根拠検証メモ": "4条件で両項目を非表示にする正本要件に対し、現行は状態欄を常時表示する。",
+   "対応の根拠(現develop)": "`src/Eccube/Resource/template/default/Mypage/event_history.twig:139-142` のデッキ登録状況ラベルは `<dd class=\"...\">{{ deckId is not null ? 'front.mypage.event_history.deck__registered'|trans : 'front.mypage.event_history.deck__not_registered'|trans }}</dd>` と非表示ガード無しで無条件描画のまま。ボタン側のみ `:145` `{% if not isFinished and detail.canBeRegisteredDeck() %}`（`src/Eccube/Entity/DtbEventDetail.php:508-511` `return $this->getDeckRegistFlg() && !$this->getDeadlineFlg() && $this->deckRegistDeadline >= new \\DateTime();`）でガードされている。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "UNCHANGED"
+   }
+  },
+  {
+   "rowId": 310,
+   "機能No": "F06-14",
+   "機能名": "F06-14 マイイベント・デッキ登録",
+   "ドメイン": "f06",
+   "区分(画面種別)": "front",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "(10)ページネーション：前後に4ページ分のリンクを表示する（例：8ページ選択時は4〜12ページのリンク）。",
+   "実装実態": "paginate() に page_range を渡さず、app/config・Plugin いずれにも knp_paginator の page_range 設定が無い（reference.php:1471 は Default:5 の記述のみ）。よって Knp デフォルト page_range=5（±2ページ）で描画される。",
+   "差分内容": "設計は現在ページ±4（例8→4〜12の9リンク）を要求。実装はrange指定が無くKnpデフォルトの±2で描画される。page_range/pageRange設定箇所を全探索したが該当なし。",
+   "実装参照": "src/Eccube/Controller/Front/Mypage/EventHistoryController.php:99 paginate()（optionsなし）, src/Eccube/Resource/template/default/pager.twig:36-46 pagesInRange",
+   "設計書参照": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-12",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html:4685 のExcel正本はページャについて「現在ページを中心に前後に4ページ分のリンクを表示」「8ページ目の場合、4〜12ページ」と明記する。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/purchase_history.twig:55-65 など旧画面はページャを利用するが、この指摘対象の統合イベント履歴における前後4ページ指定を裏付ける旧コードは確認範囲（pf-eccube3 の `pagination`、`pageRange`、`pagesInRange` 横断検索）に存在しない。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Controller/Front/Mypage/EventHistoryController.php:99 は `$paginator->paginate($query, $pageNo, $pageSize)` とし範囲を指定しない。ec-cube-enterprise/vendor/knplabs/knp-paginator-bundle/src/DependencyInjection/Configuration.php:49-50 は `page_range` の既定値を `5` とし、ec-cube-enterprise/src/Eccube/Resource/template/default/pager.twig:35-46 は `pagesInRange` のみを反復するため、前後4ページ（最大9ページ）にならない。",
+   "根拠検証メモ": "Excel正本の具体例まであるため、既定5ページの利用は要件未達。",
+   "対応の根拠(現develop)": "`src/Eccube/Controller/Front/Mypage/EventHistoryController.php:99` `$pagination = $paginator->paginate($EventDetails, $pageNo, $dispNumber);` と options（page_range）未指定のまま。app/src 配下に knp_paginator の page_range 設定は無く、`src/Eccube/Resource/template/default/pager.twig:36` `{% for page in pages.pagesInRange %}` は Knp 既定 page_range=5（現在ページ±2）で描画される。設計の±4（9リンク）未充足。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "NOT_FOUND",
+    "stale": "UNCHANGED",
+    "implFile": "FILE_MISSING",
+    "quoteDetail": [
+     "現在ページを中心に前後に4ページ分のリンクを表示",
+     "8ページ目の場合、4〜12ページ"
+    ]
+   }
+  },
+  {
+   "rowId": 312,
+   "機能No": "F06-14",
+   "機能名": "F06-14 マイイベント・デッキ登録",
+   "ドメイン": "f06",
+   "区分(画面種別)": "front",
+   "指摘区分": "実装違い",
+   "重要度": "low",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "(1)パンくずリスト末尾は現在ページ名＝「マイイベント・デッキ登録」（押下不可）。",
+   "実装実態": "mypage_event_history のパンくず末尾は breadcrumb_title すなわち『大会デッキ登録』を表示する（見出しh1/メニュー名は『マイイベント・デッキ登録』）。",
+   "差分内容": "設計のパンくず末尾は『マイイベント・デッキ登録』だが、実装は別文言『大会デッキ登録』。ホームアイコン→homepage・現在ページ非リンクは満たすが、末尾クラムの文言が不一致。",
+   "実装参照": "src/Eccube/Resource/template/default/breadcrumb_nav.twig:122-124, src/Eccube/Resource/locale/messages.ja.yaml event_history.breadcrumb_title: 大会デッキ登録",
+   "設計書参照": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-12",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html:4616 のExcel正本はパンくずを「> マイページ > マイイベント・デッキ登録」と記載する。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/event_history.twig:9-18 と deckentry_list.twig:41 は旧来「イベント予約履歴」と「デッキ登録」を別画面にしており、統合後の正本文言を直接裏付ける旧パンくずは存在しない。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:652-654 は `nav: マイイベント・デッキ登録` に対し `breadcrumb_title: 大会デッキ登録` と定義し、ec-cube-enterprise/src/Eccube/Resource/template/default/breadcrumb_nav.twig:126-128 は `mypage_event_history` で後者をパンくずに使用する。",
+   "根拠検証メモ": "ナビ文言は正しいが、指摘対象のパンくず終端は別キーで不一致。",
+   "対応の根拠(現develop)": "`src/Eccube/Resource/template/default/breadcrumb_nav.twig:126-128` `{% elseif route == 'mypage_event_history' %}` … `{{ hareruya_breadcrumb.current_li('front.mypage.event_history.breadcrumb_title'|trans, 3) }}` のままで、`src/Eccube/Resource/locale/messages.ja.yaml:653` `front.mypage.event_history.breadcrumb_title: 大会デッキ登録`。設計の末尾クラム『マイイベント・デッキ登録』と不一致のまま。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Resource/locale/messages.ja.yaml",
+     "src/Eccube/Resource/template/default/breadcrumb_nav.twig"
+    ]
+   }
+  },
+  {
+   "rowId": 313,
+   "機能No": "F06-14",
+   "機能名": "F06-14 マイイベント・デッキ登録",
+   "ドメイン": "f06",
+   "区分(画面種別)": "front",
+   "指摘区分": "実装違い",
+   "重要度": "low",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "(7)デッキ登録状況：登録されている場合「デッキ登録済み」、未登録の場合「デッキ未登録」と表示する。",
+   "実装実態": "表示値は『登録済み』／『未登録』で、接頭『デッキ』が無い。列ラベルlabel__deck='デッキ登録'は別要素。",
+   "差分内容": "設計は表示文言を『デッキ登録済み』『デッキ未登録』と明記するが、実装は『登録済み』『未登録』。値テキスト自体が設計の引用文言と不一致（利用者可視の文言差）。",
+   "実装参照": "src/Eccube/Resource/template/default/Mypage/event_history.twig:144, src/Eccube/Resource/locale/messages.ja.yaml deck__registered: 登録済み / deck__not_registered: 未登録",
+   "設計書参照": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-12",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html:4682 のExcel正本は「デッキ登録状況」に、登録済みなら「デッキ登録済み」、未登録なら「デッキ未登録」と表示すると規定する。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/deckentry_list.twig:125-143 は旧画面で `デッキ登録済` と `デッキ未登録` を表示しており、未登録文言は一致するが登録済み文言は正本より「み」がない。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:658,664-665 は見出しを「デッキ登録」、値を「登録済み」「未登録」と定義し、ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/event_history.twig:139-142 がその値を表示するため、正本の「デッキ登録済み／デッキ未登録」にならない。",
+   "根拠検証メモ": "正本は見出しと状態文言を明記している。",
+   "対応の根拠(現develop)": "`src/Eccube/Resource/locale/messages.ja.yaml:664-665` `front.mypage.event_history.deck__registered: 登録済み` / `front.mypage.event_history.deck__not_registered: 未登録` のままで接頭『デッキ』無し。`src/Eccube/Resource/template/default/Mypage/event_history.twig:141` が両キーをそのまま出力しており、設計文言『デッキ登録済み』『デッキ未登録』と不一致。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Resource/locale/messages.ja.yaml"
+    ]
+   }
+  },
+  {
+   "rowId": 314,
+   "機能No": "F06-14",
+   "機能名": "F06-14 マイイベント・デッキ登録",
+   "ドメイン": "f06",
+   "区分(画面種別)": "front",
+   "指摘区分": "実装違い",
+   "重要度": "low",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "(5)処理状態：デッキ登録済みの大会（申込なし）の表示追加のため、処理状態に「未登録」を追加する。",
+   "実装実態": "デッキ登録済みだが申込(Entry)が無い行の処理状態は status__not_applied ＝『未申込』を表示する。",
+   "差分内容": "設計は追加ステータスの表示文言を『未登録』と記載するが、実装は『未申込』。該当ケース(Entry is null)向けステータスは実装されているが文言が設計の引用と異なる。",
+   "実装参照": "src/Eccube/Resource/template/default/Mypage/event_history.twig:120-121, src/Eccube/Resource/locale/messages.ja.yaml status__not_applied: 未申込",
+   "設計書参照": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-12",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html:4680-4682 のExcel正本は処理状態へ「未登録」を追加し、デッキが未登録なら「デッキ未登録」と表示すると規定しており、デッキが存在する非申込行を「未申込」とする例外は記載しない。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/deckentry_list.twig:125-143 は旧デッキ一覧で登録済み／未登録をデッキの有無で判定する一方、event_history.twig:47-53 は別画面のイベント申込状態を表示していた。旧実装は両一覧を分離しており、デッキあり・申込なしを「未申込」とする統合後の挙動を裏付けない。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Controller/Front/Mypage/EventHistoryController.php:87-96 は申込IDとデッキ詳細IDを統合して行を作るため、デッキのみ存在する行では `Entry` がnullになり得る。ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/event_history.twig:115-118 は `Entry is null` を `status_not_applied` にし、ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:660 はそれを「未申込」と定義する。",
+   "根拠検証メモ": "デッキ存在行を統合する実装構造と、申込nullを優先する表示条件の組合せにより正本の未登録表示にならない。",
+   "対応の根拠(現develop)": "`src/Eccube/Resource/template/default/Mypage/event_history.twig:117-118` `{% elseif Entry is null %}` → `{{ 'front.mypage.event_history.status__not_applied'|trans }}` のままで、`src/Eccube/Resource/locale/messages.ja.yaml:660` も `front.mypage.event_history.status__not_applied: 未申込`。設計の『未登録』文言にはなっていない（`deck__not_registered: 未登録` は同ファイル665行のデッキ欄用キーで、処理状態欄では未使用）。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Resource/locale/messages.ja.yaml"
+    ]
+   }
+  },
+  {
+   "rowId": 318,
+   "機能No": "F06-16",
+   "機能名": "F06-16 大会デッキ登録編集",
+   "ドメイン": "f06",
+   "区分(画面種別)": "front",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "提出時にメイン/サイドの入力形式チェックを行い、書式誤りなら画面遷移せず（登録せず）入力保持で編集画面へ戻し、入力形式エラーを該当テキストエリア上に表示する。",
+   "実装実態": "entry() は書式検証をせず handle() が textMain/textSide をそのまま保存し、常に mypage_deckentry_check へリダイレクト。書式エラーでも必ずデッキが保存される。#errorMain/#errorSide span は常時 hidden でデッドコード。検証は確認画面側 DeckValidationService::getCheckData() でのみ実施。",
+   "差分内容": "設計は『提出時に書式エラー→編集画面へ戻し登録しない』だが、実装は書式検証なしで常に登録し確認画面へ遷移。設計文言そのままのエラー span が未使用である点も裏付け。",
+   "実装参照": "src/Eccube/Controller/Front/Mypage/DeckEntryController.php:99-154, src/Eccube/Service/Front/Mypage/DeckEntryAction.php:37-83, src/Eccube/Resource/template/default/Mypage/deck_entry_edit.twig:278,283",
+   "設計書参照": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-13",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html:4966 のExcel正本は登録時にメイン・サイドの入力フォーマットをチェックし、「エラーの場合、画面遷移せずエラーメッセージを表示」と規定する。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Controller/DeckentryController.php:170-196 はメイン・サイドを `deckDecode` し、整数でない入力等をエラー化して入力値・エラーをセッションへ保存し編集画面へ戻す。同:199 以降でのみ保存処理へ進む。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Controller/Front/Mypage/DeckEntryController.php:137-153 はPOSTされた `deckMain` と `deckSide` をそのままアクションへ渡し、成功リダイレクトする。ec-cube-enterprise/src/Eccube/Service/Deck/DeckEntryAction.php:47-80 も生文字列をEntityへ設定して `persist`・`flush` し、ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/deck_entry_edit.twig:282-288 のエラー表示領域は初期状態で隠れている。",
+   "根拠検証メモ": "正本が求める保存前の入力形式検証と同画面エラー表示が実装されていない。",
+   "対応の根拠(現develop)": "`src/Eccube/Controller/Front/Mypage/DeckEntryController.php:137-153` は `new DeckEntryInput(... textMain: (string) $request->request->get('deckMain',''), textSide: ...)` をそのまま `$this->deckEntryAction->handle($input)` へ渡し、無条件に `return $this->redirectToRoute('mypage_deckentry_check', ...)`。書式検証・編集画面への差し戻しは無い。`src/Eccube/Service/Front/Mypage/DeckEntryAction.php:47-80` も `setTextMain($input->textMain)` 後 `persist/flush` で必ず保存する。`deck_entry_edit.twig:282,287` の `<span ... id=\"errorMain\" hidden>` `id=\"errorSide\" hidden>` は依然どこからも制御されないデッドコード。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "NOT_FOUND",
+    "stale": "UNCHANGED",
+    "implFile": "FILE_MISSING",
+    "quoteDetail": [
+     "エラーの場合、画面遷移せずエラーメッセージを表示"
+    ]
+   }
+  },
+  {
+   "rowId": 319,
+   "機能No": "F06-16",
+   "機能名": "F06-16 大会デッキ登録編集",
+   "ドメイン": "f06",
+   "区分(画面種別)": "front",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "編集画面の『キャンセル』リンクは GET /{_locale}/events（イベント一覧）へ遷移し、編集せずイベント一覧へ戻る。",
+   "実装実態": "キャンセルボタンのリンク先は href=\"{{ url('mypage') }}\"（マイページトップ）で、イベント一覧(events)ではない。",
+   "差分内容": "設計はキャンセル遷移先をイベント一覧(/{_locale}/events)と明記するが、実装は mypage へ遷移。遷移先が相違。",
+   "実装参照": "src/Eccube/Resource/template/default/Mypage/deck_entry_edit.twig:311",
+   "設計書参照": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-13",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html:5001 のExcel正本は「キャンセル」ボタンを列挙するが、遷移・処理欄は「-」であり、`/{_locale}/events` への遷移は正本範囲に記載しない。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/deckentry.twig:166-168 はキャンセルを `<a href=\"{{ url('events_index') }}\" ...>キャンセル</a>` とし、イベント一覧へ戻す。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/deck_entry_edit.twig:312-315 はキャンセルを `<a href=\"{{ url('mypage') }}\" ...>` とし、マイページへ遷移させる。",
+   "根拠検証メモ": "イベント一覧という具体的な遷移先はExcel正本ではなく旧実装由来。",
+   "対応の根拠(現develop)": "`src/Eccube/Resource/template/default/Mypage/deck_entry_edit.twig:315` `<a class=\"c-hareruya-btn c-hareruya-btn--lg p-hareruya-deckentry-edit__submit-btn\" href=\"{{ url('mypage') }}\">キャンセル</a>` のままで、イベント一覧(`/{_locale}/events`)への遷移になっていない。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "TOO_SHORT",
+    "stale": "UNCHANGED"
+   }
+  },
+  {
+   "rowId": 323,
+   "機能No": "F06-18",
+   "機能名": "F06-18 会員情報変更",
+   "ドメイン": "f06",
+   "区分(画面種別)": "front",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "住所系（国・郵便番号・都道府県・住所）変更時に確認済み・簡易書留確認済みなら本人確認ステータスを未確認へ戻す。住所にはカスタマイズ追加の海外住所3カラム目(1-19 住所3/addr03)を含む。",
+   "実装実態": "$isAddressChanged は country・郵便番号・pref・addr01・addr02 の変更のみで判定し addr03 を含めない。海外会員が addr03 のみ変更した場合、本人確認ステータスが未確認へ戻らない。",
+   "差分内容": "設計の住所系変更トリガーの『住所』には addr03(dtb_customer.addr03、既定配送先へ 164 行で反映される正規の住所項目)が含まれるが、$isAddressChanged の比較に addr03 が欠落。海外住所3のみ変更時に未確認化が発火しない業務ルールの部分的不充足。",
+   "実装参照": "src/Eccube/Controller/Front/Mypage/ChangeController.php:139-143",
+   "設計書参照": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-15",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html:5930 のExcel正本は入力項目「住所(住所3)」を「海外住所用に3カラム目」として追加するが、住所3変更時に本人確認ステータスを未確認へ戻す条件はExcel正本範囲（会員情報変更sheet-16）に明記しない。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Mypage/ChangeController.php:107-122 は「氏名・住所・生年月日…に変更があった場合は本人確認ステータスを未確認」とし、簡易書留確認済み／確認済みの会員で国・郵便番号・都道府県・`addr01`・`addr02` のいずれかが変わると `STATUS_UNCONFIRMED` を設定する。旧スキーマには住所3がないため列名そのものはないが、住所情報変更全般を対象にする業務規則が確認できる。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Controller/Front/Mypage/ChangeController.php:140-148 は住所変更判定で `country`、`postal_code`、`pref`、`addr01`、`addr02` だけを比較し、同:157-163 で確認済み／簡易書留確認済みの場合に未確認へ戻す。同:165-170 は既定配送先には `setAddr03($Customer->getAddr03())` も保存しており、`addr03` が住所データであるにもかかわらず本人確認リセット判定から漏れている。",
+   "根拠検証メモ": "住所3は新設項目のため旧コードに列名はないが、旧実装の「住所情報が変更されたら本人確認を未確認へ戻す」という一般規則を新しい住所カラムへ適用した期待値と判断した。",
+   "対応の根拠(現develop)": "`src/Eccube/Controller/Front/Mypage/ChangeController.php:144-148` `$isAddressChanged = ($Customer->getCountry() !== $LoginCustomer->getCountry()) || $isZipChanged || ($Customer->getPref()?->getId() !== $LoginCustomer->getPref()?->getId()) || ($Customer->getAddr01() !== $LoginCustomer->getAddr01()) || ($Customer->getAddr02() !== $LoginCustomer->getAddr02());` と addr03 の比較は依然欠落。同ファイル169行 `->setAddr03($Customer->getAddr03())` で既定配送先へは反映される正規項目である点も監査時点と同じ。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "UNCHANGED"
+   }
+  },
+  {
+   "rowId": 327,
+   "機能No": "F06-21",
+   "機能名": "F06-21 退会",
+   "ドメイン": "f06",
+   "区分(画面種別)": "front",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "退会完了画面の完了メッセージは『退会を完了いたしました。<br>ご利用ありがとうございました。またのご利用をお待ちしております。』を表示する（完了見出しは別途『退会完了』）。",
+   "実装実態": "h1(37) は withdraw_complete_page__title=『退会完了』（完了見出し）。メッセージ本文(39) は withdraw_complete_message__body=『ご利用ありがとうございました。／またのご利用をお待ちしております。』のみを nl2br 表示。設計の完了メッセージ先頭文に相当する withdraw_complete_message__title=『退会が完了いたしました』(messages.ja.yaml:732) はロケール定義済みだがテンプレートで render されない。",
+   "差分内容": "設計の完了メッセージ先頭行『退会を完了いたしました。』が画面に表示されない。withdraw_complete.twig(39) は body キーのみ出力し、対応する title キー(messages.ja.yaml:732, 未使用)を出力していないため、利用者が目にする完了メッセージが設計文言より1文欠落する。見出し『退会完了』は完了見出しであり完了メッセージ先頭行の代替にはならない。",
+   "実装参照": "src/Eccube/Resource/template/default/Mypage/withdraw_complete.twig:37,39 と src/Eccube/Resource/locale/messages.ja.yaml:732-735",
+   "設計書参照": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-17",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html:6997 のExcel正本は画面名「退会完了」、同:7024 は「退会完了メールを会員に送信する」と記すだけで、画面本文の指定文言はない。指定文言はリバース詳細設計 hareruya-design-docs/functions/pf-eccube3/f06-21_front_member_mypage_withdraw.md:140-141 の完了見出しと完了メッセージにのみある。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/withdraw_complete.twig:9-18 は見出し「退会完了」と別に本文 `退会を完了いたしました。<br>ご利用ありがとうございました。またのご利用をお待ちしております。` を表示していた。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/withdraw_complete.twig:37-39 は見出しと `withdraw_complete_message__body` だけを描画する。ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:735-738 には未使用のtitle「退会が完了いたしました」とbody「ご利用ありがとうございました。／またのご利用をお待ちしております。」があるが、titleはテンプレートから参照されない。",
+   "根拠検証メモ": "完了本文の具体文言は旧テンプレート由来。",
+   "対応の根拠(現develop)": "`src/Eccube/Resource/template/default/Mypage/withdraw_complete.twig:37,39` は今も `<h1 ...>{{ 'front.mypage.withdraw_complete_page__title'|trans }}</h1>`(=退会完了) と `<p ...>{{ 'front.mypage.withdraw_complete_message__body'|trans|nl2br }}</p>` の2箇所のみ。`src/Eccube/Resource/locale/messages.ja.yaml:735` の `front.mypage.withdraw_complete_message__title: 退会が完了いたしました` は定義されているが、`src/` `app/` 全体を検索しても ja.yaml:735 / en.yaml:672 の定義行以外に参照が無く、テンプレートで render されていない。設計の完了メッセージ先頭文が欠落したまま。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Resource/locale/messages.ja.yaml"
+    ]
+   }
+  },
+  {
+   "rowId": 329,
+   "機能No": "F06-22",
+   "機能名": "F06-22 お問い合わせ",
+   "ドメイン": "f06",
+   "区分(画面種別)": "front",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "パンくずリストは「⌂ > マイページ ＞お問い合わせ」の3階層",
+   "実装実態": "route in ['contact','contact_confirm','contact_complete'] では home_li の直後に current_li('front.contact.title') のみを出力し「ホーム > お問い合わせ」の2階層。中間のマイページリンクが無い。contact_history 系は mypage を挟む実装がある。",
+   "差分内容": "設計はマイページを中間に持つ3階層。実装は2階層でマイページを欠く。",
+   "実装参照": "src/Eccube/Resource/template/default/breadcrumb_nav.twig:151-153",
+   "設計書参照": "0306_基本設計仕様書(フロント_会員).html#sheet-18:17",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html:7251-7253 のExcel正本レイアウトはお問い合わせのパンくずを「⌂ > マイページ ＞お問い合わせ」と直接記載する。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Contact/index.twig:8-16 は問い合わせ見出し・案内・フォームを描画するがローカルなパンくずはなく、旧実装テンプレートから3階層を直接確認できない。pf-eccube3のContactテンプレートと共通ナビを「マイページ」「breadcrumb」で確認した範囲では、期待値の直接根拠はExcel正本である。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Resource/template/default/breadcrumb_nav.twig:155-160 はcontact系で `current_li('front.contact.title', 2)` だけを出し、直後のcontact_history系とは異なり `link_li(url('mypage'), ...)` を挟まない。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Resource/template/default/breadcrumb_nav.twig:155-156` は `{% elseif route in ['contact', 'contact_confirm', 'contact_complete'] %}` の直後に `{{ hareruya_breadcrumb.current_li('front.contact.title'|trans, 2) }}` のみで position=2、中間のマイページ link_li が無く2階層のまま。対して `同ファイル:162-165` の contact_history_detail は position 3,4 で mypage を挟む実装があり、contact 系のみ未修正。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Resource/template/default/breadcrumb_nav.twig"
+    ]
+   }
+  }
+ ]
+}

@@ -1,0 +1,165 @@
+{
+  "packetId": "rest_20",
+  "results": [
+    {
+      "rowId": 653,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:3433 は Excel 正本セル E83 を「注文番号」とだけ定義し、getOrderNo/getOrderNumber の指定はない。詳細な getOrderNo 指定は正本終了後の同ファイル:3485 `<!-- function-design-embed:start ... -->` 以降にしかない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Util/OrderUtil.php:22-24 は旧補助テーブルから `$orderNumbers[$orderSub->getOrderId()] = $orderSub->getOrderNumber();` を取得し、pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Order/MailController.php:359-365 も本文へ `'orderNumber' => $orderSub->getOrderNumber()` を渡す。旧実装も getOrderNo ではなく移行対象の注文番号を使用している。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Util/OrderUtil.php:36-38 は `$orderNumbers[$order->getid()] = $order->getOrderNumber();`、ec-cube-enterprise/src/Eccube/Controller/Admin/Order/MailController.php:552-558 は本文へ `'orderNumber' => $Order->getOrderNumber()` を渡しており、旧実装と同じ注文番号系統を使用している。",
+      "note": "getOrderNo 指定はリバース詳細設計の誤記であり、正本の「注文番号」表示・本文利用と旧実装の実態は現実装で満たされている。"
+    },
+    {
+      "rowId": 654,
+      "verdict": "UNSUPPORTED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:3428-3436 の Excel 正本入力項目表は件名・本文・注文番号・注文者氏名等のみで、dtb_mail_history や creator_id の記述はない。列一覧は同ファイル:3485 のリバース詳細設計開始後に置かれている。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Service/MailService.php:1799-1806 は `saveUserMailHistory(..., Member $creator = null)` とし、`->setCreator($creator)` を保存する。さらに同ファイル:150-165 の一括送信経路は `saveUserMailHistory($message, $template, $data)` と creator を渡さないため、旧実装でも creator は null である。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/MailService.php:2318-2333 は一括送信後に `$this->saveUserMailHistory($message, $template, $order);` と3引数で呼び、同ファイル:2341-2348 の既定値 `?Member $creator = null` を `setCreator($creator)` している。指摘どおり creator_id は null だが、その必須紐付けを要求する正本・旧実装根拠がない。",
+      "note": "creator_id 必須という期待値は移行先スキーマ列の列挙を必須値と誤解したもの。"
+    },
+    {
+      "rowId": 655,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:3433-3434 の Excel 正本は右カラム項目を「注文番号」「注文者氏名」と定義するが、氏名の取得元を Order.name01/name02 に限定していない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Order/manual_mail_all.twig:94-100 は注文番号を `attribute(orderNumbers, order.id)`、注文者氏名を `order.customer.name01` と `order.customer.name02` で表示する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Order/manual_mail_all.twig:115-125 は `attribute(orderNumbers, Order.id)` と `Order.customer.name01` / `Order.customer.name02` を表示する。注文番号・注文者名という正本要求を満たし、旧実装とも同一である。",
+      "note": "「注文者名は必ず受注スナップショット Order.name01/name02」という限定は正本にも旧実装にもない。"
+    },
+    {
+      "rowId": 656,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:4124 は Excel 正本セル D28 で「未採番の注文がある場合は400エラーを返すようにする。」と要求するが、判定キーを order_no とは指定していない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Order/OrderController.php:245-251 は `if (empty($order['order_number']))` のとき JSON `注文番号が未採番の注文があります。` を HTTP 400 で返す。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Order/OrderController.php:988-994 は `getPrintOrderList` の各行について `if (empty($Order['order_number']))` なら JSON `注文番号が未採番の注文があります。` を 400 で返す。正本の挙動と旧実装を満たしている。",
+      "note": "リバース詳細設計の order_no 表記が誤りで、実際の旧新実装はいずれも order_number を判定する。"
+    },
+    {
+      "rowId": 657,
+      "verdict": "UNSUPPORTED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:4123-4125 の Excel 正本は「ブラウザ印刷フラグをON」「注文受領ならピック中に変更し、注文確定日を登録」と明記しており、「DB更新しない」という期待値と正面から矛盾する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Order/OrderController.php:253-266 は `browser_print_flg => true` と必要時 `update_status_picking => true` を組み立て `updateOrder` を呼び、同ファイル:393-405 は `setBrowserPrintFlg(true)`、ステータス・日付を設定して `flush()` する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Admin/Order/UpdateStackListAction.php:43-60 は `setBrowserPrintFlg(true)`、必要時 `setOrderStatus(...PICKING)` と `setConfirmDate(new DateTime())` を行い `flush()` する。これは正本・旧実装どおりである。",
+      "note": "「参照系のみでDB更新なし」はリバース詳細設計内の自己矛盾したテンプレ記述で、乖離根拠にならない。"
+    },
+    {
+      "rowId": 659,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:6029-6032 で M05-11 の詳細記述は `data-source=\"functions/pf-eccube3/m05-11_admin_order_order_edit.md\"` のリバース設計として開始する。Excel 正本部分には PurchaseFlow の有無を指定する記述がない（確認範囲: sheet-15 の正本部 4904-6028）。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Order/EditController.php:654-671 は `$form->isValid()` で検証し、同ファイル:721-723 で `persist($targetOrder)`, `persist($orderSub)`, `flush()` を直接実行する。同ファイル全体を PurchaseFlow/prepare/commit で検索して該当0件で、旧実装は PurchaseFlow を使わない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Order/EditController.php:558-559 は `$this->orderPurchaseFlow->validate(...)`、同ファイル:659-665 はトランザクション内で `orderPurchaseFlow->prepare(...)` と `commit(...)` を実行しており、旧実装の保存経路から変わっている。",
+      "note": "正本根拠はないが、旧実装の直接 persist/flush 経路に対する移植差として成立する。"
+    },
+    {
+      "rowId": 660,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:6029-6032 により gainPoints の詳細は Excel 正本ではなく pf-eccube3 リバース設計由来である（正本部 4904-6028 にメソッド名の指定なし）。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Order/EditController.php:730-736 は出荷完了遷移時に `gainPoints($targetOrder)` と `gainSmaregiPoint($orderSub, $player)` を呼ぶ。一方、同ファイル:987-990 は初回キャンセルで `cancelProcess`、:1035-1045 は `setGainedPoints(0)` とポイント履歴削除を行うため、取消処理も旧挙動である。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Order/EditController.php:760-765 は出荷完了時に `pointService->gainPoints` とスマレジ連携ジョブ登録を行い、同ファイル:715-717 は初回キャンセル時に `cancelOrderPoints` を呼ぶ。gain と cancel の双方が旧挙動に対応している。",
+      "note": "指摘はキャンセル時の取消を「設計にない追加」としたが、旧実装にも明示的な取消処理がある。"
+    },
+    {
+      "rowId": 661,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:6029-6032 のとおり、register 経路の詳細はリバース設計であり、Excel 正本は register 時のキャンセル日設定有無を限定していない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Order/EditController.php:974-990 の `updateSubDate` は register 経路からも呼ばれ、キャンセル時に `setCancelDate(new DateTime())` と `cancelProcess(...)` を実行する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Order/EditController.php:687-717 は register 経路で出荷完了なら未出荷 Shipping に日付を設定し、初回キャンセルなら `setCancelDate` と `cancelOrderPoints` を行う。旧実装と同じく register でもキャンセル副作用がある。",
+      "note": "register ではキャンセル日を設定しないという前提が旧実装と不一致であり、追加乖離ではない。"
+    },
+    {
+      "rowId": 662,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:6029-6032 の埋め込み詳細はリバース設計で、Excel 正本部に成功フラッシュを二分岐に限定する記述はない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Order/EditController.php:750-763 は完了イベント後、全キャンセル `admin.order.cancel.complete`、一部キャンセル `admin.order.part_cancel.complete`、その他 `admin.order.save.complete` の3分岐を持つ。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Order/EditController.php:807-825 は完了イベントを送出した後、旧実装と同じ3分岐で cancel / part_cancel / save の成功フラッシュを積む。",
+      "note": "一部キャンセル専用メッセージは旧実装にも存在し、現実装は移植済み。"
+    },
+    {
+      "rowId": 663,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:6029-6032 のポイント計算詳細は pf-eccube3 リバース設計で、Excel 正本部にはキャンセル時に獲得ポイントを維持するという要求はない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Order/EditController.php:702-710 は通常時に小計・利用ポイント・割合で再計算し、同ファイル:1035-1038 はキャンセル処理で `$orderSub->setGainedPoints(0)` を明示する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Order/EditController.php:1104-1119 はキャンセルなら `$gainedPoints = 0`、店頭支払系以外なら `taxedBase > 0 ? floor(...) : 0` とし、通常再計算と旧来のキャンセル0化を両立している。",
+      "note": "キャンセル時0固定は設計外の追加ではなく旧実装にもある。"
+    },
+    {
+      "rowId": 664,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "hareruya-design-docs/functions/pf-eccube3/m05-11_admin_order_order_edit.md:69-74 は register で「未出荷の配送に出荷日時」、同ファイル:81-86 は status_change で「受注および全配送の出荷日時」と記すリバース設計であり、Excel正本ではない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Order/EditController.php:687-690 は register で `updateDate` / `updateSubDate`、同ファイル:805-811 は status_change でも同処理後に persist/flush する。旧コード上の経路差を移行先向けに読み替えた期待値である。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Order/EditController.php:687-699 は register で未出荷 Shipping のみ `setShippingDate`、同ファイル:869-875 は status_change で Order と全 Shipping に `setShippingDate` を行う。指摘の設計期待値と実装実態が同一である。",
+      "note": "パケット自身の期待値と実装実態が一致しており、乖離ではない。"
+    },
+    {
+      "rowId": 665,
+      "verdict": "UNSUPPORTED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:1783-1785 の M05-14 記述は `function-design-embed` かつ `data-source=\"functions/ec-cube-enterprise/...\"` の移行先リバース設計である。Excel正本から「フォームエラーを保持して再表示」の根拠は確認できない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Order/EditController.php:785-803 の旧 status 更新はフォーム値を直接 `setOrderStatus` し、同一ならリダイレクトするだけで、遷移可否のフォームエラーを保持して再表示する処理はない。pf-eccube3 全体で `failed_to_change_status` を検索して該当0件。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/OrderType.php:527-545 はステータス検証を行う一方、ec-cube-enterprise/src/Eccube/Controller/Admin/Order/EditController.php:864-866 はフォーム不正時に編集画面へリダイレクトする。現象候補はあるが、要求根拠が移行先自身のリバース文書のみである。",
+      "note": "移行先コードから起こした文書と同じ移行先コードとの差を、正本仕様または旧実装要件として扱う根拠がない。"
+    },
+    {
+      "rowId": 666,
+      "verdict": "UNSUPPORTED",
+      "specEvidence": "hareruya-design-docs/functions/ec-cube-enterprise/m05-14_admin_order_order_status_change.md:139-143 は英語欄の `-` を「英語ロケール資源を持たない」と説明するリバース設計であり、表示すべき文字列 `-` を要求する Excel 正本ではない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Order/EditController.php:821-824 は `admin.order.cancel.complete` または `admin.order.save.complete` をフラッシュするが、pf-eccube3 全体で `Order cancellation completed.` および同キーの英語定義を検索して該当0件。旧実装は `-` を英語表示するコードを持たない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/locale/messages.en.yaml:2496 は `admin.order.cancel.complete: Order cancellation completed.` と英語訳を定義する。`-` は設計表の「英訳なし」プレースホルダであって要求文言ではない。",
+      "note": "プレースホルダを表示仕様と誤認した指摘。"
+    },
+    {
+      "rowId": 667,
+      "verdict": "UNSUPPORTED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:1999-2001 の M05-17 は `function-design-embed` かつ `data-source=\"functions/ec-cube-enterprise/m05-17...\"` のリバース設計で、Excel正本ではない。正本部で `/order/new` の出荷用メモ表示要求は確認できない。",
+      "legacyEvidence": "pf-eccube3/src/Eccube/Form/Type/Admin/OrderType.php:196-202 にある `->add('note', 'textarea', ... 'SHOP用メモ欄')` は受注本体メモであり、旧 Shipping.note ではない。pf-eccube3 の ShippingType/Twig を `Shipping.note`, `shop_memo_for_shipped`, `出荷用メモ` で横断検索して該当0件。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/ShippingType.php:207-212 は Shipping の `note` フィールドを定義するが、ec-cube-enterprise/src/Eccube/Resource/template/admin/Order/edit.twig 全体に `form.Shipping.note` / `Shipping.note` の描画は存在しない。欠落候補は確認できるが、正本・旧実装の要求根拠がない。",
+      "note": "移行先実装から生成したリバース文書だけを根拠にした指摘。"
+    },
+    {
+      "rowId": 668,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:5334 の Excel 正本セル C446 は「『商品の追加』ボタン」、同ファイル:5361 のセル E469 もラベルを「商品の追加」と明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Order/edit.twig:507-512 は旧画面でもボタンを `商品の追加` と表示する。旧実装も Excel 正本文言と一致している。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:2513 は `admin.order.add_product_item: 商品を追加`、ec-cube-enterprise/src/Eccube/Resource/template/admin/Order/edit.twig:1253-1258 は同キーをボタンとモーダル見出しに表示するため、正本の「商品の追加」と一致しない。",
+      "note": ""
+    },
+    {
+      "rowId": 669,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:5371 の Excel 正本セル E479 はラベルを「お支払合計」と明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Order/edit.twig:541-547 は旧画面のラベルを `<dt ...>お支払合計：</dt>` と表示する。旧実装も Excel 正本文言と一致している。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:2527 は `admin.order.payment_total: お支払い合計`、ec-cube-enterprise/src/Eccube/Resource/template/admin/Order/edit.twig:1325 は同キーを支払合計ラベルとして表示するため、正本より送り仮名「い」が多い。",
+      "note": ""
+    },
+    {
+      "rowId": 670,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:6222-6224 の Excel 正本は「データは編集不可」「ボタンは非活性」「リンクは非活性」、同ファイル:6319-6321 は明細部を「データは編集不可」「欠品登録以外のボタンは非活性」「リンクは非活性」と定義する。",
+      "legacyEvidence": "本機能は正本上「【新規】受注情報履歴」であり旧 pf-eccube3 に対応画面はない。旧通常編集画面 pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Order/edit.twig:500-512 は削除・商品の追加・登録をすべて活性操作として描画し、Controller/Admin/Order と Twig を `OrderHistory`, `order_history`, `履歴データ` で検索して専用履歴表示ルートは0件。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Order/HistoryController.php:56-80 はGET専用履歴ルートと `'disabled' => true` のフォームを実装し、ec-cube-enterprise/src/Eccube/Resource/template/admin/Order/edit.twig:1250-1273 も商品追加を非リンク化し登録をdisabledにする。ただし同Twig:1164 は欠品登録にも `history_disabled_attr` を付けてdisabledにしており、正本の「欠品登録以外を非活性」という例外条件を満たしていない。",
+      "note": "パケット作成後に大部分は実装済みだが、欠品登録だけは活性とする正本条件が残るため SPEC_BACKED。"
+    },
+    {
+      "rowId": 671,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:6232-6233 の Excel 正本はスマレジ連携注文番号を括弧・カンマ区切りで表示し、整理番号は存在時のみ表示すると記す。一方、同ファイル:6224 は履歴画面全体で「リンクは非活性とする」と明記するため、履歴表示ではリンク遷移させないのが整合的な読み方である。",
+      "legacyEvidence": "【新規】履歴画面のため旧実装には直接対応がない。旧データ元の注文番号は pf-eccube3/app/Plugin/HareruyaEc/Util/OrderUtil.php:22-24 の `getOrderNumber()`、整理番号系は旧受注補助情報として扱われていた。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Order/HistoryController.php:96-104 は履歴表示へ `waitingNumber` と `linkedEcOrderNumbers` を渡す。ec-cube-enterprise/src/Eccube/Resource/template/admin/Order/edit.twig:872-889 は履歴では注文番号を非リンク表示し、連携番号を `({{ linkedEcOrderNumbers|join(', ') }})`、整理番号を存在時のみ表示する。正本の履歴画面共通ルールを含め満たしている。",
+      "note": "パケット作成後の実装更新により、データ取得・括弧/カンマ表示・存在時表示・履歴リンク非活性が実装済み。"
+    },
+    {
+      "rowId": 672,
+      "verdict": "UNSUPPORTED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:7035-7036 の Excel 正本入力表は「注文番号（from/to）」「数値（整数）」とだけ定義し、dtb_order.order_no や最大255文字を指定しない。order_no の詳細は同ファイル:7077-7080 から始まる pf-eccube3 リバース設計側である。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Repository/OrderRepository.php:108-129 は DtbOrderSub `os.orderNumber` に `>= :order_id_from` / `<= :order_id_to` を適用し、pf-eccube3/app/Plugin/HareruyaEc/Resource/doctrine/Plugin.HareruyaEc.Entity.DtbOrderSub.dcm.yml:100-105 はその列を `order_number`、コメントを「注文番号」と定義する。旧実装は order_no を使わない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php:1263-1272 は旧実装の移行先列 `o.order_number` に同じ上下限条件を適用する。現実装の `order_number` は旧 DtbOrderSub.order_number と整合する。",
+      "note": "dtb_order.order_no を使うべきという期待値は正本にも旧実装にもなく、リバース設計で移行列を取り違えたもの。"
+    },
+    {
+      "rowId": 673,
+      "verdict": "UNSUPPORTED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:7035-7036 の Excel 正本は注文番号 from/to の数値入力を要求するだけで、条件対象列を order_no と指定しない。`order_id_from` と `order_no >=` の組合せは正本終了後の同ファイル:7077-7080 以降のリバース設計由来である。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Repository/OrderRepository.php:120-129 は `order_id_from/to` を `os.orderNumber` に比較し、対応マッピング pf-eccube3/app/Plugin/HareruyaEc/Resource/doctrine/Plugin.HareruyaEc.Entity.DtbOrderSub.dcm.yml:100-105 は物理列を `order_number` とする。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php:1264-1272 は `order_id_from/to` を `o.order_number` に `>=` / `<=` 比較する。フォームキーと比較方法、移行対象列はいずれも旧実装どおりである。",
+      "note": "order_no 指定だけが根拠のない誤記であり、現実装は正本の注文番号レンジ機能と旧実装を満たす。"
+    }
+  ]
+}

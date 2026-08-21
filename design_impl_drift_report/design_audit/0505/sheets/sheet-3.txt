@@ -1,0 +1,228 @@
+# sheet-3 注文印刷_印刷情報をプリンタへ送信 (HTML行 1002-1240 / 画像 0枚)
+
+注文印刷_印刷情報をプリンタへ送信
+ドキュメント名
+受注管理　基本設計
+セクション
+—
+プロジェクト名
+受注管理機能
+作成者
+堀部
+作成日
+2025-05-27
+更新者
+—
+更新日
+—
+機能No
+A05-01
+機能名
+注文印刷_印刷情報をプリンタへ送信
+概要
+アクセスしてきた店舗のプリンタに対して印刷情報を返す
+処理概要（★はカスタマイズ項目）
+GET　POST　PUT　DELETE　PATCH　OPTIONS　HEAD　有　無　〇
+エンドポイントURL
+/order/prints/{店舗ID}
+プロトコル　HTTP　メソッド　GET　認証の有無　有　認証方式　IP制限　リクエスト書式　クエリ　レスポンス書式　XML
+カスタマイズ説明
+本店・支店のシステムを統合するので、注文印刷情報のAPIも処理を一本化する。
+本店のプリンタはエンドポイントURLに店舗IDを追加する必要があるので、設定変更が必要
+本店・支店のシステムを統合するので、支店側のプリンタに設定されているエンドポイントURLはドメインが変更となるので全て設定変更が必要
+現状は印刷完了ステータスに更新するAPI (A05-02)と処理を受けるメソッドが共通で、クエリ「ConnectionType」で処理が分岐しているので、
+A05-02とエンドポイントを分ける
+現状	/order/print/direct?ConnectionType=GetRequest	GETで受信
+	/order/print/direct?ConnectionType=SetResponse	POSTで受信	※ RoutingでGetとPostで登録を行なっているが、同じメソッドを登録している
+機能仕様処理概要（★はカスタマイズ項目）
+★ 各店舗に設置されているプリンタから定期的(間隔:30秒)にこのAPIにアクセス(エンドポイントURL変更)
+URLに店舗ID(shop_id)を引数として持つ
+・バーコードが印刷されていない問題が発生しないようにするため、注文データをXML形式にする前に受注データにスマレジの商品コードが存在するかどうか確認する
+スマレジの商品コードが存在しない場合はスマレジコードが採番されていない可能性があるため何もしない
+・店舗IDからその店舗の未印刷の注文データを抽出し、各注文データごとに印刷できるようにプリンタ仕様に合わせてXMLの書式にして返す。
+未印刷データがなければ空文字''を返す
+※ プリンタのxmlの仕様 https://www2.epson.jp/support/manual/SDP_UM_JA_REVW.ZIP
+・印刷データXMLをログに出力する
+リクエストパラメータ
+項目名	型	必須	最大文字数
+または最大値	入力例	備考
+店舗ID	数値(整数)	〇		123	受取店舗の店舗ID(shop_id)
+リクエストパラメータサンプル
+/order/prints/123
+ステータスコード
+コード　説明
+200　正常終了
+404　店舗ID(shop_id)が無い、整数以外の型、存在しない店舗ID(shop_id)　※支店での処理を踏襲
+レスポンスデータ
+名前	型	説明
+印刷データ(XML)	文字型	専用の言語(フォーマット)で記述された印刷レイアウトデータを注文データ数分出力
+印刷データの動的変更部分については、別表「印刷レイアウトデータの動的変更箇所」参照のこと
+印刷位置や罫線情報については、サンプルデータを参照のこと
+印刷レイアウトデータの動的変更箇所
+名前	型	説明
+受注情報ID	数値(整数)	注文詳細URLと生成と、印刷情報データを一意に定めるXML向けの情報として使用
+店頭注文番号	文字型	店頭注文番号
+注文詳細URL	文字型	管理画面の受注詳細情報ページのURL。QRコードにして印刷する
+備考	文字型	受注情報の問合せに値があれば、「問い合わせ有」と表示。それ以外は空欄
+注文日	日付（YYYY/MM/DD）	注文日
+注文番号	数値(整数)	注文番号
+お客様名	文字型	お客様名
+合計金額	数値(整数)	注文の合計金額。ただしスムーズ店頭受取の場合、「スムーズ店頭受取」と表示
+変更後金額	数値(整数)	スマレジコード。バーコードにして印刷
+高額	文字型	固定値で「□」を出力
+※内部処理としてはデータを差し込んでいるが、差し込むデータが現状固定値で「□」になっている
+レスポンスデータサンプル
+<?xml version="1.0" encoding="utf-8"?>
+<PrintRequestInfo Version="3.00">
+<ePOSPrint>
+<Parameter>
+<devid>local_printer</devid>
+<timeout>10000</timeout>
+<printjobid>{$order['order_id']}</printjobid>
+</Parameter>
+<PrintData>
+<epos-print xmlns="http://www.epson-pos.com/schemas/2011/03/epos-print">
+<text lang="ja"/>
+<page>
+<area x="0" y="0" width="512" height="751"/>
+<rectangle x1="0" y1="0" x2="511" y2="200" style="thin"/>
+<position x="18" y="25"/>
+<text>店頭注文番号</text>
+<rectangle x1="0" y1="0" x2="511" y2="200" style="thin"/>
+<position x="200" y="150"/>
+<text width="5" height="5">{$order['order_number']}</text>
+<rectangle x1="0" y1="200" x2="511" y2="400" style="thin"/>
+<rectangle x1="0" y1="200" x2="175" y2="400" style="thin"/>
+<position x="18" y="225"/>
+<text width="1" height="1">注文詳細URL</text>
+<position x="14" y="243"/>
+<symbol type="qrcode_model_2" level="default" width="5" height="0" size="0">{$uri}admin/order/{$order['order_id']}/edit</symbol>
+<position x="179" y="230"/>
+<text>備考　　{$contactText}</text>
+<rectangle x1="0" y1="400" x2="210" y2="450" style="thin"/>
+<position x="25" y="434"/>
+<text>注文日</text>
+<rectangle x1="210" y1="400" x2="511" y2="450" style="thin"/>
+<position x="235" y="434"/>
+<text>{$orderDate}</text>
+<rectangle x1="0" y1="450" x2="210" y2="500" style="thin"/>
+<position x="25" y="484"/>
+<text>注文番号</text>
+<rectangle x1="210" y1="450" x2="511" y2="500" style="thin"/>
+<position x="235" y="484"/>
+<text>{$order['order_no']}</text>
+<rectangle x1="0" y1="500" x2="210" y2="550" style="thin"/>
+<position x="25" y="534"/>
+<text>お客様名</text>
+<rectangle x1="210" y1="500" x2="511" y2="550" style="thin"/>
+<position x="235" y="534"/>
+<text>{$orderName}</text>
+<rectangle x1="0" y1="550" x2="210" y2="600" style="thin"/>
+<position x="25" y="584"/>
+<text>合計金額</text>
+<rectangle x1="210" y1="550" x2="511" y2="600" style="thin"/>
+<position x="235" y="584"/>
+<text>{$paymentTotal}</text>
+<rectangle x1="0" y1="600" x2="210" y2="650" style="thin"/>
+<position x="25" y="634"/>
+<text>変更後金額</text>
+<rectangle x1="210" y1="600" x2="511" y2="650" style="thin"/>
+<position x="8" y="720"/>
+<barcode type="jan13" hri="below" font="font_b" width="2" height="50">{$order['smaregi_code']}</barcode>
+<position x="225" y="684"/>
+<text>高額　　{$order['expensive']}</text>
+<position x="370" y="684"/>
+<text>サプライ □</text>
+<position x="225" y="734"/>
+<text>欠品　　□</text>
+<position x="370" y="734"/>
+<text>Wチェック□</text>
+</page>
+<cut type="feed"/>
+</epos-print>
+</PrintData>
+</ePOSPrint>
+</PrintRequestInfo>
+Source:
+functions/pf-api/a05-01_api_order_print_direct.md
+現行仕様
+A05-01 注文印刷_印刷情報をプリンタへ送信 / API 受注管理 — 注文印刷（印刷情報送信・印刷済み更新）
+業務ロジック
+呼び出し元
+呼び出すのは店頭のスタック用紙プリンタ（印刷クライアント）である。本エンドポイントは認証の判定を持たず、未認証で実行できる（確認値）。認証判定を持たないため、認証失敗による拒否は返さない。利用者の照合も行わない。
+動作の分岐
+接続種別が印刷情報要求のときは印刷情報を送信し、印刷結果応答のときは印刷済みへの更新を行う。いずれにも一致しない値のときは処理を行わず、応答を組み立てない。接続種別はGET・POSTのいずれの要求からも読み取る。
+印刷対象の受注
+次のいずれかに当たる受注を最大10件取得する。
+店頭受取で注文受領の受注
+スムーズ店頭受取で、所定の支払方法かつ未確定・未出荷・未取消・未受領・店頭予約日なし・スマレジコードありの受注
+ブラウザ印刷フラグが立つ受注
+対象受注が無いときは印刷情報を生成せず、空のデータを返す。
+印刷情報の組み立て
+受注ごとに、注文日・合計金額・店頭注文番号・スマレジコード・問い合わせ有無・注文詳細URLを組み立て、1受注分の印刷情報を生成する。配送がスムーズ店頭受取のときは、合計金額欄を「スムーズ店頭受取」とする。全受注分を束ねてスタック用紙の印刷情報を生成する。生成した印刷情報が空でないときは、印刷不具合の検証のため印刷情報を記録する。
+印刷済みへの更新
+受け取った印刷結果を解析し、印刷結果要素ごとに印刷ジョブIDの先頭部分から受注IDを取り出して対象受注を特定する。対象受注の補助情報のブラウザ印刷フラグが立っているときは、そのフラグを倒すだけに留める。立っていないときは受注のステータスをピック中へ更新し、補助情報の確定日時に現在時刻を設定する。
+本APIでは金額・税・ポイント・在庫数量の再計算や丸めを行わない。ステータスの更新は、実装で定義された遷移・存在確認に従う。
+エラー時の扱い
+エラー内容	処理
+接続種別が想定値に一致しない	処理を行わず応答を組み立てない
+印刷情報要求で対象受注が無い	空のデータを返す。印刷情報の記録も行わない
+印刷結果応答で印刷結果の解析に失敗	内容とエラーを記録し、更新を行わずに戻る
+印刷結果応答で直接印刷結果が偽・印刷結果要素なし	内容を記録し、更新を行わずに戻る
+印刷結果応答で受注が見つからない	該当受注IDのエラーを記録し、その要素を飛ばして次へ進む
+印刷情報生成・データ取得・記録の書き出し中の例外	共通例外処理に委ねる（HTTP 500相当）
+入出力
+入出力: リクエスト
+パラメータ	位置	型	必須／任意	説明
+ConnectionType	クエリまたはボディ	string	必須	動作の分岐。GetRequestで印刷情報送信、SetResponseでステータス更新。いずれにも一致しない場合は処理を行わず本文を返さない
+ResponseFile	ボディ	string	SetResponse時に必須	プリンタが返した印刷結果のXML文字列。直接印刷結果の真偽と印刷結果要素（印刷ジョブID）を含む。更新対象の特定に用いる
+入出力: レスポンス（成功）
+応答はJSONではない。分岐ごとに応答形式が異なる。
+分岐	HTTPステータス	Content-Type	本体
+GetRequest（A05-01）	200	application/octet-stream	スタック用紙の印刷情報XMLをストリーム送信する。対象受注が無い場合は空のデータ
+SetResponse（A05-02）	200	text/xml; charset=utf-8	空の本文（本文長0）
+印刷情報要求が返すXMLの構造は次のとおり。
+要素	説明
+PrintRequestInfo	ルート要素。バージョン属性を持ち、配下に受注ごとの印刷情報要素を並べる
+ePOSPrint	受注1件分の印刷情報。印刷先・タイムアウト・印刷ジョブID（受注ID）と印字レイアウトを持つ
+ePOSPrint/Parameter/printjobid	印刷ジョブID。受注IDを用いる。印刷結果応答での受注特定に対応する
+ePOSPrint/PrintData	印字レイアウト。店頭注文番号・注文詳細URLのQRコード・注文日・注文番号・お客様名・合計金額・スマレジコードのバーコード・各種チェック欄を含む
+応答本体の代表例（実装確認値に基づくXML構造。受注IDなどは代表値）。
+<?xml version="1.0" encoding="utf-8"?>
+<PrintRequestInfo Version="3.00">
+<ePOSPrint>
+<Parameter>
+<devid>local_printer</devid>
+<timeout>10000</timeout>
+<printjobid>1000001</printjobid>
+</Parameter>
+<PrintData>
+<epos-print xmlns="http://www.epson-pos.com/schemas/2011/03/epos-print">
+<text lang="ja"/>
+<page>
+<text>店頭注文番号</text>
+<symbol type="qrcode_model_2">https://example.test/admin/order/1000001/edit</symbol>
+<text>注文番号</text>
+<text>20260603-0001</text>
+<text>お客様名</text>
+<text>テスト 太郎</text>
+<text>合計金額</text>
+<text>\1,500</text>
+<barcode type="jan13">4900000000000</barcode>
+</page>
+<cut type="feed"/>
+</epos-print>
+</PrintData>
+</ePOSPrint>
+</PrintRequestInfo>
+入出力: レスポンス（失敗）
+認証・入力検証による明示的なエラー応答は組み立てない。
+HTTPステータス	条件	本文の形
+200	印刷情報要求で対象受注が無い	空のデータ（XML本体を持たない）
+200	印刷結果応答で解析失敗、直接印刷結果が偽、印刷結果要素が無い、または受注が見つからない	空の本文。更新は行わず、内容とエラーを記録する
+（応答なし）	接続種別が想定値のいずれにも一致しない	応答を組み立てず本文を返さない
+500	印刷情報生成中・データ取得中・記録の書き出し中の例外	共通例外処理に委ねる
+入出力: 永続化
+操作	契機
+更新	印刷結果応答で、ブラウザ印刷フラグが立つ受注はそのフラグを倒す
+更新	印刷結果応答で、ブラウザ印刷フラグが立たない受注はステータスをピック中にし、補助情報の確定日時に現在時刻を設定する

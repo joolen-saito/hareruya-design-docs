@@ -1,0 +1,165 @@
+{
+  "packetId": "rest_22",
+  "results": [
+    {
+      "rowId": 694,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:8775-8777 のExcel正本セル E59-E61 は「配送先_住所1」「配送先_住所2」の直後を「配送先_TEL1」とし、同:8785 のE69を「送り状No.」とする。配送先_住所3は正本の当CSV項目表に存在しない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Order/OrderCsvController.php:67-79 も旧CSVヘッダを「配送先_住所1」「配送先_住所2」「配送先_TEL1」…「送り状No.」の順で定義し、配送先_住所3を持たない。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Order/OrderCsvController.php:97-100 は「配送先_住所1」「配送先_住所2」の後に設計外の「配送先_住所3」を定義する。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Order/shipping_result_csv_import.twig:82-84 は `{% for header in headers|keys %}` でそのヘッダを表示し、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php:1525 も `'s.addr03 AS shipping_addr03'` を出力対象にする。",
+      "note": ""
+    },
+    {
+      "rowId": 695,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:8785 のExcel正本セル E69/P69 は「送り状No.」「数値(整数)」と明記する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/OrderCsv.php:85-96 は出荷日だけを `new \\Datetime(...)` で検証し、送り状No.は `$invoiceNumber = $row['送り状No.'];` のまま `setInvoiceNumber($invoiceNumber)` へ渡すため、旧実装にも整数検証はない。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/OrderCsv.php:124-137 は出荷日だけを `new \\DateTime(...)` で検証し、`$invoiceNumber = $row['送り状No.'];` を文字列のまま保存する。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Entity/Order.php:694-695 も `invoice_number` を `Types::STRING, length: 64` と定義し、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/AbstractCsvService.php:288-299 の共通処理は空チェックのみである。",
+      "note": ""
+    },
+    {
+      "rowId": 696,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:8956 のExcel正本セル AG70 は「リンク押下でJavaScriptポップアップを表示」「『[店頭注文番号]を を削除してもよろしいですか？』」「『OK』をクリックすると、当該の店頭注文番号を一覧から除去する」と明記する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Waiting/index.twig:69-71 は旧画面も `data-message=\"{{ trans('admin.confirm.delete')|format(tag.waitingTag) }}\"` と削除リンクを使い、/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/locale/message.ja.yml:1036 は `delete: %s を削除してもよろしいですか？` とする。旧実装も正本の誤字を含む完全一致文言ではない。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Order/waiting_tag.twig:120-125 はBootstrapモーダルに `admin.common.delete_modal__message` と表示ボタン `admin.common.delete` を使い、同:153-159 の確定ボタンも「削除」である。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:1641 は `admin.common.delete: 削除`、同:1790 は「この操作はあとから取り消すことができません。『%name%』を削除してよろしいですか？」と定義するため、正本の「OK」および指定文言と一致しない。",
+      "note": ""
+    },
+    {
+      "rowId": 697,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0205_基本設計仕様書(店頭買取管理).html:1102 のExcel正本セル AG84 は「査定申込日時(From)>査定申込日時(To)の場合エラー」と明記する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/OtcBuyOrder/OtcBuyOrderType.php:35-85 の旧フォームは `assessment_id`、`complete_date_from/to`、店舗、状態、金額、氏名、会員IDまでで `application_date_from/to` 自体を持たない（旧実装4リポジトリを `application_date_from` で横断検索しても本機能の別実装は0件）。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/OtcBuyOrder/OtcBuyOrderType.php:155-170 の `application_date_from` は単項目の `Assert\\Range` だけでToとの相関制約がない。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbOtcBuyOrderRepository.php:123-139 は `applyDate >= From` と `applyDate <= To` を独立に追加するだけで、From>Toをエラーにしない。",
+      "note": ""
+    },
+    {
+      "rowId": 698,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0205_基本設計仕様書(店頭買取管理).html:1104 のExcel正本セル AG86 は「買取日時(From)>買取日時(To)の場合エラー」と明記する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/OtcBuyOrder/OtcBuyOrderType.php:38-48 は旧 `complete_date_from` に `new RelationDate('complete_date_to', ..., '<')` を設定し、From/To相関検証を実装していた。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/OtcBuyOrder/OtcBuyOrderType.php:96-121 の `complete_date_from/to` はFrom側の単項目 `Assert\\Range` 以外に相関制約がない。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbOtcBuyOrderRepository.php:141-158 は完了日または取消日へFrom/To条件をそのまま付けるだけでエラー化しない。",
+      "note": ""
+    },
+    {
+      "rowId": 699,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0205_基本設計仕様書(店頭買取管理).html:1104 のExcel正本セル AG86 では「3か月前の日付の0時を初期表示する」が `<span class=\"cell-strike\">` で取消され、同じ行のAZ86に「2026/7/16木村：ECCUBE_HARERUYA-2081初期値は記載は誤りのため削除。」と明記されている。現在の正本は3か月前初期値を要求しない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/OtcBuyOrder/OtcBuyOrderType.php:38-56 の旧 `complete_date_from/to` にも `data` 初期値はなく、書式・相関制約だけである。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/OtcBuyOrder/OtcBuyOrderType.php:96-121 の `complete_date_from/to` は `required/input/widget/attr/constraints` のみで3か月前初期値を設定しない。これは取消後のExcel正本と一致する。",
+      "note": "監査後に正本が訂正され、元の期待値そのものが明示的に削除されたため、現実装は最新正本を満たす。"
+    },
+    {
+      "rowId": 700,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0205_基本設計仕様書(店頭買取管理).html:1414-1425 のExcel正本項目表は、検索結果ブロックに該当件数・件数・ダウンロード・選択チェックと、査定ID、申込者、買取金額、買取店舗、査定担当者、最終更新者、ステータス、ページングを各1項目として定義する。検索結果件数ごとにテーブル自体を複製する記述はない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/OtcBuyOrder/index.twig:137-178 は旧実装にも外側 `{% for OtcBuyOrder in pagination %}` とtbody内側の同:156 `{% for OtcBuyOrder in pagination %}` があり、旧実装自体も同じN×N描画不具合を持つ。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/OtcBuyOrder/index.twig:193-234 はテーブル全体を外側の `{% for OtcBuyOrder in pagination %}` で囲み、同:212-229 でtbodyを同じpaginationでもう一度ループするため、N件なら同一テーブルをN回描画する。",
+      "note": ""
+    },
+    {
+      "rowId": 701,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0601_基本設計仕様書(その他_MTGBuyer).html:1049-1057 のExcel正本セル D40/C48-D50 は「チェックした項目を削除するボタンを押した際、APIを呼び出しキャンセル商品としてをECCUBE側に連携する」「呼び出すAPIは店頭買取情報一部キャンセル情報連携API」と明記する。",
+      "legacyEvidence": "/home/y-saito/Developments/deck-api/src/Tests/Controller/Admin/OtcBuyOrderControllerPutActionTest.php:13-20 は旧PUT APIの入力例に明細ごとの `cancel_flg` 0/1を含め、同:76-81 は保存後の `getCancelFlg()` を検証している。ただし /home/y-saito/Developments/deck-api/src/Controller/Admin/OtcBuyOrderController.php:122-148 の実コードは明細再生成時にcancel_flgをセットせず、専用一部キャンセルAPIもないため、旧実装根拠は不完全である。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php:129-150 は全体更新PUT、同:156-184 はコメント、同:190-225 は状態、同:231-267 はダブルチェック者、同:273-291 は本人確認更新だけを公開する。`一部キャンセル`、`cancel_product`、`cancel_flg` をController/Service/DTO全体で探索したが、選択明細をキャンセル商品として連携する入口は存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 702,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0601_基本設計仕様書(その他_MTGBuyer).html:1085-1091 のExcel正本セル D98/C106-D107 は「買取成立の際に端末取引IDを必須とする」「買取成立ボタンを押した際、出金コードがなければエラー」「端末取引IDがあれば…出金コードを送り」と明記する。",
+      "legacyEvidence": "/home/y-saito/Developments/deck-api/src/Entity/Api/OtcBuyOrderEdit.php:12-28 の旧API入力は必須の `orderStatus` と `orderDetails` だけで、同:34-38 の `setRequest()` も `order_status` と `order_details` しか読まない。旧4リポジトリを `smaregi_transaction_id` / `端末取引ID` / `出金コード` で横断検索しても該当検証は0件。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Dto/App/MTGBuyer/V1/Admin/UpdateOtcBuyOrderDto.php:32-45 は状態をNotNullにする一方、`smaregi_transaction_id` は `PositiveOrZero` と `Type('int')` のみのnullable `?int` で、買取成立時のNotNull条件がない。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/App/MTGBuyer/V1/Admin/OtcBuyOrder/UpdateOtcBuyOrderAction.php:69-74 は受け取った値をそのままupdateへ渡す。",
+      "note": ""
+    },
+    {
+      "rowId": 703,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0601_基本設計仕様書(その他_MTGBuyer).html:1092-1094 のExcel正本セル D108/D111 は「印刷済みにチェックが入っていない場合は買取成立にできない」「印刷済みにチェックが入っていない場合は経理払い出し済みにできない」と明記する。",
+      "legacyEvidence": "/home/y-saito/Developments/deck-api/src/Entity/Api/OtcBuyOrderEdit.php:12-28 は旧API入力を状態と明細だけで定義し、/home/y-saito/Developments/deck-api/src/Controller/Admin/OtcBuyOrderController.php:69-99 もその2系統の値を検証して更新する。旧4リポジトリを `印刷済` / `printed` / `print_flg` で横断検索しても査定表印刷済み状態は存在しない。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Dto/App/MTGBuyer/V1/Admin/UpdateOtcBuyOrderDto.php:32-51 は状態・適格請求書確認・端末取引ID・明細だけを入力とし、印刷済み項目を持たない。Controller/Service/DTOと /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Entity/DtbOtcBuyOrder.php を `印刷済` / `printed` / `print_flg` / `assessment_print` で探索しても保存・検証箇所は0件。",
+      "note": ""
+    },
+    {
+      "rowId": 704,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0601_基本設計仕様書(その他_MTGBuyer).html:1053-1054 のExcel正本セル C45/D46 は「販売価格を基準価格に文言変更する」「他にも販売価格の文言があれば基準価格に文言変更する」と明記する。",
+      "legacyEvidence": "/home/y-saito/Developments/deck-api/src/Entity/Api/OtcBuyOrderDetail.php:30-44 の旧API検証文言は「数量は、整数で入力してください。」「単価は、整数で入力してください。」までで、sell_price/販売価格欄はない。旧4リポジトリで `販売価格は、整数` を検索しても該当は0件。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Dto/App/MTGBuyer/V1/Admin/UpdateOtcBuyOrderDetailDto.php:43-46 は `sell_price` のバリデーションメッセージを `販売価格は、整数で入力してください。` と定義しており、正本が全箇所に要求する「基準価格」への文言変更が残っている。",
+      "note": ""
+    },
+    {
+      "rowId": 705,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0205_基本設計仕様書(店頭買取管理).html:1630-1662 のExcel正本は古物台帳CSVの12出力列と算出内容だけを定義し、result_form、CSRFフィールド、トークン検証の有無を規定しない。CSRFなしの記述はリバース詳細設計 /home/y-saito/Developments/hareruya-design-docs/functions/pf-eccube3/m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export.md:283-285 の「CSRFフィールドはなく…CSRFトークン検証は行わない」にのみ存在する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/OtcBuyOrder/index.twig:99-100 の旧 `result_form` は `export_type` だけを持ちCSRF hiddenを出力しない。/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/OtcBuyOrder/OtcBuyOrderController.php:166-189 の旧 `export()` も `export_type` と `otcBuyOrderIds` を読みCSVを返すだけでトークン検証を呼ばない。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/OtcBuyOrder/index.twig:152-154 はresult_formへ `Constant::TOKEN_NAME` のCSRF hiddenを出力し、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/OtcBuyOrder/OtcBuyOrderController.php:189-194 はexport冒頭で `$this->isTokenValid();` を実行する。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/AbstractController.php:252-260 は不正時に `AccessDeniedHttpException` を投げる。",
+      "note": "期待値はExcel正本ではなく旧pf-eccube3の挙動に一致する。移植先でCSRF保護が追加されたため、旧挙動との差としては真だが設計書記述漏れがある。"
+    },
+    {
+      "rowId": 706,
+      "verdict": "UNSUPPORTED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0205_基本設計仕様書(店頭買取管理).html:1630-1662 のExcel正本はCSV出力列だけを定義し、検索0件時の表示文言を規定しない。「該当なし」という記述はリバース詳細設計 /home/y-saito/Developments/hareruya-design-docs/functions/pf-eccube3/m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export.md:30-34 の入口説明にのみある。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/OtcBuyOrder/index.twig:183-186 の旧実装は0件時に「検索条件に該当するデータがありませんでした。」と表示し、期待値の短い「該当なし」を表示しない。旧4リポジトリを `該当なし` で横断検索しても当画面の別表示経路は0件。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/OtcBuyOrder/index.twig:159-190 はCSVメニューを `pagination.totalItemCount > 0` の内側に置き、同:239-243 は0件時に旧実装と同じ「検索条件に該当するデータがありませんでした。」だけを表示する。",
+      "note": "リバース詳細設計の「該当なし」は0件状態の要約であり、正本にも旧実装にも完全一致の表示文言としての根拠がない。現実装は旧実装と同じ0件メッセージかつCSVメニュー非表示であるため、文言乖離の指摘は誤検出の疑いが強い。"
+    },
+    {
+      "rowId": 707,
+      "verdict": "UNCERTAIN",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0205_基本設計仕様書(店頭買取管理).html:3566 のExcel正本セル D58 は「ITチームのみが使用可能な画面とする（権限で設定）」と明記する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/OtcBuyOrder/OtcBuyOrderStatusController.php:25-36 の旧表示処理と同:42-67 の旧更新処理にはITチーム判定がなく、/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/OtcBuyOrder/detail.twig:431-435 もステータス変更リンクを無条件表示する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/OtcBuyOrder/OtcBuyOrderController.php:335-348 はGETで `isAccessibleRoute('admin_otcbuyorder_status')`、同:382-399 はPOSTで `isAccessibleRoute('admin_otcbuyorder_status_update')` を確認する。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Twig/Extension/IsAccessibleRouteExtension.php:64-86 はログインMemberのAuthorityRoleに保存された `denyUrl` がルートへ一致した場合だけfalseを返す。",
+      "note": "コード上は権限設定を反映できるdeny-list機構があるため、ITチーム以外のAuthorityRoleに対象URLが登録されていれば要件を満たす。リポジトリ内にその固定登録はなく、運用DBのdtb_authority_role相当データを確認できないため、実際にITチーム限定か確定できない。必要材料は監査対象環境の権限ロール・deny_urlレコード。"
+    },
+    {
+      "rowId": 708,
+      "verdict": "UNCERTAIN",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0205_基本設計仕様書(店頭買取管理).html:3540 のExcel正本セル E29 は「経理払い出し済みボタンを詳細画面につけて、経理のみ更新可能とする」と明記する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/OtcBuyOrder/OtcBuyOrderStatusController.php:42-67 の旧ステータス更新はフォーム検証と保存だけで経理ロール判定を持たず、旧実装4リポジトリを `account_team_paid` / `経理払い出し済み` で横断検索しても専用処理は0件。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/OtcBuyOrder/detail.twig:470-474 は「経理払出し済」ボタンを表示する。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/OtcBuyOrder/OtcBuyOrderController.php:447-477 はCSRF・編集可能店舗・`isAccessibleRoute('admin_otcbuyorder_update_status_account_team_paid')` を確認し、同:479-494 で経理払出し待ちから完了へ更新するが、コード内に経理ロール名の直接判定はない。",
+      "note": "汎用deny_url設定で経理以外を拒否できるため、運用DBのAuthorityRole設定次第では要件を満たす。リポジトリには経理専用の権限レコードがなく、監査対象環境の権限設定を確認できないため確定不能。必要材料は経理・非経理ロールのdeny_url実データと当該ルートへの割当。"
+    },
+    {
+      "rowId": 709,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0205_基本設計仕様書(店頭買取管理).html:3542 のExcel正本セル E31 は「入庫済みボタンを詳細画面につけて、買取管理を使えるユーザが更新可能とする」と明記する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/OtcBuyOrder/OtcBuyOrderStatusController.php:42-67 の旧処理は任意の状態更新フォームであり、入庫済み専用ルート・買取管理利用権限判定を持たない（旧4リポジトリを `statusUpdateRestocked` / `update_status_restocked` で横断検索して0件）。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/OtcBuyOrder/detail.twig:473-475 は「入庫済みにする」ボタンを表示するが、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/OtcBuyOrder/OtcBuyOrderController.php:517-545 の専用POSTはCSRF・ログインMember・編集可能店舗だけを確認し、経理用POSTの同:471にある `isAccessibleRoute(...)` 相当を呼ばない。同:547-555 はそのまま `STATUS_STOCKING_COMPLETE` へ更新する。",
+      "note": ""
+    },
+    {
+      "rowId": 710,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0205_基本設計仕様書(店頭買取管理).html:3820 のExcel正本セル D62 は申込者名について「空白で区切ったいずれかの入力が一致していれば検索結果に出力する」と明記する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/OtcBuyOrder/OtcBuyOrderHistoryType.php:38-64 の旧履歴フォームは査定ID・状態・買取日時から始まり申込者名項目自体を持たず、/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Repository/DtbOtcBuyOrderStockHistoryRepository.php:32-46 の旧検索にも申込者名条件はない。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbOtcBuyOrderStockHistoryRepository.php:105-129 は空白分割後の各keywordごとに `$qb->andWhere(...)` を追加し、各keywordの内部だけを姓・名・カナの`orX(...)`にする。したがって複数語間はANDで、正本の「いずれか一致」OR条件ではない。",
+      "note": ""
+    },
+    {
+      "rowId": 711,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0205_基本設計仕様書(店頭買取管理).html:3853 のExcel正本セル AG96 は「買取日時(From)>買取日時(To)の場合エラー」と明記する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/OtcBuyOrder/OtcBuyOrderHistoryType.php:58-70 の旧 `complete_date_from/to` は日時書式だけを設定し相関制約を持たず、/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Repository/DtbOtcBuyOrderStockHistoryRepository.php:68-75 はFrom/Toを独立条件として追加するだけであった。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/OtcBuyOrder/OtcBuyOrderHistoryType.php:103-121 は `complete_date_from/to` をDateTimeTypeとして定義するだけでCallback/RelationDate等を持たない。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbOtcBuyOrderStockHistoryRepository.php のFrom/To条件も個別に適用され、FormType・Controller・Repository・専用JSを探索してもFrom>Toエラー化処理は存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 712,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0205_基本設計仕様書(店頭買取管理).html:4115-4116 のExcel正本セル C57/C58 は現在「検索結果は買取日時の降順、実在庫履歴の作成日時の降順」「CSVの出力順も検索結果と同仕様」と記載し、AZ57に「2026/7/21木村：買取日時、査定申込日時の降順ではなく現行通り、買取日時、実在庫履歴の作成日時の降順に修正」と明記する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Repository/DtbOtcBuyOrderStockHistoryRepository.php:115-116 の旧実装も `obo.completeDate DESC`、`obosh.createDate DESC` の順で並べ、同:124-139 のCSV取得も同じQueryBuilderを再利用する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbOtcBuyOrderStockHistoryRepository.php:283-286 は一覧を `obo.completeDate DESC`、`obosh.createDate DESC` で並べ、同:343-344 のCSV用QueryBuilderも同じ2キー・同順序で並べる。訂正後のExcel正本と一致する。",
+      "note": "元指摘は訂正前の「査定申込日時」を期待値にしたもの。監査後に正本が現行・旧実装どおり「実在庫履歴の作成日時」へ訂正されたため誤検出。"
+    },
+    {
+      "rowId": 713,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0205_基本設計仕様書(店頭買取管理).html:4526-4527 のExcel正本セル E47/M47/T47およびE48/M48/T48 は、集計日From/Toをともに「日付(yyyy/mm/dd)」「〇（必須）」と定義する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/OtcBuyOrder/OtcBuyOrderSummaryType.php:32-44 は旧From/Toを `required => true`、`format => 'yyyy-MM-dd'` と実装しており、旧実装もハイフン区切りだった。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/OtcBuyOrder/OtcBuyOrderSummaryType.php:58-67 はFrom/Toを必須DateTypeで実装するが、/home/y-saito/Developments/ec-cube-enterprise/html/template/admin/assets/js/OtcBuyOrder/otc-buy-order-summary.js:1-7 は日時ピッカーへ `format: \"YYYY-MM-DD\"` を明示し、正本のyyyy/mm/dd（スラッシュ区切り）と一致しない。",
+      "note": ""
+    }
+  ]
+}

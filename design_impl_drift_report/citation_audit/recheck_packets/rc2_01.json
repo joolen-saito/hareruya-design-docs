@@ -1,0 +1,382 @@
+{
+ "packetId": "rc2_01",
+ "note": "rowId は drift_findings_list_final.tsv の行番号(ヘッダ除く1始まり)。これらは分類の批判的レビュー済み(レビュー結果列)だが、検証後に実装が変更されている。classVerdict も再判定しつつ、driftVerdict を重点的に確認すること。",
+ "count": 12,
+ "findings": [
+  {
+   "rowId": 2,
+   "機能No": "A01-01",
+   "機能名": "A01-01 スマレジ連携処理",
+   "ドメイン": "a01",
+   "区分(画面種別)": "api",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・未実装",
+   "設計期待値": "管理画面の在庫編集・在庫一括編集で在庫場所区分がスマレジの場合、編集結果をスマレジ側に反映し、1回の管理画面操作での実行件数上限を設定し、上限を越えたらエラーを表示してCSV登録を促す。",
+   "実装実態": "在庫編集・在庫一括編集の保存処理は承認/履歴/在庫DBを作成・更新するが、スマレジ在庫相対値更新APIを呼び出していない。SmaregiStockApiClient の公開メソッドも add/getStockChange/listStocks/listStockChanges のみで、在庫相対値更新API用メソッドが存在しない。件数上限超過時にCSV登録を促す専用エラー文言・分岐も確認できない。",
+   "差分内容": "StockApprovalStoreAction は ProductStock 更新と StockHistory/ApprovalList 登録のみ（/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Stock/StockApprovalStoreAction.php:95,105,128）。StockBulkApprovalStoreAction も明細登録と ApprovalList 登録のみ（/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Stock/StockBulkApprovalStoreAction.php:80,84）。SmaregiStockApiClient の public function は add/getStockChange/listStocks/listStockChanges のみ（/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/Api/SmaregiStockApiClient.php:43,86,128,158）。反証検索として Smaregi/stockApiClient/relative/相対値更新/CSV登録を促/20商品/100商品/上限数 を管理画面Stock・Smaregi service・翻訳キーで検索したが該当なし。",
+   "実装参照": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Stock, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/Api/SmaregiStockApiClient.php, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml）",
+   "設計書参照": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0501_基本設計仕様書(API_在庫管理).html#sheet-3:889,890,1041-1046",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0501_基本設計仕様書(API_在庫管理).html:1073-1074 に在庫編集・一括編集について「在庫場所区分がスマレジの場合に編集結果をスマレジ側に反映する」「実行できる件数上限を設定し、上限を越えたらエラーを表示し、CSV登録を促す」と明記され、同:1087 に閾値超過時はPatch一括、以下はAPI個別とある。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Service/SmaregiService.php:74-84 の旧実装は受注の `stock_upd` だけで、管理在庫編集の件数上限・CSV誘導は旧4リポジトリを `20商品/100商品/CSV登録を促/上限/stock_upd` で検索しても見つからなかった。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Stock/StockBulkApprovalStoreAction.php:35-43 の依存にSmaregi APIクライアントはなく、同:74-100 は各明細の `processOne` と承認一覧保存だけである。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Stock/StockApprovalStoreAction.php:32-40 も同様にDB系依存だけで、件数上限エラーやCSV誘導分岐はない。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "在庫編集の `src/Eccube/Service/Admin/Stock/StockApprovalStoreAction.php:43` `public function handle(StockApprovalStoreInput $input): void` は `stockEditApprovalEntityManager->save(...)` / `stockEditApprovalDetailEntityManager->save(...)` / `productStockEntityManager->save(...)` / `stockHistoryEntityManager->save(...)` / `stockApprovalListEntityManager->save(...)` を呼ぶのみで、`use` 節(18-28行)に Smaregi 系クラスが1つも無い。在庫一括編集の `src/Eccube/Service/Admin/Stock/StockBulkApprovalStoreAction.php:46` `public function handle(StockBulkApprovalStoreInput $input): void` も `$HistorySourceType = $this->stockHistorySourceTypeRepository->get(MtbStockHistorySourceType::STOCK_BULK_EDIT);`(83行) 以下の履歴・承認一覧登録のみで Smaregi 参照なし。在庫相対値更新APIメソッドが `SmaregiStockApiClient` に無いのも rowId 1 と同じ(public は 43/86/128/158行の4メソッドのみ)。件数上限超過時にCSV登録を促すエラーも、`src/Eccube/Resource/locale/messages.ja.yaml` の「上限」ヒットは `admin.stock.split_csv_modal.csv_file_limit: 1ファイルの登録上限は 2,000 件です`(4976行) 等のCSVファイル行数上限のみで、1回の管理画面操作の商品件数上限(仮20商品)判定は存在しない。",
+   "再確認HEAD": "da9c2ba276",
+   "レビュー結果": "UPHELD",
+   "レビュー根拠": "引用は function-design-embed 開始（1400行）より前のExcel正本領域に実在し、管理画面の在庫編集・在庫一括編集、スマレジ反映、上限超過時のエラーとCSV誘導を直接支持する。",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Resource/locale/messages.ja.yaml"
+    ]
+   }
+  },
+  {
+   "rowId": 9,
+   "機能No": "A02-02",
+   "機能名": "A02-02 ポップアップ用カード情報取得",
+   "ドメイン": "a02",
+   "区分(画面種別)": "api",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "パスのカードID・言語、クエリのフォイル有無（foil_flg）・価格（price）を受け取り、当該カードID・言語・フォイル有無・価格に対応するポップアップ用商品情報を取得する。foil_flg指定時はフォイル区分の並び順に反映し、price=highで販売価格の降順、それ以外で昇順に並べる。",
+   "実装実態": "カードIDAPIは /api/popup/card/{lang}/{cardId} として存在し、cardId/langのみを ProductRepository::findPopupProductByCardId($cardId, $languageCode) に渡す。Requestを受け取らず foil_flg / price クエリを読まない。リポジトリ側も引数は cardId と languageCode のみで、ORDER BY は cd.foil_flg ASC 固定、price02の昇降順指定は無い。",
+   "差分内容": "設計は foil_flg と price を外部契約のクエリ条件として定義しているが、Controllerシグネチャと呼び出しに Request/query 取得がなく、Repositoryのメソッド引数・SQLにもクエリ条件が存在しない。別キーワード（foil_flg, price, query->get, findPopupProductByCardId）で再検索しても、A02-02のController/Repository内にクエリ反映実装は見つからなかった。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/ProductController.php:265, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/ProductController.php:278, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/ProductRepository.php:2226",
+   "設計書参照": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-4:1171,1178",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0502_基本設計仕様書(API_商品管理).html:1255-1265 のExcel原文リクエスト表は「言語コード」「カードID」の2項目のみで、`foil_flg`/`price` は存在しない（確認範囲: sheet-4のExcel由来 `src-cell` 全件）。後段のリバース詳細設計は旧pf-apiを正とするため正本Excel根拠には数えない。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-api/src/Controller/ProductController.php:87-93 は `$request->get('foil_flg')`, `$request->get('price')` を取得してリポジトリへ渡す。/home/y-saito/Developments/pf-api/src/Repository/DtbProductSubClassRepository.php:111-121 はfoil真偽でASC/DESC、同:114-116 は `price === 'high' ? 'DESC' : 'ASC'` を適用する。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/ProductController.php:265-278 はRequestを受け取らずcardId/language/shopIdだけを `findPopupProductByCardId` へ渡す。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/ProductRepository.php:2357-2367 のORDER BYは `cd.foil_flg ASC` 固定でprice02順を持たない。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Controller/App/ProductController.php:265-266` `#[Route(path: '/api/popup/card/{lang}/{cardId}', name: 'popup_product_by_card_id', methods: ['GET'])]` / `public function getPopupProductByCardId(string $lang, string $cardId): JsonResponse` と、Request を受け取らないシグネチャのまま。foil_flg / price のクエリ取得は無い。`src/Eccube/Controller/App/ProductController.php:278` の呼び出しも `findPopupProductByCardId((int) $cardId, $languageCode, $this->getShop()->getId())` で、追加されたのは在庫参照店舗IDのみ。`src/Eccube/Repository/ProductRepository.php:2320` `findPopupProductByCardId(int $cardId, string $languageCode, ?int $stockBaseInfoId = null)` に foil_flg/price 引数は無く、`ProductRepository.php:2362` の `cd.foil_flg ASC,` は固定で price02 の昇降順切替も存在しない。",
+   "再確認HEAD": "da9c2ba276",
+   "レビュー結果": "UPHELD",
+   "レビュー根拠": "Excel正本は言語コード・カードIDを入力とし、foilFlg/price02は出力項目としてのみ記載する。期待値の foil_flg・price クエリとソート規則は正本にはなく、旧実装にのみ具体的根拠がある。1320行以降の function-design-embed は正本根拠に数えていない。",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Repository/ProductRepository.php"
+    ]
+   }
+  },
+  {
+   "rowId": 12,
+   "機能No": "A02-03",
+   "機能名": "A02-03 ポップアップ用商品情報取得（旧商品ID）",
+   "ドメイン": "a02",
+   "区分(画面種別)": "api",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "A02-03（旧商品ID・言語指定なし）の成功レスポンスは productId, name, productClassId, price01, price02, stock, nameEn, fileName, cardId を返す。cardId は mtb_card.id を返す。",
+   "実装実態": "レスポンスビルダーは productId/name/productClassId/price01/price02/stock/nameEn/subFileName/fileName/code/conditionCode/weeklySold/productUrl/beltUrl を返し、cardId は返さない。Repository 側 SELECT/RSM にも cardId がない。",
+   "差分内容": "設計で必須の cardId が実装レスポンスに存在しない。一方で設計詳細のA02-03成功レスポンスにない subFileName/code/conditionCode/weeklySold/productUrl/beltUrl が返る。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/App/Popup/PopupResponseBuilder.php:29-49 /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/ProductRepository.php:2384-2435",
+   "設計書参照": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-5:1360,1379,1393,1404",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0502_基本設計仕様書(API_商品管理).html:1484-1497 のsheet-5 Excel原文レスポンス項目にはproductId等とfoilFlg/weeklySold/productUrlがあるが `cardId` はない（確認範囲: sheet-5レスポンス表全項目）。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-api/src/Repository/DtbProductRepository.php:88-115 は言語なし旧商品IDを検索し、SELECT末尾で `card.id AS cardId` を返す。/home/y-saito/Developments/pf-api/src/Controller/ProductController.php:113-128 はその配列を無変換で返す。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/ProductRepository.php:2495-2513 の言語なし旧ID SELECTにcardIdはなく、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/App/Popup/PopupResponseBuilder.php:29-49 の出力キーにもcardIdはない。",
+   "根拠検証メモ": "設計参照シートの項目表はcardIdを裏付けず、言語なし旧実装のSELECTが真の根拠。",
+   "対応の根拠(現develop)": "`src/Eccube/Service/App/Popup/PopupResponseBuilder.php:29-49` のレスポンスは `productId / name / productClassId / price01 / price02 / stock / nameEn / subFileName / fileName / code / conditionCode / weeklySold / productUrl` ＋ `if ($includeBeltUrl) { $response['beltUrl'] = ...; } else { $response['foilFlg'] = ...; }` で cardId は依然含まれない。A02-03 の呼び出し `src/Eccube/Controller/App/ProductController.php:334` も `build($result, $productUrl, true)`。リポジトリ側 `src/Eccube/Repository/ProductRepository.php:2496-2513`（findPopupProductByOldProductIdWithoutLang の SELECT）および `:2538-2550` の RSM にも cardId は無い（mtb_card は `INNER JOIN mtb_card c`（`:2524`）しているが c.id を SELECT していない）。",
+   "再確認HEAD": "da9c2ba276",
+   "レビュー結果": "UPHELD",
+   "レビュー根拠": "A02-03のExcel正本レスポンス表とサンプルにはcardIdがなく、旧実装はcardIdを返す。したがって当該期待値は旧実装に裏付けられる。",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Repository/ProductRepository.php"
+    ]
+   }
+  },
+  {
+   "rowId": 22,
+   "機能No": "A05-01",
+   "機能名": "A05-01 注文印刷_印刷情報をプリンタへ送信",
+   "ドメイン": "a05",
+   "区分(画面種別)": "api",
+   "指摘区分": "未実装",
+   "重要度": "high",
+   "観点": "②業務ルール・計算",
+   "設計期待値": "配送がスムーズ店頭受取の場合は合計金額欄を「スムーズ店頭受取」とする。 / 旧根拠: function_spec_html_preview/pf-api/a05-01_api_order_print_direct.html:247",
+   "実装実態": "設計はスムーズ店頭受取の受注で合計金額欄を文言「スムーズ店頭受取」に置換すると規定。実装 getPrintData(行129)は配送方法を判定せず常に $paymentTotal(payment_total の生値)を出力。加えて取得元リポジトリ(getPrintOrderListMainShop:1517 / getDirectPrintOrderList:1575,1597)も payment_total を生値SELECTするのみで配送方法を印刷側に渡さず、置換ロジック自体が存在しない。印字結果が設計と異なる。",
+   "差分内容": "設計はスムーズ店頭受取の受注で合計金額欄を文言「スムーズ店頭受取」に置換すると規定。実装 getPrintData(行129)は配送方法を判定せず常に $paymentTotal(payment_total の生値)を出力。加えて取得元リポジトリ(getPrintOrderListMainShop:1517 / getDirectPrintOrderList:1575,1597)も payment_total を生値SELECTするのみで配送方法を印刷側に渡さず、置換ロジック自体が存在しない。印字結果が設計と異なる。",
+   "実装参照": "src/Eccube/Service/Admin/Order/OrderDirectPrintAction.php:129",
+   "設計書参照": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-3",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html:1106 のExcel正本に、合計金額は「注文の合計金額。ただしスムーズ店頭受取の場合、『スムーズ店頭受取』と表示」と明記されている。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-api/src/Controller/Admin/OrderController.php:137-144 は通常 `$paymentTotal = '\\\\' . number_format(...)` としつつ、配送IDが `DtbDelivery::SMOOTH_OTC` の場合に `$paymentTotal = 'スムーズ店頭受取';` と置換する。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Order/OrderDirectPrintAction.php:73-75 は `$paymentTotal = $Order['payment_total'];` とするだけで配送を判定せず、同:124-129 はその値を合計金額欄へそのまま出力する。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Service/Admin/Order/OrderDirectPrintAction.php:74` `$paymentTotal = $Order['payment_total'];`、同 `:126-129` `<text>合計金額</text> ... <text>{$paymentTotal}</text>` で配送方法を判定せず生値を出力。「スムーズ店頭受取」への文言置換分岐はファイル内に存在しない。取得元 `src/Eccube/Repository/OrderRepository.php:1609` `'o.payment_total AS payment_total'` / 同 `:1689` `o.payment_total` も配送方法列を SELECT しておらず、印刷側で判定不能なまま。",
+   "再確認HEAD": "da9c2ba276",
+   "レビュー結果": "UPHELD",
+   "レビュー根拠": "A05-01のExcel正本レスポンス項目が、スムーズ店頭受取時の合計金額欄の文言置換をそのまま規定している。",
+   "mech": {
+    "quote": "NOT_FOUND",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Repository/OrderRepository.php"
+    ]
+   }
+  },
+  {
+   "rowId": 32,
+   "機能No": "A05-01",
+   "機能名": "A05-01 注文印刷_印刷情報をプリンタへ送信",
+   "ドメイン": "a05",
+   "区分(画面種別)": "api",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "印刷対象の受注一覧は、店頭受取で注文受領の受注、スムーズ店頭受取で所定の支払方法かつ未確定・未出荷・未取消・未受領・店頭予約日なし・スマレジコードありの受注、ブラウザ印刷フラグが立つ受注を対象とし、最大10件を取得する。配送がスムーズ店頭受取の場合は合計金額欄を「スムーズ店頭受取」とする。",
+   "実装実態": "支店向け getDirectPrintOrderList は店頭受取分岐と browser_print_flg 分岐のみで、スムーズ店頭受取分岐がない。また OrderDirectPrintAction は payment_total をそのまま印字しており、スムーズ店頭受取時に「スムーズ店頭受取」へ置換する分岐を持たない。",
+   "差分内容": "SMOOTH_OTC/smoothOtc/スムーズ店頭/otc_rsv_date/receiptDate を再検索したところ、本店向け getPrintOrderListMainShop には smoothOtc 条件があるが、支店向け getDirectPrintOrderList には存在しない。印字生成側にも配送方法の入力・判定がないため、合計金額欄の文言置換を実行できない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php:1550",
+   "設計書参照": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-3:1044",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html:1106 のExcel正本はスムーズ店頭受取時に合計金額欄を「スムーズ店頭受取」と表示すると明記する。同:1065 は店舗IDごとの未印刷注文抽出を要求する。詳細な抽出条件は正本にないが、少なくとも文言置換は直接裏付けられる。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-api/src/Repository/DtbOrderRepository.php:38-60 はSMOOTH_OTCを含む3系統の抽出と最大10件を実装し、/home/y-saito/Developments/pf-api/src/Controller/Admin/OrderController.php:140-144 はSMOOTH_OTC時に合計金額を「スムーズ店頭受取」へ置換する。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php:1657-1700 の支店クエリにはSMOOTH_OTC分岐がなく、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Order/OrderDirectPrintAction.php:73-75,124-129 は配送判定なしでpayment_totalを出力する。",
+   "根拠検証メモ": "指摘内の詳細抽出条件は旧実装由来だが、同時に指摘された合計金額の文言置換欠落はExcel正本に明記され、新実装が満たさないためSPEC_BACKED。",
+   "対応の根拠(現develop)": "`src/Eccube/Repository/OrderRepository.php:1659-1701` の getDirectPrintOrderList は `AND s.delivery_id = :otc AND o.order_status_id = :orderNew AND o.smaregi_code IS NOT NULL`（:1676-1678）と `AND o.browser_print_flg = true`（:1697）の2ブランチ UNION ＋ `LIMIT 10`（:1700）のみで、smoothOtc 分岐が無い（`setParameters`（:1718-1722）にも smoothOtc パラメータ無し）。合計金額欄も `src/Eccube/Service/Admin/Order/OrderDirectPrintAction.php:129` `<text>{$paymentTotal}</text>` の生値出力のままで、配送方法が印字側に渡っていない。",
+   "再確認HEAD": "da9c2ba276",
+   "レビュー結果": "UNSURE",
+   "レビュー根拠": "一つのfindingに、Excel正本で直接支持される文言置換と、旧実装にしか根拠がない詳細抽出条件・最大10件が混在している。単一のSPEC_BACKED/LEGACY_BACKEDへ安全に畳み込めないためUNSUREとする。",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Repository/OrderRepository.php"
+    ]
+   }
+  },
+  {
+   "rowId": 40,
+   "機能No": "A05-04",
+   "機能名": "A05-04 スマレジ受信処理",
+   "ドメイン": "a05",
+   "区分(画面種別)": "api",
+   "指摘区分": "未実装",
+   "重要度": "high",
+   "観点": "①ルート/HTTPメソッド",
+   "設計期待値": "スマレジ取引通知の受信 | `POST /{_locale}/smaregi/transaction` / 旧根拠: functions/pf-eccube3/a05-04_api_order_order_smaregi_receive.md:68",
+   "実装実態": "設計は言語識別子配下の固定パス `POST /{_locale}/smaregi/transaction`。実装は `#[Route('', name: 'smaregi_webhook', methods: ['POST'])]` で、routes.yaml(app/config/eccube/routes.yaml:9-12)の prefix `/%eccube_smaregi_webhook_route%`（秘匿パス）配下の単一Webhookエンドポイント。`{_locale}`も`/transaction`サブパスも存在しない。",
+   "差分内容": "設計は言語識別子配下の固定パス `POST /{_locale}/smaregi/transaction`。実装は `#[Route('', name: 'smaregi_webhook', methods: ['POST'])]` で、routes.yaml(app/config/eccube/routes.yaml:9-12)の prefix `/%eccube_smaregi_webhook_route%`（秘匿パス）配下の単一Webhookエンドポイント。`{_locale}`も`/transaction`サブパスも存在しない。",
+   "実装参照": "src/Eccube/Controller/Smaregi/WebhookController.php:41",
+   "設計書参照": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-6",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html:1727-1728 のExcel正本はエンドポイントURLを `/smaregi/transaction`、HTTPメソッドを `POST` と明記する。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/HareruyaEcServiceProvider.php:94 はFrontControllerProviderを `/{_locale}` にmountし、pf-eccube3/app/Plugin/HareruyaEc/ControllerProvider/FrontControllerProvider.php:287-289 は `POST /smaregi/transaction` を登録するため、旧公開URLは `/{_locale}/smaregi/transaction` である。",
+   "現実装": "ec-cube-enterprise/app/config/eccube/routes.yaml:9-12 はController群を秘密値 `/%eccube_smaregi_webhook_route%` 配下へmountし、ec-cube-enterprise/src/Eccube/Controller/Smaregi/WebhookController.php:41 はその直下の空パス `#[Route('', ... methods: ['POST'])]` のみを定義する。`/smaregi/transaction` は現実装に存在しない。",
+   "根拠検証メモ": "locale有無は旧実装由来だが、指摘の核心である固定パス `/smaregi/transaction` はExcel正本にも明記されている。",
+   "対応の根拠(現develop)": "`src/Eccube/Controller/Smaregi/WebhookController.php:41` は現 develop でも `#[Route('', name: 'smaregi_webhook', methods: ['POST'])]` で、`app/config/eccube/routes.yaml:9-12` の `smaregi_webhook_controllers:` / `prefix: /%eccube_smaregi_webhook_route%`（`app/config/eccube/packages/eccube.yaml:73` の `eccube_smaregi_webhook_route: '%env(ECCUBE_SMAREGI_WEBHOOK_ROUTE)%'` で解決される秘匿パス）配下。設計の `{_locale}` セグメントも `/transaction` サブパスも存在しない。",
+   "再確認HEAD": "da9c2ba276",
+   "レビュー結果": "UPHELD",
+   "レビュー根拠": "指摘の核心である固定エンドポイント `/smaregi/transaction` とPOSTメソッドはExcel正本が直接規定している。`{_locale}` プレフィックスだけは旧実装由来だが、現実装の秘匿prefix直下空パスとの主要な差分は正本だけで成立するため、SPEC_BACKEDを維持する。",
+   "mech": {
+    "quote": "TOO_SHORT",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "app/config/eccube/packages/eccube.yaml"
+    ]
+   }
+  },
+  {
+   "rowId": 47,
+   "機能No": "A05-04",
+   "機能名": "A05-04 スマレジ受信処理",
+   "ドメイン": "a05",
+   "区分(画面種別)": "api",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "④DBカラム・DB操作（注文サブ／出荷完了反映）",
+   "設計期待値": "注文サブ（dtb_order_sub。ec-cube-enterprise 実装で要確認）| スマレジコード・出荷日・担当者・付与ポイント・連携エラー | 出荷完了反映の対象特定と更新に用いる。 / 旧根拠: functions/pf-eccube3/a05-04_api_order_order_smaregi_receive.md:195",
+   "実装実態": "設計は通常取引で自店舗明細に対し注文サブ(dtb_order_sub)を特定し出荷完了反映。実装に dtb_order_sub 相当エンティティは存在せず(grep一致は 'OrderSubmit' の誤検出のみ)、created処理は PurchasePatternResolver で判定し既存受注の引渡し済み化＋新規Order作成を行う。永続化先・更新項目が設計と異なる（設計も『要確認』と明記）。",
+   "差分内容": "設計は通常取引で自店舗明細に対し注文サブ(dtb_order_sub)を特定し出荷完了反映。実装に dtb_order_sub 相当エンティティは存在せず(grep一致は 'OrderSubmit' の誤検出のみ)、created処理は PurchasePatternResolver で判定し既存受注の引渡し済み化＋新規Order作成を行う。永続化先・更新項目が設計と異なる（設計も『要確認』と明記）。",
+   "実装参照": "不在",
+   "設計書参照": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-6",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html:1792-1795 のExcel正本はスマレジ商品IDで既存受注を検索し、取引データを出荷完了で登録する業務を記すが、`dtb_order_sub` や「スマレジコード・出荷日・担当者・付与ポイント・連携エラー」の列集合はExcel正本範囲（1703-1973行）に存在しない。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Controller/SmaregiController.php:178-207 は注文サブを `smaregiCode` で検索し、Shippingの出荷確定日、受注のcommit/status、注文サブの `shippingDate` と `operator` を更新する。同:209-226 は付与ポイントとスマレジ連携エラーを注文サブへ反映する。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Entity/Order.php:655-719 は `gained_points`、`shipping_date`、`smaregi_code`、`smaregi_error_flg`、`point_error_message` をOrderへ移している。ec-cube-enterprise/src/Eccube/Service/Smaregi/Webhook/Transaction/Handler/Pattern/EccubeSmoothOtcPatternHandler.php:62-66 は該当受注にstatusとsmaregiTransactionIdだけを設定し、旧実装の出荷日・担当者・連携エラー一式の更新は行わない。",
+   "根拠検証メモ": "具体的な注文サブ列集合と更新内容は旧実装由来。現実装には移行先列の一部と出荷完了処理があるが、旧更新一式は満たさない。",
+   "対応の根拠(現develop)": "`grep -rln 'order_sub' app/ src/ script/` の一致は 0 件で、注文サブ（dtb_order_sub）相当のエンティティ・マイグレーション（app/DoctrineMigrations/**）は現 develop にも存在しない。created 処理は `src/Eccube/Service/Smaregi/Webhook/Transaction/Handler/CreatedHandler.php:44` `public function handle(SmaregiWebhookEvent $event, array $transactionHeadIds, ?int $parentJobId = null): void` から `SmaregiTransactionProcessDispatcher`→`PurchasePatternResolver` 経由でパターン判定する監査時点と同じ構成のまま。",
+   "再確認HEAD": "da9c2ba276",
+   "レビュー結果": "UPHELD",
+   "レビュー根拠": "正本は受注検索と出荷完了という上位業務を記すものの、指摘対象の具体的な永続化先 `dtb_order_sub` と列集合は記していない。具体的期待値は旧実装でのみ裏付けられる。",
+   "mech": {
+    "quote": "EMBED_ONLY",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Entity/Order.php"
+    ]
+   }
+  },
+  {
+   "rowId": 128,
+   "機能No": "B02-01",
+   "機能名": "B02-01 期間別販売数集計",
+   "ドメイン": "b02",
+   "区分(画面種別)": "batch",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "コンソールのバッチコマンドは `product:batch updateProductSummary` とし、コマンド名が一致しない場合は処理を行わずに終了する。",
+   "実装実態": "実装の Symfony Console コマンド名は `eccube:aggregate-sales`。`product:batch updateProductSummary` は src/Eccube/Command、src/Eccube/Resource、html 配下でヒットしない。",
+   "差分内容": "設計の外部契約である実行コマンド名と実装コマンド名が一致しない。反証検索として `updateProductSummary`、`product:batch updateProductSummary`、`aggregate-sales`、`AggregateSalesCommand` を確認したが、設計コマンド名の実装入口は不在。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/AggregateSalesCommand.php:35",
+   "設計書参照": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-3:922",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html:1031 の正本セルは実行トリガーを「スケジュール起動(Step Functions)」「毎日0:00」とするだけで、`product:batch updateProductSummary` というコマンド名は正本部（996-1046）に存在しない。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Command/ProductBatch.php:12-20 は `BATCH_NAMES` に `'updateProductSummary' => ...UpdateProductSummary` を登録し、同:30-32 はコマンドを `product:batch` と定義する。同:43-50 は未登録名なら `Nothing args or command.` で終了する。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Command/AggregateSalesCommand.php:31-35 は利用方法を `bin/console eccube:aggregate-sales`、登録名を `#[AsCommand(name: 'eccube:aggregate-sales'...)]` とする。`product:batch` / `updateProductSummary` は新実装の src/Eccube、html、config、app を横断検索して登録なし。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Command/AggregateSalesCommand.php:35` `#[AsCommand(name: 'eccube:aggregate-sales', description: '期間別販売数集計バッチ')]` のままで、設計の `product:batch updateProductSummary` は登録されていない。今回は探索を src/ に限定せず `src/`・`bin/`・`app/config/**`・`script/ops/**`（db, monthly-inventory-snapshot, imgcheck, stg-db-maintenance）・`.github/workflows/**`（deploy-batch.yml 含む）を横断 grep したが、`updateProductSummary` は `src/Eccube/Repository/ProductClassRepository.php:1111` `//     // public function updateProductSummaryColumns(Application $app, array $productClass): void` のコメントアウトのみ、`product:batch` は `src/Eccube/Command/InventoryReflectionCommand.php:29,32` の3系由来の説明コメントのみ。コマンド名不一致時に処理を行わず終了する分岐も無い。",
+   "再確認HEAD": "da9c2ba276",
+   "レビュー結果": "UPHELD",
+   "レビュー根拠": "正本はスケジュールと時刻のみを定め、具体的なSymfony Console名と不一致時の終了規則は旧実装にしかない。",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Repository/ProductClassRepository.php"
+    ]
+   }
+  },
+  {
+   "rowId": 129,
+   "機能No": "B02-01",
+   "機能名": "B02-01 期間別販売数集計",
+   "ドメイン": "b02",
+   "区分(画面種別)": "batch",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・未実装",
+   "設計期待値": "本店のほか支店やスマレジの販売情報も集計対象とし、スマレジの取引データも店舗ごとにECCUBEとスマレジで分けて販売数を集計する。",
+   "実装実態": "B02-01 実装コメントで `現在は EC 受注のみ対象。スマレジ実店舗販売は未実装のため除外される` と明記され、集計SQLも dtb_order_item/dtb_order/dtb_shipping のみを対象にしている。",
+   "差分内容": "設計はスマレジ取引データを集計対象かつECCUBE分と分離集計する要求だが、実装はスマレジ実店舗販売を未実装として除外している。反証検索で Smaregi transaction 取込系は存在するが、DtbSalesQuantityRepository::getSalesForAggregate への連携や UNION はなく、同リポジトリにも `スマレジ受注が別テーブル管理の場合は UNION 等で本クエリを拡張すること` という TODO が残る。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/AggregateSalesCommand.php:28",
+   "設計書参照": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-3:869",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html:1023 は「本店のほか、支店やスマレジの販売情報も集計対象」、同:1030 は「スマレジの取引データも集計対象とし、それぞれ店舗ごとにECCUBEとスマレジで分けて販売数を集計する」と正本セルで明記する。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Repository/OrderDetailRepository.php:332-350 の旧集計SQLは `dtb_order_detail` と `dtb_order` のみを商品規格IDで集計し、スマレジ・店舗軸は持たない。これは正本が明記するリニューアル時カスタマイズである。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Command/AggregateSalesCommand.php:28-30 は「現在は EC 受注のみ対象。スマレジ実店舗販売は未実装」と明記し、ec-cube-enterprise/src/Eccube/Repository/DtbSalesQuantityRepository.php:438-440 にも別テーブルなら `UNION 等で本クエリを拡張` するTODOが残る。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Command/AggregateSalesCommand.php:29` に `現在は EC 受注のみ対象。スマレジ実店舗販売は未実装のため除外される。` が残存。`src/Eccube/Service/Product/BatchAggregateSalesAction.php:39-41` にも `// TODO: スマレジ実店舗販売を dtb_order に取り込む処理が実装されたら、` の TODO が残り、`src/Eccube/Repository/DtbSalesQuantityRepository.php:438-440` にも `// スマレジ受注が別テーブル管理の場合は UNION 等で本クエリを拡張すること` が残る。集計SQL（同ファイル:452-455）は `FROM dtb_order_item oi JOIN dtb_order o ON oi.order_id = o.id JOIN dtb_shipping s ON oi.shipping_id = s.id JOIN dtb_base_info bi ON s.base_info_id = bi.id` のみで、スマレジ取引テーブルの UNION も店舗ごとの ECCUBE／スマレジ分離集計も存在しない。",
+   "再確認HEAD": "da9c2ba276",
+   "レビュー結果": "UPHELD",
+   "レビュー根拠": "スマレジを含めることとECCUBE分との分離集計が、function-design-embedではなくdata-excel-ref保持セルに直接明記されている。",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Repository/DtbSalesQuantityRepository.php",
+     "src/Eccube/Service/Product/BatchAggregateSalesAction.php"
+    ]
+   }
+  },
+  {
+   "rowId": 133,
+   "機能No": "B02-01",
+   "機能名": "B02-01 期間別販売数集計",
+   "ドメイン": "b02",
+   "区分(画面種別)": "batch",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "途中失敗時は反映済みの行のみ更新が残る。100件ごとに変更を反映しキャッシュをクリアしながら処理し、部分反映は次回実行で回収される。",
+   "実装実態": "B02-01 は明示トランザクションを開始し、全件処理後に commit、例外時に rollBack する。100件ごとの flush/clear はこの処理には存在しない。",
+   "差分内容": "設計は途中まで反映された行が残る部分反映モデルだが、実装は単一トランザクションで例外時に全体ロールバックする。`flush`、`clear`、`100`、`setSQLLogger`、`beginTransaction` を反証検索し、100件ごとの反映は別メソッド updateRecommend にのみ存在し、B02-01 handle にはない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Product/BatchAggregateSalesAction.php:43",
+   "設計書参照": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-3:936",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html:1017-1044 の正本部には100件単位flush/clear、部分反映、次回回収、トランザクション方針の記述が存在しない。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Service/Product/UpdateProductSummary.php:35-42 は各行を更新し、`if ($index % 100 === 0) { ... flush(); EntityManagerUtil::clearCache(...); }`、最後に `flush()` する。明示的な全体トランザクションはなく、途中までflush済みの変更が残る構造である。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Service/Product/BatchAggregateSalesAction.php:42-54 は `beginTransaction()`、全件処理後 `commit()`、例外時 `rollBack()` とするため、100件単位の部分反映ではなく全体ロールバックになる。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Service/Product/BatchAggregateSalesAction.php:42-55` は `$connection->beginTransaction();` … 全件 foreach 後に `$connection->commit();`、`} catch (\\Throwable $e) { $connection->rollBack(); throw $e; }` という単一トランザクション構成のままで、100件ごとの flush/clear は無い。100件単位の反映は `src/Eccube/Repository/DtbSalesQuantityRepository.php:313` `public function updateRecommend(): void`（人気商品リコメンド更新）側にのみ存在し、B02-01 経路からは呼ばれない。",
+   "再確認HEAD": "da9c2ba276",
+   "レビュー結果": "UPHELD",
+   "レビュー根拠": "100件境界・キャッシュクリア・部分反映モデルを示す正本記述はなく、具体的な処理境界は旧実装から導かれている。",
+   "mech": {
+    "quote": "NO_QUOTE",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Repository/DtbSalesQuantityRepository.php",
+     "src/Eccube/Service/Product/BatchAggregateSalesAction.php"
+    ]
+   }
+  },
+  {
+   "rowId": 134,
+   "機能No": "B02-01",
+   "機能名": "B02-01 期間別販売数集計",
+   "ドメイン": "b02",
+   "区分(画面種別)": "batch",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・未実装",
+   "設計期待値": "長時間処理に備えて実行時間制限を解除し、SQLロガーを無効化する。",
+   "実装実態": "B02-01 の AggregateSalesCommand::execute と BatchAggregateSalesAction::handle には set_time_limit(0) や SQL logger 無効化処理がない。DtbSalesQuantityRepository 内の set_time_limit(0) / setSQLLogger(null) は人気商品リコメンド更新 updateRecommend() 用で、B02-01 から呼ばれていない。",
+   "差分内容": "設計の処理フロー1番目の要求が B02-01 の実行経路に存在しない。別キーワード `set_time_limit`、`memory_limit`、`setSQLLogger`、`SQLLogger` で再検索したが、該当は updateRecommend のみ。",
+   "実装参照": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/AggregateSalesCommand.php, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Product/BatchAggregateSalesAction.php, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbSalesQuantityRepository.php）",
+   "設計書参照": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-3:927",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html:1017-1044 の正本部に実行時間制限解除やSQLロガー無効化の記述は存在しない。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Service/Product/UpdateProductSummary.php:30-34 は `set_time_limit(0);` と `$this->app['orm.em']->getConnection()->getConfiguration()->setSQLLogger(null);` を実行してから集計する。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Command/AggregateSalesCommand.php:44-56 はaction実行と完了出力のみ、ec-cube-enterprise/src/Eccube/Service/Product/BatchAggregateSalesAction.php:37-54 はトランザクション処理のみで、`set_time_limit` / `setSQLLogger` は存在しない（確認範囲: 当該Command、Action、DtbSalesQuantityRepository）。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Command/AggregateSalesCommand.php:44-59`（execute 全体）と `src/Eccube/Service/Product/BatchAggregateSalesAction.php:37-56`（handle 全体）に `set_time_limit` / `setSQLLogger` の呼び出しは無い（両ファイル grep で0件）。該当処理は `src/Eccube/Repository/DtbSalesQuantityRepository.php:315` `set_time_limit(0);` と同:320 `$em->getConnection()->getConfiguration()->setSQLLogger(null);` のみで、いずれも同:313 `updateRecommend()` 内であり B02-01 の実行経路外。",
+   "再確認HEAD": "da9c2ba276",
+   "レビュー結果": "UPHELD",
+   "レビュー根拠": "実行時間制限解除とSQLロガー無効化は該当Excel正本に記載されず、旧バッチ実装のみが具体的根拠である。",
+   "mech": {
+    "quote": "NO_QUOTE",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Repository/DtbSalesQuantityRepository.php",
+     "src/Eccube/Service/Product/BatchAggregateSalesAction.php"
+    ]
+   }
+  },
+  {
+   "rowId": 145,
+   "機能No": "B02-03",
+   "機能名": "B02-03 期間別入庫数集計バッチ",
+   "ドメイン": "b02",
+   "区分(画面種別)": "batch",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・未実装",
+   "設計期待値": "エラーが発生した場合、集計できなかった旨をメールで送信する。",
+   "実装実態": "AggregateStockUpCommand は例外時にコンソールへ error() を出力して FAILURE を返すだけで、BatchAggregateStockUpAction に MailService 等のメール送信依存もない。MailService には週間在庫履歴更新など他バッチ向けのエラー通知はあるが、期間別入庫数集計向けの送信処理は見つからない。",
+   "差分内容": "「集計できなかった旨をメールで送信する」実装が当該コマンド・サービス・リポジトリ・MailService に存在しない。別キーワード（集計できなかった、期間別入庫、stock up、AggregateStockUp、MailService、send）でも反証できなかった。",
+   "実装参照": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository）",
+   "設計書参照": "excel_to_html/output/0402_基本設計仕様書(バッチ_在庫管理).html#sheet-5:1172",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0402_基本設計仕様書(バッチ_在庫管理).html:1339-1340 のExcel正本セルに「エラーハンドリング」「エラーが発生した場合集計できなかった旨をメールで送信する」と明記されている。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Command/ProductBatch.php:53-56 は `$product->execute();` の後に `echo $product->getErrorMassage() ?? ... \"Command complete.\"` とコンソール出力するだけで、旧B02-03経路にもエラーメール送信はない。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Command/AggregateStockUpCommand.php:47-55 は例外時に `$io->error('集計処理でエラーが発生しました: '.$e->getMessage());`、成功時に `$io->success(...)` を出力するのみ。`BatchAggregateStockUpAction`、`MailService`、Command/Service/Repositoryを `AggregateStockUp`, `集計できなかった`, `send*Mail` で確認したが、本バッチのメール送信は存在しない。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Command/AggregateStockUpCommand.php:49-53` は `catch (\\Exception $e) { $io->error('集計処理でエラーが発生しました: '.$e->getMessage()); return Command::FAILURE; }` のみでメール送信が無く、`src/Eccube/Service/Product/BatchAggregateStockUpAction.php:23-27` のコンストラクタ依存も `DtbStockUpQuantityRepository` と `EntityManagerInterface` だけで MailService を持たない。`src/Eccube/Service/MailService.php` のバッチ用エラーメールは `:1317 sendUpdateOtcBuyOrderSummaryErrorMail()` と `:1908 sendWeeklyStockHistoryErrorMail()` のみで、`src/Eccube/Entity/Master/MtbOption.php` にも stock_up 系の通知先キーは無い（`:98 WEEKLY_STOCK_HISTORY_ERROR_MAIL_ADDRESS` のみ）。",
+   "再確認HEAD": "da9c2ba276",
+   "レビュー結果": "UPHELD",
+   "レビュー根拠": "エラー時のメール送信要求がdata-excel-ref保持要素に直接記載されており、正本根拠として成立する。",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Service/MailService.php"
+    ]
+   }
+  }
+ ]
+}

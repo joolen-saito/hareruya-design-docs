@@ -1,0 +1,331 @@
+{
+ "packetId": "sw_19",
+ "mode": "sweep",
+ "note": "著者はこれらの大半を IMPACT(外部から観測できる) と判定した。見落とし＝実は NO_IMPACT な行が無いかを独立に判定すること。",
+ "findings": [
+  {
+   "rowId": 649,
+   "機能No": "M08-05",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "機能名・付与種別は「ポイント付与（余剰入金へのご返金、注文金額変更によるご返金）」として表示する。",
+   "差分内容": "設計およびフォーム選択肢は「注文金額変更によるご返金」だが、画面タイトルの翻訳だけ「ご送金」になっており利用者表示文言が異なる。反証として ご返金, ご送金, point_update.purchase, NOTE_CHOICES_REFUND を翻訳/FormType/Controller 範囲で確認し、FormType の選択肢はご返金だがタイトル表示はご送金であることを確認した。",
+   "実装参照": "src/Eccube/Resource/locale/messages.ja.yaml:2631, src/Eccube/Controller/Admin/Customer/CustomerPointController.php:100"
+  },
+  {
+   "rowId": 650,
+   "機能No": "M08-06",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "「登録」ボタン（付与）は POST /{admin_route}/customer/point/{id}/update/{type} で入力したポイント変動を履歴に追加し、ポイント履歴画面へ戻る。",
+   "差分内容": "設計は付与 POST の外部契約として /customer/point/{id}/update/{type} を指定しているが、実装ルートとフォーム送信先はいずれも /customer/point/{id}/{type}。反証検索で customer/point/{id}/update/{type} または update/{type} の別ルートは見つからなかった。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/CustomerPointController.php:51, /home/y-saito/Developments/ec-cube-enterprise"
+  },
+  {
+   "rowId": 651,
+   "機能No": "M08-06",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "会員・選手情報が無い場合はページが見つからない扱い（404）とする。",
+   "差分内容": "会員 ID の不在は ParamConverter 側で 404 になり得るが、設計が明示する選手情報不在時の 404 は実装されていない。Player が null の場合は GET 表示または POST 保存で null 参照になり、設計どおりのページが見つからない扱いにならない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Entity/Customer.php:1015, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Entity/Customer.php:"
+  },
+  {
+   "rowId": 652,
+   "機能No": "M08-06",
+   "指摘区分": "未実装",
+   "authorVerdict": "NO_IMPACT",
+   "設計期待値": "画面遷移の種別選択は種別選択画面（admin_customer_point_type_select）へ遷移する。",
+   "差分内容": "設計は遷移先ルート名として admin_customer_point_type_select を明記しているが、実装には同名ルートが存在しない。反証検索でも admin_customer_point_type_select は翻訳キー admin.customer.point_type_select 以外に見つからなかった。URL /customer/point/{id}/select 自体は存在するため、差異はルート名契約に限定される。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/CustomerPointController.php:38, /home/y-saito/Developments/ec-cube-enterprise"
+  },
+  {
+   "rowId": 653,
+   "機能No": "M08-07",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "メール配信履歴は処理日降順で表示する。送信履歴を新しい順に表示する。",
+   "差分内容": "設計は処理日・送信履歴の新しい順を要求しているが、実装の並び順キーは send_date ではなく id。id と送信日時の単調増加はDB上保証されず、設計値と実装値が一致しない。反証として mail_history.twig、CustomerMailHistoryType、MailHistoryRepository、MailHistory/DtbUserMailHistory エンティティを確認したが、send_date DESC で取得する実装は見つからなかった。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/CustomerMailController.php:135"
+  },
+  {
+   "rowId": 654,
+   "機能No": "M08-07",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "メール送信履歴を表示する（GET /{admin_route}/customer/{id}/mail_history）。会員詳細等の「メール送信履歴」は当該URLで表示する。",
+   "差分内容": "設計はURLエンドポイントを外部契約として /{admin_route}/customer/{id}/mail_history と記載しているが、実装は /{admin_route}/customer/mail/{id}/history。反証として Controller ルート、Customer/index.twig、Customer/edit.twig のリンク生成、ルート名 admin_customer_mail_history を検索したが、設計URLの別ルートまたは互換ルートは見つからなかった。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/CustomerMailController.php:116"
+  },
+  {
+   "rowId": 655,
+   "機能No": "M08-07",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "会員へ配信したメールの送信履歴は ec-cube-enterprise の dtb_user_mail_history を正とし、customer_id、template_id、subject、mail_body、send_date を一覧表示・絞り込みに使用する。",
+   "差分内容": "設計は dtb_user_mail_history を一覧表示・絞り込みの対象テーブルとしているが、実装は dtb_mail_history の MailHistory エンティティを使用する。反証として DtbUserMailHistory、MailHistory、MailHistoryRepository、CustomerMailController、mail_history.twig、MailService の履歴保存処理を確認したが、当画面で dtb_user_mail_history を検索する実装は見つからなかった。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Entity/MailHistory.php:25,53,70,232 /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller"
+  },
+  {
+   "rowId": 656,
+   "機能No": "M08-08",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "手動メール作成画面は GET /{admin_route}/customer/manual_mail（クエリで会員IDを指定）および GET /{admin_route}/customer/manual_mail/{customerId}/{templateId} で表示する。",
+   "差分内容": "設計はクエリ指定の作成画面入口を外部契約として定義しているが、実装はパスパラメータ必須のルートに変更されている。再検索範囲: CustomerMailController.php、Customer/edit.twig、Customer/index.twig、Twig内 `admin_customer_manual_mail`、`customer/manual_mail`。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/CustomerMailController.php:150"
+  },
+  {
+   "rowId": 657,
+   "機能No": "M08-08",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "テンプレートID指定がある場合、会員向けベース（会員・会員英語・ベースなし）に該当するテンプレートのみを対象とし、該当が無い場合は404とする。",
+   "差分内容": "フォーム選択肢の query_builder は候補表示を絞るだけで、パス指定された非会員向けテンプレートIDを404にする実装証跡がない。再検索範囲: CustomerMailController.php、CustomerManualMailType.php、MailTemplateRepository.php。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/CustomerMailController.php:152"
+  },
+  {
+   "rowId": 658,
+   "機能No": "M08-08",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "テンプレート未選択で表示する場合、件名・本文の入力欄は出さない。本文はテンプレート選択時のみ表示する複数行入力（textarea）。",
+   "差分内容": "設計のテンプレート未選択時非表示条件がTwigに存在しない。再検索範囲: Customer/mail_manual.twig、CustomerManualMailType.php、CustomerMailController.php。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Customer/mail_manual.twig:71"
+  },
+  {
+   "rowId": 659,
+   "機能No": "M08-08",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "フォームキーは件名 `mail[subject]`、本文 `mail_body`、ヘッダ・フッタ `mail[header]`・`mail[footer]` とし、テンプレートのヘッダ・フッタは隠し入力として送信に含める。",
+   "差分内容": "設計されたフォームキーおよび hidden header/footer の外部契約と実装のSymfonyフォーム項目が一致しない。再検索範囲: CustomerManualMailType.php、Customer/mail_manual.twig、Customer/mail_manual_confirm.twig、`mail[header]`、`mail[footer]`、`form.header`、`form.footer`。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/CustomerManualMailType.php:62"
+  },
+  {
+   "rowId": 660,
+   "機能No": "M08-08",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "送信したメールは会員向けメール送信履歴テーブル `dtb_user_mail_history` に、customer_id、template_id、subject、mail_body、send_date として記録する。",
+   "差分内容": "設計の永続化先テーブル・列名と実装の保存先が異なる。再検索範囲: MailHistoryEntityManager.php、MailHistory.php、DtbUserMailHistory.php、CustomerMailController.php、`dtb_user_mail_history`、`dtb_mail_history`。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/EntityManager/MailHistoryEntityManager.php:39"
+  },
+  {
+   "rowId": 661,
+   "機能No": "M08-08",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "送信履歴は会員・テンプレート・件名・本文・送信日時を保持する。手動メールでは作成者の記録は持たない。",
+   "差分内容": "個別の MailHistoryEntityManager は creator を明示設定していないが、共通の保存イベントにより作成者が記録される。設計の「作成者の記録は持たない」と異なる。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Doctrine/EventSubscriber/SaveEventSubscriber.php:51"
+  },
+  {
+   "rowId": 662,
+   "機能No": "M08-08",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "手動メール送信では、件名と本文は送信内容を用いる。",
+   "差分内容": "設計はフォーム送信内容の件名を送信メールの件名として扱うが、実装は送信時に件名を書き換える。履歴も Message の件名を保存するため、記録件名にもプレフィックスが入る。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/MailService.php:1028"
+  },
+  {
+   "rowId": 663,
+   "機能No": "M08-08",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "フロント挙動の表示要素として、見出し「手動メール送信」を表示する。",
+   "差分内容": "設計の見出し文言と実装の表示文言が異なる。再検索範囲: Customer/mail_manual.twig、messages.ja.yaml、`手動メール送信`、`admin.customer.manual_mail`。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Customer/mail_manual.twig:43"
+  },
+  {
+   "rowId": 664,
+   "機能No": "M08-08",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "確認画面の「会員編集画面へ戻る」ボタンは、当該の会員情報編集画面へ遷移する。",
+   "差分内容": "設計は確認画面から会員編集画面へ直接戻るボタンを要求しているが、実装は手動メール作成画面へ戻る動線になっている。",
+   "実装参照": "src/Eccube/Resource/template/admin/Customer/mail_manual_confirm.twig:91, src/Eccube/Controller/Admin/Customer/CustomerMailController.php:183, src/Eccube/Control"
+  },
+  {
+   "rowId": 665,
+   "機能No": "M08-08",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "テンプレート未選択で表示する場合、件名・本文の入力欄は出さず、本文textareaはテンプレート選択時のみ表示する。",
+   "差分内容": "設計はテンプレート未選択時に件名・本文入力欄を非表示にする要求だが、実装は空の件名欄と本文textareaを表示する。",
+   "実装参照": "src/Eccube/Resource/template/admin/Customer/mail_manual.twig:71, src/Eccube/Resource/template/admin/Customer/mail_manual.twig:85, src/Eccube/Controller/Admin/Cu"
+  },
+  {
+   "rowId": 666,
+   "機能No": "M08-08",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "テンプレートID指定時は、会員向けベース（会員・会員英語・ベースなし）のテンプレートのみ対象とし、該当しないテンプレートIDは404にする。",
+   "差分内容": "設計はbase外テンプレートIDを404で拒否する要求だが、実装は存在するMailTemplateであれば表示処理へ進める。",
+   "実装参照": "src/Eccube/Controller/Admin/Customer/CustomerMailController.php:150, src/Eccube/Controller/Admin/Customer/CustomerMailController.php:165, src/Eccube/Form/Type/A"
+  },
+  {
+   "rowId": 667,
+   "機能No": "M08-08",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "送信する件名と本文は、確認・入力した送信内容を用いる。",
+   "差分内容": "設計はフォーム上の件名を送信メール件名として扱うが、実装は店舗名プレフィックスを強制付与するため、確認画面の件名と送信・履歴の件名が一致しない。",
+   "実装参照": "src/Eccube/Service/MailService.php:1028, src/Eccube/Service/EntityManager/MailHistoryEntityManager.php:40"
+  },
+  {
+   "rowId": 668,
+   "機能No": "M08-08",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "入力項目のフォームキーは template、mail[subject]、mail_body、隠し入力 mail[header]・mail[footer] とし、ヘッダ・フッタを送信に含める。",
+   "差分内容": "設計のPOST契約およびヘッダ・フッタ送信項目が実装と一致しない。",
+   "実装参照": "src/Eccube/Form/Type/Admin/CustomerManualMailType.php:43, src/Eccube/Form/Type/Admin/CustomerManualMailType.php:95, src/Eccube/Resource/template/admin/Customer/"
+  },
+  {
+   "rowId": 669,
+   "機能No": "M08-08",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "会員を指定して手動メールを開く入口として、GET /{admin_route}/customer/manual_mail（クエリで会員ID指定）を提供する。",
+   "差分内容": "設計のクエリID入口では対象会員の作成画面を表示できず、URL外部契約が設計と異なる。",
+   "実装参照": "src/Eccube/Controller/Admin/Customer/CustomerMailController.php:150, 不在（探索範囲: src/Eccube/Controller/Admin/Customer, src/Eccube/Resource/template/admin/Customer;"
+  },
+  {
+   "rowId": 670,
+   "機能No": "M08-08",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "送信履歴は dtb_user_mail_history に customer_id、template_id、subject、mail_body、send_date を1件記録する。",
+   "差分内容": "設計の永続化先 dtb_user_mail_history ではなく dtb_mail_history に保存しており、件名列も subject ではなく mail_subject になる。",
+   "実装参照": "src/Eccube/Service/EntityManager/MailHistoryEntityManager.php:39, src/Eccube/Entity/MailHistory.php:25, src/Eccube/Entity/DtbUserMailHistory.php:21"
+  },
+  {
+   "rowId": 671,
+   "機能No": "M08-09",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "配送先一覧を表示する（GET /{admin_route}/customer/{id}/delivery ）、配送先を編集する（GET/POST /{admin_route}/customer/delivery/{id}/update ）、配送先を削除する（DELETE /{admin_route}/customer/delivery/{id}/delete ）として入口・画面遷移を提供する。",
+   "差分内容": "設計が外部契約として示すURL・ルート名に対し、実装のRoute属性とTwigリンクは別パス・別ルート名であり、設計上の一覧入口 m08-09_admin_customer_customer_delivery も見つからない。",
+   "実装参照": "src/Eccube/Controller/Admin/Customer/CustomerDeliveryEditController.php:45,46,127 / src/Eccube/Resource/template/admin/Customer/edit.twig:753,786 / 不在（探索範囲: src"
+  },
+  {
+   "rowId": 672,
+   "機能No": "M08-09",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "保存完了メッセージはロケールキー admin.customer.save.complete を使用する。",
+   "差分内容": "設計が指定するロケールキーと実装が使用するキーが異なる。",
+   "実装参照": "src/Eccube/Controller/Admin/Customer/CustomerDeliveryEditController.php:107 / src/Eccube/Resource/locale/messages.ja.yaml:1405 / 不在（探索範囲: src/Eccube/Resource/lo"
+  },
+  {
+   "rowId": 673,
+   "機能No": "M08-09",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "削除後は配送先一覧へ戻る。",
+   "差分内容": "設計は削除後の遷移先を配送先一覧としているが、実装は会員編集画面へ戻す。実装には配送先一覧専用ルートも見つからない。",
+   "実装参照": "src/Eccube/Controller/Admin/Customer/CustomerDeliveryEditController.php:166"
+  },
+  {
+   "rowId": 674,
+   "機能No": "M08-10",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "「確認済に変更する」押下時、身分証有効期限の入力値となりすまし対策トークンを隠しフォームに載せてPOST送信し、確認済への変更POSTでトークンを検証する。",
+   "差分内容": "会員編集本体フォームの form._token は別フォームにあり、確認済変更用に動的生成されるフォームへ載らない。専用POST側にもCSRF検証が無い。",
+   "実装参照": "src/Eccube/Resource/template/admin/Customer/edit.twig:82; src/Eccube/Controller/Admin/Customer/CustomerEditController.php:231; 不在（探索範囲: CustomerEditController.p"
+  },
+  {
+   "rowId": 675,
+   "機能No": "M08-10",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "会員IDから選手情報を取得し、存在しない場合はページが見つからない扱い（404）とする。",
+   "差分内容": "設計は選手情報なしを404として扱うが、実装は会員編集画面へ戻すエラーフラッシュ扱いになっている。",
+   "実装参照": "src/Eccube/Controller/Admin/Customer/CustomerEditController.php:252; src/Eccube/Controller/Admin/Customer/CustomerEditController.php:264"
+  },
+  {
+   "rowId": 676,
+   "機能No": "M08-10",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "本人確認の閲覧権限が無い場合は身分証画像を表示せず、各画像枠に「閲覧不可」を表示する。",
+   "差分内容": "設計はモーダル表示時に画像を出さず文言表示する仕様だが、実装は画像タグを出した後に画像取得リクエストを拒否する方式で、利用者向け文言も欠落している。",
+   "実装参照": "src/Eccube/Resource/template/admin/Customer/edit.twig:251; src/Eccube/Resource/template/admin/Customer/edit.twig:253; src/Eccube/Resource/template/admin/Custome"
+  },
+  {
+   "rowId": 677,
+   "機能No": "M08-10",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "身分証画像のサムネイル押下で画像種別ごとの拡大表示モーダルを開き、サムネイルは縮小表示、拡大モーダルは大きめ表示にする。",
+   "差分内容": "設計されたサムネイル押下遷移と拡大表示モーダルが実装されていない。",
+   "実装参照": "src/Eccube/Resource/template/admin/Customer/edit.twig:253; html/template/admin/assets/css/customer.css:7; 不在（探索範囲: src/Eccube/Resource/template/admin/Customer, "
+  },
+  {
+   "rowId": 678,
+   "機能No": "M08-10",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "確認済への変更が成功したとき、フラッシュに「会員情報を保存しました。」を表示する。",
+   "差分内容": "設計の成功フラッシュ文言「会員情報を保存しました。」と、実装で表示される「保存しました」が一致しない。",
+   "実装参照": "src/Eccube/Controller/Admin/Customer/CustomerEditController.php:299; src/Eccube/Resource/locale/messages.ja.yaml:1559"
+  },
+  {
+   "rowId": 679,
+   "機能No": "M08-12",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "利用者視点の入口は、GET /{admin_route}/customer_group/{id}、POST /{admin_route}/customer_group/new、POST /{admin_route}/customer_group/{id}/update、DELETE /{admin_route}/customer_group/{id}/delete とする。",
+   "差分内容": "設計の外部契約URLに対して、実装は customer/customer_group 配下かつ新規・更新を個別URLに分けない構成で、パスとPOSTエンドポイント粒度が一致しない。探索範囲: src/Eccube/Controller, src/Eccube/Resource/template/admin, html。",
+   "実装参照": "src/Eccube/Controller/Admin/Customer/CustomerGroupController.php:39,40,72 ／ src/Eccube/Resource/template/admin/CustomerGroup/index.twig:13,117"
+  },
+  {
+   "rowId": 680,
+   "機能No": "M08-12",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "新規追加/編集ラベルは、初期表示は「新規追加」、既存の顧客グループ選択時は「編集」と表示する。",
+   "差分内容": "設計は初期表示と既存選択時でラベルを切り替える要求だが、実装Twigは固定翻訳キーを表示しており、関連Twig/翻訳キー/Controller内にも該当する条件分岐がない。",
+   "実装参照": "src/Eccube/Resource/template/admin/CustomerGroup/index.twig:5,6,20 ／ src/Eccube/Resource/locale/messages.ja.yaml:3840,3841"
+  },
+  {
+   "rowId": 681,
+   "機能No": "M08-12",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "削除確認ダイアログの表示メッセージは「[顧客グループ名称]を削除してもよろしいですか？」とする。",
+   "差分内容": "確認ダイアログ自体は実装済みだが、利用者に表示される文言が設計指定の文言と一致しない。",
+   "実装参照": "src/Eccube/Resource/template/admin/CustomerGroup/index.twig:111 ／ src/Eccube/Resource/locale/messages.ja.yaml:1600"
+  },
+  {
+   "rowId": 682,
+   "機能No": "M08-12",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "支払方法は複数選択チェックボックスで、支払方法設定に登録されている支払方法をすべて表示する。",
+   "差分内容": "設計は登録済み支払方法をすべて表示する要求だが、実装は表示フラグと特定ID除外で候補を絞り込んでいる。",
+   "実装参照": "src/Eccube/Form/Type/Admin/CustomerGroupType.php:54,55,56,57,58,59,60,61,62,63,64 ／ src/Eccube/Entity/Payment.php:49,50,142,143"
+  },
+  {
+   "rowId": 683,
+   "機能No": "M08-13",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "項目(新規登録用)・項目(更新用)は単一選択(チェックボックス)で、選択肢は住所、電話番号、氏名。",
+   "差分内容": "設計は項目 UI を単一選択チェックボックスとし、選択肢を住所、電話番号、氏名としているが、実装は select 表示で、並びも氏名、電話番号、住所となる。",
+   "実装参照": "src/Eccube/Form/Type/Admin/BlacklistUpdateType.php:34, src/Eccube/Form/Type/Admin/BlacklistType.php:32, src/Eccube/Form/Type/Master/BlacklistTagType.php:45, src"
+  },
+  {
+   "rowId": 684,
+   "機能No": "M08-13",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "登録・編集・削除が完了したとき、登録完了メッセージ（ロケールキー admin.register.complete）を表示する。",
+   "差分内容": "設計が明示した成功メッセージキー admin.register.complete と、実装が使用する admin.common.save_complete が異なるため、利用者に表示される完了文言も異なる。",
+   "実装参照": "src/Eccube/Controller/Admin/Customer/BlacklistController.php:107, src/Eccube/Resource/locale/messages.ja.yaml:1405, src/Eccube/Resource/locale/messages.ja.yaml:"
+  }
+ ]
+}

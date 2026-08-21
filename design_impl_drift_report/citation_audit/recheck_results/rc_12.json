@@ -1,0 +1,149 @@
+{
+  "packetId": "rc_12",
+  "results": [
+    {
+      "rowId": 183,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0405_基本設計仕様書(バッチ_受注管理).html の sheet-5 正本部（1414-1466行）を「例外捕捉」「通知を行わない」「コンソールへ例外」で検索して0件。正本 src-cell 0405:店頭注文番号初期化!D42 には逆に「エラーが発生した場合、メールで管理者に通知」が実在する。「本バッチは例外捕捉や通知を行わない」「例外発生時はコンソールへ例外が伝播する」は同HTML 1508・1511行の function-design-embed 内にのみ実在した。pf-eccube3/app/Plugin/HareruyaEc/Command/OrderBatch.php:51-54 と Service/Order/TruncateWaitingNumber.php:29-32 も開き、旧経路に try/catch と通知がないことを確認した。画面表示・レイアウト指摘ではないため画像確認対象外。",
+      "reason": "指摘期待値はExcel正本ではなく旧実装だけで裏付けられるので LEGACY_BACKED は正しい。ただし正本は管理者メール通知を要求しており、旧実装由来の「通知しない」と正本が矛盾する点は明記すべきである。現行CommandはActionからのThrowableを捕捉して終了コードへ変換するため、旧実装との差は現在も再現する。なお現行のCommand/Action/Repositoryにもメール通知経路はなく、正本の通知要件も別途未充足である。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Command/TruncateWaitingNumberCommand.php の execute() は40-48行で `try` / `catch (\\Throwable $e)`、`$io->error(...)`、`return Command::FAILURE` を実行する。src/Eccube/Service/Admin/Order/TruncateWaitingNumberAction.php の handle() は54-57行でrollback後に再throwするが、Commandで捕捉される。両ファイルと DtbWaitingNumberRepository を Mail/Mailer/send/通知で検索して通知処理は0件。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 184,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "REFUTED",
+      "correctedClass": "UNSUPPORTED",
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0405 の sheet-5 正本部（1414-1466行）を「日時付き」「件数ログ」「完了ログ」で検索して0件。これらは function-design-embed の1529-1530行にのみ実在した。旧実装 pf-eccube3/app/Plugin/HareruyaEc/Command/OrderBatch.php:43-48 の日時文字列は未登録コマンド時の `Nothing args or command.` にだけ連結され、有効なバッチは51-54行で出力なしに実行される。Service/Order/TruncateWaitingNumber.php:29-32 にも開始・完了出力はない。画面表示・レイアウト指摘ではないため画像確認対象外。",
+      "reason": "「完了ログを出さない」は旧実装と一致する一方、「正常起動時に日時付き出力を行う」は正本にも旧実装にも根拠がない。複合期待値全体を LEGACY_BACKED とする分類は誤りで、主張どおりの要求としては UNSUPPORTED。現行実装が日時なし開始ログと完了ログを出す事実自体は変わらず、記載された差は再現するが、根拠のある旧実装差は完了ログ追加の部分に限られる。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Command/TruncateWaitingNumberCommand.php の execute() は38行で `$io->text('店舗注文番号初期化バッチ開始');`、51行で `$io->success('店舗注文番号初期化処理が完了しました。');` を出力する。同ファイルに `date(`、`DateTime`、`format(` はなく日時付与処理はない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 187,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0405 の sheet-7 正本部（1684-1733行）を「ロック」「楽観」「悲観」「排他」で検索して0件。「本バッチは削除連携が主であり、楽観ロック・悲観ロックの対象は持たない」は1799行の function-design-embed 内にのみ実在した。旧実装 pf-eccube3/app/Plugin/HareruyaEc/Service/Order/DeleteSmaregiProduct.php:27-36 と Command/OrderBatch.php:51-54 を開き、削除経路が取得結果をforeachしてAPI処理を直接呼び、ロック取得を挟まないことを確認した。画面表示・レイアウト指摘ではないため画像確認対象外。",
+      "reason": "ロックなしはExcel正本の要件ではないが旧削除経路の事実なので LEGACY_BACKED は妥当。現行の削除メッセージ処理は本線で同一MessengerJobの処理ロックを取得しており、旧実装との差は現在も再現する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/MessageHandler/SmaregiOtcDeleteMessageHandler.php はコンストラクタ45行で `SmaregiMessengerJobProcessingLock` を注入し、__invoke() の73行で `tryBeginProcessingJob($Job)` を呼び、取得できない場合はreturnする。ロック取得後の92-97行で SmaregiOtcDeleteService::delete() を実行する。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 189,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0405 の sheet-8 正本部（1815-1847行）を「コンソール」「取得・送信時」「送信時のエラー」で検索して0件。正本 src-cell 0405:ポイント二重登録チェック!C48 は「外部システムとの連携もなく、外部から引数等も受け取っていないため、特になし」。一方「取得・送信時のエラー」「エラーメッセージをコンソールに出力する」は1908行の function-design-embed 内に実在した。旧実装 OrderBatch.php:51-54 と MailService.php:1434-1466 を開き、バッチ呼出しと `$this->app->mail($message)` の周囲にcatchがなく、例外がCommandへ伝播することを確認した。画面表示・レイアウト指摘ではないため画像確認対象外。",
+      "reason": "送信例外をコンソール経路へ伝播させる挙動は正本ではなく旧実装由来なので LEGACY_BACKED は正しい。現行では取得・Action例外はCommandに届くが、メール送信例外だけはMailService内で握られるため、旧実装との差は再現する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Command/CheckDuplicatePointCommand.php の execute() は48-56行でActionのThrowableを `$io->error(...)` に出す。一方 src/Eccube/Service/MailService.php の sendOrderDuplicateNotificationMail() は2496-2501行で `TransportExceptionInterface` をcatchし、`log_critical($e->getMessage())` のみで再throwしないため、送信例外はCommandへ到達しない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 193,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0405 の sheet-10 を開き、src-cell 0405:スマレジEC受注連携エラー再連携!C40 に「リトライに成功したら、当該の注文データのスマレジ連携エラーフラグをオフにする」が function-design-embed 開始前の2087行に実在することを確認した。画面表示・レイアウト指摘ではないため画像確認対象外。",
+      "reason": "成功時フラグ解除はExcel正本に明記されるため SPEC_BACKED は正しい。通常の非同期Use/Gain Pointハンドラには成功時解除が追加されたが、B05-08の再連携コマンドが直接呼ぶ SmaregiUpdatePointAction の成功経路は依然returnだけであり、この機能の乖離は再現する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Command/SmaregiUpdatePointCommand.php の execute() は61-69行で SmaregiUpdatePointAction::handle() を直接呼ぶ。同Actionのhandle() は71-73行で `array_key_exists('result', $response)` の成功時にそのままreturnし、失敗時だけ57-60行・75-78行で `setSmaregiErrorFlg(true)` を保存する。`setSmaregiErrorFlg(false)` は SmaregiOrderUsePointMessageHandler.php:129 や GainPointMessageHandler.php:127 にはあるが、この再連携Actionからは呼ばれない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 194,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0405 の sheet-10 を開き、src-cell 0405:スマレジEC受注連携エラー再連携!C37 の「ユーザーのスマレジIDとポイント残高を取得」、同!D39 の「ユーザーのポイント数は絶対値で更新を行う」が function-design-embed 開始前の2084・2086行に実在することを確認した。画面表示・レイアウト指摘ではないため画像確認対象外。",
+      "reason": "スマレジIDとポイント残高による絶対値更新はExcel正本に明記されるため SPEC_BACKED は正しい。現在も再連携Actionは受注の使用ポイントを負の差分として相対加算APIへ送り、Playerの残高を送らないので乖離は再現する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Smaregi/SmaregiUpdatePointAction.php の handle() は39行で `$order->getSpendedPoints()` を取得し、54行で `postSmaregiPoint($player->getSmaregiId(), -$suspendPoint, false)` を呼ぶ。src/Eccube/Service/Smaregi/Api/SmaregiCustomerApiClient.php の addPoint() は215行の `/point/add` に223-225行で差分 `point` を送る。Playerのポイント残高を絶対値として送る経路はない。",
+      "severityOpinion": "high",
+      "confidence": "high"
+    },
+    {
+      "rowId": 199,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0405 の sheet-11 正本部（2163-2213行）を「mtb_option」「option_key」「option_value」「接続設定」「契約ID」「アクセストークン」「接続先URL」で検索して0件。正本 src-cell 0405:スマレジ取引連携エラー再連携!G30 は入力元を「スマレジプラットフォームAPI」とするだけである。`mtb_option` の保持先指定は function-design-embed 開始後の2238・2262行に実在した。旧実装 pf-eccube3/app/Plugin/HareruyaEc/Service/Smaregi/CheckSmaregiTransaction.php:35-44,68-78 を開き、option repositoryから契約ID・アクセストークン・接続URL等を取得してAPI呼出しに使用することを確認した。画面表示・レイアウト指摘ではないため画像確認対象外。",
+      "reason": "接続設定の保持先をmtb_optionとする指定はExcel正本にはなく旧実装にのみあるので LEGACY_BACKED は正しい。現行の取引API経路は環境変数由来のDIパラメータを使い続けており、旧実装との差は再現する。",
+      "currentImpl": "ec-cube-enterprise/app/config/eccube/services.yaml:28-32 はスマレジAPI URL、client ID/secret、contract IDを `%env(SMAREGI_API_...)%` で定義する。src/Eccube/MessageHandler/SmaregiTransactionProcessMessageHandler.php のコンストラクタ96-100行がこれらを受け、processTransaction() の154-165行でトークン取得と取引APIに渡す。接続URL・契約ID・アクセストークンを MtbOptionRepository から取得する処理はこの経路にない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 201,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0406_基本設計仕様書(バッチ_店頭買取管理) .html の sheet-3 を開き、src-cell 0406:【新規】買取自動入庫バッチ!B54「店頭買取情報.ステータス」と同!S54「12: 入庫待ち」、同!B55「ネット買取情報.ステータス」と同!S55「16: 入庫待ち」が function-design-embed 開始前の1037-1038行に実在することを確認した。機械フラグNOT_FOUNDは項目名と条件が別src-cellであるための見落とし。画面表示・レイアウト指摘ではないため画像確認対象外。",
+      "reason": "店頭12・ネット16という検索条件はExcel正本に直接明記されるので SPEC_BACKED は正しい。ネット側は16を対象とするが、店頭側は13だけを対象として12を処理しないため、店頭側の乖離が再現する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Entity/Master/MtbOtcBuyOrderStatus.php:40-42,58-60 は11=入庫済み、12=未登録在庫あり、13=入庫待ちと定義する。src/Eccube/Service/Admin/OtcBuyOrder/BatchAutoStockAction.php の handle() は45行で `STATUS_STOCKING_PENDING`（13）だけをfindByする。ネット側 BatchAutoStockAction.php:51 は MtbBuyOrderStatus::WAITING_FOR_STOCK（16）を対象にする。",
+      "severityOpinion": "high",
+      "confidence": "high"
+    },
+    {
+      "rowId": 202,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0406 の sheet-3 を開き、src-cell 0406:【新規】買取自動入庫バッチ!D9 の「買取を行った店舗のECCUBE在庫」、同!E18 の「店頭買取を行った店舗のECCUBE在庫」、同!E30 の「本店のECCUBE在庫」が function-design-embed 開始前の1005・1010・1021行に実在することを確認した。機械フラグNOT_FOUNDは引用文字列の切り出し差によるもの。画面表示・レイアウト指摘ではないため画像確認対象外。",
+      "reason": "入庫先を店舗または本店のECCUBE在庫とする要求はExcel正本に明記されるため SPEC_BACKED は正しい。現行は店舗IDだけで既存在庫を選び、選んだ行のstock_location_idを引き継ぐので、同一店舗のスマレジ在庫行を更新し得る乖離が再現する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Admin/OtcBuyOrder/OtcBuyOrderStockInbound.php の process() は56-60行で `getProductStocks()` をBaseInfo IDだけで選び、81行で既存行のstockLocationIdを引き継ぐ。ネット側 BuyOrderStockInbound.php:56-60,81も同じ。src/Eccube/Entity/ProductClass.php の getProductStockByEccube()（595-598行）と resolveEccubeProductStockForShop()（604-610行）は在庫場所を限定できるが、両自動入庫サービスからは呼ばれない。",
+      "severityOpinion": "high",
+      "confidence": "high"
+    },
+    {
+      "rowId": 203,
+      "originalClass": "UNCERTAIN",
+      "classVerdict": "REFUTED",
+      "correctedClass": "ALREADY_MET",
+      "driftVerdict": "RESOLVED",
+      "checkedQuote": "0406 の sheet-3 正本部を開き、src-cell !F19・!F31 の「総在庫、総原価、原価単価の更新を行う」、!D62「在庫情報を更新する」、!D63「在庫履歴を登録する」を1011-1023・1042-1043行で確認した。一方 `dtb_product_class.stock` と `dtb_product_stock.stock` の双方更新という物理指定は正本部に0件で、function-design-embed の1075・1082行にのみ実在する。さらに同embed 1073・1079・1081・1083行はDBカラムをec-cube-enterprise実装側で補完すると明記する。旧4リポジトリを `B06-01|auto[-_ ]?stock|買取自動入庫|purchase_auto_import|BatchAutoStock` で検索して該当0件。画面表示・レイアウト指摘ではないため画像確認対象外。",
+      "reason": "正本が要求するのは総在庫・総原価・原価単価と在庫履歴の更新であり、現行モデルに存在しない `dtb_product_class.stock` の二重更新ではない。物理カラム指定はリバース詳細設計だけにあり、しかも対象B06-01は新規機能で対応旧バッチがないため、当該物理要件を旧実装でも裏付けられない。現行はProductStockのstockとtotalCostを更新し、unitCostは両者から算出し、StockHistoryも登録するため、正本の抽象要件は満たしている。したがって元の指摘はALREADY_METで、現在の乖離はない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/EntityManager/ProductStockEntityManager.php の save() は42-49行でProductClass/BaseInfoを設定し、`setStock($stock)` と `setTotalCost($totalCost)` をpersistする。src/Eccube/Entity/ProductStock.php の getUnitCost() は352-361行で `totalCost / stock` を算出する。OtcBuyOrderStockInbound.php と BuyOrderStockInbound.php は85行以降で StockHistoryEntityManager::save() を呼ぶ。現行 ProductClass.php にstockプロパティはなく、在庫数はProductStockモデルに保持される。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 205,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0406 の sheet-4 を開き、src-cell 0406:買取集計バッチ!D50 の「部門が登録されていない商品が存在する場合は、エラーメールを送信する」が function-design-embed 開始前の1195行に実在することを確認した。商品名・商品コードを本文に並べる具体化は旧実装 pf-eccube3/app/Plugin/HareruyaEc/Service/MailService.php:1168-1176 で確認した。画面表示・レイアウト指摘ではないため画像確認対象外。",
+      "reason": "指摘の中核である部門未設定商品が存在する場合のエラーメール送信はExcel正本に明記されるため SPEC_BACKED は妥当。本文の商品名・商品コード一覧は旧実装による補足だが、現行SQLの構文不正により存在判定とメール送信自体へ到達できないため、正本に対する乖離は再現する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Repository/DtbOtcBuyOrderRepository.php の getNoSectionProducts() は956-958行と969-971行で `WHERE` 直後に `AND obo.complete_date ...` を置く不正SQLを組み、980-986行で実行する。src/Eccube/Service/Admin/OtcBuyOrder/BatchAggregateSummaryAction.php の handle() は50-53行でこの結果取得後にのみ sendNoSectionAlertMail() を呼ぶため、SQL例外時は部門未設定通知へ到達しない。",
+      "severityOpinion": "high",
+      "confidence": "high"
+    },
+    {
+      "rowId": 209,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "PARTIAL",
+      "checkedQuote": "0408_基本設計仕様書(バッチ_会員).html の sheet-4 を開き、src-cell 0408:ポイント失効!D46 の「失効ポイント」の値をポイント増減APIへ送信する要求が1289行、同!C61 の「エラーが発生したユーザーのポイント失効処理(スマレジ・ユーザーポイント増減含め)は今回は行わず」が1301行、同!C62 の翌日以降へ持ち越す要求が1302行に、いずれも function-design-embed 開始前で実在することを確認した。画面表示・レイアウト指摘ではないため画像確認対象外。",
+      "reason": "API送信と失敗時持ち越しの両方がExcel正本に明記されるため SPEC_BACKED は正しい。先行記載の「引数なし」「固定成功レスポンス」は現在解消され、失効ポイントは実APIへ渡る。一方、EC側のポイント・履歴を先にcommitしてから非同期APIを呼ぶため、API失敗時に当該会員のEC側失効を行わず翌日へ持ち越すことはできない。複合乖離の一部だけ解消したため PARTIAL。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Admin/Customer/LostPointsAction.php の handle() は55行で失効差分を算出し、68-86行でPlayer更新・履歴・連携Jobをflush/commitし、112-115行でcommit後にメッセージをdispatchする。src/Eccube/MessageHandler/SmaregiCustomerPointAddMessageHandler.php:83-91 は履歴のpointChangeとsmaregiIdを `postSmaregiPoint($smaregiId, $pointChange)` に渡し、SmaregiCustomerService.php:397-410 は実際にcustomerApiClient->addPoint()を呼ぶ。しかし同Handlerの99-113行でAPI失敗をJob失敗にしても、既にcommit済みのPlayerポイントと履歴をrollbackする処理はない。",
+      "severityOpinion": "high",
+      "confidence": "high"
+    }
+  ]
+}

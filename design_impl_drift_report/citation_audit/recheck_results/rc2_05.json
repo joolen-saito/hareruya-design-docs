@@ -1,0 +1,149 @@
+{
+  "packetId": "rc2_05",
+  "results": [
+    {
+      "rowId": 477,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html を「CSVは10,000件を登録上限とする」と data-excel-ref「0202:在庫分割結合登録編集（結合)!E242」で検索し、9442行の src-cell に実在することを確認した。該当箇所は function-design-embed の外側（直後の開始は9966行）。",
+      "reason": "Excel正本の E242 に「CSVは10,000件を登録上限とする」と明記されており、SPEC_BACKED は妥当。現実装の StockJoinCsvImportHandler::parseMerged() と StockJoinEditReplaceSourcesImportHandler::handleToSession() は MAX_ERROR_COUNT=20 だけを持ち、10,000行で中止する分岐がない。呼出側 StockJoinController にも countCsvRows 等の事前上限判定はないため、表示上の上限文言だけでバックエンド制限は再現しない。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Service/Csv/Importer/Event/StockJoinCsvImportHandler.php の定数は `private const MAX_ERROR_COUNT = 20;`、parseMerged() は `foreach ($importService as $rowIndex => $rowData)` で全行を走査する。src/Eccube/Service/Csv/Importer/Event/StockJoinEditReplaceSourcesImportHandler.php の handleToSession() も同様に MAX_ERROR_COUNT のみ。src/Eccube/Controller/Admin/Stock/StockJoinController.php の両ハンドラ呼出経路に行数判定はない。一方 src/Eccube/Resource/locale/messages.ja.yaml には「1ファイルの登録上限は 10,000 件です」がある。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 481,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "同HTMLを data-excel-ref「0202:在庫履歴検索一覧(検索入力)!AC107」と「デフォルト検索表示店舗」で検索し、10732行の src-cell に「ログインしているメンバーのデフォルト検索表示店舗」を確認した。該当箇所は function-design-embed 開始10899行より前。sheet-22 のレイアウト画像（B7、1920x2627）も展開して目視し、店舗欄の配置を確認した。",
+      "reason": "初期値列の正本セルが期待値を直接支持するため SPEC_BACKED は妥当。レイアウト画像は検索結果を含む画面例で初期表示状態そのものではないため、空の店舗欄は初期値セルを反証しない。現実装では StockHistoryType::buildForm() の base_info に data 指定がなく、StockHistoryController::new() も Member::getDefaultSearchBaseInfo() を使わない。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Form/Type/Admin/StockHistoryType.php の buildForm() は base_info を EntityType、multiple=true、placeholder付きで定義するが初期 data はない。src/Eccube/Controller/Admin/Stock/StockHistoryController.php の new() 初期表示分岐は `FormUtil::getViewData($searchForm)` を `submitAndGetData()` へ渡すだけ。ADMIN_STOCK_HISTORY_NEW_INITIALIZE のリスナーやテンプレートJSにも base_info 初期設定は見つからない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 482,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "同HTMLを data-excel-ref「0202:在庫履歴検索一覧(検索入力)!AC110」と「ページを表示した日の月の1日」で検索し、10735行の src-cell に実在することを確認した。該当箇所は function-design-embed 開始10899行より前。sheet-22 のレイアウト画像（B7）も展開して登録日(from)欄の配置を目視した。",
+      "reason": "Excel正本の初期値列が当月1日を直接指定しているため SPEC_BACKED は妥当。現実装の create_date_from は任意 DateType で data 指定がなく、Controller の初期表示にも当月1日を生成する処理がない。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Form/Type/Admin/StockHistoryType.php の buildForm() にある create_date_from は DateType(single_text) だが初期 data を持たない。src/Eccube/Controller/Admin/Stock/StockHistoryController.php の new() 初期表示は空フォームの view data を再submitするだけで、`first day of`、月初計算、DateTime の初期設定はない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 483,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "同HTMLを data-excel-ref「0202:在庫履歴検索一覧(検索入力)!AC115」と「公開種別」で検索し、10740行の Excel正本 src-cell の初期値が「公開」であることを確認した。該当箇所は function-design-embed 開始10899行より前。sheet-22 レイアウト画像（B7）も展開し、公開・非公開・廃止のチェック欄を目視した。",
+      "reason": "正本の初期値セルが「公開」を直接指定するため SPEC_BACKED は妥当。画面例はチェックなしだが検索結果表示を含む汎用レイアウトで、初期値仕様の正本セルを上書きする説明はない。現実装には公開を既定選択する data または初期submit値がない。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Form/Type/Admin/StockHistoryType.php の status は ProductStatusType、multiple=true、expanded=true だが data 指定なし。src/Eccube/Form/Type/Master/ProductStatusType.php にも公開を既定値にする処理はなく、StockHistoryController::new() の初期表示は空の view data を使用する。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 484,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "同HTMLを data-excel-ref「0202:在庫履歴検索一覧(検索入力)!AC119」と「状態」で検索し、10744行の Excel正本 src-cell の初期値が「NM」であることを確認した。該当箇所は function-design-embed 開始10899行より前。sheet-22 レイアウト画像（B7）も展開し、NM/SP/MP/HP/その他の状態欄を目視した。",
+      "reason": "正本の初期値セルが NM を直接指定するため SPEC_BACKED は妥当。現実装の card_condition は選択肢を定義するだけで初期 data がなく、Controller やJSにも NM を既定選択する処理がない。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Form/Type/Admin/StockHistoryType.php の card_condition は ChoiceType、multiple=true、expanded=true で、choices は NM=1、SP=2、MP=3、HP=4、その他=5 だが data 指定なし。StockHistoryController::new() は初期表示で空フォーム値を再submitする。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 485,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "PARTIAL",
+      "checkedQuote": "同HTMLを data-excel-ref「0202:在庫履歴検索一覧(検索入力)!AK113」と「欠品検索」で検索し、10738行の Excel正本 src-cell に、選択時の2-3固定・非活性、欠品履歴で「－」の項目のクリア・非活性、2-37活性化、解除時の2-37および2-3クリアを確認した。2-37は10771行の正本で「在庫変動理由・欠品理由」。該当箇所はいずれも function-design-embed 開始10899行より前。sheet-22 レイアウト画像（B7）も展開し、欠品検索、在庫変動理由区分、在庫変動理由・欠品理由を含む配置を目視した。",
+      "reason": "動的挙動はExcel正本が直接定義するため SPEC_BACKED は妥当。元指摘後の変更により、history.twig には disposal_search の change 監視、2-3を欠品2区分へ固定・非活性化、複数の非対象項目をクリア・非活性化する実装が追加されているため、元の「JS監視が存在しない」は現状と一致しない。ただし2-37の `#admin_stock_history_stock_change_reason` は連動対象に含まれず、未選択時も無効化・クリアされず、選択時の明示的活性化もないため要求は一部残る。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Resource/template/admin/Stock/history.twig の applyDisposalSearchMode() は `disposalStockChangeTypeDetailIds` を stock_change_type_detail に設定して disabled にし、disposalSearchClearFieldSelectors の12項目をクリア・disabled化する。change ハンドラも存在する。一方 `#admin_stock_history_stock_change_reason` は配列にも applyDisposalSearchMode() にもなく、src/Eccube/Form/Type/Admin/StockHistoryType.php の stock_change_reason は通常の TextareaType のままである。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 487,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "同HTMLを data-excel-ref「0202:在庫履歴検索一覧(検索結果)!AG160」と「承認待ち」で検索し、11175行の Excel正本 src-cell に「承認を押下した作業者」「在庫編集承認IDがあり、承認者の登録がない場合、“承認待ち”」「承認行為が発生しなかったデータは“-”」の3状態を確認した。該当箇所は function-design-embed 開始11267行より前。sheet-23 のレイアウト画像群も展開して目視し、右端の承認日・承認者列に承認者名または「-」の表示例があることを確認した。",
+      "reason": "Excel正本が3状態を直接規定するため SPEC_BACKED は妥当。現実装の表示式は承認者オブジェクトの有無だけで名または「-」を選ぶ2状態であり、承認IDあり・承認者なしを「承認待ち」にする分岐はない。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Resource/template/admin/Stock/history.twig の結果行は承認日を `Stock.approvalAt ? ... : '-'`、承認者を `Stock.approvalMember ? Stock.approvalMember : '-'` と表示する。DtbStockHistory は approvalAt と ApprovalMember を持つが、テンプレートには在庫編集承認IDまたは未承認状態を判定して「承認待ち」を出す条件がない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 498,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "同HTMLを data-excel-ref「0202:欠品履歴検索一覧(検索結果)!AG72」と「商品名を押下」で検索し、11666行の Excel正本 src-cell に「商品名を押下すると、押下した商品在庫の在庫編集画面を別タブで表示」を確認した。該当箇所は function-design-embed 開始11748行より前。sheet-25 のレイアウト画像（B8、1657x670）も展開して目視し、商品名が青いリンク表示になっていることを確認した。",
+      "reason": "正本の項目説明とレイアウト画像がともに商品名リンクを支持するため SPEC_BACKED は妥当。現実装の商品名セルは単なる Twig 出力で、在庫編集URLも target=\"_blank\" もない。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Resource/template/admin/Stock/history.twig の検索結果行は `<td class=\"align-top fixed-cell-col2\">{{ productSub.name }}</td>`。同じ行の登録元IDには a タグと target=\"_blank\" があるが、商品名には適用されていない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 506,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "excel_to_html/output 全体を「直近」「同じファイル名」「アップロードされたファイル名」「同一ファイル名」で検索した。0202正本領域では12240行の src-cell「カスタマイズ要件に記載の内容以外は現行踏襲とする。」のみで、具体的な同名判定・1か月・文言は見つからなかった。具体文は12489行と12542行にあるが、function-design-embed:start（12447行）から end（12562行）の内側で正本ではない。functions/pf-eccube3/m04-21_admin_stock_stock_csv_import.md:102-105、旧 pf-eccube3 の ProductCsvController.php と message.ja.yml は実際に開いて確認した。",
+      "reason": "Excel正本は現行踏襲を一般的に指示するだけで、指摘の具体値はリバース詳細設計と旧実装から得られるため LEGACY_BACKED は妥当。旧 pf-eccube3 の ProductCsvController は getRecentCsvImportHistory() が真なら `admin.csv.error.upload.duplicate` を表示して中止し、Repository の HISTORY_PERIOD は `-1 month`、message.ja.yml の文言も一致する。新実装ではこの照会が在庫変更CSV経路に接続されていない。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/Admin/Stock/StockChangeCsvController.php のコンストラクタに DtbCsvImportHistoryRepository はなく、CSV取込メソッドはファイル取得後に countCsvRows の上限判定を行い、そのまま StockChangeCsvImporter::import() へ進む。src/Eccube/Repository/DtbCsvImportHistoryRepository.php に getRecentCsvImportHistory() の定義はあるが、src 配下で呼出しは見つからず、messages.ja.yaml に「直近でアップロードされたファイル名です。ファイルを確認してください。」もない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 522,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "同HTMLを data-excel-ref「0202:在庫振替CSV登録!E53」と「csv以外のファイル」で検索し、12973行の Excel正本 src-cell に「アップロードされたファイルがcsv以外のファイルの場合」を登録処理実行時のエラーとして確認した。該当箇所は直前の function-design-embed:end 12921行と次の start 13059行の間。",
+      "reason": "非CSVをエラーにする要求がExcel正本に直接あるため SPEC_BACKED は妥当。現実装は File 制約でサイズだけを検査し、拡張子・MIMEをCSVに限定しない。CsvImporter も tsv だけ区切りを切替え、それ以外の拡張子をカンマ区切りとして読むため、CSV内容を持つ .txt 等を拡張子で拒否できない。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Form/Type/Admin/StockTransferCsvImportType.php の import_file は Assert\\NotBlank と Assert\\File(maxSize) のみ。src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php の importStockTransferCsv() は isValid、null、行数、店舗権限の後に importer へ渡し、拡張子/MIME判定を行わない。src/Eccube/Service/Csv/Importer/CsvImporter.php は `tsv` ならタブ、それ以外は通常のCSV区切りとして処理する。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 524,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "同HTMLを data-excel-ref「0202:在庫振替CSV登録!E64」「0202:在庫振替CSV登録!E65」と「まったく同一の行が複数」で検索し、12983-12984行の Excel正本 src-cell に、振替元コード単独の重複は許容する一方、振替元商品と振替先商品が同一の行の複数存在はエラーとする記述を確認した。該当箇所は function-design-embed:end 12921行と次の start 13059行の間。",
+      "reason": "重複可否がExcel正本で明確に区別されているため SPEC_BACKED は妥当。現実装は行ごとに商品存在と点数だけを検証し、既出の振替元・振替先ペアを保持しない。getRowValidators() も空であり、同一ペアの複数行をエラーにできない。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Service/Csv/Importer/Event/StockTransferCsvImportHandler.php の onValidateRow() は validateProductExists() と validateTransferQuantity() のみ。onReadRow() は fromProductCode/toProductCode を読み明細・履歴・在庫更新を行うが既出ペア集合を持たず、getRowValidators() は `return [];`。同ファイルと StockMoveTransfer 拡張、Validator 配下に当該ペア重複検証は見つからない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 531,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "同HTMLを data-excel-ref「0202:在庫結合CSV登録!E43」と「登録および承認申請を行う」で検索し、13715行の Excel正本 src-cell に実在することを確認した。該当箇所は function-design-embed:end 13665行と次の start 13811行の間。",
+      "reason": "CSV取込で登録と承認申請を行う要求がExcel正本に直接あるため SPEC_BACKED は妥当。現実装のCSV経路は StockJoinRegisterAction と StockJoinMoveToShortageEntryAction だけを使い、StockJoinApplyApprovalAction は別の StockJoinController::applyApproval() からのみ呼ばれる。したがってCSV取込内の承認申請は今も行われない。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php の listJoinCsvImport() は StockJoinListCsvImportHandler に stockJoinRegisterAction と stockJoinMoveToShortageEntryAction を渡す。src/Eccube/Service/Csv/Importer/Event/StockJoinListCsvImportHandler.php は登録後に StockJoinMoveToShortageEntryAction::handle() まで進め、成功文言は messages.ja.yaml の「%count% 件の結合を登録し、欠品入力まで進めました。」。StockJoinApplyApprovalAction は src/Eccube/Controller/Admin/Stock/StockJoinController.php の applyApproval() にのみ接続されている。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    }
+  ]
+}

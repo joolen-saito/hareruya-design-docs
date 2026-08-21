@@ -1,0 +1,133 @@
+# sheet-4 ポップアップ用カード情報取得 (HTML行 1139-1270 / 画像 0枚)
+
+ポップアップ用カード情報取得
+ドキュメント名
+商品管理API機能
+セクション
+—
+プロジェクト名
+サイトリニューアル
+作成者
+高久
+作成日
+2025-08-06
+更新者
+高久
+更新日
+2025-09-17
+機能No
+A02-02
+機能名
+ポップアップ用カード情報取得
+概要
+記事内表示ポップアップ用カード情報取得
+処理概要（★はカスタマイズ項目）
+GET　POST　PUT　DELETE　PATCH　OPTIONS　HEAD　有　無　〇
+エンドポイントURL
+/api/popup/card/{言語コード}/{カードID}
+プロトコル　HTTP　メソッド　GET　認証の有無　無　認証方式　無　リクエスト書式　クエリ　レスポンス書式　JSON
+カスタマイズ説明
+通販・記事画面内にあるカード画像の上にマウスカーソルを置いたときポップアップ表示する商品情報をJSON形式で出力する
+機能仕様処理概要（★はカスタマイズ項目）
+・言語・カードIDを元に商品ページURLを含む商品情報をJSON出力する。
+・カード画像にマウスを置いた際に、AJAX(Javascript)を使用しEC-CUBE側のAPIへアクセスが行われ
+EC-CUBEサーバを経由して間接的にAPIサーバにアクセスする
+(外部からAPIサーバに直接アクセスはできない)
+・EC-CUBE側通信URL例
+https://www.hareruyamtg.com/ja/goods_api/get_goods?card_id=22&lang=jp
+※ langはEC-CUBEサーバURLではjpで表記する(EC-CUBEサーバ→APIサーバ通信時にjaに差し替えられる)
+リクエストパラメータ
+項目名	型	必須	最大文字数
+または最大値	入力例	備考
+言語コード	文字型	〇	2	ja	'ja'もしくは'en' 省略時:'en'
+カードID	数値(整数)	〇		123456
+リクエストパラメータサンプル
+/api/popup/card/ja/22
+ステータスコード
+コード　説明
+200　正常
+404　該当データがない場合
+レスポンスデータ
+名前	型	説明
+productId	数値(整数)	商品ID
+name	文字型	商品名
+productClassId	数値(整数)	商品規格ID
+price01	数値(整数)	(未使用)
+price02	数値(整数)	販売価格
+stock	数値(整数)	在庫数
+nameEn	文字型	商品名(英語)
+subFileName	文字型	サブ画像
+fileName	文字型	画像
+code	文字型	言語コード
+conditionCode	文字型	状態
+foilFlg	文字型	Foilフラグ
+weeklySold	数値(整数)	週間販売数
+productUrl	文字型	商品詳細URL
+レスポンスデータサンプル
+{
+"productId": 14357,
+"name": "《生真面目な補充兵/Solemn Recruit》[AER] 白R",
+"productClassId": 106105,
+"price01": null,
+"price02": "50",
+"stock": "17",
+"nameEn": "《Solemn Recruit》 [AER]",
+"subFileName": "img/goods/L/AER/jp/22_jpn.jpg",
+"fileName": "img/goods/L/AER/jp/22_jpn.jpg",
+"code": "JP",
+"conditionCode": "NM",
+"beltUrl": null,
+"weeklySold": "1",
+"productUrl": "https://www.hareruyamtg.com/ja/products/detail/14357"
+}
+Source:
+functions/pf-api/a02-02_api_product_popup_card.md
+現行仕様
+A02-02 ポップアップ用カード情報取得 / API 商品管理 — ポップアップ用カード情報取得
+業務ロジック
+取得の対象
+指定されたカードID・言語・フォイル有無・価格の条件に対応する商品規格を1件取得する。該当が無いときはコード404と「Not Found」を返す。
+並びの決め方
+指定	並び
+フォイル有無に真値を指定	フォイル区分の降順
+フォイル有無に偽値を指定	フォイル区分の昇順
+フォイル有無が未指定	非フォイルを優先する
+価格に high を指定	販売価格の降順
+価格にそれ以外の値を指定	販売価格の昇順
+価格が未指定	価格では並べ替えない
+応答の値
+取得時点の値をそのまま返し、金額・税・ポイント・在庫数量の再計算や丸めは行わない。表示用の加工は呼び出し元の設計に委ねる。
+エラー時の扱い
+事象	扱い
+該当する商品規格が無い	コード404と「Not Found」を含むJSONを返す
+入出力
+種類	内容
+入力	カードID、言語、フォイル有無（任意）、価格の並び指定（任意）
+成功時出力	HTTP 200。条件に合致する商品規格を1件返す
+失敗時出力	HTTP 404。該当する商品規格が無いとき
+入出力: リクエスト
+パラメータ	位置	型	必須／任意	説明
+lang	パス	string	必須	言語区分。jpまたはenを想定し、言語の優先順の判定に用いる
+cardId	パス	integer	必須	取得対象のカードID
+foil_flg	クエリ	string	任意	フォイル優先の指定。フォイル区分の並び順に反映する
+price	クエリ	string	任意	価格の並び指定
+入出力: 応答フィールド
+フィールド	型	説明
+productId	integer	商品ID
+name	string	商品名
+productClassId	integer	商品規格ID
+price01	string	通常価格。小数を持つ値のため数値文字列で返す
+price02	string	販売価格。小数を持つ値のため数値文字列で返す
+stock	string	在庫数。小数を持つ値のため数値文字列で返す
+nameEn	string	英語商品名
+subFileName	string	商品規格画像のファイル名。該当が無いときはnull
+fileName	string	商品画像のファイル名。該当が無いときはnull
+code	string	言語コード
+conditionCode	string	カードコンディションコード
+beltUrl	string	帯リンクのURL。該当が無いときはnull
+weeklySold	string	週間販売数。合計した結果のため数値文字列で返す
+入出力: 永続化
+本機能はデータを更新しない。
+リニューアル後の仕様
+表示メッセージ
+この機能は画面を持たないためメッセージを扱わない。

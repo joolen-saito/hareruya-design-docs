@@ -1,0 +1,149 @@
+{
+  "packetId": "rc_02",
+  "results": [
+    {
+      "rowId": 18,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0502 sheet-7 を `strageCodeId` / `storageCodeId` で検索。Excel正本の src-cell 0502:更新商品規格取得!B57（HTML:1869）に `result.strageCodeId`、同!C84（HTML:1898）に `\"strageCodeId\": 1449` が実在した。リバース詳細設計開始はHTML:1947であり、両引用はその外側。",
+      "reason": "Excel正本は応答キーを一貫して誤綴りの `strageCodeId` としている。旧pf-apiの DtbProductClassRepository::findByUpdateDate 相当のSELECTも `storageCode.id AS strageCodeId` で同じ外部契約を返す。現実装は別綴りをそのままJSON化するため反証できない。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Repository/ProductRepository.php の findProductClassesByUpdateDate() は:2233で `sc.id AS storageCodeId`、:2272で結果キーを `storageCodeId` に割り当てる。src/Eccube/Controller/App/ProductController.php の getUpdatedProductClasses() :232-237は結果をキー変換せず `result` に返す。src配下の対象API経路に `strageCodeId` は無い。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 19,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "REFUTED",
+      "correctedClass": "SPEC_BACKED",
+      "driftVerdict": "UNSURE",
+      "checkedQuote": "0502 sheet-7 を `result.stock` / `result.price02` / `\"stock\"` / `\"price02\"` で検索。Excel正本の型表は src-cell !J52・!J53（HTML:1864-1865）で両方 `数値(整数)`、同じ正本のJSONサンプルは !C79・!C80（HTML:1893-1894）で `\"stock\": \"1\"`, `\"price02\": \"6000\"`、!C101・!C102（HTML:1915-1916）でも引用符付き文字列だった。いずれもリバース詳細設計開始HTML:1947より前。",
+      "reason": "「string は旧実装だけが根拠」という分類は誤りで、Excel正本のJSONサンプルが直接stringを示すためSPEC_BACKED。ただし同じExcel正本の型表は整数を要求しており正本内で矛盾する。現実装の整数は型表には合致しサンプルには不一致なので、どちらを優先するか決められず乖離自体はUNSUREとした。",
+      "currentImpl": "ec-cube-enterprise 現状: ProductRepository::findProductClassesByUpdateDate() は:2219-2220でstock/price02を取得し、:2267-2268で両方を `integer` にマップする。ProductController::getUpdatedProductClasses() :232-237はその配列を無変換でJSON化する。対象テスト tests/Eccube/Tests/Web/App/ProductControllerTest.php:601-620 はキー存在だけを検証し型を固定していない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 20,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0502 sheet-7 を `productClassUpdateDate` / `productUpdateDate` / `T20:20:00+09:00` で検索。Excel正本 src-cell !B62・!B63（HTML:1874-1875）は両項目を文字型として定義し、!C89・!C90（HTML:1903-1904）と!C111・!C112（HTML:1925-1926）は `2025-08-01T20:20:00+09:00` / `2025-03-06T18:34:41+09:00` を実在するサンプルとして示す。リバース詳細設計開始はHTML:1947。",
+      "reason": "正本サンプルはT区切り・UTCオフセット付きの日時を明示する。現実装はnative SQLのDB値をstringへマップするだけで、出力をサンプル形式へ正規化する処理が無い。入力側のformat('c')は応答整形ではない。",
+      "currentImpl": "ec-cube-enterprise 現状: ProductRepository::findProductClassesByUpdateDate() :2238-2239はupdate_dateを直接SELECTし、:2277-2278はstringにマップするだけ。:2281-2282の `format('c')` は検索入力パラメータ用。ProductController::getUpdatedProductClasses() :232-237にも出力日時のformat処理が無い。Entity側はProduct.php:539-540、ProductClass.php:214-215でDATETIMETZだが、native結果をDateTimeとして整形していない。",
+      "severityOpinion": "med",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 21,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0505 sheet-3 を `/order/print/direct` / `ConnectionType` / `GetRequest` / `SetResponse` で検索。Excel正本 src-cell !G22・!G23（HTML:1052,1055）に旧URLは実在するが、明示的に見出し `現状` の配下。移行後の正本は !B9（HTML:1040）で `/order/prints/{店舗ID}`、!L11（HTML:1041）でGET、!D20-!D21（HTML:1046-1047）でA05-02との分離を要求する。したがってfindingの旧URLを移行後期待値としては支持しない。",
+      "reason": "旧URL/GET+POSTはpf-api config/routes.yaml:73-80とOrderController::postPrintDirectAction()の旧挙動には存在するためLEGACY_BACKEDは正しい。ただしExcel正本では旧仕様を廃止対象の「現状」として載せており、移行後の期待値ではない。新実装側の記載事実（POST専用の別経路）は現状でも再現する。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/App/OrderController.php の orderDirectPrint() は:43で `POST /api/order/prints/direct/{base_info_id}` のみ。:48のGetRequest分岐もPOST経由でしか到達できず、旧 `GET /order/print/direct` は登録されていない。なお正本の新A05-01経路 `/order/prints/{店舗ID}` GETにも一致しない。",
+      "severityOpinion": "high",
+      "confidence": "high"
+    },
+    {
+      "rowId": 23,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0505 sheet-3 と関連sheet-5、全outputを `店頭注文番号` / `waiting_number` / `dtb_order_number` / `order_number` で検索。Excel正本は!B62-!R62（HTML:1100）に店頭注文番号欄、!E89-!E92（HTML:1129-1132）に同欄=`{$order['order_number']}`、!E109-!E112（HTML:1149-1152）に注文番号欄=`{$order['order_no']}`を示すが、`dtb_order_number.value`/`waiting_number` の印字元対応は無い。該当HTMLのsheet-3には `image-layer-img` が0件で、別途確認すべきレイアウト画像は存在しない。具体マッピングはfunction-design-embed開始HTML:1187以後の:1212/:1291のみ。関連正本0405:注文番号登録!AB72（HTML:1184）はむしろPostgreSQL移行後はdtb_order_number不要とする。",
+      "reason": "印字欄と2つの別変数はExcel正本にあるが、findingの核心である待ち番号および移行先dtb_order_number.valueという取得元は正本にない。旧pf-api OrderController::getPrintData() はDtbWaitingNumberを受注IDで引き `$waitingNumber` を店頭注文番号欄へ出すため、LEGACY_BACKEDは維持する。移行先テーブル断定は正本と衝突するが、旧待ち番号と現実装の差自体は残る。",
+      "currentImpl": "ec-cube-enterprise 現状: OrderRepository::getPrintOrderListMainShop()/getDirectPrintOrderList() はorder_numberだけを取得し、OrderDirectPrintAction::getPrintData() :77で `$orderNumber` を作る。:94-97の店頭注文番号欄と:114-117の注文番号欄へ同じ `$orderNumber` を出力し、待ち番号を別取得する処理は無い。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 25,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0505 sheet-3のExcel正本範囲（HTML:1017-1186）を `ConnectionType` / `GetRequest` / `SetResponse` / `応答` で確認。!D20-!D21（HTML:1046-1047）は共通ConnectionType方式を廃してA05-02と分離する説明で、想定外値の応答契約は無い。`（応答なし）` と `応答を組み立てず本文を返さない` はfunction-design-embed開始HTML:1187後の:1246にのみ実在した。",
+      "reason": "期待値はExcel正本ではなく、else/Response生成を持たない旧pf-api OrderController::postPrintDirectAction()から起こした挙動であるためLEGACY_BACKEDは正しい。現実装は想定外値に明示的な400応答を返す状態のまま。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/App/OrderController.php の orderDirectPrint() :79-84は想定外ConnectionTypeに対して空callbackのStreamedResponseを作り、HTTP_BAD_REQUESTと `text/plain; charset=utf-8` を設定して返す。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 26,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0505 sheet-3および全outputを `未印刷の注文データ` / `スムーズ店頭受取` / `ブラウザ印刷フラグ` / `最大10件` / `confirm_date` で検索。Excel正本 !E34（HTML:1065）は「店舗IDからその店舗の未印刷の注文データを抽出」とだけ要求し、!R68（HTML:1106）はスムーズ店頭受取時の表示文言を述べる。列挙された抽出条件と最大10件はfunction-design-embed開始HTML:1187後の:1228等にしかまとまって存在しない。",
+      "reason": "詳細抽出条件は旧pf-api DtbOrderRepository::getPrintOrderList()のOTC、SMOOTH_OTC、browserPrintFlgのOR条件とsetMaxResults(10)に由来するためLEGACY_BACKEDは正しい。現実装の本店/支店分岐と支店側SMOOTH_OTC欠落は現在も残る。",
+      "currentImpl": "ec-cube-enterprise 現状: OrderDirectPrintAction::handle() :44-48はisMainShop()でgetPrintOrderListMainShop()/getDirectPrintOrderList()を分ける。OrderRepository::getPrintOrderListMainShop() :1631-1642にはsmoothOtc条件があるが、getDirectPrintOrderList() :1665-1708はOTC+NEW+smaregi_codeとbrowser_print_flgの2 UNIONだけでsmoothOtc分岐を持たない。",
+      "severityOpinion": "high",
+      "confidence": "high"
+    },
+    {
+      "rowId": 27,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0505 sheet-4のExcel正本範囲（HTML:1313-1420）を `ピック中` / `確定日時` / `confirm_date` / `picking_date` / `pick_finish_date` で確認。正本!AG4（HTML:1318付近）と!C29（HTML:1345）はステータスをピック中にする要求を持つが、3日時列の設定要求は無い。`補助情報の確定日時` はfunction-design-embed開始HTML:1187後の:1230、3列の記述は:1291にのみ実在する。",
+      "reason": "全店舗でconfirm_dateを設定する期待は旧pf-api OrderController::updatePrintedOrderStatus()の `$orderSub->setConfirmDate(new DateTime())` に由来し、Excel正本は日時列を指定しないためLEGACY_BACKEDは正しい。現実装はステータス更新を行うが、日時は店舗種別で分岐したまま。",
+      "currentImpl": "ec-cube-enterprise 現状: UpdatePrintedOrderStatusAction::handle() :87-98はbrowser_print_flgが偽ならPICKINGへ更新し、本店は:93 `setConfirmDate()`、支店は:96 `setPickingDate()`。`setPickFinishDate()`呼出しはこの処理に無く、支店ではconfirm_dateを設定しない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 31,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0505 sheet-3を `バーコード` / `XML形式` / `スマレジの商品コード` / `何もしない` で検索。Excel正本 src-cell !E31（HTML:1063）に「XML形式にする前に…スマレジの商品コードが存在するかどうか確認」、!E32（HTML:1064）に「存在しない場合…何もしない」、!E130（HTML:1170）にバーコード値 `{$order['smaregi_code']}` が実在する。すべてfunction-design-embed開始HTML:1187より前。",
+      "reason": "Excel正本が全件のXML化前チェックを明示する。現実装は一部抽出分岐にだけIS NOT NULLを置き、handle()/getPrintData()での全件事前確認を持たないため反証できない。",
+      "currentImpl": "ec-cube-enterprise 現状: OrderRepository::getPrintOrderListMainShop() :1627-1643ではsmaregi_code必須はsmoothOtc分岐だけで、OTC+NEWとbrowser_print_flg分岐には無い。getDirectPrintOrderList() :1682-1686のOTC分岐には追加済みだが、:1703-1705のbrowser_print_flg分岐には無い。OrderDirectPrintAction::handle() :54-58は全取得行をそのままXML化し、getPrintData() :78,:135は空値も文字列化してbarcodeへ入れる。",
+      "severityOpinion": "high",
+      "confidence": "high"
+    },
+    {
+      "rowId": 33,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0505 sheet-3のExcel正本範囲（HTML:1017-1186）を `ConnectionType` / `応答を組み立てない` / `GetRequest` / `SetResponse` で検索。正本!D20-!D21（HTML:1046-1047）は旧共通分岐からエンドポイントを分離する要求で、想定外値時の契約は記載しない。完全一致の `応答を組み立てない` はfunction-design-embed開始HTML:1187後の:1246/:1283/:1300にのみ実在した。",
+      "reason": "rowId 25と同一契約の重複。旧pf-apiはGetRequest/SetResponse以外の分岐とResponse返却を持たないためLEGACY_BACKEDは正しい。現実装の400応答もそのまま再現する。",
+      "currentImpl": "ec-cube-enterprise 現状: OrderController::orderDirectPrint() :79-84は想定外ConnectionTypeにHTTP 400、Content-Type `text/plain; charset=utf-8` のStreamedResponseを明示的に構築して返す。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 34,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0505 sheet-4を `/order/print/direct` / `/order/prints/status/printed` / `ConnectionType` / `GET` / `POST` で検索。A05-02 Excel正本 src-cell !B9（HTML:1325）は `/order/prints/status/printed`、!L11（HTML:1326）はPOST、!C16（HTML:1328）は旧ConnectionType共通メソッドからの分離を要求する。findingのGET/POST `/order/print/direct` は正本期待ではなく、function-design-embed開始HTML:1421後と旧pf-api routes.yamlに由来する。",
+      "reason": "findingに掲げた経路は旧pf-apiの実物にはあるためLEGACY_BACKEDは正しいが、新A05-02の設計期待値ではない。現在も旧GET経路は無く、POST専用combined routeだけという実装事実は再現する。さらに正本の新専用経路も未登録。",
+      "currentImpl": "ec-cube-enterprise 現状: OrderController::orderDirectPrint() :43は `POST /api/order/prints/direct/{base_info_id}` のみを登録する。ソース全体を `order/prints/status/printed` と `order/print/direct` で検索しても代替ルートは無く、A05-02正本の専用POST経路も存在しない。",
+      "severityOpinion": "high",
+      "confidence": "high"
+    },
+    {
+      "rowId": 35,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0505 sheet-4のExcel正本範囲（HTML:1313-1420）を `印刷対象` / `スムーズ店頭受取` / `ブラウザ印刷フラグ` / `最大10件` で検索したが、A05-02は受信XMLから受注IDを抽出してピック中へ更新する仕様（!C27-!C30、HTML:1344-1346）で、GetRequestの抽出条件を持たない。列挙条件はfunction-design-embed開始HTML:1421後のA05-02リバース文書、またはA05-01 embedにのみ存在する。A05-01正本!E34（HTML:1065）は上位要件「未印刷の注文データを抽出」まで。",
+      "reason": "A05-02 findingへA05-01の旧GetRequest要件が重複混入しているが、条件自体は旧pf-api DtbOrderRepository::getPrintOrderList()に実在するためLEGACY_BACKEDは維持する。現在の支店側検索にsmoothOtc分岐が無い事実も残る。",
+      "currentImpl": "ec-cube-enterprise 現状: OrderDirectPrintAction::handle() :44-48は本店/支店で取得メソッドを分ける。OrderRepository::getPrintOrderListMainShop() :1631-1642にはsmoothOtc条件がある一方、getDirectPrintOrderList() :1665-1708はOTC+NEW+smaregi_codeとbrowser_print_flgだけでsmoothOtcを抽出しない。",
+      "severityOpinion": "high",
+      "confidence": "high"
+    }
+  ]
+}

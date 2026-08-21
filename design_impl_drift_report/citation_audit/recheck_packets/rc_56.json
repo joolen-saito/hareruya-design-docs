@@ -1,0 +1,343 @@
+{
+ "packetId": "rc_56",
+ "note": "rowId は drift_findings_list_final.tsv の行番号(ヘッダ除く1始まり)。mech は機械検証フラグ(手掛かりであって正解ではない)。",
+ "count": 12,
+ "findings": [
+  {
+   "rowId": 984,
+   "機能No": "M15-06",
+   "機能名": "M15-06 デッキ登録CSV",
+   "ドメイン": "m15",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "成功時フラッシュ鍵は admin.register.complete、ログは「デッキCSV登録開始」「デッキCSV登録完了」程度の短文を残す。",
+   "実装実態": "開始ログは admin.deck.csv.import.start、完了ログは admin.deck.csv.import.complete。成功フラッシュは admin.common.csv_upload_complete（表示文言: CSVファイルをアップロードしました）。",
+   "差分内容": "設計の成功メッセージキーおよびログ短文と実装が一致しない。admin.register.complete/デッキCSV登録開始/デッキCSV登録完了 を DeckCsvController・messages.*.yaml で再検索したが、Deck CSV 経路では確認できなかった。",
+   "実装参照": "src/Eccube/Controller/Admin/Deck/DeckCsvController.php:100; src/Eccube/Controller/Admin/Deck/DeckCsvController.php:137; src/Eccube/Controller/Admin/Deck/DeckCsvController.php:138; src/Eccube/Resource/locale/messages.ja.yaml:1570",
+   "設計書参照": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-7:2628,2680",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "Excel正本範囲 hareruya-design-docs/excel_to_html/output/0212_基本設計仕様書(デッキ管理).html:2710-2842 に成功フラッシュ鍵やログ短文はない。具体値はリバース文書 hareruya-design-docs/functions/pf-eccube3/m15-06_admin_deck_deck_csv_import.md:94 の `admin.register.complete`・「デッキCSV登録完了」と同:277 の「デッキCSV登録開始」「デッキCSV登録完了」にのみある。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/DeckCsvController.php:73 は `log_info('デッキCSV登録開始')`、同:103-104 は `log_info('デッキCSV登録完了')` と `$app->addSuccess('admin.register.complete', 'admin')`。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Controller/Admin/Deck/DeckCsvController.php:110 は `log_info('admin.deck.csv.import.start')`、同:147,157 は `log_info('admin.deck.csv.import.complete')` と `addSuccess('admin.common.csv_upload_complete', 'admin')`。ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:1606 は後者を「CSVファイルをアップロードしました」と定義する。",
+   "根拠検証メモ": "フラッシュ鍵・ログ文字列の具体値はExcel正本ではなく旧実装由来。",
+   "対応の根拠(現develop)": "`src/Eccube/Controller/Admin/Deck/DeckCsvController.php:110` `log_info('admin.deck.csv.import.start');`、同:147 `log_info('admin.deck.csv.import.complete');`、同:157 `$this->addSuccess('admin.common.csv_upload_complete', 'admin');` で、`src/Eccube/Resource/locale/messages.ja.yaml:1606` `admin.common.csv_upload_complete: CSVファイルをアップロードしました`。`admin.register.complete` は同ファイル:1970 に `登録が完了しました。` として存在するが Deck CSV 経路からは使われず、「デッキCSV登録開始/完了」の短文ログも grep で該当なし。監査時点と同じ。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EMBED_ONLY",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Resource/locale/messages.ja.yaml"
+    ],
+    "quoteDetail": [
+     "admin.register.complete",
+     "デッキCSV登録完了",
+     "デッキCSV登録開始"
+    ]
+   }
+  },
+  {
+   "rowId": 985,
+   "機能No": "M15-08",
+   "機能名": "M15-08 アーキタイプ管理(検索結果)",
+   "ドメイン": "m15",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "各アーキタイプは「日本語名とフォーマット日本語名を組み合わせた文字列」（エンティティの getNameWithFormatNameJp）として表示される。",
+   "実装実態": "admin_search_deck[archetypes][] の EntityType は choice_label に 'nameJp' を指定しており、フォーマット日本語名を含めない。",
+   "差分内容": "探索範囲: SearchDeckType.php、DtbArchetype エンティティ、Deck/index.twig、翻訳キー。設計は getNameWithFormatNameJp 相当の複合ラベルを要求するが、実装はアーキタイプ日本語名のみを選択肢ラベルにしている。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/SearchDeckType.php:84",
+   "設計書参照": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-10:3165",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "Excel正本 hareruya-design-docs/excel_to_html/output/0212_基本設計仕様書(デッキ管理).html:3294 は現行踏襲とするが、`getNameWithFormatNameJp` やアーキタイプ選択肢の複合ラベルは正本範囲（同:3265-3359）に具体記載がない。具体値はリバース文書 functions/pf-eccube3/m15-08_admin_deck_deck_archetype_search.md:99 の「日本語名とフォーマット日本語名を組み合わせた文字列」にのみある。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/Deck/SearchDeckType.php:64-68 はarchetypesの `choice_label` で `$archetype->getNameWithFormatNameJp()` を返す。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/SearchDeckType.php:84-90 はarchetypesの `choice_label` を `'nameJp'` とし、フォーマット名を含めない。",
+   "根拠検証メモ": "具体的な複合ラベル期待値はExcel正本ではなく旧実装由来。",
+   "対応の根拠(現develop)": "`src/Eccube/Form/Type/Admin/SearchDeckType.php:86` は現 develop でも `'choice_label' => 'nameJp',` のまま。`getNameWithFormatNameJp` を src 配下で全文検索すると `src/Eccube/Entity/DtbArchetype.php:309` `public function getNameWithFormatNameJp(): string` の定義 1 件のみで、フォーム・テンプレートからの呼び出しは存在しない。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EMBED_ONLY",
+    "stale": "UNCHANGED",
+    "quoteDetail": [
+     "getNameWithFormatNameJp",
+     "日本語名とフォーマット日本語名を組み合わせた文字列"
+    ]
+   }
+  },
+  {
+   "rowId": 986,
+   "機能No": "M15-08",
+   "機能名": "M15-08 アーキタイプ管理(検索結果)",
+   "ドメイン": "m15",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "m15-01_admin_deck_deck_search … GET, POST … /{admin_route}/deck/search/{page_no}（page_no は正の整数（ルートの assert ^[1-9][0-9]*$）。検索実行・一覧・ソート・ページ送り・表示件数変更、GET によるセッションからの検索条件復元。フォームの action は page_no=1 固定。）",
+   "実装実態": "admin_deck_search の Route requirements は ['page_no' => '\\d+'] で、0 もルートマッチする。",
+   "差分内容": "設計は ^[1-9][0-9]*$ により 1 以上の整数のみ許可する外部契約だが、実装は \\d+ で 0 を許容する。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Deck/DeckController.php:75",
+   "設計書参照": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-10:3227",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "Excel正本 hareruya-design-docs/excel_to_html/output/0212_基本設計仕様書(デッキ管理).html:3294,3513 はM15-08の未変更部分を「現行踏襲」とするが、Route名、`/deck/search/{page_no}`、正規表現 `^[1-9][0-9]*$` は正本セルにない。具体契約はリバース文書 functions/pf-eccube3/m15-08_admin_deck_deck_archetype_search.md:274 にのみある。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/DeckServiceProvider.php:16-19 は `/deck/search/{page_no}` をmatchし、`->assert('page_no', '^[1-9][0-9]*$')`、Route名 `admin_deck_search` とする。findingの接頭辞付きRoute名は旧コードにはなく、実名は `admin_deck_search`。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Controller/Admin/Deck/DeckController.php:76-79 は同パス・GET/POST・`admin_deck_search` を実装するが、requirementsは `['page_no' => '\\d+']` のため0もRouteに一致する。",
+   "根拠検証メモ": "正の整数制約は旧実装で裏付けられる。finding記載のRoute名 `m15-01_admin_deck_deck_search` はリバース文書上の機能IDで、旧コードの実Route名は `admin_deck_search`。",
+   "対応の根拠(現develop)": "`src/Eccube/Controller/Admin/Deck/DeckController.php:77` は現 develop でも `#[Route('/%eccube_admin_route%/deck/search/{page_no}', name: 'admin_deck_search', requirements: ['page_no' => '\\d+'], methods: ['GET', 'POST'])]` であり、設計の assert `^[1-9][0-9]*$` に是正されておらず 0 もマッチする。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EMBED_ONLY",
+    "stale": "UNCHANGED",
+    "quoteDetail": [
+     "^[1-9][0-9]*$"
+    ]
+   }
+  },
+  {
+   "rowId": 987,
+   "機能No": "M15-08",
+   "機能名": "M15-08 アーキタイプ管理(検索入力)",
+   "ドメイン": "m15",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "フォーマット・色変更時、deck-search.js の archetypeFilter が #admin_search_deck_archetypes に allowClear: true 付き select2 を付与し、format_id_{id}/color_id_{id} クラスで option を disabled/有効化・並び替え・再初期化する。",
+   "実装実態": "デッキ一覧テンプレートは select2.min.js を読み込み、.select2-select に width と placeholder のみで select2 を初期化している。SearchDeckType の archetypes は class=select2-select のみで、format_id_* / color_id_* option class 生成もない。",
+   "差分内容": "deck-search.js、archetypeFilter、allowClear、format_id_、color_id_ を src/Eccube と html 配下で再検索したが、M15-08/Deck 検索向けの連動実装は見つからず、汎用 select2 初期化だけだった。",
+   "実装参照": "src/Eccube/Resource/template/admin/Deck/index.twig:52,57,62,64 / src/Eccube/Form/Type/Admin/SearchDeckType.php:84",
+   "設計書参照": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-9:3150,3156",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "Excel正本 hareruya-design-docs/excel_to_html/output/0212_基本設計仕様書(デッキ管理).html:3294 は「カスタマイズ要件に記載の内容以外は現行踏襲」とするだけで、`deck-search.js` のoption disabled制御やclass名は記載しない。具体記述はリバース文書 functions/pf-eccube3/m15-08_admin_deck_deck_archetype_search.md:64-67 にのみある。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/assets/js/deck-search.js:50-79 の `archetypeFilter()` は `.format_id_` / `.color_id_` で候補をdisabled/有効化・先頭移動しallowClear付きselect2を再設定し、同:84-89 はformat/color変更時に呼ぶ。pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/Deck/SearchDeckType.php:69-75 は必要なoption classを生成する。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Deck/index.twig:51-64 はselect2の汎用初期化のみ、ec-cube-enterprise/src/Eccube/Form/Type/Admin/SearchDeckType.php:84-91 はoption用 `choice_attr` を持たない。`deck-search.js|archetypeFilter|format_id_|color_id_|allowClear` は現行Deck検索経路に存在しない。",
+   "根拠検証メモ": "rowId 1192と同じ旧実装由来の重複指摘。",
+   "対応の根拠(現develop)": "`src/Eccube/Resource/template/admin/Deck/index.twig:52` `<script src=\"{{ asset('assets/js/select2.min.js', 'admin') }}\" nonce=\"{{ csp_nonce }}\"></script>` と `:57-64` の `opts = { width: '100%' }` / placeholder のみの初期化は監査時点から変わらず、`:257` は `{{ form_widget(searchForm.archetypes) }}` を素で出力するのみ。`src/Eccube/Form/Type/Admin/SearchDeckType.php:84-88` にも format_id_* / color_id_* の option class 生成はなく、archetypeFilter・allowClear を含む連動実装は src・html 配下に見つからない。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "UNCHANGED"
+   }
+  },
+  {
+   "rowId": 988,
+   "機能No": "M15-08",
+   "機能名": "M15-08 アーキタイプ管理(検索入力)",
+   "ドメイン": "m15",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "フォーマット・色を変えてアーキタイプを選び検索する入口は POST /{admin_route}/deck/search/1 で、フォーム action は page_no=1 固定。コード探索上の検索ルート page_no は正の整数 assert ^[1-9][0-9]*$。",
+   "実装実態": "検索フォーム action は url('admin_deck_list') で POST /{admin_route}/deck に送信する。検索ルートは name='admin_deck_search'、requirements は '\\d+' で 0 も許容する。",
+   "差分内容": "admin_deck_search と m15-01_admin_deck_deck_search の別名、/deck/search/{page_no}、フォーム action を再検索したが、設計どおり POST /deck/search/1 固定で送る実装は確認できない。",
+   "実装参照": "src/Eccube/Resource/template/admin/Deck/index.twig:230 / src/Eccube/Controller/Admin/Deck/DeckController.php:74,75",
+   "設計書参照": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-9:3147,3227",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0212_基本設計仕様書(デッキ管理).html:3296 は「条件を指定して、登録されているアーキタイプの検索ができる」、同:3316 は「入力項目一覧で設定された値をもとに検索を実行する」とだけ記載する。正本範囲 sheet-9:3249-3359 に POST `/deck/search/1`、page_no=1、assert `^[1-9][0-9]*$` の具体値はない。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/DeckServiceProvider.php:17-19 は `$app->match('/'.$app['config']['admin_route'].'/deck/search/{page_no}', ...)`、`->assert('page_no', '^[1-9][0-9]*$')`、`->bind('admin_deck_search')`。pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Deck/deck.twig:35 は `<form ... method=\"post\" action=\"{{ url('admin_deck_search', {'page_no': 1}) }}\">` と実装する。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Controller/Admin/Deck/DeckController.php:76-79 は `/deck` と `/deck/search/{page_no}` を定義するが requirements は `['page_no' => '\\d+']`。ec-cube-enterprise/src/Eccube/Resource/template/admin/Deck/index.twig:230 は `form_start(searchForm, { 'action': url('admin_deck_list'), 'method': 'POST' ... })` で `/deck` へ送信する。",
+   "根拠検証メモ": "具体的URL・page_no固定・正整数制約の根拠はExcel正本ではなくpf-eccube3。",
+   "対応の根拠(現develop)": "`src/Eccube/Resource/template/admin/Deck/index.twig:230` は現 develop でも `{{ form_start(searchForm, { 'action': url('admin_deck_list'), 'method': 'POST', 'attr': { 'id': 'admin_search_deck' } }) }}` で、POST 先は `/{admin_route}/deck`（`DeckController.php:76` `name: 'admin_deck_list'`）のまま。設計の POST /deck/search/1 固定送信にはなっておらず、検索ルート `DeckController.php:77` の requirements も `'\\d+'` のままである。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "UNCHANGED"
+   }
+  },
+  {
+   "rowId": 989,
+   "機能No": "M15-08",
+   "機能名": "M15-08 アーキタイプ管理(検索入力)",
+   "ドメイン": "m15",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "フォーム admin_search_deck がリクエストを取り込む。CSRF はこのフォーム型では無効である。",
+   "実装実態": "SearchDeckType の configureOptions は csrf_protection => true を設定している。",
+   "差分内容": "SearchDeckType と csrf_protection を再検索し、当該検索フォームの CSRF 無効化設定は見つからなかった。",
+   "実装参照": "src/Eccube/Form/Type/Admin/SearchDeckType.php:206",
+   "設計書参照": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-9:3154",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0212_基本設計仕様書(デッキ管理).html:3294 は「カスタマイズ要件に記載の内容以外は現行踏襲とする」とするだけで、正本範囲 sheet-9:3249-3359 にフォーム内部名 `admin_search_deck` や `csrf_protection=false` の記載はない。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/DeckController.php:41-44 は `$this->sessionKey = 'deck';`、`$this->formName = 'admin_search_deck';`。pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/Deck/SearchDeckType.php:21-26 は `configureOptions` で `'csrf_protection' => false` を設定する。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Controller/Admin/Deck/DeckController.php:67-70 は `$this->formName = 'admin_search_deck'` を維持する一方、ec-cube-enterprise/src/Eccube/Form/Type/Admin/SearchDeckType.php:206-211 は `'csrf_protection' => true` とする。",
+   "根拠検証メモ": "フォーム名は一致するが、CSRF無効という具体要件は旧実装由来で新実装に移植されていない。",
+   "対応の根拠(現develop)": "`src/Eccube/Form/Type/Admin/SearchDeckType.php:209` は現 develop でも `'csrf_protection' => true,` のままで、設計が求める当該検索フォームの CSRF 無効化設定は存在しない。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "UNCHANGED"
+   }
+  },
+  {
+   "rowId": 990,
+   "機能No": "M15-08",
+   "機能名": "M15-08 アーキタイプ管理(検索入力)",
+   "ドメイン": "m15",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "検索ビューデータはセッションキー admin.deck.search に保存され、ページ・ソートは admin.deck.search.page_no、admin.deck.sort、admin.deck.order、admin.deck.search.page_count が更新される。",
+   "実装実態": "SearchControllerTrait は eccube.admin.deck.search、eccube.admin.deck.search.page_no、eccube.admin.deck.sort、eccube.admin.deck.order、eccube.admin.deck.search.page_count を使用する。DeckController の POST 前処理では deck、deck.page_no も別途保存する。",
+   "差分内容": "admin.deck.search と eccube.admin.deck.search の両方、DeckController と SearchControllerTrait を再確認した結果、設計値 admin.deck.* そのものの保存処理は確認できない。",
+   "実装参照": "src/Eccube/Controller/Admin/SearchControllerTrait.php:109 / src/Eccube/Controller/Admin/Deck/DeckController.php:97",
+   "設計書参照": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-9:3154,3168,3212",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0212_基本設計仕様書(デッキ管理).html:3294 は「カスタマイズ要件に記載の内容以外は現行踏襲とする」とするが、正本範囲 sheet-9:3249-3359 に `admin.deck.search`、`.page_no`、`.sort`、`.order`、`.page_count` のセッションキーは記載されていない。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/DeckController.php:41-44 は `$this->sessionKey = 'deck'`。pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/SearchControllerTrait.php:91-99 は `admin.{$sessionkey}.search.page_count`、`.search.page_no`、`.search`、`.sort`、`.order` を組み立て、同:191-196 は `$session->set(...)` で5キーを保存する。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Controller/Admin/SearchControllerTrait.php:110-118 はキーを `eccube.admin.{$sessionkey}.*` とし、同:189-194 で保存する。さらに ec-cube-enterprise/src/Eccube/Controller/Admin/Deck/DeckController.php:104-108 は別に `$this->session->set($this->sessionKey, $viewData)` と `deck.page_no` を保存する。",
+   "根拠検証メモ": "具体的な `admin.deck.*` 契約の根拠はpf-eccube3。",
+   "対応の根拠(現develop)": "`src/Eccube/Controller/Admin/Deck/DeckController.php:67` `$this->sessionKey = 'deck';` に対し `src/Eccube/Controller/Admin/SearchControllerTrait.php:110-118` は `\"eccube.admin.{$sessionkey}.search.page_count\"` / `\".search.page_no\"` / `\".sort\"` / `\".order\"` / `\"eccube.admin.{$sessionkey}.search\"` を使用しており、設計値 `admin.deck.search` ではなく `eccube.admin.deck.search` のまま。さらに `DeckController.php:107-108` で `$this->session->set($this->sessionKey, $viewData); $this->session->set($this->sessionKey.'.page_no', $page_no);` と素の `deck` / `deck.page_no` も併存しており、監査時点と同じ状態。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "UNCHANGED"
+   }
+  },
+  {
+   "rowId": 991,
+   "機能No": "M15-08",
+   "機能名": "M15-08 アーキタイプ管理(検索入力)",
+   "ドメイン": "m15",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "アーキタイプ選択肢ラベルは、日本語名とフォーマット日本語名を組み合わせた文字列（エンティティの getNameWithFormatNameJp）として表示される。",
+   "実装実態": "SearchDeckType の archetypes は choice_label => 'nameJp' で、日本語名のみを選択肢ラベルにしている。",
+   "差分内容": "getNameWithFormatNameJp、choice_label、archetypes を再検索したが、デッキ検索フォームでフォーマット名を含むラベル指定は確認できない。",
+   "実装参照": "src/Eccube/Form/Type/Admin/SearchDeckType.php:84",
+   "設計書参照": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-9:3165",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0212_基本設計仕様書(デッキ管理).html:3309 は正本項目を「アーキタイプ」として列挙するだけで、選択肢ラベルを日本語名＋フォーマット日本語名にする記載や `getNameWithFormatNameJp` は正本範囲 sheet-9:3249-3359 にない。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/Deck/SearchDeckType.php:64-68 は archetypes の `choice_label` で `return $archetype->getNameWithFormatNameJp();`。pf-eccube3/app/Plugin/HareruyaEc/Entity/DtbArchetype.php:541-544 は `return $this->__toString() . ' ( ' . $this->getFormat()->getNameJp() . ' ) ';` と日本語フォーマット名を連結する。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/SearchDeckType.php:84-90 は archetypes に `'choice_label' => 'nameJp'` を指定し、日本語アーキタイプ名のみを表示する。",
+   "根拠検証メモ": "ラベル結合規則の直接根拠はpf-eccube3。",
+   "対応の根拠(現develop)": "`src/Eccube/Form/Type/Admin/SearchDeckType.php:84-86` の `->add('archetypes', EntityType::class, [ 'class' => DtbArchetype::class, 'choice_label' => 'nameJp',` は現 develop でも日本語名のみをラベルにしている。`getNameWithFormatNameJp` の実体は `src/Eccube/Entity/DtbArchetype.php:309` に定義されるのみで、デッキ検索フォームからは呼ばれていない。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "UNCHANGED"
+   }
+  },
+  {
+   "rowId": 992,
+   "機能No": "M15-09",
+   "機能名": "M15-09 アーキタイプ編集",
+   "ドメイン": "m15",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "新規登録送信・編集表示・更新送信・削除実行は、設計のHTTPルート名とURL/メソッドで到達する。",
+   "実装実態": "実装は新規登録を admin_archetype_new の GET/POST /archetype/new、編集/更新を admin_archetype_edit の GET/POST /archetype/{id}/edit、削除を admin_archetype_delete の POST /archetype/{id}/delete で処理している。POST /archetype は一覧検索の admin_archetype_list 側に割り当てられている。",
+   "差分内容": "設計で外部契約として示された admin_archetype_create/admin_archetype_update ルートが実装に無く、編集・更新・削除のパスおよび削除HTTPメソッドも設計値と異なる。反証検索: admin_archetype_create, admin_archetype_update, DELETE, _method を src/Eccube/Controller/Admin/Archetype, src/Eccube/Resource/template/admin/Archetype, app/config で確認。",
+   "実装参照": "src/Eccube/Controller/Admin/Archetype/ArchetypeController.php:64,137,165,179; src/Eccube/Resource/template/admin/Archetype/edit.twig:337",
+   "設計書参照": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-11:3368,3456",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0212_基本設計仕様書(デッキ管理).html:3740-3742 は「新規登録および…内容変更」「削除ができる」と機能だけを定め、正本範囲 sheet-11:3687-3832 に `admin_archetype_create/update`、URL、DELETEメソッドの具体契約はない。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/ArchetypeServiceProvider.php:24-40 は GET `/archetype/{id}`=`admin_archetype_edit`、GET `/archetype/new`=`admin_archetype_new`、POST `/archetype`=`admin_archetype_create`、POST `/archetype/{id}`=`admin_archetype_update`、DELETE `/archetype/{id}`=`admin_archetype_delete` を定義する。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Controller/Admin/Archetype/ArchetypeController.php:147-149 は GET/POST `/archetype/new`=`admin_archetype_new`、同:175-177 は GET/POST `/archetype/{id}/edit`=`admin_archetype_edit`、同:189-190 は POST `/archetype/{id}/delete`=`admin_archetype_delete` とし、旧create/updateルートを持たない。",
+   "根拠検証メモ": "具体的HTTP契約は旧実装由来。",
+   "対応の根拠(現develop)": "現 develop も監査時点と同じルート定義。`src/Eccube/Controller/Admin/Archetype/ArchetypeController.php:66` `#[Route('/%eccube_admin_route%/archetype', name: 'admin_archetype_list', methods: ['GET', 'POST'])]`、`:147` `#[Route('/%eccube_admin_route%/archetype/new', name: 'admin_archetype_new', methods: ['GET', 'POST'])]`、`:175` `#[Route('/%eccube_admin_route%/archetype/{id}/edit', name: 'admin_archetype_edit', ... methods: ['GET', 'POST'])]`、`:189` `#[Route('/%eccube_admin_route%/archetype/{id}/delete', name: 'admin_archetype_delete', ... methods: ['POST'])]`。src/ app/ 全体を `admin_archetype_create` / `admin_archetype_update` で横断検索したがヒット無し。削除フォームも `src/Eccube/Resource/template/admin/Archetype/edit.twig:337` `<form id=\"delete_form\" method=\"post\" action=\"{{ url('admin_archetype_delete', {id: Archetype.id}) }}\">` のまま（DELETEメソッド/_method 併用なし）。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "UNCHANGED"
+   }
+  },
+  {
+   "rowId": 995,
+   "機能No": "M15-09",
+   "機能名": "M15-09 アーキタイプ編集",
+   "ドメイン": "m15",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "登録成功時は成功フラッシュに登録完了メッセージキー admin.register.complete を積み、編集URLへリダイレクトする。更新も新規送信と同様の保存・フラッシュ・リダイレクトを行う。",
+   "実装実態": "保存成功時は新規・更新とも admin.common.save_complete をフラッシュに積み、admin_archetype_edit へリダイレクトする。admin.register.complete は翻訳定義に存在するが、この保存処理では使われていない。",
+   "差分内容": "設計指定の成功メッセージキーと実装のフラッシュキーが異なるため、利用者に表示される成功文言が設計と一致しない。",
+   "実装参照": "src/Eccube/Controller/Admin/Archetype/ArchetypeController.php:231,232,234; src/Eccube/Resource/locale/messages.ja.yaml:1559,1934",
+   "設計書参照": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-11:3377,3424",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0212_基本設計仕様書(デッキ管理).html:3771-3772 は登録・更新の実行とエラー表示だけを定め、成功フラッシュキー `admin.register.complete` や編集URLへのリダイレクトは正本範囲 sheet-11:3687-3832 に記載がない。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/ArchetypeController.php:114-118 は保存後 `$app->addSuccess('admin.register.complete', 'admin');` とし、`admin_archetype_edit` へリダイレクトする。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Controller/Admin/Archetype/ArchetypeController.php:275-277 は `$this->addSuccess('admin.common.save_complete', 'admin');` の後 `admin_archetype_edit` へ戻る。ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:1595 は `admin.common.save_complete: 保存しました`、同:1970 は未使用の `admin.register.complete: 登録が完了しました。`。",
+   "根拠検証メモ": "リダイレクトは満たすが、旧実装由来の成功メッセージキーは移植されていない。",
+   "対応の根拠(現develop)": "保存成功時のフラッシュは新規・更新共通で `src/Eccube/Controller/Admin/Archetype/ArchetypeController.php:275` `$this->addSuccess('admin.common.save_complete', 'admin');`、続く `:277` `return $this->redirectToRoute('admin_archetype_edit', ['id' => $Saved->getId()]);` のまま。設計指定キーは `src/Eccube/Resource/locale/messages.ja.yaml:1970` `admin.register.complete: 登録が完了しました。` として定義されているが、Archetype 保存処理からは参照されていない（src/ 内 `admin.register.complete` 使用箇所に ArchetypeController は無い）。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EMBED_ONLY",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Resource/locale/messages.ja.yaml"
+    ],
+    "quoteDetail": [
+     "admin.register.complete"
+    ]
+   }
+  },
+  {
+   "rowId": 996,
+   "機能No": "M15-09",
+   "機能名": "M15-09 アーキタイプ編集",
+   "ドメイン": "m15",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "削除確認文言は一覧では admin.confirm.delete（名称埋め込み）、詳細では admin.confirm.archetype_delete を用い、アンカーの data-message で確認ダイアログ文言を渡す。",
+   "実装実態": "一覧は form onsubmit の confirm('{{ admin.archetype.delete_confirm }}')、詳細は #btn_delete click の confirm('{{ admin.archetype.delete_confirm }}') を使う。data-message アンカーではなく、一覧・詳細とも同じ翻訳キーを使っている。",
+   "差分内容": "設計で分けられた一覧/詳細の確認文言キーと data-message 方式が実装されていない。反証検索: admin.confirm.archetype_delete, admin.confirm.delete, data-message を Archetype テンプレートと messages.*.yaml で確認。",
+   "実装参照": "src/Eccube/Resource/template/admin/Archetype/index.twig:193; src/Eccube/Resource/template/admin/Archetype/edit.twig:63",
+   "設計書参照": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-11:3371,3400",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0212_基本設計仕様書(デッキ管理).html:3773 は編集画面の削除について「確認するJSダイアログを表示」「OK押下で削除」とだけ記載し、一覧/詳細別の翻訳キーや `data-message` アンカー方式は正本範囲 sheet-11:3687-3832 にない。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Archetype/archetype.twig:157 は一覧削除を `data-method=\"delete\" data-message=\"{{ trans('admin.confirm.delete')|format(...) }}\"` とし、pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Archetype/archetype_detail.twig:132-133 は詳細削除を `data-message=\"{{ trans('admin.confirm.archetype_delete') }}\"` とする。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Archetype/index.twig:193-196 はformの `onsubmit=\"return confirm('{{ 'admin.archetype.delete_confirm'|trans... }}')\"`、ec-cube-enterprise/src/Eccube/Resource/template/admin/Archetype/edit.twig:63-67 も同じ `admin.archetype.delete_confirm` を使い、data-messageアンカー方式ではない。",
+   "根拠検証メモ": "確認ダイアログ自体は正本を満たすが、findingが要求するキー分離・DOM方式は旧実装由来で未移植。",
+   "対応の根拠(現develop)": "一覧: `src/Eccube/Resource/template/admin/Archetype/index.twig:193` `<form method=\"post\" action=\"{{ url('admin_archetype_delete', {id: Archetype.id}) }}\" onsubmit=\"return confirm('{{ 'admin.archetype.delete_confirm'|trans|e('js') }}');\">`。詳細: `src/Eccube/Resource/template/admin/Archetype/edit.twig:63-64` `$('#btn_delete').on('click', function() { if (confirm('{{ 'admin.archetype.delete_confirm'|trans|e('js') }}')) {`。両者とも同一キーで、`data-message` 属性は Archetype テンプレート内に存在せず、`admin.confirm.archetype_delete` も messages.ja.yaml に不在（定義は `src/Eccube/Resource/locale/messages.ja.yaml:4472` `admin.archetype.delete_confirm` のみ）。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Resource/locale/messages.ja.yaml"
+    ]
+   }
+  },
+  {
+   "rowId": 997,
+   "機能No": "M15-09",
+   "機能名": "M15-09 アーキタイプ編集",
+   "ドメイン": "m15",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "削除時は関連デッキありなら admin.archetype.delete.failed を積んで admin_archetype_search の1ページ目へ、成功時は admin.delete.complete を積み、セッション admin.archetype.search.page_no があれば当該検索ページへ戻る。CSRF不正はHTTP403相当。",
+   "実装実態": "CSRF不正時は admin.common.csrf_invalid を積んで admin_archetype_list へリダイレクトする。関連デッキありは admin.archetype.delete_error_deck_exists を投げ、編集画面へ戻る。成功時は admin.common.delete_complete を積み、常に admin_archetype_list へ戻る。",
+   "差分内容": "削除の失敗時リダイレクト先、失敗時メッセージキー、成功時メッセージキー、成功時の検索ページ復帰、CSRF不正時のHTTPステータスが設計と異なる。",
+   "実装参照": "src/Eccube/Controller/Admin/Archetype/ArchetypeController.php:182,185,190,193,201,203; src/Eccube/Service/Admin/Archetype/ArchetypeDeleteAction.php:44",
+   "設計書参照": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-11:3383,3424,3429,3441",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0212_基本設計仕様書(デッキ管理).html:3741-3742 は登録済みアーキタイプを削除できることだけを定め、関連デッキ時/成功時/CSRF不正時のメッセージキー・HTTP403・検索ページ復帰は正本範囲 sheet-11:3687-3832 にない。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/ArchetypeController.php:211-230 はCSRFを `checkCsrfValid` し、関連デッキ時 `admin.archetype.delete.failed`＋`admin_archetype_search` 1ページ、成功時 `admin.delete.complete`＋セッション `admin.archetype.search.page_no` の検索ページへ戻す。pf-eccube3/app/Plugin/HareruyaEc/Controller/FormValidHelper.php:39-46 は不正CSRFで `AccessDeniedHttpException('CSRF token is invalid.')` を投げる。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Controller/Admin/Archetype/ArchetypeController.php:192-221 はCSRF不正を `admin.common.csrf_invalid`＋一覧リダイレクト、実行時例外を編集画面、成功を `admin.common.delete_complete`＋常に一覧へ戻す。ec-cube-enterprise/src/Eccube/Service/Admin/Archetype/ArchetypeDeleteAction.php:44-46 は関連デッキ時 `admin.archetype.delete_error_deck_exists` を投げる。",
+   "根拠検証メモ": "削除後分岐・メッセージ・403契約の直接根拠はpf-eccube3。",
+   "対応の根拠(現develop)": "`src/Eccube/Controller/Admin/Archetype/ArchetypeController.php:192-195` `if (!$this->isCsrfTokenValid('admin_archetype_delete', ...)) { $this->addError('admin.common.csrf_invalid', 'admin'); return $this->redirectToRoute('admin_archetype_list'); }`（403ではない）、`:200-203` `catch (\\RuntimeException $e) { $this->addError($e->getMessage(), 'admin'); return $this->redirectToRoute('admin_archetype_edit', ['id' => $Archetype->getId()]); }`、`:211` `$this->addSuccess('admin.common.delete_complete', 'admin');`、`:221` `return $this->redirectToRoute('admin_archetype_list');`（検索ページ復帰なし）。関連デッキ存在時のメッセージも `src/Eccube/Service/Admin/Archetype/ArchetypeDeleteAction.php:45` `throw new \\RuntimeException('admin.archetype.delete_error_deck_exists');` のままで、設計の `admin.archetype.delete.failed` / `admin.delete.complete` / `admin_archetype_search` 1ページ目復帰は未実装。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "NO_QUOTE",
+    "stale": "UNCHANGED"
+   }
+  }
+ ]
+}

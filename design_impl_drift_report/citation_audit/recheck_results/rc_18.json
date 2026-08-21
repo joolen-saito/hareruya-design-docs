@@ -1,0 +1,149 @@
+{
+  "packetId": "rc_18",
+  "results": [
+    {
+      "rowId": 330,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0306_基本設計仕様書(フロント_会員).html の Excel 正本 src-cell を「イベント実施店舗」「全店舗名」「閉店」「非公開」で検索。0306:お問い合わせ!AG152 に「閉店または非公開の店舗を除く」、0306:お問い合わせ!AG155 に「店舗登録に登録されている全店舗名を選択肢とする」が実在することを確認した。",
+      "reason": "Excel 正本は 4-2 と 4-5 を明確に書き分けている。旧実装 pf-eccube3/app/Plugin/HareruyaEc/Form/Extension/Front/ContactTypeExtension.php の eventShop query_builder も createQueryBuilder('s')->orderBy('s.rank', 'ASC') のみで、全店舗を候補にしていた。現在の eventShop は公開・営業中だけに絞るため、正本要求との差が残る。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Form/Type/Front/ContactType.php の ContactType::buildForm() 内 eventShop query_builder は `->where('s.isPublicShop = true')->andWhere('s.isOpenShop = true')->orderBy('s.rank', 'ASC')`。直前の shop と同じ除外条件を適用している。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 332,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "REFUTED",
+      "correctedClass": "SPEC_BACKED",
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0306_基本設計仕様書(フロント_会員).html の sheet-19 の src-cell を「Y年」「Y/m」「問い合わせ日時」で検索すると、0306:お問い合わせ履歴!AG69 は項目名「問い合わせ日時」までで書式テキストは無かった。一方、同 sheet の Excel 正本レイアウト画像 data-excel-ref=0306:お問い合わせ履歴!F10 と !N26 を実際に開き、一覧日時が「2025年09月26日 13:10」「2025年09月26日 10:18」と年・月・日付きで表示されていることを確認した。",
+      "reason": "先行判定は正本画像を見落としている。レイアウト画像が一覧の `Y年m月d日 H:i` 形式を直接示すため、期待書式は旧実装だけの根拠ではない。旧実装 pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Contact/history.twig でも `date('Y年m月d日 H:i')`、詳細は history_detail.twig で `date('Y/m/d H:i')` を確認した。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/default/Contact/history.twig の一覧日時分岐は日本語でも `{{ contactHistory.createDate|date('Y/m/d H:i') }}`。history_detail.twig の詳細も `Y/m/d H:i` で、一覧だけが正本画像の年月日表記を満たさない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 333,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0306_基本設計仕様書(フロント_会員).html の Excel src-cell を「0件」「問い合わせ件数」「総件数」で検索。sheet-19 では 0306:お問い合わせ履歴!E68「問い合わせ件数」と !AG68「今まで問い合わせを行なった件数」は見つかったが、0件時の表示条件は見つからなかった。sheet-19 のレイアウト画像 data-excel-ref=0306:お問い合わせ履歴!F10/N26 も確認したが、いずれもデータ有りの「3件」で、0件時の状態は描かれていない。",
+      "reason": "0件でも「0件」を出す条件は functions/pf-eccube3/f06-23_front_contact_history.md と旧実装に由来する。旧 history.twig は件数表示をループ外に置き `{{ contactHistories|length }}` を無条件出力するため空配列でも0件となるが、Excel 正本から0件時の表示までは確定できない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/default/Contact/history.twig は `{% if contactHistories is empty %}` で `front.contact_history.empty` を表示し、`front.contact_history.toolbar_count` の出力は `{% if contactHistories is not empty %}` の内側にある。0件時に「0件」は出ない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 339,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0307_基本設計仕様書(フロント_イベント).html を「自動スクロール」「5秒毎」「左方向」で検索し、Excel 正本 0307:イベント大会TOP!D232 に「自動スクロールで5秒毎に左方向にスクロール」が実在することを確認した。",
+      "reason": "要求値 5秒は src-cell の直接記載であり SPEC_BACKED は正しい。現在の日本語・英語テンプレートはいずれも SP/PC の双方で 4000ms のままである。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/default/Event/index.twig のスライダー初期化は SP と PC の両方で `autoplay: true, autoplaySpeed: 4000`。index.en.twig も同じ 4000 で、5000 の指定は確認できない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 342,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0307_基本設計仕様書(フロント_イベント).html の Excel 正本で 0307:大会詳細検索!E229「リセット」、!AG229「入力項目をリセットする」を確認した。sheet-4 のレイアウト画像 data-excel-ref=0307:大会詳細検索!Z11 を実際に開き、ボタン表示「リセット」、平日・休日がチェック済み、過去が未チェックの初期状態も確認した。",
+      "reason": "先行メモは初期チェック値を旧実装由来としていたが、正本レイアウト画像にも三つの初期状態が明示されているため、複合期待値全体を SPEC_BACKED としてよい。現在は文言もリセット挙動も一致しない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml の `front.event.search.modal_clear` は「クリア」。Block/event_detailed_search_modal.twig の data-search-clear クリック処理は setTimeout 内で全 checkbox を `cb.checked = false`、text/search を空文字にするため、平日・休日も未チェックになる。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 344,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "MISDESCRIBED",
+      "checkedQuote": "0307_基本設計仕様書(フロント_イベント).html の sheet-5 Excel src-cell を「参加費」「無料」「円」「1,000」で検索し、0307:大会詳細!E286「参加費」と !AG286「イベント参加費」は確認したが、0円/非0円の書式規定は無かった。sheet-5 の PC/SP レイアウト画像も実際に開き、非0円の例は「¥100」であり「100円」ではないことを確認した。具体的な末尾円書式は functions/pf-eccube3/f07-03_front_event_event_detail.md の「0円は無料、それ以外は…（金額）円」にのみ確認した。",
+      "reason": "末尾「円」の期待値は旧実装・リバース詳細設計由来であり LEGACY_BACKED は正しい。旧 show.twig は0円なら「無料」、非0円なら `number_format() }}円`。現在も通貨表記差は残るが、先行記載の `Event.entryFee` 参照は現HEADでは `Detail.entryFee` に変更されているため、実装実態の説明はその点で古い。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/default/Event/detail.twig は `{% if Detail.entryFee == 0 %}` なら free 翻訳、非0円なら `¥{{ Detail.entryFee|number_format }}`。表示差は残るが、値の参照元は先行記載の Event ではなく Detail である。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 345,
+      "originalClass": "UNCERTAIN",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "RESOLVED",
+      "checkedQuote": "0307_基本設計仕様書(フロント_イベント).html の sheet-5 Excel src-cell を「定員」「参加費」「未設定時」「イベント本体」「dtb_event_detail」で検索。0307:大会詳細!AG285「イベントに設定されている定員数」と !AG286「イベント参加費」までは確認できたが、テーブル優先順位は無かった。PC/SP レイアウト画像も定員50人・参加費¥100の表示は示すが参照テーブルは特定しない。詳細優先/本体フォールバックは functions/pf-eccube3/f07-03_front_event_event_detail.md の記載のみ確認した。",
+      "reason": "旧実装は DtbEventDetail::getCapacity()/getEntryFee() と申込可否では詳細優先を実装する一方、主表示 show.twig は event.getCapacity()/getEntryFee() を直接参照しており、複合期待値を一つの区分に確定できないという先行 UNCERTAIN は妥当。現HEADでは主表示と申込判定の双方が Detail getter を通るよう修正され、記載された乖離は解消している。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/default/Event/detail.twig は定員を `Detail.capacity`、参加費を `Detail.entryFee` で表示する。DtbEventDetail::getCapacity() は `$this->capacity ?? $this->Event->getCapacity()`、getEntryFee() は `$this->entryFee ?? $this->getEvent()->getEntryFee()`。EventDetailButtonStateResolver::resolve() は `$Detail->canBeEntried(...)` を呼び、canBeEntried() は `$this->getCapacity()` で定員判定する。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 346,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0307_基本設計仕様書(フロント_イベント).html の Excel 正本 0307:大会詳細!E607「戻る」と !AG607「イベント大会TOPに遷移」を確認した。sheet-5 の PC/SP レイアウト画像にも「戻る」ボタンはあるが遷移元切替は示されない。「一覧側へ戻る。遷移元のクエリにより戻り先を切り替える」は function-design-embed 内および functions/pf-eccube3/f07-03_front_event_event_detail.md にのみ確認した。",
+      "reason": "動的な戻り先切替は旧実装だけに根拠があり LEGACY_BACKED は正しい。なお Excel 正本はむしろイベント大会TOP固定を明記しており、これは正本乖離ではなく旧実装互換性の差である。旧 show.twig は eventDate クエリの有無で events_index/events_daily を切り替えていたが、現実装にその分岐は無い。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/default/Event/_event_detail_actions.twig の戻るリンクは `href=\"{{ url('event_top') }}\"` 固定。遷移元クエリによる切替は行っていない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 349,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0308_基本設計仕様書(フロント_店頭買取).html の Excel 正本 src-cell 0308:店頭買取査定申込情報入力!D65「共通の利用規約のみ表示する」、!D70「共通の利用規約のみ表示する」、!D71「個人情報の取り扱いについてを削除する」を確認した。sheet-4 レイアウト画像 data-excel-ref=0308:店頭買取査定申込情報入力!D8 も実際に開き、現行側の「個人情報の取り扱いについて」「利用規約」各詳細ボタンと併記同意文言を確認した。",
+      "reason": "削除・一本化の要求は Excel 正本の直接記載であり SPEC_BACKED は正しい。現在は個別ボタンこそ一本化されているが、開く共通モーダル内にプライバシータブと本文が残り、同意ラベルにも個人情報文言が残るため、正本の「共通の利用規約のみ」を満たさない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/default/Block/terms_modal.twig は tab-otc-terms に加え tab-otc-privacy ボタンを表示し、同ファイルの privacy content で `front.privacy.heading` 以下を描画する。OtcBuy/index.twig の同意ラベルも「個人情報の取り扱い/利用規約に同意する」のまま。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 352,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0204_基本設計仕様書(商品管理).html の Excel 正本 0204:商品マスター(検索入力)!E124「プロモ」と !AG124「チェック項目: プロモ、ノーマル」を確認した。sheet-3 レイアウト画像 data-excel-ref=0204:商品マスター(検索入力)!C8 も実際に開き、検索条件ラベルが「プロモ」と表示されることを確認した。",
+      "reason": "ラベル「プロモ」は src-cell とレイアウト画像の両方にあるため SPEC_BACKED は正しい。現在の表示経路は SearchProductType の admin.product.promotion を Product/index.twig の form_label が描画する経路で、翻訳値が「プロモ種別」のまま。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/SearchProductType.php の promotion label は `admin.product.promotion`。src/Eccube/Resource/locale/messages.ja.yaml の同キーは「プロモ種別」で、src/Eccube/Resource/template/admin/Product/index.twig が `form_label(searchForm.promotion)` として表示する。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 353,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0204_基本設計仕様書(商品管理).html の Excel 正本 0204:商品マスター(検索入力)!E111「商品名(日/英)」と !AG111「商品名(日)・商品名(英)」を確認した。sheet-3 レイアウト画像 data-excel-ref=0204:商品マスター(検索入力)!C8 でも入力欄「商品名(日/英)」を確認した。",
+      "reason": "日英双方を検索する要求は Excel 正本の直接記載。旧 ProductRepository も検索列を `p.name` と `ps.nameEn` にしていた。現在の個別 product_name 条件は日本語名だけで、隠し一括キーワード id 条件に英語名があっても別入力欄の要求を満たさない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Repository/ProductRepository.php の管理商品検索処理で product_name は `p.name LIKE :adminSearchProductName` のみ。`p.name_en LIKE` は別の id 一括キーワード条件にはあるが、product_name 条件には無い。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 354,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0204_基本設計仕様書(商品管理).html の Excel 正本 0204:商品マスター(検索入力)!E113「カード名」と !AG113「カード名(日)・カード名(英)」を確認した。sheet-3 レイアウト画像 data-excel-ref=0204:商品マスター(検索入力)!C8 でもカード名入力欄を確認した。",
+      "reason": "日英双方を検索する要求は Excel 正本の直接記載。旧 ProductRepository は検索列を `nameJp`, `nameEn` の両方にしていた。現在の個別 card_name サブクエリは name_jp しか参照しない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Repository/ProductRepository.php の card_name 用 EXISTS サブクエリは `ca_card.name_jp LIKE :adminSearchCardName` のみ。`ca_card.name_en` は個別 card_name 条件に含まれない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    }
+  ]
+}

@@ -1,0 +1,361 @@
+{
+ "packetId": "rc_24",
+ "note": "rowId は drift_findings_list_final.tsv の行番号(ヘッダ除く1始まり)。mech は機械検証フラグ(手掛かりであって正解ではない)。",
+ "count": 12,
+ "findings": [
+  {
+   "rowId": 434,
+   "機能No": "M04-01",
+   "機能名": "M04-01 在庫検索一覧(検索入力)",
+   "ドメイン": "m04",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "店舗検索条件の選択肢は、店舗管理に登録されており閉店となっていない店舗のみ取得する。",
+   "実装実態": "base_info は BaseInfo::class の EntityType として定義されているが、閉店店舗を除外する query_builder が無く、TODO コメントで未対応とされている。BaseInfo には is_open_shop カラムが存在し、BaseInfoRepository::getOpenShops() では開店中条件が実装されている。",
+   "差分内容": "設計は閉店店舗を選択肢から除外する要求だが、実装は BaseInfo 全体を候補にする EntityType のままで、SearchStockListType.php:131 に「閉店フラグが BaseInfo に追加された後、query_builder で絞り込む」とあり未対応。反証検索で BaseInfoRepository::getOpenShops() は見つかったが SearchStockListType の base_info 選択肢には使われていない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/SearchStockListType.php:123",
+   "設計書参照": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-4:1205",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:1393 の Excel 正本セル `0202:在庫検索一覧(検索入力)!AG219` は店舗選択肢を「店舗管理に登録されており、閉店となっていない店舗」と明記する。共通処理の同ファイル:1180 も「店舗マスタから閉店していない店舗のみ取得」とする。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/ProductServiceProvider.php:228-240 の旧商品管理ルートにはこの店舗検索フォームがなく、旧4リポジトリを `閉店`, `closing`, `base_info`, `product/stock` で横断検索しても対応するM04-01旧実装は見つからない。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/SearchStockListType.php:123-132 は `BaseInfo::class` の全件EntityTypeを使い、行131に `TODO: 閉店フラグが BaseInfo に追加された後、query_builder で絞り込む` と明記している。閉店店舗を除外するquery_builderは未実装である。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Form/Type/Admin/SearchStockListType.php:123-132` `->add('base_info', EntityType::class, [ 'class' => BaseInfo::class, 'choice_label' => 'shop_name', ... ])` のままで、131行に `// TODO: 閉店フラグが BaseInfo に追加された後、query_builder で絞り込む` が残る。`query_builder` 指定は無く、`BaseInfoRepository::getOpenShops()`（`src/Eccube/Repository/BaseInfoRepository.php:188-192` `->andWhere('bi.isOpenShop = :isOpenShop')`）は本フォームから呼ばれていない（getOpenShops/isOpenShop の全 grep で SearchStockListType はヒットせず）。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Form/Type/Admin/SearchStockListType.php",
+     "src/Eccube/Repository/BaseInfoRepository.php"
+    ]
+   }
+  },
+  {
+   "rowId": 435,
+   "機能No": "M04-01",
+   "機能名": "M04-01 在庫検索一覧(検索入力)",
+   "ドメイン": "m04",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "検索パターン名を入力することで検索条件保存ボタンが活性化する。",
+   "実装実態": "検索条件保存ボタンは初期表示から disabled 属性なしで描画され、JS も pattern_name 入力に応じた活性/非活性制御を持たない。未入力時は Controller 側で admin.common.save_pattern.error.name_empty を出してリダイレクトする。",
+   "差分内容": "設計は利用者可視のボタン活性制御を要求しているが、実装は常時押下可能で、未入力時にサーバエラー表示へ流す挙動になっている。反証検索でも savePatternBtn に対する disabled 制御や pattern_name 入力イベントは見つからなかった。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/stock_list_index.twig:369",
+   "設計書参照": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-4:1133",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:1317 の Excel 正本は「検索パターン名を入力することで検索条件保存ボタンが活性化する」とし、同ファイル:1420 も「検索パターン名を入力していない場合は非活性とする」と明記する。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/locale/message.ja.yml:1280-1284 には旧共通検索パターンの空名エラー「検索パターン名を入力して下さい。」はあるが、M04-01ボタン活性制御の旧画面は旧4リポジトリに存在しない（`pattern_name`, `disabled`, `在庫一覧` で確認）。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/stock_list_index.twig:361-372 は `pattern_name` 入力と `savePatternBtn` を描画するが、ボタンに `disabled` がない。同ファイル:691-695 のJSもクリック時に常にフォーム送信するだけで入力イベントによる活性切替がなく、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockListController.php:357-362 が空名をサーバー側エラーにする。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Resource/template/admin/Stock/stock_list_index.twig:369-372` `<button type=\"button\" id=\"savePatternBtn\" class=\"btn btn-sm btn-ec-regular\" data-url=\"...\">` と disabled 属性なしで描画。JS も同692-697行 `$('#savePatternBtn').on('click', function() { const url = $(this).data('url'); ... });` のみで pattern_name の入力イベント連動は無い。未入力時は `StockListController.php:359-362` の `$this->addError('admin.common.save_pattern.error.name_empty', 'admin');` でリダイレクトする実装のまま。プロジェクト全体 grep でも savePatternBtn の出現は twig の上記2箇所のみ。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Controller/Admin/Stock/StockListController.php",
+     "src/Eccube/Resource/template/admin/Stock/stock_list_index.twig"
+    ]
+   }
+  },
+  {
+   "rowId": 436,
+   "機能No": "M04-01",
+   "機能名": "M04-01 在庫検索一覧(検索入力)",
+   "ドメイン": "m04",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "検索条件保存では、ボタン押下時に設定されている検索条件を保存する。ただし店舗は検索条件の保存に含めない。",
+   "実装実態": "savePattern() は FormUtil::getViewData($searchForm) の結果を $dataToStore に入れ、_token だけ unset して serialize($dataToStore) している。base_info は除外されない。",
+   "差分内容": "設計では店舗を検索条件保存から除外する必要があるが、実装は _token 以外を保存対象に残す。反証検索で base_info を unset する処理、保存前正規化、DtbSearchPattern 側の除外処理はいずれも確認できなかった。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockListController.php:332",
+   "設計書参照": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-4:1135",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:1315-1319 の Excel 正本は「ボタン押下時に設定されている検索条件を保存する」「店舗は検索条件の保存に含めない」と明記する。",
+   "旧実装根拠": "旧実装の確認範囲 pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin、Resource/template/admin を `検索条件保存|save.pattern|stock` で探索したが同等の在庫検索パターン保存入口は存在しない。近接する pf-eccube3/app/Plugin/HareruyaEc/Repository/ProductStockRepository.php:32-40 は `product_class_id, stock ... FOR UPDATE` の在庫ロック処理であり、検索条件保存を実装しない。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockListController.php:357-375 はフォーム全体を `$viewData` として取得し、`_token` だけを unset する。同:377-381 はそのまま `setPattern(serialize($dataToStore))` するため、店舗検索条件を除外していない。",
+   "根拠検証メモ": "BaseInfoを検索パターン所有者として設定すること自体ではなく、serialize対象の店舗検索条件を除外していない点が正本と不一致。",
+   "対応の根拠(現develop)": "`src/Eccube/Controller/Admin/Stock/StockListController.php:374-378` `$dataToStore = $viewData;` `unset($dataToStore['_token']);` `->setPattern(serialize($dataToStore))`。base_info を除外する処理は追加されておらず、保存前正規化も DtbSearchPattern 側の除外も存在しない。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Controller/Admin/Stock/StockListController.php"
+    ]
+   }
+  },
+  {
+   "rowId": 438,
+   "機能No": "M04-01",
+   "機能名": "M04-01 在庫検索一覧(検索結果)",
+   "ドメイン": "m04",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "メンバー管理で設定されているデフォルト検索表示店舗の在庫一覧を初期表示する。",
+   "実装実態": "SearchStockListType は base_info の初期値にログインメンバーの DefaultSearchBaseInfo を設定しているが、StockListController の初回GETは検索条件セッションを破棄し pagination=[] を返すため、初期表示で在庫一覧は表示されない。",
+   "差分内容": "設計はデフォルト検索表示店舗で絞り込んだ在庫一覧の表示を要求している。実装はフォーム初期値だけ設定し、一覧本体は検索前空状態として返すため、利用者が初期表示で在庫一覧を見られない。確認範囲: StockListController, SearchStockListType, ProductStockRepository, stock_list_index.twig。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockListController.php:180",
+   "設計書参照": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-5:1898",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:2159,2167 の Excel 正本は、デフォルト検索表示店舗で絞られた状態とし、その店舗の在庫一覧を初期表示すると明記する。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/ProductServiceProvider.php:228-240 の旧商品管理ルートにはM04-01在庫一覧がなく、旧4リポジトリの `デフォルト検索表示店舗`, `default_search_base_info`, `stock list` 横断検索でも対応実装は見つからない。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/SearchStockListType.php:123-131,502-513 はメンバーのデフォルト検索表示店舗をフォーム初期値にするが、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockListController.php:192-205 は初回GET時に `pagination => []` を返し、検索結果一覧を取得しない。",
+   "根拠検証メモ": "rowId 496 と同じ根拠を検索結果シート側から指摘した重複findingだが、パケットの全件要件に従い個別判定した。",
+   "対応の根拠(現develop)": "`src/Eccube/Form/Type/Admin/SearchStockListType.php:130` `'data' => array_filter([$this->getCurrentBaseInfo()]),`（同502-511行で `$user->getDefaultSearchBaseInfo()` を返す）とフォーム初期値は設定されるが、`src/Eccube/Controller/Admin/Stock/StockListController.php:192-206` の初回 GET は検索セッションを破棄して 199行 `'pagination' => [],` を返すため一覧本体は空のまま。監査時点から変化なし。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "NO_QUOTE",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Controller/Admin/Stock/StockListController.php",
+     "src/Eccube/Form/Type/Admin/SearchStockListType.php"
+    ]
+   }
+  },
+  {
+   "rowId": 439,
+   "機能No": "M04-01",
+   "機能名": "M04-01 在庫検索一覧(検索結果)",
+   "ドメイン": "m04",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "一覧の表示順はID降順で表示する。ID列は商品IDを表示する。",
+   "実装実態": "一覧列のIDは Item.ProductClass.Product.id を表示している一方、検索QueryBuilderのORDER BYは pc.id DESC（商品規格ID降順）で、商品ID降順ではない。",
+   "差分内容": "設計のID列は商品IDと定義されているため、表示順のID降順も商品ID降順として実装される必要がある。実装は ProductClass.id を降順にしており、表示IDとソートキーが一致しない。確認範囲: ProductStockRepository, stock_list_index.twig。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/ProductStockRepository.php:314",
+   "設計書参照": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-5:1903,1940",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:2171-2172 の Excel 正本は「一覧の表示順はID降順」、同:2209 は「2-3 ID」「商品ID」と明記する。",
+   "旧実装根拠": "旧実装側の近接在庫ソース pf-eccube3/app/Plugin/HareruyaEc/Repository/ProductStockRepository.php:32-40 は `product_class_id, stock` のロック取得で、当該新在庫一覧の表示順契約を持たない（pf-eccube3 の同Repository全体を `orderBy|ORDER BY` で確認して該当なし）。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/stock_list_index.twig:580 は `{{ Item.ProductClass.Product.id }}` で商品IDを表示し、この部分は充足する。一方 ec-cube-enterprise/src/Eccube/Repository/ProductStockRepository.php:314-315 は `orderBy('pc.id', 'DESC')`、すなわち商品規格ID降順であり商品ID降順ではない。",
+   "根拠検証メモ": "ID列の値は既に満たすが、一覧の主ソートが商品IDではなく商品規格IDなので指摘は一部成立する。",
+   "対応の根拠(現develop)": "`src/Eccube/Repository/ProductStockRepository.php:314-315` `$qb->orderBy('pc.id', 'DESC')->addOrderBy('ps.stockLocationId', 'ASC');`（pc = ProductClass）で商品規格ID降順のまま。一方 ID 列表示は `src/Eccube/Resource/template/admin/Stock/stock_list_index.twig:580` `<td class=\"col-id\">{{ Item.ProductClass.Product.id }}</td>` と商品ID。表示IDとソートキーの不一致は解消されていない。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Repository/ProductStockRepository.php",
+     "src/Eccube/Resource/template/admin/Stock/stock_list_index.twig"
+    ]
+   }
+  },
+  {
+   "rowId": 440,
+   "機能No": "M04-01",
+   "機能名": "M04-01 在庫検索一覧(検索結果)",
+   "ドメイン": "m04",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "在庫移動・振替登録選択時、複数の在庫区分の在庫が選択されている場合はエラー文言/アラートを表示し、在庫移動・振替登録画面へ遷移させない。",
+   "実装実態": "在庫移動・振替ボタンのクリック処理は未編集権限、複数店舗、在庫0のみを判定し、data-zone は行チェックボックスに出力されているが複数在庫区分判定に使われていない。",
+   "差分内容": "反証検索で stock_list_index.twig、StockListController、StockMoveController、StockTransferController、FormType/Service を isSameZone/複数の在庫区分/data-zone/stockLocationId で確認したが、遷移前に選択在庫区分の一意性を検査する実装は見つからない。StockMoveController/StockTransferController も productStockIds を受け取り先頭在庫の在庫区分を使うだけで、複数在庫区分を一覧へ戻す判定はない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/stock_list_index.twig:815",
+   "設計書参照": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-5:1910,1912",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:2176-2182 の Excel 正本は在庫移動・振替登録選択時に、複数在庫区分ならエラー文言を表示して遷移させないと明記する。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/ProductServiceProvider.php:228-240 に旧M04-01一覧・移動・振替入口はない。旧4リポジトリを `複数の在庫区分`, `stock_location_id`, `productStockIds` で横断検索しても対応する旧画面制御は見つからない。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/stock_list_index.twig:780-784 は1件以上の選択で移動・振替ボタンを活性化し、同ファイル:815-836 は複数店舗等だけを検査して在庫区分を比較しない。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockTransferController.php:120-137 も複数在庫を取得後、先頭在庫の `getLocationName()` だけを画面値に使う。",
+   "根拠検証メモ": "rowId 500 と同一要求の検索結果シート側finding。",
+   "対応の根拠(現develop)": "`src/Eccube/Resource/template/admin/Stock/stock_list_index.twig:816-837` の `$('#stockMoveBtn, #stockTransferBtn').on('click', ...)` は権限・複数店舗・在庫0のみを alert 判定し、選択行の在庫区分（575行 `data-zone=\"{{ Item.stockLocationId }}\"`）の一意性検査は無い。遷移は835行 `submitIdsToUrl(url, ids);` で無条件に実行される。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "NO_QUOTE",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Resource/template/admin/Stock/stock_list_index.twig"
+    ]
+   }
+  },
+  {
+   "rowId": 441,
+   "機能No": "M04-01",
+   "機能名": "M04-01 在庫検索一覧(検索結果)",
+   "ドメイン": "m04",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "在庫情報カスタムCSV出力はリンクで、押下時に「カスタムCSVで作成した各種出力フォーマット」「出力項目設定」のリンクを表示する。",
+   "実装実態": "在庫情報カスタムCSV出力はリンクではなく select 要素として実装され、フォーマット名と出力項目設定は option に入っている。選択変更時に option value のURLへ遷移する。",
+   "差分内容": "設計はリンク押下でリンク群を表示するUIを要求しているが、実装はプルダウン選択UIであり、各フォーマットや出力項目設定がリンクとして表示されない。確認範囲: stock_list_index.twig, StockListController, DtbCsvExtensionRepository, StockCustomCsvExportService。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/stock_list_index.twig:449",
+   "設計書参照": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-5:1919,1935",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:2187-2190 の Excel 正本は「在庫情報カスタムCSV出力について」押下時に「カスタムCSVで作成した各種出力フォーマット」「出力項目設定」のリンクを表示するとし、同ファイル:2204 も画面部品説明に同じリンク表示を明記する。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/ProductServiceProvider.php:228-240 に旧在庫一覧カスタムCSV入口はなく、旧4リポジトリを `在庫情報カスタムCSV出力`, `出力項目設定`, `stock_csv_pulldown` で横断検索しても該当旧UIは見つからない。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/stock_list_index.twig:448-456 はカスタムCSVを `<select id=\"stock_csv_pulldown\">` のoptionとして描画し、同ファイル:786-792 は選択変更時にoptionのURLへ即時遷移する。リンク押下でリンク群を表示するUIではない。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Resource/template/admin/Stock/stock_list_index.twig:449-457` `<select id=\"stock_csv_pulldown\" class=\"form-select form-select-sm\">` 配下に453行 `<option value=\"{{ url('admin_stock_list_custom_csv', { csvExtensionId: CsvEx.id }) }}\">{{ CsvEx.name }}</option>`、455行 `<option value=\"{{ url('admin_setting_shop_csv_custom', ...) }}\">{{ 'admin.stock.list.custom_csv_settings'|trans }}</option>` とプルダウンのまま。787-792行 `$('#page_count_pulldown, #stock_csv_pulldown').on('change', ... window.location.href = targetUrl; ...)` で選択遷移する実装で、リンク表示UIにはなっていない。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Resource/template/admin/Stock/stock_list_index.twig"
+    ]
+   }
+  },
+  {
+   "rowId": 442,
+   "機能No": "M04-01",
+   "機能名": "M04-01 在庫検索一覧(検索結果)",
+   "ドメイン": "m04",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "検索パターン名を入力することで検索条件保存ボタンが活性化する。",
+   "実装実態": "検索条件保存ボタンは disabled 属性なしで常に押下可能。pattern_name 入力イベントで活性/非活性を切り替えるJSもなく、空の場合はController側で name_empty エラーにして戻す。",
+   "差分内容": "設計は入力に応じたボタン活性制御を求めているが、実装は常時活性のままサーバーバリデーションで拒否している。反証検索範囲: stock_list_index.twig, StockListController, SearchStockListType の pattern_name/savePatternBtn/disabled/input。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/stock_list_index.twig:369",
+   "設計書参照": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-5:2147",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:2147 に相当する再生成後の Excel 正本は同ファイル:1317「検索パターン名を入力することで検索条件保存ボタンが活性化する」および:1420「検索パターン名を入力していない場合は非活性とする」で要求を明記する。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/locale/message.ja.yml:1280-1284 には空名エラーはあるが、在庫一覧のボタン活性制御画面は旧4リポジトリにない（`pattern_name`, `savePatternBtn`, `disabled`, `在庫一覧` で横断検索済み）。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/stock_list_index.twig:361-372 の保存ボタンは常時活性で、同ファイル:691-695 もクリック時の送信だけを実装する。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockListController.php:359-362 は空名を送信後にエラー化する。",
+   "根拠検証メモ": "rowId 498 と同一要求の検索結果シート側finding。",
+   "対応の根拠(現develop)": "`src/Eccube/Resource/template/admin/Stock/stock_list_index.twig:369` `<button type=\"button\" id=\"savePatternBtn\" class=\"btn btn-sm btn-ec-regular\"` に disabled 属性なし。JS は692行 `$('#savePatternBtn').on('click', function() {` の click ハンドラのみで pattern_name の input/keyup 連動制御は無い。空入力時は `StockListController.php:359-362` の `admin.common.save_pattern.error.name_empty` でサーバ側拒否のまま。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Controller/Admin/Stock/StockListController.php",
+     "src/Eccube/Resource/template/admin/Stock/stock_list_index.twig"
+    ]
+   }
+  },
+  {
+   "rowId": 443,
+   "機能No": "M04-01",
+   "機能名": "M04-01 在庫検索一覧(検索結果)",
+   "ドメイン": "m04",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "店舗は検索条件の保存に含めない。",
+   "実装実態": "savePattern は FormUtil::getViewData($searchForm) の全体を $dataToStore に入れ、_token だけを unset して serialize($dataToStore) で保存する。SearchStockListType には base_info フィールドが含まれる。",
+   "差分内容": "設計は店舗を検索条件保存から除外する要求だが、実装は base_info を除外していない。反証検索で StockListController, SearchStockListType, Repository/Service を確認したが unset($dataToStore['base_info']) 相当の処理は見つからない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockListController.php:337",
+   "設計書参照": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-5:2034",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:1315-1319 の Excel 正本は検索条件保存について「店舗は検索条件の保存に含めない」と明記する。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/ProductServiceProvider.php:228-240 にM04-01在庫一覧検索パターン入口はなく、旧4リポジトリを `店舗は検索条件の保存に含めない`, `save-pattern`, `base_info` で横断検索しても該当旧実装は見つからない。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockListController.php:357-378 は検索フォーム全体を取得し、`_token` だけをunsetしてserializeする。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/SearchStockListType.php:123-132 の `base_info` は除外されない。",
+   "根拠検証メモ": "rowId 495 と同一要求の検索結果シート側finding。",
+   "対応の根拠(現develop)": "`src/Eccube/Controller/Admin/Stock/StockListController.php:374-378` `$dataToStore = $viewData;` `unset($dataToStore['_token']);` `->setPattern(serialize($dataToStore))`。`src/Eccube/Form/Type/Admin/SearchStockListType.php:123` の `->add('base_info', EntityType::class, [...])` は保存対象に含まれたままで、base_info を除外する処理は Controller/FormType/Repository/Service いずれにも無い。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Controller/Admin/Stock/StockListController.php",
+     "src/Eccube/Form/Type/Admin/SearchStockListType.php"
+    ]
+   }
+  },
+  {
+   "rowId": 444,
+   "機能No": "M04-02",
+   "機能名": "M04-02 在庫編集",
+   "ドメイン": "m04",
+   "区分(画面種別)": "admin",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・未実装",
+   "設計期待値": "総原価及び商品ごとの原価単は一日単位で記録し、呼び出せるようにする",
+   "実装実態": "ProductStock は現在値の total_cost と getUnitCost() を持ち、DtbStockHistory は在庫変動時の unit_cost_price_before/after と total_cost_price_before/after を持つが、商品規格または在庫単位で1日ごとの総原価・原価単価を記録し呼び出す履歴テーブル、バッチ、Repository、APIは確認できなかった。DtbDailySummary は店舗別の日次売上集計、DtbWeeklyStockHistory は在庫数のみの週次履歴であり本要求の保存先ではない。",
+   "差分内容": "設計は一日単位の原価スナップショットと呼び出しを要求するが、実装は現在値または変動イベント単位の原価しか保持していない。",
+   "実装参照": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Stock, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Product, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Entity, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock, /home/y-saito/Developments/ec-cube-enterprise/html。検索語: 日単位, 一日単位, daily cost, unit_cost date, total_cost date, 原価単価 日, 総原価 日, stock cost history）",
+   "設計書参照": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-6:2371",
+   "根拠区分": "UNCERTAIN",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:2676-2677 の Excel 正本は「総原価と原価単価を商品規単位で管理する」「総原価及び商品ごとの原価単は一日単位で記録し、呼び出せるようにする」と明記するが、「一日単位」が日次スナップショット1件を意味するのか、日時付き変動履歴を日付範囲で呼び出せればよいのかは定義していない。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/ProductServiceProvider.php:228-240 の旧商品管理には在庫一括更新・欠品履歴しかなく、旧4リポジトリを `一日単位`, `daily cost`, `unit_cost_price`, `total_cost_price`, `stock cost history` で横断検索しても日次原価履歴の旧実装は見つからない。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/EntityManager/StockHistoryEntityManager.php:32-47 は在庫変動履歴保存時に変更前後の原価単価・総原価を受け取り、同ファイル:63-76 は `unitCostPriceBefore/After`, `totalCostPriceBefore/After` を履歴へ保存する。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbStockHistoryRepository.php:120-133 は登録日を日頭〜日末で検索できる。一方、日ごとに1件の終値を保存・取得するスナップショット処理は、src/Eccube/Command・Service・Entity・Repositoryを上記語で検索しても確認できない。",
+   "根拠検証メモ": "現行には日時付きの原価変動履歴と日付範囲検索があり、これを「一日単位で記録・呼出し」とみなすなら要件充足する。日次終値スナップショットを要求するなら未実装となるため、日次粒度の受入条件または別添仕様が不足している。",
+   "対応の根拠(現develop)": "src/ 外（script/**, bin/, app/config/**, app/DoctrineMigrations/**, .github/workflows/**）まで再探索したが、一日単位の総原価・原価単価スナップショットは不在。`src/Eccube/Entity/DtbDailySummary.php:34-47` は `#[ORM\\Column(name: 'summary_date', type: Types::DATE_MUTABLE)]` / `#[ORM\\Column(name: 'total_cost', type: Types::BIGINT, options: ['default' => 0])]` と店舗×日付の売上集計にとどまり商品規格単位ではない。`src/Eccube/Entity/DtbWeeklyStockHistory.php:45` `#[ORM\\Column(name: 'stock_01', ... 'comment' => '1週間前在庫数'])]` は在庫数のみの週次履歴。運用バッチは `script/ops/` 配下に db / imgcheck / monthly-inventory-snapshot / stg-db-maintenance の4件のみで、うち在庫系の `script/ops/monthly-inventory-snapshot/query.sql:1-16` は `-- 月次商品情報スナップショット 抽出クエリ` かつ抽出項目が `pc.product_code, pc.price02, pc.buy_price, bi.shop_name, ps.stock_location_id, ps.stock` と原価を含まない月次処理。`.github/workflows/` にも日次原価バッチの起動定義は無い（cron 記述は vaddy-1.yml / vaddy-2.yml のみ）。`app/DoctrineMigrations/` にも日次原価テーブル追加は無い。スナップショット全体の `daily.?cost|日次.*原価|一日単位|日単位` 検索ヒットは `src/Eccube/Repository/DtbDailySummaryRepository.php:37` のコメント1件のみ。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Repository/DtbStockHistoryRepository.php"
+    ]
+   }
+  },
+  {
+   "rowId": 445,
+   "機能No": "M04-02",
+   "機能名": "M04-02 在庫編集",
+   "ドメイン": "m04",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "識別ID:3-6 承認通知先（所属選択）は、共通処理識別ID1-1を参照し、編集している在庫を保持している店舗の所属マスターデータから取得し選択肢とする。共通処理では所属マスターから取得し、所属マスターデータの並び順項目の昇順で表示する。",
+   "実装実態": "StockApprovalType::getDepartmentChoices() は memberRepository->findBy(['baseInfo' => $BaseInfo]) で対象店舗のメンバーを取得し、各 Member の Department 名を選択肢化している。DepartmentRepository または mtb_department を直接参照せず、mtb_department.sort_no 昇順でもない。",
+   "差分内容": "設計の選択肢ソースは店舗の所属マスターデータだが、実装は所属マスターではなく対象店舗に紐づくメンバーの所属から選択肢を作るため、所属マスターに存在しても該当メンバーがいない所属は表示されず、マスターの並び順も保証されない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/StockApprovalType.php:224",
+   "設計書参照": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-6:2484",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:2790 の Excel 正本は承認通知先（所属選択）を「編集している在庫を保持している店舗の所属マスターデータから取得し選択肢とする」と明記する。共通処理の同ファイル:1178 は「所属マスターから取得」「所属マスターデータの並び順項目の昇順」とする。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/ProductServiceProvider.php:228-240 にM04-02在庫編集・所属選択入口はなく、旧4リポジトリを `承認通知先`, `所属マスター`, `department`, `product/stock` で横断検索しても対応旧実装は見つからない。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/StockApprovalType.php:224-237 は `memberRepository->findBy(['baseInfo' => $BaseInfo])` で店舗メンバーを無指定順で取得し、各MemberのDepartment名を連想配列化する。`DepartmentRepository` を取得元にせず、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Entity/Master/Department.php:20-27 の `mtb_department` マスター順によるASC指定もない。",
+   "根拠検証メモ": "店舗に所属するメンバーから部門集合を導くことで選択肢集合が一致する場合はあるが、所属マスターに存在しても当該メンバーがいない所属が落ち、マスター順も保証されないため正本との差分は残る。",
+   "対応の根拠(現develop)": "`src/Eccube/Form/Type/Admin/StockApprovalType.php:224-226` `private function getDepartmentChoices(BaseInfo $BaseInfo): array` / `$Members = $this->memberRepository->findBy(['baseInfo' => $BaseInfo]);` のままで、以降 L228-236 は `$Member->getDepartment()` の名称を選択肢化するのみ。所属マスター（Department エンティティ / mtb_department）参照にも sort_no 昇順ソートにも変わっていない。この結果が同ファイル:141 `'choices' => $this->getDepartmentChoices($BaseInfo),` で承認通知先（所属選択）に使われている。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Form/Type/Admin/StockApprovalType.php"
+    ]
+   }
+  },
+  {
+   "rowId": 446,
+   "機能No": "M04-03",
+   "機能名": "M04-03 在庫一括編集",
+   "ドメイン": "m04",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "登録成功時は「登録が完了しました。」（admin.register.complete）を表示し、商品検索一覧（在庫一覧 admin_stock_list）の保持ページへリダイレクトする。",
+   "実装実態": "登録成功後に addSuccess('admin.common.save_complete')（「保存しました」）を表示し、admin_stock_bulk_approval_new へ同一 productStockIds 付きでリダイレクトして在庫一括編集画面を再表示する。在庫一覧へは戻らない。",
+   "差分内容": "設計は本機能の画面・処理フロー・表示メッセージの正を pf-eccube3（直接更新型）と明記し、登録成功時は一覧へ戻し「登録が完了しました。」を表示すると規定。永続化の承認ワークフロー化は遷移先・成功メッセージの変更を正当化しない。実装は遷移先が自ルート（編集画面再表示）、メッセージも admin.common.save_complete で不一致。",
+   "実装参照": "src/Eccube/Controller/Admin/Stock/StockBulkApprovalController.php:177-184",
+   "設計書参照": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-7",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:3135 のExcel正本は「カスタマイズ要件に記載の内容以外は現行踏襲とする。」とのみ記載し、成功文言・遷移先を具体化していない。具体要件は同ファイル:3248-3251 の `<!-- function-design-embed:start ... -->`、`Source: functions/pf-eccube3/m04-03_admin_stock_stock_bulk_edit.md` 以降にあり、同:3290 に「『登録が完了しました。』を表示して、商品検索一覧の保持ページへリダイレクトする」と記載されるため、Excel正本ではなくリバース詳細設計由来である。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Product/ProductClassController.php:693-696 は `$app->addSuccess('admin.register.complete', 'admin');` の後に `return $app->redirect($app->url('admin_product_search', ['page_no' => ...]));` を実行する。文言は /home/y-saito/Developments/pf-eccube3/src/Eccube/Resource/locale/message.ja.yml:83 の `admin.register.complete: 登録が完了しました。` であり、期待挙動を直接裏付ける。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockBulkApprovalController.php:213-220 は `$this->addSuccess('admin.common.save_complete', 'admin');` の後、`redirectToRoute('admin_stock_bulk_approval_new', $params)` で自画面へ戻る。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:1595 は `admin.common.save_complete: 保存しました` であり、旧実装の文言・一覧遷移の双方を満たさない。",
+   "根拠検証メモ": "具体要件はExcel正本にはなく、リバース詳細設計と旧実装に一致するため、旧挙動の移植漏れと判定した。",
+   "対応の根拠(現develop)": "`src/Eccube/Controller/Admin/Stock/StockBulkApprovalController.php:213` `$this->addSuccess('admin.common.save_complete', 'admin');`、同:215-220 `foreach ($ProductStocks as $ps) { $params['productStockIds'][] = $ps->getId(); }` `return $this->redirectToRoute('admin_stock_bulk_approval_new', $params);` のまま。`src/Eccube/Resource/locale/messages.ja.yaml:1595` `admin.common.save_complete: 保存しました` であり、設計の `admin.register.complete`（同:1970 `登録が完了しました。`）表示にも `admin_stock_list` へのリダイレクトにも変更されていない。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Resource/locale/messages.ja.yaml"
+    ]
+   }
+  }
+ ]
+}

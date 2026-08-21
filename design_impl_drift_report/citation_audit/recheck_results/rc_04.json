@@ -1,0 +1,149 @@
+{
+  "packetId": "rc_04",
+  "results": [
+    {
+      "rowId": 52,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0505_基本設計仕様書(API_受注管理).html の sheet-6 を実際に開き、Excel正本の data-excel-ref=\"0505:スマレジ受信処理!B9\" に「/smaregi/transaction」、同 L11/S11/Y11/AH11/AS11 に「POST」「有」「IP制限」「JSON」「なし (ステータスコードのみ)」があることを確認した（1727-1728行）。同 B128/J128 の「200」「レスポンスデータは空を返す」も確認した（1861-1863行）。",
+      "reason": "正本引用は function-design-embed 開始（1974行）より前の src-cell/data-excel-ref 保持要素に実在し、IP制限という設計期待を直接支持するため SPEC_BACKED は妥当。現実装には一般の front/admin 許可リスト以外にスマレジWebhook固有の許可IP判定がなく、必須の共有シークレットヘッダ認証へ置き換わっている。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/Smaregi/WebhookController.php の WebhookController::index() は AuthenticationService::verify() を必須実行する。src/Eccube/Service/Smaregi/Webhook/AuthenticationService.php の verify() は secretHeader の値を hash_equals($this->secret, $receivedSecret) で照合する。app/config/eccube/routes.yaml の smaregi_webhook_controllers と eccube.yaml の既定値により入口も /smaregi/webhook で、設計の /smaregi/transaction ではない。IpAddrListener は既定空配列の汎用 front/admin 許可・拒否リストであり、Webhook固有のIP認証契約ではない。",
+      "severityOpinion": "high",
+      "confidence": "high"
+    },
+    {
+      "rowId": 53,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0505_基本設計仕様書(API_受注管理).html のExcel正本で、data-excel-ref=\"0505:スマレジ受信処理!AS11\" の「なし (ステータスコードのみ)」（1728行）と、B128/J128 の「200」「レスポンスデータは空を返す」（1861-1863行）を実物確認した。",
+      "reason": "空本文・200の要求は function-design-embed 外のExcel正本に明記されている。成功時にもJSON本文を返す現実装との差は現ツリーでも残る。Smaregi-Event-Id 欠落時の400分岐は正本に明示されていないが、再現判定は空本文違反だけで成立する。",
+      "currentImpl": "ec-cube-enterprise 現状: WebhookController::index() は認証失敗時に {status:error,message:Authentication failed} の401、Event ID欠落時に {status:error,message:Smaregi-Event-Id header is required} の400、重複時に {status:ok,message:Event is duplicate} の200、通常成功時に {status:ok} の200を JsonResponse で返す（src/Eccube/Controller/Smaregi/WebhookController.php）。通常成功も空本文ではない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 54,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0505_基本設計仕様書(API_受注管理).html のExcel正本で、data-excel-ref=\"0505:スマレジ受信処理!B137/S137/AC137\" に「その他支払い方法情報フラグ」「none」「allで固定」が併記されること（1875行）、C146-C148 に「...?with_details=all&with_deposit_others=all&」「with_discounts=all&with_store=all&with_customer=all&with_store=all&with_staff」「本来は改行はなし」があること（1886-1888行）を確認した。",
+      "reason": "入力例 none と備考 allで固定は正本内部で矛盾するが、具体的URLサンプルは with_deposit_others=all を明記しており、先行分類どおり正本根拠は実在する。矛盾があるため設計値の確度は high ではなく medium としたが、現実装が別キー with_payments を送る事実は明確。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Service/Smaregi/Api/SmaregiTransactionApiClient.php の SmaregiTransactionApiClient::TRANSACTION_GET_FIXED_QUERY は with_details=all, with_payments=none, with_discounts=all, with_store=all, with_customer=all, with_staff=all。src/Eccube と tests を with_deposit_others/with_payments で検索し、with_deposit_others は0件、with_payments はこの定数と同値を期待するテストにのみ存在した。関連単体テスト14件（JwtTokenServiceTestと本ApiClientTest）は実行して成功した。",
+      "severityOpinion": "med",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 55,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0506_基本設計仕様書(API_店頭買取管理).html の sheet-3 を開き、Excel正本の data-excel-ref=\"0506:買取アプリ用ログイン!B9\" に「/api/admin/login.json」、L11 に「POST」があることを確認した（1041-1043行）。同シートのレイアウト画像 D22 と E38 も実物確認したが、追加URLは描かれていなかった。/admin/login.json と /admin/login は functions/pf-api/a06-01_api_store_purchase_admin_login.md の61-62行でのみ確認した。",
+      "reason": "少なくとも /api/admin/login.json とPOSTはExcel正本が直接規定するため SPEC_BACKED は妥当。旧実装由来の2別名が同じfindingに混在するが、正本URLとの不一致だけで乖離は成立する。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/App/MTGBuyer/V1/Admin/LoginController.php の LoginController::login() は Route('/%eccube_api_v1_route%/admin/login.json', methods:['POST']) のみ。app/config/eccube/packages/eccube.yaml の既定 ECCUBE_API_V1_ROUTE は api/v1 で、eccube_member_login_user_routes も /api/v1/admin/login.json のみ。src/Eccube と app/config を /api/admin/login.json、/admin/login.json、Route.*admin/login で検索したが、正本URLまたは別名を提供する追加Routeはなかった。",
+      "severityOpinion": "high",
+      "confidence": "high"
+    },
+    {
+      "rowId": 57,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0506の sheet-3 正本で login_id/password がいずれも必須「〇」（data-excel-ref M46/M47、1062-1063行）、認証失敗が401（B60/J60、1072行）であることを確認した。excel_to_html/output/*.html の data-excel-ref 行を「形式検証しない」「必須の検証を行わず」「中継先の認証判定に委ねる」で検索して0件。同シート画像 D22/E38 も確認したが、検証を行わないという記述はなかった。非検証の明文は functions/pf-api/a06-01_api_store_purchase_admin_login.md の169-170行、実処理は pf-api/src/Controller/Admin/LoginController.php の postAction() で確認した。",
+      "reason": "Excel正本はパラメータを必須とするが、pf-api入口で必須判定をせず中継先へ委ねるという実装位置の指定はない。旧pf-apiの postAction() は request値をそのまま中継しており、期待値の出所は旧実装なので LEGACY_BACKED は妥当。",
+      "currentImpl": "ec-cube-enterprise 現状: LoginController::login() は requestから login_id/password を得た直後、どちらかが空文字なら UnauthenticatedException('ログインIDまたはパスワードが入力されていません') を投げる（src/Eccube/Controller/App/MTGBuyer/V1/Admin/LoginController.php）。中継先へ委譲する前提自体がなく、ローカル必須判定は残る。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 58,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "REFUTED",
+      "correctedClass": "SPEC_BACKED",
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0506の sheet-3 正本を開くと、data-excel-ref=\"0506:買取アプリ用ログイン!F37\" に「ログインに失敗した場合は以下のようにエラーを表示する」（1053行）があり、直後のExcelレイアウト画像 E38 を実物確認すると赤字で「正しいログインIDとパスワードを入力してください。」と表示されていた。一方、excel_to_html/output/*.html の data-excel-ref 行を「{code, message}」「画面エラー文言」「独自の文言」で検索して0件で、これらの応答機構は旧 pf-api/src/Controller/Admin/LoginController.php の postAction() 59-68行にのみ実在した。",
+      "reason": "先行メモの「Excel正本は401だけ」は画像を見落としており誤り。正本は認証失敗時の画面表示文言まで規定するため、現実装の独自文言との差にはSPEC根拠がある。ただし `{code,message}`、中継先HTMLからの抽出、独自文言禁止という機構部分は旧実装由来であり、findingはSPECとLEGACYを混在させている。分類軸に混在区分がないため、正本根拠が1つでもある場合の手順に従い SPEC_BACKED へ修正する。",
+      "currentImpl": "ec-cube-enterprise 現状: LoginController::login() は空入力時に「ログインIDまたはパスワードが入力されていません」、会員不在・パスワード不正時に「ログインIDまたはパスワードが正しくありません」を生成する。UnauthenticatedException::__construct() はこれを errors 配列へ入れ、ExceptionListener::onKernelException() は HTTP 401 の {code:401, errors:[...]} を返す。正本画像の「正しいログインIDとパスワードを入力してください。」とも、旧契約の {code,message} とも一致しない。",
+      "severityOpinion": "med",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 59,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0506の sheet-3 正本にある図形抽出行 data-excel-ref=\"0506:買取アプリ用ログイン!C72\" を開き、JWT実物「eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJTZWthcHB5IEluYy4iLCJhdWQiOjgyNX0...」を確認した（1102行）。前半2セグメントを実際にbase64url復号し、ヘッダが {\"typ\":\"JWT\",\"alg\":\"HS256\"}、ペイロードが {\"iss\":\"Sekappy Inc.\",\"aud\":825} であることを確認した。",
+      "reason": "JWTサンプルは function-design-embed 外かつ data-excel-ref を持つExcel図形由来で、iss/aud/HS256を直接示すため SPEC_BACKED は妥当。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Security/AccessToken/JwtTokenService.php の JwtTokenService::createToken() は payload を ['sub' => (string)$memberId] のみでJSON化し、alg=HS256で署名する。Security/AccessToken と App API周辺を iss/aud/sub で検索して、iss/aud は0件、subのみ実装・テストされていた。JwtTokenServiceTestを含む対象単体テストは成功した。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 60,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0506の sheet-3 正本で data-excel-ref B66/R66 と B67/R67 の「shopName／ログイン者の所属店舗」「shopAddr／ログイン者の所属店舗の住所」（1083-1084行）を確認した。excel_to_html/output/*.html の data-excel-ref 行を「店舗が紐づかない場合」「shopName 空文字」「shopAddr 空文字」で検索して0件。レイアウト画像 D22/E38 も実物確認したが、店舗未紐付け時の応答は描かれていなかった。空文字初期化は旧 pf-eccube3 の AdminLoginController::index() 14-22行で確認した。",
+      "reason": "店舗なし時に空文字を保証する明文はExcel正本になく、旧EC-CUBE3の `$shopName = \"\"; $shopAddr = \"\"; if (isset($memberSub))` に由来するため LEGACY_BACKED は妥当。",
+      "currentImpl": "ec-cube-enterprise 現状: LoginMemberView::getBaseInfoId() の元プロパティは ?int だが、LoginController::login() は entityManager->find(BaseInfo::class, $viewMember->getBaseInfoId()) を非nullableの Member::setBaseInfo(BaseInfo $baseInfo) に渡す。その後 Member::getBaseInfo() と BaseInfoの住所・店舗名getterを無条件に呼ぶ。null時に shopName/shopAddr を空文字へする分岐はない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 61,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0506の sheet-4 正本で data-excel-ref=\"0506:店頭買取情報取得!B9\" の「/api/admin/otcBuyOrders.json」と L11 の「GET」を確認した（1233-1235行）。同シートのレイアウト画像 D24 も実物確認したが追加URLはなかった。/admin/otcBuyOrders.json と拡張子なし別名は functions/pf-api/a06-02_api_store_purchase_otc_buy_order_list.md の69-70行で確認した。",
+      "reason": "正本URLとGETが直接記載されているので SPEC_BACKED は妥当。別名は旧実装由来だが、正本URLとの不一致だけで乖離は成立する。",
+      "currentImpl": "ec-cube-enterprise 現状: OtcBuyOrderController::getUncompletedOtcBuyOrders() のRouteは '/%eccube_api_v1_route%/admin/otcBuyOrders.json' のみで、eccube.yaml の既定値により /api/v1/admin/otcBuyOrders.json。src/Eccube と app/config を /api/admin/otcBuyOrders.json、/admin/otcBuyOrders、Route.*otcBuyOrders で検索し、追加Routeはなかった。",
+      "severityOpinion": "high",
+      "confidence": "high"
+    },
+    {
+      "rowId": 62,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0506の sheet-4 正本で data-excel-ref=\"0506:店頭買取情報取得!D35\" の「取得対象ステータスは『査定前』『査定中』『査定中断』『査定再開』」（1241行）と、R55の同じ4状態（1257行）を確認した。D24のレイアウト画像も実物確認したが振込前を抽出対象とする記述はなかった。excel_to_html/output/*.html の data-excel-ref 行を「商品到着.*査定中.*振込前.*保留.*査定再開」「振込前（7）」で検索して0件。5,6,7,8,9は旧 pf-api の DtbOtcBuyOrderRepository::findUncompleteBuyOrderByShopId() と MtbOtcBuyOrderStatus で確認した。",
+      "reason": "Excel正本は4状態で、振込前（7）を含む5状態の期待は旧実装だけにある。したがって LEGACY_BACKED は妥当。現実装は正本の4状態には一致するが、旧実装差として登録された本findingの差は現存する。",
+      "currentImpl": "ec-cube-enterprise 現状: MtbOtcBuyOrderStatus::ASSESSMENT_UNCOMPLETED_STATUSES は STATUS_ASSESSMENT_PENDING(5), IN_PROGRESS(6), PAUSED(8), RESUMED(9) の4つ。STATUS_BEFORE_PAY(7) は deprecated かつ配列外。OtcBuyOrderController::getUncompletedOtcBuyOrders() はこの配列をそのままRepositoryへ渡すため7は抽出されない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 63,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0506の sheet-4 正本で data-excel-ref=\"0506:店頭買取情報取得!D34\" の「ログイン者の所属店舗に紐づく特定のステータスの査定情報を取得する」（1240行）と R55 の所属店舗条件（1257行）を確認した。excel_to_html/output/*.html の data-excel-ref 行を「所属店舗が無い場合」「店舗による絞り込みを行わず」で検索して0件。D24レイアウト画像も確認したが未紐付け時の全店表示はなかった。nullable shopIdと条件付きjoinは旧 pf-api の OtcBuyOrderController::getAction() 35-46行、DtbOtcBuyOrderRepository::findUncompleteBuyOrderByShopId() 95-99行で確認した。",
+      "reason": "正本は所属店舗に紐づく情報を要求するだけで、店舗なしなら全店返却という例外分岐はない。その分岐は旧実装由来なので LEGACY_BACKED は妥当。",
+      "currentImpl": "ec-cube-enterprise 現状: OtcBuyOrderController::getUncompletedOtcBuyOrders() は `$Member->getBaseInfo()->getId()` を無条件取得する。DtbOtcBuyOrderRepository::getOtcBuyOrdersByShopIdAndStatus(int $shopId, array $statusIds) は shopIdを必須とし、空なら[]、通常は `where('baseInfo.id = :shopId')` を常に付ける。店舗条件を外して全件返す分岐はない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 64,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0506の sheet-4 正本で applyDate と birth は型「文字列」とだけ記載されること（data-excel-ref B58/J58/R58、B74/J74/R74、1260・1276行）を確認した。図形サンプル C81 は「applyDate:2020/07/28 15:57:41」「birth:'1990/01/01'」（1296行）。さらにD24レイアウト画像を実物確認すると申込み時間は「9/20/2024 10:47:29 AM」等の非ISO表示だった。excel_to_html/output/*.html の data-excel-ref 行を ISO8601 で検索して0件。ISO8601明文は functions/pf-api/a06-02_api_store_purchase_otc_buy_order_list.md の133・149・201行で確認した。",
+      "reason": "ISO8601要件はExcel正本になく、正本のサンプルと画像はむしろスラッシュ区切りの日時を示す。旧pf-apiのserializer出力に由来するため LEGACY_BACKED は妥当。",
+      "currentImpl": "ec-cube-enterprise 現状: OtcBuyOrderController::getUncompletedOtcBuyOrders() は applyDate を format('Y/m/d H:i:s')、customerInfo.birth を format('Y-m-d') で固定整形する。対象Controllerを format('c')、DATE_ATOM、ISO8601で検索して0件。旧実装期待のISO8601にはなっていない（applyDateは正本サンプルには合致し、birthは正本サンプルのスラッシュとも異なる）。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    }
+  ]
+}

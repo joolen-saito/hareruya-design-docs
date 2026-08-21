@@ -1,0 +1,149 @@
+{
+  "packetId": "rc_07",
+  "results": [
+    {
+      "rowId": 95,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "REFUTED",
+      "correctedClass": "ALREADY_MET",
+      "driftVerdict": "RESOLVED",
+      "checkedQuote": "0506_基本設計仕様書(API_店頭買取管理).html のExcel正本全体を「新規のカラム」「dtb_otc_buy_order」「approver」で検索した。src-cellで実在したのは 0506:【新規】ダブルチェック者更新!E43 の「ダブルチェック者は新規のカラムに追加する」だけで、対象テーブル名・専用列名は0件。sheet-15のレイアウト画像 D22 も実見したが、MTGバイヤー画面であり保存先テーブルの注記はない。",
+      "reason": "正本の実在引用は「新規のカラム」までで、dtb_otc_buy_order直下の専用列を要求していない。現実装は src/Eccube/Entity/DtbOtcBuyOrderApprover.php のテーブル dtb_otc_buy_order_approver に、新設された approver_id 列でダブルチェック者を保持する。設計引用から「受注テーブルの新規専用列でなければならない」まで導くのは過剰解釈であり、引用どおりの列保存は満たしている。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Service/App/MTGBuyer/V1/Admin/OtcBuyOrder/UpdateDoubleCheckMemberAction.php の handle() は saveDoubleCheckApproval() を呼ぶ。src/Eccube/Service/EntityManager/OtcBuyOrderApproverEntityManager.php の saveDoubleCheckApproval() は role=ROLE_DOUBLE_CHECK の DtbOtcBuyOrderApprover を作成・更新し setApprover($Approver) する。src/Eccube/Entity/DtbOtcBuyOrderApprover.php はテーブル名 dtb_otc_buy_order_approver、JoinColumn名 approver_id を実定義する。",
+      "severityOpinion": "low",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 96,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0506_基本設計仕様書(API_店頭買取管理).html の sheet-15 を実見し、src-cell 0506:【新規】ダブルチェック者更新!B61 の「200」、B63の「レスポンスデータ」、B65の「なし」を確認した。sheet-15のレイアウト画像 D22 も実見したが、レスポンス契約を上書きする注記はない。",
+      "reason": "成功ステータス200とレスポンスデータなしはExcel正本に明記されている。現行の updateDoubleCheckMember() はHTTP 200でJSON本文を付けるため、本文なしの契約との差が残る。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php の updateDoubleCheckMember() は `return new JsonResponse(['code' => Response::HTTP_OK], Response::HTTP_OK);` を返し、本文は `{\"code\":200}` となる。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 97,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0507_基本設計仕様書(API_ネット買取管理).html のExcel正本全体を「設定が存在しない」「未設定」「設定が無い」「共通例外」「HTTP 500」「例外」で検索し、該当src-cellは0件。sheet-3では D24「追加システム設定のまとめて買取商品IDを取得する」、B50/J50「200／成功」を確認し、レイアウト画像 D25 も実見したが、画像は設定値「まとめて買取商品ID 70578」の表示だけで欠落時挙動はない。旧 pf-api/src/Controller/Admin/OptionController.php の getBulkPurchaseIdAction() は findOneBy(...)->getOptionValue() をnull確認なしで呼ぶ。",
+      "reason": "設定欠落時500はExcel正本にはなく、旧pf-apiのnull未考慮呼出しだけが根拠なのでLEGACY_BACKEDは妥当。現行は明示的にnullを空文字へ変換して200を返す。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/App/MTGBuyer/V1/Admin/OptionController.php の getBulkPurchaseId() は `$value = $Option?->getOptionValue() ?? '';`、続いて `return new JsonResponse($value);`。tests/Eccube/Tests/Web/App/MTGBuyer/V1/Admin/OptionControllerTest.php の testGetBulkPurchaseIdWhenNotFound() もHTTP 200とJSON空文字を期待する。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 98,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0507_基本設計仕様書(API_ネット買取管理).html の sheet-4 を実見した。src-cell J57/J61 は netBuyOrderId/netOrderStatusId を「文字列」とし、shape C70 の正本サンプルは `\"netBuyOrderId\": \"9218\"`、`\"applyDate\": \"2024/03/06 17:21:23\"`、`\"netOrderStatusId\":\"1\"`。正本全体を「integer」「ISO8601」「serialize_null」「null」で検索して0件。レイアウト画像 D22 も実見したが、APIの型・null規約はない。旧 pf-api/src/Repository/DtbBuyOrderRepository.php の findProductArrivalBuyOrder() はDB値をキャストせず返し、config/packages/fos_rest.yaml は `serialize_null: true`。",
+      "reason": "整数・ISO8601・null保持はExcel正本とむしろ矛盾し、旧実装のDoctrine/JMSシリアライズ経路だけに由来するためLEGACY_BACKEDは正しい。現行の明示キャスト・日時整形・空文字置換も現在残っている。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderController.php の getProductArrivalBuyOrders() は netBuyOrderId/netOrderStatusId を `(string)`、applyDateを `format('Y/m/d H:i:s')`、memo/memberNameのnullを `?? ''` で返す。tests/Eccube/Tests/Web/App/MTGBuyer/V1/Admin/BuyOrderControllerTest.php も文字列IDと同日時書式を検証する。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 99,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "PARTIAL",
+      "checkedQuote": "0507_基本設計仕様書(API_ネット買取管理).html のExcel正本全体を「401」「本文を持たない」で検索してsrc-cell 0件。sheet-4の正本ステータスはB52の「200」だけで、レイアウト画像 D22 にも認証失敗応答はない。旧 pf-api/src/Controller/BaseController.php の authAdminToken() はトークン欠落・SignatureInvalidException・会員不在の各分岐で `throw new UnauthorizedHttpException('');` とする。",
+      "reason": "401空本文の具体契約はExcel正本になく旧認証経路由来なのでLEGACY_BACKEDは妥当。ただし先行記述の「401は共通ExceptionListenerで必ずJSON」は過大。現行では不正トークンとトークンが指す会員不在はAccessTokenAuthenticatorの認証失敗レスポンスが空本文401を直接返し、旧期待を満たす。ヘッダ欠落だけは認証器が非対応となり、IsGranted拒否からHttpException 401を経てEccube ExceptionListenerのJSON本文になるため、この条件の乖離だけ残る。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Security/AccessToken/JwtTokenHeaderExtractor.php の extractAccessToken() は欠落時null。src/Eccube/Security/AccessToken/JwtTokenHandler.php は署名不正・会員不在をBadCredentialsExceptionにし、vendor/symfony/security-http/Authenticator/AccessTokenAuthenticator.php の onAuthenticationFailure() は `new Response(null, 401, ...)` を返す。一方、src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderController.php はクラスに IsGranted があり、欠落時の401 HttpExceptionは src/Eccube/EventListener/ExceptionListener.php が `{code, errors}` にする。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 100,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0507_基本設計仕様書(API_ネット買取管理).html のExcel正本全体を「例外メッセージ」「ロールバック」「errors」で検索してsrc-cell 0件。sheet-5ではB51/J51「500／サーバエラー」、B53「レスポンスデータ」、B55「なし」を確認し、レイアウト画像 D22 も実見したが例外本文契約はない。旧 pf-api/src/Controller/Admin/BuyOrderFreeCommentController.php の putAction() はcatch内で rollback() 後に `errors => [$e->getMessage()]` のHTTP 500 Viewを返す。",
+      "reason": "500自体は正本にあるが、rollbackと元例外メッセージ配列の返却は旧実装だけが根拠でありLEGACY_BACKEDは妥当。現行はrollbackする一方、外部応答を固定文言へ置換する。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Service/App/MTGBuyer/V1/Admin/BuyOrder/UpdateFreeCommentAction.php の handle() はcatchでrollbackし `RuntimeException('システムエラーが発生しました')` を投げる。src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderController.php の updateFreeComment() はさらに InternalException の同じ固定文言へ包み、src/Eccube/Exception/App/InternalException.php は errorsをその固定文言配列にする。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 101,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "PARTIAL",
+      "checkedQuote": "0507_基本設計仕様書(API_ネット買取管理).html のExcel正本全体を「401」「404」「本文を持たない」で検索してsrc-cell 0件。sheet-6の正本はB70「200」、B72「レスポンスデータ」、B74「なし」で、sheet-6にはsheet-image自体がない。旧 pf-api/src/Controller/BaseController.php の authAdminToken() は認証失敗に `UnauthorizedHttpException('')`、pf-api/src/Controller/Admin/BuyOrderStatusController.php の putAction() は受注なしに引数なしの `NotFoundHttpException()` を投げる。",
+      "reason": "401/404空本文はExcel正本になく旧経路由来なのでLEGACY_BACKEDは妥当。ただし現行が全条件で必ずJSONという説明は誤り。不正トークン・会員不在はAccessTokenAuthenticatorが空本文401を直接返すため解消済み。トークン欠落はIsGranted拒否からJSON 401となり、受注なしはNotFoundExceptionからJSON 404となるので、この2条件の乖離は残る。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Security/AccessToken/JwtTokenHandler.php と vendor/symfony/security-http/Authenticator/AccessTokenAuthenticator.php の onAuthenticationFailure() により、不正トークン・会員不在は `Response(null, 401)`。欠落時は JwtTokenHeaderExtractor::extractAccessToken() がnullを返し、BuyOrderControllerのIsGranted拒否由来の401を Eccube/EventListener/ExceptionListener.php がJSON化する。BuyOrderController::updateStatus() の受注なしは `NotFoundException('買取情報が見つかりません')`、NotFoundExceptionとExceptionListenerにより `{code:404, errors:[...]}` となる。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 102,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0507_基本設計仕様書(API_ネット買取管理).html のExcel正本全体を「例外メッセージ」「ロールバック」「errors」「500」で検索した。A07-04のsheet-6には該当src-cellがなく、正本ステータスはB70の「200」のみでsheet-imageもない。旧 pf-api/src/Controller/Admin/BuyOrderStatusController.php の putAction() は更新例外時に rollback() し、`errors => [$e->getMessage()]` のHTTP 500 Viewを返す。",
+      "reason": "保存例外時のrollback・500本文・元例外メッセージ返却は旧実装だけが根拠で、LEGACY_BACKEDは妥当。現行はrollback後に元例外メッセージを固定文言へ置換するため差が残る。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Service/App/MTGBuyer/V1/Admin/BuyOrder/UpdateStatusAction.php の handle() はcatchでrollbackし `InternalException('システムエラーが発生しました', $e)` を投げる。BuyOrderController::updateStatus() はBaseApiExceptionをそのまま再throwし、InternalExceptionのerrorsは固定文言配列である。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 103,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0507_基本設計仕様書(API_ネット買取管理).html の sheet-7 を実見し、src-cell 0507:ネット買取注文の査定終了処理!B110/J110 の「400／バリデーションエラー」を確認した。レイアウト画像 D23 も実見したが、このステータス定義を変更する注記はない。",
+      "reason": "入力検証失敗400はExcel正本に明記される。現行 updateBuyOrder() はMapRequestPayloadのvalidationFailedStatusCodeを指定せず、Symfony既定422を使うため乖離は再現する。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderController.php の updateBuyOrder() は `#[MapRequestPayload]` をオプションなしで使用する。vendor/symfony/http-kernel/Attribute/MapRequestPayload.php の既定は `Response::HTTP_UNPROCESSABLE_ENTITY`。tests/Eccube/Tests/Web/App/MTGBuyer/V1/Admin/BuyOrderControllerTest.php の testUpdateBuyOrderValidationError() も422を実証する。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 105,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0507_基本設計仕様書(API_ネット買取管理).html の sheet-7 でsrc-cell B111/J111「500／例外発生」とB115「なし」を確認したが、Excel正本全体を「例外メッセージ」「ロールバック」「errors」で検索して0件。レイアウト画像 D23 も実見したがエラー本文契約はない。旧 pf-api/src/Controller/Admin/BuyOrderController.php の putBuyOrderEndAction() はcatchで `errors => [$e->getMessage()]` のHTTP 500 Viewを返し、updateBuyOrder() は内部例外時にrollback後、元例外を再throwする。",
+      "reason": "HTTP 500は正本にもあるが、rollbackと元例外メッセージ配列の外部返却という指摘の核心は旧実装のみが根拠で、LEGACY_BACKEDは妥当。現行は固定汎用文言を返す。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Service/App/MTGBuyer/V1/Admin/BuyOrder/UpdateBuyOrderAction.php の handle() は例外時にrollbackし `InternalException('システムエラーが発生しました', $e)` を投げる。BuyOrderController::updateBuyOrder() はBaseApiExceptionを再throwし、src/Eccube/Exception/App/InternalException.php はerrorsを固定文言配列にする。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 106,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0507_基本設計仕様書(API_ネット買取管理).html のExcel正本全体を「404」「本文を持たない」で検索してsrc-cell 0件。sheet-7の正本ステータスは200/400/500で、B115の「なし」はあるが404定義はない。レイアウト画像 D23 も実見したが404応答はない。旧 pf-api/src/Controller/Admin/BuyOrderController.php の putBuyOrderEndAction() は受注なしに引数なしの `throw new NotFoundHttpException();` とする。",
+      "reason": "受注なし時の404空本文はExcel正本にないためLEGACY_BACKEDは妥当。現行は404ステータスを保つが、明示メッセージをcode/errorsのJSON本文で返す。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderController.php の updateBuyOrder() は受注なしで `NotFoundException('買取情報が見つかりません')`。src/Eccube/Exception/App/NotFoundException.php はerrors配列と404を保持し、src/Eccube/EventListener/ExceptionListener.php は `{code, errors}` のJsonResponseを生成する。",
+      "severityOpinion": "med",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 107,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0507_基本設計仕様書(API_ネット買取管理).html の sheet-7 を実見し、src-cell B77/J77/M77/O77/AC77 が順に `name`／「文字列」／「〇」／「65535」／「商品名」と定義することを確認した。レイアウト画像 D23 も実見したが、この上限を縮小する注記はない。",
+      "reason": "商品名の必須・最大65535はExcel正本に明記される。DTO検証は65535まで通す一方、個別入力商品へ保存するORM列が255なので、256〜65535文字を設計どおり永続化できない。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Dto/App/MTGBuyer/V1/Admin/UpdateBuyOrderDetailDto.php はnameに `Assert\\Length(max: 65535)`。src/Eccube/Service/App/MTGBuyer/V1/Admin/BuyOrder/UpdateBuyOrderAction.php の buildIndivisualInputProduct() はそのnameを setName() し、src/Eccube/Entity/DtbBuyOrderIndivisualInputProduct.php はnameを `Types::STRING, length: 255` と定義する。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    }
+  ]
+}

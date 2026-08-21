@@ -1,0 +1,149 @@
+{
+  "packetId": "rc2_01",
+  "results": [
+    {
+      "rowId": 2,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0501_基本設計仕様書(API_在庫管理).html のExcel正本セル S38-S39に「在庫場所区分がスマレジの場合に編集結果をスマレジ側に反映する」「実行できる件数上限を設定し、上限を越えたらエラーを表示し、CSV登録を促す」とある。関連する画面正本 0202_基本設計仕様書(在庫管理機能).html の「在庫編集」A7 image 2・A7 image 3・D81 image 1、および「在庫一括編集」C7 image 2・D60 image 1も実画像を開いて確認したが、これらの画像自体には件数超過エラーやCSV誘導文言は描かれていない。",
+      "reason": "スマレジ反映と上限超過時のCSV誘導はいずれもリバース詳細設計ではなくExcel正本セルに明記されており、SPEC_BACKEDは妥当。現行の編集・一括編集処理にはどちらの契約も実装されていない。",
+      "currentImpl": "StockApprovalStoreAction::handle と StockBulkApprovalStoreAction::handle は在庫エンティティの更新までで、スマレジAPI呼出しも編集件数上限の判定も行わない。対応するControllerのstore系メソッドもAction実行とイベントdispatchのみ。SmaregiStockApiClientの公開メソッドにも編集結果を送る処理は見当たらず、在庫編集・一括編集画面から上限超過時にCSV登録へ誘導する分岐もない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 9,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0502_基本設計仕様書(API_商品管理).html のA02-02のExcel正本では、エンドポイントは「/api/popup/card/{言語コード}/{カードID}」、リクエストパラメータは「言語コード」「カードID」のみで、foil_flg、price、価格昇降順の指定はない。foilFlgはレスポンス項目として記載されている。foil_flgとpriceによる選択はpf-api/src/Controller/ProductController.php と pf-api/src/Repository/DtbProductSubClassRepository.php の旧実装で確認した。",
+      "reason": "期待値のfoil_flg・price入力と価格順制御はExcel正本ではなく旧実装だけに根拠があるため、LEGACY_BACKEDは妥当。現行APIからはこの互換動作が失われたまま。",
+      "currentImpl": "ProductController::getPopupProductByCardId は $lang と $cardId だけを受け取り、ProductRepository::findPopupProductByCardId を呼ぶ。後者の並び順は cd.foil_flg ASC に固定され、Requestのfoil_flg・priceを取得する処理も、price=high/lowに応じた価格順の切替もない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 12,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0502_基本設計仕様書(API_商品管理).html のA02-03のExcel正本レスポンス表には productId、name、productClassId、price01、price02、stock、nameEn、subFileName、fileName、code、conditionCode、foilFlg、weeklySold、productUrl があるが、cardIdはない。旧 pf-api/src/Repository/DtbProductRepository.php の findPopupProductByOldProductId では SELECT に「card.id AS cardId」がある。",
+      "reason": "cardId返却の根拠は対象Excel正本ではなく旧実装であるため、LEGACY_BACKEDは妥当。現行の旧商品ID検索レスポンスにもcardIdは復元されていない。",
+      "currentImpl": "ProductController::getPopupCardByOldProductId は ProductRepository::findPopupProductByOldProductIdWithoutLang の結果を PopupResponseBuilder::build に渡す。リポジトリのSELECT／ResultSetMappingにcardIdはなく、PopupResponseBuilder::buildの出力キーにもcardIdはない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 22,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0505_基本設計仕様書(API_受注管理).html のsheet-3、Excel正本セル R68に「注文の合計金額。ただしスムーズ店頭受取の場合、『スムーズ店頭受取』と表示」とある。関連する画面正本 0203_基本設計仕様書(受注管理機能).html の「スタック用紙印刷」C8 image 1も実画像を開いて確認したが、画像は「印刷予約を受け付けました。」という受付通知で、伝票の合計欄は描かれていない。",
+      "reason": "スムーズ店頭受取時の表示文言はExcel正本セルに明記されており、SPEC_BACKEDは妥当。現行印刷データは条件分岐なしに数値のpayment_totalを出力する。",
+      "currentImpl": "OrderDirectPrintAction::getPrintData は paymentTotal に Orderのpayment_totalをそのまま設定する。OrderRepository::getPrintOrderListMainShop も o.payment_total を取得するだけで、配送種別を使って「スムーズ店頭受取」に置換する分岐はない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 32,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UNSURE",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0505_基本設計仕様書(API_受注管理).html のsheet-3のExcel正本には、未印刷注文を店舗IDで取得する旨と、セル R68の「注文の合計金額。ただしスムーズ店頭受取の場合、『スムーズ店頭受取』と表示」はある。一方、指摘に含まれる詳細な抽出条件、最大10件、部分成功などの規則は同シートのExcel正本範囲では確認できず、後続のfunction-design-embed側と旧実装に現れる。関連画面の「スタック用紙印刷」C8 image 1も実画像を確認したが、受付通知だけで抽出条件は判断できない。",
+      "reason": "一つのfindingにExcel正本で裏付けられる表示契約と、旧実装だけに根拠がある詳細抽出契約が混在している。単一のSPEC_BACKEDまたはLEGACY_BACKEDへ安全に確定できないためUNSUREとする。ただし記載された現行差分自体は実装上再現する。",
+      "currentImpl": "OrderRepository::getPrintOrderListMainShop には通常店頭受取・スムーズ店頭受取・ブラウザ印刷フラグの各抽出とLIMIT 10があるが、getDirectPrintOrderList は通常店頭受取とブラウザ印刷フラグのUNIONおよびLIMIT 10だけで、スムーズ店頭受取の枝がない。また OrderDirectPrintAction::getPrintData は合計額を「スムーズ店頭受取」に置換しない。",
+      "severityOpinion": "med",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 40,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0505_基本設計仕様書(API_受注管理).html のA05-04のExcel正本に、エンドポイント「/smaregi/transaction」、メソッド「POST」と記載されている。旧実装の_locale付きマウントはExcel正本ではなく旧ルーティング由来だが、指摘の中心である/smaregi/transactionは正本にある。",
+      "reason": "外部WebhookのパスとHTTPメソッドはExcel正本で裏付けられ、SPEC_BACKEDは妥当。現行ルーティングは設定値プレフィックス配下の空パスであり、正本の固定パスを提供していない。",
+      "currentImpl": "WebhookController::index のRouteは空文字かつPOSTで、app/config/eccube/routes.yaml により /%eccube_smaregi_webhook_route% をプレフィックスとしてマウントされる。現行ツリーには /smaregi/transaction を公開するRoute定義がない。",
+      "severityOpinion": "high",
+      "confidence": "high"
+    },
+    {
+      "rowId": 47,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "REFUTED",
+      "correctedClass": "SPEC_BACKED",
+      "driftVerdict": "PARTIAL",
+      "checkedQuote": "0505_基本設計仕様書(API_受注管理).html のA05-04正本には、既存注文のスムーズ店頭受取を発送済みにする旨とOrderへの連携項目追加がある。さらに関連Excel正本 0408_基本設計仕様書(バッチ_会員).html の「スマレジ使用ポイント連携」には「注文IDから注文サブデータ抽出し」、入力項目「注文サブデータ.注文ID」、失敗時に注文サブデータへ保存する旨、および「スマレジエラーメッセージ(point_error_message)…スマレジ仕様ポイントエラーフラグ(smaregi_error_flg)をTrue」と明記されている。",
+      "reason": "注文サブデータと連携エラー項目は関連するExcel正本に明記されているため、旧実装だけを根拠としたLEGACY_BACKED判定は誤りで、SPEC_BACKEDへ訂正する。現行では一部の項目とポイント反映がOrder上に実装済みだが、注文サブデータ構造および既存スムーズ店頭受取注文に対する全項目更新は未達なのでPARTIAL。",
+      "currentImpl": "現行ツリーにdtb_order_sub相当のEntity／テーブル参照はない。Orderにはsmaregi_code、shipping_date、Member、gained_points、smaregi_error_flg、point_error_messageが存在する。EccubeSmoothOtcPatternHandler::handle は既存注文をsmaregi_codeで特定してOrderStatusをDELIVEREDにしsmaregiTransactionIdを設定するが、shipping_date、担当者、エラー項目は更新しない。一方、SmaregiOrderPointApplier::apply はgained_points等をOrderへ反映しており、「状態と取引IDだけ」という差分の一部は既に解消している。",
+      "severityOpinion": "med",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 128,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0404_基本設計仕様書(バッチ_売上集計).html のsheet-3のExcel正本にはStep Functionsで毎日0:00に実行する旨はあるが、コマンド名 product:batch や updateProductSummary はない。これらは後続のfunction-design-embedと旧 pf-eccube3/ProductBatch 実装で確認した。",
+      "reason": "旧コマンド名の互換性はExcel正本ではなく旧実装に基づくため、LEGACY_BACKEDは妥当。現行には旧名のエイリアスもなく差分は継続している。",
+      "currentImpl": "現行の集計コマンドは AggregateSalesCommand の eccube:aggregate-sales。src、bin、app/config、script、.githubの実行定義を確認した範囲に product:batch または updateProductSummary を受け付けるコマンド／エイリアスはない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 129,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "RESOLVED",
+      "checkedQuote": "0404_基本設計仕様書(バッチ_売上集計).html のsheet-3のExcel正本に「本店のほか、支店やスマレジの販売情報も集計対象」「スマレジの取引データも集計対象とし、それぞれ店舗ごとにECCUBEとスマレジで分けて販売数を集計する」と明記されている。",
+      "reason": "ECCUBE販売とスマレジ販売を店舗別・販売元別に集計する期待値はExcel正本にあり、SPEC_BACKEDは妥当。現在の集計SQLはsmaregi_transaction_idを用いて販売元を分離しており、元findingの未実装状態は解消している。",
+      "currentImpl": "DtbSalesQuantityRepository::buildSalesForAggregateSql は smaregi_transaction_id の有無から sales_location を SMAREGI／ECCUBEに分け、店舗ID・商品規格ID・sales_location単位でGROUP BYするSQLを構築する。insertSalesQuantityFromAggregate がその結果を保存する。AggregateSalesCommand内にはスマレジ未実装という古いコメントが残るが、実行コードは実装済み。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 133,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0404_基本設計仕様書(バッチ_売上集計).html のsheet-3のExcel正本範囲には100件ごとのflush・clear、部分コミット、再実行時の継続条件はない。100件単位のflush／clearは後続のfunction-design-embedと旧 pf-eccube3 の集計サービスで確認した。",
+      "reason": "100件単位の部分コミット運用はExcel正本でなく旧実装に基づくため、LEGACY_BACKEDは妥当。現行は全削除と再集計を一つのトランザクションで処理し、旧運用との差分が残る。",
+      "currentImpl": "BatchAggregateSalesAction::handle は beginTransaction後にclearSalesQuantityとinsertSalesQuantityFromAggregateを実行し、最後にcommit、例外時はrollbackする。売上集計経路に100件ごとのflush／clearや部分コミットはない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 134,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0404_基本設計仕様書(バッチ_売上集計).html のsheet-3のExcel正本範囲には set_time_limit(0) やSQL logger無効化の指定はない。これらは後続のfunction-design-embedと旧 pf-eccube3 の実装で確認した。",
+      "reason": "実行時間制限解除とSQL logger無効化は旧実装だけに根拠があるため、LEGACY_BACKEDは妥当。現行の売上集計コマンド経路ではどちらも行われない。",
+      "currentImpl": "AggregateSalesCommand::execute はBatchAggregateSalesActionを実行するだけで、BatchAggregateSalesActionにも set_time_limit(0) やConfiguration::setSQLLogger(null) はない。DtbSalesQuantityRepository::updateRecommendには同種の設定があるが、これは売上集計コマンドの経路ではない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 145,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0402_基本設計仕様書(バッチ_在庫管理).html のExcel正本に「エラーが発生した場合集計できなかった旨をメールで送信する」と明記されている。",
+      "reason": "エラー時のメール通知はExcel正本に明記されており、SPEC_BACKEDは妥当。現行は標準エラー表示と失敗終了だけでメールを送らない。",
+      "currentImpl": "AggregateStockUpCommand::execute のcatchは SymfonyStyle::error を出してCommand::FAILUREを返すだけ。BatchAggregateStockUpActionにもメール送信依存はなく、MailServiceにも在庫集計失敗を通知する呼出しは接続されていない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    }
+  ]
+}

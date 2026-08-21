@@ -1,0 +1,165 @@
+{
+  "packetId": "rest_04",
+  "results": [
+    {
+      "rowId": 321,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html:2634 はExcel正本で「パスワード再設定完了」、同:2660-2670 は「パスワード再設定完了画面を表示する」「戻る」「押下すると、ECTOP画面へ遷移する」と規定する。埋め込み後の同:2854 も「更新完了」「パスワードを変更しました。」と記載する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Forgot/resetcomplete.twig:5-12 は `<h1 class=\"common-headline\">パスワード再設定</h1>`、`<p>パスワードを変更しました。</p>`、`<a href=\"{{ url('homepage') }}\" ...>戻る</a>` を表示していた。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Front/ForgotController.php:227-229 は完了イベント後に `return $this->redirectToRoute('forgot_resetcomplete');` とし、ec-cube-enterprise/src/Eccube/Resource/template/default/Forgot/reset_complete.twig:17-22 は `front.forgot.reset_title`、`front.forgot.reset_complete`、`url('homepage')` の戻りボタンを描画する。文言は ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:504-507 の「ホームへ戻る」「パスワード再設定」「パスワードを変更しました。」であり、現行実装は期待値を満たす。",
+      "note": "指摘作成後に専用完了画面が実装されたと判断する。パケット記載の「resetcomplete.twig不在」は現在のスナップショットには当てはまらない。"
+    },
+    {
+      "rowId": 322,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html:2609-2618 のExcel正本は、リセットキー書式を確認し「1の条件でエラーになった場合、E-1. リセットキー書式エラー画面」「2の条件でエラーになった場合、E-2.ユーザー存在チェックエラー画面」を分ける。さらに同:2691 はE-1を「リセットキーに英数文字以外の文字が混じっている場合」、同:2720 はE-2を「リセットキーの有効期限内の本会員が存在しなかった場合」と明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/ForgotController.php:76-92 は書式不正時に `error_messages.forbidden.*`、有効会員取得失敗時に `error_messages.reset_expire.*` を渡してそれぞれ `error.twig` を描画し、旧実装は判定別のエラーを返していた。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Front/ForgotController.php:172-186 は書式検証失敗で `throw new ...NotFoundHttpException();`、同:189-195 は会員取得失敗でも同じ `NotFoundHttpException` を投げる。専用文言 `front.forgot.reset_error: 有効期限が切れているか、無効なURLです。` は ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:507 にあるが、Controller/Templates全体で使用箇所がない。",
+      "note": "Excel正本がE-1/E-2の分岐を直接規定しており、現在の一律404処理は真の乖離。"
+    },
+    {
+      "rowId": 323,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html:2656-2659 のExcel正本は「パスワードリセット完了をログに保存する」「この時、ユーザーID,メールアドレス,アクセスしてきたグローバルIPもログに保存する」と明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/ForgotController.php:150-155 はパスワード保存後に `$app['monolog']->addInfo('reset password complete:' . \"{$customer->getId()} {$customer->getEmail()} {$request->getClientIp()}\");` を実行していた。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Front/ForgotController.php:204-229 の成功経路は、パスワードUPDATE、イベントdispatch、`redirectToRoute('forgot_resetcomplete')` で終了し、会員ID・メール・IPを含むログ出力がない。",
+      "note": ""
+    },
+    {
+      "rowId": 324,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html:3028-3029 のExcel正本は「バーコードを店頭で読み取ると、スマレジと連携して会員の注文履歴に登録する」「ポイントも付与される」とし、同:3044 は画面部品5のバーコードにも同じ会員別機能を規定する。全会員共通値では会員本人を特定できず、この要求を満たせない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Block/js/point_barcode_js.twig:11-13 は `$(\"#js-ec_point_barcode\").barcode('{{ player.getSmaregiMemberCode }}', \"ean13\", ...)` と、ログイン会員のスマレジ会員コードをバーコード化していた。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/default/Block/js/point_barcode_js.twig:22-23 は会員別の `Customer.getSmaregiMemberCode` 呼出しをコメントアウトし、`barcode('2900065596792', \"ean13\", ...)` という固定値を全会員に描画する。一方 ec-cube-enterprise/src/Eccube/Entity/Customer.php:1069-1075 には「スマレジ会員コード(EAN13)を生成して返す」`getSmaregiMemberCode()` が存在する。",
+      "note": "正本は符号化するカラム名までは指定しないが、会員の注文履歴登録・ポイント付与という直接要件から会員別識別が必須であり、固定共通値は適合しない。"
+    },
+    {
+      "rowId": 325,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html:2997-3003 のExcel正本はカスタマイズ要件として「買取履歴を買取一覧に名称変更する」と明記する。同:3055 も遷移先を「買取一覧画面」とする。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/index.twig:103-107 は旧画面のリンクを `mypage_purchase_history` とし、画像altを「買取履歴」、見出しを「ネット買取履歴」と表示していたため、名称変更は旧表示の踏襲ではなく正本の明示的カスタマイズである。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/index.twig:145-148 は `front.mypage.nav__purchase_history` を表示し、その値は ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:834 の `買取履歴` である。要求された「買取一覧」になっていない。",
+      "note": ""
+    },
+    {
+      "rowId": 326,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html:2997-3010 のExcel正本は個別カスタマイズを列挙した後に「カスタマイズ要件に記載の内容以外は現行踏襲とする」と記載するだけで、商品検索戻り先のセッションキー・取得・消去・リダイレクトは正本範囲（同:2911-3155）に明記しない。具体記述はリバース詳細設計 hareruya-design-docs/functions/pf-eccube3/f06-05_front_member_mypage_index.md:89 の「セッションに商品検索の戻り先がある場合は、戻り先を取得・消去してそこへリダイレクト」にのみある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Mypage/MypageController.php:161-168 は `$request->getSession()->get('PRODUCT_SEARCH_REFERER')` を取得し、存在時に `remove('PRODUCT_SEARCH_REFERER')` 後 `return $app->redirect($productSearchUrl);` を実行していた。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Front/Mypage/MypageController.php:126-138 の `index()` はログイン会員と期限間近ポイントを取得して配列を返すのみで、`PRODUCT_SEARCH_REFERER` の取得・消去・リダイレクトがない。ec-cube-enterprise/src/Eccube/Controller/Front と EventListener 配下を `PRODUCT_SEARCH_REFERER` / `productSearchUrl` で検索しても代替処理は存在しない。",
+      "note": "具体的な期待値はExcel正本の一般的な「現行踏襲」を旧実装で具体化したもの。"
+    },
+    {
+      "rowId": 327,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0304_基本設計仕様書(フロント_注文).html:3040-3042 のExcel正本は「ステータス表示の画像を変更する」「どの注文ステータスでどの画像を表示するかは基本設計で確定する」とし、同:3086 は識別ID13を明示的に「処理状態 画像」、表示画像の紐付けは別シート参照と定義する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/shopping_history.twig:125-129 は処理状態欄で `<img src=\"...img/sys/shopping_status_...gif\">` を描画していた。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/shopping_history.twig:193-200 は対象注文の処理状態を `<span class=\"c-hareruya-label--status ...\">{{ Order.OrderStatus.name }}</span>` という文字ラベルで表示し、状態画像を描画しない。",
+      "note": ""
+    },
+    {
+      "rowId": 328,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0304_基本設計仕様書(フロント_注文).html:3121-3123 のExcel正本由来図形テキストは「購入内容」「支払金額合計」「スマレジの場合のみ文言を・注文内容→購入内容・注文金額合計→支払金額合計とする」と明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/shopping_history.twig:76-80 は旧実装でも見出しを無条件に「注文内容」「注文金額合計」と表示しており、この変更要求は旧実装ではなく正本のカスタマイズに由来する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/shopping_history.twig:155-170 はスマレジ判定を挟まず常に `front.mypage.shopping_history.col.items` と `...col.total` を描画する。近接する同:174-191 の支払方法には `Order.isSmaregiTransactionOrder or Order.isOtcSmaregiLinkedOrder` 分岐があるが、2見出しには同等分岐がない。",
+      "note": ""
+    },
+    {
+      "rowId": 329,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0304_基本設計仕様書(フロント_注文).html:3088-3090 のExcel正本は一覧下部の識別ID15を「件数」、16を「ページング」、17を「表示件数 プルダウン」とし、いずれも全注文区分を「◯」にする。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/shopping_history.twig:27-38 は上部に表示件数selectと件数を置く一方、同:135-160 の下部は件数とページ番号のみで、旧実装も下部プルダウンまでは満たしていなかった。したがって根拠はExcel正本である。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/shopping_history.twig:212-216 の下部ブロックは `{% include \"pager.twig\" ... %}` のみで、件数表示と表示件数プルダウンを描画しない。",
+      "note": ""
+    },
+    {
+      "rowId": 330,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0304_基本設計仕様書(フロント_注文).html:3464-3466 のExcel正本は詳細画面のポイント項目を「ポイント使用（値引き）」「ポイント発生 ラベル」と定義するが、正本範囲（同:3260-3727）に「獲得ポイントは商品出荷時に有効」の注記はない。明示文はリバース詳細設計 hareruya-design-docs/functions/pf-eccube3/f06-07_front_member_mypage_order_history_detail.md:83 の「獲得ポイントには『獲得ポイントは商品出荷時に有効になります。』の注記を表示する」にのみある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/shopping_history_detail.twig:106-110 はポイント発生値の直後に `<span class=\"small_\">※獲得ポイントは商品出荷時に有効になります。</span>` を常時描画していた。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/shopping_history_detail.twig:223-228 は「ポイント発生」と `Order.gained_points` を表示するだけで注記を描画しない。文言自体は ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:1438 に `front.shopping.notice.point` として存在するが、使用箇所は `Shopping/index.twig:834` の購入手続画面だけで、履歴詳細からは参照されない。",
+      "note": "注記の具体的期待値は旧実装を起こしたリバース詳細設計由来。"
+    },
+    {
+      "rowId": 331,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html:3354-3361 のExcel正本は「入荷通知を設定している(8)状態のカードのみ、(8)~(10)を表示する」と規定する。同:3379 は「入荷通知ボタンは入荷通知を解除したときのみ表示する（当画面へ遷移してきたとき、再読み込みしたときは表示しない）」と明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/notify_request_list.twig:59-79 は取得済み通知明細だけをループし、各行には `notifyme-cancel` の解除ボタンのみを描画していた。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/notifylist.twig:78-104 は全 `ProductClasses` をループし、`isRequested` がfalseなら初期表示から `class=\"... notifyme\"` の入荷通知ボタンを描画する。ec-cube-enterprise/src/Eccube/Controller/Front/Mypage/NotifylistController.php:64-72 もBuilder結果をそのままテンプレートへ渡し、この初期表示を抑止するフラグを渡していない。",
+      "note": ""
+    },
+    {
+      "rowId": 332,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html:3354-3357 のExcel正本は「管理画面で設定されている入荷通知登録上限数(現在は20件)まで表示」「登録上限数以上…エラーを表示」と上限制御を記すが、上限が拡張された旨の案内表示は正本範囲（同:3263-3473）にない。具体的な案内はリバース詳細設計 hareruya-design-docs/functions/pf-eccube3/f06-08_front_member_mypage_arrival_notification.md:87 の「登録上限が拡張された旨の案内を、一覧がある場合・無い場合のいずれでも表示する」にのみある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/notify_request_list.twig:29-38 は、一覧ありの分岐と0件の分岐の双方で `NEW！もっと便利に。入荷通知の登録上限が20件から100件に増えました` を描画していた。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/notifylist.twig:35-45 は一覧ありの場合に件数ツールバーへ進み、同テンプレート全域に上限拡張案内がない。ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:964 の `入荷通知登録上限数に達してしまうため登録できません` は到達上限エラーであり、拡張案内ではない。",
+      "note": "具体的な案内文・両分岐表示は旧実装由来。"
+    },
+    {
+      "rowId": 333,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html:3372-3375 のExcel正本は識別ID4を「商品画像 画像」とし、「押下すると、商品詳細画面へ遷移する」と明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/notify_request_list.twig:42-49 は商品画像全体を `path('product_detail', ...)` のアンカーで囲み、旧実装は画像押下で詳細へ遷移していた。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/notifylist.twig:50-56 は商品画像を `<button ... data-js-target=\"product-img-zoom\">` で囲んでズーム動作にし、商品詳細リンクは同:58-67 の商品名アンカーだけに設定する。",
+      "note": ""
+    },
+    {
+      "rowId": 334,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html:3661-3665 のExcel正本はお気に入り解除の動的反映と「カスタマイズ要件に記載の内容以外は現行踏襲」を記すだけで、セール通知の日英案内文は正本範囲（同:3579-3806）にない。該当文は埋め込みリバース詳細の同:3864 に「お気に入り登録した商品がセール対象になった際… / You will receive ... become on sale.」として現れる。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/favorite_list.twig:30 は `お気に入り登録した商品がセール対象になった際、ご登録されているメールアドレスにお知らせをお送りいたします。`、同ディレクトリの `favorite_list.en.twig:30` は `You will receive a notification to your registered e-mail address when your bookmarked items become on sale.` を描画していた。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/favorite.twig:50-52 は `front.mypage.favorite_list.lead` を表示するが、値は ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:700 の「下記の商品が入荷した際…」、messages.en.yaml:624 の `When the items below are back in stock...` であり、セール通知ではなく入荷通知の文言になっている。",
+      "note": "具体的な日英文言はExcel正本ではなく旧実装を起こしたリバース詳細設計由来。"
+    },
+    {
+      "rowId": 335,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html:3661-3665 のExcel正本には「一覧表示時に常時」や0件時の案内表示条件がなく、正本は「カスタマイズ要件に記載の内容以外は現行踏襲」とだけ記載する。常時条件は埋め込みリバース詳細の同:3864 に「セール通知案内…一覧表示時に常時」として現れる。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/favorite_list.twig:25-31 は商品ループや件数分岐より前に案内文 `<p class=\"message_\">お気に入り登録した商品がセール対象になった際…</p>` を無条件描画しており、0件でも表示する構造だった。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/favorite.twig:50-57 は案内文を `{% if FavoriteProducts|length > 0 %}` の中だけで描画し、0件時は `front.mypage.favorite_not_found` のみを表示する。",
+      "note": "常時表示条件は旧実装由来。"
+    },
+    {
+      "rowId": 336,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html:3683-3688 のExcel正本は識別ID6を「商品画像 画像」とし、「押下すると、商品詳細画面へ遷移する」と直接規定する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Block/product.twig:19-25 は旧共通商品画像を `js-ec-itemList-imageExpand` で画像URLへリンクし、同:31-36 で商品名だけを `product_detail` へリンクしていた。したがって当該期待値は旧実装由来ではなく、旧挙動を変更するExcel正本の要求である。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/favorite.twig:132-145 は商品画像を `<button ... data-js-target=\"product-img-zoom\">` としてズームさせ、詳細リンクは同:147-156 の商品名アンカーにだけ設定する。",
+      "note": ""
+    },
+    {
+      "rowId": 337,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html:3999-4001 のExcel正本は識別ID7を「ポイント履歴表示範囲」とし、「ポイント履歴の全件数のうち、現在表示している範囲を表示する」と直接規定する。具体書式は埋め込み詳細の同:4147 に「（開始）~（終了）件 ／ （総件数）件あります」とある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/point_history.twig:49-58 は `[(currentPage-1)*itemNumberPerPage+1 ~ ... 件]` と総件数 `{{ pointHistories.getTotalItemCount }} 件あります` を表示し、旧実装は開始～終了範囲を出していた。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/point_history.twig:51-57 はstart/end/totalを計算して翻訳へ渡すが、日本語値は ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:826 の `front.mypage.point_history.range_info: \"件数: %total%件\"` であり、`%start%` と `%end%` を出力しない。英語は messages.en.yaml:647 の `Showing %start%–%end% of %total%` で範囲を出す。",
+      "note": "日本語の開始～終了範囲欠落だけでもExcel正本の直接要件に違反する。"
+    },
+    {
+      "rowId": 338,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html:4005-4007 のExcel正本は注文番号について「押下すると、注文番号に応じた購入履歴詳細画面へ遷移する」とだけ記載し、別タブ指定はない。別タブ条件は埋め込みリバース詳細の同:4152 に「押下で注文詳細を別タブで開く」として現れる。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/point_history.twig:99-103 は注文番号リンクを `<a href=\"...mypage_shopping_history_detail...\" target=\"_blank\">` とし、旧実装では別タブを明示していた。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/point_history.twig:98-109 は注文番号リンクを `<a class=\"c-hareruya-link\" href=\"{{ url('mypage_shopping_history_detail', ...) }}\">` とするが、`target=\"_blank\"` も別タブを開くJavaScriptもない。",
+      "note": "別タブという具体的期待値は旧実装由来で、Excel正本は遷移先のみを規定する。"
+    },
+    {
+      "rowId": 339,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html:4002-4004 のExcel正本はページ番号について「現在表示しているページ番号から前後最大4つまで表示できる」と明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/point_history.twig:20 は `{% set limit = 4 %}`、同:60-69 は現在ページの前後をそのlimitで列挙しており、旧実装も前後4ページを実装していた。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Front/Mypage/MypageController.php:402-410 の `paginate()` オプションは `['wrap-queries' => true]` だけでpage rangeを指定しない。Knp既定値は ec-cube-enterprise/vendor/knplabs/knp-paginator-bundle/src/DependencyInjection/Configuration.php:49-51 の `page_range` / `defaultValue(5)` で、app/config配下に上書き設定がないため、最大5ページ（通常は現在ページ前後2）となる。",
+      "note": ""
+    },
+    {
+      "rowId": 340,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "再生成後のExcel正本 hareruya-design-docs/excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html:3500-3503 は識別ID10を現在「処理状態 ラベル」とし、同じセルに「2026/7/16木村：書式を画像からラベルに修正。」と明記する。パケットの「画像」期待値は現行正本では廃止済みである。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/purchase_history.twig:150-153 は旧一覧で処理状態を `<img src=\"...img/buy_order_status_...png\">` として描画しており、画像期待値の真の出所は旧実装だった。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/purchase_history.twig:133-145 は処理状態を `<span class=\"c-hareruya-label--status ...\">{{ row.statusIconAlt }}</span>` というラベルで描画する。これは2026/7/16更新後のExcel正本「処理状態 ラベル」と一致する。",
+      "note": "監査後の正本改訂で要求が画像からラベルへ変更され、現実装が最新仕様を満たす。旧画像アセットやDTOのstatusIconPathが残っていても、一覧の最新要件はラベルである。"
+    }
+  ]
+}

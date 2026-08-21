@@ -1,0 +1,4105 @@
+Reading additional input from stdin...
+OpenAI Codex v0.146.0
+--------
+workdir: /home/y-saito/Developments
+model: gpt-5.6-sol
+provider: openai
+approval: never
+sandbox: workspace-write [workdir, /tmp, $TMPDIR]
+reasoning effort: high
+reasoning summaries: none
+session id: 019fb7e1-d4df-7913-a2bb-53b79adc3bd1
+--------
+user
+あなたは「その乖離を直すのに何を触るか(改修区分)」と「何人日か」の判定を
+**批判的にレビュー**します。追認ではなく、誤りを見つけるのが仕事です。
+
+まず手順書を読んでください: /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/EFFORT_REVIEW_TASK.md
+
+担当パケット: /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/effort_packets/ef_08.json
+出力先: /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/effort_results/ef_08.json
+
+厳守事項:
+- authorCat は語スコアによる機械分類で、約2割が誤り。**重い区分へ寄る傾向**がある。
+  ただし逆方向(軽く見積もりすぎ)も必ず探すこと。
+- 区分は「指摘の話題」ではなく「**直すために触るもの**」で決める。
+  在庫や価格の話でも、翻訳ファイル1行の修正なら 2(画面表示)。
+  「実装されていない」と書いてあっても、フォームの初期値1行なら 2、バリデータ1個なら 4。
+- effortDays は区分の代表値に引きずられず、**この1件を実際に直すなら何人日か**を自分で見積もる。
+  判断が要るときは実コード(/home/y-saito/Developments/ec-cube-enterprise)を開いて範囲を確かめる。
+- 仕様が確定していないもの(設計が矛盾している等)は needsDecision: true とし、工数を出さない。
+- 引用・確認内容の捏造は絶対に禁止。確認していないことを確認したと書かない。
+
+findings 全件について verdict と effortDays をJSONで書き込んでください。
+最終メッセージは内訳1行のみ（例: 28件: UPHELD=21 REFUTED=7 / 工数計 34.5人日）。
+warning: Codex could not find bubblewrap on PATH. Install bubblewrap with your OS package manager. See the sandbox prerequisites: https://developers.openai.com/codex/concepts/sandboxing#prerequisites. Codex will use the bundled bubblewrap in the meantime.
+codex
+`design-impl-drift-audit` スキルを使います。手順書と担当パケットを全文確認し、各 finding の改修対象を実コードで突き合わせてから、指定JSONへ判定を書き込みます。
+exec
+/bin/bash -lc "sed -n '1,240p' /home/y-saito/.codex/skills/design-impl-drift-audit/SKILL.md && sed -n '241,520p' /home/y-saito/.codex/skills/design-impl-drift-audit/SKILL.md" in /home/y-saito/Developments
+ succeeded in 0ms:
+---
+name: design-impl-drift-audit
+description: Compare HTML design specifications against an implementation to find functional drift and produce an evidence-backed HTML report. Use when Codex is asked to treat design docs as the source of truth, audit code such as controllers/services/forms/repositories/templates/batches/CSV definitions, continue a partially completed drift report, or update findings JSON/HTML for gaps between design and implementation.
+---
+
+# Design Impl Drift Audit
+
+## Purpose
+
+Use this skill to audit functional differences between HTML design specifications and an implementation repository, with the design docs treated as authoritative. Produce or continue a report that lists concrete differences with design locations, implementation locations, confidence, severity, and impact.
+
+## Repository Discovery
+
+1. Find the design-doc directory and implementation directory from the user request. If omitted, infer from nearby names such as `*-design-docs` and application repos.
+2. Look for an existing report before starting new work. Prefer directories named `design_impl_drift_report`, existing `findings.json`, per-function `findings/*.json`, and `index.html`.
+3. Count total target specs and audited specs so the report clearly states scope and remaining work.
+4. Preserve existing findings. Append or refine; do not overwrite unrelated prior work.
+
+## Audit Workflow
+
+For each target HTML spec:
+
+1. Identify the feature ID, route/action name, UI template, CSV/batch/API behavior, and acceptance rules from the HTML design spec.
+2. Extract a requirement inventory from the HTML spec before looking at code. This inventory must include not only route/screen names, but every concrete requirement in 処理概要, 図形・テキストボックス, 項目表, 表示メッセージ, 業務ルール・計算, 入力項目, エッジケース, データ整合性, API/バッチ結果, 入出力, DB操作, バリデーション, 権限・認可, 画面遷移, エラー処理, ログ・監査, セッション, Cookie, and 排他制御. Treat bullets such as "押下時", "場合", "登録/更新/保存", "遷移", "保持", "表示/非表示", "表示切り替え", "エリアを表示", "誘導", "エラー", "判定", "連携", time limits, thresholds, and retry/idempotency rules as auditable requirements. 秒後/分後, `画面を表示してから`, 自動遷移, タイマー, and store/kiosk/account-specific forced redirects are material requirements even if the route and template already exist.
+3. For every extracted requirement, create or mentally maintain a `requirementTrace` row with: `requirementId`, `designRef`, `designRequirement`, `implementationSearchTerms`, `implementationRefs`, `implementationActual`, `traceVerdict` (`MATCHED|DRIFT|NOT_FOUND|UNCERTAIN|PHASE2_EXCLUDED`), and `traceReason`. A feature cannot be marked no-drift until all material requirements have a trace verdict other than `NOT_FOUND` or unresolved `UNCERTAIN`.
+4. Search the implementation with `rg` across likely files: controllers, services, repositories, form types, entities, migrations, Twig/templates, commands/batches, route definitions, JavaScript, CSV exporters/importers, and PDF/print services. Search by business terms from the requirement, route names, translation keys, DB columns, state names, constants, statuses, time values, thresholds, and side-effect verbs. For timer or auto-navigation requirements, explicitly search client and server paths for `setTimeout`, `setInterval`, millisecond/second constants such as `60000` and `60 * 1000`, `location.href`, `location.assign`, `location.replace`, redirect routes, and the condition that limits the behavior. For a negative result, also search nearby implemented flows so the report can explain why they do not satisfy the design.
+5. Compare behavior and user-facing text, not just names. Check input fields, validation, defaults, search conditions, session persistence, buttons/actions, labels, button text, messages, translation keys/locales, permissions, status transitions, CSV columns, sort/order rules, scheduled timing, timeouts/expiration, thresholds, client-side timers, forced auto-navigation, side effects, idempotency, external integrations, conditional display toggles, alternate UI areas, and error handling.
+6. Do not treat "route/controller/template exists" as sufficient. Existence only satisfies the route/screen requirement. It does not satisfy individual rules inside the screen, such as timeout handling, cart retention, validation branches, status transitions, DB writes, logging prohibitions, conditional hide/show behavior, alternative contact/help areas, or external API retry behavior.
+7. For conditional display requirements, audit each side of the condition separately. If the HTML says "Aの場合はXを非表示、Yを表示 / A以外はXを表示、Yを非表示", record trace rows for the condition detector, X visibility, Y visibility, and the inverse condition. A nearby notice or route is not enough unless the cited template/JS actually renders the required area under the required condition.
+8. For labels, button text, messages, and translation keys, do a dedicated near-match pass. Extract user-visible Japanese text from the HTML item/message tables and compare it with implementation locale values and Twig/Form usage. Treat punctuation, okurigana, missing characters, long-vowel marks, wording changes such as `商品を追加` vs `商品の追加`, and business-term changes such as `返金` vs `送金` as audit targets.
+9. A text drift finding is complete only when it cites both the translation/source value and the display path that uses it, such as `messages.ja.yaml` plus the `FormType` label or Twig `|trans` call. If the implementation value exists but no display path is verified, mark it `UNCERTAIN` instead of presenting it as confirmed.
+10. Do not stamp all functions as if every standard aspect was fully checked. Separate "standard audit target aspects" from actual evidence. For each finding, list the aspects actually supported by evidence; for no-drift functions, include a requirement trace summary naming the concrete HTML requirements checked and implementation refs searched.
+11. Record only actionable drift. If evidence is incomplete, mark the finding `UNCERTAIN` and explain what remains ambiguous.
+12. For every drift finding, split the result into implementation-ready fields: `designExpectation`, `implementationActual`, `comparisonRows`, `comparisonSummary`, `mismatchReason`, `impact`, `fixTarget`, `requiredChange`, `implementationRefs`, and, when available, short design/implementation snippets from the cited lines. Do not rely on a generic prose paragraph alone.
+13. Each `comparisonRows` entry must answer all four questions explicitly: comparison item, exact design value/requirement, exact implementation value/behavior, and why those two do not match. If any of those four cells would be vague, continue investigating before recording the finding.
+14. Treat phase labels such as Ph2 as auxiliary context. They can be stored, but the main report must not use phase status as a substitute for concrete behavioral differences and exact implementation locations.
+15. If the HTML design spec explicitly says the whole function or scoped subfeature is `フェーズ2で実装する`, `Ph2で対応`, or `Ph1では実装しない`, do not report absence of that planned Phase 2 work as drift or as a clear implementation gap. You may keep a secondary audit note that non-implementation was confirmed, but exclude it from finding counts and implementation-gap counts. Only keep a finding when there is a concrete non-phase mismatch, such as an implemented Phase 1 path behaving differently from the design or user-facing text differing.
+16. When no drift is found, add the function to the audited set with an empty findings list only after the requirement trace gate passes. If material HTML requirements are untraced, do not mark `AUDITED_NO_DRIFT_FOUND`; mark the function as requiring review or add `UNCERTAIN` findings with the unresolved requirements.
+17. Do not let one confirmed finding hide other requirements in the same function. A function with `AUDITED_WITH_FINDINGS` can still have untraced material requirements; keep those requirements visible in the trace gate until each one is converted to a confirmed finding, an uncertain finding, a matched trace row, or a documented phase/design non-implementation exclusion.
+18. For explicitly registered critical requirements, the harness should carry a missing-finding template or an equivalent escalation rule. If the trace is not covered by an existing finding, promote it into findings automatically or fail the quality gate loudly. Do not rely on a hand-maintained `ADDITIONAL_FINDINGS` list as the only path for user-reported or high-risk missing behavior such as timeouts, cart retention, one-minute/30-minute limits, store-account auto redirects, conditional UI areas, status transitions, external calls, or destructive side effects.
+19. The HTML report must not expose broad source-signal candidates as if they were implementation gaps. A requirement-level list in the main report must be limited to confirmed or explicitly uncertain actionable drift derived from findings, such as `NOT_FOUND` or `DRIFT` requirement traces and concrete comparison rows. If a source-signal scan is used for triage, keep it out of the main HTML report unless each row has been verified against implementation source and written as a concrete finding.
+20. Do not hide time-based or automatic-navigation requirements merely because they are not confirmed findings yet. Requirements involving `画面を表示してから`, seconds/minutes after display, auto redirect/navigation, or timeout-to-cart/top behavior should appear in a separate focused untraced-requirement audit queue when they remain uncovered. This queue is not a confirmed defect count; it exists so these high-risk requirements are reviewed against Controller/Twig/JavaScript/Service source instead of being buried among broad requirement-trace failures.
+
+## Function-Level Implementation Gap Audit
+
+For every HTML spec sheet, maintain a function-level implementation audit even when no drift finding is confirmed yet.
+
+- Extract implementation search terms from the HTML design: route names, URL paths, translation keys, class/controller/service names, batch/API/CSV names, and high-signal business terms from the sheet title and requirement text.
+- Search implementation source by function across Controller, Form, Service, Repository, Entity, Migration, Twig, Command/Batch, CSV, PDF/print, API/webhook, locale/messages, JavaScript, and configuration files.
+- Store a `functionImplementationAudit` object with `verdict`, `designDerivedTerms`, `candidateRefs`, `candidateCount`, `strongSignalCount`, `searchedAreas`, and `auditNote`.
+- Use separate verdicts:
+  - `CONFIRMED_IMPLEMENTATION_GAP`: a concrete drift finding already proves missing implementation.
+  - `NO_IMPLEMENTATION_ENTRY_FOUND`: no entry candidate was found from design-derived terms; treat as an additional-review candidate, not an automatic confirmed defect.
+  - `IMPLEMENTATION_ENTRY_FOUND`: strong source evidence such as route, class, translation key, or path was found.
+  - `IMPLEMENTATION_CANDIDATE_FOUND`: weak business-term candidates were found but the entry point is not proven.
+  - `PHASE2_NONIMPLEMENTATION_EXPECTED`: HTML design explicitly scopes non-implementation to Phase 2/Ph1 exclusion.
+  - `DESIGN_NONIMPLEMENTATION_EXPECTED`: HTML design explicitly says the function or scoped behavior is not implemented by code, such as `実装しない`, `実装不要`, or infrastructure/external-service configuration replacing application code.
+- Use `DESIGN_NONIMPLEMENTATION_EXPECTED` as the function-level verdict only when the non-implementation statement applies to the whole function or the implementation entry itself, for example an external WordPress server, Docker image cron, Aurora parameter group, or a bare whole-sheet `実装しない`. If the text only excludes a scoped subfeature, UI alert, HTML hint, logging detail, partial Phase 2 item, or internal job, keep the function's source-entry verdict and mention the scoped exclusion only in the trace/audit note.
+- The report must show both confirmed implementation-gap findings and function-level no-entry candidates. Do not merge these counts: implementers need confirmed defects for fixing and no-entry candidates for review planning.
+- A function-level candidate is not enough to mark the detailed requirements as implemented. Requirement trace still controls no-drift status.
+- Do not set report metadata such as `auditComplete` or narrative notes to "complete" merely because every sheet has a function-level implementation audit. If any material requirement trace remains unresolved, state that all sheets have function-entry coverage but requirement-level audit is incomplete.
+- For infrastructure-oriented sheets such as Step Functions, Lambda, WAF/S3 jobs, cron configured outside the application, or managed database settings, distinguish "not found in the requested implementation repository" from "not implemented anywhere". A confirmed implementation-gap finding may be scoped to the audited repository, but the report must say when external infrastructure repositories or cloud configuration were not checked.
+
+## Requirement Trace Gate
+
+Before marking a function no-drift, verify the following:
+
+- Every material HTML requirement has a trace row. Material means it changes behavior, data, display, validation, permission, transition, side effect, external communication, schedule, retry/idempotency, logging/audit, CSV/API/PDF/batch I/O, or user-visible text.
+- Each trace row includes exact design text or a tight paraphrase plus line/anchor reference, not only the sheet title.
+- Each matched row cites the implementation path and line(s) that actually execute or render the behavior. A nearby class, route, or template is not enough unless the cited code contains the relevant condition/value/side effect.
+- Each missing row is converted to a confirmed or uncertain finding. Use confirmed only after searching the direct path and nearby alternative implementations.
+- Missing rows remain failures even if the function already has other findings. The gate is requirement-scoped, not function-scoped.
+- If an explicit critical requirement has a configured missing-finding template, regenerate the report from the harness and verify the promoted finding appears in both JSON and HTML with design value, implementation behavior, mismatch reason, fix target, and search evidence.
+- If a missing row does not yet have enough evidence for a confirmed or uncertain actionable finding, do not count it as an implementation gap and do not put it in the main HTML fix list. Keep the function in an incomplete requirement-trace state, and promote the row only after implementation source has been checked enough to state the exact design requirement, exact implementation behavior, and mismatch reason.
+- A generic `auditEvidence` string is not a substitute for requirement traces.
+- Negative searches must list the searched terms/areas and why nearby hits do not satisfy the design.
+
+## Finding Format
+
+Store findings in a machine-readable JSON structure. Use this shape for each finding:
+
+```json
+{
+  "id": "stable-feature-id-001",
+  "functionId": "m04-01_admin_stock_stock_search_list",
+  "functionName": "在庫一覧",
+  "severity": "high|med|low",
+  "dimension": "①機能/ルート未実装",
+  "confidence": "CONFIRMED|UNCERTAIN",
+  "design": {
+    "file": "path/to/spec.html",
+    "lines": "215-220",
+    "summary": "設計書に書かれている仕様"
+  },
+  "implementation": {
+    "file": "path/to/source.php or 不在",
+    "lines": "337-344",
+    "summary": "実装側の状態"
+  },
+  "difference": "設計と実装の具体的な差分",
+  "comparisonRows": [
+    {
+      "item": "比較項目名",
+      "design": "設計書の値・要求。列名、HTTPメソッド、パス、保存先、表示文言、条件、状態遷移などを具体値で書く",
+      "implementation": "実装の値・挙動。実際の列名、メソッド、パス、保存先、文言、条件、処理順を具体値で書く",
+      "mismatch": "なぜ一致しないのか。実装者が直すべき差分を一文で書く"
+    }
+  ],
+  "requirementTrace": [
+    {
+      "requirementId": "stable-requirement-id",
+      "designRef": "path/to/spec.html:123",
+      "designRequirement": "HTML設計書の個別要求",
+      "implementationSearchTerms": ["検索語", "route_name", "methodName"],
+      "implementationRefs": ["src/...php:123"],
+      "implementationActual": "実装で確認できた挙動、または不在判定",
+      "traceVerdict": "MATCHED|DRIFT|NOT_FOUND|UNCERTAIN|PHASE2_EXCLUDED",
+      "traceReason": "なぜその判定か"
+    }
+  ],
+  "comparisonSummary": "設計はX、実装はY、したがってZが違う",
+  "mismatchReason": "乖離と判断した具体的な理由",
+  "impact": "ユーザー・業務・データへの影響",
+  "fixTarget": "修正対象のファイル/ルート/サービス/不在箇所",
+  "requiredChange": "設計に合わせる場合に必要な修正",
+  "implementationRefs": ["src/...php:123"],
+  "implementationSnippets": ["123: 実装コードの短い断片"],
+  "evidence": ["短い根拠。ファイル名と行番号を含める"]
+}
+```
+
+The HTML report should make these fields visible as separate blocks so an implementer can answer: what exact value does the design require, what exact value does the code implement, why is that a mismatch, exactly where is the code, and what should be changed.
+
+Use stable IDs and Japanese text when the existing report is Japanese. Keep dimensions consistent with existing findings when continuing a report.
+
+## Severity Guidance
+
+- `high`: missing feature/route, wrong critical business rule, destructive or externally visible behavior, missing required import/export/batch/PDF flow.
+- `med`: partial implementation, wrong filtering/sorting/session behavior, missing non-critical columns or validation, incompatible screen behavior.
+- `low`: copy/display/default-state differences, ambiguous design wording, minor workflow variance.
+
+## Report Generation
+
+If the project already has a report generator, use it. Otherwise copy or adapt `scripts/build_report.py` from this skill into the report directory, then run it from the repository root or pass paths as needed.
+
+The HTML report must include:
+
+- summary counts: total findings, severities, audited functions, functions with drift
+- scope and remaining work
+- per-function sections
+- each finding with severity, confidence, dimension, audit aspects including label/message/translation-key differences when applicable, design reference, implementation reference, design expectation, implementation actual behavior, `comparisonRows`, mismatch reason, impact, fix target, required change, and evidence
+- a comparison table with columns: 比較項目 / 設計書の値・要求 / 実装の値・挙動 / 乖離理由
+- links or file paths precise enough for a developer to inspect
+- short cited design and implementation snippets when available
+- phase/Ph2 data only as hidden or secondary metadata, never as a report column or primary summary
+- a function-level implementation audit section showing verdict counts, no-entry candidates, candidate source references, and the search terms that produced them
+- a requirement-level difference list derived only from confirmed/uncertain findings, showing the exact design requirement, implementation behavior, mismatch reason, implementation refs, and a link back to the finding. Do not include broad unverified source-signal queues in the main HTML report.
+- a focused untraced-requirement section for small, high-risk classes such as display-time timers, automatic redirects, and timeout navigation. Keep it separate from confirmed difference and implementation-gap counts, and include search terms/candidate refs so the next audit step is concrete.
+
+After editing findings, validate JSON and regenerate HTML:
+
+```bash
+python3 -m json.tool path/to/design_impl_drift_report/findings.json
+python3 path/to/design_impl_drift_report/build_report.py
+```
+
+## Quality Bar
+
+- Treat the HTML design spec as source of truth even when implementation looks intentional.
+- Cite exact file paths and line numbers whenever available.
+- Distinguish `不在` from “not found yet”; use `不在` only after searching likely implementation areas.
+- Avoid broad claims such as “not implemented” without search evidence or contrasting nearby implemented features.
+- Do not classify Phase 2 planned non-implementation as a defect. A missing route, CSV, batch, API, table, or screen is only a drift finding when the design expects it in the audited implementation phase.
+- For label/message drift, prefer exact line evidence and a verified render path over fuzzy string similarity. Fuzzy or near-match scans are candidate generators; they are not findings until source and display usage are confirmed.
+- When an external reviewer or another agent reports candidates, verify each candidate against the HTML design and implementation source before adding it. Keep rejected or ambiguous candidates out of confirmed counts, or mark them `UNCERTAIN` with the unresolved reason.
+- For absent implementations, include the searched terms/areas, nearby implementation files with line numbers, and a concrete reason those nearby files do not satisfy the design. Do not leave `implRef` as only `不在` in the final report.
+- Reject vague findings. A finding is not complete until it names the exact design value and exact implementation value that differ.
+- Keep the report cumulative and resumable.
+
+exec
+/bin/bash -lc "sed -n '1,260p' hareruya-design-docs/design_impl_drift_report/citation_audit/EFFORT_REVIEW_TASK.md && sed -n '261,520p' hareruya-design-docs/design_impl_drift_report/citation_audit/EFFORT_REVIEW_TASK.md && printf '\\nPACKET_BYTES '; wc -c < hareruya-design-docs/design_impl_drift_report/citation_audit/effort_packets/ef_08.json && jq 'keys, (.findings|length)' hareruya-design-docs/design_impl_drift_report/citation_audit/effort_packets/ef_08.json" in /home/y-saito/Developments
+ succeeded in 0ms:
+# 改修区分と工数見積の批判的レビュー
+
+各乖離指摘に「何を直すことになるか」の区分(①〜⑧)と工数を付けた。
+これは**語のスコアによる機械分類**であり、1件ずつ人が読んで決めたものではない。
+無作為30件の自己点検で5〜6件(約2割)が誤分類で、**誤りは重い区分へ寄る傾向**があった。
+
+あなたの仕事は**その分類と工数を疑い、誤りを見つけること**である。追認は目的ではない。
+
+## 区分の定義と代表工数（実装のみ・人日）
+
+| 区分 | 名称 | 直す対象 | 下限 | 標準 | 上限 |
+|---|---|---|---:|---:|---:|
+| 1 | 外部インタフェース契約 | URL・HTTPメソッド・ステータス・レスポンス本文・CSV列/ヘッダ・コマンド名 | 0.25 | 0.5 | 1.5 |
+| 2 | 画面表示 | 文言・ラベル・表示項目・並び・活性制御（Twig/翻訳ファイルの修正で済む範囲） | 0.1 | 0.25 | 0.5 |
+| 3 | データ永続化 | 保存先テーブル/カラム・永続値・削除方式。**マイグレーションや既存データ移行を伴う** | 1.0 | 3.0 | 8.0 |
+| 4 | 入力検証 | 必須・桁・形式・範囲・重複・相関チェックの追加/修正 | 0.25 | 0.5 | 1.5 |
+| 5 | 業務ロジック | 抽出条件・計算・ステータス遷移・分岐の修正 | 0.5 | 2.0 | 5.0 |
+| 6 | 未実装機能 | 画面・ルート・バッチ・処理**そのもの**の新規実装 | 2.0 | 5.0 | 15.0 |
+| 7 | 外部連携・副作用 | スマレジ/S3/SFTP/メール送信/支店通知/監査ログの追加・変更 | 1.0 | 3.0 | 8.0 |
+| 8 | 実行制御 | トランザクション境界・排他・実行環境設定・同期/非同期 | 0.5 | 2.0 | 5.0 |
+
+工数はすべて**実装のみ**。テスト・レビュー・設計書改訂・リリース作業は含めない。
+
+## 判定の考え方
+
+**区分は「指摘の話題」ではなく「直すために触るもの」で決める。**
+
+よくある誤りのパターン:
+- 在庫・価格・ポイントという語が出るだけで ⑤業務ロジック にしている。
+  実際は翻訳ファイル1行の修正なら ②。
+- 「〜が実装されていない」という書き方だけで ⑥未実装機能 にしている。
+  実際はフォームの初期値1行なら ②、バリデータ1個なら ④。
+- バリデータの追加なのに ⑤ にしている（正しくは ④）。
+- 画面のモーダル表示なのに ⑤ にしている（正しくは ②）。
+- DBへ書く話なのに ⑦ にしている（マイグレーションを伴うなら ③）。
+
+**逆方向（軽く見積もりすぎ）も探すこと。**
+- ②に分類されているが、実は表示のために新しいデータ取得経路が要る → ⑤や⑥。
+- ①に分類されているが、URLを変えると連携先(MTGバイヤー等)の改修も要る → 工数は上限側。
+
+## 工数の見積もり方
+
+区分の代表値をそのまま使うのではなく、**この1件を実際に直すなら何人日か**を答える。
+判断材料は `差分内容` `設計期待値` `実装参照` と、必要なら実コードを開いて確かめた範囲。
+
+- 触るファイルが1つで、既存の似た実装をコピーできる → 下限側
+- 影響範囲が複数画面・複数経路に及ぶ、既存データの移行が要る、
+  外部システムとの調整が要る、仕様の確認が先に要る → 上限側
+- **仕様が確定していない（設計が矛盾している等）ものは工数を出さず `needsDecision: true`**
+
+## 出力
+
+指示されたJSONファイルに **Write して** 書き込む。
+
+```json
+{
+  "packetId": "...",
+  "results": [
+    {
+      "rowId": 123,
+      "authorCat": "5",
+      "verdict": "UPHELD",
+      "correctedCat": null,
+      "effortDays": 2.0,
+      "effortBasis": "何を触るか。触るファイル数・既存実装の流用可否・影響範囲",
+      "needsDecision": false,
+      "reason": "区分をそう判断した根拠",
+      "confidence": "high"
+    }
+  ]
+}
+```
+
+- `verdict`: `UPHELD`（区分が正しい）/ `REFUTED`（誤り）/ `UNSURE`
+- `correctedCat`: REFUTED のとき正しい区分番号("1"〜"8")。それ以外は null
+- `effortDays`: **この1件の実装工数(人日)**。区分の代表値に引きずられず自分で見積もる
+- `needsDecision`: 仕様が決まっておらず見積不能なら true（`effortDays` は 0 でよい）
+- `confidence`: `high` / `medium` / `low`
+
+findings 全件について返すこと（欠落禁止）。
+
+## リポジトリ
+
+| 役割 | パス |
+|---|---|
+| 新実装（改修先） | `/home/y-saito/Developments/ec-cube-enterprise` |
+| 正本設計書(HTML) | `/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/` |
+| 旧実装 | `/home/y-saito/Developments/pf-api`, `pf-eccube3`, `pf-article`, `deck-api` |
+
+PACKET_BYTES 37710
+[
+  "findings",
+  "note",
+  "packetId"
+]
+28
+
+codex
+手順書を確認しました。担当は28件です。まず全件の分類候補と根拠・参照先を一覧化し、軽微な表示修正を重く分類した例と、逆に取得・副作用まで必要なのに軽く分類した例の両方向を重点確認します。
+exec
+/bin/bash -lc "jq -r '.findings[] | \"ROW \\(.rowId) CAT=\\(.authorCat)\\nID=\\(.id // \"-\")\\nNAME=\\(.functionName // \"-\")\\nDIFF=\\(.difference // \"-\")\\nEXPECT=\\(.designExpectation // .design.summary // \"-\")\\nACTUAL=\\(.implementationActual // .implementation.summary // \"-\")\\nFIX=\\(.fixTarget // \"-\")\\nCHANGE=\\(.requiredChange // \"-\")\\nREFS=\\((.implementationRefs // [])|join(\" | \"))\\n---\"' hareruya-design-docs/design_impl_drift_report/citation_audit/effort_packets/ef_08.json" in /home/y-saito/Developments
+ succeeded in 0ms:
+ROW 213 CAT=7
+ID=-
+NAME=-
+DIFF=-
+EXPECT=-
+ACTUAL=-
+FIX=-
+CHANGE=-
+REFS=
+---
+ROW 214 CAT=5
+ID=-
+NAME=-
+DIFF=-
+EXPECT=-
+ACTUAL=-
+FIX=-
+CHANGE=-
+REFS=
+---
+ROW 215 CAT=1
+ID=-
+NAME=-
+DIFF=-
+EXPECT=-
+ACTUAL=-
+FIX=-
+CHANGE=-
+REFS=
+---
+ROW 216 CAT=5
+ID=-
+NAME=-
+DIFF=-
+EXPECT=-
+ACTUAL=-
+FIX=-
+CHANGE=-
+REFS=
+---
+ROW 217 CAT=7
+ID=-
+NAME=-
+DIFF=-
+EXPECT=-
+ACTUAL=-
+FIX=-
+CHANGE=-
+REFS=
+---
+ROW 218 CAT=1
+ID=-
+NAME=-
+DIFF=-
+EXPECT=-
+ACTUAL=-
+FIX=-
+CHANGE=-
+REFS=
+---
+ROW 219 CAT=7
+ID=-
+NAME=-
+DIFF=-
+EXPECT=-
+ACTUAL=-
+FIX=-
+CHANGE=-
+REFS=
+---
+ROW 220 CAT=7
+ID=-
+NAME=-
+DIFF=-
+EXPECT=-
+ACTUAL=-
+FIX=-
+CHANGE=-
+REFS=
+---
+ROW 221 CAT=5
+ID=-
+NAME=-
+DIFF=-
+EXPECT=-
+ACTUAL=-
+FIX=-
+CHANGE=-
+REFS=
+---
+ROW 222 CAT=5
+ID=-
+NAME=-
+DIFF=-
+EXPECT=-
+ACTUAL=-
+FIX=-
+CHANGE=-
+REFS=
+---
+ROW 223 CAT=7
+ID=-
+NAME=-
+DIFF=-
+EXPECT=-
+ACTUAL=-
+FIX=-
+CHANGE=-
+REFS=
+---
+ROW 224 CAT=5
+ID=-
+NAME=-
+DIFF=-
+EXPECT=-
+ACTUAL=-
+FIX=-
+CHANGE=-
+REFS=
+---
+ROW 225 CAT=8
+ID=-
+NAME=-
+DIFF=-
+EXPECT=-
+ACTUAL=-
+FIX=-
+CHANGE=-
+REFS=
+---
+ROW 226 CAT=5
+ID=-
+NAME=-
+DIFF=-
+EXPECT=-
+ACTUAL=-
+FIX=-
+CHANGE=-
+REFS=
+---
+ROW 227 CAT=5
+ID=-
+NAME=-
+DIFF=-
+EXPECT=-
+ACTUAL=-
+FIX=-
+CHANGE=-
+REFS=
+---
+ROW 228 CAT=7
+ID=-
+NAME=-
+DIFF=-
+EXPECT=-
+ACTUAL=-
+FIX=-
+CHANGE=-
+REFS=
+---
+ROW 229 CAT=7
+ID=-
+NAME=-
+DIFF=-
+EXPECT=-
+ACTUAL=-
+FIX=-
+CHANGE=-
+REFS=
+---
+ROW 230 CAT=7
+ID=-
+NAME=-
+DIFF=-
+EXPECT=-
+ACTUAL=-
+FIX=-
+CHANGE=-
+REFS=
+---
+ROW 231 CAT=5
+ID=-
+NAME=-
+DIFF=-
+EXPECT=-
+ACTUAL=-
+FIX=-
+CHANGE=-
+REFS=
+---
+ROW 232 CAT=7
+ID=-
+NAME=-
+DIFF=-
+EXPECT=-
+ACTUAL=-
+FIX=-
+CHANGE=-
+REFS=
+---
+ROW 233 CAT=2
+ID=-
+NAME=-
+DIFF=-
+EXPECT=-
+ACTUAL=-
+FIX=-
+CHANGE=-
+REFS=
+---
+ROW 234 CAT=2
+ID=-
+NAME=-
+DIFF=-
+EXPECT=-
+ACTUAL=-
+FIX=-
+CHANGE=-
+REFS=
+---
+ROW 235 CAT=5
+ID=-
+NAME=-
+DIFF=-
+EXPECT=-
+ACTUAL=-
+FIX=-
+CHANGE=-
+REFS=
+---
+ROW 236 CAT=2
+ID=-
+NAME=-
+DIFF=-
+EXPECT=-
+ACTUAL=-
+FIX=-
+CHANGE=-
+REFS=
+---
+ROW 237 CAT=2
+ID=-
+NAME=-
+DIFF=-
+EXPECT=-
+ACTUAL=-
+FIX=-
+CHANGE=-
+REFS=
+---
+ROW 238 CAT=2
+ID=-
+NAME=-
+DIFF=-
+EXPECT=-
+ACTUAL=-
+FIX=-
+CHANGE=-
+REFS=
+---
+ROW 241 CAT=2
+ID=-
+NAME=-
+DIFF=-
+EXPECT=-
+ACTUAL=-
+FIX=-
+CHANGE=-
+REFS=
+---
+ROW 242 CAT=6
+ID=-
+NAME=-
+DIFF=-
+EXPECT=-
+ACTUAL=-
+FIX=-
+CHANGE=-
+REFS=
+---
+
+exec
+/bin/bash -lc "jq '.findings[0], .findings[20], .findings[27]' hareruya-design-docs/design_impl_drift_report/citation_audit/effort_packets/ef_08.json" in /home/y-saito/Developments
+ succeeded in 0ms:
+{
+  "rowId": 213,
+  "機能No": "B08-03",
+  "機能名": "B08-03 ポイント有効期限通知",
+  "区分(画面種別)": "batch",
+  "指摘区分": "実装違い",
+  "優先度": "P3",
+  "実害": "med",
+  "authorCat": "7",
+  "authorCatName": "外部連携・副作用",
+  "authorEffort": "3.0",
+  "authorHint": "メール送信 / ログ出力",
+  "設計期待値": "送信時のエラーはエラーメッセージをコンソールに出力する。",
+  "実装実態": "`sendPointExpireNotificationMail()` は `TransportExceptionInterface` を catch すると `log_critical($e->getMessage())` を実行して return する。例外は `PointExpireNotificationCommand` へ再throwされないため、コマンド側の `$io->error(...)` には到達しない。",
+  "差分内容": "設計は送信時エラーのコンソール出力を要求しているが、実装はメール送信例外を MailService 内でログ出力に変換して握りつぶす。反証検索として Command の catch、MailService の TransportException catch、logger/log_critical を確認したが、送信時エラーをコンソール出力する実装は確認できない。",
+  "実装参照": "src/Eccube/Service/MailService.php:1115"
+}
+{
+  "rowId": 233,
+  "機能No": "F01-01",
+  "機能名": "F01-01 ECTOP",
+  "区分(画面種別)": "front",
+  "指摘区分": "未実装",
+  "優先度": "P2",
+  "実害": "med",
+  "authorCat": "2",
+  "authorCatName": "画面表示",
+  "authorEffort": "0.38",
+  "authorHint": "disabled / twig",
+  "設計期待値": "アイテムを探す(5): 画面部品は静的コンテンツだが、(5-5)カテゴリ押下で当該カテゴリ絞込の商品一覧画面へ、(5-6)通常盤以外のカードセット押下で当該カードセット絞込の商品一覧画面へ遷移する（5-5/5-6はリンク）。",
+  "実装実態": "search_items.twig は全80行が静的ハードコード。カテゴリ/カードセット相当リンクは全て <a class=\"c-hareruya-tag\" aria-disabled=\"true\"> で href 不在（aria-disabled 11箇所, href 0件）。押下しても商品一覧画面へ遷移しない。shop_top.twig:45 で実描画される。",
+  "差分内容": "設計は5-5/5-6を『リンク』と定義し押下時の商品一覧遷移を明示要求。実装は href 無しの aria-disabled 非リンクで遷移ロジックが未配線のため機能要求(5-5)(5-6)が実現されていない。",
+  "実装参照": "src/Eccube/Resource/template/default/Block/search_items.twig:22-31,53-56,75; shop_top.twig:45"
+}
+{
+  "rowId": 242,
+  "機能No": "F02-01",
+  "機能名": "F02-01 PC版ナビゲーション",
+  "区分(画面種別)": "front",
+  "指摘区分": "未実装",
+  "優先度": "P2",
+  "実害": "med",
+  "authorCat": "6",
+  "authorCatName": "未実装機能",
+  "authorEffort": "5.0",
+  "authorHint": "Controller 検索でも不在 / TODO",
+  "設計期待値": "(24-11)FAQ(サイトマップ内リンク): 押下すると、FAQ画面へ遷移する",
+  "実装実態": "フッター・サイトマップの『FAQ』リンクが href=\"#\" のプレースホルダ。直前行50に『TODO: FAQ ページ (user_data/hareruya_faq) 実装後に href を差し替え』のコメントあり。FAQ画面ルート(user_data/hareruya_faq等)は Controller 検索でも不在。押下してもFAQ画面へ遷移しない。",
+  "差分内容": "設計はFAQ押下でFAQ画面へ遷移を要求。実装はリンク要素はあるが遷移先が未設定(#)で、FAQ画面ルート未実装のため遷移不可。同ブロック他項目(deck_index/help_guide/event_top等)は実ルートを指すためFAQのみ差異。",
+  "実装参照": "src/Eccube/Resource/template/default/Block/footer_sitemap.twig:50-52"
+}
+
+exec
+/bin/bash -lc "jq -r '.findings[] | \"ROW \\(.rowId) [\\(.authorCat) \\(.authorCatName)] author=\\(.authorEffort)\\n\\(.機能No) \\(.機能名) / \\(.指摘区分)\\n期待: \\(.設計期待値)\\n実態: \\(.実装実態)\\n差分: \\(.差分内容)\\n参照: \\(.実装参照)\\n---\"' hareruya-design-docs/design_impl_drift_report/citation_audit/effort_packets/ef_08.json" in /home/y-saito/Developments
+ exited 3 in 0ms:
+jq: error: syntax error, unexpected INVALID_CHARACTER (Unix shell quoting issues?) at <top-level>, line 1:
+.findings[] | "ROW \(.rowId) [\(.authorCat) \(.authorCatName)] author=\(.authorEffort)\n\(.機能No) \(.機能名) / \(.指摘区分)\n期待: \(.設計期待値)\n実態: \(.実装実態)\n差分: \(.差分内容)\n参照: \(.実装参照)\n---"                                                                                           
+jq: error: try .["field"] instead of .field for unusually named fields at <top-level>, line 1:
+.findings[] | "ROW \(.rowId) [\(.authorCat) \(.authorCatName)] author=\(.authorEffort)\n\(.機能No) \(.機能名) / \(.指摘区分)\n期待: \(.設計期待値)\n実態: \(.実装実態)\n差分: \(.差分内容)\n参照: \(.実装参照)\n---"                                                                                          
+jq: 2 compile errors
+
+exec
+/bin/bash -lc "jq -r '.findings[] | \"ROW \\(.rowId) [\\(.authorCat) \\(.authorCatName)] author=\\(.authorEffort)\\n\\(.[\"機能No\"]) \\(.[\"機能名\"]) / \\(.[\"指摘区分\"])\\n期待: \\(.[\"設計期待値\"])\\n実態: \\(.[\"実装実態\"])\\n差分: \\(.[\"差分内容\"])\\n参照: \\(.[\"実装参照\"])\\n---\"' hareruya-design-docs/design_impl_drift_report/citation_audit/effort_packets/ef_08.json" in /home/y-saito/Developments
+ succeeded in 0ms:
+ROW 213 [7 外部連携・副作用] author=3.0
+B08-03 B08-03 ポイント有効期限通知 / 実装違い
+期待: 送信時のエラーはエラーメッセージをコンソールに出力する。
+実態: `sendPointExpireNotificationMail()` は `TransportExceptionInterface` を catch すると `log_critical($e->getMessage())` を実行して return する。例外は `PointExpireNotificationCommand` へ再throwされないため、コマンド側の `$io->error(...)` には到達しない。
+差分: 設計は送信時エラーのコンソール出力を要求しているが、実装はメール送信例外を MailService 内でログ出力に変換して握りつぶす。反証検索として Command の catch、MailService の TransportException catch、logger/log_critical を確認したが、送信時エラーをコンソール出力する実装は確認できない。
+参照: src/Eccube/Service/MailService.php:1115
+---
+ROW 214 [5 業務ロジック] author=1.2
+B08-03 B08-03 ポイント有効期限通知 / 実装違い
+期待: 開始・完了のコンソール出力は日時付きで行う。
+実態: 開始時は `$io->text('ポイント有効期限通知バッチ開始')`、完了時は `$io->success('ポイント有効期限通知処理が完了しました。')` を出力するが、いずれのコンソール文言にも日時は含まれない。
+差分: 設計は開始・完了のコンソール出力に日時を含めることを要求しているが、実装の Console 出力文字列は固定文言のみ。反証検索として Command の `$io->text` / `$io->success` と Action の logger 出力を確認したが、日時付きコンソール出力は確認できない。
+参照: src/Eccube/Command/PointExpireNotificationCommand.php:38
+---
+ROW 215 [1 外部インタフェース契約] author=0.5
+B08-05 B08-05 ポイント差分発生通知 / 実装違い
+期待: コンソールのバッチコマンドは customer:batch adjustPointVariance として実行する。
+実態: Symfony Console コマンド名は #[AsCommand(name: 'eccube:customer:adjust-point-variance', ...)] として登録されている。
+差分: 設計の外部契約である実行コマンド名 customer:batch adjustPointVariance と、実装で登録される eccube:customer:adjust-point-variance が一致しない。別キーワード（adjustPointVariance / adjust-point-variance / ポイント差分発生通知 / customer:batch）で再検索したが、設計名のコマンド登録は確認できなかった。
+参照: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/AdjustPointVarianceCommand.php:25
+---
+ROW 216 [5 業務ロジック] author=1.2
+B08-05 B08-05 ポイント差分発生通知 / 実装違い
+期待: 開始・完了のコンソール出力（日時付き）。
+実態: 開始時は「ポイント差分発生通知バッチ開始」、完了時は「ポイント差分発生通知処理が完了しました。」を出力するが、日時は付与していない。
+差分: 設計は開始・完了のコンソール出力に日時付きであることを要求している。実装の開始・完了出力箇所および同コマンド内を確認したが、date/format/現在日時を付与する処理は確認できなかった。
+参照: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/AdjustPointVarianceCommand.php:38
+---
+ROW 217 [7 外部連携・副作用] author=3.0
+B08-05 B08-05 ポイント差分発生通知 / 実装違い
+期待: 取得・送信時のエラーはエラーメッセージをコンソールに出力する。
+実態: メール送信時の TransportExceptionInterface は MailService 内で catch され、log_critical($e->getMessage()) を呼ぶだけで再throwしないため、Command 側の $io->error() に到達しない。
+差分: 設計は送信時エラーのコンソール出力を要求しているが、実装はメール送信例外をログ出力で握りつぶす。Command 側には Throwable をコンソール出力する catch があるものの、MailService が送信例外を再throwしないため送信時エラーには適用されない。
+参照: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/MailService.php:1356
+---
+ROW 218 [1 外部インタフェース契約] author=0.5
+B08-06 B08-06 スマレジ使用ポイント連携 / 実装違い
+期待: スマレジ使用ポイント連携を実行する（ smaregi:batch updatePoint <受注ID> ）
+実態: 実装コマンド名は `eccube:smaregi:update-point`。購入完了処理からの別プロセス呼び出しも `/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Front/ShoppingController.php:605` で `eccube:smaregi:update-point` を実行している。
+差分: 設計の外部契約は `smaregi:batch updatePoint <受注ID>` だが、Symfony コマンド登録名と呼び出し側が別名になっている。`smaregi:batch updatePoint` / `updatePoint` / `smaregi:batch` で src/Eccube と html を再検索したが、設計名の実装は見つからなかった。
+参照: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/SmaregiUpdatePointCommand.php:26
+---
+ROW 219 [7 外部連携・副作用] author=1.8
+B08-06 B08-06 スマレジ使用ポイント連携 / 実装違い
+期待: 入力はコマンド名と受注ID。受注IDが不正なら何もせず終了する。
+実態: 受注ID未入力時は成功終了するが、数値でない場合は `/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/SmaregiUpdatePointCommand.php:53-56` でエラーを出力し `Command::FAILURE` を返す。
+差分: 設計は「受注IDが未指定・数値でない」どちらも処理を行わず終了する扱いだが、実装は非数値入力を失敗終了として扱う。
+参照: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/SmaregiUpdatePointCommand.php:47
+---
+ROW 220 [7 外部連携・副作用] author=4.5
+B08-06 B08-06 スマレジ使用ポイント連携 / 未実装
+期待: 失敗時はエラー状態を残し、スマレジEC受注連携エラー再連携バッチで再試行できる。
+実態: 失敗時のエラー保存は `/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/SmaregiUpdatePointAction.php:57-60` と `/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/SmaregiUpdatePointAction.php:75-78` にある。`smaregi_erro
+差分: 設計は失敗記録だけでなく後続のスマレジEC受注連携エラー再連携バッチによる再試行可能性まで要求している。実装はエラー受注抽出メソッド止まりで、使用ポイント連携を再試行するバッチ入口・Action・呼び出しが不在。なお `SmaregiStockBackfillCommand` は在庫変動Webhook再連携であり、使用ポイント連携の再試行ではない。
+参照: 不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube, /home/y-saito/Developments/ec-cube-enterprise/html; 検索語: getSmaregiErrorOrder, point_error_message, smaregi_error_flg, エラー再連携, 再試行, r
+---
+ROW 221 [5 業務ロジック] author=4.5
+B13-01 B13-01 決済処理中チェックバッチ / 未実装
+期待: SP.LINKSに取引照会を行い、照会結果に応じた処理を行う。決済サービスへ取引を照会し、結果でステータスを判定する。
+実態: getApiResponse() は SP.LINKS 取引照会APIを実行せず、常に LogicException を throw する。
+差分: PaymentStatusCheckAction::handle() は申込みごとに getApiResponse($paymentNo) を呼ぶが、同メソッド本体が「SP.LINKS取引照会API未実装」として例外を投げるため、設計上の取引照会・レスポンス判定・後続のステータス整合に到達できない。探索範囲: src/Eccube/Command, src/Eccube/Service/Admin/Payment, src/Eccube/Service/Payment, src/Eccube/Repository, html。検索語: SP.LINKS, 取引照会, ResponseCd, MerchantId, getApiResponse, payment-status-check。
+参照: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Payment/PaymentStatusCheckAction.php:191
+---
+ROW 222 [5 業務ロジック] author=3.0
+B13-01 B13-01 決済処理中チェックバッチ / 未実装
+期待: 直前と同じ決済番号の申込みは、前回の照会結果に従って同様の処理を行う。同一決済番号は前回結果を流用する。
+実態: DtbEventEntryRepository::getBeforeMinutesEntry() は paymentNo 順に並べるが、PaymentStatusCheckAction::handle() は各 EventEntry ごとに getApiResponse($paymentNo) を呼び、前回の paymentNo/result を保持・再利用する変数や分岐がない。
+差分: 実装には orderBy('ee.paymentNo') はあるが、同一決済番号の検出、前回照会結果のキャッシュ、前回結果に基づく更新・削除・保留処理の流用が存在しない。
+参照: 不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Payment/PaymentStatusCheckAction.php, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbEventEntryR
+---
+ROW 223 [7 外部連携・副作用] author=3.0
+B13-01 B13-01 決済処理中チェックバッチ / 実装違い
+期待: 取引不在・未完了以外の想定外エラーは1つにまとめ、管理者へ通知メールを送信する。取引不在・未完了以外のエラーは重複を除いてまとめ、管理者へ通知する。
+実態: 各 EventEntry の catch 節で sendEventPaymentErrorAlertMail($EventEntry, $e->getMessage()) を即時送信し、cntError を加算する。エラー配列への蓄積、重複排除、ループ後の一括通知はない。
+差分: 設計は想定外エラーを重複排除して1つにまとめ管理者へ通知することを要求しているが、実装は申込み単位の例外ごとに通知メールを送信するため、同一エラーが複数回通知され得る。
+参照: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Payment/PaymentStatusCheckAction.php:164
+---
+ROW 224 [5 業務ロジック] author=3.0
+B13-01 B13-01 決済処理中チェックバッチ / 未実装
+期待: 取引不在・未完了等のメッセージ収集、想定外エラーの通知。取引不在・未完了は記録の除去等の所定処理を行い、メッセージを収集する。
+実態: 取引が存在しない・失敗している場合は deletedAt を設定して flush し、cntDeleted を加算するだけで、取引不在・未完了等のメッセージを収集しない。戻り値 detail も件数集計のみ。
+差分: 設計は失敗時出力として取引不在・未完了等のメッセージ収集を要求しているが、実装にはメッセージ配列や個別理由の蓄積がなく、削除件数だけを返す。
+参照: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Payment/PaymentStatusCheckAction.php:154
+---
+ROW 225 [8 実行制御] author=3.0
+B13-01 B13-01 決済処理中チェックバッチ / 未実装
+期待: 照会・更新を積み、最後に確定する。
+実態: 成功時は申込みごとに beginTransaction()、flush()、commit() を行い、取引不在・失敗時も申込みごとに flush() する。
+差分: 設計はバッチ全体で照会・更新を積み最後に確定することを要求しているが、実装は対象申込みごとにDB確定するため、途中エラー時に既処理分が確定済みになる。
+参照: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Payment/PaymentStatusCheckAction.php:113
+---
+ROW 226 [5 業務ロジック] author=1.2
+B16-04 B16-04 必須項目が空欄の会員発生通知 / 実装違い
+期待: 該当するユーザーがある場合、会員IDおよびユーザー情報抜粋データをコロン区切りで取得し、電話番号(1列目)は tel01 としてメール本文例どおり出力する。
+実態: ユーザー情報抜粋データの CONCAT で、c.tel01 のラベルが ':tel02:' になっており、続く c.tel02 も ':tel02:' のため tel01 ラベルが出力されない。
+差分: 設計本文例は tel01:[電話番号(1列目)]:tel02:[電話番号(2列目)]:tel03:[電話番号(3列目)] を要求しているが、実装は ':tel02:' + c.tel01 + ':tel02:' + c.tel02 となっている。反証検索でも src/Eccube/Repository/CustomerRepository.php、src/Eccube/Service/MailService.php、src/Eccube/Command、src/Eccube/Service/Admin/Customer、html/template、src/Eccube/Resource 内に、このメール本文用の ':tel01:' 出力実装は見つからなかった。
+参照: src/Eccube/Repository/CustomerRepository.php:649
+---
+ROW 227 [5 業務ロジック] author=3.0
+B16-06 B16-06 月次商品情報スナップショット / 未実装
+期待: 月初に店舗・在庫場所・商品規格ごとに一部の事項を抽出し、stock_YYYYMMDD.txt.zip に圧縮して s3://inventorycheck/ へアップロードする月次バッチを、毎月1日 午前1時にStep Functionsから実行する。
+実態: 専用Command/Service/Repositoryは確認できない。S3汎用サービスは src/Eccube/Service/S3/FileUploadService.php:57 で単一ファイルputFileを提供し、デモCommandは src/Eccube/Command/TestS3UploadDemoCommand.php:22 の eccube:demo:s3-upload で固定の hello.txt をアップロードするだけ。Command一覧にも月次商品情報スナップショット相
+差分: 設計は月次商品情報スナップショット専用の外部契約（Step Functions月次起動、DB抽出、ZIP生成、stock_YYYYMMDD.txt.zip、s3://inventorycheck/アップロード）を要求しているが、実装範囲にはその入口・ファイル名生成・ZIP生成・S3アップロード呼び出しの連結処理が存在しない。S3サービス単体やデモCommand、管理画面CSVはこのバッチ契約を満たさない。なお設計HTMLの一時DBクラスタ作成/削除に関する行は cell-strike 表示のため現行要求から除外した。
+参照: 不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Re
+---
+ROW 228 [7 外部連携・副作用] author=4.5
+B16-09 B16-09 サイトマップ生成処理 / 未実装
+期待: 晴れる屋トップページからリンクを辿りながらアクセス可能なURLのリストからサイトマップファイルを作成し、S3にファイルをアップロードする。Sitemap-Generator-Crawlerを使い、トップページを解析してリンクURLを抽出し、リンク先がなくなるまで巡回したURLリストでサイトマップファイルを作成する。
+実態: 実装は `/sitemap.xml` 等のGETルートで、DBのPage/Product/Category/Purchase/Deck情報からTwig XMLレスポンスを返すフロントController。Sitemap-Generator-Crawler依存、トップページ起点のリンク巡回、URLリストからファイルを生成する処理、S3アップロード呼び出しは確認できない。
+差分: `SitemapController` は `#[Route(path: '/sitemap.xml')]` でXMLをHTTP出力し、`pageRepository`/`productRepository`/`categoryRepository`等からデータ取得して `sitemap_index.xml.twig` をレンダリングする実装。反証検索として `Sitemap-Generator-Crawler`/`SitemapGenerator`/`crawl(`/`spatie/crawler`/`samdark/sitemap`、S3連携語 `S3Client`/`putObject` を確認したが、サイトマップ生成処理からS3へアップロードする接続は不在。ComposerにもSitemap-Generator-Crawler系依存は不在。
+参照: src/Eccube/Controller/Front/SitemapController.php:56
+---
+ROW 229 [7 外部連携・副作用] author=4.5
+B16-09 B16-09 サイトマップ生成処理 / 未実装
+期待: 前回(昨日)のサイトマップと今回作成したサイトマップを比較し、差異がある場合はS3にアップロードする。
+実態: 前回サイトマップ取得、今回サイトマップとの比較、差異がある場合のみS3へアップロードする制御は確認できない。
+差分: 確認できたサイトマップ実装は `SitemapController` のGETルートとXML Twigのみで、前回ファイルの取得・比較・条件付きアップロードの状態管理がない。S3の `putObject` は汎用アップロードサービスとデモコマンドに限られ、サイトマップ差分判定から呼ばれていない。
+参照: 不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube, /home/y-saito/Developments/ec-cube-enterprise/html。検索語: sitemap/Sitemap, yesterday/前回/昨日, diff/compare/差異/比較, S3Client/putObject/uplo
+---
+ROW 230 [7 外部連携・副作用] author=4.5
+B16-09 B16-09 サイトマップ生成処理 / 未実装
+期待: 実行トリガーは Eventbridge+Lamdba、実行タイミングは毎日4:00。実行環境はバッチ処理用EC2インスタンス。
+実態: サイトマップ生成用のSymfony Command、EventBridge/Lambda連携設定、毎日4:00のスケジュール設定は確認できない。
+差分: `src/Eccube/Command` 配下のコマンド一覧にサイトマップ生成コマンドはなく、スケジュール検索で見つかるのはDependabot/Vaddy等のGitHub workflowと `eccube_sitemap_products_per_page` 設定のみ。B16-09を起動するEventBridge+Lambda/4:00設定の根拠がない。
+参照: 不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command, /home/y-saito/Developments/ec-cube-enterprise/html, app/config/eccube, .github。検索語: EventBridge/Eventbridge/Lambda/Lamdba/cro
+---
+ROW 231 [5 業務ロジック] author=3.0
+B16-09 B16-09 サイトマップ生成処理 / 未実装
+期待: 全部のリンクを取得するように設定(階層設定なし)。但し、管理ページ、商品検索ページ(日本語・英語)、カードリスト購入ページ(日本語・英語)、デッキ検索ページ(日本語・英語)、イベント情報(日本語・英語)およびそれ以降のページは取得しない。
+実態: 実装は巡回除外ルールではなく、ページ・カテゴリ・商品・買取商品・デッキ系の固定XMLルートをDBから生成している。`page()` ではnoindex/noneやURL変数、管理画面作成ページを除外するが、設計の巡回除外対象一覧とは一致しない。
+差分: 設計はクローラー設定として階層制限なし取得と特定URL配下の除外を要求している。実装は `sitemap_page.xml`、`sitemap_product_{page}.xml`、`sitemap_purchase_{page}.xml`、`sitemap_deck.xml`、`sitemap_deck_show_{page}.xml` の固定生成であり、商品検索/カードリスト購入/デッキ検索/イベント情報の日本語・英語URLを巡回除外する設定は不在。
+参照: src/Eccube/Controller/Front/SitemapController.php:164
+---
+ROW 232 [7 外部連携・副作用] author=4.5
+B16-11 B16-11 S3画像サイズチェック処理 / 未実装
+期待: S3画像サイズチェック処理として、15分毎にS3上の指定画像バケットからファイル名・ファイルサイズ一覧を取得し、画像種別ごとの規定サイズ超過ファイル一覧を作成して、指定宛先へメール通知する
+実態: B16-11相当のConsole Command/Service/Mailテンプレートは確認できない。近いS3実装は /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/S3/FileUploadService.php:36 で s3_inventory_check 設定を読み、同:57-85 で putObject によるアップロードのみを行う。/home/y-saito/Developments/ec-cube-e
+差分: 設計はバッチ外部契約として「スケジュール起動(Step Functions) 15分毎」「入力S3、出力メール」「指定S3パス5種」「種別別しきい値」「指定From/To/CC/BCC/件名/本文」を要求しているが、src/Eccube/Command の AsCommand 一覧に画像サイズチェック/ファイルサイズアラート相当の入口がなく、S3処理はアップロード/単体取得系のみ、MailServiceとMailテンプレートにも設計件名・宛先・本文に該当する送信処理が存在しない。
+参照: 不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/S3, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube
+---
+ROW 233 [2 画面表示] author=0.38
+F01-01 F01-01 ECTOP / 未実装
+期待: アイテムを探す(5): 画面部品は静的コンテンツだが、(5-5)カテゴリ押下で当該カテゴリ絞込の商品一覧画面へ、(5-6)通常盤以外のカードセット押下で当該カードセット絞込の商品一覧画面へ遷移する（5-5/5-6はリンク）。
+実態: search_items.twig は全80行が静的ハードコード。カテゴリ/カードセット相当リンクは全て <a class="c-hareruya-tag" aria-disabled="true"> で href 不在（aria-disabled 11箇所, href 0件）。押下しても商品一覧画面へ遷移しない。shop_top.twig:45 で実描画される。
+差分: 設計は5-5/5-6を『リンク』と定義し押下時の商品一覧遷移を明示要求。実装は href 無しの aria-disabled 非リンクで遷移ロジックが未配線のため機能要求(5-5)(5-6)が実現されていない。
+参照: src/Eccube/Resource/template/default/Block/search_items.twig:22-31,53-56,75; shop_top.twig:45
+---
+ROW 234 [2 画面表示] author=0.25
+F01-01 F01-01 ECTOP / 実装違い
+期待: 最新入荷アイテム(2)英語版: (2-17)(2-18)more 押下で『Trending Now』タグ絞込の商品一覧画面へ遷移（英語版のみ表示）。表示商品も Trending Now タグ由来。
+実態: new_items.en.twig の more リンク(:9,:23)は共に url('product_list_tag', {tagId: constant('Eccube\\Entity\\Tag::NEW_ITEMS_ID')})。NEW_ITEMS_ID=1(最新入荷アイテムタグ)。一方 NewItemsBlockPayloadBuilder は locale='en' 時 MtbOption::SLIDER_EN_ONLY_TAG_ID(Trending Now タグ)で商品取得。
+差分: 英語版表示商品は Trending Now タグ由来なのに more リンク遷移先タグが NEW_ITEMS_ID にハードコードされ、押下すると表示中商品とは別の『最新入荷アイテム』タグ絞込一覧へ遷移する。設計要求(Trending Now タグ絞込一覧)と不一致。Tag.php:55 NEW_ITEMS_ID=1, MtbOption.php:100 SLIDER_EN_ONLY_TAG_ID 確認。
+参照: src/Eccube/Resource/template/default/Block/new_items.en.twig:9,23; src/Eccube/Service/Block/NewItemsBlockPayloadBuilder.php:56-63
+---
+ROW 235 [5 業務ロジック] author=2.0
+F01-01 F01-01 ECTOP / 実装違い
+期待: あなたのお気に入り(4)の表示条件は1~6のみ: 1 会員お気に入り登録商品 / 2 本店公開ステータス公開 / 3 表示サイト言語 / 4 登録日降順 / 5 最大30件 / 6 1件もなければ非表示。在庫条件は非列挙(他ブロック2/8/SALE/英語版は『在庫が1以上』を明記)。
+実態: findTopFavoriteProductClassesByCustomer が status=1・visible・locale・登録日降順に加え pc.stock > 0(:109)を条件付加。FavoritesBlockPayloadBuilder が同メソッドを直接利用(緩和なし)。在庫切れのお気に入り商品が除外される。
+差分: 設計ブロック4は条件を1~6で明示列挙し在庫条件を意図的に含めていない(他ブロックは『在庫が1以上』を明記)。実装が独自に pc.stock>0 を付加するため在庫切れお気に入り商品が設計と異なりトップに出ない。docstring も『pf-eccube3 の stock 条件を踏襲』と旧仕様追随を明言。
+参照: src/Eccube/Repository/CustomerFavoriteProductRepository.php:109; src/Eccube/Service/Block/FavoritesBlockPayloadBuilder.php:61-66
+---
+ROW 236 [2 画面表示] author=0.25
+F01-02 F01-02 支店ECTOP / 実装違い
+期待: (2-11)カートに入れる ボタン: 押下すると(2-9)商品数の数量分商品をカートに追加する。今週の売れ筋商品/SALE中の商品の各カードにカート追加ボタンを表示する。
+実態: add-cartボタン(78-82行)は {% if _show_customer_favorite %}(72行)ブロック内にのみ存在。_show_customer_favorite(9行)は (showFavoriteButton未定義 or showFavoriteButton) かつ isMainShop を要求。shop_best_sellers.twig:23/shop_sale.twig:23 は showFavoriteButton:false を渡し isMainShop も未
+差分: ShopTopController→shop_top.twig:37-38→shop_best_sellers/shop_sale.twig(showFavoriteButton:false,isMainShop未指定)→_product_card.twig を追跡。add-cartボタンの表示条件がお気に入りボタン表示条件に内包されており支店では必ず非表示。app/html オーバーライドも無し。設計は店頭注文フローとしてカート追加ボタンを要求。
+参照: src/Eccube/Resource/template/default/Block/_product_card.twig:9,72,78-82; src/Eccube/Resource/template/default/Block/shop_best_sellers.twig:23; src/Eccube/Resource/template/default/Block/shop_sale.twi
+---
+ROW 237 [2 画面表示] author=0.38
+F01-02 F01-02 支店ECTOP / 未実装
+期待: (6-5)カテゴリリンク押下で押下カテゴリで絞り込んだ商品一覧へ遷移／(6-6)通常盤以外のカードセットリンク押下で押下カードセットで絞り込んだ商品一覧へ遷移。
+実態: search_items.twig は3枚のハードコードダミーカード(ダミー画像 dammy-feature01〜03.webp、固定タイトル等)。カテゴリ/カードセット相当タグは全て <a class="c-hareruya-tag" aria-disabled="true"> で href 無し。shop_top.twig:45 からデータ無しで include され動的連携なし。
+差分: ShopTopController は search_items 用データを渡さず(PHPに search_items 参照なし)、app/html オーバーライドも無し。設計(6-5)(6-6)の『押下→商品一覧遷移』が aria-disabled のダミータグで実装されておらず遷移機能が不在。
+参照: src/Eccube/Resource/template/default/Block/search_items.twig (全体); shop_top.twig:45
+---
+ROW 238 [2 画面表示] author=0.38
+F01-02 F01-02 支店ECTOP / 未実装
+期待: (8-1)バナー画像押下でhtml内で各画像に設定しているURLに遷移。管理画面＞コンテンツ管理＞ブロック管理に設定されている編集可能なブロックを表示する。
+実態: shop_recommend.twig は6枚の固定バナーカード(ダミー画像 top-category-banner01〜06.webp、固定ラベル等)で全リンクが href="#"。各画像設定URLへの遷移未実装。ブロック管理由来の編集可能コンテンツにも連携なし。shop_top.twig:47 からデータ無しで include。
+差分: shop_recommend を無パラメータで include(PHPに shop_recommend 参照なし)、動的URL/ブロック管理データを渡していない。app/html オーバーライドも無し。設計(8-1)の『押下→設定URLへ遷移』『ブロック管理の編集可能ブロック表示』が href="#" のプレースホルダで未実装。
+参照: src/Eccube/Resource/template/default/Block/shop_recommend.twig:18,28,38,48,58,68; shop_top.twig:47
+---
+ROW 241 [2 画面表示] author=0.25
+F02-01 F02-01 PC版ナビゲーション / 実装違い
+期待: (1-6)デッキ構築(メニュー展開内リンク): 押下すると、デッキTOP画面へ遷移する
+実態: メニュー展開ドロップダウンの『デッキ構築』リンクが href="#" のプレースホルダ。直前行42に『TODO: デッキ構築 TOP ルート実装後に href を差し替え』のコメントあり。押下してもデッキTOPへ遷移しない。
+差分: 同一のデッキ構築導線は header.twig:92(/decks)・footer_sitemap.twig:36(/decks)では遷移先設定済みだが、mega_menu の当該項目のみ href="#" のまま未差し替えで遷移不可。
+参照: src/Eccube/Resource/template/default/Block/mega_menu.twig:42-48
+---
+ROW 242 [6 未実装機能] author=5.0
+F02-01 F02-01 PC版ナビゲーション / 未実装
+期待: (24-11)FAQ(サイトマップ内リンク): 押下すると、FAQ画面へ遷移する
+実態: フッター・サイトマップの『FAQ』リンクが href="#" のプレースホルダ。直前行50に『TODO: FAQ ページ (user_data/hareruya_faq) 実装後に href を差し替え』のコメントあり。FAQ画面ルート(user_data/hareruya_faq等)は Controller 検索でも不在。押下してもFAQ画面へ遷移しない。
+差分: 設計はFAQ押下でFAQ画面へ遷移を要求。実装はリンク要素はあるが遷移先が未設定(#)で、FAQ画面ルート未実装のため遷移不可。同ブロック他項目(deck_index/help_guide/event_top等)は実ルートを指すためFAQのみ差異。
+参照: src/Eccube/Resource/template/default/Block/footer_sitemap.twig:50-52
+---
+
+exec
+/bin/bash -lc "ls -la hareruya-design-docs/design_impl_drift_report/citation_audit/effort_results | sed -n '1,80p'; for f in hareruya-design-docs/design_impl_drift_report/citation_audit/effort_results/ef_0{6,7}.json; do if [ -f \""'$f" ]; then echo "$f"; jq '"'.results[0:3]' \""'$f"; fi; done' in /home/y-saito/Developments
+ succeeded in 0ms:
+total 3112
+drwxr-xr-x  2 y-saito y-saito   4096 Jul 31 20:14 .
+drwxr-xr-x 14 y-saito y-saito   4096 Jul 31 20:10 ..
+-rw-r--r--  1 y-saito y-saito  15734 Jul 31 20:14 ef_01.json
+-rw-r--r--  1 y-saito y-saito 459794 Jul 31 20:14 ef_01.log
+-rw-r--r--  1 y-saito y-saito 629222 Jul 31 20:13 ef_02.log
+-rw-r--r--  1 y-saito y-saito  12997 Jul 31 20:13 ef_03.json
+-rw-r--r--  1 y-saito y-saito 277593 Jul 31 20:13 ef_03.log
+-rw-r--r--  1 y-saito y-saito  14759 Jul 31 20:14 ef_04.json
+-rw-r--r--  1 y-saito y-saito 501910 Jul 31 20:15 ef_04.log
+-rw-r--r--  1 y-saito y-saito  15807 Jul 31 20:14 ef_05.json
+-rw-r--r--  1 y-saito y-saito 587361 Jul 31 20:14 ef_05.log
+-rw-r--r--  1 y-saito y-saito  15576 Jul 31 20:14 ef_06.json
+-rw-r--r--  1 y-saito y-saito 387438 Jul 31 20:14 ef_06.log
+-rw-r--r--  1 y-saito y-saito 111148 Jul 31 20:14 ef_07.log
+-rw-r--r--  1 y-saito y-saito  68179 Jul 31 20:14 ef_08.log
+-rw-r--r--  1 y-saito y-saito  24737 Jul 31 20:15 ef_09.log
+-rw-r--r--  1 y-saito y-saito  24683 Jul 31 20:15 ef_10.log
+hareruya-design-docs/design_impl_drift_report/citation_audit/effort_results/ef_06.json
+[
+  {
+    "rowId": 149,
+    "authorCat": "5",
+    "verdict": "UPHELD",
+    "correctedCat": null,
+    "effortDays": 0.5,
+    "effortBasis": "BatchAggregateStockUpAction.phpで集計取得を削除前へ移し、空配列時の早期returnを追加する小規模な分岐変更。",
+    "needsDecision": false,
+    "reason": "永続化方式やスキーマを変えるのではなく、対象なし時の削除を避ける処理順・分岐の修正なので⑤業務ロジックが妥当。",
+    "confidence": "high"
+  },
+  {
+    "rowId": 150,
+    "authorCat": "8",
+    "verdict": "UPHELD",
+    "correctedCat": null,
+    "effortDays": 0.5,
+    "effortBasis": "BatchAggregateStockUpAction.phpのバッチ全体トランザクションを外し、設計上の部分反映境界に合わせる変更。",
+    "needsDecision": false,
+    "reason": "差分の本体は集計内容ではなくbeginTransaction/commit/rollBackの境界なので⑧実行制御。",
+    "confidence": "high"
+  },
+  {
+    "rowId": 151,
+    "authorCat": "5",
+    "verdict": "REFUTED",
+    "correctedCat": "8",
+    "effortDays": 1.0,
+    "effortBasis": "既存foreachへ100件カウンタ、チャンク単位のcommit、EntityManager::clearを組み込み、最終端数も反映する。主にAction 1ファイルだが境界処理が必要。",
+    "needsDecision": false,
+    "reason": "集計式の変更ではなく、100件ごとの反映境界とキャッシュ解放という実行方式の変更なので⑧実行制御。",
+    "confidence": "high"
+  }
+]
+
+exec
+/bin/bash -lc "sed -n '20,95p' ec-cube-enterprise/src/Eccube/Command/PointExpireNotificationCommand.php; sed -n '1090,1130p' ec-cube-enterprise/src/Eccube/Service/MailService.php; sed -n '20,100p' ec-cube-enterprise/src/Eccube/Command/AdjustPointVarianceCommand.php; sed -n '1335,1370p' ec-cube-enterprise/src/Eccube/Service/MailService.php; sed -n '20,125p' ec-cube-enterprise/src/Eccube/Command/SmaregiUpdatePointCommand.php; sed -n '1,130p' ec-cube-enterprise/src/Eccube/Service/Smaregi/SmaregiUpdatePointAction.php" in /home/y-saito/Developments
+ succeeded in 0ms:
+use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Style\SymfonyStyle;
+
+#[AsCommand(name: 'eccube:customer:point-expire-notification', description: 'ポイント有効期限通知バッチ')]
+class PointExpireNotificationCommand extends Command
+{
+    public function __construct(
+        private readonly PointExpireNotificationAction $pointExpireNotificationAction,
+    ) {
+        parent::__construct();
+    }
+
+    #[\Override]
+    protected function execute(InputInterface $input, OutputInterface $output): int
+    {
+        $io = new SymfonyStyle($input, $output);
+        $io->text('ポイント有効期限通知バッチ開始');
+
+        try {
+            $this->pointExpireNotificationAction->handle();
+        } catch (\Throwable $e) {
+            $io->error([
+                'ポイント有効期限通知処理でエラーが発生しました',
+                $e->getMessage(),
+            ]);
+
+            return Command::FAILURE;
+        }
+
+        $io->success('ポイント有効期限通知処理が完了しました。');
+
+        return Command::SUCCESS;
+    }
+}
+            ->subject('['.$this->BaseInfo->getShopName().'] '.$formData['mail_subject'])
+            ->from(new Address($this->BaseInfo->getEmail01(), $this->BaseInfo->getShopName()))
+            ->to($this->convertRFCViolatingEmail($Customer->getEmail()))
+            ->bcc($this->BaseInfo->getEmail01())
+            ->replyTo($this->BaseInfo->getEmail03())
+            ->returnPath($this->BaseInfo->getEmail04())
+            ->text($formData['body']);
+
+        try {
+            $this->mailer->send($message);
+            log_info('会員手動メール通知送信完了');
+        } catch (TransportExceptionInterface $e) {
+            log_critical($e->getMessage());
+        }
+
+        return $message;
+    }
+
+    /**
+     * オンライン本人確認申請完了メール通知送信
+     */
+    public function sendIdentificationConfirmMail(Customer $Customer): Email
+    {
+        log_info('オンライン本人確認申請完了メール通知送信');
+
+        $templateId = MailTemplate::IDENTIFICATION_CONFIRM;
+
+        /** @var MailTemplate $MailTemplate */
+        $MailTemplate = $this->mailTemplateRepository->find($templateId);
+
+        $body = $this->twig->render($MailTemplate->getFileName(), [
+            'customer' => $Customer,
+            'header' => $MailTemplate->getHeader(),
+            'footer' => $MailTemplate->getFooter(),
+        ]);
+
+        $message = (new Email())
+            ->subject('['.$this->BaseInfo->getShopName().'] '.$MailTemplate->getMailSubject())
+            ->from(new Address($this->BaseInfo->getEmail01(), $this->BaseInfo->getShopName()))
+            ->to($this->convertRFCViolatingEmail($Customer->getEmail()))
+            ->bcc($this->BaseInfo->getEmail01())
+use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Style\SymfonyStyle;
+
+#[AsCommand(name: 'eccube:customer:adjust-point-variance', description: 'ポイント差分発生通知バッチ')]
+class AdjustPointVarianceCommand extends Command
+{
+    public function __construct(
+        private readonly AdjustPointVarianceAction $adjustPointVarianceAction,
+    ) {
+        parent::__construct();
+    }
+
+    #[\Override]
+    protected function execute(InputInterface $input, OutputInterface $output): int
+    {
+        $io = new SymfonyStyle($input, $output);
+        $io->text('ポイント差分発生通知バッチ開始');
+
+        try {
+            $this->adjustPointVarianceAction->handle();
+        } catch (\Throwable $e) {
+            $io->error([
+                'ポイント差分発生通知処理でエラーが発生しました',
+                $e->getMessage(),
+            ]);
+
+            return Command::FAILURE;
+        }
+
+        $io->success('ポイント差分発生通知処理が完了しました。');
+
+        return Command::SUCCESS;
+    }
+}
+    /**
+     * 部門未設定商品通知メール送信
+     *
+     * @param array<int, array{product_name: string, product_code: string}> $products
+     */
+    public function sendNoSectionAlertMail(array $products): void
+    {
+        log_info('部門未設定商品通知メール送信開始');
+
+        $addresses = $this->resolveOtcSummaryMailAddresses();
+        if (empty($addresses)) {
+            log_info('部門未設定商品通知メールアドレス未設定のため送信せず終了');
+
+            return;
+        }
+
+        $MailTemplate = $this->mailTemplateRepository->findOneBy([
+            'mail_key' => $this->eccubeConfig['eccube_otc_buy_order_no_section_alert_mail_template_id'],
+        ]);
+
+        $body = $this->twig->render($MailTemplate->getFileName(), [
+            'products' => $products,
+        ]);
+
+        $message = (new Email())
+            ->subject('['.$this->BaseInfo->getShopName().'] '.$MailTemplate->getMailSubject())
+            ->text($body)
+            ->from(new Address($this->BaseInfo->getEmail01(), $this->BaseInfo->getShopName()))
+            ->to(...$addresses)
+            ->replyTo($this->BaseInfo->getEmail03())
+            ->returnPath($this->BaseInfo->getEmail04());
+
+        try {
+            $this->mailer->send($message);
+            log_info('部門未設定商品通知メール送信完了');
+        } catch (TransportExceptionInterface $e) {
+use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Input\InputArgument;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Style\SymfonyStyle;
+
+#[AsCommand(name: 'eccube:smaregi:update-point', description: 'スマレジ使用ポイント連携バッチ')]
+class SmaregiUpdatePointCommand extends Command
+{
+    public function __construct(
+        private readonly SmaregiUpdatePointAction $smaregiUpdatePointAction,
+    ) {
+        parent::__construct();
+    }
+
+    #[\Override]
+    protected function configure(): void
+    {
+        $this->addArgument('orderId', InputArgument::OPTIONAL, '対象受注ID', '');
+    }
+
+    #[\Override]
+    protected function execute(InputInterface $input, OutputInterface $output): int
+    {
+        $io = new SymfonyStyle($input, $output);
+
+        $orderId = $input->getArgument('orderId');
+        if ($orderId === '') {
+            $io->success('orderId が未入力のため、処理をスキップして正常終了しました');
+
+            return Command::SUCCESS;
+        }
+
+        if (!is_numeric($orderId)) {
+            $io->error('orderId は数値で指定してください');
+
+            return Command::FAILURE;
+        }
+
+        $io->text(sprintf('スマレジ使用ポイント連携バッチ開始 orderId=%s', $orderId));
+
+        try {
+            $this->smaregiUpdatePointAction->handle((int) $orderId);
+        } catch (\Throwable $e) {
+            $io->error([
+                'スマレジ使用ポイント連携処理でエラーが発生しました',
+                $e->getMessage(),
+            ]);
+
+            return Command::FAILURE;
+        }
+
+        $io->success(sprintf('スマレジ使用ポイント連携処理が完了しました。orderId=%s', $orderId));
+
+        return Command::SUCCESS;
+    }
+}
+<?php
+
+declare(strict_types=1);
+
+/*
+ * This file is part of EC-CUBE
+ *
+ * Copyright(c) EC-CUBE CO.,LTD. All Rights Reserved.
+ *
+ * http://www.ec-cube.co.jp/
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+namespace Eccube\Service\Smaregi;
+
+use Doctrine\ORM\EntityManagerInterface;
+use Eccube\Repository\DtbPlayerRepository;
+use Eccube\Repository\OrderRepository;
+
+class SmaregiUpdatePointAction
+{
+    public function __construct(
+        private readonly OrderRepository $orderRepository,
+        private readonly DtbPlayerRepository $playerRepository,
+        private readonly SmaregiCustomerService $smaregiCustomerService,
+        private readonly EntityManagerInterface $entityManager,
+    ) {
+    }
+
+    public function handle(int $orderId): void
+    {
+        $order = $this->orderRepository->find($orderId);
+        if ($order === null) {
+            return;
+        }
+
+        $suspendPoint = $order->getSpendedPoints();
+        if ($suspendPoint === null || $suspendPoint === 0) {
+            return;
+        }
+
+        $customer = $order->getCustomer();
+        if ($customer === null) {
+            return;
+        }
+        $player = $this->playerRepository->findOneByCustomer($customer);
+        if ($player === null) {
+            return;
+        }
+
+        try {
+            $response = $this->smaregiCustomerService->postSmaregiPoint($player->getSmaregiId(), -$suspendPoint, false);
+        } catch (\Throwable $e) {
+            try {
+                $order->setPointErrorMessage(json_encode(['message' => $e->getMessage()], JSON_UNESCAPED_UNICODE))
+                    ->setSmaregiErrorFlg(true);
+                $this->entityManager->persist($order);
+                $this->entityManager->flush();
+            } catch (\Throwable $persistError) {
+                log_error('スマレジポイント連携失敗後の注文更新に失敗しました', [
+                    'orderId' => $orderId,
+                    'error' => $persistError->getMessage(),
+                ]);
+            }
+
+            throw $e;
+        }
+
+        if (array_key_exists('result', $response)) {
+            return;
+        }
+
+        $order->setPointErrorMessage(json_encode($response, JSON_UNESCAPED_UNICODE))
+            ->setSmaregiErrorFlg(true);
+        $this->entityManager->persist($order);
+        $this->entityManager->flush();
+    }
+}
+
+exec
+/bin/bash -lc "rg -n \"sendPointExpireNotificationMail|sendAdjustPointVarianceMail|TransportExceptionInterface\" ec-cube-enterprise/src/Eccube/Service/MailService.php | tail -30; sed -n '1065,1125p' ec-cube-enterprise/src/Eccube/Service/MailService.php; sed -n '1310,1370p' ec-cube-enterprise/src/Eccube/Service/MailService.php; sed -n '1,245p' ec-cube-enterprise/src/Eccube/Service/Admin/Payment/PaymentStatusCheckAction.php; sed -n '620,665p' ec-cube-enterprise/src/Eccube/Repository/CustomerRepository.php" in /home/y-saito/Developments
+ succeeded in 0ms:
+984:        } catch (TransportExceptionInterface $e) {
+995:            } catch (TransportExceptionInterface $e) {
+1075:        } catch (TransportExceptionInterface $e) {
+1101:        } catch (TransportExceptionInterface $e) {
+1138:        } catch (TransportExceptionInterface $e) {
+1155:    public function sendPointExpireNotificationMail(DtbPlayer $player, int $point, \DateTimeInterface $expireDate): void
+1182:        } catch (TransportExceptionInterface $e) {
+1216:        } catch (TransportExceptionInterface $e) {
+1276:        } catch (TransportExceptionInterface $e) {
+1328:        } catch (TransportExceptionInterface $e) {
+1370:        } catch (TransportExceptionInterface $e) {
+1406:        } catch (TransportExceptionInterface $e) {
+1456:        } catch (TransportExceptionInterface $e) {
+1466:    public function sendAdjustPointVarianceMail(array $pointVarianceList): void
+1511:        } catch (TransportExceptionInterface $e) {
+1578:        } catch (TransportExceptionInterface $e) {
+1635:        } catch (TransportExceptionInterface $e) {
+1691:        } catch (TransportExceptionInterface $e) {
+1730:        } catch (TransportExceptionInterface $e) {
+1779:        } catch (TransportExceptionInterface $e) {
+1832:        } catch (TransportExceptionInterface $e) {
+1904:        } catch (TransportExceptionInterface $e) {
+1959:        } catch (TransportExceptionInterface $e) {
+2004:        } catch (TransportExceptionInterface $e) {
+2039:        } catch (TransportExceptionInterface $e) {
+2226:        } catch (TransportExceptionInterface $e) {
+2394:        } catch (TransportExceptionInterface $e) {
+2499:        } catch (TransportExceptionInterface $e) {
+2569:        } catch (TransportExceptionInterface $e) {
+2706:        } catch (TransportExceptionInterface $e) {
+            ->from(new Address($this->BaseInfo->getEmail01(), $this->BaseInfo->getShopName()))
+            ->to($this->convertRFCViolatingEmail($Customer->getEmail()))
+            ->bcc($this->BaseInfo->getEmail01())
+            ->replyTo($this->BaseInfo->getEmail03())
+            ->returnPath($this->BaseInfo->getEmail04())
+            ->text($formData['body']);
+
+        try {
+            $this->mailer->send($message);
+            log_info('会員メール一括送信完了');
+        } catch (TransportExceptionInterface $e) {
+            log_critical($e->getMessage());
+        }
+
+        return $message;
+    }
+
+    /**
+     * 会員手動メール通知送信
+     */
+    public function sendCustomerManualMail(Customer $Customer, mixed $formData): Email
+    {
+        log_info('会員手動メール通知信開始');
+
+        $message = (new Email())
+            ->subject('['.$this->BaseInfo->getShopName().'] '.$formData['mail_subject'])
+            ->from(new Address($this->BaseInfo->getEmail01(), $this->BaseInfo->getShopName()))
+            ->to($this->convertRFCViolatingEmail($Customer->getEmail()))
+            ->bcc($this->BaseInfo->getEmail01())
+            ->replyTo($this->BaseInfo->getEmail03())
+            ->returnPath($this->BaseInfo->getEmail04())
+            ->text($formData['body']);
+
+        try {
+            $this->mailer->send($message);
+            log_info('会員手動メール通知送信完了');
+        } catch (TransportExceptionInterface $e) {
+            log_critical($e->getMessage());
+        }
+
+        return $message;
+    }
+
+    /**
+     * オンライン本人確認申請完了メール通知送信
+     */
+    public function sendIdentificationConfirmMail(Customer $Customer): Email
+    {
+        log_info('オンライン本人確認申請完了メール通知送信');
+
+        $templateId = MailTemplate::IDENTIFICATION_CONFIRM;
+
+        /** @var MailTemplate $MailTemplate */
+        $MailTemplate = $this->mailTemplateRepository->find($templateId);
+
+        $body = $this->twig->render($MailTemplate->getFileName(), [
+            'customer' => $Customer,
+            'header' => $MailTemplate->getHeader(),
+            'footer' => $MailTemplate->getFooter(),
+        ]);
+
+        /**
+         * テーブル定義書: dtb_base_info
+         * 受注受付メールアドレス	email01
+         * 問い合わせ受付メールアドレス	email02
+         * 送信エラー受付メールアドレス	email03
+         * メール送信元メールアドレス	email04
+         */
+        $message = (new Email())
+            ->subject($subject)
+            ->text($body)
+            ->from(new Address($ShopBaseInfo->getEmail04(), $ShopBaseInfo->getShopName()))
+            ->to($this->convertRFCViolatingEmail($otcBuyOrderAccountingPaymentPendingMailAddress->getOptionValue()))
+            ->replyTo($ShopBaseInfo->getEmail02())
+            ->returnPath($ShopBaseInfo->getEmail03());
+
+        try {
+            $this->mailer->send($message);
+            log_info('店頭買取査定の経理払出し依頼通知メール送信完了。OtcBuyOrder ID: '.$OtcBuyOrder->getId());
+        } catch (TransportExceptionInterface $e) {
+            log_critical($e->getMessage());
+        }
+
+        //  メールは履歴に保存しなくて良いため、送信後は何もしない
+    }
+
+    /**
+     * 部門未設定商品通知メール送信
+     *
+     * @param array<int, array{product_name: string, product_code: string}> $products
+     */
+    public function sendNoSectionAlertMail(array $products): void
+    {
+        log_info('部門未設定商品通知メール送信開始');
+
+        $addresses = $this->resolveOtcSummaryMailAddresses();
+        if (empty($addresses)) {
+            log_info('部門未設定商品通知メールアドレス未設定のため送信せず終了');
+
+            return;
+        }
+
+        $MailTemplate = $this->mailTemplateRepository->findOneBy([
+            'mail_key' => $this->eccubeConfig['eccube_otc_buy_order_no_section_alert_mail_template_id'],
+        ]);
+
+        $body = $this->twig->render($MailTemplate->getFileName(), [
+            'products' => $products,
+        ]);
+
+        $message = (new Email())
+            ->subject('['.$this->BaseInfo->getShopName().'] '.$MailTemplate->getMailSubject())
+            ->text($body)
+            ->from(new Address($this->BaseInfo->getEmail01(), $this->BaseInfo->getShopName()))
+            ->to(...$addresses)
+            ->replyTo($this->BaseInfo->getEmail03())
+            ->returnPath($this->BaseInfo->getEmail04());
+
+        try {
+            $this->mailer->send($message);
+            log_info('部門未設定商品通知メール送信完了');
+        } catch (TransportExceptionInterface $e) {
+<?php
+
+declare(strict_types=1);
+
+/*
+ * This file is part of EC-CUBE
+ *
+ * Copyright(c) EC-CUBE CO.,LTD. All Rights Reserved.
+ *
+ * http://www.ec-cube.co.jp/
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+namespace Eccube\Service\Admin\Payment;
+
+use Doctrine\ORM\EntityManagerInterface;
+use Eccube\Entity\DtbEntryHistory;
+use Eccube\Entity\DtbEventEntry;
+use Eccube\Entity\Master\MtbEntryStatus;
+use Eccube\Repository\CustomerRepository;
+use Eccube\Repository\DtbEntryHistoryRepository;
+use Eccube\Repository\DtbEventDetailRepository;
+use Eccube\Repository\DtbEventEntryRepository;
+use Eccube\Repository\DtbEventRepository;
+use Eccube\Repository\Master\MtbEntryStatusRepository;
+use Eccube\Repository\MemberRepository;
+use Eccube\Service\MailService;
+use Symfony\Component\Lock\LockFactory;
+use Symfony\Component\Lock\Store\FlockStore;
+
+class PaymentStatusCheckAction
+{
+    /**
+     * @var array<string,string>
+     */
+    private array $pendingResponseCds = [
+        'K02' => 'MerchantId精査エラー',
+        'K03' => 'MerchantPass精査エラー',
+        'K04' => 'TenantId精査エラー',
+        'K05' => 'TransactionTate精査エラー',
+        'K06' => 'OperateId精査エラー',
+        'K86' => 'ProcNo精査エラー',
+        'K88' => '元取引重複エラー',
+        'K99' => 'その他例外エラー',
+    ];
+
+    public function __construct(
+        protected EntityManagerInterface $entityManager,
+        protected DtbEventEntryRepository $eventEntryRepository,
+        protected DtbEventDetailRepository $eventDetailRepository,
+        protected DtbEventRepository $eventRepository,
+        protected MtbEntryStatusRepository $entryStatusRepository,
+        protected CustomerRepository $customerRepository,
+        protected MemberRepository $memberRepository,
+        protected MailService $mailService,
+        protected DtbEntryHistoryRepository $entryHistoryRepository,
+    ) {
+    }
+
+    /**
+     * @return array<string,int|string>
+     */
+    public function handle(): array
+    {
+        // 重複起動防止のため、ロックを取得
+        $store = new FlockStore(sys_get_temp_dir());
+        $factory = new LockFactory($store);
+        $lock = $factory->createLock('payment-status-check', 300); // 5分TTL
+
+        if (!$lock->acquire()) {
+            return ['error' => 1, 'detail' => '他のプロセスが実行中のためスキップしました'];
+        }
+
+        try {
+            // イベント申込情報を取得
+            $EventEntries = $this->eventEntryRepository->getBeforeMinutesEntry(30);
+
+            // 件数(初期値)
+            $cntEntries = count($EventEntries);
+            $cntUpdate = 0;
+            $cntPending = 0;
+            $cntDeleted = 0;
+            $cntError = 0;
+
+            // 商品情報を取得
+            foreach ($EventEntries as $EventEntry) {
+                // イベント申込履歴の重複チェック：「申込ステータス＝申込済み(mtb_entry_status.id=4)」のレコード
+                $EventHistories = $this->entryHistoryRepository->findBy([
+                    'EventEntry' => $EventEntry->getId(),
+                    'EntryStatus' => MtbEntryStatus::ENTERED,
+                ]);
+                if (count($EventHistories) > 0) {
+                    $cntEntries--;
+                    continue;
+                }
+
+                // SP.LINKS取引照会用データを取得
+                $paymentNo = $EventEntry->getPaymentNo();
+                $payingCustomerId = $EventEntry->getPayingCustomer()->getId();
+
+                try {
+                    // SP.LINKS取引照会API
+                    $resultApi = $this->getApiResponse($paymentNo);  // TODO APIからのレスポンスから取得
+
+                    // 取引が成功している場合
+                    if ($resultApi === 'OK') {
+                        $eventEntryId = $EventEntry->getId();
+                        $EventEntry = $this->entityManager->getReference(DtbEventEntry::class, $eventEntryId);
+                        $EntryStatus = $this->entityManager->getReference(MtbEntryStatus::class, MtbEntryStatus::ENTERED);
+
+                        $this->entityManager->getConnection()->beginTransaction(); // ← トランザクション開始
+
+                        try {
+                            // イベント申込の申込ステータスを「申込済み(mtb_entry_status.id=4)」にする
+                            $EventEntry->setEntryStatus($EntryStatus);
+                            $this->entityManager->persist($EventEntry);
+
+                            // イベント申込履歴を「申込ステータス＝申込済み(mtb_entry_status.id=4)」として追加する
+                            $EventHistory = new DtbEntryHistory();
+                            $EventHistory->setEventEntry($EventEntry);
+                            $EventHistory->setEntryStatus($EntryStatus);
+                            $EventHistory->setMemberId(null);
+                            $EventHistory->setCreateDate(new \DateTime());
+                            $this->entityManager->persist($EventHistory);
+                            $this->entityManager->flush();
+
+                            $this->entityManager->getConnection()->commit();
+                        } catch (\Throwable $e) {
+                            $this->entityManager->getConnection()->rollBack(); // flush失敗時はロールバック
+                            throw $e;
+                        }
+
+                        // 会員に対して「クレジット決済完了メール」を送信する
+                        // メール送信はトランザクション外（DBコミット後）
+                        $Customer = $this->customerRepository->find($payingCustomerId);
+                        $EventDetail = $EventEntry->getEventDetail();
+                        $Event = $EventDetail->getEvent();
+                        try {
+                            $this->mailService->sendCreditPaymentCompleteMail($Customer, $Event, $EventEntry);
+                        } catch (\Throwable $mailException) {
+                            log_error('クレジット決済完了メール送信失敗（DB更新は完了）: '.$mailException->getMessage(), ['exception' => $mailException]);
+                            // DB更新は成功しているため、エラーカウントには含めない
+                        }
+
+                        $cntUpdate++;
+
+                    // 参照に失敗しているコードの場合は決済結果はわからないため、イベント申し込みは保留
+                    } elseif (array_key_exists($resultApi, $this->pendingResponseCds)) {
+                        log_error('決済処理中チェックで参照に失敗: PaymentNo: '.$paymentNo.', Error: '.$this->pendingResponseCds[$resultApi]);
+                        $cntPending++;
+                        continue;
+                    // 取引が存在しない・失敗している場合（決済画面での離脱やキャンセルを含む）
+                    } else {
+                        // イベント申込を削除（論理削除）する、トランザクション不要
+                        $time = new \DateTime();
+                        $EventEntry->setDeletedAt($time);
+                        $this->entityManager->persist($EventEntry);
+                        $this->entityManager->flush();
+
+                        $cntDeleted++;
+                    }
+                } catch (\Throwable $e) {
+                    try {
+                        $this->mailService->sendEventPaymentErrorAlertMail($EventEntry, $e->getMessage());
+                    } catch (\Throwable $mailException) {
+                        log_error('イベント決済確認エラー通知メール送信失敗: '.$mailException->getMessage(), ['exception' => $mailException]);
+                    }
+                    log_error('決済処理中チェックでエラー発生: '.$e->getMessage(), ['exception' => $e]);
+                    $cntError++;
+                }
+            }
+
+            $result = [
+                'error' => $cntError,
+                'detail' => '対象：'.$cntEntries.'件、更新：'.$cntUpdate.'件、保留：'.$cntPending.'件、削除：'.$cntDeleted.'件、エラー：'.$cntError.'件',
+            ];
+        } finally {
+            $lock->release(); // 正常終了・例外どちらでも必ずロックを解放
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param ?string $paymentNo
+     *
+     * @return ?string
+     */
+    public function getApiResponse(?string $paymentNo): ?string
+    {
+        // SP.LINKS取引照会API未実装のため、後続PRで実装予定
+        throw new \LogicException('SP.LINKS取引照会API未実装のため、決済処理中チェックはまだ実行できません。');
+        // return 'OK'; // TODO: 後続PRでSP.LINKS APIのレスポンスを返す
+    }
+}
+     */
+    public function findMostAppositeOneByEmail(string $email): ?Customer
+    {
+        $qb = $this->createQueryBuilder('c')
+            ->addSelect('(CASE WHEN s.id = :active_customer THEN 1 ELSE 0 END) AS HIDDEN active_status')
+            ->innerJoin('c.Status', 's')
+            ->where('c.email = :email')
+            ->andWhere('c.delFlg = :del_flg')
+            ->orderBy('c.delFlg', 'ASC')
+            ->addOrderBy('active_status', 'DESC')
+            ->setParameter('email', $email)
+            ->setParameter('active_customer', CustomerStatus::REGULAR)
+            ->setParameter('del_flg', 0)
+            ->setMaxResults(1);
+
+        return $qb->getQuery()->getOneOrNullResult();
+    }
+
+    /**
+     * 必須項目が空欄である会員を取得
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function getBlankRequiredItemCustomers(): array
+    {
+        $qb = $this->createQueryBuilder('c');
+        $expr = $qb->expr();
+        $emptyLiteral = $expr->literal('');
+
+        $qb
+            ->select([
+                'c.id AS id',
+                "CONCAT('contory:', COALESCE(co.name, 'null'), ':pref:', COALESCE(p.name, 'null'), ':name01:', COALESCE(c.name01, 'null'),
+                ':name02:', COALESCE(c.name02, 'null'), ':tel02:', COALESCE(c.tel01, 'null'), ':tel02:', COALESCE(c.tel02, 'null'), ':tel03:', COALESCE(c.tel03, 'null'),
+                ':email:', COALESCE(c.email, 'null'), ':addr01:', COALESCE(c.addr01, 'null'), ':addr02:', COALESCE(c.addr02, 'null'), ':addr03:', COALESCE(c.addr03, 'null'),
+                ':postal_code:', COALESCE(c.postal_code, 'null')) AS info",
+            ])
+            ->leftJoin('c.Country', 'co')
+            ->leftJoin('c.Pref', 'p')
+            ->andWhere('c.delFlg = :delFlg')
+            ->andWhere($expr->orX(
+                $expr->isNull('c.Country'),
+                $expr->isNull('c.Pref'),
+                $expr->isNull('c.name01'),
+                $expr->eq('c.name01', $emptyLiteral),
+                $expr->isNull('c.name02'),
+
+exec
+/bin/bash -lc "sed -n '1148,1190p' ec-cube-enterprise/src/Eccube/Service/MailService.php; sed -n '1458,1520p' ec-cube-enterprise/src/Eccube/Service/MailService.php; sed -n '1,110p' ec-cube-enterprise/src/Eccube/Repository/DtbEventEntryRepository.php | tail -70; rg -n \"getSmaregiErrorOrder|smaregiErrorFlg|pointErrorMessage|update-point\" ec-cube-enterprise/src/Eccube | head -100" in /home/y-saito/Developments
+ succeeded in 0ms:
+    /**
+     * ポイント有効期限通知メール送信
+     *
+     * @param DtbPlayer $player
+     * @param int $point
+     * @param \DateTimeInterface $expireDate
+     */
+    public function sendPointExpireNotificationMail(DtbPlayer $player, int $point, \DateTimeInterface $expireDate): void
+    {
+        log_info('ポイント有効期限通知メール送信開始');
+
+        $customer = $player->getCustomer();
+        $isAbroad = $customer->getPref()?->getId() === Pref::PREF_ABROAD;
+        $templateId = $isAbroad ? MailTemplate::POINT_EXPIRE_NOTIFICATION_EN : MailTemplate::POINT_EXPIRE_NOTIFICATION_JP;
+        $mailTemplate = $this->mailTemplateRepository->find($templateId);
+
+        $body = $this->twig->render($mailTemplate->getFileName(), [
+            'header' => $mailTemplate->getHeader(),
+            'footer' => $mailTemplate->getFooter(),
+            'point' => $point,
+            'expireDate' => $expireDate,
+        ]);
+
+        $baseInfo = $this->BaseInfoRepository->getMallBaseInfo();
+        $message = (new Email())
+            ->subject($mailTemplate->getMailSubject())
+            ->from(new Address($baseInfo->getEmail01(), $baseInfo->getShopName()))
+            ->to($this->convertRFCViolatingEmail($customer->getEmail()))
+            ->replyTo($baseInfo->getEmail03())
+            ->returnPath($baseInfo->getEmail04())
+            ->text($body);
+
+        try {
+            $this->mailer->send($message);
+        } catch (TransportExceptionInterface $e) {
+            log_critical($e->getMessage());
+
+            return;
+        }
+
+        $this->mailHistoryEntityManager->save($message, $baseInfo, $customer, $mailTemplate);
+        $this->entityManager->flush();
+
+        }
+    }
+
+    /**
+     * ポイント差分発生通知メール送信
+     *
+     * @param array<int, array{customerId: int, pointHistoryTotal: int, point: int, pointVariance: int}> $pointVarianceList
+     */
+    public function sendAdjustPointVarianceMail(array $pointVarianceList): void
+    {
+        log_info('ポイント差分発生通知メール送信開始');
+
+        $address = $this->mtbOptionRepository
+            ->findOneBy(['option_key' => MtbOption::ADJUST_POINT_VARIANCE_MAIL_ADDRESS])
+            ?->getOptionValue() ?? '';
+
+        if (empty($address)) {
+            log_info('ポイント差分発生通知メールアドレス未設定のため送信せずに終了');
+
+            return;
+        }
+
+        $lines = [];
+        foreach ($pointVarianceList as $pointVariance) {
+            $lines[] = sprintf(
+                '%d, %d, %d, %d',
+                $pointVariance['customerId'],
+                $pointVariance['pointHistoryTotal'],
+                $pointVariance['point'],
+                $pointVariance['pointVariance'],
+            );
+        }
+
+        $text = implode("\n", $lines);
+        $body = <<<EOT
+        以下のポイント差分が発生したため自動調整されました。
+        会員ID, 履歴合計値, 現在のポイント, 差分
+        {$text}
+        EOT;
+
+        $baseInfo = $this->BaseInfoRepository->getMallBaseInfo();
+
+        $message = (new Email())
+            ->subject('ポイント差分発生通知メール')
+            ->text($body)
+            ->from(new Address($baseInfo->getEmail01(), $baseInfo->getShopName()))
+            ->to($this->convertRFCViolatingEmail($address))
+            ->replyTo($baseInfo->getEmail03())
+            ->returnPath($baseInfo->getEmail04());
+
+        try {
+            $this->mailer->send($message);
+            log_info('ポイント差分発生通知メール送信完了');
+        } catch (TransportExceptionInterface $e) {
+            log_critical($e->getMessage());
+        }
+    }
+
+    /**
+     * @return string[]
+     */
+    private function resolveOtcSummaryMailAddresses(): array
+    {
+    private array $entryListSortKeys = [
+        'entry_id' => 'ee.id',
+        'create_date' => 'ee.createDate',
+        'entry_status' => 'es.id',
+    ];
+
+    public function __construct(ManagerRegistry $registry)
+    {
+        parent::__construct($registry, DtbEventEntry::class);
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function getEntryListSortKeys(): array
+    {
+        return $this->entryListSortKeys;
+    }
+
+    /**
+     * イベント申込管理　検索
+     *
+     * @param array<string, mixed> $searchData
+     */
+    public function getQueryBuilderByEntrySearchData(array $searchData): QueryBuilder
+    {
+        $qb = $this->createQueryBuilder('ee')
+            ->join('ee.EventDetail', 'ed')
+            ->join('ed.Event', 'e')
+            ->andWhere('ed.entryFlg = true');
+
+        $eventName = $searchData['event_name'] ?? null;
+        if (StringUtil::isNotBlank($eventName)) {
+            $qb->andWhere('e.nameJp LIKE :eventName OR e.nameEn LIKE :eventName')
+                ->setParameter('eventName', '%'.trim($eventName).'%');
+        }
+
+        $baseInfos = array_values(array_filter((array) ($searchData['base_info'] ?? [])));
+        if ($baseInfos !== []) {
+            $baseInfoIds = array_values(array_unique(array_map(fn (BaseInfo $baseInfo) => $baseInfo->getId(), $baseInfos)));
+            $qb->andWhere('IDENTITY(e.BaseInfo) IN (:baseInfoIds)')
+                ->setParameter('baseInfoIds', $baseInfoIds);
+        }
+
+        $entryStatusIds = array_values(array_unique((array) ($searchData['entry_status'] ?? [])));
+        if ($entryStatusIds !== []) {
+            $qb->andWhere('IDENTITY(ee.EntryStatus) IN (:entryStatusIds)')
+                ->setParameter('entryStatusIds', $entryStatusIds);
+        }
+
+        $paymentIds = array_values(array_unique((array) ($searchData['payment'] ?? [])));
+        if ($paymentIds !== []) {
+            $qb->andWhere('IDENTITY(ee.Payment) IN (:paymentIds)')
+                ->setParameter('paymentIds', $paymentIds);
+        }
+
+        $paymentNo = $searchData['payment_no'] ?? null;
+        if (StringUtil::isNotBlank($paymentNo)) {
+            $qb->andWhere('ee.paymentNo LIKE :paymentNo')
+                ->setParameter('paymentNo', '%'.trim($paymentNo).'%');
+        }
+
+        $playerName = $searchData['player_name'] ?? null;
+        if (StringUtil::isNotBlank($playerName)) {
+            $playerNameParam = '%'.trim($playerName).'%';
+            $subQbPlayer = $this->getEntityManager()->createQueryBuilder();
+            $subQbPlayer->select('1')
+                ->from(DtbEntryPlayer::class, 'ep_pl')
+                ->join('ep_pl.Player', 'pl_sub')
+                ->where('ep_pl.EventEntry = ee')
+ec-cube-enterprise/src/Eccube/Command/SmaregiUpdatePointCommand.php:26:#[AsCommand(name: 'eccube:smaregi:update-point', description: 'スマレジ使用ポイント連携バッチ')]
+ec-cube-enterprise/src/Eccube/MessageHandler/SmaregiOrderUsePointMessageHandler.php:35: * 失敗時は Order.smaregiErrorFlg / pointErrorMessage に記録したうえで FAILED にして例外を再送出し、
+ec-cube-enterprise/src/Eccube/MessageHandler/SmaregiOrderGainPointMessageHandler.php:35: * 失敗時は Order.smaregiErrorFlg / pointErrorMessage に記録したうえで FAILED にし、
+ec-cube-enterprise/src/Eccube/Form/Type/Admin/OrderType.php:323:            ->add('pointErrorMessage', TextareaType::class, [
+ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php:988:    public function getSmaregiErrorOrder(): mixed
+ec-cube-enterprise/src/Eccube/Service/Admin/Order/ResendMailAction.php:98:                        "nohup php {$projectDir}/bin/console eccube:smaregi:update-point {$Order->getId()} &"
+ec-cube-enterprise/src/Eccube/Resource/template/admin/Order/edit.twig:1936:                                <div class="col-4 text-end"><a data-bs-toggle="collapse" href="#pointErrorMessage" aria-expanded="{{ id ? 'false' : 'true' }}" aria-controls="pointErrorMessage"><i class="fa {{ id ? 'fa-angle-down' : 'fa-angle-up' }} fa-lg"></i></a></div>
+ec-cube-enterprise/src/Eccube/Resource/template/admin/Order/edit.twig:1939:                        <div class="collapse {{ id ? '' : 'show' }} ec-cardCollapse" id="pointErrorMessage">
+ec-cube-enterprise/src/Eccube/Resource/template/admin/Order/edit.twig:1941:                                {{ form_widget(form.pointErrorMessage) }}
+
+exec
+/bin/bash -lc "sed -n '1,220p' ec-cube-enterprise/src/Eccube/MessageHandler/SmaregiOrderUsePointMessageHandler.php; sed -n '1,180p' ec-cube-enterprise/src/Eccube/Message/SmaregiOrderUsePointMessage.php; sed -n '950,1015p' ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php; rg -n \"SmaregiOrderUsePointMessage|smaregi.*retry|retry.*smaregi|getSmaregiErrorOrder\" ec-cube-enterprise/src ec-cube-enterprise/app ec-cube-enterprise/config ec-cube-enterprise/html 2>/dev/null" in /home/y-saito/Developments
+ exited 2 in 0ms:
+<?php
+
+declare(strict_types=1);
+
+/*
+ * This file is part of EC-CUBE
+ *
+ * Copyright(c) EC-CUBE CO.,LTD. All Rights Reserved.
+ *
+ * http://www.ec-cube.co.jp/
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+namespace Eccube\MessageHandler;
+
+use Doctrine\ORM\EntityManagerInterface;
+use Eccube\Entity\MessengerJob;
+use Eccube\Entity\Order;
+use Eccube\Message\SmaregiOrderUsePointMessage;
+use Eccube\Repository\MessengerJobRepository;
+use Eccube\Repository\OrderRepository;
+use Eccube\Service\Smaregi\Api\SmaregiMessengerJobContext;
+use Eccube\Service\Smaregi\SmaregiCustomerService;
+use Eccube\Service\Smaregi\SmaregiMessengerJobProcessingLock;
+use Eccube\Service\Smaregi\SmaregiPointPushLogService;
+use Psr\Log\LoggerInterface;
+use Symfony\Component\Messenger\Attribute\AsMessageHandler;
+
+/**
+ * 注文完了時の使用ポイントをスマレジ会員ポイントへ反映する非同期ハンドラ.
+ *
+ * MessengerJob 行を悲観ロックして重複実行を防ぎ、PENDING/FAILED のときのみ PROCESSING へ遷移する。
+ * 失敗時は Order.smaregiErrorFlg / pointErrorMessage に記録したうえで FAILED にして例外を再送出し、
+ * Messenger のリトライに委ねる（管理画面の受注編集画面で連携失敗を確認できるようにする）。
+ */
+#[AsMessageHandler]
+final readonly class SmaregiOrderUsePointMessageHandler
+{
+    public function __construct(
+        private LoggerInterface $logger,
+        private EntityManagerInterface $entityManager,
+        private SmaregiMessengerJobProcessingLock $smaregiMessengerJobProcessingLock,
+        private MessengerJobRepository $messengerJobRepository,
+        private OrderRepository $orderRepository,
+        private SmaregiCustomerService $smaregiCustomerService,
+        private SmaregiMessengerJobContext $smaregiMessengerJobContext,
+        private SmaregiPointPushLogService $smaregiPointPushLogService,
+    ) {
+    }
+
+    public function __invoke(SmaregiOrderUsePointMessage $message): void
+    {
+        $Job = $this->messengerJobRepository->find($message->getJobId());
+        if (!$Job instanceof MessengerJob) {
+            $this->logger->error('MessengerJob not found for SmaregiOrderUsePointMessage', [
+                'jobId' => $message->getJobId(),
+                'orderId' => $message->getOrderId(),
+            ]);
+
+            return;
+        }
+
+        $this->smaregiMessengerJobContext->setJobId((int) $Job->getId());
+        try {
+            if (!$this->smaregiMessengerJobProcessingLock->tryBeginProcessingJob($Job)) {
+                return;
+            }
+
+            $Order = $this->orderRepository->find($message->getOrderId());
+            if (!$Order instanceof Order) {
+                $this->failJob($Job, '受注が見つかりません (orderId='.$message->getOrderId().').');
+
+                return;
+            }
+
+            $smaregiId = $Order->getCustomer()?->getPlayer()?->getSmaregiId();
+            if ($smaregiId === null || $smaregiId === '') {
+                $this->completeJobSkipped($Job, 'スマレジ未連携の会員のため使用ポイント連携をスキップしました。');
+
+                return;
+            }
+
+            $spendedPoints = $Order->getSpendedPoints();
+            if ($spendedPoints === null || $spendedPoints === 0) {
+                $this->completeJobSkipped($Job, '使用ポイントが 0 のため連携をスキップしました。');
+
+                return;
+            }
+
+            try {
+                // 使用ポイントはスマレジ会員ポイントから減算するため負値で連携する。
+                $response = $this->smaregiCustomerService->postSmaregiPoint($smaregiId, -$spendedPoints, false);
+            } catch (\Throwable $e) {
+                // postSmaregiPoint は通常例外を投げないが、想定外例外は適用有無が不明なため自動リトライせず手動照合へ回す。
+                $this->markOrderError($Order, $e->getMessage());
+                $this->failJob($Job, 'スマレジ会員ポイント更新で想定外の例外が発生しました（適用有無不明・要手動照合）: '.$e->getMessage());
+
+                return;
+            }
+
+            if (!array_key_exists('result', $response)) {
+                $error = json_encode($response, JSON_UNESCAPED_UNICODE) ?: 'スマレジ会員ポイント更新に失敗しました。';
+                $this->markOrderError($Order, $error);
+
+                // ポイント加算API(point/add)は相対加算で非冪等。加算API実行後（statusCode あり）の失敗は
+                // 適用済みの可能性があり、自動リトライすると二重加算になりうるため再送出せず FAILED にして手動照合へ回す。
+                if (array_key_exists('statusCode', $response)) {
+                    $this->failJob($Job, 'スマレジ会員ポイント更新が不確定な状態で失敗しました（自動リトライ不可・要手動照合）: '.$error);
+
+                    return;
+                }
+
+                // 加算API実行前の失敗（トークン取得 / customerId 解決）＝外部未適用が確定しているため再送出して再試行する。
+                $this->failJob($Job, 'スマレジ会員ポイント更新に失敗しました（外部未適用・再試行）: '.$error);
+
+                throw new \RuntimeException($error);
+            }
+
+            // ここに到達した時点でスマレジ側のポイント加算は成功している。
+            // echo 抑止の送信記録(persist)と COMPLETED を同一 flush で確定する。ここでの「失敗」は DB 永続化(flush)の失敗を指し、
+            // その場合はどちらも残さない（原子的）。取引ID無しは失敗ではない（成功で取引ID無しは postSmaregiPoint でエラー化、skipped は取引なしで記録不要）。
+            // point/add は非冪等のため、この flush 失敗では再送出（リトライ）せずログのみとする（echo 抑止が DB に残らない恐れ・要手動照合）。
+            try {
+                // この point/add がスマレジ側に生む取引が Webhook で戻ってきても二重処理しないよう、取引IDを送信記録へ積む。
+                $this->smaregiPointPushLogService->recordFromResult($response);
+                // 連携成功時は過去の連携エラー状態をクリアする。
+                $Order->setSmaregiErrorFlg(false)
+                    ->setPointErrorMessage(null);
+                $Job->setStatus(MessengerJob::STATUS_COMPLETED);
+                $Job->setCompletedAt(new \DateTime());
+                $Job->setErrorMessage(null);
+                $this->entityManager->flush();
+            } catch (\Throwable $persistError) {
+                $this->logger->error('Smaregi order use-point applied but failed to persist push log/COMPLETED state', [
+                    'jobId' => $Job->getId(),
+                    'error' => $persistError->getMessage(),
+                ]);
+            }
+        } finally {
+            $this->smaregiMessengerJobContext->clear();
+        }
+    }
+
+    /**
+     * 連携失敗を受注側にも記録する（管理画面の受注編集画面で確認できるようにする）。
+     * 永続化は呼び出し元の failJob の flush に委ねる。
+     */
+    private function markOrderError(Order $Order, string $message): void
+    {
+        $Order->setSmaregiErrorFlg(true)
+            ->setPointErrorMessage(json_encode(['message' => $message], JSON_UNESCAPED_UNICODE) ?: $message);
+    }
+
+    private function failJob(MessengerJob $Job, string $errorMessage): void
+    {
+        $Job->setStatus(MessengerJob::STATUS_FAILED);
+        $Job->setCompletedAt(new \DateTime());
+        $Job->setErrorMessage($errorMessage);
+        try {
+            $this->entityManager->flush();
+        } catch (\Throwable $persistError) {
+            $this->logger->error('Failed to persist Smaregi order use-point job failure state', [
+                'jobId' => $Job->getId(),
+                'error' => $persistError->getMessage(),
+            ]);
+        }
+        $this->logger->error($errorMessage, ['jobId' => $Job->getId()]);
+    }
+
+    private function completeJobSkipped(MessengerJob $Job, string $reason): void
+    {
+        $Job->setStatus(MessengerJob::STATUS_COMPLETED);
+        $Job->setCompletedAt(new \DateTime());
+        $Job->setErrorMessage(null);
+        try {
+            $this->entityManager->flush();
+        } catch (\Throwable $persistError) {
+            $this->logger->error('Failed to persist Smaregi order use-point job skipped state', [
+                'jobId' => $Job->getId(),
+                'error' => $persistError->getMessage(),
+            ]);
+        }
+        $this->logger->info($reason, ['jobId' => $Job->getId()]);
+    }
+}
+<?php
+
+declare(strict_types=1);
+
+/*
+ * This file is part of EC-CUBE
+ *
+ * Copyright(c) EC-CUBE CO.,LTD. All Rights Reserved.
+ *
+ * http://www.ec-cube.co.jp/
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+namespace Eccube\Message;
+
+/**
+ * 注文完了時の使用ポイントをスマレジ会員ポイントへ反映するための非同期メッセージ.
+ */
+final readonly class SmaregiOrderUsePointMessage
+{
+    public function __construct(
+        private int $orderId,
+        private int $jobId,
+    ) {
+    }
+
+    public function getOrderId(): int
+    {
+        return $this->orderId;
+    }
+
+    public function getJobId(): int
+    {
+        return $this->jobId;
+    }
+}
+        $result = $qb->getQuery()->getResult();
+
+        return $result;
+    }
+
+    /**
+     * スマレジ削除対象の受注を取得
+     *
+     * TODO (パフォーマンス): 現状 dtb_order には smaregi_del_flg / smaregi_code / order_status_id を
+     * 含む複合インデックスが無いため、本クエリは全件スキャンになり得る。
+     * 受注テーブルが肥大化した時点で部分インデックス
+     *   `CREATE INDEX dtb_order_smaregi_delete_idx
+     *      ON dtb_order (order_status_id) WHERE smaregi_del_flg = false AND smaregi_code IS NOT NULL`
+     * 等の追加を検討する。バッチが日次 4 時実行のため当面は許容範囲を想定。
+     *
+     * @return list<Order>
+     */
+    public function getDeleteSmaregiProduct(int $limit = 100): array
+    {
+        $qb = $this->createQueryBuilder('o');
+        $qb
+            ->where($qb->expr()->in('o.OrderStatus', ':statusIds'))
+            ->andWhere('o.smaregi_code IS NOT NULL')
+            ->andWhere('o.smaregi_del_flg = :flgFalse')
+            ->setParameter('statusIds', [OrderStatus::CANCEL, OrderStatus::DELIVERED, OrderStatus::PASSED])
+            ->setParameter('flgFalse', Constant::DISABLED)
+            ->orderBy('o.id', 'ASC')
+            ->setMaxResults($limit);
+
+        /** @var list<Order> $result */
+        $result = $qb->getQuery()->getResult();
+
+        return $result;
+    }
+
+    /**
+     * スマレジ連携エラーの受注を取得
+     */
+    public function getSmaregiErrorOrder(): mixed
+    {
+        $qb = $this->createQueryBuilder('o');
+
+        $results = $qb->join('o.Customer', 'c')
+            ->join(DtbPlayer::class, 'p', 'WITH', 'c = p.Customer')
+            ->select('o', 'p', 'c')
+            ->where('o.smaregi_error_flg = 1')
+            ->getQuery()
+            ->getResult();
+
+        $orders = [];
+        $players = [];
+
+        foreach ($results as $result) {
+            if ($result instanceof Order) {
+                $orders[] = $result;
+            }
+
+            if ($result instanceof DtbPlayer) {
+                $players[$result->getCustomer()->getId()] = $result;
+            }
+        }
+
+        $returnArray = [];
+
+        foreach ($orders as $order) {
+            $returnArray[] = [
+ec-cube-enterprise/app/config/eccube/packages/messenger.yaml:35:            Eccube\Message\SmaregiOrderUsePointMessage: async
+ec-cube-enterprise/src/Eccube/Message/SmaregiOrderUsePointMessage.php:21:final readonly class SmaregiOrderUsePointMessage
+ec-cube-enterprise/src/Eccube/MessageHandler/SmaregiOrderUsePointMessageHandler.php:21:use Eccube\Message\SmaregiOrderUsePointMessage;
+ec-cube-enterprise/src/Eccube/MessageHandler/SmaregiOrderUsePointMessageHandler.php:39:final readonly class SmaregiOrderUsePointMessageHandler
+ec-cube-enterprise/src/Eccube/MessageHandler/SmaregiOrderUsePointMessageHandler.php:53:    public function __invoke(SmaregiOrderUsePointMessage $message): void
+ec-cube-enterprise/src/Eccube/MessageHandler/SmaregiOrderUsePointMessageHandler.php:57:            $this->logger->error('MessengerJob not found for SmaregiOrderUsePointMessage', [
+ec-cube-enterprise/src/Eccube/Service/Smaregi/SmaregiOrderUsePointEventService.php:21:use Eccube\Message\SmaregiOrderUsePointMessage;
+ec-cube-enterprise/src/Eccube/Service/Smaregi/SmaregiOrderUsePointEventService.php:58:        $job->setMessageClass(SmaregiOrderUsePointMessage::class);
+ec-cube-enterprise/src/Eccube/Service/Smaregi/SmaregiOrderUsePointEventService.php:82:            $this->messageBus->dispatch(new SmaregiOrderUsePointMessage((int) $Order->getId(), $jobId));
+ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php:988:    public function getSmaregiErrorOrder(): mixed
+
+exec
+/bin/bash -lc "rg -n \"PaymentStatusCheck|payment-status-check|sendEventPaymentErrorAlertMail\" ec-cube-enterprise/src/Eccube/Command ec-cube-enterprise/src/Eccube/Service/MailService.php; sed -n '1,120p' ec-cube-enterprise/src/Eccube/Command/PaymentStatusCheckCommand.php 2>/dev/null || true; rg -n \"sendEventPaymentErrorAlertMail\" ec-cube-enterprise/src/Eccube/Service/MailService.php; sed -n '2680,2720p' ec-cube-enterprise/src/Eccube/Service/MailService.php; rg -n \"getBeforeMinutesEntry\" ec-cube-enterprise/src/Eccube/Repository/DtbEventEntryRepository.php" in /home/y-saito/Developments
+ succeeded in 0ms:
+ec-cube-enterprise/src/Eccube/Service/MailService.php:1790:    public function sendEventPaymentErrorAlertMail(DtbEventEntry $EventEntry, ?string $message = null): Email
+ec-cube-enterprise/src/Eccube/Command/PaymentStatusCheckCommand.php:18:use Eccube\Service\Admin\Payment\PaymentStatusCheckAction;
+ec-cube-enterprise/src/Eccube/Command/PaymentStatusCheckCommand.php:33: *   bin/console eccube:payment-status-check
+ec-cube-enterprise/src/Eccube/Command/PaymentStatusCheckCommand.php:35:#[AsCommand(name: 'eccube:payment-status-check', description: '決済処理中チェックバッチ')]
+ec-cube-enterprise/src/Eccube/Command/PaymentStatusCheckCommand.php:36:class PaymentStatusCheckCommand extends Command
+ec-cube-enterprise/src/Eccube/Command/PaymentStatusCheckCommand.php:39:        private readonly PaymentStatusCheckAction $paymentStatusCheckAction,
+<?php
+
+declare(strict_types=1);
+
+/*
+ * This file is part of EC-CUBE
+ *
+ * Copyright(c) EC-CUBE CO.,LTD. All Rights Reserved.
+ *
+ * http://www.ec-cube.co.jp/
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+namespace Eccube\Command;
+
+use Eccube\Service\Admin\Payment\PaymentStatusCheckAction;
+use Symfony\Component\Console\Attribute\AsCommand;
+use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Style\SymfonyStyle;
+
+/**
+ * 決済処理中チェックバッチ
+ *
+ * イベント申込のリンク型決済で、通信障害や決済画面からの離脱で申込完了画面へ
+ * 遷移しなかった申込についてSP.LINKSに取引照会を行い、照会結果に応じた処理を行う。
+ *
+ * 【使い方】
+ *
+ *   bin/console eccube:payment-status-check
+ */
+#[AsCommand(name: 'eccube:payment-status-check', description: '決済処理中チェックバッチ')]
+class PaymentStatusCheckCommand extends Command
+{
+    public function __construct(
+        private readonly PaymentStatusCheckAction $paymentStatusCheckAction,
+    ) {
+        parent::__construct();
+    }
+
+    #[\Override]
+    protected function execute(InputInterface $input, OutputInterface $output): int
+    {
+        $io = new SymfonyStyle($input, $output);
+
+        try {
+            $result = $this->paymentStatusCheckAction->handle();
+        } catch (\Throwable $e) {
+            $io->error('決済処理中チェックでエラーが発生しました。 '.$e->getMessage());
+
+            return Command::FAILURE;
+        }
+
+        if ($result['error'] > 0) {
+            $io->error('決済処理中チェックでエラーが発生しました。 '.$result['detail']);
+
+            return Command::FAILURE;
+        }
+
+        $io->success('決済処理中チェックが完了しました。'.$result['detail']);
+
+        return Command::SUCCESS;
+    }
+}
+1790:    public function sendEventPaymentErrorAlertMail(DtbEventEntry $EventEntry, ?string $message = null): Email
+        ];
+
+        $body = $this->twig->render($MailTemplate->getFileName(), $templateParameters);
+
+        $message = (new Email())
+            ->subject('['.$Order->getBaseInfo()->getShopName().'] '.$MailTemplate->getMailSubject())
+            ->from(new Address($this->BaseInfo->getEmail01(), $this->BaseInfo->getShopName()))
+            ->to($this->convertRFCViolatingEmail($Order->getEmail()))
+            ->bcc($this->BaseInfo->getEmail01())
+            ->replyTo($this->BaseInfo->getEmail03())
+            ->returnPath($this->BaseInfo->getEmail04());
+
+        // HTMLテンプレートが存在する場合
+        $htmlFileName = $this->getHtmlTemplate($MailTemplate->getFileName());
+        if ($htmlFileName !== null) {
+            $htmlBody = $this->twig->render($htmlFileName, $templateParameters);
+            $message->text($body)->html($htmlBody);
+        } else {
+            $message->text($body);
+        }
+
+        MailUtil::convertMessage($this->eccubeConfig, $message);
+        MailUtil::setParameterForCharset($this->eccubeConfig, $message);
+
+        try {
+            $this->mailer->send($message);
+        } catch (TransportExceptionInterface $e) {
+            log_critical($e->getMessage());
+            throw $e;
+        }
+
+        $this->mailHistoryEntityManager->save($message, $Order->getBaseInfo(), $Order, $MailTemplate);
+        $this->entityManager->flush();
+
+        log_info('受注メール再送信完了');
+    }
+}
+261:    public function getBeforeMinutesEntry(int $beforeMinute, array $payments = [], int $entryStatusId = ES::PROCESSING_PAYMENT): mixed
+
+exec
+/bin/bash -lc "sed -n '1780,1840p' ec-cube-enterprise/src/Eccube/Service/MailService.php; sed -n '250,295p' ec-cube-enterprise/src/Eccube/Repository/DtbEventEntryRepository.php" in /home/y-saito/Developments
+ succeeded in 0ms:
+            log_critical($e->getMessage());
+            throw $e;
+        }
+
+        return $message;
+    }
+
+    /**
+     * イベント決済確認エラー通知メール送信（決済処理中チェックバッチ）
+     */
+    public function sendEventPaymentErrorAlertMail(DtbEventEntry $EventEntry, ?string $message = null): Email
+    {
+        log_info('イベント決済確認エラー通知メール送信開始（決済処理中チェックバッチ）');
+
+        $templateId = MailTemplate::EVENTENTRY_CREDIT_ERROR;
+
+        /** @var ?MailTemplate $MailTemplate */
+        $MailTemplate = $this->mailTemplateRepository->find($templateId);
+        if ($MailTemplate === null) {
+            throw new \LogicException('イベント決済確認エラー通知メールテンプレートが存在しません。templateId='.$templateId);
+        }
+
+        $body = $this->twig->render($MailTemplate->getFileName(), [
+            'entry' => $EventEntry,
+            'message' => $message,
+            'header' => $MailTemplate->getHeader(),
+            'footer' => $MailTemplate->getFooter(),
+        ]);
+
+        $alertMailAddress = trim((string) $this->mtbOptionRepository
+            ->findOneBy(['option_key' => MtbOption::ALERT_CHECK_PAYMENT_ERROR_MAIL_ADDRESS])
+            ?->getOptionValue());
+        if ($alertMailAddress === '') {
+            throw new \LogicException('イベント決済確認エラー通知メールアドレスが設定されていません。');
+        }
+
+        $emailMessage = (new Email())
+            ->subject('['.$this->BaseInfo->getShopName().'] '.$MailTemplate->getMailSubject())
+            ->from(new Address($this->BaseInfo->getEmail01(), $this->BaseInfo->getShopName()))
+            ->to($this->convertRFCViolatingEmail($alertMailAddress))
+            ->bcc($this->BaseInfo->getEmail01())
+            ->replyTo($this->BaseInfo->getEmail03())
+            ->returnPath($this->BaseInfo->getEmail04())
+            ->text($body);
+
+        try {
+            $this->mailer->send($emailMessage);
+            log_info('イベント決済確認エラー通知メール送信完了（決済処理中チェックバッチ）');
+
+            $BaseInfo = $this->BaseInfoRepository->find(1);
+            $this->mailHistoryEntityManager->save($emailMessage, $BaseInfo, null, $MailTemplate);
+            $this->entityManager->flush();
+        } catch (TransportExceptionInterface $e) {
+            log_critical($e->getMessage());
+            throw $e;
+        }
+
+        return $emailMessage;
+    }
+
+    /**
+            ->setParameters(new ArrayCollection($paramters))
+            ->getQuery();
+
+        return $query->execute();
+    }
+
+    /**
+     * 特定のステータスで現在時刻よりも申込日時が指定した時間前の申込を取得（決済処理中チェックバッチ用）
+     *
+     * @param array<int, mixed> $payments
+     */
+    public function getBeforeMinutesEntry(int $beforeMinute, array $payments = [], int $entryStatusId = ES::PROCESSING_PAYMENT): mixed
+    {
+        $time = new \DateTime();
+        // dtb_event_entry
+        $qb = $this->createQueryBuilder('ee');
+        $qb->where($qb->expr()->eq('IDENTITY(ee.EntryStatus)', ':entryStatusId'))
+            ->andWhere($qb->expr()->lte('ee.createDate', ':beforeTime'))
+            ->andWhere('ee.paymentNo IS NOT NULL')
+            ->andWhere('ee.deletedAt IS NULL')
+            ->setParameter('entryStatusId', $entryStatusId)
+            ->setParameter('beforeTime', $time->modify("-{$beforeMinute} minute"))
+            ->orderBy('ee.paymentNo');
+
+        if (count($payments) > 0) {
+            $qb->andWhere($qb->expr()->in('IDENTITY(ee.Payment)', ':payments'))
+                ->setParameter('payments', $payments);
+        }
+        $query = $qb->getQuery();
+
+        return $query->getResult();
+    }
+
+    /**
+     * 該当プレイヤーが申込済みの申込を取得
+     */
+    public function getEntriesByPlayerId(int $playerId): mixed
+    {
+        $qb = $this->createQueryBuilder('e');
+        $query = $qb->join('e.EntryPlayers', 'p')
+            ->join('e.EventDetail', 'ed')
+            ->where('IDENTITY(p.Player) = :playerId')
+            ->andWhere($qb->expr()->notIn('IDENTITY(e.EntryStatus)', [ES::CANCELED]))
+            ->setParameter('playerId', $playerId)
+            ->orderBy('ed.startDate', 'DESC')
+            ->getQuery();
+
+codex
+初回のコード突合では、機械分類の過大判定が複数見つかっています（日時付きコンソール文言、コマンド引数判定、SQL内ラベル1箇所など）。一方、SP.LINKS API、月次スナップショット、S3画像検査は既存処理の微修正ではなく、外部連携またはバッチ新設が必要なため軽い区分には置けません。残るフロント系とサイトマップ系の実装範囲を詰めています。
+exec
+/bin/bash -lc "sed -n '1,110p' ec-cube-enterprise/src/Eccube/Resource/template/default/Block/search_items.twig; sed -n '1,110p' ec-cube-enterprise/src/Eccube/Resource/template/default/Block/shop_recommend.twig; sed -n '1,120p' ec-cube-enterprise/src/Eccube/Resource/template/default/Block/_product_card.twig; sed -n '1,90p' ec-cube-enterprise/src/Eccube/Resource/template/default/Block/shop_top.twig; sed -n '1,100p' ec-cube-enterprise/src/Eccube/Resource/template/default/Block/mega_menu.twig; sed -n '1,90p' ec-cube-enterprise/src/Eccube/Resource/template/default/Block/footer_sitemap.twig" in /home/y-saito/Developments
+ succeeded in 0ms:
+      <!-- アイテムを探す-->
+      <section class="p-hareruya-section">
+        <div class="l-hareruya-container">
+          <h2 class="c-hareruya-heading--lev2 p-hareruya-section__heading">アイテムを探す</h2>
+          <ul class="p-hareruya-feature-card-list">
+            <li class="p-hareruya-feature-card p-hareruya-feature-card--green">
+              <div class="p-hareruya-badge">
+                <div class="p-hareruya-badge__inner"><img class="p-hareruya-badge__img"
+                    src="{{ asset('assets/hareruya/img/share/badge.webp') }}" alt="予約販売" width="72" height="72" decoding="async"
+                    loading="lazy"><span class="p-hareruya-badge__text">予約販売</span></div>
+              </div>
+              <div class="p-hareruya-feature-card__img-wrap"><img class="p-hareruya-feature-card__img"
+                  src="{{ asset('assets/hareruya/img/ectop/dammy-feature01.webp') }}" alt="ファイナルファンタジー" width="344" height="240"
+                  decoding="async" loading="lazy"></div>
+              <div class="p-hareruya-feature-card__info">
+                <div class="p-hareruya-feature-card__title-wrap">
+                  <div class="p-hareruya-feature-card__title-icon"><img
+                      src="{{ asset('assets/hareruya/img/ectop/dammy-feature-icon-dammy01.webp') }}" alt="" width="24" height="24"
+                      decoding="async" loading="lazy"></div>
+                  <p class="p-hareruya-feature-card__title">ファイナルファンタジー 通常版</p>
+                </div>
+                <div class="p-hareruya-feature-card__tags"><a class="c-hareruya-tag" aria-disabled="true">すべて見る</a><a
+                    class="c-hareruya-tag" aria-disabled="true">神話レア&amp;レア</a><a class="c-hareruya-tag" aria-disabled="true">コモン</a><a
+                    class="c-hareruya-tag" aria-disabled="true">アンコモン</a><a class="c-hareruya-tag" aria-disabled="true">基本土地</a><a
+                    class="c-hareruya-tag" aria-disabled="true">Foil</a><a class="c-hareruya-tag" aria-disabled="true">パック・ボックス</a></div>
+                <div class="p-hareruya-feature-card__sub-tags"><a class="c-hareruya-tag" aria-disabled="true">
+                    <div class="c-hareruya-category-tag__icon"><img
+                        src="{{ asset('assets/hareruya/img/ectop/dammy-feature-icon-dammy02.webp') }}" alt="" width="24" height="24"
+                        decoding="async" loading="lazy"></div>ブースターファン
+                  </a><a class="c-hareruya-tag" aria-disabled="true">
+                    <div class="c-hareruya-category-tag__icon"><img
+                        src="{{ asset('assets/hareruya/img/ectop/dammy-feature-icon-dammy03.webp') }}" alt="" width="24" height="24"
+                        decoding="async" loading="lazy"></div>統率者
+                  </a></div>
+              </div>
+            </li>
+            <li class="p-hareruya-feature-card p-hareruya-feature-card--blue">
+              <div class="p-hareruya-badge">
+                <div class="p-hareruya-badge__inner"><img class="p-hareruya-badge__img"
+                    src="{{ asset('assets/hareruya/img/share/badge.webp') }}" alt="新発売" width="72" height="72" decoding="async"
+                    loading="lazy"><span class="p-hareruya-badge__text">新発売</span></div>
+              </div>
+              <div class="p-hareruya-feature-card__img-wrap"><img class="p-hareruya-feature-card__img"
+                  src="{{ asset('assets/hareruya/img/ectop/dammy-feature02.webp') }}" alt="霊気走破" width="344" height="240" decoding="async"
+                  loading="lazy"></div>
+              <div class="p-hareruya-feature-card__info">
+                <div class="p-hareruya-feature-card__title-wrap">
+                  <div class="p-hareruya-feature-card__title-icon"><img
+                      src="{{ asset('assets/hareruya/img/ectop/dammy-feature-icon-dammy01.webp') }}" alt="" width="24" height="24"
+                      decoding="async" loading="lazy"></div>
+                  <p class="p-hareruya-feature-card__title">霊気走破 通常版</p>
+                </div>
+                <div class="p-hareruya-feature-card__tags"><a class="c-hareruya-tag" aria-disabled="true">すべて見る</a><a
+                    class="c-hareruya-tag" aria-disabled="true">神話レア&amp;レア</a><a class="c-hareruya-tag" aria-disabled="true">コモン</a><a
+                    class="c-hareruya-tag" aria-disabled="true">アンコモン</a><a class="c-hareruya-tag" aria-disabled="true">基本土地</a><a
+                    class="c-hareruya-tag" aria-disabled="true">Foil</a><a class="c-hareruya-tag" aria-disabled="true">パック・ボックス</a></div>
+              </div>
+            </li>
+            <li class="p-hareruya-feature-card p-hareruya-feature-card--darkblue">
+              <div class="p-hareruya-badge">
+                <div class="p-hareruya-badge__inner"><img class="p-hareruya-badge__img"
+                    src="{{ asset('assets/hareruya/img/share/badge.webp') }}" alt="新発売" width="72" height="72" decoding="async"
+                    loading="lazy"><span class="p-hareruya-badge__text">新発売</span></div>
+              </div>
+              <div class="p-hareruya-feature-card__img-wrap"><img class="p-hareruya-feature-card__img"
+                  src="{{ asset('assets/hareruya/img/ectop/dammy-feature03.webp') }}" alt="タルキール：龍嵐録" width="344" height="240" decoding="async"
+                  loading="lazy"></div>
+              <div class="p-hareruya-feature-card__info">
+                <div class="p-hareruya-feature-card__title-wrap">
+                  <div class="p-hareruya-feature-card__title-icon"><img
+                      src="{{ asset('assets/hareruya/img/ectop/dammy-feature-icon-dammy01.webp') }}" alt="" width="24" height="24"
+                      decoding="async" loading="lazy"></div>
+                  <p class="p-hareruya-feature-card__title">タルキール：龍嵐録 通常版(スタート)</p>
+                </div>
+                <div class="p-hareruya-feature-card__tags"><a class="c-hareruya-tag" aria-disabled="true">パック・ボックス</a></div>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </section>
+{#
+This file is part of EC-CUBE
+
+Copyright(c) EC-CUBE CO.,LTD. All Rights Reserved.
+
+http://www.ec-cube.co.jp/
+
+For the full copyright and license information, please view the LICENSE
+file that was distributed with this source code.
+#}
+<section class="p-hareruya-section p-hareruya-branch-top__recommend">
+  <div class="l-hareruya-container">
+    <div class="p-hareruya-heading__wrap p-hareruya-section__heading">
+      <h2 class="c-hareruya-heading--lev2">{{ 'front.top.recommend.title'|trans }}</h2>
+    </div>
+    <ul class="p-hareruya-branch-top__recommend-list">
+      <li class="p-hareruya-branch-top__recommend-item">
+        <a class="p-hareruya-branch-top__recommend-link" href="{{ path('product_list_tag', { tagId: 9 }) }}">
+          <div class="p-hareruya-branch-top__recommend-img-wrap">
+            <img class="p-hareruya-branch-top__recommend-img" src="{{ asset('assets/hareruya/img/branch/top-category-banner01.webp') }}" alt="{{ 'shop_top.recommend.label.standard'|trans }}" width="384" height="131" decoding="async" loading="lazy">
+          </div>
+          <div class="p-hareruya-branch-top__recommend-label">
+            <span class="p-hareruya-branch-top__recommend-label-text">{{ 'shop_top.recommend.label.standard'|trans }}</span>
+          </div>
+        </a>
+      </li>
+      <li class="p-hareruya-branch-top__recommend-item">
+        <a class="p-hareruya-branch-top__recommend-link" href="{{ path('product_list_tag', { tagId: 659 }) }}">
+          <div class="p-hareruya-branch-top__recommend-img-wrap">
+            <img class="p-hareruya-branch-top__recommend-img" src="{{ asset('assets/hareruya/img/branch/top-category-banner02.webp') }}" alt="{{ 'shop_top.recommend.label.pioneer'|trans }}" width="384" height="131" decoding="async" loading="lazy">
+          </div>
+          <div class="p-hareruya-branch-top__recommend-label">
+            <span class="p-hareruya-branch-top__recommend-label-text">{{ 'shop_top.recommend.label.pioneer'|trans }}</span>
+          </div>
+        </a>
+      </li>
+      <li class="p-hareruya-branch-top__recommend-item">
+        <a class="p-hareruya-branch-top__recommend-link" href="{{ path('product_list_tag', { tagId: 10 }) }}">
+          <div class="p-hareruya-branch-top__recommend-img-wrap">
+            <img class="p-hareruya-branch-top__recommend-img" src="{{ asset('assets/hareruya/img/branch/top-category-banner03.webp') }}" alt="{{ 'shop_top.recommend.label.modern'|trans }}" width="384" height="131" decoding="async" loading="lazy">
+          </div>
+          <div class="p-hareruya-branch-top__recommend-label">
+            <span class="p-hareruya-branch-top__recommend-label-text">{{ 'shop_top.recommend.label.modern'|trans }}</span>
+          </div>
+        </a>
+      </li>
+      <li class="p-hareruya-branch-top__recommend-item">
+        <a class="p-hareruya-branch-top__recommend-link" href="{{ path('product_list_tag', { tagId: 11 }) }}">
+          <div class="p-hareruya-branch-top__recommend-img-wrap">
+            <img class="p-hareruya-branch-top__recommend-img" src="{{ asset('assets/hareruya/img/branch/top-category-banner04.webp') }}" alt="{{ 'shop_top.recommend.label.legacy'|trans }}" width="384" height="131" decoding="async" loading="lazy">
+          </div>
+          <div class="p-hareruya-branch-top__recommend-label">
+            <span class="p-hareruya-branch-top__recommend-label-text">{{ 'shop_top.recommend.label.legacy'|trans }}</span>
+          </div>
+        </a>
+      </li>
+      <li class="p-hareruya-branch-top__recommend-item">
+        <a class="p-hareruya-branch-top__recommend-link" href="{{ path('product_list_tag', { tagId: 14 }) }}">
+          <div class="p-hareruya-branch-top__recommend-img-wrap">
+            <img class="p-hareruya-branch-top__recommend-img" src="{{ asset('assets/hareruya/img/branch/top-category-banner05.webp') }}" alt="{{ 'shop_top.recommend.label.commander'|trans }}" width="384" height="131" decoding="async" loading="lazy">
+          </div>
+          <div class="p-hareruya-branch-top__recommend-label">
+            <span class="p-hareruya-branch-top__recommend-label-text">{{ 'shop_top.recommend.label.commander'|trans }}</span>
+          </div>
+        </a>
+      </li>
+      <li class="p-hareruya-branch-top__recommend-item">
+        <a class="p-hareruya-branch-top__recommend-link" href="{{ path('product_list_tag', { tagId: 647 }) }}">
+          <div class="p-hareruya-branch-top__recommend-img-wrap">
+            <img class="p-hareruya-branch-top__recommend-img" src="{{ asset('assets/hareruya/img/branch/top-category-banner06.webp') }}" alt="{{ 'shop_top.recommend.label.promo'|trans }}" width="384" height="131" decoding="async" loading="lazy">
+          </div>
+          <div class="p-hareruya-branch-top__recommend-label">
+            <span class="p-hareruya-branch-top__recommend-label-text">{{ 'shop_top.recommend.label.promo'|trans }}</span>
+          </div>
+        </a>
+      </li>
+    </ul>
+  </div>
+</section>
+{% set visibleClasses = Product.ProductClasses|filter(pc => pc.visible) %}
+{% set hasSale = visibleClasses|filter(pc => pc.saleFlg)|length > 0 %}
+{% set hasStock = ProductClass.getStockFind(BaseInfo) %}
+{% set eccubeStock = ProductClass.resolveEccubeProductStockForShop(BaseInfo) %}
+{% set stockCount = eccubeStock ? eccubeStock.stock|default(0) : 0 %}
+{% set isFavorited = favorites is defined and favorites[Product.id] is defined %}
+{% set languageCode = ProductClass.Language.code|default('JP') %}
+{% set form = forms is defined ? forms[Product.id]|default(null) : null %}
+{% set displayName = app.request.locale == 'en' and Product.nameEn ? Product.nameEn : Product.name %}
+{% set _show_customer_favorite = (showFavoriteButton is not defined or showFavoriteButton) and isMainShop and (not app.user or (app.user.isNotOtcGroupPlayer and app.user.isNotOtcShitenGroupPlayer)) %}
+<div class="p-hareruya-product-card{{ cardModifier is defined and cardModifier ? ' ' ~ cardModifier : '' }}{{ not hasStock ? ' is-soldout' : '' }}">
+  <div class="p-hareruya-product-card__img-section">
+    <button class="p-hareruya-product-card__img-wrap" type="button" data-js-target="product-img-zoom" aria-label="{{ 'front.product.zoom_image'|trans }}">
+      <img class="p-hareruya-product-card__img" src="{{ image_path(Product.main_list_image|no_image_product) }}" alt="{{ displayName }}" width="128" height="179" decoding="async" loading="lazy">
+      <span class="p-hareruya-product-card__img-overlay"><span class="p-hareruya-product-card__img-zoom-text">{{ 'front.product.zoom_image'|trans }}</span></span>
+      {% if hasSale %}
+      <span class="p-hareruya-product-card__sale-label c-hareruya-label--sale">{{ 'front.top.product_card.sale_label'|trans }}</span>
+      {% endif %}
+      <span class="p-hareruya-product-card__expand-icon"><i class="icon-hareruya-expand-arrows c-hareruya-icon--xs"></i></span>
+    </button>
+  </div>
+  <div class="p-hareruya-product-card__info">
+    <div class="p-hareruya-product-card__details">
+      <a class="p-hareruya-product-card__name" href="{{ url('product_detail', { id: Product.id }) }}">
+        {% if Product.CardDetail %}
+        <span class="p-hareruya-product-card__language-label c-hareruya-label--language">{{ languageCode }}</span>
+        {% endif %}
+        <span class="p-hareruya-product-card__name-text">
+          {% if Product.CardDetail and Product.CardDetail.foil_flg %}{{ 'front.product.foil_prefix'|trans }}{% endif %}
+          {{ displayName }}
+        </span>
+      </a>
+      {% if showStock is not defined or showStock %}
+      <div class="p-hareruya-product-card__stock-info">
+        {% if Product.CardDetail %}
+        <p class="p-hareruya-product-card__condition">{{ ProductClass.memo ? ProductClass.memo : ProductClass.CardCondition.code|default('') }}</p>
+        {% endif %}
+        <p class="p-hareruya-product-card__stock">
+          {% if ProductClass.stockUnlimited %}
+            {{ 'admin.product.stock_unlimited__short'|trans }}
+          {% else %}
+            {{ 'front.top.product_card.stock'|trans({ '%count%': stockCount|number_format }) }}
+          {% endif %}
+        </p>
+      </div>
+      {% endif %}
+      <div class="p-hareruya-product-card__price-wrap">
+        <p class="p-hareruya-product-card__price"><span class="p-hareruya-product-card__price-symbol">¥</span>{{ ProductClass.price02|number_format }}</p>
+      </div>
+      {% if hasStock and form %}
+      {% set maxQty = ProductClass.stockUnlimited ? 999 : stockCount %}
+      <form class="p-hareruya-product-card__cart-form" action="{{ url('product_add_cart', { id: Product.id }) }}" method="post">
+        <div class="p-hareruya-product-card__actions">
+          <div class="p-hareruya-product-card__quantity-controls" data-stock="{{ maxQty }}">
+            <button class="c-hareruya-btn-quantity" type="button" aria-label="{{ 'front.top.product_card.decrease_qty'|trans }}"><i class="icon-hareruya-minus c-hareruya-icon--xs"></i></button>
+            <input class="p-hareruya-product-card__quantity-input" type="text" name="quantity" min="0" max="{{ maxQty }}" value="1" aria-label="{{ 'front.top.product_card.input_qty'|trans }}">
+            <button class="c-hareruya-btn-quantity" type="button" aria-label="{{ 'front.top.product_card.increase_qty'|trans }}"><i class="icon-hareruya-plus c-hareruya-icon--xs"></i></button>
+          </div>
+        </div>
+        {{ form_widget(form.ProductClass) }}
+        {{ form_widget(form.product_id) }}
+        {{ form_widget(form._token) }}
+      </form>
+      {% else %}
+      <div class="p-hareruya-product-card__actions" style="visibility: hidden">
+        <div class="p-hareruya-product-card__quantity-controls">
+          <button class="c-hareruya-btn-quantity" type="button" disabled="disabled"><i class="icon-hareruya-minus c-hareruya-icon--xs"></i></button>
+          <input class="p-hareruya-product-card__quantity-input" type="text" value="0" disabled="disabled">
+          <button class="c-hareruya-btn-quantity" type="button" disabled="disabled"><i class="icon-hareruya-plus c-hareruya-icon--xs"></i></button>
+        </div>
+      </div>
+      {% endif %}
+      {% if _show_customer_favorite %}
+      <div class="p-hareruya-product-card__btn-group">
+        <button type="button" class="p-hareruya-product-card__btn-favorite c-hareruya-btn-favorite btn-favorite js-product-list-favorite{{ isFavorited ? ' is-selected' : '' }}" data-product-id="{{ Product.id }}" data-language="{{ languageCode }}" data-js-target="favorite-btn" data-aria-add="{{ 'front.product.favorite_product.add.title'|trans|e('html_attr') }}" data-aria-remove="{{ 'front.product.favorite_product.remove.title'|trans|e('html_attr') }}" aria-pressed="{{ isFavorited ? 'true' : 'false' }}" aria-label="{{ isFavorited ? 'front.product.favorite_product.remove.title'|trans : 'front.product.favorite_product.add.title'|trans }}">
+          <i class="icon-hareruya-favorite c-hareruya-icon"></i>
+          <img src="{{ asset('assets/hareruya/img/share/icon-hareruya-favorite-full.webp') }}" alt="" width="24" height="24" loading="lazy" decoding="async">
+        </button>
+        {% if hasStock and form %}
+        <button class="p-hareruya-product-card__btn-cart c-hareruya-btn--md c-hareruya-btn--primary u-hareruya-w-full add-cart" type="button" data-product-id="{{ Product.id }}" aria-label="{{ 'front.product.add_cart'|trans }}">
+          <i class="icon-hareruya-cart_plus c-hareruya-icon"></i>
+        </button>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+    {% if showWeeklySales is not defined or showWeeklySales %}
+    {% set weeklySales = 0 %}
+    {% for sq in ProductClass.ShopSalesQuantities %}
+      {% if sq.BaseInfo is null or sq.BaseInfo.id == 0 %}
+        {% set weeklySales = weeklySales + sq.salesQuantity_04 %}
+      {% endif %}
+    {% endfor %}
+    {% if weeklySales > 0 %}
+    <p class="p-hareruya-product-card__sales">{{ 'front.top.product_card.weekly_sales_prefix'|trans }}<span class="p-hareruya-product-card__sales-number">{{ weeklySales|number_format }}</span>{{ 'front.top.product_card.weekly_sales_suffix'|trans }}</p>
+    {% endif %}
+    {% endif %}
+  </div>
+</div>
+sed: can't read ec-cube-enterprise/src/Eccube/Resource/template/default/Block/shop_top.twig: No such file or directory
+{#
+This file is part of EC-CUBE
+
+Copyright(c) EC-CUBE CO.,LTD. All Rights Reserved.
+
+http://www.ec-cube.co.jp/
+
+For the full copyright and license information, please view the LICENSE
+file that was distributed with this source code.
+#}
+<div class="p-hareruya-header__menu">
+    <button class="p-hareruya-header__menu-btn" aria-label="{{ 'front.nav.menu.aria_label'|trans }}" data-menu-toggle>
+        <i class="icon-hareruya-menu c-hareruya-icon"></i>
+    </button>
+    <div class="p-hareruya-header__menu-dropdown" data-menu-dropdown>
+        <div class="p-hareruya-header__menu-dropdown-arrow"></div>
+        <ul class="p-hareruya-header__menu-list">
+            <li class="p-hareruya-header__menu-item">
+                <a class="p-hareruya-header__menu-link" href="{{ url('homepage') }}">
+                    <i class="icon-hareruya-buy c-hareruya-icon"></i>
+                    <span class="p-hareruya-header__menu-text">{{ 'front.nav.menu.shop'|trans }}</span>
+                </a>
+            </li>
+            <li class="p-hareruya-header__menu-item">
+                <a class="p-hareruya-header__menu-link" href="{{ url('purchase_index') }}">
+                    <i class="icon-hareruya-kaitori c-hareruya-icon"></i>
+                    <span class="p-hareruya-header__menu-text">{{ 'front.nav.menu.purchase'|trans }}</span>
+                </a>
+            </li>
+            <li class="p-hareruya-header__menu-item">
+                <a class="p-hareruya-header__menu-link" href="https://article.hareruyamtg.com/" target="_blank" rel="noopener">
+                    <i class="icon-hareruya-kiji c-hareruya-icon"></i>
+                    <span class="p-hareruya-header__menu-text">{{ 'front.nav.menu.article'|trans }}</span>
+                </a>
+            </li>
+            <li class="p-hareruya-header__menu-item">
+                <a class="p-hareruya-header__menu-link" href="{{ url('deck_index') }}">
+                    <i class="icon-hareruya-deck-shosai c-hareruya-icon"></i>
+                    <span class="p-hareruya-header__menu-text">{{ 'front.nav.menu.deck_search'|trans }}</span>
+                </a>
+            </li>
+            {# TODO: ECCUBE_HARERUYA-XXX デッキ構築 TOP ルート実装後に href を差し替え #}
+            <li class="p-hareruya-header__menu-item">
+                <a class="p-hareruya-header__menu-link" href="#">
+                    <i class="icon-hareruya-deck-new c-hareruya-icon"></i>
+                    <span class="p-hareruya-header__menu-text">{{ 'front.nav.menu.deck_build'|trans }}</span>
+                </a>
+            </li>
+            <li class="p-hareruya-header__menu-item">
+                <a class="p-hareruya-header__menu-link" href="https://pros.hareruyamtg.com/" target="_blank" rel="noopener">
+                    <i class="icon-hareruya-player c-hareruya-icon"></i>
+                    <span class="p-hareruya-header__menu-text">{{ 'front.nav.menu.pros'|trans }}</span>
+                </a>
+            </li>
+            <li class="p-hareruya-header__menu-item">
+                <a class="p-hareruya-header__menu-link" href="{{ url('user_data', { route: 'store_menu' }) }}">
+                    <i class="icon-hareruya-shop c-hareruya-icon"></i>
+                    <span class="p-hareruya-header__menu-text">{{ 'front.nav.menu.store'|trans }}</span>
+                </a>
+            </li>
+            <li class="p-hareruya-header__menu-item">
+                <a class="p-hareruya-header__menu-link" href="{{ url('event_top') }}">
+                    <i class="icon-hareruya-event c-hareruya-icon"></i>
+                    <span class="p-hareruya-header__menu-text">{{ 'front.nav.menu.events'|trans }}</span>
+                </a>
+            </li>
+            <li class="p-hareruya-header__menu-item">
+                <a class="p-hareruya-header__menu-link" href="{{ url('help_guide') }}">
+                    <i class="icon-hareruya-help c-hareruya-icon"></i>
+                    <span class="p-hareruya-header__menu-text">{{ 'front.nav.menu.help'|trans }}</span>
+                </a>
+            </li>
+            <li class="p-hareruya-header__menu-item">
+                <a class="p-hareruya-header__menu-link" href="{{ url('contact') }}">
+                    <i class="icon-hareruya-mail-small c-hareruya-icon"></i>
+                    <span class="p-hareruya-header__menu-text">{{ 'front.nav.menu.contact'|trans }}</span>
+                </a>
+            </li>
+        </ul>
+    </div>
+</div>
+{#
+This file is part of EC-CUBE
+
+Copyright(c) EC-CUBE CO.,LTD. All Rights Reserved.
+
+http://www.ec-cube.co.jp/
+
+For the full copyright and license information, please view the LICENSE
+file that was distributed with this source code.
+#}
+<div class="p-hareruya-footer__nav-section">
+    <div class="p-hareruya-footer__nav-head">
+        <button class="p-hareruya-footer__nav-toggle js-footer-accordion-trigger" type="button" aria-expanded="false" aria-controls="footer-nav-sitemap">
+            <span class="p-hareruya-footer__nav-title">{{ 'front.footer.sitemap.title'|trans }}</span>
+            <span class="p-hareruya-footer__nav-toggle-icon"></span>
+        </button>
+    </div>
+    <div class="p-hareruya-footer__nav-body" id="footer-nav-sitemap">
+        <ul class="p-hareruya-footer__nav-list">
+            <li class="p-hareruya-footer__nav-item">
+                <a class="p-hareruya-footer__nav-link" href="{{ url('homepage') }}">{{ 'front.footer.sitemap.online_shop'|trans }}</a>
+            </li>
+            <li class="p-hareruya-footer__nav-item">
+                <a class="p-hareruya-footer__nav-link" href="{{ url('purchase_index') }}">{{ 'front.footer.sitemap.purchase'|trans }}</a>
+            </li>
+            <li class="p-hareruya-footer__nav-item">
+                <a class="p-hareruya-footer__nav-link" href="https://article.hareruyamtg.com/" target="_blank" rel="noopener">{{ 'front.footer.sitemap.article'|trans }}</a>
+            </li>
+            <li class="p-hareruya-footer__nav-item">
+                <a class="p-hareruya-footer__nav-link" href="https://pros.hareruyamtg.com/" target="_blank" rel="noopener">{{ 'front.footer.sitemap.pros'|trans }}</a>
+            </li>
+            <li class="p-hareruya-footer__nav-item">
+                <a class="p-hareruya-footer__nav-link" href="{{ url('deck_index') }}">{{ 'front.footer.sitemap.deck_search'|trans }}</a>
+            </li>
+            <li class="p-hareruya-footer__nav-item">
+                <a class="p-hareruya-footer__nav-link" href="/decks">{{ 'front.footer.sitemap.deck_build'|trans }}</a>
+            </li>
+            <li class="p-hareruya-footer__nav-item">
+                <a class="p-hareruya-footer__nav-link" href="{{ url('event_top') }}">{{ 'front.footer.sitemap.events'|trans }}</a>
+            </li>
+            <li class="p-hareruya-footer__nav-item">
+                <a class="p-hareruya-footer__nav-link" href="{{ url('user_data', { route: 'store_menu' }) }}">{{ 'front.footer.sitemap.store_guide'|trans }}</a>
+            </li>
+            <li class="p-hareruya-footer__nav-item">
+                <a class="p-hareruya-footer__nav-link" href="{{ url('contact') }}">{{ 'front.footer.sitemap.contact'|trans }}</a>
+            </li>
+            <li class="p-hareruya-footer__nav-item">
+                <a class="p-hareruya-footer__nav-link" href="{{ url('help_guide') }}">{{ 'front.footer.sitemap.help'|trans }}</a>
+            </li>
+            {# TODO: ECCUBE_HARERUYA-XXX FAQ ページ (user_data/hareruya_faq) 実装後に href を差し替え #}
+            <li class="p-hareruya-footer__nav-item">
+                <a class="p-hareruya-footer__nav-link" href="#">{{ 'front.footer.sitemap.faq'|trans }}</a>
+            </li>
+        </ul>
+    </div>
+</div>
+
+exec
+/bin/bash -lc 'rg -n "hareruya_faq|FAQ|よくある質問" ec-cube-enterprise/src/Eccube ec-cube-enterprise/app ec-cube-enterprise/html | head -100; rg -l "B16-09|サイトマップ生成処理" hareruya-design-docs/excel_to_html/output | head -20; rg -l "F01-02|支店ECTOP" hareruya-design-docs/excel_to_html/output | head -20; rg -l "F02-01|PC版ナビゲーション" hareruya-design-docs/excel_to_html/output | head -20' in /home/y-saito/Developments
+ succeeded in 168ms:
+hareruya-design-docs/excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html
+hareruya-design-docs/excel_to_html/output/0301_基本設計仕様書(フロント_トップ).html
+hareruya-design-docs/excel_to_html/output/0210_基本設計仕様書(コンテンツ管理).html
+hareruya-design-docs/excel_to_html/output/0302_基本設計仕様書(フロント_グローバルナビ).html
+hareruya-design-docs/excel_to_html/output/0303_基本設計仕様書(フロント_商品).html
+hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html
+hareruya-design-docs/excel_to_html/output/0302_基本設計仕様書(フロント_グローバルナビ).html
+hareruya-design-docs/excel_to_html/output/0303_基本設計仕様書(フロント_商品).html
+hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html
+hareruya-design-docs/excel_to_html/output/0301_基本設計仕様書(フロント_トップ).html
+
+exec
+/bin/bash -lc "rg -n \"Route\\(.*decks|name: ['\\\"]deck|path: ['\\\"]/decks|deck_index\" ec-cube-enterprise/src/Eccube/Controller | head -100; rg -n \"hareruya_faq\" ec-cube-enterprise/app/DoctrineMigrations ec-cube-enterprise/src/Eccube/Controller ec-cube-enterprise/app/config | head -50; rg -n \"shop_recommend|shop_top\" ec-cube-enterprise/app/DoctrineMigrations ec-cube-enterprise/src/Eccube/Controller | head -100; git -C ec-cube-enterprise status --short -- src/Eccube/Resource/template/default/Block/shop_recommend.twig app/DoctrineMigrations/Version20260703063355.php app/template/user_data/hareruya_faq.twig" in /home/y-saito/Developments
+ succeeded in 0ms:
+ec-cube-enterprise/src/Eccube/Controller/Front/Deck/DeckController.php:75:    #[Route(path: '/deck/', name: 'deck_index', methods: ['GET'])]
+ec-cube-enterprise/src/Eccube/Controller/Front/Deck/DeckController.php:111:    #[Route(path: '/deck/{formatId}/metagame/', name: 'deck_metagame', requirements: ['formatId' => '\d+'], methods: ['GET'])]
+ec-cube-enterprise/src/Eccube/Controller/Front/Deck/DeckController.php:139:    #[Route(path: '/deck/{formatId}/usage_ranking/', name: 'deck_usage_ranking', requirements: ['formatId' => '\d+'], methods: ['GET'])]
+ec-cube-enterprise/src/Eccube/Controller/Front/Deck/DeckController.php:179:    #[Route(path: '/deck/{deckId}/show/', name: 'deck_show', requirements: ['deckId' => '\d+'], methods: ['GET'])]
+ec-cube-enterprise/src/Eccube/Controller/Front/Deck/DeckController.php:221:    #[Route(path: '/deck/{oldDeckId}/old/', name: 'deck_old', requirements: ['oldDeckId' => '[A-Za-z0-9]+'], methods: ['GET'])]
+ec-cube-enterprise/src/Eccube/Controller/Front/Deck/DeckController.php:236:        return $this->redirectToRoute('deck_index');
+ec-cube-enterprise/src/Eccube/Controller/Front/Deck/DeckController.php:247:    #[Route(path: '/deck/result/', name: 'deck_result', methods: ['GET'])]
+ec-cube-enterprise/src/Eccube/Controller/Front/Deck/DeckController.php:286:    #[Route(path: '/deck/others/', name: 'deck_others', methods: ['GET'])]
+ec-cube-enterprise/src/Eccube/Controller/Front/Deck/DeckController.php:340:    #[Route(path: '/deck/bulk/{deckId}', name: 'deck_bulk', requirements: ['deckId' => '\d+'], defaults: ['deckId' => null], methods: ['GET'])]
+ec-cube-enterprise/src/Eccube/Controller/Front/Deck/DeckController.php:379:    #[Route(path: '/deck/bulk_check', name: 'deck_bulk_check', methods: ['POST'])]
+ec-cube-enterprise/src/Eccube/Controller/Front/Deck/DeckController.php:454:    #[Route(path: '/deck/download/{deckId}', name: 'deck_download', requirements: ['deckId' => '\d+'], methods: ['GET'])]
+ec-cube-enterprise/src/Eccube/Controller/Front/Deck/DeckController.php:487:    #[Route(path: '/deck/arena/{deckId}', name: 'deck_arena', requirements: ['deckId' => '\d+'], methods: ['GET'])]
+ec-cube-enterprise/src/Eccube/Controller/App/DeckBuilder/DeckController.php:262:    #[Route('/api/decks', name: 'api_deck_builder_decks', methods: ['GET', 'OPTIONS'])]
+ec-cube-enterprise/app/DoctrineMigrations/Version20260703063355.php:122:            ['page_name' => 'FAQ', 'url' => 'hareruya_faq', 'file_name' => 'hareruya_faq'],
+ec-cube-enterprise/src/Eccube/Controller/Shop/ShopTopController.php:58:        name: 'shop_top',
+ec-cube-enterprise/src/Eccube/Controller/Shop/ShopTopController.php:64:    #[Template(template: 'shop_top.twig')]
+ec-cube-enterprise/src/Eccube/Controller/Shop/ShopTopController.php:98:            'shop_top',
+ec-cube-enterprise/app/DoctrineMigrations/Version20260421120000.php:23:    private const PAGE_URL = 'shop_top';
+ec-cube-enterprise/app/DoctrineMigrations/Version20260421120000.php:24:    private const PAGE_FILE = 'shop_top';
+ec-cube-enterprise/app/DoctrineMigrations/Version20260421120000.php:31:        return '支店トップページ (shop_top) を dtb_page に登録し、下層ページ用レイアウトへ紐付ける。';
+ec-cube-enterprise/src/Eccube/Controller/Front/ShoppingController.php:680:            $shopTopUrl = $this->generateUrl('shop_top', [
+
+exec
+/bin/bash -lc "rg -n \"AsCommand\\(name: '.*:batch|customer:batch|smaregi:batch\" ec-cube-enterprise/src/Eccube/Command ec-cube-enterprise/src/Eccube/Controller ec-cube-enterprise/app | head -100; rg -n \"eccube:smaregi:update-point|eccube:customer:adjust-point-variance|point-expire-notification\" ec-cube-enterprise --glob '"'!var/**'"' --glob '"'!vendor/**'"' --glob '"'!html/template/admin/assets/css/app.css'"'" in /home/y-saito/Developments
+ succeeded in 69ms:
+ec-cube-enterprise/src/Eccube/Command/AdjustPointVarianceCommand.php:25:#[AsCommand(name: 'eccube:customer:adjust-point-variance', description: 'ポイント差分発生通知バッチ')]
+ec-cube-enterprise/src/Eccube/Command/SmaregiUpdatePointCommand.php:26:#[AsCommand(name: 'eccube:smaregi:update-point', description: 'スマレジ使用ポイント連携バッチ')]
+ec-cube-enterprise/src/Eccube/Command/PointExpireNotificationCommand.php:25:#[AsCommand(name: 'eccube:customer:point-expire-notification', description: 'ポイント有効期限通知バッチ')]
+ec-cube-enterprise/src/Eccube/Service/Admin/Order/ResendMailAction.php:98:                        "nohup php {$projectDir}/bin/console eccube:smaregi:update-point {$Order->getId()} &"
+
+exec
+/bin/bash -lc "rg -n -i \"sp\\.links|splinks|responsecd|merchantid|operateid|procno|TransactionState|TransactionTate\" ec-cube-enterprise/src ec-cube-enterprise/app --glob '"'!**/*.css'"' --glob '"'!**/*.js'"' | head -200; rg -n \"S3|inventorycheck|zip|ZipArchive|EventBridge|Step Functions|stepfunctions\" ec-cube-enterprise/src/Eccube ec-cube-enterprise/app/config ec-cube-enterprise/app/DoctrineMigrations --glob '"'!**/*.css'"' | head -200" in /home/y-saito/Developments
+ succeeded in 7ms:
+exec
+/bin/bash -lc "python3 - <<'PY'
+vals=[.25,.25,.75,.25,.25,1,.25,2,3,.5,1.5,.75,1.5,.1,7,7,2,2,1.5,7,.5,.1,.25,.25,.5,.25,.1,.1]
+print(len(vals),sum(vals))
+PY" in /home/y-saito/Developments
+ succeeded in 0ms:
+28 40.9
+
+apply patch
+patch: completed
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/effort_results/ef_08.json
+diff --git a/hareruya-design-docs/design_impl_drift_report/citation_audit/effort_results/ef_08.json b/hareruya-design-docs/design_impl_drift_report/citation_audit/effort_results/ef_08.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..bc81aaf7a94fd74de58da2e0a74291dcae5b8e0d
+--- /dev/null
++++ b/hareruya-design-docs/design_impl_drift_report/citation_audit/effort_results/ef_08.json
+@@ -0,0 +1,313 @@
++{
++  "packetId": "ef_08",
++  "results": [
++    {
++      "rowId": 213,
++      "authorCat": "7",
++      "verdict": "UPHELD",
++      "correctedCat": null,
++      "effortDays": 0.25,
++      "effortBasis": "MailService.php の送信例外 catch で例外を再送出し、既存 Command の Throwable catch と $io->error() に到達させる小変更。",
++      "needsDecision": false,
++      "reason": "直す対象はメール送信という外部副作用の例外処理であり、既存のコンソール出力ロジックは流用できるため⑦が妥当。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 214,
++      "authorCat": "5",
++      "verdict": "REFUTED",
++      "correctedCat": "1",
++      "effortDays": 0.25,
++      "effortBasis": "PointExpireNotificationCommand.php の開始・完了メッセージ2箇所に既定書式の現在日時を付加する。",
++      "needsDecision": false,
++      "reason": "業務上の抽出・計算・分岐は変わらず、CLIが外部へ出す文字列の契約だけを直すため①。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 215,
++      "authorCat": "1",
++      "verdict": "UPHELD",
++      "correctedCat": null,
++      "effortDays": 0.75,
++      "effortBasis": "AdjustPointVarianceCommand.php で設計の `customer:batch adjustPointVariance` 形式を受けるコマンド名・引数または互換ラッパーを用意し、既存名との互換性も整理する。",
++      "needsDecision": false,
++      "reason": "差分はバッチの呼出元が依存するコマンド名と引数形式であり、①の外部インタフェース契約そのもの。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 216,
++      "authorCat": "5",
++      "verdict": "REFUTED",
++      "correctedCat": "1",
++      "effortDays": 0.25,
++      "effortBasis": "AdjustPointVarianceCommand.php の開始・完了メッセージ2箇所へ現在日時の整形出力を追加する。",
++      "needsDecision": false,
++      "reason": "ポイント調整ロジックには触れずCLI出力文字列だけを直すため、⑤ではなく①。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 217,
++      "authorCat": "7",
++      "verdict": "UPHELD",
++      "correctedCat": null,
++      "effortDays": 0.25,
++      "effortBasis": "sendAdjustPointVarianceMail() の TransportException catch から再送出し、既存Commandのエラー出力へ伝播させる。",
++      "needsDecision": false,
++      "reason": "修正点はメール送信失敗という外部副作用の扱いで、⑦が妥当。Command側の出力は既にある。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 218,
++      "authorCat": "1",
++      "verdict": "UPHELD",
++      "correctedCat": null,
++      "effortDays": 1.0,
++      "effortBasis": "SmaregiUpdatePointCommand.php を `smaregi:batch updatePoint <受注ID>` 形式で呼べるようにし、ResendMailAction等の既存呼出箇所も互換性を保って更新する。",
++      "needsDecision": false,
++      "reason": "スマレジ処理内容ではなく、スケジューラや別プロセス呼出しが依存するCLI契約の変更なので①。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 219,
++      "authorCat": "7",
++      "verdict": "REFUTED",
++      "correctedCat": "4",
++      "effortDays": 0.25,
++      "effortBasis": "SmaregiUpdatePointCommand.php の非数値 orderId 分岐を、外部APIを呼ばず正常終了する扱いへ変更する1箇所の入力判定修正。",
++      "needsDecision": false,
++      "reason": "スマレジ連携処理を変えるのではなく、コマンド引数の形式不正時の検証結果を直すため④。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 220,
++      "authorCat": "7",
++      "verdict": "REFUTED",
++      "correctedCat": "6",
++      "effortDays": 2.0,
++      "effortBasis": "既存のエラー受注抽出、ポイント連携Action/Messenger処理を流用し、再連携用Commandと対象走査・再投入処理を新設する。",
++      "needsDecision": false,
++      "reason": "指摘された不足は外部APIの一呼出し変更ではなく、再連携バッチの入口と一連の処理そのものの不在なので⑥。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 221,
++      "authorCat": "5",
++      "verdict": "REFUTED",
++      "correctedCat": "7",
++      "effortDays": 3.0,
++      "effortBasis": "PaymentStatusCheckAction.php のスタブを、SP.LINKS認証設定、HTTP取引照会、レスポンス解析・エラー変換を行うクライアント実装へ置換する。後続のステータス分岐は既存を流用できる。",
++      "needsDecision": false,
++      "reason": "不足の中心は抽出条件や内部ステータス分岐ではなく、未実装のSP.LINKS外部API呼出しであるため⑦。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 222,
++      "authorCat": "5",
++      "verdict": "UPHELD",
++      "correctedCat": null,
++      "effortDays": 0.5,
++      "effortBasis": "paymentNo順の既存ループに直前paymentNoと照会結果の保持・再利用分岐を追加する。主にAction 1ファイル。",
++      "needsDecision": false,
++      "reason": "同一決済番号なら照会結果を流用するという処理分岐の修正で、⑤業務ロジックが妥当。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 223,
++      "authorCat": "7",
++      "verdict": "UPHELD",
++      "correctedCat": null,
++      "effortDays": 1.5,
++      "effortBasis": "Actionで想定外エラーを蓄積・重複排除し、ループ後に一括送信するよう変更する。MailServiceの引数とメールテンプレートも複数エラー表示へ対応する。",
++      "needsDecision": false,
++      "reason": "主たる改修結果は管理者メールの送信単位・内容という外部副作用の変更なので⑦。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 224,
++      "authorCat": "5",
++      "verdict": "UPHELD",
++      "correctedCat": null,
++      "effortDays": 0.75,
++      "effortBasis": "PaymentStatusCheckAction.php に取引不在・未完了理由の収集を加え、既存の結果detailへまとめる。Commandの表示経路は流用可能。",
++      "needsDecision": false,
++      "reason": "単なる固定文言変更ではなく、照会結果ごとの理由を判定・蓄積する処理追加が中心なので⑤。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 225,
++      "authorCat": "8",
++      "verdict": "UPHELD",
++      "correctedCat": null,
++      "effortDays": 1.5,
++      "effortBasis": "PaymentStatusCheckAction.php の申込み単位begin/commitをバッチ全体の境界へ組み替え、例外時rollbackとコミット後メール送信の順序を整理する。",
++      "needsDecision": false,
++      "reason": "更新内容ではなく、複数申込みをいつ確定・ロールバックするかというトランザクション境界の差なので⑧。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 226,
++      "authorCat": "5",
++      "verdict": "REFUTED",
++      "correctedCat": "2",
++      "effortDays": 0.1,
++      "effortBasis": "CustomerRepository.php のCONCAT内にある固定ラベル `:tel02:` 1箇所を `:tel01:` に直す。取得列やメール送信経路は変更不要。",
++      "needsDecision": false,
++      "reason": "電話番号の業務処理ではなく、メール本文へ出すラベル文字列だけの修正なので②。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 227,
++      "authorCat": "5",
++      "verdict": "REFUTED",
++      "correctedCat": "6",
++      "effortDays": 7.0,
++      "effortBasis": "専用Command、店舗・在庫場所・商品規格の抽出Repository/Service、txt生成、ZIP化、規定名生成、S3アップロードの一連を新設し、Step Functions起動対象を用意する。",
++      "needsDecision": false,
++      "reason": "抽出条件の微修正ではなく月次スナップショットバッチ全体が不在で、複数工程を新規実装するため⑥。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 228,
++      "authorCat": "7",
++      "verdict": "REFUTED",
++      "correctedCat": "6",
++      "effortDays": 7.0,
++      "effortBasis": "既存HTTP sitemapとは別に、専用Command、Crawler依存導入、トップ起点巡回、XMLファイル生成、S3配置までのバッチ処理を新設する。",
++      "needsDecision": false,
++      "reason": "S3アップロードだけが欠けているのではなく、設計方式のクローラ型サイトマップ生成処理そのものが存在しないため⑥。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 229,
++      "authorCat": "7",
++      "verdict": "UPHELD",
++      "correctedCat": null,
++      "effortDays": 2.0,
++      "effortBasis": "S3から前回ファイルを取得し、今回生成物と正規化比較して、差異時だけputする処理をサイトマップバッチへ追加する。",
++      "needsDecision": false,
++      "reason": "比較分岐を含むが、前回成果物の取得と条件付きS3アップロードという外部副作用の変更が中心なので⑦。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 230,
++      "authorCat": "7",
++      "verdict": "REFUTED",
++      "correctedCat": "8",
++      "effortDays": 2.0,
++      "effortBasis": "EventBridgeの毎日4:00ルール、Lambdaからバッチ用EC2を起動する設定・権限・実行対象をIaCまたは環境設定へ追加する。",
++      "needsDecision": false,
++      "reason": "サイトマップの内容やS3通信ではなく、いつ・どの環境で起動するかというスケジュールと実行環境の設定なので⑧。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 231,
++      "authorCat": "5",
++      "verdict": "UPHELD",
++      "correctedCat": null,
++      "effortDays": 1.5,
++      "effortBasis": "クローラ設定またはURL判定Serviceへ、階層無制限と日本語・英語を含む除外パス群の判定を実装する。",
++      "needsDecision": false,
++      "reason": "巡回対象URLを含める・除く条件の実装であり、⑤の抽出・分岐ロジックに当たる。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 232,
++      "authorCat": "7",
++      "verdict": "REFUTED",
++      "correctedCat": "6",
++      "effortDays": 7.0,
++      "effortBasis": "専用Command、S3一覧取得とページング、画像種別別サイズ判定、超過一覧作成、宛先設定・メールテンプレート・送信、15分起動対象まで一式を新設する。",
++      "needsDecision": false,
++      "reason": "S3またはメールの一部変更ではなく、入力から通知までの画像サイズ検査バッチ全体が不在なので⑥。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 233,
++      "authorCat": "2",
++      "verdict": "UPHELD",
++      "correctedCat": null,
++      "effortDays": 0.5,
++      "effortBasis": "search_items.twig の11個の無効リンクへ既存商品一覧ルートとカテゴリ・カードセットのパラメータを設定する。新規Controllerや取得経路は不要。",
++      "needsDecision": false,
++      "reason": "静的ブロック内のhref配線で完結するため②。『未実装』という表現だけで⑥にはしない。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 234,
++      "authorCat": "2",
++      "verdict": "UPHELD",
++      "correctedCat": null,
++      "effortDays": 0.1,
++      "effortBasis": "new_items.en.twig のmoreリンク2箇所でタグID定数をTrending Now用へ差し替える。",
++      "needsDecision": false,
++      "reason": "商品取得ロジックは既に正しく、表示中リンクの遷移パラメータだけをTwigで直すため②。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 235,
++      "authorCat": "5",
++      "verdict": "UPHELD",
++      "correctedCat": null,
++      "effortDays": 0.25,
++      "effortBasis": "CustomerFavoriteProductRepository.php の既存QueryBuilderから `pc.stock > 0` 条件を外し、他条件は維持する。",
++      "needsDecision": false,
++      "reason": "お気に入り商品の抽出条件を変更するため⑤。修正自体はクエリ条件1箇所で小さい。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 236,
++      "authorCat": "2",
++      "verdict": "UPHELD",
++      "correctedCat": null,
++      "effortDays": 0.25,
++      "effortBasis": "_product_card.twig でカートボタンをお気に入り表示条件の外へ移し、既存のhasStock/form条件をそのまま利用する。",
++      "needsDecision": false,
++      "reason": "カート追加処理やフォーム生成は既にあり、Twigの表示条件だけを直すため②。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 237,
++      "authorCat": "2",
++      "verdict": "UPHELD",
++      "correctedCat": null,
++      "effortDays": 0.5,
++      "effortBasis": "search_items.twig の静的カテゴリ・カードセットタグへ既存一覧ルートのhrefと絞込値を設定する。",
++      "needsDecision": false,
++      "reason": "必要な修正はTwig内のリンク配線で、商品一覧機能の新設ではないため②。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 238,
++      "authorCat": "2",
++      "verdict": "UPHELD",
++      "correctedCat": null,
++      "effortDays": 0.25,
++      "effortBasis": "ブロック管理対象のshop_recommend.twigにある6個のバナーhrefを各設定URLへ差し替える。ブロックの表示経路自体は既存。",
++      "needsDecision": false,
++      "reason": "管理画面機能やデータ取得経路の新設ではなく、編集可能なTwigブロック内のリンク設定で完結するため②。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 241,
++      "authorCat": "2",
++      "verdict": "UPHELD",
++      "correctedCat": null,
++      "effortDays": 0.1,
++      "effortBasis": "mega_menu.twig のhrefを、既にheader/footerで利用されているデッキ構築先 `/decks` へ1箇所差し替える。",
++      "needsDecision": false,
++      "reason": "既存遷移先を再利用するTwigリンク1箇所の修正なので②。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 242,
++      "authorCat": "6",
++      "verdict": "REFUTED",
++      "correctedCat": "2",
++      "effortDays": 0.1,
++      "effortBasis": "footer_sitemap.twig のhrefを既存の汎用user_dataルート `hareruya_faq` へ差し替える。app/template/user_data/hareruya_faq.twig と同ページを登録する既存Migrationを確認済み。",
++      "needsDecision": false,
++      "reason": "専用ControllerがなくてもFAQページ本体とEC-CUBEのuser_data表示経路は既に存在するため、新規画面実装ではなくリンク1箇所の②。",
++      "confidence": "high"
++    }
++  ]
++}
+
+diff --git a/hareruya-design-docs/design_impl_drift_report/citation_audit/effort_results/ef_08.json b/hareruya-design-docs/design_impl_drift_report/citation_audit/effort_results/ef_08.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..bc81aaf7a94fd74de58da2e0a74291dcae5b8e0d
+--- /dev/null
++++ b/hareruya-design-docs/design_impl_drift_report/citation_audit/effort_results/ef_08.json
+@@ -0,0 +1,313 @@
++{
++  "packetId": "ef_08",
++  "results": [
++    {
++      "rowId": 213,
++      "authorCat": "7",
++      "verdict": "UPHELD",
++      "correctedCat": null,
++      "effortDays": 0.25,
++      "effortBasis": "MailService.php の送信例外 catch で例外を再送出し、既存 Command の Throwable catch と $io->error() に到達させる小変更。",
++      "needsDecision": false,
++      "reason": "直す対象はメール送信という外部副作用の例外処理であり、既存のコンソール出力ロジックは流用できるため⑦が妥当。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 214,
++      "authorCat": "5",
++      "verdict": "REFUTED",
++      "correctedCat": "1",
++      "effortDays": 0.25,
++      "effortBasis": "PointExpireNotificationCommand.php の開始・完了メッセージ2箇所に既定書式の現在日時を付加する。",
++      "needsDecision": false,
++      "reason": "業務上の抽出・計算・分岐は変わらず、CLIが外部へ出す文字列の契約だけを直すため①。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 215,
++      "authorCat": "1",
++      "verdict": "UPHELD",
++      "correctedCat": null,
++      "effortDays": 0.75,
++      "effortBasis": "AdjustPointVarianceCommand.php で設計の `customer:batch adjustPointVariance` 形式を受けるコマンド名・引数または互換ラッパーを用意し、既存名との互換性も整理する。",
++      "needsDecision": false,
++      "reason": "差分はバッチの呼出元が依存するコマンド名と引数形式であり、①の外部インタフェース契約そのもの。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 216,
++      "authorCat": "5",
++      "verdict": "REFUTED",
++      "correctedCat": "1",
++      "effortDays": 0.25,
++      "effortBasis": "AdjustPointVarianceCommand.php の開始・完了メッセージ2箇所へ現在日時の整形出力を追加する。",
++      "needsDecision": false,
++      "reason": "ポイント調整ロジックには触れずCLI出力文字列だけを直すため、⑤ではなく①。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 217,
++      "authorCat": "7",
++      "verdict": "UPHELD",
++      "correctedCat": null,
++      "effortDays": 0.25,
++      "effortBasis": "sendAdjustPointVarianceMail() の TransportException catch から再送出し、既存Commandのエラー出力へ伝播させる。",
++      "needsDecision": false,
++      "reason": "修正点はメール送信失敗という外部副作用の扱いで、⑦が妥当。Command側の出力は既にある。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 218,
++      "authorCat": "1",
++      "verdict": "UPHELD",
++      "correctedCat": null,
++      "effortDays": 1.0,
++      "effortBasis": "SmaregiUpdatePointCommand.php を `smaregi:batch updatePoint <受注ID>` 形式で呼べるようにし、ResendMailAction等の既存呼出箇所も互換性を保って更新する。",
++      "needsDecision": false,
++      "reason": "スマレジ処理内容ではなく、スケジューラや別プロセス呼出しが依存するCLI契約の変更なので①。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 219,
++      "authorCat": "7",
++      "verdict": "REFUTED",
++      "correctedCat": "4",
++      "effortDays": 0.25,
++      "effortBasis": "SmaregiUpdatePointCommand.php の非数値 orderId 分岐を、外部APIを呼ばず正常終了する扱いへ変更する1箇所の入力判定修正。",
++      "needsDecision": false,
++      "reason": "スマレジ連携処理を変えるのではなく、コマンド引数の形式不正時の検証結果を直すため④。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 220,
++      "authorCat": "7",
++      "verdict": "REFUTED",
++      "correctedCat": "6",
++      "effortDays": 2.0,
++      "effortBasis": "既存のエラー受注抽出、ポイント連携Action/Messenger処理を流用し、再連携用Commandと対象走査・再投入処理を新設する。",
++      "needsDecision": false,
++      "reason": "指摘された不足は外部APIの一呼出し変更ではなく、再連携バッチの入口と一連の処理そのものの不在なので⑥。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 221,
++      "authorCat": "5",
++      "verdict": "REFUTED",
++      "correctedCat": "7",
++      "effortDays": 3.0,
++      "effortBasis": "PaymentStatusCheckAction.php のスタブを、SP.LINKS認証設定、HTTP取引照会、レスポンス解析・エラー変換を行うクライアント実装へ置換する。後続のステータス分岐は既存を流用できる。",
++      "needsDecision": false,
++      "reason": "不足の中心は抽出条件や内部ステータス分岐ではなく、未実装のSP.LINKS外部API呼出しであるため⑦。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 222,
++      "authorCat": "5",
++      "verdict": "UPHELD",
++      "correctedCat": null,
++      "effortDays": 0.5,
++      "effortBasis": "paymentNo順の既存ループに直前paymentNoと照会結果の保持・再利用分岐を追加する。主にAction 1ファイル。",
++      "needsDecision": false,
++      "reason": "同一決済番号なら照会結果を流用するという処理分岐の修正で、⑤業務ロジックが妥当。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 223,
++      "authorCat": "7",
++      "verdict": "UPHELD",
++      "correctedCat": null,
++      "effortDays": 1.5,
++      "effortBasis": "Actionで想定外エラーを蓄積・重複排除し、ループ後に一括送信するよう変更する。MailServiceの引数とメールテンプレートも複数エラー表示へ対応する。",
++      "needsDecision": false,
++      "reason": "主たる改修結果は管理者メールの送信単位・内容という外部副作用の変更なので⑦。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 224,
++      "authorCat": "5",
++      "verdict": "UPHELD",
++      "correctedCat": null,
++      "effortDays": 0.75,
++      "effortBasis": "PaymentStatusCheckAction.php に取引不在・未完了理由の収集を加え、既存の結果detailへまとめる。Commandの表示経路は流用可能。",
++      "needsDecision": false,
++      "reason": "単なる固定文言変更ではなく、照会結果ごとの理由を判定・蓄積する処理追加が中心なので⑤。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 225,
++      "authorCat": "8",
++      "verdict": "UPHELD",
++      "correctedCat": null,
++      "effortDays": 1.5,
++      "effortBasis": "PaymentStatusCheckAction.php の申込み単位begin/commitをバッチ全体の境界へ組み替え、例外時rollbackとコミット後メール送信の順序を整理する。",
++      "needsDecision": false,
++      "reason": "更新内容ではなく、複数申込みをいつ確定・ロールバックするかというトランザクション境界の差なので⑧。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 226,
++      "authorCat": "5",
++      "verdict": "REFUTED",
++      "correctedCat": "2",
++      "effortDays": 0.1,
++      "effortBasis": "CustomerRepository.php のCONCAT内にある固定ラベル `:tel02:` 1箇所を `:tel01:` に直す。取得列やメール送信経路は変更不要。",
++      "needsDecision": false,
++      "reason": "電話番号の業務処理ではなく、メール本文へ出すラベル文字列だけの修正なので②。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 227,
++      "authorCat": "5",
++      "verdict": "REFUTED",
++      "correctedCat": "6",
++      "effortDays": 7.0,
++      "effortBasis": "専用Command、店舗・在庫場所・商品規格の抽出Repository/Service、txt生成、ZIP化、規定名生成、S3アップロードの一連を新設し、Step Functions起動対象を用意する。",
++      "needsDecision": false,
++      "reason": "抽出条件の微修正ではなく月次スナップショットバッチ全体が不在で、複数工程を新規実装するため⑥。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 228,
++      "authorCat": "7",
++      "verdict": "REFUTED",
++      "correctedCat": "6",
++      "effortDays": 7.0,
++      "effortBasis": "既存HTTP sitemapとは別に、専用Command、Crawler依存導入、トップ起点巡回、XMLファイル生成、S3配置までのバッチ処理を新設する。",
++      "needsDecision": false,
++      "reason": "S3アップロードだけが欠けているのではなく、設計方式のクローラ型サイトマップ生成処理そのものが存在しないため⑥。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 229,
++      "authorCat": "7",
++      "verdict": "UPHELD",
++      "correctedCat": null,
++      "effortDays": 2.0,
++      "effortBasis": "S3から前回ファイルを取得し、今回生成物と正規化比較して、差異時だけputする処理をサイトマップバッチへ追加する。",
++      "needsDecision": false,
++      "reason": "比較分岐を含むが、前回成果物の取得と条件付きS3アップロードという外部副作用の変更が中心なので⑦。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 230,
++      "authorCat": "7",
++      "verdict": "REFUTED",
++      "correctedCat": "8",
++      "effortDays": 2.0,
++      "effortBasis": "EventBridgeの毎日4:00ルール、Lambdaからバッチ用EC2を起動する設定・権限・実行対象をIaCまたは環境設定へ追加する。",
++      "needsDecision": false,
++      "reason": "サイトマップの内容やS3通信ではなく、いつ・どの環境で起動するかというスケジュールと実行環境の設定なので⑧。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 231,
++      "authorCat": "5",
++      "verdict": "UPHELD",
++      "correctedCat": null,
++      "effortDays": 1.5,
++      "effortBasis": "クローラ設定またはURL判定Serviceへ、階層無制限と日本語・英語を含む除外パス群の判定を実装する。",
++      "needsDecision": false,
++      "reason": "巡回対象URLを含める・除く条件の実装であり、⑤の抽出・分岐ロジックに当たる。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 232,
++      "authorCat": "7",
++      "verdict": "REFUTED",
++      "correctedCat": "6",
++      "effortDays": 7.0,
++      "effortBasis": "専用Command、S3一覧取得とページング、画像種別別サイズ判定、超過一覧作成、宛先設定・メールテンプレート・送信、15分起動対象まで一式を新設する。",
++      "needsDecision": false,
++      "reason": "S3またはメールの一部変更ではなく、入力から通知までの画像サイズ検査バッチ全体が不在なので⑥。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 233,
++      "authorCat": "2",
++      "verdict": "UPHELD",
++      "correctedCat": null,
++      "effortDays": 0.5,
++      "effortBasis": "search_items.twig の11個の無効リンクへ既存商品一覧ルートとカテゴリ・カードセットのパラメータを設定する。新規Controllerや取得経路は不要。",
++      "needsDecision": false,
++      "reason": "静的ブロック内のhref配線で完結するため②。『未実装』という表現だけで⑥にはしない。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 234,
++      "authorCat": "2",
++      "verdict": "UPHELD",
++      "correctedCat": null,
++      "effortDays": 0.1,
++      "effortBasis": "new_items.en.twig のmoreリンク2箇所でタグID定数をTrending Now用へ差し替える。",
++      "needsDecision": false,
++      "reason": "商品取得ロジックは既に正しく、表示中リンクの遷移パラメータだけをTwigで直すため②。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 235,
++      "authorCat": "5",
++      "verdict": "UPHELD",
++      "correctedCat": null,
++      "effortDays": 0.25,
++      "effortBasis": "CustomerFavoriteProductRepository.php の既存QueryBuilderから `pc.stock > 0` 条件を外し、他条件は維持する。",
++      "needsDecision": false,
++      "reason": "お気に入り商品の抽出条件を変更するため⑤。修正自体はクエリ条件1箇所で小さい。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 236,
++      "authorCat": "2",
++      "verdict": "UPHELD",
++      "correctedCat": null,
++      "effortDays": 0.25,
++      "effortBasis": "_product_card.twig でカートボタンをお気に入り表示条件の外へ移し、既存のhasStock/form条件をそのまま利用する。",
++      "needsDecision": false,
++      "reason": "カート追加処理やフォーム生成は既にあり、Twigの表示条件だけを直すため②。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 237,
++      "authorCat": "2",
++      "verdict": "UPHELD",
++      "correctedCat": null,
++      "effortDays": 0.5,
++      "effortBasis": "search_items.twig の静的カテゴリ・カードセットタグへ既存一覧ルートのhrefと絞込値を設定する。",
++      "needsDecision": false,
++      "reason": "必要な修正はTwig内のリンク配線で、商品一覧機能の新設ではないため②。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 238,
++      "authorCat": "2",
++      "verdict": "UPHELD",
++      "correctedCat": null,
++      "effortDays": 0.25,
++      "effortBasis": "ブロック管理対象のshop_recommend.twigにある6個のバナーhrefを各設定URLへ差し替える。ブロックの表示経路自体は既存。",
++      "needsDecision": false,
++      "reason": "管理画面機能やデータ取得経路の新設ではなく、編集可能なTwigブロック内のリンク設定で完結するため②。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 241,
++      "authorCat": "2",
++      "verdict": "UPHELD",
++      "correctedCat": null,
++      "effortDays": 0.1,
++      "effortBasis": "mega_menu.twig のhrefを、既にheader/footerで利用されているデッキ構築先 `/decks` へ1箇所差し替える。",
++      "needsDecision": false,
++      "reason": "既存遷移先を再利用するTwigリンク1箇所の修正なので②。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 242,
++      "authorCat": "6",
++      "verdict": "REFUTED",
++      "correctedCat": "2",
++      "effortDays": 0.1,
++      "effortBasis": "footer_sitemap.twig のhrefを既存の汎用user_dataルート `hareruya_faq` へ差し替える。app/template/user_data/hareruya_faq.twig と同ページを登録する既存Migrationを確認済み。",
++      "needsDecision": false,
++      "reason": "専用ControllerがなくてもFAQページ本体とEC-CUBEのuser_data表示経路は既に存在するため、新規画面実装ではなくリンク1箇所の②。",
++      "confidence": "high"
++    }
++  ]
++}
+
+exec
+/bin/bash -lc "python3 -m json.tool hareruya-design-docs/design_impl_drift_report/citation_audit/effort_results/ef_08.json >/dev/null && jq -n --slurpfile p hareruya-design-docs/design_impl_drift_report/citation_audit/effort_packets/ef_08.json --slurpfile r hareruya-design-docs/design_impl_drift_report/citation_audit/effort_results/ef_08.json '{packetIdExpected:"'$p[0].packetId, packetIdActual:$r[0].packetId, findings:($p[0].findings|length), results:($r[0].results|length), missing:([ $p[0].findings[].rowId ] - [ $r[0].results[].rowId ]), extra:([ $r[0].results[].rowId ] - [ $p[0].findings[].rowId ]), duplicateRows:([$r[0].results[].rowId]|group_by(.)|map(select(length>1)|.[0])), verdicts:($r[0].results|group_by(.verdict)|map({key:.[0].verdict,value:length})|from_entries), effortTotal:([$r[0].results[].effortDays]|add), decisions:([$r[0].results[]|select(.needsDecision)]|length), badCorrected:([$r[0].results[]|select((.verdict=="REFUTED" and .correctedCat==null) or (.verdict!="REFUTED" and .correctedCat!=null))]|length)}'"'" in /home/y-saito/Developments
+ succeeded in 0ms:
+{
+  "packetIdExpected": "ef_08",
+  "packetIdActual": "ef_08",
+  "findings": 28,
+  "results": 28,
+  "missing": [],
+  "extra": [],
+  "duplicateRows": [],
+  "verdicts": {
+    "REFUTED": 11,
+    "UPHELD": 17
+  },
+  "effortTotal": 40.900000000000006,
+  "decisions": 0,
+  "badCorrected": 0
+}
+
+diff --git a/hareruya-design-docs/design_impl_drift_report/citation_audit/effort_results/ef_08.json b/hareruya-design-docs/design_impl_drift_report/citation_audit/effort_results/ef_08.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..bc81aaf7a94fd74de58da2e0a74291dcae5b8e0d
+--- /dev/null
++++ b/hareruya-design-docs/design_impl_drift_report/citation_audit/effort_results/ef_08.json
+@@ -0,0 +1,313 @@
++{
++  "packetId": "ef_08",
++  "results": [
++    {
++      "rowId": 213,
++      "authorCat": "7",
++      "verdict": "UPHELD",
++      "correctedCat": null,
++      "effortDays": 0.25,
++      "effortBasis": "MailService.php の送信例外 catch で例外を再送出し、既存 Command の Throwable catch と $io->error() に到達させる小変更。",
++      "needsDecision": false,
++      "reason": "直す対象はメール送信という外部副作用の例外処理であり、既存のコンソール出力ロジックは流用できるため⑦が妥当。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 214,
++      "authorCat": "5",
++      "verdict": "REFUTED",
++      "correctedCat": "1",
++      "effortDays": 0.25,
++      "effortBasis": "PointExpireNotificationCommand.php の開始・完了メッセージ2箇所に既定書式の現在日時を付加する。",
++      "needsDecision": false,
++      "reason": "業務上の抽出・計算・分岐は変わらず、CLIが外部へ出す文字列の契約だけを直すため①。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 215,
++      "authorCat": "1",
++      "verdict": "UPHELD",
++      "correctedCat": null,
++      "effortDays": 0.75,
++      "effortBasis": "AdjustPointVarianceCommand.php で設計の `customer:batch adjustPointVariance` 形式を受けるコマンド名・引数または互換ラッパーを用意し、既存名との互換性も整理する。",
++      "needsDecision": false,
++      "reason": "差分はバッチの呼出元が依存するコマンド名と引数形式であり、①の外部インタフェース契約そのもの。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 216,
++      "authorCat": "5",
++      "verdict": "REFUTED",
++      "correctedCat": "1",
++      "effortDays": 0.25,
++      "effortBasis": "AdjustPointVarianceCommand.php の開始・完了メッセージ2箇所へ現在日時の整形出力を追加する。",
++      "needsDecision": false,
++      "reason": "ポイント調整ロジックには触れずCLI出力文字列だけを直すため、⑤ではなく①。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 217,
++      "authorCat": "7",
++      "verdict": "UPHELD",
++      "correctedCat": null,
++      "effortDays": 0.25,
++      "effortBasis": "sendAdjustPointVarianceMail() の TransportException catch から再送出し、既存Commandのエラー出力へ伝播させる。",
++      "needsDecision": false,
++      "reason": "修正点はメール送信失敗という外部副作用の扱いで、⑦が妥当。Command側の出力は既にある。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 218,
++      "authorCat": "1",
++      "verdict": "UPHELD",
++      "correctedCat": null,
++      "effortDays": 1.0,
++      "effortBasis": "SmaregiUpdatePointCommand.php を `smaregi:batch updatePoint <受注ID>` 形式で呼べるようにし、ResendMailAction等の既存呼出箇所も互換性を保って更新する。",
++      "needsDecision": false,
++      "reason": "スマレジ処理内容ではなく、スケジューラや別プロセス呼出しが依存するCLI契約の変更なので①。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 219,
++      "authorCat": "7",
++      "verdict": "REFUTED",
++      "correctedCat": "4",
++      "effortDays": 0.25,
++      "effortBasis": "SmaregiUpdatePointCommand.php の非数値 orderId 分岐を、外部APIを呼ばず正常終了する扱いへ変更する1箇所の入力判定修正。",
++      "needsDecision": false,
++      "reason": "スマレジ連携処理を変えるのではなく、コマンド引数の形式不正時の検証結果を直すため④。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 220,
++      "authorCat": "7",
++      "verdict": "REFUTED",
++      "correctedCat": "6",
++      "effortDays": 2.0,
++      "effortBasis": "既存のエラー受注抽出、ポイント連携Action/Messenger処理を流用し、再連携用Commandと対象走査・再投入処理を新設する。",
++      "needsDecision": false,
++      "reason": "指摘された不足は外部APIの一呼出し変更ではなく、再連携バッチの入口と一連の処理そのものの不在なので⑥。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 221,
++      "authorCat": "5",
++      "verdict": "REFUTED",
++      "correctedCat": "7",
++      "effortDays": 3.0,
++      "effortBasis": "PaymentStatusCheckAction.php のスタブを、SP.LINKS認証設定、HTTP取引照会、レスポンス解析・エラー変換を行うクライアント実装へ置換する。後続のステータス分岐は既存を流用できる。",
++      "needsDecision": false,
++      "reason": "不足の中心は抽出条件や内部ステータス分岐ではなく、未実装のSP.LINKS外部API呼出しであるため⑦。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 222,
++      "authorCat": "5",
++      "verdict": "UPHELD",
++      "correctedCat": null,
++      "effortDays": 0.5,
++      "effortBasis": "paymentNo順の既存ループに直前paymentNoと照会結果の保持・再利用分岐を追加する。主にAction 1ファイル。",
++      "needsDecision": false,
++      "reason": "同一決済番号なら照会結果を流用するという処理分岐の修正で、⑤業務ロジックが妥当。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 223,
++      "authorCat": "7",
++      "verdict": "UPHELD",
++      "correctedCat": null,
++      "effortDays": 1.5,
++      "effortBasis": "Actionで想定外エラーを蓄積・重複排除し、ループ後に一括送信するよう変更する。MailServiceの引数とメールテンプレートも複数エラー表示へ対応する。",
++      "needsDecision": false,
++      "reason": "主たる改修結果は管理者メールの送信単位・内容という外部副作用の変更なので⑦。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 224,
++      "authorCat": "5",
++      "verdict": "UPHELD",
++      "correctedCat": null,
++      "effortDays": 0.75,
++      "effortBasis": "PaymentStatusCheckAction.php に取引不在・未完了理由の収集を加え、既存の結果detailへまとめる。Commandの表示経路は流用可能。",
++      "needsDecision": false,
++      "reason": "単なる固定文言変更ではなく、照会結果ごとの理由を判定・蓄積する処理追加が中心なので⑤。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 225,
++      "authorCat": "8",
++      "verdict": "UPHELD",
++      "correctedCat": null,
++      "effortDays": 1.5,
++      "effortBasis": "PaymentStatusCheckAction.php の申込み単位begin/commitをバッチ全体の境界へ組み替え、例外時rollbackとコミット後メール送信の順序を整理する。",
++      "needsDecision": false,
++      "reason": "更新内容ではなく、複数申込みをいつ確定・ロールバックするかというトランザクション境界の差なので⑧。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 226,
++      "authorCat": "5",
++      "verdict": "REFUTED",
++      "correctedCat": "2",
++      "effortDays": 0.1,
++      "effortBasis": "CustomerRepository.php のCONCAT内にある固定ラベル `:tel02:` 1箇所を `:tel01:` に直す。取得列やメール送信経路は変更不要。",
++      "needsDecision": false,
++      "reason": "電話番号の業務処理ではなく、メール本文へ出すラベル文字列だけの修正なので②。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 227,
++      "authorCat": "5",
++      "verdict": "REFUTED",
++      "correctedCat": "6",
++      "effortDays": 7.0,
++      "effortBasis": "専用Command、店舗・在庫場所・商品規格の抽出Repository/Service、txt生成、ZIP化、規定名生成、S3アップロードの一連を新設し、Step Functions起動対象を用意する。",
++      "needsDecision": false,
++      "reason": "抽出条件の微修正ではなく月次スナップショットバッチ全体が不在で、複数工程を新規実装するため⑥。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 228,
++      "authorCat": "7",
++      "verdict": "REFUTED",
++      "correctedCat": "6",
++      "effortDays": 7.0,
++      "effortBasis": "既存HTTP sitemapとは別に、専用Command、Crawler依存導入、トップ起点巡回、XMLファイル生成、S3配置までのバッチ処理を新設する。",
++      "needsDecision": false,
++      "reason": "S3アップロードだけが欠けているのではなく、設計方式のクローラ型サイトマップ生成処理そのものが存在しないため⑥。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 229,
++      "authorCat": "7",
++      "verdict": "UPHELD",
++      "correctedCat": null,
++      "effortDays": 2.0,
++      "effortBasis": "S3から前回ファイルを取得し、今回生成物と正規化比較して、差異時だけputする処理をサイトマップバッチへ追加する。",
++      "needsDecision": false,
++      "reason": "比較分岐を含むが、前回成果物の取得と条件付きS3アップロードという外部副作用の変更が中心なので⑦。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 230,
++      "authorCat": "7",
++      "verdict": "REFUTED",
++      "correctedCat": "8",
++      "effortDays": 2.0,
++      "effortBasis": "EventBridgeの毎日4:00ルール、Lambdaからバッチ用EC2を起動する設定・権限・実行対象をIaCまたは環境設定へ追加する。",
++      "needsDecision": false,
++      "reason": "サイトマップの内容やS3通信ではなく、いつ・どの環境で起動するかというスケジュールと実行環境の設定なので⑧。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 231,
++      "authorCat": "5",
++      "verdict": "UPHELD",
++      "correctedCat": null,
++      "effortDays": 1.5,
++      "effortBasis": "クローラ設定またはURL判定Serviceへ、階層無制限と日本語・英語を含む除外パス群の判定を実装する。",
++      "needsDecision": false,
++      "reason": "巡回対象URLを含める・除く条件の実装であり、⑤の抽出・分岐ロジックに当たる。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 232,
++      "authorCat": "7",
++      "verdict": "REFUTED",
++      "correctedCat": "6",
++      "effortDays": 7.0,
++      "effortBasis": "専用Command、S3一覧取得とページング、画像種別別サイズ判定、超過一覧作成、宛先設定・メールテンプレート・送信、15分起動対象まで一式を新設する。",
++      "needsDecision": false,
++      "reason": "S3またはメールの一部変更ではなく、入力から通知までの画像サイズ検査バッチ全体が不在なので⑥。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 233,
++      "authorCat": "2",
++      "verdict": "UPHELD",
++      "correctedCat": null,
++      "effortDays": 0.5,
++      "effortBasis": "search_items.twig の11個の無効リンクへ既存商品一覧ルートとカテゴリ・カードセットのパラメータを設定する。新規Controllerや取得経路は不要。",
++      "needsDecision": false,
++      "reason": "静的ブロック内のhref配線で完結するため②。『未実装』という表現だけで⑥にはしない。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 234,
++      "authorCat": "2",
++      "verdict": "UPHELD",
++      "correctedCat": null,
++      "effortDays": 0.1,
++      "effortBasis": "new_items.en.twig のmoreリンク2箇所でタグID定数をTrending Now用へ差し替える。",
++      "needsDecision": false,
++      "reason": "商品取得ロジックは既に正しく、表示中リンクの遷移パラメータだけをTwigで直すため②。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 235,
++      "authorCat": "5",
++      "verdict": "UPHELD",
++      "correctedCat": null,
++      "effortDays": 0.25,
++      "effortBasis": "CustomerFavoriteProductRepository.php の既存QueryBuilderから `pc.stock > 0` 条件を外し、他条件は維持する。",
++      "needsDecision": false,
++      "reason": "お気に入り商品の抽出条件を変更するため⑤。修正自体はクエリ条件1箇所で小さい。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 236,
++      "authorCat": "2",
++      "verdict": "UPHELD",
++      "correctedCat": null,
++      "effortDays": 0.25,
++      "effortBasis": "_product_card.twig でカートボタンをお気に入り表示条件の外へ移し、既存のhasStock/form条件をそのまま利用する。",
++      "needsDecision": false,
++      "reason": "カート追加処理やフォーム生成は既にあり、Twigの表示条件だけを直すため②。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 237,
++      "authorCat": "2",
++      "verdict": "UPHELD",
++      "correctedCat": null,
++      "effortDays": 0.5,
++      "effortBasis": "search_items.twig の静的カテゴリ・カードセットタグへ既存一覧ルートのhrefと絞込値を設定する。",
++      "needsDecision": false,
++      "reason": "必要な修正はTwig内のリンク配線で、商品一覧機能の新設ではないため②。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 238,
++      "authorCat": "2",
++      "verdict": "UPHELD",
++      "correctedCat": null,
++      "effortDays": 0.25,
++      "effortBasis": "ブロック管理対象のshop_recommend.twigにある6個のバナーhrefを各設定URLへ差し替える。ブロックの表示経路自体は既存。",
++      "needsDecision": false,
++      "reason": "管理画面機能やデータ取得経路の新設ではなく、編集可能なTwigブロック内のリンク設定で完結するため②。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 241,
++      "authorCat": "2",
++      "verdict": "UPHELD",
++      "correctedCat": null,
++      "effortDays": 0.1,
++      "effortBasis": "mega_menu.twig のhrefを、既にheader/footerで利用されているデッキ構築先 `/decks` へ1箇所差し替える。",
++      "needsDecision": false,
++      "reason": "既存遷移先を再利用するTwigリンク1箇所の修正なので②。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 242,
++      "authorCat": "6",
++      "verdict": "REFUTED",
++      "correctedCat": "2",
++      "effortDays": 0.1,
++      "effortBasis": "footer_sitemap.twig のhrefを既存の汎用user_dataルート `hareruya_faq` へ差し替える。app/template/user_data/hareruya_faq.twig と同ページを登録する既存Migrationを確認済み。",
++      "needsDecision": false,
++      "reason": "専用ControllerがなくてもFAQページ本体とEC-CUBEのuser_data表示経路は既に存在するため、新規画面実装ではなくリンク1箇所の②。",
++      "confidence": "high"
++    }
++  ]
++}
+
+codex
+28件: UPHELD=17 REFUTED=11 / 工数計 40.9人日
+diff --git a/hareruya-design-docs/design_impl_drift_report/citation_audit/effort_results/ef_08.json b/hareruya-design-docs/design_impl_drift_report/citation_audit/effort_results/ef_08.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..bc81aaf7a94fd74de58da2e0a74291dcae5b8e0d
+--- /dev/null
++++ b/hareruya-design-docs/design_impl_drift_report/citation_audit/effort_results/ef_08.json
+@@ -0,0 +1,313 @@
++{
++  "packetId": "ef_08",
++  "results": [
++    {
++      "rowId": 213,
++      "authorCat": "7",
++      "verdict": "UPHELD",
++      "correctedCat": null,
++      "effortDays": 0.25,
++      "effortBasis": "MailService.php の送信例外 catch で例外を再送出し、既存 Command の Throwable catch と $io->error() に到達させる小変更。",
++      "needsDecision": false,
++      "reason": "直す対象はメール送信という外部副作用の例外処理であり、既存のコンソール出力ロジックは流用できるため⑦が妥当。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 214,
++      "authorCat": "5",
++      "verdict": "REFUTED",
++      "correctedCat": "1",
++      "effortDays": 0.25,
++      "effortBasis": "PointExpireNotificationCommand.php の開始・完了メッセージ2箇所に既定書式の現在日時を付加する。",
++      "needsDecision": false,
++      "reason": "業務上の抽出・計算・分岐は変わらず、CLIが外部へ出す文字列の契約だけを直すため①。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 215,
++      "authorCat": "1",
++      "verdict": "UPHELD",
++      "correctedCat": null,
++      "effortDays": 0.75,
++      "effortBasis": "AdjustPointVarianceCommand.php で設計の `customer:batch adjustPointVariance` 形式を受けるコマンド名・引数または互換ラッパーを用意し、既存名との互換性も整理する。",
++      "needsDecision": false,
++      "reason": "差分はバッチの呼出元が依存するコマンド名と引数形式であり、①の外部インタフェース契約そのもの。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 216,
++      "authorCat": "5",
++      "verdict": "REFUTED",
++      "correctedCat": "1",
++      "effortDays": 0.25,
++      "effortBasis": "AdjustPointVarianceCommand.php の開始・完了メッセージ2箇所へ現在日時の整形出力を追加する。",
++      "needsDecision": false,
++      "reason": "ポイント調整ロジックには触れずCLI出力文字列だけを直すため、⑤ではなく①。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 217,
++      "authorCat": "7",
++      "verdict": "UPHELD",
++      "correctedCat": null,
++      "effortDays": 0.25,
++      "effortBasis": "sendAdjustPointVarianceMail() の TransportException catch から再送出し、既存Commandのエラー出力へ伝播させる。",
++      "needsDecision": false,
++      "reason": "修正点はメール送信失敗という外部副作用の扱いで、⑦が妥当。Command側の出力は既にある。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 218,
++      "authorCat": "1",
++      "verdict": "UPHELD",
++      "correctedCat": null,
++      "effortDays": 1.0,
++      "effortBasis": "SmaregiUpdatePointCommand.php を `smaregi:batch updatePoint <受注ID>` 形式で呼べるようにし、ResendMailAction等の既存呼出箇所も互換性を保って更新する。",
++      "needsDecision": false,
++      "reason": "スマレジ処理内容ではなく、スケジューラや別プロセス呼出しが依存するCLI契約の変更なので①。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 219,
++      "authorCat": "7",
++      "verdict": "REFUTED",
++      "correctedCat": "4",
++      "effortDays": 0.25,
++      "effortBasis": "SmaregiUpdatePointCommand.php の非数値 orderId 分岐を、外部APIを呼ばず正常終了する扱いへ変更する1箇所の入力判定修正。",
++      "needsDecision": false,
++      "reason": "スマレジ連携処理を変えるのではなく、コマンド引数の形式不正時の検証結果を直すため④。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 220,
++      "authorCat": "7",
++      "verdict": "REFUTED",
++      "correctedCat": "6",
++      "effortDays": 2.0,
++      "effortBasis": "既存のエラー受注抽出、ポイント連携Action/Messenger処理を流用し、再連携用Commandと対象走査・再投入処理を新設する。",
++      "needsDecision": false,
++      "reason": "指摘された不足は外部APIの一呼出し変更ではなく、再連携バッチの入口と一連の処理そのものの不在なので⑥。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 221,
++      "authorCat": "5",
++      "verdict": "REFUTED",
++      "correctedCat": "7",
++      "effortDays": 3.0,
++      "effortBasis": "PaymentStatusCheckAction.php のスタブを、SP.LINKS認証設定、HTTP取引照会、レスポンス解析・エラー変換を行うクライアント実装へ置換する。後続のステータス分岐は既存を流用できる。",
++      "needsDecision": false,
++      "reason": "不足の中心は抽出条件や内部ステータス分岐ではなく、未実装のSP.LINKS外部API呼出しであるため⑦。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 222,
++      "authorCat": "5",
++      "verdict": "UPHELD",
++      "correctedCat": null,
++      "effortDays": 0.5,
++      "effortBasis": "paymentNo順の既存ループに直前paymentNoと照会結果の保持・再利用分岐を追加する。主にAction 1ファイル。",
++      "needsDecision": false,
++      "reason": "同一決済番号なら照会結果を流用するという処理分岐の修正で、⑤業務ロジックが妥当。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 223,
++      "authorCat": "7",
++      "verdict": "UPHELD",
++      "correctedCat": null,
++      "effortDays": 1.5,
++      "effortBasis": "Actionで想定外エラーを蓄積・重複排除し、ループ後に一括送信するよう変更する。MailServiceの引数とメールテンプレートも複数エラー表示へ対応する。",
++      "needsDecision": false,
++      "reason": "主たる改修結果は管理者メールの送信単位・内容という外部副作用の変更なので⑦。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 224,
++      "authorCat": "5",
++      "verdict": "UPHELD",
++      "correctedCat": null,
++      "effortDays": 0.75,
++      "effortBasis": "PaymentStatusCheckAction.php に取引不在・未完了理由の収集を加え、既存の結果detailへまとめる。Commandの表示経路は流用可能。",
++      "needsDecision": false,
++      "reason": "単なる固定文言変更ではなく、照会結果ごとの理由を判定・蓄積する処理追加が中心なので⑤。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 225,
++      "authorCat": "8",
++      "verdict": "UPHELD",
++      "correctedCat": null,
++      "effortDays": 1.5,
++      "effortBasis": "PaymentStatusCheckAction.php の申込み単位begin/commitをバッチ全体の境界へ組み替え、例外時rollbackとコミット後メール送信の順序を整理する。",
++      "needsDecision": false,
++      "reason": "更新内容ではなく、複数申込みをいつ確定・ロールバックするかというトランザクション境界の差なので⑧。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 226,
++      "authorCat": "5",
++      "verdict": "REFUTED",
++      "correctedCat": "2",
++      "effortDays": 0.1,
++      "effortBasis": "CustomerRepository.php のCONCAT内にある固定ラベル `:tel02:` 1箇所を `:tel01:` に直す。取得列やメール送信経路は変更不要。",
++      "needsDecision": false,
++      "reason": "電話番号の業務処理ではなく、メール本文へ出すラベル文字列だけの修正なので②。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 227,
++      "authorCat": "5",
++      "verdict": "REFUTED",
++      "correctedCat": "6",
++      "effortDays": 7.0,
++      "effortBasis": "専用Command、店舗・在庫場所・商品規格の抽出Repository/Service、txt生成、ZIP化、規定名生成、S3アップロードの一連を新設し、Step Functions起動対象を用意する。",
++      "needsDecision": false,
++      "reason": "抽出条件の微修正ではなく月次スナップショットバッチ全体が不在で、複数工程を新規実装するため⑥。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 228,
++      "authorCat": "7",
++      "verdict": "REFUTED",
++      "correctedCat": "6",
++      "effortDays": 7.0,
++      "effortBasis": "既存HTTP sitemapとは別に、専用Command、Crawler依存導入、トップ起点巡回、XMLファイル生成、S3配置までのバッチ処理を新設する。",
++      "needsDecision": false,
++      "reason": "S3アップロードだけが欠けているのではなく、設計方式のクローラ型サイトマップ生成処理そのものが存在しないため⑥。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 229,
++      "authorCat": "7",
++      "verdict": "UPHELD",
++      "correctedCat": null,
++      "effortDays": 2.0,
++      "effortBasis": "S3から前回ファイルを取得し、今回生成物と正規化比較して、差異時だけputする処理をサイトマップバッチへ追加する。",
++      "needsDecision": false,
++      "reason": "比較分岐を含むが、前回成果物の取得と条件付きS3アップロードという外部副作用の変更が中心なので⑦。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 230,
++      "authorCat": "7",
++      "verdict": "REFUTED",
++      "correctedCat": "8",
++      "effortDays": 2.0,
++      "effortBasis": "EventBridgeの毎日4:00ルール、Lambdaからバッチ用EC2を起動する設定・権限・実行対象をIaCまたは環境設定へ追加する。",
++      "needsDecision": false,
++      "reason": "サイトマップの内容やS3通信ではなく、いつ・どの環境で起動するかというスケジュールと実行環境の設定なので⑧。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 231,
++      "authorCat": "5",
++      "verdict": "UPHELD",
++      "correctedCat": null,
++      "effortDays": 1.5,
++      "effortBasis": "クローラ設定またはURL判定Serviceへ、階層無制限と日本語・英語を含む除外パス群の判定を実装する。",
++      "needsDecision": false,
++      "reason": "巡回対象URLを含める・除く条件の実装であり、⑤の抽出・分岐ロジックに当たる。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 232,
++      "authorCat": "7",
++      "verdict": "REFUTED",
++      "correctedCat": "6",
++      "effortDays": 7.0,
++      "effortBasis": "専用Command、S3一覧取得とページング、画像種別別サイズ判定、超過一覧作成、宛先設定・メールテンプレート・送信、15分起動対象まで一式を新設する。",
++      "needsDecision": false,
++      "reason": "S3またはメールの一部変更ではなく、入力から通知までの画像サイズ検査バッチ全体が不在なので⑥。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 233,
++      "authorCat": "2",
++      "verdict": "UPHELD",
++      "correctedCat": null,
++      "effortDays": 0.5,
++      "effortBasis": "search_items.twig の11個の無効リンクへ既存商品一覧ルートとカテゴリ・カードセットのパラメータを設定する。新規Controllerや取得経路は不要。",
++      "needsDecision": false,
++      "reason": "静的ブロック内のhref配線で完結するため②。『未実装』という表現だけで⑥にはしない。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 234,
++      "authorCat": "2",
++      "verdict": "UPHELD",
++      "correctedCat": null,
++      "effortDays": 0.1,
++      "effortBasis": "new_items.en.twig のmoreリンク2箇所でタグID定数をTrending Now用へ差し替える。",
++      "needsDecision": false,
++      "reason": "商品取得ロジックは既に正しく、表示中リンクの遷移パラメータだけをTwigで直すため②。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 235,
++      "authorCat": "5",
++      "verdict": "UPHELD",
++      "correctedCat": null,
++      "effortDays": 0.25,
++      "effortBasis": "CustomerFavoriteProductRepository.php の既存QueryBuilderから `pc.stock > 0` 条件を外し、他条件は維持する。",
++      "needsDecision": false,
++      "reason": "お気に入り商品の抽出条件を変更するため⑤。修正自体はクエリ条件1箇所で小さい。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 236,
++      "authorCat": "2",
++      "verdict": "UPHELD",
++      "correctedCat": null,
++      "effortDays": 0.25,
++      "effortBasis": "_product_card.twig でカートボタンをお気に入り表示条件の外へ移し、既存のhasStock/form条件をそのまま利用する。",
++      "needsDecision": false,
++      "reason": "カート追加処理やフォーム生成は既にあり、Twigの表示条件だけを直すため②。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 237,
++      "authorCat": "2",
++      "verdict": "UPHELD",
++      "correctedCat": null,
++      "effortDays": 0.5,
++      "effortBasis": "search_items.twig の静的カテゴリ・カードセットタグへ既存一覧ルートのhrefと絞込値を設定する。",
++      "needsDecision": false,
++      "reason": "必要な修正はTwig内のリンク配線で、商品一覧機能の新設ではないため②。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 238,
++      "authorCat": "2",
++      "verdict": "UPHELD",
++      "correctedCat": null,
++      "effortDays": 0.25,
++      "effortBasis": "ブロック管理対象のshop_recommend.twigにある6個のバナーhrefを各設定URLへ差し替える。ブロックの表示経路自体は既存。",
++      "needsDecision": false,
++      "reason": "管理画面機能やデータ取得経路の新設ではなく、編集可能なTwigブロック内のリンク設定で完結するため②。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 241,
++      "authorCat": "2",
++      "verdict": "UPHELD",
++      "correctedCat": null,
++      "effortDays": 0.1,
++      "effortBasis": "mega_menu.twig のhrefを、既にheader/footerで利用されているデッキ構築先 `/decks` へ1箇所差し替える。",
++      "needsDecision": false,
++      "reason": "既存遷移先を再利用するTwigリンク1箇所の修正なので②。",
++      "confidence": "high"
++    },
++    {
++      "rowId": 242,
++      "authorCat": "6",
++      "verdict": "REFUTED",
++      "correctedCat": "2",
++      "effortDays": 0.1,
++      "effortBasis": "footer_sitemap.twig のhrefを既存の汎用user_dataルート `hareruya_faq` へ差し替える。app/template/user_data/hareruya_faq.twig と同ページを登録する既存Migrationを確認済み。",
++      "needsDecision": false,
++      "reason": "専用ControllerがなくてもFAQページ本体とEC-CUBEのuser_data表示経路は既に存在するため、新規画面実装ではなくリンク1箇所の②。",
++      "confidence": "high"
++    }
++  ]
++}
+
+tokens used
+129,418
+28件: UPHELD=17 REFUTED=11 / 工数計 40.9人日

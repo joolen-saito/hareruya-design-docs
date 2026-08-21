@@ -1,0 +1,149 @@
+{
+  "packetId": "rc_11",
+  "results": [
+    {
+      "rowId": 166,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "REFUTED",
+      "correctedClass": "SPEC_BACKED",
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0402_基本設計仕様書(バッチ_在庫管理).html の週間在庫履歴更新バッチ正本を「在庫」「全データ」「検索条件」で確認。src-cell 0402:週間在庫履歴更新バッチ!D54 に「在庫の全データ」、同!B59 に「なし」、同!E25 に「在庫ごと（商品コードごと、店舗ごと、在庫区分ごと）」が実在した。「該当する在庫履歴が無い場合は0」は同HTMLの function-design-embed 内および functions/pf-eccube3/b02-07_batch_product_product_weekly_stock_history_update.md:102 にのみ実在した。表示・レイアウト指摘ではないため画像確認対象外。",
+      "reason": "先行判定は0埋めの明記がリバース詳細設計だけにある点を重視したが、指摘の中核である「商品在庫側の全件を対象にする」はExcel正本の「在庫の全データ」「検索条件なし」で支持される。したがって旧実装だけを根拠とする分類は誤り。現在の DtbWeeklyStockHistoryTempRepository::getStockData() は商品在庫ではなく dtb_stock_history をFROMにするため、履歴皆無の商品在庫を結果行にできず、乖離は再現する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Repository/DtbWeeklyStockHistoryTempRepository.php の getStockData() は `FROM dtb_stock_history sh`、`sh.product_stock_id BETWEEN :start AND :end`、`GROUP BY sh.product_stock_id`。NULLを0にするのは取得済み行の週列だけである。BatchUpdateWeeklyStockHistoryAction::handle() の getLastProductStockId() はID範囲の上限取得にしか使われない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 168,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0402_基本設計仕様書(バッチ_在庫管理).html の週間在庫履歴更新バッチ正本範囲1425-1477を「開始」「完了」「日時」「コンソール」で確認したが該当要件なし。同文言「開始・完了のコンソール出力（日時付き）」は function-design-embed 内の同HTML:1542 と functions/pf-eccube3/b02-07_batch_product_product_weekly_stock_history_update.md:176 に実在した。表示・レイアウト指摘ではないため画像確認対象外。",
+      "reason": "日時付き開始・完了出力はExcel正本ではなく、旧共通コマンドの挙動を記述したリバース詳細設計にだけあるため LEGACY_BACKED は妥当。現コマンドにも開始出力と日時付与は追加されていない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Command/UpdateWeeklyStockHistoryCommand.php の execute() は BatchUpdateWeeklyStockHistoryAction::handle() を直ちに呼び、例外時に `$io->error(...)`、成功時に `$io->success('週間在庫履歴の更新が完了しました。')` を出すだけで、開始出力も日時文字列もない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 169,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "MISDESCRIBED",
+      "checkedQuote": "0404_基本設計仕様書(バッチ_商品管理).html の正本項目表1850-1888を開き、src-cell 0404:ユニサーチフィードTSV!E41 の `product_code`、同!E42 の `branch_status`、同!E45 の `reservation_flg` を確認した。正本項目表に `category_name_en` と `search_word` はない。なお識別ID12が cardset_name_en と release_date で重複しており、正本の実行上の項目行数は38行だった。表示・レイアウト指摘ではないため画像確認対象外。",
+      "reason": "列名差は正本項目表に直接裏付けられるため SPEC_BACKED は正しい。ただし先行の実装実態「39項目」は現在の getHeader() と一致しない。現状は正本38行に対して category_name_en と search_word を加えた40列で、branch_status は is_branch_published に改名されている。乖離自体は残るが記載列数が誤っているため MISDESCRIBED。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/UniSearch/UniSearchExportService.php の getHeader() を実行確認すると40列。28列目 `category_name_en`、36列目 `is_branch_published`、40列目 `search_word` で、`branch_status` はない。ProductClassRepository::getUniSearchFeedSql() も `CASE WHEN p.is_branch_published ... AS is_branch_published` と `p.search_word AS search_word` を返す。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 170,
+      "originalClass": "UNCERTAIN",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "UNSURE",
+      "checkedQuote": "0404_基本設計仕様書(バッチ_商品管理).html の正本を「本店ECの在庫数」「支店ID:在庫数」「在庫有無のみ」で確認。src-cell !F42 は「在庫数は本店ECの在庫数」、!F43 は「在庫のカラムにすべての店舗のEC在庫数を連携する」、!F44 は「支店ID:在庫数...の形式で指定可能であれば指定したい」と記す一方、!F45 は「（在庫有無のみ検索できればよいので、数量は不要か）」と未確定の問いを記す。項目表!M31 は「本店ECの在庫数...店舗のEC在庫を反映する」、!BI31 は「在庫の有無を検索する」。表示・レイアウト指摘ではないため画像確認対象外。",
+      "reason": "Excel正本には数量連携を望む記述と、数量不要の可能性を残す記述が併存し、stock値の確定形式を一意に決められない。よって根拠区分の UNCERTAIN は妥当。現実装の店舗ID集合が「在庫有無のみ」という未確定案を満たす可能性があり、確定的な乖離判定もできない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Repository/ProductClassRepository.php の getUniSearchFeedSql() 内 stock_agg は、在庫ありの `base_info_id` を `string_agg(..., E'\\x01')` し、SELECTで `stock.stock AS stock` を返す。在庫数量そのものや `支店ID:在庫数` は出力しない。",
+      "severityOpinion": "med",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 171,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0402/0404の該当HTMLと functions/pf-eccube3/b02-07_batch_product_product_weekly_stock_history_update.md を `product:batch exportWeeklyStockHistoryCsv` で検索。文字列は0404 HTML:1922等および0402 HTML:1508等の function-design-embed 内と、埋め込み元md:63に実在したが、src-cell/data-excel-refを持つ正本セルには存在しなかった。0402正本は実行トリガーを「スケジュール起動(Step Functions)」とするだけでコマンド名を定めない。表示・レイアウト指摘ではないため画像確認対象外。",
+      "reason": "旧 `ProductBatch` のサブコマンド名を根拠とする要求で、Excel正本にはないため LEGACY_BACKED は妥当。現在の新実装にも旧コマンド名の互換入口はない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Command/UpdateWeeklyStockHistoryCommand.php の AsCommand名は `eccube:update-weekly-stock-history`。現ツリーを `product:batch|exportWeeklyStockHistoryCsv` で検索しても実装入口は見つからない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 172,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0404 HTMLの `weekly_stock_history.csv_path`、`DBは更新しない` は1893の function-design-embed:start より後の1939にのみ実在した。埋め込み元md:123,125にも同文言を確認した。関連するExcel正本0402の src-cell !D9 は「週間在庫履歴テーブルに結果を保存する」、!AG50 は出力先を「DB」と明記した。表示・レイアウト指摘ではないため画像確認対象外。",
+      "reason": "CSV出力・DB非更新は旧実装由来で、移行先のExcel正本は明確にDB保存へ変更しているため LEGACY_BACKED は妥当。現在も旧CSV契約は実装されておらず、旧期待値との差はそのまま存在する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Product/BatchUpdateWeeklyStockHistoryAction.php の handle() は一時テーブルをtruncate/insertし、DtbWeeklyStockHistoryRepository::replaceFromTemp() で本テーブルを置換する。現ツリーに `weekly_stock_history.csv` と `HareruyaEc.const.weekly_stock_history` の出力実装はない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 173,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "REFUTED",
+      "correctedClass": "SPEC_BACKED",
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "参照先0404の「商品在庫に存在する全商品規格ID」「該当する在庫履歴が無い場合は0」はfunction-design-embed内だった。一方、関連正本0402の src-cell 0402:週間在庫履歴更新バッチ!D54 に「在庫の全データ」、!B59 に検索条件「なし」、!E25 に「在庫ごと...最新の在庫変動履歴を取得」が実在した。「履歴が無い場合は0」の明記は埋め込み元md:102だけだった。表示・レイアウト指摘ではないため画像確認対象外。",
+      "reason": "0埋めの明記自体は旧実装由来だが、全商品在庫を入力対象とする要求は関連するExcel正本に存在する。履歴テーブル起点のため商品在庫全件を処理できないという指摘の中核は正本で裏付けられ、LEGACY_BACKED分類は誤り。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Repository/DtbWeeklyStockHistoryTempRepository.php の getStockData() は `FROM dtb_stock_history sh` で履歴行をgroup化する。`$column === null ? 0` は生成済みのproduct_stock_id行の欠損週にしか作用せず、履歴が皆無の商品在庫行は生成されない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 174,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0404正本の src-cell !D85「管理画面から実行」、!E86「管理画面の商品管理＞ユニサーチフィード作成メニューでフィードファイル作成可能」、!E18「TSV...doneファイルを指定のディレクトリ以下に出力」、!D130/!D131の指定ディレクトリ出力を確認した。別シートB02-09の src-cell !D9 は「作成されたフィードファイルをユニサーチのサーバに送信する」と明確に分離している。表示文言・レイアウトの指摘ではなく処理副作用の指摘なので画像確認対象外。",
+      "reason": "Excel正本はB02-08の作成とB02-09の送信を別機能・別トリガーとして定義しているため SPEC_BACKED は妥当。管理画面の作成操作が送信まで行う現状は変わっていない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Product/UniSearchFeedController.php の index() POSTは UniSearchFeedCreateAction::handle() を呼ぶ。同handle() は `exportAndUpload(false)` を渡し、UniSearchExportService::exportAndUpload() は `!$isManualExecution` 分岐で既存リモート削除とgzip/doneのSFTP uploadを実行する。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 176,
+      "originalClass": "UNCERTAIN",
+      "classVerdict": "REFUTED",
+      "correctedClass": "SPEC_BACKED",
+      "driftVerdict": "UNSURE",
+      "checkedQuote": "0404正本の src-cell 0404:ユニサーチフィード送信!D20 に「現行のCron設定」、!D21 に `*/5 * * * * sh -x /home/ec2-user/feed_upload.sh > /home/ec2-user/feed.log 2>&1`、!F25 に「スケジュール起動(Step Functions)」、!AO25 に「5分おき」が実在した。いずれもfunction-design-embed外のExcel正本セル。表示・レイアウト指摘ではないため画像確認対象外。",
+      "reason": "実行トリガーと間隔の設計根拠は曖昧ではなくExcel正本に明記されるので、根拠区分UNCERTAINは誤りでSPEC_BACKED。ただしStep Functions/EventBridgeの実環境設定はアプリリポジトリ外に存在し得て、提示範囲だけでは現在の運用スケジュール欠落を確定できないため driftVerdict は UNSURE。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Command/SendUnisearchProductFeedCommand.php に AsCommand `unisearch:batch` はある。src/app/bin/script/scripts/.github/infraを `unisearch:batch|feed_upload.sh|feed.log|*/5|rate(|Schedule.cron|schedule:` で確認したが、同コマンドを5分おきに起動する定義は見つからず、infraのSchedule.cronはdatastoreバックアップ用だけだった。",
+      "severityOpinion": "med",
+      "confidence": "low"
+    },
+    {
+      "rowId": 177,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0405正本の src-cell 0405:注文番号登録!E100 に「注文番号(8桁0埋め後、末尾から6桁取得）」、!F106 に例 `2010010123451` が実在した。実際に現クラスの getProductBarcode(..., `12345`) を実行すると `201001123457`、SmaregiOtcProductCodeGenerator::generate(`1`,`12345`) は設計例どおり `2010010123451` だった。表示・レイアウト指摘ではないため画像確認対象外。",
+      "reason": "採番規則はExcel正本に直接あるため SPEC_BACKED は正しい。正しい新Generatorは存在するが、親バッチが先に旧ロジックでsmaregi_codeを設定し、同期サービスが既存値を優先するため、対象経路の乖離は現在も再現する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Smaregi/SmaregiOtcOrderPostAction.php の handle() は自身の getProductBarcode() を呼び、同メソッドは `$inStoreCode.$extension.$shopCode.substr($orderNumber, -6)` と0埋めしない。SmaregiOtcOrderSyncService::sync() は Order::getSmaregiCode() が空のときだけ新Generatorを呼ぶ。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 178,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0405正本の src-cell 0405:注文番号登録!E116「部門ID」と!F117「6: 店頭受取（固定）」を実物確認した。app/DoctrineMigrations/Version20251125161057.php の初期値 `smaregi_category_id=6` と、AdditionalSystemFormType の編集可能な同TextTypeも確認した。表示・レイアウト指摘ではないため画像確認対象外。",
+      "reason": "固定6はExcel正本に直接あるので SPEC_BACKED は正しい。初期値は6だが、API送信時の値は編集可能な設定を毎回解決しており、コードとして6固定を保証しないため乖離は再現する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/MessageHandler/SmaregiOtcSyncMessageHandler.php の resolveSmaregiCategoryId() は MtbOption::SMAREGI_CATEGORY_ID の option_valueを返し、handle()からSmaregiOtcOrderSyncService::sync()へ渡す。SmaregiOtcProductBodyBuilder::buildForCreate() は受け取った値をそのまま `categoryId` に設定する。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 182,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0405正本の src-cell 0405:店頭注文番号初期化!C34「全件を物理削除」と!C35「ID...をリセットして、1から」を確認したが、トランザクション境界の指定はなかった。「削除と採番カウンタ初期化は別の文」「1トランザクションでまとめた更新ではなく」はfunction-design-embed内の同HTML:1515,1535と埋め込み元 functions/pf-eccube3/b05-03_batch_order_order_store_call_number_initialize.md に実在した。表示・レイアウト指摘ではないため画像確認対象外。",
+      "reason": "独立文・非単一トランザクションという条件はExcel正本ではなく、旧MySQL実装の逐次実行を記述したリバース詳細設計にだけあるため LEGACY_BACKED は妥当。現在のActionは明示的に一つのトランザクションで囲むままである。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Admin/Order/TruncateWaitingNumberAction.php の handle() は beginTransaction() 後、DtbWaitingNumberRepository::truncateWaitingNumber()、DtbWaitingNumberCounterRepository::truncateWaitingNumberCounter()、各店舗カウンタpersist/flushを行ってcommitし、例外時はrollbackする。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    }
+  ]
+}

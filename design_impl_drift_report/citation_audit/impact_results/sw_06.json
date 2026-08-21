@@ -1,0 +1,365 @@
+{
+  "packetId": "sw_06",
+  "results": [
+    {
+      "rowId": 181,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "設計名 `order:batch truncateWaitingNumber` ではコマンドを起動できず、店頭注文番号と採番カウンタが初期化されない。",
+      "checked": "src/Eccube/Command/TruncateWaitingNumberCommand.php:25 の AsCommand 名を確認し、src/Eccube・app・html を設計名、truncateWaitingNumber、alias/setAliases で検索したが別名登録はなかった。",
+      "reason": "コマンド名はこの行ではCLIの利用者向け入口そのものであり、内部識別子だけの差ではない。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 182,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "2操作目や再登録で失敗したとき、実装は先行削除もロールバックするため、設計の独立実行時とはDBに残る待ち番号・カウンタ状態が異なる。",
+      "checked": "src/Eccube/Service/Admin/Order/TruncateWaitingNumberAction.php:36-57 で beginTransaction、2テーブルのtruncate、再登録、commit、例外時rollbackが同一トランザクション内にあることを確認した。",
+      "reason": "障害時のロールバック範囲と永続データが変わるため外部観測可能である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 183,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "処理例外が生の例外として伝播せず、固定のエラー見出しと例外メッセージがコンソールへ出て終了コードFAILUREへ変換される。",
+      "checked": "src/Eccube/Command/TruncateWaitingNumberCommand.php:40-48 の catch (Throwable)、io->error、Command::FAILURE を確認し、Action側は src/Eccube/Service/Admin/Order/TruncateWaitingNumberAction.php:54-57 で再throwすることも確認した。",
+      "reason": "運用者が観測する標準出力・例外経路・終了形態が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 184,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "開始出力に日時が含まれず、さらに成功時には設計にない完了メッセージが標準出力へ追加される。",
+      "checked": "src/Eccube/Command/TruncateWaitingNumberCommand.php:38,51 の固定文字列出力を開き、同ファイルに date/DateTime/format による日時付与がないことを確認した。",
+      "reason": "コンソール出力はI/Oであり、日時や完了行の有無は直接観測できる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 185,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "設計名 `order:batch deleteSmaregiProduct` では削除バッチに到達せず、対象受注のスマレジ商品削除ジョブも作成されない。",
+      "checked": "src/Eccube/Command/SmaregiOtcDeleteCommand.php:39 の登録名 `eccube:smaregi:otc:delete` と同:77-111 のenqueue経路を確認し、設計名・aliasをsrc/Eccube、app、htmlで検索したが登録はなかった。",
+      "reason": "CLI入口と、その後の外部API削除・ジョブ永続化の有無が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 186,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "スマレジ商品削除に失敗しても管理者宛エラーメールが送られず、運用者がメールで障害を認知できない。",
+      "checked": "src/Eccube/MessageHandler/SmaregiOtcDeleteMessageHandler.php:100-106,113-130 を開き、失敗時はジョブ失敗化とlogger出力だけであることを確認した。Command、Handler、Service/Smaregi/OtcからMailService/mailer呼出しも検索したが削除失敗経路にはなかった。",
+      "reason": "メール送信の有無は明確な外部I/O差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 187,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "同一ジョブが重複配信・並列実行された場合、実装は後続処理をreturnしてAPI削除を1回に抑えるため、ロックなしの場合とAPI呼出回数・ジョブ処理結果が変わる。",
+      "checked": "src/Eccube/MessageHandler/SmaregiOtcDeleteMessageHandler.php:35-36,45,71-75 で処理ロックの注入と tryBeginProcessingJob が削除本線より前に実行されることを確認した。",
+      "reason": "ロックは単なる内部名ではなく、競合時の外部API副作用と永続ジョブ状態を変える。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 188,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "設計名 `order:batch checkDuplicatePoint` ではポイント二重登録チェックが起動せず、検出結果や通知メールが生成されない。",
+      "checked": "src/Eccube/Command/CheckDuplicatePointCommand.php:32-34,43-65 で実登録名と実行経路を確認し、設計名とaliasをsrc/Eccube、app、htmlで検索したが登録はなかった。",
+      "reason": "CLIコマンド名が実行入口であり、同じ入力に対する処理実行の有無が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 189,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "通知メール送信に失敗してもコンソールへエラーが出ず、Commandは検出件数に応じた成功メッセージと成功終了を返し得る。",
+      "checked": "src/Eccube/Command/CheckDuplicatePointCommand.php:48-65 の例外表示経路と、src/Eccube/Service/MailService.php:2566-2571 の TransportException をlog_criticalだけで握りつぶす実装を確認した。",
+      "reason": "標準出力と終了結果がメール送信失敗時に変わるためIMPACT。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 190,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "設計名 `order:batch checkNotReflectedPointUsage` では未反映チェックを起動できず、検出・通知が行われない。",
+      "checked": "src/Eccube/Command/CheckNotReflectedPointUsageCommand.php:32-37,49-71 で実登録名 `eccube:check-not-reflected-point-usage` と処理を確認し、設計名・aliasの登録をsrc/Eccube、app、htmlで検索したがなかった。",
+      "reason": "CLI入口の不一致によりバッチの出力と副作用が欠落する。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 191,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "`smaregi:batch checkSmaregiErrorOrder` でエラー受注の一括再連携を開始できず、対象受注のポイント・エラー状態が更新されない。",
+      "checked": "src/Eccube/Command/SmaregiUpdatePointCommand.php:26-38 は別名かつ単一orderId用であることを確認し、src/Eccube/Command一覧とsrc/Eccube全体を設計名・checkSmaregiErrorOrderで検索して該当コマンドがないことを確認した。",
+      "reason": "未実装のCLI入口とバッチ副作用は外部から観測可能である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 192,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "スマレジエラーフラグ付き受注が自動列挙・再送されず、明示した単一orderId以外はエラー状態のまま残る。",
+      "checked": "src/Eccube/Repository/OrderRepository.php:985-1022 の getSmaregiErrorOrder 定義、src/Eccube/Service/Smaregi/SmaregiUpdatePointAction.php:32-54 の単一受注find、src/Eccube/Command/SmaregiUpdatePointCommand.php:38,46-62 のorderId入力を確認した。getSmaregiErrorOrderの呼出しは定義以外になかった。",
+      "reason": "処理対象集合とスマレジAPI・DB更新の有無が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 193,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "ポイント再連携が成功しても `smaregi_error_flg` が解除されず、受注が引き続きエラー対象としてDB・管理処理に残る。",
+      "checked": "src/Eccube/Service/Smaregi/SmaregiUpdatePointAction.php:53-78 を開き、成功を示すresult存在時は同:71-72でreturnし、false設定なし、失敗時だけtrue設定することを確認した。",
+      "reason": "成功後の永続フラグ値が設計と異なるため直接的なDB状態差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 194,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "スマレジへ会員の現在ポイント残高ではなく受注使用ポイントの負数が送られ、スマレジ側ポイントの更新値が異なる。",
+      "checked": "src/Eccube/Service/Smaregi/SmaregiUpdatePointAction.php:39-54 で getSpendedPoints を取得し、postSmaregiPointへ `-$suspendPoint` を渡すことを確認した。",
+      "reason": "外部APIパラメータと連携先のポイント残高が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 195,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "エラー受注を順次再連携するバッチ自体がなく、受注間隔を制御したAPI呼出しも発生しないため、再連携件数・API時系列・状態更新が設計と異なる。",
+      "checked": "src/Eccube/Command/SmaregiUpdatePointCommand.php:38,46-62 の単一orderId経路、src/Eccube/Repository/OrderRepository.php:988 の未使用抽出メソッド、src/Eccube/Service/Smaregi/Api/SmaregiGuzzleClientFactory.php:82-95 の共通RateLimiterを確認した。抽出結果をループするB05-08経路はなかった。",
+      "reason": "共通レート制限があっても、未実装の一括再連携フローとその外部副作用は代替されない。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 196,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "`smaregi:batch checkSmaregiTransaction` からWebhook未達取引の救済処理を起動できない。",
+      "checked": "src/Eccube/Command配下のスマレジ関連コマンド一覧を開き、src/Eccube全体をcheckSmaregiTransactionで検索したが該当Command・aliasはなかった。近接実装はsrc/Eccube/MessageHandler/SmaregiTransactionProcessMessageHandler.php:104-130のWebhookイベント前提処理だった。",
+      "reason": "バッチCLI入口の欠落は実行可否そのものを変える。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 197,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "5時間窓または手動指定期間をAPIへ渡す一覧取得が実行されず、その期間の未連携取引が処理対象にならない。",
+      "checked": "src/Eccube/Service/Smaregi/Api/SmaregiTransactionApiClient.php:90-117 にlistTransactionsはあるが、src/Eccube内の呼出しは定義のみだった。src/Eccube/MessageHandler/SmaregiTransactionProcessMessageHandler.php:152-170 は既知の単一transactionHeadIdをgetTransactionするだけと確認した。",
+      "reason": "APIクエリ、取得対象集合、後続DB更新が変わるためIMPACT。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 198,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "Webhookが未達の取引は発見されず、ポイント不整合、スマレジ取引ID未登録、返品・取消の更新漏れがDBに残り得る。",
+      "checked": "src/Eccube/MessageHandler/SmaregiTransactionProcessMessageHandler.php:104-130 で既存Webhookイベントとメッセージを前提にすること、src/Eccube/Service/Smaregi/Api/SmaregiTransactionApiClient.php:101 の一覧APIが未使用であることを確認した。未達取引を探索するCommandもなかった。",
+      "reason": "救済対象の発見・永続データ修正・ポイント副作用の有無が異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 199,
+      "authorVerdict": "UNSURE",
+      "verdict": "IMPACT",
+      "agree": false,
+      "observableEffect": "管理画面でスマレジ送信URLやアクセストークンを変更してもB05-09のAPI呼出先・認証情報は変わらず、環境変数側の値が使われるため、接続先と認証結果が設計と異なり得る。",
+      "checked": "src/Eccube/Form/Type/Admin/AdditionalSystemFormType.php:80-98 とResource/template/admin/Setting/Shop/additional_system.twig:81-96でmtb_option設定の画面露出を確認した。一方app/config/eccube/services.yaml:28-32,79-83とsrc/Eccube/MessageHandler/SmaregiTransactionProcessMessageHandler.php:96-100,154-165は環境変数由来DI値をAPIへ渡していた。",
+      "reason": "保持元の違いは内部配置に閉じず、管理画面から変更可能な永続設定が実際の外部API I/Oに反映されるかを変える。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 200,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "該当バッチが存在しないため、API取得失敗時のコンソールエラーと終了コード1、空結果時の正常終了というCLI契約を返せない。",
+      "checked": "src/Eccube/Command一覧とsrc/Eccube全体をcheckSmaregiTransaction、Command::FAILURE、5時間窓関連語で確認したが該当Commandはなかった。近接するsrc/Eccube/MessageHandler/SmaregiTransactionProcessMessageHandler.php:136-146はlogger記録と例外再throwで、CLI出力経路ではない。",
+      "reason": "標準出力とプロセス終了コードは運用者・スケジューラから観測できるI/Oである。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 201,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "設計が店頭買取の入庫待ちとするステータス12は自動入庫対象にならず、在庫更新・履歴登録・入庫済み化が行われない。",
+      "checked": "src/Eccube/Entity/Master/MtbOtcBuyOrderStatus.php:58-60 で12=未登録在庫あり、13=入庫待ちを確認し、src/Eccube/Service/Admin/OtcBuyOrder/BatchAutoStockAction.php:43-60が13だけを抽出することを確認した。",
+      "reason": "処理対象、在庫数、履歴、買取ステータスという永続データが変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 202,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "同一店舗にスマレジ在庫行が先にある場合、それをECCUBE在庫行として更新し、stock_location_idと在庫数が設計と異なる行へ保存され得る。",
+      "checked": "src/Eccube/Service/Admin/OtcBuyOrder/OtcBuyOrderStockInbound.php:54-82 とService/Admin/Purchase/BuyOrderStockInbound.php:54-82でBaseInfo一致だけの先頭行選択と既存stockLocationId継承を確認した。src/Eccube/Entity/ProductClass.php:595-610のECCUBE在庫専用取得はこの経路で使われていない。",
+      "reason": "更新先DB行・在庫場所・在庫数が変わるためIMPACT。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 203,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "入庫後に更新される在庫永続値がdtb_product_stock側だけとなり、設計が要求するdtb_product_class.stockとの二重保持状態・DBスキーマ契約が一致しない。",
+      "checked": "src/Eccube/Service/EntityManager/ProductStockEntityManager.php:29-51でProductStockだけをsetStock/persistすることを確認した。src/Eccube/Entity/ProductClass.php:570-630にはstockプロパティ・setStockがなく、app/DoctrineMigrations/sql/dtb_product_class.sqlの列一覧にもstockはなかった。",
+      "reason": "DBスキーマと保存値は外部観測面であり、旧列を参照する連携・SQLの結果も変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 204,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "設計名 `otcBuyOrder:batch updateSummary` では日次集計を起動できず、集計テーブルや通知メールが更新されない。",
+      "checked": "src/Eccube/Command/OtcBuyOrderAggregateSummaryCommand.php:34-45,53-90で実登録名、日付引数、Action呼出しを確認し、設計名・aliasをsrc/Eccube、app、htmlで検索したが登録はなかった。",
+      "reason": "CLIコマンド名が外部の実行契約であり、副作用の有無を変える。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 205,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "部門未設定商品があると一覧取得SQLで失敗し、商品名・商品コードを載せた通知メールを送れず、バッチはエラー経路へ進む。",
+      "checked": "src/Eccube/Repository/DtbOtcBuyOrderRepository.php:942-986で両SELECTが `WHERE` 直後に `AND` を置くSQLを確認し、src/Eccube/Service/Admin/OtcBuyOrder/BatchAggregateSummaryAction.php:50-57で同メソッド実行後にだけ通知する経路を確認した。",
+      "reason": "メール送信、コンソール終了結果、DB集計処理の成否が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 206,
+      "authorVerdict": "UNSURE",
+      "verdict": "NO_IMPACT",
+      "agree": false,
+      "observableEffect": "",
+      "checked": "src/Eccube/Command/OtcBuyOrderAggregateSummaryCommand.php:60-90に個別のset_time_limitがないことに加え、実際のCLI入口bin/console:1-13を開いた。bin/console:11がApplication生成・実行前に `set_time_limit(0)` を呼ぶため、本コマンドも通常の `bin/console` 起動時には実行時間制限が解除される。",
+      "reason": "設計要件は共通CLI入口で既に実現されており、対象Command内に同じ呼出しがない差は実装場所だけに閉じる。同じCLI入力に対する時間制限・処理結果・I/Oは変わらない。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 207,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "部門未設定商品の通知時、送信対象件数がログに残らず、運用者がログから通知規模を確認できない。",
+      "checked": "src/Eccube/Service/MailService.php:1340-1372を開き、送信開始、宛先未設定、送信完了は記録する一方、productsのcountや件数をログコンテキストへ渡していないことを確認した。",
+      "reason": "設計で要求された運用ログの内容差はファイルI/Oとして外部観測可能である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 208,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "設計名 `customer:batch lostPoint` ではポイント失効処理を起動できず、会員ポイント・履歴・スマレジ連携ジョブが更新されない。",
+      "checked": "src/Eccube/Command/LostPointsCommand.php:25,35-53で実登録名とAction呼出しを確認し、src/Eccube、app、htmlを設計名、lostPoint、aliasで検索したが別名登録はなかった。",
+      "reason": "CLI入口の不一致によりDB更新と外部連携の有無が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 209,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "スマレジ連携が失敗してもEC側のポイント失効と履歴は先にcommit済みで、設計どおり当該会員をスキップして翌日以降へ持ち越す状態にならない。",
+      "checked": "src/Eccube/Service/Admin/Customer/LostPointsAction.php:65-86でECポイント・履歴・ジョブを先にcommitし、同:112-115で後からdispatchすることを確認した。src/Eccube/MessageHandler/SmaregiCustomerPointAddMessageHandler.php:90-113ではAPI失敗時にジョブを失敗化するがEC側失効を戻さない。",
+      "reason": "現コードではAPI引数送信自体は実装済みだが、失敗時の永続ポイント・履歴・ジョブ状態はなお設計と異なるためIMPACT。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 210,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "ポイント失効バッチの開始・完了コンソール行に日時が含まれず、運用者が得る標準出力が設計と異なる。",
+      "checked": "src/Eccube/Command/LostPointsCommand.php:35-53の開始・完了固定文字列を確認し、同ファイルにdate/DateTime/formatによる日時付与がないことを確認した。",
+      "reason": "日時の有無はコンソールI/Oの具体的な内容差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 211,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "会員ごとに一定の短い待機を挟む設計に対し、実装は連携メッセージを即時dispatchし、共通fixed-window limiterが許す範囲では複数API更新が連続するため、外部APIから見えるリクエスト時系列が異なる。",
+      "checked": "src/Eccube/Service/Admin/Customer/LostPointsAction.php:52-116にsleep/usleepがなくcommit後すぐdispatchすることを確認した。共通対策としてsrc/Eccube/Service/Smaregi/Api/SmaregiGuzzleClientFactory.php:82-95とapp/config/eccube/packages/framework.yaml:86-96の1秒fixed-window制限も確認した。",
+      "reason": "共通上限制御はあるが、各会員間のインターバルと同一ではなく、API I/Oのタイミングは観測可能に変わる。",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 212,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "設計名 `customer:batch pointExpireNotification` では通知バッチを起動できず、対象会員へのメールが送られない。",
+      "checked": "src/Eccube/Command/PointExpireNotificationCommand.php:25,35-53で実登録名と処理を確認し、src/Eccube、app、htmlを設計名、pointExpireNotification、aliasで検索したが別名登録はなかった。",
+      "reason": "CLI入口とメール副作用の有無が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 213,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "メール送信例外が起きてもコンソールへエラーが出ず、Commandは完了メッセージと成功終了を返し得る。",
+      "checked": "src/Eccube/Service/MailService.php:1180-1191でTransportExceptionをlog_critical後returnすること、src/Eccube/Command/PointExpireNotificationCommand.php:40-53ではActionから伝播した例外だけをエラー表示し、通常復帰時はsuccessを出すことを確認した。",
+      "reason": "送信障害時の標準出力と終了コードが設計と異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 214,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "ポイント有効期限通知バッチの開始・完了コンソール行に日時が含まれない。",
+      "checked": "src/Eccube/Command/PointExpireNotificationCommand.php:35-53の固定文字列出力を確認し、同ファイルに日時生成・format処理がないことを確認した。",
+      "reason": "標準出力の文字列差は軽微でも外部観測可能なI/O差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 215,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "設計名 `customer:batch adjustPointVariance` ではポイント差分通知バッチを起動できず、検査・通知処理が行われない。",
+      "checked": "src/Eccube/Command/AdjustPointVarianceCommand.php:25,35-53で実登録名 `eccube:customer:adjust-point-variance` と実行経路を確認し、設計名・aliasをsrc/Eccube、app、htmlで検索したが登録はなかった。",
+      "reason": "コマンド名がCLIの外部入口であり、処理実行の有無が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 216,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "ポイント差分発生通知バッチの開始・完了コンソール行に日時が含まれず、設計と異なる標準出力になる。",
+      "checked": "src/Eccube/Command/AdjustPointVarianceCommand.php:35-53の開始・完了固定文字列を確認し、同ファイルにdate/DateTime/formatによる日時付与がないことを確認した。",
+      "reason": "コンソール出力内容の差は直接観測できるためIMPACT。",
+      "confidence": "high"
+    }
+  ]
+}

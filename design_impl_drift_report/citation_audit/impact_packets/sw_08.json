@@ -1,0 +1,331 @@
+{
+ "packetId": "sw_08",
+ "mode": "sweep",
+ "note": "著者はこれらの大半を IMPACT(外部から観測できる) と判定した。見落とし＝実は NO_IMPACT な行が無いかを独立に判定すること。",
+ "findings": [
+  {
+   "rowId": 253,
+   "機能No": "F03-05",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "マイページで種別 mypage のおすすめブロックを非同期取得し、会員の最新注文商品（最高額商品）を基準商品としておすすめ商品を抽出・スライダー表示する。0件のときのみ空メッセージを表示する。",
+   "差分内容": "src/ 全体で recommendProducts をセットする処理を grep したが不在。ProductRecommendController のみが RecommendService を呼ぶが、マイページからは context=mypage で呼び出されておらず、user_recommend_product.twig の mypage 分岐は死コード。マイページのおすすめ表示は未実装（TODO）。",
+   "実装参照": "src/Eccube/Controller/Front/Mypage/MypageController.php:127-138 ; src/Eccube/Resource/template/default/Mypage/index.twig:20-21,246,266"
+  },
+  {
+   "rowId": 254,
+   "機能No": "F03-05",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "買い物かご種別ではカート内の最高額商品を基準商品とし、カートが空なら基準商品なし＝おすすめ0件を表示する。",
+   "差分内容": "controller の product_id==0 フォールバック（mypage/complete 向けの最新注文基準ロジック）が checkout(=カート) 文脈にも無差別適用される。設計はカート空で『基準商品なし＝0件』を要求しており挙動が異なる。",
+   "実装参照": "src/Eccube/Resource/template/default/Cart/index.twig:299-310 ; src/Eccube/Controller/Block/ProductRecommendController.php:54-60"
+  },
+  {
+   "rowId": 255,
+   "機能No": "F03-05",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "おすすめが0件のとき、おすすめブロックを持つ全ページで『表示するおすすめ商品はまだありません。』（英語 No recommended items to display yet.）を常時表示する。",
+   "差分内容": "src/ 全体で recommend_no_items の使用箇所を grep すると Mypage/index.twig のみ。共通ブロック user_recommend_product.twig に0件時メッセージ分岐が存在せず、設計が要求する常時表示（0件文言）が detail/cart/complete で満たされない。",
+   "実装参照": "src/Eccube/Resource/template/default/Block/user_recommend_product.twig:18-46 ; src/Eccube/Resource/locale/messages.ja.yaml:1172"
+  },
+  {
+   "rowId": 256,
+   "機能No": "F03-06",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "履歴Cookie(history)が無い/空のとき、見出しに加えて履歴無しメッセージ『最近見た商品はありません。』（英語『No Recently Seen Items』, キー history.no_content 相当）を表示する。",
+   "差分内容": "recently_viewed.twig / RecentlyViewedBlockPayloadBuilder.php / messages.ja.yaml / messages.en.yaml を確認。no_content 相当の翻訳キーは存在せず（recently_viewed 系は title のみ, ja.yaml:1199 / en.yaml:979）、履歴無し表示の描画分岐も無く未実装。",
+   "実装参照": "src/Eccube/Resource/template/default/Block/recently_viewed.twig:4,58 ; src/Eccube/Service/Block/RecentlyViewedBlockPayloadBuilder.php:50-68"
+  },
+  {
+   "rowId": 257,
+   "機能No": "F03-06",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "最大15件を『スライダーなし』で表示する（表示対象画面: 本店ECTOP・商品一覧・商品詳細）。",
+   "差分内容": "recently_viewed.twig の3レイアウト分岐と resolveLayout を確認。本店ECTOP(homepage=top)のみカルーセル/スライダー実装で設計の『スライダーなし』要求に不一致。",
+   "実装参照": "src/Eccube/Resource/template/default/Block/recently_viewed.twig:19-42 ; src/Eccube/Service/Block/RecentlyViewedBlockPayloadBuilder.php:87-94"
+  },
+  {
+   "rowId": 258,
+   "機能No": "F03-06",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "フォイル商品のサムネイル（商品画像）にフォイル用の装飾を付す。",
+   "差分内容": "_product_card_simple.twig 全体を確認し foil 出現箇所は :28 の名称接頭辞のみ。画像 section・CSS フックにフォイル用装飾が無く設計の『サムネイルにフォイル装飾』と差異。",
+   "実装参照": "src/Eccube/Resource/template/default/Block/_product_card_simple.twig:5-20 ; :28"
+  },
+  {
+   "rowId": 259,
+   "機能No": "F03-08",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "お気に入り登録商品一覧の案内文言は「お気に入り登録した商品がセール対象になった際、ご登録されているメールアドレスにお知らせをお送りいたします。」（通知契機=セール対象）。",
+   "差分内容": "実通知バッチ（BatchFavoriteSaleNotificationAction／FavoriteSaleNotificationCommand）はセール通知であり設計もセール契機と明記するが、一覧の案内文言は入荷契機で説明しており設計・バッチ実挙動と食い違う。favorite.twig:51 と messages.ja.yaml:697、及びバッチを確認して裏取りした。",
+   "実装参照": "src/Eccube/Resource/locale/messages.ja.yaml:697 (front.mypage.favorite_list.lead) ／ src/Eccube/Resource/template/default/Mypage/favorite.twig:51"
+  },
+  {
+   "rowId": 260,
+   "機能No": "F03-08",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "お気に入り解除で選手情報が無い（未ログイン相当）場合は HTTP400 として処理し、画面文言（メッセージ）は返さない。",
+   "差分内容": "設計は解除時の選手情報なしを HTTP400（文言なし）と規定し追加時の nologin 応答と意図的に区別しているが、実装は追加時と同じ nologin JSON(200)＋文言を返しており HTTPステータス・文言有無ともに相違。ProductController.php removeFavorite/addFavorite を読み比べて確認した。",
+   "実装参照": "src/Eccube/Controller/Front/ProductController.php:773-775 (removeFavorite)"
+  },
+  {
+   "rowId": 261,
+   "機能No": "F03-08",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "一覧画面の見出し（H1）は「お気に入り登録商品一覧」。",
+   "差分内容": "利用者が直接目にするH1見出しの文言差異。favorite.twig:49 と messages.ja.yaml:696 を確認。",
+   "実装参照": "src/Eccube/Resource/locale/messages.ja.yaml:696 (front.mypage.favorite_list.page_title) ／ src/Eccube/Resource/template/default/Mypage/favorite.twig:49"
+  },
+  {
+   "rowId": 262,
+   "機能No": "F03-08",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "一覧のセール絞り込み切替のラベルは「セール対象商品のみ表示する」。",
+   "差分内容": "利用者が目にする切替ラベル文言が設計と相違。favorite.twig:79 と messages.ja.yaml:698 を確認。",
+   "実装参照": "src/Eccube/Resource/locale/messages.ja.yaml:698 (front.mypage.favorite_list.sale_only) ／ src/Eccube/Resource/template/default/Mypage/favorite.twig:79"
+  },
+  {
+   "rowId": 263,
+   "機能No": "F03-08",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "お気に入り登録商品一覧の表示要素として『会員氏名』を表示する。",
+   "差分内容": "設計は一覧の表示要素として『会員氏名』を明記するが、favorite.twig を全文 grep しても Customer/会員/氏名/様/name01 のいずれも一致無く、当該画面枠で navi.twig（welcome=会員氏名）も include されないため会員氏名が表示されない。",
+   "実装参照": "不在（src/Eccube/Resource/template/default/Mypage/favorite.twig 全文 grep、及び navi.twig の include 状況を確認）"
+  },
+  {
+   "rowId": 264,
+   "機能No": "F04-02",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "「注文する」ボタン文言を支払方法で変更する(コンビニ決済→コンビニ決済へ／クレジットカード決済→クレジットカード決済へ／支店→購入する)。",
+   "差分内容": "index.twig:768 は固定 trans。支払方法選択(data-trigger=change)や支店で文言を変える処理が Twig にもJS(textContent書換なし)にも無く、localeに「コンビニ決済へ/クレジットカード決済へ」文言も不在。",
+   "実装参照": "src/Eccube/Resource/template/default/Shopping/index.twig:767-769, src/Eccube/Resource/locale/messages.ja.yaml:1504, html/template/default/assets/hareruya/js/har"
+  },
+  {
+   "rowId": 265,
+   "機能No": "F04-03",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "新規登録時、アドレス帳件数が登録上限（20）以上なら『お届け先登録数の上限を超えています。』(front.shopping.error.customer_address_max) の上限超過エラーをご注文方法指定画面のエラー領域へ表示し、ご注文方法指定へ戻す。",
+   "差分内容": "ShoppingController.php:788-792 で404例外分岐を確認。messages.ja/en.yaml を grep し front.shopping.error.customer_address_max と当該文言が不在（common.customer_address_count_is_over のみ存在、文言・挙動が異なる）ことを確認。",
+   "実装参照": "src/Eccube/Controller/Front/ShoppingController.php:788-792"
+  },
+  {
+   "rowId": 266,
+   "機能No": "F04-03",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "編集画面表示時に注意文『既にいただいています（準備中も含む）ご注文の注文者ならびに配送先の情報は変更されませんので、変更が必要な場合は弊社へご連絡をお願い致します。』を常時表示。",
+   "差分内容": "shopping_shipping_edit ルートの描画テンプレートが Shopping/shipping_edit.twig であることを ShoppingController.php:761-763 で確認。同テンプレート全文を精読・grep し edit_notice/変更されません/弊社へご連絡 が無いことを確認。",
+   "実装参照": "不在（src/Eccube/Resource/template/default/Shopping/shipping_edit.twig）"
+  },
+  {
+   "rowId": 267,
+   "機能No": "F04-03",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "編集画面の住所欄の下に入力注意『※町名・番地の入力漏れにご注意ください。』（日本語のみ）を表示。",
+   "差分内容": "shipping_edit.twig の住所セクション(231-288)を精読、および template を grep し当該注意文が無いことを確認。",
+   "実装参照": "不在（src/Eccube/Resource/template/default/Shopping/shipping_edit.twig:231-288）"
+  },
+  {
+   "rowId": 268,
+   "機能No": "F04-03",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "編集画面の見出しは『配送先の新規登録・変更』（英語 Register New/Change Address）を表示。",
+   "差分内容": "shipping_edit.twig の見出し出力キーを特定し、messages.ja/en.yaml で当該キーの値を確認。設計指定文言（日英）を grep して実装に存在しないことを確認。",
+   "実装参照": "src/Eccube/Resource/template/default/Shopping/shipping_edit.twig:62,64,74,76 / messages.ja.yaml:1516-1517 / messages.en.yaml:1308-1309"
+  },
+  {
+   "rowId": 269,
+   "機能No": "F04-03",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "国が日本で都道府県が国外、または国が日本以外で都道府県が国外でない場合は不整合として国の項目にエラーを付与し編集画面を再表示する。エラー文言『The combination of country and region is incorrect.』（キー form.country.error.invalid）を国の項目直下に表示する。",
+   "差分内容": "設計が指定する利用者向けの国・都道府県整合バリデーションエラー（国項目直下の指定文言表示）が実装に存在しない。国=日本＋都道府県=国外 の不整合入力が PrefType（フィルタ無し）で構造的に可能であり、CustomerAddressType の POST_SUBMIT や ShippingType にも整合検証が無く、メッセージキー form.country.error.invalid・文言も messages.ja.yaml/en.yaml に不在。海外時の pref 強制上書き(CustomerAddressType.php:179)は片方向是正に過ぎず、設計の『国にエラーを付与』とは挙動が異なる。反証で実装不在を再確認済み",
+   "実装参照": "不在。探索: src/Eccube/Form/Type/Front/CustomerAddressType.php:145-181(POST_SUBMIT), src/Eccube/Form/Type/Front/EntryType.php:197-231, src/Eccube/Form/Type/Shopping/"
+  },
+  {
+   "rowId": 270,
+   "機能No": "F04-04",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "購入完了本文『注文完了メールをお送りしました。届かない場合はお手数ですが当店のヘルプページを御覧ください。』",
+   "差分内容": "翻訳キーの文言を確認したところ、届かない場合の誘導先が設計の『当店のヘルプページを御覧ください』ではなく『お問い合わせ』となっており核心文言が相違。",
+   "実装参照": "src/Eccube/Resource/locale/messages.ja.yaml:1508-1510 / src/Eccube/Resource/template/default/Shopping/complete.twig:104-107"
+  },
+  {
+   "rowId": 271,
+   "機能No": "F05-01",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "TOPの2番目のコーナーとして『強化買取』タグが付いた商品を、各タグの商品／本店公開／NM／買取価格1円以上／優先表示商品の商品コード順／最大60件の条件で表示する。",
+   "差分内容": "設計の★カスタマイズ要件は当該コーナーを『強化買取』タグ商品と規定するが、実装は汎用の新着(NEW_ITEMS_ID=1)タグを表示対象にしており、コーナーは在るが表示対象タグが設計と異なる。",
+   "実装参照": "src/Eccube/Resource/template/default/Block/purchase_new_product.twig:3,7"
+  },
+  {
+   "rowId": 272,
+   "機能No": "F05-03",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "買取商品一覧の「マイナス（商品数減）ボタン」：押下すると商品数を1つ減らす。商品数が1の場合に押下すると、商品数を20にする（20へ循環させる）。",
+   "差分内容": "設計は識別ID8で『商品数が1の場合に押下すると、商品数を20にする』循環挙動を明示。実装は1で下限固定し20へ戻さない。card twig は .purchase-detail-qty を用い body_class に purchase_page を含むため当ハンドラが適用される。他JS（hareruya-products.js等）に循環処理は不在。",
+   "実装参照": "ec-cube-enterprise/src/Eccube/Resource/template/default/Block/js/Purchase/purchase_js.twig:44-55"
+  },
+  {
+   "rowId": 273,
+   "機能No": "F05-03",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "買取特集タグが1件指定のとき、そのタグの説明文（フリーエリア）を買取商品一覧の上部に表示する。",
+   "差分内容": "設計は買取一覧の表示要素として『買取特集タグ説明（該当時）』を挙げ1件指定時のフリーエリア表示を明記。入口(search)・テンプレート(search.twig)・買取Blockを探索したが該当表示は不在。Tagエンティティに free_area 列はあるが買取一覧で参照していない（getFreeArea 呼び出しが Front/Purchase 配下に0件）。",
+   "実装参照": "不在（探索: src/Eccube/Controller/Front/Purchase/PurchaseController.php search()返却配列、src/Eccube/Resource/template/default/Purchase/search.twig、getFreeArea参照なし）"
+  },
+  {
+   "rowId": 274,
+   "機能No": "F05-03",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "検索結果が0件のとき、一覧本文に『お探しのカードは見つかりませんでした』と、買取最低保証・ヘルプへの案内を含む文言を表示する。",
+   "差分内容": "設計のエラー・警告メッセージ表は0件案内に買取最低保証・ヘルプ案内を含めることを明記。空結果描画(showEmptyResult)とロケール(search__product_not_found)を確認したが単一メッセージのみで導線が欠落。表示文言の内容が設計と相違。",
+   "実装参照": "ec-cube-enterprise/html/template/default/assets/hareruya/js/hareruya-purchase-unisearch-list-client.js:152-157（showEmptyResult）, src/Eccube/Resource/template/de"
+  },
+  {
+   "rowId": 275,
+   "機能No": "F05-04",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "GET /{_locale}/purchase/forward/{oldCode} で旧商品コードを新商品コードにマッピングし、対応する買取商品詳細へリダイレクト。マッピング無し/商品取得不可はトップへリダイレクト。DBカラム mtb_product_code_mapping.old_product_code/product_code を使用。",
+   "差分内容": "設計はforward入口・処理フロー・画面遷移・エラー処理を明記するが、ルートもマッピング参照処理も全く存在しない。",
+   "実装参照": "不在（src/Eccube/Controller/Front/Purchase/PurchaseController.php にforwardルート無し, src/Eccube/Repository/Master/MtbProductCodeMappingRepository.php に旧コード検索メソッド無し）"
+  },
+  {
+   "rowId": 276,
+   "機能No": "F05-06",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "★カスタマイズ要件：現行は買取依頼内容の確認画面で『買取利用規約』を表示しているが、リニューアル後はサイト全体で共通の利用規約にまとめるため共通の利用規約を表示し、かつ『冒頭からではなく買取に該当する箇所を表示する』（画面部品#23 ネット買取利用規約テキストエリア：共通の利用規約を表示／買取に該当する箇所を表示）",
+   "差分内容": "fill.twig→Block/terms_modal.twig→net_purchase_terms_text.twig および messages.ja.yaml(front.agreement.s1〜s11/front.purchase.fill.terms_heading) を確認。共通利用規約の表示自体は実装されているが、★カスタマイズで明記された『冒頭からではなく買取に該当する箇所を表示する』が満たされず、モーダルは共通規約を冒頭(第1条 適用範囲)から全文表示する。加えて共通規約側に買取該当条項が統合されておらず、旧・買取専用規約テンプレは渡されても描画されない。利用者が目にする規約表示が設計の要求位置・要求内容と差異が",
+   "実装参照": "src/Eccube/Resource/template/default/Purchase/fill.twig:362-367 / src/Eccube/Resource/template/default/Block/terms_modal.twig:1-166 / src/Eccube/Resource/templa"
+  },
+  {
+   "rowId": 277,
+   "機能No": "F05-06",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "買取依頼完了画面の画面部品ID3「オンライン本人確認について」は画像で、押下時に別ウィンドウでオンライン本人確認について画面へ遷移する（sheet-9 画面部品表／カスタマイズ説明「・別ウィンドウでオンライン本人確認について画面に遷移する」）。",
+   "差分内容": "設計は『別ウィンドウでオンライン本人確認について画面に遷移する』と明記するが、実装のアンカーには target=\"_blank\" が無く同一ウィンドウ遷移で別ウィンドウ要件を満たさない。加えて設計の部品種別は『画像』だが実装はテキストリンクで、意図する画像（QRコード）は complete.twig:63 の TODO で未実装。Purchase/complete.twig のみに当該アンカーが存在し JS 等での別ウィンドウ化も無いことを確認した上での判定。",
+   "実装参照": "src/Eccube/Resource/template/default/Purchase/complete.twig:62-64"
+  },
+  {
+   "rowId": 278,
+   "機能No": "F06-01",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "(1-11)メールアドレス(確認): 同意する押下時にメール不一致なら「同じメールアドレスを入力してください。」を表示する",
+   "差分内容": "設計はメール確認不一致メッセージを「同じメールアドレスを入力してください。」に固定するが、クライアント側の初出表示文言が別キー(email_mismatch=「メールアドレスが一致しません」)を参照しており乖離。",
+   "実装参照": "src/Eccube/Resource/template/default/Entry/index.twig:282, src/Eccube/Resource/locale/messages.ja.yaml:482"
+  },
+  {
+   "rowId": 279,
+   "機能No": "F06-01",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "パスワード(確認)の不一致メッセージは「同じパスワードを入力してください。」",
+   "差分内容": "設計はパスワード確認不一致文言を「同じパスワードを入力してください。」に固定するが、クライアント側初出文言が別キー(password_mismatch=「パスワードが一致しません」)を参照しており乖離。",
+   "実装参照": "src/Eccube/Resource/template/default/Entry/index.twig:334, src/Eccube/Resource/locale/messages.ja.yaml:486"
+  },
+  {
+   "rowId": 280,
+   "機能No": "F06-01",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "仮会員登録完了時にデッキ登録用ユーザーID（英数字の8文字のランダム文字列で一意）を登録する",
+   "差分内容": "設計は deck_user_id を『一意』と要求するが、実装は一意性をアプリ側ベストエフォート照合のみで担保し、DB制約もトランザクション直列化も無く重複可能性を実装自身が認めている。",
+   "実装参照": "src/Eccube/Service/PlayerService.php:28-46, src/Eccube/Entity/DtbPlayer.php:114-115"
+  },
+  {
+   "rowId": 281,
+   "機能No": "F06-02",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "判定順序4/5: スマレジ会員登録連携が成功した場合にのみ会員・選手情報を保存して本会員化を確定する。連携失敗時は本会員化を確定せず(DBは本会員化前のまま)『会員情報の有効化に失敗しました。』エラー画面を表示し、利用者は再度URLを開くことで再試行できる。",
+   "差分内容": "設計の判定順序表・副作用順序・エラーケースを正として実装を精査。会員ステータス更新(283-289)がスマレジ連携(302)より前に自動コミットされ連携失敗時にロールバックが無いため、失敗後に再度URLを開いても getProvisionalCustomerBySecretKey が null→already_activated となり設計要求の再試行が不可能。確定タイミング・ロールバック挙動が設計と逆転している。",
+   "実装参照": "src/Eccube/Controller/Front/EntryController.php:283-289, 302, 384, 393, 410"
+  },
+  {
+   "rowId": 282,
+   "機能No": "F06-02",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "判定順序3: 秘密キーで取得した会員の選手情報にスマレジIDが既にある場合は再登録せず、共通エラー画面『完了済みです。／既に会員登録が完了されております。』を表示して終了する。",
+   "差分内容": "設計の判定順序3を正として実装を精査。スマレジID保有時の分岐がエラー画面ではなく冪等スキップ+正常完了扱いになっている。『完了済み』判定は customer_status(273-279)でのみ行われ、設計指定のスマレジID保有による判定・画面出力は未実装(activate_error.twig の error_type にも該当ケース無し)。",
+   "実装参照": "src/Eccube/Controller/Front/EntryController.php:348-352"
+  },
+  {
+   "rowId": 283,
+   "機能No": "F06-02",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "本登録完了画面の表示文言。完了案内(日本語)『本登録が完了いたしました。』/(英語)『Main registration is completed.』、完了見出し(英語)『Main registration complete』。",
+   "差分内容": "設計の表示文言表(日英明記)を正として実装テンプレート(activate.twig:20-21)と翻訳キー値を突合。日本語完了案内および英語見出し・英語案内が設計値と相違。完了補足(ja)は一致。",
+   "実装参照": "src/Eccube/Resource/locale/messages.ja.yaml:443-445, src/Eccube/Resource/locale/messages.en.yaml:316,323-325"
+  },
+  {
+   "rowId": 284,
+   "機能No": "F06-02",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "共通エラー画面の本文文言。秘密キー不正時『お探しのページはアクセスができない状況にあるか、移動もしくは削除された可能性があります。』、スマレジ連携失敗時『大変お手数ですが、サイト管理者までご連絡ください。』。",
+   "差分内容": "設計のエラー表示文言表を正として activate_error.twig の描画キー('front.entry.activate_error.'~error_type~'.message')と messages.ja.yaml の値を突合。forbidden と activate_failed の本文が設計指定文言と相違することを確認。",
+   "実装参照": "src/Eccube/Resource/locale/messages.ja.yaml:451-456"
+  },
+  {
+   "rowId": 285,
+   "機能No": "F06-03",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "会員ログイン画面に、旧サイト会員向けの常時表示案内『旧サイトで会員登録がお済みの方へ、パスワード再設定のお願い / システムの移行に伴い、新サイトに初めてログインする際には「パスワード」の再設定をお願いします。』を表示する。",
+   "差分内容": "設計は常時表示の静的案内として明記。login.twig 全体・messages.ja.yaml/validators.ja.yaml・src/Eccube/html 配下 grep で該当文言の描画箇所が見当たらない。",
+   "実装参照": "不在"
+  },
+  {
+   "rowId": 286,
+   "機能No": "F06-04",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "再設定画面の入力メールアドレスは形式検証（メール形式・空不可）のみで、会員登録メールとの一致照合は行わない。対象会員はリセットキーのみで特定する。",
+   "差分内容": "設計は再設定画面のメールを形式検証のみとし会員特定はリセットキー単独と明記するが、実装はリセットキー＋メール完全一致で特定しており、登録と異なるメール入力時に更新できない不一致エラーになる。",
+   "実装参照": "src/Eccube/Controller/Front/ForgotController.php:189、src/Eccube/Repository/Views/RegisterCustomerViewRepository.php:143-160"
+  },
+  {
+   "rowId": 287,
+   "機能No": "F06-04",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "再設定URL到達時、(1)キー不正→『アクセスできません。』エラー画面（E-1、トップへボタン）、(2)GET表示時に有効期限内の有効会員取得不可→『アクセスできません。／有効期限が切れているか、無効なURLです。』エラー画面（E-2）を判定別に表示。",
+   "差分内容": "設計はキー不正・キー失効（表示時）に『アクセスできません』系の専用エラー画面/文言を求めるが、実装は表示時も含め全ケースを一律404で処理し E-1/E-2 専用画面や reset_error 文言を出力しない。",
+   "実装参照": "src/Eccube/Controller/Front/ForgotController.php:154-177、src/Eccube/Resource/locale/messages.ja.yaml:508（front.forgot.reset_error 未使用）"
+  },
+  {
+   "rowId": 288,
+   "機能No": "F06-04",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "パスワード更新（リセット完了）成功時に完了ログを保存する（会員ID・メールアドレス・アクセス元グローバルIP）。",
+   "差分内容": "設計はパスワード更新完了時に会員ID・メール・接続元IPを含む完了ログの保存を要求するが、実装の更新成功パスにはログ出力がなく完了ログのみ欠落している。",
+   "実装参照": "src/Eccube/Controller/Front/ForgotController.php:186-215（更新成功パスに該当処理なし）"
+  }
+ ]
+}

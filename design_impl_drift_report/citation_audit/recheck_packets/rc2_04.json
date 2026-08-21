@@ -1,0 +1,381 @@
+{
+ "packetId": "rc2_04",
+ "note": "rowId は drift_findings_list_final.tsv の行番号(ヘッダ除く1始まり)。これらは分類の批判的レビュー済み(レビュー結果列)だが、検証後に実装が変更されている。classVerdict も再判定しつつ、driftVerdict を重点的に確認すること。",
+ "count": 12,
+ "findings": [
+  {
+   "rowId": 348,
+   "機能No": "F07-04",
+   "機能名": "F07-04 大会申込～完了",
+   "ドメイン": "f07",
+   "区分(画面種別)": "front",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "申込同意(1-10)未チェックのまま「支払いへ進む」(1-11)を押しても次画面へ遷移させず、エラーを動的に表示する。",
+   "実装実態": "entry.twig にエラー表示用ノードが無い。hareruya-event.js は `f.disabled=!e` で送信ボタンの disabled を切替え、`f.disabled&&e.preventDefault()` で click を無効化するのみでエラー文言を動的表示しない。専用メッセージ front.event.entry.error.agree_required は ja/en の locale に定義されるだけで src/・html/ から未参照。confirm() は未同意なら event_entry へリダイレクト（動的エラーではない）。",
+   "差分内容": "「遷移させない」はボタン無効化で満たすが「エラーを動的に表示する」が未実装（表示要素・呼出しなし、専用メッセージ未参照）。",
+   "実装参照": "src/Eccube/Resource/template/default/Event/entry.twig:103-109, html/template/default/assets/hareruya/js/hareruya-event.js（data-js-payment-confirm-checkbox 制御部）, src/Eccube/Resource/locale/messages.ja.yaml:6599, src/Eccube/Controller/Front/Event/EventEntryController.php:106-108",
+   "設計書参照": "excel_to_html/output/0307_基本設計仕様書(フロント_イベント).html#sheet-6",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0307_基本設計仕様書(フロント_イベント).html:2965 の src-cell に「申込同意...チェックが入っていない状態で『支払いへ進む』を押しても次の画面には遷移させずエラーを動的に表示する」と明記される。",
+   "旧実装根拠": "判定はExcel正本で確定。参考として旧実装 pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Event/entry.twig:76-79 は単に `<button type=\"submit\" ...>支払方法選択に進む</button>` を表示しており、この新要件の動的エラー根拠にはならない。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Resource/template/default/Event/entry.twig:123-130 は同意checkboxと初期disabledのsubmitを置くがエラー表示ノードがない。ec-cube-enterprise/src/Eccube/Controller/Front/Event/EventEntryController.php:106-108 も未同意時は `redirectToRoute('event_entry', ...)` のみで、動的エラーを返さない。",
+   "根拠検証メモ": "画面遷移防止はボタン無効化とサーバ側リダイレクトで行われるが、正本が要求する動的エラー表示が欠ける。",
+   "対応の根拠(現develop)": "`src/Eccube/Resource/template/default/Event/entry.twig:123-126` は `<input ... name=\"agree\" value=\"1\" data-js-payment-confirm-checkbox>` と label のみでエラー表示用ノードが無く、`:129` の送信ボタンも `data-js-payment-submit disabled` のまま。`html/template/default/assets/hareruya/js/hareruya-event.js` の該当部は `var p=function(e){if(f.disabled=!e,f.removeAttribute(\"tabindex\"),!e)return};p(h.checked),h.addEventListener(\"change\",...),f.addEventListener(\"click\",function(e){f.disabled&&e.preventDefault()})` で disabled 切替と click 抑止のみ（エラー文言の動的表示なし）。`front.event.entry.error.agree_required` は `src/Eccube/Resource/locale/messages.ja.yaml:6669` と en.yaml:4252 に定義されるだけで src/・html/ からの参照は 0 件。`src/Eccube/Controller/Front/Event/EventEntryController.php:106-108` も `if (!(bool) $request->request->get('agree')) { return $this->redirectToRoute('event_entry', ['detailId' => $detailId]); }` とリダイレクトのみ。",
+   "再確認HEAD": "da9c2ba276",
+   "レビュー結果": "UPHELD",
+   "レビュー根拠": "未同意時の遷移禁止と動的エラー表示がExcel正本に一文で直接規定されている。",
+   "mech": {
+    "quote": "NOT_FOUND",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Resource/locale/messages.ja.yaml"
+    ]
+   }
+  },
+  {
+   "rowId": 355,
+   "機能No": "M03-01",
+   "機能名": "M03-01 商品マスター(検索入力)",
+   "ドメイン": "m03",
+   "区分(画面種別)": "admin",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "商品一覧の表示順は棚番号昇順とする。詳細仕様では未指定ソート時は p.update_date DESC、p.id DESC とする。",
+   "実装実態": "未指定ソート時は p.id DESC、IDENTITY(pc.Language) ASC、IDENTITY(pc.CardCondition) ASC で並べ替える。ShelfNumber による昇順指定も p.update_date DESC の既定順もない。",
+   "差分内容": "設計で要求される棚番号昇順、および詳細仕様の p.update_date DESC 既定順が実装の orderBy に存在しない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/ProductRepository.php:1316",
+   "設計書参照": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-3:1039",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:1223 の src-cell に「表示順は、棚番号昇順とする」と明記される。未指定時 `p.update_date DESC, p.id DESC` はリバース詳細側の補足であり、正本根拠ではない。",
+   "旧実装根拠": "判定はExcel正本で確定。参考として旧実装 pf-eccube3/app/Plugin/HareruyaEc/Repository/ProductRepository.php:49-51 はdefault sortを `p.id` とし、棚番号昇順を実装していないため、旧実装踏襲ではなく刷新要件である。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Repository/ProductRepository.php:1385-1397 は指定sortkeyがなければ `orderBy('p.id', 'DESC')`、続いてLanguage/CardCondition順を追加するだけで、棚番号をORDER BYしない。",
+   "根拠検証メモ": "正本の棚番号昇順要件が未達。指摘中のupdate_date/id順はリバース由来なので根拠として採用しない。",
+   "対応の根拠(現develop)": "`src/Eccube/Repository/ProductRepository.php:1386-1397` の Order By は `if (isset($searchData['sortkey']) ...) { $qb->orderBy(self::COLUMNS[$searchData['sortkey']], $sortOrder); $qb->addOrderBy('p.id', 'DESC'); } else { $qb->orderBy('p.id', 'DESC'); }` に続き `$qb->addOrderBy('IDENTITY(pc.Language)', 'ASC');` `$qb->addOrderBy('IDENTITY(pc.CardCondition)', 'ASC');` のままで、棚番号昇順も既定の `p.update_date DESC` も存在しない。`git grep -i shelf da9c2ba276 -- src/Eccube/Repository/ProductRepository.php` のヒットは :1378-1382 の検索絞り込み `->andWhere($qb->expr()->in('pc.ShelfNumber', ':shelf_number'))` のみで、並び順用途の実装はない。`self::COLUMNS`（同 :61-68）にも shelf_number キーはない。",
+   "再確認HEAD": "da9c2ba276",
+   "レビュー結果": "UPHELD",
+   "レビュー根拠": "findingの主要な設計期待である棚番号昇順はExcel正本に直接記載されているためSPEC_BACKEDである。ただし、update_date/idの補足は正本根拠に含めてはならず、比較内容から分離すべきである。",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Repository/ProductRepository.php"
+    ]
+   }
+  },
+  {
+   "rowId": 359,
+   "機能No": "M03-01",
+   "機能名": "M03-01 商品マスター(検索結果)",
+   "ドメイン": "m03",
+   "区分(画面種別)": "admin",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "表示順は、棚番号昇順とする。",
+   "実装実態": "商品一覧クエリは指定sortkeyがあれば列マップでORDER BYし、未指定時はp.id DESC。その後、規格行はLanguage、CardCondition順で並べる。棚番号のsortNo昇順は検索条件プルダウンの選択肢にだけ使われている。",
+   "差分内容": "設計の棚番号昇順が一覧クエリのORDER BYに存在しない。別キーワード（ShelfNumber/shelf_number/sortNo）で確認しても、商品一覧の並び順として使われる実装根拠は見つからない。",
+   "実装参照": "src/Eccube/Repository/ProductRepository.php:1317 / src/Eccube/Repository/ProductRepository.php:1323 / src/Eccube/Repository/ProductRepository.php:1327 / src/Eccube/Repository/ProductRepository.php:1328 / src/Eccube/Form/Type/Admin/SearchProductType.php:387",
+   "設計書参照": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-4:1345",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:1223 の src-cell に「表示順は、棚番号昇順とする」と明記される。",
+   "旧実装根拠": "判定はExcel正本で確定。旧実装 pf-eccube3/app/Plugin/HareruyaEc/Repository/ProductRepository.php:49-51 はdefault sortを `p.id` と定義しており、棚番号昇順は旧実装由来ではない。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Repository/ProductRepository.php:1385-1397 は未指定時 `p.id DESC` とLanguage/CardCondition順で、棚番号昇順をORDER BYに含めない。",
+   "根拠検証メモ": "row393と同じ正本要件を検索結果側から指摘した重複 finding だが、各finding単位では根拠・未達とも確認できる。",
+   "対応の根拠(現develop)": "`src/Eccube/Repository/ProductRepository.php:1386-1393` `if (isset($searchData['sortkey']) && !empty($searchData['sortkey']) && isset(self::COLUMNS[$searchData['sortkey']])) { ... $qb->orderBy(self::COLUMNS[$searchData['sortkey']], $sortOrder); $qb->addOrderBy('p.id', 'DESC'); } else { $qb->orderBy('p.id', 'DESC'); }`、続く `:1395-1397` `// 規格行の表示順: 言語（日本語→英語）→ 状態（NM→SP→…）` `$qb->addOrderBy('IDENTITY(pc.Language)', 'ASC');` `$qb->addOrderBy('IDENTITY(pc.CardCondition)', 'ASC');` のままで、棚番号昇順の ORDER BY は存在しない。`self::COLUMNS`（`src/Eccube/Repository/ProductRepository.php:61-68`: product_id/name/product_code/status/create_date/update_date）にも棚番号は含まれない。ShelfNumber の登場箇所は `:1378-1382` の検索絞り込み `->andWhere($qb->expr()->in('pc.ShelfNumber', ':shelf_number'))` のみ。",
+   "再確認HEAD": "da9c2ba276",
+   "レビュー結果": "UPHELD",
+   "レビュー根拠": "検索結果の表示順に関する期待値を、同一機能M03-01のExcel正本処理概要が直接規定している。",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Repository/ProductRepository.php"
+    ]
+   }
+  },
+  {
+   "rowId": 365,
+   "機能No": "M03-02",
+   "機能名": "M03-02 商品登録編集",
+   "ドメイン": "m03",
+   "区分(画面種別)": "admin",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・未実装",
+   "設計期待値": "商品編集で商品公開ステータスが廃止になった場合、スマレジに登録済みの紐付く商品規格についてDELETE APIを実行し削除する。",
+   "実装実態": "SmaregiProductClassEventServiceには削除メッセージ投入機能があり、ProductClassControllerの規格削除ではdispatchDeleteMessageを呼ぶ。一方、ProductControllerの商品編集更新では商品名変更時のdispatchUpsertのみで、商品ステータスがDISPLAY_ABOLISHEDになった場合の削除ジョブ登録/DELETE投入がない。",
+   "差分内容": "設計の『商品編集で廃止になった場合のスマレジ削除』が、商品編集Controllerの更新確定経路に存在しない。スマレジ削除機構は別経路に存在するが、本機能から呼ばれていない。",
+   "実装参照": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Product/ProductController.php, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Product/ProductClassController.php, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Message, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/MessageHandler。検索語: DISPLAY_ABOLISHED, dispatchDeleteMessage, SmaregiProductClassDeleteMessage, dispatchUpsert, smaregi delete）",
+   "設計書参照": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-5:1684-1686,",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:15122 の正本セル（別添資料__スマレジ連携対象商品!G33）に「商品公開ステータスが廃止になった場合、紐付く商品規格についてスマレジに登録済みの場合削除を行う」と明記されている。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Product/ProductController.php:225-238 は商品更新後を「$app['orm.em']->flush();」「$branchUpdate->noticeProductUpdate(...)」「$app->addSuccess(...)」としており、pf-api/pf-eccube3/pf-article/deck-api を DISPLAY_ABOLISHED・スマレジ削除・商品編集で横断検索しても、この商品編集経路からの商品規格削除処理は確認できない。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Product/ProductController.php:830-855 は商品名変更時に連携対象規格へ「$smaregiProductClassEventService->dispatchUpsert($ProductClass);」を行うだけで、廃止ステータス分岐がない。削除投入は別経路の /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Product/ProductClassController.php:471-476 にある「dispatchDeleteMessage(...)」に限られる。",
+   "根拠検証メモ": "Excel正本に直接根拠があり、現実装の商品編集確定経路には廃止時削除がないため真の乖離。",
+   "対応の根拠(現develop)": "商品編集の更新確定経路のスマレジ連携は `src/Eccube/Controller/Admin/Product/ProductController.php:830-843` `if ($Product->getName() !== $previousProductName) { foreach ($Product->getProductClasses() as $ProductClass) { ... $smaregiProductClassEventService->dispatchUpsert($ProductClass);` の商品名変更時 upsert のみで、ステータスが DISPLAY_ABOLISHED になった場合の DELETE 投入は無い（ProductController 内に `dispatchDelete` は0件）。削除機構自体は存在するが別経路専用: `src/Eccube/Service/Smaregi/SmaregiProductClassEventService.php:116` `public function dispatchDeleteMessage(MessengerJob $job, int $productClassId, int $productId, string $smaregiProductId): void` の呼び出し元は `src/Eccube/Controller/Admin/Product/ProductClassController.php:472` と `src/Eccube/Service/Admin/Product/ProductClassDeleteAction.php:72`（いずれも規格削除）のみ。一括ステータス変更 `src/Eccube/Controller/Admin/Product/ProductController.php:1487-1490` `$Product->setStatus($ProductStatus); $this->productRepository->save($Product);` にもスマレジ削除は無い。監査時点と同一。",
+   "再確認HEAD": "da9c2ba276",
+   "レビュー結果": "UPHELD",
+   "レビュー根拠": "商品編集・廃止ステータス・紐付く商品規格・スマレジ登録済み・削除という期待条件がExcel正本セルに直接まとまって記載されている。",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Controller/Admin/Product/ProductClassController.php"
+    ]
+   }
+  },
+  {
+   "rowId": 401,
+   "機能No": "M03-30",
+   "機能名": "M03-30 基準価格変更CSVアップロード",
+   "ドメイン": "m03",
+   "区分(画面種別)": "admin",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・未実装",
+   "設計期待値": "低価格帯カード価格変更CSVファイルフォーマットのテーブルを追加し、低価格帯カード価格変更CSVファイルをダウンロードするボタンを追加する。画面部品「低価格帯カード価格変更CSVダウンロード」は低価格帯カード価格変更CSVを出力し、「低価格帯カード価格変更CSVファイルフォーマット」を表示する。",
+   "実装実態": "基準価格変更CSV画面は csv_product_standard_price.twig が base_csv_upload.twig を継承し、アップロードフォーム、基準価格CSVフォーマット表、雛形ダウンロード、インポート履歴だけを描画する。低価格帯カード価格変更CSVの出力ボタン、低価格帯フォーマット表、専用ルート、翻訳キーは見当たらない。",
+   "差分内容": "ProductStandardPriceCsvController は基準価格CSV用の form_action_route/template_download_route/history_page_route だけを渡しており、csv_product_standard_price.twig は base_csv_upload.twig の継承のみ。base_csv_upload.twig 側にも低価格帯カードCSV出力導線は無く、別キーワード検索でも低価格帯CSV実装は確認できなかった。",
+   "実装参照": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Product/Csv, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Product, /home/y-saito/Developments/ec-cube-enterprise/app/config/eccube/packages/eccube_nav.yaml, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml, /home/y-saito/Developments/ec-cube-enterprise/html。検索語: 低価格帯, 低価格帯カード価格変更CSV, low_price, simple_low, ProductSimpleLow, admin_product_simple_low, 現行基準価格, 新基準価格）",
+   "設計書参照": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-42:9414-9415,9457-9458",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:10381 のExcel正本は「低価格帯カード価格変更CSVファイルフォーマットのテーブルを追加し、低価格帯カード価格変更CSVファイルをダウンロードするボタンを追加」、同:10423 は画面部品を「低価格帯カード価格変更CSVを出力する」と明記する。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Product/ProductCsvController.php:869-875 の旧価格CSV画面は `getProductPriceCsvHeader()` と単一の価格CSVテンプレートを返す構成で、低価格帯専用導線はこの旧画面経路にない。判定根拠はExcel正本の追加要件である。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Controller/Admin/Product/Csv/ProductStandardPriceCsvController.php:107-118 は基準価格CSVのheaders・取込route・雛形routeだけを渡し、ec-cube-enterprise/src/Eccube/Resource/template/admin/Product/csv_product_standard_price.twig:1-5 は共通テンプレートを継承するだけ。共通テンプレート同:80-113 にも雛形ボタンと1表しかない。指定探索範囲を「低価格帯カード価格変更CSV|low_price|simple_low」で検索して該当実装0件。",
+   "根拠検証メモ": "Excel正本に画面部品と出力動作が直接あり、現実装には専用導線・表・ルートがない。",
+   "対応の根拠(現develop)": "`src/Eccube/Resource/template/admin/Product/csv_product_standard_price.twig` は全5行で `{% extends '@admin/Product/base_csv_upload.twig' %}` と menus/sub_title の定義のみ。`src/Eccube/Controller/Admin/Product/Csv/ProductStandardPriceCsvController.php:109-122` も `'template_download_route' => 'admin_product_product_standard_price_csv_template'` など基準価格CSV用ルートだけを渡す。`src/Eccube`・`app/config`・`html` に対する `低価格帯 / low_price / simple_low / SimpleLow / LowPrice` の横断検索でヒットするのは `src/Eccube/Entity/DtbBuyOrder.php:743` 等のまとめて買取（低価格帯集計）関連のみで、低価格帯カード価格変更CSVのダウンロードボタン・フォーマット表・ルート・翻訳キーは develop に存在しない。",
+   "再確認HEAD": "da9c2ba276",
+   "レビュー結果": "UPHELD",
+   "レビュー根拠": "対象アップロード画面のExcel正本が、低価格帯用フォーマット表、ダウンロード導線、出力動作を直接要求している。",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Resource/locale/messages.ja.yaml"
+    ]
+   }
+  },
+  {
+   "rowId": 403,
+   "機能No": "M03-30",
+   "機能名": "M03-30 基準価格変更CSVフォーマット",
+   "ドメイン": "m03",
+   "区分(画面種別)": "admin",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・未実装",
+   "設計期待値": "M03-30 基準価格変更CSVフォーマットでは、識別ID:5「原価単価」を新規追加し、CSV列として数値(整数)・必須・最大999999999で扱う。",
+   "実装実態": "M03-30 の実装は基準価格変更CSVとして存在するが、雛形ヘッダは「商品ID」「言語ID」「基準価格」「買取価格」の4列のみで、取込ハンドラの列定義も同じ4列のみ。dtb_product_class.wholesale_price は存在するが、このCSVで原価単価列を読み込み・検証・更新する処理はない。",
+   "差分内容": "設計は原価単価をCSV識別ID:5として新規追加する要求を持つ。一方、ProductStandardPriceCsvController::getCsvHeader は4列だけを返し、getRequiredCsvHeader も4列だけを必須化している。ProductStandardPriceImportHandler::getColumns/initializeColumnDefinitions も productId/languageId/standardPrice/buyPrice の4列だけで、ProductClassRepository::updateProductClassForStandardPriceCsv は standard_price/price02/buy_price のみ更新し wholesale_price を更新しない。原価単価・costUnitPrice・wholesalePrice へ翻案して再検索したが、M03-30取込の列定義・更新処理には存在しなかった。",
+   "実装参照": "不在（探索範囲: src/Eccube/Controller/Admin/Product/Csv/ProductStandardPriceCsvController.php, src/Eccube/Service/Csv/Importer/Event/ProductStandardPriceImportHandler.php, src/Eccube/Repository/ProductClassRepository.php, src/Eccube/Entity/ProductClass.php, src/Eccube/Resource/template/admin/Product, src/Eccube/Resource/locale/messages.ja.yaml）",
+   "設計書参照": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-43:9852,9867-9868,9880-9881",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:10833 のExcel正本は識別ID5「原価単価」を「数値(整数)」「◯」「999999999」と定義し、同:10871 は「識別ID:5『原価単価』を新規追加」と明記する。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/Importer/Event/ProductPriceImportHandler.php:70-78 の旧価格CSV列定義には原価単価がなく、旧機能にはないリニューアル追加要件である。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Controller/Admin/Product/Csv/ProductStandardPriceCsvController.php:217-224 と:232-239 は商品ID・言語ID・基準価格・買取価格の4列のみ。ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/ProductStandardPriceImportHandler.php:97-101 も基準価格・買取価格だけを読み、ec-cube-enterprise/src/Eccube/Repository/ProductClassRepository.php:2729-2733 のSQLは `wholesale_price` を更新しない。",
+   "根拠検証メモ": "Excel正本の必須第5列がヘッダ・列定義・更新SQLのすべてで欠落。",
+   "対応の根拠(現develop)": "`src/Eccube/Controller/Admin/Product/Csv/ProductStandardPriceCsvController.php:217-225` `getCsvHeader()` は `'商品ID' => '', '言語ID' => '', '基準価格' => '', '買取価格' => '',` の4列のみ。`src/Eccube/Service/Csv/Importer/Event/ProductStandardPriceImportHandler.php:210-213` の `initializeColumnDefinitions()` も `productId / languageId('言語ID') / standardPrice / buyPrice` の4列だけを定義し、`:193-196` の getColumns も同4列。更新SQL `src/Eccube/Repository/ProductClassRepository.php:2730,2742` は standard_price / price02 / buy_price のみで wholesale_price を更新しない。識別ID:5「原価単価」の列定義・検証・更新は develop に存在しない。",
+   "再確認HEAD": "da9c2ba276",
+   "レビュー結果": "UNSURE",
+   "レビュー根拠": "Excel正本には期待値を支持する項目定義と新規追加指示がある一方、同じ項目行の備考が「こちら対応なし」と明記する。どちらが最終仕様か正本内だけでは確定できず、元分類を無条件には追認できない。",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Repository/ProductClassRepository.php",
+     "src/Eccube/Resource/locale/messages.ja.yaml"
+    ]
+   }
+  },
+  {
+   "rowId": 405,
+   "機能No": "M03-31",
+   "機能名": "M03-31 セール用価格変更CSVアップロード",
+   "ドメイン": "m03",
+   "区分(画面種別)": "admin",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "取込成功時のフラッシュとして『商品登録CSVファイルをアップロードしました。』（キー admin.product.csv_import.save.complete）を表示する。",
+   "実装実態": "$this->addSuccess('admin.register.complete', 'admin') を呼び、messages.ja.yaml:1929 で admin.register.complete = 『登録が完了しました。』を表示。設計指定キー admin.product.csv_import.save.complete は locale に存在しない（grep で不在確認）。",
+   "差分内容": "設計は成功フラッシュの表示文言を『表示メッセージ』節で正とし具体文言と翻訳キーを明記しているが、実装は汎用キー admin.register.complete（『登録が完了しました。』）を使用しており、利用者が目にする成功メッセージの文言が設計と相違する。",
+   "実装参照": "src/Eccube/Controller/Admin/Product/Csv/ProductPriceCsvController.php:176",
+   "設計書参照": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-44",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:11106-11112 のExcel正本には成功メッセージ文言・翻訳キーの記載がない。指定文言はリバース詳細 hareruya-design-docs/functions/pf-eccube3/m03-31_admin_product_product_sale_price_csv_import.md:279 の「商品登録CSVファイルをアップロードしました。」「admin.product.csv_import.save.complete」にのみある。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Product/ProductCsvController.php:920-924 は成功時 `$app->addSuccess('admin.product.csv_import.save.complete', 'admin')` を呼び、pf-eccube3/src/Eccube/Resource/locale/message.ja.yml:133 は同キーを「商品登録CSVファイルをアップロードしました。」と定義する。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Controller/Admin/Product/Csv/ProductPriceCsvController.php:182-189 は成功時 `$this->addSuccess('admin.register.complete', 'admin')` を呼び、ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:1970 は「登録が完了しました。」と定義する。旧キーは同localeに存在しない。",
+   "根拠検証メモ": "正本Excelにはないが、旧実装で表示経路と翻訳値の両方を確認できるため文言の移植差。",
+   "対応の根拠(現develop)": "`src/Eccube/Controller/Admin/Product/Csv/ProductPriceCsvController.php:188` `$this->addSuccess('admin.register.complete', 'admin');` のままで、`src/Eccube/Resource/locale/messages.ja.yaml:1970` `admin.register.complete: 登録が完了しました。` を表示する。設計指定キー `admin.product.csv_import.save.complete` は messages.ja.yaml に存在しない（grep 0 件）。",
+   "再確認HEAD": "da9c2ba276",
+   "レビュー結果": "UPHELD",
+   "レビュー根拠": "成功文言・翻訳キーは言い換えを含めてもExcel正本に見つからず、旧実装では表示経路と翻訳値の両方が確認できた。",
+   "mech": {
+    "quote": "EMBED_ONLY",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Resource/locale/messages.ja.yaml"
+    ]
+   }
+  },
+  {
+   "rowId": 407,
+   "機能No": "M03-31",
+   "機能名": "M03-31 セール用価格変更CSVフォーマット",
+   "ドメイン": "m03",
+   "区分(画面種別)": "admin",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "取込成功時、画面上部のフラッシュ領域に『商品登録CSVファイルをアップロードしました。』(キー admin.product.csv_import.save.complete)を表示する。表示メッセージ節は表示文言を正と宣言。",
+   "実装実態": "成功分岐で $this->addSuccess('admin.register.complete', 'admin') を呼び出し、messages.ja.yaml:1929 で『登録が完了しました。』と定義。設計指定キー admin.product.csv_import.save.complete は messages.ja.yaml に不在。",
+   "差分内容": "import()成功分岐(:176)と messages.ja.yaml を確認した結果、成功フラッシュの表示文言・翻訳キーが設計指定と一致しない。設計は表示文言を正と宣言しており利用者が目にする成功メッセージに差異がある。",
+   "実装参照": "src/Eccube/Controller/Admin/Product/Csv/ProductPriceCsvController.php:176",
+   "設計書参照": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-45",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:11266-11365 のExcel正本フォーマット表には取込成功フラッシュの文言・キーがない。指定はリバース詳細 hareruya-design-docs/functions/pf-eccube3/m03-31_admin_product_product_sale_price_csv_import.md:279 の「商品登録CSVファイルをアップロードしました。」「admin.product.csv_import.save.complete」にのみある。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Product/ProductCsvController.php:920-924 は取込成功時 `admin.product.csv_import.save.complete` をsuccessフラッシュへ積み、pf-eccube3/src/Eccube/Resource/locale/message.ja.yml:133 は実文言を「商品登録CSVファイルをアップロードしました。」とする。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Controller/Admin/Product/Csv/ProductPriceCsvController.php:182-189 は成功時 `admin.register.complete` を使用し、ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:1970 の実文言は「登録が完了しました。」である。",
+   "根拠検証メモ": "rowId 458と設計参照シートだけが異なる重複指摘。どちらも旧実装に根拠があり現表示は異なる。",
+   "対応の根拠(現develop)": "rowId 547 と同一箇所。`src/Eccube/Controller/Admin/Product/Csv/ProductPriceCsvController.php:188` `$this->addSuccess('admin.register.complete', 'admin');` が成功分岐に残り、`src/Eccube/Resource/locale/messages.ja.yaml:1970` `admin.register.complete: 登録が完了しました。` を表示。設計指定の `admin.product.csv_import.save.complete`／『商品登録CSVファイルをアップロードしました。』は locale に存在しない。",
+   "再確認HEAD": "da9c2ba276",
+   "レビュー結果": "UPHELD",
+   "レビュー根拠": "sheet-45正本には成功フラッシュの要求がなく、確認できた設計風記述はリバース詳細である。要求自体は旧実装の表示経路と翻訳値に裏付けられるためLEGACY_BACKEDが妥当。",
+   "mech": {
+    "quote": "EMBED_ONLY",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Resource/locale/messages.ja.yaml"
+    ]
+   }
+  },
+  {
+   "rowId": 437,
+   "機能No": "M04-01",
+   "機能名": "M04-01 在庫検索一覧(検索入力)",
+   "ドメイン": "m04",
+   "区分(画面種別)": "admin",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・未実装",
+   "設計期待値": "在庫移動・振替登録では、複数在庫区分の在庫が選択された場合、アラートを表示し遷移させない。",
+   "実装実態": "一覧行チェックボックスには data-zone が出力されるが、在庫移動・振替ボタンのクリック処理は編集権限、複数店舗、在庫0のみを判定しており、選択行の data-zone が複数かどうかを判定する関数やアラートが無い。",
+   "差分内容": "設計は複数在庫区分選択時の遷移禁止を要求するが、実装の stockMoveBtn/stockTransferBtn クリック処理には isSameZone 相当の判定が存在しない。反証検索で「複数在庫区分」「data-zone」「stockLocationId」「isSameZone」等へ翻案して確認したが、該当する M04-01 一覧側制御は見つからなかった。",
+   "実装参照": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/stock_list_index.twig, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Stock, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml）",
+   "設計書参照": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-4:1392",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:1330-1337 の Excel 正本は在庫移動登録で「以下の場合は、アラートを表示し遷移させない」の一つに「複数の在庫区分が選択された場合」を挙げ、同ファイル:1338-1345 は在庫振替登録にも同じ条件を明記する。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/ProductServiceProvider.php:228-240 の旧商品管理ルートには在庫移動・振替画面がない。pf-api・pf-eccube3・pf-article・deck-api を `複数の在庫区分`, `stock_location_id`, `stockMoveBtn`, `stockTransferBtn` で横断検索しても該当旧実装は見つからない。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/stock_list_index.twig:815-836 の移動・振替クリック処理は未編集権限、複数店舗、在庫0だけを検査し、在庫区分の一意性を検査しない。さらに /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockMoveController.php:162-179 は複数IDを読みながら先頭在庫の `getStockLocationId()` だけをフォーム初期値に使う。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Resource/template/admin/Stock/stock_list_index.twig:816-837` `$('#stockMoveBtn, #stockTransferBtn').on('click', ...)` の判定は `hasUnauthorizedShop()`(768-772行)、`isSameShop()`(761-766行、data-shop-id のみ参照)、`hasZeroStock()`(774-778行) の3つのみ。行チェックボックスには575行 `data-zone=\"{{ Item.stockLocationId }}\"` が出力されるが、JS 側で data-zone を読む箇所は存在しない（同ファイル内 data-zone の出現は575行のみ）。src/・app/ 全体を `isSameZone` `複数の在庫区分` `同一の在庫区分` で grep してもヒット無し。",
+   "再確認HEAD": "da9c2ba276",
+   "レビュー結果": "UPHELD",
+   "レビュー根拠": "対象条件はリバース詳細ではなく、在庫移動と在庫振替の両方についてExcel正本が直接定義している。",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Resource/locale/messages.ja.yaml",
+     "src/Eccube/Resource/template/admin/Stock/stock_list_index.twig"
+    ]
+   }
+  },
+  {
+   "rowId": 456,
+   "機能No": "M04-09",
+   "機能名": "M04-09 在庫移動・振替登録 編集(振替)",
+   "ドメイン": "m04",
+   "区分(画面種別)": "admin",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・未実装",
+   "設計期待値": "在庫振替登録の入力チェック: 「振替対象の商品と振替後商品コードが同一の場合はエラーとする」",
+   "実装実態": "StoreAction は振替後商品コードから ProductClass を検索し（非存在は例外＝別要求は実装済）、振替先 ProductStock を取得して明細保存するのみ。振替元コードと dest_product_code の同一判定・MoveFrom==MoveTo 禁止ガードが無い。翻訳キー admin.stock.transfer.same_source_dest_error は Split/Join アクションのみで使用され振替フローでは未使用。",
+   "差分内容": "設計は移動元＝移動先商品コードが同一の場合をエラーとする要求。実装では同一コードでもそのまま登録されるガードが無いため未実装。(B)振替後商品コード非存在エラーのみ StockTransferStoreAction.php:92 で実装済との対比。",
+   "実装参照": "不在（src/Eccube/Service/Admin/Stock/StockTransferStoreAction.php:86-103）",
+   "設計書参照": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-15",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:6787-6790 のExcel正本 `src-cell` は「振替対象の商品と振替後商品コードが同一の場合はエラーとする」と明記する。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/ProductServiceProvider.php:225-230 の旧在庫ルートに在庫振替登録はなく、旧4リポジトリを `same_source_dest|振替後商品コード|dest_product_code` で横断検索しても対応処理は見つからない。同一判定の根拠はExcel正本である。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Stock/StockTransferStoreAction.php:86-103 は振替元在庫をIDで、振替先規格を商品コードで取得するが、両者の商品コードまたは在庫を比較せず処理を続ける。`admin.stock.transfer.same_source_dest_error` の利用箇所は /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Stock/StockSplitUpdateDestinationStockLocationAction.php:95 と StockJoinUpdateSourceStockLocationAction.php:102 だけで、振替StoreActionでは使われない。",
+   "根拠検証メモ": "振替先コード非存在の検査はあるが、振替元と同一かを拒否する別要件は未実装である。",
+   "対応の根拠(現develop)": "`src/Eccube/Service/Admin/Stock/StockTransferStoreAction.php:86-103` は現 develop でも `$FromProductStock = $this->productStockRepository->find($moveFromProductStockId);` → `$ProductClass = $this->productClassRepository->findOneBy(['code' => $destProductCode]);` → `$ToProductStock = $this->productStockRepository->findOneBy([...])` の順で、振替元コードと `$destProductCode` の同一判定・`MoveFrom == MoveTo` 禁止ガードは無い。フォーム側 `src/Eccube/Form/Type/Admin/StockTransferNewDetailType.php:47-57` の constraints も `new Assert\\NotBlank(['message' => trans('admin.stock.transfer.dest_product_code_required')])` のみで Callback 検証なし。`src/Eccube/Controller/Admin/Stock/StockTransferController.php:241-258` の明細ループも `admin.stock.transfer.not_editable_store` の店舗チェックのみ。翻訳キー `admin.stock.transfer.same_source_dest_error`（develop の `src/Eccube/Resource/locale/messages.ja.yaml:4818`）は依然 `src/Eccube/Service/Admin/Stock/StockJoinUpdateSourceStockLocationAction.php:102` `throw new \\LogicException('admin.stock.transfer.same_source_dest_error');` の結合フローのみで使用され、振替登録フローでは未使用。",
+   "再確認HEAD": "da9c2ba276",
+   "レビュー結果": "UPHELD",
+   "レビュー根拠": "引用は src-cell / data-excel-ref 付きのExcel正本に実在し、同一商品コードをエラーにする期待値を直接支持する。",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Resource/locale/messages.ja.yaml"
+    ]
+   }
+  },
+  {
+   "rowId": 459,
+   "機能No": "M04-10",
+   "機能名": "M04-10 在庫移動・振替情報CSV出力",
+   "ドメイン": "m04",
+   "区分(画面種別)": "admin",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "CSV出力項目の11列目「出庫日」は、移動の場合はステータスが移動中になった日時、振替の場合はステータスが出庫承認済みになった日時を出力し、12列目「入庫日」はステータスが入庫完了になった日時を出力する。",
+   "実装実態": "CSV列自体は存在するが、出庫日/入庫日は StockMoveTransferListCsvExportService が moveFromStockAt / moveToStockAt を読むだけで、通常業務フローでこれらの日時を設定する実装がない。ステータス更新時は status や approval_at / trackingNo が更新される。",
+   "差分内容": "設計はステータス到達日時の出力を要求しているが、実装は未設定の stock_at フィールドを出力している。反証として moveFromApprovalAt / MoveToApprovalAt / STATUS_MOVING / STATUS_INBOUND_APPROVED / SQLカラム名まで検索したが、CSV対象の moveFromStockAt / moveToStockAt への代入はテスト生成以外に存在しない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Exporter/StockMoveTransferListCsvExportService.php:171, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Stock/StockMoveInstructionTrackingRegisterAction.php:46, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Stock/StockMoveInboundApprovalApproveAction.php:158, 不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube と /home/y-saito/Developments/ec-cube-enterprise/html; 検索語: setMoveFromStockAt, setMoveToStockAt, move_from_stock_at, move_to_stock_at）",
+   "設計書参照": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-16:6928",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:7537-7538 のExcel正本 `src-cell` は、出庫日を「移動の場合はステータスが移動中になった日時／振替の場合はステータスが出庫承認済みになった日時」、入庫日を「ステータスが入庫完了になった日時」と定義する。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/ProductServiceProvider.php:225-230 の旧在庫ルートに移動振替CSVはなく、旧4リポジトリを `move_from_stock_at|move_to_stock_at|在庫移動振替情報CSV` で横断検索しても対応実装は見つからない。日時意味の根拠はExcel正本である。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Exporter/StockMoveTransferListCsvExportService.php:170-174 は `getMoveFromStockAt()` と `getMoveToStockAt()` をそのまま出力する。一方、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Stock/StockMoveInstructionTrackingRegisterAction.php:46-53 は移動中への更新時にstatusだけを設定し、日時を設定しない。`setMoveFromStockAt|setMoveToStockAt` の業務コード上の利用はなく、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Entity/DtbStockMoveTransfer.php:236-238,282-284 のsetter宣言だけである（確認範囲: src/Eccube と html、テスト除外）。",
+   "根拠検証メモ": "CSV列はあるが、その値を正本のステータス到達時に記録する業務処理がないため、要求値を出力できない。",
+   "対応の根拠(現develop)": "`src/Eccube/Service/Csv/Exporter/StockMoveTransferListCsvExportService.php:171-172` は現 develop でも `'move_from_stock_at' => $this->formatDateTime($stockMoveTransfer->getMoveFromStockAt()), 'move_to_stock_at' => $this->formatDateTime($stockMoveTransfer->getMoveToStockAt()),` のまま（列見出しは同ファイル:47-48 `'move_from_stock_at' => '出庫日'` / `'move_to_stock_at' => '入庫日'`）。`grep -rn -- \"->setMoveFromStockAt(\\|->setMoveToStockAt(\"` をリポジトリ全体（vendor 除く）に実行した結果、ヒットは `tests/Eccube/Tests/Service/Csv/StockMoveTransferListCsvExportServiceTest.php:228-229` と `tests/Eccube/Tests/Repository/DtbStockMoveTransferRepositoryGetQueryBuilderBySearchDataTest.php:95-96` のテスト生成のみで、`src/` 配下の業務フロー（ステータス『移動中』『出庫承認済み』『入庫完了』到達時）に代入箇所は存在しない。セッター定義は `src/Eccube/Entity/DtbStockMoveTransfer.php:236` `public function setMoveFromStockAt(?\\DateTime $moveFromStockAt): DtbStockMoveTransfer` / 同:282 のみ。",
+   "再確認HEAD": "da9c2ba276",
+   "レビュー結果": "UPHELD",
+   "レビュー根拠": "出庫日・入庫日の列番号、名称、出力日時の意味がいずれもExcel正本に明記されている。",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Entity/DtbStockMoveTransfer.php"
+    ]
+   }
+  },
+  {
+   "rowId": 461,
+   "機能No": "M04-12",
+   "機能名": "M04-12 在庫分割結合検索一覧(検索・結果)",
+   "ドメイン": "m04",
+   "区分(画面種別)": "admin",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・未実装",
+   "設計期待値": "識別ID 4-4「表示件数」: 単一選択、初期値10件、EC-CUBE標準のマスタデータ管理の最大ページ表示にて設定されている表示件数の選択肢を表示する",
+   "実装実態": "検索フォーム・Twig・Controllerのいずれにも表示件数(page_count/PageMax)を選ぶUI/パラメータが無い。Controllerは常に pager => null(:131,:161)を返し、検索結果を全件表示する。page_count/表示件数/disp_number/pageMax いずれも grep でヒットせず。",
+   "差分内容": "表示件数の単一選択(初期10件・標準マスタの選択肢)が実装に存在しない。件数制御自体が成立していない。",
+   "実装参照": "不在 (SearchStockSplitJoinType.php, stock_split_join_index.twig, StockSplitJoinController.php:92-170, StockSplitJoinIndexAction.php)",
+   "設計書参照": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-17",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:7934 のExcel正本 `src-cell` は識別ID4-4「表示件数」を単一選択、初期値 `10件`、説明を「EC-CUBE標準のマスタデータ管理の最大ページ表示にて、設定されている表示件数の選択肢を表示する」と定義する。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/ProductServiceProvider.php:225-230 の旧在庫ルートに分割結合一覧はなく、旧4リポジトリを `split_join|page_count|在庫分割結合` で横断検索しても対応画面は見つからない。表示件数要件の根拠はExcel正本である。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:148-160 と :178-189 は常に `'pager' => null` を返し、検索結果を配列のまま渡す。SearchStockSplitJoinType.php、stock_split_join_index.twig、StockSplitJoinController.phpを `page_count|PageMax|disp_number` で確認したが選択UI・パラメータは存在せず、テンプレートの /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/stock_split_join_index.twig:409-412 のpager表示条件にも到達しない。",
+   "根拠検証メモ": "表示件数選択だけでなくページング用データも生成されていない。",
+   "対応の根拠(現develop)": "`grep -rn \"page_count\\|pageMax\\|disp_number\\|表示件数\\|PageMax\"` を `src/Eccube/Form/Type/Admin/SearchStockSplitJoinType.php` / `src/Eccube/Resource/template/admin/Stock/stock_split_join_index.twig` / `src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php` / `src/Eccube/Service/Admin/Stock/StockSplitJoinIndexAction.php` に対して実行した結果 0 件。Controller は現 develop でも `src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:152` `'pager' => null,`（初期表示）および同:182 `'pager' => null,`（検索後）を返し、`$StockSplitJoins = $this->indexAction->handle(new StockSplitJoinIndexInput($searchData, $rawFormPayload));`（:165）で全件を返却する。表示件数の単一選択UIは存在しない。",
+   "再確認HEAD": "da9c2ba276",
+   "レビュー結果": "UPHELD",
+   "レビュー根拠": "項目、入力形式、初期値、選択肢の由来がExcel正本の同一項目行に揃っている。",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Form/Type/Admin/SearchStockSplitJoinType.php"
+    ]
+   }
+  }
+ ]
+}

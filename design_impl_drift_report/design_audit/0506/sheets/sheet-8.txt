@@ -1,0 +1,173 @@
+# sheet-8 カード詳細IDから買取用商品情報を取得 (HTML行 1634-1807 / 画像 1枚)
+
+カード詳細IDから買取用商品情報を取得
+ドキュメント名
+店頭買取管理　基本設計
+セクション
+—
+プロジェクト名
+店頭買取管理機能
+作成者
+石川
+作成日
+2025-07-17
+更新者
+石川
+更新日
+2026-04-15
+機能No
+A06-06
+機能名
+カード詳細IDから買取用商品情報を取得
+概要
+カード詳細IDから買取用商品情報を取得
+処理概要（★はカスタマイズ項目）
+カード詳細IDから買取用商品情報を取得 / D24 / image 1
+GET　POST　PUT　DELETE　PATCH　OPTIONS　HEAD　有　無　〇
+エンドポイントURL
+/api/buying/{detailId}.json
+プロトコル　HTTP　メソッド　GET　認証の有無　有　認証方式　IP制限
+トークン　リクエスト書式　クエリ　レスポンス書式　JSON
+カスタマイズ説明
+・商品の販売価格を取得していたところを基準価格を取得するようにする
+・商品の在庫を取得していたところを明示的に
+追加開発でログイン者の所属店舗のEC在庫を取得するようにする
+機能仕様処理概要（★はカスタマイズ項目）
+・MTGBuyerで読み取ったカードの情報を取得するために呼ばれる
+・URLで指定されたカード詳細IDからカード情報を取得する
+・カード詳細IDに紐づく商品および商品規格情報を取得する
+・カード詳細IDに紐づくカードに属する他の詳細情報も取得する
+・商品および商品規格情報が削除済みのものは取得しない
+・高額商品コードがはいっていないものを取得する
+★商品の販売価格を取得していたところを基準価格を取得するようにする
+★商品の在庫を取得していたところを
+追加開発でログイン者の所属店舗のEC在庫を取得するようにする
+リクエストパラメータ
+項目名	型	必須	最大文字数
+または最大値	入力例	備考
+カード詳細ID	文字列	〇		173634	URLに含む
+リクエストパラメータサンプル
+https://stg-api.hareruyamtg.com/api/buying/173634.json
+↑カード詳細ID
+ステータスコード
+コード　説明
+200　成功
+404　指定されたカード詳細IDに紐づくカードが見つからなかった場合
+レスポンスデータ
+名前	型	説明
+cards	オブジェクト	カード情報のオブジェクト、指定されたカード詳細が紐づくカード情報
+カードID	オブジェクト	カードIDをキーにしてカード情報オブジェクトを持つ
+cardNameJp	文字列	カード名日本語
+cardNameEn	文字列	カード名英語
+imageFileName	文字列	画像ファイル名
+details	オブジェクト	カード情報に紐づくカード詳細情報をすべて保持するオブジェクト
+カード詳細ID	オブジェクト	カード詳細IDをキーにしてカード詳細情報オブジェクトを持つ
+cardsetCode	文字列	カードセットコード
+cardsetName	文字列	カードセット名
+foilFlg	文字列	フォイルフラグ
+cardNo	文字列	カードNo
+promotionName	文字列	プロモーション名
+productId	文字列	商品ID
+productNameJp	文字列	商品名日本語
+productNameEn	文字列	商品名英語
+rarityCode	文字列	レアリティーコード
+storageCodeName	文字列	略称タグ名
+languageClasses	オブジェクト	言語に紐づく商品情報をすべて保持するオブジェクト
+言語	オブジェクト	言語（EN、JP等）をキーにして言語情報オブジェクトを持つ
+conditionClasses	オブジェクト	状態に紐づく商品情報をすべて保持するオブジェクト
+状態	オブジェクト	状態（NM、SP等）をキーにして状態情報オブジェクトを持つ
+productClassId	文字列	商品規格ID
+productCode	文字列	商品コード
+buyPrice	文字列	買取価格
+price	文字列	基準価格（販売価格を取得していたが基準価格を取得する）
+stock	文字列	在庫（ログイン者の所属店舗のEC在庫を取得する）
+sectionId	文字列	部門ID
+レスポンスデータサンプル
+Source:
+functions/pf-api/a06-06_api_buying_products_by_detail.md
+現行仕様
+A06-06 カード詳細IDから買取用商品情報を取得 / API 店頭買取管理 — カード詳細IDから買取用商品情報を取得
+業務ロジック
+取得対象
+パスで指定されたカード詳細IDが属するカードに紐づく買取用商品を取得する。取得結果が空のときはページが見つからない扱い（404）とする。
+応答値の扱い
+金額・税・ポイント・在庫数量の再計算や丸めは行わない。取得時点の値をJSON応答へ整形して返す。表示用の加工と表示制御は呼び出し元クライアントの設計を正とする。
+応答の階層
+応答はカードIDをキーとする cards オブジェクトを最上位に持つ階層構造とする。各カードの配下にカード詳細ID（details）、言語コード（languageClasses）、状態コード（conditionClasses）の順で入れ子になる。
+エラー時の扱い
+エラー内容	処理
+該当する買取用商品が無い	ページが見つからない扱い（404）とし、標準の例外応答（メッセージを含むJSON）を返す
+入出力
+種類	内容
+入力	パスのカード詳細ID（detailId、整数、必須）。このIDが属するカードに紐づく買取用商品を取得する
+成功時出力	HTTP 200。買取用商品情報のJSON
+失敗時出力	HTTP 404。該当する買取用商品が無いとき
+出力: 応答フィールド
+フィールド	型	説明
+cards	object	カードIDをキーとするオブジェクト。値は各カードの情報。
+cards.<cardId>.cardNameJp	string	カードの日本語名。
+cards.<cardId>.cardNameEn	string	カードの英語名。
+cards.<cardId>.imageFileName	string	カード画像のファイル名。
+cards.<cardId>.details	object	カード詳細IDをキーとするオブジェクト。値は各カード詳細の情報。
+cards.<cardId>.details.<detailId>.cardsetCode	string	カードセットのコード。カードセット未設定のときはnull。
+cards.<cardId>.details.<detailId>.cardsetName	string	カードセットの日本語名。カードセット未設定のときはnull。
+cards.<cardId>.details.<detailId>.foilFlg	boolean	フォイルか否か。
+cards.<cardId>.details.<detailId>.cardNo	string	カード番号。
+cards.<cardId>.details.<detailId>.promotionName	string	プロモーションの日本語名。プロモーション未設定のときはnull。
+cards.<cardId>.details.<detailId>.productId	integer	商品ID。
+cards.<cardId>.details.<detailId>.productNameJp	string	商品の日本語名。
+cards.<cardId>.details.<detailId>.productNameEn	string	商品の英語名。
+cards.<cardId>.details.<detailId>.rarityCode	string	レアリティのコード。
+cards.<cardId>.details.<detailId>.storageCodeName	string	保管コードの名称。未設定のときはnull。
+cards.<cardId>.details.<detailId>.languageClasses	object	言語コードをキーとするオブジェクト。
+cards.<cardId>.details.<detailId>.languageClasses.<languageCode>.conditionClasses	object	状態コードをキーとするオブジェクト。値は商品規格単位の情報。
+…conditionClasses.<conditionCode>.productClassId	integer	商品規格ID。
+…conditionClasses.<conditionCode>.productCode	string	商品コード。
+…conditionClasses.<conditionCode>.buyPrice	integer	買取価格。未設定のときはnull。
+…conditionClasses.<conditionCode>.price	string	販売価格（販売価格列の値）。
+…conditionClasses.<conditionCode>.stock	string	在庫数。
+…conditionClasses.<conditionCode>.sectionId	integer	部門ID。未設定のときはnull。
+成功時の応答例（実装確認値に基づく代表値）。
+{
+"cards": {
+"10001": {
+"cardNameJp": "サンプルカード",
+"cardNameEn": "Sample Card",
+"imageFileName": "10001.jpg",
+"details": {
+"20001": {
+"cardsetCode": "SET",
+"cardsetName": "サンプルセット",
+"foilFlg": false,
+"cardNo": "123",
+"promotionName": null,
+"productId": 30001,
+"productNameJp": "サンプルカード",
+"productNameEn": "Sample Card",
+"rarityCode": "R",
+"storageCodeName": null,
+"languageClasses": {
+"JP": {
+"conditionClasses": {
+"NM": {
+"productClassId": 40001,
+"productCode": "P-40001",
+"buyPrice": 100,
+"price": "300",
+"stock": "5",
+"sectionId": 1
+}
+}
+}
+}
+}
+}
+}
+}
+}
+リニューアル後の仕様
+表示メッセージ
+メッセージID	表示位置	画面上の文言	表示条件	後続処理
+A06-06-MSG-001	API応答JSON（errors配列）	認証エラー	カード詳細ID取得時に、ログイン中の利用者が管理者でない	MTGバイヤー側で認証を行い再試行する
+A06-06-MSG-002	API応答JSON（errors配列）	カードが見つかりません	指定カード詳細IDに対応する買取用カードが0件	対象カード詳細IDを確認して再検索する
+いずれのメッセージも英訳を持たない。

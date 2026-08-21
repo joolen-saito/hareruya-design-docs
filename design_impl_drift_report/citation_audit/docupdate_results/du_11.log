@@ -1,0 +1,4081 @@
+Reading additional input from stdin...
+OpenAI Codex v0.146.0
+--------
+workdir: /home/y-saito/Developments
+model: gpt-5.6-sol
+provider: openai
+approval: never
+sandbox: workspace-write [workdir, /tmp, $TMPDIR]
+reasoning effort: high
+reasoning summaries: none
+session id: 019fc099-c9e8-7740-bf27-073234b86d8a
+--------
+user
+設計書（正本Excel）を最新化する工数を見積もります。実装の修正工数ではありません。
+
+まず手順書を読んでください: /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/DOCUPDATE_TASK.md
+
+担当パケット: /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_packets/du_11.json
+出力先: /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_11.json
+
+厳守事項:
+- **正本はExcel** (/home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/*.xlsx)。
+  HTML(output/)は convert.py の生成物で、直接編集しても次の変換で消える。
+  見積もる対象は「Excelのどのシートのどの表/画像を、どう直すか」の作業量。
+- 根拠区分=SPEC_BACKED は原則 docWork=NONE（設計書は正しく実装が追いついていないだけ）。
+  記述が曖昧で明確化が要る場合だけ FIX。
+- 根拠区分=LEGACY_BACKED は原則 docWork=ADD（設計書の記述漏れ）。
+  ただし移行後に残さない挙動と読めるなら NONE。
+- 表示文言・画面項目は、テキストの表に足せば済むのか、
+  レイアウト**画像の描き直し**まで要るのか(IMAGE)を必ず区別する。
+- 同じシートの行が隣り合うよう並べてある。まとめて直せる分は2件目以降を安くしてよい。
+- HTML再生成と検証は書籍単位の固定費として別途集計するので、1件ごとの見積に含めない。
+- 引用・確認内容の捏造は絶対に禁止。実装側の修正工数と混同しない。
+
+findings 全件について docWork と docEffortDays をJSONで書き込んでください。
+最終メッセージは内訳1行のみ（例: 28件: NONE=14 ADD=10 FIX=2 IMAGE=2 / 計 1.8人日）。
+warning: Codex could not find bubblewrap on PATH. Install bubblewrap with your OS package manager. See the sandbox prerequisites: https://developers.openai.com/codex/concepts/sandboxing#prerequisites. Codex will use the bundled bubblewrap in the meantime.
+codex
+`design-impl-drift-audit` スキルを使います。手順書と担当パケットを読み、正本Excelの該当シート・表・画像を確認したうえで、各 finding の設計書更新工数だけを判定します。
+exec
+/bin/bash -lc "sed -n '1,240p' /home/y-saito/.codex/skills/design-impl-drift-audit/SKILL.md" in /home/y-saito/Developments
+ succeeded in 1876ms:
+---
+name: design-impl-drift-audit
+description: Compare HTML design specifications against an implementation to find functional drift and produce an evidence-backed HTML report. Use when Codex is asked to treat design docs as the source of truth, audit code such as controllers/services/forms/repositories/templates/batches/CSV definitions, continue a partially completed drift report, or update findings JSON/HTML for gaps between design and implementation.
+---
+
+# Design Impl Drift Audit
+
+## Purpose
+
+Use this skill to audit functional differences between HTML design specifications and an implementation repository, with the design docs treated as authoritative. Produce or continue a report that lists concrete differences with design locations, implementation locations, confidence, severity, and impact.
+
+## Repository Discovery
+
+1. Find the design-doc directory and implementation directory from the user request. If omitted, infer from nearby names such as `*-design-docs` and application repos.
+2. Look for an existing report before starting new work. Prefer directories named `design_impl_drift_report`, existing `findings.json`, per-function `findings/*.json`, and `index.html`.
+3. Count total target specs and audited specs so the report clearly states scope and remaining work.
+4. Preserve existing findings. Append or refine; do not overwrite unrelated prior work.
+
+## Audit Workflow
+
+For each target HTML spec:
+
+1. Identify the feature ID, route/action name, UI template, CSV/batch/API behavior, and acceptance rules from the HTML design spec.
+2. Extract a requirement inventory from the HTML spec before looking at code. This inventory must include not only route/screen names, but every concrete requirement in 処理概要, 図形・テキストボックス, 項目表, 表示メッセージ, 業務ルール・計算, 入力項目, エッジケース, データ整合性, API/バッチ結果, 入出力, DB操作, バリデーション, 権限・認可, 画面遷移, エラー処理, ログ・監査, セッション, Cookie, and 排他制御. Treat bullets such as "押下時", "場合", "登録/更新/保存", "遷移", "保持", "表示/非表示", "表示切り替え", "エリアを表示", "誘導", "エラー", "判定", "連携", time limits, thresholds, and retry/idempotency rules as auditable requirements. 秒後/分後, `画面を表示してから`, 自動遷移, タイマー, and store/kiosk/account-specific forced redirects are material requirements even if the route and template already exist.
+3. For every extracted requirement, create or mentally maintain a `requirementTrace` row with: `requirementId`, `designRef`, `designRequirement`, `implementationSearchTerms`, `implementationRefs`, `implementationActual`, `traceVerdict` (`MATCHED|DRIFT|NOT_FOUND|UNCERTAIN|PHASE2_EXCLUDED`), and `traceReason`. A feature cannot be marked no-drift until all material requirements have a trace verdict other than `NOT_FOUND` or unresolved `UNCERTAIN`.
+4. Search the implementation with `rg` across likely files: controllers, services, repositories, form types, entities, migrations, Twig/templates, commands/batches, route definitions, JavaScript, CSV exporters/importers, and PDF/print services. Search by business terms from the requirement, route names, translation keys, DB columns, state names, constants, statuses, time values, thresholds, and side-effect verbs. For timer or auto-navigation requirements, explicitly search client and server paths for `setTimeout`, `setInterval`, millisecond/second constants such as `60000` and `60 * 1000`, `location.href`, `location.assign`, `location.replace`, redirect routes, and the condition that limits the behavior. For a negative result, also search nearby implemented flows so the report can explain why they do not satisfy the design.
+5. Compare behavior and user-facing text, not just names. Check input fields, validation, defaults, search conditions, session persistence, buttons/actions, labels, button text, messages, translation keys/locales, permissions, status transitions, CSV columns, sort/order rules, scheduled timing, timeouts/expiration, thresholds, client-side timers, forced auto-navigation, side effects, idempotency, external integrations, conditional display toggles, alternate UI areas, and error handling.
+6. Do not treat "route/controller/template exists" as sufficient. Existence only satisfies the route/screen requirement. It does not satisfy individual rules inside the screen, such as timeout handling, cart retention, validation branches, status transitions, DB writes, logging prohibitions, conditional hide/show behavior, alternative contact/help areas, or external API retry behavior.
+7. For conditional display requirements, audit each side of the condition separately. If the HTML says "Aの場合はXを非表示、Yを表示 / A以外はXを表示、Yを非表示", record trace rows for the condition detector, X visibility, Y visibility, and the inverse condition. A nearby notice or route is not enough unless the cited template/JS actually renders the required area under the required condition.
+8. For labels, button text, messages, and translation keys, do a dedicated near-match pass. Extract user-visible Japanese text from the HTML item/message tables and compare it with implementation locale values and Twig/Form usage. Treat punctuation, okurigana, missing characters, long-vowel marks, wording changes such as `商品を追加` vs `商品の追加`, and business-term changes such as `返金` vs `送金` as audit targets.
+9. A text drift finding is complete only when it cites both the translation/source value and the display path that uses it, such as `messages.ja.yaml` plus the `FormType` label or Twig `|trans` call. If the implementation value exists but no display path is verified, mark it `UNCERTAIN` instead of presenting it as confirmed.
+10. Do not stamp all functions as if every standard aspect was fully checked. Separate "standard audit target aspects" from actual evidence. For each finding, list the aspects actually supported by evidence; for no-drift functions, include a requirement trace summary naming the concrete HTML requirements checked and implementation refs searched.
+11. Record only actionable drift. If evidence is incomplete, mark the finding `UNCERTAIN` and explain what remains ambiguous.
+12. For every drift finding, split the result into implementation-ready fields: `designExpectation`, `implementationActual`, `comparisonRows`, `comparisonSummary`, `mismatchReason`, `impact`, `fixTarget`, `requiredChange`, `implementationRefs`, and, when available, short design/implementation snippets from the cited lines. Do not rely on a generic prose paragraph alone.
+13. Each `comparisonRows` entry must answer all four questions explicitly: comparison item, exact design value/requirement, exact implementation value/behavior, and why those two do not match. If any of those four cells would be vague, continue investigating before recording the finding.
+14. Treat phase labels such as Ph2 as auxiliary context. They can be stored, but the main report must not use phase status as a substitute for concrete behavioral differences and exact implementation locations.
+15. If the HTML design spec explicitly says the whole function or scoped subfeature is `フェーズ2で実装する`, `Ph2で対応`, or `Ph1では実装しない`, do not report absence of that planned Phase 2 work as drift or as a clear implementation gap. You may keep a secondary audit note that non-implementation was confirmed, but exclude it from finding counts and implementation-gap counts. Only keep a finding when there is a concrete non-phase mismatch, such as an implemented Phase 1 path behaving differently from the design or user-facing text differing.
+16. When no drift is found, add the function to the audited set with an empty findings list only after the requirement trace gate passes. If material HTML requirements are untraced, do not mark `AUDITED_NO_DRIFT_FOUND`; mark the function as requiring review or add `UNCERTAIN` findings with the unresolved requirements.
+17. Do not let one confirmed finding hide other requirements in the same function. A function with `AUDITED_WITH_FINDINGS` can still have untraced material requirements; keep those requirements visible in the trace gate until each one is converted to a confirmed finding, an uncertain finding, a matched trace row, or a documented phase/design non-implementation exclusion.
+18. For explicitly registered critical requirements, the harness should carry a missing-finding template or an equivalent escalation rule. If the trace is not covered by an existing finding, promote it into findings automatically or fail the quality gate loudly. Do not rely on a hand-maintained `ADDITIONAL_FINDINGS` list as the only path for user-reported or high-risk missing behavior such as timeouts, cart retention, one-minute/30-minute limits, store-account auto redirects, conditional UI areas, status transitions, external calls, or destructive side effects.
+19. The HTML report must not expose broad source-signal candidates as if they were implementation gaps. A requirement-level list in the main report must be limited to confirmed or explicitly uncertain actionable drift derived from findings, such as `NOT_FOUND` or `DRIFT` requirement traces and concrete comparison rows. If a source-signal scan is used for triage, keep it out of the main HTML report unless each row has been verified against implementation source and written as a concrete finding.
+20. Do not hide time-based or automatic-navigation requirements merely because they are not confirmed findings yet. Requirements involving `画面を表示してから`, seconds/minutes after display, auto redirect/navigation, or timeout-to-cart/top behavior should appear in a separate focused untraced-requirement audit queue when they remain uncovered. This queue is not a confirmed defect count; it exists so these high-risk requirements are reviewed against Controller/Twig/JavaScript/Service source instead of being buried among broad requirement-trace failures.
+
+## Function-Level Implementation Gap Audit
+
+For every HTML spec sheet, maintain a function-level implementation audit even when no drift finding is confirmed yet.
+
+- Extract implementation search terms from the HTML design: route names, URL paths, translation keys, class/controller/service names, batch/API/CSV names, and high-signal business terms from the sheet title and requirement text.
+- Search implementation source by function across Controller, Form, Service, Repository, Entity, Migration, Twig, Command/Batch, CSV, PDF/print, API/webhook, locale/messages, JavaScript, and configuration files.
+- Store a `functionImplementationAudit` object with `verdict`, `designDerivedTerms`, `candidateRefs`, `candidateCount`, `strongSignalCount`, `searchedAreas`, and `auditNote`.
+- Use separate verdicts:
+  - `CONFIRMED_IMPLEMENTATION_GAP`: a concrete drift finding already proves missing implementation.
+  - `NO_IMPLEMENTATION_ENTRY_FOUND`: no entry candidate was found from design-derived terms; treat as an additional-review candidate, not an automatic confirmed defect.
+  - `IMPLEMENTATION_ENTRY_FOUND`: strong source evidence such as route, class, translation key, or path was found.
+  - `IMPLEMENTATION_CANDIDATE_FOUND`: weak business-term candidates were found but the entry point is not proven.
+  - `PHASE2_NONIMPLEMENTATION_EXPECTED`: HTML design explicitly scopes non-implementation to Phase 2/Ph1 exclusion.
+  - `DESIGN_NONIMPLEMENTATION_EXPECTED`: HTML design explicitly says the function or scoped behavior is not implemented by code, such as `実装しない`, `実装不要`, or infrastructure/external-service configuration replacing application code.
+- Use `DESIGN_NONIMPLEMENTATION_EXPECTED` as the function-level verdict only when the non-implementation statement applies to the whole function or the implementation entry itself, for example an external WordPress server, Docker image cron, Aurora parameter group, or a bare whole-sheet `実装しない`. If the text only excludes a scoped subfeature, UI alert, HTML hint, logging detail, partial Phase 2 item, or internal job, keep the function's source-entry verdict and mention the scoped exclusion only in the trace/audit note.
+- The report must show both confirmed implementation-gap findings and function-level no-entry candidates. Do not merge these counts: implementers need confirmed defects for fixing and no-entry candidates for review planning.
+- A function-level candidate is not enough to mark the detailed requirements as implemented. Requirement trace still controls no-drift status.
+- Do not set report metadata such as `auditComplete` or narrative notes to "complete" merely because every sheet has a function-level implementation audit. If any material requirement trace remains unresolved, state that all sheets have function-entry coverage but requirement-level audit is incomplete.
+- For infrastructure-oriented sheets such as Step Functions, Lambda, WAF/S3 jobs, cron configured outside the application, or managed database settings, distinguish "not found in the requested implementation repository" from "not implemented anywhere". A confirmed implementation-gap finding may be scoped to the audited repository, but the report must say when external infrastructure repositories or cloud configuration were not checked.
+
+## Requirement Trace Gate
+
+Before marking a function no-drift, verify the following:
+
+- Every material HTML requirement has a trace row. Material means it changes behavior, data, display, validation, permission, transition, side effect, external communication, schedule, retry/idempotency, logging/audit, CSV/API/PDF/batch I/O, or user-visible text.
+- Each trace row includes exact design text or a tight paraphrase plus line/anchor reference, not only the sheet title.
+- Each matched row cites the implementation path and line(s) that actually execute or render the behavior. A nearby class, route, or template is not enough unless the cited code contains the relevant condition/value/side effect.
+- Each missing row is converted to a confirmed or uncertain finding. Use confirmed only after searching the direct path and nearby alternative implementations.
+- Missing rows remain failures even if the function already has other findings. The gate is requirement-scoped, not function-scoped.
+- If an explicit critical requirement has a configured missing-finding template, regenerate the report from the harness and verify the promoted finding appears in both JSON and HTML with design value, implementation behavior, mismatch reason, fix target, and search evidence.
+- If a missing row does not yet have enough evidence for a confirmed or uncertain actionable finding, do not count it as an implementation gap and do not put it in the main HTML fix list. Keep the function in an incomplete requirement-trace state, and promote the row only after implementation source has been checked enough to state the exact design requirement, exact implementation behavior, and mismatch reason.
+- A generic `auditEvidence` string is not a substitute for requirement traces.
+- Negative searches must list the searched terms/areas and why nearby hits do not satisfy the design.
+
+## Finding Format
+
+Store findings in a machine-readable JSON structure. Use this shape for each finding:
+
+```json
+{
+  "id": "stable-feature-id-001",
+  "functionId": "m04-01_admin_stock_stock_search_list",
+  "functionName": "在庫一覧",
+  "severity": "high|med|low",
+  "dimension": "①機能/ルート未実装",
+  "confidence": "CONFIRMED|UNCERTAIN",
+  "design": {
+    "file": "path/to/spec.html",
+    "lines": "215-220",
+    "summary": "設計書に書かれている仕様"
+  },
+  "implementation": {
+    "file": "path/to/source.php or 不在",
+    "lines": "337-344",
+    "summary": "実装側の状態"
+  },
+  "difference": "設計と実装の具体的な差分",
+  "comparisonRows": [
+    {
+      "item": "比較項目名",
+      "design": "設計書の値・要求。列名、HTTPメソッド、パス、保存先、表示文言、条件、状態遷移などを具体値で書く",
+      "implementation": "実装の値・挙動。実際の列名、メソッド、パス、保存先、文言、条件、処理順を具体値で書く",
+      "mismatch": "なぜ一致しないのか。実装者が直すべき差分を一文で書く"
+    }
+  ],
+  "requirementTrace": [
+    {
+      "requirementId": "stable-requirement-id",
+      "designRef": "path/to/spec.html:123",
+      "designRequirement": "HTML設計書の個別要求",
+      "implementationSearchTerms": ["検索語", "route_name", "methodName"],
+      "implementationRefs": ["src/...php:123"],
+      "implementationActual": "実装で確認できた挙動、または不在判定",
+      "traceVerdict": "MATCHED|DRIFT|NOT_FOUND|UNCERTAIN|PHASE2_EXCLUDED",
+      "traceReason": "なぜその判定か"
+    }
+  ],
+  "comparisonSummary": "設計はX、実装はY、したがってZが違う",
+  "mismatchReason": "乖離と判断した具体的な理由",
+  "impact": "ユーザー・業務・データへの影響",
+  "fixTarget": "修正対象のファイル/ルート/サービス/不在箇所",
+  "requiredChange": "設計に合わせる場合に必要な修正",
+  "implementationRefs": ["src/...php:123"],
+  "implementationSnippets": ["123: 実装コードの短い断片"],
+  "evidence": ["短い根拠。ファイル名と行番号を含める"]
+}
+```
+
+The HTML report should make these fields visible as separate blocks so an implementer can answer: what exact value does the design require, what exact value does the code implement, why is that a mismatch, exactly where is the code, and what should be changed.
+
+Use stable IDs and Japanese text when the existing report is Japanese. Keep dimensions consistent with existing findings when continuing a report.
+
+## Severity Guidance
+
+- `high`: missing feature/route, wrong critical business rule, destructive or externally visible behavior, missing required import/export/batch/PDF flow.
+- `med`: partial implementation, wrong filtering/sorting/session behavior, missing non-critical columns or validation, incompatible screen behavior.
+- `low`: copy/display/default-state differences, ambiguous design wording, minor workflow variance.
+
+## Report Generation
+
+If the project already has a report generator, use it. Otherwise copy or adapt `scripts/build_report.py` from this skill into the report directory, then run it from the repository root or pass paths as needed.
+
+The HTML report must include:
+
+- summary counts: total findings, severities, audited functions, functions with drift
+- scope and remaining work
+- per-function sections
+- each finding with severity, confidence, dimension, audit aspects including label/message/translation-key differences when applicable, design reference, implementation reference, design expectation, implementation actual behavior, `comparisonRows`, mismatch reason, impact, fix target, required change, and evidence
+- a comparison table with columns: 比較項目 / 設計書の値・要求 / 実装の値・挙動 / 乖離理由
+- links or file paths precise enough for a developer to inspect
+- short cited design and implementation snippets when available
+- phase/Ph2 data only as hidden or secondary metadata, never as a report column or primary summary
+- a function-level implementation audit section showing verdict counts, no-entry candidates, candidate source references, and the search terms that produced them
+- a requirement-level difference list derived only from confirmed/uncertain findings, showing the exact design requirement, implementation behavior, mismatch reason, implementation refs, and a link back to the finding. Do not include broad unverified source-signal queues in the main HTML report.
+- a focused untraced-requirement section for small, high-risk classes such as display-time timers, automatic redirects, and timeout navigation. Keep it separate from confirmed difference and implementation-gap counts, and include search terms/candidate refs so the next audit step is concrete.
+
+After editing findings, validate JSON and regenerate HTML:
+
+```bash
+python3 -m json.tool path/to/design_impl_drift_report/findings.json
+python3 path/to/design_impl_drift_report/build_report.py
+```
+
+## Quality Bar
+
+- Treat the HTML design spec as source of truth even when implementation looks intentional.
+- Cite exact file paths and line numbers whenever available.
+- Distinguish `不在` from “not found yet”; use `不在` only after searching likely implementation areas.
+- Avoid broad claims such as “not implemented” without search evidence or contrasting nearby implemented features.
+- Do not classify Phase 2 planned non-implementation as a defect. A missing route, CSV, batch, API, table, or screen is only a drift finding when the design expects it in the audited implementation phase.
+- For label/message drift, prefer exact line evidence and a verified render path over fuzzy string similarity. Fuzzy or near-match scans are candidate generators; they are not findings until source and display usage are confirmed.
+- When an external reviewer or another agent reports candidates, verify each candidate against the HTML design and implementation source before adding it. Keep rejected or ambiguous candidates out of confirmed counts, or mark them `UNCERTAIN` with the unresolved reason.
+- For absent implementations, include the searched terms/areas, nearby implementation files with line numbers, and a concrete reason those nearby files do not satisfy the design. Do not leave `implRef` as only `不在` in the final report.
+- Reject vague findings. A finding is not complete until it names the exact design value and exact implementation value that differ.
+- Keep the report cumulative and resumable.
+
+exec
+/bin/bash -lc "sed -n '1,260p' /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/DOCUPDATE_TASK.md && jq '.' /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_packets/du_11.json" in /home/y-saito/Developments
+ succeeded in 519ms:
+# 設計書（正本Excel）の最新化工数の見積
+
+乖離指摘 1,007件（クローズ済を除く）について、**設計書側にどんな作業が発生し、何人日か**を見積もる。
+実装をどう直すかではなく、**設計書をどう直すか**だけを判断する。
+
+## 前提: 正本はExcel、HTMLは生成物
+
+| 役割 | パス |
+|---|---|
+| **正本Excel（編集対象）** | `/home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/*.xlsx` |
+| 生成HTML（読む用・編集対象ではない） | `/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/*.html` |
+| 変換ツール | `excel_to_html/convert.py`（`uv run python convert.py`）、検証は `verify.py` |
+| 実装 | `/home/y-saito/Developments/ec-cube-enterprise` |
+
+**HTMLを直接編集しても次の変換で消える。** 直すのは常にExcelのセル・図形・画像である。
+したがって見積もる対象は「該当シートの該当セル/表/画像をどう直すか」の作業量。
+
+HTML再生成と検証は書籍単位でまとめて行うため、**1件ごとの見積には含めない**（別途固定費として集計する）。
+
+## 判定する2つのこと
+
+### 1. `docWork` — 設計書側にどんな作業が要るか
+
+| 値 | 意味 |
+|---|---|
+| `NONE` | 設計書は現状で正しい。実装を直せば済み、**設計書は触らない** |
+| `ADD` | 設計書に記述が無い。項目表・処理概要などに**書き足す** |
+| `FIX` | 設計書に記述はあるが、採用する仕様と食い違う。**既存記述を直す** |
+| `IMAGE` | 画面レイアウト**画像の差し替え**が要る（Excelに貼られた画像の描き直し） |
+| `RESOLVE` | 正本の中で記述同士が矛盾している（項目表と画像、本文と注記など）。**どちらが正かを決めて片方を直す** |
+| `UNSURE` | 判断できない |
+
+**重要な原則:**
+- `根拠区分 = SPEC_BACKED`（設計書に裏付けがある）＝ 原則 `NONE`。
+  設計書は正しく、実装が追いついていないだけ。
+  ただし設計書の記述が曖昧・不完全で、実装に合わせて**明確化**が要るなら `FIX`。
+- `根拠区分 = LEGACY_BACKED`（設計書に記述が無く旧実装に根拠）＝ 原則 `ADD`。
+  移行後も必要な挙動なら、設計書の記述漏れとして書き足す必要がある。
+  ただし**その挙動を移行後に残さない**と読めるなら `NONE`。
+- 表示文言・ラベル・画面項目の追記は、テキストの表に足すだけで済むのか、
+  **レイアウト画像も描き直しになるのか**を区別する（後者は `IMAGE`）。
+
+### 2. `docEffortDays` — Excel編集の工数（人日）
+
+**この1件のために、該当シートを開いて直す作業**の量。目安:
+
+| 作業 | 目安 |
+|---|---|
+| 既存の表に1行足す／セルの文言を1つ直す | 0.05〜0.1 |
+| 項目表に複数行・条件付きの記述を足す | 0.1〜0.25 |
+| 処理概要・業務ルールの節を書き起こす | 0.25〜0.5 |
+| 画面レイアウト画像の差し替え（実画面の取得＋貼り直し＋位置調整） | 0.5〜1.0 |
+| 正本内部の矛盾解消（影響範囲の確認＋関係箇所の統一） | 0.25〜1.0 |
+| シート新設（機能ごと丸ごと無い） | 1.0〜3.0 |
+
+**同じシートに複数の指摘がまとまっている場合、2件目以降は安くなる**（シートを開く手間が1回で済む）。
+パケット内で同一 `設計書参照` の行が並んでいたら、その分を反映してよい（理由に書くこと）。
+
+`docWork = NONE` のときは `docEffortDays: 0`。
+`RESOLVE` は、裁定そのもの（どちらが正かを決める会議・確認）は含めず、**決まった後の反映作業**だけを見積もる。
+
+## 絶対の禁止事項
+
+- 引用・確認内容の捏造をしないこと。実際に開いて確認したものだけを書く。
+- 確認していないことを「確認した」と書かない。
+- 実装側の修正工数と混同しないこと。**ここで見積もるのは設計書の編集だけ**である。
+
+## 出力
+
+指示されたJSONファイルに **Write して** 書き込む。
+
+```json
+{
+  "packetId": "...",
+  "results": [
+    {
+      "rowId": 123,
+      "docWork": "ADD",
+      "docEffortDays": 0.1,
+      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫編集 シートの画面項目表",
+      "reason": "旧実装にしかない上限件数の扱いを、項目表の備考へ1行足す。既存の行構成をそのまま使える。",
+      "sharedWithRows": [124, 125],
+      "confidence": "high"
+    }
+  ]
+}
+```
+
+- `target`: 直す対象（ブック名 / シート名 / 表や図の位置）。分かる範囲で具体的に
+- `sharedWithRows`: 同じシートでまとめて直せる他の rowId（無ければ空配列）
+- `confidence`: `high` / `medium` / `low`
+
+findings 全件について返すこと（欠落禁止）。
+{
+  "packetId": "du_11",
+  "note": "同じ設計書シートの行が隣り合うよう並べてある。まとめて直せる分は2件目以降を安く見積もってよい（sharedWithRowsに記す）。",
+  "findings": [
+    {
+      "rowId": 537,
+      "機能No": "M04-24",
+      "機能名": "M04-24 在庫移動指示検索",
+      "区分(画面種別)": "admin",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "要修正-設計準拠",
+      "設計書参照": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:4343",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:14394 の Excel 正本（0202:在庫移動指示検索!E189）は項目名を「送り状No.」と、末尾ピリオド付きで定義する。",
+      "設計期待値": "在庫移動指示検索の送り状番号項目は「送り状No.」と表示する。",
+      "差分内容": "設計は在庫移動指示検索で送り状番号の項目名を「送り状No.」とする。実装は admin.stock.move_instruction.tracking_no の翻訳値が「送り状No」で、一覧ヘッダと登録モーダルラベルにそのキーを表示するため、末尾のピリオドが欠落する。",
+      "実装実態": "実装の翻訳キー admin.stock.move_instruction.tracking_no は「送り状No」。stock_move_instruction_index.twig の一覧ヘッダと登録モーダルラベルがこのキーを表示する。"
+    },
+    {
+      "rowId": 454,
+      "機能No": "M04-09",
+      "機能名": "M04-09 在庫移動・振替登録 編集(振替)",
+      "区分(画面種別)": "admin",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "要修正-設計準拠",
+      "設計書参照": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:6410",
+      "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:6908 と :6955 のExcel正本 `src-cell` は、フッターリンクを「在庫移動・振替検索一覧」へ変更すると明記し、項目ラベルも同文言で定義する。",
+      "設計期待値": "振替画面の一覧戻りリンクは「在庫移動・振替検索一覧」。",
+      "差分内容": "設計は在庫移動・振替登録編集（振替）のフッターリンクを「在庫移動・振替検索一覧」とする。実装は admin.stock.transfer.back_to_list の翻訳値が「在庫振替検索一覧へ」で、transfer_approval.twig と transfer_complete.twig がそのキーを表示するため、「移動・」がなく末尾に「へ」が付く。",
+      "実装実態": "実装の翻訳キー admin.stock.transfer.back_to_list は「在庫振替検索一覧へ」。承認画面と完了画面のフッターリンクで表示される。"
+    },
+    {
+      "rowId": 460,
+      "機能No": "M04-12",
+      "機能名": "M04-12 在庫分割結合検索一覧(検索・結果)",
+      "区分(画面種別)": "admin",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "要修正-設計準拠",
+      "設計書参照": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:7330",
+      "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:7940 のExcel正本 `src-cell` は識別ID5-5のラベルを `分割元 / 結合先商品名` と定義する。",
+      "設計期待値": "在庫分割結合検索一覧の結果列見出しは「分割元 / 結合先商品名」。",
+      "差分内容": "設計は在庫分割結合検索一覧の結果列を「分割元 / 結合先商品名」とする。実装は stock_split_join_index.twig で admin.stock.split_join.list.source_destination_product を表示し、messages.ja.yaml の値が「分割元・結合先商品」になっているため、区切り記号と末尾の「名」が一致しない。",
+      "実装実態": "実装の翻訳キー admin.stock.split_join.list.source_destination_product は「分割元・結合先商品」。stock_split_join_index.twig が一覧ヘッダとして表示する。"
+    },
+    {
+      "rowId": 569,
+      "機能No": "M05-11",
+      "機能名": "M05-11 受注情報編集",
+      "区分(画面種別)": "admin",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-15",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:6029-6032 で M05-11 の詳細記述は `data-source=\"functions/pf-eccube3/m05-11_admin_order_order_edit.md\"` のリバース設計として開始する。Excel 正本部分には PurchaseFlow の有無を指定する記述がない（確認範囲: sheet-15 の正本部 4904-6028）。",
+      "設計期待値": "配送・明細の店舗参照を揃え、トランザクション内で persist／flush により永続化する（現行実装に PurchaseFlow の prepare/commit は無い）。 / 旧根拠: function_spec_html_preview/pf-eccube3/m05-11_admin_order_order_edit.html:244",
+      "差分内容": "設計はpf-eccube3挙動として『PurchaseFlowのprepare/commitは無い』(html:244)『validateもcalculate()＋$form->isValid()のみでEC-CUBE4系PurchaseFlowを用いない』(html:242)としているが、enterprise実装はorderPurchaseFlow->validate()(526)・prepare()(595)・commit()(596)を実行する。PurchaseFlowのプロセッサ群(StockDiff/税/ポイント等)が動くため在庫差分検証・税計算・金額確定の経路が設計記述と根本的に異なる。",
+      "実装実態": "設計はpf-eccube3挙動として『PurchaseFlowのprepare/commitは無い』(html:244)『validateもcalculate()＋$form->isValid()のみでEC-CUBE4系PurchaseFlowを用いない』(html:242)としているが、enterprise実装はorderPurchaseFlow->validate()(526)・prepare"
+    },
+    {
+      "rowId": 572,
+      "機能No": "M05-11",
+      "機能名": "M05-11 【新規】受注情報履歴",
+      "区分(画面種別)": "admin",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "一部解消-残差あり",
+      "設計書参照": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-16:5558-5561,5574,5578-5597,5602-5605,5655-5658,5680,5682-5683",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:6222-6224 の Excel 正本は「データは編集不可」「ボタンは非活性」「リンクは非活性」、同ファイル:6319-6321 は明細部を「データは編集不可」「欠品登録以外のボタンは非活性」「リンクは非活性」と定義する。",
+      "設計期待値": "履歴データ表示ではデータは編集不可、ボタンは非活性、リンクは非活性とする。明細部では欠品登録以外のボタンは非活性とする。",
+      "差分内容": "履歴表示用に同テンプレートを読み取り専用化する分岐や disabled 制御がない。OrderType でも全体 disabled は設定されず、確認できた disabled は pointErrorMessage など一部に限られるため、設計の編集不可/非活性条件と異なる。",
+      "実装実態": "edit.twig は POST 可能フォームで、OrderStatus、日付クリア、スマレジメモ、ショップメモ、商品リンク、削除、登録、戻る、メール作成などが有効。EditController は POST で persist/flush し保存完了フラッシュを積む。"
+    },
+    {
+      "rowId": 573,
+      "機能No": "M05-19",
+      "機能名": "M05-19 出荷指示リスト編集",
+      "区分(画面種別)": "admin",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-19",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:7473-7482 のExcel正本は「一覧でチェックされた注文について、各ボタンに応じた出力処理を実行する」等を記載するだけで、表示件数プルダウンやchange時の自動遷移を規定しない。同:7584 から `function-design-embed:start ...shipping_standby_list_search` であり、当該記述はリバース詳細設計側にのみある。",
+      "設計期待値": "当 index.twig の javascript ブロックは空であり、同一パターンのハンドラは載っていない。プルダウンだけでは自動遷移しない実装である。 / 旧根拠: function_spec_html_preview/pf-eccube3/m05-19_admin_order_order_shipping_standby_list_search.html:231",
+      "差分内容": "設計は「block javascript は空・#page_count_pulldown の change ハンドラは無く、選択だけでは遷移しない」とする（HTML:234『当テンプレート専用の block javascript は空』、HTML:255『change ハンドラが無く、選択だけでは遷移しない』も同旨）。しかし enterprise の index.twig は block javascript 内に $('#page_count_pulldown').on('change', ...) を実装し、選択した option の value(URL)へ window.location.href で自動遷移する。設計の記述と実装のUI挙動が逆である。",
+      "実装実態": "設計は「block javascript は空・#page_count_pulldown の change ハンドラは無く、選択だけでは遷移しない」とする（HTML:234『当テンプレート専用の block javascript は空』、HTML:255『change ハンドラが無く、選択だけでは遷移しない』も同旨）。しかし enterprise の index.twig は block java"
+    },
+    {
+      "rowId": 574,
+      "機能No": "M05-19",
+      "機能名": "M05-19 出荷指示リスト編集",
+      "区分(画面種別)": "admin",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-19",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:7473-7482 のExcel正本は出荷指示編集の出力処理を列挙するのみで、表示件数リンクのURL形式を記載しない。同:7584 以降がリバース詳細設計である。",
+      "設計期待値": "各 option の value は GET /{admin_route}/standby/search?page_no=1&page_count=… 形式の URL 文字列 / 旧根拠: function_spec_html_preview/pf-eccube3/m05-19_admin_order_order_shipping_standby_list_search.html:231",
+      "差分内容": "設計は option の value を admin_shipping_standby ルート（/{admin_route}/standby/search?page_no=1&page_count=…）形式とする。実装は path('admin_shipping_standby_page', {'page_no':1,'page_count':pageMax.name}) を出力し、生成URLは /{admin_route}/standby/page/1?page_count=… というパスパラメータ経路（別ルート名 admin_shipping_standby_page）になる。ルート/URL形式が設計と異なる。",
+      "実装実態": "設計は option の value を admin_shipping_standby ルート（/{admin_route}/standby/search?page_no=1&page_count=…）形式とする。実装は path('admin_shipping_standby_page', {'page_no':1,'page_count':pageMax.name}) を出力し、生成URLは "
+    },
+    {
+      "rowId": 575,
+      "機能No": "M05-19",
+      "機能名": "M05-19 出荷指示リスト編集",
+      "区分(画面種別)": "admin",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-19",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:7473-7482 のExcel正本には0件時メッセージの文言がなく、同:7584 からリバース詳細設計が始まる。",
+      "設計期待値": "0 件時は固定文言で「検索条件に該当するデータがありませんでした。」を見出しに近い形で出す。 / 旧根拠: function_spec_html_preview/pf-eccube3/m05-19_admin_order_order_shipping_standby_list_search.html:234",
+      "差分内容": "設計は0件時に固定文言『検索条件に該当するデータがありませんでした。』を出すとする。実装は翻訳キー admin.common.search_no_result（実文言『検索条件に合致するデータが見つかりませんでした』）と admin.common.search_try_change_condition（『検索条件を変えて、再度検索をお試しください』）の2行構成で表示し、さらに has_errors 分岐（admin.common.search_invalid_condition『検索条件に誤りがあります』, index.twig:307-312）を別途持つ。設計の単一固定文言とは表示文言も構造も異なる（翻訳文言を再検証済みで一致しないことを確認）。",
+      "実装実態": "設計は0件時に固定文言『検索条件に該当するデータがありませんでした。』を出すとする。実装は翻訳キー admin.common.search_no_result（実文言『検索条件に合致するデータが見つかりませんでした』）と admin.common.search_try_change_condition（『検索条件を変えて、再度検索をお試しください』）の2行構成で表示し、さらに has_errors"
+    },
+    {
+      "rowId": 576,
+      "機能No": "M05-19",
+      "機能名": "M05-19 出荷指示リスト編集",
+      "区分(画面種別)": "admin",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-19:6724,6748",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:7473-7482 のExcel正本には表示件数選択時の遷移仕様がなく、同:7584 のリバース詳細設計開始後にのみ当該説明がある。",
+      "設計期待値": "表示件数プルダウンは、各 option の value に GET /{admin_route}/standby/search?page_no=1&page_count=… 形式のURL文字列を持つが、当 index.twig の javascript ブロックは空であり、#page_count_pulldown の change ハンドラは載っていないため、プルダウンだけでは自動遷移しない。",
+      "差分内容": "設計は表示件数プルダウン選択だけでは自動遷移しないことを現行仕様としているが、実装は change イベントで即時遷移する。反証として ShippingStandby/index.twig、共通 function.js、ShippingStandby テンプレート配下を page_count_pulldown/location.href/change で再検索し、当該専用ハンドラが存在することを確認した。",
+      "実装実態": "ShippingStandby/index.twig の javascript ブロックに #page_count_pulldown の change ハンドラが実装され、選択値を targetUrl として window.location.href に代入している。"
+    },
+    {
+      "rowId": 577,
+      "機能No": "M05-21",
+      "機能名": "M05-21 ピッキングリスト印刷",
+      "区分(画面種別)": "admin",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:7845-7849 のExcel正本は「カードの価格帯、サプライ品でグループ分けして表示する」と4グループを規定するが、サプライ判定を最小カテゴリIDと `GOODS_ID` / `RESERVED_GOODS_ID` の比較で行うとは記載しない。同:7946 からリバース詳細設計である。",
+      "設計期待値": "ステップ2より前に、最小カテゴリがグッズ定数または予約グッズ定数に一致しないかだけを見て、サプライ帯への強制があるかを決める。…強制側ならステップ2のマップを読まず goods。 / 旧根拠: function_spec_html_preview/pf-eccube3/m05-21_admin_order_order_shipping_standby_picking_list_print.html:246",
+      "差分内容": "設計(pf-eccube3を確認値とする処理フロー)は『最小カテゴリ MIN(ct.category_id) がグッズ定数(Category::GOODS_ID)/予約グッズ定数(Category::RESERVED_GOODS_ID)に一致するか』でサプライ(goods)帯への強制を決める。実装(ec-cube-enterprise)はカテゴリ定数を一切使わず、productClassRepository.getSubInfosByProductClassIds([productClassId]) の返却有無($hasSubInfo)で分岐している(348行 if($hasSubInfo)、非該当は375行 $c='goods')。getSubInfosByProductClassIds ",
+      "実装実態": "設計(pf-eccube3を確認値とする処理フロー)は『最小カテゴリ MIN(ct.category_id) がグッズ定数(Category::GOODS_ID)/予約グッズ定数(Category::RESERVED_GOODS_ID)に一致するか』でサプライ(goods)帯への強制を決める。実装(ec-cube-enterprise)はカテゴリ定数を一切使わず、productClassRepos"
+    },
+    {
+      "rowId": 578,
+      "機能No": "M05-21",
+      "機能名": "M05-21 ピッキングリスト印刷",
+      "区分(画面種別)": "admin",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:7845-7848 のExcel正本は価格帯を「980円未満」「980円以上4800円未満」「4800円以上」と定めるが、`mtb_option` の2行を一括取得し返却順の添字へ結び付ける内部手順は記載しない。同:7946 以降がリバース詳細設計である。",
+      "設計期待値": "このクエリでは mtb_option へ findBy(['option_key' => ['order_list_threshold_price_1','order_list_threshold_price_2'], …]) 相当で複数行を一度に読み、その返却順の最初の行値を :price1、2番目を :price2 に結びつける。 / 旧根拠: function_spec_html_preview/pf-eccube3/m05-21_admin_order_order_shipping_standby_picking_list_print.html:",
+      "差分内容": "設計(pf-eccube3を確認値とする)はクエリ側の閾値取得を『両キーを findByOptionKey で一括取得し返却順の[0]を:price1/[1]を:price2に結ぶ』とし、これに起因する取得順の食い違い・添字[0]/[1]参照による実行時異常(html:277)を論点とする。実装(ec-cube-enterprise)の generatePickingList は各キーを個別に findOneBy(['option_key'=>ORDER_LIST_THRESHOLD_PRICE_1]) / (…PRICE_2) で読み、null時は0にフォールバックして $thresholdPrice1/$thresholdPrice2 を作り :price1/:price2 に setP",
+      "実装実態": "設計(pf-eccube3を確認値とする)はクエリ側の閾値取得を『両キーを findByOptionKey で一括取得し返却順の[0]を:price1/[1]を:price2に結ぶ』とし、これに起因する取得順の食い違い・添字[0]/[1]参照による実行時異常(html:277)を論点とする。実装(ec-cube-enterprise)の generatePickingList は各キーを個別に f"
+    },
+    {
+      "rowId": 579,
+      "機能No": "M05-24",
+      "機能名": "M05-24 出荷実績入力用CSV出力",
+      "区分(画面種別)": "admin",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "要修正-設計準拠",
+      "設計書参照": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23:7474",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:8381-8384 のExcel正本は列52「配送先_住所1」、53「配送先_住所2」、54「配送先_TEL1」と連続して定義し、同:8393 の最終列は64「お届け時間(名称)」である。配送先_住所3は含まれない。",
+      "設計期待値": "出荷実績入力用CSV出力項目設定は、設計HTMLの一覧どおり64列で出力する。配送先住所列は「配送先_住所1」「配送先_住所2」の後に「配送先_TEL1」が続き、「配送先_住所3」は含めない。",
+      "差分内容": "設計HTMLの項目一覧では ID52 が「配送先_住所1」、ID53 が「配送先_住所2」、ID54 が「配送先_TEL1」であり、配送先_住所3 は定義されていない。実装は OrderCsvController::CSV_HEADER と NOT_REQUIRED_CSV_HEADER に「配送先_住所3」を持ち、OrderRepository::generateResultCsv も s.addr03 を返すため、設計より1列多く、ID54以降の列位置がずれる。反証検索では「配送先_住所3」「shipping_addr03」「s.addr03」「CSV_HEADER」「generateResultCsv」を確認し、sheet-23 の出荷実績入力用CSV出力項目設定内に配送先_住所3 の",
+      "実装実態": "実装のCSV_HEADERには「配送先_住所2」と「配送先_TEL1」の間に「配送先_住所3」が追加されており、generateResultCsv も s.addr03 AS shipping_addr03 を選択してCSV行へ含める。"
+    },
+    {
+      "rowId": 580,
+      "機能No": "M05-26",
+      "機能名": "M05-26 出荷実績インポート登録",
+      "区分(画面種別)": "admin",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-24:7757",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:8535-8545 のExcel正本はインポート処理内容を規定するがURL・HTTPメソッドは記載しない。同:8603-8604 から `functions/pf-eccube3/m05-26...md` のリバース詳細設計が始まり、`/shipping_result_csv/upload` は同:8692-8693 のリバース部分にのみある。",
+      "設計期待値": "admin_shipping_result_csv_upload … POST … /{admin_route}/order/shipping_result_csv/upload （送信されたCSVまたはTSVの検証・一括反映・成功時の付随処理へ進む。）",
+      "差分内容": "設計の外部HTTP契約はPOST /order/shipping_result_csv/uploadだが、実装ルート定義とフォームactionはいずれも /order/shipping_result_csv/import 系である。反証として shipping_result_csv/upload、admin_shipping_result_csv_upload、shipping_result_csv/import を検索し、uploadパス定義は見つからなかった。",
+      "実装実態": "POSTルート名 admin_shipping_result_csv_upload は存在するが、パスは /{admin_route}/order/shipping_result_csv/import。フォームも admin_shipping_result_csv_import のURLへPOSTしており、/shipping_result_csv/upload ではない。"
+    },
+    {
+      "rowId": 582,
+      "機能No": "M05-26",
+      "機能名": "M05-26 出荷実績登録CSVフォーマット",
+      "区分(画面種別)": "admin",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "要修正-設計準拠",
+      "設計書参照": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-25",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:8536-8540 のExcel正本は、出荷日なし行を無視し、「指定した注文番号に該当する受注情報データの『出荷日』が登録済みでなければデータを更新する」とした上で、受注ステータス・受注の出荷日/送り状No.・配送の出荷日を更新すると規定する。更新前ステータスが出荷指示であることは条件にしていない。",
+      "設計期待値": "親注文状態は「対応開始に近い状態」チェックなくサブ側出荷実施日時の既存のみでゲートされている。 / 旧根拠: functions/pf-eccube3/m05-26_admin_order_order_shipping_result_csv_import.md:114",
+      "差分内容": "設計は親注文の状態差し替えを「サブ側出荷実施日時の既存有無のみ」でゲートし、受注ステータス条件は課さない（設計step15も同旨）。実装はOrderCsv.php:132で `$isPreDeliv = $order->getOrderStatus()?->getId() === OrderStatus::PRE_DELIV;` を追加し、133行 `if ($isPreDeliv && $order->getShippingDate() === null)` の両条件成立時のみ状態を出荷完了(DELIVERED)へ差し替える。出荷指示(PRE_DELIV)でない受注は設計では更新対象になり得るが、実装では親状態・出荷日・送り状番号の更新から除外される。",
+      "実装実態": "設計は親注文の状態差し替えを「サブ側出荷実施日時の既存有無のみ」でゲートし、受注ステータス条件は課さない（設計step15も同旨）。実装はOrderCsv.php:132で `$isPreDeliv = $order->getOrderStatus()?->getId() === OrderStatus::PRE_DELIV;` を追加し、133行 `if ($isPreDeliv && $ord"
+    },
+    {
+      "rowId": 583,
+      "機能No": "M05-26",
+      "機能名": "M05-26 出荷実績登録CSVフォーマット",
+      "区分(画面種別)": "admin",
+      "指摘区分": "未実装",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-25",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:8698-8724 のsheet-25 Excel正本はCSV項目表を定義するが、HTTPルートを記載しない。同:8792 から同じ `functions/pf-eccube3/m05-26...md` のリバース詳細設計であり、POST `/shipping_result_csv/upload` の出所は hareruya-design-docs/functions/pf-eccube3/m05-26_admin_order_order_shipping_result_csv_import.md:234-237 である。",
+      "設計期待値": "`admin_shipping_result_csv_upload` … `POST` … `/{admin_route}/order/shipping_result_csv/upload` / 旧根拠: functions/pf-eccube3/m05-26_admin_order_order_shipping_result_csv_import.md:229",
+      "差分内容": "設計はPOSTのパスを `.../shipping_result_csv/upload` とする。実装のPOSTルート(name=admin_shipping_result_csv_upload, methods=['POST'])は path が `/%eccube_admin_route%/order/shipping_result_csv/import`（265行）で、GET画面(240行 path=同 import, name=admin_shipping_result_csv_import)と同一パスをHTTPメソッドで分岐している。ルート名は一致するがURLパスが `upload` ではなく `import`。ソース全体を検索しても `shipping_result_csv/up",
+      "実装実態": "設計はPOSTのパスを `.../shipping_result_csv/upload` とする。実装のPOSTルート(name=admin_shipping_result_csv_upload, methods=['POST'])は path が `/%eccube_admin_route%/order/shipping_result_csv/import`（265行）で、GET画面(240行 "
+    },
+    {
+      "rowId": 584,
+      "機能No": "M05-26",
+      "機能名": "M05-26 出荷実績登録CSVフォーマット",
+      "区分(画面種別)": "admin",
+      "指摘区分": "未実装",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "一部解消-残差あり",
+      "設計書参照": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-25",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:8541-8544 のExcel正本は更新後にポイント・メール・スマレジ送信を行うことを規定するが、それらをトランザクション外で独立実行する順序までは記載しない。同:8603 以降のリバース詳細設計にだけ具体的境界がある。",
+      "設計期待値": "続けて try の外側でポイント付与・出荷完了メール送信・別系ポイント付与が呼び出され、それらでの例外処理はサービス側の try と独立している確認値となる。 / 旧根拠: functions/pf-eccube3/m05-26_admin_order_order_shipping_result_csv_import.md:75",
+      "差分内容": "設計は成功後処理（ポイント付与・出荷完了メール・別系ポイント）を try の外側で独立実行する。実装はポイント付与(pointService->gainPoints)とスマレジ発生ポイント連携ジョブ登録を try 内かつ beginTransaction/commit の内側（315-320行付近、commit は322行）で実行し、失敗時は import 全体がロールバックされる。commit後(324-327行)に実行されるのは dispatchGainPointMessage のみ。設計の「トランザクションと独立」ではない。加えて出荷完了メール送信に相当する処理が実装に存在しない（controllerに mail/MailService 参照が皆無）。",
+      "実装実態": "設計は成功後処理（ポイント付与・出荷完了メール・別系ポイント）を try の外側で独立実行する。実装はポイント付与(pointService->gainPoints)とスマレジ発生ポイント連携ジョブ登録を try 内かつ beginTransaction/commit の内側（315-320行付近、commit は322行）で実行し、失敗時は import 全体がロールバックされる。commit後"
+    },
+    {
+      "rowId": 585,
+      "機能No": "M05-26",
+      "機能名": "M05-26 出荷実績登録CSVフォーマット",
+      "区分(画面種別)": "admin",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "要再起票(記述が事実と相違)",
+      "設計書参照": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-25",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:8775-8777 のExcel正本は列52「配送先_住所1」、53「配送先_住所2」、54「配送先_TEL1」と定義し、配送先_住所3を含めない。",
+      "設計期待値": "プラグインバージョンでは会社名〜住所〜配送先項目の並びにおいて、`配送先_住所3` 相当の区分は一覧に載らない。 / 旧根拠: functions/pf-eccube3/m05-26_admin_order_order_shipping_result_csv_import.md:84",
+      "差分内容": "設計（挙動の正=pf-eccube3プラグイン）では固定列一覧に `配送先_住所3` が含まれない。実装の CSV_HEADER(97行) / NOT_REQUIRED_CSV_HEADER(170行) には `配送先_住所3` が含まれ列数が1多い。ヘッダ照合(checkHeaderValues/checkHeaderSize)は必須外リスト差し引き後にサイズ一致を要求するため、pf-eccube3側の出力列数を想定したCSVでは列ズレ・取込失敗となり得る。",
+      "実装実態": "設計（挙動の正=pf-eccube3プラグイン）では固定列一覧に `配送先_住所3` が含まれない。実装の CSV_HEADER(97行) / NOT_REQUIRED_CSV_HEADER(170行) には `配送先_住所3` が含まれ列数が1多い。ヘッダ照合(checkHeaderValues/checkHeaderSize)は必須外リスト差し引き後にサイズ一致を要求するため、pf-eccub"
+    },
+    {
+      "rowId": 586,
+      "機能No": "M05-26",
+      "機能名": "M05-26 出荷実績登録CSVフォーマット",
+      "区分(画面種別)": "admin",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-25",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:8535-8545 のExcel正本は出荷実績インポートの業務処理を規定するが、0バイトファイルを後続へ残す挙動は記載しない。同:8603 以降のリバース詳細設計にのみ当該注意がある。",
+      "設計期待値": "サイズ判定の分岐は空であり、サイズが0でもオブジェクト経路に残りうる（実装上の注意）。 / 旧根拠: functions/pf-eccube3/m05-26_admin_order_order_shipping_result_csv_import.md:61",
+      "差分内容": "設計（pf-eccube3挙動）ではサイズ0判定の分岐が空で、サイズ0でも処理経路に残る。実装 getFormFile(AbstractCsvService.php:129-134)は `if ($formFile === null || $formFile->getSize() === 0) return null;` とサイズ0を明示ガードし、呼び出し元(OrderCsvController.php:272-276)で render+一覧リダイレクトへ復帰する。設計が指摘する挙動と異なり、サイズ0は取込されない。",
+      "実装実態": "設計（pf-eccube3挙動）ではサイズ0判定の分岐が空で、サイズ0でも処理経路に残る。実装 getFormFile(AbstractCsvService.php:129-134)は `if ($formFile === null || $formFile->getSize() === 0) return null;` とサイズ0を明示ガードし、呼び出し元(OrderCsvController."
+    },
+    {
+      "rowId": 588,
+      "機能No": "M05-26",
+      "機能名": "M05-26 出荷実績登録CSVフォーマット",
+      "区分(画面種別)": "admin",
+      "指摘区分": "未実装",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "要修正-設計準拠",
+      "設計書参照": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-25:7837",
+      "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:8775-8777 のExcel正本セル E59-E61 は「配送先_住所1」「配送先_住所2」の直後を「配送先_TEL1」とし、同:8785 のE69を「送り状No.」とする。配送先_住所3は正本の当CSV項目表に存在しない。",
+      "設計期待値": "出荷実績登録CSVフォーマットは、識別ID43〜64の配送先項目として「配送先_住所1」「配送先_住所2」の後に「配送先_TEL1」「配送先_TEL2」「配送先_TEL3」「配送先_FAX1」「配送先_FAX2」「配送先_FAX3」「配送方法(ID)」「配送方法(名称)」「送り状No.」「お届け時間ID」「お届け時間(名称)」を並べ、配送先_住所3列は定義しない。",
+      "差分内容": "設計CSV表の配送先側は line 7837〜7849 で住所2の次が配送先_TEL1であり、配送先_住所3は存在しない。一方、実装は OrderCsvController::CSV_HEADER/NOT_REQUIRED_CSV_HEADER に配送先_住所3を定義し、テンプレートがその定義を表示する。別経路として admin_shipping_csv_import も確認したが3列の出荷CSVアップロードであり、本出荷実績登録CSVフォーマットの反証にはならない。",
+      "実装実態": "実装のCSV_HEADERは「配送先_住所2」の後に設計にない「配送先_住所3」を追加し、画面のフォーマット表も headers|keys をそのまま表示する。出力SQLも s.addr03 AS shipping_addr03 を含むため、設計64列に対して実装は配送先_住所3を含む65列の契約になる。"
+    },
+    {
+      "rowId": 589,
+      "機能No": "M05-26",
+      "機能名": "M05-26 出荷実績登録CSVフォーマット",
+      "区分(画面種別)": "admin",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "要修正-設計準拠",
+      "設計書参照": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-25:7847",
+      "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:8785 のExcel正本セル E69/P69 は「送り状No.」「数値(整数)」と明記する。",
+      "設計期待値": "出荷実績登録CSVフォーマットの「送り状No.」は書式・制限が「数値(整数)」である。",
+      "差分内容": "対象実装範囲（OrderCsvController、OrderCsv、AbstractCsvService、OrderRepository、shipping_result_csv_import.twig、別名の CsvImportController）を確認した。旧系の admin_shipping_csv_import には tracking_number の半角英数字ハイフン検証があるが、これは出荷ID/お問い合わせ番号/出荷日の3列CSVであり、sheet-25の「送り状No.」数値(整数)制約ではない。対象ルート admin_shipping_result_csv_import では数値整数制約が実装されていない。",
+      "実装実態": "実装は row['送り状No.'] を文字列のまま invoiceNumber に代入し、Order.invoice_number は string length 64。AbstractCsvService側も必須項目の空チェックのみで、送り状No.の数値(整数)チェックはない。"
+    },
+    {
+      "rowId": 562,
+      "機能No": "M05-01",
+      "機能名": "M05-01 受注情報検索 一覧(検索入力)",
+      "区分(画面種別)": "admin",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "要修正-設計準拠",
+      "設計書参照": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3:1003,1004,1005,1007,1109,1110",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:1188-1192 に、保存パターンを「リンクとして並べて表示」、クリックで検索、個々の「リロードアイコン」、更新前は件数に `*` を表示すると明記されている。",
+      "設計期待値": "保存した検索パターンは検索条件フォームと検索結果一覧の間にリンクとして並べて表示され、クリックするとその検索条件で受注検索を行う。また保存した検索パターン個々にリロードアイコンがあり、該当件数は更新されるまで「*」を表示する。",
+      "差分内容": "search_pattern / SearchPattern / reload_all_pattern / get_count_pattern / admin_order_search_pattern / admin_order_count_pattern を再検索し、非選択パターンの実装は確認した。一方で現在選択中パターンだけは設計の「保存した検索パターン個々」のリンク・件数・リロード対象から外れている。",
+      "実装実態": "検索パターン一覧は描画されるが、現在適用中のパターンは pattern_id 分岐で名前だけを出力する。リンク、該当件数「*」のspan、個別リロードボタンは未選択パターン側の else にしかない。"
+    },
+    {
+      "rowId": 561,
+      "機能No": "M05-01",
+      "機能名": "M05-01 受注情報検索 一覧(検索入力)",
+      "区分(画面種別)": "admin",
+      "指摘区分": "未実装",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "要修正-設計準拠",
+      "設計書参照": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3:1012",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:1197 に「引き渡し後の受注情報に引き渡し前の注文番号を紐づけておき、引き渡し前の注文番号で検索した際に、引き渡し後の受注情報が検索できるようにする」と明記されている。",
+      "設計期待値": "引き渡し後の受注情報に引き渡し前の注文番号を紐づけておき、引き渡し前の注文番号で検索した際に、引き渡し後の受注情報が検索できるようにする。",
+      "差分内容": "引き渡し前/後、next_order_id、nextOrder、order_number、previous/original order を OrderRepository、SearchOrderType、OrderController、Smaregi handler、Order entity へ翻案して再検索したが、旧注文番号入力で移行先受注を返す検索経路は確認できない。なお本要求は materialGapRows に無く extractorMissed として数えた。",
+      "実装実態": "スマレジ引き渡し処理では既存受注に next_order_id を設定するが、受注検索の注文番号条件は o.order_number LIKE :order_number のみ。旧受注の next_order_id から新受注を引く join/subquery はなく、未選択ステータスでは引渡し済み受注自体も除外される。 設計要求に対応する実装が見当たらない（未実装）。"
+    },
+    {
+      "rowId": 564,
+      "機能No": "M05-04",
+      "機能名": "M05-04 受注詳細CSV出力",
+      "区分(画面種別)": "admin",
+      "指摘区分": "未実装",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "要修正-設計準拠",
+      "設計書参照": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-7:2623",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:2955 は受注詳細CSVの識別ID67を「送料ID」と明記している。",
+      "設計期待値": "受注詳細CSV出力項目設定の識別ID:67「送料ID」をCSV出力項目として出力する。",
+      "差分内容": "設計は識別ID:67に送料ID、識別ID:68に送料を別列で要求している。実装は app/DoctrineMigrations/Version20260226000001.php:95 でお届け希望日をsort_no=66、同:96 で「送料」をsort_no=68へ変更するのみで、送料IDを追加していない。初期seedにも src/Eccube/Resource/doctrine/import_csv/ja/dtb_csv.csv:193 の送料(sort_no=67)はあるが、送料IDは存在しない。",
+      "実装実態": "配送CSV種別(csv_type_id=4)ではsort_no=67が既存の「送料」列に割り当てられており、「送料ID」列は追加されていない。"
+    },
+    {
+      "rowId": 565,
+      "機能No": "M05-04",
+      "機能名": "M05-04 受注詳細CSV出力",
+      "区分(画面種別)": "admin",
+      "指摘区分": "未実装",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "要修正-設計準拠",
+      "設計書参照": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-7:2644",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:2889 は識別ID1を「注文番号」、同:2976 は識別ID88も「注文番号」と定義しており、Excel正本上は重複した2項目が存在する。",
+      "設計期待値": "受注詳細CSV出力項目設定の識別ID:88「注文番号」をCSV出力項目として出力する。",
+      "差分内容": "設計表は識別ID:1と識別ID:88に注文番号を2回要求している。実装は app/DoctrineMigrations/Version20260226000001.php:31 で注文番号をsort_no=1へ設定し、同:117 ではsort_no=90の送り状No.へ進んでおり、sort_no=88の注文番号追加がない。別キーワード「sort_no = 88」「VALUES (4 ... 注文番号」「disp_name = '注文番号'」で再検索しても、csv_type_id=4の注文番号は既存行の更新のみだった。",
+      "実装実態": "配送CSV種別(csv_type_id=4)の注文番号は先頭列(sort_no=1)のみで、識別ID:88相当の2つ目の注文番号列は存在しない。"
+    },
+    {
+      "rowId": 570,
+      "機能No": "M05-11",
+      "機能名": "M05-11 受注情報編集",
+      "区分(画面種別)": "admin",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "要修正-設計準拠",
+      "設計書参照": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:4885",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:5334 の Excel 正本セル C446 は「『商品の追加』ボタン」、同ファイル:5361 のセル E469 もラベルを「商品の追加」と明記する。",
+      "設計期待値": "受注情報編集画面の商品追加ボタンは「商品の追加」。",
+      "差分内容": "設計は受注情報編集の商品検索ダイアログを開くボタンを「商品の追加」とする。実装は Order/edit.twig で admin.order.add_product_item を表示し、messages.ja.yaml の値が「商品を追加」になっているため、助詞と語順が一致しない。",
+      "実装実態": "実装の翻訳キー admin.order.add_product_item は「商品を追加」。Order/edit.twig のボタンとモーダルタイトルで同じキーを表示する。"
+    },
+    {
+      "rowId": 571,
+      "機能No": "M05-11",
+      "機能名": "M05-11 受注情報編集",
+      "区分(画面種別)": "admin",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "要修正-設計準拠",
+      "設計書参照": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:4895",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:5371 の Excel 正本セル E479 はラベルを「お支払合計」と明記する。",
+      "設計期待値": "受注情報編集画面の支払合計ラベルは「お支払合計」。",
+      "差分内容": "設計は受注情報編集の支払合計ラベルを「お支払合計」とする。実装は Order/edit.twig で admin.order.payment_total を表示し、messages.ja.yaml の値が「お支払い合計」になっているため、送り仮名の有無が一致しない。",
+      "実装実態": "実装の翻訳キー admin.order.payment_total は「お支払い合計」。Order/edit.twig が支払合計行のラベルとして表示する。"
+    },
+    {
+      "rowId": 396,
+      "機能No": "M03-27",
+      "機能名": "M03-27 グッズ商品CSV登録",
+      "区分(画面種別)": "admin",
+      "指摘区分": "未実装",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "要修正-設計準拠",
+      "設計書参照": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-11",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:3482 のExcel正本（グッズ商品CSV登録!AG147）は「CSVファイルのアップロード」ボタンについて「押下後、確認モーダルを表示」と明記する。",
+      "設計期待値": "画面構成 識別ID2「CSVファイルのアップロード」ボタン：押下後、確認モーダルを表示する。",
+      "差分内容": "画面構成表（UI仕様=正）はアップロード押下後に確認モーダルの表示を要求するが、実装はモーダルを介さず即 submit する。設計HTML内リバース詳細節には『送信前の確認ダイアログはない』(pf-eccube3現行挙動の記述)という相反記述があり要判断だが、画面構成表の element-level 要求との差異として挙げる。",
+      "実装実態": "アップロードボタンは type=submit の単純送信。押下時JS(#upload-form submit)は $.changeLoading(true)（ローディング表示）を呼ぶのみで、確認モーダル/確認ダイアログの表示コードは無い。関連3 Twig を grep しても modal/confirm/確認 のいずれも不在。"
+    },
+    {
+      "rowId": 368,
+      "機能No": "M03-04",
+      "機能名": "M03-04 グッズ商品CSV出力",
+      "区分(画面種別)": "admin",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-12:3370,3427",
+      "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:3752 のリバース埋め込み開始後、同:3781 に「ストリーム送信後…『グッズ商品CSV出力ファイル名』」と記載される。Excel正本範囲（同:3644-3751）にはログ文言・実行順の記載がない。",
+      "設計期待値": "CSV 出力ストリーム送信後（コールバック内で送信処理が走ったあと）、情報ログに「グッズ商品CSV出力ファイル名」と生成ファイル名を記録する。",
+      "差分内容": "設計はストリーム送信処理後の監査ログを要求しているが、実装はレスポンス作成時点でログを出すため、実際に CSV ストリームが送信・完了したことの記録にならない。",
+      "実装実態": "StreamedResponse の callback は 63 行目で設定されるが、log_info('グッズ商品CSV出力ファイル名', [$filename]) は 75-76 行目で response return 前、かつ callback 外で実行される。"
+    }
+  ]
+}
+
+exec
+/bin/bash -lc "jq -r '.findings[] | [.rowId, .機能No, .機能名, .確定根拠区分, .設計書参照] | @tsv' /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_packets/du_11.json && jq '.findings|length' /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_packets/du_11.json" in /home/y-saito/Developments
+ exited 3 in 1696ms:
+jq: error: syntax error, unexpected INVALID_CHARACTER (Unix shell quoting issues?) at <top-level>, line 1:
+.findings[] | [.rowId, .機能No, .機能名, .確定根拠区分, .設計書参照] | @tsv                        
+jq: error: try .["field"] instead of .field for unusually named fields at <top-level>, line 1:
+.findings[] | [.rowId, .機能No, .機能名, .確定根拠区分, .設計書参照] | @tsv                       
+jq: 2 compile errors
+
+exec
+/bin/bash -lc "jq -r '.findings[] | [.rowId, .[\"機能No\"], .[\"機能名\"], .[\"確定根拠区分\"], .[\"設計書参照\"]] | @tsv' /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_packets/du_11.json; jq '.findings|length' /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_packets/du_11.json" in /home/y-saito/Developments
+ succeeded in 1164ms:
+537	M04-24	M04-24 在庫移動指示検索	SPEC_BACKED	excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:4343
+454	M04-09	M04-09 在庫移動・振替登録 編集(振替)	SPEC_BACKED	excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:6410
+460	M04-12	M04-12 在庫分割結合検索一覧(検索・結果)	SPEC_BACKED	excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:7330
+569	M05-11	M05-11 受注情報編集	LEGACY_BACKED	excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-15
+572	M05-11	M05-11 【新規】受注情報履歴	SPEC_BACKED	excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-16:5558-5561,5574,5578-5597,5602-5605,5655-5658,5680,5682-5683
+573	M05-19	M05-19 出荷指示リスト編集	LEGACY_BACKED	excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-19
+574	M05-19	M05-19 出荷指示リスト編集	LEGACY_BACKED	excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-19
+575	M05-19	M05-19 出荷指示リスト編集	LEGACY_BACKED	excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-19
+576	M05-19	M05-19 出荷指示リスト編集	LEGACY_BACKED	excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-19:6724,6748
+577	M05-21	M05-21 ピッキングリスト印刷	LEGACY_BACKED	excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20
+578	M05-21	M05-21 ピッキングリスト印刷	LEGACY_BACKED	excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20
+579	M05-24	M05-24 出荷実績入力用CSV出力	SPEC_BACKED	excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23:7474
+580	M05-26	M05-26 出荷実績インポート登録	LEGACY_BACKED	excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-24:7757
+582	M05-26	M05-26 出荷実績登録CSVフォーマット	SPEC_BACKED	excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-25
+583	M05-26	M05-26 出荷実績登録CSVフォーマット	LEGACY_BACKED	excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-25
+584	M05-26	M05-26 出荷実績登録CSVフォーマット	LEGACY_BACKED	excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-25
+585	M05-26	M05-26 出荷実績登録CSVフォーマット	SPEC_BACKED	excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-25
+586	M05-26	M05-26 出荷実績登録CSVフォーマット	LEGACY_BACKED	excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-25
+588	M05-26	M05-26 出荷実績登録CSVフォーマット	SPEC_BACKED	excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-25:7837
+589	M05-26	M05-26 出荷実績登録CSVフォーマット	SPEC_BACKED	excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-25:7847
+562	M05-01	M05-01 受注情報検索 一覧(検索入力)	SPEC_BACKED	excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3:1003,1004,1005,1007,1109,1110
+561	M05-01	M05-01 受注情報検索 一覧(検索入力)	SPEC_BACKED	excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3:1012
+564	M05-04	M05-04 受注詳細CSV出力	SPEC_BACKED	excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-7:2623
+565	M05-04	M05-04 受注詳細CSV出力	SPEC_BACKED	excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-7:2644
+570	M05-11	M05-11 受注情報編集	SPEC_BACKED	excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:4885
+571	M05-11	M05-11 受注情報編集	SPEC_BACKED	excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:4895
+396	M03-27	M03-27 グッズ商品CSV登録	SPEC_BACKED	excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-11
+368	M03-04	M03-04 グッズ商品CSV出力	LEGACY_BACKED	excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-12:3370,3427
+28
+
+codex
+手順書を確認しました。対象は28件です。これから正本3冊の該当シートを直接確認し、SPEC_BACKED は原則0、LEGACY_BACKED は追記箇所と画像差し替え要否を切り分けます。正本内で矛盾が明示されている指摘は `RESOLVE` 候補として扱います。
+exec
+/bin/bash -lc "jq -r '.findings[] | \"ROW \\(.rowId) [\\(.[\\\"確定根拠区分\\\"])] \\(.[\\\"機能名\\\"])\\nEXPECT: \\(.[\\\"設計期待値\\\"])\\nDIFF: \\(.[\\\"差分内容\\\"])\\n\"' /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_packets/du_11.json" in /home/y-saito/Developments
+ exited 3 in 751ms:
+jq: error: syntax error, unexpected INVALID_CHARACTER (Unix shell quoting issues?) at <top-level>, line 1:
+.findings[] | "ROW \(.rowId) [\(.[\"確定根拠区分\"])] \(.[\"機能名\"])\nEXPECT: \(.[\"設計期待値\"])\nDIFF: \(.[\"差分内容\"])\n"                                  
+jq: 1 compile error
+
+exec
+/bin/bash -lc "jq -r '.findings[] | (\"ROW \" + (.rowId|tostring) + \" [\" + .[\"確定根拠区分\"] + \"] \" + .[\"機能名\"]), (\"EXPECT: \" + .[\"設計期待値\"]), (\"DIFF: \" + .[\"差分内容\"]), \"\"' /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_packets/du_11.json" in /home/y-saito/Developments
+ succeeded in 619ms:
+ROW 537 [SPEC_BACKED] M04-24 在庫移動指示検索
+EXPECT: 在庫移動指示検索の送り状番号項目は「送り状No.」と表示する。
+DIFF: 設計は在庫移動指示検索で送り状番号の項目名を「送り状No.」とする。実装は admin.stock.move_instruction.tracking_no の翻訳値が「送り状No」で、一覧ヘッダと登録モーダルラベルにそのキーを表示するため、末尾のピリオドが欠落する。
+
+ROW 454 [SPEC_BACKED] M04-09 在庫移動・振替登録 編集(振替)
+EXPECT: 振替画面の一覧戻りリンクは「在庫移動・振替検索一覧」。
+DIFF: 設計は在庫移動・振替登録編集（振替）のフッターリンクを「在庫移動・振替検索一覧」とする。実装は admin.stock.transfer.back_to_list の翻訳値が「在庫振替検索一覧へ」で、transfer_approval.twig と transfer_complete.twig がそのキーを表示するため、「移動・」がなく末尾に「へ」が付く。
+
+ROW 460 [SPEC_BACKED] M04-12 在庫分割結合検索一覧(検索・結果)
+EXPECT: 在庫分割結合検索一覧の結果列見出しは「分割元 / 結合先商品名」。
+DIFF: 設計は在庫分割結合検索一覧の結果列を「分割元 / 結合先商品名」とする。実装は stock_split_join_index.twig で admin.stock.split_join.list.source_destination_product を表示し、messages.ja.yaml の値が「分割元・結合先商品」になっているため、区切り記号と末尾の「名」が一致しない。
+
+ROW 569 [LEGACY_BACKED] M05-11 受注情報編集
+EXPECT: 配送・明細の店舗参照を揃え、トランザクション内で persist／flush により永続化する（現行実装に PurchaseFlow の prepare/commit は無い）。 / 旧根拠: function_spec_html_preview/pf-eccube3/m05-11_admin_order_order_edit.html:244
+DIFF: 設計はpf-eccube3挙動として『PurchaseFlowのprepare/commitは無い』(html:244)『validateもcalculate()＋$form->isValid()のみでEC-CUBE4系PurchaseFlowを用いない』(html:242)としているが、enterprise実装はorderPurchaseFlow->validate()(526)・prepare()(595)・commit()(596)を実行する。PurchaseFlowのプロセッサ群(StockDiff/税/ポイント等)が動くため在庫差分検証・税計算・金額確定の経路が設計記述と根本的に異なる。
+
+ROW 572 [SPEC_BACKED] M05-11 【新規】受注情報履歴
+EXPECT: 履歴データ表示ではデータは編集不可、ボタンは非活性、リンクは非活性とする。明細部では欠品登録以外のボタンは非活性とする。
+DIFF: 履歴表示用に同テンプレートを読み取り専用化する分岐や disabled 制御がない。OrderType でも全体 disabled は設定されず、確認できた disabled は pointErrorMessage など一部に限られるため、設計の編集不可/非活性条件と異なる。
+
+ROW 573 [LEGACY_BACKED] M05-19 出荷指示リスト編集
+EXPECT: 当 index.twig の javascript ブロックは空であり、同一パターンのハンドラは載っていない。プルダウンだけでは自動遷移しない実装である。 / 旧根拠: function_spec_html_preview/pf-eccube3/m05-19_admin_order_order_shipping_standby_list_search.html:231
+DIFF: 設計は「block javascript は空・#page_count_pulldown の change ハンドラは無く、選択だけでは遷移しない」とする（HTML:234『当テンプレート専用の block javascript は空』、HTML:255『change ハンドラが無く、選択だけでは遷移しない』も同旨）。しかし enterprise の index.twig は block javascript 内に $('#page_count_pulldown').on('change', ...) を実装し、選択した option の value(URL)へ window.location.href で自動遷移する。設計の記述と実装のUI挙動が逆である。
+
+ROW 574 [LEGACY_BACKED] M05-19 出荷指示リスト編集
+EXPECT: 各 option の value は GET /{admin_route}/standby/search?page_no=1&page_count=… 形式の URL 文字列 / 旧根拠: function_spec_html_preview/pf-eccube3/m05-19_admin_order_order_shipping_standby_list_search.html:231
+DIFF: 設計は option の value を admin_shipping_standby ルート（/{admin_route}/standby/search?page_no=1&page_count=…）形式とする。実装は path('admin_shipping_standby_page', {'page_no':1,'page_count':pageMax.name}) を出力し、生成URLは /{admin_route}/standby/page/1?page_count=… というパスパラメータ経路（別ルート名 admin_shipping_standby_page）になる。ルート/URL形式が設計と異なる。
+
+ROW 575 [LEGACY_BACKED] M05-19 出荷指示リスト編集
+EXPECT: 0 件時は固定文言で「検索条件に該当するデータがありませんでした。」を見出しに近い形で出す。 / 旧根拠: function_spec_html_preview/pf-eccube3/m05-19_admin_order_order_shipping_standby_list_search.html:234
+DIFF: 設計は0件時に固定文言『検索条件に該当するデータがありませんでした。』を出すとする。実装は翻訳キー admin.common.search_no_result（実文言『検索条件に合致するデータが見つかりませんでした』）と admin.common.search_try_change_condition（『検索条件を変えて、再度検索をお試しください』）の2行構成で表示し、さらに has_errors 分岐（admin.common.search_invalid_condition『検索条件に誤りがあります』, index.twig:307-312）を別途持つ。設計の単一固定文言とは表示文言も構造も異なる（翻訳文言を再検証済みで一致しないことを確認）。
+
+ROW 576 [LEGACY_BACKED] M05-19 出荷指示リスト編集
+EXPECT: 表示件数プルダウンは、各 option の value に GET /{admin_route}/standby/search?page_no=1&page_count=… 形式のURL文字列を持つが、当 index.twig の javascript ブロックは空であり、#page_count_pulldown の change ハンドラは載っていないため、プルダウンだけでは自動遷移しない。
+DIFF: 設計は表示件数プルダウン選択だけでは自動遷移しないことを現行仕様としているが、実装は change イベントで即時遷移する。反証として ShippingStandby/index.twig、共通 function.js、ShippingStandby テンプレート配下を page_count_pulldown/location.href/change で再検索し、当該専用ハンドラが存在することを確認した。
+
+ROW 577 [LEGACY_BACKED] M05-21 ピッキングリスト印刷
+EXPECT: ステップ2より前に、最小カテゴリがグッズ定数または予約グッズ定数に一致しないかだけを見て、サプライ帯への強制があるかを決める。…強制側ならステップ2のマップを読まず goods。 / 旧根拠: function_spec_html_preview/pf-eccube3/m05-21_admin_order_order_shipping_standby_picking_list_print.html:246
+DIFF: 設計(pf-eccube3を確認値とする処理フロー)は『最小カテゴリ MIN(ct.category_id) がグッズ定数(Category::GOODS_ID)/予約グッズ定数(Category::RESERVED_GOODS_ID)に一致するか』でサプライ(goods)帯への強制を決める。実装(ec-cube-enterprise)はカテゴリ定数を一切使わず、productClassRepository.getSubInfosByProductClassIds([productClassId]) の返却有無($hasSubInfo)で分岐している(348行 if($hasSubInfo)、非該当は375行 $c='goods')。getSubInfosByProductClassIds 
+
+ROW 578 [LEGACY_BACKED] M05-21 ピッキングリスト印刷
+EXPECT: このクエリでは mtb_option へ findBy(['option_key' => ['order_list_threshold_price_1','order_list_threshold_price_2'], …]) 相当で複数行を一度に読み、その返却順の最初の行値を :price1、2番目を :price2 に結びつける。 / 旧根拠: function_spec_html_preview/pf-eccube3/m05-21_admin_order_order_shipping_standby_picking_list_print.html:
+DIFF: 設計(pf-eccube3を確認値とする)はクエリ側の閾値取得を『両キーを findByOptionKey で一括取得し返却順の[0]を:price1/[1]を:price2に結ぶ』とし、これに起因する取得順の食い違い・添字[0]/[1]参照による実行時異常(html:277)を論点とする。実装(ec-cube-enterprise)の generatePickingList は各キーを個別に findOneBy(['option_key'=>ORDER_LIST_THRESHOLD_PRICE_1]) / (…PRICE_2) で読み、null時は0にフォールバックして $thresholdPrice1/$thresholdPrice2 を作り :price1/:price2 に setP
+
+ROW 579 [SPEC_BACKED] M05-24 出荷実績入力用CSV出力
+EXPECT: 出荷実績入力用CSV出力項目設定は、設計HTMLの一覧どおり64列で出力する。配送先住所列は「配送先_住所1」「配送先_住所2」の後に「配送先_TEL1」が続き、「配送先_住所3」は含めない。
+DIFF: 設計HTMLの項目一覧では ID52 が「配送先_住所1」、ID53 が「配送先_住所2」、ID54 が「配送先_TEL1」であり、配送先_住所3 は定義されていない。実装は OrderCsvController::CSV_HEADER と NOT_REQUIRED_CSV_HEADER に「配送先_住所3」を持ち、OrderRepository::generateResultCsv も s.addr03 を返すため、設計より1列多く、ID54以降の列位置がずれる。反証検索では「配送先_住所3」「shipping_addr03」「s.addr03」「CSV_HEADER」「generateResultCsv」を確認し、sheet-23 の出荷実績入力用CSV出力項目設定内に配送先_住所3 の
+
+ROW 580 [LEGACY_BACKED] M05-26 出荷実績インポート登録
+EXPECT: admin_shipping_result_csv_upload … POST … /{admin_route}/order/shipping_result_csv/upload （送信されたCSVまたはTSVの検証・一括反映・成功時の付随処理へ進む。）
+DIFF: 設計の外部HTTP契約はPOST /order/shipping_result_csv/uploadだが、実装ルート定義とフォームactionはいずれも /order/shipping_result_csv/import 系である。反証として shipping_result_csv/upload、admin_shipping_result_csv_upload、shipping_result_csv/import を検索し、uploadパス定義は見つからなかった。
+
+ROW 582 [SPEC_BACKED] M05-26 出荷実績登録CSVフォーマット
+EXPECT: 親注文状態は「対応開始に近い状態」チェックなくサブ側出荷実施日時の既存のみでゲートされている。 / 旧根拠: functions/pf-eccube3/m05-26_admin_order_order_shipping_result_csv_import.md:114
+DIFF: 設計は親注文の状態差し替えを「サブ側出荷実施日時の既存有無のみ」でゲートし、受注ステータス条件は課さない（設計step15も同旨）。実装はOrderCsv.php:132で `$isPreDeliv = $order->getOrderStatus()?->getId() === OrderStatus::PRE_DELIV;` を追加し、133行 `if ($isPreDeliv && $order->getShippingDate() === null)` の両条件成立時のみ状態を出荷完了(DELIVERED)へ差し替える。出荷指示(PRE_DELIV)でない受注は設計では更新対象になり得るが、実装では親状態・出荷日・送り状番号の更新から除外される。
+
+ROW 583 [LEGACY_BACKED] M05-26 出荷実績登録CSVフォーマット
+EXPECT: `admin_shipping_result_csv_upload` … `POST` … `/{admin_route}/order/shipping_result_csv/upload` / 旧根拠: functions/pf-eccube3/m05-26_admin_order_order_shipping_result_csv_import.md:229
+DIFF: 設計はPOSTのパスを `.../shipping_result_csv/upload` とする。実装のPOSTルート(name=admin_shipping_result_csv_upload, methods=['POST'])は path が `/%eccube_admin_route%/order/shipping_result_csv/import`（265行）で、GET画面(240行 path=同 import, name=admin_shipping_result_csv_import)と同一パスをHTTPメソッドで分岐している。ルート名は一致するがURLパスが `upload` ではなく `import`。ソース全体を検索しても `shipping_result_csv/up
+
+ROW 584 [LEGACY_BACKED] M05-26 出荷実績登録CSVフォーマット
+EXPECT: 続けて try の外側でポイント付与・出荷完了メール送信・別系ポイント付与が呼び出され、それらでの例外処理はサービス側の try と独立している確認値となる。 / 旧根拠: functions/pf-eccube3/m05-26_admin_order_order_shipping_result_csv_import.md:75
+DIFF: 設計は成功後処理（ポイント付与・出荷完了メール・別系ポイント）を try の外側で独立実行する。実装はポイント付与(pointService->gainPoints)とスマレジ発生ポイント連携ジョブ登録を try 内かつ beginTransaction/commit の内側（315-320行付近、commit は322行）で実行し、失敗時は import 全体がロールバックされる。commit後(324-327行)に実行されるのは dispatchGainPointMessage のみ。設計の「トランザクションと独立」ではない。加えて出荷完了メール送信に相当する処理が実装に存在しない（controllerに mail/MailService 参照が皆無）。
+
+ROW 585 [SPEC_BACKED] M05-26 出荷実績登録CSVフォーマット
+EXPECT: プラグインバージョンでは会社名〜住所〜配送先項目の並びにおいて、`配送先_住所3` 相当の区分は一覧に載らない。 / 旧根拠: functions/pf-eccube3/m05-26_admin_order_order_shipping_result_csv_import.md:84
+DIFF: 設計（挙動の正=pf-eccube3プラグイン）では固定列一覧に `配送先_住所3` が含まれない。実装の CSV_HEADER(97行) / NOT_REQUIRED_CSV_HEADER(170行) には `配送先_住所3` が含まれ列数が1多い。ヘッダ照合(checkHeaderValues/checkHeaderSize)は必須外リスト差し引き後にサイズ一致を要求するため、pf-eccube3側の出力列数を想定したCSVでは列ズレ・取込失敗となり得る。
+
+ROW 586 [LEGACY_BACKED] M05-26 出荷実績登録CSVフォーマット
+EXPECT: サイズ判定の分岐は空であり、サイズが0でもオブジェクト経路に残りうる（実装上の注意）。 / 旧根拠: functions/pf-eccube3/m05-26_admin_order_order_shipping_result_csv_import.md:61
+DIFF: 設計（pf-eccube3挙動）ではサイズ0判定の分岐が空で、サイズ0でも処理経路に残る。実装 getFormFile(AbstractCsvService.php:129-134)は `if ($formFile === null || $formFile->getSize() === 0) return null;` とサイズ0を明示ガードし、呼び出し元(OrderCsvController.php:272-276)で render+一覧リダイレクトへ復帰する。設計が指摘する挙動と異なり、サイズ0は取込されない。
+
+ROW 588 [SPEC_BACKED] M05-26 出荷実績登録CSVフォーマット
+EXPECT: 出荷実績登録CSVフォーマットは、識別ID43〜64の配送先項目として「配送先_住所1」「配送先_住所2」の後に「配送先_TEL1」「配送先_TEL2」「配送先_TEL3」「配送先_FAX1」「配送先_FAX2」「配送先_FAX3」「配送方法(ID)」「配送方法(名称)」「送り状No.」「お届け時間ID」「お届け時間(名称)」を並べ、配送先_住所3列は定義しない。
+DIFF: 設計CSV表の配送先側は line 7837〜7849 で住所2の次が配送先_TEL1であり、配送先_住所3は存在しない。一方、実装は OrderCsvController::CSV_HEADER/NOT_REQUIRED_CSV_HEADER に配送先_住所3を定義し、テンプレートがその定義を表示する。別経路として admin_shipping_csv_import も確認したが3列の出荷CSVアップロードであり、本出荷実績登録CSVフォーマットの反証にはならない。
+
+ROW 589 [SPEC_BACKED] M05-26 出荷実績登録CSVフォーマット
+EXPECT: 出荷実績登録CSVフォーマットの「送り状No.」は書式・制限が「数値(整数)」である。
+DIFF: 対象実装範囲（OrderCsvController、OrderCsv、AbstractCsvService、OrderRepository、shipping_result_csv_import.twig、別名の CsvImportController）を確認した。旧系の admin_shipping_csv_import には tracking_number の半角英数字ハイフン検証があるが、これは出荷ID/お問い合わせ番号/出荷日の3列CSVであり、sheet-25の「送り状No.」数値(整数)制約ではない。対象ルート admin_shipping_result_csv_import では数値整数制約が実装されていない。
+
+ROW 562 [SPEC_BACKED] M05-01 受注情報検索 一覧(検索入力)
+EXPECT: 保存した検索パターンは検索条件フォームと検索結果一覧の間にリンクとして並べて表示され、クリックするとその検索条件で受注検索を行う。また保存した検索パターン個々にリロードアイコンがあり、該当件数は更新されるまで「*」を表示する。
+DIFF: search_pattern / SearchPattern / reload_all_pattern / get_count_pattern / admin_order_search_pattern / admin_order_count_pattern を再検索し、非選択パターンの実装は確認した。一方で現在選択中パターンだけは設計の「保存した検索パターン個々」のリンク・件数・リロード対象から外れている。
+
+ROW 561 [SPEC_BACKED] M05-01 受注情報検索 一覧(検索入力)
+EXPECT: 引き渡し後の受注情報に引き渡し前の注文番号を紐づけておき、引き渡し前の注文番号で検索した際に、引き渡し後の受注情報が検索できるようにする。
+DIFF: 引き渡し前/後、next_order_id、nextOrder、order_number、previous/original order を OrderRepository、SearchOrderType、OrderController、Smaregi handler、Order entity へ翻案して再検索したが、旧注文番号入力で移行先受注を返す検索経路は確認できない。なお本要求は materialGapRows に無く extractorMissed として数えた。
+
+ROW 564 [SPEC_BACKED] M05-04 受注詳細CSV出力
+EXPECT: 受注詳細CSV出力項目設定の識別ID:67「送料ID」をCSV出力項目として出力する。
+DIFF: 設計は識別ID:67に送料ID、識別ID:68に送料を別列で要求している。実装は app/DoctrineMigrations/Version20260226000001.php:95 でお届け希望日をsort_no=66、同:96 で「送料」をsort_no=68へ変更するのみで、送料IDを追加していない。初期seedにも src/Eccube/Resource/doctrine/import_csv/ja/dtb_csv.csv:193 の送料(sort_no=67)はあるが、送料IDは存在しない。
+
+ROW 565 [SPEC_BACKED] M05-04 受注詳細CSV出力
+EXPECT: 受注詳細CSV出力項目設定の識別ID:88「注文番号」をCSV出力項目として出力する。
+DIFF: 設計表は識別ID:1と識別ID:88に注文番号を2回要求している。実装は app/DoctrineMigrations/Version20260226000001.php:31 で注文番号をsort_no=1へ設定し、同:117 ではsort_no=90の送り状No.へ進んでおり、sort_no=88の注文番号追加がない。別キーワード「sort_no = 88」「VALUES (4 ... 注文番号」「disp_name = '注文番号'」で再検索しても、csv_type_id=4の注文番号は既存行の更新のみだった。
+
+ROW 570 [SPEC_BACKED] M05-11 受注情報編集
+EXPECT: 受注情報編集画面の商品追加ボタンは「商品の追加」。
+DIFF: 設計は受注情報編集の商品検索ダイアログを開くボタンを「商品の追加」とする。実装は Order/edit.twig で admin.order.add_product_item を表示し、messages.ja.yaml の値が「商品を追加」になっているため、助詞と語順が一致しない。
+
+ROW 571 [SPEC_BACKED] M05-11 受注情報編集
+EXPECT: 受注情報編集画面の支払合計ラベルは「お支払合計」。
+DIFF: 設計は受注情報編集の支払合計ラベルを「お支払合計」とする。実装は Order/edit.twig で admin.order.payment_total を表示し、messages.ja.yaml の値が「お支払い合計」になっているため、送り仮名の有無が一致しない。
+
+ROW 396 [SPEC_BACKED] M03-27 グッズ商品CSV登録
+EXPECT: 画面構成 識別ID2「CSVファイルのアップロード」ボタン：押下後、確認モーダルを表示する。
+DIFF: 画面構成表（UI仕様=正）はアップロード押下後に確認モーダルの表示を要求するが、実装はモーダルを介さず即 submit する。設計HTML内リバース詳細節には『送信前の確認ダイアログはない』(pf-eccube3現行挙動の記述)という相反記述があり要判断だが、画面構成表の element-level 要求との差異として挙げる。
+
+ROW 368 [LEGACY_BACKED] M03-04 グッズ商品CSV出力
+EXPECT: CSV 出力ストリーム送信後（コールバック内で送信処理が走ったあと）、情報ログに「グッズ商品CSV出力ファイル名」と生成ファイル名を記録する。
+DIFF: 設計はストリーム送信処理後の監査ログを要求しているが、実装はレスポンス作成時点でログを出すため、実際に CSV ストリームが送信・完了したことの記録にならない。
+
+
+exec
+/bin/bash -lc "ls -lh /home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/020{2,3,4}_*.xlsx; python3 - <<'PY'
+from openpyxl import load_workbook
+from pathlib import Path
+for p in sorted(Path('/home/y-saito/Developments/hareruya-design-docs/excel_to_html/input').glob('020[234]_*.xlsx')):
+    wb=load_workbook(p, read_only=False, data_only=False)
+    print('\\n',p.name)
+    for i,ws in enumerate(wb.worksheets,1):
+        print(i, ws.title, 'rows',ws.max_row,'cols',ws.max_column,'images',len(ws._images))
+PY" in /home/y-saito/Developments
+ exited 1 in 1679ms:
+-rw-r--r-- 1 y-saito y-saito  13M Jul 28 10:43 /home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/0202_基本設計仕様書(在庫管理機能).xlsx
+-rw-r--r-- 1 y-saito y-saito 4.4M Jul 28 11:19 /home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/0203_基本設計仕様書(受注管理機能).xlsx
+-rw-r--r-- 1 y-saito y-saito  12M Jul 28 09:10 /home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/0204_基本設計仕様書(商品管理).xlsx
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+ModuleNotFoundError: No module named 'openpyxl'
+
+exec
+/bin/bash -lc "rg -n \"openpyxl\" /home/y-saito/Developments/hareruya-design-docs/pyproject.toml /home/y-saito/Developments/hareruya-design-docs/uv.lock /home/y-saito/Developments/hareruya-design-docs/excel_to_html -g 'pyproject.toml' -g 'requirements*.txt' -g 'uv.lock' | head -30" in /home/y-saito/Developments
+ succeeded in 1287ms:
+rg: /home/y-saito/Developments/hareruya-design-docs/pyproject.toml: No such file or directory (os error 2)
+rg: /home/y-saito/Developments/hareruya-design-docs/uv.lock: No such file or directory (os error 2)
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/pyproject.toml:7:    "openpyxl>=3.1.0",
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/requirements.txt:1:openpyxl>=3.1.0
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/uv.lock:19:    { name = "openpyxl" },
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/uv.lock:25:    { name = "openpyxl", specifier = ">=3.1.0" },
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/uv.lock:30:name = "openpyxl"
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/uv.lock:36:sdist = { url = "https://files.pythonhosted.org/packages/3d/f9/88d94a75de065ea32619465d2f77b29a0469500e99012523b91cc4141cd1/openpyxl-3.1.5.tar.gz", hash = "sha256:cf0e3cf56142039133628b5acffe8ef0c12bc902d2aadd3e0fe5878dc08d1050", size = 186464, upload-time = "2024-06-28T14:03:44.161Z" }
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/uv.lock:38:    { url = "https://files.pythonhosted.org/packages/c0/da/977ded879c29cbd04de313843e76868e6e13408a94ed6b987245dc7c8506/openpyxl-3.1.5-py2.py3-none-any.whl", hash = "sha256:5282c12b107bffeef825f4617dc029afaf41d0ea60823bbb665ef3079dc79de2", size = 250910, upload-time = "2024-06-28T14:03:41.161Z" },
+
+exec
+/bin/bash -lc "uv run python - <<'PY'
+from openpyxl import load_workbook
+from pathlib import Path
+for p in sorted(Path('input').glob('020[234]_*.xlsx')):
+    wb=load_workbook(p, read_only=False, data_only=False)
+    print('\\n'+p.name)
+    for i,ws in enumerate(wb.worksheets,1):
+        print(i, ws.title, 'rows',ws.max_row,'cols',ws.max_column,'images',len(ws._images), 'charts',len(ws._charts))
+PY" in /home/y-saito/Developments/hareruya-design-docs/excel_to_html
+exec
+/bin/bash -lc "uv run python - <<'PY'
+from pathlib import Path
+print(list(Path('input').glob('*.xlsx'))[:5])
+PY" in /home/y-saito/Developments/hareruya-design-docs/excel_to_html
+ succeeded in 309ms:
+[PosixPath('input/0404_基本設計仕様書(バッチ_商品管理).xlsx'), PosixPath('input/0514_基本設計仕様書(API_カード管理).xlsx'), PosixPath('input/0204_基本設計仕様書(商品管理).xlsx'), PosixPath('input/0203_基本設計仕様書(受注管理機能).xlsx'), PosixPath('input/0507_基本設計仕様書(API_ネット買取管理).xlsx')]
+
+exec
+/bin/bash -lc "uv run python - <<'PY'
+from pathlib import Path
+for pat in ['020[234]_*.xlsx','020?_*.xlsx']:
+ print(pat, list(Path('input').glob(pat)))
+PY" in /home/y-saito/Developments/hareruya-design-docs/excel_to_html
+ succeeded in 603ms:
+020[234]_*.xlsx [PosixPath('input/0204_基本設計仕様書(商品管理).xlsx'), PosixPath('input/0203_基本設計仕様書(受注管理機能).xlsx'), PosixPath('input/0202_基本設計仕様書(在庫管理機能).xlsx')]
+020?_*.xlsx [PosixPath('input/0204_基本設計仕様書(商品管理).xlsx'), PosixPath('input/0203_基本設計仕様書(受注管理機能).xlsx'), PosixPath('input/0205_基本設計仕様書(店頭買取管理).xlsx'), PosixPath('input/0206_基本設計仕様書(ネット買取管理機能).xlsx'), PosixPath('input/0209_基本設計仕様書(基本情報設定).xlsx'), PosixPath('input/0208_基本設計仕様書(カード管理).xlsx'), PosixPath('input/0201_基本設計仕様書(システム設定).xlsx'), PosixPath('input/0202_基本設計仕様書(在庫管理機能).xlsx'), PosixPath('input/0207_基本設計仕様書(会員管理機能).xlsx')]
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+from zipfile import ZipFile
+from xml.etree import ElementTree as ET
+ns={'m':'http://schemas.openxmlformats.org/spreadsheetml/2006/main','r':'http://schemas.openxmlformats.org/officeDocument/2006/relationships'}
+for p in sorted(Path('/home/y-saito/Developments/hareruya-design-docs/excel_to_html/input').glob('020[234]_*.xlsx')):
+    with ZipFile(p) as z:
+        root=ET.fromstring(z.read('xl/workbook.xml'))
+        sheets=root.find('m:sheets',ns)
+        print('\\n'+p.name)
+        for i,s in enumerate(sheets,1): print(i, s.attrib['name'], s.attrib['{'+ns['r']+'}id'])
+PY" in /home/y-saito/Developments
+ succeeded in 1910ms:
+
+0202_基本設計仕様書(在庫管理機能).xlsx
+1 表紙 rId1
+2 目次 rId2
+3 画面遷移図 rId3
+4 共通処理 rId4
+5 在庫検索一覧(検索入力) rId5
+6 在庫検索一覧(検索結果) rId6
+7 在庫編集 rId7
+8 在庫一括編集 rId8
+9 在庫情報CSV出力 rId9
+10 在庫情報カスタムCSV出力 rId10
+11 在庫切れ、在庫警戒リストCSV出力 rId11
+12 在庫切れリストCSV出力 rId12
+13 在庫警戒リストCSV出力 rId13
+14 在庫移動・振替検索一覧(検索・結果) rId14
+15 在庫移動・振替登録 編集 (移動) rId15
+16 在庫移動・振替登録 編集(振替) rId16
+17 在庫移動・振替情報CSV出力 rId17
+18 在庫分割結合検索一覧(検索・結果) rId18
+19 在庫分割結合登録編集（分割） rId19
+20 在庫分割結合登録編集（結合) rId20
+21 在庫分割結合情報CSV出力 rId21
+22 在庫リコメンドCSV出力 rId22
+23 在庫履歴検索一覧(検索入力) rId23
+24 在庫履歴検索一覧(検索結果) rId24
+25 在庫変動履歴CSV出力 rId25
+26 欠品履歴検索一覧(検索結果) rId26
+27 欠品履歴CSV出力 rId27
+28 在庫変更CSV登録 rId28
+29 在庫移動CSV登録 rId29
+30 在庫振替CSV登録 rId30
+31 在庫分割CSV登録 rId31
+32 在庫結合CSV登録 rId32
+33 在庫移動指示検索 rId33
+34 在庫移動指示詳細 rId34
+35 在庫移動指示リスト ピッキングリスト印刷 rId35
+36 送り状CSV出力 rId36
+37 バーコード貼替リストCSV出力 rId37
+38 棚卸計画一覧 rId38
+39 棚卸計画新規作成 rId39
+40 棚卸計画編集 rId40
+41 棚卸詳細登録CSV rId41
+42 棚卸詳細CSV出力 rId42
+43 棚卸在庫確認 rId43
+44 棚卸在庫反映 rId44
+45 在庫編集承認一覧(検索入力) rId45
+46 在庫編集承認一覧(検索結果) rId46
+47 承認一覧CSV出力 rId47
+48 承認対象在庫一覧CSV出力 rId48
+49 在庫移動戻しリストCSV出力 rId49
+50 在庫移動戻しリストPDF rId50
+51 エラー表示 rId51
+52 別添資料_在庫変動時の履歴作成について rId52
+53 別添資料_在庫移動ステータス遷移概要 rId53
+54 別添資料_リコメンドCSV出力仕様 rId54
+
+0203_基本設計仕様書(受注管理機能).xlsx
+1 表紙 rId1
+2 目次 rId2
+3 画面遷移図 rId3
+4 受注情報検索 一覧(検索入力) rId4
+5 受注情報検索 一覧(検索結果) rId5
+6 受注一覧CSV出力 rId6
+7 受注一覧カスタムCSV出力 rId7
+8 受注詳細CSV出力 rId8
+9 受注詳細カスタムCSV出力 rId9
+10 メール一括送信 rId10
+11 【新規】手動メール通知(確認画面) rId11
+12 送り状CSV出力 rId12
+13 スタック用紙印刷 rId13
+14 納品書印刷（日本語） rId14
+15 納品書印刷（英語） rId15
+16 受注情報編集 rId16
+17 【新規】受注情報履歴 rId17
+18 出荷指示リスト生成 rId18
+19 出荷指示リスト検索 rId19
+20 出荷指示リスト編集 rId20
+21 ピッキングリスト印刷 rId21
+22 出荷指示ー納品書印刷（日本語） rId22
+23 出荷指示ー納品書印刷（英語） rId23
+24 出荷実績入力用CSV出力 rId24
+25 出荷実績インポート登録 rId25
+26 出荷実績登録CSVフォーマット rId26
+27 店頭注文番号札管理 rId27
+28 別添資料_スマレジ決済後返品処理について rId28
+29 別添資料_スマレジ決済後返品処理についてBK rId29
+
+0204_基本設計仕様書(商品管理).xlsx
+1 表紙 rId1
+2 目次 rId2
+3 画面遷移図 rId3
+4 商品マスター(検索入力) rId4
+5 商品マスター(検索結果) rId5
+6 商品登録編集 rId6
+7 セール用価格変更CSV出力 rId7
+8 商品情報カスタムCSV出力 rId8
+9 カード商品CSV登録 rId9
+10 カード商品CSV出力 rId10
+11 カード商品CSVフォーマット rId11
+12 グッズ商品CSV登録 rId12
+13 グッズ商品CSV出力 rId13
+14 グッズ商品CSVフォーマット rId14
+15 商品タグ更新CSV登録 rId15
+16 商品タグ更新CSVフォーマット  rId16
+17 売上分析タグ登録編集 rId17
+18 売上分析タグ更新CSV登録 rId18
+19 売上分析タグ更新CSVフォーマット  rId19
+20 商品公開CSV登録 rId20
+21 商品公開CSVフォーマット rId21
+22 商品規格一覧 rId22
+23 商品規格登録編集 rId23
+24 買取・基準価格一括編集 rId24
+25 カテゴリ一覧 rId25
+26 カテゴリ登録 rId26
+27 カテゴリCSV出力 rId27
+28 タグ登録 rId28
+29 略称タグ登録 rId29
+30 略称タグCSV出力 rId30
+31 略称タグCSVアップロード rId31
+32 略称タグCSVフォーマット  rId32
+33 部門登録 rId33
+34 部門CSV出力 rId34
+35 部門登録CSVアップロード  rId35
+36 部門登録CSVフォーマット rId36
+37 棚番登録 編集 rId37
+38 棚番号CSVフォーマット rId38
+39 購入グループ管理 rId39
+40 買取・販売価格履歴検索 rId40
+41 買取 販売価格履歴情報CSV出力 rId41
+42 重複商品コード確認 rId42
+43 基準価格変更CSVアップロード rId43
+44 基準価格変更CSVフォーマット rId44
+45 セール用価格変更CSVアップロード rId45
+46 セール用価格変更CSVフォーマット rId46
+47 低価格帯カード価格変更CSV出力 rId47
+48 低価格帯カード価格変更CSVフォーマット rId48
+49 高額商品価格変更CSVアップロード rId49
+50 高額商品価格変更CSVフォーマット rId50
+51 セール用高額商品価格変更CSVアップロード rId51
+52 セール用高額商品価格変更CSVフォーマット rId52
+53 部門更新CSV登録 rId53
+54 部門更新CSVフォーマット  rId54
+55 略称タグ更新CSV登録  rId55
+56 略称タグ更新CSVフォーマット  rId56
+57 棚番号更新CSV登録 rId57
+58 棚番号更新CSVフォーマット  rId58
+59 カテゴリ登録CSVアップロード rId59
+60 カテゴリ登録CSVフォーマット rId60
+61 別添資料_カテゴリ子検索条件について rId61
+62 別添資料_CSVアップロードによる基準価格と販売価格の更新 rId62
+63 別添資料__スマレジ連携機能一覧 rId63
+64 別添資料__スマレジ連携__商品連携項目 rId64
+65 別添資料__スマレジ部門連携項目 rId65
+66 別添資料__スマレジ連携対象商品 rId66
+67 別添資料__スマレジ連携__呼び出しAPIについて rId67
+68 別添資料__一括更新系の処理結果について rId68
+69 別添資料__スマレジ連携__機能改修一覧 rId69
+70 XXXCSV出力項目設定 rId70
+71 対応状況管理 rId71
+72 メール管理_商品予約完了 rId72
+73 機能A rId73
+
+exec
+/bin/bash -lc 'ls /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results | tail -20; for f in /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_{08,09,10,12}.json; do if [ -f "$f" ]; then echo "$f"; jq -r '"'.results[] | select(.docWork "'!= "NONE") | [.rowId,.docWork,.docEffortDays,.reason] | @tsv'"' \""'$f" | head -8; fi; done' in /home/y-saito/Developments
+ succeeded in 313ms:
+du_01.json
+du_01.log
+du_02.json
+du_02.log
+du_03.json
+du_03.log
+du_04.json
+du_04.log
+du_05.json
+du_05.log
+du_06.json
+du_06.log
+du_07.json
+du_07.log
+du_08.log
+du_09.log
+du_10.log
+du_11.log
+du_12.log
+du_13.log
+
+exec
+/bin/bash -lc 'for f in /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_0{1,2,3,4,5,6,7}.json; do echo "$f"; jq -r '"'[.results[].docWork] | group_by(.) | map({key:.[0],value:length}) | from_entries' \""'$f"; done; rg -n '"'移行後|残さ|不具合|バグ|旧実装' /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_0{1,2,3,4,5,6,7}.json | head -80" in /home/y-saito/Developments
+ succeeded in 1146ms:
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_01.json
+{
+  "ADD": 10,
+  "FIX": 1,
+  "NONE": 17
+}
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_02.json
+{
+  "ADD": 3,
+  "NONE": 25
+}
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_03.json
+{
+  "ADD": 9,
+  "NONE": 19
+}
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_04.json
+{
+  "ADD": 14,
+  "NONE": 13,
+  "UNSURE": 1
+}
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_05.json
+{
+  "ADD": 18,
+  "NONE": 9,
+  "UNSURE": 1
+}
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_06.json
+{
+  "ADD": 23,
+  "NONE": 5
+}
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_07.json
+{
+  "ADD": 4,
+  "NONE": 23,
+  "RESOLVE": 1
+}
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_07.json:135:      "reason": "正本はConnectionType分岐を「現状」とし、A05-01とA05-02のエンドポイント分離を移行後仕様としている。想定外ConnectionType時に応答を組み立てない旧挙動は分離後に残す対象ではないため追記しない。",
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_06.json:9:      "reason": "旧実装にだけある送信時のボタン無効化とスピナー表示を、アップロードボタンの動作説明へ追記する。スピナーは送信中だけの状態なので、通常状態を示すレイアウト画像の差し替えは不要。",
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_06.json:18:      "reason": "旧実装にのみあるトップバナー管理の入口、保存、削除の4エンドポイントを、HTTPメソッドとパスが分かる小節として追記する。同シートのrowId 1007、1008、1009、1010とまとめて編集する。",
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_06.json:27:      "reason": "旧実装にのみある送信前の並び順空欄・重複チェック、alertによる中止、送信対象フォームを画面部品の動作説明へ追記する。rowId 1005、1008、1009、1010と同じシートを続けて編集する分を減額した。",
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_06.json:36:      "reason": "旧実装にのみあるフラッシュメッセージと検索条件セッションを使わず、URLとハッシュで遷移先を決める方針を1項目追記する。rowId 1005、1007、1009、1010との一括編集分を減額した。",
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_06.json:54:      "reason": "旧実装にのみある横型フォーム適用と入力幅95%のCSS指定を短い注記として追記する。既存レイアウト画像は同じ項目配置を既に示すため画像差し替えは不要で、同シートの他4件との一括編集分を減額した。",
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_06.json:63:      "reason": "旧実装にのみあるcalendar対象条件、DateTimePickerの適用、YYYY-MM-DD HH:mm書式、momentの日本語設定を日時入力仕様として追記する。貼付画像は日時列を表示していないため画像差し替えは不要。",
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_06.json:72:      "reason": "旧実装にのみある一覧、検索、ページ送り、新規登録のURL・HTTPメソッド・bind名を小節として追記する。同シートのrowId 813、814、815、817とまとめて編集する。",
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_06.json:81:      "reason": "検索フォーム名admin_event_list、POST送信、CSRF保護なしという旧実装の契約を1項目追記する。rowId 812、814、815、817と同じ処理概要を続けて編集する分を減額した。",
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_06.json:90:      "reason": "旧実装由来の検索条件、表示件数、ソート、並び順、ページ番号のセッションキーと、初期表示時の削除対象を追記する。rowId 812、813、815、817との一括編集分を反映した。",
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_06.json:99:      "reason": "旧実装由来のsort/order、ASC/DESC、不正値時のadmin.error.sort表示と初期表示への復帰を追記する。rowId 812、813、814、817と同じシートでまとめて編集する。",
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_06.json:117:      "reason": "旧実装にのみあるdeleted_at設定済みレコードの検索対象外条件を1項目追記する。rowId 812、813、814、815との一括編集分を減額した。",
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_06.json:126:      "reason": "旧実装にのみある一覧、検索、ページ送りのURL・HTTPメソッドと、フォーム名admin_event_list・CSRFなしの契約を追記する。同シートのrowId 819、821、823とまとめて編集する。",
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_06.json:144:      "reason": "正本は開催日FromがToを超える場合をエラーと明記しており、移行後実装も範囲エラーとする。LEGACY_BACKEDの「逆転時も検証しない」挙動は移行後に残さない仕様と読めるため、正本は変更しない。",
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_06.json:153:      "reason": "旧実装由来のsort/order、ASC/DESC、不正order時のadmin.error.sort表示と初期表示への復帰を追記する。rowId 818、819、823と同じシートを続けて編集する。",
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_06.json:171:      "reason": "旧実装にのみある専用CSSファイルeventlist.cssの使用を短い注記として追記する。画面項目や配置は変わらないため画像差し替えは不要で、rowId 818、819、821との一括編集分を減額した。",
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_06.json:180:      "reason": "旧実装にのみある初期表示、アップロードPOST、雛形CSV取得の3導線を、HTTPメソッドとURLが分かる小節として追記する。同シートのrowId 871、872、873、874、877、878とまとめて編集する。",
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_06.json:207:      "reason": "旧実装にのみある成功時のフラッシュ文言「イベント情報を登録しました。」を1項目追記する。処理完了時だけの通知なので通常状態のレイアウト画像は変更せず、同シートの他6件との一括編集分を反映した。",
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_06.json:234:      "reason": "正本は2026/6/11の注記で「会場」を不要として削除し、現行列を「チーム戦」「フリー入力エリア」、公開状態_日程を必須と定義している。旧実装由来の列名・任意扱いは移行後に残さない更新済み仕様と読めるため変更しない。",
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_06.json:243:      "reason": "CSV取込時にゼロ幅スペースを正規化または除去する旧実装要件を1項目追記する。rowId 870、871、872、873、874、878と同じ処理概要をまとめて編集する分を減額した。",
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_06.json:252:      "reason": "CSVアップロードPOST処理で実行時間制限を無効化する旧実装要件を1項目追記する。rowId 870、871、872、873、874、877との一括編集分を減額した。",
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_05.json:9:      "reason": "旧実装由来のTwigローダへのプラグイン既定本文ディレクトリ追加を、本文ソース読込時の処理として追記する。画面配置の変更ではないためレイアウト画像は直さない。",
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_05.json:18:      "reason": "正本はテンプレート選択後に最終更新者・最終更新日を表示するとだけ記載しているため、旧実装由来の「更新年が2018より大きい場合のみ日時表示」という条件を備考へ追記する。同じシートのrow 735とまとめて編集できる。",
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_05.json:45:      "reason": "正本はテンプレート・件名・本文・登録のみで、旧実装由来のメソッド別From/Bcc/Reply-To割当がない。問い合わせ受付と仮会員確認メール再送の2条件を処理概要へ追記する。",
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_05.json:90:      "reason": "正本は「現行機能から変更なし」とCSV列だけで、旧実装由来のGET export/{mode}、形式別ヘッダ・ファイル名契約がないため追記する。同シートにレイアウト画像はなく、表と処理概要の編集だけで済む。",
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_05.json:99:      "reason": "旧実装由来の検索結果表示、条件のセッション保持、初期GET時消去、同条件でのCSV出力という二段階フローを追記する。シートに貼付レイアウト画像がないため画像作成は不要で、row 810とまとめて編集できる。",
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_05.json:108:      "reason": "正本は検索結果表示と100件既定のみで、旧実装由来の初期表示／検索ルート分離、GET/POST、page_no正規表現がないため追記する。静的な画面配置は変えない。",
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_05.json:135:      "reason": "フォーマットまたは色変更時にアーキタイプ選択肢を絞り込む旧実装由来の画面動作を追記する。既存項目間の動作説明であり、レイアウト画像の描き直しは不要。",
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_05.json:171:      "reason": "正本は「TSVアップロードを廃止」「TSVをエラー扱い」と明記しており、TSV許容は移行後に残さない挙動と読める。LEGACY_BACKEDだが設計書への追記は不要。",
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_05.json:180:      "reason": "成功・失敗ともフラッシュへ結果を積み、HTTP 302でGET取込画面へ戻す旧実装由来の応答契約を処理概要へ追記する。row 971、972と同じ処理概要をまとめて編集する。",
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_05.json:189:      "reason": "再取込時に既存DtbDeckCardを明示削除せず新規明細を積むという旧実装由来のDB操作条件を処理概要へ追記する。同シートの関連指摘とまとめて編集する。",
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_05.json:216:      "reason": "正本は一括登録・更新だけで、旧実装由来のGET/POSTパス、ルート名、処理後の再GET遷移がないため処理概要へ追記する。同シートのrow 1001〜1003とまとめて編集する。",
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_05.json:234:      "reason": "第1行ヘッダを固定配列と順序まで完全一致させる旧実装由来の条件を入力チェックへ追記する。同シートの既存CSV処理概要へ1条件追加する作業。",
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_05.json:243:      "reason": "成功・失敗ともGET取込画面へHTTP 302で戻し、フラッシュで結果を示す旧実装由来の応答契約を追記する。画面項目の配置変更ではないため画像は直さない。",
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_02.json:9:      "reason": "旧実装にのみ記載された取込完了後の入荷対象判定、入荷通知メール送信、更新後在庫の支店通知を、条件と副作用が分かる処理項目として追記する。通常画面のレイアウト画像には完了後処理を表現する箇所がないため、画像差し替えは不要。",
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_02.json:18:      "reason": "旧実装にのみある正常終了メッセージ「商品登録CSVファイルをアップロードしました。」を、取込成功時の表示文言として1項目追記する。完了時だけの通知であり、既存レイアウト画像は通常表示を示すため画像の描き直しは不要。rowId 512、514と同じ処理概要を続けて編集できる分を減額した。",
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_02.json:27:      "reason": "旧実装にのみ記載された取込開始、処理件数付き正常完了、異常終了の各ログ要件を、発生タイミングと記録内容が分かるよう追記する。rowId 512、513と同じ処理概要を続けて編集できる分を減額した。",
+
+exec
+/bin/bash -lc "jq '.' /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_07.json | sed -n '1,220p'" in /home/y-saito/Developments
+ succeeded in 1598ms:
+{
+  "packetId": "du_07",
+  "results": [
+    {
+      "rowId": 201,
+      "docWork": "NONE",
+      "docEffortDays": 0,
+      "target": "0406_基本設計仕様書(バッチ_店頭買取管理) .xlsx / 【新規】買取自動入庫バッチ シート / 入庫対象ステータスの記述",
+      "reason": "正本には店頭買取の入庫待ちをステータス12、ネット買取の入庫待ちをステータス16として明記済みである。SPEC_BACKEDのため、正本は変更せず実装側の乖離として扱う。",
+      "sharedWithRows": [],
+      "confidence": "high"
+    },
+    {
+      "rowId": 202,
+      "docWork": "NONE",
+      "docEffortDays": 0,
+      "target": "0406_基本設計仕様書(バッチ_店頭買取管理) .xlsx / 【新規】買取自動入庫バッチ シート / ECCUBE在庫への登録処理",
+      "reason": "正本には店頭買取を買取店舗のECCUBE在庫へ、ネット買取を本店のECCUBE在庫へ登録する処理が記載済みである。実装の在庫場所絞り込み不足に対する設計書編集は不要。",
+      "sharedWithRows": [],
+      "confidence": "high"
+    },
+    {
+      "rowId": 2,
+      "docWork": "NONE",
+      "docEffortDays": 0,
+      "target": "0501_基本設計仕様書(API_在庫管理).xlsx / スマレジ連携処理 シート / 在庫編集・一括編集の処理概要",
+      "reason": "スマレジ在庫への反映、実行件数上限、超過時のエラーとCSV登録誘導、閾値による個別・一括APIの使い分けが正本に記載済みである。SPEC_BACKEDのため変更しない。",
+      "sharedWithRows": [],
+      "confidence": "high"
+    },
+    {
+      "rowId": 3,
+      "docWork": "NONE",
+      "docEffortDays": 0,
+      "target": "0501_基本設計仕様書(API_在庫管理).xlsx / スマレジ連携処理 シート / 大量CSV時の一括更新処理",
+      "reason": "Patch一括更新、callback用S3保存、CSV履歴、100件ごとの分割、在庫一括相対値更新APIによる登録が正本に記載済みである。実装不足に伴う正本の追記は不要。",
+      "sharedWithRows": [],
+      "confidence": "high"
+    },
+    {
+      "rowId": 4,
+      "docWork": "NONE",
+      "docEffortDays": 0,
+      "target": "0501_基本設計仕様書(API_在庫管理).xlsx / スマレジ連携処理 シート / 非同期callback結果受信後の処理",
+      "reason": "問合せIDとcallbackパラメータによるCSV特定、S3取得、ECCUBE在庫更新、CSV処理履歴登録まで正本に記載済みである。SPEC_BACKEDのため変更しない。",
+      "sharedWithRows": [],
+      "confidence": "high"
+    },
+    {
+      "rowId": 5,
+      "docWork": "NONE",
+      "docEffortDays": 0,
+      "target": "0501_基本設計仕様書(API_在庫管理).xlsx / スマレジwebhook連携エラー再連携 シート / 取得期間・入力データ検索条件",
+      "reason": "バッチ駆動時間から5時間前まで、取得期間を可変とすること、およびXからX-Y hoursの検索条件が正本に記載済みである。実装側の時間幅未対応に対する設計書編集は不要。",
+      "sharedWithRows": [],
+      "confidence": "high"
+    },
+    {
+      "rowId": 11,
+      "docWork": "ADD",
+      "docEffortDays": 0.05,
+      "target": "0502_基本設計仕様書(API_商品管理).xlsx / ポップアップ用商品情報取得（旧商品ID） シート / ステータスコード表の404行またはエラー応答仕様",
+      "reason": "正本は404となる条件だけを記載し、旧契約の応答本文 `{code, message}` と message=`Not Found` を記載していない。既存の404行へ応答形式を追記する小規模なセル編集として見積もる。同じシートのrow 12・13とまとめて編集できる。",
+      "sharedWithRows": [
+        12,
+        13
+      ],
+      "confidence": "high"
+    },
+    {
+      "rowId": 12,
+      "docWork": "ADD",
+      "docEffortDays": 0.1,
+      "target": "0502_基本設計仕様書(API_商品管理).xlsx / ポップアップ用商品情報取得（旧商品ID） シート / レスポンスデータ表（B54:R67付近）とレスポンスサンプル",
+      "reason": "正本のレスポンス項目表に旧契約の `cardId` が無いため、項目行とJSONサンプルへ追加する。表とサンプルの2か所だが既存形式を流用でき、row 11・13と同時に編集できる。",
+      "sharedWithRows": [
+        11,
+        13
+      ],
+      "confidence": "high"
+    },
+    {
+      "rowId": 13,
+      "docWork": "RESOLVE",
+      "docEffortDays": 0.25,
+      "target": "0502_基本設計仕様書(API_商品管理).xlsx / ポップアップ用商品情報取得（旧商品ID） シート / 型表 J57:J59付近とJSONサンプル C75:C77付近",
+      "reason": "正本内部でprice01・price02・stockの型表は「数値(整数)」、サンプルは引用符付き数値文字列となっており矛盾する。採用する外部契約を決定した後、型表またはサンプルを統一する反映作業を見積もる。裁定工数は含めず、row 11・12と同時に編集する。",
+      "sharedWithRows": [
+        11,
+        12
+      ],
+      "confidence": "high"
+    },
+    {
+      "rowId": 28,
+      "docWork": "NONE",
+      "docEffortDays": 0,
+      "target": "0505_基本設計仕様書(API_受注管理).xlsx / 注文印刷_印刷情報をプリンタへ送信 シート / エンドポイントURL・メソッド・店舗ID引数",
+      "reason": "GET `/order/prints/{店舗ID}`、店舗ID(shop_id)のURL引数、A05-02とのエンドポイント分離が正本に明記済みである。実装ルートとの差に対する正本修正は不要。",
+      "sharedWithRows": [],
+      "confidence": "high"
+    },
+    {
+      "rowId": 29,
+      "docWork": "NONE",
+      "docEffortDays": 0,
+      "target": "0505_基本設計仕様書(API_受注管理).xlsx / 注文印刷_印刷情報をプリンタへ送信 シート / リクエスト条件・404条件",
+      "reason": "店舗IDを必須の整数とし、未指定・型不正・不存在の場合に404とすることが正本に記載済みである。SPEC_BACKEDのため変更しない。",
+      "sharedWithRows": [],
+      "confidence": "high"
+    },
+    {
+      "rowId": 30,
+      "docWork": "NONE",
+      "docEffortDays": 0,
+      "target": "0505_基本設計仕様書(API_受注管理).xlsx / 注文印刷_印刷情報をプリンタへ送信 シート / 処理概要の印刷データXMLログ出力",
+      "reason": "未印刷注文をXML化して返した後に印刷データXMLをログ出力する要求が正本に明記済みである。コメントアウトされた実装を理由に正本を変更しない。",
+      "sharedWithRows": [],
+      "confidence": "high"
+    },
+    {
+      "rowId": 31,
+      "docWork": "NONE",
+      "docEffortDays": 0,
+      "target": "0505_基本設計仕様書(API_受注管理).xlsx / 注文印刷_印刷情報をプリンタへ送信 シート / 処理概要と印刷レイアウト動的変更箇所",
+      "reason": "XML化前のスマレジ商品コード確認、不存在時は何もしないこと、およびバーコードにスマレジコードを使うことが正本に記載済みである。設計書編集は不要。",
+      "sharedWithRows": [],
+      "confidence": "high"
+    },
+    {
+      "rowId": 32,
+      "docWork": "NONE",
+      "docEffortDays": 0,
+      "target": "0505_基本設計仕様書(API_受注管理).xlsx / 注文印刷_印刷情報をプリンタへ送信 シート / 未印刷注文抽出と合計金額欄の表示仕様",
+      "reason": "店舗IDごとの未印刷注文抽出と、スムーズ店頭受取時に合計金額欄を「スムーズ店頭受取」とする要求は正本に記載済みである。確認された実装乖離を直すための正本変更は不要。",
+      "sharedWithRows": [],
+      "confidence": "medium"
+    },
+    {
+      "rowId": 33,
+      "docWork": "NONE",
+      "docEffortDays": 0,
+      "target": "0505_基本設計仕様書(API_受注管理).xlsx / 注文印刷_印刷情報をプリンタへ送信 シート / D20:D23付近の現状ConnectionType分岐とエンドポイント分離方針",
+      "reason": "正本はConnectionType分岐を「現状」とし、A05-01とA05-02のエンドポイント分離を移行後仕様としている。想定外ConnectionType時に応答を組み立てない旧挙動は分離後に残す対象ではないため追記しない。",
+      "sharedWithRows": [],
+      "confidence": "high"
+    },
+    {
+      "rowId": 38,
+      "docWork": "NONE",
+      "docEffortDays": 0,
+      "target": "0505_基本設計仕様書(API_受注管理).xlsx / 注文印刷_該当受注のステータスを印刷済みに変更 シート / エンドポイント・HTTP契約",
+      "reason": "専用URL `/order/prints/status/printed`、POST、XMLリクエスト、レスポンスなし、A05-01との分離が正本に記載済みである。SPEC_BACKEDのため変更しない。",
+      "sharedWithRows": [],
+      "confidence": "high"
+    },
+    {
+      "rowId": 39,
+      "docWork": "NONE",
+      "docEffortDays": 0,
+      "target": "0505_基本設計仕様書(API_受注管理).xlsx / 注文印刷_該当受注のステータスを印刷済みに変更 シート / プリンタ応答エラー確認・ログ記録",
+      "reason": "プリンタ応答XMLのエラーコードをログへ追記し、印刷結果詳細からエラー有無を確認する要求が正本に記載済みである。実装不足に伴う設計書編集は不要。",
+      "sharedWithRows": [],
+      "confidence": "high"
+    },
+    {
+      "rowId": 77,
+      "docWork": "NONE",
+      "docEffortDays": 0,
+      "target": "0506_基本設計仕様書(API_店頭買取管理).xlsx / カード詳細IDから買取用商品情報を取得 シート / エンドポイントURLとリクエスト例",
+      "reason": "GET `/api/buying/{detailId}.json` と具体的なURL例が正本に記載済みである。API版数プレフィックスを含む実装との差は実装側の乖離であり、正本は変更しない。",
+      "sharedWithRows": [],
+      "confidence": "high"
+    },
+    {
+      "rowId": 78,
+      "docWork": "NONE",
+      "docEffortDays": 0,
+      "target": "0506_基本設計仕様書(API_店頭買取管理).xlsx / カード詳細IDから買取用商品情報を取得 シート / conditionClassesレスポンス項目表",
+      "reason": "conditionClasses配下の外部JSON項目を `productCode` とすることが正本に明記済みである。実装の `productClassCode` に合わせて正本を変更しない。",
+      "sharedWithRows": [],
+      "confidence": "high"
+    },
+    {
+      "rowId": 86,
+      "docWork": "NONE",
+      "docEffortDays": 0,
+      "target": "0506_基本設計仕様書(API_店頭買取管理).xlsx / 部門一覧を取得 シート / レスポンスデータ表とJSONサンプル",
+      "reason": "トップレベルのcode、message、sectionsと、sections要素のsection_id・name・codeが正本の表とサンプルに記載済みである。実装の裸配列応答に対する設計書編集は不要。",
+      "sharedWithRows": [],
+      "confidence": "high"
+    },
+    {
+      "rowId": 89,
+      "docWork": "NONE",
+      "docEffortDays": 0,
+      "target": "0506_基本設計仕様書(API_店頭買取管理).xlsx / 本人確認更新 シート / 処理概要とステータスコード表",
+      "reason": "証明書IDがマスタに存在しない場合をエラーとし、HTTP 400とすることが正本に明記済みである。実装の404応答に合わせる正本修正は不要。",
+      "sharedWithRows": [],
+      "confidence": "high"
+    },
+    {
+      "rowId": 90,
+      "docWork": "ADD",
+      "docEffortDays": 0.1,
+      "target": "0506_基本設計仕様書(API_店頭買取管理).xlsx / 本人確認更新 シート / エンドポイントURL B9付近とリクエスト例 C44付近",
+      "reason": "正本は `.json` 付き入口のみを記載し、旧契約にある拡張子なしの同一処理aliasを記載していない。エンドポイント一覧と必要に応じてURL例へ拡張子なし入口を追記する。",
+      "sharedWithRows": [],
+      "confidence": "high"
+    },
+    {
+      "rowId": 93,
+      "docWork": "NONE",
+      "docEffortDays": 0,
+      "target": "0506_基本設計仕様書(API_店頭買取管理).xlsx / 【新規】ダブルチェック者更新 シート / エンドポイントURL・メソッド",
+      "reason": "PUT `/api/otcBuyOrder/{id}/doublecheck.json` が正本に明記済みである。実装のURLへ合わせる正本変更は不要。",
+      "sharedWithRows": [],
+      "confidence": "high"
+    },
+    {
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+from zipfile import ZipFile
+from xml.etree import ElementTree as ET
+from posixpath import normpath, join, dirname
+NSM='http://schemas.openxmlformats.org/spreadsheetml/2006/main'; NSR='http://schemas.openxmlformats.org/officeDocument/2006/relationships'; NSP='http://schemas.openxmlformats.org/package/2006/relationships'
+books={
+'0202_基本設計仕様書(在庫管理機能).xlsx':{
+'在庫移動指示検索':['送り状No'],
+'在庫移動・振替登録 編集(振替)':['在庫移動・振替検索一覧','在庫振替検索一覧'],
+'在庫分割結合検索一覧(検索・結果)':['分割元','結合先商品'],},
+'0203_基本設計仕様書(受注管理機能).xlsx':{
+'受注情報検索 一覧(検索入力)':['検索パターン','引き渡し前','注文番号'],
+'受注詳細CSV出力':['送料ID','注文番号'],
+'受注情報編集':['商品の追加','お支払','PurchaseFlow'],
+'【新規】受注情報履歴':['編集不可','非活性'],
+'出荷指示リスト編集':['表示件数','検索条件に','page_count','一覧でチェック'],
+'ピッキングリスト印刷':['カテゴリ','閾値','threshold','ピッキング'],
+'出荷実績入力用CSV出力':['配送先_住所','送り状No'],
+'出荷実績インポート登録':['upload','import','出荷実績'],
+'出荷実績登録CSVフォーマット':['配送先_住所','送り状No','出荷実績'],},
+'0204_基本設計仕様書(商品管理).xlsx':{
+'グッズ商品CSV登録':['確認モーダル','確認ダイアログ','アップロード'],
+'グッズ商品CSV出力':['グッズ商品CSV出力ファイル名','ログ','ストリーム'],},
+}
+base=Path('/home/y-saito/Developments/hareruya-design-docs/excel_to_html/input')
+for bn,qs in books.items():
+ p=base/bn
+ with ZipFile(p) as z:
+  ss=[]
+  if 'xl/sharedStrings.xml' in z.namelist():
+   rr=ET.fromstring(z.read('xl/sharedStrings.xml'))
+   for si in rr.findall(f'{{{NSM}}}si'):
+    ss.append(''.join(t.text or '' for t in si.iter(f'{{{NSM}}}t')))
+  wr=ET.fromstring(z.read('xl/workbook.xml'))
+  relr=ET.fromstring(z.read('xl/_rels/workbook.xml.rels'))
+  rel={x.attrib['Id']:x.attrib['Target'] for x in relr}
+  sm={}
+  for s in wr.find(f'{{{NSM}}}sheets'):
+   name=s.attrib['name']; rid=s.attrib[f'{{{NSR}}}id']; target=rel[rid]
+   if not target.startswith('xl/'): target='xl/'+target.lstrip('/')
+   sm[name]=normpath(target)
+  print('\\n###',bn)
+  for sn,terms in qs.items():
+   path=sm[sn]; root=ET.fromstring(z.read(path)); hits=[]
+   for c in root.iter(f'{{{NSM}}}c'):
+    typ=c.attrib.get('t'); val=''
+    if typ=='s':
+     v=c.find(f'{{{NSM}}}v'); val=ss[int(v.text)] if v is not None else ''
+    elif typ=='inlineStr': val=''.join(t.text or '' for t in c.iter(f'{{{NSM}}}t'))
+    else:
+     v=c.find(f'{{{NSM}}}v'); val=v.text if v is not None and v.text is not None else ''
+    if any(term.lower() in val.lower() for term in terms): hits.append((c.attrib['r'],val.replace('\\n',' / ')))
+   print('\\n--',sn,'sheetxml',path)
+   for h in hits[:100]: print(h[0],h[1][:500])
+PY" in /home/y-saito/Developments
+ succeeded in 8163ms:
+
+### 0202_基本設計仕様書(在庫管理機能).xlsx
+
+-- 在庫移動指示検索 sheetxml xl/worksheets/sheet33.xml
+AG4 在庫移動指示を検索、送り状No.の登録およびダウンロードが可能ザイコイドウシジケンサクオクジョウトウロクカノウ
+D78 ③ゆうプリRに②で出力したCSVを登録し、送り状No.を得るシュツリョクトウロクオクジョウエ
+E88 ・移動指示ID、送り状No.どちらも入力されていることイドウシジオクジョウニュウリョク
+E95 ・該当の移動指示IDに送り状No.を登録するガイトウイドウシジオクジョウトウロク
+AG184 押下時に、分割商品CSV登録を実行 /  / 商品登録を押下時に下記の場合エラーとなる / ・アップロードされたファイルがcsv以外のファイルの場合 / ・CSVファイルが下記のカラム名以外の場合（フォーマット不一致エラー） / 移動指示ID、送り状No. / ※CSV1行目のカラム名の一致チェックを行うジッコウショウヒンメイイドウシジオクジョウギョウメメイイッチオコナ
+AG188 送り状No.を登録したい移動指示IDを指定オクジョウトウロクイドウシジシテイ
+E189 送り状No.オクジョウ
+
+-- 在庫移動・振替登録 編集(振替) sheetxml xl/worksheets/sheet16.xml
+E332 初期表示画面ではフッタのリンクは「在庫一覧」だったが、「在庫移動・振替検索一覧」へのリンクに変更し、検索状態を維持したまま「在庫移動・振替検索一覧」画面へ遷移するショキヒョウジガメンザイコイチランザイコイドウフリカエケンサクイチランヘンコウケンサクジョウタイイジガメンセンイ
+E378 在庫移動・振替検索一覧ザイコイドウフリカエケンサクイチラン
+AG378 初期表示画面ではフッタのリンクは「在庫一覧」だったが、「在庫移動・振替検索一覧」へのリンクに変更し、検索状態を維持したまま「在庫移動・振替検索一覧」画面へ遷移するショキヒョウジガメンザイコイチランザイコイドウフリカエケンサクイチランヘンコウケンサクジョウタイイジザイコイドウフリカエケンサクイチランガメンセンイ
+
+-- 在庫分割結合検索一覧(検索・結果) sheetxml xl/worksheets/sheet18.xml
+Z131 分割元・結合先
+AG131 2-2, 2-3 の商品の検索対象を「分割元・結合先」または「分割先・結合元」とするかの指定するために利用ショウヒnブンカケツゴウブンクケツゴウシテイ
+E156 分割元 / 結合先商品名ブnケツゴウ
+AG156 在庫分割・結合登録 編集（分割）の "識別ID2-1" 「分割元商品名」を表示 / 在庫分割・結合登録 編集（結合）の "識別ID2-1" 「結合先商品名」を表示ブンカテゥケツゴウブンカテゥ
+E157 分割元・結合先点数ブnモト ケツゴウ
+
+### 0203_基本設計仕様書(受注管理機能).xlsx
+
+-- 受注情報検索 一覧(検索入力) sheetxml xl/worksheets/sheet4.xml
+C162 ・指定した詳細な検索条件は任意の「検索パターン名（識別ID 5）」をつけて保存（識別ID 6）ができる。シキベツ
+D163 ・保存した検索パターンは、検索条件を入力するフォームと検索結果一覧の間にリンクとして並べて表示され（識別ID 82）、
+D165 ・また保存した検索パターン個々にリロードアイコンがあり、クリックするとその検索条件に該当する受注件数がその場で表示される
+D166 ・「全件更新」ボタンをクリックすると保存した検索パターン全てに対してそれぞれの検索条件に該当する受注件数が一括で求められて表示される
+D167 ・各検索パターンごとの該当件数は全件更新か個々にリロードしない限り該当する受注件数に"*"が表示される
+E173 引き渡し後の受注情報に引き渡し前の注文番号を紐づけておき、引き渡し前の注文番号で検索した際に、引き渡し後の受注情報が検索できるようにするチュウモンチュウモン
+C182 ★検索パターン保存時についてケンサク ホゾン ジニ 
+D183 検索パターンを保存する場合は店舗は除いた条件で保存するジョウケン ホゾンスル 
+E188 注文番号チュウモンバンゴウ
+E192 検索パターン名
+AG192 検索パターン保存ボタン押下時に未入力の場合エラー
+E193 検索パターン保存ボタン
+E263 店頭注文番号テントウチュウモ
+AG267 全検索パターンに対して、件数更新を実行する。ケンサク タイケンスウコウシンジッコウ
+E268 検索パターン名（該当件数）メイ
+AG268 検索パターンでの検索結果に遷移する。ケンサクケンサクケッカセンイ
+E269 検索パターン該当件数更新ガイトウケンスウコウシン
+
+-- 受注詳細CSV出力 sheetxml xl/worksheets/sheet8.xml
+E8 注文番号
+E74 送料ID
+E95 注文番号
+
+-- 受注情報編集 sheetxml xl/worksheets/sheet16.xml
+E184 お支払情報シハライジョウホウ
+E357 お支払情報
+AG357 お支払情報を参照
+C446 ・「商品の追加」ボタンを押下すると商品検索ダイアログが開き、選択した商品を受注に追加できる。ショウヒンツイカオウカショウヒンケンサクヒラセンタクショウヒンジュチュウツイカ
+E469 商品の追加ショウヒンノツイカ 
+E479 お支払合計
+D632 対象受注のお支払方法を編集できる。タイショウカイイン ジュチュウ ヘンシュウ
+E642 お支払方法
+E643 変更後お支払方法ヘンコウゴ ホウホウ 
+C791 ・受注商品情報の「商品の追加」ボタンでこのダイアログが開く。ジュチュウショウヒンジョウホウショウヒンツイカヒラ
+
+-- 【新規】受注情報履歴 sheetxml xl/worksheets/sheet17.xml
+E114 データは編集不可とするヘンシュウ フカトスル 
+E115 ボタンは非活性とするヒカッセイ 
+E116 リンクは非活性とするヒカッセイ 
+AG125 非活性ヒカッセイ 
+AG129 非活性ヒカッセイ 
+AG131 非活性ヒカッセイ 
+AG133 非活性ヒカッセイ 
+AG135 非活性ヒカッセイ 
+AG137 非活性ヒカッセイ 
+AG140 非活性ヒカッセイ 
+AG143 非活性ヒカッセイ 
+AG144 非活性ヒカッセイ 
+AG145 非活性ヒカッセイ 
+AG147 非活性ヒカッセイ 
+AG148 非活性ヒカッセイ 
+AG153 非活性ヒカッセイ 
+AG154 非活性ヒカッセイ 
+AG155 非活性ヒカッセイ 
+AG156 非活性ヒカッセイ 
+E232 データは編集不可とするヘンシュウ フカトスル 
+E233 欠品登録以外のボタンは非活性とするイガイ ヒカッセイ 
+E234 リンクは非活性とするヒカッセイ 
+AG252 非活性ヒカッセイ 
+AG254 非活性ヒカッセイ 
+AG255 非活性ヒカッセイ 
+E285 データは編集不可とするヘンシュウ フカトスル 
+E286 ボタンは非活性とするヒカッセイ 
+E287 リンクは非活性とするヒカッセイ 
+
+-- 出荷指示リスト編集 sheetxml xl/worksheets/sheet20.xml
+D45 一覧でチェックされた注文について、各ボタンに応じた出力処理を実行する。イチランチュウモンカクオウシュツリョクショリジッコウ
+
+-- ピッキングリスト印刷 sheetxml xl/worksheets/sheet21.xml
+N4 ピッキングリスト印刷
+AG4 ピッキングリストの印刷ができるようピッキングリストがポップアップ表示されます。
+O33 ピッキングリストのグループごとにページを繰り返しクカエ
+D43 ピッキングリスト印刷用画面を表示する。インサツヨウガメンヒョウジ
+E68 ピッキングリスト
+
+-- 出荷実績入力用CSV出力 sheetxml xl/worksheets/sheet24.xml
+E59 配送先_住所1
+E60 配送先_住所2
+E69 送り状No.
+
+-- 出荷実績インポート登録 sheetxml xl/worksheets/sheet25.xml
+N4 出荷実績インポート登録
+
+-- 出荷実績登録CSVフォーマット sheetxml xl/worksheets/sheet26.xml
+I2 出荷実績登録CSVトウロク
+N4 出荷実績登録CSVショウヒントウロクヘン
+B6 出荷実績登録CSV
+E59 配送先_住所1
+E60 配送先_住所2
+E69 送り状No.
+
+### 0204_基本設計仕様書(商品管理).xlsx
+
+-- グッズ商品CSV登録 sheetxml xl/worksheets/sheet12.xml
+AG146 新規作成もしくは編集したアップロード用グッズ商品CSVファイルを選択シンキサクセイヘンシュウヨウショウヒンセンタク
+E147 CSVファイルのアップロード
+AG147 押下後、確認モーダルを表示オウカゴカクニンヒョウジ
+
+-- グッズ商品CSV出力 sheetxml xl/worksheets/sheet13.xml
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path, PurePosixPath
+from zipfile import ZipFile
+from xml.etree import ElementTree as ET
+from posixpath import normpath, join, dirname
+NSM='http://schemas.openxmlformats.org/spreadsheetml/2006/main'; NSR='http://schemas.openxmlformats.org/officeDocument/2006/relationships'; NSP='http://schemas.openxmlformats.org/package/2006/relationships'; NSD='http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing'
+targets={
+'0202_基本設計仕様書(在庫管理機能).xlsx':['在庫移動指示検索','在庫移動・振替登録 編集(振替)','在庫分割結合検索一覧(検索・結果)'],
+'0203_基本設計仕様書(受注管理機能).xlsx':['受注情報検索 一覧(検索入力)','受注詳細CSV出力','受注情報編集','【新規】受注情報履歴','出荷指示リスト編集','ピッキングリスト印刷','出荷実績入力用CSV出力','出荷実績インポート登録','出荷実績登録CSVフォーマット'],
+'0204_基本設計仕様書(商品管理).xlsx':['グッズ商品CSV登録','グッズ商品CSV出力']}
+base=Path('/home/y-saito/Developments/hareruya-design-docs/excel_to_html/input')
+for bn,names in targets.items():
+ with ZipFile(base/bn) as z:
+  wr=ET.fromstring(z.read('xl/workbook.xml')); rr=ET.fromstring(z.read('xl/_rels/workbook.xml.rels'))
+  rel={x.attrib['Id']:x.attrib['Target'] for x in rr}; sm={s.attrib['name']:'xl/'+rel[s.attrib[f'{{{NSR}}}id']].lstrip('/') for s in wr.find(f'{{{NSM}}}sheets')}
+  print('\\n'+bn)
+  for sn in names:
+   sp=normpath(sm[sn]); sr=ET.fromstring(z.read(sp)); drawings=[]
+   for d in sr.findall(f'{{{NSM}}}drawing'):
+    rid=d.attrib[f'{{{NSR}}}id']; rp=normpath(join(dirname(sp),'_rels',PurePosixPath(sp).name+'.rels'))
+    rroot=ET.fromstring(z.read(rp)); tr={x.attrib['Id']:x.attrib['Target'] for x in rroot}
+    dp=normpath(join(dirname(sp),tr[rid]))
+    dr=ET.fromstring(z.read(dp))
+    for a in list(dr):
+     fr=a.find(f'{{{NSD}}}from'); to=a.find(f'{{{NSD}}}to')
+     def loc(x):
+      if x is None:return '?'
+      col=x.find(f'{{{NSD}}}col'); row=x.find(f'{{{NSD}}}row')
+      return f'c{int(col.text)+1}r{int(row.text)+1}' if col is not None and row is not None else '?'
+     kind=a.tag.split('}')[-1]
+     drawings.append((kind,loc(fr),loc(to)))
+   print(sn, 'drawings',len(drawings),drawings[:15])
+PY" in /home/y-saito/Developments
+ succeeded in 4444ms:
+
+0202_基本設計仕様書(在庫管理機能).xlsx
+在庫移動指示検索 drawings 39 [('twoCellAnchor', 'c4r155', 'c39r176'), ('twoCellAnchor', 'c2r7', 'c51r50'), ('oneCellAnchor', 'c2r9', '?'), ('oneCellAnchor', 'c2r16', '?'), ('oneCellAnchor', 'c19r49', '?'), ('oneCellAnchor', 'c48r33', '?'), ('oneCellAnchor', 'c2r33', '?'), ('oneCellAnchor', 'c12r33', '?'), ('oneCellAnchor', 'c5r36', '?'), ('twoCellAnchor', 'c6r67', 'c51r74'), ('twoCellAnchor', 'c23r68', 'c31r74'), ('oneCellAnchor', 'c10r36', '?'), ('oneCellAnchor', 'c12r35', '?'), ('oneCellAnchor', 'c14r35', '?'), ('oneCellAnchor', 'c19r35', '?')]
+在庫移動・振替登録 編集(振替) drawings 21 [('twoCellAnchor', 'c3r439', 'c51r470'), ('oneCellAnchor', 'c3r442', '?'), ('oneCellAnchor', 'c3r444', '?'), ('oneCellAnchor', 'c3r447', '?'), ('oneCellAnchor', 'c4r449', '?'), ('oneCellAnchor', 'c10r449', '?'), ('oneCellAnchor', 'c29r448', '?'), ('oneCellAnchor', 'c50r449', '?'), ('oneCellAnchor', 'c19r465', '?'), ('oneCellAnchor', 'c51r467', '?'), ('twoCellAnchor', 'c2r383', 'c51r420'), ('twoCellAnchor', 'c39r156', 'c48r159'), ('twoCellAnchor', 'c5r153', 'c31r161'), ('twoCellAnchor', 'c12r153', 'c17r155'), ('twoCellAnchor', 'c23r153', 'c32r155')]
+在庫分割結合検索一覧(検索・結果) drawings 43 [('twoCellAnchor', 'c3r8', 'c53r94'), ('oneCellAnchor', 'c19r1', '?'), ('oneCellAnchor', 'c19r1', '?'), ('oneCellAnchor', 'c19r1', '?'), ('oneCellAnchor', 'c19r1', '?'), ('oneCellAnchor', 'c19r1', '?'), ('oneCellAnchor', 'c19r1', '?'), ('oneCellAnchor', 'c19r1', '?'), ('oneCellAnchor', 'c19r42', '?'), ('twoCellAnchor', 'c3r10', 'c7r12'), ('twoCellAnchor', 'c12r10', 'c12r12'), ('twoCellAnchor', 'c3r23', 'c7r25'), ('twoCellAnchor', 'c30r23', 'c34r25'), ('twoCellAnchor', 'c3r27', 'c7r29'), ('twoCellAnchor', 'c15r27', 'c19r29')]
+
+0203_基本設計仕様書(受注管理機能).xlsx
+受注情報検索 一覧(検索入力) drawings 1 [('twoCellAnchor', 'c2r8', 'c47r141')]
+受注詳細CSV出力 drawings 0 []
+受注情報編集 drawings 188 [('twoCellAnchor', 'c2r760', 'c39r783'), ('twoCellAnchor', 'c5r367', 'c47r422'), ('twoCellAnchor', 'c4r606', 'c49r618'), ('twoCellAnchor', 'c4r7', 'c46r121'), ('oneCellAnchor', 'c27r6', '?'), ('oneCellAnchor', 'c36r6', '?'), ('oneCellAnchor', 'c2r10', '?'), ('oneCellAnchor', 'c22r35', '?'), ('oneCellAnchor', 'c20r41', '?'), ('oneCellAnchor', 'c17r47', '?'), ('oneCellAnchor', 'c22r49', '?'), ('oneCellAnchor', 'c20r55', '?'), ('oneCellAnchor', 'c20r66', '?'), ('oneCellAnchor', 'c21r76', '?'), ('oneCellAnchor', 'c3r368', '?')]
+【新規】受注情報履歴 drawings 131 [('twoCellAnchor', 'c5r9', 'c43r104'), ('oneCellAnchor', 'c3r11', '?'), ('oneCellAnchor', 'c3r12', '?'), ('oneCellAnchor', 'c3r14', '?'), ('oneCellAnchor', 'c3r15', '?'), ('oneCellAnchor', 'c3r18', '?'), ('oneCellAnchor', 'c23r11', '?'), ('oneCellAnchor', 'c23r12', '?'), ('oneCellAnchor', 'c23r14', '?'), ('oneCellAnchor', 'c38r14', '?'), ('oneCellAnchor', 'c23r15', '?'), ('oneCellAnchor', 'c38r15', '?'), ('oneCellAnchor', 'c23r17', '?'), ('oneCellAnchor', 'c38r17', '?'), ('oneCellAnchor', 'c23r18', '?')]
+出荷指示リスト編集 drawings 23 [('twoCellAnchor', 'c3r8', 'c50r34'), ('oneCellAnchor', 'c2r11', '?'), ('oneCellAnchor', 'c2r12', '?'), ('oneCellAnchor', 'c2r13', '?'), ('oneCellAnchor', 'c2r15', '?'), ('oneCellAnchor', 'c25r11', '?'), ('oneCellAnchor', 'c21r20', '?'), ('oneCellAnchor', 'c40r20', '?'), ('oneCellAnchor', 'c3r23', '?'), ('oneCellAnchor', 'c11r23', '?'), ('oneCellAnchor', 'c19r23', '?'), ('oneCellAnchor', 'c27r23', '?'), ('oneCellAnchor', 'c38r23', '?'), ('oneCellAnchor', 'c2r27', '?'), ('oneCellAnchor', 'c2r28', '?')]
+ピッキングリスト印刷 drawings 18 [('twoCellAnchor', 'c3r8', 'c45r24'), ('oneCellAnchor', 'c19r7', '?'), ('oneCellAnchor', 'c10r9', '?'), ('oneCellAnchor', 'c20r9', '?'), ('oneCellAnchor', 'c32r9', '?'), ('oneCellAnchor', 'c5r10', '?'), ('oneCellAnchor', 'c33r11', '?'), ('oneCellAnchor', 'c4r13', '?'), ('oneCellAnchor', 'c6r13', '?'), ('twoCellAnchor', 'c2r28', 'c46r32'), ('oneCellAnchor', 'c9r13', '?'), ('oneCellAnchor', 'c12r13', '?'), ('oneCellAnchor', 'c15r13', '?'), ('oneCellAnchor', 'c37r13', '?'), ('oneCellAnchor', 'c40r13', '?')]
+出荷実績入力用CSV出力 drawings 0 []
+出荷実績インポート登録 drawings 8 [('twoCellAnchor', 'c3r8', 'c48r31'), ('oneCellAnchor', 'c15r14', '?'), ('oneCellAnchor', 'c17r17', '?'), ('oneCellAnchor', 'c3r23', '?'), ('twoCellAnchor', 'c21r18', 'c23r18'), ('twoCellAnchor', 'c7r15', 'c9r15'), ('twoCellAnchor', 'c11r22', 'c13r22'), ('twoCellAnchor', 'c18r8', 'c20r8')]
+出荷実績登録CSVフォーマット drawings 0 []
+
+0204_基本設計仕様書(商品管理).xlsx
+グッズ商品CSV登録 drawings 10 [('twoCellAnchor', 'c8r7', 'c44r60'), ('oneCellAnchor', 'c19r15', '?'), ('oneCellAnchor', 'c14r10', '?'), ('oneCellAnchor', 'c21r13', '?'), ('oneCellAnchor', 'c35r16', '?'), ('oneCellAnchor', 'c7r24', '?'), ('oneCellAnchor', 'c14r36', '?'), ('oneCellAnchor', 'c38r38', '?'), ('oneCellAnchor', 'c7r47', '?'), ('oneCellAnchor', 'c20r57', '?')]
+グッズ商品CSV出力 drawings 0 []
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path, PurePosixPath
+from zipfile import ZipFile
+from xml.etree import ElementTree as ET
+from posixpath import normpath
+NSM='http://schemas.openxmlformats.org/spreadsheetml/2006/main'; NSR='http://schemas.openxmlformats.org/officeDocument/2006/relationships'; NSP='http://schemas.openxmlformats.org/package/2006/relationships'
+queries={
+'0203_基本設計仕様書(受注管理機能).xlsx':{
+'受注情報編集':[(430,490)],'出荷指示リスト編集':[(35,85)],'ピッキングリスト印刷':[(35,80)],'出荷実績インポート登録':[(35,100)],'出荷実績登録CSVフォーマット':[(1,90)]},
+'0204_基本設計仕様書(商品管理).xlsx':{'グッズ商品CSV登録':[(130,155)],'グッズ商品CSV出力':[(1,120)]}}
+base=Path('/home/y-saito/Developments/hareruya-design-docs/excel_to_html/input')
+for bn,sqs in queries.items():
+ with ZipFile(base/bn) as z:
+  ss=[]
+  if 'xl/sharedStrings.xml' in z.namelist():
+   root=ET.fromstring(z.read('xl/sharedStrings.xml'))
+   ss=[''.join(t.text or '' for t in si.iter(f'{{{NSM}}}t')) for si in root.findall(f'{{{NSM}}}si')]
+  wb=ET.fromstring(z.read('xl/workbook.xml')); rr=ET.fromstring(z.read('xl/_rels/workbook.xml.rels')); rel={x.attrib['Id']:x.attrib['Target'] for x in rr}
+  sm={s.attrib['name']:normpath('xl/'+rel[s.attrib[f'{{{NSR}}}id']].lstrip('/')) for s in wb.find(f'{{{NSM}}}sheets')}
+  print('\\n##',bn)
+  for sn,ranges in sqs.items():
+   sr=ET.fromstring(z.read(sm[sn])); vals={}
+   for c in sr.iter(f'{{{NSM}}}c'):
+    typ=c.attrib.get('t'); v=c.find(f'{{{NSM}}}v'); val=''
+    if typ=='s' and v is not None: val=ss[int(v.text)]
+    elif typ=='inlineStr': val=''.join(t.text or '' for t in c.iter(f'{{{NSM}}}t'))
+    elif v is not None: val=v.text or ''
+    if val: vals[c.attrib['r']]=val.replace('\\n',' / ')
+   print('\\n--',sn)
+   for lo,hi in ranges:
+    for coord,val in vals.items():
+     row=int(''.join(ch for ch in coord if ch.isdigit()))
+     if lo<=row<=hi: print(coord,val[:700])
+PY" in /home/y-saito/Developments
+ succeeded in 3662ms:
+
+## 0203_基本設計仕様書(受注管理機能).xlsx
+
+-- 受注情報編集
+C430 エンハンス対応した「ピックの際の商品コードの認識不足による課題」の内容をカスタマイズ項目として取り込む。タイオウナイヨウコウモクトコ
+B434 処理概要（★はカスタマイズ項目）ショリガイヨウコウモク
+C436 ・受注商品情報を表示する。ジュチュウショウヒンジョウホウヒョウジ
+C437 ・商品価格 0円～980円未満、980円以上4800円未満、4800円以上 に分けて表示する。ショウヒンカカクエンミマンエンイジョウエンミマンエンイジョウワヒョウジ
+C438 ・数量、欠品数量、価格を商品ごとに編集できる。スウリョウケッピンスウリョウカカクショウヒンヘンシュウ
+C439 ★商品画像をクリックすると画像を拡大する。再度クリックすると拡大画面を閉じる。ショウヒンガゾウガゾウカクダイサイドカクダイガメント
+C440 ★商品名をクリックすると当該商品の商品編集画面へ遷移する。ショウヒンメイトウガイショウヒンショウヒンヘンシュウガメンセンイ
+C441 ★商品の 言語・状態・Foil・フレーム に応じたアイコン（アイコン風のラベル）を表示する。ショウヒンゲンゴジョウタイオウフウヒョウジ
+D442 ・FoilについてはFoil、特殊の場合のみ表示する、フレームについては特殊の場合のみ表示する
+C443 ★商品名の【言語/状態】の状態部分に、NM～HP以外の文字列が記載されている場合、それを状態アイコンとして表示する。
+C444 ★商品名の 【言語/状態】部分は表示しない。Foil 部分は表示する。ショウヒンメイブブンヒョウジブブンヒョウジ
+C445 ・商品を個別に削除できる。ショウヒンコベツサクジョ
+C446 ・「商品の追加」ボタンを押下すると商品検索ダイアログが開き、選択した商品を受注に追加できる。ショウヒンツイカオウカショウヒンケンサクヒラセンタクショウヒンジュチュウツイカ
+D447 商品検索ダイアログショウヒンケンサク
+D448 追加した商品の在庫がない場合は警告メッセージを表示する。ツイカショウヒンザイコバアイケイコクヒョウジ
+C449 ・受注の 値引き、送料、手数料 を編集できる。ジュチュウネビソウリョウテスウリョウヘンシュウ
+B452 識別IDシキベツ
+E452 ラベル
+M452 書式・制限ショシキセイゲン
+T452 必須ヒッス
+V452 最大値サイダイチ
+Z452 初期値ショキチ
+AG452 画面部品の説明
+B453 6-1
+E453 商品画像ショウヒンガゾイウ ガゾウ 
+M453 画像ガゾウ
+T453 -
+V453 -
+Z453 -
+AG453 クリックすると拡大カクダイ
+B454 6-2
+E454 数量スウリョウ 
+M454 数値（整数）スウチ セイスウ 
+T454 〇
+V454 -
+Z454 -
+AG454 -
+B455 6-3
+E455 欠品登録ケッピントウロク 
+M455 ボタン
+T455 -
+V455 -
+Z455 -
+AG455 押下すると欠品数量入力欄と担当者を表示するオウカケッピンスウリョウニュウリョクランタントウシャヒョウジ
+B456 6-4
+E456 欠品数量ケッピンスウリョウ 
+M456 数値（整数）スウチ セイスウ 
+T456 〇
+V456 -
+Z456 0
+AG456 0の場合非表示。欠品登録ボタンを押下すると表示されるバアイヒヒョウジケッピントウロクオウカヒョウジ
+B457 6-5
+E457 担当者タントウシャ 
+M457 単一選択(セレクトボックス)
+T457 -
+V457 -
+Z457 ログイン中のメンバー
+AG457 変更不可ヘンコウフカ
+B458 6-6
+E458 言語ゲンゴ 
+M458 ラベル
+T458 -
+V458 -
+Z458 -
+AG458 言語に応じた色で認識しやすくするゲンゴオウイロニンシキ
+B459 6-7
+E459 状態ジョウタイ 
+M459 ラベル
+T459 -
+V459 -
+Z459 -
+AG459 状態に応じた色で認識しやすくするジョウタイオウイロニンシキ
+B460 6-8
+E460 Foil
+M460 ラベル
+T460 -
+V460 -
+Z460 -
+AG460 Foilカードの時のみ表示 / Foil、特殊の場合のみ表示するトキヒョウジ
+B461 6-9
+E461 フレーム
+M461 ラベル
+T461 -
+V461 -
+Z461 -
+AG461 特殊フレームの場合のみ表示トクシュ ヒョウジ 
+B462 6-10
+E462 商品名ショウヒンメイ 
+M462 リンク
+T462 -
+V462 -
+Z462 -
+AG462 当該商品の商品編集画面へのリンクトウガイショウヒンショウヒンヘンシュウガメン
+B463 6-11
+E463 棚番号タナ バンゴウ 
+M463 ラベル
+T463 -
+V463 -
+Z463 -
+AG463 -
+B464 6-12
+E464 商品コードショウヒンコード 
+M464 ラベル
+T464 -
+V464 -
+Z464 -
+AG464 -
+B465 6-13
+E465 価格カカク 
+M465 数値（整数）スウチ セイスウ 
+T465 〇
+V465 -
+Z465 -
+AG465 -
+B466 6-14
+E466 小計ショウケイ 
+M466 ラベル
+T466 -
+V466 -
+Z466 -
+AG466 -
+B467 6-15
+E467 削除サクジョ 
+M467 ボタン
+T467 -
+V467 -
+Z467 -
+AG467 -
+B468 6-16
+E468 商品価格帯ラベルショウヒン カカクタイ
+M468 ラベル
+T468 -
+V468 -
+Z468 -
+AG468 -
+B469 6-17
+E469 商品の追加ショウヒンノツイカ 
+M469 ボタン
+T469 -
+V469 -
+Z469 -
+AG469 商品検索ダイアログを開くショウヒンケンサクヒラ
+B470 6-18
+E470 受注情報を登録ジュチュウジョウホウヲ トウロク 
+M470 ボタン
+T470 -
+V470 -
+Z470 -
+AG470 受注情報更新処理を実行ジュチュウジョウホウコウシンショリジッコウ
+B471 6-19
+E471 小計ショウケイ 
+M471 ラベル
+T471 -
+V471 -
+Z471 -
+AG471 -
+B472 6-20
+E472 小計値引き/割引区分ショウケイ 
+M472 ラベル
+T472 -
+V472 -
+Z472 -
+AG472 スマレジ連携レンケイ 
+B473 6-21
+E473 クーポン値引きショウケイ 
+M473 ラベル
+T473 -
+V473 -
+Z473 -
+AG473 スマレジ連携レンケイ 
+B474 6-22
+E474 免税額ショウケイ 
+M474 ラベル
+T474 -
+V474 -
+Z474 -
+AG474 スマレジ連携レンケイ 
+B475 6-23
+E475 値引きネビキ 
+M475 数値（整数）スウチ セイスウ 
+T475 〇
+V475 -
+Z475 0
+AG475 -
+B476 6-24
+E476 送料ソウリョウ 
+M476 数値（整数）スウチ セイスウ 
+T476 〇
+V476 -
+Z476 -
+AG476 -
+B477 6-25
+E477 手数料テスウリョウ 
+M477 数値（整数）スウチ セイスウ 
+T477 〇
+V477 -
+Z477 -
+AG477 -
+B478 6-26
+E478 合計ゴウケイ 
+M478 ラベル
+T478 -
+V478 -
+Z478 -
+AG478 -
+B479 6-27
+E479 お支払合計
+M479 ラベル
+T479 -
+V479 -
+Z479 -
+AG479 -
+B481 レイアウト図
+
+-- 出荷指示リスト編集
+B36 カスタマイズ説明セツメイ
+B40 処理概要（★はカスタマイズ項目）ショリガイヨウコウモク
+D42 出荷指示リストのエクスポート、削除、備考の編集ができる。シュッカシジサクジョビコウヘンシュウ
+D43 登録ボタンを押下すると、備考、更新日、最終更新者を更新する。トウロクオウカビコウコウシンビサイシュウコウシンシャコウシン
+D44 リスト削除ボタンを押下すると、確認のダイアログを表示し、OKなら当該出荷指示リストを削除して出荷指示リスト検索画面へ遷移する。サクジョオウカカクニンヒョウジトウガイシュッカシジサクジョシュッカシジケンサクガメンセンイ
+D45 一覧でチェックされた注文について、各ボタンに応じた出力処理を実行する。イチランチュウモンカクオウシュツリョクショリジッコウ
+E46 ピッキングリスト印刷インサツ
+E47 納品書印刷（日本語）ノウヒンショインサツニホンゴ
+E48 納品書印刷（英語）ノウヒンショインサツエイゴ
+E49 出荷委実績入力用CSVダウンロードシュッカイジッセキニュウリョクヨウ
+E50 送り状CSVダウンロードオクジョウ
+B53 識別IDシキベツ
+E53 ラベル
+P53 書式・制限ショシキセイゲン
+V53 必須ヒッス
+X53 最大文字数 / または最大値サイダイモジスウサイダイチ
+AB53 初期値ショキチ
+AI53 画面部品の説明
+B54 1
+E54 出荷指示番号シュッカシジバンゴウ
+P54 ラベル
+V54 -
+X54 -
+AB54 -
+B55 2
+E55 登録日トウロクビ
+P55 ラベル
+V55 -
+X55 -
+AB55 -
+B56 3
+E56 更新日コウシンビ
+P56 ラベル
+V56 -
+X56 -
+AB56 -
+B57 4
+E57 最終更新者サイシュウコウシンシャ
+P57 ラベル
+V57 -
+X57 -
+AB57 -
+B58 5
+E58 備考ビコウ
+P58 全角・半角
+V58 -
+X58 -
+AB58 -
+B59 6
+E59 登録トウロク
+P59 ボタン
+V59 -
+X59 -
+AB59 -
+B60 7
+E60 リスト削除サクジョ
+P60 ボタン
+V60 -
+X60 -
+AB60 -
+B61 8
+E61 ピッキングリスト印刷インサツ
+P61 ボタン
+V61 -
+X61 -
+AB61 -
+B62 9
+E62 納品書印刷（日本語）ノウヒンショインサツニホンゴ
+P62 ボタン
+V62 -
+X62 -
+AB62 -
+B63 10
+E63 納品書印刷（英語）ノウヒンショインサツエイゴ
+P63 ボタン
+V63 -
+X63 -
+AB63 -
+B64 11
+E64 出荷委実績入力用CSVダウンロードシュッカイジッセキニュウリョクヨウ
+P64 ボタン
+V64 -
+X64 -
+AB64 -
+B65 12
+E65 送り状CSVダウンロードオクジョウ
+P65 ボタン
+V65 -
+X65 -
+AB65 -
+B66 13
+E66 （全件選択）ゼンケンセンタク
+P66 複数選択(チェックボックス)
+V66 -
+X66 -
+AB66 -
+AI66 一覧の全レコードの選択チェックボックスをオン/オフするイチランゼンセンタク
+B67 14
+E67 （選択）センタク
+P67 複数選択(チェックボックス)
+V67 -
+X67 -
+AB67 -
+B68 15
+E68 注文番号チュウモンバンゴウ
+P68 リンク
+V68 -
+X68 -
+AB68 -
+AI68 当該注文の編集画面に遷移するトウガイチュウモンヘンシュウガメンセンイ
+B69 16
+E69 お名前ナマエ
+P69 ラベル
+V69 -
+X69 -
+AB69 -
+B70 17
+E70 支払方法シハライホウホウ
+P70 ラベル
+V70 -
+X70 -
+AB70 -
+B71 18
+E71 購入金額（円）コウニュウキンガクエン
+P71 ラベル
+V71 -
+X71 -
+AB71 -
+B72 19
+E72 合計点数ゴウケイテンスウ
+P72 ラベル
+V72 -
+X72 -
+AB72 -
+B73 20
+E73 受注日ジュチュウビ
+P73 ラベル
+V73 -
+X73 -
+AB73 -
+B74 21
+E74 出荷指示日シュッカシジビ
+P74 ラベル
+V74 -
+X74 -
+AB74 -
+B75 22
+E75 対応状況タイオウジョウキョウ
+P75 ラベル
+V75 -
+X75 -
+AB75 -
+
+-- ピッキングリスト印刷
+B36 カスタマイズ説明セツメイ
+B41 処理概要（★はカスタマイズ項目）ショリガイヨウコウモク
+C43 ・
+D43 ピッキングリスト印刷用画面を表示する。インサツヨウガメンヒョウジ
+C44 ・
+D44 「印刷する」ボタンを押下するとブラウザの印刷ダイアログを開く。インサツオウカインサツヒラ
+C45 ・
+D45 カードの価格帯、サプライ品でグループ分けして表示する。カカクタイヒンワヒョウジ
+E46 商品単位_980円未満エンミマン
+E47 商品単位_980円以上_4800円未満ショウヒンタンイエンイジョウエンミマン
+E48 商品単位_4800円以上エンイジョウ
+E49 サプライ
+C50 ・
+D50 ソート順ジュン
+E51 カード→サプライ
+E52 棚番号の並び順タナバンゴウナラジュン
+E53 言語IDゲンゴ
+E54 カード状態ジョウタイ
+E55 フォイル（無→有）ナシアリ
+E56 略称タグの並び順ナラジュン
+E57 レアリティ（無→有）
+E58 レアリティID（「レア」と「神話」は同値とみなす）シンワドウチ
+E59 色の順序イロジュンジョ
+E60 略称タグのアルファベット順ソートフラグが0 or カード番号無し なら後バンゴウナシアト
+E61 略称タグのアルファベット順ソートフラグが1 → ソートフラグが0ならカード番号順 バンゴウジュン
+E62 略称タグのアルファベット順ソートフラグが１ならカード名（英）のアルファベット順→ソートフラグ0メイエイジュン
+E63 カード番号バンゴウ
+B66 識別IDシキベツ
+E66 ラベル
+M66 書式・制限ショシキセイゲン
+T66 必須ヒッス
+V66 最大文字数 / または最大値サイダイモジスウサイダイチ
+Z66 初期値ショキチ
+AG66 画面部品の説明
+B67 1
+E67 印刷するインサツ
+M67 ボタン
+AG67 画面最上部にのみ表示ガメンサイジョウブヒョウジ
+B68 2
+E68 ピッキングリスト
+B69 3
+E69 リストのグループ名メイ
+B70 4
+E70 ページ表示ヒョウジ
+B71 5
+E71 出荷指示リスト番号シュッカシジバンゴウ
+B72 6
+E72 作成日サクセイビ
+B73 7
+E73 No.
+AG73 グループごとに1から振るフ
+B74 8
+E74 棚番号タナバンゴウ
+B75 9
+E75 言語/状態ゲンゴジョウタイ
+AG75 （Foilなら「Foil」＋）言語コードと状態コードゲンゴジョウタイ
+B76 10
+E76 略称リャクショウ
+B77 11
+E77 色/Rイロ
+AG77 色名とレアリティコードイロメイ
+B78 12
+E78 数カズ
+AG78 ピック数スウ
+B79 13
+E79 商品名ショウヒンメイ
+AG79 受注詳細の商品名に含まれる略称・言語・状態・色・レアリティを取り除くジュチュウショウサイショウヒンメイフク
+B80 14
+E80 価格カカク
+
+-- 出荷実績インポート登録
+C36 ・
+D36 TSVの文言を削除するモンゴンサクジョ
+B39 処理概要（★はカスタマイズ項目）ショリガイヨウコウモク
+C41 ・
+D41 インポートファイルで「出荷日」が設定されていない行は無視する。ギョウムシ
+C42 ・
+D42 指定した注文番号に該当する受注情報データの「出荷日」が登録済みでなければデータを更新する。シテイチュウモンバンゴウガイトウジュチュウジョウホウシュッカビトウロクズコウシン
+D43 ・
+E43 受注のステータスを「発送済み」にする。ジュチュウハッソウズ
+D44 ・
+E44 受注情報の「出荷日」と「送り状No.」を登録する。ジュチュウジョウホウシュッカビトウロク
+D45 ・
+E45 配送情報の「出荷日」を登録する。ハイソウジョウホウシュッカビトウロク
+C46 ・
+D46 更新された受注について以下の処理を行う。コウシンジュチュウイカショリオコナ
+D47 ・
+E47 ポイント付加処理を行う。
+D48 ・
+E48 出荷完了メールを送信する。
+D49 ・
+E49 スマレジへ付与ポイントを送信する。
+C50 ★
+D50 TSVの文言を削除するモンゴンサクジョ
+B53 識別IDシキベツ
+E53 ラベル
+P53 書式・制限ショシキセイゲン
+T53 必須ヒッス
+V53 最大文字数 / または最大値サイダイモジスウサイダイチ
+Z53 初期値ショキチ
+AG53 画面部品の説明
+B54 1
+E54 ファイルを選択センタク
+P54 ボタン
+AG54 インポートファイル選択ダイアログを開くセンタクヒラ
+B55 2
+E55 CSVファイルのアップロード
+P55 ボタン
+AG55 TSVの文言を削除するモンゴンサクジョ
+B56 3
+E56 ファイルフォーマット
+
+-- 出荷実績登録CSVフォーマット
+A1 ドキュメント名
+I1 受注管理　基本設計
+U1 セクション
+A2 プロジェクト名
+I2 出荷実績登録CSVトウロク
+U2 作成者
+Y2 緑川ミドリカワ 
+AC2 作成日
+AG2 45784
+AK2 更新者
+AS2 更新日
+A4 機能Noキノウ
+D4 M05-26
+I4 機能名
+N4 出荷実績登録CSVショウヒントウロクヘン
+AC4 概要
+B6 出荷実績登録CSV
+B7 識別IDシキベツ
+E7 項目名 ※コウモクメイ
+M7 主キーシュ
+P7 書式・制限ショシキセイゲン
+U7 必須ヒッス
+W7 最大文字数 / または最大値サイダイモジスウサイダイチ
+Z7 入力例ニュウリョクレイ
+AG7 備考
+B8 1
+E8 注文番号
+P8 数値(整数)
+U8 〇
+Z8 01234567
+AG8 更新のキー項目
+B9 2
+E9 会員ID
+P9 数値(整数)
+Z9 123456
+B10 3
+E10 お名前(姓)
+P10 文字型
+Z10 晴屋ハヤ
+B11 4
+E11 お名前(名)
+P11 文字型
+Z11 太郎タロウ
+B12 5
+E12 お名前(セイ)
+P12 文字型
+Z12 ハレルヤ
+B13 6
+E13 お名前(メイ)
+P13 文字型
+Z13 タロウ
+B14 7
+E14 会社名
+P14 文字型
+Z14 株式会社　Hareruya
+B15 8
+E15 郵便番号1
+P15 数値(整数)
+Z15 169
+B16 9
+E16 郵便番号2
+P16 数値(整数)
+Z16 0075
+B17 10
+E17 都道府県(ID)
+P17 数値(整数)
+Z17 13
+B18 11
+E18 都道府県(名称)
+P18 文字型
+Z18 東京都
+B19 12
+E19 住所1
+P19 文字型
+Z19 新宿区高田馬場
+B20 13
+E20 住所2
+P20 文字型
+Z20 3-12-2
+B21 14
+E21 住所3
+P21 文字型
+Z21 XXビル1F
+AG21 海外住所用で住所３を追加
+B22 15
+E22 メールアドレス
+P22 文字型
+Z22 test@example.com
+B23 16
+E23 TEL1
+P23 数値(整数)
+Z23 03
+B24 17
+E24 TEL2
+P24 数値(整数)
+Z24 5332
+B25 18
+E25 TEL3
+P25 数値(整数)
+Z25 7517
+B26 19
+E26 FAX1
+P26 数値(整数)
+Z26 03
+B27 20
+E27 FAX2
+P27 数値(整数)
+Z27 5332
+B28 21
+E28 FAX3
+P28 数値(整数)
+Z28 7545
+B29 22
+E29 性別(ID)
+P29 数値(整数)
+Z29 1
+B30 23
+E30 性別(名称)
+P30 文字型
+Z30 男性
+B31 24
+E31 職業(ID)
+P31 数値(整数)
+Z31 18
+B32 25
+E32 職業(名称)
+P32 文字型
+Z32 その他/Other
+B33 26
+E33 誕生日
+P33 日時（YYYY/MM/DD HH:MM）
+Z33 1987/8/18  0:00:00
+B34 27
+E34 ショップ用メモ欄
+P34 文字型
+Z34 メモ
+B35 28
+E35 小計
+P35 数値(整数)
+Z35 2400
+B36 29
+E36 値引き
+P36 数値(整数)
+Z36 0
+B37 30
+E37 送料合計
+P37 数値(整数)
+Z37 550
+B38 31
+E38 税金
+P38 数値(整数)
+Z38 0
+B39 32
+E39 合計
+P39 数値(整数)
+Z39 2950
+B40 33
+E40 支払合計
+P40 数値(整数)
+Z40 2950
+B41 34
+E41 対応状況(ID)
+P41 数値(整数)
+Z41 9
+B42 35
+E42 対応状況(名称)
+P42 文字型
+Z42 出荷指示
+B43 36
+E43 支払方法(ID)
+P43 数値(整数)
+Z43 9
+B44 37
+E44 支払方法(名称)
+P44 文字型
+Z44 コンビニ決済
+B45 38
+E45 注文日
+P45 日時（YYYY/MM/DD HH:MM）
+Z45 2025/08/06 16:59:42
+B46 39
+E46 注文確定日
+P46 日時（YYYY/MM/DD HH:MM）
+Z46 2025/08/06 16:59:42
+B47 40
+E47 入金日
+P47 日時（YYYY/MM/DD HH:MM）
+Z47 2025/08/07 09:34:43
+B48 41
+E48 出荷指示日
+P48 日時（YYYY/MM/DD HH:MM）
+Z48 2025/08/08 09:34:43
+B49 42
+E49 出荷日
+P49 日時（YYYY/MM/DD HH:MM）
+Z49 2025/08/08 12:34:43
+B50 43
+E50 配送先_お名前(姓)
+P50 文字型
+Z50 晴屋ハヤ
+B51 44
+E51 配送先_お名前(名)
+P51 文字型
+Z51 太郎タロウ
+B52 45
+E52 配送先_お名前(セイ)
+P52 文字型
+Z52 ハレルヤ
+B53 46
+E53 配送先_お名前(メイ)
+P53 文字型
+Z53 タロウ
+B54 47
+E54 配送先_会社名
+P54 文字型
+Z54 株式会社　Hareruya
+B55 48
+E55 配送先_郵便番号1
+P55 数値(整数)
+Z55 169
+B56 49
+E56 配送先_郵便番号2
+P56 数値(整数)
+Z56 0075
+B57 50
+E57 配送先_都道府県(ID)
+P57 数値(整数)
+Z57 13
+B58 51
+E58 配送先_都道府県(名称)
+P58 文字型
+Z58 東京都
+B59 52
+E59 配送先_住所1
+P59 文字型
+Z59 新宿区高田馬場
+B60 53
+E60 配送先_住所2
+P60 文字型
+Z60 3-12-2
+B61 54
+E61 配送先_TEL1
+P61 数値(整数)
+Z61 03
+B62 55
+E62 配送先_TEL2
+P62 数値(整数)
+Z62 5332
+B63 56
+E63 配送先_TEL3
+P63 数値(整数)
+Z63 7517
+B64 57
+E64 配送先_FAX1
+P64 数値(整数)
+Z64 03
+B65 58
+E65 配送先_FAX2
+P65 数値(整数)
+Z65 5332
+B66 59
+E66 配送先_FAX3
+P66 数値(整数)
+Z66 7545
+B67 60
+E67 配送方法(ID)
+P67 数値(整数)
+Z67 3
+B68 61
+E68 配送方法(名称)
+P68 文字型
+Z68 ゆうパック
+B69 62
+E69 送り状No.
+P69 数値(整数)
+Z69 12345
+B70 63
+E70 お届け時間ID
+P70 数値(整数)
+Z70 7
+B71 64
+E71 お届け時間(名称)
+P71 文字型
+Z71 18～20時
+
+## 0204_基本設計仕様書(商品管理).xlsx
+
+-- グッズ商品CSV登録
+D130 ・
+E130 商品詳細が見つからない場合はエラー。
+D131 ・
+E131 商品コードが重複する場合はエラー。
+C132 ・
+D132 商品ID で該当商品がなければ登録、 すでにあれば 更新する
+C133 ・
+D133 商品サブ情報を更新または登録する
+C134 ・
+D134 商品カテゴリを（親のカテゴリも含めて）更新する
+C135 ・
+D135 商品タグを更新する
+C136 ・
+D136 商品規格／商品規格サブを一律NM規格、日本語固定で登録・更新する
+D137 ・更新時は販売／買取価格/基準価格が変更された場合のみ価格履歴を登録するキジュンカカク
+D138 ・商品規格登録時は商品在庫も登録し、常に価格履歴を登録する
+C139 ・
+D139 商品規格の画像を日本語固定で更新する
+C140 ・
+D140 売上分析タグを更新
+C141 ・
+D141 インポート成功した商品IDの重複を避ける
+B144 画面構成ガメンコウセイ
+B145 識別IDシキベツ
+E145 ラベル
+M145 書式・制限ショシキセイゲン
+T145 必須ヒッス
+V145 最大文字数 / または最大値サイダイモジスウサイダイチ
+Z145 初期値ショキチ
+AG145 画面部品の説明
+B146 1
+E146 CSVファイル選択センタク
+M146 ボタン
+T146 -
+V146 -
+Z146 -
+AG146 新規作成もしくは編集したアップロード用グッズ商品CSVファイルを選択シンキサクセイヘンシュウヨウショウヒンセンタク
+B147 2
+E147 CSVファイルのアップロード
+M147 ボタン
+T147 -
+V147 -
+Z147 -
+AG147 押下後、確認モーダルを表示オウカゴカクニンヒョウジ
+B148 3
+E148 雛形ファイルダウンロードヒナガタ
+M148 ボタン
+T148 -
+V148 -
+Z148 -
+B149 4
+E149 雛形ファイル項目説明ヒナガタコウモクセツメイ
+M149 -
+T149 -
+V149 -
+Z149 -
+AG149 各項目の名称および内容を記載カクコウモクメイショウナイヨウキサイ
+B150 5
+E150 該当件数ガイトウケンスウ
+M150 -
+T150 -
+V150 -
+Z150 -
+C151 6
+E151 件数ケンスウ 
+M151 単一選択タンイツセンタク 
+T151 -
+V151 -
+Z151 -
+AG151 選択肢: 10件 50件 100件 300件 500件 1000件 2000件 10000件 12000件センタクカノウスウケンケンケンケン
+C152 7
+E152 該当レコード表示ガイトウヒョウジ
+M152 -
+T152 -
+V152 -
+Z152 -
+B153 8
+E153 ページング
+M153 リンク
+T153 -
+V153 -
+Z153 -
+AG153 選択したページへ遷移する
+
+-- グッズ商品CSV出力
+A1 ドキュメント名
+I1 商品管理機能ショウヒン
+U1 セクション
+A2 プロジェクト名
+I2 サイトリニューアル
+U2 作成者
+Y2 城下シロシ
+AC2 作成日
+AG2 45813
+AK2 更新者
+AO2 堀部ホリベ 
+AS2 更新日
+AW2 45912
+A4 機能Noキノウ
+D4 M03-04
+I4 機能名
+N4 グッズ商品CSV出力ショウヒントウロクヘン
+AC4 概要
+B6 M03-04 グッズ商品CSV出力
+B7 識別ID
+E7 項目名
+M7 備考
+B8 1
+E8 商品ID
+B9 2
+E9 商品コード
+B10 3
+E10 言語(ID)ゲンゴ
+M10 ※カスタマイズ対応、新規項目を追加シンキコウモクツイカ
+B11 4
+E11 商品公開ステータスショウヒンコウカイ
+M11 ※カスタマイズ対応、ステータスに「廃止」を追加ハイシツイカ
+B12 5
+E12 支店の商品公開ステータスシテンショウヒンコウカイ
+M12 ※カスタマイズ対応、新規項目を追加シンキコウモクツイカ
+B13 6
+E13 商品名(日)
+B14 7
+E14 商品名(英)
+B15 8
+E15 サイズ
+B16 9
+E16 重量
+B17 10
+E17 商品説明(日)
+B18 11
+E18 商品説明(英)
+B19 12
+E19 買取商品説明(日)
+B20 13
+E20 買取商品説明(英)
+B21 14
+E21 検索ワード
+B22 15
+E22 商品削除フラグ
+M22 2025-11-14 Takagi 商品公開ステータスに踏襲の為、CSV項目から削除
+B23 16
+E23 規格画像
+B24 17
+E24 商品カテゴリ(ID)
+B25 18
+E25 購入グループ名称
+B26 19
+E26 略称タグ(ID)
+B27 20
+E27 売上分析タグ(ID)
+B28 21
+E28 タグ(ID)
+B29 22
+E29 発送日目安(ID)
+B30 23
+E30 カードセット(ID)
+M30 ※カスタマイズ対応、新規項目を追加シンキコウモクツイカ
+B31 24
+E31 販売制限数
+B32 25
+E32 基準価格
+M32 ※カスタマイズ対応、新規項目を追加シンキコウモクヲ ツイカ 
+B33 26
+E33 販売価格ハンバイ 
+B34 27
+E34 買取価格
+B35 28
+E35 原価単価ゲンカタンカ 
+M35 ※カスタマイズ対応、新規項目を追加シンキコウモクヲ ツイカ 
+B36 29
+E36 地域別販売制限
+B37 30
+E37 スマレジ連携フラグレンケイ
+M37 ※カスタマイズ対応、新規項目を追加シンキコウモクツイカ
+B38 31
+E38 スマレジ商品コードショウヒンコード 
+M38 ※カスタマイズ対応、新規項目を追加シンキコウモクツイカ
+B39 32
+E39 部門IDブモン 
+M39 ※カスタマイズ対応、新規項目を追加 / スマレジ連携フラグをONにした場合は必須項目シンキコウモクツイカコウモク 
+B40 33
+E40 フリーエリア
+B42 カスタマイズ説明セツメイ
+B43 概要
+C44 商品情報のうちグッズ商品をCSV出力することが可能
+B46 機能について
+C47 現行機能をベースに下記のカスタマイズを行う
+B49 商品公開ステータス
+C50 ・
+D50 商品公開ステータスの項目を追加するショウヒンコウカイコウモクツイカ
+B52 支店の商品公開ステータスシテンショウヒンコウカイ
+C53 ・
+D53 支店の商品公開ステータスを出力するショウヒン
+B55 カードセット(ID)
+C56 ・
+D56 カードセット(ID)を出力する
+B58 基準価格、原価単価ゲンカタンカ 
+C59 ・
+D59 基準価格を出力するシュツリョク
+C60 ・
+D60 原価単価を出力するゲンカタンカヲ シュツリョク 
+B62 言語(ID)ゲンゴ
+C63 ・
+D63 言語(ID)を出力するゲンゴシュツリョク
+B65 スマレジ連携フラグ
+C66 ・
+D66 スマレジ連携のステータスを出力するレンケイシュツリョク
+B68 スマレジ商品コードの追加ショウヒンツイカ
+C69 ・
+D69 商品個別に発行されているJANコードもしくはカスタムコードを管理するカンリ
+B71 部門ブモン 
+C72 スマレジ連携フラグをONにした場合は部門の指定は必須
+C73 別添資料__スマレジ連携対象商品の「5. 商品の部門について」を参照
+B77 処理概要（★はカスタマイズ項目）ショリガイヨウコウモク
+B78 商品公開ステータスショウヒン
+C79 ★
+D79 識別ID:4 「商品公開ステータス」のステータス項目に「廃止」を追加シキベツコウモクハイシツイカ
+B81 支店の商品公開ステータスシテンショウヒンコウカイ
+C82 ★
+D82 識別ID:5 「支店の商品公開ステータス」を追加シキベツツイカ
+B84 基準価格、原価単価ゲンカタンカ 
+C85 ★
+D85 識別ID:25 「基準価格」を新規追加シキベツシンキツイカ 
+C86 ★
+D86 識別ID:28 「原価単価」を新規追加シキベツゲンカタンカ シンキツイカ 
+B88 言語(ID)ゲンゴ
+C89 ★
+D89 識別ID:3 「言語(ID)」を追加シキベツゲンゴツイカ
+B91 スマレジ連携フラグ
+C92 ★
+D92 識別ID:30 「スマレジ連携フラグ」を追加シキベツレンケイツイカ
+B94 スマレジ商品コード
+C95 ★
+D95 識別ID 31 : 「スマレジ商品コード」を追加ショウヒンツイカ
+B97 部門
+C98 ★
+D98 識別ID 32: 「部門ID」を追加ブモン ツイカ
+
+exec
+/bin/bash -lc "jq -r '.findings[] | select(.[\"確定根拠区分\"]==\"LEGACY_BACKED\") | \"ROW \" + (.rowId|tostring) + \"\\nROOT: \" + .[\"正本根拠\"] + \"\\n\"' /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_packets/du_11.json" in /home/y-saito/Developments
+ succeeded in 436ms:
+ROW 569
+ROOT: hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:6029-6032 で M05-11 の詳細記述は `data-source="functions/pf-eccube3/m05-11_admin_order_order_edit.md"` のリバース設計として開始する。Excel 正本部分には PurchaseFlow の有無を指定する記述がない（確認範囲: sheet-15 の正本部 4904-6028）。
+
+ROW 573
+ROOT: hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:7473-7482 のExcel正本は「一覧でチェックされた注文について、各ボタンに応じた出力処理を実行する」等を記載するだけで、表示件数プルダウンやchange時の自動遷移を規定しない。同:7584 から `function-design-embed:start ...shipping_standby_list_search` であり、当該記述はリバース詳細設計側にのみある。
+
+ROW 574
+ROOT: hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:7473-7482 のExcel正本は出荷指示編集の出力処理を列挙するのみで、表示件数リンクのURL形式を記載しない。同:7584 以降がリバース詳細設計である。
+
+ROW 575
+ROOT: hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:7473-7482 のExcel正本には0件時メッセージの文言がなく、同:7584 からリバース詳細設計が始まる。
+
+ROW 576
+ROOT: hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:7473-7482 のExcel正本には表示件数選択時の遷移仕様がなく、同:7584 のリバース詳細設計開始後にのみ当該説明がある。
+
+ROW 577
+ROOT: hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:7845-7849 のExcel正本は「カードの価格帯、サプライ品でグループ分けして表示する」と4グループを規定するが、サプライ判定を最小カテゴリIDと `GOODS_ID` / `RESERVED_GOODS_ID` の比較で行うとは記載しない。同:7946 からリバース詳細設計である。
+
+ROW 578
+ROOT: hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:7845-7848 のExcel正本は価格帯を「980円未満」「980円以上4800円未満」「4800円以上」と定めるが、`mtb_option` の2行を一括取得し返却順の添字へ結び付ける内部手順は記載しない。同:7946 以降がリバース詳細設計である。
+
+ROW 580
+ROOT: hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:8535-8545 のExcel正本はインポート処理内容を規定するがURL・HTTPメソッドは記載しない。同:8603-8604 から `functions/pf-eccube3/m05-26...md` のリバース詳細設計が始まり、`/shipping_result_csv/upload` は同:8692-8693 のリバース部分にのみある。
+
+ROW 583
+ROOT: hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:8698-8724 のsheet-25 Excel正本はCSV項目表を定義するが、HTTPルートを記載しない。同:8792 から同じ `functions/pf-eccube3/m05-26...md` のリバース詳細設計であり、POST `/shipping_result_csv/upload` の出所は hareruya-design-docs/functions/pf-eccube3/m05-26_admin_order_order_shipping_result_csv_import.md:234-237 である。
+
+ROW 584
+ROOT: hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:8541-8544 のExcel正本は更新後にポイント・メール・スマレジ送信を行うことを規定するが、それらをトランザクション外で独立実行する順序までは記載しない。同:8603 以降のリバース詳細設計にだけ具体的境界がある。
+
+ROW 586
+ROOT: hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:8535-8545 のExcel正本は出荷実績インポートの業務処理を規定するが、0バイトファイルを後続へ残す挙動は記載しない。同:8603 以降のリバース詳細設計にのみ当該注意がある。
+
+ROW 368
+ROOT: /home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:3752 のリバース埋め込み開始後、同:3781 に「ストリーム送信後…『グッズ商品CSV出力ファイル名』」と記載される。Excel正本範囲（同:3644-3751）にはログ文言・実行順の記載がない。
+
+
+exec
+/bin/bash -lc "jq -r '.results[] | select(.docWork "'!= "NONE" and .docEffortDays == 0) | [.rowId,.docWork,.reason] | @tsv'"' /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_0{1,2,3,4,5,6,7}.json" in /home/y-saito/Developments
+ succeeded in 2399ms:
+638	UNSURE	根拠区分がUNCERTAINで、Excel正本には本人確認ステータスはあるが、別項目の本人確認フラグの必須・保存先は存在しない。両者が別要件かを確定できないため現時点では工数未計上。別項目として採用する場合は、項目表追記だけでなくラジオ項目を含むレイアウト画像の差し替えも必要になる。
+964	UNSURE	正本は昇順・降順の選択肢だけを規定し、不正sort/order時のメッセージとセッション初期化は記載していないが、根拠区分がUNCERTAINのため採用仕様を確定できない。採否決定後でないとExcel編集量を確定できない。
+
+ succeeded in 312971ms:
+
+0202_基本設計仕様書(在庫管理機能).xlsx
+1 表紙 rows 220 cols 26 images 0 charts 0
+2 目次 rows 236 cols 26 images 0 charts 0
+3 画面遷移図 rows 318 cols 54 images 0 charts 0
+4 共通処理 rows 202 cols 55 images 0 charts 0
+5 在庫検索一覧(検索入力) rows 433 cols 66 images 2 charts 0
+6 在庫検索一覧(検索結果) rows 269 cols 55 images 4 charts 0
+7 在庫編集 rows 338 cols 57 images 2 charts 0
+8 在庫一括編集 rows 250 cols 55 images 2 charts 0
+9 在庫情報CSV出力 rows 170 cols 83 images 0 charts 0
+10 在庫情報カスタムCSV出力 rows 258 cols 74 images 0 charts 0
+11 在庫切れ、在庫警戒リストCSV出力 rows 167 cols 55 images 1 charts 0
+12 在庫切れリストCSV出力 rows 171 cols 55 images 0 charts 0
+13 在庫警戒リストCSV出力 rows 157 cols 55 images 0 charts 0
+14 在庫移動・振替検索一覧(検索・結果) rows 340 cols 68 images 0 charts 0
+15 在庫移動・振替登録 編集 (移動) rows 1036 cols 68 images 19 charts 0
+16 在庫移動・振替登録 編集(振替) rows 613 cols 70 images 7 charts 0
+17 在庫移動・振替情報CSV出力 rows 197 cols 55 images 0 charts 0
+18 在庫分割結合検索一覧(検索・結果) rows 317 cols 68 images 1 charts 0
+19 在庫分割結合登録編集（分割） rows 517 cols 98 images 8 charts 0
+20 在庫分割結合登録編集（結合) rows 738 cols 68 images 11 charts 0
+21 在庫分割結合情報CSV出力 rows 165 cols 83 images 0 charts 0
+22 在庫リコメンドCSV出力 rows 194 cols 70 images 0 charts 0
+23 在庫履歴検索一覧(検索入力) rows 325 cols 62 images 1 charts 0
+24 在庫履歴検索一覧(検索結果) rows 355 cols 55 images 8 charts 0
+25 在庫変動履歴CSV出力 rows 202 cols 54 images 0 charts 0
+26 欠品履歴検索一覧(検索結果) rows 279 cols 55 images 1 charts 0
+27 欠品履歴CSV出力 rows 181 cols 55 images 0 charts 0
+28 在庫変更CSV登録 rows 349 cols 59 images 3 charts 0
+29 在庫移動CSV登録 rows 242 cols 68 images 1 charts 0
+30 在庫振替CSV登録 rows 242 cols 68 images 1 charts 0
+31 在庫分割CSV登録 rows 245 cols 68 images 1 charts 0
+32 在庫結合CSV登録 rows 245 cols 68 images 1 charts 0
+33 在庫移動指示検索 rows 204 cols 98 images 3 charts 0
+34 在庫移動指示詳細 rows 125 cols 68 images 2 charts 0
+35 在庫移動指示リスト ピッキングリスト印刷 rows 281 cols 92 images 1 charts 0
+36 送り状CSV出力 rows 176 cols 54 images 0 charts 0
+37 バーコード貼替リストCSV出力 rows 165 cols 55 images 5 charts 0
+38 棚卸計画一覧 rows 106 cols 54 images 7 charts 0
+39 棚卸計画新規作成 rows 109 cols 54 images 1 charts 0
+40 棚卸計画編集 rows 196 cols 55 images 1 charts 0
+41 棚卸詳細登録CSV rows 767 cols 54 images 0 charts 0
+42 棚卸詳細CSV出力 rows 209 cols 63 images 0 charts 0
+43 棚卸在庫確認 rows 161 cols 54 images 2 charts 0
+44 棚卸在庫反映 rows 121 cols 54 images 2 charts 0
+45 在庫編集承認一覧(検索入力) rows 234 cols 56 images 1 charts 0
+46 在庫編集承認一覧(検索結果) rows 415 cols 71 images 5 charts 0
+47 承認一覧CSV出力 rows 169 cols 55 images 0 charts 0
+48 承認対象在庫一覧CSV出力 rows 178 cols 55 images 0 charts 0
+49 在庫移動戻しリストCSV出力 rows 189 cols 92 images 0 charts 0
+50 在庫移動戻しリストPDF rows 305 cols 92 images 2 charts 0
+51 エラー表示 rows 262 cols 55 images 1 charts 0
+52 別添資料_在庫変動時の履歴作成について rows 567 cols 52 images 11 charts 0
+53 別添資料_在庫移動ステータス遷移概要 rows 313 cols 58 images 0 charts 0
+54 別添資料_リコメンドCSV出力仕様 rows 33 cols 16 images 0 charts 0
+
+0203_基本設計仕様書(受注管理機能).xlsx
+1 表紙 rows 1000 cols 51 images 0 charts 0
+2 目次 rows 789 cols 51 images 0 charts 0
+3 画面遷移図 rows 886 cols 61 images 0 charts 0
+4 受注情報検索 一覧(検索入力) rows 1033 cols 54 images 1 charts 0
+5 受注情報検索 一覧(検索結果) rows 299 cols 54 images 1 charts 0
+6 受注一覧CSV出力 rows 810 cols 55 images 0 charts 0
+7 受注一覧カスタムCSV出力 rows 779 cols 55 images 0 charts 0
+8 受注詳細CSV出力 rows 804 cols 55 images 0 charts 0
+9 受注詳細カスタムCSV出力 rows 804 cols 55 images 0 charts 0
+10 メール一括送信 rows 273 cols 54 images 1 charts 0
+11 【新規】手動メール通知(確認画面) rows 258 cols 54 images 1 charts 0
+12 送り状CSV出力 rows 774 cols 108 images 0 charts 0
+13 スタック用紙印刷 rows 226 cols 54 images 1 charts 0
+14 納品書印刷（日本語） rows 264 cols 54 images 1 charts 0
+15 納品書印刷（英語） rows 270 cols 54 images 1 charts 0
+16 受注情報編集 rows 807 cols 57 images 9 charts 0
+17 【新規】受注情報履歴 rows 484 cols 54 images 6 charts 0
+18 出荷指示リスト生成 rows 241 cols 54 images 1 charts 0
+19 出荷指示リスト検索 rows 266 cols 54 images 2 charts 0
+20 出荷指示リスト編集 rows 252 cols 56 images 1 charts 0
+21 ピッキングリスト印刷 rows 273 cols 54 images 2 charts 0
+22 出荷指示ー納品書印刷（日本語） rows 170 cols 54 images 0 charts 0
+23 出荷指示ー納品書印刷（英語） rows 168 cols 54 images 0 charts 0
+24 出荷実績入力用CSV出力 rows 252 cols 116 images 0 charts 0
+25 出荷実績インポート登録 rows 247 cols 54 images 1 charts 0
+26 出荷実績登録CSVフォーマット rows 778 cols 113 images 0 charts 0
+27 店頭注文番号札管理 rows 258 cols 54 images 1 charts 0
+28 別添資料_スマレジ決済後返品処理について rows 128 cols 30 images 22 charts 0
+29 別添資料_スマレジ決済後返品処理についてBK rows 128 cols 30 images 26 charts 0
+
+0204_基本設計仕様書(商品管理).xlsx
+1 表紙 rows 1000 cols 51 images 0 charts 0
+2 目次 rows 791 cols 51 images 0 charts 0
+3 画面遷移図 rows 841 cols 61 images 0 charts 0
+4 商品マスター(検索入力) rows 944 cols 54 images 1 charts 0
+5 商品マスター(検索結果) rows 912 cols 66 images 2 charts 0
+6 商品登録編集 rows 966 cols 54 images 1 charts 0
+7 セール用価格変更CSV出力 rows 199 cols 55 images 0 charts 0
+8 商品情報カスタムCSV出力 rows 289 cols 54 images 0 charts 0
+9 カード商品CSV登録 rows 917 cols 54 images 1 charts 0
+10 カード商品CSV出力 rows 244 cols 54 images 0 charts 0
+11 カード商品CSVフォーマット rows 820 cols 55 images 0 charts 0
+12 グッズ商品CSV登録 rows 918 cols 54 images 1 charts 0
+13 グッズ商品CSV出力 rows 263 cols 75 images 0 charts 0
+14 グッズ商品CSVフォーマット rows 830 cols 54 images 0 charts 0
+15 商品タグ更新CSV登録 rows 250 cols 54 images 3 charts 0
+16 商品タグ更新CSVフォーマット  rows 749 cols 54 images 0 charts 0
+17 売上分析タグ登録編集 rows 243 cols 54 images 3 charts 0
+18 売上分析タグ更新CSV登録 rows 252 cols 54 images 3 charts 0
+19 売上分析タグ更新CSVフォーマット  rows 749 cols 54 images 0 charts 0
+20 商品公開CSV登録 rows 863 cols 54 images 1 charts 0
+21 商品公開CSVフォーマット rows 766 cols 81 images 0 charts 0
+22 商品規格一覧 rows 869 cols 54 images 2 charts 0
+23 商品規格登録編集 rows 977 cols 54 images 1 charts 0
+24 買取・基準価格一括編集 rows 874 cols 73 images 2 charts 0
+25 カテゴリ一覧 rows 840 cols 58 images 1 charts 0
+26 カテゴリ登録 rows 949 cols 65 images 1 charts 0
+27 カテゴリCSV出力 rows 207 cols 55 images 0 charts 0
+28 タグ登録 rows 866 cols 54 images 16 charts 0
+29 略称タグ登録 rows 855 cols 54 images 4 charts 0
+30 略称タグCSV出力 rows 190 cols 55 images 0 charts 0
+31 略称タグCSVアップロード rows 235 cols 54 images 2 charts 0
+32 略称タグCSVフォーマット  rows 765 cols 81 images 0 charts 0
+33 部門登録 rows 885 cols 54 images 1 charts 0
+34 部門CSV出力 rows 192 cols 55 images 0 charts 0
+35 部門登録CSVアップロード  rows 260 cols 54 images 1 charts 0
+36 部門登録CSVフォーマット rows 780 cols 54 images 0 charts 0
+37 棚番登録 編集 rows 833 cols 54 images 4 charts 0
+38 棚番号CSVフォーマット rows 765 cols 81 images 0 charts 0
+39 購入グループ管理 rows 844 cols 54 images 1 charts 0
+40 買取・販売価格履歴検索 rows 876 cols 54 images 2 charts 0
+41 買取 販売価格履歴情報CSV出力 rows 204 cols 55 images 0 charts 0
+42 重複商品コード確認 rows 832 cols 54 images 4 charts 0
+43 基準価格変更CSVアップロード rows 317 cols 54 images 1 charts 0
+44 基準価格変更CSVフォーマット rows 789 cols 54 images 0 charts 0
+45 セール用価格変更CSVアップロード rows 323 cols 54 images 1 charts 0
+46 セール用価格変更CSVフォーマット rows 753 cols 54 images 0 charts 0
+47 低価格帯カード価格変更CSV出力 rows 223 cols 58 images 0 charts 0
+48 低価格帯カード価格変更CSVフォーマット rows 731 cols 61 images 0 charts 0
+49 高額商品価格変更CSVアップロード rows 291 cols 56 images 1 charts 0
+50 高額商品価格変更CSVフォーマット rows 774 cols 93 images 0 charts 0
+51 セール用高額商品価格変更CSVアップロード rows 318 cols 54 images 1 charts 0
+52 セール用高額商品価格変更CSVフォーマット rows 748 cols 54 images 0 charts 0
+53 部門更新CSV登録 rows 244 cols 54 images 3 charts 0
+54 部門更新CSVフォーマット  rows 747 cols 54 images 0 charts 0
+55 略称タグ更新CSV登録  rows 244 cols 54 images 3 charts 0
+56 略称タグ更新CSVフォーマット  rows 747 cols 54 images 0 charts 0
+57 棚番号更新CSV登録 rows 241 cols 54 images 3 charts 0
+58 棚番号更新CSVフォーマット  rows 747 cols 54 images 0 charts 0
+59 カテゴリ登録CSVアップロード rows 300 cols 61 images 1 charts 0
+60 カテゴリ登録CSVフォーマット rows 786 cols 54 images 0 charts 0
+61 別添資料_カテゴリ子検索条件について rows 111 cols 61 images 0 charts 0
+62 別添資料_CSVアップロードによる基準価格と販売価格の更新 rows 118 cols 87 images 0 charts 0
+63 別添資料__スマレジ連携機能一覧 rows 42 cols 21 images 0 charts 0
+64 別添資料__スマレジ連携__商品連携項目 rows 49 cols 16 images 0 charts 0
+65 別添資料__スマレジ部門連携項目 rows 21 cols 9 images 1 charts 0
+66 別添資料__スマレジ連携対象商品 rows 67 cols 19 images 0 charts 0
+67 別添資料__スマレジ連携__呼び出しAPIについて rows 960 cols 8 images 0 charts 0
+68 別添資料__一括更新系の処理結果について rows 43 cols 13 images 1 charts 0
+69 別添資料__スマレジ連携__機能改修一覧 rows 14 cols 3 images 0 charts 0
+70 XXXCSV出力項目設定 rows 799 cols 54 images 0 charts 0
+71 対応状況管理 rows 824 cols 54 images 0 charts 0
+72 メール管理_商品予約完了 rows 817 cols 61 images 0 charts 0
+73 機能A rows 279 cols 54 images 0 charts 0
+
+exec
+/bin/bash -lc "jq -r '.findings[] | select(.[\"確定根拠区分\"]==\"SPEC_BACKED\") | \"ROW \" + (.rowId|tostring) + \"\\nROOT: \" + .[\"正本根拠\"] + \"\\n\"' /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_packets/du_11.json" in /home/y-saito/Developments
+ succeeded in 1973ms:
+ROW 537
+ROOT: hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:14394 の Excel 正本（0202:在庫移動指示検索!E189）は項目名を「送り状No.」と、末尾ピリオド付きで定義する。
+
+ROW 454
+ROOT: /home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:6908 と :6955 のExcel正本 `src-cell` は、フッターリンクを「在庫移動・振替検索一覧」へ変更すると明記し、項目ラベルも同文言で定義する。
+
+ROW 460
+ROOT: /home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:7940 のExcel正本 `src-cell` は識別ID5-5のラベルを `分割元 / 結合先商品名` と定義する。
+
+ROW 572
+ROOT: hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:6222-6224 の Excel 正本は「データは編集不可」「ボタンは非活性」「リンクは非活性」、同ファイル:6319-6321 は明細部を「データは編集不可」「欠品登録以外のボタンは非活性」「リンクは非活性」と定義する。
+
+ROW 579
+ROOT: hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:8381-8384 のExcel正本は列52「配送先_住所1」、53「配送先_住所2」、54「配送先_TEL1」と連続して定義し、同:8393 の最終列は64「お届け時間(名称)」である。配送先_住所3は含まれない。
+
+ROW 582
+ROOT: hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:8536-8540 のExcel正本は、出荷日なし行を無視し、「指定した注文番号に該当する受注情報データの『出荷日』が登録済みでなければデータを更新する」とした上で、受注ステータス・受注の出荷日/送り状No.・配送の出荷日を更新すると規定する。更新前ステータスが出荷指示であることは条件にしていない。
+
+ROW 585
+ROOT: hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:8775-8777 のExcel正本は列52「配送先_住所1」、53「配送先_住所2」、54「配送先_TEL1」と定義し、配送先_住所3を含めない。
+
+ROW 588
+ROOT: /home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:8775-8777 のExcel正本セル E59-E61 は「配送先_住所1」「配送先_住所2」の直後を「配送先_TEL1」とし、同:8785 のE69を「送り状No.」とする。配送先_住所3は正本の当CSV項目表に存在しない。
+
+ROW 589
+ROOT: /home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:8785 のExcel正本セル E69/P69 は「送り状No.」「数値(整数)」と明記する。
+
+ROW 562
+ROOT: hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:1188-1192 に、保存パターンを「リンクとして並べて表示」、クリックで検索、個々の「リロードアイコン」、更新前は件数に `*` を表示すると明記されている。
+
+ROW 561
+ROOT: hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:1197 に「引き渡し後の受注情報に引き渡し前の注文番号を紐づけておき、引き渡し前の注文番号で検索した際に、引き渡し後の受注情報が検索できるようにする」と明記されている。
+
+ROW 564
+ROOT: hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:2955 は受注詳細CSVの識別ID67を「送料ID」と明記している。
+
+ROW 565
+ROOT: hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:2889 は識別ID1を「注文番号」、同:2976 は識別ID88も「注文番号」と定義しており、Excel正本上は重複した2項目が存在する。
+
+ROW 570
+ROOT: hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:5334 の Excel 正本セル C446 は「『商品の追加』ボタン」、同ファイル:5361 のセル E469 もラベルを「商品の追加」と明記する。
+
+ROW 571
+ROOT: hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:5371 の Excel 正本セル E479 はラベルを「お支払合計」と明記する。
+
+ROW 396
+ROOT: hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:3482 のExcel正本（グッズ商品CSV登録!AG147）は「CSVファイルのアップロード」ボタンについて「押下後、確認モーダルを表示」と明記する。
+
+
+codex
+正本Excelを直接確認しました。表示文言のうち、旧仕様から追記対象となる0件時メッセージは通常状態の貼付レイアウト画像に現れない条件表示なので、画像差し替えではなく処理概要へのテキスト追記で見積もります。また、旧環境固有の処理欠落や不具合的挙動（PurchaseFlow不使用、変更イベント不在、返却順依存、0バイト継続）は移行後に残す要件とは読まず `NONE` とします。
+apply patch
+patch: completed
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_11.json
+diff --git a/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_11.json b/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_11.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..e29bf4c8357bd71cc569031e08f2823a9e44c37b
+--- /dev/null
++++ b/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_11.json
+@@ -0,0 +1,257 @@
++{
++  "packetId": "du_11",
++  "results": [
++    {
++      "rowId": 537,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫移動指示検索 シート / 画面項目表 E189",
++      "reason": "正本のE189は末尾ピリオド付きの「送り状No.」と定義済みである。SPEC_BACKEDの文言差であり、正本は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 454,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫移動・振替登録 編集(振替) シート / 処理概要 E332・画面項目表 E378",
++      "reason": "正本は戻り先とラベルを「在庫移動・振替検索一覧」と明記済みである。SPEC_BACKEDのため設計書側の修正は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 460,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫分割結合検索一覧(検索・結果) シート / 画面項目表 E156",
++      "reason": "正本のE156は「分割元 / 結合先商品名」と定義済みである。実装の翻訳文言との差に対して正本は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 569,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 受注情報編集 シート / 登録・更新処理概要",
++      "reason": "PurchaseFlowを用いないことはEC-CUBE3系の内部実装上の確認値で、正本Excelに要件として固定する対象ではない。EC-CUBE4系でPurchaseFlowを使用する構造への移行後に「不使用」を残す挙動とは読めないため追記しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 572,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 【新規】受注情報履歴 シート / 画面制御 E114:E116・E232:E234等",
++      "reason": "正本にデータ編集不可、ボタン・リンク非活性、明細は欠品登録以外非活性と明記済みである。読み取り専用化不足は実装側の乖離であり、画像を含む正本の修正は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 573,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 出荷指示リスト編集 シート / 表示件数変更時の画面動作",
++      "reason": "changeハンドラが無く選択しても遷移しないのは、旧テンプレートの処理欠落に由来する挙動である。移行後に残す画面要件とは読めず、正本へは追記しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 574,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 出荷指示リスト編集 シート / 処理概要 D42:D50付近",
++      "reason": "正本は出力処理の列挙のみで、表示件数optionが持つGET `/standby/search?page_no=1&page_count=…` のURL契約が無い。旧契約を処理概要へ1項追記する。rowId 575と同じ節を続けて編集できる。",
++      "sharedWithRows": [575],
++      "confidence": "high"
++    },
++    {
++      "rowId": 575,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 出荷指示リスト編集 シート / 処理概要の0件時表示文言",
++      "reason": "旧仕様の0件時文言「検索条件に該当するデータがありませんでした。」を条件付き表示の1項として追記する。通常状態の貼付レイアウト画像には現れない状態のため画像差し替えは不要で、rowId 574と一括編集する。",
++      "sharedWithRows": [574],
++      "confidence": "high"
++    },
++    {
++      "rowId": 576,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 出荷指示リスト編集 シート / 表示件数プルダウン変更時の遷移仕様",
++      "reason": "rowId 573と同じく、選択時に自動遷移しない挙動は旧実装のハンドラ欠落によるもので、移行後に残す要件とは読めない。正本の変更は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 577,
++      "docWork": "ADD",
++      "docEffortDays": 0.25,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / ピッキングリスト印刷 シート / 処理概要 D45:E49付近のグループ判定ルール",
++      "reason": "正本には価格帯とサプライの4グループだけがあり、最小カテゴリIDがGOODS_IDまたはRESERVED_GOODS_IDかでサプライ帯へ強制する条件と判定順序が無い。旧業務ルールを条件分岐として追記する。画面配置は変わらないため画像修正は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 578,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / ピッキングリスト印刷 シート / 価格帯閾値の取得方式",
++      "reason": "2行の返却順を無条件に添字[0]/[1]へ結び付け、欠落時に実行時異常となり得る方式は、旧実装の内部手順と不具合リスクの確認値である。移行後に残す業務要件とは読めないため追記しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 579,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 出荷実績入力用CSV出力 シート / CSV項目表 E59:E71",
++      "reason": "正本は配送先_住所1、配送先_住所2の次を配送先_TEL1とし、最終を64列目と定義済みである。配送先_住所3を持つ実装側の修正対象であり、正本は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 580,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 出荷実績インポート登録 シート / 処理概要 D41:E49付近のエンドポイント契約",
++      "reason": "正本には取込業務処理はあるが、POST `/order/shipping_result_csv/upload` とルート名の外部HTTP契約が無い。処理概要に短いエンドポイント項目を追記する。rowId 583・584と同じ処理概要をまとめて編集できる。",
++      "sharedWithRows": [583, 584],
++      "confidence": "high"
++    },
++    {
++      "rowId": 582,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 出荷実績インポート登録 シート / 更新条件 D41:E45",
++      "reason": "正本は、受注の出荷日が未登録であることを更新条件とし、更新前ステータスが出荷指示であることは要求していない。SPEC_BACKEDのため正本修正は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 583,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 出荷実績インポート登録 シート / 処理概要のPOSTルート記述",
++      "reason": "旧契約のルート名 `admin_shipping_result_csv_upload`、POST、`/order/shipping_result_csv/upload` を追記する。rowId 580と同一のルート記述に併合でき、rowId 584とも同じシートを続けて編集するため小幅に見積もる。",
++      "sharedWithRows": [580, 584],
++      "confidence": "high"
++    },
++    {
++      "rowId": 584,
++      "docWork": "ADD",
++      "docEffortDays": 0.25,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 出荷実績インポート登録 シート / 更新後処理 D46:E49とトランザクション境界",
++      "reason": "正本はポイント付加、出荷完了メール、スマレジ送信を列挙済みだが、取込トランザクションの外側で独立実行する順序と例外境界が無い。後続3処理の実行位置が分かる業務ルールを追記する。rowId 580・583と一括編集する。",
++      "sharedWithRows": [580, 583],
++      "confidence": "high"
++    },
++    {
++      "rowId": 585,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 出荷実績登録CSVフォーマット シート / CSV項目表 E59:E71",
++      "reason": "正本は配送先_住所1・2の次を配送先_TEL1と定義し、配送先_住所3を含めていない。SPEC_BACKEDであり、実装の追加列に合わせて正本は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 586,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 出荷実績インポート登録 シート / アップロードファイル検証",
++      "reason": "0バイト判定の分岐が空で後続処理へ残り得るのは旧実装の不備の確認値である。0バイトを拒否する移行後挙動に対し、旧のガード欠落を残す要件とは読めないため追記しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 588,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 出荷実績登録CSVフォーマット シート / CSV項目表 E59:E71",
++      "reason": "正本は識別ID52〜64の列を明記し、配送先_住所3を定義していない。実装の65列契約との差は実装側の乖離であり、正本の表を修正しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 589,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 出荷実績登録CSVフォーマット シート / 項目表 E69・P69",
++      "reason": "正本は「送り状No.」の書式・制限をP69で「数値(整数)」と定義済みである。SPEC_BACKEDの未実装であり、設計書側の編集は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 562,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 受注情報検索 一覧(検索入力) シート / 検索パターン説明 D163:D167・項目表 E268:E269",
++      "reason": "正本は保存パターンをリンク表示し、クリック検索、個別リロード、更新前件数の`*`表示を要求済みである。選択中パターンの実装不足に対する正本の変更は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 561,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 受注情報検索 一覧(検索入力) シート / 検索要件 E173",
++      "reason": "正本のE173は、引き渡し前の注文番号で引き渡し後の受注情報を検索できることを明記している。SPEC_BACKEDの未実装であり追記は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 564,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 受注詳細CSV出力 シート / CSV項目表 E74",
++      "reason": "正本は識別ID67の項目名を「送料ID」と定義済みである。出力定義に当該列が無い実装側の乖離に対し、正本は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 565,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 受注詳細CSV出力 シート / CSV項目表 E8・E95",
++      "reason": "正本は識別ID1とID88の両方を「注文番号」と定義しており、本指摘が要求する2列目も明記済みである。同名列の存在だけで正本内部の矛盾とは断定せず、SPEC_BACKEDとして変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 570,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 受注情報編集 シート / 処理概要 C446・画面項目表 E469",
++      "reason": "正本はボタン文言を「商品の追加」と処理概要と項目表の両方に明記済みである。実装の「商品を追加」へ合わせた表またはレイアウト画像の修正は行わない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 571,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 受注情報編集 シート / 画面項目表 E479",
++      "reason": "正本のE479は「お支払合計」と定義済みである。送り仮名が異なる実装文言に合わせて正本の表や貼付画像を直す必要はない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 396,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0204_基本設計仕様書(商品管理).xlsx / グッズ商品CSV登録 シート / 画面構成表 AG147",
++      "reason": "Excel正本のAG147はアップロード押下後に確認モーダルを表示すると明記済みである。相反する「確認ダイアログなし」はHTML生成時に付加されたリバース詳細で、Excel正本内の矛盾ではない。SPEC_BACKEDのため正本の表や画像は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 368,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0204_基本設計仕様書(商品管理).xlsx / グッズ商品CSV出力 シート / 処理概要 B77以降のCSV出力・ログ要件",
++      "reason": "正本には出力項目のカスタマイズ説明はあるが、CSVストリーム送信後に「グッズ商品CSV出力ファイル名」と生成ファイル名を情報ログへ記録する要件が無い。実行タイミングとログ文言が分かる1項を追記する。画面項目の変更ではないため画像修正は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    }
++  ]
++}
+
+diff --git a/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_11.json b/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_11.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..e29bf4c8357bd71cc569031e08f2823a9e44c37b
+--- /dev/null
++++ b/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_11.json
+@@ -0,0 +1,257 @@
++{
++  "packetId": "du_11",
++  "results": [
++    {
++      "rowId": 537,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫移動指示検索 シート / 画面項目表 E189",
++      "reason": "正本のE189は末尾ピリオド付きの「送り状No.」と定義済みである。SPEC_BACKEDの文言差であり、正本は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 454,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫移動・振替登録 編集(振替) シート / 処理概要 E332・画面項目表 E378",
++      "reason": "正本は戻り先とラベルを「在庫移動・振替検索一覧」と明記済みである。SPEC_BACKEDのため設計書側の修正は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 460,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫分割結合検索一覧(検索・結果) シート / 画面項目表 E156",
++      "reason": "正本のE156は「分割元 / 結合先商品名」と定義済みである。実装の翻訳文言との差に対して正本は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 569,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 受注情報編集 シート / 登録・更新処理概要",
++      "reason": "PurchaseFlowを用いないことはEC-CUBE3系の内部実装上の確認値で、正本Excelに要件として固定する対象ではない。EC-CUBE4系でPurchaseFlowを使用する構造への移行後に「不使用」を残す挙動とは読めないため追記しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 572,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 【新規】受注情報履歴 シート / 画面制御 E114:E116・E232:E234等",
++      "reason": "正本にデータ編集不可、ボタン・リンク非活性、明細は欠品登録以外非活性と明記済みである。読み取り専用化不足は実装側の乖離であり、画像を含む正本の修正は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 573,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 出荷指示リスト編集 シート / 表示件数変更時の画面動作",
++      "reason": "changeハンドラが無く選択しても遷移しないのは、旧テンプレートの処理欠落に由来する挙動である。移行後に残す画面要件とは読めず、正本へは追記しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 574,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 出荷指示リスト編集 シート / 処理概要 D42:D50付近",
++      "reason": "正本は出力処理の列挙のみで、表示件数optionが持つGET `/standby/search?page_no=1&page_count=…` のURL契約が無い。旧契約を処理概要へ1項追記する。rowId 575と同じ節を続けて編集できる。",
++      "sharedWithRows": [575],
++      "confidence": "high"
++    },
++    {
++      "rowId": 575,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 出荷指示リスト編集 シート / 処理概要の0件時表示文言",
++      "reason": "旧仕様の0件時文言「検索条件に該当するデータがありませんでした。」を条件付き表示の1項として追記する。通常状態の貼付レイアウト画像には現れない状態のため画像差し替えは不要で、rowId 574と一括編集する。",
++      "sharedWithRows": [574],
++      "confidence": "high"
++    },
++    {
++      "rowId": 576,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 出荷指示リスト編集 シート / 表示件数プルダウン変更時の遷移仕様",
++      "reason": "rowId 573と同じく、選択時に自動遷移しない挙動は旧実装のハンドラ欠落によるもので、移行後に残す要件とは読めない。正本の変更は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 577,
++      "docWork": "ADD",
++      "docEffortDays": 0.25,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / ピッキングリスト印刷 シート / 処理概要 D45:E49付近のグループ判定ルール",
++      "reason": "正本には価格帯とサプライの4グループだけがあり、最小カテゴリIDがGOODS_IDまたはRESERVED_GOODS_IDかでサプライ帯へ強制する条件と判定順序が無い。旧業務ルールを条件分岐として追記する。画面配置は変わらないため画像修正は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 578,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / ピッキングリスト印刷 シート / 価格帯閾値の取得方式",
++      "reason": "2行の返却順を無条件に添字[0]/[1]へ結び付け、欠落時に実行時異常となり得る方式は、旧実装の内部手順と不具合リスクの確認値である。移行後に残す業務要件とは読めないため追記しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 579,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 出荷実績入力用CSV出力 シート / CSV項目表 E59:E71",
++      "reason": "正本は配送先_住所1、配送先_住所2の次を配送先_TEL1とし、最終を64列目と定義済みである。配送先_住所3を持つ実装側の修正対象であり、正本は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 580,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 出荷実績インポート登録 シート / 処理概要 D41:E49付近のエンドポイント契約",
++      "reason": "正本には取込業務処理はあるが、POST `/order/shipping_result_csv/upload` とルート名の外部HTTP契約が無い。処理概要に短いエンドポイント項目を追記する。rowId 583・584と同じ処理概要をまとめて編集できる。",
++      "sharedWithRows": [583, 584],
++      "confidence": "high"
++    },
++    {
++      "rowId": 582,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 出荷実績インポート登録 シート / 更新条件 D41:E45",
++      "reason": "正本は、受注の出荷日が未登録であることを更新条件とし、更新前ステータスが出荷指示であることは要求していない。SPEC_BACKEDのため正本修正は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 583,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 出荷実績インポート登録 シート / 処理概要のPOSTルート記述",
++      "reason": "旧契約のルート名 `admin_shipping_result_csv_upload`、POST、`/order/shipping_result_csv/upload` を追記する。rowId 580と同一のルート記述に併合でき、rowId 584とも同じシートを続けて編集するため小幅に見積もる。",
++      "sharedWithRows": [580, 584],
++      "confidence": "high"
++    },
++    {
++      "rowId": 584,
++      "docWork": "ADD",
++      "docEffortDays": 0.25,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 出荷実績インポート登録 シート / 更新後処理 D46:E49とトランザクション境界",
++      "reason": "正本はポイント付加、出荷完了メール、スマレジ送信を列挙済みだが、取込トランザクションの外側で独立実行する順序と例外境界が無い。後続3処理の実行位置が分かる業務ルールを追記する。rowId 580・583と一括編集する。",
++      "sharedWithRows": [580, 583],
++      "confidence": "high"
++    },
++    {
++      "rowId": 585,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 出荷実績登録CSVフォーマット シート / CSV項目表 E59:E71",
++      "reason": "正本は配送先_住所1・2の次を配送先_TEL1と定義し、配送先_住所3を含めていない。SPEC_BACKEDであり、実装の追加列に合わせて正本は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 586,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 出荷実績インポート登録 シート / アップロードファイル検証",
++      "reason": "0バイト判定の分岐が空で後続処理へ残り得るのは旧実装の不備の確認値である。0バイトを拒否する移行後挙動に対し、旧のガード欠落を残す要件とは読めないため追記しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 588,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 出荷実績登録CSVフォーマット シート / CSV項目表 E59:E71",
++      "reason": "正本は識別ID52〜64の列を明記し、配送先_住所3を定義していない。実装の65列契約との差は実装側の乖離であり、正本の表を修正しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 589,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 出荷実績登録CSVフォーマット シート / 項目表 E69・P69",
++      "reason": "正本は「送り状No.」の書式・制限をP69で「数値(整数)」と定義済みである。SPEC_BACKEDの未実装であり、設計書側の編集は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 562,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 受注情報検索 一覧(検索入力) シート / 検索パターン説明 D163:D167・項目表 E268:E269",
++      "reason": "正本は保存パターンをリンク表示し、クリック検索、個別リロード、更新前件数の`*`表示を要求済みである。選択中パターンの実装不足に対する正本の変更は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 561,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 受注情報検索 一覧(検索入力) シート / 検索要件 E173",
++      "reason": "正本のE173は、引き渡し前の注文番号で引き渡し後の受注情報を検索できることを明記している。SPEC_BACKEDの未実装であり追記は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 564,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 受注詳細CSV出力 シート / CSV項目表 E74",
++      "reason": "正本は識別ID67の項目名を「送料ID」と定義済みである。出力定義に当該列が無い実装側の乖離に対し、正本は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 565,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 受注詳細CSV出力 シート / CSV項目表 E8・E95",
++      "reason": "正本は識別ID1とID88の両方を「注文番号」と定義しており、本指摘が要求する2列目も明記済みである。同名列の存在だけで正本内部の矛盾とは断定せず、SPEC_BACKEDとして変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 570,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 受注情報編集 シート / 処理概要 C446・画面項目表 E469",
++      "reason": "正本はボタン文言を「商品の追加」と処理概要と項目表の両方に明記済みである。実装の「商品を追加」へ合わせた表またはレイアウト画像の修正は行わない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 571,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 受注情報編集 シート / 画面項目表 E479",
++      "reason": "正本のE479は「お支払合計」と定義済みである。送り仮名が異なる実装文言に合わせて正本の表や貼付画像を直す必要はない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 396,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0204_基本設計仕様書(商品管理).xlsx / グッズ商品CSV登録 シート / 画面構成表 AG147",
++      "reason": "Excel正本のAG147はアップロード押下後に確認モーダルを表示すると明記済みである。相反する「確認ダイアログなし」はHTML生成時に付加されたリバース詳細で、Excel正本内の矛盾ではない。SPEC_BACKEDのため正本の表や画像は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 368,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0204_基本設計仕様書(商品管理).xlsx / グッズ商品CSV出力 シート / 処理概要 B77以降のCSV出力・ログ要件",
++      "reason": "正本には出力項目のカスタマイズ説明はあるが、CSVストリーム送信後に「グッズ商品CSV出力ファイル名」と生成ファイル名を情報ログへ記録する要件が無い。実行タイミングとログ文言が分かる1項を追記する。画面項目の変更ではないため画像修正は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    }
++  ]
++}
+
+exec
+/bin/bash -lc "python3 -m json.tool /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_11.json >/dev/null && jq -n --slurpfile p /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_packets/du_11.json --slurpfile r /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_11.json '{packetCount:("'$p[0].findings|length), resultCount:($r[0].results|length), missing:([$p[0].findings[].rowId]-[$r[0].results[].rowId]), extra:([$r[0].results[].rowId]-[$p[0].findings[].rowId]), duplicateResultIds:([$r[0].results[].rowId]|group_by(.)|map(select(length>1)|.[0])), workCounts:([$r[0].results[].docWork]|group_by(.)|map({key:.[0],value:length})|from_entries), totalDays:([$r[0].results[].docEffortDays]|add)}'"'" in /home/y-saito/Developments
+ succeeded in 874ms:
+{
+  "packetCount": 28,
+  "resultCount": 28,
+  "missing": [],
+  "extra": [],
+  "duplicateResultIds": [],
+  "workCounts": {
+    "ADD": 7,
+    "NONE": 21
+  },
+  "totalDays": 0.9
+}
+
+diff --git a/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_11.json b/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_11.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..e29bf4c8357bd71cc569031e08f2823a9e44c37b
+--- /dev/null
++++ b/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_11.json
+@@ -0,0 +1,257 @@
++{
++  "packetId": "du_11",
++  "results": [
++    {
++      "rowId": 537,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫移動指示検索 シート / 画面項目表 E189",
++      "reason": "正本のE189は末尾ピリオド付きの「送り状No.」と定義済みである。SPEC_BACKEDの文言差であり、正本は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 454,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫移動・振替登録 編集(振替) シート / 処理概要 E332・画面項目表 E378",
++      "reason": "正本は戻り先とラベルを「在庫移動・振替検索一覧」と明記済みである。SPEC_BACKEDのため設計書側の修正は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 460,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫分割結合検索一覧(検索・結果) シート / 画面項目表 E156",
++      "reason": "正本のE156は「分割元 / 結合先商品名」と定義済みである。実装の翻訳文言との差に対して正本は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 569,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 受注情報編集 シート / 登録・更新処理概要",
++      "reason": "PurchaseFlowを用いないことはEC-CUBE3系の内部実装上の確認値で、正本Excelに要件として固定する対象ではない。EC-CUBE4系でPurchaseFlowを使用する構造への移行後に「不使用」を残す挙動とは読めないため追記しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 572,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 【新規】受注情報履歴 シート / 画面制御 E114:E116・E232:E234等",
++      "reason": "正本にデータ編集不可、ボタン・リンク非活性、明細は欠品登録以外非活性と明記済みである。読み取り専用化不足は実装側の乖離であり、画像を含む正本の修正は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 573,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 出荷指示リスト編集 シート / 表示件数変更時の画面動作",
++      "reason": "changeハンドラが無く選択しても遷移しないのは、旧テンプレートの処理欠落に由来する挙動である。移行後に残す画面要件とは読めず、正本へは追記しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 574,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 出荷指示リスト編集 シート / 処理概要 D42:D50付近",
++      "reason": "正本は出力処理の列挙のみで、表示件数optionが持つGET `/standby/search?page_no=1&page_count=…` のURL契約が無い。旧契約を処理概要へ1項追記する。rowId 575と同じ節を続けて編集できる。",
++      "sharedWithRows": [575],
++      "confidence": "high"
++    },
++    {
++      "rowId": 575,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 出荷指示リスト編集 シート / 処理概要の0件時表示文言",
++      "reason": "旧仕様の0件時文言「検索条件に該当するデータがありませんでした。」を条件付き表示の1項として追記する。通常状態の貼付レイアウト画像には現れない状態のため画像差し替えは不要で、rowId 574と一括編集する。",
++      "sharedWithRows": [574],
++      "confidence": "high"
++    },
++    {
++      "rowId": 576,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 出荷指示リスト編集 シート / 表示件数プルダウン変更時の遷移仕様",
++      "reason": "rowId 573と同じく、選択時に自動遷移しない挙動は旧実装のハンドラ欠落によるもので、移行後に残す要件とは読めない。正本の変更は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 577,
++      "docWork": "ADD",
++      "docEffortDays": 0.25,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / ピッキングリスト印刷 シート / 処理概要 D45:E49付近のグループ判定ルール",
++      "reason": "正本には価格帯とサプライの4グループだけがあり、最小カテゴリIDがGOODS_IDまたはRESERVED_GOODS_IDかでサプライ帯へ強制する条件と判定順序が無い。旧業務ルールを条件分岐として追記する。画面配置は変わらないため画像修正は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 578,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / ピッキングリスト印刷 シート / 価格帯閾値の取得方式",
++      "reason": "2行の返却順を無条件に添字[0]/[1]へ結び付け、欠落時に実行時異常となり得る方式は、旧実装の内部手順と不具合リスクの確認値である。移行後に残す業務要件とは読めないため追記しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 579,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 出荷実績入力用CSV出力 シート / CSV項目表 E59:E71",
++      "reason": "正本は配送先_住所1、配送先_住所2の次を配送先_TEL1とし、最終を64列目と定義済みである。配送先_住所3を持つ実装側の修正対象であり、正本は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 580,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 出荷実績インポート登録 シート / 処理概要 D41:E49付近のエンドポイント契約",
++      "reason": "正本には取込業務処理はあるが、POST `/order/shipping_result_csv/upload` とルート名の外部HTTP契約が無い。処理概要に短いエンドポイント項目を追記する。rowId 583・584と同じ処理概要をまとめて編集できる。",
++      "sharedWithRows": [583, 584],
++      "confidence": "high"
++    },
++    {
++      "rowId": 582,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 出荷実績インポート登録 シート / 更新条件 D41:E45",
++      "reason": "正本は、受注の出荷日が未登録であることを更新条件とし、更新前ステータスが出荷指示であることは要求していない。SPEC_BACKEDのため正本修正は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 583,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 出荷実績インポート登録 シート / 処理概要のPOSTルート記述",
++      "reason": "旧契約のルート名 `admin_shipping_result_csv_upload`、POST、`/order/shipping_result_csv/upload` を追記する。rowId 580と同一のルート記述に併合でき、rowId 584とも同じシートを続けて編集するため小幅に見積もる。",
++      "sharedWithRows": [580, 584],
++      "confidence": "high"
++    },
++    {
++      "rowId": 584,
++      "docWork": "ADD",
++      "docEffortDays": 0.25,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 出荷実績インポート登録 シート / 更新後処理 D46:E49とトランザクション境界",
++      "reason": "正本はポイント付加、出荷完了メール、スマレジ送信を列挙済みだが、取込トランザクションの外側で独立実行する順序と例外境界が無い。後続3処理の実行位置が分かる業務ルールを追記する。rowId 580・583と一括編集する。",
++      "sharedWithRows": [580, 583],
++      "confidence": "high"
++    },
++    {
++      "rowId": 585,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 出荷実績登録CSVフォーマット シート / CSV項目表 E59:E71",
++      "reason": "正本は配送先_住所1・2の次を配送先_TEL1と定義し、配送先_住所3を含めていない。SPEC_BACKEDであり、実装の追加列に合わせて正本は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 586,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 出荷実績インポート登録 シート / アップロードファイル検証",
++      "reason": "0バイト判定の分岐が空で後続処理へ残り得るのは旧実装の不備の確認値である。0バイトを拒否する移行後挙動に対し、旧のガード欠落を残す要件とは読めないため追記しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 588,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 出荷実績登録CSVフォーマット シート / CSV項目表 E59:E71",
++      "reason": "正本は識別ID52〜64の列を明記し、配送先_住所3を定義していない。実装の65列契約との差は実装側の乖離であり、正本の表を修正しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 589,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 出荷実績登録CSVフォーマット シート / 項目表 E69・P69",
++      "reason": "正本は「送り状No.」の書式・制限をP69で「数値(整数)」と定義済みである。SPEC_BACKEDの未実装であり、設計書側の編集は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 562,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 受注情報検索 一覧(検索入力) シート / 検索パターン説明 D163:D167・項目表 E268:E269",
++      "reason": "正本は保存パターンをリンク表示し、クリック検索、個別リロード、更新前件数の`*`表示を要求済みである。選択中パターンの実装不足に対する正本の変更は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 561,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 受注情報検索 一覧(検索入力) シート / 検索要件 E173",
++      "reason": "正本のE173は、引き渡し前の注文番号で引き渡し後の受注情報を検索できることを明記している。SPEC_BACKEDの未実装であり追記は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 564,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 受注詳細CSV出力 シート / CSV項目表 E74",
++      "reason": "正本は識別ID67の項目名を「送料ID」と定義済みである。出力定義に当該列が無い実装側の乖離に対し、正本は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 565,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 受注詳細CSV出力 シート / CSV項目表 E8・E95",
++      "reason": "正本は識別ID1とID88の両方を「注文番号」と定義しており、本指摘が要求する2列目も明記済みである。同名列の存在だけで正本内部の矛盾とは断定せず、SPEC_BACKEDとして変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 570,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 受注情報編集 シート / 処理概要 C446・画面項目表 E469",
++      "reason": "正本はボタン文言を「商品の追加」と処理概要と項目表の両方に明記済みである。実装の「商品を追加」へ合わせた表またはレイアウト画像の修正は行わない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 571,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 受注情報編集 シート / 画面項目表 E479",
++      "reason": "正本のE479は「お支払合計」と定義済みである。送り仮名が異なる実装文言に合わせて正本の表や貼付画像を直す必要はない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 396,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0204_基本設計仕様書(商品管理).xlsx / グッズ商品CSV登録 シート / 画面構成表 AG147",
++      "reason": "Excel正本のAG147はアップロード押下後に確認モーダルを表示すると明記済みである。相反する「確認ダイアログなし」はHTML生成時に付加されたリバース詳細で、Excel正本内の矛盾ではない。SPEC_BACKEDのため正本の表や画像は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 368,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0204_基本設計仕様書(商品管理).xlsx / グッズ商品CSV出力 シート / 処理概要 B77以降のCSV出力・ログ要件",
++      "reason": "正本には出力項目のカスタマイズ説明はあるが、CSVストリーム送信後に「グッズ商品CSV出力ファイル名」と生成ファイル名を情報ログへ記録する要件が無い。実行タイミングとログ文言が分かる1項を追記する。画面項目の変更ではないため画像修正は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    }
++  ]
++}
+
+codex
+28件: NONE=21 ADD=7 FIX=0 IMAGE=0 / 計 0.9人日
+diff --git a/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_11.json b/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_11.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..e29bf4c8357bd71cc569031e08f2823a9e44c37b
+--- /dev/null
++++ b/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_11.json
+@@ -0,0 +1,257 @@
++{
++  "packetId": "du_11",
++  "results": [
++    {
++      "rowId": 537,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫移動指示検索 シート / 画面項目表 E189",
++      "reason": "正本のE189は末尾ピリオド付きの「送り状No.」と定義済みである。SPEC_BACKEDの文言差であり、正本は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 454,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫移動・振替登録 編集(振替) シート / 処理概要 E332・画面項目表 E378",
++      "reason": "正本は戻り先とラベルを「在庫移動・振替検索一覧」と明記済みである。SPEC_BACKEDのため設計書側の修正は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 460,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫分割結合検索一覧(検索・結果) シート / 画面項目表 E156",
++      "reason": "正本のE156は「分割元 / 結合先商品名」と定義済みである。実装の翻訳文言との差に対して正本は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 569,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 受注情報編集 シート / 登録・更新処理概要",
++      "reason": "PurchaseFlowを用いないことはEC-CUBE3系の内部実装上の確認値で、正本Excelに要件として固定する対象ではない。EC-CUBE4系でPurchaseFlowを使用する構造への移行後に「不使用」を残す挙動とは読めないため追記しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 572,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 【新規】受注情報履歴 シート / 画面制御 E114:E116・E232:E234等",
++      "reason": "正本にデータ編集不可、ボタン・リンク非活性、明細は欠品登録以外非活性と明記済みである。読み取り専用化不足は実装側の乖離であり、画像を含む正本の修正は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 573,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 出荷指示リスト編集 シート / 表示件数変更時の画面動作",
++      "reason": "changeハンドラが無く選択しても遷移しないのは、旧テンプレートの処理欠落に由来する挙動である。移行後に残す画面要件とは読めず、正本へは追記しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 574,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 出荷指示リスト編集 シート / 処理概要 D42:D50付近",
++      "reason": "正本は出力処理の列挙のみで、表示件数optionが持つGET `/standby/search?page_no=1&page_count=…` のURL契約が無い。旧契約を処理概要へ1項追記する。rowId 575と同じ節を続けて編集できる。",
++      "sharedWithRows": [575],
++      "confidence": "high"
++    },
++    {
++      "rowId": 575,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 出荷指示リスト編集 シート / 処理概要の0件時表示文言",
++      "reason": "旧仕様の0件時文言「検索条件に該当するデータがありませんでした。」を条件付き表示の1項として追記する。通常状態の貼付レイアウト画像には現れない状態のため画像差し替えは不要で、rowId 574と一括編集する。",
++      "sharedWithRows": [574],
++      "confidence": "high"
++    },
++    {
++      "rowId": 576,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 出荷指示リスト編集 シート / 表示件数プルダウン変更時の遷移仕様",
++      "reason": "rowId 573と同じく、選択時に自動遷移しない挙動は旧実装のハンドラ欠落によるもので、移行後に残す要件とは読めない。正本の変更は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 577,
++      "docWork": "ADD",
++      "docEffortDays": 0.25,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / ピッキングリスト印刷 シート / 処理概要 D45:E49付近のグループ判定ルール",
++      "reason": "正本には価格帯とサプライの4グループだけがあり、最小カテゴリIDがGOODS_IDまたはRESERVED_GOODS_IDかでサプライ帯へ強制する条件と判定順序が無い。旧業務ルールを条件分岐として追記する。画面配置は変わらないため画像修正は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 578,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / ピッキングリスト印刷 シート / 価格帯閾値の取得方式",
++      "reason": "2行の返却順を無条件に添字[0]/[1]へ結び付け、欠落時に実行時異常となり得る方式は、旧実装の内部手順と不具合リスクの確認値である。移行後に残す業務要件とは読めないため追記しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 579,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 出荷実績入力用CSV出力 シート / CSV項目表 E59:E71",
++      "reason": "正本は配送先_住所1、配送先_住所2の次を配送先_TEL1とし、最終を64列目と定義済みである。配送先_住所3を持つ実装側の修正対象であり、正本は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 580,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 出荷実績インポート登録 シート / 処理概要 D41:E49付近のエンドポイント契約",
++      "reason": "正本には取込業務処理はあるが、POST `/order/shipping_result_csv/upload` とルート名の外部HTTP契約が無い。処理概要に短いエンドポイント項目を追記する。rowId 583・584と同じ処理概要をまとめて編集できる。",
++      "sharedWithRows": [583, 584],
++      "confidence": "high"
++    },
++    {
++      "rowId": 582,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 出荷実績インポート登録 シート / 更新条件 D41:E45",
++      "reason": "正本は、受注の出荷日が未登録であることを更新条件とし、更新前ステータスが出荷指示であることは要求していない。SPEC_BACKEDのため正本修正は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 583,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 出荷実績インポート登録 シート / 処理概要のPOSTルート記述",
++      "reason": "旧契約のルート名 `admin_shipping_result_csv_upload`、POST、`/order/shipping_result_csv/upload` を追記する。rowId 580と同一のルート記述に併合でき、rowId 584とも同じシートを続けて編集するため小幅に見積もる。",
++      "sharedWithRows": [580, 584],
++      "confidence": "high"
++    },
++    {
++      "rowId": 584,
++      "docWork": "ADD",
++      "docEffortDays": 0.25,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 出荷実績インポート登録 シート / 更新後処理 D46:E49とトランザクション境界",
++      "reason": "正本はポイント付加、出荷完了メール、スマレジ送信を列挙済みだが、取込トランザクションの外側で独立実行する順序と例外境界が無い。後続3処理の実行位置が分かる業務ルールを追記する。rowId 580・583と一括編集する。",
++      "sharedWithRows": [580, 583],
++      "confidence": "high"
++    },
++    {
++      "rowId": 585,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 出荷実績登録CSVフォーマット シート / CSV項目表 E59:E71",
++      "reason": "正本は配送先_住所1・2の次を配送先_TEL1と定義し、配送先_住所3を含めていない。SPEC_BACKEDであり、実装の追加列に合わせて正本は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 586,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 出荷実績インポート登録 シート / アップロードファイル検証",
++      "reason": "0バイト判定の分岐が空で後続処理へ残り得るのは旧実装の不備の確認値である。0バイトを拒否する移行後挙動に対し、旧のガード欠落を残す要件とは読めないため追記しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 588,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 出荷実績登録CSVフォーマット シート / CSV項目表 E59:E71",
++      "reason": "正本は識別ID52〜64の列を明記し、配送先_住所3を定義していない。実装の65列契約との差は実装側の乖離であり、正本の表を修正しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 589,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 出荷実績登録CSVフォーマット シート / 項目表 E69・P69",
++      "reason": "正本は「送り状No.」の書式・制限をP69で「数値(整数)」と定義済みである。SPEC_BACKEDの未実装であり、設計書側の編集は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 562,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 受注情報検索 一覧(検索入力) シート / 検索パターン説明 D163:D167・項目表 E268:E269",
++      "reason": "正本は保存パターンをリンク表示し、クリック検索、個別リロード、更新前件数の`*`表示を要求済みである。選択中パターンの実装不足に対する正本の変更は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 561,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 受注情報検索 一覧(検索入力) シート / 検索要件 E173",
++      "reason": "正本のE173は、引き渡し前の注文番号で引き渡し後の受注情報を検索できることを明記している。SPEC_BACKEDの未実装であり追記は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 564,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 受注詳細CSV出力 シート / CSV項目表 E74",
++      "reason": "正本は識別ID67の項目名を「送料ID」と定義済みである。出力定義に当該列が無い実装側の乖離に対し、正本は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 565,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 受注詳細CSV出力 シート / CSV項目表 E8・E95",
++      "reason": "正本は識別ID1とID88の両方を「注文番号」と定義しており、本指摘が要求する2列目も明記済みである。同名列の存在だけで正本内部の矛盾とは断定せず、SPEC_BACKEDとして変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 570,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 受注情報編集 シート / 処理概要 C446・画面項目表 E469",
++      "reason": "正本はボタン文言を「商品の追加」と処理概要と項目表の両方に明記済みである。実装の「商品を追加」へ合わせた表またはレイアウト画像の修正は行わない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 571,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0203_基本設計仕様書(受注管理機能).xlsx / 受注情報編集 シート / 画面項目表 E479",
++      "reason": "正本のE479は「お支払合計」と定義済みである。送り仮名が異なる実装文言に合わせて正本の表や貼付画像を直す必要はない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 396,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0204_基本設計仕様書(商品管理).xlsx / グッズ商品CSV登録 シート / 画面構成表 AG147",
++      "reason": "Excel正本のAG147はアップロード押下後に確認モーダルを表示すると明記済みである。相反する「確認ダイアログなし」はHTML生成時に付加されたリバース詳細で、Excel正本内の矛盾ではない。SPEC_BACKEDのため正本の表や画像は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 368,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0204_基本設計仕様書(商品管理).xlsx / グッズ商品CSV出力 シート / 処理概要 B77以降のCSV出力・ログ要件",
++      "reason": "正本には出力項目のカスタマイズ説明はあるが、CSVストリーム送信後に「グッズ商品CSV出力ファイル名」と生成ファイル名を情報ログへ記録する要件が無い。実行タイミングとログ文言が分かる1項を追記する。画面項目の変更ではないため画像修正は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    }
++  ]
++}
+
+tokens used
+111,695
+28件: NONE=21 ADD=7 FIX=0 IMAGE=0 / 計 0.9人日

@@ -1,0 +1,2771 @@
+Reading additional input from stdin...
+OpenAI Codex v0.146.0
+--------
+workdir: /home/y-saito/Developments
+model: gpt-5.6-sol
+provider: openai
+approval: never
+sandbox: workspace-write [workdir, /tmp, $TMPDIR]
+reasoning effort: high
+reasoning summaries: none
+session id: 019fc097-61d0-7e20-ba9b-b726f9aa0d5c
+--------
+user
+設計書（正本Excel）を最新化する工数を見積もります。実装の修正工数ではありません。
+
+まず手順書を読んでください: /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/DOCUPDATE_TASK.md
+
+担当パケット: /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_packets/du_09.json
+出力先: /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_09.json
+
+厳守事項:
+- **正本はExcel** (/home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/*.xlsx)。
+  HTML(output/)は convert.py の生成物で、直接編集しても次の変換で消える。
+  見積もる対象は「Excelのどのシートのどの表/画像を、どう直すか」の作業量。
+- 根拠区分=SPEC_BACKED は原則 docWork=NONE（設計書は正しく実装が追いついていないだけ）。
+  記述が曖昧で明確化が要る場合だけ FIX。
+- 根拠区分=LEGACY_BACKED は原則 docWork=ADD（設計書の記述漏れ）。
+  ただし移行後に残さない挙動と読めるなら NONE。
+- 表示文言・画面項目は、テキストの表に足せば済むのか、
+  レイアウト**画像の描き直し**まで要るのか(IMAGE)を必ず区別する。
+- 同じシートの行が隣り合うよう並べてある。まとめて直せる分は2件目以降を安くしてよい。
+- HTML再生成と検証は書籍単位の固定費として別途集計するので、1件ごとの見積に含めない。
+- 引用・確認内容の捏造は絶対に禁止。実装側の修正工数と混同しない。
+
+findings 全件について docWork と docEffortDays をJSONで書き込んでください。
+最終メッセージは内訳1行のみ（例: 28件: NONE=14 ADD=10 FIX=2 IMAGE=2 / 計 1.8人日）。
+warning: Codex could not find bubblewrap on PATH. Install bubblewrap with your OS package manager. See the sandbox prerequisites: https://developers.openai.com/codex/concepts/sandboxing#prerequisites. Codex will use the bundled bubblewrap in the meantime.
+codex
+`design-impl-drift-audit` スキルを使います。手順書と担当パケットを読み、各 finding の根拠を正本 Excel のシート・表・画像単位で確認して見積結果を書き込みます。
+exec
+/bin/bash -lc "sed -n '1,240p' /home/y-saito/.codex/skills/design-impl-drift-audit/SKILL.md" in /home/y-saito/Developments
+ succeeded in 848ms:
+---
+name: design-impl-drift-audit
+description: Compare HTML design specifications against an implementation to find functional drift and produce an evidence-backed HTML report. Use when Codex is asked to treat design docs as the source of truth, audit code such as controllers/services/forms/repositories/templates/batches/CSV definitions, continue a partially completed drift report, or update findings JSON/HTML for gaps between design and implementation.
+---
+
+# Design Impl Drift Audit
+
+## Purpose
+
+Use this skill to audit functional differences between HTML design specifications and an implementation repository, with the design docs treated as authoritative. Produce or continue a report that lists concrete differences with design locations, implementation locations, confidence, severity, and impact.
+
+## Repository Discovery
+
+1. Find the design-doc directory and implementation directory from the user request. If omitted, infer from nearby names such as `*-design-docs` and application repos.
+2. Look for an existing report before starting new work. Prefer directories named `design_impl_drift_report`, existing `findings.json`, per-function `findings/*.json`, and `index.html`.
+3. Count total target specs and audited specs so the report clearly states scope and remaining work.
+4. Preserve existing findings. Append or refine; do not overwrite unrelated prior work.
+
+## Audit Workflow
+
+For each target HTML spec:
+
+1. Identify the feature ID, route/action name, UI template, CSV/batch/API behavior, and acceptance rules from the HTML design spec.
+2. Extract a requirement inventory from the HTML spec before looking at code. This inventory must include not only route/screen names, but every concrete requirement in 処理概要, 図形・テキストボックス, 項目表, 表示メッセージ, 業務ルール・計算, 入力項目, エッジケース, データ整合性, API/バッチ結果, 入出力, DB操作, バリデーション, 権限・認可, 画面遷移, エラー処理, ログ・監査, セッション, Cookie, and 排他制御. Treat bullets such as "押下時", "場合", "登録/更新/保存", "遷移", "保持", "表示/非表示", "表示切り替え", "エリアを表示", "誘導", "エラー", "判定", "連携", time limits, thresholds, and retry/idempotency rules as auditable requirements. 秒後/分後, `画面を表示してから`, 自動遷移, タイマー, and store/kiosk/account-specific forced redirects are material requirements even if the route and template already exist.
+3. For every extracted requirement, create or mentally maintain a `requirementTrace` row with: `requirementId`, `designRef`, `designRequirement`, `implementationSearchTerms`, `implementationRefs`, `implementationActual`, `traceVerdict` (`MATCHED|DRIFT|NOT_FOUND|UNCERTAIN|PHASE2_EXCLUDED`), and `traceReason`. A feature cannot be marked no-drift until all material requirements have a trace verdict other than `NOT_FOUND` or unresolved `UNCERTAIN`.
+4. Search the implementation with `rg` across likely files: controllers, services, repositories, form types, entities, migrations, Twig/templates, commands/batches, route definitions, JavaScript, CSV exporters/importers, and PDF/print services. Search by business terms from the requirement, route names, translation keys, DB columns, state names, constants, statuses, time values, thresholds, and side-effect verbs. For timer or auto-navigation requirements, explicitly search client and server paths for `setTimeout`, `setInterval`, millisecond/second constants such as `60000` and `60 * 1000`, `location.href`, `location.assign`, `location.replace`, redirect routes, and the condition that limits the behavior. For a negative result, also search nearby implemented flows so the report can explain why they do not satisfy the design.
+5. Compare behavior and user-facing text, not just names. Check input fields, validation, defaults, search conditions, session persistence, buttons/actions, labels, button text, messages, translation keys/locales, permissions, status transitions, CSV columns, sort/order rules, scheduled timing, timeouts/expiration, thresholds, client-side timers, forced auto-navigation, side effects, idempotency, external integrations, conditional display toggles, alternate UI areas, and error handling.
+6. Do not treat "route/controller/template exists" as sufficient. Existence only satisfies the route/screen requirement. It does not satisfy individual rules inside the screen, such as timeout handling, cart retention, validation branches, status transitions, DB writes, logging prohibitions, conditional hide/show behavior, alternative contact/help areas, or external API retry behavior.
+7. For conditional display requirements, audit each side of the condition separately. If the HTML says "Aの場合はXを非表示、Yを表示 / A以外はXを表示、Yを非表示", record trace rows for the condition detector, X visibility, Y visibility, and the inverse condition. A nearby notice or route is not enough unless the cited template/JS actually renders the required area under the required condition.
+8. For labels, button text, messages, and translation keys, do a dedicated near-match pass. Extract user-visible Japanese text from the HTML item/message tables and compare it with implementation locale values and Twig/Form usage. Treat punctuation, okurigana, missing characters, long-vowel marks, wording changes such as `商品を追加` vs `商品の追加`, and business-term changes such as `返金` vs `送金` as audit targets.
+9. A text drift finding is complete only when it cites both the translation/source value and the display path that uses it, such as `messages.ja.yaml` plus the `FormType` label or Twig `|trans` call. If the implementation value exists but no display path is verified, mark it `UNCERTAIN` instead of presenting it as confirmed.
+10. Do not stamp all functions as if every standard aspect was fully checked. Separate "standard audit target aspects" from actual evidence. For each finding, list the aspects actually supported by evidence; for no-drift functions, include a requirement trace summary naming the concrete HTML requirements checked and implementation refs searched.
+11. Record only actionable drift. If evidence is incomplete, mark the finding `UNCERTAIN` and explain what remains ambiguous.
+12. For every drift finding, split the result into implementation-ready fields: `designExpectation`, `implementationActual`, `comparisonRows`, `comparisonSummary`, `mismatchReason`, `impact`, `fixTarget`, `requiredChange`, `implementationRefs`, and, when available, short design/implementation snippets from the cited lines. Do not rely on a generic prose paragraph alone.
+13. Each `comparisonRows` entry must answer all four questions explicitly: comparison item, exact design value/requirement, exact implementation value/behavior, and why those two do not match. If any of those four cells would be vague, continue investigating before recording the finding.
+14. Treat phase labels such as Ph2 as auxiliary context. They can be stored, but the main report must not use phase status as a substitute for concrete behavioral differences and exact implementation locations.
+15. If the HTML design spec explicitly says the whole function or scoped subfeature is `フェーズ2で実装する`, `Ph2で対応`, or `Ph1では実装しない`, do not report absence of that planned Phase 2 work as drift or as a clear implementation gap. You may keep a secondary audit note that non-implementation was confirmed, but exclude it from finding counts and implementation-gap counts. Only keep a finding when there is a concrete non-phase mismatch, such as an implemented Phase 1 path behaving differently from the design or user-facing text differing.
+16. When no drift is found, add the function to the audited set with an empty findings list only after the requirement trace gate passes. If material HTML requirements are untraced, do not mark `AUDITED_NO_DRIFT_FOUND`; mark the function as requiring review or add `UNCERTAIN` findings with the unresolved requirements.
+17. Do not let one confirmed finding hide other requirements in the same function. A function with `AUDITED_WITH_FINDINGS` can still have untraced material requirements; keep those requirements visible in the trace gate until each one is converted to a confirmed finding, an uncertain finding, a matched trace row, or a documented phase/design non-implementation exclusion.
+18. For explicitly registered critical requirements, the harness should carry a missing-finding template or an equivalent escalation rule. If the trace is not covered by an existing finding, promote it into findings automatically or fail the quality gate loudly. Do not rely on a hand-maintained `ADDITIONAL_FINDINGS` list as the only path for user-reported or high-risk missing behavior such as timeouts, cart retention, one-minute/30-minute limits, store-account auto redirects, conditional UI areas, status transitions, external calls, or destructive side effects.
+19. The HTML report must not expose broad source-signal candidates as if they were implementation gaps. A requirement-level list in the main report must be limited to confirmed or explicitly uncertain actionable drift derived from findings, such as `NOT_FOUND` or `DRIFT` requirement traces and concrete comparison rows. If a source-signal scan is used for triage, keep it out of the main HTML report unless each row has been verified against implementation source and written as a concrete finding.
+20. Do not hide time-based or automatic-navigation requirements merely because they are not confirmed findings yet. Requirements involving `画面を表示してから`, seconds/minutes after display, auto redirect/navigation, or timeout-to-cart/top behavior should appear in a separate focused untraced-requirement audit queue when they remain uncovered. This queue is not a confirmed defect count; it exists so these high-risk requirements are reviewed against Controller/Twig/JavaScript/Service source instead of being buried among broad requirement-trace failures.
+
+## Function-Level Implementation Gap Audit
+
+For every HTML spec sheet, maintain a function-level implementation audit even when no drift finding is confirmed yet.
+
+- Extract implementation search terms from the HTML design: route names, URL paths, translation keys, class/controller/service names, batch/API/CSV names, and high-signal business terms from the sheet title and requirement text.
+- Search implementation source by function across Controller, Form, Service, Repository, Entity, Migration, Twig, Command/Batch, CSV, PDF/print, API/webhook, locale/messages, JavaScript, and configuration files.
+- Store a `functionImplementationAudit` object with `verdict`, `designDerivedTerms`, `candidateRefs`, `candidateCount`, `strongSignalCount`, `searchedAreas`, and `auditNote`.
+- Use separate verdicts:
+  - `CONFIRMED_IMPLEMENTATION_GAP`: a concrete drift finding already proves missing implementation.
+  - `NO_IMPLEMENTATION_ENTRY_FOUND`: no entry candidate was found from design-derived terms; treat as an additional-review candidate, not an automatic confirmed defect.
+  - `IMPLEMENTATION_ENTRY_FOUND`: strong source evidence such as route, class, translation key, or path was found.
+  - `IMPLEMENTATION_CANDIDATE_FOUND`: weak business-term candidates were found but the entry point is not proven.
+  - `PHASE2_NONIMPLEMENTATION_EXPECTED`: HTML design explicitly scopes non-implementation to Phase 2/Ph1 exclusion.
+  - `DESIGN_NONIMPLEMENTATION_EXPECTED`: HTML design explicitly says the function or scoped behavior is not implemented by code, such as `実装しない`, `実装不要`, or infrastructure/external-service configuration replacing application code.
+- Use `DESIGN_NONIMPLEMENTATION_EXPECTED` as the function-level verdict only when the non-implementation statement applies to the whole function or the implementation entry itself, for example an external WordPress server, Docker image cron, Aurora parameter group, or a bare whole-sheet `実装しない`. If the text only excludes a scoped subfeature, UI alert, HTML hint, logging detail, partial Phase 2 item, or internal job, keep the function's source-entry verdict and mention the scoped exclusion only in the trace/audit note.
+- The report must show both confirmed implementation-gap findings and function-level no-entry candidates. Do not merge these counts: implementers need confirmed defects for fixing and no-entry candidates for review planning.
+- A function-level candidate is not enough to mark the detailed requirements as implemented. Requirement trace still controls no-drift status.
+- Do not set report metadata such as `auditComplete` or narrative notes to "complete" merely because every sheet has a function-level implementation audit. If any material requirement trace remains unresolved, state that all sheets have function-entry coverage but requirement-level audit is incomplete.
+- For infrastructure-oriented sheets such as Step Functions, Lambda, WAF/S3 jobs, cron configured outside the application, or managed database settings, distinguish "not found in the requested implementation repository" from "not implemented anywhere". A confirmed implementation-gap finding may be scoped to the audited repository, but the report must say when external infrastructure repositories or cloud configuration were not checked.
+
+## Requirement Trace Gate
+
+Before marking a function no-drift, verify the following:
+
+- Every material HTML requirement has a trace row. Material means it changes behavior, data, display, validation, permission, transition, side effect, external communication, schedule, retry/idempotency, logging/audit, CSV/API/PDF/batch I/O, or user-visible text.
+- Each trace row includes exact design text or a tight paraphrase plus line/anchor reference, not only the sheet title.
+- Each matched row cites the implementation path and line(s) that actually execute or render the behavior. A nearby class, route, or template is not enough unless the cited code contains the relevant condition/value/side effect.
+- Each missing row is converted to a confirmed or uncertain finding. Use confirmed only after searching the direct path and nearby alternative implementations.
+- Missing rows remain failures even if the function already has other findings. The gate is requirement-scoped, not function-scoped.
+- If an explicit critical requirement has a configured missing-finding template, regenerate the report from the harness and verify the promoted finding appears in both JSON and HTML with design value, implementation behavior, mismatch reason, fix target, and search evidence.
+- If a missing row does not yet have enough evidence for a confirmed or uncertain actionable finding, do not count it as an implementation gap and do not put it in the main HTML fix list. Keep the function in an incomplete requirement-trace state, and promote the row only after implementation source has been checked enough to state the exact design requirement, exact implementation behavior, and mismatch reason.
+- A generic `auditEvidence` string is not a substitute for requirement traces.
+- Negative searches must list the searched terms/areas and why nearby hits do not satisfy the design.
+
+## Finding Format
+
+Store findings in a machine-readable JSON structure. Use this shape for each finding:
+
+```json
+{
+  "id": "stable-feature-id-001",
+  "functionId": "m04-01_admin_stock_stock_search_list",
+  "functionName": "在庫一覧",
+  "severity": "high|med|low",
+  "dimension": "①機能/ルート未実装",
+  "confidence": "CONFIRMED|UNCERTAIN",
+  "design": {
+    "file": "path/to/spec.html",
+    "lines": "215-220",
+    "summary": "設計書に書かれている仕様"
+  },
+  "implementation": {
+    "file": "path/to/source.php or 不在",
+    "lines": "337-344",
+    "summary": "実装側の状態"
+  },
+  "difference": "設計と実装の具体的な差分",
+  "comparisonRows": [
+    {
+      "item": "比較項目名",
+      "design": "設計書の値・要求。列名、HTTPメソッド、パス、保存先、表示文言、条件、状態遷移などを具体値で書く",
+      "implementation": "実装の値・挙動。実際の列名、メソッド、パス、保存先、文言、条件、処理順を具体値で書く",
+      "mismatch": "なぜ一致しないのか。実装者が直すべき差分を一文で書く"
+    }
+  ],
+  "requirementTrace": [
+    {
+      "requirementId": "stable-requirement-id",
+      "designRef": "path/to/spec.html:123",
+      "designRequirement": "HTML設計書の個別要求",
+      "implementationSearchTerms": ["検索語", "route_name", "methodName"],
+      "implementationRefs": ["src/...php:123"],
+      "implementationActual": "実装で確認できた挙動、または不在判定",
+      "traceVerdict": "MATCHED|DRIFT|NOT_FOUND|UNCERTAIN|PHASE2_EXCLUDED",
+      "traceReason": "なぜその判定か"
+    }
+  ],
+  "comparisonSummary": "設計はX、実装はY、したがってZが違う",
+  "mismatchReason": "乖離と判断した具体的な理由",
+  "impact": "ユーザー・業務・データへの影響",
+  "fixTarget": "修正対象のファイル/ルート/サービス/不在箇所",
+  "requiredChange": "設計に合わせる場合に必要な修正",
+  "implementationRefs": ["src/...php:123"],
+  "implementationSnippets": ["123: 実装コードの短い断片"],
+  "evidence": ["短い根拠。ファイル名と行番号を含める"]
+}
+```
+
+The HTML report should make these fields visible as separate blocks so an implementer can answer: what exact value does the design require, what exact value does the code implement, why is that a mismatch, exactly where is the code, and what should be changed.
+
+Use stable IDs and Japanese text when the existing report is Japanese. Keep dimensions consistent with existing findings when continuing a report.
+
+## Severity Guidance
+
+- `high`: missing feature/route, wrong critical business rule, destructive or externally visible behavior, missing required import/export/batch/PDF flow.
+- `med`: partial implementation, wrong filtering/sorting/session behavior, missing non-critical columns or validation, incompatible screen behavior.
+- `low`: copy/display/default-state differences, ambiguous design wording, minor workflow variance.
+
+## Report Generation
+
+If the project already has a report generator, use it. Otherwise copy or adapt `scripts/build_report.py` from this skill into the report directory, then run it from the repository root or pass paths as needed.
+
+The HTML report must include:
+
+- summary counts: total findings, severities, audited functions, functions with drift
+- scope and remaining work
+- per-function sections
+- each finding with severity, confidence, dimension, audit aspects including label/message/translation-key differences when applicable, design reference, implementation reference, design expectation, implementation actual behavior, `comparisonRows`, mismatch reason, impact, fix target, required change, and evidence
+- a comparison table with columns: 比較項目 / 設計書の値・要求 / 実装の値・挙動 / 乖離理由
+- links or file paths precise enough for a developer to inspect
+- short cited design and implementation snippets when available
+- phase/Ph2 data only as hidden or secondary metadata, never as a report column or primary summary
+- a function-level implementation audit section showing verdict counts, no-entry candidates, candidate source references, and the search terms that produced them
+- a requirement-level difference list derived only from confirmed/uncertain findings, showing the exact design requirement, implementation behavior, mismatch reason, implementation refs, and a link back to the finding. Do not include broad unverified source-signal queues in the main HTML report.
+- a focused untraced-requirement section for small, high-risk classes such as display-time timers, automatic redirects, and timeout navigation. Keep it separate from confirmed difference and implementation-gap counts, and include search terms/candidate refs so the next audit step is concrete.
+
+After editing findings, validate JSON and regenerate HTML:
+
+```bash
+python3 -m json.tool path/to/design_impl_drift_report/findings.json
+python3 path/to/design_impl_drift_report/build_report.py
+```
+
+## Quality Bar
+
+- Treat the HTML design spec as source of truth even when implementation looks intentional.
+- Cite exact file paths and line numbers whenever available.
+- Distinguish `不在` from “not found yet”; use `不在` only after searching likely implementation areas.
+- Avoid broad claims such as “not implemented” without search evidence or contrasting nearby implemented features.
+- Do not classify Phase 2 planned non-implementation as a defect. A missing route, CSV, batch, API, table, or screen is only a drift finding when the design expects it in the audited implementation phase.
+- For label/message drift, prefer exact line evidence and a verified render path over fuzzy string similarity. Fuzzy or near-match scans are candidate generators; they are not findings until source and display usage are confirmed.
+- When an external reviewer or another agent reports candidates, verify each candidate against the HTML design and implementation source before adding it. Keep rejected or ambiguous candidates out of confirmed counts, or mark them `UNCERTAIN` with the unresolved reason.
+- For absent implementations, include the searched terms/areas, nearby implementation files with line numbers, and a concrete reason those nearby files do not satisfy the design. Do not leave `implRef` as only `不在` in the final report.
+- Reject vague findings. A finding is not complete until it names the exact design value and exact implementation value that differ.
+- Keep the report cumulative and resumable.
+
+exec
+/bin/bash -lc "wc -l /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/DOCUPDATE_TASK.md && sed -n '1,260p' /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/DOCUPDATE_TASK.md && jq '{packetId, findingCount:(.findings|length), topKeys:(keys)}' /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_packets/du_09.json && jq '.' /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_packets/du_09.json" in /home/y-saito/Developments
+ succeeded in 903ms:
+93 /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/DOCUPDATE_TASK.md
+# 設計書（正本Excel）の最新化工数の見積
+
+乖離指摘 1,007件（クローズ済を除く）について、**設計書側にどんな作業が発生し、何人日か**を見積もる。
+実装をどう直すかではなく、**設計書をどう直すか**だけを判断する。
+
+## 前提: 正本はExcel、HTMLは生成物
+
+| 役割 | パス |
+|---|---|
+| **正本Excel（編集対象）** | `/home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/*.xlsx` |
+| 生成HTML（読む用・編集対象ではない） | `/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/*.html` |
+| 変換ツール | `excel_to_html/convert.py`（`uv run python convert.py`）、検証は `verify.py` |
+| 実装 | `/home/y-saito/Developments/ec-cube-enterprise` |
+
+**HTMLを直接編集しても次の変換で消える。** 直すのは常にExcelのセル・図形・画像である。
+したがって見積もる対象は「該当シートの該当セル/表/画像をどう直すか」の作業量。
+
+HTML再生成と検証は書籍単位でまとめて行うため、**1件ごとの見積には含めない**（別途固定費として集計する）。
+
+## 判定する2つのこと
+
+### 1. `docWork` — 設計書側にどんな作業が要るか
+
+| 値 | 意味 |
+|---|---|
+| `NONE` | 設計書は現状で正しい。実装を直せば済み、**設計書は触らない** |
+| `ADD` | 設計書に記述が無い。項目表・処理概要などに**書き足す** |
+| `FIX` | 設計書に記述はあるが、採用する仕様と食い違う。**既存記述を直す** |
+| `IMAGE` | 画面レイアウト**画像の差し替え**が要る（Excelに貼られた画像の描き直し） |
+| `RESOLVE` | 正本の中で記述同士が矛盾している（項目表と画像、本文と注記など）。**どちらが正かを決めて片方を直す** |
+| `UNSURE` | 判断できない |
+
+**重要な原則:**
+- `根拠区分 = SPEC_BACKED`（設計書に裏付けがある）＝ 原則 `NONE`。
+  設計書は正しく、実装が追いついていないだけ。
+  ただし設計書の記述が曖昧・不完全で、実装に合わせて**明確化**が要るなら `FIX`。
+- `根拠区分 = LEGACY_BACKED`（設計書に記述が無く旧実装に根拠）＝ 原則 `ADD`。
+  移行後も必要な挙動なら、設計書の記述漏れとして書き足す必要がある。
+  ただし**その挙動を移行後に残さない**と読めるなら `NONE`。
+- 表示文言・ラベル・画面項目の追記は、テキストの表に足すだけで済むのか、
+  **レイアウト画像も描き直しになるのか**を区別する（後者は `IMAGE`）。
+
+### 2. `docEffortDays` — Excel編集の工数（人日）
+
+**この1件のために、該当シートを開いて直す作業**の量。目安:
+
+| 作業 | 目安 |
+|---|---|
+| 既存の表に1行足す／セルの文言を1つ直す | 0.05〜0.1 |
+| 項目表に複数行・条件付きの記述を足す | 0.1〜0.25 |
+| 処理概要・業務ルールの節を書き起こす | 0.25〜0.5 |
+| 画面レイアウト画像の差し替え（実画面の取得＋貼り直し＋位置調整） | 0.5〜1.0 |
+| 正本内部の矛盾解消（影響範囲の確認＋関係箇所の統一） | 0.25〜1.0 |
+| シート新設（機能ごと丸ごと無い） | 1.0〜3.0 |
+
+**同じシートに複数の指摘がまとまっている場合、2件目以降は安くなる**（シートを開く手間が1回で済む）。
+パケット内で同一 `設計書参照` の行が並んでいたら、その分を反映してよい（理由に書くこと）。
+
+`docWork = NONE` のときは `docEffortDays: 0`。
+`RESOLVE` は、裁定そのもの（どちらが正かを決める会議・確認）は含めず、**決まった後の反映作業**だけを見積もる。
+
+## 絶対の禁止事項
+
+- 引用・確認内容の捏造をしないこと。実際に開いて確認したものだけを書く。
+- 確認していないことを「確認した」と書かない。
+- 実装側の修正工数と混同しないこと。**ここで見積もるのは設計書の編集だけ**である。
+
+## 出力
+
+指示されたJSONファイルに **Write して** 書き込む。
+
+```json
+{
+  "packetId": "...",
+  "results": [
+    {
+      "rowId": 123,
+      "docWork": "ADD",
+      "docEffortDays": 0.1,
+      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫編集 シートの画面項目表",
+      "reason": "旧実装にしかない上限件数の扱いを、項目表の備考へ1行足す。既存の行構成をそのまま使える。",
+      "sharedWithRows": [124, 125],
+      "confidence": "high"
+    }
+  ]
+}
+```
+
+- `target`: 直す対象（ブック名 / シート名 / 表や図の位置）。分かる範囲で具体的に
+- `sharedWithRows`: 同じシートでまとめて直せる他の rowId（無ければ空配列）
+- `confidence`: `high` / `medium` / `low`
+
+findings 全件について返すこと（欠落禁止）。
+{
+  "packetId": "du_09",
+  "findingCount": 28,
+  "topKeys": [
+    "findings",
+    "note",
+    "packetId"
+  ]
+}
+{
+  "packetId": "du_09",
+  "note": "同じ設計書シートの行が隣り合うよう並べてある。まとめて直せる分は2件目以降を安く見積もってよい（sharedWithRowsに記す）。",
+  "findings": [
+    {
+      "rowId": 466,
+      "機能No": "M04-12",
+      "機能名": "M04-12 在庫分割結合検索一覧(検索・結果)",
+      "区分(画面種別)": "admin",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "一部解消-残差あり",
+      "設計書参照": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-17",
+      "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:7921 のExcel正本 `src-cell` は、ステータス選択肢を分割では「新規登録、分割承認待ち、却下、入庫完了」、結合では「新規登録、結合元登録、結合承認待ち、却下、入庫完了」とタイプ別に定義する。",
+      "設計期待値": "識別ID 2-7「ステータス」: 選択肢(分割)=新規登録・分割承認待ち・却下・入庫完了／選択肢(結合)=新規登録・結合元登録・結合承認待ち・却下・入庫完了（タイプ別・文言『入庫完了』）",
+      "差分内容": "分割4択・結合5択のタイプ別選択肢を要求するが、実装は全ステータス常時表示かつ文言が異なる。",
+      "実装実態": "MtbStockSplitJoinStatus 全6件(新規登録/結合元登録/分割承認待ち/結合承認待ち/入庫済み/却下)を id ASC で一律フラット表示。タイプ別の出し分けは無く、文言は設計の『入庫完了』ではなくマスタ名『入庫済み』(RECEIPT_COMPLETED=5)。"
+    },
+    {
+      "rowId": 467,
+      "機能No": "M04-12",
+      "機能名": "M04-12 在庫分割結合検索一覧(検索・結果)",
+      "区分(画面種別)": "admin",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "一部解消-残差あり",
+      "設計書参照": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-17",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:7929 のExcel正本（data-excel-ref=\"0202:在庫分割結合検索一覧(検索・結果)!AG145\"）に、識別ID 3-7「検索条件をクリア」は「ボタン」であり「押下すると3-1~3-4の内容を空にする」と明記されている。",
+      "設計期待値": "識別ID 3-7「検索条件をクリアボタン」: 押下すると3-1〜3-4(詳細検索の日付/登録者)の内容を空にする",
+      "差分内容": "設計は3-1〜3-4限定クリアだが実装は検索セッション全体を破棄。対象範囲が異なり部品もボタンでなくリンク。",
+      "実装実態": "実装はボタンではなくリンク(<a href=...?clear=1>)で、押下すると Controller が session admin.stock.split_join.search を丸ごと remove し一覧へリダイレクト。3-1〜3-4だけでなく基本検索を含む全検索条件がクリアされ画面も初期表示に戻る。"
+    },
+    {
+      "rowId": 468,
+      "機能No": "M04-12",
+      "機能名": "M04-12 在庫分割結合検索一覧(検索・結果)",
+      "区分(画面種別)": "admin",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "要修正-設計準拠",
+      "設計書参照": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-17",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:7915 のExcel正本（data-excel-ref=\"0202:在庫分割結合検索一覧(検索・結果)!Z131\"）は、識別ID 2-1「商品名・商品コード検索対象」の初期値を「分割元・結合先」と明記している。",
+      "設計期待値": "識別ID 2-1「商品名・商品コード検索対象」: 初期値『分割元・結合先』(source)",
+      "差分内容": "設計は初期値 source(分割元・結合先)が選択済みを要求するが、実装の初期状態は無選択。",
+      "実装実態": "search_target は ChoiceType(expanded/multiple) で source/destination の2チェックボックスだが、Form に初期選択(data/初期値)が設定されておらず初期表示ではどちらも未チェック。"
+    },
+    {
+      "rowId": 469,
+      "機能No": "M04-13",
+      "機能名": "M04-13 在庫分割結合登録編集（分割）",
+      "区分(画面種別)": "admin",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "要修正-設計準拠",
+      "設計書参照": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-18",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:8475 のExcel正本（data-excel-ref=\"0202:在庫分割結合登録編集（分割）!E219\"）に「エラーメッセージには固定で、『エラーは20件まで表示されます』、とエラーメッセージの上に表示する」と明記されている。",
+      "設計期待値": "分割先商品CSV登録モーダルで、エラー20件到達時に固定文言「エラーは20件まで表示されます」（実装ロケール「エラーを最大20件まで表示しています。」）をエラーメッセージの上に表示する",
+      "差分内容": "Join側と非対称。分割CSVエラー表示経路（ハンドラ→Controller editDestinationCsvUpload→twig errs.join）を確認し、固定文言の付加が無いことを確認。",
+      "実装実態": "分割CSVハンドラは errors をそのまま return し固定文言を先頭付加しない。結合側 StockJoinEditReplaceSourcesImportHandler.php:257-260 は array_unshift(trans('admin.stock.csv.error_limit_notice')) で付加。翻訳キーは messages.ja.yaml:2368 に存在する"
+    },
+    {
+      "rowId": 470,
+      "機能No": "M04-13",
+      "機能名": "M04-13 在庫分割結合登録編集（分割）",
+      "区分(画面種別)": "admin",
+      "指摘区分": "未実装",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "要修正-設計準拠",
+      "設計書参照": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-18",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:8502 は「承認申請時…分割先商品の仕入総価格の計算」、同:8509 は「分割先商品の仕入総価格…を計算し、分割先商品情報に登録する」、同:8529 は「承認申請時に仕入総価格の計算を行う」とExcel正本に明記している。",
+      "設計期待値": "承認申請時に分割先商品の仕入総価格（1商品について数量分の仕入価格＝買取金額比率での按分値）を計算し、分割先商品情報に登録する",
+      "差分内容": "DtbStockSplitJoinDetail 全カラム・StockSplitApplyApprovalAction・StockSplitApprovalApproveAction を確認。設計は承認申請時に仕入総価格を計算・登録することを要求するが、計算タイミング（承認処理時）・格納先（明細に非永続）ともに不一致。",
+      "実装実態": "承認申請時は Detail.totalCost に分割先現在総原価スナップショットを保存するのみ。按分計算（仕入総価格）は承認処理 StockSplitApprovalApproveAction.php:130-185 で都度行われ ProductStock.total_cost と在庫変動履歴へ反映されるが、分割先明細へ仕入総価格として登録されず、専用格納カラムも存在しない。"
+    },
+    {
+      "rowId": 471,
+      "機能No": "M04-13",
+      "機能名": "M04-13 在庫分割結合登録編集（分割）",
+      "区分(画面種別)": "admin",
+      "指摘区分": "未実装",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "要修正-設計準拠",
+      "設計書参照": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-18",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:8542 のExcel正本（data-excel-ref=\"0202:在庫分割結合登録編集（分割）!AG280\"）に「分割先在庫数の合計」「分割先在庫数が変更されるたびに再集計を行う（…フォーカスアウトで再集計）」と明記され、同:8553 にも「フォーカスアウトした際に、分割点数を再集計する」とある。",
+      "設計期待値": "分割点数（分割先在庫数の合計）は分割先在庫数が変更されるたびに再集計を行う（登録フォームのフォーカスアウトで再集計）",
+      "差分内容": "twig の qty change JS と合計表示、updateDestinationQuantity 戻り値を確認。フォーカスアウト時の即時再集計がクライアント側で未実装。",
+      "実装実態": "分割先在庫数 input の change ハンドラは数量を Ajax 保存し input.value を更新するのみで、上部の分割点数合計（destTotalSum, :177 サーバ描画静的値）を再集計・再描画しない。合計はページ再読み込みまで古いまま。"
+    },
+    {
+      "rowId": 472,
+      "機能No": "M04-13",
+      "機能名": "M04-13 在庫分割結合登録編集（分割）",
+      "区分(画面種別)": "admin",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "要修正-設計準拠",
+      "設計書参照": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-18",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:8562 のExcel正本（data-excel-ref=\"0202:在庫分割結合登録編集（分割）!AG300\"）に、フッターを「在庫分割・結合検索一覧」へのリンクに変更し「検索状態を維持したまま」遷移すると明記されている。",
+      "設計期待値": "分割先登録（編集）画面のフッターリンクは「在庫分割・結合検索一覧」へ検索状態を維持したまま遷移する",
+      "差分内容": "編集画面フッターリンクと index の resume 分岐を確認。検索状態維持が resume 未付与により満たされない。",
+      "実装実態": "フッターリンクは url('admin_stock_split_join_list') へ resume 無しで遷移。一覧側は resume が真の時のみ検索条件を復元（else節は空初期表示）のため、このリンク経由では検索状態が初期化される。新規画面 stock_split_new.twig:159 の resume=1 付与と非対称。"
+    },
+    {
+      "rowId": 473,
+      "機能No": "M04-13",
+      "機能名": "M04-13 在庫分割結合登録編集（分割）",
+      "区分(画面種別)": "admin",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "要修正-設計準拠",
+      "設計書参照": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-18",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:8594 のExcel正本は、CSVカラムを「商品コード、分割先分割在庫数」として1行目の一致チェックを要求する。同:8595 は雛形も同じ2カラムで出力するとし、同:8607 の項目名も「分割先分割在庫数」である。",
+      "設計期待値": "分割先商品CSVの第2列カラム名は「分割先分割在庫数」でカラム名一致チェックを行い、雛形も同カラムで出力する",
+      "差分内容": "設計HTML sheet-18 のCSV登録部・登録CSVテーブルで列名「分割先分割在庫数」を確認。実装のImportHandlerと雛形出力ヘッダは「分割先在庫数」で列名不一致。",
+      "実装実態": "実装は列名「分割先在庫数」を必須キーとして isset 判定し、不一致時「1行目の列名を確認してください（商品コード, 分割先在庫数）。」を返す。雛形出力も ['商品コード','分割先在庫数']。設計どおり「分割先分割在庫数」ヘッダのCSVはフォーマット不一致で拒否される。"
+    },
+    {
+      "rowId": 474,
+      "機能No": "M04-13",
+      "機能名": "M04-13 在庫分割結合登録編集（結合)",
+      "区分(画面種別)": "admin",
+      "指摘区分": "未実装",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "要修正-設計準拠",
+      "設計書参照": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-19",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:9322 は結合数必須チェック、同:9381 は「2-11 結合数」「○」「1～99999999」「在庫数を超える数値が入力された場合はエラー」と明記する。",
+      "設計期待値": "結合先商品の結合数(2-11)は必須○・最大値1～99999999。在庫数を超える数値が入力された場合はエラーとする。",
+      "差分内容": "設計2-11が明記する2つのバリデーション（最大値99999999・在庫数超過エラー）が実装に存在しない。Twig/Action/Controllerを直接確認し不在を確認。",
+      "実装実態": "入力は min=1 のみで max 属性なし。StockJoinRegisterAction は destinationStock<=0 のみをエラーとし、上限99999999も在庫超過チェックも行わずそのまま保存する。"
+    },
+    {
+      "rowId": 475,
+      "機能No": "M04-13",
+      "機能名": "M04-13 在庫分割結合登録編集（結合)",
+      "区分(画面種別)": "admin",
+      "指摘区分": "未実装",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "要修正-設計準拠",
+      "設計書参照": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-19",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:9363 のExcel正本（data-excel-ref=\"0202:在庫分割結合登録編集（結合)!AG119\"）は、ステータス候補を「新規登録、結合元登録、結合計画承認待ち、却下、結合計画承認済み、結合完了承認待ち、入庫完了」の7区分と明記している。",
+      "設計期待値": "基本情報ステータス(1-5)の表示候補は7区分『新規登録／結合元登録／結合計画承認待ち／却下／結合計画承認済み／結合完了承認待ち／入庫完了』。",
+      "差分内容": "設計の7区分と実装マスタ6区分が一致せず、『結合計画承認済み』『結合完了承認待ち』『入庫完了』が存在しない。二段階承認が単一承認→入庫済みに集約。migration/Entityを直接確認。",
+      "実装実態": "mtb_stock_split_join_status は6件のみ（1新規登録/2結合元登録/3分割承認待ち/4結合承認待ち/5入庫済み/6却下）。"
+    },
+    {
+      "rowId": 476,
+      "機能No": "M04-13",
+      "機能名": "M04-13 在庫分割結合登録編集（結合)",
+      "区分(画面種別)": "admin",
+      "指摘区分": "未実装",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "要修正-設計準拠",
+      "設計書参照": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-19",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:9636-9637 のExcel正本は、識別ID 6-1「承認通知先（所属選択）」と6-2「承認通知先（メンバー選択）」の双方に「※ 店舗間移動時は必須」と明記している。",
+      "設計期待値": "承認通知先の所属(6-1)・メンバー(6-2)は店舗間移動時は必須（店舗間移動時のみ通知先を必須入力）。",
+      "差分内容": "設計は店舗間移動時のみ必須の条件付き必須だが、実装はメンバーを条件無視で常時必須にし、所属は一度も必須化されない。店舗間移動判定自体が存在しない。Controller/Formを直接確認。",
+      "実装実態": "applyApproval は店舗間移動か否かに関わらず通知先メンバーが空なら常時エラーで必須化（approval_required を無条件true指定）。所属は常に required=false。"
+    },
+    {
+      "rowId": 477,
+      "機能No": "M04-13",
+      "機能名": "M04-13 在庫分割結合登録編集（結合)",
+      "区分(画面種別)": "admin",
+      "指摘区分": "未実装",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "要修正-設計準拠",
+      "設計書参照": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-19",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:9442 のExcel正本（data-excel-ref=\"0202:在庫分割結合登録編集（結合)!E242\"）に「CSVは10,000件を登録上限とする」と明記されている。",
+      "設計期待値": "結合元商品CSV登録はCSVを10,000件を登録上限とする（上限超過は登録不可）。",
+      "差分内容": "設計の10,000件上限がバックエンドで未実装。分割側は2,000件のMAX_ROWSがあるが結合側は上限定数自体が存在しない。両ハンドラを直接確認し行数チェック不在を確認。",
+      "実装実態": "UI文言は『登録上限は 10,000 件』と表示するが、結合元CSV取込ハンドラには行数上限(MAX_ROWS)判定が無く全行を処理する。MAX_ERROR_COUNT=20のみ実装。"
+    },
+    {
+      "rowId": 478,
+      "機能No": "M04-13",
+      "機能名": "M04-13 在庫分割結合登録編集（結合)",
+      "区分(画面種別)": "admin",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "要修正-設計準拠",
+      "設計書参照": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-19",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:9489 のExcel正本に「結合元在庫数は0を許容し、0の場合は結合元商品から削除すること」、同:9533 の識別ID 7-14 に「0を許容し、0が入力された場合は商品行を削除する」と明記されている。",
+      "設計期待値": "結合元在庫数(7-14)は0を許容し、0が入力された場合は商品行を削除する。",
+      "差分内容": "設計7-14は0入力=即時行削除を要求するが、実装は0を保持したまま行を残す。編集画面のAjax更新Controllerを直接確認し0削除処理が呼ばれないことを確認。",
+      "実装実態": "結合元在庫数Ajax更新は数量を max(0,int) でSessionに保存するのみで、0入力時に商品行を削除・画面除去しない（details_were_removed を返さず reload も起きない）。0削除用Util は当該経路で未使用。"
+    },
+    {
+      "rowId": 480,
+      "機能No": "M04-17",
+      "機能名": "M04-17 在庫履歴検索一覧(検索入力)",
+      "区分(画面種別)": "admin",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "要修正-設計準拠",
+      "設計書参照": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-22",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:10749-10750 のExcel正本は、識別ID 2-15「在庫増減数(from)」と2-16「在庫増減数(to)」の制限を双方とも「-99999999～99999999」と明記している。",
+      "設計期待値": "識別ID2-15/2-16 在庫増減数(from/to) 書式・制限『-99999999～99999999』。負値（在庫減算分）を含めて検索できる数値項目である。",
+      "差分内容": "設計は範囲を -99999999～99999999 と明記し負値を許容するが、実装は min=0 で下限を0に固定しており負の在庫増減数（在庫減算分）を検索できない。設計範囲と不一致。",
+      "実装実態": "stock_change_from / stock_change_to を IntegerType で追加し attr に 'min' => 0 を指定。HTML number入力の min=0 により負値を入力・検索できない。負値を許す Range 等の設定もない。"
+    },
+    {
+      "rowId": 481,
+      "機能No": "M04-17",
+      "機能名": "M04-17 在庫履歴検索一覧(検索入力)",
+      "区分(画面種別)": "admin",
+      "指摘区分": "未実装",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "要修正-設計準拠",
+      "設計書参照": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-22",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:10732 のExcel正本（data-excel-ref=\"0202:在庫履歴検索一覧(検索入力)!AC107\"）は、識別ID 1-2「店舗」の初期値を「ログインしているメンバーのデフォルト検索表示店舗」と明記している。参照先の共通処理も同:1180 に「初期表示時…選択されている状態」と記載する。",
+      "設計期待値": "識別ID1-2 店舗 初期値『ログインしているメンバーのデフォルト検索表示店舗』。アクセス時(1-1)に初期値が入力された状態で表示する。",
+      "差分内容": "StockHistoryType・StockHistoryController ともに getDefaultSearchBaseInfo / setData / PRE_SET_DATA を参照していない（grep で不在確認）。同一 Stock 配下の InventoryPlanController.php:181 では getDefaultSearchBaseInfo を使用しており、本機能では未適用。初期値として店舗が入力される挙動が未実装。",
+      "実装実態": "base_info は placeholder 'common.select__unspecified' の未選択状態で生成され、初期表示分岐(new())は FormUtil::getViewData($searchForm) の空フォーム値をそのまま表示する。Member::getDefaultSearchBaseInfo をセットする処理がない。"
+    },
+    {
+      "rowId": 482,
+      "機能No": "M04-17",
+      "機能名": "M04-17 在庫履歴検索一覧(検索入力)",
+      "区分(画面種別)": "admin",
+      "指摘区分": "未実装",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "要修正-設計準拠",
+      "設計書参照": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-22",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:10735 のExcel正本（data-excel-ref=\"0202:在庫履歴検索一覧(検索入力)!AC110\"）は、識別ID 2-1「登録日(from)」の初期値を「ページを表示した日の月の1日」と明記している。",
+      "設計期待値": "識別ID2-1 登録日(from) 初期値『ページを表示した日の月の1日』（当月1日）を初期表示時に入力済みとする。",
+      "差分内容": "Controller/Form を first day of month・modify( で grep したが不在。初期値『当月1日』が設定されず初期表示時に登録日(from)は空欄となる。未実装。",
+      "実装実態": "create_date_from は DateType(single_text)で初期データ未設定。初期表示は空フォームの view data を表示する。当月1日を算出・設定する処理が存在しない。"
+    },
+    {
+      "rowId": 483,
+      "機能No": "M04-17",
+      "機能名": "M04-17 在庫履歴検索一覧(検索入力)",
+      "区分(画面種別)": "admin",
+      "指摘区分": "未実装",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "要修正-設計準拠",
+      "設計書参照": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-22",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:10740 のExcel正本（data-excel-ref=\"0202:在庫履歴検索一覧(検索入力)!AC115\"）は、識別ID 2-6「公開種別」の初期値を「公開」と明記している。",
+      "設計期待値": "識別ID2-6 公開種別 初期値『公開』を初期表示時に選択済みとする。",
+      "差分内容": "status に data/empty_data・初期選択の設定がなく Controller に setData も無い（grep 確認）。初期値『公開』が未実装。",
+      "実装実態": "status は ProductStatusType(multiple/expanded)で初期データ未設定。Controllerも空フォームを表示するのみで『公開』を既定選択しない。"
+    },
+    {
+      "rowId": 484,
+      "機能No": "M04-17",
+      "機能名": "M04-17 在庫履歴検索一覧(検索入力)",
+      "区分(画面種別)": "admin",
+      "指摘区分": "未実装",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "要修正-設計準拠",
+      "設計書参照": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-22",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:10744 のExcel正本（data-excel-ref=\"0202:在庫履歴検索一覧(検索入力)!AC119\"）は、識別ID 2-10「状態」の初期値を「NM」と明記している。",
+      "設計期待値": "識別ID2-10 状態 初期値『NM』を初期表示時に選択済みとする。",
+      "差分内容": "card_condition に初期選択(NM)の指定がなく Controller でも setData されない。初期値『NM』が未実装。",
+      "実装実態": "card_condition は ChoiceType(multiple/expanded, 選択肢NM/SP/MP/HP/その他)で初期データ未設定。初期表示は未選択。"
+    },
+    {
+      "rowId": 485,
+      "機能No": "M04-17",
+      "機能名": "M04-17 在庫履歴検索一覧(検索入力)",
+      "区分(画面種別)": "admin",
+      "指摘区分": "未実装",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "一部解消-残差あり",
+      "設計書参照": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-22",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:10738 のExcel正本は、欠品検索選択時に2-3を欠品2区分へ固定・非活性化し、欠品履歴で「－」の項目を空・非活性化し、2-37を活性化すること、未選択時は2-37を空・非活性化し、チェック解除時は2-3を空にすることを明記している。",
+      "設計期待値": "識別ID2-4 欠品検索 チェック時の画面動的挙動: 2-3在庫変動理由区分を『欠品/欠品減算(受注)』『欠品/欠品減算(移動)』に変更し非活性化、欠品履歴で『－』の検索対象項目を空にし非活性化、2-37欠品理由を活性化。チェック解除時は欠品理由をクリア、及びチェック済→解除で2-3在庫変動理由区分の内容を空にする。",
+      "差分内容": "twig内JS・assets/js を grep したが disposal_search 変更ハンドラなし。欠品検索チェックに連動したフォーム項目の自動設定・活性/非活性・クリアというクライアント側動的挙動が未実装。",
+      "実装実態": "disposal_search は ChoiceType のチェックボックスとして存在し、サーバ側(StockHistoryController)で has_search_disposal による結果テーブルの列切替に使われるのみ。history.twig の JS に disposal_search の変更を監視して stock_change_type_detail を自動設定・非活性化したり "
+    },
+    {
+      "rowId": 487,
+      "機能No": "M04-17",
+      "機能名": "M04-17 在庫履歴検索一覧(検索結果)",
+      "区分(画面種別)": "admin",
+      "指摘区分": "未実装",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "要修正-設計準拠",
+      "設計書参照": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-23",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:11175 のExcel正本（在庫履歴検索一覧(検索結果)!AG160）は承認者列を「承認を押下した作業者」「在庫編集承認IDがあり、承認者の登録がない場合、”承認待ち”」「承認行為が発生しなかったデータについては”-”」の3状態で定義する。",
+      "設計期待値": "承認者列は3状態: 承認者名 / 在庫編集承認IDあり かつ 承認者未登録→「承認待ち」/ 承認行為なし→「-」。",
+      "差分内容": "history.twig を grep しても「承認待ち」文言・ロジック不在。翻訳キー admin.stock.approval_list.approval_waiting=承認待ち は在庫編集承認一覧側でのみ使用され、本一覧では未使用。承認待ちレコードが一律「-」表示になり設計の3状態と差異。",
+      "実装実態": "{{ Stock.approvalMember ? Stock.approvalMember : '-' }} で承認者名か「-」の2値のみ。「承認待ち」分岐が無い。"
+    },
+    {
+      "rowId": 488,
+      "機能No": "M04-17",
+      "機能名": "M04-17 在庫履歴検索一覧(検索結果)",
+      "区分(画面種別)": "admin",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "要修正-設計準拠",
+      "設計書参照": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-23",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:11166 のExcel正本（在庫履歴検索一覧(検索結果)!AG151）は識別ID2-16「仕入単価」について「『在庫編集』シート識別ID:3-4仕入単価を参照」「値がない場合は\"-\"を表示」と明記する。",
+      "設計期待値": "仕入単価は値がない場合「-」を表示する。",
+      "差分内容": "設計は値なし時「-」だが実装は null→¥0。加えてデータソースが履歴時点の仕入単価でなく現在の ProductClass.buy_price のため設計とデータソースも相違の可能性。",
+      "実装実態": "{{ productClassSub.buy_price|price }} を出力。price フィルタ(EccubeExtension::getPriceFilter は formatCurrency((float)($number ?? 0)))が null を ¥0 に整形するため、値が無い場合「¥0」表示。「-」分岐なし。表示値も履歴時点でなく現在の ProductClass.buy_pr"
+    },
+    {
+      "rowId": 496,
+      "機能No": "M04-19",
+      "機能名": "M04-19 欠品履歴検索一覧(検索結果)",
+      "区分(画面種別)": "admin",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "一部解消-残差あり",
+      "設計書参照": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25:10732",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:11636 のExcel正本（欠品履歴検索一覧(検索結果)!D44）は「在庫変動理由区分が『廃棄』（親区分）、『欠品減算（受注）』・『欠品減算（移動）』（子区分）の履歴を検索し表示」と明記する。",
+      "設計期待値": "検索した結果の在庫変動履歴の内、在庫変動理由区分が「廃棄」（親区分）、「欠品減算（受注）」・「欠品減算（移動）」（子区分）の履歴を検索し表示する。",
+      "差分内容": "DtbStockHistoryRepository、MtbStockChangeTypeDetail 定数、DoctrineMigrations を 欠品減算 / OUT_OF_STOCK / DISPOSAL / ORDER_STOCKOUT_DECREASE / MOVE_SHORTAGE_SUBTRACT で再検索したが、M04-19 の検索条件で id=19,21 を指定する実装はなく、廃棄親区分の一括抽出になっている。",
+      "実装実態": "disposal_search 時は MtbStockChangeType::DISPOSAL 配下の全子区分を取得して sh.StockChangeTypeDetail IN 条件にしている。マスタ上の「欠品減算(受注)」id=19 と「欠品減算(移動)」id=21 は MtbStockChangeType::OUT_OF_STOCK 配下であり、この条件に含まれない。"
+    },
+    {
+      "rowId": 497,
+      "機能No": "M04-19",
+      "機能名": "M04-19 欠品履歴検索一覧(検索結果)",
+      "区分(画面種別)": "admin",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "一部解消-残差あり",
+      "設計書参照": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25:10737",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:11641 のExcel正本（欠品履歴検索一覧(検索結果)!E49）は「第三ソートを各レコードの『登録日時』の降順（最新順）で表示する」と明記する。",
+      "設計期待値": "第三ソートを各レコードの「登録日時」の降順（最新順）で表示する。",
+      "差分内容": "DtbStockHistoryRepository と history.twig を registeredAt / createDate / orderBy で再検索した結果、第三ソートに sh.registeredAt を使う実装は確認できない。",
+      "実装実態": "並び順は pc.code DESC、ps.baseInfo DESC、sh.createDate DESC。画面の登録日表示は Stock.registeredAt を使っているが、ソートは registeredAt ではなく createDate を使っている。"
+    },
+    {
+      "rowId": 501,
+      "機能No": "M04-19",
+      "機能名": "M04-19 欠品履歴検索一覧(検索結果)",
+      "区分(画面種別)": "admin",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "要修正-設計準拠",
+      "設計書参照": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25:10743",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:11647 はExcel正本で「識別ID:2-7在庫区分を追加」とし、同:11671 の項目表も識別ID2-7の項目名を「在庫区分」と定義する。",
+      "設計期待値": "識別ID:2-7 として「在庫区分」列を表示する。",
+      "差分内容": "history.twig と messages.ja.yaml を 在庫区分 / stock_location / locationName で再検索したが、M04-19 一覧列の見出しとして「在庫区分」を出す実装は確認できない。",
+      "実装実態": "列値は Stock.ProductStock.locationName を表示しているが、列見出しは admin.stock.history.stock_location を使い、ロケール上は「在庫場所」と表示される。"
+    },
+    {
+      "rowId": 498,
+      "機能No": "M04-19",
+      "機能名": "M04-19 欠品履歴検索一覧(検索結果)",
+      "区分(画面種別)": "admin",
+      "指摘区分": "未実装",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "要修正-設計準拠",
+      "設計書参照": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25:10762",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:11666 のExcel正本（欠品履歴検索一覧(検索結果)!AG72）は「商品名を押下すると、押下した商品在庫の在庫編集画面を別タブで表示」と明記する。",
+      "設計期待値": "商品名を押下すると、押下した商品在庫の在庫編集画面を別タブで表示する。",
+      "差分内容": "history.twig、admin_stock_approval_new、stock_list_index.twig、ProductStock.id で再検索した。stock_list_index.twig には admin_stock_approval_new へのリンク実装があるが、M04-19 の history.twig 商品名列には適用されていない。",
+      "実装実態": "商品名列は {{ productSub.name }} のプレーンテキスト表示で、在庫編集画面への a タグや target=\"_blank\" がない。 設計要求に対応する実装が見当たらない（未実装）。"
+    },
+    {
+      "rowId": 499,
+      "機能No": "M04-19",
+      "機能名": "M04-19 欠品履歴検索一覧(検索結果)",
+      "区分(画面種別)": "admin",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "要修正-設計準拠",
+      "設計書参照": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25:10771",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:11675 のExcel正本（欠品履歴検索一覧(検索結果)!AG81）は「欠品登録時の販売販売価格を表示」「受注の場合は、受注情報で保持している販売価格を参照」「移動の場合も、移動情報で保持している販売価格を参照」と明記する。",
+      "設計期待値": "欠品時販売価格は、欠品登録時の販売価格を表示し、受注の場合は受注情報で保持している販売価格、移動の場合も移動情報で保持している販売価格を参照する。",
+      "差分内容": "history.twig、StockHistoryDisposalCsv、DtbStockHistory::sell_price を再検索した。CSV は getSellPrice() を使うが、画面一覧だけ buy_price を表示している。",
+      "実装実態": "欠品検索モードの「欠品時販売価格」列は productClassSub.buy_price|price を表示している。これは仕入単価であり、在庫履歴に保存された sell_price ではない。"
+    },
+    {
+      "rowId": 500,
+      "機能No": "M04-19",
+      "機能名": "M04-19 欠品履歴検索一覧(検索結果)",
+      "区分(画面種別)": "admin",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25:10903",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:11681-11682 のExcel正本の画面下部項目は「ページング」のみで、0件見出しの文言をテキスト要件として記載しない。指定文言はリバース詳細 hareruya-design-docs/functions/pf-eccube3/m04-19_admin_stock_stock_shortage_history_search_list.md:258 の「0件見出し｜検索条件に該当するデータがありませんでした。｜件数が0件のとき」にのみある。",
+      "設計期待値": "検索結果0件時は「検索条件に該当するデータがありませんでした。」の見出しを表示する。",
+      "差分内容": "StockHistoryController と history.twig を has_errors / search_no_result / search_invalid_condition で再検索した。0件時に設計文言へ到達するには has_errors=false が必要だが、検索後の実装は true を返している。",
+      "実装実態": "検索成功後の戻り値で has_errors が true 固定になっているため、pagination.totalItemCount が0件の場合、history.twig の has_errors 分岐に入り admin.common.search_invalid_condition を表示する。"
+    },
+    {
+      "rowId": 502,
+      "機能No": "M04-20",
+      "機能名": "M04-20 欠品履歴CSV出力",
+      "区分(画面種別)": "admin",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "要修正-設計準拠",
+      "設計書参照": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-26:10957",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:11892-11907 のExcel正本は欠品履歴CSVを1〜16の16列で定義し、同:11898 は7列目「在庫区分」、同:11900 は9列目「登録元ID」と明記する。同:11923,11925 も両列の追加を要求する。",
+      "設計期待値": "欠品履歴CSV出力のCSV出力項目は16列で、7列目は「在庫区分」、9列目は「登録元ID」を出力する。Excelの列要件を正とし、実装のdisposalヘッダ15列は是正対象。",
+      "差分内容": "設計のCSV列は16列だが、実装の欠品履歴CSVヘッダは15列。さらに設計の「在庫区分」が実装では「在庫場所」になっており、「登録元ID」は行データ側にあってもヘッダ欠落により出力対象外。",
+      "実装実態": "getStockHistoryDisposalCsvHeader() は15列で「在庫場所」を含み「登録元ID」を含まない。convertExportCsvRows() は「登録元ID」を組み立てるが、exportCsv() はヘッダキーだけを fputcsv するため、CSVには出力されない。"
+    }
+  ]
+}
+
+exec
+/bin/bash -lc "jq -r '.findings[] | [.rowId, .[\"機能No\"], .[\"機能名\"], .[\"確定根拠区分\"], .[\"設計書参照\"], .[\"設計期待値\"]] | @tsv' /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_packets/du_09.json" in /home/y-saito/Developments
+ succeeded in 1233ms:
+466	M04-12	M04-12 在庫分割結合検索一覧(検索・結果)	SPEC_BACKED	excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-17	識別ID 2-7「ステータス」: 選択肢(分割)=新規登録・分割承認待ち・却下・入庫完了／選択肢(結合)=新規登録・結合元登録・結合承認待ち・却下・入庫完了（タイプ別・文言『入庫完了』）
+467	M04-12	M04-12 在庫分割結合検索一覧(検索・結果)	SPEC_BACKED	excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-17	識別ID 3-7「検索条件をクリアボタン」: 押下すると3-1〜3-4(詳細検索の日付/登録者)の内容を空にする
+468	M04-12	M04-12 在庫分割結合検索一覧(検索・結果)	SPEC_BACKED	excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-17	識別ID 2-1「商品名・商品コード検索対象」: 初期値『分割元・結合先』(source)
+469	M04-13	M04-13 在庫分割結合登録編集（分割）	SPEC_BACKED	excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-18	分割先商品CSV登録モーダルで、エラー20件到達時に固定文言「エラーは20件まで表示されます」（実装ロケール「エラーを最大20件まで表示しています。」）をエラーメッセージの上に表示する
+470	M04-13	M04-13 在庫分割結合登録編集（分割）	SPEC_BACKED	excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-18	承認申請時に分割先商品の仕入総価格（1商品について数量分の仕入価格＝買取金額比率での按分値）を計算し、分割先商品情報に登録する
+471	M04-13	M04-13 在庫分割結合登録編集（分割）	SPEC_BACKED	excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-18	分割点数（分割先在庫数の合計）は分割先在庫数が変更されるたびに再集計を行う（登録フォームのフォーカスアウトで再集計）
+472	M04-13	M04-13 在庫分割結合登録編集（分割）	SPEC_BACKED	excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-18	分割先登録（編集）画面のフッターリンクは「在庫分割・結合検索一覧」へ検索状態を維持したまま遷移する
+473	M04-13	M04-13 在庫分割結合登録編集（分割）	SPEC_BACKED	excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-18	分割先商品CSVの第2列カラム名は「分割先分割在庫数」でカラム名一致チェックを行い、雛形も同カラムで出力する
+474	M04-13	M04-13 在庫分割結合登録編集（結合)	SPEC_BACKED	excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-19	結合先商品の結合数(2-11)は必須○・最大値1～99999999。在庫数を超える数値が入力された場合はエラーとする。
+475	M04-13	M04-13 在庫分割結合登録編集（結合)	SPEC_BACKED	excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-19	基本情報ステータス(1-5)の表示候補は7区分『新規登録／結合元登録／結合計画承認待ち／却下／結合計画承認済み／結合完了承認待ち／入庫完了』。
+476	M04-13	M04-13 在庫分割結合登録編集（結合)	SPEC_BACKED	excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-19	承認通知先の所属(6-1)・メンバー(6-2)は店舗間移動時は必須（店舗間移動時のみ通知先を必須入力）。
+477	M04-13	M04-13 在庫分割結合登録編集（結合)	SPEC_BACKED	excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-19	結合元商品CSV登録はCSVを10,000件を登録上限とする（上限超過は登録不可）。
+478	M04-13	M04-13 在庫分割結合登録編集（結合)	SPEC_BACKED	excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-19	結合元在庫数(7-14)は0を許容し、0が入力された場合は商品行を削除する。
+480	M04-17	M04-17 在庫履歴検索一覧(検索入力)	SPEC_BACKED	excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-22	識別ID2-15/2-16 在庫増減数(from/to) 書式・制限『-99999999～99999999』。負値（在庫減算分）を含めて検索できる数値項目である。
+481	M04-17	M04-17 在庫履歴検索一覧(検索入力)	SPEC_BACKED	excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-22	識別ID1-2 店舗 初期値『ログインしているメンバーのデフォルト検索表示店舗』。アクセス時(1-1)に初期値が入力された状態で表示する。
+482	M04-17	M04-17 在庫履歴検索一覧(検索入力)	SPEC_BACKED	excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-22	識別ID2-1 登録日(from) 初期値『ページを表示した日の月の1日』（当月1日）を初期表示時に入力済みとする。
+483	M04-17	M04-17 在庫履歴検索一覧(検索入力)	SPEC_BACKED	excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-22	識別ID2-6 公開種別 初期値『公開』を初期表示時に選択済みとする。
+484	M04-17	M04-17 在庫履歴検索一覧(検索入力)	SPEC_BACKED	excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-22	識別ID2-10 状態 初期値『NM』を初期表示時に選択済みとする。
+485	M04-17	M04-17 在庫履歴検索一覧(検索入力)	SPEC_BACKED	excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-22	識別ID2-4 欠品検索 チェック時の画面動的挙動: 2-3在庫変動理由区分を『欠品/欠品減算(受注)』『欠品/欠品減算(移動)』に変更し非活性化、欠品履歴で『－』の検索対象項目を空にし非活性化、2-37欠品理由を活性化。チェック解除時は欠品理由をクリア、及びチェック済→解除で2-3在庫変動理由区分の内容を空にする。
+487	M04-17	M04-17 在庫履歴検索一覧(検索結果)	SPEC_BACKED	excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-23	承認者列は3状態: 承認者名 / 在庫編集承認IDあり かつ 承認者未登録→「承認待ち」/ 承認行為なし→「-」。
+488	M04-17	M04-17 在庫履歴検索一覧(検索結果)	SPEC_BACKED	excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-23	仕入単価は値がない場合「-」を表示する。
+496	M04-19	M04-19 欠品履歴検索一覧(検索結果)	SPEC_BACKED	excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25:10732	検索した結果の在庫変動履歴の内、在庫変動理由区分が「廃棄」（親区分）、「欠品減算（受注）」・「欠品減算（移動）」（子区分）の履歴を検索し表示する。
+497	M04-19	M04-19 欠品履歴検索一覧(検索結果)	SPEC_BACKED	excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25:10737	第三ソートを各レコードの「登録日時」の降順（最新順）で表示する。
+501	M04-19	M04-19 欠品履歴検索一覧(検索結果)	SPEC_BACKED	excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25:10743	識別ID:2-7 として「在庫区分」列を表示する。
+498	M04-19	M04-19 欠品履歴検索一覧(検索結果)	SPEC_BACKED	excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25:10762	商品名を押下すると、押下した商品在庫の在庫編集画面を別タブで表示する。
+499	M04-19	M04-19 欠品履歴検索一覧(検索結果)	SPEC_BACKED	excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25:10771	欠品時販売価格は、欠品登録時の販売価格を表示し、受注の場合は受注情報で保持している販売価格、移動の場合も移動情報で保持している販売価格を参照する。
+500	M04-19	M04-19 欠品履歴検索一覧(検索結果)	LEGACY_BACKED	excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25:10903	検索結果0件時は「検索条件に該当するデータがありませんでした。」の見出しを表示する。
+502	M04-20	M04-20 欠品履歴CSV出力	SPEC_BACKED	excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-26:10957	欠品履歴CSV出力のCSV出力項目は16列で、7列目は「在庫区分」、9列目は「登録元ID」を出力する。Excelの列要件を正とし、実装のdisposalヘッダ15列は是正対象。
+
+codex
+手順書と全28件を確認しました。27件は SPEC_BACKED、1件（row 500）のみ LEGACY_BACKED です。これから正本 Excel を直接開き、各対象の既存記載位置と、row 500 が表への追記で済むか・画像差し替えを伴うかを確認します。
+exec
+/bin/bash -lc "rg --files /home/y-saito/Developments/hareruya-design-docs/excel_to_html/input | rg '0202_基本設計仕様書\\(在庫管理機能\\)\\.xlsx"'$|'"\\.xlsx"'$'"' | sed -n '1,80p' && command -v libreoffice || true && python3 - <<'PY'
+from openpyxl import load_workbook
+p='/home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/0202_基本設計仕様書(在庫管理機能).xlsx'
+wb=load_workbook(p, read_only=False, data_only=False)
+print('\\n'.join(f'{i+1}\\t{ws.title}\\t{ws.max_row}x{ws.max_column}\\timages={len(ws._images)}' for i,ws in enumerate(wb.worksheets)))
+PY" in /home/y-saito/Developments
+ exited 1 in 1887ms:
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/0205_基本設計仕様書(店頭買取管理).xlsx
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/0507_基本設計仕様書(API_ネット買取管理).xlsx
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/0203_基本設計仕様書(受注管理機能).xlsx
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/0204_基本設計仕様書(商品管理).xlsx
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/0514_基本設計仕様書(API_カード管理).xlsx
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/0404_基本設計仕様書(バッチ_商品管理).xlsx
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/0207_基本設計仕様書(会員管理機能).xlsx
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/0402_基本設計仕様書(バッチ_在庫管理).xlsx
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/0501_基本設計仕様書(API_在庫管理).xlsx
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/0506_基本設計仕様書(API_店頭買取管理).xlsx
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/0302_基本設計仕様書(フロント_グローバルナビ).xlsx
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/0305_基本設計仕様書(フロント_ネット買取).xlsx
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/0502_基本設計仕様書(API_商品管理).xlsx
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/0306_基本設計仕様書(フロント_会員).xlsx
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/0303_基本設計仕様書(フロント_商品).xlsx
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/0304_基本設計仕様書(フロント_注文).xlsx
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/0202_基本設計仕様書(在庫管理機能).xlsx
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/0416_基本設計仕様書(バッチ_インフラ).xlsx
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/0201_基本設計仕様書(システム設定).xlsx
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/0406_基本設計仕様書(バッチ_店頭買取管理) .xlsx
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/0308_基本設計仕様書(フロント_店頭買取).xlsx
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/0214_基本設計仕様書(イベント管理).xlsx
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/0517_基本設計仕様書(API_その他).xlsx
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/0210_基本設計仕様書(コンテンツ管理).xlsx
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/0505_基本設計仕様書(API_受注管理).xlsx
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/0208_基本設計仕様書(カード管理).xlsx
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/0213_基本設計仕様書(データ管理).xlsx
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/0301_基本設計仕様書(フロント_トップ).xlsx
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/0408_基本設計仕様書(バッチ_会員).xlsx
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/0307_基本設計仕様書(フロント_イベント).xlsx
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/0601_基本設計仕様書(その他_MTGBuyer).xlsx
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/0413_基本設計仕様書(バッチ_イベント).xlsx
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/0209_基本設計仕様書(基本情報設定).xlsx
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/0206_基本設計仕様書(ネット買取管理機能).xlsx
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/0211_基本設計仕様書(分析・集計管理機能).xlsx
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/0516_基本設計仕様書(API_データ管理).xlsx
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/0212_基本設計仕様書(デッキ管理).xlsx
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/0405_基本設計仕様書(バッチ_受注管理).xlsx
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+ModuleNotFoundError: No module named 'openpyxl'
+
+exec
+/bin/bash -lc "sed -n '1,220p' pyproject.toml && uv run python - <<'PY'
+from openpyxl import load_workbook
+p='input/0202_基本設計仕様書(在庫管理機能).xlsx'
+wb=load_workbook(p, read_only=False, data_only=False)
+print('\\n'.join(f'{i+1}\\t{ws.title}\\t{ws.max_row}x{ws.max_column}\\timages={len(ws._images)}' for i,ws in enumerate(wb.worksheets)))
+PY" in /home/y-saito/Developments/hareruya-design-docs/excel_to_html
+ exited 2 in 977ms:
+[project]
+name = "excel-to-html"
+version = "0.1.0"
+description = "Convert Excel workbooks to readable, self-contained tabbed HTML files."
+requires-python = ">=3.10"
+dependencies = [
+    "openpyxl>=3.1.0",
+    "Pillow>=10.0.0",
+]
+
+[tool.uv]
+package = false
+error: Could not acquire lock
+  Caused by: Could not create temporary file
+  Caused by: Read-only file system (os error 30) at path "/home/y-saito/.cache/uv/.tmpePJuRi"
+
+exec
+/bin/bash -lc "UV_CACHE_DIR=/tmp/codex-uv-cache uv run python - <<'PY'
+from openpyxl import load_workbook
+p='input/0202_基本設計仕様書(在庫管理機能).xlsx'
+wb=load_workbook(p, read_only=False, data_only=False)
+print('\\n'.join(f'{i+1}\\t{ws.title}\\t{ws.max_row}x{ws.max_column}\\timages={len(ws._images)}' for i,ws in enumerate(wb.worksheets)))
+PY" in /home/y-saito/Developments/hareruya-design-docs/excel_to_html
+exec
+/bin/bash -lc 'ls -la .venv/bin/python* 2>/dev/null || true && UV_CACHE_DIR=/tmp/codex-uv-cache uv run python -c "import openpyxl; print(openpyxl.__version__)"' in /home/y-saito/Developments/hareruya-design-docs/excel_to_html
+ succeeded in 2553ms:
+lrwxrwxrwx 1 y-saito y-saito 16 Jun  3 15:12 .venv/bin/python -> /usr/bin/python3
+lrwxrwxrwx 1 y-saito y-saito  6 Jun  3 15:12 .venv/bin/python3 -> python
+lrwxrwxrwx 1 y-saito y-saito  6 Jun  3 15:12 .venv/bin/python3.12 -> python
+3.1.5
+
+exec
+/bin/bash -lc "UV_CACHE_DIR=/tmp/codex-uv-cache uv run python -c \"from openpyxl import load_workbook; p='input/0202_基本設計仕様書(在庫管理機能).xlsx'; wb=load_workbook(p,read_only=False,data_only=False); print('\\\\n'.join(f'{i+1}\\\\t{ws.title}\\\\t{ws.max_row}x{ws.max_column}\\\\timages={len(ws._images)}' for i,ws in enumerate(wb.worksheets)))\"" in /home/y-saito/Developments/hareruya-design-docs/excel_to_html
+exec
+/bin/bash -lc ".venv/bin/python -c \"from openpyxl import load_workbook; print('start'); p='input/0202_基本設計仕様書(在庫管理機能).xlsx'; wb=load_workbook(p,read_only=True,data_only=False); print(len(wb.worksheets)); print('\\\\n'.join(f'{i+1}\\\\t{ws.title}\\\\t{ws.max_row}x{ws.max_column}' for i,ws in enumerate(wb.worksheets)))\"" in /home/y-saito/Developments/hareruya-design-docs/excel_to_html
+ succeeded in 6121ms:
+start
+54
+1	表紙	1000x26
+2	目次	1001x26
+3	画面遷移図	1098x54
+4	共通処理	886x55
+5	在庫検索一覧(検索入力)	433x66
+6	在庫検索一覧(検索結果)	1021x55
+7	在庫編集	1022x57
+8	在庫一括編集	934x55
+9	在庫情報CSV出力	976x83
+10	在庫情報カスタムCSV出力	977x74
+11	在庫切れ、在庫警戒リストCSV出力	964x55
+12	在庫切れリストCSV出力	968x55
+13	在庫警戒リストCSV出力	954x55
+14	在庫移動・振替検索一覧(検索・結果)	340x68
+15	在庫移動・振替登録 編集 (移動)	1036x68
+16	在庫移動・振替登録 編集(振替)	1292x70
+17	在庫移動・振替情報CSV出力	994x55
+18	在庫分割結合検索一覧(検索・結果)	317x68
+19	在庫分割結合登録編集（分割）	1144x98
+20	在庫分割結合登録編集（結合)	738x68
+21	在庫分割結合情報CSV出力	970x83
+22	在庫リコメンドCSV出力	991x70
+23	在庫履歴検索一覧(検索入力)	1070x62
+24	在庫履歴検索一覧(検索結果)	1107x55
+25	在庫変動履歴CSV出力	999x54
+26	欠品履歴検索一覧(検索結果)	1031x55
+27	欠品履歴CSV出力	978x55
+28	在庫変更CSV登録	1129x59
+29	在庫移動CSV登録	242x68
+30	在庫振替CSV登録	242x68
+31	在庫分割CSV登録	245x68
+32	在庫結合CSV登録	245x68
+33	在庫移動指示検索	268x98
+34	在庫移動指示詳細	922x68
+35	在庫移動指示リスト ピッキングリスト印刷	1026x92
+36	送り状CSV出力	973x54
+37	バーコード貼替リストCSV出力	962x55
+38	棚卸計画一覧	106x54
+39	棚卸計画新規作成	109x54
+40	棚卸計画編集	196x55
+41	棚卸詳細登録CSV	767x54
+42	棚卸詳細CSV出力	978x63
+43	棚卸在庫確認	161x54
+44	棚卸在庫反映	121x54
+45	在庫編集承認一覧(検索入力)	979x56
+46	在庫編集承認一覧(検索結果)	1167x71
+47	承認一覧CSV出力	966x55
+48	承認対象在庫一覧CSV出力	975x55
+49	在庫移動戻しリストCSV出力	986x92
+50	在庫移動戻しリストPDF	1050x92
+51	エラー表示	1014x55
+52	別添資料_在庫変動時の履歴作成について	567x52
+53	別添資料_在庫移動ステータス遷移概要	1093x58
+54	別添資料_リコメンドCSV出力仕様	33x16
+
+exec
+/bin/bash -lc ".venv/bin/python - <<'PY'
+from openpyxl import load_workbook
+p='input/0202_基本設計仕様書(在庫管理機能).xlsx'
+wb=load_workbook(p,read_only=True,data_only=False)
+queries={
+'在庫分割結合検索一覧(検索・結果)':['ステータス','検索条件をクリア','分割元・結合先','入庫完了'],
+'在庫分割結合登録編集（分割）':['エラーは20件まで表示されます','仕入総価格','再集計','検索状態を維持','分割先分割在庫数'],
+'在庫分割結合登録編集（結合)':['1～99999999','結合数','結合計画承認待ち','店舗間移動時','10,000','商品行を削除'],
+'在庫履歴検索一覧(検索入力)':['-99999999','デフォルト検索表示店舗','ページを表示した日の月の1日','初期値','欠品検索'],
+'在庫履歴検索一覧(検索結果)':['承認待ち','仕入単価','値がない場合'],
+'欠品履歴検索一覧(検索結果)':['欠品減算','第三ソート','在庫区分','別タブ','欠品時販売価格','ページング','検索条件に該当するデータがありませんでした'],
+'欠品履歴CSV出力':['16','在庫区分','登録元ID']}
+for sn,qs in queries.items():
+    ws=wb[sn]
+    print(f'### {sn}')
+    for row in ws.iter_rows():
+        for c in row:
+            v=c.value
+            if v is None: continue
+            s=str(v)
+            hits=[q for q in qs if q in s]
+            if hits:
+                print(f'{c.coordinate}\\t{hits}\\t{s[:500].replace(chr(10),\" / \")}')
+PY" in /home/y-saito/Developments/hareruya-design-docs/excel_to_html
+ succeeded in 11091ms:
+### 在庫分割結合検索一覧(検索・結果)
+F105	['ステータス']	在庫分割が登録されると、対象の在庫分割のステータスは分割承認待ちとなる
+F108	['ステータス']	在庫結合が登録されると、対象の在庫結合のステータスは結合元登録となる
+Z131	['分割元・結合先']	分割元・結合先
+AG131	['分割元・結合先']	2-2, 2-3 の商品の検索対象を「分割元・結合先」または「分割先・結合元」とするかの指定するために利用
+E137	['ステータス']	ステータス
+AG137	['ステータス', '入庫完了']	在庫分割・結合登録 編集（分割）の "識別ID1-5" 「ステータス」の検索に利用 / 選択肢（分割）：新規登録、分割承認待ち、却下、入庫完了 / 在庫分割・結合登録 編集（結合）の "識別ID1-5" 「ステータス」の検索に利用 / 選択肢（結合）：新規登録、結合元登録、結合承認待ち、却下、入庫完了
+E145	['検索条件をクリア']	検索条件をクリア
+E157	['分割元・結合先']	分割元・結合先点数
+E161	['ステータス']	ステータス
+### 在庫分割結合登録編集（分割）
+M110	['仕入総価格']	分割先商品の仕入総価格として利用するため / 出庫総原価を計算する /  / 
+E219	['エラーは20件まで表示されます']	3-5-2.エラーメッセージには固定で、「エラーは20件まで表示されます」、とエラーメッセージの上に表示する
+D241	['仕入総価格']	6-5.承認申請時、基本情報の更新と、分割先商品の仕入総価格の計算、ステータス変更履歴の更新、承認通知先へのメール送信を行う
+D249	['仕入総価格']	6-7.分割先商品の仕入総価格（1商品について数量分の仕入価格）を計算し、分割先商品情報に登録する
+F270	['仕入総価格']	仕入総価格
+M270	['仕入総価格']	この時点では分割先が確定ではないので計算は行わない、承認申請時に分割先が確定（編集不可）となるので、承認申請時に仕入総価格の計算を行う
+AG280	['再集計']	分割先在庫数の合計 / 分割先在庫数が変更されるたびに再集計を行う（分割先在庫数の登録フォームのフォーカスアウトで再集計の処理を実施）
+AG291	['再集計']	分割先商品の入庫を行う在庫数を記入するフォーム / ・在庫数を超える数値が入力された場合はエラーとする / ・フォーカスアウトした際に、分割点数を再集計する
+AG300	['検索状態を維持']	初期表示画面ではフッタのリンクは「在庫一覧」だったが、「在庫分割・結合検索一覧」へのリンクに変更し、検索状態を維持したまま「在庫分割・結合検索一覧」画面へ遷移する
+AG336	['分割先分割在庫数']	押下時に、分割商品CSV登録を実行 /  / 商品登録を押下時に下記の場合エラーとなる / ・アップロードされたファイルがcsv以外のファイルの場合 / ・CSVファイルが下記のカラム名以外の場合（フォーマット不一致エラー） / 商品コード、分割先分割在庫数 / ※CSV1行目のカラム名の一致チェックを行う
+AG337	['分割先分割在庫数']	ボタン押下時に下記のカラムが記入されているCSVファイルを出力する /  / CSVのカラムは下記の通り / 商品コード、分割先分割在庫数
+E342	['分割先分割在庫数']	分割先分割在庫数
+E407	['仕入総価格']	※計算式は、「承認処理時の総原価+分割先商品の仕入総価格」とする
+### 在庫分割結合登録編集（結合)
+E80	['結合数']	登録時に結合数を必須として入力チェックを行う
+F103	['結合数']	結合数
+AG119	['結合計画承認待ち']	在庫結合の進行状況を表示 /  / 項目内容は下記の通り / 新規登録、結合元登録、結合計画承認待ち、却下、結合計画承認済み、結合完了承認待ち、入庫完了
+E137	['結合数']	結合数
+V137	['1～99999999']	1～99999999
+E242	['10,000']	CSVは10,000件を登録上限とする
+L288	['結合計画承認待ち']	結合計画承認待ち
+AG313	['商品行を削除']	結合元商品の出庫を行う在庫数を記入するフォーム / ・在庫数を超える数値が入力された場合はエラーとする / ・0を許容し、0が入力された場合は商品行を削除する
+E402	['結合計画承認待ち']	承認申請後、ステータスは結合計画承認待ちとなる
+M459	['結合計画承認待ち']	結合計画承認待ち
+AG484	['店舗間移動時']	※ 店舗間移動時は必須 / 共通処理識別ID1-1参照 /  / 表示内容については下記条件を追加とする / 編集している在庫を保持している店舗の所属マスターデータから取得し選択肢とする
+AG485	['店舗間移動時']	※ 店舗間移動時は必須 / 共通処理識別ID1-2参照 /  / 承認を行う担当者にメール通知を送るために、対象メンバーを選択するためのフォーム
+E593	['結合計画承認待ち']	基本情報のステータスは結合計画承認待ちとする
+### 在庫履歴検索一覧(検索入力)
+E63	['初期値']	1-1.アクセス時に、初期値を入力されている状態とする※検索は行わない
+F71	['欠品検索']	識別ID:2-4欠品検索を追加
+F88	['欠品検索']	検索に使用できる項目は「欠品検索」のチェック有無によって分岐する。
+F100	['欠品検索']	3-5-1.「欠品検索」にチェックが選択された場合は「欠品履歴検索一覧(検索結果)」シートの検索結果一覧を表示
+AC104	['初期値']	初期値
+AC107	['デフォルト検索表示店舗']	ログインしているメンバーのデフォルト検索表示店舗
+AC110	['ページを表示した日の月の1日']	ページを表示した日の月の1日
+F113	['欠品検索']	欠品検索
+X122	['-99999999']	0-99999999
+X123	['-99999999']	0-99999999
+X124	['-99999999']	-99999999～99999999
+X125	['-99999999']	-99999999～99999999
+### 在庫履歴検索一覧(検索結果)
+E90	['承認待ち']	1-1-1.入庫承認待ち在庫情報は表示しない
+E117	['仕入単価']	識別ID:2-14仕入単価を追加
+E151	['仕入単価']	仕入単価
+AG151	['仕入単価', '値がない場合']	「在庫編集」シート識別ID:3-4仕入単価を参照 / 値がない場合は"-"を表示
+AG160	['承認待ち']	在庫編集承認一覧にて、承認を押下した作業者を承認者として表示する /  / 在庫編集承認IDがあり、 / 承認者の登録がない場合、”承認待ち"と表示する /  / 承認行為が発生しなかったデータについては”-”を表示
+### 欠品履歴検索一覧(検索結果)
+D44	['欠品減算']	1-1.検索した結果の在庫変動履歴の内、在庫変動理由区分が「廃棄」（親区分）、「欠品減算（受注）」・「欠品減算（移動）」（子区分）の履歴を検索し表示
+E48	['在庫区分']	1-2-2.第二ソートを店舗のIDを降順とする※在庫区分でのソートは行わない
+E49	['第三ソート']	1-2-3.第三ソートを各レコードの「登録日時」の降順（最新順）で表示する
+E57	['在庫区分']	識別ID:2-7在庫区分を追加
+E60	['欠品時販売価格']	識別ID:2-11欠品時販売価格を追加
+AG72	['別タブ']	「在庫編集」シート識別ID:1-3商品名を参照 /  / 商品名を押下すると、押下した商品在庫の在庫編集画面を別タブで表示 / ※運用想定では欠品商品を発見した場合の補填目的で設置
+E77	['在庫区分']	在庫区分
+AG77	['在庫区分']	「在庫編集」シート識別ID:2-3在庫区分を参照
+E81	['欠品時販売価格']	欠品時販売価格
+E88	['ページング']	ページング
+### 欠品履歴CSV出力
+E14	['在庫区分']	在庫区分
+E16	['登録元ID']	登録元ID
+B23	['16']	16
+D40	['在庫区分']	識別ID:7在庫区分を追加
+D42	['登録元ID']	識別ID:9登録元IDを追加
+D46	['16']	識別ID:16最終更新者を追加
+
+ succeeded in 129095ms:
+1	表紙	220x26	images=0
+2	目次	236x26	images=0
+3	画面遷移図	318x54	images=0
+4	共通処理	202x55	images=0
+5	在庫検索一覧(検索入力)	433x66	images=2
+6	在庫検索一覧(検索結果)	269x55	images=4
+7	在庫編集	338x57	images=2
+8	在庫一括編集	250x55	images=2
+9	在庫情報CSV出力	170x83	images=0
+10	在庫情報カスタムCSV出力	258x74	images=0
+11	在庫切れ、在庫警戒リストCSV出力	167x55	images=1
+12	在庫切れリストCSV出力	171x55	images=0
+13	在庫警戒リストCSV出力	157x55	images=0
+14	在庫移動・振替検索一覧(検索・結果)	340x68	images=0
+15	在庫移動・振替登録 編集 (移動)	1036x68	images=19
+16	在庫移動・振替登録 編集(振替)	613x70	images=7
+17	在庫移動・振替情報CSV出力	197x55	images=0
+18	在庫分割結合検索一覧(検索・結果)	317x68	images=1
+19	在庫分割結合登録編集（分割）	517x98	images=8
+20	在庫分割結合登録編集（結合)	738x68	images=11
+21	在庫分割結合情報CSV出力	165x83	images=0
+22	在庫リコメンドCSV出力	194x70	images=0
+23	在庫履歴検索一覧(検索入力)	325x62	images=1
+24	在庫履歴検索一覧(検索結果)	355x55	images=8
+25	在庫変動履歴CSV出力	202x54	images=0
+26	欠品履歴検索一覧(検索結果)	279x55	images=1
+27	欠品履歴CSV出力	181x55	images=0
+28	在庫変更CSV登録	349x59	images=3
+29	在庫移動CSV登録	242x68	images=1
+30	在庫振替CSV登録	242x68	images=1
+31	在庫分割CSV登録	245x68	images=1
+32	在庫結合CSV登録	245x68	images=1
+33	在庫移動指示検索	204x98	images=3
+34	在庫移動指示詳細	125x68	images=2
+35	在庫移動指示リスト ピッキングリスト印刷	281x92	images=1
+36	送り状CSV出力	176x54	images=0
+37	バーコード貼替リストCSV出力	165x55	images=5
+38	棚卸計画一覧	106x54	images=7
+39	棚卸計画新規作成	109x54	images=1
+40	棚卸計画編集	196x55	images=1
+41	棚卸詳細登録CSV	767x54	images=0
+42	棚卸詳細CSV出力	209x63	images=0
+43	棚卸在庫確認	161x54	images=2
+44	棚卸在庫反映	121x54	images=2
+45	在庫編集承認一覧(検索入力)	234x56	images=1
+46	在庫編集承認一覧(検索結果)	415x71	images=5
+47	承認一覧CSV出力	169x55	images=0
+48	承認対象在庫一覧CSV出力	178x55	images=0
+49	在庫移動戻しリストCSV出力	189x92	images=0
+50	在庫移動戻しリストPDF	305x92	images=2
+51	エラー表示	262x55	images=1
+52	別添資料_在庫変動時の履歴作成について	567x52	images=11
+53	別添資料_在庫移動ステータス遷移概要	313x58	images=0
+54	別添資料_リコメンドCSV出力仕様	33x16	images=0
+
+exec
+/bin/bash -lc "unzip -l 'input/0202_基本設計仕様書(在庫管理機能).xlsx' | rg 'xl/worksheets/sheet(18|19|20|23|24|26|27)\\.xml|sheet26\\.xml\\.rels|xl/drawings/drawing|xl/media/' | sed -n '1,220p' && unzip -p 'input/0202_基本設計仕様書(在庫管理機能).xlsx' xl/worksheets/sheet26.xml | rg -o '<drawing["'^>]*/>|<legacyDrawing[''^>]*/>'"' && unzip -p 'input/0202_基本設計仕様書(在庫管理機能).xlsx' xl/worksheets/_rels/sheet26.xml.rels" in /home/y-saito/Developments/hareruya-design-docs/excel_to_html
+ succeeded in 493ms:
+   463898  1980-01-01 00:00   xl/worksheets/sheet18.xml
+   690319  1980-01-01 00:00   xl/worksheets/sheet19.xml
+   921087  1980-01-01 00:00   xl/worksheets/sheet20.xml
+   468334  1980-01-01 00:00   xl/worksheets/sheet23.xml
+   456747  1980-01-01 00:00   xl/worksheets/sheet24.xml
+   362234  1980-01-01 00:00   xl/worksheets/sheet26.xml
+   237318  1980-01-01 00:00   xl/worksheets/sheet27.xml
+   164631  1980-01-01 00:00   xl/drawings/drawing1.xml
+     2846  1980-01-01 00:00   xl/drawings/drawing2.xml
+   102899  1980-01-01 00:00   xl/drawings/drawing3.xml
+    22012  1980-01-01 00:00   xl/media/image1.png
+   101379  1980-01-01 00:00   xl/media/image2.png
+    74002  1980-01-01 00:00   xl/media/image3.png
+   129347  1980-01-01 00:00   xl/media/image4.png
+     5024  1980-01-01 00:00   xl/media/image5.png
+    39342  1980-01-01 00:00   xl/drawings/drawing4.xml
+   147717  1980-01-01 00:00   xl/media/image6.png
+     8902  1980-01-01 00:00   xl/media/image7.png
+     8481  1980-01-01 00:00   xl/media/image8.png
+    10328  1980-01-01 00:00   xl/media/image9.png
+    41201  1980-01-01 00:00   xl/drawings/drawing5.xml
+    23159  1980-01-01 00:00   xl/media/image10.png
+   223271  1980-01-01 00:00   xl/media/image11.png
+     4756  1980-01-01 00:00   xl/media/image12.png
+    33286  1980-01-01 00:00   xl/drawings/drawing6.xml
+    29346  1980-01-01 00:00   xl/media/image13.png
+   152671  1980-01-01 00:00   xl/media/image14.png
+     7848  1980-01-01 00:00   xl/drawings/drawing7.xml
+    22035  1980-01-01 00:00   xl/media/image15.png
+     2735  1980-01-01 00:00   xl/drawings/drawing8.xml
+     2738  1980-01-01 00:00   xl/drawings/drawing9.xml
+    54726  1980-01-01 00:00   xl/drawings/drawing10.xml
+    85165  1980-01-01 00:00   xl/media/image16.png
+   128087  1980-01-01 00:00   xl/media/image17.png
+   711555  1980-01-01 00:00   xl/drawings/drawing11.xml
+    77836  1980-01-01 00:00   xl/media/image18.png
+    64897  1980-01-01 00:00   xl/media/image19.png
+    84424  1980-01-01 00:00   xl/media/image20.png
+    72779  1980-01-01 00:00   xl/media/image21.png
+    79977  1980-01-01 00:00   xl/media/image22.png
+    42972  1980-01-01 00:00   xl/media/image23.png
+    81206  1980-01-01 00:00   xl/media/image24.png
+    42331  1980-01-01 00:00   xl/media/image25.png
+    71482  1980-01-01 00:00   xl/media/image26.png
+    22219  1980-01-01 00:00   xl/media/image27.png
+     3457  1980-01-01 00:00   xl/media/image28.png
+    31688  1980-01-01 00:00   xl/media/image29.png
+    30909  1980-01-01 00:00   xl/media/image30.png
+    27890  1980-01-01 00:00   xl/media/image31.png
+    11647  1980-01-01 00:00   xl/media/image32.png
+    72585  1980-01-01 00:00   xl/media/image33.png
+    73421  1980-01-01 00:00   xl/media/image34.png
+   181312  1980-01-01 00:00   xl/media/image35.png
+   198804  1980-01-01 00:00   xl/media/image36.png
+    31545  1980-01-01 00:00   xl/media/image37.png
+   102730  1980-01-01 00:00   xl/media/image38.png
+   103453  1980-01-01 00:00   xl/media/image39.png
+    42300  1980-01-01 00:00   xl/media/image40.png
+    43688  1980-01-01 00:00   xl/media/image41.png
+    88273  1980-01-01 00:00   xl/media/image42.png
+    67356  1980-01-01 00:00   xl/media/image43.png
+   106157  1980-01-01 00:00   xl/drawings/drawing12.xml
+    78085  1980-01-01 00:00   xl/media/image44.png
+    26289  1980-01-01 00:00   xl/media/image45.png
+    44488  1980-01-01 00:00   xl/media/image46.png
+   150931  1980-01-01 00:00   xl/media/image47.png
+    14242  1980-01-01 00:00   xl/media/image48.png
+    32120  1980-01-01 00:00   xl/media/image49.png
+   147953  1980-01-01 00:00   xl/media/image50.png
+     8096  1980-01-01 00:00   xl/media/image51.png
+   155493  1980-01-01 00:00   xl/media/image52.png
+     1129  1980-01-01 00:00   xl/media/image53.jpeg
+    59812  1980-01-01 00:00   xl/drawings/drawing13.xml
+   153065  1980-01-01 00:00   xl/media/image54.png
+    77464  1980-01-01 00:00   xl/media/image55.png
+     4974  1980-01-01 00:00   xl/media/image56.png
+   139617  1980-01-01 00:00   xl/drawings/drawing14.xml
+    48498  1980-01-01 00:00   xl/media/image57.png
+    71228  1980-01-01 00:00   xl/media/image58.png
+    46092  1980-01-01 00:00   xl/media/image59.png
+    71291  1980-01-01 00:00   xl/media/image60.png
+    60398  1980-01-01 00:00   xl/media/image61.png
+    55662  1980-01-01 00:00   xl/media/image62.png
+      179  1980-01-01 00:00   xl/media/image63.png
+    13624  1980-01-01 00:00   xl/media/image64.png
+    50400  1980-01-01 00:00   xl/media/image65.png
+    77561  1980-01-01 00:00   xl/media/image66.png
+   459978  1980-01-01 00:00   xl/drawings/drawing15.xml
+   132719  1980-01-01 00:00   xl/media/image67.png
+   117058  1980-01-01 00:00   xl/media/image68.png
+   132798  1980-01-01 00:00   xl/media/image69.png
+   117560  1980-01-01 00:00   xl/media/image70.png
+    94182  1980-01-01 00:00   xl/media/image71.png
+   109013  1980-01-01 00:00   xl/media/image72.png
+    81687  1980-01-01 00:00   xl/media/image73.png
+    57721  1980-01-01 00:00   xl/media/image74.png
+    18081  1980-01-01 00:00   xl/media/image75.png
+    54302  1980-01-01 00:00   xl/media/image76.png
+    31614  1980-01-01 00:00   xl/media/image77.png
+    22998  1980-01-01 00:00   xl/media/image78.png
+    22120  1980-01-01 00:00   xl/media/image79.png
+   133897  1980-01-01 00:00   xl/media/image80.png
+   111542  1980-01-01 00:00   xl/media/image81.png
+    58328  1980-01-01 00:00   xl/drawings/drawing16.xml
+   528088  1980-01-01 00:00   xl/media/image82.png
+    69917  1980-01-01 00:00   xl/drawings/drawing17.xml
+    58114  1980-01-01 00:00   xl/media/image83.png
+    35981  1980-01-01 00:00   xl/media/image84.png
+   198335  1980-01-01 00:00   xl/media/image85.png
+    97305  1980-01-01 00:00   xl/media/image86.png
+     2053  1980-01-01 00:00   xl/media/image87.png
+    65294  1980-01-01 00:00   xl/media/image88.png
+    35828  1980-01-01 00:00   xl/drawings/drawing18.xml
+   188051  1980-01-01 00:00   xl/media/image89.png
+    44958  1980-01-01 00:00   xl/drawings/drawing19.xml
+   310059  1980-01-01 00:00   xl/media/image90.png
+    16399  1980-01-01 00:00   xl/media/image91.png
+     4015  1980-01-01 00:00   xl/media/image92.png
+    13833  1980-01-01 00:00   xl/drawings/drawing20.xml
+    86719  1980-01-01 00:00   xl/media/image93.png
+    15229  1980-01-01 00:00   xl/drawings/drawing21.xml
+   103637  1980-01-01 00:00   xl/media/image94.png
+    17780  1980-01-01 00:00   xl/drawings/drawing22.xml
+   109317  1980-01-01 00:00   xl/media/image95.png
+    18948  1980-01-01 00:00   xl/drawings/drawing23.xml
+    80897  1980-01-01 00:00   xl/media/image96.png
+   168940  1980-01-01 00:00   xl/drawings/drawing24.xml
+    40970  1980-01-01 00:00   xl/media/image97.png
+    35919  1980-01-01 00:00   xl/media/image98.png
+    88911  1980-01-01 00:00   xl/media/image99.png
+   122901  1980-01-01 00:00   xl/media/image100.png
+    39287  1980-01-01 00:00   xl/drawings/drawing25.xml
+    53385  1980-01-01 00:00   xl/media/image101.png
+    60277  1980-01-01 00:00   xl/media/image102.png
+    84364  1980-01-01 00:00   xl/media/image103.png
+    27853  1980-01-01 00:00   xl/drawings/drawing26.xml
+    78144  1980-01-01 00:00   xl/media/image104.png
+      500  1980-01-01 00:00   xl/media/image105.png
+     9279  1980-01-01 00:00   xl/drawings/drawing27.xml
+    18654  1980-01-01 00:00   xl/media/image106.png
+    14031  1980-01-01 00:00   xl/media/image107.png
+   133133  1980-01-01 00:00   xl/media/image108.png
+    72865  1980-01-01 00:00   xl/media/image109.png
+    67112  1980-01-01 00:00   xl/media/image110.png
+    38375  1980-01-01 00:00   xl/drawings/drawing28.xml
+   113560  1980-01-01 00:00   xl/media/image111.png
+      151  1980-01-01 00:00   xl/media/image112.png
+     4503  1980-01-01 00:00   xl/media/image113.png
+     8354  1980-01-01 00:00   xl/media/image114.png
+     9458  1980-01-01 00:00   xl/media/image115.png
+    20374  1980-01-01 00:00   xl/media/image116.png
+    10045  1980-01-01 00:00   xl/drawings/drawing29.xml
+    37646  1980-01-01 00:00   xl/media/image117.png
+    50024  1980-01-01 00:00   xl/drawings/drawing30.xml
+   194993  1980-01-01 00:00   xl/media/image118.png
+    54841  1980-01-01 00:00   xl/drawings/drawing31.xml
+   161171  1980-01-01 00:00   xl/media/image119.png
+   148488  1980-01-01 00:00   xl/media/image120.png
+      707  1980-01-01 00:00   xl/media/image121.png
+    15350  1980-01-01 00:00   xl/drawings/drawing32.xml
+    46719  1980-01-01 00:00   xl/media/image122.png
+    22843  1980-01-01 00:00   xl/drawings/drawing33.xml
+    65403  1980-01-01 00:00   xl/media/image123.png
+    63512  1980-01-01 00:00   xl/drawings/drawing34.xml
+   149095  1980-01-01 00:00   xl/media/image124.png
+   143124  1980-01-01 00:00   xl/media/image125.png
+    39527  1980-01-01 00:00   xl/media/image126.png
+    40450  1980-01-01 00:00   xl/media/image127.png
+    23191  1980-01-01 00:00   xl/media/image128.png
+    24971  1980-01-01 00:00   xl/drawings/drawing35.xml
+     6511  1980-01-01 00:00   xl/drawings/drawing36.xml
+   112699  1980-01-01 00:00   xl/media/image129.png
+    46230  1980-01-01 00:00   xl/drawings/drawing37.xml
+    42014  1980-01-01 00:00   xl/media/image130.png
+    82293  1980-01-01 00:00   xl/media/image131.png
+   313893  1980-01-01 00:00   xl/media/image132.png
+     5876  1980-01-01 00:00   xl/media/image133.png
+     3449  1980-01-01 00:00   xl/media/image134.png
+     3856  1980-01-01 00:00   xl/media/image135.png
+     4180  1980-01-01 00:00   xl/media/image136.png
+     3843  1980-01-01 00:00   xl/media/image137.png
+     5953  1980-01-01 00:00   xl/media/image138.png
+     3628  1980-01-01 00:00   xl/media/image139.png
+    92041  1980-01-01 00:00   xl/drawings/drawing38.xml
+      300  1980-01-01 00:00   xl/worksheets/_rels/sheet26.xml.rels
+<drawing r:id="rId1"/>
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing" Target="../drawings/drawing18.xml"/></Relationships>
+exec
+/bin/bash -lc "python3 - <<'PY'
+from zipfile import ZipFile
+from xml.etree import ElementTree as ET
+p='input/0202_基本設計仕様書(在庫管理機能).xlsx'
+ns={'xdr':'http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing','a':'http://schemas.openxmlformats.org/drawingml/2006/main','r':'http://schemas.openxmlformats.org/officeDocument/2006/relationships'}
+with ZipFile(p) as z:
+    root=ET.fromstring(z.read('xl/drawings/drawing18.xml'))
+    rel=ET.fromstring(z.read('xl/drawings/_rels/drawing18.xml.rels'))
+    rm={e.attrib['Id']:e.attrib['Target'] for e in rel}
+    for i,anchor in enumerate(list(root),1):
+        f=anchor.find('xdr:from',ns); t=anchor.find('xdr:to',ns)
+        def pos(x):
+            if x is None:return '?'
+            return f\"r{int(x.find('xdr:row',ns).text)+1}c{int(x.find('xdr:col',ns).text)+1}\"
+        pic=anchor.find('xdr:pic',ns); sp=anchor.find('xdr:sp',ns)
+        if pic is not None:
+            name=pic.find('xdr:nvPicPr/xdr:cNvPr',ns).attrib.get('name')
+            blip=pic.find('xdr:blipFill/a:blip',ns)
+            rid=blip.attrib.get('{%s}embed'%ns['r']) if blip is not None else None
+            print(i,'PIC',pos(f),pos(t),name,rid,rm.get(rid))
+        elif sp is not None:
+            name=sp.find('xdr:nvSpPr/xdr:cNvPr',ns).attrib.get('name')
+            txt=' / '.join((e.text or '') for e in sp.findall('.//a:t',ns))
+            print(i,'SHAPE',pos(f),pos(t),name,txt[:300])
+        else:
+            print(i,'OTHER',anchor.tag,pos(f),pos(t))
+PY" in /home/y-saito/Developments/hareruya-design-docs/excel_to_html
+ succeeded in 1989ms:
+1 PIC r8c2 r27c51 図 5 rId1 ../media/image89.png
+2 SHAPE r7c43 r9c46 Shape 18 (1-1)
+3 SHAPE r7c46 r9c49 Shape 18 (1- / 2 / )
+4 SHAPE r8c6 r10c9 Shape 18 ( / 2 / - / 2 / )
+5 SHAPE r8c8 r10c11 Shape 18 ( / 2 / - / 3 / )
+6 SHAPE r8c10 r11c13 Shape 18 ( / 2 / - / 4 / )
+7 SHAPE r8c11 r11c14 Shape 18 ( / 2 / - / 5 / )
+8 SHAPE r8c13 r10c16 Shape 18 ( / 2 / - / 6 / )
+9 SHAPE r8c14 r10c17 Shape 18 ( / 2 / - / 7 / )
+10 SHAPE r8c16 r10c19 Shape 18 ( / 2 / - / 8 / )
+11 SHAPE r8c18 r10c21 Shape 18 ( / 2 / - / 9 / )
+12 SHAPE r8c2 r10c5 Shape 18 ( / 2 / - / 1 / )
+13 SHAPE r8c22 r10c25 Shape 18 ( / 2 / - / 10 / )
+14 SHAPE r8c28 r10c31 Shape 18 ( / 2 / - / 12 / )
+15 SHAPE r8c37 r11c40 Shape 18 ( / 2 / - / 13 / )
+16 SHAPE r24c23 r27c26 Shape 18 ( / 3 / - / 1 / )
+17 SHAPE r8c41 r11c44 Shape 18 ( / 2 / - / 14 / )
+18 SHAPE r9c48 r11c51 Shape 18 ( / 2 / - / 16 / )
+19 SHAPE r8c44 r10c47 Shape 18 ( / 2 / - / 15 / )
+20 SHAPE r8c24 r10c27 Shape 18 ( / 2 / - / 11 / )
+
+exec
+/bin/bash -lc ".venv/bin/python - <<'PY'
+from openpyxl import load_workbook
+p='input/0202_基本設計仕様書(在庫管理機能).xlsx'
+wb=load_workbook(p,read_only=True,data_only=False)
+ws=wb['欠品履歴検索一覧(検索結果)']
+for rn in range(35,96):
+    vals=[]
+    for row in ws.iter_rows(min_row=rn,max_row=rn):
+        for c in row:
+            if c.value is not None:
+                vals.append(f'{c.coordinate}={str(c.value).replace(chr(10),\" / \")[:500]}')
+    if vals: print(' | '.join(vals))
+PY" in /home/y-saito/Developments/hareruya-design-docs/excel_to_html
+ succeeded in 122970ms:
+1	表紙	220x26	images=0
+2	目次	236x26	images=0
+3	画面遷移図	318x54	images=0
+4	共通処理	202x55	images=0
+5	在庫検索一覧(検索入力)	433x66	images=2
+6	在庫検索一覧(検索結果)	269x55	images=4
+7	在庫編集	338x57	images=2
+8	在庫一括編集	250x55	images=2
+9	在庫情報CSV出力	170x83	images=0
+10	在庫情報カスタムCSV出力	258x74	images=0
+11	在庫切れ、在庫警戒リストCSV出力	167x55	images=1
+12	在庫切れリストCSV出力	171x55	images=0
+13	在庫警戒リストCSV出力	157x55	images=0
+14	在庫移動・振替検索一覧(検索・結果)	340x68	images=0
+15	在庫移動・振替登録 編集 (移動)	1036x68	images=19
+16	在庫移動・振替登録 編集(振替)	613x70	images=7
+17	在庫移動・振替情報CSV出力	197x55	images=0
+18	在庫分割結合検索一覧(検索・結果)	317x68	images=1
+19	在庫分割結合登録編集（分割）	517x98	images=8
+20	在庫分割結合登録編集（結合)	738x68	images=11
+21	在庫分割結合情報CSV出力	165x83	images=0
+22	在庫リコメンドCSV出力	194x70	images=0
+23	在庫履歴検索一覧(検索入力)	325x62	images=1
+24	在庫履歴検索一覧(検索結果)	355x55	images=8
+25	在庫変動履歴CSV出力	202x54	images=0
+26	欠品履歴検索一覧(検索結果)	279x55	images=1
+27	欠品履歴CSV出力	181x55	images=0
+28	在庫変更CSV登録	349x59	images=3
+29	在庫移動CSV登録	242x68	images=1
+30	在庫振替CSV登録	242x68	images=1
+31	在庫分割CSV登録	245x68	images=1
+32	在庫結合CSV登録	245x68	images=1
+33	在庫移動指示検索	204x98	images=3
+34	在庫移動指示詳細	125x68	images=2
+35	在庫移動指示リスト ピッキングリスト印刷	281x92	images=1
+36	送り状CSV出力	176x54	images=0
+37	バーコード貼替リストCSV出力	165x55	images=5
+38	棚卸計画一覧	106x54	images=7
+39	棚卸計画新規作成	109x54	images=1
+40	棚卸計画編集	196x55	images=1
+41	棚卸詳細登録CSV	767x54	images=0
+42	棚卸詳細CSV出力	209x63	images=0
+43	棚卸在庫確認	161x54	images=2
+44	棚卸在庫反映	121x54	images=2
+45	在庫編集承認一覧(検索入力)	234x56	images=1
+46	在庫編集承認一覧(検索結果)	415x71	images=5
+47	承認一覧CSV出力	169x55	images=0
+48	承認対象在庫一覧CSV出力	178x55	images=0
+49	在庫移動戻しリストCSV出力	189x92	images=0
+50	在庫移動戻しリストPDF	305x92	images=2
+51	エラー表示	262x55	images=1
+52	別添資料_在庫変動時の履歴作成について	567x52	images=11
+53	別添資料_在庫移動ステータス遷移概要	313x58	images=0
+54	別添資料_リコメンドCSV出力仕様	33x16	images=0
+
+ succeeded in 9534ms:
+D35=→振替の場合は欠品から振替を行えるようにしたい※ユースケース確認 | AB35=振替の要件はなくなりました
+C36=・ | D36=欠品登録時に総在庫を減らす処理を行う
+D37=※欠品のため総原価は変えない
+B39=・ | C39=カスタマイズ要件に記載の内容以外は現行踏襲とする。
+B42=処理概要（★はカスタマイズ項目）
+B43=★ | C43=1.一覧表示
+D44=1-1.検索した結果の在庫変動履歴の内、在庫変動理由区分が「廃棄」（親区分）、「欠品減算（受注）」・「欠品減算（移動）」（子区分）の履歴を検索し表示
+E45=1-1-1.入庫承認待ち在庫情報は表示しない
+D46=1-2.在庫履歴情報の一覧は、下記ソート順とする
+E47=1-2-1.第一ソートを商品コードの降順とする※現行踏襲
+E48=1-2-2.第二ソートを店舗のIDを降順とする※在庫区分でのソートは行わない
+E49=1-2-3.第三ソートを各レコードの「登録日時」の降順（最新順）で表示する
+B51=★ | C51=2.表示条件
+D52=2-1.在庫変動履歴の検索で欠品履歴一覧を表示を選択された場合に表示
+B54=★ | C54=3.表示項目カスタマイズ追加
+D55=3-1.現行より、下記項目の追加を行う
+D56=・ | E56=識別ID:2-6店舗を追加
+D57=・ | E57=識別ID:2-7在庫区分を追加
+D58=・ | E58=識別ID:2-8登録元を追加
+D59=・ | E59=識別ID:2-9登録元IDを追加
+D60=・ | E60=識別ID:2-11欠品時販売価格を追加
+D61=・ | E61=識別ID:2-12欠品理由を追加
+D62=・ | E62=識別ID:2-15最終更新日を追加
+D63=・ | E63=識別ID:2-16最終更新者を追加
+B66=識別ID | E66=ラベル | M66=書式・制限 | T66=必須 | V66=最大値 | Z66=初期値 | AG66=画面部品の説明
+B67=上部表示項目
+B68=1-1 | E68=表示件数 | M68=単一選択 | T68=- | V68=- | Z68=50件 | AG68=EC-CUBE標準のマスタデータ管理の最大ページ表示にて、設定されている表示件数の選択肢を表示する
+B69=1-2 | E69=CSVダウンロード | M69=ボタン | T69=- | V69=- | Z69=- | AG69=在庫変動履歴CSVを出力する
+B70=リスト表示項目
+B71=2-1 | E71=商品コード | M71=文字列 | T71=- | V71=- | Z71=- | AG71=「在庫編集」シート識別ID:1-5商品コードを参照
+B72=2-2 | E72=商品名 | M72=リンク | T72=- | V72=- | Z72=- | AG72=「在庫編集」シート識別ID:1-3商品名を参照 /  / 商品名を押下すると、押下した商品在庫の在庫編集画面を別タブで表示 / ※運用想定では欠品商品を発見した場合の補填目的で設置
+B73=2-3 | E73=言語 | M73=文字列 | T73=- | V73=- | Z73=- | AG73=「在庫編集」シート識別ID:1-6言語を参照
+B74=2-4 | E74=状態 | M74=文字列 | T74=- | V74=- | Z74=- | AG74=「在庫編集」シート識別ID:1-7状態を参照
+B75=2-5 | E75=Foil | M75=文字列 | T75=- | V75=- | Z75=- | AG75=「在庫編集」シート識別ID:1-8Foilを参照
+B76=2-6 | E76=店舗 | M76=文字列 | T76=- | V76=- | Z76=- | AG76=「在庫編集」シート識別ID:2-2店舗を参照
+B77=2-7 | E77=在庫区分 | M77=文字列 | T77=- | V77=- | Z77=- | AG77=「在庫編集」シート識別ID:2-3在庫区分を参照
+B78=2-8 | E78=登録元 | M78=テキスト | T78=- | V78=- | Z78=- | AG78=「在庫履歴検索一覧(検索結果)」シート識別ID:2-8登録元を参照
+B79=2-9 | E79=登録元ID | M79=リンク | T79=- | V79=- | Z79=- | AG79=「在庫履歴検索一覧(検索結果)」シート識別ID:2-9登録元IDを参照
+B80=2-10 | E80=欠品点数 | M80=文字列 | T80=- | V80=- | Z80=- | AG80=欠品登録された商品に対する欠品点数を表示
+B81=2-11 | E81=欠品時販売価格 | M81=テキスト | T81=- | V81=- | Z81=- | AG81=欠品登録時の販売販売価格を表示 / 受注の場合は、受注情報で保持している販売価格を参照 / 移動の場合も、移動情報で保持している販売価格を参照
+B82=2-12 | E82=欠品理由 | M82=テキスト | T82=- | V82=- | Z82=- | AG82=欠品理由を表示する /  / ・編集機能 / 欠品理由の編集ができるようペンのアイコンを押下するとテキストエリアが表示され、再びペンのアイコンを押下すると編集内容が登録される / 更新された場合は、更新された更新日と、ログインしているメンバーを更新者として更新する
+B83=2-13 | E83=登録日 | M83=日付(yyyy/mm/dd hh:mm) | T83=- | V83=- | Z83=- | AG83=「在庫編集」シート識別ID:4-6登録日を参照
+B84=2-14 | E84=登録者 | M84=文字列 | T84=- | V84=- | Z84=- | AG84=「在庫編集」シート識別ID:4-7登録者を参照
+B85=2-15 | E85=最終更新日 | M85=日付(yyyy/mm/dd hh:mm) | T85=- | V85=- | Z85=- | AG85=「在庫履歴検索一覧(検索結果)」シート識別ID:2-26最終更新日を参照
+B86=2-16 | E86=最終更新者 | M86=文字列 | T86=- | V86=- | Z86=- | AG86=「在庫履歴検索一覧(検索結果)」シート識別ID:2-27最終更新者を参照
+B87=画面下部
+B88=3-1 | E88=ページング | M88=リンク | T88=- | V88=- | Z88=- | AG88=再検索実行し、移動先内容の範囲の内容を表示する画面に遷移する / ※在庫編集承認一覧(検索入力)の内容を表示する
+
+exec
+/bin/bash -lc ".venv/bin/python - <<'PY'
+from openpyxl import load_workbook
+p='input/0202_基本設計仕様書(在庫管理機能).xlsx'
+wb=load_workbook(p,read_only=True,data_only=False)
+for sn,r1,r2 in [
+('在庫履歴検索一覧(検索入力)',100,150),
+('在庫分割結合検索一覧(検索・結果)',125,150),
+('在庫分割結合登録編集（結合)',110,145),
+('欠品履歴CSV出力',1,55),
+]:
+ print('###',sn)
+ ws=wb[sn]
+ for rn in range(r1,r2+1):
+  vals=[]
+  for row in ws.iter_rows(min_row=rn,max_row=rn):
+   for c in row:
+    if c.value is not None: vals.append(f'{c.coordinate}={str(c.value).replace(chr(10),\" / \")[:400]}')
+  if vals: print(' | '.join(vals))
+PY" in /home/y-saito/Developments/hareruya-design-docs/excel_to_html
+ succeeded in 29502ms:
+### 在庫履歴検索一覧(検索入力)
+F100=3-5-1.「欠品検索」にチェックが選択された場合は「欠品履歴検索一覧(検索結果)」シートの検索結果一覧を表示
+H101=※検索元のデータは在庫履歴一覧を参照し、表示カラムを「在庫履歴検索一覧（検索結果）」とは差し替える作りとなる
+B104=識別ID | F104=ラベル | O104=書式・制限 | V104=必須 | X104=最大値 | AC104=初期値 | AK104=画面部品の説明 | AZ104=検索対象項目
+B105=上部表示項目 | AZ105=在庫変動履歴 | BC105=欠品履歴
+B106=1-1 | F106=商品名(日/英）・カード名・商品コード | O106=文字列 | V106=- | X106=255文字 | AC106=- | AK106=値が入力されていた場合 / 商品名（日/英）、カード名、商品コードの3カラムを検索対象とし、それぞれのカラムに対して部分一致検索を行う | AZ106=○ | BC106=○
+B107=1-2 | F107=店舗 | O107=複数選択(セレクトボックス) | V107=- | X107=- | AC107=ログインしているメンバーのデフォルト検索表示店舗 | AK107=共通処理識別ID1-3参照 | AZ107=○ | BC107=○
+B108=1-3 | F108=在庫区分 | O108=チェックボックス | V108=- | X108=- | AC108=- | AK108=共通処理識別ID1-4参照 | AZ108=○ | BC108=○
+B109=アコーディオン内
+B110=2-1 | F110=登録日(from） | O110=日時(YYYY/MM/DD HH:mm) | V110=- | X110=~9999/12/31 23:59 | AC110=ページを表示した日の月の1日 | AK110=登録日(From)>登録日(To)の場合エラーとし検索を行わない / 入力された日時以降を検索対象に含めます（入力した日時も含む） | AZ110=○ | BC110=○
+B111=2-2 | F111=登録日(to) | O111=日時(YYYY/MM/DD HH:mm) | V111=- | X111=~9999/12/31 23:59 | AC111=- | AK111=入力した日時以前を検索対象に含めます（入力した日時も含む） | AZ111=○ | BC111=○
+B112=2-3 | F112=在庫変動理由区分 | O112=複数選択(セレクトボックス) | V112=- | X112=- | AC112=- | AK112=在庫変動区分マスタを参照し、"親/子"の表示で選択肢を表示する /  / 項目一覧は、 / 「別添資料_在庫変動時の履歴作成について」シートの「①在庫変動区分のマスタは以下の通りとする」を参照 | AZ112=○ | BC112=【選択固定】 / 「欠品/欠品減算（受注）」・「欠品/欠品減算(移動)」
+B113=2-4 | F113=欠品検索 | O113=チェックボックス | V113=- | X113=- | AC113=- | AK113=選択肢：欠品履歴一覧を表示 /  / 選択された場合 / ・識別ID:2-3在庫変更理由区分を「欠品/欠品減算（受注）」・「欠品/欠品減算(移動)」に変更し選択できないよう非活性にする / ・検索対象項目の欠品履歴の内”－”としている項目は中身を空にし非活性にする / ・識別ID2-37欠品理由は活性化し入力できるようにする / ・検索結果として欠品履歴検索一覧を表示する /  / 選択されていない場合 / ・識別ID2-37欠品理由のみ中身を空にし非活性にする / ・チェックされていた状態から解除された場合、識別ID2-3在庫変動理由区分の内容を空にする / ・検索結果として在庫履歴検索一覧を表示する | AZ113=- | BC113=○
+B114=2-5 | F114=カテゴリ | O114=複数選択(セレクトボックス) | V114=- | X114=- | AC114=- | AK114=商品カテゴリーを参照し選択肢を表示 /  / 検索を行った際は、検索時に商品情報に紐づいている商品カテゴリーを参照する | AZ114=○ | BC114=○
+B115=2-6 | F115=公開種別 | O115=チェックボックス | V115=- | X115=- | AC115=公開 | AK115=商品のカテゴリーを参照※商品規格ではない / 検索を行った際は、検索時に商品情報に紐づいている公開種別を参照する /  / 選択肢:公開 非公開 廃止 | AZ115=○ | BC115=○
+B116=2-7 | F116=エキスパンション | O116=複数選択(セレクトボックス) | V116=- | X116=- | AC116=- | AK116=カードセット管理情報を参照し選択肢を表示 / 検索を行った際は、検索時に商品規格の商品に紐づいているカード情報より参照する | AZ116=○ | BC116=○
+B117=2-8 | F117=レアリティ | O117=チェックボックス | V117=- | X117=- | AC117=- | AK117=検索を行った際は、検索時に商品規格の商品に紐づいているカード情報より参照する /  / 選択肢: / コモン アンコモン レア 神話レア 基本土地 スペシャル トークン | AZ117=○ | BC117=○
+B118=2-9 | F118=言語 | O118=チェックボックス | V118=- | X118=- | AC118=- | AK118=検索を行った際は、在庫変動履歴の言語を検索条件とする / 選択肢:日本語 英語 その他言語 | AZ118=○ | BC118=○
+B119=2-10 | F119=状態 | O119=チェックボックス | V119=- | X119=- | AC119=NM | AK119=検索を行った際は、在庫変動履歴の状態を検索条件とする / 選択肢:NM SP MP HP その他 | AZ119=○ | BC119=○
+B120=2-11 | F120=Foil | O120=チェックボックス | V120=- | X120=- | AC120=- | AK120=検索を行った際は、在庫変動履歴のFoiliを検索条件とする /  / 選択肢:なし 通常 特殊 | AZ120=○ | BC120=○
+B121=2-12 | F121=プロモ | O121=チェックボックス | V121=- | X121=- | AC121=- | AK121=検索を行った際は、検索時に商品規格の商品に紐づいているカード情報より参照する / 選択肢:プロモ ノーマル | AZ121=○ | BC121=○
+B122=2-13 | F122=在庫数(from) | O122=数値 | V122=- | X122=0-99999999 | AC122=- | AK122=在庫変動履歴の変更前在庫数または変更後在庫数を検索（※現行踏襲） / 入力された在庫数以上を検索 / 在庫数(From)>在庫数(To)の場合エラーとし検索を行わない | AZ122=○ | BC122=○
+B123=2-14 | F123=在庫数(to) | O123=数値 | V123=- | X123=0-99999999 | AC123=- | AK123=在庫変動履歴の変更前在庫数または変更後在庫数を検索（※現行踏襲） / 入力された在庫数以下を検索 | AZ123=○ | BC123=○
+B124=2-15 | F124=在庫増減数(from) | O124=数値 | V124=- | X124=-99999999～99999999 | AC124=- | AK124=在庫変動履歴の在庫増減数を検索 / 入力された在庫変動数以上を検索 / 在庫増減数(From)>在庫増減数(To)の場合エラーとし検索を行わない | AZ124=○ | BC124=-
+B125=2-16 | F125=在庫増減数(to) | O125=数値 | V125=- | X125=-99999999～99999999 | AC125=- | AK125=在庫変動履歴の在庫増減数を検索 / 入力された在庫変動数以下を検索 | AZ125=○ | BC125=-
+B126=2-17 | F126=変更時販売価格(from) | O126=数値 | V126=- | X126=0~999999999 | AC126=- | AK126=在庫変動履歴の変更時販売価格を検索 / 入力された変更時販売価格以上を検索 / 変更時販売価格(From)>変更時販売価格(To)の場合エラーとし検索を行わない | AZ126=○ | BC126=○
+B127=2-18 | F127=変更時販売価格(to) | O127=数値 | V127=- | X127=0~999999999 | AC127=- | AK127=在庫変動履歴の変更時販売価格を検索 / 入力された変更時販売価格以下を検索 | AZ127=○ | BC127=○
+B128=2-19 | F128=仕入単価(from) | O128=数値 | V128=- | X128=0~999999999 | AC128=- | AK128=在庫変動履歴の仕入単価を検索 / 入力された仕入単価以上を検索 / 仕入単価(From)>仕入単価(To)の場合エラーとし検索を行わない / 入力されている場合、仕入単価が空のものは検索結果として出力されない | AZ128=○ | BC128=-
+B129=2-20 | F129=仕入単価(to) | O129=数値 | V129=- | X129=0~999999999 | AC129=- | AK129=在庫変動履歴の仕入単価を検索 / 入力された仕入単価以下を検索 / 入力されている場合、仕入単価が空のものは検索結果として出力されない | AZ129=○ | BC129=-
+B130=2-21 | F130=変更後原価単価(from) | O130=数値 | V130=- | X130=0~999999999 | AC130=- | AK130=「在庫履歴検索一覧(検索結果)」識別ID2-15の内容を検索 / 入力された原価単価以上を検索 / 原価単価(From)>原価単価(To)の場合エラーとし検索を行わない / 入力されている場合、原価単価が空のものは検索結果として出力されない | AZ130=○ | BC130=-
+B131=2-22 | F131=変更後原価単価(to) | O131=数値 | V131=- | X131=0~999999999 | AC131=- | AK131=「在庫履歴検索一覧(検索結果)」識別ID2-15の内容を検索 / 入力された原価単価以下を検索 / 入力されている場合、原価単価が空のものは検索結果として出力されない | AZ131=○ | BC131=-
+B132=2-23 | F132=原価率(from) | O132=数値 | V132=- | X132=0-9999 | AC132=- | AK132=在庫変動履歴の総売価と総原価を算出しその結果を検索 / 計算式は、「(変更後総原価)/(変更時販売価格＊在庫数)」 / ※パーセントを入れてもらう /  / 入力された原価率以上を検索 / 原価率(From)>原価率(To)の場合エラーとし検索を行わない | AZ132=○ | BC132=-
+B133=2-24 | F133=原価率(to) | O133=数値 | V133=- | X133=0-9999 | AC133=- | AK133=在庫変動履歴の総売価と総原価を算出しその結果を検索 / ※計算式は識別ID2-23の部品説明を参照 / 入力された原価率以下を検索 | AZ133=○ | BC133=-
+B134=2-25 | F134=登録元 | O134=複数選択(セレクトボックス) | V134=- | X134=- | AC134=- | AK134=在庫変動履歴の登録元を検索 /  / 選択肢: / 在庫編集 / 在庫一括更新 / 在庫変更CSV登録 / 在庫移動 / 在庫振替 / 在庫分割 / 在庫結合 / 在庫棚卸 / 受注 / 店頭買取 / ネット買取 | AZ134=○ | BC134=○
+B135=2-26 | F135=登録元ID | O135=数値 | V135=- | X135=- | AC135=- | AK135=在庫変動履歴の登録元IDを検索 | AZ135=○ | BC135=○
+B136=2-27 | F136=登録者（所属選択） | O136=複数選択(セレクトボックス) | V136=- | X136=- | AC136=- | AK136=共通処理識別ID1-1参照 | AZ136=○ | BC136=○
+B137=2-28 | F137=登録者（メンバー選択） | O137=複数選択(セレクトボックス) | V137=- | X137=- | AC137=- | AK137=共通処理識別ID1-2参照 | AZ137=○ | BC137=○
+B138=2-29 | F138=承認者（所属選択） | O138=複数選択(セレクトボックス) | V138=- | X138=- | AC138=- | AK138=共通処理識別ID1-1参照 | AZ138=○ | BC138=-
+B139=2-30 | F139=承認者（メンバー選択） | O139=複数選択(セレクトボックス) | V139=- | X139=- | AC139=- | AK139=共通処理識別ID1-2参照 | AZ139=○ | BC139=-
+B140=2-31 | F140=承認日(from） | O140=日時(YYYY/MM/DD HH:mm) | V140=- | X140=~9999/12/31 23:59 | AC140=- | AK140=承認日(From)>承認日(To)の場合エラーとし検索を行わない / 入力されている場合、承認日が空のものは検索結果として出力されない | AZ140=○ | BC140=-
+B141=2-32 | F141=承認日(to) | O141=日時(YYYY/MM/DD HH:mm) | V141=- | X141=~9999/12/31 23:59 | AC141=- | AK141=入力した日時以前を検索対象に含めます（入力した日時も含む） / 入力されている場合、承認日が空のものは検索結果として出力されない | AZ141=○ | BC141=-
+B142=2-33 | F142=最終更新者（所属選択） | O142=複数選択(セレクトボックス) | V142=- | X142=- | AC142=- | AK142=共通処理識別ID1-1参照 | AZ142=○ | BC142=○
+B143=2-34 | F143=最終更新者（メンバー選択） | O143=複数選択(セレクトボックス) | V143=- | X143=- | AC143=- | AK143=共通処理識別ID1-2参照 | AZ143=○ | BC143=○
+B144=2-35 | F144=最終更新日(from） | O144=日時(YYYY/MM/DD HH:mm) | V144=- | X144=~9999/12/31 23:59 | AC144=- | AK144=最終更新日(From)>最終更新日(To)の場合エラーとし検索を行わない / 入力されている場合、最終更新日が空のものは検索結果として出力されない | AZ144=○ | BC144=○
+B145=2-36 | F145=最終更新日(to) | O145=日時(YYYY/MM/DD HH:mm) | V145=- | X145=~9999/12/31 23:59 | AC145=- | AK145=入力した日時以前を検索対象に含めます（入力した日時も含む） / 入力されている場合、最終更新日が空のものは検索結果として出力されない | AZ145=○ | BC145=○
+B146=2-37 | F146=在庫変動理由・欠品理由 | O146=文字列 | V146=- | X146=16384文字 | AC146=- | AK146=部分一致検索にて、「在庫履歴検索一覧(検索結果)」シート識別ID2-21在庫変動理由・欠品履歴検索一覧(検索結果)」シート識別ID2-12欠品理由の文字列に該当する情報を検索する | AZ146=○ | BC146=○
+B147=2-38 | F147=検索条件をクリア | O147=リンク | V147=- | X147=- | AC147=- | AK147=押下すると2-1~2-37の内容を空にする
+B148=画面下部
+B149=3-1 | F149=検索 | O149=ボタン | V149=- | X149=- | AC149=- | AK149=押下すると検索処理を実行する
+B150=3-2 | F150=検索結果件数 | O150=文字列 | V150=- | X150=- | AC150=- | AK150=検索処理実行後の件数を表示する
+### 在庫分割結合検索一覧(検索・結果)
+B126=識別ID | E126=ラベル | M126=書式・制限 | T126=必須 | V126=最大値 | Z126=初期値 | AG126=画面部品の説明 | AZ126=検索対象項目
+B127=CSVファイル登録 | AZ127=在庫分割 | BA127=在庫結合
+B128=1-1 | E128=在庫分割CSV登録 | M128=ボタン | T128=- | V128=- | Z128=- | AZ128=- | BA128=-
+B129=1-2 | E129=在庫結合CSV登録 | M129=ボタン | T129=- | V129=- | Z129=- | AZ129=- | BA129=-
+B130=検索条件
+B131=2-1 | E131=商品名・商品コード検索対象 | M131=チェックボックス | T131=- | V131=- | Z131=分割元・結合先 | AG131=2-2, 2-3 の商品の検索対象を「分割元・結合先」または「分割先・結合元」とするかの指定するために利用 | AZ131=○ | BA131=○
+B132=2-2 | E132=商品名 | M132=数値 | T132=- | V132=- | AG132=在庫分割・結合登録 編集（分割）の "識別ID2-1" 「商品名」の検索に利用 / 在庫分割・結合登録 編集（結合）の "識別ID2-1" 「商品名」の検索に利用 | AZ132=○ | BA132=○
+B133=2-3 | E133=商品コード | M133=数値 | T133=- | V133=- | Z133=- | AG133=在庫分割・結合登録 編集（分割）の "識別ID2-2" 「商品コード」の検索に利用 / 在庫分割・結合登録 編集（結合）の "識別ID2-2" 「商品コード」の検索に利用 | AZ133=○ | BA133=○
+B134=2-4 | E134=店舗 | M134=複数選択(セレクトボックス) | T134=- | V134=- | Z134=- | AG134=在庫分割・結合登録 編集（分割）の "識別ID1-3" 「店舗」の検索に利用 / 在庫分割・結合登録 編集（結合）の "識別ID1-3" 「店舗」の検索に利用 | AZ134=○ | BA134=○
+B135=2-5 | E135=在庫区分 | M135=チェックボックス | T135=- | V135=- | Z135=- | AG135=在庫分割・結合登録 編集（分割）の "識別ID1-4" 「在庫区分」の検索に利用 / 在庫分割・結合登録 編集（結合）の "識別ID1-4" 「在庫区分」の検索に利用 | AZ135=○ | BA135=○
+B136=2-6 | E136=タイプ | M136=チェックボックス | T136=- | V136=- | Z136=- | AG136=在庫分割・結合登録 編集（分割）の "識別ID1-2" 「処理タイプ」の検索に利用 / 在庫分割・結合登録 編集（結合）の "識別ID1-2" 「処理タイプ」の検索に利用 | AZ136=○ | BA136=○
+B137=2-7 | E137=ステータス | M137=チェックボックス | T137=- | V137=- | Z137=- | AG137=在庫分割・結合登録 編集（分割）の "識別ID1-5" 「ステータス」の検索に利用 / 選択肢（分割）：新規登録、分割承認待ち、却下、入庫完了 / 在庫分割・結合登録 編集（結合）の "識別ID1-5" 「ステータス」の検索に利用 / 選択肢（結合）：新規登録、結合元登録、結合承認待ち、却下、入庫完了 | AZ137=○ | BA137=○
+B138=詳細検索条件
+B139=3-1 | E139=登録日(From) | M139=日付（yyyy/mm/dd） | T139=- | V139=- | Z139=- | AG139=在庫分割・結合登録 編集（分割）の "識別ID1-6" 「登録日」の検索に利用 / 在庫分割・結合登録 編集（結合）の "識別ID1-6" 「登録日」の検索に利用 / 期間の開始日、カレンダー選択機能あり | AZ139=○ | BA139=○
+B140=3-2 | E140=登録日(To) | M140=日付（yyyy/mm/dd） | T140=- | V140=- | Z140=- | AG140=在庫分割・結合登録 編集（分割）の "識別ID1-6" 「登録日」の検索に利用 / 在庫分割・結合登録 編集（結合）の "識別ID1-6" 「登録日」の検索に利用 / 期間の終了日、カレンダー選択機能あり | AZ140=○ | BA140=○
+B141=3-3 | E141=登録者 | M141=文字列 | T141=- | V141=- | Z141=- | AG141=共通処理識別ID1-1, 1-2参照 / 在庫分割・結合登録 編集（分割）の "識別ID1-9" 「登録者」の検索に利用 / 在庫分割・結合登録 編集（結合）の "識別ID1-9" 「登録者」の検索に利用 | AZ141=○ | BA141=○
+B142=3-4 | E142=承認日(From) | M142=日付（yyyy/mm/dd） | T142=- | V142=- | Z142=- | AG142=在庫分割・結合登録 編集（分割）の "識別ID1-8" 「承認日」の検索に利用 / 在庫分割・結合登録 編集（結合）の "識別ID1-8" 「承認日」の検索に利用 / 期間の開始日、カレンダー選択機能あり | AZ142=○ | BA142=○
+B143=3-5 | E143=承認日(To) | M143=日付（yyyy/mm/dd） | T143=- | V143=- | Z143=- | AG143=在庫分割・結合登録 編集（分割）の "識別ID1-8" 「承認日」の検索に利用 / 在庫分割・結合登録 編集（結合）の "識別ID1-8" 「承認日」の検索に利用 / 期間の終了日、カレンダー選択機能あり | AZ143=○ | BA143=○
+B144=3-6 | E144=承認者 | M144=文字列 | T144=- | V144=- | Z144=- | AG144=共通処理識別ID1-1, 1-2参照 / 在庫分割・結合登録 編集（分割）の "識別ID1-11" 「承認者」の検索に利用 / 在庫分割・結合登録 編集（結合）の "識別ID1-11" 「承認者」の検索に利用 | AZ144=○ | BA144=○
+B145=3-7 | E145=検索条件をクリア | M145=ボタン | T145=- | V145=- | Z145=- | AG145=押下すると3-1~3-4の内容を空にする | AZ145=- | BA145=-
+B146=ボタン表示グループ
+B147=4-1 | E147=検索 | M147=ボタン | T147=- | V147=- | Z147=- | AG147=押下すると検索処理を実行する | AZ147=- | BA147=-
+B148=4-2 | E148=検索結果件数 | M148=ラベル | T148=- | V148=- | Z148=- | AG148=検索処理実行後の件数を表示する | AZ148=- | BA148=-
+B149=4-3 | E149=在庫分割結合CSV出力 | M149=ボタン | T149=- | V149=- | Z149=- | AG149=在庫分割CSVを出力する | AZ149=- | BA149=-
+B150=4-4 | E150=表示件数 | M150=単一選択 | T150=- | V150=- | Z150=10件 | AG150=EC-CUBE標準のマスタデータ管理の最大ページ表示にて、設定されている表示件数の選択肢を表示する | AZ150=- | BA150=-
+### 在庫分割結合登録編集（結合)
+E110=・ | F110=在庫分割結合（結合2（結合元登録））の画面へ遷移する
+B113=識別ID | E113=ラベル | M113=書式・制限 | T113=必須 | V113=最大値 | Z113=初期値 | AG113=画面部品の説明
+B114=基本情報
+B115=1-1 | E115=在庫分割結合ID | M115=ラベル | T115=- | V115=- | Z115=- | AG115=ステータスが新規登録の場合 / "-"を表示 /  / それ以外の場合 / 在庫分割結合IDを表示
+B116=1-2 | E116=処理タイプ | M116=ラベル | T116=- | V116=- | Z116=- | AG116=「在庫結合」を表示
+B117=1-3 | E117=店舗 | M117=ラベル | T117=- | V117=- | Z117=- | AG117=「在庫編集」シート識別ID:2-2店舗を参照
+B118=1-4 | E118=在庫区分 | M118=ラベル | T118=- | V118=- | Z118=- | AG118=「在庫編集」シート識別ID:2-3在庫区分を参照
+B119=1-5 | E119=ステータス | M119=ラベル | T119=- | V119=- | Z119=- | AG119=在庫結合の進行状況を表示 /  / 項目内容は下記の通り / 新規登録、結合元登録、結合計画承認待ち、却下、結合計画承認済み、結合完了承認待ち、入庫完了
+B120=1-6 | E120=登録日 | M120=ラベル(YYYY/MM/DD HH:mm) | T120=- | V120=- | Z120=- | AG120=在庫結合登録画面または、在庫結合CSV登録にて、 / 結合先商品が登録された日時を表示 /  / 新規登録時など登録前で日時が登録されていない場合は"-"を表示
+B121=1-7 | E121=更新日 | M121=ラベル(YYYY/MM/DD HH:mm) | T121=- | V121=- | Z121=- | AG121=参照している在庫結合情報の更新日を表示 / 在庫結合情報の情報が登録、変更された日時 / 新規登録時など登録前で日時が登録されていない場合は"-"を表示
+B122=1-8 | E122=登録者 | M122=ラベル | T122=- | V122=- | Z122=- | AG122=在庫結合登録画面または、在庫結合CSV登録にて結合先商品の情報が登録された場合、操作時にログインしていたメンバーを登録者として登録しメンバーの名前を表示する /  / 新規登録時など登録前で登録者が登録されていない場合は"-"を表示
+B123=1-9 | E123=結合承認日 | M123=ラベル(YYYY/MM/DD HH:mm) | T123=- | V123=- | Z123=- | AG123=在庫結合承認申請について承認行為が行われた日時 / 日時が登録されていない場合は"-"を表示
+B124=1-10 | E124=更新者 | M124=ラベル | T124=- | V124=- | Z124=- | AG124=参照している在庫結合情報の更新者を表示 / 在庫結合情報の情報が登録、変更された際にログインして操作していたメンバーが表示される / 新規登録時など登録前で最終更新者が登録されていない場合は"-"を表示
+B125=1-11 | E125=結合承認者 | M125=ラベル | T125=- | V125=- | Z125=- | AG125=在庫結合承認申請を承認した作業者を承認者として表示する / 承認前で承認者が登録されていない場合は"-"を表示
+B126=結合先商品
+B127=2-1 | E127=商品名 /  | M127=文字列 | T127=- | V127=- | Z127=- | AG127=「在庫編集」シート識別ID:1-5商品コードを参照
+B128=2-2 | E128=商品コード | M128=文字列 | T128=- | V128=- | Z128=- | AG128=「在庫編集」シート識別ID:1-3商品名を参照
+B129=2-3 | E129=言語 | M129=文字列 | T129=- | V129=- | Z129=- | AG129=「在庫編集」シート識別ID:1-6言語を参照
+B130=2-4 | E130=状態 | M130=文字列 | T130=- | V130=- | Z130=- | AG130=「在庫編集」シート識別ID:1-7状態を参照
+B131=2-5 | E131=Foil | M131=文字列 | T131=- | V131=- | Z131=- | AG131=「在庫編集」シート識別ID:1-8Foilを参照
+B132=2-6 | E132=在庫区分 | M132=ラベル | T132=- | V132=- | Z132=- | AG132=「在庫編集」シート識別ID:2-4在庫区分を参照
+B133=2-7 | E133=基準価格 | M133=文字列 | T133=- | V133=- | Z133=- | AG133=分割元商品の商品コードより商品規格情報を取得しその基準価格を表示する
+B134=2-8 | E134=原価単価 | M134=数値 | T134=- | V134=- | Z134=- | AG134=「在庫編集」シート識別ID:2-5原価単価を参照
+B135=2-9 | E135=総原価 | M135=数値 | T135=- | V135=- | Z135=- | AG135=「在庫編集」シート識別ID:2-6総原価を参照
+B136=2-10 | E136=在庫数 | M136=数値 | T136=- | V136=- | Z136=- | AG136=「在庫編集」シート識別ID:2-4在庫数を参照
+B137=2-11 | E137=結合数 | M137=数値 | T137=○ | V137=1～99999999 | Z137=- | AG137=結合先商品から結合して作成する数を記入するフォーム / ・在庫数を超える数値が入力された場合はエラーとする
+B138=結合登録メモ
+B139=3-1 | E139=結合登録メモ | M139=文字列 | T139=- | V139=- | Z139=- | AG139=メモの入力は全ステータスで可能 / 登録や却下や承認が押下されたときにメモの内容が保存される
+B140=ステータス変更履歴
+B141=4-1 | E141=更新日 | M141=ラベル | T141=- | V141=- | Z141=- | AG141=各種ステータス更新時の日時を履歴として表示
+B142=4-2 | E142=ステータス | M142=ラベル | T142=- | V142=- | Z142=- | AG142=各種ステータス更新時のステータスを履歴として表示
+B143=4-3 | E143=更新者 | M143=ラベル | T143=- | V143=- | Z143=- | AG143=各種ステータス更新時の更新者を履歴として表示
+B144=フッター
+B145=5-1 | E145=在庫一覧 | M145=リンク | T145=- | V145=- | Z145=- | AG145=初期登録画面には在庫一覧検索画面からしか遷移しないため、在庫一覧検索画面の検索条件と結合対象商品の選択状態を維持したまま在庫一覧検索画面へ遷移する
+### 欠品履歴CSV出力
+A1=ドキュメント名 | I1=在庫管理　基本設計 | U1=セクション
+A2=プロジェクト名 | I2=サイトリニューアル | U2=作成者 | Y2=佐藤 | AC2=作成日 | AG2=2025/8/25 | AK2=更新者 | AO2=加藤 | AS2=更新日 | AW2=2025-11-12 00:00:00
+A4=機能No | D4=M04-20 | I4=機能名 | N4=欠品履歴CSV出力 | AC4=概要 | AG4=在庫一覧で欠品のみを選択時の一覧CSV出力
+B6=CSV出力項目
+B7=識別ID | E7=項目名 | M7=備考
+B8=1 | E8=商品コード
+B9=2 | E9=商品名
+B10=3 | E10=言語
+B11=4 | E11=状態
+B12=5 | E12=Foil
+B13=6 | E13=店舗
+B14=7 | E14=在庫区分
+B15=8 | E15=登録元
+B16=9 | E16=登録元ID
+B17=10 | E17=欠品点数
+B18=11 | E18=欠品時販売価格
+B19=12 | E19=欠品理由
+B20=13 | E20=登録日
+B21=14 | E21=登録者
+B22=15 | E22=最終更新日
+B23=16 | E23=最終更新者
+B25=カスタマイズ説明
+B26=・ | C26=カスタマイズ要件
+C27=・ | D27=欠品履歴を検索した結果をCSVとして出力
+D28=※本店・支店・スマレジの在庫を横断して出力可能とする
+B30=・ | C30=カスタマイズ要件に記載の内容以外は現行踏襲とする。
+B33=処理概要（★はカスタマイズ項目）
+C34=・ | D34=在庫履歴検索一覧(検索入力)の検索条件でデータを取得しCSV出力する
+C35=・ | D35=一覧表示されている順番と同じ順でCSV出力する
+C36=※参照情報は「在庫編集承認一覧(検索結果)」シート1-1を参照
+B38=★ | C38=・現行より、下記項目の追加を行う
+D39=識別ID:6店舗を追加
+D40=識別ID:7在庫区分を追加
+D41=識別ID:8登録元を追加
+D42=識別ID:9登録元IDを追加
+D43=識別ID:11欠品時販売価格を追加
+D44=識別ID:12欠品理由を追加
+D45=識別ID:15最終更新日を追加
+D46=識別ID:16最終更新者を追加
+
+exec
+/bin/bash -lc 'ls -l /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results | tail -20 && for f in /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_0{7,8}.json; do if [ -f "$f" ]; then jq '"'{packetId, count:(.results|length), summary:(.results|group_by(.docWork)|map({work:.[0].docWork,count:length,days:(map(.docEffortDays)|add)})), sample:(.results[0:3])}' \""'$f"; fi; done' in /home/y-saito/Developments
+ succeeded in 1069ms:
+total 4684
+-rw-r--r-- 1 y-saito y-saito   14171 Aug  2 12:51 du_01.json
+-rw-r--r-- 1 y-saito y-saito  259812 Aug  2 12:52 du_01.log
+-rw-r--r-- 1 y-saito y-saito   14814 Aug  2 12:48 du_02.json
+-rw-r--r-- 1 y-saito y-saito  242462 Aug  2 12:48 du_02.log
+-rw-r--r-- 1 y-saito y-saito   14099 Aug  2 12:47 du_03.json
+-rw-r--r-- 1 y-saito y-saito  251348 Aug  2 12:47 du_03.log
+-rw-r--r-- 1 y-saito y-saito   15894 Aug  2 12:52 du_04.json
+-rw-r--r-- 1 y-saito y-saito  264473 Aug  2 12:53 du_04.log
+-rw-r--r-- 1 y-saito y-saito   14923 Aug  2 12:49 du_05.json
+-rw-r--r-- 1 y-saito y-saito  503678 Aug  2 12:49 du_05.log
+-rw-r--r-- 1 y-saito y-saito   16229 Aug  2 12:51 du_06.json
+-rw-r--r-- 1 y-saito y-saito 1684763 Aug  2 12:52 du_06.log
+-rw-r--r-- 1 y-saito y-saito   15639 Aug  2 12:54 du_07.json
+-rw-r--r-- 1 y-saito y-saito  222336 Aug  2 12:54 du_07.log
+-rw-r--r-- 1 y-saito y-saito  250666 Aug  2 12:54 du_08.log
+-rw-r--r-- 1 y-saito y-saito  154923 Aug  2 12:54 du_09.log
+-rw-r--r-- 1 y-saito y-saito  546501 Aug  2 12:54 du_10.log
+-rw-r--r-- 1 y-saito y-saito  120382 Aug  2 12:54 du_11.log
+-rw-r--r-- 1 y-saito y-saito  140267 Aug  2 12:54 du_12.log
+{
+  "packetId": "du_07",
+  "count": 28,
+  "summary": [
+    {
+      "work": "ADD",
+      "count": 4,
+      "days": 0.4
+    },
+    {
+      "work": "NONE",
+      "count": 23,
+      "days": 0
+    },
+    {
+      "work": "RESOLVE",
+      "count": 1,
+      "days": 0.25
+    }
+  ],
+  "sample": [
+    {
+      "rowId": 201,
+      "docWork": "NONE",
+      "docEffortDays": 0,
+      "target": "0406_基本設計仕様書(バッチ_店頭買取管理) .xlsx / 【新規】買取自動入庫バッチ シート / 入庫対象ステータスの記述",
+      "reason": "正本には店頭買取の入庫待ちをステータス12、ネット買取の入庫待ちをステータス16として明記済みである。SPEC_BACKEDのため、正本は変更せず実装側の乖離として扱う。",
+      "sharedWithRows": [],
+      "confidence": "high"
+    },
+    {
+      "rowId": 202,
+      "docWork": "NONE",
+      "docEffortDays": 0,
+      "target": "0406_基本設計仕様書(バッチ_店頭買取管理) .xlsx / 【新規】買取自動入庫バッチ シート / ECCUBE在庫への登録処理",
+      "reason": "正本には店頭買取を買取店舗のECCUBE在庫へ、ネット買取を本店のECCUBE在庫へ登録する処理が記載済みである。実装の在庫場所絞り込み不足に対する設計書編集は不要。",
+      "sharedWithRows": [],
+      "confidence": "high"
+    },
+    {
+      "rowId": 2,
+      "docWork": "NONE",
+      "docEffortDays": 0,
+      "target": "0501_基本設計仕様書(API_在庫管理).xlsx / スマレジ連携処理 シート / 在庫編集・一括編集の処理概要",
+      "reason": "スマレジ在庫への反映、実行件数上限、超過時のエラーとCSV登録誘導、閾値による個別・一括APIの使い分けが正本に記載済みである。SPEC_BACKEDのため変更しない。",
+      "sharedWithRows": [],
+      "confidence": "high"
+    }
+  ]
+}
+
+exec
+/bin/bash -lc "mkdir -p /tmp/du09_image_check && unzip -jo 'input/0202_基本設計仕様書(在庫管理機能).xlsx' xl/media/image89.png -d /tmp/du09_image_check" in /home/y-saito/Developments/hareruya-design-docs/excel_to_html
+ succeeded in 476ms:
+Archive:  input/0202_基本設計仕様書(在庫管理機能).xlsx
+ extracting: /tmp/du09_image_check/image89.png  
+
+codex
+正本 Excel の該当セルを全件照合しました。SPEC_BACKED 27件はいずれも要求が明記済みで編集不要です。row 500 は画面下部の項目表に0件時文言を1行追加すれば足り、貼付画像はデータあり状態の一覧なので差し替え不要と判断しました。
+apply patch
+patch: completed
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_09.json
+diff --git a/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_09.json b/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_09.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..bac0c7cac719ba936245ab27a16022cc206932c3
+--- /dev/null
++++ b/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_09.json
+@@ -0,0 +1,257 @@
++{
++  "packetId": "du_09",
++  "results": [
++    {
++      "rowId": 466,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫分割結合検索一覧(検索・結果) シート / 画面項目表のステータス行（E137・AG137）",
++      "reason": "分割・結合ごとの選択肢と文言「入庫完了」が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 467,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫分割結合検索一覧(検索・結果) シート / 画面項目表の検索条件をクリア行（E145・AG145）",
++      "reason": "ボタンであることと、押下時に3-1〜3-4を空にする対象範囲が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 468,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫分割結合検索一覧(検索・結果) シート / 画面項目表の検索対象行（E131・Z131・AG131）",
++      "reason": "商品名・商品コード検索対象の初期値「分割元・結合先」が正本の初期値欄に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 469,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫分割結合登録編集（分割）シート / CSV登録モーダルのエラー表示説明（E219）",
++      "reason": "固定文言「エラーは20件まで表示されます」と、その表示位置が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 470,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫分割結合登録編集（分割）シート / 処理概要と仕入総価格説明（D241・D249・M270）",
++      "reason": "承認申請時に仕入総価格を計算し分割先商品情報へ登録する処理と計算時点が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 471,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫分割結合登録編集（分割）シート / 分割点数・分割先在庫数の画面部品説明（AG280・AG291）",
++      "reason": "分割先在庫数の変更時およびフォーカスアウト時に分割点数を再集計する要件が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 472,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫分割結合登録編集（分割）シート / フッターリンクの画面部品説明（AG300）",
++      "reason": "検索状態を維持して在庫分割・結合検索一覧へ遷移する要件が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 473,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫分割結合登録編集（分割）シート / CSV登録・雛形説明と登録CSV項目表（AG336・AG337・E342）",
++      "reason": "CSV第2列「分割先分割在庫数」、カラム名一致チェック、雛形の列構成が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 474,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫分割結合登録編集（結合) シート / 結合数の画面項目行（E137・T137・V137・AG137）",
++      "reason": "結合数の必須、範囲1〜99999999、在庫数超過時エラーが正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 475,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫分割結合登録編集（結合) シート / ステータスの画面項目行（E119・AG119）",
++      "reason": "基本情報ステータスの7候補が正本に列挙済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 476,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫分割結合登録編集（結合) シート / 承認通知先の所属・メンバー説明（AG484・AG485）",
++      "reason": "承認通知先の所属とメンバーが店舗間移動時に必須となる条件が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 477,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫分割結合登録編集（結合) シート / CSV登録上限の処理説明（E242）",
++      "reason": "結合元商品CSVの登録上限10,000件が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 478,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫分割結合登録編集（結合) シート / 結合元在庫数の画面部品説明（AG313）",
++      "reason": "結合元在庫数は0を許容し、0入力時に商品行を削除する要件が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 480,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫履歴検索一覧(検索入力) シート / 在庫増減数from・toの画面項目行（F124・F125・X124・X125）",
++      "reason": "在庫増減数from・toの範囲「-99999999〜99999999」が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 481,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫履歴検索一覧(検索入力) シート / 店舗の初期値欄（F107・AC107）",
++      "reason": "店舗の初期値「ログインしているメンバーのデフォルト検索表示店舗」が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 482,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫履歴検索一覧(検索入力) シート / 登録日(from)の初期値欄（F110・AC110）",
++      "reason": "登録日(from)の初期値「ページを表示した日の月の1日」が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 483,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫履歴検索一覧(検索入力) シート / 公開種別の初期値欄（F115・AC115）",
++      "reason": "公開種別の初期値「公開」が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 484,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫履歴検索一覧(検索入力) シート / 状態の初期値欄（F119・AC119）",
++      "reason": "状態の初期値「NM」が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 485,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫履歴検索一覧(検索入力) シート / 欠品検索の画面部品説明（F113・AK113）",
++      "reason": "欠品検索の選択・解除に連動する値設定、非活性化、クリア、欠品理由の活性制御が正本に具体的に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 487,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫履歴検索一覧(検索結果) シート / 承認者の画面部品説明（AG160）",
++      "reason": "承認者名、「承認待ち」、「-」の3状態と条件が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 488,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫履歴検索一覧(検索結果) シート / 仕入単価の画面項目行（E151・AG151）",
++      "reason": "仕入単価の参照元と、値がない場合に「-」を表示する要件が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 496,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 欠品履歴検索一覧(検索結果) シート / 処理概要の検索対象条件（D44）",
++      "reason": "廃棄の親区分と欠品減算（受注・移動）の子区分を検索対象とする要件が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 497,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 欠品履歴検索一覧(検索結果) シート / 処理概要の第三ソート条件（E49）",
++      "reason": "第三ソートを登録日時の降順とする要件が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 501,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 欠品履歴検索一覧(検索結果) シート / 在庫区分の追加説明と画面項目行（E57・E77・AG77）",
++      "reason": "識別ID2-7の項目名「在庫区分」と参照元が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 498,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 欠品履歴検索一覧(検索結果) シート / 商品名リンクの画面部品説明（E72・AG72）",
++      "reason": "商品名押下時に対象商品の在庫編集画面を別タブ表示する要件が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 499,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 欠品履歴検索一覧(検索結果) シート / 欠品時販売価格の画面項目行（E81・AG81）",
++      "reason": "欠品登録時の販売価格を表示し、受注・移動情報で保持する販売価格を参照する要件が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 500,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 欠品履歴検索一覧(検索結果) シート / 画面下部の画面項目表（B87以降、ページング行 E88 の次）",
++      "reason": "LEGACY_BACKEDで正本には0件時見出しの記載がないため、画面下部の項目表へ「検索条件に該当するデータがありませんでした。」と0件時の表示条件を1行追記する。貼付レイアウト画像はデータありの一覧状態であり、0件時の代替状態は表の条件記述で扱えるため画像差し替えは不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 502,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 欠品履歴CSV出力 シート / CSV出力項目表と追加項目説明（E7:E23・D38:D46）",
++      "reason": "16列のCSV項目表に7列目「在庫区分」と9列目「登録元ID」が明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    }
++  ]
++}
+
+diff --git a/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_09.json b/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_09.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..bac0c7cac719ba936245ab27a16022cc206932c3
+--- /dev/null
++++ b/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_09.json
+@@ -0,0 +1,257 @@
++{
++  "packetId": "du_09",
++  "results": [
++    {
++      "rowId": 466,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫分割結合検索一覧(検索・結果) シート / 画面項目表のステータス行（E137・AG137）",
++      "reason": "分割・結合ごとの選択肢と文言「入庫完了」が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 467,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫分割結合検索一覧(検索・結果) シート / 画面項目表の検索条件をクリア行（E145・AG145）",
++      "reason": "ボタンであることと、押下時に3-1〜3-4を空にする対象範囲が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 468,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫分割結合検索一覧(検索・結果) シート / 画面項目表の検索対象行（E131・Z131・AG131）",
++      "reason": "商品名・商品コード検索対象の初期値「分割元・結合先」が正本の初期値欄に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 469,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫分割結合登録編集（分割）シート / CSV登録モーダルのエラー表示説明（E219）",
++      "reason": "固定文言「エラーは20件まで表示されます」と、その表示位置が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 470,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫分割結合登録編集（分割）シート / 処理概要と仕入総価格説明（D241・D249・M270）",
++      "reason": "承認申請時に仕入総価格を計算し分割先商品情報へ登録する処理と計算時点が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 471,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫分割結合登録編集（分割）シート / 分割点数・分割先在庫数の画面部品説明（AG280・AG291）",
++      "reason": "分割先在庫数の変更時およびフォーカスアウト時に分割点数を再集計する要件が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 472,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫分割結合登録編集（分割）シート / フッターリンクの画面部品説明（AG300）",
++      "reason": "検索状態を維持して在庫分割・結合検索一覧へ遷移する要件が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 473,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫分割結合登録編集（分割）シート / CSV登録・雛形説明と登録CSV項目表（AG336・AG337・E342）",
++      "reason": "CSV第2列「分割先分割在庫数」、カラム名一致チェック、雛形の列構成が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 474,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫分割結合登録編集（結合) シート / 結合数の画面項目行（E137・T137・V137・AG137）",
++      "reason": "結合数の必須、範囲1〜99999999、在庫数超過時エラーが正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 475,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫分割結合登録編集（結合) シート / ステータスの画面項目行（E119・AG119）",
++      "reason": "基本情報ステータスの7候補が正本に列挙済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 476,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫分割結合登録編集（結合) シート / 承認通知先の所属・メンバー説明（AG484・AG485）",
++      "reason": "承認通知先の所属とメンバーが店舗間移動時に必須となる条件が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 477,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫分割結合登録編集（結合) シート / CSV登録上限の処理説明（E242）",
++      "reason": "結合元商品CSVの登録上限10,000件が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 478,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫分割結合登録編集（結合) シート / 結合元在庫数の画面部品説明（AG313）",
++      "reason": "結合元在庫数は0を許容し、0入力時に商品行を削除する要件が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 480,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫履歴検索一覧(検索入力) シート / 在庫増減数from・toの画面項目行（F124・F125・X124・X125）",
++      "reason": "在庫増減数from・toの範囲「-99999999〜99999999」が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 481,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫履歴検索一覧(検索入力) シート / 店舗の初期値欄（F107・AC107）",
++      "reason": "店舗の初期値「ログインしているメンバーのデフォルト検索表示店舗」が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 482,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫履歴検索一覧(検索入力) シート / 登録日(from)の初期値欄（F110・AC110）",
++      "reason": "登録日(from)の初期値「ページを表示した日の月の1日」が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 483,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫履歴検索一覧(検索入力) シート / 公開種別の初期値欄（F115・AC115）",
++      "reason": "公開種別の初期値「公開」が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 484,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫履歴検索一覧(検索入力) シート / 状態の初期値欄（F119・AC119）",
++      "reason": "状態の初期値「NM」が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 485,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫履歴検索一覧(検索入力) シート / 欠品検索の画面部品説明（F113・AK113）",
++      "reason": "欠品検索の選択・解除に連動する値設定、非活性化、クリア、欠品理由の活性制御が正本に具体的に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 487,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫履歴検索一覧(検索結果) シート / 承認者の画面部品説明（AG160）",
++      "reason": "承認者名、「承認待ち」、「-」の3状態と条件が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 488,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫履歴検索一覧(検索結果) シート / 仕入単価の画面項目行（E151・AG151）",
++      "reason": "仕入単価の参照元と、値がない場合に「-」を表示する要件が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 496,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 欠品履歴検索一覧(検索結果) シート / 処理概要の検索対象条件（D44）",
++      "reason": "廃棄の親区分と欠品減算（受注・移動）の子区分を検索対象とする要件が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 497,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 欠品履歴検索一覧(検索結果) シート / 処理概要の第三ソート条件（E49）",
++      "reason": "第三ソートを登録日時の降順とする要件が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 501,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 欠品履歴検索一覧(検索結果) シート / 在庫区分の追加説明と画面項目行（E57・E77・AG77）",
++      "reason": "識別ID2-7の項目名「在庫区分」と参照元が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 498,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 欠品履歴検索一覧(検索結果) シート / 商品名リンクの画面部品説明（E72・AG72）",
++      "reason": "商品名押下時に対象商品の在庫編集画面を別タブ表示する要件が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 499,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 欠品履歴検索一覧(検索結果) シート / 欠品時販売価格の画面項目行（E81・AG81）",
++      "reason": "欠品登録時の販売価格を表示し、受注・移動情報で保持する販売価格を参照する要件が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 500,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 欠品履歴検索一覧(検索結果) シート / 画面下部の画面項目表（B87以降、ページング行 E88 の次）",
++      "reason": "LEGACY_BACKEDで正本には0件時見出しの記載がないため、画面下部の項目表へ「検索条件に該当するデータがありませんでした。」と0件時の表示条件を1行追記する。貼付レイアウト画像はデータありの一覧状態であり、0件時の代替状態は表の条件記述で扱えるため画像差し替えは不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 502,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 欠品履歴CSV出力 シート / CSV出力項目表と追加項目説明（E7:E23・D38:D46）",
++      "reason": "16列のCSV項目表に7列目「在庫区分」と9列目「登録元ID」が明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    }
++  ]
++}
+
+exec
+/bin/bash -lc "python3 -m json.tool /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_09.json >/dev/null && jq '{packetId, count:(.results|length), counts:(.results|group_by(.docWork)|map({work:.[0].docWork,count:length,days:(map(.docEffortDays)|add)})), totalDays:(.results|map(.docEffortDays)|add), duplicateRows:([.results[].rowId]|group_by(.)|map(select(length>1)|.[0]))}' /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_09.json && diff -u <(jq -S '[.findings[].rowId]' /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_packets/du_09.json) <(jq -S '[.results[].rowId]' /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_09.json)" in /home/y-saito/Developments
+ succeeded in 3698ms:
+{
+  "packetId": "du_09",
+  "count": 28,
+  "counts": [
+    {
+      "work": "ADD",
+      "count": 1,
+      "days": 0.1
+    },
+    {
+      "work": "NONE",
+      "count": 27,
+      "days": 0
+    }
+  ],
+  "totalDays": 0.1,
+  "duplicateRows": []
+}
+
+diff --git a/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_09.json b/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_09.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..bac0c7cac719ba936245ab27a16022cc206932c3
+--- /dev/null
++++ b/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_09.json
+@@ -0,0 +1,257 @@
++{
++  "packetId": "du_09",
++  "results": [
++    {
++      "rowId": 466,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫分割結合検索一覧(検索・結果) シート / 画面項目表のステータス行（E137・AG137）",
++      "reason": "分割・結合ごとの選択肢と文言「入庫完了」が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 467,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫分割結合検索一覧(検索・結果) シート / 画面項目表の検索条件をクリア行（E145・AG145）",
++      "reason": "ボタンであることと、押下時に3-1〜3-4を空にする対象範囲が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 468,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫分割結合検索一覧(検索・結果) シート / 画面項目表の検索対象行（E131・Z131・AG131）",
++      "reason": "商品名・商品コード検索対象の初期値「分割元・結合先」が正本の初期値欄に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 469,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫分割結合登録編集（分割）シート / CSV登録モーダルのエラー表示説明（E219）",
++      "reason": "固定文言「エラーは20件まで表示されます」と、その表示位置が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 470,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫分割結合登録編集（分割）シート / 処理概要と仕入総価格説明（D241・D249・M270）",
++      "reason": "承認申請時に仕入総価格を計算し分割先商品情報へ登録する処理と計算時点が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 471,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫分割結合登録編集（分割）シート / 分割点数・分割先在庫数の画面部品説明（AG280・AG291）",
++      "reason": "分割先在庫数の変更時およびフォーカスアウト時に分割点数を再集計する要件が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 472,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫分割結合登録編集（分割）シート / フッターリンクの画面部品説明（AG300）",
++      "reason": "検索状態を維持して在庫分割・結合検索一覧へ遷移する要件が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 473,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫分割結合登録編集（分割）シート / CSV登録・雛形説明と登録CSV項目表（AG336・AG337・E342）",
++      "reason": "CSV第2列「分割先分割在庫数」、カラム名一致チェック、雛形の列構成が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 474,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫分割結合登録編集（結合) シート / 結合数の画面項目行（E137・T137・V137・AG137）",
++      "reason": "結合数の必須、範囲1〜99999999、在庫数超過時エラーが正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 475,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫分割結合登録編集（結合) シート / ステータスの画面項目行（E119・AG119）",
++      "reason": "基本情報ステータスの7候補が正本に列挙済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 476,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫分割結合登録編集（結合) シート / 承認通知先の所属・メンバー説明（AG484・AG485）",
++      "reason": "承認通知先の所属とメンバーが店舗間移動時に必須となる条件が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 477,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫分割結合登録編集（結合) シート / CSV登録上限の処理説明（E242）",
++      "reason": "結合元商品CSVの登録上限10,000件が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 478,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫分割結合登録編集（結合) シート / 結合元在庫数の画面部品説明（AG313）",
++      "reason": "結合元在庫数は0を許容し、0入力時に商品行を削除する要件が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 480,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫履歴検索一覧(検索入力) シート / 在庫増減数from・toの画面項目行（F124・F125・X124・X125）",
++      "reason": "在庫増減数from・toの範囲「-99999999〜99999999」が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 481,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫履歴検索一覧(検索入力) シート / 店舗の初期値欄（F107・AC107）",
++      "reason": "店舗の初期値「ログインしているメンバーのデフォルト検索表示店舗」が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 482,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫履歴検索一覧(検索入力) シート / 登録日(from)の初期値欄（F110・AC110）",
++      "reason": "登録日(from)の初期値「ページを表示した日の月の1日」が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 483,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫履歴検索一覧(検索入力) シート / 公開種別の初期値欄（F115・AC115）",
++      "reason": "公開種別の初期値「公開」が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 484,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫履歴検索一覧(検索入力) シート / 状態の初期値欄（F119・AC119）",
++      "reason": "状態の初期値「NM」が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 485,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫履歴検索一覧(検索入力) シート / 欠品検索の画面部品説明（F113・AK113）",
++      "reason": "欠品検索の選択・解除に連動する値設定、非活性化、クリア、欠品理由の活性制御が正本に具体的に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 487,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫履歴検索一覧(検索結果) シート / 承認者の画面部品説明（AG160）",
++      "reason": "承認者名、「承認待ち」、「-」の3状態と条件が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 488,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫履歴検索一覧(検索結果) シート / 仕入単価の画面項目行（E151・AG151）",
++      "reason": "仕入単価の参照元と、値がない場合に「-」を表示する要件が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 496,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 欠品履歴検索一覧(検索結果) シート / 処理概要の検索対象条件（D44）",
++      "reason": "廃棄の親区分と欠品減算（受注・移動）の子区分を検索対象とする要件が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 497,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 欠品履歴検索一覧(検索結果) シート / 処理概要の第三ソート条件（E49）",
++      "reason": "第三ソートを登録日時の降順とする要件が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 501,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 欠品履歴検索一覧(検索結果) シート / 在庫区分の追加説明と画面項目行（E57・E77・AG77）",
++      "reason": "識別ID2-7の項目名「在庫区分」と参照元が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 498,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 欠品履歴検索一覧(検索結果) シート / 商品名リンクの画面部品説明（E72・AG72）",
++      "reason": "商品名押下時に対象商品の在庫編集画面を別タブ表示する要件が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 499,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 欠品履歴検索一覧(検索結果) シート / 欠品時販売価格の画面項目行（E81・AG81）",
++      "reason": "欠品登録時の販売価格を表示し、受注・移動情報で保持する販売価格を参照する要件が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 500,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 欠品履歴検索一覧(検索結果) シート / 画面下部の画面項目表（B87以降、ページング行 E88 の次）",
++      "reason": "LEGACY_BACKEDで正本には0件時見出しの記載がないため、画面下部の項目表へ「検索条件に該当するデータがありませんでした。」と0件時の表示条件を1行追記する。貼付レイアウト画像はデータありの一覧状態であり、0件時の代替状態は表の条件記述で扱えるため画像差し替えは不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 502,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 欠品履歴CSV出力 シート / CSV出力項目表と追加項目説明（E7:E23・D38:D46）",
++      "reason": "16列のCSV項目表に7列目「在庫区分」と9列目「登録元ID」が明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    }
++  ]
++}
+
+codex
+28件: NONE=27 ADD=1 FIX=0 IMAGE=0 / 計 0.1人日
+diff --git a/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_09.json b/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_09.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..bac0c7cac719ba936245ab27a16022cc206932c3
+--- /dev/null
++++ b/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_09.json
+@@ -0,0 +1,257 @@
++{
++  "packetId": "du_09",
++  "results": [
++    {
++      "rowId": 466,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫分割結合検索一覧(検索・結果) シート / 画面項目表のステータス行（E137・AG137）",
++      "reason": "分割・結合ごとの選択肢と文言「入庫完了」が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 467,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫分割結合検索一覧(検索・結果) シート / 画面項目表の検索条件をクリア行（E145・AG145）",
++      "reason": "ボタンであることと、押下時に3-1〜3-4を空にする対象範囲が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 468,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫分割結合検索一覧(検索・結果) シート / 画面項目表の検索対象行（E131・Z131・AG131）",
++      "reason": "商品名・商品コード検索対象の初期値「分割元・結合先」が正本の初期値欄に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 469,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫分割結合登録編集（分割）シート / CSV登録モーダルのエラー表示説明（E219）",
++      "reason": "固定文言「エラーは20件まで表示されます」と、その表示位置が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 470,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫分割結合登録編集（分割）シート / 処理概要と仕入総価格説明（D241・D249・M270）",
++      "reason": "承認申請時に仕入総価格を計算し分割先商品情報へ登録する処理と計算時点が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 471,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫分割結合登録編集（分割）シート / 分割点数・分割先在庫数の画面部品説明（AG280・AG291）",
++      "reason": "分割先在庫数の変更時およびフォーカスアウト時に分割点数を再集計する要件が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 472,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫分割結合登録編集（分割）シート / フッターリンクの画面部品説明（AG300）",
++      "reason": "検索状態を維持して在庫分割・結合検索一覧へ遷移する要件が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 473,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫分割結合登録編集（分割）シート / CSV登録・雛形説明と登録CSV項目表（AG336・AG337・E342）",
++      "reason": "CSV第2列「分割先分割在庫数」、カラム名一致チェック、雛形の列構成が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 474,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫分割結合登録編集（結合) シート / 結合数の画面項目行（E137・T137・V137・AG137）",
++      "reason": "結合数の必須、範囲1〜99999999、在庫数超過時エラーが正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 475,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫分割結合登録編集（結合) シート / ステータスの画面項目行（E119・AG119）",
++      "reason": "基本情報ステータスの7候補が正本に列挙済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 476,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫分割結合登録編集（結合) シート / 承認通知先の所属・メンバー説明（AG484・AG485）",
++      "reason": "承認通知先の所属とメンバーが店舗間移動時に必須となる条件が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 477,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫分割結合登録編集（結合) シート / CSV登録上限の処理説明（E242）",
++      "reason": "結合元商品CSVの登録上限10,000件が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 478,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫分割結合登録編集（結合) シート / 結合元在庫数の画面部品説明（AG313）",
++      "reason": "結合元在庫数は0を許容し、0入力時に商品行を削除する要件が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 480,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫履歴検索一覧(検索入力) シート / 在庫増減数from・toの画面項目行（F124・F125・X124・X125）",
++      "reason": "在庫増減数from・toの範囲「-99999999〜99999999」が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 481,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫履歴検索一覧(検索入力) シート / 店舗の初期値欄（F107・AC107）",
++      "reason": "店舗の初期値「ログインしているメンバーのデフォルト検索表示店舗」が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 482,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫履歴検索一覧(検索入力) シート / 登録日(from)の初期値欄（F110・AC110）",
++      "reason": "登録日(from)の初期値「ページを表示した日の月の1日」が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 483,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫履歴検索一覧(検索入力) シート / 公開種別の初期値欄（F115・AC115）",
++      "reason": "公開種別の初期値「公開」が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 484,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫履歴検索一覧(検索入力) シート / 状態の初期値欄（F119・AC119）",
++      "reason": "状態の初期値「NM」が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 485,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫履歴検索一覧(検索入力) シート / 欠品検索の画面部品説明（F113・AK113）",
++      "reason": "欠品検索の選択・解除に連動する値設定、非活性化、クリア、欠品理由の活性制御が正本に具体的に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 487,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫履歴検索一覧(検索結果) シート / 承認者の画面部品説明（AG160）",
++      "reason": "承認者名、「承認待ち」、「-」の3状態と条件が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 488,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫履歴検索一覧(検索結果) シート / 仕入単価の画面項目行（E151・AG151）",
++      "reason": "仕入単価の参照元と、値がない場合に「-」を表示する要件が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 496,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 欠品履歴検索一覧(検索結果) シート / 処理概要の検索対象条件（D44）",
++      "reason": "廃棄の親区分と欠品減算（受注・移動）の子区分を検索対象とする要件が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 497,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 欠品履歴検索一覧(検索結果) シート / 処理概要の第三ソート条件（E49）",
++      "reason": "第三ソートを登録日時の降順とする要件が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 501,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 欠品履歴検索一覧(検索結果) シート / 在庫区分の追加説明と画面項目行（E57・E77・AG77）",
++      "reason": "識別ID2-7の項目名「在庫区分」と参照元が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 498,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 欠品履歴検索一覧(検索結果) シート / 商品名リンクの画面部品説明（E72・AG72）",
++      "reason": "商品名押下時に対象商品の在庫編集画面を別タブ表示する要件が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 499,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 欠品履歴検索一覧(検索結果) シート / 欠品時販売価格の画面項目行（E81・AG81）",
++      "reason": "欠品登録時の販売価格を表示し、受注・移動情報で保持する販売価格を参照する要件が正本に明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 500,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 欠品履歴検索一覧(検索結果) シート / 画面下部の画面項目表（B87以降、ページング行 E88 の次）",
++      "reason": "LEGACY_BACKEDで正本には0件時見出しの記載がないため、画面下部の項目表へ「検索条件に該当するデータがありませんでした。」と0件時の表示条件を1行追記する。貼付レイアウト画像はデータありの一覧状態であり、0件時の代替状態は表の条件記述で扱えるため画像差し替えは不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 502,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 欠品履歴CSV出力 シート / CSV出力項目表と追加項目説明（E7:E23・D38:D46）",
++      "reason": "16列のCSV項目表に7列目「在庫区分」と9列目「登録元ID」が明記済みである。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    }
++  ]
++}
+
+tokens used
+85,488
+28件: NONE=27 ADD=1 FIX=0 IMAGE=0 / 計 0.1人日

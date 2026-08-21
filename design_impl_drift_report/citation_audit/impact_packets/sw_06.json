@@ -1,0 +1,331 @@
+{
+ "packetId": "sw_06",
+ "mode": "sweep",
+ "note": "著者はこれらの大半を IMPACT(外部から観測できる) と判定した。見落とし＝実は NO_IMPACT な行が無いかを独立に判定すること。",
+ "findings": [
+  {
+   "rowId": 181,
+   "機能No": "B05-03",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "コンソールのバッチコマンド `order:batch truncateWaitingNumber` で店頭注文番号初期化を実行し、コマンド名が一致しない場合は処理を行わずに終了する。",
+   "差分内容": "設計は利用者視点の入口として `order:batch truncateWaitingNumber` を外部契約化しているが、実装の `#[AsCommand]` 登録名は別名である。反証検索として `order:batch truncateWaitingNumber`、`truncateWaitingNumber`、`truncate-waiting-number`、`setAliases`、`aliases` を `src/Eccube`、`app`、`html` で確認したが、設計コマンド名または alias は不在。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/TruncateWaitingNumberCommand.php:25"
+  },
+  {
+   "rowId": 182,
+   "機能No": "B05-03",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "削除と採番カウンタ初期化は1トランザクションでまとめた更新ではなく、それぞれ独立した文として実行する。削除のみ成功してカウンタ初期化前に中断した場合でも、再実行で空テーブル・カウンタ1に収束する。",
+   "差分内容": "設計は削除とカウンタ初期化を1トランザクションにまとめないことを明記しているが、実装は `beginTransaction()` から `commit()` までの1トランザクション内で両テーブル操作と再登録をまとめている。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Order/TruncateWaitingNumberAction.php:36"
+  },
+  {
+   "rowId": 183,
+   "機能No": "B05-03",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "削除またはカウンタ初期化の途中で例外が発生した場合は処理が中断する。本バッチは例外捕捉や通知を行わない。例外発生時はコンソールへ例外が伝播する。",
+   "差分内容": "設計は例外を捕捉せずコンソールへ伝播するとしているが、実装は Command 層で Throwable を捕捉して終了コードへ変換している。対象 Command/Action/Repository を `catch`、`Throwable`、`error`、`通知`、`Mailer`、`MailService` で再検索し、設計どおりの非捕捉伝播経路は確認できない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/TruncateWaitingNumberCommand.php:40"
+  },
+  {
+   "rowId": 184,
+   "機能No": "B05-03",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "バッチコマンドの起動時に日時付きのコンソール出力を行う。本バッチ独自の件数ログ・完了ログは出力しない。",
+   "差分内容": "設計は起動ログに日時を含め、完了ログは出さないとしている。実装は起動ログに日時を含まず、かつ成功時の完了ログを出力している。`date(`、`DateTime`、`format(`、起動/完了文言を対象ファイルで再検索しても日時付与処理は確認できない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/TruncateWaitingNumberCommand.php:38"
+  },
+  {
+   "rowId": 185,
+   "機能No": "B05-05",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "コンソールのバッチコマンドは order:batch deleteSmaregiProduct で実行し、手続きが完了した店頭注文をスマレジ商品から削除する。コマンド名が一致しない場合は処理を行わずに終了する。",
+   "差分内容": "設計の利用者視点の入口は order:batch deleteSmaregiProduct を外部契約としているが、実装の起動名が異なるため、設計どおりのコマンド名では本バッチに到達しない。反証として order:batch / deleteSmaregiProduct / SmaregiOtcDeleteCommand / AsCommand を検索したが、該当する別名・エイリアス実装は不在。",
+   "実装参照": "src/Eccube/Command/SmaregiOtcDeleteCommand.php:39"
+  },
+  {
+   "rowId": 186,
+   "機能No": "B05-05",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "連携に失敗した場合はスマレジ通信エラーメールを送信し、エラーが発生したスマレジ連携ごとにメールで管理者に通知する。",
+   "差分内容": "設計はスマレジ連携ごとの管理者メール通知を要求しているが、実装はログ出力とジョブ失敗状態の永続化に留まる。反証として 通信エラーメール / スマレジ通信エラー / 管理者に通知 / send*Smaregi / Smaregi*Mail / MailService / mailer->send を関連範囲で検索したが、B05-05 の失敗経路からメール送信へ到達するコードは不在。",
+   "実装参照": "不在（探索範囲: src/Eccube/Command, src/Eccube/MessageHandler, src/Eccube/Service/Smaregi, src/Eccube/Service/MailService.php, src/Eccube/Resource。関連実装は src/Eccube/Ser"
+  },
+  {
+   "rowId": 187,
+   "機能No": "B05-05",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "本バッチは削除連携が主であり、楽観ロック・悲観ロックの対象は持たない。",
+   "差分内容": "設計は本バッチが楽観ロック・悲観ロックの対象を持たないと明記しているが、実装は MessengerJob に対して処理ロックを使用する。反証として B05-05 の Command/Dispatcher/MessageHandler/Service を確認し、該当ロックは削除メッセージ処理の本線に存在する。",
+   "実装参照": "src/Eccube/MessageHandler/SmaregiOtcDeleteMessageHandler.php:35, src/Eccube/MessageHandler/SmaregiOtcDeleteMessageHandler.php:45, src/Eccube/MessageHandler/Smar"
+  },
+  {
+   "rowId": 188,
+   "機能No": "B05-06",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "コンソールのバッチコマンドは `order:batch checkDuplicatePoint` として実行する。",
+   "差分内容": "設計は利用者視点の入口として `order:batch checkDuplicatePoint` を指定しているが、実装入口は `#[AsCommand(name: 'eccube:check-duplicate-point')]` のため、設計通りのコマンド名では起動できない。",
+   "実装参照": "src/Eccube/Command/CheckDuplicatePointCommand.php:34 / 不在（探索範囲: src/Eccube/Command, src/Eccube, html; 検索語: order:batch, checkDuplicatePoint, eccube:check-duplic"
+  },
+  {
+   "rowId": 189,
+   "機能No": "B05-06",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "取得・送信時のエラーはエラーメッセージをコンソールに出力する。",
+   "差分内容": "取得エラーはコンソール出力され得る一方、送信時エラーは MailService 内でログ化されるだけで Command に伝播せず、設計が求めるコンソールへのエラーメッセージ出力にならない。",
+   "実装参照": "src/Eccube/Command/CheckDuplicatePointCommand.php:50; src/Eccube/Service/MailService.php:2266"
+  },
+  {
+   "rowId": 190,
+   "機能No": "B05-07",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "コンソールのバッチコマンドは `order:batch checkNotReflectedPointUsage` でポイント利用未反映チェックを実行する。",
+   "差分内容": "設計は利用者視点の入口として `order:batch checkNotReflectedPointUsage` を外部契約にしているが、実装の `AsCommand` は別名 `eccube:check-not-reflected-point-usage` で登録されているため、設計コマンド名では起動できない。",
+   "実装参照": "src/Eccube/Command/CheckNotReflectedPointUsageCommand.php:35（不在探索: src/Eccube, html; 検索語: order:batch / checkNotReflectedPointUsage / check-not-reflected-point-"
+  },
+  {
+   "rowId": 191,
+   "機能No": "B05-08",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "コンソールのバッチコマンド `smaregi:batch checkSmaregiErrorOrder` で、スマレジ連携エラーのEC受注について会員ポイントの連携をリトライし、成否で状態を更新する。",
+   "差分内容": "`src/Eccube/Command/SmaregiUpdatePointCommand.php:26` は `#[AsCommand(name: 'eccube:smaregi:update-point')]` で、`src/Eccube/Command` 配下に `smaregi:batch checkSmaregiErrorOrder` または同等のエラー受注再連携コマンドがない。",
+   "実装参照": "不在（探索範囲: src/Eccube/Command, src/Eccube/Service, src/Eccube/Repository, src/Eccube/Message, src/Eccube/MessageHandler。検索語: checkSmaregiErrorOrder, smaregi:batch"
+  },
+  {
+   "rowId": 192,
+   "機能No": "B05-08",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "スマレジ連携エラーのEC受注を取得し、受注ごとに会員のスマレジIDとポイントでスマレジポイント連携をリトライする。",
+   "差分内容": "`src/Eccube/Repository/OrderRepository.php:877` に抽出メソッドはあるが、`rg getSmaregiErrorOrder\\(` で利用箇所は定義のみ。`src/Eccube/Service/Smaregi/SmaregiUpdatePointAction.php:32` は `handle(int $orderId)` で単一受注を `find($orderId)` する実装。",
+   "実装参照": "不在（探索範囲: src/Eccube/Command, src/Eccube/Service, src/Eccube/Repository, src/Eccube/MessageHandler。検索語: getSmaregiErrorOrder, smaregi_error_flg, SmaregiUpdatePoi"
+  },
+  {
+   "rowId": 193,
+   "機能No": "B05-08",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "連携が成功した場合は受注サブ（移行先では `dtb_order`）のスマレジ連携エラーフラグを解除する。",
+   "差分内容": "`SmaregiUpdatePointAction.php:71-72` は `array_key_exists('result', $response)` の場合にそのまま `return` する。`setSmaregiErrorFlg(true)` は同ファイル57-58行、75-76行にあるが、成功時解除処理がない。",
+   "実装参照": "src/Eccube/Service/Smaregi/SmaregiUpdatePointAction.php:71"
+  },
+  {
+   "rowId": 194,
+   "機能No": "B05-08",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "ユーザーのポイント数は絶対値で更新を行う。取得したユーザーのスマレジIDとポイント残高を使ってスマレジ連携を行う。",
+   "差分内容": "設計はユーザーのポイント残高を取得し絶対値で更新する要求。実装は `src/Eccube/Service/Smaregi/SmaregiUpdatePointAction.php:39` の使用ポイントを、同54行で負数として送信する差分連携である。",
+   "実装参照": "src/Eccube/Service/Smaregi/SmaregiUpdatePointAction.php:39"
+  },
+  {
+   "rowId": 195,
+   "機能No": "B05-08",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "リクエスト数の上限に配慮し、受注ごとに短いインターバルを挟む。1秒あたりのリクエスト上限を超えないよう受注ごとにインターバルを挟む。",
+   "差分内容": "B05-08のバッチ本体が存在せず、抽出受注をループして `sleep`/`usleep` 等で待機する実装もない。`src/Eccube/Service/Smaregi/Api/SmaregiGuzzleClientFactory.php:90-94` の共通RateLimiterは見つかったが、未実装のB05-08再連携フローに組み込まれた受注ごとのインターバルではない。",
+   "実装参照": "不在（探索範囲: src/Eccube/Command, src/Eccube/Service/Smaregi, src/Eccube/MessageHandler。検索語: sleep, usleep, rate, interval, インターバル, 1秒, リクエスト上限）"
+  },
+  {
+   "rowId": 196,
+   "機能No": "B05-09",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "スマレジ取引連携エラー再連携は、コンソールのバッチコマンド `smaregi:batch checkSmaregiTransaction` から実行できること。",
+   "差分内容": "設計は利用者視点の入口として特定コマンド名を外部契約化している。実装側には当該コマンド名・別名・取引再連携を示すCommandクラスがなく、Webhook由来の子ジョブ処理だけではバッチ入口要求を満たさない。",
+   "実装参照": "不在（探索範囲: src/Eccube/Command, src/Eccube/Service, src/Eccube/MessageHandler, src/Eccube/Repository, src/Eccube/Entity, html。検索語: checkSmaregiTransaction / check_"
+  },
+  {
+   "rowId": 197,
+   "機能No": "B05-09",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "APIでバッチ駆動時間から5時間前まで、または手動実行時に指定された期間内のスマレジ取引データを取得すること。",
+   "差分内容": "設計は時間窓検索をバッチの入力データ検索条件として定義しているが、実装には期間パラメータの組み立て、手動期間指定の受け口、一覧取得結果の処理ループがない。単一transactionHeadIdを取得する `getTransaction()` は `SmaregiTransactionProcessMessageHandler.php:158` で使われるが、時間窓で未連携取引を発見する処理ではない。",
+   "実装参照": "不在（探索範囲: src/Eccube/Command, src/Eccube/Service/Smaregi, src/Eccube/MessageHandler, src/Eccube/Repository, html。検索語: listTransactions / transaction_list / pos/t"
+  },
+  {
+   "rowId": 198,
+   "機能No": "B05-09",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "Webhookが失敗した可能性のある取引について、ポイント処理不整合、ECCUBE側にスマレジ取引ID未登録、登録済み取引の返品・キャンセル等による更新日時差異を検知し、スマレジ受信処理(A05-04)と同等の処理が完了した状態にすること。",
+   "差分内容": "設計の再連携バッチはWebhook失敗時の救済処理であり、Webhookが届いていない/失敗した取引をAPI一覧から発見して処理する必要がある。実装はWebhookイベントまたは既存メッセージを前提にした処理で、失敗Webhookを発見する入口・条件判定が欠落している。",
+   "実装参照": "不在（探索範囲: src/Eccube/Command, src/Eccube/Service/Smaregi/Webhook, src/Eccube/MessageHandler, src/Eccube/Repository, src/Eccube/Entity, html。検索語: 未連携.*取引 / スマレジ取引"
+  },
+  {
+   "rowId": 199,
+   "機能No": "B05-09",
+   "指摘区分": "実装違い",
+   "authorVerdict": "UNSURE",
+   "設計期待値": "スマレジ接続設定（接続先URL・契約ID・アクセストークン等）はオプションマスタ `mtb_option` の `option_key`・`option_value` に保持し、API呼び出しに使用すること。",
+   "差分内容": "設計は接続設定の保持・利用元を `mtb_option` と明記している。実装は環境変数由来のDIパラメータを使用しており、設計のオプションマスタ契約と異なる。なお `mtb_option` に旧スマレジ設定を追加するmigrationや管理画面項目は存在するが、B05-09取引API呼び出し経路では参照されていない。",
+   "実装参照": "src/Eccube/MessageHandler/SmaregiTransactionProcessMessageHandler.php:93,151; app/config/eccube/services.yaml:27"
+  },
+  {
+   "rowId": 200,
+   "機能No": "B05-09",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "取引情報取得に失敗した場合は、失敗内容をログとコンソールに出力して異常終了（戻り値1）すること。取得結果が空の場合は正常終了すること。",
+   "差分内容": "設計の外部契約はコンソールバッチの終了仕様である。実装には該当Command自体がなく、ログは子ジョブ内に閉じており、コンソール出力や戻り値1を保証する処理が確認できない。",
+   "実装参照": "不在（探索範囲: src/Eccube/Command, src/Eccube/Service/Smaregi, src/Eccube/MessageHandler, html。検索語: checkSmaregiTransaction / Command::FAILURE / return 1 / 異常終了 / コンソ"
+  },
+  {
+   "rowId": 201,
+   "機能No": "B06-01",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "入庫待ちの店頭買取（ステータス12）・ネット買取（ステータス16）の買取情報を入庫済みへ更新する。",
+   "差分内容": "設計は店頭買取の入庫待ちをステータス12と明記しているが、実装ではステータス12は未登録在庫あり、入庫待ちは13として扱われる。反証として BatchAutoStockAction、DtbOtcBuyOrderRepository、MtbOtcBuyOrderStatus、MtbBuyOrderStatus を検索・確認したが、店頭買取ステータス12を入庫待ちとして自動入庫対象にする実装はなかった。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Entity/Master/MtbOtcBuyOrderStatus.php:58"
+  },
+  {
+   "rowId": 202,
+   "機能No": "B06-01",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "ステータスが入庫待ちの店頭買取情報/ネット買取情報を対象に、実在庫情報を買取店舗または本店のECCUBE在庫に登録する。",
+   "差分内容": "設計はECCUBE在庫への登録を要求しているが、実装は stock_location_id = STOCK_LOCATION_ECCUBE で既存在庫を絞り込まず、同一店舗のスマレジ等の在庫行を拾う余地がある。反証として getProductStockByEccube、resolveEccubeProductStockForShop、STOCK_LOCATION_ECCUBE、OtcBuyOrderStockInbound、BuyOrderStockInbound を検索したが、自動入庫処理でEC-CUBE在庫行に限定する実装は確認できなかった。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/OtcBuyOrder/OtcBuyOrderStockInbound.php:56"
+  },
+  {
+   "rowId": 203,
+   "機能No": "B06-01",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "ネット買取は dtb_buy_order_stock ・ dtb_buy_order_stock_history、店頭買取は dtb_otc_buy_order_stock ・ dtb_otc_buy_order_stock_history。在庫数は dtb_product_class.stock ・ dtb_product_stock.stock を更新する。",
+   "差分内容": "設計は dtb_product_class.stock と dtb_product_stock.stock の両方の在庫数更新を要求している。実装では ProductStockEntityManager が ProductStock の stock だけを更新し、ProductClass 側の stock 更新または dtb_product_class.stock 更新SQLがない。反証として自動入庫サービス、EntityManager、Repository を setStock/ProductClass/dtb_product_class.stock で再検索したが、対象更新は見つからなかった。",
+   "実装参照": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/OtcBuyOrder, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Ad"
+  },
+  {
+   "rowId": 204,
+   "機能No": "B06-02",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "入口はコンソールのバッチコマンド `otcBuyOrder:batch updateSummary [YYYY-MM-DD]` とし、引数に集計日（YYYY-MM-DD形式）を1つ指定できる。",
+   "差分内容": "設計は外部契約として `otcBuyOrder:batch updateSummary [YYYY-MM-DD]` を指定しているが、実装の `#[AsCommand]` は別名で登録されており、設計コマンド名で起動できる根拠がない。探索範囲: src/Eccube, html。検索語: `otcBuyOrder:batch`, `updateSummary`, `aggregate-summary`, `AsCommand`, `alias`。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/OtcBuyOrderAggregateSummaryCommand.php:45"
+  },
+  {
+   "rowId": 205,
+   "機能No": "B06-02",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "部門が登録されていない商品が存在する場合は、エラーメールを送信する。部門未設定商品通知メールには商品名・商品コードの一覧を本文に載せる。",
+   "差分内容": "設計は部門未設定商品一覧を取得して通知することを要求しているが、実装の一覧取得 SQL が構文不正のため、通知判定・商品名/商品コード本文生成まで到達できない。加えて同メソッドには集計対象ステータス条件もなく、集計対象内の商品一覧という設計条件との対応が不足している。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbOtcBuyOrderRepository.php:956"
+  },
+  {
+   "rowId": 206,
+   "機能No": "B06-02",
+   "指摘区分": "未実装",
+   "authorVerdict": "UNSURE",
+   "設計期待値": "実行時間制限を解除する。長時間処理に備えて実行時間制限を解除する。",
+   "差分内容": "設計の処理フローと排他制御・トランザクション節にある実行時間制限解除が、Command/Action/Aggregator/Repository のいずれにも実装されていない。検索語: `set_time_limit`, `max_execution_time`, `時間制限`。",
+   "実装参照": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/OtcBuyOrderAggregateSummaryCommand.php, src/Eccube/Service/Admin/OtcBuyOrder, src/Eccu"
+  },
+  {
+   "rowId": 207,
+   "機能No": "B06-02",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "部門未設定商品通知メールは送信開始・送信完了・件数、宛先未設定時の送信せず終了をログに記録する。",
+   "差分内容": "設計で明示されたログ項目のうち件数だけが実装されていない。反証検索で `件数`、`count($products)`、部門未設定商品通知周辺のログを確認したが、該当ログは不在。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/MailService.php:1190"
+  },
+  {
+   "rowId": 208,
+   "機能No": "B08-02",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "コンソールのバッチコマンドは customer:batch lostPoint で実行する。",
+   "差分内容": "設計の利用者視点入口は customer:batch lostPoint だが、実装入口は eccube:customer:lost-points で外部契約が一致しない。反証として customer:batch/lostPoint/lost-point/lost-points/aliases を src/Eccube と html 配下で検索したが、該当する別名は LostPointsCommand.php:25 以外に存在しない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/LostPointsCommand.php:25"
+  },
+  {
+   "rowId": 209,
+   "機能No": "B08-02",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "ユーザーの失効ポイントの値をスマレジのポイント増減APIに送信し、失効ポイント分を差し引く。連携が成功しない場合は当該会員をスキップする。",
+   "差分内容": "設計は会員のスマレジIDと失効ポイントをポイント増減APIへ送信することを要求しているが、実装は送信先・送信ポイントを渡しておらず、サービス本体も固定成功レスポンスであるため、失効分のスマレジ差し引きと失敗時スキップの実効性がない。反証として postSmaregiPoint 呼び出し、SmaregiCustomerApiClient、失効ポイント/losePoint/ポイント増減/API 関連を検索したが、LostPointsAction から実APIに失効値を渡す実装は確認できない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Customer/LostPointsAction.php:59, /home/y-saito/Developments/ec-cube-enterprise/src/Eccub"
+  },
+  {
+   "rowId": 210,
+   "機能No": "B08-02",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "開始・完了のコンソール出力（日時付き）。",
+   "差分内容": "設計は開始・完了のコンソール出力に日時付きであることを要求している。LostPointsCommand 内に DateTime/format 等を使った日時出力はなく、反証検索でも当該コマンドの開始・完了メッセージに日時を付ける実装は確認できない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/LostPointsCommand.php:38, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/Lost"
+  },
+  {
+   "rowId": 211,
+   "機能No": "B08-02",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "リクエスト上限に配慮し、会員ごとに短いインターバルを挟む。流量制御のため会員ごとにインターバルを挟む。",
+   "差分内容": "設計はスマレジ連携の流量制御として会員ごとの短いインターバルを要求しているが、対象バッチ実装内に待機処理が存在しない。反証として英日キーワードと sleep/usleep を検索したが、ポイント失効バッチ内のインターバル実装は確認できない。",
+   "実装参照": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Customer/LostPointsAction.php, /home/y-saito/Developments/ec-cube-enterprise/src"
+  },
+  {
+   "rowId": 212,
+   "機能No": "B08-03",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "コンソールのバッチコマンドは `customer:batch pointExpireNotification` として実行でき、コマンド名が一致しない場合は処理を行わずに終了する。",
+   "差分内容": "設計は利用者視点の入口として `customer:batch pointExpireNotification` を指定しているが、実装入口は別名の `eccube:customer:point-expire-notification` で登録されている。反証検索として `pointExpireNotification` / `point-expire-notification` / `customer:batch` / `AsCommand(name:)` / `setName(` を確認したが、設計コマンド名の登録は不在。",
+   "実装参照": "src/Eccube/Command/PointExpireNotificationCommand.php:25"
+  },
+  {
+   "rowId": 213,
+   "機能No": "B08-03",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "送信時のエラーはエラーメッセージをコンソールに出力する。",
+   "差分内容": "設計は送信時エラーのコンソール出力を要求しているが、実装はメール送信例外を MailService 内でログ出力に変換して握りつぶす。反証検索として Command の catch、MailService の TransportException catch、logger/log_critical を確認したが、送信時エラーをコンソール出力する実装は確認できない。",
+   "実装参照": "src/Eccube/Service/MailService.php:1115"
+  },
+  {
+   "rowId": 214,
+   "機能No": "B08-03",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "開始・完了のコンソール出力は日時付きで行う。",
+   "差分内容": "設計は開始・完了のコンソール出力に日時を含めることを要求しているが、実装の Console 出力文字列は固定文言のみ。反証検索として Command の `$io->text` / `$io->success` と Action の logger 出力を確認したが、日時付きコンソール出力は確認できない。",
+   "実装参照": "src/Eccube/Command/PointExpireNotificationCommand.php:38"
+  },
+  {
+   "rowId": 215,
+   "機能No": "B08-05",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "コンソールのバッチコマンドは customer:batch adjustPointVariance として実行する。",
+   "差分内容": "設計の外部契約である実行コマンド名 customer:batch adjustPointVariance と、実装で登録される eccube:customer:adjust-point-variance が一致しない。別キーワード（adjustPointVariance / adjust-point-variance / ポイント差分発生通知 / customer:batch）で再検索したが、設計名のコマンド登録は確認できなかった。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/AdjustPointVarianceCommand.php:25"
+  },
+  {
+   "rowId": 216,
+   "機能No": "B08-05",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "開始・完了のコンソール出力（日時付き）。",
+   "差分内容": "設計は開始・完了のコンソール出力に日時付きであることを要求している。実装の開始・完了出力箇所および同コマンド内を確認したが、date/format/現在日時を付与する処理は確認できなかった。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/AdjustPointVarianceCommand.php:38"
+  }
+ ]
+}

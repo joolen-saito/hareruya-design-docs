@@ -1,0 +1,166 @@
+{
+ "packetId": "bl_09",
+ "note": "1枚に複数の不具合がまとまっているチケットがある。itemCountに件数を書き工数は合計で。",
+ "findings": [
+  {
+   "issueKey": "ECCUBE_HARERUYA-2118",
+   "summary": "【実装乖離】会員管理_会員登録編集_会員登録編集にて、会員ステータスがラジオボタンではなくセレクトボックスで表示されている",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "中",
+   "description": "# 基本情報【必須】\n分類：会員管理\n機能：会員登録編集\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】会員管理_会員登録編集_会員登録編集にて、会員ステータスがラジオボタンではなくセレクトボックスで表示されている\n設計書：0207_基本設計仕様書(会員管理機能).xlsx\n\n# 期待される挙動【必須】\n- 会員登録編集の識別ID:53「会員ステータス」は単一選択(ラジオボタン)とし、選択肢は「仮会員」「本会員」とする。\n\n# 現在の挙動【必須】\n- 会員ステータスは CustomerStatusType を使用しており、configureOptions で 'expanded' => false が指定されているため、form_widget(form.status) はセレクトボックスとして描画される。\n- 選択肢自体はマイグレーションにより mtb_customer_status が「仮会員」「本会員」の2件のみとなっており、設計の選択肢とは一致している。\n- したがって乖離は画面部品の種別(ラジオボタン vs セレクトボックス)のみである。\n\n# 補足情報【任意】\n▼設計書該当箇所\nM08_customer_management_basedesign.md:462 「| 53 | 会員ステータス | 単一選択(ラジオボタン) | - | - | - | 選択肢：仮会員、本会員」\n\n▼実装該当箇所\nsrc/Eccube/Form/Type/Master/CustomerStatusType.php:42-45 （'expanded' => false でセレクトボックスとして描画）\nsrc/Eccube/Resource/template/admin/Customer/edit.twig:1061 （form_widget(form.status) で描画）\napp/DoctrineMigrations/Version20251117053426.php:36 （mtb_customer_status から退会(id=3)を削除）\napp/DoctrineMigrations/Version20251125144657.php:59-71 （mtb_customer_status のマスタは仮会員・本会員の2件のみ）\n\n▼備考\n元レポートの「マスタ全件(退会含む)を対象」という指摘は誤り。Version20251117053426 で退会ステータスが削除され、Version20251125144657 でも仮会員・本会員のみが投入されるため、選択肢は設計どおり2件。乖離はラジオボタンでない点のみ。"
+  },
+  {
+   "issueKey": "ECCUBE_HARERUYA-2113",
+   "summary": "【実装乖離】会員管理_会員登録編集_会員登録編集にて、会社名の最大文字数が設計値100文字ではなく255文字になっている",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "中",
+   "description": "# 基本情報【必須】\n分類：会員管理\n機能：会員登録編集\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】会員管理_会員登録編集_会員登録編集にて、会社名の最大文字数が設計値100文字ではなく255文字になっている\n設計書：0207_基本設計仕様書(会員管理機能).xlsx\n\n# 期待される挙動【必須】\n- 会員登録編集の識別ID:6「会社名」は全角・半角入力で最大文字数100文字とする。\n\n# 現在の挙動【必須】\n- 会社名(company_name)は任意項目として実装されているが、Assert\\Length の max に eccube_stext_len が指定されている。\n- eccube_stext_len の実値は 255 であり、設計値100文字と相違している。\n\n# 補足情報【任意】\n▼設計書該当箇所\nM08_customer_management_basedesign.md:414 「| 6 | 会社名 | 全角・半角 | - | 100 | - |」\n\n▼実装該当箇所\nsrc/Eccube/Form/Type/Admin/CustomerType.php:71-78 （company_name の Assert\\Length max に eccube_stext_len を指定）\napp/config/eccube/packages/eccube.yaml:137 （eccube_stext_len: 255）\n\n▼備考\n項目自体は実装済み。乖離は最大文字数のみ(255 vs 100)。"
+  },
+  {
+   "issueKey": "ECCUBE_HARERUYA-2109",
+   "summary": "【実装乖離】会員管理_会員登録編集_会員登録編集にて、廃止対象である会員の新規登録ルート(admin_customer_new)が残存している",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "中",
+   "description": "# 基本情報【必須】\n分類：会員管理\n機能：会員登録編集\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】会員管理_会員登録編集_会員登録編集にて、廃止対象である会員の新規登録ルート(admin_customer_new)が残存している\n設計書：0207_基本設計仕様書(会員管理機能).xlsx\n\n# 期待される挙動【必須】\n- 会員管理のカスタマイズ要件として、会員の新規登録機能は廃止し、会員登録編集画面は編集専用とする。\n\n# 現在の挙動【必須】\n- CustomerEditController::index に admin_customer_new ルート(/%eccube_admin_route%/customer/new)が宣言されたままであり、URLを直接指定すれば新規登録画面にアクセスできる状態である。\n- 管理画面のテンプレート・ナビゲーションから admin_customer_new を参照している箇所は無く、UI上の導線は存在しないため、廃止対応がルート宣言レベルで行われていない状態である。\n\n# 補足情報【任意】\n▼設計書該当箇所\nM08_customer_management_basedesign.md:356 「* 新規登録機能は廃止」（会員登録編集 カスタマイズ説明）\n\n▼実装該当箇所\nsrc/Eccube/Controller/Admin/Customer/CustomerEditController.php:64 （admin_customer_new ルートが残存）\nsrc/Eccube/Resource/template/admin/Customer/edit.twig:331 （フォームのaction は admin_customer_edit 固定で Customer.id を必要とする。新規登録導線は存在しない）\n\n▼備考\nリポジトリ全体を grep しても admin_customer_new を参照するテンプレート/ナビゲーションは無く、実質的な導線は存在しない。ただしルート定義が残っているため直URLアクセスが可能で、廃止要件は完全には満たしていない。なお設計書の処理概要(387-389行)には現行踏襲の「新規登録処理」の記述も残っており、記載が矛盾している点は留意が必要。"
+  },
+  {
+   "issueKey": "ECCUBE_HARERUYA-2114",
+   "summary": "【実装乖離】会員管理_会員登録編集_会員登録編集にて、海外用郵便番号の最大文字数が設計値100文字ではなく10文字になっている",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "中",
+   "description": "# 基本情報【必須】\n分類：会員管理\n機能：会員登録編集\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】会員管理_会員登録編集_会員登録編集にて、海外用郵便番号の最大文字数が設計値100文字ではなく10文字になっている\n設計書：0207_基本設計仕様書(会員管理機能).xlsx\n\n# 期待される挙動【必須】\n- 会員登録編集の識別ID:11「海外用郵便番号」は最大文字数100文字とする。\n\n# 現在の挙動【必須】\n- 海外用郵便番号(abroadPostalCode)は任意項目として実装されているが、Assert\\Length の max に eccube_abroad_postal_code_len が指定されている。\n- eccube_abroad_postal_code_len の実値は 10 であり、設計値100文字より大幅に短い上限となっている。\n\n# 補足情報【任意】\n▼設計書該当箇所\nM08_customer_management_basedesign.md:419 「| 11 | 海外用郵便番号 | 数字 | - | 100 | - |」\n\n▼実装該当箇所\nsrc/Eccube/Form/Type/Admin/CustomerType.php:154-164 （abroadPostalCode の Assert\\Length max に eccube_abroad_postal_code_len を指定）\napp/config/eccube/packages/eccube.yaml:173 （eccube_abroad_postal_code_len: 10）\n\n▼備考\n10文字を超える海外郵便番号は入力できないため、設計値100文字に対して実害のある乖離となる可能性がある。"
+  },
+  {
+   "issueKey": "ECCUBE_HARERUYA-2116",
+   "summary": "【実装乖離】会員管理_会員登録編集_会員登録編集にて、生年月日が年・月・日の3セレクトボックスではなく単一の日付入力になっている",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "中",
+   "description": "# 基本情報【必須】\n分類：会員管理\n機能：会員登録編集\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】会員管理_会員登録編集_会員登録編集にて、生年月日が年・月・日の3セレクトボックスではなく単一の日付入力になっている\n設計書：0207_基本設計仕様書(会員管理機能).xlsx\n\n# 期待される挙動【必須】\n- 会員登録編集の識別ID:25「性別」は単一選択(ラジオボタン)、識別ID:26「職業」は単一選択(セレクトボックス)とする。\n- 識別ID:27「生年月日（年）」・識別ID:28「生年月日（月）」・識別ID:29「生年月日（日）」はそれぞれ単一選択(セレクトボックス)とする。\n\n# 現在の挙動【必須】\n- 性別は SexType が expanded=true のためラジオボタンで描画され、職業は JobType が MasterType の既定(expanded=false)を継承するためセレクトボックスで描画されており、いずれも設計どおりである。\n- 生年月日は CustomerType で BirthdayType を 'widget' => 'single_text' で追加しており、年・月・日の3つのセレクトボックスではなく単一の日付テキスト入力(datepicker)として描画される。\n\n# 補足情報【任意】\n▼設計書該当箇所\nM08_customer_management_basedesign.md:433-437 「| 25 | 性別 | 単一選択(ラジオボタン) … | 26 | 職業 | 単一選択(セレクトボックス) … | 27 | 生年月日（年） | 単一選択(セレクトボックス) … | 28 | 生年月日（月） | 単一選択(セレクトボックス) … | 29 | 生年月日（日） | 単一選択(セレクトボックス) …」\n\n▼実装該当箇所\nsrc/Eccube/Form/Type/Admin/CustomerType.php:112-128 （birth を BirthdayType の widget=single_text で追加）\nsrc/Eccube/Resource/template/admin/Customer/edit.twig:575 （form_widget(form.birth) で単一入力として描画）\nsrc/Eccube/Form/Type/Master/SexType.php:43 （expanded=true でラジオボタン。設計どおり）\nsrc/Eccube/Form/Type/MasterType.php:31 （JobType が継承する既定 expanded=false でセレクトボックス。設計どおり）\n\n▼備考\n性別・職業は設計どおり。乖離は生年月日の画面部品(3セレクト vs 単一日付入力)のみ。"
+  },
+  {
+   "issueKey": "ECCUBE_HARERUYA-2121",
+   "summary": "【実装乖離】会員管理_手動メール通知(入力/確認)_手動メール通知(入力画面)にて、必須項目であるテンプレ選択が必須になっていない",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "中",
+   "description": "# 基本情報【必須】\n分類：会員管理\n機能：手動メール通知(入力/確認)\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】会員管理_手動メール通知(入力/確認)_手動メール通知(入力画面)にて、必須項目であるテンプレ選択が必須になっていない\n設計書：0207_基本設計仕様書(会員管理機能).xlsx\n\n# 期待される挙動【必須】\n- 手動メール通知(入力画面)の識別ID:2「テンプレ選択」は必須(◯)とする。\n- テンプレートを選択すると画面を更新して当該テンプレートを呼び出し、件名・メール本文に選択したテンプレートの内容を初期セットする。未選択の場合は件名・本文の初期値を空欄にする。\n\n# 現在の挙動【必須】\n- テンプレート選択時は JS が admin_customer_manual_mail の template_id 付きURLへ遷移して画面を再読込し、コントローラが件名(mail_subject)と本文(body)にテンプレートの内容をセットしており、未選択時は空欄のままとなるため、この動作は設計どおりである。\n- しかし CustomerManualMailType の mailTemplate は 'required' => false かつ mapped=false で、NotBlank 等の必須制約も無いため、テンプレート未選択のままでも確認・送信まで進めてしまう。\n\n# 補足情報【任意】\n▼設計書該当箇所\nM08_customer_management_basedesign.md:714 「| 2 | テンプレ選択 | 単一選択(セレクトボックス) | ◯ | - | - | 選択すると画面を更新して、当該のテンプレートを呼び出す…」\nM08_customer_management_basedesign.md:715-716 「識別ID:3「テンプレ選択」が未選択の場合は初期値を空欄にする<br>選択されている場合は、選ばれたテンプレートの件名を初期セットする」\n\n▼実装該当箇所\nsrc/Eccube/Form/Type/Admin/CustomerManualMailType.php:44-61 （mailTemplate が required=false・必須制約なし）\nsrc/Eccube/Controller/Admin/Customer/CustomerMailController.php:161-177 （テンプレート指定時に件名・本文をセット。再読込による呼び出しは実装済み）\nsrc/Eccube/Resource/template/admin/Customer/mail_manual.twig:18-20 （テンプレート選択で template_id 付きURLへ遷移し画面を再読込）\n\n▼備考\n再読込・件名/本文の初期セットは設計どおり。乖離はテンプレ選択が必須化されていない点のみ。"
+  },
+  {
+   "issueKey": "ECCUBE_HARERUYA-2122",
+   "summary": "【実装乖離】会員管理_手動メール通知(入力/確認)_手動メール通知(確認画面)にて、戻るリンクが会員編集画面ではなく入力画面へ遷移する",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "中",
+   "description": "# 基本情報【必須】\n分類：会員管理\n機能：手動メール通知(入力/確認)\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】会員管理_手動メール通知(入力/確認)_手動メール通知(確認画面)にて、戻るリンクが会員編集画面ではなく入力画面へ遷移する\n設計書：0207_基本設計仕様書(会員管理機能).xlsx\n\n# 期待される挙動【必須】\n- 手動メール通知(確認画面)には会員名・テンプレ選択・件名・メール本文を表示する。\n- 識別ID:5「会員編集画面へ戻る」ボタン押下時、当該の会員情報編集画面へ遷移する。\n- 識別ID:6「送信」ボタン押下でメール送信を実行し、送信完了後、当該の会員情報編集画面に遷移する。\n\n# 現在の挙動【必須】\n- 確認画面には会員名・テンプレート名・件名・本文がいずれも表示されており、送信完了後は admin_customer_edit にリダイレクトするため、表示と送信後遷移は設計どおりである。\n- 確認画面左下の戻るリンク(id=\"back\")は mode=back でフォームを再POSTするだけで、コントローラの switch には back の分岐が無いため入力画面(mail_manual.twig)が再表示される。会員編集画面へは遷移しない。\n- 戻るリンクのラベルも 'admin.customer.manual_mail'(「手動メール通知」)であり、設計の「会員編集画面へ戻る」とは異なる。\n\n# 補足情報【任意】\n▼設計書該当箇所\nM08_customer_management_basedesign.md:743-748 「| 1 | 会員名 | ラベル … | 5 | 会員編集画面へ戻る | ボタン | - | - | - | 当該の会員情報編集画面へ遷移する | | 6 | 送信 | ボタン | … 送信完了後、当該の会員情報編集画面に遷移する」\n\n▼実装該当箇所\nsrc/Eccube/Resource/template/admin/Customer/mail_manual_confirm.twig:91 （戻るリンクは mode=back でフォーム再送信。ラベルは「手動メール通知」）\nsrc/Eccube/Controller/Admin/Customer/CustomerMailController.php:180-207 （mode の switch は confirm と complete のみで back は default に落ち、入力画面が再表示される）\nsrc/Eccube/Controller/Admin/Customer/CustomerMailController.php:203 （送信完了後は admin_customer_edit へリダイレクト。設計どおり）\nsrc/Eccube/Resource/template/admin/Customer/mail_manual_confirm.twig:52-81 （会員名・テンプレート・件名・本文の表示は実装済み）\n\n▼備考\n確認画面の項目表示・送信後の会員編集画面遷移は設計どおり。乖離は戻るボタンの遷移先(入力画面 vs 会員編集画面)とラベルのみ。なお入力画面側には「会員編集に戻る」リンク(mail_manual.twig:94-96)が存在する。"
+  },
+  {
+   "issueKey": "ECCUBE_HARERUYA-2124",
+   "summary": "【実装乖離】会員管理_配送先編集_配送先編集にて、配送先会社名の最大文字数が設計値100文字ではなく255文字になっている",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "中",
+   "description": "# 基本情報【必須】\n分類：会員管理\n機能：配送先編集\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】会員管理_配送先編集_配送先編集にて、配送先会社名の最大文字数が設計値100文字ではなく255文字になっている\n設計書：0207_基本設計仕様書(会員管理機能).xlsx\n\n# 期待される挙動【必須】\n- 配送先編集の識別ID:17「配送先会社名」は全角・半角入力で最大文字数100文字とする。\n\n# 現在の挙動【必須】\n- 配送先会社名(company_name)は任意項目として実装されているが、Assert\\Length の max に eccube_stext_len が指定されている。\n- eccube_stext_len の実値は 255 であり、設計値100文字と相違している。\n\n# 補足情報【任意】\n▼設計書該当箇所\nM08_customer_management_basedesign.md:787 「| 17 | 配送先会社名 | 全角・半角 | - | 100 | - |」\n\n▼実装該当箇所\nsrc/Eccube/Form/Type/Front/CustomerAddressType.php:95-102 （company_name の Assert\\Length max に eccube_stext_len を指定）\napp/config/eccube/packages/eccube.yaml:137 （eccube_stext_len: 255）\nsrc/Eccube/Resource/template/admin/Customer/delivery_edit.twig:205 （配送先会社名の入力欄）\n\n▼備考\n項目自体は実装済み。乖離は最大文字数のみ(255 vs 100)。"
+  },
+  {
+   "issueKey": "ECCUBE_HARERUYA-2123",
+   "summary": "【実装乖離】会員管理_配送先編集_配送先編集にて、配送先海外用郵便番号の最大文字数が設計値100文字ではなく10文字になっている",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "中",
+   "description": "# 基本情報【必須】\n分類：会員管理\n機能：配送先編集\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】会員管理_配送先編集_配送先編集にて、配送先海外用郵便番号の最大文字数が設計値100文字ではなく10文字になっている\n設計書：0207_基本設計仕様書(会員管理機能).xlsx\n\n# 期待される挙動【必須】\n- 配送先編集の識別ID:9「配送先郵便番号1」は最大3桁、識別ID:10「配送先郵便番号2」は最大4桁で、国が日本(Japan)の場合必須とする。\n- 識別ID:12「配送先海外用郵便番号」は最大100文字で、国が日本(Japan)以外の場合必須とする。\n\n# 現在の挙動【必須】\n- 郵便番号1/2は SplitPostalType で eccube_zip01_len(3)・eccube_zip02_len(4)の Length 制約が付与されており、国が日本の場合の必須チェックも POST_SUBMIT リスナで実装されている。\n- 海外用郵便番号も国が日本以外の場合の必須チェックが実装されている。\n- ただし海外用郵便番号の最大文字数は Assert\\Length の max に eccube_abroad_postal_code_len(実値10)が指定されており、設計値100文字と相違している。\n\n# 補足情報【任意】\n▼設計書該当箇所\nM08_customer_management_basedesign.md:779-782 「| 9 | 配送先郵便番号1 | 数値（整数） | - | 3 | - | 国が日本(Japan)の場合必須 | / | 10 | 配送先郵便番号2 | 数値（整数） | - | 4 | - | 国が日本(Japan)の場合必須 | / | 12 | 配送先海外用郵便番号 | 数値（整数） | - | 100 | - | 国が日本(Japan)以外の場合必須 |」\n\n▼実装該当箇所\nsrc/Eccube/Form/Type/Front/CustomerAddressType.php:118-128 （abroadPostalCode の Assert\\Length max に eccube_abroad_postal_code_len を指定。管理画面の配送先編集はこの Front\\CustomerAddressType を使用）\napp/config/eccube/packages/eccube.yaml:173 （eccube_abroad_postal_code_len: 10）\nsrc/Eccube/Form/Type/Front/CustomerAddressType.php:160-181 （国が日本なら郵便番号1・2必須、日本以外なら海外用郵便番号必須のチェックは実装済み）\napp/config/eccube/packages/eccube.yaml:190-191 （eccube_zip01_len: 3 / eccube_zip02_len: 4 は設計と一致）\nsrc/Eccube/Controller/Admin/Customer/CustomerDeliveryEditController.php:73 （Eccube\\Form\\Type\\Front\\CustomerAddressType を使用）\n\n▼備考\n郵便番号1(3桁)・2(4桁)・国別必須チェックはいずれも設計どおり。乖離は海外用郵便番号の最大文字数(10 vs 100)のみ。"
+  },
+  {
+   "issueKey": "ECCUBE_HARERUYA-2128",
+   "summary": "【実装乖離】会員管理_顧客グループ管理_顧客グループ管理にて、ポイント還元率が0以上の制限を満たさず、最大値も設計値4294967295に対しSMALLINT(65535)までしか保持できない",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "中",
+   "description": "# 基本情報【必須】\n分類：会員管理\n機能：顧客グループ管理\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】会員管理_顧客グループ管理_顧客グループ管理にて、ポイント還元率が0以上の制限を満たさず、最大値も設計値4294967295に対しSMALLINT(65535)までしか保持できない\n設計書：0207_基本設計仕様書(会員管理機能).xlsx\n\n# 期待される挙動【必須】\n- 顧客グループ管理の識別ID:3「ポイント還元率」は数値(整数)・必須で、0以上の整数のみ入力可能とする。\n- 最大値は4294967295とする。\n\n# 現在の挙動【必須】\n- ポイント還元率(point_percentage)は IntegerType で required=true・NotBlank が付与されており、必須要件は満たしている。\n- 書式チェックの Regex が '/^[-]?([1-9]\\d*|0)$/' で先頭のマイナス符号を許容しているため、負数が入力可能で「0以上の整数のみ」という設計要件を満たしていない。\n- 上限値を制限する Range 等の制約は無く、かつ DtbCustomerGroup の point_percentage カラムは SMALLINT unsigned (最大65535) で定義されているため、設計値の最大4294967295を保持できない。\n\n# 補足情報【任意】\n▼設計書該当箇所\nM08_customer_management_basedesign.md:938 「| 3 | ポイント還元率 | 数値（整数） | ○ | 4294967295 | - | 0以上の整数のみ |」\n\n▼実装該当箇所\nsrc/Eccube/Form/Type/Admin/CustomerGroupType.php:39-45 （point_percentage の制約は NotBlank と負数を許容する Regex のみ。上限制約なし）\nsrc/Eccube/Entity/DtbCustomerGroup.php:70 （point_percentage は SMALLINT unsigned のため最大65535）\n\n▼備考\n負数を入力するとフォームバリデーションは通過し、SMALLINT unsigned カラムへの永続化時にDBエラーとなる恐れがある。0以上の担保(Range/PositiveOrZero)と上限値の整合が必要。"
+  },
+  {
+   "issueKey": "ECCUBE_HARERUYA-2129",
+   "summary": "【実装乖離】会員管理_顧客グループ管理_顧客グループ管理にて、支払方法のチェックボックスに支払方法設定の全支払方法が表示されていない",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "中",
+   "description": "# 基本情報【必須】\n分類：会員管理\n機能：顧客グループ管理\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】会員管理_顧客グループ管理_顧客グループ管理にて、支払方法のチェックボックスに支払方法設定の全支払方法が表示されていない\n設計書：0207_基本設計仕様書(会員管理機能).xlsx\n\n# 期待される挙動【必須】\n- 顧客グループ管理の識別ID:6「支払方法」は複数選択(チェックボックス)で、支払方法設定に登録されている支払方法をすべて表示する。\n\n# 現在の挙動【必須】\n- 支払方法(Payments)は expanded=true・multiple=true でチェックボックスとして描画されており、複数選択できる点は設計どおりである。\n- ただし query_builder が p.visible = true の条件に加えて Payment::EC_CREDIT(ID=5) と Payment::EC_CVS(ID=6) を除外しているため、支払方法設定に登録されている支払方法のうちクレジットカードとコンビニ決済が選択肢に表示されない。\n\n# 補足情報【任意】\n▼設計書該当箇所\nM08_customer_management_basedesign.md:941 「| 6 | 支払方法 | 複数選択(チェックボックス) | - | - | - | 支払方法設定に登録されている支払方法をすべて表示する |」\n\n▼実装該当箇所\nsrc/Eccube/Form/Type/Admin/CustomerGroupType.php:54-66 （Payments の query_builder が visible=true かつ EC_CREDIT / EC_CVS を除外）\nsrc/Eccube/Entity/Payment.php:49-50 （EC_CREDIT = 5 / EC_CVS = 6）\n\n▼備考\nチェックボックスによる複数選択は設計どおり。乖離は選択肢からEC_CREDIT・EC_CVSが除外されている点(設計は「すべて表示」)。意図的な業務要件であれば設計書側の更新が必要。"
+  },
+  {
+   "issueKey": "ECCUBE_HARERUYA-2202",
+   "summary": "【実装乖離】分析・集計管理_日別・月別集計 CSV出力_日別・月別集計CSV出力にて、注文ステータス「出荷完了」のみを計上する集計方式が反映されていない",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "中",
+   "description": "# 基本情報【必須】\n分類：分析・集計管理\n機能：日別・月別集計 CSV出力\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】分析・集計管理_日別・月別集計 CSV出力_日別・月別集計CSV出力にて、注文ステータス「出荷完了」のみを計上する集計方式が反映されていない\n設計書：0211_基本設計仕様書(分析・集計管理機能).xlsx\n\n# 期待される挙動【必須】\n- 日別・月別集計CSV出力の集計値は、注文ステータスが「出荷完了」の受注のみを計上した集計方式に従うこと。\n\n# 現在の挙動【必須】\n- CSV出力(SummaryCsvExporterService::export)は画面表示と同じ AnalysisSummaryBuilder::build を呼び出し、dtb_daily_summary / dtb_monthly_summary に格納済みの値をそのまま出力している。\n- その集計値を作成する日次集計バッチのSQLに注文ステータスの絞り込みがないため、CSVにも出荷完了以外のステータスの受注が計上される（M12-01と同一原因）。\n- またCSV出力には最終行の「総合計」行が出力されていない（設計書310行目「最終行には「総合計」を追加」）。\n\n# 補足情報【任意】\n▼設計書該当箇所\nM12_analysis_management_basedesign.md:37 の逐語引用: 「(注文ステータスが「出荷完了」のみ集計対象とする)」\nM12_analysis_management_basedesign.md:156 の逐語引用: 「* 販売関連の集計は注文データの注文ステータスが「出荷完了」のみ計上し、それ以外の注文ステータスは計上しない」\nM12_analysis_management_basedesign.md:310 の逐語引用: 「* 最終行には「総合計」を追加。識別ID3～12各列のそれぞれの総合計を出力」\n\n▼実装該当箇所\nsrc/Eccube/Service/Csv/Exporter/SummaryCsvExporterService.php:93 （画面と同じ AnalysisSummaryBuilder::build を使用）\nsrc/Eccube/Service/Csv/Exporter/SummaryCsvExporterService.php:109 （集計行のみ出力し総合計行を出力していない）\nsrc/Eccube/Repository/DtbDailySummaryRepository.php:62 （集計元SQLに注文ステータス条件なし）\nsrc/Eccube/Controller/Admin/Analysis/SummaryController.php:130 （admin_summary_export から CSV 出力を実行）\n\n▼備考\nM12-01（uid 01-1）と同一原因。CSV出力固有の追加乖離として「総合計」行の欠落も確認した（AnalysisSummaryBuilder は total を計算しているが、CSVエクスポータは summary のみを出力し total を書き出していない）。"
+  },
+  {
+   "issueKey": "ECCUBE_HARERUYA-2199",
+   "summary": "【実装乖離】分析・集計管理_日別・月別集計 集計一覧（検索項目/検索結果）_日別・月別集計にて、販売関連の集計が注文ステータス「出荷完了」に限定されていない",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "中",
+   "description": "# 基本情報【必須】\n分類：分析・集計管理\n機能：日別・月別集計 集計一覧（検索項目/検索結果）\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】分析・集計管理_日別・月別集計 集計一覧（検索項目/検索結果）_日別・月別集計にて、販売関連の集計が注文ステータス「出荷完了」に限定されていない\n設計書：0211_基本設計仕様書(分析・集計管理機能).xlsx\n\n# 期待される挙動【必須】\n- 日別・月別集計の販売関連の集計は、注文データの注文ステータスが「出荷完了」のもののみを計上し、それ以外の注文ステータスは計上しないこと。\n\n# 現在の挙動【必須】\n- 日次集計バッチが使用する受注集計SQL（aggregateOrderSummaryByBaseInfo）の WHERE 句は「base_info_id IS NOT NULL」と受注日(order_date)の範囲指定のみで、注文ステータス（order_status_id）による絞り込みが一切ない。\n- そのため、キャンセル・入金待ち・新規受付など出荷完了以外のステータスの受注も総売上・原価・粗利益高・販売点数・取引数に計上される。\n- OrderStatus::DELIVERED（出荷完了、値=5）は集計処理側では参照されていない。\n- 月次集計は日次集計（dtb_daily_summary）を合算する実装のため、同じ問題が月別集計にも波及する。\n\n# 補足情報【任意】\n▼設計書該当箇所\nM12_analysis_management_basedesign.md:156 の逐語引用: 「* 販売関連の集計は注文データの注文ステータスが「出荷完了」のみ計上し、それ以外の注文ステータスは計上しない」\nM12_analysis_management_basedesign.md:36 の逐語引用: 「* 集計は売上として計上できるものとし、それ以外の対応状況は計上しない (注文ステータスが「出荷完了」のみ集計対象とする)」\n\n▼実装該当箇所\nsrc/Eccube/Repository/DtbDailySummaryRepository.php:62 （受注集計SQLのWHERE句。注文ステータス条件なし）\nsrc/Eccube/Repository/DtbDailySummaryRepository.php:42 （aggregateOrderSummaryByBaseInfo）\nsrc/Eccube/Service/Admin/Analysis/BatchAggregateDailySummaryAction.php:37 （バッチから当該SQLを呼び出し dtb_daily_summary に格納）\nsrc/Eccube/Repository/DtbDailySummaryRepository.php:232 （月次はその日次集計を合算）\nsrc/Eccube/Entity/Master/OrderStatus.php:39 （DELIVERED = 5 は集計側で未使用）\n\n▼備考\n反証として BatchAggregateDailySummaryAction / BatchAggregateMonthlySummaryAction / AnalysisSummaryBuilder / SummaryController / DtbMonthlySummaryRepository を確認したが、注文ステータスで絞り込む処理はどこにも存在しない。集計結果は dtb_daily_summary / dtb_monthly_summary に事前生成されるため、画面側で絞ることもできない。git log --since=2026-07-08 で当該ファイルに変更なし。"
+  },
+  {
+   "issueKey": "ECCUBE_HARERUYA-2200",
+   "summary": "【実装乖離】分析・集計管理_日別・月別集計 集計一覧（検索項目/検索結果）_日別・月別集計にて、買取関連の集計が買取ステータス「買取成立」に限定されていない",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "中",
+   "description": "# 基本情報【必須】\n分類：分析・集計管理\n機能：日別・月別集計 集計一覧（検索項目/検索結果）\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】分析・集計管理_日別・月別集計 集計一覧（検索項目/検索結果）_日別・月別集計にて、買取関連の集計が買取ステータス「買取成立」に限定されていない\n設計書：0211_基本設計仕様書(分析・集計管理機能).xlsx\n\n# 期待される挙動【必須】\n- 日別・月別集計の買取関連の集計（買取件数・買取金額）は、買取データの買取ステータスが「買取成立」のもののみを計上し、それ以外の買取ステータスは計上しないこと。\n\n# 現在の挙動【必須】\n- ネット買取(dtb_buy_order)は「auto_approval_flg = TRUE」（自動承認フラグ）と申込日の範囲のみで抽出しており、買取ステータス(mtb_buy_order_status)による絞り込みを行っていない。\n- 店頭買取(dtb_otc_buy_order)は「cancel_date IS NULL」（キャンセル日が未設定）と申込日の範囲のみで抽出しており、買取ステータス(mtb_otc_buy_order_status)による絞り込みを行っていない。そのため査定中・査定保留などキャンセルされていない未成立データも計上される。\n- 店頭買取には「買取成立(STATUS_COMPLETE=1)」を含む集計対象ステータス定数 MtbOtcBuyOrderStatus::SUMMARY_STATUSES が定義されているが、日別・月別集計の買取集計SQLからは参照されていない（別機能の店舗×部門別買取集計でのみ使用）。\n\n# 補足情報【任意】\n▼設計書該当箇所\nM12_analysis_management_basedesign.md:157 の逐語引用: 「* 買取関連の集計は買取データの買取ステータスが「買取成立」のみ計上し、それ以外の買取ステータスは計上しない」\nM12_analysis_management_basedesign.md:221 の逐語引用: 「* 買取関連の集計は買取データの買取ステータスが「買取成立」のみ計上し、それ以外の買取ステータスは計上しない」\n\n▼実装該当箇所\nsrc/Eccube/Repository/DtbDailySummaryRepository.php:132 （ネット買取は auto_approval_flg = TRUE のみで抽出）\nsrc/Eccube/Repository/DtbDailySummaryRepository.php:146 （店頭買取は cancel_date IS NULL のみで抽出）\nsrc/Eccube/Repository/DtbDailySummaryRepository.php:83 （aggregatePurchaseSummaryByBaseInfo）\nsrc/Eccube/Entity/Master/MtbOtcBuyOrderStatus.php:66 （買取集計データ対象ステータス SUMMARY_STATUSES。日別集計では未使用）\nsrc/Eccube/Entity/DtbBuyOrder.php:133 （dtb_buy_order は BuyOrderStatus を保持しているが集計SQLで未参照）\n\n▼備考\n反証として MtbOtcBuyOrderStatus::SUMMARY_STATUSES の利用箇所を grep したが、参照しているのは DtbOtcBuyOrderRepository::getSectionSummary（店舗×部門単位の買取集計、別機能）と RecalculateSummaryAction のみで、M12-01 の日別・月別集計バッチからは参照されていない。買取ステータスによる絞り込みは日別・月別集計には存在しない。"
+  },
+  {
+   "issueKey": "ECCUBE_HARERUYA-2206",
+   "summary": "【実装乖離】分析・集計管理_特集タグ編集CSVダウンロード（検索項目）_特集タグ編集CSVダウンロードにて、集計日(From)の初期値が当月1日ではなく2週間前になっている",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "中",
+   "description": "# 基本情報【必須】\n分類：分析・集計管理\n機能：特集タグ編集CSVダウンロード（検索項目）\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】分析・集計管理_特集タグ編集CSVダウンロード（検索項目）_特集タグ編集CSVダウンロードにて、集計日(From)の初期値が当月1日ではなく2週間前になっている\n設計書：0211_基本設計仕様書(分析・集計管理機能).xlsx\n\n# 期待される挙動【必須】\n- 特集タグ編集CSVダウンロード（検索項目）の識別ID1「集計日(From)」は必須項目であり、初期値として当月1日が設定されていること。\n\n# 現在の挙動【必須】\n- 集計日(From)に相当する start_date の初期値は 'data' => new \\DateTime('2 weeks ago') となっており、画面表示時に「2週間前の日付」が設定される（設計の当月1日と不一致）。\n- 必須指定は required=true かつ NotBlank 制約が付与されており、必須要件は満たしている。\n- テンプレート(used_card.twig)側でも初期値を上書きする処理はなく、フォームの既定値がそのまま表示される。\n\n# 補足情報【任意】\n▼設計書該当箇所\nM12_analysis_management_basedesign.md:813 の逐語引用: 「| 1 | 集計日(From) | 日付(yyyy/mm/dd) | 〇 | - | 当月1日 | 集計開始日付を指定する |」\n\n▼実装該当箇所\nsrc/Eccube/Form/Type/Admin/Analysis/SearchUsedCardType.php:47 （'data' => new \\DateTime('2 weeks ago')）\nsrc/Eccube/Form/Type/Admin/Analysis/SearchUsedCardType.php:48 （NotBlank 制約により必須は充足）\nsrc/Eccube/Controller/Admin/Analysis/UsedCardController.php:39 （特集タグ編集CSVダウンロード画面 admin_analysis_used_card）\nsrc/Eccube/Resource/template/admin/Analysis/used_card.twig:35 （start_date をそのまま描画）\n\n▼備考\nM12-09（特集タグ編集CSVダウンロード）の実体は Admin/Analysis/UsedCardController + SearchUsedCardType + used_card.twig。Controller・Twig・JS のいずれにも初期値を当月1日に上書きする処理はない（used_card.twig のJSはフォームリセット時に初期値へ戻すのみ）。Analysis 配下に *.en.twig は存在しない。git log --since=2026-07-08 で当該ファイルに変更なし。"
+  },
+  {
+   "issueKey": "ECCUBE_HARERUYA-2027",
+   "summary": "【実装乖離】在庫管理_ピッキングリスト印刷_在庫移動指示詳細画面にピッキングリスト作成ボタンがなく、ピック表は出庫承認申請画面からしか出力できない",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "低",
+   "description": "# 基本情報【必須】\n分類：在庫管理\n機能：ピッキングリスト印刷\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】在庫管理_ピッキングリスト印刷_在庫移動指示詳細画面にピッキングリスト作成ボタンがなく、ピック表は出庫承認申請画面からしか出力できない\n設計書：0202_基本設計仕様書(在庫管理機能).xlsx\n\n# 期待される挙動【必須】\n- 移動指示リスト詳細画面（M04-25）からピッキングリスト作成ボタンを押下して、ピッキングリスト（M04-39）のダイアログを表示できること。\n- 移動指示リスト詳細画面で選択した在庫移動に対して、実際に出庫される商品の情報がピッキングリストに表示されること。\n\n# 現在の挙動【必須】\n- 在庫移動指示詳細画面のテンプレートにはピッキングリスト作成に相当するボタン・フォーム・JavaScriptが一切存在しない。\n- ピック表PDF出力は在庫移動の出庫承認申請画面（move_outbound_approval_request.twig）のボタンからのみ実行でき、ルートも在庫移動振替ID単位の admin_stock_move_outbound_approval_request_pick_list_pdf_export のみである。\n- 当該ルートは在庫移動のステータスが新規（STATUS_NEW）でない場合はエラーとするため、在庫移動指示作成後（出庫承認済み以降）に指示単位でピッキングリストを出力する導線が存在しない。\n\n# 補足情報【任意】\n▼設計書該当箇所\nM04_stock_management_basedesign.md:3916 の逐語引用「* 移動指示リスト詳細画面から、ピッキングリスト作成ボタンを押下してダイアログを表示する」\nM04_stock_management_basedesign.md:3917 の逐語引用「* 移動指示リスト詳細画面で選択した在庫移動に対して実際に出庫される商品の情報を表示する」\n\n▼実装該当箇所\nsrc/Eccube/Resource/template/admin/Stock/stock_move_instruction_detail.twig:1-185 （画面全体にピッキングリスト作成ボタンが存在しない）\nsrc/Eccube/Resource/template/admin/Stock/move_outbound_approval_request.twig:375 （ピック表出力ボタンは出庫承認申請画面にのみ存在）\nsrc/Eccube/Controller/Admin/Stock/StockMoveController.php:437-481 （ピック表PDF出力ルートは在庫移動振替ID単位）\nsrc/Eccube/Controller/Admin/Stock/StockMoveController.php:447-451 （在庫移動のステータスが新規以外はエラー）\n\n▼備考\nピッキングリストの帳票自体（@admin/Stock/MoveTransfer/pick_list.twig と StockMoveTransferListPdfFormatter::buildPickListDataByStockMoveTransferIds）は実装済みで、欠けているのは在庫移動指示詳細（M04-25）からの作成導線と在庫移動指示単位での出力である。"
+  },
+  {
+   "issueKey": "ECCUBE_HARERUYA-2012",
+   "summary": "【実装乖離】在庫管理_在庫分割 登録編集_在庫分割 登録編集にて、分割先商品の仕入総価格（買取金額比率での按分）が承認申請時ではなく承認時に計算され、分割先商品情報に保存されない",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "低",
+   "description": "# 基本情報【必須】\n分類：在庫管理\n機能：在庫分割 登録編集\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】在庫管理_在庫分割 登録編集_在庫分割 登録編集にて、分割先商品の仕入総価格（買取金額比率での按分）が承認申請時ではなく承認時に計算され、分割先商品情報に保存されない\n設計書：0202_基本設計仕様書(在庫管理機能).xlsx\n\n# 期待される挙動【必須】\n- 承認申請時に、基本情報の更新・分割先商品の仕入総価格の計算・ステータス変更履歴の更新・承認通知先へのメール送信を行い、計算した仕入総価格を分割先商品情報に登録すること（分割先が確定＝編集不可となる承認申請時に計算する）。\n- 分割先商品の仕入総価格は分割先商品の買取金額比率で按分し、合計が分割元商品の移動総原価と一致しない場合は端数分を「最も買取金額（単価）が高い分割先商品」に割り当てること。\n\n# 現在の挙動【必須】\n- 承認申請（StockSplitApplyApprovalAction）は、分割先明細の作成・ステータスの分割承認待ちへの変更・承認申請一覧への登録のみを行い、仕入総価格の按分計算は一切行っていない。\n- 分割先明細（DtbStockSplitJoinDetail）には仕入総価格を保持するカラム自体が無く（standardPrice / costPrice / totalCost / stock / splitJoinQuantity / missingQuantity のみ）、承認申請時点の仕入総価格は保存されない。\n- 買取金額比率での按分と端数調整は承認処理（StockSplitApprovalApproveAction）で都度計算されており、承認時点の買取価格・分割元総原価で計算されるため、申請時から値が変動した場合に設計と異なる金額になる。\n- 端数の割当先は「買取価格×数量（買取金額小計）が最大の分割先」であり、設計の「最も買取金額（単価）が高い分割先商品」とは、単価は低いが数量が多い商品が存在するケースで一致しない。\n- 承認通知先（メンバー）の必須チェックと承認通知メール送信、ステータスの分割承認待ちへの遷移は実装されている。\n\n# 補足情報【任意】\n▼設計書該当箇所\nM04_stock_management_basedesign.md:2176 の逐語引用「6-5.承認申請時、基本情報の更新と、分割先商品の仕入総価格の計算、ステータス変更履歴の更新、承認通知先へのメール送信を行う」\nM04_stock_management_basedesign.md:2183 の逐語引用「6-7.分割先商品の仕入総価格（1商品について数量分の仕入価格）を計算し、分割先商品情報に登録する」\nM04_stock_management_basedesign.md:5050-5052 の逐語引用「* 分割は、分割先の商品の買取金額比率で按分を行い仕入総価格とする / * 分割先商品の仕入総価格の合計＝分割元商品の移動総価格とならない場合は / 端数分を最も買取金額（単価）が高い分割先商品に割り当てる（金額が高くなっても安くなっても端数の割り当てを行う）」\n\n▼実装該当箇所\nsrc/Eccube/Service/Admin/Stock/StockSplitApplyApprovalAction.php:87-118 （承認申請処理。明細作成とステータス変更のみで按分計算・仕入総価格保存が無い）\nsrc/Eccube/Entity/DtbStockSplitJoinDetail.php:55-75 （明細のカラム。仕入総価格に相当するフィールドが存在しない）\nsrc/Eccube/Service/Admin/Stock/StockSplitApprovalApproveAction.php:118-185 （承認時に買取金額比率で按分し端数調整を行っている）\nsrc/Eccube/Service/Admin/Stock/StockSplitApprovalApproveAction.php:170-173 （端数の割当先を「買取価格×数量」が最大の行としている）\nsrc/Eccube/Controller/Admin/Stock/StockSplitController.php:295-300 （承認通知先メンバー必須チェック：実装済み）\nsrc/Eccube/Controller/Admin/Stock/StockSplitController.php:327-331 （承認通知メール送信：実装済み）\n\n▼備考\n承認通知先必須・メール送信・分割承認待ちへの遷移は設計どおり。乖離は (1) 仕入総価格の按分計算タイミングが承認申請時ではなく承認時であり、分割先商品情報に保存されない点、(2) 端数の割当先が『買取単価が最も高い商品』ではなく『買取金額小計（単価×数量）が最大の商品』である点。買取価格が承認までに変動すると申請時点の想定金額と乖離する。"
+  },
+  {
+   "issueKey": "ECCUBE_HARERUYA-2021",
+   "summary": "【実装乖離】在庫管理_在庫移動指示検索_在庫移動実績CSV登録にて、設計の2列（移動指示ID・送り状No.）ではなく4列（店舗名2列を含む）のCSVを要求している",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "低",
+   "description": "# 基本情報【必須】\n分類：在庫管理\n機能：在庫移動指示検索\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】在庫管理_在庫移動指示検索_在庫移動実績CSV登録にて、設計の2列（移動指示ID・送り状No.）ではなく4列（店舗名2列を含む）のCSVを要求している\n設計書：0202_基本設計仕様書(在庫管理機能).xlsx\n\n# 期待される挙動【必須】\n- 在庫移動実績CSV登録のCSVは「移動指示ID」「送り状No.」の2列とし、1行目のカラム名が一致しない場合はフォーマット不一致エラーとすること。\n- 移動指示ID・送り状No.はいずれも必須とし、指定された移動指示IDが存在することを検証すること。\n\n# 現在の挙動【必須】\n- 取込ハンドラは「移動指示ID」「出庫元店舗(名称)」「入庫先店舗(名称)」「送り状No.」の4列を定義し、行の列数が定義数と一致しない場合は列数不正エラーとするため、設計どおりの2列CSVは取り込めない。\n- 雛形ダウンロード（csvTrackingDownload 相当の csvTemplateDownload）も4列のヘッダを出力しており、モーダル内のフォーマット説明も4項目を提示している。\n- 移動指示IDの必須・数値チェック、存在チェック、送り状No.の必須チェックは実装されている。\n- 出庫元店舗(名称)・入庫先店舗(名称)は任意入力扱いだが、値がある場合は移動指示の店舗名と一致しないとエラーになる。\n\n# 補足情報【任意】\n▼設計書該当箇所\nM04_stock_management_basedesign.md:3811-3815 の逐語引用「商品登録を押下時に下記の場合エラーとなる / ・アップロードされたファイルがcsv以外のファイルの場合 / ・CSVファイルが下記のカラム名以外の場合（フォーマット不一致エラー） / 移動指示ID、送り状No. / ※CSV1行目のカラム名の一致チェックを行う」\nM04_stock_management_basedesign.md:3819-3820 の逐語引用「| 2-1 | 移動指示ID | ○ | 数値 | ○ | 1～99999999 | 1234 | 送り状No.を登録したい移動指示IDを指定 | / | 2-2 | 送り状No. | 文字列 | ○ | 65535byte | 1234-5678,1234-1234 | 形式のチェックは行わない、カンマ区切りで複数登録可能 |」\n\n▼実装該当箇所\nsrc/Eccube/Service/Csv/Importer/Event/StockMoveInstructionCsvImportHandler.php:37-40 （4列のカラム定義）\nsrc/Eccube/Service/Csv/Importer/Event/StockMoveInstructionCsvImportHandler.php:79-84 （列数が定義と一致しない行は列数不正エラー）\nsrc/Eccube/Service/Csv/Importer/Event/StockMoveInstructionCsvImportHandler.php:199-210 （移動指示ID：必須＋数値、送り状No.：必須）\nsrc/Eccube/Controller/Admin/Stock/StockMoveInstructionController.php:339 （雛形CSVのヘッダも4列）\nsrc/Eccube/Resource/template/admin/Stock/stock_move_instruction_index.twig:312-330 （モーダルのフォーマット説明も4項目）\n\n▼備考\n存在チェック・必須チェックは実装済み。乖離はCSVのカラム構成（設計は2列、実装は店舗名2列を含む4列を必須の列構成として要求）。なお在庫移動実績入力用CSV（M04-27）の列定義シートは本設計書MDに含まれていないため、M04-27側で4列が定義されている可能性は排除できない（confidence: medium）。ただしM04-24シートの登録CSVレイアウトおよびフォーマット不一致エラーの記述は2列を明示している。"
+  },
+  {
+   "issueKey": "ECCUBE_HARERUYA-2022",
+   "summary": "【実装乖離】在庫管理_在庫移動指示検索_在庫移動指示検索にて、在庫移動実績入力用CSVダウンロードが選択行を出力せず、常時活性のヘッダーのみのテンプレート出力になっている",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "低",
+   "description": "# 基本情報【必須】\n分類：在庫管理\n機能：在庫移動指示検索\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】在庫管理_在庫移動指示検索_在庫移動指示検索にて、在庫移動実績入力用CSVダウンロードが選択行を出力せず、常時活性のヘッダーのみのテンプレート出力になっている\n設計書：0202_基本設計仕様書(在庫管理機能).xlsx\n\n# 期待される挙動【必須】\n- 在庫移動指示一覧で各行のチェックボックスにより移動指示を選択している場合のみ、在庫移動実績入力用CSVダウンロードボタンが活性状態になること。\n- 在庫移動実績入力用CSVダウンロードボタンを押下すると、選択している移動指示リストの内容が在庫移動実績入力用CSV（機能No.M04-27）として出力されること。\n\n# 現在の挙動【必須】\n- 在庫移動実績入力用CSVダウンロードは a タグのリンクとして常に活性状態で描画されており、チェックボックスの選択状態による活性・非活性の制御が行われていない。\n- リンク先の admin_stock_move_instruction_csv_download_record は GET かつ移動指示IDを受け取らないルートであり、CSVには「移動指示ID, 出庫元店舗(名称), 入庫先店舗(名称), 送り状No.」のヘッダー行のみが書き出され、選択した移動指示のデータ行は一切出力されない。\n\n# 補足情報【任意】\n▼設計書該当箇所\nM04_stock_management_basedesign.md:3783 の逐語引用「3-2 在庫移動実績入力用CSVダウンロード ボタン - - - 在庫移動選択時のみ活性状態」\nM04_stock_management_basedesign.md:3752-3754 の逐語引用「* 在庫移動実績入力CSVダウンロードボタン / * 選択している移動指示リストについて、在庫移動実績入力用CSVを出力する / * 在庫移動実績入力用CSV（機能No.: M04-27）」\n\n▼実装該当箇所\nsrc/Eccube/Resource/template/admin/Stock/stock_move_instruction_index.twig:160 （常時活性のリンクとして描画。disabled 制御・チェックボックス連動のJSなし）\nsrc/Eccube/Controller/Admin/Stock/StockMoveInstructionController.php:334-363 （csvTemplateDownload。IDを受け取らずヘッダー行のみ出力）\nsrc/Eccube/Resource/template/admin/Stock/stock_move_instruction_index.twig:405-426 （選択行のIDをPOSTするJSは送り状CSV（#stockMoveInstructionLabelsExport）にのみ実装されている）\n\n▼備考\n送り状CSVダウンロード（M04-28）は #stockMoveInstructionLabelsExport で選択行のIDをPOSTしており、選択行の反映自体は実現できている。実績入力用CSV側のみ雛形（ヘッダーのみ）ダウンロードの実装にとどまる。git log で 2026-07-01 以降の当該ファイル変更なし。"
+  },
+  {
+   "issueKey": "ECCUBE_HARERUYA-2023",
+   "summary": "【実装乖離】在庫管理_在庫移動指示検索_在庫移動指示検索の一覧にて、表示件数の初期値が設計の50件ではなく10件になっている",
+   "issueType": "未実装・実装乖離リスト",
+   "status": "処理中",
+   "priority": "低",
+   "description": "# 基本情報【必須】\n分類：在庫管理\n機能：在庫移動指示検索\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】在庫管理_在庫移動指示検索_在庫移動指示検索の一覧にて、表示件数の初期値が設計の50件ではなく10件になっている\n設計書：0202_基本設計仕様書(在庫管理機能).xlsx\n\n# 期待される挙動【必須】\n- 在庫移動指示一覧の表示件数（1ページあたりの表示件数）の初期値は50件であること。\n\n# 現在の挙動【必須】\n- コントローラはセッション未設定時のページ件数として eccube_default_page_count を用いており、その設定値は10であるため、初期表示は10件となっている。\n- 表示件数プルダウンの選択肢自体は mtb_page_max（10/50/100/300…）から生成されており50件を選択することは可能だが、初期選択は10件である。\n\n# 補足情報【任意】\n▼設計書該当箇所\nM04_stock_management_basedesign.md:3786 の逐語引用「3-4 表示件数 ○ - 50 １ページあたりの表示件数」\n\n▼実装該当箇所\nsrc/Eccube/Controller/Admin/Stock/StockMoveInstructionController.php:77-80 （page_count の既定値に eccube_default_page_count を使用）\napp/config/eccube/packages/eccube.yaml:142 （eccube_default_page_count: 10）\nsrc/Eccube/Resource/template/admin/Stock/stock_move_instruction_index.twig:170-174 （表示件数プルダウン。selected は page_count に一致する値）\n\n▼備考\n一覧の列（移動指示ID・出庫元店舗・入庫先店舗・在庫移動数・移動点数・基準価格合計・移動原価合計・登録日・更新日・送状No.・発送状況の11列＋選択チェックボックス列）は設計の識別ID 3-5〜3-15 と一致しており乖離なし。乖離は表示件数の初期値のみ。"
+  }
+ ]
+}

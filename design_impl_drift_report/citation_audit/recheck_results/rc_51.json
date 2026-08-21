@@ -1,0 +1,149 @@
+{
+  "packetId": "rc_51",
+  "results": [
+    {
+      "rowId": 898,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0208_基本設計仕様書(カード管理).html の全 src-cell を「リロード」「reload」「再読み込み」「画面更新」で検索した。カード一覧(検索入力)の正本 D79/D80/AG119 は「カード名リスト作成バッチを実行しますか？」、実行後のサジェスト用ファイル作成だけを記載し、この処理のリロード指示は0件だった（同書の「リロード」1件は別要件のカード一覧(検索結果)!F46）。正本レイアウト画像 C8 と C94 も開いて確認したが、リロード指示はない。",
+      "reason": "具体的なリロード根拠は旧実装だけにあるため LEGACY_BACKED は妥当。pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/assets/js/card-search.js のバッチ実行ハンドラは成功時に `alert(data.message); location.reload(true);` を実行する。一方、失敗時は `document.body.innerHTML = jqXHR.responseText;` であり、元 finding の「成功/失敗alert後、常にリロード」は過大記述である。現在も少なくとも旧実装で裏付けられる成功時リロードは欠けている。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Resource/template/admin/Card/index.twig の `#generate-card-list-btn` click handler は `.done(function(data) { alert(data.message); })`、`.fail(function(jqXHR) { alert('エラーが発生しました'); ... })`、`.always(function() { $btn.prop('disabled', false).html(btnText); })` で、同 Card テンプレート群を `location.reload` / `reload(true)` で検索して0件。成功時リロードは追加されていない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 900,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0208_基本設計仕様書(カード管理).html と全45冊の Excel 正本 src-cell を `admin.card.search`、`eccube.admin.card`、`セッションキー`、`検索関連キー` で検索して0件。カード一覧(検索入力)!C69 の正本には「カスタマイズ要件に記載の内容以外は現行踏襲とする」とあるが、削除対象キーの具体名はない。",
+      "reason": "具体的なセッション削除は旧実装由来なので LEGACY_BACKED は妥当。pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/SearchControllerTrait.php の `index()` は `admin.card.search`、`.search.page_no`、`.search.page_count` を remove する。なお旧 `index()` は sort/order までは remove しておらず、元 finding が5キー全部を同列に扱う部分は過大であるが、検索条件・ページ番号・表示件数の3キーを初期表示で消す差は実在する。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/Admin/Card/CardController.php の `index()` は初期 GET 分岐で FormUtil::getViewData($searchForm) を `card` に、1を `card.page_no` に set して return する。続いて利用される src/Eccube/Controller/Admin/SearchControllerTrait.php の `search()` は `eccube.admin.card.search`、`.search.page_no`、`.search.page_count`、`eccube.admin.card.sort`、`.order` を組み立てるが、現作業ツリー全体を該当キーの `remove` で検索して0件だった。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 901,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0208_基本設計仕様書(カード管理).html の sheet-3/4 の正本 src-cell、および全45冊の正本 src-cell を `CSRF` と `csrf_protection` で検索して0件。カード一覧(検索入力)!AG143 は検索ボタンの押下動作を記すが、フォームのCSRF設定は記さない。",
+      "reason": "CSRF無効化の具体根拠は pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/Card/SearchCardType.php の `configureOptions()` にある `'csrf_protection' => false` だけであり、LEGACY_BACKED は妥当。現在の型定義は逆の設定のままである。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Form/Type/Admin/SearchCardType.php の `SearchCardType::configureOptions()` は `'csrf_protection' => true`。src/Eccube/Resource/template/admin/Card/index.twig は `form_start(searchForm, { action: url('admin_card_list'), method: 'POST', ... })` でこのフォームを描画しており、CSRF無効化はない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 902,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0208_基本設計仕様書(カード管理).html の正本ではカード一覧(検索入力)!C86/D87/E88-E91 が検索対象をカード名(日/英)・ルールテキスト(日/英)の4列とし、項目表のカード一覧(検索入力)!V120 は最大値「-」。全45冊の正本 src-cell を「半角・全角スペース」「カンマで分割」「複合キーワード」「トークン間」で検索したところ、同種のAND LIKE記述は別機能の0212:デッキ編集!AB212-AB213だけで、M14-01にはなかった。sheet-3 レイアウト画像 C8/C94 も確認し、50文字上限や分割条件の注記はない。",
+      "reason": "4列を検索対象とする点は正本にもあるが、finding の差分の中心である50文字上限・空白/カンマ分割・語間ANDは旧実装由来である。pf-eccube3 の SearchCardType は `Assert\\Length(['max' => $config['stext_len']])`、constant.yml.dist は `stext_len: 50`、MtbCardRepository と SqlUtil::multiTextQuery() は空白/カンマ分割、列間OR・語間ANDを実装するため、LEGACY_BACKED は妥当。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Form/Type/Admin/SearchCardType.php の `buildForm()` にある `multi` は TextType、required=false、placeholderのみで Length/maxlength がない。src/Eccube/Repository/Master/MtbCardRepository.php の `getQueryBuilderBySearchData()` は入力全体を単一の `:multi` とし、`c.name_jp LIKE :multi OR c.name_en LIKE :multi OR c.text_jp LIKE :multi OR c.text_en LIKE :multi` に `'%'.$multi.'%'` を設定する。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 903,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "Excel正本のカード一覧(検索結果)!E69/M69 は「カードID」「ラベル」、同 !E70/M70/AG70 は「カード名」「リンク」「押下すると、カード詳細画面へ遷移する」。正本レイアウト画像 E8 も開き、カードID 42983等は黒いプレーン表示、カード名は青いリンク表示であることを確認した。",
+      "reason": "カード名をリンクにする要求は正本に実在するため SPEC_BACKED は妥当。ただし元 finding の「カード名またはID」は広すぎ、正本はIDをラベル、カード名だけをリンクとしている。現在はカード名もリンクでないため、正本で裏付けられる部分の乖離は再現する。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Resource/template/admin/Card/index.twig の一覧行はカードIDを `{{ card.id }}`、カード名を `{{ card.getNameJpWithEn }}` とアンカー外に描画し、`admin_card_edit` へのリンクは右端の鉛筆アイコン `<a class=\"btn btn-ec-actionIcon ...\">` だけにある。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 905,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0208_基本設計仕様書(カード管理).html の Excel 正本 src-cell を「タイトル」「サブタイトル」で検索して0件。sheet-6 の正本レイアウト画像 B7、C118、C184 の3レイヤー（計5枚）もすべて開いた。画像内には「カード新規登録:基本情報」「詳細情報」等はあるが、管理画面フレームの title/sub_title を「カード管理」「カード詳細」と指定する記載はない。この指定は function-design-embed 開始後と functions/pf-eccube3/m14-04_admin_card_card_register_update_delete.md にのみある。",
+      "reason": "Excel正本ではなく旧実装・リバース文書だけが根拠なので LEGACY_BACKED は妥当。pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Card/card_detail.twig は実際に `{% block title %}カード管理{% endblock %}`、`{% block sub_title %}カード詳細{% endblock %}` としている。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Resource/template/admin/Card/edit.twig は title=`admin.product.card_detail`（カード詳細）、sub_title=`admin.product.card_management`（カード管理）。src/Eccube/Resource/template/admin/default_frame.twig はページ見出しを `block('title')`、副題を `block('sub_title')` として描画するため、旧実装と上下が逆のままである。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 906,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "Excel正本のカード詳細(登録・編集・削除)!C271 は「詳細情報が商品と紐づいている場合は、(2-26)詳細情報削除不可の文言を表示し、(2-18)詳細情報を追加 を非表示にする」と明記する。項目表 !AG175 にも同条件があるが、そこは cell-strike 表示。sheet-6 の正本レイアウト画像 B7/C118/C184 の全5枚も確認したところ、C184の編集レイアウトは「この詳細情報は商品に登録されているため、削除できません。」と「詳細情報を追加」を同時表示しており、正本内にテキストと画像の矛盾がある。",
+      "reason": "少なくとも非取り消し線の正本セル C271 が非表示要求を明記するため SPEC_BACKED は維持する。ただし同じ正本のC184画像は追加ボタンを表示しており、設計自体が不整合なので確信度は medium とした。現実装はC271の文言要求を満たさない。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/Admin/Card/CardController.php の編集処理は `getCardDetailIdsHaveProduct($card)` を `noDeletableCardDetailIds` としてテンプレートへ渡す。src/Eccube/Resource/template/admin/Card/edit.twig は各既存行の `is_deletable` 判定にその配列を使うが、直後の `<button type=\"button\" id=\"add-detail\" ...>詳細情報を追加</button>` は条件分岐なしで常に描画する。",
+      "severityOpinion": "med",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 908,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "PARTIAL",
+      "checkedQuote": "Excel正本のカード詳細(登録・編集・削除)!AG292 を実物確認した。正確な文言は「この操作はあとから取り消すことができません。『{カード名}』を削除してよろしいですか？」に相当する二重鉤括弧表記で、続けて「その後『実行』を選択すると、削除を実行する」。正本 src-cell を「このカードを削除」で検索して0件。sheet-6 の正本レイアウト画像5枚も確認したが、確認モーダル自体は描かれていない。",
+      "reason": "確認モーダルと「実行」ラベルの要求は正本にあるため SPEC_BACKED は妥当。ただし元 finding の設計期待値「このカードを削除してもよろしいですか？」は誤引用である。現実装の確認本文は正本と一致しており、この部分は乖離しない。残る差は確定ボタンが正本の「実行」ではなく「削除」である点だけなので PARTIAL。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Resource/template/admin/Card/edit.twig の削除リンクは `admin.common.delete_modal__message` に `card.getNameJpWithEn` を渡す。src/Eccube/Resource/locale/messages.ja.yaml の値は「この操作はあとから取り消すことができません。『%name%』を削除してよろしいですか？」に相当する二重鉤括弧表記で正本本文と一致する。一方、src/Eccube/Resource/template/admin/Card/delete_modal.twig の確定アンカーは `admin.common.delete`、翻訳値は「削除」であり、「実行」ではない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 909,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "Excel正本のカード詳細(登録・編集・削除)!C274/D275 を実物確認し、「カードを削除すると、カード一覧画面へ遷移し以下の文言を表示する」「『削除が完了しました。』」に相当する鉤括弧付き文言を確認した。sheet-6 の正本レイアウト画像5枚も確認したが、削除後フラッシュメッセージの画像はない。",
+      "reason": "遷移先と完了文言が正本に明記されるため SPEC_BACKED は妥当。現実装は一覧へ戻る点は満たすが、利用者に表示する成功文言が異なるため、指摘された文言乖離は現在も再現する。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/Admin/Card/CardController.php の `delete()` は削除成功後に `$this->addSuccess('admin.common.delete_complete', 'admin');` を実行し、カード検索一覧URLへ redirect する。src/Eccube/Resource/locale/messages.ja.yaml の `admin.common.delete_complete` は「削除しました」で、正本の「削除が完了しました。」ではない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 911,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "PARTIAL",
+      "checkedQuote": "0208_基本設計仕様書(カード管理).html のカード登録CSVアップロード正本範囲と全45冊の正本 src-cell を `csvimport`、`admin_card_csv`、`m14-05_admin_card_card_csv_import` で検索して0件。sheet-7 正本レイアウト画像 C7/AC46 も開いたが、URL/route名の表示はない。これらの名前は function-design-embed / functions/pf-eccube3/m14-05_admin_card_card_csv_import.md 側だけにある。",
+      "reason": "URL・route名の根拠は旧実装なので LEGACY_BACKED は妥当。pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/CardServiceProvider.php は GET `/card/csvimport`=`admin_card_csv`、POST同パス=`admin_card_csv_import`。元 finding のPOST名 `m14-05_admin_card_card_csv_import` は旧4リポジトリにも存在せず誤りである。現実装は旧POST route名 `admin_card_csv_import` だけは維持する一方、GET名、GET/POSTパス、戻り先識別子は異なるため PARTIAL。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/Admin/Card/CardCsvController.php の `csv()` は GET `/%eccube_admin_route%/card/csv_upload`, name=`admin_card_csv_upload`。`import()` は POST `/%eccube_admin_route%/card/import`, name=`admin_card_csv_import`。入力エラー、例外、成功の各 return はすべて `redirectToRoute('admin_card_csv_upload')`。現作業ツリーを `admin_card_csv`、`card/csvimport`、`m14-05_admin_card_card_csv_import` で検索して0件だった。",
+      "severityOpinion": "low",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 912,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "Excel正本のカード登録CSVアップロード!E50 は「CSVファイル選択」、!E52 は「CSVファイルの／アップロード」、!E53 は「カード登録CSV／フォーマット」、!AG53 はシート「カード登録CSV」に対応する項目をテーブル表示すると明記する。sheet-7 の正本レイアウト画像 C7 も開き、TSV部分を取消線で除いたこれらのラベルとCSV項目表を確認した。AC46画像は小アイコンで追加文言なし。",
+      "reason": "表示文言・項目表が正本セルと画像の両方にあるため SPEC_BACKED は妥当。現実装は項目表自体は表示するが、選択ラベルを描画せず、アップロードボタンとフォーマット見出しの文言も正本と異なるので、文言乖離は再現する。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/Admin/Card/CardCsvController.php の `renderWithError()` は `admin.card.card_csv_upload_title` / `admin.card.card_csv_format_title` を渡し、翻訳値は「カードCSVアップロード」「カードCSVフォーマット」。src/Eccube/Resource/template/admin/Product/base_csv_upload.twig のボタンは `admin.common.csv_upload`=「CSVファイルをアップロード」で、import_file widget の前後に `admin.common.csv_file_select`=「CSVファイル選択」を描画する参照はない。同Twigは `headers` をループして項目表は描画する。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 916,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0208_基本設計仕様書(カード管理).html のカード登録CSVアップロード/カード登録CSVの正本 src-cell、および全45冊の正本 src-cell を「SQLロガー」「SQL Logger」「setSQLLogger」「100行ごと」「キャッシュ解放」「clearCache」で検索して0件。記述は function-design-embed / functions/pf-eccube3/m14-05_admin_card_card_csv_import.md 側だけだった。",
+      "reason": "SQLロガー無効化と定期clearの具体根拠は旧実装だけなので LEGACY_BACKED は妥当。pf-eccube3 の CardCsvController::import() は取込前に `setSQLLogger(null)`、Service/Csv/CardCsv::register() は行単位flush後に `if ($rowIndex % 100 === 0) { $this->clearCache(); }`、ループ後にも `clearCache()` を実行する。現在もこれらは取込経路にない。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Service/Csv/CardCsv.php の `CardCsv::register()` は beginTransaction、各行の persist/flush、最後の commit を行うが `clearCache()` も `rowIndex % 100` もない。src/Eccube/Service/Csv/AbstractCsvService.php に `clearCache()` 定義はあるが CardCsv からの呼出しは0件。src/Eccube/Controller/Admin/Card/CardCsvController.php の `setSQLLogger(null)` は `export()` にだけあり、`import()` にはない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    }
+  ]
+}

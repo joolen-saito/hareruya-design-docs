@@ -1,0 +1,165 @@
+{
+  "packetId": "rest_46",
+  "results": [
+    {
+      "rowId": 1196,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0212_基本設計仕様書(デッキ管理).html:3296 は「条件を指定して、登録されているアーキタイプの検索ができる」、同:3316 は「入力項目一覧で設定された値をもとに検索を実行する」とだけ記載する。正本範囲 sheet-9:3249-3359 に POST `/deck/search/1`、page_no=1、assert `^[1-9][0-9]*$` の具体値はない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/DeckServiceProvider.php:17-19 は `$app->match('/'.$app['config']['admin_route'].'/deck/search/{page_no}', ...)`、`->assert('page_no', '^[1-9][0-9]*$')`、`->bind('admin_deck_search')`。pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Deck/deck.twig:35 は `<form ... method=\"post\" action=\"{{ url('admin_deck_search', {'page_no': 1}) }}\">` と実装する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Deck/DeckController.php:76-79 は `/deck` と `/deck/search/{page_no}` を定義するが requirements は `['page_no' => '\\d+']`。ec-cube-enterprise/src/Eccube/Resource/template/admin/Deck/index.twig:230 は `form_start(searchForm, { 'action': url('admin_deck_list'), 'method': 'POST' ... })` で `/deck` へ送信する。",
+      "note": "具体的URL・page_no固定・正整数制約の根拠はExcel正本ではなくpf-eccube3。"
+    },
+    {
+      "rowId": 1197,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0212_基本設計仕様書(デッキ管理).html:3294 は「カスタマイズ要件に記載の内容以外は現行踏襲とする」とするだけで、正本範囲 sheet-9:3249-3359 にフォーム内部名 `admin_search_deck` や `csrf_protection=false` の記載はない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/DeckController.php:41-44 は `$this->sessionKey = 'deck';`、`$this->formName = 'admin_search_deck';`。pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/Deck/SearchDeckType.php:21-26 は `configureOptions` で `'csrf_protection' => false` を設定する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Deck/DeckController.php:67-70 は `$this->formName = 'admin_search_deck'` を維持する一方、ec-cube-enterprise/src/Eccube/Form/Type/Admin/SearchDeckType.php:206-211 は `'csrf_protection' => true` とする。",
+      "note": "フォーム名は一致するが、CSRF無効という具体要件は旧実装由来で新実装に移植されていない。"
+    },
+    {
+      "rowId": 1198,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0212_基本設計仕様書(デッキ管理).html:3294 は「カスタマイズ要件に記載の内容以外は現行踏襲とする」とするが、正本範囲 sheet-9:3249-3359 に `admin.deck.search`、`.page_no`、`.sort`、`.order`、`.page_count` のセッションキーは記載されていない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/DeckController.php:41-44 は `$this->sessionKey = 'deck'`。pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/SearchControllerTrait.php:91-99 は `admin.{$sessionkey}.search.page_count`、`.search.page_no`、`.search`、`.sort`、`.order` を組み立て、同:191-196 は `$session->set(...)` で5キーを保存する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/SearchControllerTrait.php:110-118 はキーを `eccube.admin.{$sessionkey}.*` とし、同:189-194 で保存する。さらに ec-cube-enterprise/src/Eccube/Controller/Admin/Deck/DeckController.php:104-108 は別に `$this->session->set($this->sessionKey, $viewData)` と `deck.page_no` を保存する。",
+      "note": "具体的な `admin.deck.*` 契約の根拠はpf-eccube3。"
+    },
+    {
+      "rowId": 1199,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0212_基本設計仕様書(デッキ管理).html:3309 は正本項目を「アーキタイプ」として列挙するだけで、選択肢ラベルを日本語名＋フォーマット日本語名にする記載や `getNameWithFormatNameJp` は正本範囲 sheet-9:3249-3359 にない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/Deck/SearchDeckType.php:64-68 は archetypes の `choice_label` で `return $archetype->getNameWithFormatNameJp();`。pf-eccube3/app/Plugin/HareruyaEc/Entity/DtbArchetype.php:541-544 は `return $this->__toString() . ' ( ' . $this->getFormat()->getNameJp() . ' ) ';` と日本語フォーマット名を連結する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/SearchDeckType.php:84-90 は archetypes に `'choice_label' => 'nameJp'` を指定し、日本語アーキタイプ名のみを表示する。",
+      "note": "ラベル結合規則の直接根拠はpf-eccube3。"
+    },
+    {
+      "rowId": 1200,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0212_基本設計仕様書(デッキ管理).html:3740-3742 は「新規登録および…内容変更」「削除ができる」と機能だけを定め、正本範囲 sheet-11:3687-3832 に `admin_archetype_create/update`、URL、DELETEメソッドの具体契約はない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/ArchetypeServiceProvider.php:24-40 は GET `/archetype/{id}`=`admin_archetype_edit`、GET `/archetype/new`=`admin_archetype_new`、POST `/archetype`=`admin_archetype_create`、POST `/archetype/{id}`=`admin_archetype_update`、DELETE `/archetype/{id}`=`admin_archetype_delete` を定義する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Archetype/ArchetypeController.php:147-149 は GET/POST `/archetype/new`=`admin_archetype_new`、同:175-177 は GET/POST `/archetype/{id}/edit`=`admin_archetype_edit`、同:189-190 は POST `/archetype/{id}/delete`=`admin_archetype_delete` とし、旧create/updateルートを持たない。",
+      "note": "具体的HTTP契約は旧実装由来。"
+    },
+    {
+      "rowId": 1201,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0212_基本設計仕様書(デッキ管理).html:3743-3744 は「代表カード選択ボタン押下時の動作は…『代表カード検索ポップアップ』と同一」とするが、正本範囲 sheet-11:3687-3832 に `search/main_card/*` の3エンドポイントや `admin.archetype.main_card.*` セッションキーはない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/ArchetypeServiceProvider.php:43-51 は POST `search/main_card/html`、GET `search/main_card/html/{page_no}`、POST `search/main_card/id` を定義する。pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/ArchetypeController.php:139-158 は `admin.archetype.main_card.search` と `.search.page_no` を保存・復元する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Archetype/ArchetypeController.php:296-303 は単一POST `/archetype/search_card_image` で page をリクエスト値から取得し、同:367-372 は `items/totalCount/page/totalPages` のJSONを返す。ec-cube-enterprise/src/Eccube/Resource/template/admin/Archetype/edit.twig:124-151 はインラインJSでこのAPIとページングを処理し、セッション保存はない。",
+      "note": "ポップアップの存在は正本にあるが、3API・セッション方式という具体契約はpf-eccube3由来。"
+    },
+    {
+      "rowId": 1202,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0212_基本設計仕様書(デッキ管理).html:3771-3772 は検証NG時に「エラー内容を表示する」とするだけで、無効送信時にも `card_image_id` を解決して代表カード画像を再表示する記載は正本範囲 sheet-11:3687-3832 にない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/ArchetypeController.php:95-109 は `handleRequest` 後、検証前に `$dtbArchetype->getCardImageId()` をリポジトリで解決して `$cardImage` を作り、無効時の再描画にも `'cardImage' => $cardImage` を渡す。pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Archetype/archetype_detail.twig:50-56 はその `cardImage` から画像とカード名を表示する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Archetype/ArchetypeController.php:249-258 は `cardImageId` の取得・解決入力作成を `if ($form->isSubmitted() && $form->isValid())` 内でのみ行い、同:286-290 の無効時返却には `form/Archetype/isNew` しかない。ec-cube-enterprise/src/Eccube/Resource/template/admin/Archetype/edit.twig:229-235 はプレビューを `Archetype.CardImage` だけから描画する。",
+      "note": "無効送信値からプレビューを復元する具体挙動は旧実装由来。"
+    },
+    {
+      "rowId": 1203,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0212_基本設計仕様書(デッキ管理).html:3771-3772 は登録・更新の実行とエラー表示だけを定め、成功フラッシュキー `admin.register.complete` や編集URLへのリダイレクトは正本範囲 sheet-11:3687-3832 に記載がない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/ArchetypeController.php:114-118 は保存後 `$app->addSuccess('admin.register.complete', 'admin');` とし、`admin_archetype_edit` へリダイレクトする。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Archetype/ArchetypeController.php:275-277 は `$this->addSuccess('admin.common.save_complete', 'admin');` の後 `admin_archetype_edit` へ戻る。ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:1595 は `admin.common.save_complete: 保存しました`、同:1970 は未使用の `admin.register.complete: 登録が完了しました。`。",
+      "note": "リダイレクトは満たすが、旧実装由来の成功メッセージキーは移植されていない。"
+    },
+    {
+      "rowId": 1204,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0212_基本設計仕様書(デッキ管理).html:3773 は編集画面の削除について「確認するJSダイアログを表示」「OK押下で削除」とだけ記載し、一覧/詳細別の翻訳キーや `data-message` アンカー方式は正本範囲 sheet-11:3687-3832 にない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Archetype/archetype.twig:157 は一覧削除を `data-method=\"delete\" data-message=\"{{ trans('admin.confirm.delete')|format(...) }}\"` とし、pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Archetype/archetype_detail.twig:132-133 は詳細削除を `data-message=\"{{ trans('admin.confirm.archetype_delete') }}\"` とする。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Archetype/index.twig:193-196 はformの `onsubmit=\"return confirm('{{ 'admin.archetype.delete_confirm'|trans... }}')\"`、ec-cube-enterprise/src/Eccube/Resource/template/admin/Archetype/edit.twig:63-67 も同じ `admin.archetype.delete_confirm` を使い、data-messageアンカー方式ではない。",
+      "note": "確認ダイアログ自体は正本を満たすが、findingが要求するキー分離・DOM方式は旧実装由来で未移植。"
+    },
+    {
+      "rowId": 1205,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0212_基本設計仕様書(デッキ管理).html:3741-3742 は登録済みアーキタイプを削除できることだけを定め、関連デッキ時/成功時/CSRF不正時のメッセージキー・HTTP403・検索ページ復帰は正本範囲 sheet-11:3687-3832 にない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/ArchetypeController.php:211-230 はCSRFを `checkCsrfValid` し、関連デッキ時 `admin.archetype.delete.failed`＋`admin_archetype_search` 1ページ、成功時 `admin.delete.complete`＋セッション `admin.archetype.search.page_no` の検索ページへ戻す。pf-eccube3/app/Plugin/HareruyaEc/Controller/FormValidHelper.php:39-46 は不正CSRFで `AccessDeniedHttpException('CSRF token is invalid.')` を投げる。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Archetype/ArchetypeController.php:192-221 はCSRF不正を `admin.common.csrf_invalid`＋一覧リダイレクト、実行時例外を編集画面、成功を `admin.common.delete_complete`＋常に一覧へ戻す。ec-cube-enterprise/src/Eccube/Service/Admin/Archetype/ArchetypeDeleteAction.php:44-46 は関連デッキ時 `admin.archetype.delete_error_deck_exists` を投げる。",
+      "note": "削除後分岐・メッセージ・403契約の直接根拠はpf-eccube3。"
+    },
+    {
+      "rowId": 1206,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0212_基本設計仕様書(デッキ管理).html:3741-3742 はアーキタイプ削除機能を定めるだけで、`deleted_at` を用いる論理削除やSoftDeleteable設定は正本範囲 sheet-11:3687-3832 に記載がない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Entity/DtbArchetype.php:7-11 は `@Gedmo\\SoftDeleteable(fieldName=\"deletedAt\", timeAware=false)`、同:88-93 は `@ORM\\Column(name=\"deleted_at\"...)` を持つ。pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/ArchetypeController.php:223-225 は `orm.em->remove($mtbArchetype)` をこのSoftDeleteableエンティティへ実行する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/EntityManager/ArchetypeEntityManager.php:82-89 は `$this->entityManager->remove($Archetype);`。ec-cube-enterprise/src/Eccube/Entity/DtbArchetype.php:29-32 のクラス属性はTable/HasLifecycleCallbacks/EntityだけでSoftDeleteableがなく、同:87-88 に `deleted_at` 列だけがある。",
+      "note": "旧実装にはSoftDeleteable設定が実在するが、新実装では列のみで設定が欠落している。"
+    },
+    {
+      "rowId": 1207,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0212_基本設計仕様書(デッキ管理).html:3994 は「カスタマイズ要件に記載の内容以外は現行踏襲」、同:3996 はCSVによる一括登録・更新を定めるが、正本範囲 sheet-12:3948-4053 に `/archetype/csvimport` やGET/POSTルート名はない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/ArchetypeServiceProvider.php:53-58 は GET `/archetype/csvimport` を `admin_archetype_csv`、POST同パスを `admin_archetype_csv_import` にbindする。packet記載のPOST名 `m15-10_admin_deck_archetype_csv_import` は旧4リポジトリに存在せず、旧コード上の正確なPOST名は `admin_archetype_csv_import`。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Archetype/ArchetypeCsvController.php:47-49 はGET/POST共通で `/archetype/csv_import`、name=`admin_archetype_csv_import` を定義する。",
+      "note": "旧URLとGET/POST分離の移植差は裏付くが、findingのPOSTルート名はリバース文書側の補助名で旧実装コードとは一致しない。"
+    },
+    {
+      "rowId": 1208,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0212_基本設計仕様書(デッキ管理).html:3992 のExcel正本は「・TSVアップロードを廃止」、同:4005 は「・ファイル拡張子『TSV』をエラー扱いにする処理を追加」と明記する。これはリバース埋め込み開始前の `src-cell` 正本記述である。",
+      "legacyEvidence": "旧実装は変更前仕様で、pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/CsvImportType.php:32-39 はNotBlank/File/CsvMimeTypeを設定し、pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/CsvMimeTypeValidator.php:19-25 は `text/tab-separated-values` を許可する。pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/AbstractCsvService.php:156-159 も拡張子tsvをタブ区切りとして取り込む。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/CsvImportType.php:48-57 はNotBlankとFile(maxSize)だけでTSV拒否制約がない。ec-cube-enterprise/src/Eccube/Service/Csv/Importer/CsvImporter.php:172-175 は `$delimiter = ($fileExtension === 'tsv') ? \"\\t\" : ...` とTSVを取り込む。Twigのaccept制限だけではサーバー側要件を満たさない。",
+      "note": "TSV廃止・拡張子TSVをエラーにする核心要件はExcel正本に直接ある。CsvMimeTypeという具体クラス名は旧実装由来だが、判定成立に不要。"
+    },
+    {
+      "rowId": 1209,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0212_基本設計仕様書(デッキ管理).html:4017 はCSVアップロード時に「入力チェックを実施」とするだけで、ヘッダ名の順序まで固定配列と完全一致させる記載は正本範囲 sheet-12:3948-4053 にない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/ArchetypeCsvController.php:59-63 は固定ヘッダのkeysと入力ヘッダを `checkHeaderValues` へ渡す。pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/AbstractCsvService.php:208-212 は `array_values(array_diff($keys,...)) !== array_values(array_diff($columnHeaders,...))` なら `admin.csv.error.format.header` を投げ、順序違いも不一致になる。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Model/CsvRow.php:60-70 はヘッダを `array_flip(array_values($headers))` して名称から位置を引く。ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/BaseCsvImportHandler.php:71-88 は列数一致と各列名の存在だけを検査し、順序入替を拒否しない。",
+      "note": "ヘッダ順序まで固定する具体契約はpf-eccube3由来。"
+    },
+    {
+      "rowId": 1210,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0212_基本設計仕様書(デッキ管理).html:4017 はアップロード・入力チェック・登録更新・画面上のエラー表示だけを定め、成功時と失敗時の双方をGETへ302リダイレクトしフラッシュ表示する応答契約は正本範囲 sheet-12:3948-4053 にない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/ArchetypeCsvController.php:54-55,73-85 は失敗時も成功時も `$archetypeCsv->render()` を返す。pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/ArchetypeCsv.php:86-98 のrenderは一時ファイル削除後 `return $this->app->redirect($this->app->url('admin_archetype_csv'));` とする。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Archetype/ArchetypeCsvController.php:60-71,92-103 はフォーム不正・ファイル無し・行数上限・例外・取込エラーを `renderWithErrors` で同一リクエスト描画し、同:106-108 の成功時だけ `admin_archetype_csv_import` へリダイレクトする。",
+      "note": "PRG方式を失敗時にも適用する具体契約は旧実装由来。"
+    },
+    {
+      "rowId": 1211,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0212_基本設計仕様書(デッキ管理).html:3996-4017 の正本は取込機能とエラー表示を定めるが、`アーキタイプCSV登録開始/完了` のログ短文や成功キー `admin.register.complete` は記載しない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/ArchetypeCsvController.php:52-53 は `log_info('アーキタイプCSV登録開始')`、同:82-83 は `log_info('アーキタイプCSV登録完了')` と `$app->addSuccess('admin.register.complete', 'admin')` を実行する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Archetype/ArchetypeCsvController.php:92-97 は例外時 `log_error('archetype csv import error', ...)` のみ、同:106-108 は成功時 `admin.common.csv_upload_complete` を積んでリダイレクトする。開始・完了log_infoはない。",
+      "note": "ログ文字列と成功フラッシュキーの具体値はpf-eccube3由来。"
+    },
+    {
+      "rowId": 1212,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0212_基本設計仕様書(デッキ管理).html:4017 はCSVアップロードボタンの処理だけを説明し、`card-csvimport.js`、送信時disabled、`#spinner` の記載は正本範囲 sheet-12:3948-4053 にない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Archetype/archetype_csv_import.twig:10-13 は `spin.min.js` と `card-csvimport.js` を読み込み、同:32 は `<div id=\"spinner\"></div>`。pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/assets/js/card-csvimport.js:21-28 はspinnerを初期化し、submit時にupload/downloadボタンをdisabled化してspinnerを開始する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Archetype/csv_import.twig:36-53 のJSはファイル選択・ファイル名表示・uploadボタン有効化だけで、同:79-88 のフォームにもspinner要素がない。確認範囲 `src/Eccube/Resource/template/admin/Archetype` と `html/template/admin/assets/js` で `card-csvimport.js|#spinner` は該当なし。",
+      "note": "送信時UI制御の具体要件は旧実装由来。"
+    },
+    {
+      "rowId": 1213,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0213_基本設計仕様書(データ管理).html:1074 は「カスタマイズ要件に記載の内容以外は現行踏襲」、同:1076 はトップのスライドバナー設定機能を定めるが、正本範囲 sheet-3:1029-1136 に `/banner/top` 系URLはない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/BannerServiceProvider.php:31-43 はGET/POST `/banner/top`、GET/POST `/banner/top/{html_class}`、DELETE `/banner/top/delete`、DELETE `/banner/top/delete/{html_class}` をそれぞれトップバナー管理ルートとして定義する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Data/TopBannerController.php:54-56 はGET/POST `/data/top_banner` と `/data/top_banner/{base_info_digit}`、同:183-185 はDELETE `/data/top_banner/delete` と `/data/top_banner/{base_info_digit}/delete` を定義する。",
+      "note": "具体的な `/banner/top` URL契約はpf-eccube3由来。"
+    },
+    {
+      "rowId": 1214,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0213_基本設計仕様書(データ管理).html:1076 はスライドバナー設定機能、同:1084-1091 は画像URL等の画面項目だけを定め、正本範囲 sheet-3:1029-1136 にストレージプレフィックス `banner/` や `banner/{html_class}/` はない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/BannerController.php:20 は `const S3_DIRCTORY = 'banner/';`、同:72-75 は一覧を `banner/` または `banner/{htmlClass}/` から取得し、同:200-209 はアップロード先も同じプレフィックスで組み立てる。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Admin/Data/TopBannerFileListAction.php:22-38 は `TOP_BANNER_S3_DIRECTORY = 'banner/top/'` と店舗サブディレクトリ、ec-cube-enterprise/src/Eccube/Service/Admin/Data/TopBannerUploadAction.php:25,70-81 は `banner/top` または `banner/top/{shopDigit}`、ec-cube-enterprise/src/Eccube/Service/Admin/Data/TopBannerDeleteAction.php:23-33 は削除キーを `banner/top/` に限定する。",
+      "note": "ストレージ階層の具体値はpf-eccube3由来。"
+    },
+    {
+      "rowId": 1215,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0213_基本設計仕様書(データ管理).html:1090 は「並び順」「少ないほど優先的に表示」、同:1091 は「バナー設定を反映」とだけ記載し、正本範囲 sheet-3:1029-1136 に `eccube.setModeAndSubmitBanner`、空欄/重複の送信前alert、DOM名 `hareruyaec_banner_sort_no_*` はない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Banner/banner.twig:21-31 は `eccube.setModeAndSubmitBanner` と `[id^=\"hareruyaec_banner_sort_no_\"]` 走査を定義し、同:32-41 は空欄で `alert('並び順が空フォームがあります。')` 後return、同:44-53 は重複で `alert('同じ並び順があります(...)')` 後returnし、問題なければ `document.hareruyaec_banner.submit()` する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Data/top_banner.twig:92-108 のJSはアップロードファイル未選択の送信阻止だけ。ec-cube-enterprise/src/Eccube/Form/Type/Admin/TopBannerType.php:131-153 はPOST_SUBMITで空欄・重複をFormErrorにする。確認範囲 `top_banner.twig`、Event/banner.twig、locale、assetsでトップバナー用 `setModeAndSubmitBanner|hareruyaec_banner` は該当なし。",
+      "note": "空欄・重複の業務検証自体は新実装にもあるが、findingが要求する送信前alert方式はpf-eccube3由来で未移植。"
+    }
+  ]
+}

@@ -1,0 +1,345 @@
+{
+ "packetId": "rc_38",
+ "note": "rowId は drift_findings_list_final.tsv の行番号(ヘッダ除く1始まり)。mech は機械検証フラグ(手掛かりであって正解ではない)。",
+ "count": 12,
+ "findings": [
+  {
+   "rowId": 673,
+   "機能No": "M08-09",
+   "機能名": "M08-09 配送先編集",
+   "ドメイン": "m08",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "削除後は配送先一覧へ戻る。",
+   "実装実態": "削除完了後は admin_customer_edit にリダイレクトする。",
+   "差分内容": "設計は削除後の遷移先を配送先一覧としているが、実装は会員編集画面へ戻す。実装には配送先一覧専用ルートも見つからない。",
+   "実装参照": "src/Eccube/Controller/Admin/Customer/CustomerDeliveryEditController.php:166",
+   "設計書参照": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-17:4031-4032",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:4511 のExcel正本は「配送先一覧に戻る」に対して「配送先一覧画面に遷移 ECCUBE4系を踏襲するため削除する」と明記する。削除処理後の遷移先はExcel正本に記載されず、期待値は同:4585以降のリバース詳細設計にのみある。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/CustomerController.php:606-609 は配送先を削除・flushした後、`return $app->redirect($app->path('admin_customer_delivery', ['id' => $customerAddress->getCustomer()->getId()]));` として旧配送先一覧へ戻す。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/CustomerDeliveryEditController.php:145-166 は削除後に `return $this->redirectToRoute('admin_customer_edit', ['id' => $Customer->getId()]);` として会員編集画面へ戻す。",
+   "根拠検証メモ": "正本は専用一覧リンクの削除を示すためSPEC_BACKEDではないが、旧実装には期待遷移が実在する。",
+   "対応の根拠(現develop)": "`src/Eccube/Controller/Admin/Customer/CustomerDeliveryEditController.php:166` は `return $this->redirectToRoute('admin_customer_edit', ['id' => $Customer->getId()]);` のままで、削除後は会員編集画面へ戻る。配送先一覧専用ルートも同ファイル `45-46,127` の Route 属性に存在しない。監査時点と同一。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "UNCHANGED"
+   }
+  },
+  {
+   "rowId": 675,
+   "機能No": "M08-10",
+   "機能名": "M08-10 オンライン本人確認",
+   "ドメイン": "m08",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "会員IDから選手情報を取得し、存在しない場合はページが見つからない扱い（404）とする。",
+   "実装実態": "$Customer->getPlayer() が null の場合、admin.common.system_error を addError して admin_customer_edit へリダイレクトする。",
+   "差分内容": "設計は選手情報なしを404として扱うが、実装は会員編集画面へ戻すエラーフラッシュ扱いになっている。",
+   "実装参照": "src/Eccube/Controller/Admin/Customer/CustomerEditController.php:252; src/Eccube/Controller/Admin/Customer/CustomerEditController.php:264",
+   "設計書参照": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-18:4178,4188,4197,4206,4226",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:4712,4737 のExcel正本は確認済へのステータス更新だけを記載し、選手情報不在時の404はsheet-18のsrc-cell要素に存在しない。404記述は同:4801以降のリバース詳細設計に属する。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/CustomerController.php:511-516 はIDなしを `$app->abort(404)` とし、`findOneByCustomerId($id)` で選手を取得して `is_null($player)` の場合も `$app->abort(404)` とする。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/CustomerEditController.php:252-269 は `$Player = $Customer->getPlayer();` の後、nullなら `$this->addError('admin.common.system_error', 'admin');` を追加して `admin_customer_edit` へredirectする。",
+   "根拠検証メモ": "選手情報不在時404は旧実装由来である。",
+   "対応の根拠(現develop)": "`src/Eccube/Controller/Admin/Customer/CustomerEditController.php:252` の `$Player = $Customer->getPlayer();` に対し `同:264-270` は `if ($Player === null) { $this->addError('admin.common.system_error', 'admin'); return $this->redirectToRoute('admin_customer_edit', ['id' => $Customer->getId()]); }` のままで、`NotFoundHttpException`（404）にはしていない。監査時点と同一。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "NO_QUOTE",
+    "stale": "UNCHANGED"
+   }
+  },
+  {
+   "rowId": 678,
+   "機能No": "M08-10",
+   "機能名": "M08-10 オンライン本人確認",
+   "ドメイン": "m08",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "確認済への変更が成功したとき、フラッシュに「会員情報を保存しました。」を表示する。",
+   "実装実態": "completeIdentification は admin.common.save_complete を addSuccess し、messages.ja.yaml では「保存しました」と定義されている。",
+   "差分内容": "設計の成功フラッシュ文言「会員情報を保存しました。」と、実装で表示される「保存しました」が一致しない。",
+   "実装参照": "src/Eccube/Controller/Admin/Customer/CustomerEditController.php:299; src/Eccube/Resource/locale/messages.ja.yaml:1559",
+   "設計書参照": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-18:4234",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:4712,4737 のExcel正本は確認済への更新を記載するが、成功フラッシュ文言「会員情報を保存しました。」はsheet-18のsrc-cell要素に存在しない。同文言はリバース詳細設計側だけにある。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/CustomerController.php:535-539 は確認済ステータスを保存後、`$app->addSuccess('admin.customer.save.complete', 'admin');` を呼ぶ。pf-eccube3/src/Eccube/Resource/locale/message.ja.yml:136 は `admin.customer.save.complete: 会員情報を保存しました。` と定義する。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/CustomerEditController.php:297-307 は保存後に `$this->addSuccess('admin.common.save_complete', 'admin');` を呼び、ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:1595 は `admin.common.save_complete: 保存しました` と定義する。",
+   "根拠検証メモ": "成功文言の期待値は旧pf-eccube3由来である。",
+   "対応の根拠(現develop)": "`src/Eccube/Controller/Admin/Customer/CustomerEditController.php:307` `$this->addSuccess('admin.common.save_complete', 'admin');`（completeIdentification 内）のままで、`src/Eccube/Resource/locale/messages.ja.yaml:1595` `admin.common.save_complete: 保存しました`。設計文言「会員情報を保存しました。」に該当する翻訳キーは追加されていない。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EMBED_ONLY",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Resource/locale/messages.ja.yaml"
+    ],
+    "quoteDetail": [
+     "会員情報を保存しました。"
+    ]
+   }
+  },
+  {
+   "rowId": 680,
+   "機能No": "M08-12",
+   "機能名": "M08-12 顧客グループ管理",
+   "ドメイン": "m08",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "新規追加/編集ラベルは、初期表示は「新規追加」、既存の顧客グループ選択時は「編集」と表示する。",
+   "実装実態": "画面タイトルは常に admin.customer.customer_group_edit（顧客グループ編集）、カードタイトルは常に admin.customer.customer_group_management（顧客グループ管理）で、TargetCustomerGroup.id による「新規追加」/「編集」の切替表示がない。",
+   "差分内容": "設計は初期表示と既存選択時でラベルを切り替える要求だが、実装Twigは固定翻訳キーを表示しており、関連Twig/翻訳キー/Controller内にも該当する条件分岐がない。",
+   "実装参照": "src/Eccube/Resource/template/admin/CustomerGroup/index.twig:5,6,20 ／ src/Eccube/Resource/locale/messages.ja.yaml:3840,3841",
+   "設計書参照": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-20:4560",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:5249 のExcel正本（0207:顧客グループ管理!E103/AG103）は「新規追加/編集」「初期表示は『新規追加』、既存の顧客グループ選択時は『編集』」と明記する。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/CustomerGroup/index.twig:20-22 も `<h3 class=\"box-title\">{% if id != null %}編集{% else %}新規追加{% endif %}</h3>` として期待どおり切り替える。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Resource/template/admin/CustomerGroup/index.twig:5-6,20 はタイトルを常に `admin.customer.customer_group_edit`、サブ/カードタイトルを常に `admin.customer.customer_group_management` とする。ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:4134-4135 はそれぞれ「顧客グループ管理」「顧客グループ編集」であり、「新規追加」/「編集」の条件分岐がない。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Resource/template/admin/CustomerGroup/index.twig:5` `{% block title %}{{ 'admin.customer.customer_group_edit'|trans }}{% endblock %}`、`:6` および `:20` `{{ 'admin.customer.customer_group_management'|trans }}` と固定翻訳キーのままで、TargetCustomerGroup.id による「新規追加」/「編集」切替は無い（`:13` の form action だけが id 有無で分岐）。翻訳も `messages.ja.yaml:4134,4135` の 顧客グループ管理／顧客グループ編集 のみ。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "NOT_FOUND",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Resource/locale/messages.ja.yaml"
+    ],
+    "quoteDetail": [
+     "初期表示は『新規追加』、既存の顧客グループ選択時は『編集』"
+    ]
+   }
+  },
+  {
+   "rowId": 681,
+   "機能No": "M08-12",
+   "機能名": "M08-12 顧客グループ管理",
+   "ドメイン": "m08",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "削除確認ダイアログの表示メッセージは「[顧客グループ名称]を削除してもよろしいですか？」とする。",
+   "実装実態": "削除モーダルは共通翻訳 admin.common.delete_modal__message を使い、「この操作はあとから取り消すことができません。「%name%」を削除してよろしいですか？」を表示する。",
+   "差分内容": "確認ダイアログ自体は実装済みだが、利用者に表示される文言が設計指定の文言と一致しない。",
+   "実装参照": "src/Eccube/Resource/template/admin/CustomerGroup/index.twig:111 ／ src/Eccube/Resource/locale/messages.ja.yaml:1600",
+   "設計書参照": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-20:4528",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:5216-5218 のExcel正本（0207:顧客グループ管理!C72/D73/D74）は「削除ボタン押下時、確認ダイアログを動的に表示する」「表示メッセージは『[顧客グループ名称]を削除してもよろしいですか？』」「『OK』押下時に該当の顧客グループを削除する」と明記する。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/CustomerGroup/index.twig:90-92 は削除リンクの `data-message` に `trans('admin.confirm.delete')|format(customerGroup.name)` を設定し、名称を差し込んだ旧確認文言を使用する。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Resource/template/admin/CustomerGroup/index.twig:110-112 は `admin.common.delete_modal__message` に顧客グループ名を渡す。ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:1790 の実文言は「この操作はあとから取り消すことができません。『%name%』を削除してよろしいですか？」で、設計指定より前置きと鉤括弧が増えている。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Resource/template/admin/CustomerGroup/index.twig:111` `<p class=\"text-start\">{{ 'admin.common.delete_modal__message'|trans({'%name%': CustomerGroup.name}) }}</p>` のままで、`src/Eccube/Resource/locale/messages.ja.yaml:1790` `admin.common.delete_modal__message: \"この操作はあとから取り消すことができません。「%name%」を削除してよろしいですか？\"`。設計文言「[顧客グループ名称]を削除してもよろしいですか？」の専用キーは追加されていない。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Resource/locale/messages.ja.yaml"
+    ]
+   }
+  },
+  {
+   "rowId": 682,
+   "機能No": "M08-12",
+   "機能名": "M08-12 顧客グループ管理",
+   "ドメイン": "m08",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "支払方法は複数選択チェックボックスで、支払方法設定に登録されている支払方法をすべて表示する。",
+   "実装実態": "Payments は expanded/multiple のチェックボックスだが、query_builder で p.visible = true に限定し、Payment::EC_CREDIT と Payment::EC_CVS を除外している。",
+   "差分内容": "設計は登録済み支払方法をすべて表示する要求だが、実装は表示フラグと特定ID除外で候補を絞り込んでいる。",
+   "実装参照": "src/Eccube/Form/Type/Admin/CustomerGroupType.php:54,55,56,57,58,59,60,61,62,63,64 ／ src/Eccube/Entity/Payment.php:49,50,142,143",
+   "設計書参照": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-20:4565",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:5254 のExcel正本（0207:顧客グループ管理!E108/M108/AG108）は支払方法を「複数選択(チェックボックス)」「支払方法設定に登録されている支払方法をすべて表示する」と明記する。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/CustomerGroup/index.twig:43-49 は旧フォームの `form.payments` をそのまま表示する。SPEC_BACKED判定には旧実装を要しない。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/CustomerGroupType.php:54-64 は `expanded => true`、`multiple => true` とする一方、query_builderで `p.visible = true` に限定し、さらに `p.id NOT IN (:excludeIds)` と `[Payment::EC_CREDIT, Payment::EC_CVS]` を除外するため、登録済み支払方法をすべて表示しない。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Form/Type/Admin/CustomerGroupType.php:57-63` は `'expanded' => true, 'multiple' => true` のチェックボックスだが query_builder が `->where('p.visible = true')->andWhere('p.id NOT IN (:excludeIds)')->setParameter('excludeIds', [Payment::EC_CREDIT, Payment::EC_CVS])` と絞り込みを維持しており、登録済み支払方法を全表示していない。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "UNCHANGED"
+   }
+  },
+  {
+   "rowId": 683,
+   "機能No": "M08-13",
+   "機能名": "M08-13 ブラックリスト管理",
+   "ドメイン": "m08",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "項目(新規登録用)・項目(更新用)は単一選択(チェックボックス)で、選択肢は住所、電話番号、氏名。",
+   "実装実態": "新規用・更新用の項目は BlacklistTagType を使い、BlacklistTagType は MasterType を親にする。MasterType は EntityType かつ expanded=false / multiple=false なのでチェックボックスではなく単一 select として表示される。マスタ投入順も id=1 氏名、id=2 電話番号、id=3 住所で、BlacklistTagType は id ASC で並べる。",
+   "差分内容": "設計は項目 UI を単一選択チェックボックスとし、選択肢を住所、電話番号、氏名としているが、実装は select 表示で、並びも氏名、電話番号、住所となる。",
+   "実装参照": "src/Eccube/Form/Type/Admin/BlacklistUpdateType.php:34, src/Eccube/Form/Type/Admin/BlacklistType.php:32, src/Eccube/Form/Type/Master/BlacklistTagType.php:45, src/Eccube/Form/Type/MasterType.php:29",
+   "設計書参照": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21:4747,4749",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:5460,5462 のExcel正本（0207:ブラックリスト管理!E68/M68/AG68、E70/M70/AG70）は新規・更新用項目を「単一選択(チェックボックス)」、選択肢を「住所、電話番号、氏名」と明記する。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/Customer/BlacklistType.php:23-31 と BlacklistUpdateType.php:23-32 は旧実装でも `expanded => false`、`multiple => false` のentity選択を使っており、UI種別については正本のチェックボックス要求と一致しない。ただし本件はExcel正本が直接根拠であるためSPEC_BACKED判定を変えない。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/BlacklistType.php:31-36 と BlacklistUpdateType.php:35-41 は `BlacklistTagType` を使用する。ec-cube-enterprise/src/Eccube/Form/Type/Master/BlacklistTagType.php:29-31,45-47 はid昇順の `MasterType`、ec-cube-enterprise/src/Eccube/Form/Type/MasterType.php:29-36 は `multiple => false`、`expanded => false` のためselect表示になる。ec-cube-enterprise/app/DoctrineMigrations/Version20251119060033.php:62-73 はid順を「氏名、電話番号、住所」と投入しており、設計順とも異なる。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Form/Type/Admin/BlacklistUpdateType.php:36` `->add('new_blacklist_tag', BlacklistTagType::class, ...)` と `src/Eccube/Form/Type/Admin/BlacklistType.php:32` `->add('BlacklistTag', BlacklistTagType::class, ...)` のままで、`src/Eccube/Form/Type/Master/BlacklistTagType.php:29-32` は `->orderBy('bt.id', 'ASC')`、親は `:47` `return MasterType::class;`。`src/Eccube/Form/Type/MasterType.php:29-30` は `'multiple' => false, 'expanded' => false` なので依然 select 表示。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "UNCHANGED"
+   }
+  },
+  {
+   "rowId": 684,
+   "機能No": "M08-13",
+   "機能名": "M08-13 ブラックリスト管理",
+   "ドメイン": "m08",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "登録・編集・削除が完了したとき、登録完了メッセージ（ロケールキー admin.register.complete）を表示する。",
+   "実装実態": "更新処理成功時は addSuccess('admin.common.save_complete', 'admin') を呼び出し、表示文言は「保存しました」。設計指定の admin.register.complete は「登録が完了しました。」として存在するが、この機能では使用していない。",
+   "差分内容": "設計が明示した成功メッセージキー admin.register.complete と、実装が使用する admin.common.save_complete が異なるため、利用者に表示される完了文言も異なる。",
+   "実装参照": "src/Eccube/Controller/Admin/Customer/BlacklistController.php:107, src/Eccube/Resource/locale/messages.ja.yaml:1405, src/Eccube/Resource/locale/messages.ja.yaml:1780",
+   "設計書参照": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21:4820",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:5433-5448 のExcel正本はブラックリストの登録・編集・削除処理を記載するが、完了メッセージまたは `admin.register.complete` はsheet-21のsrc-cell要素に存在しない。メッセージキー期待値は同:5505以降のリバース詳細設計にのみある。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/BlacklistController.php:105-110 は更新内容をflush後、`$app->addSuccess('admin.register.complete', 'admin');` を実行する。pf-eccube3/src/Eccube/Resource/locale/message.ja.yml:83 は `admin.register.complete: 登録が完了しました。` と定義する。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/BlacklistController.php:97-109 は更新成功時に `$this->addSuccess('admin.common.save_complete', 'admin');` を使用する。ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:1595,1970 は `admin.common.save_complete: 保存しました` と `admin.register.complete: 登録が完了しました。` を別々に定義する。",
+   "根拠検証メモ": "完了メッセージキーの真の根拠は旧pf-eccube3である。",
+   "対応の根拠(現develop)": "`src/Eccube/Controller/Admin/Customer/BlacklistController.php:107` `$this->addSuccess('admin.common.save_complete', 'admin');` のままで、`messages.ja.yaml:1595` `admin.common.save_complete: 保存しました`。設計指定の `admin.register.complete`（`messages.ja.yaml:1970` 登録が完了しました。）は同コントローラで使用されていない（grep で addSuccess は :107 の 1 箇所のみ）。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EMBED_ONLY",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Resource/locale/messages.ja.yaml"
+    ],
+    "quoteDetail": [
+     "admin.register.complete"
+    ]
+   }
+  },
+  {
+   "rowId": 685,
+   "機能No": "M08-13",
+   "機能名": "M08-13 ブラックリスト管理",
+   "ドメイン": "m08",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "会員登録、買取時の会員登録時にブラックリスト判定を使用し、登録不可の場合は登録エラー(ブラックリスト)画面を表示する。",
+   "実装実態": "通常会員登録では blacklist 該当時に entry_regist_error へ遷移するが、買取時の会員登録では registerCustomer が false を返し、買取申込完了画面へ register=2 を付けて遷移し、同画面内に会員登録不可メッセージを表示する。",
+   "差分内容": "設計は買取時の会員登録も含めて登録不可時に登録エラー(ブラックリスト)画面を表示するとしているが、実装は買取申込完了画面上のメッセージ表示に留まる。",
+   "実装参照": "src/Eccube/Controller/Front/Purchase/OtcBuyController.php:380, src/Eccube/Controller/Front/Purchase/OtcBuyController.php:437, src/Eccube/Resource/template/default/OtcBuy/complete.twig:31",
+   "設計書参照": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21:4737,4738,4739",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:5449-5452 のExcel正本（0207:ブラックリスト管理!C61/D62/D63/D64）は「会員登録、買取時の会員登録時に使用する」「ブラックリスト登録がある場合は会員登録不可」「登録不可の場合は登録エラー(ブラックリスト)画面を表示する」と明記する。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Controller/EntryController.php:103-112 は通常会員登録でブラックリスト該当時に `return $app->redirect($app->path('entry_regist_error'));` とする。一方、旧買取の pf-eccube3/app/Plugin/HareruyaEc/Controller/OtcBuyController.php:385-393 は該当時に `return false;` とするため、旧実装は通常登録だけが設計どおりで、買取側は設計要求を満たさない。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Controller/Front/Purchase/OtcBuyController.php:552-560 は買取時にブラックリスト該当なら `return false` とし、同:377-380,435-441 は結果を `ENTRY_FAILED` として査定申込完了URLの `register` クエリへ載せる。ec-cube-enterprise/src/Eccube/Resource/template/default/OtcBuy/complete.twig:16-20 は専用登録エラー画面へ遷移せず、査定申込完了画面内に「ご入力いただいた内容では会員登録ができませんでした。」を表示する。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Controller/Front/Purchase/OtcBuyController.php:380` `$registerResult = $this->registerCustomer($form) ? self::ENTRY_SUCCESS : self::ENTRY_FAILED;`、`:437-438` `if ($registerResult !== self::NO_ENTRY) { $urlComplete = $urlComplete.'?register='.$registerResult; }` のままで、買取時はブラックリスト該当（`:67` ENTRY_FAILED = 2）でも買取申込完了画面へ遷移する。`src/Eccube/Resource/template/default/OtcBuy/complete.twig:16-19` が ENTRY_FAILED 時に「ご入力いただいた内容では会員登録ができませんでした。」を表示するのみで、`entry_regist_error` へのリダイレクトは `src/Eccube/Controller/Front/EntryController.php:155` の通常会員登録側にしか存在しない。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "UNCHANGED"
+   }
+  },
+  {
+   "rowId": 686,
+   "機能No": "M08-17",
+   "機能名": "M08-17 配送先情報CSV登録",
+   "ドメイン": "m08",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "配送先情報登録CSVフォーマットは「配送先情報登録CSV入力項目設定」シートを参照し、CSV項目（識別ID、項目名、主キー、書式・制限、必須、最大文字数または最大値、入力例、備考）をテーブルで表現する。",
+   "実装実態": "画面のCSVフォーマット表は headers をループして header.name と required バッジのみを表示し、2列目の td は空。実装側の getColumnDefs() も name/required のみを返す。",
+   "差分内容": "設計は sheet-26 の8列構成と各項目の書式・最大値・入力例・備考まで画面上のCSVフォーマットとして示す要求だが、実装は項目名と必須有無だけで、主キー・書式制限・最大文字数/最大値・入力例・備考を表示していない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/app/template/admin/Customer/customer_address_csv.twig:96 / /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/CustomerAddressCsvImportHandler.php:220",
+   "設計書参照": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-25:5158",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:5893,5905 のExcel正本は「フォーマットは『配送先情報登録CSV入力項目設定』シート参照」「CSVのファイルフォーマットをテーブルで表現」とする。参照先の同:5960（0207:配送先情報登録CSV入力項目設定!B5/E5/M5/P5/U5/W5/AA5/AH5）は列を「識別ID、項目名、主キー、書式・制限、必須、最大文字数または最大値、入力例、備考」と明記する。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/CustomerAddressCsvController.php:73-78 は旧画面へ `self::CSV_HEADER` を `headers` として渡す。pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/CustomerAddress/customer_address_csv_import.twig:53-64 は `headers|keys` を列見出し、`headers` の値を制約説明として表に描画しており、旧実装にも項目名以外のフォーマット説明がある。",
+   "現実装": "ec-cube-enterprise/app/template/admin/Customer/customer_address_csv.twig:95-108 は `headers` をループして `header.name` と `header.required` バッジだけを表示し、2列目は空の `<td class=\"align-middle\"></td>` である。ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/CustomerAddressCsvImportHandler.php:215-224 は戻り型を `{name, required}` とし、実データも `['name' => ..., 'required' => ...]` のみである。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`app/template/admin/Customer/customer_address_csv.twig:96-110` は現 develop でも `<table class=\"table table-striped table-bordered\">` 内で `{% for header in headers %}` を回し `<th>{{ header.name }}` と `{% if header.required %}<span class=\"badge bg-primary ms-1\">{{ 'admin.common.required'|trans }}</span>` を出すのみで、2列目は `<td class=\"align-middle\"></td>` と空のまま。データ供給元 `src/Eccube/Service/Csv/Importer/Event/CustomerAddressCsvImportHandler.php:220-242` の `getColumnDefs()` も `['name' => 'メールアドレス', 'required' => true]` 形式で name/required のみを返し、識別ID・主キー・書式制限・最大文字数/最大値・入力例・備考の各列は存在しない。`src/Eccube/Controller/Admin/Customer/CustomerAddressCsvController.php:83,98` も `'headers' => CustomerAddressCsvImportHandler::getColumnDefs()` を渡すだけで、別クラス・別サービスへの実装移管も無し（`grep -rn getColumnDefs src app` の該当は上記3箇所のみ）。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "NOT_FOUND",
+    "stale": "UNCHANGED",
+    "quoteDetail": [
+     "フォーマットは『配送先情報登録CSV入力項目設定』シート参照",
+     "CSVのファイルフォーマットをテーブルで表現",
+     "識別ID、項目名、主キー、書式・制限、必須、最大文字数または最大値、入力例、備考"
+    ]
+   }
+  },
+  {
+   "rowId": 689,
+   "機能No": "M09-04",
+   "機能名": "M09-04 ページ管理(登録・編集)",
+   "ドメイン": "m09",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "言語に応じて twig ファイル拡張子は日本語 .ja.twig、英語 .en.twig とし、ページ新規登録時は日英2種類のファイルを作成する。",
+   "実装実態": "画面は .ja.twig / .en.twig を表示するが、保存処理は日本語 localeSuffix を空文字にして foo.twig を作成し、英語のみ foo.en.twig を作成する。",
+   "差分内容": "設計は日本語も .ja.twig を外部契約として示すが、実装コメントと分岐が「日本語は.jaなし」を明示しており、表示と保存ファイル名も不整合になっている。",
+   "実装参照": "src/Eccube/Controller/Admin/Content/PageController.php:99, src/Eccube/Controller/Admin/Content/PageController.php:100, src/Eccube/Controller/Admin/Content/PageController.php:200, src/Eccube/Controller/Admin/Content/PageController.php:231, src/Eccube/Resource/template/admin/Content/page_edit.twig:186",
+   "設計書参照": "excel_to_html/output/0210_基本設計仕様書(コンテンツ管理).html#sheet-4:1956,",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0210_基本設計仕様書(コンテンツ管理).html:2175-2178 の Excel 正本は「日本語の場合: .ja.twig」「英語の場合: .en.twig」「ページを新規登録する場合、日英2種類のファイルを作成する」と明記し、同:2205 も入力欄の例として同じ拡張子を示す。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Content/ContentController.php:208-214 は読込時に `{$fileName}.{$locale}.twig` を優先し、同:251-261 は保存先を `{$fileName}.{$locale}.twig` とするため、日本語も `.ja.twig` で保存する。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Controller/Admin/Content/PageController.php:94-100 は「日本語は.jaなし」として `$localeSuffix = $locale === 'ja' ? '' : '.'.$locale` を設定し、同:199-201 はその suffix でファイルを作る。同:231-237 も新規時の他言語で日本語 suffix を空にするため `foo.twig` と `foo.en.twig` になる。",
+   "根拠検証メモ": "正本と旧実装の双方が日本語 `.ja.twig` を要求し、新実装だけ日本語suffixを省略する。",
+   "対応の根拠(現develop)": "`src/Eccube/Controller/Admin/Content/PageController.php:99-100` に `// 日本語は.jaなし（例: foo.twig）、英語は.en付き（例: foo.en.twig）` / `$localeSuffix = $locale === 'ja' ? '' : '.'.$locale;` が残存し、保存パスも `PageController.php:200-201` `$localeFileName = $Page->getFileName().$localeSuffix; $filePath = $templatePath.'/'.$localeFileName.'.twig';` のままで日本語は `.ja.twig` にならない。一方、新規登録時の日英2ファイル作成は `PageController.php:232-239` `if ($PrevPage->getId() === null) { $otherLocale = $locale === 'ja' ? 'en' : 'ja'; ... $fs->dumpFile($otherFilePath, $pageData); $fileAdapter->upload($otherFilePath, $s3_path, $otherLocaleFileName, $contentBucketOptions); }` で充足している。画面表示側は `src/Eccube/Resource/template/admin/Content/page_edit.twig:188` `<div class=\"col-2 ps-0\">.{{ locale }}.twig</div>` および `page_edit.twig:191` `{{ template_path }}/{{ page_file_name }}.{{ locale }}.twig` で `.ja.twig` を表示しており、保存ファイル名との不整合は解消していない。なお同一リポジトリの `src/Eccube/Controller/Admin/Content/BlockController.php:97` は `// 日本語は.ja付き（例: foo.ja.twig）` と対照的で、ページ側のみ未是正。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "UNCHANGED"
+   }
+  },
+  {
+   "rowId": 691,
+   "機能No": "M09-04",
+   "機能名": "M09-04 ページ管理(登録・編集)",
+   "ドメイン": "m09",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "指定ページの編集フォームを表示する。ファイル名が未設定のページではページ編集リンクを無効化する。",
+   "実装実態": "Page.file_name の有無に関係なく Page.name は admin_content_page_edit へのリンクになる。file_name が空の場合はファイル名列だけ空表示になる。",
+   "差分内容": "設計はファイル名未設定ページの編集リンク無効化を要求するが、実装に条件分岐がない。",
+   "実装参照": "src/Eccube/Resource/template/admin/Content/page.twig:64, src/Eccube/Resource/template/admin/Content/page.twig:77",
+   "設計書参照": "excel_to_html/output/0210_基本設計仕様書(コンテンツ管理).html#sheet-4:2085,",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0210_基本設計仕様書(コンテンツ管理).html:1077 の Excel 正本は「すべてのページで(3)ページ名を押下すると、内容を閲覧できる」、同:1107 もページ名を編集画面へのリンクとする。ファイル名未設定時にページ編集リンクを無効化する条件は Excel 正本本文に存在せず、同:2307 以降のリバース詳細設計にのみ現れる。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-eccube3/src/Eccube/Resource/template/admin/Content/page.twig:69-73 は `{% if PageLayout.filename|length >= 1 %}` の場合だけ編集URLを付け、未設定時は `<a>ページ編集</a>` として無効化する。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Content/page.twig:61-65 は `Page.file_name` の有無を判定せず、常に `url('admin_content_page_edit', {id : Page.id})` へのページ名リンクを出力する。同:76-78 のファイル名列だけが未設定時に空になる。",
+   "根拠検証メモ": "期待値は旧テンプレート由来である。",
+   "対応の根拠(現develop)": "`src/Eccube/Resource/template/admin/Content/page.twig:63-65` はファイル名の有無に関係なく `<a href=\"{{ url('admin_content_page_edit', {id : Page.id } ) }}\">{{ Page.name }}</a>` を出力し、`Page.file_name` の条件分岐は `page.twig:77` `{% if Page.file_name %}{{ Page.file_name }}.twig{% endif %}`（ファイル名列の表示のみ）に限られる。リンク無効化の分岐は追加されていない。監査時点と同一。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "UNCHANGED"
+   }
+  }
+ ]
+}

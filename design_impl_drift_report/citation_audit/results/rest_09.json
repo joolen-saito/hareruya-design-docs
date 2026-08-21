@@ -1,0 +1,165 @@
+{
+  "packetId": "rest_09",
+  "results": [
+    {
+      "rowId": 426,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:7065 はExcel正本の列として「5 親カテゴリID」、同:7072 は「12 対象商品数」、同:7083 はカスタマイズを「カテゴリに紐づいている対象商品数を出力する」と記すが、Excel正本範囲（sheet-26:7031-7096）には親なし時を空セルにする規則や「対象商品数以外は一般セル値取得に渡す」との記述はない。具体的な一般列規則はリバース詳細設計 hareruya-design-docs/functions/pf-eccube3/m03-12_admin_product_product_category_csv_export.md:61,91 の「それ以外はCSV出力サービス…nullまたは空文字のときは空セル」「関連エンティティは参照フィールド名でスカラ化」にのみある。",
+      "legacyEvidence": "pf-eccube3/src/Eccube/Controller/Admin/Product/CategoryController.php:229-245 は全列を一律に `$csvService->getData($Csv, $Category)`、`$ExportCsvRow->pushData()` へ渡す。pf-eccube3/src/Eccube/Service/CsvExportService.php:266-298 はフィールドを `offsetGet` し、関連Entityなら参照フィールドを返し、値が無ければ最終的に `return null;` とする。旧実装にはParentだけを文字列'0'にする分岐がなく、期待挙動の根拠になる。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Product/CategoryController.php:846-855 は `target_product_count` に加えて `Parent` も特例分岐し、親なし時に `$row[] = ... : '0';` とする一方、一般列だけを `getData()` に渡してnull/空文字を空セル化する。",
+      "note": "Excel正本には親なし時のセル値が明記されていない。具体的な空セル挙動は旧実装に存在し、新実装でParent特例が加わったためLEGACY_BACKED。"
+    },
+    {
+      "rowId": 427,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:7284 のExcel正本セル（0204:タグ登録!B81/E81/M81/T81）は「2 名称(英) 半角 ◯」と明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/Product/TagType.php:34-40 の旧フォームも `nameEn` に `Length` と `NotBlank` だけを設定しており、半角Regexはない。したがって要件の所在は旧実装ではなくExcel正本である。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/TagType.php:70-77 は `nameEn` をTextTypeとし、制約は `new Length(...)` と `new NotBlank()` のみで、半角制約を実装していない。",
+      "note": ""
+    },
+    {
+      "rowId": 428,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:7292,7294 のExcel正本は「タイトル(日)…値がある場合、日本語の商品検索ページのページタイトルとする」「タイトル(英)…値がある場合、英語の商品検索ページのページタイトルとする」と明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Product/product_list.twig:98-99 は `tagSub.getTitleJp` があれば `defaultTitle` に設定し、英語版 pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Product/product_list.en.twig:21-22 は `tagSub.getTitleEn` を設定していた。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Front/ProductController.php:1296-1312 の `getPageTitle()` は商品検索、カテゴリ、全商品の分岐だけでTagのtitleを参照しない。ec-cube-enterprise/src/Eccube/Resource/template/default/default_frame.twig:17-23 も `page_title`、`subtitle`、`title` からタイトルを組み立てるだけで、`getTitleJp/getTitleEn` はController/Resource/template全域に表示経路が存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 429,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:7293,7295 のExcel正本は「説明(日)…日本語の商品検索ページのページ説明文…として指定する」「説明(英)…英語の商品検索ページのページ説明文…として指定する」と明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Product/product_list.twig:101-102 は `tagSub.getDescriptionJp` を `PageLayout.setDescription(...)` に渡し、英語版 pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Product/product_list.en.twig:24-25 は `tagSub.getDescriptionEn` を同様に反映していた。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/default/meta.twig:41-64 は商品一覧系でroute/canonicalを組み立て、Categoryがある場合だけ `front.seo.product_list.meta_description` を設定する。最終表示は同:107-110 の `meta_description | default(Page.description)` であり、Tagの `descriptionJp/descriptionEn` を参照する表示経路はController/Resource/template全域に存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 430,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:7573 のExcel正本セル（0204:略称タグ登録 編集!AG67）は件数の「選択肢: 10件 50件 100件 300件 500件 1000件 2000件 10000件 12000件」を直接列挙する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Product/storage_code.twig:73-119 の旧一覧はページ件数プルダウン自体を持たず全件テーブルを描画していたため、9選択肢の根拠はExcel正本の刷新要件である。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Product/storage_code.twig:113-118 は `{% for count in [10, 50, 100, 300, 500, 1000] %}` の6件だけを描画し、2000・10000・12000が欠ける。",
+      "note": ""
+    },
+    {
+      "rowId": 431,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:7568 のExcel正本は「CSV入力…略称タグ登録CSVアップロード画面へ遷移する」、同:7916 はアップロードボタンが「CSVファイルのアップロードと入力チェックを実施」と記すだけで、GET/POSTのURLはExcel正本範囲（sheet-28,30のembed開始前）に存在しない。GET `/product/storage_code/import` はリバース詳細設計 hareruya-design-docs/functions/pf-eccube3/m03-16_admin_product_product_storage_code_import.md:58-59 にのみ具体化される。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/ProductServiceProvider.php:286-290 は同じ `/product/storage_code/import` にGET `StorageCodeController::csv` とPOST `StorageCodeController::import` を登録する。pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Product/StorageCodeController.php:149-159 はGET側でフォームとheadersを描画する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Product/StorageCodeController.php:284-295 はフォーム表示をGET `/product/storage_code/csv`、同:305-306 は取込をPOST `/product/storage_code/import` と分離する。ec-cube-enterprise/src/Eccube/Resource/template/admin/Product/storage_code.twig:64-66 のCSV入力リンクも `admin_product_storage_code_csv` を指す。",
+      "note": "URLの具体値はExcel正本ではなく旧実装に由来する。旧GET入口の互換ルートは現実装にない。"
+    },
+    {
+      "rowId": 432,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:8063-8066 のExcel正本「略称タグCSVフォーマット」はID・名称・並び順の列契約だけを定義し、GETフォーム表示URLを記載しない。GET `/product/storage_code/import` の記述はリバース詳細設計 hareruya-design-docs/functions/pf-eccube3/m03-16_admin_product_product_storage_code_import.md:58,77 にのみある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/ProductServiceProvider.php:286-290 はGETとPOSTをともに `/product/storage_code/import` へ割り当て、pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Product/storage_code.twig:16-17 のCSV入力リンクはそのGET route `admin_product_storage_code_csv` を使う。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Product/StorageCodeController.php:284-295 はGETフォームを `/product/storage_code/csv` で描画し、同:305-306 の `/product/storage_code/import` は `methods: ['POST']` 専用である。フォームactionも ec-cube-enterprise/src/Eccube/Resource/template/admin/Product/csv_product_storage_code.twig:62 の `admin_product_storage_code_import` である。",
+      "note": "rowId 431と同じ旧GET入口を、CSVフォーマット側の指摘として重複計上したfinding。根拠の所在は旧実装。"
+    },
+    {
+      "rowId": 433,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:8063-8066 のExcel正本項目表は「ID 数値(整数) 主キー△ 新規登録時は不要」「名称 文字型 必須〇」「並び順 数値(整数) 必須〇」と明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/StorageCodeCsv.php:29-51 の旧取込も必須確認後、IDをRepository検索に使い、並び順をそのまま `setRank($row['並び順'])` するだけで整数形式検証はない。よって整数契約の根拠はExcel正本である。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Csv/StorageCodeCsv.php:84-99 は必須確認後にIDを `(int)` キャストし、同:117-119 は並び順を `(int)` キャストして保存するだけで、非数値を拒否しない。共通必須検証も ec-cube-enterprise/src/Eccube/Service/Csv/AbstractCsvService.php:288-298 の空文字判定だけである。",
+      "note": ""
+    },
+    {
+      "rowId": 434,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:8243 のExcel正本セル（0204:部門登録!AG100）は登録ボタンについて「ECCUBE4に合わせて画面下部に表示」「編集モードの際はボタン名が『編集』に変わる」と明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Product/section.twig:53-63 は旧ボタンを右カラムに置き、同:58 は `id is not null ? '更新' : '登録'` としていた。位置・編集時文言を『編集』へ変える根拠はExcel正本の刷新要件である。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Product/section.twig:144-162 はボタンを画面下部のconversionAreaに移したが、同:154-156 は常に `admin.common.registration`（登録）を表示し、編集モード分岐がない。",
+      "note": ""
+    },
+    {
+      "rowId": 435,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:8220-8222 のExcel正本は部門登録/更新時のスマレジAPIと別添参照を要求し、別添の同:15043（src-cell、別添資料__スマレジ部門連携項目!B9以降）は「軽減税率ID（画面では税設定）」「null を連携する」「新規登録」に〇と明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Product/SectionController.php:52-86 の旧登録更新はSectionを `persist`/`flush`/`commit` するだけでスマレジAPIを呼ばない。したがって軽減税率ID null連携は旧コードではなくExcel正本の追加要件である。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Smaregi/Api/SmaregiSectionApiClient.php:62-83 の新規登録payloadは `categoryCode`、`categoryName`、`displayFlag`、`taxDivision`、`pointNotApplicable` のみで、軽減税率ID（reduceTaxId相当）をnullで送る項目がない。",
+      "note": ""
+    },
+    {
+      "rowId": 436,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:8847-8848 のExcel正本は「CSVアップロードを実行し、部門登録 および 部門更新のタイミングで、スマレジへ部門情報の連携を実施するAPIを呼び出す」と明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/SectionCsv.php:103-126 の旧CSV登録はSectionの `setName/setCode/setVisible`、`persist/flush/commit` のみでスマレジ呼出しを持たないため、この要件はExcel正本の追加要件である。",
+      "currentImpl": "現行画面は ec-cube-enterprise/src/Eccube/Resource/template/admin/Product/section.twig:47-48 で `admin_product_section_master_csv_upload` を使う。取込は ec-cube-enterprise/src/Eccube/Controller/Admin/Product/SectionController.php:358-402 が `SectionMasterImportHandler` をCsvImporterへ渡し、ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/SectionMasterImportHandler.php:76-88 は成功後に各Sectionへ `$this->smaregiSectionEventService->dispatchUpsert($Section)` を実行する。",
+      "note": "findingが参照した旧互換経路CsvImportController::csvDepartmentではなく、現在の画面から到達する正規のSectionController master_import経路で既に満たす。"
+    },
+    {
+      "rowId": 437,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:8830 のExcel正本セル（0204:部門登録CSVフォーマット!B11-AG11）は「免税区分 数値(整数) 必須◯ 最大値2」「0:対象外 1:一般品 2:消耗品」と明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/SectionCsv.php:21-26 の旧CSV列はID・部門名・部門コード・表示フラグだけで免税区分を持たず、旧実装由来の要件ではない。",
+      "currentImpl": "現行の正規取込ハンドラ ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/SectionMasterImportHandler.php:66-70 は免税区分をrequiredとし、`NumericValidator()`、`ChoiceValidator('0', '1', '2')`、`IntConverter()` を設定する。現行画面のリンクは ec-cube-enterprise/src/Eccube/Resource/template/admin/Product/section.twig:47 のmaster_csv_uploadである。",
+      "note": "旧互換のCsvImportController::csvDepartmentだけを見ると未検証だが、利用中の正規経路は数値・0/1/2を検証済み。"
+    },
+    {
+      "rowId": 438,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:8831 のExcel正本セル（0204:部門登録CSVフォーマット!B12-AG12）は「MTGBuyer表示フラグ 数値(整数) 最大値1」「0:非表示 1:表示 指定が無い場合は0:非表示」と明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/SectionCsv.php:21-26 の旧列名は「表示フラグ」で、同:112-116 は値をそのまま `setVisible($row['表示フラグ'])` するだけで0/1 Choice検証を持たない。要件はExcel正本の追加・名称変更である。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/SectionMasterImportHandler.php:71-73 は当該列をrequired=falseかつ `ChoiceValidator('0', '1')` とし、同:140-142 は空欄を含め `'1'` 以外をfalseにするため未指定時0相当を満たす。現行画面は ec-cube-enterprise/src/Eccube/Resource/template/admin/Product/section.twig:47 の正規master_csv_upload経路を使う。",
+      "note": "不正な2等はChoiceValidatorで拒否され、未指定だけがfalseになるためfindingの指摘は現状に当たらない。"
+    },
+    {
+      "rowId": 439,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:9037 のExcel正本セル（0204:棚番登録 編集!AG59）は一覧の「並び順」について「押下で該当行の情報を(3)(4)に反映」と明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Product/shelf_number.twig:83-94 はID、名称、並び順、編集のすべてを `admin_product_shelf_number` の該当IDへリンクし、並び順も押下可能だった。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Product/shelf_number.twig:128-140 はID・名称・編集には `admin_product_shelf_number_edit` リンクを付けるが、並び順は同:134-136 の `{{ shelfNumber.sortNo }}` というプレーンテキストだけで押下動作がない。",
+      "note": ""
+    },
+    {
+      "rowId": 440,
+      "verdict": "UNSUPPORTED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:9031 のExcel正本は画面入力の名称を「大文字アルファベットと-(ハイフン)と3桁の数値の形式のみ登録可能」とする一方、CSV側の同:9240 は「名称 文字型 必須〇」とだけ記す。CSVではRegexを行わずDB制約だけに依存するとの具体記述はExcel正本範囲（sheet-36,37のembed開始前）に存在せず、リバース詳細設計 hareruya-design-docs/functions/pf-eccube3/m03-21_admin_product_product_shelf_number_register_edit.md:106,152 にのみある。",
+      "legacyEvidence": "実際の旧CSV取込 pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/ShelfNumberCsv.php:29-35 は必須確認直後に `preg_match('/^[A-Z][-][0-9]{3}$/', $row['名称'])` を実行し、不一致ならformat_errorをthrowする。旧実装は期待値を明確に否定する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/ShelfNumberMasterImportHandler.php:44-51 は名称列に `RegexValidator('/^[A-Z][-][0-9]{3}$/')`、並び順にNumericValidatorを設定しており、名称Regexは旧実装を踏襲する。",
+      "note": "pf-api、pf-eccube3、pf-article、deck-apiを棚番号・ShelfNumber・名称Regexで横断し、当該CSVの実体はpf-eccube3で確認した。リバース詳細設計の「CSV側にRegexなし」が旧コードと矛盾するため誤検出。"
+    },
+    {
+      "rowId": 441,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:9241 のExcel正本セル（0204:棚番号CSVフォーマット!B10-W10）は「3 並び順 数値(整数) 必須〇 0〜32767」と明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/ShelfNumberCsv.php:29-30,56-59 の旧取込は必須確認後に並び順をそのまま `setSortNo($row['並び順'])` し、0〜32767の範囲検証を持たない。上限の根拠はExcel正本である。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/ShelfNumberMasterImportHandler.php:48-51 は必須・NumericValidator・IntConverterだけでRangeを持たない。ec-cube-enterprise/src/Eccube/Entity/DtbShelfNumber.php:37-38 もunsigned integer列で、32767上限を定義しない。",
+      "note": ""
+    },
+    {
+      "rowId": 442,
+      "verdict": "UNSUPPORTED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:9240 のExcel正本CSV表は「名称 文字型 必須〇 入力例S-001」とだけ記し、CSV側で画面Regexを意図的に外す、DB制約だけに依存する、形式外名称を保存可能にするとの記述はない。具体的な否定要件はリバース詳細設計 hareruya-design-docs/functions/pf-eccube3/m03-21_admin_product_product_shelf_number_register_edit.md:106,152 にのみある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/ShelfNumberCsv.php:32-35 は旧CSV名称に `preg_match('/^[A-Z][-][0-9]{3}$/', ...)` を実行し、形式外なら例外にする。旧実装は期待値と逆である。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/ShelfNumberMasterImportHandler.php:45-51 は名称に同じ `RegexValidator('/^[A-Z][-][0-9]{3}$/')` を設定しているため、旧実装と一致する。",
+      "note": "rowId 440と同じ誤ったリバース記述をCSVフォーマット側でも重複計上したfinding。旧4リポジトリの横断確認でも「Regexを掛けない」根拠は見つからない。"
+    },
+    {
+      "rowId": 443,
+      "verdict": "UNSUPPORTED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:10013-10015 のExcel正本は「買取/販売価格履歴一覧で指定した検索条件に応じた履歴情報をCSV出力する」とだけ記し、getQuery()の実行位置やセッション閉鎖を規定しない。コールバック外getQuery要求はリバース詳細設計 hareruya-design-docs/functions/pf-eccube3/m03-24_admin_product_product_buy_sale_price_history_csv_export.md:65 にのみある。",
+      "legacyEvidence": "実際の旧処理は pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Product/BuySalePriceHistoryController.php:40-45 がQueryBuilderをHistoryCsvへ渡し、pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/HistoryCsv.php:50-65 が `setCallback(function ... use ($qb))` の内部で `$qb->getQuery()->iterate()` を実行する。旧実装もgetQueryはコールバック内で、期待値を裏付けない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Product/BuySalePriceHistoryController.php:255-264 はコールバック外でQueryBuilderを作るが、`$query = $qb->getQuery();` は `setCallback` 内で実行する。これは旧実装と同じ実行位置である。",
+      "note": "pf-api、pf-eccube3、pf-article、deck-apiをbuy_sale_price、HistoryCsv、getQuery、StreamedResponseで横断し、該当旧実装以外にコールバック外getQueryの根拠はない。リバース詳細設計の誤記と判断。"
+    },
+    {
+      "rowId": 444,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:3186 のExcel正本セル（0204:カード商品CSVフォーマット!B21-AG21）は識別ID14「商品削除フラグ」、数値(整数)、入力例0、備考「0: 削除しない(default)/1: 削除する」と明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/Importer/Event/ProductCardImportHandler.php:271-306 の旧列集合には `$this->productDelFlgColumn` が検索ワードの直後にあり、同:325-338 は `ColumnDefinitions::productDelFlg()` で初期化していた。旧実装も正本要求を支持する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/ProductCardImportHandler.php:292-325 の現列集合はsearchWordの次がproductImageListで、productDelFlg列がない。同:348-363 の初期化にも商品削除フラグはない。汎用定義自体は ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Model/ColumnDefinitions.php:253-261 に存在するが、このHandlerから呼ばれない。",
+      "note": ""
+    },
+    {
+      "rowId": 445,
+      "verdict": "UNSUPPORTED",
+      "specEvidence": "findingの期待値「0:非公開、1:公開、2:廃止」はExcel正本と一致しない。hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:3175 のsrc-cell（0204:カード商品CSVフォーマット!AG10）は実際には「1: 非公開 2:公開 3:廃止(追加)」と明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/Importer/Model/ColumnDefinitions.php:150-156 の旧statusIdは `[Disp::DISPLAY_SHOW, Disp::DISPLAY_HIDE]` を許可し、pf-eccube3/src/Eccube/Entity/Master/Disp.php:34-36 はSHOW=1、HIDE=2である。旧実装にも0/1/2体系の根拠はない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Product/Csv/CardCsvController.php:269-272 は説明を「1:公開 2:非公開 3:廃止」とし、ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Model/ColumnDefinitions.php:118-124 はProductStatusのSHOW/HIDE/ABOLISHEDを許可、ec-cube-enterprise/src/Eccube/Entity/Master/ProductStatus.php:39,49,61 は各1,2,3である。",
+      "note": "指摘された0/1/2体系は正本にも旧実装にもないため本findingはUNSUPPORTED。ただしExcel正本の実値は1=非公開・2=公開で、現実装の1=公開・2=非公開とは逆であるため、別内容の実乖離は残る。"
+    }
+  ]
+}

@@ -1,0 +1,149 @@
+{
+  "packetId": "rc_53",
+  "results": [
+    {
+      "rowId": 938,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0208 sheet-13 の Excel 正本を確認。src-cell 0208:フォーマット一覧!E40 は「フォーマット名」、同 M40 は「リンク」。data-excel-ref=0208:フォーマット一覧!B8 のレイアウト画像も実際に開き、「スタンダード / Standard」等が青いリンクとして描画されていることを確認した。",
+      "reason": "Excel 正本の項目表とレイアウト画像の双方がフォーマット名セルのリンク表示を直接支持するため SPEC_BACKED は妥当。旧実装 pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Format/format.twig の一覧行も `<a href=\"{{ url('admin_format_edit', {'formatId':format.id}) }}\">{{ format.nameJp }} / {{ format.nameEn }}</a>` である。現実装は名前自体をリンクにしていない。",
+      "currentImpl": "ec-cube-enterprise 現状: app/template/admin/Format/format_list.twig の一覧ループでは `<td class=\"align-middle ps-3\">{{ Format.nameJp }} / {{ Format.nameEn }}</td>` とプレーンテキスト。編集リンクは別セルの `href=\"{{ url('admin_format_edit', { 'id': Format.id}) }}\"` を持つ鉛筆アイコンだけである。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 939,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "data-excel-ref=0208:フォーマット一覧!B8 の正本レイアウト画像を開き、左から大見出し「フォーマット管理」、小見出し「フォーマット一覧」の順であることを目視確認した。これは function-design-embed 開始行より前の Excel 画像である。",
+      "reason": "表示文言と配置は Excel 正本画像に直接存在するため SPEC_BACKED は妥当。現テンプレートの block 割当と default_frame.twig の描画順を突き合わせると逆転が実際に起きる。",
+      "currentImpl": "ec-cube-enterprise 現状: app/template/admin/Format/format_list.twig は title=`admin.product.format_list`、sub_title=`admin.product.format_management`。src/Eccube/Resource/locale/messages.ja.yaml は前者を「フォーマット一覧」、後者を「フォーマット管理」と定義し、src/Eccube/Resource/template/admin/default_frame.twig のページ見出しは `<h2 ...>{{ block('title') }}</h2><span ...>{{ block('sub_title') }}</span>` のため、大見出し「フォーマット一覧」・小見出し「フォーマット管理」となる。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 940,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "全 Excel 正本の src-cell を `/format/`、`formatId`、`admin_format_delete` で検索して各0件。0208 sheet-13 の正本は C33-C35 と AG45 で削除可否・確認文言・実行を規定するが、HTTP パスは記載しない。sheet-13 の B8 レイアウト画像も確認したが URL 表示はない。",
+      "reason": "具体的な DELETE パスは Excel 正本でなく、旧実装 pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/FormatServiceProvider.php の `$app->delete('/'.$app['config']['admin_route'].'/format/{formatId}/delete', ...)` にのみ確認できるため LEGACY_BACKED は妥当。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/Admin/Card/FormatController.php の delete() は `#[Route('/%eccube_admin_route%/product/format/{id}/delete', name: 'admin_format_delete', requirements: ['id' => '\\d+'], methods: ['DELETE'])]`。app/template/admin/Format/format_list.twig も `url('admin_format_delete', {'id' : Format.id})` を使うため、生成先は `/product/format/{id}/delete` のままである。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 941,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "全 Excel 正本の src-cell を `admin.format.error.delete.event` と `Referer` で検索して各0件。0208 sheet-13 の正本 C34-C35 にはイベント紐付き時の削除拒否と画面文言「既にイベントが登録されているので、削除出来ません。」はあるが、内部キーと戻り先指定はない。B8 のレイアウト画像も確認したが当該キー・遷移指定はない。",
+      "reason": "単一キーと Referer 戻りは function-design-embed 内ではなく、旧実装 pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/FormatController.php の delete() に `$app->addError('admin.format.error.delete.event', 'admin')` と `$app->redirect($request->headers->get('referer'))` として実在する。従って具体仕様の分類は LEGACY_BACKED が正しい。",
+      "currentImpl": "ec-cube-enterprise 現状: FormatController::delete() は Events、Decks、Archetypes の各分岐で `admin.product.format.error.delete.registered_event` / `registered_deck` / `registered_archetype` を積み、すべて `redirectToRoute('admin_format_list')` を返す。単一キーと Referer 参照は同コントローラにない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 942,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "全 Excel 正本の src-cell を `dtb_card_format` で検索して0件。0208 sheet-13 の正本はイベント紐付き時の削除拒否と削除操作を規定するが、カード別制限行の事前削除は書かれていない。sheet-13 B8 のレイアウト画像にも DB 操作の記載はない。",
+      "reason": "事前全削除は旧実装 pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/FormatController.php の delete() に `foreach($format->getCardFormats() as $cardFormat) { $app['orm.em']->remove($cardFormat); }` として確認できるため LEGACY_BACKED は妥当。新側では MtbFormat が SoftDeleteable である一方、DtbCardFormat 自体は削除されず関連行が残る。",
+      "currentImpl": "ec-cube-enterprise 現状: FormatController::delete() は `$this->entityManager->remove($Format); $this->entityManager->flush();` のみ。MtbFormat の CardFormats は `#[ORM\\OneToMany(targetEntity: DtbCardFormat::class, mappedBy: 'Format')]` で cascade remove なし、DtbCardFormat の format JoinColumn に onDelete 指定もない。MtbFormat は `#[Gedmo\\SoftDeleteable(fieldName: 'deletedAt', timeAware: false)]` であり、カード別制限行を消す処理は確認できない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 943,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0208 sheet-13 の Excel 正本 src-cell を `javascript`、`DeleteModal` で検索して0件。正本 AG45 は削除押下時に動的ポップアップを表示することだけを規定する。B8 レイアウト画像も開き、三点リーダーから編集・削除を表示する構成は確認したが、テンプレート内の JS block や modal include の配置指定はない。",
+      "reason": "「一覧テンプレート自身に javascript block と modal include を置かない」という具体的構造は Excel 正本にはなく、旧テンプレート pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Format/format.twig 全体に javascript block と modal include がないことにのみ根拠があるため LEGACY_BACKED は妥当。これは利用者影響の乏しい内部構造差である。",
+      "currentImpl": "ec-cube-enterprise 現状: app/template/admin/Format/format_list.twig に `{% block javascript %}` があり、`$('#DeleteModal').on('shown.bs.modal', ...)` で href と message を差し替える。同テンプレートは `{% include \"@admin/Format/delete_modal.twig\" %}` を行い、delete_modal.twig が `<div class=\"modal fade\" id=\"DeleteModal\">` を定義する。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 945,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "全 Excel 正本の src-cell を `/format/`、`formatId`、`admin_format_delete`、`^[1-9` で検索して各0件。0208 sheet-14 正本の削除項目 AG184 と処理概要 C150-C151 は削除操作・完了文言を規定するが URL と ID 正規表現は記載しない。sheet-14 のレイアウト画像 B7 と D142 も実際に開いたが URL・正規表現表示はない。",
+      "reason": "DELETE パスと正の整数制約は旧実装 FormatServiceProvider.php の delete ルートと `->assert('formatId', '^[1-9][0-9]*$')` に実在するため LEGACY_BACKED は妥当。",
+      "currentImpl": "ec-cube-enterprise 現状: FormatController::delete() の route は `/%eccube_admin_route%/product/format/{id}/delete`、requirements は `['id' => '\\d+']`。`\\d+` は文字列 `0` もルート一致させ、旧実装の `^[1-9][0-9]*$` と一致しない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 946,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "全 Excel 正本の src-cell を `ID昇順` で検索して0件。0208 sheet-13 C31 は「並び順」の昇順、sheet-14 C89-C90 は「登録した並び順」で表示するとだけ記載する。sheet-13 B8 と sheet-14 B7/D142 の画像も確認したが、同順位時の ID タイブレーク指定はない。",
+      "reason": "ID の第2ソートは Excel 正本ではなく、旧実装 FormatController::index() の `findBy([], ['rank' => 'ASC', 'id' => 'ASC'])` にのみ確認できるため LEGACY_BACKED は妥当。",
+      "currentImpl": "ec-cube-enterprise 現状: FormatController::index() は `'Formats' => $this->formatRepository->findBy([], ['rank' => 'ASC'])` のみで、MtbFormatRepository にこの一覧用の ID 第2ソートを付加する処理もない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 947,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "全 Excel 正本の src-cell を `admin.register.complete`、`admin.delete.complete`、`admin.register.failed` で検索して各0件。0208 sheet-14 正本 AG185 は正常時に登録/更新、エラー時に画面へエラーメッセージ表示と規定し、C150-C151 は「削除が完了しました。」と記載するが、内部フラッシュキーは指定しない。B7 と D142 のレイアウト画像も確認したが3キーの表示はない。",
+      "reason": "3つの具体キーは旧実装 FormatController::update()/delete() の addError/addSuccess に実在するため LEGACY_BACKED は妥当。Excel 正本の一般的なフォームエラー表示と、旧実装固有の上部フラッシュは区別した。",
+      "currentImpl": "ec-cube-enterprise 現状: FormatController::new()/edit() は成功時に `addSuccess('admin.common.save_complete', 'admin')`、delete() は `addSuccess('admin.common.delete_complete', 'admin')` を使う。フォーム不正時は form view を返し、`admin.register.failed` の addError はない。messages.ja.yaml の表示値は common.save_complete が「保存しました」、common.delete_complete が「削除しました」である。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 948,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "全 Excel 正本の src-cell を `admin.format.error.delete.event` と `Referer` で検索して各0件。0208 sheet-14 AG184 は削除確認と実行、C150-C151 は削除成功文言を記載するが、関連データ拒否時の内部キー・遷移先は指定しない。sheet-14 の B7/D142 レイアウト画像も確認したが当該キーと Referer 指定はない。",
+      "reason": "単一キーと Referer 戻りは旧実装 FormatController::delete() の関連コレクション判定直後に実在するため LEGACY_BACKED は妥当。リバース詳細設計の記述は正本根拠として扱っていない。",
+      "currentImpl": "ec-cube-enterprise 現状: FormatController::delete() は Events、Decks、Archetypes ごとに `registered_event`、`registered_deck`、`registered_archetype` の別キーを使い、各分岐で `redirectToRoute('admin_format_list')`。`headers->get('referer')` はない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 950,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0208 sheet-14 Excel 正本の src-cell C119 は「(18)イベントに表示について」、D120 は選択登録時のイベント一覧挙動、F121 は「選択したフォーマットのイベントのみを表示」、F122 は「選択したフォーマットのみを検索可能とする」。B7 のレイアウト画像でも「イベントに表示」チェック項目を目視確認した。",
+      "reason": "項目と利用側挙動が Excel 正本テキスト・画像に直接存在するため SPEC_BACKED は妥当。現在のソースを `isShownInEvent`、`is_shown_in_event`、`getFormatsAssignedToEvents` で横断検索した結果、保存・管理フォーム以外にフラグを条件利用する箇所はない。",
+      "currentImpl": "ec-cube-enterprise 現状: MtbFormatRepository::getFormatsAssignedToEvents() は `innerJoin('f.Events', 'e')` と `e.deletedAt IS NULL`、group/order のみで isShownInEvent 条件がない。EventDetailedSearchModalController::index() はこの結果をそのまま Formats に渡す。フラグ参照は MtbFormat の列/getter/setter、FormatType、管理 edit.twig、初期データに限られ、フロントのイベント候補・一覧絞り込みに接続されていない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 951,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "MISDESCRIBED",
+      "checkedQuote": "全 Excel 正本の src-cell を `page_no`、`/deck/search/`、`admin_deck_search`、`m15-01_admin` で検索して各0件。0212 sheet-3 正本 C53 と AB107 は検索実行を規定するだけで、送信 URL・ルート名・page_no 制約は書かれていない。レイアウト画像 C7 と AC24 も開いて確認したが、検索ボタン等の画面部品だけで HTTP 契約の表示はない。",
+      "reason": "POST `/deck/search/{page_no}` と `^[1-9][0-9]*$` は旧実装 DeckServiceProvider.php、page_no=1 の送信は旧 deck.twig に実在するため、主要部分の LEGACY_BACKED 分類は妥当。ただし finding が設計ルート名を `m15-01_admin_deck_deck_search` とした点は誤り。旧実装の実際の bind 名は `admin_deck_search` で、現実装も同名である。URL と制約の乖離は残るがルート名差は存在しないため MISDESCRIBED。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Resource/template/admin/Deck/index.twig の form_start は action=`url('admin_deck_list')`、method POST。DeckController::index() は `/deck` の `admin_deck_list` と `/deck/search/{page_no}` の `admin_deck_search` を持ち、後者の requirements は `\\d+`。POST 時にメソッド内で `$page_no = 1` へ戻すため検索結果のページ動作は1ページ目になるが、送信 URL は旧 `/deck/search/1` ではない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    }
+  ]
+}

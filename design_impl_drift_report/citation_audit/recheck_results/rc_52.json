@@ -1,0 +1,149 @@
+{
+  "packetId": "rc_52",
+  "results": [
+    {
+      "rowId": 917,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0208正本のsheet-9（HTML 2769-2932）を admin_cardset_page、admin_cardset_download_lang、download_lang、URL、ルートで確認し、全output HTMLのsrc-cell抽出でも admin_cardset_page/admin_cardset_download_lang/download_lang は各0件。正本セルC44/C46は「画像ダウンロード…を押下した場合の処理」を関連シートへ委ね、AG71-AG73は前へ・ページ番号・次への遷移だけを記載する。sheet-9のレイアウト画像（B7/image 1）も実見したが、ボタンとページャはあるもののRoute名・URL文字列はない。",
+      "reason": "正本は画面動作を定めるが、期待値のRoute名・パスは明記しない。実際に開いた旧実装 pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/CardsetServiceProvider.php の register() では19-23行に `/cardset`=`admin_cardset` と `/cardset/{page_no}`=`admin_cardset_page`、42-43行に `/cardset/download_lang`=`admin_cardset_download_lang` があり、期待値は旧実装由来である。",
+      "currentImpl": "ec-cube-enterprise現状: src/Eccube/Controller/Admin/Card/CardsetController.php の index() は51-52行で `admin_cardset_list` `/cardset` と `admin_cardset_list_paged` `/cardset/page/{page_no}`、downloadEachLang() は310行で `admin_cardset_download_each_lang` `/cardset/download_each_lang`。app/template/admin/Cardset/index.twig 79行・97行・110行・191行も現Route名を使う。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 918,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0208正本sheet-9のsrc-cellを pageCount、page_count、sortSelect、sort_key、表示件数、並び順で確認。全output HTMLのsrc-cell抽出では pageCount/sortSelect は各0件。正本AG57（HTML 2847）は表示件数候補と選択件数表示、AG58（2848）は「リリース日(降順) リリース日(昇順) セット英名(降順) セット英名(昇順)」を実在確認したが、クエリ名や4文言との完全一致検証規則はない。sheet-9レイアウト画像では「表示件数: 10件」「並び順: リリース日（降順）」を確認した。",
+      "reason": "正本が支えるのは選択肢と表示動作まで。実際に開いた旧実装 pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/CardSetController.php の index() 57-65行は `pageCount` をPageMax名一致時のみ採用し、73-85行は4文言の `sortSelect` 完全一致時のみ保存する。期待値のパラメータ契約・検証方式は旧実装由来であり、LEGACY_BACKEDは妥当。",
+      "currentImpl": "ec-cube-enterprise現状: CardsetController::index() 57-76行は `sort_key`/`sort_order`、87-102行は `page_count` を使用する。page_countはPageMaxと突合するが、sort_orderは72行で値検証なしにセッション保存され、MtbCardsetRepository::getQueryBuilder() 170-173行でaddOrderByへ渡る。Twig 107-113行が生成する通常UIは2キー×ASC/DESCの4選択肢。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 919,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0208正本sheet-9と関連sheet-12を resume、pageCount、sortSelect、セッション、保持、初期化で確認し、全output HTMLのsrc-cell抽出では resume/pageCount/sortSelect は各0件。sheet-12 AG118（HTML 3729）には戻る際に「表示件数と並び順を保持する」とあるが、直接一覧へ入った際の3キー削除やキー名はない。sheet-9・sheet-12のレイアウト画像も確認したがセッション契約の記載はない。",
+      "reason": "実際に開いた旧実装 CardSetController::index() 46-50行はpage_noなし・resume!=1で3キーをremoveし、102-105行はpage_no/pageCount/sortSelectを保存する。正本にはこの具体契約がないためLEGACY_BACKEDを維持する。",
+      "currentImpl": "ec-cube-enterprise現状: CardsetController::index() 54-119行にresume参照やsession->removeはない。保存キーは57行 `eccube.admin.cardset.sort`、66行 `.order`、87行 `.search.page_count`、109行 `.page_no` で、旧 `pageCount`/`sortSelect` キーは使わない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 920,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "MISDESCRIBED",
+      "checkedQuote": "0208正本sheet-9 AG70（HTML 2860）を実際に開き、「この操作はあとから取り消すことができません。「{カードセット名}」を削除してよろしいですか？」と「その後「実行」を選択すると、削除を実行する」を確認した。findingの「このカードセットを削除してもよろしいですか？」はsrc-cellに0件。sheet-9レイアウト画像B7/image 1も実見し、一覧の削除メニューは確認したがポップアップ自体は画像に描かれていない。",
+      "reason": "SPEC_BACKED自体は、正本AG70が確認文言と確定操作「実行」を明記するため妥当。ただしfindingは正本文言を旧固定文言へ誤記し、「確認文言も不一致」と過大に述べる。現実装の確認文言は正本と一致し、残る乖離は確定ボタン「実行」対「削除」だけなのでMISDESCRIBED。",
+      "currentImpl": "ec-cube-enterprise現状: app/template/admin/Cardset/index.twig 174-176行は `admin.common.delete_modal__message` にCardset.nameJpを渡し、src/Eccube/Resource/locale/messages.ja.yaml 1785行の値は正本同文の「この操作はあとから取り消すことができません。「%name%」を削除してよろしいですか？」。一方、app/template/admin/Cardset/delete_modal.twig 21-24行は `admin.common.delete`、同locale 1636行は「削除」で、正本の「実行」とは異なる。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 921,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0208正本sheet-9（2769-2932）を Referer/referer、外部キー、子カード、削除不可、リダイレクトで確認し、全output HTMLのsrc-cell抽出でも Referer は0件。正本AG70は削除確認と実行のみで、子カード存在時の戻り先を定めない。sheet-9レイアウト画像も確認したがエラー時遷移の注記はない。",
+      "reason": "実際に開いた旧実装 CardSetController::delete() 259-264行は子のcount>0でエラーを積み `redirect($request->headers->get('referer'))` を返す。具体的なReferer遷移は旧実装だけにあり、LEGACY_BACKEDは正しい。",
+      "currentImpl": "ec-cube-enterprise現状: CardsetController::delete() 255-270行はForeignKeyConstraintViolationException時にエラーを積むが、成功・失敗とも280行の `redirectToRoute('admin_cardset_list')` へ到達する。delete()内にReferer参照はない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 922,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0208正本sheet-9 AG56（HTML 2846）と関連sheet-11「画像ダウンロード(言語別)」の正本範囲（3322-3612）を確認。sheet-11 C57は「現行踏襲のためカスタマイズ要件はなし」、D62/D64はZIPと言語別フォルダを記すがRoute名・URLはない。全output HTMLのsrc-cell抽出で admin_cardset_download_lang/download_lang は各0件。sheet-9レイアウト画像では「画像ダウンロード（言語別）」ボタンを実見した。",
+      "reason": "実際に開いた旧実装 CardsetServiceProvider::register() 42-43行とcard_set.twig 45-46行が、POST `/cardset/download_lang` と `admin_cardset_download_lang` を定義・参照する。正本は操作と出力を定めるだけなのでLEGACY_BACKEDを維持する。",
+      "currentImpl": "ec-cube-enterprise現状: CardsetController::downloadEachLang() のRouteは310行 `admin_cardset_download_each_lang` `/cardset/download_each_lang`。app/template/admin/Cardset/index.twig 76-81行のformactionも `admin_cardset_download_each_lang`。旧名・旧パスの別名Routeはない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 926,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0208正本sheet-10（3031-3211）を Content-Type、Content-Disposition、filename*、RFC 5987、aplication/octet-stream、application/octet-stream、ヘッダで確認し、全output HTMLのsrc-cell抽出でも該当語は各0件。正本C57（3110）は「現行踏襲のためカスタマイズ要件はなし」、D62/D64/D66（3113-3117）はZIPダウンロードとフォルダ構成を記すだけでヘッダ値はない。",
+      "reason": "実際に開いた旧実装 CardSetController::download() 376-379行にのみ `Content-Type: aplication/octet-stream;` と `Content-Disposition: attachment; filename*=UTF-8''...` がある。期待値は旧実装ヘッダそのもので、LEGACY_BACKEDは妥当。",
+      "currentImpl": "ec-cube-enterprise現状: CardsetController::createZipResponse() 333-340行はBinaryFileResponseにASCII名 `card_image.zip` を指定するだけ。現vendorのBinaryFileResponse::prepare() 191-198行はMIMEを自動検出し、HeaderUtils::makeDisposition() 190-193行はfilenameとfallbackが異なる場合だけfilename*を付ける。実際に同コードで生成したZIP応答をprepareして確認した値は `Content-Type: application/zip`、`Content-Disposition: attachment; filename=card_image.zip` で、旧ヘッダとは一致しない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 928,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0208正本sheet-10の正本範囲（3031-3211）を 不正、ダミー、実在、存在しない、0件、未選択、プロモで検索。正本D79（3126）は「カードセットを未選択の場合のみ」未設定画像をダウンロード、D81（3127）はプロモ種別ごとのフォルダと記すが、不正・不存在IDの扱いと0件エラー規則は見つからない。これらを記す箇所は3212行以降のfunction-design-embedであり正本ではない。",
+      "reason": "実際に開いた旧実装 CardSetController::download() 308-327行は各IDをfindし、emptyならcreatePromotionSet()、カード詳細が空ならエラーで一覧へ戻す。期待値の不正ID規則は旧実装由来なのでLEGACY_BACKEDを維持する。",
+      "currentImpl": "ec-cube-enterprise現状: CardsetDownloadAction::execute() 84-94行は入力配列自体が空のときだけ `[null]` とし、入力があればfilter_varで整数化して0以下を除外する。96-100行は正の不存在IDの取得結果が空ならcontinueする。全対象で画像0件なら168-174行でdownload_no_images例外だが、有効IDと不存在IDの混在時は不存在IDを無言で飛ばして有効分のZIPを返し得る。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 933,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0208正本sheet-12 AG183（HTML 3782）を開き、正本文言は「この操作はあとから取り消すことができません。「{カードセット名}」を削除してよろしいですか？」、確定操作は「実行」と確認した。全output HTMLのsrc-cell抽出で「このカードセットを削除してもよろしいですか？」は0件、`/cardset/{id}/delete` 相当のURL記述もなし。sheet-12の登録・編集レイアウト画像2枚を実見し、編集画像には「削除」導線があるがURLやポップアップ文言は描かれていない。",
+      "reason": "findingの中心である旧URLと固定確認文言は、実際に開いた旧実装 CardsetServiceProvider.php 34-37行のDELETE `/cardset/{id}/delete` とcard_set_detail.twig 72行の固定 `data-message` に一致する。正本は別の可変文言と「実行」を定めるため、旧URL・旧固定文言を比較するこのfindingのLEGACY_BACKED分類は妥当。",
+      "currentImpl": "ec-cube-enterprise現状: CardsetController::delete() のRouteは234-239行 `/product/cardset/{id}/delete`。edit.twig 153-156行は共通可変メッセージを使い、locale 1785行の文言は正本と一致する。delete_modal.twig 21-24行の確定表示は「削除」。したがって旧URL・旧固定文言との差は今もあり、正本に対しては「実行」対「削除」の表示差だけが残る。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 935,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0208正本sheet-12 AG182（HTML 3781）を開き、「カード名を押下すると、カード詳細（編集・削除）画面へ遷移する」までを確認したが新規タブ指定はない。全output HTMLのsrc-cellを「新規タブ」「target=_blank」で抽出検索し、新規タブは別書籍0204の商品規格編集に1件のみ、0208には0件、target属性は0件。sheet-12編集レイアウト画像E126/image 2も実見し、収録カードリストのリンク表示はあるが新規タブを示す注記はない。",
+      "reason": "実際に開いた旧実装 card_set_detail.twig 87-92行だけがカードリンクに `target=\"_blank\"` を付ける。正本は遷移先だけを定めるため、新規タブ期待は旧実装由来でLEGACY_BACKEDが正しい。",
+      "currentImpl": "ec-cube-enterprise現状: app/template/admin/Cardset/edit.twig 122-143行は編集時だけ収録カードリストを表示し、135行は `admin_card_edit` への `<a href=...>` だがtarget属性を持たない。CardsetController::edit() 216-219行でリストを取得する。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 936,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "PARTIAL",
+      "checkedQuote": "0208正本sheet-12 AG118（HTML 3729）を開き、カードセット管理へ戻る際に「表示件数と並び順を保持する」を確認した。一方、全output HTMLのsrc-cell抽出で resume は0件、`/{page_no}?resume=1` や admin_cardset_page も0件。sheet-12の登録・編集レイアウト画像2枚では「検索画面に戻る」/カードセット管理への戻り導線を実見したがURLパラメータは記されていない。",
+      "reason": "正本が要求する機能結果（表示件数・並び順保持）は現実装も満たす。期待値中の具体URLとresume規則は、実際に開いた旧実装 card_set_detail.twig 108-110行およびCardSetController::index() 46-50行だけにあるためLEGACY_BACKEDは妥当。現状は保持機能がある一方、旧URL契約だけが残存差なのでPARTIAL。",
+      "currentImpl": "ec-cube-enterprise現状: edit.twig 151行はpageNoに応じ `admin_cardset_list_paged` または `admin_cardset_list` へ戻し、resume=1は付けない。CardsetController::index() 57-72行・87-109行はsort/order/page_count/page_noをセッション保持し、一覧直アクセスでもクリアしないため、正本の保持結果は実現する。旧 `/cardset/{page_no}?resume=1` はない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 937,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0208正本sheet-13 C31（HTML 3996）を開き、「フォーマットに登録されている『並び順』の昇順で、フォーマット一覧を表示する」を確認した。全output HTMLのsrc-cell抽出で「同一 rank」「id 昇順」は各0件。sheet-13レイアウト画像B8/image 1も実見し一覧順は確認したが、同順位時のタイブレーク規則は注記されていない。",
+      "reason": "正本はrank相当の「並び順」昇順までで、同一rank内id昇順は定めない。実際に開いた旧実装 pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/FormatController.php の index() 28-30行が `findBy([], ['rank' => 'ASC', 'id' => 'ASC'])` とするため、第二キー期待は旧実装由来でLEGACY_BACKEDは妥当。",
+      "currentImpl": "ec-cube-enterprise現状: src/Eccube/Controller/Admin/Card/FormatController.php の index() 49-51行は `findBy([], ['rank' => 'ASC'])` のみ。MtbFormatRepositoryの一覧用経路にもrank+id複合指定はなく、同一rank時のid順は保証されない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    }
+  ]
+}

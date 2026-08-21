@@ -1,0 +1,149 @@
+{
+  "packetId": "rc_25",
+  "results": [
+    {
+      "rowId": 447,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "MISDESCRIBED",
+      "checkedQuote": "0202 sheet-7 を「商品が選択されていません。」「商品未選択」「select_no_product」で検索した。Excel正本で確認できたのは 0202:在庫一括編集!C50 の「カスタマイズ要件に記載の内容以外は現行踏襲とする。」までで、具体文言と遷移は function-design-embed 内（HTML:3288等）だけだった。関連書籍0204も検索したが具体挙動は function-design-embed 内だけだった。sheet-7 には image-layer-img が0枚で、確認対象となる正本レイアウト画像は無かった。旧実装 pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Product/ProductController.php の editBulkUpdateMainProcess() 861-865行と locale/message.ja.yml 1189行を開き、「商品が選択されていません。」と商品検索一覧へのリダイレクトを確認した。",
+      "reason": "LEGACY_BACKED は妥当。ただし先行記述の「商品未選択で押下→遷移先 new()→自己リダイレクトループ」は経路として誤り。現在の StockListController::bulkEditDispatch() は空IDを検出するとその場で admin_stock_list へ返すため、当該操作では StockBulkApprovalController::new() に到達しない。指定文言ではなく「指定された在庫が見つかりませんでした。」を出す乖離は残る。StockBulkApprovalController::new()/store() のID無し自己リダイレクト自体は実在するが、直接アクセス等の別経路の問題である。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/Admin/Stock/StockListController.php の bulkEditDispatch() 510-515行は `$ids === []` で `admin.stock.bulk_approval.no_product_stocks` を追加し `admin_stock_list` へ戻す。src/Eccube/Resource/locale/messages.ja.yaml 4555行の値は「指定された在庫が見つかりませんでした。」。src/Eccube/Controller/Admin/Stock/StockBulkApprovalController.php の new() 62-65行と store() 117-128行にはID無しで `admin_stock_bulk_approval_new` へ戻す実装が残る。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 448,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "UNSURE",
+      "checkedQuote": "0202 sheet-8 のExcel正本表を実物確認した。0202:在庫情報CSV出力!B18/E18 は「14 / 原価単価」、B19/E19 は「15 / 総原価」、B20/E20 は「13 / 在庫」で、物理的な行順は原価単価→総原価→在庫だが、識別ID順は在庫(13)→原価単価(14)→総原価(15)になる。sheet-8 にはレイアウト画像は無く、列順の優先規則を明記する別のExcel正本文言も確認できなかった。",
+      "reason": "SPEC_BACKED という分類は正しいが、乖離の確定はできない。先行指摘はExcelの物理行順をCSV列順とみなす一方、実装は識別IDの昇順と一致する。正本は「識別ID」と物理行順のどちらが出力順を支配するかを明記せず、両者が矛盾するため、現在実装が設計違反か判断不能。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Service/Csv/Exporter/StockListCsvExportService.php の CSV_HEADER 33-53行は `buy_price` の後を `stock`（在庫）、`unit_cost`（原価単価）、`total_cost`（総原価）とし、exportBySearchInput() 77-90行が array_keys(CSV_HEADER) の順で出力する。",
+      "severityOpinion": "med",
+      "confidence": "low"
+    },
+    {
+      "rowId": 449,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0202 sheet-13 を「CSVファイル登録時のエラー挙動」「検索項目および一覧の選択状態は失われない」で検索し、Excel正本 0202:在庫移動・振替検索一覧(検索・結果)!C101 と !E103 に実在することを確認した。正本レイアウト画像 B7/image 1・2 も目視し、検索条件領域と一覧の行選択チェックボックスを確認した。",
+      "reason": "引用は function-design-embed 外の src-cell で要求を直接支持する。CSV取込の各エラー分岐は resume も選択IDも渡さず一覧へリダイレクトし、通常GETは保存済み検索条件を復元せずデフォルト値で上書きする。一覧チェックボックスにも復元値がないため、検索条件・選択状態とも保持されない。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php の importStockMoveCsv() 256-322行と importStockTransferCsv() 364-431行はエラー時に `redirectToRoute('admin_stock_move_transfer')`。index() 177-181行だけが resume 時に検索条件を復元し、194-201行の通常GETはデフォルト値を保存する。src/Eccube/Resource/template/admin/Stock/MoveTransfer/index.twig 714-719行は各行checkboxを常に未選択で描画し、sessionStorage/localStorage等の復元処理も同テンプレート内に無い。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 450,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0202 sheet-13 を「検索条件をクリア」「押下すると3-1~3-9の内容を空にする」で検索し、Excel正本 0202:在庫移動・振替検索一覧(検索・結果)!E162/AG162 に実在することを確認した。正本レイアウト画像 B7/image 1 を目視し、「検索条件をクリア」が詳細検索ブロック下部に配置されていることも確認した。",
+      "reason": "正本はクリア対象を識別ID3-1〜3-9に限定し、画像上も詳細検索領域に配置する。実装は詳細領域だけでなく同じform内の基本検索ID・店舗・在庫区分・移動タイプ・ステータスまで一括クリアするため、現状も対象範囲が広すぎる。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Resource/template/admin/Stock/MoveTransfer/index.twig のクリア処理 447-473行は `#form_search_stock_move_transfer` 全体のchecked checkbox、hidden等を除く全input、店舗等を含むselectを消す。基本検索項目も同formの496-550行にあるため対象になる。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 451,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0202 sheet-13 を「一覧は在庫移動振替IDを降順として表示する」で検索し、Excel正本 0202:在庫移動・振替検索一覧(検索・結果)!E108 に完全一致で実在することを確認した。正本レイアウト画像 B7/image 2 も目視し、一覧の在庫移動・振替ID列を確認した。",
+      "reason": "正本の第一ソートはID降順。現在のQueryBuilderは createDate DESC を第一キー、id DESC を第二キーにするため、作成日時とIDの順が一致しないデータでは正本順にならない。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Repository/DtbStockMoveTransferRepository.php の getQueryBuilderBySearchData() 50-57行は `orderBy('s.createDate', 'DESC')` の後に `addOrderBy('s.id', 'DESC')`。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 452,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0202 sheet-13 を「チェックされた移動をまとめて在庫移動指示を作成し、在庫移動指示一覧画面へ遷移する」で検索し、Excel正本 0202:在庫移動・振替検索一覧(検索・結果)!E118 に実在することを確認した。正本レイアウト画像 B7/image 2 も目視し、一覧上の「在庫移動指示作成」ボタンと行選択チェックボックスを確認した。",
+      "reason": "正本は作成成功後の遷移先を在庫移動指示一覧と明記する。作成条件の処理は存在するが、成功後は一覧でなく作成した指示の詳細へ遷移するため、現在も乖離する。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php の createMoveInstruction() 728-751行は StockMoveInstructionCreateAction::handle() 成功後、`admin_stock_move_instruction_detail` にID付きでリダイレクトする。一覧ルートは src/Eccube/Controller/Admin/Stock/StockMoveInstructionController.php 68-71行の `admin_stock_move_instruction_list` として別に存在する。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 453,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0202 sheet-13 を「在庫移動である場合にのみ出力を可能とする」で検索し、Excel正本 0202:在庫移動・振替検索一覧(検索・結果)!H130 と !H134 にCSV・PDF双方の同文言が実在することを確認した。正本レイアウト画像 B7/image 2 も目視し、「戻しリストCSV出力」「戻しリストPDF出力」ボタンと一覧の移動タイプ列を確認した。",
+      "reason": "共通バリデーションは移動/振替種別を取得も判定もしない。振替承認処理は振替データを STATUS_INBOUND_APPROVED に遷移させ得る一方、このステータスは戻しリストの許可一覧に含まれるため、ステータス検査だけでは振替を排除できない。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php の validateReturnListExportRequest() 592-616行は validateReturnListExportIds() に委譲。src/Eccube/Service/Csv/Exporter/StockMoveTransferReturnListCsvExportService.php 43-48行は STATUS_MOVING/INBOUND_APPROVAL_PENDING/INBOUND_APPROVED を許可し、115-172行は店舗・権限・ステータス等だけを検査する。src/Eccube/Repository/DtbStockMoveTransferRepository.php の getMoveToBaseInfoAndStatusByIds() 326-343行も transferId/shopId/statusId しか取得しない。src/Eccube/Service/Admin/Stock/StockTransferApprovalApproveAction.php 108行では振替承認時に STATUS_INBOUND_APPROVED を設定する。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 454,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0202 sheet-15 を「在庫移動・振替検索一覧」で検索し、Excel正本 0202:在庫移動・振替登録 編集(振替)!E332 と識別ID6-1の !E378 に実在することを確認した。正本レイアウト画像 B285/image 7 と B383/image 3 を目視し、フッター表示が実際に「在庫移動・振替検索一覧」であることを確認した。",
+      "reason": "正本テキストとレイアウト画像の双方が同じリンク文言を示す。実装は表示経路まで確認でき、翻訳値が「在庫振替検索一覧へ」のため、「移動・」の欠落と末尾「へ」の追加が現状も表示される。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Resource/locale/messages.ja.yaml 4798行は `admin.stock.transfer.back_to_list: 在庫振替検索一覧へ`。src/Eccube/Resource/template/admin/Stock/transfer_approval.twig 226-229行と transfer_complete.twig 184-187行が同キーをフッターリンクで表示する。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 457,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0202 sheet-15 を「振替後商品コードの入力フォームは直接入力も可能」「振替先の商品コードを入力する」で検索し、Excel正本 0202:在庫移動・振替登録 編集(振替)!E185 と識別ID3-6の項目定義に実在することを確認した。正本レイアウト画像 A8/image 10 を目視し、振替先の商品コード入力欄とその直下の検索ボタンが別々に描かれていることを確認した。",
+      "reason": "正本は直接入力可を明記し、レイアウトにも独立した入力欄がある。FormTypeはTextType/requiredだが、実表示テンプレートがreadonlyを付けるため、利用者は直接入力できず、現在も商品検索モーダル経由に限定される。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Resource/template/admin/Stock/transfer_new.twig 340-344行は `form_widget(detail.dest_product_code, {'attr': {'readonly': 'readonly'}})`。同38-45行と110-149行は検索ボタンで対象欄を記憶し、モーダル決定時に `.val(destData.product_code || '')` で設定する。src/Eccube/Form/Type/Admin/StockTransferNewDetailType.php 47-57行は TextType/required。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 460,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0202 sheet-17 を「分割元 / 結合先商品名」で検索し、Excel正本 0202:在庫分割結合検索一覧(検索・結果)!E156 に実在することを確認した。正本レイアウト画像 C8/image 1 も目視したところ、見出しは改行された「分割元」「結合先商品名」で、画像にはスラッシュ自体は描かれていなかったが、末尾の「商品名」は確認できた。",
+      "reason": "区切り表現は項目表（スラッシュ）と画像（改行）で差があるが、どちらの正本根拠も「結合先商品名」としており、実装の「分割元・結合先商品」は少なくとも末尾の「名」が欠落する。したがって表示文言の乖離は現状も再現する。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Resource/locale/messages.ja.yaml 4939行は `admin.stock.split_join.list.source_destination_product: 分割元・結合先商品`。src/Eccube/Resource/template/admin/Stock/stock_split_join_index.twig 308-313行がこのキーを一覧見出しとして表示する。",
+      "severityOpinion": "low",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 464,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "UNSURE",
+      "checkedQuote": "0202 sheet-17 を「選択した一覧の分割・結合」「チェックした場合、各種出力ボタンが活性化」で検索し、Excel正本 0202:在庫分割結合検索一覧(検索・結果)!E101 と !E121 に実在することを確認した。一方、項目表の識別ID4-3 !AG149 は「在庫分割CSVを出力する」とだけ記載し、正本レイアウト画像 C8/image 1 を目視すると一覧に行選択チェックボックスがなく、「在庫分割結合CSV出力」ボタンは選択なしで表示されている。",
+      "reason": "SPEC_BACKED の分類自体は正しいが、正本内部で処理概要と画面レイアウト・項目表が矛盾する。テキスト要求に従えば実装は乖離する一方、実装の「選択IDなし・検索条件全件出力」はレイアウト画像と整合するため、どちらが正本の最終意図か判断できず drift は UNSURE。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php の csvExport() 251-271行はGETでセッション検索条件を復元し `exportBySearchData($searchData)` を呼び、選択IDを受け取らない。src/Eccube/Resource/template/admin/Stock/stock_split_join_index.twig 286-293行は検索実行後にID無しのCSVリンクを表示し、一覧ヘッダ308-324行にも選択checkbox列は無い。src/Eccube/Service/Csv/Exporter/StockSplitJoinCsvExportService.php 56-63行は検索条件一致データを取得する。",
+      "severityOpinion": "med",
+      "confidence": "low"
+    },
+    {
+      "rowId": 465,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0202 sheet-17 を「CSVファイル登録時にエラーがあり登録が行われなかった場合」「検索項目および一覧の選択状態は失われない」で検索し、Excel正本 0202:在庫分割結合検索一覧(検索・結果)!E112 と !E113 に実在することを確認した。正本レイアウト画像 C8/image 2 で検索項目を目視した。画像上の一覧には選択checkboxが無く選択状態部分は正本内で不整合だが、検索項目保持の要求は明確。",
+      "reason": "少なくとも検索項目を失わないという要求は正本で明確。CSV取込エラーの全分岐がresume無しで一覧へ戻り、一覧indexの通常GET分岐は保存済み検索条件をフォームへ復元せず空検索・空一覧を返すため、この部分の乖離は現在も再現する。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php の index() 126-160行はPOSTまたは `resume` 時だけ検索条件を反映し、通常GETは `StockSplitJoins => []`、`stockSplitJoinSearchPerformed => false` を返す。listSplitCsvImport() 275-363行と listJoinCsvImport() 367-454行のエラー・完了リダイレクトはいずれも `redirectToRoute('admin_stock_split_join_list')` で resume を付けない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    }
+  ]
+}

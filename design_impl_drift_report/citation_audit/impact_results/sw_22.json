@@ -1,0 +1,365 @@
+{
+  "packetId": "sw_22",
+  "results": [
+    {
+      "rowId": 757,
+      "authorVerdict": "IMPACT",
+      "verdict": "NO_IMPACT",
+      "agree": false,
+      "observableEffect": "",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Admin/Setting/Shop/AdditionalSystemController.php:104-113 で option_value/member/update_date の変更後に flush すること、src/Eccube/Doctrine/EventSubscriber/SaveEventSubscriber.php:62-68 で全 preUpdate 対象の setUpdateDate を現在時刻で上書きすること、src/Eccube/Entity/Master/MtbOption.php:183-193 で同メソッドを持つことを確認した。",
+      "reason": "明示 setUpdateDate の有無にかかわらず option_value/member の変更で preUpdate が発火し、同じ SaveEventSubscriber が update_date を現在時刻へ設定する。明示値は flush 時に上書きされるため、DB更新内容・画面応答・副作用に差が残らず、責務配置だけの差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 758,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "存在しないIDへのDELETEが、設計の警告フラッシュ付き一覧リダイレクトではなく、コントローラ到達前のHTTP 404になる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Admin/Setting/System/MemberController.php:300-305 の Member 型付き引数と、本体が Member を前提に開始する実装を確認した。",
+      "reason": "HTTPステータス、フラッシュ、遷移先が外部から観測可能に異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 759,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "既に有効なスマレジ用メンバーがいても別メンバーの smaregiMemberFlg を有効のまま保存でき、設計のエラー表示とフラグ非反映が起きない。",
+      "checked": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/MemberType.php:171-267 で smaregiMemberFlg は通常の CheckboxType であり、POST_SUBMIT リスナに重複検証がないことを確認した。",
+      "reason": "永続値と保存後の画面メッセージが変わる業務制約の欠落である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 760,
+      "authorVerdict": "NO_IMPACT",
+      "verdict": "NO_IMPACT",
+      "agree": true,
+      "observableEffect": "",
+      "checked": "ec-cube-enterprise/src/Eccube/EventListener/TwigInitializeListener.php:183-191,204-253 で AuthorityRole は拒否URLによる eccubeNav の事前フィルタにのみ使われ、Twig global は eccubeNav だけであることを確認した。Resource/template と app/template の全 *.twig を AuthorityRoles で検索して参照0件、admin/nav.twig:20 は eccubeNav のみを描画することも確認した。",
+      "reason": "AuthorityRoles という公開名は現行テンプレートのHTML・HTTP・DBに露出せず、権限制御済みナビゲーションだけが描画される。現行コードで観測できる差はグローバル名と責務配置に閉じる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 761,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "保存後の画面フラッシュが「権限設定を保存しました。」ではなく「保存しました」と表示される。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Admin/Setting/System/AuthorityController.php:96-108 と src/Eccube/Resource/locale/messages.ja.yaml:1590 を確認した。",
+      "reason": "表示文言は1文字差でも外部出力差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 762,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "配送方法や出荷完了状態に関係なく注文が売上集計へ入り、通販・店舗の集計額と件数が設計と異なる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Repository/DtbDailySummaryRepository.php:42-66 の受注集計WHEREが base_info_id と order_date だけであることを確認した。",
+      "reason": "集計画面・CSV・集計テーブルの値を変える対象条件差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 763,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "集計値がない日付・月の0行が一覧に現れず、期間内の表示行数と内容が設計より少なくなる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Service/Admin/Analysis/AnalysisSummaryBuilder.php:75-106,126-153 で取得済み行だけを変換して返すことを確認した。",
+      "reason": "画面一覧とCSVの行有無は外部から観測可能である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 764,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "出荷完了以外の注文も売上・原価・販売数量・取引数へ加算され、集計値が変わる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Repository/DtbDailySummaryRepository.php:46-66 に order_status 条件がないことを確認した。",
+      "reason": "集計対象の違いは永続集計値と表示値の差になる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 765,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "欠落日付・欠落月が0値の行として補完されず、一覧とCSVから期間の一部が消える。",
+      "checked": "ec-cube-enterprise/src/Eccube/Service/Admin/Analysis/AnalysisSummaryBuilder.php:75-106,126-153 と src/Eccube/Repository/DtbDailySummaryRepository.php:329-342 を確認した。",
+      "reason": "default(0) では存在しない行を生成できず、出力行の有無が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 766,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "日次・月次の販売集計に出荷完了以外の注文が含まれる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Service/Admin/Analysis/BatchAggregateDailySummaryAction.php:31-38 から呼ぶ src/Eccube/Repository/DtbDailySummaryRepository.php:42-66 に出荷完了条件がないことを確認した。",
+      "reason": "バッチの集計対象と保存値が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 767,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "買取成立ステータス以外のネット・店頭買取が件数・金額へ入り得て、キャンセル等の扱いも設計と異なる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Repository/DtbDailySummaryRepository.php:131-149 でネット側は auto_approval_flg、店頭側は cancel_date と apply_date のみを条件にし、買取ステータスと成立日を参照しないことを確認した。",
+      "reason": "集計対象レコードと結果値を変える条件差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 768,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "店舗のrankとIDの順が異なるデータでは、画面一覧・CSVの店舗行順が設計と異なる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Repository/DtbDailySummaryRepository.php:331-332 と src/Eccube/Repository/DtbMonthlySummaryRepository.php:119 の ORDER BY が base_info_id ASC であることを確認した。",
+      "reason": "並び順は画面・CSVの外部出力差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 769,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "店舗別に選ぶべきEC在庫・スマレジ在庫の区別なしに廃棄・欠品数量を集計し、対象店舗の値が変わる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Repository/DtbDailySummaryRepository.php:171-193,204-220 で stock location 条件を持たず、baseInfo 単位で全対象履歴を合算することを確認した。",
+      "reason": "バッチの集計対象と永続・表示値に影響する。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 770,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "出荷完了以外の注文もM12-01の販売集計に含まれ、表示・CSVの数値が増減する。",
+      "checked": "ec-cube-enterprise/src/Eccube/Repository/DtbDailySummaryRepository.php:62-66 のWHEREに order_status_id がないことを確認した。",
+      "reason": "販売集計の対象条件差は外部出力差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 771,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "買取成立以外の買取データがM12-01の買取件数・金額へ含まれ得る。",
+      "checked": "ec-cube-enterprise/src/Eccube/Repository/DtbDailySummaryRepository.php:131-149 に buy_order_status_id / otc_buy_order_status_id 条件がないことを確認した。",
+      "reason": "集計対象と出力数値が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 772,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "通販・各店舗に属さない売上が「その他」行として表示・出力されず、集計結果から欠落する。",
+      "checked": "ec-cube-enterprise/src/Eccube/Repository/DtbDailySummaryRepository.php:62-66 が base_info_id IS NOT NULL で除外し、src/Eccube/Service/Admin/Analysis/AnalysisSummaryBuilder.php:157-171 は通販または店舗名しか返さないことを確認した。",
+      "reason": "行の欠落と支店名出力の差は外部観測可能である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 773,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "廃棄・欠品列にコスト金額ではなく在庫変動数量が表示・出力される。",
+      "checked": "ec-cube-enterprise/src/Eccube/Repository/DtbDailySummaryRepository.php:175-177,208-210 と src/Eccube/Service/Admin/Analysis/AnalysisSummaryBuilder.php:101-102 を確認した。",
+      "reason": "同じ列の値・単位が異なる明確なI/O差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 774,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "集計結果のない月が0件行として生成されず、指定期間より短い一覧・CSVになる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Service/Admin/Analysis/AnalysisSummaryBuilder.php:120-153 でDB取得行のみを返すことを確認した。",
+      "reason": "月行の表示有無は外部出力差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 775,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "ダウンロード応答のContent-Dispositionファイル名が report_summary_*.csv ではなく summary_daily_* / summary_monthly_*.csv になる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Service/Csv/Exporter/SummaryCsvExporterService.php:128-132 のファイル名と応答ヘッダ設定を確認した。",
+      "reason": "HTTPレスポンスヘッダに露出するファイル名差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 776,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "検索条件セッションがないとCSVを返さず、エラーフラッシュ付きで日次画面へリダイレクトする。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Admin/Analysis/SummaryController.php:157-164 を確認した。",
+      "reason": "CSV応答の有無、リダイレクト、表示メッセージが異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 777,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "CSV末尾に総合計行が出力されず、ファイルの行数・最終行・合計値が設計と異なる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Service/Csv/Exporter/SummaryCsvExporterService.php:93-125 で build() の total を使用せず summary 行だけを書き出すことを確認した。",
+      "reason": "CSV本文の欠落は直接のI/O差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 778,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "CSVの「廃棄」列が廃棄コストではなく廃棄数量になる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Repository/DtbDailySummaryRepository.php:175-177 と src/Eccube/Service/Csv/Exporter/SummaryCsvExporterService.php:121 を確認した。",
+      "reason": "CSVセルの値と単位が異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 779,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "CSVの「欠品」列が欠品コストではなく欠品数量になる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Repository/DtbDailySummaryRepository.php:208-210 と src/Eccube/Service/Csv/Exporter/SummaryCsvExporterService.php:122 を確認した。",
+      "reason": "CSVセルの値と単位が異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 780,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "POST /analysis/sales/result は利用できず、検索フォームはPOST /analysis/sales/searchへ送信される。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Admin/Analysis/SalesAnalysisController.php:72-74 と src/Eccube/Resource/template/admin/Analysis/sales.twig:105 を確認した。",
+      "reason": "HTTPパスは外部契約であり、直接観測できる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 781,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "To欄の初期表示が当月末23:59:59となり、指定To時刻ちょうどのレコードも集計へ含まれる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/Analysis/SalesType.php:99-112 と src/Eccube/Repository/OrderItemRepository.php:260-266 を確認した。",
+      "reason": "入力欄の表示値と境界レコードの集計結果が外部から観測可能に異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 782,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "設計のPOST /analysis/sales/resultでは同一画面の集計結果を取得できず、実装は/searchだけを公開する。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Admin/Analysis/SalesAnalysisController.php:72-74 と sales.twig:105 を確認した。",
+      "reason": "公開HTTPエンドポイントの不在は動作差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 783,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "選択日付列がTo値と完全一致する注文を、設計では除外するが実装では集計に含める。",
+      "checked": "ec-cube-enterprise/src/Eccube/Repository/OrderItemRepository.php:260-266 の >= / <= 条件を確認した。",
+      "reason": "境界入力に対する結果行・集計値が異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 784,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "初期画面GET後も以前の検索条件がセッションに残り、CSV出力が古い条件で実行できる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Admin/Analysis/SalesAnalysisController.php:45-67 の index に session remove がなく、同:129-140 の export が残存SESSION_KEYを読むことを確認した。",
+      "reason": "後続CSVの対象・内容が変わるセッション副作用差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 785,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "CSVも画面と同じ page_count 件で打ち切られ、上限超過分の集計行がファイルから欠落する。",
+      "checked": "ec-cube-enterprise/src/Eccube/Service/Csv/Exporter/SalesAnalysisCsvExporterService.php:34-39 と src/Eccube/Repository/OrderItemRepository.php:326-329 を確認した。",
+      "reason": "CSV行数・内容が変わる明確なI/O差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 786,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "検索POSTの公開URLが /analysis/sales/result ではなく /analysis/sales/search になる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Admin/Analysis/SalesAnalysisController.php:72 と src/Eccube/Resource/template/admin/Analysis/sales.twig:105 を確認した。",
+      "reason": "HTTPパス差は外部観測可能である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 787,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "検索初期表示後も過去の検索条件が残り、CSVが過去条件で生成される。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Admin/Analysis/SalesAnalysisController.php:47-67 にセッション破棄がなく、同:129-140 で残存条件を利用することを確認した。",
+      "reason": "セッション状態が後続I/Oへ影響する。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 788,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "To日時と同時刻の注文が結果に含まれ、設計の半開区間より集計件数・金額が増え得る。",
+      "checked": "ec-cube-enterprise/src/Eccube/Repository/OrderItemRepository.php:264-266 の <= 条件を確認した。",
+      "reason": "境界値で集計結果が異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 789,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "平均単価・数量の入力HTMLに0以上の制約がなく、利用者が負数を入力・送信でき、負数をHAVING条件として検索できる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/Analysis/SalesType.php:193-204 に min 属性や非負制約がなく、src/Eccube/Repository/OrderItemRepository.php:305-315 が値をそのままHAVINGへ使うことを確認した。",
+      "reason": "生成HTMLと受理する入力範囲、検索結果が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 790,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "検索条件セッションがないと空条件CSVではなく、エラー表示付きで検索画面へリダイレクトする。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Admin/Analysis/SalesAnalysisController.php:126-134 を確認した。",
+      "reason": "HTTP応答種別、CSV有無、画面メッセージが異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 791,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "CSV出力が page_count 上限で切られ、集計結果全件ではなく先頭の上限件数だけになる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Service/Csv/Exporter/SalesAnalysisCsvExporterService.php:38 が共通 getAnalysisSummary を呼び、src/Eccube/Repository/OrderItemRepository.php:326-329 が setMaxResults を適用することを確認した。",
+      "reason": "CSVの行数と内容に直接影響する。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 792,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "セッション未保存時はCSVストリームを返さず、「検索条件がありません。先に検索を実行してください。」を積んでリダイレクトする。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Admin/Analysis/SalesAnalysisController.php:129-134 を確認した。",
+      "reason": "CSV本文の有無、リダイレクト、フラッシュ文言が外部から観測できる。",
+      "confidence": "high"
+    }
+  ]
+}

@@ -1,0 +1,149 @@
+{
+  "packetId": "rc2_03",
+  "results": [
+    {
+      "rowId": 263,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0303_基本設計仕様書(フロント_商品).html 全体を「会員氏名」「氏名」「お名前」「様」で検索。Excel正本は 4018-4022 行の「お気に入り登録商品一覧」「会員ログイン時にお気に入りに登録した商品は、マイページ＞お気に入り登録商品一覧に表示する」までで、会員氏名は function-design-embed 内の 4214 行にだけ実在した。sheet-10 の data-excel-ref 付きレイアウト画像15枚（U29、C47、AE47、Y10、AN53、B112、W137、Y155、P149、N130）もすべて目視したが、会員氏名を表示する一覧画像は無かった。",
+      "reason": "正本はお気に入り商品の一覧表示を要求するが、表示要素としての会員氏名は指定しない。旧実装 pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/favorite_list.twig の block main では、27-29行に `<div class=\"loginname\">{{ app.user.name01 }} {{ app.user.name02 }} 様</div>` が実在するため、具体的期待値は旧実装由来である。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Resource/template/default/Mypage/favorite.twig の block main は 44-58行で見出し・案内・空表示、60行以降で絞り込みと商品一覧を描画するが、Customer/name01/name02 の出力は無い。Mypage/navi.twig の include は Mypage/history.twig:23 のみで、favorite.twig は 11行で default_frame.twig を extends するだけである。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 264,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "PARTIAL",
+      "checkedQuote": "0304_基本設計仕様書(フロント_注文).html のExcel正本 src-cell を確認。1460行は「支払方法によって『注文する』ボタンの文言を変更する」、1461行は「コンビニ決済へ」、1462行は「クレジットカード決済へ」、1463行は支店の場合「購入する」と明記する。sheet-4 の data-excel-ref 付きレイアウト画像10枚も目視し、決済ボタン例「クレジットカード決済へ」を確認した。",
+      "reason": "条件と3種類の文言が function-design-embed 外の src-cell に直接存在するため SPEC_BACKED は正しい。現在はコンビニ・クレジットカードの2分岐だけ実装され、支店分岐が残っているため部分解消である。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Resource/template/default/Shopping/index.twig の block main 139-151行は creditPaymentMethods と EC_CVS_METHOD を判定し、それぞれ `front.shopping.checkout.credit` / `.cvs` を選ぶ。856-858行が checkoutButtonLabel を表示し、messages.ja.yaml:1533-1535 は「注文する」「クレジットカード決済へ」「コンビニ決済へ」。一方、Twigで利用可能な isMainShop による支店分岐はラベル選択部に無く、「購入する」キーも当該フローに無い。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 265,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0304_基本設計仕様書(フロント_注文).html 全体を「お届け先登録数の上限を超えています」「customer_address_max」「配送先を20」「20件」「エラー領域」で検索。Excel正本の 2266行には「新規登録の場合、すでに配送先住所が20件登録されている場合は登録できない」とだけあり、指定文言・ご注文方法指定画面のエラー領域・戻り先は function-design-embed 内の2408/2638行だけに実在した。sheet-5の正本レイアウト画像2枚と、戻り先とされるsheet-4の正本レイアウト画像10枚も目視したが、当該エラー表示は無かった。",
+      "reason": "20件で追加不可という業務制約は正本にあるが、本 finding が差分とする特定のエラー文言・表示領域・ご注文方法指定への復帰は正本に無い。旧実装 pf-eccube3/app/Plugin/HareruyaEc/Service/DeliveryService.php の canAddCustomerAddress() 82-90行は上限時に `front.shopping.error.customer_address_max` を addError して false を返し、同 Controller/ShoppingController.php の deliveryEdit() 947-952行は shopping へリダイレクトする。message.ja.yml:1462 の実値は「お届け先登録数の上限を超えています。」である。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/Front/ShoppingController.php の shippingEdit() 733-749行は新規会員住所が eccube_deliv_addr_max 以上なら `throw new NotFoundHttpException()`。shippingEditComplete() 887-895行も同じく404を投げる。エラーを注文画面へ積んで shopping に戻す処理は無く、messages.ja.yaml に `front.shopping.error.customer_address_max` も無い。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 266,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0304_基本設計仕様書(フロント_注文).html 全体を注意文の「既にいただいています」「準備中も含む」「変更されません」「弊社へご連絡」で検索。該当文は function-design-embed 内の2405/2635行だけに実在した。sheet-5のExcel正本レイアウト画像2枚（H7、D68）も目視し、H7の編集フォームには見出しと入力欄はあるが当該注意文は無かった。",
+      "reason": "注意文はExcel正本のセル・レイアウト画像には無く、旧実装 pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Shopping/delivery_edit.twig の block main 20-22行に実在するため LEGACY_BACKED が妥当である。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Resource/template/default/Shopping/shipping_edit.twig の block main は64-69行で見出し直後にフォームを開始し、`front.mypage.delivery.edit_notice` を参照しない。文言自体は messages.ja.yaml:746 に残るが、このShoppingテンプレートの表示経路には接続されていない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 267,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0304_基本設計仕様書(フロント_注文).html のsheet-5 Excel正本レイアウト画像 `data-excel-ref=\"0304:配送先の新規登録_変更!H7\"` を目視し、住所入力欄の直下に実物の表示「町名・番地の入力漏れにご注意ください。」が存在することを確認した。テキスト検索では同文は function-design-embed 内2405/2635行にしか出ないため、判定根拠はテキスト抽出ではなく正本画像である。sheet-5のもう1枚（D68）も確認した。",
+      "reason": "先行メモの「Excel正本全体に指定がない」は画像を見落としているが、元の根拠区分 SPEC_BACKED 自体は正しい。正本画像は日本語住所欄の直下にこの注意を明示する。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Resource/template/default/Shopping/shipping_edit.twig の日本住所ブロック220-248行は都道府県・addr01・addr02と各エラーを描画するが注意文を出力しない。messages.ja.yaml:462 の `front.entry.address.note` と :747 の `front.mypage.delivery.address_help` は当該テンプレートで未参照である。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 268,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "REFUTED",
+      "correctedClass": "SPEC_BACKED",
+      "driftVerdict": "PARTIAL",
+      "checkedQuote": "0304_基本設計仕様書(フロント_注文).html のExcel正本 src-cell 2200行に機能名「配送先の新規登録・変更」があり、さらにsheet-5正本レイアウト画像 `data-excel-ref=\"0304:配送先の新規登録_変更!H7\"` の画面H1にも実物の「配送先の新規登録・変更」が存在した。sheet-5画像2枚を目視した。英語の完全一致 `Register New/Change Address` は function-design-embed 内2405/2635行だけで、正本画像には英語版が無い。",
+      "reason": "日本語見出しがExcel正本のレイアウト画像に直接存在するため、「見出し要求は旧実装だけ」という分類は反証される。英語の厳密な旧文言は旧実装 pf-eccube3/.../Shopping/delivery_edit.en.twig の block main 19行にのみ確認でき、期待値には正本由来部分と旧実装由来部分が混在するが、指定された単一 correctedClass は正本根拠の実在に合わせ SPEC_BACKED とした。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Resource/template/default/Shopping/shipping_edit.twig の block main 66行は `front.shopping.shipping_edit_title_management` をH1表示し、messages.ja.yaml:1552 は正本どおり「配送先の新規登録・変更」。英語表示経路も shipping_edit.en.twig:66 で同キーを使うが、messages.en.yaml:1404 は `Register / Change Delivery Address` であり、旧実装の `Register New/Change Address` とは一致しない。日本語は解消、英語差は残存する。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 269,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0304_基本設計仕様書(フロント_注文).html のsheet-6正本範囲を「国」「都道府県」「不整合」「form.country.error.invalid」「The combination of country and region is incorrect」で検索。正本は国・住所項目を持つが、組合せ検証と文言は function-design-embed 内2638行だけに実在した。sheet-6のExcel正本レイアウト画像1枚（H9）も目視し、確認画面の国・住所表示はあるが不整合エラーの指定は無かった。",
+      "reason": "具体条件と国フィールドへのエラー付与は旧実装由来である。pf-eccube3/app/Plugin/HareruyaEc/Service/DeliveryService.php の getForm() 47-60行は日本×国外都道府県、または海外×国外以外を検出して country に FormError を追加し、message.en.yml:662 に `The combination of country and region is incorrect.` が実在する。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Form/Type/Front/CustomerAddressType.php の POST_SUBMIT 165-185行は日本時の郵便番号必須と、海外時に Pref::PREF_ABROAD を強制設定するだけで、国・都道府県の双方向整合性エラーを国フィールドへ追加しない。PrefType::configureOptions() 30-35行にも国外除外フィルタは無く、`form.country.error.invalid` は src/tests/app 検索で0件だった。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 274,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0305_基本設計仕様書(フロント_ネット買取).html 全体を「お探しのカードは見つかりませんでした」「買取最低保証」「help_buying」「ヘルプへの案内」「0件」で検索。該当する期待文は function-design-embed 開始後の2144、2151、2184行にだけ実在した。sheet-5のExcel正本レイアウト画像4枚（C361、C395、N236）もすべて目視し、通常一覧・パンくず・モバイル一覧・ページャのみで0件時文言やヘルプ導線は無かった。",
+      "reason": "正本に0件時の具体文言・最低保証案内・ヘルプリンクは無い。旧実装 pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Purchase/product_list.twig の block main 345-349行には「お探しのカードは見つかりませんでした。」「買取最低保証」と `/ja/user_data/help_buying#block4` のリンクが実在する。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Resource/template/default/Purchase/search.twig:56 は emptyResultMsg に `front.product.search__product_not_found` を渡し、messages.ja.yaml:1103 は「お探しの商品は見つかりませんでした」。html/template/default/assets/hareruya/js/hareruya-unisearch-list-client-core.js の showEmptyResult() 290-297行はその一文だけをp要素として描画し、最低保証・ヘルプ導線は無い。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 277,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "RESOLVED",
+      "checkedQuote": "0305_基本設計仕様書(フロント_ネット買取).html のExcel正本 src-cell 3249行を開き、部品3.0「オンライン本人確認について」、書式「画像」、「別ウィンドウでオンライン本人確認について画面に遷移する」を確認した。sheet-9の正本レイアウト画像 `data-excel-ref=\"0305:買取依頼完了!D8\"` も目視し、オンライン本人確認案内の右側にQR画像が存在することを確認した。",
+      "reason": "画像形式と別ウィンドウ遷移が function-design-embed 外のExcel正本に明記されているため SPEC_BACKED は正しい。現在のPC表示経路にはQR画像と target=\"_blank\" が追加され、元の「テキストリンクのみ・同一ウィンドウ」という乖離は解消している。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Resource/template/default/Purchase/complete.twig の block main 63-67行は `mypage_identification` への `<a ... target=\"_blank\" rel=\"noopener noreferrer\">` 内に `assets/img/share/mypage_identification.webp` のimgを描画する。以前のTODOとテキストリンクだけの状態ではない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 293,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0304_基本設計仕様書(フロント_注文).html のExcel正本由来 shape-table を確認。3122行は「支払金額合計」、3123行の `data-excel-ref=\"0304:注文購入履歴一覧!AV49\"` は「スマレジの場合のみ文言を・注文内容→購入内容・注文金額合計→支払金額合計とする」と明記する。sheet-8の正本レイアウト画像1枚（J8）も目視し、複数注文種別の一覧配置を確認した。",
+      "reason": "条件と変更前後の文言がExcel正本の図形テキストに直接存在するため SPEC_BACKED が正しい。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Resource/template/default/Mypage/shopping_history.twig の block main 155-170行は、近接する102-107行や175-191行のスマレジ分岐とは異なり、常に `front.mypage.shopping_history.col.items` と `.total` を表示する。messages.ja.yaml:983-984 の実値は「注文内容」「注文金額合計」で、「購入内容」「支払金額合計」キーは当該表示経路に無い。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 295,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0304_基本設計仕様書(フロント_注文).html のsheet-9正本範囲を「獲得ポイントは商品出荷時に有効」「商品出荷時」「ポイント注記」で検索。該当文は function-design-embed 内3765/3779行にだけ実在した。sheet-9のExcel正本レイアウト画像7枚（BC10、BC23、BC35、C154、F136、D216、D230）もすべて目視し、ポイント発生値はあるが当該注記は無かった。",
+      "reason": "注記の具体文言は旧実装由来である。pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/shopping_history_detail.twig の block main 106-110行はポイント発生値の直後に「※獲得ポイントは商品出荷時に有効になります。」を常時描画する。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Resource/template/default/Mypage/shopping_history_detail.twig の block main 223-228行は `front.mypage.shopping_history.col.point_generated` と Order.gained_points のみを表示する。messages.ja.yaml:1432 に `front.shopping.notice.point: ※獲得ポイントは商品出荷時に有効になります。` は存在するが、使用箇所は Shopping/index.twig:844 で、履歴詳細テンプレートからは参照されない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 343,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0307_基本設計仕様書(フロント_イベント).html のExcel正本 src-cell を確認。2391行は「ホーム > イベントTOP > [店舗名] > [フォーマット] > [イベント開催日付]」、2399行の `data-excel-ref=\"0307:大会詳細!AG277\"` は3項目を「それぞれ押下可能」「その内容での絞り込み結果画面に遷移する」と明記する。sheet-5の正本レイアウト画像6枚（C371、C427、B508、B484、AB508、AA485）もすべて目視した。",
+      "reason": "パンくず階層、押下対象、押下後の絞り込み挙動がExcel正本に直接記載されているため SPEC_BACKED が正しい。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Resource/template/default/Event/detail.twig の block main 47-64行は店舗名とfirstFormatをいずれもパラメータ無しの `url('event_search')` へリンクする。66-72行の最終クラムは開催日付でなく `eventName` の非リンク現在項目であり、Detail.startDate は102行の本文表示にしか使われない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    }
+  ]
+}

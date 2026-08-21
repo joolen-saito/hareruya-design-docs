@@ -1,0 +1,3874 @@
+Reading additional input from stdin...
+OpenAI Codex v0.146.0
+--------
+workdir: /home/y-saito/Developments
+model: gpt-5.6-sol
+provider: openai
+approval: never
+sandbox: workspace-write [workdir, /tmp, $TMPDIR]
+reasoning effort: high
+reasoning summaries: none
+session id: 019fc0a7-f152-7632-9b0d-d79d7bdefa03
+--------
+user
+設計書（正本Excel）を最新化する工数を見積もります。実装の修正工数ではありません。
+
+まず手順書を読んでください: /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/DOCUPDATE_TASK.md
+
+担当パケット: /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_packets/du_21.json
+出力先: /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_21.json
+
+厳守事項:
+- **正本はExcel** (/home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/*.xlsx)。
+  HTML(output/)は convert.py の生成物で、直接編集しても次の変換で消える。
+  見積もる対象は「Excelのどのシートのどの表/画像を、どう直すか」の作業量。
+- 根拠区分=SPEC_BACKED は原則 docWork=NONE（設計書は正しく実装が追いついていないだけ）。
+  記述が曖昧で明確化が要る場合だけ FIX。
+- 根拠区分=LEGACY_BACKED は原則 docWork=ADD（設計書の記述漏れ）。
+  ただし移行後に残さない挙動と読めるなら NONE。
+- 表示文言・画面項目は、テキストの表に足せば済むのか、
+  レイアウト**画像の描き直し**まで要るのか(IMAGE)を必ず区別する。
+- 同じシートの行が隣り合うよう並べてある。まとめて直せる分は2件目以降を安くしてよい。
+- HTML再生成と検証は書籍単位の固定費として別途集計するので、1件ごとの見積に含めない。
+- 引用・確認内容の捏造は絶対に禁止。実装側の修正工数と混同しない。
+
+findings 全件について docWork と docEffortDays をJSONで書き込んでください。
+最終メッセージは内訳1行のみ（例: 28件: NONE=14 ADD=10 FIX=2 IMAGE=2 / 計 1.8人日）。
+warning: Codex could not find bubblewrap on PATH. Install bubblewrap with your OS package manager. See the sandbox prerequisites: https://developers.openai.com/codex/concepts/sandboxing#prerequisites. Codex will use the bundled bubblewrap in the meantime.
+codex
+`design-impl-drift-audit` スキルを使い、手順書・担当パケット・正本Excelの該当箇所を照合して、実装修正ではなく設計書更新工数として全件を見積もります。まずスキル指示と手順書を通読します。
+exec
+/bin/bash -lc "sed -n '1,240p' /home/y-saito/.codex/skills/design-impl-drift-audit/SKILL.md" in /home/y-saito/Developments
+ succeeded in 732ms:
+---
+name: design-impl-drift-audit
+description: Compare HTML design specifications against an implementation to find functional drift and produce an evidence-backed HTML report. Use when Codex is asked to treat design docs as the source of truth, audit code such as controllers/services/forms/repositories/templates/batches/CSV definitions, continue a partially completed drift report, or update findings JSON/HTML for gaps between design and implementation.
+---
+
+# Design Impl Drift Audit
+
+## Purpose
+
+Use this skill to audit functional differences between HTML design specifications and an implementation repository, with the design docs treated as authoritative. Produce or continue a report that lists concrete differences with design locations, implementation locations, confidence, severity, and impact.
+
+## Repository Discovery
+
+1. Find the design-doc directory and implementation directory from the user request. If omitted, infer from nearby names such as `*-design-docs` and application repos.
+2. Look for an existing report before starting new work. Prefer directories named `design_impl_drift_report`, existing `findings.json`, per-function `findings/*.json`, and `index.html`.
+3. Count total target specs and audited specs so the report clearly states scope and remaining work.
+4. Preserve existing findings. Append or refine; do not overwrite unrelated prior work.
+
+## Audit Workflow
+
+For each target HTML spec:
+
+1. Identify the feature ID, route/action name, UI template, CSV/batch/API behavior, and acceptance rules from the HTML design spec.
+2. Extract a requirement inventory from the HTML spec before looking at code. This inventory must include not only route/screen names, but every concrete requirement in 処理概要, 図形・テキストボックス, 項目表, 表示メッセージ, 業務ルール・計算, 入力項目, エッジケース, データ整合性, API/バッチ結果, 入出力, DB操作, バリデーション, 権限・認可, 画面遷移, エラー処理, ログ・監査, セッション, Cookie, and 排他制御. Treat bullets such as "押下時", "場合", "登録/更新/保存", "遷移", "保持", "表示/非表示", "表示切り替え", "エリアを表示", "誘導", "エラー", "判定", "連携", time limits, thresholds, and retry/idempotency rules as auditable requirements. 秒後/分後, `画面を表示してから`, 自動遷移, タイマー, and store/kiosk/account-specific forced redirects are material requirements even if the route and template already exist.
+3. For every extracted requirement, create or mentally maintain a `requirementTrace` row with: `requirementId`, `designRef`, `designRequirement`, `implementationSearchTerms`, `implementationRefs`, `implementationActual`, `traceVerdict` (`MATCHED|DRIFT|NOT_FOUND|UNCERTAIN|PHASE2_EXCLUDED`), and `traceReason`. A feature cannot be marked no-drift until all material requirements have a trace verdict other than `NOT_FOUND` or unresolved `UNCERTAIN`.
+4. Search the implementation with `rg` across likely files: controllers, services, repositories, form types, entities, migrations, Twig/templates, commands/batches, route definitions, JavaScript, CSV exporters/importers, and PDF/print services. Search by business terms from the requirement, route names, translation keys, DB columns, state names, constants, statuses, time values, thresholds, and side-effect verbs. For timer or auto-navigation requirements, explicitly search client and server paths for `setTimeout`, `setInterval`, millisecond/second constants such as `60000` and `60 * 1000`, `location.href`, `location.assign`, `location.replace`, redirect routes, and the condition that limits the behavior. For a negative result, also search nearby implemented flows so the report can explain why they do not satisfy the design.
+5. Compare behavior and user-facing text, not just names. Check input fields, validation, defaults, search conditions, session persistence, buttons/actions, labels, button text, messages, translation keys/locales, permissions, status transitions, CSV columns, sort/order rules, scheduled timing, timeouts/expiration, thresholds, client-side timers, forced auto-navigation, side effects, idempotency, external integrations, conditional display toggles, alternate UI areas, and error handling.
+6. Do not treat "route/controller/template exists" as sufficient. Existence only satisfies the route/screen requirement. It does not satisfy individual rules inside the screen, such as timeout handling, cart retention, validation branches, status transitions, DB writes, logging prohibitions, conditional hide/show behavior, alternative contact/help areas, or external API retry behavior.
+7. For conditional display requirements, audit each side of the condition separately. If the HTML says "Aの場合はXを非表示、Yを表示 / A以外はXを表示、Yを非表示", record trace rows for the condition detector, X visibility, Y visibility, and the inverse condition. A nearby notice or route is not enough unless the cited template/JS actually renders the required area under the required condition.
+8. For labels, button text, messages, and translation keys, do a dedicated near-match pass. Extract user-visible Japanese text from the HTML item/message tables and compare it with implementation locale values and Twig/Form usage. Treat punctuation, okurigana, missing characters, long-vowel marks, wording changes such as `商品を追加` vs `商品の追加`, and business-term changes such as `返金` vs `送金` as audit targets.
+9. A text drift finding is complete only when it cites both the translation/source value and the display path that uses it, such as `messages.ja.yaml` plus the `FormType` label or Twig `|trans` call. If the implementation value exists but no display path is verified, mark it `UNCERTAIN` instead of presenting it as confirmed.
+10. Do not stamp all functions as if every standard aspect was fully checked. Separate "standard audit target aspects" from actual evidence. For each finding, list the aspects actually supported by evidence; for no-drift functions, include a requirement trace summary naming the concrete HTML requirements checked and implementation refs searched.
+11. Record only actionable drift. If evidence is incomplete, mark the finding `UNCERTAIN` and explain what remains ambiguous.
+12. For every drift finding, split the result into implementation-ready fields: `designExpectation`, `implementationActual`, `comparisonRows`, `comparisonSummary`, `mismatchReason`, `impact`, `fixTarget`, `requiredChange`, `implementationRefs`, and, when available, short design/implementation snippets from the cited lines. Do not rely on a generic prose paragraph alone.
+13. Each `comparisonRows` entry must answer all four questions explicitly: comparison item, exact design value/requirement, exact implementation value/behavior, and why those two do not match. If any of those four cells would be vague, continue investigating before recording the finding.
+14. Treat phase labels such as Ph2 as auxiliary context. They can be stored, but the main report must not use phase status as a substitute for concrete behavioral differences and exact implementation locations.
+15. If the HTML design spec explicitly says the whole function or scoped subfeature is `フェーズ2で実装する`, `Ph2で対応`, or `Ph1では実装しない`, do not report absence of that planned Phase 2 work as drift or as a clear implementation gap. You may keep a secondary audit note that non-implementation was confirmed, but exclude it from finding counts and implementation-gap counts. Only keep a finding when there is a concrete non-phase mismatch, such as an implemented Phase 1 path behaving differently from the design or user-facing text differing.
+16. When no drift is found, add the function to the audited set with an empty findings list only after the requirement trace gate passes. If material HTML requirements are untraced, do not mark `AUDITED_NO_DRIFT_FOUND`; mark the function as requiring review or add `UNCERTAIN` findings with the unresolved requirements.
+17. Do not let one confirmed finding hide other requirements in the same function. A function with `AUDITED_WITH_FINDINGS` can still have untraced material requirements; keep those requirements visible in the trace gate until each one is converted to a confirmed finding, an uncertain finding, a matched trace row, or a documented phase/design non-implementation exclusion.
+18. For explicitly registered critical requirements, the harness should carry a missing-finding template or an equivalent escalation rule. If the trace is not covered by an existing finding, promote it into findings automatically or fail the quality gate loudly. Do not rely on a hand-maintained `ADDITIONAL_FINDINGS` list as the only path for user-reported or high-risk missing behavior such as timeouts, cart retention, one-minute/30-minute limits, store-account auto redirects, conditional UI areas, status transitions, external calls, or destructive side effects.
+19. The HTML report must not expose broad source-signal candidates as if they were implementation gaps. A requirement-level list in the main report must be limited to confirmed or explicitly uncertain actionable drift derived from findings, such as `NOT_FOUND` or `DRIFT` requirement traces and concrete comparison rows. If a source-signal scan is used for triage, keep it out of the main HTML report unless each row has been verified against implementation source and written as a concrete finding.
+20. Do not hide time-based or automatic-navigation requirements merely because they are not confirmed findings yet. Requirements involving `画面を表示してから`, seconds/minutes after display, auto redirect/navigation, or timeout-to-cart/top behavior should appear in a separate focused untraced-requirement audit queue when they remain uncovered. This queue is not a confirmed defect count; it exists so these high-risk requirements are reviewed against Controller/Twig/JavaScript/Service source instead of being buried among broad requirement-trace failures.
+
+## Function-Level Implementation Gap Audit
+
+For every HTML spec sheet, maintain a function-level implementation audit even when no drift finding is confirmed yet.
+
+- Extract implementation search terms from the HTML design: route names, URL paths, translation keys, class/controller/service names, batch/API/CSV names, and high-signal business terms from the sheet title and requirement text.
+- Search implementation source by function across Controller, Form, Service, Repository, Entity, Migration, Twig, Command/Batch, CSV, PDF/print, API/webhook, locale/messages, JavaScript, and configuration files.
+- Store a `functionImplementationAudit` object with `verdict`, `designDerivedTerms`, `candidateRefs`, `candidateCount`, `strongSignalCount`, `searchedAreas`, and `auditNote`.
+- Use separate verdicts:
+  - `CONFIRMED_IMPLEMENTATION_GAP`: a concrete drift finding already proves missing implementation.
+  - `NO_IMPLEMENTATION_ENTRY_FOUND`: no entry candidate was found from design-derived terms; treat as an additional-review candidate, not an automatic confirmed defect.
+  - `IMPLEMENTATION_ENTRY_FOUND`: strong source evidence such as route, class, translation key, or path was found.
+  - `IMPLEMENTATION_CANDIDATE_FOUND`: weak business-term candidates were found but the entry point is not proven.
+  - `PHASE2_NONIMPLEMENTATION_EXPECTED`: HTML design explicitly scopes non-implementation to Phase 2/Ph1 exclusion.
+  - `DESIGN_NONIMPLEMENTATION_EXPECTED`: HTML design explicitly says the function or scoped behavior is not implemented by code, such as `実装しない`, `実装不要`, or infrastructure/external-service configuration replacing application code.
+- Use `DESIGN_NONIMPLEMENTATION_EXPECTED` as the function-level verdict only when the non-implementation statement applies to the whole function or the implementation entry itself, for example an external WordPress server, Docker image cron, Aurora parameter group, or a bare whole-sheet `実装しない`. If the text only excludes a scoped subfeature, UI alert, HTML hint, logging detail, partial Phase 2 item, or internal job, keep the function's source-entry verdict and mention the scoped exclusion only in the trace/audit note.
+- The report must show both confirmed implementation-gap findings and function-level no-entry candidates. Do not merge these counts: implementers need confirmed defects for fixing and no-entry candidates for review planning.
+- A function-level candidate is not enough to mark the detailed requirements as implemented. Requirement trace still controls no-drift status.
+- Do not set report metadata such as `auditComplete` or narrative notes to "complete" merely because every sheet has a function-level implementation audit. If any material requirement trace remains unresolved, state that all sheets have function-entry coverage but requirement-level audit is incomplete.
+- For infrastructure-oriented sheets such as Step Functions, Lambda, WAF/S3 jobs, cron configured outside the application, or managed database settings, distinguish "not found in the requested implementation repository" from "not implemented anywhere". A confirmed implementation-gap finding may be scoped to the audited repository, but the report must say when external infrastructure repositories or cloud configuration were not checked.
+
+## Requirement Trace Gate
+
+Before marking a function no-drift, verify the following:
+
+- Every material HTML requirement has a trace row. Material means it changes behavior, data, display, validation, permission, transition, side effect, external communication, schedule, retry/idempotency, logging/audit, CSV/API/PDF/batch I/O, or user-visible text.
+- Each trace row includes exact design text or a tight paraphrase plus line/anchor reference, not only the sheet title.
+- Each matched row cites the implementation path and line(s) that actually execute or render the behavior. A nearby class, route, or template is not enough unless the cited code contains the relevant condition/value/side effect.
+- Each missing row is converted to a confirmed or uncertain finding. Use confirmed only after searching the direct path and nearby alternative implementations.
+- Missing rows remain failures even if the function already has other findings. The gate is requirement-scoped, not function-scoped.
+- If an explicit critical requirement has a configured missing-finding template, regenerate the report from the harness and verify the promoted finding appears in both JSON and HTML with design value, implementation behavior, mismatch reason, fix target, and search evidence.
+- If a missing row does not yet have enough evidence for a confirmed or uncertain actionable finding, do not count it as an implementation gap and do not put it in the main HTML fix list. Keep the function in an incomplete requirement-trace state, and promote the row only after implementation source has been checked enough to state the exact design requirement, exact implementation behavior, and mismatch reason.
+- A generic `auditEvidence` string is not a substitute for requirement traces.
+- Negative searches must list the searched terms/areas and why nearby hits do not satisfy the design.
+
+## Finding Format
+
+Store findings in a machine-readable JSON structure. Use this shape for each finding:
+
+```json
+{
+  "id": "stable-feature-id-001",
+  "functionId": "m04-01_admin_stock_stock_search_list",
+  "functionName": "在庫一覧",
+  "severity": "high|med|low",
+  "dimension": "①機能/ルート未実装",
+  "confidence": "CONFIRMED|UNCERTAIN",
+  "design": {
+    "file": "path/to/spec.html",
+    "lines": "215-220",
+    "summary": "設計書に書かれている仕様"
+  },
+  "implementation": {
+    "file": "path/to/source.php or 不在",
+    "lines": "337-344",
+    "summary": "実装側の状態"
+  },
+  "difference": "設計と実装の具体的な差分",
+  "comparisonRows": [
+    {
+      "item": "比較項目名",
+      "design": "設計書の値・要求。列名、HTTPメソッド、パス、保存先、表示文言、条件、状態遷移などを具体値で書く",
+      "implementation": "実装の値・挙動。実際の列名、メソッド、パス、保存先、文言、条件、処理順を具体値で書く",
+      "mismatch": "なぜ一致しないのか。実装者が直すべき差分を一文で書く"
+    }
+  ],
+  "requirementTrace": [
+    {
+      "requirementId": "stable-requirement-id",
+      "designRef": "path/to/spec.html:123",
+      "designRequirement": "HTML設計書の個別要求",
+      "implementationSearchTerms": ["検索語", "route_name", "methodName"],
+      "implementationRefs": ["src/...php:123"],
+      "implementationActual": "実装で確認できた挙動、または不在判定",
+      "traceVerdict": "MATCHED|DRIFT|NOT_FOUND|UNCERTAIN|PHASE2_EXCLUDED",
+      "traceReason": "なぜその判定か"
+    }
+  ],
+  "comparisonSummary": "設計はX、実装はY、したがってZが違う",
+  "mismatchReason": "乖離と判断した具体的な理由",
+  "impact": "ユーザー・業務・データへの影響",
+  "fixTarget": "修正対象のファイル/ルート/サービス/不在箇所",
+  "requiredChange": "設計に合わせる場合に必要な修正",
+  "implementationRefs": ["src/...php:123"],
+  "implementationSnippets": ["123: 実装コードの短い断片"],
+  "evidence": ["短い根拠。ファイル名と行番号を含める"]
+}
+```
+
+The HTML report should make these fields visible as separate blocks so an implementer can answer: what exact value does the design require, what exact value does the code implement, why is that a mismatch, exactly where is the code, and what should be changed.
+
+Use stable IDs and Japanese text when the existing report is Japanese. Keep dimensions consistent with existing findings when continuing a report.
+
+## Severity Guidance
+
+- `high`: missing feature/route, wrong critical business rule, destructive or externally visible behavior, missing required import/export/batch/PDF flow.
+- `med`: partial implementation, wrong filtering/sorting/session behavior, missing non-critical columns or validation, incompatible screen behavior.
+- `low`: copy/display/default-state differences, ambiguous design wording, minor workflow variance.
+
+## Report Generation
+
+If the project already has a report generator, use it. Otherwise copy or adapt `scripts/build_report.py` from this skill into the report directory, then run it from the repository root or pass paths as needed.
+
+The HTML report must include:
+
+- summary counts: total findings, severities, audited functions, functions with drift
+- scope and remaining work
+- per-function sections
+- each finding with severity, confidence, dimension, audit aspects including label/message/translation-key differences when applicable, design reference, implementation reference, design expectation, implementation actual behavior, `comparisonRows`, mismatch reason, impact, fix target, required change, and evidence
+- a comparison table with columns: 比較項目 / 設計書の値・要求 / 実装の値・挙動 / 乖離理由
+- links or file paths precise enough for a developer to inspect
+- short cited design and implementation snippets when available
+- phase/Ph2 data only as hidden or secondary metadata, never as a report column or primary summary
+- a function-level implementation audit section showing verdict counts, no-entry candidates, candidate source references, and the search terms that produced them
+- a requirement-level difference list derived only from confirmed/uncertain findings, showing the exact design requirement, implementation behavior, mismatch reason, implementation refs, and a link back to the finding. Do not include broad unverified source-signal queues in the main HTML report.
+- a focused untraced-requirement section for small, high-risk classes such as display-time timers, automatic redirects, and timeout navigation. Keep it separate from confirmed difference and implementation-gap counts, and include search terms/candidate refs so the next audit step is concrete.
+
+After editing findings, validate JSON and regenerate HTML:
+
+```bash
+python3 -m json.tool path/to/design_impl_drift_report/findings.json
+python3 path/to/design_impl_drift_report/build_report.py
+```
+
+## Quality Bar
+
+- Treat the HTML design spec as source of truth even when implementation looks intentional.
+- Cite exact file paths and line numbers whenever available.
+- Distinguish `不在` from “not found yet”; use `不在` only after searching likely implementation areas.
+- Avoid broad claims such as “not implemented” without search evidence or contrasting nearby implemented features.
+- Do not classify Phase 2 planned non-implementation as a defect. A missing route, CSV, batch, API, table, or screen is only a drift finding when the design expects it in the audited implementation phase.
+- For label/message drift, prefer exact line evidence and a verified render path over fuzzy string similarity. Fuzzy or near-match scans are candidate generators; they are not findings until source and display usage are confirmed.
+- When an external reviewer or another agent reports candidates, verify each candidate against the HTML design and implementation source before adding it. Keep rejected or ambiguous candidates out of confirmed counts, or mark them `UNCERTAIN` with the unresolved reason.
+- For absent implementations, include the searched terms/areas, nearby implementation files with line numbers, and a concrete reason those nearby files do not satisfy the design. Do not leave `implRef` as only `不在` in the final report.
+- Reject vague findings. A finding is not complete until it names the exact design value and exact implementation value that differ.
+- Keep the report cumulative and resumable.
+
+exec
+/bin/bash -lc "wc -l hareruya-design-docs/design_impl_drift_report/citation_audit/DOCUPDATE_TASK.md && sed -n '1,260p' hareruya-design-docs/design_impl_drift_report/citation_audit/DOCUPDATE_TASK.md && jq '{keys: keys, findingCount: (.findings|length)}' hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_packets/du_21.json" in /home/y-saito/Developments
+ succeeded in 3187ms:
+93 hareruya-design-docs/design_impl_drift_report/citation_audit/DOCUPDATE_TASK.md
+# 設計書（正本Excel）の最新化工数の見積
+
+乖離指摘 1,007件（クローズ済を除く）について、**設計書側にどんな作業が発生し、何人日か**を見積もる。
+実装をどう直すかではなく、**設計書をどう直すか**だけを判断する。
+
+## 前提: 正本はExcel、HTMLは生成物
+
+| 役割 | パス |
+|---|---|
+| **正本Excel（編集対象）** | `/home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/*.xlsx` |
+| 生成HTML（読む用・編集対象ではない） | `/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/*.html` |
+| 変換ツール | `excel_to_html/convert.py`（`uv run python convert.py`）、検証は `verify.py` |
+| 実装 | `/home/y-saito/Developments/ec-cube-enterprise` |
+
+**HTMLを直接編集しても次の変換で消える。** 直すのは常にExcelのセル・図形・画像である。
+したがって見積もる対象は「該当シートの該当セル/表/画像をどう直すか」の作業量。
+
+HTML再生成と検証は書籍単位でまとめて行うため、**1件ごとの見積には含めない**（別途固定費として集計する）。
+
+## 判定する2つのこと
+
+### 1. `docWork` — 設計書側にどんな作業が要るか
+
+| 値 | 意味 |
+|---|---|
+| `NONE` | 設計書は現状で正しい。実装を直せば済み、**設計書は触らない** |
+| `ADD` | 設計書に記述が無い。項目表・処理概要などに**書き足す** |
+| `FIX` | 設計書に記述はあるが、採用する仕様と食い違う。**既存記述を直す** |
+| `IMAGE` | 画面レイアウト**画像の差し替え**が要る（Excelに貼られた画像の描き直し） |
+| `RESOLVE` | 正本の中で記述同士が矛盾している（項目表と画像、本文と注記など）。**どちらが正かを決めて片方を直す** |
+| `UNSURE` | 判断できない |
+
+**重要な原則:**
+- `根拠区分 = SPEC_BACKED`（設計書に裏付けがある）＝ 原則 `NONE`。
+  設計書は正しく、実装が追いついていないだけ。
+  ただし設計書の記述が曖昧・不完全で、実装に合わせて**明確化**が要るなら `FIX`。
+- `根拠区分 = LEGACY_BACKED`（設計書に記述が無く旧実装に根拠）＝ 原則 `ADD`。
+  移行後も必要な挙動なら、設計書の記述漏れとして書き足す必要がある。
+  ただし**その挙動を移行後に残さない**と読めるなら `NONE`。
+- 表示文言・ラベル・画面項目の追記は、テキストの表に足すだけで済むのか、
+  **レイアウト画像も描き直しになるのか**を区別する（後者は `IMAGE`）。
+
+### 2. `docEffortDays` — Excel編集の工数（人日）
+
+**この1件のために、該当シートを開いて直す作業**の量。目安:
+
+| 作業 | 目安 |
+|---|---|
+| 既存の表に1行足す／セルの文言を1つ直す | 0.05〜0.1 |
+| 項目表に複数行・条件付きの記述を足す | 0.1〜0.25 |
+| 処理概要・業務ルールの節を書き起こす | 0.25〜0.5 |
+| 画面レイアウト画像の差し替え（実画面の取得＋貼り直し＋位置調整） | 0.5〜1.0 |
+| 正本内部の矛盾解消（影響範囲の確認＋関係箇所の統一） | 0.25〜1.0 |
+| シート新設（機能ごと丸ごと無い） | 1.0〜3.0 |
+
+**同じシートに複数の指摘がまとまっている場合、2件目以降は安くなる**（シートを開く手間が1回で済む）。
+パケット内で同一 `設計書参照` の行が並んでいたら、その分を反映してよい（理由に書くこと）。
+
+`docWork = NONE` のときは `docEffortDays: 0`。
+`RESOLVE` は、裁定そのもの（どちらが正かを決める会議・確認）は含めず、**決まった後の反映作業**だけを見積もる。
+
+## 絶対の禁止事項
+
+- 引用・確認内容の捏造をしないこと。実際に開いて確認したものだけを書く。
+- 確認していないことを「確認した」と書かない。
+- 実装側の修正工数と混同しないこと。**ここで見積もるのは設計書の編集だけ**である。
+
+## 出力
+
+指示されたJSONファイルに **Write して** 書き込む。
+
+```json
+{
+  "packetId": "...",
+  "results": [
+    {
+      "rowId": 123,
+      "docWork": "ADD",
+      "docEffortDays": 0.1,
+      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫編集 シートの画面項目表",
+      "reason": "旧実装にしかない上限件数の扱いを、項目表の備考へ1行足す。既存の行構成をそのまま使える。",
+      "sharedWithRows": [124, 125],
+      "confidence": "high"
+    }
+  ]
+}
+```
+
+- `target`: 直す対象（ブック名 / シート名 / 表や図の位置）。分かる範囲で具体的に
+- `sharedWithRows`: 同じシートでまとめて直せる他の rowId（無ければ空配列）
+- `confidence`: `high` / `medium` / `low`
+
+findings 全件について返すこと（欠落禁止）。
+{
+  "keys": [
+    "findings",
+    "note",
+    "packetId"
+  ],
+  "findingCount": 28
+}
+
+exec
+/bin/bash -lc "jq '.' hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_packets/du_21.json" in /home/y-saito/Developments
+ succeeded in 1289ms:
+{
+  "packetId": "du_21",
+  "note": "同じ設計書シートの行が隣り合うよう並べてある。まとめて直せる分は2件目以降を安く見積もってよい（sharedWithRowsに記す）。",
+  "findings": [
+    {
+      "rowId": 806,
+      "機能No": "M12-08",
+      "機能名": "M12-08 フォーマット売上分析 CSV出力",
+      "区分(画面種別)": "admin",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-18:3913",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:4300 のExcel正本は現行踏襲、sheet-18正本はCSV列を列挙するが、`format_sales_report_`、`YmdHis`、BOMは記載しない。これらは同:4325 のリバース詳細設計開始後の同:4382「ファイル名はformat_sales_report_に出力日時（YmdHis）を付けた.csv。文字コード判別用のBOMを付与する」にのみある（確認範囲: sheet-18 Excel正本部 4245-4324行）。",
+      "設計期待値": "成功時出力は日別の売上表のCSVファイル。ファイル名は format_sales_report_ に出力日時（YmdHis）を付けた .csv。文字コード判別用のBOMを付与する。",
+      "差分内容": "設計のファイル名接頭辞は format_sales_report_ だが、実装の Content-Disposition は format_sales_ を使用している。format_sales_report、format_sales_、Content-Disposition、SalesAnalysisCsvExporterService を再検索し、本機能で設計接頭辞を使う実装は確認できなかった。",
+      "実装実態": "BOMは fwrite($handle, \"\\xEF\\xBB\\xBF\") で付与しているが、ファイル名は format_sales_YYYYmmddHis.csv を設定している。"
+    },
+    {
+      "rowId": 808,
+      "機能No": "M12-09",
+      "機能名": "M12-09 特集タグ編集CSVダウンロード(検索項目)",
+      "区分(画面種別)": "admin",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-19:4058,4062,4071,4074,4079,4085,4100",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:4451 はExcel正本で現行踏襲、同:4471 は「特集タグ編集CSVダウンロード」「ボタン」とするだけで、検索後のセッション保持や二段階導線は記載しない。それらは同:4509 のリバース詳細設計以降にのみある（確認範囲: sheet-19 Excel正本部 4410-4508行）。",
+      "設計期待値": "「検索」ボタンの POST は、指定した出力条件で集計結果を表示し、条件をセッションに保持する。表示要素として出力条件の検索フォーム、集計結果、CSVダウンロードの導線を持つ。",
+      "差分内容": "設計は検索POSTで結果表示と条件保持を行い、別導線でCSV出力する構造だが、実装は検索操作がCSVダウンロードそのものになっている。反証として UsedCardController/SearchUsedCardType/used_card.twig/UsedCardCsvExportService/DtbDeckRepository/getUsedCardsCsvExportData と admin Analysis 配下を検索したが、UsedCard 用の searched/summary/result 返却、結果テンプレート、セッション保存は見つからなかった。",
+      "実装実態": "POST は searchForm を検証後、UsedCardCsvExportService::exportBySearchData() を即返却する。Twig は検索条件フォームとCSVダウンロードボタンのみで、集計結果表示領域や結果用変数がない。"
+    },
+    {
+      "rowId": 807,
+      "機能No": "M12-09",
+      "機能名": "M12-09 特集タグ編集CSVダウンロード(検索項目)",
+      "区分(画面種別)": "admin",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-19:4058,4067,4098",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:4451 のExcel正本は現行踏襲、同:4467-4471 は入力項目とCSVダウンロードボタンを示すが、URL/bind/modeは記載しない。具体契約は同:4509 のリバース詳細設計開始後にのみ存在する（確認範囲: sheet-19 Excel正本部 4410-4508行）。",
+      "設計期待値": "出力条件を指定する画面は GET/POST /{admin_route}/analysis/used_card とし、CSVダウンロードは GET /{admin_route}/analysis/used_card/export/{mode} で、画面遷移上は admin_used_card / admin_used_card_result / admin_used_card_export を用いる。",
+      "差分内容": "設計は underscore パスの検索画面と export/{mode} の GET CSV導線を要求しているが、実装は hyphen パスで検索フォーム POST が同一パスに直接CSV出力する。反証として used_card/admin_used_card/admin_analysis_used_card/used-card/export/{mode}/used_card_result を Controller/Twig/Service/Repository/locale/nav で再検索したが、該当ルートは UsedCardController.php:39,52 の2本のみだった。",
+      "実装実態": "実装は GET /analysis/used-card を admin_analysis_used_card、POST /analysis/used-card を admin_analysis_used_card_export として定義している。/analysis/used_card、/analysis/used_card/export/{mode}、{mode} パラメータ、admin_use"
+    },
+    {
+      "rowId": 809,
+      "機能No": "M12-09",
+      "機能名": "M12-09 特集タグ編集CSVダウンロード(検索項目)",
+      "区分(画面種別)": "admin",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-19:4058,4076,4085,4100",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:4467 のExcel正本は集計日(From)を必須・初期値「当月1日」とし、同:4471 はCSVボタンを記載するが、セッション消去・mode・CSRFは記載しない。それらは同:4509 のリバース詳細設計以降にのみある（確認範囲: sheet-19 Excel正本部 4410-4508行）。",
+      "設計期待値": "初期表示（GET）では保持していた出力条件を消去し、未指定の検索フォームを表示する。入力は出力条件、CSVの出力形式（mode）、なりすまし対策トークンを扱う。",
+      "差分内容": "設計は初期表示でセッション条件を消し、未指定フォームとCSRFトークン、CSV形式 mode を扱う要求だが、実装はセッション削除も mode もCSRFもなく、一部入力に必須・初期値を設定している。反証として UsedCardController/SearchUsedCardType/used_card.twig/locale/nav と export/{mode}, mode, csrf, session キーワードを再検索したが、UsedCard 用の該当実装は見つからなかった。",
+      "実装実態": "GET は SearchUsedCardType を新規作成するだけで、保持条件の削除処理はない。フォームは csrf_protection=false、start_date は必須かつ初期値が 2 weeks ago、formats は必須で Count(min:1)。Twig の form は POST admin_analysis_used_card_export で、mode 入力を持たな"
+    },
+    {
+      "rowId": 763,
+      "機能No": "M12-01",
+      "機能名": "M12-01 日別・月別集計 集計一覧(検索項目-日別)",
+      "区分(画面種別)": "admin",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-3:1055,1069,1096",
+      "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:1107 のExcel正本セルは「カスタマイズ要件に記載の内容以外は現行踏襲」とするが、欠落日・欠落月を0行で補完する具体記述は同:1197の埋込開始前には存在しない。同:1239 の具体文は埋込リバース詳細設計である。",
+      "設計期待値": "期間内で集計結果が無い日付・月は、表示項目の各列を0として一覧へ補完する。集計対象が0件でも集計結果が無い日付・月の列を0で補完する。",
+      "差分内容": "反証検索として DatePeriod/CarbonPeriod/補完/0で/zero/fill/missing/empty/calendar を Analysis 配下と DtbDailySummaryRepository/DtbMonthlySummaryRepository で確認したが、期間内の日付・月を展開して0行を埋める処理は見つからない。",
+      "実装実態": "AnalysisSummaryBuilder はリポジトリが返した集計済み行だけを表示用配列へ変換する。リポジトリは dtb_daily_summary / dtb_monthly_summary に存在する行だけを期間条件で取得し、欠落日・欠落月の行生成をしない。summary が空の場合、Twig は結果表自体を描画しない。"
+    },
+    {
+      "rowId": 762,
+      "機能No": "M12-01",
+      "機能名": "M12-01 日別・月別集計 集計一覧(検索項目-日別)",
+      "区分(画面種別)": "admin",
+      "指摘区分": "未実装",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "要修正-設計準拠",
+      "設計書参照": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-3:907,910,912,914,930,931",
+      "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:1091-1098 のExcel正本セルは通販売上を「店頭受取(スムーズ含む)・なし以外」かつ「出荷完了」、店舗売上を「店頭受取(スムーズ含む)またはなし」かつ「出荷完了」と明記する。",
+      "設計期待値": "通販売上は配送方法が店頭受取（スムーズ店頭受取含む）・なし以外かつ対応状況が出荷完了、店舗売上は配送方法が店頭受取（スムーズ店頭受取含む）またはなし且つ対応状況が出荷完了のみを集計対象にする。",
+      "差分内容": "反証検索として delivery/shipping/店頭受取/スムーズ/OrderStatus/order_status/出荷完了/対応状況 を SummaryController・AnalysisSummaryBuilder・DtbDailySummaryRepository・DtbMonthlySummaryRepository・集計Command配下で確認したが、本機能の集計条件には存在しない。実装SQLの WHERE は o.base_info_id IS NOT NULL と o.order_date の範囲条件のみ。",
+      "実装実態": "日次集計バッチは dtb_order を base_info_id と order_date の範囲だけで集計し、配送方法や order_status_id による通販売上/店舗売上/出荷完了の絞り込みを行っていない。月次集計はこの日次集計を合算する。"
+    },
+    {
+      "rowId": 764,
+      "機能No": "M12-01",
+      "機能名": "M12-01 日別・月別集計 集計一覧(検索項目-月別)",
+      "区分(画面種別)": "admin",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "要修正-設計準拠",
+      "設計書参照": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4:1141",
+      "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:1343-1344 のExcel正本セルは「集計は売上として計上できるもの」「注文ステータスが『出荷完了』のみ集計対象」と明記する。",
+      "設計期待値": "集計は売上として計上できるもののみとし、注文ステータスが「出荷完了」の注文だけを集計対象とする。",
+      "差分内容": "DtbDailySummaryRepository::aggregateOrderSummaryByBaseInfo は dtb_order の全ステータスを対象に subtotal + delivery_fee_total + charge を合算する。SummaryController、Analysis配下Service、DtbDailySummaryRepository、DtbMonthlySummaryRepositoryを OrderStatus/order_status/DELIVERED/出荷完了 で反証検索したが、本集計に適用されるステータス条件は見つからなかった。",
+      "実装実態": "日次集計バッチの受注集計SQLは dtb_order を order_date 範囲と base_info_id で集計しており、order_status_id や OrderStatus::DELIVERED の条件がない。"
+    },
+    {
+      "rowId": 765,
+      "機能No": "M12-01",
+      "機能名": "M12-01 日別・月別集計 集計一覧(検索項目-月別)",
+      "区分(画面種別)": "admin",
+      "指摘区分": "未実装",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4:1249",
+      "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:1336 のExcel正本は「カスタマイズ要件に記載の内容以外は現行踏襲」とするが、各欠落期間を0補完する具体値は同:1427の埋込開始前にはない。同:1469 の具体記述はリバース詳細設計領域である。",
+      "設計期待値": "期間内で集計結果が無い日付・月は、表示項目の各列を0として一覧へ補完する。",
+      "差分内容": "SummaryController、Analysis配下Service、DtbDailySummaryRepository、DtbMonthlySummaryRepository、summary.twig を 補完/DatePeriod/DateInterval/P1D/P1M/zero/0で で反証検索したが、欠落日付・欠落月を0で補う処理は見つからなかった。Twig の default(0) は既存行の欠落属性を0表示するだけで、存在しない日付・月の行は作らない。",
+      "実装実態": "AnalysisSummaryBuilder は日次/月次ともサマリーテーブルから取得できた行だけを整形して返す。Repository も指定範囲の既存行を SELECT するだけで、期間内の日付・月を列挙して0行を生成する処理がない。"
+    },
+    {
+      "rowId": 770,
+      "機能No": "M12-01",
+      "機能名": "M12-01 日別・月別集計 集計一覧(検索結果-月別)",
+      "区分(画面種別)": "admin",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "要修正-設計準拠",
+      "設計書参照": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-6:1611",
+      "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:1855 のExcel正本セルは「販売関連の集計は注文データの注文ステータスが『出荷完了』のみ計上し、それ以外は計上しない」と明記する。",
+      "設計期待値": "販売関連の集計は注文データの注文ステータスが「出荷完了」のみ計上し、それ以外の注文ステータスは計上しない。",
+      "差分内容": "OrderStatus::DELIVERED / order_status_id / 出荷完了 へ翻案して再検索したが、M12-01の日次・月次集計元SQLでは出荷完了ステータスに限定する条件が見つからない。",
+      "実装実態": "aggregateOrderSummaryByBaseInfo は order_date 範囲と base_info_id IS NOT NULL のみで dtb_order を集計し、order_status_id = 出荷完了 の条件を付けていない。"
+    },
+    {
+      "rowId": 771,
+      "機能No": "M12-01",
+      "機能名": "M12-01 日別・月別集計 集計一覧(検索結果-月別)",
+      "区分(画面種別)": "admin",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "要修正-設計準拠",
+      "設計書参照": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-6:1612",
+      "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:1856 のExcel正本セルは「買取ステータスが『買取成立』のみ計上し、それ以外は計上しない」と明記する。",
+      "設計期待値": "買取関連の集計は買取データの買取ステータスが「買取成立」のみ計上し、それ以外の買取ステータスは計上しない。",
+      "差分内容": "MtbBuyOrderStatus / MtbOtcBuyOrderStatus / STATUS_COMPLETE / 買取成立 / buy_order_status_id / otc_buy_order_status_id へ翻案して再検索したが、M12-01集計SQLでは買取成立ステータス限定が見つからない。",
+      "実装実態": "ネット買取は bo.auto_approval_flg = TRUE、店頭買取は obo.cancel_date IS NULL で集計しており、買取成立ステータスのみを指定していない。"
+    },
+    {
+      "rowId": 772,
+      "機能No": "M12-01",
+      "機能名": "M12-01 日別・月別集計 集計一覧(検索結果-月別)",
+      "区分(画面種別)": "admin",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "要修正-設計準拠",
+      "設計書参照": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-6:1615",
+      "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:1859-1860 のExcel正本セルは支店名を「通販」「店舗名」「その他」で出力し、「その他」は通販・各店舗に該当しない売上を計上すると明記する。",
+      "設計期待値": "識別ID 2: 「支店名」を追加。「通販」もしくは指定された「店舗名」または「その他」を出力する。※「その他」は通販・各店舗に該当しない売上を計上。",
+      "差分内容": "その他 / store_name / base_info_id IS NULL / root_base_info / short_name_jp / shop_name で再検索したが、M12-01集計に通販・店舗外売上を「その他」として集計・表示する処理が見つからない。",
+      "実装実態": "販売集計は o.base_info_id IS NOT NULL、店頭買取集計は obo.base_info_id IS NOT NULL を条件にし、表示名は AnalysisSummaryBuilder::resolveStoreName で「通販」または short_name_jp/shop_name を返すだけで「その他」を生成しない。"
+    },
+    {
+      "rowId": 773,
+      "機能No": "M12-01",
+      "機能名": "M12-01 日別・月別集計 集計一覧(検索結果-月別)",
+      "区分(画面種別)": "admin",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "要修正-設計準拠",
+      "設計書参照": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-6:1626",
+      "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:1870-1871 のExcel正本セルは廃棄について「廃棄コスト合計」、欠品について「コスト合計」を出力すると明記する。",
+      "設計期待値": "識別ID 11「廃棄」は在庫変動区分が「廃棄」となっているものを集計し廃棄コスト合計を出力し、識別ID 12「欠品」は在庫変動区分が「欠品」となっているものを集計しコスト合計を出力する。",
+      "差分内容": "廃棄コスト / shortage / waste / total_cost / stockChangeQuantity / DtbStockHistory を再検索したが、M12-01集計で廃棄・欠品のコスト金額を合算する実装は見つからない。",
+      "実装実態": "廃棄は stockChangeQuantity の符号反転合計を waste_quantity とし、欠品も stockChangeQuantity の符号反転合計を shortage_quantity として保存・表示している。コスト合計は算出していない。"
+    },
+    {
+      "rowId": 774,
+      "機能No": "M12-01",
+      "機能名": "M12-01 日別・月別集計 集計一覧(検索結果-月別)",
+      "区分(画面種別)": "admin",
+      "指摘区分": "未実装",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-6:1726",
+      "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:1850 のExcel正本は「カスタマイズ要件に記載の内容以外は現行踏襲」とするが、欠落月を0行で補完する具体記述は同:1952の埋込開始前には存在しない。同:1994 の具体文はリバース詳細設計領域である。",
+      "設計期待値": "期間内で集計結果が無い日付・月は、件数等を0で補完して一覧に並べる。",
+      "差分内容": "DatePeriod / modify('+1 month') / 補完 / zero / summary_month の別キーワードで再検索したが、M12-01の表示用ビルダーに期間内の欠落月を0行として生成する処理が見つからない。",
+      "実装実態": "月別表示は DtbMonthlySummaryRepository::fetchSummaryRowsByMonthRangeAndTargets の取得行を AnalysisSummaryBuilder::fetchMonthlySummary がそのまま配列化して返す。欠落月を生成するループや0埋め処理は無い。"
+    },
+    {
+      "rowId": 778,
+      "機能No": "M12-02",
+      "機能名": "M12-02 日別・月別集計 CSV出力",
+      "区分(画面種別)": "admin",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "要修正-設計準拠",
+      "設計書参照": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-7:1841",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:2111 のExcel正本セル（`data-excel-ref=...!E46`）に「識別ID 11:『廃棄』を追加。在庫変動区分が『廃棄』となっているものを集計し廃棄コスト合計を出力」と明記されている。",
+      "設計期待値": "識別ID 11: 「廃棄」を追加。在庫変動区分が「廃棄」となっているものを集計し廃棄コスト合計を出力。",
+      "差分内容": "設計は廃棄コスト合計の出力を要求しているが、実装は在庫変動数量の合計を waste_count/discard_count として出力する。total_cost_price_before/after や原価合計を用いた廃棄コスト算出は確認できない。",
+      "実装実態": "aggregateDisposalQuantityByBaseInfo は stockChangeQuantity の合計を waste_quantity として算出し、AnalysisSummaryBuilder は waste_count を discard_count としてCSVへ渡す。コスト合計ではなく数量を出力している。"
+    },
+    {
+      "rowId": 779,
+      "機能No": "M12-02",
+      "機能名": "M12-02 日別・月別集計 CSV出力",
+      "区分(画面種別)": "admin",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "要修正-設計準拠",
+      "設計書参照": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-7:1842",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:2112 のExcel正本セル（`data-excel-ref=...!E47`）に「識別ID 12:『欠品』を追加。在庫変動区分が『欠品』となっているものを集計しコスト合計を出力」と明記されている。",
+      "設計期待値": "識別ID 12: 「欠品」を追加。在庫変動区分が「欠品」となっているものを集計しコスト合計を出力。",
+      "差分内容": "設計は欠品コスト合計の出力を要求しているが、実装は欠品数量の合計を shortage_count/out_of_stock_count として出力する。原価・コスト金額を用いた欠品コスト算出は確認できない。",
+      "実装実態": "aggregateShortageQuantityByBaseInfo は stockChangeQuantity の合計を shortage_quantity として算出し、AnalysisSummaryBuilder は shortage_count を out_of_stock_count としてCSVへ渡す。コスト合計ではなく数量を出力している。"
+    },
+    {
+      "rowId": 777,
+      "機能No": "M12-02",
+      "機能名": "M12-02 日別・月別集計 CSV出力",
+      "区分(画面種別)": "admin",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "要修正-設計準拠",
+      "設計書参照": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-7:1843",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:2113 のExcel正本セル（`data-excel-ref=...!E48`）に「最終行には『総合計』を追加。識別ID3～12各列のそれぞれの総合計を出力」と明記されている。",
+      "設計期待値": "最終行には「総合計」を追加。識別ID3～12各列のそれぞれの総合計を出力。",
+      "差分内容": "画面側は総合計行を表示しているが、CSV出力サービスは総合計行を組み立てず、識別ID3～12の総合計をCSV末尾へ出力しない。",
+      "実装実態": "AnalysisSummaryBuilder から summaryData['summary'] のみを取り出し、foreach ($summary as $row) で明細行だけを fputcsv する。summaryData['total'] はCSV出力に使われない。"
+    },
+    {
+      "rowId": 775,
+      "機能No": "M12-02",
+      "機能名": "M12-02 日別・月別集計 CSV出力",
+      "区分(画面種別)": "admin",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-7:1904",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:2094 に「カスタマイズ要件に記載の内容以外は現行踏襲とする」とあるが、Excel正本のM12-02部分（同:2045-2118）にはファイル名や `report_summary_` の具体記述は存在しない。`report_summary_` はリバース詳細設計領域の同:2174「ファイル名は report_summary_ に出力日時（YmdHis）を付けた .csv」にのみ現れる。",
+      "設計期待値": "集計結果のCSVファイル。ファイル名は report_summary_ に出力日時（ YmdHis ）を付けた .csv 。",
+      "差分内容": "設計は report_summary_YYYYmmddHHMMSS.csv を指定しているが、実装は summary_{daily|monthly}_YYYYmmddHHMMSS.csv を返す。",
+      "実装実態": "ファイル名は sprintf('summary_%s_%s.csv', $summaryType, YmdHis) で、例として summary_daily_YYYYmmddHHMMSS.csv / summary_monthly_YYYYmmddHHMMSS.csv になる。"
+    },
+    {
+      "rowId": 776,
+      "機能No": "M12-02",
+      "機能名": "M12-02 日別・月別集計 CSV出力",
+      "区分(画面種別)": "admin",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-7:1920",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:2094 のExcel正本は「カスタマイズ要件に記載の内容以外は現行踏襲とする」とするだけで、M12-02正本範囲（同:2045-2118）に検索条件セッションが空の場合の処理はない。「空の検索条件で集計し、出力する」はリバース詳細設計領域の同:2190 にのみ存在する。",
+      "設計期待値": "検索条件セッションが空の場合、空の検索条件で集計し、出力する。",
+      "差分内容": "設計は空条件でCSV出力継続を要求しているが、実装はCSVを出力せずエラー付きリダイレクトに分岐する。",
+      "実装実態": "セッション値が配列でない場合は「検索条件がありません。先に検索を実行してください。」を addError し、admin_summary_daily へリダイレクトする。"
+    },
+    {
+      "rowId": 782,
+      "機能No": "M12-03",
+      "機能名": "M12-03 受注売上分析 集計一覧(検索項目)",
+      "区分(画面種別)": "admin",
+      "指摘区分": "未実装",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-8:2119,2128",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:2202-2388 のsheet-8 Excel正本には検索POST URLの記載がない。`POST /{admin_route}/analysis/sales/result` はリバース詳細設計領域の同:2888,2897 にのみ存在する。",
+      "設計期待値": "検索ボタン押下は POST /{admin_route}/analysis/sales/result で集計し、同一画面に集計結果一覧を表示する。",
+      "差分内容": "設計は /analysis/sales/result を外部契約として指定しているが、Controller/Twig の実装は /analysis/sales/search であり、result ルートは SalesAnalysisController 内に存在しない。反証として analysis/sales/result, admin_analysis_sales_result, sales/result を Controller/Twig/route 定義で検索したが該当なし。",
+      "実装実態": "実装の検索POSTルートは /{admin_route}/analysis/sales/search、フォームactionも admin_analysis_sales_search を指している。"
+    },
+    {
+      "rowId": 784,
+      "機能No": "M12-03",
+      "機能名": "M12-03 受注売上分析 集計一覧(検索項目)",
+      "区分(画面種別)": "admin",
+      "指摘区分": "未実装",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-8:2126,2127",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:2202-2388 のsheet-8 Excel正本に初期表示時のセッション破棄処理は記載されていない。同:2271 は「カスタマイズ要件に記載の内容以外は現行踏襲とする」とするのみで、具体的な破棄処理はリバース詳細設計領域の同:2895-2896 にある。",
+      "設計期待値": "検索画面初期表示では検索条件セッションを破棄する。",
+      "差分内容": "SalesAnalysisController 内で SESSION_KEY の remove/clear/invalidate を検索したが、検索条件セッション破棄処理がない。",
+      "実装実態": "index() はフォーム生成と所属店舗初期値設定のみ行い、SESSION_KEY eccube.admin.analysis.sales.search を削除していない。検索時は session->set、CSV時は session->get だけが存在する。"
+    },
+    {
+      "rowId": 783,
+      "機能No": "M12-03",
+      "機能名": "M12-03 受注売上分析 集計一覧(検索項目)",
+      "区分(画面種別)": "admin",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-8:2132",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:2202-2388 のsheet-8 Excel正本には期間上限を未満とする記述はない。「集計日Fromから集計日To未満まで」はリバース詳細設計領域の同:2901 にのみ存在する。",
+      "設計期待値": "期間は集計日Fromから集計日To未満まで、使用日付で選んだ日付列で絞り込む。",
+      "差分内容": "設計は上限を「未満」とするが、実装は <= で上限日時を含める。date_to/summary_date_to の条件を Repository 内で確認し、未満比較（< :summaryDateTo）の実装は見つからなかった。",
+      "実装実態": "summary_date_to がある場合、o.{dateType} <= :summaryDateTo で絞り込む。"
+    },
+    {
+      "rowId": 785,
+      "機能No": "M12-03",
+      "機能名": "M12-03 受注売上分析 集計一覧(検索項目)",
+      "区分(画面種別)": "admin",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-8:2144,2166,2168",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:2202-2388 のM12-03 Excel正本にはCSV再集計時の表示件数制限に関する記述はない。「CSVは表示件数の上限を適用しない」はリバース詳細設計領域の同:2915 にのみ存在する。",
+      "設計期待値": "CSVダウンロードは同じセッションの検索条件で再集計する。ただしCSVは表示件数の上限を適用しない。",
+      "差分内容": "設計はCSVで表示件数上限を適用しないとするが、実装は画面一覧と同じ getAnalysisSummary() を使い page_count 上限を除去していない。exportBySearchData, getAnalysisSummary, page_count, setMaxResults を確認した。",
+      "実装実態": "CSV exporter はセッション由来の searchData をそのまま getAnalysisSummary() に渡し、getAnalysisSummary() は page_count が正数なら setMaxResults(page_count) を適用する。"
+    },
+    {
+      "rowId": 786,
+      "機能No": "M12-03",
+      "機能名": "M12-03 受注売上分析 集計一覧(検索結果-集計単位 商品)",
+      "区分(画面種別)": "admin",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-9:2320,2329",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:2495-2620 のsheet-9 Excel正本には検索POST URLの記載がない。`POST /{admin_route}/analysis/sales/result` はリバース詳細設計領域の同:2660,2669（同じM12-03リバース記述）にのみ存在する。",
+      "設計期待値": "検索ボタン押下は POST /{admin_route}/analysis/sales/result で、入力された検索条件で集計し、同一画面に集計結果一覧を表示する。",
+      "差分内容": "設計の外部契約は /analysis/sales/result だが、実装は /analysis/sales/search で公開している。別名 route/admin_analysis_sales_result や /analysis/sales/result の定義は探索範囲で確認できなかった。探索範囲: SalesAnalysisController, sales.twig, src/Eccube, html。",
+      "実装実態": "検索POSTの実装ルートは /{admin_route}/analysis/sales/search、フォームactionも admin_analysis_sales_search を向いている。"
+    },
+    {
+      "rowId": 787,
+      "機能No": "M12-03",
+      "機能名": "M12-03 受注売上分析 集計一覧(検索結果-集計単位 商品)",
+      "区分(画面種別)": "admin",
+      "指摘区分": "未実装",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-9:2327-2328",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:2495-2620 のsheet-9 Excel正本には初期表示時のセッション破棄処理は記載されていない。具体的な「検索条件セッションを破棄する」はリバース詳細設計領域の同:2668 にのみ存在する。",
+      "設計期待値": "検索画面初期表示では検索条件セッションを破棄し、集計結果は無しとする。",
+      "差分内容": "設計要求の「検索条件セッションを破棄する」に対応する session->remove(self::SESSION_KEY) 等が初期表示処理に存在しない。別キーワード clear/remove/invalidate/eccube.admin.analysis.sales.search/admin_analysis_sales で反証検索したが、当該キーを破棄する実装は確認できなかった。",
+      "実装実態": "index() は検索フォームを作成して searched=false を返すが、SESSION_KEY(eccube.admin.analysis.sales.search) を remove/clear していない。検索時は session->set、CSV時は session->get している。"
+    },
+    {
+      "rowId": 788,
+      "機能No": "M12-03",
+      "機能名": "M12-03 受注売上分析 集計一覧(検索結果-集計単位 商品)",
+      "区分(画面種別)": "admin",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-9:2333,2339",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:2289-2290 のExcel正本はTo既定値を「当月末日」「2025-7-31 23:59:59」とするが、sheet-9正本（同:2495-2620）に期間上限の比較演算子はない。「集計日To未満」はリバース詳細設計領域の同:2673 にのみ存在する。",
+      "設計期待値": "期間は集計日Fromから集計日To未満まで、使用日付で選んだ日付列で絞り込む。",
+      "差分内容": "設計はToを未満（排他的上限）としているが、実装はTo以下（包含上限）で条件化している。date_to/summary_date_to/less than/< で反証検索したが、本機能のTo未満条件は確認できなかった。",
+      "実装実態": "Fromは >= だが、Toは o.{dateType} <= :summaryDateTo で絞り込む。初期値も last day of this month 23:59:59。"
+    },
+    {
+      "rowId": 789,
+      "機能No": "M12-03",
+      "機能名": "M12-03 受注売上分析 集計一覧(検索結果-集計単位 商品)",
+      "区分(画面種別)": "admin",
+      "指摘区分": "未実装",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-9:2333,2361",
+      "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:2542 のExcel正本セルは「カスタマイズ要件に記載の内容以外は現行踏襲とする」とするが、0以上の入力補助は同:2621の `<!-- function-design-embed:start ... -->` より後のリバース詳細設計にだけある。sheet-9正本セルの確認範囲:2495-2620。",
+      "設計期待値": "平均単価・数量のFrom・Toは任意の数値で、0以上を入力補助で促し、集計後の値に対する絞り込みとして適用する。",
+      "差分内容": "集計後HAVING条件は実装済みだが、設計の「0以上を入力補助で促す」に相当するHTML属性・制約がない。min/PositiveOrZero/GreaterThanOrEqual/Range/0以上 の別名で SalesType と関連locale/validatorを反証検索したが、本項目向けの0以上入力補助は確認できなかった。",
+      "実装実態": "price_from/price_to/quantity_from/quantity_to は IntegerType として定義され、RepositoryでHAVINGに使われるが、フォーム属性 min=0 や0以上制約は確認できない。 設計要求に対応する実装が見当たらない（未実装）。"
+    },
+    {
+      "rowId": 986,
+      "機能No": "M15-08",
+      "機能名": "M15-08 アーキタイプ管理(検索結果)",
+      "区分(画面種別)": "admin",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要再起票(記述が事実と相違)",
+      "設計書参照": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-10:3227",
+      "正本根拠": "Excel正本 hareruya-design-docs/excel_to_html/output/0212_基本設計仕様書(デッキ管理).html:3294,3513 はM15-08の未変更部分を「現行踏襲」とするが、Route名、`/deck/search/{page_no}`、正規表現 `^[1-9][0-9]*$` は正本セルにない。具体契約はリバース文書 functions/pf-eccube3/m15-08_admin_deck_deck_archetype_search.md:274 にのみある。",
+      "設計期待値": "m15-01_admin_deck_deck_search … GET, POST … /{admin_route}/deck/search/{page_no}（page_no は正の整数（ルートの assert ^[1-9][0-9]*$）。検索実行・一覧・ソート・ページ送り・表示件数変更、GET によるセッションからの検索条件復元。フォームの action は page_no=1 固定。）",
+      "差分内容": "設計は ^[1-9][0-9]*$ により 1 以上の整数のみ許可する外部契約だが、実装は \\d+ で 0 を許容する。",
+      "実装実態": "admin_deck_search の Route requirements は ['page_no' => '\\d+'] で、0 もルートマッチする。"
+    },
+    {
+      "rowId": 993,
+      "機能No": "M15-09",
+      "機能名": "M15-09 アーキタイプ編集",
+      "区分(画面種別)": "admin",
+      "指摘区分": "未実装",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-11:3368,3426,3441,3456",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0212_基本設計仕様書(デッキ管理).html:3743-3744 は「代表カード選択ボタン押下時の動作は…『代表カード検索ポップアップ』と同一」とするが、正本範囲 sheet-11:3687-3832 に `search/main_card/*` の3エンドポイントや `admin.archetype.main_card.*` セッションキーはない。",
+      "設計期待値": "代表カードモーダルは search/main_card/html, search/main_card/html/{page_no}, search/main_card/id のXHRエンドポイントとセッションキー admin.archetype.main_card.search / .page_no で検索・ページング・ID解決を行う。",
+      "差分内容": "設計のHTML断片返却API、GETページングAPI、ID解決API、セッション維持が実装されていない。反証検索: admin_archetype_main_card_html, admin_archetype_main_card_html_page, admin_archetype_search_main_card_by_id, search/main_card, admin.archetype.main_card を src/Eccube/Controller/Admin/Archetype, src/Eccube/Resource/template/admin/Archetype, src/Eccube/Service/Admin/Archetype, app/config で確認し不",
+      "実装実態": "実装は admin_archetype_search_card_image / POST /archetype/search_card_image の単一JSON APIで items/totalCount/page/totalPages を返し、Twig内のインラインJSが結果表・ページング・選択時のhidden/画像/名称更新を行う。検索条件・ページ番号を admin.archetype.ma"
+    }
+  ]
+}
+
+codex
+手順書では、LEGACY_BACKED は原則追記、SPEC_BACKED は原則変更なし、画面画像の更新有無を別判定する必要があります。次に28件をシート単位へ整理し、正本Excelのシート名・セル表・貼付画像の有無を実ファイルから確認します。
+exec
+/bin/bash -lc "jq -r '.findings[] | [.rowId, .[\"機能No\"], .[\"確定根拠区分\"], .[\"設計書参照\"], .[\"設計期待値\"]] | @tsv' hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_packets/du_21.json" in /home/y-saito/Developments
+ succeeded in 1602ms:
+806	M12-08	LEGACY_BACKED	excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-18:3913	成功時出力は日別の売上表のCSVファイル。ファイル名は format_sales_report_ に出力日時（YmdHis）を付けた .csv。文字コード判別用のBOMを付与する。
+808	M12-09	LEGACY_BACKED	excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-19:4058,4062,4071,4074,4079,4085,4100	「検索」ボタンの POST は、指定した出力条件で集計結果を表示し、条件をセッションに保持する。表示要素として出力条件の検索フォーム、集計結果、CSVダウンロードの導線を持つ。
+807	M12-09	LEGACY_BACKED	excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-19:4058,4067,4098	出力条件を指定する画面は GET/POST /{admin_route}/analysis/used_card とし、CSVダウンロードは GET /{admin_route}/analysis/used_card/export/{mode} で、画面遷移上は admin_used_card / admin_used_card_result / admin_used_card_export を用いる。
+809	M12-09	LEGACY_BACKED	excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-19:4058,4076,4085,4100	初期表示（GET）では保持していた出力条件を消去し、未指定の検索フォームを表示する。入力は出力条件、CSVの出力形式（mode）、なりすまし対策トークンを扱う。
+763	M12-01	LEGACY_BACKED	excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-3:1055,1069,1096	期間内で集計結果が無い日付・月は、表示項目の各列を0として一覧へ補完する。集計対象が0件でも集計結果が無い日付・月の列を0で補完する。
+762	M12-01	SPEC_BACKED	excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-3:907,910,912,914,930,931	通販売上は配送方法が店頭受取（スムーズ店頭受取含む）・なし以外かつ対応状況が出荷完了、店舗売上は配送方法が店頭受取（スムーズ店頭受取含む）またはなし且つ対応状況が出荷完了のみを集計対象にする。
+764	M12-01	SPEC_BACKED	excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4:1141	集計は売上として計上できるもののみとし、注文ステータスが「出荷完了」の注文だけを集計対象とする。
+765	M12-01	LEGACY_BACKED	excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4:1249	期間内で集計結果が無い日付・月は、表示項目の各列を0として一覧へ補完する。
+770	M12-01	SPEC_BACKED	excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-6:1611	販売関連の集計は注文データの注文ステータスが「出荷完了」のみ計上し、それ以外の注文ステータスは計上しない。
+771	M12-01	SPEC_BACKED	excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-6:1612	買取関連の集計は買取データの買取ステータスが「買取成立」のみ計上し、それ以外の買取ステータスは計上しない。
+772	M12-01	SPEC_BACKED	excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-6:1615	識別ID 2: 「支店名」を追加。「通販」もしくは指定された「店舗名」または「その他」を出力する。※「その他」は通販・各店舗に該当しない売上を計上。
+773	M12-01	SPEC_BACKED	excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-6:1626	識別ID 11「廃棄」は在庫変動区分が「廃棄」となっているものを集計し廃棄コスト合計を出力し、識別ID 12「欠品」は在庫変動区分が「欠品」となっているものを集計しコスト合計を出力する。
+774	M12-01	LEGACY_BACKED	excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-6:1726	期間内で集計結果が無い日付・月は、件数等を0で補完して一覧に並べる。
+778	M12-02	SPEC_BACKED	excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-7:1841	識別ID 11: 「廃棄」を追加。在庫変動区分が「廃棄」となっているものを集計し廃棄コスト合計を出力。
+779	M12-02	SPEC_BACKED	excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-7:1842	識別ID 12: 「欠品」を追加。在庫変動区分が「欠品」となっているものを集計しコスト合計を出力。
+777	M12-02	SPEC_BACKED	excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-7:1843	最終行には「総合計」を追加。識別ID3～12各列のそれぞれの総合計を出力。
+775	M12-02	LEGACY_BACKED	excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-7:1904	集計結果のCSVファイル。ファイル名は report_summary_ に出力日時（ YmdHis ）を付けた .csv 。
+776	M12-02	LEGACY_BACKED	excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-7:1920	検索条件セッションが空の場合、空の検索条件で集計し、出力する。
+782	M12-03	LEGACY_BACKED	excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-8:2119,2128	検索ボタン押下は POST /{admin_route}/analysis/sales/result で集計し、同一画面に集計結果一覧を表示する。
+784	M12-03	LEGACY_BACKED	excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-8:2126,2127	検索画面初期表示では検索条件セッションを破棄する。
+783	M12-03	LEGACY_BACKED	excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-8:2132	期間は集計日Fromから集計日To未満まで、使用日付で選んだ日付列で絞り込む。
+785	M12-03	LEGACY_BACKED	excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-8:2144,2166,2168	CSVダウンロードは同じセッションの検索条件で再集計する。ただしCSVは表示件数の上限を適用しない。
+786	M12-03	LEGACY_BACKED	excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-9:2320,2329	検索ボタン押下は POST /{admin_route}/analysis/sales/result で、入力された検索条件で集計し、同一画面に集計結果一覧を表示する。
+787	M12-03	LEGACY_BACKED	excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-9:2327-2328	検索画面初期表示では検索条件セッションを破棄し、集計結果は無しとする。
+788	M12-03	LEGACY_BACKED	excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-9:2333,2339	期間は集計日Fromから集計日To未満まで、使用日付で選んだ日付列で絞り込む。
+789	M12-03	LEGACY_BACKED	excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-9:2333,2361	平均単価・数量のFrom・Toは任意の数値で、0以上を入力補助で促し、集計後の値に対する絞り込みとして適用する。
+986	M15-08	LEGACY_BACKED	excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-10:3227	m15-01_admin_deck_deck_search … GET, POST … /{admin_route}/deck/search/{page_no}（page_no は正の整数（ルートの assert ^[1-9][0-9]*$）。検索実行・一覧・ソート・ページ送り・表示件数変更、GET によるセッションからの検索条件復元。フォームの action は page_no=1 固定。）
+993	M15-09	LEGACY_BACKED	excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-11:3368,3426,3441,3456	代表カードモーダルは search/main_card/html, search/main_card/html/{page_no}, search/main_card/id のXHRエンドポイントとセッションキー admin.archetype.main_card.search / .page_no で検索・ページング・ID解決を行う。
+
+exec
+/bin/bash -lc "rg --files hareruya-design-docs/excel_to_html/input | rg '0211_|0212_'" in /home/y-saito/Developments
+ succeeded in 917ms:
+hareruya-design-docs/excel_to_html/input/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx
+hareruya-design-docs/excel_to_html/input/0211_基本設計仕様書(分析・集計管理機能).xlsx
+hareruya-design-docs/excel_to_html/input/0212_基本設計仕様書(デッキ管理).xlsx
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from openpyxl import load_workbook
+from pathlib import Path
+for name in ['0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx','0212_基本設計仕様書(デッキ管理).xlsx']:
+    p=Path('hareruya-design-docs/excel_to_html/input')/name
+    wb=load_workbook(p, read_only=False, data_only=False)
+    print(name)
+    for i, ws in enumerate(wb.worksheets, 1):
+        print(f'{i:2d}\\t{ws.title}\\trows={ws.max_row}\\tcols={ws.max_column}\\timages={len(ws._images)}\\tcharts={len(ws._charts)}')
+PY" in /home/y-saito/Developments
+ exited 1 in 2017ms:
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+ModuleNotFoundError: No module named 'openpyxl'
+
+exec
+/bin/bash -lc "sed -n '1,220p' hareruya-design-docs/excel_to_html/pyproject.toml" in /home/y-saito/Developments
+ succeeded in 1101ms:
+[project]
+name = "excel-to-html"
+version = "0.1.0"
+description = "Convert Excel workbooks to readable, self-contained tabbed HTML files."
+requires-python = ">=3.10"
+dependencies = [
+    "openpyxl>=3.1.0",
+    "Pillow>=10.0.0",
+]
+
+[tool.uv]
+package = false
+
+exec
+/bin/bash -lc "uv run python - <<'PY'
+from openpyxl import load_workbook
+from pathlib import Path
+for name in ['0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx','0212_基本設計仕様書(デッキ管理).xlsx']:
+    p=Path('input')/name
+    wb=load_workbook(p, read_only=False, data_only=False)
+    print(name)
+    for i, ws in enumerate(wb.worksheets, 1):
+        print(f'{i:2d}\\t{ws.title}\\trows={ws.max_row}\\tcols={ws.max_column}\\timages={len(ws._images)}\\tcharts={len(ws._charts)}')
+PY" in /home/y-saito/Developments/hareruya-design-docs/excel_to_html
+exec
+/bin/bash -lc "uv run python -c 'import openpyxl; print(openpyxl.__version__)'" in /home/y-saito/Developments/hareruya-design-docs/excel_to_html
+ succeeded in 1062ms:
+3.1.5
+
+exec
+/bin/bash -lc "uv run python - <<'PY'
+from openpyxl import load_workbook
+p='input/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx'
+wb=load_workbook(p, read_only=True)
+print(wb.sheetnames)
+PY" in /home/y-saito/Developments/hareruya-design-docs/excel_to_html
+ succeeded in 1497ms:
+['表紙', '目次', '画面遷移図', '日別・月別集計 集計一覧(検索項目-日別) ', '日別・月別集計 集計一覧(検索項目-月別)', '日別・月別集計 集計一覧(検索結果-日別)', '日別・月別集計 集計一覧(検索結果-月別)', '日別・月別集計 CSV出力', '受注売上分析 集計一覧(検索項目)', '受注売上分析 集計一覧(検索結果-集計単位 商品)', '受注売上分析 集計一覧(検索結果-集計単位 カテゴリ )', '受注売上分析 CSV出力(商品)', '受注売上分析 CSV出力(カテゴリ)', '入荷通知依頼 一覧表示(検索項目)', '入荷通知依頼 一覧表示(検索結果)', '入荷通知依頼 CSV出力', 'フォーマット売上分析 集計一覧(検索項目)', 'フォーマット売上分析 集計一覧(検索結果) ', 'フォーマット売上分析 CSV出力', '特集タグ編集CSVダウンロード(検索項目)', '特集タグ編集CSVダウンロード CSV出力', 'XXXCSV出力項目設定', '対応状況管理', 'メール管理_商品予約完了', '機能A']
+
+exec
+/bin/bash -lc "uv run python -u - <<'PY'
+from openpyxl import load_workbook
+p='input/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx'
+print('loading', flush=True)
+wb=load_workbook(p, read_only=False, data_only=False)
+print('loaded', flush=True)
+for i in [4,5,7,8,9,10,19,20]:
+    ws=wb.worksheets[i-1]
+    print(i, repr(ws.title), ws.max_row, ws.max_column, len(ws._images), len(ws._charts), flush=True)
+PY" in /home/y-saito/Developments/hareruya-design-docs/excel_to_html
+ succeeded in 86624ms:
+0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx
+ 1	表紙	rows=1000	cols=51	images=0	charts=0
+ 2	目次	rows=766	cols=51	images=0	charts=0
+ 3	画面遷移図	rows=848	cols=61	images=0	charts=0
+ 4	日別・月別集計 集計一覧(検索項目-日別) 	rows=906	cols=67	images=1	charts=0
+ 5	日別・月別集計 集計一覧(検索項目-月別)	rows=905	cols=67	images=1	charts=0
+ 6	日別・月別集計 集計一覧(検索結果-日別)	rows=895	cols=67	images=1	charts=0
+ 7	日別・月別集計 集計一覧(検索結果-月別)	rows=894	cols=67	images=1	charts=0
+ 8	日別・月別集計 CSV出力	rows=217	cols=67	images=0	charts=0
+ 9	受注売上分析 集計一覧(検索項目)	rows=904	cols=62	images=2	charts=0
+10	受注売上分析 集計一覧(検索結果-集計単位 商品)	rows=864	cols=54	images=1	charts=0
+11	受注売上分析 集計一覧(検索結果-集計単位 カテゴリ )	rows=863	cols=54	images=1	charts=0
+12	受注売上分析 CSV出力(商品)	rows=202	cols=55	images=0	charts=0
+13	受注売上分析 CSV出力(カテゴリ)	rows=203	cols=55	images=0	charts=0
+14	入荷通知依頼 一覧表示(検索項目)	rows=848	cols=54	images=1	charts=0
+15	入荷通知依頼 一覧表示(検索結果)	rows=847	cols=63	images=1	charts=0
+16	入荷通知依頼 CSV出力	rows=205	cols=55	images=0	charts=0
+17	フォーマット売上分析 集計一覧(検索項目)	rows=855	cols=54	images=1	charts=0
+18	フォーマット売上分析 集計一覧(検索結果) 	rows=850	cols=54	images=1	charts=0
+19	フォーマット売上分析 CSV出力	rows=207	cols=55	images=0	charts=0
+20	特集タグ編集CSVダウンロード(検索項目)	rows=831	cols=55	images=1	charts=0
+21	特集タグ編集CSVダウンロード CSV出力	rows=201	cols=62	images=0	charts=0
+22	XXXCSV出力項目設定	rows=799	cols=54	images=0	charts=0
+23	対応状況管理	rows=824	cols=54	images=0	charts=0
+24	メール管理_商品予約完了	rows=817	cols=61	images=0	charts=0
+25	機能A	rows=279	cols=54	images=0	charts=0
+0212_基本設計仕様書(デッキ管理).xlsx
+ 1	表紙	rows=1000	cols=53	images=0	charts=0
+ 2	目次	rows=820	cols=51	images=0	charts=0
+ 3	画面遷移図	rows=824	cols=54	images=0	charts=0
+ 4	デッキ一覧(検索入力)	rows=909	cols=54	images=2	charts=0
+ 5	デッキ一覧(検索結果)	rows=345	cols=54	images=3	charts=0
+ 6	デッキ編集	rows=413	cols=54	images=5	charts=0
+ 7	デッキ登録CSVアップロード	rows=266	cols=54	images=1	charts=0
+ 8	デッキ登録CSV	rows=800	cols=54	images=0	charts=0
+ 9	デッキタグ一覧	rows=201	cols=54	images=0	charts=0
+10	アーキタイプ管理(検索入力)	rows=252	cols=54	images=1	charts=0
+11	アーキタイプ管理(検索結果)	rows=272	cols=54	images=1	charts=0
+12	アーキタイプ編集	rows=283	cols=54	images=1	charts=0
+13	アーキタイプ登録CSVアップロード	rows=253	cols=54	images=1	charts=0
+14	アーキタイプ登録CSV	rows=781	cols=54	images=0	charts=0
+15	直近の大会管理	rows=243	cols=54	images=1	charts=0
+16	XXXCSV出力項目設定	rows=799	cols=54	images=0	charts=0
+17	対応状況管理	rows=824	cols=54	images=0	charts=0
+18	メール管理_商品予約完了	rows=817	cols=61	images=0	charts=0
+19	機能A	rows=279	cols=54	images=0	charts=0
+
+exec
+/bin/bash -lc "unzip -l 'hareruya-design-docs/excel_to_html/input/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx' | sed -n '1,80p'" in /home/y-saito/Developments
+ succeeded in 1880ms:
+Archive:  hareruya-design-docs/excel_to_html/input/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx
+  Length      Date    Time    Name
+---------  ---------- -----   ----
+     6790  1980-01-01 00:00   [Content_Types].xml
+      588  1980-01-01 00:00   _rels/.rels
+     4239  1980-01-01 00:00   xl/workbook.xml
+     4251  1980-01-01 00:00   xl/_rels/workbook.xml.rels
+   553305  1980-01-01 00:00   xl/worksheets/sheet1.xml
+   111660  1980-01-01 00:00   xl/worksheets/sheet2.xml
+   986984  1980-01-01 00:00   xl/worksheets/sheet3.xml
+  1005739  1980-01-01 00:00   xl/worksheets/sheet4.xml
+  1000226  1980-01-01 00:00   xl/worksheets/sheet5.xml
+   997141  1980-01-01 00:00   xl/worksheets/sheet6.xml
+   989995  1980-01-01 00:00   xl/worksheets/sheet7.xml
+   290701  1980-01-01 00:00   xl/worksheets/sheet8.xml
+  1056592  1980-01-01 00:00   xl/worksheets/sheet9.xml
+  1006372  1980-01-01 00:00   xl/worksheets/sheet10.xml
+  1005050  1980-01-01 00:00   xl/worksheets/sheet11.xml
+   272187  1980-01-01 00:00   xl/worksheets/sheet12.xml
+   273223  1980-01-01 00:00   xl/worksheets/sheet13.xml
+   988612  1980-01-01 00:00   xl/worksheets/sheet14.xml
+   987563  1980-01-01 00:00   xl/worksheets/sheet15.xml
+   275966  1980-01-01 00:00   xl/worksheets/sheet16.xml
+   994671  1980-01-01 00:00   xl/worksheets/sheet17.xml
+   989003  1980-01-01 00:00   xl/worksheets/sheet18.xml
+   278148  1980-01-01 00:00   xl/worksheets/sheet19.xml
+   967166  1980-01-01 00:00   xl/worksheets/sheet20.xml
+   270591  1980-01-01 00:00   xl/worksheets/sheet21.xml
+   932344  1980-01-01 00:00   xl/worksheets/sheet22.xml
+   959616  1980-01-01 00:00   xl/worksheets/sheet23.xml
+   953357  1980-01-01 00:00   xl/worksheets/sheet24.xml
+   353030  1980-01-01 00:00   xl/worksheets/sheet25.xml
+     3763  1980-01-01 00:00   xl/theme/theme1.xml
+    90327  1980-01-01 00:00   xl/styles.xml
+   122701  1980-01-01 00:00   xl/sharedStrings.xml
+      293  1980-01-01 00:00   xl/drawings/_rels/drawing10.xml.rels
+    60467  1980-01-01 00:00   xl/drawings/drawing1.xml
+      293  1980-01-01 00:00   xl/drawings/_rels/drawing11.xml.rels
+    15767  1980-01-01 00:00   xl/drawings/drawing2.xml
+   644399  1980-01-01 00:00   xl/media/image1.png
+      293  1980-01-01 00:00   xl/drawings/_rels/drawing12.xml.rels
+    15771  1980-01-01 00:00   xl/drawings/drawing3.xml
+   642625  1980-01-01 00:00   xl/media/image2.png
+      293  1980-01-01 00:00   xl/drawings/_rels/drawing14.xml.rels
+    25414  1980-01-01 00:00   xl/drawings/drawing4.xml
+   899533  1980-01-01 00:00   xl/media/image3.png
+      466  1980-01-01 00:00   xl/worksheets/_rels/sheet24.xml.rels
+    22817  1980-01-01 00:00   xl/drawings/drawing5.xml
+   909364  1980-01-01 00:00   xl/media/image4.png
+    35367  1980-01-01 00:00   xl/drawings/drawing6.xml
+   617193  1980-01-01 00:00   xl/media/image5.png
+    12392  1980-01-01 00:00   xl/media/image6.png
+    17306  1980-01-01 00:00   xl/drawings/drawing7.xml
+   514444  1980-01-01 00:00   xl/media/image7.png
+    15865  1980-01-01 00:00   xl/drawings/drawing8.xml
+   463235  1980-01-01 00:00   xl/media/image8.png
+    21616  1980-01-01 00:00   xl/drawings/drawing9.xml
+   327300  1980-01-01 00:00   xl/media/image9.png
+    13064  1980-01-01 00:00   xl/drawings/drawing10.xml
+   332216  1980-01-01 00:00   xl/media/image10.png
+    10220  1980-01-01 00:00   xl/drawings/drawing11.xml
+   238111  1980-01-01 00:00   xl/media/image11.png
+    10120  1980-01-01 00:00   xl/drawings/drawing12.xml
+   444441  1980-01-01 00:00   xl/media/image12.png
+     1953  1980-01-01 00:00   xl/drawings/drawing13.xml
+    10122  1980-01-01 00:00   xl/drawings/drawing14.xml
+   245234  1980-01-01 00:00   xl/media/image13.png
+    51800  1980-01-01 00:00   xl/drawings/drawing15.xml
+     2870  1980-01-01 00:00   xl/drawings/drawing16.xml
+     3430  1980-01-01 00:00   xl/drawings/drawing17.xml
+      464  1980-01-01 00:00   xl/worksheets/_rels/sheet3.xml.rels
+      464  1980-01-01 00:00   xl/worksheets/_rels/sheet4.xml.rels
+      464  1980-01-01 00:00   xl/worksheets/_rels/sheet5.xml.rels
+      464  1980-01-01 00:00   xl/worksheets/_rels/sheet6.xml.rels
+      464  1980-01-01 00:00   xl/worksheets/_rels/sheet7.xml.rels
+      322  1980-01-01 00:00   xl/worksheets/_rels/sheet8.xml.rels
+      299  1980-01-01 00:00   xl/worksheets/_rels/sheet10.xml.rels
+      299  1980-01-01 00:00   xl/worksheets/_rels/sheet11.xml.rels
+      322  1980-01-01 00:00   xl/worksheets/_rels/sheet12.xml.rels
+      322  1980-01-01 00:00   xl/worksheets/_rels/sheet13.xml.rels
+
+ succeeded in 54586ms:
+loading
+loaded
+4 '日別・月別集計 集計一覧(検索項目-日別) ' 906 67 1 0
+5 '日別・月別集計 集計一覧(検索項目-月別)' 905 67 1 0
+7 '日別・月別集計 集計一覧(検索結果-月別)' 894 67 1 0
+8 '日別・月別集計 CSV出力' 217 67 0 0
+9 '受注売上分析 集計一覧(検索項目)' 904 62 2 0
+10 '受注売上分析 集計一覧(検索結果-集計単位 商品)' 864 54 1 0
+19 'フォーマット売上分析 CSV出力' 207 55 0 0
+20 '特集タグ編集CSVダウンロード(検索項目)' 831 55 1 0
+
+exec
+/bin/bash -lc 'for n in 4 5 7 8 9 10 19 20; do echo "sheet$n"; unzip -p '"'hareruya-design-docs/excel_to_html/input/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx' \"xl/worksheets/_rels/sheet"'${n}.xml.rels" 2>/dev/null; done' in /home/y-saito/Developments
+ succeeded in 4445ms:
+sheet4
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing" Target="../drawings/drawing2.xml"/><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/printerSettings" Target="../printerSettings/printerSettings2.bin"/></Relationships>sheet5
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing" Target="../drawings/drawing3.xml"/><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/printerSettings" Target="../printerSettings/printerSettings3.bin"/></Relationships>sheet7
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing" Target="../drawings/drawing5.xml"/><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/printerSettings" Target="../printerSettings/printerSettings5.bin"/></Relationships>sheet8
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/printerSettings" Target="../printerSettings/printerSettings6.bin"/></Relationships>sheet9
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing" Target="../drawings/drawing6.xml"/></Relationships>sheet10
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing" Target="../drawings/drawing7.xml"/></Relationships>sheet19
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing" Target="../drawings/drawing13.xml"/><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/printerSettings" Target="../printerSettings/printerSettings10.bin"/></Relationships>sheet20
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing" Target="../drawings/drawing14.xml"/><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/printerSettings" Target="../printerSettings/printerSettings11.bin"/></Relationships>
+exec
+/bin/bash -lc "uv run python - <<'PY'
+from zipfile import ZipFile
+from xml.etree import ElementTree as ET
+from pathlib import Path
+NS='{http://schemas.openxmlformats.org/spreadsheetml/2006/main}'
+p=Path('input/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx')
+with ZipFile(p) as z:
+    ss=[]
+    root=ET.fromstring(z.read('xl/sharedStrings.xml'))
+    for si in root.findall(NS+'si'):
+        ss.append(''.join(t.text or '' for t in si.iter(NS+'t')))
+    for n in [4,5,7,8,9,10,19,20]:
+        print(f'\\n=== sheet{n} ===')
+        root=ET.fromstring(z.read(f'xl/worksheets/sheet{n}.xml'))
+        for c in root.iter(NS+'c'):
+            r=c.get('r'); typ=c.get('t'); v=c.find(NS+'v')
+            if v is None: continue
+            val=v.text or ''
+            if typ=='s': val=ss[int(val)]
+            elif typ=='inlineStr': val=''.join(t.text or '' for t in c.iter(NS+'t'))
+            val=val.replace('\\n',' / ')
+            if val.strip(): print(f'{r}\\t{val}')
+PY" in /home/y-saito/Developments/hareruya-design-docs/excel_to_html
+ succeeded in 4172ms:
+
+=== sheet4 ===
+A1	ドキュメント名
+I1	分析・集計管理機能
+U1	セクション
+A2	プロジェクト名
+I2	サイトリニューアル
+U2	作成者
+Y2	高久タカク
+AC2	作成日
+AG2	45847
+AK2	更新者
+AS2	更新日
+A4	機能Noキノウ
+D4	M12-01
+I4	機能名
+N4	日別・月別集計 集計一覧表示
+AC4	概要
+AG4	受注データを使って日別・月別の集計を行うことが可能ジュチュウツカヒベツツキベツシュウケイオコナカノウ
+B6	レイアウト図ズ
+BA7	集計対象についてシュウケイタイショウ
+BA9	・通販売上ツウハンウリアゲ
+BB10	配送方法が①店頭受取(スムーズ店頭受取含む）以外、②なし以外ハイソウホウホウテントウウケトリテントウウケトリフクイガイイガイ
+BB11	支払方法が店頭支払、店頭支払(店内PC)以外シハライホウホウテントウシハライイガイ
+BB12	対応状況が出荷完了シュッカカンリョウ
+BA14	・店舗売上テンポウリアゲ
+BB15	配送方法が店頭受取(スムーズ店頭受取含む）またはなしハイソウホウホウテントウウケトリ
+BB16	支払方法が店頭支払、店頭支払(店内PC)、クレジットカードシハライホウホウテントウシハライ
+BB17	対応状況が出荷完了シュッカカンリョウ
+BA19	・対象店舗タイショウテンポ
+BB20	店舗登録画面の公開状態が公開であり、開店状態が開店であるものを集計対象の店舗とするテンポトウロクガメンコウカイジョウタイコウカイカイテンジョウタイカイテンシュウケイタイショウテンポ
+BE21	開店状態は見ないカイテンジョウタイミ
+B50	カスタマイズ説明セツメイ
+B51	・カスタマイズ要件ヨウケン
+C52	・
+D52	集計方式の変更シュウケイホウシキヘンコウ
+C53	・
+D53	検索項目についてケンサクコウモク
+C54	・
+D54	スマレジについて
+C56	カスタマイズ要件に記載の内容以外は現行踏襲とする
+B59	処理概要（★はカスタマイズ項目）ショリガイヨウコウモク
+B60	概要ガイヨウ
+C61	受注データを使って日別・月別の集計を行うことが可能
+B63	機能キノウ
+C64	現行機能をベースに下記のカスタマイズを行う
+C66	集計方式の変更
+D67	・
+E67	集計は売上として計上できるものとし、それ以外の対応状況は計上しないシュウケイウリアゲケイジョウイガイタイオウジョウキョウケイジョウ
+E68	(注文ステータスが「出荷完了」のみ集計対象とする)チュウモンシュッカカンリョウシュウケイタイショウ
+D69	・
+E69	集計データをバッチであらかじめ作成することで速度改善を行う
+C71	検索項目についてケンサクコウモク
+D72	・
+E72	検索項目は以下の項目に固定とするケンサクコウモクイカコウモクコテイ
+E73	・
+F73	識別ID 1 : 集計タイプ(既存) シキベツキゾン
+E74	・
+F74	識別ID 2～3 :集計日(既存)シキベツビキゾン
+E75	・
+F75	識別ID 4～6:集計対象(新規)シキベツシンキ
+D76	・
+E76	売上集計用に検索項目に出力するフラグを店舗管理に持たせる(追加)ツイカ
+D77	・
+E77	今回のカスタマイズに伴い、下記項目は削除するコンカイトモナカキコウモクサクジョ
+E78	・
+F78	利用端末リヨウタンマツ
+E79	・
+F79	表示項目(注文) ※検索結果の出力項目が固定になるためヒョウジコウモクチュウモンケンサクケッカシュツリョクコウモクコテイ
+E80	・
+F80	表示項目(詳細) ※検索結果の出力項目が固定になるためヒョウジコウモクショウサイ
+D81	・
+E81	識別ID 1:集計タイプの切り替えを行うたびに、集計日の値が上書きされるシキベツシュウケイキカオコナシュウケイビアタイウワガ
+E82	・
+F82	集計タイプが「日別」の場合、集計日は「当月1日」から「当月末日」を自動入力シュウケイニチベツバアイシュウケイビトウゲツニチトウゲツマツジツジドウニュウリョク
+E83	・
+F83	集計タイプが「月別」の場合、集計月は「2か月前」から「当月」を自動入力シュウケイゲツベツバアイシュウケイツキゲツマエトウゲツジドウニュウリョク
+D84	・
+E84	識別ID 4:集計対象(通販)にチェックを入れた場合、通販の売上集計を行うシキベツシュウケイタイショウツウハンイバアイツウハンウリアゲシュウケイオコナ
+D85	・
+E85	識別ID 5:集計対象(各店舗)の追加。店舗一覧から売上集計したい店舗にチェックを入れるシキベツシュウケイタイショウカクテンポツイカテンポイチランウリアゲシュウケイテンポイ
+E86	初期設定として、店舗一覧にログインしたユーザーが所属している店舗にチェックが入った状態で表示される(追加)ショキセッテイテンポイチランショゾクテンポハイジョウタイヒョウジ
+D87	・
+E87	識別ID 6:店舗全選択/全解除のチェックボックスは、識別ID 5:集計対象(各店舗)の全チェックボックスと連動シキベツカクゼン
+E88	チェックを入れると、識別ID 5:集計対象(各店舗)にある全店舗のチェックボックスにチェックが入るイカクゼンテンポハイ
+E89	チェックを外すと、識別ID 5:集計対象(各店舗)にある全店舗のチェックボックスにチェックが外れるハズカクゼンテンポハズ
+C91	スマレジについて
+D92	・
+E92	スマレジの取引データは基本的にリアルタイムに送信されるトリヒキキホンテキソウシン
+D93	・
+E93	本店のほか、支店やスマレジの取引情報も集計対象として取り扱うホンテンシテントリヒキジョウホウシュウケイタイショウトアツカ
+B96	識別IDシキベツ
+E96	ラベル
+M96	書式・制限ショシキセイゲン
+T96	必須ヒッス
+V96	最大文字数 / または最大値サイダイモジスウサイダイチ
+Z96	初期値ショキチ
+AG96	画面部品の説明
+B97	1
+E97	集計タイプシュウケイ
+M97	ラジオボックス
+T97	〇
+Z97	-
+AG97	集計範囲を日時・月次のいずれかを選択シュウケイハンイニチジゲツジセンタク
+B98	2
+E98	集計日(From)シュウケイヒ
+M98	日付(yyyy/mm/dd)ヒヅケ
+T98	〇
+Z98	当月1日トウゲツニチ
+AG98	集計開始日付を指定するシュウケイカイシヒヅケシテイ
+B99	3
+E99	集計日(To)シュウケイヒ
+M99	日付(yyyy/mm/dd)ヒヅケ
+T99	〇
+Z99	当月末日トウゲツマツジツ
+AG99	集計終了日付を指定するシュウケイシュウリョウヒヅケシテイ
+B100	4
+E100	集計対象(通販)シュウケイタイショウツウハン
+M100	チェックボックス
+T100	-
+Z100	-
+AG100	検索結果に「通販売上集計」を含める場合はチェックを入れるケンサクケッカツウハンウリアゲシュウケイフクバアイイ
+B101	5
+E101	集計対象(各店舗)シュウケイタイショウカクテンポ
+M101	チェックボックス / (店舗毎)テンポゴト
+T101	-
+Z101	-
+AG101	店舗一覧から「店舗売上集計」をしたい店舗にチェックを入れる。ログインユーザーの所属店舗には自動的にチェックが入る。テンポイチランテンポウリアゲシュウケイテンポイショゾクテンポジドウテキハイ
+B102	6
+E102	店舗全選択/全解除テンポゼンセンタクゼンカイジョ
+M102	チェックボックス
+T102	-
+Z102	-
+AG102	チェックボックスの設定に沿って、すべての各店舗のチェックボックスと連動セッテイソカクテンポレンドウ
+B103	7
+E103	検索ボタンケンサク
+M103	ボタン
+T103	-
+Z103	-
+AG103	検索を実行するケンサクジッコウ
+B104	8
+E104	検索枠表示・非表示ボタンケンサクワクヒョウジヒヒョウジ
+M104	ボタン
+T104	-
+Z104	-
+AG104	検索枠(識別ID 1～6)の表示・非表示ケンサクワクシキベツヒョウジヒヒョウジ
+
+=== sheet5 ===
+A1	ドキュメント名
+I1	分析・集計管理機能
+U1	セクション
+A2	プロジェクト名
+I2	サイトリニューアル
+U2	作成者
+Y2	高久タカク
+AC2	作成日
+AG2	45847
+AK2	更新者
+AS2	更新日
+A4	機能Noキノウ
+D4	M12-01
+I4	機能名
+N4	日別・月別集計 集計一覧表示
+AC4	概要
+AG4	受注データを使って日別・月別の集計を行うことが可能ジュチュウツカヒベツツキベツシュウケイオコナカノウ
+B6	レイアウト図ズ
+B48	カスタマイズ説明セツメイ
+B49	・カスタマイズ要件ヨウケン
+C50	・
+D50	集計方式の変更シュウケイホウシキヘンコウ
+C51	・
+D51	検索項目についてケンサクコウモク
+C52	・
+D52	スマレジについて
+C54	カスタマイズ要件に記載の内容以外は現行踏襲とする
+B57	処理概要（★はカスタマイズ項目）ショリガイヨウコウモク
+B58	概要ガイヨウ
+C59	受注データを使って日別・月別の集計を行うことが可能
+B61	機能キノウ
+C62	現行機能をベースに下記のカスタマイズを行う
+C64	集計方式の変更
+D65	・
+E65	集計は売上として計上できるものとし、それ以外の対応状況は計上しないシュウケイウリアゲケイジョウイガイタイオウジョウキョウケイジョウ
+E66	(注文ステータスが「出荷完了」のみ集計対象とする)チュウモンシュッカカンリョウシュウケイタイショウ
+D67	・
+E67	集計データをバッチであらかじめ作成することで速度改善を行う
+C69	検索項目についてケンサクコウモク
+D70	・
+E70	検索項目は以下の項目に固定とするケンサクコウモクイカコウモクコテイ
+E71	・
+F71	識別ID 1 : 集計タイプ(既存) シキベツキゾン
+E72	・
+F72	識別ID 2～3 :集計日(既存)シキベツビキゾン
+E73	・
+F73	識別ID 4～5:集計対象(新規)シキベツシンキ
+D74	・
+E74	売上集計用に検索項目に出力するフラグを店舗管理に持たせる(追加)ツイカ
+D75	・
+E75	今回のカスタマイズに伴い、下記項目は削除するコンカイトモナカキコウモクサクジョ
+E76	・
+F76	利用端末リヨウタンマツ
+E77	・
+F77	表示項目(注文) ※検索結果の出力項目が固定になるためヒョウジコウモクチュウモンケンサクケッカシュツリョクコウモクコテイ
+E78	・
+F78	表示項目(詳細) ※検索結果の出力項目が固定になるためヒョウジコウモクショウサイ
+D79	・
+E79	売上集計用に検索項目に出力するフラグを店舗管理に持たせる
+D80	・
+E80	識別ID 1:集計タイプの切り替えを行うたびに、集計日の値が上書きされるシキベツシュウケイキカオコナシュウケイビアタイウワガ
+E81	・
+F81	集計タイプが「日別」の場合、集計日は「当月1日」から「当月末日」を自動入力シュウケイニチベツバアイシュウケイビトウゲツニチトウゲツマツジツジドウニュウリョク
+E82	・
+F82	集計タイプが「月別」の場合、集計月は「2か月前」から「当月」を自動入力シュウケイゲツベツバアイシュウケイツキゲツマエトウゲツジドウニュウリョク
+D83	・
+E83	識別ID 4:集計対象(通販)にチェックを入れた場合、通販の売上集計を行うシキベツシュウケイタイショウツウハンイバアイツウハンウリアゲシュウケイオコナ
+D84	・
+E84	識別ID 5:集計対象(各店舗)の追加。店舗一覧から売上集計したい店舗にチェックを入れるシキベツシュウケイタイショウカクテンポツイカテンポイチランウリアゲシュウケイテンポイ
+E85	初期設定として、店舗一覧にログインしたユーザーが所属している店舗にチェックが入った状態で表示される(追加)ショキセッテイテンポイチランショゾクテンポハイジョウタイヒョウジ
+D86	・
+E86	識別ID 6:店舗全選択/全解除のチェックボックスは、識別ID 5:集計対象(各店舗)の全チェックボックスと連動シキベツカクゼン
+E87	チェックを入れると、識別ID 5:集計対象(各店舗)にある全店舗のチェックボックスにチェックが入るイカクゼンテンポハイ
+E88	チェックを外すと、識別ID 5:集計対象(各店舗)にある全店舗のチェックボックスにチェックが外れるハズカクゼンテンポハズ
+C90	スマレジについて
+D91	・
+E91	スマレジの取引データは基本的にリアルタイムに送信されるトリヒキキホンテキソウシン
+D92	・
+E92	本店のほか、支店やスマレジの取引情報も集計対象として取り扱うホンテンシテントリヒキジョウホウシュウケイタイショウトアツカ
+B95	識別IDシキベツ
+E95	ラベル
+M95	書式・制限ショシキセイゲン
+T95	必須ヒッス
+V95	最大文字数 / または最大値サイダイモジスウサイダイチ
+Z95	初期値ショキチ
+AG95	画面部品の説明
+B96	1
+E96	集計タイプシュウケイ
+M96	ラジオボックス
+T96	〇
+Z96	-
+AG96	集計範囲を日時・月次のいずれかを選択シュウケイハンイニチジゲツジセンタク
+B97	2
+E97	集計月(From)シュウケイツキ
+M97	年月(yyyy-mm)ネンツキ
+T97	〇
+Z97	2か月前の月初ゲツマエゲッショ
+AG97	集計開始年月を指定するシュウケイカイシネンヅキシテイ
+B98	3
+E98	集計月(To)シュウケイツキ
+M98	年月(yyyy-mm)ネンツキ
+T98	〇
+Z98	当月トウゲツ
+AG98	集計終了年月を指定するシュウケイシュウリョウネンヅキシテイ
+B99	4
+E99	集計対象(通販)シュウケイタイショウツウハン
+M99	チェックボックス
+T99	-
+Z99	-
+AG99	検索結果に「通販売上集計」を含める場合はチェックを入れるケンサクケッカツウハンウリアゲシュウケイフクバアイイ
+B100	5
+E100	集計対象(各店舗)シュウケイタイショウカクテンポ
+M100	チェックボックス / (店舗毎)テンポゴト
+T100	-
+Z100	-
+AG100	店舗一覧から「店舗売上集計」をしたい店舗にチェックを入れる。ログインユーザーの所属店舗には自動的にチェックが入る。テンポイチランテンポウリアゲシュウケイテンポイショゾクテンポジドウテキハイ
+B101	6
+E101	店舗全選択/全解除テンポゼンセンタクゼンカイジョ
+M101	チェックボックス
+T101	-
+Z101	-
+AG101	チェックボックスの設定に沿って、すべての各店舗のチェックボックスと連動セッテイソカクテンポレンドウ
+B102	7
+E102	検索ボタンケンサク
+M102	ボタン
+T102	-
+Z102	-
+AG102	検索を実行するケンサクジッコウ
+B103	8
+E103	検索枠表示・非表示ボタンケンサクワクヒョウジヒヒョウジ
+M103	ボタン
+T103	-
+Z103	-
+AG103	検索枠(識別ID 1～6)の表示・非表示ケンサクワクシキベツヒョウジヒヒョウジ
+
+=== sheet7 ===
+A1	ドキュメント名
+I1	分析・集計管理機能
+U1	セクション
+A2	プロジェクト名
+I2	サイトリニューアル
+U2	作成者
+Y2	高久タカク
+AC2	作成日
+AG2	45847
+AK2	更新者
+AO2	堀部ホリベ 
+AS2	更新日
+AW2	45958
+A4	機能Noキノウ
+D4	M12-01
+I4	機能名
+N4	日別・月別集計 集計一覧表示
+AC4	概要
+AG4	受注データを使って日別・月別の集計を行うことが可能ジュチュウツカヒベツツキベツシュウケイオコナカノウ
+B6	レイアウト図ズ
+B38	カスタマイズ説明セツメイ
+B39	・カスタマイズ要件ヨウケン
+C40	・
+D40	集計方式の変更ホウシキヘンコウ
+C41	・
+D41	集計項目の固定
+C42	・
+D42	スマレジについて
+C44	カスタマイズ要件に記載の内容以外は現行踏襲とする
+B47	処理概要（★はカスタマイズ項目）ショリガイヨウコウモク
+C49	概要
+D50	受注データを使って日別・月別の集計を行うことが可能
+B52	★
+C52	集計方式の変更
+D53	・
+E53	販売関連の集計は注文データの注文ステータスが「出荷完了」のみ計上し、それ以外の注文ステータスは計上しないハンバイカンレンシュウケイチュウモンチュウモンシュッカカンリョウケイジョウイガイチュウモンケイジョウ
+D54	・
+E54	買取関連の集計は買取データの買取ステータスが「買取成立」のみ計上し、それ以外の買取ステータスは計上しないカイトリカンレンシュウケイカイトリカイトリケイジョウイガイカイトリケイジョウ
+B56	★
+C56	集計項目の固定
+D57	今回のカスタマイズで、結果出力時の項目を固定とするコンカイケッカシュツリョクジコウモクコテイ
+D58	・
+E58	識別ID 2: 「支店名」を追加。「通販」もしくは指定された「店舗名」または「その他」を出力シキベツシテンメイツイカツウハンシテイテンポメイタシュツリョク
+F59	※「その他」は通販・各店舗に該当しない売上を計上タツウハンカクテンポガイトウウリアゲケイジョウ
+D60	・
+E60	識別ID 3: 「総売上」を追加。通販・店舗毎の売上総件数を出力シキベツソウウリアゲツイカツウハンテンポゴトウリアゲソウケンスウシュツリョク
+D61	・
+E61	識別ID 4: 「原価」を追加。通販・店舗毎の原価合計を出力シキベツゲンカツイカツウハンテンポゴトゲンカゴウケイシュツリョク
+D62	・
+E62	識別ID 5: 「粗利益高」を追加。通販・店舗毎の粗利益高を出力シキベツアラリエキダカツイカツウハンテンポゴトアラリエキダカシュツリョク
+F63	計算式 : 粗利益高=総売上 - 原価ケイサンシキアラリエキダカソウウリアゲゲンカ
+D64	・
+E64	識別ID 6 : 「販売点数」を追加。通販・店舗毎の販売点数を出力シキベツハンバイテンスウツイカツウハンテンポゴトハンバイテンスウシュツリョク
+D65	・
+E65	識別ID 7: 「取引数」を追加。通販・店舗毎の取引数を出力シキベツトリヒキスウツイカツウハンテンポゴトトリヒキスウシュツリョク
+D66	・
+E66	識別ID 8: 「取引単価(平均)」を追加。通販・店舗毎に1回の取引に対しての購入金額平均を出力シキベツトリヒキタンカヘイキンツイカカイトリヒキタイコウニュウキンガクヘイキンシュツリョク
+D67	・
+E67	識別ID 9: 「買取件数」を追加。通販・店舗毎に買取が行われた取引件数シキベツカイトリケンスウツイカカイトリオコナトリヒキケンスウ
+D68	・
+E68	識別ID 10: 「買取金額」を追加。通販・店舗毎の買取合計を出力シキベツカイトリキンガクツイカカイトリゴウケイシュツリョク
+D69	・
+E69	識別ID 11: 「廃棄」を追加。在庫変動区分が「廃棄」となっているものを集計し廃棄コスト合計を出力シキベツハイキツイカザイコヘンドウクブン ハイキ シュウケイシ ハイキゴウケイシュツリョク
+D70	・
+E70	識別ID 12: 「欠品」を追加。在庫変動区分が「欠品」となっているものを集計しコスト合計を出力シキベツケッピン ツイカザイコヘンドウクブン ケッピン シュウケイシ ゴウケイシュツリョク
+D71	・
+E71	識別ID 14: 「総合計」を追加。識別ID3～12各列のそれぞれの総合計を出力シキベツ
+B73	★
+C73	スマレジについて
+D74	・
+E74	スマレジの取引データは基本的にリアルタイムに送信されるトリヒキキホンテキソウシン
+D75	・
+E75	本店のほか、支店やスマレジの取引情報も集計対象として取り扱うホンテンシテントリヒキジョウホウシュウケイタイショウトアツカ
+B78	識別IDシキベツ
+E78	ラベル
+M78	書式・制限ショシキセイゲン
+T78	必須ヒッス
+V78	最大文字数 / または最大値サイダイモジスウサイダイチ
+Z78	初期値ショキチ
+AG78	画面部品の説明
+B79	1
+E79	集計月シュウケイツキ
+M79	テキスト(年月)ネンゲツ
+T79	-
+V79	-
+Z79	-
+B80	2
+E80	店舗名テンポメイ
+M80	テキスト
+T80	-
+V80	-
+Z80	-
+AG80	※カスタマイズ対応、新規項目タイオウシンキコウモク
+B81	3
+E81	総売上ソウウリアゲ
+M81	数値(整数)スウチセイスウ
+T81	-
+V81	-
+Z81	-
+AG81	※カスタマイズ対応、新規項目タイオウシンキコウモク
+B82	4
+E82	原価ゲンカ
+M82	数値(整数)スウチセイスウ
+T82	-
+V82	-
+Z82	-
+AG82	※カスタマイズ対応、新規項目タイオウシンキコウモク
+B83	5
+E83	粗利益高アラリエキダカ
+M83	数値(整数)スウチセイスウ
+T83	-
+V83	-
+Z83	-
+AG83	※カスタマイズ対応、新規項目タイオウシンキコウモク
+B84	6
+E84	販売点数ハンバイテンスウ
+M84	数値(整数)スウチセイスウ
+T84	-
+V84	-
+Z84	-
+AG84	※カスタマイズ対応、新規項目。タイオウシンキコウモク
+B85	7
+E85	取引数トリヒキスウ
+M85	数値(整数)スウチセイスウ
+T85	-
+V85	-
+Z85	-
+AG85	※カスタマイズ対応、新規項目タイオウシンキコウモク
+B86	8
+E86	取引単価(平均)トリヒキタンカヘイキン
+M86	数値(整数)スウチセイスウ
+T86	-
+V86	-
+Z86	-
+AG86	※カスタマイズ対応、新規項目タイオウシンキコウモク
+B87	9
+E87	買取件数カイトリケンスウ
+M87	数値(整数)スウチセイスウ
+T87	-
+V87	-
+Z87	-
+AG87	※カスタマイズ対応、新規項目タイオウシンキコウモク
+B88	10
+E88	買取金額カイトリキンガク
+M88	数値(整数)スウチセイスウ
+T88	-
+V88	-
+Z88	-
+AG88	※カスタマイズ対応、新規項目タイオウシンキコウモク
+B89	11
+E89	廃棄
+M89	数値(整数)スウチセイスウ
+T89	-
+V89	-
+Z89	-
+AG89	※カスタマイズ対応、新規項目。 / 　在庫変動区分が「廃棄」となっているものタイオウシンキコウモクハイキリユウハンメイ
+B90	12
+E90	欠品
+M90	数値(整数)スウチセイスウ
+T90	-
+V90	-
+Z90	-
+AG90	※カスタマイズ対応、新規項目。 / 　在庫変動区分が「欠品」となっているものタイオウシンキコウモクハイキリユウハンメイバアイ
+B91	13
+E91	CSVダウンロード
+M91	リンク
+T91	-
+V91	-
+Z91	-
+B92	14
+E92	総合計ソウゴウケイ
+M92	数値(整数)スウチセイスウ
+T92	-
+V92	-
+Z92	-
+AG92	※カスタマイズ対応、新規項目タイオウシンキコウモク
+
+=== sheet8 ===
+A1	ドキュメント名
+I1	分析・集計管理機能
+U1	セクション
+A2	プロジェクト名
+I2	サイトリニューアル
+U2	作成者
+Y2	高久タカク
+AC2	作成日
+AG2	45847
+AK2	更新者
+AO2	堀部ホリベ 
+AS2	更新日
+AW2	45958
+A4	機能Noキノウ
+D4	M12-02
+I4	機能名
+N4	日別・月別集計 CSV出力
+AC4	概要
+AG4	受注データを使って日別・月別の集計のCSVダウンロードを行うことが可能
+B6	M12-02 日別・月別集計 CSV出力
+B7	識別ID
+E7	項目名
+M7	備考
+B8	1
+E8	集計日 または 集計月シュウケイビシュウケイツキ
+M8	※集計タイプ(日別・月別)によってヘッダー項目名が差し替わるシュウケイニチベツツキベツコウモクメイサカ
+B9	2
+E9	店舗名テンポメイ
+M9	※カスタマイズ対応、カラム情報は固定ジョウホウコテイ
+B10	3
+E10	総売上ソウウリアゲ
+M10	※カスタマイズ対応、カラム情報は固定ジョウホウコテイ
+B11	4
+E11	原価ゲンカ
+M11	※カスタマイズ対応、カラム情報は固定ジョウホウコテイ
+B12	5
+E12	粗利益高アラリエキダカ
+M12	※カスタマイズ対応、カラム情報は固定ジョウホウコテイ
+B13	6
+E13	販売点数ハンバイテンスウ
+M13	※カスタマイズ対応、カラム情報は固定ジョウホウコテイ
+B14	7
+E14	取引数トリヒキスウ
+M14	※カスタマイズ対応、カラム情報は固定ジョウホウコテイ
+B15	8
+E15	取引単価(平均)トリヒキタンカヘイキン
+M15	※カスタマイズ対応、カラム情報は固定ジョウホウコテイ
+B16	9
+E16	買取件数カイトリケンスウ
+M16	※カスタマイズ対応、カラム情報は固定ジョウホウコテイ
+B17	10
+E17	買取金額カイトリキンガク
+M17	※カスタマイズ対応、カラム情報は固定ジョウホウコテイ
+B18	11
+E18	廃棄
+M18	※カスタマイズ対応、カラム情報は固定ジョウホウコテイ
+B19	12
+E19	欠品
+M19	※カスタマイズ対応、カラム情報は固定ジョウホウコテイ
+B21	カスタマイズ説明セツメイ
+B22	・カスタマイズ要件ヨウケン
+C23	・
+D23	集計項目の固定
+C24	・
+D24	スマレジについて
+C26	カスタマイズ要件に記載の内容以外は現行踏襲とする
+B29	処理概要（★はカスタマイズ項目）ショリガイヨウコウモク
+C30	概要
+D31	受注データを使って日別・月別の集計のCSVダウンロードを行うことが可能
+B33	★
+C33	集計項目の固定
+D34	今回のカスタマイズで、結果出力時の項目を固定とするコンカイケッカシュツリョクジコウモクコテイ
+D35	・
+E35	識別ID 2: 「支店名」を追加。「通販」もしくは指定された「店舗名」または「その他」を出力シキベツシテンメイツイカツウハンシテイテンポメイタシュツリョク
+F36	※「その他」は通販・各店舗に該当しない売上を計上タツウハンカクテンポガイトウウリアゲケイジョウ
+D37	・
+E37	識別ID 3: 「総売上」を追加。通販・店舗毎の売上総件数を出力シキベツソウウリアゲツイカツウハンテンポゴトウリアゲソウケンスウシュツリョク
+D38	・
+E38	識別ID 4: 「原価」を追加。通販・店舗毎の原価合計を出力シキベツゲンカツイカツウハンテンポゴトゲンカゴウケイシュツリョク
+D39	・
+E39	識別ID 5: 「粗利益高」を追加。通販・店舗毎の粗利益高を出力シキベツアラリエキダカツイカツウハンテンポゴトアラリエキダカシュツリョク
+F40	計算式 : 粗利益高=総売上 - 原価ケイサンシキアラリエキダカソウウリアゲゲンカ
+D41	・
+E41	識別ID 6 : 「販売点数」を追加。通販・店舗毎の販売点数を出力シキベツハンバイテンスウツイカツウハンテンポゴトハンバイテンスウシュツリョク
+D42	・
+E42	識別ID 7: 「取引数」を追加。通販・店舗毎の取引数を出力シキベツトリヒキスウツイカツウハンテンポゴトトリヒキスウシュツリョク
+D43	・
+E43	識別ID 8: 「取引単価(平均)」を追加。通販・店舗毎に1回の取引に対しての購入金額平均を出力シキベツトリヒキタンカヘイキンツイカカイトリヒキタイコウニュウキンガクヘイキンシュツリョク
+D44	・
+E44	識別ID 9: 「買取件数」を追加。通販・店舗毎に買取が行われた取引件数シキベツカイトリケンスウツイカカイトリオコナトリヒキケンスウ
+D45	・
+E45	識別ID 10: 「買取金額」を追加。通販・店舗毎の買取合計を出力シキベツカイトリキンガクツイカカイトリゴウケイシュツリョク
+D46	・
+E46	識別ID 11: 「廃棄」を追加。在庫変動区分が「廃棄」となっているものを集計し廃棄コスト合計を出力シキベツハイキツイカザイコヘンドウクブン ハイキ シュウケイシ ハイキゴウケイシュツリョク
+D47	・
+E47	識別ID 12: 「欠品」を追加。在庫変動区分が「欠品」となっているものを集計しコスト合計を出力シキベツケッピン ツイカザイコヘンドウクブン ケッピン シュウケイシ ゴウケイシュツリョク
+D48	・
+E48	最終行には「総合計」を追加。識別ID3～12各列のそれぞれの総合計を出力サイシュウギョウ
+B50	★
+C50	スマレジについて
+D51	・
+E51	スマレジの取引データは基本的にリアルタイムに送信されるトリヒキキホンテキソウシン
+D52	・
+E52	本店のほか、支店やスマレジの取引情報も集計対象として取り扱うホンテンシテントリヒキジョウホウシュウケイタイショウトアツカ
+
+=== sheet9 ===
+A1	ドキュメント名
+I1	分析・集計管理機能
+U1	セクション
+A2	プロジェクト名
+I2	サイトリニューアル
+U2	作成者
+Y2	高久タカク
+AC2	作成日
+AG2	45847
+AK2	更新者
+AO2	堀部ホリベ 
+AS2	更新日
+AW2	45958
+A4	機能Noキノウ
+D4	M12-03
+I4	機能名
+N4	受注/売上分析 集計一覧(検索項目)コウモク
+AC4	概要
+AG4	受注データを使って集計単位を指定して集計を行うことが可能ジュチュウツカシュウケイタンイシテイシュウケイオコナカノウ
+B6	レイアウト図ズ
+BC17	店舗の検索はあるが、出力項目に店舗がないため、テンポケンサクシュツリョクコウモクテンポ
+BC18	指定された店舗すべてで集計でよいかシテイテンポシュウケイ
+BG19	ここにすべての店舗の集計を含むテンポシュウケイフク
+B59	カスタマイズ説明セツメイ
+B60	・カスタマイズ要件ヨウケン
+C61	・
+D61	検索項目についてケンサクコウモク
+C62	・
+D62	スマレジについて
+C63	・
+D63	集計単位の選択肢を商品・カテゴリのみとし、支払方法、購入グループ、都道府県、性別、利用端末、年代(会員)は削除するシュウケイタンイ センタクシ ショウヒン サクジョスル 
+C65	カスタマイズ要件に記載の内容以外は現行踏襲とする
+B68	処理概要（★はカスタマイズ項目）ショリガイヨウコウモク
+B69	概要
+C70	受注データを使って集計単位を指定して集計を行うことが可能
+B72	機能
+C73	現行機能をベースに下記のカスタマイズを行う
+B75	検索項目についてコウモク
+C76	・
+D76	下記の項目を削除カキコウモクサクジョ
+D77	・
+E77	生年月日セイネンガッピ
+D78	・
+E78	性別セイベツ
+D79	・
+E79	都道府県トドウフケン
+D80	・
+E80	利用端末リヨウタンマツ
+C82	・
+D82	識別ID 3:集計対象(通販)にチェックを入れた場合、通販の売上集計を行うシキベツシュウケイタイショウツウハンイバアイツウハンウリアゲシュウケイオコナ
+C83	・
+D83	識別ID 4:集計対象(各店舗)の追加。店舗一覧から売上集計したい店舗にチェックを入れるシキベツシュウケイタイショウカクテンポツイカテンポイチランウリアゲシュウケイテンポイ
+D84	初期設定として、店舗一覧にログインしたユーザーが所属している店舗にチェックが入った状態で表示される(追加)ショキセッテイテンポイチランショゾクテンポハイジョウタイヒョウジ
+C85	・
+D85	識別ID 5:店舗全選択/全解除のチェックボックスは、識別ID 5:集計対象(各店舗)の全チェックボックスと連動シキベツカクゼン
+D86	チェックを入れると、識別ID 5:集計対象(各店舗)にある全店舗のチェックボックスにチェックが入るイカクゼンテンポハイ
+D87	チェックを外すと、識別ID 5:集計対象(各店舗)にある全店舗のチェックボックスにチェックが外れるハズカクゼンテンポハズ
+C89	・
+D89	識別ID 7:集計日(To)について、デフォルトの値を当月末日に設定シキベツシュウケイビチトウゲツマツジツセッテイ
+D90	例レイ
+E90	2025-7-31  23:59:59
+C92	・
+D92	識別ID:8 集計単位の選択肢を商品・カテゴリのみとし、支払方法、購入グループ、都道府県、性別、利用端末、年代(会員)は削除するシキベツ シュウケイタンイ センタクシ ショウヒン サクジョスル 
+B94	スマレジについて
+C95	・
+D95	スマレジの取引データは基本的にリアルタイムに送信されるトリヒキキホンテキソウシン
+C96	・
+D96	本店のほか、支店やスマレジの取引情報も集計対象として取り扱うホンテンシテントリヒキジョウホウシュウケイタイショウトアツカ
+B99	識別IDシキベツ
+E99	ラベル
+M99	書式・制限ショシキセイゲン
+T99	必須ヒッス
+V99	最大値サイダイチ
+Z99	初期値ショキチ
+AG99	画面部品の説明
+B100	1
+E100	キーワード検索ケンサク
+M100	テキストボックス
+T100	-
+Z100	-
+AG100	検索対象 : 商品名(日/英)・カード名・商品コード・備考ケンサクタイショウショウヒンメイニチエイメイショウヒンビコウ
+B101	2
+E101	検索枠表示・非表示ボタンケンサクワクヒョウジヒヒョウジ
+M101	ボタン
+T101	-
+Z101	-
+AG101	検索枠(識別ID 2～15)の表示・非表示ケンサクワクシキベツヒョウジヒヒョウジ
+B102	3
+E102	集計対象(通販)シュウケイタイショウツウハン
+M102	チェックボックス
+T102	-
+Z102	-
+AG102	検索結果に「通販売上集計」を含める場合はチェックを入れるケンサクケッカツウハンウリアゲシュウケイフクバアイイ
+B103	4
+E103	集計対象(各店舗)シュウケイタイショウカクテンポ
+M103	チェックボックス / (店舗毎)テンポゴト
+T103	-
+Z103	-
+AG103	店舗一覧から「店舗売上集計」をしたい店舗にチェックを入れる。ログインユーザーの所属店舗には自動的にチェックが入る。テンポイチランテンポウリアゲシュウケイテンポイショゾクテンポジドウテキハイ
+B104	5
+E104	店舗全選択/全解除テンポゼンセンタクゼンカイジョ
+M104	チェックボックス
+T104	-
+Z104	-
+AG104	チェックボックスの設定に沿って、すべての各店舗のチェックボックスと連動セッテイソカクテンポレンドウ
+B105	6
+E105	集計日(From)シュウケイヒ
+M105	日時(yyyy/mm/dd hh:mm:ss)ニチジ
+T105	-
+Z105	当月1日トウゲツニチ
+AG105	集計開始日時を指定するシュウケイカイシニチジシテイ
+B106	7
+E106	集計日(To)シュウケイヒ
+M106	日時(yyyy/mm/dd hh:mm:ss)ニチジ
+T106	-
+Z106	当月末日トウゲツマツジツ
+AG106	集計終了日時を指定するシュウケイシュウリョウニチジシテイ
+B107	8
+E107	集計日対象項目シュウケイビタイショウコウモク
+M107	ラジオボックス
+T107	-
+Z107	-
+AG107	上記集計期間内で取得する項目を選択ジョウキシュウケイキカンナイシュトクコウモクセンタク
+B108	9
+E108	集計単位シュウケイタンイ
+M108	リストボックス
+T108	-
+Z108	-
+AG108	グループ化させる集計単位を指定 / 選択肢 : 商品,カテゴリ / 既存の下記選択肢は削除 / 支払方法、購入グループ、都道府県、性別、利用端末、年代(会員)カシュウケイタンイシテイセンタクシショウヒンキゾン カキ センタクシハ サクジョ 
+B109	10
+E109	並び替え(項目)ナラカコウモク
+M109	リストボックス
+T109	-
+Z109	-
+AG109	並べ替えする項目を指定ナラカコウモクシテイ
+B110	11
+E110	並び替え(並び順)ナラカナラジュン
+M110	ラジオボックス
+T110	-
+Z110	-
+AG110	上記の並び替え(項目)の並び順を指定 選択肢:昇順・降順ジョウキナラカコウモクナラジュンシテイセンタクシショウジュンコウジュン
+B111	12
+E111	件数ケンスウ
+M111	リストボックス
+T111	-
+Z111	-
+AG111	1ページに表示する件数 / 選択肢(赤文字は追加項目) / 10,50,100,300,500,1000,2000,10000,12000,15000,20000センタクシアカモジツイカコウモク
+B112	13
+E112	カテゴリ
+M112	リストボックス
+T112	-
+Z112	-
+AG112	集計したいカテゴリを指定シュウケイシテイ
+B113	14
+E113	状態ジョウタイ
+M113	チェックボックス
+T113	-
+Z113	-
+AG113	選択肢 : NM・SP・MP・HPセンタクシ
+B114	15
+E114	売上分析タグウリアゲブンセキ
+M114	複数テキストボックスフクスウ
+T114	-
+Z114	-
+AG114	商品管理 - 売上分析タグで登録されているデータから選択ショウヒンカンリウリアゲブンセキトウロクセンタク
+B115	16
+E115	カードセット
+M115	複数テキストボックスフクスウ
+T115	-
+Z115	-
+AG115	カード管理 - カードセット管理で登録されているデータから選択カンリカンリトウロクセンタク
+B116	17
+E116	平均単価ヘイキンタンカ
+M116	数値スウチ
+T116	-
+Z116	-
+B117	18
+E117	数量スウリョウ
+M117	数値スウチ
+T117	-
+Z117	-
+B118	19
+E118	検索条件をクリアケンサクジョウケン
+M118	リンク
+T118	-
+Z118	-
+B119	20
+E119	検索ボタンケンサク
+M119	ボタン
+T119	-
+Z119	-
+
+=== sheet10 ===
+A1	ドキュメント名
+I1	分析・集計管理機能
+U1	セクション
+A2	プロジェクト名
+I2	サイトリニューアル
+U2	作成者
+Y2	高久タカク
+AC2	作成日
+AG2	45847
+AK2	更新者
+AS2	更新日
+A4	機能Noキノウ
+D4	M12-03
+I4	機能名
+N4	受注売上分析 集計一覧(検索結果) / 集計単位:商品ショウヒン
+AC4	概要
+AG4	受注データを使って集計単位を指定して集計を行うことが可能ジュチュウツカシュウケイタンイシテイシュウケイオコナカノウ
+B6	レイアウト図ズ
+B42	カスタマイズ説明セツメイ
+B43	・カスタマイズ要件ヨウケン
+C44	・
+D44	出力結果項目についてシュツリョクケッカコウモク
+C45	・
+D45	スマレジについて
+C47	カスタマイズ要件に記載の内容以外は現行踏襲とする
+B50	処理概要（★はカスタマイズ項目）ショリガイヨウコウモク
+B51	概要
+C52	受注データを使って集計単位を指定して集計を行うことが可能
+C53	(集計日期間内の集計日対象項目の商品ごとの統計を行う)シュウケイビキカンナイショウヒントウケイオコナ
+B55	機能
+C56	現行機能をベースに下記のカスタマイズを行う
+B58	出力結果項目について
+C59	・
+D59	下記の項目を削除カキコウモクサクジョ
+D60	・
+E60	数量割合スウリョウワリアイ
+D61	・
+E61	合計割合ゴウケイワリアイ
+D62	・
+E62	件数割合ケンスウワリアイ
+B64	スマレジについて
+C65	・
+D65	スマレジの取引データは基本的にリアルタイムに送信されるトリヒキキホンテキソウシン
+C66	・
+D66	本店のほか、支店やスマレジの取引情報も集計対象として取り扱うホンテンシテントリヒキジョウホウシュウケイタイショウトアツカ
+B69	識別IDシキベツ
+E69	ラベル
+M69	書式・制限ショシキセイゲン
+T69	必須ヒッス
+V69	最大値サイダイチ
+Z69	初期値ショキチ
+AG69	画面部品の説明
+B70	1
+E70	商品コードショウヒン
+M70	ラベル
+T70	-
+V70	-
+Z70	-
+B71	2
+E71	商品名ショウヒンメイ
+M71	ラベル
+T71	-
+V71	-
+Z71	-
+B72	3
+E72	平均単価ヘイキンタンカ
+M72	ラベル
+T72	-
+V72	-
+Z72	-
+B73	4
+E73	数量スウリョウ
+M73	ラベル
+T73	-
+V73	-
+Z73	-
+B74	5
+E74	合計ゴウケイ
+M74	ラベル
+T74	-
+V74	-
+Z74	-
+B75	6
+E75	件数ケンスウ
+M75	ラベル
+T75	-
+V75	-
+Z75	-
+B76	7
+E76	数量累計スウリョウルイケイ
+M76	ラベル
+T76	-
+V76	-
+Z76	-
+AG76	識別ID  4 :「数量」の総合計シキベツスウリョウソウゴウケイ
+B77	8
+E77	合計累計ゴウケイルイケイ
+M77	ラベル
+T77	-
+V77	-
+Z77	-
+AG77	識別ID  5 :「合計」の総合計シキベツゴウケイソウゴウケイ
+B78	9
+E78	件数累計ケンスウルイケイ
+M78	ラベル
+T78	-
+V78	-
+Z78	-
+AG78	識別ID  6 :「件数」の総合計シキベツケンスウソウゴウケイ
+B79	10
+E79	CSVダウンロード
+M79	リンク
+T79	-
+V79	-
+Z79	-
+
+=== sheet19 ===
+A1	ドキュメント名
+I1	分析・集計管理機能
+U1	セクション
+A2	プロジェクト名
+I2	サイトリニューアル
+U2	作成者
+Y2	高久タカク
+AC2	作成日
+AG2	45847
+AK2	更新者
+AS2	更新日
+A4	機能Noキノウ
+D4	M12-08
+I4	機能名
+N4	フォーマット売上分析 CSV出力シュツリョク
+AC4	概要
+AG4	受注データを使って受注データに紐づく売上分析タグ別に集計を行うことが可能
+B6	M12-08 フォーマット売上分析 CSVダウンロード
+B7	識別ID
+E7	項目名
+M7	備考
+B8	1
+E8	日ヒ
+B9	2
+E9	スタンダード
+B10	3
+E10	パイオニア(RTR～)
+B11	4
+E11	モダン(MRD～M13)
+B12	5
+E12	レガシー
+B13	6
+E13	ヴィンテージ
+B14	7
+E14	スタンFoil
+B15	8
+E15	絶版Foil(スタン除く)ゼッパンノゾ
+B16	9
+E16	サプライ
+B17	10
+B18	11
+B19	12
+B20	13
+B21	14
+B22	15
+B23	α-2
+E23	その他(カード)タ
+B24	α-1
+E24	その他タ
+B25	α
+E25	合計ゴウケイ
+B27	カスタマイズ説明セツメイ
+B28	・カスタマイズ要件ヨウケン
+C29	・
+D29	スマレジについて
+C31	カスタマイズ要件に記載の内容以外は現行踏襲とする
+B33	処理概要（★はカスタマイズ項目）ショリガイヨウコウモク
+B34	概要
+C35	受注データを使って受注データに紐づく売上分析タグ別に集計を行うことが可能
+B37	機能
+C38	現行機能をベースに下記のカスタマイズを行う
+B40	スマレジについて
+C41	・
+D41	スマレジの取引データは基本的にリアルタイムに送信されるトリヒキキホンテキソウシン
+C42	・
+D42	本店のほか、支店やスマレジの取引情報も集計対象として取り扱うホンテンシテントリヒキジョウホウシュウケイタイショウトアツカ
+
+=== sheet20 ===
+A1	ドキュメント名
+I1	分析・集計管理機能
+U1	セクション
+A2	プロジェクト名
+I2	サイトリニューアル
+U2	作成者
+Y2	高久タカク
+AC2	作成日
+AG2	45847
+AK2	更新者
+AS2	更新日
+A4	機能Noキノウ
+D4	M12-09
+I4	機能名
+N4	特集タグ編集CSVダウンロード
+AC4	概要
+AG4	特集タグ編集CSVをダウンロードすることができる
+B6	レイアウト図ズ
+B23	カスタマイズ説明セツメイ
+B24	・カスタマイズ要件ヨウケン
+C25	・
+D25	採用枚数略式CSVダウンロードの廃止
+C27	カスタマイズ要件に記載の内容以外は現行踏襲とする
+B29	処理概要（★はカスタマイズ項目）ショリガイヨウコウモク
+B30	概要
+C31	特集タグ編集CSVをダウンロードすることができる
+B33	機能
+C34	現行機能をベースに下記のカスタマイズを行う
+B36	採用枚数略式CSVダウンロードの廃止
+C37	・
+D37	採用枚数略式CSVダウンロードは利用頻度が少ないため、今回のカスタマイズで廃止するリヨウヒンドスクコンカイハイシ
+C38	・
+D38	特集タグ編集用CSVダウンロードは現行踏襲トクシュウヘンシュウヨウゲンコウトウシュウ
+B41	識別IDシキベツ
+E41	ラベル
+M41	書式・制限ショシキセイゲン
+T41	必須ヒッス
+V41	最大値サイダイチ
+Z41	初期値ショキチ
+AG41	画面部品の説明
+B42	1
+E42	集計日(From)シュウケイヒ
+M42	日付(yyyy/mm/dd)ヒヅケ
+T42	〇
+V42	-
+Z42	当月1日トウゲツニチ
+AG42	集計開始日付を指定するシュウケイカイシヒヅケシテイ
+B43	2
+E43	集計日(To)シュウケイヒ
+M43	日付(yyyy/mm/dd)ヒヅケ
+T43	-
+V43	-
+Z43	-
+AG43	集計終了日付を指定するシュウケイシュウリョウヒヅケシテイ
+C44	3
+E44	フォーマット
+M44	リスト
+T44	〇
+V44	-
+Z44	-
+AG44	商品カードのフォーマットから選択ショウヒンセンタク
+C45	4
+E45	基本土地項目追加キホントチコウモクツイカ
+M45	チェックボックス
+T45	-
+V45	-
+Z45	-
+B46	5
+E46	特集タグ編集CSVダウンロードトクシュウヘンシュウ
+M46	ボタン
+T46	-
+V46	-
+Z46	-
+
+exec
+/bin/bash -lc "uv run python - <<'PY'
+from zipfile import ZipFile
+from xml.etree import ElementTree as ET
+from pathlib import Path
+NS={'xdr':'http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing','a':'http://schemas.openxmlformats.org/drawingml/2006/main','r':'http://schemas.openxmlformats.org/officeDocument/2006/relationships'}
+p=Path('input/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx')
+mapd={4:2,5:3,7:5,8:None,9:6,10:7,19:13,20:14}
+with ZipFile(p) as z:
+  for sheet,draw in mapd.items():
+    print(f'\\nSHEET {sheet} drawing={draw}')
+    if draw is None: continue
+    root=ET.fromstring(z.read(f'xl/drawings/drawing{draw}.xml'))
+    for i,anchor in enumerate(list(root),1):
+      fr=anchor.find('xdr:from',NS); to=anchor.find('xdr:to',NS)
+      def pos(e):
+        if e is None:return '?'
+        return f\"r{int(e.find('xdr:row',NS).text)+1}c{int(e.find('xdr:col',NS).text)+1}\"
+      pics=anchor.findall('xdr:pic',NS); shapes=anchor.findall('xdr:sp',NS)
+      typ='pic' if pics else 'shape' if shapes else 'other'
+      txt='|'.join((t.text or '') for t in anchor.findall('.//a:t',NS))
+      print(i,typ,pos(fr),pos(to),txt[:160])
+PY" in /home/y-saito/Developments/hareruya-design-docs/excel_to_html
+ succeeded in 427ms:
+
+SHEET 4 drawing=2
+1 pic r7c4 r47c51 
+2 shape r15c19 ? 
+3 shape r15c3 ? (1)
+4 shape r15c15 ? (2)
+5 shape r15c26 ? (3)
+6 shape r22c4 ? (4)
+7 shape r45c18 ? (7)
+8 shape r11c36 ? (8)
+9 shape r23c15 ? (6)
+10 shape r32c2 ? (5)
+11 shape r26c4 r40c6 
+
+SHEET 5 drawing=3
+1 pic r7c3 r44c50 
+2 shape r15c19 ? 
+3 shape r15c2 ? (1)
+4 shape r15c14 ? (2)
+5 shape r15c25 ? (3)
+6 shape r22c3 ? (4)
+7 shape r41c16 ? (7)
+8 shape r11c35 ? (8)
+9 shape r24c15 ? (6)
+10 shape r32c1 ? (5)
+11 shape r26c3 r40c5 
+
+SHEET 7 drawing=5
+1 pic r7c5 r35c47 
+2 shape r15c19 ? 
+3 shape r15c4 ? (1)
+4 shape r15c8 ? (2)
+5 shape r15c12 ? (3)
+6 shape r15c15 ? (4)
+7 shape r15c27 ? (8)
+8 shape r15c30 ? (9)
+9 shape r15c24 ? (7)
+10 shape r15c37 ? (11)
+11 shape r15c18 ? (5)
+12 shape r15c22 ? (6)
+13 shape r15c33 ? (10)
+14 shape r15c41 ? (12)
+15 shape r33c3 ? (13)
+16 shape r15c47 ? (14)
+
+SHEET 8 drawing=None
+
+SHEET 9 drawing=6
+1 pic r7c7 r55c48 
+2 shape r14c19 ? 
+3 shape r9c18 ? (1)
+4 shape r10c39 ? (2)
+5 shape r15c7 ? (3)
+6 shape r24c6 ? (4)
+7 shape r31c39 ? (8)
+8 shape r38c7 ? (10)
+9 shape r31c20 ? (7)
+10 shape r38c34 ? (12)
+11 shape r37c22 ? (11)
+12 shape r41c7 ? (13)
+13 shape r41c28 ? (14)
+14 shape r45c7 ? (15)
+15 shape r45c26 ? (16)
+16 shape r48c26 ? (18)
+17 shape r48c7 ? (17)
+18 shape r51c22 ? (19)
+19 shape r34c8 ? (9)
+20 shape r31c11 ? (6)
+21 shape r17c17 ? (5)
+22 shape r19c8 r30c10 
+23 shape r53c18 ? (20)
+24 pic r20c55 r25c62 
+25 shape r20c58 r25c62 
+
+SHEET 10 drawing=7
+1 pic r7c6 r39c49 
+2 shape r14c19 ? 
+3 shape r18c6 ? (1)
+4 shape r18c13 ? (2)
+5 shape r18c35 ? (3)
+6 shape r18c39 ? (4)
+7 shape r18c42 ? (5)
+8 shape r38c42 ? (8)
+9 shape r38c45 ? (9)
+10 shape r38c39 ? (7)
+11 shape r18c45 ? (6)
+12 shape r17c49 ? (10)
+
+SHEET 19 drawing=13
+1 shape r9c2 r22c51 売上分析タグ登録件数分の項目の日別集計|(|可変|)
+
+SHEET 20 drawing=14
+1 pic r11c6 r20c45 
+2 shape r14c19 ? 
+3 shape r12c8 ? (1)
+4 shape r12c18 ? (2)
+5 shape r12c30 ? (3)
+6 shape r15c5 ? (4)
+7 shape r17c17 ? (5)
+
+exec
+/bin/bash -lc 'for d in 2 3 5 6 7 13 14; do echo drawing$d; unzip -p '"'input/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx' \"xl/drawings/_rels/drawing"'${d}.xml.rels" 2>/dev/null; done' in /home/y-saito/Developments/hareruya-design-docs/excel_to_html
+ succeeded in 346ms:
+drawing2
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/image1.png"/></Relationships>drawing3
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/image2.png"/></Relationships>drawing5
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/image4.png"/></Relationships>drawing6
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/image6.png"/><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/image5.png"/></Relationships>drawing7
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/image7.png"/></Relationships>drawing13
+drawing14
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/image13.png"/></Relationships>
+exec
+/bin/bash -lc "mkdir -p /tmp/du21_excel_media && unzip -o 'input/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx' xl/media/image13.png -d /tmp/du21_excel_media" in /home/y-saito/Developments/hareruya-design-docs/excel_to_html
+ succeeded in 1316ms:
+Archive:  input/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx
+ extracting: /tmp/du21_excel_media/xl/media/image13.png  
+
+exec
+/bin/bash -lc "uv run python - <<'PY'
+from openpyxl import load_workbook
+wb=load_workbook('input/0212_基本設計仕様書(デッキ管理).xlsx', read_only=True)
+for i,n in enumerate(wb.sheetnames,1): print(i,repr(n))
+PY" in /home/y-saito/Developments/hareruya-design-docs/excel_to_html
+ succeeded in 1755ms:
+1 '表紙'
+2 '目次'
+3 '画面遷移図'
+4 'デッキ一覧(検索入力)'
+5 'デッキ一覧(検索結果)'
+6 'デッキ編集'
+7 'デッキ登録CSVアップロード'
+8 'デッキ登録CSV'
+9 'デッキタグ一覧'
+10 'アーキタイプ管理(検索入力)'
+11 'アーキタイプ管理(検索結果)'
+12 'アーキタイプ編集'
+13 'アーキタイプ登録CSVアップロード'
+14 'アーキタイプ登録CSV'
+15 '直近の大会管理'
+16 'XXXCSV出力項目設定'
+17 '対応状況管理'
+18 'メール管理_商品予約完了'
+19 '機能A'
+
+exec
+/bin/bash -lc "unzip -l 'input/0212_基本設計仕様書(デッキ管理).xlsx' | rg 'worksheets/sheet(11|12)|drawings/drawing|media/image|sharedStrings' | sed -n '1,120p'; for n in 11 12; do echo sheet"'$n; unzip -p '"'input/0212_基本設計仕様書(デッキ管理).xlsx' \"xl/worksheets/_rels/sheet"'${n}.xml.rels" 2>/dev/null; done' in /home/y-saito/Developments/hareruya-design-docs/excel_to_html
+ succeeded in 269ms:
+   345300  1980-01-01 00:00   xl/worksheets/sheet11.xml
+   359486  1980-01-01 00:00   xl/worksheets/sheet12.xml
+    99334  1980-01-01 00:00   xl/sharedStrings.xml
+    51164  1980-01-01 00:00   xl/drawings/drawing1.xml
+    52147  1980-01-01 00:00   xl/drawings/drawing2.xml
+   125747  1980-01-01 00:00   xl/media/image1.png
+      151  1980-01-01 00:00   xl/media/image2.png
+    55550  1980-01-01 00:00   xl/drawings/drawing3.xml
+    67144  1980-01-01 00:00   xl/media/image3.png
+   183058  1980-01-01 00:00   xl/media/image4.png
+    87475  1980-01-01 00:00   xl/drawings/drawing4.xml
+    24634  1980-01-01 00:00   xl/media/image5.png
+   113152  1980-01-01 00:00   xl/media/image6.png
+    75483  1980-01-01 00:00   xl/media/image7.png
+   168660  1980-01-01 00:00   xl/media/image8.png
+    78478  1980-01-01 00:00   xl/media/image9.png
+    11326  1980-01-01 00:00   xl/drawings/drawing5.xml
+    74561  1980-01-01 00:00   xl/media/image10.png
+    11876  1980-01-01 00:00   xl/drawings/drawing6.xml
+    51361  1980-01-01 00:00   xl/media/image11.png
+    13196  1980-01-01 00:00   xl/drawings/drawing7.xml
+   133334  1980-01-01 00:00   xl/media/image12.png
+    22413  1980-01-01 00:00   xl/drawings/drawing8.xml
+    95403  1980-01-01 00:00   xl/media/image13.png
+     6631  1980-01-01 00:00   xl/drawings/drawing9.xml
+    70257  1980-01-01 00:00   xl/media/image14.png
+    11873  1980-01-01 00:00   xl/drawings/drawing10.xml
+    54314  1980-01-01 00:00   xl/media/image15.png
+    51800  1980-01-01 00:00   xl/drawings/drawing11.xml
+     2870  1980-01-01 00:00   xl/drawings/drawing12.xml
+     3430  1980-01-01 00:00   xl/drawings/drawing13.xml
+sheet11
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing" Target="../drawings/drawing7.xml"/></Relationships>sheet12
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing" Target="../drawings/drawing8.xml"/></Relationships>
+exec
+/bin/bash -lc "uv run python - <<'PY'
+from zipfile import ZipFile
+from xml.etree import ElementTree as ET
+from pathlib import Path
+S='{http://schemas.openxmlformats.org/spreadsheetml/2006/main}'
+D={'xdr':'http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing','a':'http://schemas.openxmlformats.org/drawingml/2006/main'}
+p=Path('input/0212_基本設計仕様書(デッキ管理).xlsx')
+with ZipFile(p) as z:
+ root=ET.fromstring(z.read('xl/sharedStrings.xml')); ss=[''.join(t.text or '' for t in si.iter(S+'t')) for si in root.findall(S+'si')]
+ for sn,dn in [(11,7),(12,8)]:
+  print(f'\\n=== sheet{sn} cells ===')
+  root=ET.fromstring(z.read(f'xl/worksheets/sheet{sn}.xml'))
+  for c in root.iter(S+'c'):
+   v=c.find(S+'v')
+   if v is None: continue
+   val=v.text or ''
+   if c.get('t')=='s': val=ss[int(val)]
+   if val.strip(): print(c.get('r'), val.replace('\\n',' / '), sep='\\t')
+  print(f'=== drawing{dn} ===')
+  root=ET.fromstring(z.read(f'xl/drawings/drawing{dn}.xml'))
+  for i,a in enumerate(list(root),1):
+   fr=a.find('xdr:from',D); to=a.find('xdr:to',D)
+   def pos(e): return '?' if e is None else f\"r{int(e.find('xdr:row',D).text)+1}c{int(e.find('xdr:col',D).text)+1}\"
+   typ='pic' if a.find('xdr:pic',D) is not None else 'shape'
+   txt='|'.join(t.text or '' for t in a.findall('.//a:t',D))
+   print(i,typ,pos(fr),pos(to),txt[:180])
+PY" in /home/y-saito/Developments/hareruya-design-docs/excel_to_html
+ succeeded in 598ms:
+
+=== sheet11 cells ===
+A1	ドキュメント名
+I1	デッキ管理機能
+U1	セクション
+A2	プロジェクト名
+I2	サイトリニューアルカンリキノウ
+U2	作成者
+Y2	城下シロ
+AC2	作成日
+AG2	45779
+AK2	更新者
+AS2	更新日
+A4	機能No
+D4	M15-08
+I4	機能名
+N4	アーキタイプ管理(検索結果)
+AC4	概要
+AG4	アーキタイプ管理(検索入力)で検索した結果を一覧表示。
+B6	レイアウト図
+B49	カスタマイズ説明
+C51	・カスタマイズ要件
+D52	・TSVアップロードを廃止
+C53	・カスタマイズ要件に記載の内容以外は現行踏襲とする。
+B56	処理概要（★はカスタマイズ項目）
+C58	アーキタイプ検索結果を一覧表示する。表示後、以下の操作ができる。ケンサクケッカイチランヒョウジ
+D59	検索結果一覧表示から個別にアーキタイプの編集画面へ遷移できる。
+D60	検索結果一覧表示から個別にアーキタイプの削除ができる。
+C62	★画面上の項目を一部除去するウエ
+D63	・識別ID:11「CSV,TSV取り込み」→「CSV取り込み」に表記を差し替える
+B66	識別ID
+E66	ラベル
+M66	書式・制限
+T66	必須ヒッス
+V66	最大値サイダイチ
+Y66	初期値ショキチ
+AB66	画面部品の説明
+B67	1
+E67	新規登録シンキトウ
+M67	ボタン
+T67	-
+AB67	ボタン押下でアーキタイプ編集の登録フォームへ遷移するオウカヘンシュウトウロクセンイ
+B68	2
+E68	CSV取り込みトコ
+M68	ボタン
+T68	-
+AB68	ボタン押下でアーキタイプ登録CSVアップロードへ遷移する / ※カスタマイズ対応、TSVの表記を除去するオウカトウロクセンイタイオウヒョウキジョキョ
+B69	3
+E69	該当件数
+M69	数値スウチ
+T69	-
+AB69	アーキタイプ管理(検索入力)で設定された条件に合致する / アーキタイプの件数
+B70	4
+E70	件数
+M70	単一選択
+T70	-
+AB70	選択肢: / 10件 50件 100件 300件 500件 1000件 2000件 10000件 12000件 / 選択された件数でページを再表示する
+B71	5
+E71	並べかえ: 項目
+M71	単一選択
+T71	-
+AB71	選択肢: アーキタイプID アーキタイプ名 登録アーキタイプ数 / 項目を選択すると、ソート順選択に切り替わる
+B72	6
+E72	並べ替え: ソート順
+M72	単一選択
+T72	-
+AB72	選択肢: 昇順 降順 / ソート順を選択すると画面を設定された項目、ソート順で画面を再描画する
+B73	7
+E73	アーキタイプ情報
+M73	各種カクs
+T73	-
+AB73	アーキタイプの情報を設定されている件数ぶん出力する / アーキタイプ名をクリックすると編集画面へ遷移するメイヘンシュウガメンセンイ
+B74	8
+E74	ポップアップメニュー / （…）
+M74	ボタン
+T74	-
+AB74	当該アーキタイプに対するポップアップメニューを表示する / ・削除　確認ダイアログを表示し、OKを選択したらアーキタイプを削除するセンタク
+B75	9
+E75	ページングUI
+M75	リンク
+T75	-
+=== drawing7 ===
+1 pic r7c3 r46c46 
+2 shape r44c17 ? (9)
+3 shape r15c1 ? (3)
+4 shape r24c1 ? (7)
+5 shape r17c28 ? (4)
+6 shape r16c39 ? (5)
+7 shape r16c43 ? (6)
+8 shape r29c42 ? (8)
+9 shape r9c10 ? (1)
+10 shape r9c15 ? (2)
+
+=== sheet12 cells ===
+A1	ドキュメント名
+I1	デッキ管理機能
+U1	セクション
+A2	プロジェクト名
+I2	サイトリニューアルカンリキノウ
+U2	作成者
+Y2	城下シロs
+AC2	作成日
+AG2	45779
+AK2	更新者
+AS2	更新日
+A4	機能No
+D4	M15-09
+I4	機能名
+N4	アーキタイプ編集ヘンシュウ
+AC4	概要
+AG4	アーキタイプの各種情報を編集する。
+B6	レイアウト図
+B46	カスタマイズ説明
+B47	・カスタマイズ要件
+C48	・旧アーキタイプIDは不要のため削除
+C49	・限定公開というステータスは廃止とする
+B50	・カスタマイズ要件に記載の内容以外は現行踏襲とする。
+B53	処理概要（★はカスタマイズ項目）
+C55	画面上の各項目を入力して、アーキタイプの新規登録および登録済みアーキタイプの内容変更ができる。ガメンジョウカク
+C56	登録済みアーキタイプを対象とする場合、当該アーキタイプの削除ができる。
+C57	代表カード選択ボタン押下時の動作は、[デッキ編集]シートに記載の「代表カード検索ポップアップ」と同一ダイヒョウセンタクオウカジドウサヘンシュウキサイ
+D58	代表カード検索ポップアップ
+C60	登録・更新時
+D61	代表カードのカードイメージをセットする。
+C63	★画面上の項目を除去する
+D64	・識別ID:6「公開状態」の選択肢「限定公開」を除去するシキベツコウカイジョウタイセンタクシゲンテイコウカイジョky
+D65	・識別ID:10「旧アーキタイプID」を除去する
+C66	★画面の変更にあわせて、登録/更新ロジック内に記載されている
+D67	・項目「公開状態」の選択肢「限定公開」を登録/更新できないようにする
+D68	・項目「旧アーキタイプID」を除去する
+B71	識別ID
+E71	ラベル
+M71	書式・制限
+T71	必須ヒッス
+V71	最大値サイダイチ
+Y71	初期値ショキチ
+AB71	画面部品の説明
+B72	1
+E72	アーキタイプ名(日)メイニチ
+M72	文字列モジレツ
+T72	〇
+V72	255文字
+B73	2
+E73	アーキタイプ名(英)メイエイ
+M73	文字列モジレツ
+T73	〇
+V73	255文字
+B74	3
+E74	解説(日)カイセツ
+M74	テキストボックス
+T74	-
+V74	1024文字
+B75	4
+E75	解説(英)カイセツエイ
+M75	テキストボックス
+T75	-
+V75	1024文字
+B76	5
+E76	代表カードダイヒョウ
+M76	画像ガゾウ
+T76	-
+B77	6
+E77	代表カード選択ダイヒョウセンタク
+M77	ボタン
+T77	-
+AB77	代表カード検索ポップアップ
+B78	7
+E78	公開状態コウカイジョウタイ
+M78	セレクトボックス
+T78	-
+AB78	選択肢: 公開, 非公開, 限定公開 / ※カスタマイズ対応、「限定公開」を除去するゲンテイコウカイジョキョ
+B79	8
+E79	カラー
+M79	チェックボックス
+T79	-
+B80	9
+E80	フォーマット
+M80	セレクトボックス
+T80	〇
+B81	10
+E81	タグ
+M81	セレクトボックス
+T81	-
+AB81	サジェスト機能
+B82	11
+E82	旧アーキタイプIDキュウ
+M82	文字列モジレツ
+T82	-
+AB82	※カスタマイズ対応、項目を除去するコウモジョキョ
+B83	12
+E83	新規登録シンキトウ
+M83	ボタン
+T83	-
+AB83	登録時のみ表示。 / フォーム入力チェックを実施。 / OKであれば登録を実施、NGがあればエラー内容を表示する。トウロクジヒョウジトウロク
+B84	13
+E84	更新コウシン
+M84	ボタン
+AB84	編集時のみ表示。 / フォーム入力チェックを実施。 / OKであれば更新を実施、NGがあればエラー内容を表示する。ヘンシュウジヒョウジコウシン
+B85	14
+E85	削除サクジョ
+M85	ボタン
+T85	-
+AB85	編集時のみ表示。 / 現在表示中のデッキ情報削除を確認するJSダイアログを表示 / 「OK」押下で削除を実行する
+B86	15
+E86	戻るモド
+M86	ボタン
+T86	-
+AB86	ひとつ前のページに戻る
+=== drawing8 ===
+1 pic r7c3 r43c47 
+2 shape r14c1 ? (1)
+3 shape r16c1 ? (2)
+4 shape r17c1 ? (3)
+5 shape r22c1 ? (4)
+6 shape r26c1 ? (5)
+7 shape r27c13 ? (7)
+8 shape r38c1 ? (8)
+9 shape r36c25 ? (9)
+10 shape r39c1 ? (10)
+11 shape r41c1 ? (11)
+12 shape r25c7 ? (6)
+13 shape r16c46 ? (12)
+14 shape r18c46 ? (13)
+15 shape r21c46 ? (14)
+16 shape r23c46 ? (15)
+17 shape r27c14 ? 選択肢変更
+
+codex
+正本Excelを直接確認しました。M12-09の現行レイアウト画像は検索条件とダウンロードボタンだけで、指摘806ではなく808の「検索結果表示領域・別CSV導線」を反映する場合は画像差し替えが必要です。一方、ルート・セッション・比較条件・CSV上限などは画面に現れないため、処理概要や項目表へのテキスト追記として見積もります。
+exec
+/bin/bash -lc "if [ -e hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_21.json ]; then sed -n '1,240p' hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_21.json; else echo MISSING; fi" in /home/y-saito/Developments
+ succeeded in 2043ms:
+MISSING
+
+apply patch
+patch: completed
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_21.json
+diff --git a/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_21.json b/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_21.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..2c1df272fb29cf3dca17579be1afd56f81f5fb26
+--- /dev/null
++++ b/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_21.json
+@@ -0,0 +1,257 @@
++{
++  "packetId": "du_21",
++  "results": [
++    {
++      "rowId": 806,
++      "docWork": "ADD",
++      "docEffortDays": 0.15,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / フォーマット売上分析 CSV出力 シート / 処理概要・CSV出力仕様",
++      "reason": "Excel正本のCSV列一覧と処理概要にはファイル名・日時書式・BOMの記載がないため、format_sales_report_＋YmdHis＋.csv、およびBOM付与を出力仕様として追記する。画面レイアウト画像はないため画像更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 808,
++      "docWork": "IMAGE",
++      "docEffortDays": 0.6,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 特集タグ編集CSVダウンロード(検索項目) シート / レイアウト図（貼付画像）・処理概要",
++      "reason": "正本の貼付画像は検索条件とCSVダウンロードボタンだけで、検索後の集計結果領域と独立したCSV導線がない。要求を正本へ反映するには実画面を取得し、結果表示を含むレイアウト画像へ差し替えたうえで、検索POST・条件保持・CSV導線を処理概要へ追記する。",
++      "sharedWithRows": [807, 809],
++      "confidence": "high"
++    },
++    {
++      "rowId": 807,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 特集タグ編集CSVダウンロード(検索項目) シート / 処理概要・画面遷移/ルート記述",
++      "reason": "正本には入力項目とボタンしかなく、検索画面、結果表示、export/{mode} のURL・メソッド・ルート名がないため、画面遷移と外部契約を処理概要へ追記する。同じシートのrowId 808・809と一括編集する前提で割り引く。",
++      "sharedWithRows": [808, 809],
++      "confidence": "high"
++    },
++    {
++      "rowId": 809,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 特集タグ編集CSVダウンロード(検索項目) シート / 処理概要・画面項目表",
++      "reason": "初期表示時の条件破棄、mode、CSRFトークンの扱いが正本にないため追記する。modeは既存のフォーマット項目に対応し、セッション処理とCSRFは非表示の動作なので、この指摘単独では画像の描き直しは不要。同じシートのrowId 808・807とまとめて直す。",
++      "sharedWithRows": [808, 807],
++      "confidence": "high"
++    },
++    {
++      "rowId": 763,
++      "docWork": "ADD",
++      "docEffortDays": 0.15,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 日別・月別集計 集計一覧(検索項目-日別) シート / 処理概要の集計・結果補完ルール",
++      "reason": "正本は現行踏襲とするだけで、期間内にデータがない日・月を0行として補う規則がない。条件付きの集計結果補完ルールを処理概要へ追記する。検索項目のレイアウト自体は変わらないため画像更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 762,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 日別・月別集計 集計一覧(検索項目-日別) シート / 集計対象について・処理概要「集計方式の変更」（変更なし）",
++      "reason": "正本には通販/店舗の配送・支払条件と出荷完了条件がすでに明記されている。SPEC_BACKEDのため設計書更新は発生しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 764,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 日別・月別集計 集計一覧(検索項目-月別) シート / 処理概要「集計方式の変更」（変更なし）",
++      "reason": "正本の処理概要に、売上計上対象かつ注文ステータスが出荷完了のみを集計する旨が明記されている。SPEC_BACKEDのため変更不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 765,
++      "docWork": "ADD",
++      "docEffortDays": 0.15,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 日別・月別集計 集計一覧(検索項目-月別) シート / 処理概要の集計・結果補完ルール",
++      "reason": "正本には期間内の欠落日・欠落月を0で補完する具体則がないため、条件付きの結果補完規則を処理概要へ追記する。検索画面の表示項目追加ではないためレイアウト画像は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 770,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 日別・月別集計 集計一覧(検索結果-月別) シート / 処理概要「集計方式の変更」（変更なし）",
++      "reason": "正本に販売関連は注文ステータスが出荷完了のみ計上する旨が明記されている。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 771,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 日別・月別集計 集計一覧(検索結果-月別) シート / 処理概要「集計方式の変更」（変更なし）",
++      "reason": "正本に買取関連は買取ステータスが買取成立のみ計上する旨が明記されている。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 772,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 日別・月別集計 集計一覧(検索結果-月別) シート / 処理概要「集計項目の固定」（変更なし）",
++      "reason": "正本に支店名として通販・店舗名・その他を出力し、その他の対象も明記されている。SPEC_BACKEDで記述も明確なため変更不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 773,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 日別・月別集計 集計一覧(検索結果-月別) シート / 処理概要・画面項目表の「廃棄」「欠品」（変更なし）",
++      "reason": "正本の処理概要に、在庫変動区分が廃棄/欠品のデータを集計して各コスト合計を出す規則が記載済み。SPEC_BACKEDのため変更不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 774,
++      "docWork": "ADD",
++      "docEffortDays": 0.15,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 日別・月別集計 集計一覧(検索結果-月別) シート / 処理概要の欠落期間0補完ルール",
++      "reason": "正本には期間内で結果のない日・月を0行として並べる具体則がないため、結果生成ルールを処理概要へ追記する。既存列や画面構成は変えないため、貼付レイアウト画像の差し替えは不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 778,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 日別・月別集計 CSV出力 シート / CSV項目表・処理概要の「廃棄」（変更なし）",
++      "reason": "正本のCSV項目表と処理概要に、廃棄コスト合計を出力する列が記載済み。SPEC_BACKEDのため設計書更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 779,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 日別・月別集計 CSV出力 シート / CSV項目表・処理概要の「欠品」（変更なし）",
++      "reason": "正本のCSV項目表と処理概要に、欠品コスト合計を出力する列が記載済み。SPEC_BACKEDのため設計書更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 777,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 日別・月別集計 CSV出力 シート / 処理概要の総合計行（変更なし）",
++      "reason": "正本の処理概要に、CSV最終行へ総合計を追加し識別ID3～12を各列合計する旨が明記済み。SPEC_BACKEDのため変更不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 775,
++      "docWork": "ADD",
++      "docEffortDays": 0.15,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 日別・月別集計 CSV出力 シート / 処理概要・CSVファイル仕様",
++      "reason": "正本にはCSV列定義はあるがファイル名規則がないため、report_summary_＋YmdHis＋.csv を出力仕様へ追記する。rowId 776と同じ処理概要を続けて編集する。",
++      "sharedWithRows": [776],
++      "confidence": "high"
++    },
++    {
++      "rowId": 776,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 日別・月別集計 CSV出力 シート / 処理概要の検索条件セッション空時の分岐",
++      "reason": "検索条件セッションが空でも空条件で集計・出力する規則が正本にないため、条件分岐を処理概要へ追記する。rowId 775と同一シート・同一節でまとめて直すため2件目を割り引く。",
++      "sharedWithRows": [775],
++      "confidence": "high"
++    },
++    {
++      "rowId": 782,
++      "docWork": "ADD",
++      "docEffortDays": 0.15,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 受注売上分析 集計一覧(検索項目) シート / 処理概要・検索POSTの画面遷移",
++      "reason": "正本に検索POSTのURLと、結果を同一画面へ表示する遷移契約がないため追記する。HTTP actionの記述であり、既存の検索フォーム画像自体の描き直しは不要。同じシートのrowId 784・783・785とまとめて編集する。",
++      "sharedWithRows": [784, 783, 785],
++      "confidence": "high"
++    },
++    {
++      "rowId": 784,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 受注売上分析 集計一覧(検索項目) シート / 処理概要の初期表示",
++      "reason": "初期表示で検索条件セッションを破棄する規則が正本にないため追記する。非表示のセッション処理なので画像変更は不要で、同じ処理概要をrowId 782・783・785と一括編集する。",
++      "sharedWithRows": [782, 783, 785],
++      "confidence": "high"
++    },
++    {
++      "rowId": 783,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 受注売上分析 集計一覧(検索項目) シート / 処理概要の期間抽出条件",
++      "reason": "正本の項目表にはFrom/Toがあるが、To未満とする比較条件がないため、使用日付列と半開区間の抽出規則を処理概要へ追記する。同一シートのrowId 782・784・785とまとめて直す。",
++      "sharedWithRows": [782, 784, 785],
++      "confidence": "high"
++    },
++    {
++      "rowId": 785,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 受注売上分析 集計一覧(検索項目) シート / 処理概要のCSV再集計ルール",
++      "reason": "同じセッション条件でCSVを再集計し、画面表示件数の上限をCSVには適用しない規則が正本にないため追記する。非表示の出力制御なので画像更新は不要。同一節の他3件と一括編集する。",
++      "sharedWithRows": [782, 784, 783],
++      "confidence": "high"
++    },
++    {
++      "rowId": 786,
++      "docWork": "ADD",
++      "docEffortDays": 0.15,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 受注売上分析 集計一覧(検索結果-集計単位 商品) シート / 処理概要・検索POSTの画面遷移",
++      "reason": "検索結果シートの正本にもPOST /analysis/sales/result と同一画面への結果表示契約がないため、処理概要へ追記する。既存の結果一覧レイアウトの構成は変わらないため画像差し替えは不要。同じシートのrowId 787・788・789とまとめる。",
++      "sharedWithRows": [787, 788, 789],
++      "confidence": "high"
++    },
++    {
++      "rowId": 787,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 受注売上分析 集計一覧(検索結果-集計単位 商品) シート / 処理概要の初期表示",
++      "reason": "初期表示で検索条件セッションを破棄し、結果なしとする規則を処理概要へ追記する。rowId 786・788・789と同一節を一括編集するため追加作業分のみ。",
++      "sharedWithRows": [786, 788, 789],
++      "confidence": "high"
++    },
++    {
++      "rowId": 788,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 受注売上分析 集計一覧(検索結果-集計単位 商品) シート / 処理概要の期間抽出条件",
++      "reason": "集計日Toを排他的上限とする抽出規則が正本にないため追記する。rowId 786・787・789と同じ処理概要内でまとめて直すため追加作業分のみ。",
++      "sharedWithRows": [786, 787, 789],
++      "confidence": "high"
++    },
++    {
++      "rowId": 789,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 受注売上分析 集計一覧(検索結果-集計単位 商品) シート / 画面項目表の平均単価・数量、処理概要の絞り込み条件",
++      "reason": "正本の平均単価・数量は数値項目とするだけで0以上の制限がなく、集計後HAVING相当の適用説明もないため、項目表の書式・制限と処理概要へ追記する。入力欄は既存画像に存在するため画像の描き直しは不要。同一シートの他3件と一括編集する。",
++      "sharedWithRows": [786, 787, 788],
++      "confidence": "high"
++    },
++    {
++      "rowId": 986,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0212_基本設計仕様書(デッキ管理).xlsx / アーキタイプ管理(検索結果) シート（変更なし・指摘の再起票対象）",
++      "reason": "正本の当該シートはM15-08のアーキタイプ検索結果である一方、指摘の期待値はm15-01_admin_deck_deck_searchと/deck/search/{page_no}というデッキ検索の契約で、対象機能が一致しない。トリアージも「要再起票(記述が事実と相違)」であり、この内容をM15-08へ追記すると誤記になるため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 993,
++      "docWork": "ADD",
++      "docEffortDays": 0.25,
++      "target": "0212_基本設計仕様書(デッキ管理).xlsx / アーキタイプ編集 シート / 処理概要「代表カード検索ポップアップ」",
++      "reason": "正本は代表カード選択をデッキ編集と同一とするだけで、3つのXHRエンドポイント、各メソッド、検索・ページング・ID解決、2つのセッションキーを列挙していない。処理概要へ複数行の契約を追記する。画面部品は既存の代表カード選択のままで、追加内容は通信・状態保持仕様なのでレイアウト画像の差し替えは不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    }
++  ]
++}
+
+diff --git a/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_21.json b/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_21.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..2c1df272fb29cf3dca17579be1afd56f81f5fb26
+--- /dev/null
++++ b/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_21.json
+@@ -0,0 +1,257 @@
++{
++  "packetId": "du_21",
++  "results": [
++    {
++      "rowId": 806,
++      "docWork": "ADD",
++      "docEffortDays": 0.15,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / フォーマット売上分析 CSV出力 シート / 処理概要・CSV出力仕様",
++      "reason": "Excel正本のCSV列一覧と処理概要にはファイル名・日時書式・BOMの記載がないため、format_sales_report_＋YmdHis＋.csv、およびBOM付与を出力仕様として追記する。画面レイアウト画像はないため画像更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 808,
++      "docWork": "IMAGE",
++      "docEffortDays": 0.6,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 特集タグ編集CSVダウンロード(検索項目) シート / レイアウト図（貼付画像）・処理概要",
++      "reason": "正本の貼付画像は検索条件とCSVダウンロードボタンだけで、検索後の集計結果領域と独立したCSV導線がない。要求を正本へ反映するには実画面を取得し、結果表示を含むレイアウト画像へ差し替えたうえで、検索POST・条件保持・CSV導線を処理概要へ追記する。",
++      "sharedWithRows": [807, 809],
++      "confidence": "high"
++    },
++    {
++      "rowId": 807,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 特集タグ編集CSVダウンロード(検索項目) シート / 処理概要・画面遷移/ルート記述",
++      "reason": "正本には入力項目とボタンしかなく、検索画面、結果表示、export/{mode} のURL・メソッド・ルート名がないため、画面遷移と外部契約を処理概要へ追記する。同じシートのrowId 808・809と一括編集する前提で割り引く。",
++      "sharedWithRows": [808, 809],
++      "confidence": "high"
++    },
++    {
++      "rowId": 809,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 特集タグ編集CSVダウンロード(検索項目) シート / 処理概要・画面項目表",
++      "reason": "初期表示時の条件破棄、mode、CSRFトークンの扱いが正本にないため追記する。modeは既存のフォーマット項目に対応し、セッション処理とCSRFは非表示の動作なので、この指摘単独では画像の描き直しは不要。同じシートのrowId 808・807とまとめて直す。",
++      "sharedWithRows": [808, 807],
++      "confidence": "high"
++    },
++    {
++      "rowId": 763,
++      "docWork": "ADD",
++      "docEffortDays": 0.15,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 日別・月別集計 集計一覧(検索項目-日別) シート / 処理概要の集計・結果補完ルール",
++      "reason": "正本は現行踏襲とするだけで、期間内にデータがない日・月を0行として補う規則がない。条件付きの集計結果補完ルールを処理概要へ追記する。検索項目のレイアウト自体は変わらないため画像更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 762,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 日別・月別集計 集計一覧(検索項目-日別) シート / 集計対象について・処理概要「集計方式の変更」（変更なし）",
++      "reason": "正本には通販/店舗の配送・支払条件と出荷完了条件がすでに明記されている。SPEC_BACKEDのため設計書更新は発生しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 764,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 日別・月別集計 集計一覧(検索項目-月別) シート / 処理概要「集計方式の変更」（変更なし）",
++      "reason": "正本の処理概要に、売上計上対象かつ注文ステータスが出荷完了のみを集計する旨が明記されている。SPEC_BACKEDのため変更不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 765,
++      "docWork": "ADD",
++      "docEffortDays": 0.15,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 日別・月別集計 集計一覧(検索項目-月別) シート / 処理概要の集計・結果補完ルール",
++      "reason": "正本には期間内の欠落日・欠落月を0で補完する具体則がないため、条件付きの結果補完規則を処理概要へ追記する。検索画面の表示項目追加ではないためレイアウト画像は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 770,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 日別・月別集計 集計一覧(検索結果-月別) シート / 処理概要「集計方式の変更」（変更なし）",
++      "reason": "正本に販売関連は注文ステータスが出荷完了のみ計上する旨が明記されている。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 771,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 日別・月別集計 集計一覧(検索結果-月別) シート / 処理概要「集計方式の変更」（変更なし）",
++      "reason": "正本に買取関連は買取ステータスが買取成立のみ計上する旨が明記されている。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 772,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 日別・月別集計 集計一覧(検索結果-月別) シート / 処理概要「集計項目の固定」（変更なし）",
++      "reason": "正本に支店名として通販・店舗名・その他を出力し、その他の対象も明記されている。SPEC_BACKEDで記述も明確なため変更不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 773,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 日別・月別集計 集計一覧(検索結果-月別) シート / 処理概要・画面項目表の「廃棄」「欠品」（変更なし）",
++      "reason": "正本の処理概要に、在庫変動区分が廃棄/欠品のデータを集計して各コスト合計を出す規則が記載済み。SPEC_BACKEDのため変更不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 774,
++      "docWork": "ADD",
++      "docEffortDays": 0.15,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 日別・月別集計 集計一覧(検索結果-月別) シート / 処理概要の欠落期間0補完ルール",
++      "reason": "正本には期間内で結果のない日・月を0行として並べる具体則がないため、結果生成ルールを処理概要へ追記する。既存列や画面構成は変えないため、貼付レイアウト画像の差し替えは不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 778,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 日別・月別集計 CSV出力 シート / CSV項目表・処理概要の「廃棄」（変更なし）",
++      "reason": "正本のCSV項目表と処理概要に、廃棄コスト合計を出力する列が記載済み。SPEC_BACKEDのため設計書更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 779,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 日別・月別集計 CSV出力 シート / CSV項目表・処理概要の「欠品」（変更なし）",
++      "reason": "正本のCSV項目表と処理概要に、欠品コスト合計を出力する列が記載済み。SPEC_BACKEDのため設計書更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 777,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 日別・月別集計 CSV出力 シート / 処理概要の総合計行（変更なし）",
++      "reason": "正本の処理概要に、CSV最終行へ総合計を追加し識別ID3～12を各列合計する旨が明記済み。SPEC_BACKEDのため変更不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 775,
++      "docWork": "ADD",
++      "docEffortDays": 0.15,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 日別・月別集計 CSV出力 シート / 処理概要・CSVファイル仕様",
++      "reason": "正本にはCSV列定義はあるがファイル名規則がないため、report_summary_＋YmdHis＋.csv を出力仕様へ追記する。rowId 776と同じ処理概要を続けて編集する。",
++      "sharedWithRows": [776],
++      "confidence": "high"
++    },
++    {
++      "rowId": 776,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 日別・月別集計 CSV出力 シート / 処理概要の検索条件セッション空時の分岐",
++      "reason": "検索条件セッションが空でも空条件で集計・出力する規則が正本にないため、条件分岐を処理概要へ追記する。rowId 775と同一シート・同一節でまとめて直すため2件目を割り引く。",
++      "sharedWithRows": [775],
++      "confidence": "high"
++    },
++    {
++      "rowId": 782,
++      "docWork": "ADD",
++      "docEffortDays": 0.15,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 受注売上分析 集計一覧(検索項目) シート / 処理概要・検索POSTの画面遷移",
++      "reason": "正本に検索POSTのURLと、結果を同一画面へ表示する遷移契約がないため追記する。HTTP actionの記述であり、既存の検索フォーム画像自体の描き直しは不要。同じシートのrowId 784・783・785とまとめて編集する。",
++      "sharedWithRows": [784, 783, 785],
++      "confidence": "high"
++    },
++    {
++      "rowId": 784,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 受注売上分析 集計一覧(検索項目) シート / 処理概要の初期表示",
++      "reason": "初期表示で検索条件セッションを破棄する規則が正本にないため追記する。非表示のセッション処理なので画像変更は不要で、同じ処理概要をrowId 782・783・785と一括編集する。",
++      "sharedWithRows": [782, 783, 785],
++      "confidence": "high"
++    },
++    {
++      "rowId": 783,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 受注売上分析 集計一覧(検索項目) シート / 処理概要の期間抽出条件",
++      "reason": "正本の項目表にはFrom/Toがあるが、To未満とする比較条件がないため、使用日付列と半開区間の抽出規則を処理概要へ追記する。同一シートのrowId 782・784・785とまとめて直す。",
++      "sharedWithRows": [782, 784, 785],
++      "confidence": "high"
++    },
++    {
++      "rowId": 785,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 受注売上分析 集計一覧(検索項目) シート / 処理概要のCSV再集計ルール",
++      "reason": "同じセッション条件でCSVを再集計し、画面表示件数の上限をCSVには適用しない規則が正本にないため追記する。非表示の出力制御なので画像更新は不要。同一節の他3件と一括編集する。",
++      "sharedWithRows": [782, 784, 783],
++      "confidence": "high"
++    },
++    {
++      "rowId": 786,
++      "docWork": "ADD",
++      "docEffortDays": 0.15,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 受注売上分析 集計一覧(検索結果-集計単位 商品) シート / 処理概要・検索POSTの画面遷移",
++      "reason": "検索結果シートの正本にもPOST /analysis/sales/result と同一画面への結果表示契約がないため、処理概要へ追記する。既存の結果一覧レイアウトの構成は変わらないため画像差し替えは不要。同じシートのrowId 787・788・789とまとめる。",
++      "sharedWithRows": [787, 788, 789],
++      "confidence": "high"
++    },
++    {
++      "rowId": 787,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 受注売上分析 集計一覧(検索結果-集計単位 商品) シート / 処理概要の初期表示",
++      "reason": "初期表示で検索条件セッションを破棄し、結果なしとする規則を処理概要へ追記する。rowId 786・788・789と同一節を一括編集するため追加作業分のみ。",
++      "sharedWithRows": [786, 788, 789],
++      "confidence": "high"
++    },
++    {
++      "rowId": 788,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 受注売上分析 集計一覧(検索結果-集計単位 商品) シート / 処理概要の期間抽出条件",
++      "reason": "集計日Toを排他的上限とする抽出規則が正本にないため追記する。rowId 786・787・789と同じ処理概要内でまとめて直すため追加作業分のみ。",
++      "sharedWithRows": [786, 787, 789],
++      "confidence": "high"
++    },
++    {
++      "rowId": 789,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 受注売上分析 集計一覧(検索結果-集計単位 商品) シート / 画面項目表の平均単価・数量、処理概要の絞り込み条件",
++      "reason": "正本の平均単価・数量は数値項目とするだけで0以上の制限がなく、集計後HAVING相当の適用説明もないため、項目表の書式・制限と処理概要へ追記する。入力欄は既存画像に存在するため画像の描き直しは不要。同一シートの他3件と一括編集する。",
++      "sharedWithRows": [786, 787, 788],
++      "confidence": "high"
++    },
++    {
++      "rowId": 986,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0212_基本設計仕様書(デッキ管理).xlsx / アーキタイプ管理(検索結果) シート（変更なし・指摘の再起票対象）",
++      "reason": "正本の当該シートはM15-08のアーキタイプ検索結果である一方、指摘の期待値はm15-01_admin_deck_deck_searchと/deck/search/{page_no}というデッキ検索の契約で、対象機能が一致しない。トリアージも「要再起票(記述が事実と相違)」であり、この内容をM15-08へ追記すると誤記になるため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 993,
++      "docWork": "ADD",
++      "docEffortDays": 0.25,
++      "target": "0212_基本設計仕様書(デッキ管理).xlsx / アーキタイプ編集 シート / 処理概要「代表カード検索ポップアップ」",
++      "reason": "正本は代表カード選択をデッキ編集と同一とするだけで、3つのXHRエンドポイント、各メソッド、検索・ページング・ID解決、2つのセッションキーを列挙していない。処理概要へ複数行の契約を追記する。画面部品は既存の代表カード選択のままで、追加内容は通信・状態保持仕様なのでレイアウト画像の差し替えは不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    }
++  ]
++}
+
+exec
+/bin/bash -lc "python3 -m json.tool hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_21.json >/dev/null && jq -n --slurpfile p hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_packets/du_21.json --slurpfile r hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_21.json '{packetCount:("'$p[0].findings|length), resultCount:($r[0].results|length), missing:([($p[0].findings[].rowId)]-[$r[0].results[].rowId]), extra:([($r[0].results[].rowId)]-[$p[0].findings[].rowId]), duplicateResultIds:([$r[0].results[].rowId]|group_by(.)|map(select(length>1)|.[0])), workCounts:($r[0].results|group_by(.docWork)|map({key:.[0].docWork,value:length})|from_entries), totalDays:($r[0].results|map(.docEffortDays)|add)}'"'" in /home/y-saito/Developments
+ succeeded in 1030ms:
+{
+  "packetCount": 28,
+  "resultCount": 28,
+  "missing": [],
+  "extra": [],
+  "duplicateResultIds": [],
+  "workCounts": {
+    "ADD": 17,
+    "IMAGE": 1,
+    "NONE": 10
+  },
+  "totalDays": 2.6999999999999993
+}
+
+diff --git a/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_21.json b/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_21.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..2c1df272fb29cf3dca17579be1afd56f81f5fb26
+--- /dev/null
++++ b/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_21.json
+@@ -0,0 +1,257 @@
++{
++  "packetId": "du_21",
++  "results": [
++    {
++      "rowId": 806,
++      "docWork": "ADD",
++      "docEffortDays": 0.15,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / フォーマット売上分析 CSV出力 シート / 処理概要・CSV出力仕様",
++      "reason": "Excel正本のCSV列一覧と処理概要にはファイル名・日時書式・BOMの記載がないため、format_sales_report_＋YmdHis＋.csv、およびBOM付与を出力仕様として追記する。画面レイアウト画像はないため画像更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 808,
++      "docWork": "IMAGE",
++      "docEffortDays": 0.6,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 特集タグ編集CSVダウンロード(検索項目) シート / レイアウト図（貼付画像）・処理概要",
++      "reason": "正本の貼付画像は検索条件とCSVダウンロードボタンだけで、検索後の集計結果領域と独立したCSV導線がない。要求を正本へ反映するには実画面を取得し、結果表示を含むレイアウト画像へ差し替えたうえで、検索POST・条件保持・CSV導線を処理概要へ追記する。",
++      "sharedWithRows": [807, 809],
++      "confidence": "high"
++    },
++    {
++      "rowId": 807,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 特集タグ編集CSVダウンロード(検索項目) シート / 処理概要・画面遷移/ルート記述",
++      "reason": "正本には入力項目とボタンしかなく、検索画面、結果表示、export/{mode} のURL・メソッド・ルート名がないため、画面遷移と外部契約を処理概要へ追記する。同じシートのrowId 808・809と一括編集する前提で割り引く。",
++      "sharedWithRows": [808, 809],
++      "confidence": "high"
++    },
++    {
++      "rowId": 809,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 特集タグ編集CSVダウンロード(検索項目) シート / 処理概要・画面項目表",
++      "reason": "初期表示時の条件破棄、mode、CSRFトークンの扱いが正本にないため追記する。modeは既存のフォーマット項目に対応し、セッション処理とCSRFは非表示の動作なので、この指摘単独では画像の描き直しは不要。同じシートのrowId 808・807とまとめて直す。",
++      "sharedWithRows": [808, 807],
++      "confidence": "high"
++    },
++    {
++      "rowId": 763,
++      "docWork": "ADD",
++      "docEffortDays": 0.15,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 日別・月別集計 集計一覧(検索項目-日別) シート / 処理概要の集計・結果補完ルール",
++      "reason": "正本は現行踏襲とするだけで、期間内にデータがない日・月を0行として補う規則がない。条件付きの集計結果補完ルールを処理概要へ追記する。検索項目のレイアウト自体は変わらないため画像更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 762,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 日別・月別集計 集計一覧(検索項目-日別) シート / 集計対象について・処理概要「集計方式の変更」（変更なし）",
++      "reason": "正本には通販/店舗の配送・支払条件と出荷完了条件がすでに明記されている。SPEC_BACKEDのため設計書更新は発生しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 764,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 日別・月別集計 集計一覧(検索項目-月別) シート / 処理概要「集計方式の変更」（変更なし）",
++      "reason": "正本の処理概要に、売上計上対象かつ注文ステータスが出荷完了のみを集計する旨が明記されている。SPEC_BACKEDのため変更不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 765,
++      "docWork": "ADD",
++      "docEffortDays": 0.15,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 日別・月別集計 集計一覧(検索項目-月別) シート / 処理概要の集計・結果補完ルール",
++      "reason": "正本には期間内の欠落日・欠落月を0で補完する具体則がないため、条件付きの結果補完規則を処理概要へ追記する。検索画面の表示項目追加ではないためレイアウト画像は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 770,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 日別・月別集計 集計一覧(検索結果-月別) シート / 処理概要「集計方式の変更」（変更なし）",
++      "reason": "正本に販売関連は注文ステータスが出荷完了のみ計上する旨が明記されている。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 771,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 日別・月別集計 集計一覧(検索結果-月別) シート / 処理概要「集計方式の変更」（変更なし）",
++      "reason": "正本に買取関連は買取ステータスが買取成立のみ計上する旨が明記されている。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 772,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 日別・月別集計 集計一覧(検索結果-月別) シート / 処理概要「集計項目の固定」（変更なし）",
++      "reason": "正本に支店名として通販・店舗名・その他を出力し、その他の対象も明記されている。SPEC_BACKEDで記述も明確なため変更不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 773,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 日別・月別集計 集計一覧(検索結果-月別) シート / 処理概要・画面項目表の「廃棄」「欠品」（変更なし）",
++      "reason": "正本の処理概要に、在庫変動区分が廃棄/欠品のデータを集計して各コスト合計を出す規則が記載済み。SPEC_BACKEDのため変更不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 774,
++      "docWork": "ADD",
++      "docEffortDays": 0.15,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 日別・月別集計 集計一覧(検索結果-月別) シート / 処理概要の欠落期間0補完ルール",
++      "reason": "正本には期間内で結果のない日・月を0行として並べる具体則がないため、結果生成ルールを処理概要へ追記する。既存列や画面構成は変えないため、貼付レイアウト画像の差し替えは不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 778,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 日別・月別集計 CSV出力 シート / CSV項目表・処理概要の「廃棄」（変更なし）",
++      "reason": "正本のCSV項目表と処理概要に、廃棄コスト合計を出力する列が記載済み。SPEC_BACKEDのため設計書更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 779,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 日別・月別集計 CSV出力 シート / CSV項目表・処理概要の「欠品」（変更なし）",
++      "reason": "正本のCSV項目表と処理概要に、欠品コスト合計を出力する列が記載済み。SPEC_BACKEDのため設計書更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 777,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 日別・月別集計 CSV出力 シート / 処理概要の総合計行（変更なし）",
++      "reason": "正本の処理概要に、CSV最終行へ総合計を追加し識別ID3～12を各列合計する旨が明記済み。SPEC_BACKEDのため変更不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 775,
++      "docWork": "ADD",
++      "docEffortDays": 0.15,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 日別・月別集計 CSV出力 シート / 処理概要・CSVファイル仕様",
++      "reason": "正本にはCSV列定義はあるがファイル名規則がないため、report_summary_＋YmdHis＋.csv を出力仕様へ追記する。rowId 776と同じ処理概要を続けて編集する。",
++      "sharedWithRows": [776],
++      "confidence": "high"
++    },
++    {
++      "rowId": 776,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 日別・月別集計 CSV出力 シート / 処理概要の検索条件セッション空時の分岐",
++      "reason": "検索条件セッションが空でも空条件で集計・出力する規則が正本にないため、条件分岐を処理概要へ追記する。rowId 775と同一シート・同一節でまとめて直すため2件目を割り引く。",
++      "sharedWithRows": [775],
++      "confidence": "high"
++    },
++    {
++      "rowId": 782,
++      "docWork": "ADD",
++      "docEffortDays": 0.15,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 受注売上分析 集計一覧(検索項目) シート / 処理概要・検索POSTの画面遷移",
++      "reason": "正本に検索POSTのURLと、結果を同一画面へ表示する遷移契約がないため追記する。HTTP actionの記述であり、既存の検索フォーム画像自体の描き直しは不要。同じシートのrowId 784・783・785とまとめて編集する。",
++      "sharedWithRows": [784, 783, 785],
++      "confidence": "high"
++    },
++    {
++      "rowId": 784,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 受注売上分析 集計一覧(検索項目) シート / 処理概要の初期表示",
++      "reason": "初期表示で検索条件セッションを破棄する規則が正本にないため追記する。非表示のセッション処理なので画像変更は不要で、同じ処理概要をrowId 782・783・785と一括編集する。",
++      "sharedWithRows": [782, 783, 785],
++      "confidence": "high"
++    },
++    {
++      "rowId": 783,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 受注売上分析 集計一覧(検索項目) シート / 処理概要の期間抽出条件",
++      "reason": "正本の項目表にはFrom/Toがあるが、To未満とする比較条件がないため、使用日付列と半開区間の抽出規則を処理概要へ追記する。同一シートのrowId 782・784・785とまとめて直す。",
++      "sharedWithRows": [782, 784, 785],
++      "confidence": "high"
++    },
++    {
++      "rowId": 785,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 受注売上分析 集計一覧(検索項目) シート / 処理概要のCSV再集計ルール",
++      "reason": "同じセッション条件でCSVを再集計し、画面表示件数の上限をCSVには適用しない規則が正本にないため追記する。非表示の出力制御なので画像更新は不要。同一節の他3件と一括編集する。",
++      "sharedWithRows": [782, 784, 783],
++      "confidence": "high"
++    },
++    {
++      "rowId": 786,
++      "docWork": "ADD",
++      "docEffortDays": 0.15,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 受注売上分析 集計一覧(検索結果-集計単位 商品) シート / 処理概要・検索POSTの画面遷移",
++      "reason": "検索結果シートの正本にもPOST /analysis/sales/result と同一画面への結果表示契約がないため、処理概要へ追記する。既存の結果一覧レイアウトの構成は変わらないため画像差し替えは不要。同じシートのrowId 787・788・789とまとめる。",
++      "sharedWithRows": [787, 788, 789],
++      "confidence": "high"
++    },
++    {
++      "rowId": 787,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 受注売上分析 集計一覧(検索結果-集計単位 商品) シート / 処理概要の初期表示",
++      "reason": "初期表示で検索条件セッションを破棄し、結果なしとする規則を処理概要へ追記する。rowId 786・788・789と同一節を一括編集するため追加作業分のみ。",
++      "sharedWithRows": [786, 788, 789],
++      "confidence": "high"
++    },
++    {
++      "rowId": 788,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 受注売上分析 集計一覧(検索結果-集計単位 商品) シート / 処理概要の期間抽出条件",
++      "reason": "集計日Toを排他的上限とする抽出規則が正本にないため追記する。rowId 786・787・789と同じ処理概要内でまとめて直すため追加作業分のみ。",
++      "sharedWithRows": [786, 787, 789],
++      "confidence": "high"
++    },
++    {
++      "rowId": 789,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 受注売上分析 集計一覧(検索結果-集計単位 商品) シート / 画面項目表の平均単価・数量、処理概要の絞り込み条件",
++      "reason": "正本の平均単価・数量は数値項目とするだけで0以上の制限がなく、集計後HAVING相当の適用説明もないため、項目表の書式・制限と処理概要へ追記する。入力欄は既存画像に存在するため画像の描き直しは不要。同一シートの他3件と一括編集する。",
++      "sharedWithRows": [786, 787, 788],
++      "confidence": "high"
++    },
++    {
++      "rowId": 986,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0212_基本設計仕様書(デッキ管理).xlsx / アーキタイプ管理(検索結果) シート（変更なし・指摘の再起票対象）",
++      "reason": "正本の当該シートはM15-08のアーキタイプ検索結果である一方、指摘の期待値はm15-01_admin_deck_deck_searchと/deck/search/{page_no}というデッキ検索の契約で、対象機能が一致しない。トリアージも「要再起票(記述が事実と相違)」であり、この内容をM15-08へ追記すると誤記になるため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 993,
++      "docWork": "ADD",
++      "docEffortDays": 0.25,
++      "target": "0212_基本設計仕様書(デッキ管理).xlsx / アーキタイプ編集 シート / 処理概要「代表カード検索ポップアップ」",
++      "reason": "正本は代表カード選択をデッキ編集と同一とするだけで、3つのXHRエンドポイント、各メソッド、検索・ページング・ID解決、2つのセッションキーを列挙していない。処理概要へ複数行の契約を追記する。画面部品は既存の代表カード選択のままで、追加内容は通信・状態保持仕様なのでレイアウト画像の差し替えは不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    }
++  ]
++}
+
+exec
+/bin/bash -lc "jq -e '(.packetId == \"du_21\") and (.results|length == 28) and (all(.results[]; (.docWork|IN(\"NONE\",\"ADD\",\"FIX\",\"IMAGE\",\"RESOLVE\",\"UNSURE\")) and (.confidence|IN(\"high\",\"medium\",\"low\")) and (.sharedWithRows|type==\"array\") and (.docEffortDays|type==\"number\") and (if .docWork==\"NONE\" then .docEffortDays==0 else .docEffortDays>0 end)))' hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_21.json" in /home/y-saito/Developments
+ succeeded in 1130ms:
+true
+
+diff --git a/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_21.json b/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_21.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..2c1df272fb29cf3dca17579be1afd56f81f5fb26
+--- /dev/null
++++ b/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_21.json
+@@ -0,0 +1,257 @@
++{
++  "packetId": "du_21",
++  "results": [
++    {
++      "rowId": 806,
++      "docWork": "ADD",
++      "docEffortDays": 0.15,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / フォーマット売上分析 CSV出力 シート / 処理概要・CSV出力仕様",
++      "reason": "Excel正本のCSV列一覧と処理概要にはファイル名・日時書式・BOMの記載がないため、format_sales_report_＋YmdHis＋.csv、およびBOM付与を出力仕様として追記する。画面レイアウト画像はないため画像更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 808,
++      "docWork": "IMAGE",
++      "docEffortDays": 0.6,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 特集タグ編集CSVダウンロード(検索項目) シート / レイアウト図（貼付画像）・処理概要",
++      "reason": "正本の貼付画像は検索条件とCSVダウンロードボタンだけで、検索後の集計結果領域と独立したCSV導線がない。要求を正本へ反映するには実画面を取得し、結果表示を含むレイアウト画像へ差し替えたうえで、検索POST・条件保持・CSV導線を処理概要へ追記する。",
++      "sharedWithRows": [807, 809],
++      "confidence": "high"
++    },
++    {
++      "rowId": 807,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 特集タグ編集CSVダウンロード(検索項目) シート / 処理概要・画面遷移/ルート記述",
++      "reason": "正本には入力項目とボタンしかなく、検索画面、結果表示、export/{mode} のURL・メソッド・ルート名がないため、画面遷移と外部契約を処理概要へ追記する。同じシートのrowId 808・809と一括編集する前提で割り引く。",
++      "sharedWithRows": [808, 809],
++      "confidence": "high"
++    },
++    {
++      "rowId": 809,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 特集タグ編集CSVダウンロード(検索項目) シート / 処理概要・画面項目表",
++      "reason": "初期表示時の条件破棄、mode、CSRFトークンの扱いが正本にないため追記する。modeは既存のフォーマット項目に対応し、セッション処理とCSRFは非表示の動作なので、この指摘単独では画像の描き直しは不要。同じシートのrowId 808・807とまとめて直す。",
++      "sharedWithRows": [808, 807],
++      "confidence": "high"
++    },
++    {
++      "rowId": 763,
++      "docWork": "ADD",
++      "docEffortDays": 0.15,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 日別・月別集計 集計一覧(検索項目-日別) シート / 処理概要の集計・結果補完ルール",
++      "reason": "正本は現行踏襲とするだけで、期間内にデータがない日・月を0行として補う規則がない。条件付きの集計結果補完ルールを処理概要へ追記する。検索項目のレイアウト自体は変わらないため画像更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 762,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 日別・月別集計 集計一覧(検索項目-日別) シート / 集計対象について・処理概要「集計方式の変更」（変更なし）",
++      "reason": "正本には通販/店舗の配送・支払条件と出荷完了条件がすでに明記されている。SPEC_BACKEDのため設計書更新は発生しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 764,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 日別・月別集計 集計一覧(検索項目-月別) シート / 処理概要「集計方式の変更」（変更なし）",
++      "reason": "正本の処理概要に、売上計上対象かつ注文ステータスが出荷完了のみを集計する旨が明記されている。SPEC_BACKEDのため変更不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 765,
++      "docWork": "ADD",
++      "docEffortDays": 0.15,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 日別・月別集計 集計一覧(検索項目-月別) シート / 処理概要の集計・結果補完ルール",
++      "reason": "正本には期間内の欠落日・欠落月を0で補完する具体則がないため、条件付きの結果補完規則を処理概要へ追記する。検索画面の表示項目追加ではないためレイアウト画像は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 770,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 日別・月別集計 集計一覧(検索結果-月別) シート / 処理概要「集計方式の変更」（変更なし）",
++      "reason": "正本に販売関連は注文ステータスが出荷完了のみ計上する旨が明記されている。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 771,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 日別・月別集計 集計一覧(検索結果-月別) シート / 処理概要「集計方式の変更」（変更なし）",
++      "reason": "正本に買取関連は買取ステータスが買取成立のみ計上する旨が明記されている。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 772,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 日別・月別集計 集計一覧(検索結果-月別) シート / 処理概要「集計項目の固定」（変更なし）",
++      "reason": "正本に支店名として通販・店舗名・その他を出力し、その他の対象も明記されている。SPEC_BACKEDで記述も明確なため変更不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 773,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 日別・月別集計 集計一覧(検索結果-月別) シート / 処理概要・画面項目表の「廃棄」「欠品」（変更なし）",
++      "reason": "正本の処理概要に、在庫変動区分が廃棄/欠品のデータを集計して各コスト合計を出す規則が記載済み。SPEC_BACKEDのため変更不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 774,
++      "docWork": "ADD",
++      "docEffortDays": 0.15,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 日別・月別集計 集計一覧(検索結果-月別) シート / 処理概要の欠落期間0補完ルール",
++      "reason": "正本には期間内で結果のない日・月を0行として並べる具体則がないため、結果生成ルールを処理概要へ追記する。既存列や画面構成は変えないため、貼付レイアウト画像の差し替えは不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 778,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 日別・月別集計 CSV出力 シート / CSV項目表・処理概要の「廃棄」（変更なし）",
++      "reason": "正本のCSV項目表と処理概要に、廃棄コスト合計を出力する列が記載済み。SPEC_BACKEDのため設計書更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 779,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 日別・月別集計 CSV出力 シート / CSV項目表・処理概要の「欠品」（変更なし）",
++      "reason": "正本のCSV項目表と処理概要に、欠品コスト合計を出力する列が記載済み。SPEC_BACKEDのため設計書更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 777,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 日別・月別集計 CSV出力 シート / 処理概要の総合計行（変更なし）",
++      "reason": "正本の処理概要に、CSV最終行へ総合計を追加し識別ID3～12を各列合計する旨が明記済み。SPEC_BACKEDのため変更不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 775,
++      "docWork": "ADD",
++      "docEffortDays": 0.15,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 日別・月別集計 CSV出力 シート / 処理概要・CSVファイル仕様",
++      "reason": "正本にはCSV列定義はあるがファイル名規則がないため、report_summary_＋YmdHis＋.csv を出力仕様へ追記する。rowId 776と同じ処理概要を続けて編集する。",
++      "sharedWithRows": [776],
++      "confidence": "high"
++    },
++    {
++      "rowId": 776,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 日別・月別集計 CSV出力 シート / 処理概要の検索条件セッション空時の分岐",
++      "reason": "検索条件セッションが空でも空条件で集計・出力する規則が正本にないため、条件分岐を処理概要へ追記する。rowId 775と同一シート・同一節でまとめて直すため2件目を割り引く。",
++      "sharedWithRows": [775],
++      "confidence": "high"
++    },
++    {
++      "rowId": 782,
++      "docWork": "ADD",
++      "docEffortDays": 0.15,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 受注売上分析 集計一覧(検索項目) シート / 処理概要・検索POSTの画面遷移",
++      "reason": "正本に検索POSTのURLと、結果を同一画面へ表示する遷移契約がないため追記する。HTTP actionの記述であり、既存の検索フォーム画像自体の描き直しは不要。同じシートのrowId 784・783・785とまとめて編集する。",
++      "sharedWithRows": [784, 783, 785],
++      "confidence": "high"
++    },
++    {
++      "rowId": 784,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 受注売上分析 集計一覧(検索項目) シート / 処理概要の初期表示",
++      "reason": "初期表示で検索条件セッションを破棄する規則が正本にないため追記する。非表示のセッション処理なので画像変更は不要で、同じ処理概要をrowId 782・783・785と一括編集する。",
++      "sharedWithRows": [782, 783, 785],
++      "confidence": "high"
++    },
++    {
++      "rowId": 783,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 受注売上分析 集計一覧(検索項目) シート / 処理概要の期間抽出条件",
++      "reason": "正本の項目表にはFrom/Toがあるが、To未満とする比較条件がないため、使用日付列と半開区間の抽出規則を処理概要へ追記する。同一シートのrowId 782・784・785とまとめて直す。",
++      "sharedWithRows": [782, 784, 785],
++      "confidence": "high"
++    },
++    {
++      "rowId": 785,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 受注売上分析 集計一覧(検索項目) シート / 処理概要のCSV再集計ルール",
++      "reason": "同じセッション条件でCSVを再集計し、画面表示件数の上限をCSVには適用しない規則が正本にないため追記する。非表示の出力制御なので画像更新は不要。同一節の他3件と一括編集する。",
++      "sharedWithRows": [782, 784, 783],
++      "confidence": "high"
++    },
++    {
++      "rowId": 786,
++      "docWork": "ADD",
++      "docEffortDays": 0.15,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 受注売上分析 集計一覧(検索結果-集計単位 商品) シート / 処理概要・検索POSTの画面遷移",
++      "reason": "検索結果シートの正本にもPOST /analysis/sales/result と同一画面への結果表示契約がないため、処理概要へ追記する。既存の結果一覧レイアウトの構成は変わらないため画像差し替えは不要。同じシートのrowId 787・788・789とまとめる。",
++      "sharedWithRows": [787, 788, 789],
++      "confidence": "high"
++    },
++    {
++      "rowId": 787,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 受注売上分析 集計一覧(検索結果-集計単位 商品) シート / 処理概要の初期表示",
++      "reason": "初期表示で検索条件セッションを破棄し、結果なしとする規則を処理概要へ追記する。rowId 786・788・789と同一節を一括編集するため追加作業分のみ。",
++      "sharedWithRows": [786, 788, 789],
++      "confidence": "high"
++    },
++    {
++      "rowId": 788,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 受注売上分析 集計一覧(検索結果-集計単位 商品) シート / 処理概要の期間抽出条件",
++      "reason": "集計日Toを排他的上限とする抽出規則が正本にないため追記する。rowId 786・787・789と同じ処理概要内でまとめて直すため追加作業分のみ。",
++      "sharedWithRows": [786, 787, 789],
++      "confidence": "high"
++    },
++    {
++      "rowId": 789,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 受注売上分析 集計一覧(検索結果-集計単位 商品) シート / 画面項目表の平均単価・数量、処理概要の絞り込み条件",
++      "reason": "正本の平均単価・数量は数値項目とするだけで0以上の制限がなく、集計後HAVING相当の適用説明もないため、項目表の書式・制限と処理概要へ追記する。入力欄は既存画像に存在するため画像の描き直しは不要。同一シートの他3件と一括編集する。",
++      "sharedWithRows": [786, 787, 788],
++      "confidence": "high"
++    },
++    {
++      "rowId": 986,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0212_基本設計仕様書(デッキ管理).xlsx / アーキタイプ管理(検索結果) シート（変更なし・指摘の再起票対象）",
++      "reason": "正本の当該シートはM15-08のアーキタイプ検索結果である一方、指摘の期待値はm15-01_admin_deck_deck_searchと/deck/search/{page_no}というデッキ検索の契約で、対象機能が一致しない。トリアージも「要再起票(記述が事実と相違)」であり、この内容をM15-08へ追記すると誤記になるため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 993,
++      "docWork": "ADD",
++      "docEffortDays": 0.25,
++      "target": "0212_基本設計仕様書(デッキ管理).xlsx / アーキタイプ編集 シート / 処理概要「代表カード検索ポップアップ」",
++      "reason": "正本は代表カード選択をデッキ編集と同一とするだけで、3つのXHRエンドポイント、各メソッド、検索・ページング・ID解決、2つのセッションキーを列挙していない。処理概要へ複数行の契約を追記する。画面部品は既存の代表カード選択のままで、追加内容は通信・状態保持仕様なのでレイアウト画像の差し替えは不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    }
++  ]
++}
+
+codex
+28件: NONE=10 ADD=17 FIX=0 IMAGE=1 / 計 2.7人日
+diff --git a/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_21.json b/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_21.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..2c1df272fb29cf3dca17579be1afd56f81f5fb26
+--- /dev/null
++++ b/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_21.json
+@@ -0,0 +1,257 @@
++{
++  "packetId": "du_21",
++  "results": [
++    {
++      "rowId": 806,
++      "docWork": "ADD",
++      "docEffortDays": 0.15,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / フォーマット売上分析 CSV出力 シート / 処理概要・CSV出力仕様",
++      "reason": "Excel正本のCSV列一覧と処理概要にはファイル名・日時書式・BOMの記載がないため、format_sales_report_＋YmdHis＋.csv、およびBOM付与を出力仕様として追記する。画面レイアウト画像はないため画像更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 808,
++      "docWork": "IMAGE",
++      "docEffortDays": 0.6,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 特集タグ編集CSVダウンロード(検索項目) シート / レイアウト図（貼付画像）・処理概要",
++      "reason": "正本の貼付画像は検索条件とCSVダウンロードボタンだけで、検索後の集計結果領域と独立したCSV導線がない。要求を正本へ反映するには実画面を取得し、結果表示を含むレイアウト画像へ差し替えたうえで、検索POST・条件保持・CSV導線を処理概要へ追記する。",
++      "sharedWithRows": [807, 809],
++      "confidence": "high"
++    },
++    {
++      "rowId": 807,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 特集タグ編集CSVダウンロード(検索項目) シート / 処理概要・画面遷移/ルート記述",
++      "reason": "正本には入力項目とボタンしかなく、検索画面、結果表示、export/{mode} のURL・メソッド・ルート名がないため、画面遷移と外部契約を処理概要へ追記する。同じシートのrowId 808・809と一括編集する前提で割り引く。",
++      "sharedWithRows": [808, 809],
++      "confidence": "high"
++    },
++    {
++      "rowId": 809,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 特集タグ編集CSVダウンロード(検索項目) シート / 処理概要・画面項目表",
++      "reason": "初期表示時の条件破棄、mode、CSRFトークンの扱いが正本にないため追記する。modeは既存のフォーマット項目に対応し、セッション処理とCSRFは非表示の動作なので、この指摘単独では画像の描き直しは不要。同じシートのrowId 808・807とまとめて直す。",
++      "sharedWithRows": [808, 807],
++      "confidence": "high"
++    },
++    {
++      "rowId": 763,
++      "docWork": "ADD",
++      "docEffortDays": 0.15,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 日別・月別集計 集計一覧(検索項目-日別) シート / 処理概要の集計・結果補完ルール",
++      "reason": "正本は現行踏襲とするだけで、期間内にデータがない日・月を0行として補う規則がない。条件付きの集計結果補完ルールを処理概要へ追記する。検索項目のレイアウト自体は変わらないため画像更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 762,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 日別・月別集計 集計一覧(検索項目-日別) シート / 集計対象について・処理概要「集計方式の変更」（変更なし）",
++      "reason": "正本には通販/店舗の配送・支払条件と出荷完了条件がすでに明記されている。SPEC_BACKEDのため設計書更新は発生しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 764,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 日別・月別集計 集計一覧(検索項目-月別) シート / 処理概要「集計方式の変更」（変更なし）",
++      "reason": "正本の処理概要に、売上計上対象かつ注文ステータスが出荷完了のみを集計する旨が明記されている。SPEC_BACKEDのため変更不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 765,
++      "docWork": "ADD",
++      "docEffortDays": 0.15,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 日別・月別集計 集計一覧(検索項目-月別) シート / 処理概要の集計・結果補完ルール",
++      "reason": "正本には期間内の欠落日・欠落月を0で補完する具体則がないため、条件付きの結果補完規則を処理概要へ追記する。検索画面の表示項目追加ではないためレイアウト画像は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 770,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 日別・月別集計 集計一覧(検索結果-月別) シート / 処理概要「集計方式の変更」（変更なし）",
++      "reason": "正本に販売関連は注文ステータスが出荷完了のみ計上する旨が明記されている。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 771,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 日別・月別集計 集計一覧(検索結果-月別) シート / 処理概要「集計方式の変更」（変更なし）",
++      "reason": "正本に買取関連は買取ステータスが買取成立のみ計上する旨が明記されている。SPEC_BACKEDのため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 772,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 日別・月別集計 集計一覧(検索結果-月別) シート / 処理概要「集計項目の固定」（変更なし）",
++      "reason": "正本に支店名として通販・店舗名・その他を出力し、その他の対象も明記されている。SPEC_BACKEDで記述も明確なため変更不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 773,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 日別・月別集計 集計一覧(検索結果-月別) シート / 処理概要・画面項目表の「廃棄」「欠品」（変更なし）",
++      "reason": "正本の処理概要に、在庫変動区分が廃棄/欠品のデータを集計して各コスト合計を出す規則が記載済み。SPEC_BACKEDのため変更不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 774,
++      "docWork": "ADD",
++      "docEffortDays": 0.15,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 日別・月別集計 集計一覧(検索結果-月別) シート / 処理概要の欠落期間0補完ルール",
++      "reason": "正本には期間内で結果のない日・月を0行として並べる具体則がないため、結果生成ルールを処理概要へ追記する。既存列や画面構成は変えないため、貼付レイアウト画像の差し替えは不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 778,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 日別・月別集計 CSV出力 シート / CSV項目表・処理概要の「廃棄」（変更なし）",
++      "reason": "正本のCSV項目表と処理概要に、廃棄コスト合計を出力する列が記載済み。SPEC_BACKEDのため設計書更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 779,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 日別・月別集計 CSV出力 シート / CSV項目表・処理概要の「欠品」（変更なし）",
++      "reason": "正本のCSV項目表と処理概要に、欠品コスト合計を出力する列が記載済み。SPEC_BACKEDのため設計書更新は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 777,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 日別・月別集計 CSV出力 シート / 処理概要の総合計行（変更なし）",
++      "reason": "正本の処理概要に、CSV最終行へ総合計を追加し識別ID3～12を各列合計する旨が明記済み。SPEC_BACKEDのため変更不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 775,
++      "docWork": "ADD",
++      "docEffortDays": 0.15,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 日別・月別集計 CSV出力 シート / 処理概要・CSVファイル仕様",
++      "reason": "正本にはCSV列定義はあるがファイル名規則がないため、report_summary_＋YmdHis＋.csv を出力仕様へ追記する。rowId 776と同じ処理概要を続けて編集する。",
++      "sharedWithRows": [776],
++      "confidence": "high"
++    },
++    {
++      "rowId": 776,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 日別・月別集計 CSV出力 シート / 処理概要の検索条件セッション空時の分岐",
++      "reason": "検索条件セッションが空でも空条件で集計・出力する規則が正本にないため、条件分岐を処理概要へ追記する。rowId 775と同一シート・同一節でまとめて直すため2件目を割り引く。",
++      "sharedWithRows": [775],
++      "confidence": "high"
++    },
++    {
++      "rowId": 782,
++      "docWork": "ADD",
++      "docEffortDays": 0.15,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 受注売上分析 集計一覧(検索項目) シート / 処理概要・検索POSTの画面遷移",
++      "reason": "正本に検索POSTのURLと、結果を同一画面へ表示する遷移契約がないため追記する。HTTP actionの記述であり、既存の検索フォーム画像自体の描き直しは不要。同じシートのrowId 784・783・785とまとめて編集する。",
++      "sharedWithRows": [784, 783, 785],
++      "confidence": "high"
++    },
++    {
++      "rowId": 784,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 受注売上分析 集計一覧(検索項目) シート / 処理概要の初期表示",
++      "reason": "初期表示で検索条件セッションを破棄する規則が正本にないため追記する。非表示のセッション処理なので画像変更は不要で、同じ処理概要をrowId 782・783・785と一括編集する。",
++      "sharedWithRows": [782, 783, 785],
++      "confidence": "high"
++    },
++    {
++      "rowId": 783,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 受注売上分析 集計一覧(検索項目) シート / 処理概要の期間抽出条件",
++      "reason": "正本の項目表にはFrom/Toがあるが、To未満とする比較条件がないため、使用日付列と半開区間の抽出規則を処理概要へ追記する。同一シートのrowId 782・784・785とまとめて直す。",
++      "sharedWithRows": [782, 784, 785],
++      "confidence": "high"
++    },
++    {
++      "rowId": 785,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 受注売上分析 集計一覧(検索項目) シート / 処理概要のCSV再集計ルール",
++      "reason": "同じセッション条件でCSVを再集計し、画面表示件数の上限をCSVには適用しない規則が正本にないため追記する。非表示の出力制御なので画像更新は不要。同一節の他3件と一括編集する。",
++      "sharedWithRows": [782, 784, 783],
++      "confidence": "high"
++    },
++    {
++      "rowId": 786,
++      "docWork": "ADD",
++      "docEffortDays": 0.15,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 受注売上分析 集計一覧(検索結果-集計単位 商品) シート / 処理概要・検索POSTの画面遷移",
++      "reason": "検索結果シートの正本にもPOST /analysis/sales/result と同一画面への結果表示契約がないため、処理概要へ追記する。既存の結果一覧レイアウトの構成は変わらないため画像差し替えは不要。同じシートのrowId 787・788・789とまとめる。",
++      "sharedWithRows": [787, 788, 789],
++      "confidence": "high"
++    },
++    {
++      "rowId": 787,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 受注売上分析 集計一覧(検索結果-集計単位 商品) シート / 処理概要の初期表示",
++      "reason": "初期表示で検索条件セッションを破棄し、結果なしとする規則を処理概要へ追記する。rowId 786・788・789と同一節を一括編集するため追加作業分のみ。",
++      "sharedWithRows": [786, 788, 789],
++      "confidence": "high"
++    },
++    {
++      "rowId": 788,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 受注売上分析 集計一覧(検索結果-集計単位 商品) シート / 処理概要の期間抽出条件",
++      "reason": "集計日Toを排他的上限とする抽出規則が正本にないため追記する。rowId 786・787・789と同じ処理概要内でまとめて直すため追加作業分のみ。",
++      "sharedWithRows": [786, 787, 789],
++      "confidence": "high"
++    },
++    {
++      "rowId": 789,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.xlsx / 受注売上分析 集計一覧(検索結果-集計単位 商品) シート / 画面項目表の平均単価・数量、処理概要の絞り込み条件",
++      "reason": "正本の平均単価・数量は数値項目とするだけで0以上の制限がなく、集計後HAVING相当の適用説明もないため、項目表の書式・制限と処理概要へ追記する。入力欄は既存画像に存在するため画像の描き直しは不要。同一シートの他3件と一括編集する。",
++      "sharedWithRows": [786, 787, 788],
++      "confidence": "high"
++    },
++    {
++      "rowId": 986,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0212_基本設計仕様書(デッキ管理).xlsx / アーキタイプ管理(検索結果) シート（変更なし・指摘の再起票対象）",
++      "reason": "正本の当該シートはM15-08のアーキタイプ検索結果である一方、指摘の期待値はm15-01_admin_deck_deck_searchと/deck/search/{page_no}というデッキ検索の契約で、対象機能が一致しない。トリアージも「要再起票(記述が事実と相違)」であり、この内容をM15-08へ追記すると誤記になるため設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 993,
++      "docWork": "ADD",
++      "docEffortDays": 0.25,
++      "target": "0212_基本設計仕様書(デッキ管理).xlsx / アーキタイプ編集 シート / 処理概要「代表カード検索ポップアップ」",
++      "reason": "正本は代表カード選択をデッキ編集と同一とするだけで、3つのXHRエンドポイント、各メソッド、検索・ページング・ID解決、2つのセッションキーを列挙していない。処理概要へ複数行の契約を追記する。画面部品は既存の代表カード選択のままで、追加内容は通信・状態保持仕様なのでレイアウト画像の差し替えは不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    }
++  ]
++}
+
+tokens used
+116,905
+28件: NONE=10 ADD=17 FIX=0 IMAGE=1 / 計 2.7人日

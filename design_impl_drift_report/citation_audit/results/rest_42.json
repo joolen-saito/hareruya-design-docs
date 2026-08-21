@@ -1,0 +1,165 @@
+{
+  "packetId": "rest_42",
+  "results": [
+    {
+      "rowId": 1112,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0208_基本設計仕様書(カード管理).html:3110 に「現行踏襲のためカスタマイズ要件はなし」、同:3113-3115 に「カードの画像を、zipファイルでダウンロードする」「zipファイル解凍後のフォルダ構成」とあるが、Excel正本範囲 sheet-10（3031-3211）には Content-Type、Content-Disposition、filename*、RFC 5987 の記述はない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/CardSetController.php:376-379 `return $app->sendFile($filePath, 200, [ \"Content-Type\" => \"aplication/octet-stream;\", \"Content-Disposition\" => \"attachment; filename*=UTF-8\\'\\'\" . rawurlencode($pathParts['basename']) ]);`。期待値のヘッダは旧実装そのものに一致する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Card/CardsetController.php:333-340 `$response = new BinaryFileResponse($filePath); $response->setContentDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT, 'card_image.zip'); $response->deleteFileAfterSend(true);`。旧実装の Content-Type と filename* を明示していない。",
+      "note": ""
+    },
+    {
+      "rowId": 1113,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0208_基本設計仕様書(カード管理).html:3110 は「現行踏襲のためカスタマイズ要件はなし」とするだけで、Excel正本範囲 sheet-10（3031-3211）に finish イベント名や処理完了後の再掃除は記載されていない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/event.yml:23-24 `eccube.event.controller.admin_cardset_download.finish: - [onControllerCardSetDownloadFinish, FIRST]`、/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Event/Admin/CardSetEvent.php:21-23 `onControllerCardSetDownloadFinish()` が `CardSetController::removeAllDirContents(CardSetController::DOWN_LOAD_DIR);` を実行する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Card/CardsetController.php:329-340 のコメントは「送信完了後に ZIP ファイルのみ削除」「展開画像などは、次回 ... execute 開始時にまとめてクリア」とし、実装も `deleteFileAfterSend(true)` のみ。旧 finish イベント相当は存在しない（確認範囲: `ec-cube-enterprise/src/Eccube`, `app`, `html`。検索語: `eccube.event.controller.admin_cardset_download.finish`, `admin_cardset_download.finish`, `onControllerCardSetDownloadFinish`）。",
+      "note": ""
+    },
+    {
+      "rowId": 1114,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0208_基本設計仕様書(カード管理).html:3126-3127 は「カードセットを未選択の場合のみ」未設定画像をプロモ種別ごとにダウンロードすると記すが、不正値・不存在の正数IDをダミープロモーション扱いにする規則や0件時エラーは Excel正本範囲 sheet-10（3031-3211）にない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/CardSetController.php:308-327 は各 `$id` で `$set = ...->find($id)` を行い、`empty($set)` なら `$this->createPromotionSet()`、さらに `$cardDetails` が空なら `admin.cardset.download.failed.set_not_exist_card` を積んでリダイレクトする。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Cardset/CardsetDownloadAction.php:84-99 は空配列だけを `[null]` とし、それ以外は `FILTER_VALIDATE_INT` 後に `$id > 0` の値だけを残す。取得結果が空なら `continue;` するため、旧実装の不正・不存在ID処理と異なる。",
+      "note": ""
+    },
+    {
+      "rowId": 1115,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0208_基本設計仕様書(カード管理).html:3401 に「現行踏襲のためカスタマイズ要件はなし」、同:3404-3406 に言語別ZIPの機能記述はあるが、Excel正本範囲 sheet-11（3322-3502）にはルート名 `admin_cardset_download_lang` やURL `/cardset/download_lang` はない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/CardsetServiceProvider.php:41-43 `$app->post('/'.$app['config']['admin_route'].'/cardset/download_lang', ...::downloadEachLang)->bind('admin_cardset_download_lang');`。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Card/CardsetController.php:310-311 `#[Route('/%eccube_admin_route%/cardset/download_each_lang', name: 'admin_cardset_download_each_lang', methods: ['POST'])]`。/home/y-saito/Developments/ec-cube-enterprise/app/template/admin/Cardset/index.twig:76-81 も `formaction=\"{{ url('admin_cardset_download_each_lang') }}\"` を使う。",
+      "note": ""
+    },
+    {
+      "rowId": 1116,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0208_基本設計仕様書(カード管理).html:3404-3429 はZIPの言語別フォルダ構成のみを定義し、Excel正本範囲 sheet-11（3322-3502）に `dead_link_flg` や取得成否によるDB更新はない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/CardSetController.php:343-350 はセット別で `setDeadLinkFlg(true/false)` 後に `persist`・`flush`、同:439-464 は言語別で更新を `$deadLinkUpdateList` に溜め、最後に `setDeadLinkFlg`・`persist`・`flush` する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Cardset/CardsetDownloadAction.php:140-164 は `downloadCardImageToDirectory(...)` の成功時にZIPへ追加するだけで、対象サービスの execute（64-180）に `setDeadLinkFlg`、`persist`、`flush` の呼出しがない（確認範囲: `src/Eccube/Service/Admin/Cardset`, `src/Eccube/Repository/Master/MtbCardImageRepository.php`, `src/Eccube/Entity/Master/MtbCardImage.php`。検索語: `dead_link_flg`, `setDeadLinkFlg`, `persist`, `flush`）。",
+      "note": ""
+    },
+    {
+      "rowId": 1117,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0208_基本設計仕様書(カード管理).html:3401 は「現行踏襲」とするが、Excel正本範囲 sheet-11（3322-3502）には3種のメッセージキー、`admin_cardset_page`、セッションページ復帰の具体記述はない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/CardSetController.php:323-327 は0件時に `admin.cardset.download.failed.set_not_exist_card` と `admin_cardset_page`、同:360 は `admin.download.card.not_found`、同:368-371 は `admin.cardset.download.failed.image_not_exist` とセッションの `eccube.admin.cardset.page_no` を使う。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Cardset/CardsetDownloadAction.php:96-100 はカード詳細0件を `continue`、同:168-173 は追加0件を `admin.card.cardset.error.download_no_images` に集約する。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Card/CardsetController.php:300-304,322-326 は例外メッセージを積んで固定の `admin_cardset_list` へ戻す。",
+      "note": ""
+    },
+    {
+      "rowId": 1118,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0208_基本設計仕様書(カード管理).html:3401 は「現行踏襲のためカスタマイズ要件はなし」とするだけで、Excel正本範囲 sheet-11（3322-3502）にセット別 finish イベントや終了後掃除はない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/event.yml:23-24 `eccube.event.controller.admin_cardset_download.finish` が `onControllerCardSetDownloadFinish` を登録し、/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Event/Admin/CardSetEvent.php:21-23 が `removeAllDirContents(DOWN_LOAD_DIR)` を実行する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Card/CardsetController.php:329-340 は `deleteFileAfterSend(true)` でZIPだけを削除し、展開画像は次回開始時に消すと明記する。finish リスナー相当は存在しない（確認範囲: `ec-cube-enterprise/src/Eccube`, `app`, `html`。検索語: `eccube.event.controller.admin_cardset_download.finish`, `admin_cardset_download.finish`, `onControllerCardSetDownloadFinish`）。",
+      "note": "rowId 1113 と同一の旧 finish イベント欠落を、言語別シート側から重複指摘した finding。"
+    },
+    {
+      "rowId": 1119,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0208_基本設計仕様書(カード管理).html:3681 は「カスタマイズ要件に記載の内容以外は現行踏襲」とする一方、同:3696-3697 は旧(18)登録を除去し新(21)登録へ、同:3730 は登録/更新を同じ「登録」ボタンで行うと明記する。Excel正本範囲 sheet-12（3613-3876）には `admin_cardset_update`、フォームprefix、hidden id、`admin.register.complete` の具体値はなく、「編集入口は更新」はむしろ除去対象である。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/CardsetServiceProvider.php:31-33 はPOST `/cardset/edit` を `admin_cardset_update` にbind。/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Cardset/card_set_detail.twig:23-28 は同ルートへ送信しhidden `form.id`、同:63-70 は新規「登録」・編集「更新」。/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/CardSetController.php:235-240 は `admin.register.complete` 後に編集へ戻す。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Card/CardsetController.php:126-160,177-213 は `/cardset/new` と `/cardset/{id}/edit` が各自POSTを受け `admin.common.save_complete` を積む。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/CardsetType.php:174-176 はprefix `admin_cardset`、/home/y-saito/Developments/ec-cube-enterprise/app/template/admin/Cardset/edit.twig:164 は常に `admin.common.registration`（「登録」）。",
+      "note": "ルート・フォーム名・旧フラッシュは旧実装由来。一方、編集時も「登録」とする現実装はExcel正本のECCUBE4向け変更（旧「更新」を除去）に合致しており、findingの複合期待値のうちボタン文言部分は設計と逆。"
+    },
+    {
+      "rowId": 1120,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0208_基本設計仕様書(カード管理).html:3730 は入力チェックで「エラーが発生した場合はエラーメッセージを画面に表示する」とだけ定める。Excel正本範囲 sheet-12（3613-3876）にフラッシュキー `admin.register.failed` はない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/CardSetController.php:173-182 `if (!$this->isFormValid($app, $form)) { $app->addError('admin.register.failed', 'admin'); ... return $app->render(...); }`。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Card/CardsetController.php:142-169,195-228 は `isSubmitted() && isValid()` の成功分岐だけを持ち、失敗時フラッシュは積まない。ただし /home/y-saito/Developments/ec-cube-enterprise/app/template/admin/Cardset/edit.twig:41-49 は `form_errors(form.nameJp/nameEn)` を表示し、Excel正本の画面エラー要求自体は満たす。",
+      "note": "欠けているのは旧実装固有のエラーフラッシュであり、Excel正本が要求するフォームエラー表示は現実装にある。"
+    },
+    {
+      "rowId": 1121,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0208_基本設計仕様書(カード管理).html:3782 のExcel正本は確認文言を「この操作はあとから取り消すことができません。『{カードセット名}』を削除してよろしいですか？」、実行操作を「実行」とする。finding記載の固定文言「このカードセットを削除してもよろしいですか？」やURL `/cardset/{id}/delete` は正本範囲 sheet-12（3613-3876）にない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/CardsetServiceProvider.php:34-37 はDELETE `/cardset/{id}/delete`。/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Cardset/card_set_detail.twig:72 は `data-message=\"このカードセットを削除してもよろしいですか？\">削除</a>` で、findingの期待値は旧実装に一致する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Card/CardsetController.php:234-239 はDELETE `/product/cardset/{id}/delete`。/home/y-saito/Developments/ec-cube-enterprise/app/template/admin/Cardset/edit.twig:153-156 は `admin.common.delete_modal__message` をカードセット名付きで使い、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:1790 の値はExcel正本と同じ「この操作はあとから取り消すことができません。『%name%』を削除してよろしいですか？」。",
+      "note": "旧URLと旧固定文言は未移植だが、確認文言については現実装がExcel正本の新しい可変文言を満たす。現実行ボタンは「削除」であり、正本の「実行」とは異なる。"
+    },
+    {
+      "rowId": 1123,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0208_基本設計仕様書(カード管理).html:3781 は「カード名を押下すると、カード詳細（編集・削除）画面へ遷移する」とだけ記し、新規タブ指定はExcel正本範囲 sheet-12（3613-3876）にない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Cardset/card_set_detail.twig:87-92 `<a href=\"{{ url('admin_card_edit', {id: cardlist.id}) }}\" target=\"_blank\">`。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/app/template/admin/Cardset/edit.twig:132-136 `<a href=\"{{ url('admin_card_edit', {id: Card.id}) }}\">` で、`target=\"_blank\"` はない。",
+      "note": ""
+    },
+    {
+      "rowId": 1124,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0208_基本設計仕様書(カード管理).html:3729 はカードセット管理へ戻る際に「表示件数と並び順を保持する」と要求するが、`/{page_no}?resume=1` というURLはExcel正本範囲 sheet-12（3613-3876）にない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Cardset/card_set_detail.twig:108-110 `<a href=\"{{ url('admin_cardset_page', { page_no : app.session.get('eccube.admin.cardset.page_no')|default('1') } ) }}?resume=1\">検索画面に戻る</a>`。/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/CardSetController.php:46-50 は `resume` が有効でなければ一覧セッションを削除する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/app/template/admin/Cardset/edit.twig:151 はページ番号に応じ `admin_cardset_list_paged` または `admin_cardset_list` へ戻し、`resume=1` は付けない。ただし /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Card/CardsetController.php:57-72,87-109 はsort/order/page_count/page_noをセッション保持する。",
+      "note": "正本の機能要求（表示件数・並び順保持）は現実装にもある。findingが差分とする旧URL形式だけが旧実装由来。"
+    },
+    {
+      "rowId": 1125,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0208_基本設計仕様書(カード管理).html:3996 のExcel正本は「『並び順』の昇順で、フォーマット一覧を表示する」とのみ記し、同一rank内のid昇順は正本範囲 sheet-13（3953-4054）にない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/FormatController.php:28-30 `$formats = $app['hareruya_ec.repository.format']->findBy([], ['rank' => 'ASC', 'id' => 'ASC']);`。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Card/FormatController.php:49-51 `'Formats' => $this->formatRepository->findBy([], ['rank' => 'ASC'])` で、第二キーidを指定しない。",
+      "note": ""
+    },
+    {
+      "rowId": 1126,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0208_基本設計仕様書(カード管理).html:4008 のExcel正本項目表は「2 フォーマット名 リンク」と明記する。また同:3989 のExcel正本埋込画像（`data-excel-ref=\"...フォーマット一覧!B8\"`）でも「スタンダード / Standard」等の名称が青いリンクとして描画されている。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Format/format.twig:35-39 `<a href=\"{{ url('admin_format_edit', {'formatId':format.id}) }}\">{{ format.nameJp }} / {{ format.nameEn }}</a>`。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/app/template/admin/Format/format_list.twig:47-50 `<td class=\"align-middle ps-3\">{{ Format.nameJp }} / {{ Format.nameEn }}</td>` はプレーンテキスト。編集リンクは同:57-59 の鉛筆アイコンにしかない。",
+      "note": ""
+    },
+    {
+      "rowId": 1127,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0208_基本設計仕様書(カード管理).html:3989 のExcel正本埋込画像（`data-excel-ref=\"0208:フォーマット一覧!B8\"`）はヘッダ左側に大見出し「フォーマット管理」、その右に小見出し「フォーマット一覧」を表示している（画像内記述の引用）。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Format/format.twig:5-7 `{% block title %}フォーマット管理{% endblock %}`、`{% block sub_title %} フォーマット一覧`。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/app/template/admin/Format/format_list.twig:5-6 はtitleに `admin.product.format_list`、sub_titleに `admin.product.format_management`。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:4253-4254 はそれぞれ「フォーマット管理」「フォーマット一覧」なので、表示割当は正本と逆になる。",
+      "note": ""
+    },
+    {
+      "rowId": 1128,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0208_基本設計仕様書(カード管理).html:4013 は削除ボタン・確認文言・実行操作を定義するが、DELETE URL `/format/{formatId}/delete` はExcel正本範囲 sheet-13（3953-4054）にない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/FormatServiceProvider.php:35-38 `$app->delete('/'.$app['config']['admin_route'].'/format/{formatId}/delete', ...)->assert('formatId', '^[1-9][0-9]*$')->bind('admin_format_delete');`。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Card/FormatController.php:172 `#[Route('/%eccube_admin_route%/product/format/{id}/delete', name: 'admin_format_delete', requirements: ['id' => '\\d+'], methods: ['DELETE'])]`。",
+      "note": ""
+    },
+    {
+      "rowId": 1130,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0208_基本設計仕様書(カード管理).html:3997-3999 のExcel正本はイベント紐付き時に削除不可とする規則だけを記し、`dtb_card_format` の事前全削除は正本範囲 sheet-13（3953-4054）にない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/FormatController.php:167-174 `foreach($format->getCardFormats() as $cardFormat) { $app['orm.em']->remove($cardFormat); }` の後に `$app['orm.em']->remove($format); $app['orm.em']->flush();`。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Card/FormatController.php:200-201 は `$this->entityManager->remove($Format); $this->entityManager->flush();` のみ。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Entity/Master/MtbFormat.php:402-406 のCardFormats関連は `#[ORM\\OneToMany(... mappedBy: 'Format')]` だけでcascade removeがない。",
+      "note": "DtbCardFormat.php:55-56 のformat_id関連にもonDelete指定はないため、コード上は旧実装の事前削除を確認できない。実DBにコード外のON DELETE CASCADEがある場合のみ挙動が変わるが、リポジトリ内定義からは確認できなかった。"
+    },
+    {
+      "rowId": 1131,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0208_基本設計仕様書(カード管理).html:3994 は「現行踏襲のためカスタマイズ要件はなし」、同:4004-4013 は画面部品定義のみで、javascriptブロックを置かないことやテンプレート単体でモーダルを定義しないことはExcel正本範囲 sheet-13（3953-4054）に明記されていない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Format/format.twig:15-19 はstylesheetブロック終了直後に `{% block main %}` が始まり、同ファイル全体（1-68）にjavascriptブロック・モーダルincludeがない。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/app/template/admin/Format/format_list.twig:7-21 はDeleteModal用 `{% block javascript %}` を実装し、同:23-24 で `{% include \"@admin/Format/delete_modal.twig\" %}` を行う。",
+      "note": ""
+    },
+    {
+      "rowId": 1132,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0208_基本設計仕様書(カード管理).html:3994 は「現行踏襲のためカスタマイズ要件はなし」とするだけで、`admin/assets/css/format.css`、padding、vertical-alignはExcel正本範囲 sheet-13（3953-4054）にない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Format/format.twig:15-17 `<link rel=\"stylesheet\" href=\"{{ app.config.root_urlpath }}/admin/assets/css/format.css\">`。/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/assets/css/format.css:1-6 `.btn-new { padding: 4px 16px; } td { vertical-align: middle!important; }`。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/app/template/admin/Format/format_list.twig:1-7 はdefault_frame継承・title/sub_titleの直後にjavascriptブロックが始まり、stylesheet/format.css読込がない。検索範囲 `app/template/admin/Format`, `src/Eccube/Resource/template/admin`, `html` でも `format.css` は0件。",
+      "note": ""
+    },
+    {
+      "rowId": 1133,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0208_基本設計仕様書(カード管理).html:4329 のExcel正本は削除ボタン、確認文言、実行操作を定義するが、URL `/format/{formatId}/delete` とID正規表現 `^[1-9][0-9]*$` は正本範囲 sheet-14（4153-4431）にない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/FormatServiceProvider.php:35-38 `$app->delete('/'.$app['config']['admin_route'].'/format/{formatId}/delete', ...)->assert('formatId', '^[1-9][0-9]*$')->bind('admin_format_delete');`。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Card/FormatController.php:172 `#[Route('/%eccube_admin_route%/product/format/{id}/delete', name: 'admin_format_delete', requirements: ['id' => '\\d+'], methods: ['DELETE'])]`。`\\d+` は0も許す。",
+      "note": ""
+    }
+  ]
+}

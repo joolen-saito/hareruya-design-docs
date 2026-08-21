@@ -1,0 +1,149 @@
+{
+  "packetId": "rc_57",
+  "results": [
+    {
+      "rowId": 999,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0212_基本設計仕様書(デッキ管理).html の Excel 正本 src-cell を `csvimport`、`admin_archetype_csv`、`m15-10_admin_deck_archetype_csv_import` で検索し、いずれも0件だった。正本 0212:アーキタイプ登録CSVアップロード!B32（HTML:3994）の実在文言は「・カスタマイズ要件に記載の内容以外は現行踏襲とする。」で、具体ルートはない。pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/ArchetypeServiceProvider.php:53-58 を開き、GET `/archetype/csvimport` の bind が `admin_archetype_csv`、POST の bind が `admin_archetype_csv_import` であることを確認した。`m15-10_admin_deck_archetype_csv_import` はリバース詳細設計 functions/pf-eccube3/m15-10_admin_deck_archetype_csv_import.md:284 にだけ記載され、旧コードの実物とは一致しない。",
+      "reason": "具体的な旧URLとGET/POST分離は旧実装に実在し、Excel正本にはないので分類の中心は LEGACY_BACKED で正しい。ただし finding のPOSTルート名 `m15-10_admin_deck_archetype_csv_import` は旧実装の bind 名ではなく、正確には `admin_archetype_csv_import` である。現実装は旧URL・GET専用名を提供せず差自体は残る。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Archetype/ArchetypeCsvController.php の csv() に付く Route（47行）は `/%eccube_admin_route%/archetype/csv_import`、name=`admin_archetype_csv_import`、methods=`GET, POST`。src/app/html を `archetype/csvimport`、`admin_archetype_csv`、`m15-10_admin_deck_archetype_csv_import` で検索して該当ルートは0件だった。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 1000,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0212_基本設計仕様書(デッキ管理).html の Excel 正本で、0212:アーキタイプ登録CSVアップロード!D30（HTML:3992）「・TSVアップロードを廃止」と、同 !D48（HTML:4005）「・ファイル拡張子『TSV』をエラー扱いにする処理を追加」を確認した。どちらも function-design-embed 開始（HTML:4054）より前の src-cell である。",
+      "reason": "TSV廃止と拡張子TSV拒否はExcel正本が直接規定するため SPEC_BACKED は正しい。CsvMimeType という具体クラス名までは正本にないが、サーバー側でTSVを拒否すべきという核心要件だけで乖離は成立する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/CsvImportType.php の buildForm()（48-57行）は NotBlank と File(maxSize) だけを設定する。src/Eccube/Service/Csv/Importer/CsvImporter.php の createCsvImportService()（172-175行）は `$fileExtension === 'tsv'` なら区切り文字をタブにして読み込む。ArchetypeCsvController::csv() に拡張子拒否の事前分岐もない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 1001,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0212_基本設計仕様書(デッキ管理).html の Excel 正本 src-cell を `ヘッダ`、`並び順も含め完全一致` で検索してM15-10要件は0件だった。正本 0212:アーキタイプ登録CSVアップロード!AG57（HTML:4017）の実在文言は「フォームに入力した情報で入力チェックを実施、OKであれば登録/更新を実施、NGがあればエラー内容を表示する」までである。pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/AbstractCsvService.php の checkHeaderValues()（208-212行）は `array_values(array_diff(...))` 同士を厳密比較し、旧Controllerの import()（59-63行）が固定ヘッダ順を渡すことを確認した。",
+      "reason": "ヘッダ順まで完全一致させる具体要件はExcel正本ではなく旧実装に由来するため LEGACY_BACKED は正しい。現実装は列名をキーに位置を引く方式で、同じ列名集合なら並べ替えを拒否しない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Model/CsvRow.php の setHeaders()（60-70行）はヘッダを `array_flip(array_values($headers))` する。BaseCsvImportHandler::onValidateRow()（71-98行）は列数一致と各列名の存在を検査するだけで、CsvImporter::validateBeforeImport()（185-207行）にも順序比較はない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 1002,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0212_基本設計仕様書(デッキ管理).html の Excel 正本 src-cell を `HTTP 302`、`リダイレクト`、`フラッシュ` で検索し0件だった。正本 0212:アーキタイプ登録CSVアップロード!AG57（HTML:4017）は入力チェック、登録/更新、エラー表示を述べるだけで応答方式を定めない。旧実装 pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/ArchetypeCsv.php の render()（86-98行）は `redirect(...admin_archetype_csv)` を返し、旧Controllerの import()（54-55、73-85行）は失敗時・成功時とも render() を返すことを確認した。",
+      "reason": "成功・失敗ともGETへリダイレクトする具体挙動は旧コードに実在し、Excel正本にはないため LEGACY_BACKED は正しい。現実装は失敗時を同一POSTのテンプレート描画に変えている。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Archetype/ArchetypeCsvController.php の csv() はフォーム不正、ファイルなし、行数上限、例外、取込結果エラーで renderWithErrors() を返す（60-71、92-103行）。成功時だけ addSuccess() 後に redirectToRoute('admin_archetype_csv_import') する（106-108行）。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 1003,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0212_基本設計仕様書(デッキ管理).html の Excel 正本 src-cell を `アーキタイプCSV登録開始`、`アーキタイプCSV登録完了`、`admin.register.complete`、`フラッシュ` で検索して0件だった。旧実装 pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/ArchetypeCsvController.php の import() には52行「log_info('アーキタイプCSV登録開始')」、82行「log_info('アーキタイプCSV登録完了')」、83行「$app->addSuccess('admin.register.complete', 'admin')」が実在する。",
+      "reason": "開始・完了ログの固定文言と成功キーはExcel正本に無く、旧実装にのみ実在するため LEGACY_BACKED は正しい。現在も開始・完了log_infoはなく、成功キーも異なる。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Archetype/ArchetypeCsvController.php の csv() は例外時にだけ `log_error('archetype csv import error', ...)` を呼ぶ（92-97行）。成功時は `$this->addSuccess('admin.common.csv_upload_complete', 'admin')`（106行）で、開始・完了の log_info は同ファイルに存在しない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 1005,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0213_基本設計仕様書(データ管理).html の全 Excel 正本 src-cell を `/banner/top`、`html_class`、`admin_top_banner` で検索した。HTTP管理画面ルートの記載は0件で、`/banner/top` の唯一の正本ヒットは別シート画像設定のS3 URL `https://files.hareruyamtg.com/banner/top/{各支店の省略名}`（0213:画像設定!C49、HTML:1292）だった。M16-01正本は 0213:バナー設定!B26（HTML:1074）「・カスタマイズ要件に記載の内容以外は現行踏襲とする。」まで。旧実装 pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/BannerServiceProvider.php:31-43 にGET/POST/DELETEの `/banner/top` 系ルートを確認した。",
+      "reason": "管理画面HTTPパスの具体値はExcel正本にはなく、旧実装に由来するため LEGACY_BACKED は正しい。S3 URLの `/banner/top` はストレージパスであり、このHTTPルートの根拠にはならない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Data/TopBannerController.php の index() に付くRoute（54-55行）は `/data/top_banner` と `/data/top_banner/{base_info_digit}`、delete() のRoute（183-184行）は `/data/top_banner/delete` と `/data/top_banner/{base_info_digit}/delete`。管理画面 `/banner/top` ルートは src/app/html のルート検索で見つからなかった。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 1006,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "REFUTED",
+      "correctedClass": "ALREADY_MET",
+      "driftVerdict": "RESOLVED",
+      "checkedQuote": "関連シートを含めて0213_基本設計仕様書(データ管理).html の Excel 正本を `banner/top`、`トップバナー用フォルダ`、`banner/` で検索した。0213:画像設定!C46（HTML:1290）は「S3のトップバナー画像参照先、アップロード先をトップバナー用フォルダに変更する」、同 !C48（HTML:1291）は「S3のトップバナー用フォルダは、下記のようなURLとする」、同 !C49（HTML:1292）は実値 `https://files.hareruyamtg.com/banner/top/{各支店の省略名}` と明記する。旧 `banner/` 直下は pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/BannerController.php:20 の `const S3_DIRCTORY = 'banner/';` に実在する。",
+      "reason": "finding は旧実装の `banner/` を設計期待値にしているが、関連するExcel正本M16-02が移行後のトップバナー用フォルダを明示的に `banner/top/{各支店の省略名}` と規定している。現実装の `banner/top` は正本に一致するため、旧挙動との差を乖離として扱うのは誤りである。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Admin/Data/TopBannerFileListAction.php の TOP_BANNER_S3_DIRECTORY（22行）は `banner/top/`、TopBannerUploadAction.php の同定数（25行）は `banner/top` で buildUploadDirectory()（70-81行）が店舗省略名を後置する。TopBannerDeleteAction.php の許可プレフィックス（23行）も `banner/top/`。Excel正本のトップバナー用フォルダ要件を満たしている。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 1008,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0213_基本設計仕様書(データ管理).html の Excel 正本 src-cell を `フラッシュメッセージ`、`検索条件セッション`、`リダイレクト先は URL とハッシュ` で検索し0件だった。M16-01正本 0213:バナー設定!B26（HTML:1074）は「・カスタマイズ要件に記載の内容以外は現行踏襲とする。」まで。具体文「フラッシュメッセージや検索条件セッションは当機能では用いない。リダイレクト先は URL とハッシュのみで決まる。」はリバース詳細設計 functions/pf-eccube3/m16-01_admin_data_top_banner.md:210 にあり、旧BannerController.phpを `addSuccess|addError` で検索して0件だった。",
+      "reason": "フラッシュ不使用はExcel正本の明示要件ではなく、旧実装とリバース詳細設計に由来するため LEGACY_BACKED は正しい。現実装は保存・アップロード・削除でフラッシュを追加しており、旧挙動との差は残る。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Data/TopBannerController.php の index() はアップロード成功で addSuccess('admin.common.upload_complete')（138行）、保存成功で addSuccess('admin.common.save_complete')（165行）。delete() は成功で addSuccess('admin.common.delete_complete')（202行）、失敗で addError()（203-208行）を呼ぶ。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 1011,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0213_基本設計仕様書(データ管理).html のExcel正本 src-cell を `/banner/top`、`html_class`、`base_info_digit`、`upload_wrap` で検索した。管理画面HTTPパス・パラメータ名・ハッシュの記載は0件で、`/banner/top` の正本ヒットはS3 URL（0213:画像設定!C49、HTML:1292）だけだった。M16-02正本 0213:画像設定!C42（HTML:1288）は「カスタマイズ要件に記載の内容以外は現行踏襲とする」。旧HTTPルートは pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/BannerServiceProvider.php:31-43 の `/banner/top[/{html_class}]` と `/banner/top/delete[/{html_class}]` で確認した。",
+      "reason": "具体的な利用者向けHTTPパスとパラメータ名はExcel正本に無く旧実装由来なので LEGACY_BACKED は正しい。正本のS3 URLはHTTP管理画面ルートの根拠ではない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Data/TopBannerController.php の index() のRoute（54-55行）は `/data/top_banner[/{base_info_digit}]`、delete() のRoute（183-184行）は `/data/top_banner/delete` と `/data/top_banner/{base_info_digit}/delete`。`/banner/top` 管理ルートは存在しない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 1012,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0213_基本設計仕様書(データ管理).html の Excel 正本 src-cell を `htmlClassName`、`upload_wrap`、`リダイレクト`、`店舗未選択なら` で検索して0件だった。正本 0213:画像設定!AG57（HTML:1303）は「(3)アップロードにより画像をアップロードする際に、画像のアップロードパスを設定している店舗ごとに変更する」、同 !AG60（HTML:1306）は店舗別一覧表示を定めるが、アップロード後の戻り先は規定しない。旧 pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/BannerController.php の upload()（200-211行）は `[true, null|htmlClassName]` を返し、bannerSet()（283-288行）がその値で全体または店舗絞り込み先へリダイレクトすることを確認した。",
+      "reason": "選択店舗をアップロード後のリダイレクト先へ引き継ぐ具体手順はExcel正本ではなく旧実装に由来するため LEGACY_BACKED は正しい。現在はアップロード先ディレクトリには店舗を反映するが、成功後の戻り先には反映しない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Data/TopBannerController.php の index() は handleUpload() 後、常に `generateUrl('admin_data_top_banner').'#upload_wrap'` へ303を返す（128-140行）。handleUpload()（241-249行）は void で、選択BaseInfoをTopBannerUploadActionへ渡すだけ。店舗別 `admin_data_top_banner_filter` へ戻す分岐はdelete()（215-219行）にだけある。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 1013,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "REFUTED",
+      "correctedClass": "SPEC_BACKED",
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0213_基本設計仕様書(データ管理).html の Excel 正本レイアウト画像 0213:画像設定!J7（image 1、HTML:1269-1282）を実際に抽出して目視し、画面上部が「データ管理 トップバナーアップロード」の順で描かれていることを確認した。正本 src-cell でも 0213:画像設定!N4（HTML:1257）の機能名は「画像設定(トップバナー管理)」。`ページタイトル`、`サブタイトル` という語自体は正本src-cellに0件だが、レイアウト画像がデータ管理を先、トップバナー固有見出しを後に配置している。旧 pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Banner/banner.twig:5-6 は title=`データ管理`、sub_title=`トップバナー管理`。",
+      "reason": "先行分類はExcel正本レイアウト画像を見落としている。画像は「データ管理」を先、トップバナー固有見出しを後に置く表示順を直接示すため、タイトル順の核心は SPEC_BACKED。画像の第二文言は厳密には「トップバナーアップロード」だが、正本の機能名には「トップバナー管理」も実在し、いずれにせよ現実装の逆順は正本レイアウトと一致しない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Data/top_banner.twig:15-16 は title=`admin.data.top_banner`、sub_title=`admin.data.data_management`。messages.ja.yaml:6152-6153 の値は「データ管理」「トップバナー管理」で、default_frame.twig:195-196 は title を先、sub_title を後に描画するため、現表示順は「トップバナー管理」→「データ管理」となる。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 1017,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0213_基本設計仕様書(データ管理).html のM16-04 Excel正本 src-cell を `DateTimePicker`、`calendar`、`YYYY-MM-DD HH:mm`、`datetime-local`、`hareruya-masterdata` で検索して全て0件だった。正本レイアウト画像 0213:MTGマスターデータ!C8（image 1、HTML:1719-1730）も実際に目視したが、初期選択の一般マスタ行だけが描かれ、日時入力やカレンダー指定は確認できなかった。具体記述はリバース詳細設計 functions/pf-eccube3/m16-04_admin_data_hareruya_mtg_masterdata.md:41,45。旧Twig app/Plugin/HareruyaEc/Resource/template/admin/HareruyaMasterdata/index.twig:8-11,70-75 と旧JS assets/js/hareruya-masterdata.js:2-13 に moment、calendar、datetimepicker、`YYYY-MM-DD HH:mm` の実物を確認した。",
+      "reason": "DateTimePickerのライブラリ、クラス名、書式、適用条件はExcel正本テキストにもレイアウト画像にも確認できず、旧実装にだけ実在するため LEGACY_BACKED は正しい。現実装はネイティブdatetime-localへ置換したままである。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Data/mtg_master_data.twig の日時列入力（100-106、121-126行）は `type=\"datetime-local\"` とし、既存値の空白を `T` に置換する。同Twigに calendar クラス、moment、datetimepicker の読込・初期化はない。`hareruya-masterdata` は src/app/html の検索で0件だった。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    }
+  ]
+}

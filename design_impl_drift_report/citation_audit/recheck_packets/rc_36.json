@@ -1,0 +1,340 @@
+{
+ "packetId": "rc_36",
+ "note": "rowId は drift_findings_list_final.tsv の行番号(ヘッダ除く1始まり)。mech は機械検証フラグ(手掛かりであって正解ではない)。",
+ "count": 12,
+ "findings": [
+  {
+   "rowId": 642,
+   "機能No": "M08-05",
+   "機能名": "M08-05 ポイント付与",
+   "ドメイン": "m08",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "会員・選手情報を取得する。いずれも無い場合はページが見つからない扱い（404）とする。",
+   "実装実態": "Customer::getPlayer() は nullable だが、Controller は null 確認なしに $Customer->getPlayer()->addPoint(...) を呼び、Twig も Customer.Player.point を直接参照している。",
+   "差分内容": "会員なしは ParamConverter/型解決により 404 になり得るが、選手情報なしの明示的な 404 分岐がない。nullable な Player を null チェックせず参照するため、設計の『会員・選手情報が無い場合は404』と異なる。反証として getPlayer、Player null、NotFoundHttpException、createNotFoundException を CustomerPointController と関連 Twig で検索したが、選手情報なし404は確認できなかった。",
+   "実装参照": "src/Eccube/Entity/Customer.php:1107 / src/Eccube/Controller/Admin/Customer/CustomerPointController.php:85 / src/Eccube/Resource/template/admin/Customer/point_update.twig:105",
+   "設計書参照": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-10:3128,3156,3159",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:3130 のExcel正本は「現行踏襲」とするだけで、会員・選手情報なしの404を明記しない。404記述は function-design-embed 後の同HTML:3216「会員・選手情報を取得する。いずれも無い場合は…404」にのみある。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/CustomerController.php:341-348 は会員取得後 `if (empty($customer)) { return $app->abort(404); }`、Player取得後 `if (empty($player)) { return $app->abort(404); }` と明示的に両方を404化する。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Entity/Customer.php:1014-1015 と1145-1147で Player は nullable (`private ?DtbPlayer $Player = null`, `getPlayer(): ?DtbPlayer`) だが、ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/CustomerPointController.php:107 は `$Customer->getPlayer()->addPoint(...)` とnull判定なしで呼ぶ。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Controller/Admin/Customer/CustomerPointController.php:107` `$Customer->getPlayer()->addPoint($PointHistory->getPointChange());` と null チェックなしの呼び出しが残り、`src/Eccube/Resource/template/admin/Customer/point_update.twig:105` も `ポイント残高: {{ Customer.Player.point }}pt` を直接参照。`src/Eccube/Entity/Customer.php:1145` `public function getPlayer(): ?DtbPlayer` は依然 nullable で、同 Controller に createNotFoundException / NotFoundHttpException は 1 件も無い。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "NOT_FOUND",
+    "stale": "UNCHANGED",
+    "quoteDetail": [
+     "会員・選手情報を取得する。いずれも無い場合は…404"
+    ]
+   }
+  },
+  {
+   "rowId": 643,
+   "機能No": "M08-05",
+   "機能名": "M08-05 ポイント付与（キャンペーン、特別対応）",
+   "ドメイン": "m08",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "「登録」ボタン（付与）は POST /{admin_route}/customer/point/{id}/update/{type} に送信し、入力したポイント変動を履歴に追加してポイント履歴画面へ戻る。",
+   "実装実態": "POST の admin_customer_point_update は /%eccube_admin_route%/customer/point/{id}/{type} に定義され、フォームも同ルートへ送信する。設計にある /customer/point/{id}/update/{type} ではない。",
+   "差分内容": "設計は POST エンドポイントの外部契約として /update/{type} を含むパスを指定しているが、実装ルートとフォーム action は /{id}/{type} であり、パス構造が一致しない。反証として customer/point/{id}/update/{type}、admin_customer_point_update、point_update.twig を検索したが /update/{type} のルート定義は確認できなかった。",
+   "実装参照": "src/Eccube/Controller/Admin/Customer/CustomerPointController.php:51; src/Eccube/Resource/template/admin/Customer/point_update.twig:18",
+   "設計書参照": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-11:2937,2946,3118,3127",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:3294 のExcel正本は「カスタマイズ要件に記載の内容以外は現行踏襲」とし、URLを明記しない。POST `/update/{type}` は埋め込み詳細設計部の同HTML:3416 にのみ記載される。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/CustomerServiceProvider.php:90-93 に `customer/point/{id}/update/{type}` のPOSTと `admin_customer_point_update` bindが実在する。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/CustomerPointController.php:64 は POSTを `/customer/point/{id}/{type}` に定義し、ec-cube-enterprise/src/Eccube/Resource/template/admin/Customer/point_update.twig:17-18 のform actionも同ルートを生成する。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "rowId 903 と同一箇所。`src/Eccube/Controller/Admin/Customer/CustomerPointController.php:64` の POST ルートは `/%eccube_admin_route%/customer/point/{id}/{type}`、`src/Eccube/Resource/template/admin/Customer/point_update.twig:18` の form action も `url('admin_customer_point_update', { id : Customer.id, type: type })` で、`/update/{type}` を含むルート定義は develop に存在しない。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "UNCHANGED"
+   }
+  },
+  {
+   "rowId": 644,
+   "機能No": "M08-05",
+   "機能名": "M08-05 ポイント付与（キャンペーン、特別対応）",
+   "ドメイン": "m08",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "会員・選手情報が無い場合は404。",
+   "実装実態": "Controller は Customer 引数で会員取得を行うが、Customer::getPlayer() は nullable であるにもかかわらず、POST時は $Customer->getPlayer()->addPoint(...)、表示時は Customer.Player.point を参照する。選手情報なしを404に変換する分岐はない。",
+   "差分内容": "会員なしはParamConverter相当で404になり得るが、選手情報なしの場合の明示的な404処理が実装されていない。反証として getPlayer、Player === null、createNotFoundException、NotFoundHttpException、point_update.twig を検索したが、管理画面ポイント付与で選手情報欠落を404にする実装は確認できなかった。",
+   "実装参照": "src/Eccube/Controller/Admin/Customer/CustomerPointController.php:53; src/Eccube/Controller/Admin/Customer/CustomerPointController.php:85; src/Eccube/Resource/template/admin/Customer/point_update.twig:105; src/Eccube/Entity/Customer.php:1107",
+   "設計書参照": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-11:2947,2962,3156,3159",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:3294 のExcel正本は現行踏襲のみで、Player不在時404は正本セルに無い。埋め込み詳細設計部の同HTML:3426 に「会員・選手情報…いずれも無い場合は…404」とある。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/CustomerController.php:341-348 は Customer と Player を個別に取得し、双方について `return $app->abort(404);` を実行する。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Entity/Customer.php:1145-1147 は `getPlayer(): ?DtbPlayer` だが、ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/CustomerPointController.php:107 は `$Customer->getPlayer()->addPoint(...)` と直接呼び、404へ変換する分岐がない。テンプレートも ec-cube-enterprise/src/Eccube/Resource/template/admin/Customer/point_update.twig:105 で `Customer.Player.point` を直接参照する。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "rowId 906 と同一箇所。`src/Eccube/Controller/Admin/Customer/CustomerPointController.php:66` `public function pointHistory(Request $request, Customer $Customer, string $type)` に Player の存在確認はなく、同:107 `$Customer->getPlayer()->addPoint(...)`、`src/Eccube/Resource/template/admin/Customer/point_update.twig:105` `{{ Customer.Player.point }}` を無防備に参照。選手情報欠落を 404 にする分岐は develop にも無い。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "NOT_FOUND",
+    "stale": "UNCHANGED",
+    "quoteDetail": [
+     "会員・選手情報…いずれも無い場合は…404"
+    ]
+   }
+  },
+  {
+   "rowId": 645,
+   "機能No": "M08-05",
+   "機能名": "M08-05 ポイント付与（キャンペーン、特別対応）",
+   "ドメイン": "m08",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "識別ID:6「保存ボタン」はボタンとして表示される。",
+   "実装実態": "ボタンは admin.common.registration を表示しており、日本語翻訳は「登録」。設計上の「保存ボタン」文言ではない。",
+   "差分内容": "設計の画面部品ラベルは保存ボタンだが、実装画面では登録ボタンとして表示される。反証として 保存、登録、admin.common.registration、point_update.twig を検索したが、当該フォームの送信ボタンに「保存」を表示する実装は見つからなかった。",
+   "実装参照": "src/Eccube/Resource/template/admin/Customer/point_update.twig:82; src/Eccube/Resource/locale/messages.ja.yaml:1443",
+   "設計書参照": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-11:2861",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:3298 のExcel正本セルは `識別ID:7「保存ボタン」押下時`、同HTML:3314 の項目表も `E61「保存ボタン」`、`M61「ボタン」` と明記する。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Customer/point_history.twig:71-73 は送信ボタンで `{{ trans('admin.btn.save') }}` を表示し、旧画面も保存ラベルを使用する。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Customer/point_update.twig:82-83 は `<button ...>{{ 'admin.common.registration'|trans }}</button>`、ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:1633 は `admin.common.registration: 登録` で、正本の「保存ボタン」と異なる。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Resource/template/admin/Customer/point_update.twig:82-83` `<button class=\"btn btn-ec-conversion px-5\" type=\"submit\">{{ 'admin.common.registration'|trans }}</button>` のままで、`src/Eccube/Resource/locale/messages.ja.yaml:1633` `admin.common.registration: 登録`。「保存」表示への変更はない。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Resource/locale/messages.ja.yaml"
+    ]
+   }
+  },
+  {
+   "rowId": 646,
+   "機能No": "M08-05",
+   "機能名": "M08-05 ポイント付与（余剰入金へのご返金、注文金額変更によるご返金",
+   "ドメイン": "m08",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "low",
+   "観点": "⑤画面表示・タイトル文言",
+   "設計期待値": "ポイント付与（余剰入金へのご返金、注文金額変更によるご返金）として表示する。",
+   "実装実態": "実装の翻訳キー admin.customer.point_update.purchase は「ポイント履歴追加（余剰入金へのご返金、注文金額変更によるご送金）」。CustomerPointController が通常付与以外のポイント履歴追加でこのキーを使う。",
+   "差分内容": "設計のシート見出しと監査台帳上の機能名は「注文金額変更によるご返金」とする。実装は CustomerPointController が admin.customer.point_update.purchase を画面タイトル用キーとして選択し、messages.ja.yaml の値が「注文金額変更によるご送金」になっているため、返金と送金で意味が異なる。なお同じHTMLシート内の機能名欄には「ご送金」表記もあり、設計側にも表記揺れがある。",
+   "実装参照": "src/Eccube/Resource/locale/messages.ja.yaml:2780 / src/Eccube/Controller/Admin/Customer/CustomerPointController.php:108-110",
+   "設計書参照": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:2992",
+   "根拠区分": "UNCERTAIN",
+   "正本根拠": "Excel正本内で矛盾する。hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:3486 の機能名セルN4は「ポイント付与（余剰入金へのご返金、注文金額変更によるご送金）」だが、同HTML:3523 の備考選択肢は「余剰入金へのご返金、注文金額変更によるご返金」。シート見出しも「…ご返金」であり、画面タイトルを「ご返金」「ご送金」のどちらとするか正本だけでは一意に決まらない。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Customer/point_history.twig:30-34 は purchase時に `ポイント履歴追加（余剰入金へのご返金、注文金額変更によるご送金）` を表示し、旧実装は「ご送金」である。備考選択肢は pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/Customer/CustomerPointType.php:16-18 で「注文金額変更によるご返金」であり、旧実装内でもタイトルと選択肢が分かれる。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/CustomerPointController.php:136-138 が purchase用キーを選び、ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:2836 は `ポイント履歴追加（余剰入金へのご返金、注文金額変更によるご送金）` と旧タイトルを踏襲する。",
+   "根拠検証メモ": "正本の機能名セルは「ご送金」、シート名・備考選択肢は「ご返金」で矛盾する。タイトルの正しい期待文言を確定する判断材料が不足。",
+   "対応の根拠(現develop)": "`src/Eccube/Resource/locale/messages.ja.yaml:2836` `admin.customer.point_update.purchase: ポイント履歴追加（余剰入金へのご返金、注文金額変更によるご送金）` のまま（行番号は2780→2836にずれたが値は同一）。`src/Eccube/Controller/Admin/Customer/CustomerPointController.php:136-138` `$pointTypeLabelKey = $type === MtbPointType::GRANTED ? 'admin.customer.point_update.granted' : 'admin.customer.point_update.purchase';` で同キーを画面タイトルに渡す構造も変わっていない。設計の「ポイント付与（…ご返金）」表記への是正なし。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Resource/locale/messages.ja.yaml"
+    ]
+   }
+  },
+  {
+   "rowId": 648,
+   "機能No": "M08-05",
+   "機能名": "M08-05 ポイント付与（余剰入金へのご返金、注文金額変更によるご返金",
+   "ドメイン": "m08",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "会員・選手情報が無い場合はページが見つからない扱い（404）とする。",
+   "実装実態": "Customer は引数の型解決で取得しているが、Player の存在確認は無い。getPlayer() は ?DtbPlayer を返すため null になり得るが、登録時に $Customer->getPlayer()->addPoint(...) を直接呼び出す。",
+   "差分内容": "設計は会員または選手情報が無い場合の 404 を要求しているが、実装は Player null を 404 に変換せずメソッド呼び出しへ進む。反証として getPlayer, Player, notFound, createNotFoundException, 404 を CustomerPointController/Customer Entity 周辺で確認したが、選手情報なしを 404 とする処理は見つからなかった。",
+   "実装参照": "src/Eccube/Controller/Admin/Customer/CustomerPointController.php:53, src/Eccube/Controller/Admin/Customer/CustomerPointController.php:85, src/Eccube/Entity/Customer.php:1107",
+   "設計書参照": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-12:3128,3156,3159",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:3504 のExcel正本にはPlayer不在時404の明記がなく、埋め込み詳細設計部の同HTML:3636 にのみ「会員・選手情報…いずれも無い場合は…404」とある。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/CustomerController.php:341-348 は会員不在とPlayer不在をそれぞれ `return $app->abort(404);` で処理する。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Entity/Customer.php:1145-1147 は nullableな `getPlayer(): ?DtbPlayer` を返すが、ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/CustomerPointController.php:107 はnull確認なしに `$Customer->getPlayer()->addPoint(...)` を実行する。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Controller/Admin/Customer/CustomerPointController.php:107` `$Customer->getPlayer()->addPoint($PointHistory->getPointChange());` と依然 null チェック無しで呼び出す。`src/Eccube/Entity/Customer.php:1145-1148` `public function getPlayer(): ?DtbPlayer` は null を返し得る。Controller 全体に `createNotFoundException` / 404 変換処理は存在しない。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "NOT_FOUND",
+    "stale": "UNCHANGED",
+    "quoteDetail": [
+     "会員・選手情報…いずれも無い場合は…404"
+    ]
+   }
+  },
+  {
+   "rowId": 649,
+   "機能No": "M08-05",
+   "機能名": "M08-05 ポイント付与（余剰入金へのご返金、注文金額変更によるご返金",
+   "ドメイン": "m08",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "機能名・付与種別は「ポイント付与（余剰入金へのご返金、注文金額変更によるご返金）」として表示する。",
+   "実装実態": "purchase 種別の画面タイトル用翻訳 admin.customer.point_update.purchase が「ポイント履歴追加（余剰入金へのご返金、注文金額変更によるご送金）」になっている。Controller は purchase 種別でこの翻訳キーを画面タイトルへ渡す。",
+   "差分内容": "設計およびフォーム選択肢は「注文金額変更によるご返金」だが、画面タイトルの翻訳だけ「ご送金」になっており利用者表示文言が異なる。反証として ご返金, ご送金, point_update.purchase, NOTE_CHOICES_REFUND を翻訳/FormType/Controller 範囲で確認し、FormType の選択肢はご返金だがタイトル表示はご送金であることを確認した。",
+   "実装参照": "src/Eccube/Resource/locale/messages.ja.yaml:2631, src/Eccube/Controller/Admin/Customer/CustomerPointController.php:100",
+   "設計書参照": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-12:3091,3133",
+   "根拠区分": "UNCERTAIN",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:3486 のExcel正本機能名は「ポイント付与（余剰入金へのご返金、注文金額変更によるご送金）」だが、同HTML:3523 の入力選択肢とシート名は「注文金額変更によるご返金」。期待値の「ご返金」タイトルと「ご送金」タイトルが正本内で競合する。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Customer/point_history.twig:30-34 は旧画面タイトルを `ポイント履歴追加（余剰入金へのご返金、注文金額変更によるご送金）` とする一方、pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/Customer/CustomerPointType.php:16-18 の備考選択肢は「注文金額変更によるご返金」である。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/CustomerPointController.php:136-138 は purchaseキーをタイトルへ渡し、ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:2836 は `ポイント履歴追加（余剰入金へのご返金、注文金額変更によるご送金）` と表示する。",
+   "根拠検証メモ": "正本内の「機能名」と「シート名・入力選択肢」が矛盾しており、どの文言を画面タイトルの正とするか不足。",
+   "対応の根拠(現develop)": "`src/Eccube/Resource/locale/messages.ja.yaml:2836` `admin.customer.point_update.purchase: ポイント履歴追加（余剰入金へのご返金、注文金額変更によるご送金）` で画面タイトルは「ご送金」のまま。一方 `src/Eccube/Form/Type/Admin/CustomerPointType.php:42-45` `NOTE_CHOICES_REFUND = ['余剰入金へのご返金' => ..., '注文金額変更によるご返金' => ...]` は「ご返金」で、監査時点と同じ不一致が残存。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Resource/locale/messages.ja.yaml"
+    ]
+   }
+  },
+  {
+   "rowId": 650,
+   "機能No": "M08-06",
+   "機能名": "M08-06 ポイント履歴確認",
+   "ドメイン": "m08",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "「登録」ボタン（付与）は POST /{admin_route}/customer/point/{id}/update/{type} で入力したポイント変動を履歴に追加し、ポイント履歴画面へ戻る。",
+   "実装実態": "POST ルートは /%eccube_admin_route%/customer/point/{id}/{type} で、フォーム action も admin_customer_point_update を生成するため /update/{type} を含まない。",
+   "差分内容": "設計は付与 POST の外部契約として /customer/point/{id}/update/{type} を指定しているが、実装ルートとフォーム送信先はいずれも /customer/point/{id}/{type}。反証検索で customer/point/{id}/update/{type} または update/{type} の別ルートは見つからなかった。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/CustomerPointController.php:51, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Customer/point_update.twig:18",
+   "設計書参照": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-13:3283,3292",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:3714 のExcel正本は「現行踏襲」とするだけで、POST URLは記載しない。埋め込み詳細設計部の同HTML:3814 に `POST /{admin_route}/customer/point/{id}/update/{type}` がある。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/CustomerServiceProvider.php:90-93 に旧POST `/customer/point/{id}/update/{type}` とbind `admin_customer_point_update` が実在する。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/CustomerPointController.php:64 は POST `/customer/point/{id}/{type}`、ec-cube-enterprise/src/Eccube/Resource/template/admin/Customer/point_update.twig:17-18 のactionも同ルートで、`update` セグメントが無い。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Controller/Admin/Customer/CustomerPointController.php:64` の POST ルートは `'/%eccube_admin_route%/customer/point/{id}/{type}'`（name: admin_customer_point_update）で `/update/{type}` を含まない。`src/Eccube/Resource/template/admin/Customer/point_update.twig:18` の form action も同ルートを url() 生成。互換ルートの追加なし。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "TOO_SHORT",
+    "stale": "UNCHANGED"
+   }
+  },
+  {
+   "rowId": 653,
+   "機能No": "M08-07",
+   "機能名": "M08-07 メール配信履歴",
+   "ドメイン": "m08",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "メール配信履歴は処理日降順で表示する。送信履歴を新しい順に表示する。",
+   "実装実態": "MailHistoryRepository::findBy($criteria, ['id' => 'DESC']) で履歴を取得しており、処理日/send_date 降順ではなく id 降順である。",
+   "差分内容": "設計は処理日・送信履歴の新しい順を要求しているが、実装の並び順キーは send_date ではなく id。id と送信日時の単調増加はDB上保証されず、設計値と実装値が一致しない。反証として mail_history.twig、CustomerMailHistoryType、MailHistoryRepository、MailHistory/DtbUserMailHistory エンティティを確認したが、send_date DESC で取得する実装は見つからなかった。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/CustomerMailController.php:135",
+   "設計書参照": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-14:3370,3453,3456",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:3900-3901 のExcel正本セル C60 は「メール配信履歴は処理日降順で表示する」と明記する。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/CustomerController.php:90-95 の旧実装も `findBy(..., ['id' => 'DESC'])` であり、処理日列を明示していない。したがって本期待値の根拠は旧実装ではなくExcel正本である。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/CustomerMailController.php:173-176 は `$this->mailHistoryRepository->findBy($criteria, ['id' => 'DESC'])` と取得し、`send_date DESC` ではない。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Controller/Admin/Customer/CustomerMailController.php:173-176` `$MailHistories = $this->mailHistoryRepository->findBy($criteria, ['id' => 'DESC']);` のままで、`src/Eccube/Entity/MailHistory.php:50-51` の `send_date` カラムを並び順に使う実装は無い。処理日降順への是正なし。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "UNCHANGED"
+   }
+  },
+  {
+   "rowId": 654,
+   "機能No": "M08-07",
+   "機能名": "M08-07 メール配信履歴",
+   "ドメイン": "m08",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "メール送信履歴を表示する（GET /{admin_route}/customer/{id}/mail_history）。会員詳細等の「メール送信履歴」は当該URLで表示する。",
+   "実装実態": "実装ルートは #[Route(path: '/%eccube_admin_route%/customer/mail/{id}/history', name: 'admin_customer_mail_history', methods: ['GET'])] で、設計URL /customer/{id}/mail_history と異なる。",
+   "差分内容": "設計はURLエンドポイントを外部契約として /{admin_route}/customer/{id}/mail_history と記載しているが、実装は /{admin_route}/customer/mail/{id}/history。反証として Controller ルート、Customer/index.twig、Customer/edit.twig のリンク生成、ルート名 admin_customer_mail_history を検索したが、設計URLの別ルートまたは互換ルートは見つからなかった。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/CustomerMailController.php:116",
+   "設計書参照": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-14:3445,3452",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:3901-3905 のExcel正本は並び順・テンプレート絞り込み・ポップアップを記載するが、`/{admin_route}/customer/{id}/mail_history` というURLは正本部分に存在しない（確認範囲: sheet-14 のExcel正本部分 3867-3972、検索語: mail_history / URL / エンドポイント）。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/CustomerServiceProvider.php:29-31 は `$app->match('/'.$app['config']['admin_route'].'/customer/{id}/mail_history', ...)->bind('admin_customer_mail_history');` と旧URLを定義する。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/CustomerMailController.php:145-147 は `path: '/%eccube_admin_route%/customer/mail/{id}/history'` を定義しており、旧URLの互換ルートはない（確認範囲: ec-cube-enterprise/src、検索語: customer/{id}/mail_history / customer/mail/{id}/history）。",
+   "根拠検証メモ": "URL期待値はExcel正本ではなく旧実装の外部契約に由来する。",
+   "対応の根拠(現develop)": "`src/Eccube/Controller/Admin/Customer/CustomerMailController.php:145` `#[Route(path: '/%eccube_admin_route%/customer/mail/{id}/history', name: 'admin_customer_mail_history', requirements: ['id' => '\\d+'], methods: ['GET'])]` で設計 URL `/customer/{id}/mail_history` とは異なる。リンク生成元（`src/Eccube/Resource/template/admin/Customer/edit.twig:1048`、`src/Eccube/Resource/template/admin/Customer/index.twig:459`、`src/Eccube/Resource/template/admin/Customer/mail_history.twig:36`）はすべて同ルート名を参照し、設計 URL の互換ルートは src 全文検索でも見つからない。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "NO_QUOTE",
+    "stale": "UNCHANGED"
+   }
+  },
+  {
+   "rowId": 655,
+   "機能No": "M08-07",
+   "機能名": "M08-07 メール配信履歴",
+   "ドメイン": "m08",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "会員へ配信したメールの送信履歴は ec-cube-enterprise の dtb_user_mail_history を正とし、customer_id、template_id、subject、mail_body、send_date を一覧表示・絞り込みに使用する。",
+   "実装実態": "一覧は MailHistoryRepository で dtb_mail_history を参照し、件名列も subject ではなく mail_subject を表示する。DtbUserMailHistory は dtb_user_mail_history にマッピングされているが、コメントで deprecated・使用しないとされ、当画面の検索には使われていない。",
+   "差分内容": "設計は dtb_user_mail_history を一覧表示・絞り込みの対象テーブルとしているが、実装は dtb_mail_history の MailHistory エンティティを使用する。反証として DtbUserMailHistory、MailHistory、MailHistoryRepository、CustomerMailController、mail_history.twig、MailService の履歴保存処理を確認したが、当画面で dtb_user_mail_history を検索する実装は見つからなかった。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Entity/MailHistory.php:25,53,70,232 /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/CustomerMailController.php:27,135 /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Entity/DtbUserMailHistory.php:21,24",
+   "設計書参照": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-14:3438,3439,3470,3473",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:3901-3918 のExcel正本は処理日・通知メール・件名・本文を画面項目として定義するが、テーブル名 `dtb_user_mail_history` や列名 `customer_id/template_id/subject/mail_body/send_date` は正本部分に存在しない（確認範囲: sheet-14 のExcel正本部分 3867-3972）。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/doctrine/Plugin.HareruyaEc.Entity.DtbUserMailHistory.dcm.yml:1-4 はエンティティを `table: dtb_user_mail_history` に割り当て、同:15-35 は `send_date`、`subject`、`mail_body`、`template_id`、`customer_id` を定義する。/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/CustomerController.php:90-95 はこの `user_mail_history` リポジトリを一覧・絞り込みに使う。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/CustomerMailController.php:173-180 は `mailHistoryRepository` の結果を画面へ渡す。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Entity/MailHistory.php:25-27,50-57 はそのエンティティを `dtb_mail_history` の `send_date/mail_subject/mail_body` に割り当てる一方、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Entity/DtbUserMailHistory.php:21-25 は `dtb_user_mail_history` を「dtb_mail_historyに統合されたため、使用しない」とする。",
+   "根拠検証メモ": "テーブル・列の期待値は旧実装に一致し、Excel正本にはDB契約がない。",
+   "対応の根拠(現develop)": "`src/Eccube/Controller/Admin/Customer/CustomerMailController.php:173` `$MailHistories = $this->mailHistoryRepository->findBy($criteria, ['id' => 'DESC']);` のまま。`src/Eccube/Entity/MailHistory.php:25` `#[ORM\\Table(name: 'dtb_mail_history')]`、`:53` `#[ORM\\Column(name: 'mail_subject', ...)]` で列名も subject ではない。一覧Twig `src/Eccube/Resource/template/admin/Customer/mail_history.twig:68` も `{{ MailHistory.mail_subject }}` を表示。`src/Eccube/Entity/DtbUserMailHistory.php:21,24` は `#[ORM\\Table(name: 'dtb_user_mail_history')]` かつ `/* @deprecated dtb_mail_historyに統合されたため、使用しない */` のままで、リポジトリ全体を grep しても dtb_user_mail_history を検索する実装は DtbUserMailHistory エンティティ定義以外に存在しない。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EMBED_ONLY",
+    "stale": "UNCHANGED",
+    "quoteDetail": [
+     "dtb_user_mail_history"
+    ]
+   }
+  },
+  {
+   "rowId": 656,
+   "機能No": "M08-08",
+   "機能名": "M08-08 手動メール通知(入力画面)",
+   "ドメイン": "m08",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "手動メール作成画面は GET /{admin_route}/customer/manual_mail（クエリで会員IDを指定）および GET /{admin_route}/customer/manual_mail/{customerId}/{templateId} で表示する。",
+   "実装実態": "実装ルートは `/%eccube_admin_route%/customer/manual_mail/{id}/{template_id}` の `admin_customer_manual_mail` のみ。会員IDをクエリで受ける `/customer/manual_mail` 入口は確認できない。",
+   "差分内容": "設計はクエリ指定の作成画面入口を外部契約として定義しているが、実装はパスパラメータ必須のルートに変更されている。再検索範囲: CustomerMailController.php、Customer/edit.twig、Customer/index.twig、Twig内 `admin_customer_manual_mail`、`customer/manual_mail`。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/CustomerMailController.php:150",
+   "設計書参照": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-15:3598",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:4084-4104 のExcel正本は確認画面追加と画面項目・ボタン遷移を定義するが、`GET /customer/manual_mail` または会員IDのクエリ指定は正本部分に存在しない（確認範囲: sheet-15 のExcel正本部分 4053-4143、検索語: manual_mail / customerId / URL）。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/CustomerServiceProvider.php:44-50 は `GET .../customer/manual_mail` と `match .../customer/manual_mail/{customerId}/{templateId}` の2入口を定義する。/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/CustomerController.php:201-205 は前者で `$customerId = $request->get('customerId')` を読む。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/CustomerMailController.php:188-190 は `'/customer/manual_mail/{id}/{template_id}'` の1ルートだけを定義し、会員IDをクエリで受ける引数なし入口はない。",
+   "根拠検証メモ": "URL契約は旧実装に由来する。",
+   "対応の根拠(現develop)": "`src/Eccube/Controller/Admin/Customer/CustomerMailController.php:188` `#[Route(path: '/%eccube_admin_route%/customer/manual_mail/{id}/{template_id}', name: 'admin_customer_manual_mail', requirements: ['id' => '\\d+', 'template_id' => '\\d+|null'], defaults: ['template_id' => null], methods: ['GET', 'POST'])]` のみ。src/ app/ を `customer/manual_mail` で横断検索しても会員IDをクエリで受ける `/customer/manual_mail` 入口は存在せず、呼び出し側（`Customer/edit.twig:1053`、`Customer/index.twig:483`）もパスパラメータ形式の `url('admin_customer_manual_mail', { 'id': Customer.id})` を生成している。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "NO_QUOTE",
+    "stale": "UNCHANGED"
+   }
+  }
+ ]
+}

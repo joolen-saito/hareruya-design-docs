@@ -1,0 +1,149 @@
+{
+  "packetId": "rc_08",
+  "results": [
+    {
+      "rowId": 108,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "REFUTED",
+      "correctedClass": "SPEC_BACKED",
+      "driftVerdict": "UNSURE",
+      "checkedQuote": "0507_基本設計仕様書(API_ネット買取管理).html の A07-05 Excel正本を `foilFlg`、`真/偽`、`3種のID` で確認した。src-cell の !D16/!E38（HTML:1959,1971）は「真/偽ではなく、『なし』『通常』『特殊』の3種のID」、!J64/!R64（HTML:2002）は「数値(整数)」「trueまたはfalseを返していたところをIDにする」とする一方、data-excel-ref を持つ正本JSONサンプル !B74（HTML:2026）は実物として `\"foilFlg\": false` を2件示す。boolean は埋め込みだけでなくExcel正本サンプルにも存在する。APIレスポンス契約であり画面レイアウト画像の対象外。",
+      "reason": "「boolean期待は旧実装だけ」という分類は、Excel正本のレスポンスサンプルが boolean を直接示すため成立しない。ただし同じ正本のカスタマイズ説明・処理概要・型表は3値IDへの変更を明記しており、正本内で矛盾する。旧 pf-api の DtbBuyMainCard.orm.yml は `foilFlg: type: boolean` なので旧実装根拠も実在するが、正本根拠が0件ではないため SPEC_BACKED に訂正する。どちらの正本記述を優先すべきか確定できず、現実装の整数返却を乖離と断定しない。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyMainCardController.php の getByBuyOrderIds() は `'foilFlg' => $BuyMainCard->getFoilFlg()` と無変換で返す。src/Eccube/Entity/DtbBuyMainCard.php は FOIL_NONE=0、FOIL_NORMAL=1、FOIL_SPECIAL=2、`foil_flg` を SMALLINT、getFoilFlg() を `?int` と定義するため、JSON値は0/1/2/nullになる。",
+      "severityOpinion": "med",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 109,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0507 A07-05 Excel正本を `ids`、`任意`、`形式`、`件数`、`未指定`、`空文字` で確認した。正本 !B43/!J43/!M43/!AC43（HTML:1980）は `ids`、`文字列`、`〇`、`ネット買取IDをカンマ区切りで指定する` までで、任意・形式検証なし・未指定時0件の記載はない。完全一致の `形式・件数の検証は行わない` は function-design-embed 内の HTML:2103/2301 のみ。旧 pf-api/src/Controller/Admin/BuyMainCardController.php の postAction() は実物として `$ids = $request->get('ids'); $buyOrderIds = explode(',', $ids);` とし、形式フィルタを持たない。API入力契約であり画面レイアウト画像の対象外。",
+      "reason": "任意・未指定許容・形式検証なしはExcel正本ではなく旧実装に実在し、正本はむしろ必須記号〇を持つため LEGACY_BACKED は妥当。現在も旧実装との差として数値トークンのフィルタが残る。",
+      "currentImpl": "ec-cube-enterprise 現状: BuyMainCardController::getByBuyOrderIds() は null/空文字なら `new JsonResponse([])` を返し、カンマ分解後に `preg_match('/^\\d+$/', trim($id)) === 1` で数字だけを残して intval する。旧実装の無検証パーサには戻っていない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 110,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0507 A07-06 Excel正本の src-cell !B9（HTML:2153）で実物 `/api/admin/buyOrderIndivisualInputProduct.json` を確認した。function-design-embed 開始はHTML:2222で、この引用は開始前の正本領域にある。API URL契約であり画面レイアウト画像の対象外。",
+      "reason": "期待URLはExcel正本に明記されており SPEC_BACKED は妥当。現在のコントローラは可変 v1 プレフィックスを使い、チェックインされた既定値は api/v1 のため正本URLと一致しない。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderIndivisualInputProductController.php の getByBuyOrderIds() は Route を `/%eccube_api_v1_route%/admin/buyOrderIndivisualInputProduct.json` と定義する。app/config/eccube/packages/eccube.yaml は `env(ECCUBE_API_V1_ROUTE): 'api/v1'` と `eccube_api_v1_route: '%env(ECCUBE_API_V1_ROUTE)%'` を持ち、リポジトリ内に正本の `/api/admin/...` を提供する別Routeはない。",
+      "severityOpinion": "high",
+      "confidence": "high"
+    },
+    {
+      "rowId": 111,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0507 A07-06 Excel正本のリクエスト表 !B42/!J42/!M42/!AC42（HTML:2176）で実物 `ids`、`文字列`、`〇`、`ネット買取IDをカンマ区切りで指定する` を確認した。引用は function-design-embed 開始HTML:2222より前。API入力契約であり画面レイアウト画像の対象外。",
+      "reason": "ids必須はExcel正本の必須欄〇で直接支持され、SPEC_BACKED は妥当。現実装は未指定・空文字を成功200の空配列として受理するため、必須要件との差が残る。",
+      "currentImpl": "ec-cube-enterprise 現状: BuyOrderIndivisualInputProductController::getByBuyOrderIds() は `$ids = $request->request->get('ids')` の後、`$ids === null || $ids === ''` なら `return new JsonResponse([])`。数値フィルタ後に有効IDが空の場合も同じ空配列を返し、必須バリデーションエラーは返さない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 112,
+      "originalClass": "UNCERTAIN",
+      "classVerdict": "REFUTED",
+      "correctedClass": "SPEC_BACKED",
+      "driftVerdict": "UNSURE",
+      "checkedQuote": "0507 A07-06 Excel正本の src-cell !V11/!Y11（HTML:2154）で、見出し `認証方式` と値 `IP制限`・`トークン` を実物確認した。引用は function-design-embed 開始HTML:2222より前であり、根拠区分を不確実とする余地はない。API認証方式であり画面レイアウト画像の対象外。",
+      "reason": "設計根拠は明確なので UNCERTAIN ではなく SPEC_BACKED。ただし先行の「IP制限実装不在」は事実と異なり、汎用 IpAddrListener がApp APIにも適用され得る。チェックイン既定値はallow/denyとも空で、実配備環境の環境変数や外部WAF設定は作業ツリーから確認できないため、当該APIでIP制限が実効化されるかは断定できない。",
+      "currentImpl": "ec-cube-enterprise 現状: BuyOrderIndivisualInputProductController は `#[IsGranted('IS_AUTHENTICATED_FULLY')]`、security.yaml の app firewall は JwtTokenHandler/JwtTokenHeaderExtractorを使う。加えて src/Eccube/EventListener/IpAddrListener.php::onKernelRequest() は非管理画面リクエストに `eccube_front_allow_hosts` / `eccube_front_deny_hosts` と Request::getClientIp() の判定を行い、Request\\Context::isAdmin() の実装上 `/api/v1/admin/...` はこの非管理側に入る。ただし app/config/eccube/packages/eccube.yaml の既定 `ECCUBE_FRONT_ALLOW_HOSTS` / `ECCUBE_FRONT_DENY_HOSTS` は双方 `[]` である。",
+      "severityOpinion": "high",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 118,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0516_基本設計仕様書(API_データ管理).html の A16-01 Excel正本範囲（HTML:985-1070）を `404`、`message`、`Not Found`、`errors` で確認した。src-cell !B35/!J35（HTML:1033）は `404` と `該当データがない場合(トップバナーIDが存在しない)` までで、src-cell/data-excel-ref の message・Not Found・errors は0件。`{code,message}` は function-design-embed 開始HTML:1071後の記述だけで、旧 pf-api/src/Controller/BannerController.php::getTopBannerAction() に実物 `\"code\" => 404, \"message\" => 'Not Found'` がある。API失敗応答契約であり画面レイアウト画像の対象外。",
+      "reason": "HTTP 404条件は正本にあるが、findingの核心である本文キーと固定文言は旧実装だけが根拠なので LEGACY_BACKED は妥当。現在も message ではなく errors を返す。",
+      "currentImpl": "ec-cube-enterprise 現状: ContentController::getTopBannerByTopBannerId() は不在時 `throw new NotFoundException('Not Found')`、catchで `['code' => $e->getStatusCode(), 'errors' => $e->getErrors()]` をJSON化する。NotFoundException はメッセージを errors 配列へ渡し、messageキーへの変換はない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 119,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "REFUTED",
+      "correctedClass": "LEGACY_BACKED",
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0516 A16-02 Excel正本を `設定済み`、`disp_type`、`非表示`、`画像URL`、`空文字`、`設定状態` で確認した。src-cell !B15（HTML:1177）は `指定言語の設定済みトップバナー一覧を取得`、!R42（HTML:1211）は応答項目disp_typeの説明 `表示タイプ(0:非表示 1:表示)` を持つが、正本領域HTML:1151-1308に `disp_type <> 0`、画像URL非空、設定状態による具体的な抽出条件はない。`設定状態・言語で絞り込む` は function-design-embed 開始HTML:1309後のHTML:1331のみ。具体条件は旧 pf-api/src/Repository/MtbTopBannerRepository.php::findAllWhereUrlIsNotEmpty() の実物 `tb.imageUrl <> ''`、`tb.dispType <> 0`、`l.code = :languageCode` にある。API抽出条件であり画面レイアウト画像の対象外。",
+      "reason": "Excel正本の「設定済み」は上位表現に留まり、findingが乖離として比較する非表示除外・画像URL空除外の具体条件を定義しない。現実装の言語関連Collection取得だけでは「設定済み」を破ると正本から一意に言えず、具体的な述語は旧実装由来なので LEGACY_BACKED に訂正する。旧実装と現実装の差自体は現在も残る。",
+      "currentImpl": "ec-cube-enterprise 現状: ContentController::getTopBannersByLanguageCode() は MtbLanguageRepositoryでcode一致を取得後、`$Language->getTopBanners()` をそのまま TopBannersResponseBuilder::build() へ渡す。MtbLanguage::$TopBanners のManyToManyには条件がない。MtbTopBannerRepository::findWhereUrlIsNotEmpty() はdispType・imageUrl・言語・sortNoの条件を持つが、このControllerから呼ばれていない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 120,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0516 A16-02 Excel正本範囲HTML:1151-1308を `404`、`message`、`Language code is not found`、`Not Found`、`errors` で確認した。src-cell !B35/!J35（HTML:1199）は `404` と `該当データがない場合(言語コード未設定・言語コードに紐づいたトップバナーIDがない場合)` までで、本文キー・固定文言のsrc-cell/data-excel-refは0件。`Language code is not found` は function-design-embed 開始HTML:1309後にのみあり、旧 pf-api/src/Controller/BannerController.php::getTopBannersAction() に実物 `{code, message}` と同文言がある。API失敗応答契約であり画面レイアウト画像の対象外。",
+      "reason": "404条件は正本にもあるが、指摘対象の message キーと固定英語文言は旧実装由来なので LEGACY_BACKED は妥当。現在も errors配列とNot Foundを返す。",
+      "currentImpl": "ec-cube-enterprise 現状: ContentController::getTopBannersByLanguageCode() は言語不在時とTopBanners空時の双方で `new NotFoundException('Not Found')` を投げ、catchは `['code' => ..., 'errors' => ...]` を返す。`Language code is not found` は src 配下に存在しない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 121,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0517_基本設計仕様書(API_その他).html の A17-01 Excel正本範囲（HTML:1021-1587）を `deleted_at`、`削除日時`、`論理削除`、`削除済み`、`応答対象外` で確認した。src-cell !B45/!J45/!R45（HTML:1081）は `deleted_at`、日時型、`削除日時` を応答項目として載せるだけで、削除済み除外条件はない。全 output の src-cell/data-excel-ref を同語で検索しても、dtb_articleの除外要件は見つからなかった。旧 pf-api/src/Entity/DtbArticle.php は実物 `@Gedmo\\SoftDeleteable(fieldName=\"deletedAt\", timeAware=false)`、pf-api/config/packages/doctrine.yaml はSoftDeleteableFilterをenabledにしている。API抽出条件であり画面レイアウト画像の対象外。",
+      "reason": "削除済み記事を通常検索から除外する根拠は旧pf-apiのSoftDeleteable設定で、Excel正本はdeleted_at列の存在しか示さないため LEGACY_BACKED は妥当。現在のDtbArticleにはSoftDeleteable指定も明示的なdeletedAt null条件もない。",
+      "currentImpl": "ec-cube-enterprise 現状: ArticleController::getSingleArticleByParamsAction() は `findOneBy(['wpPostId' => (int) $wpPostIdParam])` のみ。DtbArticleはnullableなdeleted_at列を持つが Gedmo\\SoftDeleteable 属性を持たず、DtbArticleRepositoryにも単記事用の除外条件はない。したがってdeleted_at設定済み行もwpPostId一致で取得され得る。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 122,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0517 A17-01 Excel正本範囲HTML:1021-1587を `404`、`message`、`Not Found`、`errors` で確認した。src-cell !B37/!J37（HTML:1068）は `404.0` と `該当データがない場合` までで、messageキー・Not Found固定文言のsrc-cell/data-excel-refは0件。両者は function-design-embed 開始HTML:1588後だけにあり、旧 pf-api/src/Controller/ArticleController.php::getSingleArticleByParamsAction() に実物 `\"code\" => 404, \"message\" => 'Not Found'` がある。API失敗応答契約であり画面レイアウト画像の対象外。",
+      "reason": "HTTP 404自体は正本要件だが、本文形と固定文言は旧実装だけが根拠なので LEGACY_BACKED は妥当。現在はキーも文言も旧契約と異なる。",
+      "currentImpl": "ec-cube-enterprise 現状: ArticleController::getSingleArticleByParamsAction() は該当なしで `NotFoundException('記事が見つかりません')` を投げ、catchで `['code' => $e->getStatusCode(), 'errors' => $e->getErrors()]` を返す。本文は `{code, errors}` かつ日本語メッセージである。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 124,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0517 A17-03 Excel正本の src-cell !D20（HTML:1884）で `PointGranterから送られてきた端末販売APIの内容をスマレジに連携する`、!D30（HTML:1892）で `スマレジへデータを転送する`、!H63/!H64（HTML:1926-1927）でスマレジ postTransactions API参照を実物確認した。いずれも function-design-embed 開始HTML:1930より前。API外部連携であり画面レイアウト画像の対象外。",
+      "reason": "スマレジへの実データ転送はExcel正本に明記され、SPEC_BACKED は妥当。現実装は受信後に固定successを生成するだけで外部APIを呼ばない。",
+      "currentImpl": "ec-cube-enterprise 現状: PointGranterController::processPointGranter() は SmaregiApiService::postRegisterTransaction() を呼ぶが、同メソッドは `TODO: スマレジAPIを実行する実装を追加`、`未実装のため仮の固定レスポンスを返却` のまま `['result' => ['status' => 'success']]` を返す。src配下の同メソッド定義・呼出はこの経路だけで、PointGranter用のPOST中継実装はない。",
+      "severityOpinion": "high",
+      "confidence": "high"
+    },
+    {
+      "rowId": 125,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0517 A17-03 Excel正本の src-cell !E24-!F28（HTML:1887-1891）で `下記の項目がなければエラー404を返す` と X_contract_id、X_access_token、proc_name、params を実物確認し、!B59/!J59（HTML:1924）で `404.0`、`必須項目にデータがない場合` を確認した。いずれも function-design-embed 開始HTML:1930より前。API入力・ステータス契約であり画面レイアウト画像の対象外。",
+      "reason": "必須4項目欠落時404はExcel正本に二重に明記され、SPEC_BACKED は妥当。現実装は同条件で400を返すため差が残る。",
+      "currentImpl": "ec-cube-enterprise 現状: PointGranterController::processPointGranter() は contractId、accessToken、procName、params のいずれかが空文字なら `return $this->jsonResponse([], Response::HTTP_BAD_REQUEST)` を実行し、HTTP 400を返す。404への変更はない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    }
+  ]
+}

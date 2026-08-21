@@ -1,0 +1,331 @@
+{
+ "packetId": "sw_07",
+ "mode": "sweep",
+ "note": "著者はこれらの大半を IMPACT(外部から観測できる) と判定した。見落とし＝実は NO_IMPACT な行が無いかを独立に判定すること。",
+ "findings": [
+  {
+   "rowId": 217,
+   "機能No": "B08-05",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "取得・送信時のエラーはエラーメッセージをコンソールに出力する。",
+   "差分内容": "設計は送信時エラーのコンソール出力を要求しているが、実装はメール送信例外をログ出力で握りつぶす。Command 側には Throwable をコンソール出力する catch があるものの、MailService が送信例外を再throwしないため送信時エラーには適用されない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/MailService.php:1356"
+  },
+  {
+   "rowId": 218,
+   "機能No": "B08-06",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "スマレジ使用ポイント連携を実行する（ smaregi:batch updatePoint <受注ID> ）",
+   "差分内容": "設計の外部契約は `smaregi:batch updatePoint <受注ID>` だが、Symfony コマンド登録名と呼び出し側が別名になっている。`smaregi:batch updatePoint` / `updatePoint` / `smaregi:batch` で src/Eccube と html を再検索したが、設計名の実装は見つからなかった。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/SmaregiUpdatePointCommand.php:26"
+  },
+  {
+   "rowId": 219,
+   "機能No": "B08-06",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "入力はコマンド名と受注ID。受注IDが不正なら何もせず終了する。",
+   "差分内容": "設計は「受注IDが未指定・数値でない」どちらも処理を行わず終了する扱いだが、実装は非数値入力を失敗終了として扱う。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/SmaregiUpdatePointCommand.php:47"
+  },
+  {
+   "rowId": 220,
+   "機能No": "B08-06",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "失敗時はエラー状態を残し、スマレジEC受注連携エラー再連携バッチで再試行できる。",
+   "差分内容": "設計は失敗記録だけでなく後続のスマレジEC受注連携エラー再連携バッチによる再試行可能性まで要求している。実装はエラー受注抽出メソッド止まりで、使用ポイント連携を再試行するバッチ入口・Action・呼び出しが不在。なお `SmaregiStockBackfillCommand` は在庫変動Webhook再連携であり、使用ポイント連携の再試行ではない。",
+   "実装参照": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube, /home/y-saito/Developments/ec-cube-enterprise/html; 検索語: getSmaregiErrorOrder, point_error_me"
+  },
+  {
+   "rowId": 221,
+   "機能No": "B13-01",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "SP.LINKSに取引照会を行い、照会結果に応じた処理を行う。決済サービスへ取引を照会し、結果でステータスを判定する。",
+   "差分内容": "PaymentStatusCheckAction::handle() は申込みごとに getApiResponse($paymentNo) を呼ぶが、同メソッド本体が「SP.LINKS取引照会API未実装」として例外を投げるため、設計上の取引照会・レスポンス判定・後続のステータス整合に到達できない。探索範囲: src/Eccube/Command, src/Eccube/Service/Admin/Payment, src/Eccube/Service/Payment, src/Eccube/Repository, html。検索語: SP.LINKS, 取引照会, ResponseCd, MerchantId, getApiRes",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Payment/PaymentStatusCheckAction.php:191"
+  },
+  {
+   "rowId": 222,
+   "機能No": "B13-01",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "直前と同じ決済番号の申込みは、前回の照会結果に従って同様の処理を行う。同一決済番号は前回結果を流用する。",
+   "差分内容": "実装には orderBy('ee.paymentNo') はあるが、同一決済番号の検出、前回照会結果のキャッシュ、前回結果に基づく更新・削除・保留処理の流用が存在しない。",
+   "実装参照": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Payment/PaymentStatusCheckAction.php, /home/y-saito/Developments/ec-cube-enterpr"
+  },
+  {
+   "rowId": 223,
+   "機能No": "B13-01",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "取引不在・未完了以外の想定外エラーは1つにまとめ、管理者へ通知メールを送信する。取引不在・未完了以外のエラーは重複を除いてまとめ、管理者へ通知する。",
+   "差分内容": "設計は想定外エラーを重複排除して1つにまとめ管理者へ通知することを要求しているが、実装は申込み単位の例外ごとに通知メールを送信するため、同一エラーが複数回通知され得る。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Payment/PaymentStatusCheckAction.php:164"
+  },
+  {
+   "rowId": 224,
+   "機能No": "B13-01",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "取引不在・未完了等のメッセージ収集、想定外エラーの通知。取引不在・未完了は記録の除去等の所定処理を行い、メッセージを収集する。",
+   "差分内容": "設計は失敗時出力として取引不在・未完了等のメッセージ収集を要求しているが、実装にはメッセージ配列や個別理由の蓄積がなく、削除件数だけを返す。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Payment/PaymentStatusCheckAction.php:154"
+  },
+  {
+   "rowId": 225,
+   "機能No": "B13-01",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "照会・更新を積み、最後に確定する。",
+   "差分内容": "設計はバッチ全体で照会・更新を積み最後に確定することを要求しているが、実装は対象申込みごとにDB確定するため、途中エラー時に既処理分が確定済みになる。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Payment/PaymentStatusCheckAction.php:113"
+  },
+  {
+   "rowId": 226,
+   "機能No": "B16-04",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "該当するユーザーがある場合、会員IDおよびユーザー情報抜粋データをコロン区切りで取得し、電話番号(1列目)は tel01 としてメール本文例どおり出力する。",
+   "差分内容": "設計本文例は tel01:[電話番号(1列目)]:tel02:[電話番号(2列目)]:tel03:[電話番号(3列目)] を要求しているが、実装は ':tel02:' + c.tel01 + ':tel02:' + c.tel02 となっている。反証検索でも src/Eccube/Repository/CustomerRepository.php、src/Eccube/Service/MailService.php、src/Eccube/Command、src/Eccube/Service/Admin/Customer、html/template、src/Eccube/Resource 内に、このメール本文用の ':tel01:' ",
+   "実装参照": "src/Eccube/Repository/CustomerRepository.php:649"
+  },
+  {
+   "rowId": 227,
+   "機能No": "B16-06",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "月初に店舗・在庫場所・商品規格ごとに一部の事項を抽出し、stock_YYYYMMDD.txt.zip に圧縮して s3://inventorycheck/ へアップロードする月次バッチを、毎月1日 午前1時にStep Functionsから実行する。",
+   "差分内容": "設計は月次商品情報スナップショット専用の外部契約（Step Functions月次起動、DB抽出、ZIP生成、stock_YYYYMMDD.txt.zip、s3://inventorycheck/アップロード）を要求しているが、実装範囲にはその入口・ファイル名生成・ZIP生成・S3アップロード呼び出しの連結処理が存在しない。S3サービス単体やデモCommand、管理画面CSVはこのバッチ契約を満たさない。なお設計HTMLの一時DBクラスタ作成/削除に関する行は cell-strike 表示のため現行要求から除外した。",
+   "実装参照": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service, /home/y-saito/Devel"
+  },
+  {
+   "rowId": 228,
+   "機能No": "B16-09",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "晴れる屋トップページからリンクを辿りながらアクセス可能なURLのリストからサイトマップファイルを作成し、S3にファイルをアップロードする。Sitemap-Generator-Crawlerを使い、トップページを解析してリンクURLを抽出し、リンク先がなくなるまで巡回したURLリストでサイトマップファイルを作成する。",
+   "差分内容": "`SitemapController` は `#[Route(path: '/sitemap.xml')]` でXMLをHTTP出力し、`pageRepository`/`productRepository`/`categoryRepository`等からデータ取得して `sitemap_index.xml.twig` をレンダリングする実装。反証検索として `Sitemap-Generator-Crawler`/`SitemapGenerator`/`crawl(`/`spatie/crawler`/`samdark/sitemap`、S3連携語 `S3Client`/`putObject` を確認したが、サイトマップ生成処理から",
+   "実装参照": "src/Eccube/Controller/Front/SitemapController.php:56"
+  },
+  {
+   "rowId": 229,
+   "機能No": "B16-09",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "前回(昨日)のサイトマップと今回作成したサイトマップを比較し、差異がある場合はS3にアップロードする。",
+   "差分内容": "確認できたサイトマップ実装は `SitemapController` のGETルートとXML Twigのみで、前回ファイルの取得・比較・条件付きアップロードの状態管理がない。S3の `putObject` は汎用アップロードサービスとデモコマンドに限られ、サイトマップ差分判定から呼ばれていない。",
+   "実装参照": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube, /home/y-saito/Developments/ec-cube-enterprise/html。検索語: sitemap/Sitemap, yesterday/前回/昨日, dif"
+  },
+  {
+   "rowId": 230,
+   "機能No": "B16-09",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "実行トリガーは Eventbridge+Lamdba、実行タイミングは毎日4:00。実行環境はバッチ処理用EC2インスタンス。",
+   "差分内容": "`src/Eccube/Command` 配下のコマンド一覧にサイトマップ生成コマンドはなく、スケジュール検索で見つかるのはDependabot/Vaddy等のGitHub workflowと `eccube_sitemap_products_per_page` 設定のみ。B16-09を起動するEventBridge+Lambda/4:00設定の根拠がない。",
+   "実装参照": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command, /home/y-saito/Developments/ec-cube-enterprise/html, app/config/eccube, .github。検索語: E"
+  },
+  {
+   "rowId": 231,
+   "機能No": "B16-09",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "全部のリンクを取得するように設定(階層設定なし)。但し、管理ページ、商品検索ページ(日本語・英語)、カードリスト購入ページ(日本語・英語)、デッキ検索ページ(日本語・英語)、イベント情報(日本語・英語)およびそれ以降のページは取得しない。",
+   "差分内容": "設計はクローラー設定として階層制限なし取得と特定URL配下の除外を要求している。実装は `sitemap_page.xml`、`sitemap_product_{page}.xml`、`sitemap_purchase_{page}.xml`、`sitemap_deck.xml`、`sitemap_deck_show_{page}.xml` の固定生成であり、商品検索/カードリスト購入/デッキ検索/イベント情報の日本語・英語URLを巡回除外する設定は不在。",
+   "実装参照": "src/Eccube/Controller/Front/SitemapController.php:164"
+  },
+  {
+   "rowId": 232,
+   "機能No": "B16-11",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "S3画像サイズチェック処理として、15分毎にS3上の指定画像バケットからファイル名・ファイルサイズ一覧を取得し、画像種別ごとの規定サイズ超過ファイル一覧を作成して、指定宛先へメール通知する",
+   "差分内容": "設計はバッチ外部契約として「スケジュール起動(Step Functions) 15分毎」「入力S3、出力メール」「指定S3パス5種」「種別別しきい値」「指定From/To/CC/BCC/件名/本文」を要求しているが、src/Eccube/Command の AsCommand 一覧に画像サイズチェック/ファイルサイズアラート相当の入口がなく、S3処理はアップロード/単体取得系のみ、MailServiceとMailテンプレートにも設計件名・宛先・本文に該当する送信処理が存在しない。",
+   "実装参照": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/S3, /home/y-saito/De"
+  },
+  {
+   "rowId": 233,
+   "機能No": "F01-01",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "アイテムを探す(5): 画面部品は静的コンテンツだが、(5-5)カテゴリ押下で当該カテゴリ絞込の商品一覧画面へ、(5-6)通常盤以外のカードセット押下で当該カードセット絞込の商品一覧画面へ遷移する（5-5/5-6はリンク）。",
+   "差分内容": "設計は5-5/5-6を『リンク』と定義し押下時の商品一覧遷移を明示要求。実装は href 無しの aria-disabled 非リンクで遷移ロジックが未配線のため機能要求(5-5)(5-6)が実現されていない。",
+   "実装参照": "src/Eccube/Resource/template/default/Block/search_items.twig:22-31,53-56,75; shop_top.twig:45"
+  },
+  {
+   "rowId": 234,
+   "機能No": "F01-01",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "最新入荷アイテム(2)英語版: (2-17)(2-18)more 押下で『Trending Now』タグ絞込の商品一覧画面へ遷移（英語版のみ表示）。表示商品も Trending Now タグ由来。",
+   "差分内容": "英語版表示商品は Trending Now タグ由来なのに more リンク遷移先タグが NEW_ITEMS_ID にハードコードされ、押下すると表示中商品とは別の『最新入荷アイテム』タグ絞込一覧へ遷移する。設計要求(Trending Now タグ絞込一覧)と不一致。Tag.php:55 NEW_ITEMS_ID=1, MtbOption.php:100 SLIDER_EN_ONLY_TAG_ID 確認。",
+   "実装参照": "src/Eccube/Resource/template/default/Block/new_items.en.twig:9,23; src/Eccube/Service/Block/NewItemsBlockPayloadBuilder.php:56-63"
+  },
+  {
+   "rowId": 235,
+   "機能No": "F01-01",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "あなたのお気に入り(4)の表示条件は1~6のみ: 1 会員お気に入り登録商品 / 2 本店公開ステータス公開 / 3 表示サイト言語 / 4 登録日降順 / 5 最大30件 / 6 1件もなければ非表示。在庫条件は非列挙(他ブロック2/8/SALE/英語版は『在庫が1以上』を明記)。",
+   "差分内容": "設計ブロック4は条件を1~6で明示列挙し在庫条件を意図的に含めていない(他ブロックは『在庫が1以上』を明記)。実装が独自に pc.stock>0 を付加するため在庫切れお気に入り商品が設計と異なりトップに出ない。docstring も『pf-eccube3 の stock 条件を踏襲』と旧仕様追随を明言。",
+   "実装参照": "src/Eccube/Repository/CustomerFavoriteProductRepository.php:109; src/Eccube/Service/Block/FavoritesBlockPayloadBuilder.php:61-66"
+  },
+  {
+   "rowId": 236,
+   "機能No": "F01-02",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "(2-11)カートに入れる ボタン: 押下すると(2-9)商品数の数量分商品をカートに追加する。今週の売れ筋商品/SALE中の商品の各カードにカート追加ボタンを表示する。",
+   "差分内容": "ShopTopController→shop_top.twig:37-38→shop_best_sellers/shop_sale.twig(showFavoriteButton:false,isMainShop未指定)→_product_card.twig を追跡。add-cartボタンの表示条件がお気に入りボタン表示条件に内包されており支店では必ず非表示。app/html オーバーライドも無し。設計は店頭注文フローとしてカート追加ボタンを要求。",
+   "実装参照": "src/Eccube/Resource/template/default/Block/_product_card.twig:9,72,78-82; src/Eccube/Resource/template/default/Block/shop_best_sellers.twig:23; src/Eccube/Resou"
+  },
+  {
+   "rowId": 237,
+   "機能No": "F01-02",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "(6-5)カテゴリリンク押下で押下カテゴリで絞り込んだ商品一覧へ遷移／(6-6)通常盤以外のカードセットリンク押下で押下カードセットで絞り込んだ商品一覧へ遷移。",
+   "差分内容": "ShopTopController は search_items 用データを渡さず(PHPに search_items 参照なし)、app/html オーバーライドも無し。設計(6-5)(6-6)の『押下→商品一覧遷移』が aria-disabled のダミータグで実装されておらず遷移機能が不在。",
+   "実装参照": "src/Eccube/Resource/template/default/Block/search_items.twig (全体); shop_top.twig:45"
+  },
+  {
+   "rowId": 238,
+   "機能No": "F01-02",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "(8-1)バナー画像押下でhtml内で各画像に設定しているURLに遷移。管理画面＞コンテンツ管理＞ブロック管理に設定されている編集可能なブロックを表示する。",
+   "差分内容": "shop_recommend を無パラメータで include(PHPに shop_recommend 参照なし)、動的URL/ブロック管理データを渡していない。app/html オーバーライドも無し。設計(8-1)の『押下→設定URLへ遷移』『ブロック管理の編集可能ブロック表示』が href=\"#\" のプレースホルダで未実装。",
+   "実装参照": "src/Eccube/Resource/template/default/Block/shop_recommend.twig:18,28,38,48,58,68; shop_top.twig:47"
+  },
+  {
+   "rowId": 239,
+   "機能No": "F01-02",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "非会員向け文言『このサイトでは、晴れる屋{支店名}での店頭受け取り注文を承っております。配送をご希望の方は、通販サイトをご利用ください。』",
+   "差分内容": "shop_order_method.twig:23 が prefix1/prefix2/link_text/suffix を結合表示。messages.ja.yaml:1250 の文言が設計の引用文と一字相違(承っております/承っています)。利用者が直接目にする文言のため差異として計上(軽微)。",
+   "実装参照": "src/Eccube/Resource/locale/messages.ja.yaml:1250 (shop_top.order_method.public.prefix1); src/Eccube/Resource/template/default/Block/shop_order_method.twig:23"
+  },
+  {
+   "rowId": 240,
+   "機能No": "F02-01",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "(10)日英切替: 英語版サイトでは「EN」、日本語版サイトでは「JP」と表示する（現在表示中サイトの言語をラベルに出す）",
+   "差分内容": "設計は現在表示中サイトの言語(ja→JP, en→EN)をラベルに出すと規定だが、実装は切替先(反対言語)を出しており表示が逆。翻訳値 front.nav.lang.jp='JP'/.en='EN' は正だが三項演算子の出し分け条件が設計と逆。",
+   "実装参照": "src/Eccube/Resource/template/default/Block/header.twig:102-106,115-117, messages.ja.yaml:6323-6324, messages.en.yaml:3863-3864"
+  },
+  {
+   "rowId": 241,
+   "機能No": "F02-01",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "(1-6)デッキ構築(メニュー展開内リンク): 押下すると、デッキTOP画面へ遷移する",
+   "差分内容": "同一のデッキ構築導線は header.twig:92(/decks)・footer_sitemap.twig:36(/decks)では遷移先設定済みだが、mega_menu の当該項目のみ href=\"#\" のまま未差し替えで遷移不可。",
+   "実装参照": "src/Eccube/Resource/template/default/Block/mega_menu.twig:42-48"
+  },
+  {
+   "rowId": 242,
+   "機能No": "F02-01",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "(24-11)FAQ(サイトマップ内リンク): 押下すると、FAQ画面へ遷移する",
+   "差分内容": "設計はFAQ押下でFAQ画面へ遷移を要求。実装はリンク要素はあるが遷移先が未設定(#)で、FAQ画面ルート未実装のため遷移不可。同ブロック他項目(deck_index/help_guide/event_top等)は実ルートを指すためFAQのみ差異。",
+   "実装参照": "src/Eccube/Resource/template/default/Block/footer_sitemap.twig:50-52"
+  },
+  {
+   "rowId": 243,
+   "機能No": "F02-02",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "(4)メニュー（スマホ版ハンバーガーメニュー）内 4-6 デッキ構築リンク：押下すると、デッキTOP画面へ遷移する",
+   "差分内容": "同じ「デッキ構築」導線は header.twig:74,92 / header.en.twig:73,90 / footer_sitemap.twig:36 では /decks を指して実装済みだが、スマホ版メニュー mega_menu.twig の 4-6 だけが未設定(\"#\")。設計は当該リンクの遷移先をデッキTOP画面と明記しており、遷移先が未設定=実装違い。",
+   "実装参照": "src/Eccube/Resource/template/default/Block/mega_menu.twig:44"
+  },
+  {
+   "rowId": 244,
+   "機能No": "F02-02",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "サイトマップ(23-12) FAQリンク：押下すると、FAQ画面へ遷移する",
+   "差分内容": "footer_sitemap.twig の他の全リンクは url() で遷移先実装済みだが、FAQ だけがプレースホルダ(\"#\")。FAQ画面ルート(user_data/hareruya_faq 想定)も未実装のためTODOコメントが残り、設計が求める FAQ画面への遷移が未実装。",
+   "実装参照": "src/Eccube/Resource/template/default/Block/footer_sitemap.twig:52"
+  },
+  {
+   "rowId": 245,
+   "機能No": "F02-02",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "言語（ja／en）による表示項目の出し分け：英語表示では上部ナビの『買取』『デッキ構築』を表示せず、『選手一覧』を加える",
+   "差分内容": "設計は en 時に買取・デッキ構築を非表示・選手一覧を追加すると規定するが、実装の en 用テンプレート header.en.twig にも標準 header.twig にも該当する locale 分岐が無く、両言語で同一のナビ項目を出す（pros はハンバーガー mega_menu.twig:50 のみで上部ナビに無い）。",
+   "実装参照": "src/Eccube/Resource/template/default/Block/header.en.twig:62,90（比較: header.twig:64,92）"
+  },
+  {
+   "rowId": 246,
+   "機能No": "F02-04",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "イベント店舗文脈の店舗切替セレクトは短縮店舗名（dtb_base_info.short_name_jp／short_name_en、言語に応じて日英）を表示する。並び順付きの全店舗一覧を取得し、店舗切替セレクトへ短縮店舗名で表示する。",
+   "差分内容": "BaseInfo エンティティに short_name_jp／short_name_en が実在し（src/Eccube/Entity/BaseInfo.php:1058-1083）、Contact/confirm.twig:105-107,189-191 では現に shortNameJp／shortNameEn を参照しているが、イベント店舗切替セレクトのみ正式店舗名を出力しており設計と不一致。Event 配下テンプレートに shortName 参照は 0 件。",
+   "実装参照": "src/Eccube/Resource/template/default/Event/index.twig:104（供給元 src/Eccube/Controller/Front/EventTopController.php:67 getOpenShops）"
+  },
+  {
+   "rowId": 247,
+   "機能No": "F02-04",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "店舗紹介ページのスマホ表示で、登録済みの右カラム項目だけをセクションナビへ並べ（値の無いセクションは非表示）、『店舗案内・初心者講習会・取り扱い商品・買取・スタッフ・その他・アクセス』の定義順で表示、出力順の末尾要素へ末尾用クラスを付与。押下で同一ページ内アンカー移動。表示有無判定は dtb_shop_page_element の element／value を用いる。",
+   "差分内容": "php 全体で ShopPageElement 参照は Entity/Repository 定義以外 0 件。セクション名（初心者講習会・取り扱い商品・スタッフ 等）や末尾用クラス付与ロジックもテンプレートに不在。旧 shoppage 由来要素がリニューアルの ShopTop 再編時に未移植と見られる。",
+   "実装参照": "不在（src/Eccube/Controller/Shop/ShopTopController.php＋shop_top.twig／src/Eccube/Repository/DtbShopPageElementRepository.php は未参照）"
+  },
+  {
+   "rowId": 248,
+   "機能No": "F02-04",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "店舗紹介ページのスマホ・タブレット表示で『閲覧店舗を選択』とともに並び順付きの全店舗一覧（タブレット用店舗一覧）を表示し、表示中の店舗を選択状態にする。店舗リンク押下で選択店舗の店舗紹介ページ（GET /{_locale}/shoppage/{name} 相当）へ遷移。",
+   "差分内容": "front テンプレートで『閲覧店舗を選択』は 0 件（admin/mall/tenant/index.twig のみ）。イベント側の店舗切替セレクト（Event/index.twig）は店舗紹介ページの店舗一覧ではなく別物。旧 shoppage 由来 UI が未移植と見られる。",
+   "実装参照": "不在（支店フロントテンプレート全域で『閲覧店舗を選択』0 件／shop_top.twig・branch_header.twig に店舗切替用店舗一覧なし）"
+  },
+  {
+   "rowId": 249,
+   "機能No": "F03-01",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "抽出件数が0件のとき、一覧領域に表示文言「ご指定の条件に一致する商品が見つかりませんでした。」を表示する",
+   "差分内容": "設計指定文字列「ご指定の条件に一致する商品が見つかりませんでした。」は messages.ja.yaml・Twig・JS のいずれにも存在しない(grep 該当0件、同義文言はデッキ用 front.deck.result.empty_message:5749 にのみ存在)。実装は別文言「お探しの商品は見つかりませんでした」を出力しており、利用者が直接目にする0件時文言が設計と相違する。",
+   "実装参照": "src/Eccube/Resource/locale/messages.ja.yaml:1096, src/Eccube/Resource/template/default/Product/list.twig:813, src/Eccube/Resource/template/default/Block/js/prod"
+  },
+  {
+   "rowId": 250,
+   "機能No": "F03-02",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "紐付くフォーマットで登録されているデッキがない場合、現行の「該当なし」表示を廃止しフォーマットの表示を行わない（空デッキのフォーマットは非表示、デッキが1件も無ければセクション自体を非表示）",
+   "差分内容": "設計は『該当なし』廃止＋空フォーマット非表示を要求するが、実装は現行同様に『該当なし』を出力し空フォーマットも表示する。",
+   "実装参照": "src/Eccube/Resource/template/default/Product/detail.twig:592,600-601, src/Eccube/Controller/Front/ProductController.php:623-637"
+  },
+  {
+   "rowId": 251,
+   "機能No": "F03-02",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "(2-22)SNSでシェアする共有内容のURLは短縮URLで表示する",
+   "差分内容": "ロケール・IDを含むフルURLを共有し、短縮URL化が未対応。",
+   "実装参照": "src/Eccube/Entity/Product.php:690-697, src/Eccube/Controller/Front/ProductController.php:655-661"
+  },
+  {
+   "rowId": 252,
+   "機能No": "F03-03",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "カテゴリの選択肢は、フロント検索で非表示とする親配下（dtb_category.front_search_hide_flg=true の親カテゴリ配下）を除いて提示する。エッジケース『非表示親配下のカテゴリ→選択肢に出さない』を含め4箇所で明記。",
+   "差分内容": "front_search_hide_flg を src/Eccube 配下で全走査した結果、使用箇所は TopCategoryListBuilder.php・CategoryTreeResponseBuilder.php・Category.php(定義)・CategoryType.php・CSV系のみで、フロント詳細検索のカテゴリ EntityType choices 生成経路(SearchType/getList/Twig)に非表示親配下除外ロジックが存在しない。実装は在るが設計の除外要件を満たさない。",
+   "実装参照": "src/Eccube/Form/Type/Front/SearchType.php:95,107-111 / src/Eccube/Repository/CategoryRepository.php:133-163 / src/Eccube/Resource/template/default/Block/_produc"
+  }
+ ]
+}

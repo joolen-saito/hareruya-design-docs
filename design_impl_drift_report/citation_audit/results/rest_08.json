@@ -1,0 +1,165 @@
+{
+  "packetId": "rest_08",
+  "results": [
+    {
+      "rowId": 404,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:15122 の正本セル（別添資料__スマレジ連携対象商品!G33）に「商品公開ステータスが廃止になった場合、紐付く商品規格についてスマレジに登録済みの場合削除を行う」と明記されている。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Product/ProductController.php:225-238 は商品更新後を「$app['orm.em']->flush();」「$branchUpdate->noticeProductUpdate(...)」「$app->addSuccess(...)」としており、pf-api/pf-eccube3/pf-article/deck-api を DISPLAY_ABOLISHED・スマレジ削除・商品編集で横断検索しても、この商品編集経路からの商品規格削除処理は確認できない。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Product/ProductController.php:830-855 は商品名変更時に連携対象規格へ「$smaregiProductClassEventService->dispatchUpsert($ProductClass);」を行うだけで、廃止ステータス分岐がない。削除投入は別経路の /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Product/ProductClassController.php:471-476 にある「dispatchDeleteMessage(...)」に限られる。",
+      "note": "Excel正本に直接根拠があり、現実装の商品編集確定経路には廃止時削除がないため真の乖離。"
+    },
+    {
+      "rowId": 405,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:2102 が「function-design-embed:start m03-02」であり、期待文言はその後の同ファイル:2152 に「『登録が完了しました。』の成功フラッシュを設定し、同じ商品の編集画面へリダイレクト」と出る。Excel正本範囲（sheet-5開始から:2101まで）にはこの固定文言の記載がない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Product/ProductController.php:236-238 に「$app->addSuccess('admin.register.complete', 'admin');」「redirect(...'admin_product_product_edit'...)」があり、/home/y-saito/Developments/pf-eccube3/src/Eccube/Resource/locale/message.ja.yml:83 は「admin.register.complete: 登録が完了しました。」と定義する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Product/ProductController.php:868 は「$this->addSuccess('admin.common.save_complete', 'admin');」、同:889 は同じ編集画面へリダイレクトする。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:1595 は「admin.common.save_complete: 保存しました」であり、遷移は一致するが文言は一致しない。",
+      "note": "固定メッセージは正本ではなく旧実装由来。リダイレクトは移植済みで、成功フラッシュだけが移植漏れ。"
+    },
+    {
+      "rowId": 406,
+      "verdict": "UNSUPPORTED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:3023 が「function-design-embed:start m03-03」で、全規格走査の記述はリバース領域の同:3078、3086 にのみ「getProductClasses() の全要素を走査」と現れる。Excel正本のカード商品CSV項目表（同:2942-2980）には走査対象規格の条件がない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/ProductCardCsv.php:455-457 は「getProductSubClassesForProductCardCsv($product)」の戻りを反復し、その旧リポジトリ /home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Repository/DtbProductSubClassRepository.php:268-281 は「->andWhere('ps.cardConditionId = :cardConditionId')」「'cardConditionId' => MtbCardCondition::NM」とNMに限定する。したがってリバース記述と実コードが矛盾する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/ProductCardCsv.php:152-157 は専用リポジトリの結果を反復し、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/ProductClassRepository.php:765-768 は「pc.CardCondition = :cardConditionId」「MtbCardCondition::NM」とする。これは旧実装の実コードと同じNM限定である。",
+      "note": "期待値はExcel正本にも旧実装にもなく、リバース詳細の誤読と判断。pf-api/pf-eccube3/pf-article/deck-apiもメソッド名・CSV名で横断検索済み。"
+    },
+    {
+      "rowId": 408,
+      "verdict": "UNSUPPORTED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:3752 が「function-design-embed:start m03-04」であり、no_goods_data の要求はその後の同:3781 に「出力行が1行も無ければ、翻訳キー admin.csv.error.export.no_goods_data」と現れるだけである。Excel正本範囲（sheet-12の同:3644-3751）に同キーや空結果例外の記載はない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/ProductGoodsCsv.php:122-148 は未登録時例外の後に「$csvRows = ...」「$response->send();」へ進み、空配列判定も no_goods_data もない。pf-api/pf-eccube3/pf-article/deck-api を no_goods_data・goods_data・グッズCSVで横断検索しても定義は0件。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/ProductGoodsCsv.php:56-58 は既に「if ($csvRows === [])」「translator->trans('admin.csv.error.export.no_goods_data')」を実装する一方、同リポジトリの src/Eccube/Resource/locale/messages.ja.yaml と messages.en.yaml にはキーがない（検索語 no_goods_data、0件）。",
+      "note": "指摘対象の翻訳定義追加は正本・旧実装のどちらにも根拠がない。空結果例外そのものは現実装済み。"
+    },
+    {
+      "rowId": 409,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:3752 のリバース埋め込み開始後、同:3781 に「ストリーム送信後…『グッズ商品CSV出力ファイル名』」と記載される。Excel正本範囲（同:3644-3751）にはログ文言・実行順の記載がない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/ProductGoodsCsv.php:144-150 は「setCsvResponseHeader」「$response->send();」の後に「log_info('グッズ商品CSV出力ファイル名', [$filename]);」を実行する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/ProductGoodsCsv.php:63-70 が送信時コールバックを設定する一方、同:72-79 はコールバック実行前に「log_info('グッズ商品CSV出力ファイル名', [$filename]);」を呼んでレスポンスを返す。",
+      "note": "ログ順は正本にないが旧実装に明確な根拠があり、現実装で順序が変わった移植差分。"
+    },
+    {
+      "rowId": 410,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:2274 が「function-design-embed:start m03-05」で、同:2303 の「コールバック完了後、情報ログに『価格変更CSV出力ファイル名』」はリバース記述である。Excel正本範囲（sheet-6開始から同:2273まで）にはログ順の記載がない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/ProductPriceCsv.php:133-139 は「$response->send();」の後に「log_info('価格変更CSV出力ファイル名', [$filename]);」を実行する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/ProductPriceCsv.php:55-64 がストリームコールバックを設定するが、同:66-71 は送信前に「log_info('価格変更CSV出力ファイル名', [$filename]);」を実行して return する。",
+      "note": "正本根拠はないが、旧実装の送信後ログが現実装で送信前に移っている。"
+    },
+    {
+      "rowId": 411,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:2423、2431、2440、2444、2504 の正本セルは順に「公開ステータスID」「発送日目安(名称)」「購入グループ名」「商品カテゴリ(名称)」「1ヶ月間入庫数」と定義する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/ProductAllCsv.php:65 は「'label' => '公開ステータス(ID)'」、同:393 は「'label' => '1ヵ月間入庫数'」、同:418 は「'label' => '発送日目安名称'」であり、旧実装にも正本と異なるラベルが含まれていた。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/ProductAllCsv.php:111-114、181-184、253-260、446-449、471-474 はそれぞれ「公開ステータス(ID)」「購入グループ名称」「商品カテゴリ(ID)／カテゴリ名(日)」「1ヵ月間入庫数」「発送日目安名称」を持つ。同:1938-1947 の getCsvHeaders() は選択列の label をヘッダへ追加するため、この差が実出力へ反映される。",
+      "note": "99項目表の正本ラベルとヘッダ生成元ラベルに実差がある。例示した5項目だけでも不一致を直接確認できる。"
+    },
+    {
+      "rowId": 412,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:2528 が「function-design-embed:start m03-06」で、deleted_at による論理削除はその後の同:2545 にのみ「拡張の削除方式 dtb_csv_extension.deleted_at による論理削除」とある。Excel正本範囲（sheet-7の同:2384-2527）には削除方式がない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/doctrine/Plugin.HareruyaEc.Entity.DtbCsvExtension.dcm.yml:16-20 は「soft_deleteable: field_name: deletedAt」、同:50-55 は「column: deleted_at」と定義する。/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Setting/Shop/CsvController.php:111-115 の「remove($csvExtension)」はこのSoftDelete設定下で論理削除になる。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Entity/DtbCsvExtension.php:87-99 は deleted_at プロパティを持つだけでSoftDeleteable指定がなく、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Setting/Shop/CustomerCsvController.php:119-121 は「deleteByCsvExtensionId」「entityManager->remove($CsvExtension)」「flush()」として物理削除する。",
+      "note": "正本記載漏れだが、旧Doctrineマッピングが論理削除を明確に裏付ける。"
+    },
+    {
+      "rowId": 413,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:2528 のリバース埋め込み開始後、同:2575 に「画面上の順序が dtb_csv_csv_extension.rank になる」とある。Excel正本範囲（同:2384-2527）には保存順・rankの規則がない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Setting/Shop/CsvController.php:73-86 は「設定された順番通り」として送信配列 $csvIds を順に回し「->setRank($key)」する。/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/doctrine/Plugin.HareruyaEc.Entity.DtbCsvCsvExtension.dcm.yml:23-29 は rank 列を定義する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Setting/Shop/CustomerCsvUpdateAction.php:77-83 は送信順配列を「findBy(['id' => $csvIds])」でDB取得結果へ変換し、その結果の foreach キーをrankへ保存するため、送信UI順を直接保持していない。",
+      "note": "旧実装は送信ID配列の順番を明示的にrankへ写しており、現実装の取得順依存は移植差分。"
+    },
+    {
+      "rowId": 414,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:1528 および同:1614 の正本セルは、空白なしで「カスタムデータCSVダウンロード」と記載する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Product/index.twig:270-274 も「カスタムデータCSVダウンロード」と空白なしで表示する。リバース領域 /home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:2553 の空白入り説明は旧実装実体とも矛盾する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Product/index.twig:512-515 は先頭optionに「admin.product.custom_csv_export」を使い、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:2247 は「カスタムデータCSVダウンロード」と定義する。",
+      "note": "現実装はExcel正本と旧実装の双方に一致している。空白入り期待値が誤り。"
+    },
+    {
+      "rowId": 415,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:5842 の正本セル（商品規格登録編集!D93）は「フロント表示制御としては”公開”の場合は表示、”非公開（廃止）”の場合は非表示とする」と明記する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Repository/DtbProductSubClassRepository.php:268-283 はカード状態NMのCSV取得であり、本件のフロント商品詳細公開制御を裏付ける直接コードではない。pf-api/pf-eccube3/pf-article/deck-api を product_status_id・visible・フロント表示制御で横断確認したが、正本以上に判定を変える旧根拠は見つからない。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/ProductRepository.php:119-138 の findForFrontDetail() は「p.Status = :status」と「pc.visible = :visible」を条件にするが pc.Status は条件にしない。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Entity/ProductClass.php:202-203 と同:300-302 は visible と Status が別フィールドであるため、visible=trueの非公開・廃止規格を除外できない。",
+      "note": "商品本体Statusだけでなく商品規格Statusも公開に限定するという正本要件に対する真の乖離。"
+    },
+    {
+      "rowId": 416,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:6046 が「function-design-embed:start m03-09」で、6本の正確なURLはその後の同:6077 にのみ列挙される。Excel正本範囲（sheet-22の同:5758-6045）にはURLパスやHTTPメソッドの記載がない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/ProductServiceProvider.php:58-83 は実際に「.../{id}/class/list」「.../{id}/class/new」「.../{id}/class/new/create」「.../{id}/class/{classId}/edit」「.../edit/update」「.../edit/delete」をGET/POST/DELETEで登録する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Product/ProductClassController.php:74、114、153、228、265、352 は現行パスをそれぞれ「.../product/product/class/{id}」「.../{id}/new」「.../{id}/store」「.../{id}/edit/{productClassId}」「.../{id}/update/{productClassId}」「.../{id}/delete/{productClassId}」と定義し、旧URL契約と一致しない。",
+      "note": "URL契約は正本ではなく旧ルーティング実装に由来するが、6入口すべてで移植差分が確認できる。"
+    },
+    {
+      "rowId": 417,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:6046 のリバース埋め込み後、同:6087、6133 に「登録できませんでした。」「登録が完了しました。」および同じ規格編集画面への遷移が記載される。Excel正本範囲（同:5758-6045）に固定文言・遷移先の指定はない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Product/ProductClassController.php:437-448 は検証失敗時「$app->addError('admin.register.failed', 'admin')」で同Twigを返し、同:553-558 は成功時「admin.register.complete」を設定して同規格の detail_edit へ戻す。/home/y-saito/Developments/pf-eccube3/src/Eccube/Resource/locale/message.ja.yml:83-84 が両日本語文言を定義する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Product/ProductClassController.php:291-303 は失敗時「admin.common.save_error」、同:347-349 は成功時「admin.common.save_complete」を使って規格一覧 admin_product_product_class へ戻す。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:1595-1596 は「保存しました」「保存に失敗しました」である。",
+      "note": "文言と成功時遷移先の双方が旧実装契約から変わっている。"
+    },
+    {
+      "rowId": 419,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:6226 は正本で「買取価格の方が基準価格より高い場合はエラー」、同:6251 は「買取価格(NM) ＞ 基準価格(NM) チェックを実施」と明記する。販売価格との比較要求は正本にない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/Product/BulkUpdateProductPriceType.php:88-103 は旧実装で price_nm と check_price_nm を比較し、buy対象では「$valid = $price > $checkPrice」「admin.product_class.buyprice_valid_bulk」を使うため、指摘期待値は旧挙動由来だが現行正本と衝突する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/BulkUpdateProductPriceType.php:89-108 は buy_price_nm と standard_price_nm を取得し「if ($buyPrice > $standardPrice)」で「admin.product.buy_price_exceeds_standard」を返しており、正本どおり基準価格と比較する。",
+      "note": "旧実装由来の販売価格比較よりExcel正本を優先すると、現実装は既に要件を満たす。"
+    },
+    {
+      "rowId": 420,
+      "verdict": "UNSUPPORTED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:6270-6272 の正本セルはSP/MP/HPを「『基準価格(NM)』と、当該商品に設定された『割引率』をもとに計算」とし、状態別に算出された値を示す。一方、同:6336 のリバース埋め込み後の同:6377 にだけ「standard_price_nm を…すべての行…同じ値」とある。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Product/ProductClassController.php:802-827 の旧一括買取更新は「$conditions = ['nm']」「$newPrice = $subClass['price_nm']」から買取価格を状態別更新するだけで、standard_price_nm や基準価格更新を扱わない。pf-api/pf-eccube3/pf-article/deck-api の standard_price_nm 横断検索も0件で、期待値を裏付ける旧コードはない。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Product/ProductBulkUpdateBuyPriceStoreAction.php:69-84 はNM/SP/MP/HPごとの product_class_id と standard_price_* を組み立てて状態別に保存する。正本は各状態値をNMと割引率から計算するため、状態別値を持つこと自体は正本と整合する。",
+      "note": "「NMの同一値を全状態へ保存しSP/MP/HPを無視」は正本にも旧実装にも根拠がなく、リバース詳細だけの期待値。"
+    },
+    {
+      "rowId": 421,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:6822 の正本セル（カテゴリ登録!E162）は項目名を「フロント非表示フラグ」と定義する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Form/Extension/Admin/Product/CategoryTypeExtension.php:59-63 も「'label' => 'フロント非表示フラグ'」としており、旧表示も正本と一致する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/CategoryType.php:64-66 はラベルキー admin.product.category_front_search_hide を使用し、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:2157 は「フロント非表フラグ」と定義するため「示」が欠ける。",
+      "note": "正本の固定ラベルと現表示値の直接的な文言乖離。"
+    },
+    {
+      "rowId": 422,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:6830 の正本セル（カテゴリ登録!E170）は項目名を「検索パラメータ」と定義する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Product/CategoryController.php:58-67 の旧編集フォーム拡張データには nameEn、priorityProducts、displaySideMenuFlg、frontSearchHideFlg だけがあり検索パラメータ項目は未実装だった。pf-api/pf-eccube3/pf-article/deck-api の「検索パラメータ」横断検索でも本画面の旧ラベルは見つからない。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/CategoryType.php:151-153 は search_parameters に admin.product.category_search_parameters を使い、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:2164 は「検索パラメーター」と長音付きで定義する。",
+      "note": "項目自体は移植済みだが、正本の「パラメータ」に対して画面は「パラメーター」。"
+    },
+    {
+      "rowId": 423,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:6800、6802 の正本セルは旧文「この画面からの画像アップロードは実施しない」を取消線にし、現行文として「この画面からの画像アップロード、削除、変更を実施可能とする」と明記する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Product/CategoryController.php:70-84 の旧保存経路はカテゴリと付加項目をpersist/flushするだけで画像処理自体がない。したがって「新規のみ画像入力、編集は読取専用」というリバース記述は、この旧実装リポジトリのコードでも裏付けられない。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Product/CategoryController.php:96-118 は編集でも共通フォームを作り、同:226-275 はバナー・アイコンの追加、削除、変更を処理する。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Product/category.twig:363-397 は編集を含むフォーム領域に両画像のFilePond入力とadd/delete hiddenを描画する。",
+      "note": "指摘が参照した旧・取消済み期待値ではなく、現在のExcel正本に現実装が一致する。"
+    },
+    {
+      "rowId": 424,
+      "verdict": "UNSUPPORTED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:6908 が「function-design-embed:start m03-11」で、永続化失敗時unlinkはその後の同:6949、6966 にだけ現れる。Excel正本範囲（sheet-25の同:6697-6907）には保存失敗時の移動済みファイル削除規則がない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Product/CategoryController.php:70-84 の旧保存処理には画像移動もunlinkもなく、pf-api/pf-eccube3/pf-article/deck-api を completeCategorySave・移動済み・unlink・カテゴリ画像で横断検索しても、この期待値を実装する旧コードは確認できない。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Product/CategoryController.php:210-279 はトランザクション内で「$fileAdapter->move(...)」後に「$this->categoryRepository->save($TargetCategory)」を呼ぶが、保存例外時に新規移動ファイルを削除するcatchはない。同:281-286 の削除は成功後の旧画像 objectKeysToDelete に対する処理である。",
+      "note": "現実装に指摘挙動はないが、根拠はリバース詳細だけで、正本にも実際の旧4リポジトリにもないため移植漏れとは断定できない。"
+    },
+    {
+      "rowId": 425,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:6794 の正本セルは「支店非表示フラグが立っている場合、支店側のカテゴリ表示に表示させず、検索対象からも除外する」、同:6796-6797 は「フロント非表示フラグが立っていると、支店ページも含めて全て非表示」「支店側も含めて検索やフロントTOPのカテゴリ表示で非表示」と定める。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Form/Extension/Admin/Product/CategoryTypeExtension.php:59-63 は旧管理フォームに「フロント非表示フラグ」を持つが、旧リポジトリを front_search_hide_flg・branch_hide_flg・商品検索で横断した範囲では、今回の正本要件を完全に実装する検索クエリ条件は確認できない。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/TopCategoryListBuilder.php:95-100 はTOP表示で両フラグを除外する一方、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Front/SearchType.php:93-107 は「getList(null, true)」の全カテゴリを選択肢にし、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/ProductRepository.php:763-773 は選択カテゴリと子孫だけで絞り、front_search_hide_flg／branch_hide_flg条件を付けない。",
+      "note": "TOP表示側は一部実装済みだが、正本が明記する検索対象からの除外が商品検索経路にない。"
+    }
+  ]
+}

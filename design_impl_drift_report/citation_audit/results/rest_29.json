@@ -1,0 +1,165 @@
+{
+  "packetId": "rest_29",
+  "results": [
+    {
+      "rowId": 840,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "Excel正本は hareruya-design-docs/excel_to_html/output/0210_基本設計仕様書(コンテンツ管理).html:2994 で「カスタマイズ要件に記載の内容以外は現行踏襲とする」とするが、最大3件という数値は正本部分にない。最大3件の記述は同:3154-3157 の `function-design-embed:start`／`Source: functions/pf-eccube3/...` より後に埋め込まれたリバース詳細設計だけにある。",
+      "legacyEvidence": "旧実装 ec-cube/app/Customize/Controller/TopController.php:18-20 は `const DISPLAY_NUM = 3;`、同:125-132 はタグ商品・ピックアップ商品の双方を `self::DISPLAY_NUM` で取得する。指定された旧4リポジトリも横断したが、M09-10の支店トップ商品取得の実体はリバース詳細設計が参照するこの旧ec-cube側にあった。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Shop/ShopTopController.php:34-38 は `private const TILE_PRODUCT_LIMIT = 8;`。同:137-142 はピックアップ取得とタグ取得の双方へ `self::TILE_PRODUCT_LIMIT` を渡しており、旧実装の3件上限と一致しない。",
+      "note": "設計書の具体値記載漏れが併存する。最大3件は旧実装に裏付けられるためLEGACY_BACKED。"
+    },
+    {
+      "rowId": 841,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0210_基本設計仕様書(コンテンツ管理).html:3064 は、タイル属性に応じて「もっと見る」押下時に指定検索条件の商品一覧を表示すると明記し、同:3069 のExcel正本セルは「ピックアップ商品(ピックアップフラグが1の商品)」を検索条件としている。",
+      "legacyEvidence": "旧実装 ec-cube/app/template/default/Block/tile.twig:22-24 はピックアップタイルのリンクを `path('product_search_result', {'pick_up_flg': 1})` としており、正本の検索条件と一致する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/default/Block/shop_item_list.twig:25-31 はピックアップタイルに `tileUrl = url('product_list')` を設定し、タグ付きURLを使う他属性とも異なり検索条件を何も渡さない。",
+      "note": ""
+    },
+    {
+      "rowId": 842,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "Excel正本は hareruya-design-docs/excel_to_html/output/0210_基本設計仕様書(コンテンツ管理).html:2993 で「変更後のデザインでも各タイルの表示位置を設定可能とする」とし、同:2997-3000 でランダム化等の除去を規定するが、フロント表示時に未設定枠を補完する処理は明記しない。補完要件は同:3154-3157 のリバース詳細設計埋込開始後にのみ現れる。",
+      "legacyEvidence": "旧実装 ec-cube/app/Customize/Controller/TopController.php:75-81 は全タイル位置を空配列で先に初期化し、同:82-95 で保存済みタイルを上書きした後、同:97-109 で空の位置をタグ商品タイルに補完する。旧実装は5枠だが、未設定位置をフロントで補完する挙動自体を直接確認できる。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Shop/ShopTopController.php:127-161 は保存済みTilesを並べ替えてforeachし、タグなしを `continue` したうえで生成済み配列だけを返す。4枠の初期化や不足枠の追加処理はない。",
+      "note": "期待値は、Excel正本のリニューアル後4枠設計と旧実装のフロント補完挙動を合成したもの。補完という差分の根は旧実装なのでLEGACY_BACKED。"
+    },
+    {
+      "rowId": 843,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "Excel正本にはS3画像置換の実行順がない。hareruya-design-docs/excel_to_html/output/0210_基本設計仕様書(コンテンツ管理).html:2994 は「カスタマイズ要件に記載の内容以外は現行踏襲」とするだけで、「削除してからアップロード」は同:3154-3157 のリバース詳細設計埋込後の記述である。",
+      "legacyEvidence": "旧実装 ec-cube/app/Customize/Controller/Admin/Integration/TopPageController.php:141-151 は、既存URLが存在するとき同:144-146 で `$s3->deleteFile($existingUrl);` を実行し、その後同:148-151 で `$s3->putFile(...)` を返す。削除先行の順序を実コードで確認できる。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Content/BranchTopPageController.php:364-374 は、同:365-370 の `uploadFile(...)` を先に実行し、続いて同:372-374 で既存画像を `delete` するため順序が逆である。",
+      "note": "設計書の具体的な処理順記載漏れが併存する。"
+    },
+    {
+      "rowId": 844,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "Excel正本の画像項目 hareruya-design-docs/excel_to_html/output/0210_基本設計仕様書(コンテンツ管理).html:3084 は画像選択時の表示だけを記載し、5MB・環境設定の許可拡張子という検証値は記載しない。同:3154-3157 から始まるリバース詳細設計にのみ具体値がある。",
+      "legacyEvidence": "旧実装 ec-cube/app/Customize/Form/Type/Admin/Integration/TopPageManagementType.php:65-72 は `image_file` に `Assert\\File` を付け、`'maxSize' => '5M'` と `'mimeTypes' => $this->eccubeConfig['allow_extensions']` を指定する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/Content/BranchTopPageManagementType.php:73-85 は `maxSize` は `5M` だが、`mimeTypes` を `image/jpeg`、`image/png`、`image/gif`、`image/webp` の固定配列にしており、環境設定を参照しない。",
+      "note": "5MB部分は現在も満たすが、指摘対象の環境依存許可形式は旧実装根拠で未充足。"
+    },
+    {
+      "rowId": 845,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html:1120 は項目表に「必須」列を設け、同:1124-1130 のExcel正本セルは会社名・会社名フリガナ・店名フリガナ・店名英語表記・住所・電話番号をいずれも必須「-」、店名だけを同:1126 で「○」とする。正本は同:1110 でその他を「現行踏襲」とする。",
+      "legacyEvidence": "旧実装 pf-eccube3/src/Eccube/Form/Type/Admin/ShopMasterType.php:47-55 は会社名を `required => false`、同:66-89 は店名英語・郵便番号・住所・電話をすべて任意にする。pf-eccube3/src/Eccube/Resource/template/admin/Setting/Shop/shop_master.twig:58-65 は郵便番号を2欄、同:88-96 は電話を3欄で描画しており、正本で省略された分割形状も現行踏襲として確認できる。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/ShopMasterType.php:57-65,75-97,110-112 は会社名・店名英語・郵便番号・住所・電話を `required => true` または `NotBlank` 付きにする。ec-cube-enterprise/src/Eccube/Resource/template/admin/Setting/Shop/shop_master.twig:38-49,68-79 は任意の会社名・各フリガナ・英語店名にも必須バッジを出し、同:94-98,128-133 は郵便番号・電話を単一widgetで描画する。",
+      "note": "必須／任意はExcel正本が直接規定する。条件付き必須と分割入力の詳細は正本の「現行踏襲」を旧実装で補強した。"
+    },
+    {
+      "rowId": 846,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html:1131 のExcel正本項目表は「1-8 FAX番号」を表示項目として列挙し、必須欄を「-」としている。同:1115 は「フォームに入力された値で店舗情報を登録する」と明記する。",
+      "legacyEvidence": "旧実装 pf-eccube3/src/Eccube/Form/Type/Admin/ShopMasterType.php:84-89 は電話とFAXをともに任意の `tel` 型で追加し、pf-eccube3/src/Eccube/Resource/template/admin/Setting/Shop/shop_master.twig:98-106 はFAXを `fax01`・`fax02`・`fax03` の3分割widgetとして描画する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Entity/BaseInfo.php:1148-1158 には `fax_number` 列とsetter/getterだけは存在するが、ec-cube-enterprise/src/Eccube/Form/Type/Admin/ShopMasterType.php:54-325 のフォーム定義にはFAXフィールドがなく、shop_master.twigにもFAX widgetがない（同テンプレート:128-133 は電話のみ）。",
+      "note": "3分割・部分入力禁止の詳細は旧実装由来だが、FAX入力項目そのものはExcel正本が明示するためSPEC_BACKED。"
+    },
+    {
+      "rowId": 847,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html:1152-1153 のExcel正本項目表は地図設定の入力を「経度」「緯度」の2項目として列挙し、同:1115 はフォーム値による店舗情報登録を要求する。",
+      "legacyEvidence": "旧実装 pf-eccube3/src/Eccube/Form/Type/Admin/ShopMasterType.php:246-266 は `latitude` と `longitude` を別々のnumber入力にし、precision 6と±90／±180の正規表現を付ける。pf-eccube3/src/Eccube/Resource/template/admin/Setting/Shop/shop_master.twig:167-175 も両項目を個別描画する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/ShopMasterType.php:270-277 は `google_map_url` というTextType 1項目だけを追加し、ec-cube-enterprise/src/Eccube/Resource/template/admin/Setting/Shop/shop_master.twig:398-407 もGoogle Map URLだけを表示する。BaseInfo.php:1578-1588 の保存列も `google_map_url` である。",
+      "note": "項目構成はExcel正本が直接規定し、数値境界・小数6桁は旧実装で補強した。"
+    },
+    {
+      "rowId": 848,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "Excel正本の項目表は hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html:1137-1138 で「取り扱い商品」「メッセージ」を列挙するが、最大99999文字や `lltext_len` は記載しない。同:1110 は具体値を示さず「カスタマイズ要件に記載の内容以外は現行踏襲」とする。",
+      "legacyEvidence": "旧実装 pf-eccube3/src/Eccube/Form/Type/Admin/ShopMasterType.php:131-147 は両textareaを `required => false` とし、Lengthのmaxに `$config['lltext_len']` を指定する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/ShopMasterType.php:157-171 は両項目のLength maxに `eccube_ltext_len` を使う。ec-cube-enterprise/app/config/eccube/packages/eccube.yaml:113-114 は `eccube_lltext_len: 99999` に対し `eccube_ltext_len: 3000` であり、BaseInfo.php:102-106 の列長も4000である。",
+      "note": "項目の存在は正本にあるが、指摘の核心である99999文字契約は旧実装にのみ裏付けられる。"
+    },
+    {
+      "rowId": 849,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "Excel正本は hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html:1140 で「送料無料条件(金額)」を列挙するが、8桁・整数Regexという検証条件は記載しない。同:1110 の正本記載は「カスタマイズ要件に記載の内容以外は現行踏襲」に留まる。",
+      "legacyEvidence": "旧実装 pf-eccube3/src/Eccube/Form/Type/Admin/ShopMasterType.php:150-167 は `delivery_free_amount` を任意とし、同:159-165 でLength maxを `$config['price_len']`、Regexを `/^\\d+$/u` とする。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/ShopMasterType.php:246-248 は当該項目を任意の `PriceType` にする。PriceType.php:42-58 は `eccube_price_max` によるRange(0..max)だけを付け、eccube.yaml:126,185 の `eccube_price_len: 8` は使わず、最大2147483647まで許容する。",
+      "note": "8桁整数という具体的契約は旧実装由来。"
+    },
+    {
+      "rowId": 850,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html:1142-1150 のExcel正本項目表は、商品別送料・複数配送・仮会員・マイページ注文状況・お気に入り・自動ログイン・在庫切れ非表示の7項目をいずれも「単一選択(ラジオボタン)」、選択肢「有効 無効」、初期値「無効」としている。",
+      "legacyEvidence": "旧実装 pf-eccube3/src/Eccube/Form/Type/Admin/ShopMasterType.php:178-244 は各項目を0=無効／1=有効、`expanded => true`、`multiple => false` のchoiceとして定義する。pf-eccube3/src/Eccube/Resource/doctrine/migration/Version20150731154721.php:24-25 は `option_remember_me` の追加時defaultを0にする。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/ShopMasterType.php:258-269 は7項目を `ToggleSwitchType` とし、ToggleSwitchType.php:42-52 は親を `CheckboxType` にする。BaseInfo.php:135-136 は `option_remember_me` のdefaultをtrueとし、ラジオ／初期無効の双方に一致しない。",
+      "note": ""
+    },
+    {
+      "rowId": 851,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "Excel正本のM10-02部分は hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html:2004-2009 でカスタマイズなし・現行踏襲・フォーム値登録を規定するが、3つの見出し文言は本文セルにない。具体文言は同:2088 から始まるリバース詳細設計埋込後にのみ現れる。",
+      "legacyEvidence": "旧実装 pf-eccube3/src/Eccube/Resource/template/admin/Setting/Shop/tradelaw.twig:25-28 はtitleを「ショップ設定」、sub_titleを「特定商取引法管理」とし、同:42-45 のボックス見出しを「特定商取引法」とする。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Setting/Shop/tradelaw.twig:13-16,25-29 はtitleとカード見出しに `admin.setting.shop.tradelaw_setting`、sub_titleに `admin.setting.basic_info` を使う。messages.ja.yaml:2985,2988 の表示値は「基本情報設定」「特定商取引法設定」で、旧3文言と一致しない。",
+      "note": "設計書の具体文言記載漏れが併存する。"
+    },
+    {
+      "rowId": 852,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "Excel正本の項目表 hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html:2031 は送信ボタンのラベルを「設定」としており、「登録」という期待文言を直接は裏付けない。ただし同:2004-2009 は本機能をカスタマイズなし・現行踏襲としている。具体的な「登録」は同:2088 以後のリバース詳細設計にだけある。",
+      "legacyEvidence": "旧実装 pf-eccube3/src/Eccube/Resource/template/admin/Setting/Shop/tradelaw.twig:124-132 はsubmitボタンを `<button ... type=\"submit\">登録</button>` としている。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Setting/Shop/tradelaw.twig:65-70 はボタンに `admin.common.save` を使用し、messages.ja.yaml:1631 の実表示は「保存」である。",
+      "note": "Excel項目表の「設定」と旧実装の「登録」に不整合があるが、指摘された「登録」の所在は旧実装に明確にあるためLEGACY_BACKED。"
+    },
+    {
+      "rowId": 853,
+      "verdict": "UNSUPPORTED",
+      "specEvidence": "Excel正本M10-02の hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html:2004-2031 は現行踏襲、フォーム入力値の登録、入力項目とボタンを記すだけで、`sort_no`・`display_order_screen` の管理入力や表示制御を要求しない。これらを移行先の正とする文は同:2088 から始まるリバース詳細設計内（functions/pf-eccube3/m10-02_admin_base_setting_setting_shop_tradelaw.md:21-29）にのみ存在する。",
+      "legacyEvidence": "旧実装 pf-eccube3/src/Eccube/Resource/template/admin/Setting/Shop/tradelaw.twig:45-119 は `law_company` から `law_term06` までの固定項目を順に描画し、pf-eccube3/src/Eccube/Form/Type/Admin/TradelawType.php:43-137 も固定フィールドだけを定義する。`sort_no`／`display_order_screen` をpf-api・pf-eccube3・pf-article・deck-apiで横断検索したが、当機能の旧挙動としての並び替え・表示制御は0件だった。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Entity/TradeLaw.php:38-48 にはname・description・sort_no・display_order_screen列がある一方、TradeLawMallType.php:39-56 はnameとdescriptionだけをフォーム化し、default/Help/tradelaw.twig:21-28 も `t.name and t.description` だけで表示を絞る。",
+      "note": "現在列が存在することからリバース詳細設計が移行要件を推定した形で、Excel正本にも旧実装にも `display_order_screen` を操作・参照すべき根拠がない。指摘自体をUNSUPPORTEDとする。"
+    },
+    {
+      "rowId": 854,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html:2231-2236 のExcel正本は現行踏襲の機能として「利用規約を登録する」と記し、同:2244 は入力項目「利用規約」、同:2245 は入力値を登録するボタンを明記する。したがって管理画面から本文を編集できることは正本要件である。",
+      "legacyEvidence": "旧実装 pf-eccube3/src/Eccube/Controller/Admin/Setting/Shop/CustomerAgreementController.php:40-64 はヘルプ情報をフォームへ結び付け、valid時にpersist/flushする。functions/pf-eccube3/m10-03_admin_base_setting_setting_shop_customer_agreement.md:45-52 は移行先では固定ページ `help_agreement` 本文を保持対象とする整理を記すが、この保存先整理自体はリバース情報である。",
+      "currentImpl": "ec-cube-enterprise/app/config/eccube/packages/eccube_nav.yaml:217-220 は利用規約導線を `admin_content_page_edit` のPage IDへ向け、Page.php:45-46 はID 19を定義する。しかしpage_edit.twig:57-61 は既定ページで `editor.setReadOnly(true)` を実行するため、利用者は本文を編集できない。",
+      "note": "固定ページID等の移行方式はリバース整理だが、指摘の核心である「利用規約本文を入力して登録できること」はExcel正本に直接ある。"
+    },
+    {
+      "rowId": 855,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "Excel正本は hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html:2231-2245 で利用規約の登録画面を要求するが、成功時GETリダイレクト、失敗時同一再描画、保存後も利用規約用ヘッダを維持するという詳細は本文にない。詳細は同:2277 以後のリバース詳細設計にのみある。",
+      "legacyEvidence": "旧実装 pf-eccube3/src/Eccube/Controller/Admin/Setting/Shop/CustomerAgreementController.php:58-77 は検証成功時に保存後 `admin_setting_shop_customer_agreement` へredirectし、同:79-83 は失敗時に同じ `customer_agreement.twig` を再描画する。functions/pf-eccube3/m10-03_admin_base_setting_setting_shop_customer_agreement.md:80-84 は旧画面見出しを「ショップ設定」「利用規約管理」「利用規約」と記す。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Content/page_edit.twig:18-25 はqueryの `return=agreement` がある場合だけ利用規約メニュー・タイトルに分岐するが、同:96-98 のform actionはlocaleだけを保持する。PageController.php:309-315 の成功redirectもidとlocaleだけなので、POST時と保存後GETでreturnが失われ、コンテンツ管理見出しへ落ちる。",
+      "note": "同一画面遷移・見出し維持の具体契約は旧実装由来。"
+    },
+    {
+      "rowId": 856,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "Excel正本M10-04は hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html:2440-2445 でカスタマイズなし・現行踏襲とし、同:2475 は「ロゴ画像」を項目化するが、「620px以上推奨」という具体文言は記載しない。具体文言は同:2532 以後のリバース詳細設計で補われたもの。",
+      "legacyEvidence": "旧実装 pf-eccube3/src/Eccube/Resource/template/admin/Setting/Shop/payment_edit.twig:167-172 はロゴ画像ラベル直下に `<span class=\"small\">620px以上推奨</span>` を表示する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Setting/Shop/payment_edit.twig:193-198 は `admin.setting.shop.payment.logo_image_size` を表示し、messages.ja.yaml:3103-3104 の翻訳値は「ロゴ画像」「推奨サイズ : 500px × 100px」である。",
+      "note": "620px文言はExcel正本ではなく旧実装に所在する。"
+    },
+    {
+      "rowId": 858,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html:2866-2867 のExcel正本は個別税率・共通税率の登録と税率一覧表示を要求する。同:2875-2883 は「個別税率設定」「共通税率設定」「税率一覧」の各ブロック、商品別税率と課税規則の「単一選択(ラジオボタン)」、両「登録」ボタン、適用日時を明記する。",
+      "legacyEvidence": "旧実装 pf-eccube3/src/Eccube/Resource/template/admin/Setting/Shop/tax_rule.twig:32-42 はbootstrap-datetimepickerを読み込み、同:69-115 は「個別税率設定」「共通税率設定」「税率一覧」を別ボックスで描画する。pf-eccube3/src/Eccube/Form/Type/Admin/TaxRuleType.php:40-48 は商品別税率をexpanded choiceとし、同:62-82 は課税規則と単一テキストの適用日時を定義する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Setting/Shop/tax_rule.twig:15-16 はtitleを「税率設定」、sub_titleを「基本情報設定」の順にし、同:57-69,86-119 は単一カード・表内で新規行と既存行を扱い、新規ボタンも「新規作成」である。RoundingTypeType.php:29-32 は `expanded => false`、tax_rule.twig:169-185 は削除モーダルを使う。",
+      "note": "ブロック構成・ラジオ・登録ボタンはExcel正本が直接裏付ける。datetimepickerとモーダル不使用の細部は旧実装で補強した。"
+    },
+    {
+      "rowId": 859,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "Excel正本M10-07の hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html:2866-2884 は登録・一覧と項目を規定するが、`GET /{admin_route}/setting/shop/tax/{id}/edit` という編集入口は記載しない。具体エンドポイントは同:2926-2929 のリバース詳細設計埋込後にのみある。",
+      "legacyEvidence": "旧実装 pf-eccube3/src/Eccube/ControllerProvider/AdminControllerProvider.php:175-180 は `/setting/shop/tax/{id}/edit` を `TaxRuleController::index` にbindする。pf-eccube3/src/Eccube/Resource/template/admin/Setting/Shop/tax_rule.twig:140 は一覧の「編集」を `url('admin_setting_shop_tax_edit', { id : TaxRule.id })` へリンクする。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Setting/Shop/TaxRuleController.php:51-53 が定義するGET/POST入口は `/setting/shop/tax` と `/setting/shop/tax/new` だけである。tax_rule.twig:114-119,160-169 は同一一覧行のhidden `tax_rule_id`／`mode=edit_inline` とJS表示切替で編集し、専用GET編集ルートを持たない。",
+      "note": "編集URLという外部入口は旧実装に裏付けられるがExcel正本にはない。"
+    },
+    {
+      "rowId": 860,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "Excel正本の課税規則行 hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html:2880 は選択肢を「四捨五入 切り捨て 切り上げ」とするが、初期値欄は「-」で、マスタID1を初期値とする規定はない。ID1要件は同:2926-2929 以後のリバース詳細設計にだけある。",
+      "legacyEvidence": "旧実装 pf-eccube3/src/Eccube/Repository/TaxRuleRepository.php:48-58 の `newTaxRule()` はマスタRepositoryから `find(1)` した値をそのまま `setCalcRule($CalcRule)` し、税調整0・削除フラグ0を設定する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Repository/TaxRuleRepository.php:77-88 は最初に `find(RoundingType::ROUND)` でID1相当を得るが、同:81-84 で現在有効なruleがあれば `$CurrentRule->getRoundingType()` に上書きしてから新規TaxRuleへ設定する。",
+      "note": "新規行を常にID1で始める具体要件は旧実装由来。"
+    }
+  ]
+}

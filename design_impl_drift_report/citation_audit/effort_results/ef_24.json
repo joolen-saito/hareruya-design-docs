@@ -1,0 +1,313 @@
+{
+  "packetId": "ef_24",
+  "results": [
+    {
+      "rowId": 704,
+      "authorCat": "5",
+      "verdict": "UPHELD",
+      "correctedCat": null,
+      "effortDays": 0.25,
+      "effortBasis": "ShopTopController の TILE_PRODUCT_LIMIT を3へ変更すれば、既存のピックアップ商品・タグ商品両方の Repository 呼出しに反映される。主対象は定数1箇所で、取得処理自体は流用できる。",
+      "needsDecision": false,
+      "reason": "表示件数はTwig上の見せ方ではなくRepositoryへ渡す取得上限で決まっているため、抽出条件を直す業務ロジックが妥当。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 705,
+      "authorCat": "2",
+      "verdict": "REFUTED",
+      "correctedCat": "5",
+      "effortDays": 1.5,
+      "effortBasis": "shop_item_list.twig のリンクに検索条件を付けるだけでなく、SearchProductType、ProductController、および商品一覧のDoctrine/Unisearch検索経路へピックアップ条件を受け渡す必要がある。既存一覧は複数の検索経路を持つため影響確認も要る。",
+      "needsDecision": false,
+      "reason": "現在の商品一覧にはピックアップ条件がなく、Twigだけではピックアップフラグ1の商品へ絞れない。直す対象は商品一覧の抽出条件なので業務ロジック。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 706,
+      "authorCat": "2",
+      "verdict": "REFUTED",
+      "correctedCat": "5",
+      "effortDays": 0.75,
+      "effortBasis": "ShopTopController::buildTiles で4位置を初期化し、保存済みタイルを位置ごとに反映して欠損位置を補完する処理を追加する。旧実装の補完手順と DtbTile の位置定数は流用可能で、主対象はController 1ファイル。",
+      "needsDecision": false,
+      "reason": "欠損タイルを表示するだけのTwig修正では商品取得情報を作れない。保存済みタイルと4位置を突き合わせて補完データを組み立てる分岐処理なので業務ロジック。",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 707,
+      "authorCat": "7",
+      "verdict": "UPHELD",
+      "correctedCat": null,
+      "effortDays": 0.5,
+      "effortBasis": "BranchTopPageController::storeBannerImage 内でS3の存在確認・既存キー削除・新規アップロードの順序を組み替える。対象メソッドは1つだが、削除後にアップロードが失敗する副作用経路も整合させる必要がある。",
+      "needsDecision": false,
+      "reason": "DBや画面ではなくS3上の既存オブジェクト削除と新規アップロードの順序を変えるため、外部連携・副作用の区分が正しい。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 708,
+      "authorCat": "5",
+      "verdict": "REFUTED",
+      "correctedCat": "4",
+      "effortDays": 0.25,
+      "effortBasis": "BranchTopPageManagementType は既に EccubeConfig を受け取るため、image_file の制約を eccube_file_uploadable_extensions 参照へ変更するフォーム1ファイル中心の修正。",
+      "needsDecision": false,
+      "reason": "画像の業務処理ではなく、アップロード入力を許可拡張子で拒否するフォーム制約を直すため入力検証。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 709,
+      "authorCat": "4",
+      "verdict": "UPHELD",
+      "correctedCat": null,
+      "effortDays": 2.0,
+      "effortBasis": "ShopMasterType の複数項目から required/NotBlank を外し、住所の相関検証を追加する。さらに郵便番号2欄・電話3欄への分割と単一DB値への結合、shop_master.twig の必須バッジを直す。既存 SplitPostalType/SplitPhoneNumberType は参考にできるが BaseInfo の単一列へ合わせる処理が要る。",
+      "needsDecision": false,
+      "reason": "見た目の必須表示だけでなく、常時必須、条件付き必須、分割欄の全欄入力という検証契約を直す指摘であり入力検証が中心。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 710,
+      "authorCat": "2",
+      "verdict": "REFUTED",
+      "correctedCat": "4",
+      "effortDays": 1.0,
+      "effortBasis": "ShopMasterType と shop_master.twig にFAX3欄を追加し、任意時の全空または3欄完入力を検証して既存 BaseInfo::fax_number の単一列へ結合・復元する。既存 FaxNumberType は3列前提のため、そのままでは BaseInfo の単一列へマップできない。",
+      "needsDecision": false,
+      "reason": "ラベルを表示するだけでは要求を満たさず、3分割入力の部分入力禁止と単一保存値への変換が必要。主な改修対象はフォーム入力検証。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 711,
+      "authorCat": "4",
+      "verdict": "REFUTED",
+      "correctedCat": "3",
+      "effortDays": 3.0,
+      "effortBasis": "dtb_base_info に latitude/longitude の2列を追加するDoctrine migration、BaseInfo のマッピング、ShopMasterType の範囲・小数桁制約、shop_master.twig の2入力を追加する。既存 google_map_url から機械的に緯度経度へ移せないため移行方針も実装へ反映する必要がある。",
+      "needsDecision": false,
+      "reason": "検証追加だけでは保存先がなく、設計は緯度・経度のDB現行値を永続化対象としている。新規列とマイグレーションが必要なのでデータ永続化。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 712,
+      "authorCat": "3",
+      "verdict": "UPHELD",
+      "correctedCat": null,
+      "effortDays": 1.5,
+      "effortBasis": "ShopMasterType の2制約を eccube_lltext_len へ変え、BaseInfo の good_traded/message を99999文字を保持できる型へ変更するDoctrine migrationを追加する。既存値の内容変換は不要。",
+      "needsDecision": false,
+      "reason": "フォーム上限だけを99999にすると現行4000文字列で保存できないため、DB列型変更を伴うデータ永続化が妥当。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 713,
+      "authorCat": "1",
+      "verdict": "REFUTED",
+      "correctedCat": "4",
+      "effortDays": 0.25,
+      "effortBasis": "ShopMasterType の delivery_free_amount に8桁Lengthと非負整数Regexを追加する1フィールドの修正。共有 PriceType 自体は変更せず既存利用箇所への波及を避けられる。",
+      "needsDecision": false,
+      "reason": "URLやレスポンス契約ではなく、管理フォームが受け付ける金額文字列の桁・形式を制限する修正なので入力検証。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 714,
+      "authorCat": "2",
+      "verdict": "REFUTED",
+      "correctedCat": "3",
+      "effortDays": 2.0,
+      "effortBasis": "ShopMasterType の7項目を展開ラジオへ変更し、shop_master.twig の表示を合わせるほか、BaseInfo::option_remember_me の既定値、DB既定値、初期データの1を0へ直すmigrationが必要。既存設定値を保持する範囲もmigrationで扱う。",
+      "needsDecision": false,
+      "reason": "UI種別だけなら画面表示だが、この指摘には自動ログイン列の永続的な既定値誤りが含まれる。DB既定値・初期データ修正が必要なのでデータ永続化を主区分とする。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 715,
+      "authorCat": "2",
+      "verdict": "UPHELD",
+      "correctedCat": null,
+      "effortDays": 0.25,
+      "effortBasis": "tradelaw.twig のtitle/sub_title/card見出しを画面専用翻訳キーへ差し替え、messages.ja.yaml に設計文言を定義する2ファイルの小修正。共有キーの値は変えず他画面への波及を避ける。",
+      "needsDecision": false,
+      "reason": "利用者に表示する3つの見出し文言だけを直すため画面表示。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 716,
+      "authorCat": "2",
+      "verdict": "UPHELD",
+      "correctedCat": null,
+      "effortDays": 0.1,
+      "effortBasis": "tradelaw.twig の送信ボタンを既存の「登録」翻訳キーへ差し替える1箇所の修正。送信処理は変更しない。",
+      "needsDecision": false,
+      "reason": "ボタンの実行内容ではなく表示文言だけの差分なので画面表示。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 717,
+      "authorCat": "2",
+      "verdict": "UPHELD",
+      "correctedCat": null,
+      "effortDays": 0.25,
+      "effortBasis": "page_edit.twig のAce readOnly条件から利用規約設定導線を除外し、既存のPageController保存処理と help_agreement 固定ページをそのまま利用する。主対象はTwigの活性条件。",
+      "needsDecision": false,
+      "reason": "保存経路と固定ページは既にあり、直すのは利用規約導線でエディタを編集可能にする画面活性制御なので画面表示。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 718,
+      "authorCat": "5",
+      "verdict": "UPHELD",
+      "correctedCat": null,
+      "effortDays": 0.5,
+      "effortBasis": "page_edit.twig のform actionに return=agreement を保持し、PageController の保存後redirectにも同パラメータを渡す。検証失敗時と成功後の2経路を揃える2ファイル修正。",
+      "needsDecision": false,
+      "reason": "文言変更ではなく、POSTとリダイレクトをまたいで遷移元状態を保持する分岐・画面遷移ロジックの修正。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 719,
+      "authorCat": "2",
+      "verdict": "UPHELD",
+      "correctedCat": null,
+      "effortDays": 0.1,
+      "effortBasis": "messages.ja.yaml の当画面専用ロゴ補足翻訳値を「620px以上推奨」へ変更する1行修正。Twigは既存キーを既に表示している。",
+      "needsDecision": false,
+      "reason": "画像検証や保存処理ではなく、利用者向け補足文言だけを直すため画面表示。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 720,
+      "authorCat": "6",
+      "verdict": "UPHELD",
+      "correctedCat": null,
+      "effortDays": 2.0,
+      "effortBasis": "税率画面用の個別税率設定フォーム、edit_param POSTルート、BaseInfo の当該フラグだけを保存するController処理、Twigブロックと完了イベントを新設する。既存 ShopMasterType のフィールドと保存例は流用できる。",
+      "needsDecision": false,
+      "reason": "永続列は既存でも、設計が要求する税率画面上のブロック・専用ルート・保存処理そのものがないため未実装機能。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 721,
+      "authorCat": "2",
+      "verdict": "UPHELD",
+      "correctedCat": null,
+      "effortDays": 1.0,
+      "effortBasis": "tax_rule.twig を3ブロック構成へ組み替え、見出し・ボタン文言・削除UIを変更し、RoundingTypeType のexpanded設定と日時ピッカー初期化を直す。主にTwigとFormTypeだが変更点が多い。",
+      "needsDecision": false,
+      "reason": "別findingのルート・保存処理を除けば、本件で直すのはブロック配置、表示文言、入力部品の見せ方、モーダル有無という画面構成。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 722,
+      "authorCat": "1",
+      "verdict": "UPHELD",
+      "correctedCat": null,
+      "effortDays": 0.75,
+      "effortBasis": "TaxRuleController にGET /setting/shop/tax/{id}/edit を追加し、既存 TaxRuleType と一覧テンプレートへ対象行を渡す。既存インライン編集フォームは流用できるが、GET時の対象解決と表示モード調整が必要。",
+      "needsDecision": false,
+      "reason": "編集機能自体は既存インライン経路にあり、差分の中心は設計指定のURL・HTTPメソッドという入口契約。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 723,
+      "authorCat": "5",
+      "verdict": "UPHELD",
+      "correctedCat": null,
+      "effortDays": 0.25,
+      "effortBasis": "TaxRuleRepository::newTaxRule で現在有効税率による rounding_type 上書きをやめ、既に取得しているID1を維持する1メソッドの小修正。",
+      "needsDecision": false,
+      "reason": "フォーム表示だけでなく、新規TaxRuleへ設定する初期エンティティ値を決める分岐なので業務ロジック。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 724,
+      "authorCat": "4",
+      "verdict": "UPHELD",
+      "correctedCat": null,
+      "effortDays": 0.25,
+      "effortBasis": "TaxRuleType の既存 Range 制約へ max=100 を追加する1箇所の修正。",
+      "needsDecision": false,
+      "reason": "消費税率入力の上限をフォームで拒否するバリデータ修正なので入力検証。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 725,
+      "authorCat": "5",
+      "verdict": "UPHELD",
+      "correctedCat": null,
+      "effortDays": 0.5,
+      "effortBasis": "TaxRuleType のPOST_SUBMIT重複検索へ Product IS NULL 条件を加え、専用エラー翻訳値を設計文言へ変更する。フォーム型とlocaleの2ファイル修正。",
+      "needsDecision": false,
+      "reason": "主差分は共通税率と判定するDB検索条件であり、重複可否という業務ロジックを直す必要がある。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 726,
+      "authorCat": "5",
+      "verdict": "UPHELD",
+      "correctedCat": null,
+      "effortDays": 0.75,
+      "effortBasis": "TaxRuleController::delete を自動エンティティ解決任せからIDの明示検索へ変更し、不存在時のフラッシュ消去・警告追加・一覧リダイレクト分岐を実装する。ルートと既存削除処理は流用する。",
+      "needsDecision": false,
+      "reason": "404になる現行経路を、対象有無に応じた警告リダイレクトへ変えるController分岐なので業務ロジック。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 727,
+      "authorCat": "2",
+      "verdict": "REFUTED",
+      "correctedCat": "7",
+      "effortDays": 0.25,
+      "effortBasis": "TaxRuleController の既存行 edit_inline 成功分岐へ、新規保存分岐と同じ EventArgs と ADMIN_SETTING_SHOP_TAX_RULE_INDEX_COMPLETE dispatchを追加する。既存コードを流用できる。",
+      "needsDecision": false,
+      "reason": "成功メッセージの表示ではなく、保存後に拡張リスナーへ通知するイベント副作用が欠けているため外部連携・副作用。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 728,
+      "authorCat": "2",
+      "verdict": "UPHELD",
+      "correctedCat": null,
+      "effortDays": 0.25,
+      "effortBasis": "AutoMail/detail.twig のtitle/sub_title/card見出しを画面専用の設計文言へ差し替え、必要な翻訳キーをlocaleへ追加する2ファイルの小修正。",
+      "needsDecision": false,
+      "reason": "3つの利用者向け見出し文言だけを直すため画面表示。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 729,
+      "authorCat": "1",
+      "verdict": "REFUTED",
+      "correctedCat": "2",
+      "effortDays": 0.25,
+      "effortBasis": "AutoMail/detail.twig でテンプレ名称・件名の行を Mail存在条件の外へ移し、初期GETでも既存フォームフィールドを描画する。ControllerのURL契約や検索処理は変更不要。",
+      "needsDecision": false,
+      "reason": "GETという語はあるが、欠けているのはTwig条件で非表示になっている2項目。直す対象は初期画面の表示条件なので画面表示。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 730,
+      "authorCat": "4",
+      "verdict": "UPHELD",
+      "correctedCat": null,
+      "effortDays": 0.25,
+      "effortBasis": "AutoMailType のtemplateをrequired=trueかつNotBlankにし、同じ query_builder の orderBy を名称昇順へ変更する1ファイル修正。自動送信対象の既存条件は流用する。",
+      "needsDecision": false,
+      "reason": "並び順差分も含むが、保存時にも空選択を拒否する必須検証が主であり入力検証が妥当。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 731,
+      "authorCat": "5",
+      "verdict": "UPHELD",
+      "correctedCat": null,
+      "effortDays": 0.25,
+      "effortBasis": "MallAutoMailController でルート解決後の MailTemplate::isAutoSend を確認し、対象外ならNotFoundを投げるガードを追加する1メソッドの小修正。",
+      "needsDecision": false,
+      "reason": "URL形式自体ではなく、解決済みテンプレートの業務属性により編集可否を分岐するため業務ロジック。",
+      "confidence": "high"
+    }
+  ]
+}

@@ -1,0 +1,149 @@
+{
+  "packetId": "rc_29",
+  "results": [
+    {
+      "rowId": 518,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0202_基本設計仕様書(在庫管理機能).html の在庫変更CSV登録を「在庫増減数100点以上」「キャンセルしてCSVファイルを修正」で検索し、Excel正本の図形抽出行 data-excel-ref=\"0202:在庫変更CSV登録!C82\" に「在庫増減数100点以上の商品がありますが内容問題ないでしょうか。※問題がある場合、キャンセルしてCSVファイルを修正してください。」が実在することを確認した。同じC82のレイアウト画像2枚もデコードして目視し、画像内本文は双方とも「本当に承認してもよろしいですか？」で、図形抽出文言とは不一致だった。",
+      "reason": "正本内に矛盾はあるが、指摘の期待文言そのものは function-design-embed 外のExcel図形抽出（0202:在庫変更CSV登録!C82）に実在するため SPEC_BACKED 分類は維持する。現在の実装文言は正本図形抽出の指定文言とも、レイアウト画像の「本当に承認してもよろしいですか？」とも一致せず、指摘された後半注意文も無い。",
+      "currentImpl": "ec-cube-enterprise 現状（HEAD da08bd6572）: src/Eccube/Resource/template/admin/Stock/change.twig の largeChangeConfirmModal は、modal-body に「100点以上の在庫変動がある商品が含まれています。このまま登録してよろしいですか？」を直書きしている。キャンセルとOKはあるが「※問題がある場合、キャンセルしてCSVファイルを修正してください。」は同テンプレート内に存在しない。",
+      "severityOpinion": "low",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 520,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0202_基本設計仕様書(在庫管理機能).html の在庫移動CSV登録を「商品点数の上限」「10,000件」で検索し、src-cell 0202:在庫移動CSV登録!E53 に「１ファイルあたりに登録できる商品点数の上限を10,000件に設定」が実在することを確認した。レイアウト画像 0202:在庫移動CSV登録!C8 も目視し、「CSVファイル選択（1ファイルの登録上限は 10,000 件です）」を確認した。",
+      "reason": "処理概要セルとレイアウト画像の双方が10,000件を要求しており、SPEC_BACKED は妥当。現在の importStockMoveCsv() は在庫変更CSV用の10002オーバーライドを持たず、共通5010を用いるため差分は残る。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php::importStockMoveCsv() は countCsvRows($formFile) >= static::ADMIN_CSV_IMPORT_MAX_ROWS で拒否する。同クラスに定数オーバーライドはなく、src/Eccube/Controller/AbstractController.php の ADMIN_CSV_IMPORT_MAX_ROWS = 5010 を継承する。対照的に StockChangeCsvController は ADMIN_CSV_IMPORT_MAX_ROWS = 10002 を定義している。画面は MoveTransfer/index.twig から messages.ja.yaml の「（1ファイルの登録上限は 10,000 件です）」を表示するため、表示とサーバ判定も一致していない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 521,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0202_基本設計仕様書(在庫管理機能).html の登録CSV表を「移動点数」「0~999999999」で検索し、0202:在庫移動CSV登録!E77「移動点数」、P77「数値」、T77「○」、V77「0~999999999」を src-cell で確認した。レイアウト画像 0202:在庫移動CSV登録!C8 も目視し、CSVフォーマット欄の「移動点数」「必須」を確認した。なおV77の列見出しは「最大文字数」であり、数値範囲表記との表構造上の不整合も確認した。",
+      "reason": "列見出しには不整合があるものの、Excel正本セルに数値・必須・0~999999999が直接記載されているため SPEC_BACKED は維持する。実装は1以上を要求し、上端の検証を付けていないため、0の扱いと上限の両方で差分が残る。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Service/Csv/Importer/Model/ColumnDefinitions.php::stockMoveQuantity() は createUnsignedNumericColumn($name, '移動点数') を第3引数なしで呼ぶ。createUnsignedNumericColumn() は maxLength がintのときだけ NumericMaxLengthValidator を追加するため、この列には NumericValidator しか付かない。src/Eccube/Service/Csv/Importer/Event/StockMoveCsvImportHandler.php::validateMoveQuantity() は if ((int) $moveQuantity <= 0) で0を拒否し、999999999との上限比較は同経路に無い。",
+      "severityOpinion": "med",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 523,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0202_基本設計仕様書(在庫管理機能).html の在庫振替CSV登録を「商品点数の上限」「2,000件」で検索し、src-cell 0202:在庫振替CSV登録!E56 に「１ファイルあたりに登録できる商品点数の上限を2,000件に設定」が実在することを確認した。レイアウト画像 0202:在庫振替CSV登録!D8 も目視したところ、画像内は「CSVファイル選択（1ファイルの登録上限は 10,000 件です）」で、処理概要セルと正本内で矛盾していた。",
+      "reason": "期待値2,000件はExcel正本セルに実在するため SPEC_BACKED 分類自体は妥当。ただし正本レイアウト画像は10,000件で矛盾している。現在のサーバ閾値5010は2,000件にも10,000件にも一致せず、少なくともサーバ側の上限乖離は再現する。画面の10,000件表示だけは正本画像とは一致するため、その点を実装欠陥としては扱わない。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php::importStockTransferCsv() は countCsvRows($formFile) >= static::ADMIN_CSV_IMPORT_MAX_ROWS を使用し、同クラスに振替専用定数はないため AbstractController::ADMIN_CSV_IMPORT_MAX_ROWS = 5010 が適用される。MoveTransfer/index.twig の振替モーダルは csv_move_modal.file_row_limit_hint を流用し、messages.ja.yaml の「（1ファイルの登録上限は 10,000 件です）」を表示する。",
+      "severityOpinion": "med",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 525,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0202_基本設計仕様書(在庫管理機能).html の登録CSV表を「振替点数」「0~999999999」で検索し、0202:在庫振替CSV登録!E83「振替点数」、P83「数値」、T83「○」、V83「0~999999999」を src-cell で確認した。レイアウト画像 0202:在庫振替CSV登録!D8 も目視し、CSVフォーマット欄の「振替点数」「必須」を確認した。なおV83の列見出しは「最大文字数」で、数値範囲表記との表構造上の不整合がある。",
+      "reason": "Excel正本に数値・必須・0~999999999が直接存在するため SPEC_BACKED は維持する。実装は0を拒否し、999999999上限を適用しないので差分は現在も残る。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Service/Csv/Importer/Model/ColumnDefinitions.php::stockTransferQuantity() は createUnsignedNumericColumn($name, '振替点数') を最大長なしで呼ぶため NumericMaxLengthValidator が付かない。src/Eccube/Service/Csv/Importer/Event/StockTransferCsvImportHandler.php::initializeColumnDefinitions() は必須化するが、validateTransferQuantity() は if ((int) $transferQuantity <= 0) のみで、0を拒否し、999999999との上限比較を行わない。",
+      "severityOpinion": "med",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 526,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0202_基本設計仕様書(在庫管理機能).html の在庫分割CSV登録で src-cell 0202:在庫分割CSV登録!E47「0201_基本設計仕様書(システム設定).xlsxの権限制御シート（機能ID: M11-03）の『2.編集可能店舗処理』に応じた権限制御が行われる」を確認し、同 E68「店舗」・T68「○」も確認した。参照先0201_基本設計仕様書(システム設定).html の src-cell 0201:権限制御!D19 に「在庫管理…のメニューに付随する機能のデータはメンバーに紐づいている編集可能店舗の店舗データのみ編集可能とする」が実在する。レイアウト画像 0202:在庫分割CSV登録!C7 も目視し、「店舗」に必須バッジがあることを確認した。",
+      "reason": "要求と参照先定義がともにExcel正本にあり SPEC_BACKED は妥当。現在の分割CSV POSTは店舗未指定を既定店舗へ置換し、指定店舗についてログインメンバーの編集可能店舗判定を行わないため、必須性と店舗権限の両方の差分が残る。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php::listSplitCsvImport() は storeId が0なら baseInfoRepository->get() を使用し、正のIDなら find($storeId) するだけである。同メソッドは getUser() の Member 型だけを確認し、Member::isEditableShop($BaseInfo) を呼ばない。StockSplitJoinController 内の isEditableShop() 呼出しは approvalMembers() にのみある。",
+      "severityOpinion": "high",
+      "confidence": "high"
+    },
+    {
+      "rowId": 527,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0202_基本設計仕様書(在庫管理機能).html の在庫分割CSV登録の項目表で、src-cell 0202:在庫分割CSV登録!E71「承認通知先（メンバー選択）」、M71「複数選択(セレクトボックス)」、T71「○」、AG71「承認を行う担当者にメール通知を送るために、対象メンバーを選択するためのフォーム」を確認した。レイアウト画像 0202:在庫分割CSV登録!C7 も目視し、承認通知先に必須バッジ、所属欄とメンバー欄が配置されていることを確認した。",
+      "reason": "項目種別・必須性・メール通知用途がExcel正本に明記されており SPEC_BACKED は妥当。実装は画面初回生成時だけNotBlank制約を構成するが、CSV POSTがフォーム検証を通らず、空配列なら通知を黙って省略するため、空のまま取込成功できる差分が残る。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Form/Type/Admin/StockSplitCsvUploadType.php::buildForm() は approval_notification_required がtrueのときだけ NotBlank を付け、configureOptions() の既定値はfalse。StockSplitJoinController::listSplitCsvImport() は admin_stock_split_csv_upload を直接読み、createForm()/handleRequest()/isValid() を呼ばない。成功時に sendApprovalNotificationMails($csvBag['approval_notification_target_members'] ?? []) を呼ぶが、同メソッドは空配列なら return する。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 528,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0202_基本設計仕様書(在庫管理機能).html の在庫分割CSV登録の項目表で、src-cell 0202:在庫分割CSV登録!E70「承認通知先（所属選択）」、M70「単一選択(セレクトボックス)」、AG70「編集している在庫を保持している店舗の所属マスターデータから取得し選択肢とする」を確認した。レイアウト画像 0202:在庫分割CSV登録!C7 も目視し、選択店舗と承認通知先の「所属」セレクトが同一モーダルに配置されていることを確認した。",
+      "reason": "選択肢の取得条件がExcel正本に直接あるため SPEC_BACKED は妥当。複数の編集可能店舗がある場合、所属選択肢はフォーム作成時の先頭店舗に固定され、店舗変更時に差し替えられないため差分が残る。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Form/Type/Admin/StockSplitCsvUploadType.php::buildForm() は approval_department の choices に getDepartmentChoices($allBaseInfos[0]) を設定する。src/Eccube/Resource/template/admin/Stock/stock_split_join_index.twig::reloadApprovalMembers() は admin_stock_split_csv_upload_approval_notification_target_members のoptionと、存在すれば承認UIのmatrixだけを更新する。approval_department セレクトを更新する処理は同関数に無い。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 529,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0202_基本設計仕様書(在庫管理機能).html の在庫分割CSV登録を「csv以外」「登録処理実行時のエラー」で検索し、src-cell 0202:在庫分割CSV登録!E50 に「アップロードされたファイルがcsv以外のファイルの場合」が実在することを確認した。レイアウト画像 0202:在庫分割CSV登録!C7 も目視し、CSVファイル選択欄の存在を確認したが、画像からサーバ側の拡張子判定までは確認できない。",
+      "reason": "非CSV拒否はExcel正本のエラー条件に直接あり SPEC_BACKED は妥当。フォーム型にはMIME制約があるものの、対象POSTはフォーム検証を実行せず、共通CsvImporterはtsvを明示的に受け入れるため差分が残る。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php::listSplitCsvImport() は UploadedFile の存在と isValid() だけを確認して CsvImporter::import() へ渡す。StockSplitCsvUploadType の File(mimeTypes) 制約はこの経路で評価されない。src/Eccube/Service/Csv/Importer/CsvImporter.php::createCsvImportService() は getClientOriginalExtension() が 'tsv' の場合に区切り文字をタブへ変え、csv拡張子またはCSV MIMEであることを必須判定しない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 532,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0202_基本設計仕様書(在庫管理機能).html の在庫結合CSV登録を「結合元商品の在庫数」「結合元在庫数以上」で検索し、src-cell 0202:在庫結合CSV登録!G56 に「結合元商品の在庫数が結合元在庫数以上であることをそれぞれチェック」が実在することを確認した。レイアウト画像 0202:在庫結合CSV登録!C8 も目視し、CSVフォーマット欄に「結合元在庫数」があることを確認した。",
+      "reason": "現在庫との大小比較条件がExcel正本に直接あり SPEC_BACKED は妥当。CSVハンドラは入力値が1以上かだけを確認し、結合元在庫の取得後も現在庫との比較をせず、後段が要求数量を現在庫まで丸めるため差分が残る。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Service/Csv/Importer/Event/StockJoinListCsvImportHandler.php::onValidateRow() は srcQtyRaw の空・数字・1未満だけを検証する。processGroup() は結合元ProductStockを解決して quantity を合算するが getStock() と比較しない。src/Eccube/Service/Admin/Stock/StockJoinMoveToShortageEntryAction.php::createDetailsFromSession() は quantity = min(max(0, $data['quantity']), (int) ($SrcPs->getStock() ?? 0)) として不足をエラーにせず丸める。messages.ja.yaml の source_register_quantity_over_stock/source_exceeds_stock は対象PHP経路から参照されていない。",
+      "severityOpinion": "high",
+      "confidence": "high"
+    },
+    {
+      "rowId": 534,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0202_基本設計仕様書(在庫管理機能).html の在庫結合CSV登録で src-cell 0202:在庫結合CSV登録!E47「0201_基本設計仕様書(システム設定).xlsxの権限制御シート（機能ID: M11-03）の『2.編集可能店舗処理』に応じた権限制御が行われる」を確認した。参照先0201_基本設計仕様書(システム設定).html の src-cell 0201:権限制御!D19 に「在庫管理…のメニューに付随する機能のデータはメンバーに紐づいている編集可能店舗の店舗データのみ編集可能とする」が実在する。レイアウト画像 0202:在庫結合CSV登録!C8 も目視し、「店舗」に必須バッジがあることを確認した。",
+      "reason": "要求と参照先M11-03がExcel正本にあり SPEC_BACKED は妥当。画面選択肢を編集可能店舗に絞っていても、CSV POSTで改ざんされた店舗IDをサーバ側検証せず受け入れるため、権限制御の差分は残る。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php::listJoinCsvImport() はPOSTのstore IDを baseInfoRepository->find($storeId) するだけで、取得したMemberに対して isEditableShop($BaseInfo) を呼ばない。StockJoinListCsvImportHandler と後続Actionにも編集可能店舗判定は無い。同Controllerで isEditableShop() を呼ぶのは approvalMembers() のJSON経路だけである。",
+      "severityOpinion": "high",
+      "confidence": "high"
+    },
+    {
+      "rowId": 535,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0202_基本設計仕様書(在庫管理機能).html の在庫結合CSV登録の登録CSV表で、src-cell 0202:在庫結合CSV登録!E79「結合数」、P79「数値」、T79「○」、V79「1~999999999」、Z79「100」、AG79「在庫結合先の結合数を記入」を確認した。同シートのレイアウト画像 0202:在庫結合CSV登録!C8 も目視し、CSVフォーマット表の2行目が「結合数」、5行目が「結合元在庫数」と別ラベルであることを確認した。",
+      "reason": "Excel正本の項目表とレイアウト画像がともに2列目を「結合数」としており SPEC_BACKED は妥当。現在のモーダルは2列目と5列目をどちらも「結合元在庫数」と表示するため差分が残る。",
+      "currentImpl": "ec-cube-enterprise 現状: src/Eccube/Resource/template/admin/Stock/stock_join_csv_modal_body.twig は2列目で admin.stock.join_csv_modal.format_join_quantity を表示し、src/Eccube/Resource/locale/messages.ja.yaml はその値を「結合元在庫数」と定義する。5列目の format_source_stock_quantity も「結合元在庫数」である。一方 StockSplitJoinController::joinCsvTemplate() の実CSVヘッダーは「結合数」で、画面説明とダウンロード雛形も不一致である。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    }
+  ]
+}

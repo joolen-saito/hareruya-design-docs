@@ -1,0 +1,149 @@
+{
+  "packetId": "rc_55",
+  "results": [
+    {
+      "rowId": 967,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0212_基本設計仕様書(デッキ管理).html の Excel 正本を「4枚制限」「5枚以上」「1枚制限」「2枚以上」で検索し、0212:デッキ編集!F96 に「4枚制限ルールのあるカードが5枚以上入力されている場合『 n 行目の {カード名} が5枚以上登録されています』」、同 F97 に「1枚制限ルールのあるカードが2枚以上入力されている場合『 n 行目の {カード名} 2枚以上登録されています』」を確認した。レイアウト画像 0212:デッキ編集!C8（image 1）も実際に確認したが、通常画面図のため当該エラーメッセージ表示は描かれていない。",
+      "reason": "Excel 正本セルが条件と表示文言を直接規定しており SPEC_BACKED は正しい。現行 DeckValidationService::validateCard() は1枚制限を admin.deck.validation.restricted に割り当て、messages.ja.yaml の実文言は「%row% 行目の %name% は制限カードです」。通常4枚上限は admin.deck.validation.more_than_max に割り当て、実文言は「%row% 行目の %name% が%count%枚を超えて登録されています」であるため、正本の文言・割当との差は残る。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Deck/DeckValidationService.php の validateCard()（247-259行）は RESTRICTION_ID かつ count>1 で `admin.deck.validation.restricted`、非Highlanderかつ count>MAX_COUNT_PER_CARD で `admin.deck.validation.more_than_max` を返す。src/Eccube/Resource/locale/messages.ja.yaml:4407-4409 は順に「%row% 行目の %name% は制限カードです」「%row% 行目の %name% が2枚以上登録されています」「%row% 行目の %name% が%count%枚を超えて登録されています」。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 968,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0212_基本設計仕様書(デッキ管理).html の Excel 正本を「DCIナンバー」「登録/更新ロジック」「旧デッキID」で検索し、0212:デッキ編集!C124 に「★画面の変更にあわせて、登録/更新ロジック内に記載されている」、同 D125 に「・項目『DCIナンバー』を除去する」を確認した。レイアウト画像 0212:デッキ編集!C8（image 1）も確認し、画面上の「DCIナンバー」入力欄に赤い取消線が描かれていることを確認した。",
+      "reason": "登録/更新ロジックから DCI ナンバーを除去する要求は Excel 正本に明記され、画面画像の取消表示とも整合する。現行保存・複製経路には dciNo が残り、正本要求は未達である。oldDeckId についても正本 D68 に「旧デッキID、DCIナンバーは不要のため削除」があるが、本判定はより直接的な DCI の C124/D125 だけで成立する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Admin/Deck/DeckStoreAction.php の保存呼出し（105行）は `dciNo: $Deck->getDciNo()`、src/Eccube/Service/EntityManager/DeckEntityManager.php の save()（50,88行）は dciNo 引数と `$Deck->setDciNo($dciNo)` を保持する。DeckCopyAction の複製呼出し（53行）も `dciNo: $Source->getDciNo()`。oldDeckId も DeckStoreAction:122、DeckEntityManager::save():67,105、DeckCopyAction:70 に残る。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 969,
+      "originalClass": "UNCERTAIN",
+      "classVerdict": "REFUTED",
+      "correctedClass": "LEGACY_BACKED",
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "Excel 正本を「TSV」「accept」「text/tsv」「MIME」「CsvMimeType」で検索した。0212:デッキ登録CSVアップロード!E33 は「・TSVアップロードを廃止」、D55 は「・表記されている『TSV』の文言を除去する」、D59 は「・ファイル拡張子『TSV』をエラー扱いにする処理を追加」であり、TSV許容期待と反対だった。accept/MIME許可セットの具体値は正本 src-cell に見つからなかった。レイアウト画像 0212:デッキ登録CSVアップロード!B8（image 1）も確認し、「TSV」の各表示に赤い取消線があることを確認した。",
+      "reason": "TSV許容、`.csv, text/csv, .tsv, text/tsv`、CsvMimeType の許可セットは pf-eccube3 の旧テンプレート・旧フォーム実装に実在する一方、Excel 正本は明示的に TSV 廃止を要求する。したがって根拠は不明ではなく LEGACY_BACKED。現行実装は旧挙動との差という意味では記載どおりである。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Deck/DeckCsvController.php の index()（100-103行）は拡張子が csv 以外なら `admin.common.csv_upload_error` で renderWithErrors() する。src/Eccube/Resource/template/admin/Deck/csv_import.twig:95 は accept を `text/csv,.csv` に限定する。src/Eccube/Form/Type/Admin/CsvImportType.php の buildForm() は File 制約に maxSize だけを設定する。なお CsvImporter::createCsvImportService()（173行）は汎用処理として tsv 区切り分岐を残すが、この画面では Controller の事前拒否により到達しない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 970,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "全 Excel 正本 src-cell を「HTTP 302」「リダイレクト」「フラッシュ」「admin.register.complete」「admin_deck_csv」で検索したが、M15-06 の成功・失敗応答契約に該当する具体記述は0件だった。0212:デッキ登録CSVアップロード!C43 の実在文言は「各項目の入力チェックを行い、エラーがあれば登録を中止してメッセージを表示する。」までである。レイアウト画像 0212:デッキ登録CSVアップロード!B8（image 1）も確認したが、エラー時応答方式は描かれていない。",
+      "reason": "成功・失敗ともフラッシュを積んで GET へ戻す具体挙動は、実際に開いた pf-eccube3 の DeckCsvController::import() と DeckCsv::render()、およびリバース文書に由来し、Excel 正本にはないため LEGACY_BACKED は正しい。現行は成功時だけリダイレクトし、失敗時は直接描画するので差は継続する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Deck/DeckCsvController.php の index() はフォーム不正・拡張子不正・例外・取込エラーで renderWithErrors() を返す（77-107,135-145行）。renderWithErrors()（165-172行）は `@admin/Deck/csv_import.twig` を直接 render する。成功時だけ157行で `admin.common.csv_upload_complete` を addSuccess し、159行で `admin_deck_csv_import` へリダイレクトする。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 971,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "全 Excel 正本 src-cell を「dtb_deck_card」「DtbDeckCard」「既存明細」「明細削除」「削除フロー」「INSERTのみ」で検索した。該当する具体セルは 0212:デッキ登録CSVアップロード!C52 の「デッキリスト公開の場合はデッキリストをDtbDeckCardに登録する。」だけで、再取込時に既存明細を削除しないという要求は見つからなかった。",
+      "reason": "非削除・INSERTのみの挙動は pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/DeckCsv.php の register() と CardUtil::setDeckCards() を実際に確認して裏付けられる旧実装由来であり、Excel 正本にはない。現行 onReadRow() は既存明細を削除するため、旧挙動との差は再現する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/DeckUpdateImportHandler.php の onReadRow()（357-364行）は無条件に `deleteDeckCards($Deck)` を呼び、公開かつ表示の場合だけ saveDeckCards() で再作成する。deleteDeckCards()（614-619行）は `findBy(['Deck' => $Deck])` の各 DtbDeckCard を EntityManager::remove() する。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 973,
+      "originalClass": "UNCERTAIN",
+      "classVerdict": "REFUTED",
+      "correctedClass": "SPEC_BACKED",
+      "driftVerdict": "PARTIAL",
+      "checkedQuote": "レイアウト画像 0212:デッキ登録CSVアップロード!B8（image 1）を実際に確認した。上部は「デッキ管理　デッキ登録CSV, TSVアップロード」の順で描かれ、画面内の「TSV」には赤い取消線がある。フォーマット見出しも「デッキ登録CSV, TSVファイルフォーマット」の TSV 部分に取消線がある。Excel 正本テキストでも D55 は「・表記されている『TSV』の文言を除去する」。`nl2br` の指定は正本 src-cell に見つからなかった。",
+      "reason": "先行分類は画像を考慮していない。見出しの配置順は Excel 正本レイアウト画像が具体的に支持するため、その部分は SPEC_BACKED と確定できる。一方、finding が期待する TSV 付き文言は正本の取消指定と反対で、nl2br は旧 Twig だけの根拠である。したがって指摘は混在しており、正本で成立する見出し順の差に限定して SPEC_BACKED へ訂正する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Deck/csv_import.twig:5-6 は title=`admin.deck.csv_upload_title`、sub_title=`admin.deck.deck_management`。messages.ja.yaml:4338,4447-4449 の値は「デッキ管理」「デッキ登録CSVアップロード」「デッキ登録CSV」「デッキ登録CSVファイルフォーマット」。default_frame.twig:196 は title を先、sub_title を後に描画するため、現状は「デッキ登録CSVアップロード」→「デッキ管理」で画像と逆。一方、TSV 文言除去は正本どおりで、csv_import.twig:119-120 の説明値表示には旧 Twig の `nl2br` がない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 974,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "PARTIAL",
+      "checkedQuote": "全 Excel 正本 src-cell を「admin_deck_csv」「m15-06_admin_deck_deck_csv_import」「csvimport」「csv_import」で検索したが、route名・URLの具体記述は0件だった。0212:デッキ登録CSVアップロード!C36 の実在文言は「・カスタマイズ要件に記載の内容以外は現行踏襲とする。」であり、具体route名やパスは書かれていない。",
+      "reason": "旧 pf-eccube3 の DeckServiceProvider.php:53-57 は GET `/deck/csvimport`=`admin_deck_csv`、POST 同パス=`admin_deck_csv_import` であり、URLとGET route名の根拠は旧実装にあるため LEGACY_BACKED は妥当。ただし finding の POST 名 `m15-06_admin_deck_deck_csv_import` は旧実装にも存在せず、リバース文書の誤記である。現行とのパス差とGET名差は残るが、POST route名差という主張は成立しないため PARTIAL。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Deck/DeckCsvController.php の index()（58-59行）は GET/POST 共通で path `/%eccube_admin_route%/deck/csv_import`、name `admin_deck_csv_import`。index.twig:226 と csv_import.twig:89 も同routeを参照する。src/app/html を `admin_deck_csv`、`deck/csvimport`、`m15-06_admin_deck_deck_csv_import` で再検索し、旧名・旧パスの実装は見つからなかった。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 977,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "全 Excel 正本 src-cell を「ヘッダ」「並び」「配列」「一致」で検索し、M15-06 のヘッダ配列順を完全一致させる具体要求は0件だった。0212:デッキ登録CSVアップロード!C36 の「・カスタマイズ要件に記載の内容以外は現行踏襲とする。」は確認したが、比較方法の記述ではない。",
+      "reason": "配列差分後の並び完全一致は、実際に開いた pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/AbstractCsvService.php の checkHeaderValues() とリバース文書だけに具体化されるため LEGACY_BACKED は正しい。現行はヘッダ名で列位置を引く設計で、列順だけの違いを拒否しない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/BaseCsvImportHandler.php の onValidateRow()（72-88行）は列数一致と各期待列名の存在を検査する。src/Eccube/Service/Csv/Importer/Model/CsvRow.php の setHeaders()（60-71行）は `array_flip(array_values($headers))` で名前から実列位置を作り、getColumnValue()（134-145行）はその位置から値を取る。期待順との配列完全一致比較はない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 979,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "PARTIAL",
+      "checkedQuote": "全 Excel 正本 src-cell を「admin.register.complete」「一時ファイル」「HTTP 302」「リダイレクト」「フラッシュ」で検索したが、M15-06 の具体的な応答・フラッシュ鍵・一時ファイル削除契約は0件だった。正本で確認できるのは 0212:デッキ登録CSVアップロード!C43 の「エラーがあれば登録を中止してメッセージを表示する。」までである。",
+      "reason": "具体契約は pf-eccube3 の DeckCsvController::import() と DeckCsv::render() に由来するので LEGACY_BACKED は正しい。現行は失敗時リダイレクトとフラッシュ鍵を踏襲していないが、CsvImporter::import() の finally で成功・失敗とも一時ファイルを削除している。この満たされた部分を無視して全差分とするのは不正確なので PARTIAL。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Csv/Importer/CsvImporter.php の import()（110-126行）は finally から deleteTempFile() を必ず呼び、deleteTempFile()（146-153行）は Filesystem::remove() を実行する。一方 DeckCsvController::index() は失敗時 renderWithErrors() で直接描画し、成功時だけ `admin.common.csv_upload_complete` を積んで `admin_deck_csv_import` へリダイレクトする（157-159行）。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 980,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "全 Excel 正本 src-cell を「dtb_deck_card」「DtbDeckCard」「既存削除」「削除とクリア」「INSERTのみ」で検索した。0212:デッキ登録CSVアップロード!C52 の実在文言は「デッキリスト公開の場合はデッキリストをDtbDeckCardに登録する。」であり、既存明細を削除しないとは書かれていない。他の正本セルにも非削除・INSERTのみの具体記述は見つからなかった。",
+      "reason": "非削除の根拠は pf-eccube3 の DeckCsv::register() と CardUtil::setDeckCards() にあり、Excel 正本にはないため LEGACY_BACKED は正しい。現行は保存前に既存明細を全削除するので差は残る。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/DeckUpdateImportHandler.php の onReadRow()（357行）は `deleteDeckCards($Deck)` を無条件に呼ぶ。deleteDeckCards()（614-619行）は対象デッキの全 DtbDeckCard を remove し、その後は公開・表示時だけ saveDeckCards()（595-612行）で新規明細を persist する。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 981,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "PARTIAL",
+      "checkedQuote": "全 Excel 正本 src-cell を「admin_deck_csv」「m15-06_admin_deck_deck_csv_import」「/deck/csvimport」「route」で検索したが、具体route名・URLは0件だった。デッキ登録CSVシートの正本はCSV項目表であり、route契約は記載していない。",
+      "reason": "旧 pf-eccube3 の実物では GET `/deck/csvimport` は `admin_deck_csv`、POST 同パスは `admin_deck_csv_import`。旧URLとGET名は LEGACY_BACKED だが、finding の POST 名 `m15-06_admin_deck_deck_csv_import` は旧4リポジトリにも当該旧ServiceProviderにも存在せず、リバース文書の誤記である。現行のパス差・GET名差は残り、POST名差だけ成立しないため PARTIAL。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Deck/DeckCsvController.php の index()（58-59行）は GET/POST 共用の `admin_deck_csv_import` と `/deck/csv_import` を定義する。成功時 redirect（159行）、index.twig:226 のリンク、csv_import.twig:89 の form action も同route名を使う。旧 `/deck/csvimport` と GET専用 `admin_deck_csv` は現行にない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 983,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "全 Excel 正本 src-cell を「dtb_deck_card」「既存明細」「明細増殖」「削除フロー」「INSERTのみ」で検索した。0212:デッキ登録CSVアップロード!C52 は「デッキリスト公開の場合はデッキリストをDtbDeckCardに登録する。」のみで、再取込時の非削除や重複残存は正本に見つからなかった。",
+      "reason": "再取込時に既存明細を残す挙動と重複可能性は、pf-eccube3 の DeckCsv::register() および CardUtil::setDeckCards() から導かれた旧実装由来であり LEGACY_BACKED は正しい。現行は既存明細を削除して再作成するため、その差は再現する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/DeckUpdateImportHandler.php の onReadRow()（357-364行）は deleteDeckCards() の後、公開・表示時だけ saveDeckCards() を呼ぶ。deleteDeckCards()（614-619行）は repository の findBy(['Deck' => $Deck]) で取得した全明細を remove し、saveDeckCards()（595-612行）は新しい DtbDeckCard を persist する。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    }
+  ]
+}

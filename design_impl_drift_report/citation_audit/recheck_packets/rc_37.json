@@ -1,0 +1,342 @@
+{
+ "packetId": "rc_37",
+ "note": "rowId は drift_findings_list_final.tsv の行番号(ヘッダ除く1始まり)。mech は機械検証フラグ(手掛かりであって正解ではない)。",
+ "count": 12,
+ "findings": [
+  {
+   "rowId": 657,
+   "機能No": "M08-08",
+   "機能名": "M08-08 手動メール通知(入力画面)",
+   "ドメイン": "m08",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "テンプレートID指定がある場合、会員向けベース（会員・会員英語・ベースなし）に該当するテンプレートのみを対象とし、該当が無い場合は404とする。",
+   "実装実態": "`#[MapEntity(id: 'template_id')] ?MailTemplate $MailTemplate` で任意の MailTemplate を解決し、`CustomerManualMailType` の選択肢は file_name で絞るが、URLで渡されたテンプレート自体のベース種別を検証して404にする処理はない。",
+   "差分内容": "フォーム選択肢の query_builder は候補表示を絞るだけで、パス指定された非会員向けテンプレートIDを404にする実装証跡がない。再検索範囲: CustomerMailController.php、CustomerManualMailType.php、MailTemplateRepository.php。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/CustomerMailController.php:152",
+   "設計書参照": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-15:3608",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:4100-4102 のExcel正本はテンプレート選択時に件名・本文を初期セットするとだけ記載し、会員向けベース3種への限定や範囲外IDの404は正本部分に存在しない（確認範囲: sheet-15 のExcel正本部分 4053-4143、検索語: 404 / 会員英語 / ベースなし）。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/CustomerController.php:214-225 はテンプレートIDに加えて `file_name` を `BASE_CUSTOMER`、`BASE_CUSTOMER_EN`、`BASE_NO_BASE` に絞り、該当しなければ `throw new NotFoundHttpException();` とする。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/CustomerMailController.php:188-199 はURLの `template_id` を任意の `MailTemplate` にMapEntityし、対象ベースはフォーム選択肢オプションへ渡すだけである。同:212-224 は直接指定された `$MailTemplate` があればそのまま本文・件名を設定し、範囲外ベースを404にする検証がない。",
+   "根拠検証メモ": "404条件は旧実装に由来する。",
+   "対応の根拠(現develop)": "`src/Eccube/Controller/Admin/Customer/CustomerMailController.php:190` `public function manual_mail(Request $request, Customer $Customer, #[MapEntity(id: 'template_id')] ?MailTemplate $MailTemplate)` のままで、メソッド本体（:192-293）に $MailTemplate のベース種別を検証して 404 を投げる処理はない。`src/Eccube/Form/Type/Admin/CustomerManualMailType.php:54-57` の `$qb->andWhere('mt.file_name IN (:fileNames)')` は選択肢の絞り込みのみ。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "NO_QUOTE",
+    "stale": "UNCHANGED"
+   }
+  },
+  {
+   "rowId": 658,
+   "機能No": "M08-08",
+   "機能名": "M08-08 手動メール通知(入力画面)",
+   "ドメイン": "m08",
+   "区分(画面種別)": "admin",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "テンプレート未選択で表示する場合、件名・本文の入力欄は出さない。本文はテンプレート選択時のみ表示する複数行入力（textarea）。",
+   "実装実態": "`mail_manual.twig` は MailTemplate の有無で分岐せず、件名入力 `form.mail_subject` と本文 textarea `form.body` を常に表示する。",
+   "差分内容": "設計のテンプレート未選択時非表示条件がTwigに存在しない。再検索範囲: Customer/mail_manual.twig、CustomerManualMailType.php、CustomerMailController.php。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Customer/mail_manual.twig:71",
+   "設計書参照": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-15:3619",
+   "根拠区分": "UNCERTAIN",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:4101-4102 のExcel正本はテンプレート未選択時に件名・本文の「初期値を空欄にする」と記載し、入力欄自体を非表示にするとは記載しない。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Customer/manual_mail.twig:45-53 は `form.template` と `form.subject` を常時描画し、`{% if mail is not null %}` の内側にだけ `mail[header]`、`mail[footer]`、`textarea name=\"mail_body\"` を置く。旧実装は本文欄の条件表示は裏付けるが、件名欄の非表示は裏付けない。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Customer/mail_manual.twig:71-85 は `form.mail_subject` と `form.body` をテンプレート有無に関係なく描画する。",
+   "根拠検証メモ": "一つのfindingに「件名欄を隠す」と「本文欄を隠す」が混在する。前者は正本にも旧実装にもなく、後者だけ旧実装に根拠があるため、単一verdictでは断定できない。findingを分割する必要がある。",
+   "対応の根拠(現develop)": "`src/Eccube/Resource/template/admin/Customer/mail_manual.twig:78` `{{ form_widget(form.mail_subject) }}` と `:85` `{{ form_widget(form.body, { 'attr': { 'rows': 20 }}) }}` は MailTemplate の有無で分岐する `{% if %}` に囲まれておらず、常に描画される（ファイル全体に MailTemplate 判定の分岐は :18,:36 の URL 生成のみ）。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "UNCHANGED"
+   }
+  },
+  {
+   "rowId": 659,
+   "機能No": "M08-08",
+   "機能名": "M08-08 手動メール通知(入力画面)",
+   "ドメイン": "m08",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "フォームキーは件名 `mail[subject]`、本文 `mail_body`、ヘッダ・フッタ `mail[header]`・`mail[footer]` とし、テンプレートのヘッダ・フッタは隠し入力として送信に含める。",
+   "実装実態": "フォームは `admin_customer_manual_mail` プレフィックス配下の `mail_subject` と `body` を定義し、`header`/`footer` フィールドは定義していない。Twigにもヘッダ・フッタ hidden の送信がない。",
+   "差分内容": "設計されたフォームキーおよび hidden header/footer の外部契約と実装のSymfonyフォーム項目が一致しない。再検索範囲: CustomerManualMailType.php、Customer/mail_manual.twig、Customer/mail_manual_confirm.twig、`mail[header]`、`mail[footer]`、`form.header`、`form.footer`。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/CustomerManualMailType.php:62",
+   "設計書参照": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-15:3616",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:4099-4102 のExcel正本は会員名・テンプレ選択・件名・メール本文を画面項目として定義するが、POSTキー `mail[subject]`、`mail_body`、`mail[header]`、`mail[footer]` は正本部分に存在しない（確認範囲: sheet-15 のExcel正本部分 4053-4143）。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Customer/manual_mail.twig:45-52 は `form.subject` と、`name=\"mail[header]\"`、`name=\"mail[footer]\"`、`name=\"mail_body\"` を送信する。/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Service/MailService.php:93-102 は `$content['mail']['subject']` と `$content['mail_body']` を読み送信する。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/CustomerManualMailType.php:43-78,93-96 は `admin_customer_manual_mail` プレフィックス配下に `mailTemplate/mail_subject/body` だけを定義する。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Customer/mail_manual.twig:36-38,67-85 にもheader/footer hiddenはない（検索範囲: CustomerManualMailType.php と mail_manual*.twig、検索語: mail[header] / mail[footer] / form.header / form.footer）。",
+   "根拠検証メモ": "フォームキーとhidden項目の期待値は旧実装に由来する。",
+   "対応の根拠(現develop)": "`src/Eccube/Form/Type/Admin/CustomerManualMailType.php:62` `->add('mail_subject', TextType::class, ...)`、`:70` `->add('body', TextareaType::class, ...)`、`:95` `return 'admin_customer_manual_mail';` のままで、`header`/`footer` フィールドの add は存在しない。`mail_manual.twig` / `mail_manual_confirm.twig` にも header/footer の hidden 送信はない（confirm 側の hidden は `:63` mailTemplate、`:74` mail_subject、`:81` body のみ）。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EMBED_ONLY",
+    "stale": "UNCHANGED",
+    "quoteDetail": [
+     "mail[subject]",
+     "mail_body",
+     "mail[header]"
+    ]
+   }
+  },
+  {
+   "rowId": 660,
+   "機能No": "M08-08",
+   "機能名": "M08-08 手動メール通知(入力画面)",
+   "ドメイン": "m08",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "送信したメールは会員向けメール送信履歴テーブル `dtb_user_mail_history` に、customer_id、template_id、subject、mail_body、send_date として記録する。",
+   "実装実態": "実装は `MailHistory` エンティティを生成して `dtb_mail_history` に保存する。`DtbUserMailHistory` は存在するが deprecated コメント付きで、保存処理からは使われていない。",
+   "差分内容": "設計の永続化先テーブル・列名と実装の保存先が異なる。再検索範囲: MailHistoryEntityManager.php、MailHistory.php、DtbUserMailHistory.php、CustomerMailController.php、`dtb_user_mail_history`、`dtb_mail_history`。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/EntityManager/MailHistoryEntityManager.php:39",
+   "設計書参照": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-15:3593",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:4084-4104 のExcel正本は送信前プレビューと画面項目を定義するが、保存先 `dtb_user_mail_history` や列名は正本部分に存在しない（確認範囲: sheet-15 のExcel正本部分 4053-4143、検索語: dtb_user_mail_history / customer_id / send_date）。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Service/MailService.php:107-108 は送信後に `saveUserMailHistory($message, $template, $data)` を呼び、同:1799-1824 は件名・本文・送信日時・テンプレート・会員を `MailHistory` に設定してpersistする。/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Service/MailService.php:14 はこの `MailHistory` を `DtbUserMailHistory` の別名としてimportし、そのDoctrine定義 /home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/doctrine/Plugin.HareruyaEc.Entity.DtbUserMailHistory.dcm.yml:1-35 は `dtb_user_mail_history` と対象列を定義する。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/CustomerMailController.php:262-267 は `MailHistoryEntityManager::save` を呼び、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/EntityManager/MailHistoryEntityManager.php:39-56 は `new MailHistory()` を保存する。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Entity/MailHistory.php:25,50-57,70-72,232-234 は保存先を `dtb_mail_history` の `send_date/mail_subject/mail_body/customer_id/template_id` とする。",
+   "根拠検証メモ": "保存先と列契約は旧実装に由来する。",
+   "対応の根拠(現develop)": "`src/Eccube/Service/EntityManager/MailHistoryEntityManager.php:39-44` `$MailHistory = new MailHistory(); $MailHistory->setMailSubject($Message->getSubject())->setBaseInfo($BaseInfo)->setMailBody($Message->getTextBody())->setSendDate(new \\DateTime());`、`:67` `$this->entityManager->persist($MailHistory);` のままで保存先は `src/Eccube/Entity/MailHistory.php:25` の `dtb_mail_history`。`src/Eccube/Entity/DtbUserMailHistory.php:24` は `@deprecated ... 使用しない` のままで永続化処理から参照されていない。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EMBED_ONLY",
+    "stale": "UNCHANGED",
+    "quoteDetail": [
+     "dtb_user_mail_history"
+    ]
+   }
+  },
+  {
+   "rowId": 661,
+   "機能No": "M08-08",
+   "機能名": "M08-08 手動メール通知(入力画面)",
+   "ドメイン": "m08",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "送信履歴は会員・テンプレート・件名・本文・送信日時を保持する。手動メールでは作成者の記録は持たない。",
+   "実装実態": "`MailHistory` には `setCreator()` があり、Doctrine prePersist/preUpdate の共通処理が `setCreator($creator)` を呼ぶため、ログイン管理者がいる場合 creator_id が設定される。",
+   "差分内容": "個別の MailHistoryEntityManager は creator を明示設定していないが、共通の保存イベントにより作成者が記録される。設計の「作成者の記録は持たない」と異なる。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Doctrine/EventSubscriber/SaveEventSubscriber.php:51",
+   "設計書参照": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-15:3613",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:4084-4104 のExcel正本は確認画面と表示項目だけを定義し、履歴の保持列や「作成者を記録しない」は正本部分に存在しない（確認範囲: sheet-15 のExcel正本部分 4053-4143、検索語: 作成者 / creator_id / 送信履歴）。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Service/MailService.php:1799-1806 は `saveUserMailHistory(..., $creator = null)` で件名・本文・送信日時を設定し、`->setCreator($creator)` に既定のnullを渡す。同:1808-1824 はテンプレート・会員を設定して保存する。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/EntityManager/MailHistoryEntityManager.php:39-56 は作成者を明示設定しないが、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Entity/MailHistory.php:66-68,181-184 はcreator関連と `setCreator()` を持つため、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Doctrine/EventSubscriber/SaveEventSubscriber.php:37-55 がprePersist時にログインMemberを `setCreator($creator)` で自動設定する。",
+   "根拠検証メモ": "手動メールだけ作成者をnullのままにする挙動は旧実装に由来する。",
+   "対応の根拠(現develop)": "`src/Eccube/Doctrine/EventSubscriber/SaveEventSubscriber.php:50-55` `if (method_exists($entity, 'setCreator')) { $creator = $this->resolveManagedCreator($args); if ($creator !== null) { $entity->setCreator($creator); } }` が prePersist で動作し、`src/Eccube/Entity/MailHistory.php:181` `public function setCreator(?Member $creator = null): MailHistory` が存在するため、手動メール履歴にも creator が設定される状態は監査時点と同じ。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "NOT_FOUND",
+    "stale": "UNCHANGED",
+    "quoteDetail": [
+     "作成者を記録しない"
+    ]
+   }
+  },
+  {
+   "rowId": 662,
+   "機能No": "M08-08",
+   "機能名": "M08-08 手動メール通知(入力画面)",
+   "ドメイン": "m08",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "手動メール送信では、件名と本文は送信内容を用いる。",
+   "実装実態": "`sendCustomerManualMail()` は送信件名を `'['.$shopName.'] '.$formData['mail_subject']` に組み立て、入力件名に店舗名プレフィックスを追加する。",
+   "差分内容": "設計はフォーム送信内容の件名を送信メールの件名として扱うが、実装は送信時に件名を書き換える。履歴も Message の件名を保存するため、記録件名にもプレフィックスが入る。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/MailService.php:1028",
+   "設計書参照": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-15:3610",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:4101-4102 のExcel正本は選択テンプレートの件名・本文を初期セットすると記載するが、送信時に件名を無加工で使うことや店舗名プレフィックス禁止は正本部分に存在しない（確認範囲: sheet-15 のExcel正本部分 4053-4143）。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Service/MailService.php:93-102 は手動メールを `->setSubject($content['mail']['subject'])`、`->setBody($content['mail_body'])` とし、入力した件名・本文を無加工で使用する。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/MailService.php:1024-1035 は本文を `$formData['body']` とする一方、件名を `->subject('['.$this->BaseInfo->getShopName().'] '.$formData['mail_subject'])` として店舗名を強制付与する。",
+   "根拠検証メモ": "「件名を無加工で使う」という厳密な期待値は旧実装に由来する。",
+   "対応の根拠(現develop)": "`src/Eccube/Service/MailService.php:1028-1029` `$message = (new Email())->subject('['.$this->BaseInfo->getShopName().'] '.$formData['mail_subject'])` のままで、入力件名に店舗名プレフィックスを付与している。履歴側も `src/Eccube/Service/EntityManager/MailHistoryEntityManager.php:41` `->setMailSubject($Message->getSubject())` で Message の件名を保存する。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "NO_QUOTE",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Service/MailService.php"
+    ]
+   }
+  },
+  {
+   "rowId": 663,
+   "機能No": "M08-08",
+   "機能名": "M08-08 手動メール通知(入力画面)",
+   "ドメイン": "m08",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "フロント挙動の表示要素として、見出し「手動メール送信」を表示する。",
+   "実装実態": "入力画面のタイトル・カードタイトルは `admin.customer.manual_mail` を表示し、翻訳値は「手動メール通知」。顧客手動メール用の「手動メール送信」見出しは確認できない。",
+   "差分内容": "設計の見出し文言と実装の表示文言が異なる。再検索範囲: Customer/mail_manual.twig、messages.ja.yaml、`手動メール送信`、`admin.customer.manual_mail`。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Customer/mail_manual.twig:43",
+   "設計書参照": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-15:3603",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:4066-4068 のExcel正本は機能名を「手動メール通知(入力画面)」とし、同:4096-4104 の項目表にも見出し「手動メール送信」は存在しない（確認範囲: sheet-15 のExcel正本部分 4053-4143、検索語: 手動メール送信）。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Customer/manual_mail.twig:32-40 は画面カード見出しを `<h3 class=\"box-title\">手動メール送信</h3>` と表示する。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Customer/mail_manual.twig:43-45 は見出しに `admin.customer.manual_mail` を使用し、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:2747 はこれを `手動メール通知` と定義する。",
+   "根拠検証メモ": "「手動メール送信」という見出しは旧実装由来で、Excel正本の機能名は「手動メール通知」である。",
+   "対応の根拠(現develop)": "`src/Eccube/Resource/template/admin/Customer/mail_manual.twig:44` `{{ 'admin.customer.manual_mail'|trans }}`（カードタイトル、:5 のページタイトルも同キー）で、`src/Eccube/Resource/locale/messages.ja.yaml:2747` `admin.customer.manual_mail: 手動メール通知`。「手動メール送信」の訳語は `admin.order.manual_mail.box_title`(:2722) と `admin.purchase.online.manual_mail.box_title`(:5630) のみで会員手動メール画面では使われていない。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Resource/locale/messages.ja.yaml"
+    ]
+   }
+  },
+  {
+   "rowId": 664,
+   "機能No": "M08-08",
+   "機能名": "M08-08 【新規】手動メール通知(確認画面)",
+   "ドメイン": "m08",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "確認画面の「会員編集画面へ戻る」ボタンは、当該の会員情報編集画面へ遷移する。",
+   "実装実態": "確認画面の戻りリンクは id=\"back\" で mode=back をPOSTし、文言も「手動メール通知」。Controller は confirm/complete 以外の back 分岐を持たず、最終的に手動メール作成画面を再表示する。",
+   "差分内容": "設計は確認画面から会員編集画面へ直接戻るボタンを要求しているが、実装は手動メール作成画面へ戻る動線になっている。",
+   "実装参照": "src/Eccube/Resource/template/admin/Customer/mail_manual_confirm.twig:91, src/Eccube/Controller/Admin/Customer/CustomerMailController.php:183, src/Eccube/Controller/Admin/Customer/CustomerMailController.php:210",
+   "設計書参照": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-16:3724",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:4301 のExcel正本セル E68/AG68 はボタンを「会員編集画面へ戻る」とし、「当該の会員情報編集画面へ遷移する」と明記する。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Customer/manual_mail.twig:5-10 の旧入力画面にも `path('admin_customer_edit', {'id': customer.id})` の「会員編集画面に戻る」リンクがある。旧実装には今回の新規確認画面自体がないため、確認画面の直接根拠はExcel正本である。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Customer/mail_manual_confirm.twig:89-92 は戻りリンクを `href=\"javascript:void(0)\" id=\"back\"`、表示文言を `admin.customer.manual_mail` とする。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/CustomerMailController.php:237-258,282-285 はmodeがconfirm/complete以外ならリダイレクトせず入力画面を再表示するため、会員編集画面へ遷移しない。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Resource/template/admin/Customer/mail_manual_confirm.twig:91` `<a class=\"c-baseLink\" href=\"javascript:void(0)\" id=\"back\">...<span>{{ 'admin.customer.manual_mail'|trans }}</span></a>` のままで、`:13-18` の JS が `$('#mode').val('back')` を POST する。`src/Eccube/Controller/Admin/Customer/CustomerMailController.php:242-284` の switch は `confirm`/`complete` のみで back 分岐がなく、:288-292 で作成画面を再表示する。会員編集画面へ直接戻すリンク（`admin_customer_edit`）は confirm 側に存在しない（同 URL リンクがあるのは入力画面 mail_manual.twig:94 のみ）。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "UNCHANGED"
+   }
+  },
+  {
+   "rowId": 665,
+   "機能No": "M08-08",
+   "機能名": "M08-08 【新規】手動メール通知(確認画面)",
+   "ドメイン": "m08",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "テンプレート未選択で表示する場合、件名・本文の入力欄は出さず、本文textareaはテンプレート選択時のみ表示する。",
+   "実装実態": "Controller は MailTemplate がある場合だけ件名・本文の値をセットするが、Twig は MailTemplate の有無に関係なく form.mail_subject と form.body(rows=20) を常に描画する。",
+   "差分内容": "設計はテンプレート未選択時に件名・本文入力欄を非表示にする要求だが、実装は空の件名欄と本文textareaを表示する。",
+   "実装参照": "src/Eccube/Resource/template/admin/Customer/mail_manual.twig:71, src/Eccube/Resource/template/admin/Customer/mail_manual.twig:85, src/Eccube/Controller/Admin/Customer/CustomerMailController.php:165",
+   "設計書参照": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-16:3797",
+   "根拠区分": "UNCERTAIN",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:4297-4300 のExcel正本は確認画面に会員名・テンプレート名・件名・本文を出力すると定義し、テンプレート未選択時の件名・本文非表示は記載しない。入力画面側の正本 /home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:4101-4102 も「初期値を空欄にする」とだけ記載する。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Customer/manual_mail.twig:45-53 は件名 `form.subject` を常時表示し、本文textareaだけを `{% if mail is not null %}` 内に置く。旧実装は本文欄の条件表示のみを裏付け、件名欄非表示は裏付けない。また旧実装には新規確認画面がない。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Customer/mail_manual.twig:71-85 は件名・本文を常時描画し、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/CustomerMailController.php:212-224 はテンプレートがある場合だけ値をセットする。",
+   "根拠検証メモ": "確認画面のfindingに入力画面の条件表示が混在し、さらに旧実装が裏付けるのは本文欄だけである。件名非表示と本文非表示を分割し、対象画面を確定しないと単一verdictにできない。",
+   "対応の根拠(現develop)": "`src/Eccube/Controller/Admin/Customer/CustomerMailController.php:213-224` の `if ($MailTemplate) { ... $form->get('mail_subject')->setData(...); $form->get('body')->setData($body); }` は値のセットのみで、Twig 側 `src/Eccube/Resource/template/admin/Customer/mail_manual.twig:78` `{{ form_widget(form.mail_subject) }}` と `:85` `{{ form_widget(form.body, { 'attr': { 'rows': 20 }}) }}` は MailTemplate の有無に関係なく常に描画されるまま。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "UNCHANGED"
+   }
+  },
+  {
+   "rowId": 666,
+   "機能No": "M08-08",
+   "機能名": "M08-08 【新規】手動メール通知(確認画面)",
+   "ドメイン": "m08",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "テンプレートID指定時は、会員向けベース（会員・会員英語・ベースなし）のテンプレートのみ対象とし、該当しないテンプレートIDは404にする。",
+   "実装実態": "Route の template_id は任意の MailTemplate に MapEntity され、Controller は取得した MailTemplate の file_name を renderView して件名・本文をセットする。FormType の選択肢 query_builder は対象ベースに絞るが、直接URLで渡された base外テンプレートを404にするController側判定はない。",
+   "差分内容": "設計はbase外テンプレートIDを404で拒否する要求だが、実装は存在するMailTemplateであれば表示処理へ進める。",
+   "実装参照": "src/Eccube/Controller/Admin/Customer/CustomerMailController.php:150, src/Eccube/Controller/Admin/Customer/CustomerMailController.php:165, src/Eccube/Form/Type/Admin/CustomerManualMailType.php:44",
+   "設計書参照": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-16:3788",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:4297-4302 のExcel正本は確認画面の表示項目とボタン動作を定義するが、会員向けベース3種や範囲外テンプレートIDの404は正本部分に存在しない（確認範囲: sheet-16 のExcel正本部分 4252-4341、検索語: 404 / 会員英語 / ベースなし）。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/CustomerController.php:214-225 はテンプレートIDを `BASE_CUSTOMER`、`BASE_CUSTOMER_EN`、`BASE_NO_BASE` の `file_name` に限定し、該当しなければ `throw new NotFoundHttpException();` とする。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/CustomerMailController.php:188-199 は任意の `template_id` を `?MailTemplate` にMapEntityし、同:212-224 は取得できたテンプレートをそのまま描画に使う。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/CustomerManualMailType.php:48-59 のbase絞り込みは選択肢query_builderだけで、直接URL指定の404検証ではない。",
+   "根拠検証メモ": "404条件は旧実装に由来する。",
+   "対応の根拠(現develop)": "`src/Eccube/Controller/Admin/Customer/CustomerMailController.php:188-190` は `#[Route(path: '/%eccube_admin_route%/customer/manual_mail/{id}/{template_id}', ... requirements: ['template_id' => '\\d+|null'])]` / `public function manual_mail(Request $request, Customer $Customer, #[MapEntity(id: 'template_id')] ?MailTemplate $MailTemplate)` のままで、base 判定も `throw new NotFoundHttpException()` も無い。`同:213-224` は `if ($MailTemplate) { $body = $this->renderView($MailTemplate->getFileName(), ...); ... }` と、存在する MailTemplate であれば無条件に描画へ進む。base 絞り込みは `src/Eccube/Form/Type/Admin/CustomerManualMailType.php:48-57` の `query_builder`（`$qb->andWhere('mt.file_name IN (:fileNames)')`）のみで選択肢側に限定されており、監査時点と変化なし。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "NO_QUOTE",
+    "stale": "UNCHANGED"
+   }
+  },
+  {
+   "rowId": 667,
+   "機能No": "M08-08",
+   "機能名": "M08-08 【新規】手動メール通知(確認画面)",
+   "ドメイン": "m08",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "送信する件名と本文は、確認・入力した送信内容を用いる。",
+   "実装実態": "sendCustomerManualMail は Email subject を '[' . shopName . '] ' . formData['mail_subject'] にして送信し、MailHistoryEntityManager はその message subject を履歴へ保存する。",
+   "差分内容": "設計はフォーム上の件名を送信メール件名として扱うが、実装は店舗名プレフィックスを強制付与するため、確認画面の件名と送信・履歴の件名が一致しない。",
+   "実装参照": "src/Eccube/Service/MailService.php:1028, src/Eccube/Service/EntityManager/MailHistoryEntityManager.php:40",
+   "設計書参照": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-16:3790",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:4299-4300 のExcel正本は確認画面で「入力画面から引き継いだ件名」「入力画面から引き継いだメール本文」を出力すると記載するが、実送信時に件名を無加工で使うことや店舗名プレフィックス禁止は明記しない。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Service/MailService.php:93-102 は実送信を `->setSubject($content['mail']['subject'])`、`->setBody($content['mail_body'])` とし、確認・入力内容を無加工で用いる。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/MailService.php:1024-1035 は件名を `->subject('['.$this->BaseInfo->getShopName().'] '.$formData['mail_subject'])` と書き換える。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/EntityManager/MailHistoryEntityManager.php:39-44 はその送信Messageの件名・本文を履歴へ保存する。",
+   "根拠検証メモ": "確認画面の表示値はExcel正本にあるが、「送信時も無加工」という厳密な期待値は旧実装に由来する。",
+   "対応の根拠(現develop)": "`src/Eccube/Service/MailService.php:1028-1029` は `$message = (new Email())->subject('['.$this->BaseInfo->getShopName().'] '.$formData['mail_subject'])` のままで店舗名プレフィックスを強制付与する。`src/Eccube/Service/EntityManager/MailHistoryEntityManager.php:39-41` も `$MailHistory = new MailHistory(); $MailHistory->setMailSubject($Message->getSubject())` とプレフィックス付き件名を履歴保存しており、確認画面（`mail_manual_confirm.twig:73` の `{{ form.mail_subject.vars.data }}`）の件名と不一致。監査時点と同一。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Service/MailService.php"
+    ]
+   }
+  },
+  {
+   "rowId": 670,
+   "機能No": "M08-08",
+   "機能名": "M08-08 【新規】手動メール通知(確認画面)",
+   "ドメイン": "m08",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "送信履歴は dtb_user_mail_history に customer_id、template_id、subject、mail_body、send_date を1件記録する。",
+   "実装実態": "手動メール送信後は MailHistoryEntityManager::save が new MailHistory() を persist する。MailHistory は dtb_mail_history にマップされ、DtbUserMailHistory は dtb_user_mail_history へマップされるが deprecated コメント付きで、会員手動メール保存処理からは使用されていない。",
+   "差分内容": "設計の永続化先 dtb_user_mail_history ではなく dtb_mail_history に保存しており、件名列も subject ではなく mail_subject になる。",
+   "実装参照": "src/Eccube/Service/EntityManager/MailHistoryEntityManager.php:39, src/Eccube/Entity/MailHistory.php:25, src/Eccube/Entity/DtbUserMailHistory.php:21",
+   "設計書参照": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-16:3812",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:4297-4302 のExcel正本は確認画面の表示とメール送信を定義するが、履歴テーブル `dtb_user_mail_history` と列 `customer_id/template_id/subject/mail_body/send_date` は正本部分に存在しない（確認範囲: sheet-16 のExcel正本部分 4252-4341）。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Service/MailService.php:107-108,1799-1824 は送信後に `DtbUserMailHistory` へ件名・本文・送信日時・テンプレート・会員を設定して保存する。/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/doctrine/Plugin.HareruyaEc.Entity.DtbUserMailHistory.dcm.yml:1-35 は保存先を `dtb_user_mail_history`、列を `send_date/subject/mail_body/template_id/customer_id` と定義する。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/CustomerMailController.php:262-267 は `MailHistoryEntityManager::save` を呼び、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/EntityManager/MailHistoryEntityManager.php:39-56 は `new MailHistory()` を保存する。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Entity/MailHistory.php:25,50-57,70-72,232-234 はこれを `dtb_mail_history` の `send_date/mail_subject/mail_body/customer_id/template_id` に割り当てる。",
+   "根拠検証メモ": "保存先と列契約は旧実装に由来する。",
+   "対応の根拠(現develop)": "`src/Eccube/Service/EntityManager/MailHistoryEntityManager.php:39-44` は `$MailHistory = new MailHistory(); $MailHistory->setMailSubject(...)->setBaseInfo(...)->setMailBody(...)->setSendDate(new \\DateTime());` のままで `同:67 $this->entityManager->persist($MailHistory);`。`src/Eccube/Entity/MailHistory.php:25` は `#[ORM\\Table(name: 'dtb_mail_history')]`、`src/Eccube/Entity/DtbUserMailHistory.php:21,24` は `#[ORM\\Table(name: 'dtb_user_mail_history')]` かつ `/* @deprecated dtb_mail_historyに統合されたため、使用しない */` で、src 配下を `DtbUserMailHistory` で横断検索してもエンティティ定義以外の参照は 0 件。保存先・列名とも監査時点と同一。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EMBED_ONLY",
+    "stale": "UNCHANGED",
+    "quoteDetail": [
+     "dtb_user_mail_history"
+    ]
+   }
+  }
+ ]
+}

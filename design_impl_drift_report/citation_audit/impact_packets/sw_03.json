@@ -1,0 +1,331 @@
+{
+ "packetId": "sw_03",
+ "mode": "sweep",
+ "note": "著者はこれらの大半を IMPACT(外部から観測できる) と判定した。見落とし＝実は NO_IMPACT な行が無いかを独立に判定すること。",
+ "findings": [
+  {
+   "rowId": 73,
+   "機能No": "A06-05",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "リクエストのステータスID（status）で店頭買取ステータスマスタを引く。該当が無い場合は入力不正（HTTP 400）とし「正しい店頭買取ステータスIDを入力してください」を返す。",
+   "差分内容": "設計はステータスID不正時の返却文言を「正しい店頭買取ステータスIDを入力してください」に固定しているが、店頭買取API実装は別文言を返す。ネット買取側 BuyOrderController には同文言があるが、OtcBuyOrderController では未採用であることを反証検索で確認した。",
+   "実装参照": "src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php:198, src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php:206, src/Eccube"
+  },
+  {
+   "rowId": 74,
+   "機能No": "A06-05",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "更新前ステータスが査定中・査定再開で、かつ指定ステータスも査定中・査定再開で、その受注の査定担当者が認証した管理者会員と異なる場合は、入力不正（HTTP 400）とし「この受注は「（査定担当者名）」が査定中です。」を返す。",
+   "差分内容": "設計は「この受注は「（査定担当者名）」が査定中です。」を返す要求だが、店頭買取実装は鉤括弧と句点を含まない。反証としてネット買取側 UpdateStatusAction には設計どおりの鉤括弧・句点付き文言が存在するが、店頭買取側では異なる文言が実装されている。",
+   "実装参照": "src/Eccube/Service/App/MTGBuyer/V1/Admin/OtcBuyOrder/UpdateStatusAction.php:95, src/Eccube/Service/App/MTGBuyer/V1/Admin/OtcBuyOrder/UpdateStatusAction.php:101,"
+  },
+  {
+   "rowId": 75,
+   "機能No": "A06-05",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "レスポンス（失敗）では、401 は「認証拒否（本文を持たない）」、404 は「該当なし（本文を持たない）」とする。",
+   "差分内容": "設計は 401/404 の本文なしを明記しているが、共通例外リスナーは App API で必ず code と errors を含む JSON 本文を設定する。",
+   "実装参照": "src/Eccube/EventListener/ExceptionListener.php:72, src/Eccube/EventListener/ExceptionListener.php:81, src/Eccube/EventListener/ExceptionListener.php:94, src/Ecc"
+  },
+  {
+   "rowId": 76,
+   "機能No": "A06-05",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "利用者視点の入口として、PUT /admin/otcBuyOrder/{id}/status の拡張子なし別名も /status.json と同一処理で提供する。",
+   "差分内容": "設計は拡張子なし別名を明記しているが、属性ルートと routes.yaml の探索で該当ルートが存在しない。",
+   "実装参照": "不在（探索範囲: src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php, app/config/eccube/routes.yaml, src/Eccube, html。検索語: otcBuyOrder/{id}/status, st"
+  },
+  {
+   "rowId": 77,
+   "機能No": "A06-06",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "エンドポイントURLは /api/buying/{detailId}.json とする。",
+   "差分内容": "設計は /api/buying/{detailId}.json を外部契約として定義しているが、実装は API 版数プレフィックス /api/v1 を付けた別URLで公開している。設計HTML側に /api/v1 への読み替え指定は確認できない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyingController.php:46"
+  },
+  {
+   "rowId": 78,
+   "機能No": "A06-06",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "レスポンスの conditionClasses 配下には productCode（商品コード）を返す。",
+   "差分内容": "設計のレスポンス項目名は productCode だが、実装の外部JSONキーは productClassCode。別キーワード productCode、product_class_code、BuyingCardsFormatter、api_buying で再検索しても当該APIで productCode に変換する実装は確認できなかった。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/App/MTGBuyer/V1/BuyingCardsFormatter.php:115"
+  },
+  {
+   "rowId": 79,
+   "機能No": "A06-07",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "0件のときは空配列を返す。カード商品以外のIDのみのときは0件を正常応答とする。",
+   "差分内容": "設計は0件時の応答全体を [] とするが、実装は空配列ではなく cards キー付きのオブジェクトを返す。カード商品以外のIDのみで検索結果0件になる通常経路では {\"cards\":{}} となる。探索範囲: Controller/App/MTGBuyer/V1/Admin/BuyingController.php, Service/App/MTGBuyer/V1/BuyingCardsFormatter.php, Repository/Master/MtbCardRepository.php。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyingController.php:80, /home/y-saito/Developments/ec-cube-enterprise"
+  },
+  {
+   "rowId": 80,
+   "機能No": "A06-07",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "レスポンスの conditionClasses.<conditionCode> は productClassId, productCode, buyPrice, price, stock, sectionId を返す。foilFlg は boolean、price と stock は string とする。",
+   "差分内容": "設計サンプルおよびレスポンス定義の外部フィールド名・型と、実装の formatter が生成するキー・型が一致しない。Repository は productClass.code AS productClassCode を選択し、formatter も productClassCode キーで返しているため productCode は不在。探索範囲: Service/App/MTGBuyer/V1/BuyingCardsFormatter.php, Dto/Repository/Master/GetBuyingCardsQueryResponseDto.php, Repository/Master/MtbCardRepository",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/App/MTGBuyer/V1/BuyingCardsFormatter.php:88, /home/y-saito/Developments/ec-cube-enterprise/src/"
+  },
+  {
+   "rowId": 81,
+   "機能No": "A06-08",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "カード名から買取用商品情報取得は GET /search とし、name はクエリパラメータで受け取る。",
+   "差分内容": "設計の詳細設計では GET /search のクエリパラメータ指定だが、実装は POST のフォームリクエストボディを読むため、MTGバイヤー側の外部API契約が一致しない。反証として api_search、/%eccube_api_v1_route%/search、request->query、QueryParam、ParamFetcher を検索したが、このAPIの GET/query 実装は確認できなかった。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyingController.php:99, /home/y-saito/Developments/ec-cube-enterprise"
+  },
+  {
+   "rowId": 82,
+   "機能No": "A06-08",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "条件に一致する買取用商品が無い場合はページが見つからない扱い（404）とし、標準の例外応答JSONを返す。",
+   "差分内容": "設計は該当なしを 404 とするが、カード名検索実装には empty($cards) 時の NotFoundException 分岐がなく、空結果を成功レスポンスとして返す。反証として NotFoundException、empty($cards)、api_search、カードが見つかりませんを検索し、404 分岐はカード詳細ID取得にしか存在しなかった。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyingController.php:104, /home/y-saito/Developments/ec-cube-enterpris"
+  },
+  {
+   "rowId": 83,
+   "機能No": "A06-08",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "name はカード名（商品名）の前方一致検索キーで、% と _ はエスケープして扱う。",
+   "差分内容": "設計はワイルドカード文字をリテラルとして扱うことを要求しているが、実装では %/_ が LIKE ワイルドカードとして効く。反証として escapeLike、addcslashes、ESCAPE、LIKE :cardName、cardName.'%' を検索したが、当該 getBuyingCardsByCardName にエスケープ処理は無かった。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/Master/MtbCardRepository.php:136, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/R"
+  },
+  {
+   "rowId": 84,
+   "機能No": "A06-08",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "成功時レスポンスは cards オブジェクトを最上位に持ち、検索で得たカードを1始まりの連番でキー付けし直して格納する。",
+   "差分内容": "設計は検索結果順の1始まり連番キーを要求しているが、実装はDB上のカードIDをキーにしており、カードIDが 10001 なら cards.10001 になる。反証として formatter、array_values、連番、cardId キー周辺を確認したが、1始まりへのキー付け直しは確認できなかった。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/App/MTGBuyer/V1/BuyingCardsFormatter.php:68, /home/y-saito/Developments/ec-cube-enterprise/src/"
+  },
+  {
+   "rowId": 85,
+   "機能No": "A06-08",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "conditionClasses.<conditionCode> 配下の応答フィールドは productCode、price(string)、stock(string) 等の設計名・型で返す。",
+   "差分内容": "設計のレスポンスフィールド名・型と実装のJSONキー/値型が一致しない。反証として BuyingCardsFormatter、GetBuyingCardsQueryResponseDto、productCode/productClassCode、stock キャストを確認したが、設計名 productCode および string 型への整形は確認できなかった。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/App/MTGBuyer/V1/BuyingCardsFormatter.php:113, /home/y-saito/Developments/ec-cube-enterprise/src"
+  },
+  {
+   "rowId": 86,
+   "機能No": "A06-11",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "成功レスポンスは code=200、message=\"get sections success\"、sections 配列を持つJSONオブジェクトとして返す。sections の各要素は section_id・name・code を持つ。",
+   "差分内容": "設計HTMLはレスポンスデータとして code、message、sections を定義し、処理フローでもコード・メッセージ・部門一覧をJSONで返すとしている。一方、実装の SectionController は array_map で部門要素配列のみを生成し、new JsonResponse($payload) で裸配列を返している。反証検索として api_admin_sections、sections.json、section.json、get sections success、'sections' =>、'message' =>、'code' => 200 を MTGBuyer 配下および src/Eccube 全体で確認し",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/SectionController.php:40"
+  },
+  {
+   "rowId": 87,
+   "機能No": "A06-12",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "固定価格部門取得APIは成功時にJSONで code（成功時200）と section_id（固定価格部門ID、文字列）を返す。",
+   "差分内容": "設計は {\"code\":200,\"section_id\":\"1\"} 形式の外部契約を要求している。一方、実装は code フィールドも section_id フィールドも作らず、固定価格部門IDの文字列そのものをレスポンス本文にしているため、MTGバイヤー向けAPIのレスポンス形が設計と異なる。反証検索では OptionController、SectionController、MTGBuyer配下Controller/Service/Dto、テストを確認したが、固定価格部門取得で code + section_id を返す別実装は見つからなかった。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/OptionController.php:57 / :59, /home/y-saito/Developments/ec-cube-ente"
+  },
+  {
+   "rowId": 88,
+   "機能No": "A06-12",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "オプションマスタに固定価格部門の設定が存在しない場合は null参照によりHTTP 500となり、フレームワーク標準の例外応答を返す。",
+   "差分内容": "設計の失敗レスポンスはHTTP 500だが、実装は例外を発生させず正常応答として空文字を返す。反証検索では fixedPriceSection.json、api_admin_fixed_price_section、FIXED_PRICE_SECTION、固定価格部門、section_id を Controller/Service/Dto/Tests/Migrations/html/template で確認したが、未設定時に500を返す固定価格部門APIの別経路は見つからなかった。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/OptionController.php:53-:59, /home/y-saito/Developments/ec-cube-enterp"
+  },
+  {
+   "rowId": 89,
+   "機能No": "A06-13",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "リクエストの証明書IDで本人確認証明書マスタを引く。該当が無い場合は入力不正（HTTP 400）とし、エラーメッセージを返す。400 証明書IDが本人確認証明書マスタに存在しない（未指定を含む）場合は {code, errors}（errorsは「正しい証明書IDを入力してください」）を返す。",
+   "差分内容": "設計は「証明書IDが本人確認証明書マスタに存在しない（未指定を含む）」を HTTP 400 と規定している。実装は未指定のみ 400、マスタ不存在は /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php:288-290 で NotFoundException を投げ、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Exception/App/NotFoundException.php:27-3",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php:288"
+  },
+  {
+   "rowId": 90,
+   "機能No": "A06-13",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "入口として PUT /admin/otcBuyOrder/{id}/identification と PUT /admin/otcBuyOrder/{id}/identification.json（同一処理）を提供し、受注IDの店頭買取受注に本人確認証明書を設定し、更新担当者・更新日時とともに保存して、成功時はコード200のJSONを返す。",
+   "差分内容": "設計は拡張子なし入口と .json 別名を同一処理として列挙しているが、実装側で otcBuyOrder/{id}/identification、identification.json、api_admin_otc_buy_order_update_identification を検索して確認できた本人確認更新ルートは .json 付きのみ。Controller、Route属性、config/routes 系、Twig/JS 参照を再検索しても拡張子なし alias は見つからなかった。",
+   "実装参照": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube と /home/y-saito/Developments/ec-cube-enterprise/html。既存実装は /home/y-saito/Developments/ec-cube-"
+  },
+  {
+   "rowId": 91,
+   "機能No": "A06-16",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "基本設計: PUT /api/otcBuyOrder/{id}/doublecheck.json、リクエスト項目 member_id。 / 旧根拠: function_spec_html_preview/ec-cube-enterprise/a06-16_api_store_purchase_otc_buy_order_double_check_member_update.html:230,257-271",
+   "差分内容": "設計は /api/otcBuyOrder/{id}/doublecheck.json と member_id を要求する。実装ルートは /{api_v1_route}/admin/otcBuyOrder/{id}/doubleCheckMember.json で、さらにリクエストから double_check_member_id を読む。設計通りのパス・パラメータでは更新できない。",
+   "実装参照": "src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php:231-240"
+  },
+  {
+   "rowId": 92,
+   "機能No": "A06-16",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "ダブルチェック者を新規カラムに追加。ec-cube-enterprise実装では承認テーブル dtb_otc_buy_order_approver へ role=double_check として登録される点が基本設計と異なる。 / 旧根拠: function_spec_html_preview/ec-cube-enterprise/a06-16_api_store_purchase_otc_buy_order_double_check_member_update.html:230-231",
+   "差分内容": "設計は店頭買取受注側の新規カラムにダブルチェック者を保存する前提だが、実装は承認者テーブルへ role=double_check として登録する方式で、保存先とデータ構造が異なる。",
+   "実装参照": "src/Eccube/Service/App/MTGBuyer/V1/Admin/OtcBuyOrder/UpdateDoubleCheckMemberAction.php"
+  },
+  {
+   "rowId": 93,
+   "機能No": "A06-16",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "エンドポイントURLは PUT /api/otcBuyOrder/{id}/doublecheck.json とする。",
+   "差分内容": "設計は /api/otcBuyOrder/{id}/doublecheck.json を指定しているが、実装は API 版数プレフィックスと /admin を含み、末尾も doubleCheckMember.json。反証検索で doublecheck.json / doubleCheckMember.json / api_admin_otc_buy_order_update_double_check_member を確認したが、設計URLそのもののルートは確認できなかった。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php:231"
+  },
+  {
+   "rowId": 94,
+   "機能No": "A06-16",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "リクエストパラメータは member_id、型は数値(整数)、必須、入力例は 1000、備考はメンバーIDとする。",
+   "差分内容": "設計の外部契約は member_id だが、実装の必須パラメータ名は double_check_member_id。反証検索で member_id / doubleCheckMemberId / double_check_member_id を確認したが、この更新APIで member_id を受け付ける実装は確認できなかった。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php:239"
+  },
+  {
+   "rowId": 95,
+   "機能No": "A06-16",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "ダブルチェック者は新規のカラムに追加する。",
+   "差分内容": "設計はダブルチェック者を新規カラムへ追加する要求だが、実装は承認者テーブルを findOneBy(OtcBuyOrder, role=double_check) で検索し、なければ DtbOtcBuyOrderApprover を作成して保存する。Entity でもテーブル名 dtb_otc_buy_order_approver と approver_id / assigned_by_id / role が定義されているため、保存モデルが設計と異なる。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/EntityManager/OtcBuyOrderApproverEntityManager.php:29"
+  },
+  {
+   "rowId": 96,
+   "機能No": "A06-16",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "成功時のステータスコードは 200、レスポンスデータはなしとする。",
+   "差分内容": "HTTPステータス200は一致するが、設計はレスポンスデータなしを指定しているのに対し、実装は JSON ボディに code: 200 を含める。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php:267"
+  },
+  {
+   "rowId": 97,
+   "機能No": "A07-01",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "まとめ買取商品IDの設定がオプションマスタに存在しない場合は、設定値の参照で例外となり、共通例外処理に委ねる（HTTP 500相当）。",
+   "差分内容": "設計のレスポンス失敗・データ整合性・エラー処理では、まとめ買取商品ID設定が無い場合は値を取得できず処理失敗（HTTP 500相当）と定義されている。一方、実装は未設定を例外化せず空文字列の正常応答にしている。反証として `optionBulkPurchaseId`、`BULK_PURCHASE_ID`、`BulkPurchaseIdService`、`mtb_option` を検索し、BulkPurchaseIdService には未設定時例外があるが当該APIからは使用されておらず、OptionController の直接実装が有効であることを確認した。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/OptionController.php:38"
+  },
+  {
+   "rowId": 98,
+   "機能No": "A07-02",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "成功レスポンスはHTTP 200で、応答本体は受注ごとのオブジェクト配列。netBuyOrderId と netOrderStatusId は integer、applyDate はISO8601形式、freeComment は未設定時 null、memberName は紐づく会員が無い場合 null とする。応答はcamelCase、日時はISO8601、serialize_null有効とする。",
+   "差分内容": "設計は整数型・ISO8601日時・null保持を外部契約として定義しているが、実装は文字列化、非ISO形式、空文字化を行っており、レスポンススキーマが一致しない。反証検索として `netBuyOrderId`、`applyDate`、`freeComment`、`memberName`、`serialize_null`、`findToAssessBuyOrders` を確認したが、当該GETレスポンスで別の正規化処理は見つからない。",
+   "実装参照": "src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderController.php:71-76"
+  },
+  {
+   "rowId": 99,
+   "機能No": "A07-02",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "認証失敗時（トークン欠落・署名不正・該当する管理者会員なし）はHTTP 401とし、本文を持たない認証拒否を返す。",
+   "差分内容": "設計は401で本文なしを要求しているが、実装のApp API共通例外処理は401でもJSON本文 `{code, errors}` を返す。反証検索として `JwtTokenHeaderExtractor`、`JwtTokenHandler`、`UnauthenticatedException`、`ExceptionListener`、security.yaml の access_token 設定を確認し、認証ヘッダ検証自体は存在するが、本文なし401を返す実装は確認できない。",
+   "実装参照": "src/Eccube/EventListener/ExceptionListener.php:72-100,136-139"
+  },
+  {
+   "rowId": 100,
+   "機能No": "A07-03",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "保存処理中の例外はHTTP 500とし、本文は {code, errors}（errors は例外メッセージ。トランザクションはロールバックする）を返す。",
+   "差分内容": "設計は500応答の errors に例外メッセージを返すことを要求しているが、実装は保存例外の実メッセージを破棄し、固定の汎用エラー文言に置き換えるため、外部契約が一致しない。",
+   "実装参照": "src/Eccube/Service/App/MTGBuyer/V1/Admin/BuyOrder/UpdateFreeCommentAction.php:41-44; src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderController.php:116-117;"
+  },
+  {
+   "rowId": 101,
+   "機能No": "A07-04",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "失敗レスポンスで、トークン欠落・署名不正・該当する管理者会員なしはHTTP 401、受注IDに該当するネット買取受注が無い場合はHTTP 404とし、いずれも本文を持たない。",
+   "差分内容": "設計は401/404を「本文を持たない」と定義しているが、実装はisAppApi()配下でJsonResponse(['code' => $statusCode, 'errors' => $errors], $statusCode)を返すため、外部レスポンス契約が異なる。反証としてBuyOrderControllerのNotFoundException、認証例外、ExceptionListenerのAPI例外処理を確認したが、本文なしレスポンスに分岐する実装は見つからなかった。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/EventListener/ExceptionListener.php:72"
+  },
+  {
+   "rowId": 102,
+   "機能No": "A07-04",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "保存処理中の例外は処理失敗（HTTP 500）とし、{code, errors} の errors に例外メッセージを返す。トランザクションはロールバックする。",
+   "差分内容": "ロールバックは実装済みだが、設計が要求する「例外メッセージを返す」契約に対し、実装は固定文言へ隠蔽して返す。反証としてUpdateStatusAction、BuyOrderController、InternalException、ExceptionListenerを確認したが、previous例外のmessageをerrorsへ戻す実装は見つからなかった。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/App/MTGBuyer/V1/Admin/BuyOrder/UpdateStatusAction.php:111"
+  },
+  {
+   "rowId": 103,
+   "機能No": "A07-05",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "ステータス・明細の入力検証に1件以上失敗した場合、入力不正（HTTP 400）とし、code と errors のJSONを返す。",
+   "差分内容": "設計は入力検証失敗を HTTP 400 と明記しているが、実装は MapRequestPayload 既定により HTTP 422 を返す。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderController.php:171; /home/y-saito/Developments/ec-cube-enterpr"
+  },
+  {
+   "rowId": 104,
+   "機能No": "A07-05",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "order_status は必須。買取受注ステータスマスタに存在しないIDは「MtbBuyOrderStatusに（値）が見つかりません。」を返す。いずれも入力不正（HTTP 400）。",
+   "差分内容": "HTTP 400 で返す点は一致するが、設計指定のエラーメッセージではなく別文言を返す。反証検索でも MTGBuyer 実装内に「MtbBuyOrderStatusに（値）が見つかりません。」を返す経路は見つからなかった。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderController.php:183"
+  },
+  {
+   "rowId": 105,
+   "機能No": "A07-05",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "更新処理中の例外は、トランザクションをロールバックし、内部エラー（HTTP 500）とし、code と例外メッセージ配列 errors のJSONを返す。",
+   "差分内容": "設計は errors に例外メッセージ配列を返す要求だが、実装は例外メッセージを外部応答に使わず固定の汎用メッセージを返す。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/App/MTGBuyer/V1/Admin/BuyOrder/UpdateBuyOrderAction.php:130; /home/y-saito/Developments/ec-cube"
+  },
+  {
+   "rowId": 106,
+   "機能No": "A07-05",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "受注IDに該当するネット買取受注が無い場合は、該当なし（HTTP 404）とし、本文を持たない。",
+   "差分内容": "設計は 404 応答を本文なしとするが、実装は code/errors のJSON本文を返す。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderController.php:173; /home/y-saito/Developments/ec-cube-enterpr"
+  },
+  {
+   "rowId": 107,
+   "機能No": "A07-05",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "明細の name は商品名。必須、最大65535。",
+   "差分内容": "API入力仕様は最大65535を許容するが、個別入力商品として永続化する実装カラムは255文字上限のため、256〜65535文字の name を設計どおり保存できない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Dto/App/MTGBuyer/V1/Admin/UpdateBuyOrderDetailDto.php:32; /home/y-saito/Developments/ec-cube-enterprise"
+  },
+  {
+   "rowId": 108,
+   "機能No": "A07-05",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "レスポンス成功時の `[].foilFlg` は boolean。フォイルか否かを表し、未設定のときは null。",
+   "差分内容": "設計は外部JSON契約として `[].foilFlg` を boolean と定義しているが、実装は `DtbBuyMainCard::FOIL_NONE=0`, `FOIL_NORMAL=1`, `FOIL_SPECIAL=2` の数値区分を変換せず返却している。反証として BuyMainCardController、DtbBuyMainCard、MTGBuyer DTO/Service を検索したが、本APIレスポンスで boolean へ変換する処理は確認できなかった。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyMainCardController.php:74, /home/y-saito/Developments/ec-cube-enter"
+  }
+ ]
+}

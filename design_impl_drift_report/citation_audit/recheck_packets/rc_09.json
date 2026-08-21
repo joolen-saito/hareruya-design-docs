@@ -1,0 +1,341 @@
+{
+ "packetId": "rc_09",
+ "note": "rowId は drift_findings_list_final.tsv の行番号(ヘッダ除く1始まり)。mech は機械検証フラグ(手掛かりであって正解ではない)。",
+ "count": 12,
+ "findings": [
+  {
+   "rowId": 126,
+   "機能No": "A17-04",
+   "機能名": "A17-04 商品IDに紐づく商品詳細の情報を取得",
+   "ドメイン": "a17",
+   "区分(画面種別)": "api",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "パスの商品IDと、クエリの言語を受け取り、商品IDと言語で商品詳細を取得する。指定言語に対応する商品詳細を返し、未指定時は日本語（JP）を既定とする。",
+   "実装実態": "ProductController は lang クエリを受け取り findProductById($productId, $languageCode) に渡すが、findProductById の SQL は mtb_language を `LEFT JOIN mtb_language lang ON pc.language_id = lang.id AND lang.code = :languageCode` と結合するだけで、WHERE 句に `lang.code = :languageCode` や `pc.language_id` の絞り込みがない。さらに `COALESCE(lang.code, :languageCode) AS languageCode` により、指定言語以外の商品規格も指定言語として応答に混入し得る。",
+   "差分内容": "設計は商品IDと言語の組み合わせで商品詳細を取得する要求だが、実装は商品IDと visible な商品規格の存在のみで抽出し、言語はレスポンス値の補完に使っている。反証として ProductController、ProductDetailResponseBuilder、ProductRepository、ProductSearchResponseBuilder を `languageCode` / `lang.code = :languageCode` / `pc.language_id` / `findProductById` で再検索したが、A17-04 詳細取得で言語を WHERE 条件に補正する実装は確認できなかった。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/ProductRepository.php:225",
+   "設計書参照": "excel_to_html/output/0517_基本設計仕様書(API_その他).html#sheet-6:2049,2056,2111",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0517_基本設計仕様書(API_その他).html:2049 は「商品IDをもとに商品情報を検索しJSON出力する」、同:2058 はリクエスト項目「言語」・入力例「JP」、同:2064 は `api/product/detail/62566?lang=JP`、同:2083 は応答の `language_code` を記載する。したがって商品IDと指定言語に対応する結果を返す要求は正本セルにある。ただし「未指定時JP」は正本ではなくリバース詳細設計側の記述である。",
+   "旧実装根拠": "pf-api/src/Controller/ProductController.php:400-408 は `$languageCode = $request->get('lang');`、空なら `$languageCode = 'JP';` として `getProductDetailById($productId, $languageCode)` を呼び、pf-api/src/Repository/DtbProductRepository.php:358-360 は `->where('product.productId = :productId')->andWhere('language.code = :languageCode')` と両条件で絞る。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Controller/App/ProductController.php:52-59 は `lang`（既定JP）を `findProductById($productId, $languageCode)` へ渡す。一方 ec-cube-enterprise/src/Eccube/Repository/ProductRepository.php:297-302 は `LEFT JOIN ... lang ON pc.language_id = lang.id AND lang.code = :languageCode`、同:320-323 のWHEREは `p.id = :productId AND pc.id IS NOT NULL` のみで言語を除外条件にせず、同:267 の `COALESCE(lang.code, :languageCode)` により非指定言語規格も指定言語として応答し得る。",
+   "根拠検証メモ": "正本で明示される指定言語対応部分だけで真の乖離を確定できる。未指定時JPの補足根拠は旧実装。",
+   "対応の根拠(現develop)": "`src/Eccube/Repository/ProductRepository.php:301` は現 develop でも `LEFT JOIN mtb_language lang ON pc.language_id = lang.id AND lang.code = :languageCode` の結合条件のみで、:320-322 の `WHERE p.id = :productId AND pc.id IS NOT NULL` に言語の絞り込みが無い。:267 の `COALESCE(lang.code, :languageCode) AS languageCode` も監査時点のまま。`src/Eccube/Controller/App/ProductController.php:54-59` は `$languageCode = $request->query->get('lang', 'JP');` を `findProductById($productId, $languageCode)` に渡すのみ。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Repository/ProductRepository.php"
+    ]
+   }
+  },
+  {
+   "rowId": 127,
+   "機能No": "A17-04",
+   "機能名": "A17-04 商品IDに紐づく商品詳細の情報を取得",
+   "ドメイン": "a17",
+   "区分(画面種別)": "api",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "商品IDに該当する商品詳細が無い場合は、HTTP 404 で `{code, message}`（\"Not Found\"）のJSONを返す。",
+   "実装実態": "ProductController::getProductDetailByProductId は該当なし時に NotFoundException('Not Found') を throw する。App API の共通例外ハンドラは BaseApiException を `{code, errors}` 形式の JsonResponse に変換するため、本文キーは `message` ではなく `errors` になる。",
+   "差分内容": "設計の失敗レスポンス本文は `{code, message}` だが、実装の共通例外レスポンスは `{code, errors}`。反証として ProductController のローカル catch、BaseApiException、NotFoundException、ExceptionListener を確認したが、A17-04 詳細取得で `{code, message}` に変換する個別処理は確認できなかった。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/EventListener/ExceptionListener.php:136",
+   "設計書参照": "excel_to_html/output/0517_基本設計仕様書(API_その他).html#sheet-6:2061,2125",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0517_基本設計仕様書(API_その他).html:2069-2070 は `200 正常` と `404 or 500 異常` を記すが、同:2075-2079 の正本レスポンス表にある失敗形式の根拠は `code` だけで、`message` や `Not Found` の正本セルは存在しない（確認範囲: sheet-6 の正本部 2021-2194）。",
+   "旧実装根拠": "pf-api/src/Controller/ProductController.php:405-414 は取得結果が空なら `return $this->json(['code' => Response::HTTP_NOT_FOUND, 'message' => 'Not Found'], Response::HTTP_NOT_FOUND);` と返す。`{code,message}` の真の根拠は旧実装である。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Controller/App/ProductController.php:59-64 は空結果で `throw new NotFoundException('Not Found')`、ec-cube-enterprise/src/Eccube/EventListener/ExceptionListener.php:140-143 は例外を `['code' => $statusCode, 'errors' => $errors]` に変換するため本文キーが `message` ではなく `errors` になる。",
+   "根拠検証メモ": "HTTP 404自体は正本にあるが、指摘対象の本文契約 `{code,message}` は旧実装由来。",
+   "対応の根拠(現develop)": "`src/Eccube/Controller/App/ProductController.php:64` `throw new NotFoundException('Not Found');` を、`src/Eccube/EventListener/ExceptionListener.php:140-143` の `$response = new JsonResponse(['code' => $statusCode, 'errors' => $errors], $statusCode);`（:74 コメントも「JSON形式で必ず(code, errors)を返す」）が処理するため、本文キーは現 develop でも `errors` のまま。`message` キーへ変換する個別処理は無い。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "UNCHANGED"
+   }
+  },
+  {
+   "rowId": 130,
+   "機能No": "B02-01",
+   "機能名": "B02-01 期間別販売数集計",
+   "ドメイン": "b02",
+   "区分(画面種別)": "batch",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "本店の支店IDは0として処理し、実行結果は商品規格ID・支店ID・期間別販売数を販売数集計データへ更新する。",
+   "実装実態": "集計SQLは `s.base_info_id` をそのまま `base_info_id` として出力する。BaseInfo::TC_TOKYO_ID は 1 で、dtb_sales_quantity の base_info_id=0 は人気商品リコメンド用として別用途に予約されている。",
+   "差分内容": "設計は本店を支店ID=0として扱うが、実装は配送の base_info_id をそのまま使用し、本店定数は 1。さらに clearSalesQuantityForAggregate は base_info_id=0 を人気商品リコメンドとして削除対象から除外しており、B02-01 の本店集計IDとして扱っていない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbSalesQuantityRepository.php:438",
+   "設計書参照": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-3:875",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html:1029 は「本店の支店IDは0として処理する」、同:1042-1043 は「商品規格ID,支店ID,...365日間の販売数」「以上の情報を販売数集計データへ更新」と正本セルで明記する。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Repository/OrderDetailRepository.php:332-350 の旧SQLは `od.product_class_id` 単位だけで店舗IDを持たず、この本店ID=0はリニューアル正本の追加要求である。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Repository/DtbSalesQuantityRepository.php:442-461 は `s.base_info_id` をそのままSELECT/GROUP BYし、ec-cube-enterprise/src/Eccube/Entity/BaseInfo.php:45 は `TC_TOKYO_ID = 1`。また ec-cube-enterprise/src/Eccube/Repository/DtbSalesQuantityRepository.php:38-39 はID 0を `POPULAR_PRODUCT_RECOMMEND_SHOP_ID` として別用途に予約している。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Repository/DtbSalesQuantityRepository.php:444` `s.base_info_id,` と同:461 `GROUP BY oi.product_class_id, s.base_info_id` で配送の base_info_id をそのまま出力する実装のまま。`src/Eccube/Entity/BaseInfo.php:45` `public const TC_TOKYO_ID = 1;` で本店は 1、`src/Eccube/Repository/DtbSalesQuantityRepository.php:39` `public const POPULAR_PRODUCT_RECOMMEND_SHOP_ID = 0;` と同:95-98 `'DELETE FROM dtb_sales_quantity WHERE base_info_id != :popular_shop_id'` により base_info_id=0 は依然として人気商品リコメンド用に予約され、B02-01 の本店集計IDとして扱われていない。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Repository/DtbSalesQuantityRepository.php"
+    ]
+   }
+  },
+  {
+   "rowId": 131,
+   "機能No": "B02-01",
+   "機能名": "B02-01 期間別販売数集計",
+   "ドメイン": "b02",
+   "区分(画面種別)": "batch",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "受注ステータスがキャンセル・処理中の受注は各期間の合計から除外する。",
+   "実装実態": "集計SQLの除外条件は `o.order_status_id != :cancel_status` のみ。OrderStatus には PENDING=7、PROCESSING=8 が存在するが、この集計SQLでは除外していない。",
+   "差分内容": "設計はキャンセルと処理中の両方を除外する要求だが、実装は OrderStatus::CANCEL だけをパラメータ化して除外している。`OrderStatus::PENDING`、`OrderStatus::PROCESSING`、`order_status_id NOT IN` 等で反証検索したが、B02-01 集計処理には処理中除外がない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbSalesQuantityRepository.php:451",
+   "設計書参照": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-3:930",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html:1038-1039 の正本検索条件は「366日間の期間内」「キャンセルを除外」であり、「処理中」除外は正本部（996-1046）に存在しない。新実装はこの正本のキャンセル除外は満たす。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Repository/OrderDetailRepository.php:316-320 は除外配列に `OrderStatus::ORDER_CANCEL` と `OrderStatus::ORDER_PROCESSING` を入れ、同:334-340 は各期間で `o.status NOT IN ({$excludeStatusesStr})` を適用する。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Repository/DtbSalesQuantityRepository.php:435-457 は `$cancelStatus = OrderStatus::CANCEL` とし、SQL条件は `o.order_status_id != :cancel_status` のみ。旧実装のPROCESSING/PENDING相当を除外する条件は当該集計経路にない。",
+   "根拠検証メモ": "乖離は「処理中も除外」の旧挙動に対してのみ成立する。",
+   "対応の根拠(現develop)": "`src/Eccube/Repository/DtbSalesQuantityRepository.php:457` `AND o.order_status_id != :cancel_status` が唯一の受注ステータス除外条件で、同:435 `$cancelStatus = OrderStatus::CANCEL;` のみをバインド（同:466 `->setParameter('cancel_status', $cancelStatus)`）。処理中ステータスを除外する `order_status_id NOT IN` 等の条件は集計SQL（同:441-462）に存在しない。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Repository/DtbSalesQuantityRepository.php"
+    ]
+   }
+  },
+  {
+   "rowId": 132,
+   "機能No": "B02-01",
+   "機能名": "B02-01 期間別販売数集計",
+   "ドメイン": "b02",
+   "区分(画面種別)": "batch",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "対象が無い場合は更新を行わずに終了／完了する。",
+   "実装実態": "handle() は集計データ取得前に clearSalesQuantityForAggregate() を必ず呼び、同メソッドは `DELETE FROM dtb_sales_quantity WHERE base_info_id != :popular_shop_id` を実行する。",
+   "差分内容": "設計は対象なしなら更新しないことを要求するが、実装は対象有無を確認する前に既存集計行を削除する。getSalesForAggregate() が空でも foreach が回らないだけで、先行DELETEは実行済みになる。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Product/BatchAggregateSalesAction.php:45",
+   "設計書参照": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-3:927",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html:1033-1044 の正本は入力条件と更新項目を記載するが、「対象が無い場合は更新しない」は正本部（996-1046）に存在しない。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Service/Product/UpdateProductSummary.php:34-42 は先に取得した `$orderDetails` をforeachし、結果が空なら更新メソッドも `flush()` 前の変更もなく終了する。旧実装が対象なし無更新の根拠である。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Service/Product/BatchAggregateSalesAction.php:45-49 は対象取得前に `clearSalesQuantityForAggregate()` を呼び、ec-cube-enterprise/src/Eccube/Repository/DtbSalesQuantityRepository.php:93-98 は `DELETE FROM dtb_sales_quantity WHERE base_info_id != :popular_shop_id` を実行するため、取得結果が空でも既存行を削除する。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Service/Product/BatchAggregateSalesAction.php:46-48` は `$this->salesQuantityRepository->clearSalesQuantityForAggregate();` を先に実行し、その後 `$salesData = $this->salesQuantityRepository->getSalesForAggregate();` `foreach ($salesData as $data) {` を回す順序のまま。`src/Eccube/Repository/DtbSalesQuantityRepository.php:95-98` の `'DELETE FROM dtb_sales_quantity WHERE base_info_id != :popular_shop_id'` が対象有無の判定前に無条件実行される構造は監査時点と同一。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "NOT_FOUND",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Repository/DtbSalesQuantityRepository.php",
+     "src/Eccube/Service/Product/BatchAggregateSalesAction.php"
+    ],
+    "quoteDetail": [
+     "対象が無い場合は更新しない"
+    ]
+   }
+  },
+  {
+   "rowId": 135,
+   "機能No": "B02-01",
+   "機能名": "B02-01 期間別販売数集計",
+   "ドメイン": "b02",
+   "区分(画面種別)": "batch",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "開始・完了のコンソール出力を日時付きで行う。",
+   "実装実態": "成功時は `期間別販売数集計が完了しました。` のみを SymfonyStyle::success で出力する。開始出力はなく、完了出力にも日時が含まれない。例外時は `集計処理でエラーが発生しました: ...` を出力する。",
+   "差分内容": "設計は開始と完了の両方を日時付きでコンソール出力する要求だが、実装は完了メッセージのみで日時なし。`date(`、`実行開始`、`実行終了`、`success(`、`error(` で確認し、B02-01 実行経路には日時付き開始・完了出力がない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/AggregateSalesCommand.php:56",
+   "設計書参照": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-3:955",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html:1031 は実行時刻「毎日0:00」を記すが、開始・完了メッセージや日時付きコンソール出力は正本部（996-1046）に存在しない。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Command/ProductBatch.php:43-56 は `$resultMessage = '[' . date('Y/m/d H:i') . '] ';` を作り、`\"{$name}: Command start.\"` と `\"{$name}: Command complete.\"` をechoする。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Command/AggregateSalesCommand.php:44-56 は処理前の開始出力を持たず、成功時も `$io->success('期間別販売数集計が完了しました。');` のみで日時を含めない。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Command/AggregateSalesCommand.php:56` `$io->success('期間別販売数集計が完了しました。');` のみで、開始時の出力が無く完了メッセージにも日時が含まれない（同ファイルに `date(` / `format('Y` は0件ヒット）。例外時は同:51 `$io->error('集計処理でエラーが発生しました: '.$e->getMessage());`。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "UNCHANGED"
+   }
+  },
+  {
+   "rowId": 136,
+   "機能No": "B02-01",
+   "機能名": "B02-01 期間別販売数集計",
+   "ドメイン": "b02",
+   "区分(画面種別)": "batch",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "移行先では補助表を設けず、商品規格 `dtb_product_class` の `order_quantity_01`〜`order_quantity_08` に販売数を反映する。",
+   "実装実態": "B02-01 実装は `dtb_sales_quantity` に `sales_quantity_01`〜`sales_quantity_08` を INSERT/UPDATE する。`dtb_product_class.order_quantity_01`〜`order_quantity_08` への更新処理は B02-01 実行経路にない。",
+   "差分内容": "設計の移行先DB関連記述は ec-cube-enterprise を正とし、反映先を dtb_product_class の order_quantity_01〜08 としているが、実装は別補助表 dtb_sales_quantity を更新している。反証検索で ProductClassRepository に dtb_product_sub_class / order_quantity 更新のコメントアウトはあるが、B02-01 から実行される実装ではない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbSalesQuantityRepository.php:113",
+   "設計書参照": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-3:916",
+   "根拠区分": "UNCERTAIN",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html:1042-1043 の正本は期間別値を「販売数集計データへ更新」とだけ記し、`dtb_product_class.order_quantity_01`〜`08` や「補助表を設けない」は正本部に存在しない。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Repository/DtbProductSubClassRepository.php:632-645 は旧実装で `UPDATE dtb_product_sub_class SET order_quantity_01 = 0, ... order_quantity_08 = :sales_365day` とする。pf-api/src/Resources/config/doctrine/DtbProductSubClass.orm.yml:82-138 と deck-api/src/Resources/config/doctrine/DtbProductSubClass.orm.yml:82-138 も同列を `DtbProductSubClass` に対応づける。pf-api、pf-eccube3、pf-article、deck-apiを `order_quantity_01`〜`08`、`dtb_product_class`、`dtb_sales_quantity` で横断したが、移行先を `dtb_product_class` とし「補助表を設けない」と決定する旧実装根拠は見つからない。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Entity/ProductClass.php:320-342 には `order_quantity_01`〜`order_quantity_08` が実在する一方、ec-cube-enterprise/src/Eccube/Repository/DtbSalesQuantityRepository.php:113-155 の実行経路は `dtb_sales_quantity.sales_quantity_01`〜`08` をINSERT/UPDATEする。",
+   "根拠検証メモ": "移行時の保存先を `dtb_product_class` と決定した正本設計・移行マッピング資料が不足している。旧実装は同名列を別表 `dtb_product_sub_class` に持つため、LEGACY_BACKEDともUNSUPPORTEDとも断定できない。",
+   "対応の根拠(現develop)": "B02-01 の反映先は補助表 `dtb_sales_quantity` のままで、`src/Eccube/Repository/DtbSalesQuantityRepository.php:113-141` `INSERT INTO dtb_sales_quantity ( product_class_id, base_info_id, sales_location, sales_quantity_01, … sales_quantity_08, update_date )`、同:143-155 `UPDATE dtb_sales_quantity SET … sales_quantity_08 = :sales_365day` を実行する。`dtb_product_class.order_quantity_01`〜`08` への書き込みは `src/Eccube/Service/ShoppingService.php:81-87` の受注時インクリメント（`->setOrderQuantity01($qty + $ProductClass->getOrderQuantity01())` ほか）のみで、B02-01 バッチ経路からの更新は無く、`ProductClassRepository.php:1111` の updateProductSummaryColumns はコメントアウトのまま。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Repository/DtbSalesQuantityRepository.php"
+    ]
+   }
+  },
+  {
+   "rowId": 140,
+   "機能No": "B02-03",
+   "機能名": "B02-03 期間別入庫数集計バッチ",
+   "ドメイン": "b02",
+   "区分(画面種別)": "batch",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "コンソールのバッチコマンドは product:batch updateProductSummaryForStockUp として実行する。",
+   "実装実態": "実装コマンド名は eccube:aggregate-stock-up。updateProductSummaryForStockUp / product:batch は src/Eccube と html 配下の再検索でも見つからない。",
+   "差分内容": "設計の外部契約である起動コマンド名と実装の AsCommand name が一致しない。探索範囲: src/Eccube/Command, src/Eccube/Service, src/Eccube/Repository, html。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/AggregateStockUpCommand.php:34",
+   "設計書参照": "excel_to_html/output/0402_基本設計仕様書(バッチ_在庫管理).html#sheet-5:1205",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0402_基本設計仕様書(バッチ_在庫管理).html:1328 の正本は実行トリガー「スケジュール起動(Step Functions)」「手動実行」のみで、`product:batch updateProductSummaryForStockUp` は正本部（1292-1342）に存在しない。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Command/ProductBatch.php:20 は `'updateProductSummaryForStockUp' => ...UpdateProductSummaryForStockUp`、同:30-32 は入口を `product:batch` とする。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Command/AggregateStockUpCommand.php:30-35 は `bin/console eccube:aggregate-stock-up`、`#[AsCommand(name: 'eccube:aggregate-stock-up'...)]` とする。旧名は新実装の src/Eccube と html を横断検索して登録なし。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Command/AggregateStockUpCommand.php:34` `#[AsCommand(name: 'eccube:aggregate-stock-up', description: '期間別入庫数集計バッチ')]` のままで、同32行の usage も `bin/console eccube:aggregate-stock-up`。スナップショット全体（src/, script/ops/**, bin/, app/**, .github/workflows/**）を `product:batch` / `updateProductSummaryForStockUp` で grep してもヒットは `src/Eccube/Command/InventoryReflectionCommand.php:29,32` の3系由来コメントのみで、設計名の起動口は存在しない。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "UNCHANGED"
+   }
+  },
+  {
+   "rowId": 141,
+   "機能No": "B02-03",
+   "機能名": "B02-03 期間別入庫数集計バッチ",
+   "ドメイン": "b02",
+   "区分(画面種別)": "batch",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "指定の期間に入庫した在庫数を商品コード、店舗、在庫区分ごとに集計し、商品コード・店舗・在庫場所が一致する集計データを更新、なければ新規登録する。",
+   "実装実態": "集計SQLは ps.product_class_id と sh.base_info_id のみを SELECT/GROUP BY し、dtb_stock_up_quantity エンティティも product_class_id と base_info_id だけを保持する。stock_location_id / 在庫区分は保持・集計キーに含まれない。",
+   "差分内容": "設計は店舗に加えて在庫区分/在庫場所単位の集計・更新を要求するが、実装は商品規格ID・店舗ID単位に集約している。ProductStock には stock_location_id が存在するが、当該バッチの集計SQL・保存先には使われていない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbStockUpQuantityRepository.php:152",
+   "設計書参照": "excel_to_html/output/0402_基本設計仕様書(バッチ_在庫管理).html#sheet-5:1152",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0402_基本設計仕様書(バッチ_在庫管理).html:1316-1317、同:1320 は商品コード・店舗・在庫区分ごとの集計を明記し、同:1325-1327 は「商品コード、店舗、在庫場所」が一致すれば更新、なければ新規登録すると正本セルで定める。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Repository/StockHistoryRepository.php は存在せず、旧集計の実体はリポジトリ横断検索で商品規格単位だった。pf-eccube3/app/Plugin/HareruyaEc/Repository/DtbProductSubClassRepository.php:653-670 も保存キーは `product_class_id` のみで、在庫場所軸はリニューアル正本の追加要求である。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Repository/DtbStockUpQuantityRepository.php:151-180 は `ps.product_class_id, sh.base_info_id` だけをSELECT/GROUP BYし、同:195-220 の保存先も `product_class_id, base_info_id` のみで `stock_location_id` / 在庫区分を保持しない。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Repository/DtbStockUpQuantityRepository.php:151-152,179` の集計SQLは `SELECT ps.product_class_id, sh.base_info_id, ...` / `GROUP BY ps.product_class_id, sh.base_info_id` のままで stock_location_id（在庫区分）を含まない。保存側 `同ファイル:199` `findOneBy(['ProductClass' => $stockUpQuantity['product_class_id'], 'BaseInfo' => $stockUpQuantity['base_info_id']])`、`:246` `WHERE product_class_id = :product_class_id AND base_info_id = :base_info_id` も2キーのみ。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "UNCHANGED"
+   }
+  },
+  {
+   "rowId": 142,
+   "機能No": "B02-03",
+   "機能名": "B02-03 期間別入庫数集計バッチ",
+   "ドメイン": "b02",
+   "区分(画面種別)": "batch",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "取得対象（＝集計対象）の在庫変動区分は親区分が「入庫」「買取」のもののみとし、移動や分割などで入庫した在庫は集計に含まない。",
+   "実装実態": "実装は MtbStockChangeType::BE_STOCKED と MtbStockChangeType::INVENTORY_ADJUSTMENT を対象にし、SQL条件も sctd.stock_change_type_id IN (:be_stocked, :inventory_adjustment) である。コメント上も「入庫・棚卸」と記載されている。",
+   "差分内容": "設計のスター付きカスタマイズ要求は親区分「入庫」「買取」のみだが、実装は「入庫」「棚卸/在庫調整」相当を対象にしており、買取対象が確認できない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbStockUpQuantityRepository.php:147",
+   "設計書参照": "excel_to_html/output/0402_基本設計仕様書(バッチ_在庫管理).html#sheet-5:1154",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0402_基本設計仕様書(バッチ_在庫管理).html:1322 は親区分が「入庫」「買取」のもののみ、同:1323 は「移動や分割などで入庫した在庫は集計に含まない」と正本セルで明記する。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Service/Product/UpdateProductSummaryForStockUp.php:30-34 は旧リポジトリの `getStockUpForUpdateSummary()` 結果を処理しており、旧挙動の詳細はリバース文書上「入庫・マスタ更新」だが、本件は旧挙動に依存せず正本要求で確定する。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Repository/DtbStockUpQuantityRepository.php:147-148 は対象定数を `BE_STOCKED` と `INVENTORY_ADJUSTMENT` にし、同:175-178 は `stock_change_type_id IN (:be_stocked, :inventory_adjustment)` とするため、「買取」ではなく「棚卸/在庫調整」を含めている。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Repository/DtbStockUpQuantityRepository.php:147-148` `$beStocked = MtbStockChangeType::BE_STOCKED; $inventoryAdjustment = MtbStockChangeType::INVENTORY_ADJUSTMENT;`、`:177` `AND sctd.stock_change_type_id IN (:be_stocked, :inventory_adjustment)`、`:109` のコメントも「入庫分類（入庫・棚卸）」のまま。`src/Eccube/Entity/Master/MtbStockChangeType.php:28` に買取相当の `public const PURCHASE = 2;` はあるが当該SQLで参照されていない。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "UNCHANGED"
+   }
+  },
+  {
+   "rowId": 143,
+   "機能No": "B02-03",
+   "機能名": "B02-03 期間別入庫数集計バッチ",
+   "ドメイン": "b02",
+   "区分(画面種別)": "batch",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "対象が無い場合は更新を行わずに終了する。",
+   "実装実態": "handle() は集計データ取得前に clearStockUpQuantityForAggregate() を呼び、同メソッドは DELETE FROM dtb_stock_up_quantity を実行する。その後 getStockUpForAggregate() の結果が空でも復元処理はない。",
+   "差分内容": "設計は対象なし時に更新しないことを要求するが、実装は対象有無判定の前に集計テーブルを全削除する。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Product/BatchAggregateStockUpAction.php:39",
+   "設計書参照": "excel_to_html/output/0402_基本設計仕様書(バッチ_在庫管理).html#sheet-5:1210",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0402_基本設計仕様書(バッチ_在庫管理).html:1314-1340 の正本部は集計・保存・エラー時メールを記すが、「対象が無い場合は更新しない」は存在しない。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Service/Product/UpdateProductSummaryForStockUp.php:32-40 は先に `$stockHistories` を取得し、そのforeach内だけで更新するため、空結果なら更新を行わず終了する。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Service/Product/BatchAggregateStockUpAction.php:36-44 は対象取得前に `clearStockUpQuantityForAggregate()` を呼び、ec-cube-enterprise/src/Eccube/Repository/DtbStockUpQuantityRepository.php:99-103 は無条件に `DELETE FROM dtb_stock_up_quantity` を実行する。空結果でも削除をcommitする。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Service/Product/BatchAggregateStockUpAction.php:39-40` は `$this->stockUpQuantityRepository->clearStockUpQuantityForAggregate();` の後に `$stockUpData = $this->stockUpQuantityRepository->getStockUpForAggregate();` を呼ぶ順序のままで、対象有無の判定前に全削除する。`src/Eccube/Repository/DtbStockUpQuantityRepository.php:101-103` も `executeStatement('DELETE FROM dtb_stock_up_quantity')` を無条件実行し、空結果時の早期 return・復元は無い。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "NOT_FOUND",
+    "stale": "UNCHANGED",
+    "quoteDetail": [
+     "対象が無い場合は更新しない"
+    ]
+   }
+  },
+  {
+   "rowId": 144,
+   "機能No": "B02-03",
+   "機能名": "B02-03 期間別入庫数集計バッチ",
+   "ドメイン": "b02",
+   "区分(画面種別)": "batch",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "100件ごとに変更を反映しキャッシュをクリアしながら処理し、途中失敗時は反映済みの行のみ更新が残る。",
+   "実装実態": "実装は connection->beginTransaction() で全体を1トランザクションにし、例外時は rollBack() する。100件ごとの flush/clear や部分反映は実装されていない。",
+   "差分内容": "設計の部分反映・再実行回収モデルと、実装の全体トランザクション/全体ロールバックが一致しない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Product/BatchAggregateStockUpAction.php:36",
+   "設計書参照": "excel_to_html/output/0402_基本設計仕様書(バッチ_在庫管理).html#sheet-5:1210",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0402_基本設計仕様書(バッチ_在庫管理).html:1314-1340 の正本部に100件単位flush/clear、部分反映、トランザクション方針は存在しない。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Service/Product/UpdateProductSummaryForStockUp.php:33-40 は各行を更新し、`if ($index % 100 === 0) { flush(); EntityManagerUtil::clearCache(...); }`、最後に `flush()` する。全体を囲う明示トランザクションはない。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Service/Product/BatchAggregateStockUpAction.php:36-47 は `beginTransaction()`、全件後 `commit()`、例外時 `rollBack()` とし、100件単位の部分反映を行わない。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Service/Product/BatchAggregateStockUpAction.php:36-48` は `$connection->beginTransaction();` → `foreach ($stockUpData as $data) { $this->stockUpQuantityRepository->updateStockUpQuantityColumns($data); }` → `$connection->commit();` / `catch (\\Throwable $e) { $connection->rollBack(); throw $e; }` の全体1トランザクションのままで、100件ごとの flush()/clear() や中間コミットは存在しない。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "NO_QUOTE",
+    "stale": "UNCHANGED"
+   }
+  }
+ ]
+}

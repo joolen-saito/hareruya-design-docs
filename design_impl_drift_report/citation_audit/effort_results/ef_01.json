@@ -1,0 +1,313 @@
+{
+  "packetId": "ef_01",
+  "results": [
+    {
+      "rowId": 1,
+      "authorCat": "7",
+      "verdict": "UPHELD",
+      "correctedCat": null,
+      "effortDays": 8.0,
+      "effortBasis": "SmaregiStockApiClientへの個別・一括更新API追加に加え、在庫編集、一括編集、CSV、移動、分割結合、棚卸しの複数経路へ送信契機を組み込む必要がある。既存の認証・API呼出記録は流用できるが影響経路が広い。",
+      "needsDecision": false,
+      "reason": "主な改修対象は在庫計算そのものではなく、各在庫変更をスマレジへ反映する外部API呼出とその失敗処理であるため区分7が妥当。",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 2,
+      "authorCat": "5",
+      "verdict": "REFUTED",
+      "correctedCat": "7",
+      "effortDays": 3.0,
+      "effortBasis": "SmaregiStockApiClientに在庫相対値更新を追加し、StockApprovalStoreActionとStockBulkApprovalStoreActionの2保存経路へ呼出を接続する。件数上限の分岐とエラー文言も追加する。",
+      "needsDecision": false,
+      "reason": "件数上限だけなら業務ロジックだが、乖離の中心は管理画面操作の結果をスマレジ更新APIへ送る副作用の欠落であり、実際に触る主対象は外部連携である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 3,
+      "authorCat": "7",
+      "verdict": "UPHELD",
+      "correctedCat": null,
+      "effortDays": 5.0,
+      "effortBasis": "既存のStockChangeCsvImportHandler、DtbStockEditCsv、S3アップロード・履歴表示は流用できる。追加対象は100件単位の分割、スマレジ一括更新API、問合せID・callback情報の保持、結果状態の履歴反映で複数サービスに及ぶ。",
+      "needsDecision": false,
+      "reason": "S3保存自体は現コードに存在するが、残る主要改修はスマレジ一括API呼出と非同期結果連携であり区分7は正しい。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 4,
+      "authorCat": "7",
+      "verdict": "UPHELD",
+      "correctedCat": null,
+      "effortDays": 5.0,
+      "effortBasis": "既存Webhook受信・メッセージdispatchとStockEditCsvのS3取得基盤を流用しつつ、一括更新専用callback判定、問合せIDとの対応付け、CSV取得、在庫反映、履歴結果更新を新設する。",
+      "needsDecision": false,
+      "reason": "callback受信からS3取得、在庫更新、履歴登録まで外部連携の非同期副作用を追加する改修であり区分7が妥当。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 5,
+      "authorCat": "5",
+      "verdict": "UPHELD",
+      "correctedCat": null,
+      "effortDays": 1.5,
+      "effortBasis": "SmaregiStockBackfillCommandへ時間幅指定を追加し、Actionで駆動時刻と開始時刻を算出する。日跨ぎを考慮して対象日を取得し、API結果の取引更新時間を範囲で絞る必要がある。",
+      "needsDecision": false,
+      "reason": "変更対象は既存バッチの取得期間計算と抽出条件であり、業務ロジック区分5に該当する。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 6,
+      "authorCat": "1",
+      "verdict": "UPHELD",
+      "correctedCat": null,
+      "effortDays": 0.25,
+      "effortBasis": "ProductControllerの言語コード変換をjp/en契約に合わせる小規模修正で、対象は1メソッド。",
+      "needsDecision": false,
+      "reason": "URLパス上の言語値の受理条件という外部API契約の修正なので区分1が正しい。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 7,
+      "authorCat": "1",
+      "verdict": "UPHELD",
+      "correctedCat": null,
+      "effortDays": 0.25,
+      "effortBasis": "対象Controllerの404 catchでerrors配列をmessageへ変える。共通化しない場合は1レスポンス分岐の修正で済む。",
+      "needsDecision": false,
+      "reason": "HTTPエラー本文のキーは外部レスポンス契約そのものであり区分1が妥当。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 8,
+      "authorCat": "1",
+      "verdict": "UPHELD",
+      "correctedCat": null,
+      "effortDays": 0.5,
+      "effortBasis": "ProductRepositoryのscalar型指定とPopupResponseBuilderのintキャストを合わせて修正する。共通ビルダー変更のため他ポップアップ経路への影響確認が必要。",
+      "needsDecision": false,
+      "reason": "JSONレスポンス各項目の型を変える外部インタフェース契約の修正なので区分1が正しい。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 9,
+      "authorCat": "1",
+      "verdict": "REFUTED",
+      "correctedCat": "5",
+      "effortDays": 1.0,
+      "effortBasis": "Controllerでfoil_flgとpriceを受け、ProductRepositoryのネイティブSQLへ動的な優先順を追加する。旧pf-apiの同等実装を参照できるため新規設計量は小さいが、検索順序全体の組替えが必要。",
+      "needsDecision": false,
+      "reason": "クエリ項目の受付だけでなく、フォイル・価格に応じて抽出結果の並びを変えることが修正の中心であり、実際に触るのは検索・並び替えロジックなので区分5。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 10,
+      "authorCat": "1",
+      "verdict": "UPHELD",
+      "correctedCat": null,
+      "effortDays": 0.25,
+      "effortBasis": "A02-02の例外レスポンス配列をerrorsからmessageへ変更する1分岐の修正。",
+      "needsDecision": false,
+      "reason": "404レスポンス本文のキー差であり外部インタフェース契約区分1。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 11,
+      "authorCat": "1",
+      "verdict": "UPHELD",
+      "correctedCat": null,
+      "effortDays": 0.25,
+      "effortBasis": "旧商品IDルートのBaseApiException応答を設計のcode/message形式に合わせる小規模修正。",
+      "needsDecision": false,
+      "reason": "JSONエラー本文の形式変更なので区分1が正しい。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 12,
+      "authorCat": "5",
+      "verdict": "REFUTED",
+      "correctedCat": "1",
+      "effortDays": 0.5,
+      "effortBasis": "旧商品ID用RepositoryのSELECT/RSMに既存結合先のcardIdを加え、PopupResponseBuilderの当該レスポンスへ1項目追加する。マイグレーションや新規業務処理は不要。",
+      "needsDecision": false,
+      "reason": "不足しているのは成功JSONのレスポンス項目であり、業務ロジックではなく外部インタフェース契約を直す作業。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 13,
+      "authorCat": "1",
+      "verdict": "UPHELD",
+      "correctedCat": null,
+      "effortDays": 0.5,
+      "effortBasis": "旧商品ID用Repositoryのprice/stock scalar型と共通PopupResponseBuilderのキャストを修正し、他経路への影響を避ける調整が必要。",
+      "needsDecision": false,
+      "reason": "成功レスポンスの数値型は外部JSON契約であり区分1が妥当。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 14,
+      "authorCat": "1",
+      "verdict": "UPHELD",
+      "correctedCat": null,
+      "effortDays": 0.25,
+      "effortBasis": "ProductControllerの旧商品IDルートでjp/enを明示的にmatchし、不正値を既存例外へ送る1メソッド修正。",
+      "needsDecision": false,
+      "reason": "パス言語値の意味と受理範囲を直す外部API契約なので区分1。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 15,
+      "authorCat": "1",
+      "verdict": "UPHELD",
+      "correctedCat": null,
+      "effortDays": 0.25,
+      "effortBasis": "旧商品ID・言語指定ルートの404 JSON組立をcode/message形式へ変更する。",
+      "needsDecision": false,
+      "reason": "HTTP 404本文形式の差なので区分1が正しい。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 16,
+      "authorCat": "1",
+      "verdict": "UPHELD",
+      "correctedCat": null,
+      "effortDays": 0.5,
+      "effortBasis": "旧商品ID用Repositoryの4項目のscalar型と共通ビルダーのstock/weeklySoldキャストを調整する。",
+      "needsDecision": false,
+      "reason": "JSON項目の型を文字列へ合わせる外部レスポンス契約の変更であり区分1。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 17,
+      "authorCat": "1",
+      "verdict": "UPHELD",
+      "correctedCat": null,
+      "effortDays": 0.5,
+      "effortBasis": "旧商品ID用SQL/RSMへfoilFlgを追加し、PopupResponseBuilderのincludeBeltUrl分岐を見直してbeltUrlとfoilFlgを必要なレスポンスへ共存させる。",
+      "needsDecision": false,
+      "reason": "成功レスポンス項目の追加であり外部インタフェース契約区分1が妥当。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 18,
+      "authorCat": "1",
+      "verdict": "UPHELD",
+      "correctedCat": null,
+      "effortDays": 0.25,
+      "effortBasis": "更新商品規格取得SQLのaliasとResultSetMappingの出力キーをstrageCodeIdへ合わせる1リポジトリ内の修正。",
+      "needsDecision": false,
+      "reason": "JSONレスポンスのフィールド名は外部契約であり区分1が正しい。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 20,
+      "authorCat": "5",
+      "verdict": "REFUTED",
+      "correctedCat": "1",
+      "effortDays": 0.5,
+      "effortBasis": "ProductRepositoryまたはControllerで2つの日時値をISO8601へ整形してから既存result配列へ返す。対象は1 API・2フィールド。",
+      "needsDecision": false,
+      "reason": "日時計算の業務ルールではなく、JSONレスポンスの表現形式を保証する外部インタフェース契約の修正。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 21,
+      "authorCat": "1",
+      "verdict": "UNSURE",
+      "correctedCat": null,
+      "effortDays": 0,
+      "effortBasis": "正本HTML内でリバース詳細設計はGET/POST /order/print/directを現行挙動として正とする一方、Excel基本設計部はGET /order/prints/{店舗ID}とA05-02分離を要求しており、改修先URLを確定できない。",
+      "needsDecision": true,
+      "reason": "どちらのエンドポイント契約へ合わせるかの仕様決定が先であり、ルート数、プリンタ設定変更、互換経路の要否が決まるまで工数を確定できない。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 22,
+      "authorCat": "5",
+      "verdict": "UPHELD",
+      "correctedCat": null,
+      "effortDays": 0.75,
+      "effortBasis": "OrderRepositoryの本店・支店向け取得結果へ配送方法判定値を加え、OrderDirectPrintActionでスムーズ店頭受取時だけ文言へ置換する。既存Delivery定数を流用できる。",
+      "needsDecision": false,
+      "reason": "印字文言だけの固定変更ではなく、配送方法を取得して条件分岐する必要があるため業務ロジック区分5。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 23,
+      "authorCat": "5",
+      "verdict": "UNSURE",
+      "correctedCat": null,
+      "effortDays": 0,
+      "effortBasis": "設計はdtb_order_number.valueを受注IDで引くとするが、実装のdtb_order_numberはbase_info_id単位の採番カウンタでorder_idを持たない。受注に紐づく候補はdtb_waiting_numberまたはdtb_order.waiting_numberであり参照元が確定していない。",
+      "needsDecision": true,
+      "reason": "店頭注文番号としてどの永続値を正とするか決めないと、単純な検索追加かデータモデル変更かが変わり、区分・工数を確定できない。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 24,
+      "authorCat": "7",
+      "verdict": "UPHELD",
+      "correctedCat": null,
+      "effortDays": 0.5,
+      "effortBasis": "GetRequestでXMLが空でない場合にvar/log/print_logsを作成し、一意名で書き出す処理をControllerまたは小規模サービスへ追加する。外部ストレージやDB変更は不要。",
+      "needsDecision": false,
+      "reason": "印刷処理の監査・障害調査用ログという副作用を追加するため区分7は正しい。ただしローカルファイル1経路のみで、機械見積の6.75人日は過大。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 25,
+      "authorCat": "4",
+      "verdict": "REFUTED",
+      "correctedCat": "1",
+      "effortDays": 0.25,
+      "effortBasis": "OrderControllerの未知ConnectionType分岐が返すHTTPステータス・ヘッダ・本文の扱いを確定した契約へ合わせる1分岐の修正。",
+      "needsDecision": false,
+      "reason": "値の妥当性判定自体は既にあり、乖離は不正値時に返すHTTP応答の有無・ステータスであるため外部インタフェース契約区分1。",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 26,
+      "authorCat": "5",
+      "verdict": "UPHELD",
+      "correctedCat": null,
+      "effortDays": 1.0,
+      "effortBasis": "支店用getDirectPrintOrderListのネイティブSQLへスムーズ店頭受取の抽出枝を追加する。本店用QueryBuilderに同等条件があり参照できるが、UNIONとパラメータの調整が必要。",
+      "needsDecision": false,
+      "reason": "印刷対象受注の抽出条件を変える改修であり業務ロジック区分5が妥当。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 27,
+      "authorCat": "5",
+      "verdict": "UNSURE",
+      "correctedCat": null,
+      "effortDays": 0,
+      "effortBasis": "同じ設計内で処理フローはconfirm_dateを現在時刻にするとし、移行先説明・DBカラム節はpicking_dateとpick_finish_dateを設定するとしている。さらに現実装は本店と支店でconfirmDate/pickingDateを分けている。",
+      "needsDecision": true,
+      "reason": "ピック中遷移時に更新すべき日時列と本店・支店差の有無が確定しておらず、仕様決定前に工数を出せない。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 28,
+      "authorCat": "1",
+      "verdict": "UNSURE",
+      "correctedCat": null,
+      "effortDays": 0,
+      "effortBasis": "Excel基本設計はGET /order/prints/{店舗ID}とA05-02分離を要求するが、同一HTMLのリバース詳細設計はGET/POST /order/print/directを正とし、1エンドポイントのConnectionType分岐を要求している。",
+      "needsDecision": true,
+      "reason": "rowId 21と逆向きの仕様が同じ正本に併存している。新URLへの全面変更、互換ルート併設、A05-02分離のどれを採るかで改修量が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 29,
+      "authorCat": "5",
+      "verdict": "REFUTED",
+      "correctedCat": "4",
+      "effortDays": 0.25,
+      "effortBasis": "Controller入口でBaseInfoRepositoryによる店舗ID存在確認を行い、不在時に既存404例外またはResponseを返す。ルートの整数制約は既にあるため追加は存在検証1件。",
+      "needsDecision": false,
+      "reason": "不足しているのは店舗IDの存在検証であり、検索・計算などの業務ロジックではなく入力検証区分4。",
+      "confidence": "high"
+    }
+  ]
+}

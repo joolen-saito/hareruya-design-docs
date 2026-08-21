@@ -1,0 +1,165 @@
+{
+  "packetId": "rest_36",
+  "results": [
+    {
+      "rowId": 984,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html:1102-1106 のExcel正本は「メンバー管理にて設定されている店舗を会場のデフォルト表示とする」「店舗を複数選択できるようにする」とし、同:1128 は識別ID 6を「店舗」「複数選択」「デフォルト表示の店舗」とする。`venue`/`MtbVenue`で検索し`shop`を非表示にする具体記述は正本部（sheet-3の1058-1178行）に存在せず、むしろ現行の店舗複数選択を指示する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/Event/EventListType.php:61-74 は `shop` を複数選択で定義した後に `->add('venue' ... 'class' => '...MtbVenue')` を定義する一方、/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Event/eventlist.twig:58-64 は `searchForm.venue` のみ描画する。/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Repository/DtbEventRepository.php:100-105 も `$venue = $searchData['venue']; ... andWhere('e.venue = :venue')` と会場検索する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/SearchEventType.php:95-105 は `base_info` を `multiple => true`、`data => $options['base_info_default']` で定義し、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Event/index.twig:83-86 がこれを表示する。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbEventRepository.php:122-130 は `IDENTITY(e.BaseInfo) IN (:baseInfoIds)` で店舗検索する。",
+      "note": "具体的なvenue/shop契約は旧実装由来である。最新Excel正本は店舗の複数選択・デフォルト店舗を要求しており、旧実装由来の期待値とは競合する。"
+    },
+    {
+      "rowId": 985,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html:1124 のExcel正本セルは識別ID 2を「イベント名、略称」、最大値「50」、説明「部分一致」と明記する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/Event/EventListType.php:35-42 は `multi` に `new Assert\\Length(... 'max' => $app['config']['stext_len'])` を付与する。/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Repository/DtbEventRepository.php:52-70 は語を分割し、`$searchColums = ['nameJp', 'nameEn', 'shortNameJp', 'shortNameEn']` をLIKE検索する。ただし同:65-70は全条件を一つの `or` で結ぶため、「語ごとAND」までは旧実装にも根拠がない。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/SearchEventType.php:39-43 は `multi` をTextTypeで定義するだけでLength制約がない。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbEventRepository.php:72-90 は `$searchColumns = ['nameJp', 'nameEn']` のみを全体OR検索し、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Entity/DtbEvent.php:46-50 にも名称2列しかない。",
+      "note": "最大50文字・イベント名と略称の部分一致は正本に直接あるため真の乖離。指摘中の「語ごとAND」は正本にも旧実装にもなく、その部分は過剰記述である。"
+    },
+    {
+      "rowId": 986,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html:1108-1131 のExcel正本の処理概要・項目表には検索実行と入力項目だけがあり、指定された検索結果・0件文言は存在しない（確認範囲: sheet-3正本部1058-1178行）。具体文言は同:1179以降のリバース詳細設計にのみある。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Event/eventlist.twig:106-109 は `検索結果 ... {{ pagination.totalItemCount }} 件 ... が該当しました` を描画し、同:180-183 は0件時に `検索条件に該当するデータがありませんでした。` を描画する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Event/index.twig:102-104 は `admin.common.search_result`、同:209-213 は `admin.common.search_no_result` と補助文を表示する。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:1735,1739-1740 の実値はそれぞれ `検索結果：%count%件が該当しました`、`検索条件に合致するデータが見つかりませんでした`、`検索条件を変えて、再度検索をお試しください`。",
+      "note": "文言の具体値は旧テンプレート由来で、Excel正本にはない。"
+    },
+    {
+      "rowId": 987,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html:1107 のExcel正本は「カスタマイズ要件に記載の内容以外は現行踏襲とする」とだけ記載し、deleted_at除外の具体記述はsheet-3正本部1058-1178行に存在しない。具体要件は同:1179以降のリバース詳細設計にある。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/doctrine/Plugin.HareruyaEc.Entity.DtbEvent.dcm.yml:173-178 は `deletedAt ... column: deleted_at`、同:229-233 は `gedmo: soft_deleteable: field_name: deletedAt` と定義し、DoctrineのSoftDeleteableフィルタで論理削除行を通常検索から除外する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Entity/DtbEvent.php:28-31 はORM Entity定義のみでGedmo SoftDeleteable属性がなく、同:135-136 は `deleted_at` 列だけを持つ。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbEventRepository.php:61-64 の一覧QueryBuilderも `leftJoin` のみで `e.deletedAt IS NULL` を追加していない。",
+      "note": "旧実装では明示WHEREではなくGedmo SoftDeleteableが除外根拠だった。現行DtbEventにはその属性がない。"
+    },
+    {
+      "rowId": 988,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html:1353-1355 のExcel正本は検索結果表示・編集・削除を記載するだけで、URL、ルート名、フォーム名、CSRF設定はsheet-4正本部1303-1423行に存在しない。これらの具体値は同:1424以降のリバース詳細設計にのみある。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/EventServiceProvider.php:25-34 は `/event/list`=`admin_event_list`、`/event/search/{page_no}`=`admin_event_search`、`/event/page/{page_no}`=`admin_event_page` を登録する。/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/Event/EventListType.php:19-24,92-95 は `csrf_protection => false` とフォーム名 `admin_event_list` を返す。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Event/EventController.php:63-65 は `/event`=`admin_event_index` と `/event/page/{page_no}`=`admin_event_index_page` のGET/POSTに集約する。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/SearchEventType.php:139-143 はprefixを `admin_search_event` とし、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Event/index.twig:39-42 はPOST先を`admin_event_index`にして `_token` を描画する。",
+      "note": "具体的なルート・フォーム契約は旧実装由来である。"
+    },
+    {
+      "rowId": 989,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html:1352-1376 のExcel正本の処理概要・一覧項目表にはセッションキーや保持・削除手順が存在しない（確認範囲: sheet-4正本部1303-1423行）。具体キーは同:1424以降のリバース詳細設計にのみある。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/SearchControllerTrait.php:56-59 は初期表示で `admin.event.search`、`.page_no`、`.page_count` をremoveする。同:91-99 は検索・ページ・sort・order各キーを組み立て、同:191-196 はそれらをsessionへsetする。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Event/EventController.php:44-48 はキーを `eccube.admin.event.search`、`.page_no`、`.page_count` と定義し、同:192-198 は初期表示分岐でも検索条件とページ番号を `session->set` する。独立したsort/orderキーは定義されていない。",
+      "note": "セッションキーと初期化・保持方式の具体値は旧実装由来である。"
+    },
+    {
+      "rowId": 990,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html:1102-1106,1128 のExcel正本はデフォルト店舗と店舗の複数選択を明記する。`venue`/`MtbVenue`検索および`shop`非表示・未使用の具体記述はsheet-3/4正本部1058-1178,1303-1423行に存在せず、最新正本はむしろ店舗検索を要求する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/Event/EventListType.php:61-74 は`shop`と`venue`を定義し、/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Event/eventlist.twig:58-64 は`venue`だけを描画する。/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Repository/DtbEventRepository.php:100-105 は `e.venue = :venue` を検索条件にする。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Event/EventController.php:70-75 はメンバーのデフォルト店舗を`base_info_default`へ渡し、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/SearchEventType.php:95-105 は店舗を複数選択で定義する。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbEventRepository.php:122-130 は選択店舗を `IDENTITY(e.BaseInfo) IN (:baseInfoIds)` で検索する。",
+      "note": "venue/shopの具体契約は旧実装由来で、最新Excel正本の店舗複数選択要件と競合する。"
+    },
+    {
+      "rowId": 991,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html:1124 のExcel正本は検索項目を「イベント名、略称」、最大50、説明を「部分一致」と明記する。従って略称を検索対象から外す現行実装は正本に反する。ただし分割語をANDで結ぶ詳細は正本部にはない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Repository/DtbEventRepository.php:51-70 は全角空白を半角化し、空白・全角空白・カンマで分割し、`nameJp/nameEn/shortNameJp/shortNameEn`をLIKE検索する。ただし同:65-70は全LIKE句を単一の`or`で連結しており、指摘の「語ごとAND」は旧実装とも一致しない。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbEventRepository.php:69-90 は同様に正規化・分割するが、`$searchColumns = ['nameJp', 'nameEn']` のみを一つの `OR` にまとめる。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Entity/DtbEvent.php:46-50 にも略称列はない。",
+      "note": "略称検索欠落はSPEC_BACKED。語ごとANDという詳細だけは正本にも旧実装にも裏付けがない。"
+    },
+    {
+      "rowId": 992,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html:1125 のExcel正本は開催日Fromの説明に「開催日(From)>開催日(To)の場合エラー」と明記し、指摘の「範囲整合性チェックなし」と正反対である。チェックなしの記述は同:1179以降のリバース詳細設計にのみある。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/Event/EventListType.php:44-60 はFrom/Toを `yyyy-MM-dd` のdateとして定義するが相互比較制約はない。/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Repository/DtbEventRepository.php:72-85 は `ed.startDate >= From` と `ed.startDate < To+1日` をAND適用する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/SearchEventType.php:44-78 はFrom/Toをsingle_textの日付にし、同:115-125 は `if ($startDateFrom > $startDateTo) ... addError(...'admin.common.date_range_error')` と正本どおり逆転エラーにする。",
+      "note": "期待値は旧実装由来だが、最新Excel正本は逆転時エラーを要求し、現行実装は正本を満たす。旧実装踏襲と正本のどちらを優先するかという設計矛盾がある。"
+    },
+    {
+      "rowId": 993,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html:1369-1370 のExcel正本は並べ替え項目を「イベントID／イベント名」、順を「昇順／降順」とするだけで、requestパラメータ`sort/order`、値`ASC/DESC`、不正値エラーはsheet-4正本部1303-1423行にない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/SearchControllerTrait.php:121-142 はrequestの`sort`/`order`を優先し、`/^(ASC|DESC|asc|desc)$/`に不一致なら `addError('admin.error.sort')` 後に初期表示へ戻す。/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Event/eventlist.twig:130-136 も`sort`と`order=ASC/DESC`をリンクへ渡す。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Event/index.twig:24-30,126-134 はhiddenの`sortkey/sorttype`と値`default/eventName`,`a/d`を使う。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbEventRepository.php:133-140 は`a`だけASC、それ以外をDESCとし、不明sortkeyは`e.id DESC`へフォールバックする。",
+      "note": "パラメータ名・値体系・不正値エラーは旧実装由来である。"
+    },
+    {
+      "rowId": 994,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html:1350,1356-1357 のExcel正本は表示項目へ「開催店舗」「開催日時」を追加するとし、同:1373 はラベルを「開催店舗」、説明を「イベントを開催する店舗名を表示する」と明記する。検索結果・0件文言の具体値は正本部にはなく旧実装由来。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Event/eventlist.twig:106-109 は `検索結果 N件が該当しました` 相当を、同:180-183 は `検索条件に該当するデータがありませんでした。` を表示する。旧一覧の列自体は同:149-153のイベントID・イベント名のみで、開催店舗追加は新正本のカスタマイズ要件である。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Event/index.twig:144-157 は開催店舗列に `admin.event.base_info` を使って店舗名を表示するが、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:6009 の実値は `店舗` で「開催店舗」ではない。検索文言は同:1735,1739-1740 の `検索結果：...`、`検索条件に合致...` と補助文である。",
+      "note": "少なくとも「開催店舗」ラベル差はExcel正本に直接裏付けられる。検索メッセージ部分は旧実装由来。"
+    },
+    {
+      "rowId": 995,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html:1303-1423 のsheet-4 Excel正本部にはCSSファイル名の記載がない。`eventlist.css`は同:1424以降のリバース詳細設計にのみ記載される。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Event/eventlist.twig:16-20 のstylesheetブロックは `<link rel=\"stylesheet\" href=\".../admin/assets/css/eventlist.css\">` を読み込む。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Event/index.twig:1-35 はjavascriptブロックのみで専用stylesheet読込がない。`eventlist.css`は `/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Event` と `/home/y-saito/Developments/ec-cube-enterprise/html` の横断検索で0件（検索語: `eventlist.css`, `eventlist`）。",
+      "note": "専用CSS名は旧テンプレート由来である。"
+    },
+    {
+      "rowId": 996,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html:1759 のExcel正本項目表は識別ID 1-13「支払方法」の初期値を「クレジットカード決済」と明記する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/EventController.php:70-76 は新規時に `findBy(['id' => Payment::EC_CREDIT])` し、`$event->setPayments($payments)` 後にフォームを作る。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Event/EventController.php:216-223 は新規`DtbEvent`へデフォルト店舗だけを設定する。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/EventType.php:67-73,159-168 は既存PaymentsにEC_CREDITがある場合だけ `$paymentsFormData` へ追加し、それを`data`にするため、新規の空Paymentsでは未選択になる。",
+      "note": "正本と旧実装の双方がクレジットカード初期選択を裏付ける。"
+    },
+    {
+      "rowId": 997,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html:1786 のExcel正本は削除ボタンについて「イベントを削除」とするだけで、確認文言へEvent.nameJpを埋め込む記述はsheet-5正本部1548-1949行に存在しない。イベント名埋込は同:1950以降のリバース詳細設計にのみある。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Event/eventdetail.twig:293 はイベント削除リンクに `data-message=\"{{ trans('admin.confirm.delete')|format(event.nameJp) }}\"` と当該イベント名を渡す。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Event/edit.twig:517 は削除モーダルの`%name%`へ `'admin.event.event_management'|trans` を渡す。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:1790,5908 により表示値は「…『イベント管理』を削除してよろしいですか？」となる。",
+      "note": "Event.nameJp埋込の具体要件は旧テンプレート由来である。"
+    },
+    {
+      "rowId": 998,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html:1715 と同:2129 のExcel正本は「日程情報がある場合、イベントの削除はできない」とするが、指定された日本語メッセージはsheet-5/6正本部1548-1949,2100-2131行に存在しない。具体文言はリバース詳細設計にのみある。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/EventController.php:168-172 は日程ありで `addError('admin.event.delete.failed')` し、/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/locale/message.ja.yml:1071 は同キーを `日程情報が存在する場合、イベント情報を削除することができません。` と定義する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Event/EventController.php:361-364 は日程ありで未定義キー `admin.event.delete.schedule_exists` をaddErrorする。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:6078 に存在する近似キーは `admin.event.delete.not.schedule_exists: 日程情報が登録されているため削除できません。先に日程を削除してください。` で、`admin.event.delete.schedule_exists`はsrc/Eccube全体でControllerの呼出し以外0件。",
+      "note": "削除禁止自体は正本にあり現行も満たす。具体メッセージと翻訳キーの根拠は旧実装で、現行にはキー取り違えがある。"
+    },
+    {
+      "rowId": 999,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html:1716-1717 のExcel正本はデッキ登録済み・申込済み日程を削除できないとするが、`deckerror`/`entryerror`の具体文言はsheet-5/6正本部にない。具体キー・文言はリバース詳細設計にのみある。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/EventController.php:211-223 はデッキ時 `admin.event.delete.deckerror`、申込時 `admin.event.delete.entryerror` をaddErrorする。/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/locale/message.ja.yml:1072-1073 はそれぞれ `デッキ登録済みの場合、イベント情報を削除することができません。`、`申込済みの場合、イベント情報を削除することができません。` と定義する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Event/ScheduleController.php:187-196 は同じ`deckerror`/`entryerror`キーをaddErrorするが、両キーはlocaleにない。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:6080-6081 に存在するのは `admin.event.delete.not.deck_exists: デッキ登録があるため削除できません` と `admin.event.delete.not.entry_exists: 申込があるため削除できません`。",
+      "note": "削除禁止ルールは正本にもあるが、指摘された専用文言・キーの所在は旧実装である。"
+    },
+    {
+      "rowId": 1000,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html:1714 のExcel正本は「すでに申込がある場合、支払方法は変更できない」とする。同:1718-1719 はさらに「クレジットカード決済をオフ」「有料かつオンライン受付あり日程」のエラーを規定するが、任意差分時の`paymenterror`表示とrefererリダイレクトという実装手順は正本部にない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/EventController.php:113-123 は支払方法差分と申込を調べ、`addError('admin.event.save.paymenterror')` 後にrefererへredirectする。/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/locale/message.ja.yml:1074 は `申込済みの場合、支払方法を変更できません。` と定義する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/EventType.php:67,159-168 は申込があると支払方法ChoiceTypeを `disabled => $hasEntry` にして変更自体を受理しない。同:277-287 は別途「支払方法オフ＋有料オンライン受付日程」のフォームエラーを実装する。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Event/EventEditAction.php:33-88 には`paymenterror`やrefererリダイレクトはない。",
+      "note": "支払方法変更禁止という正本上の結果はdisabledで満たす一方、専用エラーとrefererリダイレクトは旧実装由来で未移植。"
+    },
+    {
+      "rowId": 1001,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html:1784 のExcel正本は「日程追加画面へ遷移」とだけ記載し、sheet-7正本部2282-2495行にもURL・ルート名・GET/POST分離はない。`schedule/new`と`admin_schedule_new`の具体値は同:2496以降のリバース詳細設計にのみある。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/EventServiceProvider.php:59-68 はGET `/{eventId}/schedule/new`=`admin_schedule_new` とPOST `/{eventId}/schedule/create`=`admin_schedule_create` を別ルートで登録する。/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Event/eventdetail.twig:277 も日程追加リンクに`admin_schedule_new`を使う。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Event/ScheduleController.php:42-49 はGET/POSTの両方を `/{eventId}/schedule/create`=`admin_schedule_create` に集約する。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Event/edit.twig:489-493 の日程追加リンクも`admin_schedule_create`を使う。",
+      "note": "画面遷移そのものは現行にもあるが、URL・ルート名・HTTPメソッド分離の具体契約は旧実装由来である。"
+    },
+    {
+      "rowId": 1002,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html:2375 のExcel正本は「編集権限を保持している店舗のイベントのみ編集を可能とする」、同:2378-2379 は「メンバーが権限を保持している店舗のイベントのみ日程追加が可能にする」と明記する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/ScheduleController.php:88-111 の旧createもイベント取得・フォーム検証後に保存処理へ進み、店舗権限チェックはない。したがってこの要件は旧実装由来ではなく、新正本のカスタマイズ要件である。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Event/edit.twig:489-500 は`isEditableBaseInfo`時だけ日程追加リンクと登録ボタンを表示し、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Event/Schedule/edit.twig:258,264 は保存ボタンをdisabledにする。しかし /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Event/ScheduleController.php:64-74 は権限判定前に有効POSTを`ScheduleStoreAction`へ渡し、同:92-100で初めて表示用`isEditableBaseInfo`を計算する。",
+      "note": "UI導線は制御されるが、直接POSTを拒否するサーバ側ガードがなく、正本の権限要件を完全には満たさない。"
+    },
+    {
+      "rowId": 1003,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html:2398 のExcel正本は「受付あり」の初期値を「オン」とする。同:2407-2409 は2026/7/7更新後の「定員」「参加費」「公開状態」の初期値を全て「親イベントを引き継ぐ」と明記する。したがってパケットの固定値10/0/公開は再生成後の最新正本と一致しない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/ScheduleController.php:34-45 は新規日程画面へ `storeEntried => true` を渡す。/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Entity/DtbEventDetail.php:168-172 は親イベント設定時に `setCapacity($event->getCapacity())`、`setEntryFee(...)`、`setDisp(...)` と引き継ぐ。旧実装も固定10/0/公開ではない。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/ScheduleType.php:181-186 は新規時に `offlineEntryFlg` の `data` を `true` にする。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Entity/DtbEventDetail.php:129-139 はコンストラクタで親イベントの`capacity`、`entryFee`、`Disp`を引き継ぐ。",
+      "note": "監査後の設計・実装更新により現行は最新正本を満たす。パケットの実装実態（新規受付オフ）も現行コードでは解消済み。"
+    }
+  ]
+}

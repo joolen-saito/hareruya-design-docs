@@ -1,0 +1,2570 @@
+Reading additional input from stdin...
+OpenAI Codex v0.146.0
+--------
+workdir: /home/y-saito/Developments
+model: gpt-5.6-sol
+provider: openai
+approval: never
+sandbox: workspace-write [workdir, /tmp, $TMPDIR]
+reasoning effort: high
+reasoning summaries: none
+session id: 019fc0a5-e1dc-7942-875d-3ba438d0dc26
+--------
+user
+設計書（正本Excel）を最新化する工数を見積もります。実装の修正工数ではありません。
+
+まず手順書を読んでください: /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/DOCUPDATE_TASK.md
+
+担当パケット: /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_packets/du_19.json
+出力先: /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_19.json
+
+厳守事項:
+- **正本はExcel** (/home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/*.xlsx)。
+  HTML(output/)は convert.py の生成物で、直接編集しても次の変換で消える。
+  見積もる対象は「Excelのどのシートのどの表/画像を、どう直すか」の作業量。
+- 根拠区分=SPEC_BACKED は原則 docWork=NONE（設計書は正しく実装が追いついていないだけ）。
+  記述が曖昧で明確化が要る場合だけ FIX。
+- 根拠区分=LEGACY_BACKED は原則 docWork=ADD（設計書の記述漏れ）。
+  ただし移行後に残さない挙動と読めるなら NONE。
+- 表示文言・画面項目は、テキストの表に足せば済むのか、
+  レイアウト**画像の描き直し**まで要るのか(IMAGE)を必ず区別する。
+- 同じシートの行が隣り合うよう並べてある。まとめて直せる分は2件目以降を安くしてよい。
+- HTML再生成と検証は書籍単位の固定費として別途集計するので、1件ごとの見積に含めない。
+- 引用・確認内容の捏造は絶対に禁止。実装側の修正工数と混同しない。
+
+findings 全件について docWork と docEffortDays をJSONで書き込んでください。
+最終メッセージは内訳1行のみ（例: 28件: NONE=14 ADD=10 FIX=2 IMAGE=2 / 計 1.8人日）。
+warning: Codex could not find bubblewrap on PATH. Install bubblewrap with your OS package manager. See the sandbox prerequisites: https://developers.openai.com/codex/concepts/sandboxing#prerequisites. Codex will use the bundled bubblewrap in the meantime.
+codex
+`design-impl-drift-audit` スキルを使います。まず手順書とスキル指示を全文確認し、その基準どおりに担当パケット全件を正本Excel単位で見積もります。
+exec
+/bin/bash -lc "sed -n '1,240p' /home/y-saito/.codex/skills/design-impl-drift-audit/SKILL.md && sed -n '1,280p' /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/DOCUPDATE_TASK.md" in /home/y-saito/Developments
+ succeeded in 767ms:
+---
+name: design-impl-drift-audit
+description: Compare HTML design specifications against an implementation to find functional drift and produce an evidence-backed HTML report. Use when Codex is asked to treat design docs as the source of truth, audit code such as controllers/services/forms/repositories/templates/batches/CSV definitions, continue a partially completed drift report, or update findings JSON/HTML for gaps between design and implementation.
+---
+
+# Design Impl Drift Audit
+
+## Purpose
+
+Use this skill to audit functional differences between HTML design specifications and an implementation repository, with the design docs treated as authoritative. Produce or continue a report that lists concrete differences with design locations, implementation locations, confidence, severity, and impact.
+
+## Repository Discovery
+
+1. Find the design-doc directory and implementation directory from the user request. If omitted, infer from nearby names such as `*-design-docs` and application repos.
+2. Look for an existing report before starting new work. Prefer directories named `design_impl_drift_report`, existing `findings.json`, per-function `findings/*.json`, and `index.html`.
+3. Count total target specs and audited specs so the report clearly states scope and remaining work.
+4. Preserve existing findings. Append or refine; do not overwrite unrelated prior work.
+
+## Audit Workflow
+
+For each target HTML spec:
+
+1. Identify the feature ID, route/action name, UI template, CSV/batch/API behavior, and acceptance rules from the HTML design spec.
+2. Extract a requirement inventory from the HTML spec before looking at code. This inventory must include not only route/screen names, but every concrete requirement in 処理概要, 図形・テキストボックス, 項目表, 表示メッセージ, 業務ルール・計算, 入力項目, エッジケース, データ整合性, API/バッチ結果, 入出力, DB操作, バリデーション, 権限・認可, 画面遷移, エラー処理, ログ・監査, セッション, Cookie, and 排他制御. Treat bullets such as "押下時", "場合", "登録/更新/保存", "遷移", "保持", "表示/非表示", "表示切り替え", "エリアを表示", "誘導", "エラー", "判定", "連携", time limits, thresholds, and retry/idempotency rules as auditable requirements. 秒後/分後, `画面を表示してから`, 自動遷移, タイマー, and store/kiosk/account-specific forced redirects are material requirements even if the route and template already exist.
+3. For every extracted requirement, create or mentally maintain a `requirementTrace` row with: `requirementId`, `designRef`, `designRequirement`, `implementationSearchTerms`, `implementationRefs`, `implementationActual`, `traceVerdict` (`MATCHED|DRIFT|NOT_FOUND|UNCERTAIN|PHASE2_EXCLUDED`), and `traceReason`. A feature cannot be marked no-drift until all material requirements have a trace verdict other than `NOT_FOUND` or unresolved `UNCERTAIN`.
+4. Search the implementation with `rg` across likely files: controllers, services, repositories, form types, entities, migrations, Twig/templates, commands/batches, route definitions, JavaScript, CSV exporters/importers, and PDF/print services. Search by business terms from the requirement, route names, translation keys, DB columns, state names, constants, statuses, time values, thresholds, and side-effect verbs. For timer or auto-navigation requirements, explicitly search client and server paths for `setTimeout`, `setInterval`, millisecond/second constants such as `60000` and `60 * 1000`, `location.href`, `location.assign`, `location.replace`, redirect routes, and the condition that limits the behavior. For a negative result, also search nearby implemented flows so the report can explain why they do not satisfy the design.
+5. Compare behavior and user-facing text, not just names. Check input fields, validation, defaults, search conditions, session persistence, buttons/actions, labels, button text, messages, translation keys/locales, permissions, status transitions, CSV columns, sort/order rules, scheduled timing, timeouts/expiration, thresholds, client-side timers, forced auto-navigation, side effects, idempotency, external integrations, conditional display toggles, alternate UI areas, and error handling.
+6. Do not treat "route/controller/template exists" as sufficient. Existence only satisfies the route/screen requirement. It does not satisfy individual rules inside the screen, such as timeout handling, cart retention, validation branches, status transitions, DB writes, logging prohibitions, conditional hide/show behavior, alternative contact/help areas, or external API retry behavior.
+7. For conditional display requirements, audit each side of the condition separately. If the HTML says "Aの場合はXを非表示、Yを表示 / A以外はXを表示、Yを非表示", record trace rows for the condition detector, X visibility, Y visibility, and the inverse condition. A nearby notice or route is not enough unless the cited template/JS actually renders the required area under the required condition.
+8. For labels, button text, messages, and translation keys, do a dedicated near-match pass. Extract user-visible Japanese text from the HTML item/message tables and compare it with implementation locale values and Twig/Form usage. Treat punctuation, okurigana, missing characters, long-vowel marks, wording changes such as `商品を追加` vs `商品の追加`, and business-term changes such as `返金` vs `送金` as audit targets.
+9. A text drift finding is complete only when it cites both the translation/source value and the display path that uses it, such as `messages.ja.yaml` plus the `FormType` label or Twig `|trans` call. If the implementation value exists but no display path is verified, mark it `UNCERTAIN` instead of presenting it as confirmed.
+10. Do not stamp all functions as if every standard aspect was fully checked. Separate "standard audit target aspects" from actual evidence. For each finding, list the aspects actually supported by evidence; for no-drift functions, include a requirement trace summary naming the concrete HTML requirements checked and implementation refs searched.
+11. Record only actionable drift. If evidence is incomplete, mark the finding `UNCERTAIN` and explain what remains ambiguous.
+12. For every drift finding, split the result into implementation-ready fields: `designExpectation`, `implementationActual`, `comparisonRows`, `comparisonSummary`, `mismatchReason`, `impact`, `fixTarget`, `requiredChange`, `implementationRefs`, and, when available, short design/implementation snippets from the cited lines. Do not rely on a generic prose paragraph alone.
+13. Each `comparisonRows` entry must answer all four questions explicitly: comparison item, exact design value/requirement, exact implementation value/behavior, and why those two do not match. If any of those four cells would be vague, continue investigating before recording the finding.
+14. Treat phase labels such as Ph2 as auxiliary context. They can be stored, but the main report must not use phase status as a substitute for concrete behavioral differences and exact implementation locations.
+15. If the HTML design spec explicitly says the whole function or scoped subfeature is `フェーズ2で実装する`, `Ph2で対応`, or `Ph1では実装しない`, do not report absence of that planned Phase 2 work as drift or as a clear implementation gap. You may keep a secondary audit note that non-implementation was confirmed, but exclude it from finding counts and implementation-gap counts. Only keep a finding when there is a concrete non-phase mismatch, such as an implemented Phase 1 path behaving differently from the design or user-facing text differing.
+16. When no drift is found, add the function to the audited set with an empty findings list only after the requirement trace gate passes. If material HTML requirements are untraced, do not mark `AUDITED_NO_DRIFT_FOUND`; mark the function as requiring review or add `UNCERTAIN` findings with the unresolved requirements.
+17. Do not let one confirmed finding hide other requirements in the same function. A function with `AUDITED_WITH_FINDINGS` can still have untraced material requirements; keep those requirements visible in the trace gate until each one is converted to a confirmed finding, an uncertain finding, a matched trace row, or a documented phase/design non-implementation exclusion.
+18. For explicitly registered critical requirements, the harness should carry a missing-finding template or an equivalent escalation rule. If the trace is not covered by an existing finding, promote it into findings automatically or fail the quality gate loudly. Do not rely on a hand-maintained `ADDITIONAL_FINDINGS` list as the only path for user-reported or high-risk missing behavior such as timeouts, cart retention, one-minute/30-minute limits, store-account auto redirects, conditional UI areas, status transitions, external calls, or destructive side effects.
+19. The HTML report must not expose broad source-signal candidates as if they were implementation gaps. A requirement-level list in the main report must be limited to confirmed or explicitly uncertain actionable drift derived from findings, such as `NOT_FOUND` or `DRIFT` requirement traces and concrete comparison rows. If a source-signal scan is used for triage, keep it out of the main HTML report unless each row has been verified against implementation source and written as a concrete finding.
+20. Do not hide time-based or automatic-navigation requirements merely because they are not confirmed findings yet. Requirements involving `画面を表示してから`, seconds/minutes after display, auto redirect/navigation, or timeout-to-cart/top behavior should appear in a separate focused untraced-requirement audit queue when they remain uncovered. This queue is not a confirmed defect count; it exists so these high-risk requirements are reviewed against Controller/Twig/JavaScript/Service source instead of being buried among broad requirement-trace failures.
+
+## Function-Level Implementation Gap Audit
+
+For every HTML spec sheet, maintain a function-level implementation audit even when no drift finding is confirmed yet.
+
+- Extract implementation search terms from the HTML design: route names, URL paths, translation keys, class/controller/service names, batch/API/CSV names, and high-signal business terms from the sheet title and requirement text.
+- Search implementation source by function across Controller, Form, Service, Repository, Entity, Migration, Twig, Command/Batch, CSV, PDF/print, API/webhook, locale/messages, JavaScript, and configuration files.
+- Store a `functionImplementationAudit` object with `verdict`, `designDerivedTerms`, `candidateRefs`, `candidateCount`, `strongSignalCount`, `searchedAreas`, and `auditNote`.
+- Use separate verdicts:
+  - `CONFIRMED_IMPLEMENTATION_GAP`: a concrete drift finding already proves missing implementation.
+  - `NO_IMPLEMENTATION_ENTRY_FOUND`: no entry candidate was found from design-derived terms; treat as an additional-review candidate, not an automatic confirmed defect.
+  - `IMPLEMENTATION_ENTRY_FOUND`: strong source evidence such as route, class, translation key, or path was found.
+  - `IMPLEMENTATION_CANDIDATE_FOUND`: weak business-term candidates were found but the entry point is not proven.
+  - `PHASE2_NONIMPLEMENTATION_EXPECTED`: HTML design explicitly scopes non-implementation to Phase 2/Ph1 exclusion.
+  - `DESIGN_NONIMPLEMENTATION_EXPECTED`: HTML design explicitly says the function or scoped behavior is not implemented by code, such as `実装しない`, `実装不要`, or infrastructure/external-service configuration replacing application code.
+- Use `DESIGN_NONIMPLEMENTATION_EXPECTED` as the function-level verdict only when the non-implementation statement applies to the whole function or the implementation entry itself, for example an external WordPress server, Docker image cron, Aurora parameter group, or a bare whole-sheet `実装しない`. If the text only excludes a scoped subfeature, UI alert, HTML hint, logging detail, partial Phase 2 item, or internal job, keep the function's source-entry verdict and mention the scoped exclusion only in the trace/audit note.
+- The report must show both confirmed implementation-gap findings and function-level no-entry candidates. Do not merge these counts: implementers need confirmed defects for fixing and no-entry candidates for review planning.
+- A function-level candidate is not enough to mark the detailed requirements as implemented. Requirement trace still controls no-drift status.
+- Do not set report metadata such as `auditComplete` or narrative notes to "complete" merely because every sheet has a function-level implementation audit. If any material requirement trace remains unresolved, state that all sheets have function-entry coverage but requirement-level audit is incomplete.
+- For infrastructure-oriented sheets such as Step Functions, Lambda, WAF/S3 jobs, cron configured outside the application, or managed database settings, distinguish "not found in the requested implementation repository" from "not implemented anywhere". A confirmed implementation-gap finding may be scoped to the audited repository, but the report must say when external infrastructure repositories or cloud configuration were not checked.
+
+## Requirement Trace Gate
+
+Before marking a function no-drift, verify the following:
+
+- Every material HTML requirement has a trace row. Material means it changes behavior, data, display, validation, permission, transition, side effect, external communication, schedule, retry/idempotency, logging/audit, CSV/API/PDF/batch I/O, or user-visible text.
+- Each trace row includes exact design text or a tight paraphrase plus line/anchor reference, not only the sheet title.
+- Each matched row cites the implementation path and line(s) that actually execute or render the behavior. A nearby class, route, or template is not enough unless the cited code contains the relevant condition/value/side effect.
+- Each missing row is converted to a confirmed or uncertain finding. Use confirmed only after searching the direct path and nearby alternative implementations.
+- Missing rows remain failures even if the function already has other findings. The gate is requirement-scoped, not function-scoped.
+- If an explicit critical requirement has a configured missing-finding template, regenerate the report from the harness and verify the promoted finding appears in both JSON and HTML with design value, implementation behavior, mismatch reason, fix target, and search evidence.
+- If a missing row does not yet have enough evidence for a confirmed or uncertain actionable finding, do not count it as an implementation gap and do not put it in the main HTML fix list. Keep the function in an incomplete requirement-trace state, and promote the row only after implementation source has been checked enough to state the exact design requirement, exact implementation behavior, and mismatch reason.
+- A generic `auditEvidence` string is not a substitute for requirement traces.
+- Negative searches must list the searched terms/areas and why nearby hits do not satisfy the design.
+
+## Finding Format
+
+Store findings in a machine-readable JSON structure. Use this shape for each finding:
+
+```json
+{
+  "id": "stable-feature-id-001",
+  "functionId": "m04-01_admin_stock_stock_search_list",
+  "functionName": "在庫一覧",
+  "severity": "high|med|low",
+  "dimension": "①機能/ルート未実装",
+  "confidence": "CONFIRMED|UNCERTAIN",
+  "design": {
+    "file": "path/to/spec.html",
+    "lines": "215-220",
+    "summary": "設計書に書かれている仕様"
+  },
+  "implementation": {
+    "file": "path/to/source.php or 不在",
+    "lines": "337-344",
+    "summary": "実装側の状態"
+  },
+  "difference": "設計と実装の具体的な差分",
+  "comparisonRows": [
+    {
+      "item": "比較項目名",
+      "design": "設計書の値・要求。列名、HTTPメソッド、パス、保存先、表示文言、条件、状態遷移などを具体値で書く",
+      "implementation": "実装の値・挙動。実際の列名、メソッド、パス、保存先、文言、条件、処理順を具体値で書く",
+      "mismatch": "なぜ一致しないのか。実装者が直すべき差分を一文で書く"
+    }
+  ],
+  "requirementTrace": [
+    {
+      "requirementId": "stable-requirement-id",
+      "designRef": "path/to/spec.html:123",
+      "designRequirement": "HTML設計書の個別要求",
+      "implementationSearchTerms": ["検索語", "route_name", "methodName"],
+      "implementationRefs": ["src/...php:123"],
+      "implementationActual": "実装で確認できた挙動、または不在判定",
+      "traceVerdict": "MATCHED|DRIFT|NOT_FOUND|UNCERTAIN|PHASE2_EXCLUDED",
+      "traceReason": "なぜその判定か"
+    }
+  ],
+  "comparisonSummary": "設計はX、実装はY、したがってZが違う",
+  "mismatchReason": "乖離と判断した具体的な理由",
+  "impact": "ユーザー・業務・データへの影響",
+  "fixTarget": "修正対象のファイル/ルート/サービス/不在箇所",
+  "requiredChange": "設計に合わせる場合に必要な修正",
+  "implementationRefs": ["src/...php:123"],
+  "implementationSnippets": ["123: 実装コードの短い断片"],
+  "evidence": ["短い根拠。ファイル名と行番号を含める"]
+}
+```
+
+The HTML report should make these fields visible as separate blocks so an implementer can answer: what exact value does the design require, what exact value does the code implement, why is that a mismatch, exactly where is the code, and what should be changed.
+
+Use stable IDs and Japanese text when the existing report is Japanese. Keep dimensions consistent with existing findings when continuing a report.
+
+## Severity Guidance
+
+- `high`: missing feature/route, wrong critical business rule, destructive or externally visible behavior, missing required import/export/batch/PDF flow.
+- `med`: partial implementation, wrong filtering/sorting/session behavior, missing non-critical columns or validation, incompatible screen behavior.
+- `low`: copy/display/default-state differences, ambiguous design wording, minor workflow variance.
+
+## Report Generation
+
+If the project already has a report generator, use it. Otherwise copy or adapt `scripts/build_report.py` from this skill into the report directory, then run it from the repository root or pass paths as needed.
+
+The HTML report must include:
+
+- summary counts: total findings, severities, audited functions, functions with drift
+- scope and remaining work
+- per-function sections
+- each finding with severity, confidence, dimension, audit aspects including label/message/translation-key differences when applicable, design reference, implementation reference, design expectation, implementation actual behavior, `comparisonRows`, mismatch reason, impact, fix target, required change, and evidence
+- a comparison table with columns: 比較項目 / 設計書の値・要求 / 実装の値・挙動 / 乖離理由
+- links or file paths precise enough for a developer to inspect
+- short cited design and implementation snippets when available
+- phase/Ph2 data only as hidden or secondary metadata, never as a report column or primary summary
+- a function-level implementation audit section showing verdict counts, no-entry candidates, candidate source references, and the search terms that produced them
+- a requirement-level difference list derived only from confirmed/uncertain findings, showing the exact design requirement, implementation behavior, mismatch reason, implementation refs, and a link back to the finding. Do not include broad unverified source-signal queues in the main HTML report.
+- a focused untraced-requirement section for small, high-risk classes such as display-time timers, automatic redirects, and timeout navigation. Keep it separate from confirmed difference and implementation-gap counts, and include search terms/candidate refs so the next audit step is concrete.
+
+After editing findings, validate JSON and regenerate HTML:
+
+```bash
+python3 -m json.tool path/to/design_impl_drift_report/findings.json
+python3 path/to/design_impl_drift_report/build_report.py
+```
+
+## Quality Bar
+
+- Treat the HTML design spec as source of truth even when implementation looks intentional.
+- Cite exact file paths and line numbers whenever available.
+- Distinguish `不在` from “not found yet”; use `不在` only after searching likely implementation areas.
+- Avoid broad claims such as “not implemented” without search evidence or contrasting nearby implemented features.
+- Do not classify Phase 2 planned non-implementation as a defect. A missing route, CSV, batch, API, table, or screen is only a drift finding when the design expects it in the audited implementation phase.
+- For label/message drift, prefer exact line evidence and a verified render path over fuzzy string similarity. Fuzzy or near-match scans are candidate generators; they are not findings until source and display usage are confirmed.
+- When an external reviewer or another agent reports candidates, verify each candidate against the HTML design and implementation source before adding it. Keep rejected or ambiguous candidates out of confirmed counts, or mark them `UNCERTAIN` with the unresolved reason.
+- For absent implementations, include the searched terms/areas, nearby implementation files with line numbers, and a concrete reason those nearby files do not satisfy the design. Do not leave `implRef` as only `不在` in the final report.
+- Reject vague findings. A finding is not complete until it names the exact design value and exact implementation value that differ.
+- Keep the report cumulative and resumable.
+# 設計書（正本Excel）の最新化工数の見積
+
+乖離指摘 1,007件（クローズ済を除く）について、**設計書側にどんな作業が発生し、何人日か**を見積もる。
+実装をどう直すかではなく、**設計書をどう直すか**だけを判断する。
+
+## 前提: 正本はExcel、HTMLは生成物
+
+| 役割 | パス |
+|---|---|
+| **正本Excel（編集対象）** | `/home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/*.xlsx` |
+| 生成HTML（読む用・編集対象ではない） | `/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/*.html` |
+| 変換ツール | `excel_to_html/convert.py`（`uv run python convert.py`）、検証は `verify.py` |
+| 実装 | `/home/y-saito/Developments/ec-cube-enterprise` |
+
+**HTMLを直接編集しても次の変換で消える。** 直すのは常にExcelのセル・図形・画像である。
+したがって見積もる対象は「該当シートの該当セル/表/画像をどう直すか」の作業量。
+
+HTML再生成と検証は書籍単位でまとめて行うため、**1件ごとの見積には含めない**（別途固定費として集計する）。
+
+## 判定する2つのこと
+
+### 1. `docWork` — 設計書側にどんな作業が要るか
+
+| 値 | 意味 |
+|---|---|
+| `NONE` | 設計書は現状で正しい。実装を直せば済み、**設計書は触らない** |
+| `ADD` | 設計書に記述が無い。項目表・処理概要などに**書き足す** |
+| `FIX` | 設計書に記述はあるが、採用する仕様と食い違う。**既存記述を直す** |
+| `IMAGE` | 画面レイアウト**画像の差し替え**が要る（Excelに貼られた画像の描き直し） |
+| `RESOLVE` | 正本の中で記述同士が矛盾している（項目表と画像、本文と注記など）。**どちらが正かを決めて片方を直す** |
+| `UNSURE` | 判断できない |
+
+**重要な原則:**
+- `根拠区分 = SPEC_BACKED`（設計書に裏付けがある）＝ 原則 `NONE`。
+  設計書は正しく、実装が追いついていないだけ。
+  ただし設計書の記述が曖昧・不完全で、実装に合わせて**明確化**が要るなら `FIX`。
+- `根拠区分 = LEGACY_BACKED`（設計書に記述が無く旧実装に根拠）＝ 原則 `ADD`。
+  移行後も必要な挙動なら、設計書の記述漏れとして書き足す必要がある。
+  ただし**その挙動を移行後に残さない**と読めるなら `NONE`。
+- 表示文言・ラベル・画面項目の追記は、テキストの表に足すだけで済むのか、
+  **レイアウト画像も描き直しになるのか**を区別する（後者は `IMAGE`）。
+
+### 2. `docEffortDays` — Excel編集の工数（人日）
+
+**この1件のために、該当シートを開いて直す作業**の量。目安:
+
+| 作業 | 目安 |
+|---|---|
+| 既存の表に1行足す／セルの文言を1つ直す | 0.05〜0.1 |
+| 項目表に複数行・条件付きの記述を足す | 0.1〜0.25 |
+| 処理概要・業務ルールの節を書き起こす | 0.25〜0.5 |
+| 画面レイアウト画像の差し替え（実画面の取得＋貼り直し＋位置調整） | 0.5〜1.0 |
+| 正本内部の矛盾解消（影響範囲の確認＋関係箇所の統一） | 0.25〜1.0 |
+| シート新設（機能ごと丸ごと無い） | 1.0〜3.0 |
+
+**同じシートに複数の指摘がまとまっている場合、2件目以降は安くなる**（シートを開く手間が1回で済む）。
+パケット内で同一 `設計書参照` の行が並んでいたら、その分を反映してよい（理由に書くこと）。
+
+`docWork = NONE` のときは `docEffortDays: 0`。
+`RESOLVE` は、裁定そのもの（どちらが正かを決める会議・確認）は含めず、**決まった後の反映作業**だけを見積もる。
+
+## 絶対の禁止事項
+
+- 引用・確認内容の捏造をしないこと。実際に開いて確認したものだけを書く。
+- 確認していないことを「確認した」と書かない。
+- 実装側の修正工数と混同しないこと。**ここで見積もるのは設計書の編集だけ**である。
+
+## 出力
+
+指示されたJSONファイルに **Write して** 書き込む。
+
+```json
+{
+  "packetId": "...",
+  "results": [
+    {
+      "rowId": 123,
+      "docWork": "ADD",
+      "docEffortDays": 0.1,
+      "target": "0202_基本設計仕様書(在庫管理機能).xlsx / 在庫編集 シートの画面項目表",
+      "reason": "旧実装にしかない上限件数の扱いを、項目表の備考へ1行足す。既存の行構成をそのまま使える。",
+      "sharedWithRows": [124, 125],
+      "confidence": "high"
+    }
+  ]
+}
+```
+
+- `target`: 直す対象（ブック名 / シート名 / 表や図の位置）。分かる範囲で具体的に
+- `sharedWithRows`: 同じシートでまとめて直せる他の rowId（無ければ空配列）
+- `confidence`: `high` / `medium` / `low`
+
+findings 全件について返すこと（欠落禁止）。
+
+codex
+手順書の要点を確認しました。これから各 finding の根拠区分・設計書参照・差分内容を読み、必要な箇所だけ正本Excelのシート構造（表か貼付画像か）まで照合します。HTML再生成・検証や実装修正は工数に含めません。
+exec
+/bin/bash -lc "jq '{packetId, count:(.findings|length), findings}' /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_packets/du_19.json" in /home/y-saito/Developments
+ succeeded in 1161ms:
+{
+  "packetId": "du_19",
+  "count": 28,
+  "findings": [
+    {
+      "rowId": 750,
+      "機能No": "M10-16",
+      "機能名": "M10-16 追加システム設定",
+      "区分(画面種別)": "admin",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0209_基本設計仕様書(基本情報設定).html#sheet-14:4016",
+      "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html:4447 の Excel 正本は「22 登録」「入力されたフォームの値で登録」と記載するだけで、GETとPOSTを同一URLにするルーティング契約は Excel 正本本文（確認範囲: 同:4350-4532）にない。同一パスPOSTの記述はリバース詳細設計の同:4564 にのみある。",
+      "設計期待値": "フォーム送信は method=\"post\"、アクションは GET で画面を開くのと同じパスを指す生成URLとする。",
+      "差分内容": "同一パスPOST要件を route 名・URL・Twig action で反証検索したが、実装は /update 専用POSTルートへ送信している。",
+      "実装実態": "GET は /setting/shop/additional_system、POST は /setting/shop/additional_system/update に分かれ、Twig の form action も admin_setting_shop_additional_system_update を指す。"
+    },
+    {
+      "rowId": 754,
+      "機能No": "M10-16",
+      "機能名": "M10-16 追加システム設定",
+      "区分(画面種別)": "admin",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0209_基本設計仕様書(基本情報設定).html#sheet-14:4032",
+      "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html:4436-4442 の Excel 正本は対象メール項目をそれぞれ「Eメール形式で許容された文字」「最大255文字」「任意」と定めるが、「カンマ区切り複数メール」や具体的な正規表現は Excel 正本本文に記載していない。",
+      "設計期待値": "買取部門集計送信、必須項目空欄会員、ポイント未反映決済、ポイント差分、購入処理エラー、イベント決済確認エラー、身分証期限切れの各通知メールは、カンマ区切り複数メールの正規表現で検証する。",
+      "差分内容": "otc_summary_mail_address/check_bric_mail_address/check_nrpu_mail_address/adjust_point_variance_mail_addr/shopping_error_mail_address/check_payment_error_mail_address/check_id_expired_mail_address で再検索したが、実装は単一メール形式の Email 制約である。",
+      "実装実態": "対象メール項目は Symfony Email 制約と Length 制約で実装されており、カンマ区切り複数メール用 Regex はない。"
+    },
+    {
+      "rowId": 757,
+      "機能No": "M10-16",
+      "機能名": "M10-16 追加システム設定",
+      "区分(画面種別)": "admin",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0209_基本設計仕様書(基本情報設定).html#sheet-14:4035,4048",
+      "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html:4407-4447 の Excel 正本機能仕様・入力項目表には `mtb_option.update_date` や更新対象列の指定がない。「同一メソッド内でupdate_dateを進めない」はリバース詳細設計の同:4583,4596 にのみ記載される。",
+      "設計期待値": "当画面の保存処理では mtb_option.update_date を現在時刻へ進める処理を同一メソッド内に持たず、option_value と member_id のみを更新対象として明示する。",
+      "差分内容": "update_date/setUpdateDate/MtbOption/保存ループで再検索し、当コントローラ内で update_date を明示更新していることを確認した。",
+      "実装実態": "変更検出時に option_value と member に加えて setUpdateDate(new \\DateTime()) を呼び出している。"
+    },
+    {
+      "rowId": 756,
+      "機能No": "M10-16",
+      "機能名": "M10-16 追加システム設定",
+      "区分(画面種別)": "admin",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0209_基本設計仕様書(基本情報設定).html#sheet-14:4044,4061",
+      "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html:4447 の Excel 正本は登録ボタンと登録処理のみを記載し、成功時翻訳キー `admin.register.complete` やGETへのリダイレクトは Excel 正本本文（確認範囲: 同:4350-4532）にない。これらはリバース詳細設計の同:4570,4592 にのみ現れる。",
+      "設計期待値": "保存成功時はフラッシュ成功メッセージ（翻訳キー admin.register.complete）を積み、リダイレクト後のGETで画面全体を再描画する。",
+      "差分内容": "admin.register.complete/admin.common.save_complete/addSuccess を再検索し、成功メッセージの翻訳キーが設計と異なることを確認した。リダイレクト自体は GET 初期表示へ戻るため一致。",
+      "実装実態": "保存成功時に addSuccess('admin.common.save_complete', 'admin') を実行する。admin.common.save_complete は「保存しました」、admin.register.complete は「登録が完了しました。」である。"
+    },
+    {
+      "rowId": 715,
+      "機能No": "M10-02",
+      "機能名": "M10-02 特定商取引に関する法律",
+      "区分(画面種別)": "admin",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "要修正-設計準拠",
+      "設計書参照": "excel_to_html/output/0209_基本設計仕様書(基本情報設定).html#sheet-4:1825,1841",
+      "正本根拠": "Excel正本のM10-02部分は hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html:2004-2009 でカスタマイズなし・現行踏襲・フォーム値登録を規定するが、3つの見出し文言は本文セルにない。具体文言は同:2088 から始まるリバース詳細設計埋込後にのみ現れる。",
+      "設計期待値": "画面見出しは「ショップ設定」「特定商取引法管理」、ボックス見出しは「特定商取引法」として表示される。",
+      "差分内容": "設計はページ見出し「ショップ設定」、サブタイトル「特定商取引法管理」、ボックス見出し「特定商取引法」を要求しているが、実装表示文言はいずれも一致しない。TradeLawController/Twig/locale を確認し、設計文言そのものの表示箇所は確認できなかった。",
+      "実装実態": "管理画面テンプレートは title とカードヘッダに admin.setting.shop.tradelaw_setting、sub_title に admin.setting.basic_info を表示する。日本語ロケール値はそれぞれ「特定商取引法設定」「基本情報設定」。"
+    },
+    {
+      "rowId": 716,
+      "機能No": "M10-02",
+      "機能名": "M10-02 特定商取引に関する法律",
+      "区分(画面種別)": "admin",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0209_基本設計仕様書(基本情報設定).html#sheet-4:1838,1841",
+      "正本根拠": "Excel正本の項目表 hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html:2031 は送信ボタンのラベルを「設定」としており、「登録」という期待文言を直接は裏付けない。ただし同:2004-2009 は本機能をカスタマイズなし・現行踏襲としている。具体的な「登録」は同:2088 以後のリバース詳細設計にだけある。",
+      "設計期待値": "特定商取引法ブロックに入力欄と「登録」ボタンがある。値を入力して「登録」を押す。",
+      "差分内容": "設計は利用者に見える送信ボタン文言を「登録」としているが、実装は「保存」を表示する。tradelaw.twig と messages.ja.yaml を確認し、当画面専用で「登録」を表示する実装は確認できなかった。",
+      "実装実態": "送信ボタンは admin.common.save を表示し、日本語ロケール値は「保存」。"
+    },
+    {
+      "rowId": 718,
+      "機能No": "M10-03",
+      "機能名": "M10-03 利用規約管理",
+      "区分(画面種別)": "admin",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "要修正-設計準拠",
+      "設計書参照": "excel_to_html/output/0209_基本設計仕様書(基本情報設定).html#sheet-5:2002,2025,2034,2036,2075",
+      "正本根拠": "Excel正本は hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html:2231-2245 で利用規約の登録画面を要求するが、成功時GETリダイレクト、失敗時同一再描画、保存後も利用規約用ヘッダを維持するという詳細は本文にない。詳細は同:2277 以後のリバース詳細設計にのみある。",
+      "設計期待値": "利用規約設定画面は、保存成功時に同一編集画面へGETリダイレクトし、検証失敗時も同一画面を再描画する。メニューおよび関連ヘッダでは利用規約／利用規約管理（移行先実装では利用規約設定）として表示されること。",
+      "差分内容": "設定メニューから初回表示した時だけ利用規約設定として表示されるが、POST送信時と保存後GETでは return=agreement が失われ、テンプレートは content/page 管理側のメニュー・タイトル分岐へ落ちる。設計が求める「同一編集画面」および関連ヘッダの維持と一致しない。反証として shop_agreement、return=agreement、admin_content_page_edit、agreement_setting を検索し、return パラメータを維持する別ルート・別リダイレクトは見つからなかった。",
+      "実装実態": "page_edit.twig は query の return=agreement がある場合だけ menus=['setting','basic_info','shop_agreement'] と page_title=admin.setting.shop.agreement_setting を使う。しかしフォーム action は locale だけを付与し return=agreement "
+    },
+    {
+      "rowId": 717,
+      "機能No": "M10-03",
+      "機能名": "M10-03 利用規約管理",
+      "区分(画面種別)": "admin",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "要修正-設計準拠",
+      "設計書参照": "excel_to_html/output/0209_基本設計仕様書(基本情報設定).html#sheet-5:2017,2019,2025",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html:2231-2236 のExcel正本は現行踏襲の機能として「利用規約を登録する」と記し、同:2244 は入力項目「利用規約」、同:2245 は入力値を登録するボタンを明記する。したがって管理画面から本文を編集できることは正本要件である。",
+      "設計期待値": "移行先（ec-cube-enterprise）では、ご利用規約をページ管理上の固定ページ（dtb_page の help_agreement／テンプレート Help/agreement）の本文として保持・編集し、設定→基本情報設定配下の利用規約設定導線から本文を入力して送信できること。",
+      "差分内容": "設計の移行先仕様は dtb_help.customer_agreement ではなく help_agreement 固定ページ本文の保持・編集を正としている。実装は導線と対象ページ ID は存在するが、固定ページ編集画面の本文エディタを読み取り専用にしており、利用者が本文を入力して登録する要求を満たさない。反証として customer_agreement/dtb_help/HelpType/HelpController/shop_agreement/AGREEMENT_PAGE_ID/help_agreement を検索し、専用 dtb_help 実装ではなくページ編集導線であることを確認した。",
+      "実装実態": "設定メニューの shop_agreement は Page::AGREEMENT_PAGE_ID=19 の admin_content_page_edit へ遷移し、help_agreement 固定ページを編集対象にしている。ただし page_edit.twig は is_user_data_page でない既定ページの場合に Ace エディタを readOnly にするため、管理画面上で利用規"
+    },
+    {
+      "rowId": 719,
+      "機能No": "M10-04",
+      "機能名": "M10-04 支払い方法　手数料設定",
+      "区分(画面種別)": "admin",
+      "指摘区分": "未実装",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "要修正-設計準拠",
+      "設計書参照": "excel_to_html/output/0209_基本設計仕様書(基本情報設定).html#sheet-6",
+      "正本根拠": "Excel正本M10-04は hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html:2440-2445 でカスタマイズなし・現行踏襲とし、同:2475 は「ロゴ画像」を項目化するが、「620px以上推奨」という具体文言は記載しない。具体文言は同:2532 以後のリバース詳細設計で補われたもの。",
+      "設計期待値": "編集画面のロゴ画像欄で、ラベル「ロゴ画像」に加え補足として「620px以上推奨」を表示する。カスタマイズ区分は「なし／現行踏襲」であり、補足文言も現行(pf-eccube3)の推奨表記を踏襲すべき。",
+      "差分内容": "編集画面テンプレート(payment_edit.twig)と日本語ロケール(messages.ja.yaml)を確認。ロゴ補足文言が翻訳キー admin.setting.shop.payment.logo_image_size 経由で「推奨サイズ : 500px × 100px」と表示され、設計書の現行踏襲文言「620px以上推奨」と一致しない、利用者が直接目にする文言差分。twig は当該翻訳キー1つのみを出力しており動的な 620px 表示経路も存在しない。",
+      "実装実態": "payment_edit.twig:197 で {{ 'admin.setting.shop.payment.logo_image_size'|trans }} を出力し、messages.ja.yaml:3055 の翻訳値は「推奨サイズ : 500px × 100px」。ラベル「ロゴ画像」(messages.ja.yaml:3054) は一致するが補足文言が設計の「620px以上推奨」と一致しな"
+    },
+    {
+      "rowId": 720,
+      "機能No": "M10-07",
+      "機能名": "M10-07 税率設定",
+      "区分(画面種別)": "admin",
+      "指摘区分": "未実装",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "要修正-設計準拠",
+      "設計書参照": "excel_to_html/output/0209_基本設計仕様書(基本情報設定).html#sheet-8:2535",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html:2875-2877 のExcel正本に「個別税率設定」、識別ID 1-1「商品別税率機能」・「選択肢:有効 無効」、識別ID 1-2「登録」・「選択された商品別税率機能を登録」と明記されている。同:2866 も「個別税率設定、共通税率設定を登録する」とする。",
+      "設計期待値": "税率設定画面は「個別税率設定」ブロックに「商品別税率機能」の有効/無効選択と上部「登録」ボタンを表示し、POST /{admin_route}/setting/shop/tax/edit_param で dtb_base_info.option_product_tax_rule だけを保存する。",
+      "差分内容": "TaxRuleController の税率設定ルートは /setting/shop/tax, /setting/shop/tax/new, /setting/shop/tax/{id}/delete のみ。tax_rule.twig は税率テーブルのみを描画し、商品別税率機能の入力を描画しない。EccubeEvents には edit.parameter の定数だけがあり、TaxRuleController からの dispatch は無い。",
+      "実装実態": "税率設定画面側には option_product_tax_rule のフォーム項目、個別税率設定ブロック、edit_param ルート、パラメータ保存イベント dispatch が無い。option_product_tax_rule は ShopMasterType に存在し、ShopController の /setting/shop で保存される。"
+    },
+    {
+      "rowId": 722,
+      "機能No": "M10-07",
+      "機能名": "M10-07 税率設定",
+      "区分(画面種別)": "admin",
+      "指摘区分": "未実装",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0209_基本設計仕様書(基本情報設定).html#sheet-8:2600",
+      "正本根拠": "Excel正本M10-07の hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html:2866-2884 は登録・一覧と項目を規定するが、`GET /{admin_route}/setting/shop/tax/{id}/edit` という編集入口は記載しない。具体エンドポイントは同:2926-2929 のリバース詳細設計埋込後にのみある。",
+      "設計期待値": "一覧から「編集」を選ぶと GET /{admin_route}/setting/shop/tax/{id}/edit で当該行がフォームに載り、基本税率行以外は適用日時欄と日時ピッカーを表示する。",
+      "差分内容": "設計が外部入口として定義する GET 編集エンドポイントが実装されておらず、実装は同一ページ内インライン編集に置き換わっている。",
+      "実装実態": "編集専用 GET /setting/shop/tax/{id}/edit は無い。編集ボタンは tax_rule.twig の JS で同一一覧行の .edit を表示し、POST /setting/shop/tax に tax_rule_id と mode=edit_inline を送る。"
+    },
+    {
+      "rowId": 721,
+      "機能No": "M10-07",
+      "機能名": "M10-07 税率設定",
+      "区分(画面種別)": "admin",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "要修正-設計準拠",
+      "設計書参照": "excel_to_html/output/0209_基本設計仕様書(基本情報設定).html#sheet-8:2603",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html:2866-2867 のExcel正本は個別税率・共通税率の登録と税率一覧表示を要求する。同:2875-2883 は「個別税率設定」「共通税率設定」「税率一覧」の各ブロック、商品別税率と課税規則の「単一選択(ラジオボタン)」、両「登録」ボタン、適用日時を明記する。",
+      "設計期待値": "画面構成は「個別税率設定」「共通税率設定」「税率一覧」の縦並びで、ページ見出しは「基本情報設定」＋サブタイトル「税率設定」、共通税率は「登録」ボタン、課税規則はラジオ、適用日時は Bootstrap datetimepicker、確認モーダルは使わない。",
+      "差分内容": "設計のブロック分割、見出し順、操作文言、入力種別、日時ピッカー、モーダル不使用がテンプレート/FormType と一致しない。",
+      "実装実態": "実装は単一の「税率設定」カード内に新規行・既存行を含む表を描画する。見出しは title=税率設定/sub_title=基本情報設定。新規ボタンは「新規作成」、編集保存は「決定」。課税規則は expanded=false の選択式。税率設定テンプレートには datetimepicker 初期化が無く、削除は Bootstrap モーダルを使う。"
+    },
+    {
+      "rowId": 723,
+      "機能No": "M10-07",
+      "機能名": "M10-07 税率設定",
+      "区分(画面種別)": "admin",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "要修正-設計準拠",
+      "設計書参照": "excel_to_html/output/0209_基本設計仕様書(基本情報設定).html#sheet-8:2607",
+      "正本根拠": "Excel正本の課税規則行 hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html:2880 は選択肢を「四捨五入 切り捨て 切り上げ」とするが、初期値欄は「-」で、マスタID1を初期値とする規定はない。ID1要件は同:2926-2929 以後のリバース詳細設計にだけある。",
+      "設計期待値": "新規共通税率行の課税規則の初期値はマスタID1とする。",
+      "差分内容": "現在有効な税率の丸め規則がID1以外の場合、新規行の初期値が設計のマスタID1ではなく現在値になる。",
+      "実装実態": "newTaxRule は最初に RoundingType::ROUND(ID1) を取得するが、現在有効な税率設定が取得できる場合は $CurrentRule->getRoundingType() で上書きする。"
+    },
+    {
+      "rowId": 726,
+      "機能No": "M10-07",
+      "機能名": "M10-07 税率設定",
+      "区分(画面種別)": "admin",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0209_基本設計仕様書(基本情報設定).html#sheet-8:2615",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html:2864 のExcel正本は「カスタマイズ要件に記載の内容以外は現行踏襲とする」とするだけで、対象ID不存在時のフラッシュ処理は記載していない。具体手順は同:2972 のリバース詳細設計にのみ現れる。",
+      "設計期待値": "削除対象IDが存在しない場合は、フラッシュをクリアして警告メッセージだけを残し、税率設定一覧へリダイレクトする。",
+      "差分内容": "ルートのエンティティ解決で対象が見つからないケースをコントローラ内で扱っておらず、設計された警告付き一覧リダイレクトにならない。",
+      "実装実態": "delete(Request $request, TaxRule $TaxRule) として TaxRule 実体を引数に受け、メソッド内に対象不存在時の分岐、フラッシュクリア、警告メッセージ追加が無い。存在する非基本税率は repository->delete して成功メッセージ、基本税率は何もせずリダイレクトする。"
+    },
+    {
+      "rowId": 725,
+      "機能No": "M10-07",
+      "機能名": "M10-07 税率設定",
+      "区分(画面種別)": "admin",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "一部解消-残差あり",
+      "設計書参照": "excel_to_html/output/0209_基本設計仕様書(基本情報設定).html#sheet-8:2628",
+      "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html:2881 のExcel正本は「2-3 適用日時 全角・半角 - - - -」とのみ記載し、重複条件やエラー文言は正本範囲:2821-2925に存在しない。",
+      "設計期待値": "同一適用日時の別行が既に存在する場合は、共通税率行に限って重複判定し、適用日時へフォームエラー文言「既に同じ適用日時で登録されています。」を付与して保存しない。",
+      "差分内容": "設計上の共通税率は product_id と product_class_id がともにNULLの行だが、実装は ProductClass だけで判定する。また、利用者に表示される重複エラー文言が設計文言と異なる。",
+      "実装実態": "POST_SUBMIT で t.apply_date が同じ、かつ t.ProductClass IS NULL の行を数える。Product IS NULL 条件は無い。エラー文言は admin.setting.shop.tax.apply_date.available_error で「同時刻の適用日時を設定できません。」。"
+    },
+    {
+      "rowId": 724,
+      "機能No": "M10-07",
+      "機能名": "M10-07 税率設定",
+      "区分(画面種別)": "admin",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0209_基本設計仕様書(基本情報設定).html#sheet-8:2646",
+      "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html:2879 のExcel正本セルは「2-1 消費税率 全角・半角 - - - -」で、必須、整数、0〜100、数値書式パターンを明記しない。正本範囲は同:2821-2925で、同:2926から `<!-- function-design-embed:start ...tax -->` のリバース詳細設計になる。",
+      "設計期待値": "消費税率は必須、整数入力、0〜100の範囲、数値書式パターンを併用して検証する。",
+      "差分内容": "設計の最大値100がフォーム制約として実装されていないため、101以上をフォーム制約で拒否できない。",
+      "実装実態": "tax_rate は IntegerType、NotBlank、Range(['min' => 0])、Regex /^\\d+(\\.\\d+)?$/ のみで、100以下の上限制約が無い。"
+    },
+    {
+      "rowId": 727,
+      "機能No": "M10-07",
+      "機能名": "M10-07 税率設定",
+      "区分(画面種別)": "admin",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0209_基本設計仕様書(基本情報設定).html#sheet-8:2666",
+      "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html:2866-2867 のExcel正本は「個別税率設定、共通税率設定を登録する」「登録した税率を一覧表示する」とだけ記載し、完了イベント名は正本範囲:2821-2925に存在しない。",
+      "設計期待値": "共通税率保存成功後は admin.setting.shop.tax.rule.index.complete イベントで完了フックを実行する。",
+      "差分内容": "設計は共通税率保存成功後の拡張イベントを新規・編集の区別なく定義しているが、実装では既存税率編集時の差し込み点が欠落する。",
+      "実装実態": "新規フォームの保存成功時は ADMIN_SETTING_SHOP_TAX_RULE_INDEX_COMPLETE を dispatch するが、既存行の edit_inline 保存成功時は persist/flush と成功メッセージだけで完了イベントを dispatch しない。"
+    },
+    {
+      "rowId": 688,
+      "機能No": "M09-04",
+      "機能名": "M09-04 ページ管理(一覧)",
+      "区分(画面種別)": "admin",
+      "指摘区分": "未実装",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "要修正-設計準拠",
+      "設計書参照": "excel_to_html/output/0210_基本設計仕様書(コンテンツ管理).html#sheet-3",
+      "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0210_基本設計仕様書(コンテンツ管理).html:1082 の Excel 正本セル C49 は「(2)検索ボックスに入力すると、ページを(3)~(6)で部分一致検索し、対象ページのみを画面に表示する」、同:1106 は「入力すると、ページを(3)~(6)で部分一致検索」と明記する。同:1107-1111 で (3)ページ名、(4)ルーティング名、(5)URL、(6)ファイル名、(7)レイアウト名が別項目として列挙されるため、(7)は検索対象外である。",
+      "設計期待値": "(2)検索ボックスに入力すると、ページを(3)ページ名・(4)ルーティング名・(5)URL・(6)ファイル名で部分一致検索し、対象ページのみを表示する（検索対象は(3)〜(6)に限定）",
+      "差分内容": "設計は検索対象を(3)〜(6)に明示限定しているが、実装は tr 全体テキストを対象とするため設計に無い(7)レイアウト名列も部分一致検索の対象になる。(3)〜(6)のみに絞る実装は Twig/JS/Controller のいずれにも存在しない。",
+      "実装実態": "検索はクライアントサイド JS のみ。page.twig の #search-page 入力ハンドラが searchWord($(this).val(), $('table.table tbody tr')) を呼び、searchWord は各行 tr の $(this).text()（行全体の可視テキスト）に対し部分一致判定する。行テキストには(7)レイアウト名列（{{ Layout.name "
+    },
+    {
+      "rowId": 689,
+      "機能No": "M09-04",
+      "機能名": "M09-04 ページ管理(登録・編集)",
+      "区分(画面種別)": "admin",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "一部解消-残差あり",
+      "設計書参照": "excel_to_html/output/0210_基本設計仕様書(コンテンツ管理).html#sheet-4:1956,",
+      "正本根拠": "hareruya-design-docs/excel_to_html/output/0210_基本設計仕様書(コンテンツ管理).html:2175-2178 の Excel 正本は「日本語の場合: .ja.twig」「英語の場合: .en.twig」「ページを新規登録する場合、日英2種類のファイルを作成する」と明記し、同:2205 も入力欄の例として同じ拡張子を示す。",
+      "設計期待値": "言語に応じて twig ファイル拡張子は日本語 .ja.twig、英語 .en.twig とし、ページ新規登録時は日英2種類のファイルを作成する。",
+      "差分内容": "設計は日本語も .ja.twig を外部契約として示すが、実装コメントと分岐が「日本語は.jaなし」を明示しており、表示と保存ファイル名も不整合になっている。",
+      "実装実態": "画面は .ja.twig / .en.twig を表示するが、保存処理は日本語 localeSuffix を空文字にして foo.twig を作成し、英語のみ foo.en.twig を作成する。"
+    },
+    {
+      "rowId": 692,
+      "機能No": "M09-04",
+      "機能名": "M09-04 ページ管理(登録・編集)",
+      "区分(画面種別)": "admin",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0210_基本設計仕様書(コンテンツ管理).html#sheet-4:1989,",
+      "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0210_基本設計仕様書(コンテンツ管理).html:2207 の Excel 正本セル B114/E114/M114 は項目を「1-9」「コード」「半角・全角」とし、必須・Twig構文チェック等を記載するが、textarea、15行、等幅小サイズ、専用エディタ非使用は記載していない。",
+      "設計期待値": "テンプレート本文欄は行数15・等幅小サイズの複数行入力 textarea で表示し、専用のリッチエディタやプレビュー切替は持たない。",
+      "差分内容": "設計は通常の複数行入力欄を要求しているが、実装は専用コードエディタを前面に出している。",
+      "実装実態": "Ace editor を初期化し、表示上は div#editor を使う。Symfony の tpl_data textarea は display:none で隠される。"
+    },
+    {
+      "rowId": 690,
+      "機能No": "M09-04",
+      "機能名": "M09-04 ページ管理(登録・編集)",
+      "区分(画面種別)": "admin",
+      "指摘区分": "未実装",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0210_基本設計仕様書(コンテンツ管理).html#sheet-4:2085,",
+      "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0210_基本設計仕様書(コンテンツ管理).html:1107 の Excel 正本はページ名を「リンク」「押下すると、ページ管理（編集）画面へ遷移」、同:1112 は削除を「削除確認モーダル表示ボタン」と記載するが、操作ドロップダウンやレイアウト編集操作は sheet-3:1025-1528 と sheet-4:2097-2306 の Excel 正本本文に記載されていない。",
+      "設計期待値": "一覧の操作はドロップダウンメニューで開き、各行にレイアウト編集・ページ編集・削除の操作を表示する。",
+      "差分内容": "設計が要求する操作メニュー形式と操作種別が実装されていない。",
+      "実装実態": "ページ名リンクでページ編集へ遷移し、操作列には利用者作成ページの削除アイコンだけを表示する。操作ドロップダウンとレイアウト編集リンクはない。"
+    },
+    {
+      "rowId": 691,
+      "機能No": "M09-04",
+      "機能名": "M09-04 ページ管理(登録・編集)",
+      "区分(画面種別)": "admin",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0210_基本設計仕様書(コンテンツ管理).html#sheet-4:2085,",
+      "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0210_基本設計仕様書(コンテンツ管理).html:1077 の Excel 正本は「すべてのページで(3)ページ名を押下すると、内容を閲覧できる」、同:1107 もページ名を編集画面へのリンクとする。ファイル名未設定時にページ編集リンクを無効化する条件は Excel 正本本文に存在せず、同:2307 以降のリバース詳細設計にのみ現れる。",
+      "設計期待値": "指定ページの編集フォームを表示する。ファイル名が未設定のページではページ編集リンクを無効化する。",
+      "差分内容": "設計はファイル名未設定ページの編集リンク無効化を要求するが、実装に条件分岐がない。",
+      "実装実態": "Page.file_name の有無に関係なく Page.name は admin_content_page_edit へのリンクになる。file_name が空の場合はファイル名列だけ空表示になる。"
+    },
+    {
+      "rowId": 694,
+      "機能No": "M09-04",
+      "機能名": "M09-04 ページ管理(登録・編集)",
+      "区分(画面種別)": "admin",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "SPEC_BACKED",
+      "トリアージ区分": "要修正-設計準拠",
+      "設計書参照": "excel_to_html/output/0210_基本設計仕様書(コンテンツ管理).html#sheet-4:2085,",
+      "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0210_基本設計仕様書(コンテンツ管理).html:1079-1081 の Excel 正本は「開発者が追加したページは削除できない」「管理画面ログインユーザーが追加したページは削除できる」と明記し、同:1073 は編集・削除可否をDB設定で判定するとする。",
+      "設計期待値": "行の削除は、利用者作成ページのときだけファイルとレコードを削除し、初期投入ページは削除しない。ページ存在、削除可否、初期ページ制限はサーバ側で判定する。",
+      "差分内容": "画面上の削除ボタンは利用者作成ページに限定されるが、DELETEルート自体は初期投入ページのファイル削除を拒否せず、設計のサーバ側初期ページ制限に反する。",
+      "実装実態": "EDIT_TYPE_USER のときはレコードと user_data ファイルを削除するが、それ以外の初期投入ページでも DEFAULT_PAGE_PATH 側のS3ファイル削除を実行する else 分岐がある。"
+    },
+    {
+      "rowId": 693,
+      "機能No": "M09-04",
+      "機能名": "M09-04 ページ管理(登録・編集)",
+      "区分(画面種別)": "admin",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0210_基本設計仕様書(コンテンツ管理).html#sheet-4:2106",
+      "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0210_基本設計仕様書(コンテンツ管理).html:1083-1097 の Excel 正本は削除押下時に確認モーダルを表示して削除するフロー、同:1112 は「削除確認モーダルを表示」とだけ記載し、「このページを削除してもよろしいですか？」という固定文言は Excel 正本本文に存在しない。",
+      "設計期待値": "削除リンク押下時は確認ダイアログ「このページを削除してもよろしいですか？」を表示する。",
+      "差分内容": "設計のページ管理専用確認文言と、実装の共通削除モーダル文言が一致しない。",
+      "実装実態": "共通文言「この操作はあとから取り消すことができません。「%name%」を削除してよろしいですか？」をページ名付きで表示する。"
+    },
+    {
+      "rowId": 695,
+      "機能No": "M09-04",
+      "機能名": "M09-04 ページ管理(登録・編集)",
+      "区分(画面種別)": "admin",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0210_基本設計仕様書(コンテンツ管理).html#sheet-4:2111",
+      "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0210_基本設計仕様書(コンテンツ管理).html:2202 の Excel 正本のURL欄説明は最大255、正規表現、必須、編集可否を記載するが、URL重複時の固定文言「※ 同じURLのデータが存在しています。別のURLを入力してください。」は記載していない。",
+      "設計期待値": "URL重複時は URL 欄直下に「※ 同じURLのデータが存在しています。別のURLを入力してください。」を表示する。",
+      "差分内容": "設計HTMLの個別表示文言が materialGapRows から漏れていたが、画面表示されるインラインエラー文言として実装差異がある。",
+      "実装実態": "URL重複時は admin.content.page_url_exists を付与し、実文言は「既にURLが存在しています。」である。"
+    },
+    {
+      "rowId": 696,
+      "機能No": "M09-04",
+      "機能名": "M09-04 ページ管理(登録・編集)",
+      "区分(画面種別)": "admin",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0210_基本設計仕様書(コンテンツ管理).html#sheet-4:2117,",
+      "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0210_基本設計仕様書(コンテンツ管理).html:2222 の Excel 正本セル B129/E129/M129 は「3-8」「metatag」「半角・全角」とするが、最大文字数セルは空で、99999やlltext_lenの指定は Excel 正本にない。",
+      "設計期待値": "追加metaタグは任意、最大長99999文字（lltext_len、Length）とする。",
+      "差分内容": "設計は lltext_len=99999 をフォーム上限にする要求だが、実装は ltext_len=3000 を使っており、設計上限より短く拒否する。",
+      "実装実態": "MainEditType は meta_tags の Length max に eccube_ltext_len を使う。設定値は eccube_ltext_len=3000、eccube_lltext_len=99999。Entity の dtb_page.meta_tags は length=4000。"
+    },
+    {
+      "rowId": 697,
+      "機能No": "M09-07",
+      "機能名": "M09-07 ブロック管理(一覧)",
+      "区分(画面種別)": "admin",
+      "指摘区分": "未実装",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0210_基本設計仕様書(コンテンツ管理).html#sheet-5",
+      "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0210_基本設計仕様書(コンテンツ管理).html:2481 の Excel 正本は削除不可ブロックを編集不可にし、同:2745 は「編集、削除できないブロックの場合、この画面にアクセスできないようにする」と記載するが、HTTP 403と対象不在404のステータス区別は明記しない。",
+      "設計期待値": "削除不可ブロックの編集フォーム表示・更新送信はアクセス拒否（HTTP 403）とし、対象ブロック無し（HTTP 404）と意図的に区別する。",
+      "差分内容": "設計は削除不可=403・対象なし=404 とHTTPステータスを区別するが、実装は両者とも404。BlockController.php を確認し403返却分岐が無いことを確認。",
+      "実装実態": "edit() は削除不可ブロックに対し NotFoundHttpException（HTTP 404）を投げる。GET/POST とも同一メソッドを通り編集・更新とも404。403（AccessDeniedHttpException）分岐は存在しない。"
+    },
+    {
+      "rowId": 698,
+      "機能No": "M09-07",
+      "機能名": "M09-07 ブロック管理(一覧)",
+      "区分(画面種別)": "admin",
+      "指摘区分": "実装違い",
+      "確定根拠区分": "LEGACY_BACKED",
+      "トリアージ区分": "要修正-移植漏れ(設計書追記も要)",
+      "設計書参照": "excel_to_html/output/0210_基本設計仕様書(コンテンツ管理).html#sheet-5",
+      "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0210_基本設計仕様書(コンテンツ管理).html:2760 の Excel 正本セル E74/M74 は項目を「コード」「半角・全角」としTwig構文チェックを記載するが、textarea、15行、等幅小サイズ、専用エディタ非使用は記載していない。",
+      "設計期待値": "ブロックデータ入力欄は複数行textareaで、リッチテキスト化・プレビュー切替を行わず専用リッチエディタや非同期保存を持たない。行数15・等幅小サイズで表示。",
+      "差分内容": "設計は専用リッチエディタを持たない素のtextarea行数15を明記するが、実装はACEエディタを組み込む。block_edit.twig を全読し確認。",
+      "実装実態": "ACEコードエディタ（mode twig, theme tomorrow, autocompletion/snippets/liveautocompletion, showInvisibles, resizable, 高さ480px）を用いる専用リッチエディタ。実textareaはd-noneで隠しsubmit時にACE値を流し込む。"
+    }
+  ]
+}
+
+exec
+/bin/bash -lc "jq -r '.findings[] | [.rowId,.機能No,.機能名,.確定根拠区分,.設計書参照,.設計期待値,.差分内容,.実装実態] | @tsv' /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_packets/du_19.json" in /home/y-saito/Developments
+ exited 3 in 436ms:
+jq: error: syntax error, unexpected INVALID_CHARACTER (Unix shell quoting issues?) at <top-level>, line 1:
+.findings[] | [.rowId,.機能No,.機能名,.確定根拠区分,.設計書参照,.設計期待値,.差分内容,.実装実態] | @tsv                       
+jq: error: try .["field"] instead of .field for unusually named fields at <top-level>, line 1:
+.findings[] | [.rowId,.機能No,.機能名,.確定根拠区分,.設計書参照,.設計期待値,.差分内容,.実装実態] | @tsv                      
+jq: 2 compile errors
+
+exec
+/bin/bash -lc "jq -r '.findings[] | [.rowId,.[\"機能No\"],.[\"機能名\"],.[\"確定根拠区分\"],.[\"設計書参照\"],.[\"設計期待値\"],.[\"差分内容\"],.[\"実装実態\"]] | @tsv' /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_packets/du_19.json" in /home/y-saito/Developments
+ succeeded in 534ms:
+750	M10-16	M10-16 追加システム設定	LEGACY_BACKED	excel_to_html/output/0209_基本設計仕様書(基本情報設定).html#sheet-14:4016	フォーム送信は method="post"、アクションは GET で画面を開くのと同じパスを指す生成URLとする。	同一パスPOST要件を route 名・URL・Twig action で反証検索したが、実装は /update 専用POSTルートへ送信している。	GET は /setting/shop/additional_system、POST は /setting/shop/additional_system/update に分かれ、Twig の form action も admin_setting_shop_additional_system_update を指す。
+754	M10-16	M10-16 追加システム設定	LEGACY_BACKED	excel_to_html/output/0209_基本設計仕様書(基本情報設定).html#sheet-14:4032	買取部門集計送信、必須項目空欄会員、ポイント未反映決済、ポイント差分、購入処理エラー、イベント決済確認エラー、身分証期限切れの各通知メールは、カンマ区切り複数メールの正規表現で検証する。	otc_summary_mail_address/check_bric_mail_address/check_nrpu_mail_address/adjust_point_variance_mail_addr/shopping_error_mail_address/check_payment_error_mail_address/check_id_expired_mail_address で再検索したが、実装は単一メール形式の Email 制約である。	対象メール項目は Symfony Email 制約と Length 制約で実装されており、カンマ区切り複数メール用 Regex はない。
+757	M10-16	M10-16 追加システム設定	LEGACY_BACKED	excel_to_html/output/0209_基本設計仕様書(基本情報設定).html#sheet-14:4035,4048	当画面の保存処理では mtb_option.update_date を現在時刻へ進める処理を同一メソッド内に持たず、option_value と member_id のみを更新対象として明示する。	update_date/setUpdateDate/MtbOption/保存ループで再検索し、当コントローラ内で update_date を明示更新していることを確認した。	変更検出時に option_value と member に加えて setUpdateDate(new \\DateTime()) を呼び出している。
+756	M10-16	M10-16 追加システム設定	LEGACY_BACKED	excel_to_html/output/0209_基本設計仕様書(基本情報設定).html#sheet-14:4044,4061	保存成功時はフラッシュ成功メッセージ（翻訳キー admin.register.complete）を積み、リダイレクト後のGETで画面全体を再描画する。	admin.register.complete/admin.common.save_complete/addSuccess を再検索し、成功メッセージの翻訳キーが設計と異なることを確認した。リダイレクト自体は GET 初期表示へ戻るため一致。	保存成功時に addSuccess('admin.common.save_complete', 'admin') を実行する。admin.common.save_complete は「保存しました」、admin.register.complete は「登録が完了しました。」である。
+715	M10-02	M10-02 特定商取引に関する法律	SPEC_BACKED	excel_to_html/output/0209_基本設計仕様書(基本情報設定).html#sheet-4:1825,1841	画面見出しは「ショップ設定」「特定商取引法管理」、ボックス見出しは「特定商取引法」として表示される。	設計はページ見出し「ショップ設定」、サブタイトル「特定商取引法管理」、ボックス見出し「特定商取引法」を要求しているが、実装表示文言はいずれも一致しない。TradeLawController/Twig/locale を確認し、設計文言そのものの表示箇所は確認できなかった。	管理画面テンプレートは title とカードヘッダに admin.setting.shop.tradelaw_setting、sub_title に admin.setting.basic_info を表示する。日本語ロケール値はそれぞれ「特定商取引法設定」「基本情報設定」。
+716	M10-02	M10-02 特定商取引に関する法律	LEGACY_BACKED	excel_to_html/output/0209_基本設計仕様書(基本情報設定).html#sheet-4:1838,1841	特定商取引法ブロックに入力欄と「登録」ボタンがある。値を入力して「登録」を押す。	設計は利用者に見える送信ボタン文言を「登録」としているが、実装は「保存」を表示する。tradelaw.twig と messages.ja.yaml を確認し、当画面専用で「登録」を表示する実装は確認できなかった。	送信ボタンは admin.common.save を表示し、日本語ロケール値は「保存」。
+718	M10-03	M10-03 利用規約管理	SPEC_BACKED	excel_to_html/output/0209_基本設計仕様書(基本情報設定).html#sheet-5:2002,2025,2034,2036,2075	利用規約設定画面は、保存成功時に同一編集画面へGETリダイレクトし、検証失敗時も同一画面を再描画する。メニューおよび関連ヘッダでは利用規約／利用規約管理（移行先実装では利用規約設定）として表示されること。	設定メニューから初回表示した時だけ利用規約設定として表示されるが、POST送信時と保存後GETでは return=agreement が失われ、テンプレートは content/page 管理側のメニュー・タイトル分岐へ落ちる。設計が求める「同一編集画面」および関連ヘッダの維持と一致しない。反証として shop_agreement、return=agreement、admin_content_page_edit、agreement_setting を検索し、return パラメータを維持する別ルート・別リダイレクトは見つからなかった。	page_edit.twig は query の return=agreement がある場合だけ menus=['setting','basic_info','shop_agreement'] と page_title=admin.setting.shop.agreement_setting を使う。しかしフォーム action は locale だけを付与し return=agreement 
+717	M10-03	M10-03 利用規約管理	SPEC_BACKED	excel_to_html/output/0209_基本設計仕様書(基本情報設定).html#sheet-5:2017,2019,2025	移行先（ec-cube-enterprise）では、ご利用規約をページ管理上の固定ページ（dtb_page の help_agreement／テンプレート Help/agreement）の本文として保持・編集し、設定→基本情報設定配下の利用規約設定導線から本文を入力して送信できること。	設計の移行先仕様は dtb_help.customer_agreement ではなく help_agreement 固定ページ本文の保持・編集を正としている。実装は導線と対象ページ ID は存在するが、固定ページ編集画面の本文エディタを読み取り専用にしており、利用者が本文を入力して登録する要求を満たさない。反証として customer_agreement/dtb_help/HelpType/HelpController/shop_agreement/AGREEMENT_PAGE_ID/help_agreement を検索し、専用 dtb_help 実装ではなくページ編集導線であることを確認した。	設定メニューの shop_agreement は Page::AGREEMENT_PAGE_ID=19 の admin_content_page_edit へ遷移し、help_agreement 固定ページを編集対象にしている。ただし page_edit.twig は is_user_data_page でない既定ページの場合に Ace エディタを readOnly にするため、管理画面上で利用規
+719	M10-04	M10-04 支払い方法　手数料設定	SPEC_BACKED	excel_to_html/output/0209_基本設計仕様書(基本情報設定).html#sheet-6	編集画面のロゴ画像欄で、ラベル「ロゴ画像」に加え補足として「620px以上推奨」を表示する。カスタマイズ区分は「なし／現行踏襲」であり、補足文言も現行(pf-eccube3)の推奨表記を踏襲すべき。	編集画面テンプレート(payment_edit.twig)と日本語ロケール(messages.ja.yaml)を確認。ロゴ補足文言が翻訳キー admin.setting.shop.payment.logo_image_size 経由で「推奨サイズ : 500px × 100px」と表示され、設計書の現行踏襲文言「620px以上推奨」と一致しない、利用者が直接目にする文言差分。twig は当該翻訳キー1つのみを出力しており動的な 620px 表示経路も存在しない。	payment_edit.twig:197 で {{ 'admin.setting.shop.payment.logo_image_size'|trans }} を出力し、messages.ja.yaml:3055 の翻訳値は「推奨サイズ : 500px × 100px」。ラベル「ロゴ画像」(messages.ja.yaml:3054) は一致するが補足文言が設計の「620px以上推奨」と一致しな
+720	M10-07	M10-07 税率設定	SPEC_BACKED	excel_to_html/output/0209_基本設計仕様書(基本情報設定).html#sheet-8:2535	税率設定画面は「個別税率設定」ブロックに「商品別税率機能」の有効/無効選択と上部「登録」ボタンを表示し、POST /{admin_route}/setting/shop/tax/edit_param で dtb_base_info.option_product_tax_rule だけを保存する。	TaxRuleController の税率設定ルートは /setting/shop/tax, /setting/shop/tax/new, /setting/shop/tax/{id}/delete のみ。tax_rule.twig は税率テーブルのみを描画し、商品別税率機能の入力を描画しない。EccubeEvents には edit.parameter の定数だけがあり、TaxRuleController からの dispatch は無い。	税率設定画面側には option_product_tax_rule のフォーム項目、個別税率設定ブロック、edit_param ルート、パラメータ保存イベント dispatch が無い。option_product_tax_rule は ShopMasterType に存在し、ShopController の /setting/shop で保存される。
+722	M10-07	M10-07 税率設定	LEGACY_BACKED	excel_to_html/output/0209_基本設計仕様書(基本情報設定).html#sheet-8:2600	一覧から「編集」を選ぶと GET /{admin_route}/setting/shop/tax/{id}/edit で当該行がフォームに載り、基本税率行以外は適用日時欄と日時ピッカーを表示する。	設計が外部入口として定義する GET 編集エンドポイントが実装されておらず、実装は同一ページ内インライン編集に置き換わっている。	編集専用 GET /setting/shop/tax/{id}/edit は無い。編集ボタンは tax_rule.twig の JS で同一一覧行の .edit を表示し、POST /setting/shop/tax に tax_rule_id と mode=edit_inline を送る。
+721	M10-07	M10-07 税率設定	SPEC_BACKED	excel_to_html/output/0209_基本設計仕様書(基本情報設定).html#sheet-8:2603	画面構成は「個別税率設定」「共通税率設定」「税率一覧」の縦並びで、ページ見出しは「基本情報設定」＋サブタイトル「税率設定」、共通税率は「登録」ボタン、課税規則はラジオ、適用日時は Bootstrap datetimepicker、確認モーダルは使わない。	設計のブロック分割、見出し順、操作文言、入力種別、日時ピッカー、モーダル不使用がテンプレート/FormType と一致しない。	実装は単一の「税率設定」カード内に新規行・既存行を含む表を描画する。見出しは title=税率設定/sub_title=基本情報設定。新規ボタンは「新規作成」、編集保存は「決定」。課税規則は expanded=false の選択式。税率設定テンプレートには datetimepicker 初期化が無く、削除は Bootstrap モーダルを使う。
+723	M10-07	M10-07 税率設定	SPEC_BACKED	excel_to_html/output/0209_基本設計仕様書(基本情報設定).html#sheet-8:2607	新規共通税率行の課税規則の初期値はマスタID1とする。	現在有効な税率の丸め規則がID1以外の場合、新規行の初期値が設計のマスタID1ではなく現在値になる。	newTaxRule は最初に RoundingType::ROUND(ID1) を取得するが、現在有効な税率設定が取得できる場合は $CurrentRule->getRoundingType() で上書きする。
+726	M10-07	M10-07 税率設定	LEGACY_BACKED	excel_to_html/output/0209_基本設計仕様書(基本情報設定).html#sheet-8:2615	削除対象IDが存在しない場合は、フラッシュをクリアして警告メッセージだけを残し、税率設定一覧へリダイレクトする。	ルートのエンティティ解決で対象が見つからないケースをコントローラ内で扱っておらず、設計された警告付き一覧リダイレクトにならない。	delete(Request $request, TaxRule $TaxRule) として TaxRule 実体を引数に受け、メソッド内に対象不存在時の分岐、フラッシュクリア、警告メッセージ追加が無い。存在する非基本税率は repository->delete して成功メッセージ、基本税率は何もせずリダイレクトする。
+725	M10-07	M10-07 税率設定	LEGACY_BACKED	excel_to_html/output/0209_基本設計仕様書(基本情報設定).html#sheet-8:2628	同一適用日時の別行が既に存在する場合は、共通税率行に限って重複判定し、適用日時へフォームエラー文言「既に同じ適用日時で登録されています。」を付与して保存しない。	設計上の共通税率は product_id と product_class_id がともにNULLの行だが、実装は ProductClass だけで判定する。また、利用者に表示される重複エラー文言が設計文言と異なる。	POST_SUBMIT で t.apply_date が同じ、かつ t.ProductClass IS NULL の行を数える。Product IS NULL 条件は無い。エラー文言は admin.setting.shop.tax.apply_date.available_error で「同時刻の適用日時を設定できません。」。
+724	M10-07	M10-07 税率設定	LEGACY_BACKED	excel_to_html/output/0209_基本設計仕様書(基本情報設定).html#sheet-8:2646	消費税率は必須、整数入力、0〜100の範囲、数値書式パターンを併用して検証する。	設計の最大値100がフォーム制約として実装されていないため、101以上をフォーム制約で拒否できない。	tax_rate は IntegerType、NotBlank、Range(['min' => 0])、Regex /^\\d+(\\.\\d+)?$/ のみで、100以下の上限制約が無い。
+727	M10-07	M10-07 税率設定	LEGACY_BACKED	excel_to_html/output/0209_基本設計仕様書(基本情報設定).html#sheet-8:2666	共通税率保存成功後は admin.setting.shop.tax.rule.index.complete イベントで完了フックを実行する。	設計は共通税率保存成功後の拡張イベントを新規・編集の区別なく定義しているが、実装では既存税率編集時の差し込み点が欠落する。	新規フォームの保存成功時は ADMIN_SETTING_SHOP_TAX_RULE_INDEX_COMPLETE を dispatch するが、既存行の edit_inline 保存成功時は persist/flush と成功メッセージだけで完了イベントを dispatch しない。
+688	M09-04	M09-04 ページ管理(一覧)	SPEC_BACKED	excel_to_html/output/0210_基本設計仕様書(コンテンツ管理).html#sheet-3	(2)検索ボックスに入力すると、ページを(3)ページ名・(4)ルーティング名・(5)URL・(6)ファイル名で部分一致検索し、対象ページのみを表示する（検索対象は(3)〜(6)に限定）	設計は検索対象を(3)〜(6)に明示限定しているが、実装は tr 全体テキストを対象とするため設計に無い(7)レイアウト名列も部分一致検索の対象になる。(3)〜(6)のみに絞る実装は Twig/JS/Controller のいずれにも存在しない。	検索はクライアントサイド JS のみ。page.twig の #search-page 入力ハンドラが searchWord($(this).val(), $('table.table tbody tr')) を呼び、searchWord は各行 tr の $(this).text()（行全体の可視テキスト）に対し部分一致判定する。行テキストには(7)レイアウト名列（{{ Layout.name 
+689	M09-04	M09-04 ページ管理(登録・編集)	SPEC_BACKED	excel_to_html/output/0210_基本設計仕様書(コンテンツ管理).html#sheet-4:1956,	言語に応じて twig ファイル拡張子は日本語 .ja.twig、英語 .en.twig とし、ページ新規登録時は日英2種類のファイルを作成する。	設計は日本語も .ja.twig を外部契約として示すが、実装コメントと分岐が「日本語は.jaなし」を明示しており、表示と保存ファイル名も不整合になっている。	画面は .ja.twig / .en.twig を表示するが、保存処理は日本語 localeSuffix を空文字にして foo.twig を作成し、英語のみ foo.en.twig を作成する。
+692	M09-04	M09-04 ページ管理(登録・編集)	LEGACY_BACKED	excel_to_html/output/0210_基本設計仕様書(コンテンツ管理).html#sheet-4:1989,	テンプレート本文欄は行数15・等幅小サイズの複数行入力 textarea で表示し、専用のリッチエディタやプレビュー切替は持たない。	設計は通常の複数行入力欄を要求しているが、実装は専用コードエディタを前面に出している。	Ace editor を初期化し、表示上は div#editor を使う。Symfony の tpl_data textarea は display:none で隠される。
+690	M09-04	M09-04 ページ管理(登録・編集)	LEGACY_BACKED	excel_to_html/output/0210_基本設計仕様書(コンテンツ管理).html#sheet-4:2085,	一覧の操作はドロップダウンメニューで開き、各行にレイアウト編集・ページ編集・削除の操作を表示する。	設計が要求する操作メニュー形式と操作種別が実装されていない。	ページ名リンクでページ編集へ遷移し、操作列には利用者作成ページの削除アイコンだけを表示する。操作ドロップダウンとレイアウト編集リンクはない。
+691	M09-04	M09-04 ページ管理(登録・編集)	LEGACY_BACKED	excel_to_html/output/0210_基本設計仕様書(コンテンツ管理).html#sheet-4:2085,	指定ページの編集フォームを表示する。ファイル名が未設定のページではページ編集リンクを無効化する。	設計はファイル名未設定ページの編集リンク無効化を要求するが、実装に条件分岐がない。	Page.file_name の有無に関係なく Page.name は admin_content_page_edit へのリンクになる。file_name が空の場合はファイル名列だけ空表示になる。
+694	M09-04	M09-04 ページ管理(登録・編集)	SPEC_BACKED	excel_to_html/output/0210_基本設計仕様書(コンテンツ管理).html#sheet-4:2085,	行の削除は、利用者作成ページのときだけファイルとレコードを削除し、初期投入ページは削除しない。ページ存在、削除可否、初期ページ制限はサーバ側で判定する。	画面上の削除ボタンは利用者作成ページに限定されるが、DELETEルート自体は初期投入ページのファイル削除を拒否せず、設計のサーバ側初期ページ制限に反する。	EDIT_TYPE_USER のときはレコードと user_data ファイルを削除するが、それ以外の初期投入ページでも DEFAULT_PAGE_PATH 側のS3ファイル削除を実行する else 分岐がある。
+693	M09-04	M09-04 ページ管理(登録・編集)	LEGACY_BACKED	excel_to_html/output/0210_基本設計仕様書(コンテンツ管理).html#sheet-4:2106	削除リンク押下時は確認ダイアログ「このページを削除してもよろしいですか？」を表示する。	設計のページ管理専用確認文言と、実装の共通削除モーダル文言が一致しない。	共通文言「この操作はあとから取り消すことができません。「%name%」を削除してよろしいですか？」をページ名付きで表示する。
+695	M09-04	M09-04 ページ管理(登録・編集)	LEGACY_BACKED	excel_to_html/output/0210_基本設計仕様書(コンテンツ管理).html#sheet-4:2111	URL重複時は URL 欄直下に「※ 同じURLのデータが存在しています。別のURLを入力してください。」を表示する。	設計HTMLの個別表示文言が materialGapRows から漏れていたが、画面表示されるインラインエラー文言として実装差異がある。	URL重複時は admin.content.page_url_exists を付与し、実文言は「既にURLが存在しています。」である。
+696	M09-04	M09-04 ページ管理(登録・編集)	LEGACY_BACKED	excel_to_html/output/0210_基本設計仕様書(コンテンツ管理).html#sheet-4:2117,	追加metaタグは任意、最大長99999文字（lltext_len、Length）とする。	設計は lltext_len=99999 をフォーム上限にする要求だが、実装は ltext_len=3000 を使っており、設計上限より短く拒否する。	MainEditType は meta_tags の Length max に eccube_ltext_len を使う。設定値は eccube_ltext_len=3000、eccube_lltext_len=99999。Entity の dtb_page.meta_tags は length=4000。
+697	M09-07	M09-07 ブロック管理(一覧)	LEGACY_BACKED	excel_to_html/output/0210_基本設計仕様書(コンテンツ管理).html#sheet-5	削除不可ブロックの編集フォーム表示・更新送信はアクセス拒否（HTTP 403）とし、対象ブロック無し（HTTP 404）と意図的に区別する。	設計は削除不可=403・対象なし=404 とHTTPステータスを区別するが、実装は両者とも404。BlockController.php を確認し403返却分岐が無いことを確認。	edit() は削除不可ブロックに対し NotFoundHttpException（HTTP 404）を投げる。GET/POST とも同一メソッドを通り編集・更新とも404。403（AccessDeniedHttpException）分岐は存在しない。
+698	M09-07	M09-07 ブロック管理(一覧)	LEGACY_BACKED	excel_to_html/output/0210_基本設計仕様書(コンテンツ管理).html#sheet-5	ブロックデータ入力欄は複数行textareaで、リッチテキスト化・プレビュー切替を行わず専用リッチエディタや非同期保存を持たない。行数15・等幅小サイズで表示。	設計は専用リッチエディタを持たない素のtextarea行数15を明記するが、実装はACEエディタを組み込む。block_edit.twig を全読し確認。	ACEコードエディタ（mode twig, theme tomorrow, autocompletion/snippets/liveautocompletion, showInvisibles, resizable, 高さ480px）を用いる専用リッチエディタ。実textareaはd-noneで隠しsubmit時にACE値を流し込む。
+
+exec
+/bin/bash -lc "ls -l /home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/0209_基本設計仕様書\\(基本情報設定\\).xlsx /home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/0210_基本設計仕様書\\(コンテンツ管理\\).xlsx && unzip -l /home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/0209_基本設計仕様書\\(基本情報設定\\).xlsx | rg 'xl/(worksheets|drawings|media)' && unzip -l /home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/0210_基本設計仕様書\\(コンテンツ管理\\).xlsx | rg 'xl/(worksheets|drawings|media)'" in /home/y-saito/Developments
+ succeeded in 1194ms:
+-rw-r--r-- 1 y-saito y-saito 4159166 Jul 15 18:39 /home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/0209_基本設計仕様書(基本情報設定).xlsx
+-rw-r--r-- 1 y-saito y-saito 1280649 Mar 13 20:17 /home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/0210_基本設計仕様書(コンテンツ管理).xlsx
+   404651  1980-01-01 00:00   xl/worksheets/sheet4.xml
+   344498  1980-01-01 00:00   xl/worksheets/sheet5.xml
+   264816  1980-01-01 00:00   xl/worksheets/sheet6.xml
+   314516  1980-01-01 00:00   xl/worksheets/sheet7.xml
+   379011  1980-01-01 00:00   xl/worksheets/sheet8.xml
+   298968  1980-01-01 00:00   xl/worksheets/sheet9.xml
+   312966  1980-01-01 00:00   xl/worksheets/sheet10.xml
+   274817  1980-01-01 00:00   xl/worksheets/sheet11.xml
+   295015  1980-01-01 00:00   xl/worksheets/sheet12.xml
+   293270  1980-01-01 00:00   xl/worksheets/sheet13.xml
+   470930  1980-01-01 00:00   xl/worksheets/sheet14.xml
+   345833  1980-01-01 00:00   xl/worksheets/sheet15.xml
+   301247  1980-01-01 00:00   xl/worksheets/sheet16.xml
+   286827  1980-01-01 00:00   xl/worksheets/sheet17.xml
+   411567  1980-01-01 00:00   xl/worksheets/sheet18.xml
+   359467  1980-01-01 00:00   xl/worksheets/sheet19.xml
+    59984  1980-01-01 00:00   xl/drawings/drawing1.xml
+    41445  1980-01-01 00:00   xl/drawings/drawing2.xml
+   168750  1980-01-01 00:00   xl/media/image1.png
+     5924  1980-01-01 00:00   xl/media/image2.png
+    21460  1980-01-01 00:00   xl/drawings/drawing3.xml
+   462524  1980-01-01 00:00   xl/media/image3.png
+     4018  1980-01-01 00:00   xl/drawings/drawing4.xml
+   453648  1980-01-01 00:00   xl/media/image4.png
+    20941  1980-01-01 00:00   xl/drawings/drawing5.xml
+   107348  1980-01-01 00:00   xl/media/image5.png
+   230569  1980-01-01 00:00   xl/media/image6.png
+    46418  1980-01-01 00:00   xl/drawings/drawing6.xml
+     9388  1980-01-01 00:00   xl/media/image7.png
+   377638  1980-01-01 00:00   xl/media/image8.png
+    51669  1980-01-01 00:00   xl/media/image9.png
+    10583  1980-01-01 00:00   xl/drawings/drawing7.xml
+   193349  1980-01-01 00:00   xl/media/image10.png
+    11893  1980-01-01 00:00   xl/drawings/drawing8.xml
+   354702  1980-01-01 00:00   xl/media/image11.png
+     7815  1980-01-01 00:00   xl/drawings/drawing9.xml
+    37501  1980-01-01 00:00   xl/media/image12.png
+    91060  1980-01-01 00:00   xl/media/image13.png
+    10438  1980-01-01 00:00   xl/drawings/drawing10.xml
+   161280  1980-01-01 00:00   xl/media/image14.png
+   239774  1980-01-01 00:00   xl/media/image15.png
+    13221  1980-01-01 00:00   xl/drawings/drawing11.xml
+    61456  1980-01-01 00:00   xl/media/image16.png
+    85831  1980-01-01 00:00   xl/drawings/drawing12.xml
+   211041  1980-01-01 00:00   xl/media/image17.png
+    42721  1980-01-01 00:00   xl/drawings/drawing13.xml
+    96024  1980-01-01 00:00   xl/media/image18.png
+    54902  1980-01-01 00:00   xl/drawings/drawing14.xml
+     3775  1980-01-01 00:00   xl/drawings/drawing15.xml
+     3798  1980-01-01 00:00   xl/drawings/drawing16.xml
+   153432  1980-01-01 00:00   xl/worksheets/sheet1.xml
+   169186  1980-01-01 00:00   xl/worksheets/sheet2.xml
+      299  1980-01-01 00:00   xl/worksheets/_rels/sheet3.xml.rels
+      299  1980-01-01 00:00   xl/worksheets/_rels/sheet4.xml.rels
+      299  1980-01-01 00:00   xl/worksheets/_rels/sheet5.xml.rels
+      299  1980-01-01 00:00   xl/worksheets/_rels/sheet6.xml.rels
+      299  1980-01-01 00:00   xl/worksheets/_rels/sheet7.xml.rels
+      299  1980-01-01 00:00   xl/worksheets/_rels/sheet8.xml.rels
+   315235  1980-01-01 00:00   xl/worksheets/sheet3.xml
+      299  1980-01-01 00:00   xl/worksheets/_rels/sheet10.xml.rels
+      299  1980-01-01 00:00   xl/worksheets/_rels/sheet11.xml.rels
+      300  1980-01-01 00:00   xl/worksheets/_rels/sheet12.xml.rels
+      300  1980-01-01 00:00   xl/worksheets/_rels/sheet13.xml.rels
+      300  1980-01-01 00:00   xl/worksheets/_rels/sheet14.xml.rels
+      300  1980-01-01 00:00   xl/worksheets/_rels/sheet15.xml.rels
+      300  1980-01-01 00:00   xl/worksheets/_rels/sheet17.xml.rels
+      300  1980-01-01 00:00   xl/worksheets/_rels/sheet18.xml.rels
+      465  1980-01-01 00:00   xl/worksheets/_rels/sheet19.xml.rels
+      427  1980-01-01 00:00   xl/drawings/_rels/drawing2.xml.rels
+      299  1980-01-01 00:00   xl/worksheets/_rels/sheet9.xml.rels
+      292  1980-01-01 00:00   xl/drawings/_rels/drawing4.xml.rels
+      427  1980-01-01 00:00   xl/drawings/_rels/drawing5.xml.rels
+      562  1980-01-01 00:00   xl/drawings/_rels/drawing6.xml.rels
+      293  1980-01-01 00:00   xl/drawings/_rels/drawing7.xml.rels
+      293  1980-01-01 00:00   xl/drawings/_rels/drawing8.xml.rels
+      429  1980-01-01 00:00   xl/drawings/_rels/drawing9.xml.rels
+      429  1980-01-01 00:00   xl/drawings/_rels/drawing10.xml.rels
+      293  1980-01-01 00:00   xl/drawings/_rels/drawing11.xml.rels
+      293  1980-01-01 00:00   xl/drawings/_rels/drawing12.xml.rels
+      293  1980-01-01 00:00   xl/drawings/_rels/drawing13.xml.rels
+      292  1980-01-01 00:00   xl/drawings/_rels/drawing3.xml.rels
+   573264  1980-01-01 00:00   xl/worksheets/sheet1.xml
+    63896  1980-01-01 00:00   xl/worksheets/sheet2.xml
+   281303  1980-01-01 00:00   xl/worksheets/sheet3.xml
+   271385  1980-01-01 00:00   xl/worksheets/sheet4.xml
+   286462  1980-01-01 00:00   xl/worksheets/sheet5.xml
+   288535  1980-01-01 00:00   xl/worksheets/sheet6.xml
+   318427  1980-01-01 00:00   xl/worksheets/sheet8.xml
+      299  1980-01-01 00:00   xl/worksheets/_rels/sheet8.xml.rels
+    65005  1980-01-01 00:00   xl/drawings/drawing1.xml
+    28771  1980-01-01 00:00   xl/drawings/drawing2.xml
+    55581  1980-01-01 00:00   xl/media/image1.png
+     6476  1980-01-01 00:00   xl/media/image2.png
+   114612  1980-01-01 00:00   xl/media/image3.png
+    61945  1980-01-01 00:00   xl/media/image4.png
+    86918  1980-01-01 00:00   xl/drawings/drawing3.xml
+     1187  1980-01-01 00:00   xl/drawings/vmlDrawing1.vml
+    32930  1980-01-01 00:00   xl/media/image5.png
+    35799  1980-01-01 00:00   xl/media/image6.png
+    93019  1980-01-01 00:00   xl/media/image7.png
+    57586  1980-01-01 00:00   xl/media/image8.png
+    23987  1980-01-01 00:00   xl/drawings/drawing4.xml
+     5225  1980-01-01 00:00   xl/media/image9.png
+    18461  1980-01-01 00:00   xl/media/image10.png
+   242489  1980-01-01 00:00   xl/worksheets/sheet7.xml
+    76817  1980-01-01 00:00   xl/media/image12.png
+    43901  1980-01-01 00:00   xl/media/image13.png
+    32327  1980-01-01 00:00   xl/drawings/drawing5.xml
+    44065  1980-01-01 00:00   xl/media/image14.png
+    54661  1980-01-01 00:00   xl/drawings/drawing6.xml
+   113228  1980-01-01 00:00   xl/media/image15.png
+    44515  1980-01-01 00:00   xl/media/image16.png
+    39670  1980-01-01 00:00   xl/media/image17.png
+    21944  1980-01-01 00:00   xl/media/image18.png
+    22211  1980-01-01 00:00   xl/media/image19.png
+    24434  1980-01-01 00:00   xl/media/image20.png
+      322  1980-01-01 00:00   xl/worksheets/_rels/sheet1.xml.rels
+      299  1980-01-01 00:00   xl/worksheets/_rels/sheet3.xml.rels
+      299  1980-01-01 00:00   xl/worksheets/_rels/sheet4.xml.rels
+      738  1980-01-01 00:00   xl/worksheets/_rels/sheet5.xml.rels
+      299  1980-01-01 00:00   xl/worksheets/_rels/sheet6.xml.rels
+      299  1980-01-01 00:00   xl/worksheets/_rels/sheet7.xml.rels
+    16597  1980-01-01 00:00   xl/media/image11.png
+      325  1980-01-01 00:00   xl/drawings/_rels/drawing1.xml.rels
+      697  1980-01-01 00:00   xl/drawings/_rels/drawing2.xml.rels
+      697  1980-01-01 00:00   xl/drawings/_rels/drawing3.xml.rels
+      836  1980-01-01 00:00   xl/drawings/_rels/drawing4.xml.rels
+      428  1980-01-01 00:00   xl/drawings/_rels/drawing5.xml.rels
+      973  1980-01-01 00:00   xl/drawings/_rels/drawing6.xml.rels
+
+exec
+/bin/bash -lc "for f in /home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/0209_基本設計仕様書\\(基本情報設定\\).xlsx /home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/0210_基本設計仕様書\\(コンテンツ管理\\).xlsx; do unzip -p \""'$f" xl/workbook.xml | xmllint --format - 2>/dev/null | rg '"'<sheet '; done" in /home/y-saito/Developments
+ exited 1 in 1034ms:
+exec
+/bin/bash -lc "for f in /home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/0209_基本設計仕様書\\(基本情報設定\\).xlsx /home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/0210_基本設計仕様書\\(コンテンツ管理\\).xlsx; do basename \""'$f"; unzip -p "$f" xl/workbook.xml | sed '"'s/<sheet /\\n<sheet /g' | rg '"'^<sheet '"'; done" in /home/y-saito/Developments
+ succeeded in 589ms:
+0209_基本設計仕様書(基本情報設定).xlsx
+<sheet name="表紙" sheetId="1" r:id="rId1"/>
+<sheet name="目次" sheetId="2" r:id="rId2"/>
+<sheet name="画面遷移図" sheetId="63" r:id="rId3"/>
+<sheet name="基本設定(旧ショップマスター)" sheetId="102" r:id="rId4"/>
+<sheet name="特定商取引に関する法律" sheetId="103" r:id="rId5"/>
+<sheet name="利用規約管理" sheetId="104" r:id="rId6"/>
+<sheet name="支払い方法　手数料設定" sheetId="105" r:id="rId7"/>
+<sheet name="配送方法設定" sheetId="106" r:id="rId8"/>
+<sheet name="税率設定" sheetId="101" r:id="rId9"/>
+<sheet name="自動送信メール" sheetId="100" r:id="rId10"/>
+<sheet name="メール設定" sheetId="99" r:id="rId11"/>
+<sheet name="CSV出力項目設定 " sheetId="98" r:id="rId12"/>
+<sheet name="カスタムCSV出力設定" sheetId="97" r:id="rId13"/>
+<sheet name="店舗登録" sheetId="107" r:id="rId14"/>
+<sheet name="追加システム設定" sheetId="6" r:id="rId15"/>
+<sheet name="XXXCSV出力項目設定" sheetId="25" state="hidden" r:id="rId16"/>
+<sheet name="対応状況管理" sheetId="26" state="hidden" r:id="rId17"/>
+<sheet name="メール管理_商品予約完了" sheetId="27" state="hidden" r:id="rId18"/>
+<sheet name="機能A" sheetId="28" state="hidden" r:id="rId19"/></sheets><calcPr calcId="191029"/><extLst><ext uri="{B58B0392-4F1F-4190-BB64-5DF3571DCE5F}" xmlns:xcalcf="http://schemas.microsoft.com/office/spreadsheetml/2018/calcfeatures"><xcalcf:calcFeatures><xcalcf:feature name="microsoft.com:RD"/><xcalcf:feature name="microsoft.com:Single"/><xcalcf:feature name="microsoft.com:FV"/><xcalcf:feature name="microsoft.com:CNMTM"/><xcalcf:feature name="microsoft.com:LET_WF"/><xcalcf:feature name="microsoft.com:LAMBDA_WF"/><xcalcf:feature name="microsoft.com:ARRAYTEXT_WF"/></xcalcf:calcFeatures></ext></extLst></workbook>
+0210_基本設計仕様書(コンテンツ管理).xlsx
+<sheet name="表紙" sheetId="1" r:id="rId1"/>
+<sheet name="目次" sheetId="2" r:id="rId2"/>
+<sheet name="画面遷移図" sheetId="3" r:id="rId3"/>
+<sheet name="ページ管理(一覧)" sheetId="9" r:id="rId4"/>
+<sheet name="ページ管理(登録・編集)" sheetId="4" r:id="rId5"/>
+<sheet name="ブロック管理(一覧)" sheetId="11" r:id="rId6"/>
+<sheet name="ブロック管理(登録・編集)" sheetId="10" r:id="rId7"/>
+<sheet name="支店トップページ管理" sheetId="5" r:id="rId8"/></sheets><calcPr calcId="191029"/><extLst><ext uri="{140A7094-0E35-4892-8432-C4D2E57EDEB5}" xmlns:x15="http://schemas.microsoft.com/office/spreadsheetml/2010/11/main"><x15:workbookPr chartTrackingRefBase="1"/></ext><ext uri="{B58B0392-4F1F-4190-BB64-5DF3571DCE5F}" xmlns:xcalcf="http://schemas.microsoft.com/office/spreadsheetml/2018/calcfeatures"><xcalcf:calcFeatures><xcalcf:feature name="microsoft.com:RD"/><xcalcf:feature name="microsoft.com:Single"/><xcalcf:feature name="microsoft.com:FV"/><xcalcf:feature name="microsoft.com:CNMTM"/><xcalcf:feature name="microsoft.com:LET_WF"/><xcalcf:feature name="microsoft.com:LAMBDA_WF"/><xcalcf:feature name="microsoft.com:ARRAYTEXT_WF"/></xcalcf:calcFeatures></ext></extLst></workbook>
+
+exec
+/bin/bash -lc "for spec in '0209_基本設計仕様書(基本情報設定).xlsx:5 6 7 9 15' '0210_基本設計仕様書(コンテンツ管理).xlsx:4 5 6'; do f="'${spec%%:*}; nums=${spec#*:}; echo "$f"; for n in $nums; do echo "sheet$n"; unzip -p "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/$f" "xl/worksheets/_rels/sheet$n.xml.rels" 2>/dev/null || true; done; done' in /home/y-saito/Developments
+ succeeded in 135ms:
+0209_基本設計仕様書(基本情報設定).xlsx
+sheet5
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing" Target="../drawings/drawing3.xml"/></Relationships>sheet6
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing" Target="../drawings/drawing4.xml"/></Relationships>sheet7
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing" Target="../drawings/drawing5.xml"/></Relationships>sheet9
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing" Target="../drawings/drawing7.xml"/></Relationships>sheet15
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing" Target="../drawings/drawing13.xml"/></Relationships>0210_基本設計仕様書(コンテンツ管理).xlsx
+sheet4
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing" Target="../drawings/drawing2.xml"/></Relationships>sheet5
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/comments" Target="../comments1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/vmlDrawing" Target="../drawings/vmlDrawing1.vml"/><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing" Target="../drawings/drawing3.xml"/><Relationship Id="rId4" Type="http://schemas.microsoft.com/office/2017/10/relationships/threadedComment" Target="../threadedComments/threadedComment1.xml"/></Relationships>sheet6
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing" Target="../drawings/drawing4.xml"/></Relationships>
+exec
+/bin/bash -lc "rg -n \"drawing|image|shape|openpyxl|LibreOffice\" /home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py /home/y-saito/Developments/hareruya-design-docs/excel_to_html -g '*.py' | head -120" in /home/y-saito/Developments
+ succeeded in 768ms:
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:24:    from openpyxl import load_workbook
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:25:    from openpyxl.cell.cell import MergedCell
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:26:    from openpyxl.cell.rich_text import CellRichText, TextBlock
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:27:    from openpyxl.utils import column_index_from_string, get_column_letter
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:30:        "openpyxl is required. Run this tool with: uv run python convert.py"
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:39:    "gif": "image/gif",
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:40:    "jpeg": "image/jpeg",
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:41:    "jpg": "image/jpeg",
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:42:    "png": "image/png",
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:43:    "svg": "image/svg+xml",
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:68:# DrawingML namespaces for reading textbox/shape text that openpyxl ignores.
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:69:NS_XDR = "http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing"
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:70:NS_A = "http://schemas.openxmlformats.org/drawingml/2006/main"
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:94:#     セル継承で取り消し線を堅牢に判定する。openpyxl の font.strike には依存しない。
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:246:    is detected robustly, independent of openpyxl's font.strike.
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:308:    shape_residual_rows: list[dict[str, Any]] = []
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:311:        shape_residual_rows.extend(convert_workbook(workbook_path, output_path))
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:313:    shape_residual_path = output_dir / "shape_textbox_sheets.csv"
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:314:    write_shape_textbox_residuals(shape_residual_path, shape_residual_rows)
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:316:        "Created shape textbox residual list: "
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:317:        f"{shape_residual_path} ({len(shape_residual_rows)} remaining)"
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:343:    # openpyxl skips textbox/shape text, so pull it straight from the package.
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:345:        shapes_by_title,
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:347:        images_by_title,
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:349:        shape_warnings,
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:350:    ) = collect_workbook_shapes(workbook_path, sheet_titles=visible_titles)
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:351:    warnings.extend(shape_warnings)
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:355:    rendered_shape_keys: dict[str, set[tuple[int, str]]] = {}
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:358:        shapes = shapes_by_title.get(worksheet.title, [])
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:360:        images = images_by_title.get(worksheet.title, [])
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:370:            shapes,
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:372:            images,
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:380:        rendered_shape_keys[worksheet.title] = sheet_result.get("rendered_shapes", set())
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:389:    return shape_textbox_residual_rows(
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:390:        workbook_path.name, visible_sheets, shapes_by_title, rendered_shape_keys
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:394:def shape_textbox_residual_rows(
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:397:    shapes_by_title: dict[str, list[dict[str, Any]]],
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:398:    rendered_shape_keys: dict[str, set[tuple[int, str]]] | None = None,
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:400:    """Return DrawingML shape/textbox entries not converted to HTML.
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:402:    Actually diffs the collected DrawingML shapes against the shapes the
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:403:    renderer emitted into each sheet's shape-block (tracked by 1-based order +
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:404:    cell ref). A successful conversion renders every shape, so the CSV is left
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:405:    with only the header row; any un-rendered shape is enumerated here so the
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:408:    rendered_shape_keys = rendered_shape_keys or {}
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:412:        shapes = shapes_by_title.get(title, [])
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:413:        rendered = rendered_shape_keys.get(title, set())
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:414:        for index, shape in enumerate(shapes, start=1):
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:415:            cellref = str(shape.get("cellref", ""))
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:422:                    "shape_index": index,
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:424:                    "text": str(shape.get("text", "")),
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:425:                    "reason": "shape-blockへ未出力",
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:431:def write_shape_textbox_residuals(path: Path, rows: list[dict[str, Any]]) -> None:
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:438:                "shape_index",
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:594:def _drawing_rels(
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:595:    archive: zipfile.ZipFile, drawing_part: str, names: set[str]
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:597:    """Map a drawing's relationship ids to absolute media part paths."""
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:598:    base = drawing_part.split("/")[-1]
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:599:    rels = f"xl/drawings/_rels/{base}.rels"
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:608:            out[rid] = _resolve_package_target("xl/drawings", target)
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:619:def collect_workbook_shapes(
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:629:    """Extract textbox/shape text, pin geometry, images, and diagrams per sheet.
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:631:    openpyxl exposes cell values but not the text inside floating textboxes and
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:632:    shapes (screen-transition diagrams, callout numbers, flow-chart notes). We
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:633:    open the .xlsx as a zip, map each worksheet to its drawing part, and pull the
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:634:    shape text out so it can be rendered alongside the cell content. The same
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:635:    drawing is parsed for absolute-EMU geometry, and images are read straight
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:636:    from the drawing's <pic> elements (box + bytes from the same source) so that
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:637:    numbered callouts can be overlaid at exact positions — openpyxl's image list
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:641:    Returns (shapes_by_title, pins_by_title, images_by_title, diagrams_by_title,
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:642:    warnings) where each image is {box, src, from, caption, order}.
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:644:    shapes_by_title: dict[str, list[dict[str, Any]]] = {}
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:646:    images_by_title: dict[str, list[dict[str, Any]]] = {}
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:656:                drawing_part = _sheet_drawing_part(archive, sheet_part, names)
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:657:                if drawing_part is None or drawing_part not in names:
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:659:                data = archive.read(drawing_part)
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:661:                    shapes = _parse_drawing_shapes(data)
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:662:                except Exception as exc:  # pragma: no cover - malformed drawing.
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:664:                    shapes = []
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:665:                if shapes:
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:666:                    shapes_by_title[title] = shapes
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:668:                    pins, raw_images, diagram = _parse_drawing_geometry(data)
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:669:                except Exception as exc:  # pragma: no cover - malformed drawing.
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:676:                rels = _drawing_rels(archive, drawing_part, names)
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:677:                images: list[dict[str, Any]] = []
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:678:                for order, raw in enumerate(raw_images, start=1):
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:683:                    mime = IMAGE_MIME_TYPES.get(ext, "image/png")
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:686:                    images.append(
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:694:                                f"{title} / {get_column_letter(col)}{row} / image {order}"
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:698:                if images:
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:699:                    images_by_title[title] = images
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:702:    return shapes_by_title, pins_by_title, images_by_title, diagrams_by_title, warnings
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:705:def assign_pins_to_images(
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:706:    pins: list[dict[str, Any]], images: list[dict[str, Any]]
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:708:    """Attach each callout pin to its nearest screen image.
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:710:    Mutates each image dict, adding an "overlay" list of {text, no, left, top}
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:712:    smallest edge-distance; pins sitting just outside an image (callouts placed
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:714:    box's larger side are left unassigned (genuinely unrelated to any image).
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:716:    for image in images:
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:717:        image.setdefault("overlay", [])
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:718:    boxed = [im for im in images if im.get("box") and im["box"][2] > 0 and im["box"][3] > 0]
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:721:        pin.setdefault("assigned_image_order", None)
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:726:        for image in boxed:
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:727:            x, y, w, h = image["box"]
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:732:                best, best_dist = image, dist
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:738:        pin["assigned_image_order"] = best.get("order")
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:753:def _image_box(image: dict[str, Any]) -> tuple[float, float, float, float] | None:
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:754:    """Return a positive image box as floats, or None when geometry is absent."""
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:755:    box = image.get("box")
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:781:    """True when two non-overlapping images look like one vertical screen flow."""
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:798:    # Excel screen captures are sometimes split into separate images with
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:804:def _image_order(
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:805:    image: dict[str, Any],
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:809:        return int(image.get("order", fallback))
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:814:def _image_anchor(image: dict[str, Any]) -> tuple[int, int]:
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:815:    source = image.get("from") or (1, 1)
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:822:def image_sheet_key(image: dict[str, Any]) -> str:
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:823:    """Return the source sheet name for DrawingML images when known."""
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:824:    return str(image.get("sheet") or "")
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:827:def group_overlapping_images(
+/home/y-saito/Developments/hareruya-design-docs/excel_to_html/convert.py:828:    images: list[dict[str, Any]],
+
+exec
+/bin/bash -lc "uv run python - <<'PY'
+from pathlib import Path
+from convert import collect_workbook_shapes
+base=Path('input')
+for name, sheets in {
+ '0209_基本設計仕様書(基本情報設定).xlsx':['特定商取引に関する法律','利用規約管理','支払い方法　手数料設定','税率設定','追加システム設定'],
+ '0210_基本設計仕様書(コンテンツ管理).xlsx':['ページ管理(一覧)','ページ管理(登録・編集)','ブロック管理(一覧)'],
+}.items():
+    print('\\nBOOK',name)
+    shapes,pins,images,diagrams,warnings=collect_workbook_shapes(base/name, sheet_titles=sheets)
+    for s in sheets:
+        print('SHEET',s,'shapes',len(shapes.get(s,[])),'images',len(images.get(s,[])),'pins',len(pins.get(s,[])))
+        for im in images.get(s,[]):
+            print(' IMAGE',im.get('order'),'from',im.get('from'),'caption',im.get('caption'),'box',im.get('box'),'src_len',len(im.get('src','')))
+        texts=[(x.get('cellref'),x.get('text','').replace('\\n',' / ')) for x in shapes.get(s,[]) if x.get('text')]
+        print(' SHAPE_TEXT',texts[:40])
+PY" in /home/y-saito/Developments/hareruya-design-docs/excel_to_html
+ succeeded in 1545ms:
+
+BOOK 0209_基本設計仕様書(基本情報設定).xlsx
+SHEET 特定商取引に関する法律 shapes 15 images 1 pins 15
+ IMAGE 1 from (7, 12) caption 特定商取引に関する法律 / L7 / image 1 box (1841500, 1022349, 5759450.0, 16040479.0) src_len 616722
+ SHAPE_TEXT [('L9', '(1-1)'), ('K12', '(1-2)'), ('L14', '(1-3)'), ('L18', '使用されていないのでエンタープライズ版をそのまま踏襲とする'), ('K24', '(1-4)'), ('K27', '(1-5)'), ('K29', '(1-6)'), ('K33', '(1-7)'), ('K35', '(1-8)'), ('K43', '(1-9)'), ('K52', '(1-10)'), ('J60', '(1-11)'), ('K68', '(1-12)'), ('K77', '(1-13)'), ('AJ84', '(2-1)')]
+SHEET 利用規約管理 shapes 2 images 1 pins 2
+ IMAGE 1 from (7, 7) caption 利用規約管理 / G7 / image 1 box (1092200, 1244600, 7493000.0, 5823006.0) src_len 604886
+ SHAPE_TEXT [('F7', '(1)'), ('AJ31', '(2)')]
+SHEET 支払い方法　手数料設定 shapes 14 images 2 pins 14
+ IMAGE 1 from (8, 2) caption 支払い方法　手数料設定 / B8 / image 1 box (228599, 1282700, 10024079.0, 2844800.0) src_len 143154
+ IMAGE 2 from (25, 3) caption 支払い方法　手数料設定 / C25 / image 2 box (495300, 11747499, 8191500.0, 7303265.0) src_len 307450
+ SHAPE_TEXT [('C7', '(1-1)'), ('C9', '(1-2)'), ('F9', '(1-3)'), ('L9', '(1-4)'), ('Q9', '(1-5)'), ('AW10', '(1-6)'), ('B25', '(2-1)'), ('B28', '(2-2)'), ('B33', '(2-3)'), ('B36', '(2-4)'), ('B42', '(2-5)'), ('B47', '(2-6)'), ('B50', '(2-7)'), ('AK58', '(2-8)')]
+SHEET 税率設定 shapes 7 images 1 pins 7
+ IMAGE 1 from (7, 7) caption 税率設定 / G7 / image 1 box (1054100, 1130299, 7962900.0, 9802047.0) src_len 257822
+ SHAPE_TEXT [('D10', '(1-1)'), ('L17', '(1-2)'), ('D27', '(2-1)'), ('D31', '(2-2)'), ('D34', '(2-3)'), ('L40', '(2-4)'), ('E46', '(3-1)')]
+SHEET 追加システム設定 shapes 23 images 1 pins 23
+ IMAGE 1 from (9, 12) caption 追加システム設定 / L9 / image 1 box (1498600, 1644650, 8826500.0, 9339978.0) src_len 128054
+ SHAPE_TEXT [('L9', '(1)'), ('L11', '(2)'), ('L13', '(3)'), ('L15', '(4)'), ('L17', '(5)'), ('L20', '(6)'), ('L22', '(7)'), ('L24', '(8)'), ('L26', '(9)'), ('L28', '(10)'), ('L30', '(11)'), ('L32', '(12)'), ('L34', '(13)'), ('L36', '(14)'), ('L38', '(15)'), ('L40', '(16)'), ('L42', '(17)'), ('L44', '(18)'), ('L46', '(19)'), ('L49', '(20)'), ('BD49', '(18と19の間に追加) 査定払出し連絡用経理部門メールアドレス'), ('L51', '(21)'), ('AI53', '(22)')]
+
+BOOK 0210_基本設計仕様書(コンテンツ管理).xlsx
+SHEET ページ管理(一覧) shapes 9 images 4 pins 9
+ IMAGE 1 from (8, 2) caption ページ管理(一覧) / B8 / image 1 box (467687.4502694411, 1564455.2274852833, 8136829.382846017, 2094256.283369521) src_len 74130
+ IMAGE 2 from (8, 2) caption ページ管理(一覧) / B8 / image 2 box (482656.2978839191, 3544788.951542968, 8107061.758425476, 511130.3312415051) src_len 8658
+ IMAGE 3 from (53, 3) caption ページ管理(一覧) / C53 / image 3 box (482600, 10363200, 7772400.0, 1464231.0) src_len 152838
+ IMAGE 4 from (65, 4) caption ページ管理(一覧) / D65 / image 4 box (622300, 12547600, 7772400.0, 1130300.0) src_len 82618
+ SHAPE_TEXT [('B8', '(1)'), ('B8', '(2)'), ('B8', '(3)'), ('B8', '(4)'), ('B8', '(5)'), ('B8', '(6)'), ('B8', '(7)'), ('B8', '(8)'), ('B8', 'ページ出力繰り返し（記載省略）')]
+SHEET ページ管理(登録・編集) shapes 29 images 4 pins 29
+ IMAGE 1 from (8, 3) caption ページ管理(登録・編集) / C8 / image 1 box (700957.9078994592, 1366520.0, 7470461.126500462, 4912942.437582597) src_len 43930
+ IMAGE 2 from (8, 3) caption ページ管理(登録・編集) / C8 / image 2 box (670931.1364296484, 6244249.667153842, 7473286.367924372, 3709351.4082981003) src_len 47754
+ IMAGE 3 from (8, 3) caption ページ管理(登録・編集) / C8 / image 3 box (6137970.44249772, 1490744.5663704781, 1571140.51954892, 220808.08403365413) src_len 124050
+ IMAGE 4 from (8, 3) caption ページ管理(登録・編集) / C8 / image 4 box (4375175.578318461, 2112044.608731243, 1858375.1579214043, 290678.302121606) src_len 76806
+ SHAPE_TEXT [('C8', '(1-1)'), ('C8', '(1-3)'), ('C8', '(1-6)'), ('C8', '(2-3)'), ('C8', '(2-4)'), ('C8', '(3-1)'), ('C8', '(3-3)'), ('C8', '(3-4)'), ('C8', '(3-5)'), ('C8', '(1-8)'), ('C8', '(1-9)'), ('C8', '(1-4)'), ('C8', '(2-1)'), ('C8', '(2-2)'), ('C8', '(3-2)'), ('C8', '(3-6)'), ('C8', '(3-7)'), ('C8', '(3-8)'), ('C8', '(5)'), ('C8', '(4)'), ('C8', 'https://www.hareruyamtg.com/ja/user_data/'), ('C8', '.ja.twig'), ('C8', '(1-7)'), ('C8', '(1-2)'), ('C8', '最終更新日時'), ('C8', '2025/10/25 10:30'), ('C8', '(1-10)'), ('C8', 'ページ確認'), ('C8', '(1-5)')]
+SHEET ブロック管理(一覧) shapes 7 images 5 pins 7
+ IMAGE 1 from (7, 3) caption ブロック管理(一覧) / C7 / image 1 box (530696.5189188772, 3214345.8108423254, 7781701.484170615, 270812.7392608416) src_len 6990
+ IMAGE 2 from (7, 3) caption ブロック管理(一覧) / C7 / image 2 box (520062.0374081265, 2212442.0351690073, 7780518.665973615, 998779.497103126) src_len 24638
+ IMAGE 3 from (7, 3) caption ブロック管理(一覧) / C7 / image 3 box (532707.2261440681, 1337210.592065708, 7793063.403058006, 868001.5760554688) src_len 22154
+ IMAGE 4 from (46, 4) caption ブロック管理(一覧) / D46 / image 4 box (571500, 9690100, 5981700.0, 1394099.0) src_len 102446
+ IMAGE 5 from (57, 3) caption ブロック管理(一覧) / C57 / image 5 box (533400, 11798300, 6604000.0, 1164949.0) src_len 58558
+ SHAPE_TEXT [('C7', '(1)'), ('C7', '(2)'), ('C7', '(3)'), ('C7', '(4)'), ('C7', '(5)'), ('C7', '(6)'), ('C7', 'ブロック出力繰り返し（記載省略）')]
+
+codex
+正本には対象シートごとに画面キャプチャが貼られていることを確認しました。ただし、バックエンド規約やバリデーションの追記だけで画像差し替えにはしません。表示ラベル・画面構成に関わる LEGACY_BACKED のみ、貼付画像に該当表示が実際に含まれるかを個別確認しています。
+exec
+/bin/bash -lc "for spec in '0209_基本設計仕様書(基本情報設定).xlsx:3 4 5 7 13' '0210_基本設計仕様書(コンテンツ管理).xlsx:2 3 4'; do f="'${spec%%:*}; nums=${spec#*:}; echo "$f"; for n in $nums; do echo "drawing$n"; unzip -p "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/$f" "xl/drawings/_rels/drawing$n.xml.rels" 2>/dev/null; done; done' in /home/y-saito/Developments
+ succeeded in 1819ms:
+0209_基本設計仕様書(基本情報設定).xlsx
+drawing3
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/image3.png"/></Relationships>drawing4
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/image4.png"/></Relationships>drawing5
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/image6.png"/><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/image5.png"/></Relationships>drawing7
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/image10.png"/></Relationships>drawing13
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/image18.png"/></Relationships>0210_基本設計仕様書(コンテンツ管理).xlsx
+drawing2
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/image3.png"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/image2.png"/><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/image1.png"/><Relationship Id="rId4" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/image4.png"/></Relationships>drawing3
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/image7.png"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/image6.png"/><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/image5.png"/><Relationship Id="rId4" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/image8.png"/></Relationships>drawing4
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/image11.png"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/image10.png"/><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/image9.png"/><Relationship Id="rId5" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/image13.png"/><Relationship Id="rId4" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/image12.png"/></Relationships>
+exec
+/bin/bash -lc 'mktemp -d --tmpdir=/tmp du19.XXXXXX' in /home/y-saito/Developments
+ succeeded in 1562ms:
+/tmp/du19.8YZwrB
+
+exec
+/bin/bash -lc "unzip -j /home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/0209_基本設計仕様書\\(基本情報設定\\).xlsx 'xl/media/image3.png' 'xl/media/image4.png' 'xl/media/image5.png' 'xl/media/image6.png' 'xl/media/image10.png' 'xl/media/image18.png' -d /tmp/du19.8YZwrB/0209 && unzip -j /home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/0210_基本設計仕様書\\(コンテンツ管理\\).xlsx 'xl/media/image1.png' 'xl/media/image2.png' 'xl/media/image3.png' 'xl/media/image4.png' 'xl/media/image5.png' 'xl/media/image6.png' 'xl/media/image7.png' 'xl/media/image8.png' 'xl/media/image9.png' 'xl/media/image10.png' 'xl/media/image11.png' 'xl/media/image12.png' 'xl/media/image13.png' -d /tmp/du19.8YZwrB/0210 && identify /tmp/du19.8YZwrB/0209/*.png /tmp/du19.8YZwrB/0210/*.png" in /home/y-saito/Developments
+ exited 127 in 2332ms:
+Archive:  /home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/0209_基本設計仕様書(基本情報設定).xlsx
+ extracting: /tmp/du19.8YZwrB/0209/image3.png  
+ extracting: /tmp/du19.8YZwrB/0209/image4.png  
+ extracting: /tmp/du19.8YZwrB/0209/image5.png  
+ extracting: /tmp/du19.8YZwrB/0209/image6.png  
+ extracting: /tmp/du19.8YZwrB/0209/image10.png  
+ extracting: /tmp/du19.8YZwrB/0209/image18.png  
+Archive:  /home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/0210_基本設計仕様書(コンテンツ管理).xlsx
+ extracting: /tmp/du19.8YZwrB/0210/image1.png  
+ extracting: /tmp/du19.8YZwrB/0210/image2.png  
+ extracting: /tmp/du19.8YZwrB/0210/image3.png  
+ extracting: /tmp/du19.8YZwrB/0210/image4.png  
+ extracting: /tmp/du19.8YZwrB/0210/image5.png  
+ extracting: /tmp/du19.8YZwrB/0210/image6.png  
+ extracting: /tmp/du19.8YZwrB/0210/image7.png  
+ extracting: /tmp/du19.8YZwrB/0210/image8.png  
+ extracting: /tmp/du19.8YZwrB/0210/image9.png  
+ extracting: /tmp/du19.8YZwrB/0210/image10.png  
+ extracting: /tmp/du19.8YZwrB/0210/image12.png  
+ extracting: /tmp/du19.8YZwrB/0210/image13.png  
+ extracting: /tmp/du19.8YZwrB/0210/image11.png  
+/bin/bash: line 1: identify: command not found
+
+exec
+/bin/bash -lc "uv run python - <<'PY'
+from openpyxl import load_workbook
+from pathlib import Path
+cases={
+ '0209_基本設計仕様書(基本情報設定).xlsx':{
+  '特定商取引に関する法律':['設定','登録','画面項目'],
+  '利用規約管理':['利用規約','登録','遷移'],
+  '支払い方法　手数料設定':['ロゴ画像','620','推奨'],
+  '税率設定':['個別税率','共通税率','適用日時','消費税率','課税規則','登録','重複','イベント'],
+  '追加システム設定':['登録','Eメール','メールアドレス','更新','画面項目'],
+ },
+ '0210_基本設計仕様書(コンテンツ管理).xlsx':{
+  'ページ管理(一覧)':['検索','ページ名','レイアウト名','削除'],
+  'ページ管理(登録・編集)':['ファイル名','コード','削除','URL','metatag','metaタグ','遷移'],
+  'ブロック管理(一覧)':['編集','削除','コード','アクセス'],
+ }
+}
+for book,sheets in cases.items():
+    print('\\nBOOK',book)
+    wb=load_workbook(Path('input')/book,read_only=True,data_only=False,rich_text=True)
+    for s,terms in sheets.items():
+        ws=wb[s]
+        print('\\nSHEET',s,ws.max_row,ws.max_column)
+        hits=[]
+        for row in ws.iter_rows():
+            vals=[]
+            matched=False
+            for c in row:
+                v='' if c.value is None else str(c.value).replace('\\n',' / ')
+                if v:
+                    vals.append(f'{c.coordinate}={v}')
+                    if any(t in v for t in terms): matched=True
+            if matched: hits.append((row[0].row, vals))
+        shown=set()
+        for rn,_ in hits:
+            for rr in range(max(1,rn-1),min(ws.max_row,rn+1)+1):
+                if rr in shown: continue
+                shown.add(rr)
+                vals=[]
+                for c in ws[rr]:
+                    if c.value is not None:
+                        vals.append(f'{c.coordinate}={str(c.value).replace(chr(10),\" / \")}')
+                if vals: print('ROW',rr,' | '.join(vals))
+PY" in /home/y-saito/Developments/hareruya-design-docs/excel_to_html
+ exited 1 in 11315ms:
+
+BOOK 0209_基本設計仕様書(基本情報設定).xlsx
+
+SHEET 特定商取引に関する法律 950 55
+ROW 1 A1=ドキュメント名 | I1=基本情報設定　基本設計 | U1=セクション
+ROW 2 A2=プロジェクト名 | I2=サイトリニューアル | U2=作成者 | Y2=佐藤 | AC2=作成日 | AG2=2025-09-29 00:00:00 | AK2=更新者 | AS2=更新日
+ROW 100 C100=・フォームに入力された値で特定商取引法を登録する
+ROW 117 B117=ボタン、リンク
+ROW 118 B118=2-1 | E118=設定 | M118=ボタン | T118=- | V118=- | Z118=- | AG118=入力されたフォームの値で登録
+
+SHEET 利用規約管理 889 55
+ROW 4 A4=機能No | D4=M10-03 | I4=機能名 | N4=利用規約管理 | AC4=概要 | AG4=利用規約の編集
+ROW 48 C48=・利用規約を登録する
+ROW 51 B51=識別ID | E51=ラベル | M51=書式・制限 | T51=必須 | V51=最大値 | Z51=初期値 | AG51=画面部品の説明
+ROW 52 B52=1 | E52=利用規約 | M52=全角・半角 | T52=- | V52=- | Z52=- | AG52=-
+ROW 53 B53=2 | E53=設定 | M53=ボタン | T53=- | V53=- | Z53=- | AG53=入力されたフォームの値で登録
+
+SHEET 支払い方法　手数料設定 929 55
+ROW 91 B91=2-6 | E91=利用条件 | M91=数値（整数） | T91=- | V91=- | Z91=- | AG91=- | AZ91=2025/12/11 田所
+ROW 92 B92=2-7 | E92=ロゴ画像 | M92=画像　リンク | T92=- | V92=- | Z92=- | AG92=ファイルアップロードを押下時、画像を選択しアップロード
+ROW 93 B93=2-8 | E93=登録 | M93=ボタン | T93=- | V93=- | Z93=- | AG93=入力されたフォームの値で登録
+
+SHEET 税率設定 917 55
+ROW 67 C67=・個別税率設定、共通税率設定を登録する
+ROW 68 C68=・登録した税率を一覧表示する
+ROW 71 B71=識別ID | E71=ラベル | M71=書式・制限 | T71=必須 | V71=最大値 | Z71=初期値 | AG71=画面部品の説明
+ROW 72 B72=個別税率設定
+ROW 73 B73=1-1 | E73=商品別税率機能 | M73=単一選択(ラジオボタン) | T73=- | V73=- | Z73=無効 | AG73=選択肢:有効　無効
+ROW 74 B74=1-2 | E74=登録 | M74=ボタン | T74=- | V74=- | Z74=- | AG74=選択された商品別税率機能を登録
+ROW 75 B75=共通税率設定
+ROW 76 B76=2-1 | E76=消費税率 | M76=全角・半角 | T76=- | V76=- | Z76=- | AG76=-
+ROW 77 B77=2-2 | E77=課税規則 | M77=単一選択(ラジオボタン) | T77=- | V77=- | Z77=- | AG77=選択肢:四捨五入　切り捨て　切り上げ
+ROW 78 B78=2-3 | E78=適用日時 | M78=全角・半角 | T78=- | V78=- | Z78=- | AG78=-
+ROW 79 B79=2-4 | E79=登録 | M79=ボタン | T79=- | V79=- | Z79=- | AG79=入力されたフォームの値で共通税率設定を登録
+ROW 80 B80=税率一覧
+
+SHEET 追加システム設定 953 55
+ROW 1 A1=ドキュメント名 | I1=基本情報設定　基本設計 | U1=セクション
+ROW 2 A2=プロジェクト名 | I2=サイトリニューアル | U2=作成者 | Y2=佐藤 | AC2=作成日 | AG2=2025-08-29 00:00:00 | AK2=更新者 | AO2=堀部 | AS2=更新日 | AW2=2025-10-29 00:00:00
+ROW 65 B65=現行機能をベースに下記の要件を定義
+ROW 66 C66=・ | D66=下記の項目は、エンタープライズの店舗登録にて設定のため削除
+ROW 67 D67=・ | E67=店頭用アカウントIPアドレス( , 区切り)
+ROW 75 D75=・ | E75=レシートプリンタIPアドレス（現行システムで未使用のため）
+ROW 76 D76=・ | E76=支店システム連携エラー通知先メールアドレス（支店連携が廃止となるため）
+ROW 86 D86=・ | E86=レシートプリンタIPアドレス（現行システムで未使用のため）
+ROW 87 D87=・ | E87=支店システム連携エラー通知先メールアドレス（支店連携が廃止となるため）
+ROW 95 B95=1 | E95=入荷通知最大数 | M95=数値（整数）, 0以上 | T95=○ | V95=変更なし | Z95=5 | AG95=入荷通知数の最大数 | AZ95=2025/12/08 田所
+ROW 96 B96=2 | E96=買取専用メールアドレス | M96=Eメール形式で許容された文字 | T96=○ | V96=255文字 | Z96=testbuying@hareruyamtg.com | AG96=- | AZ96=2025/12/08 田所
+ROW 97 B97=3 | E97=レコメンドの検索期間（日数） | M97=数値（整数）, 0以上 | T97=○ | V97=変更なし | Z97=7 | AG97=レコメンド取得時の条件で使用 | AZ97=2025/12/08 田所
+ROW 105 B105=11 | E105=固定価格商品部門ID | M105=数値（整数）, 1以上 | T105=○ | V105=変更なし | Z105=- | AG105=店舗x部門単位の買取集計データを取得時に使用 | AZ105=2025/12/08 田所
+ROW 106 B106=12 | E106=買取部門集計送信メールアドレス | M106=Eメール形式で許容された文字 | T106=- | V106=255文字 | Z106=- | AG106=- | AZ106=2025/12/08 田所
+ROW 107 B107=13 | E107=必須項目が空欄である会員送信メールアドレス | M107=Eメール形式で許容された文字 | T107=- | V107=255文字 | Z107=- | AG107=- | AZ107=2025/12/08 田所
+ROW 108 B108=14 | E108=ポイント利用が反映されない決済の送信先メールアドレス | M108=Eメール形式で許容された文字 | T108=- | V108=255文字 | Z108=- | AG108=- | AZ108=2025/12/08 田所
+ROW 109 B109=15 | E109=ポイント差分発生通知メールアドレス | M109=Eメール形式で許容された文字 | T109=- | V109=255文字 | Z109=- | AG109=- | AZ109=2025/12/08 田所
+ROW 110 B110=16 | E110=購入処理エラー通知先メールアドレス | M110=Eメール形式で許容された文字 | T110=- | V110=255文字 | Z110=- | AG110=- | AZ110=2025/12/08 田所
+ROW 111 B111=17 | E111=イベント決済確認エラー通知メールアドレス | M111=Eメール形式で許容された文字 | T111=- | V111=255文字 | Z111=- | AG111=- | AZ111=2025/12/08 田所
+ROW 112 B112=18 | E112=身分証の有効期限切れ会員送信メールアドレス | M112=Eメール形式で許容された文字 | T112=- | V112=255文字 | Z112=- | AG112=- | AZ112=2025/12/08 田所
+ROW 113 E113=査定払出し連絡用経理部門メールアドレス | M113=Eメール形式で許容された文字 | T113=- | V113=255文字 | Z113=- | AG113=- | AZ113=2026/01/27 井澤
+ROW 114 B114=19 | E114=Small packetが選択可能な合計金額の閾値 | M114=数値（整数）, 0以上 | T114=○ | V114=変更なし | Z114=- | AG114=注文内容に対して適正な配送方法を取得時に使用 | AZ114=2025/12/08 田所
+ROW 116 B116=21 | E116=管理画面自動ログアウト時間（分） | M116=数値（整数）, 0以上 | T116=○ | V116=255文字 | Z116=10 | AG116=自動ログアウトの時間を入力 / 例:1を入力された場合、1分 | AZ116=2025/12/08 田所
+ROW 117 B117=22 | E117=登録 | M117=ボタン | T117=- | V117=- | Z117=- | AG117=入力されたフォームの値で登録
+
+BOOK 0210_基本設計仕様書(コンテンツ管理).xlsx
+
+SHEET ページ管理(一覧) 943 54
+Traceback (most recent call last):
+  File "<stdin>", line 32, in <module>
+AttributeError: 'EmptyCell' object has no attribute 'row'
+
+exec
+/bin/bash -lc "uv run python - <<'PY'
+from openpyxl import load_workbook
+from pathlib import Path
+book='0210_基本設計仕様書(コンテンツ管理).xlsx'
+sheets={
+ 'ページ管理(一覧)':['検索','ページ名','レイアウト名','削除','遷移'],
+ 'ページ管理(登録・編集)':['ファイル名','コード','削除','URL','metatag','metaタグ','遷移','登録'],
+ 'ブロック管理(一覧)':['編集','削除','コード','アクセス','登録'],
+}
+wb=load_workbook(Path('input')/book,read_only=True,data_only=False,rich_text=True)
+for s,terms in sheets.items():
+    ws=wb[s]
+    print('\\nSHEET',s,ws.max_row,ws.max_column)
+    hits=[]
+    for rn,row in enumerate(ws.iter_rows(),1):
+        matched=False
+        for c in row:
+            v='' if c.value is None else str(c.value).replace('\\n',' / ')
+            if any(t in v for t in terms): matched=True
+        if matched: hits.append(rn)
+    shown=set()
+    for rn in hits:
+        for rr in range(max(1,rn-1),min(ws.max_row,rn+1)+1):
+            if rr in shown: continue
+            shown.add(rr)
+            vals=[]
+            for c in ws[rr]:
+                if c.value is not None:
+                    vals.append(f'{c.coordinate}={str(c.value).replace(chr(10),\" / \")}')
+            if vals: print('ROW',rr,' | '.join(vals))
+PY" in /home/y-saito/Developments/hareruya-design-docs/excel_to_html
+ succeeded in 8515ms:
+
+SHEET ページ管理(一覧) 943 54
+ROW 33 B33=処理概要（★はカスタマイズ項目）
+ROW 34 B34=・ | C34=ページの編集、削除の可否について
+ROW 35 C35=・ | D35=編集、削除の可否はデータベースで設定できる
+ROW 39 E39=※ | F39=コードはシート「ページ管理(登録・編集)」の画面部品(1-8)を参照
+ROW 40 E40=※ | F40=すべてのページで(3)ページ名を押下すると、内容を閲覧できるが、ページ管理(登録・編集)画面では編集できない
+ROW 44 C44=・ | D44=ページ削除
+ROW 45 D45=・ | E45=開発者が追加したページは削除できない
+ROW 47 D47=・ | E47=管理画面ログインユーザーが追加したページは削除できる
+ROW 49 B49=・ | C49=(2)検索ボックスに入力すると、ページを(3)~(6)で部分一致検索し、対象ページのみを画面に表示する
+ROW 51 B51=・ | C51=(8)削除を押下すると、以下1~3のフローでページを削除する
+ROW 52 C52=1 | D52=以下のように削除確認のモーダルが表示する
+ROW 62 C62=2 | D62=「削除」を押下すると、ページを削除する
+ROW 64 C64=3 | D64=以下のように削除完了メッセージを表示する
+ROW 73 B73=識別ID | E73=ラベル | M73=書式・制限 | T73=必須 | V73=最大文字数 / または最大値 | Z73=初期値 | AG73=画面部品の説明
+ROW 74 B74=1 | E74=新規作成 | M74=リンク | T74=- | V74=- | Z74=- | AG74=・押下すると、ページ管理 (登録)画面へ遷移する
+ROW 75 B75=2 | E75=検索ボックス | M75=半角・全角 | T75=- | V75=- | Z75=- | AG75=・入力すると、ページを(3)~(6)で部分一致検索し、対象ページのみを画面に表示する
+ROW 76 B76=3 | E76=ページ名 | M76=リンク | T76=- | V76=- | Z76=- | AG76=・押下すると、ページ管理（編集）画面へ遷移する
+ROW 77 B77=4 | E77=ルーティング名 | M77=ラベル | T77=- | V77=- | Z77=- | AG77=-
+ROW 79 B79=6 | E79=ファイル名 | M79=ラベル | T79=- | V79=- | Z79=- | AG79=-
+ROW 80 B80=7 | E80=レイアウト名 | M80=ラベル | T80=- | V80=- | Z80=- | AG80=-
+ROW 81 B81=8 | E81=削除 | M81=削除確認モーダル表示ボタン | T81=- | V81=- | Z81=- | AG81=・押下すると削除確認モーダルを表示し、「削除」を押下するとページを削除して、削除完了メッセージを表示する / ※処理概要を参照 /  / ・削除できないページの場合、非表示とする
+
+SHEET ページ管理(登録・編集) 983 54
+ROW 4 A4=機能No | D4=M09-04 | I4=機能名 | N4=ページ管理 | AC4=概要 | AG4=フロントページの登録/編集できる
+ROW 62 D62=(販売系以外のLPで使用するため)
+ROW 63 C63=・ | D63=ページ確認ボタンを設置し、URLの内容を別タブで開くようにする
+ROW 64 C64=・ | D64=最終更新日時を表示するようにする
+ROW 70 B70=・ | C70=(1-1)言語について
+ROW 71 C71=・ | D71=選択すると、選択した言語に応じたページの編集画面に遷移する
+ROW 73 C73=・ | D73=選択されている言語に応じた画面表示について
+ROW 74 D74=・ | E74=(1-4)URLのテキストボックス左横のパスに、言語に応じたパスセグメントを追加する
+ROW 75 E75=日本語の場合: https://www.hareruyamtg.com/ja/~
+ROW 82 B82=・ | C82=ページ登録について
+ROW 83 C83=・ | D83=ページを新規登録する場合、日英2種類のファイルを作成する
+ROW 85 B85=★ | C85=ページ確認
+ROW 86 C86=・ | D86=(1-5)ページ確認ボタンを追加し、登録されたURLを別タブで表示する
+ROW 90 B90=・ | C90=ページ更新について
+ROW 91 C91=★ | D91=編集できないページの場合、(1-9)コードは(5)登録を押下した後、編集できない旨のエラーを表示する
+ROW 98 B98=★ | C98=タイトルタグの固定文言を非表示
+ROW 99 C99=・ | D99=(1-9)コード内に{% set noShopName = true %}を設定すると、titleタグのサフィックス（末尾）に以下の固定文言が追加されない
+ROW 100 D100=固定文言:  | 日本最大級 MTG通販サイト『晴れる屋』
+ROW 105 B105=ページ設定
+ROW 106 B106=1-1 | E106=言語 | M106=単一選択 | T106=- | V106=- | Z106=- | AG106=・選択すると読み込みが発生し、選択した言語に応じたページ管理(登録・編集)画面を表示する
+ROW 107 B107=1-2 | E107=ページ設定の開閉ボタン | M107=開閉ボタン | T107=- | V107=- | Z107=- | AG107=・押下すると、(1-3)~(1-9)の表示/非表示を切り替える
+ROW 108 B108=1-3 | E108=ページ名 | M108=半角・全角 | T108=〇 | V108=255 | Z108=- | AG108=・未入力で(5)登録を押下すると、動的に必須入力のエラーメッセージを表示する
+ROW 109 B109=1-4 | E109=URL | M109=半角・全角 | T109=〇 | V109=255 | Z109=- | AG109=・テキストボックス左横のパスに、言語に応じたパスセグメントを追加する / 　例 / 　日本語： https://www.hareruyamtg.com/ja/〜 / 　英語： https://www.hareruyamtg.com/en/〜 /  / ・(5)登録を押下すると、以下の正規表現にマッチしない場合、値が有効でないとエラーメッセージを表示する / /^([0-9a-zA-Z_\-]+\/?)+(?<!\/)$/ /  / ・入力なしで(5)登録を押下すると、動的に必須入力のエラーメッセージを表示する /  / ・URL最後のパスセグメントが/user_dataではない場合、テキストボックスを非表示にし、編集できない
+ROW 110 B110=1-5 | E110=ページ確認ボタン | M110=ボタン | T110=- | V110=- | Z110=- | AG110=・URLに登録されているURLを別タブで開く / ※ URLに変数が含まれる場合、正しく表示されない
+ROW 111 B111=1-6 | E111=ファイル名のヘルプ | M111=ラベル | T111=- | V111=- | Z111=- | AG111=・マウスオーバーすると、以下の文言を表示する / 「ページの内容を記述したtwigテンプレートファイルの名前です。」
+ROW 112 B112=1-7 | E112=twigファイル | M112=半角・全角 | T112=〇 | V112=255 | Z112=- | AG112=・テキストボックス右横のファイル拡張子に、言語に応じた識別子を追加する / 　例 / 　日本語： .ja.twig / 　英語： .en.twig /  / ・(5)登録を押下すると、以下の正規表現にマッチしない場合、値が有効でないとエラーメッセージを表示する / /^([0-9a-zA-Z_\-]+\/?)+$/ /  / ・未入力で(5)登録を押下すると、動的に必須入力のエラーメッセージを表示する /  / ・ファイル名最後のパスセグメントが/user_dataではない場合、テキストボックスを非表示にし、編集できない
+ROW 113 B113=1-8 | E113=コードのヘルプ | M113=ラベル | T113=- | V113=- | Z113=- | AG113=・マウスオーバーすると、以下の文言を表示する / 「テンプレートファイルを記述します。Twigで記述します。」
+ROW 114 B114=1-9 | E114=コード | M114=半角・全角 | T114=〇 | Z114={% extends 'default_frame.twig' %} /  / {% block main %} /  / {% endblock %} | AG114=・未入力で(5)登録を押下すると、動的に必須入力のエラーメッセージを表示する /  / ・(5)登録を押下すると、twig構文のエラーチェックを行う /  / ・コードが編集できないページの場合、readonlyにして入力不可とする /  /  / ・コード内に{% set noShopName = true %}を設定すると、titleタグのサフィックス（末尾）に以下の固定文言が追加されない / 　固定文言:  | 日本最大級 MTG通販サイト『晴れる屋』
+ROW 115 B115=1-10 | E115=最終更新日時 | M115=ラベル | T115=- | V115=- | Z115=- | AG115=編集しているページの最終更新日時の表示を追加
+ROW 127 B127=3-6 | E127=robot | M127=半角・全角 | T127=- | V127=255 | Z127=- | AG127=-
+ROW 128 B128=3-7 | E128=metatagの開閉ボタン | M128=開閉ボタン | T128=- | V128=- | Z128=- | AG128=・マウスオーバーすると、以下の文言を表示する / 「METAタグの出力をカスタマイズできます。twig内で利用されている変数も利用可能です。空欄の場合は、テンプレートフォルダの meta.twig ファイルが読み込まれます。」
+ROW 129 B129=3-8 | E129=metatag | M129=半角・全角 | T129=- | V129=- | Z129=- | AG129=-
+ROW 130 B130=その他
+ROW 131 B131=4 | E131=ページ管理 | M131=リンク | T131=- | V131=- | Z131=- | AG131=・押下すると、ページ管理 (一覧)画面へ遷移する
+ROW 132 B132=5 | E132=登録 | M132=ボタン | T132=- | V132=- | Z132=- | AG132=・押下すると、フォームに入力した情報で入力チェックを実施し、入力チェックが正常に完了した場合は登録/更新を行い、エラーが発生した場合はエラーメッセージを画面に表示する
+
+SHEET ブロック管理(一覧) 960 54
+ROW 25 B25=・ | C25=カスタマイズ要件
+ROW 26 C26=・ | D26=全てのブロックを編集可能にする
+ROW 27 D27=→ | E27=編集できないブロックを残すため、ECCUBE4系に寄せた形で現行仕様を踏襲する
+ROW 30 B30=処理概要（★はカスタマイズ項目）
+ROW 31 B31=・ | C31=ブロックの編集、削除の可否について
+ROW 32 C32=・ | D32=編集、削除の可否はデータベースで設定できる
+ROW 33 D33=※ | E33=データベースで削除不可に設定しているブロックは全て編集できないように現行仕様を踏襲する
+ROW 35 C35=・ | D35=開発者、管理画面ログインユーザーが追加したブロックは編集、削除できる
+ROW 37 C37=・ | D37=編集、削除ができないブロックは、以下1～3の条件を満たして表示する
+ROW 38 E38=1 | F38=(3)ブロック名の書式をリンクからラベルに変更し、押下してもブロック管理(編集)に遷移しないようにする
+ROW 39 E39=2 | F39=(5)編集を非表示にする
+ROW 40 E40=3 | F40=(6)削除を非表示にする
+ROW 44 B44=・ | C44=(6)削除を押下すると、以下1~3のフローでページを削除する
+ROW 45 C45=1 | D45=以下のように削除確認のモーダルが表示する
+ROW 54 C54=2 | D54=「削除」を押下すると、ブロックを削除する
+ROW 56 C56=3 | D56=以下のように削除完了メッセージを表示する
+ROW 65 B65=識別ID | E65=ラベル | M65=書式・制限 | T65=必須 | V65=最大文字数 / または最大値 | Z65=初期値 | AG65=画面部品の説明
+ROW 66 B66=1 | E66=新規作成 | M66=リンク | T66=- | V66=- | Z66=- | AG66=・押下すると、ブロック管理 (登録)画面へ遷移する
+ROW 67 B67=2 | E67=検索ボックス | M67=半角・全角 | T67=- | V67=- | Z67=- | AG67=・入力すると、ブロックを(3)~(4)で部分一致検索し、対象ブロックのみを画面に表示する
+ROW 68 B68=3 | E68=ブロック名 | M68=リンク | T68=- | V68=- | Z68=- | AG68=・押下すると、ブロック管理（編集）画面へ遷移する /  / ・編集できないブロックの場合、「3ブロック名の書式」をリンクからラベルに変更し、押下してもブロック管理(編集)に遷移しないようにする
+ROW 69 B69=4 | E69=ファイル名 | M69=ラベル | T69=- | V69=- | Z69=- | AG69=-
+ROW 70 B70=5 | E70=編集 | M70=リンク | T70=- | V70=- | Z70=- | AG70=・押下すると、ブロック管理 (編集)画面へ遷移する /  / ・編集できないブロックの場合、非表示にする
+ROW 71 B71=6 | E71=削除 | M71=削除確認モーダル表示ボタン | T71=- | V71=- | Z71=- | AG71=・押下すると削除確認モーダルを表示し、「削除」を押下するとブロックを削除して、削除完了メッセージを表示する / ※処理概要を参照 /  / ・削除できないブロックの場合、非表示とする
+
+exec
+/bin/bash -lc "uv run python - <<'PY'
+from openpyxl import load_workbook
+wb=load_workbook('input/0210_基本設計仕様書(コンテンツ管理).xlsx',read_only=True,data_only=False,rich_text=True)
+for s in ['ブロック管理(一覧)','ブロック管理(登録・編集)']:
+ print('\\n',s)
+ ws=wb[s]
+ for rr in range(60,91):
+  vals=[]
+  for c in ws[rr]:
+   if c.value is not None: vals.append(f'{c.coordinate}={str(c.value).replace(chr(10),\" / \")}')
+  if vals: print('ROW',rr,' | '.join(vals))
+PY" in /home/y-saito/Developments/hareruya-design-docs/excel_to_html
+ succeeded in 6215ms:
+
+ ブロック管理(一覧)
+ROW 65 B65=識別ID | E65=ラベル | M65=書式・制限 | T65=必須 | V65=最大文字数 / または最大値 | Z65=初期値 | AG65=画面部品の説明
+ROW 66 B66=1 | E66=新規作成 | M66=リンク | T66=- | V66=- | Z66=- | AG66=・押下すると、ブロック管理 (登録)画面へ遷移する
+ROW 67 B67=2 | E67=検索ボックス | M67=半角・全角 | T67=- | V67=- | Z67=- | AG67=・入力すると、ブロックを(3)~(4)で部分一致検索し、対象ブロックのみを画面に表示する
+ROW 68 B68=3 | E68=ブロック名 | M68=リンク | T68=- | V68=- | Z68=- | AG68=・押下すると、ブロック管理（編集）画面へ遷移する /  / ・編集できないブロックの場合、「3ブロック名の書式」をリンクからラベルに変更し、押下してもブロック管理(編集)に遷移しないようにする
+ROW 69 B69=4 | E69=ファイル名 | M69=ラベル | T69=- | V69=- | Z69=- | AG69=-
+ROW 70 B70=5 | E70=編集 | M70=リンク | T70=- | V70=- | Z70=- | AG70=・押下すると、ブロック管理 (編集)画面へ遷移する /  / ・編集できないブロックの場合、非表示にする
+ROW 71 B71=6 | E71=削除 | M71=削除確認モーダル表示ボタン | T71=- | V71=- | Z71=- | AG71=・押下すると削除確認モーダルを表示し、「削除」を押下するとブロックを削除して、削除完了メッセージを表示する / ※処理概要を参照 /  / ・削除できないブロックの場合、非表示とする
+
+ ブロック管理(登録・編集)
+ROW 61 C61=・ | D61=(6)ファイル名を変更して更新する場合、日英2種類のtwigファイルを作成する
+ROW 63 C63=・ | D63=編集、削除できないブロックの場合、この画面にアクセスできないようにする
+ROW 66 B66=識別ID | E66=ラベル | M66=書式・制限 | T66=必須 | V66=最大文字数 / または最大値 | Z66=初期値 | AG66=画面部品の説明
+ROW 67 B67=1 | E67=言語 | M67=単一選択 | T67=- | V67=- | Z67=- | AG67=・選択すると読み込みが発生し、選択した言語に応じたブロック管理(登録・編集)画面を表示する
+ROW 68 B68=2 | E68=ブロック設定の開閉ボタン | M68=開閉ボタン | T68=- | V68=- | Z68=- | AG68=・押下すると、(3)~(8)の表示/非表示を切り替える
+ROW 69 B69=3 | E69=ブロック名のヘルプ | M69=ラベル | T69=- | V69=- | Z69=- | AG69=・マウスオーバーすると、以下の文言を表示する / 「ブロックの管理用名称です。」
+ROW 70 B70=4 | E70=ブロック名 | M70=半角・全角 | T70=〇 | V70=255 | Z70=- | AG70=・未入力で(10)登録を押下すると、動的に必須入力のエラーメッセージを表示する
+ROW 71 B71=5 | E71=ファイル名のヘルプ | M71=ラベル | T71=- | V71=- | Z71=- | AG71=・マウスオーバーすると、以下の文言を表示する / 「このブロックの内容を記述したtwigテンプレートファイルの名前です。管理画面ではあとから変更できません。」
+ROW 72 B72=6 | E72=ファイル名 | M72=半角・全角 | T72=〇 | V72=255 | Z72=- | AG72=・テキストボックス右横のファイル拡張子に、言語に応じた識別子を追加する / 　例 / 　日本語： 〜.ja.twig / 　英語： 〜.en.twig /  / ・(10)登録を押下すると、以下2つのの正規表現にマッチしない場合、値が有効でないとエラーメッセージを表示する / /^[0-9a-zA-Z\/_]+$/ / /^(?!.*\/\/).+$/ /  / ・未入力で(10)登録を押下すると、動的に必須入力のエラーメッセージを表示する /  / ・ファイル名最後のパスセグメントが/user_dataではない場合、テキストボックスを非表示にし、編集できない
+ROW 73 B73=7 | E73=コードのヘルプ | M73=ラベル | T73=- | V73=- | Z73=- | AG73=・マウスオーバーすると、以下の文言を表示する / 「テンプレートファイルを記述します。Twigで記述します。」
+ROW 74 B74=8 | E74=コード | M74=半角・全角 | T74=〇 | V74=- | Z74=- | AG74=・(10)登録を押下すると、twig構文のエラーチェックを行う
+ROW 75 B75=9 | E75=ブロック管理 | M75=リンク | T75=- | V75=- | Z75=- | AG75=・押下すると、ブロック管理 (一覧)画面へ遷移する
+ROW 76 B76=10 | E76=登録 | M76=ボタン | T76=- | V76=- | Z76=- | AG76=・押下すると、フォームに入力した情報で入力チェックを実施し、入力チェックが正常に完了した場合は登録/更新を行い、エラーが発生した場合はエラーメッセージを画面に表示する
+
+exec
+/bin/bash -lc "unzip -p /home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/0210_基本設計仕様書\\(コンテンツ管理\\).xlsx xl/worksheets/_rels/sheet7.xml.rels && unzip -p /home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/0210_基本設計仕様書\\(コンテンツ管理\\).xlsx xl/drawings/_rels/drawing5.xml.rels" in /home/y-saito/Developments
+ succeeded in 1864ms:
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing" Target="../drawings/drawing5.xml"/></Relationships><?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/image7.png"/><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/image14.png"/></Relationships>
+exec
+/bin/bash -lc "unzip -j /home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/0210_基本設計仕様書\\(コンテンツ管理\\).xlsx 'xl/media/image14.png' -d /tmp/du19.8YZwrB/0210" in /home/y-saito/Developments
+ succeeded in 1115ms:
+Archive:  /home/y-saito/Developments/hareruya-design-docs/excel_to_html/input/0210_基本設計仕様書(コンテンツ管理).xlsx
+ extracting: /tmp/du19.8YZwrB/0210/image14.png  
+
+codex
+正本照合の結果、単なる記述追記では済まない貼付画像差し替えは5件です（ボタン文言、ページ一覧の操作UI・削除モーダル、ページ／ブロックのコード入力欄）。残りは、SPEC_BACKED は無編集、LEGACY_BACKED の非表示仕様は既存表・処理概要への追記として整理します。
+exec
+/bin/bash -lc 'ls -l /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results | tail -8 && for f in /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_18.json /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_20.json; do if [ -f "$f" ]; then echo "$f"; jq '"'{packetId,count:(.results|length),sample:.results[0]}' \""'$f"; fi; done' in /home/y-saito/Developments
+ succeeded in 819ms:
+-rw-r--r-- 1 y-saito y-saito  275228 Aug  2 13:07 du_16.log
+-rw-r--r-- 1 y-saito y-saito   17200 Aug  2 13:12 du_17.json
+-rw-r--r-- 1 y-saito y-saito  282585 Aug  2 13:12 du_17.log
+-rw-r--r-- 1 y-saito y-saito  284353 Aug  2 13:12 du_18.log
+-rw-r--r-- 1 y-saito y-saito  174245 Aug  2 13:12 du_19.log
+-rw-r--r-- 1 y-saito y-saito  127795 Aug  2 13:12 du_20.log
+-rw-r--r-- 1 y-saito y-saito  153784 Aug  2 13:12 du_21.log
+-rw-r--r-- 1 y-saito y-saito  453857 Aug  2 13:12 du_22.log
+
+apply patch
+patch: completed
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_19.json
+diff --git a/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_19.json b/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_19.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..e60123c963fadc56ed5807fdd9b7c19e08de46fa
+--- /dev/null
++++ b/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_19.json
+@@ -0,0 +1,257 @@
++{
++  "packetId": "du_19",
++  "results": [
++    {
++      "rowId": 750,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0209_基本設計仕様書(基本情報設定).xlsx / 追加システム設定 シート / 処理概要（登録時のフォーム送信先）",
++      "reason": "正本は登録ボタンと登録処理のみで、GETと同一URLへPOSTする契約がないため、登録フローへ1項目追記する。同じシートの関連追記とまとめて編集できる。",
++      "sharedWithRows": [754, 757, 756],
++      "confidence": "high"
++    },
++    {
++      "rowId": 754,
++      "docWork": "ADD",
++      "docEffortDays": 0.15,
++      "target": "0209_基本設計仕様書(基本情報設定).xlsx / 追加システム設定 シート / 画面部品表の通知メールアドレス7項目（行106～112相当）の書式・制限",
++      "reason": "各項目にはEメール形式・255文字までしかなく、カンマ区切り複数メールの検証条件がない。7行の書式・制限または共通注記へ条件を追記する。同一表の連続行なので一括編集できる。",
++      "sharedWithRows": [750, 757, 756],
++      "confidence": "high"
++    },
++    {
++      "rowId": 757,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0209_基本設計仕様書(基本情報設定).xlsx / 追加システム設定 シート / 処理概要（登録時の更新対象項目）",
++      "reason": "正本にmtb_optionの更新対象列がないため、option_valueとmember_idのみを更新しupdate_dateを同一処理で進めない旨を登録処理へ追記する。同じシートの追記とまとめて行う。",
++      "sharedWithRows": [750, 754, 756],
++      "confidence": "medium"
++    },
++    {
++      "rowId": 756,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0209_基本設計仕様書(基本情報設定).xlsx / 追加システム設定 シート / 登録後の処理概要・完了メッセージ",
++      "reason": "成功メッセージと登録後GET再表示の記述がないため、admin.register.complete相当の表示文言とリダイレクトを追記する。静止レイアウト画像に完了状態は含まれないため画像差し替えは不要。",
++      "sharedWithRows": [750, 754, 757],
++      "confidence": "high"
++    },
++    {
++      "rowId": 715,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0209_基本設計仕様書(基本情報設定).xlsx / 特定商取引に関する法律 シート",
++      "reason": "SPEC_BACKEDのため、設計書を正として実装側で解消する指摘であり、正本Excelの編集は発生しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 716,
++      "docWork": "IMAGE",
++      "docEffortDays": 0.6,
++      "target": "0209_基本設計仕様書(基本情報設定).xlsx / 特定商取引に関する法律 シート / 画面レイアウト画像の送信ボタン、および画面部品表の識別ID 2-1",
++      "reason": "LEGACY_BACKEDの「登録」を反映するには、画面部品表の現行「設定」を直すだけでなく、貼付画面画像にも表示されている「設定」ボタンを「登録」へ差し替える必要がある。画像再取得・貼り直し・位置調整を含む。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 718,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0209_基本設計仕様書(基本情報設定).xlsx / 利用規約管理 シート",
++      "reason": "SPEC_BACKEDのため、同一編集画面の維持は正本に準拠して実装側で直す内容であり、設計書編集は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 717,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0209_基本設計仕様書(基本情報設定).xlsx / 利用規約管理 シート",
++      "reason": "SPEC_BACKEDで、利用規約本文を入力・登録できる正本要件は既にある。実装の読み取り専用状態を解消する指摘なので正本Excelは触らない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 719,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0209_基本設計仕様書(基本情報設定).xlsx / 支払い方法　手数料設定 シート / ロゴ画像欄",
++      "reason": "SPEC_BACKEDであり、貼付画面画像には既に「620px以上推奨」が表示されている。設計書側の表・画像とも変更不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 720,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0209_基本設計仕様書(基本情報設定).xlsx / 税率設定 シート / 個別税率設定ブロック",
++      "reason": "SPEC_BACKEDで、商品別税率機能と登録ボタンは正本の画面部品表および貼付画像に既にある。実装側のみの不足。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 722,
++      "docWork": "ADD",
++      "docEffortDays": 0.15,
++      "target": "0209_基本設計仕様書(基本情報設定).xlsx / 税率設定 シート / 処理概要・税率一覧の編集操作",
++      "reason": "一覧から専用GET編集画面へ入る経路と、基本税率以外で適用日時を表示する条件が正本にないため追記する。既存画像の一覧操作と共通税率入力欄で表現でき、画像自体の描き直しは不要。",
++      "sharedWithRows": [726, 725, 724, 727],
++      "confidence": "medium"
++    },
++    {
++      "rowId": 721,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0209_基本設計仕様書(基本情報設定).xlsx / 税率設定 シート / 画面レイアウト画像・画面部品表",
++      "reason": "SPEC_BACKEDで、個別税率設定・共通税率設定・税率一覧の構成、ラジオボタン、登録ボタンは正本に記載済み。設計書変更は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 723,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0209_基本設計仕様書(基本情報設定).xlsx / 税率設定 シート / 共通税率設定の課税規則",
++      "reason": "SPEC_BACKEDの初期値要件であり、設計書を直さず実装側を正本へ合わせる指摘。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 726,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0209_基本設計仕様書(基本情報設定).xlsx / 税率設定 シート / 削除処理の例外フロー",
++      "reason": "削除対象ID不在時のフラッシュ消去、警告表示、一覧リダイレクトが正本にないため処理概要へ追記する。同じシートのルール追記とまとめて編集できる。",
++      "sharedWithRows": [722, 725, 724, 727],
++      "confidence": "high"
++    },
++    {
++      "rowId": 725,
++      "docWork": "ADD",
++      "docEffortDays": 0.15,
++      "target": "0209_基本設計仕様書(基本情報設定).xlsx / 税率設定 シート / 適用日時の入力チェック・エラーメッセージ",
++      "reason": "共通税率の判定条件と重複時の固定エラー文言が正本にないため、処理概要または適用日時行の説明へ条件付きで追記する。エラー状態は貼付レイアウト画像に含まれないため画像差し替えは不要。",
++      "sharedWithRows": [722, 726, 724, 727],
++      "confidence": "high"
++    },
++    {
++      "rowId": 724,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0209_基本設計仕様書(基本情報設定).xlsx / 税率設定 シート / 画面部品表の「消費税率」行",
++      "reason": "消費税率行に必須・整数・0～100・書式条件を追記する。既存1行の複数セル修正で済み、同シートの他修正と同時に行える。",
++      "sharedWithRows": [722, 726, 725, 727],
++      "confidence": "high"
++    },
++    {
++      "rowId": 727,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0209_基本設計仕様書(基本情報設定).xlsx / 税率設定 シート / 共通税率の保存完了処理",
++      "reason": "保存完了イベント名が正本にないため、登録・編集共通の完了フックとして処理概要へ1項目追記する。同シートの処理追記とまとめる。",
++      "sharedWithRows": [722, 726, 725, 724],
++      "confidence": "medium"
++    },
++    {
++      "rowId": 688,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0210_基本設計仕様書(コンテンツ管理).xlsx / ページ管理(一覧) シート / 検索ボックスの処理概要・画面部品表",
++      "reason": "SPEC_BACKEDで、検索対象を項目(3)～(6)に限定する記述が正本に既にある。設計書編集は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 689,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0210_基本設計仕様書(コンテンツ管理).xlsx / ページ管理(登録・編集) シート / twigファイル名・新規登録処理",
++      "reason": "SPEC_BACKEDで、日本語.ja.twig・英語.en.twigおよび日英2ファイル作成は正本に明記済み。実装側のみの修正対象。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 692,
++      "docWork": "IMAGE",
++      "docEffortDays": 0.8,
++      "target": "0210_基本設計仕様書(コンテンツ管理).xlsx / ページ管理(登録・編集) シート / コード欄の画面部品表、およびコードエディタが写る複数の画面レイアウト画像",
++      "reason": "行数15・等幅小サイズの通常textareaというLEGACY_BACKED要件を足すだけでは、正本の貼付画像に写る行番号付きAceエディタと食い違う。画面部品表の追記に加え、該当する複数画像の再取得・差し替え・位置調整が必要。",
++      "sharedWithRows": [695, 696],
++      "confidence": "high"
++    },
++    {
++      "rowId": 690,
++      "docWork": "IMAGE",
++      "docEffortDays": 0.7,
++      "target": "0210_基本設計仕様書(コンテンツ管理).xlsx / ページ管理(一覧) シート / 一覧の操作列・画面部品表・画面レイアウト画像",
++      "reason": "操作ドロップダウンとレイアウト編集・ページ編集・削除を反映するには、ページ名リンクと削除アイコンだけの現行表記を直し、一覧画像も操作列を含む状態へ差し替える必要がある。",
++      "sharedWithRows": [691, 693],
++      "confidence": "high"
++    },
++    {
++      "rowId": 691,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0210_基本設計仕様書(コンテンツ管理).xlsx / ページ管理(一覧) シート / 画面部品表の「ページ名」または編集操作行",
++      "reason": "ファイル名未設定時に編集リンクを無効化する条件を画面部品の説明へ追記する。同じ一覧シートの操作UI更新とまとめられ、追加の画像差し替えはrow 690側に集約する。",
++      "sharedWithRows": [690, 693],
++      "confidence": "high"
++    },
++    {
++      "rowId": 694,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0210_基本設計仕様書(コンテンツ管理).xlsx / ページ管理(一覧) シート / 編集・削除可否の処理概要",
++      "reason": "SPEC_BACKEDで、開発者追加ページは削除不可、管理画面ユーザー追加ページは削除可という正本記述が既にある。設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 693,
++      "docWork": "IMAGE",
++      "docEffortDays": 0.5,
++      "target": "0210_基本設計仕様書(コンテンツ管理).xlsx / ページ管理(一覧) シート / 削除確認フローの文言、および削除確認モーダル画像",
++      "reason": "固定文言を追記するだけでなく、正本の削除確認モーダル画像には現行の共通文言が写っているため、期待文言「このページを削除してもよろしいですか？」の状態へ画像差し替えが必要。同シートの一覧画像更新と併せて作業する。",
++      "sharedWithRows": [690, 691],
++      "confidence": "high"
++    },
++    {
++      "rowId": 695,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0210_基本設計仕様書(コンテンツ管理).xlsx / ページ管理(登録・編集) シート / URL行の入力チェック・エラーメッセージ",
++      "reason": "URL重複時の固定表示文言が正本にないため、URL行の画面部品説明へ追記する。エラー状態画像は正本にないので表の編集だけで済み、同シートの他修正とまとめる。",
++      "sharedWithRows": [692, 696],
++      "confidence": "high"
++    },
++    {
++      "rowId": 696,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0210_基本設計仕様書(コンテンツ管理).xlsx / ページ管理(登録・編集) シート / 画面部品表の「metatag」行",
++      "reason": "任意・最大99999文字（lltext_len）の制約を既存metatag行へ追記する。同じシートの隣接修正と一括で行える。",
++      "sharedWithRows": [692, 695],
++      "confidence": "high"
++    },
++    {
++      "rowId": 697,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0210_基本設計仕様書(コンテンツ管理).xlsx / ブロック管理(登録・編集) シート / アクセス制御の処理概要",
++      "reason": "正本は編集・削除不可ブロックへのアクセス禁止までで、削除不可は403、対象不在は404という区別がない。アクセス制御ルールへステータス条件を追記し、同シートのコード欄更新とまとめる。",
++      "sharedWithRows": [698],
++      "confidence": "high"
++    },
++    {
++      "rowId": 698,
++      "docWork": "IMAGE",
++      "docEffortDays": 0.7,
++      "target": "0210_基本設計仕様書(コンテンツ管理).xlsx / ブロック管理(登録・編集) シート / コード欄の画面部品表、およびAceエディタが写る画面レイアウト画像",
++      "reason": "行数15・等幅小サイズの通常textareaという要件を追記すると、正本画像の行番号付きAceエディタ表示と矛盾する。画面部品表の追記と画像再取得・差し替え・位置調整が必要で、row 697と同じシートで作業する。",
++      "sharedWithRows": [697],
++      "confidence": "high"
++    }
++  ]
++}
+
+diff --git a/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_19.json b/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_19.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..e60123c963fadc56ed5807fdd9b7c19e08de46fa
+--- /dev/null
++++ b/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_19.json
+@@ -0,0 +1,257 @@
++{
++  "packetId": "du_19",
++  "results": [
++    {
++      "rowId": 750,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0209_基本設計仕様書(基本情報設定).xlsx / 追加システム設定 シート / 処理概要（登録時のフォーム送信先）",
++      "reason": "正本は登録ボタンと登録処理のみで、GETと同一URLへPOSTする契約がないため、登録フローへ1項目追記する。同じシートの関連追記とまとめて編集できる。",
++      "sharedWithRows": [754, 757, 756],
++      "confidence": "high"
++    },
++    {
++      "rowId": 754,
++      "docWork": "ADD",
++      "docEffortDays": 0.15,
++      "target": "0209_基本設計仕様書(基本情報設定).xlsx / 追加システム設定 シート / 画面部品表の通知メールアドレス7項目（行106～112相当）の書式・制限",
++      "reason": "各項目にはEメール形式・255文字までしかなく、カンマ区切り複数メールの検証条件がない。7行の書式・制限または共通注記へ条件を追記する。同一表の連続行なので一括編集できる。",
++      "sharedWithRows": [750, 757, 756],
++      "confidence": "high"
++    },
++    {
++      "rowId": 757,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0209_基本設計仕様書(基本情報設定).xlsx / 追加システム設定 シート / 処理概要（登録時の更新対象項目）",
++      "reason": "正本にmtb_optionの更新対象列がないため、option_valueとmember_idのみを更新しupdate_dateを同一処理で進めない旨を登録処理へ追記する。同じシートの追記とまとめて行う。",
++      "sharedWithRows": [750, 754, 756],
++      "confidence": "medium"
++    },
++    {
++      "rowId": 756,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0209_基本設計仕様書(基本情報設定).xlsx / 追加システム設定 シート / 登録後の処理概要・完了メッセージ",
++      "reason": "成功メッセージと登録後GET再表示の記述がないため、admin.register.complete相当の表示文言とリダイレクトを追記する。静止レイアウト画像に完了状態は含まれないため画像差し替えは不要。",
++      "sharedWithRows": [750, 754, 757],
++      "confidence": "high"
++    },
++    {
++      "rowId": 715,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0209_基本設計仕様書(基本情報設定).xlsx / 特定商取引に関する法律 シート",
++      "reason": "SPEC_BACKEDのため、設計書を正として実装側で解消する指摘であり、正本Excelの編集は発生しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 716,
++      "docWork": "IMAGE",
++      "docEffortDays": 0.6,
++      "target": "0209_基本設計仕様書(基本情報設定).xlsx / 特定商取引に関する法律 シート / 画面レイアウト画像の送信ボタン、および画面部品表の識別ID 2-1",
++      "reason": "LEGACY_BACKEDの「登録」を反映するには、画面部品表の現行「設定」を直すだけでなく、貼付画面画像にも表示されている「設定」ボタンを「登録」へ差し替える必要がある。画像再取得・貼り直し・位置調整を含む。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 718,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0209_基本設計仕様書(基本情報設定).xlsx / 利用規約管理 シート",
++      "reason": "SPEC_BACKEDのため、同一編集画面の維持は正本に準拠して実装側で直す内容であり、設計書編集は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 717,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0209_基本設計仕様書(基本情報設定).xlsx / 利用規約管理 シート",
++      "reason": "SPEC_BACKEDで、利用規約本文を入力・登録できる正本要件は既にある。実装の読み取り専用状態を解消する指摘なので正本Excelは触らない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 719,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0209_基本設計仕様書(基本情報設定).xlsx / 支払い方法　手数料設定 シート / ロゴ画像欄",
++      "reason": "SPEC_BACKEDであり、貼付画面画像には既に「620px以上推奨」が表示されている。設計書側の表・画像とも変更不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 720,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0209_基本設計仕様書(基本情報設定).xlsx / 税率設定 シート / 個別税率設定ブロック",
++      "reason": "SPEC_BACKEDで、商品別税率機能と登録ボタンは正本の画面部品表および貼付画像に既にある。実装側のみの不足。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 722,
++      "docWork": "ADD",
++      "docEffortDays": 0.15,
++      "target": "0209_基本設計仕様書(基本情報設定).xlsx / 税率設定 シート / 処理概要・税率一覧の編集操作",
++      "reason": "一覧から専用GET編集画面へ入る経路と、基本税率以外で適用日時を表示する条件が正本にないため追記する。既存画像の一覧操作と共通税率入力欄で表現でき、画像自体の描き直しは不要。",
++      "sharedWithRows": [726, 725, 724, 727],
++      "confidence": "medium"
++    },
++    {
++      "rowId": 721,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0209_基本設計仕様書(基本情報設定).xlsx / 税率設定 シート / 画面レイアウト画像・画面部品表",
++      "reason": "SPEC_BACKEDで、個別税率設定・共通税率設定・税率一覧の構成、ラジオボタン、登録ボタンは正本に記載済み。設計書変更は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 723,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0209_基本設計仕様書(基本情報設定).xlsx / 税率設定 シート / 共通税率設定の課税規則",
++      "reason": "SPEC_BACKEDの初期値要件であり、設計書を直さず実装側を正本へ合わせる指摘。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 726,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0209_基本設計仕様書(基本情報設定).xlsx / 税率設定 シート / 削除処理の例外フロー",
++      "reason": "削除対象ID不在時のフラッシュ消去、警告表示、一覧リダイレクトが正本にないため処理概要へ追記する。同じシートのルール追記とまとめて編集できる。",
++      "sharedWithRows": [722, 725, 724, 727],
++      "confidence": "high"
++    },
++    {
++      "rowId": 725,
++      "docWork": "ADD",
++      "docEffortDays": 0.15,
++      "target": "0209_基本設計仕様書(基本情報設定).xlsx / 税率設定 シート / 適用日時の入力チェック・エラーメッセージ",
++      "reason": "共通税率の判定条件と重複時の固定エラー文言が正本にないため、処理概要または適用日時行の説明へ条件付きで追記する。エラー状態は貼付レイアウト画像に含まれないため画像差し替えは不要。",
++      "sharedWithRows": [722, 726, 724, 727],
++      "confidence": "high"
++    },
++    {
++      "rowId": 724,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0209_基本設計仕様書(基本情報設定).xlsx / 税率設定 シート / 画面部品表の「消費税率」行",
++      "reason": "消費税率行に必須・整数・0～100・書式条件を追記する。既存1行の複数セル修正で済み、同シートの他修正と同時に行える。",
++      "sharedWithRows": [722, 726, 725, 727],
++      "confidence": "high"
++    },
++    {
++      "rowId": 727,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0209_基本設計仕様書(基本情報設定).xlsx / 税率設定 シート / 共通税率の保存完了処理",
++      "reason": "保存完了イベント名が正本にないため、登録・編集共通の完了フックとして処理概要へ1項目追記する。同シートの処理追記とまとめる。",
++      "sharedWithRows": [722, 726, 725, 724],
++      "confidence": "medium"
++    },
++    {
++      "rowId": 688,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0210_基本設計仕様書(コンテンツ管理).xlsx / ページ管理(一覧) シート / 検索ボックスの処理概要・画面部品表",
++      "reason": "SPEC_BACKEDで、検索対象を項目(3)～(6)に限定する記述が正本に既にある。設計書編集は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 689,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0210_基本設計仕様書(コンテンツ管理).xlsx / ページ管理(登録・編集) シート / twigファイル名・新規登録処理",
++      "reason": "SPEC_BACKEDで、日本語.ja.twig・英語.en.twigおよび日英2ファイル作成は正本に明記済み。実装側のみの修正対象。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 692,
++      "docWork": "IMAGE",
++      "docEffortDays": 0.8,
++      "target": "0210_基本設計仕様書(コンテンツ管理).xlsx / ページ管理(登録・編集) シート / コード欄の画面部品表、およびコードエディタが写る複数の画面レイアウト画像",
++      "reason": "行数15・等幅小サイズの通常textareaというLEGACY_BACKED要件を足すだけでは、正本の貼付画像に写る行番号付きAceエディタと食い違う。画面部品表の追記に加え、該当する複数画像の再取得・差し替え・位置調整が必要。",
++      "sharedWithRows": [695, 696],
++      "confidence": "high"
++    },
++    {
++      "rowId": 690,
++      "docWork": "IMAGE",
++      "docEffortDays": 0.7,
++      "target": "0210_基本設計仕様書(コンテンツ管理).xlsx / ページ管理(一覧) シート / 一覧の操作列・画面部品表・画面レイアウト画像",
++      "reason": "操作ドロップダウンとレイアウト編集・ページ編集・削除を反映するには、ページ名リンクと削除アイコンだけの現行表記を直し、一覧画像も操作列を含む状態へ差し替える必要がある。",
++      "sharedWithRows": [691, 693],
++      "confidence": "high"
++    },
++    {
++      "rowId": 691,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0210_基本設計仕様書(コンテンツ管理).xlsx / ページ管理(一覧) シート / 画面部品表の「ページ名」または編集操作行",
++      "reason": "ファイル名未設定時に編集リンクを無効化する条件を画面部品の説明へ追記する。同じ一覧シートの操作UI更新とまとめられ、追加の画像差し替えはrow 690側に集約する。",
++      "sharedWithRows": [690, 693],
++      "confidence": "high"
++    },
++    {
++      "rowId": 694,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0210_基本設計仕様書(コンテンツ管理).xlsx / ページ管理(一覧) シート / 編集・削除可否の処理概要",
++      "reason": "SPEC_BACKEDで、開発者追加ページは削除不可、管理画面ユーザー追加ページは削除可という正本記述が既にある。設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 693,
++      "docWork": "IMAGE",
++      "docEffortDays": 0.5,
++      "target": "0210_基本設計仕様書(コンテンツ管理).xlsx / ページ管理(一覧) シート / 削除確認フローの文言、および削除確認モーダル画像",
++      "reason": "固定文言を追記するだけでなく、正本の削除確認モーダル画像には現行の共通文言が写っているため、期待文言「このページを削除してもよろしいですか？」の状態へ画像差し替えが必要。同シートの一覧画像更新と併せて作業する。",
++      "sharedWithRows": [690, 691],
++      "confidence": "high"
++    },
++    {
++      "rowId": 695,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0210_基本設計仕様書(コンテンツ管理).xlsx / ページ管理(登録・編集) シート / URL行の入力チェック・エラーメッセージ",
++      "reason": "URL重複時の固定表示文言が正本にないため、URL行の画面部品説明へ追記する。エラー状態画像は正本にないので表の編集だけで済み、同シートの他修正とまとめる。",
++      "sharedWithRows": [692, 696],
++      "confidence": "high"
++    },
++    {
++      "rowId": 696,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0210_基本設計仕様書(コンテンツ管理).xlsx / ページ管理(登録・編集) シート / 画面部品表の「metatag」行",
++      "reason": "任意・最大99999文字（lltext_len）の制約を既存metatag行へ追記する。同じシートの隣接修正と一括で行える。",
++      "sharedWithRows": [692, 695],
++      "confidence": "high"
++    },
++    {
++      "rowId": 697,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0210_基本設計仕様書(コンテンツ管理).xlsx / ブロック管理(登録・編集) シート / アクセス制御の処理概要",
++      "reason": "正本は編集・削除不可ブロックへのアクセス禁止までで、削除不可は403、対象不在は404という区別がない。アクセス制御ルールへステータス条件を追記し、同シートのコード欄更新とまとめる。",
++      "sharedWithRows": [698],
++      "confidence": "high"
++    },
++    {
++      "rowId": 698,
++      "docWork": "IMAGE",
++      "docEffortDays": 0.7,
++      "target": "0210_基本設計仕様書(コンテンツ管理).xlsx / ブロック管理(登録・編集) シート / コード欄の画面部品表、およびAceエディタが写る画面レイアウト画像",
++      "reason": "行数15・等幅小サイズの通常textareaという要件を追記すると、正本画像の行番号付きAceエディタ表示と矛盾する。画面部品表の追記と画像再取得・差し替え・位置調整が必要で、row 697と同じシートで作業する。",
++      "sharedWithRows": [697],
++      "confidence": "high"
++    }
++  ]
++}
+
+exec
+/bin/bash -lc "python3 -m json.tool /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_19.json >/dev/null && jq '{packetId, count:(.results|length), byWork:(.results|group_by(.docWork)|map({key:.[0].docWork,value:length})|from_entries), total:(.results|map(.docEffortDays)|add), duplicateRowIds:(.results|group_by(.rowId)|map(select(length>1)|.[0].rowId))}' /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_19.json && comm -3 <(jq -r '.findings[].rowId' /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_packets/du_19.json | sort -n) <(jq -r '.results[].rowId' /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_19.json | sort -n)" in /home/y-saito/Developments
+ succeeded in 588ms:
+{
+  "packetId": "du_19",
+  "count": 28,
+  "byWork": {
+    "ADD": 13,
+    "IMAGE": 5,
+    "NONE": 10
+  },
+  "total": 4.499999999999999,
+  "duplicateRowIds": []
+}
+
+diff --git a/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_19.json b/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_19.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..e60123c963fadc56ed5807fdd9b7c19e08de46fa
+--- /dev/null
++++ b/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_19.json
+@@ -0,0 +1,257 @@
++{
++  "packetId": "du_19",
++  "results": [
++    {
++      "rowId": 750,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0209_基本設計仕様書(基本情報設定).xlsx / 追加システム設定 シート / 処理概要（登録時のフォーム送信先）",
++      "reason": "正本は登録ボタンと登録処理のみで、GETと同一URLへPOSTする契約がないため、登録フローへ1項目追記する。同じシートの関連追記とまとめて編集できる。",
++      "sharedWithRows": [754, 757, 756],
++      "confidence": "high"
++    },
++    {
++      "rowId": 754,
++      "docWork": "ADD",
++      "docEffortDays": 0.15,
++      "target": "0209_基本設計仕様書(基本情報設定).xlsx / 追加システム設定 シート / 画面部品表の通知メールアドレス7項目（行106～112相当）の書式・制限",
++      "reason": "各項目にはEメール形式・255文字までしかなく、カンマ区切り複数メールの検証条件がない。7行の書式・制限または共通注記へ条件を追記する。同一表の連続行なので一括編集できる。",
++      "sharedWithRows": [750, 757, 756],
++      "confidence": "high"
++    },
++    {
++      "rowId": 757,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0209_基本設計仕様書(基本情報設定).xlsx / 追加システム設定 シート / 処理概要（登録時の更新対象項目）",
++      "reason": "正本にmtb_optionの更新対象列がないため、option_valueとmember_idのみを更新しupdate_dateを同一処理で進めない旨を登録処理へ追記する。同じシートの追記とまとめて行う。",
++      "sharedWithRows": [750, 754, 756],
++      "confidence": "medium"
++    },
++    {
++      "rowId": 756,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0209_基本設計仕様書(基本情報設定).xlsx / 追加システム設定 シート / 登録後の処理概要・完了メッセージ",
++      "reason": "成功メッセージと登録後GET再表示の記述がないため、admin.register.complete相当の表示文言とリダイレクトを追記する。静止レイアウト画像に完了状態は含まれないため画像差し替えは不要。",
++      "sharedWithRows": [750, 754, 757],
++      "confidence": "high"
++    },
++    {
++      "rowId": 715,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0209_基本設計仕様書(基本情報設定).xlsx / 特定商取引に関する法律 シート",
++      "reason": "SPEC_BACKEDのため、設計書を正として実装側で解消する指摘であり、正本Excelの編集は発生しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 716,
++      "docWork": "IMAGE",
++      "docEffortDays": 0.6,
++      "target": "0209_基本設計仕様書(基本情報設定).xlsx / 特定商取引に関する法律 シート / 画面レイアウト画像の送信ボタン、および画面部品表の識別ID 2-1",
++      "reason": "LEGACY_BACKEDの「登録」を反映するには、画面部品表の現行「設定」を直すだけでなく、貼付画面画像にも表示されている「設定」ボタンを「登録」へ差し替える必要がある。画像再取得・貼り直し・位置調整を含む。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 718,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0209_基本設計仕様書(基本情報設定).xlsx / 利用規約管理 シート",
++      "reason": "SPEC_BACKEDのため、同一編集画面の維持は正本に準拠して実装側で直す内容であり、設計書編集は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 717,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0209_基本設計仕様書(基本情報設定).xlsx / 利用規約管理 シート",
++      "reason": "SPEC_BACKEDで、利用規約本文を入力・登録できる正本要件は既にある。実装の読み取り専用状態を解消する指摘なので正本Excelは触らない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 719,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0209_基本設計仕様書(基本情報設定).xlsx / 支払い方法　手数料設定 シート / ロゴ画像欄",
++      "reason": "SPEC_BACKEDであり、貼付画面画像には既に「620px以上推奨」が表示されている。設計書側の表・画像とも変更不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 720,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0209_基本設計仕様書(基本情報設定).xlsx / 税率設定 シート / 個別税率設定ブロック",
++      "reason": "SPEC_BACKEDで、商品別税率機能と登録ボタンは正本の画面部品表および貼付画像に既にある。実装側のみの不足。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 722,
++      "docWork": "ADD",
++      "docEffortDays": 0.15,
++      "target": "0209_基本設計仕様書(基本情報設定).xlsx / 税率設定 シート / 処理概要・税率一覧の編集操作",
++      "reason": "一覧から専用GET編集画面へ入る経路と、基本税率以外で適用日時を表示する条件が正本にないため追記する。既存画像の一覧操作と共通税率入力欄で表現でき、画像自体の描き直しは不要。",
++      "sharedWithRows": [726, 725, 724, 727],
++      "confidence": "medium"
++    },
++    {
++      "rowId": 721,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0209_基本設計仕様書(基本情報設定).xlsx / 税率設定 シート / 画面レイアウト画像・画面部品表",
++      "reason": "SPEC_BACKEDで、個別税率設定・共通税率設定・税率一覧の構成、ラジオボタン、登録ボタンは正本に記載済み。設計書変更は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 723,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0209_基本設計仕様書(基本情報設定).xlsx / 税率設定 シート / 共通税率設定の課税規則",
++      "reason": "SPEC_BACKEDの初期値要件であり、設計書を直さず実装側を正本へ合わせる指摘。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 726,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0209_基本設計仕様書(基本情報設定).xlsx / 税率設定 シート / 削除処理の例外フロー",
++      "reason": "削除対象ID不在時のフラッシュ消去、警告表示、一覧リダイレクトが正本にないため処理概要へ追記する。同じシートのルール追記とまとめて編集できる。",
++      "sharedWithRows": [722, 725, 724, 727],
++      "confidence": "high"
++    },
++    {
++      "rowId": 725,
++      "docWork": "ADD",
++      "docEffortDays": 0.15,
++      "target": "0209_基本設計仕様書(基本情報設定).xlsx / 税率設定 シート / 適用日時の入力チェック・エラーメッセージ",
++      "reason": "共通税率の判定条件と重複時の固定エラー文言が正本にないため、処理概要または適用日時行の説明へ条件付きで追記する。エラー状態は貼付レイアウト画像に含まれないため画像差し替えは不要。",
++      "sharedWithRows": [722, 726, 724, 727],
++      "confidence": "high"
++    },
++    {
++      "rowId": 724,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0209_基本設計仕様書(基本情報設定).xlsx / 税率設定 シート / 画面部品表の「消費税率」行",
++      "reason": "消費税率行に必須・整数・0～100・書式条件を追記する。既存1行の複数セル修正で済み、同シートの他修正と同時に行える。",
++      "sharedWithRows": [722, 726, 725, 727],
++      "confidence": "high"
++    },
++    {
++      "rowId": 727,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0209_基本設計仕様書(基本情報設定).xlsx / 税率設定 シート / 共通税率の保存完了処理",
++      "reason": "保存完了イベント名が正本にないため、登録・編集共通の完了フックとして処理概要へ1項目追記する。同シートの処理追記とまとめる。",
++      "sharedWithRows": [722, 726, 725, 724],
++      "confidence": "medium"
++    },
++    {
++      "rowId": 688,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0210_基本設計仕様書(コンテンツ管理).xlsx / ページ管理(一覧) シート / 検索ボックスの処理概要・画面部品表",
++      "reason": "SPEC_BACKEDで、検索対象を項目(3)～(6)に限定する記述が正本に既にある。設計書編集は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 689,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0210_基本設計仕様書(コンテンツ管理).xlsx / ページ管理(登録・編集) シート / twigファイル名・新規登録処理",
++      "reason": "SPEC_BACKEDで、日本語.ja.twig・英語.en.twigおよび日英2ファイル作成は正本に明記済み。実装側のみの修正対象。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 692,
++      "docWork": "IMAGE",
++      "docEffortDays": 0.8,
++      "target": "0210_基本設計仕様書(コンテンツ管理).xlsx / ページ管理(登録・編集) シート / コード欄の画面部品表、およびコードエディタが写る複数の画面レイアウト画像",
++      "reason": "行数15・等幅小サイズの通常textareaというLEGACY_BACKED要件を足すだけでは、正本の貼付画像に写る行番号付きAceエディタと食い違う。画面部品表の追記に加え、該当する複数画像の再取得・差し替え・位置調整が必要。",
++      "sharedWithRows": [695, 696],
++      "confidence": "high"
++    },
++    {
++      "rowId": 690,
++      "docWork": "IMAGE",
++      "docEffortDays": 0.7,
++      "target": "0210_基本設計仕様書(コンテンツ管理).xlsx / ページ管理(一覧) シート / 一覧の操作列・画面部品表・画面レイアウト画像",
++      "reason": "操作ドロップダウンとレイアウト編集・ページ編集・削除を反映するには、ページ名リンクと削除アイコンだけの現行表記を直し、一覧画像も操作列を含む状態へ差し替える必要がある。",
++      "sharedWithRows": [691, 693],
++      "confidence": "high"
++    },
++    {
++      "rowId": 691,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0210_基本設計仕様書(コンテンツ管理).xlsx / ページ管理(一覧) シート / 画面部品表の「ページ名」または編集操作行",
++      "reason": "ファイル名未設定時に編集リンクを無効化する条件を画面部品の説明へ追記する。同じ一覧シートの操作UI更新とまとめられ、追加の画像差し替えはrow 690側に集約する。",
++      "sharedWithRows": [690, 693],
++      "confidence": "high"
++    },
++    {
++      "rowId": 694,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0210_基本設計仕様書(コンテンツ管理).xlsx / ページ管理(一覧) シート / 編集・削除可否の処理概要",
++      "reason": "SPEC_BACKEDで、開発者追加ページは削除不可、管理画面ユーザー追加ページは削除可という正本記述が既にある。設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 693,
++      "docWork": "IMAGE",
++      "docEffortDays": 0.5,
++      "target": "0210_基本設計仕様書(コンテンツ管理).xlsx / ページ管理(一覧) シート / 削除確認フローの文言、および削除確認モーダル画像",
++      "reason": "固定文言を追記するだけでなく、正本の削除確認モーダル画像には現行の共通文言が写っているため、期待文言「このページを削除してもよろしいですか？」の状態へ画像差し替えが必要。同シートの一覧画像更新と併せて作業する。",
++      "sharedWithRows": [690, 691],
++      "confidence": "high"
++    },
++    {
++      "rowId": 695,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0210_基本設計仕様書(コンテンツ管理).xlsx / ページ管理(登録・編集) シート / URL行の入力チェック・エラーメッセージ",
++      "reason": "URL重複時の固定表示文言が正本にないため、URL行の画面部品説明へ追記する。エラー状態画像は正本にないので表の編集だけで済み、同シートの他修正とまとめる。",
++      "sharedWithRows": [692, 696],
++      "confidence": "high"
++    },
++    {
++      "rowId": 696,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0210_基本設計仕様書(コンテンツ管理).xlsx / ページ管理(登録・編集) シート / 画面部品表の「metatag」行",
++      "reason": "任意・最大99999文字（lltext_len）の制約を既存metatag行へ追記する。同じシートの隣接修正と一括で行える。",
++      "sharedWithRows": [692, 695],
++      "confidence": "high"
++    },
++    {
++      "rowId": 697,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0210_基本設計仕様書(コンテンツ管理).xlsx / ブロック管理(登録・編集) シート / アクセス制御の処理概要",
++      "reason": "正本は編集・削除不可ブロックへのアクセス禁止までで、削除不可は403、対象不在は404という区別がない。アクセス制御ルールへステータス条件を追記し、同シートのコード欄更新とまとめる。",
++      "sharedWithRows": [698],
++      "confidence": "high"
++    },
++    {
++      "rowId": 698,
++      "docWork": "IMAGE",
++      "docEffortDays": 0.7,
++      "target": "0210_基本設計仕様書(コンテンツ管理).xlsx / ブロック管理(登録・編集) シート / コード欄の画面部品表、およびAceエディタが写る画面レイアウト画像",
++      "reason": "行数15・等幅小サイズの通常textareaという要件を追記すると、正本画像の行番号付きAceエディタ表示と矛盾する。画面部品表の追記と画像再取得・差し替え・位置調整が必要で、row 697と同じシートで作業する。",
++      "sharedWithRows": [697],
++      "confidence": "high"
++    }
++  ]
++}
+
+codex
+28件すべての rowId が揃い、JSON構文・重複・欠落を検証しました。集計は NONE=10、ADD=13、IMAGE=5、合計4.5人日です。
+codex
+28件: NONE=10 ADD=13 FIX=0 IMAGE=5 / 計 4.5人日
+diff --git a/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_19.json b/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_19.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..e60123c963fadc56ed5807fdd9b7c19e08de46fa
+--- /dev/null
++++ b/hareruya-design-docs/design_impl_drift_report/citation_audit/docupdate_results/du_19.json
+@@ -0,0 +1,257 @@
++{
++  "packetId": "du_19",
++  "results": [
++    {
++      "rowId": 750,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0209_基本設計仕様書(基本情報設定).xlsx / 追加システム設定 シート / 処理概要（登録時のフォーム送信先）",
++      "reason": "正本は登録ボタンと登録処理のみで、GETと同一URLへPOSTする契約がないため、登録フローへ1項目追記する。同じシートの関連追記とまとめて編集できる。",
++      "sharedWithRows": [754, 757, 756],
++      "confidence": "high"
++    },
++    {
++      "rowId": 754,
++      "docWork": "ADD",
++      "docEffortDays": 0.15,
++      "target": "0209_基本設計仕様書(基本情報設定).xlsx / 追加システム設定 シート / 画面部品表の通知メールアドレス7項目（行106～112相当）の書式・制限",
++      "reason": "各項目にはEメール形式・255文字までしかなく、カンマ区切り複数メールの検証条件がない。7行の書式・制限または共通注記へ条件を追記する。同一表の連続行なので一括編集できる。",
++      "sharedWithRows": [750, 757, 756],
++      "confidence": "high"
++    },
++    {
++      "rowId": 757,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0209_基本設計仕様書(基本情報設定).xlsx / 追加システム設定 シート / 処理概要（登録時の更新対象項目）",
++      "reason": "正本にmtb_optionの更新対象列がないため、option_valueとmember_idのみを更新しupdate_dateを同一処理で進めない旨を登録処理へ追記する。同じシートの追記とまとめて行う。",
++      "sharedWithRows": [750, 754, 756],
++      "confidence": "medium"
++    },
++    {
++      "rowId": 756,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0209_基本設計仕様書(基本情報設定).xlsx / 追加システム設定 シート / 登録後の処理概要・完了メッセージ",
++      "reason": "成功メッセージと登録後GET再表示の記述がないため、admin.register.complete相当の表示文言とリダイレクトを追記する。静止レイアウト画像に完了状態は含まれないため画像差し替えは不要。",
++      "sharedWithRows": [750, 754, 757],
++      "confidence": "high"
++    },
++    {
++      "rowId": 715,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0209_基本設計仕様書(基本情報設定).xlsx / 特定商取引に関する法律 シート",
++      "reason": "SPEC_BACKEDのため、設計書を正として実装側で解消する指摘であり、正本Excelの編集は発生しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 716,
++      "docWork": "IMAGE",
++      "docEffortDays": 0.6,
++      "target": "0209_基本設計仕様書(基本情報設定).xlsx / 特定商取引に関する法律 シート / 画面レイアウト画像の送信ボタン、および画面部品表の識別ID 2-1",
++      "reason": "LEGACY_BACKEDの「登録」を反映するには、画面部品表の現行「設定」を直すだけでなく、貼付画面画像にも表示されている「設定」ボタンを「登録」へ差し替える必要がある。画像再取得・貼り直し・位置調整を含む。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 718,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0209_基本設計仕様書(基本情報設定).xlsx / 利用規約管理 シート",
++      "reason": "SPEC_BACKEDのため、同一編集画面の維持は正本に準拠して実装側で直す内容であり、設計書編集は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 717,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0209_基本設計仕様書(基本情報設定).xlsx / 利用規約管理 シート",
++      "reason": "SPEC_BACKEDで、利用規約本文を入力・登録できる正本要件は既にある。実装の読み取り専用状態を解消する指摘なので正本Excelは触らない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 719,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0209_基本設計仕様書(基本情報設定).xlsx / 支払い方法　手数料設定 シート / ロゴ画像欄",
++      "reason": "SPEC_BACKEDであり、貼付画面画像には既に「620px以上推奨」が表示されている。設計書側の表・画像とも変更不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 720,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0209_基本設計仕様書(基本情報設定).xlsx / 税率設定 シート / 個別税率設定ブロック",
++      "reason": "SPEC_BACKEDで、商品別税率機能と登録ボタンは正本の画面部品表および貼付画像に既にある。実装側のみの不足。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 722,
++      "docWork": "ADD",
++      "docEffortDays": 0.15,
++      "target": "0209_基本設計仕様書(基本情報設定).xlsx / 税率設定 シート / 処理概要・税率一覧の編集操作",
++      "reason": "一覧から専用GET編集画面へ入る経路と、基本税率以外で適用日時を表示する条件が正本にないため追記する。既存画像の一覧操作と共通税率入力欄で表現でき、画像自体の描き直しは不要。",
++      "sharedWithRows": [726, 725, 724, 727],
++      "confidence": "medium"
++    },
++    {
++      "rowId": 721,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0209_基本設計仕様書(基本情報設定).xlsx / 税率設定 シート / 画面レイアウト画像・画面部品表",
++      "reason": "SPEC_BACKEDで、個別税率設定・共通税率設定・税率一覧の構成、ラジオボタン、登録ボタンは正本に記載済み。設計書変更は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 723,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0209_基本設計仕様書(基本情報設定).xlsx / 税率設定 シート / 共通税率設定の課税規則",
++      "reason": "SPEC_BACKEDの初期値要件であり、設計書を直さず実装側を正本へ合わせる指摘。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 726,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0209_基本設計仕様書(基本情報設定).xlsx / 税率設定 シート / 削除処理の例外フロー",
++      "reason": "削除対象ID不在時のフラッシュ消去、警告表示、一覧リダイレクトが正本にないため処理概要へ追記する。同じシートのルール追記とまとめて編集できる。",
++      "sharedWithRows": [722, 725, 724, 727],
++      "confidence": "high"
++    },
++    {
++      "rowId": 725,
++      "docWork": "ADD",
++      "docEffortDays": 0.15,
++      "target": "0209_基本設計仕様書(基本情報設定).xlsx / 税率設定 シート / 適用日時の入力チェック・エラーメッセージ",
++      "reason": "共通税率の判定条件と重複時の固定エラー文言が正本にないため、処理概要または適用日時行の説明へ条件付きで追記する。エラー状態は貼付レイアウト画像に含まれないため画像差し替えは不要。",
++      "sharedWithRows": [722, 726, 724, 727],
++      "confidence": "high"
++    },
++    {
++      "rowId": 724,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0209_基本設計仕様書(基本情報設定).xlsx / 税率設定 シート / 画面部品表の「消費税率」行",
++      "reason": "消費税率行に必須・整数・0～100・書式条件を追記する。既存1行の複数セル修正で済み、同シートの他修正と同時に行える。",
++      "sharedWithRows": [722, 726, 725, 727],
++      "confidence": "high"
++    },
++    {
++      "rowId": 727,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0209_基本設計仕様書(基本情報設定).xlsx / 税率設定 シート / 共通税率の保存完了処理",
++      "reason": "保存完了イベント名が正本にないため、登録・編集共通の完了フックとして処理概要へ1項目追記する。同シートの処理追記とまとめる。",
++      "sharedWithRows": [722, 726, 725, 724],
++      "confidence": "medium"
++    },
++    {
++      "rowId": 688,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0210_基本設計仕様書(コンテンツ管理).xlsx / ページ管理(一覧) シート / 検索ボックスの処理概要・画面部品表",
++      "reason": "SPEC_BACKEDで、検索対象を項目(3)～(6)に限定する記述が正本に既にある。設計書編集は不要。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 689,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0210_基本設計仕様書(コンテンツ管理).xlsx / ページ管理(登録・編集) シート / twigファイル名・新規登録処理",
++      "reason": "SPEC_BACKEDで、日本語.ja.twig・英語.en.twigおよび日英2ファイル作成は正本に明記済み。実装側のみの修正対象。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 692,
++      "docWork": "IMAGE",
++      "docEffortDays": 0.8,
++      "target": "0210_基本設計仕様書(コンテンツ管理).xlsx / ページ管理(登録・編集) シート / コード欄の画面部品表、およびコードエディタが写る複数の画面レイアウト画像",
++      "reason": "行数15・等幅小サイズの通常textareaというLEGACY_BACKED要件を足すだけでは、正本の貼付画像に写る行番号付きAceエディタと食い違う。画面部品表の追記に加え、該当する複数画像の再取得・差し替え・位置調整が必要。",
++      "sharedWithRows": [695, 696],
++      "confidence": "high"
++    },
++    {
++      "rowId": 690,
++      "docWork": "IMAGE",
++      "docEffortDays": 0.7,
++      "target": "0210_基本設計仕様書(コンテンツ管理).xlsx / ページ管理(一覧) シート / 一覧の操作列・画面部品表・画面レイアウト画像",
++      "reason": "操作ドロップダウンとレイアウト編集・ページ編集・削除を反映するには、ページ名リンクと削除アイコンだけの現行表記を直し、一覧画像も操作列を含む状態へ差し替える必要がある。",
++      "sharedWithRows": [691, 693],
++      "confidence": "high"
++    },
++    {
++      "rowId": 691,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0210_基本設計仕様書(コンテンツ管理).xlsx / ページ管理(一覧) シート / 画面部品表の「ページ名」または編集操作行",
++      "reason": "ファイル名未設定時に編集リンクを無効化する条件を画面部品の説明へ追記する。同じ一覧シートの操作UI更新とまとめられ、追加の画像差し替えはrow 690側に集約する。",
++      "sharedWithRows": [690, 693],
++      "confidence": "high"
++    },
++    {
++      "rowId": 694,
++      "docWork": "NONE",
++      "docEffortDays": 0,
++      "target": "0210_基本設計仕様書(コンテンツ管理).xlsx / ページ管理(一覧) シート / 編集・削除可否の処理概要",
++      "reason": "SPEC_BACKEDで、開発者追加ページは削除不可、管理画面ユーザー追加ページは削除可という正本記述が既にある。設計書は変更しない。",
++      "sharedWithRows": [],
++      "confidence": "high"
++    },
++    {
++      "rowId": 693,
++      "docWork": "IMAGE",
++      "docEffortDays": 0.5,
++      "target": "0210_基本設計仕様書(コンテンツ管理).xlsx / ページ管理(一覧) シート / 削除確認フローの文言、および削除確認モーダル画像",
++      "reason": "固定文言を追記するだけでなく、正本の削除確認モーダル画像には現行の共通文言が写っているため、期待文言「このページを削除してもよろしいですか？」の状態へ画像差し替えが必要。同シートの一覧画像更新と併せて作業する。",
++      "sharedWithRows": [690, 691],
++      "confidence": "high"
++    },
++    {
++      "rowId": 695,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0210_基本設計仕様書(コンテンツ管理).xlsx / ページ管理(登録・編集) シート / URL行の入力チェック・エラーメッセージ",
++      "reason": "URL重複時の固定表示文言が正本にないため、URL行の画面部品説明へ追記する。エラー状態画像は正本にないので表の編集だけで済み、同シートの他修正とまとめる。",
++      "sharedWithRows": [692, 696],
++      "confidence": "high"
++    },
++    {
++      "rowId": 696,
++      "docWork": "ADD",
++      "docEffortDays": 0.05,
++      "target": "0210_基本設計仕様書(コンテンツ管理).xlsx / ページ管理(登録・編集) シート / 画面部品表の「metatag」行",
++      "reason": "任意・最大99999文字（lltext_len）の制約を既存metatag行へ追記する。同じシートの隣接修正と一括で行える。",
++      "sharedWithRows": [692, 695],
++      "confidence": "high"
++    },
++    {
++      "rowId": 697,
++      "docWork": "ADD",
++      "docEffortDays": 0.1,
++      "target": "0210_基本設計仕様書(コンテンツ管理).xlsx / ブロック管理(登録・編集) シート / アクセス制御の処理概要",
++      "reason": "正本は編集・削除不可ブロックへのアクセス禁止までで、削除不可は403、対象不在は404という区別がない。アクセス制御ルールへステータス条件を追記し、同シートのコード欄更新とまとめる。",
++      "sharedWithRows": [698],
++      "confidence": "high"
++    },
++    {
++      "rowId": 698,
++      "docWork": "IMAGE",
++      "docEffortDays": 0.7,
++      "target": "0210_基本設計仕様書(コンテンツ管理).xlsx / ブロック管理(登録・編集) シート / コード欄の画面部品表、およびAceエディタが写る画面レイアウト画像",
++      "reason": "行数15・等幅小サイズの通常textareaという要件を追記すると、正本画像の行番号付きAceエディタ表示と矛盾する。画面部品表の追記と画像再取得・差し替え・位置調整が必要で、row 697と同じシートで作業する。",
++      "sharedWithRows": [697],
++      "confidence": "high"
++    }
++  ]
++}
+
+tokens used
+163,933
+28件: NONE=10 ADD=13 FIX=0 IMAGE=5 / 計 4.5人日

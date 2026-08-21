@@ -1,0 +1,331 @@
+{
+ "packetId": "sw_24",
+ "mode": "sweep",
+ "note": "著者はこれらの大半を IMPACT(外部から観測できる) と判定した。見落とし＝実は NO_IMPACT な行が無いかを独立に判定すること。",
+ "findings": [
+  {
+   "rowId": 829,
+   "機能No": "M13-03",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "メンバーが権限を保持している店舗のイベントのみ日程追加が可能にする。",
+   "差分内容": "設計は「日程追加が可能」かどうかの権限制御を要求している。実装はイベント編集画面のリンク表示やボタン disabled では制御しているが、ScheduleController::create/edit の保存分岐自体は権限チェック前に実行されるため、直接POSTに対して日程追加・更新を拒否する実装になっていない。反証として RepeatScheduleController は保存前に権限NGをリダイレクトしており、同等のガードが ScheduleController に無いことを確認した。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Event/ScheduleController.php:55, /home/y-saito/Developments/ec-cube-enterprise/src/Ecc"
+  },
+  {
+   "rowId": 830,
+   "機能No": "M13-03",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "ボタンは新規日程登録時のみ「登録」を表示し、既存の日程更新時のみ「更新」を表示する。",
+   "差分内容": "設計は新規時のボタンラベルを「登録」、既存時のボタンラベルを「更新」としている。実装は両方とも「保存」であり、利用者が直接見るボタン文言が設計と異なる。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Event/Schedule/edit.twig:247, /home/y-saito/Developments/ec-cube-enterprise/src"
+  },
+  {
+   "rowId": 831,
+   "機能No": "M13-04",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "利用者視点の入口は、GET /{admin_route}/event/repeatschedule/{eventId}/new で入力フォームを表示し、POST /{admin_route}/event/repeatschedule/{eventId}/create で登録する。画面遷移先は admin_repeat_schedule_new とする。",
+   "差分内容": "設計は event/repeatschedule/{eventId}/new と event/repeatschedule/{eventId}/create を利用者視点の外部契約として定義しているが、実装は event/{eventId}/repeatSchedule/create で、eventId の位置、repeatschedule の大小文字、new 入力画面ルートが異なる。反証検索として admin_repeat_schedule_new、event/repeatschedule、repeatSchedule/create、admin_repeat_schedule_create を src/Eccube と html ",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Event/RepeatScheduleController.php:39"
+  },
+  {
+   "rowId": 832,
+   "機能No": "M13-04",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "申込受付を有効にする指定で、当該イベントに支払い方法が設定されていない場合は、申込受付不可のエラーメッセージを表示して入力画面を再表示する。",
+   "差分内容": "設計は申込受付有効時の支払い方法設定を本機能の前提確認としている。実装では RepeatScheduleType.php:157-174 で entryFlg とオンライン受付項目を定義し、RepeatScheduleStoreAction.php:49,84-87,98,102-103 で entryFlg を保存するが、その前に DtbEvent::getPayments() を確認してエラー化する処理が存在しない。ScheduleType.php:191-198 には単一日程向けの支払い方法チェックがあるため、別キーワードで反証したが繰返日程側には未実装。",
+   "実装参照": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Event/RepeatScheduleController.php, src/Eccube/Form/Type/Admin/RepeatSchedule"
+  },
+  {
+   "rowId": 833,
+   "機能No": "M13-04",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "表示メッセージは、検証失敗時または申込受付有効で支払い方法未設定のときに保存失敗メッセージ（ロケールキー admin.schedule.save.failed）を表示し、支払い方法未設定時は admin.schedule.error.payment.not.exists を表示する。",
+   "差分内容": "設計は本機能固有の保存失敗キーと支払い方法未設定キーを表示契約としているが、実装は共通キー admin.common.save_error のみを例外時に使用し、支払い方法未設定キーは未定義。rg で admin.schedule.save.failed、admin.schedule.error.payment.not.exists、not.exists、schedule_credit_payment_required を検索し、繰返日程側の該当実装は確認できなかった。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Event/RepeatScheduleController.php:68"
+  },
+  {
+   "rowId": 834,
+   "機能No": "M13-04",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "受付開始時間・受付終了時間の初期値は 00:00、デッキ登録締切開始日前日数は 0、デッキ登録締切時刻は 23:59、オンライン受付開始/終了の日前日数は 0、オンライン受付開始/終了時刻は 00:00 とする。",
+   "差分内容": "設計は画面項目の初期値を明示している。実装フォームの add 定義を確認すると、該当初期値のうち 23:59 以外は data 未設定であり、Twig も form_widget をそのまま描画しているため、初期表示が設計値にならない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/RepeatScheduleType.php:131"
+  },
+  {
+   "rowId": 835,
+   "機能No": "M13-04",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "フロントの当該イベントページへのリンクとしてイベントページURLを表示する。",
+   "差分内容": "設計は登録済みイベントに対する繰返日程追加画面で当該イベントページへのリンクを画面部品として定義している。実装は新規日程登録時の eventDetailId を null にしており、Twig の条件によりリンクを出さない。eventId からイベントページへ遷移する代替リンクも同テンプレートには存在しない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Event/RepeatSchedule/create.twig:88"
+  },
+  {
+   "rowId": 836,
+   "機能No": "M13-05",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "複製新規ボタンは GET /%admin_route%/event/{duplicateId}/duplicate（bind名 admin_event_duplicate）で複製元イベントの値を載せた新規登録フォームを表示し、duplicateId は1以上の整数のみ受け付ける。",
+   "差分内容": "設計のルート名・URL・パラメータ名と実装が一致しない。さらに設計は duplicateId を1以上の整数としているが、実装の \\d+ は 0 も経路一致し得る。探索範囲: Controller/Twig/route名/翻訳キーを admin_event_duplicate, duplicate, copy, event/{duplicateId}/duplicate, event/{id}/copy で再検索。",
+   "実装参照": "src/Eccube/Controller/Admin/Event/EventController.php:245; src/Eccube/Resource/template/admin/Event/edit.twig:497"
+  },
+  {
+   "rowId": 837,
+   "機能No": "M13-05",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "店舗（識別ID1-3）は編集権限のある店舗のみ表示し、編集権限のない店舗が選択された場合はエラーとする。",
+   "差分内容": "非編集権限店舗の選択エラーは存在するが、設計が求める「編集権限のある店舗のみ表示」が未達。EventType/Controller/Twig/MemberBaseInfos 周辺を再検索したが、イベント登録フォームの店舗選択肢を権限店舗に絞る query_builder は見つからない。",
+   "実装参照": "src/Eccube/Form/Type/Admin/EventType.php:88; src/Eccube/Form/Type/Admin/EventType.php:90; src/Eccube/Form/Type/Admin/EventType.php:295"
+  },
+  {
+   "rowId": 838,
+   "機能No": "M13-05",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "識別ID1-4「会場」は単一選択・必須で、選択肢は全会場。複製時は会場（venue_id）を複製元の値として初期表示する。",
+   "差分内容": "設計はユーザー入力項目として会場必須選択と venue_id の複製対象を定義しているが、実装には form.venue、venue_id/ Venue プロパティ、保存・初期表示処理がない。",
+   "実装参照": "不在（探索範囲: src/Eccube/Controller/Admin/Event/EventController.php, src/Eccube/Form/Type/Admin/EventType.php, src/Eccube/Resource/template/admin/Event/edit.twig, sr"
+  },
+  {
+   "rowId": 839,
+   "機能No": "M13-05",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "識別ID2-3「備考(日)」と識別ID2-4「備考(英)」は最大4096字の入力項目として表示し、複製時は複製元の値を初期表示する。",
+   "差分内容": "設計がユーザー可視の備考(日/英)項目と複製対象を定義しているのに対し、実装側に対応する FormType/Twig/Entity/EntityManager の経路がない。",
+   "実装参照": "不在（探索範囲: src/Eccube/Form/Type/Admin/EventType.php, src/Eccube/Resource/template/admin/Event/edit.twig, src/Eccube/Entity/DtbEvent.php, src/Eccube/Service/Entity"
+  },
+  {
+   "rowId": 840,
+   "機能No": "M13-05",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "複製元イベントを初期データとしてイベント登録フォーム（フォーム名 admin_event_detail）を生成する。",
+   "差分内容": "設計が明示するフォーム名 admin_event_detail と、実装のフォームprefix admin_event が一致しない。フォーム名はリクエスト項目名・CSRFスコープに影響する外部契約であり、弱い文言差ではない。",
+   "実装参照": "src/Eccube/Controller/Admin/Event/EventController.php:214; src/Eccube/Controller/Admin/Event/EventController.php:253; src/Eccube/Form/Type/Admin/EventType.php:3"
+  },
+  {
+   "rowId": 841,
+   "機能No": "M13-06",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "2-2「検索条件をクリア」リンク押下でフォームを全て空に変更する（画面部品説明『フォームを全て空に変更』）",
+   "差分内容": "設計は『フォームを全て空に変更』を要求するが、実装は検索モードのラジオ選択を初期化するのみで他の全入力を空にしない。SearchEntryType にもリセット手段は無い。",
+   "実装参照": "src/Eccube/Resource/template/admin/Event/Entry/index.twig:114-119, 39-55"
+  },
+  {
+   "rowId": 842,
+   "機能No": "M13-06",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "並び順が ASC／DESC 以外のとき『並び順エラー』(ロケールキー admin.error.sort)を画面上部フラッシュ領域に表示し、初期表示へ戻す。",
+   "差分内容": "EntryController.php の order 判定は不正値を DESC に強制するのみで、設計が要求するフラッシュ表示(admin.error.sort)と初期表示戻しが実装されておらず挙動が異なる。",
+   "実装参照": "src/Eccube/Controller/Admin/Event/EntryController.php:150-153,214-217"
+  },
+  {
+   "rowId": 843,
+   "機能No": "M13-06",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "支払番号は maxlength 属性による入力長制限(64文字)、プレイヤー名は maxlength 属性による入力長制限(255文字)を持つ。",
+   "差分内容": "SearchEntryType.php の該当フィールド定義と index.twig の form_widget 呼び出しを確認したが、設計が要求する maxlength(64/255) が付与されておらず入力長制限が未実装で差異がある。（本件はM13-06 検索入力sheet-10側の同一所見と重複）",
+   "実装参照": "src/Eccube/Form/Type/Admin/SearchEntryType.php:98-105, src/Eccube/Resource/template/admin/Event/Entry/index.twig:273,280"
+  },
+  {
+   "rowId": 844,
+   "機能No": "M13-06",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "イベント詳細IDは『10桁以内の数字(Regex)』で検証する。",
+   "差分内容": "SearchEntryType.php のフィールド定義は Length のみで、設計が要求する『数字(Regex)』のフォームバリデーションが無い。非数字は form エラーを出さず repo が無視する挙動で、設計の検証仕様と差異がある（軽微）。",
+   "実装参照": "src/Eccube/Form/Type/Admin/SearchEntryType.php:152-158, src/Eccube/Repository/DtbEventEntryRepository.php:122-128"
+  },
+  {
+   "rowId": 845,
+   "機能No": "M13-07",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "申込一覧で複数選択し「一括編集」は POST /{admin_route}/entry/bulkupdate（非同期）で、選択した申込の申込ステータスを一括変更し、結果をJSONで返す。",
+   "差分内容": "設計の利用者視点入口は /{admin_route}/entry/bulkupdate だが、実装は /{admin_route}/event/entry/bulk_update で、event セグメント追加と bulkupdate/bulk_update の差異がある。探索範囲: src/Eccube, html。検索語: entry/bulkupdate, entry/bulk_update, bulkupdate, admin_entry_bulk_update, admin_event_entry_bulk_update。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Event/EntryController.php:300"
+  },
+  {
+   "rowId": 846,
+   "機能No": "M13-07",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "非同期リクエストでない場合は失敗メッセージのJSONを返す。",
+   "差分内容": "設計は非XHRを失敗JSONにする要求だが、実装は非XHRを拒否せず、フォーム検証・ID取得・更新へ進む。反証検索でも Admin/Event/EntryController の一括更新周辺に isXmlHttpRequest / X-Requested-With 判定は存在しない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Event/EntryController.php:301"
+  },
+  {
+   "rowId": 847,
+   "機能No": "M13-07",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "表示メッセージは、失敗時にロケールキー admin.register.failed、完了時にロケールキー admin.register.complete をJSONで返す。",
+   "差分内容": "設計指定の表示文言キー admin.register.failed/admin.register.complete と、実装が返すロケールキーが一致しない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Event/EntryController.php:307"
+  },
+  {
+   "rowId": 848,
+   "機能No": "M13-08",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "デッキ表示ボタン（申込一覧）は GET /%admin_route%/entry/deckList を開き、bind名 admin_entry_decklist（GETデッキ表示）で登録する。",
+   "差分内容": "設計HTMLの入口URL・bind名と、Symfony Route/Twig の実装値が一致しない。反証として admin_entry_decklist、entry/deckList、deckList、admin_event_entry_decklist、event/entry/decklist を検索し、実装済みなのは新名称・新パスのみであることを確認した。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Event/EntryController.php:503, /home/y-saito/Developments/ec-cube-enterprise/src/Eccub"
+  },
+  {
+   "rowId": 849,
+   "機能No": "M13-08",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "権限を保持している店舗のイベントのデッキのみ表示を可能とする。",
+   "差分内容": "検索モーダル等では isEditableShop / getMemberBaseInfos による権限制御があるが、デッキ表示本体では同等の照合がない。セッションに権限外店舗が入った場合に除外する根拠が実装から確認できない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Event/EntryController.php:507, /home/y-saito/Developments/ec-cube-enterprise/src/Eccub"
+  },
+  {
+   "rowId": 850,
+   "機能No": "M13-08",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "デッキのプレイヤー名を前後空白除去して用いる。空の場合は会員のカナ姓・カナ名を半角空白で連結して表示する。",
+   "差分内容": "設計は deck.player_name を第一候補、空時のみ会員カナ代替とするが、実装は会員カナを第一候補にしており優先順位が逆転している。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Event/EntryDeckListDisplayBuilder.php:338"
+  },
+  {
+   "rowId": 851,
+   "機能No": "M13-08",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "イベント名（英）を表示する。",
+   "差分内容": "設計は dtb_event.name_en / イベント名（英）の表示を要求しているが、実装は日本語名 getNameJp() を表示している。getNameEn() の利用は当該デッキリスト表示経路では確認できない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Event/EntryDeckListDisplayBuilder.php:144, /home/y-saito/Developments/ec-cube-enterprise/"
+  },
+  {
+   "rowId": 852,
+   "機能No": "M13-08",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "メインカード一覧を1ページ40枚で分割し、デッキ単位でページを構成する。サイドボードは先頭ページにのみ表示する。",
+   "差分内容": "array_chunk/40/page split/BOARD_ID_SIDE/textSide/sideboard/サイドボード等へ翻案して再検索したが、デッキリスト表示経路ではメインカードの40枚分割とサイドボードページ制御が存在しない。",
+   "実装参照": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Event, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin"
+  },
+  {
+   "rowId": 853,
+   "機能No": "M13-08",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "デッキごとのカードに、サイドボード見出しと枚数、サイドのカード一覧を表示する。メイン・サイドそれぞれの枚数を合計し、各見出しに表示する。",
+   "差分内容": "設計はメインとサイド双方のカード一覧・枚数見出しを要求しているが、実装の表示モデルとTwigはメインボード専用である。",
+   "実装参照": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Event/EntryDeckListDisplayBuilder.php, /home/y-saito/Developments/ec-cube-enterp"
+  },
+  {
+   "rowId": 854,
+   "機能No": "M13-08",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "デッキが0件の場合、デッキリストに何も表示しない（印刷ボタンのみ）。",
+   "差分内容": "設計は0件時に印刷ボタンのみとするが、実装は検索結果なしメッセージを表示するため、利用者に見える出力が異なる。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Event/Entry/decklist.twig:299"
+  },
+  {
+   "rowId": 855,
+   "機能No": "M13-08",
+   "指摘区分": "実装違い",
+   "authorVerdict": "NO_IMPACT",
+   "設計期待値": "デッキ表示時は申込一覧の検索条件セッション（admin.event_entry.search）を読み取り専用で参照する。",
+   "差分内容": "設計が明示する admin.event_entry.search ではなく、実装独自の eccube.enterprise.admin.entry.search を参照している。admin.event_entry.search への参照は実装検索で確認できない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Event/EntryController.php:57,509"
+  },
+  {
+   "rowId": 856,
+   "機能No": "M13-10",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "申込の更新が成功したとき「登録が完了しました。」を、未送信・その他検証失敗で更新できなかったとき「登録できませんでした。」を画面上部のフラッシュに表示する（成功メッセージは登録・更新で共通）。",
+   "差分内容": "実装は存在するが、利用者が目にするフラッシュ文言が設計指定の文言と異なる。EntryController.php の edit() で共通の保存メッセージキー（save_complete/save_error）を用いており、設計が明示する「登録が完了しました。」「登録できませんでした。」を表示していない。",
+   "実装参照": "ec-cube-enterprise/src/Eccube/Controller/Admin/Event/EntryController.php:286, :292"
+  },
+  {
+   "rowId": 857,
+   "機能No": "M13-11",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "権限を保持している店舗のイベントの情報のみ表示を可能とする。",
+   "差分内容": "EntryRegistrationController は getDefaultSearchBaseInfo() を初期値に渡すだけで、検索対象をメンバーが権限保持する店舗集合へ常時制限していない。EntryRegisterSearchType の query_builder は BaseInfo を全件 orderBy し、DtbEventRepository::getQueryBuilderByEntryRegistrationSearchData() は base_info が空の場合に IDENTITY(e.BaseInfo) 条件を追加しないため、設計の「権限を保持している店舗のイベントの情報のみ表示」と一致しない。反証と",
+   "実装参照": "src/Eccube/Controller/Admin/Event/EntryRegistrationController.php:71; src/Eccube/Form/Type/Admin/EntryRegisterSearchType.php:50; src/Eccube/Repository/DtbEventR"
+  },
+  {
+   "rowId": 858,
+   "機能No": "M13-11",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "申込登録のイベント検索は POST /{admin_route}/entry/search/event/html、ページ送りは GET /{admin_route}/entry/search/event/html/{page_no} の非同期リクエストで行い、検索結果をモーダル内に表示する。",
+   "差分内容": "設計は Entry/search_event.twig 由来の非同期モーダル検索を正としているが、EntryRegistrationController には /entry/search/event/html 系ルートも isXmlHttpRequest() によるイベント検索分岐もない。反証検索で admin_entry_event_html/admin_entry_search_event_by_id を確認したが、これはイベント申込一覧画面用の /event/entry/search_event GET モーダルであり、M13-11 申込登録検索の /entry/search/event/html POST ではない。",
+   "実装参照": "src/Eccube/Controller/Admin/Event/EntryRegistrationController.php:64; src/Eccube/Resource/template/admin/Event/EntryRegistration/index.twig:29; src/Eccube/Resou"
+  },
+  {
+   "rowId": 859,
+   "機能No": "M13-11",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "イベントIDによる直接検索として POST /{admin_route}/entry/search/event/id で指定IDのイベントを取得する。",
+   "差分内容": "設計は申込登録検索の外部契約としてイベントID直接検索を要求しているが、EntryRegistrationController のルートは index/new/search_player のみで、イベントID取得専用ルートが存在しない。反証として EntryController::searchEventByIdForEntryList を確認したが、対象画面・URLが異なり M13-11 の登録検索入力には接続されていない。",
+   "実装参照": "不在（探索範囲: src/Eccube/Controller/Admin/Event, src/Eccube/Form/Type/Admin, src/Eccube/Resource/template/admin/Event, src/Eccube/Repository/DtbEventRepository.php。検"
+  },
+  {
+   "rowId": 860,
+   "機能No": "M13-11",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "非同期リクエストでない場合は、空の検索結果でモーダル枠のみ表示する。",
+   "差分内容": "設計のエラー処理はイベント検索HTMLエンドポイントに対する非AJAX時の空モーダル返却を要求しているが、M13-11 のイベント検索実装自体が同期ページで、該当するモーダル枠・空結果返却処理が存在しない。反証として search_event_modal_list.twig と Event/EntryController のモーダルを確認したが、M13-11 EntryRegistrationController から非AJAX時にそれを返す経路は確認できない。",
+   "実装参照": "不在（探索範囲: src/Eccube/Controller/Admin/Event/EntryRegistrationController.php, src/Eccube/Resource/template/admin/Event/EntryRegistration/index.twig, src/Eccube/Re"
+  },
+  {
+   "rowId": 861,
+   "機能No": "M13-11",
+   "指摘区分": "未実装",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "申込登録のイベント検索は POST /{admin_route}/entry/search/event/html（非同期）、ページ送りは GET /{admin_route}/entry/search/event/html/{page_no}（非同期）、イベントIDによる直接検索は POST /{admin_route}/entry/search/event/id（非同期）で提供し、非同期リクエストでない場合は空の検索結果でモーダル枠のみ表示する。",
+   "差分内容": "設計が外部契約として示すURLパスおよび検索HTMLのHTTPメソッドと実装ルートが一致しない。さらに設計の「非同期リクエストでない場合は空の検索結果でモーダル枠のみ表示」に対応する isXmlHttpRequest 等の分岐が entryEventHtml に存在しない（探索範囲: Admin/Event/EntryController.php, Admin/Event/EntryRegistrationController.php, admin/Event/Entry/*.twig, admin/Event/EntryRegistration/*.twig）。",
+   "実装参照": "src/Eccube/Controller/Admin/Event/EntryController.php:379, src/Eccube/Controller/Admin/Event/EntryController.php:380, src/Eccube/Controller/Admin/Event/EntryCon"
+  },
+  {
+   "rowId": 862,
+   "機能No": "M13-11",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "権限を保持している店舗のイベントのみ登録が可能とし、識別ID:4「新規登録」ボタンは権限を保持している店舗のイベントのみ表示する。",
+   "差分内容": "登録処理入口では権限チェックがあるが、設計が求める検索結果一覧での「権限を保持している店舗のイベントのみ」表示、および新規登録ボタンの表示制御が実装されていない。FormType/Controller/Repository/Twig を確認しても、一覧検索結果を編集可能店舗へ常時制限する処理やボタン単位の isEditableShop 条件がない。",
+   "実装参照": "src/Eccube/Form/Type/Admin/EntryRegisterSearchType.php:41, src/Eccube/Form/Type/Admin/EntryRegisterSearchType.php:50, src/Eccube/Controller/Admin/Event/EntryReg"
+  },
+  {
+   "rowId": 863,
+   "機能No": "M13-12",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "利用者視点の入口は、登録先選択 GET /%eccube_admin_route%/entry/select、新規申込入力 GET /%eccube_admin_route%/entry/{eventDetailId}/new、登録送信 POST /%eccube_admin_route%/entry/{eventDetailId}/create、プレイヤー検索 POST /%eccube_admin_route%/entry/search/player/html とする。",
+   "差分内容": "設計の外部契約URL・HTTPメソッドが実装ルートと一致しない。反証検索でも /entry/select、/entry/{eventDetailId}/create、/entry/search/player/html の実装ルートは見つからない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Event/EntryRegistrationController.php:64,148,203; /home/y-saito/Developments/ec-cube-e"
+  },
+  {
+   "rowId": 864,
+   "機能No": "M13-12",
+   "指摘区分": "実装違い",
+   "authorVerdict": "IMPACT",
+   "設計期待値": "権限を保持している店舗のイベントのみ登録可能とし、識別ID:3-1「イベント申込を登録」は権限を保持している店舗のイベントの申込のみ表示する。",
+   "差分内容": "登録処理の防御はあるが、設計が求める「権限を保持している店舗のイベントの申込のみ表示」が一覧・ボタン表示で満たされていない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Event/EntryRegistrationController.php:72; /home/y-saito/Developments/ec-cube-enterpris"
+  }
+ ]
+}

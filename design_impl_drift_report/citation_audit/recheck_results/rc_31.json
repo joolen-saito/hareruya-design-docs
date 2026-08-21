@@ -1,0 +1,149 @@
+{
+  "packetId": "rc_31",
+  "results": [
+    {
+      "rowId": 557,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0202_基本設計仕様書(在庫管理機能).html の sheet-45 を「合計在庫増減数」「合計総原価増減数」「在庫変動区分」で検索し、Excel正本セル AG94-AG96（HTML 17523-17525）を開いて確認した。AG94 は「承認対象が『在庫編集』、『在庫一括編集』、『在庫変更CSV登録』の場合…それ以外の場合 '-'を表示」、AG95 も同じ3種と「それ以外の場合 '-'」、AG96 も3種以外は「'-'を表示」と記載する。sheet-45 のレイアウト画像4枚も実物を確認した。",
+      "reason": "分類は正しい。条件は function-design-embed ではなく data-excel-ref=\"0202:在庫編集承認一覧(検索結果)!AG94\"～AG96 のExcel正本にある。現行コードは指定3種以外の STOCK_SPLIT_EDIT / STOCK_JOIN_EDIT も値表示側へ含めたままである。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Admin/Stock/ApprovalListRowBuilder.php の build() 内 101-113行で、条件が STOCK_EDIT / STOCK_BULK_EDIT / STOCK_CHANGE_CSV_IMPORT に加え STOCK_SPLIT_EDIT / STOCK_JOIN_EDIT を含み、該当時に totalChangeQuantity、totalCostChange、changeTypeDetailName を設定する。分割・結合は else の「-」へ入らない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 558,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "同HTML sheet-45 のExcel正本セル D150（HTML 17580）を開き、「承認対象が『在庫変更CSV登録』の情報が含まれる場合、モーダルの識別ID5-1～5-14には表示されず、『識別ID:4-2 CSVダウンロード』でのみ情報を参照できる」を確認した。AG205（HTML 17599）にも「※一覧として表示しない、在庫変更CSV登録…もダウンロード時に出力対象」とある。レイアウト画像4枚も確認し、画像2はCSV登録だけの場合に明細表を出さない画面、画像1は通常明細表を示していた。",
+      "reason": "正本がモーダル除外とCSV限定参照を明記しているため SPEC_BACKED は妥当。現行の画面用とCSV用が同じ private query builder を使い、CSV登録種別を画面側だけ除外する分岐がない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Repository/DtbStockApprovalListRepository.php の createDbalQueryBuilderForStockEditLineItems() は createStockEditLineItemsQueryBuilder() を使用し、同privateメソッド 374-380行の stockEditTypes に STOCK_CHANGE_CSV_IMPORT を含む。CSV用 createDbalQueryBuilderForStockEditLineItemsCsv() も同じメソッドを使う。src/Eccube/Resource/template/admin/Stock/approval_list_line_items.twig 29-45行は Pagination の全行を14列で描画し、CSV登録行を除外しない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 559,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "同HTML sheet-45 のExcel正本セル AG212-AG218（HTML 17606-17612）を開いて確認した。AG212 は親区分・承認状態ごとに一覧参照時、ステータス変更時、在庫変動履歴の変更前在庫を使い分け、AG213 は変更後在庫と却下時「-」、AG215 は廃棄時の仕入単価「-」、AG217-AG218 は変更前後総原価の状態別値と却下時「-」を規定する。sheet-45 の明細列を示すレイアウト画像1を含む全4枚も確認した。",
+      "reason": "状態・親区分別の表示元切替はExcel正本の個別セルに実在する。現行SQLとrow builderには承認状態を受け取る列・分岐も、在庫変動履歴へ切り替える経路もない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Repository/DtbStockApprovalListRepository.php の createStockEditLineItemsQueryBuilder() 336-385行は dtb_stock_edit_approval_detail を中心に before_edit_quantity、edit_quantity、purchase_unit_price、before_purchase_unit_price を取得するが承認状態をselectせず、在庫変動履歴にもjoinしない。src/Eccube/Service/Admin/Stock/StockEditLineItemRowBuilder.php の mapRow() 49-59行は afterQty=beforeQty+editQty、beforeTotal/afterTotalを常時計算し、104-110行で値をそのまま出力する。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 562,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0203_基本設計仕様書(受注管理機能).html sheet-3 のExcel正本セル D163、D165-D167（HTML 1188-1192付近）を開き、保存パターンをフォームと結果の間に「リンクとして並べて表示」、保存パターン「個々にリロードアイコン」、未更新件数に「*」と記載されることを確認した。項目表 E268/M268/AG268 は「検索パターン名（該当件数）」「リンク」「検索パターンでの検索結果に遷移する」。sheet-3 と関連する結果 sheet-4 は image-layer-img 0枚で、確認対象のレイアウト画像は存在しなかった。",
+      "reason": "Excel正本は「個々」の保存パターンにリンク・件数・リロードを要求する。現行は適用中パターンだけ名前のみへ分岐し、3要素を欠く。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Order/index.twig 1046-1057行で、pattern_id と一致する SearchPattern は 1049行の「{{ SearchPattern.name }}」だけを描画する。admin_order_search_pattern のリンク、pattern_id_* の「*」span、get_count_pattern ボタンは else 側 1051-1056行にしかない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 567,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "REFUTED",
+      "correctedClass": "SPEC_BACKED",
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "先行確認の sheet-8 だけでなく、同じ0203正本の関連 sheet-4「受注情報検索 一覧(検索結果)」を「カスタム配送CSV」「保存されている」「希望するもの」「セレクトボックス」で検索した。Excel正本セル E71-E72/G73（HTML 2184-2186）は「カスタム配送CSVとは出力したい項目を任意に選んで名前をつけて保存されているもので、その中から希望するものを選んでCSVをダウンロードする」と記載し、項目表 E107/M107（HTML 2221）は「受注詳細カスタムCSVダウンロード」「単一選択（セレクトボックス）」とする。sheet-4 と sheet-8 は image-layer-img 0枚だった。",
+      "reason": "LEGACY_BACKED は関連正本シートの見落とし。deleted_at という実装カラム名自体は正本にないが、一覧で選べる対象を「名前をつけて保存されているもの」から希望するもの、とする利用者要件はExcel正本にある。論理削除済み定義まで選択・直接出力可能にする現行はこの正本要件に反するため SPEC_BACKED が妥当。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Order/OrderController.php の一覧返却配列 298-299行は OrderCsvExtensions / ShippingCsvExtensions を findBy(['CsvType' => ...]) で取得し deleted_at を絞らない。src/Eccube/Repository/DtbCsvExtensionRepository.php の findActiveByCsvTypeId() 34-43行には e.deleted_at IS NULL があるが一覧は未使用。src/Eccube/Controller/Admin/CustomExportCsvController.php の index() 75-80行も find($csvExtensionId) 後に getDeletedAt() を検査せず出力へ進む。",
+      "severityOpinion": "med",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 569,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0203正本 sheet-15 のExcel領域を「PurchaseFlow」「prepare」「commit」「persist」「flush」で検索したが該当する src-cell は0件。HTML 6029-6032を開き、PurchaseFlowに関する詳細記述が function-design-embed:start と data-source=\"functions/pf-eccube3/m05-11_admin_order_order_edit.md\" のリバース領域から始まることを確認した。旧 pf-eccube3 の EditController.php 654行は form->isValid()、721-723行は persist(targetOrder)、persist(orderSub)、flush() で、同ファイルの PurchaseFlow/prepare/commit は0件だった。",
+      "reason": "PurchaseFlowを使わないという期待はExcel正本ではなく旧実装にのみ根拠があるため LEGACY_BACKED は妥当。現行では validate/prepare/commit が明示的に残る。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Order/EditController.php の handleSubmittedOrderEdit() 554-558行は orderPurchaseFlow->validate() を実行し、tryCommitOrderRegister() 659-665行は wrapInTransaction 内で orderPurchaseFlow->prepare() と commit() を実行する。650-655行で配送・明細のBaseInfoも揃えているが、旧実装の直接persist/flush経路には戻っていない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 570,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0203正本 sheet-15 のセル C446（HTML 5334）で「『商品の追加』ボタン」、E469で「商品の追加」を実見した。sheet-15 のレイアウト画像5枚をすべて確認し、画像1の受注商品情報下部にも「商品の追加」ボタンが表示されていた。",
+      "reason": "テキストセルとレイアウト画像の双方が「商品の追加」を支持する。現行の実表示経路は同じ翻訳キーをボタンとモーダルタイトルで使い、その値が「商品を追加」のまま。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml 2509行は admin.order.add_product_item: 商品を追加。src/Eccube/Resource/template/admin/Order/edit.twig 1251/1253/1258行がこのキーを受注商品追加表示とモーダルタイトルに使用する。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 571,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0203正本 sheet-15 のセル E479（HTML 5371）でラベル「お支払合計」を実見した。sheet-15 のレイアウト画像5枚をすべて確認し、画像1の金額欄にも「お支払合計」と表示されていた。",
+      "reason": "Excel正本セルと画像が同じ表記を示す。現行翻訳値と表示経路は「お支払い合計」で送り仮名が異なる。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml 2523行は admin.order.payment_total: お支払い合計。src/Eccube/Resource/template/admin/Order/edit.twig 1323-1326行が支払合計行でこのキーを表示する。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 572,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "PARTIAL",
+      "checkedQuote": "0203正本 sheet-16 のセル E114-E116（HTML 6222-6224）で「データは編集不可」「ボタンは非活性」「リンクは非活性」、E232-E234（HTML 6319-6321）で明細部は「データは編集不可」「欠品登録以外のボタンは非活性」「リンクは非活性」を確認した。項目 E240 は「欠品登録」で、対応する説明列に非活性指定はない。sheet-16 は image-layer-img 0枚でレイアウト画像は存在しなかった。",
+      "reason": "先行記載の「読み取り専用分岐がない」は現状では解消済みだが、設計が明示的に例外とした欠品登録まで現行は disabled にしているため全解消ではない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Order/HistoryController.php の index() はGET専用で、78-80行に createBuilder(OrderType::class, ..., ['disabled' => true])、96行に isHistoryView=true がある。edit.twig は isHistoryView 分岐、history_disabled_attr、リンクの order-history-inert 化、登録等の非活性を実装済み。一方 edit.twig 1164行の欠品登録ボタンにも history_disabled_attr を付けており、設計の「欠品登録以外」を満たさない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 573,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "先行参照の sheet-19 だけでなく正しい関連 sheet-18「出荷指示リスト検索」も確認した。Excel正本セル E78/M78 は「表示件数」「ラベル」までで、change時挙動の記載はない。sheet-18 のレイアウト画像2枚を実見し、画像1に「10件」のドロップダウンはあるが自動遷移の有無は判別不能、画像2は編集/削除メニューのみ。旧 pf-eccube3 の index.twig 12-17行はJSを読むため「javascriptブロックは空」というリバース文言は不正確だが、旧UIは118-131行のanchorリンク群でselect/change自動遷移ではなく、読込JSにも page_count/change/location.href はなかった。",
+      "reason": "自動遷移しないという比較根拠はExcel正本ではなく旧Twig/JSにあるため LEGACY_BACKED は維持する。リバース文書の「block javascriptは空」という字面は誤りだが、旧画面にselectのchange自動遷移がないという中核事実は旧実装で確認できる。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/ShippingStandby/index.twig の javascript block 24-29行は #page_count_pulldown の change で選択値を取り、window.location.href = targetUrl を実行する。現在も選択直後に自動遷移する。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 574,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0203正本の関連 sheet-18 を「表示件数」「page_count」「URL」「ルート」で確認した。Excel正本は E78/M78 の「表示件数」「ラベル」まででURL形式を規定しない。レイアウト画像1は「10件」ドロップダウンを示すがURLは見えず、画像2にもURL情報はない。旧 pf-eccube3/index.twig 126-130行を開き、表示件数リンクが path('admin_shipping_standby_search', {'page_no': 1, 'page_count': pageMax.name}) であることを確認した。",
+      "reason": "検索ルートURLという契約は旧実装由来で、Excel正本にはないため LEGACY_BACKED は妥当。旧UIはoptionではなくanchorなので「各option」という表現は移行先UIとの合成だが、比較対象の旧URL経路自体は実在する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/ShippingStandby/index.twig 214-218行は option value に path('admin_shipping_standby_page', {'page_no': 1, 'page_count': ...}) を設定する。ShippingStandbyController.php 97-105行では検索が /standby/search、pageルートが /standby/page/{page_no} の別定義であり、旧search経路には戻っていない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 575,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0203正本の sheet-18 と sheet-19 を「検索条件に該当」「合致」「見つかりません」「0件」で検索したが、該当するExcel正本セルはなかった。sheet-18 のレイアウト画像2枚も確認したが検索結果ありの一覧と編集/削除メニューのみで、0件メッセージはない。旧 pf-eccube3/index.twig 193-196行を開き、0件時の h3 に「検索条件に該当するデータがありませんでした。」を1行表示することを確認した。",
+      "reason": "固定文言の根拠は旧Twigだけなので LEGACY_BACKED は妥当。現行は別文言2行の表示経路のままである。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/ShippingStandby/index.twig 314-319行は admin.common.search_no_result と admin.common.search_try_change_condition を2行表示する。messages.ja.yaml 1734-1735行の実値は「検索条件に合致するデータが見つかりませんでした」「検索条件を変えて、再度検索をお試しください」。has_errors 時は1733行の別文言も使う。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    }
+  ]
+}

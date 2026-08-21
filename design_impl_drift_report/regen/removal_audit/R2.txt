@@ -1,0 +1,2879 @@
+Reading additional input from stdin...
+OpenAI Codex v0.147.0
+--------
+workdir: /home/y-saito/Developments
+model: gpt-5.6-sol
+provider: openai
+approval: never
+sandbox: read-only
+reasoning effort: high
+reasoning summaries: none
+session id: 01a01e1d-6989-7642-b684-2e3dd312a1be
+--------
+user
+# 敵対レビュー依頼: 節の除去で「設計内容」が失われていないかの検証
+
+あなたはレビュアーである。著者ではない。ファイルを書き換えず、read-only で読むだけでよい。
+指摘が無ければ `NONE` の1語だけを出力する。
+
+## 背景
+
+機能設計書（`functions/**/*.md`）から、HTML設計書へ出さないと決めた節を正本ごと除去した。
+除去した内容は `functions/_archive/<区分>/<同名ファイル>` へ退避してある（消してはいない）。
+除去は累積で約1万行ある。廃止宣言とフェーズ2対応の明記が巻き添えで消えた事故が2件あり、
+それは台帳検証（superseded-spec / phase2-spec）が検出して復元済みである。
+
+**知りたいのは「台帳に載らない設計内容が失われていないか」だけ**である。
+
+## レビュー対象
+
+- 抽出パケット: `/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/regen/removal_audit/packet.md`
+  （10機能ぶん。各機能について「退避先にあり、現在の正本のどこにも同じ文字列が無い行」を機械抽出したもの）
+- 全候補: `/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/regen/removal_audit/candidates.tsv`
+  （3,175行 / 404機能。パケットはこの一部）
+- 現在の正本と退避先はパケット内にパスを書いてある。両方を読んで突き合わせること。
+
+## 判定の基準
+
+**失われた＝次の両方を満たす場合だけ**である。
+
+1. その行が **機能のI/Oかふるまい**（入力・出力・判定条件・分岐・業務ルール・画面に出る文言）を述べている
+2. 同じ事実が、現在の正本のどこにも書かれていない（言い換えを含めて無い）
+
+## 失われたと判定してはいけないもの（意図的に外した）
+
+- 実装手段: クラス名・メソッド名・ファイル名・イベント名・セッションキー・翻訳キー・設定キー・DB物理名
+- 定型節: 副作用 / 入力項目 / エッジケース / データ整合性 / 権限・認可 / セッション / Cookie /
+  ログ・監査 / ログに出してはいけないもの / 排他制御・トランザクション / 試行制限 /
+  明細の並び / 出力: 画面の項目 / 出力: 一覧の列 / 中身の無い「入出力: 永続化」
+- 廃止宣言・フェーズ2対応の明記（台帳検証が別途担保しており、2件は復元済み）
+- 節の見出しそのものが消えたこと（3分類へ寄せた結果であり、内容が残っていれば問題ない）
+- 概要・用語・参考・調査補助・改訂履歴などの補助記述
+
+## 記述の粒度（重要）
+
+復元を提案する場合、**0203_基本設計仕様書(受注管理機能) に埋め込まれている正本の粒度と書き方を守る**こと。
+手本: `/home/y-saito/Developments/hareruya-design-docs/functions/pf-eccube3/m05-01_admin_order_order_search_list.md`
+
+- 結論を先に置く。1事実1文。体言止めを混ぜてよい。
+- 実装手段を書かない。DB物理名を書かない（論理名で書く）。
+- **過大に追記しない。** 1件の復元提案は原則1〜2文まで。表が要る場合も列は最小限にする。
+- 元の文章をそのまま戻すのではなく、上記の粒度へ言い換えた案を書く。
+
+## 出力形式
+
+```
+判定: 失われている
+機能: <ファイル名>
+消えた事実: <退避先の該当行の要旨>
+現在の正本に無いことの根拠: <どこを見て無いと判断したか>
+復元案（0203の粒度・1〜2文）: <そのまま本文へ入れられる文>
+```
+
+最後に必ず次の1行で締める。
+
+```
+サンプル10機能の集計: 失われている <n>件 / 意図的な除去と判断 <m>件
+```
+warning: Codex could not find bubblewrap on PATH. Install bubblewrap with your OS package manager. See the sandbox prerequisites: https://developers.openai.com/codex/concepts/sandboxing#prerequisites. Codex will use the bundled bubblewrap in the meantime.
+codex
+`design-impl-drift-audit` スキルを使います。設計書を正本として差分の事実性を検証する依頼に合致するためで、まず手順を読み、パケット・退避先・現行正本を read-only で照合します。
+exec
+/bin/bash -lc "sed -n '1,240p' /home/y-saito/.codex/skills/design-impl-drift-audit/SKILL.md" in /home/y-saito/Developments
+ succeeded in 0ms:
+---
+name: design-impl-drift-audit
+description: Compare HTML design specifications against an implementation to find functional drift and produce an evidence-backed HTML report. Use when Codex is asked to treat design docs as the source of truth, audit code such as controllers/services/forms/repositories/templates/batches/CSV definitions, continue a partially completed drift report, or update findings JSON/HTML for gaps between design and implementation.
+---
+
+# Design Impl Drift Audit
+
+## Purpose
+
+Use this skill to audit functional differences between HTML design specifications and an implementation repository, with the design docs treated as authoritative. Produce or continue a report that lists concrete differences with design locations, implementation locations, confidence, severity, and impact.
+
+## Repository Discovery
+
+1. Find the design-doc directory and implementation directory from the user request. If omitted, infer from nearby names such as `*-design-docs` and application repos.
+2. Look for an existing report before starting new work. Prefer directories named `design_impl_drift_report`, existing `findings.json`, per-function `findings/*.json`, and `index.html`.
+3. Count total target specs and audited specs so the report clearly states scope and remaining work.
+4. Preserve existing findings. Append or refine; do not overwrite unrelated prior work.
+
+## Audit Workflow
+
+For each target HTML spec:
+
+1. Identify the feature ID, route/action name, UI template, CSV/batch/API behavior, and acceptance rules from the HTML design spec.
+2. Extract a requirement inventory from the HTML spec before looking at code. This inventory must include not only route/screen names, but every concrete requirement in 処理概要, 図形・テキストボックス, 項目表, 表示メッセージ, 業務ルール・計算, 入力項目, エッジケース, データ整合性, API/バッチ結果, 入出力, DB操作, バリデーション, 権限・認可, 画面遷移, エラー処理, ログ・監査, セッション, Cookie, and 排他制御. Treat bullets such as "押下時", "場合", "登録/更新/保存", "遷移", "保持", "表示/非表示", "表示切り替え", "エリアを表示", "誘導", "エラー", "判定", "連携", time limits, thresholds, and retry/idempotency rules as auditable requirements. 秒後/分後, `画面を表示してから`, 自動遷移, タイマー, and store/kiosk/account-specific forced redirects are material requirements even if the route and template already exist.
+3. For every extracted requirement, create or mentally maintain a `requirementTrace` row with: `requirementId`, `designRef`, `designRequirement`, `implementationSearchTerms`, `implementationRefs`, `implementationActual`, `traceVerdict` (`MATCHED|DRIFT|NOT_FOUND|UNCERTAIN|PHASE2_EXCLUDED`), and `traceReason`. A feature cannot be marked no-drift until all material requirements have a trace verdict other than `NOT_FOUND` or unresolved `UNCERTAIN`.
+4. Search the implementation with `rg` across likely files: controllers, services, repositories, form types, entities, migrations, Twig/templates, commands/batches, route definitions, JavaScript, CSV exporters/importers, and PDF/print services. Search by business terms from the requirement, route names, translation keys, DB columns, state names, constants, statuses, time values, thresholds, and side-effect verbs. For timer or auto-navigation requirements, explicitly search client and server paths for `setTimeout`, `setInterval`, millisecond/second constants such as `60000` and `60 * 1000`, `location.href`, `location.assign`, `location.replace`, redirect routes, and the condition that limits the behavior. For a negative result, also search nearby implemented flows so the report can explain why they do not satisfy the design.
+5. Compare behavior and user-facing text, not just names. Check input fields, validation, defaults, search conditions, session persistence, buttons/actions, labels, button text, messages, translation keys/locales, permissions, status transitions, CSV columns, sort/order rules, scheduled timing, timeouts/expiration, thresholds, client-side timers, forced auto-navigation, side effects, idempotency, external integrations, conditional display toggles, alternate UI areas, and error handling.
+6. Do not treat "route/controller/template exists" as sufficient. Existence only satisfies the route/screen requirement. It does not satisfy individual rules inside the screen, such as timeout handling, cart retention, validation branches, status transitions, DB writes, logging prohibitions, conditional hide/show behavior, alternative contact/help areas, or external API retry behavior.
+7. For conditional display requirements, audit each side of the condition separately. If the HTML says "Aの場合はXを非表示、Yを表示 / A以外はXを表示、Yを非表示", record trace rows for the condition detector, X visibility, Y visibility, and the inverse condition. A nearby notice or route is not enough unless the cited template/JS actually renders the required area under the required condition.
+8. For labels, button text, messages, and translation keys, do a dedicated near-match pass. Extract user-visible Japanese text from the HTML item/message tables and compare it with implementation locale values and Twig/Form usage. Treat punctuation, okurigana, missing characters, long-vowel marks, wording changes such as `商品を追加` vs `商品の追加`, and business-term changes such as `返金` vs `送金` as audit targets.
+9. A text drift finding is complete only when it cites both the translation/source value and the display path that uses it, such as `messages.ja.yaml` plus the `FormType` label or Twig `|trans` call. If the implementation value exists but no display path is verified, mark it `UNCERTAIN` instead of presenting it as confirmed.
+10. Do not stamp all functions as if every standard aspect was fully checked. Separate "standard audit target aspects" from actual evidence. For each finding, list the aspects actually supported by evidence; for no-drift functions, include a requirement trace summary naming the concrete HTML requirements checked and implementation refs searched.
+11. Record only actionable drift. If evidence is incomplete, mark the finding `UNCERTAIN` and explain what remains ambiguous.
+12. For every drift finding, split the result into implementation-ready fields: `designExpectation`, `implementationActual`, `comparisonRows`, `comparisonSummary`, `mismatchReason`, `impact`, `fixTarget`, `requiredChange`, `implementationRefs`, and, when available, short design/implementation snippets from the cited lines. Do not rely on a generic prose paragraph alone.
+13. Each `comparisonRows` entry must answer all four questions explicitly: comparison item, exact design value/requirement, exact implementation value/behavior, and why those two do not match. If any of those four cells would be vague, continue investigating before recording the finding.
+14. Treat phase labels such as Ph2 as auxiliary context. They can be stored, but the main report must not use phase status as a substitute for concrete behavioral differences and exact implementation locations.
+15. If the HTML design spec explicitly says the whole function or scoped subfeature is `フェーズ2で実装する`, `Ph2で対応`, or `Ph1では実装しない`, do not report absence of that planned Phase 2 work as drift or as a clear implementation gap. You may keep a secondary audit note that non-implementation was confirmed, but exclude it from finding counts and implementation-gap counts. Only keep a finding when there is a concrete non-phase mismatch, such as an implemented Phase 1 path behaving differently from the design or user-facing text differing.
+16. When no drift is found, add the function to the audited set with an empty findings list only after the requirement trace gate passes. If material HTML requirements are untraced, do not mark `AUDITED_NO_DRIFT_FOUND`; mark the function as requiring review or add `UNCERTAIN` findings with the unresolved requirements.
+17. Do not let one confirmed finding hide other requirements in the same function. A function with `AUDITED_WITH_FINDINGS` can still have untraced material requirements; keep those requirements visible in the trace gate until each one is converted to a confirmed finding, an uncertain finding, a matched trace row, or a documented phase/design non-implementation exclusion.
+18. For explicitly registered critical requirements, the harness should carry a missing-finding template or an equivalent escalation rule. If the trace is not covered by an existing finding, promote it into findings automatically or fail the quality gate loudly. Do not rely on a hand-maintained `ADDITIONAL_FINDINGS` list as the only path for user-reported or high-risk missing behavior such as timeouts, cart retention, one-minute/30-minute limits, store-account auto redirects, conditional UI areas, status transitions, external calls, or destructive side effects.
+19. The HTML report must not expose broad source-signal candidates as if they were implementation gaps. A requirement-level list in the main report must be limited to confirmed or explicitly uncertain actionable drift derived from findings, such as `NOT_FOUND` or `DRIFT` requirement traces and concrete comparison rows. If a source-signal scan is used for triage, keep it out of the main HTML report unless each row has been verified against implementation source and written as a concrete finding.
+20. Do not hide time-based or automatic-navigation requirements merely because they are not confirmed findings yet. Requirements involving `画面を表示してから`, seconds/minutes after display, auto redirect/navigation, or timeout-to-cart/top behavior should appear in a separate focused untraced-requirement audit queue when they remain uncovered. This queue is not a confirmed defect count; it exists so these high-risk requirements are reviewed against Controller/Twig/JavaScript/Service source instead of being buried among broad requirement-trace failures.
+
+## Function-Level Implementation Gap Audit
+
+For every HTML spec sheet, maintain a function-level implementation audit even when no drift finding is confirmed yet.
+
+- Extract implementation search terms from the HTML design: route names, URL paths, translation keys, class/controller/service names, batch/API/CSV names, and high-signal business terms from the sheet title and requirement text.
+- Search implementation source by function across Controller, Form, Service, Repository, Entity, Migration, Twig, Command/Batch, CSV, PDF/print, API/webhook, locale/messages, JavaScript, and configuration files.
+- Store a `functionImplementationAudit` object with `verdict`, `designDerivedTerms`, `candidateRefs`, `candidateCount`, `strongSignalCount`, `searchedAreas`, and `auditNote`.
+- Use separate verdicts:
+  - `CONFIRMED_IMPLEMENTATION_GAP`: a concrete drift finding already proves missing implementation.
+  - `NO_IMPLEMENTATION_ENTRY_FOUND`: no entry candidate was found from design-derived terms; treat as an additional-review candidate, not an automatic confirmed defect.
+  - `IMPLEMENTATION_ENTRY_FOUND`: strong source evidence such as route, class, translation key, or path was found.
+  - `IMPLEMENTATION_CANDIDATE_FOUND`: weak business-term candidates were found but the entry point is not proven.
+  - `PHASE2_NONIMPLEMENTATION_EXPECTED`: HTML design explicitly scopes non-implementation to Phase 2/Ph1 exclusion.
+  - `DESIGN_NONIMPLEMENTATION_EXPECTED`: HTML design explicitly says the function or scoped behavior is not implemented by code, such as `実装しない`, `実装不要`, or infrastructure/external-service configuration replacing application code.
+- Use `DESIGN_NONIMPLEMENTATION_EXPECTED` as the function-level verdict only when the non-implementation statement applies to the whole function or the implementation entry itself, for example an external WordPress server, Docker image cron, Aurora parameter group, or a bare whole-sheet `実装しない`. If the text only excludes a scoped subfeature, UI alert, HTML hint, logging detail, partial Phase 2 item, or internal job, keep the function's source-entry verdict and mention the scoped exclusion only in the trace/audit note.
+- The report must show both confirmed implementation-gap findings and function-level no-entry candidates. Do not merge these counts: implementers need confirmed defects for fixing and no-entry candidates for review planning.
+- A function-level candidate is not enough to mark the detailed requirements as implemented. Requirement trace still controls no-drift status.
+- Do not set report metadata such as `auditComplete` or narrative notes to "complete" merely because every sheet has a function-level implementation audit. If any material requirement trace remains unresolved, state that all sheets have function-entry coverage but requirement-level audit is incomplete.
+- For infrastructure-oriented sheets such as Step Functions, Lambda, WAF/S3 jobs, cron configured outside the application, or managed database settings, distinguish "not found in the requested implementation repository" from "not implemented anywhere". A confirmed implementation-gap finding may be scoped to the audited repository, but the report must say when external infrastructure repositories or cloud configuration were not checked.
+
+## Requirement Trace Gate
+
+Before marking a function no-drift, verify the following:
+
+- Every material HTML requirement has a trace row. Material means it changes behavior, data, display, validation, permission, transition, side effect, external communication, schedule, retry/idempotency, logging/audit, CSV/API/PDF/batch I/O, or user-visible text.
+- Each trace row includes exact design text or a tight paraphrase plus line/anchor reference, not only the sheet title.
+- Each matched row cites the implementation path and line(s) that actually execute or render the behavior. A nearby class, route, or template is not enough unless the cited code contains the relevant condition/value/side effect.
+- Each missing row is converted to a confirmed or uncertain finding. Use confirmed only after searching the direct path and nearby alternative implementations.
+- Missing rows remain failures even if the function already has other findings. The gate is requirement-scoped, not function-scoped.
+- If an explicit critical requirement has a configured missing-finding template, regenerate the report from the harness and verify the promoted finding appears in both JSON and HTML with design value, implementation behavior, mismatch reason, fix target, and search evidence.
+- If a missing row does not yet have enough evidence for a confirmed or uncertain actionable finding, do not count it as an implementation gap and do not put it in the main HTML fix list. Keep the function in an incomplete requirement-trace state, and promote the row only after implementation source has been checked enough to state the exact design requirement, exact implementation behavior, and mismatch reason.
+- A generic `auditEvidence` string is not a substitute for requirement traces.
+- Negative searches must list the searched terms/areas and why nearby hits do not satisfy the design.
+
+## Finding Format
+
+Store findings in a machine-readable JSON structure. Use this shape for each finding:
+
+```json
+{
+  "id": "stable-feature-id-001",
+  "functionId": "m04-01_admin_stock_stock_search_list",
+  "functionName": "在庫一覧",
+  "severity": "high|med|low",
+  "dimension": "①機能/ルート未実装",
+  "confidence": "CONFIRMED|UNCERTAIN",
+  "design": {
+    "file": "path/to/spec.html",
+    "lines": "215-220",
+    "summary": "設計書に書かれている仕様"
+  },
+  "implementation": {
+    "file": "path/to/source.php or 不在",
+    "lines": "337-344",
+    "summary": "実装側の状態"
+  },
+  "difference": "設計と実装の具体的な差分",
+  "comparisonRows": [
+    {
+      "item": "比較項目名",
+      "design": "設計書の値・要求。列名、HTTPメソッド、パス、保存先、表示文言、条件、状態遷移などを具体値で書く",
+      "implementation": "実装の値・挙動。実際の列名、メソッド、パス、保存先、文言、条件、処理順を具体値で書く",
+      "mismatch": "なぜ一致しないのか。実装者が直すべき差分を一文で書く"
+    }
+  ],
+  "requirementTrace": [
+    {
+      "requirementId": "stable-requirement-id",
+      "designRef": "path/to/spec.html:123",
+      "designRequirement": "HTML設計書の個別要求",
+      "implementationSearchTerms": ["検索語", "route_name", "methodName"],
+      "implementationRefs": ["src/...php:123"],
+      "implementationActual": "実装で確認できた挙動、または不在判定",
+      "traceVerdict": "MATCHED|DRIFT|NOT_FOUND|UNCERTAIN|PHASE2_EXCLUDED",
+      "traceReason": "なぜその判定か"
+    }
+  ],
+  "comparisonSummary": "設計はX、実装はY、したがってZが違う",
+  "mismatchReason": "乖離と判断した具体的な理由",
+  "impact": "ユーザー・業務・データへの影響",
+  "fixTarget": "修正対象のファイル/ルート/サービス/不在箇所",
+  "requiredChange": "設計に合わせる場合に必要な修正",
+  "implementationRefs": ["src/...php:123"],
+  "implementationSnippets": ["123: 実装コードの短い断片"],
+  "evidence": ["短い根拠。ファイル名と行番号を含める"]
+}
+```
+
+The HTML report should make these fields visible as separate blocks so an implementer can answer: what exact value does the design require, what exact value does the code implement, why is that a mismatch, exactly where is the code, and what should be changed.
+
+Use stable IDs and Japanese text when the existing report is Japanese. Keep dimensions consistent with existing findings when continuing a report.
+
+## Severity Guidance
+
+- `high`: missing feature/route, wrong critical business rule, destructive or externally visible behavior, missing required import/export/batch/PDF flow.
+- `med`: partial implementation, wrong filtering/sorting/session behavior, missing non-critical columns or validation, incompatible screen behavior.
+- `low`: copy/display/default-state differences, ambiguous design wording, minor workflow variance.
+
+## Report Generation
+
+If the project already has a report generator, use it. Otherwise copy or adapt `scripts/build_report.py` from this skill into the report directory, then run it from the repository root or pass paths as needed.
+
+The HTML report must include:
+
+- summary counts: total findings, severities, audited functions, functions with drift
+- scope and remaining work
+- per-function sections
+- each finding with severity, confidence, dimension, audit aspects including label/message/translation-key differences when applicable, design reference, implementation reference, design expectation, implementation actual behavior, `comparisonRows`, mismatch reason, impact, fix target, required change, and evidence
+- a comparison table with columns: 比較項目 / 設計書の値・要求 / 実装の値・挙動 / 乖離理由
+- links or file paths precise enough for a developer to inspect
+- short cited design and implementation snippets when available
+- phase/Ph2 data only as hidden or secondary metadata, never as a report column or primary summary
+- a function-level implementation audit section showing verdict counts, no-entry candidates, candidate source references, and the search terms that produced them
+- a requirement-level difference list derived only from confirmed/uncertain findings, showing the exact design requirement, implementation behavior, mismatch reason, implementation refs, and a link back to the finding. Do not include broad unverified source-signal queues in the main HTML report.
+- a focused untraced-requirement section for small, high-risk classes such as display-time timers, automatic redirects, and timeout navigation. Keep it separate from confirmed difference and implementation-gap counts, and include search terms/candidate refs so the next audit step is concrete.
+
+After editing findings, validate JSON and regenerate HTML:
+
+```bash
+python3 -m json.tool path/to/design_impl_drift_report/findings.json
+python3 path/to/design_impl_drift_report/build_report.py
+```
+
+## Quality Bar
+
+- Treat the HTML design spec as source of truth even when implementation looks intentional.
+- Cite exact file paths and line numbers whenever available.
+- Distinguish `不在` from “not found yet”; use `不在` only after searching likely implementation areas.
+- Avoid broad claims such as “not implemented” without search evidence or contrasting nearby implemented features.
+- Do not classify Phase 2 planned non-implementation as a defect. A missing route, CSV, batch, API, table, or screen is only a drift finding when the design expects it in the audited implementation phase.
+- For label/message drift, prefer exact line evidence and a verified render path over fuzzy string similarity. Fuzzy or near-match scans are candidate generators; they are not findings until source and display usage are confirmed.
+- When an external reviewer or another agent reports candidates, verify each candidate against the HTML design and implementation source before adding it. Keep rejected or ambiguous candidates out of confirmed counts, or mark them `UNCERTAIN` with the unresolved reason.
+- For absent implementations, include the searched terms/areas, nearby implementation files with line numbers, and a concrete reason those nearby files do not satisfy the design. Do not leave `implRef` as only `不在` in the final report.
+- Reject vague findings. A finding is not complete until it names the exact design value and exact implementation value that differ.
+- Keep the report cumulative and resumable.
+
+exec
+/bin/bash -lc "wc -l design_impl_drift_report/regen/removal_audit/packet.md && sed -n '1,240p' design_impl_drift_report/regen/removal_audit/packet.md" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+377 design_impl_drift_report/regen/removal_audit/packet.md
+# 除去内容レビュー用パケット（抽出10機能）
+
+## a01-01_api_stock_smaregi_stock_sync.md（消えた候補 99行）
+- 現在の正本: `functions/ec-cube-enterprise/a01-01_api_stock_smaregi_stock_sync.md`
+- 退避先: `functions/_archive/ec-cube-enterprise/a01-01_api_stock_smaregi_stock_sync.md`
+
+消えた行（節ごと・先頭30行）:
+
+  [(節なし)] # a01-01_api_stock_smaregi_stock_sync — 5分類外の退避
+  [(節なし)] 写像しなかった節の退避先。設計書本体から外した内容をそのまま保持する。
+  [(節なし)] 規約は .cursor/skills/output-exclusion-policy/SKILL.md を正本とする。 -->
+  [入出力仕様] | 入力 | 外部システムまたはMTGバイヤーからのAPIリクエスト。 |
+  [入出力仕様] | 出力 | APIレスポンス。成功・失敗の詳細は実装を正とする。 |
+  [入出力仕様] | 副作用 | 対象データの更新、外部連携履歴または受信履歴の記録。 |
+  [開始条件、終了条件] | 開始条件 | API呼び出しを受け、認証・認可・署名等の実装側チェックを通過する。 |
+  [開始条件、終了条件] | 終了条件 | レスポンスを返し、必要なDB更新または非同期処理投入が完了する。 |
+  [判定条件] - Excel設計書に記載された対象条件、検索条件、CSV出力条件、登録条件を正とする。
+  [判定条件] - Excel設計書に未記載のURLエンドポイント、DBカラム、実処理順序は `../ec-cube-enterprise` の実装を正とする。
+  [判定条件] - 権限、ログイン状態、管理画面プレフィックスなどの共通判定は共通設計および実装側のセキュリティ設定に従う。
+  [プロセスフロー] 1. 利用者または外部システムが対象機能を開始する。
+  [プロセスフロー] 2. 入力値、検索条件、アップロードファイル、またはリクエスト本文を受け付ける。
+  [プロセスフロー] 3. Excel設計書に定義された対象データを取得し、実装側の検証・権限・状態条件を適用する。
+  [プロセスフロー] 4. 登録・更新・出力・連携のいずれかの主処理を実行する。
+  [プロセスフロー] 5. 成功時は結果画面、CSV/PDF/APIレスポンス、またはバッチ結果を返す。失敗時はエラー内容を返し、更新が必要な処理では不整合が残らないように扱う。
+  [ビジネスロジック] - **Excel設計優先**: 仕様の目的、対象データ、出力項目、表示項目、業務上の条件は `excel_to_html/output` の設計書を正とする。
+  [ビジネスロジック] - **実装補完**: Excel設計に書かれていないURLエンドポイント、DBカラム、トランザクション、サービス分割、非同期処理は `../ec-cube-enterprise` の実装を正とする。
+  [ビジネスロジック] - **対象機能の要点**: 在庫処理に関連するスマレジとの連携処理
+  [状態・データ更新] | 主データ | API対象の買取・在庫・スマレジWebhook関連データを作成・更新・参照する。 |
+  [状態・データ更新] | 履歴・ログ | 必要に応じてCSV取込履歴、在庫履歴、ステータス履歴、API受信履歴、アプリケーションログを作成・更新する。 |
+  [例外処理] - **入力不備**: 必須項目、CSVヘッダ、CSV行、APIリクエスト本文、検索条件が不正な場合はエラーとして処理し、登録・更新対象を確定しない。
+  [例外処理] - **対象なし**: 検索条件や対象IDに該当するデータがない場合は、空の一覧、空CSV、またはエラーレスポンスとして扱う。扱いの細部は対象画面/API/バッチの実装に従う。
+  [例外処理] - **状態不整合**: 既に処理済み、キャンセル済み、承認不可、在庫不足など状態条件に合わない場合は処理対象外またはエラーとする。
+  [例外処理] - **外部連携失敗**: スマレジ等の外部連携で失敗した場合は、実装側の再連携・エラーログ・エラーメール・ステータス更新仕様を正とする。
+  [関連設計への接続点] - 画面項目、CSV列、PDFレイアウト、APIリクエスト/レスポンスの詳細は、参照元Excel設計書の該当シートを正とする。
+  [関連設計への接続点] <summary>Excel設計書からの抽出（原典・テスト網羅の根拠）</summary>
+  [関連設計への接続点] 処理概要（★はカスタマイズ項目）
+  [関連設計への接続点] 図形・テキストボックス内テキスト（20件）
+  [関連設計への接続点] GET POST PUT DELETE PATCH OPTIONS HEAD 有 無 〇
+  …ほか 69 行
+
+## m03-43_admin_product_product_simple_low_price_csv_export.md（消えた候補 90行）
+- 現在の正本: `functions/ec-cube-enterprise/m03-43_admin_product_product_simple_low_price_csv_export.md`
+- 退避先: `functions/_archive/ec-cube-enterprise/m03-43_admin_product_product_simple_low_price_csv_export.md`
+
+消えた行（節ごと・先頭30行）:
+
+  [(節なし)] # m03-43_admin_product_product_simple_low_price_csv_export — 5分類外の退避
+  [(節なし)] 写像しなかった節の退避先。設計書本体から外した内容をそのまま保持する。
+  [(節なし)] 規約は .cursor/skills/output-exclusion-policy/SKILL.md を正本とする。 -->
+  [入出力仕様] | 入力 | 管理画面の検索条件、フォーム入力、CSVアップロード、または画面操作。 |
+  [入出力仕様] | 出力 | 画面表示、CSV/PDFダウンロード、登録完了/エラー表示。 |
+  [入出力仕様] | 副作用 | 対象データの登録・更新、CSV取込履歴、在庫履歴、ステータス履歴の記録。 |
+  [開始条件、終了条件] | 開始条件 | 管理画面にログイン済みの利用者が対象メニューまたは操作を実行する。 |
+  [開始条件、終了条件] | 終了条件 | 画面表示、ファイル出力、登録完了、またはエラー表示が完了する。 |
+  [判定条件] - Excel設計書に記載された対象条件、検索条件、CSV出力条件、登録条件を正とする。
+  [判定条件] - Excel設計書に未記載のURLエンドポイント、DBカラム、実処理順序は `../ec-cube-enterprise` の実装を正とする。
+  [判定条件] - 権限、ログイン状態、管理画面プレフィックスなどの共通判定は共通設計および実装側のセキュリティ設定に従う。
+  [プロセスフロー] 1. 利用者または外部システムが対象機能を開始する。
+  [プロセスフロー] 2. 入力値、検索条件、アップロードファイル、またはリクエスト本文を受け付ける。
+  [プロセスフロー] 3. Excel設計書に定義された対象データを取得し、実装側の検証・権限・状態条件を適用する。
+  [プロセスフロー] 4. 登録・更新・出力・連携のいずれかの主処理を実行する。
+  [プロセスフロー] 5. 成功時は結果画面、CSV/PDF/APIレスポンス、またはバッチ結果を返す。失敗時はエラー内容を返し、更新が必要な処理では不整合が残らないように扱う。
+  [ビジネスロジック] - **Excel設計優先**: 仕様の目的、対象データ、出力項目、表示項目、業務上の条件は `excel_to_html/output` の設計書を正とする。
+  [ビジネスロジック] - **実装補完**: Excel設計に書かれていないURLエンドポイント、DBカラム、トランザクション、サービス分割、非同期処理は `../ec-cube-enterprise` の実装を正とする。
+  [ビジネスロジック] - **対象機能の要点**: 低価格帯カード価格変更を行うためのCSV出力を行えます。
+  [ビジネスロジック] - **実装確認値**: 管理画面のCSV出力機能。実装で確認できるURLは未特定のため断定しない。
+  [状態・データ更新] | 主データ | 管理画面の対象業務データを参照し、登録系では対象データと履歴を更新する。 |
+  [状態・データ更新] | 履歴・ログ | 必要に応じてCSV取込履歴、在庫履歴、ステータス履歴、API受信履歴、アプリケーションログを作成・更新する。 |
+  [例外処理] - **入力不備**: 必須項目、CSVヘッダ、CSV行、APIリクエスト本文、検索条件が不正な場合はエラーとして処理し、登録・更新対象を確定しない。
+  [例外処理] - **対象なし**: 検索条件や対象IDに該当するデータがない場合は、空の一覧、空CSV、またはエラーレスポンスとして扱う。扱いの細部は対象画面/API/バッチの実装に従う。
+  [例外処理] - **状態不整合**: 既に処理済み、キャンセル済み、承認不可、在庫不足など状態条件に合わない場合は処理対象外またはエラーとする。
+  [例外処理] - **外部連携失敗**: スマレジ等の外部連携で失敗した場合は、実装側の再連携・エラーログ・エラーメール・ステータス更新仕様を正とする。
+  [関連設計への接続点] - 画面項目、CSV列、PDFレイアウト、APIリクエスト/レスポンスの詳細は、参照元Excel設計書の該当シートを正とする。
+  [関連設計への接続点] <summary>Excel設計書からの抽出（原典・テスト網羅の根拠）</summary>
+  [関連設計への接続点] 処理概要（★はカスタマイズ項目）
+  [関連設計への接続点] 図形・テキストボックス内テキスト（1件）
+  …ほか 60 行
+
+## m06-11_admin_store_purchase_purchase_store_return_list_pdf_export.md（消えた候補 84行）
+- 現在の正本: `functions/ec-cube-enterprise/m06-11_admin_store_purchase_purchase_store_return_list_pdf_export.md`
+- 退避先: `functions/_archive/ec-cube-enterprise/m06-11_admin_store_purchase_purchase_store_return_list_pdf_export.md`
+
+消えた行（節ごと・先頭30行）:
+
+  [(節なし)] # m06-11_admin_store_purchase_purchase_store_return_list_pdf_export — 5分類外の退避
+  [(節なし)] 写像しなかった節の退避先。設計書本体から外した内容をそのまま保持する。
+  [(節なし)] 規約は .cursor/skills/output-exclusion-policy/SKILL.md を正本とする。 -->
+  [入出力仕様] | 入力 | 管理画面の検索条件、フォーム入力、CSVアップロード、または画面操作。 |
+  [入出力仕様] | 出力 | 画面表示、CSV/PDFダウンロード、登録完了/エラー表示。 |
+  [入出力仕様] | 副作用 | 対象データの登録・更新、CSV取込履歴、在庫履歴、ステータス履歴の記録。 |
+  [開始条件、終了条件] | 開始条件 | 管理画面にログイン済みの利用者が対象メニューまたは操作を実行する。 |
+  [開始条件、終了条件] | 終了条件 | 画面表示、ファイル出力、登録完了、またはエラー表示が完了する。 |
+  [判定条件] - Excel設計書に記載された対象条件、検索条件、CSV出力条件、登録条件を正とする。
+  [判定条件] - Excel設計書に未記載のURLエンドポイント、DBカラム、実処理順序は `../ec-cube-enterprise` の実装を正とする。
+  [判定条件] - 権限、ログイン状態、管理画面プレフィックスなどの共通判定は共通設計および実装側のセキュリティ設定に従う。
+  [プロセスフロー] 1. 利用者または外部システムが対象機能を開始する。
+  [プロセスフロー] 2. 入力値、検索条件、アップロードファイル、またはリクエスト本文を受け付ける。
+  [プロセスフロー] 3. Excel設計書に定義された対象データを取得し、実装側の検証・権限・状態条件を適用する。
+  [プロセスフロー] 4. 登録・更新・出力・連携のいずれかの主処理を実行する。
+  [プロセスフロー] 5. 成功時は結果画面、CSV/PDF/APIレスポンス、またはバッチ結果を返す。失敗時はエラー内容を返し、更新が必要な処理では不整合が残らないように扱う。
+  [ビジネスロジック] - **Excel設計優先**: 仕様の目的、対象データ、出力項目、表示項目、業務上の条件は `excel_to_html/output` の設計書を正とする。
+  [ビジネスロジック] - **実装補完**: Excel設計に書かれていないURLエンドポイント、DBカラム、トランザクション、サービス分割、非同期処理は `../ec-cube-enterprise` の実装を正とする。
+  [ビジネスロジック] - **対象機能の要点**: 棚戻し業務用のPDF出力が行えます。
+  [ビジネスロジック] - 実装確認値: 店頭買取（OTC）の戻しリストPDFは OtcBuyOrderRestockListService（PDF用ビュー組み立て、テンプレート @admin/Purchase/restock_list.twig）とルート admin_otcbuyorder_restock_list_pdf を実装確認値とする（grep用。ネット買取側の RestockListPdfSectionBuilder / BuyOrderRestockListService とは別系統）。
+  [状態・データ更新] | 主データ | 管理画面の対象業務データを参照し、登録系では対象データと履歴を更新する。 |
+  [状態・データ更新] | 履歴・ログ | 必要に応じてCSV取込履歴、在庫履歴、ステータス履歴、API受信履歴、アプリケーションログを作成・更新する。 |
+  [例外処理] - **入力不備**: 必須項目、CSVヘッダ、CSV行、APIリクエスト本文、検索条件が不正な場合はエラーとして処理し、登録・更新対象を確定しない。
+  [例外処理] - **対象なし**: 検索条件や対象IDに該当するデータがない場合は、空の一覧、空CSV、またはエラーレスポンスとして扱う。扱いの細部は対象画面/API/バッチの実装に従う。
+  [例外処理] - **状態不整合**: 既に処理済み、キャンセル済み、承認不可、在庫不足など状態条件に合わない場合は処理対象外またはエラーとする。
+  [例外処理] - **外部連携失敗**: スマレジ等の外部連携で失敗した場合は、実装側の再連携・エラーログ・エラーメール・ステータス更新仕様を正とする。
+  [関連設計への接続点] - 画面項目、CSV列、PDFレイアウト、APIリクエスト/レスポンスの詳細は、参照元Excel設計書の該当シートを正とする。
+  [関連設計への接続点] <summary>Excel設計書からの抽出（原典・テスト網羅の根拠）</summary>
+  [関連設計への接続点] 【新規】戻しリストPDF出力
+  [関連設計への接続点] 店頭買取管理機能 基本設計
+  …ほか 54 行
+
+## m04-13_admin_stock_stock_split_join_register_edit.md（消えた候補 70行）
+- 現在の正本: `functions/ec-cube-enterprise/m04-13_admin_stock_stock_split_join_register_edit.md`
+- 退避先: `functions/_archive/ec-cube-enterprise/m04-13_admin_stock_stock_split_join_register_edit.md`
+
+消えた行（節ごと・先頭30行）:
+
+  [(節なし)] # m04-13_admin_stock_stock_split_join_register_edit — 5分類外の退避
+  [(節なし)] 写像しなかった節の退避先。設計書本体から外した内容をそのまま保持する。
+  [(節なし)] 規約は .cursor/skills/output-exclusion-policy/SKILL.md を正本とする。 -->
+  [ステータス区分（`MtbStockSplitJoinStatus`）] | ID | 定数 | 名称 | 主な用途 |
+  [ステータス区分（`MtbStockSplitJoinStatus`）] | 1 | `NEW` | 新規登録 | 分割登録直後／結合登録直後。分割先・結合元はSessionで一時保持。 |
+  [ステータス区分（`MtbStockSplitJoinStatus`）] | 2 | `JOIN_SOURCE_REGISTERED` | 結合元登録 | 結合のみ。結合元明細をDB確定し在庫減算済み。欠品入力可。 |
+  [ステータス区分（`MtbStockSplitJoinStatus`）] | 3 | `SPLIT_APPROVAL_WAITING` | 分割承認待ち | 分割の承認申請後。 |
+  [ステータス区分（`MtbStockSplitJoinStatus`）] | 4 | `JOIN_APPROVAL_WAITING` | 結合承認待ち | 結合の承認申請後。 |
+  [ステータス区分（`MtbStockSplitJoinStatus`）] | 5 | `RECEIPT_COMPLETED` | 入庫済み | 承認完了（分割先／結合先へ加算済み）。 |
+  [ステータス区分（`MtbStockSplitJoinStatus`）] | 6 | `REJECTED` | 却下 | 承認却下（分割は分割元へ戻し済み）。 |
+  [分割 新規登録（`StockSplitNewType` / `admin_stock_split_register`）] | 項目 | フォームキー／パラメータ | 必須 | 検証 |
+  [分割 新規登録（`StockSplitNewType` / `admin_stock_split_register`）] | 分割メモ | `admin_stock_split_new[split_join_memo]`（TextareaType） | 任意 | — |
+  [結合 新規登録（`StockJoinNewType` / `admin_stock_join_register`）] | 項目 | フォームキー／パラメータ | 必須 | 検証 |
+  [承認・却下（`StockSplitApprovalSubmitAction` ほか）] | 項目 | パラメータ | 検証 |
+  [承認・却下（`StockSplitApprovalSubmitAction` ほか）] | 仕入価格（結合承認） | `purchase_price` | 数字以外を除去。結合先の総原価加算に使用。 |
+  [承認・却下（`StockSplitApprovalSubmitAction` ほか）] | ステータス | — | 分割は `SPLIT_APPROVAL_WAITING`、結合は `JOIN_APPROVAL_WAITING` 以外なら不整合エラー。 |
+  [1. 分割 登録（`StockSplitRegisterAction`）] 基本設計4-4の処理順（在庫減算→在庫変動履歴→ステータス履歴→在庫分割情報）に対応。実装は単一トランザクション（`wrapInTransaction`）で分割元 `ProductStock` を `PESSIMISTIC_WRITE` ロック・`refresh` 後に以下を実行する。
+  [1. 分割 登録（`StockSplitRegisterAction`）] 2. **①在庫減算**: 新在庫 = `max(0, 現在庫 - 分割数)`、新総原価 = 現総原価 - 出庫総原価、原価単価を再計算して `ProductStock` を更新。
+  [1. 分割 登録（`StockSplitRegisterAction`）] 4. **②在庫変動履歴登録**: `SPLIT_OUTBOUND` 種別、履歴ソース `STOCK_SPLIT_EDIT`、変動数 `-分割数`、減算前後の在庫・原価を記録。
+  [2. 分割 編集～承認申請（`StockSplitApplyApprovalAction`）] 編集画面で分割先（`ProductStock`）と各数量をSession（キー `stock_split_edit_destinations_{id}`）に保持。承認申請で以下を実行する。
+  [2. 分割 編集～承認申請（`StockSplitApplyApprovalAction`）] 3. ステータスを「分割承認待ち」へ変更、`move_to_approval_at`／`move_to_approval_member` を記録、ステータス履歴を追加。
+  [2. 分割 編集～承認申請（`StockSplitApplyApprovalAction`）] 4. 承認リスト `DtbStockApprovalList`（未承認）を1行作成（対象在庫数=分割先件数+1、変動数=分割先合計、移動総原価=分割元原価単価×分割数）。
+  [3. 分割 承認（`StockSplitApprovalApproveAction`）／却下（`StockSplitApprovalRejectAction`）] - **却下**: ステータス `SPLIT_APPROVAL_WAITING` 前提。分割元 `ProductStock` をロックし、分割登録時に減算した在庫（`+分割数`）と原価（原価単価×分割数）を戻し、`SPLIT_REJECT` 履歴を記録。ステータスを「却下」、却下メモを保存、承認リストを却下に更新。
+  [5. 結合 編集～欠品入力遷移（`StockJoinMoveToShortageEntryAction`）] 編集画面で結合元と数量をSession（キー `stock_join_edit_sources_{id}`）に保持。欠品入力へ遷移する操作で、NEWステータスなら単一トランザクションで以下を実行する。
+  [5. 結合 編集～欠品入力遷移（`StockJoinMoveToShortageEntryAction`）] 2. 各結合元 `ProductStock` をロック・`refresh`。数量は `min(入力数量, 在庫数)` に丸め、0以下はスキップ。
+  [5. 結合 編集～欠品入力遷移（`StockJoinMoveToShortageEntryAction`）] 3. `DtbStockSplitJoinDetail` を作成（基準価格・原価単価・総原価・在庫スナップショット・結合数量）。
+  [5. 結合 編集～欠品入力遷移（`StockJoinMoveToShortageEntryAction`）] 4. 結合元在庫を `-数量`、総原価減算、原価単価再計算し `JOIN_OUTBOUND` 履歴を記録。
+  [5. 結合 編集～欠品入力遷移（`StockJoinMoveToShortageEntryAction`）] 5. ヘッダ（`DtbStockSplitJoin`）の派生原価を `StockJoinDetailDerivedHeaderCostApplier` で再計算。
+  [5. 結合 編集～欠品入力遷移（`StockJoinMoveToShortageEntryAction`）] 6. ステータスを「結合元登録」へ変更しステータス履歴を追加。
+  [6. 結合 欠品入力～承認申請（`StockJoinShortageEntryAction` / `StockJoinApplyApprovalAction`）] - **欠品加算[`JOIN_SHORTAGE_ADD`]**: `JOIN_OUTBOUND` で出庫した全量を結合元へ戻す。
+  …ほか 40 行
+
+## m08-11_admin_customer_customer_analysis_tag_master.md（消えた候補 69行）
+- 現在の正本: `functions/ec-cube-enterprise/m08-11_admin_customer_customer_analysis_tag_master.md`
+- 退避先: `functions/_archive/ec-cube-enterprise/m08-11_admin_customer_customer_analysis_tag_master.md`
+
+消えた行（節ごと・先頭30行）:
+
+  [(節なし)] # m08-11_admin_customer_customer_analysis_tag_master — 5分類外の退避
+  [(節なし)] 写像しなかった節の退避先。設計書本体から外した内容をそのまま保持する。
+  [(節なし)] 規約は .cursor/skills/output-exclusion-policy/SKILL.md を正本とする。 -->
+  [入出力仕様] | 入力 | 管理画面の検索条件、フォーム入力、CSVアップロード、または画面操作。 |
+  [入出力仕様] | 出力 | 画面表示、CSV/PDFダウンロード、登録完了/エラー表示。 |
+  [入出力仕様] | 副作用 | 対象データの登録・更新、CSV取込履歴、在庫履歴、ステータス履歴の記録。 |
+  [開始条件、終了条件] | 開始条件 | 管理画面にログイン済みの利用者が対象メニューまたは操作を実行する。 |
+  [開始条件、終了条件] | 終了条件 | 画面表示、ファイル出力、登録完了、またはエラー表示が完了する。 |
+  [判定条件] - Excel設計書に記載された対象条件、検索条件、CSV出力条件、登録条件を正とする。
+  [判定条件] - Excel設計書に未記載のURLエンドポイント、DBカラム、実処理順序は `../ec-cube-enterprise` の実装を正とする。
+  [判定条件] - 権限、ログイン状態、管理画面プレフィックスなどの共通判定は共通設計および実装側のセキュリティ設定に従う。
+  [プロセスフロー] 1. 利用者または外部システムが対象機能を開始する。
+  [プロセスフロー] 2. 入力値、検索条件、アップロードファイル、またはリクエスト本文を受け付ける。
+  [プロセスフロー] 3. Excel設計書に定義された対象データを取得し、実装側の検証・権限・状態条件を適用する。
+  [プロセスフロー] 4. 登録・更新・出力・連携のいずれかの主処理を実行する。
+  [プロセスフロー] 5. 成功時は結果画面、CSV/PDF/APIレスポンス、またはバッチ結果を返す。失敗時はエラー内容を返し、更新が必要な処理では不整合が残らないように扱う。
+  [ビジネスロジック] - **Excel設計優先**: 仕様の目的、対象データ、出力項目、表示項目、業務上の条件は `excel_to_html/output` の設計書を正とする。
+  [ビジネスロジック] - **実装補完**: Excel設計に書かれていないURLエンドポイント、DBカラム、トランザクション、サービス分割、非同期処理は `../ec-cube-enterprise` の実装を正とする。
+  [ビジネスロジック] - **対象機能の要点**: 会員情報に紐づける顧客分析タグの登録・編集・削除が行える
+  [状態・データ更新] | 主データ | 管理画面の対象業務データを参照し、登録系では対象データと履歴を更新する。 |
+  [状態・データ更新] | 履歴・ログ | 必要に応じてCSV取込履歴、在庫履歴、ステータス履歴、API受信履歴、アプリケーションログを作成・更新する。 |
+  [例外処理] - **入力不備**: 必須項目、CSVヘッダ、CSV行、APIリクエスト本文、検索条件が不正な場合はエラーとして処理し、登録・更新対象を確定しない。
+  [例外処理] - **対象なし**: 検索条件や対象IDに該当するデータがない場合は、空の一覧、空CSV、またはエラーレスポンスとして扱う。扱いの細部は対象画面/API/バッチの実装に従う。
+  [例外処理] - **状態不整合**: 既に処理済み、キャンセル済み、承認不可、在庫不足など状態条件に合わない場合は処理対象外またはエラーとする。
+  [例外処理] - **外部連携失敗**: スマレジ等の外部連携で失敗した場合は、実装側の再連携・エラーログ・エラーメール・ステータス更新仕様を正とする。
+  [関連設計への接続点] - 画面項目、CSV列、PDFレイアウト、APIリクエスト/レスポンスの詳細は、参照元Excel設計書の該当シートを正とする。
+  [関連設計への接続点] <summary>Excel設計書からの抽出（原典・テスト網羅の根拠）</summary>
+  [関連設計への接続点] 顧客分析タグマスターの登録、一覧表示
+  [関連設計への接続点] 処理概要（★はカスタマイズ項目）
+  [関連設計への接続点] 図形・テキストボックス内テキスト（13件）
+  …ほか 39 行
+
+## b01-03_batch_data_stock_warning.md（消えた候補 45行）
+- 現在の正本: `functions/ec-cube-enterprise/b01-03_batch_data_stock_warning.md`
+- 退避先: `functions/_archive/ec-cube-enterprise/b01-03_batch_data_stock_warning.md`
+
+消えた行（節ごと・先頭30行）:
+
+  [(節なし)] # b01-03_batch_data_stock_warning — 5分類外の退避
+  [(節なし)] 写像しなかった節の退避先。設計書本体から外した内容をそのまま保持する。
+  [(節なし)] 規約は .cursor/skills/output-exclusion-policy/SKILL.md を正本とする。 -->
+  [入出力仕様] | 入力 | バッチ起動条件、設定値、DB上の対象データ。 |
+  [入出力仕様] | 出力 | CSVファイル、DB更新結果、ログ。 |
+  [入出力仕様] | 副作用 | 対象データの更新、CSV出力、処理ログの記録。 |
+  [開始条件、終了条件] | 開始条件 | バッチ起動時刻または手動起動により処理が開始される。 |
+  [開始条件、終了条件] | 終了条件 | 対象データの処理と出力、ログ記録が完了する。 |
+  [判定条件] - Excel設計書に記載された対象条件、検索条件、CSV出力条件、登録条件を正とする。
+  [判定条件] - Excel設計書に未記載のURLエンドポイント、DBカラム、実処理順序は `../ec-cube-enterprise` の実装を正とする。
+  [判定条件] - 権限、ログイン状態、管理画面プレフィックスなどの共通判定は共通設計および実装側のセキュリティ設定に従う。
+  [プロセスフロー] 1. 利用者または外部システムが対象機能を開始する。
+  [プロセスフロー] 2. 入力値、検索条件、アップロードファイル、またはリクエスト本文を受け付ける。
+  [プロセスフロー] 3. Excel設計書に定義された対象データを取得し、実装側の検証・権限・状態条件を適用する。
+  [プロセスフロー] 4. 登録・更新・出力・連携のいずれかの主処理を実行する。
+  [プロセスフロー] 5. 成功時は結果画面、CSV/PDF/APIレスポンス、またはバッチ結果を返す。失敗時はエラー内容を返し、更新が必要な処理では不整合が残らないように扱う。
+  [ビジネスロジック] - **Excel設計優先**: 仕様の目的、対象データ、出力項目、表示項目、業務上の条件は `excel_to_html/output` の設計書を正とする。
+  [ビジネスロジック] - **実装補完**: Excel設計に書かれていないURLエンドポイント、DBカラム、トランザクション、サービス分割、非同期処理は `../ec-cube-enterprise` の実装を正とする。
+  [ビジネスロジック] - **対象機能の要点**: 在庫数が指定した閾値以下の在庫情報を取得しCSVファイルに出力する
+  [ビジネスロジック] - **実装確認値**: バッチ起動コマンドは実装未確認。Excel設計と在庫CSV実装を正とする。
+  [状態・データ更新] | 主データ | バッチ対象の在庫・買取・履歴データを参照し、必要に応じて更新する。 |
+  [状態・データ更新] | 履歴・ログ | 必要に応じてCSV取込履歴、在庫履歴、ステータス履歴、API受信履歴、アプリケーションログを作成・更新する。 |
+  [例外処理] - **入力不備**: 必須項目、CSVヘッダ、CSV行、APIリクエスト本文、検索条件が不正な場合はエラーとして処理し、登録・更新対象を確定しない。
+  [例外処理] - **対象なし**: 検索条件や対象IDに該当するデータがない場合は、空の一覧、空CSV、またはエラーレスポンスとして扱う。扱いの細部は対象画面/API/バッチの実装に従う。
+  [例外処理] - **状態不整合**: 既に処理済み、キャンセル済み、承認不可、在庫不足など状態条件に合わない場合は処理対象外またはエラーとする。
+  [例外処理] - **外部連携失敗**: スマレジ等の外部連携で失敗した場合は、実装側の再連携・エラーログ・エラーメール・ステータス更新仕様を正とする。
+  [関連設計への接続点] - 画面項目、CSV列、PDFレイアウト、APIリクエスト/レスポンスの詳細は、参照元Excel設計書の該当シートを正とする。
+  [関連設計への接続点] <summary>Excel設計書からの抽出（原典・テスト網羅の根拠）</summary>
+  [関連設計への接続点] 規格単位でバックヤードに在庫有、通販在庫無の商品を取得しCSV出力
+  [関連設計への接続点] 図形・テキストボックス内テキスト（1件）
+  …ほか 15 行
+
+## m14-05_admin_card_card_csv_import.md（消えた候補 39行）
+- 現在の正本: `functions/pf-eccube3/m14-05_admin_card_card_csv_import.md`
+- 退避先: `functions/_archive/pf-eccube3/m14-05_admin_card_card_csv_import.md`
+
+消えた行（節ごと・先頭30行）:
+
+  [(節なし)] # m14-05_admin_card_card_csv_import — 5分類外の退避
+  [(節なし)] 写像しなかった節の退避先。設計書本体から外した内容をそのまま保持する。
+  [(節なし)] 規約は .cursor/skills/output-exclusion-policy/SKILL.md を正本とする。 -->
+  [CSV 列（論理キー）一覧] 1 行目は次のキーを、この順で並べる。表の説明欄は画面の日本語ラベルに相当する。
+
+exec
+/bin/bash -lc "sed -n '241,500p' design_impl_drift_report/regen/removal_audit/packet.md" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+  [CSV 列（論理キー）一覧] | 論理キー | 画面説明（概要） |
+  [CSV 列（論理キー）一覧] | name_jp | カード名(日本語)（`＋`→`/`） |
+  [CSV 列（論理キー）一覧] | name_en | カード名(英語)（`//`→`/`） |
+  [CSV 列（論理キー）一覧] | arena_format_name_jp | アリーナカード名(日本語) |
+  [CSV 列（論理キー）一覧] | arena_format_name_en | アリーナカード名(英語) |
+  [CSV 列（論理キー）一覧] | text_jp | ルールテキスト(日本語) |
+  [CSV 列（論理キー）一覧] | text_en | ルールテキスト(英語) |
+  [CSV 列（論理キー）一覧] | mana_cost | マナコスト |
+  [CSV 列（論理キー）一覧] | cmc | 点数で見たマナコスト |
+  [CSV 列（論理キー）一覧] | power | パワー |
+  [CSV 列（論理キー）一覧] | toughness | タフネス |
+  [CSV 列（論理キー）一覧] | loyalty | 忠誠度 |
+  [CSV 列（論理キー）一覧] | color | カラー（多値） |
+  [CSV 列（論理キー）一覧] | cardtype | カードタイプ（多値） |
+  [CSV 列（論理キー）一覧] | subtype | サブタイプ（多値） |
+  [CSV 列（論理キー）一覧] | specialtype | 特殊タイプ（多値） |
+  [CSV 列（論理キー）一覧] | keyword_ability | キーワード能力（現行取込では未使用） |
+  [CSV 列（論理キー）一覧] | format | 使用可能フォーマット |
+  [CSV 列（論理キー）一覧] | set | セット |
+  [CSV 列（論理キー）一覧] | rarity | レアリティ |
+  [CSV 列（論理キー）一覧] | illustrator | イラストレーター |
+  [CSV 列（論理キー）一覧] | layout | レイアウト |
+  [CSV 列（論理キー）一覧] | flavor_jp | フレーバーテキスト(日本語) |
+  [CSV 列（論理キー）一覧] | flavor_en | フレーバーテキスト(英語) |
+  [CSV 列（論理キー）一覧] | card_no | カードNo |
+  [CSV 列（論理キー）一覧] | promotion | プロモーション名 |
+  …ほか 9 行
+
+## m05-07_admin_order_order_labels_csv_export.md（消えた候補 36行）
+- 現在の正本: `functions/pf-eccube3/m05-07_admin_order_order_labels_csv_export.md`
+- 退避先: `functions/_archive/pf-eccube3/m05-07_admin_order_order_labels_csv_export.md`
+
+消えた行（節ごと・先頭30行）:
+
+  [(節なし)] # m05-07_admin_order_order_labels_csv_export — 5分類外の退避
+  [(節なし)] 写像しなかった節の退避先。設計書本体から外した内容をそのまま保持する。
+  [(節なし)] 規約は .cursor/skills/output-exclusion-policy/SKILL.md を正本とする。 -->
+  [データ取得クエリの要点] - 受注を起点に、都道府県マスタ・会員・受注明細・商品・出荷・配送方法を結合する。
+  [データ取得クエリの要点] - 出荷の主キーが `ids` に含まれる行に限定する。
+  [データ取得クエリの要点] - 受注 ID でグループ化するため、同一受注に複数の出荷が `ids` に含まれる場合、SQL 上は 1 行に畳み込まれる。データ行の配送先などは受注に紐づく出荷コレクションの先頭要素を参照する実装であり、どの出荷 ID に対応する行かと一致しない場合がある（実装を確認値とする）。
+  [データ取得クエリの要点] - 受注明細と商品の内部結合のため、該当する明細が存在しない受注は結果に現れない。
+  [出力列と値の対応（業務ルール）] ヘッダ行の並びは送り状CSV用エクスポータ内の固定配列どおりである。データ行は取得処理が同じ順序で `row` に値を追加する。
+  [出力列と値の対応（業務ルール）] | 列名（ヘッダ） | 内容 |
+  [出力列と値の対応（業務ルール）] | 注文番号 | 受注の注文番号。 |
+  [出力列と値の対応（業務ルール）] | 注文金額合計 | 受注合計。 |
+  [出力列と値の対応（業務ルール）] | 注文者氏名〜注文者電話番号 | 受注の注文者情報。電話は `tel01`〜`tel03` の連結。部署列は空文字固定。 |
+  [出力列と値の対応（業務ルール）] | 贈り主氏名〜贈り主電話番号 | 注文者と同一の文字列を繰り返し立てる。部署列は空文字固定。 |
+  [出力列と値の対応（業務ルール）] | 注文コメント | 受注メッセージ。 |
+  [出力列と値の対応（業務ルール）] | 注文備考(社内用) | 受注備考。 |
+  [出力列と値の対応（業務ルール）] | 備考(内部用) | 空文字固定。 |
+  [出力列と値の対応（業務ルール）] | 注文確定日〜配送希望時間帯 | 注文日時、確定日時、受注に紐づく出荷日時、配送日・時間帯。日時は `Y/m/d H:i:s`、無ければ空。 |
+  [出力列と値の対応（業務ルール）] | 商品金額合計 | 受注小計。 |
+  [出力列と値の対応（業務ルール）] | 送料・送料(税抜) | いずれも受注の送料合計と同一値。 |
+  [出力列と値の対応（業務ルール）] | 手数料・手数料(税抜) | いずれも受注の手数料と同一値。 |
+  [出力列と値の対応（業務ルール）] | のし・ラッピング手数料、のし・ラッピング手数料(税抜)、送料・手数料税率 | 空文字固定。 |
+  [出力列と値の対応（業務ルール）] | 配送先番号 | 数値リテラル `1` 固定。 |
+  [出力列と値の対応（業務ルール）] | 荷物問い合わせURL | 空文字固定。 |
+  [出力列と値の対応（業務ルール）] | 送り状No. | 空文字固定（追跡番号列はヘッダに存在するが値は埋めない）。 |
+  [出力列と値の対応（業務ルール）] | 配送先氏名〜配送先電話番号 | 出荷のお届け先。部署名は空文字固定。電話は連結。 |
+  [出力列と値の対応（業務ルール）] | 郵便種別 | 配送方法マスタの主キーがリポジトリ定義に存在するときだけマッピング値を立てる。例として ID `3` は `0`、ID `4` は `8`。それ以外は空。 |
+  [出力列と値の対応（業務ルール）] | 発送方法 | 配送方法名。 |
+  [出力列と値の対応（業務ルール）] | 発送先国コード | 出荷の国があれば 2 文字の国コード、無ければ空。 |
+  [出力列と値の対応（業務ルール）] | 商品総重量 | クエリで集計した重量。 |
+  [出力列と値の対応（業務ルール）] | 発送方法コード | 配送方法 ID がリポジトリの別マップに存在するときコード文字列、それ以外は空。例として ID `8` は `111`、`9` は `521`、`11` は `321`。 |
+  …ほか 6 行
+
+## m13-13_admin_event_event_entry_csv_import.md（消えた候補 31行）
+- 現在の正本: `functions/pf-eccube3/m13-13_admin_event_event_entry_csv_import.md`
+- 退避先: `functions/_archive/pf-eccube3/m13-13_admin_event_event_entry_csv_import.md`
+
+消えた行（節ごと・先頭30行）:
+
+  [(節なし)] # m13-13_admin_event_event_entry_csv_import — 5分類外の退避
+  [(節なし)] 写像しなかった節の退避先。設計書本体から外した内容をそのまま保持する。
+  [(節なし)] 規約は .cursor/skills/output-exclusion-policy/SKILL.md を正本とする。 -->
+  [取込フォーマット] | ヘッダ行 | 1行目に列見出しを持つ。雛形の見出し名と一致する必要がある。不一致はフォーマットエラー。 |
+  [取込フォーマット] | 区切り・囲み | 拡張子tsvはタブ区切り、それ以外は設定の区切り文字（確認値カンマ）。囲み文字は設定値（確認値ダブルクォート）。 |
+  [取込フォーマット] | 文字コード | アップロード後にUTF-8へ変換して取り込む（Windows環境はSJIS-win考慮）。BOM・ゼロ幅スペースは除去する。 |
+  [取込フォーマット] | 行数上限 | 5000行以上は登録不可（上限超過エラー）。 |
+  [取込フォーマット] | 登録単位 | 1行＝イベント1件。開始時間が入っている行はイベント日程も同時に登録する。 |
+  [列（論理名と必須・選択肢の要点）] | 列（論理名） | 必須／任意 | 値の要点 |
+  [列（論理名と必須・選択肢の要点）] | イベント名（日）・イベント名（英） | 必須 | 文字列。 |
+  [列（論理名と必須・選択肢の要点）] | 店舗・会場 | 必須 | 日本語名でマスタを引く。 |
+  [列（論理名と必須・選択肢の要点）] | フォーマット | 必須 | 日本語名でマスタを引く。複数指定はカンマ区切り。 |
+  [列（論理名と必須・選択肢の要点）] | ルール適用度・公開状態 | 必須 | 名称でマスタを引く。 |
+  [列（論理名と必須・選択肢の要点）] | バナーURL（日）・バナーURL（英） | 任意 | URL文字列。 |
+  [列（論理名と必須・選択肢の要点）] | 定員・チーム人数 | 必須 | 数値。 |
+  [列（論理名と必須・選択肢の要点）] | 支払方法（クレジットカード支払い） | 任意 | 「あり」でクレジット支払を有効化、空・なしは無効。 |
+  [列（論理名と必須・選択肢の要点）] | 参加費 | 必須 | 半角数値。 |
+  [列（論理名と必須・選択肢の要点）] | 賞品（日）・賞品（英）・備考（日）・備考（英） | 任意 | 文字列。 |
+  [列（論理名と必須・選択肢の要点）] | 開始時間 | 任意（日程登録の起点） | `YYYY-MM-DD HH:MM`。値があるとイベント日程を登録する。 |
+  [列（論理名と必須・選択肢の要点）] | 受付・受付時間From・受付時間To | 受付ありの場合From・Toが必須 | 受付は「あり」で有効。時刻は`HH:MM`。 |
+  [列（論理名と必須・選択肢の要点）] | デッキ登録・デッキ登録締切 | 任意 | デッキ登録は「あり」で有効。締切は`YYYY-MM-DD HH:MM`。 |
+  [列（論理名と必須・選択肢の要点）] | オンライン受付・オンライン受付時間From・オンライン受付時間To | オンライン受付ありの場合From・Toが必須 | 受付は「あり」で有効。From・Toは`YYYY-MM-DD HH:MM`。 |
+  [列（論理名と必須・選択肢の要点）] | 定員_日程・参加費_日程 | 任意 | 半角数値。 |
+  [列（論理名と必須・選択肢の要点）] | 公開状態_日程 | 任意 | 名称でマスタを引く。 |
+  [列（論理名と必須・選択肢の要点）] | 賞品_日程（日）・賞品_日程（英） | 任意 | 文字列。 |
+  [列（論理名と必須・選択肢の要点）] 行検証として、受付ありなら受付時間From・To、オンライン受付ありならオンライン受付時間From・Toを必須とする。
+  [結果報告] | 成功時 | 完了メッセージを表示し、取込件数を情報ログへ記録し、アップロード画面へリダイレクトする。DBはコミットする。 |
+  [結果報告] | 取込エラー時 | エラーメッセージ一覧を同画面のアップロード欄付近に表示する。DBはロールバックする。 |
+  [結果報告] | 前提検証エラー時 | ヘッダ形式・データ無しのエラーを表示し、取込を行わない。 |
+  [結果報告] | フォーム検証エラー時 | ファイル未選択・サイズ超過などのエラーを表示し同画面を再描画する。 |
+  …ほか 1 行
+
+## b06-01_batch_purchase_purchase_auto_stock.md（消えた候補 27行）
+- 現在の正本: `functions/ec-cube-enterprise/b06-01_batch_purchase_purchase_auto_stock.md`
+- 退避先: `functions/_archive/ec-cube-enterprise/b06-01_batch_purchase_purchase_auto_stock.md`
+
+消えた行（節ごと・先頭30行）:
+
+  [(節なし)] # b06-01_batch_purchase_purchase_auto_stock — 5分類外の退避
+  [(節なし)] 写像しなかった節の退避先。設計書本体から外した内容をそのまま保持する。
+  [(節なし)] 規約は .cursor/skills/output-exclusion-policy/SKILL.md を正本とする。 -->
+  [入出力仕様] | 入力 | バッチ起動条件、設定値、DB上の対象データ。 |
+  [入出力仕様] | 出力 | CSVファイル、DB更新結果、ログ。 |
+  [入出力仕様] | 副作用 | 対象データの更新、CSV出力、処理ログの記録。 |
+  [開始条件、終了条件] | 開始条件 | バッチ起動時刻または手動起動により処理が開始される。 |
+  [開始条件、終了条件] | 終了条件 | 対象データの処理と出力、ログ記録が完了する。 |
+  [判定条件] - Excel設計書に記載された対象条件、検索条件、CSV出力条件、登録条件を正とする。
+  [判定条件] - Excel設計書に未記載のURLエンドポイント、DBカラム、実処理順序は `../ec-cube-enterprise` の実装を正とする。
+  [判定条件] - 権限、ログイン状態、管理画面プレフィックスなどの共通判定は共通設計および実装側のセキュリティ設定に従う。
+  [プロセスフロー] 1. 利用者または外部システムが対象機能を開始する。
+  [プロセスフロー] 2. 入力値、検索条件、アップロードファイル、またはリクエスト本文を受け付ける。
+  [プロセスフロー] 3. Excel設計書に定義された対象データを取得し、実装側の検証・権限・状態条件を適用する。
+  [プロセスフロー] 4. 登録・更新・出力・連携のいずれかの主処理を実行する。
+  [プロセスフロー] 5. 成功時は結果画面、CSV/PDF/APIレスポンス、またはバッチ結果を返す。失敗時はエラー内容を返し、更新が必要な処理では不整合が残らないように扱う。
+  [ビジネスロジック] - **Excel設計優先**: 仕様の目的、対象データ、出力項目、表示項目、業務上の条件は `excel_to_html/output` の設計書を正とする。
+  [ビジネスロジック] - **実装補完**: Excel設計に書かれていないURLエンドポイント、DBカラム、トランザクション、サービス分割、非同期処理は `../ec-cube-enterprise` の実装を正とする。
+  [ビジネスロジック] - **対象機能の要点**: 買取成立した商品に対して入庫処理を行う
+  [ビジネスロジック] - **実装確認値**: BuyOrderAutoStockCommand / BatchAutoStockAction を実装確認値とする。
+  [状態・データ更新] | 主データ | バッチ対象の在庫・買取・履歴データを参照し、必要に応じて更新する。 |
+  [状態・データ更新] | 履歴・ログ | 必要に応じてCSV取込履歴、在庫履歴、ステータス履歴、API受信履歴、アプリケーションログを作成・更新する。 |
+  [例外処理] - **入力不備**: 必須項目、CSVヘッダ、CSV行、APIリクエスト本文、検索条件が不正な場合はエラーとして処理し、登録・更新対象を確定しない。
+  [例外処理] - **対象なし**: 検索条件や対象IDに該当するデータがない場合は、空の一覧、空CSV、またはエラーレスポンスとして扱う。扱いの細部は対象画面/API/バッチの実装に従う。
+  [例外処理] - **状態不整合**: 既に処理済み、キャンセル済み、承認不可、在庫不足など状態条件に合わない場合は処理対象外またはエラーとする。
+  [例外処理] - **外部連携失敗**: スマレジ等の外部連携で失敗した場合は、実装側の再連携・エラーログ・エラーメール・ステータス更新仕様を正とする。
+  [関連設計への接続点] - 画面項目、CSV列、PDFレイアウト、APIリクエスト/レスポンスの詳細は、参照元Excel設計書の該当シートを正とする。
+
+codex
+パケットには機械抽出の先頭行しか出ないため、10組のファイル本体を全文で確認します。特に、定型節に見えても固有の判定条件・状態遷移・表示文言が混じっていないかを重点的に追います。
+exec
+/bin/bash -lc 'for f in a01-01_api_stock_smaregi_stock_sync m03-43_admin_product_product_simple_low_price_csv_export m06-11_admin_store_purchase_purchase_store_return_list_pdf_export m04-13_admin_stock_stock_split_join_register_edit m08-11_admin_customer_customer_analysis_tag_master b01-03_batch_data_stock_warning b06-01_batch_purchase_purchase_auto_stock; do wc -l "functions/ec-cube-enterprise/$f.md" "functions/_archive/ec-cube-enterprise/$f.md"; done
+for f in m14-05_admin_card_card_csv_import m05-07_admin_order_order_labels_csv_export m13-13_admin_event_event_entry_csv_import; do wc -l "functions/pf-eccube3/$f.md" "functions/_archive/pf-eccube3/$f.md"; done' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 4ms:
+   93 functions/pf-eccube3/m13-13_admin_event_event_entry_csv_import.md
+  108 functions/_archive/pf-eccube3/m13-13_admin_event_event_entry_csv_import.md
+  201 total
+
+exec
+/bin/bash -lc 'for f in functions/ec-cube-enterprise/{a01-01_api_stock_smaregi_stock_sync,m03-43_admin_product_product_simple_low_price_csv_export,m06-11_admin_store_purchase_purchase_store_return_list_pdf_export,m04-13_admin_stock_stock_split_join_register_edit,m08-11_admin_customer_customer_analysis_tag_master,b01-03_batch_data_stock_warning,b06-01_batch_purchase_purchase_auto_stock}.md functions/pf-eccube3/{m14-05_admin_card_card_csv_import,m05-07_admin_order_order_labels_csv_export,m13-13_admin_event_event_entry_csv_import}.md; do echo "===== $f"; nl -ba "$f"; done' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+===== functions/ec-cube-enterprise/a01-01_api_stock_smaregi_stock_sync.md
+     1	# A01-01（スマレジ連携処理）
+===== functions/ec-cube-enterprise/m03-43_admin_product_product_simple_low_price_csv_export.md
+     1	# M03-43（低価格帯カード価格変更CSV出力）
+     2	
+     3	### フェーズ2対応（フェーズ1では実装しない）
+     4	
+     5	- Excel基本設計 0204「低価格帯カード価格変更CSV（出力・登録）」はフェーズ2対応。フェーズ1では実装しない（機能全体）。Excel原文: 「Ph2で対応」
+===== functions/ec-cube-enterprise/m06-11_admin_store_purchase_purchase_store_return_list_pdf_export.md
+     1	# M06-11（戻しリストPDF出力）
+===== functions/ec-cube-enterprise/m04-13_admin_stock_stock_split_join_register_edit.md
+     1	# 在庫管理 — 在庫分割結合登録/編集
+     2	
+     3	## 表示メッセージ
+     4	
+     5	| メッセージID | 表示位置 | 画面上の文言 | 表示条件 | 後続処理 |
+     6	| --- | --- | --- | --- | --- |
+     7	| M04-13-MSG-027 | 画面中央(ダイアログ) | 保存に失敗しました | 結合元の在庫区分を変更したときに通信エラーが起きたとき | エラーを表示して結合編集画面に留まる |
+     8	| M04-13-MSG-028 | 画面中央(ダイアログ) | ポップアップがブロックされているため、ピック表を開けませんでした。ブラウザの設定を確認してください。 | ピック表を開こうとしたときにブラウザにブロックされたとき | ピック表を開かず、欠品入力画面に留まる |
+     9	| M04-13-MSG-029 | 画面中央(ダイアログ) | ピック表用データの取得に失敗しました。 | ピック表の出力データを取得できなかったとき | エラーを表示して欠品入力画面に留まる |
+    10	| M04-13-MSG-030 | 画面中央(ダイアログ) | ピック表用データの取得に失敗しました。 | ピック表の出力データ取得中に通信エラーが起きたとき | エラーを表示して欠品入力画面に留まる |
+    11	| M04-13-MSG-031 | 画面中央(ダイアログ) | 保存に失敗しました | 分割先の数量を変更したときに通信エラーが起きたとき | エラーを表示して分割編集画面に留まる |
+    12	| M04-13-MSG-032 | 画面中央(ダイアログ) | 保存に失敗しました | 分割先の在庫区分を変更したときに通信エラーが起きたとき | エラーを表示して分割編集画面に留まる |
+    13	| M04-13-MSG-033 | 管理画面上部 | セッションがタイムアウトしました。もう一度やり直してください。 | 画面の操作時にセッションの有効期限が切れているとき | 結合新規登録画面に遷移する |
+    14	| M04-13-MSG-034 | 管理画面上部 | この店舗の在庫を編集する権限がありません。 | 編集権限のない店舗の在庫を登録しようとしたとき | 結合新規登録画面に遷移する |
+    15	| M04-13-MSG-035 | 管理画面上部 | admin.stock.split_join.login_required ／ 結合先在庫数に1以上を入力してください。 | 在庫結合を登録するとき、ログインしていない、または結合先在庫数が1未満の場合 | 在庫結合の新規登録画面に遷移する |
+    16	| M04-13-MSG-036 | 管理画面上部 | 在庫結合を開始しました。 | 在庫結合を登録したとき | 結合編集画面に遷移する |
+    17	| M04-13-MSG-037 | 管理画面上部 | セッションがタイムアウトしました。もう一度やり直してください。 | 画面の操作時にセッションの有効期限が切れているとき | 結合承認画面に遷移する |
+    18	| M04-13-MSG-038 | 管理画面上部 | 承認権限がありません。 | 承認操作をしたときに承認権限がないとき | 結合承認画面に遷移する |
+    19	| M04-13-MSG-039 | 管理画面上部 | 保存しました | 編集内容を保存したとき | 結合編集画面に遷移する |
+    20	| M04-13-MSG-040 | 管理画面上部 | セッションがタイムアウトしました。もう一度やり直してください。 | 画面の操作時にセッションの有効期限が切れているとき | 結合編集画面または結合新規登録画面に遷移する |
+    21	| M04-13-MSG-041 | 管理画面上部 | 保存に失敗しました | 存在しない結合データを保存しようとしたとき | 結合編集画面または結合新規登録画面に遷移する |
+    22	| M04-13-MSG-042 | 管理画面上部 | 保存に失敗しました | 対象の在庫と一致しない結合データを保存しようとしたとき | 結合編集画面に遷移する |
+    23	| M04-13-MSG-043 | 管理画面上部 | 保存に失敗しました | 新規登録以外の結合データを保存しようとしたとき | 結合編集画面に遷移する |
+    24	| M04-13-MSG-044 | 管理画面上部 | 指定の在庫が見つかりません。 | 結合先と同じ在庫、または存在しない在庫を結合元に指定したとき | 結合編集画面に遷移する |
+    25	| M04-13-MSG-045 | 管理画面上部 | admin.stock.split_join.destination_already_exists | 結合元を追加するとき、同じ在庫を既に結合元として追加している場合 | 在庫結合の編集画面に遷移する |
+    26	| M04-13-MSG-046 | 管理画面上部 | 結合元を追加しました。 | 結合元の在庫を追加したとき | 結合編集画面に遷移する |
+    27	| M04-13-MSG-047 | 管理画面上部 | セッションがタイムアウトしました。もう一度やり直してください。 | 画面の操作時にセッションの有効期限が切れているとき | 結合新規登録画面に遷移する |
+    28	| M04-13-MSG-048 | 管理画面上部 | 保存に失敗しました | 存在しない結合データを保存しようとしたとき | 結合新規登録画面に遷移する |
+    29	| M04-13-MSG-049 | 管理画面上部 | 保存に失敗しました | 対象の在庫と一致しない結合データを保存しようとしたとき | 結合新規登録画面に遷移する |
+    30	| M04-13-MSG-050 | 管理画面上部 | 保存に失敗しました | 新規登録以外の結合データを保存しようとしたとき | 結合編集画面に遷移する |
+    31	| M04-13-MSG-051 | 管理画面上部 | 結合元を削除しました。 | 結合元の在庫を削除したとき | 結合編集画面に遷移する |
+    32	| M04-13-MSG-052 | 管理画面上部 | セッションがタイムアウトしました。もう一度やり直してください。 | 画面の操作時にセッションの有効期限が切れているとき | 結合新規登録画面に遷移する |
+    33	| M04-13-MSG-053 | 管理画面上部 | この店舗の在庫を編集する権限がありません。 | 編集権限のない店舗の在庫を操作しようとしたとき | 結合新規登録画面に遷移する |
+    34	| M04-13-MSG-054 | 管理画面上部 | admin.stock.split_join.login_required ／ 承認申請には結合元を1件以上登録してください。 ／ 実際に結合する数量（結合数−欠品）の合計が0のため承認申請できません。 ／ 結合を開始してください。 ／ 結合元登録後に「欠品入力へ」を押してください。 | 欠品入力へ進むとき、ログインしていない、結合元が未登録、結合予定数量が0、結合が未開始、または結合元登録後以外の状態である場合 | 在庫結合の新規登録画面または編集画面に遷移する |
+    35	| M04-13-MSG-055 | 管理画面上部 | 欠品入力画面に移動しました。 | 欠品入力へ進んだとき | 欠品入力画面に遷移する |
+    36	| M04-13-MSG-056 | 管理画面上部 | セッションがタイムアウトしました。もう一度やり直してください。 | 画面の操作時にセッションの有効期限が切れているとき | 結合編集画面に遷移する |
+    37	| M04-13-MSG-057 | 管理画面上部 | 保存に失敗しました | メモの保存中にエラーが起きたとき | 結合編集画面に遷移する |
+    38	| M04-13-MSG-058 | 管理画面上部 | 保存しました | メモを保存したとき | 結合承認画面または結合編集画面に遷移する |
+    39	| M04-13-MSG-059 | 管理画面上部 | 欠品入力可能なステータスではありません。 | 結合元登録済み（JOIN_SOURCE_REGISTERED）以外のステータスの結合データで欠品入力をしようとしたとき | 結合編集画面に遷移する |
+    40	| M04-13-MSG-060 | 管理画面上部 | 保存しました | 欠品入力を保存したとき | 欠品入力画面に遷移する |
+    41	| M04-13-MSG-061 | 管理画面上部 | セッションがタイムアウトしました。もう一度やり直してください。 | 画面の操作時にセッションの有効期限が切れているとき | 欠品入力画面に遷移する |
+    42	| M04-13-MSG-062 | 管理画面上部 | 指定の在庫が見つかりません。 | 対象の結合データまたは在庫が見つからないとき | 在庫分割結合一覧画面に遷移する |
+    43	| M04-13-MSG-063 | 管理画面上部 | 承認通知先のメンバーを1人以上選択してください。 | 承認通知先を選ばずに承認申請したとき | 欠品入力画面に遷移する |
+    44	| M04-13-MSG-064 | 管理画面上部 | この店舗の在庫を編集する権限がありません。 | 編集権限のない店舗の在庫を操作しようとしたとき | 欠品入力画面に遷移する |
+    45	| M04-13-MSG-065 | 管理画面上部 | 保存に失敗しました | 承認申請の処理中にエラーが起きたとき | 欠品入力画面に遷移する |
+    46	| M04-13-MSG-066 | 管理画面上部 | 指定の在庫が見つかりません。 ／ 結合元登録済みのステータスのみ承認申請できます。 ／ 結合元を1件以上追加してください。 ／ 実際に結合する数量（結合数−欠品）の合計が0のため承認申請できません。 | 結合の承認申請時、対象の在庫結合が見つからない、結合元登録済み以外の状態、結合元が未登録、または欠品控除後の結合予定数量が0の場合 | 欠品入力画面に遷移する |
+    47	| M04-13-MSG-067 | 管理画面上部 | 承認申請しました。 | 承認申請したとき | 結合承認画面に遷移する |
+    48	| M04-13-MSG-068 | 管理画面上部 | 欠品入力可能なステータスではありません。 | 結合元登録が完了していない結合データで欠品CSVを出力しようとしたとき | 結合編集画面に遷移する |
+    49	| M04-13-MSG-069 | 管理画面上部 | 承認しました。 ／ 却下しました。 | 在庫結合の承認画面で承認または却下を実行した場合 | 在庫結合の編集画面に遷移する |
+    50	| M04-13-MSG-070 | 管理画面上部 | ピック表を出力できるステータスではありません。 | 結合元の登録が完了していない結合データでピック表を出力しようとしたとき | 欠品入力画面に遷移する |
+    51	| M04-13-MSG-071 | 管理画面上部 | ピック表を出力する権限がありません。 | ピック表を出力する権限のない店舗の在庫を操作したとき | 欠品入力画面に遷移する |
+    52	| M04-13-MSG-072 | 画面中央(ダイアログ) | この操作はあとから取り消すことができません。在庫結合計画を承認申請してよろしいですか？ | 在庫結合の欠品入力後、承認申請を確定しようとしたとき | 確認後に承認申請を実行し、処理結果を表示して在庫結合承認画面へ遷移する |
+    53	| M04-13-MSG-073 | 画面中央(ダイアログ) | この操作はあとから取り消すことができません。在庫結合を承認してよろしいですか？ | 在庫結合の承認を確定しようとしたとき | 確認後に承認処理を実行し、処理結果を表示して在庫結合編集画面へ遷移する |
+    54	| M04-13-MSG-074 | 画面中央(ダイアログ) | この操作はあとから取り消すことができません。在庫結合を却下してよろしいですか？ | 在庫結合の却下を確定しようとしたとき | 確認後に却下処理を実行し、処理結果を表示して在庫結合編集画面へ遷移する |
+    55	| M04-13-MSG-075 | 画面中央(ダイアログ) | 商品を削除（結合元対象外に）します、よろしいですか。 | 在庫結合編集で結合元商品を削除しようとしたとき | 確認後に結合元をSessionから削除し、成功通知を表示して在庫結合編集画面へ遷移する |
+    56	| M04-13-MSG-076 | 本文 | 結合元が登録されていません | 結合元明細が0件の結合画面を表示したとき | 結合元なしのまま同一画面を表示する |
+    57	| M04-13-MSG-077 | 入力項目付近 | 結合元の実結合数（各行の結合数から欠品を差し引いた値）の合計が0です。承認申請や欠品入力に進む前に、1以上になるよう入力してください。 | 結合数と欠品数から算出した実結合数合計が0になったとき | 警告を表示したまま結合編集画面に留まる |
+    58	| M04-13-MSG-078 | 画面中央(ダイアログ) | この操作はあとから取り消すことができません。在庫分割計画を承認申請してよろしいですか？ | 在庫分割編集画面で承認申請を実行するとき | 承認申請成功時は承認画面へ遷移し、失敗時は編集画面へ戻る |
+    59	| M04-13-MSG-079 | 画面中央(ダイアログ) | この操作はあとから取り消すことができません。在庫分割を承認してよろしいですか？ | 在庫分割承認画面で承認を実行するとき | 承認処理後は編集画面へ遷移し、処理失敗時は承認画面へ戻る |
+    60	| M04-13-MSG-080 | 画面中央(ダイアログ) | この操作はあとから取り消すことができません。在庫分割を却下してよろしいですか？ | 在庫分割承認画面で却下を実行するとき | 却下処理後は編集画面へ遷移し、処理失敗時は承認画面へ戻る |
+    61	| M04-13-MSG-081 | 画面中央(ダイアログ) | 商品を削除（分割先対象外に）します、よろしいですか。 | 新規状態の在庫分割編集で分割先商品を削除するとき | 分割先をSessionから削除し、成功フラッシュ後に編集画面へ遷移する |
+    62	| M04-13-MSG-082 | 結合編集画面の結合元CSV取込モーダル内 | 在庫結合ではありません。 | 結合元CSV置換取込時、対象の`DtbStockSplitJoin`が結合種別ではないとき | CSV取込を中止し、モーダルを開いたまま結合編集画面に留まる。 |
+    63	| M04-13-MSG-083 | 結合欠品入力画面の欠品CSV取込モーダル内 | 在庫結合ではありません。 | 欠品CSV取込時、対象の`DtbStockSplitJoin`が結合種別ではないとき | CSV取込を中止し、モーダルを開いたまま欠品入力画面に留まる。 |
+    64	| M04-13-MSG-084 | CSVアップロードモーダル内 | CSRFトークンが無効です。 | 編集用分割先CSVアップロードでCSRFトークンが無効 | アップロードを中止しモーダルに留まる |
+    65	| M04-13-MSG-085 | CSVアップロードモーダル内 | ファイルがアップロードされていません。 | 編集用分割先CSVアップロードでimport_fileが未送信 | アップロードを中止しモーダルに留まる |
+    66	| M04-13-MSG-086 | CSVアップロードモーダル内 | 在庫分割ではありません。 | 編集対象の在庫分割結合が分割状態ではない | アップロードを中止しモーダルに留まる |
+===== functions/ec-cube-enterprise/m08-11_admin_customer_customer_analysis_tag_master.md
+     1	# M08-11（顧客分析タグマスター）
+     2	
+     3	### フェーズ2対応（フェーズ1では実装しない）
+     4	
+     5	- Excel基本設計 0207「顧客分析タグマスタ」はフェーズ2対応。フェーズ1では実装しない（機能全体）。Excel原文: 「顧客分析タグマスターはPh2で対応するため、Ph1では実装しない」
+     6	
+===== functions/ec-cube-enterprise/b01-03_batch_data_stock_warning.md
+     1	# B01-03（在庫警告）
+     2	
+     3	### フェーズ2対応（フェーズ1では実装しない）
+     4	
+     5	- Excel基本設計 0402「在庫警戒バッチ」はフェーズ2対応。フェーズ1では実装しない（機能全体）。Excel原文: 「在庫警戒バッチはPh2で対応するため、Ph1では実装しない」
+     6	
+===== functions/ec-cube-enterprise/b06-01_batch_purchase_purchase_auto_stock.md
+     1	# B06-01（買取自動入庫バッチ）
+===== functions/pf-eccube3/m14-05_admin_card_card_csv_import.md
+     1	# カード管理 — カード CSV 登録（取込）
+     2	
+     3	## 処理フロー
+     4	
+     5	### 画面を表示する（GET `admin_card_csv`）
+     6	
+     7	1. 管理画面の認証・共通制約を通過する。
+     8	2. フォーム型 `admin_csv_import` で空のフォームを生成し、リクエストを取り込む。
+     9	3. 取込対象列の論理キーと説明の連想配列をテンプレートに渡し、Twig を描画する。
+    10	
+    11	### ファイルを取り込む（POST `m14-05_admin_card_card_csv_import`）
+    12	
+    13	1. 管理画面の認証・共通制約を通過する。
+    14	2. 取込処理用オブジェクトを生成し、同じく `admin_csv_import` のフォームを生成して `handleRequest` する。
+    15	3. 共有のフォーム検証ヘルプで CSRF を検証し、不合格ならアクセス拒否（HTTP 403）として扱われ得る。検証エラー時はエラーメッセージをフラッシュに積み、`admin_card_csv` へリダイレクトする応答を組み立てるが、`import` 側がこの戻り値で処理を打ち切るかは呼び出し元の実装次第である（実装を確認値とする）。
+    16	4. フォームからアップロードファイルを取得する。
+    17	5. 情報ログ「カードCSV登録開始」を出す。
+    18	6. ファイルを一時ディレクトリ（`csv_temp_realdir`）に保存し、内容を読み込んで文字コード変換・改行正規化・BOM・ゼロ幅文字の除去を行う。拡張子が `tsv` なら区切りはタブ、そうでなければ `csv_import_delimiter` を使い、ヘッダ行を 0 行目とする `CsvImportService` を構築する。失敗時は `false` となり、その場合はリダイレクトで GET 画面へ戻る。
+    19	7. 想定キー一覧とファイルのヘッダ配列を比較する。比較から除外する論理キーは `old_product_id`、`old_en_product_id`、`card_detail_id` である。一致しない場合は翻訳キー `admin.csv.error.format.header` をメッセージとする例外を投げる（翻訳は例外生成時点では行わない）。
+    20	8. ヘッダ列数を基準に、データが 1 行以上あるか、各行の列数がヘッダと一致するかを後続のループで検証する。データ 0 行は `admin.csv.error.data.empty`。
+    21	9. ORM の SQL ロガーを無効にし、トランザクションを開始する。
+    22	10. 各行について、必須列（後述）を検証し、英語カード名の `//` を `/` に置換した文字列で既存カードを検索する。無ければ新規カードとして生成する。
+    23	11. 行の値に応じてカード共通項目・タイプ・色・フォーマット・詳細・画像等を更新し、都度 `flush` する。100 行ごとに ORM キャッシュを解放する。
+    24	12. 全行処理後に再度キャッシュ解放を行い、サービス内で `commit` を呼ぶ。コントローラでも `commit` を呼ぶ。
+    25	13. 成功時、情報ログ「カードCSV登録完了」とフラッシュ成功キー `admin.register.complete` を積む。
+    26	14. 更新対象になったカード ID の配列（重複排除後）を引数に、支店更新通知サービスを呼ぶ。通信失敗時はエラーテーブル登録とログに留まり、取込自体の成功フラッシュは打ち消さない。
+    27	15. 一時ファイルを削除してから `admin_card_csv` へリダイレクトする。
+    28	
+    29	### 取込中に検証例外または実行時例外が出たとき
+    30	
+    31	1. トランザクションを `rollback` する。
+    32	2. 情報ログに例外メッセージを残す。
+    33	3. 例外メッセージをそのまま管理画面エラーフラッシュに積む（多くの経路では事前に `trans` 済みの文言が入る）。
+    34	4. 一時ファイル削除を試み、`admin_card_csv` へリダイレクトする。
+    35	
+    36	---
+    37	
+    38	### カード CSV 取込時の判定順序
+    39	
+    40	| 順序 | 判定 | 結果 |
+    41	|------|------|------|
+    42	| 1 | CSRF・フォーム・ファイル必須・サイズ・MIME | 不合格ならエラー扱いでアップロード画面へ戻すか、HTTP 403。 |
+    43	| 2 | 一時保存と `CsvImportService` 構築 | 失敗時はリダイレクトのみ（追加フラッシュはこの分岐では積まない）。 |
+    44	| 3 | ヘッダの論理キー列（除外列適用後）が想定と完全一致 | 違反時は `admin.csv.error.format.header`。 |
+    45	| 4 | データ行が 1 行以上 | 違反時は `admin.csv.error.data.empty`。 |
+    46	| 5 | 各行の列数がヘッダ列数と一致 | 違反時は `admin.csv.error.format.body`（行番号付き）。 |
+    47	| 6 | 必須論理キーが空でない（`cmc` は後段で空を 0 扱いするため例外ルールあり） | 違反時は `admin.csv.error.data.require`。 |
+    48	| 7 | 参照マスタ（色・タイプ・セット等）に英名が存在 | 欠ける場合は `admin.csv.error.data.not_registered`。 |
+    49	| 8 | トランザクションコミットと支店通知 | 成否はログ・支店エラー表に分割される。 |
+    50	
+    51	---
+    52	
+    53	## 入出力
+    54	
+    55	| 種類 | 内容 |
+    56	|------|------|
+    57	| 入力 | multipart の `import_file`、フォーム CSRF トークン、論理キー行＋データ行の CSV または TSV。 |
+    58	| 成功時出力 | 302 で `admin_card_csv`、フラッシュ成功 `admin.register.complete`。 |
+    59	| 失敗時出力 | 302 で同画面、フラッシュにエラー文言または翻訳キー文字列。 |
+    60	
+    61	---
+    62	
+    63	## 業務ロジック
+    64	
+    65	| 項目 | 内容 |
+    66	|------|------|
+    67	| 既存判定 | 英語カード名は `//` を `/` に直した値で `mtb_card` 相当を検索する。ヒットしなければ新規。 |
+    68	| 日本語名ほか（条件付き） | `name_jp` が空でない行だけ、`＋` を `/` に置換して日本語名・アリーナ日本語名・日本語ルールテキストを上書きする。空の行ではこれらは更新されない。 |
+    69	| マナコスト | `White`→`W` 等の置換と `{` `}`→`(` `)` を行ってから保存する。 |
+    70	| CMC | レイアウト値により解釈が変わる。`Split` は `/` 区切りの数値を合計。`Flip` は先頭片方。`Double Faced,Meld` は `Meld` としてレイアウトマスタを引く。空の `cmc` は必須チェックから外れ、数値変換時は 0 扱いになり得る。 |
+    71	| 多値列 | `color`、`cardtype`、`subtype`、`specialtype`、`color_identity` は `,` または `/` で分割し、重複を除いてマスタ英名と照合する。同一英語カード名の 2 行目以降では、直前に登録した集合で上書きしない実装がある（配列 `registeredCards` による分岐）。 |
+    72	| フォーマット | CSV の `format` はカンマ区切り英名。行に含まれない既存の合法性付きフォーマット紐付けは削除する。新規・継続行はレガル制限に紐づけて保存する。ソースコメントに、禁止・制限のみのフォーマットを CSV だけでは再現できない旨の TODO がある。 |
+    73	| プロモーション | 空なら非プロモ定数に戻す。 |
+    74	| イラストレータ | マスタに無い英名は新規マスタ行を作成して紐付ける。 |
+    75	| 画像 URL | 日本語・英語・表側のみ更新。`card_detail_id` が行に無いときは `null` 条件で既存画像を探す実装になり、意図しない行との突合になる余地がある（実装を確認値とする）。 |
+    76	| 裏面詳細 ID | 空なら `null`。値があるとき対象行が無ければエラー。 |
+    77	| 色順 | 名前でマスタ検索。空なら外部キーを `null`。 |
+    78	| keyword_ability | ヘッダには含まれるが登録処理では読まない。 |
+    79	
+    80	## 表示メッセージ
+    81	
+    82	| メッセージID | 表示位置 | 画面上の文言 | 表示条件 | 後続処理 |
+    83	| --- | --- | --- | --- | --- |
+    84	| M14-05-MSG-001 | 管理画面上部 | 入力されていません。 ／ ファイルのサイズが大きすぎます（{{ size }} {{ suffix }}）。{{ limit }} {{ suffix }}以下にしてください。 ／ ファイルのサイズが大きすぎます。許可されている最大サイズは{{ limit }} {{ suffix }}です。 ／ ファイルのサイズが大きすぎます。 ／ ファイルをアップロードできませんでした。 ／ ファイルのアップロードが完了しませんでした。 ／ ファイルがアップロードされていません。 ／ php.iniに一時フォルダが設定されていないか、設定されたフォルダが存在しません。 ／ 一時ファイルをディスクに書き込むことができません。 ／ PHP拡張が原因でアップロードに失敗しました。 ／ ファイルが見つかりません。 ／ ファイルが読み込めません。 ／ 空のファイルは許可されていません。 ／ CSRFトークンが無効です、再送信してください。 | CSVファイルを選択せずにアップロードする、または選択したCSVファイルが許容サイズを超えているとき | エラーメッセージを表示し、カードCSVアップロード画面へ戻る |
+    85	
+    86	## エラー処理
+    87	
+    88	| エラー内容 | 処理 |
+    89	|------------|------|
+    90	| フォーム・ファイル検証 |  field エラーをフラッシュに載せる、`admin_card_csv` へ戻る経路（戻り値の扱いは実装を確認値とする）。 |
+    91	| ヘッダ不一致 | 例外メッセージ `admin.csv.error.format.header`、ロールバック、エラーフラッシュ。 |
+    92	| 行形式・必須・マスタ欠落 | 対応する翻訳メッセージを例外で発生させ、同様にロールバックとフラッシュ。 |
+    93	| 一時ファイル処理失敗 | `CsvImportService` 構築失敗時はフラッシュを増やさずリダイレクトのみの分岐がある。 |
+    94	
+    95	---
+===== functions/pf-eccube3/m05-07_admin_order_order_labels_csv_export.md
+     1	# 受注管理 — 送り状CSV
+     2	
+     3	## 業務ロジック
+     4	
+     5	### 出力対象
+     6	
+     7	一覧で選択した受注だけを対象とする。検索条件は使わず、選択していない受注は条件に一致していても出力しない。受注を 1 件も選ばずに実行したときも出力し、見出し行だけのファイルになる。
+     8	
+     9	選択した受注のうち、受注サブ情報・都道府県・受注明細・商品・商品サブ情報・会員・配送先・配送方法のいずれかを持たない受注は出力しない。
+    10	
+    11	### 行の作り方
+    12	
+    13	受注 1 件につき 1 行を出力する。配送先を複数持つ受注でも、値を取るのは先頭の配送先だけである。
+    14	
+    15	### 値の作り方
+    16	
+    17	| 出力する値 | 作り方 |
+    18	| --- | --- |
+    19	| 氏名・カナ | 姓と名を半角空白 1 個で連結する |
+    20	| 郵便番号 | 郵便番号を持つときはその値。持たないときは郵便番号の上 3 桁と下 4 桁を区切り文字なしで連結する |
+    21	| 電話番号 | 3 つの電話番号値を区切り文字なしで連結する |
+    22	| 日時 | `Y/m/d H:i:s` の形式の文字列。未設定のときは空欄 |
+    23	| 商品総重量 | 受注明細ごとに商品の重量と数量を掛け、受注単位で合計する |
+    24	| 郵便種別 | 配送方法IDが `3` のときは `0`、`4` のときは `8`。それ以外の配送方法では空欄 |
+    25	| 発送方法コード | 配送方法IDが `8` のときは `111`、`9` のときは `521`、`11` のときは `321`。それ以外の配送方法では空欄 |
+    26	| 発送先国コード | 配送先に国・地域があるときだけ、その国・地域に対応する国コード。無いときは空欄 |
+    27	
+    28	贈り主の 10 項目には、注文者と同じ値を出力する。贈り主だけを別に持つことはできない。
+    29	
+    30	送料と手数料は、税込の列と税抜の列に同じ値を出力する。税抜額として別に計算した値ではない。
+    31	
+    32	配送先番号は常に `1` を出力する。注文者住所3・注文者部署・贈り主住所3・贈り主部署・配送先住所3・配送先部署・注文コメント・荷物問い合わせURL・送り状No.は常に空欄とする。
+    33	
+    34	### 出力する列
+    35	
+    36	出力する列は固定で、カスタムCSVのように項目を選ぶことはできない。列の構成は基本設計の送り状CSV出力項目設定による。
+    37	
+    38	## 入出力
+    39	
+    40	### 出力: CSVファイル
+    41	
+    42	| 項目 | 内容 |
+    43	| --- | --- |
+    44	| 文字コード | CSV出力の設定に従う。応答に載せる文字コード名は、設定が `SJIS-win` のときだけ `windows-31j` へ読み替える |
+    45	| 区切り文字 | `,` |
+    46	| 引用符 | 値が `,`・`"`・改行のいずれかを含むときだけ、値全体を `"` で囲む。値の中の `"` は 2 個続けて出力する |
+    47	| ファイル名 | `exp_ship_` に出力日時を `YmdHis` の形式でつなぎ、`.csv` を付けた名前 |
+    48	| 応答 | ダウンロードとして返す |
+    49	
+    50	バイトオーダーマークは付けない。受注CSVダウンロードと違い、先頭は見出し行から始まる。
+    51	
+    52	## 表示メッセージ
+    53	
+    54	本機能は画面メッセージを持たない。
+===== functions/pf-eccube3/m13-13_admin_event_event_entry_csv_import.md
+     1	# イベント管理 — イベント申込一括CSV登録
+     2	
+     3	## 処理フロー
+     4	
+     5	### アップロード画面を表示する（`GET …/entry/bulkentry`）
+     6	
+     7	1. CSV取込フォームと取込フォーマットのヘッダ定義をテンプレートに渡して表示する。
+     8	
+     9	### CSVを取り込む（`POST …/entry/bulkentry/upload`）
+    10	
+    11	1. 実行時間制限を無効化する。
+    12	2. CSV取込フォームを送信として処理する。フォーム検証NGのとき、各エラーを表示し同画面を再描画する。
+    13	3. アップロードファイルの行数が上限（確認値5000行）以上のとき、上限超過エラーを表示し同画面を再描画する。
+    14	4. 取込開始を情報ログに記録する。
+    15	5. 取込サービスに一括登録の取込ハンドラを渡してファイルを取り込む。
+    16	6. 取込結果にエラーがあれば、異常終了を情報ログに記録し、同画面にエラー一覧を表示する（DBはロールバックする）。
+    17	7. エラーがなければ完了を表示し、取込件数を情報ログに記録し、アップロード画面へリダイレクトする。
+    18	
+    19	### 取込サービス内の処理
+    20	
+    21	1. アップロードファイルを一時ディレクトリへ退避し、文字コードをUTF-8へ寄せ、改行・ゼロ幅スペースを正規化する。拡張子がtsvならタブ、それ以外は設定の区切り文字で読む。
+    22	2. 前提検証として、1行目にヘッダが無ければヘッダ形式エラー、2行目にデータが無ければデータ無しエラーを返し、取込を行わない。
+    23	3. トランザクションを開始し、行ロックタイムアウトを設定する。
+    24	4. 行ごとに、行検証（受付ありなら受付時間必須など）を行い、検証で全体中断指示があれば打ち切り、スキップ指示があればその行を飛ばす。
+    25	5. 取込ハンドラで1行をイベント（開始時間があればイベント日程も）として登録する。一定件数ごとにDBへ反映する。
+    26	6. エラーが無く中断もなければコミットし、そうでなければロールバックする。
+    27	7. 取込件数とエラーメッセージを取込結果として返す。一時ファイルは削除する。
+    28	
+    29	---
+    30	
+    31	## 入出力
+    32	
+    33	| 種類 | 内容 |
+    34	|------|------|
+    35	| 入力 | フォーム名`admin_csv_import`のアップロードファイル（CSRF・`import_file`）。 |
+    36	| 成功時出力 | イベント・イベント日程の一括登録、完了表示、件数ログ。 |
+    37	| 失敗時出力 | エラー一覧表示、ロールバック。 |
+    38	
+    39	---
+    40	
+    41	## 業務ロジック
+    42	
+    43	| 項目 | 内容 |
+    44	|------|------|
+    45	| マスタ参照 | 店舗・会場・ルール適用度・公開状態・フォーマットは名称で対応するマスタを引いて設定する。 |
+    46	| クレジット支払 | 支払方法列が「あり」のときのみクレジット支払を有効化する。 |
+    47	| 日程の登録 | 開始時間がある行のみイベント日程を作り、受付・デッキ登録・オンライン受付の各時刻を設定する。 |
+    48	| 件数 | 取込結果に取込件数を持つ。完了時に件数をログへ記録する。 |
+    49	
+    50	本機能は金額の丸めや合計計算を行わない。取込件数は成功登録行数を数える。
+    51	
+    52	---
+    53	
+    54	## 表示メッセージ
+    55	
+    56	### フラッシュ・トースト
+    57	
+    58	| 表示文言（日本語） | 表示条件（利用者視点） | 表示位置 | 備考 |
+    59	|-------------------|----------------------|----------|------|
+    60	| イベント情報を登録しました。 | 取込が成功したとき | 画面上部のフラッシュ | 成功メッセージ。 |
+    61	
+    62	### エラー・警告（インライン）
+    63	
+    64	| 表示文言（日本語） | 表示条件（利用者視点） | 表示位置 | 備考 |
+    65	|-------------------|----------------------|----------|------|
+    66	| ファイルを選択してください。 | ファイル未選択で送信したとき | アップロード欄付近 | フォーム検証。 |
+    67	| CSVファイルは（上限）M以下でアップロードしてください。 | サイズ上限超過のとき | アップロード欄付近 | フォーム検証。上限は設定値。 |
+    68	| （上限）行を超えるCSVファイルは登録できません。 | 行数が上限以上のとき | アップロード欄付近 | 上限は5000行（確認値）。 |
+    69	| CSVのフォーマットが一致しません。 | ヘッダ行が雛形と不一致のとき | アップロード欄付近 | 前提検証。 |
+    70	| CSVデータが存在しません。 | データ行が無いとき | アップロード欄付近 | 前提検証。 |
+    71	| （行・列に応じた取込エラー） | 必須未入力・マスタ未存在・形式不正などがあるとき | アップロード欄付近 | 行番号・列名を含むメッセージを行ごとに列挙。 |
+    72	
+    73	ロケールキーは調査補助に留め、本文の主語にしない。文言の正は表示メッセージ節、処理方針はエラー処理節とする。
+    74	
+    75	---
+    76	
+    77	### メッセージID対応（自動棚卸）
+    78	
+    79	| メッセージID | 表示位置 | 画面上の文言 | 表示条件 | 後続処理 |
+    80	| --- | --- | --- | --- | --- |
+    81	| M13-13-MSG-001 | 管理画面上部 | CSVファイルをアップロードしました | CSVファイルの取込が正常に完了したとき | CSV取込完了後、イベント申込一括CSV登録画面に遷移する |
+    82	
+    83	## エラー処理
+    84	
+    85	| エラー内容 | 処理 |
+    86	|------------|------|
+    87	| ファイル未選択・サイズ超過 | フォームエラーを表示し再描画。 |
+    88	| 行数上限超過 | 上限超過エラーを表示し再描画。 |
+    89	| ヘッダ不一致・データ無し | 前提検証エラーを表示し取込しない。 |
+    90	| 行ごとの取込エラー | エラー一覧を表示し全件ロールバック。 |
+    91	| 取込中の例外 | ロールバックして例外を伝播する。 |
+    92	
+    93	---
+
+exec
+/bin/bash -lc 'nl -ba functions/_archive/ec-cube-enterprise/a01-01_api_stock_smaregi_stock_sync.md' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+     1	# a01-01_api_stock_smaregi_stock_sync — 5分類外の退避
+     2	
+     3	<!-- 5分類（処理フロー / 入出力 / 業務ロジック / 表示メッセージ / エラー処理）へ
+     4	     写像しなかった節の退避先。設計書本体から外した内容をそのまま保持する。
+     5	     規約は .cursor/skills/output-exclusion-policy/SKILL.md を正本とする。 -->
+     6	
+     7	## TODO（未確定項目）
+     8	
+     9	- URLエンドポイントとDBカラムは `../ec-cube-enterprise` の実装確認値を優先する。本文で実装未確認とした項目は、対象 Controller / Route / Entity / Migration の追加確認後に確定する。
+    10	- Excel設計書に画面項目、CSV列、帳票レイアウトの詳細がある場合、詳細項目は各画面・CSV・帳票設計側を正とする。
+    11	
+    12	## 1. スマレジ連携処理
+    13	
+    14	### 入出力仕様
+    15	
+    16	| 種類 | 内容 |
+    17	|------|------|
+    18	| 入力 | 外部システムまたはMTGバイヤーからのAPIリクエスト。 |
+    19	| 出力 | APIレスポンス。成功・失敗の詳細は実装を正とする。 |
+    20	| 副作用 | 対象データの更新、外部連携履歴または受信履歴の記録。 |
+    21	
+    22	### 開始条件、終了条件
+    23	
+    24	| 種類 | 内容 |
+    25	|------|------|
+    26	| 開始条件 | API呼び出しを受け、認証・認可・署名等の実装側チェックを通過する。 |
+    27	| 終了条件 | レスポンスを返し、必要なDB更新または非同期処理投入が完了する。 |
+    28	
+    29	### 判定条件
+    30	
+    31	- Excel設計書に記載された対象条件、検索条件、CSV出力条件、登録条件を正とする。
+    32	- Excel設計書に未記載のURLエンドポイント、DBカラム、実処理順序は `../ec-cube-enterprise` の実装を正とする。
+    33	- 権限、ログイン状態、管理画面プレフィックスなどの共通判定は共通設計および実装側のセキュリティ設定に従う。
+    34	
+    35	### プロセスフロー
+    36	
+    37	1. 利用者または外部システムが対象機能を開始する。
+    38	2. 入力値、検索条件、アップロードファイル、またはリクエスト本文を受け付ける。
+    39	3. Excel設計書に定義された対象データを取得し、実装側の検証・権限・状態条件を適用する。
+    40	4. 登録・更新・出力・連携のいずれかの主処理を実行する。
+    41	5. 成功時は結果画面、CSV/PDF/APIレスポンス、またはバッチ結果を返す。失敗時はエラー内容を返し、更新が必要な処理では不整合が残らないように扱う。
+    42	
+    43	### ビジネスロジック
+    44	
+    45	- **Excel設計優先**: 仕様の目的、対象データ、出力項目、表示項目、業務上の条件は `excel_to_html/output` の設計書を正とする。
+    46	- **実装補完**: Excel設計に書かれていないURLエンドポイント、DBカラム、トランザクション、サービス分割、非同期処理は `../ec-cube-enterprise` の実装を正とする。
+    47	- **対象機能の要点**: 在庫処理に関連するスマレジとの連携処理
+    48	- **実装確認値**: POST /%eccube_smaregi_webhook_route%（既定 smaregi/webhook）。WebhookController / Smaregi Webhook Transaction handlers を実装確認値とする。
+    49	
+    50	### 状態・データ更新
+    51	
+    52	| 対象 | 内容 |
+    53	|------|------|
+    54	| 主データ | API対象の買取・在庫・スマレジWebhook関連データを作成・更新・参照する。 |
+    55	| 履歴・ログ | 必要に応じてCSV取込履歴、在庫履歴、ステータス履歴、API受信履歴、アプリケーションログを作成・更新する。 |
+    56	| DB関連実装確認値 | dtb_smaregi_webhook_request.smaregi_event_id, event, action, request_headers, request_body, status |
+    57	
+    58	### 例外処理
+    59	
+    60	- **入力不備**: 必須項目、CSVヘッダ、CSV行、APIリクエスト本文、検索条件が不正な場合はエラーとして処理し、登録・更新対象を確定しない。
+    61	- **対象なし**: 検索条件や対象IDに該当するデータがない場合は、空の一覧、空CSV、またはエラーレスポンスとして扱う。扱いの細部は対象画面/API/バッチの実装に従う。
+    62	- **状態不整合**: 既に処理済み、キャンセル済み、承認不可、在庫不足など状態条件に合わない場合は処理対象外またはエラーとする。
+    63	- **外部連携失敗**: スマレジ等の外部連携で失敗した場合は、実装側の再連携・エラーログ・エラーメール・ステータス更新仕様を正とする。
+    64	
+    65	### 関連設計への接続点
+    66	
+    67	- 画面項目、CSV列、PDFレイアウト、APIリクエスト/レスポンスの詳細は、参照元Excel設計書の該当シートを正とする。
+    68	- URLエンドポイントとDBカラムは `../ec-cube-enterprise` の Controller Route、Entity、Repository、Migration、Service 実装を正とする。
+    69	
+    70	<details>
+    71	<summary>Excel設計書からの抽出（原典・テスト網羅の根拠）</summary>
+    72	
+    73	```text
+    74	スマレジ連携処理
+    75	ドキュメント名
+    76	在庫管理API機能
+    77	セクション
+    78	—
+    79	プロジェクト名
+    80	サイトリニューアル
+    81	作成者
+    82	堀部
+    83	作成日
+    84	2025-07-28
+    85	更新者
+    86	—
+    87	更新日
+    88	—
+    89	機能No
+    90	A01-01
+    91	機能名
+    92	スマレジ連携処理
+    93	概要
+    94	スマレジとの連携処理
+    95	処理概要（★はカスタマイズ項目）
+    96	図形・テキストボックス内テキスト（20件）
+    97	GET POST PUT DELETE PATCH OPTIONS HEAD 有 無 〇
+    98	エンドポイントURL
+    99	/smaregi/stocks
+   100	プロトコル HTTP メソッド POST 認証の有無 有 認証方式 IP制限 リクエスト書式 JSON レスポンス書式 なし(ステータスコードのみ)
+   101	カスタマイズ説明
+   102	スマレジの在庫が変動するタイミングで、ECCUBEとスマレジをスマレジプラットフォームAPIを介して連携させる
+   103	トリガーとなるポイントに合わせて、APIやWebhookを活用して連携させる
+   104	実装時の注意点
+   105	API利用時の注意事項一般 https://developers.smaregi.dev/apidoc/common/#section/Webhook
+   106	APIのレート制限(スロットリング) https://developers.smaregi.dev/apidoc/common/#section/%E3%83%AC%E3%83%BC%E3%83%88%E5%88%B6%E9%99%90
+   107	※秒間50回が上限になりますが、理論上1秒間にレジ25台(在庫・受注処理で2回として仮定)が同時決済まで対応可能
+   108	※レート制限を超えた場合もエラーレスポンスで待機時間が返ってくるのでリトライ処理が可能
+   109	機能仕様処理概要（★はカスタマイズ項目）
+   110	在庫におけるスマレジとの連携は大きく分けて3つの方式
+   111	1スマレジ -> ECCUBE (Webhook方式)スマレジ側で在庫変動があった場合、取引完了や取引キャンセル(全キャンセル)
+   112	2ECCUBE -> スマレジ(API個別)CSV登録等の一括処理ではない管理画面でスマレジ側の在庫変動が発生した場合
+   113	3ECCUBE -> スマレジ連携(Patch一括)CSV登録等の一括処理でスマレジ側の在庫変動が発生した場合
+   114	スマレジ連携方式一覧
+   115	操作場所機能名方式概要
+   116	スマレジスマレジで取引完了時1:webhookスマレジで受注した結果による在庫変動結果をwebhookで受信し、スマレジ在庫数を減らす
+   117	スマレジスマレジで取引全キャンセル1:webhookスマレジでの受注が全キャンセルされた結果をwebhookで受信し、スマレジ在庫数を戻す
+   118	管理画面在庫編集2:API個別在庫場所区分がスマレジの場合に編集結果をスマレジ側に反映する
+   119	実行できる件数上限を設定し、上限を越えたらエラーを表示し、CSV登録を促す
+   120	管理画面在庫一括編集2:API個別在庫場所区分がスマレジの場合に編集結果をスマレジ側に反映する
+   121	実行できる件数上限を設定し、上限を越えたらエラーを表示し、CSV登録を促す
+   122	管理画面在庫変更CSV登録3:Patch一括在庫区分がスマレジの場合に編集結果をスマレジ側に反映する
+   123	管理画面在庫移動指示2 or 3 ※1スマレジ在庫に入庫する場合、その移動指示結果を入庫済みになったタイミングで反映
+   124	管理画面在庫移動指示2 or 3 ※1スマレジ在庫から出庫する場合、その移動指示結果を出庫承認済みになったタイミングで反映
+   125	管理画面分割結合(分割)2 or 3 ※1スマレジ在庫から分割するために、福袋やオリパを出庫にする
+   126	管理画面分割結合(分割)2 or 3 ※1スマレジ在庫に福袋やオリパを分割した結果を入庫する
+   127	管理画面分割結合(結合)2 or 3 ※1スマレジの在庫から福袋やオリパを作るための商品を出庫する
+   128	管理画面分割結合(結合)2 or 3 ※1スマレジの在庫に結合した福袋やオリパを入庫する
+   129	管理画面棚卸し3:Patch一括スマレジの在庫を棚卸した場合、結果をスマレジ側に反映する
+   130	※1 上限件数を閾値にして、閾値を越えたらPatch一括処理。越えなかったらAPI個別
+   131	1.スマレジ -> ECCUBE (Webhook方式) 処理概要（★はカスタマイズ項目）
+   132	スマレジ -> ECCUBE (Webhook方式)
+   133	★1-1. スマレジで取引完了もしくは取引全キャンセルをhookにwebhook発動
+   134	スマレジ
+   135	ECCUBE
+   136	A. ★スマレジ在庫変動履歴IDを送信
+   137	B. ★在庫変動履歴IDで取引詳細を要求
+   138	C. ★在庫変動履歴情報を返す
+   139	取引完了 or
+   140	取引全キャンセル
+   141	スマレジ在庫変更履歴情報取得
+   142	ECCUBE
+   143	スマレジ
+   144	D. ★在庫相対値更新で在庫更新
+   145	E. ★APIのレスポンスを返す
+   146	管理画面操作による在庫変更
+   147	スマレジ在庫更新
+   148	ECCUBE
+   149	スマレジ
+   150	F. ★在庫一括相対値更新でデータ登録
+   151	G. ★処理結果をURLに返す
+   152	管理画面操作による在庫変更CSV登録
+   153	非同期による処理
+   154	ECCUBE側の処理を実行
+   155	画面遷移図をExcel図形座標で再構成（画面 10件 / 遷移 5件 / 元コネクタ 15件）
+   156	遷移一覧（5件）
+   157	遷移元遷移先
+   158	取引完了 or
+   159	取引全キャンセルA. ★スマレジ在庫変動履歴IDを送信
+   160	C. ★在庫変動履歴情報を返すスマレジ在庫変更履歴情報取得
+   161	管理画面操作による在庫変更スマレジ在庫更新
+   162	管理画面操作による在庫変更CSV登録F. ★在庫一括相対値更新でデータ登録
+   163	ECCUBE側の処理を実行G. ★処理結果をURLに返す
+   164	※ 在庫変動履歴情報のIDは商品と店舗の組合せでしかまとめて取得できないので、取引商品種類数分CのAPIを叩く必要がある
+   165	★1-2. 取得したスマレジ在庫変更履歴情報をもとにECCUBE上のスマレジ在庫情報を更新
+   166	在庫区分が02:売上の時は出庫処理, 12:の時は入庫処理を実施
+   167	取得したスマレジ在庫変更履歴情報の在庫区分が02:売上と12:返品のみ、情報更新処理を実施。それ以外は無視する
+   168	店頭受取分の商品IDの場合、スマレジ側の在庫は変動しないので無視する
+   169	スマレジの在庫変動履歴IDはECCUBE側の在庫変動履歴に紐づけて保存しておく
+   170	在庫変動履歴の登録については、「在庫変動時の履歴作成について」シートを参照
+   171	1-1 A. Webhook受信データ
+   172	項目名型必須最大文字数
+   173	または最大値入力例備考
+   174	契約IDString〇スマレジの契約ID
+   175	イベント名String〇pos:stock取引のイベント名固定 [pos:transactions]
+   176	アクションString〇editededited: 更新, bulk-update: 一括更新
+   177	在庫変動履歴IDリストint[]〇スマレジの以下の3つの情報のセットを1配列データとした配列リスト
+   178	在庫変更履歴ID, 商品ID, 店舗ID
+   179	1-1 A. レスポンスデータサンプル
+   180	{
+   181	"contractId": "string",
+   182	"event": "string",
+   183	"action": "edited",
+   184	"ids": [
+   185	{
+   186	"id": "1",
+   187	"productId": "1",
+   188	"storeId": "0"
+   189	},
+   190	{
+   191	"id": "10",
+   192	"productId": "1",
+   193	"storeId": "0"
+   194	```
+   195	
+   196	</details>
+
+exec
+/bin/bash -lc 'nl -ba functions/_archive/ec-cube-enterprise/m06-11_admin_store_purchase_purchase_store_return_list_pdf_export.md
+nl -ba functions/_archive/ec-cube-enterprise/b06-01_batch_purchase_purchase_auto_stock.md' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+     1	# m06-11_admin_store_purchase_purchase_store_return_list_pdf_export — 5分類外の退避
+     2	
+     3	<!-- 5分類（処理フロー / 入出力 / 業務ロジック / 表示メッセージ / エラー処理）へ
+     4	     写像しなかった節の退避先。設計書本体から外した内容をそのまま保持する。
+     5	     規約は .cursor/skills/output-exclusion-policy/SKILL.md を正本とする。 -->
+     6	
+     7	## TODO（未確定項目）
+     8	
+     9	- URLエンドポイントとDBカラムは `../ec-cube-enterprise` の実装確認値を優先する。本文で実装未確認とした項目は、対象 Controller / Route / Entity / Migration の追加確認後に確定する。
+    10	- Excel設計書に画面項目、CSV列、帳票レイアウトの詳細がある場合、詳細項目は各画面・CSV・帳票設計側を正とする。
+    11	
+    12	## 1. 戻しリストPDF出力
+    13	
+    14	### 入出力仕様
+    15	
+    16	| 種類 | 内容 |
+    17	|------|------|
+    18	| 入力 | 管理画面の検索条件、フォーム入力、CSVアップロード、または画面操作。 |
+    19	| 出力 | 画面表示、CSV/PDFダウンロード、登録完了/エラー表示。 |
+    20	| 副作用 | 対象データの登録・更新、CSV取込履歴、在庫履歴、ステータス履歴の記録。 |
+    21	
+    22	### 開始条件、終了条件
+    23	
+    24	| 種類 | 内容 |
+    25	|------|------|
+    26	| 開始条件 | 管理画面にログイン済みの利用者が対象メニューまたは操作を実行する。 |
+    27	| 終了条件 | 画面表示、ファイル出力、登録完了、またはエラー表示が完了する。 |
+    28	
+    29	### 判定条件
+    30	
+    31	- Excel設計書に記載された対象条件、検索条件、CSV出力条件、登録条件を正とする。
+    32	- Excel設計書に未記載のURLエンドポイント、DBカラム、実処理順序は `../ec-cube-enterprise` の実装を正とする。
+    33	- 権限、ログイン状態、管理画面プレフィックスなどの共通判定は共通設計および実装側のセキュリティ設定に従う。
+    34	
+    35	### プロセスフロー
+    36	
+    37	1. 利用者または外部システムが対象機能を開始する。
+    38	2. 入力値、検索条件、アップロードファイル、またはリクエスト本文を受け付ける。
+    39	3. Excel設計書に定義された対象データを取得し、実装側の検証・権限・状態条件を適用する。
+    40	4. 登録・更新・出力・連携のいずれかの主処理を実行する。
+    41	5. 成功時は結果画面、CSV/PDF/APIレスポンス、またはバッチ結果を返す。失敗時はエラー内容を返し、更新が必要な処理では不整合が残らないように扱う。
+    42	
+    43	### ビジネスロジック
+    44	
+    45	- **Excel設計優先**: 仕様の目的、対象データ、出力項目、表示項目、業務上の条件は `excel_to_html/output` の設計書を正とする。
+    46	- **実装補完**: Excel設計に書かれていないURLエンドポイント、DBカラム、トランザクション、サービス分割、非同期処理は `../ec-cube-enterprise` の実装を正とする。
+    47	- **対象機能の要点**: 棚戻し業務用のPDF出力が行えます。
+    48	- 実装確認値: 店頭買取（OTC）の戻しリストPDFは OtcBuyOrderRestockListService（PDF用ビュー組み立て、テンプレート @admin/Purchase/restock_list.twig）とルート admin_otcbuyorder_restock_list_pdf を実装確認値とする（grep用。ネット買取側の RestockListPdfSectionBuilder / BuyOrderRestockListService とは別系統）。
+    49	
+    50	### 状態・データ更新
+    51	
+    52	| 対象 | 内容 |
+    53	|------|------|
+    54	| 主データ | 管理画面の対象業務データを参照し、登録系では対象データと履歴を更新する。 |
+    55	| 履歴・ログ | 必要に応じてCSV取込履歴、在庫履歴、ステータス履歴、API受信履歴、アプリケーションログを作成・更新する。 |
+    56	| DB関連実装確認値 | 対象テーブル: dtb_otc_buy_order, dtb_otc_buy_order_stock（店頭買取の受注・実在庫）。列詳細は `../ec-cube-enterprise` の Entity / Repository / Migration を正とする。 |
+    57	
+    58	### 例外処理
+    59	
+    60	- **入力不備**: 必須項目、CSVヘッダ、CSV行、APIリクエスト本文、検索条件が不正な場合はエラーとして処理し、登録・更新対象を確定しない。
+    61	- **対象なし**: 検索条件や対象IDに該当するデータがない場合は、空の一覧、空CSV、またはエラーレスポンスとして扱う。扱いの細部は対象画面/API/バッチの実装に従う。
+    62	- **状態不整合**: 既に処理済み、キャンセル済み、承認不可、在庫不足など状態条件に合わない場合は処理対象外またはエラーとする。
+    63	- **外部連携失敗**: スマレジ等の外部連携で失敗した場合は、実装側の再連携・エラーログ・エラーメール・ステータス更新仕様を正とする。
+    64	
+    65	### 関連設計への接続点
+    66	
+    67	- 画面項目、CSV列、PDFレイアウト、APIリクエスト/レスポンスの詳細は、参照元Excel設計書の該当シートを正とする。
+    68	- URLエンドポイントとDBカラムは `../ec-cube-enterprise` の Controller Route、Entity、Repository、Migration、Service 実装を正とする。
+    69	
+    70	<details>
+    71	<summary>Excel設計書からの抽出（原典・テスト網羅の根拠）</summary>
+    72	
+    73	```text
+    74	【新規】戻しリストPDF出力
+    75	ドキュメント名
+    76	店頭買取管理機能 基本設計
+    77	セクション
+    78	—
+    79	プロジェクト名
+    80	サイトリニューアル
+    81	作成者
+    82	石川
+    83	作成日
+    84	2025-08-29
+    85	更新者
+    86	石川
+    87	更新日
+    88	2025-08-29
+    89	機能No
+    90	M06-11
+    91	機能名
+    92	戻しリストPDF出力
+    93	概要
+    94	店頭買取情報のPDF出力
+    95	処理概要（★はカスタマイズ項目）
+    96	図形・テキストボックス内テキスト（19件）
+    97	レイアウト図
+    98	1
+    99	2
+   100	3
+   101	4
+   102	5
+   103	6
+   104	7
+   105	8
+   106	9
+   107	10
+   108	11
+   109	12
+   110	13
+   111	15
+   112	14
+   113	画像レイヤー（6枚）: 【新規】戻しリストPDF出力 / B7 / image 1 + 【新規】戻しリストPDF出力 / D18 / image 2 + 【新規】戻しリストPDF出力 / C27 / image 3 + 【新規】戻しリストPDF出力 / C37 / image 4 + 【新規】戻しリストPDF出力 / B49 / image 5 + 【新規】戻しリストPDF出力 / AD49 / image 6
+   114	カスタマイズ説明
+   115	・カスタマイズ要件
+   116	・在庫指示リスト内の在庫移動データのピッキングリスト情報をポップアップにて表示する
+   117	・本店3F,2F,B2Fや支店で閾値が異なるため、マスターデータ管理にて、店舗ごとに金額の閾値を分けられるようにする
+   118	→フォーマットがそれぞれ3F,2F,B2Fで異なるものとなる
+   119	備考
+   120	３F在庫 現行運用での金額の閾値について
+   121	シングルカード
+   122	低額：4800円未満
+   123	高額：4800円以上
+   124	金庫：基本的にEC在庫で500万以上のものを保管。あとは備品などを入れている
+   125	シングルカード以外
+   126	倉庫：2Fに置ききれない（商品化していない）サプライパックボックス等を保管
+   127	・カスタマイズ要件に記載の内容以外は現行踏襲とする。
+   128	機能仕様処理概要（★はカスタマイズ項目）
+   129	・表示制御
+   130	・ページ内で印刷に最適化した状態でページを表示する
+   131	・「印刷する」ボタン(1)を印刷範囲に含まない
+   132	・印刷ボタン
+   133	・PC端末の印刷ダイアログが表示され、印刷を実行する
+   134	・印刷対象取得
+   135	★一覧画面で選択された買取情報に紐づく実在庫情報を、対象店舗ごとに指定された閾値情報+サプライで分けて取得する
+   136	・閾値は識別ID:2に表示する
+   137	・対象店舗ごとに指定された閾値情報とは、店舗登録画面で設定された高額商品閾値1～3の情報となる
+   138	・0209_基本設計仕様書(基本情報設定).xlsxの店舗登録シート参照
+   139	・サプライ品でない場合は商品名から略称・言語・状態・色・レアリティがあれば取り除く
+   140	・商品名内に[略称タグ]が含まれない場合は[～]（[]内にある文字を[]ごと）を削除
+   141	・並び順は金額閾値の昇順(最後にサプライ)が最優先となる
+   142	・金額閾値内の並び順は以下の通りとなる
+   143	・棚番（昇順、支店の場合は棚番のソートは行わない）
+   144	・言語（日→英→他言語）
+   145	・状態（NM→HP）
+   146	・Foilフラグ（非Foil→Foil）
+   147	・略称タグ（昇順）
+   148	・レアリティ（M→C）
+   149	・色（マスターデータ色順参照）
+   150	・設定されている略称タグについてコレクター番号でのソートだった場合、コレクター番号（昇順）
+   151	・設定されている略称タグについてアルファベットでのソートだった場合、英語のカード名（昇順）
+   152	識別IDラベル書式・制限必須最大値初期値画面部品の説明
+   153	1印刷するボタン---ボタンを押下すると、PC端末の印刷ダイアログが表示され、印刷を開始する
+   154	2商品仕訳ラベル---店舗ごとの閾値（ネット買取管理の場合は本店しかないため本店の閾値）とサプライを出力
+   155	●●円未満、●●円以上▲▲円未満、■■円以上、サプライ
+   156	閾値の表示も基準価格を参照して行う（セール中で金額が変わっても棚を移動することはないため）
+   157	3ページングラベル---閾値ごとのページ数を表示
+   158	4作成日時ラベル---ピッキングリストを作成した日時
+   159	※「ピッキングリスト印刷」ボタンを押した日時
+   160	5行番号ラベル---各ページ毎に商品に割り振られる行番号
+   161	6棚番号ラベル---本店の商品を棚戻しする場合のみ必要
+   162	→買取店舗が本店の場合のみ必要
+   163	7言語 / 状態ラベル---Foilの場合はFoilをつけて、言語/状態の形式で出力する（例: FoilJP/NM）、サプライ品の場合は「サプライ品」と表示
+   164	8略称ラベル---サプライ品の場合は表示しない
+   165	9色 / Rラベル---商品名から取り出した色とレアリティを出力（例: 金R）
+   166	10数ラベル---商品点数
+   167	11商品名ラベル---サプライ品でない場合は商品名から略称・言語・状態・色・レアリティを取り除く
+   168	12価格ラベル---基準価格を表示する
+   169	13備考ラベル---備考
+   170	14ページ内個数小計ラベル---ページ内の商品個数の総計
+   171	図形・テキストボックス内テキスト（19件）
+   172	画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。
+   173	位置テキスト
+   174	AE7(1)
+   175	W8(2)
+   176	C10(5)
+   177	G10(6)
+   178	K10(7)
+   179	O10(8)
+   180	S10(9)
+   181	T10(10)
+   182	AD10(11)
+   183	AI10(3)
+   184	AQ10(4)
+   185	AN12(12)
+   186	AR12(13)
+   187	M17結果出力繰り返し（記載省略）
+   188	M25結果出力繰り返し（記載省略）
+   189	L35結果出力繰り返し（記載省略）
+   190	Y43(15)
+   191	L48結果出力繰り返し（記載省略）
+   192	V52(14)
+   193	```
+   194	
+   195	</details>
+     1	# b06-01_batch_purchase_purchase_auto_stock — 5分類外の退避
+     2	
+     3	<!-- 5分類（処理フロー / 入出力 / 業務ロジック / 表示メッセージ / エラー処理）へ
+     4	     写像しなかった節の退避先。設計書本体から外した内容をそのまま保持する。
+     5	     規約は .cursor/skills/output-exclusion-policy/SKILL.md を正本とする。 -->
+     6	
+     7	## TODO（未確定項目）
+     8	
+     9	- URLエンドポイントとDBカラムは `../ec-cube-enterprise` の実装確認値を優先する。本文で実装未確認とした項目は、対象 Controller / Route / Entity / Migration の追加確認後に確定する。
+    10	- Excel設計書に画面項目、CSV列、帳票レイアウトの詳細がある場合、詳細項目は各画面・CSV・帳票設計側を正とする。
+    11	
+    12	## 1. 買取自動入庫バッチ
+    13	
+    14	### 入出力仕様
+    15	
+    16	| 種類 | 内容 |
+    17	|------|------|
+    18	| 入力 | バッチ起動条件、設定値、DB上の対象データ。 |
+    19	| 出力 | CSVファイル、DB更新結果、ログ。 |
+    20	| 副作用 | 対象データの更新、CSV出力、処理ログの記録。 |
+    21	
+    22	### 開始条件、終了条件
+    23	
+    24	| 種類 | 内容 |
+    25	|------|------|
+    26	| 開始条件 | バッチ起動時刻または手動起動により処理が開始される。 |
+    27	| 終了条件 | 対象データの処理と出力、ログ記録が完了する。 |
+    28	
+    29	### 判定条件
+    30	
+    31	- Excel設計書に記載された対象条件、検索条件、CSV出力条件、登録条件を正とする。
+    32	- Excel設計書に未記載のURLエンドポイント、DBカラム、実処理順序は `../ec-cube-enterprise` の実装を正とする。
+    33	- 権限、ログイン状態、管理画面プレフィックスなどの共通判定は共通設計および実装側のセキュリティ設定に従う。
+    34	
+    35	### プロセスフロー
+    36	
+    37	1. 利用者または外部システムが対象機能を開始する。
+    38	2. 入力値、検索条件、アップロードファイル、またはリクエスト本文を受け付ける。
+    39	3. Excel設計書に定義された対象データを取得し、実装側の検証・権限・状態条件を適用する。
+    40	4. 登録・更新・出力・連携のいずれかの主処理を実行する。
+    41	5. 成功時は結果画面、CSV/PDF/APIレスポンス、またはバッチ結果を返す。失敗時はエラー内容を返し、更新が必要な処理では不整合が残らないように扱う。
+    42	
+    43	### ビジネスロジック
+    44	
+    45	- **Excel設計優先**: 仕様の目的、対象データ、出力項目、表示項目、業務上の条件は `excel_to_html/output` の設計書を正とする。
+    46	- **実装補完**: Excel設計に書かれていないURLエンドポイント、DBカラム、トランザクション、サービス分割、非同期処理は `../ec-cube-enterprise` の実装を正とする。
+    47	- **対象機能の要点**: 買取成立した商品に対して入庫処理を行う
+    48	- **実装確認値**: BuyOrderAutoStockCommand / BatchAutoStockAction を実装確認値とする。
+    49	
+    50	### 状態・データ更新
+    51	
+    52	| 対象 | 内容 |
+    53	|------|------|
+    54	| 主データ | バッチ対象の在庫・買取・履歴データを参照し、必要に応じて更新する。 |
+    55	| 履歴・ログ | 必要に応じてCSV取込履歴、在庫履歴、ステータス履歴、API受信履歴、アプリケーションログを作成・更新する。 |
+    56	| DB関連実装確認値 | 対象テーブル: dtb_buy_order_stock, dtb_buy_order_stock_history 明示列: dtb_product_class.stock, dtb_product_stock.stock 列詳細は `../ec-cube-enterprise` の Entity / Repository / Migration を正とする。 |
+    57	
+    58	### 例外処理
+    59	
+    60	- **入力不備**: 必須項目、CSVヘッダ、CSV行、APIリクエスト本文、検索条件が不正な場合はエラーとして処理し、登録・更新対象を確定しない。
+    61	- **対象なし**: 検索条件や対象IDに該当するデータがない場合は、空の一覧、空CSV、またはエラーレスポンスとして扱う。扱いの細部は対象画面/API/バッチの実装に従う。
+    62	- **状態不整合**: 既に処理済み、キャンセル済み、承認不可、在庫不足など状態条件に合わない場合は処理対象外またはエラーとする。
+    63	- **外部連携失敗**: スマレジ等の外部連携で失敗した場合は、実装側の再連携・エラーログ・エラーメール・ステータス更新仕様を正とする。
+    64	
+    65	### 関連設計への接続点
+    66	
+    67	- 画面項目、CSV列、PDFレイアウト、APIリクエスト/レスポンスの詳細は、参照元Excel設計書の該当シートを正とする。
+    68	- URLエンドポイントとDBカラムは `../ec-cube-enterprise` の Controller Route、Entity、Repository、Migration、Service 実装を正とする。
+
+exec
+/bin/bash -lc 'nl -ba functions/_archive/ec-cube-enterprise/m04-13_admin_stock_stock_split_join_register_edit.md' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+     1	# m04-13_admin_stock_stock_split_join_register_edit — 5分類外の退避
+     2	
+     3	<!-- 5分類（処理フロー / 入出力 / 業務ロジック / 表示メッセージ / エラー処理）へ
+     4	     写像しなかった節の退避先。設計書本体から外した内容をそのまま保持する。
+     5	     規約は .cursor/skills/output-exclusion-policy/SKILL.md を正本とする。 -->
+     6	
+     7	## 1. 在庫分割結合登録/編集
+     8	
+     9	### ステータス区分（`MtbStockSplitJoinStatus`）
+    10	
+    11	| ID | 定数 | 名称 | 主な用途 |
+    12	|----|------|------|----------|
+    13	| 1 | `NEW` | 新規登録 | 分割登録直後／結合登録直後。分割先・結合元はSessionで一時保持。 |
+    14	| 2 | `JOIN_SOURCE_REGISTERED` | 結合元登録 | 結合のみ。結合元明細をDB確定し在庫減算済み。欠品入力可。 |
+    15	| 3 | `SPLIT_APPROVAL_WAITING` | 分割承認待ち | 分割の承認申請後。 |
+    16	| 4 | `JOIN_APPROVAL_WAITING` | 結合承認待ち | 結合の承認申請後。 |
+    17	| 5 | `RECEIPT_COMPLETED` | 入庫済み | 承認完了（分割先／結合先へ加算済み）。 |
+    18	| 6 | `REJECTED` | 却下 | 承認却下（分割は分割元へ戻し済み）。 |
+    19	
+    20	### フォーム項目・バリデーション
+    21	
+    22	#### 分割 新規登録（`StockSplitNewType` / `admin_stock_split_register`）
+    23	
+    24	| 項目 | フォームキー／パラメータ | 必須 | 検証 |
+    25	|------|--------------------------|------|------|
+    26	| 分割メモ | `admin_stock_split_new[split_join_memo]`（TextareaType） | 任意 | — |
+    27	| 分割数 | `split_quantity` | 必須 | 1以上（`admin.stock.split.quantity_min`）かつ分割元在庫数以下（`admin.stock.split.quantity_exceeds_stock`）。 |
+    28	| CSRF | `_token`（トークンID `stock_split_register`） | 必須 | 不正時 `admin.common.save_error`。 |
+    29	| 店舗編集権限 | （ログインメンバー） | — | `Member::isEditableShop(BaseInfo)` が false なら `admin.stock.split.not_editable_store`。 |
+    30	
+    31	#### 結合 新規登録（`StockJoinNewType` / `admin_stock_join_register`）
+    32	
+    33	| 項目 | フォームキー／パラメータ | 必須 | 検証 |
+    34	|------|--------------------------|------|------|
+    35	| 結合メモ | `split_join_memo`（TextareaType。`StockJoinNewType` submit経由でも検証） | 任意 | — |
+    36	| 結合点数 | `destination_stock` | 必須 | 0超（`admin.stock.join.destination_stock_min`）。整数化（`filter_var`）。 |
+    37	| CSRF | `_token`（トークンID `stock_join_register`） | 必須 | 不正時 `admin.common.csrf_invalid`。 |
+    38	| 店舗編集権限 | （ログインメンバー） | — | false なら `admin.stock.join.not_editable_store`。 |
+    39	
+    40	#### 編集・承認共通（`StockSplitJoinType`）
+    41	
+    42	分割編集・結合編集・欠品入力・承認申請で共通利用。項目は分割結合メモ `split_join_memo`（TextareaType）と承認通知先メンバー `approval_notification_target_members`（ChoiceType, 複数選択）。通知先候補は `MemberRepository::getApprovalAuthorityMembers(BaseInfo)`（当該店舗の承認権限保有メンバー）。承認申請成功時、選択された通知先のうち承認権限を持つメンバーへ承認依頼メール（`MailService::sendStockApprovalAlertMail`）を送信する。
+    43	
+    44	#### 承認・却下（`StockSplitApprovalSubmitAction` ほか）
+    45	
+    46	| 項目 | パラメータ | 検証 |
+    47	|------|-----------|------|
+    48	| 承認モード | `approval_mode` | `approve` / `reject` 以外は `admin.common.save_error`。 |
+    49	| 却下メモ | `rejected_memo` | 却下時は必須（全角/NBSP正規化後に空なら `admin.stock.move.rejection_reason_required`）。 |
+    50	| 仕入価格（結合承認） | `purchase_price` | 数字以外を除去。結合先の総原価加算に使用。 |
+    51	| CSRF | `_token`（トークンID `authenticate`） | 不正時 `admin.common.csrf_invalid`。 |
+    52	| ステータス | — | 分割は `SPLIT_APPROVAL_WAITING`、結合は `JOIN_APPROVAL_WAITING` 以外なら不整合エラー。 |
+    53	
+    54	### 在庫増減ロジック・プロセスフロー
+    55	
+    56	在庫数・総原価・原価単価の更新は `ProductStockEntityManager::save()`（`dtb_product_stock` と `dtb_product_class.stock` を更新）を経由し、在庫変動履歴は `StockHistoryEntityManager::save()`（`dtb_stock_history`）で記録する。総原価の出庫計算は `ProductStock::getMovementTotalCost()`、原価単価は「総原価 ÷ 在庫数」で再計算する。
+    57	
+    58	#### 1. 分割 登録（`StockSplitRegisterAction`）
+    59	
+    60	基本設計4-4の処理順（在庫減算→在庫変動履歴→ステータス履歴→在庫分割情報）に対応。実装は単一トランザクション（`wrapInTransaction`）で分割元 `ProductStock` を `PESSIMISTIC_WRITE` ロック・`refresh` 後に以下を実行する。
+    61	
+    62	1. 在庫不足チェック: 分割数 > 現在庫なら中断し `admin.stock.split.quantity_exceeds_stock`（在庫操作なし＝ロールバック）。
+    63	2. **①在庫減算**: 新在庫 = `max(0, 現在庫 - 分割数)`、新総原価 = 現総原価 - 出庫総原価、原価単価を再計算して `ProductStock` を更新。
+    64	3. **④在庫分割情報登録**: `DtbStockSplitJoin`（種別=分割, ステータス=新規登録）を作成。減算前の在庫数・総原価・原価単価・基準価格をスナップショットとして保持し、`outbound_total_cost` に出庫総原価を記録。在庫変動履歴が `history_source_id` としてIDを参照するため先に flush。
+    65	4. **②在庫変動履歴登録**: `SPLIT_OUTBOUND` 種別、履歴ソース `STOCK_SPLIT_EDIT`、変動数 `-分割数`、減算前後の在庫・原価を記録。
+    66	5. **③ステータス履歴登録**: `dtb_stock_split_join_status_history` に新規登録ステータスを記録。
+    67	
+    68	成功時 `admin.stock.split.register_complete` を表示し編集画面へ。分割先はこの時点では未登録（編集画面でSession追加）。
+    69	
+    70	#### 2. 分割 編集～承認申請（`StockSplitApplyApprovalAction`）
+    71	
+    72	編集画面で分割先（`ProductStock`）と各数量をSession（キー `stock_split_edit_destinations_{id}`）に保持。承認申請で以下を実行する。
+    73	
+    74	1. Sessionの分割先から `DtbStockSplitJoinDetail` を作成（`cost_price`=分割先原価単価, `total_cost`=原価単価×数量, `stock`=分割先在庫スナップショット）し flush。
+    75	2. コミット規則検証: 分割数1以上、分割先1件以上（`admin.stock.split.destination_required`）、分割先合計1以上（`admin.stock.split.destination_total_zero`）。
+    76	3. ステータスを「分割承認待ち」へ変更、`move_to_approval_at`／`move_to_approval_member` を記録、ステータス履歴を追加。
+    77	4. 承認リスト `DtbStockApprovalList`（未承認）を1行作成（対象在庫数=分割先件数+1、変動数=分割先合計、移動総原価=分割元原価単価×分割数）。
+    78	
+    79	却下済み（`REJECTED`）からの承認申請は `admin.stock.split.apply_approval_invalid_status`。
+    80	
+    81	#### 3. 分割 承認（`StockSplitApprovalApproveAction`）／却下（`StockSplitApprovalRejectAction`）
+    82	
+    83	- **承認**: ステータス `SPLIT_APPROVAL_WAITING` を `PESSIMISTIC_WRITE` ロック・`refresh`。各分割先 `ProductStock` をロックし、移動総原価（分割元総原価 × 分割数 / 分割元在庫）を、分割先の買取金額×個数の比で按分して加算。分割先在庫を `+数量`、総原価加算、原価単価再計算し `SPLIT_INBOUND` 履歴を記録。ステータスを「入庫済み」、承認リストを承認済みに更新。既に入庫済みなら冪等成功、その他ステータスは `admin.stock.split.approval_status_error`。
+    84	- **却下**: ステータス `SPLIT_APPROVAL_WAITING` 前提。分割元 `ProductStock` をロックし、分割登録時に減算した在庫（`+分割数`）と原価（原価単価×分割数）を戻し、`SPLIT_REJECT` 履歴を記録。ステータスを「却下」、却下メモを保存、承認リストを却下に更新。
+    85	
+    86	#### 4. 結合 登録（`StockJoinRegisterAction`）
+    87	
+    88	結合点数（`destination_stock`>0）で `DtbStockSplitJoin`（種別=結合, ステータス=新規登録）を作成。`stock`／`split_join_quantity` に結合点数、原価単価・総原価は結合先 `ProductStock` の現在値を記録。ステータス履歴を追加。**この時点では在庫操作を行わない**（結合先への加算は承認時）。成功時 `admin.stock.join.register_complete`。
+    89	
+    90	#### 5. 結合 編集～欠品入力遷移（`StockJoinMoveToShortageEntryAction`）
+    91	
+    92	編集画面で結合元と数量をSession（キー `stock_join_edit_sources_{id}`）に保持。欠品入力へ遷移する操作で、NEWステータスなら単一トランザクションで以下を実行する。
+    93	
+    94	1. 検証: 結合元1件以上（`admin.stock.join.require_at_least_one_source`）、計画結合数1以上（`admin.stock.join.apply_approval_zero_quantity`）。
+    95	2. 各結合元 `ProductStock` をロック・`refresh`。数量は `min(入力数量, 在庫数)` に丸め、0以下はスキップ。
+    96	3. `DtbStockSplitJoinDetail` を作成（基準価格・原価単価・総原価・在庫スナップショット・結合数量）。
+    97	4. 結合元在庫を `-数量`、総原価減算、原価単価再計算し `JOIN_OUTBOUND` 履歴を記録。
+    98	5. ヘッダ（`DtbStockSplitJoin`）の派生原価を `StockJoinDetailDerivedHeaderCostApplier` で再計算。
+    99	6. ステータスを「結合元登録」へ変更しステータス履歴を追加。
+   100	
+   101	既に「結合元登録」ステータスの場合はDB明細を検証のみして遷移する。NEW/結合元登録以外は `admin.stock.join.move_to_shortage_only_from_registered`。
+   102	
+   103	#### 6. 結合 欠品入力～承認申請（`StockJoinShortageEntryAction` / `StockJoinApplyApprovalAction`）
+   104	
+   105	- 欠品入力画面は「結合元登録」ステータス専用（不一致は `admin.stock.join.shortage_entry_invalid_status`）。結合数0の明細は表示対象外。欠品点数はSession（キー `eccube.admin.stock.join.shortage.{id}`）に保持。
+   106	- 承認申請: 「結合元登録」前提。各結合元の欠品点数を確定し、有効結合数（結合量-欠品量）の合計が1未満なら `admin.stock.join.apply_approval_zero_quantity`。欠品>0の明細は「案B方式」で在庫調整する。
+   107	  - **欠品加算[`JOIN_SHORTAGE_ADD`]**: `JOIN_OUTBOUND` で出庫した全量を結合元へ戻す。
+   108	  - **欠品減算[`JOIN_SHORTAGE_SUBTRACT`]**: 有効数量（結合量-欠品量）のみを再減算する。
+   109	  - 欠品分は `DtbStockoutHistory`（欠品履歴）を作成し、`DtbStockSplitJoinDetail.missing_quantity`／`missing_member_id` を更新。
+   110	  - ステータスを「結合承認待ち」へ、承認リスト `DtbStockApprovalList`（未承認, 種別 `JOIN_INBOUND`）を作成。
+   111	
+   112	#### 7. 結合 承認（`StockJoinApprovalApproveAction`）
+   113	
+   114	ステータス `JOIN_APPROVAL_WAITING` を `PESSIMISTIC_WRITE` ロック・`refresh`。結合先 `ProductStock`（`DtbStockSplitJoin.product_stock_id`）をロックし、在庫を `+結合数量`、総原価に仕入価格（`purchase_price`）を加算、原価単価を再計算し `JOIN_INBOUND` 履歴を記録。ステータスを「入庫済み」へ。結合数量が0以下なら例外（`admin.stock.join.approval_no_inbound_quantity`）。却下は分割と同様に承認画面POSTから処理する。
+   115	
+   116	### トランザクション・同時実行制御
+   117	
+   118	- 在庫を増減する各 Action（分割登録／分割承認・却下／結合欠品入力遷移／結合承認申請／結合承認）は、対象 `ProductStock` および `DtbStockSplitJoin` を `LockMode::PESSIMISTIC_WRITE` でロックし `refresh()` で最新化したうえで単一トランザクション内で在庫・履歴・ステータスを更新する。例外時は `rollback()`。
+   119	- NEWステータス中の分割先・結合元・欠品の入力値は **DBではなくSession** に保持し、承認申請・欠品入力遷移のタイミングで一括してDB確定する。登録メモのみ各ステータスでDB即時保存可能。
+   120	- 結合承認申請で同一結合元 `ProductStock` を複数明細が参照する場合に備え、明細ごとに `flush()` してDB値を確定する。
+   121	
+   122	### 分岐・遷移・例外（実メッセージキー）
+   123	
+   124	| 状況 | 実装の扱い |
+   125	|------|-----------|
+   126	| CSRFトークン不正 | 分割登録 `admin.common.save_error`、結合登録・承認系 `admin.common.csrf_invalid`。元画面へリダイレクト。 |
+   127	| 店舗編集権限なし | 分割 `admin.stock.split.not_editable_store`／結合 `admin.stock.join.not_editable_store`。 |
+   128	| 分割数 < 1 | `admin.stock.split.quantity_min`。 |
+   129	| 分割数 > 在庫 | `admin.stock.split.quantity_exceeds_stock`（トランザクション中断）。 |
+   130	| 結合点数 ≤ 0 | `admin.stock.join.destination_stock_min`。 |
+   131	| 分割先未登録／合計0 | `admin.stock.split.destination_required` / `admin.stock.split.destination_total_zero`。 |
+   132	| 分割先・結合元の重複追加 | `admin.stock.split_join.destination_already_exists`。 |
+   133	| 対象 `DtbStockSplitJoin` が見つからない／種別不一致 | `admin.stock.split_join.not_found` / `admin.stock.join.source_not_found`。 |
+   134	| 種別取り違え（分割IDで結合画面など） | 対応する編集画面（`admin_stock_split_edit` / `admin_stock_join_edit`）へリダイレクト。 |
+   135	| 編集対象が承認待ちステータス | 編集POSTは保存せず承認画面（`admin_stock_split_approval` / `admin_stock_join_approval`）へリダイレクト。 |
+   136	| 承認モード不正 | `admin.common.save_error`。 |
+   137	| 却下メモ未入力 | `admin.stock.move.rejection_reason_required`。 |
+   138	| 承認ステータス不整合 | 分割 `admin.stock.split.approval_status_error` / `admin.stock.split.approval_invalid_status`、結合 `admin.stock.join.apply_approval_invalid_status` / `admin.stock.join.shortage_entry_invalid_status`。 |
+   139	| メモ専用エンドポイントを別種別で呼出 | `createNotFoundException()`（404）。 |
+   140	| マスタ未整備（ステータス／変動種別／履歴ソース欠落） | `\LogicException`（`admin.stock.join.status_not_found` 等）。 |
+   141	| CSV取込時のCSRF/ファイル不正・ステータス不可 | JSONで `ok=false` とエラーメッセージ（例 `admin.stock.split_join.already_applied`、`admin.stock.join.receipt_completed_locked`）。 |
+   142	
+   143	成功時の主なメッセージキー: `admin.stock.split.register_complete`、`admin.stock.split.apply_approval_success`、`admin.stock.split.approval_approve_complete`、`admin.stock.move.reject_complete`、`admin.stock.join.register_complete`、`admin.stock.join.moved_to_shortage_entry`、`admin.stock.join.apply_approval_success`、`admin.stock.join.approval_approve_complete`、共通 `admin.common.save_complete` / `admin.common.delete_complete`。
+   144	
+   145	### 表示メッセージ（メッセージ一覧・在庫分割 `StockSplitController`）
+   146	
+   147	`StockSplitController`（分割系）のフラッシュメッセージをメッセージIDで一覧化する。文言は `messages.ja.yaml` 由来のロケール解決値、可変（例外・フォーム検証由来）行はその旨を明記。結合系 `StockJoinController` は別途採番。
+   148	
+   149	| メッセージID | 表示位置 | 画面上の文言 | 表示条件 | 種別 | 後続処理 |
+   150	| --- | --- | --- | --- | --- | --- |
+   151	| M04-13-MSG-001 | 管理画面上部 | 保存に失敗しました | 分割登録時にセッションの有効期限が切れているとき | エラー | 分割新規登録画面に遷移する |
+   152	| M04-13-MSG-002 | 管理画面上部 | この店舗の在庫を編集する権限がありません。 | 編集権限のない店舗の在庫を分割登録しようとしたとき | エラー | 分割新規登録画面に遷移する |
+   153	| M04-13-MSG-003 | 管理画面上部 | 分割数は1以上を入力してください。 | 分割数に1未満を入力して登録したとき | エラー | 分割新規登録画面に遷移する |
+   154	| M04-13-MSG-004 | 管理画面上部 | admin.stock.split_join.login_required ／ ステータスマスタが設定されていません。 | 在庫分割を登録するとき、ログインしていない、またはステータスマスタが設定されていない場合 | エラー | 在庫分割の新規登録画面に遷移する |
+   155	| M04-13-MSG-005 | 管理画面上部 | 分割数は1以上を入力してください。 ／ 分割数が在庫数を超えています。 | 在庫分割を登録するとき、分割数が1未満、または在庫数を超える場合 | エラー | 在庫分割の新規登録画面に遷移する |
+   156	| M04-13-MSG-006 | 管理画面上部 | 在庫分割を登録しました。 | 在庫分割を登録したとき | インフォ(成功) | 分割編集画面に遷移する |
+   157	| M04-13-MSG-007 | 管理画面上部 | 保存しました | 編集内容を保存したとき | インフォ(成功) | 分割編集画面に遷移する |
+   158	| M04-13-MSG-008 | 管理画面上部 | 保存に失敗しました | 編集内容の保存時にセッションの有効期限が切れているとき | エラー | 分割編集画面に遷移する |
+   159	| M04-13-MSG-009 | 管理画面上部 | この店舗の在庫を編集する権限がありません。 | 編集権限のない店舗の在庫を操作しようとしたとき | エラー | 分割編集画面に遷移する |
+   160	| M04-13-MSG-010 | 管理画面上部 | 承認通知先のメンバーを1人以上選択してください。 | 承認通知先を選ばずに承認申請したとき | エラー | 分割編集画面に遷移する |
+   161	| M04-13-MSG-011 | 管理画面上部 | admin.stock.split_join.not_found ／ 却下済みのため、再申請はできません。新規分割から操作してください。 | 在庫分割の承認申請時、対象の分割が見つからない、対象外の在庫または種別である、または却下済みの場合 | エラー | 在庫分割の編集画面に遷移する |
+   162	| M04-13-MSG-012 | 管理画面上部 | 承認申請しました。 | 承認申請したとき | インフォ(成功) | 分割承認画面に遷移する |
+   163	| M04-13-MSG-013 | 管理画面上部 | セッションがタイムアウトしました。もう一度やり直してください。 | 承認操作時にセッションの有効期限が切れているとき | エラー | 分割承認画面に遷移する |
+   164	| M04-13-MSG-014 | 管理画面上部 | 承認権限がありません。 | 承認操作をしたときに承認権限がないとき | エラー | 分割承認画面に遷移する |
+   165	| M04-13-MSG-015 | 管理画面上部 | 保存に失敗しました | 分割先の追加時にセッションの有効期限が切れているとき | エラー | 分割編集画面または分割新規登録画面に遷移する |
+   166	| M04-13-MSG-016 | 管理画面上部 | admin.stock.split_join.not_found | 在庫分割の分割先を追加するとき、対象の分割がない、または編集できない状態の場合 | エラー | 在庫分割の新規登録画面に遷移する |
+   167	| M04-13-MSG-017 | 管理画面上部 | admin.stock.split_join.not_found | 在庫分割の分割先を追加するとき、分割先の在庫が指定されていない場合 | エラー | 在庫分割の編集画面に遷移する |
+   168	| M04-13-MSG-018 | 管理画面上部 | admin.stock.split_join.destination_already_exists | 在庫分割の分割先に、分割元と同じ在庫を追加しようとした場合 | エラー | 在庫分割の編集画面に遷移する |
+   169	| M04-13-MSG-019 | 管理画面上部 | admin.stock.split_join.destination_already_exists | 在庫分割の分割先に、既に追加済みの在庫を追加しようとした場合 | エラー | 在庫分割の編集画面に遷移する |
+   170	| M04-13-MSG-020 | 管理画面上部 | セッションがタイムアウトしました。もう一度やり直してください。 | 分割先の削除時にセッションの有効期限が切れているとき | エラー | 分割編集画面に遷移する |
+   171	| M04-13-MSG-021 | 管理画面上部 | 保存に失敗しました | 新規登録以外の分割データを削除しようとしたとき | エラー | 分割編集画面に遷移する |
+   172	| M04-13-MSG-022 | 管理画面上部 | 削除しました | 分割先の在庫を削除したとき | インフォ(成功) | 分割編集画面に遷移する |
+   173	| M04-13-MSG-023 | 管理画面上部 | セッションがタイムアウトしました。もう一度やり直してください。 | メモの保存時にセッションの有効期限が切れているとき | エラー | 分割編集画面に遷移する |
+   174	| M04-13-MSG-024 | 管理画面上部 | 保存に失敗しました | メモの保存中にエラーが起きたとき | エラー | 分割編集画面に遷移する |
+   175	| M04-13-MSG-025 | 管理画面上部 | 保存しました | メモを保存したとき | インフォ(成功) | 分割承認画面または分割編集画面に遷移する |
+   176	| M04-13-MSG-026 | 管理画面上部 | 却下しました。 ／ 分割の承認が完了しました。 | 在庫分割の承認画面で承認または却下を実行した場合 | インフォ(成功) | 在庫分割の編集画面に遷移する |
+   177	
+   178	### 状態・データ更新（更新系）
+   179	
+   180	本機能は**更新系**であり、以下の実Entity／テーブルを更新する。
+   181	
+   182	| 対象テーブル | Entity | 用途・主な列 |
+   183	|--------------|--------|--------------|
+   184	| `dtb_stock_split_join` | `DtbStockSplitJoin` | 分割・結合の基本情報。`split_join_type`（1=分割/2=結合）、`stock_split_join_status_id`、`product_stock_id`（分割元/結合先）、`standard_price`、`unit_cost_price`、`total_cost`、`stock`、`split_join_quantity`、`split_join_memo`、`outbound_total_cost`、`move_to_approval_member_id`/`move_to_approval_at`、`rejected_memo`、登録者/更新者/登録日/更新日。 |
+   185	| `dtb_stock_split_join_detail` | `DtbStockSplitJoinDetail` | 分割先／結合元の明細。`subject_product_stock_id`、`standard_price`、`cost_price`、`total_cost`、`stock`、`split_join_quantity`、**欠品点数 `missing_quantity`**、**欠品登録者 `missing_member_id`**。 |
+   186	| `dtb_stock_split_join_status_history` | `DtbStockSplitJoinStatusHistory` | ステータス遷移履歴。`stock_split_join_id`、`stock_split_join_status_id`、`update_member_id`、`update_date`。 |
+   187	| `dtb_product_stock` / `dtb_product_class` | `ProductStock` / `ProductClass` | 在庫数 `stock`・総原価 `total_cost` を `ProductStockEntityManager::save()` で更新。 |
+   188	| `dtb_stock_history` | `DtbStockHistory` | 在庫変動履歴。変動種別 `SPLIT_OUTBOUND` / `SPLIT_INBOUND` / `SPLIT_REJECT` / `JOIN_OUTBOUND` / `JOIN_INBOUND` / `JOIN_SHORTAGE_ADD` / `JOIN_SHORTAGE_SUBTRACT`、履歴ソース `STOCK_SPLIT_EDIT` / `STOCK_JOIN_EDIT`、`history_source_id`=`DtbStockSplitJoin.id`。 |
+   189	| `dtb_stock_approval_list` | `DtbStockApprovalList` | 承認申請時に未承認で作成、承認・却下時に状態更新。 |
+   190	| `dtb_stockout_history` | `DtbStockoutHistory` | 結合の欠品確定時に欠品点数を記録。 |
+   191	
+   192	### 結合テスト観点（既存テストの出典）
+   193	
+   194	既存の `tests/Eccube/Tests/Web/Admin/Stock/StockSplitControllerTest.php` / `StockJoinControllerTest.php` がエンドポイントごとの挙動を網羅する。
+   195	
+   196	- 分割: 新規GET（既存分割あり/なし）、登録のCSRF不正・成功・在庫不足エラー・権限なし、編集GET（分割/結合種別）・POST成功・承認待ち時リダイレクト・不正フォーム、承認申請のCSRF不正・成功・joinId有無別エラー、承認画面の承認成功・却下（メモ空/成功/例外）・不明モード、分割先の追加（CSRF/不正ID/未存在/ステータス不正/重複/成功）・削除・CSV雛形・CSV取込。
+   197	- 結合: 新規200、登録成功・CSRF不正・LogicException・権限なし、編集GET/POST・承認待ち時リダイレクト、結合元の追加/削除、欠品入力遷移（成功/検証例外）、登録メモ保存（成功/承認へ戻り/例外）、欠品入力GET・ステータス不正、欠品数量更新、承認申請の対象なし、結合元CSV雛形・取込（新規/編集）、結合元数量更新（Ajax/非Ajax/ステータス別）、在庫区分更新（非Ajax/LogicException/Throwable）。
+   198	
+   199	### 関連設計への接続点
+   200	
+   201	- 在庫検索一覧（M04-01）の「在庫分割登録」「在庫結合登録」ボタンが本機能の新規登録画面（`admin_stock_split_new` / `admin_stock_join_new`）への入口。遷移可否のアラート（複数店舗選択時など）はM04-01側の要件。
+   202	- 承認申請で作成する `DtbStockApprovalList` は在庫承認関連画面（`StockApprovalController` / `StockApprovalListController`）の対象。
+   203	- 在庫変動履歴（`dtb_stock_history`）は在庫変動履歴一覧（M04-05系）から参照される。
+   204	- 画面項目・CSV列・帳票レイアウトの詳細は参照元Excel設計書の該当シートを正とする。
+
+exec
+/bin/bash -lc 'nl -ba functions/_archive/pf-eccube3/m14-05_admin_card_card_csv_import.md
+nl -ba functions/_archive/pf-eccube3/m05-07_admin_order_order_labels_csv_export.md
+nl -ba functions/_archive/pf-eccube3/m13-13_admin_event_event_entry_csv_import.md' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+     1	# m14-05_admin_card_card_csv_import — 5分類外の退避
+     2	
+     3	<!-- 5分類（処理フロー / 入出力 / 業務ロジック / 表示メッセージ / エラー処理）へ
+     4	     写像しなかった節の退避先。設計書本体から外した内容をそのまま保持する。
+     5	     規約は .cursor/skills/output-exclusion-policy/SKILL.md を正本とする。 -->
+     6	
+     7	## CSV 列（論理キー）一覧
+     8	
+     9	1 行目は次のキーを、この順で並べる。表の説明欄は画面の日本語ラベルに相当する。
+    10	
+    11	| 論理キー | 画面説明（概要） |
+    12	|----------|------------------|
+    13	| name_jp | カード名(日本語)（`＋`→`/`） |
+    14	| name_en | カード名(英語)（`//`→`/`） |
+    15	| arena_format_name_jp | アリーナカード名(日本語) |
+    16	| arena_format_name_en | アリーナカード名(英語) |
+    17	| text_jp | ルールテキスト(日本語) |
+    18	| text_en | ルールテキスト(英語) |
+    19	| mana_cost | マナコスト |
+    20	| cmc | 点数で見たマナコスト |
+    21	| power | パワー |
+    22	| toughness | タフネス |
+    23	| loyalty | 忠誠度 |
+    24	| color | カラー（多値） |
+    25	| cardtype | カードタイプ（多値） |
+    26	| subtype | サブタイプ（多値） |
+    27	| specialtype | 特殊タイプ（多値） |
+    28	| keyword_ability | キーワード能力（現行取込では未使用） |
+    29	| format | 使用可能フォーマット |
+    30	| set | セット |
+    31	| rarity | レアリティ |
+    32	| illustrator | イラストレーター |
+    33	| layout | レイアウト |
+    34	| flavor_jp | フレーバーテキスト(日本語) |
+    35	| flavor_en | フレーバーテキスト(英語) |
+    36	| card_no | カードNo |
+    37	| promotion | プロモーション名 |
+    38	| foil_flg | Foilフラグ |
+    39	| promotion_flg | プロモフラグ |
+    40	| image_jp | 画像URL(日本語) |
+    41	| image_en | 画像URL(英語) |
+    42	| card_detail_id | カード詳細ID |
+    43	| back_card_detail_id | 裏面カード詳細ID |
+    44	| color_sequence | 色順 |
+    45	| color_identity | 固有色（多値） |
+    46	
+    47	必須として別定義されている論理キーは `name_en`、`cmc`（空は後続で 0 扱い）、`rarity`、`layout`、`promotion_flg`、`image_en` である。ヘッダ比較では `card_detail_id` など 3 キーは抜き出して比較するため、ファイルから省略してよい。
+    48	
+    49	---
+    50	
+    51	---
+    52	
+    53	## 副作用（設計書からは削除・2026-08-19）
+    54	
+    55	| 副作用 | `mtb_card`・`mtb_card_detail`・中間・画像・イラストレータ等の INSERT/UPDATE、`dtb_card_format` の DELETE を含み得る。一時ファイル削除。支店通知。 |
+    56	
+    57	---
+    58	
+    59	## 0203に無い定型節（設計書からは削除・2026-08-19）
+    60	
+    61	#### エッジケース
+    62	| ケース | 扱い |
+    63	|--------|------|
+    64	| ヘッダのみでデータ行がない | `admin.csv.error.data.empty`。 |
+    65	| ヘッダ列数とデータ列数が異なる | 該当行番号付きで `admin.csv.error.format.body`。 |
+    66	| 英語名が同一の複数データ行 | 同一カードに対する更新となる。タイプ・色等は最初に触れた行の結果が `registeredCards` により保持され、後続行では変更されない場合がある。 |
+    67	| 支店通知失敗 | DB 取込は完了済み。失敗内容を支店更新エラーに残しログに JSON を出す。 |
+    68	| Windows かつ PHP7 かつパス区切りが `\` | 一時読込後に UTF-8 検出時は `SJIS-win` へ一度変換する分岐がある。 |
+    69	---
+    70	### データ整合性
+    71	| 観点 | 内容 |
+    72	|------|------|
+    73	| 一覧・検索との即時一致 | 取込成功後は同一 DB を見る画面なら再検索で反映される。キャッシュ層は取込中に定期的にクリアされる。 |
+    74	| 支店系統 | 通知失敗時はローカル DB と支店側の整合は保証されない。別途再連携機能の設計を正とする。 |
+    75	| 同一ファイルの再実行 | 英語名キーで上書き更新となるため、冪等ではない。 |
+    76	---
+    77	
+    78	---
+    79	
+    80	## 0203に無い定型節（設計書からは削除・2026-08-19）
+    81	
+    82	#### 入力項目
+    83	| 項目名 | 必須／任意 | 最大長 | 初期値 | 保存先・扱い |
+    84	|--------|------------|--------|--------|----------------|
+    85	| CSV, TSVファイル選択 | 必須 | ファイルサイズ上限は `csv_size` MB（`constant.yml.dist` では 5）。MIME は `text/plain`、`text/csv`、`text/tab-separated-values`、`application/vnd.ms-excel` のいずれかとして検証される | 未選択 | フォーム項目キー `import_file`。永続化は行わず、一時ディレクトリへ保存したうえで取込パイプラインへ渡す。空ファイルはフォーム層の `NotBlank` により通常は弾かれる。 |
+    86	
+    87	---
+    88	
+    89	## 0203に無い定型節（設計書からは削除・2026-08-19）
+    90	
+    91	### ログ・監査
+    92	| タイミング | 記録内容 |
+    93	|------------|----------|
+    94	| 取込開始 | 情報ログ「カードCSV登録開始」。 |
+    95	| 取込完了 | 情報ログ「カードCSV登録完了」。 |
+    96	| 取込失敗 | 情報ログ「エラーが発生しました」と例外メッセージ配列。 |
+    97	| 支店通知成功 | 情報ログにカード ID 連結。 |
+    98	| 支店通知失敗 | 情報ログに失敗と JSON。 |
+    99	#### ログに出してはいけないもの
+   100	- パスワード
+   101	- CSRF トークン原値
+   102	- セッション ID の完全値
+   103	- クッキー値
+   104	---
+   105	### 権限・認可
+   106	| 利用者状態 | カード CSV 取込 |
+   107	|------------|-----------------|
+   108	| 管理画面に入れる通常の管理者 | ルート定義上は個別のアノテーションを持たず、管理画面共通の認証・認可が適用される実装である。 |
+   109	| 未ログインまたは共通ルールで遮断される利用者 | 当パスへ到達できない。 |
+   110	---
+   111	### セッション
+   112	#### 本機能におけるセッション
+   113	| 観点 | 内容 |
+   114	|------|------|
+   115	| フラッシュ | 成功・エラーメッセージは `eccube.admin.success` / `eccube.admin.error` に積まれる。 |
+   116	| カード検索セッション | 取込画面の表示・取込完了では更新しない。 |
+   117	#### セッションへ保存しない情報
+   118	アップロードファイル本体や全行バッファをセッションに載せない。
+   119	---
+   120	### 業務ルール・計算
+     1	# m05-07_admin_order_order_labels_csv_export — 5分類外の退避
+     2	
+     3	<!-- 5分類（処理フロー / 入出力 / 業務ロジック / 表示メッセージ / エラー処理）へ
+     4	     写像しなかった節の退避先。設計書本体から外した内容をそのまま保持する。
+     5	     規約は .cursor/skills/output-exclusion-policy/SKILL.md を正本とする。 -->
+     6	
+     7	## データ取得クエリの要点
+     8	
+     9	- 受注を起点に、都道府県マスタ・会員・受注明細・商品・出荷・配送方法を結合する。
+    10	- 出荷の主キーが `ids` に含まれる行に限定する。
+    11	- 受注 ID でグループ化するため、同一受注に複数の出荷が `ids` に含まれる場合、SQL 上は 1 行に畳み込まれる。データ行の配送先などは受注に紐づく出荷コレクションの先頭要素を参照する実装であり、どの出荷 ID に対応する行かと一致しない場合がある（実装を確認値とする）。
+    12	- 受注明細と商品の内部結合のため、該当する明細が存在しない受注は結果に現れない。
+    13	
+    14	---
+    15	
+    16	## 出力列と値の対応（業務ルール）
+    17	
+    18	ヘッダ行の並びは送り状CSV用エクスポータ内の固定配列どおりである。データ行は取得処理が同じ順序で `row` に値を追加する。
+    19	
+    20	| 列名（ヘッダ） | 内容 |
+    21	|----------------|------|
+    22	| 注文番号 | 受注の注文番号。 |
+    23	| 注文金額合計 | 受注合計。 |
+    24	| 注文者氏名〜注文者電話番号 | 受注の注文者情報。電話は `tel01`〜`tel03` の連結。部署列は空文字固定。 |
+    25	| 贈り主氏名〜贈り主電話番号 | 注文者と同一の文字列を繰り返し立てる。部署列は空文字固定。 |
+    26	| 注文コメント | 受注メッセージ。 |
+    27	| 注文備考(社内用) | 受注備考。 |
+    28	| 備考(内部用) | 空文字固定。 |
+    29	| 注文確定日〜配送希望時間帯 | 注文日時、確定日時、受注に紐づく出荷日時、配送日・時間帯。日時は `Y/m/d H:i:s`、無ければ空。 |
+    30	| 商品金額合計 | 受注小計。 |
+    31	| 送料・送料(税抜) | いずれも受注の送料合計と同一値。 |
+    32	| 手数料・手数料(税抜) | いずれも受注の手数料と同一値。 |
+    33	| のし・ラッピング手数料、のし・ラッピング手数料(税抜)、送料・手数料税率 | 空文字固定。 |
+    34	| 配送先番号 | 数値リテラル `1` 固定。 |
+    35	| 荷物問い合わせURL | 空文字固定。 |
+    36	| 送り状No. | 空文字固定（追跡番号列はヘッダに存在するが値は埋めない）。 |
+    37	| 配送先氏名〜配送先電話番号 | 出荷のお届け先。部署名は空文字固定。電話は連結。 |
+    38	| 郵便種別 | 配送方法マスタの主キーがリポジトリ定義に存在するときだけマッピング値を立てる。例として ID `3` は `0`、ID `4` は `8`。それ以外は空。 |
+    39	| 発送方法 | 配送方法名。 |
+    40	| 発送先国コード | 出荷の国があれば 2 文字の国コード、無ければ空。 |
+    41	| 商品総重量 | クエリで集計した重量。 |
+    42	| 発送方法コード | 配送方法 ID がリポジトリの別マップに存在するときコード文字列、それ以外は空。例として ID `8` は `111`、`9` は `521`、`11` は `321`。 |
+    43	
+    44	マップのキーはソース上は文字列だが、取得 ID は整数でも参照される（実装を確認値とする）。
+    45	
+    46	---
+    47	
+    48	## 関連機能との違い（混同防止）
+    49	
+    50	| 項目 | 送り状CSV（本書） | 出荷CSVダウンロード（別） |
+    51	|------|-------------------|---------------------------|
+    52	| ルート | `admin_labels_export` | `admin_order_export_shipping` |
+    53	| 列定義 | コード内固定 | CSV出力項目定義テーブル（配送種別）と画面設定 |
+    54	| 行の単位 | 受注クエリ結果（実質受注＋集計重量。複数出荷選択時は注意） | 受注明細をループし CSV 行を増やす |
+    55	| 検索条件の反映 | 受注一覧フォームからの POST では検索セッションと無関係に ID のみ | GET で開き、セッションの検索条件で対象受注を決める |
+    56	
+    57	---
+    58	
+    59	## 0203に無い定型節（設計書からは削除・2026-08-19）
+    60	
+    61	### 入出力: 永続化
+    62	更新しない。
+     1	# m13-13_admin_event_event_entry_csv_import — 5分類外の退避
+     2	
+     3	<!-- 5分類（処理フロー / 入出力 / 業務ロジック / 表示メッセージ / エラー処理）へ
+     4	     写像しなかった節の退避先。設計書本体から外した内容をそのまま保持する。
+     5	     規約は .cursor/skills/output-exclusion-policy/SKILL.md を正本とする。 -->
+     6	
+     7	## 用語
+     8	
+     9	| 用語 | 説明 |
+    10	|------|------|
+    11	| 一括登録CSV | イベント情報と日程を1行ずつ表したCSV。先頭にヘッダ行を持つ。 |
+    12	| 取込ハンドラ | CSV1行をイベント・イベント日程として永続化する取込処理。 |
+    13	| 列定義 | 各列の論理名・必須／任意・選択肢・マスタ参照の定義。 |
+    14	| 行検証 | 1行内の複数列をまたいだ整合性検証（受付ありなら受付時間必須など）。 |
+    15	| 取込結果 | 取込件数とエラーメッセージの集合。 |
+    16	
+    17	---
+    18	
+    19	## 取込フォーマット
+    20	
+    21	| 観点 | 内容 |
+    22	|------|------|
+    23	| ヘッダ行 | 1行目に列見出しを持つ。雛形の見出し名と一致する必要がある。不一致はフォーマットエラー。 |
+    24	| 区切り・囲み | 拡張子tsvはタブ区切り、それ以外は設定の区切り文字（確認値カンマ）。囲み文字は設定値（確認値ダブルクォート）。 |
+    25	| 文字コード | アップロード後にUTF-8へ変換して取り込む（Windows環境はSJIS-win考慮）。BOM・ゼロ幅スペースは除去する。 |
+    26	| 行数上限 | 5000行以上は登録不可（上限超過エラー）。 |
+    27	| 登録単位 | 1行＝イベント1件。開始時間が入っている行はイベント日程も同時に登録する。 |
+    28	
+    29	### 列（論理名と必須・選択肢の要点）
+    30	
+    31	| 列（論理名） | 必須／任意 | 値の要点 |
+    32	|--------------|------------|----------|
+    33	| イベント名（日）・イベント名（英） | 必須 | 文字列。 |
+    34	| 店舗・会場 | 必須 | 日本語名でマスタを引く。 |
+    35	| フォーマット | 必須 | 日本語名でマスタを引く。複数指定はカンマ区切り。 |
+    36	| ルール適用度・公開状態 | 必須 | 名称でマスタを引く。 |
+    37	| バナーURL（日）・バナーURL（英） | 任意 | URL文字列。 |
+    38	| 定員・チーム人数 | 必須 | 数値。 |
+    39	| 支払方法（クレジットカード支払い） | 任意 | 「あり」でクレジット支払を有効化、空・なしは無効。 |
+    40	| 参加費 | 必須 | 半角数値。 |
+    41	| 賞品（日）・賞品（英）・備考（日）・備考（英） | 任意 | 文字列。 |
+    42	| 開始時間 | 任意（日程登録の起点） | `YYYY-MM-DD HH:MM`。値があるとイベント日程を登録する。 |
+    43	| 受付・受付時間From・受付時間To | 受付ありの場合From・Toが必須 | 受付は「あり」で有効。時刻は`HH:MM`。 |
+    44	| デッキ登録・デッキ登録締切 | 任意 | デッキ登録は「あり」で有効。締切は`YYYY-MM-DD HH:MM`。 |
+    45	| オンライン受付・オンライン受付時間From・オンライン受付時間To | オンライン受付ありの場合From・Toが必須 | 受付は「あり」で有効。From・Toは`YYYY-MM-DD HH:MM`。 |
+    46	| 定員_日程・参加費_日程 | 任意 | 半角数値。 |
+    47	| 公開状態_日程 | 任意 | 名称でマスタを引く。 |
+    48	| 賞品_日程（日）・賞品_日程（英） | 任意 | 文字列。 |
+    49	
+    50	行検証として、受付ありなら受付時間From・To、オンライン受付ありならオンライン受付時間From・Toを必須とする。
+    51	
+    52	---
+    53	
+    54	## 結果報告
+    55	
+    56	| 観点 | 内容 |
+    57	|------|------|
+    58	| 成功時 | 完了メッセージを表示し、取込件数を情報ログへ記録し、アップロード画面へリダイレクトする。DBはコミットする。 |
+    59	| 取込エラー時 | エラーメッセージ一覧を同画面のアップロード欄付近に表示する。DBはロールバックする。 |
+    60	| 前提検証エラー時 | ヘッダ形式・データ無しのエラーを表示し、取込を行わない。 |
+    61	| フォーム検証エラー時 | ファイル未選択・サイズ超過などのエラーを表示し同画面を再描画する。 |
+    62	| 行数上限超過時 | 上限超過エラーを表示し同画面を再描画する。 |
+    63	
+    64	---
+    65	
+    66	---
+    67	
+    68	## 副作用（設計書からは削除・2026-08-19）
+    69	
+    70	| 副作用 | DBへの一括登録、一時ファイルの生成・削除、情報ログ。 |
+    71	
+    72	---
+    73	
+    74	## 0203に無い定型節（設計書からは削除・2026-08-19）
+    75	
+    76	### データ整合性
+    77	| 観点 | 内容 |
+    78	|------|------|
+    79	| 取込の原子性 | 取込はトランザクション内で行い、エラーまたは中断があれば全件ロールバックする。部分コミットはしない（前提検証で弾いた場合は取込自体を行わない）。 |
+    80	| 一時ファイル | アップロードファイルは一時ディレクトリへ退避し、取込後に削除する。 |
+    81	| マスタ未一致 | マスタ名称が引けない列はマスタ未存在系のエラーで報告し得る。報告対象の行はロールバックされる。 |
+    82	---
+    83	
+    84	---
+    85	
+    86	## 0203に無い定型節（設計書からは削除・2026-08-19）
+    87	
+    88	### ログ・監査
+    89	| タイミング | 記録内容 |
+    90	|------------|----------|
+    91	| 取込開始 | 「イベント一括登録CSV登録開始」を情報ログに記録。 |
+    92	| 取込異常終了 | 「イベント一括登録 異常終了」を情報ログに記録。 |
+    93	| 取込完了 | 取込件数を情報ログに記録。 |
+    94	#### ログに出してはいけないもの
+    95	- Cookie値
+    96	- セッションIDの完全値
+    97	- アップロードファイルの全内容
+    98	- なりすまし対策トークン
+    99	---
+   100	### 権限・認可
+   101	| 利用者状態 | 一括CSV登録 |
+   102	|------------|-------------|
+   103	| 未ログイン管理者 | アクセス不可。 |
+   104	| ログイン済み管理者 | アクセス制御リストがURLを許可するとき、アップロード・取込が可能。 |
+   105	---
+   106	### 排他制御・トランザクション
+   107	取込は単一トランザクションで行い、行ロックタイムアウトを設定する。エラーまたは中断があれば全件ロールバックする。取込中はDBへ一定件数ごとに反映しつつ、最終的な確定はコミットで行う。
+   108	### 業務ルール・計算
+
+exec
+/bin/bash -lc "sed -n '1,220p' functions/pf-eccube3/m05-01_admin_order_order_search_list.md" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+# 受注管理 — 受注情報検索・一覧
+
+## 業務ロジック
+
+### 検索条件
+
+| 画面上の項目 | 検索条件 |
+| --- | --- |
+| 注文者会社名・注文備考のフリーワード | 空白・カンマ区切りの語ごとに、注文者会社名・注文備考・ショップ用メモ・受注明細の商品コードのいずれかへの部分一致。語どうしは AND |
+| 注文者名のフリーワード | 語ごとに、注文者の姓・名・セイ・メイのいずれかへの部分一致。語どうしは AND |
+| 配送先氏名・住所・送り状Noのフリーワード | 語ごとに、配送先の住所1・住所2・姓・名・会社名、受注の送り状No.のいずれかへの部分一致。語どうしは AND |
+| 注文番号 | 受注の注文番号への部分一致 |
+| 店頭注文番号 | 店舗販売用整理番号が一致する受注に限定 |
+| 対応状況 | 選択したいずれかの対応状況に一致 |
+| 注文者のお名前 | 注文者の姓と名を連結した文字列への部分一致 |
+| 注文者のフリガナ | ひらがなを全角カタカナへ変換した入力値で、注文者のセイとメイを連結した文字列への部分一致 |
+| 注文者の電話番号 | 全角英数を半角へ変換しハイフンを除去した入力値で、注文者の 3 つの電話番号値を連結した文字列への部分一致 |
+| メールアドレス | 部分一致 |
+| 性別 | 選択したいずれかの性別に一致 |
+| 支払方法 | 選択したいずれかの支払方法に一致 |
+| 配送方法 | 配送先に紐づく配送方法が、選択したいずれかに一致 |
+| 顧客グループ | 注文者の会員に紐づくプレイヤー情報の顧客グループが、選択したいずれかに一致 |
+| 注文備考の有無 | 選択が 1 件のときだけ、注文備考が未入力か入力済かで絞り込む |
+| 購入金額 | 下限は以上、上限は以下 |
+| 購入商品名 | 受注明細の商品名への部分一致。入力欄は 3 つあり、AND/OR 選択で関係を切り替える |
+| 購入商品コード | 受注明細の商品コードへの完全一致 |
+| 配送先のお名前 | 配送先の姓と名を連結した文字列への部分一致 |
+| 配送先のフリガナ | 配送先のセイとメイを連結した文字列への部分一致。注文者側と違い、入力値の変換は行わない |
+| 配送先の電話番号 | 配送先の 3 つの電話番号値を連結した文字列への部分一致。注文者側と違い、入力値の変換は行わない |
+| 配送先の郵便番号 | 配送先の郵便番号への部分一致 |
+| 配送先の都道府県 | 配送先の都道府県に一致 |
+| 配送先の国・地域 | 配送先の国・地域に一致 |
+| 各日付の期間 | 開始は以上、終了は未満 |
+| 各日付の相対日数 | 「〜日以内」「〜日以上前」で指定する。境界日時の求め方は計算方法に示す |
+| 各日付の未入力／入力済 | 選択が 1 件のときだけ絞り込む |
+
+対応状況を指定しないときは、購入処理中を除いた全対応状況が条件になる。除外する対応状況IDの既定値は `8` で、環境の設定ファイルで変更できる。
+
+支払方法の選択肢は、削除済みでない支払方法から旧・大会専用の 2 件を除き、表示順の降順に並べたものである。
+
+### 入力値の扱い
+
+文字列の条件は、前後の半角空白・タブ・改行を除いた長さが 0 より大きいときだけ付く。全角スペースは除かないため、全角スペースだけの入力でも条件が付く。
+
+フリーワード 3 欄、配送先のお名前・フリガナ・電話番号・郵便番号、店頭注文番号は、空文字・数値の 0・文字列の "0" では条件が付かない。購入商品コードと注文番号は "0" でも条件が付く。配送先の都道府県と国・地域、配送方法・顧客グループ・注文備考の有無も、値が空とみなされる場合は条件が付かない。
+
+フリーワード 3 欄と購入商品名の 3 欄は、入力値のワイルドカード文字 `%` と `_` をエスケープして文字そのものとして扱う。それ以外の部分一致条件はエスケープしないため、入力したワイルドカード文字がそのまま働く。エスケープしないのは、注文番号、配送先のお名前・フリガナ・電話番号・郵便番号、注文者のお名前・フリガナ・メールアドレス・電話番号である。
+
+フリーワード欄の実際の検索対象は画面表示と一致しない。画面のプレースホルダは「注文者会社名・注文備考」だが、実際にはショップ用メモと受注明細の商品コードも検索対象になる。
+
+### 複数条件を同時に指定したときの上書き
+
+一部の条件は値の置き場所を共有しており、同時に指定すると後から設定した値で上書きされる。
+
+| 同時に指定した条件 | 結果 |
+| --- | --- |
+| 配送先の電話番号と郵便番号 | 電話番号の条件にも郵便番号の値が使われる |
+| 日付の開始側どうし | すべての開始条件が最後に指定した値になる。対象は注文日・ピック中・出荷日・キャンセル日・売上確定日・店頭予約の期間条件と、全 9 項目の相対日数条件。入金日・出荷指示日・更新日の期間条件は上書きされない |
+| 日付の終了側どうし | 開始側と同じ。開始側と終了側のあいだでは上書きは起きない |
+| フリーワード 3 欄 | 注文者会社名と、姓・名が上書きの対象になる。優先されるのは配送先フリーワードの語 |
+
+### フリーワードの分割と検索
+
+フリーワード 3 欄は、半角空白・全角空白・カンマ・タブなどの連続で語に分割する。各語について対象項目それぞれへの部分一致を OR で束ね、語どうしを AND で積み上げる。空文字と文字列 "0" の語は読み飛ばすため条件にならない。
+
+### 購入商品名の AND / OR 切替
+
+購入商品名の入力欄は画面に 3 つあり、AND/OR 選択でこの 3 欄の関係を切り替える。
+
+- OR を選んだとき: 入力済みの各欄について受注明細の商品名への部分一致を OR で束ねる。
+- それ以外のとき: 入力済みの各欄ごとに受注明細を個別に絞り込むため、語どうしは AND になる。
+
+選択肢は「AND検索」と「OR検索」である。
+
+### 日付の検索対象
+
+| 画面上の項目 | 検索対象 |
+| --- | --- |
+| 注文日 [乖離] | 受注の注文日 |
+| 入金日 | 受注の入金日 |
+| ピック中 [乖離] | 受注の注文確定日 |
+| 出荷指示日 | 受注の出荷指示日 |
+| 出荷日 | 受注の出荷日 |
+| キャンセル日 | 受注のキャンセル日 |
+| 売上確定日 | 受注の売上確定日 |
+| 店頭予約 | 受注の店頭予約日 |
+| 更新日 | 受注の更新日 |
+
+未入力／入力済の絞り込みがあるのは、ピック中・出荷日・キャンセル日・売上確定日・店頭予約・入金日・出荷指示日の 7 つである。未入力を選んだときは当該日付が未設定の受注に、それ以外のときは設定済みの受注に限定する。
+
+### 検索の成立条件
+
+- 検索フォームの検証結果は検索実行の可否に影響しない。検証エラーがあっても、入力された条件のまま検索する。
+- 検索条件を受け取れないときは、セッションに保持した前回の検索条件で検索する。セッションにも無ければ検索しない。
+
+### 初期表示
+
+一覧の初期表示では、セッションの受注検索条件・受注検索のページ番号・受注検索の表示件数を破棄し、空の検索フォーム・空の一覧・ページ番号 1・既定の表示件数で表示する。受注検索のソートキーと並び順は破棄しない。
+
+### 保存済み検索条件
+
+保存済み検索条件の特定は ID だけで行い、画面キーを確認しない。受注一覧以外の画面キーを持つ検索条件でも、IDを指定すれば呼び出し・削除・件数取得の対象になる。保存で上書きすると画面キーが受注一覧のものへ変わる。画面キーで絞るのは一覧への列挙だけである。
+
+保存・呼び出し・件数取得のいずれも、フォームの検証結果を処理の可否に使わない。
+
+保存
+
+- 検索パターン名が未入力または空文字のときは保存しない。
+- 入力された保存済み検索条件IDに一致するものがあればそれを更新し、無ければ新規に作成する。
+- 入力中の検索条件一式と名称を保存し、受注一覧の画面キーを付ける。
+- 保存後は画面遷移せず、保存した条件を適用した一覧を表示する。
+
+削除
+
+- IDの指定が無い、または該当する保存済み検索条件が存在しないときは削除しない。
+- 存在するときは削除し、一覧の初期表示へ遷移する。
+
+呼び出し
+
+- 保存済みの条件を検索フォームへ復元し、セッションの受注検索条件にも保存する。
+- ページ番号は常に 1 とする。
+
+### 計算方法
+
+#### 表示件数の決定
+
+1. セッションの受注検索の表示件数を用いる。未設定時の既定値は `10` である。
+2. リクエストで指定された表示件数は、表示件数マスタに登録された値のいずれかと一致するときだけ採用し、セッションへ保存する。一致しない値は無視する。
+
+保存済み検索条件の呼び出し時は、リクエストで指定された表示件数を採用しない。
+
+#### 該当件数
+
+保存済み検索条件の該当件数は、明細が複数ある受注を重複して数えるため、実際の受注件数より多くなることがある。配送方法・顧客グループ・購入商品名・配送先の各条件・店頭注文番号を指定すると、重複はさらに増える。同じ保存済み検索条件については最大 10 秒間、前回取得した件数をそのまま返す。
+
+一覧画面に表示する該当件数はこれとは別の算出である。
+
+#### 相対日数条件の算出
+
+「〜日以内」「〜日以上前」の入力から、現在日時を基準に境界日時を計算する。
+
+- 開始日時: 現在日時から「日以内」の日数を引き、時刻を `00:00:00` に設定する。条件は開始日時以上。
+- 終了日時: 「日以上前」の日数を 1 だけ減じたうえで、現在日時からその日数を引き、時刻を `00:00:00` に設定する。条件は終了日時未満。
+- 「日以上前」が 1 以上のとき、終了日時は現在日時から入力値より 1 少ない日数を引いた日の 0 時になる。画面からは 0 も送れる。その場合と負値の場合のふるまいは正本コードからは確認できない。
+
+相対日数を指定できるのは、注文日・ピック中・出荷日・入金日・出荷指示日・キャンセル日・売上確定日・店頭予約・更新日の 9 項目である。
+
+### Excel設計書との乖離
+
+[乖離] を付けた記述は、現行ソースにあって Excel設計書に無いふるまいである。
+
+| 現行ソースのふるまい | Excel設計書の記載 |
+| --- | --- |
+| 注文日を期間と相対日数で絞り込める | 注文日の項目が無い |
+| ピック中を期間・相対日数・未入力／入力済で絞り込める | ピック中の項目が無い |
+
+## 入出力
+
+### 出力: 保存済み検索条件の該当件数
+
+保存済み検索条件ごとに、その条件で検索したときの該当件数を返す。該当する保存済み検索条件が無いときは件数を返さない。この経路では検索条件をセッションへ保存しないため、一覧の検索状態は変わらない。
+
+呼び出すのは一覧画面の検索条件欄である。個別の再取得ボタンは非同期で 1 件だけ取り直し、全件更新ボタンは各条件を同期で順に呼ぶ。取得した件数は当該条件の件数表示へ差し込む。
+
+### 入出力: 永続化
+
+保存済み検索条件は検索パターンテーブルに保持する。項目はID・パターン名・検索パターン・画面キーである。
+
+| 操作 | 契機 |
+| --- | --- |
+| 登録・更新 | 検索条件保存 |
+| 削除 | 検索条件削除 |
+
+受注側のデータは更新しない。
+
+## 表示メッセージ
+
+| メッセージID | 表示位置 | 画面上の文言 | 表示条件 | 後続処理 |
+| --- | --- | --- | --- | --- |
+| M05-01-MSG-005 | 管理画面上部 | 検索パターン名を入力して下さい | 検索パターン名を入力せずに保存したとき | 保存せず受注一覧へ戻る |
+| M05-01-MSG-006 | 管理画面上部 | 検索条件を保存しました | 検索条件を保存したとき | 保存した条件を適用した一覧へ戻る |
+| M05-01-MSG-007 | 管理画面上部 | 検索条件を削除できませんでした | 削除しようとした検索条件が見つからないとき | 削除せず受注一覧へ戻る |
+| M05-01-MSG-008 | 管理画面上部 | 検索条件を削除しました | 検索条件を削除したとき | 受注一覧へ戻る |
+| M05-01-MSG-011 | 入力項目直下 | カタカナで入力してください。 | 注文者のフリガナにカタカナ以外を入力して検索したとき | 検索せず一覧に留まる |
+| M05-01-MSG-012 | 入力項目直下 | カタカナで入力してください。 | 配送先のフリガナにカタカナ以外を入力して検索したとき | 検索せず一覧に留まる |
+| M05-01-MSG-013 | 入力項目直下とフォーム上部 | admin.product.date_range_error | 注文日の開始日が終了日より後の状態で検索したとき | 検索せず、詳細検索欄を開いた状態でエラーを表示する |
+| M05-01-MSG-014 | 入力項目直下とフォーム上部 | admin.product.date_range_error | 入金日の開始日が終了日より後の状態で検索したとき | 検索せず、詳細検索欄を開いた状態でエラーを表示する |
+| M05-01-MSG-015 | 入力項目直下とフォーム上部 | admin.product.date_range_error | 更新日の開始日が終了日より後の状態で検索したとき | 検索せず、詳細検索欄を開いた状態でエラーを表示する |
+| M05-01-MSG-016 | 入力項目直下とフォーム上部 | admin.product.date_range_error | お届け日の開始日が終了日より後の状態で検索したとき | 検索せず、詳細検索欄を開いた状態でエラーを表示する |
+| M05-01-MSG-017 | 入力項目直下とフォーム上部 | admin.product.date_range_error | ピック日の開始日が終了日より後の状態で検索したとき | 検索せず、詳細検索欄を開いた状態でエラーを表示する |
+| M05-01-MSG-018 | 入力項目直下とフォーム上部 | admin.product.date_range_error | 出荷指示日の開始日が終了日より後の状態で検索したとき | 検索せず、詳細検索欄を開いた状態でエラーを表示する |
+| M05-01-MSG-019 | 入力項目直下とフォーム上部 | admin.product.date_range_error | 出荷日の開始日が終了日より後の状態で検索したとき | 検索せず、詳細検索欄を開いた状態でエラーを表示する |
+| M05-01-MSG-020 | 入力項目直下とフォーム上部 | admin.product.date_range_error | キャンセル日の開始日が終了日より後の状態で検索したとき | 検索せず、詳細検索欄を開いた状態でエラーを表示する |
+| M05-01-MSG-021 | 入力項目直下とフォーム上部 | admin.product.date_range_error | 売上確定日の開始日が終了日より後の状態で検索したとき | 検索せず、詳細検索欄を開いた状態でエラーを表示する |
+| M05-01-MSG-022 | 入力項目直下とフォーム上部 | admin.product.date_range_error | 店頭予約日の開始日が終了日より後の状態で検索したとき | 検索せず、詳細検索欄を開いた状態でエラーを表示する |
+
+exec
+/bin/bash -lc "head -n 3 design_impl_drift_report/regen/removal_audit/candidates.tsv && for f in a01-01_api_stock_smaregi_stock_sync m03-43_admin_product_product_simple_low_price_csv_export m06-11_admin_store_purchase_purchase_store_return_list_pdf_export m04-13_admin_stock_stock_split_join_register_edit m08-11_admin_customer_customer_analysis_tag_master b01-03_batch_data_stock_warning m14-05_admin_card_card_csv_import m05-07_admin_order_order_labels_csv_export m13-13_admin_event_event_entry_csv_import b06-01_batch_purchase_purchase_auto_stock; do printf '%s\\t' \""'$f"; rg -c "''^$f'"\\.md\\t\" design_impl_drift_report/regen/removal_audit/candidates.tsv; done" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+機能	節	消えた行
+a01-01_api_stock_smaregi_stock_sync.md		# a01-01_api_stock_smaregi_stock_sync — 5分類外の退避
+a01-01_api_stock_smaregi_stock_sync.md		写像しなかった節の退避先。設計書本体から外した内容をそのまま保持する。
+a01-01_api_stock_smaregi_stock_sync	99
+m03-43_admin_product_product_simple_low_price_csv_export	90
+m06-11_admin_store_purchase_purchase_store_return_list_pdf_export	84
+m04-13_admin_stock_stock_split_join_register_edit	70
+m08-11_admin_customer_customer_analysis_tag_master	69
+b01-03_batch_data_stock_warning	45
+m14-05_admin_card_card_csv_import	39
+m05-07_admin_order_order_labels_csv_export	36
+m13-13_admin_event_event_entry_csv_import	31
+b06-01_batch_purchase_purchase_auto_stock	27
+
+exec
+/bin/bash -lc 'for f in a01-01_api_stock_smaregi_stock_sync m06-11_admin_store_purchase_purchase_store_return_list_pdf_export m04-13_admin_stock_stock_split_join_register_edit b06-01_batch_purchase_purchase_auto_stock; do echo "===== $f"; awk -F '"'\\t' -v f=\""'$f.md" '"'NR>1 && "'$1==f {print "[" $2 "] " $3}'"' design_impl_drift_report/regen/removal_audit/candidates.tsv; done" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+===== a01-01_api_stock_smaregi_stock_sync
+[] # a01-01_api_stock_smaregi_stock_sync — 5分類外の退避
+[] 写像しなかった節の退避先。設計書本体から外した内容をそのまま保持する。
+[] 規約は .cursor/skills/output-exclusion-policy/SKILL.md を正本とする。 -->
+[入出力仕様] | 入力 | 外部システムまたはMTGバイヤーからのAPIリクエスト。 |
+[入出力仕様] | 出力 | APIレスポンス。成功・失敗の詳細は実装を正とする。 |
+[入出力仕様] | 副作用 | 対象データの更新、外部連携履歴または受信履歴の記録。 |
+[開始条件、終了条件] | 開始条件 | API呼び出しを受け、認証・認可・署名等の実装側チェックを通過する。 |
+[開始条件、終了条件] | 終了条件 | レスポンスを返し、必要なDB更新または非同期処理投入が完了する。 |
+[判定条件] - Excel設計書に記載された対象条件、検索条件、CSV出力条件、登録条件を正とする。
+[判定条件] - Excel設計書に未記載のURLエンドポイント、DBカラム、実処理順序は `../ec-cube-enterprise` の実装を正とする。
+[判定条件] - 権限、ログイン状態、管理画面プレフィックスなどの共通判定は共通設計および実装側のセキュリティ設定に従う。
+[プロセスフロー] 1. 利用者または外部システムが対象機能を開始する。
+[プロセスフロー] 2. 入力値、検索条件、アップロードファイル、またはリクエスト本文を受け付ける。
+[プロセスフロー] 3. Excel設計書に定義された対象データを取得し、実装側の検証・権限・状態条件を適用する。
+[プロセスフロー] 4. 登録・更新・出力・連携のいずれかの主処理を実行する。
+[プロセスフロー] 5. 成功時は結果画面、CSV/PDF/APIレスポンス、またはバッチ結果を返す。失敗時はエラー内容を返し、更新が必要な処理では不整合が残らないように扱う。
+[ビジネスロジック] - **Excel設計優先**: 仕様の目的、対象データ、出力項目、表示項目、業務上の条件は `excel_to_html/output` の設計書を正とする。
+[ビジネスロジック] - **実装補完**: Excel設計に書かれていないURLエンドポイント、DBカラム、トランザクション、サービス分割、非同期処理は `../ec-cube-enterprise` の実装を正とする。
+[ビジネスロジック] - **対象機能の要点**: 在庫処理に関連するスマレジとの連携処理
+[状態・データ更新] | 主データ | API対象の買取・在庫・スマレジWebhook関連データを作成・更新・参照する。 |
+[状態・データ更新] | 履歴・ログ | 必要に応じてCSV取込履歴、在庫履歴、ステータス履歴、API受信履歴、アプリケーションログを作成・更新する。 |
+[例外処理] - **入力不備**: 必須項目、CSVヘッダ、CSV行、APIリクエスト本文、検索条件が不正な場合はエラーとして処理し、登録・更新対象を確定しない。
+[例外処理] - **対象なし**: 検索条件や対象IDに該当するデータがない場合は、空の一覧、空CSV、またはエラーレスポンスとして扱う。扱いの細部は対象画面/API/バッチの実装に従う。
+[例外処理] - **状態不整合**: 既に処理済み、キャンセル済み、承認不可、在庫不足など状態条件に合わない場合は処理対象外またはエラーとする。
+[例外処理] - **外部連携失敗**: スマレジ等の外部連携で失敗した場合は、実装側の再連携・エラーログ・エラーメール・ステータス更新仕様を正とする。
+[関連設計への接続点] - 画面項目、CSV列、PDFレイアウト、APIリクエスト/レスポンスの詳細は、参照元Excel設計書の該当シートを正とする。
+[関連設計への接続点] <summary>Excel設計書からの抽出（原典・テスト網羅の根拠）</summary>
+[関連設計への接続点] 処理概要（★はカスタマイズ項目）
+[関連設計への接続点] 図形・テキストボックス内テキスト（20件）
+[関連設計への接続点] GET POST PUT DELETE PATCH OPTIONS HEAD 有 無 〇
+[関連設計への接続点] /smaregi/stocks
+[関連設計への接続点] プロトコル HTTP メソッド POST 認証の有無 有 認証方式 IP制限 リクエスト書式 JSON レスポンス書式 なし(ステータスコードのみ)
+[関連設計への接続点] スマレジの在庫が変動するタイミングで、ECCUBEとスマレジをスマレジプラットフォームAPIを介して連携させる
+[関連設計への接続点] トリガーとなるポイントに合わせて、APIやWebhookを活用して連携させる
+[関連設計への接続点] API利用時の注意事項一般 https://developers.smaregi.dev/apidoc/common/#section/Webhook
+[関連設計への接続点] APIのレート制限(スロットリング) https://developers.smaregi.dev/apidoc/common/#section/%E3%83%AC%E3%83%BC%E3%83%88%E5%88%B6%E9%99%90
+[関連設計への接続点] ※秒間50回が上限になりますが、理論上1秒間にレジ25台(在庫・受注処理で2回として仮定)が同時決済まで対応可能
+[関連設計への接続点] ※レート制限を超えた場合もエラーレスポンスで待機時間が返ってくるのでリトライ処理が可能
+[関連設計への接続点] 機能仕様処理概要（★はカスタマイズ項目）
+[関連設計への接続点] 在庫におけるスマレジとの連携は大きく分けて3つの方式
+[関連設計への接続点] 1スマレジ -> ECCUBE (Webhook方式)スマレジ側で在庫変動があった場合、取引完了や取引キャンセル(全キャンセル)
+[関連設計への接続点] 2ECCUBE -> スマレジ(API個別)CSV登録等の一括処理ではない管理画面でスマレジ側の在庫変動が発生した場合
+[関連設計への接続点] 3ECCUBE -> スマレジ連携(Patch一括)CSV登録等の一括処理でスマレジ側の在庫変動が発生した場合
+[関連設計への接続点] スマレジスマレジで取引完了時1:webhookスマレジで受注した結果による在庫変動結果をwebhookで受信し、スマレジ在庫数を減らす
+[関連設計への接続点] スマレジスマレジで取引全キャンセル1:webhookスマレジでの受注が全キャンセルされた結果をwebhookで受信し、スマレジ在庫数を戻す
+[関連設計への接続点] 管理画面在庫編集2:API個別在庫場所区分がスマレジの場合に編集結果をスマレジ側に反映する
+[関連設計への接続点] 実行できる件数上限を設定し、上限を越えたらエラーを表示し、CSV登録を促す
+[関連設計への接続点] 管理画面在庫一括編集2:API個別在庫場所区分がスマレジの場合に編集結果をスマレジ側に反映する
+[関連設計への接続点] 実行できる件数上限を設定し、上限を越えたらエラーを表示し、CSV登録を促す
+[関連設計への接続点] 管理画面在庫変更CSV登録3:Patch一括在庫区分がスマレジの場合に編集結果をスマレジ側に反映する
+[関連設計への接続点] 管理画面在庫移動指示2 or 3 ※1スマレジ在庫に入庫する場合、その移動指示結果を入庫済みになったタイミングで反映
+[関連設計への接続点] 管理画面在庫移動指示2 or 3 ※1スマレジ在庫から出庫する場合、その移動指示結果を出庫承認済みになったタイミングで反映
+[関連設計への接続点] 管理画面分割結合(分割)2 or 3 ※1スマレジ在庫から分割するために、福袋やオリパを出庫にする
+[関連設計への接続点] 管理画面分割結合(分割)2 or 3 ※1スマレジ在庫に福袋やオリパを分割した結果を入庫する
+[関連設計への接続点] 管理画面分割結合(結合)2 or 3 ※1スマレジの在庫から福袋やオリパを作るための商品を出庫する
+[関連設計への接続点] 管理画面分割結合(結合)2 or 3 ※1スマレジの在庫に結合した福袋やオリパを入庫する
+[関連設計への接続点] 管理画面棚卸し3:Patch一括スマレジの在庫を棚卸した場合、結果をスマレジ側に反映する
+[関連設計への接続点] ※1 上限件数を閾値にして、閾値を越えたらPatch一括処理。越えなかったらAPI個別
+[関連設計への接続点] 1.スマレジ -> ECCUBE (Webhook方式) 処理概要（★はカスタマイズ項目）
+[関連設計への接続点] スマレジ -> ECCUBE (Webhook方式)
+[関連設計への接続点] ★1-1. スマレジで取引完了もしくは取引全キャンセルをhookにwebhook発動
+[関連設計への接続点] A. ★スマレジ在庫変動履歴IDを送信
+[関連設計への接続点] B. ★在庫変動履歴IDで取引詳細を要求
+[関連設計への接続点] C. ★在庫変動履歴情報を返す
+[関連設計への接続点] スマレジ在庫変更履歴情報取得
+[関連設計への接続点] D. ★在庫相対値更新で在庫更新
+[関連設計への接続点] E. ★APIのレスポンスを返す
+[関連設計への接続点] 管理画面操作による在庫変更
+[関連設計への接続点] F. ★在庫一括相対値更新でデータ登録
+[関連設計への接続点] G. ★処理結果をURLに返す
+[関連設計への接続点] 管理画面操作による在庫変更CSV登録
+[関連設計への接続点] ECCUBE側の処理を実行
+[関連設計への接続点] 画面遷移図をExcel図形座標で再構成（画面 10件 / 遷移 5件 / 元コネクタ 15件）
+[関連設計への接続点] 取引全キャンセルA. ★スマレジ在庫変動履歴IDを送信
+[関連設計への接続点] C. ★在庫変動履歴情報を返すスマレジ在庫変更履歴情報取得
+[関連設計への接続点] 管理画面操作による在庫変更スマレジ在庫更新
+[関連設計への接続点] 管理画面操作による在庫変更CSV登録F. ★在庫一括相対値更新でデータ登録
+[関連設計への接続点] ECCUBE側の処理を実行G. ★処理結果をURLに返す
+[関連設計への接続点] ※ 在庫変動履歴情報のIDは商品と店舗の組合せでしかまとめて取得できないので、取引商品種類数分CのAPIを叩く必要がある
+[関連設計への接続点] ★1-2. 取得したスマレジ在庫変更履歴情報をもとにECCUBE上のスマレジ在庫情報を更新
+[関連設計への接続点] 在庫区分が02:売上の時は出庫処理, 12:の時は入庫処理を実施
+[関連設計への接続点] 取得したスマレジ在庫変更履歴情報の在庫区分が02:売上と12:返品のみ、情報更新処理を実施。それ以外は無視する
+[関連設計への接続点] 店頭受取分の商品IDの場合、スマレジ側の在庫は変動しないので無視する
+[関連設計への接続点] スマレジの在庫変動履歴IDはECCUBE側の在庫変動履歴に紐づけて保存しておく
+[関連設計への接続点] 在庫変動履歴の登録については、「在庫変動時の履歴作成について」シートを参照
+[関連設計への接続点] 1-1 A. Webhook受信データ
+[関連設計への接続点] 契約IDString〇スマレジの契約ID
+[関連設計への接続点] イベント名String〇pos:stock取引のイベント名固定 [pos:transactions]
+[関連設計への接続点] アクションString〇editededited: 更新, bulk-update: 一括更新
+[関連設計への接続点] 在庫変動履歴IDリストint[]〇スマレジの以下の3つの情報のセットを1配列データとした配列リスト
+[関連設計への接続点] 在庫変更履歴ID, 商品ID, 店舗ID
+[関連設計への接続点] 1-1 A. レスポンスデータサンプル
+[関連設計への接続点] """contractId"": ""string"","
+[関連設計への接続点] """event"": ""string"","
+[関連設計への接続点] """action"": ""edited"","
+[関連設計への接続点] """productId"": ""1"","
+[関連設計への接続点] """storeId"": ""0"""
+[関連設計への接続点] """productId"": ""1"","
+[関連設計への接続点] """storeId"": ""0"""
+===== m06-11_admin_store_purchase_purchase_store_return_list_pdf_export
+[] # m06-11_admin_store_purchase_purchase_store_return_list_pdf_export — 5分類外の退避
+[] 写像しなかった節の退避先。設計書本体から外した内容をそのまま保持する。
+[] 規約は .cursor/skills/output-exclusion-policy/SKILL.md を正本とする。 -->
+[入出力仕様] | 入力 | 管理画面の検索条件、フォーム入力、CSVアップロード、または画面操作。 |
+[入出力仕様] | 出力 | 画面表示、CSV/PDFダウンロード、登録完了/エラー表示。 |
+[入出力仕様] | 副作用 | 対象データの登録・更新、CSV取込履歴、在庫履歴、ステータス履歴の記録。 |
+[開始条件、終了条件] | 開始条件 | 管理画面にログイン済みの利用者が対象メニューまたは操作を実行する。 |
+[開始条件、終了条件] | 終了条件 | 画面表示、ファイル出力、登録完了、またはエラー表示が完了する。 |
+[判定条件] - Excel設計書に記載された対象条件、検索条件、CSV出力条件、登録条件を正とする。
+[判定条件] - Excel設計書に未記載のURLエンドポイント、DBカラム、実処理順序は `../ec-cube-enterprise` の実装を正とする。
+[判定条件] - 権限、ログイン状態、管理画面プレフィックスなどの共通判定は共通設計および実装側のセキュリティ設定に従う。
+[プロセスフロー] 1. 利用者または外部システムが対象機能を開始する。
+[プロセスフロー] 2. 入力値、検索条件、アップロードファイル、またはリクエスト本文を受け付ける。
+[プロセスフロー] 3. Excel設計書に定義された対象データを取得し、実装側の検証・権限・状態条件を適用する。
+[プロセスフロー] 4. 登録・更新・出力・連携のいずれかの主処理を実行する。
+[プロセスフロー] 5. 成功時は結果画面、CSV/PDF/APIレスポンス、またはバッチ結果を返す。失敗時はエラー内容を返し、更新が必要な処理では不整合が残らないように扱う。
+[ビジネスロジック] - **Excel設計優先**: 仕様の目的、対象データ、出力項目、表示項目、業務上の条件は `excel_to_html/output` の設計書を正とする。
+[ビジネスロジック] - **実装補完**: Excel設計に書かれていないURLエンドポイント、DBカラム、トランザクション、サービス分割、非同期処理は `../ec-cube-enterprise` の実装を正とする。
+[ビジネスロジック] - **対象機能の要点**: 棚戻し業務用のPDF出力が行えます。
+[ビジネスロジック] - 実装確認値: 店頭買取（OTC）の戻しリストPDFは OtcBuyOrderRestockListService（PDF用ビュー組み立て、テンプレート @admin/Purchase/restock_list.twig）とルート admin_otcbuyorder_restock_list_pdf を実装確認値とする（grep用。ネット買取側の RestockListPdfSectionBuilder / BuyOrderRestockListService とは別系統）。
+[状態・データ更新] | 主データ | 管理画面の対象業務データを参照し、登録系では対象データと履歴を更新する。 |
+[状態・データ更新] | 履歴・ログ | 必要に応じてCSV取込履歴、在庫履歴、ステータス履歴、API受信履歴、アプリケーションログを作成・更新する。 |
+[例外処理] - **入力不備**: 必須項目、CSVヘッダ、CSV行、APIリクエスト本文、検索条件が不正な場合はエラーとして処理し、登録・更新対象を確定しない。
+[例外処理] - **対象なし**: 検索条件や対象IDに該当するデータがない場合は、空の一覧、空CSV、またはエラーレスポンスとして扱う。扱いの細部は対象画面/API/バッチの実装に従う。
+[例外処理] - **状態不整合**: 既に処理済み、キャンセル済み、承認不可、在庫不足など状態条件に合わない場合は処理対象外またはエラーとする。
+[例外処理] - **外部連携失敗**: スマレジ等の外部連携で失敗した場合は、実装側の再連携・エラーログ・エラーメール・ステータス更新仕様を正とする。
+[関連設計への接続点] - 画面項目、CSV列、PDFレイアウト、APIリクエスト/レスポンスの詳細は、参照元Excel設計書の該当シートを正とする。
+[関連設計への接続点] <summary>Excel設計書からの抽出（原典・テスト網羅の根拠）</summary>
+[関連設計への接続点] 【新規】戻しリストPDF出力
+[関連設計への接続点] 店頭買取管理機能 基本設計
+[関連設計への接続点] 店頭買取情報のPDF出力
+[関連設計への接続点] 処理概要（★はカスタマイズ項目）
+[関連設計への接続点] 図形・テキストボックス内テキスト（19件）
+[関連設計への接続点] 画像レイヤー（6枚）: 【新規】戻しリストPDF出力 / B7 / image 1 + 【新規】戻しリストPDF出力 / D18 / image 2 + 【新規】戻しリストPDF出力 / C27 / image 3 + 【新規】戻しリストPDF出力 / C37 / image 4 + 【新規】戻しリストPDF出力 / B49 / image 5 + 【新規】戻しリストPDF出力 / AD49 / image 6
+[関連設計への接続点] ・在庫指示リスト内の在庫移動データのピッキングリスト情報をポップアップにて表示する
+[関連設計への接続点] ・本店3F,2F,B2Fや支店で閾値が異なるため、マスターデータ管理にて、店舗ごとに金額の閾値を分けられるようにする
+[関連設計への接続点] →フォーマットがそれぞれ3F,2F,B2Fで異なるものとなる
+[関連設計への接続点] ３F在庫 現行運用での金額の閾値について
+[関連設計への接続点] 金庫：基本的にEC在庫で500万以上のものを保管。あとは備品などを入れている
+[関連設計への接続点] 倉庫：2Fに置ききれない（商品化していない）サプライパックボックス等を保管
+[関連設計への接続点] ・カスタマイズ要件に記載の内容以外は現行踏襲とする。
+[関連設計への接続点] 機能仕様処理概要（★はカスタマイズ項目）
+[関連設計への接続点] ・ページ内で印刷に最適化した状態でページを表示する
+[関連設計への接続点] ・「印刷する」ボタン(1)を印刷範囲に含まない
+[関連設計への接続点] ・PC端末の印刷ダイアログが表示され、印刷を実行する
+[関連設計への接続点] ★一覧画面で選択された買取情報に紐づく実在庫情報を、対象店舗ごとに指定された閾値情報+サプライで分けて取得する
+[関連設計への接続点] ・閾値は識別ID:2に表示する
+[関連設計への接続点] ・対象店舗ごとに指定された閾値情報とは、店舗登録画面で設定された高額商品閾値1～3の情報となる
+[関連設計への接続点] ・0209_基本設計仕様書(基本情報設定).xlsxの店舗登録シート参照
+[関連設計への接続点] ・サプライ品でない場合は商品名から略称・言語・状態・色・レアリティがあれば取り除く
+[関連設計への接続点] ・商品名内に[略称タグ]が含まれない場合は[～]（[]内にある文字を[]ごと）を削除
+[関連設計への接続点] ・並び順は金額閾値の昇順(最後にサプライ)が最優先となる
+[関連設計への接続点] ・金額閾値内の並び順は以下の通りとなる
+[関連設計への接続点] ・棚番（昇順、支店の場合は棚番のソートは行わない）
+[関連設計への接続点] ・言語（日→英→他言語）
+[関連設計への接続点] ・Foilフラグ（非Foil→Foil）
+[関連設計への接続点] ・色（マスターデータ色順参照）
+[関連設計への接続点] ・設定されている略称タグについてコレクター番号でのソートだった場合、コレクター番号（昇順）
+[関連設計への接続点] ・設定されている略称タグについてアルファベットでのソートだった場合、英語のカード名（昇順）
+[関連設計への接続点] 識別IDラベル書式・制限必須最大値初期値画面部品の説明
+[関連設計への接続点] 1印刷するボタン---ボタンを押下すると、PC端末の印刷ダイアログが表示され、印刷を開始する
+[関連設計への接続点] 2商品仕訳ラベル---店舗ごとの閾値（ネット買取管理の場合は本店しかないため本店の閾値）とサプライを出力
+[関連設計への接続点] ●●円未満、●●円以上▲▲円未満、■■円以上、サプライ
+[関連設計への接続点] 閾値の表示も基準価格を参照して行う（セール中で金額が変わっても棚を移動することはないため）
+[関連設計への接続点] 3ページングラベル---閾値ごとのページ数を表示
+[関連設計への接続点] 4作成日時ラベル---ピッキングリストを作成した日時
+[関連設計への接続点] ※「ピッキングリスト印刷」ボタンを押した日時
+[関連設計への接続点] 5行番号ラベル---各ページ毎に商品に割り振られる行番号
+[関連設計への接続点] 6棚番号ラベル---本店の商品を棚戻しする場合のみ必要
+[関連設計への接続点] →買取店舗が本店の場合のみ必要
+[関連設計への接続点] 7言語 / 状態ラベル---Foilの場合はFoilをつけて、言語/状態の形式で出力する（例: FoilJP/NM）、サプライ品の場合は「サプライ品」と表示
+[関連設計への接続点] 8略称ラベル---サプライ品の場合は表示しない
+[関連設計への接続点] 9色 / Rラベル---商品名から取り出した色とレアリティを出力（例: 金R）
+[関連設計への接続点] 10数ラベル---商品点数
+[関連設計への接続点] 11商品名ラベル---サプライ品でない場合は商品名から略称・言語・状態・色・レアリティを取り除く
+[関連設計への接続点] 12価格ラベル---基準価格を表示する
+[関連設計への接続点] 13備考ラベル---備考
+[関連設計への接続点] 14ページ内個数小計ラベル---ページ内の商品個数の総計
+[関連設計への接続点] 図形・テキストボックス内テキスト（19件）
+[関連設計への接続点] 画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。
+[関連設計への接続点] M17結果出力繰り返し（記載省略）
+[関連設計への接続点] M25結果出力繰り返し（記載省略）
+[関連設計への接続点] L35結果出力繰り返し（記載省略）
+[関連設計への接続点] L48結果出力繰り返し（記載省略）
+===== m04-13_admin_stock_stock_split_join_register_edit
+[] # m04-13_admin_stock_stock_split_join_register_edit — 5分類外の退避
+[] 写像しなかった節の退避先。設計書本体から外した内容をそのまま保持する。
+[] 規約は .cursor/skills/output-exclusion-policy/SKILL.md を正本とする。 -->
+[ステータス区分（`MtbStockSplitJoinStatus`）] | ID | 定数 | 名称 | 主な用途 |
+[ステータス区分（`MtbStockSplitJoinStatus`）] | 1 | `NEW` | 新規登録 | 分割登録直後／結合登録直後。分割先・結合元はSessionで一時保持。 |
+[ステータス区分（`MtbStockSplitJoinStatus`）] | 2 | `JOIN_SOURCE_REGISTERED` | 結合元登録 | 結合のみ。結合元明細をDB確定し在庫減算済み。欠品入力可。 |
+[ステータス区分（`MtbStockSplitJoinStatus`）] | 3 | `SPLIT_APPROVAL_WAITING` | 分割承認待ち | 分割の承認申請後。 |
+[ステータス区分（`MtbStockSplitJoinStatus`）] | 4 | `JOIN_APPROVAL_WAITING` | 結合承認待ち | 結合の承認申請後。 |
+[ステータス区分（`MtbStockSplitJoinStatus`）] | 5 | `RECEIPT_COMPLETED` | 入庫済み | 承認完了（分割先／結合先へ加算済み）。 |
+[ステータス区分（`MtbStockSplitJoinStatus`）] | 6 | `REJECTED` | 却下 | 承認却下（分割は分割元へ戻し済み）。 |
+[分割 新規登録（`StockSplitNewType` / `admin_stock_split_register`）] | 項目 | フォームキー／パラメータ | 必須 | 検証 |
+[分割 新規登録（`StockSplitNewType` / `admin_stock_split_register`）] | 分割メモ | `admin_stock_split_new[split_join_memo]`（TextareaType） | 任意 | — |
+[結合 新規登録（`StockJoinNewType` / `admin_stock_join_register`）] | 項目 | フォームキー／パラメータ | 必須 | 検証 |
+[承認・却下（`StockSplitApprovalSubmitAction` ほか）] | 項目 | パラメータ | 検証 |
+[承認・却下（`StockSplitApprovalSubmitAction` ほか）] | 仕入価格（結合承認） | `purchase_price` | 数字以外を除去。結合先の総原価加算に使用。 |
+[承認・却下（`StockSplitApprovalSubmitAction` ほか）] | ステータス | — | 分割は `SPLIT_APPROVAL_WAITING`、結合は `JOIN_APPROVAL_WAITING` 以外なら不整合エラー。 |
+[1. 分割 登録（`StockSplitRegisterAction`）] 基本設計4-4の処理順（在庫減算→在庫変動履歴→ステータス履歴→在庫分割情報）に対応。実装は単一トランザクション（`wrapInTransaction`）で分割元 `ProductStock` を `PESSIMISTIC_WRITE` ロック・`refresh` 後に以下を実行する。
+[1. 分割 登録（`StockSplitRegisterAction`）] 2. **①在庫減算**: 新在庫 = `max(0, 現在庫 - 分割数)`、新総原価 = 現総原価 - 出庫総原価、原価単価を再計算して `ProductStock` を更新。
+[1. 分割 登録（`StockSplitRegisterAction`）] 4. **②在庫変動履歴登録**: `SPLIT_OUTBOUND` 種別、履歴ソース `STOCK_SPLIT_EDIT`、変動数 `-分割数`、減算前後の在庫・原価を記録。
+[2. 分割 編集～承認申請（`StockSplitApplyApprovalAction`）] 編集画面で分割先（`ProductStock`）と各数量をSession（キー `stock_split_edit_destinations_{id}`）に保持。承認申請で以下を実行する。
+[2. 分割 編集～承認申請（`StockSplitApplyApprovalAction`）] 3. ステータスを「分割承認待ち」へ変更、`move_to_approval_at`／`move_to_approval_member` を記録、ステータス履歴を追加。
+[2. 分割 編集～承認申請（`StockSplitApplyApprovalAction`）] 4. 承認リスト `DtbStockApprovalList`（未承認）を1行作成（対象在庫数=分割先件数+1、変動数=分割先合計、移動総原価=分割元原価単価×分割数）。
+[3. 分割 承認（`StockSplitApprovalApproveAction`）／却下（`StockSplitApprovalRejectAction`）] - **却下**: ステータス `SPLIT_APPROVAL_WAITING` 前提。分割元 `ProductStock` をロックし、分割登録時に減算した在庫（`+分割数`）と原価（原価単価×分割数）を戻し、`SPLIT_REJECT` 履歴を記録。ステータスを「却下」、却下メモを保存、承認リストを却下に更新。
+[5. 結合 編集～欠品入力遷移（`StockJoinMoveToShortageEntryAction`）] 編集画面で結合元と数量をSession（キー `stock_join_edit_sources_{id}`）に保持。欠品入力へ遷移する操作で、NEWステータスなら単一トランザクションで以下を実行する。
+[5. 結合 編集～欠品入力遷移（`StockJoinMoveToShortageEntryAction`）] 2. 各結合元 `ProductStock` をロック・`refresh`。数量は `min(入力数量, 在庫数)` に丸め、0以下はスキップ。
+[5. 結合 編集～欠品入力遷移（`StockJoinMoveToShortageEntryAction`）] 3. `DtbStockSplitJoinDetail` を作成（基準価格・原価単価・総原価・在庫スナップショット・結合数量）。
+[5. 結合 編集～欠品入力遷移（`StockJoinMoveToShortageEntryAction`）] 4. 結合元在庫を `-数量`、総原価減算、原価単価再計算し `JOIN_OUTBOUND` 履歴を記録。
+[5. 結合 編集～欠品入力遷移（`StockJoinMoveToShortageEntryAction`）] 5. ヘッダ（`DtbStockSplitJoin`）の派生原価を `StockJoinDetailDerivedHeaderCostApplier` で再計算。
+[5. 結合 編集～欠品入力遷移（`StockJoinMoveToShortageEntryAction`）] 6. ステータスを「結合元登録」へ変更しステータス履歴を追加。
+[6. 結合 欠品入力～承認申請（`StockJoinShortageEntryAction` / `StockJoinApplyApprovalAction`）] - **欠品加算[`JOIN_SHORTAGE_ADD`]**: `JOIN_OUTBOUND` で出庫した全量を結合元へ戻す。
+[6. 結合 欠品入力～承認申請（`StockJoinShortageEntryAction` / `StockJoinApplyApprovalAction`）] - **欠品減算[`JOIN_SHORTAGE_SUBTRACT`]**: 有効数量（結合量-欠品量）のみを再減算する。
+[6. 結合 欠品入力～承認申請（`StockJoinShortageEntryAction` / `StockJoinApplyApprovalAction`）] - ステータスを「結合承認待ち」へ、承認リスト `DtbStockApprovalList`（未承認, 種別 `JOIN_INBOUND`）を作成。
+[トランザクション・同時実行制御] - NEWステータス中の分割先・結合元・欠品の入力値は **DBではなくSession** に保持し、承認申請・欠品入力遷移のタイミングで一括してDB確定する。登録メモのみ各ステータスでDB即時保存可能。
+[分岐・遷移・例外（実メッセージキー）] | 状況 | 実装の扱い |
+[分岐・遷移・例外（実メッセージキー）] | 種別取り違え（分割IDで結合画面など） | 対応する編集画面（`admin_stock_split_edit` / `admin_stock_join_edit`）へリダイレクト。 |
+[分岐・遷移・例外（実メッセージキー）] | 編集対象が承認待ちステータス | 編集POSTは保存せず承認画面（`admin_stock_split_approval` / `admin_stock_join_approval`）へリダイレクト。 |
+[分岐・遷移・例外（実メッセージキー）] | メモ専用エンドポイントを別種別で呼出 | `createNotFoundException()`（404）。 |
+[表示メッセージ（メッセージ一覧・在庫分割 `StockSplitController`）] | メッセージID | 表示位置 | 画面上の文言 | 表示条件 | 種別 | 後続処理 |
+[表示メッセージ（メッセージ一覧・在庫分割 `StockSplitController`）] | M04-13-MSG-001 | 管理画面上部 | 保存に失敗しました | 分割登録時にセッションの有効期限が切れているとき | エラー | 分割新規登録画面に遷移する |
+[表示メッセージ（メッセージ一覧・在庫分割 `StockSplitController`）] | M04-13-MSG-002 | 管理画面上部 | この店舗の在庫を編集する権限がありません。 | 編集権限のない店舗の在庫を分割登録しようとしたとき | エラー | 分割新規登録画面に遷移する |
+[表示メッセージ（メッセージ一覧・在庫分割 `StockSplitController`）] | M04-13-MSG-003 | 管理画面上部 | 分割数は1以上を入力してください。 | 分割数に1未満を入力して登録したとき | エラー | 分割新規登録画面に遷移する |
+[表示メッセージ（メッセージ一覧・在庫分割 `StockSplitController`）] | M04-13-MSG-004 | 管理画面上部 | admin.stock.split_join.login_required ／ ステータスマスタが設定されていません。 | 在庫分割を登録するとき、ログインしていない、またはステータスマスタが設定されていない場合 | エラー | 在庫分割の新規登録画面に遷移する |
+[表示メッセージ（メッセージ一覧・在庫分割 `StockSplitController`）] | M04-13-MSG-005 | 管理画面上部 | 分割数は1以上を入力してください。 ／ 分割数が在庫数を超えています。 | 在庫分割を登録するとき、分割数が1未満、または在庫数を超える場合 | エラー | 在庫分割の新規登録画面に遷移する |
+[表示メッセージ（メッセージ一覧・在庫分割 `StockSplitController`）] | M04-13-MSG-006 | 管理画面上部 | 在庫分割を登録しました。 | 在庫分割を登録したとき | インフォ(成功) | 分割編集画面に遷移する |
+[表示メッセージ（メッセージ一覧・在庫分割 `StockSplitController`）] | M04-13-MSG-007 | 管理画面上部 | 保存しました | 編集内容を保存したとき | インフォ(成功) | 分割編集画面に遷移する |
+[表示メッセージ（メッセージ一覧・在庫分割 `StockSplitController`）] | M04-13-MSG-008 | 管理画面上部 | 保存に失敗しました | 編集内容の保存時にセッションの有効期限が切れているとき | エラー | 分割編集画面に遷移する |
+[表示メッセージ（メッセージ一覧・在庫分割 `StockSplitController`）] | M04-13-MSG-009 | 管理画面上部 | この店舗の在庫を編集する権限がありません。 | 編集権限のない店舗の在庫を操作しようとしたとき | エラー | 分割編集画面に遷移する |
+[表示メッセージ（メッセージ一覧・在庫分割 `StockSplitController`）] | M04-13-MSG-010 | 管理画面上部 | 承認通知先のメンバーを1人以上選択してください。 | 承認通知先を選ばずに承認申請したとき | エラー | 分割編集画面に遷移する |
+[表示メッセージ（メッセージ一覧・在庫分割 `StockSplitController`）] | M04-13-MSG-011 | 管理画面上部 | admin.stock.split_join.not_found ／ 却下済みのため、再申請はできません。新規分割から操作してください。 | 在庫分割の承認申請時、対象の分割が見つからない、対象外の在庫または種別である、または却下済みの場合 | エラー | 在庫分割の編集画面に遷移する |
+[表示メッセージ（メッセージ一覧・在庫分割 `StockSplitController`）] | M04-13-MSG-012 | 管理画面上部 | 承認申請しました。 | 承認申請したとき | インフォ(成功) | 分割承認画面に遷移する |
+[表示メッセージ（メッセージ一覧・在庫分割 `StockSplitController`）] | M04-13-MSG-013 | 管理画面上部 | セッションがタイムアウトしました。もう一度やり直してください。 | 承認操作時にセッションの有効期限が切れているとき | エラー | 分割承認画面に遷移する |
+[表示メッセージ（メッセージ一覧・在庫分割 `StockSplitController`）] | M04-13-MSG-014 | 管理画面上部 | 承認権限がありません。 | 承認操作をしたときに承認権限がないとき | エラー | 分割承認画面に遷移する |
+[表示メッセージ（メッセージ一覧・在庫分割 `StockSplitController`）] | M04-13-MSG-015 | 管理画面上部 | 保存に失敗しました | 分割先の追加時にセッションの有効期限が切れているとき | エラー | 分割編集画面または分割新規登録画面に遷移する |
+[表示メッセージ（メッセージ一覧・在庫分割 `StockSplitController`）] | M04-13-MSG-016 | 管理画面上部 | admin.stock.split_join.not_found | 在庫分割の分割先を追加するとき、対象の分割がない、または編集できない状態の場合 | エラー | 在庫分割の新規登録画面に遷移する |
+[表示メッセージ（メッセージ一覧・在庫分割 `StockSplitController`）] | M04-13-MSG-017 | 管理画面上部 | admin.stock.split_join.not_found | 在庫分割の分割先を追加するとき、分割先の在庫が指定されていない場合 | エラー | 在庫分割の編集画面に遷移する |
+[表示メッセージ（メッセージ一覧・在庫分割 `StockSplitController`）] | M04-13-MSG-018 | 管理画面上部 | admin.stock.split_join.destination_already_exists | 在庫分割の分割先に、分割元と同じ在庫を追加しようとした場合 | エラー | 在庫分割の編集画面に遷移する |
+[表示メッセージ（メッセージ一覧・在庫分割 `StockSplitController`）] | M04-13-MSG-019 | 管理画面上部 | admin.stock.split_join.destination_already_exists | 在庫分割の分割先に、既に追加済みの在庫を追加しようとした場合 | エラー | 在庫分割の編集画面に遷移する |
+[表示メッセージ（メッセージ一覧・在庫分割 `StockSplitController`）] | M04-13-MSG-020 | 管理画面上部 | セッションがタイムアウトしました。もう一度やり直してください。 | 分割先の削除時にセッションの有効期限が切れているとき | エラー | 分割編集画面に遷移する |
+[表示メッセージ（メッセージ一覧・在庫分割 `StockSplitController`）] | M04-13-MSG-021 | 管理画面上部 | 保存に失敗しました | 新規登録以外の分割データを削除しようとしたとき | エラー | 分割編集画面に遷移する |
+[表示メッセージ（メッセージ一覧・在庫分割 `StockSplitController`）] | M04-13-MSG-022 | 管理画面上部 | 削除しました | 分割先の在庫を削除したとき | インフォ(成功) | 分割編集画面に遷移する |
+[表示メッセージ（メッセージ一覧・在庫分割 `StockSplitController`）] | M04-13-MSG-023 | 管理画面上部 | セッションがタイムアウトしました。もう一度やり直してください。 | メモの保存時にセッションの有効期限が切れているとき | エラー | 分割編集画面に遷移する |
+[表示メッセージ（メッセージ一覧・在庫分割 `StockSplitController`）] | M04-13-MSG-024 | 管理画面上部 | 保存に失敗しました | メモの保存中にエラーが起きたとき | エラー | 分割編集画面に遷移する |
+[表示メッセージ（メッセージ一覧・在庫分割 `StockSplitController`）] | M04-13-MSG-025 | 管理画面上部 | 保存しました | メモを保存したとき | インフォ(成功) | 分割承認画面または分割編集画面に遷移する |
+[表示メッセージ（メッセージ一覧・在庫分割 `StockSplitController`）] | M04-13-MSG-026 | 管理画面上部 | 却下しました。 ／ 分割の承認が完了しました。 | 在庫分割の承認画面で承認または却下を実行した場合 | インフォ(成功) | 在庫分割の編集画面に遷移する |
+[状態・データ更新（更新系）] 本機能は**更新系**であり、以下の実Entity／テーブルを更新する。
+[状態・データ更新（更新系）] | 対象テーブル | Entity | 用途・主な列 |
+[結合テスト観点（既存テストの出典）] - 分割: 新規GET（既存分割あり/なし）、登録のCSRF不正・成功・在庫不足エラー・権限なし、編集GET（分割/結合種別）・POST成功・承認待ち時リダイレクト・不正フォーム、承認申請のCSRF不正・成功・joinId有無別エラー、承認画面の承認成功・却下（メモ空/成功/例外）・不明モード、分割先の追加（CSRF/不正ID/未存在/ステータス不正/重複/成功）・削除・CSV雛形・CSV取込。
+[結合テスト観点（既存テストの出典）] - 結合: 新規200、登録成功・CSRF不正・LogicException・権限なし、編集GET/POST・承認待ち時リダイレクト、結合元の追加/削除、欠品入力遷移（成功/検証例外）、登録メモ保存（成功/承認へ戻り/例外）、欠品入力GET・ステータス不正、欠品数量更新、承認申請の対象なし、結合元CSV雛形・取込（新規/編集）、結合元数量更新（Ajax/非Ajax/ステータス別）、在庫区分更新（非Ajax/LogicException/Throwable）。
+[関連設計への接続点] - 在庫検索一覧（M04-01）の「在庫分割登録」「在庫結合登録」ボタンが本機能の新規登録画面（`admin_stock_split_new` / `admin_stock_join_new`）への入口。遷移可否のアラート（複数店舗選択時など）はM04-01側の要件。
+[関連設計への接続点] - 画面項目・CSV列・帳票レイアウトの詳細は参照元Excel設計書の該当シートを正とする。
+===== b06-01_batch_purchase_purchase_auto_stock
+[] # b06-01_batch_purchase_purchase_auto_stock — 5分類外の退避
+[] 写像しなかった節の退避先。設計書本体から外した内容をそのまま保持する。
+[] 規約は .cursor/skills/output-exclusion-policy/SKILL.md を正本とする。 -->
+[入出力仕様] | 入力 | バッチ起動条件、設定値、DB上の対象データ。 |
+[入出力仕様] | 出力 | CSVファイル、DB更新結果、ログ。 |
+[入出力仕様] | 副作用 | 対象データの更新、CSV出力、処理ログの記録。 |
+[開始条件、終了条件] | 開始条件 | バッチ起動時刻または手動起動により処理が開始される。 |
+[開始条件、終了条件] | 終了条件 | 対象データの処理と出力、ログ記録が完了する。 |
+[判定条件] - Excel設計書に記載された対象条件、検索条件、CSV出力条件、登録条件を正とする。
+[判定条件] - Excel設計書に未記載のURLエンドポイント、DBカラム、実処理順序は `../ec-cube-enterprise` の実装を正とする。
+[判定条件] - 権限、ログイン状態、管理画面プレフィックスなどの共通判定は共通設計および実装側のセキュリティ設定に従う。
+[プロセスフロー] 1. 利用者または外部システムが対象機能を開始する。
+[プロセスフロー] 2. 入力値、検索条件、アップロードファイル、またはリクエスト本文を受け付ける。
+[プロセスフロー] 3. Excel設計書に定義された対象データを取得し、実装側の検証・権限・状態条件を適用する。
+[プロセスフロー] 4. 登録・更新・出力・連携のいずれかの主処理を実行する。
+[プロセスフロー] 5. 成功時は結果画面、CSV/PDF/APIレスポンス、またはバッチ結果を返す。失敗時はエラー内容を返し、更新が必要な処理では不整合が残らないように扱う。
+[ビジネスロジック] - **Excel設計優先**: 仕様の目的、対象データ、出力項目、表示項目、業務上の条件は `excel_to_html/output` の設計書を正とする。
+[ビジネスロジック] - **実装補完**: Excel設計に書かれていないURLエンドポイント、DBカラム、トランザクション、サービス分割、非同期処理は `../ec-cube-enterprise` の実装を正とする。
+[ビジネスロジック] - **対象機能の要点**: 買取成立した商品に対して入庫処理を行う
+[ビジネスロジック] - **実装確認値**: BuyOrderAutoStockCommand / BatchAutoStockAction を実装確認値とする。
+[状態・データ更新] | 主データ | バッチ対象の在庫・買取・履歴データを参照し、必要に応じて更新する。 |
+[状態・データ更新] | 履歴・ログ | 必要に応じてCSV取込履歴、在庫履歴、ステータス履歴、API受信履歴、アプリケーションログを作成・更新する。 |
+[例外処理] - **入力不備**: 必須項目、CSVヘッダ、CSV行、APIリクエスト本文、検索条件が不正な場合はエラーとして処理し、登録・更新対象を確定しない。
+[例外処理] - **対象なし**: 検索条件や対象IDに該当するデータがない場合は、空の一覧、空CSV、またはエラーレスポンスとして扱う。扱いの細部は対象画面/API/バッチの実装に従う。
+[例外処理] - **状態不整合**: 既に処理済み、キャンセル済み、承認不可、在庫不足など状態条件に合わない場合は処理対象外またはエラーとする。
+[例外処理] - **外部連携失敗**: スマレジ等の外部連携で失敗した場合は、実装側の再連携・エラーログ・エラーメール・ステータス更新仕様を正とする。
+[関連設計への接続点] - 画面項目、CSV列、PDFレイアウト、APIリクエスト/レスポンスの詳細は、参照元Excel設計書の該当シートを正とする。
+
+codex
+各候補ファイル内だけでなく、`functions/_archive` を除く正本全体も検索します。関連機能の正本へ事実が移されていれば「失われた」にはしません。
+exec
+/bin/bash -lc "rg -n --glob 'functions/**/*.md' --glob '"'!functions/_archive/**'"' '02:売上|12:返品|店頭受取分|Patch一括|API個別|スマレジ.*閾値|閾値.*スマレジ|取引全キャンセル|在庫変動履歴ID' functions
+rg -n --glob 'functions/**/*.md' --glob '"'!functions/_archive/**'"' '戻しリスト|ピッキングリスト|高額商品閾値|金額閾値|サプライ.*最後|棚番.*昇順|FoilJP/NM|印刷する.*印刷範囲' functions
+rg -n --glob 'functions/**/*.md' --glob '"'!functions/_archive/**'"' 'SPLIT_APPROVAL_WAITING|JOIN_APPROVAL_WAITING|JOIN_SHORTAGE|分割承認待ち|結合承認待ち|分割登録時.*減算|分割.*在庫.*戻|結合元.*在庫.*減|結合先.*在庫.*加算|却下済みのため、再申請|分割数が在庫数を超えています' functions
+rg -n --glob 'functions/**/*.md' --glob '"'!functions/_archive/**'"' '買取成立.*入庫|買取自動入庫|自動入庫.*買取|成立した商品' functions" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+functions/pf-eccube3/smaregi_api_and_functions_extract.md:7:| A01-01 | スマレジ連携処理 | API / 新規実装 | `POST /smaregi/stocks`、`POST /%eccube_smaregi_webhook_route%`（既定`smaregi/webhook`） | スマレジの在庫変動Webhook、管理画面操作による在庫個別連携、CSV等のPatch一括連携を扱う。 |
+functions/pf-eccube3/smaregi_api_and_functions_extract.md:26:| 在庫変動Webhook受信 | スマレジプラットフォームWebhook | スマレジ側の取引完了、取引全キャンセル、在庫変動時 | 契約ID、イベント、アクション、在庫変動履歴IDリストを受け、EC-CUBE側のスマレジ在庫更新へ接続する。 |
+functions/pf-eccube3/smaregi_api_and_functions_extract.md:29:| 在庫一括相対値更新 | スマレジプラットフォームAPI | CSV登録、棚卸し、件数上限超過時の一括処理 | Patch一括方式でスマレジ在庫更新データを登録し、非同期結果を受ける。 |
+functions/pf-eccube3/smaregi_api_and_functions_extract.md:80:| 在庫変動履歴IDリスト | 在庫変更履歴ID、商品ID、店舗IDを1組にした配列。 |
+functions/pf-eccube3/smaregi_api_and_functions_extract.md:82:受信したWebhookは、ec-cube-enterpriseのスマレジWebhook受信テーブルへ記録する。記録後、スマレジ在庫変動履歴を取得し、在庫区分が`02:取引`の場合は出庫、`12:返品`の場合は入庫としてEC-CUBE側のスマレジ在庫を更新する。店頭受取分の商品IDや、対象外の在庫変動区分は更新対象外とする。
+functions/pf-eccube3/smaregi_api_and_functions_extract.md:93:| 対象条件 | 在庫変動区分が`02:取引`または`12:返品`、EC-CUBE側に在庫変動履歴IDが未登録、店頭受取データではない。 |
+functions/pf-eccube3/smaregi_api_and_functions_extract.md:524:1. スマレジから契約ID、イベント、アクション、在庫変動履歴IDリストを含むWebhookを受ける。
+functions/pf-eccube3/smaregi_api_and_functions_extract.md:528:5. 在庫区分が`12:返品`の場合は、EC-CUBE側のスマレジ在庫を入庫として更新する。
+functions/pf-eccube3/smaregi_api_and_functions_extract.md:529:6. 対象外の在庫区分、店頭受取分の商品ID、既に処理済みの在庫変動履歴は更新対象外とする。
+functions/pf-eccube3/smaregi_api_and_functions_extract.md:530:7. スマレジ在庫変動履歴IDをEC-CUBE側の在庫変動履歴に紐づけて保存する。
+functions/pf-eccube3/smaregi_api_and_functions_extract.md:535:2. 在庫区分が`02:取引`または`12:返品`のデータに絞る。
+functions/pf-eccube3/smaregi_api_and_functions_extract.md:536:3. EC-CUBE側の在庫変動履歴にスマレジ在庫変動履歴IDが保存済みか確認する。
+functions/pf-eccube3/smaregi_api_and_functions_extract.md:687:| スマレジ在庫変動Webhook | 契約ID、イベント、アクション、在庫変動履歴IDリスト | Webhook受信記録、在庫変動履歴取得、EC-CUBE側スマレジ在庫更新 | 対象外区分は更新しない。連携失敗分は再連携対象として扱う。 |
+functions/pf-eccube3/smaregi_api_and_functions_extract.md:702:| 在庫変動履歴ID | ec-cube-enterpriseの在庫系スマレジ連携では、スマレジ在庫変動履歴IDをEC-CUBE側の在庫変動履歴に紐づけ、再連携時の二重反映を避ける。 |
+functions/todo-list.md:140:| - [x] | 管理画面 | 在庫管理 | ピッキングリスト印刷 | M04-26 | 新規実装 | 在庫移動指示のピッキングリスト印刷用画面を表示します | 生成済み: 2026-06-11 [md](ec-cube-enterprise/m04-26_admin_stock_stock_move_instruction_picking_list_print.md) / [html](../function_spec_html_preview/ec-cube-enterprise/m04-26_admin_stock_stock_move_instruction_picking_list_print.html) |
+functions/todo-list.md:147:| - [x] | 管理画面 | 在庫管理 | 戻しリストCSV | M04-33 | 新規実装 | 移動の戻しリストをCSV出力できます。 | 生成済み: 2026-06-11 [md](ec-cube-enterprise/m04-33_admin_stock_stock_move_return_list_csv_export.md) / [html](../function_spec_html_preview/ec-cube-enterprise/m04-33_admin_stock_stock_move_return_list_csv_export.html) |
+functions/todo-list.md:148:| - [x] | 管理画面 | 在庫管理 | 戻しリストPDF | M04-34 | 新規実装 | 移動の戻しリストを印刷できます。 | 生成済み: 2026-06-11 [md](ec-cube-enterprise/m04-34_admin_stock_stock_move_return_list_pdf_export.md) / [html](../function_spec_html_preview/ec-cube-enterprise/m04-34_admin_stock_stock_move_return_list_pdf_export.html) |
+functions/todo-list.md:170:| - [x] | 管理画面 | 受注管理 | ピッキングリスト印刷 | M05-21 | 現行踏襲 | ピッキングリストの印刷ができるようピッキングリストがポップアップ表示されます。 | [md](pf-eccube3/m05-21_admin_order_order_shipping_standby_picking_list_print.md) / [html](../function_spec_html_preview/pf-eccube3/m05-21_admin_order_order_shipping_standby_picking_list_print.html) |
+functions/todo-list.md:186:| - [x] | 管理画面 | 店頭買取管理 | 戻しリストCSV出力 | M06-10 | 新規実装 | 棚戻し業務用のCSV出力が行えます。 | 生成済み: 2026-06-11 [md](ec-cube-enterprise/m06-10_admin_store_purchase_purchase_store_return_list_csv_export.md) / [html](../function_spec_html_preview/ec-cube-enterprise/m06-10_admin_store_purchase_purchase_store_return_list_csv_export.html) |
+functions/todo-list.md:187:| - [x] | 管理画面 | 店頭買取管理 | 戻しリストPDF出力 | M06-11 | 新規実装 | 棚戻し業務用のPDF出力が行えます。 | 生成済み: 2026-06-11 [md](ec-cube-enterprise/m06-11_admin_store_purchase_purchase_store_return_list_pdf_export.md) / [html](../function_spec_html_preview/ec-cube-enterprise/m06-11_admin_store_purchase_purchase_store_return_list_pdf_export.html) |
+functions/todo-list.md:197:| - [x] | 管理画面 | ネット買取管理 | 戻しリストCSV | M07-08 | 新規実装 |  | 生成済み: 2026-06-11 [md](ec-cube-enterprise/m07-08_admin_online_purchase_purchase_online_return_list_csv_export.md) / [html](../function_spec_html_preview/ec-cube-enterprise/m07-08_admin_online_purchase_purchase_online_return_list_csv_export.html) |
+functions/todo-list.md:198:| - [x] | 管理画面 | ネット買取管理 | 戻しリストPDF | M07-09 | 新規実装 |  | 生成済み: 2026-06-11 [md](ec-cube-enterprise/m07-09_admin_online_purchase_purchase_online_return_list_pdf_export.md) / [html](../function_spec_html_preview/ec-cube-enterprise/m07-09_admin_online_purchase_purchase_online_return_list_pdf_export.html) |
+functions/function-doc-excel-integration-report.md:49:- M05-21 ピッキングリスト印刷 -> `sheet-20` from `functions/pf-eccube3/m05-21_admin_order_order_shipping_standby_picking_list_print.md`
+functions/function-doc-excel-integration-report.md:118:- M07-08 戻しリストCSV -> `sheet-9` from `functions/ec-cube-enterprise/m07-08_admin_online_purchase_purchase_online_return_list_csv_export.md`
+functions/function-doc-excel-integration-report.md:119:- M07-09 戻しリストPDF -> `sheet-10` from `functions/ec-cube-enterprise/m07-09_admin_online_purchase_purchase_online_return_list_pdf_export.md`
+functions/ec-cube-enterprise/m06-11_admin_store_purchase_purchase_store_return_list_pdf_export.md:1:# M06-11（戻しリストPDF出力）
+functions/ec-cube-enterprise/m07-09_admin_online_purchase_purchase_online_return_list_pdf_export.md:1:# ネット買取管理 — 戻しリストPDF
+functions/ec-cube-enterprise/m07-09_admin_online_purchase_purchase_online_return_list_pdf_export.md:7:| M07-09-MSG-001 | 管理画面上部 | 1つ以上の買取注文情報を選択してください。 | 戻しリストPDF出力で、買取注文を選択せずに出力したとき | 買取一覧画面に遷移する |
+functions/ec-cube-enterprise/m07-09_admin_online_purchase_purchase_online_return_list_pdf_export.md:8:| M07-09-MSG-002 | 管理画面上部 | 対象のデータが見つかりません。 ／ 買取番号: %07d は存在しません。 ／ 買取番号: %07d 出力対象に入庫待ち、入庫済み以外のステータスが設定されています。 | 買取一覧で選択した買取注文の戻しリストをCSVまたはPDFで出力するとき、対象が存在しない、または対象に入庫待ち・入庫済み以外のステータスの買取注文が含まれる場合 | 買取一覧画面に遷移する |
+functions/ec-cube-enterprise/m07-09_admin_online_purchase_purchase_online_return_list_pdf_export.md:9:| M07-09-MSG-003 | ブラウザダイアログ | PDF出力する買取注文情報をひとつ以上選択してください。 | 戻しリストPDF出力で、買取注文を選択せずに出力を実行したとき | 送信せず買取一覧画面に留まる |
+functions/ec-cube-enterprise/m07-09_admin_online_purchase_purchase_online_return_list_pdf_export.md:10:| M07-09-MSG-004 | ブラウザダイアログ | ポップアップがブロックされているため、PDFを開けませんでした。ブラウザの設定を確認してください。 | 戻しリストPDFを開こうとしたとき、ブラウザでポップアップがブロックされたとき | 買取一覧画面に留まる |
+functions/ec-cube-enterprise/m07-09_admin_online_purchase_purchase_online_return_list_pdf_export.md:11:| M07-09-MSG-005 | ブラウザダイアログ | PDF用データの取得に失敗しました。 | 戻しリストPDFの出力中に、データの取得でエラーが起きたとき | 買取一覧画面に留まる |
+functions/ec-cube-enterprise/m04-09_admin_stock_stock_move_transfer_register_edit.md:40:| M04-09-MSG-034 | 管理画面上部 | 戻しリストPDFを出力できるステータスではありません。 | 戻しリストPDFを出力できない状態で出力しようとしたとき | エラー情報をJSONで返す |
+functions/ec-cube-enterprise/m04-09_admin_stock_stock_move_transfer_register_edit.md:41:| M04-09-MSG-035 | 管理画面上部 | 対象のデータが見つかりません。 ／ ID: %d は入庫先店舗が設定されていません。 ／ ID: %d は権限のない店舗のデータです。 ／ ID: %d は対象外のステータスです。 ／ ID: %d は存在しません。 ／ 複数店舗の在庫移動・振替情報を同時に処理することはできません。 | 戻しリストPDFを出力し、対象データ・入庫先店舗・操作権限のいずれかに問題があるとき | エラー情報をJSONで返す |
+functions/ec-cube-enterprise/m04-09_admin_stock_stock_move_transfer_register_edit.md:67:| M04-09-MSG-061 | JSアラート | ポップアップがブロックされているため、戻しリストPDFを開けませんでした。ブラウザの設定を確認してください。 | 戻しリストPDFを開こうとしたが、ブラウザにポップアップをブロックされたとき | 戻しリストPDFを出力せず、現在の画面に留まる |
+functions/ec-cube-enterprise/m04-09_admin_stock_stock_move_transfer_register_edit.md:68:| M04-09-MSG-062 | 別ウィンドウ | 読み込み中… | ポップアップを開いた後、データの読み込みが完了するまで | PDFデータ取得後、ポップアップに戻しリストPDFを表示する |
+functions/ec-cube-enterprise/m04-09_admin_stock_stock_move_transfer_register_edit.md:69:| M04-09-MSG-063 | JSアラート | 戻しリストPDF用データの取得に失敗しました。 | 戻しリストPDF用データの取得中にエラーが起きたとき | ポップアップを閉じ、現在の画面に留まる |
+functions/ec-cube-enterprise/m04-09_admin_stock_stock_move_transfer_register_edit.md:94:| M04-09-MSG-088 | 画面中央(ダイアログ) | ポップアップがブロックされているため、戻しリストPDFを開けませんでした。ブラウザの設定を確認してください。 | 戻しリストPDFを開こうとしたが、ブラウザにポップアップをブロックされたとき | 現在の画面に留まる |
+functions/ec-cube-enterprise/m04-09_admin_stock_stock_move_transfer_register_edit.md:95:| M04-09-MSG-089 | 画面中央(ダイアログ) | 戻しリストPDF用データの取得に失敗しました。 | 戻しリストPDF用データを取得できなかったとき | 元画面に留まる |
+functions/ec-cube-enterprise/m04-09_admin_stock_stock_move_transfer_register_edit.md:96:| M04-09-MSG-090 | 画面中央(ダイアログ) | 戻しリストPDF用データの取得に失敗しました。 | 戻しリストPDF用データの取得中に通信エラーが起きたとき | 元画面に留まる |
+functions/ec-cube-enterprise/m06-10_admin_store_purchase_purchase_store_return_list_csv_export.md:1:# M06-10（戻しリストCSV出力）
+functions/ec-cube-enterprise/m04-33_admin_stock_stock_move_return_list_csv_export.md:1:# M04-33（戻しリストCSV）
+functions/function-doc-excel-sheet-gap-report.md:24:| `0202_基本設計仕様書(在庫管理機能).html` | `sheet-34` | `M04-39` | 在庫移動指示リスト ピッキングリスト印刷 | `m04-26-m04-26_admin_stock_stock_move_instruction_picking_list_print` |
+functions/function-doc-excel-sheet-gap-report.md:38:| `0206_基本設計仕様書(ネット買取管理機能).html` | `sheet-10` | `M07-08` | 【新規】戻しリストPDF出力 | `m07-09-m07-09_admin_online_purchase_purchase_online_return_list_pdf_export` |
+functions/SOURCE-ATTRIBUTION-README.md:44:   （例: ec-cube の `picking_list_threshold` はピッキングリスト分割閾値の設定で、印刷処理ではない）。
+functions/excel_markdown_full_review.md:75:- `m04-26-m04-26_admin_stock_stock_move_instruction_picking_list_print` / 在庫移動指示リスト ピッキングリスト印刷 / `functions/ec-cube-enterprise/m04-26_admin_stock_stock_move_instruction_picking_list_print.md`
+functions/excel_markdown_full_review.md:80:- `m04-33-m04-33_admin_stock_stock_move_return_list_csv_export` / 在庫移動戻しリストCSV出力 / `functions/ec-cube-enterprise/m04-33_admin_stock_stock_move_return_list_csv_export.md`
+functions/excel_markdown_full_review.md:81:- `m04-34-m04-34_admin_stock_stock_move_return_list_pdf_export` / 在庫移動戻しリストPDF / `functions/ec-cube-enterprise/m04-34_admin_stock_stock_move_return_list_pdf_export.md`
+functions/excel_markdown_full_review.md:107:- `m05-21-m05-21_admin_order_order_shipping_standby_picking_list_print` / ピッキングリスト印刷 / `functions/pf-eccube3/m05-21_admin_order_order_shipping_standby_picking_list_print.md`
+functions/excel_markdown_full_review.md:169:- `m06-10-m06-10_admin_store_purchase_purchase_store_return_list_csv_export` / 【新規】戻しリストCSV出力 / `functions/ec-cube-enterprise/m06-10_admin_store_purchase_purchase_store_return_list_csv_export.md`
+functions/excel_markdown_full_review.md:170:- `m06-11-m06-11_admin_store_purchase_purchase_store_return_list_pdf_export` / 【新規】戻しリストPDF出力 / `functions/ec-cube-enterprise/m06-11_admin_store_purchase_purchase_store_return_list_pdf_export.md`
+functions/excel_markdown_full_review.md:188:- `m07-08-m07-08_admin_online_purchase_purchase_online_return_list_csv_export` / 【新規】戻しリストCSV出力 / `functions/ec-cube-enterprise/m07-08_admin_online_purchase_purchase_online_return_list_csv_export.md`
+functions/excel_markdown_full_review.md:189:- `m07-09-m07-09_admin_online_purchase_purchase_online_return_list_pdf_export` / 【新規】戻しリストPDF出力 / `functions/ec-cube-enterprise/m07-09_admin_online_purchase_purchase_online_return_list_pdf_export.md`
+functions/ec-cube-enterprise/m07-08_admin_online_purchase_purchase_online_return_list_csv_export.md:1:# ネット買取管理 — 戻しリストCSV
+functions/ec-cube-enterprise/m07-08_admin_online_purchase_purchase_online_return_list_csv_export.md:7:| M07-08-MSG-001 | 管理画面上部 | 1つ以上の買取注文情報を選択してください。 | 戻しリストCSVを出力するときに、買取注文を選択していないとき | 買取検索/一覧画面に遷移する |
+functions/ec-cube-enterprise/m07-08_admin_online_purchase_purchase_online_return_list_csv_export.md:8:| M07-08-MSG-002 | 管理画面上部 | 対象のデータが見つかりません。 ／ 買取番号: %07d は存在しません。 ／ 買取番号: %07d 出力対象に入庫待ち、入庫済み以外のステータスが設定されています。 | 買取一覧で選択した買取の棚戻しリストを出力するとき、選択した全件が存在しない、選択中に存在しない買取がある、または入庫待ち・入庫済み以外のステータスの買取がある場合 | エラーを表示し、買取一覧の検索結果画面に遷移する |
+functions/ec-cube-enterprise/m04-26_admin_stock_stock_move_instruction_picking_list_print.md:1:# M04-26（ピッキングリスト印刷）
+functions/ec-cube-enterprise/m04-08_admin_stock_stock_move_transfer_search_list.md:17:| M04-08-MSG-011 | 管理画面上部 | 1つ以上の在庫移動情報を選択してください。 | 戻しリストをCSVまたはPDFで出力するとき、在庫移動情報を選択していないとき | 在庫移動・振替検索/一覧画面に遷移する |
+functions/ec-cube-enterprise/m04-08_admin_stock_stock_move_transfer_search_list.md:18:| M04-08-MSG-012 | 管理画面上部 | 対象のデータが見つかりません。 ／ ID: %d は入庫先店舗が設定されていません。 ／ ID: %d は権限のない店舗のデータです。 ／ ID: %d は対象外のステータスです。 ／ ID: %d は存在しません。 ／ 複数店舗の在庫移動・振替情報を同時に処理することはできません。 | 戻しリストを出力しようとしたとき、選択データがない、入庫先店舗が未設定、または編集権限のない店舗のデータが含まれるとき | 在庫移動・振替一覧画面の現在のページに遷移する |
+functions/ec-cube-enterprise/m04-08_admin_stock_stock_move_transfer_search_list.md:29:| M04-08-MSG-023 | 画面中央(ダイアログ) | 1つ以上の在庫移動情報を選択してください。 | 戻しリストCSVを出力するとき、一覧で在庫移動情報を選択していないとき | 在庫移動・振替検索/一覧画面に留まる |
+functions/ec-cube-enterprise/m04-08_admin_stock_stock_move_transfer_search_list.md:30:| M04-08-MSG-024 | 画面中央(ダイアログ) | 1つ以上の在庫移動情報を選択してください。 | 戻しリストPDFを出力するとき、一覧で在庫移動情報を選択していないとき | 在庫移動・振替検索/一覧画面に留まる |
+functions/ec-cube-enterprise/m04-08_admin_stock_stock_move_transfer_search_list.md:31:| M04-08-MSG-025 | 画面中央(ダイアログ) | ポップアップがブロックされているため、戻しリストPDFを開けませんでした。ブラウザの設定を確認してください。 | 戻しリストPDFを開こうとしたとき、ブラウザでポップアップがブロックされたとき | 在庫移動・振替検索/一覧画面に留まる |
+functions/ec-cube-enterprise/m04-08_admin_stock_stock_move_transfer_search_list.md:32:| M04-08-MSG-026 | 画面中央(ダイアログ) | 戻しリストPDF用データの取得に失敗しました。 | 戻しリストPDFを出力するとき、PDF用データの取得結果に問題があったとき | 在庫移動・振替検索/一覧画面に留まる |
+functions/ec-cube-enterprise/m04-08_admin_stock_stock_move_transfer_search_list.md:33:| M04-08-MSG-027 | 画面中央(ダイアログ) | 戻しリストPDF用データの取得に失敗しました。 | 戻しリストPDFを出力するとき、PDF用データの取得中に通信エラーが起きたとき | 在庫移動・振替検索/一覧画面に留まる |
+functions/ec-cube-enterprise/m04-34_admin_stock_stock_move_return_list_pdf_export.md:1:# M04-34（戻しリストPDF）
+functions/pf-eccube3/m10-05_admin_base_setting_setting_shop_delivery_free_conditions.md:52:サイドなどに差し込まれる文言ブロックでは、金額閾値が truthy のときのみ「〇〇円以上の購入で配送料無料」と出し、そうでない場合は便宜的に「0円以上の購入で配送料無料」固定文となる実装がある。閾値未設定運用での利用者への意味はテンプレート実装とブロック設置を正とする。
+functions/pf-eccube3/m05-20_admin_order_order_shipping_standby_detail_edit_delete.md:12:| ピッキングリスト印刷 | 数字だけを受け付ける | ピッキングリスト印刷の設計書を正とする |
+functions/pf-eccube3/m05-21_admin_order_order_shipping_standby_picking_list_print.md:1:# 受注管理 — ピッキングリスト印刷
+functions/pf-eccube3/m05-21_admin_order_order_shipping_standby_picking_list_print.md:7:指定した出荷指示リストで選択した受注だけを対象とする。指定した出荷指示リストが存在しないときは、ピッキングリストを作らず未検出として応答する。
+functions/pf-eccube3/m05-21_admin_order_order_shipping_standby_picking_list_print.md:62:### 出力: ピッキングリスト
+functions/pf-eccube3/m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export.md:11:5. `old_goods_account`では戻しリスト向けの追加バリデーションは実行しない。
+functions/pf-eccube3/m06-01_admin_store_purchase_purchase_store_search_list.md:60:| M06-01-MSG-002 | 管理画面上部 | 対象のデータが見つかりません。 ／ ID: %d は権限のない店舗のデータです。 ／ ID: %d は対象外のステータスです。 ／ 複数店舗の買取情報を同時に処理することはできません。 | 棚戻しリストCSVを出力しようとした際、選択した買取情報が存在しない、操作権限のない店舗に属する、または対象外のステータスであるとき。 | エラーを表示し、買取一覧画面に遷移する。 |
+functions/pf-eccube3/m06-01_admin_store_purchase_purchase_store_search_list.md:62:| M06-01-MSG-005 | 管理画面上部 | 対象のデータが見つかりません。 ／ ID: %d は権限のない店舗のデータです。 ／ ID: %d は対象外のステータスです。 ／ 複数店舗の買取情報を同時に処理することはできません。 | 棚戻しリストPDFを出力しようとした際、選択した買取情報が存在しない、操作権限のない店舗に属する、または対象外のステータスであるとき。 | 買取検索/一覧画面に遷移する |
+functions/pf-eccube3/m06-01_admin_store_purchase_purchase_store_search_list.md:63:| M06-01-MSG-006 | 画面中央の警告ダイアログ | PDF出力する買取情報をひとつ以上選択してください。 | 戻しリストPDF出力で買取情報を選択していないとき | 買取一覧画面に留まる。 |
+functions/ec-cube-enterprise/m04-13_admin_stock_stock_split_join_register_edit.md:58:| M04-13-MSG-078 | 画面中央(ダイアログ) | この操作はあとから取り消すことができません。在庫分割計画を承認申請してよろしいですか？ | 在庫分割編集画面で承認申請を実行するとき | 承認申請成功時は承認画面へ遷移し、失敗時は編集画面へ戻る |
+functions/ec-cube-enterprise/m04-13_admin_stock_stock_split_join_register_edit.md:59:| M04-13-MSG-079 | 画面中央(ダイアログ) | この操作はあとから取り消すことができません。在庫分割を承認してよろしいですか？ | 在庫分割承認画面で承認を実行するとき | 承認処理後は編集画面へ遷移し、処理失敗時は承認画面へ戻る |
+functions/ec-cube-enterprise/m04-13_admin_stock_stock_split_join_register_edit.md:60:| M04-13-MSG-080 | 画面中央(ダイアログ) | この操作はあとから取り消すことができません。在庫分割を却下してよろしいですか？ | 在庫分割承認画面で却下を実行するとき | 却下処理後は編集画面へ遷移し、処理失敗時は承認画面へ戻る |
+functions/todo-list.md:319:| - [x] | バッチ | 買取管理 | 買取自動入庫バッチ | B06-01 | 新規実装 | 買取成立した商品に対して入庫処理を行う | 生成済み: 2026-06-11 [md](ec-cube-enterprise/b06-01_batch_purchase_purchase_auto_stock.md) / [html](../function_spec_html_preview/ec-cube-enterprise/b06-01_batch_purchase_purchase_auto_stock.html) |
+functions/excel_markdown_full_review.md:464:- `b06-01-b06-01_batch_purchase_purchase_auto_stock` / 【新規】買取自動入庫バッチ / `functions/ec-cube-enterprise/b06-01_batch_purchase_purchase_auto_stock.md`
+functions/ec-cube-enterprise/b06-01_batch_purchase_purchase_auto_stock.md:1:# B06-01（買取自動入庫バッチ）
+functions/pf-eccube3/m06-05_admin_store_purchase_purchase_store_history.md:77:| ステータス選択肢 | フォームは買取成立・キャンセル・入庫待ち・未登録在庫あり・入庫済み・管理者取消の 6 種のみをクエリ候補として出す（マスタ定数 1,2,11,12,13,14。実装を確認値とする）。 |
+functions/pf-eccube3/m06-04_admin_store_purchase_purchase_store_status_change.md:45:6. 店頭買取受注の `update_date` を現在時刻に更新する。ステータスに紐づく日付列（買取成立・キャンセル・入庫）のうち、受注側の対応表に載るものだけを、ステータス遷移に応じた日時更新ルールで埋める（同一ステータスへの更新や、買取成立の重複上書きは抑止する実装）。
+functions/pf-eccube3/m06-04_admin_store_purchase_purchase_store_status_change.md:47:8. 次が買取成立のとき、個別入力商品の有無で「未登録在庫あり」か「入庫待ち」のどちらかを決め、同じトランザクション内でもう一度ステータス更新と履歴追記を行う。
+functions/pf-eccube3/m06-04_admin_store_purchase_purchase_store_status_change.md:61:| 4 | 次が買取成立か | 成立なら続けて入庫待ち系の最終ステータスへ2回目の更新を行う。 |
+functions/pf-eccube3/m06-04_admin_store_purchase_purchase_store_status_change.md:81:| 買取成立後の自動遷移 | 個別入力商品コレクションが空なら入庫待ち（ID13）、空でなければ未登録在庫あり（ID12）。 |
+functions/pf-eccube3/o01-02_other_mtg_buyer_mtg_buyer_online_purchase.md:39:| 入庫 | ネット買取成立後の在庫登録（入庫）は本機能では行わない。入庫処理は O01-03 を正とする。 |
+
+exec
+/bin/bash -lc "sed -n '1,120p' functions/pf-eccube3/smaregi_api_and_functions_extract.md
+sed -n '500,555p' functions/pf-eccube3/smaregi_api_and_functions_extract.md
+sed -n '1,120p' functions/pf-eccube3/m06-01_admin_store_purchase_purchase_store_search_list.md
+sed -n '1,140p' functions/ec-cube-enterprise/m06-10_admin_store_purchase_purchase_store_return_list_csv_export.md" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+# スマレジAPI・関連機能抜粋設計書
+
+## 抜粋対象機能
+
+| 機能No | 機能名 | 種別 | 入口 | 役割 |
+|--------|--------|------|--------------------|------|
+| A01-01 | スマレジ連携処理 | API / 新規実装 | `POST /smaregi/stocks`、`POST /%eccube_smaregi_webhook_route%`（既定`smaregi/webhook`） | スマレジの在庫変動Webhook、管理画面操作による在庫個別連携、CSV等のPatch一括連携を扱う。 |
+| A01-02 | スマレジwebhook連携エラー再連携 | API / 新規実装 | Step Functions等のスケジュール起動、スマレジプラットフォームAPI | Webhook失敗分のスマレジ在庫変動履歴を再取得し、未連携分を再処理する。 |
+| A05-04 | スマレジ受信処理 | API | `POST /{_locale}/smaregi/transaction` | スマレジ取引通知を受け、会員ポイント・ポイント履歴・対象注文の出荷完了を更新する。 |
+| B05-04 | スマレジ商品再連携 | バッチ | `order:batch resendSmaregiProduct` | 店頭注文受注の未連携商品・在庫をスマレジへ再送信する。 |
+| B05-05 | スマレジ商品削除 | バッチ | `order:batch deleteSmaregiProduct` | 手続き完了後の店頭注文をスマレジ商品から削除する。 |
+| B05-08 | スマレジEC受注連携エラー再連携 | バッチ | `smaregi:batch checkSmaregiErrorOrder` | スマレジポイント連携エラーの受注を再連携する。 |
+| B05-09 | スマレジ取引連携エラー再連携 | バッチ | `smaregi:batch checkSmaregiTransaction` | スマレジ取引参照APIで取引を取得し、未反映・未取消のポイント履歴を補正する。 |
+| B08-05 | ポイント差分発生通知 | バッチ | `customer:batch adjustPointVariance` | 保有ポイントとポイント履歴合計の差分を補正し、管理者へ通知する。 |
+| B08-06 | スマレジ使用ポイント連携 | バッチ | `smaregi:batch updatePoint <受注ID>` | 指定受注で使用したポイントをスマレジへ減算連携する。 |
+| - | スマレジ会員一括作成 | 運用バッチ | `smaregi:batch createCustomer <開始プレイヤーID> <終了プレイヤーID>` | スマレジID未設定の会員へ新規スマレジIDを採番し、スマレジ会員を登録する。 |
+| - | スマレジ会員存在確認 | 運用バッチ | `smaregi:batch checkCustomer <開始プレイヤーID> <終了プレイヤーID>` | EC側に保持するスマレジIDがスマレジ側に存在するか確認し、存在しなければスマレジIDを初期化する。 |
+| - | 会員登録・更新・退会・ポイント統合 | 機能内連携 | 会員登録、会員編集、退会、ポイント統合、管理者アカウント操作 | 会員情報をスマレジへ登録・更新・停止する。 |
+
+---
+
+## 外部API区分
+
+| 連携先処理 | スマレジ処理名 | 送信タイミング | 主な内容 |
+|------------|----------------|----------------|----------|
+| 在庫変動Webhook受信 | スマレジプラットフォームWebhook | スマレジ側の取引完了、取引全キャンセル、在庫変動時 | 契約ID、イベント、アクション、在庫変動履歴IDリストを受け、EC-CUBE側のスマレジ在庫更新へ接続する。 |
+| 在庫変動履歴取得 | スマレジプラットフォームAPI | Webhook受信後、またはWebhookエラー再連携時 | 在庫変更履歴ID、商品ID、店舗IDをもとにスマレジ在庫変動履歴を取得する。 |
+| 在庫相対値更新 | スマレジプラットフォームAPI | EC-CUBE管理画面の在庫編集、一括編集、移動・分割結合等 | スマレジ在庫に対する個別の相対値更新を送信する。 |
+| 在庫一括相対値更新 | スマレジプラットフォームAPI | CSV登録、棚卸し、件数上限超過時の一括処理 | Patch一括方式でスマレジ在庫更新データを登録し、非同期結果を受ける。 |
+| 取引通知受信 | - | スマレジからECへの通知 | 取引ヘッダ・取引明細を受け、ポイントと注文状態を更新する。 |
+| 商品更新 | `product_upd` | 店頭注文の商品連携、再連携 | 商品ID・商品コード・商品名・価格・部門ID・税区分を送信する。 |
+| 商品削除 | `product_upd` | 店頭注文完了後の商品削除 | 処理区分を削除にして商品IDを送信する。 |
+| 在庫更新 | `stock_upd` | 店頭注文の在庫連携、再連携 | 店舗ID・商品ID・在庫数1・在庫区分15を送信する。 |
+| 会員参照 | `customer_ref` | スマレジID採番時の重複確認、既存会員確認、会員存在確認 | スマレジ会員IDまたは会員コードで会員を検索する。 |
+| 会員登録・更新・削除・停止 | `customer_upd` | 会員登録、会員編集、退会、ポイント統合、一括会員作成 | スマレジ会員情報を登録・更新・削除・利用停止にする。 |
+| ポイント更新 | `point_upd` | 使用ポイント連携、付与ポイント連携、連携エラー再実行 | 絶対値同期または相対増減でスマレジ会員ポイントを更新する。 |
+| 取引参照 | `transaction_ref` | スマレジ取引連携エラー再連携 | 直近期間の取引ヘッダを取得し、EC側ポイント履歴との差分を補正する。 |
+
+---
+
+## APIリクエスト・レスポンス詳細
+
+### スマレジAPI送信の共通仕様
+
+pf-eccube3からスマレジへ送信するAPIは、処理名が異なっても送信形式は共通である。
+
+| 項目 | 内容 |
+|------|------|
+| HTTPメソッド | `POST` |
+| 送信先URL | `smaregi_request_url`設定値 |
+| Content-Type | `application/x-www-form-urlencoded;charset=UTF-8` |
+| 契約IDヘッダ | `X_contract_id: <smaregi_contract_id>` |
+| アクセストークンヘッダ | `X_access_token: <smaregi_access_token>` |
+| フォーム項目 | `proc_name=<処理名>&params=<JSON文字列>` |
+| 成功判定 | 応答JSONに`result`キーが存在すること |
+| 失敗判定 | cURL結果が空、JSONとして解釈できない、または応答JSONに`result`キーが存在しないこと |
+
+送信する`params`は処理ごとにJSONを組み立て、フォーム値として送信する。実装上はURLエンコードを必ずしも明示していない箇所があるため、呼び出し側のHTTPクライアント仕様に依存しないよう、設計上はフォーム値として安全に送信できる文字列にする。
+
+### スマレジ在庫変動Webhook受信API
+
+ec-cube-enterpriseで新規実装される在庫系スマレジ連携では、スマレジからのWebhook受信を起点に在庫変動履歴を取得し、EC-CUBE側のスマレジ在庫へ反映する。
+
+| 項目 | 内容 |
+|------|------|
+| EC側エンドポイント | `POST /%eccube_smaregi_webhook_route%`（既定`smaregi/webhook`） |
+| Excel設計上のエンドポイント | `POST /smaregi/stocks` |
+| 呼び出し元 | スマレジプラットフォームWebhook、またはスマレジ在庫連携処理の呼び出し元 |
+| 認証・制限 | Excel設計ではIP制限あり。実装上の署名・認可・ルート設定はec-cube-enterpriseを正とする。 |
+| リクエスト形式 | JSON |
+| レスポンス形式 | Excel設計ではステータスコードのみ。実装レスポンスはec-cube-enterpriseを正とする。 |
+
+Webhook受信データは次の内容を持つ。
+
+| 項目 | 内容 |
+|------|------|
+| 契約ID | スマレジ契約ID。 |
+| イベント名 | `pos:stock`など、スマレジ側イベントを示す。 |
+| アクション | `edited`、`bulk-update`など、更新または一括更新を示す。 |
+| 在庫変動履歴IDリスト | 在庫変更履歴ID、商品ID、店舗IDを1組にした配列。 |
+
+受信したWebhookは、ec-cube-enterpriseのスマレジWebhook受信テーブルへ記録する。記録後、スマレジ在庫変動履歴を取得し、在庫区分が`02:取引`の場合は出庫、`12:返品`の場合は入庫としてEC-CUBE側のスマレジ在庫を更新する。店頭受取分の商品IDや、対象外の在庫変動区分は更新対象外とする。
+
+### スマレジWebhook連携エラー再連携
+
+Webhookで連携に失敗した、またはEC-CUBE側に未登録のスマレジ在庫変動履歴は、A01-02で再連携する。
+
+| 項目 | 内容 |
+|------|------|
+| 起動方式 | Step Functions等のスケジュール起動。Excel設計上は毎時16分を確認値とする。 |
+| 入力データ元 | スマレジプラットフォームAPI。 |
+| 対象期間 | バッチ駆動時刻から指定時間前まで。Excel設計では5時間前までを確認値とするが、実行頻度・エラー率・運用時間で可変にする。 |
+| 対象条件 | 在庫変動区分が`02:取引`または`12:返品`、EC-CUBE側に在庫変動履歴IDが未登録、店頭受取データではない。 |
+| 成功時 | スマレジ連携処理A01-01のWebhook方式と同等の処理が完了した状態にする。 |
+
+### スマレジ取引通知受信API
+
+| 項目 | 内容 |
+|------|------|
+| EC側エンドポイント | `POST /{_locale}/smaregi/transaction` |
+| 呼び出し元 | スマレジ、または支店システムからの転送 |
+| Content-Type | `application/x-www-form-urlencoded;charset=UTF-8`想定 |
+| リクエスト項目 | `params` |
+| `params`形式 | JSON文字列 |
+| 認証情報 | 支店転送時のみ`X_contract_id`、`X_access_token`を引き継ぐ |
+
+リクエストの基本構造は次のとおりである。
+
+```json
+{
+  "data": [
+    {
+      "table_name": "TransactionHead",
+      "rows": [
+        {
+          "transactionHeadId": "取引ID",
+          "cancelDivision": "取消区分",
+          "disposeDivision": "打消区分",
+          "disposeServerTransactionHeadId": "打消元取引ID",
+          "customerId": "スマレジ会員ID",
+| `smaregi.customer_code.fix_no` | スマレジ会員コードの固定接頭値。 |
+| `smaregi.customer_code.length` | スマレジ会員コードの桁数。 |
+| `smaregi.transaction_period_hours` | 取引参照バッチで遡る時間幅。 |
+| `eccube_smaregi_webhook_route` | ec-cube-enterpriseのスマレジWebhook受信ルート。既定は`smaregi/webhook`。 |
+
+契約ID・アクセストークン・送信先URLの実値は本書に記載しない。
+
+---
+
+## フロント挙動
+
+| 観点 | 内容 |
+|------|------|
+| ブラウザ画面 | 本書の主対象はAPIとバッチであり、スマレジ連携専用のブラウザ画面は持たない。 |
+| 管理画面表示 | 受注編集画面や受注一覧では、スマレジポイント連携エラーがある場合に警告表示を行う。表示内容は受注管理の個別設計を正とする。 |
+| 会員画面 | 会員登録、会員情報変更、退会、ポイント統合などの画面操作がスマレジ会員登録・更新・停止を呼び出す。各画面の入力項目は個別設計を正とする。 |
+| 非同期処理 | 購入完了やメール再送処理から、スマレジ使用ポイント連携を別プロセスで起動する。 |
+
+---
+
+## 処理フロー
+
+### スマレジ在庫変動Webhookを受信する
+
+1. スマレジから契約ID、イベント、アクション、在庫変動履歴IDリストを含むWebhookを受ける。
+2. リクエストヘッダーとリクエスト本文をスマレジWebhook受信テーブルへ記録する。
+3. 在庫変更履歴ID、商品ID、店舗IDをもとにスマレジ在庫変動履歴を取得する。
+4. 在庫区分が`02:取引`の場合は、EC-CUBE側のスマレジ在庫を出庫として更新する。
+5. 在庫区分が`12:返品`の場合は、EC-CUBE側のスマレジ在庫を入庫として更新する。
+6. 対象外の在庫区分、店頭受取分の商品ID、既に処理済みの在庫変動履歴は更新対象外とする。
+7. スマレジ在庫変動履歴IDをEC-CUBE側の在庫変動履歴に紐づけて保存する。
+
+### スマレジWebhook連携エラーを再実行する
+
+1. スケジュール起動で、指定期間内のスマレジ在庫変動履歴をスマレジプラットフォームAPIから取得する。
+2. 在庫区分が`02:取引`または`12:返品`のデータに絞る。
+3. EC-CUBE側の在庫変動履歴にスマレジ在庫変動履歴IDが保存済みか確認する。
+4. 未保存の在庫変動履歴を再連携対象にする。
+5. スマレジ連携処理A01-01のWebhook方式と同じ入庫・出庫更新を実行する。
+6. 実行結果をDBとログへ記録する。
+
+### スマレジ取引通知を受信する
+
+1. POSTされた`params`をJSONとして読み取り、取引ヘッダと取引明細を取り出す。
+2. 自店舗のスマレジ店舗IDを3桁文字列として取得する。
+3. 取引が取消の場合は、取引IDに紐づくポイント履歴を削除し、会員ポイントを巻き戻す。
+4. 取引が打消レコードの場合は、打消元取引IDを使い、付与ポイント・使用ポイントの正負を反転して巻き戻す。
+5. 通常取引の場合は、スマレジ会員IDで会員を探し、付与ポイントと使用ポイントを会員ポイントへ反映し、ポイント履歴を登録する。
+6. 通常取引の明細ごとに、商品コードが自店舗の店舗IDを含む場合は、スマレジコードから対象注文を探して出荷完了に更新する。
+7. 商品コードが自店舗以外の場合は、明細を支店システム向けに集める。
+8. 支店明細がある場合は、受信した契約ID・アクセストークンヘッダを引き継ぎ、支店システムのスマレジ受信APIへ転送する。
+9. 自EC側更新件数と支店転送の更新件数を合算し、JSONで返す。
+
+### スマレジへ商品・在庫・削除を送信する
+
+1. オプションマスタから契約ID、アクセストークン、送信先URL、店舗ID、部門IDを取得する。
+# 店頭買取管理 — 買取検索一覧
+
+## 処理フロー
+
+### 初期表示（GET `admin_otcbuyorder`、クエリに有効な `page_no` / `pageno` がない）
+
+1. 管理画面の認証・共通制約を通過する。
+2. 店頭買取検索用フォームを項目既定値つきで生成する（後述の入力項目の初期値）。
+3. ページング情報は空配列、表示件数マスタは渡さず、`page_count` だけ設定ファイルの `eccube_default_page_count` を渡してテンプレートを返す。一覧ブロックは `pagination` が偽のため出ない。
+
+### 検索実行（POST `admin_otcbuyorder`）
+
+1. 共通トレイトの検索処理に入る。フォームをリクエストでバインドする。
+2. ソートキーはリクエストまたはセッション、なければ識別子 `default`。並び順はリクエストまたはセッション、なければ `DESC`。値が `ASC`/`DESC`（大小無視）に合致しないときはソートエラーメッセージを積み、処理を打ち切る経路がある（共通トレイトの実装に従う）。
+3. 表示件数はセッションまたは既定値、リクエストに妥当な `page_count` があればセッションを更新する。
+4. 検索データが空に見える場合はセッションに保存した検索条件を復元する。
+5. 検索条件とソートをセッションキー `eccube.admin.otcbuyorder.search`、ページ番号、`eccube.admin.otcbuyorder.sort`、`eccube.admin.otcbuyorder.order`、`eccube.admin.otcbuyorder.search.page_count` に保存する。
+6. リポジトリが検索条件からクエリビルダを組み立て、ページャで指定ページを取得する。
+7. 最終ページで件数がちょうどページ境界になった直後に空ページになる場合はページ番号を1つ戻して再ページングする（共通トレイトの補正）。
+8. テンプレートへフォームビュー、ページネーション結果、表示件数マスタ、現在ページ、ソート情報、`is_search_filter_active` を渡す。
+
+### ページ移動・表示件数変更（GET、クエリに `page_no` または `pageno`、またはパス `admin_otcbuyorder_page`）
+
+1. `admin_otcbuyorder` の単一路由では、メソッド引数 `page_no` が0のときクエリの `pageno` または `page_no` を読む。正の値なら検索処理へ進む。
+2. `admin_otcbuyorder_page/{page_no}` は引数が正のとき常に検索処理へ進む。
+3. 検索処理はセッションの検索条件を復元して該当ページを表示する。
+
+### 一覧から詳細へ
+
+1. 査定IDのリンクは `GET admin_otcbuyorder_detail` へ遷移する（本書では詳細を扱わない）。
+
+---
+
+## 入出力
+
+| 種類 | 内容 |
+|------|------|
+| 入力 | 検索フォームの各フィールド、ページ番号、表示件数、ソート（一覧画面にソート UI は無く主にセッション継承）。 |
+| 成功時出力 | HTML（検索フォーム＋任意で一覧）。 |
+| 失敗時出力 | ソート不正時など共通トレイト経由のエラーフラッシュや再描画（詳細は共通実装を確認値とする）。 |
+
+---
+
+## 業務ロジック
+
+### フェーズ2対応（フェーズ1では実装しない）
+
+- Excel基本設計 0205「買取商品（キャンセル）CSV出力」はフェーズ2対応。フェーズ1では実装しない（この項目だけ）。Excel原文: 「買取商品（キャンセル）CSVはPh2の要件となるためPh1では実装しない」
+
+- 検索・一覧・取得条件はリクエストパラメータ、ログイン状態、公開状態、店舗・支店条件、既存リポジトリの絞り込み順序を正とする。
+- 件数、ページ番号、表示順は既存実装のデフォルトと上限に従い、取得後に業務値を再計算しない。
+- 金額、ポイント、数量、ステータス、日時はDBまたは連携元の永続化済み値を返却し、レスポンス生成時の丸め・補正は行わない。
+- 条件に一致しない、権限がない、または非公開のデータは空結果または既存のエラー形式で返す。
+
+## 表示メッセージ
+
+| メッセージID | 表示位置 | 画面上の文言 | 表示条件 | 後続処理 |
+| --- | --- | --- | --- | --- |
+| M06-01-MSG-001 | 管理画面上部 | 1つ以上の買取注文情報を選択してください。 | CSV出力で買取注文を選択していないとき | 買取検索/一覧画面に遷移する |
+| M06-01-MSG-002 | 管理画面上部 | 対象のデータが見つかりません。 ／ ID: %d は権限のない店舗のデータです。 ／ ID: %d は対象外のステータスです。 ／ 複数店舗の買取情報を同時に処理することはできません。 | 棚戻しリストCSVを出力しようとした際、選択した買取情報が存在しない、操作権限のない店舗に属する、または対象外のステータスであるとき。 | エラーを表示し、買取一覧画面に遷移する。 |
+| M06-01-MSG-004 | 管理画面上部 | 1つ以上の買取注文情報を選択してください。 | PDF出力で買取注文を選択していないとき | 買取検索/一覧画面に遷移する |
+| M06-01-MSG-005 | 管理画面上部 | 対象のデータが見つかりません。 ／ ID: %d は権限のない店舗のデータです。 ／ ID: %d は対象外のステータスです。 ／ 複数店舗の買取情報を同時に処理することはできません。 | 棚戻しリストPDFを出力しようとした際、選択した買取情報が存在しない、操作権限のない店舗に属する、または対象外のステータスであるとき。 | 買取検索/一覧画面に遷移する |
+| M06-01-MSG-006 | 画面中央の警告ダイアログ | PDF出力する買取情報をひとつ以上選択してください。 | 戻しリストPDF出力で買取情報を選択していないとき | 買取一覧画面に留まる。 |
+| M06-01-MSG-007 | 画面中央の警告ダイアログ | ポップアップがブロックされているため、PDFを開けませんでした。ブラウザの設定を確認してください。 | PDFを開こうとしたとき、ブラウザがポップアップをブロックしたとき | 買取一覧画面に留まる。 |
+| M06-01-MSG-008 | 画面中央の警告ダイアログ | PDF用データの取得に失敗しました。 | PDF用データの取得に失敗したとき | ポップアップを閉じ、買取一覧画面に留まる。 |
+| M06-01-MSG-009 | 検索フォーム項目下インライン | 不正な日付です。 | 検索条件の査定申込日時または買取日時に古すぎる日付を指定したとき | 入力エラーが表示され、買取一覧画面に留まる。 |
+| M06-01-MSG-010 | 管理画面上部フラッシュ | admin.error.sort | 検索結果の並び順に不正な値を指定したとき | エラーを表示し、一覧画面に留まる。 |
+| M06-01-MSG-003 | 管理画面上部 | 編集可能な店舗と買取情報の買取店舗が一致しません。 ／ 入庫済みのステータスは管理者取消以外に変更できません。 ／ 商品マスターに登録されていない商品明細が含まれているため、入庫済みに変更できません。 ／ 実在庫情報が登録されていない個別入力商品が含まれているため、入庫済みに変更できません。 | ステータス変更画面で変更を実行したとき、編集可能な店舗と買取店舗が一致しない、または入庫済みから管理者取消以外へ変更しようとした場合 | ステータス変更画面へ戻る |
+| M06-01-MSG-011 | 買取一覧の検索結果ボックス見出し | 検索条件に該当するデータがありませんでした。 | 買取一覧検索POST又は検索条件を復元したページ表示で、paginationは生成されたがtotalItemCountが0の場合。 | 買取一覧テーブル・ページャを表示せず、同じ検索画面に空結果メッセージを表示する。 |
+
+---
+
+## エラー処理
+
+| エラー内容 | 処理 |
+|------------|------|
+| CSV出力でID未選択 | フラッシュエラー（通販買取一覧と同一キー `admin.purchase.online.csv_export.no_selection` を流用）し、セッションの検索ページ番号へリダイレクト（エクスポート系ルート）。 |
+
+---
+# M06-10（戻しリストCSV出力）
+
+exec
+/bin/bash -lc "rg -n --glob 'functions/**/*.md' --glob '"'!functions/_archive/**'"' '秒間50|50回|レート制限|待機時間|25台' functions/pf-eccube3/smaregi_api_and_functions_extract.md functions/ec-cube-enterprise functions/pf-eccube3 | head -n 80
+rg -n --glob 'functions/**/*.md' --glob '"'!functions/_archive/**'"' '商品と店舗の組合せ|商品種類数分|上限を越えたらエラー.*CSV|上限件数.*Patch|API個別' functions | head -n 120" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+codex
+判定: 失われている  
+機能: a01-01_api_stock_smaregi_stock_sync.md  
+消えた事実: 管理画面の在庫編集・一括編集には実行件数の上限があり、超過時はエラーを表示してCSV登録へ誘導する。  
+現在の正本に無いことの根拠: 当該正本は見出しのみ。`smaregi_api_and_functions_extract.md` には個別連携・Patch一括連携の使い分けはあるが、上限超過時のエラー表示とCSV登録への誘導はなく、正本全体でも該当する記述を確認できない。  
+復元案（0203の粒度・1〜2文）: 管理画面の在庫編集・一括編集は実行件数に上限を設け、上限を超えたときはエラーを表示してCSV登録へ誘導する。
+
+判定: 失われている  
+機能: m06-11_admin_store_purchase_purchase_store_return_list_pdf_export.md  
+消えた事実: 選択した店頭買取の実在庫を店舗別の金額閾値とサプライに区分すること、区分内の並び順、印刷向け表示と印刷ボタンの動作。  
+現在の正本に無いことの根拠: 当該正本は見出しのみ。関連する `m06-01_admin_store_purchase_purchase_store_search_list.md` には未選択・対象不正時のメッセージしかなく、退避先の130～156行にある区分、並び順、印刷制御は正本全体でも確認できない。  
+復元案（0203の粒度・1〜2文）: 選択した店頭買取の実在庫を、対象店舗の高額商品閾値1～3とサプライに区分し、閾値の昇順、最後にサプライの順で表示する。区分内は棚番（支店を除く）、言語、状態、非Foil・Foil、略称、レアリティ、色、略称設定に応じたコレクター番号または英語名の順とし、「印刷する」は印刷範囲から除外して押下時に端末の印刷ダイアログを開く。
+
+判定: 失われている  
+機能: m04-13_admin_stock_stock_split_join_register_edit.md  
+消えた事実: 分割・結合に伴う在庫と原価の増減時点、承認・却下時の処理、分割数の判定条件とその表示文言。  
+現在の正本に無いことの根拠: 現在の正本3～66行は主にメッセージ027～086で、退避先62～114行の在庫増減規則と151～176行の分割系メッセージ001～026がない。正本全体でも「分割数が在庫数を超えています」や分割承認・却下時の在庫復元規則を確認できない。  
+復元案（0203の粒度・1〜2文）: 分割数は1以上かつ分割元在庫以下とし、違反時は「分割数は1以上を入力してください。」または「分割数が在庫数を超えています。」を表示する。分割は登録時に元在庫を減算し、承認時に分割先へ数量と按分原価を加算、却下時に元在庫へ戻し、結合は欠品入力への遷移時に元在庫を減算して承認時に結合先へ数量と仕入価格を加算する。
+
+サンプル10機能の集計: 失われている 3件 / 意図的な除去と判断 7件
+tokens used
+117,222
+判定: 失われている  
+機能: a01-01_api_stock_smaregi_stock_sync.md  
+消えた事実: 管理画面の在庫編集・一括編集には実行件数の上限があり、超過時はエラーを表示してCSV登録へ誘導する。  
+現在の正本に無いことの根拠: 当該正本は見出しのみ。`smaregi_api_and_functions_extract.md` には個別連携・Patch一括連携の使い分けはあるが、上限超過時のエラー表示とCSV登録への誘導はなく、正本全体でも該当する記述を確認できない。  
+復元案（0203の粒度・1〜2文）: 管理画面の在庫編集・一括編集は実行件数に上限を設け、上限を超えたときはエラーを表示してCSV登録へ誘導する。
+
+判定: 失われている  
+機能: m06-11_admin_store_purchase_purchase_store_return_list_pdf_export.md  
+消えた事実: 選択した店頭買取の実在庫を店舗別の金額閾値とサプライに区分すること、区分内の並び順、印刷向け表示と印刷ボタンの動作。  
+現在の正本に無いことの根拠: 当該正本は見出しのみ。関連する `m06-01_admin_store_purchase_purchase_store_search_list.md` には未選択・対象不正時のメッセージしかなく、退避先の130～156行にある区分、並び順、印刷制御は正本全体でも確認できない。  
+復元案（0203の粒度・1〜2文）: 選択した店頭買取の実在庫を、対象店舗の高額商品閾値1～3とサプライに区分し、閾値の昇順、最後にサプライの順で表示する。区分内は棚番（支店を除く）、言語、状態、非Foil・Foil、略称、レアリティ、色、略称設定に応じたコレクター番号または英語名の順とし、「印刷する」は印刷範囲から除外して押下時に端末の印刷ダイアログを開く。
+
+判定: 失われている  
+機能: m04-13_admin_stock_stock_split_join_register_edit.md  
+消えた事実: 分割・結合に伴う在庫と原価の増減時点、承認・却下時の処理、分割数の判定条件とその表示文言。  
+現在の正本に無いことの根拠: 現在の正本3～66行は主にメッセージ027～086で、退避先62～114行の在庫増減規則と151～176行の分割系メッセージ001～026がない。正本全体でも「分割数が在庫数を超えています」や分割承認・却下時の在庫復元規則を確認できない。  
+復元案（0203の粒度・1〜2文）: 分割数は1以上かつ分割元在庫以下とし、違反時は「分割数は1以上を入力してください。」または「分割数が在庫数を超えています。」を表示する。分割は登録時に元在庫を減算し、承認時に分割先へ数量と按分原価を加算、却下時に元在庫へ戻し、結合は欠品入力への遷移時に元在庫を減算して承認時に結合先へ数量と仕入価格を加算する。
+
+サンプル10機能の集計: 失われている 3件 / 意図的な除去と判断 7件

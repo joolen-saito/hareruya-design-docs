@@ -1,0 +1,365 @@
+{
+  "packetId": "sw_15",
+  "results": [
+    {
+      "rowId": 505,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "非CSV/TSVやサイズ超過ファイルの受付可否が設計と変わり、取込処理の実行結果または表示エラーが異なる。",
+      "checked": "src/Eccube/Form/Type/Admin/StockChangeType.php:154-160 で import_file の constraints が空、src/Eccube/Resource/template/admin/Stock/change.twig:406 で accept が text/csv,text/tsv であることを確認した。",
+      "reason": "アップロード可否とHTTP処理結果を変える入力検証差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 506,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "同名ファイルを続けて送信した際、設計では警告して中止するが、実装では再取込されて承認情報・明細が再作成され得る。",
+      "checked": "src/Eccube/Controller/Admin/Stock/StockChangeCsvController.php:256-359 と src/Eccube/Service/Csv/Importer/Event/StockChangeCsvImportHandler.php:124-184 を確認し、元ファイル名は履歴保存に使うだけで事前重複照会がないことを確認した。",
+      "reason": "画面メッセージ、処理中止の有無、DB副作用が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 507,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "複数行に不備があるCSVで、表示されるエラーの件数・行番号が設計より少なくなり、後続行が検査されない。",
+      "checked": "src/Eccube/Service/Csv/Importer/Event/BaseCsvImportHandler.php:71-109 で列数、列値、行バリデータの最初の失敗時に breakAll() して return することを確認した。",
+      "reason": "利用者向けエラー出力と検査範囲が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 508,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "同一商品コードが複数一致する場合に設計エラーとならず先頭1件が選ばれ、競合時にも設計のロック失敗エラーではなく処理継続または別のDB結果になり得る。",
+      "checked": "src/Eccube/Repository/ProductStockRepository.php:535-550 で商品コード検索が setMaxResults(1) の非ロック照会であること、src/Eccube/Service/Csv/Importer/Event/StockChangeCsvImportHandler.php:281-301 がその単一IDを使用することを確認した。",
+      "reason": "エラー応答と更新対象・並行実行時の永続結果が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 509,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "増減数0の行でも承認明細が保存され、対象件数と集計件数に加算される。",
+      "checked": "src/Eccube/Service/Csv/Importer/Event/StockChangeCsvImportHandler.php:273-325 で0判定なしに insertStockChangeDetail()、totalInventoryChange 加算、rowCount 加算を行うことを確認した。",
+      "reason": "DB明細と画面に使われる件数・集計が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 510,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "廃棄CSV取込直後の在庫数・在庫履歴・スマレジ通知が設計どおり更新されず、承認待ち期間の在庫表示と外部連携状態が異なる。",
+      "checked": "src/Eccube/Service/Csv/Importer/Event/StockChangeCsvImportHandler.php:124-197,273-325 を確認し、取込後処理は承認一覧・S3履歴作成、行処理は承認明細挿入のみで、在庫減算・在庫履歴・スマレジ呼出しがないことを確認した。",
+      "reason": "永続在庫、履歴、外部システム連携という直接の副作用差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 511,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "取込成立後も規格在庫・規格本体在庫が設計の更新後値へ同期されず、在庫履歴件数も設計と異なる。",
+      "checked": "src/Eccube/Service/Csv/Importer/Event/StockChangeCsvImportHandler.php:273-325 で保存先が dtb_stock_edit_approval_detail 相当のリポジトリだけであり、ProductStock/ProductClass更新や在庫履歴保存を呼んでいないことを確認した。",
+      "reason": "DBの在庫値と履歴I/Oが変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 512,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "取込完了後に入荷通知メールと支店向け在庫通知が送られず、受信者・連携先が通知を観測できない。",
+      "checked": "src/Eccube/Controller/Admin/Stock/StockChangeCsvController.php:323-359 と src/Eccube/Service/Csv/Importer/Event/StockChangeCsvImportHandler.php:124-197 を確認し、送信は承認者向け sendStockApprovalAlertMail のみで、入荷通知・支店在庫通知処理がないことを確認した。",
+      "reason": "メール・外部通知の有無は外部I/Oそのものである。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 513,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "成功時の画面には設計文言ではなく「保存しました」が表示される。",
+      "checked": "src/Eccube/Controller/Admin/Stock/StockChangeCsvController.php:359 の addSuccess('admin.common.save_complete') と src/Eccube/Resource/locale/messages.ja.yaml:1590 の翻訳値「保存しました」を確認した。",
+      "reason": "表示文言の差は軽微でも画面出力として観測可能である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 514,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "正常完了時の取込件数ログと異常終了ログが残らず、運用者が監査・障害調査で取得できる記録が設計より少ない。",
+      "checked": "src/Eccube/Controller/Admin/Stock/StockChangeCsvController.php:269 の開始 log_info と同:281-359 の成功・例外経路を確認し、件数付き完了ログと異常終了ログがないことを確認した。",
+      "reason": "明示されたログ・監査要件のファイルI/O差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 515,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "承認日時が画面で分単位まで表示されず、同日内の承認時刻を利用者が確認できない。",
+      "checked": "src/Eccube/Repository/DtbStockEditCsvRepository.php:115-120 では基準日時ソートが既に実装済みである一方、src/Eccube/Resource/template/admin/Stock/change.twig:509-514 は承認日時を Y/m/d だけで表示することを確認した。",
+      "reason": "指摘のソート部分は現コードで解消済みだが、同じ行の表示フォーマット差が残り外部観測可能である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 516,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "承認一覧に保存される総原価集計が増減額ではなく変更前総原価合計となり、DB値と承認画面の集計意味が異なる。",
+      "checked": "src/Eccube/Service/Csv/Importer/Event/StockChangeCsvImportHandler.php:55-57,128-148,321-323 で totalCostPriceBefore に各商品の変更前総原価を加算し TotalCostPriceBefore として保存することを確認した。",
+      "reason": "永続する集計値とそれを読む業務画面の数値が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 517,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "在庫編集承認親レコードの登録者IDが操作者ではなく通知先配列の整数キャスト値となり、登録者表示・検索・監査結果が誤る。",
+      "checked": "src/Eccube/Controller/Admin/Stock/StockChangeCsvController.php:294-296 で複数選択値を int キャストして入力へ渡し、src/Eccube/Repository/DtbStockEditApprovalRepository.php:48-76 でそれを registered_member_id に保存することを確認した。明細側は同 Controller:310 と Handler:316 でログインMemberを保持しており親子で差が出る。",
+      "reason": "登録者はDBに永続化され画面・監査に露出する業務データである。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 518,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "100点以上の確認モーダルに設計指定のCSV修正案内が表示されず、利用者が見る注意文が異なる。",
+      "checked": "src/Eccube/Resource/template/admin/Stock/change.twig:290-304 でモーダル本文が「100点以上の在庫変動がある商品が含まれています。このまま登録してよろしいですか？」だけであることを確認した。",
+      "reason": "画面表示文言は外部出力である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 519,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "CSV以外の拡張子・MIMEのファイルでも内容を読めれば在庫移動取込へ進み、設計なら表示される形式エラーが出ない。",
+      "checked": "src/Eccube/Form/Type/Admin/StockMoveCsvImportType.php:110-120 の File 制約は maxSize のみ、src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:253-314 はフォーム通過後そのまま importer に渡すことを確認した。",
+      "reason": "ファイル受付可否と処理結果が変わる入力契約差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 520,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "約5,010行以上10,000行以下の在庫移動CSVが設計では受付対象なのに、実装では上限超過エラーになる。",
+      "checked": "src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:273-276 が共通上限を使用し、src/Eccube/Controller/AbstractController.php:360-364 の ADMIN_CSV_IMPORT_MAX_ROWS が5010であることを確認した。",
+      "reason": "受理できる入力件数とエラー応答が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 521,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "移動点数0は設計上有効でも実装でエラーとなり、反対に9桁上限を超える値は専用上限検証がないため処理へ進み得る。",
+      "checked": "src/Eccube/Service/Csv/Importer/Model/ColumnDefinitions.php:68-71,716-726 で桁上限なしの数値列、src/Eccube/Service/Csv/Importer/Event/StockMoveCsvImportHandler.php:275-293 で0以下を拒否することを確認した。",
+      "reason": "CSVバリデーションの合否と保存・在庫更新の有無が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 522,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "CSV以外の拡張子・MIMEのファイルでも在庫振替取込へ進み、設計のファイル形式エラーにならない。",
+      "checked": "src/Eccube/Form/Type/Admin/StockTransferCsvImportType.php:105-116 の File 制約は maxSize のみ、src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:361-423 がフォーム通過後 importer に渡すことを確認した。",
+      "reason": "アップロード可否とレスポンスが外部から異なる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 523,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "2,001件以上の在庫振替CSVが設計では上限エラーだが、実装では約5,010行未満なら取込対象になる。",
+      "checked": "src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:381-384 と src/Eccube/Controller/AbstractController.php:360-364 で振替にも共通5010上限を使うことを確認した。",
+      "reason": "処理対象件数とDB副作用の有無が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 524,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "同じ振替元・振替先ペアを複数行に書いてもエラーにならず、重複明細と複数回の在庫減算・履歴作成が発生し得る。",
+      "checked": "src/Eccube/Service/Csv/Importer/Event/StockTransferCsvImportHandler.php:153-169,178-270,292-302 を確認し、行間のペア保持や重複RowValidatorがなく各行を個別保存することを確認した。",
+      "reason": "エラー表示だけでなく永続明細・在庫・履歴の副作用が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 525,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "振替点数が999,999,999を超えても9桁上限で拒否されず、DB明細・在庫計算へ渡り得る。",
+      "checked": "src/Eccube/Service/Csv/Importer/Model/ColumnDefinitions.php:98-101,716-726 と src/Eccube/Service/Csv/Importer/Event/StockTransferCsvImportHandler.php:297-302 を確認し、stockTransferQuantity() に maxLength が渡されていないことを確認した。",
+      "reason": "入力合否と在庫・履歴への保存値が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 526,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "店舗未指定なら既定店舗で分割取込が進み、POSTで編集不可店舗IDを送っても権限エラーにならず処理され得る。",
+      "checked": "src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:275-324 で生POSTを読み、store未指定時に baseInfoRepository->get() へフォールバックし、Member取得後も isEditableShop() を呼ばないことを確認した。",
+      "reason": "必須入力、認可、更新対象店舗という外部動作を変える。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 527,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "承認通知先を空にしたPOSTでも分割取込が進み、承認担当者へのメールが送信されない。",
+      "checked": "src/Eccube/Form/Type/Admin/StockSplitCsvUploadType.php:56-58 に必須制約はあるが、src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:275-357 はフォームsubmit/isValidを行わず、生配列が空なら sendApprovalNotificationMails() が同:462-465 でreturnすることを確認した。",
+      "reason": "サーバ側バリデーション結果とメールI/Oが変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 528,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "分割CSVモーダルの所属選択肢が初期店舗基準のまま残る経路があり、選択店舗の所属だけを候補にする設計と画面選択肢が異なる。",
+      "checked": "src/Eccube/Form/Type/Admin/StockSplitCsvUploadType.php:78-90 で所属・メンバー初期候補を allBaseInfos[0] から作ること、src/Eccube/Resource/template/admin/Stock/stock_split_join_index.twig:466-493 の店舗変更処理はメンバーnative selectを再構築する一方、手動描画された src/Eccube/Resource/template/admin/Stock/stock_split_csv_modal_body.twig:30-40 の approval_department select自体は再構築しないことを確認した。",
+      "reason": "画面に表示され選べる所属候補が変わる。",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 529,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "非CSVのMIMEでも分割CSV取込処理へ進み、設計のファイル形式エラーが保証されない。",
+      "checked": "src/Eccube/Form/Type/Admin/StockSplitCsvUploadType.php:100-109 にMIME制約はあるが、src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:275-335 はフォームを処理せず UploadedFile::isValid() のみ確認して importer に渡すことを確認した。",
+      "reason": "サーバが受理するファイルとレスポンスが変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 530,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "分割数・分割先在庫数が999,999,999を超えても上限エラーにならず、また設計上許可される0を実装が拒否するため取込可否が変わる。",
+      "checked": "src/Eccube/Service/Csv/Importer/Event/StockSplitListCsvImportHandler.php:147-164 で ctype_digit と1以上だけを検証し、9桁上限比較がないことを確認した。",
+      "reason": "CSVの合否と後続DB登録・承認処理が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 531,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "CSV取込後の在庫結合は承認待ちへ進まず結合元登録状態に留まり、利用者は別画面で承認申請操作を追加で行う必要がある。",
+      "checked": "src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:407-454 が StockJoinApplyApprovalAction を渡さず、src/Eccube/Service/Csv/Importer/Event/StockJoinListCsvImportHandler.php:422-430 は StockJoinMoveToShortageEntryAction まで、src/Eccube/Service/Admin/Stock/StockJoinMoveToShortageEntryAction.php:86-99 は JOIN_SOURCE_REGISTERED にすることを確認した。",
+      "reason": "画面遷移・業務ステータス・必要操作数が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 532,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "要求した結合元在庫数が現在庫を超えてもエラーにならず、現在庫までに丸めた数量で明細・在庫履歴が登録される。",
+      "checked": "src/Eccube/Service/Csv/Importer/Event/StockJoinListCsvImportHandler.php:363-430 で要求数量をそのままactionへ渡し、src/Eccube/Service/Admin/Stock/StockJoinMoveToShortageEntryAction.php:179-203 で min(要求数量, 現在庫) に丸めて明細保存することを確認した。",
+      "reason": "エラー応答、登録数量、在庫・履歴の永続結果が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 533,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "非CSVのMIMEでも結合CSV取込へ進み、設計のファイル形式エラーが保証されない。",
+      "checked": "src/Eccube/Form/Type/Admin/StockJoinCsvUploadType.php:67-76 にMIME制約はあるが、src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:367-426 はフォーム検証を行わず UploadedFile::isValid() のみで importer に渡すことを確認した。",
+      "reason": "アップロード受付可否と取込結果が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 534,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "POSTで編集不可店舗IDを指定しても結合CSV取込が拒否されず、その店舗を対象に登録処理が進み得る。",
+      "checked": "src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:367-415 で生POSTのstoreからBaseInfoを取得し、ログインMember確認後も isEditableShop() を実行しないことを確認した。",
+      "reason": "認可結果と他店舗データへのDB副作用が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 535,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "CSVフォーマット説明の2-2列が「結合数」ではなく「結合元在庫数」と表示され、2-5列と同名に見える。",
+      "checked": "src/Eccube/Resource/template/admin/Stock/stock_join_csv_modal_body.twig:51-53 が format_join_quantity を表示し、src/Eccube/Resource/locale/messages.ja.yaml:4996 の翻訳値が「結合元在庫数」であることを確認した。実取込ヘッダーは StockJoinListCsvImportHandler.php:48-52 で「結合数」。",
+      "reason": "利用者向けラベルとCSV作成案内の差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 536,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "結合数・結合元在庫数に10桁以上の数値を指定しても999,999,999上限で拒否されず、登録数量へ渡り得る。",
+      "checked": "src/Eccube/Service/Csv/Importer/Event/StockJoinListCsvImportHandler.php:152-170 で数値形式と1以上だけを検証し、9桁上限比較がないことを確認した。",
+      "reason": "CSV合否とDB登録数量・在庫更新結果が変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 537,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "検索一覧と登録モーダルのラベルが「送り状No」と表示され、設計の「送り状No.」から末尾ピリオドが欠ける。",
+      "checked": "src/Eccube/Resource/locale/messages.ja.yaml:5289 の翻訳値「送り状No」、src/Eccube/Form/Type/Admin/StockMoveInstructionDetailType.php:42 と src/Eccube/Resource/template/admin/Stock/stock_move_instruction_index.twig:194,262 の表示経路を確認した。",
+      "reason": "1文字差でも実際の画面出力が異なるためIMPACTである。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 538,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "2,000件を超える在庫移動実績CSVが上限エラーにならず処理され、画面も誤って10,000件上限と案内する。",
+      "checked": "src/Eccube/Controller/Admin/Stock/StockMoveInstructionController.php:458-470 と src/Eccube/Service/Admin/Stock/StockMoveInstructionCsvUploadAction.php:49-67 に件数上限判定がなく、src/Eccube/Resource/locale/messages.ja.yaml:5312 が10,000件と表示することを確認した。",
+      "reason": "受付件数、更新件数、画面文言が外部から変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 539,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "一部行がエラーでも正常行の送り状番号と移動ステータスがDBへコミットされ、設計の全件未登録と異なる部分更新になる。",
+      "checked": "src/Eccube/Service/Csv/Importer/Event/StockMoveInstructionCsvImportHandler.php:71-110 がエラー行を skipRow() で継続し、src/Eccube/Service/Csv/Importer/CsvImporter.php:239-275 が breakAllなしならメッセージがあっても isSuccessful=true としてcommitすることを確認した。",
+      "reason": "トランザクション結果と永続データが直接変わる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 540,
+      "authorVerdict": "IMPACT",
+      "verdict": "IMPACT",
+      "agree": true,
+      "observableEffect": "同じ移動指示IDが複数行にあっても重複エラーにならず、同一指示が複数回更新され、異なる送り状番号なら後の行の値が最終保存値になる。",
+      "checked": "src/Eccube/Service/Csv/Importer/Event/StockMoveInstructionCsvImportHandler.php:116-184 で各行を独立にfind・persistTrackingNoし、同:207-210 の RowValidator が空で重複ID集合を保持していないことを確認した。",
+      "reason": "エラー表示の有無と最終DB値・更新履歴が変わる。",
+      "confidence": "high"
+    }
+  ]
+}

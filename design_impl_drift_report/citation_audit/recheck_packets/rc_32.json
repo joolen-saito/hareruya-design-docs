@@ -1,0 +1,352 @@
+{
+ "packetId": "rc_32",
+ "note": "rowId は drift_findings_list_final.tsv の行番号(ヘッダ除く1始まり)。mech は機械検証フラグ(手掛かりであって正解ではない)。",
+ "count": 12,
+ "findings": [
+  {
+   "rowId": 576,
+   "機能No": "M05-19",
+   "機能名": "M05-19 出荷指示リスト編集",
+   "ドメイン": "m05",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "表示件数プルダウンは、各 option の value に GET /{admin_route}/standby/search?page_no=1&page_count=… 形式のURL文字列を持つが、当 index.twig の javascript ブロックは空であり、#page_count_pulldown の change ハンドラは載っていないため、プルダウンだけでは自動遷移しない。",
+   "実装実態": "ShippingStandby/index.twig の javascript ブロックに #page_count_pulldown の change ハンドラが実装され、選択値を targetUrl として window.location.href に代入している。",
+   "差分内容": "設計は表示件数プルダウン選択だけでは自動遷移しないことを現行仕様としているが、実装は change イベントで即時遷移する。反証として ShippingStandby/index.twig、共通 function.js、ShippingStandby テンプレート配下を page_count_pulldown/location.href/change で再検索し、当該専用ハンドラが存在することを確認した。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/ShippingStandby/index.twig:21",
+   "設計書参照": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-19:6724,6748",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:7473-7482 のExcel正本には表示件数選択時の遷移仕様がなく、同:7584 のリバース詳細設計開始後にのみ当該説明がある。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/ShippingStandby/index.twig:118-131 は旧表示件数UIを検索ルートへのanchorリンク群で描画し、同:12-17 の専用JSブロックにも `#page_count_pulldown` のchangeハンドラはない。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Resource/template/admin/ShippingStandby/index.twig:21-29 は `#page_count_pulldown` のchangeで `window.location.href = targetUrl` を実行する。",
+   "根拠検証メモ": "rowId 674と同じ乖離の重複指摘。根拠は旧実装。",
+   "対応の根拠(現develop)": "`src/Eccube/Resource/template/admin/ShippingStandby/index.twig:21-31`（block javascript）に `$('#page_count_pulldown').on('change', function () { const targetUrl = $(this).val(); if (targetUrl) { window.location.href = targetUrl; } });` が残存。設計が言う「block javascript は空・change ハンドラなし」との差異は未解消。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "NO_QUOTE",
+    "stale": "UNCHANGED"
+   }
+  },
+  {
+   "rowId": 577,
+   "機能No": "M05-21",
+   "機能名": "M05-21 ピッキングリスト印刷",
+   "ドメイン": "m05",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "high",
+   "観点": "② 業務ルール・計算",
+   "設計期待値": "ステップ2より前に、最小カテゴリがグッズ定数または予約グッズ定数に一致しないかだけを見て、サプライ帯への強制があるかを決める。…強制側ならステップ2のマップを読まず goods。 / 旧根拠: function_spec_html_preview/pf-eccube3/m05-21_admin_order_order_shipping_standby_picking_list_print.html:246",
+   "実装実態": "設計(pf-eccube3を確認値とする処理フロー)は『最小カテゴリ MIN(ct.category_id) がグッズ定数(Category::GOODS_ID)/予約グッズ定数(Category::RESERVED_GOODS_ID)に一致するか』でサプライ(goods)帯への強制を決める。実装(ec-cube-enterprise)はカテゴリ定数を一切使わず、productClassRepository.getSubInfosByProductClassIds([productClassId]) の返却有無($hasSubInfo)で分岐している(348行 if($hasSubInfo)、非該当は375行 $c='goods')。getSubInfosByProductClassIds は ProductClass→Language/CardCondition, Product→CardDetail の INNER JOIN(ProductClassRepository.php:3042-3067)で行が取れるか＝カード明細を持つ規格かどうかを判定する仕組みで、カテゴリ定数比較とは判定基準が別物。クエリでは categoryId(MIN(ct.category_id)) を SELECT(DtbShippingStandbyRepository.php:168)しているがループ内で未使用。この結果、goods帯に落ちる明細・価格帯(low/middle/high)分類とその合計点数が設計と食い違いうる。",
+   "差分内容": "設計(pf-eccube3を確認値とする処理フロー)は『最小カテゴリ MIN(ct.category_id) がグッズ定数(Category::GOODS_ID)/予約グッズ定数(Category::RESERVED_GOODS_ID)に一致するか』でサプライ(goods)帯への強制を決める。実装(ec-cube-enterprise)はカテゴリ定数を一切使わず、productClassRepository.getSubInfosByProductClassIds([productClassId]) の返却有無($hasSubInfo)で分岐している(348行 if($hasSubInfo)、非該当は375行 $c='goods')。getSubInfosByProductClassIds は ProductClass→Language/CardCondition, Product→CardDetail の INNER JOIN(ProductClassRepository.php:3042-3067)で行が取れるか＝カード明細を持つ規格かどうかを判定する仕組みで、カテゴリ定数比較とは判定基準が別物。クエリでは categoryId(MIN(ct.category_id)) を SELECT(DtbShippingStandbyRepository.php:168)しているがループ内で未使用。この結果、goods帯に落ちる明細・価格帯(low/middle/high)分類とその合計点数が設計と食い違いうる。",
+   "実装参照": "src/Eccube/Controller/Admin/Order/ShippingStandbyController.php:343",
+   "設計書参照": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:7845-7849 のExcel正本は「カードの価格帯、サプライ品でグループ分けして表示する」と4グループを規定するが、サプライ判定を最小カテゴリIDと `GOODS_ID` / `RESERVED_GOODS_ID` の比較で行うとは記載しない。同:7946 からリバース詳細設計である。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Order/ShippingStandbyController.php:245-250 は `intval($item['categoryId']) !== Category::GOODS_ID && ... !== Category::RESERVED_GOODS_ID` でカード側を判定し、同:273-275 はそれ以外を `$c = 'goods';` とする。カテゴリIDは pf-eccube3/app/Plugin/HareruyaEc/Repository/DtbShippingStandbyRepository.php:168 の `MIN(ct.category_id) AS categoryId` から来る。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Controller/Admin/Order/ShippingStandbyController.php:394-400 は `getSubInfosByProductClassIds` の返却有無を `$hasSubInfo` とし、同:425-427 でfalseなら `goods` にする。ec-cube-enterprise/src/Eccube/Repository/ProductClassRepository.php:3062-3068 はLanguage/CardCondition/Product/CardDetailのjoinで詳細有無を判定する。",
+   "根拠検証メモ": "正本はグループ分けの結果だけを要求し、カテゴリ定数による具体的判定は旧実装由来。",
+   "対応の根拠(現develop)": "`src/Eccube/Controller/Admin/Order/ShippingStandbyController.php:395-397` `$subInfos = $this->productClassRepository->getSubInfosByProductClassIds([$item['productClassId']]); // 詳細情報が紐づくかでサプライ品かどうかを判定 $hasSubInfo = count($subInfos) > 0 && isset($subInfos[$item['productClassId']]);`、`:400` `if ($hasSubInfo) {`、`:426-428` `} else { $c = 'goods'; }` のまま。`grep -n GOODS_ID` を ShippingStandbyController.php / DtbShippingStandbyRepository.php に掛けてもヒット0で、Category::GOODS_ID / RESERVED_GOODS_ID によるカテゴリ定数判定は導入されていない。`src/Eccube/Repository/DtbShippingStandbyRepository.php:168` `'MIN(ct.category_id) AS categoryId',` は依然 SELECT されるのみでループ内未使用。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Repository/ProductClassRepository.php"
+    ]
+   }
+  },
+  {
+   "rowId": 578,
+   "機能No": "M05-21",
+   "機能名": "M05-21 ピッキングリスト印刷",
+   "ドメイン": "m05",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "low",
+   "観点": "④ DBカラム・DB操作 / ⑦ エラー処理",
+   "設計期待値": "このクエリでは mtb_option へ findBy(['option_key' => ['order_list_threshold_price_1','order_list_threshold_price_2'], …]) 相当で複数行を一度に読み、その返却順の最初の行値を :price1、2番目を :price2 に結びつける。 / 旧根拠: function_spec_html_preview/pf-eccube3/m05-21_admin_order_order_shipping_standby_picking_list_print.html:240",
+   "実装実態": "設計(pf-eccube3を確認値とする)はクエリ側の閾値取得を『両キーを findByOptionKey で一括取得し返却順の[0]を:price1/[1]を:price2に結ぶ』とし、これに起因する取得順の食い違い・添字[0]/[1]参照による実行時異常(html:277)を論点とする。実装(ec-cube-enterprise)の generatePickingList は各キーを個別に findOneBy(['option_key'=>ORDER_LIST_THRESHOLD_PRICE_1]) / (…PRICE_2) で読み、null時は0にフォールバックして $thresholdPrice1/$thresholdPrice2 を作り :price1/:price2 に setParameter(214-215行)している。よって設計が挙げる『返却順による取り違え』も『[0]/[1]未定義添字クラッシュ』も実装では発生せず、取得ロジック自体が設計(現行)と異なる。",
+   "差分内容": "設計(pf-eccube3を確認値とする)はクエリ側の閾値取得を『両キーを findByOptionKey で一括取得し返却順の[0]を:price1/[1]を:price2に結ぶ』とし、これに起因する取得順の食い違い・添字[0]/[1]参照による実行時異常(html:277)を論点とする。実装(ec-cube-enterprise)の generatePickingList は各キーを個別に findOneBy(['option_key'=>ORDER_LIST_THRESHOLD_PRICE_1]) / (…PRICE_2) で読み、null時は0にフォールバックして $thresholdPrice1/$thresholdPrice2 を作り :price1/:price2 に setParameter(214-215行)している。よって設計が挙げる『返却順による取り違え』も『[0]/[1]未定義添字クラッシュ』も実装では発生せず、取得ロジック自体が設計(現行)と異なる。",
+   "実装参照": "src/Eccube/Repository/DtbShippingStandbyRepository.php:143",
+   "設計書参照": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:7845-7848 のExcel正本は価格帯を「980円未満」「980円以上4800円未満」「4800円以上」と定めるが、`mtb_option` の2行を一括取得し返却順の添字へ結び付ける内部手順は記載しない。同:7946 以降がリバース詳細設計である。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Repository/DtbShippingStandbyRepository.php:149-153 は両option keyを `findByOptionKey([...])` で一括取得し、同:191-196 は `$thresholdPrices[0]` をprice1、`[1]` をprice2へ設定する。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Repository/DtbShippingStandbyRepository.php:143-151 は各option keyを個別に `findOneBy` し、null時0へフォールバックする。同:212-215 はその値をprice1/price2へ設定する。",
+   "根拠検証メモ": "添字順依存という具体的挙動の根拠は旧実装のみ。",
+   "対応の根拠(現develop)": "`src/Eccube/Repository/DtbShippingStandbyRepository.php:143-150` `$option1 = $this->optionRepository->findOneBy(['option_key' => MtbOption::ORDER_LIST_THRESHOLD_PRICE_1, ...]); $option2 = $this->optionRepository->findOneBy(['option_key' => MtbOption::ORDER_LIST_THRESHOLD_PRICE_2, ...]);` と個別 findOneBy のままで、`:214-215` `->setParameter('price1', $thresholdPrice1) ->setParameter('price2', $thresholdPrice2)` に結んでいる。設計が記す findBy 一括取得＋返却順[0]/[1]方式にはなっていない。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "UNCHANGED"
+   }
+  },
+  {
+   "rowId": 579,
+   "機能No": "M05-24",
+   "機能名": "M05-24 出荷実績入力用CSV出力",
+   "ドメイン": "m05",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "出荷実績入力用CSV出力項目設定は、設計HTMLの一覧どおり64列で出力する。配送先住所列は「配送先_住所1」「配送先_住所2」の後に「配送先_TEL1」が続き、「配送先_住所3」は含めない。",
+   "実装実態": "実装のCSV_HEADERには「配送先_住所2」と「配送先_TEL1」の間に「配送先_住所3」が追加されており、generateResultCsv も s.addr03 AS shipping_addr03 を選択してCSV行へ含める。",
+   "差分内容": "設計HTMLの項目一覧では ID52 が「配送先_住所1」、ID53 が「配送先_住所2」、ID54 が「配送先_TEL1」であり、配送先_住所3 は定義されていない。実装は OrderCsvController::CSV_HEADER と NOT_REQUIRED_CSV_HEADER に「配送先_住所3」を持ち、OrderRepository::generateResultCsv も s.addr03 を返すため、設計より1列多く、ID54以降の列位置がずれる。反証検索では「配送先_住所3」「shipping_addr03」「s.addr03」「CSV_HEADER」「generateResultCsv」を確認し、sheet-23 の出荷実績入力用CSV出力項目設定内に配送先_住所3 の設計定義は見つからなかった。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Order/OrderCsvController.php:95; /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php:1418",
+   "設計書参照": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23:7474",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:8381-8384 のExcel正本は列52「配送先_住所1」、53「配送先_住所2」、54「配送先_TEL1」と連続して定義し、同:8393 の最終列は64「お届け時間(名称)」である。配送先_住所3は含まれない。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Order/OrderCsvController.php:67-70 の旧CSV_HEADERも `配送先_住所1`, `配送先_住所2`, `配送先_TEL1` の順で、配送先_住所3を持たない。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Controller/Admin/Order/OrderCsvController.php:97-100 は `配送先_住所2` と `配送先_TEL1` の間に `配送先_住所3` を追加している。ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php:1523-1526 も `s.addr03 AS shipping_addr03` を結果へ含める。",
+   "根拠検証メモ": "64列のExcel正本に直接反する。",
+   "対応の根拠(現develop)": "`src/Eccube/Controller/Admin/Order/OrderCsvController.php:98-100` `'配送先_住所2' => '配送先_住所2', '配送先_住所3' => '配送先_住所3', '配送先_TEL1' => '配送先_TEL1',`（CSV_HEADER）、同 `:171-173` にも同順で存在（NOT_REQUIRED_CSV_HEADER）。`src/Eccube/Repository/OrderRepository.php:1525` `'s.addr03 AS shipping_addr03',` も残存し、設計の64列定義より1列多い状態は変わっていない。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Controller/Admin/Order/OrderCsvController.php",
+     "src/Eccube/Repository/OrderRepository.php"
+    ]
+   }
+  },
+  {
+   "rowId": 580,
+   "機能No": "M05-26",
+   "機能名": "M05-26 出荷実績インポート登録",
+   "ドメイン": "m05",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "admin_shipping_result_csv_upload … POST … /{admin_route}/order/shipping_result_csv/upload （送信されたCSVまたはTSVの検証・一括反映・成功時の付随処理へ進む。）",
+   "実装実態": "POSTルート名 admin_shipping_result_csv_upload は存在するが、パスは /{admin_route}/order/shipping_result_csv/import。フォームも admin_shipping_result_csv_import のURLへPOSTしており、/shipping_result_csv/upload ではない。",
+   "差分内容": "設計の外部HTTP契約はPOST /order/shipping_result_csv/uploadだが、実装ルート定義とフォームactionはいずれも /order/shipping_result_csv/import 系である。反証として shipping_result_csv/upload、admin_shipping_result_csv_upload、shipping_result_csv/import を検索し、uploadパス定義は見つからなかった。",
+   "実装参照": "src/Eccube/Controller/Admin/Order/OrderCsvController.php:263 / src/Eccube/Resource/template/admin/Order/shipping_result_csv_import.twig:45",
+   "設計書参照": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-24:7757",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:8535-8545 のExcel正本はインポート処理内容を規定するがURL・HTTPメソッドは記載しない。同:8603-8604 から `functions/pf-eccube3/m05-26...md` のリバース詳細設計が始まり、`/shipping_result_csv/upload` は同:8692-8693 のリバース部分にのみある。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/OrderServiceProvider.php:134-139 はGET `/order/shipping_result_csv/import` とPOST `/order/shipping_result_csv/upload` を別々に定義し、POSTを `admin_shipping_result_csv_upload` にbindする。旧フォームも pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Order/shipping_result_csv_import.twig:15-18 で `url('admin_shipping_result_csv_upload')` へ送信する。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Controller/Admin/Order/OrderCsvController.php:286-287 はPOSTルート名を `admin_shipping_result_csv_upload` としつつpathを `/order/shipping_result_csv/import` にする。ec-cube-enterprise/src/Eccube/Resource/template/admin/Order/shipping_result_csv_import.twig:43-45 も `admin_shipping_result_csv_import` へPOSTする。",
+   "根拠検証メモ": "具体的POSTパスの真の根拠は旧ルート定義。",
+   "対応の根拠(現develop)": "`src/Eccube/Controller/Admin/Order/OrderCsvController.php:286` `#[Route(path: '/%eccube_admin_route%/order/shipping_result_csv/import', name: 'admin_shipping_result_csv_upload', methods: ['POST'], ),]` で、パスは現 develop でも `import` のまま。`src/Eccube/Resource/template/admin/Order/shipping_result_csv_import.twig:45` `<form id=\"upload-form\" method=\"post\" action=\"{{ url('admin_shipping_result_csv_import') }}\"` も import ルート宛。スナップショット全体を `grep -rn \"shipping_result_csv/upload\" .` で検索したがヒット0（script/, bin/, app/config/, .github/ を含む）。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "NO_QUOTE",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Controller/Admin/Order/OrderCsvController.php"
+    ]
+   }
+  },
+  {
+   "rowId": 582,
+   "機能No": "M05-26",
+   "機能名": "M05-26 出荷実績登録CSVフォーマット",
+   "ドメイン": "m05",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "high",
+   "観点": "②業務ルール・計算",
+   "設計期待値": "親注文状態は「対応開始に近い状態」チェックなくサブ側出荷実施日時の既存のみでゲートされている。 / 旧根拠: functions/pf-eccube3/m05-26_admin_order_order_shipping_result_csv_import.md:114",
+   "実装実態": "設計は親注文の状態差し替えを「サブ側出荷実施日時の既存有無のみ」でゲートし、受注ステータス条件は課さない（設計step15も同旨）。実装はOrderCsv.php:132で `$isPreDeliv = $order->getOrderStatus()?->getId() === OrderStatus::PRE_DELIV;` を追加し、133行 `if ($isPreDeliv && $order->getShippingDate() === null)` の両条件成立時のみ状態を出荷完了(DELIVERED)へ差し替える。出荷指示(PRE_DELIV)でない受注は設計では更新対象になり得るが、実装では親状態・出荷日・送り状番号の更新から除外される。",
+   "差分内容": "設計は親注文の状態差し替えを「サブ側出荷実施日時の既存有無のみ」でゲートし、受注ステータス条件は課さない（設計step15も同旨）。実装はOrderCsv.php:132で `$isPreDeliv = $order->getOrderStatus()?->getId() === OrderStatus::PRE_DELIV;` を追加し、133行 `if ($isPreDeliv && $order->getShippingDate() === null)` の両条件成立時のみ状態を出荷完了(DELIVERED)へ差し替える。出荷指示(PRE_DELIV)でない受注は設計では更新対象になり得るが、実装では親状態・出荷日・送り状番号の更新から除外される。",
+   "実装参照": "src/Eccube/Service/Csv/OrderCsv.php:132",
+   "設計書参照": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-25",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:8536-8540 のExcel正本は、出荷日なし行を無視し、「指定した注文番号に該当する受注情報データの『出荷日』が登録済みでなければデータを更新する」とした上で、受注ステータス・受注の出荷日/送り状No.・配送の出荷日を更新すると規定する。更新前ステータスが出荷指示であることは条件にしていない。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/OrderCsv.php:90-105 は `$orderSub->getShippingDate()` が空ならステータス、出荷日、送り状番号を更新し、事前ステータスの判定を置かない。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Service/Csv/OrderCsv.php:130-145 は `$isPreDeliv = ... === OrderStatus::PRE_DELIV` を追加し、`if ($isPreDeliv && $order->getShippingDate() === null)` の場合だけ受注側を更新する。",
+   "根拠検証メモ": "正本の更新条件にないPRE_DELIV制約を追加しており、正本と旧実装の双方に反する。",
+   "対応の根拠(現develop)": "`src/Eccube/Service/Csv/OrderCsv.php:132-133` に `$isPreDeliv = $order->getOrderStatus()?->getId() === OrderStatus::PRE_DELIV;` / `if ($isPreDeliv && $order->getShippingDate() === null) {` が現 develop でもそのまま存在し、`:134-137` の `$order->setOrderStatus($newStatus);` `->setShippingDate($shippingDate)->setInvoiceNumber($invoiceNumber);` は両条件成立時のみ実行される。設計の「サブ側出荷実施日時の既存のみでゲート」に対し、受注ステータス(PRE_DELIV)条件が残存しており監査時点と同一。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "NOT_FOUND",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Service/Csv/OrderCsv.php"
+    ],
+    "quoteDetail": [
+     "指定した注文番号に該当する受注情報データの『出荷日』が登録済みでなければデータを更新する"
+    ]
+   }
+  },
+  {
+   "rowId": 585,
+   "機能No": "M05-26",
+   "機能名": "M05-26 出荷実績登録CSVフォーマット",
+   "ドメイン": "m05",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "④DBカラム・DB操作・テーブル",
+   "設計期待値": "プラグインバージョンでは会社名〜住所〜配送先項目の並びにおいて、`配送先_住所3` 相当の区分は一覧に載らない。 / 旧根拠: functions/pf-eccube3/m05-26_admin_order_order_shipping_result_csv_import.md:84",
+   "実装実態": "設計（挙動の正=pf-eccube3プラグイン）では固定列一覧に `配送先_住所3` が含まれない。実装の CSV_HEADER(97行) / NOT_REQUIRED_CSV_HEADER(170行) には `配送先_住所3` が含まれ列数が1多い。ヘッダ照合(checkHeaderValues/checkHeaderSize)は必須外リスト差し引き後にサイズ一致を要求するため、pf-eccube3側の出力列数を想定したCSVでは列ズレ・取込失敗となり得る。",
+   "差分内容": "設計（挙動の正=pf-eccube3プラグイン）では固定列一覧に `配送先_住所3` が含まれない。実装の CSV_HEADER(97行) / NOT_REQUIRED_CSV_HEADER(170行) には `配送先_住所3` が含まれ列数が1多い。ヘッダ照合(checkHeaderValues/checkHeaderSize)は必須外リスト差し引き後にサイズ一致を要求するため、pf-eccube3側の出力列数を想定したCSVでは列ズレ・取込失敗となり得る。",
+   "実装参照": "src/Eccube/Controller/Admin/Order/OrderCsvController.php:97",
+   "設計書参照": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-25",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:8775-8777 のExcel正本は列52「配送先_住所1」、53「配送先_住所2」、54「配送先_TEL1」と定義し、配送先_住所3を含めない。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Order/OrderCsvController.php:67-70 の旧CSV_HEADERも `配送先_住所1`, `配送先_住所2`, `配送先_TEL1` の連続で、配送先_住所3を持たない。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Controller/Admin/Order/OrderCsvController.php:97-100 のCSV_HEADERと同:170-173 のNOT_REQUIRED_CSV_HEADERはいずれも `配送先_住所3` を追加する。ヘッダ照合は同:330-334 でこれらを使用する。",
+   "根拠検証メモ": "sheet-25のExcel正本に直接反する。rowId 684と同じ列差分をインポート側から指摘したもの。",
+   "対応の根拠(現develop)": "`src/Eccube/Controller/Admin/Order/OrderCsvController.php:99` `'配送先_住所3' => '配送先_住所3',`（CSV_HEADER 内、`:98` の `'配送先_住所2'` 直後）および `:172` `'配送先_住所3' => '配送先_住所3',`（NOT_REQUIRED_CSV_HEADER 内）が現 develop でも存在し列数は設計より1多い。ヘッダ照合も `:334` `$this->orderCsv->checkHeaderValues(array_keys($headers), $columnHeaders, array_keys($notRequiredCsvHeader));` と `src/Eccube/Service/Csv/OrderCsv.php:108` `$this->checkHeaderSize($headerSize, $row, $rowIndex);` で監査時点と同一。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Controller/Admin/Order/OrderCsvController.php",
+     "src/Eccube/Service/Csv/OrderCsv.php"
+    ]
+   }
+  },
+  {
+   "rowId": 586,
+   "機能No": "M05-26",
+   "機能名": "M05-26 出荷実績登録CSVフォーマット",
+   "ドメイン": "m05",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "low",
+   "観点": "③バリデーション",
+   "設計期待値": "サイズ判定の分岐は空であり、サイズが0でもオブジェクト経路に残りうる（実装上の注意）。 / 旧根拠: functions/pf-eccube3/m05-26_admin_order_order_shipping_result_csv_import.md:61",
+   "実装実態": "設計（pf-eccube3挙動）ではサイズ0判定の分岐が空で、サイズ0でも処理経路に残る。実装 getFormFile(AbstractCsvService.php:129-134)は `if ($formFile === null || $formFile->getSize() === 0) return null;` とサイズ0を明示ガードし、呼び出し元(OrderCsvController.php:272-276)で render+一覧リダイレクトへ復帰する。設計が指摘する挙動と異なり、サイズ0は取込されない。",
+   "差分内容": "設計（pf-eccube3挙動）ではサイズ0判定の分岐が空で、サイズ0でも処理経路に残る。実装 getFormFile(AbstractCsvService.php:129-134)は `if ($formFile === null || $formFile->getSize() === 0) return null;` とサイズ0を明示ガードし、呼び出し元(OrderCsvController.php:272-276)で render+一覧リダイレクトへ復帰する。設計が指摘する挙動と異なり、サイズ0は取込されない。",
+   "実装参照": "src/Eccube/Service/Csv/AbstractCsvService.php:132",
+   "設計書参照": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-25",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:8535-8545 のExcel正本は出荷実績インポートの業務処理を規定するが、0バイトファイルを後続へ残す挙動は記載しない。同:8603 以降のリバース詳細設計にのみ当該注意がある。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/AbstractCsvService.php:105-113 は `$formFile->getSize() == 0` のif本文が空で、そのまま `$formFile` を返す。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Service/Csv/AbstractCsvService.php:129-136 は `$formFile === null || $formFile->getSize() === 0` なら `return null;` とする。ec-cube-enterprise/src/Eccube/Controller/Admin/Order/OrderCsvController.php:302-307 はnull時に取込画面へ戻す。",
+   "根拠検証メモ": "0バイトを通す旧バグ相当の具体挙動は旧実装由来で、正本要件ではない。",
+   "対応の根拠(現develop)": "`src/Eccube/Service/Csv/AbstractCsvService.php:129-134` `public function getFormFile(FormInterface $form): ?UploadedFile { $formFile = $form->get('import_file')->getData(); if ($formFile === null || $formFile->getSize() === 0) { return null; }` とサイズ0の明示ガードが現 develop にも残存。呼び出し元 `src/Eccube/Controller/Admin/Order/OrderCsvController.php:303-308` `$formFile = $this->orderCsv->getFormFile($form); if ($formFile === null) { $this->orderCsv->render(); return $this->redirectToRoute('admin_shipping_result_csv_import'); }` も同一。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "NO_QUOTE",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Controller/Admin/Order/OrderCsvController.php"
+    ]
+   }
+  },
+  {
+   "rowId": 587,
+   "機能No": "M05-26",
+   "機能名": "M05-26 出荷実績登録CSVフォーマット",
+   "ドメイン": "m05",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "③バリデーション・注文番号突合",
+   "設計期待値": "sprintfで桁埋めされた注文番号でサブ注文情報を検索する。",
+   "実装実態": "設計は桁埋め済み注文番号でサブ注文情報を検索するが、実装はCSV値をそのままorder_numberにfindOneByしており、桁埋めもサブ注文検索も行わない。",
+   "差分内容": "設計は桁埋め済み注文番号でサブ注文情報を検索するが、実装はCSV値をそのままorder_numberにfindOneByしており、桁埋めもサブ注文検索も行わない。",
+   "実装参照": "src/Eccube/Service/Csv/OrderCsv.php:112",
+   "設計書参照": "function_spec_html_preview/pf-eccube3/m05-26_admin_order_order_shipping_result_csv_import.html:69,98",
+   "根拠区分": "LEGACY_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:8724 のExcel正本は注文番号を「数値(整数)」「必須」「入力例01234567」「更新のキー項目」と定義するが、受信値を `sprintf('%08d', ...)` で桁埋めしてサブ注文表を検索する手順は記載しない。",
+   "旧実装根拠": "pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/OrderCsv.php:70-76 は `findOneByOrderNumber(sprintf('%08d', $row['注文番号']))` で8桁化した番号から `DtbOrderSub` を取得し、その親Orderを使う。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Service/Csv/OrderCsv.php:107-115 はCSV値をそのまま `$this->orderRepository->findOneBy(['order_number' => $row['注文番号']])` に渡し、桁埋めもサブ注文検索も行わない。",
+   "根拠検証メモ": "8桁化とサブ注文突合という具体的契約の根拠は旧実装。",
+   "対応の根拠(現develop)": "設計書 m05-26_admin_order_order_shipping_result_csv_import.html:321 は「サービス側で各行について列数・注文番号必須を検証したあと、sprintf で桁埋めされた注文番号でサブ注文情報を検索する」と規定。現 develop の `src/Eccube/Service/Csv/OrderCsv.php:112` は `$order = $this->orderRepository->findOneBy(['order_number' => $row['注文番号']]);` のままで、sprintf/str_pad による桁埋めもサブ注文（dtb_order_sub 相当）検索も行っていない。`src/Eccube/Service/Csv/OrderCsv.php` 内の sprintf 使用箇所は 115 行のエラーメッセージ整形のみで、桁埋め用途は存在しない。`src/Eccube/Service/Csv/`・`src/Eccube/Controller/Admin/Order/` 配下を str_pad / sprintf('%0 で横断検索しても注文番号桁埋めの実装は無く、`src/Eccube/Entity/` に OrderSub 系エンティティも存在しない。監査時点と同一状態。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Service/Csv/OrderCsv.php"
+    ]
+   }
+  },
+  {
+   "rowId": 589,
+   "機能No": "M05-26",
+   "機能名": "M05-26 出荷実績登録CSVフォーマット",
+   "ドメイン": "m05",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "出荷実績登録CSVフォーマットの「送り状No.」は書式・制限が「数値(整数)」である。",
+   "実装実態": "実装は row['送り状No.'] を文字列のまま invoiceNumber に代入し、Order.invoice_number は string length 64。AbstractCsvService側も必須項目の空チェックのみで、送り状No.の数値(整数)チェックはない。",
+   "差分内容": "対象実装範囲（OrderCsvController、OrderCsv、AbstractCsvService、OrderRepository、shipping_result_csv_import.twig、別名の CsvImportController）を確認した。旧系の admin_shipping_csv_import には tracking_number の半角英数字ハイフン検証があるが、これは出荷ID/お問い合わせ番号/出荷日の3列CSVであり、sheet-25の「送り状No.」数値(整数)制約ではない。対象ルート admin_shipping_result_csv_import では数値整数制約が実装されていない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/OrderCsv.php:130, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Entity/Order.php:679, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/AbstractCsvService.php:288",
+   "設計書参照": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-25:7847",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:8785 のExcel正本セル E69/P69 は「送り状No.」「数値(整数)」と明記する。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/OrderCsv.php:85-96 は出荷日だけを `new \\Datetime(...)` で検証し、送り状No.は `$invoiceNumber = $row['送り状No.'];` のまま `setInvoiceNumber($invoiceNumber)` へ渡すため、旧実装にも整数検証はない。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/OrderCsv.php:124-137 は出荷日だけを `new \\DateTime(...)` で検証し、`$invoiceNumber = $row['送り状No.'];` を文字列のまま保存する。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Entity/Order.php:694-695 も `invoice_number` を `Types::STRING, length: 64` と定義し、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/AbstractCsvService.php:288-299 の共通処理は空チェックのみである。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Service/Csv/OrderCsv.php:130` `$invoiceNumber = $row['送り状No.'];` と文字列のまま代入して `:137` `->setInvoiceNumber($invoiceNumber)` へ渡す。格納先は `src/Eccube/Entity/Order.php:694` `#[ORM\\Column(name: 'invoice_number', type: Types::STRING, length: 64, nullable: true, options: ['comment' => '送り状No.'])]` で string 64。`src/Eccube/Service/Csv/AbstractCsvService.php` を `送り状|invoiceNumber|is_numeric|ctype_digit|numeric` で検索したヒットは `:117-118` の getCmc 内 `is_numeric($cmc)` のみで、送り状No. の数値(整数)検証は存在しない。`OrderCsv::registerShippingResult`(`:99-151`) の検証も `checkHeaderSize` / `checkRequiredHeaders` / 出荷日の `new \\DateTime($row['出荷日'])` 変換のみ。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Entity/Order.php",
+     "src/Eccube/Service/Csv/OrderCsv.php"
+    ]
+   }
+  },
+  {
+   "rowId": 590,
+   "機能No": "M05-27",
+   "機能名": "M05-27 店頭注文番号札管理",
+   "ドメイン": "m05",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "削除リンク押下でJavaScriptポップアップを表示し、「[店頭注文番号]を を削除してもよろしいですか？」を表示し、「OK」をクリックすると当該の店頭注文番号を一覧から除去する。",
+   "実装実態": "削除操作は Bootstrap モーダルを開き、本文は共通翻訳 admin.common.delete_modal__message（「この操作はあとから取り消すことができません。「%name%」を削除してよろしいですか？」）を使う。確定ボタンの表示文言は admin.common.delete の「削除」。",
+   "差分内容": "設計で指定された確認文言および確定操作名「OK」と、実装の共通削除モーダル文言および「削除」ボタンが一致しない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Order/waiting_tag.twig:121,123,156,158 ／ /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:1754",
+   "設計書参照": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-26:8016",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:8956 のExcel正本セル AG70 は「リンク押下でJavaScriptポップアップを表示」「『[店頭注文番号]を を削除してもよろしいですか？』」「『OK』をクリックすると、当該の店頭注文番号を一覧から除去する」と明記する。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Waiting/index.twig:69-71 は旧画面も `data-message=\"{{ trans('admin.confirm.delete')|format(tag.waitingTag) }}\"` と削除リンクを使い、/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Resource/locale/message.ja.yml:1036 は `delete: %s を削除してもよろしいですか？` とする。旧実装も正本の誤字を含む完全一致文言ではない。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Order/waiting_tag.twig:120-125 はBootstrapモーダルに `admin.common.delete_modal__message` と表示ボタン `admin.common.delete` を使い、同:153-159 の確定ボタンも「削除」である。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:1641 は `admin.common.delete: 削除`、同:1790 は「この操作はあとから取り消すことができません。『%name%』を削除してよろしいですか？」と定義するため、正本の「OK」および指定文言と一致しない。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Resource/template/admin/Order/waiting_tag.twig:121-124` は今も `data-bs-toggle=\"modal\" data-bs-target=\"#DeleteModal\"` の Bootstrap モーダルで、本文は `:123` `data-message=\"{{ 'admin.common.delete_modal__message'|trans({ \"%name%\" : WaitingTag.waiting_tag }) }}\"`（`src/Eccube/Resource/locale/messages.ja.yaml:1790` `admin.common.delete_modal__message: \"この操作はあとから取り消すことができません。「%name%」を削除してよろしいですか？\"`）。確定ボタンも `同twig:156-158` `<a class=\"btn btn-ec-delete\" ... data-method=\"delete\">{{ 'admin.common.delete'|trans }}</a>`（`messages.ja.yaml:1641` `admin.common.delete: 削除`）のままで、設計の「[店頭注文番号]を を削除してもよろしいですか？」「OK」には変わっていない。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Resource/locale/messages.ja.yaml"
+    ]
+   }
+  },
+  {
+   "rowId": 591,
+   "機能No": "M06-01",
+   "機能名": "M06-01 買取一覧(検索入力)",
+   "ドメイン": "m06",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "査定申込日時(From)>査定申込日時(To)の場合エラー",
+   "実装実態": "査定申込日時 From/To の入力欄と form_errors 表示枠はあるが、From > To を検出してフォームエラーにする処理がない。Repository は applyDate >= From と applyDate <= To をそのまま AND 条件で付与するだけで、エラー化しない。",
+   "差分内容": "OtcBuyOrderType の application_date_from/application_date_to には単項目 Range 制約のみで相関チェックがなく、Controller/Repository/JS 側にも application_date_from > application_date_to の FormError/addError/検証分岐が見当たらない（探索範囲: src/Eccube/Form/Type/Admin/OtcBuyOrder, src/Eccube/Controller/Admin/OtcBuyOrder, src/Eccube/Repository/DtbOtcBuyOrderRepository.php, src/Eccube/Resource/template/admin/OtcBuyOrder, html/template/admin/assets/js/OtcBuyOrder）。",
+   "実装参照": "src/Eccube/Form/Type/Admin/OtcBuyOrder/OtcBuyOrderType.php:155; src/Eccube/Repository/DtbOtcBuyOrderRepository.php:124; src/Eccube/Resource/template/admin/OtcBuyOrder/index.twig:101",
+   "設計書参照": "excel_to_html/output/0205_基本設計仕様書(店頭買取管理).html#sheet-3:948",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0205_基本設計仕様書(店頭買取管理).html:1102 のExcel正本セル AG84 は「査定申込日時(From)>査定申込日時(To)の場合エラー」と明記する。",
+   "旧実装根拠": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/OtcBuyOrder/OtcBuyOrderType.php:35-85 の旧フォームは `assessment_id`、`complete_date_from/to`、店舗、状態、金額、氏名、会員IDまでで `application_date_from/to` 自体を持たない（旧実装4リポジトリを `application_date_from` で横断検索しても本機能の別実装は0件）。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/OtcBuyOrder/OtcBuyOrderType.php:155-170 の `application_date_from` は単項目の `Assert\\Range` だけでToとの相関制約がない。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbOtcBuyOrderRepository.php:123-139 は `applyDate >= From` と `applyDate <= To` を独立に追加するだけで、From>Toをエラーにしない。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Form/Type/Admin/OtcBuyOrder/OtcBuyOrderType.php:155-181` の application_date_from/application_date_to は監査時点と同じく単項目制約のみ（from 側 `new Assert\\Range(['min' => '0003-01-01', 'minMessage' => 'form_error.out_of_range'])`、to 側は制約なし）で、From>To の相関チェックがない。`src/Eccube/Repository/DtbOtcBuyOrderRepository.php:124-138` も `$qb->andWhere('obo.applyDate >= :applicationDateFrom')` / `$qb->andWhere('obo.applyDate <= :applicationDateTo')` を AND で付与するだけでエラー化しない（同ファイル:105-108 の金額は `if ($priceFrom !== null && $priceTo !== null && $priceFrom > $priceTo) { [$priceFrom, $priceTo] = [$priceTo, $priceFrom]; }` と入替処理があるが、日付には同等処理すらない）。`src/Eccube/Controller/Admin/OtcBuyOrder/OtcBuyOrderController.php` / `src/Eccube/Controller/Admin/SearchControllerTrait.php` に FormError/addError による日付相関エラーはなく、`html/template/admin/assets/js/OtcBuyOrder/otc-buy-order.js` にも date_from/date_to の検証はない。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "UNCHANGED"
+   }
+  }
+ ]
+}

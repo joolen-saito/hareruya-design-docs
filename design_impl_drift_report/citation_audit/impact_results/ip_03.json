@@ -1,0 +1,65 @@
+{
+  "packetId": "ip_03",
+  "results": [
+    {
+      "rowId": 883,
+      "authorVerdict": "UNSURE",
+      "verdict": "IMPACT",
+      "agree": false,
+      "observableEffect": "処理が90秒を超えるCSVでは、設計どおり実行時間制限を解除した場合は取込を継続できる一方、現実装はPHPのmax_execution_timeにより処理が打ち切られ、成功リダイレクト・完了フラッシュを返せず取込結果が変わり得る。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Admin/Event/EventEntryBulkCsvController.php:90-160でPOSTからCsvImporter::importまでにset_time_limit(0)がないこと、同src/Eccube/Service/Csv/Importer/CsvImporter.php:219-295で全行をトランザクション処理すること、同dockerbuild/php.ini:13でmax_execution_time=90であることを確認した。設計HTMLの0214_基本設計仕様書(イベント管理).html:6101-6104も実行時間制限解除を取込フローの先頭に要求している。",
+      "reason": "実行時間制限は内部名ではなく、入力規模と処理時間によりHTTP処理の完遂可否を変える。実環境設定にも90秒の上限が存在するため、外部から成功/異常終了として観測できる差である。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 916,
+      "authorVerdict": "UNSURE",
+      "verdict": "IMPACT",
+      "agree": false,
+      "observableEffect": "大きいカードCSVでは、SQLログとDoctrineの管理対象エンティティが取込中に蓄積し続けるため、設計どおり無効化・100行ごとのclearを行う場合よりメモリ消費が増え、資源上限に達するとHTTP取込がエラーとなってトランザクションが完了せず、成功フラッシュやDB更新結果が変わり得る。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Admin/Card/CardCsvController.php:115-153の取込経路にはsetSQLLogger(null)がなく、同:171-172の設定はCSV出力経路だけであることを確認した。同src/Eccube/Service/Csv/CardCsv.php:466-527は各行persist/flushするがclearを呼ばず、AbstractCsvService.php:367-373のclearCacheがEntityManager::clearによるメモリ対策であることも確認した。設計HTMLの0208_基本設計仕様書(カード管理).html:2583はSQLロガー無効化と100行ごと・全行後のキャッシュ解放を要求する。",
+      "reason": "SQLロガーとORM identity mapの保持量は資源使用量を変え、資源次第で取込の完遂、HTTP応答、DBコミットの有無に波及する。単なる内部的な責務配置の差ではない。",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 943,
+      "authorVerdict": "UNSURE",
+      "verdict": "IMPACT",
+      "agree": false,
+      "observableEffect": "一覧GETのレスポンスHTMLに設計にはないBootstrap削除モーダル一式と専用scriptが追加され、削除操作時も共通data-message処理ではなく、画面内の「削除確認」モーダルを表示して対象URL・文言を差し替えるUIになる。",
+      "checked": "ec-cube-enterprise/app/template/admin/Format/format_list.twig:7-21でDeleteModal専用JavaScript、同:23-24でdelete_modal.twigのinclude、同:61-67でモーダル起動用data-bs属性を確認した。同app/template/admin/Format/delete_modal.twig:2-28にはタイトル、キャンセル、削除ボタンを持つモーダルDOMがある。設計HTMLの0208_基本設計仕様書(カード管理).html:4078付近のフロント挙動は一覧専用JSなし・モーダル定義なしとしている。",
+      "reason": "見た目が仮に近くても、GETレスポンスのHTML/JavaScriptが異なる時点でI/O差である。実際には確認UIも共通アンカー処理からBootstrapモーダルへ変わるため、利用者から直接観測できる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 990,
+      "authorVerdict": "NO_IMPACT",
+      "verdict": "NO_IMPACT",
+      "agree": true,
+      "observableEffect": "",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Admin/SearchControllerTrait.php:104-118,127-194を開き、eccube.admin.{$sessionkey}.*を同一trait内で一貫して読書きしていることを確認した。DeckController.php:67,92-135,159ではsessionKey='deck'を用い、別系統のdeck/deck.page_noも読書きが対応している。src・app内をadmin.deck.search、eccube.admin.deck.search、各page_no/sort/order/page_countの完全文字列で検索し、外部出力や不整合な固定キー参照は見つからなかった。app/config/eccube/packages/framework.yaml:12-20ではセッション本体がRedis handler、ブラウザCookieはECCUBE_COOKIE_NAMEであり、内部キー名はCookie名・値として送られないことを確認した。",
+      "reason": "設計名と実装名は異なるが、対応する保存・復元処理が同じ実装キーを一貫して使う。キー名はRedis内のサーバ側セッション属性に閉じ、HTML、HTTPリクエストキー、Cookie名、API、DB業務データへ露出しないため、同じ操作に対する画面挙動と副作用は変わらない。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 1030,
+      "authorVerdict": "UNSURE",
+      "verdict": "IMPACT",
+      "agree": false,
+      "observableEffect": "買取減額率一覧のGETレスポンスでは、設計なら表頭要素にid=\"news_list_box__list_header\"が現れるが、現実装の生成HTMLにはそのidが存在しないため、DOM取得結果および当該idを使うCSS・スクリプト・自動化から見えるHTML I/Oが異なる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Data/buy_discount.twig:49-57を開き、thead/tr/thに指定idがないことを確認した。src/Eccube・app・htmlをnews_list_box__list_headerで検索して0件だった。設計HTMLの0213_基本設計仕様書(データ管理).html:2662-2664には表頭行の要素idとして同識別子が明記されている。",
+      "reason": "DOM idは画面の可視文字列を変えなくてもHTTPレスポンス本文の属性であり、外部から観測可能である。依存スクリプトの有無を待たず、設計と生成HTMLの具体的な差そのものがI/O差になる。",
+      "confidence": "high"
+    },
+    {
+      "rowId": 1034,
+      "authorVerdict": "UNSURE",
+      "verdict": "IMPACT",
+      "agree": false,
+      "observableEffect": "mtb_discountの物理的な返却順がid順でない状態では、設計のORDER BYなしfindAll()はその順で一覧行を描画し得る一方、現実装は必ずid昇順に並べるため、販売割引率一覧の行順とレスポンスHTMLが変わる。",
+      "checked": "ec-cube-enterprise/src/Eccube/Controller/Admin/Data/DiscountController.php:47-59でDiscountsだけfindBy([], ['id' => 'ASC'])としてTwigへ渡すこと、同src/Eccube/Resource/template/admin/Data/discount.twig:58-72で配列順のまま行を描画することを確認した。MtbDiscountRepository.php:25-35にfindAll上書きはなく、vendor/doctrine/orm/src/EntityRepository.php:94-110ではfindAll()がorderBy=nullのfindBy([])である。MtbDiscount.php:27-34にも既定順指定はない。設計HTMLの0213_基本設計仕様書(データ管理).html:2068-2077はfindAll()取得かつ並べ替えなしとしている。",
+      "reason": "取得メソッド名だけの内部差ではなく、明示ORDER BYの有無がTwigの表示行順へ直結する。DBが偶然id順を返す場合は同じでも、保証されない返却順の状態では利用者が見る一覧とHTMLが変わるため影響ありである。",
+      "confidence": "medium"
+    }
+  ]
+}

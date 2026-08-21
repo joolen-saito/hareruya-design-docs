@@ -1,0 +1,149 @@
+{
+  "packetId": "rc_30",
+  "results": [
+    {
+      "rowId": 536,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0202_基本設計仕様書(在庫管理機能).html を「結合数」「結合元在庫数」「1~999999999」で検索し、Excel正本の src-cell 0202:在庫結合CSV登録!B79/E79/P79/V79/Z79（13756行）に「2-2 結合数」「数値」「○」「1~999999999」、同 B82/E82/P82/V82/Z82（13759行）に「2-5 結合元在庫数」「数値」「○」「1~999999999」が実在することを確認した。",
+      "reason": "正本の2項目はいずれも上限999999999を直接定めているためSPEC_BACKEDは妥当。現行実装には上限判定がなく、10桁以上の数字列を行バリデーションで拒否しない。",
+      "currentImpl": "ec-cube-enterprise 現状HEAD da08bd65722b: src/Eccube/Service/Csv/Importer/Event/StockJoinListCsvImportHandler.php の onValidateRow() は、結合数を153行の `!ctype_digit($joinQtyRaw) || (int) $joinQtyRaw <= 0`、結合元在庫数を169行の `$srcQtyRaw === '' || !ctype_digit($srcQtyRaw) || (int) $srcQtyRaw < 1` で検証するだけで、999999999以下の条件はない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 537,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0202_基本設計仕様書(在庫管理機能).html を「送り状No.」で検索し、Excel正本の src-cell 0202:在庫移動指示検索!E189（14394行）に「送り状No.」を確認した。さらに同シートのレイアウト画像 B7 image order 2 layer 2 と AI105 image order 4 を実際に開き、一覧見出しと登録モーダルの双方が「送り状No.」と末尾ピリオド付きで描画されていることを確認した。",
+      "reason": "正本の項目表とレイアウト画像がともに末尾ピリオド付き表記を支持する。実装の共通表示キーはピリオドなしのままであり、表示経路も確認できた。",
+      "currentImpl": "ec-cube-enterprise 現状HEAD da08bd65722b: src/Eccube/Resource/locale/messages.ja.yaml の `admin.stock.move_instruction.tracking_no`（5289行）は `送り状No`。src/Eccube/Resource/template/admin/Stock/stock_move_instruction_index.twig は一覧見出し（194行）と登録モーダルラベル（262行）でこのキーを `|trans` し、StockMoveInstructionDetailType::buildForm() も同じキーをラベルに使う。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 539,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0202_基本設計仕様書(在庫管理機能).html を「エラーがある場合」「エラーがなければ登録処理」で検索し、Excel正本の src-cell 0202:在庫移動指示検索!E92（14285行）に「エラーがある場合、登録処理を終了」、同 E94（14287行）に「エラーがなければ登録処理を行う」が実在することを確認した。",
+      "reason": "エラーを含むCSVでは登録処理を行わないという正本根拠が明確。現行インポータはエラー行をスキップして正常行をコミットするため、全体未登録の要件に反する。",
+      "currentImpl": "ec-cube-enterprise 現状HEAD da08bd65722b: StockMoveInstructionCsvImportHandler::onValidateRow() はエラー時に `skipRow()`（81-107行）を使い、onReadRow() の業務エラーもメッセージ追加後 `return false`（122-179行）で全体中断しない。CsvImporter::importRows() は `skipRow` では `$hasBreak` を立てず、270行の `$isSuccessful = $messageStore->count() === 0 || !$hasBreak` により正常行をcommitする。",
+      "severityOpinion": "high",
+      "confidence": "high"
+    },
+    {
+      "rowId": 541,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0202_基本設計仕様書(在庫管理機能).html を「表示件数」「50」で検索し、Excel正本の src-cell 0202:在庫移動指示検索!B137/E137/Z137/AG137（14342行）に「3-4 表示件数」「50」「１ページあたりの表示件数」を確認した。同シートのレイアウト画像 B7 image order 2 layer 2 も実際に開き、一覧右上の選択値が「50件」であることを確認した。",
+      "reason": "項目表とレイアウト画像の双方が初期値50件を支持する。現行のセッション未設定時既定値は共通設定10である。",
+      "currentImpl": "ec-cube-enterprise 現状HEAD da08bd65722b: StockMoveInstructionController::index() は88-91行でセッション未設定時に `eccube_default_page_count` を採用し、app/config/eccube/packages/eccube.yaml の同設定（142行）は10。stock_move_instruction_index.twig のページ件数選択（170-173行）はこの `page_count` を選択状態にする。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 542,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "UNSURE",
+      "checkedQuote": "0202_基本設計仕様書(在庫管理機能).html を「発送状況」「複数選択(セレクトボックス)」「未、済」で検索し、Excel正本の src-cell 0202:在庫移動指示検索!B133/E133/M133/AG133（14336行）に「2-7 発送状況」「複数選択(セレクトボックス)」「選択肢：未、済」を確認した。一方、同じExcel正本に紐づくレイアウト画像 B7 image order 2 layer 1 を実際に開くと、「発送状況」は「未」「済」の独立チェックボックス2個として描かれていた。",
+      "reason": "項目表に直接記載があるためSPEC_BACKED分類自体は妥当。ただし同じ正本のレイアウト画像は現行実装と同じチェックボックス2個を示し、正本内部で部品種別が矛盾する。どちらを優先すべきか確定できないため、現在の乖離再現判定はUNSUREとする。",
+      "currentImpl": "ec-cube-enterprise 現状HEAD da08bd65722b: SearchStockMoveInstructionType::buildForm() は `shipment_status_not_done` と `shipment_status_done` を CheckboxType として定義（142-149行）。stock_move_instruction_index.twig も131行と134行で2項目を個別の `form-check-input` として描画する。これは項目表とは異なるが、正本レイアウト画像とは一致する。",
+      "severityOpinion": "low",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 546,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0202_基本設計仕様書(在庫管理機能).html を「発送済みでない」「送り状No.が登録されていない」「出庫待ち状態の場合のみ削除可能」で検索し、Excel正本の src-cell 0202:在庫移動指示詳細!E73（14904行）に「発送済みでないかつ送り状No.が登録されていない在庫移動指示のみ削除可能」、同 AG96（14930行）に「出庫待ち状態の場合のみ削除可能」を確認した。同シートのレイアウト画像 AG69 image order 3 も実際に開き、背景のステータスが「出庫待ち」、送り状No.が空の状態で削除確認モーダルが表示される例を確認した。",
+      "reason": "正本は送り状No.未登録に加えて業務ステータス条件も明記する。通常フローでは指示作成対象が出庫承認済みで、送り状登録時に移動中へ進むため両条件が連動しやすいが、削除処理自体はステータスを検証せず、正本の削除可否条件を防御的に保証していない。",
+      "currentImpl": "ec-cube-enterprise 現状HEAD da08bd65722b: StockMoveInstructionController::deleteInstruction() は367-370行で `getTrackingNo()` が空かだけを確認し、紐づくDtbStockMoveTransferの MoveTransferStatus は確認しない。stock_move_instruction_detail.twig も84-88行と144行で `instruction.trackingNo` のみを削除ボタン・モーダル表示条件に使う。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 548,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "機械フラグNOT_FOUNDを再検証し、0202_基本設計仕様書(在庫管理機能).html を「商品名から取り出した色」「色とレアリティ」「シングルカード以外」「色/R」で検索した。Excel正本の src-cell 0202:在庫移動戻しリストCSV出力!B12/E12/O12（17875行）に「色/R」「商品名から取り出した色とレアリティを出力（例: 金R）。シングルカード以外は色に該当するデータがないため、色情報は非表示」が実在することを確認した。",
+      "reason": "引用は省略記号を含む機械検証文字列では見つからなかったが、完全な正本文言は実在するためSPEC_BACKEDは妥当。現行の色/R出力元は商品名文字列ではなく構造化マスタであり、設計が明記する抽出元と異なる。",
+      "currentImpl": "ec-cube-enterprise 現状HEAD da08bd65722b: DtbStockMoveTransferRepository::getListExportRows() は206-212行で dtb_card_color→mtb_color の `colorName` と mtb_rarity の `rarityCode` を取得する。RestockListCsvRowFormatter::formatRow() は84行で非サプライ時に `$colorName.$rarityCode` を `colorAndRarity` として出力する。商品名処理の stripProductNameComponents() は出力用商品名から部品を除去する処理で、色/R列の抽出元ではない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 551,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0202_基本設計仕様書(在庫管理機能).html を「在庫変動区分」「単一選択(セレクトボックス)」で検索し、Excel正本の src-cell 0202:在庫編集承認一覧(検索入力)!B47/E47/M47（17053行）に「1-5 在庫変動区分」「単一選択(セレクトボックス)」を確認した。同シートのレイアウト画像 B7 image order 1 も実際に開き、在庫変動区分が1つのセレクトボックスとして描かれていることを確認した。",
+      "reason": "項目表とレイアウト画像がともに単一選択を支持する。現行実装はmultiple=trueで複数選択を許可する。",
+      "currentImpl": "ec-cube-enterprise 現状HEAD da08bd65722b: SearchStockApprovalListType::buildForm() は `stock_change_type_detail` を EntityType とし、105行で `'multiple' => true` を指定する。DtbStockApprovalListRepository::getQueryBuilderBySearchDataForAdmin() も130-135行で `IN (:stock_change_type_detail)` に複数値を渡す。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 552,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "UNSURE",
+      "checkedQuote": "0202_基本設計仕様書(在庫管理機能).html を「登録日(from）」「承認日(from）」「日時(YYYY/MM/DD HH:mm)」「入力された日時以降」で検索し、Excel正本の src-cell 0202:在庫編集承認一覧(検索入力)!B50/E50/M50/AG50、B51/E51/M51/AG51、B54/E54/M54/AG54、B55/E55/M55/AG55（17056-17061行）に、4条件の書式「日時(YYYY/MM/DD HH:mm)」と入力日時を含む境界説明を確認した。一方、同シートのレイアウト画像 B7 image order 1 を実際に開くと、登録日・承認日の全入力欄はプレースホルダ「YYYY/MM/DD」で、時分欄が描かれていなかった。",
+      "reason": "項目表に時刻付き条件が直接存在するためSPEC_BACKED分類は妥当。ただし同じ正本のレイアウト画像は日付のみで現行実装と一致し、正本内部で入力粒度が矛盾する。採用すべき仕様を断定できないためdriftVerdictはUNSUREとする。",
+      "currentImpl": "ec-cube-enterprise 現状HEAD da08bd65722b: SearchStockApprovalListType::buildForm() は registered_date_start/end と approved_date_start/end をすべて DateType + `widget=single_text` で定義（164-215行）。DtbStockApprovalListRepository::getQueryBuilderBySearchDataForAdmin() は開始を `Y-m-d 00:00:00`、終了を `Y-m-d 23:59:59` に固定（151-173行）し、任意のHH:mmは受け付けない。これは項目表とは異なるが、正本レイアウト画像とは一致する。",
+      "severityOpinion": "med",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 553,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "RESOLVED",
+      "checkedQuote": "0202_基本設計仕様書(在庫管理機能).html を「表示件数」「100件」「最大ページ表示」で検索し、Excel正本の src-cell 0202:在庫編集承認一覧(検索結果)!B86/E86/Z86/AG86（17515行）に「1-3 表示件数」「100件」「最大ページ表示にて、設定されている表示件数の選択肢を表示する」を確認した。同シートのレイアウト画像 B8 image order 2 も実際に開いたが、画像上の選択値は「10件」であり、項目表とは矛盾していた。",
+      "reason": "引用された100件はExcel正本の項目表に実在するためSPEC_BACKED分類は妥当。現行コードは監査時点の共通既定値10参照から、承認一覧専用の既定値100参照へ変更されており、指摘が対象とした「初期値100件」に関する乖離は解消している。正本レイアウト画像の10件との矛盾は別途残る。",
+      "currentImpl": "ec-cube-enterprise 現状HEAD da08bd65722b: StockApprovalListController::index() はセッション未設定時に118行の `eccube_admin_stock_approval_list_page_count` を使用する。app/config/eccube/packages/eccube.yaml の同設定（145行）は100。選択肢は同Controller 121行の PageMaxRepository::findAll() から取得する。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 555,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0202_基本設計仕様書(在庫管理機能).html を「スマレジ連携中」「登録日が古い順」「承認日が新しい順」「在庫編集承認ID」で検索し、Excel正本の src-cell 0202:在庫編集承認一覧(検索結果)!E37-E39（17466-17468行）に、未承認/スマレジ連携中/スマレジ連携失敗を最上位かつ登録日昇順、承認済/却下済を承認日降順、同日なら在庫編集承認ID昇順とする記述を確認した。同シートのレイアウト画像 B8 image order 2 も実際に開き、未承認行が完了行より上に配置された例を確認したが、同日時タイのサブソートまでは画像から判別できなかった。",
+      "reason": "正本に並び順が直接記載されているためSPEC_BACKEDは妥当。PostgreSQLのapprovedDate DESCはNULLを上位にするため未承認を先頭にする大枠は満たすが、完了行で承認日が同じ場合にもregisteredDateが先に効き、最終キーも正本の在庫編集承認ID（history_source_id）ではなく承認一覧内部ID（a.id）。また現行承認状態は3値のみでスマレジ連携中/失敗を表現しない。",
+      "currentImpl": "ec-cube-enterprise 現状HEAD da08bd65722b: DtbStockApprovalListRepository::getQueryBuilderBySearchDataForAdmin() は184-187行で `a.approvedDate DESC`、`a.registeredDate ASC`、`a.id ASC` を一律指定する。DtbStockApprovalList の状態定数は UNAPPROVED/APPROVED/REJECTED の3値（28-35行）のみ。Entity上、`a.id` は承認一覧ID（50-57行）、正本の在庫編集承認IDに対応する登録元は `historySourceId`（117-129行）。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 556,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0202_基本設計仕様書(在庫管理機能).html を「承認対象」「在庫一括編集」「在庫変更CSV登録」「確認モーダル」で検索し、Excel正本の src-cell 0202:在庫編集承認一覧(検索結果)!B91/E91/M91/AG91（17520行）に、承認対象が「在庫編集」「在庫一括編集」「在庫変更CSV登録」の場合は押下対象に紐づく在庫変動履歴の確認モーダルを表示する記述を確認した。同シートのレイアウト画像 B8 image order 2 と C105 image order 1 layers 1-4 を実際に開き、一覧の対象名がリンク表示され、在庫履歴を含む確認モーダル例が用意されていることを確認した。",
+      "reason": "正本は3対象タイプを条件にモーダル表示を要求しており、承認状態や登録者本人かどうかでリンク挙動を除外していない。現行は操作可能フラグをモーダル起動条件に流用するため、同じ3タイプでも承認済・却下済・本人登録分はモーダルを開かず、`#`への通常リンクになる。",
+      "currentImpl": "ec-cube-enterprise 現状HEAD da08bd65722b: ApprovalListRowBuilder::build() は対象リンクを初期値 `#`（62-64行）とし、`isBulkActionable` を3対象タイプかつ未承認かつ本人以外に限定（90-92行）。approval_list.twig は515-523行でこのフラグがtrueのときだけ `js-open-single-approval-modal` を付与し、falseでは `approval_target_link` を通常リンクとして出力する。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    }
+  ]
+}

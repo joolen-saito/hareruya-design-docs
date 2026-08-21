@@ -1,0 +1,149 @@
+{
+  "packetId": "rc_35",
+  "results": [
+    {
+      "rowId": 624,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0206_基本設計仕様書(ネット買取管理機能).html を「申込者名検索」「空白で区切った」「いずれかの入力」で検索し、Excel正本の src-cell 0206:【新規】買取商品履歴(検索入力)!D54 に「空白で区切ったいずれかの入力が一致していれば検索結果に出力する」、同 D55 に「申込者姓、申込者名、申込者姓カナ、申込者名カナに対して部分一致検索を行う」を確認した。シート14のレイアウト画像 B7/image 1 も開き、申込者名入力欄を確認した。",
+      "reason": "正本は分割後のいずれかの入力の一致を要求する。現在の DtbBuyOrderStockHistoryRepository::createQueryBuilderBySearchData() はキーワードごとに andWhere(orX(...)) を追加しており、キーワード間がANDのままである。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Repository/DtbBuyOrderStockHistoryRepository.php の createQueryBuilderBySearchData(): 「$keywords = preg_split(...)」の後、各 keyword について「$qb->andWhere($qb->expr()->orX(...))」を実行し、姓・名・姓カナ・名カナのORをキーワード単位でAND結合している。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 625,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0206_基本設計仕様書(ネット買取管理機能).html のExcel正本で、src-cell 0206:【新規】買取商品履歴(検索入力)!D50 の「完全一致検索とする」と、同 M74 の会員ID書式「半角数字(整数)」を確認した。シート14のレイアウト画像 B7/image 1 も開き、会員ID入力欄を確認した。",
+      "reason": "完全一致条件は実装済みだが、正本の半角数字・整数という入力制限は実装されていない。TextTypeから文字列DTOへ渡し、Repositoryで初めてintキャストしている。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/Purchase/PurchaseHistoryType.php の buildForm() は customer_id を「TextType::class」「required => false」で追加し constraints はない。HistorySearchDataDto::__construct() は「public ?string $customerId」、DtbBuyOrderStockHistoryRepository::createQueryBuilderBySearchData() は「setParameter('customerId', (int) $searchData->customerId)」で完全一致検索する。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 626,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0206_基本設計仕様書(ネット買取管理機能).html のExcel正本で、src-cell 0206:【新規】買取商品履歴(検索入力)!D62 の「振込が完了した日を買取が成立した日とみなし、検索項目とする」と、項目表の振込完了日(From)/(To)の書式「日付(yyyy/mm/dd)」を確認した。シート14のレイアウト画像 B7/image 1 も開き、振込完了日はFrom/Toの日付欄として描かれていることを確認した。",
+      "reason": "正本は日付入力を定義するが、現在もフォームと画面は時刻を含むDateTime入力であり、To側の日終端補正もない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/Purchase/PurchaseHistoryType.php の buildForm() は transfer_complete_date_from/to を「DateTimeType::class」「input => datetime」「widget => single_text」で定義する。src/Eccube/Resource/template/admin/Purchase/history.twig の初期化は「format: 'YYYY-MM-DD HH:mm'」。DtbBuyOrderStockHistoryRepository::createQueryBuilderBySearchData() はMAX(createDate)へ「>= :transferCompleteDateFrom」「<= :transferCompleteDateTo」をそのまま適用する。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 627,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0206_基本設計仕様書(ネット買取管理機能).html のExcel正本項目表で、src-cell 0206:【新規】買取商品履歴(検索結果)!E55 の画面項目名「CSVダウンロード」を確認した。シート15のレイアウト画像 B7/image 1 も実際に開き、ドロップダウン見出しが「CSVダウンロード」と表示されていることを確認した。",
+      "reason": "正本テキストとレイアウト画像の双方が「CSVダウンロード」を示す一方、現在のテンプレートは「ダウンロード」になる別の翻訳キーを使用している。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Purchase/history.twig のCSVメニュー見出しは「{{ 'admin.common.download'|trans }}」。src/Eccube/Resource/locale/messages.ja.yaml は「admin.common.download: ダウンロード」であり、「admin.common.csv_download: CSVダウンロード」は存在するが当該テンプレートでは使われていない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 629,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0207_基本設計仕様書(会員管理機能).html のメール一括送信シート全src-cellを「dtb_user_mail_history」「customer_id」「creator_id」「メール送信履歴」で検索した。Excel正本で確認できたのは 0207:メール一括送信!B46 の「カスタマイズ要件に記載の内容以外は現行踏襲とする」までで、具体的なテーブル名・列名は function-design-embed 開始後にのみあった。レイアウト画像 C8/image 1 も開いたが、画面項目のみで保存テーブル・列の記載はなかった。",
+      "reason": "具体的な dtb_user_mail_history と列構成はExcel正本の明示要件ではなく、旧実装で確認されるためLEGACY_BACKEDが妥当。現在は別テーブルへ保存している。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/CustomerMailController.php の complete 分岐は「$this->mailHistoryEntityManager->save(...)」を呼ぶ。MailHistoryEntityManager::save() は「$MailHistory = new MailHistory()」をpersistし、src/Eccube/Entity/MailHistory.php は「#[ORM\\Table(name: 'dtb_mail_history')]」。DtbUserMailHistory は「dtb_user_mail_history」だが「@deprecated dtb_mail_historyに統合されたため、使用しない」で、src内に生成・persist経路はない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 631,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0207_基本設計仕様書(会員管理機能).html のメール一括送信確認シート全src-cellを「dtb_user_mail_history」「customer_id」「creator_id」「メール送信履歴」で検索した。Excel正本には 0207:メール一括送信確認!C67 の「メール送信ボタン押下時、メール送信実行し、メール一括送信完了画面に遷移する」と同 B61 の「現行踏襲」はあるが、具体的な履歴テーブル・列はない。レイアウト画像 C8/image 1 も開いたが、確認画面の表示項目だけでDB記載はなかった。",
+      "reason": "送信実行自体は正本にあるが、保存先テーブル・列の具体値は旧実装由来である。現在の送信処理はdtb_user_mail_historyではなくdtb_mail_historyを永続化する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/CustomerMailController.php の complete 分岐から MailHistoryEntityManager::save() が呼ばれ、同save()はMailHistoryをpersistする。MailHistoryのORMテーブルは「dtb_mail_history」で、DtbUserMailHistoryの利用箇所はない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 633,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "MISDESCRIBED",
+      "checkedQuote": "0207_基本設計仕様書(会員管理機能).html のメール一括送信完了シート全src-cellを「dtb_user_mail_history」「customer_id」「creator_id」「メール送信履歴」で検索した。Excel正本は 0207:メール一括送信完了!B24 の「現行踏襲」と完了画面・戻り先だけで、具体的テーブル・列はfunction-design-embed内に限られた。レイアウト画像 C8/image 1 も開いたがDB記載はなかった。旧実装 pf-eccube3 の MailService::sendCustomerWithoutTemplate() と saveUserMailHistory()、DtbUserMailHistory.dcm.yml も開いて確認した。",
+      "reason": "保存先がdtb_user_mail_historyからdtb_mail_historyへ変わった点は再現する。ただしfindingが追加差分とするcreator未設定は旧実装でも一括送信呼出しが「saveUserMailHistory($message, null, $customer)」でcreatorを渡さず、saveUserMailHistory()の第4引数既定値はnullであるため、新実装固有の乖離ではない。creator_id列自体は旧マッピングにも現実装MailHistoryにも存在する。したがって乖離は残るが差分説明が過大である。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/EntityManager/MailHistoryEntityManager.php の save() はMailHistoryへ件名・本文・送信日・Customerを設定してpersistし、Creatorは設定しない。保存先はsrc/Eccube/Entity/MailHistory.phpの「dtb_mail_history」。一方、旧 pf-eccube3/app/Plugin/HareruyaEc/Service/MailService.php の一括送信もcreator引数なしでsaveUserMailHistory()を呼んでいた。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 634,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0207_基本設計仕様書(会員管理機能).html のExcel正本項目表で、必須列 0207:会員登録編集!T168 を確認した上で、カナ T172/T173 と郵便番号 T176/T177 が「-」、対照となるお名前姓 T170 が「◯」であることを確認した。会員登録編集のレイアウト画像 B8/image 1 も開き、カナ欄と分割郵便番号欄の配置を確認した。",
+      "reason": "正本上、カナと郵便番号は任意。現実装はカナをrequired=falseにしているが、郵便番号はrequired=trueであり、findingの未充足部分は現在も残る。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/CustomerType.php の buildForm() はkanaを「required => false」、postalCodeをSplitPostalTypeで「required => true」とする。SplitPostalType::buildForm() はpostalCode01/02に数値型と3桁/4桁のLength制約を付与している。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 635,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0207_基本設計仕様書(会員管理機能).html のExcel正本を「SJIS」「Shift_JIS」「CP932」「住所1」「住所2」で検索した。正本 src-cell 0207:会員登録編集!M181/M182 は「全角・半角」、V181/V182 は「200」で、SJIS換算の記載はなかった。SJIS換算記述はfunction-design-embed内だった。旧実装 pf-eccube3 の CustomerEditTypeExtension.php を開き、POST_SUBMITで「strlen(mb_convert_encoding($addr01, 'SJIS', 'auto'))」およびaddr02を上限比較する実装を確認した。",
+      "reason": "SJIS換算要件はExcel正本ではなく旧実装にのみ根拠があるためLEGACY_BACKEDが妥当。現在の住所フォームには通常の文字列長制約しかない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Form/Type/AddressType.php の configureOptions() はaddr01/addr02にそれぞれ「new Assert\\Length(['max' => ...])」を設定する。Form、Validator、Controller/Admin/Customerを sjis/shift_jis/cp932/mb_convert_encoding/mb_strwidth で検索して該当検証は0件。Service内のSJISヒットはCSV/PDF等で、会員住所の入力検証ではない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 637,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0207_基本設計仕様書(会員管理機能).html のExcel正本 src-cell 0207:会員登録編集!E334/M334/AG334 で「買取番号」「リンク」「リンク押下時、買取詳細画面に遷移する」を確認した。会員登録編集のレイアウト画像 B308/image 4 も開き、買取履歴欄の配置を確認した。",
+      "reason": "正本が明示する買取詳細画面への遷移に対し、現在のBuyOrderリンクは受注編集ルートを生成している。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Customer/edit.twig のpaginationBuyOrderループは「url('admin_order_edit', {'id': BuyOrder.id})」を使用する。買取詳細はsrc/Eccube/Controller/Admin/Purchase/PurchaseController.phpの edit() に付いた「name: 'admin_purchase_edit'」で、admin_order_editは受注編集の別ルートである。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 638,
+      "originalClass": "UNCERTAIN",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0207_基本設計仕様書(会員管理機能).html を「本人確認フラグ」「identificationFlg」「identification_flg」で検索したところ、これらの具体的入力・保存要件はfunction-design-embed内だけだった。Excel正本 src-cell 0207:会員登録編集!E204/AG204 は別項目「本人確認ステータス」と4選択肢を定義する。会員登録編集レイアウト画像 B8/image 1 も開き、「本人確認ステータス」はあるが「本人確認フラグ」はなく、赤線で削除表示されているのは「DCI確認フラグ」であることを確認した。旧実装のCustomerEditTypeExtension.phpではidentificationFlg必須ラジオを確認したが、AccountEvent.phpとpf-eccube3全体のsetIdentificationFlg検索では保存呼出しを確認できなかった。",
+      "reason": "旧実装は必須ラジオのUIを支持する一方、期待値に含まれるidentification_flgへの保存を支持しない。Excel正本にも本人確認フラグ要件はないため、複合した期待値全体をSPEC_BACKEDまたはLEGACY_BACKEDに断定できず、元のUNCERTAINが妥当。現実装でUI項目がないという事実自体は現在も再現する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/PlayerType.php の buildForm() はsmaregiId、IdentityConfirmStatus、CustomerGroup、mailMagazineFlg、firstNameEn、lastNameEn、id_expiration_dateのみを追加する。Customer/edit.twigはIdentityConfirmStatusとmailMagazineFlgを描画するがidentificationFlgを描画しない。DtbPlayerにはidentification_flg列があり、CustomerEditControllerは既存のgetIdentificationFlg()をPlayerEntityManagerへ渡すだけで、フォーム入力はない。",
+      "severityOpinion": "med",
+      "confidence": "medium"
+    },
+    {
+      "rowId": 641,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0207_基本設計仕様書(会員管理機能).html のExcel正本を「admin_customer_point_type_select」「point_type_select」「種別選択画面」で検索し、具体的ルート名はfunction-design-embed内だけにあることを確認した。正本 src-cell 0207:ポイント付与!E33/AG33 はリンクと遷移先画面を記載するがルート名は記載しない。ポイント付与のレイアウト画像 C8/image 1 も開き、2種類の選択リンクを確認したが内部ルート名の表示はなかった。旧実装CustomerServiceProvider.phpでは「bind('admin_customer_point_type_select')」を確認した。",
+      "reason": "具体的ルート名の期待は旧実装だけに根拠があるためLEGACY_BACKEDが妥当。現在もルート名はadmin_customer_point_selectで、旧名は存在しない。ただしURLパスと種別選択画面への実遷移は保たれており、実害は内部識別子差に限られる。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/CustomerPointController.php の index() は同じ「/customer/point/{id}/select」パスを「name: 'admin_customer_point_select'」で定義し、Customer/edit.twigもその名前を使用する。srcとappをadmin_customer_point_type_selectで検索して定義・参照は0件だった。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    }
+  ]
+}

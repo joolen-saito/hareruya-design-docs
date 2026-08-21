@@ -1,0 +1,149 @@
+{
+  "packetId": "rc2_02",
+  "results": [
+    {
+      "rowId": 167,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "PARTIAL",
+      "checkedQuote": "0402_基本設計仕様書(バッチ_在庫管理).html のB02-07正本領域（function-design-embed開始前）を確認し、メモリ制限解除・実行時間制限解除・SQLロガー無効化の記載は見つからなかった。実在する文言「メモリ制限と実行時間制限を解除し、SQLロガーを無効化する。」は functions/pf-eccube3/b02-07_batch_product_product_weekly_stock_history_update.md にある。旧実装 DtbStockHistoryRepository::getWeeklyStockHistory() では `ini_set('memory_limit', '-1');`、`set_time_limit(0);`、`setSQLLogger(null);` の3点を実物確認した。",
+      "reason": "要求の直接根拠はExcel正本ではなくリバース詳細設計と旧実装なので、LEGACY_BACKEDは妥当。現実装ではコンソール入口の実行時間制限解除だけが共通適用され、残るメモリ制限解除とSQLロガー無効化はB02-07経路にないため、一部解消と判定する。",
+      "currentImpl": "ec-cube-enterprise 現HEAD da08bd65722b: bin/console の入口に `set_time_limit(0);` がある。一方、UpdateWeeklyStockHistoryCommand::execute()、BatchUpdateWeeklyStockHistoryAction::handle()、DtbWeeklyStockHistoryTempRepository、DtbWeeklyStockHistoryRepositoryには `ini_set('memory_limit', '-1')` と `setSQLLogger(null)` がない。同等処理を持つDtbSalesQuantityRepositoryはB02-07の呼出経路ではない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 179,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0405_基本設計仕様書(バッチ_受注管理).html のExcel正本セル `0405:注文番号登録!D124` に「失敗した場合エラーメールを送信する」、`0405:注文番号登録!E125` に「メールの送信先は追加設定のスマレジ通信エラー送信メールアドレス」が実在することを確認した。同じ要求は在庫連携のE欄にもある。",
+      "reason": "引用はfunction-design-embed開始前のsrc-cell/data-excel-ref保持要素であり、失敗時メールと宛先設定を直接要求している。現実装はエラーフラグ・ログ・ジョブ失敗情報を保存するだけで、対象経路からメール送信へ到達しない。",
+      "currentImpl": "ec-cube-enterprise 現HEAD da08bd65722b: SmaregiOtcOrderSyncService::markError() はlogger、smaregi_error_flg=true、flushのみ。SmaregiOtcSyncMessageHandler::failJob()もMessengerJobのFAILED化とerrorMessage保存のみである。Smaregi/Otc、同MessageHandler、OtcOrderSmaregiPostCommandをMailService・mailer・sendMail等で検索して対象メール呼出しは0件。MailService::sendOrderDuplicateNotificationMail()による同系設定参照はポイント重複通知で別機能。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 180,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "PARTIAL",
+      "checkedQuote": "0405_基本設計仕様書(バッチ_受注管理).html のExcel正本セル `0405:購入完了手続き再処理!D22` に対象ステータス「新規、入金待ち、ピック中」、D23に注文完了メール送信履歴なし、D24に「注文日時がバッチ起動時間の5分前から1分前まで」が実在することを確認した。E49〜E51、S56〜S58にも同条件が反復されている。",
+      "reason": "3条件はExcel正本が直接支持する。現実装ではステータスとメール履歴なしは実装済みだが、時刻下限をnow-1分からさらに5分戻しており、実際は6分前〜1分前になる。旧来の「抽出実装がない」という説明は現在には当てはまらないが、複合要件の一部だけ未達なのでPARTIALとする。",
+      "currentImpl": "ec-cube-enterprise 現HEAD da08bd65722b: OrderRepository::getNotSendMailOrders() はMailHistoryをLEFT JOINして `mh.id IS NULL`、NEW/PAY_WAIT/PICKINGを条件にし、ResendMailAction::handle()から呼ばれる。ただし `$toDate->modify('-60 second')` の後、そのcloneへ `$fromDate->modify('-5 minute')` を行うため、範囲は起動時刻の6分前〜1分前である。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 186,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0405_基本設計仕様書(バッチ_受注管理).html のExcel正本セル `0405:スマレジ商品削除!E20` に「連携に失敗した場合はスマレジ通信エラーメール送信」、D53に「エラーが発生した場合、発生したスマレジ連携ごとにメールで管理者に通知」が実在することを確認した。いずれもfunction-design-embed開始前である。",
+      "reason": "正本が連携失敗ごとの管理者メールを直接要求する。現実装の検索API・削除API失敗経路はログとDELETE_FAILED、ジョブFAILED保存に留まり、通知メールは送られない。",
+      "currentImpl": "ec-cube-enterprise 現HEAD da08bd65722b: SmaregiOtcDeleteService::delete() は商品検索・削除API例外でlogger->error後にDELETE_FAILEDを返す。SmaregiOtcDeleteMessageHandler::failJob()はMessengerJobをFAILEDにしてerrorMessageを保存するだけである。関連Command/MessageHandler/ServiceにMailService、mailer、スマレジ通信エラーメールの呼出しはない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 192,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0405_基本設計仕様書(バッチ_受注管理).html のExcel正本セル `0405:スマレジEC受注連携エラー再連携!C13` にエラーフラグ付き注文と必要ユーザー情報の取得、C15に「取得した注文データのスマレジ連携をリトライする」、C37〜C38にスマレジID・ポイント残高の取得とポイント情報更新が実在することを確認した。",
+      "reason": "エラー受注を定期抽出して再連携する要求はExcel正本に明記される。現実装には抽出メソッドと単一注文用処理が別々にあるが、抽出メソッドの呼出し元も一覧を走査するバッチもないため、要求された再連携処理は動作しない。",
+      "currentImpl": "ec-cube-enterprise 現HEAD da08bd65722b: OrderRepository::getSmaregiErrorOrder() は `o.smaregi_error_flg = 1` の注文とPlayerを返すが、リポジトリ全体で同メソッドの呼出しは定義箇所のみ。SmaregiUpdatePointAction::handle(int $orderId) は渡された単一orderIdをfindして処理するだけで、エラー注文一覧を取得・走査しない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 207,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0406_基本設計仕様書(バッチ_店頭買取管理) .html のB06-02正本領域を確認した。正本には部門未設定商品のエラーメール送信はあるが、送信開始・送信完了・件数・宛先未設定時のログ要件はない。このログ要件はfunction-design-embed内の「送信開始・送信完了・件数、宛先未設定時の送信せず終了をログに記録する。」にだけ実在する。旧実装 MailService::sendNoSectionAlertMail() は開始、宛先未設定、完了時の `['count' => $count]` を実物確認した。",
+      "reason": "具体的なログ内容はExcel正本ではなくリバース詳細設計と旧実装が根拠なのでLEGACY_BACKEDが妥当。現実装は開始・宛先未設定・完了をログに残すが、完了ログから送信件数が落ちている。",
+      "currentImpl": "ec-cube-enterprise 現HEAD da08bd65722b: MailService::sendNoSectionAlertMail() は「部門未設定商品通知メール送信開始」「…アドレス未設定のため送信せず終了」「…送信完了」を記録する。一方、メール送信後の戻り値をログcontextへ渡しておらず、旧実装にあった `['count' => $count]` 相当がない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 220,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0408_基本設計仕様書(バッチ_会員).html のExcel正本セル `0408:スマレジ使用ポイント連携!C49` にAPI通信失敗、C50にpoint_error_messageへエラー詳細JSONとsmaregi_error_flg=trueの保存が実在する。さらに関連正本0405の `スマレジEC受注連携エラー再連携!C13/C15/C37/C38/C40` に、同エラーフラグの注文取得、再連携、成功時フラグ解除が実在することを確認した。",
+      "reason": "再試行の根拠は0408のリバース詳細設計だけではなく、関連する0405のExcel正本に明記されているためSPEC_BACKEDは妥当。現実装は失敗情報を保存するが、エラー注文を定期取得して再連携する経路がない。",
+      "currentImpl": "ec-cube-enterprise 現HEAD da08bd65722b: SmaregiUpdatePointAction::handle() は例外または異常レスポンスでpoint_error_messageをJSON化しsmaregi_error_flg=trueを保存する。しかしOrderRepository::getSmaregiErrorOrder()の利用箇所は定義だけで、src/Eccube/Commandにもこの一覧を処理する再連携バッチはない。handle()自体も単一orderId処理である。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 221,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0413_基本設計仕様書(バッチ_イベント).html のExcel正本セル `0413:決済処理中チェック!D10` に「SP.LINKSに取引照会を行い、照会結果に応じた処理を行う」、J16に入力元「SP.LINKS取引照会API」が実在する。後続の正本セルにはResponseCdに応じた更新・保留・論理削除も記載されていることを確認した。",
+      "reason": "SP.LINKS照会と結果別処理はExcel正本の直接要求である。現実装は照会メソッドが常に未実装例外を投げるため、照会にも後続判定にも到達できない。",
+      "currentImpl": "ec-cube-enterprise 現HEAD da08bd65722b: PaymentStatusCheckAction::handle() はgetApiResponse($paymentNo)を呼ぶが、PaymentStatusCheckAction::getApiResponse()は常に `LogicException('SP.LINKS取引照会API未実装のため、決済処理中チェックはまだ実行できません。')` をthrowする。src外もSP.LINKS・取引照会・payment-status-checkで探索したが、代替の取引照会実装は見つからなかった。",
+      "severityOpinion": "high",
+      "confidence": "high"
+    },
+    {
+      "rowId": 238,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "PARTIAL",
+      "checkedQuote": "0301_基本設計仕様書(フロント_トップ).html のExcel正本セル `0301:支店ECTOP!C886` に「管理画面＞コンテンツ管理＞ブロック管理に設定されている、編集可能なブロックを表示する」、AG890にバナー押下でHTML内の各画像に設定したURLへ遷移する旨が実在する。正本レイアウト画像 `s4_55_支店ECTOP_C812_image_4.png` と `s4_56_支店ECTOP_C812_image_5.png` も実物確認し、モバイルでは6枠、デスクトップでは2行×3枠の「おすすめ特集」バナー配置を確認した。",
+      "reason": "文言と配置はExcel正本が直接支持する。現実装の6リンクはhref=\"#\"から実URLへ変更され、各画像のHTML内設定URLへ遷移する部分は解消した。一方、画像・リンク・ラベルはTwig固定で、ブロック管理由来の編集可能データ表示は未実装のままである。",
+      "currentImpl": "ec-cube-enterprise 現HEAD da08bd65722b: Block/shop_recommend.twig の6リンクは現在 `path('product_list_tag', { tagId: ... })` で実URLを生成する。一方、画像はtop-category-banner01〜06.webp、tagIdとラベルもすべてテンプレート固定。shop_top.twigはshop_recommend.twigを無パラメータincludeし、同ブロックへ管理画面データを供給するPHP経路は見つからない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    },
+    {
+      "rowId": 249,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0303のsheet-3から抽出したExcel正本レイアウト画像全体を確認し、data-excel-ref `0303:商品一覧!F567` に紐づく `0303_基本設計仕様書(フロント_商品)_sheet-3_9.png` の0件画面内に「ご指定の条件に一致する商品が見つかりませんでした。」が完全一致で実在することを目視確認した。これはfunction-design-embed内テキストだけではなく正本画像にもある。",
+      "reason": "テキスト抽出だけなら正本不在に見えるが、正本に紐づくレイアウト画像が期待文言を直接示すためSPEC_BACKEDが正しい。現実装のDB検索とUniSearchの双方は別文言を使う。",
+      "currentImpl": "ec-cube-enterprise 現HEAD da08bd65722b: messages.ja.yaml の `front.product.search__product_not_found` は「お探しの商品は見つかりませんでした」。Product/list.twigはDB検索0件分岐とUniSearchのemptyResultMsgの双方でこの翻訳キーを使い、設計文言はsrc配下に存在しない。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 251,
+      "originalClass": "SPEC_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0303_基本設計仕様書(フロント_商品).html のExcel正本セル `0303:商品詳細!D300` に「・URL（言語まで、実際には短縮URLを表示する）」が完全一致で実在することを確認した。引用はfunction-design-embed開始前のsrc-cell/data-excel-ref保持要素である。",
+      "reason": "SNS共有URLの短縮はExcel正本の直接要求である。現実装は絶対URLを生成して共有文へそのまま連結し、短縮サービスや変換処理を介さない。",
+      "currentImpl": "ec-cube-enterprise 現HEAD da08bd65722b: ProductControllerはUrlGeneratorInterface::ABSOLUTE_URLでproduct_detail URLを生成してProduct::getSnsShareText()へ渡す。Product::getSnsShareText()は受け取った `$productDetailUrl` をそのまま文字列連結して返す。関連箇所を短縮URL・short URL等で探索して短縮処理は見つからなかった。",
+      "severityOpinion": "low",
+      "confidence": "high"
+    },
+    {
+      "rowId": 252,
+      "originalClass": "LEGACY_BACKED",
+      "classVerdict": "UPHELD",
+      "correctedClass": null,
+      "driftVerdict": "REPRODUCED",
+      "checkedQuote": "0303_基本設計仕様書(フロント_商品).html のsheet-5正本領域（function-design-embed開始前）をfront_search_hide_flg、非表示、親配下、選択肢で確認した。正本は `0303:商品詳細検索!AG170` などで最大4階層のカテゴリUIを規定するが、非表示親配下の除外条件はない。sheet-5の正本レイアウト画像5枚もすべて目視し、階層セレクトは確認できたが、非表示親配下除外の注記はなかった。具体条件はリバース詳細設計と旧実装SearchTypeの親カテゴリ判定にのみ実在する。",
+      "reason": "Excel正本はカテゴリ選択UIの階層動作までで、front_search_hide_flgによる除外は要求していないためLEGACY_BACKEDが妥当。現実装は全カテゴリを供給し、階層ツリー構築でも非表示フラグを判定しない。",
+      "currentImpl": "ec-cube-enterprise 現HEAD da08bd65722b: SearchType::buildForm() はCategoryRepository::getList(null, true)を無加工でchoicesへ渡す。CategoryRepository::getList()はsort_no順の全カテゴリを子孫まで展開し、front_search_hide_flg条件がない。ProductSearchCategoryCascadeBuilder::buildTree()/buildNode()にも同フラグの判定はなく、非表示親配下を除外しない。",
+      "severityOpinion": "med",
+      "confidence": "high"
+    }
+  ]
+}

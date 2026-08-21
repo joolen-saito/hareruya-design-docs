@@ -1,0 +1,354 @@
+{
+ "packetId": "rc_30",
+ "note": "rowId は drift_findings_list_final.tsv の行番号(ヘッダ除く1始まり)。mech は機械検証フラグ(手掛かりであって正解ではない)。",
+ "count": 12,
+ "findings": [
+  {
+   "rowId": 536,
+   "機能No": "M04-23",
+   "機能名": "M04-23 在庫結合CSV登録",
+   "ドメイン": "m04",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "登録CSV 2-2「結合数」および2-5「結合元在庫数」は数値必須で最大値1~999999999",
+   "実装実態": "結合数は ctype_digit かつ 1以上、結合元在庫数も ctype_digit かつ 1以上のみを検証し、999999999 以下の上限チェックをしない。",
+   "差分内容": "設計の最大値1~999999999を超える10桁以上の数値を、CSV行バリデーションで拒否しない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/StockJoinListCsvImportHandler.php:153; /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/StockJoinListCsvImportHandler.php:169",
+   "設計書参照": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-31:12719",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:13756,13759 のExcel正本は2-2「結合数」と2-5「結合元在庫数」をともに数値・必須「○」・範囲「1~999999999」とする。",
+   "旧実装根拠": "判定には不使用。hareruya-design-docs/design_impl_drift_report/citation_audit/CODEX_TASK.md:47-50 の旧実装探索条件に照らし、Excel正本に両列の数値範囲が直接記載されているため旧実装は必須探索対象外。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/StockJoinListCsvImportHandler.php:152-160 は結合数を `ctype_digit` かつ0超、同:162-171 は結合元在庫数を `ctype_digit` かつ1以上とするだけで、999999999以下の判定がない。同ファイル全体を `999999999|1000000000|上限|MAX.*QTY` で確認したが件数上限 `MAX_ROWS` 以外の数量上限検証は存在しない。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Service/Csv/Importer/Event/StockJoinListCsvImportHandler.php:153` `if (!ctype_digit($joinQtyRaw) || (int) $joinQtyRaw <= 0) {`（結合数）、同`:169` `if ($srcQtyRaw === '' || !ctype_digit($srcQtyRaw) || (int) $srcQtyRaw < 1) {`（結合元在庫数）のいずれも下限のみで、999999999 の上限判定は無い（ファイル全体に `999999999` の文字列なし）。監査時点と同じ。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "UNCHANGED"
+   }
+  },
+  {
+   "rowId": 537,
+   "機能No": "M04-24",
+   "機能名": "M04-24 在庫移動指示検索",
+   "ドメイン": "m04",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "low",
+   "観点": "⑤画面表示・ラベル文言",
+   "設計期待値": "在庫移動指示検索の送り状番号項目は「送り状No.」と表示する。",
+   "実装実態": "実装の翻訳キー admin.stock.move_instruction.tracking_no は「送り状No」。stock_move_instruction_index.twig の一覧ヘッダと登録モーダルラベルがこのキーを表示する。",
+   "差分内容": "設計は在庫移動指示検索で送り状番号の項目名を「送り状No.」とする。実装は admin.stock.move_instruction.tracking_no の翻訳値が「送り状No」で、一覧ヘッダと登録モーダルラベルにそのキーを表示するため、末尾のピリオドが欠落する。",
+   "実装参照": "src/Eccube/Resource/locale/messages.ja.yaml:5228 / src/Eccube/Form/Type/Admin/StockMoveInstructionDetailType.php:35 / src/Eccube/Resource/template/admin/Stock/stock_move_instruction_index.twig:194,262",
+   "設計書参照": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:4343",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:14394 の Excel 正本（0202:在庫移動指示検索!E189）は項目名を「送り状No.」と、末尾ピリオド付きで定義する。",
+   "旧実装根拠": "旧実装に同じ在庫移動指示検索はないが、表記規約の実例として pf-eccube3/app/Plugin/HareruyaEc/Form/Extension/Admin/Order/OrderTypeExtension.php:98 は `'label' => '送り状No.'`、pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Order/ShippingStandbyController.php:61 も `'送り状No.'` を用いる。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:5290 は `admin.stock.move_instruction.tracking_no: 送り状No` とピリオドなし。ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/stock_move_instruction_index.twig:194 はこの翻訳キーを一覧見出しに表示する。",
+   "根拠検証メモ": "正本の表示文字列と実表示経路の双方を確認した文言乖離。",
+   "対応の根拠(現develop)": "`src/Eccube/Resource/locale/messages.ja.yaml:5288` `admin.stock.move_instruction.tracking_no: 送り状No` と末尾ピリオドが無いまま。`src/Eccube/Resource/template/admin/Stock/stock_move_instruction_index.twig:194` `<th class=\"pt-2 pb-2\">{{ 'admin.stock.move_instruction.tracking_no'|trans }}</th>` および同`:262` `<label class=\"form-label fw\">{{ 'admin.stock.move_instruction.tracking_no'|trans }}</label>`、`src/Eccube/Form/Type/Admin/StockMoveInstructionDetailType.php:35` `'label' => 'admin.stock.move_instruction.tracking_no',` が引き続きこのキーを表示する。監査時点と同じ。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Form/Type/Admin/StockMoveInstructionDetailType.php",
+     "src/Eccube/Resource/locale/messages.ja.yaml",
+     "src/Eccube/Resource/template/admin/Stock/stock_move_instruction_index.twig"
+    ]
+   }
+  },
+  {
+   "rowId": 539,
+   "機能No": "M04-24",
+   "機能名": "M04-24 在庫移動指示検索",
+   "ドメイン": "m04",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "1件でもエラーがあれば登録処理を行わずに終了する（全体を登録しない）。",
+   "実装実態": "onValidateRowはエラー行でbreakAll()せずskipRow()で継続。CsvImporter.php:269のcommit判定は $isSuccessful = messageStore->count()===0 || !$hasBreak で、skipのみ($hasBreak=false)ならエラーが有っても正常行をコミットする。onReadRowの行レベルエラーもfalse返却のみで中断しない。",
+   "差分内容": "設計は『エラーがあれば登録処理を終了（全体未登録）』だが、実装は行単位スキップで成功行を確定コミットする。",
+   "実装参照": "src/Eccube/Service/Csv/Importer/Event/StockMoveInstructionCsvImportHandler.php:69-107, src/Eccube/Service/Csv/Importer/CsvImporter.php:242,269-273",
+   "設計書参照": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-32",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:14285 のExcel正本は「エラーがある場合、登録処理を終了」しエラーを表示すると定め、同:14287（直後の正本セル）は「エラーがなければ登録処理を行う」とするため、エラーを含むCSVの正常行だけを登録する仕様ではない。",
+   "旧実装根拠": "判定には不使用。hareruya-design-docs/design_impl_drift_report/citation_audit/CODEX_TASK.md:47-50 の旧実装探索条件に照らし、Excel正本にエラー時終了とエラー無し時のみ登録が直接記載されているため旧実装は必須探索対象外。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/StockMoveInstructionCsvImportHandler.php:69-107 はエラー行で `breakAll()` せず `skipRow()` を使い、同:114-171 の業務エラーもfalseを返すだけで全体中断しない。ec-cube-enterprise/src/Eccube/Service/Csv/Importer/CsvImporter.php:231-272 はskip行があっても `$hasBreak` がfalseのままで、`$isSuccessful = $messageStore->count() === 0 || !$hasBreak;` により正常行をcommitする。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Service/Csv/Importer/Event/StockMoveInstructionCsvImportHandler.php:81,90,95,104` はいずれも `$event->skipRow();` でエラー行を飛ばして継続（docコメント70-72行「エラー時はその行をスキップして処理を継続する。全行の個別エラーを収集するため、breakAll() ではなく skipRow() を使用する」）。`onReadRow()`:127,136,149,156,166 も `return false;` のみで中断しない。`src/Eccube/Service/Csv/Importer/CsvImporter.php:270-275` `$isSuccessful = $messageStore->count() === 0 || !$hasBreak;` / `if ($isSuccessful) { $this->em->getConnection()->commit(); } else { ...rollback(); }` も未変更で、skip のみ（$hasBreak=false）ならエラー有りでも正常行がコミットされる。監査時点と同じ。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Service/Csv/Importer/Event/StockMoveInstructionCsvImportHandler.php"
+    ]
+   }
+  },
+  {
+   "rowId": 541,
+   "機能No": "M04-24",
+   "機能名": "M04-24 在庫移動指示検索",
+   "ドメイン": "m04",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "low",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "一覧の表示件数（3-4）の初期値は50件。",
+   "実装実態": "Controllerはsession未設定時eccube_default_page_countを採用し、その値はeccube.yaml:140で10。プルダウン(twig:170)・ページネーション(paginate,:135)は実装済みだが初期値は10。",
+   "差分内容": "Controllerが参照する既定値がconfigで10。設計の初期値50と不一致。",
+   "実装参照": "src/Eccube/Controller/Admin/Stock/StockMoveInstructionController.php:78-79, app/config/eccube/packages/eccube.yaml:140",
+   "設計書参照": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-32",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:14342 のExcel正本は一覧3-4「表示件数」の初期値を「50」、説明を「１ページあたりの表示件数」と明記する。",
+   "旧実装根拠": "判定には不使用。hareruya-design-docs/design_impl_drift_report/citation_audit/CODEX_TASK.md:47-50 の旧実装探索条件に照らし、Excel正本に初期値が直接記載されているため旧実装は必須探索対象外。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockMoveInstructionController.php:87-91 はセッション未設定時に `eccube_default_page_count` を採用し、ec-cube-enterprise/app/config/eccube/packages/eccube.yaml:142 はこれを `10` と定義する。ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/stock_move_instruction_index.twig:170-173 はこの `page_count` とPageMax一覧で選択状態を描画するため初期表示は50ではなく10件。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Controller/Admin/Stock/StockMoveInstructionController.php:88-91` `$page_count = (int) $session->get(self::SESSION_KEY_PAGE_COUNT, $this->eccubeConfig->get('eccube_default_page_count'));` のままで、その既定値は `app/config/eccube/packages/eccube.yaml:142` `eccube_default_page_count: 10`（監査時の140行から行番号のみ移動、値は10で不変）。設計の初期値50と不一致。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "app/config/eccube/packages/eccube.yaml",
+     "src/Eccube/Controller/Admin/Stock/StockMoveInstructionController.php",
+     "src/Eccube/Resource/template/admin/Stock/stock_move_instruction_index.twig"
+    ]
+   }
+  },
+  {
+   "rowId": 542,
+   "機能No": "M04-24",
+   "機能名": "M04-24 在庫移動指示検索",
+   "ドメイン": "m04",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "low",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "検索条件『発送状況』(2-7)は複数選択セレクトボックスで選択肢は未／済。",
+   "実装実態": "発送状況は複数選択セレクトボックスではなく、独立したチェックボックス2つ(shipment_status_not_done/shipment_status_done、CheckboxType×2)として実装。",
+   "差分内容": "フォーム型がCheckboxType×2でTwigも個別チェックボックス描画。設計指定の『複数選択(セレクトボックス)』とは部品種別が異なる。",
+   "実装参照": "src/Eccube/Form/Type/Admin/SearchStockMoveInstructionType.php:141-148, src/Eccube/Resource/template/admin/Stock/stock_move_instruction_index.twig:130-134",
+   "設計書参照": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-32",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:14336 のExcel正本は検索条件2-7「発送状況」を「複数選択(セレクトボックス)」、選択肢を「未、済」と明記する。",
+   "旧実装根拠": "判定には不使用。hareruya-design-docs/design_impl_drift_report/citation_audit/CODEX_TASK.md:47-50 の旧実装探索条件に照らし、Excel正本に部品種別と選択肢が直接記載されているため旧実装は必須探索対象外。",
+   "現実装": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/SearchStockMoveInstructionType.php:142-149 は発送状況を `shipment_status_not_done` と `shipment_status_done` の独立した `CheckboxType` 2項目として定義する。ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/stock_move_instruction_index.twig:125-136 も2つの `form-check` として個別描画し、複数選択セレクトボックスではない。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Form/Type/Admin/SearchStockMoveInstructionType.php:142` `->add('shipment_status_not_done', CheckboxType::class, [` および同`:146` `->add('shipment_status_done', CheckboxType::class, [` と、CheckboxType×2 のまま（複数選択 ChoiceType/セレクトボックスではない）。Twig も `src/Eccube/Resource/template/admin/Stock/stock_move_instruction_index.twig:131,134` で `form_widget(searchForm.shipment_status_not_done, {'attr': {'class': 'form-check-input'}})` / `form_widget(searchForm.shipment_status_done, ...)` と個別チェックボックス描画。監査時点と同じ。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Resource/template/admin/Stock/stock_move_instruction_index.twig"
+    ]
+   }
+  },
+  {
+   "rowId": 546,
+   "機能No": "M04-25",
+   "機能名": "M04-25 在庫移動指示詳細",
+   "ドメイン": "m04",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "削除は、発送済みでないかつ送り状No.が登録されていない在庫移動指示のみ削除可能。項目説明では出庫待ち状態の場合のみ削除可能。",
+   "実装実態": "画面の削除ボタン/モーダル表示とサーバ側削除可否は trackingNo の有無だけで判定している。紐づく在庫移動のステータス確認はない。",
+   "差分内容": "設計の「出庫待ち状態の場合のみ」または発送状態の業務ステータス条件に対し、実装は送り状No.未登録ならステータスを問わず削除する。",
+   "実装参照": "src/Eccube/Resource/template/admin/Stock/stock_move_instruction_detail.twig:84-87,144-159; src/Eccube/Controller/Admin/Stock/StockMoveInstructionController.php:256-279,294-311",
+   "設計書参照": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-33:42-45,178-184",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:14904 のExcel正本セル 0202:在庫移動指示詳細!E73 は「発送済みでないかつ送り状No.が登録されていない在庫移動指示のみ削除可能」、同:14930 のセル AG96 は「出庫待ち状態の場合のみ削除可能」と記載する。",
+   "旧実装根拠": "旧実装4リポジトリで `stock_move_instruction` / `move-instruction` / `出庫待ち状態` を横断検索したが対応実装は存在しない（確認範囲: /home/y-saito/Developments/pf-api, pf-eccube3, pf-article, deck-api。Excel正本が直接根拠）。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/stock_move_instruction_detail.twig:84-88,143-159 は `instruction.trackingNo` の有無だけで削除ボタンとモーダルを切り替える。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockMoveInstructionController.php:351-368 の `deleteInstruction()` も `getTrackingNo()` が空かだけを検証し、紐づく移動のステータスを確認せず削除する。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Resource/template/admin/Stock/stock_move_instruction_detail.twig:84-88` は `{% if instruction.trackingNo %}` … `{% else %}` で削除ボタンの活性/非活性を切り替えるのみ、144行 `{% if not instruction.trackingNo %}` でモーダル表示も送り状No.のみで判定。サーバ側も `src/Eccube/Controller/Admin/Stock/StockMoveInstructionController.php:353-356` `$trackingNo = $Instruction->getTrackingNo(); if ($trackingNo !== null && $trackingNo !== '') { throw new StockMoveInstructionDeleteException(); }` だけで、紐づく在庫移動の「出庫待ち」ステータス確認は無い。監査時点から未変更。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Controller/Admin/Stock/StockMoveInstructionController.php"
+    ]
+   }
+  },
+  {
+   "rowId": 548,
+   "機能No": "M04-33",
+   "機能名": "M04-33 在庫移動戻しリストCSV出力",
+   "ドメイン": "m04",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "CSV列「色/R」は、商品名から取り出した色とレアリティを出力（例: 金R）。シングルカード以外は色に該当するデータがないため、色情報は非表示。",
+   "実装実態": "色/R の出力値は商品名文字列から抽出しておらず、SQLで dtb_card_color→mtb_color の色名と mtb_rarity.code を取得し、RestockListCsvRowFormatter が colorName . rarityCode を連結している。商品名からの色/R抽出は商品名整形用の削除処理に限られる。",
+   "差分内容": "設計は「商品名から取り出した色とレアリティ」を出力源としているが、実装はカード色マスタとレアリティマスタを出力源にしている。反証として colorAndRarity、colorName、rarityCode、商品名から取り出した色、stripProductNameComponents、dtb_card_color を StockMoveTransferController / StockMoveTransferReturnListCsvExportService / RestockListCsvRowFormatter / DtbStockMoveTransferRepository 配下で再検索したが、戻しリストCSVの色/Rを商品名から抽出する処理は見つからなかった。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbStockMoveTransferRepository.php:206",
+   "設計書参照": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-48:16471",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:17875 のExcel正本セル 0202:在庫移動戻しリストCSV出力!O12 は色/Rについて「商品名から取り出した色とレアリティを出力（例: 金R）。シングルカード以外は…色情報は非表示」と明記する。",
+   "旧実装根拠": "旧実装4リポジトリで `return_list_csv` / `色/R` / `商品名から取り出した色` を横断検索したが本機能の対応実装は存在しない（確認範囲: /home/y-saito/Developments/pf-api, pf-eccube3, pf-article, deck-api）。リバース詳細設計 /home/y-saito/Developments/hareruya-design-docs/functions/ec-cube-enterprise/m04-33_admin_stock_stock_move_return_list_csv_export.md:25-27 も新規実装で旧相当機能なしと記載する。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbStockMoveTransferRepository.php:200-213 は `dtb_card_color`→`mtb_color` の `colorName` と `mtb_rarity.code` の `rarityCode` を別列で取得する。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Exporter/RestockListCsvRowFormatter.php:74-95 は `colorAndRarity` を `$colorName.$rarityCode` で作り、商品名は別途 `stripProductNameComponents()` に渡すため、色/Rの出力元は商品名ではない。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Repository/DtbStockMoveTransferRepository.php:206-212` が `SELECT STRING_AGG(cl.name_jp, '' ORDER BY cl.id) FROM dtb_card_color dcc JOIN mtb_color cl ON cl.id = dcc.color_id WHERE dcc.card_id = c.id ) AS \"colorName\", r.code AS \"rarityCode\",` と、色/Rをカード色マスタ・レアリティマスタから取得している。商品名から色/Rを抽出する処理は無い。監査時点から未変更。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "NOT_FOUND",
+    "stale": "UNCHANGED",
+    "quoteDetail": [
+     "商品名から取り出した色とレアリティを出力（例: 金R）。シングルカード以外は…色情報は非表示"
+    ]
+   }
+  },
+  {
+   "rowId": 551,
+   "機能No": "M04-38",
+   "機能名": "M04-38 在庫編集承認一覧(検索入力)",
+   "ドメイン": "m04",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "1-5 在庫変動区分は「単一選択(セレクトボックス)」の検索条件。",
+   "実装実態": "stock_change_type_detail は EntityType かつ 'multiple' => true（select2複数選択）で描画され、Repositoryも IN 句で複数値を受ける。",
+   "差分内容": "設計は単一選択(セレクトボックス)だが、実装は複数選択(multiple=true, select2)で構築。選択方式が相違。",
+   "実装参照": "src/Eccube/Form/Type/Admin/SearchStockApprovalListType.php:100-116, src/Eccube/Resource/template/admin/Stock/approval_list.twig:331-333,385-387, src/Eccube/Repository/DtbStockApprovalListRepository.php:106-110",
+   "設計書参照": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-44",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:17053 のExcel正本セル 0202:在庫編集承認一覧(検索入力)!E47/M47 は「在庫変動区分」「単一選択(セレクトボックス)」と明記する。",
+   "旧実装根拠": "旧実装4リポジトリを `在庫編集承認一覧` / `stock_change_type_detail` / `stock_approval_list` で横断検索したが対応実装は存在しない（確認範囲: /home/y-saito/Developments/pf-api, pf-eccube3, pf-article, deck-api。Excel正本が直接根拠）。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/SearchStockApprovalListType.php:103-119 は `stock_change_type_detail` をEntityTypeかつ `'multiple' => true` で定義する。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbStockApprovalListRepository.php:130-134 も `IN (:stock_change_type_detail)` で複数値を受けるため、正本の単一選択と相違する。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Form/Type/Admin/SearchStockApprovalListType.php:103-119` の `->add('stock_change_type_detail', EntityType::class, [... 'multiple' => true, ...])` は監査時点と同じ複数選択のままで、`src/Eccube/Repository/DtbStockApprovalListRepository.php:131-135` も `$qb->expr()->in('a.StockTransferTypeDetail', ':stock_change_type_detail')` と IN 句で複数値を受ける。設計 sheet-44 1-5「在庫変動区分 単一選択(セレクトボックス)」と相違したまま。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Form/Type/Admin/SearchStockApprovalListType.php"
+    ]
+   }
+  },
+  {
+   "rowId": 552,
+   "機能No": "M04-38",
+   "機能名": "M04-38 在庫編集承認一覧(検索入力)",
+   "ドメイン": "m04",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "1-8〜1-13 登録日(from/to)・承認日(from/to) の書式は「日時(YYYY/MM/DD HH:mm)」。入力された日時以降/以前を（入力日時を含めて）検索対象とする。",
+   "実装実態": "registered_date_start/end・approved_date_start/end は4項目とも DateType::class（DateTimeTypeではない）＋widget=single_text で日付のみ入力(HH:mm入力不可)。Repositoryも開始を00:00:00、終了を23:59:59に固定して丸める。",
+   "差分内容": "設計は時刻(HH:mm)まで入力できる日時条件を要求するが、実装は日付のみのDateTypeで時分入力を受け付けず、時刻境界を00:00:00/23:59:59に固定。指定時刻での絞り込み不可。",
+   "実装参照": "src/Eccube/Form/Type/Admin/SearchStockApprovalListType.php:163-214, src/Eccube/Repository/DtbStockApprovalListRepository.php:126-148",
+   "設計書参照": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-44",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:17056-17061 のExcel正本セル M50/M51/M54/M55 は登録日・承認日のfrom/toを全て「日時(YYYY/MM/DD HH:mm)」とし、AG50/AG51/AG55 は入力日時を含む以降/以前検索を明記する。",
+   "旧実装根拠": "旧実装4リポジトリを `在庫編集承認一覧` / `registered_date_start` / `approved_date_start` / `YYYY/MM/DD HH:mm` で横断検索したが対応実装は存在しない（確認範囲: /home/y-saito/Developments/pf-api, pf-eccube3, pf-article, deck-api。Excel正本が直接根拠）。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/SearchStockApprovalListType.php:166-217 は4項目すべてを `DateType::class` として時分入力を受け付けない。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbStockApprovalListRepository.php:151-172 は開始を `00:00:00`、終了を `23:59:59` に固定して検索するため、任意のHH:mmで絞り込めない。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Form/Type/Admin/SearchStockApprovalListType.php:166-217` で registered_date_start / registered_date_end / approved_date_start / approved_date_end の4項目とも `DateType::class` + `'widget' => 'single_text'` のままで時分入力不可。`src/Eccube/Repository/DtbStockApprovalListRepository.php:152-173` も `->format('Y-m-d 00:00:00')` / `->format('Y-m-d 23:59:59')` で時刻を固定して丸めており、監査時点から変化なし。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "NO_QUOTE",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Form/Type/Admin/SearchStockApprovalListType.php"
+    ]
+   }
+  },
+  {
+   "rowId": 553,
+   "機能No": "M04-38",
+   "機能名": "M04-38 在庫編集承認一覧(検索結果)",
+   "ドメイン": "m04",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "表示件数は初期値100件で、EC-CUBE標準の最大ページ表示に設定されている表示件数の選択肢を表示する。",
+   "実装実態": "初期表示件数はセッション未設定時に eccube_default_page_count を使用し、設定値は10。選択肢自体は mtb_page_max から表示している。",
+   "差分内容": "設計の初期値100件に対し、実装のデフォルトが10件になっている。",
+   "実装参照": "src/Eccube/Controller/Admin/Stock/StockApprovalListController.php:105; app/config/eccube/packages/eccube.yaml:124",
+   "設計書参照": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-45:16158",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:17515 のExcel正本セル 0202:在庫編集承認一覧(検索結果)!Z86/AG86 は表示件数の初期値を「100件」とし、EC-CUBE標準の最大ページ表示マスタの選択肢を表示すると明記する。",
+   "旧実装根拠": "旧実装4リポジトリを `在庫編集承認一覧` / `stock_approval_list` で横断検索したが対応実装は存在しない（確認範囲: /home/y-saito/Developments/pf-api, pf-eccube3, pf-article, deck-api。Excel正本が直接根拠）。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockApprovalListController.php:104-118 は選択肢をPageMaxマスタから得る一方、初期値を `$this->eccubeConfig['eccube_default_page_count']` にする。/home/y-saito/Developments/ec-cube-enterprise/app/config/eccube/packages/eccube.yaml:142 は `eccube_default_page_count: 10` のため初期値は10件。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Controller/Admin/Stock/StockApprovalListController.php:116` `$pageCount = (int) ($page_count ?? $session->get($sessionKeyPageCount, $this->eccubeConfig['eccube_default_page_count']));` のままで、`app/config/eccube/packages/eccube.yaml:142` は `eccube_default_page_count: 10`。設計 sheet-45 1-3 の初期値100件になっていない（選択肢は :118 `$this->pageMaxRepository->findAll()` で mtb_page_max から表示）。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "TOO_SHORT",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "app/config/eccube/packages/eccube.yaml",
+     "src/Eccube/Controller/Admin/Stock/StockApprovalListController.php"
+    ]
+   }
+  },
+  {
+   "rowId": 555,
+   "機能No": "M04-38",
+   "機能名": "M04-38 在庫編集承認一覧(検索結果)",
+   "ドメイン": "m04",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "一覧は未承認/スマレジ連携中/スマレジ連携失敗を最上位に登録日古い順で表示し、承認済/却下済は承認日新しい順、同日なら在庫編集承認ID昇順で表示する。",
+   "実装実態": "approvedDate DESC、registeredDate ASC、承認一覧ID a.id ASC で一律ソートしている。",
+   "差分内容": "完了/却下レコードで承認日が同一の場合も登録日が ID より先に効き、サブソート対象も設計の在庫編集承認ID(history_source_id)ではなく承認一覧ID(a.id)。スマレジ系ステータスもソート条件に含まれない。",
+   "実装参照": "src/Eccube/Repository/DtbStockApprovalListRepository.php:157",
+   "設計書参照": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-45:16108",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:17466-17468 のExcel正本セル E37-E39 は、未承認/スマレジ連携中/失敗を最上位かつ登録日古い順、承認済/却下済を承認日新しい順、同日なら在庫編集承認ID昇順と明記する。",
+   "旧実装根拠": "旧実装4リポジトリを `在庫編集承認一覧` / `approvedDate` / `registeredDate` / `スマレジ連携中` で横断検索したが対応実装は存在しない（確認範囲: /home/y-saito/Developments/pf-api, pf-eccube3, pf-article, deck-api。Excel正本が直接根拠）。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbStockApprovalListRepository.php:182-187 は状態別条件を設けず全件を `approvedDate DESC`、`registeredDate ASC`、承認一覧ID `a.id ASC` の順で一律ソートする。承認済/却下済でも登録日が在庫編集承認IDより先に効き、スマレジ2状態の優先条件もない。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Repository/DtbStockApprovalListRepository.php:184-187` `->addOrderBy('a.approvedDate','DESC')->addOrderBy('a.registeredDate','ASC')->addOrderBy('a.id','ASC')` のままで監査時点と同一。承認済/却下済で承認日が同一の場合も registeredDate が a.id より先に効き、サブソートは設計の在庫編集承認ID(history_source_id)ではなく承認一覧ID(a.id)。スマレジ連携中/失敗はステータス体系自体が無くソート条件にも含まれない。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "NO_QUOTE",
+    "stale": "UNCHANGED"
+   }
+  },
+  {
+   "rowId": 556,
+   "機能No": "M04-38",
+   "機能名": "M04-38 在庫編集承認一覧(検索結果)",
+   "ドメイン": "m04",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "承認対象が「在庫編集」「在庫一括編集」「在庫変更CSV登録」の場合、承認対象リンク押下で紐づく在庫変動履歴を確認できる確認モーダルを表示する。",
+   "実装実態": "確認モーダルを開くリンクは item.is_bulk_actionable の場合だけ。is_bulk_actionable でない在庫編集系行は approval_target_link 初期値の '#' へ通常リンク表示され、モーダルを開かない。",
+   "差分内容": "設計は在庫編集/一括編集/CSV登録の承認対象リンクで確認モーダル表示を要求しているが、実装は未承認かつ本人以外など一括操作可能な行に限定している。",
+   "実装参照": "src/Eccube/Resource/template/admin/Stock/approval_list.twig:499; src/Eccube/Service/Admin/Stock/ApprovalListRowBuilder.php:62",
+   "設計書参照": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-45:16163",
+   "根拠区分": "SPEC_BACKED",
+   "正本根拠": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html:17520 のExcel正本セル 0202:在庫編集承認一覧(検索結果)!AG91 は、承認対象が「在庫編集」「在庫一括編集」「在庫変更CSV登録」の場合、押下した対象に紐づく在庫変動履歴の確認モーダルを表示すると明記する。",
+   "旧実装根拠": "旧実装4リポジトリを `在庫編集承認一覧` / `在庫変更CSV登録` / `確認モーダル` / `stock_approval_list` で横断検索したが対応実装は存在しない（確認範囲: /home/y-saito/Developments/pf-api, pf-eccube3, pf-article, deck-api。Excel正本が直接根拠）。",
+   "現実装": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Stock/ApprovalListRowBuilder.php:41-45,90-93 は3対象タイプであっても未承認かつ登録者本人以外の場合だけ `is_bulk_actionable=true` にする。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/approval_list.twig:509-523 はこのフラグがtrueのときだけ `js-open-single-approval-modal` を付け、それ以外は `approval_target_link`（初期値は同Builder:62-64の`#`）へ通常リンクする。",
+   "根拠検証メモ": "",
+   "対応の根拠(現develop)": "`src/Eccube/Resource/template/admin/Stock/approval_list.twig:515-523` は `{% if item.is_bulk_actionable %}` のときだけ `<a href=\"#\" class=\"js-open-single-approval-modal\" ...>` を出力し、それ以外は `<a href=\"{{ item.approval_target_link }}\" ...>` を出す構造のまま。`src/Eccube/Service/Admin/Stock/ApprovalListRowBuilder.php:90-92` の `$isBulkActionable = in_array($typeId, self::BULK_ACTIONABLE_HISTORY_SOURCE_TYPE_IDS, true) && ...APPROVAL_STATUS_UNAPPROVED && $ApprovalList->getRegisteredMember()->getId() !== $currentMemberId;` も変わっておらず、承認済・却下済や本人登録分の在庫編集系行は :63 の `$approvalTargetLink = '#'` のまま通常リンクとなりモーダルを開かない。",
+   "再確認HEAD": "da9c2ba276",
+   "mech": {
+    "quote": "EXCEL",
+    "stale": "CHANGED",
+    "changedFiles": [
+     "src/Eccube/Service/Admin/Stock/ApprovalListRowBuilder.php"
+    ]
+   }
+  }
+ ]
+}
