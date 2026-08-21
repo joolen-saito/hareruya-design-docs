@@ -1,5 +1,7 @@
 # 実装乖離監査 判定規約（全設計書共通）
 
+調査全体の観点は [AUDIT_SCOPE.md](AUDIT_SCOPE.md) を参照。本書はその観点で判定するための手順を定める。
+
 正本は `excel_to_html/output/*.html` から機械抽出した `design_audit/<doc>/sheets/<sheet-id>.txt` と
 `design_audit/<doc>/images/<sheet-id>_imgN.png` だけ。実装は `../ec-cube-enterprise`（以下 ee）の HEAD。
 **正本に書かれていないことは指摘にできない。実装を読まずに判定を書いてはいけない。**

@@ -1,5 +1,6 @@
 # 実装乖離監査（②不具合調査）進捗台帳
 
+- 調査の観点: [AUDIT_SCOPE.md](AUDIT_SCOPE.md) ／ 判定手順: [AUDIT_JUDGING_RULES.md](AUDIT_JUDGING_RULES.md)
 - 対象: 正本HTML設計書 45冊すべて。既に出力済みの 0201/0202/0203/0204 も**やり直す**（利用者指示 2026-08-21）
 - 道具: `design_audit_harness.py inventory/build --doc <key>`（母数TSV非依存・正本HTMLだけを正とする）
 - 出力: `AUDIT_<key>.tsv` / `AUDIT_<key>.md`。TSVの列は
