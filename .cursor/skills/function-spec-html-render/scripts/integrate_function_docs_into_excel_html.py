@@ -640,9 +640,19 @@ def csv_format_only_sources() -> set[str]:
     return out
 
 
+# 正本HTMLへ埋め込まないカスタマイズ区分（2026-08-21 利用者決定）。
+#   新規実装: 正典は Excel基本設計仕様書。現行ソースが無く、リバースは行わない。
+#             ee 実装からリバースしたMarkdownを埋めると、これから作る仕様と実装の写しが混ざる。
+#   標準:     HTML設計書の生成自体が不要。
+# 埋め込むのは「現行踏襲」「カスタマイズ」の2区分だけ（389本中316本）。
+EMBED_EXCLUDED_KINDS = ("新規実装", "標準")
+
+
 def render_block(converter, row: TodoRow, key: str, note: str | None = None) -> str:
     if row.source.relative_to(ROOT).as_posix() in csv_format_only_sources():
         return ""  # CSV項目定義しか無いシートには現行仕様を出さない
+    if converter.customization_kind(source=row.source) in EMBED_EXCLUDED_KINDS:
+        return ""  # 新規実装・標準は正本HTMLへ埋め込まない
 
     markdown = converter.build_combined_markdown(row.source, [])
     title, body_markdown = converter.extract_title_and_body(markdown, row.source.stem)
