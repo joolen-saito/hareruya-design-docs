@@ -279,7 +279,9 @@ IMPL_MEANS_RE = re.compile(
     r"トランザクション|セッションキー|ルート名|ルート定義|"
     r"inner\s*join|left\s*join|leftJoin|innerJoin|"
     r"通信方式|認可設定|受付先|エンドポイント|内部配線|呼び出し順|"
-    r"クラス名|メソッド名|パラメータ名|DIコンテナ|イベント|キャッシュを持つ",
+    # 「イベント」はこのプロジェクトではイベント管理という業務ドメイン語でもあるため、
+    # 実装手段としての用法（ディスパッチ・リスナ・購読）に限って弾く。
+    r"クラス名|メソッド名|パラメータ名|DIコンテナ|イベント(?:ディスパッチ|リスナ|購読|を発火)|キャッシュを持つ",
     re.IGNORECASE,
 )
 REPORTED = {"DRIFT", "NOT_IMPLEMENTED", "DESIGN_ISSUE"}  # 成果物に載せる判定
@@ -348,6 +350,18 @@ def dedupe_by_impl_actual(reported: list[dict], reqs: dict) -> tuple[list[dict],
 
 _IMPL_REF_RE = re.compile(r"^([\w./\-]+\.[A-Za-z0-9]+)(?::(\d+)(?:-(\d+))?)?$")
 
+# 判定根拠の文中に埋め込まれた実装引用（例: src/Eccube/.../MemberController.php:63）を拾う。
+# MATCHED は「設計どおり実装されている」という主張なので、その根拠となる実在の位置を必ず1つ以上要求する。
+# ここを空けておくと、母集合を全部 MATCHED にする手抜きが捏造ゼロゲートを素通りしてしまう。
+_INLINE_REF_RE = re.compile(
+    r"(?:src|app|codeception|tests|bin|config)/[\w./\-]+\.(?:php|twig|yaml|yml|js|json|xml|sql|md)"
+    r"(?::\d+(?:-\d+)?)?"
+)
+
+
+def inline_impl_refs(text: str) -> list[str]:
+    return _INLINE_REF_RE.findall(text or "")
+
 
 def verify_impl_ref(ref: str) -> list[str]:
     bad = []
@@ -390,6 +404,74 @@ class Sheets:
         return self.index[sheet_id].title
 
 
+def validate_verdict(v: dict, req: dict, sheets: "Sheets") -> list[str]:
+    """判定1行を検査し、違反の説明を返す。cmd_build と audit_part.py が同じゲートを共有する。
+
+    ★識別IDずれの自動 OUT_OF_SCOPE 化（ポリシー1）はここで v を書き換える。
+    """
+    rid = (v.get("要求ID") or "").strip()
+    errors: list[str] = []
+    verdict = (v.get("判定") or "").strip()
+    if verdict not in VALID:
+        return [f"{rid}: 判定が不正 {verdict!r} (許可: {sorted(VALID)})"]
+
+    # --- ポリシー1: ★識別IDずれは自動で対象外へ落とす ---
+    if STAR_ID_SHIFT_RE.match(req["要求文"].strip()) and req["区分"] == "機能仕様":
+        if verdict != "OUT_OF_SCOPE":
+            v["判定"] = verdict = "OUT_OF_SCOPE"
+            v["判定根拠"] = ("[policy] カスタマイズ説明の★識別IDずれは指摘対象外（利用者指示 2026-08-19）。"
+                           "追加すべき列は項目表側の識別IDで決まり、実装は追随済み。"
+                           + (v.get("判定根拠") or ""))
+
+    quote = (v.get("設計根拠_引用") or "").strip()
+    if verdict in QUOTE_REQUIRED:
+        if not quote:
+            errors.append(f"{rid}: {verdict} には 設計根拠_引用 が必須")
+        elif norm(quote) not in sheets.norm_text(req["シート"]):
+            errors.append(f"{rid}: 引用が {req['シート']} 本文に存在しない（捏造ゲート）: {quote[:60]!r}")
+    if verdict in FINDING:
+        # --- ポリシー3: I/O かふるまいかの明示を必須にする ---
+        kind = (v.get("乖離種別") or "").strip()
+        if kind not in DRIFT_KINDS:
+            errors.append(f"{rid}: 乖離種別は {sorted(DRIFT_KINDS)} のいずれか"
+                          "（実装違いは I/O とふるまいに限る）")
+        # --- ポリシー2: 設計期待値を実装手段の語で書かない ---
+        hit = IMPL_MEANS_RE.search(v.get("設計期待値") or "")
+        if hit:
+            errors.append(f"{rid}: 設計期待値が実装手段の語で書かれている（{hit.group(0)!r}）。"
+                          "結果・ふるまいの言葉へ書き直すか、指摘を取り下げること")
+        impl = (v.get("実装参照") or "").strip()
+        if not impl:
+            errors.append(f"{rid}: {verdict} には 実装参照 が必須（不在なら探索したファイルを書く）")
+        else:
+            bad = verify_impl_ref(impl)
+            if bad:
+                errors.append(f"{rid}: 実装参照が実在しない: {', '.join(bad)}")
+        if (v.get("重要度") or "").strip() not in SEVERITY_LEVELS:
+            errors.append(f"{rid}: 重要度は {'/'.join(SEVERITY_LEVELS)}")
+        if (v.get("指摘区分") or "").strip() not in ("未実装", "実装違い"):
+            errors.append(f"{rid}: 指摘区分は 未実装/実装違い")
+        if not (v.get("設計期待値") or "").strip():
+            errors.append(f"{rid}: 設計期待値 が空")
+        if not (v.get("実装実態") or "").strip():
+            errors.append(f"{rid}: 実装実態 が空")
+    if verdict == "MATCHED":
+        # 実装のどこを見て「設計どおり」と判断したのかを、実在するファイル:行で必ず示させる。
+        refs = inline_impl_refs(v.get("判定根拠", "")) + inline_impl_refs(v.get("実装参照", ""))
+        if not refs:
+            errors.append(f"{rid}: MATCHED には実装の位置（例 src/Eccube/...php:123）を"
+                          "判定根拠か実装参照に最低1つ書くこと")
+        else:
+            bad = verify_impl_ref(";".join(refs))
+            if bad:
+                errors.append(f"{rid}: 判定根拠の実装引用が実在しない: {', '.join(bad)}")
+    if not (v.get("判定根拠") or "").strip():
+        errors.append(f"{rid}: 判定根拠 が空")
+    if (v.get("確信度") or "").strip() not in ("high", "med", "low"):
+        errors.append(f"{rid}: 確信度は high/med/low")
+    return errors
+
+
 def cmd_build(doc_key: str, partial: bool = False) -> None:
     outdir = AUDIT_DIR / doc_key
     req_path, ver_path = outdir / "requirements.tsv", outdir / "verdicts.tsv"
@@ -419,57 +501,10 @@ def cmd_build(doc_key: str, partial: bool = False) -> None:
         if rid in seen:
             errors.append(f"{rid}: 重複行")
         seen.add(rid)
-        req = reqs[rid]
-        verdict = (v.get("判定") or "").strip()
-        if verdict not in VALID:
-            errors.append(f"{rid}: 判定が不正 {verdict!r} (許可: {sorted(VALID)})")
-            continue
-
-        # --- ポリシー1: ★識別IDずれは自動で対象外へ落とす ---
-        if STAR_ID_SHIFT_RE.match(req["要求文"].strip()) and req["区分"] == "機能仕様":
-            if verdict != "OUT_OF_SCOPE":
-                v["判定"] = verdict = "OUT_OF_SCOPE"
-                v["判定根拠"] = ("[policy] カスタマイズ説明の★識別IDずれは指摘対象外（利用者指示 2026-08-19）。"
-                               "追加すべき列は項目表側の識別IDで決まり、実装は追随済み。"
-                               + (v.get("判定根拠") or ""))
-                policy_star += 1
-
-        quote = (v.get("設計根拠_引用") or "").strip()
-        if verdict in QUOTE_REQUIRED:
-            if not quote:
-                errors.append(f"{rid}: {verdict} には 設計根拠_引用 が必須")
-            elif norm(quote) not in sheets.norm_text(req["シート"]):
-                errors.append(f"{rid}: 引用が {req['シート']} 本文に存在しない（捏造ゲート）: {quote[:60]!r}")
-        if verdict in FINDING:
-            # --- ポリシー3: I/O かふるまいかの明示を必須にする ---
-            kind = (v.get("乖離種別") or "").strip()
-            if kind not in DRIFT_KINDS:
-                errors.append(f"{rid}: 乖離種別は {sorted(DRIFT_KINDS)} のいずれか"
-                              "（実装違いは I/O とふるまいに限る）")
-            # --- ポリシー2: 設計期待値を実装手段の語で書かない ---
-            hit = IMPL_MEANS_RE.search(v.get("設計期待値") or "")
-            if hit:
-                errors.append(f"{rid}: 設計期待値が実装手段の語で書かれている（{hit.group(0)!r}）。"
-                              "結果・ふるまいの言葉へ書き直すか、指摘を取り下げること")
-            impl = (v.get("実装参照") or "").strip()
-            if not impl:
-                errors.append(f"{rid}: {verdict} には 実装参照 が必須（不在なら探索したファイルを書く）")
-            else:
-                bad = verify_impl_ref(impl)
-                if bad:
-                    errors.append(f"{rid}: 実装参照が実在しない: {', '.join(bad)}")
-            if (v.get("重要度") or "").strip() not in SEVERITY_LEVELS:
-                errors.append(f"{rid}: 重要度は {'/'.join(SEVERITY_LEVELS)}")
-            if (v.get("指摘区分") or "").strip() not in ("未実装", "実装違い"):
-                errors.append(f"{rid}: 指摘区分は 未実装/実装違い")
-            if not (v.get("設計期待値") or "").strip():
-                errors.append(f"{rid}: 設計期待値 が空")
-            if not (v.get("実装実態") or "").strip():
-                errors.append(f"{rid}: 実装実態 が空")
-        if not (v.get("判定根拠") or "").strip():
-            errors.append(f"{rid}: 判定根拠 が空")
-        if (v.get("確信度") or "").strip() not in ("high", "med", "low"):
-            errors.append(f"{rid}: 確信度は high/med/low")
+        before = v.get("判定")
+        errors.extend(validate_verdict(v, reqs[rid], sheets))
+        if before != v.get("判定"):
+            policy_star += 1
 
     unjudged = sorted(set(reqs) - seen)
     if unjudged and not partial:

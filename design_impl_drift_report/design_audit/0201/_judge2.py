@@ -174,7 +174,7 @@ put('sheet-4-R084','NOT_IMPLEMENTED','失敗時出力のうち、スマレジ用
     判定根拠=f'項目ごとのエラー・保存失敗メッセージ・404（{CTRL}:157-159 の経路解決）は実装されているが、'
     '重複エラーだけが無い。R070 と同一の実装実態。')
 put('sheet-4-R085','OUT_OF_SCOPE','小見出し「入出力: 永続化」。'+HEAD)
-put('sheet-4-R086','MATCHED',f'{CACT}/{EACT} が管理者アカウントを追加・更新し、設計の項目を保存する。'
+put('sheet-4-R086','MATCHED',f'{CACT} と {EACT} が管理者アカウントを追加・更新し、設計の項目を保存する。'
     'ソルトは Symfony のハッシュ器がハッシュ文字列に内包する。')
 put('sheet-4-R087','OUT_OF_SCOPE','表の見出し行。'+HEAD)
 put('sheet-4-R088','MATCHED',f'{CTRL}:94-152 の新規登録が {CACT} を通して追加する。')
@@ -366,8 +366,18 @@ put('sheet-6-R011','MATCHED','在庫・受注・店頭買取・イベントの�
     '編集可否を判定している（src/Eccube/Service/Admin/Stock/StockListMoveTransferSelectionValidator.php:38、'
     'src/Eccube/Resource/template/admin/Order/edit.twig:937、src/Eccube/Service/Admin/OtcBuyOrder/UpdateStatusAction.php:48、'
     'src/Eccube/Resource/template/admin/Event/index.twig:167）。')
-put('sheet-6-R012','MATCHED','isEditableShop の呼び出しは在庫・受注・店頭買取・イベントと、それらに付随する分析・データ管理に限られ、'
-    'それ以外の機能に編集可能店舗の判定は入っていない。')
+put('sheet-6-R012','DRIFT','在庫・受注・店頭買取・イベント以外にも編集可能店舗の制御が入っている。',
+    重要度='P2',指摘区分='実装違い',乖離種別='ふるまい',
+    設計根拠_引用='2-2.2-1で定められた以外の機能については編集可能店舗の制御を入れずアクセス可能であれば編集可能とする',
+    設計期待値='在庫管理・受注管理・店頭買取管理・イベント管理以外の機能では、編集可能店舗による制限をかけず、'
+    'アクセスできるメンバーはそのまま編集できること。',
+    実装参照='src/Eccube/Service/Admin/Data/TopBannerUploadAction.php:40-42; src/Eccube/Controller/Admin/Mall/TenantController.php:232; src/Eccube/Controller/Admin/Mall/TenantController.php:251-255',
+    実装実態='データ管理のトップバナーアップロードとテナント管理（店舗情報の更新）でも編集可能店舗を判定しており、'
+    '編集可能店舗に含まれない店舗を対象にすると、アクセスできても更新が拒否される。',
+    判定根拠='src/Eccube/Entity/Member.php:78-91 の isEditableShop を呼ぶ箇所を全件走査すると、在庫（Stock）・受注（Order）・'
+    '店頭買取（OtcBuyOrder）・イベント（Event）のほかに src/Eccube/Service/Admin/Data/TopBannerUploadAction.php:40 と '
+    'src/Eccube/Controller/Admin/Mall/TenantController.php:232 の2箇所がある。前者は例外を投げ（同:41）、'
+    '後者は POST を拒否して詳細画面へ戻す（同:251-255）。')
 put('sheet-6-R013','MATCHED','src/Eccube/Resource/template/admin/Order/edit.twig:937-993 のように、編集可能店舗でない場合も'
     '画面は表示し、更新系の操作だけを出さない作りになっている。')
 put('sheet-6-R014','MATCHED','src/Eccube/Service/Admin/OtcBuyOrder/UpdateStatusAction.php:48、'
