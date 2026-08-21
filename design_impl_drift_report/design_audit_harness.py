@@ -246,6 +246,9 @@ def cmd_inventory(doc_key: str) -> None:
 VERDICT_COLUMNS = [
     "要求ID", "判定", "重要度", "指摘区分", "乖離種別",
     "設計根拠_引用", "設計期待値", "実装参照", "実装実態", "判定根拠", "画像確認メモ", "確信度",
+    # 同じ1つの実装欠陥から出た指摘に共通して付ける短いキー。設計書1冊の中で一意にする。
+    # 実装実態のバイト一致だけで畳んでいたころは、書き手が変わると同じ欠陥が畳まれず件数が膨らんだ。
+    "根本原因",
 ]
 VALID = {
     "MATCHED",        # 設計どおり実装されている
@@ -329,11 +332,12 @@ def dedupe_by_impl_actual(reported: list[dict], reqs: dict) -> tuple[list[dict],
     groups: dict[str, list[dict]] = {}
     passthrough: list[dict] = []
     for v in reported:
-        actual = norm(v.get("実装実態", ""))
-        if v["判定"] not in FINDING or actual == "":
+        # 根本原因が書かれていればそれで畳む。書き手ごとに文言が揺れても同じ欠陥は1件になる。
+        key = norm(v.get("根本原因", "")) or norm(v.get("実装実態", ""))
+        if v["判定"] not in FINDING or key == "":
             passthrough.append(v)
             continue
-        groups.setdefault(actual, []).append(v)
+        groups.setdefault(key, []).append(v)
 
     kept: list[dict] = list(passthrough)
     folded: dict[str, list[str]] = {}
@@ -458,6 +462,9 @@ def validate_verdict(v: dict, req: dict, sheets: "Sheets") -> list[str]:
             errors.append(f"{rid}: 設計期待値 が空")
         if not (v.get("実装実態") or "").strip():
             errors.append(f"{rid}: 実装実態 が空")
+        if not (v.get("根本原因") or "").strip():
+            errors.append(f"{rid}: 根本原因 が空（同じ実装欠陥から出た指摘には同じキーを書く。"
+                          "1つの欠陥を要求の数だけ指摘に割らないこと）")
     if verdict == "MATCHED":
         # 実装のどこを見て「設計どおり」と判断したのかを、実在するファイル:行で必ず示させる。
         refs = inline_impl_refs(v.get("判定根拠", "")) + inline_impl_refs(v.get("実装参照", ""))
@@ -607,7 +614,7 @@ def write_markdown(path: Path, doc_key: str, sheets: Sheets, reqs: dict,
     a("- 指摘ポリシー（harness が機械で強制）: "
       "①★書きの識別IDずれは対象外に自動で落とす ②設計期待値を実装手段の語で書いた指摘は build を落とす "
       "③実装違いは I/O とふるまいに限り、どちらかの明示を必須にする "
-      "④実装実態が同一の指摘は重複とみなし代表1件だけを載せる（折り畳んだ要求IDは代表に併記する） "
+      "④同じ実装欠陥から出た指摘は根本原因キーで1件に畳む（折り畳んだ要求IDは代表に併記する） "
       "⑤実装実態が空欄の指摘は載せない ⑥区分が「表示メッセージ」の指摘は載せない")
     a("")
     a("## 母数の内訳")
