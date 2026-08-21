@@ -12,8 +12,6 @@
 
 ファイルを選んでいないとき、設定した上限より大きいファイルのとき、選んだファイルの形式がCSVとして扱えないときは、エラーを表示して取込画面を再表示し、1行も取り込まない。
 
-行数が上限に達したときも、エラーを表示して取込画面を再表示し、1行も取り込まない。
-
 1行目を見出し行として読み取れないとき、およびデータ行が1行も無いときは、エラーを表示して1行も取り込まない。
 
 ### 行ごとの確認
@@ -37,7 +35,7 @@
 
 ### 支店システムへの連携
 
-取り込みが最後まで通ったときにかぎり、更新した商品を支店システムへ通知する。通知の対象は、取り込んだ行の商品を重複なくまとめたものとする。
+取り込みが最後まで通ったときにかぎり、更新した商品を支店システムへ通知する。
 
 通知に失敗しても取り込みは成功のままとし、画面にはエラーを出さない。失敗した対象は、あとで連携をやり直せるように記録する。
 
@@ -46,6 +44,8 @@
 取り込みが最後まで通ったときにかぎり、取り込んだファイル名・日時・作業者を履歴に残す。エラーで終わったときは履歴に残さない。
 
 履歴の作業者は、その後に削除された管理者であっても名前を表示する。
+
+履歴はアップロード日時の新しい順に並べて表示する。
 
 ### 雛形ファイル
 
@@ -90,7 +90,6 @@
 | 取込ファイルの読み方 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Service/Csv/Importer/CsvImporter.php:131 |
 | 取込ファイルの読み方 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Service/Csv/Importer/CsvImporter.php:237 |
 | 取り込む前の確認 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Product/ProductCsvController.php:1359 |
-| 取り込む前の確認 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Product/ProductCsvController.php:1371 |
 | 取り込む前の確認 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Service/Csv/Importer/CsvImporter.php:190 |
 | 行ごとの確認 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Service/Csv/Importer/Event/BaseCsvImportHandler.php:52 |
 | 行ごとの確認 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Service/Csv/Importer/Event/StorageCodeImportHandler.php:137 |
@@ -98,7 +97,10 @@
 | 取り込みの確定 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Service/Csv/Importer/Event/StorageCodeImportHandler.php:237 |
 | 支店システムへの連携 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Service/Csv/Importer/Event/StorageCodeImportHandler.php:57 |
 | 支店システムへの連携 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Service/BranchUpdateService.php:66 |
-| 取込履歴 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Product/ProductCsvController.php:1385 |
-| 取込履歴 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Product/ProductCsvController.php:1857 |
+| 取込履歴 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Product/ProductCsvController.php:1388 |
+| 取込履歴 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Product/ProductCsvController.php:1859 |
+| 取込履歴 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Product/ProductCsvController.php:1860 |
 | 雛形ファイル | P3 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Product/ProductCsvController.php:508 |
 | 入出力: 永続化 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Repository/DtbProductSubRepository.php:171 |
+| 入出力: 永続化 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Repository/DtbCsvImportHistoryRepository.php:25 |
+| 入出力: 永続化 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Service/BranchUpdateService.php:205 |
