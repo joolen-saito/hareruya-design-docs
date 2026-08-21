@@ -8,27 +8,13 @@
 - M11-03 権限管理 -> `sheet-5` from `functions/pf-eccube3/m11-03_admin_system_setting_setting_system_authority.md`
 
 ### `excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html`
-- M04-01 在庫検索/一覧 -> `sheet-4` from `functions/ec-cube-enterprise/m04-01_admin_stock_stock_search_list.md`
-- M04-02 在庫編集機能 -> `sheet-6` from `functions/ec-cube-enterprise/m04-02_admin_stock_stock_edit.md`
 - M04-03 在庫一括編集 -> `sheet-7` from `functions/pf-eccube3/m04-03_admin_stock_stock_bulk_edit.md`
-- M04-04 在庫情報CSV出力 -> `sheet-8` from `functions/ec-cube-enterprise/m04-04_admin_stock_stock_csv_export.md`
-- M04-06 在庫切れリストCSV出力 -> `sheet-10` from `functions/ec-cube-enterprise/m04-06_admin_stock_stock_shortage_csv_export.md`
-- M04-07 在庫警戒リストCSV出力 -> `sheet-12` from `functions/ec-cube-enterprise/m04-07_admin_stock_stock_warning_csv_export.md`
-- M04-08 在庫移動・振替検索/一覧 -> `sheet-13` from `functions/ec-cube-enterprise/m04-08_admin_stock_stock_move_transfer_search_list.md`
-- M04-09 在庫移動・振替登録/編集 -> `sheet-14` from `functions/ec-cube-enterprise/m04-09_admin_stock_stock_move_transfer_register_edit.md`
-- M04-12 在庫分割結合検索/一覧 -> `sheet-17` from `functions/ec-cube-enterprise/m04-12_admin_stock_stock_split_join_search_list.md`
-- M04-13 在庫分割結合登録/編集 -> `sheet-18` from `functions/ec-cube-enterprise/m04-13_admin_stock_stock_split_join_register_edit.md`
 - M04-16 在庫リコメンドCSV出力 -> `sheet-21` from `functions/pf-eccube3/m04-16_admin_stock_product_stock_recommend_csv_export.md`
 - M04-17 在庫履歴検索/一覧 -> `sheet-22` from `functions/pf-eccube3/m04-17_admin_stock_stock_history_search_list.md`
 - M04-18 在庫履歴CSV出力 -> `sheet-24` from `functions/pf-eccube3/m04-18_admin_stock_stock_history_csv_export.md`
 - M04-19 欠品履歴検索/一覧 -> `sheet-25` from `functions/pf-eccube3/m04-19_admin_stock_stock_shortage_history_search_list.md`
-- M04-20 欠品履歴CSV出力 -> `sheet-26` from `functions/ec-cube-enterprise/m04-20_admin_stock_stock_shortage_history_csv_export.md`
 - M04-21 在庫変更CSV登録 -> `sheet-27` from `functions/pf-eccube3/m04-21_admin_stock_stock_csv_import.md`
-- M04-23 在庫分割結合CSV登録 -> `sheet-30` from `functions/ec-cube-enterprise/m04-23_admin_stock_stock_split_join_csv_import.md`
-- M04-24 在庫移動指示リスト作成/検索 -> `sheet-32` from `functions/ec-cube-enterprise/m04-24_admin_stock_stock_move_instruction_search_create.md`
-- M04-30 バーコード貼替リストCSV出力 -> `sheet-36` from `functions/ec-cube-enterprise/m04-30_admin_stock_stock_barcode_replacement_list_csv_export.md`
 - M04-31 棚卸計画 -> `sheet-37` from `functions/pf-eccube3/m04-31_admin_stock_stock_inventory_plan.md`
-- M04-32 承認一覧 -> `sheet-44` from `functions/ec-cube-enterprise/m04-32_admin_stock_stock_approval_list.md`
 
 ### `excel_to_html/output/0203_基本設計仕様書(受注管理機能).html`
 - M05-01 受注情報検索/一覧(検索入力) -> `sheet-3` from `functions/pf-eccube3/m05-01_admin_order_order_search_list.md`
@@ -49,7 +35,6 @@
 - M05-21 ピッキングリスト印刷 -> `sheet-20` from `functions/pf-eccube3/m05-21_admin_order_order_shipping_standby_picking_list_print.md`
 - M05-22 出荷指示：納品書印刷（日本語） -> `sheet-21` from `functions/pf-eccube3/m05-22_admin_order_order_shipping_standby_print_delivery_slips_ja.md`
 - M05-23 出荷指示：納品書印刷（英語） -> `sheet-22` from `functions/pf-eccube3/m05-23_admin_order_order_shipping_standby_print_delivery_slips_en.md`
-- M05-24 出荷実績入力用CSV出力 -> `sheet-23` from `functions/pf-eccube3/m05-24_admin_order_order_shipping_export_for_import.md`
 - M05-26 出荷実績インポート登録 -> `sheet-24` from `functions/pf-eccube3/m05-26_admin_order_order_shipping_result_csv_import.md`
 - M05-27 店頭注文番号札管理 -> `sheet-26` from `functions/pf-eccube3/m05-27_admin_order_order_waiting_tag.md`
 
@@ -91,8 +76,6 @@
 - M03-38 商品公開CSV登録 -> `sheet-19` from `functions/pf-eccube3/m03-38_admin_product_product_status_csv.md`
 - M03-40 棚番号更新CSV登録 -> `sheet-56` from `functions/pf-eccube3/m03-40_admin_product_product_shelf_number_csv_import.md`
 - M03-41 カテゴリCSV登録 -> `sheet-58` from `functions/pf-eccube3/m03-41_admin_product_product_category_csv_import.md`
-- M03-43 低価格帯カード価格変更CSV出力 -> `sheet-47` from `functions/ec-cube-enterprise/m03-43_admin_product_product_simple_low_price_csv_export.md`
-- M03-44 低価格帯カード価格変更CSV登録 -> `sheet-46` from `functions/ec-cube-enterprise/m03-44_admin_product_product_simple_low_price_csv_import.md`
 - M03-45 カテゴリー一覧 -> `sheet-24` from `functions/pf-eccube3/m03-45_admin_product_product_category_list.md`
 
 ### `excel_to_html/output/0205_基本設計仕様書(店頭買取管理).html`
@@ -105,18 +88,11 @@
 - M06-07 買取商品履歴選択CSV出力 -> `sheet-13` from `functions/pf-eccube3/m06-07_admin_store_purchase_purchase_store_history_select_csv_export.md`
 - M06-08 買取集計データ -> `sheet-15` from `functions/pf-eccube3/m06-08_admin_store_purchase_purchase_store_summary.md`
 - M06-09 買取集計データCSV出力 -> `sheet-17` from `functions/pf-eccube3/m06-09_admin_store_purchase_otc_buy_order_summary_csv_export.md`
-- M06-13 買取商品（キャンセル）CSV -> `sheet-7` from `functions/ec-cube-enterprise/m06-13_admin_store_purchase_purchase_store_product_cancel_csv_export.md`
 
 ### `excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html`
 - M07-01 買取検索/一覧 -> `sheet-3` from `functions/pf-eccube3/m07-01_admin_online_purchase_purchase_online_search_list.md`
-- M07-02 古物台帳入力用CSV -> `sheet-5` from `functions/pf-eccube3/m07-02_admin_online_purchase_purchase_online_old_goods_ledger_csv_export.md`
 - M07-03 買取情報編集 -> `sheet-11` from `functions/pf-eccube3/m07-03_admin_online_purchase_purchase_online_buy_order_edit.md`
 - M07-04 手動メール通知 -> `sheet-12` from `functions/pf-eccube3/m07-04_admin_online_purchase_purchase_manual_mail.md`
-- M07-05 入金CSV -> `sheet-6` from `functions/pf-eccube3/m07-05_admin_online_purchase_purchase_csv_export_deposit.md`
-- M07-06 買取商品一覧CSV -> `sheet-7` from `functions/pf-eccube3/m07-06_admin_online_purchase_purchase_online_product_list_csv_export.md`
-- M07-07 買取商品（キャンセル）CSV -> `sheet-8` from `functions/ec-cube-enterprise/m07-07_admin_online_purchase_purchase_online_product_cancel_csv_export.md`
-- M07-08 戻しリストCSV -> `sheet-9` from `functions/ec-cube-enterprise/m07-08_admin_online_purchase_purchase_online_return_list_csv_export.md`
-- M07-09 戻しリストPDF -> `sheet-10` from `functions/ec-cube-enterprise/m07-09_admin_online_purchase_purchase_online_return_list_pdf_export.md`
 
 ### `excel_to_html/output/0207_基本設計仕様書(会員管理機能).html`
 - M08-01 会員検索/一覧 -> `sheet-3` from `functions/pf-eccube3/m08-01_admin_customer_customer_search_list.md`
@@ -128,7 +104,6 @@
 - M08-08 手動メール通知 -> `sheet-15` from `functions/pf-eccube3/m08-08_admin_customer_customer_manual_mail.md`
 - M08-09 配送先一覧表示/編集 -> `sheet-17` from `functions/pf-eccube3/m08-09_admin_customer_customer_delivery.md`
 - M08-10 オンライン本人確認 -> `sheet-18` from `functions/pf-eccube3/m08-10_admin_customer_customer_online_identification.md`
-- M08-11 顧客分析タグマスター -> `sheet-19` from `functions/ec-cube-enterprise/m08-11_admin_customer_customer_analysis_tag_master.md`
 - M08-12 顧客グループ管理 -> `sheet-20` from `functions/pf-eccube3/m08-12_admin_customer_customer_group.md`
 - M08-13 ブラックリスト登録/編集/削除 -> `sheet-21` from `functions/pf-eccube3/m08-13_admin_customer_customer_blacklist.md`
 - M08-14 会員登録仮登録完了メール再送 -> `sheet-22` from `functions/pf-eccube3/m08-14_admin_customer_customer_resend_provisional_mail.md`
@@ -189,7 +164,6 @@
 - F06-10 ポイント履歴 -> `sheet-14` from `functions/pf-eccube3/f06-10_front_member_mypage_point_history.md`
 - M15-01 デッキ検索/一覧 -> `sheet-3` from `functions/pf-eccube3/m15-01_admin_deck_deck_search.md`
 - M15-02 デッキCSV出力 -> `sheet-5` from `functions/pf-eccube3/m15-02_admin_deck_deck_csv_export.md`
-- M15-06 デッキ登録CSV -> `sheet-6` from `functions/pf-eccube3/m15-06_admin_deck_deck_csv_import.md`
 - M15-07 デッキタグ一覧 -> `sheet-8` from `functions/pf-eccube3/m15-07_admin_deck_deck_tag_list.md`
 - M15-08 アーキタイプ検索 -> `sheet-9` from `functions/pf-eccube3/m15-08_admin_deck_deck_archetype_search.md`
 - M15-09 アーキタイ登録/編集/削除 -> `sheet-11` from `functions/pf-eccube3/m15-09_admin_deck_deck_archetype_crud.md`
@@ -295,8 +269,6 @@
 - F08-03 店頭買取査定申込登録確認～完了 -> `sheet-5` from `functions/pf-eccube3/f08-03_front_store_purchase_otc_buy_entry_complete.md`
 
 ### `excel_to_html/output/0402_基本設計仕様書(バッチ_在庫管理).html`
-- B01-02 在庫切れ -> `sheet-3` from `functions/ec-cube-enterprise/b01-02_batch_data_stock_shortage.md`
-- B01-03 在庫警告 -> `sheet-4` from `functions/ec-cube-enterprise/b01-03_batch_data_stock_warning.md`
 - B02-03 期間別入庫数集計 -> `sheet-5` from `functions/pf-eccube3/b02-03_batch_product_product_storage_period_summary.md`
 
 ### `excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html`
@@ -357,7 +329,6 @@
 - A06-11 部門一覧を取得 -> `sheet-11` from `functions/pf-api/a06-11_api_store_purchase_section_list.md`
 - A06-12 固定価格部門を部門情報を取得 -> `sheet-12` from `functions/pf-api/a06-12_api_store_purchase_fixed_price_section.md`
 - A06-13 本人確認更新 -> `sheet-13` from `functions/pf-api/a06-13_api_store_purchase_otc_buy_order_identification.md`
-- A06-14 店頭買取情報一部キャンセル情報連携 -> `sheet-14` from `functions/ec-cube-enterprise/a06-14_api_store_purchase_otc_buy_order_partial_cancel_sync.md`
 
 ### `excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html`
 - A07-01 まとめて買取商品IDの取得 -> `sheet-3` from `functions/pf-api/a07-01_api_online_purchase_bulk_purchase_id.md`
