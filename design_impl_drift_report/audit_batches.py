@@ -19,13 +19,18 @@ ROOT = Path(__file__).resolve().parent
 
 # 1シート=1エージェントなので、シートの大きさはそのエージェントの負荷であってバッチの負荷ではない。
 # バッチはワークフロー1回あたりのエージェント数（判定+反証で2倍）だけを決める。
-MAX_SHEETS = 7
+# workflowSizeGuideline=large（50エージェント未満）に合わせて20シート=40エージェント。
+# 実行機は12コアで同時実行が10に制限されるため、これ以上増やしても待ち行列が伸びるだけ。
+MAX_SHEETS = 20
 
 
-def batches(doc: str, include_done: bool = False) -> list[list[dict]]:
+def batches(doc: str, include_done: bool = False, exclude: set[str] | None = None) -> list[list[dict]]:
     d = ROOT / "design_audit" / doc
     rows = list(csv.DictReader((d / "sheets.tsv").open(encoding="utf-8"), delimiter="\t"))
     done = {p.stem for p in (d / "parts").glob("*.tsv")}
+    # 実行中のワークフローが担当しているシートはまだ parts を書いていない。
+    # 除外しないと次のバッチに混ざり、同じファイルを2エージェントが同時に書く。
+    done |= (exclude or set())
     out: list[list[dict]] = []
     cur: list[dict] = []
     for r in rows:
@@ -46,8 +51,10 @@ def main() -> None:
     ap.add_argument("--doc", required=True)
     ap.add_argument("--emit", type=int, help="このバッチ番号の args JSON を出す")
     ap.add_argument("--all", action="store_true", help="判定済みのシートも含める")
+    ap.add_argument("--exclude", default="", help="実行中で除外したいシート（カンマ区切り）")
     a = ap.parse_args()
-    bs = batches(a.doc, include_done=a.all)
+    bs = batches(a.doc, include_done=a.all,
+                 exclude={x.strip() for x in a.exclude.split(",") if x.strip()})
     if a.emit is not None:
         print(json.dumps({"doc": a.doc, "sheets": bs[a.emit]}, ensure_ascii=False))
         return

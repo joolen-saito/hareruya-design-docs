@@ -91,6 +91,7 @@ def classify_sections(lines: list[str]) -> list[str]:
     """
     out, cur = [], "HEADER"
     src_left = 0
+    imported = "BODY"      # Source: の直後に見出しが来ないときの既定区分
     for line in lines:
         matched = None
         for rx, name in SECTION_MARKS:
@@ -102,14 +103,16 @@ def classify_sections(lines: list[str]) -> list[str]:
             out.append(cur)
             continue
         if cur == "SOURCE":
-            if matched:
-                cur = matched
-            elif src_left:
+            if src_left:
+                # この行が取り込み元のパス。どのリポジトリのリバースかで既定区分が決まる。
+                # pf-* は現行システムのリバース＝踏襲対象の「現行仕様」、
+                # ec-cube-enterprise は移行先自身のリバース＝「刷新仕様」。
+                imported = "RENEWED" if "ec-cube-enterprise" in line else (
+                    "CURRENT" if line.strip().startswith("functions/") else "BODY")
                 src_left -= 1
                 out.append(cur)
                 continue
-            else:
-                cur = "BODY"
+            cur = matched if matched else imported
         elif matched:
             cur = matched
         out.append(cur)
