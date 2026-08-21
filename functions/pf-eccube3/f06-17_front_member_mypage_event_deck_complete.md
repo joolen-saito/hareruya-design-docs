@@ -31,17 +31,15 @@
 
 登録完了画面はログイン会員の選手情報を起点に表示する。選手情報を特定できないとき、デッキを取得できないとき、当該選手のデッキでないとき、デッキに紐づくイベント詳細が無いときは表示しない。
 
-見出し「デッキ登録完了」、会員氏名、大会名とフォーマット名、DCIナンバー、お名前（選手の英字氏名）、案内文、メイン・サイドのカードリスト（テキストと画像一覧）、各ボードの登録枚数を表示する。カード画像の一覧は画面側で組み立て済みのものを表示する。本画面専用のモーダルは持たない。
+プレイヤー名として表示するのは選手情報の英字姓名とする。
 
-### 枚数と妥当性の検証
+大会名に添えるフォーマットは、その大会に設定されたフォーマットをすべて並べる。登録したデッキのフォーマットを単独の項目として出すのは、大会に複数のフォーマットが設定されているときだけとする。
 
-メイン・サイドの登録枚数を集計し、フォーマットの最大・最小枚数と比較する。超過・不足はボードごとに表示する。カードリストは行ごとの妥当性エラーを含めて表示する。
-
-登録完了画面の枚数・妥当性エラーは登録の確定を妨げない。登録は提出の時点で保存済みであり、完了画面は保存済みデッキに対する検証結果を表示する。
+カード画像を持たないカードは代替画像を表示する。
 
 ### 他機能との境界
 
-デッキ編集画面の入力フォーム項目は本書では扱わない。書式エラーはデッキ編集画面で扱う。本機能はフラッシュ・トーストを生成しない。
+デッキ編集画面の入力フォーム項目は本書では扱わない。書式エラーはデッキ編集画面で扱う。本機能はフラッシュ・トーストを生成せず、本画面専用のモーダルも持たない。
 
 ## 入出力
 
@@ -76,11 +74,25 @@
 | — | 該当ボードのカードリスト上 | Column no.%d, %s does not exist. | 行のカード名が辞書に無いとき（英語表示） | 登録は取り消さず画面に留まる |
 | — | 該当ボードのカードリスト上 | %d行目の%sは禁止カードです | 行のカードがフォーマットの禁止カードのとき | 登録は取り消さず画面に留まる |
 | — | 該当ボードのカードリスト上 | Column no.%d, %s is on the banned list. | 行のカードがフォーマットの禁止カードのとき（英語表示） | 登録は取り消さず画面に留まる |
-| — | 該当ボードのカードリスト上 | %d行目の%sは制限カードです | 行のカードがフォーマットの制限カードのとき | 登録は取り消さず画面に留まる |
-| — | 該当ボードのカードリスト上 | Column no.%d, %s is on the restricted list. | 行のカードがフォーマットの制限カードのとき（英語表示） | 登録は取り消さず画面に留まる |
+| — | 該当ボードのカードリスト上 | %d行目の%sは制限カードです | 行のカードが制限カードで、投入枚数の制限を超えるとき | 登録は取り消さず画面に留まる |
+| — | 該当ボードのカードリスト上 | Column no.%d, %s is on the restricted list. | 行のカードが制限カードで、投入枚数の制限を超えるとき（英語表示） | 登録は取り消さず画面に留まる |
 | — | 該当ボードのカードリスト上 | %d行目の%sはフォーマットの範囲から外れています | 行のカードがフォーマット対象外のとき | 登録は取り消さず画面に留まる |
 | — | 該当ボードのカードリスト上 | Column no.%d, %s is not legal in this format. | 行のカードがフォーマット対象外のとき（英語表示） | 登録は取り消さず画面に留まる |
 | — | 該当ボードのカードリスト上 | %d行目の%sが5枚以上登録されています | 同一カードが規定枚数を超えるとき | 登録は取り消さず画面に留まる |
 | — | 該当ボードのカードリスト上 | Column no.%d, %s is registered over limit. | 同一カードが規定枚数を超えるとき（英語表示） | 登録は取り消さず画面に留まる |
 
 利用者は言語切替で英語表示へ到達する。
+
+## 出典
+
+| 小見出し | 重要度 | 出典 |
+| --- | --- | --- |
+| 登録できる条件 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/DeckentryController.php:353 |
+| 登録の判定順序 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/DeckentryController.php:149 |
+| 登録内容 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/DeckentryController.php:206 |
+| 登録完了画面 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/DeckentryController.php:266 |
+| 登録完了画面 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/Mypage/deckentry_check.twig:17 |
+| 登録完了画面 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/Mypage/deckentry_check.twig:19 |
+| 登録完了画面 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/Mypage/deckentry_check.twig:76 |
+| 他機能との境界 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Controller/DeckentryController.php:187 |
+| 入出力: 永続化 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/DeckentryController.php:246 |
