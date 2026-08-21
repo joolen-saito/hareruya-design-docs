@@ -2,52 +2,44 @@
 
 ## 業務ロジック
 
-### フェーズ2対応（フェーズ1では実装しない）
+### 表示言語による導線の違い
 
-- Excel基本設計 0302「PC版ナビゲーション上の通知」はフェーズ2対応。フェーズ1では実装しない（この項目だけ）。Excel原文: 「※通知はフェーズ2以降で設計予定とする」
-
-### 表示する導線
-
-| 区分 | 内容 |
-|------|------|
-| グローバルナビ（日本語表示のとき） | 買取・記事・デッキ検索・選手一覧・店舗一覧・イベント・ヘルプを横並びで表示する |
-| グローバルナビ（英語表示のとき） | 記事・デッキ検索・選手一覧・店舗一覧・イベント・ヘルプを表示する。買取の導線は表示しない |
-| ECヘッダ | ロゴ、商品検索（検索対象の種別・キーワード・検索）、詳細検索、マイページ、言語切替、カート（個数付き）を表示する |
-| ログイン会員のとき | 保有ポイントの表示を併せて出す |
-| 未ログインのとき | マイページの隠しメニューにログイン・会員登録の導線を出す |
-
-検索対象の種別は全商品・カード・パック／サプライから選ぶ。商品検索の送信先とサジェストの仕様は商品機能を正とする。カート個数は非同期で取得して表示する。保有ポイントの集計はポイント機能（F02-05）を正とする。
-
-グローバルナビとECヘッダは、ページ設定の割り当てに従ってヘッダ領域へ差し込む。グローバルナビの描画では追加のデータ取得を行わない。
+英語表示のときは、グローバルナビにもメニューにも買取の導線を表示しない。メニューではデッキ構築の導線も表示しない。日本語表示のときはいずれも表示する。
 
 ### 言語切替先の決め方
 
-現在のURLのロケール接頭辞を反対の言語へ置き換える。日本語ページで対象画面に英語版が無いときは、言語切替先を英語のトップへ差し替える。言語切替が無効な画面のときは、言語切替を表示しない。
+言語切替の遷移先は、表示中の画面のURLのロケール接頭辞を反対の言語へ置き換えたものとする。日本語ページで対象画面に英語版が無いときは、遷移先を英語のトップへ差し替える。商品一覧（検索結果）は常に英語版が無いものとして扱う。商品詳細は、商品に設定された表示可能言語に英語が含まれないときに英語版が無いものとして扱う。言語切替が無効な画面のときは、言語切替を表示しない。
 
-### 本店と支店の境界
+### カート内商品数の取得
 
-本書のナビは本店の導線である。支店ページを表示するときのヘッダ・ナビ（F02-03）は別部品とする。
-
-本機能は金額計算・税計算・丸めを行わない。
-
-### エラー時の扱い
-
-| エラー内容 | 処理 |
-|------------|------|
-| 日本語ページで対応する英語版の画面が無いとき | 言語切替先を英語のトップへ差し替える |
-| カート個数の非同期取得に失敗したとき | 取得できないときの表示は本書では確定せず、実装を確認値とする |
-| 描画に障害があったとき | アプリケーションの共通例外処理に委ねる |
+ヘッダのカートに出す商品数は、画面の読み込みが終わった後に取得して表示する。取得できなかったときは商品数を表示しない。
 
 ## 入出力
 
 | 種類 | 内容 |
 |------|------|
-| 入力 | 本店の各画面の表示要求（ロケール付き）。商品検索を行うときだけ、検索対象の種別とキーワードを受け取る |
-| 成功時出力 | グローバルナビとECヘッダの表示。ログイン会員のときは保有ポイントを併せて表示する |
+| 入力 | 本店の各画面の表示要求（表示言語を伴う） |
+| 成功時出力 | 表示要求の言語に応じたグローバルナビとECヘッダの表示 |
 | 失敗時出力 | 描画に失敗したときはアプリケーションの共通例外処理に委ねる |
-
-本機能は参照だけを行い、データを更新しない。カート個数だけは表示のたびに取得する。
 
 ## 表示メッセージ
 
 本機能に固有のメッセージは無い。
+
+## 出典
+
+| 小見出し | 重要度 | 出典 |
+| --- | --- | --- |
+| 表示言語による導線の違い | P2 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/Block/ec_navigator.twig:4-6 |
+| 表示言語による導線の違い | P2 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/Block/ec_navigator.en.twig:1-24 |
+| 表示言語による導線の違い | P2 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/Block/base_header.twig:13-24 |
+| 表示言語による導線の違い | P2 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/Block/base_header.en.twig:9-34 |
+| 表示言語による導線の違い | P2 | pf-eccube3:app/Plugin/HareruyaEc/Event/LocaleEvent.php:41-52 |
+| 言語切替先の決め方 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Block/HeaderController.php:30-58 |
+| 言語切替先の決め方 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/ProductController.php:93-94 |
+| 言語切替先の決め方 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/ProductController.php:157-158 |
+| 言語切替先の決め方 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/ProductController.php:296-303 |
+| 言語切替先の決め方 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/Block/base_header.twig:71-78 |
+| 言語切替先の決め方 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/Block/purchase_header.twig:3 |
+| カート内商品数の取得 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/Block/ec_header_unisuggest.twig:33-40 |
+| カート内商品数の取得 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/Block/js/header_js.twig:1-20 |
