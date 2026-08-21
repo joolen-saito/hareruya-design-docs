@@ -6,7 +6,7 @@
 
 選択が空のときは編集画面を開かず、商品一覧へ戻る。戻り先は商品一覧で最後に表示していたページとする。
 
-高額商品コードが設定された規格は、この画面の表示にも更新にも含めない。編集の行は、対象商品の商品IDと言語の組ごとに作る。
+高額商品コードが設定された規格は、この画面の表示にも更新にも含めない。編集の行は、対象商品の商品IDと言語の組ごとに作る。行は商品IDの降順に並べ、同一商品の中では言語IDの昇順に並べる。
 
 ### 保存の判定順序
 
@@ -18,7 +18,7 @@
 | 4 | 商品に買取減額率が無く、入力買取が0以外かつ上限（10000）以下のとき、買取価格マスタに該当があるか | 無ければエラーを表示し、編集画面を再表示する |
 | 5 | 上記を通過 | 価格履歴を追加し、同一商品・同一言語の通常規格すべての買取価格を更新する |
 
-良品（NM）規格が実在しない行と、買取価格マスタに該当が無い行は、その行だけをエラーとして通知し、残りの行の処理は続ける。エラーが1件でもあるときは編集画面を再表示するが、エラーにならなかった行の買取価格の更新と価格履歴の追加は取り消されない。
+良品（NM）規格が実在しない行と、買取価格マスタに該当が無い行は、その行だけをエラーとして通知し、残りの行の処理は続ける。エラーにならなかった行の買取価格の更新と価格履歴の追加は、編集画面を再表示したあとも取り消されない。
 
 ### 買取価格の決め方
 
@@ -26,7 +26,7 @@
 | --- | --- |
 | 入力した買取価格(NM)が0 | 率による計算へ進む。率を掛けた結果を100円単位で切り上げるため、いずれの状態も0となる |
 | 入力した買取価格(NM)が1以上かつ上限（10000）以下で、商品に買取減額率が無い | 買取価格マスタを、良品（NM）価格・状態・Foilやプロモに相当する区分で参照する。見つかればその価格、見つからなければ入力値を各規格の買取価格とする |
-| 上記以外（高額帯、または買取減額率がある） | 良品（NM）は入力値をそのまま買取価格とする。他の状態は、Foilやプロモか否かと状態に応じた率を入力値に掛け、100円単位で切り上げて決める。率は商品の買取減額率マスタを優先し、無ければ既定値を使う |
+| 上記以外（高額帯、または買取減額率がある） | 入力値に状態ごとの率を掛け、100円単位で切り上げて各規格の買取価格とする。良品（NM）には率を掛けないため、入力値を100円単位で切り上げた額になる。率は商品の買取減額率を優先し、無ければ既定値を使う。既定値はFoilやプロモかどうかで別の値を持つが、買取減額率があるときはその区別なく同じ率を使う |
 
 ### 基準価格の更新
 
@@ -34,7 +34,7 @@
 
 ### 価格履歴
 
-買取価格の更新にあわせて、同一商品・同一言語の通常規格すべてについて価格履歴を追加する。
+買取価格の更新にあわせて、同一商品・同一言語の通常規格すべてについて価格履歴を追加する。この価格履歴には、販売価格の変更前後を記録しない。
 
 ### エラー時の扱い
 
@@ -79,12 +79,15 @@
 | --- | --- | --- |
 | 編集画面の対象 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Product/ProductController.php:859 |
 | 編集画面の対象 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Repository/DtbProductSubClassRepository.php:519 |
+| 編集画面の対象 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Repository/DtbProductSubClassRepository.php:559 |
 | 保存の判定順序 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Product/ProductClassController.php:788 |
 | 保存の判定順序 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Product/ProductClassController.php:830 |
-| 保存の判定順序 | P1 | pf-eccube3:src/Eccube/EventListener/TransactionListener.php:103 |
+| 保存の判定順序 | P1 | pf-eccube3:src/Eccube/EventListener/TransactionListener.php:107 |
 | 買取価格の決め方 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Repository/DtbProductSubClassRepository.php:1241 |
+| 買取価格の決め方 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Repository/DtbProductSubClassRepository.php:1283 |
 | 基準価格の更新 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Product/ProductClassController.php:739 |
 | 価格履歴 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Repository/DtbPriceHistoryRepository.php:116 |
+| 価格履歴 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Repository/DtbPriceHistoryRepository.php:135 |
 | エラー時の扱い | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Product/ProductClassController.php:812 |
 | エラー時の扱い | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Product/ProductClassController.php:819 |
 | 入出力: 永続化 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Repository/DtbProductSubClassRepository.php:1244 |

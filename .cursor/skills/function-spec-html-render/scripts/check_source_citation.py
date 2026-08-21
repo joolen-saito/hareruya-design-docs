@@ -219,8 +219,9 @@ def check(path: Path) -> tuple[list[str], collections.Counter]:
 def collect(args) -> list[Path]:
     if args.docs:
         return [Path(d) if Path(d).is_absolute() else ROOT / d for d in args.docs]
+    # functions/_archive/ は退避済みの旧版。点検対象ではない
     return sorted(p for p in (ROOT / "functions").glob("*/*.md")
-                  if re.match(r"^[mbfa]\d{2}-\d{2}_", p.name))
+                  if re.match(r"^[mbfa]\d{2}-\d{2}_", p.name) and "_archive" not in p.parts)
 
 
 def main() -> None:

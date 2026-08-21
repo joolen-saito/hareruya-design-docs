@@ -16,6 +16,8 @@
 
 指定した略称タグが存在しないときは 404 とする。
 
+新規の入力欄では、アルファベット順ソートフラグを外した状態で表示する。
+
 ### 保存の判定順序
 
 | 順序 | 判定 | 結果 |
@@ -73,9 +75,12 @@
 | --- | --- | --- |
 | 一覧の並びと表示内容 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Product/StorageCodeController.php:37 |
 | 一覧の並びと表示内容 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/admin/Product/storage_code.twig:92-101 |
-| 入力欄の状態 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Product/StorageCodeController.php:30 |
-| 入力欄の状態 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/admin/Product/storage_code.twig:7-12 |
+| 入力欄の状態 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Product/StorageCodeController.php:30 |
+| 入力欄の状態 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/admin/Product/storage_code.twig:7-12 |
+| 入力欄の状態 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Entity/MtbStorageCode.php:31 |
 | 保存の判定順序 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Product/StorageCodeController.php:56-75 |
 | 保存の判定順序 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Resource/doctrine/Plugin.HareruyaEc.Entity.MtbStorageCode.dcm.yml:22 |
+| 保存の判定順序 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/FormValidHelper.php:39-46 |
 | 削除の判定順序 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Product/StorageCodeController.php:85-103 |
+| 削除の判定順序 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/FormValidHelper.php:39-46 |
 | 入出力: 永続化 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Product/StorageCodeController.php:64-75 |

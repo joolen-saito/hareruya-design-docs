@@ -160,7 +160,10 @@ def check(path: Path, rev: str, min_ratio: float, warn_ratio: float, min_coverag
 def collect(args) -> list[Path]:
     if args.docs:
         return [Path(d).resolve() for d in args.docs]
-    paths = sorted((ROOT / "functions").glob("*/*.md"))
+    # functions/_archive/ は退避済みの旧版。点検対象ではない
+    # （2026-08-21: 同名ファイルが両方にあり、エージェントがアーカイブ側を編集した）
+    paths = sorted(p for p in (ROOT / "functions").glob("*/*.md")
+                   if "_archive" not in p.parts)
     if args.book:
         m: dict[str, set[str]] = {}
         for line in (ROOT / "functions" / "function-sheet-map.tsv").read_text(
@@ -194,6 +197,9 @@ def main() -> None:
     ng = warn_n = 0
     for p in paths:
         if not FUNCTION_DOC_RE.match(p.name):
+            continue
+        if "_archive" in p.parts:
+            print(f"skip {p.name}（functions/_archive は退避済みの旧版。点検対象外）")
             continue
         warnings: list[str] = []
         v = check(p, args.rev, args.min_ratio, args.warn_ratio, args.min_coverage,

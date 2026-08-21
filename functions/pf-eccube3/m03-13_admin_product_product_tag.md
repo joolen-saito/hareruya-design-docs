@@ -10,7 +10,7 @@
 
 編集対象のIDの指定が無いときは、新規登録として空の入力欄を表示する。指定されたIDに該当するタグが無いときは、画面を表示せず要求を受け付けない。
 
-新規登録のタグのIDは、登録済みのタグの最大のIDに 1 を足した値を採番する。
+新規登録のタグのIDは、登録済みのタグの最大のIDに 1 を足した値を採番する。登録済みのタグが1件も無いときは 1 とする。
 
 ### 保存の処理順序
 
@@ -19,10 +19,10 @@
 | 1 | 送信の有無と入力値の検証 | 登録できなかった旨を表示し、一覧を付けて同じ画面を返す（画面遷移しない） |
 | 2 | 当該タグの優先表示順をすべて削除する | — |
 | 3 | 優先表示商品に入力されたコードから、空の行を除き、先頭から順に重複を除く | — |
-| 4 | 各コードについて、当該タグが付いた商品の規格であり、規格コードが一致し、表示中である規格を検索する | 見つからないコードがあれば処理を中止し、コードとタグ名を含むエラーを表示して同じ画面に留まる |
+| 4 | 各コードについて、当該タグが付いた商品の規格であり、規格コードが一致し、削除されていない規格を検索する | 見つからないコードがあれば処理を中止し、コードとタグ名を含むエラーを表示して同じ画面に留まる |
 | 5 | 見つかった規格ごとに優先表示順の行を作り、タグ本体とあわせて確定する | — |
 
-コードが1件も残らないときは 4・5 を行わない。
+コードが1件も残らないときは、優先表示順の行を作らずにタグ本体を確定する。
 
 優先表示順の削除（2）は、タグ本体の確定（5）とは別に、その場で確定する。4 で中止したときは、タグ本体の追加・更新は行われず、削除した優先表示順も作り直されない。
 
@@ -30,15 +30,15 @@
 
 ### 優先表示の順位
 
-優先表示の順位は、入力テキストの先頭に近いコードほど大きい値になる。行数を n、0 始まりの位置を i とすると、順位は n − i である。
+優先表示の順位は、入力テキストの先頭に近いコードほど大きい値になる。空の行と重複を除いたコードの件数を n、そのコードが入力テキストの何行目にあるか（0 始まり）を i とすると、順位は n − i である。
 
-優先表示に指定できるのは、表示中の規格であり、かつ当該タグがその商品に付いているものに限る。登録直後の新規タグはまだ商品に付いていないため、優先表示のコードを指定しても規格の解決に失敗し得る。
+優先表示に指定できるのは、削除されていない規格であり、かつ当該タグがその商品に付いているものに限る。登録直後の新規タグはまだ商品に付いていないため、優先表示のコードを指定しても規格の解決に失敗し得る。
 
 ### 削除
 
-あらかじめ用意された固定のタグ（IDが 7 以下のもの）は削除の対象にできず、一覧にも削除の導線を出さない。
+削除は、IDの指定があり、そのIDが 8 以上で、該当するタグが存在するときだけ受け付ける。IDが 7 以下のものはあらかじめ用意された固定のタグで、削除の対象にできない。
 
-当該タグと商品の紐付けが1件でもあるときは削除せず、使用中である旨を表示して一覧へ戻る。紐付けが無いときはタグ本体と当該タグの優先表示順を削除する。関連するデータがあって削除できなかったときは、その旨を表示する。いずれの場合もタグ登録/編集画面へ戻る。
+当該タグと商品の紐付けが1件でもあるときは削除せず、使用中である旨を表示する。紐付けが無いときはタグ本体と当該タグの優先表示順を削除する。いずれの場合も、新規登録の状態のタグ登録/編集画面へ戻る。
 
 ### エラー時の扱い
 
@@ -47,7 +47,6 @@
 | 入力値の検証失敗 | 登録できなかった旨を表示し、同じ画面に留まる |
 | 優先表示商品のコードが解決できない | コードとタグ名を含むエラーを表示し、同じ画面に留まる |
 | 削除対象のタグが商品に紐付いている | 使用中である旨を表示する |
-| 削除時に関連するデータがある | 関連するデータがある旨を表示する |
 
 ## 入出力
 
@@ -61,7 +60,7 @@
 
 | 操作 | 契機 |
 | --- | --- |
-| 追加・更新 | タグの保存が検証に通ったとき |
+| 追加・更新 | タグの保存で、優先表示商品のコードがすべて解決できたとき |
 | 削除・追加 | タグの保存時に、当該タグの優先表示順を全件削除して作り直す |
 | 削除 | 商品に紐付いていないタグの削除時に、タグ本体と当該タグの優先表示順を削除する |
 
@@ -81,12 +80,14 @@
 | --- | --- | --- |
 | 一覧の表示 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Repository/MtbTagSubRepository.php:37-47 |
 | 一覧の表示 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/admin/Product/tag.twig:132 |
+| 編集対象 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Product/TagController.php:24-37 |
 | 編集対象 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Product/TagController.php:46-54 |
+| 編集対象 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Repository/MtbTagSubRepository.php:53-63 |
 | 保存の処理順序 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Product/TagController.php:58-97 |
 | 保存の処理順序 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Repository/DtbTagSortRepository.php:18-30 |
+| 保存の処理順序 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Repository/DtbProductSubClassRepository.php:932-954 |
 | 優先表示の順位 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Product/TagController.php:74-92 |
 | 削除 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Product/TagController.php:107-128 |
 | 削除 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Entity/Tag.php:20 |
-| 削除 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/admin/Product/tag.twig:152 |
 | エラー時の扱い | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Product/TagController.php:58-66 |
-| 入出力: 永続化 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Product/TagController.php:68-94 |
+| 入出力: 永続化 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Product/TagController.php:68-94 |
