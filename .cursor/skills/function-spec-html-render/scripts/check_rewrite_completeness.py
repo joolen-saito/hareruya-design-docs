@@ -37,6 +37,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[4]
 
 REQUIRED_SECTIONS = ("業務ロジック", "入出力")
+# 機能設計書は「<機能No>_…md」の命名が正（[[function-spec-html-render]] の原則）。
+# これに合わないものは抜粋資料・索引の類で、3節の型を求める対象ではない。
+FUNCTION_DOC_RE = re.compile(r"^[mbfa]\d{2}-\d{2}_")
 
 # 比較元から先に落とす節。出力除外規約で「設計書に書かない」と決めたもの、
 # および書き直しで意図的に畳む定型の枠組み。ここを残したまま量を比べると、
@@ -190,6 +193,8 @@ def main() -> None:
     paths = collect(args)
     ng = warn_n = 0
     for p in paths:
+        if not FUNCTION_DOC_RE.match(p.name):
+            continue
         warnings: list[str] = []
         v = check(p, args.rev, args.min_ratio, args.warn_ratio, args.min_coverage,
                   ledger, warnings)
@@ -204,7 +209,8 @@ def main() -> None:
                 print(f"warn {p.relative_to(ROOT)}")
                 for x in warnings:
                     print(f"   - {x}")
-    print(f"\n合計 {len(paths)}本 / 合格 {len(paths) - ng} / 違反 {ng} / 警告 {warn_n}")
+    checked = sum(1 for p in paths if FUNCTION_DOC_RE.match(p.name))
+    print(f"\n合計 {checked}本 / 合格 {checked - ng} / 違反 {ng} / 警告 {warn_n}")
     sys.exit(1 if ng else 0)
 
 

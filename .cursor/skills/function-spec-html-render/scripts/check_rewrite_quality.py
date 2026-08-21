@@ -39,12 +39,26 @@ IMPL_PATTERNS = [
 ]
 
 
-def baseline_text(path: Path) -> str | None:
-    """比較元（git HEAD の内容）。取得できなければ None。"""
+def default_rev() -> str:
+    """比較元の既定。書き直しの前を指すリビジョンが記録されていればそれを使う。
+
+    HEAD 固定にすると、書き直しで本文を捨てた版が既にコミットされている場合に
+    欠落検査が空振りする（2026-08-21 実測: タイトル1行に削られたファイルで検査が無効化されていた）。
+    """
+    ledger = ROOT / "functions" / "REWRITE_BASELINE.md"
+    if ledger.is_file():
+        m = re.search(r"\b[0-9a-f]{40}\b", ledger.read_text(encoding="utf-8"))
+        if m:
+            return m.group(0)
+    return "HEAD"
+
+
+def baseline_text(path: Path, rev: str = "HEAD") -> str | None:
+    """比較元の内容。取得できなければ None。"""
     rel = path.relative_to(ROOT).as_posix()
     try:
         out = subprocess.run(
-            ["git", "show", f"HEAD:{rel}"], cwd=ROOT, capture_output=True, text=True, check=False
+            ["git", "show", f"{rev}:{rel}"], cwd=ROOT, capture_output=True, text=True, check=False
         )
         return out.stdout if out.returncode == 0 else None
     except OSError:
@@ -95,7 +109,7 @@ def message_texts(text: str) -> set[str]:
     return out
 
 
-def check(path: Path) -> list[str]:
+def check(path: Path, rev: str = "HEAD") -> list[str]:
     text = path.read_text(encoding="utf-8")
     problems: list[str] = []
 
@@ -116,7 +130,7 @@ def check(path: Path) -> list[str]:
                 problems.append(f"メッセージ表が5列でない（{len(cells)}列）: {line.strip()[:50]}")
                 break
 
-    base = baseline_text(path)
+    base = baseline_text(path, rev)
     if base:
         lost_ids = set(MSG_ID_RE.findall(base)) - set(MSG_ID_RE.findall(text))
         if lost_ids:
@@ -132,6 +146,8 @@ def main() -> int:
     parser.add_argument("--docs", nargs="*", type=Path, default=[])
     parser.add_argument("--book", default="")
     parser.add_argument("--quiet", action="store_true")
+    parser.add_argument("--rev", default=None,
+                        help="比較元のリビジョン。既定は functions/REWRITE_BASELINE.md の記録、無ければ HEAD")
     args = parser.parse_args()
 
     docs = [p if p.is_absolute() else ROOT / p for p in args.docs]
@@ -147,9 +163,10 @@ def main() -> int:
         print("対象がありません", file=sys.stderr)
         return 1
 
+    rev = args.rev or default_rev()
     bad = 0
     for path in sorted(docs):
-        problems = check(path)
+        problems = check(path, rev)
         if problems:
             bad += 1
             print(f"NG {path.name}")
