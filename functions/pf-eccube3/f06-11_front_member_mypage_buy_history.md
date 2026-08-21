@@ -2,41 +2,52 @@
 
 ## 業務ロジック
 
-### 一覧の対象と並び順
+### 一覧の対象とアクセス制御
 
-ログイン会員自身の買取注文だけを対象とする。買取注文の識別子の降順とし、依頼の新しいものを上に並べる。未ログインのときは会員ログインへ誘導する。
+ログイン会員自身の買取注文だけを対象とする。未ログインのときは会員ログインへ誘導する。
 
-ページ番号と1ページ件数はクエリで受け取る。指定が無いときはページ1・10件とする。
+マイページからこの画面への入口は日本語版のマイページにだけ置き、英語版のマイページには表示しない。
+
+ページ番号と1ページ表示件数はクエリ文字列で受け取る。ページ番号の指定が無いときは先頭ページを表示する。
 
 ### 買取依頼内容の表示
 
-えらんで買取・まとめて買取の順に、売却対象で数量のある代表商品を1件だけ表示し、同じ区分の残りを「ほか○件」として示す。売却対象でない商品と、数量が0の商品は対象から除く。商品の言語と状態（買取用コード）があるときは、角括弧で併記する。
+えらんで買取・まとめて買取の順に、売却対象で数量のある代表商品を1件だけ表示し、同じ区分の残りを「ほか○件」として示す。売却対象でない商品と、数量が0の商品は対象から除く。
+
+代表商品は、その区分の商品を買取価格の高い順（同額のときは商品状態の定義順）に並べ、先頭から条件に合う最初の1件を選ぶ。まとめて買取の対象には個別入力商品も含める。
+
+商品の言語があるときに限り、商品名の前に言語のコードを【】で囲んで表示する。状態（買取用コード）もあわせて持つ商品では、言語のコードに続けて「/」で区切り、同じ括弧の中に併記する。
 
 ### 表示の規則
 
-| 項目 | 表示 |
-|------|------|
-| 買取依頼日 | 買取注文の依頼日を表示する |
-| オーダーID | 買取注文の識別子を7桁ゼロ詰めで表示する |
-| 買取依頼内容 | 区分ごとの代表商品と、他にもあるときは「ほか○件」 |
-| 申込時買取金額合計 | 申込時の買取金額の合計を表示する |
-| 処理状態 | 処理状態の識別子に対応する状態画像を表示する |
+会員名は姓と名を並べ、敬称を付けて表示する。
+
+買取依頼日は年月日で表示する。
+
+買取番号は7桁のゼロ詰めで表示する。
 
 商品と規格が論理削除済みのときも一覧に表示する。
+
+### 件数の表示
+
+件数範囲と総件数は、一覧の上と下の2箇所に表示する。買取依頼が1件も無いときは件数範囲の開始を0として表示し、一覧には行を出さない。履歴が無いことを知らせるメッセージは表示しない。
+
+### ページ送り
+
+ページ送りは、件数と同じく一覧の上と下の2箇所に置く。現在のページ番号を挟み、前後それぞれ4ページ分までのページ番号リンクを並べる。前のページがあるときは「最初」、後のページがあるときは「最後」のリンクをあわせて表示する。
 
 ### エラー時の扱い
 
 | エラー内容 | 処理 |
 |------------|------|
 | 未ログインでのアクセス | 会員ログインへ誘導する |
-| 買取依頼の履歴が無いとき | 一覧を表示せず、履歴が無い旨のメッセージを表示する |
 
 ## 入出力
 
 | 種類 | 内容 |
 |------|------|
-| 入力 | ページ番号と1ページ件数。いずれも指定が無いときはページ1・10件とする |
-| 成功時出力 | 買取履歴一覧の表示。会員氏名・件数範囲・総件数・ページ送りをあわせて表示する |
+| 入力 | ページ番号と1ページ表示件数 |
+| 成功時出力 | 買取履歴一覧の表示。会員名・件数範囲・総件数・ページ送りをあわせて表示する |
 | 失敗時出力 | 未ログインのときは会員ログインへ誘導する |
 
 本機能は参照だけを行い、データを更新しない。入力フォームを持たないため、送信に伴うメッセージも持たない。
@@ -50,3 +61,21 @@
 | — | 買取区分ラベル | えらんで買取：／まとめて買取： | 各区分に該当する代表商品があるとき | 買取履歴一覧画面に留まる |
 | — | ほか件数 | ほか（件数）件 | 同区分に他の対象商品があるとき | 買取履歴一覧画面に留まる |
 | — | 画面見出し | 買取履歴一覧 | 一覧表示時に常時 | 買取履歴一覧画面に留まる |
+
+## 出典
+| 小見出し | 重要度 | 出典 |
+| --- | --- | --- |
+| 一覧の対象とアクセス制御 | P1 | pf-eccube3:app/Plugin/HareruyaEc/ServiceProvider/HareruyaEcServiceProvider.php:326 |
+| 一覧の対象とアクセス制御 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Mypage/PurchaseController.php:30 |
+| 一覧の対象とアクセス制御 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Mypage/PurchaseController.php:34 |
+| 一覧の対象とアクセス制御 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/Mypage/index.twig:103 |
+| 買取依頼内容の表示 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/Mypage/purchase_history.twig:102 |
+| 買取依頼内容の表示 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/Mypage/purchase_history.twig:119 |
+| 買取依頼内容の表示 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Entity/DtbBuyOrder.php:1414 |
+| 表示の規則 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/Mypage/purchase_history.twig:25 |
+| 表示の規則 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/Mypage/purchase_history.twig:92 |
+| 表示の規則 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/Mypage/purchase_history.twig:96 |
+| 表示の規則 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Mypage/PurchaseController.php:37 |
+| 件数の表示 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/Mypage/purchase_history.twig:40 |
+| ページ送り | P3 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/Mypage/purchase_history.twig:54 |
+| エラー時の扱い | P1 | pf-eccube3:app/Plugin/HareruyaEc/ServiceProvider/HareruyaEcServiceProvider.php:326 |

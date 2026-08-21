@@ -2,21 +2,17 @@
 
 ## 業務ロジック
 
-### Excel基本設計により廃止された仕様（刷新後は実装不要）
-
-- Excel基本設計 0306 ポイント履歴 識別ID:2 により廃止。刷新後は実装しない。現行実装のふるまいは本書に残すが、刷新後の実装・テストの対象外とする
-
 ### 画面上部の表示
 
 画面の見出しは「ポイント履歴一覧」とする。現在のポイントと次に消失するポイントの数値は強調表示する。画面に出すポイント数はいずれも桁区切りで表示する。本画面専用のモーダルは持たない。
 
 ### 一覧の対象と受け取るクエリ
 
-常にログイン会員自身のポイント履歴のみを対象とする。ページ番号と1ページ表示件数はクエリで受け取り、ページ番号の指定が無いときは1ページ目を表示する。
+常にログイン会員自身のポイント履歴のみを対象とする。ページ番号と1ページ表示件数はクエリで受け取る。いずれも数値として解釈し、指定が無いとき・0のとき・数値として解釈できないときは既定に戻す（ページ番号の既定は1ページ目）。ページ送りのリンクは、押下時点の表示件数の指定をそのまま引き継ぐ。
 
 ### 表示件数の選択肢
 
-表示件数として選べるのは 10件・20件・50件・100件 の4つとする。
+表示件数として選べるのは 10件・20件・50件・100件 の4つとする。表示件数を選び直したときはページ番号を引き継がず、1ページ目から表示し直す。
 
 ### ポイント値と有効期限の表示
 
@@ -55,12 +51,14 @@
 
 | 小見出し | 重要度 | 出典 |
 | --- | --- | --- |
-| Excel基本設計により廃止された仕様（刷新後は実装不要） | P3 | 0306:sheet-10 |
 | 画面上部の表示 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/Mypage/point_history.twig:18-37 |
 | 画面上部の表示 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/Mypage/point_history.twig:12-161 |
 | 一覧の対象と受け取るクエリ | P1 | pf-eccube3:app/Plugin/HareruyaEc/Repository/DtbPointHistoryRepository.php:19-28 |
 | 一覧の対象と受け取るクエリ | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Mypage/MypageController.php:115-126 |
+| 一覧の対象と受け取るクエリ | P3 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/Mypage/point_history.twig:61-71 |
 | 表示件数の選択肢 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/Mypage/point_history.twig:40-46 |
+| 表示件数の選択肢 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/assets/js/history.js:2-5 |
+| 表示件数の選択肢 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/Mypage/point_history.twig:13-14 |
 | ポイント値と有効期限の表示 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/Mypage/point_history.twig:99-115 |
 | ポイント値と有効期限の表示 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Entity/DtbPointHistory.php:231-235 |
 | 失効見込みの算定 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Repository/DtbPointHistoryRepository.php:122-160 |
