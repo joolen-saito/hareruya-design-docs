@@ -16,7 +16,24 @@ description: 基本設計仕様書HTMLの末尾に「実装差分追補」節を
 で囲まれた `<section class="endpoint-supplement">` であり、先頭に
 `<h2 id="endpoint-supplement-user-entry">利用者視点の入口</h2>` の表を持つ。
 
-## 不変条件（最優先）
+## 出力除外規約（2026-08-12 ユーザー決定・最優先）
+
+**「実装差分追補」節はHTML設計書へ出力しない。** 規約の正本は [[output-exclusion-policy]]、実装は
+`build_endpoint_supplement.py` の `RENDER_ENDPOINT_SUPPLEMENT = False`。この規約が有効な間、各コマンドの役割は次のとおり。
+
+- `build` = 掃除役。output HTML から追補節（`endpoint-supplement:start/end`）と装飾CSS
+  （`endpoint-supplement-style:start/end`）を取り除く（冪等）。
+- `verify` = 追補節が**どのHTMLにも存在しないこと**を検査する。残っていればNG。
+  `excel_to_html/verify.py` も同じフラグを import して同じ判定を行う（二重定義しない）。
+- `extract` = **実行を拒否する**。HTMLに節が無い状態で走らせると正本スナップショット
+  （`endpoint_supplement_data.json` / `endpoint_supplement_sections.json`）を空で上書きし、
+  復元不能になるため。
+- route突合の正本（`endpoint_reports/` のCSV・data JSON・sections JSON）は**消さずに保持する**。
+  除外はHTML表示だけの措置で、入口の情報は正本側に残る。
+- 再びHTMLへ出したくなったら `RENDER_ENDPOINT_SUPPLEMENT = True` に戻し、`build` を実行すれば
+  sections JSON のスナップショットから節ごと復元できる。以下の不変条件はそのときの規約である。
+
+## 不変条件（`RENDER_ENDPOINT_SUPPLEMENT = True` のとき）
 
 - **「利用者視点の入口」は必ず3列の表組(`<table>`)で出力する。** 箇条書き(`<ul>`/`<ol>`)・
   段落(`<p>`)・整形済みテキスト(`<pre>`)で出力してはならない。
@@ -75,6 +92,18 @@ json/ajax/api→JSON-API、それ以外→画面）。
 ```bash
 S=.cursor/skills/endpoint-supplement/scripts/build_endpoint_supplement.py
 
+# 出力除外規約が有効（既定）のとき
+python3 "$S" build    # HTMLから追補節・装飾CSSを除去（冪等）
+python3 "$S" verify   # どのHTMLにも追補節が無いことを検査
+# extract は正本スナップショット保護のため実行を拒否する（exit 2）
+
+# 補助: recheck.csv の1行から入口行の導出結果を確認（正本メンテ用・規約に関係なく使える）
+python3 "$S" rows --grep customer/customer_group
+```
+
+`RENDER_ENDPOINT_SUPPLEMENT = True` に戻したときは従来の3ステップになる。
+
+```bash
 # 1) 現行HTMLの入口行と追補節全文を正本JSONへスナップショット
 #    （初回・行を確定したとき・節の手書き小節を編集したとき。HTMLが健全なうちに実行する）
 python3 "$S" extract
@@ -84,9 +113,6 @@ python3 "$S" build
 
 # 3) 追補節の欠落と、入口が表組でないことを検査
 python3 "$S" verify
-
-# 補助: recheck.csv の1行から入口行の導出結果を確認（新規route追加時）
-python3 "$S" rows --grep customer/customer_group
 ```
 
 - `build` は次を冪等に行う。正常系（節あり＋表＋CSS適用済み）では差分ゼロ。
@@ -102,6 +128,12 @@ python3 "$S" rows --grep customer/customer_group
   更新しないと次の再変換で古い節に巻き戻る。
 
 ## convert.py 再変換との関係
+
+出力除外規約が有効な間は、再変換で追補節が消えるのは**期待どおり**なので復元しない。
+順序は「convert → 各種統合 → endpoint-supplement build（掃除）→ verify」で変わらず、
+`build` は既存HTMLに残った追補節を取り除く役目を担う。
+
+以下は `RENDER_ENDPOINT_SUPPLEMENT = True` に戻したときの規約である。
 
 `excel-to-html` / `function-spec-html-render` で Excel HTML を再生成すると、後段で
 注入した追補節は**丸ごと失われる**。再変換後は本スキルの `build` を実行して追補節を

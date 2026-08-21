@@ -43,6 +43,14 @@ RECHECK_CSV = BASE_DIR / "endpoint_reports" / "html_entry_missing_endpoints_rech
 ENTRY_ANCHOR = 'endpoint-supplement-user-entry'
 HEADER_CELLS = ("入口", "URLエンドポイント", "期待されるふるまい")
 
+# 出力除外規約（2026-08-12 ユーザー決定）: 「実装差分追補」節はHTML設計書へ出力しない。
+# False の間、`build` は追補節と装飾CSSを output HTML から取り除く冪等な掃除役になり、
+# `verify` は「節が存在しないこと」を検査する。route突合の正本（endpoint_reports/ の
+# data JSON・sections JSON・recheck CSV）は消さずに保持するので、True へ戻せば
+# `build` で節ごと復元できる。`extract` は正本スナップショットを空で上書きしないよう
+# 規約が有効な間は実行を拒否する。
+RENDER_ENDPOINT_SUPPLEMENT = False
+
 # 追補節の開始/終了マーカー。convert.py 再変換で追補が消えた後の再適用判定に使う。
 SUPPLEMENT_START = "<!-- endpoint-supplement:start -->"
 SUPPLEMENT_END = "<!-- endpoint-supplement:end -->"
@@ -113,6 +121,17 @@ def section_of(text: str) -> str | None:
     if not m:
         return None
     return EMBED_BLOCK_RE.sub("", m.group(0))
+
+
+def strip_supplement(text: str) -> str:
+    """出力除外規約: 追補節と装飾CSSをHTMLから取り除く（冪等）。
+
+    route突合の正本は endpoint_reports/ 側にあるので、HTMLから消しても情報は失われない。
+    """
+    new = SECTION_RE.sub("", text)
+    new = STYLE_BLOCK_RE.sub("", new)
+    # 節を抜いた跡の空行が積み上がらないように整える。
+    return re.sub(r"\n{4,}", "\n\n\n", new)
 
 
 def restore_section(text: str, section: str) -> str:
@@ -257,6 +276,16 @@ def extract_rows(text: str) -> list[dict] | None:
 
 
 def cmd_extract(args) -> int:
+    if not RENDER_ENDPOINT_SUPPLEMENT:
+        # 規約が有効な間はHTMLに節が無い。そのまま抽出すると data/sections JSON を
+        # 空で上書きし、復元用スナップショット（＝正本）を失う。
+        print(
+            "出力除外規約により実装差分追補はHTMLに存在しないため、extract は実行しません"
+            f"（既存のスナップショット {SECTIONS_JSON.name} / {DATA_JSON.name} を保持します）。\n"
+            "再びHTMLへ出力する場合は RENDER_ENDPOINT_SUPPLEMENT=True に戻し、build で復元してください。",
+            file=sys.stderr,
+        )
+        return 2
     data = {}
     sections = {}
     for path in iter_output_files():
@@ -290,6 +319,8 @@ def cmd_extract(args) -> int:
 # build: data JSON から入口テーブルを冪等に差し替え
 # --------------------------------------------------------------------------- #
 def cmd_build(args) -> int:
+    if not RENDER_ENDPOINT_SUPPLEMENT:
+        return _cmd_strip()
     if not DATA_JSON.exists():
         print(f"data JSON がありません: {DATA_JSON}\n先に `extract` を実行してください。", file=sys.stderr)
         return 2
@@ -356,10 +387,42 @@ def cmd_build(args) -> int:
     return 0
 
 
+def _cmd_strip() -> int:
+    """出力除外規約が有効なときの build: 追補節をHTMLから取り除く（冪等）。"""
+    stripped = 0
+    for path in iter_output_files():
+        original = path.read_text(encoding="utf-8")
+        if SUPPLEMENT_START not in original and STYLE_START not in original:
+            continue
+        new_text = strip_supplement(original)
+        if new_text != original:
+            path.write_text(new_text, encoding="utf-8")
+            stripped += 1
+            print(f"  stripped: {path.name}（実装差分追補を非出力）")
+    print(
+        f"build(出力除外規約): {stripped} files から実装差分追補を除去"
+        "（route突合の正本は endpoint_reports/ に保持）"
+    )
+    return 0
+
+
 # --------------------------------------------------------------------------- #
-# verify: 追補節の存在と、入口が <table> であることを保証
+# verify: 出力除外規約では「節が無いこと」、規約を外したときは節の存在と表組を保証
 # --------------------------------------------------------------------------- #
 def cmd_verify(args) -> int:
+    if not RENDER_ENDPOINT_SUPPLEMENT:
+        leaked = [
+            path.name
+            for path in iter_output_files()
+            if SUPPLEMENT_START in path.read_text(encoding="utf-8")
+        ]
+        if leaked:
+            print("NG: 出力除外規約に反して実装差分追補が残っている", file=sys.stderr)
+            for name in leaked:
+                print(f"  - {name}（build で除去してください）", file=sys.stderr)
+            return 1
+        print("OK: 実装差分追補はどのHTMLにも出力されていません（出力除外規約）")
+        return 0
     failures = []
     checked = 0
     # data JSON に載っているファイルは追補節を必ず持つ。ここを「節が無ければ skip」に

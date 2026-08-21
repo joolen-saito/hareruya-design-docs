@@ -98,6 +98,14 @@ E2Eテストケース表とPlaywright雛形を出力する直前に、すべて�
 - [ ] `migration`（現行pf-eccube3からの移行）を充てる場合、DB対応は ec-cube-enterprise 正典（reverse-design 1c）に従う旨を明記した。
 - [ ] 生成データの後始末（撤去/使い捨て/識別接頭辞）を定義した。
 
+## 論理名（物理名を書かない・[[logical-naming]]）
+
+- [ ] ケース表・付帯表・Page Object/spec のコメントに、翻訳キー・セッションキー・フラッシュキー・ルート名・DB物理名（`dtb_`/`mtb_`/`plg_`）が無い（根拠としての併記も不可）。
+- [ ] メッセージは `e2e/config/logical-names.tsv` のメッセージID＋画面上の文言で書いた（表に無いものは出典付きで行を足した／作れないものは `要確認` にして観測できる事実で判定した）。
+- [ ] 翻訳キー未定義で生キーが表示される件は不具合候補に出し、生キー文字列を期待値にしていない。
+- [ ] セレクタ・`file:line`・HTTPパス・コマンド名・SQL/シードは物理のまま残してよい範囲に収まっている（論理名化して実行不能にしていない）。
+- [ ] `python3 .cursor/skills/logical-naming/scripts/audit_logical_naming.py --repo .` が `AUDIT OK` である。
+
 ## セレクタの根拠（創作禁止）
 
 - [ ] すべての対象セレクタに Twig 由来の根拠（file:line、id/name/trans キー）がある、または `要実機確認` と明示している。

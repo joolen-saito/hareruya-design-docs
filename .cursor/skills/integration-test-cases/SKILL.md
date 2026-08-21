@@ -94,6 +94,7 @@ python3 .cursor/skills/integration-test-cases/scripts/align_viewpoint_columns.py
 
 ## 追加リソース
 
+- [[logical-naming]]（物理名を書かない・論理名対応表・混入監査）
 - [TERMINOLOGY.md](TERMINOLOGY.md)
 - [TEMPLATE.md](TEMPLATE.md)
 - [CHECKLIST.md](CHECKLIST.md)

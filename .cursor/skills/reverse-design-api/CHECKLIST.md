@@ -59,3 +59,11 @@
 - [ ] 該当行の TODO 列が `- [x]` になり、8列目に `[md](<参照リポ>/<id>.md) / [html](../function_spec_html_preview/<参照リポ>/<id>.html)` のリンクが書式どおり記入されている
 - [ ] `convert_function_spec_html.py` または `integrate_function_docs_into_excel_html.py` を実行し、HTML閲覧版またはExcel HTML統合ブロックが生成・更新されている
 - [ ] 生成された HTML を直接編集していない（変更は Markdown と todo-list.md 側に行い再生成している）
+
+## 5分類（章立て）
+
+- [ ] 節は **処理フロー / 入出力 / 業務ロジック / 表示メッセージ / エラー処理** の5つだけである（[[output-exclusion-policy]] 2.5）。旧節（用語・概要・利用者視点の入口・権限・認可・ログ・監査 等）を新設していない。
+- [ ] 5節すべてに記述がある。現行ソースに該当が無い節は「該当なし」と**理由・根拠**を書いた（空欄・節ごと省略にしない）。
+- [ ] Excel基本設計に無い仕様（処理順・分岐、DB副作用、メッセージ文言、エラー時の挙動）を現行ソースから取り切った。
+- [ ] 共通仕様（[[common-spec]]）と一致する横断内容は各機能に書かず、機能固有の差異だけを「業務ロジック」に書いた。
+- [ ] `python3 .cursor/skills/reverse-design/scripts/audit_five_sections.py --repo . --strict` が通る。

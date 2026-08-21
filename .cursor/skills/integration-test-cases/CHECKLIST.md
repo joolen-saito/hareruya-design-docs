@@ -14,6 +14,8 @@
 - [ ] 優先度列が `P1`／`P2`／`P3` のみであり、リスク基準（TERMINOLOGY.md）に整合している
 - [ ] テスト項目名・前提・手順・期待結果に「または」を使っていない。複数パターンは操作手順を番号で分け、期待結果は**1行1判定**（各セルは観測・判定可能な一文）
 - [ ] 期待結果に「設計書に記載のとおり」「設計どおり」や特定設計ファイル名を正とする記述がない（[TERMINOLOGY.md](TERMINOLOGY.md)「期待結果に書かないこと」）
+- [ ] 翻訳キー・セッションキー・ルート名・DB物理名を書いていない（併記も不可）。論理名は `e2e/config/logical-names.tsv` から引いた（[TERMINOLOGY.md](TERMINOLOGY.md)「物理名を書かない」／[[logical-naming]]）
+- [ ] `python3 .cursor/skills/logical-naming/scripts/audit_logical_naming.py --repo .` が `AUDIT OK` である
 
 ## テスト観点との列整合
 

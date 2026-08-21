@@ -127,6 +127,7 @@ Promotion safeguards:
 - Do not output duplicate execution cases. A duplicate is a row whose `前提条件`, `入力データ/リクエスト内容`, `操作手順/実行方法`, and `期待結果／レスポンス` match another row after whitespace normalization.
 - Keep `integration_test/all_it_cases.tsv` to one physical line per test case. When aggregating Markdown TSV rows, collapse cell-internal line breaks to ` / ` so line-oriented checks do not overcount cases.
 - Do not write `UI標準` in generated output. There is no UI standard document in this project.
+- Do not write physical names in generated cases: translation keys, session keys, flash keys, route bind names, and `dtb_`/`mtb_`/`plg_` tables/columns. Use logical names (message ID + on-screen text, business names) resolved from `e2e/config/logical-names.tsv`; parenthetical evidence is forbidden too. Selectors, `file:line`, HTTP paths, command names, executable SQL and seed definitions stay physical. Rules: `.cursor/skills/logical-naming/SKILL.md`; audit with `python3 .cursor/skills/logical-naming/scripts/audit_logical_naming.py --repo .`.
 - Do not make the expected result depend on phrases such as `設計書に記載のとおり`.
 - Put non-applicable viewpoints in the target-out-of-scope table with a concrete reason.
 - Keep generated cases at integration-test level. Unit-level component checks and visual styling minutiae are out of scope unless the design explicitly exposes them as behavior.

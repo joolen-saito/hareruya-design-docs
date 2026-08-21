@@ -32,6 +32,20 @@ Full rules: [TRANSITION_RULES.md](TRANSITION_RULES.md). Summary:
 - Do not treat the mother-set `テスト観点` column (e.g. 「未認証」) as evidence of a direct-access
   case; it is generator noise. The intent must appear verbatim in the steps.
 
+## Logical Naming (no physical names)
+
+Full rules: `.cursor/skills/logical-naming/SKILL.md`. Summary:
+
+- Case Markdown, spec/page comments and oracle text use logical names: message ID + on-screen text
+  for messages, business names for session data / routes / DB tables and columns.
+- Translation keys, session keys, flash keys, route bind names and `dtb_`/`mtb_`/`plg_` names are not
+  written at all — not even in parentheses as evidence. `e2e/config/logical-names.tsv` holds the
+  mapping, and every row needs `出典`.
+- Selectors, `file:line`, HTTP paths, command names, executable SQL and seed definitions stay
+  physical; they are execution values, not descriptions.
+- The audit is baselined: legacy files are recorded in `.cursor/skills/logical-naming/baseline.tsv`
+  and only newly added physical names fail. Do not raise the baseline to silence a new violation.
+
 ## Spec Pattern
 
 - Start with unauthenticated direct-access tests when the screen is admin-only, and write them with
@@ -58,12 +72,13 @@ Full rules: [TRANSITION_RULES.md](TRANSITION_RULES.md). Summary:
 Run these before finishing a rollout slice:
 
 ```bash
+python3 .cursor/skills/logical-naming/scripts/audit_logical_naming.py --repo .
 python3 .codex/skills/hareruya-playwright-standard-tests/scripts/audit_standard_playwright.py --repo .
 python3 .codex/skills/hareruya-playwright-standard-tests/scripts/extract_screen_transitions.py --selftest
 python3 .codex/skills/hareruya-playwright-standard-tests/scripts/extract_screen_transitions.py --repo .
 python3 .codex/skills/hareruya-playwright-standard-tests/scripts/audit_transition_paths.py --repo . --scope <target fids> --strict
 e2e/seed/lib/apply.sh <needed SEED ids>
 eval "$(e2e/seed/lib/seed-env.sh)"
-cd e2e && npx playwright test spec/_harness/navigation.selfcheck.spec.ts
+cd e2e && npx playwright test spec/_harness/navigation.selfcheck.spec.ts spec/_harness/logical-naming.selfcheck.spec.ts
 cd e2e && npx playwright test --list
 ```

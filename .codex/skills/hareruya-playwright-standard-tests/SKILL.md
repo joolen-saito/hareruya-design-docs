@@ -75,6 +75,21 @@ cd e2e && npx playwright test --list
 - Do not silently drop destructive or seed-dependent cases. Represent them in case Markdown and, when automation is intended, in spec with `test.fixme`.
 - Once the blocking seed is present and non-destructive, convert the matching `test.fixme` to a live test and keep the expected result unchanged.
 
+## Logical Naming (no physical names)
+
+Full rules: `.cursor/skills/logical-naming/SKILL.md`. Summary:
+
+- Never write internal identifiers (translation keys, session keys, flash keys, route bind names) or
+  DB physical names (`dtb_` / `mtb_` / `plg_`) in case Markdown, spec/page comments, or oracle text.
+  Writing them "as evidence" alongside the logical name is also forbidden.
+- Resolve logical names from `e2e/config/logical-names.tsv` (物理名 / 種別 / 論理名 / 機能ID / 出典 / 状態).
+  Add a row with evidence before using a name that is missing; never invent one.
+- Out of scope (keep physical): selectors and form field id/name, `file:line` provenance, HTTP paths
+  and methods, command names, executable SQL and seed definitions (`e2e/seed`, `e2e/db`).
+- When a translation key is undefined and the raw key would render, report it as a defect candidate;
+  do not make the raw key string the expected value.
+- Existing files are baselined, so only newly added physical names fail the audit.
+
 ## File Mapping
 
 - Function ID `M09-08` normalizes to `m09_08`.
@@ -98,6 +113,13 @@ cd e2e && npx playwright test --list
 - `e2e/fixtures/reachability.fixture.ts`: `test` fixture that replaces `page.goto` so raw navigation
   is checked against the registry even when the helpers are bypassed.
 - `e2e/spec/_harness/navigation.selfcheck.spec.ts`: harness self-check (runs without a live app).
+- `.cursor/skills/logical-naming/scripts/audit_logical_naming.py`: logical-naming audit (physical
+  names in test assets / harness), baselined at `.cursor/skills/logical-naming/baseline.tsv`.
+- `.cursor/skills/logical-naming/scripts/build_logical_name_map.py`: regenerates the message rows of
+  `e2e/config/logical-names.tsv` from `message_inventory/` (deterministic join; no hand edits).
+- `e2e/config/logical-names.tsv`: physical → logical name registry (evidence required).
+- `e2e/spec/_harness/logical-naming.selfcheck.spec.ts`: harness self-check for the registry and the
+  audit (runs without a live app).
 
 ## E2E Case TSV Format
 

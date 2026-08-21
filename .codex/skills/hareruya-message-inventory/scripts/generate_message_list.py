@@ -39,9 +39,43 @@ def existing_names() -> dict[str, str]:
     return out
 
 
+FID_KUBUN = ROOT / "integration_test" / "fid_kubun.tsv"
+
+
+def canonical_docs() -> dict[str, str]:
+    """fid_kubun.tsv（結合テスト対象機能の正本一覧）の『設計書md』列。
+
+    同じFID接頭辞のmdが複数ある場合（例 m05-26 に ..._csv_import.md と ..._csv_format.md）、
+    glob順で先に来た方を拾うと正本でない文書を指してしまうため、正本一覧で解決する。
+    """
+    out: dict[str, str] = {}
+    if not FID_KUBUN.exists():
+        return out
+    for line in FID_KUBUN.read_text(encoding="utf-8").splitlines():
+        if line.startswith("#") or not line.strip():
+            continue
+        cells = line.split("\t")
+        if len(cells) >= 6 and cells[5].endswith(".md"):
+            out[cells[0].upper()] = cells[5]
+    return out
+
+
+_CANON = canonical_docs()
+
+
 def doc_for(fid: str) -> Path | None:
-    hits = sorted(FUNCTIONS.rglob(f"{fid.lower()}_*.md"))
-    return hits[0] if hits else None
+    # functions/_archive は5分類化で本文から外した節の退避先。現役の設計書ではないので除外する
+    # （除外しないと _archive がアルファベット順で先に来て、doc パスが退避先を指してしまう）。
+    hits = [p for p in sorted(FUNCTIONS.rglob(f"{fid.lower()}_*.md"))
+            if "_archive" not in p.relative_to(FUNCTIONS).parts]
+    if not hits:
+        return None
+    canon = _CANON.get(fid.upper())
+    if canon:
+        for p in hits:
+            if p.relative_to(FUNCTIONS).as_posix() == canon:
+                return p
+    return hits[0]
 
 
 def derive_name(fid: str) -> str:
