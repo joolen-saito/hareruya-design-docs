@@ -6,25 +6,25 @@
 
 一覧は管理者アカウントを表示順の降順で並べる。値が大きい行が先頭に来る。
 
-削除済みのメンバーは一覧に含まれない。移行先は物理削除のため対象行自体が存在しない（現行 pf-eccube3 は `del_flg` を立てる論理削除で行が残るため、フィルタで除外する）。
+削除済みのメンバーは一覧に含まれない。
 
 稼働状態による絞り込みは行わない。非稼働のメンバーも一覧に表示される。ログイン可否の判定は管理画面ログインを正とする。
 
-一覧は絞り込み条件とページングを持たない。該当件数の集計も行わない。
+一覧はページングを持たない。該当件数の集計も行わない。
+
+各行の操作は編集・削除・上へ・下への 4 つで、編集はメンバー管理へ遷移する。
 
 ### 表示順の入れ替え
 
 上へは、自身の表示順より 1 大きいメンバーと表示順を交換する。下へは、1 小さいメンバーと交換する。
 
-隣接するメンバーが無い場合は失敗とする。先頭行の上へ、末尾行の下へは一覧にリンクを出さない。
+隣接するメンバーが無い場合は失敗とする。先頭行に上へ、末尾行に下への操作は一覧に置かない。
 
 ### 削除
 
-削除は対象メンバーを物理削除し、削除対象より大きい表示順の全行を 1 つ繰り下げる（現行 pf-eccube3 は `del_flg` を立て `rank` を 0 にする論理削除）。
+削除は対象メンバーを削除済みにし、削除対象より大きい表示順の全行を 1 つ繰り下げる。削除したメンバーの表示順は保持しない。
 
-ログイン中のメンバー自身の行は、一覧で削除をリンクにせず文言のみとする。同一メンバーの削除をサーバ側で拒否する判定は持たない。
-
-関連するデータから参照されているメンバーは削除できない。
+ログイン中のメンバー自身の行では、削除の項目を文言だけで表示し、削除を実行できない。ただし同一メンバーの削除をサーバ側で拒否する判定は持たない。
 
 ### 操作の判定順序
 
@@ -39,8 +39,6 @@
 
 新規登録・編集の入力項目、入力検証、編集権限は「メンバー管理」（M11-02）を正とする。当画面パスの拒否設定は「権限管理」（M11-03）を正とする。
 
-金額集計と税率計算は行わない。一覧画面は入力フォームを持たないため、入力項目の検証も行わない。
-
 ## 入出力
 
 | 種類 | 内容 |
@@ -51,11 +49,11 @@
 
 ### 入出力: 永続化
 
-削除は管理者アカウントの対象行を削除する。表示順の入れ替えと削除後の繰り下げは、管理者アカウントの表示順を更新する。
+削除は管理者アカウントの対象行を削除済みにする。表示順の入れ替えと削除後の繰り下げは、管理者アカウントの表示順を更新する。
 
 | 操作 | 契機 |
 | --- | --- |
-| 削除 | 削除 |
+| 更新（削除済み・表示順） | 削除 |
 | 更新（表示順） | 上へ・下へ・削除後の繰り下げ |
 
 所属マスタ・権限マスタ・稼働マスタは更新しない。
@@ -85,3 +83,20 @@
 | M11-01-MSG-019 | 入力項目直下（ログインID） | このログインIDは利用できません。 | 新しいメンバーのログインIDがすでに使用されているとき（新規登録時のみ） | メンバー管理画面に留まる |
 | M11-01-MSG-014 | 入力項目直下 | form_error.authority_guest | 権限にゲスト権限を選択して登録したとき | 編集画面に遷移する |
 | M11-01-MSG-015 | 入力項目直下 | form_error.authority_customer | 権限に顧客権限を選択して登録したとき | 編集画面に遷移する |
+
+## 出典
+
+| 小見出し | 重要度 | 出典 |
+| --- | --- | --- |
+| 一覧の対象と並び | P3 | pf-eccube3:src/Eccube/Controller/Admin/Setting/System/MemberController.php:41 |
+| 一覧の対象と並び | P3 | pf-eccube3:src/Eccube/Resource/template/admin/Setting/System/member.twig:61 |
+| 一覧の対象と並び | P3 | pf-eccube3:src/Eccube/Repository/MemberRepository.php:72 |
+| 表示順の入れ替え | P2 | pf-eccube3:src/Eccube/Repository/MemberRepository.php:136 |
+| 表示順の入れ替え | P2 | pf-eccube3:src/Eccube/Resource/template/admin/Setting/System/member.twig:81 |
+| 削除 | P1 | pf-eccube3:src/Eccube/Repository/MemberRepository.php:240 |
+| 削除 | P1 | pf-eccube3:src/Eccube/Controller/Admin/Setting/System/MemberController.php:190 |
+| 削除 | P1 | pf-eccube3:src/Eccube/Resource/template/admin/Setting/System/member.twig:72 |
+| 操作の判定順序 | P1 | pf-eccube3:src/Eccube/Controller/Admin/Setting/System/MemberController.php:142 |
+| 操作の判定順序 | P1 | pf-eccube3:src/Eccube/Controller/AbstractController.php:60 |
+| 他機能との境界 | P3 | pf-eccube3:app/Plugin/HareruyaEc/ControllerProvider/AdminControllerProvider.php:45 |
+| 入出力: 永続化 | P2 | pf-eccube3:src/Eccube/Repository/MemberRepository.php:240 |
