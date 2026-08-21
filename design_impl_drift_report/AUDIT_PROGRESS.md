@@ -13,6 +13,20 @@
 2. `lib_design_doc.sheet_index` が sheet-panel 以外の構造を持つ設計書で例外になっていた。
    `<section class="doc-section">` と、セクションを持たない資料（0000_共通仕様）に対応した。
 
+## 進め方（2026-08-21 以降：ワークフローで並列化）
+
+1. `python3 audit_batches.py --doc <key>` で残りバッチを見る（1バッチ = 7シート = 判定7＋反証7の14エージェント）
+2. `python3 audit_batches.py --doc <key> --emit <n>` の JSON を Workflow の args に渡して実行する
+   （スクリプトは `design-audit-sheets`。判定→反証のパイプライン）
+3. 各エージェントは `design_audit/<key>/parts/<sheet>.tsv` を書き、
+   `python3 audit_part.py check --doc <key> --sheet <sheet>` が OK になるまで直す
+4. 全シートが揃ったら `python3 audit_part.py merge --doc <key>` → `python3 design_audit_harness.py build --doc <key>`
+5. 判定の規約は `AUDIT_JUDGING_RULES.md`（全エージェントが必読）
+
+機械ゲート: 引用の実在／実装参照の実在／**MATCHEDの実装引用の実在**／判定漏れ0。
+MATCHEDのゲートが無いと「全部MATCHED」が素通りするため、並列化の前提として 2026-08-21 に追加した。
+
+
 ## 進捗
 
 | key | 要求数 | シート | inventory | 判定 | build | 備考 |
