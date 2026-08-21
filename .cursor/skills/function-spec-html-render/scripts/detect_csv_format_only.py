@@ -35,6 +35,11 @@ SPEC_HEADINGS = ("機能仕様", "処理概要", "カスタマイズ説明", "�
 META_LABELS = ("ドキュメント名", "セクション", "プロジェクト名", "作成者", "作成日",
                "更新者", "更新日", "機能No", "機能名", "概要", "備考")
 EMBED_START = re.compile(r"^Source:$")
+# 表が主体というだけでは足りない。別添資料の機能一覧や対応表まで拾ってしまう
+# （実測: 0204「スマレジ連携機能一覧」0304「注文ステータスと表示画像の紐付け」）。
+# CSV/TSVの項目定義であることの signal を要求する。
+CSV_TITLE_RE = re.compile(r"CSV|TSV|フォーマット")
+CSV_HEADER_RE = re.compile(r"識別ID\t|項目名|出力項目|入力項目")
 TABLE_RATIO = 0.90
 MIN_LINES = 8
 
@@ -75,6 +80,8 @@ def looks_csv_only(lines: list[str], title: str = "") -> tuple[bool, int, float]
     if len(body) < MIN_LINES:
         return False, len(body), 0.0
     if any(any(l.strip().startswith(h) for h in SPEC_HEADINGS) for l in body):
+        return False, len(body), 0.0
+    if not (CSV_TITLE_RE.search(title) or CSV_HEADER_RE.search("\n".join(body[:3]))):
         return False, len(body), 0.0
     table = sum(1 for l in body if "\t" in l)
     ratio = table / len(body)
