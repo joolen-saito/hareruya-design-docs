@@ -1,40 +1,5 @@
 # スマレジAPI・関連機能抜粋設計書
 
-## 概要
-
-本書はpf-eccube3リポジトリのHareruyaEcプラグインと、ec-cube-enterpriseの新規スマレジ在庫連携から、スマレジAPI連携およびスマレジ連携に直接関係する機能だけを抜粋した横断リバース詳細設計である。
-
-本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むための設計書とする。確認値はpf-eccube3のスマレジ受信API、スマレジ向け送信処理、スマレジ系バッチ、会員・受注・ポイントのスマレジ連携呼び出し元、およびec-cube-enterpriseのスマレジWebhook受信・在庫連携実装を正とする。
-
-ec-cube-enterpriseで新規実装される在庫系スマレジ連携は、基本設計仕様書（Excel）と個別設計書A01-01/A01-02を正とし、本書では横断把握に必要な入口、連携方式、DB接続点だけを扱う。管理画面・フロント画面の全項目仕様は扱わず、スマレジ連携へ入る入口と副作用に絞る。
-
----
-
-## 本書で扱うこと
-
-- スマレジ取引通知を受けるAPI
-- スマレジへ商品・在庫・商品削除を送信する処理
-- スマレジへ会員登録・会員更新・会員停止・会員参照・ポイント更新を送信する処理
-- スマレジ取引参照APIを呼び、未反映のポイント取引を補正する処理
-- スマレジ連携失敗を再実行するバッチ
-- スマレジとEC側ポイントの差分を検出・補正するバッチ
-- pf-eccube3内でスマレジ連携を呼び出す主な入口
-- ec-cube-enterpriseで新規実装される在庫系スマレジWebhook受信、個別API連携、Patch一括連携、Webhookエラー再連携の接続点
-
----
-
-## 本書で扱わないこと
-
-以下は本書では仕様確定せず、個別機能または外部システムの設計を正とする。
-
-- スマレジ本体のAPI仕様、認証仕様、レスポンス仕様の全量
-- EC-CUBE側の会員登録、会員編集、退会、受注登録、購入完了、ポイント統合画面の画面項目全量
-- スマレジ連携設定値の登録画面
-- ジョブスケジューラ、cron、監視設定などの運用設定
-- ec-cube-enterpriseへ移行後のスマレジ連携実装全量。ただし、在庫系スマレジ連携の入口とDB接続点は本書で扱う。
-
----
-
 ## 抜粋対象機能
 
 | 機能No | 機能名 | 種別 | 入口 | 役割 |
@@ -51,25 +16,6 @@ ec-cube-enterpriseで新規実装される在庫系スマレジ連携は、基�
 | - | スマレジ会員一括作成 | 運用バッチ | `smaregi:batch createCustomer <開始プレイヤーID> <終了プレイヤーID>` | スマレジID未設定の会員へ新規スマレジIDを採番し、スマレジ会員を登録する。 |
 | - | スマレジ会員存在確認 | 運用バッチ | `smaregi:batch checkCustomer <開始プレイヤーID> <終了プレイヤーID>` | EC側に保持するスマレジIDがスマレジ側に存在するか確認し、存在しなければスマレジIDを初期化する。 |
 | - | 会員登録・更新・退会・ポイント統合 | 機能内連携 | 会員登録、会員編集、退会、ポイント統合、管理者アカウント操作 | 会員情報をスマレジへ登録・更新・停止する。 |
-
----
-
-## 利用者視点の入口
-
-| 入口 | URLエンドポイントまたは実行方法 | 期待されるふるまい |
-|------|--------------------------------|--------------------|
-| スマレジ在庫変動Webhookの受信 | `POST /%eccube_smaregi_webhook_route%`（既定`smaregi/webhook`） | スマレジWebhookの契約ID、イベント、アクション、リクエスト本文を受け付け、スマレジWebhook受信テーブルへ記録し、在庫連携処理へ接続する。 |
-| スマレジ在庫変動をEC-CUBEへ反映する | `POST /smaregi/stocks` | スマレジ在庫変動履歴をもとに、売上は出庫、返品は入庫としてEC-CUBE側のスマレジ在庫と在庫履歴を更新する。 |
-| スマレジWebhook連携エラーを再実行する | Step Functions等のスケジュール起動 | Webhook失敗または未連携のスマレジ在庫変動履歴を検索し、スマレジ連携処理と同等の処理を再実行する。 |
-| スマレジ取引通知の受信 | `POST /{_locale}/smaregi/transaction` | 取引ヘッダ・明細を受け取り、会員ポイントとポイント履歴を更新し、自店舗の商品明細に該当する注文を出荷完了にする。支店商品明細は支店システムへ転送する。 |
-| 店頭注文の商品・在庫を再連携する | `order:batch resendSmaregiProduct` | スマレジ商品連携または在庫連携が未完了の受注を抽出し、未完了区分だけをスマレジへ再送信する。 |
-| 店頭注文の商品をスマレジから削除する | `order:batch deleteSmaregiProduct` | 削除対象の店頭注文を抽出し、スマレジへ商品削除区分で送信する。 |
-| EC受注のポイント連携エラーを再実行する | `smaregi:batch checkSmaregiErrorOrder` | 連携エラーの受注を抽出し、会員の現在ポイントをスマレジへ同期する。成功したらエラーフラグを解除する。 |
-| スマレジ取引を参照して未反映取引を補正する | `smaregi:batch checkSmaregiTransaction` | 直近期間のスマレジ取引を取得し、未登録取引のポイント履歴登録、取消・打消取引のポイント履歴削除を行う。 |
-| スマレジ使用ポイントを連携する | `smaregi:batch updatePoint <受注ID>` | 指定受注の使用ポイントをスマレジへ減算連携する。失敗時は受注側へエラーを記録する。 |
-| ポイント差分を補正して通知する | `customer:batch adjustPointVariance` | 保有ポイントとポイント履歴合計に差がある会員の保有ポイントを補正し、差分一覧を管理者へ通知する。 |
-| スマレジ会員を一括作成する | `smaregi:batch createCustomer <開始プレイヤーID> <終了プレイヤーID>` | 指定範囲のスマレジID未設定会員にスマレジIDを採番し、スマレジへ会員登録する。 |
-| スマレジ会員の存在を確認する | `smaregi:batch checkCustomer <開始プレイヤーID> <終了プレイヤーID>` | 指定範囲の未検証会員についてスマレジ会員参照を行い、存在すれば確認済みにし、存在しなければスマレジIDを空に戻す。 |
 
 ---
 
@@ -758,36 +704,6 @@ Webhookで連携に失敗した、またはEC-CUBE側に未登録のスマレジ
 
 ---
 
-## DBカラム
-
-本書ではスマレジ連携に直接関係する主な列だけを記載する。
-
-| テーブル | 列 | メモ |
-|---------|-----|------|
-| `mtb_option` | `option_key`、`option_value` | スマレジ契約ID、アクセストークン、送信先URL、店舗ID、部門ID、エラー通知先を保持する。 |
-| `dtb_player` | `smaregi_id` | スマレジ会員ID。会員参照・ポイント更新・取引通知の会員照合に使用する。 |
-| `dtb_player` | `point` | EC側の保有ポイント。取引通知、取引参照補正、ポイント差分補正で更新する。 |
-| `dtb_player` | `exists_smaregi_flg` | スマレジ側会員存在確認済みの状態を保持する。 |
-| `dtb_point_history` | `point_change`、`note`、`issue_date`、`point_type_id`、`transaction_id` | スマレジ取引の付与・使用ポイント履歴を保持する。取消・打消時は`transaction_id`で削除対象を特定する。 |
-| `dtb_order_sub` | `smaregi_code` | スマレジ商品ID・商品コード。取引明細から対象注文を探すキーにもなる。 |
-| `dtb_order_sub` | `smaregi_product_flg`、`smaregi_stock_flg`、`smaregi_del_flg` | 商品・在庫・削除の連携済み状態を保持する。 |
-| `dtb_order_sub` | `smaregi_error_flg`、`point_error_message` | ポイント連携失敗状態とエラー内容を保持する。 |
-| `dtb_order_sub` | `spended_points`、`gained_points` | スマレジへの使用ポイント連携、出荷完了時の付与ポイント連携に使用する。 |
-| `dtb_member_sub` | `smaregi_member_flg` | スマレジ用管理メンバーを特定し、スマレジ取引通知による出荷完了更新の担当者へ設定する。 |
-| `dtb_smaregi_webhook_request` | `contract_id`、`smaregi_event_id`、`event`、`action`、`request_headers`、`request_body`、`received_at`、`status` | ec-cube-enterpriseのスマレジWebhook受信内容と処理状態を保持する。 |
-| `dtb_smaregi_webhook_request` | `started_at`、`completed_at`、`create_date`、`update_date` | Webhook処理開始・完了・更新日時を保持し、再連携や監査に使用する。 |
-
-### DB操作
-
-永続化の正は ec-cube-enterprise（テーブル名・操作は ec-cube-enterprise を正典）。当ドメインは承認ワークフローを介さず persist/flush で直接確定する（承認ワークフローは在庫機能固有）。
-
-| 操作種別 | 対象テーブル | 契機・条件 |
-|---------|--------------|------------|
-| 登録/更新 | dtb_member_sub / dtb_order_sub / dtb_player / dtb_point_history / mtb_option | 当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。 |
-| 登録/更新 | dtb_smaregi_webhook_request | ec-cube-enterpriseのスマレジWebhook受信、処理開始、処理完了、再連携で受信内容と状態を保存する。 |
-
----
-
 ## エラー処理
 
 | エラー内容 | 処理 |
@@ -816,15 +732,6 @@ Webhookで連携に失敗した、またはEC-CUBE側に未登録のスマレジ
 | ポイント差分補正 | 差分一覧を管理者宛メールとして送信する。 |
 | スマレジWebhook受信 | 受信ヘッダー、受信本文、スマレジイベントID、処理状態をDBへ記録する。 |
 | スマレジWebhook処理失敗 | 失敗状態と処理日時を残し、再連携・監視の根拠にする。 |
-
-### ログに出してはいけないもの
-
-- スマレジアクセストークンの実値
-- スマレジ契約IDの実値
-- 顧客個人情報の不要な全量
-- セッションID、Cookie、なりすまし対策トークンの完全値
-
----
 
 ## セキュリティ
 
@@ -957,99 +864,3 @@ Webhookで連携に失敗した、またはEC-CUBE側に未登録のスマレジ
 | 在庫Webhook URL | A01-01の設計書には`/smaregi/stocks`の記載があるが、現行実装は環境変数で変更可能な共通Webhookルートを使用する。 |
 
 ---
-
-## 調査補助
-
-論理説明と切り離し、ソース照合用に主なファイルを列挙する。
-
-```text
-pf-eccube3/app/Plugin/HareruyaEc/Controller/SmaregiController.php
-pf-eccube3/app/Plugin/HareruyaEc/ControllerProvider/FrontControllerProvider.php
-pf-eccube3/app/Plugin/HareruyaEc/Command/SmaregiBatch.php
-pf-eccube3/app/Plugin/HareruyaEc/Command/OrderBatch.php
-pf-eccube3/app/Plugin/HareruyaEc/Command/CustomerBatch.php
-pf-eccube3/app/Plugin/HareruyaEc/Service/SmaregiService.php
-pf-eccube3/app/Plugin/HareruyaEc/Service/Smaregi/CustomerService.php
-pf-eccube3/app/Plugin/HareruyaEc/Service/Smaregi/CreateCustomer.php
-pf-eccube3/app/Plugin/HareruyaEc/Service/Smaregi/CheckCustomer.php
-pf-eccube3/app/Plugin/HareruyaEc/Service/Smaregi/UpdatePoint.php
-pf-eccube3/app/Plugin/HareruyaEc/Service/Smaregi/CheckSmaregiErrorOrder.php
-pf-eccube3/app/Plugin/HareruyaEc/Service/Smaregi/CheckSmaregiTransaction.php
-pf-eccube3/app/Plugin/HareruyaEc/Service/Order/ResendSmaregiProduct.php
-pf-eccube3/app/Plugin/HareruyaEc/Service/Order/DeleteSmaregiProduct.php
-pf-eccube3/app/Plugin/HareruyaEc/Service/Customer/AdjustPointVariance.php
-pf-eccube3/app/Plugin/HareruyaEc/Controller/ShoppingController.php
-pf-eccube3/app/Plugin/HareruyaEc/Controller/EntryController.php
-pf-eccube3/app/Plugin/HareruyaEc/Controller/Mypage/ChangeController.php
-pf-eccube3/app/Plugin/HareruyaEc/Controller/Mypage/WithdrawController.php
-pf-eccube3/app/Plugin/HareruyaEc/Controller/Mypage/PointConsolidationController.php
-pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/PointConsolidationController.php
-pf-eccube3/app/Plugin/HareruyaEc/Event/Admin/AccountEvent.php
-pf-eccube3/app/Plugin/HareruyaEc/config.yml
-ec-cube-enterprise/app/config/eccube/routes.yaml
-ec-cube-enterprise/app/config/eccube/packages/eccube.yaml
-ec-cube-enterprise/app/config/eccube/packages/security.yaml
-ec-cube-enterprise/src/Eccube/Controller/Smaregi/WebhookController.php
-ec-cube-enterprise/src/Eccube/Entity/SmaregiWebhookEvent.php
-ec-cube-enterprise/src/Eccube/Repository/SmaregiWebhookEventRepository.php
-ec-cube-enterprise/src/Eccube/Message/SmaregiWebhookEventMessage.php
-ec-cube-enterprise/src/Eccube/Message/SmaregiStockProcessMessage.php
-ec-cube-enterprise/src/Eccube/Message/SmaregiTransactionProcessMessage.php
-ec-cube-enterprise/src/Eccube/Message/SmaregiProductClassUpsertMessage.php
-ec-cube-enterprise/src/Eccube/Message/SmaregiProductClassDeleteMessage.php
-ec-cube-enterprise/src/Eccube/Message/SmaregiSectionUpsertMessage.php
-ec-cube-enterprise/src/Eccube/MessageHandler/SmaregiWebhookEventMessageHandler.php
-ec-cube-enterprise/src/Eccube/MessageHandler/SmaregiStockProcessMessageHandler.php
-ec-cube-enterprise/src/Eccube/MessageHandler/SmaregiTransactionProcessMessageHandler.php
-ec-cube-enterprise/src/Eccube/MessageHandler/SmaregiProductClassUpsertMessageHandler.php
-ec-cube-enterprise/src/Eccube/MessageHandler/SmaregiProductClassDeleteMessageHandler.php
-ec-cube-enterprise/src/Eccube/MessageHandler/SmaregiSectionUpsertMessageHandler.php
-ec-cube-enterprise/src/Eccube/Command/OtcOrderSmaregiPostCommand.php
-ec-cube-enterprise/src/Eccube/Command/SmaregiOtcDeleteCommand.php
-ec-cube-enterprise/src/Eccube/Command/SmaregiUpdatePointCommand.php
-ec-cube-enterprise/src/Eccube/Service/Smaregi/Webhook/EventService.php
-ec-cube-enterprise/src/Eccube/Service/Smaregi/Webhook/Stock/StockEventDispatcher.php
-ec-cube-enterprise/src/Eccube/Service/Smaregi/Webhook/Stock/SmaregiStockChangeApplier.php
-ec-cube-enterprise/src/Eccube/Service/Smaregi/Webhook/Transaction/TransactionEventDispatcher.php
-ec-cube-enterprise/src/Eccube/Service/Smaregi/Webhook/Transaction/Handler/CreatedHandler.php
-ec-cube-enterprise/src/Eccube/Service/Smaregi/Webhook/Transaction/Handler/CanceledHandler.php
-ec-cube-enterprise/src/Eccube/Service/Smaregi/Webhook/Transaction/Handler/DisposedHandler.php
-ec-cube-enterprise/src/Eccube/Service/Smaregi/Webhook/Transaction/Handler/EditedHandler.php
-ec-cube-enterprise/src/Eccube/Service/Smaregi/Webhook/Transaction/Handler/BulkUpdateHandler.php
-ec-cube-enterprise/src/Eccube/Service/Smaregi/Webhook/Transaction/Handler/BulkDeletedHandler.php
-ec-cube-enterprise/src/Eccube/Service/Smaregi/Otc/SmaregiOtcOrderSyncService.php
-ec-cube-enterprise/src/Eccube/Service/Smaregi/Otc/SmaregiOtcDeleteService.php
-ec-cube-enterprise/src/Eccube/Service/Smaregi/SmaregiUpdatePointAction.php
-ec-cube-enterprise/src/Eccube/Service/Smaregi/SmaregiCustomerService.php
-ec-cube-enterprise/src/Eccube/Service/Smaregi/ProductClass/SmaregiProductClassEventService.php
-ec-cube-enterprise/src/Eccube/Service/Smaregi/Section/SmaregiSectionEventService.php
-ec-cube-enterprise/src/Eccube/Service/Smaregi/Webhook/Transaction/PurchasePattern.php
-ec-cube-enterprise/src/Eccube/Service/Smaregi/Webhook/Transaction/PurchasePatternResolver.php
-ec-cube-enterprise/src/Eccube/Service/Smaregi/Webhook/Transaction/SmaregiPointAdjustmentApplier.php
-ec-cube-enterprise/src/Eccube/Service/Smaregi/Webhook/Transaction/SmaregiPointAdjustmentReverter.php
-ec-cube-enterprise/src/Eccube/Service/Smaregi/Webhook/Transaction/Processor/SmaregiTransactionCanceledProcessor.php
-ec-cube-enterprise/src/Eccube/Service/Smaregi/Webhook/Transaction/Processor/SmaregiTransactionDisposedProcessor.php
-ec-cube-enterprise/src/Eccube/Service/Smaregi/Api/SmaregiAccessTokenService.php
-ec-cube-enterprise/src/Eccube/Service/Smaregi/Api/SmaregiStockApiClient.php
-ec-cube-enterprise/src/Eccube/Service/Smaregi/Api/SmaregiTransactionApiClient.php
-ec-cube-enterprise/src/Eccube/Service/Smaregi/Api/SmaregiProductApiClient.php
-ec-cube-enterprise/src/Eccube/Service/Smaregi/Api/SmaregiSectionApiClient.php
-ec-cube-enterprise/src/Eccube/Service/Smaregi/Api/SmaregiPlatformApiCallRecorder.php
-ec-cube-enterprise/src/Eccube/Entity/MessengerJob.php
-ec-cube-enterprise/src/Eccube/Entity/SmaregiTransactionJob.php
-ec-cube-enterprise/src/Eccube/Entity/SmaregiPlatformApiCallLog.php
-```
-
-既存の個別設計書:
-
-```text
-functions/ec-cube-enterprise/a01-01_api_stock_smaregi_stock_sync.md
-functions/ec-cube-enterprise/a01-02_api_stock_smaregi_webhook_error_retry.md
-functions/pf-eccube3/a05-04_api_order_order_smaregi_receive.md
-functions/pf-eccube3/b05-04_batch_order_order_resend_smaregi_product.md
-functions/pf-eccube3/b05-05_batch_order_order_delete_smaregi_product.md
-functions/pf-eccube3/b05-08_batch_order_smaregi_check_error_order.md
-functions/pf-eccube3/b05-09_batch_order_smaregi_check_transaction.md
-functions/pf-eccube3/b08-05_batch_customer_customer_adjust_point_variance.md
-functions/pf-eccube3/b08-06_batch_customer_smaregi_update_point.md
-```
