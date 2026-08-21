@@ -198,7 +198,12 @@ CSV項目だけのシート（0206「買取商品一覧CSV出力項目」など�
 
 ```bash
 git status --short functions/ excel_to_html/output/   # 作業ツリーが汚れていないこと
+git status --short functions/_archive/                # 0件であること（編集禁止領域）
 ```
+
+`functions/_archive/` は退避済みの旧版で編集対象ではない。正本側と**同名ファイル**があるため、
+パスを確かめずに開くとこちらを触ってしまう（2026-08-21〜22 に3回発生）。
+各バッチの後にこの確認を挟み、変更があれば `git checkout -- functions/_archive/` で戻す。
 
 再生成は既存の正本を上書きする。**比較元（git HEAD）が正しい状態であること**が全ゲートの前提。
 未コミットの変更が残っている状態で始めない。
