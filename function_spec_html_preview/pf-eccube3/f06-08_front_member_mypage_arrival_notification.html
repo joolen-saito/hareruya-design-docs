@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,33 +272,15 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#本書で扱うこと">本書で扱うこと</a>
-<a class="lv2" href="#本書で扱わないこと">本書で扱わないこと</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv3" href="#Excel基本設計により廃止された仕様-刷新後は実装不要">Excel基本設計により廃止された仕様（刷新後は実装不要）</a>
-<a class="lv2" href="#用語">用語</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#フロント挙動">フロント挙動</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#入荷待ち商品一覧を表示する-GET-locale-mypage-notifylist">入荷待ち商品一覧を表示する（GET `/{_locale}/mypage/notifylist`）</a>
-<a class="lv2" href="#集計条件">集計条件</a>
-<a class="lv2" href="#表示メッセージ">表示メッセージ</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
-<a class="lv3" href="#エッジケース">エッジケース</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#廃止された仕様">廃止された仕様</a>
+<a class="lv3" href="#画面の構成">画面の構成</a>
+<a class="lv3" href="#一覧の取得">一覧の取得</a>
+<a class="lv3" href="#エラー時の扱い">エラー時の扱い</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#バリデーション">バリデーション</a>
-<a class="lv2" href="#権限・認可">権限・認可</a>
-<a class="lv2" href="#画面遷移">画面遷移</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#ログ・監査">ログ・監査</a>
-<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
-<a class="lv2" href="#セッション">セッション</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a></nav>
+<a class="lv3" href="#入出力-永続化">入出力: 永続化</a>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -301,93 +293,26 @@ footer {
         <li><span class="superseded-target">画面上部のログインユーザ名表示（入荷待ち商品一覧）</span> は削除（<a href="../../excel_to_html/output/0306_%E5%9F%BA%E6%9C%AC%E8%A8%AD%E8%A8%88%E4%BB%95%E6%A7%98%E6%9B%B8%28%E3%83%95%E3%83%AD%E3%83%B3%E3%83%88_%E4%BC%9A%E5%93%A1%29.html#item-sheet-8-2">0306 入荷待ち商品一覧 識別ID:2</a>）</li>
       </ul>
     </div>
-      <h2 id="概要">概要</h2>
-<p>入荷待ち商品一覧は、ログイン済み会員が在庫無し商品で入荷通知（再入荷のお知らせ）を登録した商品を確認する機能である。会員に紐づく入荷通知依頼から、対象商品の名称・言語・状態（コンディション）・価格などを集約して一覧表示する。入荷時に登録メールアドレスへ通知を送る旨を案内する。一覧の各商品から商品詳細やカード検索へ遷移できる。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインの入荷通知依頼一覧処理、入荷待ち商品一覧テンプレート（<code>Mypage/notify_request_list.twig</code>）、入荷通知依頼・選手情報・商品情報を扱うリポジトリを正とする。</p>
-<p>本機能のカスタマイズ区分はカスタマイズであり、画面・処理フローの挙動はpf-eccube3を参照リポとする。DB関連（テーブル名・列名・保存先）はec-cube-enterpriseを正とする。</p>
-<p>対象はブラウザ経由のフロント（会員マイページ）に限定する。フロントのページは言語別パスセグメント<code>/{_locale}</code>を前提とし、本書のパスは<code>/{_locale}</code>配下の確認値として記載する。<code>/mypage</code>配下は会員ログインを要する。</p>
-<p>本文ではフレームワークのコントローラ型名やメソッド名を主説明としない。ルートbind名の網羅は主説明とせず、「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。</p>
-<hr>
-<h2 id="本書で扱うこと">本書で扱うこと</h2>
-<ul><li>入荷待ち商品一覧の入口・表示要素・一覧の集約条件</li><li>入荷通知の対象（在庫無し商品で入荷通知登録した商品）の抽出</li><li>一覧からの商品詳細・カード検索への遷移</li><li>未ログイン・0件時の扱い</li></ul>
-<hr>
-<h2 id="本書で扱わないこと">本書で扱わないこと</h2>
-<p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
-<ul><li>入荷通知の登録・解除の操作（商品詳細・カート機能を正とする）</li><li>入荷時の通知メール送信（入荷通知メール機能を正とする）</li><li>商品詳細・カード検索画面そのものの仕様（商品機能を正とする）</li><li>会員ログイン認証そのもの（会員ログイン機能を正とする）</li></ul>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<p>DB関連の記述はec-cube-enterpriseを正とする。入荷通知依頼テーブル（<code>dtb_product_request</code>）は移行先（ec-cube-enterprise）にも存在し、<code>player_id</code>（選手情報）・<code>product_class_id</code>（商品規格）で会員の依頼を保持する。選手情報テーブル（<code>dtb_player</code>）の<code>customer_id</code>からログイン会員を特定する点も移行先と現行で同じである。</p>
-<h3 id="Excel基本設計により廃止された仕様-刷新後は実装不要">Excel基本設計により廃止された仕様（刷新後は実装不要）</h3>
-<p>本書は現行実装からのリバースであり、以下は現行挙動として記述しているが、Excel基本設計が廃止を宣言している。刷新後は実装しない。</p>
-<ul><li>画面上部のログインユーザ名表示（入荷待ち商品一覧）（※Excel基本設計 0306 入荷待ち商品一覧 識別ID:2 により廃止。刷新後は実装しない）。削除。</li></ul>
-<p>商品の状態（コンディション）・言語の保持先が現行と移行先で異なる。現行は補助テーブル<code>dtb_product_sub_class</code>に<code>product_id</code>・<code>product_class_id</code>・<code>card_condition_id</code>・<code>language_id</code>を保持して集約する。移行先（ec-cube-enterprise）では補助テーブルを持たず、商品規格テーブル（<code>dtb_product_class</code>）が<code>card_condition_id</code>・<code>language_id</code>を直接保持する。本書のDB記述は移行先の保持先（<code>dtb_product_class</code>の同名列）を主とし、現行の補助テーブル名（<code>dtb_product_sub_class</code>）を括弧で添える。価格は商品規格の<code>price02</code>で表示する。</p>
-<p>移行先の入荷通知依頼は論理削除（<code>deleted_at</code>）を持つ。一覧表示は参照のみで業務データを更新しないため、移行に伴う保存処理の差分は生じない。</p>
-<hr>
-<h2 id="用語">用語</h2>
-<div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>会員</td><td>フロントにログインしている顧客。</td></tr><tr><td>選手情報</td><td>会員に1対1で紐づく拡張情報。入荷通知依頼は選手情報に紐づく。</td></tr><tr><td>入荷通知依頼</td><td>在庫無し商品の再入荷時に通知を受けるための登録。</td></tr><tr><td>商品規格</td><td>商品の規格（コンディション・言語等の組）。一覧の集約キーに用いる。</td></tr><tr><td>言語</td><td>商品の言語区分。商品規格に含まれる。</td></tr></tbody></table></div>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>マイページの「入荷待ち商品一覧」ブロック</td><td><code>GET /{_locale}/mypage/notifylist</code></td><td>会員ログインを要し、会員が入荷通知登録した商品を集約して一覧表示する。</td></tr><tr><td>一覧の商品リンク</td><td><code>GET /{_locale}/products/detail/{id}</code>（言語・規格を指定）</td><td>当該商品の商品詳細へ遷移する（商品機能を正とする）。</td></tr><tr><td>一覧のカード検索リンク</td><td><code>GET /{_locale}/products/search</code>（カードIDを指定）</td><td>当該カードの検索結果へ遷移する（商品機能を正とする）。</td></tr><tr><td>「戻る」リンク</td><td><code>GET /{_locale}/mypage</code></td><td>マイページトップへ戻る。</td></tr></tbody></table></div>
-<p><code>/mypage</code>配下は会員ログインを要する。一覧は当該会員の入荷通知依頼のみを対象とする。</p>
-<hr>
-<h2 id="フロント挙動">フロント挙動</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>見出し「入荷待ち商品一覧」、入荷時に登録メールアドレスへ通知する旨の案内、入荷通知登録の上限拡張の案内、入荷通知登録した商品の一覧（商品名・言語・状態・価格、商品詳細リンク、カード検索リンク）、マイページへ戻るリンク。</td></tr><tr><td>JS挙動</td><td>本機能ではJSによる非同期取得や動的な表示切替を主目的としない。</td></tr><tr><td>CSS・レイアウト</td><td>商品ごとに状態・価格などをまとめて表示する。</td></tr><tr><td>モーダル・ポップアップ</td><td>本画面専用のモーダルは無い。</td></tr></tbody></table></div>
-<p>入荷通知の登録上限が拡張された旨の案内を、一覧がある場合・無い場合のいずれでも表示する。</p>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="入荷待ち商品一覧を表示する-GET-locale-mypage-notifylist">入荷待ち商品一覧を表示する（GET <code>/{_locale}/mypage/notifylist</code>）</h3>
-<ol><li>会員ログインを要求する。未ログインの場合は会員ログインへ誘導する（会員ログイン機能を正とする）。</li><li>ログイン会員を特定する。</li><li>当該会員の選手情報に紐づく入荷通知依頼から、対象の商品規格・商品・状態・言語・価格を取得する。</li><li>同一商品・言語・価格区分のまとまりで集約し、商品ごとに状態・価格の明細を束ねる。</li><li>件数とともに一覧を表示する。0件の場合は入荷待ち商品が無い旨を表示する。</li></ol>
-<hr>
-<h2 id="集計条件">集計条件</h2>
-<div class="table-wrap"><table><thead><tr><th>指標</th><th>集計の要点</th></tr></thead><tbody><tr><td>一覧対象</td><td>ログイン会員の選手情報に紐づく入荷通知依頼の商品規格。</td></tr><tr><td>結合</td><td>入荷通知依頼を商品規格・商品・商品クラス・状態・言語に結合し、選手情報で会員を絞り込む。</td></tr><tr><td>集約単位</td><td>商品・言語・価格区分（高額コードを含む）のまとまりで集約し、商品ごとに状態・価格の明細を束ねる。</td></tr><tr><td>件数</td><td>取得した依頼の件数を一覧の件数として表示する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="表示メッセージ">表示メッセージ</h2>
-<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>画面上の文言(英語)</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>F06-08-MSG-001</td><td>画面上部</td><td>入荷待ち商品はありません。</td><td>No items waiting for restock.</td><td>入荷待ち商品一覧を開き、登録済みの商品がないとき</td><td>入荷待ち商品がない一覧画面に留まる</td></tr></tbody></table></div>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>抽出対象</td><td>在庫無し商品で入荷通知登録した商品（当該会員の入荷通知依頼）を対象とする。</td></tr><tr><td>集約</td><td>同一商品・言語・価格区分でまとめ、状態・価格の明細を商品ごとに束ねて表示する。</td></tr><tr><td>通知案内</td><td>対象商品が入荷した際に登録メールアドレスへ通知する旨を案内する。</td></tr><tr><td>登録上限</td><td>入荷通知登録の上限が拡張された旨を案内する（登録・解除の上限制御は商品詳細・カート機能を正とする）。</td></tr><tr><td>業務計算</td><td>価格は商品クラスの価格を表示する。集計の再計算は行わない。</td></tr></tbody></table></div>
-<p>本機能は一覧表示が主で、利用者入力のフォームを持たない。商品詳細・カード検索への遷移はリンクのパラメータで受け渡す。</p>
-<h3 id="エッジケース">エッジケース</h3>
-<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>入荷通知依頼が0件</td><td>入荷待ち商品が無い旨を表示する。</td></tr><tr><td>同一商品で言語・価格区分が異なる</td><td>集約キーが異なるため別のまとまりとして表示する。</td></tr><tr><td>高額コードを持つ商品規格</td><td>商品詳細リンクに規格を含めて遷移する。</td></tr><tr><td>未ログイン</td><td>会員ログインへ誘導する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>一覧対象会員</td><td>一覧は当該会員の選手情報に紐づく入荷通知依頼のみを参照する。</td></tr><tr><td>商品情報</td><td>商品名・状態・言語・価格は表示時点の商品・商品クラス・状態・言語マスタを参照する。</td></tr><tr><td>通知</td><td>入荷時の通知送信は別機能で行う。一覧は登録済みの依頼を参照するのみとする。</td></tr></tbody></table></div>
-<hr>
-<h2 id="API-バッチ結果">API/バッチ結果</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>API</td><td>本機能では外部API呼び出しを行わない。</td></tr><tr><td>バッチ</td><td>本機能ではバッチ実行を扱わない。入荷時の通知メール送信は入荷通知メール機能を正とする。</td></tr></tbody></table></div>
-<hr>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="廃止された仕様">廃止された仕様</h3>
+<p>Excel基本設計 0306 入荷待ち商品一覧 識別ID:2 により廃止する。刷新後は実装しない。現行実装のふるまいは本書に残すが、刷新後の実装とテストの対象からは外す。</p>
+<h3 id="画面の構成">画面の構成</h3>
+<div class="table-wrap"><table><thead><tr><th>表示要素</th><th>内容</th></tr></thead><tbody><tr><td>見出し</td><td>入荷待ち商品一覧。一覧が0件のときも表示する</td></tr><tr><td>案内</td><td>対象商品が入荷したときに、登録メールアドレスへ通知する旨を案内する</td></tr><tr><td>案内</td><td>入荷通知登録の上限が拡張された旨を案内する。一覧があるときも0件のときも表示する</td></tr><tr><td>一覧</td><td>入荷通知登録した商品の商品名・言語・状態・価格。登録があるときだけ表示する</td></tr><tr><td>一覧の遷移</td><td>商品詳細リンクとカード検索リンク。遷移の値はリンクのパラメータで受け渡す</td></tr><tr><td>画面下部</td><td>マイページへ戻るリンク。一覧の件数によらず表示する</td></tr><tr><td>モーダル</td><td>本画面専用のモーダルは無い。非同期取得と動的な表示切替は主目的としない</td></tr></tbody></table></div>
+<h3 id="一覧の取得">一覧の取得</h3>
+<p>会員ログインを要求する。未ログインのときは会員ログインへ誘導する。判定は会員ログイン機能を正とする。</p>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>抽出対象</td><td>ログイン会員の選手情報に紐づく入荷通知依頼。在庫無し商品で入荷通知登録した商品だけを対象とする</td></tr><tr><td>取得する値</td><td>対象の商品規格・商品・状態・言語・価格</td></tr><tr><td>集約</td><td>同一商品・同一言語・同一価格区分でまとめ、商品ごとに状態・価格の明細を束ねる</td></tr><tr><td>件数</td><td>件数とともに一覧を表示する</td></tr><tr><td>0件のとき</td><td>入荷待ち商品が無い旨を表示する</td></tr></tbody></table></div>
+<p>価格は商品規格の価格だけをそのまま表示する。集計の再計算は、いずれの場合も行わない。</p>
+<p>登録・解除の上限の制御は、商品詳細とカートの機能を正とする。</p>
+<p>本機能は一覧表示が主であり、利用者が入力するフォームを持たない。入力項目が無いので、入力の検証も行わない。</p>
+<h3 id="エラー時の扱い">エラー時の扱い</h3>
+<div class="table-wrap"><table><thead><tr><th>事象</th><th>扱い</th></tr></thead><tbody><tr><td>未ログインで開いたとき</td><td>会員ログインへ誘導する。判定は会員ログイン機能を正とする</td></tr><tr><td>入荷通知登録した商品が0件のとき</td><td>入荷待ち商品が無い旨を表示する</td></tr></tbody></table></div>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>会員ログイン状態。</td></tr><tr><td>成功時出力</td><td>入荷待ち商品一覧のHTML表示（件数・商品ごとの明細）。</td></tr><tr><td>失敗時出力</td><td>未ログイン時の会員ログインへの誘導。</td></tr><tr><td>副作用</td><td>一覧表示は更新を伴わない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<p>機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。</p>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>dtb_product_request</code></td><td><code>player_id</code> / <code>product_class_id</code> / <code>deleted_at</code></td><td>会員（選手情報）ごとの入荷通知依頼。一覧の抽出キー。移行先は<code>deleted_at</code>による論理削除を持つ。</td></tr><tr><td><code>dtb_player</code></td><td><code>customer_id</code></td><td>ログイン会員から選手情報を特定する。</td></tr><tr><td><code>dtb_product_class</code>（現行は補助表 <code>dtb_product_sub_class</code>）</td><td><code>card_condition_id</code> / <code>language_id</code></td><td>商品・状態・言語の集約に用いる。移行先では商品規格テーブルが状態・言語を直接保持する。</td></tr><tr><td><code>dtb_product_class</code></td><td><code>price02</code></td><td>価格の表示。</td></tr></tbody></table></div>
-<h3 id="DB操作">DB操作</h3>
-<p>本機能は参照系（検索）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>検索</td><td>dtb_player / dtb_product_class / dtb_product_request / dtb_product_sub_class</td><td>検索条件に合致するレコードを抽出する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="バリデーション">バリデーション</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>ログイン状態</td><td>一覧表示は会員ログインを要する。未ログインは会員ログインへ誘導する。</td></tr></tbody></table></div>
-<p>本機能は利用者入力の検証対象を持たない。</p>
-<hr>
-<h2 id="権限・認可">権限・認可</h2>
-<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>入荷待ち商品一覧</th></tr></thead><tbody><tr><td>未ログイン</td><td>アクセス不可。会員ログインへ誘導する。</td></tr><tr><td>ログイン済み会員</td><td>自分の入荷通知依頼のみ閲覧可能。</td></tr></tbody></table></div>
-<hr>
-<h2 id="画面遷移">画面遷移</h2>
-<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>マイページの「入荷待ち商品一覧」ブロック</td><td>入荷待ち商品一覧（<code>GET /{_locale}/mypage/notifylist</code>）</td></tr><tr><td>一覧の商品リンク</td><td>商品詳細（<code>/{_locale}/products/detail/{id}</code>、言語・規格を指定）</td></tr><tr><td>一覧のカード検索リンク</td><td>商品検索（<code>/{_locale}/products/search</code>、カードIDを指定）</td></tr><tr><td>「戻る」リンク</td><td>マイページトップ（<code>/{_locale}/mypage</code>）</td></tr></tbody></table></div>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>未ログインアクセス</td><td>会員ログインへ誘導する（会員ログイン機能を正とする）。</td></tr></tbody></table></div>
-<hr>
-<h2 id="ログ・監査">ログ・監査</h2>
-<p>本機能は固有の監査ログを主目的としない。</p>
-<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
-<ul><li>Cookie値</li><li>セッションIDの完全値</li></ul>
-<hr>
-<h2 id="セッション">セッション</h2>
-<p>本機能は入荷待ち商品一覧の表示のために機微情報をセッションへ保存しない。ログイン状態の判定にのみ会員の認証情報を用いる。</p>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<p>入荷待ち商品一覧の表示は参照のみで、業務データの更新を行わない。本機能では楽観ロック・悲観ロックの対象は持たない。</p>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>会員のログイン状態だけを用いる。</td></tr><tr><td>成功時出力</td><td>入荷待ち商品一覧の表示。件数と商品ごとの明細を含む。</td></tr><tr><td>失敗時出力</td><td>未ログインのときは会員ログインへの誘導。</td></tr></tbody></table></div>
+<h3 id="入出力-永続化">入出力: 永続化</h3>
+<p>いずれの場合もデータを更新しない。</p>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
+<h2 id="表示メッセージ">表示メッセージ</h2>
+<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>F06-08-MSG-001</td><td>画面上部</td><td>入荷待ち商品はありません。</td><td>入荷待ち商品一覧を開き、登録済みの商品がないとき</td><td>入荷待ち商品がない一覧画面に留まる</td></tr><tr><td>F06-08-MSG-001</td><td>画面上部（英語ページ）</td><td>No items waiting for restock.</td><td>入荷待ち商品一覧を開き、登録済みの商品がないとき</td><td>入荷待ち商品がない一覧画面に留まる</td></tr></tbody></table></div>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

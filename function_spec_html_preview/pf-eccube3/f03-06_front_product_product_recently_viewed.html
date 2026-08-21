@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,35 +272,15 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#本書で扱うこと">本書で扱うこと</a>
-<a class="lv2" href="#本書で扱わないこと">本書で扱わないこと</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv2" href="#用語">用語</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#フロント挙動">フロント挙動</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#最近見た商品を表示する">最近見た商品を表示する</a>
-<a class="lv2" href="#集計条件">集計条件</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
-<a class="lv3" href="#エッジケース">エッジケース</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#表示するもの">表示するもの</a>
+<a class="lv3" href="#履歴の読み取り">履歴の読み取り</a>
+<a class="lv3" href="#表示順と除外">表示順と除外</a>
+<a class="lv3" href="#エラー時の扱い">エラー時の扱い</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#バリデーション">バリデーション</a>
-<a class="lv2" href="#権限・認可">権限・認可</a>
-<a class="lv2" href="#画面遷移">画面遷移</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#表示メッセージ">表示メッセージ</a>
-<a class="lv3" href="#常時表示-正常・静的">常時表示（正常・静的）</a>
-<a class="lv2" href="#Cookie">Cookie</a>
-<a class="lv3" href="#閲覧履歴のCookie">閲覧履歴のCookie</a>
-<a class="lv2" href="#ログ・監査">ログ・監査</a>
-<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
-<a class="lv2" href="#セッション">セッション</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a></nav>
+<a class="lv3" href="#入出力-永続化">入出力: 永続化</a>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -298,99 +288,25 @@ footer {
         <h1>F03-06（最近見た商品）</h1>
       </header>
       
-      <h2 id="概要">概要</h2>
-<p>最近見た商品は、利用者が商品詳細で閲覧した商品の履歴をブラウザのCookieから読み取り、各商品の最適なカード画像をサムネイルで一覧表示するブロック機能である。履歴の蓄積（Cookieへの書き込み）は商品詳細（F03-02）が行い、本ブロックはその履歴Cookieを読み取って商品画像を並べる表示側を担う。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインの履歴ブロック処理、テンプレート（<code>Block/history.twig</code>）、商品画像取得処理を正とする。</p>
-<p>本機能のカスタマイズ区分はカスタマイズであり、挙動の確認は現行リポ（pf-eccube3）の実装を参照する。DB関連の記述はリニューアル移行先の ec-cube-enterprise を正とする。</p>
-<p>対象はブラウザ経由のフロントに限定する。フロントのルートはロケールを先頭に付けた<code>/{_locale}</code>配下に配置される。</p>
-<p>本文ではフレームワークのコントローラ型名やメソッド名を主説明としない。本文ではルートbind名の網羅は主説明とせず、「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。コード探索でbind名が必要なときだけ「調査補助」へ書く。</p>
-<hr>
-<h2 id="本書で扱うこと">本書で扱うこと</h2>
-<ul><li>最近見た商品ブロックの入口と表示要素</li><li>履歴Cookieの読み取りと、商品IDからの画像取得・表示</li><li>履歴が無い場合の表示</li><li>履歴の蓄積（書き込み）は商品詳細（F03-02）に委ねる旨</li></ul>
-<hr>
-<h2 id="本書で扱わないこと">本書で扱わないこと</h2>
-<p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
-<ul><li>履歴Cookieへの書き込み・上限・並び替え（F03-02 を正とする）</li><li>商品詳細画面そのものの仕様（F03-02 を正とする）</li><li>カード画像の最適化・サムネイルのサイズ調整の内部仕様</li><li>ポップアップ（商品プレビュー）の内部仕様</li></ul>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<p>現行（pf-eccube3）と移行先（ec-cube-enterprise）で、本機能が参照する商品テーブルは dtb_product で同一スキーマである。最近見た商品ブロックは履歴Cookieの読み取りと商品画像の表示のみを行い、永続化（DB更新）を持たないため、移行に伴うDB差分は無い。履歴Cookieの蓄積（書き込み）・上限・並び替えの扱いは商品詳細（F03-02）を正とする。</p>
-<hr>
-<h2 id="用語">用語</h2>
-<div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>履歴Cookie</td><td>商品詳細で閲覧した商品IDの並びを保持するCookie。本ブロックはこれを読み取る。</td></tr><tr><td>最適カード画像</td><td>商品IDに対して表示用に選ばれるカード画像。サムネイルとして用いる。</td></tr><tr><td>遅延読み込み</td><td>画像を後追いで読み込む表示方式。一覧の画像に用いる。</td></tr></tbody></table></div>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>最近見た商品ブロックの読み込み</td><td><code>GET /{_locale}/block/history</code>（埋め込み・非同期取得）</td><td>履歴Cookieの商品IDからカード画像を取得し、サムネイルの一覧として描画する。</td></tr></tbody></table></div>
-<p>フロントのページであり管理画面プレフィックスは付かない。ロケールは<code>/{_locale}</code>の先頭区切りで決まる。本ブロックは各ページに埋め込まれて表示され、利用者が直接たどるURLではない。</p>
-<hr>
-<h2 id="フロント挙動">フロント挙動</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>見出し（最近見た商品）と、履歴の商品サムネイルの横並び一覧。各サムネイルは商品詳細へのリンク。</td></tr><tr><td>JS挙動</td><td>サムネイル画像は遅延読み込みで取得する。サムネイルにマウスを乗せると商品プレビューのポップアップを表示する（ポップアップ自体の内部仕様は本書で扱わない）。</td></tr><tr><td>CSS・レイアウト</td><td>フォイル商品のサムネイルにはフォイル用の装飾を付す。日本語と英語でポップアップのテンプレートを切り替える。</td></tr><tr><td>モーダル・ポップアップ</td><td>サムネイルのプレビュー用ポップアップを内包する。</td></tr></tbody></table></div>
-<p>履歴が無い場合は、最近見た商品が無い旨のメッセージを表示する。</p>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="最近見た商品を表示する">最近見た商品を表示する</h3>
-<ol><li>履歴Cookieを読み取る。Cookieが無い場合は、見出しと履歴無しの表示のみを描画する。</li><li>履歴Cookieの値を商品IDの並びとして解釈する。</li><li>並びの商品IDに対して最適なカード画像を取得する。</li><li>履歴の並び順に従って、画像が取得できた商品をサムネイルとして並べる。画像が取得できない商品は一覧から除外する。</li><li>サムネイルの一覧を描画する。各サムネイルは当該商品の商品詳細へのリンクとする。</li></ol>
-<hr>
-<h2 id="集計条件">集計条件</h2>
-<div class="table-wrap"><table><thead><tr><th>指標</th><th>集計の要点</th></tr></thead><tbody><tr><td>表示対象</td><td>履歴Cookieに含まれる商品IDのうち、最適カード画像が取得できた商品。</td></tr><tr><td>並び順</td><td>履歴Cookieの並び順（商品詳細で新しく見た商品が先頭）に従う。</td></tr><tr><td>除外</td><td>画像が取得できない商品IDは一覧から除外する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>画像の出し分け</td><td>商品IDごとに最適なカード画像をサムネイルに用いる。フォイル商品はフォイル用の装飾を付す。</td></tr><tr><td>履歴の並び</td><td>履歴Cookieの並び順をそのまま表示順とする。並び・上限の決定は商品詳細（F03-02）を正とする。</td></tr><tr><td>履歴無し</td><td>履歴Cookieが無い場合は履歴無しの表示とする。</td></tr></tbody></table></div>
-<p>本機能は利用者入力のフォームを持たないため入力項目は無い。</p>
-<h3 id="エッジケース">エッジケース</h3>
-<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>履歴Cookieが無い</td><td>履歴無しの表示のみを描画する。</td></tr><tr><td>履歴の商品IDで画像が取得できない</td><td>当該商品を一覧から除外する。</td></tr><tr><td>画像が取得できる商品が結果的に0件</td><td>一覧は空となる。</td></tr></tbody></table></div>
-<hr>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>参照時点</td><td>サムネイル画像は表示時点に商品IDから取得する。履歴の並びは表示時点の履歴Cookieに基づく。</td></tr><tr><td>履歴の蓄積との関係</td><td>履歴Cookieの書き込み・上限・重複の扱いは商品詳細（F03-02）を正とする。本ブロックは読み取り専用とする。</td></tr></tbody></table></div>
-<hr>
-<h2 id="API-バッチ結果">API/バッチ結果</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>API</td><td>本ブロックは履歴Cookieの商品IDから画像を取得して描画する。専用の外部APIは呼ばない。</td></tr><tr><td>バッチ</td><td>本機能ではバッチを実行しない。</td></tr></tbody></table></div>
-<hr>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="表示するもの">表示するもの</h3>
+<div class="table-wrap"><table><thead><tr><th>要素</th><th>内容</th></tr></thead><tbody><tr><td>見出し</td><td>常に表示する</td></tr><tr><td>サムネイルの横並び一覧</td><td>履歴があるときに表示する。各サムネイルは当該商品の商品詳細への導線とする</td></tr><tr><td>履歴無しの表示</td><td>履歴が無いときに、最近見た商品が無い旨を表示する</td></tr><tr><td>サムネイルの装飾</td><td>フォイル商品のときはフォイル用の装飾を付す</td></tr><tr><td>プレビューのポップアップ</td><td>サムネイルにマウスを乗せたときに表示する。雛形は日本語と英語で切り替える。ポップアップ自体の内部仕様は本書では扱わない</td></tr></tbody></table></div>
+<p>サムネイル画像は遅延読み込みで取得する。</p>
+<h3 id="履歴の読み取り">履歴の読み取り</h3>
+<p>閲覧履歴の保存値を読み取る。保存値が無いときは、見出しと履歴無しの表示だけを描画する。保存値があるときは、その値を商品IDの並びとして解釈する。</p>
+<h3 id="表示順と除外">表示順と除外</h3>
+<p>履歴の並び順をそのまま表示順とする。並びと上限の決定は商品詳細（F03-02）を正とする。商品IDごとに最適なカード画像を取得し、画像が取得できたときだけサムネイルとして並べる。画像が取得できないときは、その商品を一覧から除外する。</p>
+<p>本機能は利用者の入力欄を持たない。</p>
+<h3 id="エラー時の扱い">エラー時の扱い</h3>
+<div class="table-wrap"><table><thead><tr><th>事象</th><th>扱い</th></tr></thead><tbody><tr><td>閲覧履歴の保存値が無いとき</td><td>履歴無しの表示を描画する</td></tr><tr><td>画像が取得できない商品があるとき</td><td>当該商品だけを一覧から除外する</td></tr></tbody></table></div>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>履歴Cookie（商品IDの並び）。</td></tr><tr><td>成功時出力</td><td>履歴の商品サムネイル一覧のHTML、または履歴無しの表示。</td></tr><tr><td>失敗時出力</td><td>履歴Cookieが無い場合は履歴無しの表示。</td></tr><tr><td>副作用</td><td>無し（読み取りと表示のみ）。</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<p>機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。</p>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>dtb_product</code></td><td>商品名・フォイル区分・画像参照</td><td>サムネイル表示と装飾の判定に用いる。</td></tr><tr><td>カード画像</td><td>画像の参照</td><td>商品IDに対する最適カード画像の取得に用いる。</td></tr></tbody></table></div>
-<h3 id="DB操作">DB操作</h3>
-<p>本機能は参照系（検索）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>検索</td><td>dtb_product</td><td>検索条件に合致するレコードを抽出する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="バリデーション">バリデーション</h2>
-<p>本機能は読み取りと表示が主であり、利用者入力の検証は行わない。履歴Cookieの値は商品IDの並びとして解釈し、画像が取得できない商品は除外する。</p>
-<hr>
-<h2 id="権限・認可">権限・認可</h2>
-<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>最近見た商品の表示</th></tr></thead><tbody><tr><td>未ログイン</td><td>表示可能。履歴Cookieに基づく。</td></tr><tr><td>ログイン済み会員</td><td>表示可能。履歴Cookieに基づく（会員単位ではなくブラウザ単位）。</td></tr></tbody></table></div>
-<p>履歴はブラウザのCookieに依存するため、会員ログインの有無では切り替わらない。</p>
-<hr>
-<h2 id="画面遷移">画面遷移</h2>
-<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>サムネイルのリンク押下</td><td>当該商品の商品詳細（F03-02）</td></tr></tbody></table></div>
-<p>本ブロックは埋め込み表示であり、表示のための画面遷移は持たない。</p>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>履歴Cookieが無い</td><td>履歴無しの表示を描画する。</td></tr><tr><td>画像が取得できない商品</td><td>当該商品を一覧から除外する。</td></tr></tbody></table></div>
-<p>表示文言は表示メッセージ節を正とする。</p>
-<hr>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>閲覧履歴の保存値（商品IDの並び）</td></tr><tr><td>成功時出力</td><td>履歴の商品サムネイル一覧、または履歴が無いときの履歴無しの表示</td></tr><tr><td>失敗時出力</td><td>保存値が無いときは履歴無しの表示</td></tr></tbody></table></div>
+<h3 id="入出力-永続化">入出力: 永続化</h3>
+<p>本機能はデータを更新しない。</p>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
 <h2 id="表示メッセージ">表示メッセージ</h2>
-<h3 id="常時表示-正常・静的">常時表示（正常・静的）</h3>
-<div class="table-wrap"><table><thead><tr><th>種別</th><th>表示文言（日本語）</th><th>表示文言（英語）</th><th>条件</th></tr></thead><tbody><tr><td>見出し</td><td>最近見た商品</td><td>Recently Viewed</td><td>常時</td></tr><tr><td>履歴無し</td><td>最近見た商品はありません。</td><td>No Recently Seen Items</td><td>履歴Cookieが無いとき</td></tr></tbody></table></div>
-<p>日本語は<code>message.ja.yml</code>、英語は<code>message.en.yml</code>の同一ロケールキー（見出し<code>history.title</code>、履歴無し<code>history.no_content</code>相当）を正とする。</p>
-<p>本ブロックはインラインエラーやフラッシュ・トーストを生成しない。</p>
-<hr>
-<h2 id="Cookie">Cookie</h2>
-<h3 id="閲覧履歴のCookie">閲覧履歴のCookie</h3>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>Cookie名</td><td><code>history</code>（確認値）。値（商品IDの並び）は本書に記載しない。</td></tr><tr><td>本ブロックの扱い</td><td>読み取り専用。商品IDの並びを取り出し、画像の取得と表示順に用いる。書き込みは行わない。</td></tr><tr><td>書き込み側</td><td>履歴Cookieへの追記・上限・重複の扱いは商品詳細（F03-02）を正とする。</td></tr></tbody></table></div>
-<p>履歴Cookieの原値（商品IDの並び）は本書に記載しない。</p>
-<hr>
-<h2 id="ログ・監査">ログ・監査</h2>
-<p>本機能は読み取りと表示が主であり、固有の業務監査ログは出力しない。</p>
-<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
-<ul><li>Cookie値（閲覧履歴の原値を含む）</li><li>セッションIDの完全値</li></ul>
-<hr>
-<h2 id="セッション">セッション</h2>
-<p>本ブロックは最近見た商品の表示のためにセッションを更新しない。表示は履歴Cookieに基づく。</p>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<p>本機能は読み取りと表示のみであり、楽観ロック・悲観ロックの対象は持たない。</p>
+<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>—</td><td>見出し</td><td>最近見た商品</td><td>常に表示する</td><td>—</td></tr><tr><td>—</td><td>一覧領域</td><td>最近見た商品はありません。</td><td>閲覧履歴の保存値が無いとき</td><td>一覧を表示しない</td></tr></tbody></table></div>
+<p>本ブロックは項目ごとのエラーと一時的な通知メッセージを生成しない。</p>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,31 +272,17 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#本書で扱うこと">本書で扱うこと</a>
-<a class="lv2" href="#本書で扱わないこと">本書で扱わないこと</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv2" href="#用語">用語</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#認証・認可">認証・認可</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#ネット買取注文の査定を終了する-PUT-admin-buyOrder-id-json">ネット買取注文の査定を終了する（PUT `/admin/buyOrder/{id}.json`）</a>
-<a class="lv2" href="#表示メッセージ">表示メッセージ</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#処理できる条件">処理できる条件</a>
+<a class="lv3" href="#入力検証">入力検証</a>
+<a class="lv3" href="#明細の処理">明細の処理</a>
+<a class="lv3" href="#合計額と受注の更新">合計額と受注の更新</a>
+<a class="lv3" href="#エラー時の扱い">エラー時の扱い</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv3" href="#リクエスト">リクエスト</a>
-<a class="lv3" href="#レスポンス-成功">レスポンス（成功）</a>
-<a class="lv3" href="#レスポンス-失敗">レスポンス（失敗）</a>
-<a class="lv3" href="#サンプルレスポンス">サンプルレスポンス</a>
-<a class="lv3" href="#副作用">副作用</a>
-<a class="lv2" href="#バリデーション">バリデーション</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv2" href="#権限・認可">権限・認可</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#ログ・監査">ログ・監査</a>
-<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a></nav>
+<a class="lv3" href="#入出力-リクエスト">入出力: リクエスト</a>
+<a class="lv3" href="#入出力-永続化">入出力: 永続化</a>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -294,94 +290,34 @@ footer {
         <h1>API ネット買取管理 — ネット買取注文の査定終了処理</h1>
       </header>
       
-      <h2 id="概要">概要</h2>
-<p>買取アプリ（MTGバイヤー）が、ネット買取注文の査定を終え、査定結果（買取明細とステータス）を確定するためのAPIである。pf-api（買取連携用のAPIアプリケーション）が提供するJSON APIで、受注IDで対象を特定し、送られた明細から買取代表カード・個別入力商品を登録・更新・削除し、合計額と買取受注ステータスを更新する。ステータスが変わった場合はステータス履歴も登録する。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-apiのネット買取注文の査定終了処理、ルート定義（<code>config/routes.yaml</code>）、ネット買取受注を扱うエンティティとリポジトリ、入力検証用のエンティティと制約、共通の認証処理を正とする。本機能のカスタマイズ区分は現行踏襲であり、挙動はpf-apiの実装を参照し、DB関連（テーブル・列）の記述はec-cube-enterpriseを正とする。</p>
-<p>対象はJSON APIエンドポイントであり、ブラウザ向けの画面を持たない。本文ではフレームワークのコントローラ型名やメソッド名を主説明としない。「利用者視点の入口」にHTTPメソッドとパスパターンを書く。</p>
-<hr>
-<h2 id="本書で扱うこと">本書で扱うこと</h2>
-<ul><li>受注IDによるネット買取受注の特定と、明細・合計額・ステータスの更新</li><li>送られた明細からの買取代表カード・個別入力商品の登録・更新・削除</li><li>ステータス変更時のステータス履歴登録</li><li>認証、対象なし、入力検証、更新処理失敗時の応答</li></ul>
-<hr>
-<h2 id="本書で扱わないこと">本書で扱わないこと</h2>
-<p>以下は本書では仕様確定せず、実装または別APIの設計を正とする。</p>
-<ul><li>ネット買取受注の一覧取得（ネット買取受注一覧取得APIの設計を正とする）</li><li>ネット買取受注のフリーコメント更新・ステータス単独更新（各ネット買取APIの設計を正とする）</li><li>申込時買取価格の算出ロジックそのものの妥当性（買取価格設定の設計を正とする）</li><li>まとめ買取商品IDの設定値（まとめて買取商品IDの取得APIの設計を正とする）</li><li>トークンの発行（買取アプリ用ログインの設計を正とする）</li></ul>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<p>本機能は現行踏襲であり、挙動の参照は現行のpf-api、DB関連の正はec-cube-enterpriseとする。永続化に関わるテーブルは、ステータス履歴の物理テーブル名を除き、現行と移行先で同一スキーマである。現行と移行先で確認した差は次のとおり。</p>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>現行（pf-api）</th><th>移行先（ec-cube-enterprise）</th><th>扱い</th></tr></thead><tbody><tr><td>ネット買取受注</td><td><code>dtb_buy_order</code></td><td><code>dtb_buy_order</code></td><td>同一スキーマ。</td></tr><tr><td>買取代表カード</td><td><code>dtb_buy_main_card</code></td><td><code>dtb_buy_main_card</code></td><td>同一スキーマ。</td></tr><tr><td>個別入力商品</td><td><code>dtb_buy_order_indivisual_input_product</code></td><td><code>dtb_buy_order_indivisual_input_product</code></td><td>同一スキーマ。</td></tr><tr><td>申込時買取価格</td><td><code>dtb_application_price</code></td><td><code>dtb_application_price</code></td><td>同一スキーマ。</td></tr><tr><td>ネット買取受注ステータス履歴</td><td><code>dtb_buy_order_status_history</code></td><td><code>dtb_buy_order_status_histry</code></td><td>物理テーブル名が異なる。移行先の<code>dtb_buy_order_status_histry</code>を正とする。</td></tr><tr><td>買取受注ステータスマスタ</td><td><code>mtb_buy_order_status</code></td><td><code>mtb_buy_order_status</code></td><td>同一スキーマ。</td></tr><tr><td>オプションマスタ</td><td><code>mtb_option</code></td><td><code>mtb_option</code></td><td>同一スキーマ。まとめ買取商品IDの設定先。</td></tr></tbody></table></div>
-<hr>
-<h2 id="用語">用語</h2>
-<div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>ネット買取受注</td><td>ネット経由で受け付けた買取の受注。受注IDで一意に特定する。</td></tr><tr><td>査定終了処理</td><td>査定結果の明細とステータスを受注に反映し、査定を確定する処理。</td></tr><tr><td>買取代表カード</td><td>受注に紐づくカード商品の買取明細。商品規格ごとに登録する。</td></tr><tr><td>個別入力商品</td><td>商品規格を持たず名称で入力する明細。明細の商品規格IDが<code>0</code>のものを指す。</td></tr><tr><td>まとめ買取商品</td><td>まとめて買取で用いる商品。オプションマスタの設定IDで識別し、申込時買取価格のみ削除対象とする。</td></tr><tr><td>買取受注ステータス</td><td>受注の進行状態を表すマスタ値。査定終了処理で指定する。</td></tr><tr><td>ステータス履歴</td><td>ステータスが変わった際に記録する履歴。</td></tr></tbody></table></div>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>ネット買取注文の査定終了処理</td><td><code>PUT /admin/buyOrder/{id}.json</code></td><td>受注IDのネット買取受注に対し、送られた明細とステータスを反映する。明細の登録・更新・削除、合計額・ステータスの更新、ステータス変更時の履歴登録を行い、成功時はコード200のJSONを返す。</td></tr></tbody></table></div>
-<p>応答形式はJSON。呼び出し元は買取アプリ（MTGバイヤー）。</p>
-<hr>
-<h2 id="認証・認可">認証・認可</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>認証方式</td><td><code>jwt-token</code>ヘッダのJWTを検証し、ペイロードの利用者IDから管理者会員を引く。署名方式はHS256。</td></tr><tr><td>認証失敗時</td><td>ヘッダ欠落・署名不正・該当する管理者会員なしのいずれも認証拒否（HTTP 401）とする。</td></tr><tr><td>認可</td><td>認証した管理者会員を受注の更新担当者として記録し、ステータス変更時の履歴にも記録する。呼び出し可能なクライアントは買取アプリ。</td></tr></tbody></table></div>
-<p>トークン原値・署名シークレットは本書に記載しない。</p>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="ネット買取注文の査定を終了する-PUT-admin-buyOrder-id-json">ネット買取注文の査定を終了する（PUT <code>/admin/buyOrder/{id}.json</code>）</h3>
-<ol><li><code>jwt-token</code>ヘッダのトークンを検証し、管理者会員を特定する。検証できない場合は認証拒否（HTTP 401）とする。</li><li>パスの受注IDでネット買取受注を1件取得する。該当が無い場合は該当なし（HTTP 404）とする。</li><li>ボディのステータス（<code>order_status</code>）と明細配列（<code>order_details</code>）を受け取り、入力検証する。ステータスは選択必須かつ買取受注ステータスマスタに存在すること、明細配列は1件以上必須であること、各明細は商品名必須・数量／単価／商品規格ID／買取カテゴリが整数であることを検証する。検証エラーが1件以上あれば入力不正（HTTP 400）とし、エラーメッセージの配列を返す。</li><li>明細を1件ずつ処理する。商品規格IDが<code>0</code>の明細は個別入力商品として、同名の既存があれば更新し、無ければ新規に作る。それ以外は商品規格から買取代表カードを特定し、同一条件の既存があれば更新し、無ければ新規に作って既存明細から申込時買取価格を引き継ぐ。各明細の単価×数量を合計額に加算する。</li><li>受注に既存登録されているカードのうち、まとめ買取商品は申込時買取価格を削除し、サプライ・パック相当（カード詳細IDが未設定）の明細は合計額に加算して保持する。</li><li>合計額を10円単位で切り上げ、受注にステータス・合計額・買取代表カード・個別入力商品・更新担当者・更新日時を設定する。今回保持しない既存の買取代表カード・個別入力商品とそれに紐づく申込時買取価格を削除する。</li><li>更新前後でステータスが変わった場合は、受注のステータスと更新日時を再設定し、ステータス履歴を1件登録する。</li><li>ここまでを1つのトランザクションで確定する。処理中に例外が発生した場合はロールバックし、内部エラー（HTTP 500）とし、エラーメッセージの配列を返す。</li><li>成功時はコード200のJSONを返す。</li></ol>
-<hr>
-<h2 id="表示メッセージ">表示メッセージ</h2>
-<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>画面上の文言(英語)</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>A07-05-MSG-001</td><td>API応答JSON（errors配列）</td><td>買取情報が見つかりません</td><td>（英訳なし）</td><td>PUT /{eccube_api_v1_route}/admin/buyOrder/{id}.json で指定IDのDtbBuyOrderが存在しない</td><td>APIはエラーJSONを返して終了</td></tr></tbody></table></div>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>更新対象</td><td>リクエストで指定されたID・入力値に対応する業務データを対象にする。対象特定、入力不正、認証・認可の判定順序は処理フローとバリデーションの各節を正とする。</td></tr><tr><td>更新方法</td><td>入力値を対象データへ上書きまたは追加登録する。履歴登録や関連データ更新がある場合は入出力の副作用およびDBカラムの節を正とする。</td></tr><tr><td>計算処理</td><td>本APIでは金額・税・ポイント・在庫数量の再計算や丸めを行わない。ステータスやコメント等の更新は、実装で定義された遷移・存在確認・担当者判定に従う。</td></tr><tr><td>応答値</td><td>成功時は処理結果コードまたは更新後に取得した値を返す。レスポンス値は本API内で独自集計せず、保存結果または取得結果をJSON応答へ整形する。</td></tr></tbody></table></div>
-<hr>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="処理できる条件">処理できる条件</h3>
+<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>認証トークンが無いとき、署名が不正なとき、または該当する管理者会員がないとき</td><td>認証拒否（HTTP 401）</td></tr><tr><td>2</td><td>パスの受注IDに一致するネット買取受注がないとき</td><td>該当なし（HTTP 404）</td></tr><tr><td>3</td><td>入力検証に1件以上失敗したとき</td><td>入力不正（HTTP 400）とし、エラーメッセージの配列を返す</td></tr><tr><td>4</td><td>上記以外のとき</td><td>査定終了処理を実行する</td></tr></tbody></table></div>
+<p>認証は要求ヘッダのトークンを検証し、その利用者IDに対応する管理者会員を特定する。署名方式はHS256とする。トークンの原値と署名の秘密値は本書に記載しない。呼び出せるのは買取アプリだけである。認証した管理者会員を受注の更新担当者として記録し、ステータス変更時の履歴にも記録する。</p>
+<h3 id="入力検証">入力検証</h3>
+<div class="table-wrap"><table><thead><tr><th>対象</th><th>条件</th></tr></thead><tbody><tr><td>ステータス</td><td>選択が必須で、買取受注ステータスマスタに存在すること</td></tr><tr><td>明細の配列</td><td>1件以上あること</td></tr><tr><td>明細の商品名</td><td>必須。最大65535</td></tr><tr><td>明細の数量・単価・商品規格ID・買取カテゴリ</td><td>整数であること</td></tr></tbody></table></div>
+<h3 id="明細の処理">明細の処理</h3>
+<p>明細は1件ずつ処理する。商品規格IDが0の明細は個別入力商品として扱い、同名の既存があるときは更新し、無いときは新規に作る。それ以外の明細は商品規格から買取代表カードを特定し、同一条件の既存があるときは更新し、無いときは新規に作って既存明細から申込時買取価格を引き継ぐ。買取代表カードの言語・状態・フォイル区分は明細処理で参照する。</p>
+<p>各明細の単価×数量を合計額に加算する。</p>
+<p>受注に既存登録されているカードのうち、まとめ買取商品は申込時買取価格を削除する。カード詳細IDが未設定の明細はサプライ・パック相当として合計額に加算して保持する。</p>
+<h3 id="合計額と受注の更新">合計額と受注の更新</h3>
+<p>合計額は10円単位で切り上げる。受注にはステータス・合計額・買取代表カード・個別入力商品・更新担当者・更新日時を設定する。今回保持しない既存の買取代表カード・個別入力商品と、それに紐づく申込時買取価格は削除する。</p>
+<p>更新前後でステータスが変わったときは、受注のステータスと更新日時を再設定し、ステータス履歴を1件登録する。</p>
+<p>本処理では金額・税・ポイント・在庫数量の再計算や丸めを、上記の合計額の切り上げを除いて行わない。応答値は独自集計せず、処理結果コードを返す。</p>
+<h3 id="エラー時の扱い">エラー時の扱い</h3>
+<div class="table-wrap"><table><thead><tr><th>事象</th><th>扱い</th></tr></thead><tbody><tr><td>認証できないとき</td><td>認証拒否（HTTP 401）とする</td></tr><tr><td>受注が存在しないとき</td><td>該当なし（HTTP 404）とする</td></tr><tr><td>ステータスまたは明細の入力検証に失敗したとき</td><td>入力不正（HTTP 400）とし、処理結果コードとエラーメッセージの配列を返す</td></tr><tr><td>更新処理中に例外が発生したとき</td><td>更新内容を取り消し、内部エラー（HTTP 500）とし、処理結果コードと例外メッセージの配列を返す</td></tr></tbody></table></div>
+<p>受注の更新から履歴登録までは一括で確定し、途中で失敗したときは全体を取り消す。</p>
 <h2 id="入出力">入出力</h2>
-<h3 id="リクエスト">リクエスト</h3>
-<div class="table-wrap"><table><thead><tr><th>パラメータ</th><th>位置</th><th>型</th><th>必須／任意</th><th>説明</th></tr></thead><tbody><tr><td><code>id</code></td><td>パス</td><td>integer</td><td>必須</td><td>更新対象のネット買取受注ID。該当が無い場合は該当なし（HTTP 404）。</td></tr><tr><td><code>order_status</code></td><td>ボディ（フォーム値）</td><td>integer</td><td>必須</td><td>設定する買取受注ステータスID。未指定は入力不正（HTTP 400）。買取受注ステータスマスタに存在しないIDも入力不正（HTTP 400）。</td></tr><tr><td><code>order_details</code></td><td>ボディ（フォーム値）</td><td>array</td><td>必須</td><td>明細の配列。空・配列以外は入力不正（HTTP 400）。各要素は<code>product_class_id</code>・<code>name</code>・<code>quantity</code>・<code>price</code>・<code>purchase_category</code>等のキーを持つ。</td></tr><tr><td><code>jwt-token</code></td><td>ヘッダ</td><td>string</td><td>必須</td><td>認証用のJWTトークン。</td></tr></tbody></table></div>
-<p>各明細（<code>order_details</code>の要素）が持つキーは次のとおり。</p>
-<div class="table-wrap"><table><thead><tr><th>キー</th><th>型</th><th>必須／任意</th><th>説明</th></tr></thead><tbody><tr><td><code>product_class_id</code></td><td>string（整数文字列）</td><td>任意</td><td>商品規格ID。<code>0</code>の明細は個別入力商品として扱う。整数以外は入力不正（HTTP 400）。</td></tr><tr><td><code>name</code></td><td>string</td><td>必須</td><td>商品名。未指定は入力不正（HTTP 400）。最大65535。</td></tr><tr><td><code>quantity</code></td><td>string（整数文字列）</td><td>任意</td><td>数量。整数以外は入力不正（HTTP 400）。</td></tr><tr><td><code>price</code></td><td>string（整数文字列）</td><td>任意</td><td>単価。整数以外は入力不正（HTTP 400）。</td></tr><tr><td><code>purchase_category</code></td><td>string（整数文字列）</td><td>任意</td><td>買取カテゴリ。整数以外は入力不正（HTTP 400）。</td></tr><tr><td><code>language_id</code>、<code>condition_id</code>、<code>foil_flg</code></td><td>各種</td><td>任意</td><td>買取代表カードの言語・状態・フォイル区分。明細処理で参照する。</td></tr></tbody></table></div>
-<h3 id="レスポンス-成功">レスポンス（成功）</h3>
-<p>HTTP 200。</p>
-<div class="table-wrap"><table><thead><tr><th>フィールド</th><th>型</th><th>説明</th></tr></thead><tbody><tr><td><code>code</code></td><td>integer</td><td>処理結果コード。成功時は200。</td></tr></tbody></table></div>
-<h3 id="レスポンス-失敗">レスポンス（失敗）</h3>
-<div class="table-wrap"><table><thead><tr><th>HTTPステータス</th><th>条件</th><th>本文の形</th></tr></thead><tbody><tr><td>401</td><td>トークン欠落・署名不正・該当する管理者会員なし</td><td>認証拒否（本文を持たない）</td></tr><tr><td>404</td><td>受注IDに該当するネット買取受注が無い</td><td>該当なし（本文を持たない）</td></tr><tr><td>400</td><td>ステータス・明細の入力検証に1件以上失敗</td><td><code>{code, errors}</code>（<code>errors</code>は検証メッセージの配列）</td></tr><tr><td>500</td><td>更新処理中の例外（ロールバック後に返す）</td><td><code>{code, errors}</code>（<code>errors</code>は例外メッセージの配列）</td></tr></tbody></table></div>
-<h3 id="サンプルレスポンス">サンプルレスポンス</h3>
-<p>成功時の応答例。</p>
-<pre><code class="language-json">{
-  "code": 200
-}</code></pre>
-<p>入力検証失敗時の応答例。</p>
-<pre><code class="language-json">{
-  "code": 400,
-  "errors": [
-    "ステータスを選択してください。",
-    "1つ以上の商品を選んでください。"
-  ]
-}</code></pre>
-<h3 id="副作用">副作用</h3>
-<p>ネット買取受注を更新する（DB更新）。具体的には次を行う。</p>
-<ul><li>受注の買取受注ステータス・合計額・更新担当者・更新日時を更新する。</li><li>送られた明細から買取代表カード・個別入力商品を登録・更新する。今回保持しない既存の買取代表カード・個別入力商品と、それに紐づく申込時買取価格を削除する。まとめ買取商品は申込時買取価格のみ削除する。</li><li>更新前後でステータスが変わった場合は、ステータス履歴を1件登録する（履歴に受注ID・ステータスID・更新担当者・登録日時を記録する）。</li></ul>
-<p>参照のみではない。応答はJSON応答整形を経て返す。プロパティはcamelCase、日時はISO8601、<code>serialize_null</code>は有効とする。</p>
-<hr>
-<h2 id="バリデーション">バリデーション</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td><code>order_status</code></td><td>必須。未指定は「ステータスを選択してください。」を返す。買取受注ステータスマスタに存在しないIDは「MtbBuyOrderStatusに（値）が見つかりません。」を返す。いずれも入力不正（HTTP 400）。</td></tr><tr><td><code>order_details</code></td><td>配列かつ1件以上必須。空・配列以外は「1つ以上の商品を選んでください。」を返す（HTTP 400）。</td></tr><tr><td>明細の<code>name</code></td><td>必須かつ最大65535。未指定は入力不正（HTTP 400）。超過時は「商品名は、（上限）以下で入力してください。」を返す。</td></tr><tr><td>明細の<code>product_class_id</code></td><td>整数のみ。整数以外は「商品規格IDは、整数で入力してください。」を返す（HTTP 400）。</td></tr><tr><td>明細の<code>quantity</code></td><td>整数のみ。整数以外は「数量は、整数で入力してください。」を返す（HTTP 400）。</td></tr><tr><td>明細の<code>price</code></td><td>整数のみ。整数以外は「単価は、整数で入力してください。」を返す（HTTP 400）。</td></tr><tr><td>明細の<code>purchase_category</code></td><td>整数のみ。整数以外は「買取カテゴリは、整数で入力してください。」を返す（HTTP 400）。</td></tr></tbody></table></div>
-<p>検証はステータス・明細全体と各明細を順に行い、収集したエラーメッセージを1つの配列にまとめる。1件以上あれば入力不正（HTTP 400）とし、更新は行わない。</p>
-<hr>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>参照時点</td><td>更新時点で存在するネット買取受注を対象に更新する。受注が無い場合は該当なし（HTTP 404）とする。</td></tr><tr><td>更新範囲</td><td>ステータス・合計額・買取代表カード・個別入力商品・更新担当者・更新日時を更新し、ステータス変更時は履歴を登録する。受注のその他項目は本APIでは変更しない。</td></tr><tr><td>合計額</td><td>送られた明細の単価×数量と、保持するサプライ・パック相当の明細額を合算し、10円単位で切り上げて確定する。</td></tr><tr><td>同時更新</td><td>同一受注への同時更新に対する楽観ロック・悲観ロックは持たない。後勝ちとなり、同時実行時は明細の削除・登録が競合し得る。</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<p>機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。</p>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td>ネット買取受注</td><td>受注ID</td><td>受注の特定に用いる。</td></tr><tr><td>ネット買取受注</td><td>買取受注ステータスID</td><td>指定値で更新する。</td></tr><tr><td>ネット買取受注</td><td>合計額</td><td>算出した合計額で更新する。</td></tr><tr><td>ネット買取受注</td><td>更新担当者</td><td>認証した管理者会員を記録する。</td></tr><tr><td>ネット買取受注</td><td>更新日時</td><td>処理時点の日時で更新する。</td></tr><tr><td>買取代表カード</td><td>各列</td><td>明細から登録・更新する。保持しないものは削除する。</td></tr><tr><td>買取個別入力商品</td><td>各列</td><td>個別入力明細から登録・更新する。保持しないものは削除する。</td></tr><tr><td>申込時買取価格</td><td>各列</td><td>新規カードに引き継ぎ登録し、削除対象のカード・まとめ買取商品の分は削除する。</td></tr><tr><td>ネット買取受注ステータス履歴</td><td>受注ID・ステータスID・更新担当者・登録日時</td><td>ステータス変更時に1件登録する。</td></tr><tr><td>買取受注ステータスマスタ</td><td>ステータスID</td><td>指定ステータスの存在確認・設定に用いる。</td></tr><tr><td>オプションマスタ</td><td>まとめ買取商品IDの値</td><td>まとめ買取商品の判定に用いる。</td></tr></tbody></table></div>
-<hr>
-<h2 id="権限・認可">権限・認可</h2>
-<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>ネット買取注文の査定終了処理</th></tr></thead><tbody><tr><td>認証済みの管理者会員</td><td>受注の明細・合計額・ステータスを更新できる。更新担当者・履歴に記録される。</td></tr><tr><td>未認証・トークン不正</td><td>認証拒否（HTTP 401）となり、更新できない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>認証不可</td><td>認証拒否（HTTP 401）とする。</td></tr><tr><td>受注が存在しない</td><td>該当なし（HTTP 404）とする。</td></tr><tr><td>ステータス・明細の入力検証に失敗</td><td>入力不正（HTTP 400）とし、<code>code</code>とエラーメッセージ配列<code>errors</code>のJSONを返す。</td></tr><tr><td>更新処理中の例外</td><td>トランザクションをロールバックし、内部エラー（HTTP 500）とし、<code>code</code>と例外メッセージ配列<code>errors</code>のJSONを返す。</td></tr></tbody></table></div>
-<hr>
-<h2 id="ログ・監査">ログ・監査</h2>
-<p>更新処理中に例外が発生した場合、例外メッセージをエラーログに出力する。</p>
-<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
-<ul><li>JWTトークンの原値</li><li>署名シークレット（<code>auth_magic</code>）</li><li>Cookie値・セッションIDの完全値</li></ul>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<p>本APIは受注の明細・合計額・ステータスの更新とステータス履歴の登録を1つのトランザクションで行う。明細の取得・登録・削除、受注の更新、履歴の登録までを1トランザクションとし、処理中に例外が発生した場合はロールバックして内部エラー（HTTP 500）を返す。楽観ロック・悲観ロックの対象は持たず、同一受注への同時更新は後勝ちとなる。</p>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>更新対象のネット買取受注ID（パス）、認証トークン（ヘッダ）、設定する買取受注ステータスID、明細の配列</td></tr><tr><td>成功時出力</td><td>HTTP 200。処理結果コード200</td></tr><tr><td>失敗時出力</td><td>HTTP 401・404・400・500のいずれか。401と404は本文を持たない。400と500は処理結果コードとエラーメッセージの配列</td></tr></tbody></table></div>
+<h3 id="入出力-リクエスト">入出力: リクエスト</h3>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>位置</th><th>型</th><th>必須／任意</th><th>内容</th></tr></thead><tbody><tr><td>ネット買取受注ID</td><td>パス</td><td>integer</td><td>必須</td><td>該当が無いときは該当なし（HTTP 404）</td></tr><tr><td>認証トークン</td><td>ヘッダ</td><td>string</td><td>必須</td><td>検証して利用者IDから管理者会員を特定する</td></tr><tr><td>買取受注ステータスID</td><td>ボディ</td><td>integer</td><td>必須</td><td>未指定のとき、およびマスタに存在しないIDのときは入力不正（HTTP 400）</td></tr><tr><td>明細の配列</td><td>ボディ</td><td>array</td><td>必須</td><td>空のとき、配列以外のときは入力不正（HTTP 400）</td></tr></tbody></table></div>
+<p>明細1件が持つ項目は次のとおり。</p>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>型</th><th>必須／任意</th><th>内容</th></tr></thead><tbody><tr><td>商品規格ID</td><td>整数文字列</td><td>任意</td><td>0のときは個別入力商品として扱う。整数以外のときは入力不正（HTTP 400）</td></tr><tr><td>商品名</td><td>string</td><td>必須</td><td>未指定のときは入力不正（HTTP 400）。最大65535</td></tr><tr><td>数量</td><td>整数文字列</td><td>任意</td><td>整数以外のときは入力不正（HTTP 400）</td></tr><tr><td>単価</td><td>整数文字列</td><td>任意</td><td>整数以外のときは入力不正（HTTP 400）</td></tr><tr><td>買取カテゴリ</td><td>整数文字列</td><td>任意</td><td>整数以外のときは入力不正（HTTP 400）</td></tr><tr><td>言語・状態・フォイル区分</td><td>各種</td><td>任意</td><td>買取代表カードの特定に用いる</td></tr></tbody></table></div>
+<h3 id="入出力-永続化">入出力: 永続化</h3>
+<div class="table-wrap"><table><thead><tr><th>操作</th><th>契機</th></tr></thead><tbody><tr><td>追加・更新</td><td>明細処理での、買取代表カードおよび個別入力商品</td></tr><tr><td>更新</td><td>受注のステータス・合計額・更新担当者・更新日時の設定</td></tr><tr><td>削除</td><td>今回保持しない既存の買取代表カード・個別入力商品と、それに紐づく申込時買取価格</td></tr><tr><td>削除</td><td>まとめ買取商品の申込時買取価格</td></tr><tr><td>追加</td><td>更新前後でステータスが変わったときの、ステータス履歴1件</td></tr></tbody></table></div>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
+<h2 id="表示メッセージ">表示メッセージ</h2>
+<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>A07-05-MSG-001</td><td>API応答JSON（errors配列）</td><td>買取情報が見つかりません</td><td>査定終了処理で、指定IDのネット買取受注が存在しないとき</td><td>APIはエラーJSONを返して終了</td></tr><tr><td>—</td><td>API応答のエラーメッセージ配列</td><td>ステータスを選択してください。</td><td>ステータスが未選択のとき</td><td>入力不正（HTTP 400）で終了する</td></tr><tr><td>—</td><td>API応答のエラーメッセージ配列</td><td>1つ以上の商品を選んでください。</td><td>明細の配列が空のとき</td><td>入力不正（HTTP 400）で終了する</td></tr></tbody></table></div>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

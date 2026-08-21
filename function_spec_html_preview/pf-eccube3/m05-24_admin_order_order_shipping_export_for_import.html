@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,35 +272,14 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#フロント挙動">フロント挙動</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#CSVをダウンロードする-admin-order-export-for-input-exportForInput">CSVをダウンロードする（`admin_order_export_for_input`、`exportForInput`）</a>
-<a class="lv2" href="#集計条件">集計条件</a>
-<a class="lv2" href="#表示メッセージ">表示メッセージ</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
-<a class="lv3" href="#エッジケース">エッジケース</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#出力対象">出力対象</a>
+<a class="lv3" href="#出力する値">出力する値</a>
+<a class="lv3" href="#出力する列">出力する列</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#バリデーション">バリデーション</a>
-<a class="lv2" href="#権限・認可">権限・認可</a>
-<a class="lv2" href="#画面遷移">画面遷移</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#試行制限">試行制限</a>
-<a class="lv2" href="#ログ・監査">ログ・監査</a>
-<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
-<a class="lv2" href="#セッション">セッション</a>
-<a class="lv3" href="#本機能におけるセッション">本機能におけるセッション</a>
-<a class="lv3" href="#セッションへ保存しない情報">セッションへ保存しない情報</a>
-<a class="lv2" href="#Cookie">Cookie</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a>
-<a class="lv2" href="#調査補助-grep向け">調査補助（grep向け）</a>
-<a class="lv3" href="#HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</a></nav>
+<a class="lv3" href="#出力-CSVファイル">出力: CSVファイル</a>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -298,93 +287,24 @@ footer {
         <h1>受注管理 — 出荷実績入力用CSV出力</h1>
       </header>
       
-      <h2 id="概要">概要</h2>
-<p>「出荷実績インポート登録」で取り込むCSVと同一の日本語ヘッダ列を持つファイルを、管理画面からダウンロード応答で返す機能である。画面ラベルは翻訳キー<code>admin.order.shipping_export_for_import</code>で「出荷実績入力用CSVダウンロード」となる。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。ソース上の確認値はSymfonyルート、<code>src/Eccube/Controller/Admin/Order/OrderCsvController.php</code>の送信先処理、<code>src/Eccube/Service/Csv/OrderCsv.php</code>、<code>src/Eccube/Repository/OrderRepository.php</code>の出荷実績用CSV検索、<code>src/Eccube/Resource/template/admin/ShippingStandby/edit.twig</code>のボタンとフォーム送信とする。</p>
-<p>対象はブラウザ経由の管理画面に限定する。</p>
-<p>本機能のカスタマイズ区分は現行踏襲であり、画面挙動と処理フローは現行リポ pf-eccube3 の実装を確認値とし、永続化に関わるテーブル・列の記述は ec-cube-enterprise を正とする。</p>
-<p>コントローラの公開関数一覧は本文の主題としない。本文ではルートbind名やSymfonyのルートnameの網羅は主説明としない。「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。コード探索でbind名が必要なときだけ「調査補助」へ書く。</p>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<p>DB関連の記述は ec-cube-enterprise を正とする。CSV生成が参照する永続化先のうち、注文の郵便番号の保持方式に現行と移行先で差がある。</p>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>受注本体</td><td><code>dtb_order</code></td><td>同一テーブル。郵便番号列の構成のみ後述のとおり異なる。</td></tr><tr><td>注文の郵便番号</td><td><code>dtb_order</code> が <code>zip01</code>（3桁）・<code>zip02</code>（4桁）の2列で保持</td><td><code>dtb_order.postal_code</code>（単一列、最大8桁）に統合。先頭3桁・残り4桁への分割はエンティティの取得補助で行う。CSVヘッダは引き続き2列分を出力する。</td></tr><tr><td>配送</td><td><code>dtb_shipping</code>（INNER JOIN のため配送が無い注文は出力対象外）</td><td>同一スキーマ。</td></tr><tr><td>配送先FAX</td><td>専用列なし。CSVでは空文字で補完</td><td>同一。移行先にも配送先FAX列は無く、空文字補完の前提は変わらない。</td></tr></tbody></table></div>
-<p>CSVのヘッダ列順・日時書式（<code>Y/m/d H:i:s</code>）・エンコーディング設定は永続化スキーマではなく出力仕様であり、本節の差分管理対象としない。</p>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>受注メニューの出荷指示（出荷待ち）詳細ページで一覧のチェック付きを残し「出荷実績入力用CSVダウンロード」ボタンを押す</td><td><code>POST /{admin_route}/order/export/order</code></td><td><code>order_ids[&lt;受注内部ID&gt;]</code>が送られ、共通CSV出力サービスでエンコード・区切り付きのCSVファイルが応答となる。ブラウザのダウンロード挙動は利用者環境に委ねる。</td></tr><tr><td>上記一覧でチェック済みが1件も送られなかった場合</td><td>（同一POSTの前段でフラッシュのみ）</td><td>エラーフラッシュ<code>admin.common.select</code>相当の文言となり、<code>Referer</code>ヘッダがあればそこへ、無ければ<code>admin_order</code>へリダイレクトする確認値となる。ステータスはリダイレクト応答のフレームワーク既定に従う。</td></tr><tr><td>ストリーム直前までにデータ取得が論外終了した場合</td><td>（同一POSTまたはGETの処理分岐による）</td><td>エラーフラッシュに例外または翻訳メッセージを載せ、<code>Referer</code>優先または<code>admin_order</code>へリダイレクトする確認値となる。</td></tr></tbody></table></div>
-<hr>
-<h2 id="フロント挙動">フロント挙動</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td><code>@admin/ShippingStandby/edit.twig</code>の一覧フォーム（<code>form_bulk</code>）直上に、<code>id="orderExportForInput"</code>のボタンがある。一覧各行のチェックボックスは既定でオン、名前は<code>order_ids[{{ Order.id }}]</code>。</td></tr><tr><td>JS挙動</td><td>クリックで<code>form_bulk</code>から<code>target</code>属性を削除し、<code>action</code>を<code>admin_order_export_for_input</code>へ差し替えて<code>submit</code>する。確認ダイアログは無い確認値である。</td></tr><tr><td>CSS・レイアウト</td><td>本機能専用の見た目変更はコード上読み取れない。</td></tr><tr><td>モーダル・ポップアップ</td><td>本機能では扱わない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="CSVをダウンロードする-admin-order-export-for-input-exportForInput">CSVをダウンロードする（<code>admin_order_export_for_input</code>、<code>exportForInput</code>）</h3>
-<ol><li>管理画面の認証・共通制約を通過する。</li><li><code>set_time_limit(0)</code>でPHPの実行時間制限を無効にする。</li><li>Doctrineの設定からSQLログ出力を無効にする確認値となる。</li><li><code>order_ids</code>を配列として取得する。PHP配列でない、または空のときフラッシュへ<code>admin.common.select</code>を載せ、<code>Referer</code>が空で無ければそこへ、空ならルート名<code>admin_order</code>へリダイレクトする。</li><li>キー一覧を整数IDの並びとして解釈し、出荷実績用CSV生成関数へ渡す。</li><li>返却データが論理偽となるとき実行時論外メッセージを投げる。そのメッセージは翻訳キー<code>admin.csv.error.export.not_registered</code>であり、標準ロケール下の日本語文言は文言上カード領域向けであり受注一覧からは転用読みとなる（実装確認値）。</li><li>論外を捕まえた場合はフラッシュへメッセージを載せ、同様に<code>Referer</code>または<code>admin_order</code>へリダイレクトする。</li><li>成功経路では<code>StreamedResponse</code>を返す。コールバック内で<code>CsvExportService</code>を開く。</li><li>ヘッダ行として、ヘッダ定数の連想キー配列について<code>array_keys</code>の順で1行書く。</li><li>クエリ結果の各行について、そのまま<code>fputcsv</code>へ渡す。 DoctrineのDateTime項目はクエリ関数内で事前に<code>'Y/m/d H:i:s'</code>形式へ書式化済みとなる。</li><li>ストリームを閉じる。</li><li>ファイル名は接頭辞<code>order_</code>、<code>YmdHis</code>桁そろえ日時、拡張子<code>.csv</code>を連結する実装関数を用いる（受注一覧向け自動命名と接頭辞と形式が字面で同一規則である確認値）。</li><li>応答ヘッダに<code>Content-Type: text/csv;charset=&lt;出力エンコーディング&gt;</code>と<code>Content-Disposition: attachment; filename=…</code>を付与する。<code>&lt;出力エンコーディング&gt;</code>は設定<code>eccube_csv_export_encoding</code>がSJIS系と判定される場合のラベルを<code>windows-31j</code>に寄せたりそうでない場合そのまま読む処理である。</li><li>ストリーム返却の手前で情報ログに「CSV出力ファイル名」とファイル名を記録する。</li></ol>
-<hr>
-<h2 id="集計条件">集計条件</h2>
-<p>本機能は金額集計をしない。結果行数および列値は検索関数の結合規則に従う。</p>
-<div class="table-wrap"><table><thead><tr><th>指標</th><th>集計の要点</th></tr></thead><tbody><tr><td>出力対象受注集合</td><td>POSTで送られた内部IDのみ。セッションの受注検索条件とは無関係である。</td></tr><tr><td>受注単位での最大行数</td><td>受注に対し配送（<code>dtb_shipping</code>に相当するORM結合対象）と配送時間の組が複数ありうるとき、<code>GROUP BY</code>句に配送側の識別に足りない列が並ばない構造のため、同一受注で複数配送があるケースでもSQLエンジン実装およびデータの状態によって複数結果行が並ぶ結果になりうる。完全な一意性の保証はクエリのみからは断定しない。</td></tr><tr><td>DBから結果ゼロ</td><td>関数が空とみなされる配列または偽値を返したとき、このコントローラ経路では上記論外となる。すべての指定IDが顧客未紐付け・配送無しなどでクエリ結果に現れなかった場合に該当しうる。</td></tr></tbody></table></div>
-<hr>
-<h2 id="表示メッセージ">表示メッセージ</h2>
-<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>画面上の文言(英語)</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M05-24-MSG-001</td><td>管理画面上部</td><td>選択してください</td><td>（英訳なし）</td><td>出力する注文を選択せずにCSV出力したとき</td><td>エラーを表示し、遷移元画面に遷移する（Refererがない場合は受注一覧画面）</td></tr><tr><td>M05-24-MSG-002</td><td>管理画面上部</td><td>存在しないカードIDが含まれています。</td><td>（英訳なし）</td><td>選択した注文の出荷実績入力用CSVを出力するとき</td><td>エラーを表示し、遷移元画面に遷移する（Refererがない場合は受注一覧画面）</td></tr></tbody></table></div>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>ヘッダ列順</td><td>アップロード側と整合する連想キー並び順（日本語項目名）はルータファイル側のヘッダ定数に固定される。</td></tr><tr><td>日時フォーマット</td><td>Doctrine結果に含まれる日時項目は関数内書式化により<code>OrderRepository::CSV_DATE_FORMAT</code>の確認値<code>'Y/m/d H:i:s'</code>へそろえる。</td></tr><tr><td>顧客郵便番号</td><td>DBは単一桁列の確認値であり、関数内で先頭3桁・残り4桁に<code>SUBSTRING</code>分割して2列出力する実装である。</td></tr><tr><td>配送先FAX</td><td>DB列が無い確認値であり、関数内では空文字3列として埋める。</td></tr><tr><td>文字コード</td><td><code>CsvExportService</code>のコールバックで、セルごとに<code>eccube_csv_export_encoding</code>へ向けて<code>mb_convert_encoding</code>する。UTF-8系と判定されるときのみ先頭BOMを付与するfopen処理である。</td></tr><tr><td>区切り・囲み</td><td><code>eccube_csv_export_separator</code>、<code>fputcsv</code>のエスケープはバックスラッシュ、囲みは二重引用符が確認値である。</td></tr></tbody></table></div>
-<p>本機能では画面フォーム入力をサーバへ永続化しないため、<code>### 入力項目</code>の表は置かない。</p>
-<h3 id="エッジケース">エッジケース</h3>
-<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>選択IDリストが論理欠損または空</td><td>フラッシュ<code>admin.common.select</code>相当を載せ、<code>Referer</code>または<code>admin_order</code>へリダイレクト。</td></tr><tr><td>クエリ関数が論理偽のデータ集合を返す</td><td>転用読みとなる翻訳メッセージを載せて実行時論外となり、その後フラッシュ処理とリダイレクト。</td></tr><tr><td>GETで<code>/order/export/order</code>へ入るが本ルート名では無いとき</td><td>Symfonyのマッチは受注dtb_csv系CSVが優先される（GETのみのルートが選ばれた確認環境がある）。セッション検索状態に応じて受注明細粒度の項目定義ファイルが生成される。この取得経路によるファイルは受注一覧用の出力であり、固定ヘッダの出荷実績入力用CSVではない。</td></tr><tr><td>画面上の一覧フォームがCSRF用hidden無しであること</td><td>Twig断片のみでは共通トークンを確認できなかった。送信が拒否されるかはSymfony全体の構成に従う。</td></tr></tbody></table></div>
-<hr>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>一覧との一致</td><td>受注一覧の検索状態や並び順とは無関係に、<code>order_ids</code>に含まれたIDのみをSQLへ渡す。</td></tr><tr><td>アップロード形式との対応</td><td>ヘッダ定数および列順はインポート実装側のチェック関数と共通のソース定数であり、両者は同一ソースで更新されることが前提となる。一方でSQLが返す列セットはDoctrineの結果キー並びであり、クエリ側の並び変更で列ズレするリスクがあるため、両ファイルの並び確認が運用上の論点となる。</td></tr><tr><td>DBの更新</td><td>読み取りのみ。インポート登録とは別機能。</td></tr></tbody></table></div>
-<hr>
-<h2 id="API-バッチ結果">API/バッチ結果</h2>
-<p>本機能ではAPI呼び出しやバッチ起動は扱わない。</p>
-<hr>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="出力対象">出力対象</h3>
+<p>一覧で選択した受注だけを対象とする。検索条件は使わず、選択していない受注は条件に一致していても出力しない。</p>
+<p>受注を 1 件も選択していないときは出力せず、操作の起点になった画面へ戻る。起点が分からないときは受注一覧へ戻る。</p>
+<p>選択した受注から出力行を 1 行も作れなかったときも出力せず、操作の起点になった画面へ戻る。</p>
+<p>選択した受注のうち、受注サブ情報・都道府県・会員・会員の都道府県・会員の国・支払方法・対応状況・配送先の都道府県・配送方法・配送方法サブ情報のいずれかを持たない受注は出力しない。性別・職業・お届け時間・国は持たない受注も出力する。</p>
+<p>受注 1 件につき 1 行を出力する。配送先を複数持つ受注でも 1 行にまとめるため、2 件目以降の配送先は出力されない。</p>
+<h3 id="出力する値">出力する値</h3>
+<p>注文者の氏名・住所・連絡先は、受注に記録した値ではなく会員の現在の値を出力する。受注のあとに会員情報を変えたときは、変えた後の値が出る。日時は <code>Y/m/d H:i:s</code> の形式で出力し、未設定のときは空欄とする。</p>
+<h3 id="出力する列">出力する列</h3>
+<p>出力する列は固定で、出力項目を選ぶことはできない。列の構成は基本設計の出荷実績登録CSVによる。出力したファイルに出荷日と送り状No.を書き込むと、そのまま出荷実績インポート登録に取り込める。</p>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力（成功経路判定に効くもの）</td><td>POSTボディまたは同等の請求項目<code>order_ids</code>（PHP配列。キーが受注内部ID）。クエリでの絞り込み入力は読まない確認値である。</td></tr><tr><td>成功時出力</td><td><code>text/csv</code>ストリーム。1行目は日本語固定ヘッダ。</td></tr><tr><td>失敗時出力</td><td>ブラウザのダウンロードではなく、フラッシュおよびリダイレクトとなる経路がある。</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<p>当機能はリポジトリの選択子一覧に応じ、<code>dtb_order</code>を中心とし会員情報・決済情報・状態マスタ・配送・都道府県・配送時間帯など多数のJOINに触れる。</p>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列または関係のメモ</th></tr></thead><tbody><tr><td><code>dtb_order</code></td><td>注文番号、計上金額系、関連日時、送り状番号内部保持列など結果に露出する項目がある。詳細な列リストは関数の選択子およびスキーマを正とする。</td></tr><tr><td>会員系</td><td>INNER JOINとなるため結果に現れず、関数が空になりうる。</td></tr><tr><td>配送系（<code>dtb_shipping</code>相当）</td><td>INNER JOINとなるため無い注文は出力から落ちうることをリバース側で押さえる価値がある。</td></tr></tbody></table></div>
-<h3 id="DB操作">DB操作</h3>
-<p>本機能は参照系（検索・出力）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>検索</td><td>dtb_order / dtb_shipping</td><td>検索条件に合致するレコードを抽出する。抽出結果を所定フォーマットでファイル出力する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="バリデーション">バリデーション</h2>
-<p>クエリ入力に対してフォームオブジェクト側の入力種別チェックは行わない確認値となる。送信欠損は配列チェックのみ。</p>
-<hr>
-<h2 id="権限・認可">権限・認可</h2>
-<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>本機能のブラウザ操作</th></tr></thead><tbody><tr><td>管理画面共通ルートにログイン済みのアカウント</td><td>POSTで送信しうる確認値となる。細かい許可一覧はSymfonyの権限設定を正とする。</td></tr><tr><td>未ログイン</td><td>管理画面の共通フローのとおりログインまたは拒否となる。</td></tr></tbody></table></div>
-<hr>
-<h2 id="画面遷移">画面遷移</h2>
-<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>一覧から正常にダウンロードが成功</td><td>画面上は出荷指示編集ページのままになりうる確認値であり、応答本体は別ストリーム。</td></tr><tr><td>選択欠損・論外によりリダイレクト</td><td>RefererヘッダのURLまたは受注一覧<code>admin_order</code>。</td></tr></tbody></table></div>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td><code>order_ids</code>が無効または欠損</td><td>フラッシュ<code>admin.common.select</code>相当。</td></tr><tr><td>データ取得関数が論外値</td><td>フラッシュにメッセージを載せ、リダイレクト経路同上。標準文言はキー転用となる（実装修正の論点になりうる）。</td></tr></tbody></table></div>
-<hr>
-<h2 id="試行制限">試行制限</h2>
-<p>本機能では試行回数による抑止機構を扱わない。</p>
-<hr>
-<h2 id="ログ・監査">ログ・監査</h2>
-<div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>ストリーム返却直前</td><td>情報ログ「CSV出力ファイル名」とファイル名文字列</td></tr></tbody></table></div>
-<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
-<ul><li>パスワード</li><li>なりすまし対策トークン</li><li>Cookie値</li><li>セッションIDの完全値</li><li>Remember Meトークンの原値</li></ul>
-<hr>
-<h2 id="セッション">セッション</h2>
-<h3 id="本機能におけるセッション">本機能におけるセッション</h3>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>読み取り</td><td>成功経路において検索状態キーは参照しない確認値となる。フラッシュのみフレームワークが利用する。</td></tr><tr><td>書き込み</td><td>受注一覧の検索状態を意図的に変更しない処理である。</td></tr></tbody></table></div>
-<h3 id="セッションへ保存しない情報">セッションへ保存しない情報</h3>
-<p>ブラウザが取得したファイル本文はサーバ側セッションへ格納しない。</p>
-<hr>
-<h2 id="Cookie">Cookie</h2>
-<p>管理画面共通のセッションCookieのみ。本機能が新規にCookieヘッダを発行する処理はソース上読み取れない。</p>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<p>読み取り主体のクエリおよびストリーム応答のみであり、このHTTPハンドラが開始するトランザクション境界や楽観排他フラグ更新はソース上読み取れない。</p>
-<p>行ロック・悲観ロック・楽観ロック・ロックファイルは使用しない。ロールバック対象や部分反映の扱いは本節のトランザクション境界と例外時の記載を正とする。</p>
-<hr>
-<h2 id="調査補助-grep向け">調査補助（grep向け）</h2>
-<div class="table-wrap"><table><thead><tr><th>手がかり</th><th>備考</th></tr></thead><tbody><tr><td><code>admin_order_export_for_input</code></td><td>ルート名。</td></tr><tr><td><code>exportForInput</code></td><td>コントローラアクション関数。</td></tr><tr><td><code>generateResultCsv</code></td><td>結果行構築。</td></tr><tr><td><code>OrderCsv::exportCsv</code></td><td>ストリームとヘッダ。</td></tr><tr><td><code>order_ids</code></td><td>フォーム入力名およびリクエスト取得キー。</td></tr></tbody></table></div>
-<h3 id="HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</h3>
-<ul><li><code>admin_order_export_for_input</code> … <code>GET, POST</code> … <code>/{admin_route}/order/export/order</code>（リクエストに含まれる<code>order_ids</code>から受注内部IDリストを復元し、固定ハードコード列のCSVをストリーム返却する。）</li></ul>
+<h3 id="出力-CSVファイル">出力: CSVファイル</h3>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>文字コード</td><td>CSV出力の設定に従う。応答に載せる文字コード名は、設定が <code>SJIS-win</code> のときだけ <code>windows-31j</code> へ読み替える</td></tr><tr><td>区切り文字</td><td><code>,</code></td></tr><tr><td>引用符</td><td>値が <code>,</code>・<code>"</code>・改行のいずれかを含むときだけ、値全体を <code>"</code> で囲む。値の中の <code>"</code> は 2 個続けて出力する</td></tr><tr><td>ファイル名</td><td><code>order_</code> に出力日時を <code>YmdHis</code> の形式でつなぎ、<code>.csv</code> を付けた名前</td></tr><tr><td>応答</td><td>ダウンロードとして返す</td></tr></tbody></table></div>
+<p>ファイルの先頭にバイトオーダーマークを 1 個出力する。見出し行の次の行からデータ行を出力する。</p>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
+<h2 id="表示メッセージ">表示メッセージ</h2>
+<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M05-24-MSG-001</td><td>管理画面上部</td><td>選択してください</td><td>出力する注文を選択せずにCSV出力したとき</td><td>エラーを表示し、遷移元画面に遷移する（Refererがない場合は受注一覧画面）</td></tr><tr><td>M05-24-MSG-002</td><td>管理画面上部</td><td>存在しないカードIDが含まれています。</td><td>選択した注文の出荷実績入力用CSVを出力するとき</td><td>エラーを表示し、遷移元画面に遷移する（Refererがない場合は受注一覧画面）</td></tr></tbody></table></div>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

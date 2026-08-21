@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,39 +272,14 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#本書で扱うこと">本書で扱うこと</a>
-<a class="lv2" href="#本書で扱わないこと">本書で扱わないこと</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv2" href="#用語">用語</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#フロント挙動">フロント挙動</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#査定申込前ログイン画面を表示する-GET-otcbuy-name-entry">査定申込前ログイン画面を表示する（GET `/otcbuy/{name}/entry`）</a>
-<a class="lv3" href="#ログインする-POST-ログイン検証">ログインする（POST ログイン検証）</a>
-<a class="lv3" href="#ゲストで申込へ進む">ゲストで申込へ進む</a>
-<a class="lv2" href="#表示メッセージ">表示メッセージ</a>
-<a class="lv3" href="#常時表示-正常・静的">常時表示（正常・静的）</a>
-<a class="lv3" href="#エラー・警告-インライン">エラー・警告（インライン）</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
-<a class="lv3" href="#入力項目">入力項目</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#店舗の特定">店舗の特定</a>
+<a class="lv3" href="#申込の開始">申込の開始</a>
+<a class="lv3" href="#ログインと申込への遷移">ログインと申込への遷移</a>
+<a class="lv3" href="#エラー時の扱い">エラー時の扱い</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#バリデーション">バリデーション</a>
-<a class="lv2" href="#権限・認可">権限・認可</a>
-<a class="lv2" href="#画面遷移">画面遷移</a>
-<a class="lv3" href="#遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#ログ・監査">ログ・監査</a>
-<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
-<a class="lv2" href="#セッション">セッション</a>
-<a class="lv3" href="#本機能におけるセッション">本機能におけるセッション</a>
-<a class="lv3" href="#セッションへ保存しない情報">セッションへ保存しない情報</a>
-<a class="lv2" href="#Cookie">Cookie</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a></nav>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -302,105 +287,23 @@ footer {
         <h1>店頭買取 — 査定申込前ログイン</h1>
       </header>
       
-      <h2 id="概要">概要</h2>
-<p>店頭買取の査定申込を始める前に表示するログイン画面である。店舗ごとのURLで開き、既にログイン中の場合はいったんログアウトさせてから、メールアドレスとパスワードによるログインフォームを表示する。ログインに成功すると当該店舗の査定申込フォームへ進み、失敗すると本画面へ戻る。アカウントを持たない利用者向けに、ログインせず申込フォームへ進む導線も用意する。認証そのものはフレームワークのログイン処理が担う。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインの店頭買取エントリー処理、テンプレート（<code>OtcBuy/entry.twig</code>・<code>OtcBuy/entry.en.twig</code>）、ログインフォーム種別、店舗を扱うリポジトリを正とする。</p>
-<p>本機能のカスタマイズ区分は現行踏襲で、画面・処理フローの挙動は現行リポ（pf-eccube3）を参照し、DB関連（店舗参照のテーブル名・列名）は ec-cube-enterprise を正とする。本機能は言語切替で英語表示へ到達できるため、表示メッセージに英語文言を併記する。</p>
-<p>対象はブラウザ経由のフロント（店頭買取）に限定する。</p>
-<p>本文ではフレームワークのコントローラ型名やメソッド名を主説明としない。本文ではルートbind名の網羅は主説明とせず、「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。コード探索でbind名が必要なときだけ「調査補助」へ書く。</p>
-<hr>
-<h2 id="本書で扱うこと">本書で扱うこと</h2>
-<ul><li>査定申込前ログイン画面の入口と店舗の特定</li><li>既ログイン時の強制ログアウトの扱い</li><li>ログイン成功・失敗時の遷移先</li><li>ログインせず申込へ進む導線</li><li>査定申込開始時のセッション初期化</li></ul>
-<hr>
-<h2 id="本書で扱わないこと">本書で扱わないこと</h2>
-<p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
-<ul><li>認証処理そのもの（ログイン検証・失敗メッセージは会員ログイン機能を正とする）</li><li>査定申込情報入力・確認〜完了（店頭買取査定申込機能を正とする）</li><li>店舗マスタの管理</li></ul>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<p>DB関連は ec-cube-enterprise を正とする。本機能の店舗参照は、現行と移行先でテーブル・列が異なる。</p>
-<div class="table-wrap"><table><thead><tr><th>対象</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th><th>扱い</th></tr></thead><tbody><tr><td>店舗の特定</td><td>店舗マスタ（<code>MtbShop</code>）のHTMLクラス名（<code>htmlClassName</code>）で照合</td><td>店舗基本情報（<code>dtb_base_info</code>）の<code>html_class_name</code>（桁数32、コメント「支店URL」）で照合</td><td>店舗参照が店舗マスタから店舗基本情報へ移る。URLの<code>{name}</code>はいずれもHTMLクラス名で照合する。</td></tr></tbody></table></div>
-<p>URLの<code>{name}</code>はいずれの実装でもHTMLクラス名（<code>\w+</code>）で受ける。挙動・画面・認証導線は現行リポ（pf-eccube3）を正とする。</p>
-<hr>
-<h2 id="用語">用語</h2>
-<div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>店舗</td><td>店頭買取を受け付ける拠点。URLの店舗識別子（HTMLクラス名）で特定する。</td></tr><tr><td>査定申込</td><td>店頭買取の査定を申し込む一連の手続き。本画面はその入口。</td></tr><tr><td>ゲスト導線</td><td>アカウントを持たない利用者がログインせず申込へ進む経路。</td></tr></tbody></table></div>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>店頭買取の査定申込前ログイン</td><td><code>GET /otcbuy/{name}/entry</code></td><td>当該店舗のログインフォームを表示する。既ログイン時はログアウトへ遷移する。</td></tr><tr><td>「査定申込み開始」ボタン</td><td><code>POST /{ログイン検証エンドポイント}</code></td><td>フレームワークのログイン検証へ送信する。成功時は申込フォーム、失敗時は本画面へ戻る。</td></tr><tr><td>「アカウントをお持ちでない方はこちら」</td><td><code>GET /otcbuy/{name}</code></td><td>ログインせず当該店舗の申込フォームへ進む。</td></tr></tbody></table></div>
-<p>フロントのページであり管理画面プレフィックスは付かない。<code>{name}</code>は店舗識別子（英数字とアンダースコア）。ログイン送信はフレームワークのログイン検証エンドポイントへ送り、成功時の遷移先・失敗時の遷移先をフォームに添えて渡す。</p>
-<hr>
-<h2 id="フロント挙動">フロント挙動</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>見出し「査定申込み」、言語切替（JP／EN）、「ログイン」見出し、メールアドレス欄、パスワード欄、「査定申込み開始」ボタン、ログインエラー表示枠、「アカウントをお持ちでない方はこちら」リンク。</td></tr><tr><td>JS挙動</td><td>ログインフォームの入力チェックを送信時に行う。言語切替で表示言語を切り替える。</td></tr><tr><td>CSS・レイアウト</td><td>店頭買取用のスタイルを読み込む。</td></tr><tr><td>モーダル・ポップアップ</td><td>本画面専用のモーダルは無い。</td></tr></tbody></table></div>
-<p>メールアドレス欄・パスワード欄にはプレースホルダを表示し、メールアドレス欄に初期フォーカスを当てる。直前のログイン失敗があるときはエラー枠に失敗理由を表示する。</p>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="査定申込前ログイン画面を表示する-GET-otcbuy-name-entry">査定申込前ログイン画面を表示する（GET <code>/otcbuy/{name}/entry</code>）</h3>
-<ol><li>URLの店舗識別子で店舗を特定する。該当が無い場合はページが見つからない扱い（404）とする。</li><li>既にログイン中の場合は、いったんログアウトへ遷移する（査定申込をログイン前の状態から開始するため）。</li><li>査定申込開始のためにセッションへ申込開始フラグと空の申込データを設定する。</li><li>ログインフォームと直前のログイン失敗理由（あれば）を渡して画面を表示する。</li></ol>
-<h3 id="ログインする-POST-ログイン検証">ログインする（POST ログイン検証）</h3>
-<ol><li>ログイン検証はフレームワークのログイン処理が行う（会員ログイン機能を正とする）。</li><li>成功時は当該店舗の査定申込フォームへ遷移する。</li><li>失敗時は査定申込前ログイン画面へ戻り、失敗理由を表示する。</li></ol>
-<h3 id="ゲストで申込へ進む">ゲストで申込へ進む</h3>
-<ol><li>「アカウントをお持ちでない方はこちら」から当該店舗の査定申込フォームへ進む。</li></ol>
-<hr>
-<h2 id="表示メッセージ">表示メッセージ</h2>
-<h3 id="常時表示-正常・静的">常時表示（正常・静的）</h3>
-<div class="table-wrap"><table><thead><tr><th>種別</th><th>表示文言（日本語）</th><th>表示文言（英語）</th><th>条件</th></tr></thead><tbody><tr><td>見出し</td><td>査定申込み</td><td>Selling Request</td><td>画面表示時</td></tr><tr><td>ログイン見出し</td><td>ログイン</td><td>Login</td><td>画面表示時</td></tr><tr><td>ゲスト導線</td><td>アカウントをお持ちでない方はこちら</td><td>If you don't have an account.</td><td>画面表示時</td></tr></tbody></table></div>
-<h3 id="エラー・警告-インライン">エラー・警告（インライン）</h3>
-<div class="table-wrap"><table><thead><tr><th>表示文言（日本語）</th><th>表示文言（英語）</th><th>表示条件（利用者視点）</th><th>表示位置</th><th>備考</th></tr></thead><tbody><tr><td>ログイン失敗理由（会員ログイン機能の文言）</td><td>-</td><td>直前のログインに失敗したとき</td><td>ログインフォームのエラー枠</td><td>文言は会員ログイン機能を正とする。英語文言も同機能を正とする</td></tr></tbody></table></div>
-<p>本画面はフラッシュ・トーストを生成しない。ログイン失敗の文言は会員ログイン機能を正とする。</p>
-<hr>
-<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>画面上の文言(英語)</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>F08-01-MSG-001</td><td>入力項目付近</td><td>ログインできませんでした。&lt;br&gt;入力内容に誤りがないかご確認ください。</td><td>Login failed.&lt;br&gt;Please check your email and password.</td><td>メールアドレスまたはパスワードが正しくなく、ログインに失敗したとき</td><td>査定申込前ログイン画面に留まる</td></tr><tr><td>F08-01-MSG-002</td><td>入力項目付近</td><td>ログイン試行回数が多すぎます。30分後に再度お試しください。</td><td>Too many login attempts. Please try again in 30 minutes.</td><td>ログイン試行回数の上限に達したとき</td><td>査定申込前ログイン画面に留まる</td></tr></tbody></table></div>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>既ログイン時の扱い</td><td>既にログイン中の場合はログアウトへ遷移し、査定申込をログイン前の状態から開始させる。</td></tr><tr><td>店舗の特定</td><td>URLの店舗識別子で店舗を特定する。該当が無ければ404とする。</td></tr><tr><td>申込の初期化</td><td>画面表示時に査定申込開始フラグと空の申込データをセッションへ設定する。</td></tr></tbody></table></div>
-<p>本画面のフォームは認証情報のみで、業務データの入力項目は持たない。</p>
-<h3 id="入力項目">入力項目</h3>
-<div class="table-wrap"><table><thead><tr><th>項目名</th><th>必須／任意</th><th>最大長</th><th>初期値</th><th>保存先・扱い</th></tr></thead><tbody><tr><td>メールアドレス</td><td>必須</td><td>フォーム上限なし（ログイン用）</td><td>空</td><td>永続化しない。フォームキー<code>login_email</code>。フレームワークのログイン検証へ送る。</td></tr><tr><td>パスワード</td><td>必須</td><td>フォーム上限なし（パスワード種別の入力欄）</td><td>空</td><td>永続化しない。フォームキー<code>login_pass</code>。フレームワークのログイン検証へ送る。原値はログ等に残さない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>店舗</td><td>URLの店舗識別子と表示・遷移先の店舗が一致する。</td></tr><tr><td>申込セッション</td><td>画面表示時に申込開始フラグと空の申込データを設定し、以降の申込で参照する（店頭買取査定申込機能を正とする）。</td></tr></tbody></table></div>
-<hr>
-<h2 id="API-バッチ結果">API/バッチ結果</h2>
-<p>本機能ではAPI呼び出し・バッチ実行を扱わない。</p>
-<hr>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="店舗の特定">店舗の特定</h3>
+<p>URLの店舗識別子で店舗を特定する。該当する店舗が無いときは、ページが見つからない扱い（404）とする。</p>
+<h3 id="申込の開始">申込の開始</h3>
+<p>既にログイン中のときは、いったんログアウトへ遷移する。査定申込はログイン前の状態から開始する。画面を表示するときに、査定申込開始の状態と空の申込データを保持する。</p>
+<h3 id="ログインと申込への遷移">ログインと申込への遷移</h3>
+<div class="table-wrap"><table><thead><tr><th>操作</th><th>結果</th></tr></thead><tbody><tr><td>ログインに成功したとき</td><td>当該店舗の査定申込フォームへ遷移する</td></tr><tr><td>ログインに失敗したとき</td><td>査定申込前ログイン画面へ戻り、失敗理由を表示する</td></tr><tr><td>アカウントを持たない利用者が申込へ進むとき</td><td>ログインせずに当該店舗の査定申込フォームへ進む</td></tr></tbody></table></div>
+<p>ログインの検証と、失敗したときの文言は、会員ログイン機能を正とする。</p>
+<p>本画面のフォームは認証情報だけを持ち、業務データの入力項目を持たない。メールアドレス欄とパスワード欄にはプレースホルダを表示し、画面を開いたときはメールアドレス欄に入力位置を置く。</p>
+<h3 id="エラー時の扱い">エラー時の扱い</h3>
+<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>店舗識別子が不正、または該当する店舗が無い</td><td>ページが見つからない扱い（404）とする</td></tr><tr><td>ログイン失敗</td><td>査定申込前ログイン画面へ戻し、失敗理由を表示する</td></tr></tbody></table></div>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>URLの店舗識別子、ログインのメールアドレス・パスワード、なりすまし対策トークン、成功・失敗の遷移先。</td></tr><tr><td>成功時出力</td><td>ログイン成功で当該店舗の査定申込フォームへ遷移。</td></tr><tr><td>失敗時出力</td><td>ログイン失敗で本画面へ戻り、失敗理由を表示。</td></tr><tr><td>副作用</td><td>既ログイン時のログアウト、申込開始フラグ・空申込データのセッション設定。</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<p>機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。</p>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>dtb_base_info</code>（店舗基本情報。現行は店舗マスタ<code>MtbShop</code>）</td><td><code>html_class_name</code>（店舗識別子。現行はHTMLクラス名<code>htmlClassName</code>）</td><td>URLの<code>{name}</code>と照合し店舗を特定する。</td></tr></tbody></table></div>
-<p>認証で参照する会員の列は会員ログイン機能を正とする。テーブル・列名は ec-cube-enterprise を正とする。</p>
-<h3 id="DB操作">DB操作</h3>
-<p>永続化の正は ec-cube-enterprise（テーブル名・操作は ec-cube-enterprise を正典）。当ドメインは承認ワークフローを介さず persist/flush で直接確定する（承認ワークフローは在庫機能固有）。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>登録/更新</td><td>dtb_base_info</td><td>当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。</td></tr></tbody></table></div>
-<hr>
-<h2 id="バリデーション">バリデーション</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>メールアドレス・パスワード</td><td>フレームワークのログイン検証に従う（会員ログイン機能を正とする）。</td></tr><tr><td>なりすまし対策トークン</td><td>ログイン検証で検証する。</td></tr><tr><td>店舗識別子</td><td>英数字とアンダースコアのみを受け付ける。</td></tr></tbody></table></div>
-<hr>
-<h2 id="権限・認可">権限・認可</h2>
-<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>査定申込前ログイン</th></tr></thead><tbody><tr><td>未ログイン</td><td>ログインフォームを表示する。ログインまたはゲスト導線で申込へ進める。</td></tr><tr><td>ログイン済み会員</td><td>いったんログアウトへ遷移し、ログイン前の状態から申込を開始させる。</td></tr></tbody></table></div>
-<hr>
-<h2 id="画面遷移">画面遷移</h2>
-<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>査定申込前ログインを開く</td><td>ログイン画面（<code>GET /otcbuy/{name}/entry</code>）</td></tr><tr><td>既にログイン中</td><td>ログアウトへ遷移</td></tr><tr><td>ログイン成功</td><td>当該店舗の査定申込フォーム（<code>/otcbuy/{name}</code>）</td></tr><tr><td>ログイン失敗</td><td>査定申込前ログイン画面（<code>/otcbuy/{name}/entry</code>、エラー表示）</td></tr><tr><td>「アカウントをお持ちでない方はこちら」</td><td>当該店舗の査定申込フォーム（<code>/otcbuy/{name}</code>）</td></tr><tr><td>店舗識別子が不正</td><td>ページが見つからない扱い（404）</td></tr></tbody></table></div>
-<h3 id="遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</h3>
-<div class="table-wrap"><table><thead><tr><th>起点</th><th>遷移前の処理</th><th>遷移後の初期状態</th></tr></thead><tbody><tr><td>査定申込前ログイン画面の表示</td><td>申込開始フラグと空の申込データをセッションへ設定する</td><td>申込フォーム側で初期状態の申込として開始する（店頭買取査定申込機能を正とする）</td></tr></tbody></table></div>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>店舗識別子が不正・該当なし</td><td>ページが見つからない扱い（404）。</td></tr><tr><td>ログイン失敗</td><td>査定申込前ログイン画面へ戻し、失敗理由を表示する。文言は会員ログイン機能を正とする。</td></tr></tbody></table></div>
-<hr>
-<h2 id="ログ・監査">ログ・監査</h2>
-<p>ログイン検証のログは会員ログイン機能を正とする。本画面固有の監査ログは主目的としない。</p>
-<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
-<ul><li>パスワード</li><li>なりすまし対策トークン</li><li>Cookie値</li><li>セッションIDの完全値</li></ul>
-<hr>
-<h2 id="セッション">セッション</h2>
-<h3 id="本機能におけるセッション">本機能におけるセッション</h3>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>申込開始フラグ</td><td>画面表示時に査定申込開始フラグを設定する。</td></tr><tr><td>申込データ</td><td>画面表示時に空の申込データを設定する。</td></tr><tr><td>既ログイン</td><td>既ログイン時はログアウトへ遷移し、認証状態を解除する。</td></tr></tbody></table></div>
-<h3 id="セッションへ保存しない情報">セッションへ保存しない情報</h3>
-<p>入力したパスワードはセッションへ保存しない。認証はフレームワークのログイン処理に委ねる。</p>
-<hr>
-<h2 id="Cookie">Cookie</h2>
-<p>セッション用Cookieはフレームワークの設定に従う。本画面固有のCookieは扱わない。</p>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<p>本画面はログイン表示とセッション設定のみで、楽観ロック・悲観ロックの対象は持たない。</p>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>URLの店舗識別子。ログインするときはメールアドレスとパスワード、なりすまし対策トークン</td></tr><tr><td>成功時出力</td><td>ログインに成功したときは当該店舗の査定申込フォームへ遷移する</td></tr><tr><td>失敗時出力</td><td>ログインに失敗したときは査定申込前ログイン画面へ戻り、失敗理由を表示する</td></tr></tbody></table></div>
+<p>本機能は業務データを登録・更新しない。店舗が特定できないときは画面自体を表示しない。</p>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
+<h2 id="表示メッセージ">表示メッセージ</h2>
+<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>F08-01-MSG-001</td><td>入力項目付近</td><td>ログインできませんでした。&lt;br&gt;入力内容に誤りがないかご確認ください。</td><td>メールアドレスまたはパスワードが正しくなく、ログインに失敗したとき</td><td>査定申込前ログイン画面に留まる</td></tr><tr><td>F08-01-MSG-002</td><td>入力項目付近</td><td>ログイン試行回数が多すぎます。30分後に再度お試しください。</td><td>ログイン試行回数の上限に達したとき</td><td>査定申込前ログイン画面に留まる</td></tr><tr><td>—</td><td>画面見出し</td><td>査定申込み</td><td>画面表示時</td><td>画面に留まる</td></tr><tr><td>—</td><td>ログイン欄の見出し</td><td>ログイン</td><td>画面表示時</td><td>画面に留まる</td></tr><tr><td>—</td><td>ゲスト導線</td><td>アカウントをお持ちでない方はこちら</td><td>画面表示時</td><td>当該店舗の査定申込フォームへ進む</td></tr><tr><td>—</td><td>ログインフォームのエラー枠</td><td>ログイン失敗理由（会員ログイン機能の文言）</td><td>直前のログインに失敗したとき</td><td>査定申込前ログイン画面に留まる</td></tr></tbody></table></div>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

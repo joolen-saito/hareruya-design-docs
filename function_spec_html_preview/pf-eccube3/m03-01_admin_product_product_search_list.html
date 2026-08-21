@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,39 +272,18 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#フロント挙動">フロント挙動</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#一覧を開くか再計算する-admin-product-admin-product-page-の共通">一覧を開くか再計算する（`admin_product` / `admin_product_page` の共通）</a>
-<a class="lv3" href="#ホームからの在庫切れリンク-admin-homepage-nonstock">ホームからの在庫切れリンク（`admin_homepage_nonstock`）</a>
-<a class="lv2" href="#集計条件">集計条件</a>
-<a class="lv2" href="#ソート時の判定順序">ソート時の判定順序</a>
-<a class="lv2" href="#表示メッセージ">表示メッセージ</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
-<a class="lv3" href="#入力項目">入力項目</a>
-<a class="lv3" href="#エッジケース">エッジケース</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#検索条件">検索条件</a>
+<a class="lv3" href="#初期表示">初期表示</a>
+<a class="lv3" href="#並び順">並び順</a>
+<a class="lv3" href="#表示件数と検索条件の保持">表示件数と検索条件の保持</a>
+<a class="lv3" href="#一括操作">一括操作</a>
+<a class="lv3" href="#計算">計算</a>
+<a class="lv3" href="#エラー時の扱い">エラー時の扱い</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#バリデーション">バリデーション</a>
-<a class="lv2" href="#権限・認可">権限・認可</a>
-<a class="lv2" href="#画面遷移">画面遷移</a>
-<a class="lv3" href="#遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#試行制限">試行制限</a>
-<a class="lv2" href="#ログ・監査">ログ・監査</a>
-<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
-<a class="lv2" href="#セッション">セッション</a>
-<a class="lv3" href="#本機能におけるセッション">本機能におけるセッション</a>
-<a class="lv3" href="#セッションへ保存しない情報">セッションへ保存しない情報</a>
-<a class="lv2" href="#Cookie">Cookie</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a>
-<a class="lv2" href="#調査補助-ソース位置の索引">調査補助（ソース位置の索引）</a>
-<a class="lv3" href="#HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</a></nav>
+<a class="lv3" href="#入出力-永続化">入出力: 永続化</a>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -302,110 +291,40 @@ footer {
         <h1>商品管理 — 商品検索・一覧</h1>
       </header>
       
-      <h2 id="概要">概要</h2>
-<p>管理画面の「商品管理」において、検索フォームで条件を組み立てて商品と規格を一覧し、ページ送り・ソート・表示件数・一覧表示モードを切り替えられる機能である。検索条件とページ番号の一部はセッションに保持し、ページ遷移後に同一条件で再検索する。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。ec-cube-enterprise のコア実装を確認値とする。プラグインによる Doctrine のクエリカスタマイザ登録、<code>ADMIN_PRODUCT_INDEX_*</code> イベントでのフォーム・クエリ改変がある環境では、その実装を正とする。</p>
-<p>本機能のカスタマイズ区分は「カスタマイズ」であり、検索・ソート・ページングなどの挙動の参照は現行リポ（pf-eccube3）、DB関連（テーブル名・列名・保存先・扱い）は ec-cube-enterprise を正とする。</p>
-<p>対象はブラウザ経由の管理画面に限定する。</p>
-<p>本書の本文ではコントローラのメソッド名は主題としない。本文ではルートbind名やSymfonyのルートnameの網羅は主説明としない。「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。コード探索でbind名が必要なときだけ「調査補助」へ書く。</p>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<p>現行（pf-eccube3）と移行先（ec-cube-enterprise）で、検索が参照する永続化スキーマに次の差がある。挙動は現行を正とし、DB列名は移行先を正とする。</p>
-<div class="table-wrap"><table><thead><tr><th>対象</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>商品付加情報</td><td>付加情報を別テーブル <code>dtb_product_sub</code>（英語名・カード詳細参照・サイズ・重量など）に分離</td><td><code>dtb_product</code> 本体へ統合。<code>name_en</code>・<code>card_detail_id</code>・<code>cardset_id</code> などを商品本体が直接保持し、<code>dtb_product_sub</code> は存在しない</td></tr><tr><td>カード属性（カードセット・レアリティ・Foil・フレーム・プロモ）</td><td>カード詳細テーブル <code>dtb_card_detail</code> を参照</td><td>カード詳細マスタ <code>mtb_card_detail</code> を参照（<code>cardset_id</code>・<code>rarity_id</code>・<code>foil_flg</code>・<code>promotion_flg</code>・<code>frame_flg</code>）。<code>dtb_product.card_detail_id</code> から参照</td></tr><tr><td>規格の言語・状態・部門・棚番号</td><td>規格テーブルの各参照</td><td><code>dtb_product_class</code> の <code>language_id</code>・<code>card_condition_id</code>・<code>section_id</code>・<code>shelf_number_id</code>・<code>delivery_duration_id</code></td></tr><tr><td>画像の並び順キー</td><td><code>dtb_product_image.rank</code></td><td><code>dtb_product_image.sort_no</code></td></tr></tbody></table></div>
-<p>並び順キー（現行 <code>rank</code>／移行先 <code>sort_no</code>）の取り違えに注意する。上表に挙げない検索条件列（<code>price02</code>・<code>high_price_code</code>・<code>order_quantity_*</code>・<code>stock</code> など）は現行と移行先で同一スキーマである。</p>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>ナビから商品一覧を開く</td><td><code>GET /{admin_route}/product</code></td><td>フォーム既定値で検索ビューデータをセッションへ書き込み、ページ 1 を表示する。</td></tr><tr><td>「検索する」で送信</td><td><code>POST /{admin_route}/product</code></td><td>検証に成功すれば条件をセッションへ保存しページ番号を 1 にし、同一条件で一覧を組み立てる。失敗すればエラー用メッセージとともに詳細検索枠を開いた状態で返す。</td></tr><tr><td>ページネーションで N ページへ</td><td><code>GET /{admin_route}/product/page/N</code></td><td>セッションの検索条件とページ番号を更新し、N ページ目を表示する。</td></tr><tr><td>ソートアイコン押下</td><td><code>POST /{admin_route}/product</code>（フォームはそのまま）</td><td>隠しフィールド <code>sortkey</code>・<code>sorttype</code> を更新して送信し、ページ番号は 1 にリセットされる POST 分岐に入る。</td></tr><tr><td>表示件数プルダウン変更</td><td><code>GET /{admin_route}/product/page/1?page_count=…</code></td><td><code>mtb_page_max</code> に存在する件数ならセッションへ保存し、その件数で分割する。</td></tr><tr><td>一覧表示データプルダウン変更</td><td><code>GET /{admin_route}/product/page/{page_no}?mode=…</code></td><td>セッションの表示モードを更新し、同一ページ番号で再描画する。</td></tr><tr><td>商品名リンク</td><td><code>GET /{admin_route}/product/product/{id}/edit</code></td><td>商品編集画面へ遷移する。</td></tr><tr><td>他画面から一覧へ戻る</td><td><code>GET /{admin_route}/product?resume=1</code></td><td>セッションに保存されたページ番号を復元し、検索条件もセッションから復元する。</td></tr><tr><td>ホームの在庫切れ件数から遷移</td><td><code>GET /{admin_route}/search_nonstock</code> → リダイレクトで <code>GET /{admin_route}/product/page/1</code></td><td>別節およびエッジケース参照。</td></tr></tbody></table></div>
-<hr>
-<h2 id="フロント挙動">フロント挙動</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>見出しは商品一覧。上部は <code>search-box-inner</code> 内の検索フォーム。商品名（日／英）入力と詳細検索アコーディオン（Bootstrap の collapse、初期は開）。詳細内はカード名、ID、コード、カテゴリ、公開状態、エキスパンション、レアリティ、言語、状態、Foil、フレーム、プロモ、タグ、略称タグ、販売価格帯、在庫帯、期間別販売数の期間・数量帯、規格更新日帯、売上分析タグ、高額商品、部門、棚番号、エンティティ拡張の自動描画項目。隠し項目に一括キーワード（一覧では非表示）とソート用 2 項目。送信ボタンの下に件数見出し、<code>search_items.twig</code> による条件サマリ、結果テーブル（チェック、ID、名前、規格ごとのコード・言語・状態・価格など）、ページネーション。</td></tr><tr><td>JS 挙動</td><td>複数選択フィールドに select2（カテゴリ、エキスパンション、タグ、略称タグ、売上分析タグ、部門、棚番号）。<code>function.js</code> の <code>.search-clear</code> で <code>#search_form</code> 内の入力・選択をクリア（CSRF 用 hidden は残す）。ソートは <code>.js-listSort</code> クリックで隠し <code>sortkey</code>・<code>sorttype</code> を更新してフォーム送信。件数・CSV・表示モードの select は変更時に URL へ遷移。一括削除は Ajax で各行の削除 URL を順に呼びモーダルで進捗表示（完了後リロード）。規格確認ボタンは Ajax でモーダル本文を差し替え。詳細検索の collapse 表示時はボタンのアイコンと <code>aria-expanded</code> を更新。</td></tr><tr><td>CSS・レイアウト</td><td><code>product.css</code> と select2 のスタイル。詳細検索の最低高さ調整用インラインスタイル。</td></tr><tr><td>モーダル・ポップアップ</td><td>規格一覧確認モーダル、一括完全削除モーダル。単体削除確認は本テンプレート範囲外の別導線に依存する場合がある。</td></tr></tbody></table></div>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="一覧を開くか再計算する-admin-product-admin-product-page-の共通">一覧を開くか再計算する（<code>admin_product</code> / <code>admin_product_page</code> の共通）</h3>
-<ol><li>管理画面の認証・共通制約を通過する。</li><li><code>SearchProductType</code> でフォームビルダーを生成し、<code>ADMIN_PRODUCT_INDEX_INITIALIZE</code> をディスパッチする。</li><li>表示件数はリクエストの <code>page_count</code> が <code>mtb_page_max.name</code> のいずれかと一致すればその値をセッション <code>eccube.admin.product.search.page_count</code> に保存する。一致しない場合はセッション値があればそれを使い、なければ設定 <code>eccube_default_page_count</code>（確認値として app のパラメータで 10）を使う。</li><li>一覧表示データモードはリクエストの <code>mode</code> が正の整数ならセッション <code>eccube.admin.product.search.display_mode</code> に保存する。無ければセッション値を使う。</li><li>POST でフォームが送られた場合は <code>handleRequest</code> する。妥当ならページ番号を 1 にし、<code>FormUtil::getViewData</code> で得た検索ビューデータをセッション <code>eccube.admin.product.search</code> に保存し、<code>eccube.admin.product.search.page_no</code> に 1 を保存する。不妥当ならエラーフラグ付きで Twig を返し、一覧は空相当の扱いになる。</li><li>GET の場合、パスに <code>page_no</code> があるか <code>resume</code> クエリがあるときはセッションからページ番号と検索ビューデータを読み、<code>FormUtil::submitAndGetData</code> で正規化した配列を検索データとする。それ以外の GET はページ 1 とし、空ではない既定の検索ビューデータをフォームから取り出してセッションへ書き直す（初期表示では「公開状態」は公開のみが既定チェックされる）。</li><li><code>ProductRepository::getQueryBuilderBySearchDataForAdmin</code> に検索データを渡し、<code>ADMIN_PRODUCT_INDEX_SEARCH</code> でクエリビルダを公開する。</li><li>ページネーションはコントローラ側で、<code>sortkey</code> が列マップに無い・または値が <code>status</code>・または値が文字列 <code>code</code> のいずれかなら通常モード、それ以外なら <code>wrap-queries</code> を付ける。列マップに無い値がリポジトリまで渡った場合は <code>orderBy</code> で未定義添字参照となり先に失敗する。</li><li>Twig にフォーム、ページネーション、件数、表示モード、拡張 CSV の一覧を渡して描画する。</li></ol>
-<h3 id="ホームからの在庫切れリンク-admin-homepage-nonstock">ホームからの在庫切れリンク（<code>admin_homepage_nonstock</code>）</h3>
-<ol><li>セッション <code>eccube.admin.product.search</code> に、<code>stock</code> キーへ在庫なしを表す定数の配列を載せた連想配列だけを保存する。</li><li><code>admin_product_page</code> で <code>page_no</code> が 1 となるようリダイレクトする。</li></ol>
-<hr>
-<h2 id="集計条件">集計条件</h2>
-<div class="table-wrap"><table><thead><tr><th>指標</th><th>集計の要点</th></tr></thead><tbody><tr><td>一覧総件数</td><td>Knp ページネータがクエリに対して件数を数える。一覧本体と同じクエリビルダを渡す。</td></tr><tr><td>画面に出す規格行</td><td>商品ごとに、<code>Language</code> と <code>CardCondition</code> が両方存在する規格だけを抽出して行を並べる。該当が無い商品は空セルを colspan で埋める。</td></tr></tbody></table></div>
-<hr>
-<h2 id="ソート時の判定順序">ソート時の判定順序</h2>
-<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td><code>sortkey</code> が空または未定義</td><td><code>p.update_date</code> 降順、その後 <code>p.id</code> 降順のみ。</td></tr><tr><td>2</td><td><code>sortkey</code> が列マップに存在し、<code>sorttype</code> が文字 <code>a</code></td><td>指定列昇順、その後 <code>p.update_date</code> 降順、<code>p.id</code> 降順。</td></tr><tr><td>3</td><td><code>sortkey</code> が列マップに存在し、<code>sorttype</code> が <code>a</code> 以外</td><td>指定列降順、その後 <code>p.update_date</code> 降順、<code>p.id</code> 降順。</td></tr></tbody></table></div>
-<p>列マップは実装上、商品 ID、商品名、規格コード、規格の在庫数量相当、公開状態、商品登録日、商品更新日に対応するクエリ式となる。</p>
-<p>クライアント側では、同一 <code>sortkey</code> を連続クリックすると昇順・降順がトグルする。</p>
-<hr>
-<h2 id="表示メッセージ">表示メッセージ</h2>
-<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>画面上の文言(英語)</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M03-01-MSG-001</td><td>管理画面上部</td><td>パスワードを更新しました</td><td>（英訳なし）</td><td>パスワード変更を保存したとき</td><td>パスワード変更画面に遷移する</td></tr><tr><td>M03-01-MSG-002</td><td>画面中央(ダイアログ)</td><td>Failed</td><td>（英訳なし）</td><td>商品の規格情報の取得に失敗したとき</td><td>エラーを表示し、商品検索・一覧画面に留まる</td></tr><tr><td>M03-01-MSG-003</td><td>画面中央(モーダル)</td><td>削除中...</td><td>（英訳なし）</td><td>選択した商品の一括削除を開始したとき</td><td>モーダルは開いたまま</td></tr><tr><td>M03-01-MSG-004</td><td>画面中央(モーダル)</td><td>商品の削除処理が完了しました</td><td>（英訳なし）</td><td>選択した商品の一括削除処理が完了したとき</td><td>モーダルを閉じて商品検索・一覧画面を再読み込みする</td></tr><tr><td>M03-01-MSG-005</td><td>未表示（XHR JSON応答）</td><td>削除しました</td><td>（英訳なし）</td><td>商品を削除したとき</td><td>商品一覧画面に留まり、完了操作で一覧を再読込する</td></tr><tr><td>M03-01-MSG-006</td><td>モーダル内</td><td>関連するデータがあるため「%name%」を削除できませんでした ／ 削除に失敗しました</td><td>（英訳なし）</td><td>商品を完全に削除したとき、関連するデータがある場合、または削除できない場合</td><td>エラーを削除確認モーダル内に表示し、完了操作後に商品一覧画面へ遷移する</td></tr><tr><td>M03-01-MSG-007</td><td>管理画面上部</td><td>%status%: %count%件が正常に適用されました</td><td>（英訳なし）</td><td>選択した商品の状態変更が1件以上完了したとき</td><td>商品検索・一覧画面に遷移する</td></tr><tr><td>M03-01-MSG-008</td><td>モーダル内</td><td>既に削除されています</td><td>（英訳なし）</td><td>削除しようとした商品がすでに削除されていたとき</td><td>エラーを削除確認モーダル内に表示し、完了操作後に商品一覧を再読込する</td></tr><tr><td>M03-01-MSG-009</td><td>画面中央(モーダル)</td><td>商品を削除してよろしいですか？</td><td>（英訳なし）</td><td>商品一覧で商品を選択し、「完全に削除」を選択したとき</td><td>モーダル内の「完全に削除」で、選択済み商品の完全削除処理を開始する。キャンセル時は処理しない</td></tr></tbody></table></div>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<p>一覧の抽出はリポジトリへ渡した検索データに対し、設定済みの条件だけを AND で付与する。文字列の部分一致では <code>%</code> と <code>_</code> をエスケープする。</p>
-<p>カテゴリは選択ノードとその子孫をまとめ、商品カテゴリがそのいずれかに該当する商品だけを残す。</p>
-<p>言語はチェックが 3 種すべて選択されている場合はフィルタを付けない。それ以外では日本語 ID・英語 ID・その他言語 ID の組み合わせにより、<code>pc.Language</code> に対する IN／NOT IN を OR で繋ぐ場合がある。</p>
-<p>プロモはチェックが 1 種類だけのときだけ <code>cd.promotion_flg</code> で絞る。2 種類同時は絞らない。</p>
-<p>高額商品もチェックが 1 種類だけのときだけ、<code>pc.high_price_code</code> が NULL か否かで絞る。既定フォームデータでは通常価格のみが選択されている。</p>
-<p>期間別販売数は、<code>order_date</code> が許容リストに含まれる値のときだけ、<code>pc.order_quantity_{列番号}</code> に下限・上限を付けられる。フォームが用意する列番号は昨日から 365 日前まで（当日列はリストに無い）。</p>
-<p>規格更新日「終了」は、その日の終わりを含めるため翌日 0 時未満として解釈する。</p>
-<p>クエリの末尾で <code>QueryKey::PRODUCT_SEARCH_ADMIN</code> に登録されたカスタマイザがあれば、追加の結合・条件が入る。</p>
-<p>本機能では集計関数による売上計算などは行わない。</p>
-<h3 id="入力項目">入力項目</h3>
-<div class="table-wrap"><table><thead><tr><th>項目名</th><th>必須／任意</th><th>最大長</th><th>初期値</th><th>保存先・扱い</th></tr></thead><tbody><tr><td>商品名（日／英）</td><td>任意</td><td>フォーム上は桁制約なし（<code>messages</code> のプレースホルダのみ）</td><td>空</td><td><code>dtb_product.name</code> に対する部分一致。セッションキー <code>product_name</code>。</td></tr><tr><td>カード名（日／英）</td><td>任意</td><td>同上</td><td>空</td><td>関連カードの日本語名に対する存在サブクエリでの部分一致。キー <code>card_name</code>。</td></tr><tr><td>ID</td><td>任意</td><td>実装上は 10 桁数字のみがフィルタ対象（それ以外の入力は無視）</td><td>空</td><td>文字列として商品 ID の一部一致。キー <code>product_id</code>。</td></tr><tr><td>コード</td><td>任意</td><td>フォーム上は桁制約なし</td><td>空</td><td><code>dtb_product_class.code</code> の部分一致。キー <code>product_code</code>。</td></tr><tr><td>カテゴリ</td><td>任意</td><td>—</td><td>プレースホルダ「すべての商品」相当（未選択）</td><td>複数選択。選択済みエンティティと子孙カテゴリで IN。キー <code>category_id</code>。</td></tr><tr><td>公開状態</td><td>任意</td><td>—</td><td>公開のみ選択済み</td><td>複数チェック。廃止ステータスはクエリから除外される選択肢。キー <code>status</code>。</td></tr><tr><td>エキスパンション</td><td>任意</td><td>—</td><td>無選択</td><td>複数 SELECT。発売日降順でマスタを読む。キー <code>cardset</code>。</td></tr><tr><td>レアリティ</td><td>任意</td><td>—</td><td>無選択</td><td>複数チェック。キー <code>rarity</code>。</td></tr><tr><td>言語</td><td>任意</td><td>—</td><td>無選択</td><td>日本語／英語／その他言語のチェック。キー <code>language</code>。</td></tr><tr><td>状態</td><td>任意</td><td>—</td><td>NM のみ選択済み</td><td>NM／SP／MP／HP／その他。キー <code>card_condition</code>。</td></tr><tr><td>Foil</td><td>任意</td><td>—</td><td>無選択</td><td>非 Foil／ノーマル／特殊。キー <code>foil</code>。</td></tr><tr><td>フレーム</td><td>任意</td><td>—</td><td>無選択</td><td>通常／特殊。キー <code>frame</code>。</td></tr><tr><td>プロモ</td><td>任意</td><td>—</td><td>無選択</td><td>プロモ／ノーマルの二択チェック（既定オプション）。キー <code>promotion</code>。</td></tr><tr><td>タグ</td><td>任意</td><td>—</td><td>無選択</td><td>複数 SELECT。タグごとの EXISTS。キー <code>tag_id</code>。</td></tr><tr><td>略称タグ</td><td>任意</td><td>—</td><td>無選択</td><td>複数 SELECT。<code>dtb_product</code> の略称タグ ID。キー <code>storage_code_id</code>。</td></tr><tr><td>販売価格（開始）</td><td>任意</td><td>桁は設定 <code>eccube_price_len</code>（確認値 8）に合わせた Symfony Length</td><td>空</td><td><code>price02</code> の下限。フォームキー <code>sell_price_from</code>。</td></tr><tr><td>販売価格（終了）</td><td>任意</td><td>同上</td><td>空</td><td><code>price02</code> の上限。<code>sell_price_to</code>。</td></tr><tr><td>基準価格（開始）</td><td>任意</td><td>同上</td><td>空</td><td>フォームおよびセッションには載るが、<code>getQueryBuilderBySearchDataForAdmin</code> 本体では参照しない（確認値）。キー <code>standard_price_from</code>。</td></tr><tr><td>基準価格（終了）</td><td>任意</td><td>同上</td><td>空</td><td>同上。<code>standard_price_to</code>。</td></tr><tr><td>買取価格（開始）</td><td>任意</td><td>同上</td><td>空</td><td>同上。<code>buy_price_from</code>。</td></tr><tr><td>買取価格（終了）</td><td>任意</td><td>同上</td><td>空</td><td>同上。<code>buy_price_to</code>。</td></tr><tr><td>在庫（開始）</td><td>任意</td><td>HTML の <code>maxlength</code> は <code>eccube_int_len</code>（確認値 9）、最小 0</td><td>空</td><td><code>dtb_product_stock.stock</code> の下限。<code>stock_from</code>。</td></tr><tr><td>在庫（終了）</td><td>任意</td><td>同上</td><td>空</td><td>同上の上限。<code>stock_to</code>。</td></tr><tr><td>期間別販売数 販売期間</td><td>任意</td><td>—</td><td>未指定プレースホルダ</td><td>ラジオ。昨日〜365 日前までの列番号。<code>order_date</code>。</td></tr><tr><td>期間別販売数 販売数（開始）</td><td>任意</td><td><code>eccube_int_len</code> に合わせた maxlength</td><td>空</td><td><code>order_quantity_*</code> 下限。<code>order_quantity_from</code>。</td></tr><tr><td>期間別販売数 販売数（終了）</td><td>任意</td><td>同上</td><td>空</td><td>上限。<code>order_quantity_to</code>。</td></tr><tr><td>規格更新日（開始）</td><td>任意</td><td><code>yyyy-MM-dd</code> の単一行日付</td><td>空</td><td><code>pc.update_date</code> の下限。Symfony の下限レンジ <code>1900-01-01</code>。<code>update_date_from</code>。</td></tr><tr><td>規格更新日（終了）</td><td>任意</td><td>同上</td><td>空</td><td>終日 inclusive。終了が開始より前ならフォームエラー。<code>update_date_to</code>。</td></tr><tr><td>売上分析タグ</td><td>任意</td><td>—</td><td>無選択</td><td>複数 SELECT。中間テーブル経由で IN。<code>tag_sales_analysis</code>。</td></tr><tr><td>高額商品</td><td>任意</td><td>—</td><td>「高額商品を除外する」のみ</td><td>いずれか一方だけチェックされたときだけ high_price_code で絞る。<code>expensive</code>。</td></tr><tr><td>部門</td><td>任意</td><td>—</td><td>無選択</td><td>複数 SELECT。<code>section</code>。</td></tr><tr><td>棚番号</td><td>任意</td><td>—</td><td>無選択</td><td>複数 SELECT。<code>shelf_number</code>。</td></tr><tr><td>商品名（日／英）・カード名（日／英）・商品 ID・商品コード</td><td>任意</td><td>フォーム上は桁制約なし</td><td>空（一覧 Twig では非表示）</td><td>ID が数値のみのときは ID 完全一致、それ以外は商品名（日・英）、規格コード、カード名（日・英）への OR 部分一致。キー <code>id</code>。</td></tr><tr><td>一覧ソート列</td><td>任意</td><td>—</td><td>空</td><td>隠し入力 <code>sortkey</code>。</td></tr><tr><td>一覧ソート向き</td><td>任意</td><td>—</td><td>空</td><td>隠し入力 <code>sorttype</code>。値 <code>a</code> 以外は降順扱い。</td></tr></tbody></table></div>
-<h3 id="エッジケース">エッジケース</h3>
-<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>POST 検証エラー</td><td><code>has_errors</code> が真となり、「検索条件に誤りがあります」系のメッセージブロックを表示。一覧テーブルは出さない。</td></tr><tr><td>検索結果 0 件</td><td>「検索結果がありません」メッセージを表示。</td></tr><tr><td>言語・プロモ・高額を複数同時に選ぶ</td><td>言語は 3 種すべてなら条件無し。プロモ・高額は 2 チェック同時なら条件無し。</td></tr><tr><td><code>sortkey</code> が列マップ外</td><td>リポジトリが <code>orderBy</code> する時点で未定義添字参照となり、実行時エラーになり得る（不正な隠しフィールド送付）。</td></tr><tr><td>ホームの <code>search_nonstock</code> のみをセッションに載せて一覧へ入る</td><td>コントローラは CSV 用に用意しているマージ処理を経由せず <code>submitAndGetData</code> するため、フォームに無いキーだけが残ると Symfony のフォームがエラーになり得る。またリポジトリ本体には <code>stock</code> 配列による絞り込みが無く、テストクラスと実装が乖離している（確認値としてギャップを記録）。</td></tr><tr><td>一覧テンプレートの在庫・期間別数量セル</td><td>一部が固定文字列のプレースホルダのまま残っており、検索結果データと一致しない表示になり得る。</td></tr></tbody></table></div>
-<hr>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>一覧と CSV</td><td>CSV 出力側はセッションと既定フォーム値をマージしてから <code>submitAndGetData</code> するため、一覧画面よりセッションの未知キーを引きずりやすい。</td></tr><tr><td>一覧と編集画面</td><td>一覧は読み取りクエリのみ。編集画面で値が変わっても一覧は再読込まで古い値を表示し得る。</td></tr><tr><td>クエリカスタマイザ</td><td>登録がある環境では一覧 SQL が本体説明と異なる場合がある。</td></tr></tbody></table></div>
-<hr>
-<h2 id="API-バッチ結果">API/バッチ結果</h2>
-<p>本機能では外部 HTTP API の呼び出しやバッチ実行を扱わない。</p>
-<hr>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="検索条件">検索条件</h3>
+<p>一覧は設定した検索条件だけをすべて満たす商品に絞り込む。文字列の項目は部分一致で検索する。</p>
+<p>カテゴリは選択したカテゴリとその配下のカテゴリを対象とする。</p>
+<p>言語は3種すべてを選んだ場合は絞り込まない。それ以外は選んだ組み合わせで絞り込む。</p>
+<p>プロモと高額商品は1種類だけを選んだ場合に絞り込む。2種類を同時に選んだ場合は絞り込まない。高額商品の初期値は通常価格のみとする。</p>
+<p>期間別販売数は、昨日から365日前までのいずれかの期間を選んだ場合に、下限と上限で絞り込む。当日は選べない。</p>
+<p>規格更新日の終了は、指定日当日を含めるため翌日の0時未満までを対象とする。</p>
+<h3 id="初期表示">初期表示</h3>
+<p>初期表示では公開状態の「公開」だけを選んだ状態にする。</p>
+<p>ホーム画面の在庫切れリンクから開いた場合は、在庫なしだけを検索条件にした一覧を表示する。</p>
+<h3 id="並び順">並び順</h3>
+<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>並び替える列の指定が無い</td><td>商品更新日の降順、次に商品IDの降順で並べる。</td></tr><tr><td>2</td><td>並び替える列の指定があり、昇順を指定した</td><td>指定列の昇順、次に商品更新日の降順、商品IDの降順で並べる。</td></tr><tr><td>3</td><td>並び替える列の指定があり、昇順以外を指定した</td><td>指定列の降順、次に商品更新日の降順、商品IDの降順で並べる。</td></tr></tbody></table></div>
+<p>並び替えできる列は、商品ID・商品名・規格コード・在庫数・公開状態・商品登録日・商品更新日とする。</p>
+<p>同じ列の見出しを続けて押すと昇順と降順が入れ替わる。</p>
+<h3 id="表示件数と検索条件の保持">表示件数と検索条件の保持</h3>
+<p>検索条件・ページ番号・表示件数・一覧の表示モードは画面をまたいで保持し、ページ送りと表示件数の変更で再利用する。</p>
+<p>表示件数は指定した値が表示件数マスタに存在する場合に保持する。存在しない場合は保持済みの値、または既定の件数を用いる。</p>
+<h3 id="一括操作">一括操作</h3>
+<p>一覧から選んだ商品をまとめて削除できる。関連するデータから参照されている商品と、すでに削除済みの商品は削除できない。</p>
+<p>一覧から選んだ商品の公開状態をまとめて変更できる。</p>
+<h3 id="計算">計算</h3>
+<p>売上などの集計計算は行わない。</p>
+<h3 id="エラー時の扱い">エラー時の扱い</h3>
+<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>扱い</th></tr></thead><tbody><tr><td>検索条件の入力に不備がある</td><td>同一画面にエラーを表示し、一覧を出さない。</td></tr><tr><td>一括削除の一部が失敗した</td><td>失敗した商品をモーダル内に列挙する。完了操作で一覧を読み直す。</td></tr></tbody></table></div>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>HTTP クエリ（<code>page_no</code>、<code>page_count</code>、<code>mode</code>、<code>resume</code>）、POST 検索フォーム、セッションに保持された検索状態。</td></tr><tr><td>成功時出力</td><td>HTML 一覧。検索条件サマリのリスト。</td></tr><tr><td>失敗時出力</td><td>フォームエラー時はエラーメッセージと入力値を保持したフォーム。</td></tr><tr><td>副作用</td><td>セッションキー <code>eccube.admin.product.search</code>、<code>eccube.admin.product.search.page_no</code>、<code>eccube.admin.product.search.page_count</code>、<code>eccube.admin.product.search.display_mode</code> の更新。一覧検索前後イベントのディスパッチ。</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<p>当機能のクエリが主に参照する論理列は次のとおり（物理列名はスキーマを参照）。</p>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td>dtb_product</td><td>id, name, name_en, product_status_id, update_date, create_date, storage_code_id, card_detail_id, cardset_id</td><td>名称・状態・略称タグ・カード詳細参照（移行先は商品本体へ統合）</td></tr><tr><td>dtb_product_class</td><td>code, price02, update_date, order_quantity_*, high_price_code, language_id, card_condition_id, section_id, shelf_number_id</td><td>規格単位の条件・並び</td></tr><tr><td>dtb_product_stock</td><td>stock</td><td>在庫帯</td></tr><tr><td>mtb_card_detail（現行 dtb_card_detail）</td><td>cardset_id, rarity_id, foil_flg, frame_flg, promotion_flg</td><td>カード属性。移行先はカード詳細マスタ</td></tr><tr><td>dtb_product_category</td><td>category_id</td><td>カテゴリ</td></tr><tr><td>dtb_product_tag</td><td>tag_id（現行 tag）</td><td>タグ EXISTS</td></tr><tr><td>mtb_card（カードマスタ）</td><td>name_jp, name_en</td><td>カード名検索</td></tr></tbody></table></div>
-<h3 id="DB操作">DB操作</h3>
-<p>本機能は参照系（検索）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>検索</td><td>dtb_card_detail / dtb_product / dtb_product_category / dtb_product_class / dtb_product_stock / dtb_product_tag 等</td><td>検索条件に合致するレコードを抽出する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="バリデーション">バリデーション</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>金額系（販売・基準・買取の開始／終了）</td><td>Symfony の桁上限（設定 <code>eccube_price_len</code>）。</td></tr><tr><td>整数系（在庫・販売数）</td><td>整数型フィールド。HTML で最小 0 と maxlength。</td></tr><tr><td>規格更新日</td><td>終了が開始より前ならエラー（共通文言）。各日付は 1900-01-01 以降のレンジ。</td></tr><tr><td>その他テキスト</td><td>追加の Symfony Length は無い（確認値）。</td></tr></tbody></table></div>
-<hr>
-<h2 id="権限・認可">権限・認可</h2>
-<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>商品一覧・検索 POST・ページ GET</th></tr></thead><tbody><tr><td>管理画面にログインしルートへ到達できる運用者</td><td>利用できる。細かいロール単位の可否はセキュリティ設定と権限マスタの実装を正とする。</td></tr><tr><td>未ログインまたは拒否された主体</td><td>管理画面共通の挙動により利用できない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="画面遷移">画面遷移</h2>
-<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>商品名リンク</td><td>商品編集</td></tr><tr><td>プレビューアイコン（実装によりフロント詳細）</td><td>別タブでフロント商品詳細</td></tr><tr><td>CSV・一括編集・一括ステータスなどフォーム <code>formaction</code></td><td>各 POST 先ルート</td></tr><tr><td>ページネーション</td><td>同一一覧の別ページ</td></tr></tbody></table></div>
-<h3 id="遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</h3>
-<div class="table-wrap"><table><thead><tr><th>起点</th><th>遷移前の処理</th><th>遷移後の初期状態</th></tr></thead><tbody><tr><td>編集などから <code>resume=1</code> で戻る</td><td>セッションの検索ビューデータとページ番号は一覧側が上書きしない限り保持</td><td>保存されていたページ番号と条件で一覧を組み立てる</td></tr><tr><td>初回 <code>GET /product</code>（<code>resume</code> も <code>page_no</code> も無い）</td><td>フォーム既定の検索ビューデータでセッションを上書き</td><td>公開のみ等の既定チェックが載った状態になる</td></tr></tbody></table></div>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>POST 検証失敗</td><td>同一画面でエラーメッセージを表示し、一覧は出さない。</td></tr><tr><td>ソート用隠し項目の改ざん</td><td>列マップ外キーは実行時例外になり得る。</td></tr><tr><td>一括削除の一部失敗</td><td>モーダル内にエラー行を列挙し、完了後に手動リロード。</td></tr></tbody></table></div>
-<hr>
-<h2 id="試行制限">試行制限</h2>
-<p>本機能では試行制限を扱わない。</p>
-<hr>
-<h2 id="ログ・監査">ログ・監査</h2>
-<p>一覧表示だけでは専用の監査ログ出力は行わない。デバッグ用途のログは別機能・設定に依存する。</p>
-<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
-<ul><li>パスワード</li><li>なりすまし対策トークン</li><li>Cookie 値</li><li>セッション ID の完全値</li><li>Remember Me トークンの原値</li></ul>
-<hr>
-<h2 id="セッション">セッション</h2>
-<h3 id="本機能におけるセッション">本機能におけるセッション</h3>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>検索ビューデータ</td><td>キー <code>eccube.admin.product.search</code>。POST 成功時と初期 GET で更新。ページ GET と resume で読む。</td></tr><tr><td>ページ番号</td><td>キー <code>eccube.admin.product.search.page_no</code>。</td></tr><tr><td>表示件数</td><td>キー <code>eccube.admin.product.search.page_count</code>。</td></tr><tr><td>一覧表示データモード</td><td>キー <code>eccube.admin.product.search.display_mode</code>。</td></tr></tbody></table></div>
-<h3 id="セッションへ保存しない情報">セッションへ保存しない情報</h3>
-<p>パスワードやクレジットカード番号など、検索フォームが本来保持しない値は保存しない。</p>
-<hr>
-<h2 id="Cookie">Cookie</h2>
-<p>本機能はセッション Cookie 以外の独自 Cookie を設けない（セッションの詳細は管理画面ログインの設計を正とする）。</p>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<p>一覧表示は読み取り主体であり、本機能単体では楽観ロックや明示トランザクション境界を持たない。</p>
-<hr>
-<h2 id="調査補助-ソース位置の索引">調査補助（ソース位置の索引）</h2>
-<p>grep や IDE 検索のためのパスのみを示す。ふるまいの正は実装本文とする。</p>
-<ul><li><code>src/Eccube/Controller/Admin/Product/ProductController.php</code>（ルート <code>admin_product</code> / <code>admin_product_page</code>）</li><li><code>src/Eccube/Form/Type/Admin/SearchProductType.php</code></li><li><code>src/Eccube/Repository/ProductRepository.php</code> の <code>getQueryBuilderBySearchDataForAdmin</code></li><li><code>src/Eccube/Resource/template/admin/Product/index.twig</code></li><li><code>html/template/admin/assets/js/function.js</code>（<code>.search-clear</code>、<code>.js-listSort</code>）</li><li><code>src/Eccube/Controller/Admin/AdminController.php</code> の <code>search_nonstock</code> 相当アクション</li></ul>
-<h3 id="HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</h3>
-<ul><li><code>admin_product</code> … <code>GET, POST</code> … <code>/{admin_route}/product</code>（一覧の初期表示、検索フォーム送信後の 1 ページ目相当の処理、一覧ヘッダからソートするときの POST 送信先、他画面から <code>resume</code> 付きで戻るときの起点。）</li><li><code>admin_product_page</code> … <code>GET, POST</code> … <code>/{admin_route}/product/page/{page_no}</code>（ページ送り、表示件数変更、一覧表示データモード変更など GET で状態を変えたあとの再表示。）</li><li><code>admin_homepage_nonstock</code> … <code>GET</code> … <code>/{admin_route}/search_nonstock</code>（ダッシュボード等からの導線として、商品一覧向けセッションへ事前条件を書き込んだうえで <code>admin_product_page</code> の 1 ページ目へリダイレクトする（詳細は処理フローとエッジケース参照）。）</li></ul>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>検索条件、ページ番号、表示件数、一覧の表示モード</td></tr><tr><td>成功時出力</td><td>商品の一覧、該当件数、検索条件の一覧表示</td></tr><tr><td>失敗時出力</td><td>入力に不備がある場合のエラーと、入力値を保持したままの検索条件</td></tr></tbody></table></div>
+<h3 id="入出力-永続化">入出力: 永続化</h3>
+<p>一覧の表示ではデータを更新しない。</p>
+<p>一括削除は商品を削除する。一括での公開状態の変更は商品の公開状態を更新する。</p>
+<div class="table-wrap"><table><thead><tr><th>操作</th><th>契機</th></tr></thead><tbody><tr><td>削除</td><td>一括削除</td></tr><tr><td>更新（公開状態）</td><td>一括での公開状態の変更</td></tr></tbody></table></div>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
+<h2 id="表示メッセージ">表示メッセージ</h2>
+<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M03-01-MSG-001</td><td>管理画面上部</td><td>パスワードを更新しました</td><td>パスワード変更を保存したとき</td><td>パスワード変更画面に遷移する</td></tr><tr><td>M03-01-MSG-002</td><td>画面中央(ダイアログ)</td><td>Failed</td><td>商品の規格情報の取得に失敗したとき</td><td>エラーを表示し、商品検索・一覧画面に留まる</td></tr><tr><td>M03-01-MSG-003</td><td>画面中央(モーダル)</td><td>削除中...</td><td>選択した商品の一括削除を開始したとき</td><td>モーダルは開いたまま</td></tr><tr><td>M03-01-MSG-004</td><td>画面中央(モーダル)</td><td>商品の削除処理が完了しました</td><td>選択した商品の一括削除処理が完了したとき</td><td>モーダルを閉じて商品検索・一覧画面を再読み込みする</td></tr><tr><td>M03-01-MSG-005</td><td>未表示（XHR JSON応答）</td><td>削除しました</td><td>商品を削除したとき</td><td>商品一覧画面に留まり、完了操作で一覧を再読込する</td></tr><tr><td>M03-01-MSG-006</td><td>モーダル内</td><td>関連するデータがあるため「%name%」を削除できませんでした ／ 削除に失敗しました</td><td>商品を完全に削除したとき、関連するデータがある場合、または削除できない場合</td><td>エラーを削除確認モーダル内に表示し、完了操作後に商品一覧画面へ遷移する</td></tr><tr><td>M03-01-MSG-007</td><td>管理画面上部</td><td>%status%: %count%件が正常に適用されました</td><td>選択した商品の状態変更が1件以上完了したとき</td><td>商品検索・一覧画面に遷移する</td></tr><tr><td>M03-01-MSG-008</td><td>モーダル内</td><td>既に削除されています</td><td>削除しようとした商品がすでに削除されていたとき</td><td>エラーを削除確認モーダル内に表示し、完了操作後に商品一覧を再読込する</td></tr><tr><td>M03-01-MSG-009</td><td>画面中央(モーダル)</td><td>商品を削除してよろしいですか？</td><td>商品一覧で商品を選択し、「完全に削除」を選択したとき</td><td>モーダル内の「完全に削除」で、選択済み商品の完全削除処理を開始する。キャンセル時は処理しない</td></tr></tbody></table></div>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,41 +272,17 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#フロント挙動">フロント挙動</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#アップロード画面を表示する-GET-m03-13-admin-product-product-tag-sales-analysis-csv-upload">アップロード画面を表示する（GET `m03-13_admin_product_product_tag_sales_analysis_csv_upload`）</a>
-<a class="lv3" href="#雛形をダウンロードする-GET-m03-13-admin-product-product-tag-sales-analysis-csv-template">雛形をダウンロードする（GET `m03-13_admin_product_product_tag_sales_analysis_csv_template`）</a>
-<a class="lv3" href="#CSV-を取込む-POST-m03-13-admin-product-product-tag-sales-analysis-import">CSV を取込む（POST `m03-13_admin_product_product_tag_sales_analysis_import`）</a>
-<a class="lv3" href="#汎用インポータ内部-確認値">汎用インポータ内部（確認値）</a>
-<a class="lv2" href="#集計条件">集計条件</a>
-<a class="lv2" href="#CSV-取込時の判定順序-データ行">CSV 取込時の判定順序（データ行）</a>
-<a class="lv2" href="#表示メッセージ">表示メッセージ</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
-<a class="lv3" href="#入力項目">入力項目</a>
-<a class="lv3" href="#エッジケース">エッジケース</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#取込履歴の一覧">取込履歴の一覧</a>
+<a class="lv3" href="#雛形">雛形</a>
+<a class="lv3" href="#取込の前提">取込の前提</a>
+<a class="lv3" href="#取込時の判定順序">取込時の判定順序</a>
+<a class="lv3" href="#タグの置換">タグの置換</a>
+<a class="lv3" href="#エラー時の扱い">エラー時の扱い</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#バリデーション">バリデーション</a>
-<a class="lv2" href="#権限・認可">権限・認可</a>
-<a class="lv2" href="#画面遷移">画面遷移</a>
-<a class="lv3" href="#遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#試行制限">試行制限</a>
-<a class="lv2" href="#ログ・監査">ログ・監査</a>
-<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
-<a class="lv2" href="#セッション">セッション</a>
-<a class="lv3" href="#本機能におけるセッション">本機能におけるセッション</a>
-<a class="lv3" href="#セッションへ保存しない情報">セッションへ保存しない情報</a>
-<a class="lv2" href="#Cookie">Cookie</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a>
-<a class="lv2" href="#調査補助-grep-向け">調査補助（grep 向け）</a>
-<a class="lv3" href="#HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</a></nav>
+<a class="lv3" href="#入出力-永続化">入出力: 永続化</a>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -304,105 +290,30 @@ footer {
         <h1>商品管理 — 売上分析タグ更新CSV登録</h1>
       </header>
       
-      <h2 id="概要">概要</h2>
-<p>管理画面の「商品管理」→「商品CSV管理」→「売上分析タグ更新CSVアップロード」から開く画面で、<code>dtb_product_tag_sales_analysis</code> に対する商品単位の売上分析タグ紐付けを CSV で一括置換する機能である。CSV は「商品ID」と「売上分析タグ(ID)」（カンマ区切り複数）の 2 列を前提とし、同一ファイル内で同一商品 ID が複数行あるときは末尾行の指定が残る。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値は EC-CUBE Enterprise の <code>src/Eccube</code> 配下とする。</p>
-<p>本機能のカスタマイズ区分は現行踏襲である。現行挙動は pf-eccube3（HareruyaEc プラグイン）を参照し、永続化に関わるテーブル名・列名などのDB関連は ec-cube-enterprise を正とする。</p>
-<p>対象はブラウザ経由の管理画面に限定する。</p>
-<p>コントローラのメソッド名は本文の主題としない。本文ではルートbind名やSymfonyのルートnameの網羅は主説明としない。「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。コード探索でbind名が必要なときだけ「調査補助」へ書く。</p>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<p>DB関連の記述は ec-cube-enterprise の実装を正とする。売上分析タグの置換対象テーブル・列は現行（pf-eccube3 の HareruyaEc プラグイン）と移行先（ec-cube-enterprise）で同一スキーマである。</p>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>売上分析タグ中間テーブル</td><td><code>dtb_product_tag_sales_analysis</code>（<code>product_id</code> <code>tag_sales_analysis_id</code>）</td><td>同一スキーマ。ec-cube-enterprise では売上分析タグマスタの多対多結合表として <code>product_id</code> <code>tag_sales_analysis_id</code> を持つ。</td></tr><tr><td>売上分析タグマスタ</td><td><code>mtb_tag_sales_analysis.id</code></td><td>同一スキーマ。</td></tr><tr><td>商品存在チェック</td><td><code>dtb_product.id</code></td><td>同一スキーマ。</td></tr><tr><td>取込履歴</td><td><code>dtb_csv_import_history</code>（<code>file_name</code> <code>create_date</code> <code>csv_import_type_id</code> <code>member_id</code>）</td><td>同一スキーマ。</td></tr></tbody></table></div>
-<p>置換（DELETE 後の INSERT）の挙動・検証順序・トランザクション制御は現行（pf-eccube3）を参照し、移行先でも同等の標準実装が ec-cube-enterprise に取り込まれている。</p>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>ナビ「商品管理」→「商品CSV管理」→「売上分析タグ更新CSVアップロード」</td><td><code>GET /{admin_route}/product/tag_sales_analysis/csv_upload</code></td><td>アップロード画面が開き、フォーマット表と履歴が表示される。</td></tr><tr><td>雛形ダウンロード</td><td><code>GET /{admin_route}/product/tag_sales_analysis/csv_template</code></td><td><code>product_tag_sales_analysis_template.csv</code> が得られる。</td></tr><tr><td>アップロード送信</td><td><code>POST /{admin_route}/product/tag_sales_analysis/import</code></td><td>検証・取込後、常に <code>GET …/product/tag_sales_analysis/csv_upload</code> へリダイレクトされ、フラッシュで結果が示される。</td></tr><tr><td>履歴の表示件数変更</td><td><code>GET /{admin_route}/product/tag_sales_analysis/csv_upload?page_no=…&amp;page_count=…</code></td><td>クエリの件数が許容リストに含まれるときだけセッションに保存され、履歴のページサイズが変わる。ページ番号はその都度セッションに保存される。</td></tr></tbody></table></div>
-<hr>
-<h2 id="フロント挙動">フロント挙動</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td><code>@admin/Product/csv_tag_sales_analysis.twig</code> は共通テンプレート <code>@admin/Product/base_csv_upload.twig</code> を継承する。ページタイトルは翻訳キー <code>admin.product.product_management</code>。サブタイトル・サイドメニュー見出しは <code>admin.product.tag_sales_analysis_csv</code>（確認値として「売上分析タグ更新CSVアップロード」）。メニューハイライトは <code>product</code>・<code>product_csv_management</code>・<code>product_tag_sales_analysis_csv_import</code>。上部カード見出しは <code>admin.product.tag_sales_analysis_csv_upload_title</code>、フォーマット見出しは <code>admin.product.tag_sales_analysis_csv_format_title</code>。ファイル入力は <code>accept</code> に <code>.csv</code>、<code>text/csv</code>、<code>.tsv</code>、<code>text/tsv</code>。送信ボタン文言は <code>admin.common.csv_upload</code>。フォーマット表は項目名列と説明列。必須列には「必須」バッジ（必須ヘッダーキーはコントローラが「商品ID」のみ）。下部に取込履歴（ファイル名・アップロード日時・作業者）。履歴はプルダウンで表示件数を切り替え（選択肢は抽象コントローラの一覧どおり 10, 50, 100, 300, 500, 1000, 2000, 10000, 12000）。ページネーションは履歴が複数ページのときに表示される。</td></tr><tr><td>JS 挙動</td><td>ファイル選択でラベルにファイル名を表示する。フォーム送信時に <code>$.changeLoading(true)</code> を呼ぶ。履歴件数プルダウン変更で <code>window.location.href</code> を差し替える。</td></tr><tr><td>CSS・レイアウト</td><td><code>base_csv_upload.twig</code> 内のカスタムファイル入力向けスタイル。</td></tr><tr><td>モーダル・ポップアップ</td><td>送信前の確認ダイアログはない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="アップロード画面を表示する-GET-m03-13-admin-product-product-tag-sales-analysis-csv-upload">アップロード画面を表示する（GET <code>m03-13_admin_product_product_tag_sales_analysis_csv_upload</code>）</h3>
-<ol><li>管理画面の認証・共通制約を通過する。</li><li>管理者向け CSV 取込フォーム種別の空フォームを組み立て、リクエストをバインドする。</li><li>クエリ <code>page_count</code> が許容リストに含まれる場合のみセッションキー文字列 <code>admin.product.tag_sales_analysis_csv.page_count</code> に保存する。含まれない場合はセッション値または既定 10 を採用する。</li><li><code>page_no</code> はクエリまたはセッション <code>admin.product.tag_sales_analysis_csv.page_no</code> から決め、セッションへ書き戻す。</li><li>取込種別が売上分析タグ更新 CSV の履歴だけを対象とするクエリビルダをページネーションし、テンプレートへ渡す。</li></ol>
-<h3 id="雛形をダウンロードする-GET-m03-13-admin-product-product-tag-sales-analysis-csv-template">雛形をダウンロードする（GET <code>m03-13_admin_product_product_tag_sales_analysis_csv_template</code>）</h3>
-<ol><li>管理画面の認証・共通制約を通過する。</li><li>コントローラが返す「列見出し→説明文」の連想配列について、<code>array_keys</code> の並びで 1 行目だけを書いた CSV をストリーミング応答する。ファイル名は <code>product_tag_sales_analysis_template.csv</code>。<code>Content-Type</code> は <code>application/octet-stream</code>。</li></ol>
-<h3 id="CSV-を取込む-POST-m03-13-admin-product-product-tag-sales-analysis-import">CSV を取込む（POST <code>m03-13_admin_product_product_tag_sales_analysis_import</code>）</h3>
-<ol><li>ログイン利用者を取込処理に渡す前提を満たす。</li><li>管理者向け CSV 取込フォーム種別を組み立てて送信をバインドする。妥当でなければフォームエラーをフラッシュに積み、<code>GET m03-13_admin_product_product_tag_sales_analysis_csv_upload</code> へリダイレクトする。</li><li><code>import_file</code> が null なら共通キー <code>admin.common.csv_invalid_format</code> をフラッシュし、同様にリダイレクトする。</li><li>アップロードファイル全文から、ダブルクォート内の改行を除いたうえでの改行数を数え、その値が抽象コントローラ定数 <code>ADMIN_CSV_IMPORT_MAX_ROWS</code>（5010）以上なら <code>admin.csv.error.upload.maxrecord</code> をパラメータ付きでフラッシュし、リダイレクトする。</li><li>情報ログに「売上分析タグ更新CSV登録開始」を書く。</li><li>汎用インポータに売上分析タグ更新用ハンドラを渡してファイルを取込む（詳細は次節）。</li><li>返却結果にエラーが 1 件でもあれば情報ログに「売上分析タグ更新CSV登録 異常終了」を書き、各メッセージをエラーフラッシュに積む。</li><li>エラーが無ければ成功フラッシュ（キー <code>admin.register.complete</code>）、完了ログ（件数付きキー付きコンテキスト）、取込履歴 INSERT（種別 ID は売上分析タグ更新 CSV 用定数、ファイル名はクライアントオリジナル名、利用者 ID）を行う。</li><li>常に <code>GET m03-13_admin_product_product_tag_sales_analysis_csv_upload</code> へリダイレクトする。</li></ol>
-<p>本コントローラはカード商品 CSV 取込などと異なり、取込直前に PHP の実行時間制限を無効化しない。</p>
-<h3 id="汎用インポータ内部-確認値">汎用インポータ内部（確認値）</h3>
-<ol><li>アップロードファイルを設定の CSV 一時ディレクトリへ移し、逐次読込できるファイルハンドルとして開く。拡張子が <code>tsv</code> のときはタブ区切り、それ以外は設定 <code>eccube_csv_import_delimiter</code> と <code>eccube_csv_import_enclosure</code> を使う（配布値はカンマと二重引用符）。</li><li>1 行目をヘッダとみなせなければエラー集合を返して終了する。ヘッダのみでデータ行が無ければエラー集合を返して終了する。</li><li>DB 接続でトランザクションを開始し、行ロックタイムアウトをハンドラが返す秒数（既定 5）に設定する。</li><li>データ行ごとに「列数がハンドラが持つ列定義と一致」「ヘッダ名が各列の名前と対応」「各列の単体検証」「商品が DB に存在するか」を通過させたうえで行処理へ進む。商品が存在しない行ではエラーを記録し全体中断する。</li><li>行処理では売上分析タグ ID 配列を求め、<code>dtb_product_tag_sales_analysis</code> を一旦 DELETE したうえで指定 ID を INSERT する置換を実行する。同一 CSV で同一商品 ID が複数回現れる場合、各回で置換が走り最終行の内容が残る。処理成功件数としてカウントされるのは「その CSV で初めて処理した商品 ID」のみである。</li><li>100 行ごとに flush と clear を挟む（インポータ既定）。</li><li>全行処理後、flush と clear を再度行う。</li><li>コミット条件は汎用インポータが「エラー件数が 0」「または処理全体の中断フラグが立っていない」のいずれかを満たすときコミットする式になっている。本ハンドラでは検証エラー時に中断フラグも立てるため、エラーがある通常経路ではロールバックに収束する。</li><li>処理件数・エラー配列・情報配列を結果オブジェクトに載せて返す。</li></ol>
-<hr>
-<h2 id="集計条件">集計条件</h2>
-<p>本機能では売上集計や一覧件数の算出は行わない。履歴一覧は「CSV 取込種別が売上分析タグ更新」の履歴行を時系列クエリでページングするだけである。</p>
-<hr>
-<h2 id="CSV-取込時の判定順序-データ行">CSV 取込時の判定順序（データ行）</h2>
-<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>ヘッダ行が解釈できるか</td><td>否なら取込中止（事前検証エラー）。</td></tr><tr><td>2</td><td>ヘッダ直下にデータ行が 1 行以上あるか</td><td>否なら取込中止（事前検証エラー）。</td></tr><tr><td>3</td><td>データ行の列数が 2 と一致するか</td><td>否ならエラー記録し全体中断。</td></tr><tr><td>4</td><td>「商品ID」「売上分析タグ(ID)」のセルが列定義どおり検証できるか（商品 ID は必須かつ符号なし整数体系、タグ列は未入力も可、入力時は要素ごとに数値検証とマスタ存在）</td><td>否ならエラー記録し全体中断。</td></tr><tr><td>5</td><td>商品 ID が <code>dtb_product</code> に存在するか（公開状態による除外なし）</td><td>否ならエラー記録し全体中断。</td></tr><tr><td>6</td><td>置換 SQL を実行する</td><td>コミットまでロールバックされなければ反映される。</td></tr></tbody></table></div>
-<hr>
-<h2 id="表示メッセージ">表示メッセージ</h2>
-<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>画面上の文言(英語)</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M03-29-MSG-001</td><td>管理画面上部</td><td>アップロードされたファイルが大きすぎます。小さなファイルで再度アップロードしてください。 ／ CSRFトークンが無効です、再送信してください。 ／ フィールドグループに追加のフィールドを含んではなりません。</td><td>（英訳なし）</td><td>CSV取込フォームの入力が無効なとき</td><td>CSV取込画面に遷移する</td></tr><tr><td>M03-29-MSG-002</td><td>管理画面上部</td><td>CSVのフォーマットが一致しません</td><td>（英訳なし）</td><td>フォームが有効であるにもかかわらず、import_file が null のとき</td><td>エラーを表示し、管理画面_商品管理_売上分析タグ更新CSV登録画面に遷移する</td></tr><tr><td>M03-29-MSG-003</td><td>管理画面上部</td><td>登録が完了しました。</td><td>（英訳なし）</td><td>CSVの登録が正常に完了したとき</td><td>完了メッセージを表示し、管理画面_商品管理_売上分析タグ更新CSV登録画面に遷移する</td></tr></tbody></table></div>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>タグの意味</td><td>CSV で指定された売上分析タグ ID の集合が、その商品について最終的な紐付けになる。タグ列が空または未入力相当のときは紐付けがすべて削除される。</td></tr><tr><td>複数値</td><td>「売上分析タグ(ID)」セルはカンマ区切りの複数整数を許す。検証開始時点でマスタに存在する ID の一覧を読み込み照合する。</td></tr><tr><td>同一商品の複数行</td><td>末尾行の指定が実データとして残る。成功件数はユニークな商品 ID の個数として数える。</td></tr><tr><td>マスタ側の削除との競合</td><td>取込処理の検証で読み込んだ ID 集合と異なる状態への変化が並行して起きた場合の整合は本書では確定しない。実装は検証開始時スナップショットに基づく。</td></tr></tbody></table></div>
-<h3 id="入力項目">入力項目</h3>
-<div class="table-wrap"><table><thead><tr><th>項目名</th><th>必須／任意</th><th>最大長</th><th>初期値</th><th>保存先・扱い</th></tr></thead><tbody><tr><td>CSVファイル選択</td><td>必須</td><td>アップロード上限は設定 <code>eccube_csv_size</code> をメガバイト単位として Symfony のファイル制約に渡す（配布 <code>eccube.yaml</code> の確認値は 5）。サーバ側の <code>upload_max_filesize</code> / <code>post_max_size</code> が実効上限となる場合がある。</td><td>未選択</td><td>フォームキー <code>admin_csv_import[import_file]</code>。送信後は一時ディレクトリへ移動され逐次処理される。ページにはラベル無しのファイルウィジェットのみが明示される。</td></tr></tbody></table></div>
-<p>補足: 画面上は項目ラベルがフォーム種別では無効化されているため、利用者にはカード内のファイル入力と送信ボタンとして見える。</p>
-<h3 id="エッジケース">エッジケース</h3>
-<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>タグ ID に重複を書く</td><td>置換前に ID 配列を一意化するため、結果として重複は残らない。</td></tr><tr><td>タグ列のみ空</td><td>検証は通り、その商品の紐付けはすべて削除される。</td></tr><tr><td>存在しない売上分析タグ ID</td><td>マスタ不存在エラーとなり全体ロールバック。</td></tr><tr><td>存在しない商品 ID</td><td>商品不存在エラーとなり全体ロールバック。</td></tr><tr><td>改行カウントが閾値以上</td><td>取込処理に入らず、<code>ADMIN_CSV_IMPORT_MAX_ROWS</code> を上限としてエラーフラッシュのみ。</td></tr></tbody></table></div>
-<hr>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>一覧との一致</td><td>取込成功後、商品詳細や一覧検索が参照する売上分析タグは置換結果と一致する（同一トランザクション内でコミットされた場合）。</td></tr><tr><td>履歴との関係</td><td>取込履歴は成功時のみ 1 件追加される。失敗時は履歴を増やさない。履歴のファイル名はアップロード時のオリジナル名。</td></tr><tr><td>部分成功</td><td>実装はファイル単位でコミットまたはロールバックする。途中まで成功した行だけを残す動きにはしない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="API-バッチ結果">API/バッチ結果</h2>
-<p>本機能では外部 HTTP API の呼び出しやバッチジョブの起動を行わない。</p>
-<hr>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="取込履歴の一覧">取込履歴の一覧</h3>
+<p>アップロード画面には、売上分析タグ更新CSVの取込履歴だけを一覧で表示する。表示件数は指定値が許容リストに含まれるときだけ採用して保持し、含まれないときは保持値または既定の10件とする。ページ番号は指定値または保持値から決め、保持し直す。</p>
+<h3 id="雛形">雛形</h3>
+<p>雛形は列見出しだけを1行書いたCSVを返す。ファイル名は product_tag_sales_analysis_template.csv とする。</p>
+<h3 id="取込の前提">取込の前提</h3>
+<p>CSVは「商品ID」「売上分析タグ(ID)」の2列とする。ファイルの行数は、囲み文字の中の改行を除いた改行数で数え、5010以上のときは取り込まず件数超過のエラーとする。ファイルが選択されていないときは形式エラーとする。</p>
+<p>拡張子が tsv のときはタブ区切り、それ以外は取込設定の区切り文字と囲み文字（配布値はカンマと二重引用符）で読む。</p>
+<h3 id="取込時の判定順序">取込時の判定順序</h3>
+<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>ヘッダ行が解釈できるか</td><td>できなければ取込を中止する</td></tr><tr><td>2</td><td>ヘッダ直下にデータ行が1行以上あるか</td><td>無ければ取込を中止する</td></tr><tr><td>3</td><td>データ行の列数が2か</td><td>一致しなければエラーを記録し、全体を中断する</td></tr><tr><td>4</td><td>各セルの検証（商品IDは必須の符号なし整数、売上分析タグは未入力可。入力時は要素ごとに数値であることとマスタに存在すること）</td><td>満たさなければエラーを記録し、全体を中断する</td></tr><tr><td>5</td><td>商品IDの商品が存在するか（公開状態による除外はしない）</td><td>存在しなければエラーを記録し、全体を中断する</td></tr><tr><td>6</td><td>売上分析タグの置換</td><td>確定するまで取り消し可能な状態で反映する</td></tr></tbody></table></div>
+<h3 id="タグの置換">タグの置換</h3>
+<p>CSVで指定した売上分析タグIDの集合が、その商品の最終的な紐付けになる。既存の紐付けをいったんすべて削除してから指定IDを登録する。タグ列が空または未入力相当のときは紐付けをすべて削除する。</p>
+<p>「売上分析タグ(ID)」はカンマ区切りで複数の整数を指定できる。検証の開始時点でマスタに存在するIDの一覧を読み、それと照合する。並行してマスタが変化した場合の整合は本書では確定しない。</p>
+<p>同じ商品IDが同一CSVに複数回現れるときは、行ごとに置換が走り最終行の内容が残る。成功件数として数えるのは、そのCSVで初めて処理した商品IDだけである。</p>
+<p>エラーが1件でもあるときは反映を取り消す。エラーが無いときだけ確定し、完了メッセージを表示して取込履歴を1件残す。取込履歴にはファイル名と取込種別と実行した管理者を記録する。</p>
+<h3 id="エラー時の扱い">エラー時の扱い</h3>
+<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>入力の検証失敗</td><td>エラーを表示し、アップロード画面へ戻す</td></tr><tr><td>ファイル未選択</td><td>形式エラーを表示し、アップロード画面へ戻す</td></tr><tr><td>行数が5010以上</td><td>件数超過のエラーを表示し、アップロード画面へ戻す</td></tr><tr><td>ヘッダ不正・データ行なし</td><td>エラーを表示し、アップロード画面へ戻す</td></tr><tr><td>行の検証失敗・商品が存在しない</td><td>エラーを表示し、反映を取り消してアップロード画面へ戻す</td></tr></tbody></table></div>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>ブラウザからの multipart POST（CSRF、CSV または TSV ファイル）。</td></tr><tr><td>成功時出力</td><td>HTTP 302 でアップロード画面へ戻り、成功フラッシュと完了ログ、取込履歴 INSERT。</td></tr><tr><td>失敗時出力</td><td>HTTP 302 でアップロード画面へ戻り、エラーフラッシュ（複数可）。ログに異常終了を書く場合がある。</td></tr><tr><td>副作用</td><td><code>dtb_product_tag_sales_analysis</code> の DELETE と INSERT、トランザクション、情報ログ、<code>dtb_csv_import_history</code> の INSERT（成功時のみ）。</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<p>機能に直接関係する実装確認値のみ示す。型や制約の細部はスキーマを参照する。</p>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>dtb_product_tag_sales_analysis</code></td><td><code>product_id</code>, <code>tag_sales_analysis_id</code></td><td>取込で一度削除され、指定どおり再投入される。</td></tr><tr><td><code>dtb_product</code></td><td><code>id</code></td><td>商品存在チェックの対象。商品公開状態による除外は行わない。</td></tr><tr><td><code>mtb_tag_sales_analysis</code></td><td><code>id</code></td><td>タグ ID の妥当性検証に参照される。</td></tr><tr><td><code>dtb_csv_import_history</code></td><td><code>file_name</code>, <code>create_date</code>, CSV 種別、作業者参照</td><td>成功時のみ INSERT。種別は売上分析タグ更新 CSV。</td></tr></tbody></table></div>
-<h3 id="DB操作">DB操作</h3>
-<p>永続化の正は ec-cube-enterprise。商品系は承認ワークフローを介さず persist/flush で直接確定する（在庫の承認ワークフローとは別系統。<code>ProductController</code>・各CSVサービスで確認）。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>登録/更新</td><td>dtb_csv_import_history / dtb_product / dtb_product_tag_sales_analysis / mtb_tag_sales_analysis</td><td>当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。</td></tr></tbody></table></div>
-<hr>
-<h2 id="バリデーション">バリデーション</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>フォーム全体</td><td>CSV ファイルは NotBlank。ファイルサイズ上限は設定由来のメガバイト値。</td></tr><tr><td>商品 ID 列</td><td>必須。符号なし整数体系として検証される列定義である。</td></tr><tr><td>売上分析タグ(ID) 列</td><td>任意。未入力は許容。入力された各要素は数値検証を受け、マスタに存在する ID でなければエラー。</td></tr><tr><td>事前チェック</td><td>ヘッダ必須、データ行必須、コントローラ側の改行カウント上限未満。</td></tr></tbody></table></div>
-<hr>
-<h2 id="権限・認可">権限・認可</h2>
-<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>アップロード画面 GET・雛形 GET・取込 POST</th></tr></thead><tbody><tr><td>管理画面にログイン済みで当パスへ到達できる管理者</td><td>実装されている処理を実行できる。ルート属性による個別の細かな認可キーは付けない確認値である。</td></tr><tr><td>未ログインまたは共通ファイアウォールで拒否される主体</td><td>管理画面の共通ルールに従い当機能には到達しない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="画面遷移">画面遷移</h2>
-<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>ナビから開く</td><td><code>GET …/csv_upload</code></td></tr><tr><td>取込フォーム送信後（成否問わず）</td><td><code>GET …/csv_upload</code></td></tr><tr><td>履歴ページサイズ変更</td><td><code>GET …/csv_upload?page_no=1&amp;page_count=…</code></td></tr></tbody></table></div>
-<h3 id="遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</h3>
-<div class="table-wrap"><table><thead><tr><th>起点</th><th>遷移前の処理</th><th>遷移後の初期状態</th></tr></thead><tbody><tr><td>ページング・件数変更（GET）</td><td>セッションに <code>page_no</code> と許容範囲内の <code>page_count</code> を保存する</td><td>保存済みのページ状態で履歴が表示される</td></tr><tr><td>取込 POST 後のリダイレクト</td><td>フラッシュメッセージを積む</td><td>アップロード画面が再描画され、フラッシュがあれば利用者に見える</td></tr></tbody></table></div>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>フォーム検証失敗</td><td>エラーフラッシュを積み、アップロード画面へリダイレクトする。</td></tr><tr><td>ファイル未選択（null）</td><td><code>admin.common.csv_invalid_format</code> をフラッシュしリダイレクトする。</td></tr><tr><td>改行数が上限以上</td><td><code>admin.csv.error.upload.maxrecord</code> をフラッシュしリダイレクトする。</td></tr><tr><td>CSV 事前検証（ヘッダ・データ無し）</td><td>インポータ結果のエラー配列をフラッシュしリダイレクトする。</td></tr><tr><td>行検証または商品不存在</td><td>メッセージストア経由の文言がフラッシュに載り、トランザクションはロールバックされる。</td></tr></tbody></table></div>
-<hr>
-<h2 id="試行制限">試行制限</h2>
-<p>本機能ではレートリミットや試行回数上限を別途設けない。</p>
-<hr>
-<h2 id="ログ・監査">ログ・監査</h2>
-<div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>取込開始直後（コントローラ）</td><td>情報ログに開始文言を書く。</td></tr><tr><td>取込完了（コントローラ、エラー無し）</td><td>情報ログに完了文言と件数コンテキストを書く。</td></tr><tr><td>取込異常終了（コントローラ、エラーあり）</td><td>情報ログに異常終了文言を書く。</td></tr></tbody></table></div>
-<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
-<ul><li>パスワード</li><li>なりすまし対策トークン</li><li>Cookie 値</li><li>セッション ID の完全値</li><li>Remember Me トークンの原値</li></ul>
-<hr>
-<h2 id="セッション">セッション</h2>
-<h3 id="本機能におけるセッション">本機能におけるセッション</h3>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>アップロード画面 GET</td><td><code>admin.product.tag_sales_analysis_csv.page_count</code> と <code>admin.product.tag_sales_analysis_csv.page_no</code> を読み書きする（クエリが許容リストに合う場合）。</td></tr></tbody></table></div>
-<h3 id="セッションへ保存しない情報">セッションへ保存しない情報</h3>
-<p>アップロードファイルの実体や CSV のデータ行本文はセッションに載せない。</p>
-<hr>
-<h2 id="Cookie">Cookie</h2>
-<p>本機能単体で新種の Cookie を定義しない。セッション Cookie は管理画面共通の設定に従う。</p>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>DB トランザクション</td><td>汎用インポータがファイル単位で開始し、成功条件を満たすときのみコミットする。</td></tr><tr><td>楽観ロック</td><td>商品本体のバージョン列による競合検知は行わない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="調査補助-grep-向け">調査補助（grep 向け）</h2>
-<p>コードベースではルート属性やテンプレート名、<code>ProductTagSalesAnalysisUpdateImportHandler</code>、<code>MtbCsvImportType::PRODUCT_TAG_SALES_ANALYSIS_IMPORT_CSV_ID</code>、<code>eccube_nav.yaml</code> の <code>product_tag_sales_analysis_csv_import</code> で起点を追える。</p>
-<h3 id="HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</h3>
-<ul><li><code>m03-13_admin_product_product_tag_sales_analysis_csv_upload</code> … <code>GET</code> … <code>/{admin_route}/product/tag_sales_analysis/csv_upload</code>（アップロードフォーム、フォーマット説明表、雛形へのリンク、CSV 取込履歴のページネーションを表示する。）</li><li><code>m03-13_admin_product_product_tag_sales_analysis_import</code> … <code>POST</code> … <code>/{admin_route}/product/tag_sales_analysis/import</code>（送信ファイルを検証し、取込処理を実行する。終了後は常に <code>GET m03-13_admin_product_product_tag_sales_analysis_csv_upload</code> へ HTTP リダイレクトする。）</li><li><code>m03-13_admin_product_product_tag_sales_analysis_csv_template</code> … <code>GET</code> … <code>/{admin_route}/product/tag_sales_analysis/csv_template</code>（ヘッダ行のみの雛形 <code>product_tag_sales_analysis_template.csv</code> を <code>application/octet-stream</code> で返す。）</li></ul>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>CSVまたはTSVファイルの送信となりすまし対策トークン</td></tr><tr><td>成功時出力</td><td>アップロード画面へ戻り、完了メッセージを表示する</td></tr><tr><td>失敗時出力</td><td>アップロード画面へ戻り、エラーを表示する（複数になることがある）</td></tr></tbody></table></div>
+<h3 id="入出力-永続化">入出力: 永続化</h3>
+<div class="table-wrap"><table><thead><tr><th>操作</th><th>契機</th></tr></thead><tbody><tr><td>削除・登録</td><td>取込した行ごとの売上分析タグの紐付けの置換</td></tr><tr><td>登録</td><td>エラーなく取込が完了したときの取込履歴</td></tr></tbody></table></div>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
+<h2 id="表示メッセージ">表示メッセージ</h2>
+<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M03-29-MSG-001</td><td>管理画面上部</td><td>アップロードされたファイルが大きすぎます。小さなファイルで再度アップロードしてください。 ／ CSRFトークンが無効です、再送信してください。 ／ フィールドグループに追加のフィールドを含んではなりません。</td><td>CSV取込フォームの入力が無効なとき</td><td>CSV取込画面に遷移する</td></tr><tr><td>M03-29-MSG-002</td><td>管理画面上部</td><td>CSVのフォーマットが一致しません</td><td>フォームが有効であるにもかかわらず、import_file が null のとき</td><td>エラーを表示し、管理画面_商品管理_売上分析タグ更新CSV登録画面に遷移する</td></tr><tr><td>M03-29-MSG-003</td><td>管理画面上部</td><td>登録が完了しました。</td><td>CSVの登録が正常に完了したとき</td><td>完了メッセージを表示し、管理画面_商品管理_売上分析タグ更新CSV登録画面に遷移する</td></tr></tbody></table></div>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

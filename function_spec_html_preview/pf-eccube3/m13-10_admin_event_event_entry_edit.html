@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,35 +272,17 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#本書で扱うこと">本書で扱うこと</a>
-<a class="lv2" href="#本書で扱わないこと">本書で扱わないこと</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
 <a class="lv3" href="#Excel基本設計により廃止された仕様-刷新後は実装不要">Excel基本設計により廃止された仕様（刷新後は実装不要）</a>
-<a class="lv2" href="#用語">用語</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#フロント挙動">フロント挙動</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#申込詳細を表示する-GET-entry-eventEntryId-edit">申込詳細を表示する（`GET …/entry/{eventEntryId}/edit`）</a>
-<a class="lv3" href="#申込を更新する-entry-eventEntryId-update">申込を更新する（`…/entry/{eventEntryId}/update`）</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
-<a class="lv3" href="#入力項目">入力項目</a>
-<a class="lv3" href="#エッジケース">エッジケース</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
+<a class="lv3" href="#申込詳細の初期表示">申込詳細の初期表示</a>
+<a class="lv3" href="#編集できる項目">編集できる項目</a>
+<a class="lv3" href="#更新の判定順序">更新の判定順序</a>
+<a class="lv3" href="#参加者の反映">参加者の反映</a>
+<a class="lv3" href="#エラー時の扱い">エラー時の扱い</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#バリデーション">バリデーション</a>
-<a class="lv2" href="#権限・認可">権限・認可</a>
-<a class="lv2" href="#表示メッセージ">表示メッセージ</a>
-<a class="lv3" href="#フラッシュ・トースト">フラッシュ・トースト</a>
-<a class="lv3" href="#表示しないが関連する遷移">表示しないが関連する遷移</a>
-<a class="lv3" href="#メッセージID対応-自動棚卸">メッセージID対応（自動棚卸）</a>
-<a class="lv2" href="#画面遷移">画面遷移</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#ログ・監査">ログ・監査</a>
-<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a></nav>
+<a class="lv3" href="#入出力-永続化">入出力: 永続化</a>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -305,94 +297,28 @@ footer {
         <li><span class="superseded-target">チームメンバー確認済み（承認フラグ）</span> は削除（<a href="../../excel_to_html/output/0214_%E5%9F%BA%E6%9C%AC%E8%A8%AD%E8%A8%88%E4%BB%95%E6%A7%98%E6%9B%B8%28%E3%82%A4%E3%83%99%E3%83%B3%E3%83%88%E7%AE%A1%E7%90%86%29.html#item-sheet-15-4-3">0214 イベント申込詳細・編集 識別ID:4-3</a>）<span class="superseded-implied">これに伴い実装不要: 参加プレイヤー表のチームメンバー確認済チェックと、その更新／承認フラグ（dtb_entry_player.confirm_flg）の運用／招待リンクからのチームプレイヤー認証（events_team_player_activate）</span></li>
       </ul>
     </div>
-      <h2 id="概要">概要</h2>
-<p>イベント管理において、既存のイベント申込1件の内容を表示し、申込状況・支払金額・参加プレイヤー・席順・チームメンバー確認を編集して更新する機能である。同一テンプレートが新規申込登録の入力にも使われるが、本書は既存申込の詳細表示（<code>GET …/entry/{eventEntryId}/edit</code>）と更新送信（<code>…/entry/{eventEntryId}/update</code>）に範囲を限定する。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインのイベント申込詳細表示・更新処理、申込詳細フォーム、申込・申込プレイヤー・申込履歴の永続化を正とする。</p>
-<p>本機能のカスタマイズ区分はカスタマイズである。挙動の参照リポはpf-eccube3（HareruyaEcプラグイン）の現行実装とし、DB関連（永続化先のテーブル名・列名、DBカラム節、入力項目の保存先・扱い、副作用のDB更新）はec-cube-enterpriseを正とする。現行と移行先でスキーマが異なる箇所はリニューアル移行時の扱いに集約する。</p>
-<p>対象はブラウザ経由の管理画面に限定する。</p>
-<p>本文ではフレームワークのコントローラ型名やメソッド名を主説明としない。管理画面プレフィックスは環境により変わり、プラグイン設定の<code>admin_route</code>で決まる。「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。</p>
-<hr>
-<h2 id="本書で扱うこと">本書で扱うこと</h2>
-<ul><li>既存イベント申込の詳細表示</li><li>申込状況・支払金額・参加プレイヤー・席順・確認フラグの編集と更新</li><li>プレイヤー検索モーダルによる参加者の差し替え</li><li>申込履歴の記録、支払会員・支払方法の扱い</li></ul>
-<hr>
-<h2 id="本書で扱わないこと">本書で扱わないこと</h2>
-<p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
-<ul><li>新規申込登録（M13-12を正とする）</li><li>イベント申込一覧・検索（イベント申込一覧機能を正とする）</li><li>CSV出力・一括登録（M13-09・M13-13を正とする）</li><li>イベント・日程そのものの登録（イベント新規登録・日程登録を正とする）</li><li>プレイヤー・会員マスタの編集</li></ul>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<p>表示・更新・差分反映の挙動は現行（pf-eccube3）を正とし、永続化先の列名は移行先（ec-cube-enterprise）を正とする。</p>
+      <h2 id="業務ロジック">業務ロジック</h2>
 <h3 id="Excel基本設計により廃止された仕様-刷新後は実装不要">Excel基本設計により廃止された仕様（刷新後は実装不要）</h3>
-<p>本書は現行実装からのリバースであり、以下は現行挙動として記述しているが、Excel基本設計が廃止を宣言している。刷新後は実装しない。</p>
-<ul><li>席順（※Excel基本設計 0214 識別ID:4-1 により廃止。刷新後は実装しない）。参加プレイヤー表の席順セレクトと、その変更をプレイヤー情報リスト（JSON）へ反映する挙動、<code>dtb_entry_player.seat_order</code>の更新は行わない。</li><li>DCIナンバー（※Excel基本設計 0214 識別ID:4-2 により廃止。刷新後は実装しない）。参加プレイヤー表のDCIナンバー列は表示しない。</li><li>チームメンバー確認済み（※Excel基本設計 0214 識別ID:4-3 により廃止。刷新後は実装しない）。確認済チェックと、<code>dtb_entry_player.confirm_flg</code>の更新は行わない。</li></ul>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>論理削除</td><td><code>dtb_event_entry</code>・<code>dtb_entry_player</code>とも<code>deleted_at</code>による論理削除</td><td>同一方式（<code>deleted_at</code>による論理削除を維持）</td></tr><tr><td>申込の主キー列</td><td><code>dtb_event_entry.event_entry_id</code></td><td><code>dtb_event_entry.id</code>（主キー列名を<code>id</code>に統一。更新対象列<code>entry_status_id</code>・<code>price</code>、参照列<code>payment_id</code>・<code>paying_customer_id</code>・<code>payment_no</code>は同名維持）</td></tr><tr><td>申込プレイヤーの主キー列</td><td><code>dtb_entry_player</code>の識別列</td><td><code>dtb_entry_player.id</code>（参照列<code>event_entry_id</code>・<code>player_id</code>、更新対象<code>confirm_flg</code>・<code>seat_order</code>は同名維持）</td></tr><tr><td>支払期限</td><td>列の有無は実装による</td><td><code>dtb_event_entry.payment_limit</code>を保持</td></tr><tr><td>申込履歴</td><td><code>dtb_entry_history</code>（<code>id</code>、<code>event_entry_id</code>、<code>entry_status_id</code>、<code>member_id</code>、<code>create_date</code>）</td><td>同一スキーマ（列構成は同じ）</td></tr></tbody></table></div>
-<p>申込状況・支払金額・参加プレイヤー・席順・確認フラグの更新と申込履歴記録という業務上の扱いは現行・移行先で同じとする。</p>
-<hr>
-<h2 id="用語">用語</h2>
-<div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>イベント申込</td><td>プレイヤーがイベント日程へ申し込んだ1件。支払会員・支払方法・支払金額・申込状況を持つ。</td></tr><tr><td>申込プレイヤー</td><td>申込に紐づく参加者。チーム戦では複数。確認フラグ・席順を持つ。</td></tr><tr><td>支払会員</td><td>申込の支払を担う会員。更新画面では確定済みで表示する。</td></tr><tr><td>申込状況</td><td>申込のステータス（参加など）。申込状況マスタから選ぶ。</td></tr><tr><td>申込履歴</td><td>申込の更新を記録する履歴。更新のたびに1件追加する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>申込一覧から編集</td><td><code>GET /%eccube_admin_route%/entry/{eventEntryId}/edit</code></td><td>指定した申込の詳細を表示し、編集フォームを描く。申込が無ければ404。</td></tr><tr><td>申込更新の送信</td><td><code>GET/POST /%eccube_admin_route%/entry/{eventEntryId}/update</code></td><td>検証後に申込を更新し、成功なら同じ申込の編集画面へ戻す。</td></tr><tr><td>プレイヤー検索（モーダル）</td><td><code>POST /%eccube_admin_route%/entry/search/player/html</code></td><td>参加プレイヤーを検索し、モーダル内に候補一覧を返す（XHR専用）。</td></tr><tr><td>プレイヤー検索ページ送り</td><td><code>GET /%eccube_admin_route%/entry/search/player/html/{page_no}</code></td><td>検索結果のページを切り替える（XHR専用）。</td></tr></tbody></table></div>
-<p>管理画面プレフィックスは環境により変わるためプレースホルダで示す。<code>{eventEntryId}</code>はイベント申込の識別子。</p>
-<hr>
-<h2 id="フロント挙動">フロント挙動</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>イベント申込ID・イベント名・店舗・会場・フォーマットを読み取り専用で表示する。参加プレイヤーの表（席順セレクト・プレイヤー名・DCIナンバー・登録本名・チームメンバー確認済チェック・検索／削除ボタン）。支払会員（確定済みは氏名表示）、申込状況セレクト、支払方法セレクト、支払金額入力、支払番号（編集時のみ・なし時は「なし」）。 （※席順は Excel基本設計 0214 識別ID:4-1、DCIナンバーは 識別ID:4-2、チームメンバー確認済チェックは 識別ID:4-3 により廃止。刷新後はいずれも表示しない）</td></tr><tr><td>JS挙動</td><td>プレイヤー検索ボタンでモーダルを開き、検索結果をXHRで取得して一覧へ差し込む。席順セレクト・確認チェックの変更を隠しフィールドのプレイヤー情報リスト（JSON）へ反映する。送信ボタンは初期disabledで、参加者確定後に有効化する。</td></tr><tr><td>CSS・レイアウト</td><td>申込専用CSSとモーメント系の日時補助を読み込む。プレイヤーが1人以下のときは席順・確認列を非表示にする。</td></tr><tr><td>モーダル・ポップアップ</td><td>プレイヤー検索モーダル。検索語を入力し検索結果から参加者を選ぶ。閉じても選択済みプレイヤーは行に残る。</td></tr></tbody></table></div>
-<p>申込状況・支払方法・支払金額の各欄は画面ラベル単位で入力項目に記載する。支払方法セレクトはフォーム上で無効化されており、編集画面では実質的に固定表示として扱う。</p>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="申込詳細を表示する-GET-entry-eventEntryId-edit">申込詳細を表示する（<code>GET …/entry/{eventEntryId}/edit</code>）</h3>
-<ol><li>会員のソフトデリートを除外対象にし、プレイヤーのソフトデリートを無効化して読み込む。</li><li>申込が存在しなければ404とする。存在すれば紐づくイベント詳細・イベントを得る。</li><li>チーム人数と既存参加者数の大きい方の行数で参加者行を用意し、参加者情報リスト（JSON）と申込状況・支払方法・支払金額をフォームへ初期設定する。</li><li>席順アルファベット一覧が参加者数より少ない場合は404とする。</li><li>詳細テンプレートを返す。</li></ol>
-<h3 id="申込を更新する-entry-eventEntryId-update">申込を更新する（<code>…/entry/{eventEntryId}/update</code>）</h3>
-<ol><li>申込詳細フォームを送信として処理する。申込が存在しなければ404。</li><li>未送信のときは更新失敗を表示し、編集画面へ戻す。</li><li>検証NGのとき、支払金額が不正なら金額メッセージ、参加者重複なら重複メッセージ、その他は更新失敗を表示し、編集画面を再描画する。</li><li>検証OKのとき、申込状況など編集対象の値を申込へ反映する（支払方法・支払会員などは更新対象から除外する）。</li><li>申込履歴を1件記録し、申込を更新する。</li><li>参加者リストと突き合わせ、継続参加者は確認フラグ・席順の変更があれば更新、外れた参加者は削除、追加された参加者は新規に登録する。</li><li>成功を表示し、同じ申込の編集画面へリダイレクトする。</li></ol>
-<hr>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>申込状況</td><td>申込状況マスタから選択する。更新時に申込へ反映する。</td></tr><tr><td>支払方法</td><td>フォーム上で無効化されており、編集画面からは変更しない。</td></tr><tr><td>支払金額</td><td>半角数字のみ。更新時に申込へ反映する。</td></tr><tr><td>参加プレイヤー</td><td>隠しフィールドのプレイヤー情報リスト（JSON、要素はプレイヤーID・確認フラグ・席順）で管理し、継続・追加・削除を更新時に反映する。</td></tr><tr><td>参加者の重複</td><td>同一プレイヤーが他申込・同日程で重複する場合は申込重複として検証で弾く。</td></tr><tr><td>申込履歴</td><td>更新成功のたびに申込履歴を1件記録する。</td></tr></tbody></table></div>
-<h3 id="入力項目">入力項目</h3>
-<div class="table-wrap"><table><thead><tr><th>項目名</th><th>必須／任意</th><th>最大長</th><th>初期値</th><th>保存先・扱い</th></tr></thead><tbody><tr><td>申込状況</td><td>必須</td><td>選択（申込状況マスタの単一選択）</td><td>現在の申込状況</td><td><code>dtb_event_entry.entry_status_id</code>。フォームキー<code>entryStatus</code>。申込状況マスタの参照。</td></tr><tr><td>支払方法</td><td>必須（フォーム無効化のため画面からは変更不可）</td><td>選択（クレジット・コンビニ・管理者の単一選択）</td><td>現在の支払方法</td><td><code>dtb_event_entry.payment_id</code>。フォームキー<code>payment</code>。<code>disabled</code>指定で送信値は採用しない。</td></tr><tr><td>支払金額</td><td>必須</td><td>半角数字のみ（通貨JPY・小数なし）</td><td>現在の支払金額</td><td><code>dtb_event_entry.price</code>。フォームキー<code>price</code>。半角数字以外は検証エラー。</td></tr><tr><td>参加プレイヤー情報</td><td>必須</td><td>JSON文字列（プレイヤーID・確認フラグ・席順の配列）</td><td>既存参加者から生成したJSON</td><td><code>dtb_entry_player</code>の<code>player_id</code>・<code>confirm_flg</code>・<code>seat_order</code>へ展開。フォームキー<code>entryPlayerList</code>。重複検証あり。</td></tr><tr><td>プレイヤー検索語</td><td>任意</td><td>テキスト（検索用、保存しない）</td><td>空</td><td>フォームキー<code>search</code>。モーダル検索の入力。永続化しない。</td></tr></tbody></table></div>
-<p>支払会員・イベント名・店舗・会場・フォーマット・支払番号は読み取り専用表示であり、入力項目ではない。最大長の数値は申込詳細フォームの実装確認値とする。</p>
-<h3 id="エッジケース">エッジケース</h3>
-<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>申込が存在しない</td><td>404。</td></tr><tr><td>席順アルファベット一覧が参加者数より少ない</td><td>404。</td></tr><tr><td>参加者を全員外す／追加する</td><td>更新時に削除・新規登録で反映する。継続者は変更分のみ更新。</td></tr><tr><td>支払金額が非数字</td><td>金額メッセージを表示し編集画面を再描画する。</td></tr><tr><td>参加者重複</td><td>重複メッセージを表示し編集画面を再描画する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示と更新</td><td>表示時に組んだ参加者行と、更新時のプレイヤー情報リストを突き合わせて差分反映する。表示後に別操作で参加者が変わった場合は更新時のリストを正とする。</td></tr><tr><td>申込と申込プレイヤー</td><td>申込本体の更新後に参加者の追加・更新・削除を行う。両者は同一リクエスト内で反映する。</td></tr><tr><td>申込履歴</td><td>更新成功時に履歴を1件追加する。表示は履歴を変更しない。</td></tr></tbody></table></div>
-<hr>
+<ul><li>Excel基本設計 0214 識別ID:4-1 により廃止。刷新後は実装しない。現行実装のふるまいは本書に残すが、刷新後の実装・テストの対象外とする</li><li>Excel基本設計 0214 識別ID:4-2 により廃止。刷新後は実装しない。現行実装のふるまいは本書に残すが、刷新後の実装・テストの対象外とする</li><li>Excel基本設計 0214 識別ID:4-3 により廃止。刷新後は実装しない。現行実装のふるまいは本書に残すが、刷新後の実装・テストの対象外とする</li></ul>
+<h3 id="申込詳細の初期表示">申込詳細の初期表示</h3>
+<p>削除済みの会員は読み込み対象から除外し、削除済みのプレイヤーも読み込む。指定された申込が存在しないときは404とする。存在するときは紐づくイベント詳細・イベントを得る。参加者行は、チーム人数と既存参加者数の大きい方の行数で用意する。参加者情報リスト・申込状況・支払方法・支払金額を初期表示する。席順アルファベット一覧が参加者数より少ないときは404とする。</p>
+<h3 id="編集できる項目">編集できる項目</h3>
+<div class="table-wrap"><table><thead><tr><th>画面上の項目</th><th>扱い</th></tr></thead><tbody><tr><td>申込状況</td><td>申込状況マスタから選択する。更新時に申込へ反映する</td></tr><tr><td>支払方法</td><td>画面上で無効化されており、編集画面からは変更しない</td></tr><tr><td>支払金額</td><td>半角数字のみ。更新時に申込へ反映する</td></tr><tr><td>参加プレイヤー</td><td>プレイヤーID・確認フラグ・席順を要素とする参加者情報リストで管理し、継続・追加・削除を更新時に反映する</td></tr></tbody></table></div>
+<p>支払方法・支払会員は更新の対象から除外する。</p>
+<h3 id="更新の判定順序">更新の判定順序</h3>
+<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>指定された申込が存在するか</td><td>存在しなければ404とする</td></tr><tr><td>2</td><td>更新の送信であるか</td><td>送信によらない到達は更新失敗を表示し、編集画面へ戻す</td></tr><tr><td>3</td><td>支払金額が半角数字のみか</td><td>不正なら金額のメッセージを表示し、編集画面を再描画する</td></tr><tr><td>4</td><td>参加者が他申込・同日程で重複しないか</td><td>重複するときは申込重複のメッセージを表示し、編集画面を再描画する</td></tr><tr><td>5</td><td>その他の入力内容が妥当か</td><td>妥当でなければ更新失敗を表示し、編集画面を再描画する</td></tr><tr><td>6</td><td>上記を通過</td><td>申込を更新し、成功を表示して同じ申込の編集画面へ戻る</td></tr></tbody></table></div>
+<h3 id="参加者の反映">参加者の反映</h3>
+<p>参加者情報リストと既存の参加者を突き合わせる。継続する参加者は確認フラグ・席順に変更があれば更新する。リストから外れた参加者は削除する。追加された参加者は新規に登録する。更新が成功するたびに申込履歴を1件記録する。</p>
+<h3 id="エラー時の扱い">エラー時の扱い</h3>
+<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>申込が存在しない</td><td>404とする。画面のメッセージは表示しない</td></tr><tr><td>更新の送信でない</td><td>更新失敗を表示し編集画面へ戻す</td></tr><tr><td>支払金額が不正</td><td>金額のメッセージを表示し編集画面を再描画する</td></tr><tr><td>参加者重複</td><td>申込重複のメッセージを表示し編集画面を再描画する</td></tr><tr><td>その他の検証不備</td><td>更新失敗を表示し編集画面を再描画する</td></tr></tbody></table></div>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>パスの申込ID、フォーム名<code>admin_entry_detail</code>（CSRF・申込状況・支払金額・参加者JSON）。</td></tr><tr><td>成功時出力</td><td>申込の更新と成功表示、編集画面へのリダイレクト。</td></tr><tr><td>失敗時出力</td><td>未送信・検証NGはエラー表示のうえ編集画面再描画またはリダイレクト。申込不在は404。</td></tr><tr><td>副作用</td><td>申込・申込プレイヤーの更新、申込履歴の追加。</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<p>機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。列名はec-cube-enterpriseを正とし、現行（pf-eccube3）と異なる場合は現行名を括弧で添える。</p>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>dtb_event_entry</code></td><td><code>id</code>（現行<code>event_entry_id</code>）</td><td>申込の特定キー。</td></tr><tr><td><code>dtb_event_entry</code></td><td><code>entry_status_id</code></td><td>申込状況。更新対象。</td></tr><tr><td><code>dtb_event_entry</code></td><td><code>price</code></td><td>支払金額。更新対象。</td></tr><tr><td><code>dtb_event_entry</code></td><td><code>payment_id</code>、<code>paying_customer_id</code>、<code>payment_no</code></td><td>編集画面では更新対象外（表示・固定）。</td></tr><tr><td><code>dtb_entry_player</code></td><td><code>id</code>（識別列）、<code>event_entry_id</code>、<code>player_id</code>、<code>confirm_flg</code>、<code>seat_order</code></td><td>参加者の追加・更新・削除対象。</td></tr><tr><td><code>dtb_entry_history</code></td><td><code>event_entry_id</code>、<code>entry_status_id</code>、<code>member_id</code>、<code>create_date</code></td><td>更新成功時に1件追加。</td></tr></tbody></table></div>
-<h3 id="DB操作">DB操作</h3>
-<p>永続化の正は ec-cube-enterprise（テーブル名・操作は ec-cube-enterprise を正典）。当ドメインは承認ワークフローを介さず persist/flush で直接確定する（承認ワークフローは在庫機能固有）。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>登録/更新</td><td>dtb_entry_history / dtb_entry_player / dtb_event_entry</td><td>当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。</td></tr></tbody></table></div>
-<hr>
-<h2 id="バリデーション">バリデーション</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>申込状況</td><td>必須。申込状況マスタの単一選択。</td></tr><tr><td>支払金額</td><td>必須。半角数字のみ（数字以外は検証エラー）。</td></tr><tr><td>参加プレイヤー情報</td><td>必須。重複検証で同一プレイヤーの重複申込を弾く。</td></tr><tr><td>支払方法</td><td>フォーム上で無効化。画面からの変更は受け付けない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="権限・認可">権限・認可</h2>
-<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>申込詳細表示・更新</th></tr></thead><tbody><tr><td>未ログイン管理者</td><td>アクセス不可。</td></tr><tr><td>ログイン済み管理者</td><td>アクセス制御リストがURLを許可するとき、表示・更新が可能。</td></tr></tbody></table></div>
-<hr>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>パスの申込ID、なりすまし対策トークン、申込状況、支払金額、参加者情報リスト</td></tr><tr><td>成功時出力</td><td>申込の更新と成功表示、編集画面への遷移</td></tr><tr><td>失敗時出力</td><td>更新の送信でないとき・検証不備はエラー表示のうえ編集画面の再描画または遷移。申込不在は404</td></tr></tbody></table></div>
+<h3 id="入出力-永続化">入出力: 永続化</h3>
+<div class="table-wrap"><table><thead><tr><th>操作</th><th>契機</th></tr></thead><tbody><tr><td>追加</td><td>更新成功時の申込履歴、参加者情報リストに追加された参加者</td></tr><tr><td>更新</td><td>更新成功時の申込、確認フラグ・席順が変わった継続参加者</td></tr><tr><td>削除</td><td>参加者情報リストから外れた参加者</td></tr></tbody></table></div>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
 <h2 id="表示メッセージ">表示メッセージ</h2>
-<h3 id="フラッシュ・トースト">フラッシュ・トースト</h3>
-<div class="table-wrap"><table><thead><tr><th>表示文言（日本語）</th><th>表示条件（利用者視点）</th><th>表示位置</th><th>備考</th></tr></thead><tbody><tr><td>登録が完了しました。</td><td>申込の更新が成功したとき</td><td>画面上部のフラッシュ</td><td>成功メッセージ。登録・更新で共通。</td></tr><tr><td>登録できませんでした。</td><td>未送信、またはその他の検証失敗で更新できなかったとき</td><td>画面上部のフラッシュ</td><td>失敗メッセージ。</td></tr><tr><td>半角数字で金額を入力してください。</td><td>支払金額が不正なとき</td><td>画面上部のフラッシュ</td><td>金額検証エラー。</td></tr></tbody></table></div>
-<h3 id="表示しないが関連する遷移">表示しないが関連する遷移</h3>
-<div class="table-wrap"><table><thead><tr><th>事象</th><th>画面でのメッセージ</th></tr></thead><tbody><tr><td>申込が存在しない</td><td>なし（404）</td></tr></tbody></table></div>
-<p>参加者重複時のメッセージは申込重複用の文言を表示する。文言の正は表示メッセージ節、処理方針はエラー処理節とする。</p>
-<hr>
-<h3 id="メッセージID対応-自動棚卸">メッセージID対応（自動棚卸）</h3>
-<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>画面上の文言(英語)</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M13-10-MSG-001</td><td>管理画面上部</td><td>保存しました</td><td>（英訳なし）</td><td>イベント申込内容を編集して保存したとき</td><td>イベント申込詳細・編集画面に遷移する</td></tr><tr><td>M13-10-MSG-002</td><td>管理画面上部</td><td>プレイヤーID %player_id% が見つかりません。 ／ admin.event.entry.paying_member_customer_not_registered</td><td>（英訳なし）</td><td>イベント申込の編集で、存在しないプレイヤーIDを指定して更新したとき</td><td>編集画面に留まる</td></tr><tr><td>M13-10-MSG-003</td><td>管理画面上部</td><td>保存に失敗しました</td><td>（英訳なし）</td><td>イベント申込内容の保存中にエラーが起きたとき</td><td>イベント申込詳細・編集画面に留まる</td></tr></tbody></table></div>
-<h2 id="画面遷移">画面遷移</h2>
-<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>編集表示</td><td>申込詳細・編集画面</td></tr><tr><td>更新成功</td><td>同じ申込の編集画面（<code>…/entry/{eventEntryId}/edit</code>相当）</td></tr><tr><td>未送信・申込不在</td><td>編集画面へリダイレクト、または404</td></tr><tr><td>検証NG</td><td>編集画面を再描画</td></tr><tr><td>戻るボタン</td><td>申込一覧へ</td></tr><tr><td>同日程の新規申込へ</td><td>同じイベント詳細の新規申込画面（M13-12）</td></tr></tbody></table></div>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>申込が存在しない</td><td>404。</td></tr><tr><td>未送信</td><td>更新失敗を表示し編集画面へリダイレクト。</td></tr><tr><td>支払金額が不正</td><td>金額メッセージを表示し編集画面再描画。</td></tr><tr><td>参加者重複</td><td>重複メッセージを表示し編集画面再描画。</td></tr><tr><td>その他検証NG</td><td>更新失敗を表示し編集画面再描画。</td></tr></tbody></table></div>
-<hr>
-<h2 id="ログ・監査">ログ・監査</h2>
-<div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>更新成功</td><td>申込履歴を1件記録する（業務履歴）。</td></tr></tbody></table></div>
-<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
-<ul><li>Cookie値</li><li>セッションIDの完全値</li><li>なりすまし対策トークン</li></ul>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<p>本画面に楽観ロックの版情報は持たない。申込本体の更新と参加者の差分反映は同一リクエストで永続化する。同時更新の競合制御は対象としない。</p>
+<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M13-10-MSG-001</td><td>管理画面上部</td><td>保存しました</td><td>イベント申込内容を編集して保存したとき</td><td>イベント申込詳細・編集画面に遷移する</td></tr><tr><td>M13-10-MSG-002</td><td>管理画面上部</td><td>プレイヤーID %player_id% が見つかりません。 ／ admin.event.entry.paying_member_customer_not_registered</td><td>イベント申込の編集で、存在しないプレイヤーIDを指定して更新したとき</td><td>編集画面に留まる</td></tr><tr><td>M13-10-MSG-003</td><td>管理画面上部</td><td>保存に失敗しました</td><td>イベント申込内容の保存中にエラーが起きたとき</td><td>イベント申込詳細・編集画面に留まる</td></tr><tr><td>—</td><td>画面上部</td><td>登録が完了しました。</td><td>申込の更新が成功したとき</td><td>編集画面へ戻る</td></tr><tr><td>—</td><td>画面上部</td><td>登録できませんでした。</td><td>更新の送信でないとき、またはその他の検証失敗で更新できなかったとき</td><td>編集画面に留まる</td></tr><tr><td>—</td><td>画面上部</td><td>半角数字で金額を入力してください。</td><td>支払金額が不正なとき</td><td>編集画面に留まる</td></tr></tbody></table></div>
+<p>「登録が完了しました。」は登録・更新で共通の成功メッセージである。参加者重複時は申込重複用の文言を表示する。申込が存在しないときはメッセージを表示しない。</p>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

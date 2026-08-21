@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,26 +272,18 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#本書で扱うこと">本書で扱うこと</a>
-<a class="lv2" href="#本書で扱わないこと">本書で扱わないこと</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv2" href="#用語">用語</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#買取集計を実行する-otcBuyOrder-batch-updateSummary">買取集計を実行する（`otcBuyOrder:batch updateSummary`）</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
-<a class="lv2" href="#集計条件">集計条件</a>
-<a class="lv2" href="#API・バッチ結果">API・バッチ結果</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#集計日の決め方">集計日の決め方</a>
+<a class="lv3" href="#集計対象">集計対象</a>
+<a class="lv3" href="#集計する値">集計する値</a>
+<a class="lv3" href="#登録の手順">登録の手順</a>
+<a class="lv3" href="#部門未設定商品の通知">部門未設定商品の通知</a>
+<a class="lv3" href="#エラー時の扱い">エラー時の扱い</a>
+<a class="lv3" href="#他機能との境界">他機能との境界</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#ログ・監査">ログ・監査</a>
-<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
-<a class="lv2" href="#通知">通知</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a></nav>
+<a class="lv3" href="#入出力-永続化">入出力: 永続化</a>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -289,73 +291,29 @@ footer {
         <h1>バッチ 買取管理 — 買取集計バッチ</h1>
       </header>
       
-      <h2 id="概要">概要</h2>
-<p>店頭買取の取引データを集計日単位で集計し、店舗・部門ごとの買取金額・売価金額を買取集計テーブルへ登録するバッチである。コマンドライン（コンソールコマンド）から実行する。集計日の店頭買取データを店舗・部門単位で合算し、同じ集計日の既存集計を削除してから当日分を登録し直す。集計対象の中に部門が未設定の商品がある場合は、その一覧を管理者へ通知メールで送る。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインの買取集計バッチ、店頭買取・買取集計を扱うリポジトリ、通知メール送信処理を正とする。</p>
-<p>カスタマイズ区分はカスタマイズであり、挙動はpf-eccube3を参照し、DB関連の記述はec-cube-enterpriseを正とする。</p>
-<p>対象はコンソールコマンドであり、ブラウザ経由の画面を持たない。</p>
-<p>本文ではフレームワークのコマンド型名やサービス型名を主説明としない。実行はコンソールのバッチコマンドで行う。</p>
-<hr>
-<h2 id="本書で扱うこと">本書で扱うこと</h2>
-<ul><li>バッチの起動方法（コンソールコマンド）と集計日引数</li><li>集計日の店頭買取データの店舗・部門単位の集計</li><li>既存集計の削除と当日分の登録</li><li>部門未設定商品がある場合の管理者通知メール</li><li>集計中エラー時のロールバックとエラー通知メール</li></ul>
-<hr>
-<h2 id="本書で扱わないこと">本書で扱わないこと</h2>
-<p>以下は本書では仕様確定せず、実装または別機能・運用の設計を正とする。</p>
-<ul><li>店頭買取の受付・査定・ステータス遷移そのもの（買取管理を正とする）</li><li>集計結果を参照する管理画面の買取集計表示（画面側の設計を正とする）</li><li>通知メールの宛先設定・本文テンプレート（メール設定・オプション管理を正とする）</li><li>バッチの起動スケジュール（運用・ジョブ設定を正とする）</li></ul>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<p>集計・登録の挙動は現行pf-eccube3を踏襲し、DB関連の永続化先はec-cube-enterpriseを正とする。店舗参照キーが現行と移行先で異なる。</p>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>集計・登録の挙動</td><td>集計日の店頭買取を店舗・部門単位で集計し、当日分の既存集計を入れ替える。</td><td>同等の挙動を踏襲する（挙動はpf-eccube3を正とする）。</td></tr><tr><td>店舗参照キー</td><td>独自店舗マスタ参照の <code>shop_id</code>（<code>dtb_otc_buy_order</code>・<code>dtb_otc_buy_order_summary</code>）。</td><td><code>base_info_id</code>（店舗基本情報 <code>dtb_base_info</code> 参照）。<code>dtb_otc_buy_order</code>・<code>dtb_otc_buy_order_summary</code> とも <code>shop_id</code> から <code>base_info_id</code> へ変わる。</td></tr><tr><td>集計結果の永続化先</td><td><code>dtb_otc_buy_order_summary</code>。</td><td>同名テーブル。店舗参照キーのみ <code>base_info_id</code> へ変わる。</td></tr><tr><td>明細・個別入力商品の集計元</td><td><code>dtb_otc_buy_order_detail</code>・<code>dtb_otc_buy_order_indivisual_input_product</code>。</td><td>同名・同等スキーマ（<code>section_id</code>・<code>price</code>・<code>original_quantity</code>／<code>quantity</code>・<code>sell_price</code> 等）。</td></tr></tbody></table></div>
-<hr>
-<h2 id="用語">用語</h2>
-<div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>店頭買取</td><td>店頭で商品を買い取る取引。店頭買取テーブルと明細に記録する。</td></tr><tr><td>集計日</td><td>集計対象とする1日。引数で指定するか、未指定なら前日を用いる。</td></tr><tr><td>部門</td><td>商品を分類する区分。集計の単位の一つ。</td></tr><tr><td>買取金額</td><td>買い取った金額。単価と数量から算出する。</td></tr><tr><td>売価金額</td><td>販売予定の金額。単価と数量から算出する。</td></tr><tr><td>買取集計</td><td>店舗・部門・集計日ごとに買取金額・売価金額を合算した結果。買取集計テーブルへ登録する。</td></tr><tr><td>部門未設定商品</td><td>集計対象の明細のうち部門が設定されていない商品。</td></tr></tbody></table></div>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>実行方法</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>コンソールのバッチコマンド</td><td><code>otcBuyOrder:batch updateSummary [YYYY-MM-DD]</code></td><td>集計日の店頭買取データを店舗・部門単位で集計し、当日分の既存集計を入れ替える。部門未設定商品があれば管理者へ通知メールを送る。</td></tr></tbody></table></div>
-<p>引数に集計日（<code>YYYY-MM-DD</code>形式）を1つ指定できる。引数を省略した場合は前日を集計日とする。本機能はHTTPで届く画面を持たない。コマンド名が一致しない場合は処理を行わずに終了する。</p>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="買取集計を実行する-otcBuyOrder-batch-updateSummary">買取集計を実行する（<code>otcBuyOrder:batch updateSummary</code>）</h3>
-<ol><li>実行時間制限を解除し、メール送信用の経路を準備し、トランザクションを開始する。</li><li>集計日を決める。引数が指定されていればその日付、無ければ前日を用いる。いずれも当日0時0分0秒を起点とする。</li><li>集計日の店頭買取データを店舗・部門単位で集計し、買取金額・売価金額の合計を得る。</li><li>同じ集計日の既存の買取集計を削除する。</li><li>集計結果を買取集計テーブルへ一括登録する。集計結果が0件の場合は登録を行わない。</li><li>集計日の店頭買取の中から部門未設定商品の一覧を取得する。</li><li>部門未設定商品がある場合は、その一覧を管理者へ通知メールで送る。</li><li>トランザクションをコミットする。</li></ol>
-<p>集計または登録の途中で例外が発生した場合は、登録をロールバックし、エラー内容を添えた集計エラー通知メールを管理者へ送る。</p>
-<hr>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>集計日の起点</td><td>引数指定時はその日付の0時0分0秒。未指定時は前日の0時0分0秒。</td></tr><tr><td>集計区間</td><td>集計日の0時0分0秒から23時59分59秒まで。完了日が区間内の店頭買取を対象とする。</td></tr><tr><td>対象ステータス</td><td>完了・ダブルチェック済み・入力済みの店頭買取を対象とする。</td></tr><tr><td>買取金額</td><td>明細・個別入力商品それぞれで単価と数量を掛けて算出し合算する。</td></tr><tr><td>売価金額</td><td>明細・個別入力商品それぞれで売価単価と数量を掛けて算出し合算する。</td></tr><tr><td>端数調整分</td><td>査定合計金額の1の位切り上げ分を、オプションで指定した特定部門の買取金額として加える。当該分の売価金額は0とする。</td></tr><tr><td>集計単位</td><td>店舗と部門の組み合わせごとに合算する。</td></tr><tr><td>数量条件</td><td>明細は元数量が0より大きい行、個別入力商品は数量が0より大きい行を集計対象とする。</td></tr></tbody></table></div>
-<hr>
-<h2 id="集計条件">集計条件</h2>
-<div class="table-wrap"><table><thead><tr><th>指標</th><th>集計の要点</th></tr></thead><tbody><tr><td>対象データ</td><td>集計区間内に完了日を持つ店頭買取の明細と個別入力商品。</td></tr><tr><td>結合</td><td>店頭買取と明細・個別入力商品を結合する。部門未設定判定では明細から商品・商品規格・商品マスタを結合する。</td></tr><tr><td>ステータス条件</td><td>完了・ダブルチェック済み・入力済みの店頭買取に限定する。</td></tr><tr><td>除外条件</td><td>明細は元数量が0以下の行、個別入力商品は数量が0以下の行を除外する。端数調整分は買取金額が0より大きい取引のみを加算する。</td></tr><tr><td>集計期間</td><td>集計日の0時0分0秒から23時59分59秒までの1日。</td></tr><tr><td>集計単位</td><td>店舗ID・部門IDの組み合わせ。買取金額・売価金額をそれぞれ合計する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="API・バッチ結果">API・バッチ結果</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>コマンド名と任意の集計日引数（<code>YYYY-MM-DD</code>）。</td></tr><tr><td>実行条件</td><td>集計対象の店頭買取が無い場合も実行できる。</td></tr><tr><td>成功結果</td><td>同じ集計日の既存集計を削除し、当日分の集計を登録する。部門未設定商品があれば管理者へ通知メールを送る。</td></tr><tr><td>失敗結果</td><td>集計・登録途中の例外時は登録をロールバックし、エラー内容を添えた集計エラー通知メールを管理者へ送る。</td></tr><tr><td>再実行時</td><td>同じ集計日で再実行すると既存の当日分集計を削除してから登録し直すため、当日分が重複しない。冪等である。</td></tr></tbody></table></div>
-<p>外部システムへの連携は行わない。</p>
-<hr>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="集計日の決め方">集計日の決め方</h3>
+<p>引数で日付が指定されていればその日付、指定が無ければ前日を集計日とする。いずれも当日0時0分0秒を起点とする。</p>
+<h3 id="集計対象">集計対象</h3>
+<p>集計日の0時0分0秒から23時59分59秒までに完了日がある店頭買取を対象とする。対象とする状態は、完了・ダブルチェック済み・入力済みである。明細は元数量が0より大きい行、個別入力商品は数量が0より大きい行を集計する。</p>
+<h3 id="集計する値">集計する値</h3>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>算出</th></tr></thead><tbody><tr><td>買取金額</td><td>明細と個別入力商品のそれぞれで単価と数量を掛け、合算する</td></tr><tr><td>売価金額</td><td>明細と個別入力商品のそれぞれで売価単価と数量を掛け、合算する</td></tr><tr><td>端数調整分</td><td>査定合計金額の1の位の切り上げ分を、オプションで指定した特定部門の買取金額として加える。当該分の売価金額は0とする</td></tr></tbody></table></div>
+<p>集計は店舗と部門の組み合わせごとに合算する。</p>
+<h3 id="登録の手順">登録の手順</h3>
+<p>同じ集計日の既存の買取集計を削除したうえで、集計結果を一括登録する。集計結果が0件のときは削除だけを行い、登録しない。同じ集計日で再実行しても当日分が重複しないため、冪等である。</p>
+<h3 id="部門未設定商品の通知">部門未設定商品の通知</h3>
+<p>集計日の店頭買取のうち部門が未設定の商品を抽出し、該当があるときは商品名・商品コードの一覧を本文に載せて管理者へ通知する。宛先が未設定のときは送らずに終える。</p>
+<h3 id="エラー時の扱い">エラー時の扱い</h3>
+<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>コマンド名が未指定・不一致</td><td>処理を行わずに終了する</td></tr><tr><td>集計対象が0件</td><td>既存の当日分集計を削除し、登録は行わずに完了する</td></tr><tr><td>集計・登録中の例外</td><td>登録を取り消し、エラー内容を添えた集計エラーの通知を管理者へ送る</td></tr><tr><td>通知の宛先が未設定</td><td>通知を送らずに当該処理を終了する</td></tr></tbody></table></div>
+<h3 id="他機能との境界">他機能との境界</h3>
+<p>外部システムへの連携は行わない。集計対象の店頭買取が無いときも実行できる。</p>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>コマンド名と任意の集計日引数。</td></tr><tr><td>成功時出力</td><td>集計日の既存集計の削除と当日分集計の買取集計テーブルへの登録。部門未設定商品がある場合の管理者通知メール。</td></tr><tr><td>失敗時出力</td><td>登録のロールバックと集計エラー通知メールの送信。</td></tr><tr><td>副作用</td><td>買取集計テーブルの当日分レコードの入れ替え、通知メール送信。</td></tr></tbody></table></div>
-<p>集計結果はファイルではなく買取集計テーブル（<code>dtb_otc_buy_order_summary</code>）へ登録する。部門未設定商品の通知メールには商品名・商品コードの一覧を本文に載せる。</p>
-<hr>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>多重実行</td><td>ロックファイル等による多重起動防止は行わない。同じ集計日を同時に実行すると、双方が削除と登録を行い当日分が重複し得る。</td></tr><tr><td>途中失敗・再実行</td><td>削除と登録を1トランザクションで行い、例外時はロールバックする。再実行で同じ集計日の集計を入れ替えるため重複しない。</td></tr><tr><td>参照時点</td><td>実行時点の店頭買取データを集計対象とする。</td></tr><tr><td>削除と登録の範囲</td><td>削除・登録の対象は指定集計日の当日分に限る。他日の集計は変更しない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<p>機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。</p>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>dtb_otc_buy_order</code></td><td><code>base_info_id</code>（現行 <code>shop_id</code>）・<code>otc_buy_order_status_id</code>・<code>complete_date</code>・<code>total_price</code></td><td>集計対象の抽出条件と店舗単位・端数調整分の算出に使用する。</td></tr><tr><td><code>dtb_otc_buy_order_detail</code></td><td><code>section_id</code>・<code>price</code>・<code>original_quantity</code>・<code>sell_price</code>・<code>product_class_id</code></td><td>明細の部門・買取金額・売価金額の集計と部門未設定判定に使用する。</td></tr><tr><td><code>dtb_otc_buy_order_indivisual_input_product</code></td><td><code>section_id</code>・<code>price</code>・<code>quantity</code>・<code>sell_price</code>・<code>name</code></td><td>個別入力商品の集計と部門未設定判定に使用する。</td></tr><tr><td><code>dtb_otc_buy_order_summary</code></td><td><code>base_info_id</code>（現行 <code>shop_id</code>）・<code>section_id</code>・<code>sell_price</code>・<code>buy_price</code>・<code>summary_date</code></td><td>集計結果の登録先。集計日で削除・登録する。</td></tr></tbody></table></div>
-<h3 id="DB操作">DB操作</h3>
-<p>本機能は参照系（検索）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>検索</td><td>dtb_otc_buy_order / dtb_otc_buy_order_detail / dtb_otc_buy_order_indivisual_input_product / dtb_otc_buy_order_summary</td><td>検索条件に合致するレコードを抽出する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>コマンド名が未指定・不一致</td><td>処理を行わずに終了する。</td></tr><tr><td>集計対象が0件</td><td>既存の当日分集計を削除し、登録は行わず完了する。</td></tr><tr><td>集計・登録中の例外</td><td>登録をロールバックし、エラー内容を添えた集計エラー通知メールを管理者へ送る。</td></tr><tr><td>通知メール宛先が未設定</td><td>メールを送らずに当該メール処理を終了する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="ログ・監査">ログ・監査</h2>
-<div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>起動</td><td>バッチコマンドの起動時に日時付きのコンソール出力を行う。</td></tr><tr><td>部門未設定商品通知メール</td><td>送信開始・送信完了・件数、宛先未設定時の送信せず終了をログに記録する。</td></tr><tr><td>集計エラー通知メール</td><td>送信開始・送信完了、宛先未設定時の送信せず終了をログに記録する。</td></tr></tbody></table></div>
-<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
-<ul><li>パスワード</li><li>トークン・接続秘密値</li><li>メール送信の認証情報</li><li>Cookie値・セッションIDの完全値</li></ul>
-<hr>
-<h2 id="通知">通知</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>送信条件</td><td>集計対象に部門未設定商品があるとき部門未設定商品通知メールを送る。集計・登録途中で例外が発生したとき集計エラー通知メールを送る。</td></tr><tr><td>宛先</td><td>オプションに設定された買取集計通知用メールアドレス（カンマ区切り）を宛先とする。宛先が未設定の場合は送信しない。宛先の決まり方はオプション管理を正とする。</td></tr><tr><td>本文</td><td>部門未設定商品通知メールは商品名・商品コードの一覧を載せる。集計エラー通知メールは例外メッセージを載せる。</td></tr></tbody></table></div>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<p>ロックファイル等による多重起動防止は行わない。集計結果の削除と登録は1トランザクションで囲み、例外時はロールバックする。長時間処理に備えて実行時間制限を解除する。本バッチは楽観ロック・悲観ロックの対象を持たない。</p>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>コマンド名と、任意の集計日（年月日）</td></tr><tr><td>成功時出力</td><td>同じ集計日の既存集計を削除し、当日分の集計を登録する。部門未設定商品があるときは管理者へ通知する</td></tr><tr><td>失敗時出力</td><td>登録を取り消し、エラー内容を添えた集計エラーの通知を管理者へ送る</td></tr></tbody></table></div>
+<h3 id="入出力-永続化">入出力: 永続化</h3>
+<div class="table-wrap"><table><thead><tr><th>操作</th><th>契機</th></tr></thead><tbody><tr><td>削除</td><td>集計の登録前に、同じ集計日の既存の買取集計を削除する</td></tr><tr><td>登録</td><td>集計結果が1件以上あるときに、買取集計へ一括登録する</td></tr></tbody></table></div>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
+<h2 id="表示メッセージ">表示メッセージ</h2>
+<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>—</td><td>管理者への通知</td><td>部門未設定商品の一覧（商品名・商品コード）</td><td>集計日の店頭買取に部門未設定の商品があるとき</td><td>通知を送り、集計を続ける</td></tr><tr><td>—</td><td>管理者への通知</td><td>集計エラーの内容</td><td>集計・登録の途中で例外が発生したとき</td><td>登録を取り消して終了する</td></tr></tbody></table></div>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

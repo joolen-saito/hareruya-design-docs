@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,32 +272,18 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#本書で扱うこと">本書で扱うこと</a>
-<a class="lv2" href="#本書で扱わないこと">本書で扱わないこと</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv3" href="#フェーズ2対応-フェーズ1では実装不要">フェーズ2対応（フェーズ1では実装不要）</a>
-<a class="lv2" href="#用語">用語</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#フロント挙動">フロント挙動</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#店舗紹介ページのナビを描画する">店舗紹介ページのナビを描画する</a>
-<a class="lv3" href="#イベント店舗文脈の店舗を切り替える">イベント店舗文脈の店舗を切り替える</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
-<a class="lv3" href="#エッジケース">エッジケース</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#店舗の決まり方">店舗の決まり方</a>
+<a class="lv3" href="#表示する要素">表示する要素</a>
+<a class="lv3" href="#右カラムのセクションナビ">右カラムのセクションナビ</a>
+<a class="lv3" href="#店舗名の表示">店舗名の表示</a>
+<a class="lv3" href="#本店との境界">本店との境界</a>
+<a class="lv3" href="#フェーズ2対応-フェーズ1では実装しない">フェーズ2対応（フェーズ1では実装しない）</a>
+<a class="lv3" href="#エラー時の扱い">エラー時の扱い</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#バリデーション">バリデーション</a>
-<a class="lv2" href="#権限・認可">権限・認可</a>
-<a class="lv2" href="#画面遷移">画面遷移</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#ログ・監査">ログ・監査</a>
-<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
-<a class="lv2" href="#セッション">セッション</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a></nav>
+<a class="lv3" href="#入出力-永続化">入出力: 永続化</a>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -300,90 +296,30 @@ footer {
         <li><span class="phase2-target">支店PC版ナビゲーション上の通知</span> はフェーズ2対応（<a href="../../excel_to_html/output/0302_%E5%9F%BA%E6%9C%AC%E8%A8%AD%E8%A8%88%E4%BB%95%E6%A7%98%E6%9B%B8%28%E3%83%95%E3%83%AD%E3%83%B3%E3%83%88_%E3%82%B0%E3%83%AD%E3%83%BC%E3%83%90%E3%83%AB%E3%83%8A%E3%83%93%29.html">0302 支店PC版ナビゲーション</a>）<br>Excel原文: ※通知はフェーズ2以降で設計予定とする</li>
       </ul>
     </div>
-      <h2 id="概要">概要</h2>
-<p>支店PC版ナビゲーションは、支店（実店舗）の店舗紹介ページおよびイベントの店舗文脈のPC表示で、利用者が店舗を切り替え、店舗ページ内のセクションへ移動するための導線を表示する機能である。店舗紹介ページのPC表示では、店舗ヘッダ（店舗一覧への導線とカート）、左カラムの店舗一覧、右カラムのセクションナビ（店舗案内・初心者講習会・取り扱い商品・買取・スタッフ・その他・アクセスのうち登録済みのもの）を表示する。イベントの店舗文脈では、店舗選択ボタン列・店舗切替セレクトにより店舗を切り替える。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。本機能のカスタマイズ区分はカスタマイズである。画面・処理フロー・JS等の挙動はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインの店舗ヘッダブロック処理・店舗選択ブロック処理、テンプレート（<code>Block/shop_header.twig</code>・<code>ShopPage/index.twig</code>・<code>Block/events_shop_buttons.twig</code>・<code>Block/events_top_buttons.twig</code>）を正とし、DB関連（テーブル名・列名・保存先）はリニューアル先のec-cube-enterpriseを正とする。</p>
-<p>対象はブラウザ経由の支店フロント（店舗紹介ページ・イベント店舗文脈）のPC表示に限定する。</p>
-<p>本文ではフレームワークのコントローラ型名やメソッド名を主説明としない。「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。コード探索でbind名が必要なときだけ「調査補助」へ書く。フロントのページであり管理画面プレフィックスは付かない。フロントのルートはロケール接頭辞<code>/{_locale}</code>の下に置かれる。</p>
-<hr>
-<h2 id="本書で扱うこと">本書で扱うこと</h2>
-<ul><li>支店PC版の店舗ヘッダの表示要素と導線</li><li>店舗紹介ページの左カラム店舗一覧と右カラムセクションナビの表示・出し分け</li><li>イベント店舗文脈の店舗選択ボタン列・店舗切替セレクトによる店舗の切り替え</li><li>言語（ja／en）による表示の出し分け</li><li>本店ナビと支店ナビの境界、店舗の決まり方</li></ul>
-<hr>
-<h2 id="本書で扱わないこと">本書で扱わないこと</h2>
-<p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
-<ul><li>本店PC版・本店スマホ版ナビゲーション（F02-01・F02-02を正とする）</li><li>支店スマホ版ナビゲーション（F02-04を正とする）</li><li>ヘッダの通知有無表示の判定（F02-05を正とする）</li><li>支店トップページ本体の表示（F01-02を正とする）</li><li>イベントトップ・イベント検索・イベント一覧の本体（イベント機能を正とする）</li></ul>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<p>本機能のカスタマイズ区分はカスタマイズである。店舗の決まり方・店舗切替・右カラムナビの表示順等の挙動はpf-eccube3（HareruyaEcプラグイン）の実装を正とし、DB関連（テーブル名・列名・保存先）はリニューアル先のec-cube-enterpriseを正とする。現行と移行先の主な差は次のとおり。移行先名を主とし、現行名を括弧で添える。</p>
-<h3 id="フェーズ2対応-フェーズ1では実装不要">フェーズ2対応（フェーズ1では実装不要）</h3>
-<p>本書は現行実装からのリバースであり、以下は現行挙動として記述しているが、Excel基本設計がフェーズ2対応としている。フェーズ1では実装・テストの対象外とする。</p>
-<ul><li>支店PC版ナビゲーション上の通知（※Excel基本設計 0302「支店PC版ナビゲーション上の通知」はフェーズ2対応。フェーズ1では実装しない）。フェーズ2対応。Excel原文: 「※通知はフェーズ2以降で設計予定とする」（0302 支店PC版ナビゲーション）</li></ul>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>店舗マスタ</td><td><code>mtb_shop</code>（HareruyaEcプラグインの独自テーブル）</td><td><code>dtb_base_info</code>（複数ショップを行として保持。BaseInfoへ統合）</td></tr><tr><td>店舗ID</td><td><code>mtb_shop.id</code></td><td><code>dtb_base_info.id</code></td></tr><tr><td>店舗識別名（HTMLクラス名）</td><td><code>mtb_shop.html_class_name</code></td><td><code>dtb_base_info.html_class_name</code>（コメント「支店URL」）</td></tr><tr><td>店舗名・短縮店舗名</td><td><code>mtb_shop.name_jp</code>／<code>name_en</code>／<code>short_name_jp</code>／<code>short_name_en</code></td><td><code>dtb_base_info.shop_name</code>／<code>shop_name_eng</code>／<code>short_name_jp</code>／<code>short_name_en</code></td></tr><tr><td>全店舗一覧・店舗選択列の並び順</td><td><code>mtb_shop.rank</code>（並び順列）</td><td><code>dtb_base_info</code>に<code>rank</code>／<code>sort_no</code>列が見当たらず、並び順キーはec-cube-enterprise実装で要確認</td></tr><tr><td>店舗ページ要素</td><td><code>dtb_shop_page_element</code>（PKは<code>shop_page_element_id</code>、店舗参照は<code>shop_id</code>）</td><td><code>dtb_shop_page_element</code>（同一テーブル名。PKは<code>id</code>、店舗参照は<code>base_info_id</code>）</td></tr></tbody></table></div>
-<p>挙動の説明でDB列に触れるときは移行先（ec-cube-enterprise）の列名を主とする。</p>
-<hr>
-<h2 id="用語">用語</h2>
-<div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>支店</td><td>実店舗。店舗マスタの1行に対応する。店舗の特定はパスの店舗識別名またはイベントの店舗選択で行う。</td></tr><tr><td>店舗ヘッダ</td><td>支店文脈で用いるヘッダ部品。店舗一覧への導線とカートを並べる。</td></tr><tr><td>左カラム店舗一覧</td><td>店舗紹介ページの左カラムに並ぶ全店舗の一覧。表示中の店舗を選択状態にする。</td></tr><tr><td>右カラムセクションナビ</td><td>店舗紹介ページの右カラムで、登録済みセクションへページ内移動するナビ。</td></tr><tr><td>店舗選択ボタン列・店舗切替セレクト</td><td>イベント店舗文脈で店舗を切り替える導線。短縮店舗名を表示する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>店舗紹介ページをPCで開く</td><td><code>GET /{_locale}/shoppage/{name}</code></td><td>店舗ヘッダ・左カラム店舗一覧・右カラムセクションナビを描画する。</td></tr><tr><td>左カラム店舗一覧の店舗リンク押下</td><td><code>GET /{_locale}/shoppage/{name}</code></td><td>選択した店舗の店舗紹介ページへ遷移する。</td></tr><tr><td>右カラムセクションナビ押下</td><td>（同一ページ内アンカー）</td><td>当該セクションへページ内移動する。</td></tr><tr><td>店舗ヘッダブロック単体（部分描画の境界）</td><td>`GET</td><td>POST /{_locale}/block/shop_header`</td></tr><tr><td>イベント店舗文脈の店舗選択</td><td><code>GET /{_locale}/events?shop={店舗ID}</code></td><td>選択した店舗のイベント店舗文脈へ遷移する。</td></tr><tr><td>イベント店舗選択ブロック単体（部分描画の境界）</td><td>`GET</td><td>POST /{_locale}/block/events/shop_buttons<code>、</code>GET</td></tr></tbody></table></div>
-<p>ナビは利用者が直接URLで開くより、支店各画面の一部として描画される。</p>
-<hr>
-<h2 id="フロント挙動">フロント挙動</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>店舗ヘッダはロゴ、店舗一覧への導線（左上テキストと右側リンク）、マイページ、言語切替、カート（個数表示付き）を表示する。店舗紹介ページの左カラムは全店舗一覧（表示中を選択状態）とポイント確認バナー・Twitter、右カラムは登録済みセクションのナビと各セクションを表示する。イベント店舗文脈は店舗選択ボタン列（PC）と店舗切替セレクト（SP）を表示する。</td></tr><tr><td>JS挙動</td><td>店舗切替セレクトの選択で対象店舗のイベント店舗文脈へ遷移する。カート個数は非同期取得した値で表示する。</td></tr><tr><td>CSS・レイアウト</td><td>支店文脈用にコンパクトなヘッダのスタイルを追加する。PC表示で店舗選択ボタン列を、SP表示で店舗切替セレクトを切り替える。右カラムナビは出力順の末尾要素へ末尾用クラスを付与する。</td></tr><tr><td>モーダル・ポップアップ</td><td>店舗紹介ページはポイント確認用モーダルを持つ（F01-02を正とする）。ナビ自体は専用モーダルを持たない。</td></tr><tr><td>入力項目</td><td>支店PC版ナビは商品検索フォームを持たない。店舗切替セレクトは導線であり入力保存を行わない。</td></tr></tbody></table></div>
-<p>店舗ヘッダの左上テキスト・右側リンクはいずれも店舗一覧（店舗一覧の利用者データページ）への導線とする。</p>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="店舗紹介ページのナビを描画する">店舗紹介ページのナビを描画する</h3>
-<ol><li>店舗識別名から店舗を特定する（特定・404の扱いはF01-02を正とする）。</li><li>並び順付きの全店舗一覧を取得し、左カラム店舗一覧へ表示する。表示中の店舗を選択状態にする。</li><li>登録済みの右カラム項目だけをセクションナビへ並べ、出力順の末尾要素へ末尾用クラスを付与する。</li><li>店舗ヘッダをヘッダ領域へ描画し、カート個数を非同期取得して表示する。</li></ol>
-<h3 id="イベント店舗文脈の店舗を切り替える">イベント店舗文脈の店舗を切り替える</h3>
-<ol><li>店舗選択（クエリの店舗ID）から対象店舗を決定する。店舗が見つからない場合は見つからない（HTTP404）として扱う。</li><li>並び順付きの全店舗一覧を取得し、店舗選択ボタン列・店舗切替セレクトへ短縮店舗名で表示する。表示中の店舗を選択状態にする。</li><li>店舗選択・切替セレクトの操作で、選択した店舗のイベント店舗文脈へ遷移する。</li></ol>
-<hr>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>店舗の決まり方</td><td>店舗紹介ページではパスの店舗識別名で、イベント店舗文脈ではクエリの店舗IDで店舗を決める。本店のようにサイトルート直下では決めない。</td></tr><tr><td>右カラムナビの表示有無</td><td>登録済みの右カラム項目だけをナビへ並べる。値の無いセクションはナビにも出さない。</td></tr><tr><td>右カラムナビの順序</td><td>店舗案内・初心者講習会・取り扱い商品・買取・スタッフ・その他・アクセスの定義順とし、末尾要素へ末尾用クラスを付与する。</td></tr><tr><td>店舗名表示</td><td>左カラム店舗一覧は店舗名を、イベント店舗文脈の選択導線は短縮店舗名を表示する。言語に応じて日本語名・英語名を用いる。</td></tr><tr><td>本店と支店の境界</td><td>本書のナビは支店文脈の導線である。本店のECヘッダ・グローバルナビ（F02-01）とは別部品である。</td></tr></tbody></table></div>
-<p>本機能は金額計算・税計算・丸めを行わない。</p>
-<p>支店PC版ナビは入力フォームを持たないため、入力項目に紐づく表を持たない。</p>
-<h3 id="エッジケース">エッジケース</h3>
-<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>店舗紹介ページで全右カラム項目が未登録</td><td>右カラムセクションナビ・各セクションを描画しない（F01-02を正とする）。</td></tr><tr><td>イベント店舗文脈で店舗IDが該当なし</td><td>見つからない（HTTP404）として扱う。</td></tr><tr><td>全店舗一覧が空</td><td>店舗一覧・店舗選択導線を描画しない。</td></tr><tr><td>ロケールがja以外</td><td>英語名・英語表示で導線を構成する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>参照時点</td><td>店舗・店舗一覧・店舗ページ要素は画面描画時点で取得する。</td></tr><tr><td>選択状態の一致</td><td>左カラム店舗一覧・店舗選択導線の選択状態は、特定・決定した店舗と一致する。</td></tr><tr><td>カート個数</td><td>非同期取得した時点の値であり、画面本文の描画時点とは別時点となり得る。</td></tr></tbody></table></div>
-<hr>
-<h2 id="API-バッチ結果">API/バッチ結果</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>API</td><td>カート個数取得は非同期リクエストで行う。</td></tr><tr><td>バッチ</td><td>本機能ではバッチを実行しない。</td></tr></tbody></table></div>
-<hr>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="店舗の決まり方">店舗の決まり方</h3>
+<p>店舗紹介ページのときはパスの店舗識別名で店舗を決める。イベント店舗文脈のときはクエリの店舗IDで店舗を決める。本店のようにサイトルート直下のときは店舗を決めない。店舗の特定と該当なしの扱いは店舗紹介ページ（F01-02）を正とする。イベント店舗文脈で店舗が見つからないときは、見つからない（HTTP404）として扱う。</p>
+<h3 id="表示する要素">表示する要素</h3>
+<div class="table-wrap"><table><thead><tr><th>領域</th><th>内容</th></tr></thead><tbody><tr><td>店舗ヘッダ</td><td>支店の画面を表示したときに、ロゴ、店舗一覧への導線（左上のテキストと右側の導線）、マイページ、言語切替、カート（個数表示付き）を出す。左上のテキストと右側の導線は、いずれのときも店舗一覧へ向かう</td></tr><tr><td>店舗紹介ページの左カラム</td><td>店舗紹介ページのときに、全店舗一覧（表示中の店舗を選択状態にする）、ポイント確認バナー、Twitter を出す</td></tr><tr><td>店舗紹介ページの右カラム</td><td>登録済みのセクションだけを、ナビと本文に出す</td></tr><tr><td>イベント店舗文脈</td><td>PC表示のときは店舗選択の並び、SP表示のときは店舗切替の選択欄</td></tr><tr><td>ポイント確認用のモーダル</td><td>店舗紹介ページのときに持つ（F01-02を正とする）。ナビ自体は専用のモーダルを持たない</td></tr></tbody></table></div>
+<p>支店文脈のヘッダにはコンパクトな体裁を用いる。カートの個数は非同期で取得した値を表示する。</p>
+<h3 id="右カラムのセクションナビ">右カラムのセクションナビ</h3>
+<p>登録済みの右カラム項目だけをナビへ並べる。値の無いセクションはナビにも出さない。順序は店舗案内・初心者講習会・取り扱い商品・買取・スタッフ・その他・アクセスの定義順とする。出力順の末尾の要素には末尾用の体裁を付す。</p>
+<h3 id="店舗名の表示">店舗名の表示</h3>
+<p>左カラムの全店舗一覧は店舗名を表示する。イベント店舗文脈の選択導線は短縮店舗名を表示する。言語に応じて日本語名と英語名を使い分ける。全店舗一覧は並び順付きで取得し、表示中の店舗を選択状態にする。</p>
+<p>イベント店舗文脈で店舗を選び直したときは、選択した店舗のイベント店舗文脈へ遷移する。</p>
+<h3 id="本店との境界">本店との境界</h3>
+<p>本書のナビは支店文脈の導線とする。本店のECヘッダとグローバルナビ（F02-01）は別の部品とする。本機能は金額計算・税計算・丸めを行わず、入力欄を持たない。</p>
+<h3 id="フェーズ2対応-フェーズ1では実装しない">フェーズ2対応（フェーズ1では実装しない）</h3>
+<p>Excel基本設計 0302「支店PC版ナビゲーション上の通知」はフェーズ2対応とし、フェーズ1ではこの項目だけ実装しない。Excel原文は「※通知はフェーズ2以降で設計予定とする」である。</p>
+<h3 id="エラー時の扱い">エラー時の扱い</h3>
+<div class="table-wrap"><table><thead><tr><th>事象</th><th>扱い</th></tr></thead><tbody><tr><td>イベント店舗文脈の店舗IDが該当なしのとき</td><td>見つからない（HTTP404）として扱う</td></tr><tr><td>カート個数の非同期取得に失敗したとき</td><td>取得できないときの表示は本書では確定せず、実装を確認値とする</td></tr><tr><td>描画に障害があったとき</td><td>共通の例外処理に委ねる</td></tr></tbody></table></div>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>支店各画面の表示要求（店舗識別名またはイベントの店舗ID、ロケール付き）。</td></tr><tr><td>成功時出力</td><td>店舗ヘッダ・店舗一覧・右カラムセクションナビ・店舗選択導線のHTML。</td></tr><tr><td>失敗時出力</td><td>店舗未存在時は見つからない（HTTP404）。描画失敗時は共通例外処理に委ねる。</td></tr><tr><td>副作用</td><td>カート個数の非同期取得。</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<p>機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。</p>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>dtb_base_info</code>（現行 <code>mtb_shop</code>）</td><td>店舗ID（<code>id</code>）</td><td>店舗の特定・選択状態の判定に用いる。</td></tr><tr><td><code>dtb_base_info</code>（現行 <code>mtb_shop</code>）</td><td>HTMLクラス名（<code>html_class_name</code>、コメント「支店URL」）</td><td>店舗紹介ページのパスの店舗識別名に対応。</td></tr><tr><td><code>dtb_base_info</code>（現行 <code>mtb_shop</code>）</td><td>店舗名・短縮店舗名（<code>shop_name</code>／<code>shop_name_eng</code>／<code>short_name_jp</code>／<code>short_name_en</code>）</td><td>店舗一覧・店舗選択導線の表示に用いる。現行は<code>name_jp</code>／<code>name_en</code>。</td></tr><tr><td><code>dtb_base_info</code>（現行 <code>mtb_shop</code>）</td><td>並び順</td><td>全店舗一覧・店舗選択列の表示順に用いる。移行先に<code>rank</code>／<code>sort_no</code>列が見当たらず、並び順キーはec-cube-enterprise実装で要確認。現行は<code>mtb_shop.rank</code>。</td></tr><tr><td><code>dtb_shop_page_element</code></td><td>要素名（<code>element</code>）・値（<code>value</code>）</td><td>右カラムナビの表示有無の判定に用いる。店舗参照は<code>base_info_id</code>（現行<code>shop_id</code>）。</td></tr></tbody></table></div>
-<h3 id="DB操作">DB操作</h3>
-<p>本機能は参照系（検索）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>検索</td><td>dtb_base_info / dtb_shop_page_element / mtb_shop</td><td>検索条件に合致するレコードを抽出する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="バリデーション">バリデーション</h2>
-<p>支店PC版ナビは入力フォームを持たない。パスの店舗識別名は英数字とアンダースコアに限定する。イベントの店舗IDが該当しない場合は見つからない（HTTP404）として扱う。</p>
-<hr>
-<h2 id="権限・認可">権限・認可</h2>
-<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>支店PC版ナビ</th></tr></thead><tbody><tr><td>未ログイン</td><td>表示できる。</td></tr><tr><td>ログイン済み会員</td><td>表示できる。店舗ヘッダのマイページ・ポイント表示はログイン状態に従う（F02-05を正とする）。</td></tr></tbody></table></div>
-<p>支店PC版ナビは支店フロントの公開導線である。</p>
-<hr>
-<h2 id="画面遷移">画面遷移</h2>
-<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>店舗ヘッダのロゴ押下</td><td>本店TOP</td></tr><tr><td>店舗ヘッダの店舗一覧導線押下</td><td>店舗一覧の利用者データページ</td></tr><tr><td>店舗ヘッダのカート押下</td><td>カート</td></tr><tr><td>店舗ヘッダの言語切替押下</td><td>反対ロケールの対応URL</td></tr><tr><td>左カラム店舗一覧の店舗リンク押下</td><td>選択した店舗の店舗紹介ページ</td></tr><tr><td>右カラムセクションナビ押下</td><td>同一ページ内の対応セクションへアンカー移動</td></tr><tr><td>イベント店舗選択ボタン・店舗切替セレクト操作</td><td>選択した店舗のイベント店舗文脈</td></tr></tbody></table></div>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>イベント店舗文脈の店舗IDが該当なし</td><td>見つからない（HTTP404）として扱う。</td></tr><tr><td>カート個数の非同期取得失敗</td><td>取得できない場合の表示は本書では仕様確定せず実装を確認値とする。</td></tr><tr><td>描画の障害</td><td>アプリケーションの共通例外処理に委ねる。</td></tr></tbody></table></div>
-<hr>
-<h2 id="ログ・監査">ログ・監査</h2>
-<div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>支店PC版ナビ表示</td><td>本機能固有の業務監査ログは追加しない。</td></tr></tbody></table></div>
-<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
-<ul><li>Cookie値</li><li>セッションIDの完全値</li></ul>
-<hr>
-<h2 id="セッション">セッション</h2>
-<p>本機能は支店PC版ナビ表示のためにセッションへ機微情報を保存しない。ログイン状態の判定にのみ会員の認証情報を用いる。</p>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<p>支店PC版ナビの表示は参照のみであり、業務トランザクションを張って台帳を更新しない。本機能では楽観ロック・悲観ロックの対象は持たない。</p>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>支店各画面の表示要求（店舗識別名またはイベントの店舗ID、ロケール付き）</td></tr><tr><td>成功時出力</td><td>店舗ヘッダ、店舗一覧、右カラムのセクションナビ、店舗選択の導線</td></tr><tr><td>失敗時出力</td><td>店舗が存在しないときは見つからない（HTTP404）。描画に失敗したときは共通の例外処理に委ねる</td></tr></tbody></table></div>
+<h3 id="入出力-永続化">入出力: 永続化</h3>
+<p>本機能はデータを更新しない。</p>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
+<h2 id="表示メッセージ">表示メッセージ</h2>
+<p>本機能は固有の文言を持たない。表示するのは店舗名・短縮店舗名とセクション名である。</p>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

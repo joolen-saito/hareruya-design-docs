@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,41 +272,17 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#本書で扱うこと">本書で扱うこと</a>
-<a class="lv2" href="#本書で扱わないこと">本書で扱わないこと</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv2" href="#用語">用語</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#フロント挙動">フロント挙動</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#画面を開く-GET">画面を開く（GET）</a>
-<a class="lv3" href="#設定-押下-POST">「設定」押下（POST）</a>
-<a class="lv3" href="#削除-実行-DELETE相当">「削除」実行（DELETE相当）</a>
-<a class="lv3" href="#カスタムCSVファイルの出力-別コントローラ-GETストリーム">カスタムCSVファイルの出力（別コントローラ、GETストリーム）</a>
-<a class="lv2" href="#集計・判定・計算">集計・判定・計算</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
-<a class="lv3" href="#入力項目">入力項目</a>
-<a class="lv3" href="#エッジケース">エッジケース</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#画面の対象">画面の対象</a>
+<a class="lv3" href="#左右のリスト">左右のリスト</a>
+<a class="lv3" href="#保存">保存</a>
+<a class="lv3" href="#削除">削除</a>
+<a class="lv3" href="#出力の並び">出力の並び</a>
+<a class="lv3" href="#エラー時の扱い">エラー時の扱い</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#バリデーション">バリデーション</a>
-<a class="lv2" href="#権限・認可">権限・認可</a>
-<a class="lv2" href="#画面遷移">画面遷移</a>
-<a class="lv3" href="#遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#表示メッセージ">表示メッセージ</a>
-<a class="lv2" href="#試行制限">試行制限</a>
-<a class="lv2" href="#ログ・監査">ログ・監査</a>
-<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
-<a class="lv2" href="#セッション">セッション</a>
-<a class="lv3" href="#本機能におけるセッション">本機能におけるセッション</a>
-<a class="lv3" href="#セッションへ保存しない情報">セッションへ保存しない情報</a>
-<a class="lv2" href="#Cookie">Cookie</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a></nav>
+<a class="lv3" href="#入出力-永続化">入出力: 永続化</a>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -304,103 +290,34 @@ footer {
         <h1>店舗設定 — カスタムCSV出力項目設定（店舗設定/システム設定）</h1>
       </header>
       
-      <h2 id="概要">概要</h2>
-<p>管理画面の「店舗設定」配下（サイドメニューでは <code>HareruyaEc</code> の差込により追加）から開く画面で、商品CSV・受注CSV・配送CSVそれぞれについて、標準の <code>dtb_csv.enable_flg</code> とは独立した「カスタムCSV定義（名前付きプリセット）」を複数保存し、出力する列とその順序を確定する機能である。画面見出しは「カスタムCSV出力項目設定」となる。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。対象はブラウザ経由の管理画面に限定する。</p>
-<p>本書では Symfony のルート名、URL パス、コントローラクラス名は扱わない。</p>
-<p>カスタマイズ区分はカスタマイズであり、挙動・画面・処理フローの参照は現行リポ pf-eccube3 を正とし、DB関連（テーブル名・列名・型・制約・関連、DBカラム節、入力項目の保存先、データ整合性のDB部分、副作用のDB更新）はリニューアル後システムである ec-cube-enterprise を正とする。</p>
-<hr>
-<h2 id="本書で扱うこと">本書で扱うこと</h2>
-<ul><li>カスタムCSV定義の表示・切替・新規・保存・削除の利用者視点のふるまい</li><li>二段リスト（出力しない項目／出力する項目）と送信時に全行を選択するクライアント挙動</li><li>保存先（<code>dtb_csv_extension</code> と <code>dtb_csv_csv_extension</code>）と、更新時の既存紐付けの削除・再登録</li><li>カスタムCSVの実ファイル出力が参照する検索条件（セッション）とエクスポートサービスとの関係の要点</li><li>CSV種別として選択肢に載る範囲（商品・受注・配送）</li></ul>
-<hr>
-<h2 id="本書で扱わないこと">本書で扱わないこと</h2>
-<p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
-<ul><li>管理画面ログイン、セッション、CSRF の共通ポリシー全般（本機能の更新アクションがフォーム検証経由でない点を含め、ミドルウェアやSilex設定での補完の有無は環境を正とする）</li><li><code>dtb_csv</code> マスタ自体の追加・変更（マイグレーションや他画面での項目定義）</li><li>標準の「CSV出力項目設定」（<code>enable_flg</code> と <code>rank</code> を直接更新するコア実装）の詳細。カスタム定義は <code>dtb_csv</code> 行を選択するだけで当該列を書き換えない</li><li>カスタムCSV以外のダウンロード経路（標準の商品CSV・受注CSV等）の出力仕様の全体</li><li><code>findById</code> 等、同梱ソース上は基底リポジトリに見えないメソッド呼び出しが実行時に成功するかどうか（デプロイ先のオートローダ・Doctrineメタデータ・リポジトリ差し替えを正とする）</li></ul>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<ul><li>挙動・画面・処理フローは現行（pf-eccube3）の確認値、DBスキーマは移行先（ec-cube-enterprise）を正とする。実装済み・未実装を取り違えず、現行と移行先を対比で示す。</li><li>出力項目マスタ（dtb_csv）の列対応（現行 → 移行先）:</li><li>主キー: <code>csv_id</code> → <code>id</code></li><li>並び順: <code>rank</code> → <code>sort_no</code>（移行先は SMALLINT。本書のDB記述は <code>sort_no</code> を正とする）</li><li>有効フラグ: <code>enable_flg</code> → <code>enabled</code>（移行先は真偽値）</li><li>CSV種別外部キー: <code>csv_type</code> → <code>csv_type_id</code></li><li>カスタム定義（dtb_csv_extension）の列対応（現行 → 移行先）:</li><li>主キー: <code>csv_extension_id</code> → <code>id</code></li><li>名称 <code>name</code> の桁: 現行 64 → 移行先 255（移行先も NULL 可）</li><li>移行先は <code>base_info_id</code>（店舗参照 <code>dtb_base_info</code>）と <code>create_date</code> を持つ。現行にこれらは無い。</li><li>ソフトデリート列 <code>deleted_at</code> は現行・移行先とも持つ。</li><li>紐付け表（dtb_csv_csv_extension）の並び順列は、移行先でも <code>rank</code> のままである（dtb_csv の <code>sort_no</code> とは異なる）。<code>csv_extension_id</code> と <code>csv_id</code> は移行先の各主キー列 <code>id</code> を参照する。</li><li>移行時は、現行と移行先のスキーマ差（主キー名・並び順キー名・有効フラグ名・CSV種別FK名・追加列）を移行設計で吸収する。</li></ul>
-<hr>
-<h2 id="用語">用語</h2>
-<div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>CSV種別</td><td><code>mtb_csv_type</code> に相当する区分。本画面の「CSV出力項目」セレクトで切り替わる対象。実装では商品・受注・配送の識別子に限定して問い合わせる。</td></tr><tr><td>カスタムCSV定義</td><td><code>dtb_csv_extension</code> の1行。名称・CSV種別・更新者が紐づき、ソフトデリート用列を持つマッピング定義。</td></tr><tr><td>出力項目</td><td><code>dtb_csv</code> の1行。エンティティ名・フィールド名・表示名等を持つ。本機能は行を選び、カスタム定義ごとの順序を <code>dtb_csv_csv_extension.rank</code> に保存する。</td></tr><tr><td>利用者</td><td>本機能では管理者アカウント（<code>dtb_member</code> 由来のログイン主体）を指す。</td></tr></tbody></table></div>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>管理画面ナビから当機能を開く</td><td><code>GET /{admin_route}/setting/shop/custom_csv/{csvTypeId}/{csvExtensionId}</code>（既定の <code>{csvExtensionId}</code> は実装を正とする）</td><td>既定のCSV種別（実装ではエントリ時のパラメータ既定により商品CSV種別に相当する）について、フォームが表示される。「CSV出力項目」セレクト、「カスタムCSV」セレクト（先頭は「新規作成」相当）、「出力名」テキスト、二段リスト、順序ボタン、「設定」ボタンが表示される。既存のカスタム定義を選ぶとその内容が表示される。</td></tr><tr><td>「CSV出力項目」セレクトを変更する</td><td><code>GET /{admin_route}/setting/shop/custom_csv/{csvTypeId}/{csvExtensionId}</code>（<code>csvTypeId</code> が変わる）</td><td>ブラウザが同一機能の別CSV種別のGETへ遷移し、選択に応じたマスタ集合でリストが組み替わる。送信は行わない。</td></tr><tr><td>「カスタムCSV」セレクトを変更する</td><td><code>GET /{admin_route}/setting/shop/custom_csv/{csvTypeId}/{csvExtensionId}</code>（<code>csvExtensionId</code> が変わる）</td><td>同一CSV種別のまま、選択した定義ID付きまたは未定義（新規）のGETへ遷移する。送信は行わない。</td></tr><tr><td>二段リストと矢印ボタンで項目を移動し、「設定」を押す</td><td><code>POST /{admin_route}/setting/shop/custom_csv/{csvTypeId}/{csvExtensionId}</code>（<code>m10-13_admin_base_setting_setting_shop_csv_custom_update</code>）</td><td>カスタム定義の名称・CSV種別・更新者が保存され、出力側リストの並びに従い <code>dtb_csv_csv_extension</code> が作り直される。成功メッセージののち、同一機能へリダイレクトする。</td></tr><tr><td>既存定義で「削除」相当の導線を実行する</td><td><code>DELETE /{admin_route}/setting/shop/custom_csv/delete/{csvExtensionId}</code></td><td>CSRF付きのDELETE相当のリクエスト後、カスタム定義が削除され、一覧（新規状態）へ戻るリダイレクトが返る。</td></tr><tr><td>カスタムCSVのダウンロードを別画面から実行する</td><td>—（一覧・エクスポート側のパス。実装を正とする）</td><td>当機能の保存結果である <code>csv_extension_id</code> を指定し、ストリーミングでCSVが返る。検索条件は各一覧がセッションに保持する検索データに依存する（後述）。</td></tr></tbody></table></div>
-<hr>
-<h2 id="フロント挙動">フロント挙動</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>ページタイトル「システム設定」、サブタイトル「カスタムCSV出力項目設定」。フォーム上部に「CSV出力項目」（<code>csv_type</code>）、「カスタムCSV」（既存定義のセレクト、先頭ラベルは「新規作成」）、「出力名」（プレースホルダ「名称」）。左右二列のマルチセレクトリスト。左見出し「CSV出力しない項目」、右見出し「CSV出力する項目」。中央に「進む／全進／戻る／全戻」ボタン。右側に「項目順序」（一つ上／一つ下／一番上／一番下）。右サイドに「設定」ボタン。既存定義では追加で「削除」リンク（確認ダイアログ文言付き）。</td></tr><tr><td>JS 挙動</td><td>jQueryで、選択された<code>option</code>要素を相手リストへ<code>appendTo</code>する。全移動は一方のリストの全<code>option</code>を移す。順序は右リスト内で<code>prev</code>/<code>next</code>または先頭／末尾へ移動。CSV種別変更とカスタム定義セレクト変更は<code>location.href</code>でGET遷移する。フォーム<code>submit</code>直前に、左右両リストの子<code>option</code>すべてに<code>selected</code>を付与する（送信時に未選択だと項目が落ちないようにする）。</td></tr><tr><td>CSS・レイアウト</td><td>管理画面標準のボックス・Bootstrap系グリッド。左リストとボタン列と右リストと順序操作用ブロックの4分割配置。</td></tr><tr><td>モーダル・ポップアップ</td><td>本機能では管理画面標準の削除確認は、アンカーの<code>data-message</code>等に依存するパターンを用いる（詳細は共通スクリプトを正とする）。</td></tr><tr><td>textarea</td><td>本機能の標準フォーム項目には<code>textarea</code>は無い。</td></tr><tr><td>拡張フィールド枠</td><td>テンプレート末尾付近で、フォームイテレータのうち名前が <code>plg</code> で始まらない追加項目を行として描画する構造がある（プラグイン拡張用）。</td></tr></tbody></table></div>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="画面を開く-GET">画面を開く（GET）</h3>
-<ol><li>管理画面の認証・権限・IP制限の各ルールを通過する（詳細は管理画面共通を正とする）。</li><li>リクエストで指定されたCSV種別識別子が <code>mtb_csv_type</code> に存在しない場合、該当HTTPエラーとなる。</li><li>カスタム定義識別子が指定されており、かつ該当する <code>dtb_csv_extension</code> 行が無い場合、該当HTTPエラーとなる。未指定の場合は新規エンティティとして扱う。</li><li>フォームビルダに、CSV種別・既存定義セレクト・名称・左右リストの選択肢がバインドされる。右リストは、当該定義に既に紐づく <code>dtb_csv</code> 行を種別と結合条件で取得した結果である。左リストは、同じCSV種別の <code>dtb_csv</code> のうち、右に出ている主キーを除いた集合を <code>sort_no</code>・<code>id</code> 順（現行 pf-eccube3 は <code>rank</code>・<code>csv_id</code> 順）で並べた結果である。</li><li>テンプレートを描画する。</li></ol>
-<h3 id="設定-押下-POST">「設定」押下（POST）</h3>
-<ol><li>リクエストボディから <code>admin_custom_csv</code> 連想配列を読む。Symfonyフォームの<code>isValid</code>を呼ぶ処理は無い。</li><li>名称文字列をカスタム定義に格納し、CSV種別を関連付け、ログイン中の管理者の主キーを <code>member_id</code> に格納する。Doctrineへ永続化しフラッシュする。</li><li>既存定義の更新である場合、同一のカスタム定義主キーを持つ <code>dtb_csv_csv_extension</code> 行を生SQLで一括削除する。</li><li>新規の場合は直前のフラッシュで採番されたカスタム定義主キーを取得する。</li><li>リクエスト内の <code>csv_output</code>（<code>dtb_csv</code> 主キーの配列）を、配列の添字を0始まりの順序番号として解釈し、行ごとに <code>dtb_csv_csv_extension</code> の複合主キーと <code>rank</code> を保存する。配列内の各IDについて <code>dtb_csv</code> 行を取得し、結合エンティティにセットして永続化する。</li><li>管理画面向け成功メッセージを積み、当機能のGETへリダイレクトする（パラメータはCSV種別と保存したカスタム定義主キー）。</li></ol>
-<h3 id="削除-実行-DELETE相当">「削除」実行（DELETE相当）</h3>
-<ol><li>CSRFトークンをフォーム名無しの既定トークン名で検証する。無効ならアクセス拒否例外となる。</li><li>カスタム定義主キーが欠ける、または該当エンティティが無い場合、該当HTTPエラーとなる。</li><li>カスタム定義の関連コレクションを空にしてflushした後、エンティティを<code>remove</code>し再flushする。</li><li>当機能トップ相当へリダイレクトする。</li></ol>
-<h3 id="カスタムCSVファイルの出力-別コントローラ-GETストリーム">カスタムCSVファイルの出力（別コントローラ、GETストリーム）</h3>
-<ol><li>カスタム定義主キーで <code>dtb_csv_extension</code> を取得できなければ該当HTTPエラーとなる。</li><li><code>dtb_csv_csv_extension</code> から <code>rank</code> 順に <code>dtb_csv</code> 行を再取得し、エクスポートサービスへ渡す。</li><li>タイムアウト制限を無効化し、SQLロガーを無効化する。</li><li>CSV種別に応じて、商品は管理画面の商品検索セッション、受注・配送は受注検索セッションから検索フォームを復元し、当システムが拡張したクエリビルダで一覧対象を取得する。</li><li>ヘッダ行に、選択された各 <code>dtb_csv</code> の表示名を並べ、データ行は種別ごとのエクスポーターで埋める。文字コードや区切り文字はアプリケーション設定に従う。</li></ol>
-<hr>
-<h2 id="集計・判定・計算">集計・判定・計算</h2>
-<p>本機能は集計や金額計算を行わない。並び順は右リスト上の上から下への順を0起算の<code>rank</code>として保存する。</p>
-<hr>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>対象CSV種別</td><td>フォームの「CSV出力項目」は、内部クエリで商品・受注・配送の3種に限定する。会員CSV・カテゴリCSVは選択肢に出さない。</td></tr><tr><td>左リストの構成要素</td><td>指定CSV種別の <code>dtb_csv</code> のうち、現在編集中のカスタム定義の右リストに含まれる主キー以外。標準画面のように有効フラグ <code>enabled</code>（現行 pf-eccube3 は <code>enable_flg</code>）で左右を分けない。</td></tr><tr><td>名称</td><td>必須。空白のみはフォーム制約上は不可だが、POST処理はフォーム検証を経由しないため、運用上はリクエスト改ざんに注意（表示・保存値の整合は実装を確認値とする）。</td></tr><tr><td>保存単位</td><td>1回の「設定」で1件の <code>dtb_csv_extension</code> と、それに紐づく <code>dtb_csv_csv_extension</code> の全置換を行う。</td></tr><tr><td>更新者</td><td>保存のたびに、当該リクエストのログイン中管理者主キーを <code>member_id</code> に上書きする。</td></tr></tbody></table></div>
-<h3 id="入力項目">入力項目</h3>
-<div class="table-wrap"><table><thead><tr><th>項目名</th><th>必須／任意</th><th>最大長</th><th>初期値</th><th>保存先・扱い</th></tr></thead><tbody><tr><td>CSV出力項目</td><td>必須</td><td>—（セレクト）</td><td>現在のCSV種別</td><td>画面切替のみ。保存時は <code>customUpdate</code> がリクエストの名称等と合わせて読む対象であり、種別変更後に未保存の左右リストを送った場合の整合は利用者操作に依存する。</td></tr><tr><td>カスタムCSV</td><td>条件付き必須</td><td>—（セレクト）</td><td>既存なら該当行、新規なら空</td><td>表示切替。コアのNotBlank制約が付くがPOSTは生パラメータ経路のため、実効性は環境・改ざん耐性の観点で別途確認。</td></tr><tr><td>出力名</td><td>必須</td><td>255 文字（移行先 dtb_csv_extension.name の桁。現行 pf-eccube3 は 64）</td><td>既存定義の名称または空</td><td><code>dtb_csv_extension.name</code>（NULL 可）。</td></tr><tr><td>CSV出力しない項目</td><td>任意</td><td>—（複数選択）</td><td>CSV種別に属する未割当行</td><td>送信時は補助的。保存ロジックは右側 <code>csv_output</code> のみを解釈し、左に残した主キーは紐付け行を作らない。</td></tr><tr><td>CSV出力する項目</td><td>任意</td><td>—（複数選択）</td><td>既存定義に紐づく行</td><td><code>dtb_csv_csv_extension</code> に順序付きで保存。空にすると、紐付け行はすべて削除された状態に近いが、定義本体は残る。</td></tr></tbody></table></div>
-<h3 id="エッジケース">エッジケース</h3>
-<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>新規定義で右リストが空</td><td><code>dtb_csv_csv_extension</code> 行は作成されない。エクスポートはヘッダのみ等、サービス実装次第。</td></tr><tr><td>既存定義の更新で、削除用の前置き分岐が真</td><td>旧紐付けを生SQL DELETEしてから再挿入する。</td></tr><tr><td>ソフトデリート可能なエンティティを物理削除</td><td>削除処理は <code>remove</code> による削除。ソフトデリート設定との整合はORM設定を正とする。</td></tr></tbody></table></div>
-<hr>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>標準CSV設定との関係</td><td><code>dtb_csv.enabled</code>（現行 pf-eccube3 は <code>enable_flg</code>）は本機能で更新しない。フロントの標準CSVダウンロードが参照する有効列集合と、カスタム定義が参照する列集合は一致しない。</td></tr><tr><td>カスタム定義間</td><td>同一CSV種別に複数の <code>dtb_csv_extension</code> が共存する。それぞれ独立に <code>dtb_csv_csv_extension</code> を持つ。</td></tr><tr><td>エクスポート時</td><td>商品・受注一覧でセッションに無い検索条件は、エクスポート側のフォーム初期化結果に従う。画面表示中の一覧とCSV内容が一致するとは限らない（セッション更新タイミングを正とする）。</td></tr></tbody></table></div>
-<hr>
-<h2 id="API-バッチ結果">API/バッチ結果</h2>
-<p>本機能では外部HTTP API呼び出し・バッチ起動を行わない。</p>
-<hr>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="画面の対象">画面の対象</h3>
+<p>指定されたCSV種別がCSV種別マスタに無いときは該当のHTTPエラーとする。カスタム定義の指定があり、かつ該当するカスタム定義が無いときも該当のHTTPエラーとする。カスタム定義の指定が無いときは新規として扱う。</p>
+<p>選べるCSV種別は商品・受注・配送の 3 種に限る。会員とカテゴリのCSV種別は選択肢に出さない。</p>
+<h3 id="左右のリスト">左右のリスト</h3>
+<p>右のリストは、当該カスタム定義に既に紐づく出力項目とする。左のリストは、同じCSV種別の出力項目のうち右に出ているものを除いた集合とし、並び順と識別子の順に並べる。標準の画面と違い、有効フラグで左右を分けない。</p>
+<h3 id="保存">保存</h3>
+<p>名称は必須とする。ただし保存は入力の検証を経ず、送信内容をそのまま受け取る。</p>
+<p>保存では、名称をカスタム定義に格納し、CSV種別を関連付け、更新者としてログイン中の管理者を上書きする。既存のカスタム定義を更新するときは、当該定義に紐づく出力項目の関連をいったんすべて削除する。新規のときは保存で採番した識別子を使う。</p>
+<p>出力項目の並びは、右のリストの上から下への順を 0 起算の並び順として保存する。1 回の保存で、1 件のカスタム定義とそれに紐づく出力項目の関連をすべて置き換える。</p>
+<p>保存の後は同じ画面へ戻す。</p>
+<h3 id="削除">削除</h3>
+<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>なりすまし対策トークンが有効か</td><td>無効のときはアクセス拒否とする</td></tr><tr><td>2</td><td>カスタム定義の指定があり、該当する定義があるか</td><td>指定が欠けるとき、または該当が無いときは該当のHTTPエラーとする</td></tr><tr><td>3</td><td>上記を満たしたとき</td><td>当該カスタム定義の関連を空にしてから定義を削除し、この機能の先頭へ戻す</td></tr></tbody></table></div>
+<h3 id="出力の並び">出力の並び</h3>
+<p>カスタムCSVを出力するときは、カスタム定義に紐づく出力項目を保存した並び順で取り出す。指定されたカスタム定義が無いときは該当のHTTPエラーとする。</p>
+<p>ヘッダ行には選ばれた各出力項目の表示名だけを並べ、データ行はCSV種別ごとの出力で埋める。文字コードと区切り文字はアプリケーションの設定に従う。</p>
+<p>一覧の対象は、CSV種別が商品のときと受注・配送のときで、復元する検索条件が変わる。</p>
+<p>商品のときは商品検索の保持条件、受注と配送のときは受注検索の保持条件から検索条件を復元し、一覧の対象を決める。</p>
+<p>集計と金額計算はこの機能では行わない。</p>
+<h3 id="エラー時の扱い">エラー時の扱い</h3>
+<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>CSV種別がマスタに無い</td><td>該当のHTTPエラーとする</td></tr><tr><td>カスタム定義の指定が該当しない</td><td>該当のHTTPエラーとする</td></tr><tr><td>削除で対象が無い</td><td>該当のHTTPエラーとする</td></tr><tr><td>削除でなりすまし対策トークンが無効</td><td>アクセス拒否とする</td></tr></tbody></table></div>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>GETでCSV種別・オプションでカスタム定義ID。POSTで名称・出力列の主キー配列。DELETEでカスタム定義IDとCSRF。</td></tr><tr><td>成功時出力</td><td>HTML画面またはリダイレクト応答。別画面ではCSVストリーム。</td></tr><tr><td>失敗時出力</td><td>共通エラーページまたは該当HTTPステータス。</td></tr><tr><td>副作用</td><td><code>dtb_csv_extension</code> のINSERT/UPDATE/DELETE、<code>dtb_csv_csv_extension</code> のDELETEと再INSERT、成功メッセージのフラッシュ、操作ログにファイル名等が載る場合がある。</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<p>DB関連は ec-cube-enterprise の実装を正とする（SKILL 手順 1c）。現行 pf-eccube3 と列名が異なる場合は移行先名を主とし、現行名を括弧で添える。差は「リニューアル移行時の扱い」を参照する。</p>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td>dtb_csv_extension</td><td>id（現行 csv_extension_id）</td><td>主キー。自動採番。</td></tr><tr><td>dtb_csv_extension</td><td>name</td><td>カスタム定義の表示名。長さ255、NULL可だが運用上は名称入力を想定。</td></tr><tr><td>dtb_csv_extension</td><td>csv_type_id</td><td>CSV種別外部キー（<code>mtb_csv_type.id</code> 参照）。</td></tr><tr><td>dtb_csv_extension</td><td>member_id</td><td>最終保存操作の管理者（<code>dtb_member.id</code> 参照）。</td></tr><tr><td>dtb_csv_extension</td><td>base_info_id</td><td>所属店舗（<code>dtb_base_info</code> 参照。移行先で追加。現行に相当列なし）。</td></tr><tr><td>dtb_csv_extension</td><td>create_date</td><td>作成日時（移行先で追加）。</td></tr><tr><td>dtb_csv_extension</td><td>update_date</td><td>更新日時。必須列。保存処理は明示セットしないためライフサイクルに依存。</td></tr><tr><td>dtb_csv_extension</td><td>deleted_at</td><td>ソフトデリート用。現行・移行先とも持つ。</td></tr><tr><td>dtb_csv_csv_extension</td><td>csv_extension_id</td><td>複合主キー片方。<code>dtb_csv_extension.id</code> を参照。</td></tr><tr><td>dtb_csv_csv_extension</td><td>csv_id</td><td>複合主キー片方。<code>dtb_csv.id</code> を参照。</td></tr><tr><td>dtb_csv_csv_extension</td><td>rank</td><td>出力順。移行先でも <code>rank</code>。保存処理は整数順序を書き込む。</td></tr><tr><td>dtb_csv</td><td>id（現行 csv_id）</td><td>本機能は参照・外部キー先。行本体は更新しない。</td></tr><tr><td>dtb_csv</td><td>entity_name</td><td>エクスポート時のデータ解決に使用。</td></tr><tr><td>dtb_csv</td><td>field_name</td><td>エクスポート時のデータ解決に使用。</td></tr><tr><td>dtb_csv</td><td>reference_field_name</td><td>関連参照名。NULL可。</td></tr><tr><td>dtb_csv</td><td>disp_name</td><td>画面上の項目ラベルとCSVヘッダに使用。</td></tr><tr><td>dtb_csv</td><td>sort_no（現行 rank）</td><td>ソートキー。左リスト構築で利用。</td></tr><tr><td>dtb_csv</td><td>enabled（現行 enable_flg）</td><td>真偽値。本機能のリスト構築では参照しない。</td></tr><tr><td>dtb_csv</td><td>create_date</td><td>マスタ作成日時。</td></tr><tr><td>dtb_csv</td><td>update_date</td><td>マスタ更新日時。</td></tr><tr><td>dtb_csv</td><td>csv_type_id（現行 csv_type）</td><td>CSV種別外部キー。</td></tr><tr><td>dtb_csv</td><td>creator_id</td><td>作成者。</td></tr></tbody></table></div>
-<h3 id="DB操作">DB操作</h3>
-<p>永続化の正は ec-cube-enterprise（テーブル名・操作は ec-cube-enterprise を正典）。当ドメインは承認ワークフローを介さず persist/flush で直接確定する（承認ワークフローは在庫機能固有）。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>登録/更新</td><td>dtb_base_info / dtb_csv / dtb_csv_csv_extension / dtb_csv_extension / dtb_member / mtb_csv_type</td><td>当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。</td></tr></tbody></table></div>
-<hr>
-<h2 id="バリデーション">バリデーション</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>入力種別</th><th>ルール・扱い</th></tr></thead><tbody><tr><td>CSV出力項目</td><td>select</td><td>フォーム上はNotBlank。コアの <code>csv_type</code> 型。</td></tr><tr><td>カスタムCSV</td><td>select</td><td>NotBlank制約付きだが空値「新規作成」あり。POST保存は検証経由でない。</td></tr><tr><td>出力名</td><td>text</td><td>NotBlank。</td></tr><tr><td>左右リスト</td><td>multiselect</td><td>required false。送信時はJSが全<code>option</code>を選択状態にする。</td></tr></tbody></table></div>
-<hr>
-<h2 id="権限・認可">権限・認可</h2>
-<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>画面の閲覧・保存・削除</th></tr></thead><tbody><tr><td>管理画面未ログイン</td><td>管理画面の共通認証フローへ誘導される（詳細はログイン機能を正とする）。</td></tr><tr><td>管理画面ログイン済み</td><td>当機能へのリクエストが権限マスタやIP制限で拒否されない限り利用できる。差別化は他機能と同型。</td></tr></tbody></table></div>
-<hr>
-<h2 id="画面遷移">画面遷移</h2>
-<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>CSV種別またはカスタム定義セレクト変更</td><td>同一機能のGET（パラメータ差し替え）</td></tr><tr><td>設定保存成功</td><td>同一機能のGET（カスタム定義ID付き）</td></tr><tr><td>削除成功</td><td>同一機能のGET（トップ相当。パラメータは生成結果に従う）</td></tr></tbody></table></div>
-<h3 id="遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</h3>
-<div class="table-wrap"><table><thead><tr><th>起点</th><th>遷移前の処理</th><th>遷移後の初期状態</th></tr></thead><tbody><tr><td>設定保存成功</td><td>成功フラッシュメッセージを積む</td><td>再表示された同一機能で成功メッセージが見える</td></tr></tbody></table></div>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>不正なCSV種別ID</td><td>該当HTTPエラー</td></tr><tr><td>不正なカスタム定義ID（GET）</td><td>該当HTTPエラー</td></tr><tr><td>削除時に対象なし</td><td>該当HTTPエラー</td></tr><tr><td>CSRF不一致（削除）</td><td>アクセス拒否例外</td></tr></tbody></table></div>
-<hr>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>画面の表示はCSV種別と、任意でカスタム定義。保存は名称と出力項目の識別子の並び。削除はカスタム定義となりすまし対策トークン</td></tr><tr><td>成功時出力</td><td>設定画面、または保存後の同じ画面。出力は別画面のCSVストリーム</td></tr><tr><td>失敗時出力</td><td>共通のエラーページまたは該当のHTTPステータス</td></tr></tbody></table></div>
+<h3 id="入出力-永続化">入出力: 永続化</h3>
+<div class="table-wrap"><table><thead><tr><th>操作</th><th>契機</th></tr></thead><tbody><tr><td>追加・更新</td><td>カスタム出力定義を、名称・種別・更新者とともに保存したとき</td></tr><tr><td>削除・追加</td><td>カスタム出力定義と出力項目の関連を、保存のたびにすべて置き換えたとき</td></tr><tr><td>削除</td><td>カスタム出力定義を、関連を空にしたうえで削除したとき</td></tr></tbody></table></div>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
 <h2 id="表示メッセージ">表示メッセージ</h2>
-<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>画面上の文言(英語)</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M10-13-MSG-001</td><td>管理画面上部</td><td>CSV出力項目を保存しました。</td><td>（英訳なし）</td><td>CSV出力項目の設定を保存したとき</td><td>カスタムCSV出力項目設定画面に遷移する</td></tr><tr><td>M10-13-MSG-002</td><td>管理画面上部</td><td>削除しました</td><td>（英訳なし）</td><td>CSV出力設定を削除したとき</td><td>カスタムCSV出力項目設定画面に遷移する</td></tr><tr><td>M10-13-MSG-003</td><td>管理画面上部</td><td>関連するデータがあるため「%name%」を削除できませんでした</td><td>（英訳なし）</td><td>CSV出力設定を削除しようとしたが、関連するデータがあるとき</td><td>エラーを表示してカスタムCSV出力項目設定画面に遷移する</td></tr><tr><td>M10-13-MSG-004</td><td>削除確認モーダル内</td><td>このCSV出力設定を削除してもよろしいでしょうか？</td><td>（英訳なし）</td><td>CSV出力設定の削除ボタンを押したとき（削除前の確認）</td><td>削除でモーダルを閉じてカスタムCSV出力項目設定画面に遷移、キャンセルでモーダルを閉じる</td></tr></tbody></table></div>
-<hr>
-<h2 id="試行制限">試行制限</h2>
-<p>本機能では試行制限を扱わない。</p>
-<hr>
-<h2 id="ログ・監査">ログ・監査</h2>
-<div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>カスタムCSVストリーム出力</td><td>ログにファイル名配列等が出る実装がある</td></tr></tbody></table></div>
-<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
-<ul><li>パスワード</li><li>CSRFトークン値</li><li>セッション識別子の完全値</li><li>Cookie値</li></ul>
-<hr>
-<h2 id="セッション">セッション</h2>
-<h3 id="本機能におけるセッション">本機能におけるセッション</h3>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>設定画面</td><td>本画面のフォーム値をセッションに固定保存する処理は無い。</td></tr><tr><td>エクスポート</td><td>商品は <code>admin.product.search</code>、受注は <code>admin.order.search</code> のキーを参照する。</td></tr></tbody></table></div>
-<h3 id="セッションへ保存しない情報">セッションへ保存しない情報</h3>
-<p>カスタム定義そのものはセッションに載せない。DBが正である。</p>
-<hr>
-<h2 id="Cookie">Cookie</h2>
-<p>本機能単体では新たなCookieを設定しない。</p>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<p>明示の楽観ロック列は無い。保存は単一リクエスト内のflush連続で完結するが、同時編集の失敗検知はアプリケーション上は行わない。</p>
+<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M10-13-MSG-001</td><td>管理画面上部</td><td>CSV出力項目を保存しました。</td><td>CSV出力項目の設定を保存したとき</td><td>カスタムCSV出力項目設定画面に遷移する</td></tr><tr><td>M10-13-MSG-002</td><td>管理画面上部</td><td>削除しました</td><td>CSV出力設定を削除したとき</td><td>カスタムCSV出力項目設定画面に遷移する</td></tr><tr><td>M10-13-MSG-003</td><td>管理画面上部</td><td>関連するデータがあるため「%name%」を削除できませんでした</td><td>CSV出力設定を削除しようとしたが、関連するデータがあるとき</td><td>エラーを表示してカスタムCSV出力項目設定画面に遷移する</td></tr><tr><td>M10-13-MSG-004</td><td>削除確認モーダル内</td><td>このCSV出力設定を削除してもよろしいでしょうか？</td><td>CSV出力設定の削除ボタンを押したとき（削除前の確認）</td><td>削除でモーダルを閉じてカスタムCSV出力項目設定画面に遷移、キャンセルでモーダルを閉じる</td></tr></tbody></table></div>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

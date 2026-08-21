@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,36 +272,17 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#本書で扱うこと">本書で扱うこと</a>
-<a class="lv2" href="#本書で扱わないこと">本書で扱わないこと</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv2" href="#用語">用語</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#フロント挙動">フロント挙動</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#許可IP以外を即時ログアウトする-応答生成後の共通後処理">許可IP以外を即時ログアウトする（応答生成後の共通後処理）</a>
-<a class="lv3" href="#店頭フロント区分の会員を遮断する-対象機能のコントローラ実行前処理">店頭フロント区分の会員を遮断する（対象機能のコントローラ実行前処理）</a>
-<a class="lv3" href="#店頭注文時の番号札採番-購入確定処理">店頭注文時の番号札採番（購入確定処理）</a>
-<a class="lv2" href="#表示メッセージ">表示メッセージ</a>
-<a class="lv3" href="#エラー・警告-画面全体">エラー・警告（画面全体）</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
-<a class="lv3" href="#エッジケース">エッジケース</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#店頭PC用アカウントの識別">店頭PC用アカウントの識別</a>
+<a class="lv3" href="#許可IP以外の即時ログアウト">許可IP以外の即時ログアウト</a>
+<a class="lv3" href="#対象機能の遮断">対象機能の遮断</a>
+<a class="lv3" href="#番号札の採番">番号札の採番</a>
+<a class="lv3" href="#通常会員との差異">通常会員との差異</a>
+<a class="lv3" href="#エラー時の扱い">エラー時の扱い</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#バリデーション">バリデーション</a>
-<a class="lv2" href="#権限・認可">権限・認可</a>
-<a class="lv2" href="#画面遷移">画面遷移</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#ログ・監査">ログ・監査</a>
-<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
-<a class="lv2" href="#セッション">セッション</a>
-<a class="lv3" href="#本機能におけるセッション">本機能におけるセッション</a>
-<a class="lv3" href="#セッションへ保存しない情報">セッションへ保存しない情報</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a></nav>
+<a class="lv3" href="#入出力-永続化">入出力: 永続化</a>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -299,99 +290,30 @@ footer {
         <h1>F06-26（店頭PC用アカウントで通常会員と異なる制御）</h1>
       </header>
       
-      <h2 id="概要">概要</h2>
-<p>店頭PC用に用意した会員アカウント（店内アカウント）に対し、通常会員と異なるアクセス制御を行う機能である。店頭PC用アカウントは会員の顧客グループで識別し、許可IPアドレス以外からのアクセスは即時ログアウトさせる。また、店頭対面接客に不要なフロント機能（会員情報変更・退会・配送先登録・お問い合わせ・購入・デッキ登録・買取など）では、店頭フロント区分が立つ顧客グループの会員に対し共通エラー画面を返してアクセスを遮断する。店頭注文を確定すると店内モニター表示用の番号札を採番する点も通常会員と異なる。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインのIPアクセス制限処理（<code>IpSecurityEvent</code>）、顧客グループによるページアクセス制限処理（<code>CustomerGroupEvent</code>）、イベント登録（<code>event.yml</code>）、顧客グループ判定リポジトリ、設定オプションを正とする。</p>
-<p>本機能のカスタマイズ区分はカスタマイズであり、画面・挙動の参照はpf-eccube3を正とし、永続化（テーブル・列）に関する記述はリニューアル移行先のec-cube-enterpriseを正とする。</p>
-<p>対象はブラウザ経由のフロント全般に作用する横断制御である。フロントのルートはサイトルート直下に言語別プレフィックス<code>/{_locale}</code>を付けて公開する。</p>
-<p>本文ではフレームワークのコントローラ型名やメソッド名を主説明としない。ルートbind名の網羅は主説明とせず、制御の効く境界を「利用者視点の入口」に書く。</p>
-<hr>
-<h2 id="本書で扱うこと">本書で扱うこと</h2>
-<ul><li>店頭PC用アカウント（店内アカウント）の識別方法</li><li>許可IP以外からのアクセス時の即時ログアウト</li><li>店頭フロント区分の顧客グループに対するフロント機能のアクセス遮断</li><li>店頭注文時の番号札採番という通常会員との差異</li></ul>
-<hr>
-<h2 id="本書で扱わないこと">本書で扱わないこと</h2>
-<p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
-<ul><li>顧客グループ・許可IPの管理画面設定の仕様（プラグイン設定機能を正とする）</li><li>各遮断対象機能（会員情報変更・配送先・お問い合わせ・購入・デッキ登録・買取など）の本体仕様（各機能の設計を正とする）</li><li>支店店頭用アカウント（支店店頭フロント区分）の制御は本書の主題としない（同型の制御として参照のみ）</li><li>店内モニターでの番号札表示そのもの（店頭呼び出し番号表示機能を正とする）</li></ul>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<p>現行（pf-eccube3）と移行先（ec-cube-enterprise）でのDB関連の差を記録する。挙動は現行を正とし、永続化先の名称はec-cube-enterpriseを正とする。</p>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>店頭フロント区分</td><td>顧客グループの店頭フロント区分フラグ</td><td><code>dtb_customer_group.shop_front_flg</code>。立っている会員を対象フロント機能で遮断する。</td></tr><tr><td>支店店頭フロント区分</td><td>顧客グループの支店店頭フロント区分フラグ</td><td><code>dtb_customer_group.branch_shop_front_flg</code>（別区分。本書では主題としない）。</td></tr><tr><td>会員から顧客グループの参照</td><td>選手情報から顧客グループへの参照</td><td><code>dtb_player.customer_group_id</code>（顧客グループへの参照）。</td></tr><tr><td>許可IPの設定</td><td>オプション設定（キー<code>otc_account_ip</code>）</td><td><code>mtb_option</code>の<code>option_key</code>=<code>otc_account_ip</code>・<code>option_value</code>にカンマ区切りで保持。同一スキーマ。</td></tr><tr><td>店頭注文の番号札</td><td><code>dtb_waiting_number</code>へ採番・保存</td><td>同名テーブルが存在し同一スキーマ。拠点参照<code>base_info_id</code>を持つ。</td></tr></tbody></table></div>
-<p>店内アカウントの識別に用いる顧客グループ区分（店内アカウント）の保持方法は、ec-cube-enterpriseの<code>dtb_customer_group</code>に明示の区分列が見当たらないため、<code>shop_front_flg</code>による判定か顧客グループ値での判定かをec-cube-enterprise実装で要確認とする。</p>
-<hr>
-<h2 id="用語">用語</h2>
-<div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>顧客グループ</td><td>会員（選手情報）に紐づく区分。通常・店内アカウント等を持つ。</td></tr><tr><td>店頭PC用アカウント</td><td>顧客グループが店内アカウントの会員。店頭PCでの利用を前提とする。</td></tr><tr><td>店頭フロント区分</td><td>顧客グループが持つフラグ。立っている場合に対象フロント機能を遮断する。</td></tr><tr><td>許可IPリスト</td><td>店頭用アカウントのアクセスを許可するIPアドレスの一覧。設定値で保持する。</td></tr><tr><td>番号札</td><td>店頭注文確定時に採番する店内モニター表示用の番号。</td></tr></tbody></table></div>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>店頭PC用アカウントでの任意のフロントアクセス</td><td>任意の<code>GET/POST /{_locale}/…</code>（応答生成後の共通後処理）</td><td>店内アカウントのとき、許可IP以外ならログアウトへリダイレクトする。</td></tr><tr><td>遮断対象フロント機能へのアクセス</td><td>例: <code>… /{_locale}/mypage/change</code>、<code>… /{_locale}/contact</code>、<code>… /{_locale}/mypage/delivery</code>、<code>… /{_locale}/deckentry/…</code>、購入・買取系など</td><td>店頭フロント区分の会員のとき、共通エラー画面（店頭用アカウントでは利用できません）を返し本来の画面を表示しない。</td></tr><tr><td>店頭注文の確定</td><td>購入確定処理（購入機能側）</td><td>店内アカウントの受注では番号札を採番する（通常会員では採番しない）。</td></tr></tbody></table></div>
-<p><code>/{_locale}</code>は言語別プレフィックスである。IPによる即時ログアウトは応答生成後の共通後処理で全フロントに作用する。機能別の遮断は各対象機能のコントローラ実行前処理で作用する。</p>
-<hr>
-<h2 id="フロント挙動">フロント挙動</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>遮断時は共通エラー画面（タイトル「店頭用アカウントでは利用できません。」、本文は空）を表示する。許可IP外の場合はログアウトへリダイレクトする。</td></tr><tr><td>JS挙動</td><td>本機能ではJSによる動的表示やモーダルを扱わない。</td></tr><tr><td>CSS・レイアウト</td><td>共通エラー画面のスタイルを用いる。</td></tr><tr><td>モーダル・ポップアップ</td><td>本機能専用のモーダルは無い。</td></tr></tbody></table></div>
-<p>本機能は利用者入力のフォームを持たない横断制御である。</p>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="許可IP以外を即時ログアウトする-応答生成後の共通後処理">許可IP以外を即時ログアウトする（応答生成後の共通後処理）</h3>
-<ol><li>ログイン中の利用者が会員かを確認する。会員でなければ何もしない。</li><li>当該会員の顧客グループを取得する。</li><li>顧客グループが店内アカウントの場合のみIP判定を行う。</li><li>アクセス端末のIPアドレスを取得する（転送元ヘッダがあればその先頭、無ければ接続元）。</li><li>設定の許可IPリストを取得する。リストが空、または端末IPがリストに含まれない場合はログアウトへリダイレクトする。</li><li>許可IPに含まれる場合は通常どおり応答を返す。</li></ol>
-<h3 id="店頭フロント区分の会員を遮断する-対象機能のコントローラ実行前処理">店頭フロント区分の会員を遮断する（対象機能のコントローラ実行前処理）</h3>
-<ol><li>ログイン中の利用者が会員かを確認する。会員でなければ何もしない。</li><li>当該会員の顧客グループを取得する。</li><li>顧客グループの店頭フロント区分が立っている場合、共通エラー画面を応答として設定し、本来のコントローラ処理に進ませない。</li><li>店頭フロント区分が立っていない場合は通常どおり当該機能を実行する。</li></ol>
-<h3 id="店頭注文時の番号札採番-購入確定処理">店頭注文時の番号札採番（購入確定処理）</h3>
-<ol><li>受注を確定する際、会員の顧客グループが店内アカウントかを判定する。</li><li>店内アカウントの場合のみ、当該受注に対し番号札を採番して保存する。</li><li>店内アカウントでない場合は番号札を採番しない。</li></ol>
-<hr>
-<h2 id="表示メッセージ">表示メッセージ</h2>
-<h3 id="エラー・警告-画面全体">エラー・警告（画面全体）</h3>
-<p>英語ロケール対応がある機能のため（<code>Resource/locale/message.en.yml</code>）、英語文言を併記する。</p>
-<div class="table-wrap"><table><thead><tr><th>表示文言（日本語）</th><th>表示文言（英語）</th><th>表示条件（利用者視点）</th><th>表示位置</th><th>備考</th></tr></thead><tbody><tr><td>店頭用アカウントでは利用できません。</td><td>店頭用アカウントでは利用できません。</td><td>店頭フロント区分の会員が遮断対象機能へアクセスしたとき</td><td>共通エラー画面のタイトル</td><td>本文は空。本来の機能画面は表示しない。英語ロケール資源（<code>message.en.yml</code>）は存在するが値が日本語のまま未翻訳のため、英語列も同一文言。</td></tr></tbody></table></div>
-<p>許可IP外でのログアウトは画面メッセージを伴わず、ログアウト後の遷移に従う。本機能はフラッシュ・トーストを生成しない。支店店頭用アカウントの遮断文言は別区分（支店店頭フロント区分）であり本書では主題としない。</p>
-<hr>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>店頭PC用アカウントの識別</td><td>会員に紐づく選手情報の顧客グループが店内アカウント（顧客グループ区分の店内アカウント）であることをもって識別する。</td></tr><tr><td>許可IPの判定</td><td>店内アカウントのアクセス時、設定の許可IPリスト（カンマ区切り）に端末IPが含まれるかを判定する。含まれない、またはリストが空なら即時ログアウトする。</td></tr><tr><td>端末IPの取得</td><td>転送元ヘッダがあればその先頭の値、無ければ接続元を端末IPとして用いる。</td></tr><tr><td>機能遮断の判定</td><td>顧客グループの店頭フロント区分が立っている会員を、対象フロント機能で遮断する。店内アカウントは当該区分が立つ。</td></tr><tr><td>番号札採番</td><td>受注確定時に会員が店内アカウントなら番号札を採番する。通常会員では採番しない。</td></tr><tr><td>通常会員との差異</td><td>通常会員はIP判定・機能遮断の対象外であり、受注確定時に番号札を採番しない。</td></tr></tbody></table></div>
-<p>本機能は利用者入力のフォームを持たないため入力項目は無い。</p>
-<h3 id="エッジケース">エッジケース</h3>
-<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>未ログイン・非会員</td><td>IP判定・機能遮断とも何もしない。</td></tr><tr><td>店内アカウントだが許可IPリストが空</td><td>即時ログアウトする。</td></tr><tr><td>店内アカウントで許可IP内から遮断対象外の機能へアクセス</td><td>通常どおり利用できる。</td></tr><tr><td>店内アカウントが遮断対象機能へアクセス</td><td>共通エラー画面を返す。</td></tr></tbody></table></div>
-<hr>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>顧客グループ判定</td><td>会員に紐づく選手情報の顧客グループを参照する。判定はアクセス時点のDB状態に依存する。</td></tr><tr><td>許可IPリスト</td><td>設定値（カンマ区切り）を参照する。設定変更は次回アクセスから反映される。</td></tr><tr><td>番号札</td><td>店内アカウントの受注確定時に採番・保存する。表示は店頭呼び出し番号表示機能が参照する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="API-バッチ結果">API/バッチ結果</h2>
-<p>本機能ではAPI呼び出し・バッチ実行を扱わない。</p>
-<hr>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="店頭PC用アカウントの識別">店頭PC用アカウントの識別</h3>
+<p>会員に紐づく選手情報の顧客グループが店内アカウントのときに、店頭PC用アカウントとして扱う。ログイン中の利用者が会員でないときは、本機能の判定を行わない。</p>
+<h3 id="許可IP以外の即時ログアウト">許可IP以外の即時ログアウト</h3>
+<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>ログイン中の利用者が会員でないとき</td><td>何もしない</td></tr><tr><td>2</td><td>顧客グループが店内アカウントでないとき</td><td>IP判定を行わない</td></tr><tr><td>3</td><td>許可IPリストが空、または端末のIPアドレスが含まれないとき</td><td>ログアウトへ遷移する</td></tr><tr><td>4</td><td>端末のIPアドレスが許可IPリストに含まれるとき</td><td>通常どおり応答を返す</td></tr></tbody></table></div>
+<p>許可IPリストはカンマ区切りの設定値とし、値が無いときは全てのアクセスを許可しない。端末のIPアドレスは、転送元ヘッダがあればその先頭の値、無ければ接続元とする。判定は応答を組み立てたあとに行う。</p>
+<h3 id="対象機能の遮断">対象機能の遮断</h3>
+<p>顧客グループの店頭フロント区分が立つ会員が遮断対象の機能へアクセスしたときは、共通エラー画面を応答とし、本来の機能を実行しない。店頭フロント区分が立たないときは通常どおり実行する。店内アカウントは当該区分が立つ。</p>
+<h3 id="番号札の採番">番号札の採番</h3>
+<p>受注を確定するとき、会員の顧客グループが店内アカウントのときだけ、当該受注に対し番号札を採番して保存する。店内アカウントでないときは採番しない。</p>
+<h3 id="通常会員との差異">通常会員との差異</h3>
+<p>通常会員はIP判定と機能遮断の対象外とし、受注確定時に番号札を採番しない。</p>
+<p>支店店頭用アカウントの遮断は別の区分（支店店頭フロント区分）によるものであり、本書では扱わない。</p>
+<h3 id="エラー時の扱い">エラー時の扱い</h3>
+<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>許可IP外からの店内アカウントのアクセス</td><td>ログアウトへ遷移する。画面メッセージは表示しない</td></tr><tr><td>遮断対象機能への店頭フロント区分の会員のアクセス</td><td>共通エラー画面を返す</td></tr></tbody></table></div>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>ログイン会員、アクセス端末のIPアドレス、許可IPリスト（設定値）、アクセス先のフロント機能。</td></tr><tr><td>成功時出力</td><td>許可IP内かつ非遮断機能では通常どおり応答する。</td></tr><tr><td>失敗時出力</td><td>許可IP外はログアウトへリダイレクト、遮断対象機能は共通エラー画面。</td></tr><tr><td>副作用</td><td>許可IP外でのログアウト、店内アカウント受注確定時の番号札採番。</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<p>機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。</p>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>dtb_customer_group</code></td><td>（店内アカウント識別の区分）</td><td>店頭PC用アカウントの識別に用いる。ec-cube-enterpriseに明示の区分列が見当たらず、<code>shop_front_flg</code>または顧客グループ値での判定かはec-cube-enterprise実装で要確認。</td></tr><tr><td><code>dtb_customer_group</code></td><td><code>shop_front_flg</code></td><td>店頭フロント区分。立っている場合に対象フロント機能を遮断する。店内アカウントは立つ。支店向けは<code>branch_shop_front_flg</code>。</td></tr><tr><td><code>dtb_player</code></td><td><code>customer_group_id</code></td><td>会員（選手情報）から顧客グループを引くために使う。</td></tr><tr><td><code>mtb_option</code></td><td><code>option_key</code>=<code>otc_account_ip</code>／<code>option_value</code></td><td>許可IPリスト（カンマ区切り）を保持する。</td></tr><tr><td><code>dtb_waiting_number</code></td><td>（受注に紐づく行）</td><td>店内アカウントの受注確定時に番号札を採番・保存する。ec-cube-enterpriseでは拠点参照<code>base_info_id</code>を持つ。</td></tr></tbody></table></div>
-<h3 id="DB操作">DB操作</h3>
-<p>永続化の正は ec-cube-enterprise（テーブル名・操作は ec-cube-enterprise を正典）。当ドメインは承認ワークフローを介さず persist/flush で直接確定する（承認ワークフローは在庫機能固有）。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>登録/更新</td><td>dtb_customer_group / dtb_player / dtb_waiting_number / mtb_option</td><td>当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。</td></tr></tbody></table></div>
-<hr>
-<h2 id="バリデーション">バリデーション</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>端末IP</td><td>許可IPリストに含まれることを要する。含まれない場合はログアウトする。</td></tr><tr><td>顧客グループ</td><td>会員に紐づく顧客グループの区分・店頭フロント区分を参照して判定する。</td></tr></tbody></table></div>
-<p>許可IPリストの書式（カンマ区切り）の検証は設定画面側で行う。本書では設定画面の検証仕様は扱わない。</p>
-<hr>
-<h2 id="権限・認可">権限・認可</h2>
-<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>フロントアクセスの可否</th></tr></thead><tbody><tr><td>未ログイン・非会員</td><td>本機能の制御対象外。通常の認可に従う。</td></tr><tr><td>通常会員</td><td>IP判定・機能遮断の対象外。受注確定で番号札を採番しない。</td></tr><tr><td>店頭PC用アカウント（許可IP内・非遮断機能）</td><td>利用できる。受注確定で番号札を採番する。</td></tr><tr><td>店頭PC用アカウント（許可IP外）</td><td>即時ログアウトする。</td></tr><tr><td>店頭PC用アカウント（遮断対象機能）</td><td>共通エラー画面を返し利用できない。</td></tr></tbody></table></div>
-<p>遮断対象には会員情報変更・退会・配送先登録・お問い合わせ・パスワード再発行・入荷通知一覧・ポイント履歴・購入履歴・配送変更・購入手続き・デッキ登録・買取などのフロント機能が含まれる（コントローラ実行前処理で遮断）。</p>
-<hr>
-<h2 id="画面遷移">画面遷移</h2>
-<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>店内アカウントが許可IP外でアクセス</td><td>ログアウト処理（<code>logout</code>）へリダイレクト</td></tr><tr><td>店頭フロント区分の会員が遮断対象機能へアクセス</td><td>共通エラー画面（本来の画面は表示しない）</td></tr><tr><td>店内アカウントが許可IP内で非遮断機能へアクセス</td><td>通常どおり当該機能の画面</td></tr></tbody></table></div>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>許可IP外からの店内アカウントアクセス</td><td>ログアウトへリダイレクトする。画面メッセージは伴わない。</td></tr><tr><td>遮断対象機能への店頭フロント区分会員のアクセス</td><td>共通エラー画面を返す。表示文言は表示メッセージ節を正とする。</td></tr></tbody></table></div>
-<hr>
-<h2 id="ログ・監査">ログ・監査</h2>
-<p>本機能ではログ・監査の追記を扱わない。</p>
-<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
-<ul><li>端末IPアドレスの不要な記録</li><li>Cookie値</li><li>セッションIDの完全値</li></ul>
-<hr>
-<h2 id="セッション">セッション</h2>
-<h3 id="本機能におけるセッション">本機能におけるセッション</h3>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>認証トークン</td><td>許可IP外の店内アカウントはログアウト処理へ誘導し、認証状態を解除する。</td></tr></tbody></table></div>
-<h3 id="セッションへ保存しない情報">セッションへ保存しない情報</h3>
-<p>許可IPリスト・端末IPはセッションへ業務データとして保存しない。判定のために参照するのみとする。</p>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<p>本機能はアクセス制御が主であり、店内アカウント受注確定時の番号札採番は購入確定処理のトランザクションに含まれる。本機能では楽観ロック・悲観ロックの対象は持たない。</p>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>ログイン中のときはログイン会員、端末のIPアドレス、許可IPリスト（設定値）、アクセス先のフロント機能</td></tr><tr><td>成功時出力</td><td>許可IP内で、かつ遮断対象でない機能のときは通常どおり応答する</td></tr><tr><td>失敗時出力</td><td>許可IP外のときはログアウトへ遷移する。遮断対象機能のときは共通エラー画面を返す</td></tr></tbody></table></div>
+<p>本機能は利用者が入力するフォームを持たない。番号札を採番したとき以外はデータを更新しない。</p>
+<h3 id="入出力-永続化">入出力: 永続化</h3>
+<div class="table-wrap"><table><thead><tr><th>操作</th><th>契機</th></tr></thead><tbody><tr><td>追加</td><td>店内アカウントの会員が受注を確定したとき。当該受注の番号札</td></tr></tbody></table></div>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
+<h2 id="表示メッセージ">表示メッセージ</h2>
+<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>—</td><td>共通エラー画面のタイトル</td><td>店頭用アカウントでは利用できません。</td><td>店頭フロント区分の会員が遮断対象機能へアクセスしたとき</td><td>本来の機能画面を表示しない</td></tr></tbody></table></div>
+<p>共通エラー画面の本文は空とする。許可IP外でのログアウトは画面メッセージを伴わず、ログアウト後の遷移に従う。</p>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

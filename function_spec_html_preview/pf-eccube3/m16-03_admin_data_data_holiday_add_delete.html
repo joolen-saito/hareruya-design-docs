@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,38 +272,16 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#フロント挙動">フロント挙動</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#一覧を表示する-GET-admin-holiday-list">一覧を表示する（GET `admin_holiday_list`）</a>
-<a class="lv3" href="#手入力で祝日を追加する-POST-admin-holiday-add">手入力で祝日を追加する（POST `admin_holiday_add`）</a>
-<a class="lv3" href="#一覧から祝日を削除する-POST-admin-holiday-delete">一覧から祝日を削除する（POST `admin_holiday_delete`）</a>
-<a class="lv2" href="#集計条件">集計条件</a>
-<a class="lv2" href="#表示メッセージ">表示メッセージ</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
-<a class="lv3" href="#入力項目-手入力による追加のみ">入力項目（手入力による追加のみ）</a>
-<a class="lv3" href="#エッジケース">エッジケース</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#一覧の表示">一覧の表示</a>
+<a class="lv3" href="#手入力での追加の判定順序">手入力での追加の判定順序</a>
+<a class="lv3" href="#一括登録">一括登録</a>
+<a class="lv3" href="#削除の判定順序">削除の判定順序</a>
+<a class="lv3" href="#エラー時の扱い">エラー時の扱い</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#バリデーション">バリデーション</a>
-<a class="lv2" href="#権限・認可">権限・認可</a>
-<a class="lv2" href="#画面遷移">画面遷移</a>
-<a class="lv3" href="#遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#試行制限">試行制限</a>
-<a class="lv2" href="#ログ・監査">ログ・監査</a>
-<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
-<a class="lv2" href="#セッション">セッション</a>
-<a class="lv3" href="#セッションへ保存しない情報">セッションへ保存しない情報</a>
-<a class="lv2" href="#Cookie">Cookie</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a>
-<a class="lv2" href="#調査補助-grep-向け">調査補助（grep 向け）</a>
-<a class="lv3" href="#HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</a></nav>
+<a class="lv3" href="#入出力-永続化">入出力: 永続化</a>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -301,96 +289,26 @@ footer {
         <h1>データ管理 — 祝日の追加・削除</h1>
       </header>
       
-      <h2 id="概要">概要</h2>
-<p>HareruyaEc プラグインが管理画面「データ管理」配下に提供する「祝日管理」画面において、<code>mtb_holiday</code> に祝日を1件追加したり、一覧から1件削除したりする機能である。同一画面には日本の祝日カレンダーライブラリから期間指定でまとめて登録する処理もあるが、本書では手入力による新規追加と削除を主題とし、一括読込の詳細フローは対象外とする。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。カスタマイズ区分は「現行踏襲」。画面・挙動は pf-eccube3 配下の HareruyaEc プラグインのソースを確認値とし、DB関連（テーブル・列・型・制約・関連）は ec-cube-enterprise の実装を正とする。</p>
-<p>対象はブラウザ経由の管理画面に限定する。</p>
-<p>本文ではコントローラのメソッド単位の解剖を主題としない。本文ではルートbind名やSymfonyのルートnameの網羅は主説明としない。「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。コード探索でbind名が必要なときだけ「調査補助」へ書く。</p>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<ul><li>本機能の DB は現行（pf-eccube3 の HareruyaEc プラグイン）と移行先（ec-cube-enterprise コア）で同一スキーマである。<code>mtb_holiday</code>（<code>id</code> / <code>date</code> / <code>name</code>(VARCHAR(64), NULL可)）のテーブル名・列名・型は一致するため、DB記述はそのまま移行先の正とする。</li><li>祝日と催事の関連は、両リポとも <code>mtb_holiday</code> から催事テーブルへの直接FKは持たず、<code>dtb_event_detail.holiday_flg</code>（BOOLEAN）で表す。本機能の追加・削除時に同日の催事明細の <code>holiday_flg</code> を更新する副作用も移行先で同等。</li><li>画面・挙動は現行（pf-eccube3）の確認値。移行先では祝日管理がコア（管理画面「データ」配下）に存在する。現行はプラグイン提供、移行先はコア提供である。</li><li>現行と移行先でスキーマ差は確認されていない。差が生じた場合のみ本節に追記する。</li></ul>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>ナビ「データ管理」→「祝日管理」</td><td><code>GET /{admin_route}/holiday</code></td><td>登録済み祝日が日付昇順の表で表示される。上部に期間指定の一括読込用フォームと「決定」がある。右上に「新規登録」ボタンがあり、追加用フォームは初期状態では非表示である。</td></tr><tr><td>「新規登録」を押す</td><td>（同一画面、<code>GET</code> の結果に対するクライアント表示切替）</td><td>追加フォームブロックが表示され、ボタン表記が「戻る」に切り替わる。再度押すと追加フォームが隠れ、ボタンが「新規登録」に戻る。</td></tr><tr><td>追加フォームで「追加」を押す</td><td><code>POST /{admin_route}/holiday/add</code></td><td>フォーム名に紐づく CSRF と入力検証を通過し、同一日付の既存行が無ければ insert され成功メッセージの後に一覧へ GET リダイレクトされる。検証失敗時は失敗メッセージのみで一覧へリダイレクトされ、フィールドエラー再表示はしない。同一日付が既登録なら重複エラーメッセージで一覧へリダイレクトされる。</td></tr><tr><td>一覧の「削除」リンク</td><td><code>POST /{admin_route}/holiday/{id}/delete</code>（リンク生成値は DELETE 疑似メソッド付き）</td><td>確認ダイアログで確認後、共通 CSRF とともに送信され、対象行が削除される。成功メッセージの後に一覧へリダイレクトされる。対象 ID が存在しない場合はアプリケーションエラー応答となる記述がある。</td></tr><tr><td>CSRF が無効な追加送信</td><td><code>POST /{admin_route}/holiday/add</code></td><td>アクセス拒否（HTTP 403）が投げられる共通実装である。</td></tr><tr><td>CSRF が無効な削除送信</td><td><code>POST /{admin_route}/holiday/{id}/delete</code></td><td>同上。</td></tr><tr><td>期間内の公的祝日を一括登録する（本書では詳細を扱わない）。</td><td><code>POST /{admin_route}/holiday/load</code></td><td>期間内の公的祝日を一括登録する（本書では詳細を扱わない）。</td></tr></tbody></table></div>
-<hr>
-<h2 id="フロント挙動">フロント挙動</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td><code>{% block title %}</code> は「データ管理」。サブタイトルは「祝日管理」。メニュー選択は <code>menus = ['data_menu', 'holiday_list']</code>。一覧表は列「名称」「日付」「削除」。日付は <code>Y/m/d</code> で表示する。</td></tr><tr><td>JS 挙動</td><td><code>holiday.js</code> が <code>#newDateButton</code> のクリックで <code>#addNewHoliday</code> の <code>display</code> を <code>none</code> と <code>block</code> で切り替え、ボタン値を「新規登録」と「戻る」で交互に変える。削除確認や疑似 DELETE の送信は管理画面共通スクリプト（テンプレートは <code>default_frame.twig</code> 継承）に依存する。</td></tr><tr><td>CSS・レイアウト</td><td><code>holiday.css</code> を読み込む。追加・一括読込フォームは Bootstrap 横型テーマでウィジェットを並べる。</td></tr><tr><td>モーダル・ポップアップ</td><td>追加フォームは画面内ブロックの表示切替であり、別ウィンドウのモーダルダイアログではない。削除は確認メッセージ文字列がアンカーの data 属性にあり、ブラウザまたは共通 JS の確認 UI に依存する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="一覧を表示する-GET-admin-holiday-list">一覧を表示する（GET <code>admin_holiday_list</code>）</h3>
-<ol><li>管理画面の認証・共通制約を通過する。</li><li>追加用フォームビルダと一括読込用フォームビルダを名前だけから生成しビューを用意する（一覧描画時点ではリクエストをバインドしない）。</li><li>祝日マスタを日付昇順で全件取得する。</li><li>Twig で一覧・両フォームを描画する。</li></ol>
-<h3 id="手入力で祝日を追加する-POST-admin-holiday-add">手入力で祝日を追加する（POST <code>admin_holiday_add</code>）</h3>
-<ol><li>管理画面の認証・共通制約を通過する。</li><li>追加フォームを生成しリクエストでバインドする。</li><li>共通トレイトにより、フォーム名に対応する CSRF トークンを検証する。成功時はトークンを更新する。</li><li>Symfony の検証が失敗した場合、管理画面向けエラー鍵 <code>admin.register.failed</code> を積み、一覧ルートへ HTTP リダイレクトする（同一レスポンス内でのフィールドエラー表示はしない）。</li><li>送信された日付と同一の日付を持つ行を検索し、1件でもあればプラグイン定義メッセージ鍵 <code>hareruyaec.holiday.overlap</code> を積み、一覧へリダイレクトする。保存はしない。</li><li>重複が無ければ新規行を組み立て、日付・名称をセットして永続化し、成功鍵 <code>admin.register.complete</code> を積む。</li><li>その日の開始時刻がイベント詳細の開始日時と同日スパンに入る全行について、祝日フラグをオンに更新し、行ごとに永続化処理を呼ぶ実装である。</li><li>一覧ルートへ HTTP リダイレクトする。</li></ol>
-<h3 id="一覧から祝日を削除する-POST-admin-holiday-delete">一覧から祝日を削除する（POST <code>admin_holiday_delete</code>）</h3>
-<ol><li>管理画面の認証・共通制約を通過する。</li><li>フォーム無しの経路で共通 CSRF トークンを検証する（フォーム名ではなくアプリケーション共通のトークン鍵）。成功時はトークンを更新する。</li><li>URL の数値 ID に対応する行を取得する。無ければアプリケーションエラー応答となる記述がある。</li><li>行を削除してフラッシュし、成功鍵 <code>admin.delete.complete</code> を積む。</li><li>削除した行の日付について、イベント詳細リポジトリが「その暦日に開始する詳細」を検索する条件で該当行を取得し、各行の祝日フラグをオフにして永続化する実装である（詳細は複数回フラッシュされる）。</li><li>一覧ルートへ HTTP リダイレクトする。</li></ol>
-<hr>
-<h2 id="集計条件">集計条件</h2>
-<p>本機能では件数・合計などの集計表示を行わない。一覧は祝日マスタの全件を日付昇順で表示する。</p>
-<hr>
-<h2 id="表示メッセージ">表示メッセージ</h2>
-<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>画面上の文言(英語)</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M16-03-MSG-001</td><td>画面中央(ダイアログ/モーダル)</td><td>この祝日を削除してもよろしいですか？</td><td>（英訳なし）</td><td>祝日の削除を選んだとき（削除前の確認）</td><td>OKでモーダルを閉じて祝日の追加・削除画面に遷移、キャンセルでモーダルを閉じる</td></tr><tr><td>M16-03-MSG-002</td><td>管理画面上部</td><td>祝日の期間指定には、左側に開始日、右側に終了日を入力してください。</td><td>（英訳なし）</td><td>一括登録で、開始日が終了日より後のとき</td><td>データ管理 — 祝日の追加・削除画面に遷移する</td></tr><tr><td>M16-03-MSG-003</td><td>管理画面上部</td><td>登録できませんでした。</td><td>（英訳なし）</td><td>一括登録で、開始日と終了日の逆転以外の入力不備があるとき</td><td>データ管理 — 祝日の追加・削除画面に遷移する</td></tr><tr><td>M16-03-MSG-004</td><td>管理画面上部</td><td>%date%は、既に祝日が登録されているのでスキップします。</td><td>（英訳なし）</td><td>一括登録で、既に登録済みの祝日が含まれるとき</td><td>警告を表示し、残りの祝日登録を続行した後、データ管理 — 祝日の追加・削除画面に遷移する</td></tr><tr><td>M16-03-MSG-005</td><td>管理画面上部</td><td>%count%件の祝日が登録されました。</td><td>（英訳なし）</td><td>一括登録で、新しい祝日が1件以上登録されたとき</td><td>データ管理 — 祝日の追加・削除画面に遷移する</td></tr><tr><td>M16-03-MSG-006</td><td>管理画面上部</td><td>指定された期間に、登録可能な祝日がありませんでした。</td><td>（英訳なし）</td><td>一括登録で、新たに登録できる祝日がないとき</td><td>データ管理 — 祝日の追加・削除画面に遷移する</td></tr><tr><td>M16-03-MSG-007</td><td>管理画面上部</td><td>入力した日付が、登録済みの祝日と重複しています。</td><td>（英訳なし）</td><td>新規追加で、登録済みの祝日と同じ日付を入力したとき</td><td>データ管理 — 祝日の追加・削除画面に遷移する</td></tr><tr><td>M16-03-MSG-008</td><td>管理画面上部</td><td>登録できませんでした。</td><td>（英訳なし）</td><td>新規追加で、登録済みの日付との重複以外の入力不備があるとき</td><td>データ管理 — 祝日の追加・削除画面に遷移する</td></tr><tr><td>M16-03-MSG-009</td><td>管理画面上部</td><td>登録が完了しました。</td><td>（英訳なし）</td><td>新規追加で祝日を登録したとき</td><td>データ管理 — 祝日の追加・削除画面に遷移する</td></tr><tr><td>M16-03-MSG-010</td><td>管理画面上部</td><td>削除しました</td><td>（英訳なし）</td><td>祝日を削除したとき</td><td>データ管理 — 祝日の追加・削除画面に遷移する</td></tr><tr><td>M16-03-MSG-011</td><td>管理画面上部</td><td>削除に失敗しました</td><td>（英訳なし）</td><td>祝日の削除でエラーが起きたとき</td><td>データ管理 — 祝日の追加・削除画面に遷移する</td></tr><tr><td>M16-03-MSG-012</td><td>管理画面上部</td><td>期間を入力してください。</td><td>（英訳なし）</td><td>一括登録で、開始日を入力せずに実行したとき</td><td>エラーを表示し、データ管理 — 祝日の追加・削除画面に遷移する</td></tr><tr><td>M16-03-MSG-013</td><td>管理画面上部</td><td>期間を入力してください。</td><td>（英訳なし）</td><td>一括登録で、終了日を入力せずに実行したとき</td><td>エラーを表示し、データ管理 — 祝日の追加・削除画面に遷移する</td></tr></tbody></table></div>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<p>本機能では金額計算や複合スコアリングを行わない。</p>
-<h3 id="入力項目-手入力による追加のみ">入力項目（手入力による追加のみ）</h3>
-<p>追加フォームは初期表示では DOM 上非表示でも、一覧 GET 時にトークン付きで生成される。</p>
-<div class="table-wrap"><table><thead><tr><th>項目名</th><th>必須／任意</th><th>最大長</th><th>初期値</th><th>保存先・扱い</th></tr></thead><tbody><tr><td>祝日名</td><td>必須</td><td>64 文字（ウィジェット <code>maxlength</code> および Symfony Length max と一致）</td><td>空（プレースホルダ「名称」）</td><td><code>mtb_holiday.name</code>。NotBlank、最大 64。</td></tr><tr><td>日付</td><td>必須</td><td>単一行日付入力、<code>yyyy-MM-dd</code></td><td>空の単一行フィールド</td><td><code>mtb_holiday.date</code>。Symfony の date 型、<code>datetime</code> 入力、<code>single_text</code>。フォームに Symfony の Length は無いが DB は date 型列である。</td></tr></tbody></table></div>
-<p>補足: 日付が同一の行が既に存在する場合、追加は拒否されプラグインの重複メッセージが表示される。</p>
-<h3 id="エッジケース">エッジケース</h3>
-<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>同一日付が既に登録済み</td><td>新規追加は保存せず重複エラーで一覧へリダイレクトする。</td></tr><tr><td>追加フォームの検証エラー（名称未入力、長さ超過など）</td><td><code>admin.register.failed</code> で一覧へリダイレクトする。入力値の再提示はしない。</td></tr><tr><td>削除対象 ID が存在しない</td><td>ソース上は一覧更新前にエラー応答となる分岐がある。</td></tr><tr><td>同日にイベント詳細が無い</td><td>祝日フラグ追随ループは対象ゼロであり、イベント詳細テーブルへの書き込みは発生しない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>一覧とマスタ</td><td>一覧は常に <code>mtb_holiday</code> の現在状態を日付昇順で読む。追加・削除の直後はリダイレクト GET で再読込される。</td></tr><tr><td>祝日マスタとイベント詳細フラグ</td><td>追加時は同日開始のイベント詳細へ祝日フラグオンを書き込む。削除時はオフにする。イベント開始日時が別日へ変更済みであれば、その変更結果とフラグの整合は別機能の保存処理に依存する。</td></tr><tr><td>トランザクション</td><td>祝日の flush とイベント詳細の複数 flush が別単位である。途中失敗時の原子性はフレームワーク既定と DB 設定に依存し、本書では個別トランザクション境界までを確認値とする。</td></tr></tbody></table></div>
-<hr>
-<h2 id="API-バッチ結果">API/バッチ結果</h2>
-<p>本機能では外部 HTTP API の呼び出しやサーバ側バッチの起動を行わない。</p>
-<hr>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="一覧の表示">一覧の表示</h3>
+<p>祝日マスタを日付の昇順で全件表示する。一覧には手入力の追加フォームと一括登録のフォームをあわせて表示する。</p>
+<h3 id="手入力での追加の判定順序">手入力での追加の判定順序</h3>
+<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定・処理</th><th>内容</th></tr></thead><tbody><tr><td>1</td><td>操作の有効期限</td><td>不正なときは追加せず、アクセス拒否（HTTP403）とする</td></tr><tr><td>2</td><td>入力内容の検証</td><td>外れたときは追加せず、エラーメッセージを表示して一覧へ戻す。項目ごとのエラー表示は行わない</td></tr><tr><td>3</td><td>日付の重複</td><td>送信された日付と同じ日付の祝日が1件でもあるときは追加せず、重複のメッセージを表示して一覧へ戻す</td></tr><tr><td>4</td><td>追加</td><td>重複が無いときだけ、日付と名称を設定して祝日を追加する</td></tr><tr><td>5</td><td>イベント詳細への反映</td><td>追加した日の開始時刻がイベント詳細の開始日時と同じ日に入る全てのイベント詳細について、祝日フラグをオンにする</td></tr><tr><td>6</td><td>遷移</td><td>一覧へ戻す</td></tr></tbody></table></div>
+<h3 id="一括登録">一括登録</h3>
+<p>期間は開始日と終了日で指定する。</p>
+<div class="table-wrap"><table><thead><tr><th>入力</th><th>扱い</th></tr></thead><tbody><tr><td>開始日が終了日より後のとき</td><td>登録せず、期間の指定を促すメッセージを表示する</td></tr><tr><td>開始日または終了日が未入力のとき</td><td>登録せず、期間の入力を促すメッセージを表示する</td></tr><tr><td>開始日と終了日の逆転以外の入力不備があるとき</td><td>登録せず、登録できなかった旨を表示する</td></tr><tr><td>期間内に既に登録済みの祝日が含まれるとき</td><td>当該日付をスキップし、残りの登録を続ける</td></tr><tr><td>新たに登録できる祝日が1件以上あるとき</td><td>登録し、登録した件数を表示する</td></tr><tr><td>新たに登録できる祝日が無いとき</td><td>登録可能な祝日が無かった旨を表示する</td></tr></tbody></table></div>
+<h3 id="削除の判定順序">削除の判定順序</h3>
+<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定・処理</th><th>内容</th></tr></thead><tbody><tr><td>1</td><td>操作の有効期限</td><td>不正なときは削除せず、アクセス拒否（HTTP403）とする</td></tr><tr><td>2</td><td>対象の特定</td><td>指定されたIDの祝日を取得する。該当が無いときはエラー応答とする</td></tr><tr><td>3</td><td>削除</td><td>当該の祝日を削除する</td></tr><tr><td>4</td><td>イベント詳細への反映</td><td>削除した日付に開始するイベント詳細を取得し、各件の祝日フラグをオフにする</td></tr><tr><td>5</td><td>遷移</td><td>一覧へ戻す</td></tr></tbody></table></div>
+<p>金額計算と複合スコアリングは行わない。</p>
+<h3 id="エラー時の扱い">エラー時の扱い</h3>
+<div class="table-wrap"><table><thead><tr><th>事象</th><th>扱い</th></tr></thead><tbody><tr><td>手入力の追加で入力内容の検証に外れたとき</td><td>追加せず、エラーメッセージを表示して一覧へ戻す</td></tr><tr><td>手入力の追加で日付が重複したとき</td><td>追加せず、重複のメッセージを表示して一覧へ戻す</td></tr><tr><td>操作の有効期限が不正なとき</td><td>アクセス拒否（HTTP403）とする</td></tr><tr><td>削除の対象が無いとき</td><td>エラー応答とする</td></tr></tbody></table></div>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>追加は POST ボディにフォーム名プレフィックス付きフィールドと CSRF。削除は POST に共通 CSRF とルートパラメータ ID。</td></tr><tr><td>成功時出力</td><td>いずれも一覧画面への HTTP リダイレクトと管理画面フラッシュ（登録完了・削除完了）。</td></tr><tr><td>失敗時出力</td><td>検証失敗・重複・CSRF 失敗時はフラッシュまたは HTTP エラー（403）など上記フローのとおり。</td></tr><tr><td>副作用</td><td><code>mtb_holiday</code> の insert または delete、条件に合致する <code>dtb_event_detail</code> 行の <code>holiday_flg</code> 更新。</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>mtb_holiday</code></td><td><code>id</code></td><td>自動採番主キー。</td></tr><tr><td><code>mtb_holiday</code></td><td><code>date</code></td><td>必須。date 型。</td></tr><tr><td><code>mtb_holiday</code></td><td><code>name</code></td><td>可変長 64、スキーマ上は nullable だが追加フォームでは必須検証により空は通さない。</td></tr><tr><td><code>dtb_event_detail</code></td><td><code>holiday_flg</code></td><td>祝日追加・削除の副作用で更新されうる。</td></tr></tbody></table></div>
-<h3 id="DB操作">DB操作</h3>
-<p>永続化の正は ec-cube-enterprise（テーブル名・操作は ec-cube-enterprise を正典）。当ドメインは承認ワークフローを介さず persist/flush で直接確定する（承認ワークフローは在庫機能固有）。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>登録/更新</td><td>dtb_event_detail / mtb_holiday</td><td>当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。</td></tr></tbody></table></div>
-<hr>
-<h2 id="バリデーション">バリデーション</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>祝日名</td><td>NotBlank、最大 64 文字。</td></tr><tr><td>日付</td><td>フォームで必須。形式は <code>yyyy-MM-dd</code> の単一行入力。 Symfony 側の追加の範囲制約はフォーム型定義上は付いていない。</td></tr><tr><td>CSRF（追加）</td><td>フォーム名 <code>hareruyaec_holiday_add</code> に紐づくトークン。検証後にリフレッシュする。</td></tr><tr><td>CSRF（削除）</td><td>アンカー用マクロが付与する共通トークン。フォーム経由ではない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="権限・認可">権限・認可</h2>
-<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>祝日一覧・追加・削除</th></tr></thead><tbody><tr><td>未ログイン（管理画面）</td><td>管理画面のログインゲートにより到達しない想定である（共通仕様を正とする）。</td></tr><tr><td>ログイン済み管理者</td><td>HareruyaEc が管理ルートとして登録したパスへアクセスできる範囲で本画面を利用する（ロール粒度の詳細は管理画面共通設定を正とする）。</td></tr></tbody></table></div>
-<hr>
-<h2 id="画面遷移">画面遷移</h2>
-<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>追加成功・重複エラー・追加検証失敗</td><td><code>GET /{admin_route}/holiday</code>（一覧）</td></tr><tr><td>削除成功</td><td>同上</td></tr><tr><td>CSRF 失敗など</td><td>アクセス拒否応答（同一画面への戻りではない）</td></tr></tbody></table></div>
-<h3 id="遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</h3>
-<div class="table-wrap"><table><thead><tr><th>起点</th><th>遷移前の処理</th><th>遷移後の初期状態</th></tr></thead><tbody><tr><td>追加・削除・失敗リダイレクト</td><td>フラッシュメッセージを積む</td><td>一覧 GET で最新の <code>mtb_holiday</code> を再表示し、フラッシュが出る。追加フォームは再び非表示の初期レイアウトである。</td></tr></tbody></table></div>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>追加フォーム検証失敗</td><td><code>admin.register.failed</code> を表示し一覧へリダイレクトする。</td></tr><tr><td>日付の重複</td><td><code>hareruyaec.holiday.overlap</code> を表示し一覧へリダイレクトする。</td></tr><tr><td>CSRF 不正</td><td>アクセス拒否（HTTP 403）を投げる共通実装である。</td></tr><tr><td>削除対象なし</td><td>アプリケーションエラー応答となる記述がある。</td></tr></tbody></table></div>
-<hr>
-<h2 id="試行制限">試行制限</h2>
-<p>本機能ではレートリミットや試行回数制限を扱わない。</p>
-<hr>
-<h2 id="ログ・監査">ログ・監査</h2>
-<p>本機能専用の監査ログ出力はソース上は主眼としていない。永続化は Doctrine 経由である。</p>
-<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
-<ul><li>パスワード</li><li>なりすまし対策トークン</li><li>Cookie 値</li><li>セッション ID の完全値</li><li>Remember Me トークンの原値</li></ul>
-<hr>
-<h2 id="セッション">セッション</h2>
-<p>本機能は検索条件のセッション保存を行わない。管理画面セッション自体はログイン共通処理に依存する。</p>
-<h3 id="セッションへ保存しない情報">セッションへ保存しない情報</h3>
-<p>祝日フォームの入力値をセッションに退避する処理はない（失敗時は再入力が必要）。</p>
-<hr>
-<h2 id="Cookie">Cookie</h2>
-<p>本機能独自の Cookie は設けない。セッション Cookie は管理画面共通を正とする。</p>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<p>明示的な楽観ロック版本管理は祝日マスタおよび本画面からは行わない。同一日付の同時追加は重複チェックのタイミング次第で競合しうるが、一意制約の有無はスキーマを正とする。</p>
-<hr>
-<h2 id="調査補助-grep-向け">調査補助（grep 向け）</h2>
-<p>実装参照のためのパスのみ記す。</p>
-<ul><li>ルート登録: <code>app/Plugin/HareruyaEc/ServiceProvider/Admin/HolidayServiceProvider.php</code></li><li>画面処理: <code>app/Plugin/HareruyaEc/Controller/Admin/HolidayController.php</code></li><li>追加フォーム型: <code>app/Plugin/HareruyaEc/Form/Type/Admin/Holiday/HolidayAddType.php</code></li><li>テンプレート: <code>app/Plugin/HareruyaEc/Resource/template/admin/Holiday/holiday.twig</code></li><li>一覧メニュー: <code>app/Plugin/HareruyaEc/ServiceProvider/Admin/SidebarProvider.php</code> の <code>data_menu</code> 子要素 <code>holiday_list</code></li></ul>
-<h3 id="HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</h3>
-<ul><li><code>admin_holiday_list</code> … <code>GET</code> … <code>/{admin_route}/holiday</code>（祝日一覧・新規追加フォーム（初期非表示）・期間指定の一括読込フォーム・各行の削除リンクを表示する。）</li><li><code>admin_holiday_add</code> … <code>POST</code> … <code>/{admin_route}/holiday/add</code>（手入力による祝日1件の追加。検証・重複チェック後に永続化し一覧へリダイレクトする。）</li><li><code>admin_holiday_delete</code> … <code>POST（削除リンク経由）</code> … <code>/{admin_route}/holiday/{id}/delete</code>（指定 ID の祝日行を削除し、関連イベント詳細の祝日フラグをオフにして一覧へリダイレクトする。アンカーに付与された疑似 DELETE はフロント共通処理で POST に変換される想定である。）</li><li><code>admin_holiday_load</code> … <code>POST</code> … <code>/{admin_route}/holiday/load</code>（期間内の公的祝日を一括登録する（本書では詳細を扱わない）。）</li></ul>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>手入力の追加は日付と名称。一括登録は開始日と終了日。削除は対象の祝日ID。</td></tr><tr><td>成功時出力</td><td>一覧画面への遷移と、登録完了・削除完了のメッセージ。</td></tr><tr><td>失敗時出力</td><td>一覧画面への遷移とエラーメッセージ、またはアクセス拒否（HTTP403）。</td></tr></tbody></table></div>
+<h3 id="入出力-永続化">入出力: 永続化</h3>
+<div class="table-wrap"><table><thead><tr><th>操作</th><th>契機</th></tr></thead><tbody><tr><td>追加</td><td>手入力の追加で重複が無かったとき。一括登録で登録できる日付があったとき</td></tr><tr><td>更新</td><td>祝日を追加したとき、対象の開催情報の祝日フラグをオンにする。対象の範囲は判定順序のとおり</td></tr><tr><td>更新</td><td>祝日を削除したとき、対象の開催情報の祝日フラグをオフにする。対象の範囲は判定順序のとおり</td></tr><tr><td>削除</td><td>一覧から祝日を削除したとき</td></tr></tbody></table></div>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
+<h2 id="表示メッセージ">表示メッセージ</h2>
+<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M16-03-MSG-001</td><td>画面中央(ダイアログ/モーダル)</td><td>この祝日を削除してもよろしいですか？</td><td>祝日の削除を選んだとき（削除前の確認）</td><td>OKでモーダルを閉じて祝日の追加・削除画面に遷移、キャンセルでモーダルを閉じる</td></tr><tr><td>M16-03-MSG-002</td><td>管理画面上部</td><td>祝日の期間指定には、左側に開始日、右側に終了日を入力してください。</td><td>一括登録で、開始日が終了日より後のとき</td><td>データ管理 — 祝日の追加・削除画面に遷移する</td></tr><tr><td>M16-03-MSG-003</td><td>管理画面上部</td><td>登録できませんでした。</td><td>一括登録で、開始日と終了日の逆転以外の入力不備があるとき</td><td>データ管理 — 祝日の追加・削除画面に遷移する</td></tr><tr><td>M16-03-MSG-004</td><td>管理画面上部</td><td>%date%は、既に祝日が登録されているのでスキップします。</td><td>一括登録で、既に登録済みの祝日が含まれるとき</td><td>警告を表示し、残りの祝日登録を続行した後、データ管理 — 祝日の追加・削除画面に遷移する</td></tr><tr><td>M16-03-MSG-005</td><td>管理画面上部</td><td>%count%件の祝日が登録されました。</td><td>一括登録で、新しい祝日が1件以上登録されたとき</td><td>データ管理 — 祝日の追加・削除画面に遷移する</td></tr><tr><td>M16-03-MSG-006</td><td>管理画面上部</td><td>指定された期間に、登録可能な祝日がありませんでした。</td><td>一括登録で、新たに登録できる祝日がないとき</td><td>データ管理 — 祝日の追加・削除画面に遷移する</td></tr><tr><td>M16-03-MSG-007</td><td>管理画面上部</td><td>入力した日付が、登録済みの祝日と重複しています。</td><td>新規追加で、登録済みの祝日と同じ日付を入力したとき</td><td>データ管理 — 祝日の追加・削除画面に遷移する</td></tr><tr><td>M16-03-MSG-008</td><td>管理画面上部</td><td>登録できませんでした。</td><td>新規追加で、登録済みの日付との重複以外の入力不備があるとき</td><td>データ管理 — 祝日の追加・削除画面に遷移する</td></tr><tr><td>M16-03-MSG-009</td><td>管理画面上部</td><td>登録が完了しました。</td><td>新規追加で祝日を登録したとき</td><td>データ管理 — 祝日の追加・削除画面に遷移する</td></tr><tr><td>M16-03-MSG-010</td><td>管理画面上部</td><td>削除しました</td><td>祝日を削除したとき</td><td>データ管理 — 祝日の追加・削除画面に遷移する</td></tr><tr><td>M16-03-MSG-011</td><td>管理画面上部</td><td>削除に失敗しました</td><td>祝日の削除でエラーが起きたとき</td><td>データ管理 — 祝日の追加・削除画面に遷移する</td></tr><tr><td>M16-03-MSG-012</td><td>管理画面上部</td><td>期間を入力してください。</td><td>一括登録で、開始日を入力せずに実行したとき</td><td>エラーを表示し、データ管理 — 祝日の追加・削除画面に遷移する</td></tr><tr><td>M16-03-MSG-013</td><td>管理画面上部</td><td>期間を入力してください。</td><td>一括登録で、終了日を入力せずに実行したとき</td><td>エラーを表示し、データ管理 — 祝日の追加・削除画面に遷移する</td></tr></tbody></table></div>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

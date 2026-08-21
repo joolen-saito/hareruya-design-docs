@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>商品管理 — 買取/販売価格履歴 CSV 出力 - 機能仕様書</title>
+  <title>商品管理 — 買取/販売価格履歴CSV出力 - 機能仕様書</title>
   <style>
 :root {
   --bg: #ffffff;
@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,146 +272,45 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#フロント挙動">フロント挙動</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#CSV-をダウンロードする-GET-m03-23-admin-product-product-buy-sale-price-history-export">CSV をダウンロードする（GET `m03-23_admin_product_product_buy_sale_price_history_export`）</a>
-<a class="lv3" href="#データ行を組み立てるときの付加読込">データ行を組み立てるときの付加読込</a>
-<a class="lv2" href="#集計条件">集計条件</a>
-<a class="lv2" href="#出力仕様-ヘッダ・列とデータ源">出力仕様（ヘッダ・列とデータ源）</a>
-<a class="lv2" href="#文字コード・区切り・BOM">文字コード・区切り・BOM</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
-<a class="lv3" href="#入力項目">入力項目</a>
-<a class="lv3" href="#エッジケース">エッジケース</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#出力対象">出力対象</a>
+<a class="lv3" href="#並び">並び</a>
+<a class="lv3" href="#値の取り方">値の取り方</a>
+<a class="lv3" href="#価格での絞り込み">価格での絞り込み</a>
+<a class="lv3" href="#他機能との境界">他機能との境界</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#バリデーション">バリデーション</a>
-<a class="lv2" href="#権限・認可">権限・認可</a>
-<a class="lv2" href="#画面遷移">画面遷移</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#試行制限">試行制限</a>
-<a class="lv2" href="#ログ・監査">ログ・監査</a>
-<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
-<a class="lv2" href="#セッション">セッション</a>
-<a class="lv3" href="#本機能におけるセッション">本機能におけるセッション</a>
-<a class="lv3" href="#セッションへ保存しない情報">セッションへ保存しない情報</a>
-<a class="lv2" href="#Cookie">Cookie</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a>
-<a class="lv2" href="#調査補助">調査補助</a>
-<a class="lv3" href="#HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</a></nav>
+<a class="lv3" href="#出力-CSVファイル">出力: CSVファイル</a>
+<a class="lv3" href="#入出力-永続化">入出力: 永続化</a>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
         <p class="crumb">Source:<br>/home/y-saito/Developments/hareruya-design-docs/functions/pf-eccube3/m03-24_admin_product_product_buy_sale_price_history_csv_export.md</p>
-        <h1>商品管理 — 買取/販売価格履歴 CSV 出力</h1>
+        <h1>商品管理 — 買取/販売価格履歴CSV出力</h1>
       </header>
       
-      <h2 id="概要">概要</h2>
-<p>管理画面「商品管理」配下の「買取/販売価格履歴」一覧で、直近にセッションへ保存した検索条件と同一の抽出条件で <code>dtb_price_history</code> を走査し、文字コード変換済みの CSV をストリーム応答として返す機能である。一覧はページ分割するが、CSV はページングを掛けずにクエリ結果を列方向にすべて出力する。</p>
-<p>検索フォーム・一覧・セッションキー全体の説明は別設計 <code>m03-23_admin_product_product_buy_sale_price_history.md</code> を正とする。本書は CSV ダウンロードの入口、前提条件、出力形式、一覧との差分を中心にする。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。</p>
-<p>本機能のカスタマイズ区分は現行踏襲である。現行挙動は pf-eccube3 の実装を参照し、永続化に関わるテーブル名・列名などのDB関連は ec-cube-enterprise を正とする。</p>
-<p>対象はブラウザ経由の管理画面のみとする。</p>
-<p>コントローラのメソッド名は本文の主題としない。本文ではルートbind名やSymfonyのルートnameの網羅は主説明としない。「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。コード探索でbind名が必要なときだけ「調査補助」へ書く。</p>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<p>DB関連の記述は ec-cube-enterprise の実装を正とする。現行（pf-eccube3）と移行先（ec-cube-enterprise）の差は次のとおり。</p>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>価格履歴テーブル</td><td><code>dtb_price_history</code>（列 <code>sell_price</code> <code>old_sell_price</code> <code>buy_price</code> <code>old_buy_price</code> <code>standard_price</code> <code>old_standard_price</code> <code>create_date</code> <code>member_id</code>）</td><td>同一スキーマ。列名・構成は一致する。</td></tr><tr><td>規格の商品コード列</td><td>Doctrine プロパティ <code>code</code> が列 <code>product_code</code> にマップされる</td><td>列名は <code>product_code</code>。エンティティ上も <code>product_code</code>。商品コードを指す列は移行先でも <code>dtb_product_class.product_code</code> とする。</td></tr><tr><td>規格の状態・備考列</td><td><code>dtb_product_class.memo</code> 等</td><td>同一スキーマ（<code>memo</code>）。</td></tr></tbody></table></div>
-<p>CSV 出力の挙動・列順・文字コード処理は現行（pf-eccube3）を参照し、移行先でも同等の標準実装が ec-cube-enterprise に取り込まれている。</p>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>一覧で 1 件以上ヒットしたあと「CSVダウンロード」をクリック</td><td><code>GET /{admin_route}/product/buy_sale_price_history/export</code></td><td>現在の検索条件に一致する全履歴が CSV としてダウンロードされる。</td></tr><tr><td>検索結果 0 件で CSV リンクが描画されていない状態から、手動で同じ URL にアクセス</td><td><code>GET /{admin_route}/product/buy_sale_price_history/export</code></td><td>検索実行済みでセッションに検索ビューデータが残っていれば、ヘッダ行のみの CSV が返る。セッションが無ければ一覧初期 URL へリダイレクトされフラッシュに文言が出る。</td></tr><tr><td>初回表示のみで検索していない</td><td>（リンクは一覧未表示だが）<code>GET …/export</code> に直接アクセス</td><td>セッションキー欠落としてリダイレクト。</td></tr></tbody></table></div>
-<p>一覧テンプレートでは <code>pagination.totalItemCount &gt; 0</code> のときだけ「CSVダウンロード」ボタンを出すため、画面からは「結果なしでもセッションだけある」状態ではボタンが見えない。URL 直叩きは上表のとおり別扱いになる。</p>
-<hr>
-<h2 id="フロント挙動">フロント挙動</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>CSV 用の独自ウィジェットはない。「CSVダウンロード」は結果ヘッダ右側の通常リンク（別タブ指定なし）。</td></tr><tr><td>JS 挙動</td><td>CSV 送信前の二重押し防止やクライアント側検証はない。クリックで単純に GET 遷移する。</td></tr><tr><td>CSS・レイアウト</td><td>一覧側のスタイルのみ。CSV 専用 CSS はない。</td></tr><tr><td>モーダル・ポップアップ</td><td>出力確認ダイアログはない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="CSV-をダウンロードする-GET-m03-23-admin-product-product-buy-sale-price-history-export">CSV をダウンロードする（GET <code>m03-23_admin_product_product_buy_sale_price_history_export</code>）</h3>
-<ol><li>管理画面の認証および共通処理を通過する。</li><li>セッションからキー <code>eccube.admin.product.buy_sale_price_history.search</code> を読む。値が <code>null</code> のみエラーとし、管理向けフラッシュに「検索条件を指定してからCSVをダウンロードしてください。」を積み、<code>GET /{admin_route}/product/buy_sale_price_history</code> へリダイレクトして終了する。</li><li><code>set_time_limit(0)</code> で PHP の実行時間上限を実質無制限に寄せる。</li><li>エクスポート用に、<code>BuySalePriceHistorySearchType</code> のビルダだけ <code>csrf_protection</code> を無効にしたうえで、手順 2 の配列を <code>FormUtil::submitAndGetData</code> に渡し、正規化済み検索データを得る。</li><li><code>dtb_price_history</code> 向けリポジトリの <code>getQueryBuilderBySearchData</code> でクエリビルダを得る。一覧検索と同一の結合・絞り込み・並び（履歴の <code>create_date</code> 降順、<code>id</code> 降順）になる。</li><li>ストリーム応答のコールバック外までに <code>getQuery()</code> を終えておく（コールバック開始後にセッションが閉じる実装を想定したコメントに基づく）。</li><li>コールバック内で共通 CSV エクスポートサービスの <code>fopen</code>・1 行目ヘッダ出力・<code>Query::toIterable</code> で得た各履歴エンティティを行配列に変換して <code>fputcsv</code>・<code>fclose</code> を行う。</li><li>応答ヘッダに <code>Content-Type: application/octet-stream</code> と <code>Content-Disposition: attachment; filename=buy_sale_price_{YmdHis}.csv</code> を付与する（日時はサーバの実行時刻）。</li></ol>
-<h3 id="データ行を組み立てるときの付加読込">データ行を組み立てるときの付加読込</h3>
-<p>イテレーションではルートエイティティのみを逐次 hydrate し、行ビルド時に商品規格・商品・言語・状態・登録者を都度参照する。一覧側で <code>addSelect</code> による eager を増やさない方針とコメント上一致し、件数に応じた付加クエリは許容される。</p>
-<hr>
-<h2 id="集計条件">集計条件</h2>
-<p>本機能は件数集計や売上計算をしない。CSV の行数は、手順 5 のクエリに一致した <code>dtb_price_history</code> 行数に等しい。ページ番号や <code>page_count</code> はクエリには渡されない。</p>
-<div class="table-wrap"><table><thead><tr><th>指標</th><th>集計の要点</th></tr></thead><tbody><tr><td>出力行数</td><td>検索条件を満たす履歴 1 行につき CSV データ行 1 行。0 件ならヘッダのみ。</td></tr></tbody></table></div>
-<hr>
-<h2 id="出力仕様-ヘッダ・列とデータ源">出力仕様（ヘッダ・列とデータ源）</h2>
-<p>ヘッダ行はコントローラ定数の日本語ラベル配列をそのまま 1 行目に書く。データ行は次の順で値を並べる。整数として有効な価格は十進文字列にし、NULL は空文字にする。</p>
-<div class="table-wrap"><table><thead><tr><th>CSV 列（ヘッダ文言）</th><th>内容</th></tr></thead><tbody><tr><td>商品コード</td><td>規格の <code>code</code>。NULL 相当は空文字にキャスト。</td></tr><tr><td>言語</td><td>規格の言語マスタがあれば日本語名。無ければ空。</td></tr><tr><td>商品名</td><td>商品の名称。</td></tr><tr><td>状態</td><td>規格 <code>memo</code> が非空ならその文字列。空ならカード状態マスタがあればその <code>code</code> 文字列。いずれも無ければ空。</td></tr><tr><td>変更前基準価格</td><td>履歴 <code>old_standard_price</code>。NULL は空セル。</td></tr><tr><td>変更後基準価格</td><td>履歴 <code>standard_price</code>。NULL は空セル。</td></tr><tr><td>変更前販売価格</td><td>履歴 <code>old_sell_price</code>。NULL は空セル。</td></tr><tr><td>変更後販売価格</td><td>履歴 <code>sell_price</code>。NULL は空セル。</td></tr><tr><td>変更前買取価格</td><td>履歴 <code>old_buy_price</code>。NULL は空セル。</td></tr><tr><td>変更後買取価格</td><td>履歴 <code>buy_price</code>。NULL は空セル。</td></tr><tr><td>登録日</td><td>履歴 <code>create_date</code> を <code>Y/m/d H:i</code> 形式。</td></tr><tr><td>登録者</td><td>履歴に紐づく会員がいればその表示名。無ければ空。</td></tr></tbody></table></div>
-<p>一覧テーブルの列順は「商品コード・商品名・言語・状態…」だが、CSV は「商品コード・言語・商品名・状態…」と名称 2 列の順が入れ替わる（実装を確認値とする）。</p>
-<hr>
-<h2 id="文字コード・区切り・BOM">文字コード・区切り・BOM</h2>
-<p>共通 CSV エクスポートサービスに従う。</p>
-<ul><li>出力ストリームは <code>php://output</code> に開く。</li><li>設定 <code>eccube_csv_export_encoding</code>（未設定時の確認値はソース上 <code>SJIS-win</code>）へ UTF-8 から <code>mb_convert_encoding</code> する。</li><li>エンコーディングが UTF-8（大文字小文字無視）のときのみ、先頭に BOM（<code>\xEF\xBB\xBF</code>）を書く。</li><li>区切り文字は設定 <code>eccube_csv_export_separator</code>。フィールドは <code>fputcsv</code> の規則でダブルクォート囲み、エスケープはバックスラッシュを指定する実装になっている。</li></ul>
-<p>応答の <code>Content-Type</code> は <code>application/octet-stream</code> のみで、<code>charset=</code> は付けない（実装を確認値とする）。</p>
-<hr>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<p>本 CSV 機能は金額の再計算や丸めを行わない。DB に格納された履歴値を列に写すのみである。</p>
-<p>価格レンジによる絞り込みは検索データの <code>product</code> 配下で、履歴の変更後側（<code>sell_price</code>・<code>buy_price</code>・<code>standard_price</code>）に対してのみ適用される。変更前のみ有意な行は、販売・買取下限などを付けたときヒットしにくい（SQL の NULL 比較）。詳細は親設計書の「エッジケース」を正とする。</p>
-<h3 id="入力項目">入力項目</h3>
-<p>CSV 専用の入力欄はない。検索条件は親画面のフォームとセッションに依存する。項目一覧・最大長・保存先は <code>m03-23_admin_product_product_buy_sale_price_history.md</code> の「### 入力項目」を正とする。</p>
-<h3 id="エッジケース">エッジケース</h3>
-<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>検索結果は 0 件だが検索ビューデータはセッションにある</td><td>自動テストはセッションを直注入していないが、実装どおりならヘッダ 1 行のみのファイルが返る。</td></tr><tr><td>セッションにキーが無い</td><td>フラッシュと一覧初期 URL へのリダイレクト。</td></tr><tr><td>長大な件数</td><td><code>set_time_limit(0)</code> とストリーム逐次出力。メモリに全行を載せないイテレーション方針。</td></tr></tbody></table></div>
-<hr>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>一覧同条件との一致</td><td>セッションの検索ビューデータから同じ <code>getQueryBuilderBySearchData</code> を使うため、抽出集合は一覧の全件集合と一致する（一覧はページ分割のみ異なる）。</td></tr><tr><td>表示のタイミング</td><td>ダウンロード要求時点の DB 内容を読む。実行中に他処理が履歴を増やしても、既に開いたクエリの結果範囲は実装・分離レベルに依存する（通常はスナップショット一貫性は保証しない）。</td></tr></tbody></table></div>
-<hr>
-<h2 id="API-バッチ結果">API/バッチ結果</h2>
-<p>本機能では公開 JSON API およびバッチ実行を扱わない。</p>
-<hr>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="出力対象">出力対象</h3>
+<p>出力対象は、買取/販売価格履歴の検索で保持している検索条件に該当する履歴の全件とする。画面の入力項目は持たない。</p>
+<p>検索条件を保持していない場合は出力せず、買取/販売価格履歴の一覧へ戻る。</p>
+<h3 id="並び">並び</h3>
+<p>履歴の登録日時の降順、次に履歴IDの降順で出力する。一覧と同じ並びとする。</p>
+<h3 id="値の取り方">値の取り方</h3>
+<p>登録済みの履歴の値をそのまま出力する。金額の再計算と丸めは行わない。</p>
+<h3 id="価格での絞り込み">価格での絞り込み</h3>
+<p>価格の範囲による絞り込みは、変更後の販売価格・買取価格・基準価格に対してだけ適用する。変更前の価格しか持たない履歴は、下限・上限を指定すると対象から外れる。</p>
+<h3 id="他機能との境界">他機能との境界</h3>
+<p>検索条件の指定と保持は「買取/販売価格履歴検索/一覧」（M03-23）を正とする。</p>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>HTTP GET のみ。クエリパラメータは解釈しない。ボディはない。有効性はセッションの検索ビューデータの有無と内容に依存。</td></tr><tr><td>成功時出力</td><td><code>Content-Type: application/octet-stream</code>、ファイル名 <code>buy_sale_price_{YmdHis}.csv</code>、本文は CSV ストリーム。</td></tr><tr><td>失敗時出力</td><td>セッション欠落時は HTTP リダイレクトとフラッシュメッセージ。</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<p>CSV の行に直接効く主な列のみ示す。型の細部はスキーマを正とする。</p>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>dtb_price_history</code></td><td><code>sell_price</code> <code>old_sell_price</code> <code>buy_price</code> <code>old_buy_price</code> <code>standard_price</code> <code>old_standard_price</code></td><td>変更後列が NULL の行があり得る。</td></tr><tr><td><code>dtb_price_history</code></td><td><code>create_date</code></td><td>CSV の登録日時列。</td></tr><tr><td><code>dtb_price_history</code></td><td><code>member_id</code></td><td>登録者名解決。</td></tr><tr><td><code>dtb_product_class</code></td><td><code>product_code</code>（現行プロパティ <code>code</code>）<code>memo</code>、言語・状態への参照</td><td>コード・状態表示列。商品コード列は ec-cube-enterprise では <code>product_code</code>。</td></tr></tbody></table></div>
-<h3 id="DB操作">DB操作</h3>
-<p>本機能は参照系（検索・出力）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>検索</td><td>dtb_price_history / dtb_product_class</td><td>検索条件に合致するレコードを抽出する。抽出結果を所定フォーマットでファイル出力する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="バリデーション">バリデーション</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>CSV リクエスト本体</td><td>GET に対する CSRF は要求しない。</td></tr><tr><td>検索データの正規化</td><td>エクスポート直前にフォームへ再投入されるため、親画面と同じ型制約・変換が掛かる。</td></tr></tbody></table></div>
-<hr>
-<h2 id="権限・認可">権限・認可</h2>
-<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>CSV ダウンロード</th></tr></thead><tbody><tr><td>管理画面ログイン済み（<code>/{admin_route}/</code> 配下の共通セキュリティ境界内）</td><td>到達できる。本パスの個別ロールアノテーションは置かれていない。細目は環境設定を正とする。</td></tr></tbody></table></div>
-<hr>
-<h2 id="画面遷移">画面遷移</h2>
-<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>CSV リンククリック（検索済み・件数 1 以上の画面）</td><td>同一タブでファイルダウンロード応答。ブラウザの挙動に依存。</td></tr><tr><td>セッション検索データ欠落</td><td><code>GET /{admin_route}/product/buy_sale_price_history</code> へリダイレクト。</td></tr></tbody></table></div>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>セッションキー <code>eccube.admin.product.buy_sale_price_history.search</code> が <code>null</code></td><td>固定日本語メッセージをフラッシュに積み、一覧初期ルートへリダイレクト。</td></tr></tbody></table></div>
-<hr>
-<h2 id="試行制限">試行制限</h2>
-<p>本機能では API レートリミットや試行回数制限を設けない。</p>
-<hr>
-<h2 id="ログ・監査">ログ・監査</h2>
-<p>CSV 送出専用の追加ログ出力はソース上目立たない。共通 CSV サービスや Web サーバアクセスログの範囲に留まる。</p>
-<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
-<ul><li>パスワード</li><li>なりすまし対策トークンの原値</li><li>Cookie 値およびセッション ID の全桁</li><li>Remember Me トークンの原値</li></ul>
-<hr>
-<h2 id="セッション">セッション</h2>
-<h3 id="本機能におけるセッション">本機能におけるセッション</h3>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>CSV 成否</td><td>キー <code>eccube.admin.product.buy_sale_price_history.search</code> が存在するかだけを見る。空配列でも <code>null</code> ではない限りエクスポート処理に入る（実装を確認値とする）。</td></tr></tbody></table></div>
-<h3 id="セッションへ保存しない情報">セッションへ保存しない情報</h3>
-<p>CSV 処理が独自に新しい検索キーを書き込むことはない。</p>
-<hr>
-<h2 id="Cookie">Cookie</h2>
-<p>本機能専用 Cookie はない。セッション Cookie は Symfony 共通。</p>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<p>読取およびストリーム出力のみであり、履歴行を画面から更新しない。悲観ロックは使わない。</p>
-<hr>
-<h2 id="調査補助">調査補助</h2>
-<p>読み取りの手がかりとして、おおむね次のパスにある。</p>
-<p><code>src/Eccube/Controller/Admin/Product/BuySalePriceHistoryController.php</code>（定数 <code>EXPORT_HEADER</code>、<code>export</code>、<code>buildPriceHistoryCsvRow</code>） <code>src/Eccube/Service/CsvExportService.php</code>（<code>fopen</code> <code>fputcsv</code> <code>fclose</code>） <code>tests/Eccube/Tests/Web/Admin/Product/BuySalePriceHistoryControllerTest.php</code>（エクスポート正常系・セッション欠落系）</p>
-<h3 id="HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</h3>
-<ul><li><code>m03-23_admin_product_product_buy_sale_price_history_export</code> … <code>GET</code> … <code>/{admin_route}/product/buy_sale_price_history/export</code>（セッションに検索ビューデータが存在するとき、同一条件の全件を CSV ストリームで返す。無いときはフラッシュとリダイレクト。）</li></ul>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>買取/販売価格履歴の検索で保持している検索条件</td></tr><tr><td>成功時出力</td><td>買取/販売価格履歴のCSVファイル</td></tr><tr><td>失敗時出力</td><td>検索条件を保持していない場合のメッセージと一覧への遷移</td></tr></tbody></table></div>
+<h3 id="出力-CSVファイル">出力: CSVファイル</h3>
+<p>ヘッダ行を先頭に出力し、続けて履歴を1件1行で出力する。ファイル名には出力日時を付ける。</p>
+<h3 id="入出力-永続化">入出力: 永続化</h3>
+<p>データを更新しない。買取/販売価格履歴は参照のみとする。</p>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
+<h2 id="表示メッセージ">表示メッセージ</h2>
+<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>—</td><td>管理画面上部</td><td>検索条件を指定してからCSVをダウンロードしてください。</td><td>検索条件を保持していない状態でCSVを出力しようとしたとき</td><td>買取/販売価格履歴の一覧へ遷移する</td></tr></tbody></table></div>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

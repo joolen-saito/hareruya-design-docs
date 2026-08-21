@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,36 +272,14 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#フロント挙動">フロント挙動</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#一覧を表示する-GET-admin-buy-discount-list">一覧を表示する（GET `admin_buy_discount_list`）</a>
-<a class="lv2" href="#集計条件">集計条件</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
-<a class="lv3" href="#エッジケース">エッジケース</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#一覧の組み立て">一覧の組み立て</a>
+<a class="lv3" href="#セルの値">セルの値</a>
+<a class="lv3" href="#エラー時の扱い">エラー時の扱い</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#バリデーション">バリデーション</a>
-<a class="lv2" href="#権限・認可">権限・認可</a>
-<a class="lv2" href="#画面遷移">画面遷移</a>
-<a class="lv3" href="#遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#試行制限">試行制限</a>
-<a class="lv2" href="#ログ・監査">ログ・監査</a>
-<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
-<a class="lv2" href="#セッション">セッション</a>
-<a class="lv3" href="#本機能におけるセッション">本機能におけるセッション</a>
-<a class="lv3" href="#セッションへ保存しない情報">セッションへ保存しない情報</a>
-<a class="lv2" href="#Cookie">Cookie</a>
-<a class="lv3" href="#セッション用-Cookie">セッション用 Cookie</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a>
-<a class="lv2" href="#調査補助-ソース上の名前">調査補助（ソース上の名前）</a>
-<a class="lv3" href="#HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</a></nav>
+<a class="lv3" href="#入出力-永続化">入出力: 永続化</a>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -299,92 +287,22 @@ footer {
         <h1>データ管理 — 買取減額率一覧</h1>
       </header>
       
-      <h2 id="概要">概要</h2>
-<p>HareruyaEc プラグインが管理画面の「データ管理」から提供する、買取用の減額率マスタ（行）× カード状態マスタのコード（列）に対応する減額率（数値）を矩形式で一覧表示する閲覧専用画面である。交差情報は <code>dtb_buy_discount_card_condition</code> を読み、その組み合わせが無いセルには固定文言「未定義」を出す。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。カスタマイズ区分は「現行踏襲」。画面・挙動は pf-eccube3 に配置された HareruyaEc プラグインのソースを確認値とし、DB関連（テーブル・列・型・制約・関連）は ec-cube-enterprise の実装を正とする。本機能のマスタは両リポで同一スキーマである。</p>
-<p>対象はブラウザ経由の管理画面に限定する。</p>
-<p>本文ではフレームワークのコントローラ型名やメソッド名を主説明としない。本文ではルートbind名やSymfonyのルートnameの網羅は主説明としない。「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。コード探索でbind名が必要なときだけ「調査補助」へ書く。</p>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<ul><li>本機能の DB は現行（pf-eccube3 の HareruyaEc プラグイン）と移行先（ec-cube-enterprise コア）で同一スキーマである。<code>mtb_buy_discount</code>・<code>mtb_card_condition</code>・<code>dtb_buy_discount_card_condition</code> のテーブル名・列名・型は一致するため、DB記述はそのまま移行先の正とする。</li><li>画面・挙動は現行（pf-eccube3）の確認値。買取減額率（行）×カード状態コード（列）のマトリクス閲覧という機能は移行先でも同等で、現行はプラグイン提供、移行先はコア提供である。</li><li>現行と移行先でスキーマ差・挙動差は確認されていない。差が生じた場合のみ本節に追記する。</li></ul>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>ナビ「データ管理」→「買取減額率一覧」</td><td><code>GET /{admin_route}/buy_discount</code></td><td>カード状態コードが列見出し、買取減額率マスタ名称が左端列となる表が出力される。各セルは交差があるとき数値レートが表示され、無いときは「未定義」と出る。</td></tr><tr><td>ブラウザで <code>/{admin_route}/buy_discount</code> に直接 GET</td><td><code>GET /{admin_route}/buy_discount</code></td><td>上記と同じ。クエリおよびリクエストボディは不要であり、共通ルールを満たす利用者のみが HTML を取得し得る。</td></tr></tbody></table></div>
-<hr>
-<h2 id="フロント挙動">フロント挙動</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>Twig の <code>{% block title %}</code> は「買取減額率管理」、<code>{% block sub_title %}</code> は「買取減額率一覧」。親ナビの項目名は「買取減額率一覧」であり、タイトル帯の「買取減額率管理」とは文言が一部異なる。表は Bootstrap の <code>table table-striped</code>。左端ヘッダは「名称」。以降の列ヘッダは、<code>mtb_card_condition</code> を取得した順に <code>code</code> のみ（和名や英名は出さない）。各行の第一データ列は対応する <code>mtb_buy_discount</code> の名称。それ以降のセルは、交差があるとき PHP が渡した浮動小数（<code>dtb_buy_discount_card_condition.rate</code> に由来）を Twig がそのまま文字列変換した形で出力し、桁区切りや <code>%</code> は付けない。交差が無いセルは「未定義」。</td></tr><tr><td>JS 挙動</td><td><code>buy_discount.twig</code> 側に <code>&lt;script&gt;</code> ブロックやインライン処理はなく、本画面単体での動的処理はしない。共通管理画面フレームの JS に依存する範囲に留める。</td></tr><tr><td>CSS・レイアウト</td><td>表ラッパーに <code>table-responsive with-border</code>。本テンプレート単体での追加スタイル読み込み指定はない（親フレームの既定に従う）。</td></tr><tr><td>モーダル・ポップアップ</td><td>定義しない。</td></tr></tbody></table></div>
-<p>補足。表頭行のひとつの要素 id はテンプレート上 <code>news_list_box__list_header</code> という識別子になっており、ニュース機能由来の名前と食い違っている。表示内容には効かない。</p>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="一覧を表示する-GET-admin-buy-discount-list">一覧を表示する（GET <code>admin_buy_discount_list</code>）</h3>
-<ol><li>管理画面の認証・共通制約を通過する。</li><li><code>mtb_card_condition</code> に対応するエンティティをリポジトリの <code>findAll()</code> で読み込む。</li><li><code>mtb_buy_discount</code> に対応するエンティティを同様に <code>findAll()</code> で読み込む。</li><li><code>dtb_buy_discount_card_condition</code> の全行を <code>findAll()</code> で読み込む。</li><li><code>dtb_buy_discount_card_condition</code> ごとに、カード状態 ID と買取減額率 ID をキーの二段配列 <code>$buyDiscountMap[cardConditionId][buyDiscountId]</code> に浮動小数 <code>rate</code> を格納する（同一キーへの二重代入は後勝ち）。</li><li>上記データを Twig に渡し、<code>buyDiscounts</code> と <code>cardConditions</code> の二重ループで表を出力する。</li><li>各セルでは <code>buyDiscountMap[condition.id][buyDiscount.id]</code> が定義されていれば値を、その他は「未定義」を表示する。</li><li>サーバ側はこのリクエスト中にフラッシュやセッション検索状態を設定する処理を持たない。</li></ol>
-<hr>
-<h2 id="集計条件">集計条件</h2>
-<p>本機能では件数集計や売上などの業務集計は行わない。</p>
-<div class="table-wrap"><table><thead><tr><th>指標</th><th>集計の要点</th></tr></thead><tbody><tr><td>一覧の列数</td><td>1（名称列）+ <code>mtb_card_condition</code> を <code>findAll()</code> で得た集合の要素数</td></tr><tr><td>一覧の行数</td><td><code>mtb_buy_discount</code> を <code>findAll()</code> で得た集合の要素数</td></tr></tbody></table></div>
-<hr>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<p>画面上のセル値は入力変換計算ではなく、<code>dtb_buy_discount_card_condition.rate</code> の参照である。並べ替え・丸め・百分率への換算は行わない。</p>
-<p>本機能ではフォームによる入力・保存を行わないため、<code>### 入力項目</code> は置かない。</p>
-<h3 id="エッジケース">エッジケース</h3>
-<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>買取減額率マスタが 0 件</td><td><code>buyDiscounts</code> ループが回らず、ヘッダと空の tbody だけが描画される。</td></tr><tr><td>カード状態マスタが 0 件</td><td>列ヘッダは「名称」のみになり、すべてのデータ行も名称列のみになる。</td></tr><tr><td>交差行が無い</td><td>名称列だけ値が並び、その他すべてのセルは「未定義」。</td></tr><tr><td>同一 <code>(buy_discount_id, card_condition_id)</code> に複数行が論理的に存在し得ない</td><td>複合主鍵であり、一意制約側の前提。一覧は <code>findAll()</code> の順にマップへ入れ、<code>foreach</code> で上書きが起きれば最後に読んだ行の <code>rate</code> が残る運用となる（通常は複数行は想定されない）。</td></tr><tr><td>浮動小数の表示形式</td><td>Twig の単純出力のため、<code>0.95</code> と <code>0.949999999</code> のような桁落ち気味の表現がブラウザ上に見え得る。</td></tr></tbody></table></div>
-<hr>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>一覧と DB</td><td>当該 GET 処理で読んだ 3 集合の結果をその場で組み立てている。一覧表示中は他利用者の更新との整合をロックしない。</td></tr><tr><td>欠損交差と「未定義」</td><td>「未定義」は永続データの NULL フラグではなく、マップにキーが無いことの結果としての表示のみである。</td></tr><tr><td>状態マスタの列並び</td><td>列順はカード状態の <code>findAll()</code> の帰順に従う。リポジトリに明示的な <code>ORDER BY</code> は無いため、実際の並びは永続実装およびドライバの挙動に依存する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="API-バッチ結果">API/バッチ結果</h2>
-<p>本機能では外部 HTTP API 呼び出しやバッチジョブの起動を扱わない。</p>
-<hr>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="一覧の組み立て">一覧の組み立て</h3>
+<div class="table-wrap"><table><thead><tr><th>順序</th><th>処理</th><th>内容</th></tr></thead><tbody><tr><td>1</td><td>カード状態の取得</td><td>カード状態のマスタを、件数によらず全件読み込む</td></tr><tr><td>2</td><td>買取減額率の取得</td><td>買取減額率のマスタを、件数によらず全件読み込む</td></tr><tr><td>3</td><td>減額率の取得</td><td>カード状態と買取減額率の組ごとの減額率を、件数によらず全件読み込む</td></tr><tr><td>4</td><td>対応表の作成</td><td>カード状態IDと買取減額率IDの2段のキーで減額率を保持する。同じキーが重複するときは、後から読み込んだ値で上書きする</td></tr><tr><td>5</td><td>表の出力</td><td>買取減額率とカード状態の二重の繰り返しで、組の数だけ表のセルを出力する</td></tr></tbody></table></div>
+<h3 id="セルの値">セルの値</h3>
+<div class="table-wrap"><table><thead><tr><th>セルの状態</th><th>表示</th></tr></thead><tbody><tr><td>当該のカード状態と買取減額率の組に減額率があるとき</td><td>保持している減額率の値を表示する</td></tr><tr><td>当該の組に減額率が無いとき</td><td>「未定義」を表示する</td></tr></tbody></table></div>
+<p>セルの値は入力による変換計算ではなく、組ごとに記録された減額率の値だけを表示する。並べ替え・丸め・百分率への換算は、いずれの場合も行わない。</p>
+<p>本機能はフォームによる入力と保存を行わない。この表示の間は、いずれの場合も検索状態を保持しない。</p>
+<h3 id="エラー時の扱い">エラー時の扱い</h3>
+<div class="table-wrap"><table><thead><tr><th>事象</th><th>扱い</th></tr></thead><tbody><tr><td>データの読み込みで例外が起きたとき</td><td>共通のエラー処理に委ねる。この一覧専用のメッセージは表示しない</td></tr><tr><td>表の出力で例外が起きたとき</td><td>共通のエラー処理に委ねる</td></tr></tbody></table></div>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>GET のみ。クエリおよびリクエストボディは機能上不要であり、処理はパスだけで開始する。</td></tr><tr><td>成功時出力</td><td>HTML（買取減額率一覧表を含む管理画面共通フレーム）。</td></tr><tr><td>失敗時出力</td><td>一覧処理は try-catch で利用者向け文言を用意していない。永続読み込みでの例外などは共通のエラーハンドリングに委ねられる。</td></tr><tr><td>副作用</td><td>本 GET による DB の更新やログ明示書き込みは行わない（ORM のキャッシュ統計などはフレームワークに従う）。</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<p>一覧描画と直接関係する列のみ記載する。型の細部はスキーマ・マッピングを参照する。</p>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>mtb_card_condition</code></td><td><code>id</code>, <code>code</code></td><td>列見出しは <code>code</code>。マップおよびセル選択に <code>id</code> を使う。</td></tr><tr><td><code>mtb_buy_discount</code></td><td><code>id</code>, <code>name</code></td><td>行のラベル。</td></tr><tr><td><code>dtb_buy_discount_card_condition</code></td><td><code>buy_discount_id</code>, <code>card_condition_id</code>, <code>rate</code></td><td>セルへの数値ソース。複合主鍵で組み合わせを一意化。</td></tr></tbody></table></div>
-<h3 id="DB操作">DB操作</h3>
-<p>本機能は参照系（検索）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>検索</td><td>dtb_buy_discount_card_condition / mtb_buy_discount / mtb_card_condition</td><td>検索条件に合致するレコードを抽出する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="バリデーション">バリデーション</h2>
-<p>一覧表示処理では利用者入力を受け付けない。入力項目の検証・CSRF は該当しない。</p>
-<hr>
-<h2 id="権限・認可">権限・認可</h2>
-<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>一覧表示（GET <code>/{admin_route}/buy_discount</code>）</th></tr></thead><tbody><tr><td>管理画面の認証を通過した運用者</td><td>他の HareruyaEc 管理ルートと同様に到達し得る実装である。本ルート単体でのロール分岐はプラグインの割当プロバイダでは追加していない。</td></tr><tr><td>未認証</td><td>管理画面共通のログイン要求に帰着する（本書ではログイン機能の細部は確定しない）。</td></tr></tbody></table></div>
-<hr>
-<h2 id="画面遷移">画面遷移</h2>
-<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>ナビまたは直接 GET に成功した場合</td><td>同一 URL の HTML を表示した状態に留まる。</td></tr><tr><td>本画面からのリンク・送信</td><td>一覧テンプレートは行クリックやボタンを定義しない。</td></tr></tbody></table></div>
-<h3 id="遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</h3>
-<p>一覧 GET は検索セッションやフラッシュメッセージを新たにセットしない。ブラウザの戻る・進むにも特有の状態は依存しない。</p>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>永続読み込みでの例外など</td><td>アプリケーション共通のエラー処理に移行する。一覧専用のフラッシュ文言はセットしない。</td></tr><tr><td>一覧取得後の Twig 評価で例外</td><td>同様にフレームワーク側の結果に依存する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="試行制限">試行制限</h2>
-<p>本機能では試行回数による制御を設けない。</p>
-<hr>
-<h2 id="ログ・監査">ログ・監査</h2>
-<p>一覧表示の処理は、成功時に機能固有のアプリケーションログを追加する処理を持たない。</p>
-<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
-<ul><li>パスワード</li><li>なりすまし対策トークン</li><li>Cookie 値</li><li>セッション ID の完全値</li><li>Remember Me トークンの原値</li></ul>
-<hr>
-<h2 id="セッション">セッション</h2>
-<h3 id="本機能におけるセッション">本機能におけるセッション</h3>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>GET 一覧</td><td>本処理はセッションに検索条件や一覧状態を読み書きしない。認証状態の確認は共通ミドルウェア側に依存するのみ。</td></tr></tbody></table></div>
-<h3 id="セッションへ保存しない情報">セッションへ保存しない情報</h3>
-<p>一覧の構成そのものやマトリクス値をセッションにキャッシュしない。</p>
-<hr>
-<h2 id="Cookie">Cookie</h2>
-<p>一覧 GET は Remember Me を新規発行しない。ブラウザのセッション用 Cookie は共通のログイン状態維持にのみ使われる運用であり、当機能だけの特別な Cookie を追加しない。</p>
-<h3 id="セッション用-Cookie">セッション用 Cookie</h3>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>Cookie 名</td><td>アプリケーション共通のものに従う。本一覧で独自の名前を追加しない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<p>一覧は読み取りのみであり、読み取り専用トランザクションや行ロックは画面ロジックで明示しない。</p>
-<hr>
-<h2 id="調査補助-ソース上の名前">調査補助（ソース上の名前）</h2>
-<p>プラグインディレクトリ <code>app/Plugin/HareruyaEc/</code> のうち、<code>ServiceProvider/Admin/BuyDiscountServiceProvider.php</code> がルート <code>admin_buy_discount_list</code> を登録し、<code>config.yml</code> のサービスプロバイダ一覧に含まれる。一覧のテンプレートは <code>HareruyaEc/Resource/template/admin/BuyDiscount/buy_discount.twig</code>。サイドナビ項目は <code>ServiceProvider/Admin/SidebarProvider.php</code> のデータ管理セクションにある。</p>
-<h3 id="HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</h3>
-<ul><li><code>admin_buy_discount_list</code> … <code>GET</code> … <code>/{admin_route}/buy_discount</code>（買取減額率一覧の HTML 応答を返す。）</li></ul>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>表示の要求だけを受け取る。クエリと本文の入力は、いずれの場合も不要である。</td></tr><tr><td>成功時出力</td><td>買取減額率の一覧表を含む管理画面。</td></tr><tr><td>失敗時出力</td><td>利用者向けの専用の文言は用意しない。共通のエラー処理に委ねる。</td></tr></tbody></table></div>
+<h3 id="入出力-永続化">入出力: 永続化</h3>
+<p>いずれの場合もデータを更新しない。</p>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
+<h2 id="表示メッセージ">表示メッセージ</h2>
+<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>—</td><td>一覧表のセル</td><td>未定義</td><td>当該のカード状態と買取減額率の組に減額率が無いとき</td><td>一覧画面に留まる</td></tr></tbody></table></div>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

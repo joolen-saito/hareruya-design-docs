@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,32 +272,17 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#本書で扱うこと">本書で扱うこと</a>
-<a class="lv2" href="#本書で扱わないこと">本書で扱わないこと</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv2" href="#用語">用語</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#フロント挙動">フロント挙動</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#入力画面を表示する-POST-admin-route-customer-mail">入力画面を表示する（POST `/{admin_route}/customer/mail`）</a>
-<a class="lv3" href="#確認画面を表示する-POST-admin-route-customer-mail-confirm">確認画面を表示する（POST `/{admin_route}/customer/mail_confirm`）</a>
-<a class="lv3" href="#送信する-POST-admin-route-customer-mail-complete">送信する（POST `/{admin_route}/customer/mail_complete`）</a>
-<a class="lv3" href="#送信完了画面を表示する-GET-admin-route-customer-mail-complete">送信完了画面を表示する（GET `/{admin_route}/customer/mail_complete`）</a>
-<a class="lv2" href="#表示メッセージ">表示メッセージ</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
-<a class="lv3" href="#入力項目">入力項目</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#送信対象の受け取り">送信対象の受け取り</a>
+<a class="lv3" href="#入力">入力</a>
+<a class="lv3" href="#確認画面の表示">確認画面の表示</a>
+<a class="lv3" href="#完了画面">完了画面</a>
+<a class="lv3" href="#送信">送信</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#権限・認可">権限・認可</a>
-<a class="lv2" href="#画面遷移">画面遷移</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#ログ・監査">ログ・監査</a>
-<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a></nav>
+<a class="lv3" href="#出力-メール">出力: メール</a>
+<a class="lv3" href="#入出力-永続化">入出力: 永続化</a>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -295,84 +290,37 @@ footer {
         <h1>会員管理 — メール一括送信</h1>
       </header>
       
-      <h2 id="概要">概要</h2>
-<p>管理画面の会員一覧から選択した複数会員に対し、テンプレートを使わずに件名・本文を入力してメールを一括送信する機能である。入力・確認・送信・完了の各画面を経て、選択会員ごとにメールを送信する。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインの管理画面会員一括メール処理、一括メールフォーム、テンプレート（<code>Customer/mail.twig</code>・<code>mail_confirm.twig</code>・<code>mail_complete.twig</code>）、メール送信処理を正とする。</p>
-<p>本機能のカスタマイズ区分は現行踏襲であり、挙動の参照は現行リポ（pf-eccube3）、DB関連はec-cube-enterpriseを正とする。会員本体<code>dtb_customer</code>は現行と移行先で同一スキーマであり、メール送信履歴の正典は会員メール送信履歴<code>dtb_user_mail_history</code>とする。</p>
-<p>対象はブラウザ経由の管理画面に限定する。</p>
-<p>本文ではフレームワークのコントローラ型名やメソッド名を主説明としない。管理画面プレフィックスは環境により変わる（<code>admin_route</code>）。「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。</p>
-<hr>
-<h2 id="本書で扱うこと">本書で扱うこと</h2>
-<ul><li>会員一覧から選択した複数会員への一括メール送信</li><li>入力・確認・送信・完了の画面遷移</li><li>テンプレート不使用の件名・本文入力</li></ul>
-<hr>
-<h2 id="本書で扱わないこと">本書で扱わないこと</h2>
-<p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
-<ul><li>会員一覧・検索・選択の仕様（会員一覧機能を正とする）</li><li>個別メール（テンプレート利用）の送信（個別メール機能を正とする）</li><li>メール送信履歴の表示（メール送信履歴機能を正とする）</li></ul>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<p>挙動の参照は現行リポ（pf-eccube3 / HareruyaEcプラグイン）、DB関連の正典はec-cube-enterpriseとする。</p>
-<ul><li>会員本体は<code>dtb_customer</code>（<code>id</code>・<code>email</code>等）で、現行と移行先で同名・同一スキーマである。</li><li>送信記録の正典は会員メール送信履歴<code>dtb_user_mail_history</code>（<code>customer_id</code>・<code>subject</code>・<code>mail_body</code>・<code>send_date</code>・<code>creator_id</code>）とする。現行のプラグインメール履歴から移行先のこの表へ読み替える。</li><li>画面遷移は現行（pf-eccube3）が入力→確認→送信→完了の多段構成である。移行先ec-cube-enterpriseの会員一括メールは<code>admin_customer_mail</code>（POST）が確認できるが、確認・完了を独立ルートとして持つかはec-cube-enterprise実装で要確認。多段フローの仕様は現行を正とする。</li></ul>
-<hr>
-<h2 id="用語">用語</h2>
-<div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>一括送信</td><td>複数の選択会員へまとめてメールを送ること。</td></tr><tr><td>選択会員</td><td>会員一覧で選んだ送信対象の会員ID群。</td></tr></tbody></table></div>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>会員一覧で会員を選び「メール送信」</td><td><code>POST /{admin_route}/customer/mail</code></td><td>件名・本文の入力画面を表示する。選択会員IDを保持する。</td></tr><tr><td>「確認」ボタン</td><td><code>POST /{admin_route}/customer/mail_confirm</code></td><td>入力内容を確認画面に表示し、対象会員を一覧する。入力欄は変更不可で表示する。</td></tr><tr><td>「送信」ボタン</td><td><code>POST /{admin_route}/customer/mail_complete</code></td><td>選択会員ごとにメールを送信し、完了画面へ遷移する。</td></tr><tr><td>送信完了画面</td><td><code>GET /{admin_route}/customer/mail_complete</code></td><td>一括送信完了の案内を表示する。</td></tr></tbody></table></div>
-<p>管理画面プレフィックスは環境により変わるためプレースホルダで示す。</p>
-<hr>
-<h2 id="フロント挙動">フロント挙動</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>入力画面は件名・本文の入力。確認画面は入力内容（変更不可）と対象会員の一覧。完了画面は送信完了の案内。</td></tr><tr><td>JS挙動</td><td>本機能では各画面の送信中心で、動的な表示切替は主としない。</td></tr><tr><td>モーダル・ポップアップ</td><td>本機能専用のモーダルは無い。</td></tr></tbody></table></div>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="入力画面を表示する-POST-admin-route-customer-mail">入力画面を表示する（POST <code>/{admin_route}/customer/mail</code>）</h3>
-<ol><li>管理画面の認証・権限を通過する。</li><li>一括メールの入力フォームを表示し、選択会員IDを保持する。</li></ol>
-<h3 id="確認画面を表示する-POST-admin-route-customer-mail-confirm">確認画面を表示する（POST <code>/{admin_route}/customer/mail_confirm</code>）</h3>
-<ol><li>入力内容を受け取り、変更不可の表示にする。</li><li>選択会員IDから対象会員を取得し、入力内容とあわせて確認画面を表示する。</li></ol>
-<h3 id="送信する-POST-admin-route-customer-mail-complete">送信する（POST <code>/{admin_route}/customer/mail_complete</code>）</h3>
-<ol><li>入力内容を受け取る。</li><li>選択会員ごとに、テンプレートを使わず件名・本文でメールを送信する。</li><li>送信完了画面へ遷移する。</li></ol>
-<h3 id="送信完了画面を表示する-GET-admin-route-customer-mail-complete">送信完了画面を表示する（GET <code>/{admin_route}/customer/mail_complete</code>）</h3>
-<ol><li>一括送信完了の案内を表示する。</li></ol>
-<hr>
-<h2 id="表示メッセージ">表示メッセージ</h2>
-<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>画面上の文言(英語)</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M08-02-MSG-001</td><td>画面中央(ダイアログ)</td><td>チェックボックスが選択されていません</td><td>（英訳なし）</td><td>メール送信対象の会員を選ばずに送信操作をしたとき</td><td>会員一覧画面に留まる</td></tr></tbody></table></div>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>送信単位</td><td>選択会員ごとに1通ずつ送信する。</td></tr><tr><td>テンプレート</td><td>テンプレートを使わず、入力した件名・本文で送信する。</td></tr></tbody></table></div>
-<h3 id="入力項目">入力項目</h3>
-<div class="table-wrap"><table><thead><tr><th>項目名</th><th>必須／任意</th><th>最大長</th><th>初期値</th><th>保存先・扱い</th></tr></thead><tbody><tr><td>件名</td><td>必須</td><td>実装確認値</td><td>空</td><td>一括メールの件名。送信時に使用する。フォームキーは一括メールフォームの件名。</td></tr><tr><td>本文</td><td>必須</td><td>実装確認値（複数行入力）</td><td>空</td><td>一括メールの本文。送信時に使用する。複数行のテキスト入力。</td></tr></tbody></table></div>
-<p>選択会員IDは画面間で受け渡す。</p>
-<hr>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>更新単位</td><td>登録・編集・削除の対象データは、フォーム送信またはCSV取込で検証を通過した単位で更新する。保存対象と副作用は処理フロー、入出力、DBカラムの各節を正とする。</td></tr><tr><td>再表示</td><td>保存成功後はDBに確定した値を次回表示・検索・出力の基準にする。検証エラーまたは例外時に確定しない入力値は再表示画面のフォーム値に留まる。</td></tr><tr><td>同時更新</td><td>明示的な楽観ロック・悲観ロックを持たない場合、同一データを複数管理者が同時に更新すると後から保存された内容が残る。</td></tr></tbody></table></div>
-<hr>
-<h2 id="API-バッチ結果">API/バッチ結果</h2>
-<p>本機能ではAPI呼び出し・バッチ実行を扱わない。</p>
-<hr>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="送信対象の受け取り">送信対象の受け取り</h3>
+<p>一覧で選択した会員だけを対象とする。選択した会員IDは、入力・確認・送信の各画面へ引き継ぐ。</p>
+<p>会員IDを配列で受け取ったときは <code>,</code> で連結して 1 つの文字列にし、文字列で受け取ったときはそのまま引き継ぐ。次の画面では <code>,</code> で分解して会員を探す。</p>
+<h3 id="入力">入力</h3>
+<p>入力できるのは件名と本文だけである。テンプレートは使わず、入力した本文をそのまま送信する。件名と本文はどちらも必須で、値が空のときはエラーを表示する。</p>
+<p>確認画面では、入力した件名と本文を変更できない状態で表示する。確認画面から入力画面へ戻ったときは、入力した値のまま再表示する。</p>
+<h3 id="確認画面の表示">確認画面の表示</h3>
+<p>配信対象者として、分解したIDに一致する会員だけを会員IDと会員名の一覧にする。会員名は姓と名を空白 1 個でつないだ値とし、会員の編集画面への導線にする。</p>
+<p>一致する会員が無いIDは一覧に出ないため、引き継いだIDの件数と一覧の行数は一致しないときがある。</p>
+<h3 id="完了画面">完了画面</h3>
+<p>送信が終わったときは配信完了の案内だけを表示する。送信できた件数も、宛先の一覧も出さない。</p>
+<p>会員検索へ戻る導線は、セッションに保持した会員検索のページ番号へ戻る。保持していないときは 1 ページ目へ戻る。</p>
+<h3 id="送信">送信</h3>
+<p>分解したIDを 1 件ずつ処理し、会員 1 人につき 1 通だけ送信する。件名と本文は全員に同じ値を使い、会員ごとに差し込む値は無い。</p>
+<p>送信するときはフォームの検証を行わない。件名と本文が空のときも、確認画面を経ずに要求したときも、そのまま送信する。</p>
+<p>一致する会員が無いIDが含まれるときは、そのIDに達するまでに処理した会員へ送信したあと、処理が中断する。中断したときは、残りのIDへ送信しない。</p>
+<p>同じ会員IDを重ねて引き継いだときは、その回数だけ送信する。重複は取り除かない。</p>
+<p>会員を 1 件も選ばずに要求したときは空のIDだけが渡るため、1 通も送信せずに中断する。</p>
+<p>送信は 1 件ずつ順に行う。途中で中断したときも、先に送信した分は取り消せない。</p>
+<p>送信が終わったときは送信完了画面へ移る。送信できた件数も失敗した件数も画面に出さない。</p>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>件名・本文、選択会員ID、なりすまし対策トークン。</td></tr><tr><td>成功時出力</td><td>選択会員へのメール送信、完了画面。</td></tr><tr><td>失敗時出力</td><td>認証・権限不足時はアクセス不可。</td></tr><tr><td>副作用</td><td>メール送信、メール送信履歴の記録。</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<p>機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。</p>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>dtb_customer</code></td><td><code>id</code>、<code>email</code></td><td>選択会員の特定と宛先に使用する。</td></tr><tr><td><code>dtb_user_mail_history</code></td><td><code>customer_id</code>、<code>subject</code>、<code>mail_body</code>、<code>send_date</code>、<code>creator_id</code></td><td>送信の記録に使用する（ec-cube-enterprise を正とする。現行はプラグインのメール履歴）。</td></tr></tbody></table></div>
-<h3 id="DB操作">DB操作</h3>
-<p>永続化の正は ec-cube-enterprise（テーブル名・操作は ec-cube-enterprise を正典）。当ドメインは承認ワークフローを介さず persist/flush で直接確定する（承認ワークフローは在庫機能固有）。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>登録/更新</td><td>dtb_customer / dtb_user_mail_history</td><td>当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。</td></tr></tbody></table></div>
-<hr>
-<h2 id="権限・認可">権限・認可</h2>
-<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>メール一括送信</th></tr></thead><tbody><tr><td>未ログイン管理者</td><td>アクセス不可。</td></tr><tr><td>ログイン済み管理者</td><td>選択会員への一括送信が可能。</td></tr></tbody></table></div>
-<hr>
-<h2 id="画面遷移">画面遷移</h2>
-<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>会員選択・メール送信</td><td>入力画面（<code>admin_customer_mail</code>）</td></tr><tr><td>確認</td><td>確認画面（<code>m08-02_admin_customer_customer_mail_all_confirm</code>）</td></tr><tr><td>送信</td><td>送信実行（<code>m08-02_admin_customer_customer_mail_all_execute</code>）→ 完了画面（<code>m08-02_admin_customer_customer_mail_all_complete</code>）</td></tr></tbody></table></div>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>認証・権限不足</td><td>アクセス不可。</td></tr></tbody></table></div>
-<hr>
-<h2 id="ログ・監査">ログ・監査</h2>
-<div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>送信</td><td>メール送信履歴の記録。</td></tr></tbody></table></div>
-<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
-<ul><li>会員のメールアドレス等の機微値</li><li>Cookie値</li></ul>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<p>本機能はメール送信が主であり、楽観ロック・悲観ロックの対象は持たない。</p>
+<h3 id="出力-メール">出力: メール</h3>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>宛先</td><td>会員のメールアドレス</td></tr><tr><td>差出人</td><td>基本情報のメールアドレス1。表示名は基本情報の店名</td></tr><tr><td>BCC</td><td>基本情報のメールアドレス1</td></tr><tr><td>返信先</td><td>基本情報のメールアドレス3</td></tr><tr><td>送信エラーの戻り先</td><td>基本情報のメールアドレス4</td></tr><tr><td>件名</td><td>入力した件名</td></tr><tr><td>本文</td><td>入力した本文。ヘッダ・フッタの付加も差し込みもしない</td></tr></tbody></table></div>
+<p>メールの文字コード設定が <code>iso-2022-jp</code> のときは、本文を <code>iso-2022-jp</code> へ変換し、転送方式を <code>7bit</code> にする。設定していないときは変換も転送方式の指定もしない。</p>
+<h3 id="入出力-永続化">入出力: 永続化</h3>
+<div class="table-wrap"><table><thead><tr><th>操作</th><th>契機</th></tr></thead><tbody><tr><td>送信履歴の登録</td><td>1 通送信するたび。件名・本文・送信日時・宛先の会員を記録する</td></tr></tbody></table></div>
+<p>送信履歴にはテンプレートも作成者も記録しない。宛先に届かなかったときも送信履歴を登録し、送信の成否は履歴に持たない。記録する本文は文字コードを変換したあとの値とし、変換しない設定のときは入力したままの値になる。会員そのものは更新しない。</p>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
+<h2 id="表示メッセージ">表示メッセージ</h2>
+<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M08-02-MSG-001</td><td>画面中央(ダイアログ)</td><td>チェックボックスが選択されていません</td><td>メール送信対象の会員を選ばずに送信操作をしたとき</td><td>会員一覧画面に留まる</td></tr></tbody></table></div>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

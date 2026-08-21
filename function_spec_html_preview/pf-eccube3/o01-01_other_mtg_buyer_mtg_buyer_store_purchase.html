@@ -262,37 +262,21 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#本書で扱うこと">本書で扱うこと</a>
-<a class="lv2" href="#本書で扱わないこと">本書で扱わないこと</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv2" href="#用語">用語</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#フロント挙動">フロント挙動</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
+      <nav class="toc"><a class="lv2" href="#処理フロー">処理フロー</a>
 <a class="lv3" href="#店頭買取を受付する">店頭買取を受付する</a>
 <a class="lv3" href="#MTGバイヤーで査定を開始する">MTGバイヤーで査定を開始する</a>
 <a class="lv3" href="#MTGバイヤーで査定結果を確定する">MTGバイヤーで査定結果を確定する</a>
 <a class="lv3" href="#査定後の店頭買取業務へ進む">査定後の店頭買取業務へ進む</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
-<a class="lv3" href="#入力項目">入力項目</a>
-<a class="lv3" href="#エッジケース">エッジケース</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#バリデーション">バリデーション</a>
-<a class="lv2" href="#権限・認可">権限・認可</a>
-<a class="lv2" href="#画面遷移">画面遷移</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#試行制限">試行制限</a>
-<a class="lv2" href="#ログ・監査">ログ・監査</a>
-<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
-<a class="lv2" href="#セッション">セッション</a>
-<a class="lv2" href="#Cookie">Cookie</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a>
-<a class="lv2" href="#調査補助">調査補助</a></nav>
+<a class="lv3" href="#API-バッチ結果">API/バッチ結果</a>
+<a class="lv3" href="#ログ・監査">ログ・監査</a>
+<a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#業務ルール・計算">業務ルール・計算</a>
+<a class="lv3" href="#データ整合性">データ整合性</a>
+<a class="lv3" href="#権限・認可">権限・認可</a>
+<a class="lv3" href="#試行制限">試行制限</a>
+<a class="lv3" href="#排他制御・トランザクション">排他制御・トランザクション</a>
+<a class="lv2" href="#エラー処理">エラー処理</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -300,33 +284,7 @@ footer {
         <h1>o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）</h1>
       </header>
       
-      <h2 id="概要">概要</h2>
-<p>MTGバイヤーで店頭買取の査定を行う業務を、EC-CUBE側の店頭買取データ、管理画面、pf-api連携から見たリバース詳細設計である。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値は<code>../pf-eccube3</code>のHareruyaEcプラグインにある店頭買取業務資料、店頭買取フロント・管理画面、店頭買取API設計を正とする。本機能のカスタマイズ区分はカスタマイズであり、挙動はpf-eccube3（HareruyaEcプラグイン）の実装を参照し、DB関連（テーブル・列）の記述はec-cube-enterpriseを正とする。</p>
-<p>MTGバイヤー本体は本リポジトリ内に実装が無い外部アプリである。本書では外部アプリ内部の画面・UI・ローカル保存仕様は確定せず、EC-CUBE側で確認できる入口、API、DB更新、副作用を扱う。</p>
-<hr>
-<h2 id="本書で扱うこと">本書で扱うこと</h2>
-<ul><li>店頭買取の受付後、MTGバイヤーで査定を開始・入力・確定する業務境界</li><li>MTGバイヤーが利用する店頭買取APIの役割</li><li>査定結果がEC-CUBE側の店頭買取受注、明細、在庫、履歴、ステータスへ反映される範囲</li><li>リポジトリ内で確認できる管理画面・CSV・集計との整合</li></ul>
-<hr>
-<h2 id="本書で扱わないこと">本書で扱わないこと</h2>
-<p>以下は本書では仕様確定せず、外部アプリまたは別機能の設計を正とする。</p>
-<ul><li>MTGバイヤー本体の画面項目、ローカルDB、オフライン動作、バーコード読取、印刷の内部仕様</li><li>Backlog、Excelマクロ、スマレジ、店舗作業などリポジトリ外の運用</li><li>店頭買取申込フォームの詳細（F08-01〜F08-03を正とする）</li><li>店頭買取管理画面の検索・編集・CSV出力の詳細（M06系の各設計を正とする）</li><li>pf-api各エンドポイントのリクエスト・レスポンス詳細（A06系の各API設計を正とする）</li></ul>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<p>本機能はカスタマイズであり、挙動の参照は現行のpf-eccube3（HareruyaEcプラグイン）、DB関連の正はec-cube-enterpriseとする。店頭買取の各テーブルは現行と移行先で同名であり、本書が参照する範囲では同一スキーマである。移行先には現行に無い承認者テーブル（<code>dtb_otc_buy_order_approver</code>）が追加されているが、本書が扱う査定確定・ステータス更新・在庫反映の範囲には影響しない。</p>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th><th>扱い</th></tr></thead><tbody><tr><td>店頭買取受注</td><td><code>dtb_otc_buy_order</code></td><td><code>dtb_otc_buy_order</code></td><td>同名テーブル。査定確定・ステータス更新・買取合計金額の中心データ。</td></tr><tr><td>査定明細</td><td><code>dtb_otc_buy_order_detail</code></td><td><code>dtb_otc_buy_order_detail</code></td><td>同名テーブル。商品規格に紐づく明細。</td></tr><tr><td>個別入力商品</td><td><code>dtb_otc_buy_order_indivisual_input_product</code></td><td><code>dtb_otc_buy_order_indivisual_input_product</code></td><td>同名テーブル。商品規格に紐づかない明細。</td></tr><tr><td>店頭買取在庫</td><td><code>dtb_otc_buy_order_stock</code></td><td><code>dtb_otc_buy_order_stock</code></td><td>同名テーブル。商品規格単位の在庫。</td></tr><tr><td>在庫履歴</td><td><code>dtb_otc_buy_order_stock_history</code></td><td><code>dtb_otc_buy_order_stock_history</code></td><td>同名テーブル。在庫作成時の履歴。</td></tr><tr><td>ステータス変更履歴</td><td><code>dtb_otc_buy_order_status_history</code></td><td><code>dtb_otc_buy_order_status_history</code></td><td>同名テーブル。ステータス変更時の履歴。</td></tr><tr><td>ステータスマスタ</td><td><code>mtb_otc_buy_order_status</code></td><td><code>mtb_otc_buy_order_status</code></td><td>同名テーブル。ステータス存在確認・一覧抽出・表示に用いる。</td></tr><tr><td>承認者</td><td>（無し）</td><td><code>dtb_otc_buy_order_approver</code></td><td>移行先で追加された承認者テーブル。本書では扱わない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="用語">用語</h2>
-<div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>MTGバイヤー</td><td>店頭買取・ネット買取の査定作業に使う外部アプリ。EC-CUBEとはpf-api経由で連携する。</td></tr><tr><td>店頭買取受注</td><td>店頭で受け付けた買取申込。EC-CUBE側では<code>dtb_otc_buy_order</code>を中心に管理する。</td></tr><tr><td>査定対象</td><td>店頭買取ステータスが商品到着、査定中、振込前、保留、査定再開など、MTGバイヤーで扱う対象となる受注。</td></tr><tr><td>査定明細</td><td>MTGバイヤーで入力・確定する商品、数量、買取単価、販売価格、部門などの明細。商品規格に紐づく明細と個別入力商品に分かれる。</td></tr><tr><td>店頭買取ステータス</td><td>店頭買取の進行状態。査定前、査定中、買取成立、買取キャンセル、ダブルチェック済、データ出力済などを持つ。</td></tr></tbody></table></div>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>MTGバイヤーでログインする</td><td><code>POST /admin/login.json</code></td><td>管理者認証に成功すると、以降の店頭買取APIで使う認証トークンを返す。</td></tr><tr><td>MTGバイヤーで査定対象を取得する</td><td><code>GET /admin/otcBuyOrders.json</code>、<code>GET /admin/otcBuyOrders</code></td><td>査定対象の店頭買取受注一覧を取得する。認証管理者に所属店舗がある場合はその店舗に絞る。</td></tr><tr><td>MTGバイヤーで査定結果を確定する</td><td><code>PUT /admin/otcBuyOrder/{id}.json</code></td><td>受注の既存明細・個別入力商品・在庫・在庫履歴を作り直し、ステータス、買取合計金額、査定担当者、更新日時などを保存する。</td></tr><tr><td>MTGバイヤーでステータスを更新する</td><td><code>PUT /admin/otcBuyOrder/{id}/status.json</code></td><td>店頭買取受注のステータス、査定担当者、更新日時を保存し、ステータス変更履歴を登録する。</td></tr><tr><td>MTGバイヤーでフリーコメントを更新する</td><td><code>PUT /admin/otcBuyOrder/{id}/free_comment.json</code>、<code>PUT /admin/otcBuyOrder/{id}/free_comment</code></td><td>店頭買取受注のフリーコメントを保存する。</td></tr><tr><td>MTGバイヤーで本人確認状態を更新する</td><td><code>PUT /admin/otcBuyOrder/{id}/identification.json</code></td><td>店頭買取受注に紐づく本人確認情報を更新する。</td></tr><tr><td>MTGバイヤーで買取用商品情報を検索・取得する</td><td>A06系の商品検索・商品取得API</td><td>査定入力に使う商品、カード、部門、固定価格部門などの情報を取得する。</td></tr></tbody></table></div>
-<p>応答形式はJSONである。MTGバイヤー本体の画面URLは本リポジトリ内に存在しないため、本書ではEC-CUBE側APIを利用者視点の入口として扱う。</p>
-<hr>
-<h2 id="フロント挙動">フロント挙動</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>MTGバイヤー本体の表示要素はリポジトリ外のため本書では仕様確定しない。EC-CUBE側で確認できる表示は、店頭買取申込画面、店頭買取管理画面、店頭買取履歴・集計・CSV出力である。</td></tr><tr><td>JS挙動</td><td>MTGバイヤー本体のJavaScript挙動は本書では扱わない。EC-CUBE管理画面の動的挙動はM06系の各設計を正とする。</td></tr><tr><td>フロントエンド側ビジネスロジック</td><td>MTGバイヤー本体で商品検索、査定明細入力、数量・価格入力、ステータス操作を行う想定だが、内部計算や入力補助は本書では仕様確定しない。EC-CUBE側ではAPIで受け取った明細から買取合計金額と在庫数量をサーバ側で再計算する。</td></tr><tr><td>モーダル・ポップアップ</td><td>MTGバイヤー本体のモーダルは扱わない。EC-CUBE側のポップアップ用商品・カード情報取得APIはA02系、買取用商品情報取得APIはA06系を正とする。</td></tr></tbody></table></div>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
+      <h2 id="処理フロー">処理フロー</h2>
 <h3 id="店頭買取を受付する">店頭買取を受付する</h3>
 <ol><li>フロントの店頭買取申込で、会員または非会員が申込情報を入力する。</li><li>申込確定時に店頭買取受注を作成し、査定番号を採番する。</li><li>店頭買取ステータスは査定前として登録される。</li><li>受付時の本人確認、買取品の預かり、身分証コピーなどの実作業は運用で行う。</li></ol>
 <h3 id="MTGバイヤーで査定を開始する">MTGバイヤーで査定を開始する</h3>
@@ -336,61 +294,40 @@ footer {
 <h3 id="査定後の店頭買取業務へ進む">査定後の店頭買取業務へ進む</h3>
 <ol><li>査定結果を顧客と確認する。</li><li>買取キャンセルの場合はステータスを買取キャンセルへ更新する。</li><li>買取成立の場合はステータスを買取成立へ更新する。</li><li>EC-CUBE管理画面では、買取一覧、買取詳細、買取商品履歴、買取集計、古物台帳用CSV、在庫登録用CSVなどで確定済みデータを参照・出力する。</li><li>バーコード印刷、Backlog起票、スマレジ、仕入れ作業などはリポジトリ外の運用を正とする。</li></ol>
 <hr>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>査定対象の抽出</td><td>店頭買取受注一覧取得APIは、商品到着、査定中、振込前、保留、査定再開の状態にある受注を対象にする。成立、キャンセル、ダブルチェック済、データ出力済などは査定対象一覧から外れる。</td></tr><tr><td>店舗絞り込み</td><td>認証した管理者に所属店舗がある場合は、その店舗に一致する店頭買取受注だけを返す。所属店舗が無い場合は店舗で絞り込まない。</td></tr><tr><td>明細の全置換</td><td>査定結果確定APIは、既存の明細・個別入力商品・在庫・在庫履歴を削除して、送信された明細で作り直す。送信されなかった既存明細は残らない。</td></tr><tr><td>個別入力商品の扱い</td><td>商品規格IDが空の明細は個別入力商品として登録する。商品規格に紐づかないため、商品規格単位の在庫集計には含めない。</td></tr><tr><td>買取合計金額</td><td>送信明細の買取単価×数量を合算し、10円単位へ切り上げる。MTGバイヤー側の表示値ではなく、EC-CUBE側保存処理で再計算した値を保存する。</td></tr><tr><td>在庫数量</td><td>商品規格に紐づく明細を商品規格ごとに集計し、同一商品規格の数量を合算して店頭買取受注在庫と在庫履歴を作成する。</td></tr><tr><td>ステータス変更履歴</td><td>更新前後でステータスが異なる場合に履歴を登録する。同じステータスへの詳細更新では明細・在庫は作り直すが、ステータス変更履歴は追加しない。</td></tr><tr><td>外部運用</td><td>査定表印刷、本人確認の実作業、出金、バーコード印刷、Backlog、スマレジ、仕入れ統合作業はEC-CUBE側で確認できる範囲外の運用を正とする。</td></tr></tbody></table></div>
-<h3 id="入力項目">入力項目</h3>
-<div class="table-wrap"><table><thead><tr><th>項目名</th><th>必須／任意</th><th>最大長</th><th>初期値</th><th>保存先・扱い</th></tr></thead><tbody><tr><td>認証トークン</td><td>必須</td><td>API認証仕様に従う</td><td>ログインAPIの成功結果</td><td>各APIの<code>jwt-token</code>ヘッダ。原値は本書に記載しない。</td></tr><tr><td>店頭買取受注ID</td><td>必須</td><td>整数</td><td>査定対象一覧から選択</td><td>店頭買取受注の特定に用いる。該当なしはHTTP 404相当。</td></tr><tr><td>ステータス</td><td>必須</td><td>整数</td><td>API呼び出し元の指定値</td><td>店頭買取ステータスマスタに存在するIDのみ受け付ける。</td></tr><tr><td>査定明細</td><td>必須</td><td>配列。商品名はAPI設計の上限に従う</td><td>MTGバイヤーで入力</td><td>商品規格ID、商品名、数量、買取単価、販売価格、部門を受け取り、明細・個別入力商品・在庫へ反映する。</td></tr><tr><td>フリーコメント</td><td>任意</td><td>API設計の上限に従う</td><td>既存値または空</td><td>店頭買取受注のフリーコメントへ保存する。</td></tr><tr><td>本人確認情報</td><td>任意</td><td>API設計の上限に従う</td><td>既存値</td><td>店頭買取受注に紐づく本人確認状態を更新する。</td></tr></tbody></table></div>
-<h3 id="エッジケース">エッジケース</h3>
-<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>認証不可</td><td>APIは認証拒否とし、店頭買取データを返さず更新しない。</td></tr><tr><td>査定対象が0件</td><td>店頭買取受注一覧取得APIは空配列を返す。</td></tr><tr><td>受注IDが存在しない</td><td>詳細更新、ステータス更新、コメント更新、本人確認更新は該当なしとして扱う。</td></tr><tr><td>明細が空</td><td>詳細更新APIは入力不正とし、既存明細・在庫を削除しない。</td></tr><tr><td>同じステータスで詳細更新</td><td>明細・個別入力商品・在庫・在庫履歴は送信内容で作り直す。ステータス変更履歴は追加しない。</td></tr><tr><td>同時更新</td><td>専用の楽観ロック・悲観ロックは持たない。後から確定した更新が残る。</td></tr></tbody></table></div>
-<hr>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>参照時点</td><td>MTGバイヤーの一覧取得、商品情報取得、管理画面の一覧・詳細・CSVは、それぞれ実行時点で永続化済みのデータを参照する。</td></tr><tr><td>査定結果と管理画面</td><td>MTGバイヤーで確定した受注明細、個別入力商品、在庫、在庫履歴、ステータス、査定担当者、更新日時は、保存成功後に管理画面の店頭買取詳細・履歴・CSVの参照元になる。</td></tr><tr><td>在庫と履歴</td><td>詳細更新時に商品規格ごとの数量で店頭買取受注在庫を作り直し、対応する在庫履歴を登録する。既存在庫・履歴は削除後に再作成される。</td></tr><tr><td>ステータスと集計</td><td>買取成立、ダブルチェック済、データ出力済など集計対象のステータスへ変わると、店頭買取集計やCSV出力の対象になる。集計処理の詳細はM06系およびバッチ設計を正とする。</td></tr><tr><td>外部運用との整合</td><td>Backlog、スマレジ、Excelマクロ、バーコード印刷は本リポジトリ内で直接整合を保証しない。EC-CUBE側で出力したCSVや確定済みデータを運用で利用する。</td></tr><tr><td>同時更新</td><td>DB行ロックを使った査定占有は確認できない。同一受注を複数の利用者・APIが同時に更新した場合、後から保存された内容が残る。</td></tr></tbody></table></div>
-<hr>
-<h2 id="API-バッチ結果">API/バッチ結果</h2>
+<h2 id="入出力">入出力</h2>
+<h3 id="API-バッチ結果">API/バッチ結果</h3>
 <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>API</td><td>MTGバイヤーはpf-apiのA06系APIを利用する。ログイン、店頭買取受注一覧取得、詳細更新、コメント更新、ステータス更新、本人確認更新、商品検索・商品取得が主な接続点である。</td></tr><tr><td>成功結果</td><td>参照APIはJSONで対象データを返す。更新APIは対象データを保存し、成功コードまたは更新結果を返す。</td></tr><tr><td>失敗結果</td><td>認証不可、対象なし、入力不正、保存例外は各API設計のHTTPステータスと本文形式に従う。</td></tr><tr><td>バッチ</td><td>店頭買取集計は<code>otcBuyOrder:batch updateSummary</code>で実行される。MTGバイヤー本体が直接バッチを起動する仕様は確認できない。</td></tr><tr><td>再実行時</td><td>参照APIは実行時点の最新データを返す。詳細更新APIは明細・在庫を全置換するため、同じ受注に再送すると送信内容で上書きされる。</td></tr></tbody></table></div>
 <hr>
-<h2 id="入出力">入出力</h2>
 <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>認証トークン、店頭買取受注ID、ステータスID、査定明細、コメント、本人確認情報、商品検索条件など。</td></tr><tr><td>成功時出力</td><td>JSON応答、店頭買取受注の更新、明細・個別入力商品・在庫・在庫履歴の作成、ステータス変更履歴の作成。</td></tr><tr><td>失敗時出力</td><td>認証拒否、該当なし、入力不正、処理失敗のJSON応答。保存前の検証エラーではDB更新を行わない。</td></tr><tr><td>副作用</td><td>DB更新、ステータス変更履歴、在庫履歴、管理画面・CSV・集計への反映。外部運用への直接連携は本書では確認できない。</td></tr></tbody></table></div>
 <hr>
-<h2 id="DBカラム">DBカラム</h2>
-<p>機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。</p>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>dtb_otc_buy_order</code></td><td>店頭買取受注ID、査定ID、店頭買取ステータスID、買取合計金額、査定担当者、更新日時、成立日時、キャンセル日時、フリーコメント、本人確認関連項目</td><td>MTGバイヤーの対象受注、ステータス更新、査定結果確定の中心データ。</td></tr><tr><td><code>dtb_otc_buy_order_detail</code></td><td>店頭買取受注ID、商品規格、数量、単価、販売価格、部門</td><td>商品規格に紐づく査定明細。詳細更新時に作り直す。</td></tr><tr><td><code>dtb_otc_buy_order_indivisual_input_product</code></td><td>店頭買取受注ID、商品名、数量、単価、販売価格、部門</td><td>商品規格に紐づかない個別入力商品。詳細更新時に作り直す。</td></tr><tr><td><code>dtb_otc_buy_order_stock</code></td><td>店頭買取受注ID、商品規格、数量</td><td>商品規格単位に集計した店頭買取在庫。</td></tr><tr><td><code>dtb_otc_buy_order_stock_history</code></td><td>店頭買取在庫ID、更新後数量、登録者、登録日時</td><td>在庫作成時の履歴。</td></tr><tr><td><code>dtb_otc_buy_order_status_history</code></td><td>店頭買取受注ID、ステータスID、更新担当者、登録日時</td><td>ステータス変更時の履歴。</td></tr><tr><td><code>mtb_otc_buy_order_status</code></td><td>ステータスID、名称</td><td>ステータス存在確認、一覧抽出、表示に使う。</td></tr></tbody></table></div>
-<h3 id="DB操作">DB操作</h3>
-<p>永続化の正は ec-cube-enterprise（テーブル名・操作は ec-cube-enterprise を正典）。当ドメインは承認ワークフローを介さず persist/flush で直接確定する（承認ワークフローは在庫機能固有）。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>登録/更新</td><td>dtb_otc_buy_order / dtb_otc_buy_order_detail / dtb_otc_buy_order_indivisual_input_product / dtb_otc_buy_order_status_history / dtb_otc_buy_order_stock / dtb_otc_buy_order_stock_history 等</td><td>当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。</td></tr></tbody></table></div>
+<h3 id="ログ・監査">ログ・監査</h3>
+<div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>ステータス変更</td><td>店頭買取ステータス変更履歴に受注ID、更新後ステータス、更新担当者、登録日時を記録する。</td></tr><tr><td>詳細更新</td><td>店頭買取在庫履歴に更新後数量、登録者、登録日時を記録する。</td></tr><tr><td>APIエラー</td><td>アプリケーションの共通ログ方針に従う。</td></tr></tbody></table></div>
+<h4 id="ログに出してはいけないもの">ログに出してはいけないもの</h4>
+<ul><li>JWTトークンの原値</li><li>署名シークレット</li><li>パスワード</li><li>Cookie値</li><li>セッションIDの完全値</li><li>本人確認画像や個人情報の不要な全文</li></ul>
 <hr>
-<h2 id="バリデーション">バリデーション</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>認証</td><td><code>jwt-token</code>ヘッダのJWTを検証し、管理者会員を特定する。失敗時は処理を行わない。</td></tr><tr><td>店頭買取受注ID</td><td>対象受注が存在すること。存在しない場合は該当なし。</td></tr><tr><td>ステータス</td><td>店頭買取ステータスマスタに存在すること。存在しない場合は入力不正。</td></tr><tr><td>査定明細</td><td>1件以上であること。商品名、数量、価格、部門、商品規格IDなどの形式は店頭買取受注詳細更新APIの検証に従う。</td></tr><tr><td>商品・部門</td><td>商品規格IDや部門IDが送信された場合、存在するデータだけを関連付ける。存在しない場合の扱いはAPI設計を正とする。</td></tr></tbody></table></div>
+<h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="業務ルール・計算">業務ルール・計算</h3>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>査定対象の抽出</td><td>店頭買取受注一覧取得APIは、商品到着、査定中、振込前、保留、査定再開の状態にある受注を対象にする。成立、キャンセル、ダブルチェック済、データ出力済などは査定対象一覧から外れる。</td></tr><tr><td>店舗絞り込み</td><td>認証した管理者に所属店舗がある場合は、その店舗に一致する店頭買取受注だけを返す。所属店舗が無い場合は店舗で絞り込まない。</td></tr><tr><td>明細の全置換</td><td>査定結果確定APIは、既存の明細・個別入力商品・在庫・在庫履歴を削除して、送信された明細で作り直す。送信されなかった既存明細は残らない。</td></tr><tr><td>個別入力商品の扱い</td><td>商品規格IDが空の明細は個別入力商品として登録する。商品規格に紐づかないため、商品規格単位の在庫集計には含めない。</td></tr><tr><td>買取合計金額</td><td>送信明細の買取単価×数量を合算し、10円単位へ切り上げる。MTGバイヤー側の表示値ではなく、EC-CUBE側保存処理で再計算した値を保存する。</td></tr><tr><td>在庫数量</td><td>商品規格に紐づく明細を商品規格ごとに集計し、同一商品規格の数量を合算して店頭買取受注在庫と在庫履歴を作成する。</td></tr><tr><td>ステータス変更履歴</td><td>更新前後でステータスが異なる場合に履歴を登録する。同じステータスへの詳細更新では明細・在庫は作り直すが、ステータス変更履歴は追加しない。</td></tr><tr><td>外部運用</td><td>査定表印刷、本人確認の実作業、出金、バーコード印刷、Backlog、スマレジ、仕入れ統合作業はEC-CUBE側で確認できる範囲外の運用を正とする。</td></tr></tbody></table></div>
+<h4 id="入力項目">入力項目</h4>
+<div class="table-wrap"><table><thead><tr><th>項目名</th><th>必須／任意</th><th>最大長</th><th>初期値</th><th>保存先・扱い</th></tr></thead><tbody><tr><td>認証トークン</td><td>必須</td><td>API認証仕様に従う</td><td>ログインAPIの成功結果</td><td>各APIの<code>jwt-token</code>ヘッダ。原値は本書に記載しない。</td></tr><tr><td>店頭買取受注ID</td><td>必須</td><td>整数</td><td>査定対象一覧から選択</td><td>店頭買取受注の特定に用いる。該当なしはHTTP 404相当。</td></tr><tr><td>ステータス</td><td>必須</td><td>整数</td><td>API呼び出し元の指定値</td><td>店頭買取ステータスマスタに存在するIDのみ受け付ける。</td></tr><tr><td>査定明細</td><td>必須</td><td>配列。商品名はAPI設計の上限に従う</td><td>MTGバイヤーで入力</td><td>商品規格ID、商品名、数量、買取単価、販売価格、部門を受け取り、明細・個別入力商品・在庫へ反映する。</td></tr><tr><td>フリーコメント</td><td>任意</td><td>API設計の上限に従う</td><td>既存値または空</td><td>店頭買取受注のフリーコメントへ保存する。</td></tr><tr><td>本人確認情報</td><td>任意</td><td>API設計の上限に従う</td><td>既存値</td><td>店頭買取受注に紐づく本人確認状態を更新する。</td></tr></tbody></table></div>
+<h4 id="エッジケース">エッジケース</h4>
+<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>認証不可</td><td>APIは認証拒否とし、店頭買取データを返さず更新しない。</td></tr><tr><td>査定対象が0件</td><td>店頭買取受注一覧取得APIは空配列を返す。</td></tr><tr><td>受注IDが存在しない</td><td>詳細更新、ステータス更新、コメント更新、本人確認更新は該当なしとして扱う。</td></tr><tr><td>明細が空</td><td>詳細更新APIは入力不正とし、既存明細・在庫を削除しない。</td></tr><tr><td>同じステータスで詳細更新</td><td>明細・個別入力商品・在庫・在庫履歴は送信内容で作り直す。ステータス変更履歴は追加しない。</td></tr><tr><td>同時更新</td><td>専用の楽観ロック・悲観ロックは持たない。後から確定した更新が残る。</td></tr></tbody></table></div>
 <hr>
-<h2 id="権限・認可">権限・認可</h2>
+<h3 id="データ整合性">データ整合性</h3>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>参照時点</td><td>MTGバイヤーの一覧取得、商品情報取得、管理画面の一覧・詳細・CSVは、それぞれ実行時点で永続化済みのデータを参照する。</td></tr><tr><td>査定結果と管理画面</td><td>MTGバイヤーで確定した受注明細、個別入力商品、在庫、在庫履歴、ステータス、査定担当者、更新日時は、保存成功後に管理画面の店頭買取詳細・履歴・CSVの参照元になる。</td></tr><tr><td>在庫と履歴</td><td>詳細更新時に商品規格ごとの数量で店頭買取受注在庫を作り直し、対応する在庫履歴を登録する。既存在庫・履歴は削除後に再作成される。</td></tr><tr><td>ステータスと集計</td><td>買取成立、ダブルチェック済、データ出力済など集計対象のステータスへ変わると、店頭買取集計やCSV出力の対象になる。集計処理の詳細はM06系およびバッチ設計を正とする。</td></tr><tr><td>外部運用との整合</td><td>Backlog、スマレジ、Excelマクロ、バーコード印刷は本リポジトリ内で直接整合を保証しない。EC-CUBE側で出力したCSVや確定済みデータを運用で利用する。</td></tr><tr><td>同時更新</td><td>DB行ロックを使った査定占有は確認できない。同一受注を複数の利用者・APIが同時に更新した場合、後から保存された内容が残る。</td></tr></tbody></table></div>
+<hr>
+<h3 id="権限・認可">権限・認可</h3>
 <div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>店頭買取査定</th></tr></thead><tbody><tr><td>認証済みの管理者会員</td><td>MTGバイヤーからA06系APIを呼び出せる。査定結果確定時は査定担当者として記録される。</td></tr><tr><td>店舗に紐づく管理者会員</td><td>店頭買取受注一覧取得では所属店舗の受注に絞り込まれる。</td></tr><tr><td>店舗に紐づかない管理者会員</td><td>店頭買取受注一覧取得では店舗による絞り込みを行わない。</td></tr><tr><td>未認証・トークン不正</td><td>APIは認証拒否となり、参照・更新できない。</td></tr></tbody></table></div>
 <hr>
-<h2 id="画面遷移">画面遷移</h2>
-<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>MTGバイヤーでログイン成功</td><td>MTGバイヤー側の査定対象一覧へ進む想定。外部アプリ内遷移は本書では仕様確定しない。</td></tr><tr><td>査定対象を選択</td><td>MTGバイヤー側の査定入力へ進む想定。EC-CUBE側では対象受注の詳細更新APIを受け付ける。</td></tr><tr><td>査定結果確定成功</td><td>MTGバイヤー側の完了または一覧へ戻る想定。EC-CUBE側ではDB更新が確定し、管理画面・CSV・集計の参照元になる。</td></tr><tr><td>入力不正・認証不可</td><td>MTGバイヤー側でエラー表示する想定。EC-CUBE側はAPIエラー応答を返す。</td></tr></tbody></table></div>
+<h3 id="試行制限">試行制限</h3>
+<p>本機能固有の試行制限は本書では仕様確定しない。API認証の失敗扱い、ログイン制限、外部アプリ側のリトライ制御は各APIおよびMTGバイヤー側を正とする。</p>
+<hr>
+<h3 id="排他制御・トランザクション">排他制御・トランザクション</h3>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>トランザクション境界</td><td>店頭買取受注詳細更新APIは、既存明細・在庫の削除、明細・在庫・履歴の登録、受注更新、ステータス履歴登録を一連の保存処理として扱う。保存処理中の例外では未確定更新をロールバックする。</td></tr><tr><td>ロック</td><td>査定対象受注に対する行ロック・悲観ロック・楽観ロック・ロックファイルは確認できない。査定中などのステータスは業務上の状態であり、DBレベルの占有ロックではない。</td></tr><tr><td>例外時</td><td>検証エラーでは削除・登録・更新を開始しない。保存処理中の例外ではトランザクション内の未確定更新をロールバックする。</td></tr><tr><td>同時更新</td><td>同一受注を複数のMTGバイヤーまたは管理画面から同時更新した場合、後から確定した保存内容が残る。</td></tr></tbody></table></div>
 <hr>
 <h2 id="エラー処理">エラー処理</h2>
 <div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>認証不可</td><td>APIは認証拒否を返し、店頭買取データを返さず更新しない。</td></tr><tr><td>受注が存在しない</td><td>該当なしとして返し、更新しない。</td></tr><tr><td>ステータス不正</td><td>入力不正として返し、更新しない。</td></tr><tr><td>明細不正</td><td>入力不正として返し、既存明細・在庫を削除しない。</td></tr><tr><td>保存処理中の例外</td><td>APIの共通例外処理に従う。トランザクション内の未確定更新はロールバックする。</td></tr><tr><td>外部運用の失敗</td><td>Backlog、スマレジ、Excelマクロ、バーコード印刷などは本書では処理結果を保証しない。各運用を正とする。</td></tr></tbody></table></div>
 <hr>
-<h2 id="試行制限">試行制限</h2>
-<p>本機能固有の試行制限は本書では仕様確定しない。API認証の失敗扱い、ログイン制限、外部アプリ側のリトライ制御は各APIおよびMTGバイヤー側を正とする。</p>
-<hr>
-<h2 id="ログ・監査">ログ・監査</h2>
-<div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>ステータス変更</td><td>店頭買取ステータス変更履歴に受注ID、更新後ステータス、更新担当者、登録日時を記録する。</td></tr><tr><td>詳細更新</td><td>店頭買取在庫履歴に更新後数量、登録者、登録日時を記録する。</td></tr><tr><td>APIエラー</td><td>アプリケーションの共通ログ方針に従う。</td></tr></tbody></table></div>
-<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
-<ul><li>JWTトークンの原値</li><li>署名シークレット</li><li>パスワード</li><li>Cookie値</li><li>セッションIDの完全値</li><li>本人確認画像や個人情報の不要な全文</li></ul>
-<hr>
-<h2 id="セッション">セッション</h2>
-<p>MTGバイヤー連携APIはJWTヘッダで認証する。EC-CUBE管理画面やフロント店頭買取申込のセッションは各画面設計を正とし、本書ではMTGバイヤー本体のセッション保存仕様を扱わない。</p>
-<hr>
-<h2 id="Cookie">Cookie</h2>
-<p>MTGバイヤー本体のCookie仕様は本書では扱わない。pf-api連携では<code>jwt-token</code>ヘッダを認証に使い、Cookie値の原値は設計書に記載しない。</p>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>トランザクション境界</td><td>店頭買取受注詳細更新APIは、既存明細・在庫の削除、明細・在庫・履歴の登録、受注更新、ステータス履歴登録を一連の保存処理として扱う。保存処理中の例外では未確定更新をロールバックする。</td></tr><tr><td>ロック</td><td>査定対象受注に対する行ロック・悲観ロック・楽観ロック・ロックファイルは確認できない。査定中などのステータスは業務上の状態であり、DBレベルの占有ロックではない。</td></tr><tr><td>例外時</td><td>検証エラーでは削除・登録・更新を開始しない。保存処理中の例外ではトランザクション内の未確定更新をロールバックする。</td></tr><tr><td>同時更新</td><td>同一受注を複数のMTGバイヤーまたは管理画面から同時更新した場合、後から確定した保存内容が残る。</td></tr></tbody></table></div>
-<hr>
-<h2 id="調査補助">調査補助</h2>
-<p>本文の主説明ではなく、実装照合用の所在を示す。</p>
-<ul><li><code>../pf-eccube3/.cursor/docs/business/store-buyback-flow.md</code></li><li><code>../pf-eccube3/.cursor/docs/business/store-buyback-features.md</code></li><li><code>../pf-eccube3/app/Plugin/HareruyaEc/Controller/OtcBuyController.php</code></li><li><code>../pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/OtcBuyOrder/OtcBuyOrderController.php</code></li><li><code>../pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/OtcBuyOrder/OtcBuyOrderStatusController.php</code></li><li><code>../pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/OtcBuyOrderServiceProvider.php</code></li><li><code>../pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/OtcBuyOrderCsv.php</code></li><li><code>.cursor/design/functions/pf-api/a06-01_api_store_purchase_admin_login.md</code></li><li><code>.cursor/design/functions/pf-api/a06-02_api_store_purchase_otc_buy_order_list.md</code></li><li><code>.cursor/design/functions/pf-api/a06-03_api_store_purchase_otc_buy_order_update.md</code></li><li><code>.cursor/design/functions/pf-api/a06-05_api_store_purchase_otc_buy_order_status.md</code></li><li><code>.cursor/design/functions/pf-api/a06-04_api_store_purchase_otc_buy_order_free_comment.md</code></li><li><code>.cursor/design/functions/pf-api/a06-13_api_store_purchase_otc_buy_order_identification.md</code></li></ul>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

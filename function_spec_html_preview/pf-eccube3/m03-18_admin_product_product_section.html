@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,39 +272,15 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#フロント挙動">フロント挙動</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#新規画面を表示する-GET-m03-18-admin-product-product-section">新規画面を表示する（GET `m03-18_admin_product_product_section`）</a>
-<a class="lv3" href="#編集画面を表示する-GET-m03-18-admin-product-product-section-edit">編集画面を表示する（GET `m03-18_admin_product_product_section_edit`）</a>
-<a class="lv3" href="#登録・更新する-POST-m03-18-admin-product-product-section-store">登録・更新する（POST `m03-18_admin_product_product_section_store`）</a>
-<a class="lv2" href="#フォーム送信時の判定順序">フォーム送信時の判定順序</a>
-<a class="lv2" href="#集計条件">集計条件</a>
-<a class="lv2" href="#表示メッセージ">表示メッセージ</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
-<a class="lv3" href="#入力項目">入力項目</a>
-<a class="lv3" href="#エッジケース">エッジケース</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#画面の構成">画面の構成</a>
+<a class="lv3" href="#保存の判定順序">保存の判定順序</a>
+<a class="lv3" href="#更新する項目">更新する項目</a>
+<a class="lv3" href="#エラー時の扱い">エラー時の扱い</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#バリデーション">バリデーション</a>
-<a class="lv2" href="#権限・認可">権限・認可</a>
-<a class="lv2" href="#画面遷移">画面遷移</a>
-<a class="lv3" href="#遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#試行制限">試行制限</a>
-<a class="lv2" href="#ログ・監査">ログ・監査</a>
-<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
-<a class="lv2" href="#セッション">セッション</a>
-<a class="lv3" href="#セッションへ保存しない情報">セッションへ保存しない情報</a>
-<a class="lv2" href="#Cookie">Cookie</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a>
-<a class="lv2" href="#調査補助-grep-向け">調査補助（grep 向け）</a>
-<a class="lv3" href="#HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</a></nav>
+<a class="lv3" href="#入出力-永続化">入出力: 永続化</a>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -302,105 +288,27 @@ footer {
         <h1>商品管理 — 部門登録/編集</h1>
       </header>
       
-      <h2 id="概要">概要</h2>
-<p>管理画面「商品管理」配下の「部門登録／編集」は、<code>mtb_section</code> を一覧し、同一画面上部のフォームで新規登録または既存行の編集を行い、下部に部門コード昇順の一覧を表示する機能である。送信に成功すると一覧のみが再表示され、画面上部のフォームは新規登録向けに戻る。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。実装の確認値は ec-cube-enterprise コアの管理画面部門ルート（<code>Controller/Admin/Product</code> 配下）、部門用フォーム定義（<code>Form/Type/Admin/ProductDepartmentType.php</code>）、テンプレート <code>section.twig</code>、永続化先 <code>mtb_section</code> とする。本ドキュメントは設計資産として <code>pf-eccube3</code> 配下に置く。</p>
-<p>本機能のカスタマイズ区分はカスタマイズである。挙動の参照は現行リポ pf-eccube3 の HareruyaEc プラグイン実装を正とし、DB関連は ec-cube-enterprise を正とする。現行と移行先のスキーマ差は「リニューアル移行時の扱い」へ集約する。</p>
-<p>対象はブラウザ経由の管理画面に限定する。</p>
-<p>本文では Symfony のコントローラ型名やメソッド名を主説明としない。本文ではルートbind名やSymfonyのルートnameの網羅は主説明としない。「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。コード探索でbind名が必要なときだけ「調査補助」へ書く。</p>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<p>DB関連の正典は ec-cube-enterprise とする。挙動は現行リポ pf-eccube3 の HareruyaEc プラグインを正とし、移行先との差は本節へ集約する。</p>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>部門マスタの列構成</td><td><code>mtb_section</code> は部門ID・部門名（<code>name</code> 128）・部門コード（<code>code</code> 128）・表示フラグ（<code>visible</code>）のみを持つ。免税区分・スマレジ部門IDの列は無い。</td><td><code>mtb_section</code> に免税区分（<code>tax_free_division</code>、既定 0）とスマレジ部門ID（<code>smaregi_category_id</code>、32 桁、null 許容）が加わる。</td></tr><tr><td>本書が扱う免税区分・スマレジ連携</td><td>現行では免税区分入力・スマレジ部門 upsert は当画面の対象外。</td><td>移行先で確定する仕様であり、本書の入力項目・DBカラム・副作用は移行先の列名（<code>tax_free_division</code>／<code>smaregi_category_id</code>）を正とする。</td></tr><tr><td>削除時の参照判定</td><td>現行は商品規格サブ等の参照有無で削除可否を判定する。</td><td>移行先は商品規格（<code>dtb_product_class</code>）の参照有無で判定する。</td></tr><tr><td>削除方式・並び順</td><td>部門は物理削除、一覧は部門コード（<code>code</code>）昇順。両者で同じ。</td><td>同左。</td></tr></tbody></table></div>
-<p><code>mtb_section</code> の <code>name</code>／<code>code</code>／<code>visible</code> の列名・桁は現行と移行先で同一スキーマである（追加列を除く）。</p>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>ナビ「部門登録／編集」</td><td><code>GET /{admin_route}/product/section</code></td><td>上部に新規フォーム、下部に一覧。</td></tr><tr><td>一覧の ID・部門名・「編集」</td><td><code>GET /{admin_route}/product/section/{id}</code></td><td>該当部門がフォームに読み込まれる。</td></tr><tr><td>「登録」ボタン（新規）</td><td><code>POST /{admin_route}/product/section/store</code>（パス末尾の <code>/{id}</code> は付けない実装）</td><td>検証成功時は保存し、成功メッセージの後に <code>GET …/product/section</code> へ移る。</td></tr><tr><td>「登録」ボタン（編集モード）</td><td><code>POST /{admin_route}/product/section/store/{id}</code></td><td>同上。保存対象は当該 <code>id</code> の行。</td></tr><tr><td>CSV 出力／CSV 取込リンク</td><td><code>GET</code> 各別ルート</td><td>本書の主題外の画面またはダウンロード。</td></tr><tr><td>一覧の「削除」</td><td><code>DELETE /{admin_route}/product/section/{id}/delete</code></td><td>参照がなければ削除し一覧へ。参照があればエラー表示のまま一覧へ（別処理）。</td></tr><tr><td>存在しない <code>{id}</code> で編集を開く</td><td><code>GET /{admin_route}/product/section/{id}</code></td><td>404。</td></tr><tr><td>部門一覧の CSV ダウンロード（本書の主題外だが同一画面からリンクされる）。</td><td><code>GET /{admin_route}/product/section/export</code></td><td>部門一覧の CSV ダウンロード（本書の主題外だが同一画面からリンクされる）。</td></tr><tr><td>部門マスタ用 CSV 雛形のダウンロード（本書の主題外）。</td><td><code>GET /{admin_route}/product/section/master_csv_template</code></td><td>部門マスタ用 CSV 雛形のダウンロード（本書の主題外）。</td></tr><tr><td>部門マスタ CSV アップロード画面の表示（本書の主題外）。</td><td><code>GET /{admin_route}/product/section/master_csv_upload</code></td><td>部門マスタ CSV アップロード画面の表示（本書の主題外）。</td></tr><tr><td>部門マスタ CSV の取込POST（本書の主題外）。</td><td><code>POST /{admin_route}/product/section/master_import</code></td><td>部門マスタ CSV の取込POST（本書の主題外）。</td></tr></tbody></table></div>
-<hr>
-<h2 id="フロント挙動">フロント挙動</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>画面タイトルは翻訳鍵 <code>admin.product.section_management</code> の日本語確認値「部門登録／編集」。サブタイトルは「商品管理」。ヘッダに「CSV 出力」「CSV 取込」、編集モード時のみ「新規登録に戻る」。主カードの見出しは新規時「新規登録」、編集時「編集」。入力ブロックは4列（部門名・部門コード・免税区分・MTGBuyer表示）。下部にテーブル（ID リンク、部門名リンク、部門コード、免税区分の表示文言、表示／非表示、編集ボタン、削除ボタン）。画面下端のコンバージョンエリアに「登録」ボタンがあり、<code>form</code> 属性で上部の <code>form_section</code> に紐づく。</td></tr><tr><td>JS 挙動</td><td>削除リンクに <code>data-method="delete"</code> と確認メッセージ用の <code>data-message</code> が付く。管理画面共通スクリプトによる疑似 DELETE 送信と CSRF 付与が前提（当テンプレート専用の入力マスクや Ajax は無い）。</td></tr><tr><td>CSS・レイアウト</td><td>ページヘッダ帯に CSV 系ボタン用の狭いパディングクラス。本文はコアの管理画面フレームに従う。</td></tr><tr><td>モーダル・ポップアップ</td><td>本機能の登録フォーム自体は確認モーダルなし。削除のみ共通の確認ダイアログ経由。</td></tr></tbody></table></div>
-<p>補足: テーブル内の免税区分は <code>admin.product.section_tax_free_division.{0,1,2}</code> を用いて表示する。MTGBuyer表示は <code>visible</code> が真なら「表示」、偽なら「非表示」の翻訳。</p>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="新規画面を表示する-GET-m03-18-admin-product-product-section">新規画面を表示する（GET <code>m03-18_admin_product_product_section</code>）</h3>
-<ol><li>管理画面の認証・共通制約を通過する。</li><li>空の部門行にバインドした部門用管理フォームを生成する。</li><li><code>mtb_section</code> を部門コード昇順で全件取得し、テンプレートに渡す。</li><li>Twig で上部フォームと下部一覧を描画する。<code>id</code> は null（新規モード）。フォームの <code>action</code> は <code>m03-18_admin_product_product_section_store</code> をパラメータ無しで解決した POST URL になる。</li></ol>
-<h3 id="編集画面を表示する-GET-m03-18-admin-product-product-section-edit">編集画面を表示する（GET <code>m03-18_admin_product_product_section_edit</code>）</h3>
-<ol><li>管理画面の認証・共通制約を通過する。</li><li>パスの <code>{id}</code> に対応する行が存在しなければ 404 応答とする。</li><li>当該行にバインドしたフォームを生成する。</li><li>一覧は新規同様、部門コード昇順で取得する。</li><li><code>id</code> に該当主キーを渡し、<code>action</code> は <code>m03-18_admin_product_product_section_store</code> に <code>{id}</code> を付与した POST URL とする。編集時のみ「新規登録に戻る」リンクを表示する。</li></ol>
-<h3 id="登録・更新する-POST-m03-18-admin-product-product-section-store">登録・更新する（POST <code>m03-18_admin_product_product_section_store</code>）</h3>
-<ol><li>管理画面の認証・共通制約を通過する。</li><li>パスに <code>{id}</code> が含まれる場合は、その行を読み込む。含まれない場合は新規の空行からフォームを組み立てる。</li><li><code>handleRequest</code> で POST を束ねる。</li><li>送信が無い、または Symfony のフォーム妥当性検証に失敗した場合、エラーメッセージ鍵 <code>admin.register.failed</code>（日本語確認値「登録できませんでした。」）を積み、同一テンプレートを 200 で再表示する。一覧は再取得する。</li><li>妥当ならフォームデータを永続化キューに載せたうえで <code>flush</code> する。</li><li>スマレジ連携向けサービスで、当該部門の upsert をメッセージに載せて投入する（内部でジョブ行の作成・追加 flush を行う）。ここで例外が上がると成功レスポンスに到達しない実装である。</li><li>成功メッセージ鍵 <code>admin.common.save_complete</code>（日本語確認値「保存しました」）を積む。</li><li><code>GET /{admin_route}/product/section</code> へリダイレクトする（編集モードを終え、新規フォームが出る）。</li></ol>
-<hr>
-<h2 id="フォーム送信時の判定順序">フォーム送信時の判定順序</h2>
-<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>ルートとパラメータ束ねが Symfony の規約に合うか</td><td>編集 URL の主キーが不正なら 404（表示側）。POST は対象行の特定に用いる。</td></tr><tr><td>2</td><td>フォーム CSRF が有効か</td><td>無効なら Symfony のエラー処理（通常は HTTP 403）に従う。</td></tr><tr><td>3</td><td>フォーム制約（必須・最大長・選択肢の範囲）を満たすか</td><td>否なら <code>admin.register.failed</code> を積み、同一画面を再表示。</td></tr><tr><td>4</td><td>永続化とスマレジ連携用メッセージ投入</td><td>成功なら成功フラッシュと一覧 GET へリダイレクト。</td></tr></tbody></table></div>
-<hr>
-<h2 id="集計条件">集計条件</h2>
-<p>本機能では売上・件数などの集計を行わない。一覧はマスタの全行抽出をコード昇順で表示するのみである。</p>
-<hr>
-<h2 id="表示メッセージ">表示メッセージ</h2>
-<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>画面上の文言(英語)</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M03-18-MSG-001</td><td>管理画面上部</td><td>登録できませんでした。</td><td>（英訳なし）</td><td>部門の登録・編集で、保存が受け付けられなかったとき</td><td>部門登録／編集画面に留まる</td></tr><tr><td>M03-18-MSG-002</td><td>管理画面上部</td><td>保存しました</td><td>（英訳なし）</td><td>部門を登録・編集して保存したとき</td><td>部門一覧画面に遷移する</td></tr><tr><td>M03-18-MSG-003</td><td>管理画面上部</td><td>削除に失敗しました</td><td>（英訳なし）</td><td>削除しようとした部門が見つからないとき</td><td>部門一覧画面に遷移する</td></tr><tr><td>M03-18-MSG-004</td><td>管理画面上部</td><td>この部門は商品規格が使用されているため、 %name% は削除することができません。</td><td>（英訳なし）</td><td>部門削除で、その部門に商品規格が紐づいていて削除できないとき</td><td>一覧画面に遷移する</td></tr><tr><td>M03-18-MSG-005</td><td>管理画面上部</td><td>この部門は買取依頼が使用されているため、 %name% は削除することができません。</td><td>（英訳なし）</td><td>部門削除で、その部門に買取依頼が紐づいていて削除できないとき</td><td>一覧画面に遷移する</td></tr><tr><td>M03-18-MSG-006</td><td>管理画面上部</td><td>この部門は買取依頼個別入力商品が使用されているため、 %name% は削除することができません。</td><td>（英訳なし）</td><td>部門削除で、その部門に買取依頼の個別入力商品が紐づいていて削除できないとき</td><td>一覧画面に遷移する</td></tr><tr><td>M03-18-MSG-007</td><td>管理画面上部</td><td>この部門は買取依頼サマリが使用されているため、 %name% は削除することができません。</td><td>（英訳なし）</td><td>部門削除で、その部門に買取依頼サマリが紐づいていて削除できないとき</td><td>一覧画面に遷移する</td></tr><tr><td>M03-18-MSG-008</td><td>管理画面上部</td><td>削除しました</td><td>（英訳なし）</td><td>部門を削除したとき</td><td>部門一覧画面に遷移する</td></tr><tr><td>M03-18-MSG-009</td><td>管理画面上部</td><td>削除に失敗しました</td><td>（英訳なし）</td><td>部門削除の処理でエラーが発生したとき</td><td>一覧画面に遷移する</td></tr><tr><td>M03-18-MSG-011</td><td>管理画面上部</td><td>CSVのフォーマットが一致しません</td><td>（英訳なし）</td><td>部門CSVを登録するとき、CSVファイルが選択されていないとき</td><td>部門マスタCSVアップロード画面に遷移する</td></tr><tr><td>M03-18-MSG-012</td><td>管理画面上部</td><td>%maxRecord% 行を超えるCSVファイルは登録できません。</td><td>（英訳なし）</td><td>部門CSVを登録するとき、5,010行以上のCSVファイルを指定したとき</td><td>部門マスタCSVアップロード画面に遷移する</td></tr><tr><td>M03-18-MSG-013</td><td>管理画面上部</td><td>登録が完了しました。</td><td>（英訳なし）</td><td>部門CSVを登録し、エラーなく完了したとき</td><td>部門マスタCSVアップロード画面に遷移する</td></tr><tr><td>M03-18-MSG-010</td><td>管理画面上部</td><td>CSRFトークンが無効です、再送信してください。 ／ アップロードされたファイルが大きすぎます。小さなファイルで再度アップロードしてください。 ／ フィールドグループに追加のフィールドを含んではなりません。</td><td>（英訳なし）</td><td>CSVアップロード実行時、入力またはアップロードファイルが受け付けられないとき</td><td>部門マスタCSV取込画面へ戻る</td></tr></tbody></table></div>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<p>送信で更新されるのはフォームに現れる4項目に対応する列のみである。<code>smaregi_category_id</code> などフォームに無い列は、編集時は既存行を読み込んだまま残り、新規時は定義上 null のままである。</p>
-<p>免税区分の選択肢と永続化値の対応は次のとおり。</p>
-<div class="table-wrap"><table><thead><tr><th>画面上の意味</th><th>永続化値</th></tr></thead><tbody><tr><td>対象外（メッセージ鍵 <code>admin.product.section_tax_free_division.0</code>）</td><td>0</td></tr><tr><td>一般品（<code>admin.product.section_tax_free_division.1</code>）</td><td>1</td></tr><tr><td>消耗品（<code>admin.product.section_tax_free_division.2</code>）</td><td>2</td></tr></tbody></table></div>
-<p>MTGBuyer表示はチェックボックスで、チェック時に真、未チェック時に偽としてマップされる。</p>
-<h3 id="入力項目">入力項目</h3>
-<div class="table-wrap"><table><thead><tr><th>項目名</th><th>必須／任意</th><th>最大長</th><th>初期値</th><th>保存先・扱い</th></tr></thead><tbody><tr><td>部門名</td><td>必須</td><td>128 文字（<code>NotBlank</code> および <code>Length max=128</code>。ウィジェット属性に 128 の上限）</td><td>新規は空の一行テキスト。編集は <code>mtb_section.name</code></td><td><code>mtb_section.name</code>。POST 名は <code>product_department[name]</code>。</td></tr><tr><td>部門コード</td><td>必須</td><td>128 文字（同上）</td><td>新規は空。編集は <code>mtb_section.code</code></td><td><code>mtb_section.code</code>。POST 名は <code>product_department[code]</code>。</td></tr><tr><td>免税区分</td><td>必須</td><td>選択式（任意長の入力ではない）</td><td>編集は現行の区分値。新規はフォームの先頭選択肢に相当する値（0）</td><td><code>mtb_section.tax_free_division</code>。POST 名は <code>product_department[tax_free_division]</code>。</td></tr><tr><td>MTGBuyer表示フラグ</td><td>任意</td><td>チェックボックス</td><td>編集は現行の真偽。新規は未チェックに相当する偽</td><td><code>mtb_section.visible</code>。POST 名は <code>product_department[visible]</code>（未チェック時はフィールド欠落により偽に落ちる挙動）。</td></tr></tbody></table></div>
-<h3 id="エッジケース">エッジケース</h3>
-<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>二名が同一部門を同時に編集する</td><td>楽観ロックは無い。後に保存した内容で上書きされる。</td></tr><tr><td>削除時に商品規格等が参照している</td><td>削除は拒否され、部門名を含むエラーメッセージを積んで一覧へリダイレクトする。</td></tr><tr><td>スマレジ連携メッセージ投入が例外で失敗する</td><td>当該 POST は完了画面に到達せず、フレームワークの例外応答に委ねる。</td></tr></tbody></table></div>
-<hr>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>一覧とフォーム</td><td>GET のたびに一覧を再取得する。成功した POST の後は必ず一覧 GET に戻るため、一覧は保存結果と整合する。</td></tr><tr><td>他画面の部門プルダウン</td><td>それらが別トランザクションで読む限り、タイミングにより当事者と見えるリストが一秒以内に一致しない場合がある（一般的な読取分離の範囲）。</td></tr><tr><td>スマレジ側</td><td>メッセージ投入成功が店舗端末反映までを保証しない。ジョブ行とメッセージ基盤の設計を正とする。</td></tr></tbody></table></div>
-<hr>
-<h2 id="API-バッチ結果">API/バッチ結果</h2>
-<p>本機能の画面からは店頭 API やバッチを直接呼ばない。スマレジ連携は内部メッセージ経路であり、画面は成功時点でジョブ完了を待たない。</p>
-<hr>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="画面の構成">画面の構成</h3>
+<p>上部に登録・編集フォーム、下部に部門一覧を表示する。一覧は部門を部門コード昇順で全件取得したものである。</p>
+<p>新規モードでは空の部門にフォームを結び付ける。編集モードでは指定IDの部門にフォームを結び付け、当該IDが存在しないときは404応答とする。編集モードのときだけ「新規登録に戻る」への導線を表示する。</p>
+<h3 id="保存の判定順序">保存の判定順序</h3>
+<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>編集対象の主キーが存在するか</td><td>存在しないなら404（表示側）。保存では対象の部門を特定するのに用いる</td></tr><tr><td>2</td><td>なりすまし対策トークンが有効か</td><td>無効なら権限エラー（HTTP403）とする</td></tr><tr><td>3</td><td>必須・最大長・選択肢の範囲を満たすか</td><td>満たさないなら「登録できませんでした。」を表示し、一覧を取り直して同一画面を再表示する</td></tr><tr><td>4</td><td>上記を通過</td><td>部門を保存し、スマレジ連携へ当該部門の登録・更新を投入する。成功メッセージを表示して部門一覧へ戻る</td></tr></tbody></table></div>
+<p>保存はパスに主キーがあるときは当該部門の更新、無いときは新規登録として扱う。スマレジ連携への投入で例外が発生したときは成功応答に至らない。</p>
+<h3 id="更新する項目">更新する項目</h3>
+<p>更新するのはフォームに現れる4項目に対応する項目だけである。スマレジ連携用の分類IDなどフォームに無い項目は、編集時は既存の値のまま残り、新規時は未設定のままとする。</p>
+<p>免税区分の選択肢と保存値の対応は次のとおりである。</p>
+<div class="table-wrap"><table><thead><tr><th>画面上の意味</th><th>保存値</th></tr></thead><tbody><tr><td>対象外</td><td>0</td></tr><tr><td>一般品</td><td>1</td></tr><tr><td>消耗品</td><td>2</td></tr></tbody></table></div>
+<p>MTGBuyer表示は、チェックしたときは真、チェックしていないときは偽として保存する。</p>
+<h3 id="エラー時の扱い">エラー時の扱い</h3>
+<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>フォーム検証に失敗したとき</td><td>「登録できませんでした。」を表示し、同一内容を再表示する</td></tr><tr><td>なりすまし対策トークンが不正なとき</td><td>権限エラー（HTTP403）とする</td></tr><tr><td>編集表示で主キーが存在しないとき</td><td>404応答とする</td></tr><tr><td>削除で参照が存在するとき</td><td>該当するエラーメッセージを表示し、一覧へ戻る</td></tr><tr><td>削除がその他の理由で失敗したとき</td><td>削除失敗のエラーを表示する</td></tr></tbody></table></div>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力（POST）</td><td><code>product_department[_token]</code> および各フィールドキー。新規は <code>POST …/product/section/store</code>、編集は <code>POST …/product/section/store/{id}</code>。</td></tr><tr><td>成功時出力</td><td><code>GET …/product/section</code> への 302 前後のリダイレクトと成功フラッシュ。</td></tr><tr><td>失敗時出力</td><td>フォームエラー時は同一 HTML。CSRF 失敗は 403。主キー不正な GET は 404。</td></tr><tr><td>副作用</td><td><code>mtb_section</code> の insert または更新、<code>dtb_messenger_job</code> へのジョブ行追加とスマレジ部門 upsert 向けメッセージ dispatch、成功フラッシュ。</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<p>本画面のフォームが直接書き換える列は次のとおり。</p>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>mtb_section</code></td><td><code>name</code></td><td>必須入力。</td></tr><tr><td><code>mtb_section</code></td><td><code>code</code></td><td>必須入力。一覧ソートに使う。</td></tr><tr><td><code>mtb_section</code></td><td><code>tax_free_division</code></td><td>0／1／2。</td></tr><tr><td><code>mtb_section</code></td><td><code>visible</code></td><td>真偽。</td></tr></tbody></table></div>
-<p>フォームに無いが行に存在し得る列の例は <code>smaregi_category_id</code> である。本フォームの保存では上書きしない。</p>
-<h3 id="DB操作">DB操作</h3>
-<p>永続化の正は ec-cube-enterprise。商品系は承認ワークフローを介さず persist/flush で直接確定する（在庫の承認ワークフローとは別系統。<code>ProductController</code>・各CSVサービスで確認）。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>登録/更新</td><td>mtb_section</td><td>当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。</td></tr></tbody></table></div>
-<hr>
-<h2 id="バリデーション">バリデーション</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>部門名・部門コード</td><td><code>NotBlank</code>、<code>Length</code> 最大 128。</td></tr><tr><td>免税区分</td><td>プルダウンで 0・1・2 のみ。必須。</td></tr><tr><td>MTGBuyer表示</td><td>チェックボックス任意。</td></tr><tr><td>CSRF</td><td>フォームブロック名 <code>product_department</code> に紐づくトークン。</td></tr></tbody></table></div>
-<hr>
-<h2 id="権限・認可">権限・認可</h2>
-<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>部門登録／編集</th></tr></thead><tbody><tr><td>管理画面にログインし当ルートへ到達できる運用者</td><td>当画面の閲覧・登録・編集・削除リンクの表示が可能である（テナント単体店舗向けテストではテナント制約が前置される）。</td></tr><tr><td>未到達の主体</td><td>管理画面共通の認証・認可により拒否される。</td></tr></tbody></table></div>
-<hr>
-<h2 id="画面遷移">画面遷移</h2>
-<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>ナビから開く、登録成功後</td><td><code>GET m03-18_admin_product_product_section</code></td></tr><tr><td>一覧から編集</td><td><code>GET m03-18_admin_product_product_section_edit</code></td></tr><tr><td>編集中に「新規登録に戻る」</td><td><code>GET m03-18_admin_product_product_section</code></td></tr><tr><td>CSV 出力</td><td><code>GET m03-18_admin_product_product_section_export</code>（ダウンロード応答）</td></tr><tr><td>CSV 取込画面</td><td><code>GET m03-18_admin_product_product_section_master_csv_upload</code></td></tr></tbody></table></div>
-<h3 id="遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</h3>
-<div class="table-wrap"><table><thead><tr><th>起点</th><th>遷移前の処理</th><th>遷移後の初期状態</th></tr></thead><tbody><tr><td>登録成功</td><td>成功フラッシュを積む</td><td>新規フォームと最新一覧。セッションに検索条件は持たない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>フォーム検証失敗</td><td><code>admin.register.failed</code> を積み、同一内容を再表示。</td></tr><tr><td>CSRF 不正</td><td>HTTP 403（フレームワーク既定）。</td></tr><tr><td>編集 GET の主キー不存在</td><td>404。</td></tr><tr><td>削除時の参照存在</td><td>該当するエラーメッセージを積み、一覧へリダイレクト。</td></tr><tr><td>削除のその他失敗</td><td>汎用削除エラー表示。</td></tr></tbody></table></div>
-<hr>
-<h2 id="試行制限">試行制限</h2>
-<p>本機能ではログイン試行制限を扱わない。</p>
-<hr>
-<h2 id="ログ・監査">ログ・監査</h2>
-<p>コントローラは登録・更新の成功時に業務ログを出さない。削除の開始・完了・例外時にはログ識別子付きで info／error を出す。スマレジ連携サービスは失敗時に logger へ書く。</p>
-<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
-<ul><li>パスワード</li><li>CSRF トークン原値</li><li>Cookie 値</li><li>セッション ID の完全値</li><li>Remember Me トークンの原値</li></ul>
-<hr>
-<h2 id="セッション">セッション</h2>
-<p>検索条件や入力下書きをセッションに保存しない。フラッシュメッセージのみ管理画面共通の仕組みを用いる。</p>
-<h3 id="セッションへ保存しない情報">セッションへ保存しない情報</h3>
-<p>入力の永続化先は POST 成功時のデータベースのみである。</p>
-<hr>
-<h2 id="Cookie">Cookie</h2>
-<p>本機能特有の Cookie 操作は扱わない。</p>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<p>単一行の保存であっても、アプリケーション層で明示の楽観ロックや <code>SELECT FOR UPDATE</code> は用いない。削除も同様。</p>
-<hr>
-<h2 id="調査補助-grep-向け">調査補助（grep 向け）</h2>
-<p>ルートは <code>SectionController</code> の属性、<code>eccube_nav.yaml</code> の <code>url: m03-18_admin_product_product_section</code>。フォームは <code>Form/Type/Admin/ProductDepartmentType.php</code>。テンプレートは <code>Resource/template/admin/Product/section.twig</code>。永続化は <code>Repository/Master/MtbSectionRepository</code> の経由で <code>mtb_section</code> へ。スマレジは <code>Service/Smaregi/SmaregiSectionEventService.php</code>。</p>
-<h3 id="HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</h3>
-<ul><li><code>m03-18_admin_product_product_section</code> … <code>GET</code> … <code>/{admin_route}/product/section</code>（新規登録フォームと、部門マスタ一覧（コード昇順）を表示する。）</li><li><code>m03-18_admin_product_product_section_edit</code> … <code>GET</code> … <code>/{admin_route}/product/section/{id}</code>（主キー <code>{id}</code> の行をフォームに載せ、同じく一覧を表示する（編集モード）。）</li><li><code>m03-18_admin_product_product_section_store</code> … <code>POST</code> … <code>/{admin_route}/product/section/store/{id}</code>（<code>id</code> セグメントは省略可能（新規登録時は省略）。フォーム送信を受けて検証・永続化し、一覧へリダイレクトする。）</li><li><code>m03-18_admin_product_product_section_delete</code> … <code>DELETE</code> … <code>/{admin_route}/product/section/{id}/delete</code>（一覧の削除操作から呼ばれ、参照制約を満たせば行を削除する（登録／編集の送信とは別系統）。）</li><li><code>m03-18_admin_product_product_section_export</code> … <code>GET</code> … <code>/{admin_route}/product/section/export</code>（部門一覧の CSV ダウンロード（本書の主題外だが同一画面からリンクされる）。）</li><li><code>m03-18_admin_product_product_section_master_csv_template</code> … <code>GET</code> … <code>/{admin_route}/product/section/master_csv_template</code>（部門マスタ用 CSV 雛形のダウンロード（本書の主題外）。）</li><li><code>m03-18_admin_product_product_section_master_csv_upload</code> … <code>GET</code> … <code>/{admin_route}/product/section/master_csv_upload</code>（部門マスタ CSV アップロード画面の表示（本書の主題外）。）</li><li><code>m03-18_admin_product_product_section_master_import</code> … <code>POST</code> … <code>/{admin_route}/product/section/master_import</code>（部門マスタ CSV の取込POST（本書の主題外）。）</li></ul>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>部門の入力項目一式、編集時は対象の部門ID、なりすまし対策トークン</td></tr><tr><td>成功時出力</td><td>部門一覧への遷移と成功メッセージ</td></tr><tr><td>失敗時出力</td><td>フォームエラー時は同一画面の再表示。トークン不正は権限エラー（HTTP403）。主キー不正な表示要求は404応答</td></tr></tbody></table></div>
+<h3 id="入出力-永続化">入出力: 永続化</h3>
+<div class="table-wrap"><table><thead><tr><th>操作</th><th>契機</th></tr></thead><tbody><tr><td>追加</td><td>新規登録の保存</td></tr><tr><td>更新</td><td>編集の保存</td></tr><tr><td>削除</td><td>部門の削除</td></tr></tbody></table></div>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
+<h2 id="表示メッセージ">表示メッセージ</h2>
+<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M03-18-MSG-001</td><td>管理画面上部</td><td>登録できませんでした。</td><td>部門の登録・編集で、保存が受け付けられなかったとき</td><td>部門登録／編集画面に留まる</td></tr><tr><td>M03-18-MSG-002</td><td>管理画面上部</td><td>保存しました</td><td>部門を登録・編集して保存したとき</td><td>部門一覧画面に遷移する</td></tr><tr><td>M03-18-MSG-003</td><td>管理画面上部</td><td>削除に失敗しました</td><td>削除しようとした部門が見つからないとき</td><td>部門一覧画面に遷移する</td></tr><tr><td>M03-18-MSG-004</td><td>管理画面上部</td><td>この部門は商品規格が使用されているため、 %name% は削除することができません。</td><td>部門削除で、その部門に商品規格が紐づいていて削除できないとき</td><td>一覧画面に遷移する</td></tr><tr><td>M03-18-MSG-005</td><td>管理画面上部</td><td>この部門は買取依頼が使用されているため、 %name% は削除することができません。</td><td>部門削除で、その部門に買取依頼が紐づいていて削除できないとき</td><td>一覧画面に遷移する</td></tr><tr><td>M03-18-MSG-006</td><td>管理画面上部</td><td>この部門は買取依頼個別入力商品が使用されているため、 %name% は削除することができません。</td><td>部門削除で、その部門に買取依頼の個別入力商品が紐づいていて削除できないとき</td><td>一覧画面に遷移する</td></tr><tr><td>M03-18-MSG-007</td><td>管理画面上部</td><td>この部門は買取依頼サマリが使用されているため、 %name% は削除することができません。</td><td>部門削除で、その部門に買取依頼サマリが紐づいていて削除できないとき</td><td>一覧画面に遷移する</td></tr><tr><td>M03-18-MSG-008</td><td>管理画面上部</td><td>削除しました</td><td>部門を削除したとき</td><td>部門一覧画面に遷移する</td></tr><tr><td>M03-18-MSG-009</td><td>管理画面上部</td><td>削除に失敗しました</td><td>部門削除の処理でエラーが発生したとき</td><td>一覧画面に遷移する</td></tr><tr><td>M03-18-MSG-011</td><td>管理画面上部</td><td>CSVのフォーマットが一致しません</td><td>部門CSVを登録するとき、CSVファイルが選択されていないとき</td><td>部門マスタCSVアップロード画面に遷移する</td></tr><tr><td>M03-18-MSG-012</td><td>管理画面上部</td><td>%maxRecord% 行を超えるCSVファイルは登録できません。</td><td>部門CSVを登録するとき、5,010行以上のCSVファイルを指定したとき</td><td>部門マスタCSVアップロード画面に遷移する</td></tr><tr><td>M03-18-MSG-013</td><td>管理画面上部</td><td>登録が完了しました。</td><td>部門CSVを登録し、エラーなく完了したとき</td><td>部門マスタCSVアップロード画面に遷移する</td></tr><tr><td>M03-18-MSG-010</td><td>管理画面上部</td><td>CSRFトークンが無効です、再送信してください。 ／ アップロードされたファイルが大きすぎます。小さなファイルで再度アップロードしてください。 ／ フィールドグループに追加のフィールドを含んではなりません。</td><td>CSVアップロード実行時、入力またはアップロードファイルが受け付けられないとき</td><td>部門マスタCSV取込画面へ戻る</td></tr></tbody></table></div>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

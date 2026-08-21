@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,26 +272,13 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#本書で扱うこと">本書で扱うこと</a>
-<a class="lv2" href="#本書で扱わないこと">本書で扱わないこと</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv2" href="#用語">用語</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#在庫リコメンドCSVを出力する-product-batch-ExportPopularProductRecommendCsv">在庫リコメンドCSVを出力する（`product:batch ExportPopularProductRecommendCsv`）</a>
-<a class="lv2" href="#集計条件">集計条件</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
-<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#出力の契機と対象">出力の契機と対象</a>
+<a class="lv3" href="#検索条件の必要性">検索条件の必要性</a>
+<a class="lv3" href="#検索条件の入力範囲">検索条件の入力範囲</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#権限・認可">権限・認可</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#ログ・監査">ログ・監査</a>
-<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a>
+<a class="lv3" href="#出力-CSVファイル">出力: CSVファイル</a>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
 <a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
@@ -290,75 +287,21 @@ footer {
         <h1>在庫管理 — 在庫リコメンドCSV出力</h1>
       </header>
       
-      <h2 id="概要">概要</h2>
-<p>人気商品のリコメンド（在庫リコメンド）情報をCSVファイルとして出力する機能である。コンソールの商品バッチから実行し、対象データを集計して所定のパスにCSVファイルを書き出す。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインの商品バッチ（在庫リコメンドCSV出力処理）、リコメンド対象を抽出するリポジトリ、出力先パスの設定を正とする。</p>
-<p>本機能のカスタマイズ区分は現行踏襲であり、挙動は現行リポ pf-eccube3（HareruyaEc プラグインのバッチ）を参照し、DB関連は ec-cube-enterprise を正とする。</p>
-<p>対象はコンソールコマンドであり、ブラウザ経由の画面を持たない。</p>
-<p>本文ではフレームワークのコマンド型名やサービス型名を主説明としない。実行はコンソールのバッチコマンドで行う。</p>
-<hr>
-<h2 id="本書で扱うこと">本書で扱うこと</h2>
-<ul><li>在庫リコメンドCSVの生成（コンソールバッチ）</li><li>出力先ファイルへの書き出し</li></ul>
-<hr>
-<h2 id="本書で扱わないこと">本書で扱わないこと</h2>
-<p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
-<ul><li>リコメンド対象の集計ロジックの詳細（実装を確認値とする）</li><li>出力したCSVを利用する側の仕様</li><li>バッチの起動スケジュール（運用・ジョブ設定を正とする）</li></ul>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<p>挙動は現行リポ pf-eccube3 を正とし、永続化に関わるテーブル・列は移行先 ec-cube-enterprise を正とする。</p>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3 / HareruyaEc）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>起動形態</td><td>コンソールの商品バッチ（在庫リコメンドCSV出力処理）</td><td>在庫リコメンドCSV出力サービスとして実装。起動形態の最終確定は移行先運用に従う。</td></tr><tr><td>集計対象テーブル</td><td>HareruyaEc プラグインの規格・販売実績系テーブル</td><td>在庫リコメンドCSV出力サービスは dtb_product_stock・dtb_product_class・dtb_product・dtb_base_info・dtb_weekly_stock_history・dtb_sales_quantity・dtb_stock_up_quantity を参照する。</td></tr></tbody></table></div>
-<p>集計列の対応で ec-cube-enterprise 実装の対応列を確認しきれないものは、推測でスキーマ化せず「ec-cube-enterprise 実装で要確認」とする。</p>
-<hr>
-<h2 id="用語">用語</h2>
-<div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>在庫リコメンド</td><td>人気商品のリコメンド情報。</td></tr><tr><td>出力先パス</td><td>CSVを書き出すファイルパス（設定値）。</td></tr></tbody></table></div>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>実行方法</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>コンソールの商品バッチ</td><td><code>product:batch ExportPopularProductRecommendCsv</code></td><td>在庫リコメンド情報を集計し、所定のパスにCSVファイルを書き出す。</td></tr></tbody></table></div>
-<p>本機能はHTTPで届く画面を持たない。コマンド名が一致しない場合は処理を行わずに終了する。</p>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="在庫リコメンドCSVを出力する-product-batch-ExportPopularProductRecommendCsv">在庫リコメンドCSVを出力する（<code>product:batch ExportPopularProductRecommendCsv</code>）</h3>
-<ol><li>在庫リコメンド（人気商品リコメンド）の対象データを取得する。</li><li>設定された出力先パスにCSVファイルを作成する。</li><li>ヘッダ行を書き出す。</li><li>対象データの各行をCSVとして書き出し、ファイルを閉じる。</li></ol>
-<hr>
-<h2 id="集計条件">集計条件</h2>
-<div class="table-wrap"><table><thead><tr><th>指標</th><th>集計の要点</th></tr></thead><tbody><tr><td>出力対象</td><td>在庫リコメンド（人気商品リコメンド）の対象データ。</td></tr><tr><td>出力先</td><td>設定された出力先パスのCSVファイル。</td></tr></tbody></table></div>
-<hr>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>出力</td><td>ヘッダと各行をCSVとして所定パスに書き出す。</td></tr><tr><td>上書き</td><td>実行時に出力先ファイルを生成する（既存があれば上書きする）。</td></tr></tbody></table></div>
-<hr>
-<h2 id="API-バッチ結果">API/バッチ結果</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>バッチ</td><td>入力はコマンド名。成功時は在庫リコメンドCSVを所定パスに出力する。</td></tr><tr><td>API</td><td>本バッチではAPIを呼び出さない。</td></tr></tbody></table></div>
-<hr>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="出力の契機と対象">出力の契機と対象</h3>
+<p>在庫リコメンドCSVはバッチ実行で出力する。対象は人気商品リコメンドのデータとする。</p>
+<p>出力先は設定された保存先とする。同じ保存先に既存のファイルがある場合は上書きする。</p>
+<h3 id="検索条件の必要性">検索条件の必要性</h3>
+<p>在庫一覧からの出力は、検索条件を指定してから実行する。検索条件が無い場合と読み込めない場合は出力しない。</p>
+<h3 id="検索条件の入力範囲">検索条件の入力範囲</h3>
+<p>基準価格・販売価格・在庫数は、下限に上限より大きい値を指定できない。更新日時は、開始に終了より後の日時を指定できない。</p>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>コマンド名。</td></tr><tr><td>成功時出力</td><td>在庫リコメンドのCSVファイル（所定パス）。</td></tr><tr><td>失敗時出力</td><td>エラーメッセージのコンソール出力。</td></tr><tr><td>副作用</td><td>CSVファイルの作成・上書き。</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<p>機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。テーブル・列名は移行先 ec-cube-enterprise を正とする。</p>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td>dtb_product_stock</td><td>product_class_id, base_info_id</td><td>集計対象の在庫。商品規格・店舗にひもづく。</td></tr><tr><td>dtb_product_class / dtb_product</td><td>product_code, name</td><td>出力する商品コード・商品名。</td></tr><tr><td>dtb_sales_quantity</td><td>販売数量集計列</td><td>販売実績の集計に用いる。詳細は ec-cube-enterprise 実装を確認値とする。</td></tr><tr><td>dtb_weekly_stock_history / dtb_stock_up_quantity</td><td>集計列</td><td>週次在庫・入荷数の集計に用いる。詳細は ec-cube-enterprise 実装を確認値とする。</td></tr></tbody></table></div>
-<h3 id="DB操作">DB操作</h3>
-<p>本機能は参照系（検索・出力）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>検索</td><td>dtb_product / dtb_product_class / dtb_product_stock 等（集計テーブルを結合）</td><td>リコメンド条件に合致する商品・規格在庫を抽出・集計し、CSV出力する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>リコメンドファイル</td><td>実行時点の集計で出力先CSVを上書きする。利用側は当ファイルを参照する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="権限・認可">権限・認可</h2>
-<p>本機能はコンソールから実行する。ブラウザ経由の権限制御は持たない。</p>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>コマンド名が未指定・不一致</td><td>処理を行わずに終了する。</td></tr><tr><td>ファイル出力エラー</td><td>エラーメッセージをコンソールに出力する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="ログ・監査">ログ・監査</h2>
-<div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>開始・完了</td><td>開始・完了のコンソール出力（日時付き）。</td></tr></tbody></table></div>
-<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
-<ul><li>出力先の機微なパス情報（必要に応じて）</li></ul>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<p>本機能はファイル出力が主であり、楽観ロック・悲観ロックの対象は持たない。</p>
-<hr>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>バッチ実行の指定、または在庫一覧の検索条件</td></tr><tr><td>成功時出力</td><td>在庫リコメンドのCSVファイル</td></tr><tr><td>失敗時出力</td><td>出力に失敗した旨のメッセージ</td></tr></tbody></table></div>
+<h3 id="出力-CSVファイル">出力: CSVファイル</h3>
+<p>ヘッダ行を先頭に出力し、続けて対象データを1件1行で出力する。</p>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
 <h2 id="表示メッセージ">表示メッセージ</h2>
-<p>本書本体はpf-eccube3のバッチ実装（<code>product:batch ExportPopularProductRecommendCsv</code>）を記載する。ec-cube-enterprise では在庫リコメンドCSV出力は在庫一覧画面のGETリンク（ルート <code>admin_stock_list_recommend_csv</code> / <code>StockListController::downloadRecommendCsv</code>）として実装され、UIメッセージは以下（文言は実ソース由来）。</p>
-<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>画面上の文言(英語)</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M04-16-MSG-005</td><td>管理画面上部</td><td>検索条件を指定してからCSV出力してください。</td><td>（英訳なし）</td><td>検索条件がない、または検索条件を読み込めない状態で在庫リコメンドCSVを出力しようとしたとき</td><td>在庫一覧画面に遷移する</td></tr><tr><td>M04-16-MSG-001</td><td>入力項目直下</td><td>上限金額は、下限金額より大きく設定してください</td><td>（英訳なし）</td><td>在庫検索で、基準価格の下限に上限より大きい値を指定したとき</td><td>在庫一覧画面に留まる</td></tr><tr><td>M04-16-MSG-002</td><td>入力項目直下</td><td>上限金額は、下限金額より大きく設定してください</td><td>（英訳なし）</td><td>在庫検索で、販売価格の下限に上限より大きい値を指定したとき</td><td>在庫一覧画面に留まる</td></tr><tr><td>M04-16-MSG-003</td><td>入力項目直下</td><td>上限金額は、下限金額より大きく設定してください</td><td>（英訳なし）</td><td>在庫検索で、在庫数の下限に上限より大きい値を指定したとき</td><td>在庫一覧画面に留まる</td></tr><tr><td>M04-16-MSG-004</td><td>表示されない</td><td>終了日時は、開始日時より大きく設定してください</td><td>（英訳なし）</td><td>在庫検索で、更新日時の開始に終了より後の日時を指定したとき</td><td>在庫一覧画面に留まる</td></tr><tr><td>M04-16-MSG-006</td><td>管理画面上部</td><td>検索条件を指定してからCSV出力してください。</td><td>（英訳なし）</td><td>検索を行わずに在庫リコメンドCSVを出力しようとしたとき</td><td>在庫一覧画面に遷移する</td></tr><tr><td>M04-16-MSG-007</td><td>管理画面上部</td><td>検索条件を指定してからCSV出力してください。</td><td>（英訳なし）</td><td>検索条件を読み込めない状態で在庫リコメンドCSVを出力しようとしたとき</td><td>在庫一覧画面に遷移する</td></tr></tbody></table></div>
+<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M04-16-MSG-005</td><td>管理画面上部</td><td>検索条件を指定してからCSV出力してください。</td><td>検索条件がない、または検索条件を読み込めない状態で在庫リコメンドCSVを出力しようとしたとき</td><td>在庫一覧画面に遷移する</td></tr><tr><td>M04-16-MSG-006</td><td>管理画面上部</td><td>検索条件を指定してからCSV出力してください。</td><td>検索を行わずに在庫リコメンドCSVを出力しようとしたとき</td><td>在庫一覧画面に遷移する</td></tr><tr><td>M04-16-MSG-007</td><td>管理画面上部</td><td>検索条件を指定してからCSV出力してください。</td><td>検索条件を読み込めない状態で在庫リコメンドCSVを出力しようとしたとき</td><td>在庫一覧画面に遷移する</td></tr><tr><td>M04-16-MSG-001</td><td>入力項目直下</td><td>上限金額は、下限金額より大きく設定してください</td><td>在庫検索で、基準価格の下限に上限より大きい値を指定したとき</td><td>在庫一覧画面に留まる</td></tr><tr><td>M04-16-MSG-002</td><td>入力項目直下</td><td>上限金額は、下限金額より大きく設定してください</td><td>在庫検索で、販売価格の下限に上限より大きい値を指定したとき</td><td>在庫一覧画面に留まる</td></tr><tr><td>M04-16-MSG-003</td><td>入力項目直下</td><td>上限金額は、下限金額より大きく設定してください</td><td>在庫検索で、在庫数の下限に上限より大きい値を指定したとき</td><td>在庫一覧画面に留まる</td></tr><tr><td>M04-16-MSG-004</td><td>表示されない</td><td>終了日時は、開始日時より大きく設定してください</td><td>在庫検索で、更新日時の開始に終了より後の日時を指定したとき</td><td>在庫一覧画面に留まる</td></tr></tbody></table></div>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

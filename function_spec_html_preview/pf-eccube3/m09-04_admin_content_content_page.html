@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,42 +272,18 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#本書で扱うこと">本書で扱うこと</a>
-<a class="lv2" href="#本書で扱わないこと">本書で扱わないこと</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv2" href="#用語">用語</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#フロント挙動">フロント挙動</a>
-<a class="lv3" href="#フロントエンド側ビジネスロジック">フロントエンド側ビジネスロジック</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#ページ一覧を表示する">ページ一覧を表示する</a>
-<a class="lv3" href="#新規作成フォームを表示する">新規作成フォームを表示する</a>
-<a class="lv3" href="#編集フォームを表示する">編集フォームを表示する</a>
-<a class="lv3" href="#新規作成を送信する">新規作成を送信する</a>
-<a class="lv3" href="#編集を送信する">編集を送信する</a>
-<a class="lv2" href="#表示メッセージ">表示メッセージ</a>
-<a class="lv3" href="#常時表示-正常・静的">常時表示（正常・静的）</a>
-<a class="lv3" href="#フラッシュ・トースト">フラッシュ・トースト</a>
-<a class="lv3" href="#エラー・警告-インライン">エラー・警告（インライン）</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
-<a class="lv3" href="#入力項目">入力項目</a>
-<a class="lv3" href="#エッジケース">エッジケース</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#一覧の対象">一覧の対象</a>
+<a class="lv3" href="#新規作成の初期表示">新規作成の初期表示</a>
+<a class="lv3" href="#編集の初期表示">編集の初期表示</a>
+<a class="lv3" href="#保存の判定順序">保存の判定順序</a>
+<a class="lv3" href="#URLの一意性">URLの一意性</a>
+<a class="lv3" href="#削除">削除</a>
+<a class="lv3" href="#エラー時の扱い">エラー時の扱い</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#バリデーション">バリデーション</a>
-<a class="lv2" href="#権限・認可">権限・認可</a>
-<a class="lv2" href="#画面遷移">画面遷移</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#ログ・監査">ログ・監査</a>
-<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
-<a class="lv2" href="#セッション">セッション</a>
-<a class="lv2" href="#Cookie">Cookie</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a>
-<a class="lv2" href="#調査補助-grep">調査補助（grep）</a></nav>
+<a class="lv3" href="#入出力-永続化">入出力: 永続化</a>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -305,120 +291,32 @@ footer {
         <h1>コンテンツ管理 — ページ管理</h1>
       </header>
       
-      <h2 id="概要">概要</h2>
-<p>管理画面コンテンツ管理のページ管理は、フロントに表示する各ページの属性（ページ名・URL・ファイル名・metaタグ等）と、そのページのテンプレート本文（Twig）を一覧から選んで編集する機能である。EC-CUBE コアのページ管理を、HareruyaEc プラグインが新規作成・編集・更新の各操作で差し替えている。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。一覧表示・削除はコアのページ管理実装、新規作成・編集フォームの表示・保存は HareruyaEc のページ管理実装を確認値とする。</p>
-<p>本機能のカスタマイズ区分はカスタマイズであり、画面・挙動の確認値は現行リポ（pf-eccube3、HareruyaEcプラグイン）を正とし、DB関連（テーブル名・列名・保存先・副作用のDB更新）はec-cube-enterpriseを正とする。現行と移行先でページ情報のスキーマが大きく異なるため、差分は「リニューアル移行時の扱い」に集約する。</p>
-<p>対象はブラウザ経由の管理画面コンテンツ管理のページ管理に限定する。レイアウト管理（ブロックの配置）、CSS管理、JavaScript管理、ファイル管理、キャッシュ管理は別機能として切り離す。</p>
-<p>管理画面プレフィックスは設定キー <code>admin_route</code>（<code>path.yml</code> の <code>${ADMIN_ROUTE}</code> 由来）で決まる。本書ではパスを <code>/{admin_route}/</code> のプレースホルダで示し、ルート bind 名は調査補助に隔離する。コントローラのメソッド名は本文の主説明としない。</p>
-<hr>
-<h2 id="本書で扱うこと">本書で扱うこと</h2>
-<ul><li>ページ一覧の表示対象と表示項目</li><li>ページ新規作成フォーム・編集フォームの表示と入力項目</li><li>ページ属性の保存と、テンプレート本文（Twig）のファイル保存先がデータ種別で分かれること</li><li>編集不可ページ（初期投入データ）で URL・ファイル名が保持されること</li><li>保存後のキャッシュ破棄とリダイレクト</li><li>ユーザー作成ページの削除可否</li></ul>
-<hr>
-<h2 id="本書で扱わないこと">本書で扱わないこと</h2>
-<p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
-<ul><li>レイアウト管理（<code>m09-03_admin_content_content_layout</code>）でのブロック配置</li><li>ファイル管理・キャッシュ管理・CSS管理・JavaScript管理の動作</li><li>フロント側でのページ描画、ルーティング解決、テンプレート継承の詳細</li><li>端末種別（PC以外）ごとのページ管理。本機能は PC 端末種別を対象に固定する</li><li>管理画面のログイン・権限設定の詳細仕様</li></ul>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<p>本機能はカスタマイズ区分がカスタマイズであり、画面・挙動の確認値は現行リポ（pf-eccube3、HareruyaEcプラグイン）を正とする。一方、DB関連（テーブル名・列名・保存先・副作用のDB更新）はec-cube-enterpriseを正とする。現行ではページ本体を dtb_pagelayout に保持するが、移行先のec-cube-enterpriseではページ本体を dtb_page に保持し、dtb_page_layout はページとレイアウトの結合表になる。本書のDBカラム節・入力項目の保存先・用語は移行先名称を主とし、現行名称を括弧で添える。</p>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>ページ本体テーブル</td><td>dtb_pagelayout（ページ属性とページ自体を保持）</td><td>dtb_page</td></tr><tr><td>ページ名列</td><td>dtb_pagelayout.name</td><td>dtb_page.page_name</td></tr><tr><td>編集可否区分列</td><td>dtb_pagelayout.edit_flg（0=利用者作成 / 1=プレビュー / 2=初期投入）</td><td>dtb_page.edit_type。区分値の対応はec-cube-enterprise実装で要確認</td></tr><tr><td>端末種別列</td><td>dtb_pagelayout.device_type_id（PC等を保持）</td><td>dtb_page に端末種別列なし。移行先は端末種別を持たない（要確認）</td></tr><tr><td>URL・ファイル名・author・description・keyword・meta_robots・meta_tags</td><td>dtb_pagelayout の同名列</td><td>dtb_page の同名列</td></tr><tr><td>追加metaタグの長さ</td><td>フォーム上限99999文字（lltext_len）</td><td>dtb_page.meta_tags は4000文字。フォーム上限とDB列長の差はec-cube-enterprise実装で要確認</td></tr><tr><td>dtb_pagelayout / dtb_page_layout の役割</td><td>dtb_pagelayout がページ本体</td><td>dtb_page_layout（アンダースコア区切り）はページとレイアウトの結合表（page_id・layout_id・sort_no）</td></tr></tbody></table></div>
-<p>テンプレート本文（Twig）をファイルへ書き出す挙動は現行・移行先とも変わらず、ページ属性のみがDBへ保存される。</p>
-<hr>
-<h2 id="用語">用語</h2>
-<div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>ページ</td><td>フロントの一画面に対応する登録情報。ページ名・URL・ファイル名・metaタグ等の属性と、テンプレート本文を持つ。テーブルは <code>dtb_page</code>（現行 <code>dtb_pagelayout</code>）。</td></tr><tr><td>編集可否区分</td><td>ページが利用者作成か初期投入かを示す区分。現行は <code>dtb_pagelayout.edit_flg</code>（値 0=利用者作成 / 1=プレビュー / 2=初期投入）、移行先は <code>dtb_page.edit_type</code>。移行先の区分値の対応はec-cube-enterprise実装で要確認。</td></tr><tr><td>テンプレート本文</td><td>ページの Twig ファイルの中身。フォーム上は本文入力欄に対応し、保存時にファイルへ書き出す。</td></tr><tr><td>端末種別</td><td>表示端末の区分。本機能では PC 端末種別を取得して対象とする。</td></tr></tbody></table></div>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>ページ一覧を開く</td><td><code>GET /{admin_route}/content/page</code></td><td>登録済みページを一覧表示する。検索ボックスでページ名・ルーティング名・URL・ファイル名・レイアウト名を部分一致検索できる。各行にページ名・ルーティング名・URL・ファイル名・レイアウト名と、レイアウト編集・ページ編集・削除の操作を表示する。</td></tr><tr><td>新規入力を押下</td><td><code>GET /{admin_route}/content/page/new</code></td><td>空のページ作成フォームを表示する。</td></tr><tr><td>新規入力の送信</td><td><code>POST /{admin_route}/content/page/new</code></td><td>検証後にページを登録し、テンプレート本文をファイルへ書き出して、登録したページの編集画面へリダイレクトする。</td></tr><tr><td>行のページ編集を押下</td><td><code>GET /{admin_route}/content/page/{id}/edit</code></td><td>指定ページの編集フォームを表示する。ファイル名が未設定のページではページ編集リンクを無効化する。</td></tr><tr><td>編集の送信</td><td><code>POST /{admin_route}/content/page/{id}/edit</code></td><td>検証後にページを更新し、編集画面へリダイレクトする。</td></tr><tr><td>行の削除を押下</td><td><code>DELETE /{admin_route}/content/page/{id}/delete</code></td><td>利用者作成ページのときファイルとレコードを削除し、一覧へ戻る。初期投入ページは削除しない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="フロント挙動">フロント挙動</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>一覧は検索ボックスと、ページ名・ルーティング名・URL・ファイル名・レイアウト名の5列、操作ドロップダウンを並べる。編集フォームはページ名・URL・ファイル名・author・description・keyword・robots・追加metaタグの各入力欄と、テンプレート本文の複数行入力欄を持つ。</td></tr><tr><td>JS 挙動</td><td>一覧の操作はドロップダウンメニューで開く。削除リンクは確認ダイアログ「このページを削除してもよろしいですか？」を出し、<code>data-method="delete"</code> でHTTP DELETE 相当の送信を行う。専用のリッチエディタや非同期保存は持たない。</td></tr><tr><td>CSS・レイアウト</td><td>管理画面共通のテーブル風レイアウトと横型フォームテーマを使う。テンプレート本文欄は行数15・等幅小サイズで表示する。</td></tr><tr><td>モーダル・ポップアップ</td><td>削除確認のダイアログ以外のモーダルは持たない。</td></tr><tr><td>入力項目</td><td>テンプレート本文は複数行入力（textarea）であり、リッチテキスト化やプレビュー切替は行わない。</td></tr></tbody></table></div>
-<h3 id="フロントエンド側ビジネスロジック">フロントエンド側ビジネスロジック</h3>
-<div class="table-wrap"><table><thead><tr><th>起点</th><th>参照する値</th><th>判定順序</th><th>更新する表示値・送信値</th><th>サーバ側再検証</th></tr></thead><tbody><tr><td>削除リンク押下</td><td>対象ページの削除URL、確認文言</td><td>確認ダイアログを表示し、承認された場合だけ削除送信へ進む。</td><td><code>data-method="delete"</code>の送信を実行する。フォーム値は更新しない。</td><td>ページ存在、削除可否、初期ページ制限、トークン、権限はサーバ側で判定する。</td></tr><tr><td>ページ本文編集</td><td>本文入力欄の値</td><td>ブラウザ側ではTwig構文検証やテンプレート展開を行わない。</td><td>入力された本文を送信値にする。</td><td>必須、ファイル名、URL重複、テンプレートファイル保存可否はサーバ側で判定する。</td></tr><tr><td>ドロップダウン操作</td><td>対象行の操作メニュー</td><td>メニューを開閉するだけで業務値を変更しない。</td><td>送信値は変更しない。</td><td>実行された操作ごとにサーバ側で対象と権限を判定する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="ページ一覧を表示する">ページ一覧を表示する</h3>
-<ol><li>PC 端末種別を取得する。</li><li>検索語が入力されている場合は、ページ名・ルーティング名・URL・ファイル名・レイアウト名を部分一致条件にする。</li><li>その端末種別のページを ID 昇順で取得する。ID が 0 のレコードは一覧から除外する。</li><li>一覧表示完了の拡張イベントを発火し、ページ一覧を渡す。</li><li>一覧テンプレートを描画する。</li></ol>
-<h3 id="新規作成フォームを表示する">新規作成フォームを表示する</h3>
-<ol><li>ページ ID 未指定で新規ページを生成し、PC 端末種別と編集可否区分（利用者作成）を設定する。</li><li>ページ用フォームを組み、初期化完了イベントを発火する。</li><li>テンプレート本文欄に、設定ファイル群から見つかった既定テンプレートの内容を初期表示する。見つからなければ空文字を初期表示する。</li><li>編集フォームを描画する。</li></ol>
-<h3 id="編集フォームを表示する">編集フォームを表示する</h3>
-<ol><li>ページ ID から該当ページを取得する。該当が無ければ見つからない扱い（HTTP 404）とする。</li><li>ページ用フォームを組み、初期化完了イベントを発火する。</li><li>テンプレート本文欄に、データ種別に応じた読込先のファイル内容を初期表示する。初期投入データはアプリのテンプレート・プラグイン既定・コア既定の順に探す。利用者作成データはユーザーデータ領域から探す。</li><li>編集フォームを描画する。<code>editable</code> は初期投入データのとき偽、利用者作成のとき真とする。</li></ol>
-<h3 id="新規作成を送信する">新規作成を送信する</h3>
-<ol><li>フォームに送信値を反映する。</li><li>検証が通らなければ同一フォームを再描画する。</li><li>検証済みなら、フォーム内容でページ情報を更新し、データベースへ保存する。</li><li>テンプレート本文をファイルへ書き出す。書き出し先は初期投入データならアプリのテンプレート領域、利用者作成データならユーザーデータ領域とする。</li><li>キャッシュを破棄する。</li><li>編集完了イベントを発火し、登録完了メッセージを追加する。</li><li>登録したページの編集画面へリダイレクトする。</li></ol>
-<h3 id="編集を送信する">編集を送信する</h3>
-<ol><li>フォームに送信値を反映する。</li><li>検証が通らなければ同一フォームを再描画する。</li><li>検証済みなら、フォーム内容でページ情報を更新する。編集可否区分が初期投入データのとき、URL とファイル名は更新前の値で保持する。</li><li>データベースへ保存する。</li><li>初期投入データでないときだけテンプレート本文をファイルへ書き出す。ファイル名が変更され旧ファイルが存在すれば旧ファイルを削除する。</li><li>キャッシュを破棄し、編集完了イベントを発火し、登録完了メッセージを追加する。</li><li>編集画面へリダイレクトする。</li></ol>
-<hr>
-<h2 id="表示メッセージ">表示メッセージ</h2>
-<h3 id="常時表示-正常・静的">常時表示（正常・静的）</h3>
-<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>種別</th><th>表示文言（日本語）</th><th>画面上の文言(英語)</th><th>条件</th><th>後続処理</th></tr></thead><tbody><tr><td>—</td><td>一覧操作</td><td>削除（確認ダイアログ「このページを削除してもよろしいですか？」）</td><td>—</td><td>削除リンク押下時（pf現行 <code>page.twig</code> data-message）</td><td>—</td></tr><tr><td>M09-04-MSG-005</td><td>確認モーダル</td><td>この操作はあとから取り消すことができません。「%name%」を削除してよろしいですか？</td><td>（英訳なし）</td><td>削除ボタンを押したとき（削除前の確認）</td><td>削除でモーダルを閉じてページ一覧画面に遷移、キャンセルでモーダルを閉じる</td></tr><tr><td>—</td><td>一覧操作</td><td>新規入力</td><td>—</td><td>一覧下部の登録ボタン</td><td>—</td></tr></tbody></table></div>
-<h3 id="フラッシュ・トースト">フラッシュ・トースト</h3>
-<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示文言（日本語）</th><th>画面上の文言(英語)</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M09-04-MSG-001</td><td>この機能の利用頻度が低い場合、使用しない間は無効化することでセキュリティを更に向上させることができます。環境変数 ECCUBE_RESTRICT_FILE_UPLOAD を 1 に設定することで機能を無効化することが可能です。</td><td>（英訳なし）</td><td>ページ登録・編集画面を開いたとき（未表示の場合）</td><td>ページ登録・編集画面に留まる</td></tr><tr><td>M09-04-MSG-002</td><td>保存しました</td><td>（英訳なし）</td><td>ページの登録・編集内容を保存したとき</td><td>ページ編集画面に遷移する</td></tr><tr><td>M09-04-MSG-003</td><td>削除しました</td><td>（英訳なし）</td><td>ユーザー作成ページを削除したとき</td><td>ページ一覧画面に遷移する</td></tr><tr><td>M09-04-MSG-004</td><td>既に削除されています</td><td>（英訳なし）</td><td>削除しようとしたページがすでに存在しないとき</td><td>ページ一覧画面に遷移する</td></tr></tbody></table></div>
-<p>文言の対応するロケールキーは調査補助に留める。</p>
-<h3 id="エラー・警告-インライン">エラー・警告（インライン）</h3>
-<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示文言（日本語）</th><th>画面上の文言(英語)</th><th>表示条件（利用者視点）</th><th>表示位置</th><th>備考</th><th>後続処理</th></tr></thead><tbody><tr><td>—</td><td>※ 同じURLのデータが存在しています。別のURLを入力してください。</td><td>—</td><td>同一端末種別で既存ページと URL が重複したとき</td><td>URL 欄直下</td><td>送信後の検証で付与する（pf現行 <code>MainEditType.php:169</code>）</td><td>—</td></tr><tr><td>M09-04-MSG-006</td><td>既にURLが存在しています。</td><td>（英訳なし）</td><td>ユーザー作成ページで、他のページと同じURLを入力して送信したとき</td><td>入力項目直下（URL欄）</td><td>ee実装（<code>MainEditType.php:212</code> <code>admin.content.page_url_exists</code>）（fable5レビュー追加）</td><td>エラーを表示してページ登録・編集画面に留まる</td></tr><tr><td>M09-04-MSG-007</td><td>同じファイル名のデータが存在しています。別のファイル名を入力してください。</td><td>（英訳なし）</td><td>ユーザー作成ページで、他のページと重複するファイル名を入力して送信したとき</td><td>入力項目直下（ファイル名欄）</td><td>ee実装（<code>MainEditType.php:233,256</code> <code>admin.content.page_file_name_exists</code>）（fable5レビュー追加）</td><td>エラーを表示してページ登録・編集画面に留まる</td></tr><tr><td>M09-04-MSG-008</td><td>入力されていません。</td><td>（英訳なし）</td><td>必須項目が未入力のまま送信したとき</td><td>入力項目直下</td><td>ee実装（<code>MainEditType.php:59,69,78,88</code> NotBlank、<code>validators.ja.yaml:17</code>）（fable5レビュー追加）</td><td>エラーを表示してページ登録・編集画面に留まる</td></tr><tr><td>M09-04-MSG-009</td><td>長すぎます。この値は{{ limit }}文字以下で入力してください。</td><td>（英訳なし）</td><td>入力内容が項目ごとの文字数上限を超えたまま送信したとき</td><td>入力項目直下</td><td>ee実装（<code>MainEditType.php:60-62,70,79,96-98,105-107,114-116,123-125,130-132</code> Length、Symfonyデフォルト訳 <code>validators.ja.xlf:79</code>。<code>{{ limit }}</code> は実行時置換）（codexレビュー是正: 旧記載「255文字」は設定値の実行時値差し替えのため設定キー名へ戻す）</td><td>エラーを表示してページ登録・編集画面に留まる</td></tr><tr><td>M09-04-MSG-010</td><td>有効な値ではありません。</td><td>（英訳なし）</td><td>ユーザー作成ページで、URLまたはファイル名に使用できない形式を入力して送信したとき</td><td>入力項目直下</td><td>ee実装（<code>MainEditType.php:71,80</code> Regex、Symfonyデフォルト訳 <code>validators.ja.xlf:102-103</code>）（fable5レビュー追加）</td><td>エラーを表示してページ登録・編集画面に留まる</td></tr><tr><td>M09-04-MSG-011</td><td>Twigのフォーマットが正しくありません。{{ error }}</td><td>（英訳なし）</td><td>テンプレート内容のTwig書式に誤りがあるとき</td><td>入力項目直下（ページ内容欄）</td><td>ee実装（<code>MainEditType.php:89</code> TwigLint → <code>TwigLint.php:21</code> の英語メッセージキーを validators ドメインで翻訳、<code>validators.ja.yaml:36</code>。<code>{{ error }}</code> は Twig エラーメッセージで実行時置換）（codexレビュー是正: 旧記載の英語キーは表示文言ではないため差し替え）</td><td>エラーを表示してページ登録・編集画面に留まる</td></tr><tr><td>M09-04-MSG-012</td><td>既にURLが存在しています。</td><td>（英訳なし）</td><td>ページを登録・編集するときに、別のページと同じURLを入力したとき</td><td>入力項目直下/フォーム上部</td><td>url 項目へ FormError を付与し、フォームを無効にする。</td><td>エラーを表示してページ登録・編集画面に留まる</td></tr><tr><td>M09-04-MSG-013</td><td>同じファイル名のデータが存在しています。別のファイル名を入力してください。</td><td>（英訳なし）</td><td>ページを登録・編集するときに、別のユーザー作成ページと同じファイル名を入力したとき</td><td>入力項目直下/フォーム上部</td><td>file_name 項目へ FormError を付与し、フォームを無効にする。</td><td>エラーを表示してページ登録・編集画面に留まる</td></tr><tr><td>M09-04-MSG-014</td><td>同じファイル名のデータが存在しています。別のファイル名を入力してください。</td><td>（英訳なし）</td><td>ユーザー作成ページを登録・編集するときに、標準ページと同じファイル名を入力したとき</td><td>入力項目直下/フォーム上部</td><td>file_name 項目へ FormError を付与し、フォームを無効にする。</td><td>エラーを表示してページ登録・編集画面に留まる</td></tr></tbody></table></div>
-<hr>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<p>本機能では金額計算・件数集計を行わない。ページ属性の検証と、テンプレート本文のファイル保存先の振り分けが主な処理である。</p>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>保存先の振り分け</td><td>テンプレート本文は、初期投入データならアプリのテンプレート領域、利用者作成データならユーザーデータ領域へ書き出す。</td></tr><tr><td>初期投入データの保持</td><td>編集時、初期投入データは URL とファイル名を更新前の値で保持し、ページ名のみ更新を許す。</td></tr><tr><td>URL の一意性</td><td>同一端末種別で URL が重複するとき検証エラーとする。新規は ID なし、編集は自身の ID を除外して重複判定する。</td></tr><tr><td>一覧の対象</td><td>PC 端末種別かつ ID が 0 でないページを ID 昇順で表示する。検索語がある場合はページ名・ルーティング名・URL・ファイル名・レイアウト名を部分一致で絞り込む。</td></tr></tbody></table></div>
-<h3 id="入力項目">入力項目</h3>
-<div class="table-wrap"><table><thead><tr><th>項目名</th><th>必須／任意</th><th>最大長</th><th>初期値</th><th>保存先・扱い</th></tr></thead><tbody><tr><td>名称</td><td>必須</td><td>255文字（<code>NotBlank</code> と <code>Length</code>）</td><td>新規は空、編集は現行値</td><td><code>dtb_page.page_name</code>（現行 <code>dtb_pagelayout.name</code>）。キー <code>name</code>。</td></tr><tr><td>URL</td><td>必須</td><td>255文字（<code>NotBlank</code>・<code>Length</code>・正規表現）</td><td>新規は空、編集は現行値</td><td><code>dtb_page.url</code>（現行 <code>dtb_pagelayout.url</code>）。キー <code>url</code>。半角英数字と <code>_ - /</code> のみ許可。末尾 <code>/</code> 不可。初期投入データは更新前の値を保持。</td></tr><tr><td>ファイル名</td><td>必須</td><td>255文字（<code>NotBlank</code>・<code>Length</code>・正規表現）</td><td>新規は空、編集は現行値</td><td><code>dtb_page.file_name</code>（現行 <code>dtb_pagelayout.file_name</code>）。キー <code>file_name</code>。半角英数字と <code>_ - /</code> のみ許可。テンプレート本文の書き出しファイル名になる。初期投入データは更新前の値を保持。</td></tr><tr><td>本文</td><td>必須</td><td>フォーム上限なし。ファイルへ書き出す</td><td>新規は既定テンプレート内容、編集は読込先ファイル内容</td><td>テーブルには保存せず Twig ファイルへ書き出す。キー <code>tpl_data</code>（<code>mapped</code> 偽）。改行コードを変換して書き込む。</td></tr><tr><td>author</td><td>任意</td><td>255文字（<code>Length</code>）</td><td>編集は現行値</td><td><code>dtb_page.author</code>（現行 <code>dtb_pagelayout.author</code>）。キー <code>author</code>。</td></tr><tr><td>description</td><td>任意</td><td>255文字（<code>Length</code>）</td><td>編集は現行値</td><td><code>dtb_page.description</code>（現行 <code>dtb_pagelayout.description</code>）。キー <code>description</code>。</td></tr><tr><td>keyword</td><td>任意</td><td>255文字（<code>Length</code>）</td><td>編集は現行値</td><td><code>dtb_page.keyword</code>（現行 <code>dtb_pagelayout.keyword</code>）。キー <code>keyword</code>。</td></tr><tr><td>robots</td><td>任意</td><td>255文字（<code>Length</code>）</td><td>編集は現行値</td><td><code>dtb_page.meta_robots</code>（現行 <code>dtb_pagelayout.meta_robots</code>）。キー <code>meta_robots</code>。</td></tr><tr><td>追加metaタグ</td><td>任意</td><td>99999文字（<code>lltext_len</code>、<code>Length</code>）</td><td>編集は現行値</td><td><code>dtb_page.meta_tags</code>（現行 <code>dtb_pagelayout.meta_tags</code>）。キー <code>meta_tags</code>。複数行入力（textarea）。移行先のDB列長は4000文字でフォーム上限と異なる（ec-cube-enterprise実装で要確認）。</td></tr></tbody></table></div>
-<p>最大長の数値は <code>src/Eccube/Resource/config/constant.yml.dist</code> の確認値とする。運用環境で上書きされている場合はその環境の値が正とする。端末種別とページ ID は隠し項目として送信し、ページ ID はキー <code>id</code>、端末種別はキー <code>DeviceType</code> で扱う。</p>
-<h3 id="エッジケース">エッジケース</h3>
-<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>ファイル名が未設定のページ</td><td>一覧のページ編集リンクを無効化する。</td></tr><tr><td>初期投入データの編集</td><td>URL・ファイル名は更新前の値を保持し、テンプレート本文のファイル書き出しは行わない。</td></tr><tr><td>編集でファイル名を変更</td><td>新ファイルへ書き出し、旧ファイルが存在すれば削除する。</td></tr><tr><td>削除対象が初期投入データ</td><td>レコード・ファイルとも削除しない。</td></tr><tr><td>削除対象が存在しない ID</td><td>削除対象なしメッセージを出して一覧へ戻る。</td></tr></tbody></table></div>
-<hr>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>属性とファイルの整合</td><td>ページ属性はデータベース、テンプレート本文はファイルへ分けて保存する。保存はデータベース更新のあとにファイル書き出しを行う。両者の整合は保存処理の成否に依存する。</td></tr><tr><td>一覧と編集の整合</td><td>一覧は保存後の最新レコードを ID 昇順で読む。本文の表示は読込先ファイルの現行内容を反映する。</td></tr><tr><td>キャッシュ</td><td>保存・削除のあとキャッシュを破棄する。テンプレートのキャッシュが古いまま残り続ける設計にはしない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="API-バッチ結果">API/バッチ結果</h2>
-<p>本機能では管理画面外の公開 API 呼び出しやバッチ起動本体を扱わない。</p>
-<hr>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="一覧の対象">一覧の対象</h3>
+<p>PC端末種別のページをID昇順で表示する。IDが 0 のページは一覧から除く。</p>
+<div class="table-wrap"><table><thead><tr><th>検索語</th><th>絞り込み</th></tr></thead><tbody><tr><td>入力があるとき</td><td>ページ名・ルーティング名・URL・ファイル名・レイアウト名のいずれかへの部分一致</td></tr><tr><td>入力が無いとき</td><td>端末種別の条件だけで一覧を取得する</td></tr></tbody></table></div>
+<h3 id="新規作成の初期表示">新規作成の初期表示</h3>
+<p>新規のページは、端末種別をPC、編集可否区分を利用者作成として生成する。</p>
+<div class="table-wrap"><table><thead><tr><th>テンプレート本文欄の初期値</th><th>条件</th></tr></thead><tbody><tr><td>設定ファイル群から見つかった既定テンプレートの内容</td><td>既定テンプレートが見つかったとき</td></tr><tr><td>空文字</td><td>既定テンプレートが見つからないとき</td></tr></tbody></table></div>
+<h3 id="編集の初期表示">編集の初期表示</h3>
+<p>ページIDに該当するページが無いときは、見つからない扱い（HTTP404）とする。テンプレート本文欄には、データ種別に応じた読込先のファイル内容を初期表示する。</p>
+<div class="table-wrap"><table><thead><tr><th>データ種別</th><th>読込先の探索順</th><th>本文欄の編集</th></tr></thead><tbody><tr><td>初期投入データ</td><td>アプリのテンプレート、プラグイン既定、コア既定の順に探す</td><td>できない</td></tr><tr><td>利用者作成データ</td><td>ユーザーデータ領域から探す</td><td>できる</td></tr></tbody></table></div>
+<h3 id="保存の判定順序">保存の判定順序</h3>
+<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定・処理</th><th>内容</th></tr></thead><tbody><tr><td>1</td><td>入力内容の検証</td><td>通らないときは保存せず、同一フォームを再描画する</td></tr><tr><td>2</td><td>ページ情報の更新</td><td>編集で編集可否区分が初期投入データのときは、URLとファイル名を更新前の値で保持し、ページ名の更新だけを許す</td></tr><tr><td>3</td><td>ページ情報の保存</td><td>検証を通ったときだけ保存する</td></tr><tr><td>4</td><td>テンプレート本文の書き出し</td><td>新規は、初期投入データのときアプリのテンプレート領域、利用者作成データのときユーザーデータ領域へ書き出す。編集は、初期投入データでないときだけ書き出す</td></tr><tr><td>5</td><td>旧ファイルの削除</td><td>編集でファイル名が変わり、かつ旧ファイルが存在するときだけ削除する</td></tr><tr><td>6</td><td>キャッシュの破棄</td><td>保存のたびに破棄する</td></tr></tbody></table></div>
+<p>保存を終えたときは、登録したページの編集画面へ戻る。</p>
+<h3 id="URLの一意性">URLの一意性</h3>
+<p>同一端末種別でURLが重複するときは検証エラーとする。重複の判定では、新規はIDを除外せず、編集は自身のIDだけを除外する。</p>
+<h3 id="削除">削除</h3>
+<p>削除の対象は利用者作成ページとする。削除しようとしたページが既に存在しないときは、削除対象なしのメッセージを表示して一覧へ戻る。</p>
+<h3 id="エラー時の扱い">エラー時の扱い</h3>
+<div class="table-wrap"><table><thead><tr><th>事象</th><th>扱い</th></tr></thead><tbody><tr><td>入力内容の検証に外れたとき</td><td>保存せず、同一フォームを再描画し、該当項目にエラーを表示する</td></tr><tr><td>URLが重複したとき</td><td>URL欄に重複のエラーを付ける</td></tr><tr><td>編集で対象ページが無いとき</td><td>見つからない扱い（HTTP404）とする</td></tr><tr><td>削除で対象ページが無いとき</td><td>削除対象なしのメッセージを表示して一覧へ戻る</td></tr></tbody></table></div>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>一覧・フォームの GET。新規・編集はフォーム名 <code>main_edit</code>、CSRF、属性とテンプレート本文。削除は ID と CSRF。</td></tr><tr><td>成功時出力</td><td>新規・編集は編集画面への 302 リダイレクトと登録完了メッセージ。削除は一覧への 302 リダイレクトと削除完了メッセージ。</td></tr><tr><td>失敗時出力</td><td>検証失敗は同一フォームを再描画。対象ページ無しは見つからない扱い（HTTP 404）または削除対象なしメッセージ。</td></tr><tr><td>副作用</td><td>データベース更新、テンプレートファイルの作成・更新・削除、キャッシュ破棄、処理イベント通知、フラッシュメッセージ。</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<p>当機能に直接関係する列のみを記載する。型や一覧の細部はスキーマを参照する。</p>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>dtb_page</code>（現行 <code>dtb_pagelayout</code>）</td><td><code>page_name</code>（現行 <code>name</code>）、<code>url</code>、<code>file_name</code></td><td>ページ属性の主項目。</td></tr><tr><td><code>dtb_page</code>（現行 <code>dtb_pagelayout</code>）</td><td><code>author</code>、<code>description</code>、<code>keyword</code>、<code>meta_robots</code>、<code>meta_tags</code></td><td>メタ情報。</td></tr><tr><td><code>dtb_page</code>（現行 <code>dtb_pagelayout</code>）</td><td><code>edit_type</code>（現行 <code>edit_flg</code>）</td><td>編集可否区分。利用者作成・プレビュー・初期投入を表す。移行先の区分値の対応はec-cube-enterprise実装で要確認。</td></tr><tr><td><code>dtb_pagelayout</code>（現行のみ）</td><td><code>device_type_id</code></td><td>現行は端末種別を保持しPCを対象とする。移行先の <code>dtb_page</code> に端末種別列は無い（要確認）。</td></tr></tbody></table></div>
-<p>テンプレート本文は <code>dtb_page</code>（現行 <code>dtb_pagelayout</code>）には保存せず、Twig ファイルへ書き出す。移行先ではページとレイアウトの紐付けを <code>dtb_page_layout</code>（page_id・layout_id・sort_no）が担う。</p>
-<h3 id="DB操作">DB操作</h3>
-<p>永続化の正は ec-cube-enterprise（テーブル名・操作は ec-cube-enterprise を正典）。当ドメインは承認ワークフローを介さず persist/flush で直接確定する（承認ワークフローは在庫機能固有）。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>登録/更新</td><td>dtb_page / dtb_page_layout / dtb_pagelayout</td><td>当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。</td></tr></tbody></table></div>
-<hr>
-<h2 id="バリデーション">バリデーション</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>名称</td><td><code>NotBlank</code>、<code>Length</code>（255文字）。</td></tr><tr><td>URL</td><td><code>NotBlank</code>、<code>Length</code>（255文字）、正規表現（半角英数字と <code>_ - /</code>、末尾 <code>/</code> 不可）、送信後の重複判定。</td></tr><tr><td>ファイル名</td><td><code>NotBlank</code>、<code>Length</code>（255文字）、正規表現（半角英数字と <code>_ - /</code>）。</td></tr><tr><td>author・description・keyword・robots</td><td><code>Length</code>（255文字）のみ。</td></tr><tr><td>追加metaタグ</td><td><code>Length</code>（99999文字）。</td></tr><tr><td>本文</td><td>フォーム制約なし。空可否はフォームの必須設定に従う。</td></tr></tbody></table></div>
-<hr>
-<h2 id="権限・認可">権限・認可</h2>
-<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>ページ管理の一覧・フォーム・削除</th></tr></thead><tbody><tr><td>未ログイン</td><td>管理画面共通のログイン誘導に従う。</td></tr><tr><td>管理メンバーでログイン済み</td><td>アクセス制御リストが URL を許可するときに到達する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="画面遷移">画面遷移</h2>
-<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>一覧の新規入力を押下</td><td>新規作成フォーム。</td></tr><tr><td>一覧のページ編集を押下</td><td>該当ページの編集フォーム。</td></tr><tr><td>新規作成保存成功</td><td>登録したページの編集画面。</td></tr><tr><td>編集保存成功</td><td>同ページの編集画面。</td></tr><tr><td>削除成功</td><td>ページ一覧。</td></tr><tr><td>検証失敗</td><td>同一フォームを再描画。</td></tr></tbody></table></div>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>フォーム検証エラー</td><td>同一フォームを再描画し、フィールドにエラーを表示する。文言は表示メッセージ節を正とする。</td></tr><tr><td>URL 重複</td><td>URL 欄に重複エラーを付与する。</td></tr><tr><td>対象ページ無し（編集）</td><td>見つからない扱い（HTTP 404）。</td></tr><tr><td>対象ページ無し（削除）</td><td>削除対象なしメッセージを出して一覧へ戻る。</td></tr></tbody></table></div>
-<hr>
-<h2 id="ログ・監査">ログ・監査</h2>
-<div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>保存・削除</td><td>本機能固有の業務監査ログは追加しない。登録完了・削除完了は画面フラッシュで通知する。</td></tr></tbody></table></div>
-<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
-<ul><li>なりすまし対策トークンの完全値</li><li>セッション識別子の完全値</li><li>Cookie の原値</li></ul>
-<hr>
-<h2 id="セッション">セッション</h2>
-<p>本機能は一覧の検索条件をセッションに載せない。検索ボックスの入力はGETリクエスト内で部分一致条件として扱い、成功・失敗メッセージは管理画面共通のフラッシュ機構に依存する。</p>
-<hr>
-<h2 id="Cookie">Cookie</h2>
-<p>管理画面のセッション Cookie のみを正とし、本機能用の追加 Cookie は定義しない。</p>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<p>ページ属性の保存はデータベースの永続化に任せ、画面側に楽観ロックの版情報は持たない。テンプレートのファイル書き出しはデータベース保存後に行う。</p>
-<hr>
-<h2 id="調査補助-grep">調査補助（grep）</h2>
-<p>論理説明と切り離し、ソース照合用。</p>
-<pre><code>app/Plugin/HareruyaEc/Controller/Admin/Content/PageController.php
-app/Plugin/HareruyaEc/Controller/Admin/Content/ContentController.php
-app/Plugin/HareruyaEc/ControllerProvider/AdminControllerProvider.php
-src/Eccube/Controller/Admin/Content/PageController.php
-src/Eccube/Form/Type/Admin/MainEditType.php
-src/Eccube/Repository/PageLayoutRepository.php
-src/Eccube/Resource/template/admin/Content/page.twig
-src/Eccube/Resource/template/admin/Content/page_edit.twig</code></pre>
-<p>ルート bind 名: <code>m09-04_admin_content_content_page</code>（一覧・コア）、<code>m09-04_admin_content_content_page_new</code> / <code>m09-04_admin_content_content_page_create</code>（プラグイン）、<code>m09-04_admin_content_content_page_edit</code> / <code>m09-04_admin_content_content_page_update</code>（プラグイン）、<code>m09-04_admin_content_content_page_delete</code>（削除・コア）。</p>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>一覧・フォームの表示要求。新規・編集はページ属性とテンプレート本文。削除はページID。</td></tr><tr><td>成功時出力</td><td>新規・編集のときは編集画面への遷移（302）と登録完了メッセージ。削除のときは一覧への遷移（302）と削除完了メッセージ。</td></tr><tr><td>失敗時出力</td><td>検証に外れたときは同一フォームの再描画。対象ページが無いときは見つからない扱い（HTTP404）、または削除対象なしのメッセージ。</td></tr></tbody></table></div>
+<h3 id="入出力-永続化">入出力: 永続化</h3>
+<div class="table-wrap"><table><thead><tr><th>操作</th><th>契機</th></tr></thead><tbody><tr><td>追加</td><td>ページを新規登録したとき</td></tr><tr><td>更新</td><td>ページを編集して保存したとき</td></tr><tr><td>削除</td><td>利用者作成ページを削除したとき</td></tr></tbody></table></div>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
+<h2 id="表示メッセージ">表示メッセージ</h2>
+<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>—</td><td>一覧</td><td>削除（確認ダイアログ「このページを削除してもよろしいですか？」）</td><td>削除リンク押下時</td><td>—</td></tr><tr><td>—</td><td>一覧下部</td><td>新規入力</td><td>一覧下部の登録ボタン</td><td>—</td></tr><tr><td>M09-04-MSG-001</td><td>フラッシュメッセージ</td><td>この機能の利用頻度が低い場合、使用しない間は無効化することでセキュリティを更に向上させることができます。環境変数 ECCUBE_RESTRICT_FILE_UPLOAD を 1 に設定することで機能を無効化することが可能です。</td><td>ページ登録・編集画面を開いたとき（未表示の場合）</td><td>ページ登録・編集画面に留まる</td></tr><tr><td>M09-04-MSG-002</td><td>フラッシュメッセージ</td><td>保存しました</td><td>ページの登録・編集内容を保存したとき</td><td>ページ編集画面に遷移する</td></tr><tr><td>M09-04-MSG-003</td><td>フラッシュメッセージ</td><td>削除しました</td><td>ユーザー作成ページを削除したとき</td><td>ページ一覧画面に遷移する</td></tr><tr><td>M09-04-MSG-004</td><td>フラッシュメッセージ</td><td>既に削除されています</td><td>削除しようとしたページがすでに存在しないとき</td><td>ページ一覧画面に遷移する</td></tr><tr><td>M09-04-MSG-005</td><td>確認モーダル</td><td>この操作はあとから取り消すことができません。「%name%」を削除してよろしいですか？</td><td>削除ボタンを押したとき（削除前の確認）</td><td>削除でモーダルを閉じてページ一覧画面に遷移、キャンセルでモーダルを閉じる</td></tr><tr><td>—</td><td>URL欄直下</td><td>※ 同じURLのデータが存在しています。別のURLを入力してください。</td><td>同一端末種別で既存ページと URL が重複したとき</td><td>送信後の検証で付与する</td></tr><tr><td>M09-04-MSG-006</td><td>入力項目直下（URL欄）</td><td>既にURLが存在しています。</td><td>ユーザー作成ページで、他のページと同じURLを入力して送信したとき</td><td>エラーを表示してページ登録・編集画面に留まる</td></tr><tr><td>M09-04-MSG-007</td><td>入力項目直下（ファイル名欄）</td><td>同じファイル名のデータが存在しています。別のファイル名を入力してください。</td><td>ユーザー作成ページで、他のページと重複するファイル名を入力して送信したとき</td><td>エラーを表示してページ登録・編集画面に留まる</td></tr><tr><td>M09-04-MSG-008</td><td>入力項目直下</td><td>入力されていません。</td><td>必須項目が未入力のまま送信したとき</td><td>エラーを表示してページ登録・編集画面に留まる</td></tr><tr><td>M09-04-MSG-009</td><td>入力項目直下</td><td>長すぎます。この値は{{ limit }}文字以下で入力してください。</td><td>入力内容が項目ごとの文字数上限を超えたまま送信したとき</td><td>エラーを表示してページ登録・編集画面に留まる</td></tr><tr><td>M09-04-MSG-010</td><td>入力項目直下</td><td>有効な値ではありません。</td><td>ユーザー作成ページで、URLまたはファイル名に使用できない形式を入力して送信したとき</td><td>エラーを表示してページ登録・編集画面に留まる</td></tr><tr><td>M09-04-MSG-011</td><td>入力項目直下（ページ内容欄）</td><td>Twigのフォーマットが正しくありません。{{ error }}</td><td>テンプレート内容の書式に誤りがあるとき</td><td>エラーを表示してページ登録・編集画面に留まる</td></tr><tr><td>M09-04-MSG-012</td><td>入力項目直下/フォーム上部</td><td>既にURLが存在しています。</td><td>ページを登録・編集するときに、別のページと同じURLを入力したとき</td><td>エラーを表示してページ登録・編集画面に留まる</td></tr><tr><td>M09-04-MSG-013</td><td>入力項目直下/フォーム上部</td><td>同じファイル名のデータが存在しています。別のファイル名を入力してください。</td><td>ページを登録・編集するときに、別のユーザー作成ページと同じファイル名を入力したとき</td><td>エラーを表示してページ登録・編集画面に留まる</td></tr><tr><td>M09-04-MSG-014</td><td>入力項目直下/フォーム上部</td><td>同じファイル名のデータが存在しています。別のファイル名を入力してください。</td><td>ユーザー作成ページを登録・編集するときに、標準ページと同じファイル名を入力したとき</td><td>エラーを表示してページ登録・編集画面に留まる</td></tr></tbody></table></div>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

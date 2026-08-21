@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,42 +272,16 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#フロント挙動">フロント挙動</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#アップロード画面を表示する-GET-m03-18-admin-product-product-section-csv-upload">アップロード画面を表示する（GET `m03-18_admin_product_product_section_csv_upload`）</a>
-<a class="lv3" href="#雛形をダウンロードする-GET-m03-18-admin-product-product-section-csv-template">雛形をダウンロードする（GET `m03-18_admin_product_product_section_csv_template`）</a>
-<a class="lv3" href="#CSV-を取込む-POST-m03-18-admin-product-product-section-import">CSV を取込む（POST `m03-18_admin_product_product_section_import`）</a>
-<a class="lv3" href="#専用手継内部-確認値">専用手継内部（確認値）</a>
-<a class="lv2" href="#集計条件">集計条件</a>
-<a class="lv2" href="#CSV-検証および行反映時の判定順序">CSV 検証および行反映時の判定順序</a>
-<a class="lv2" href="#表示メッセージ">表示メッセージ</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
-<a class="lv3" href="#入力項目">入力項目</a>
-<a class="lv3" href="#ファイル内データ列">ファイル内データ列</a>
-<a class="lv3" href="#エッジケース">エッジケース</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#アップロード画面の表示">アップロード画面の表示</a>
+<a class="lv3" href="#雛形の出力">雛形の出力</a>
+<a class="lv3" href="#取込の判定順序">取込の判定順序</a>
+<a class="lv3" href="#エラー時の扱い">エラー時の扱い</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#バリデーション">バリデーション</a>
-<a class="lv2" href="#権限・認可">権限・認可</a>
-<a class="lv2" href="#画面遷移">画面遷移</a>
-<a class="lv3" href="#遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#試行制限">試行制限</a>
-<a class="lv2" href="#ログ・監査">ログ・監査</a>
-<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
-<a class="lv2" href="#セッション">セッション</a>
-<a class="lv3" href="#本機能におけるセッション">本機能におけるセッション</a>
-<a class="lv3" href="#セッションへ保存しない情報">セッションへ保存しない情報</a>
-<a class="lv2" href="#Cookie">Cookie</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a>
-<a class="lv2" href="#調査補助-grep向け">調査補助（grep向け）</a>
-<a class="lv3" href="#HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</a></nav>
+<a class="lv3" href="#入出力-CSVの列">入出力: CSVの列</a>
+<a class="lv3" href="#入出力-永続化">入出力: 永続化</a>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -305,103 +289,27 @@ footer {
         <h1>商品管理 — 部門更新CSV登録</h1>
       </header>
       
-      <h2 id="概要">概要</h2>
-<p>管理画面の「商品管理」→「商品CSV管理」→「部門更新CSV登録」から開く画面で、アップロードした CSV に従って商品規格（<code>dtb_product_class</code>）の部門（<code>section_id</code>）を一括で更新する機能である。CSV の「商品コード」は規格の商品コード列（DB 上は <code>product_code</code>）に一致する行を対象とし、「部門コード」は部門マスタ（<code>mtb_section.code</code>）から部門 ID を引いて設定する。部門コードが空または空白のみの行では <code>section_id</code> を未設定（SQL の NULL）に書き換える。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値は EC-CUBE Enterprise の <code>src/Eccube</code> 配下とする。</p>
-<p>本機能のカスタマイズ区分はカスタマイズである。挙動の参照リポは現行の pf-eccube3 とし、DB関連（テーブル名・列名・型・制約・関連、保存先・扱い、副作用のDB更新）は ec-cube-enterprise を正とする。</p>
-<p>対象はブラウザ経由の管理画面に限定する。</p>
-<p>コントローラのメソッド名は本文の主題としない。本文ではルートbind名やSymfonyのルートnameの網羅は主説明としない。「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。コード探索でbind名が必要なときだけ「調査補助」へ書く。</p>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>更新対象列</td><td><code>dtb_product_class.section_id</code>（部門ID）を <code>product_code</code> 一致で更新</td><td>同一スキーマ。<code>dtb_product_class.product_code</code> は長さ 255、<code>section_id</code> は <code>mtb_section</code> への外部参照列で確認値も一致</td></tr><tr><td>部門マスタ</td><td><code>mtb_section</code>（<code>code</code>→<code>id</code> 解決）</td><td>同一スキーマ。<code>mtb_section.id</code>・<code>code</code>（長さ 128）が存在</td></tr><tr><td>取込履歴</td><td><code>dtb_csv_import_history</code></td><td>同一スキーマ。<code>file_name</code>・<code>create_date</code>・<code>csv_import_type_id</code>・<code>member_id</code> が存在</td></tr></tbody></table></div>
-<p>本機能が参照・更新するテーブル・列は現行と移行先で同一スキーマである。差分は確認できない。</p>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>ナビ「商品管理」→「商品CSV管理」→「部門更新CSV登録」</td><td><code>GET /{admin_route}/product/section/csv_upload</code></td><td>アップロード画面が開き、フォーマット表と履歴が表示される。</td></tr><tr><td>雛形ダウンロード</td><td><code>GET /{admin_route}/product/section/csv_template</code></td><td><code>product_section_update.csv</code>（ヘッダのみ）が得られる。</td></tr><tr><td>アップロード送信</td><td><code>POST /{admin_route}/product/section/import</code></td><td>検証・取込後、常に <code>GET …/section/csv_upload</code> へリダイレクトされ、フラッシュで結果が示される。</td></tr><tr><td>履歴の表示件数変更</td><td><code>GET /{admin_route}/product/section/csv_upload?page_no=…&amp;page_count=…</code></td><td>クエリの件数が許容リストに含まれるときだけセッションに保存される。ページ番号はその都度セッションへ書き戻される。</td></tr></tbody></table></div>
-<hr>
-<h2 id="フロント挙動">フロント挙動</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td><code>@admin/Product/csv_product_section.twig</code> は <code>@admin/Product/base_csv_upload.twig</code> を継承する。ブロック <code>sub_title</code> は翻訳キー <code>admin.product.product_section_csv</code>（画面では「部門更新CSV登録」）。タイトル行は共通フレームの「商品管理」。サイドメニュー鍵は <code>product</code>・<code>product_csv_management</code>・<code>m03-18_admin_product_product_section_import</code>。カード見出しは <code>admin.product.product_section_csv_upload_title</code> と <code>admin.product.product_section_csv_format_title</code>。ファイル入力の <code>accept</code> は <code>.csv</code>・<code>text/csv</code>・<code>.tsv</code>・<code>text/tsv</code>。フォーマット表はコントローラの <code>getCsvHeader()</code> のキー・値（説明セルはいずれも空文字の確認値）。「商品コード」列には必須バッジ（<code>getRequiredCsvHeader()</code> のキーに含まれる列のみ）。続けて共通 <code>csv_import_history.twig</code>。</td></tr><tr><td>JS 挙動</td><td>ファイル選択でカスタムラベルへファイル名表示。送信時に <code>$.changeLoading(true)</code>。履歴の件数プルダウン変更で選択 URL へ即時遷移。</td></tr><tr><td>CSS・レイアウト</td><td><code>base_csv_upload.twig</code> 内の <code>custom-file-input</code> とラベル装飾。</td></tr><tr><td>モーダル・ポップアップ</td><td>送信前確認ダイアログはない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="アップロード画面を表示する-GET-m03-18-admin-product-product-section-csv-upload">アップロード画面を表示する（GET <code>m03-18_admin_product_product_section_csv_upload</code>）</h3>
-<ol><li>管理画面の認証・共通制約を通過する。</li><li>管理者向け CSV 取込フォーム種別の空フォームを作成し、<code>handleRequest</code> でバインドする。</li><li><code>page_count</code> が抽象コントローラの許容リスト（10, 50, 100, 300, 500, 1000, 2000, 10000, 12000 の確認値）に含まれる場合のみセッションキー文字列 <code>admin.product.section_csv.page_count</code> を更新する。</li><li><code>page_no</code> はクエリまたはセッションキー文字列 <code>admin.product.section_csv.page_no</code> で決め、セッションへ書き戻す。</li><li>取込履歴クエリビルダを「CSV 種別が部門更新 CSV（ID 11）」だけに限定し、ページネータで渡す。</li></ol>
-<h3 id="雛形をダウンロードする-GET-m03-18-admin-product-product-section-csv-template">雛形をダウンロードする（GET <code>m03-18_admin_product_product_section_csv_template</code>）</h3>
-<ol><li>管理画面の認証・共通制約を通過する。</li><li><code>getCsvHeader()</code> のキー順で 1 行目のみを出力する CSV をストリーミング返却する（値側は雛形出力では使われず、キーがヘッダセルになる）。</li><li>ファイル名は <code>product_section_update.csv</code>。<code>Content-Type</code> は <code>application/octet-stream</code>。</li></ol>
-<h3 id="CSV-を取込む-POST-m03-18-admin-product-product-section-import">CSV を取込む（POST <code>m03-18_admin_product_product_section_import</code>）</h3>
-<ol><li>ログイン利用者アカウントが履歴 INSERT の <code>member_id</code> として使われる。</li><li><code>CsvImportType</code> に送信をバインドする。妥当でない場合は各フォームエラーを管理者向けフラッシュに積み、<code>GET m03-18_admin_product_product_section_csv_upload</code> へリダイレクトする。</li><li><code>import_file</code> が null の場合、キー <code>admin.common.csv_invalid_format</code> をフラッシュし、同様にリダイレクトする。</li><li>アップロードファイル全文について、ダブルクォート内の改行を除いたあとの改行数を数え、その値が抽象コントローラ定数 <code>ADMIN_CSV_IMPORT_MAX_ROWS</code>（5010）以上なら <code>admin.csv.error.upload.maxrecord</code>（パラメータに当該上限）をフラッシュしリダイレクトする。</li><li>情報ログに「部門更新CSV登録開始」を出力する。</li><li>部門更新専用の手継ハンドラと ORM・翻訳器・共通設定・ログイン利用者を渡した汎用インポータで <code>import</code> を実行する。</li><li>結果にエラーが 1 件でもあれば「部門更新CSV登録 異常終了」をログし、各エラーを管理者向けフラッシュに積む。</li><li>エラーが無い場合、<code>admin.register.complete</code> を成功フラッシュに積む。「部門更新CSV登録完了」を件数パラメータ付きでログする。続けて取込履歴リポジトリへ種別 ID 11・クライアントオリジナルファイル名・利用者 ID を渡して INSERT する（種別マスタ行が無い環境ではリポジトリが無操作で返る）。</li><li>いずれの場合も <code>GET m03-18_admin_product_product_section_csv_upload</code> へリダイレクトする。</li></ol>
-<h3 id="専用手継内部-確認値">専用手継内部（確認値）</h3>
-<ol><li><code>onBeforeImport</code> で列定義を初期化する。1 列目は商品コード列（必須）、2 列目は部門コード列（必須フラグは付けない）。</li><li>共通実装により、データ行の列数が 2 でない場合や、ヘッダ名と列定義名の対応が取れない場合はエラーとなり <code>breakAll</code> で中断する。</li><li>列単体検証で商品コードが必須（空は不可）。部門コードは文字列列として空も許容される。</li><li><code>onValidateRow</code> の追加処理として、(a) 商品コードに一致する規格が存在しない場合は商品不存在エラーを積み <code>breakAll</code>。(b) 部門コードが空でないときに <code>mtb_section.code</code> が一致する行が無い場合はマスタ不存在エラーを積み <code>breakAll</code>。部門コードが trim 後空のときは (b) をスキップする。</li><li><code>onReadRow</code> で <code>replaceSection(商品コード, 部門IDまたはnull)</code> を呼ぶ。更新は <code>UPDATE dtb_product_class SET section_id = ? WHERE product_code = ?</code> のパラメータバインディングによる native 実行で、<code>product_code</code> が一致するすべての規格行が対象となる。</li></ol>
-<hr>
-<h2 id="集計条件">集計条件</h2>
-<p>本機能では売上集計は行わない。履歴は種別 ID 11 のみを <code>create_date</code> 降順でページングする。</p>
-<hr>
-<h2 id="CSV-検証および行反映時の判定順序">CSV 検証および行反映時の判定順序</h2>
-<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>フォームのファイル妥当性・Symfony <code>File</code> のサイズ上限（<code>eccube_csv_size</code> をメガバイト単位に付与した値。配布既定は 5M）</td><td>失敗時はリクエスト処理内でフラッシュのみ。DB トランザクションには入らない</td></tr><tr><td>2</td><td>事前の改行行数カウント</td><td>5010 以上ならフラッシュのみで中止</td></tr><tr><td>3</td><td>一時ファイル化後、インポータ先頭チェックでヘッダ行および 2 行目以降のデータ行が読めること</td><td>ヘッダ不正またはデータ空エラーとなりインポータがエラー配列のみ返す</td></tr><tr><td>4</td><td>各データ行の列数が 2 と一致すること</td><td>不一致なら共通メッセージストア経路で全体中断へ</td></tr><tr><td>5</td><td>各行のヘッダ名対応と列検証（商品コード必須、部門コードは空可）</td><td>失敗ごとに <code>breakAll</code></td></tr><tr><td>6</td><td>商品コードに対応する規格の実在</td><td>不存在なら <code>breakAll</code></td></tr><tr><td>7</td><td>部門コードが非空のとき <code>mtb_section.code</code> の実在</td><td>不存在なら <code>breakAll</code></td></tr><tr><td>8</td><td>問題なければ native UPDATE で <code>section_id</code> を設定または NULL クリア</td><td>同一 CSV 内で同一商品コードが複数行あれば、各行ごとに UPDATE が繰り返され、最終行の値が残る</td></tr></tbody></table></div>
-<hr>
-<h2 id="表示メッセージ">表示メッセージ</h2>
-<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>画面上の文言(英語)</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M03-35-MSG-001</td><td>管理画面上部</td><td>CSRFトークンが無効です、再送信してください。</td><td>（英訳なし）</td><td>CSV取込時にCSRFトークンが無効なとき</td><td>部門更新CSV取込画面に遷移する</td></tr><tr><td>M03-35-MSG-002</td><td>管理画面上部</td><td>CSVのフォーマットが一致しません</td><td>（英訳なし）</td><td>フォームが有効であるにもかかわらず、import_file が null のとき</td><td>エラーを表示し、部門更新CSV登録画面に遷移する</td></tr><tr><td>M03-35-MSG-003</td><td>管理画面上部</td><td>%maxRecord% 行を超えるCSVファイルは登録できません。</td><td>（英訳なし）</td><td>上限を超える行数のCSVファイルを登録したとき</td><td>エラーを表示し、部門更新CSV登録画面に遷移する</td></tr><tr><td>M03-35-MSG-004</td><td>管理画面上部</td><td>CSVのフォーマットが一致しません。 ／ CSVデータが存在しません。 ／ CSVのフォーマットが一致しません。 %d 行目のデータを確認してください。 ／ %d 行目の %s ではデータを取得できません。 ／ %s は必須項目です。 %d 行目のデータを確認してください。 ／ %s : %s がマスターから取得できません。 %d 行目のデータを確認してください。</td><td>（英訳なし）</td><td>CSV取込時にヘッダーがない、データ行がない、またはデータ行の列数が不正なとき</td><td>部門更新CSV取込画面に遷移する</td></tr><tr><td>M03-35-MSG-005</td><td>管理画面上部</td><td>登録が完了しました。</td><td>（英訳なし）</td><td>CSVの登録がエラーなく完了したとき</td><td>登録完了を表示し、部門更新CSV登録画面に遷移する</td></tr></tbody></table></div>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<p>本機能における画面上の入力はファイル 1 系統のみであり、価格計算はない。ファイル内データ列は雛形の見出し行どおりとする。</p>
-<h3 id="入力項目">入力項目</h3>
-<div class="table-wrap"><table><thead><tr><th>項目名</th><th>必須／任意</th><th>最大長</th><th>初期値</th><th>保存先・扱い</th></tr></thead><tbody><tr><td>CSV ファイル</td><td>必須</td><td>Symfony <code>File</code> 制約で <code>eccube_csv_size</code> をメガバイト単位につけたサイズ上限（配布既定は 5M）。送信前チェックとして改行行数が 5010 未満であること（5010 以上でフラッシュのみで中止）。行数カウントはファイル全文を読む簡易方式でダブルクォート内改行は除く。拡張子が <code>tsv</code> のときは区切りがタブになる</td><td>未選択</td><td>一時ディレクトリ <code>eccube_csv_temp_realdir</code> へ退避後にインポータが読込み、終了時に一時ファイル削除を試行。成功時のみ履歴にオリジナルファイル名を記録</td></tr></tbody></table></div>
-<p>アップロードしたファイルのデータ行は、次の表どおり 2 列とする。</p>
-<h3 id="ファイル内データ列">ファイル内データ列</h3>
-<div class="table-wrap"><table><thead><tr><th>項目名</th><th>必須／任意</th><th>最大長</th><th>初期値</th><th>保存先・扱い</th></tr></thead><tbody><tr><td>商品コード</td><td>必須</td><td>文字列列として Symfony Length は付かない。DB 上の <code>dtb_product_class.product_code</code> は長さ 255 の確認値</td><td>データ行のみ</td><td>一致する規格の <code>product_code</code> を持つ行すべての <code>section_id</code> を更新対象とする</td></tr><tr><td>部門コード</td><td>任意</td><td>文字列列として桁上限の追加バリデータは無し</td><td>データ行のみ</td><td>trim 後が空なら <code>section_id</code> を NULL に更新。非空なら <code>mtb_section.code</code> で検索した ID をセット。存在しなければ当該行で全体中断</td></tr></tbody></table></div>
-<h3 id="エッジケース">エッジケース</h3>
-<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>部門を未設定に戻したい</td><td>部門コード列を空にすると検証をスキップし、<code>section_id</code> が NULL に更新される。</td></tr><tr><td>同一商品コードを複数データ行に書く</td><td>各行で UPDATE が走る。途中行でエラーが無ければすべて適用され、同一コードに対しては後勝ちとなる。途中で <code>breakAll</code> した場合はトランザクションがロールバックされ一行も確定しない。</td></tr><tr><td>同一 <code>product_code</code> を持つ規格が複数行</td><td>いずれも同じ UPDATE の WHERE に該当し、まとめて同じ <code>section_id</code> に更新される。</td></tr><tr><td>トランザクションがロールバックされた取込</td><td>履歴 INSERT は実行されず、フラッシュにエラーのみ。</td></tr></tbody></table></div>
-<hr>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>一覧と反映内容</td><td>アップロード画面は実行後も自動で CSV を再読込しない。規格の部門は別画面で確認する必要がある。</td></tr><tr><td>履歴一覧</td><td>種別 ID 11 に絞るため、他 CSV の履歴と混在しない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="API-バッチ結果">API/バッチ結果</h2>
-<p>本機能では外部 HTTP API またはバッチを起動しない。</p>
-<hr>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="アップロード画面の表示">アップロード画面の表示</h3>
+<p>部門更新CSVの取込履歴だけを並べて表示する。表示件数は10・50・100・300・500・1000・2000・10000・12000のいずれかを指定したときだけ更新する。</p>
+<h3 id="雛形の出力">雛形の出力</h3>
+<p>見出し行だけを持つCSVを出力する。ファイル名は <code>product_section_update.csv</code> とする。</p>
+<h3 id="取込の判定順序">取込の判定順序</h3>
+<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>送信内容が妥当でないとき、またはファイルの大きさが上限（設定値。配布時の既定は5メガバイト）を超えるとき</td><td>エラーを表示してアップロード画面へ戻り、取込を開始しない</td></tr><tr><td>2</td><td>二重引用符に囲まれた改行を除いた改行数が5010以上のとき</td><td>上限超過のエラーを表示し、取込を開始しない</td></tr><tr><td>3</td><td>見出し行が読めないとき、または2行目以降のデータ行が無いとき</td><td>エラーだけを返す</td></tr><tr><td>4</td><td>データ行の列数が2でないとき</td><td>全体を中止する</td></tr><tr><td>5</td><td>見出し名が列定義と対応しないとき、または商品コードが空のとき</td><td>全体を中止する</td></tr><tr><td>6</td><td>商品コードに一致する規格が存在しないとき</td><td>商品不存在のエラーを積み、全体を中止する</td></tr><tr><td>7</td><td>部門コードが空でなく、一致する部門が存在しないとき</td><td>マスタ不存在のエラーを積み、全体を中止する</td></tr><tr><td>8</td><td>上記のいずれにも該当しないとき</td><td>商品コードが一致するすべての規格の部門を更新する</td></tr></tbody></table></div>
+<p>部門コードが前後の空白を除いて空のときは、部門の存在確認を行わない。同一のCSV内に同じ商品コードが複数行あるときは、行ごとに更新を繰り返すため最終行の値が残る。</p>
+<h3 id="エラー時の扱い">エラー時の扱い</h3>
+<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>送信内容が妥当でない</td><td>エラーを表示し、アップロード画面へ戻る</td></tr><tr><td>ファイルを選択していない</td><td>形式が一致しない旨のエラーを表示し、アップロード画面へ戻る</td></tr><tr><td>行数が上限を超える</td><td>上限超過のエラーを表示し、アップロード画面へ戻る</td></tr><tr><td>取込の検証でエラーが出た</td><td>各メッセージを表示し、更新を反映しない</td></tr></tbody></table></div>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>multipart の CSV（または TSV）ファイル、CSRF トークン</td></tr><tr><td>成功時出力</td><td>PRG パターンで GET <code>m03-18_admin_product_product_section_csv_upload</code> へリダイレクトし、成功フラッシュとログ、履歴 1 件 INSERT</td></tr><tr><td>失敗時出力</td><td>同上リダイレクトにエラーフラッシュ、異常時はログ文言「異常終了」。インポータ外例外は捕捉しない</td></tr><tr><td>副作用</td><td><code>dtb_product_class.section_id</code> の一括更新、条件付きで <code>dtb_csv_import_history</code> への追記、情報ログ</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>dtb_product_class</code></td><td><code>product_code</code>, <code>section_id</code></td><td>更新対象。<code>section_id</code> は外部キーで <code>mtb_section</code> を参照する想定の列である。</td></tr><tr><td><code>mtb_section</code></td><td><code>id</code>, <code>code</code></td><td>参照のみ（コード→ID 解決）。</td></tr><tr><td><code>dtb_csv_import_history</code></td><td><code>file_name</code>, <code>create_date</code>, <code>csv_import_type_id</code>, <code>member_id</code></td><td>成功時のみ INSERT。種別は ID 11。</td></tr></tbody></table></div>
-<h3 id="DB操作">DB操作</h3>
-<p>永続化の正は ec-cube-enterprise。商品系は承認ワークフローを介さず persist/flush で直接確定する（在庫の承認ワークフローとは別系統。<code>ProductController</code>・各CSVサービスで確認）。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>登録/更新</td><td>dtb_csv_import_history / dtb_product_class / mtb_section</td><td>当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。</td></tr></tbody></table></div>
-<hr>
-<h2 id="バリデーション">バリデーション</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>アップロードファイル</td><td><code>CsvImportType</code> の <code>NotBlank</code> と <code>File</code>（最大サイズ）。未選択や不正時はフォームエラーまたは <code>admin.common.csv_invalid_format</code>。</td></tr><tr><td>CSV 全体</td><td>インポータのヘッダ・データ行存在チェック、区切り・囲みは共通 <code>CsvImportService</code> と設定 <code>eccube_csv_import_delimiter</code>・<code>eccube_csv_import_enclosure</code>。文字コードはサービス側フィルタで UTF-8 に寄せる経路がある（SJIS 系ファイルを含む）。</td></tr><tr><td>各行</td><td>列数 2、商品コード必須、規格実在、部門コード非空時は部門実在。</td></tr></tbody></table></div>
-<hr>
-<h2 id="権限・認可">権限・認可</h2>
-<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>部門更新 CSV 画面・雛形・取込 POST</th></tr></thead><tbody><tr><td>未ログインのゲスト</td><td>管理画面ファイアウォールにより当パスへ到達しない想定</td></tr><tr><td>ログイン済み管理者</td><td>実装個別のアノテーション制限は付けず、<code>/%eccube_admin_route%/</code> の共通ルールに従う</td></tr></tbody></table></div>
-<hr>
-<h2 id="画面遷移">画面遷移</h2>
-<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>POST 取込の完了（成功・失敗いずれも）</td><td><code>GET …/product/section/csv_upload</code></td></tr><tr><td>ナビから開く</td><td><code>GET …/product/section/csv_upload</code></td></tr></tbody></table></div>
-<h3 id="遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</h3>
-<div class="table-wrap"><table><thead><tr><th>起点</th><th>遷移前の処理</th><th>遷移後の初期状態</th></tr></thead><tbody><tr><td>GET 画面で <code>page_count</code>／<code>page_no</code> をクエリ指定</td><td>許容値ならセッションキー <code>admin.product.section_csv.page_count</code> を更新。<code>page_no</code> は常にセッションへ書き戻し</td><td>指定ページの履歴一覧</td></tr></tbody></table></div>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>フォーム不正</td><td>管理者向けエラーフラッシュを積みリダイレクト</td></tr><tr><td>ファイル未選択（null）</td><td><code>admin.common.csv_invalid_format</code> をフラッシュしてリダイレクト</td></tr><tr><td>行数上限超過</td><td><code>admin.csv.error.upload.maxrecord</code> をフラッシュしてリダイレクト</td></tr><tr><td>インポータが返した検証エラー</td><td>各メッセージをフラッシュに積みリダイレクト。DB はロールバック</td></tr><tr><td>実行時例外（インポータ内部など）</td><td>本コントローラは捕捉しないため、Symfony の例外処理に委ねられる</td></tr></tbody></table></div>
-<hr>
-<h2 id="試行制限">試行制限</h2>
-<p>本機能ではレートリミットを設けない。</p>
-<hr>
-<h2 id="ログ・監査">ログ・監査</h2>
-<div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>取込開始直前</td><td>情報ログ「部門更新CSV登録開始」</td></tr><tr><td>取込正常終了</td><td>情報ログ「部門更新CSV登録完了」と件数パラメータ <code>count</code></td></tr><tr><td>取込がエラー結果</td><td>情報ログ「部門更新CSV登録 異常終了」</td></tr></tbody></table></div>
-<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
-<ul><li>パスワード</li><li>なりすまし対策トークン</li><li>Cookie 値</li><li>セッション ID の完全値</li><li>Remember Me トークンの原値</li></ul>
-<hr>
-<h2 id="セッション">セッション</h2>
-<h3 id="本機能におけるセッション">本機能におけるセッション</h3>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>履歴ページング</td><td>キー文字列 <code>admin.product.section_csv.page_count</code> と <code>admin.product.section_csv.page_no</code> に保存する。値は整数。</td></tr></tbody></table></div>
-<h3 id="セッションへ保存しない情報">セッションへ保存しない情報</h3>
-<ul><li>アップロードファイルのバイナリ本文</li></ul>
-<hr>
-<h2 id="Cookie">Cookie</h2>
-<p>本機能専用の Cookie は定義しない。セッション Cookie は管理画面全体の設定に従う。</p>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<p>インポータは DB 接続のトランザクションを開始し、検証エラーで <code>breakAll</code> した場合はロールバックする。成功時のみコミットする。行ロックタイムアウトは手継の既定値（確認値 5 秒）をインポータが設定する。規格更新は ORM のエンティティではなく native UPDATE を用いる。</p>
-<hr>
-<h2 id="調査補助-grep向け">調査補助（grep向け）</h2>
-<h3 id="HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</h3>
-<ul><li><code>m03-18_admin_product_product_section_csv_upload</code> … <code>GET</code> … <code>/{admin_route}/product/section/csv_upload</code>（アップロードフォーム、フォーマット説明表、雛形へのリンク、CSV 取込履歴のページネーションを表示する。）</li><li><code>m03-18_admin_product_product_section_import</code> … <code>POST</code> … <code>/{admin_route}/product/section/import</code>（アップロードされた CSV を検証し取込処理を実行する。終了後は常に <code>GET m03-18_admin_product_product_section_csv_upload</code> へ HTTP リダイレクトする。）</li><li><code>m03-18_admin_product_product_section_csv_template</code> … <code>GET</code> … <code>/{admin_route}/product/section/csv_template</code>（ヘッダ行のみの雛形 <code>product_section_update.csv</code> を <code>application/octet-stream</code> で返す。）</li></ul>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>取込のCSVまたはTSVファイルと、なりすまし対策トークン</td></tr><tr><td>成功時出力</td><td>登録完了のメッセージを表示し、アップロード画面へ戻る</td></tr><tr><td>失敗時出力</td><td>エラーを表示し、アップロード画面へ戻る</td></tr></tbody></table></div>
+<p>画面上の入力はファイルだけであり、価格の計算は行わない。</p>
+<h3 id="入出力-CSVの列">入出力: CSVの列</h3>
+<div class="table-wrap"><table><thead><tr><th>項目名</th><th>必須／任意</th><th>桁</th><th>扱い</th></tr></thead><tbody><tr><td>商品コード</td><td>必須</td><td>追加の桁の上限は持たない。規格の商品コードは255文字まで</td><td>一致する規格すべてを更新対象とする</td></tr><tr><td>部門コード</td><td>任意</td><td>追加の桁の上限は持たない</td><td>空のときは規格の部門を未設定にする。空でないときは一致する部門を設定する。一致する部門が無いときは全体を中止する</td></tr></tbody></table></div>
+<h3 id="入出力-永続化">入出力: 永続化</h3>
+<div class="table-wrap"><table><thead><tr><th>操作</th><th>契機</th></tr></thead><tbody><tr><td>更新</td><td>行の検証を通過したとき。商品コードが一致する規格の部門</td></tr><tr><td>追加</td><td>エラーなく取込を終えたとき。取込履歴を1件（種別は部門更新、ファイル名はアップロードしたファイルの名称、実行した利用者）</td></tr></tbody></table></div>
+<p>取込履歴は、種別のマスタが無い環境では追加しない。</p>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
+<h2 id="表示メッセージ">表示メッセージ</h2>
+<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M03-35-MSG-001</td><td>管理画面上部</td><td>CSRFトークンが無効です、再送信してください。</td><td>CSV取込時にCSRFトークンが無効なとき</td><td>部門更新CSV取込画面に遷移する</td></tr><tr><td>M03-35-MSG-002</td><td>管理画面上部</td><td>CSVのフォーマットが一致しません</td><td>送信内容は妥当だが、ファイルを選択せずにCSV取込を実行したとき</td><td>エラーを表示し、部門更新CSV登録画面に遷移する</td></tr><tr><td>M03-35-MSG-003</td><td>管理画面上部</td><td>%maxRecord% 行を超えるCSVファイルは登録できません。</td><td>上限を超える行数のCSVファイルを登録したとき</td><td>エラーを表示し、部門更新CSV登録画面に遷移する</td></tr><tr><td>M03-35-MSG-004</td><td>管理画面上部</td><td>CSVのフォーマットが一致しません。 ／ CSVデータが存在しません。 ／ CSVのフォーマットが一致しません。 %d 行目のデータを確認してください。 ／ %d 行目の %s ではデータを取得できません。 ／ %s は必須項目です。 %d 行目のデータを確認してください。 ／ %s : %s がマスターから取得できません。 %d 行目のデータを確認してください。</td><td>CSV取込時にヘッダーがない、データ行がない、またはデータ行の列数が不正なとき</td><td>部門更新CSV取込画面に遷移する</td></tr><tr><td>M03-35-MSG-005</td><td>管理画面上部</td><td>登録が完了しました。</td><td>CSVの登録がエラーなく完了したとき</td><td>登録完了を表示し、部門更新CSV登録画面に遷移する</td></tr></tbody></table></div>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

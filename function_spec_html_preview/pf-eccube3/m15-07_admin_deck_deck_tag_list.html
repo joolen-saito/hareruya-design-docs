@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,39 +272,14 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#フロント挙動">フロント挙動</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#一覧を表示する-GET-admin-decktag-list-disabled-または-admin-decktag-sort">一覧を表示する（GET `admin_decktag_list_disabled` または `admin_decktag_sort`）</a>
-<a class="lv3" href="#モーダル送信で新規登録または更新する-POST-admin-decktag-update">モーダル送信で新規登録または更新する（POST `admin_decktag_update`）</a>
-<a class="lv3" href="#削除する-DELETE-admin-decktag-delete">削除する（DELETE `admin_decktag_delete`）</a>
-<a class="lv2" href="#集計条件">集計条件</a>
-<a class="lv2" href="#一覧取得時の並び順">一覧取得時の並び順</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
-<a class="lv3" href="#入力項目-モーダル">入力項目（モーダル）</a>
-<a class="lv3" href="#エッジケース">エッジケース</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#一覧の表示">一覧の表示</a>
+<a class="lv3" href="#登録・更新">登録・更新</a>
+<a class="lv3" href="#削除">削除</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#バリデーション">バリデーション</a>
-<a class="lv2" href="#権限・認可">権限・認可</a>
-<a class="lv2" href="#画面遷移">画面遷移</a>
-<a class="lv3" href="#遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#試行制限">試行制限</a>
-<a class="lv2" href="#ログ・監査">ログ・監査</a>
-<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
-<a class="lv2" href="#セッション">セッション</a>
-<a class="lv3" href="#本機能におけるセッション">本機能におけるセッション</a>
-<a class="lv3" href="#セッションへ保存しない情報">セッションへ保存しない情報</a>
-<a class="lv2" href="#Cookie">Cookie</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a>
-<a class="lv2" href="#調査補助-ソース位置の索引">調査補助（ソース位置の索引）</a>
-<a class="lv3" href="#HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</a></nav>
+<a class="lv3" href="#入出力-永続化">入出力: 永続化</a>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -302,104 +287,21 @@ footer {
         <h1>デッキ管理 — デッキタグ一覧（カスタム管理画面）</h1>
       </header>
       
-      <h2 id="概要">概要</h2>
-<p>HareruyaEc プラグインが管理画面に提供する「デッキ管理」の下にある、デッキタグマスタ（実装上はテーブル <code>mtb_deck_tag</code>）を一覧し、並び順の切り替え・ページ単位の表示・モーダルからの新規登録・更新・一覧上からの削除を行う機能である。一覧は Doctrine で全件読み込みしたうえで、Twig 側でページ番号により行を間引いて表示する。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。本機能のカスタマイズ区分は現行踏襲であり、挙動は現行リポ pf-eccube3 に配置された HareruyaEc プラグイン実装を確認値とし、DB関連は ec-cube-enterprise を正とする。コア単体では当ルートは存在しない。</p>
-<p>対象はブラウザ経由の管理画面に限定する。側メニュー項目の名前は「デッキタグ一覧」だが、メニューが参照しているルート bind と、本書が主題とする <code>deckTag.twig</code> を返すエンドポイントはソース上ずれがある（後述および「本書で扱わないこと」参照）。</p>
-<p>コントローラの公開メソッド名は本文の主題としない。本文ではルートbind名やSymfonyのルートnameの網羅は主説明としない。「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。コード探索でbind名が必要なときだけ「調査補助」へ書く。</p>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<p>デッキタグマスタは移行先（ec-cube-enterprise）でもコア標準のエンティティとして取り込まれている。DB関連の記述は移行先を正とする。並び順キーの列名が現行と移行先で異なる。</p>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>テーブル名</td><td><code>mtb_deck_tag</code></td><td>同名 <code>mtb_deck_tag</code></td></tr><tr><td>並び順列</td><td><code>rank</code>（表示順）</td><td><code>sort_no</code>（表示順）。並び順キーの列名が現行 <code>rank</code> から移行先 <code>sort_no</code> へ変わる</td></tr><tr><td>日本語名・英語名</td><td><code>name_jp</code>・<code>name_en</code>（各最大 32 文字）</td><td>同名・同桁。<code>name_jp</code>・<code>name_en</code>（各最大 32 文字）</td></tr><tr><td>主キー</td><td><code>id</code></td><td>同じく <code>id</code></td></tr><tr><td>デッキ／アーキタイプとの中間表</td><td>デッキ用・アーキタイプ用の多対多中間表</td><td><code>dtb_deck_deck_tag</code>（<code>deck_id</code>・<code>deck_tag_id</code>）、<code>dtb_archetype_deck_tag</code>（<code>archetype_id</code>・<code>deck_tag_id</code>）</td></tr></tbody></table></div>
-<p>一覧の並び替えキー値・ページ間引き・モーダル編集・削除可否判定などの挙動面は現行 pf-eccube3 実装を正とする。リクエスト引数 <code>sortKey</code> の値（<code>default</code>・<code>nameJp</code>・<code>nameEn</code>・<code>rank</code>）自体は画面上の論理キーであり、移行先では並び替えに用いる DB 列が <code>sort_no</code> になる。</p>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>カスタム一覧を既定件数・既定ページ・既定並びで開く（ルート名前付きリンクや直接入力を含む）</td><td><code>GET /{admin_route}/deckTag</code></td><td>全デッキタグをリポジトリから取得した配列について、並びだけ適用したうえで、先頭ページ相当の行が一覧に載るテンプレートが返る。</td></tr><tr><td>表示件数（10〜100 の 10 段階）、ページ、<code>sortKey</code> を変えて再度開く</td><td><code>GET /{admin_route}/deckTag/{pageCount}/{pageNo}/{sortKey}</code></td><td>取得と並びは <code>sortKey</code> に従い、表示される行だけがページインデックスで間引かれる。</td></tr><tr><td>一覧の編集または新規をモーダルで編集して登録</td><td><code>POST /{admin_route}/deckTag/{pageCount}/{pageNo}/{sortKey}</code>（同一画面のフォームと同じページ変数値）</td><td>検証・永続化の後、成功フラッシュとともに同じページ変数での GET 一覧へ HTTP リダイレクトする。</td></tr><tr><td>一覧の削除ボタン</td><td><code>DELETE /{admin_route}/deckTag/{id}</code>（CSRF 付きのアンカー実装による送信）</td><td>利用中チェック後に削除またはフラッシュのみで一覧へリダイレクトする（詳細は処理フロー）。</td></tr><tr><td>側メニュー「デッキタグ一覧」からの標準リンク</td><td><code>/{admin_route}/masterdata/Plugin-HareruyaEc-Entity-MtbDeckTag/edit</code>（bind は <code>admin_decktag_list</code>）</td><td>ソース上、このパスへの GET はマスタデータ編集向け別コントローラが応答し、この節で述べた <code>deckTag.twig</code> ベースの画面とは異なる Twig が返る（前提は「概要」と「利用者視点の入口」を正とする）。</td></tr></tbody></table></div>
-<hr>
-<h2 id="フロント挙動">フロント挙動</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>ブロック見出し相当の領域に、表示件数ドロップダウン（10 〜 100 件、10 件刻みのうち現在値以外を列挙）、並び順ドロップダウン（日本語名・英語名・表示順の各ラベルはフォーム <code>admin_deck_tag</code> の各フィールドラベルに一致）。一覧表は「日本語名」「英語名」「表示順」列と操作列。各行に編集ボタン・削除リンク。末尾行にのみ新規ボタン。一覧件数が 1 より大きいときフッターにページネーション（前へ・番号リンク・次へ）。ページタイトル文言は Twig ブロックにより「デッキタグ管理」とする想定実装がある。モーダル見出しは初期「編集」で、編集開始や新規で JS が「デッキタグ編集／デッキタグ新規作成」に書き換える。</td></tr><tr><td>JS 挙動</td><td><code>deck-tag.js</code>。モーダル内で <code>.glyphicon</code> が存在するときモーダルを開きなおす（Symfony のエラーが Bootstrap <code>help-block</code> にアイコン付きで載る構成を想定している）。編集ボタンの <code>data-*</code> から名前・順位・識別子を転記してからモーダルを開く。新規時は順位に「現データの順位上限 +1」を埋める。送信ボタンのラベルは新規で「登録」、編集で「更新」に変更する。</td></tr><tr><td>CSS・レイアウト</td><td><code>default_frame.twig</code> 継続。共通 Bootstrap レイアウト。select2 の JS を CDN で読み込む記述があるが、この画面専用の <code>deck-tag.js</code> 側では select2 初期化を行っておらず、機能上は未使用読み込みに近い。</td></tr><tr><td>モーダル・ポップアップ</td><td>単一の Bootstrap モーダル <code>#editModal</code> に、CSRF と非表示項目の識別子、日本語名・英語名・表示順のテキスト／数値入力があり、送信は POST のみ。削除は一覧行の確認付き削除（削除メッセージは管理画面共通の確認文言フォーマットにフォーマット引数 <code>"このデッキタグ"</code> を渡す）。</td></tr></tbody></table></div>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="一覧を表示する-GET-admin-decktag-list-disabled-または-admin-decktag-sort">一覧を表示する（GET <code>admin_decktag_list_disabled</code> または <code>admin_decktag_sort</code>）</h3>
-<ol><li>管理画面の認証・共通制約を通過する。</li><li>フォーム名 <code>admin_deck_tag</code> のビルダを生成し、そのビューをテンプレートに渡す（一覧表示時は未入力の新規状態に近いが、一覧描画のみで入力値検証はしない）。</li><li>リクエストまたはルート既定に従い <code>pageCount</code>・<code>pageNo</code>・<code>sortKey</code> を確定する。</li><li><code>sortKey</code> がリポジトリの対応表に無い場合は並び順句を追加しない実装となる。既定キーでは <code>default</code> と <code>rank</code> が同じ列並び昇順となるマッピングが定義されている。</li><li><code>mtb_deck_tag</code> 向けクエリビルダで昇順のみの <code>ORDER BY</code> を適用した結果をすべて取得してテンプレートへ渡す。セッション保存はしない。</li></ol>
-<h3 id="モーダル送信で新規登録または更新する-POST-admin-decktag-update">モーダル送信で新規登録または更新する（POST <code>admin_decktag_update</code>）</h3>
-<ol><li>管理画面の認証・共通制約を通過する。</li><li>送信ボディについて、フォーム名に紐づく CSRF 検証が先に実行され、異常時は共通の拒否処理となる。</li><li>フォームのバリデータが問題なければ、<code>id</code> 有無で既存検索または新規エンティティを準備する。識別子は存在するが行が無いときは HTTP 404 とする。</li><li>フォーム配列データを共通トレイトの配列セットでエンティティへ反映する。関連コレクション名は対象から除外しているので多対多は更新しない。</li><li>Doctrine の永続・フラッシュの後、更新成功フラッシュ（管理共通メッセージ鍵を使用）を積み、<code>admin_decktag_sort</code> へ送信元と同一のページ変数へリダイレクトする。</li><li>バリデータが問題ある場合は一覧と同構成の Twig を再レンダして返し、画面上は JS がバリダーメッセージ検知によりモーダルを再び開く構成になる。</li></ol>
-<h3 id="削除する-DELETE-admin-decktag-delete">削除する（DELETE <code>admin_decktag_delete</code>）</h3>
-<ol><li>管理画面の認証・共通制約を通過する。</li><li>アンカー用 CSRF が無効なら共通の CSRF 失敗となる。</li><li>対象行が無い場合は HTTP 404 となる。</li><li>関連するデッキの個数が 0 でないとき、プラグインメッセージ（デッキ利用中）はエラーフラッシュのみし、<code>admin_decktag_list</code> の URL でリダイレクトする（パス実体は側メニューと同様のマスタデータ向け）。</li><li>アーキタイプ初期値側の関連が 0 でないときも同様にエラーフラッシュのみし、同じ <code>admin_decktag_list</code> でリダイレクトする。</li><li>上記両方とも 0 のときのみエンティティを remove したうえで flush し、削除成功フラッシュを積み、同様に <code>admin_decktag_list</code> でリダイレクトする。</li></ol>
-<hr>
-<h2 id="集計条件">集計条件</h2>
-<div class="table-wrap"><table><thead><tr><th>指標</th><th>集計の要点</th></tr></thead><tbody><tr><td>一覧の総件数</td><td>リポジトリが返す結果配列長と一致する。追加のクエリ集約カウントはしない。</td></tr><tr><td>表示行</td><td>Twig のループ位置が <code>(pageNo-1)*pageCount</code> より後かつ <code>pageNo*pageCount</code> までの半開区間にある行のみ表に載る。この間引きはクライアントが受け取る HTML が既に絞られたものになる。</td></tr></tbody></table></div>
-<hr>
-<h2 id="一覧取得時の並び順">一覧取得時の並び順</h2>
-<div class="table-wrap"><table><thead><tr><th>sortKey の値として解釈されるもの</th><th>ORDER BY に使う論理項目</th><th>昇降</th></tr></thead><tbody><tr><td><code>default</code>（初期）</td><td>表示順列 <code>sort_no</code>（現行 <code>rank</code>）</td><td>ASC</td></tr><tr><td><code>nameJp</code></td><td>日本語名列 <code>name_jp</code></td><td>ASC</td></tr><tr><td><code>nameEn</code></td><td>英語名列 <code>name_en</code></td><td>ASC</td></tr><tr><td><code>rank</code></td><td>表示順列 <code>sort_no</code>（現行 <code>rank</code>）</td><td>ASC</td></tr></tbody></table></div>
-<p>上記辞書に無い値が経路により渡される場合でも、並び順句自体は追加されない実装となる。ルート assert は英字のみのため、通常運用経路での未定義入力は限定される。</p>
-<hr>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<p>本機能に税額・価格のような関数計算はない。並び順の重複だけが業務規則に近い制約となる。</p>
-<h3 id="入力項目-モーダル">入力項目（モーダル）</h3>
-<p>プラグイン定数 <code>deck_tag.length.name</code> は 32。<code>deck_tag.max.rank</code> は 999999。Twig とメッセージは翻訳リソース環境により文言が異なりうる。</p>
-<div class="table-wrap"><table><thead><tr><th>項目名</th><th>必須／任意</th><th>最大長</th><th>初期値</th><th>保存先・扱い</th></tr></thead><tbody><tr><td>日本語名</td><td>必須</td><td>入力 32 文字（Symfony Length と HTML maxlength、設定ファイルの名前長定数による）</td><td>編集開始時は行の現在値または空</td><td><code>mtb_deck_tag.name_jp</code>。空白不可。フォーム種別は一行テキスト。</td></tr><tr><td>英語名</td><td>必須</td><td>同上</td><td>同上</td><td><code>mtb_deck_tag.name_en</code>。同上。</td></tr><tr><td>表示順</td><td>必須</td><td>整数。上限 999999（LessThanOrEqual と HTML max）、下限 1 より大きい（Symfony GreaterThan と HTML min）の両方により 1〜999999</td><td>編集開始時は行の現在順位。新規時は画面上「現リストの順位最大 +1」（データが無いとき基準順位からの加算となる Twig 側の単純規則）</td><td><code>mtb_deck_tag.sort_no</code>（現行 <code>rank</code>）。既存または新規とも、自分以外で同一順位があるとカスタム制約によりエラーとなる。別メッセージキーにより「表示順が他と重複」旨を文言化。</td></tr><tr><td>識別子（非画面）</td><td>任意</td><td>hidden</td><td>新規では空または未設定相当</td><td>DB 自動採番主キー。更新時のみ既存検索キーとなる。送信時のみ意味を持ち、一覧表示のみの GET には含まれない。</td></tr></tbody></table></div>
-<h3 id="エッジケース">エッジケース</h3>
-<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>表示順が他行と競合</td><td>フォーム送信は成功せず一覧再描画。モーダル再表示により翻訳メッセージを見せる構成。</td></tr><tr><td>削除対象デッキタグがデッキに利用中</td><td>削除はしない。プラグインメッセージ（デッキ利用中）はエラー表示し、<code>admin_decktag_list</code> へリダイレクト。</td></tr><tr><td>アーキタイプ初期値側にのみ残っている</td><td>同上、アーキタイプ向け文言でエラー。</td></tr><tr><td>更新で存在しない ID</td><td>一覧とは別経路として HTTP 404。</td></tr><tr><td>GET の sortKey が辞書外</td><td>ORDER BY が付かない可能性があるため、並び順は不定に近くなる経路がある（通常はルート制約により英字のみ）。</td></tr></tbody></table></div>
-<hr>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>一覧と送信後の並び・ページ</td><td>一覧は送信直前にも全件クエリであり、フラッシュのみ跨いでも DB 状態は送信完了後値で次回 GET に反映される。更新後リダイレクト URL は入力と同じ <code>pageNo</code> と <code>pageCount</code> を維持する。よって並び順変更により当該ページが空白になる経路がある。</td></tr><tr><td>マスタデータ画面との二重運用</td><td>同一テーブルへ別経路でも書けるが、両画面間のロックや整合前提はソース上ここには書かれていない。この設計書は一方の経路のみを細述する。</td></tr><tr><td>側メニューからの削除後ゴール画面</td><td>DELETE 処理は <code>deckTag.twig</code> と異なる Twig となるリダイレクトパスでもよいソースになっているため、画面上のコンテキストは一覧独自画面と異なる状態へ切り替わりうる。</td></tr></tbody></table></div>
-<hr>
-<h2 id="API-バッチ結果">API/バッチ結果</h2>
-<p>本機能ではブラウザ外 API やバッチ起動は扱わない。</p>
-<hr>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="一覧の表示">一覧の表示</h3>
+<p>デッキタグをすべて取得して一覧に表示する。ページ内の表示件数・ページ番号・並び替えキーは、リクエストの指定または画面の既定値で決める。並び替えは昇順のみで、既定のキーと表示順キーはいずれも表示順の昇順になる。対応表に無い並び替えキーを受け取ったときは並び順を指定しない。検索条件は保持しない。登録・更新用のモーダルは一覧と同じ画面に置き、一覧表示のときは入力値の検証を行わない。</p>
+<h3 id="登録・更新">登録・更新</h3>
+<p>識別子を伴わない送信は新規登録、識別子を伴う送信は当該デッキタグの更新とする。識別子はあるが該当するデッキタグが無いときはページが見つからない扱い（404）とする。入力値の検証に通ったときだけ、送信された名称2種と表示順をデッキタグへ反映する。デッキとの関連は更新の対象から除外するため変更しない。更新後は送信元と同じページ変数でデッキタグ一覧へ戻る。検証に通らないときは一覧と同じ画面を再表示し、モーダルを開いた状態で入力エラーを見せる。表示順の重複が業務上の制約となる。</p>
+<h3 id="削除">削除</h3>
+<p>削除対象のデッキタグが無いときはページが見つからない扱い（404）とする。当該デッキタグに紐づくデッキが1件以上あるときは削除しない。アーキタイプ初期値側の関連が1件以上あるときも削除しない。いずれも0件のときだけ削除する。削除の可否にかかわらずデッキタグ一覧へ戻る。</p>
+<p>本機能に税額・価格のような計算は無い。CSVは出力しない。</p>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>GET でのページおよび並び変更、モーダル POST での名前二種と表示順、DELETE での削除対象整数 ID。いずれも管理画面コンテキスト。</td></tr><tr><td>成功時出力</td><td>HTML 一覧、またはフラッシュのみのリダイレクト応答（DELETE、一部エラー削除）。CSV 出力はしない。</td></tr><tr><td>失敗時出力</td><td>Twig による同一画面でのバリデータメッセージ、またはフラッシュのみの別画面リダイレクト応答など。</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<p>（機能が直接読み書きする主項目のみ。型細部はスキーマ定義ファイルを参照。）</p>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>mtb_deck_tag</code></td><td><code>id</code></td><td>主キー。自動採番。</td></tr><tr><td><code>mtb_deck_tag</code></td><td><code>name_jp</code></td><td>日本語ラベル。最大長 32。</td></tr><tr><td><code>mtb_deck_tag</code></td><td><code>name_en</code></td><td>英語ラベル。最大長 32。</td></tr><tr><td><code>mtb_deck_tag</code></td><td><code>sort_no</code>（現行 <code>rank</code>）</td><td>表示順の整数。一覧・前台の並び用途に関与しうる。</td></tr></tbody></table></div>
-<p>多対多中間テーブル（実装上デッキ用・アーキタイプ用）は削除可否判定のみ参照される。</p>
-<h3 id="DB操作">DB操作</h3>
-<p>永続化の正は ec-cube-enterprise（テーブル名・操作は ec-cube-enterprise を正典）。当ドメインは承認ワークフローを介さず persist/flush で直接確定する（承認ワークフローは在庫機能固有）。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>登録/更新</td><td>mtb_deck_tag</td><td>当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。</td></tr></tbody></table></div>
-<hr>
-<h2 id="バリデーション">バリデーション</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>日本語名・英語名</td><td>NotBlank、最大長設定値。</td></tr><tr><td>表示順</td><td>1 より大きく最大値以下の整数。また、自分以外同一順位があるとカスタム違反。</td></tr><tr><td>CSRF（POST と DELETE アンカー）</td><td>管理画面共通の CSRF と整合し、異常時は拒否となる。</td></tr></tbody></table></div>
-<hr>
-<h2 id="権限・認可">権限・認可</h2>
-<p>ソース上、このコントローラ単体でのロール細分チェック記述には踏み込まず、通常の管理画面到達権限がある利用者だけが利用する前提とする。細部は管理画面共通の認可レイヤーを正とする。</p>
-<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th><code>/deckTag</code> 系</th></tr></thead><tbody><tr><td>管理画面ログイン済で当プレフィックスへ到達可</td><td>GET・POST・DELETE の各ルート定義により操作可能となる前提。未到達状態は共通ログイン処理に依存。</td></tr></tbody></table></div>
-<hr>
-<h2 id="画面遷移">画面遷移</h2>
-<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>更新成功後</td><td><code>GET /deckTag/{pageCount}/{pageNo}/{sortKey}</code>（同一変数、<code>admin_decktag_sort</code>）</td></tr><tr><td>DELETE 結果（どの分岐でも）</td><td><code>admin_decktag_list</code> で生成されるパスへのリダイレクト実装となる（一覧独自画面とは別コンテキストになりうる。実装確認値として記す）</td></tr><tr><td>POST 入力エラー時</td><td>HTTP 状態は一覧再描画。URL は入力と同経路になりうるため、状態はフラッシュおよびフォーム状態で示す</td></tr></tbody></table></div>
-<h3 id="遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</h3>
-<div class="table-wrap"><table><thead><tr><th>起点</th><th>遷移前の処理</th><th>遷移後の初期状態</th></tr></thead><tbody><tr><td>POST 保存成功時</td><td>Doctrine 永続および成功フラッシュ</td><td>同一ページサイズでの一覧再クエリ結果</td></tr><tr><td>DELETE 処理</td><td>フラッシュ類の積込とリダイレクト</td><td>メニュー側と同種の URL が指す Twig（マスタデータ系）となるパス側の状態</td></tr></tbody></table></div>
-<p>一覧のクエリ状態をセッションに残す処理はしない。</p>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>フォーム入力不備または表示順重複</td><td>同一一覧テンプレートを返しモーダル再表示によりメッセージを見せる。</td></tr><tr><td>CSRF 異常（POST とアンカー DELETE）</td><td>共通の例外系へ。</td></tr><tr><td>更新時に ID 不整合</td><td>HTTP 404。</td></tr><tr><td>DELETE 時に使用中</td><td>メッセージ鍵によりデッキ用またはアーキタイプ用のエラーを出し一覧以外パスへリダイレクト。</td></tr></tbody></table></div>
-<hr>
-<h2 id="試行制限">試行制限</h2>
-<p>試行上限やロックアウト等のソースは機能内に確認されない。「本機能では試行回数による制御をしない」とする。</p>
-<hr>
-<h2 id="ログ・監査">ログ・監査</h2>
-<p>専用の業務ログは見ておらず、フラッシュのみで利用者へのフィードバックとする構成である。共通 HTTP ログ等は環境側。</p>
-<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
-<ul><li>パスワードやトークンの原値</li><li>CSRF シークレットやセッション完全値など、なりすましに直結する生データ</li></ul>
-<hr>
-<h2 id="セッション">セッション</h2>
-<h3 id="本機能におけるセッション">本機能におけるセッション</h3>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>クエリ状態</td><td>クエリ変数のみで復元できる範囲で URL にあり、一覧条件をサーバ側セッションキーへ保存しない。</td></tr></tbody></table></div>
-<h3 id="セッションへ保存しない情報">セッションへ保存しない情報</h3>
-<ul><li>並び順・ページ番号や検索状態のサーバ側永続複製としてのセッション保存はしない（URL とリクエストに依存）。</li></ul>
-<hr>
-<h2 id="Cookie">Cookie</h2>
-<p>機能固有の設定 Cookie は定義しない。セッション用 Cookie はブラウザの管理セッションに従う（値の列挙はしない）。</p>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<p>明示の楽観ロック版管理はしない。Doctrine のフラッシュ単位で更新・削除される。並行編集での最後勝ちは運用側の許容または別機能を正とする。</p>
-<hr>
-<h2 id="調査補助-ソース位置の索引">調査補助（ソース位置の索引）</h2>
-<p>読者がソースを検索するときの手掛かりとして、プラグインディレクトリ配下における確認しやすい相対経路のみ列挙する。</p>
-<ul><li>HareruyaEc / 管理側ルート定義：<code>app/Plugin/HareruyaEc/ServiceProvider/Admin/DeckServiceProvider.php</code>、<code>HareruyaMasterdataServiceProvider.php</code></li><li>HareruyaEc / 一覧・送信・削除：<code>app/Plugin/HareruyaEc/Controller/Admin/DeckTagController.php</code></li><li>HareruyaEc / Twig と JS：<code>app/Plugin/HareruyaEc/Resource/template/admin/DeckTag/deckTag.twig</code>、<code>.../assets/js/deck-tag.js</code></li><li>HareruyaEc / 並び一覧と順位検査：<code>app/Plugin/HareruyaEc/Repository/MtbDeckTagRepository.php</code></li><li>HareruyaEc / フォーム：<code>app/Plugin/HareruyaEc/Form/Type/Admin/DeckTag/</code> 一式</li><li>HareruyaEc / 設定定数：<code>app/Plugin/HareruyaEc/config.yml</code> の <code>const.deck_tag</code></li><li>HareruyaEc / 側メニュー：<code>app/Plugin/HareruyaEc/ServiceProvider/Admin/SidebarProvider.php</code></li></ul>
-<h3 id="HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</h3>
-<ul><li><code>admin_decktag_list_disabled</code> … <code>GET</code> … <code>/{admin_route}/deckTag</code>（一覧の初期表示。コントローラの既定引数により <code>pageCount=100</code>、<code>pageNo=1</code>、<code>sortKey=default</code> と同値の状態でテンプレートを描画する。）</li><li><code>admin_decktag_sort</code> … <code>GET</code> … <code>/{admin_route}/deckTag/{pageCount}/{pageNo}/{sortKey}</code>（<code>pageCount</code>・<code>pageNo</code> はともに 1 以上の整数（ルートの assert）、<code>sortKey</code> は英字のみ（ルートの assert）。一覧のページ送り、表示件数変更、並び順変更後の表示。）</li><li><code>admin_decktag_update</code> … <code>POST</code> … <code>/{admin_route}/deckTag/{pageCount}/{pageNo}/{sortKey}</code>（モーダル内フォームによる新規作成または更新の送信先。同上のパス変数パターンを満たす必要がある。）</li><li><code>admin_decktag_delete</code> … <code>DELETE</code> … <code>/{admin_route}/deckTag/{id}</code>（<code>{id}</code> は 1 以上の整数（assert）。一覧の削除ボタンから、CSRF 付きのアンカー経由で送る想定ルートである。）</li></ul>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>一覧のページ指定と並び替え指定、登録・更新の名称2種と表示順、削除対象のデッキタグID</td></tr><tr><td>成功時出力</td><td>一覧画面のHTML、または完了メッセージを伴う一覧への戻り</td></tr><tr><td>失敗時出力</td><td>入力不備は同一画面の再表示でエラーを見せる。使用中の削除はエラーメッセージを伴う一覧への戻り</td></tr></tbody></table></div>
+<h3 id="入出力-永続化">入出力: 永続化</h3>
+<div class="table-wrap"><table><thead><tr><th>操作</th><th>契機</th></tr></thead><tbody><tr><td>追加</td><td>識別子を伴わない登録・更新の送信が検証に通ったとき</td></tr><tr><td>更新</td><td>識別子を伴う登録・更新の送信が検証に通ったとき</td></tr><tr><td>削除</td><td>関連するデッキとアーキタイプ初期値がいずれも0件のデッキタグを削除したとき</td></tr></tbody></table></div>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
+<h2 id="表示メッセージ">表示メッセージ</h2>
+<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>—</td><td>管理画面上部</td><td>—</td><td>デッキタグの登録・更新が完了したとき</td><td>送信元と同じページ変数でデッキタグ一覧へ戻る</td></tr><tr><td>—</td><td>管理画面上部</td><td>—</td><td>削除対象のデッキタグに紐づくデッキが1件以上あるとき</td><td>削除せずデッキタグ一覧へ戻る</td></tr><tr><td>—</td><td>管理画面上部</td><td>—</td><td>削除対象のデッキタグにアーキタイプ初期値側の関連が1件以上あるとき</td><td>削除せずデッキタグ一覧へ戻る</td></tr><tr><td>—</td><td>管理画面上部</td><td>—</td><td>デッキタグの削除が完了したとき</td><td>デッキタグ一覧へ戻る</td></tr><tr><td>—</td><td>モーダル内の入力項目直下</td><td>—</td><td>入力値の検証に通らなかったとき（表示順の重複を含む）</td><td>一覧と同じ画面を再表示し、モーダルを開いた状態で留まる</td></tr></tbody></table></div>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

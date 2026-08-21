@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,29 +272,14 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#本書で扱うこと">本書で扱うこと</a>
-<a class="lv2" href="#本書で扱わないこと">本書で扱わないこと</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv2" href="#用語">用語</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#フロント挙動">フロント挙動</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#集計結果CSVを出力する-admin-route-analysis-format-sales-export">集計結果CSVを出力する（`/{admin_route}/analysis/format_sales/export`）</a>
-<a class="lv2" href="#集計条件">集計条件</a>
-<a class="lv2" href="#表示メッセージ">表示メッセージ</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#出力対象">出力対象</a>
+<a class="lv3" href="#出力する列">出力する列</a>
+<a class="lv3" href="#出力の形式">出力の形式</a>
+<a class="lv3" href="#エラー時の扱い">エラー時の扱い</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#権限・認可">権限・認可</a>
-<a class="lv2" href="#画面遷移">画面遷移</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#ログ・監査">ログ・監査</a>
-<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a></nav>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -292,79 +287,22 @@ footer {
         <h1>分析 — フォーマット売上分析CSVダウンロード</h1>
       </header>
       
-      <h2 id="概要">概要</h2>
-<p>フォーマット売上分析のCSVダウンロードは、CSVダウンロードの送信に含まれる集計月でフォーマット（売上分析タグ）ごとの日別売上を集計し直し、画面の日別の売上表と同じ集計結果をCSVとしてストリーミング出力する機能である。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインのフォーマット売上分析のエクスポート処理、売上分析タグ集計用リポジトリ、CSV出力サービスを正とする。本機能のカスタマイズ区分はカスタマイズであり、挙動は現行リポpf-eccube3を参照し、DB関連の記述はec-cube-enterpriseを正とする。現行と移行先でテーブル名・列の所在が異なる箇所は「リニューアル移行時の扱い」に集約する。</p>
-<p>対象はブラウザ経由の管理画面に限定する。本文ではフレームワークのコントローラ型名やメソッド名を主説明としない。管理画面プレフィックスは環境により変わる（<code>admin_route</code>）。「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。</p>
-<p>集計条件・一覧表示はM12-07で扱う。本書はCSV出力の入口・出力列・ファイル形式と、集計条件が一覧と一致することを扱う。</p>
-<hr>
-<h2 id="本書で扱うこと">本書で扱うこと</h2>
-<ul><li>集計結果（M12-07）の日別の売上表と同じ集計によるCSV出力</li><li>CSVのヘッダ行・データ行・ファイル形式</li><li>集計の対象データ・期間・除外条件が一覧と一致すること</li></ul>
-<hr>
-<h2 id="本書で扱わないこと">本書で扱わないこと</h2>
-<p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
-<ul><li>集計条件・集計ロジックの詳細（M12-07を正とする）</li><li>フォーマットごとの合計・平均表のCSV出力（本機能は日別の売上表のみを出力する）</li><li>他の分析・集計機能のCSV（M12-02・M12-04・M12-06を正とする）</li><li>管理画面へのアクセス制御・ログイン・権限設定の詳細</li></ul>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<p>挙動は現行リポpf-eccube3を正とし、DB関連はec-cube-enterpriseを正とする。CSV出力はM12-07の集計と同じ列を参照するため、スキーマ差はM12-07と同じである。</p>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>注文明細テーブル</td><td><code>dtb_order_detail</code></td><td><code>dtb_order_item</code>（<code>price</code>・<code>quantity</code> は同名）</td></tr><tr><td>明細と売上分析タグの紐づき</td><td><code>dtb_order_detail_sub_tag_sales_analysis</code>（<code>order_detail_id</code>）</td><td><code>dtb_order_item_tag_sales_analysis</code>（<code>order_item_id</code>）</td></tr><tr><td>カード明細の判別列</td><td>規格サブ <code>dtb_product_sub.card_detail_id</code></td><td><code>dtb_product.card_detail_id</code>（商品本体に統合）</td></tr><tr><td>フォーマットの並び順</td><td><code>mtb_tag_sales_analysis.rank</code></td><td><code>mtb_tag_sales_analysis.rank</code>（同名）</td></tr></tbody></table></div>
-<p>詳細はM12-07の「リニューアル移行時の扱い」を正とする。移行先に該当が見当たらない箇所は「ec-cube-enterprise 実装で要確認」と残す。</p>
-<hr>
-<h2 id="用語">用語</h2>
-<div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>集計月</td><td>CSVダウンロードの送信に含まれる年月。集計対象期間を決める。</td></tr><tr><td>フォーマット</td><td>売上分析タグ。CSVの列の単位となる。</td></tr></tbody></table></div>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>集計結果の「CSVダウンロード」</td><td><code>POST /{admin_route}/analysis/format_sales/export</code></td><td>送信された集計月でフォーマットごとの日別売上を集計し、日別の売上表をCSVとして出力する。</td></tr></tbody></table></div>
-<p>管理画面プレフィックスは環境により変わるためプレースホルダで示す。CSVダウンロードは集計フォームの送信ボタンとして実装され、検索と同じフォームの集計月をエクスポート先へ送信する。他の分析・集計機能と異なり検索条件セッションは参照しない。</p>
-<hr>
-<h2 id="フロント挙動">フロント挙動</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>CSVファイルのダウンロード。画面遷移は伴わない。CSVダウンロードのボタンは集計フォームの送信ボタンとして配置される。</td></tr><tr><td>JS挙動</td><td>本機能ではダウンロードのみで、動的な表示切替は扱わない。</td></tr><tr><td>モーダル・ポップアップ</td><td>本機能専用のモーダルは無い。</td></tr></tbody></table></div>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="集計結果CSVを出力する-admin-route-analysis-format-sales-export">集計結果CSVを出力する（<code>/{admin_route}/analysis/format_sales/export</code>）</h3>
-<ol><li>管理画面の認証・権限を通過する。</li><li>検索フォームへ送信値を取り込み、集計月を取得する。</li><li>集計月をもとに、フォーマット（売上分析タグ）ごと、および売上分析タグに紐づかない区分ごとの日別売上を集計する（M12-07と同じ集計）。</li><li>CSV出力サービスを開き、BOMを出力する。</li><li>先頭に「日」、続けて各フォーマットの名称、末尾に「合計」を並べたヘッダ行を出力する。</li><li>日別の売上表を日ごとに1行で出力する。日に続けて各フォーマットの売上、末尾に当日の日別合計を出力する。</li><li>CSV出力サービスを閉じる。</li></ol>
-<hr>
-<h2 id="集計条件">集計条件</h2>
-<div class="table-wrap"><table><thead><tr><th>指標</th><th>集計の要点</th></tr></thead><tbody><tr><td>集計の同一性</td><td>M12-07の集計実行と同じ売上分析タグ集計用リポジトリ・集計月で集計する。対象データ・結合・除外・集計単位・期間はM12-07の集計条件と一致する。</td></tr><tr><td>条件の取得元</td><td>集計月はCSVダウンロードの送信値とする。検索条件セッションは参照しない。</td></tr><tr><td>出力対象</td><td>日別の売上表（日・各フォーマット・日別合計）を出力する。フォーマットごとの合計・平均の表はCSVに含めない。</td></tr></tbody></table></div>
-<p>集計の対象データ・期間・除外条件の詳細はM12-07の集計条件を正とする。</p>
-<hr>
-<h2 id="表示メッセージ">表示メッセージ</h2>
-<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>画面上の文言(英語)</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M12-08-MSG-001</td><td>管理画面上部</td><td>検索条件がありません。先に検索を実行してください。</td><td>（英訳なし）</td><td>検索を実行せずにCSVをダウンロードしようとしたとき</td><td>エラーを表示し、フォーマット売上分析 集計一覧表示画面に遷移する</td></tr></tbody></table></div>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>ヘッダ行</td><td>先頭を「日」とし、各フォーマットの名称を続け、末尾に「合計」を置く。フォーマットの並びはM12-07と同じく売上分析タグの<code>rank</code>昇順、その後に「その他(カード)」「その他」とする。</td></tr><tr><td>データ行</td><td>日に続けて各フォーマットの売上を出力し、末尾に当日の日別合計を出力する。</td></tr><tr><td>値の算出</td><td>日別売上・日別合計の算出はM12-07の集計と同一とする。</td></tr></tbody></table></div>
-<p>本機能は集計月のみを入力とし、その他の入力項目に紐づく表を持たない。</p>
-<hr>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>参照時点</td><td>画面表示またはCSV・帳票出力の実行時点で検索条件に一致するデータを参照する。本機能は参照・出力を主とし、業務データを更新しない。</td></tr><tr><td>一覧・出力の整合</td><td>一覧、CSV、帳票に出る値はそれぞれの実行時点のDB値を基準にする。画面表示後に他処理で更新された値は、再検索または再出力するまで反映しない。</td></tr><tr><td>同時更新</td><td>出力中に他処理が対象データを更新した場合のスナップショット保証は持たない。行ロックを取得せず、読み取り時点の値を出力する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="API-バッチ結果">API/バッチ結果</h2>
-<p>本機能ではAPI呼び出し・バッチ実行を扱わない。CSV出力はストリーミングで行う。</p>
-<hr>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="出力対象">出力対象</h3>
+<p>ダウンロードするときは、送信された集計月をもとに、フォーマット（売上分析タグ）ごと、および売上分析タグに紐づかない区分ごとの日別売上を集計する。集計はM12-07と同一とする。</p>
+<h3 id="出力する列">出力する列</h3>
+<div class="table-wrap"><table><thead><tr><th>行</th><th>内容</th></tr></thead><tbody><tr><td>ヘッダ行</td><td>先頭を「日」とし、各フォーマットの名称を続け、末尾に「合計」を置く。名称は集計の対象となるフォーマットの数だけ並ぶ</td></tr><tr><td>データ行</td><td>日ごとに1行とし、日に続けて各フォーマットの売上、末尾に当日の日別合計を出力する。行は集計月の日ごとに並ぶ</td></tr></tbody></table></div>
+<p>フォーマットの並びは、M12-07と同じく売上分析タグの順位の昇順とし、そのあとに「その他(カード)」「その他」を置く。日別売上と日別合計を算出するときの規則は、M12-07の集計と同一とする。</p>
+<h3 id="出力の形式">出力の形式</h3>
+<p>文字コードの判別用にBOMを付ける。ファイル名は <code>format_sales_report_</code> に、出力したときの日時（<code>YmdHis</code>）を付けた <code>.csv</code> とする。</p>
+<h3 id="エラー時の扱い">エラー時の扱い</h3>
+<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>検索を実行せずにダウンロードしたとき</td><td>エラーを表示し、フォーマット売上分析 集計一覧表示画面へ遷移する。出力しない</td></tr><tr><td>集計月が未入力のとき</td><td>集計月は必須であり、未入力のときは送信できない。出力もしない</td></tr><tr><td>データベース読み取りの障害</td><td>アプリケーションの共通例外処理に委ねる</td></tr></tbody></table></div>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>送信された集計月。</td></tr><tr><td>成功時出力</td><td>日別の売上表のCSVファイル。ファイル名は<code>format_sales_report_</code>に出力日時（<code>YmdHis</code>）を付けた<code>.csv</code>。文字コード判別用のBOMを付与する。</td></tr><tr><td>失敗時出力</td><td>データ取得失敗時はアプリケーションの共通例外処理に委ねる。</td></tr><tr><td>副作用</td><td>無し（参照・出力のみ）。</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<p>機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。M12-07の集計で参照する列に一致する。テーブル名・列名はec-cube-enterpriseを正とし、現行（pf-eccube3）と異なる場合は現行名を括弧で添える。</p>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td>dtb_order</td><td>order_date, status</td><td>集計期間・日別集計・キャンセル除外。</td></tr><tr><td>dtb_order_item（現行 dtb_order_detail）</td><td>price, quantity</td><td>売上金額の算出。</td></tr><tr><td>dtb_order_item_tag_sales_analysis（現行 dtb_order_detail_sub_tag_sales_analysis）</td><td>tag_sales_analysis_id, order_item_id（現行 order_detail_id）</td><td>明細と売上分析タグの紐づき。</td></tr><tr><td>dtb_product（現行 dtb_product_sub）</td><td>card_detail_id</td><td>その他(カード)・その他の判別。</td></tr><tr><td>mtb_tag_sales_analysis</td><td>rank, name</td><td>フォーマットの並び順・列名。</td></tr></tbody></table></div>
-<h3 id="DB操作">DB操作</h3>
-<p>本機能は参照系（検索・出力）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>検索</td><td>dtb_order / dtb_order_detail / dtb_order_detail_sub_tag_sales_analysis / dtb_order_item / dtb_order_item_tag_sales_analysis / dtb_product 等</td><td>検索条件に合致するレコードを抽出する。抽出結果を所定フォーマットでファイル出力する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="権限・認可">権限・認可</h2>
-<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>フォーマット売上分析CSVダウンロード</th></tr></thead><tbody><tr><td>未ログイン管理者</td><td>アクセス不可。</td></tr><tr><td>ログイン済み管理者</td><td>集計結果のCSV出力が可能。</td></tr></tbody></table></div>
-<hr>
-<h2 id="画面遷移">画面遷移</h2>
-<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>「CSVダウンロード」押下</td><td>画面遷移せずCSVを出力する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>集計月が未入力</td><td>集計月は必須のため、未入力では送信できない。</td></tr><tr><td>データベース読み取りの障害</td><td>アプリケーションの共通例外処理に委ねる。</td></tr><tr><td>認証・権限不足</td><td>出力しない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="ログ・監査">ログ・監査</h2>
-<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
-<ul><li>Cookie値</li><li>セッションIDの完全値</li></ul>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<p>本機能は参照・出力のみであり、楽観ロック・悲観ロックの対象は持たない。</p>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>送信された集計月。集計月は必須とする</td></tr><tr><td>成功時出力</td><td>検索を実行済みのときは、日別の売上表のCSVファイル</td></tr><tr><td>失敗時出力</td><td>検索条件が無いときはエラーを表示し、集計一覧表示画面へ遷移する</td></tr></tbody></table></div>
+<p>本機能は参照だけを行い、CSVを出力するときもデータを更新しない。</p>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
+<h2 id="表示メッセージ">表示メッセージ</h2>
+<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M12-08-MSG-001</td><td>管理画面上部</td><td>検索条件がありません。先に検索を実行してください。</td><td>検索を実行せずにCSVをダウンロードしようとしたとき</td><td>エラーを表示し、フォーマット売上分析 集計一覧表示画面に遷移する</td></tr></tbody></table></div>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

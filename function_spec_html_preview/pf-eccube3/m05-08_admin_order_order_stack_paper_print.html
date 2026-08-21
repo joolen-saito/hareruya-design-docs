@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,36 +272,16 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#フロント挙動">フロント挙動</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#子ウィンドウを開いてHTMLを表示する-admin-order-print-stack-window">子ウィンドウを開いてHTMLを表示する（`admin_order_print_stack_window`）</a>
-<a class="lv3" href="#印刷予約を記録する-admin-order-print-stack">印刷予約を記録する（`admin_order_print_stack`）</a>
-<a class="lv2" href="#集計条件">集計条件</a>
-<a class="lv2" href="#スタック用紙印字データ組み立て時の判定">スタック用紙印字データ組み立て時の判定</a>
-<a class="lv2" href="#表示メッセージ">表示メッセージ</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#印刷対象の受け取り">印刷対象の受け取り</a>
+<a class="lv3" href="#印刷内容の組み立て">印刷内容の組み立て</a>
+<a class="lv3" href="#注文番号が未採番のときの扱い">注文番号が未採番のときの扱い</a>
+<a class="lv3" href="#受注の更新">受注の更新</a>
+<a class="lv3" href="#呼び出し元の動き">呼び出し元の動き</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#バリデーション">バリデーション</a>
-<a class="lv2" href="#権限・認可">権限・認可</a>
-<a class="lv2" href="#画面遷移">画面遷移</a>
-<a class="lv3" href="#遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#試行制限">試行制限</a>
-<a class="lv2" href="#ログ・監査">ログ・監査</a>
-<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
-<a class="lv2" href="#セッション">セッション</a>
-<a class="lv3" href="#セッションへ保存しない情報">セッションへ保存しない情報</a>
-<a class="lv2" href="#Cookie">Cookie</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a>
-<a class="lv2" href="#調査補助-grep用">調査補助（grep用）</a>
-<a class="lv3" href="#HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</a></nav>
+<a class="lv3" href="#入出力-永続化">入出力: 永続化</a>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -299,96 +289,32 @@ footer {
         <h1>受注管理 — スタック用紙印刷</h1>
       </header>
       
-      <h2 id="概要">概要</h2>
-<p>管理画面の「受注管理」一覧から選択した配送行に対し、別ウィンドウを開いたうえで非同期処理を走らせ、スタック用紙向けに必要な印刷予約フラグおよび条件に応じた受注ステータス・確定日を更新する機能である。呼び出し成功時にはJSONで確認メッセージを返し、アラート表示後に子ウィンドウを閉じる。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値とするソースは <code>src/Eccube/Controller/Admin/Order/OrderController.php</code> の該当ルート、<code>src/Eccube/Resource/template/admin/Order/index.twig</code>、<code>src/Eccube/Resource/template/admin/Order/print_stack_window.twig</code>、<code>src/Eccube/Repository/OrderRepository.php</code> の印字リスト取得処理、<code>src/Eccube/Service/Admin/Order/UpdateStackListAction.php</code>、<code>src/Eccube/Entity/Master/MtbOption.php</code> とする。</p>
-<p>対象はブラウザ経由の管理画面に限定する。店舗別の基本情報画面上の「スタック用紙高額商品しきい値価格」（<code>dtb_base_info.stack_paper_threshold</code>）の入力・同期は別画面の設計とし、一覧からのスタック用紙印字クエリそのものでは参照しない点に注意する。</p>
-<p>本機能のカスタマイズ区分は現行踏襲である。現行挙動は pf-eccube3 のHareruyaEcプラグイン実装を参照し、リニューアル移行後の挙動とDBは ec-cube-enterprise を確認値とする。DB関連の記述は ec-cube-enterprise を正とする。</p>
-<p>コントローラの公開関数一覧は本文の主題としない。本文ではルートbind名やSymfonyのルートnameの網羅は主説明としない。「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。コード探索でbind名が必要なときだけ「調査補助」へ書く。</p>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<p>スタック用紙印刷は現行 pf-eccube3 では HareruyaEc プラグインで実装する。ブラウザ印刷フラグ・確定日時・担当者は、現行では補助テーブル <code>dtb_order_sub</code> に分割保持するが、移行先 ec-cube-enterprise では <code>dtb_order</code> に統合される。DB関連は ec-cube-enterprise を正とし、本書のテーブル・列名は移行先名で記す。</p>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>現行 pf-eccube3（HareruyaEc）</th><th>移行先 ec-cube-enterprise</th></tr></thead><tbody><tr><td>ブラウザ印刷フラグ</td><td><code>dtb_order_sub.browser_print_flg</code></td><td><code>dtb_order.browser_print_flg</code></td></tr><tr><td>確定日時</td><td><code>dtb_order_sub.confirm_date</code></td><td><code>dtb_order.confirm_date</code></td></tr><tr><td>担当者会員</td><td><code>dtb_order_sub.operator_id</code></td><td><code>dtb_order.member_id</code></td></tr><tr><td>受注ステータス</td><td><code>dtb_order.order_status_id</code></td><td><code>dtb_order.order_status_id</code>（同一）</td></tr><tr><td>高額判定・閾値オプション</td><td><code>mtb_option</code>（<code>option_key</code>/<code>option_value</code>）</td><td><code>mtb_option</code>（同一。<code>stack_paper_judgment_price</code>, <code>stack_paper_threshold_price</code>）</td></tr><tr><td>店舗別しきい値</td><td>ec-cube-enterprise 実装で要確認</td><td><code>dtb_base_info.stack_paper_threshold</code></td></tr></tbody></table></div>
-<p>本書のDBカラム節・副作用節のDB更新記述は移行先 ec-cube-enterprise の名称に合わせている。現行の補助テーブル列は上表で対応づける。</p>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>受注一覧で配送行のチェックを付けて「スタック用紙印刷」を押す</td><td><code>POST /{admin_route}/order/print/stack/window</code>（同一画面の一括フォームから子ウィンドウ向けに送信）</td><td>未選択ならアラート「チェックボックスが選択されていません」で中断。選択済みなら幅450高さ400の別ウィンドウを開き、フォームをPOSTする。子画面は「スタック用紙印刷中」と見出しのみの本文を表示し、読み込み完了後にJSON用エンドポイントへAJAX POSTする</td></tr><tr><td>子ウィンドウ内の自動AJAX</td><td><code>POST /{admin_route}/order/print/stack</code></td><td>成功時はアラートで「印刷予約を受け付けました。」を表示し、ウィンドウを閉じる。失敗時はレスポンス本文の <code>message</code> をアラートし、本文が取れなければ固定のシステムエラー文を表示して閉じる</td></tr></tbody></table></div>
-<hr>
-<h2 id="フロント挙動">フロント挙動</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>一覧下部の「スタック用紙印刷」ボタン（識別子 <code>printStack</code>）。子ウィンドウは見出し「スタック用紙印刷中」のみ</td></tr><tr><td>JS挙動</td><td>一覧側で <code>#form_bulk</code> の <code>action</code> をウィンドウ用ルートに差し替え、<code>target</code> を <code>newwin</code> にしてPOSTする。子ウィンドウはjQueryの <code>$.ajax</code> でタイムアウト5秒、データ型JSON、POST。成功・失敗のどちらでも <code>alert</code> のあと <code>window.close()</code> する</td></tr><tr><td>CSS・レイアウト</td><td>一覧先頭のインラインスタイルで <code>.btn-print-stack</code> の配色を定義する</td></tr><tr><td>モーダル・ポップアップ</td><td>別ウィンドウを用いる。Bootstrapモーダルは本導線では使わない</td></tr></tbody></table></div>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="子ウィンドウを開いてHTMLを表示する-admin-order-print-stack-window">子ウィンドウを開いてHTMLを表示する（<code>admin_order_print_stack_window</code>）</h3>
-<ol><li>管理画面の認証・共通制約を通過する。</li><li>リクエストパラメータ <code>ids</code> をそのままテンプレート変数に渡す（配列でも単一値でもテンプレート側でJSON化する）。</li><li><code>print_stack_window.twig</code> を返す。ルート処理内に <code>_token</code> の検証コードは無い。</li></ol>
-<h3 id="印刷予約を記録する-admin-order-print-stack">印刷予約を記録する（<code>admin_order_print_stack</code>）</h3>
-<ol><li>管理画面の認証・共通制約を通過する。</li><li>リクエストボディの <code>_token</code> について共通の検証関数で照合し、失敗時は管理向けエラーメッセージを積み、HTTP400でJSON「不正なリクエストです。」を返す。</li><li><code>ids</code> が空ならHTTP404でJSON「対象の注文が指定されていません。」を返す。配列でなければ長さ1の配列に包む。</li><li><code>mtb_option</code> から <code>stack_paper_judgment_price</code> と <code>stack_paper_threshold_price</code> を取得し、連想配列にする。</li><li><code>getPrintOrderList</code> に配送ID配列と当該オプション値を渡し、注文ごとの印字行を得る。SQLの <code>ORDER BY</code> は <code>dtb_order.id</code> 昇順。</li><li>各行について <code>order_no</code> が空ならHTTP400でJSON「注文番号が未採番の注文があります。」を返し、以降の更新は行わない。</li><li>各行について更新パラメータを組み立てる。配列には印刷フラグを真にする意図のキーを含めるが、保存処理側は現行コードではそれ以外のビジネス用キーを解釈しない。ステータスが新規受付（数値IDが1）の行だけピックへ進めるフラグを真にする。</li><li><code>src/Eccube/Service/Admin/Order/UpdateStackListAction.php</code> が提供するハンドラをトランザクション内で実行する。各注文に対し <code>browser_print_flg</code> を真にし、手順7でピック遷移フラグが真になった行だけ受注ステータスをピック中（数値IDが10）にし <code>confirm_date</code> を現在日時で上書きする。操作者会員が解決できれば <code>dtb_order</code> の担当者をその会員に差し替える。</li><li>例外が出た場合はハンドラでロールバックしたうえで再送出される。コントローラ側は単一種類の標準例外だけをHTTP400のJSONへ写し替える分岐がある。印刷フラグ更新ハンドラの処理本文だけを読む限り、その型での終了は定義されていない。その他はそのまま外へ伝播しうる。</li><li>正常終了時はHTTP200でJSON「印刷予約を受け付けました。」を返す。</li></ol>
-<hr>
-<h2 id="集計条件">集計条件</h2>
-<p>本機能は一覧の件数集計や合計金額の再計算を行わない。</p>
-<div class="table-wrap"><table><thead><tr><th>指標</th><th>集計の要点</th></tr></thead><tbody><tr><td>印字行の単位</td><td>選択された <code>dtb_shipping.id</code> に紐づく <code>dtb_order.id</code> ごとに1行。同一注文の複数配送を同時に選んでも注文は1行にまとまる</td></tr></tbody></table></div>
-<hr>
-<h2 id="スタック用紙印字データ組み立て時の判定">スタック用紙印字データ組み立て時の判定</h2>
-<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td><code>stack_paper_judgment_price</code> の文字列が <code>"0"</code> か</td><td><code>"0"</code> なら明細価格の最大を使うサブクエリを採用。それ以外なら商品規格の買取価格の最大を使うサブクエリを採用</td></tr><tr><td>2</td><td>閾値 <code>(int) stack_paper_threshold_price</code> と <code>op.price</code> を比較する</td><td>現行の <code>CASE</code> 式では閾値以上・未満にかかわらず印字列 <code>expensive</code> は同じ空欄装飾文字（実装では「□」）になる</td></tr></tbody></table></div>
-<hr>
-<h2 id="表示メッセージ">表示メッセージ</h2>
-<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>画面上の文言(英語)</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M05-08-MSG-001</td><td>画面中央(ダイアログ、スタック印刷ウィンドウ)</td><td>admin.common.csrf_token_error</td><td>（英訳なし）</td><td>スタック用紙印刷で、送信内容の確認に失敗したとき</td><td>エラーを表示後、スタック用紙印刷ウィンドウを閉じる</td></tr><tr><td>M05-08-MSG-002</td><td>画面中央(ダイアログ、スタック印刷ウィンドウ)</td><td>対象の注文が指定されていません。</td><td>（英訳なし）</td><td>スタック用紙印刷で、印刷する注文を選択せずに実行したとき</td><td>エラーを表示後、スタック用紙印刷ウィンドウを閉じる</td></tr><tr><td>M05-08-MSG-003</td><td>画面中央(ダイアログ、スタック印刷ウィンドウ)</td><td>注文番号が未採番の注文があります。</td><td>（英訳なし）</td><td>印刷対象に注文番号が付いていない注文が含まれるとき</td><td>エラーを表示後、スタック用紙印刷ウィンドウを閉じる</td></tr><tr><td>M05-08-MSG-004</td><td>画面中央(ダイアログ、スタック印刷ウィンドウ)</td><td>印刷予約を受け付けました。</td><td>（英訳なし）</td><td>スタック用紙印刷の予約が完了したとき</td><td>完了メッセージを表示後、スタック用紙印刷ウィンドウを閉じる</td></tr><tr><td>M05-08-MSG-005</td><td>画面中央(ダイアログ、スタック印刷ウィンドウ)</td><td>システムエラーが発生いたしました。&lt;br&gt;サイト管理者へお問い合わせください。</td><td>（英訳なし）</td><td>スタック用紙印刷の通信で、エラー内容を取得できなかったとき</td><td>エラーを表示後、スタック用紙印刷ウィンドウを閉じる</td></tr></tbody></table></div>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>閾値</td><td><code>mtb_option.stack_paper_threshold_price</code> を整数化してSQLパラメータに渡す。店舗マスタ <code>dtb_base_info.stack_paper_threshold</code> は当クエリでは使わない</td></tr><tr><td>高額印字区分</td><td>前表のとおり分岐はあるが、返却列の文字は両分岐で同一のため、現行実装単体では印字データ上の差は出ない</td></tr><tr><td>新規受付時の追加更新</td><td>ステータスIDが1の注文だけピック中（ID10）へ遷移し、<code>confirmDate</code> をサーバ現在日時でセットする。それ以外のステータスではステータスと確定日は変えない</td></tr></tbody></table></div>
-<p>本機能ではフォーム入力の保存・更新画面を持たないため、<code>### 入力項目</code> の5列表は置かない。</p>
-<hr>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>一覧との対応</td><td>チェックボックスの値は配送ID。印字と更新の対象はその配送が属する注文</td></tr><tr><td>オプションと店舗マスタ</td><td>印字SQLは全体オプションの閾値のみ参照し、行ごとの店舗しきい値とは自動一致しない</td></tr><tr><td>同時操作</td><td>更新は悲観的ロックの追加取得なしで行う。他画面と同一注文を同時に更新した場合の結果は最終書き込み優先</td></tr><tr><td>子画面と親画面</td><td>親の検索条件セッションは本導線では書き換えない</td></tr><tr><td>配送ID欠損時</td><td>SQLに現れなかった配送IDだけは更新対象に含まれず、リストに載った注文だけがコミットされる</td></tr></tbody></table></div>
-<hr>
-<h2 id="API-バッチ結果">API/バッチ結果</h2>
-<p>本機能では外部公開API呼び出しやバッチジョブ起動を扱わない。子ウィンドウからの <code>POST</code> は同一オリジンの管理画面用JSON応答である。</p>
-<hr>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="印刷対象の受け取り">印刷対象の受け取り</h3>
+<p>一覧で選択した受注のIDと、操作した担当者のIDを、印刷用の別画面から受け取る。受注IDが 1 件も無いときは、印刷内容を組み立てず未検出として応答する。</p>
+<h3 id="印刷内容の組み立て">印刷内容の組み立て</h3>
+<p>レシートプリンタIPアドレス、スタック用紙高額商品判定価格、スタック用紙高額商品しきい値価格の 3 つの設定値を読む。設定が無いときの既定値はそれぞれ空・販売価格・<code>5000</code> とする。</p>
+<p>対象受注ごとに、受注日・注文番号・注文者名・注文者フリガナ・購入金額・対応状況・スマレジ用商品コード・注文備考の有無を組み立てる。</p>
+<p>高額かどうかの判定に使う金額は、高額商品判定価格の設定で変わる。設定が販売価格のときは受注明細の販売価格の最大値、買取価格のときは受注明細に紐づく商品の買取価格の最大値を使う。</p>
+<p>しきい値価格と比べた結果は記号として持つが、しきい値以上のときと未満のときで同じ記号になるため、印刷内容からは区別が付かない。</p>
+<p>組み立てた内容は応答に含めない。応答に載るのはメッセージだけである。</p>
+<h3 id="注文番号が未採番のときの扱い">注文番号が未採番のときの扱い</h3>
+<p>対象受注に注文番号が未採番のものが 1 件でもあるときは、その旨を返して終了する。このときは受注を 1 件も更新しない。未採番の受注が見つかるまでに調べた受注も更新しない。</p>
+<h3 id="受注の更新">受注の更新</h3>
+<p>印刷対象の受注すべてにブラウザ印刷フラグを立てる。</p>
+<p>対応状況が注文受領の受注だけ、対応状況をピック中に更新し、注文確定日に現在日時を設定する。それ以外の対応状況のときは、対応状況も注文確定日も変更しない。</p>
+<p>担当者IDに一致する担当者が存在するときだけ、受注の担当者に設定する。存在しないときは担当者を変更しない。</p>
+<h3 id="呼び出し元の動き">呼び出し元の動き</h3>
+<p>呼び出しは印刷用の別画面から行い、5 秒で応答が無いときは打ち切る。</p>
+<p>応答にメッセージがあるときはそれを表示して画面を閉じる。応答が得られないとき、応答の内容にメッセージが無いときは、システムエラーである旨を表示して画面を閉じる。</p>
+<p>用紙への印刷そのものを行う処理は、現行ソースに無い。</p>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>一覧フォームの <code>ids[]</code>（配送ID）、<code>_token</code>。AJAXでは同じ <code>ids</code> 配列と <code>_token</code></td></tr><tr><td>成功時出力</td><td>HTTP200、JSONオブジェクトに <code>message</code> キーで成功文面</td></tr><tr><td>失敗時出力</td><td>HTTP400または404、JSONに <code>message</code>。<code>_token</code> 不正時は本文が固定、同時にフラッシュへ管理者向けCSRFエラーキーを積む場合がある</td></tr><tr><td>副作用</td><td>対象注文の <code>browser_print_flg</code>、条件付きで <code>order_status_id</code> と <code>confirmDate</code>、担当者会員。トランザクション完了時に確定</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<p>当機能の更新で直接触れる主な列は次のとおり。型の細部はスキーマ定義を参照する。</p>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>dtb_order</code></td><td><code>browser_print_flg</code></td><td>真に更新する</td></tr><tr><td><code>dtb_order</code></td><td><code>order_status_id</code></td><td>新規受付からピック中への遷移時のみ変更</td></tr><tr><td><code>dtb_order</code></td><td><code>confirm_date</code></td><td>上記遷移時に現在日時をセット</td></tr><tr><td><code>dtb_order</code></td><td><code>member_id</code></td><td>操作者会員が存在するときにセット</td></tr></tbody></table></div>
-<h3 id="DB操作">DB操作</h3>
-<p>本機能は参照系（検索・出力）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>検索</td><td>dtb_order</td><td>検索条件に合致するレコードを抽出する。抽出結果を所定フォーマットでファイル出力する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="バリデーション">バリデーション</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>CSRF</td><td>AJAXのPOSTのみ明示検証。フォームキーは <code>_token</code>。失敗時HTTP400</td></tr><tr><td>対象ID</td><td><code>ids</code> 空はHTTP404</td></tr><tr><td>注文番号</td><td>印字行の <code>order_no</code> が空文字相当ならHTTP400</td></tr></tbody></table></div>
-<hr>
-<h2 id="権限・認可">権限・認可</h2>
-<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>本機能の画面・ルート</th></tr></thead><tbody><tr><td>未ログイン</td><td>管理画面セキュリティ設定に従い当パスへ到達しない</td></tr><tr><td>管理画面ログイン済み（従来の管理者ロール）</td><td>ルート定義上は追加のメソッド単位制限なし。実運用のロール細分は管理画面共通に従う</td></tr></tbody></table></div>
-<hr>
-<h2 id="画面遷移">画面遷移</h2>
-<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>一覧で印刷ボタン押下（正常）</td><td>子ウィンドウが開き、同セッション内でAJAX後に子が閉じる。親URLは変わらない</td></tr><tr><td>CSRF失敗・対象なし・未採番</td><td>子ウィンドウ内でアラート後に閉じる。親はそのまま</td></tr></tbody></table></div>
-<h3 id="遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</h3>
-<div class="table-wrap"><table><thead><tr><th>起点</th><th>遷移前の処理</th><th>遷移後の初期状態</th></tr></thead><tbody><tr><td>一覧→子ウィンドウ</td><td>一括フォームに埋めた <code>ids[]</code> と <code>_token</code> をPOST</td><td>子は同じ <code>ids</code> をJSONでAJAXに載せ替え、新しいページ生成時点の <code>_token</code> を付与する</td></tr></tbody></table></div>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>CSRF不正</td><td>HTTP400、JSONで固定メッセージ。管理向けフラッシュにCSRF関連キー</td></tr><tr><td><code>ids</code> 空</td><td>HTTP404、JSONで対象未指定メッセージ</td></tr><tr><td>注文番号未採番</td><td>HTTP400、JSONで未採番メッセージ。DB更新は行わない</td></tr><tr><td>AJAX応答がJSONでない等</td><td>子ウィンドウで固定のシステムエラー文を表示して閉じる</td></tr><tr><td>更新処理の例外（HTTP400へ写し替えられない種類）</td><td>子ウィンドウ側では汎用エラー表示に落ちうる。サーバは伝播させうる</td></tr></tbody></table></div>
-<hr>
-<h2 id="試行制限">試行制限</h2>
-<p>本機能ではレート制限や試行回数上限を扱わない。</p>
-<hr>
-<h2 id="ログ・監査">ログ・監査</h2>
-<div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>本ルート正常系</td><td>専用の業務ログ出力はコード上は必須としていない</td></tr><tr><td>更新例外</td><td>印刷フラグ更新用ハンドラはロールバック後に例外を再送出する。当ハンドラ内の追加ログは無い</td></tr></tbody></table></div>
-<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
-<ul><li>パスワード</li><li>なりすまし対策トークン</li><li>Cookie値</li><li>セッションIDの完全値</li><li>Remember Meトークンの原値</li></ul>
-<hr>
-<h2 id="セッション">セッション</h2>
-<p>本機能は受注検索セッションキーを読み書きしない。子ウィンドウのPOSTは同一ブラウザセッションのクッキーで識別される。</p>
-<h3 id="セッションへ保存しない情報">セッションへ保存しない情報</h3>
-<ul><li>スタック用紙用の配送ID一覧をセッションに残す処理は無い（リクエスト都度POSTで渡す）</li></ul>
-<hr>
-<h2 id="Cookie">Cookie</h2>
-<p>セッション識別子以外の専用Cookieを本機能が新たに設定することはない。詳細は管理画面共通のセッション設定に従う。</p>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<p>印刷フラグ・ステータス更新ハンドラは1トランザクションで複数注文を更新し、成功時にコミット、例外時にロールバックする。行ロックの明示取得は行わない。</p>
-<hr>
-<h2 id="調査補助-grep用">調査補助（grep用）</h2>
-<p>実装位置の手がかりとして、ルート名 <code>admin_order_print_stack_window</code>・<code>admin_order_print_stack</code>、テンプレート <code>print_stack_window.twig</code>、リポジトリメソッド <code>getPrintOrderList</code>、サービス <code>UpdateStackListAction</code> を検索する。</p>
-<h3 id="HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</h3>
-<ul><li><code>admin_order_print_stack_window</code> … <code>POST</code> … <code>/{admin_route}/order/print/stack/window</code>（子ウィンドウ用の薄いページをHTMLで返す。<code>ids[]</code> と <code>_token</code> を一覧の一括フォームからPOSTする前提）</li><li><code>admin_order_print_stack</code> … <code>POST</code> … <code>/{admin_route}/order/print/stack</code>（AJAXによる印刷予約処理。<code>_token</code> を検証し、配送ID群から受注を解決してDB更新し、JSONで結果メッセージを返す）</li></ul>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>一覧で選択した受注のID、操作した担当者のID</td></tr><tr><td>成功時出力</td><td>受注の更新と、印刷予約を受け付けた旨のメッセージ</td></tr><tr><td>失敗時出力</td><td>受注を更新せず、対象未指定・注文番号未採番・システムエラーのいずれかのメッセージ</td></tr></tbody></table></div>
+<h3 id="入出力-永続化">入出力: 永続化</h3>
+<div class="table-wrap"><table><thead><tr><th>操作</th><th>契機</th></tr></thead><tbody><tr><td>ブラウザ印刷フラグの更新</td><td>印刷対象の受注すべて</td></tr><tr><td>対応状況と注文確定日の更新</td><td>対応状況が注文受領の受注だけ</td></tr><tr><td>担当者の更新</td><td>受け取った担当者IDに一致する担当者が存在するときだけ</td></tr></tbody></table></div>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
+<h2 id="表示メッセージ">表示メッセージ</h2>
+<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M05-08-MSG-001</td><td>画面中央(ダイアログ、スタック印刷ウィンドウ)</td><td>admin.common.csrf_token_error</td><td>スタック用紙印刷で、送信内容の確認に失敗したとき</td><td>エラーを表示後、スタック用紙印刷ウィンドウを閉じる</td></tr><tr><td>M05-08-MSG-002</td><td>画面中央(ダイアログ、スタック印刷ウィンドウ)</td><td>対象の注文が指定されていません。</td><td>スタック用紙印刷で、印刷する注文を選択せずに実行したとき</td><td>エラーを表示後、スタック用紙印刷ウィンドウを閉じる</td></tr><tr><td>M05-08-MSG-003</td><td>画面中央(ダイアログ、スタック印刷ウィンドウ)</td><td>注文番号が未採番の注文があります。</td><td>印刷対象に注文番号が付いていない注文が含まれるとき</td><td>エラーを表示後、スタック用紙印刷ウィンドウを閉じる</td></tr><tr><td>M05-08-MSG-004</td><td>画面中央(ダイアログ、スタック印刷ウィンドウ)</td><td>印刷予約を受け付けました。</td><td>スタック用紙印刷の予約が完了したとき</td><td>完了メッセージを表示後、スタック用紙印刷ウィンドウを閉じる</td></tr><tr><td>M05-08-MSG-005</td><td>画面中央(ダイアログ、スタック印刷ウィンドウ)</td><td>システムエラーが発生いたしました。&lt;br&gt;サイト管理者へお問い合わせください。</td><td>スタック用紙印刷の通信で、エラー内容を取得できなかったとき</td><td>エラーを表示後、スタック用紙印刷ウィンドウを閉じる</td></tr></tbody></table></div>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

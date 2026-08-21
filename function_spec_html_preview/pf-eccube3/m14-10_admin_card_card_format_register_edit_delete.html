@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,40 +272,17 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#フロント挙動">フロント挙動</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#一覧を表示する-GET-m14-09-admin-card-format-list">一覧を表示する（GET `m14-09_admin_card_format_list`）</a>
-<a class="lv3" href="#新規登録画面を表示する-GET-admin-format-new">新規登録画面を表示する（GET `admin_format_new`）</a>
-<a class="lv3" href="#編集画面を表示する-GET-admin-format-edit">編集画面を表示する（GET `admin_format_edit`）</a>
-<a class="lv3" href="#登録または更新する-POST-admin-format-create-admin-format-update">登録または更新する（POST `admin_format_create` / `admin_format_update`）</a>
-<a class="lv3" href="#削除する-DELETE-admin-format-delete">削除する（DELETE `admin_format_delete`）</a>
-<a class="lv2" href="#集計条件">集計条件</a>
-<a class="lv2" href="#表示メッセージ">表示メッセージ</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
-<a class="lv3" href="#入力項目">入力項目</a>
-<a class="lv3" href="#エッジケース">エッジケース</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#一覧と編集の対象">一覧と編集の対象</a>
+<a class="lv3" href="#保存の判定順序">保存の判定順序</a>
+<a class="lv3" href="#カード制限の置き換え">カード制限の置き換え</a>
+<a class="lv3" href="#フォーマットボード">フォーマットボード</a>
+<a class="lv3" href="#削除の判定順序">削除の判定順序</a>
+<a class="lv3" href="#エラー時の扱い">エラー時の扱い</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#バリデーション">バリデーション</a>
-<a class="lv2" href="#権限・認可">権限・認可</a>
-<a class="lv2" href="#画面遷移">画面遷移</a>
-<a class="lv3" href="#遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#試行制限">試行制限</a>
-<a class="lv2" href="#ログ・監査">ログ・監査</a>
-<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
-<a class="lv2" href="#セッション">セッション</a>
-<a class="lv3" href="#セッションへ保存しない情報">セッションへ保存しない情報</a>
-<a class="lv2" href="#Cookie">Cookie</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a>
-<a class="lv2" href="#調査補助-grep-用">調査補助（grep 用）</a>
-<a class="lv3" href="#HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</a></nav>
+<a class="lv3" href="#入出力-永続化">入出力: 永続化</a>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -303,104 +290,32 @@ footer {
         <h1>カード管理 — フォーマット新規登録・編集・削除</h1>
       </header>
       
-      <h2 id="概要">概要</h2>
-<p>HareruyaEc プラグインが管理画面「カード管理」配下で提供する、対戦フォーマットマスタ（レギュレーション名・枚数上限・紐付けセット・禁止／制限カードなど）の一覧表示、新規登録、編集、削除である。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。pf-eccube3 に配置された HareruyaEc プラグインのソースを確認値とする。</p>
-<p>本機能のカスタマイズ区分はカスタマイズである。挙動は現行リポ（pf-eccube3 の HareruyaEc プラグイン）を参照し、DB関連は ec-cube-enterprise を正とする。</p>
-<p>対象はブラウザ経由の管理画面に限定する。</p>
-<p>コントローラのメソッド名は本文の主題としない。本文ではルートbind名やSymfonyのルートnameの網羅は主説明としない。「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。コード探索でbind名が必要なときだけ「調査補助」へ書く。</p>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<ul><li>ec-cube-enterprise にフォーマット関連テーブル一式が実装されており、本機能の永続化先は移行先に存在する。</li><li>フォーマットマスタ（<code>mtb_format</code>）は、主キー <code>id</code> と列（<code>name_jp</code>、<code>name_en</code>、<code>code</code>、<code>rank</code>、<code>certification_id</code>、<code>main_max_card_count</code>、<code>main_min_card_count</code>、<code>side_max_card_count</code>、<code>side_min_card_count</code>、<code>rule_jp</code>、<code>rule_en</code>、<code>meta_range</code>、各種フラグ列、<code>deleted_at</code>）が現行 pf-eccube3 と同一スキーマである。</li><li>並び順キーは現行・移行先とも <code>rank</code>（予約語のためバッククォート付き）であり、<code>sort_no</code> への改称はない。</li><li>論理削除列 <code>deleted_at</code> を現行・移行先とも持つ。</li><li>関連テーブルは、枚数ルールのフォーマットボード（<code>dtb_format_board</code>、列 <code>format_id</code>、<code>board_id</code>、<code>count_board_id</code>、<code>max_card_count</code>、<code>min_card_count</code>、<code>deleted_at</code>）、フォーマットとカードセットの中間（<code>dtb_format_cardset</code>、列 <code>format_id</code>、<code>cardset_id</code>）、禁止・制限・リーガルのカードフォーマット（<code>dtb_card_format</code>、列 <code>card_id</code>、<code>format_id</code>、<code>restriction_id</code>）で、いずれも移行先に存在し同一スキーマである。</li><li>移行先 <code>mtb_format</code> には現行に無い列（イベント表示フラグ <code>is_shown_in_event</code> 等）が追加されているが、本書の入力項目では参照しない。</li></ul>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>サイドバー「カード管理」→「フォーマット管理」</td><td>GET <code>/{admin_route}/format</code></td><td>フォーマット一覧が並び順・ID 昇順で表示される。</td></tr><tr><td>一覧右上「新規登録」</td><td>GET <code>/{admin_route}/format/new</code></td><td>空のフォーマット登録画面が表示される。</td></tr><tr><td>一覧のフォーマット名リンクまたは「編集」</td><td>GET <code>/{admin_route}/format/{formatId}/edit</code></td><td>既存値が載った編集画面が表示される。</td></tr><tr><td>登録画面で「フォーマット登録」送信</td><td>POST <code>/{admin_route}/format/new</code></td><td>検証成功時は保存後、当該 ID の編集画面へリダイレクトする。</td></tr><tr><td>編集画面で「フォーマット更新」送信</td><td>POST <code>/{admin_route}/format/{formatId}/edit</code></td><td>検証成功時は保存後、同一編集画面へリダイレクトする。</td></tr><tr><td>一覧または編集の「削除」（確認後）</td><td>DELETE <code>/{admin_route}/format/{formatId}/delete</code></td><td>関連データが無ければ削除し一覧へ戻る。関連があればエラーメッセージを出してリファラへ戻る。</td></tr></tbody></table></div>
-<hr>
-<h2 id="フロント挙動">フロント挙動</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>一覧は「フォーマット名」「略称（コード）」「認定」列と行メニュー（編集・削除）。編集画面はアコーディオン見出し「フォーマット情報」内にフォーム項目を縦並び。右カラムに登録／更新・削除（編集時のみ）・一覧へ戻る。</td></tr><tr><td>JS 挙動</td><td><code>format.js</code> がセット選択・禁止カード・制限カードの複数選択を Select2 で表示する。「統率でカードを使用する」チェックのオンオフで、「統率のカードをメインボード枚数に含む」「統率上限枚数」「統率下限枚数」を disabled に切り替える（オフ時は POST に含まれない）。<code>required.js</code> がフォームの必須項目ラベルへ「※必須」を追記する。</td></tr><tr><td>CSS・レイアウト</td><td><code>format.css</code> を一覧・編集の双方で読み込む。編集画面は Select2 の CDN CSS を読み込む。</td></tr><tr><td>モーダル・ポップアップ</td><td>削除リンクはアンカー用 CSRF と <code>data-method="delete"</code>・確認メッセージ（翻訳キー <code>admin.confirm.delete</code> にフォーマット表示名を埋め込む）により、送信前に確認ダイアログを出す実装に依存する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="一覧を表示する-GET-m14-09-admin-card-format-list">一覧を表示する（GET <code>m14-09_admin_card_format_list</code>）</h3>
-<ol><li>管理画面の認証・共通制約を通過する。</li><li>フォーマットを並び順昇順、次に ID 昇順で全件取得する（ソフトデリート除外は ORM／Gedmo の既定に従う）。</li><li>一覧テンプレートを返す。</li></ol>
-<h3 id="新規登録画面を表示する-GET-admin-format-new">新規登録画面を表示する（GET <code>admin_format_new</code>）</h3>
-<ol><li>管理画面の認証・共通制約を通過する。</li><li>PHP のメモリ上限を 500M に引き上げる。</li><li>新規のフォーマットエンティティでフォームを生成する。禁止カード・制限カードの補助フィールドは空配列をセットする。統率ボードが無いため「統率をメインに含む」チェックはエンティティの算出結果に従う。</li><li>編集テンプレートを返す（画面上のサブタイトルは「フォーマット登録」）。</li></ol>
-<h3 id="編集画面を表示する-GET-admin-format-edit">編集画面を表示する（GET <code>admin_format_edit</code>）</h3>
-<ol><li>管理画面の認証・共通制約を通過する。</li><li>パス <code>formatId</code> に対応する行が無ければ HTTP 404 とする。</li><li>PHP のメモリ上限を 500M に引き上げる。</li><li>当該フォーマット ID の <code>dtb_card_format</code> 行を読み、禁止 ID のものから禁止カード一覧を、制限 ID のものから制限カード一覧を組み立てる。リーガル ID の行はこの補助フィールドには載せない。</li><li>フォームにエンティティをバインドし、禁止・制限リストと統率関連の初期値（統率ボードの上下限、「統率をメイン枚数に含む」の判定）をセットする。</li><li>編集テンプレートを返す（サブタイトルは「フォーマット詳細」）。</li></ol>
-<h3 id="登録または更新する-POST-admin-format-create-admin-format-update">登録または更新する（POST <code>admin_format_create</code> / <code>admin_format_update</code>）</h3>
-<ol><li>管理画面の認証・共通制約を通過する。</li><li>更新の場合、パス ID の行が無ければ HTTP 404 とする。</li><li>フォーム名に紐づく CSRF トークンを検証する。無効ならアクセス拒否（HTTP 403）とする。検証後はトークンを更新する。</li><li>リクエストをフォームに取り込み、Symfony の検証を実行する。</li><li>検証に失敗した場合、管理フラッシュに <code>admin.register.failed</code> を積み、入力済みのフォームで編集テンプレートを再表示する。</li><li>検証に成功した場合、フォーマットエンティティを永続化して flush し、主キーを確定する。</li><li>フォームに載った禁止カード ID と制限カード ID をマージした集合を求める。</li><li>当該フォーマットに紐づく <code>dtb_card_format</code> の各行について、次のいずれかを満たす行を削除する。条件は実装どおりである。</li></ol>
-<ul><li>制限種別がリーガル以外である。</li><li>またはカード ID が手順 7 の集合に含まれる。</li></ul>
-<p>リーガルかつ集合に含まれない行は残す。</p>
-<ol><li>禁止カード・制限カードそれぞれについて、対応する制限マスタ ID を付与した <code>dtb_card_format</code> 行を新規永続化する。</li><li>メイン・サイドのフォーマットボード行を、フォームの上下限で作成または更新する。カウント対象ボード ID は null にする。</li><li>「統率でカードを使用する」が真のとき、統率ボード行を作成または更新する。「統率のカードをメインボード枚数に含む」が真のときはメイン側フォーマットボードへの参照をセットし、偽のときは参照を null にする。</li><li>「統率でカードを使用する」が偽で、既に統率ボード行があればその行を削除する。</li><li>flush する。</li><li>管理フラッシュに <code>admin.register.complete</code> を積み、保存後のフォーマット ID の編集画面へ HTTP リダイレクトする（新規でも更新でも同じ）。</li></ol>
-<h3 id="削除する-DELETE-admin-format-delete">削除する（DELETE <code>admin_format_delete</code>）</h3>
-<ol><li>管理画面の認証・共通制約を通過する。</li><li>アンカー用 CSRF（フォーム名によらない既定トークン）を検証する。無効なら HTTP 403 とする。</li><li>パス ID の行が無ければ HTTP 404 とする。</li><li>フォーマットに紐づく大会（多対多）、デッキ、いずれかのアーキタイプのコレクションが空でなければ、管理フラッシュに <code>admin.format.error.delete.event</code> を積み、<code>Referer</code> へリダイレクトする（削除は行わない）。</li><li>当該フォーマットの <code>dtb_card_format</code> をすべて削除する。</li><li>フォーマットエンティティを削除し flush する（ソフトデリートか物理削除かはマッピングと Gedmo を確認値とする）。</li><li>管理フラッシュに <code>admin.delete.complete</code> を積み、一覧へリダイレクトする。</li></ol>
-<hr>
-<h2 id="集計条件">集計条件</h2>
-<p>本機能では件数集計や売上集計は行わない。</p>
-<hr>
-<h2 id="表示メッセージ">表示メッセージ</h2>
-<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>画面上の文言(英語)</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M14-10-MSG-001</td><td>入力項目直下</td><td>半角英数字、アンダースコア、ハイフン、スペースのみ入力できます。</td><td>（英訳なし）</td><td>フォーマット名（英字）に使用できない文字を入力して保存したとき</td><td>フォーマット新規登録・編集画面に留まる</td></tr><tr><td>M14-10-MSG-002</td><td>入力項目直下</td><td>半角英数字、アンダースコア、ハイフン、スペースのみ入力できます。</td><td>（英訳なし）</td><td>フォーマットコードに使用できない文字を入力して保存したとき</td><td>フォーマット新規登録・編集画面に留まる</td></tr></tbody></table></div>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<p>本機能では売上や在庫の業務計算は行わない。禁止／制限リスト更新時の削除判定は「処理フロー」に従う。</p>
-<h3 id="入力項目">入力項目</h3>
-<div class="table-wrap"><table><thead><tr><th>項目名</th><th>必須／任意</th><th>最大長</th><th>初期値</th><th>保存先・扱い</th></tr></thead><tbody><tr><td>フォーマット名(日)</td><td>必須</td><td>64 文字（プラグイン設定 <code>HareruyaEc.const.construct_format.name.min</code> が 1、<code>max</code> が 64）</td><td>新規はエンティティ初期値、編集は <code>mtb_format.name_jp</code></td><td><code>mtb_format.name_jp</code>。NotBlank、Length。</td></tr><tr><td>フォーマット名(英)</td><td>必須</td><td>64 文字（同上）</td><td>同上</td><td><code>mtb_format.name_en</code>。NotBlank、英数字・アンダースコア・ハイフン・半角スペースのみの Regex、Length。</td></tr><tr><td>フォーマットコード</td><td>任意</td><td>10 文字（<code>construct_format.code</code> の min 1・max 10。未入力時は Symfony の検証が空文字をどう扱うかは実装確認値とする）</td><td>同上</td><td><code>mtb_format.code</code>（NULL 可）。Regex・Length。</td></tr><tr><td>並び順</td><td>必須</td><td>整数レンジ 1～10000（<code>construct_format.meta_range</code> の min・max をフォームの整数項目が共用している）</td><td>新規は NULL のうえフォーム必須のため利用者入力が前提</td><td><code>mtb_format.rank</code>。NotBlank、Range。</td></tr><tr><td>メイン上限枚数</td><td>任意</td><td>整数 0～4096（<code>construct_format.board</code>）</td><td>DB 現行値</td><td><code>mtb_format.main_max_card_count</code> およびメイン用 <code>dtb_format_board.max_card_count</code>。Range。</td></tr><tr><td>メイン下限枚数</td><td>任意</td><td>同上</td><td>DB 現行値</td><td><code>mtb_format.main_min_card_count</code> およびメイン用 <code>dtb_format_board.min_card_count</code>。Range。</td></tr><tr><td>サイド上限枚数</td><td>任意</td><td>同上</td><td>DB 現行値</td><td><code>mtb_format.side_max_card_count</code> およびサイド用 <code>dtb_format_board</code>。Range。</td></tr><tr><td>サイド下限枚数</td><td>任意</td><td>同上</td><td>DB 現行値</td><td><code>mtb_format.side_min_card_count</code> およびサイド用 <code>dtb_format_board</code>。Range。</td></tr><tr><td>カードセット</td><td>任意</td><td>複数選択（検索可能 UI）</td><td>DB 現行の関連</td><td><code>dtb_format_cardset</code> 経由の <code>mtb_cardset</code> 多対多。</td></tr><tr><td>認定</td><td>任意</td><td>単一選択</td><td>DB 現行値</td><td><code>mtb_format.certification_id</code>／認定マスタ参照。</td></tr><tr><td>デッキ検索条件に表示</td><td>任意</td><td>チェックボックス</td><td>DB 現行値</td><td><code>mtb_format.search_flg</code>。</td></tr><tr><td>商品検索条件に表示</td><td>任意</td><td>チェックボックス</td><td>DB 現行値</td><td><code>mtb_format.product_search_flg</code>。</td></tr><tr><td>ランキング表示</td><td>任意</td><td>チェックボックス</td><td>DB 現行値</td><td><code>mtb_format.ranking_flg</code>。</td></tr><tr><td>メタ分布簡易化</td><td>任意</td><td>チェックボックス</td><td>DB 現行値</td><td><code>mtb_format.other_meta_flg</code>。</td></tr><tr><td>MTG ARENAで導入済</td><td>任意</td><td>チェックボックス</td><td>DB 現行値</td><td><code>mtb_format.arena_legal_flg</code>。</td></tr><tr><td>採用枚数ランキングに基本土地を含める</td><td>任意</td><td>チェックボックス</td><td>DB 現行値</td><td><code>mtb_format.include_basic_flg</code>。</td></tr><tr><td>デッキビルダーで利用</td><td>任意</td><td>チェックボックス</td><td>DB 現行値</td><td><code>mtb_format.deckbuilder_flg</code>。</td></tr><tr><td>メタゲーム分析日数</td><td>必須</td><td>整数 1～10000（同上 <code>meta_range</code> キー）</td><td>新規エンティティは定数上 14 日が既定（実装のプロパティ既定）</td><td><code>mtb_format.meta_range</code>。NotBlank、Range。</td></tr><tr><td>ルール説明(日)</td><td>任意</td><td>65535 文字（<code>construct_format.text</code> の max。DB は text）</td><td>DB 現行値</td><td><code>mtb_format.rule_jp</code>。Length。</td></tr><tr><td>ルール説明(英)</td><td>任意</td><td>同上</td><td>DB 現行値</td><td><code>mtb_format.rule_en</code>。Length。</td></tr><tr><td>禁止カード</td><td>任意</td><td>複数選択（検索可能 UI）</td><td>編集時は禁止 ID の <code>dtb_card_format</code> から復元</td><td>フォームでは <code>mapped</code> ではない。保存時に禁止マスタ ID で <code>dtb_card_format</code> を追加。既存の禁止／制限／対象 ID のリーガル行は処理フローの削除ルールに従う。</td></tr><tr><td>制限カード</td><td>任意</td><td>複数選択</td><td>編集時は制限 ID の行から復元</td><td>同上（制限マスタ ID）。</td></tr><tr><td>統率でカードを使用する（統率者や策略等）</td><td>任意</td><td>チェック（内部では 1／0）</td><td>DB 現行値</td><td><code>mtb_format.use_command_flg</code>。整数真偽変換トランスフォーマ付き。オフ時は統率用 <code>dtb_format_board</code> を削除。</td></tr><tr><td>統率のカードをメインボード枚数に含む</td><td>任意</td><td>チェック</td><td>編集時は統率ボードの参照先から算出</td><td>フォームでは <code>mapped</code> ではない。統率ボード行の参照ボードにメインを繋ぐか否か。統率オフ時は disabled で POST されない。</td></tr><tr><td>統率上限枚数</td><td>任意</td><td>整数 0～4096</td><td>編集時は統率ボードの現行値</td><td><code>mapped</code> ではない。統率ボードの <code>max_card_count</code>。</td></tr><tr><td>統率下限枚数</td><td>任意</td><td>整数 0～4096</td><td>同上</td><td>統率ボードの <code>min_card_count</code>。</td></tr><tr><td>基本土地でないカードは各1枚まで（ハイランダー）</td><td>任意</td><td>チェック（内部では 1／0）</td><td>DB 現行値</td><td><code>mtb_format.highlander_flg</code>。整数真偽変換トランスフォーマ付き。</td></tr></tbody></table></div>
-<p>補足: 長さ・レンジの数値はプラグイン <code>config.yml</code> の <code>HareruyaEc.const.construct_format</code> を確認値とする。環境で上書きされている場合はその値に従う。</p>
-<h3 id="エッジケース">エッジケース</h3>
-<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>編集対象 ID が存在しない</td><td>GET／POST とも HTTP 404。</td></tr><tr><td>CSRF 無効</td><td>POST はフォームトークン単位で HTTP 403。DELETE は既定トークンで HTTP 403。</td></tr><tr><td>大会・デッキ・アーキタイプのいずれかが紐付く状態で削除</td><td>削除せずエラーフラッシュしリファラへリダイレクト。</td></tr><tr><td>統率チェックオフで送信</td><td>統率関連入力は disabled のため POST に含まれない。サーバは統率ボード行を削除し、<code>use_command_flg</code> はフォームのチェック状態で更新される。</td></tr><tr><td>リーガル状態の <code>dtb_card_format</code> がバッチ等で存在する</td><td>保存時、リーガルかつ禁止・制限リストに含まれないカードの行は削除ルールに該当しないため残る。禁止・制限として選んだカードのリーガル行は集合に含まれるため一旦削除され、禁止または制限として再作成される。</td></tr><tr><td>フォーマットコード欄を空のまま送信する</td><td>フォームは <code>required</code> ではないが Length の最小が 1 のため、空文字は検証エラーになりうる（実装どおり）。</td></tr></tbody></table></div>
-<hr>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>一覧と編集</td><td>一覧はリポジトリの <code>findBy</code> の結果である。編集は ID での再取得である。一覧表示から編集を開くまでに他管理者が更新した場合、編集開始時点の DB 値が載る（楽観ロックはない）。</td></tr><tr><td>禁止・制限とリーガル</td><td>画面上の禁止・制限は <code>dtb_card_format</code> の一部のみを編集する。リーガル行はフォームの禁止・制限集合と削除条件により一部が削除されうるが、集合外のリーガル行は維持される。</td></tr><tr><td>削除</td><td>関連する大会・デッキ・アーキタイプが無い場合のみフォーマット本体を削除する。<code>dtb_card_format</code> は事前にすべて削除する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="API-バッチ結果">API/バッチ結果</h2>
-<p>本機能では API 呼び出し・バッチ実行を扱わない。</p>
-<hr>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="一覧と編集の対象">一覧と編集の対象</h3>
+<p>一覧はフォーマットを並び順の昇順、並び順が同じときは識別子の昇順で全件表示する。</p>
+<p>編集では、指定したフォーマットが無いときは 404 とする。当該フォーマットに紐づくカード制限のうち、禁止のものから禁止カードの一覧を、制限のものから制限カードの一覧を組み立てる。リーガルのものはどちらの一覧にも載せない。</p>
+<p>新規登録では禁止カードと制限カードをいずれも空とする。統率のボードが無いときは、統率をメインに含めるかの判定をフォーマットの算出結果に従う。</p>
+<h3 id="保存の判定順序">保存の判定順序</h3>
+<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>更新のとき、指定したフォーマットがあるか</td><td>無いときは 404 とする</td></tr><tr><td>2</td><td>なりすまし対策トークンが有効か</td><td>無効のときはアクセス拒否（HTTP 403）とする</td></tr><tr><td>3</td><td>入力の検証を満たすか</td><td>満たさないときは保存せず、入力した値のまま編集画面を再表示する</td></tr><tr><td>4</td><td>検証を満たしたとき</td><td>フォーマットを保存し、識別子を確定する</td></tr><tr><td>5</td><td>保存の後</td><td>カード制限とフォーマットボードを次のとおり置き換える</td></tr></tbody></table></div>
+<h3 id="カード制限の置き換え">カード制限の置き換え</h3>
+<p>入力にある禁止カードと制限カードを合わせた集合を求め、当該フォーマットに紐づくカード制限のうち次のいずれかに当たるものを削除する。</p>
+<ul><li>制限の種別がリーガル以外である。</li><li>カードが上記の集合に含まれる。</li></ul>
+<p>リーガルであり、かつ集合に含まれないものは残す。削除の後、禁止カードと制限カードそれぞれに対応する種別を付けたカード制限を新たに作る。</p>
+<h3 id="フォーマットボード">フォーマットボード</h3>
+<p>メインとサイドのフォーマットボードは、入力の上限と下限で作成または更新する。枚数の数え先となるボードは持たせない。</p>
+<div class="table-wrap"><table><thead><tr><th>統率でカードを使用する</th><th>統率のカードをメインボード枚数に含む</th><th>結果</th></tr></thead><tbody><tr><td>真</td><td>真</td><td>統率のボードを作成または更新し、メインのフォーマットボードへの参照を持たせる</td></tr><tr><td>真</td><td>偽</td><td>統率のボードを作成または更新し、メインのフォーマットボードへの参照を持たせない</td></tr><tr><td>偽</td><td>—</td><td>統率のボードが既にあるときは削除する</td></tr></tbody></table></div>
+<p>登録と更新のいずれも、保存した後は当該フォーマットの編集画面へ戻す。</p>
+<h3 id="削除の判定順序">削除の判定順序</h3>
+<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>なりすまし対策トークンが有効か</td><td>無効のときはアクセス拒否（HTTP 403）とする</td></tr><tr><td>2</td><td>指定したフォーマットがあるか</td><td>無いときは 404 とする</td></tr><tr><td>3</td><td>大会・デッキ・アーキタイプのいずれかが当該フォーマットに紐づくか</td><td>1 件でも紐づくときは削除せず、元の画面へ戻す</td></tr><tr><td>4</td><td>いずれも紐づかないとき</td><td>当該フォーマットのカード制限をすべて削除し、フォーマットを削除して一覧へ戻す</td></tr></tbody></table></div>
+<h3 id="エラー時の扱い">エラー時の扱い</h3>
+<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>なりすまし対策トークンが無効</td><td>アクセス拒否（HTTP 403）とする</td></tr><tr><td>対象のフォーマットが無い</td><td>404 とする</td></tr><tr><td>入力の検証を満たさない</td><td>保存せず、入力した値のまま編集画面を再表示する</td></tr><tr><td>削除時に大会・デッキ・アーキタイプのいずれかが紐づく</td><td>削除せず、元の画面へ戻す</td></tr></tbody></table></div>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>GET はパスパラメータ <code>formatId</code>。POST はフォームフィールドと CSRF。DELETE は CSRF（クエリまたはボディは実装のフロントに従う）。</td></tr><tr><td>成功時出力</td><td>HTML 画面またはリダイレクト応答。成功フラッシュは登録・更新で <code>admin.register.complete</code>、削除で <code>admin.delete.complete</code>。</td></tr><tr><td>失敗時出力</td><td>バリデーション失敗時は同一フォーム再表示と <code>admin.register.failed</code>。削除不可時は <code>admin.format.error.delete.event</code>。</td></tr><tr><td>副作用</td><td>DB の INSERT／UPDATE／DELETE（およびソフトデリートの場合は <code>deleted_at</code> 更新）。セッションにフラッシュメッセージ。CSRF トークン更新（POST フォーム検証時）。</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<p>機能に直接関係する主な列・テーブル関係のみ示す。型の細部は Doctrine の yml を参照する。</p>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列または関係</th><th>メモ</th></tr></thead><tbody><tr><td><code>mtb_format</code></td><td><code>name_jp</code>, <code>name_en</code>, <code>code</code>, <code>rank</code>, メイン／サイド枚数、各種フラグ、<code>meta_range</code>, <code>rule_jp</code>, <code>rule_en</code>, <code>certification_id</code>, <code>deleted_at</code></td><td>フォーマット本体。</td></tr><tr><td><code>dtb_format_board</code></td><td><code>format_id</code>, ボード種別、上下限、カウント対象ボード参照</td><td>メイン・サイド・統率の枚数ルール。</td></tr><tr><td><code>dtb_format_cardset</code></td><td>中間テーブル</td><td>フォーマットとカードセットの多対多。</td></tr><tr><td><code>dtb_card_format</code></td><td><code>format_id</code>, <code>card_id</code>, <code>restriction_id</code></td><td>禁止・制限・リーガル等。保存時に禁止・制限行が差し替わる。</td></tr></tbody></table></div>
-<h3 id="DB操作">DB操作</h3>
-<p>永続化の正は ec-cube-enterprise（テーブル名・操作は ec-cube-enterprise を正典）。当ドメインは承認ワークフローを介さず persist/flush で直接確定する（承認ワークフローは在庫機能固有）。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>登録/更新</td><td>dtb_card_format / dtb_format_board / dtb_format_cardset / mtb_format</td><td>当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。</td></tr></tbody></table></div>
-<hr>
-<h2 id="バリデーション">バリデーション</h2>
-<p>入力項目表および Symfony の制約に従う。フォーマット名（英）・コードは英数字・アンダースコア・ハイフン・半角スペースのみを許す正規表現がある。</p>
-<hr>
-<h2 id="権限・認可">権限・認可</h2>
-<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>一覧・編集・登録・削除</th></tr></thead><tbody><tr><td>管理画面にログインし当ナビゲーションに到達できる管理者</td><td>実装されたルートへアクセスできる（コアの管理画面認可とロール設定を正とする）。</td></tr><tr><td>未ログインまたは権限不足</td><td>コアの管理画面セキュリティにより拒否またはログインへ誘導される（詳細は別設計）。</td></tr></tbody></table></div>
-<hr>
-<h2 id="画面遷移">画面遷移</h2>
-<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>一覧で新規登録を押す</td><td>GET 新規編集画面</td></tr><tr><td>一覧で名称または編集を押す</td><td>GET 既存編集画面</td></tr><tr><td>新規／編集で送信成功</td><td>該当フォーマットの編集画面へリダイレクト</td></tr><tr><td>送信バリデーション失敗</td><td>同一編集画面を再表示</td></tr><tr><td>編集で削除成功</td><td>一覧へリダイレクト</td></tr><tr><td>一覧または編集で削除拒否</td><td><code>Referer</code> へリダイレクト</td></tr><tr><td>編集で戻る</td><td>一覧 GET</td></tr></tbody></table></div>
-<h3 id="遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</h3>
-<div class="table-wrap"><table><thead><tr><th>起点</th><th>遷移前の処理</th><th>遷移後の初期状態</th></tr></thead><tbody><tr><td>削除失敗</td><td>エラーフラッシュを積む</td><td>リファラの画面を再表示しフラッシュを見せる</td></tr></tbody></table></div>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>CSRF 無効</td><td>HTTP 403（アクセス拒否例外）。</td></tr><tr><td>対象フォーマットなし</td><td>HTTP 404。</td></tr><tr><td>フォーム検証エラー</td><td><code>admin.register.failed</code> を積みフォーム再表示。</td></tr><tr><td>削除時に大会・デッキ・アーキタイプのいずれかが関連</td><td><code>admin.format.error.delete.event</code> を積みリファラへ。</td></tr></tbody></table></div>
-<hr>
-<h2 id="試行制限">試行制限</h2>
-<p>本機能では試行制限を扱わない。</p>
-<hr>
-<h2 id="ログ・監査">ログ・監査</h2>
-<p>本機能専用の業務ログ出力はコード上は主眼としない。コアの HTTP／アクセスログは環境に依存する。</p>
-<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
-<ul><li>パスワード</li><li>なりすまし対策トークン</li><li>Cookie 値</li><li>セッション ID の完全値</li><li>Remember Me トークンの原値</li></ul>
-<hr>
-<h2 id="セッション">セッション</h2>
-<p>管理フラッシュメッセージ用のセッション領域が成功・失敗時に更新される。詳細はコアのフラッシュ実装を正とする。</p>
-<h3 id="セッションへ保存しない情報">セッションへ保存しない情報</h3>
-<p>フォームの全項目をセッションキーとして別途保持する処理は本機能では行わない。</p>
-<hr>
-<h2 id="Cookie">Cookie</h2>
-<p>本機能固有の Cookie は使わない。管理画面のセッション Cookie はコアに従う。</p>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<p>明示の楽観ロックはない。更新・削除はリクエスト単位の flush に依存する。複数管理者の同時更新の衝突は最後の flush が優先する形になりうる。</p>
-<hr>
-<h2 id="調査補助-grep-用">調査補助（grep 用）</h2>
-<p>実装ファイルの所在を示す。本文の主説明とは切り離して参照する。</p>
-<ul><li><code>app/Plugin/HareruyaEc/ServiceProvider/Admin/FormatServiceProvider.php</code></li><li><code>app/Plugin/HareruyaEc/Controller/Admin/FormatController.php</code></li><li><code>app/Plugin/HareruyaEc/Form/Type/Admin/Format/FormatType.php</code></li><li><code>app/Plugin/HareruyaEc/Resource/template/admin/Format/format.twig</code></li><li><code>app/Plugin/HareruyaEc/Resource/template/admin/Format/formatedit.twig</code></li><li><code>app/Plugin/HareruyaEc/Resource/template/admin/assets/js/format.js</code></li><li><code>app/Plugin/HareruyaEc/Resource/doctrine/Plugin.HareruyaEc.Entity.MtbFormat.dcm.yml</code></li></ul>
-<h3 id="HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</h3>
-<ul><li><code>m14-09_admin_card_format_list</code> … <code>GET</code> … <code>/{admin_route}/format</code>（フォーマット一覧を表示する。）</li><li><code>admin_format_new</code> … <code>GET</code> … <code>/{admin_route}/format/new</code>（新規フォーマットの入力画面を表示する。）</li><li><code>admin_format_create</code> … <code>POST</code> … <code>/{admin_route}/format/new</code>（新規フォーマットを登録する。）</li><li><code>admin_format_edit</code> … <code>GET</code> … <code>/{admin_route}/format/{formatId}/edit</code>（既存フォーマットの編集画面を表示する。<code>formatId</code> は 1 以上の整数（正規表現 <code>^[1-9][0-9]*$</code>）。）</li><li><code>admin_format_update</code> … <code>POST</code> … <code>/{admin_route}/format/{formatId}/edit</code>（既存フォーマットを更新する。）</li><li><code>admin_format_delete</code> … <code>DELETE</code> … <code>/{admin_route}/format/{formatId}/delete</code>（フォーマットを削除する。）</li></ul>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>一覧と編集は対象のフォーマット。保存は入力欄一式となりすまし対策トークン。削除はなりすまし対策トークン</td></tr><tr><td>成功時出力</td><td>一覧・新規登録・編集の各画面、または保存後の編集画面と削除後の一覧</td></tr><tr><td>失敗時出力</td><td>検証を満たさないときは同じ入力のまま編集画面を再表示する。削除できないときは元の画面へ戻す</td></tr></tbody></table></div>
+<h3 id="入出力-永続化">入出力: 永続化</h3>
+<div class="table-wrap"><table><thead><tr><th>操作</th><th>契機</th></tr></thead><tbody><tr><td>追加・更新</td><td>フォーマットを、入力の検証を満たして保存したとき</td></tr><tr><td>削除・追加</td><td>カード制限を、保存のたびに置き換えたとき</td></tr><tr><td>追加・更新</td><td>メインとサイドのフォーマットボードを、保存のたびに入力の上限と下限で反映したとき。既にあるときは更新し、無いときは作る</td></tr><tr><td>削除</td><td>統率でカードを使用しない設定に変え、統率のボードが既にあるとき</td></tr><tr><td>削除</td><td>フォーマットと、それに紐づくカード制限を、削除できる条件を満たしたとき</td></tr></tbody></table></div>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
+<h2 id="表示メッセージ">表示メッセージ</h2>
+<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M14-10-MSG-001</td><td>入力項目直下</td><td>半角英数字、アンダースコア、ハイフン、スペースのみ入力できます。</td><td>フォーマット名（英字）に使用できない文字を入力して保存したとき</td><td>フォーマット新規登録・編集画面に留まる</td></tr><tr><td>M14-10-MSG-002</td><td>入力項目直下</td><td>半角英数字、アンダースコア、ハイフン、スペースのみ入力できます。</td><td>フォーマットコードに使用できない文字を入力して保存したとき</td><td>フォーマット新規登録・編集画面に留まる</td></tr></tbody></table></div>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

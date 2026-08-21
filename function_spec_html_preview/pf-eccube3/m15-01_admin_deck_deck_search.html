@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,40 +272,16 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#フロント挙動">フロント挙動</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#デッキ一覧を初期表示する-GET-admin-deck-list">デッキ一覧を初期表示する（GET `admin_deck_list`）</a>
-<a class="lv3" href="#検索・一覧を表示する-GET-または-POST-m15-01-admin-deck-deck-search">検索・一覧を表示する（GET または POST `m15-01_admin_deck_deck_search`）</a>
-<a class="lv2" href="#集計条件">集計条件</a>
-<a class="lv2" href="#検索実行時の判定順序-グローバル除外">検索実行時の判定順序（グローバル除外）</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
-<a class="lv3" href="#入力項目">入力項目</a>
-<a class="lv3" href="#エッジケース">エッジケース</a>
-<a class="lv2" href="#並び替え">並び替え</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#初期表示">初期表示</a>
+<a class="lv3" href="#検索条件">検索条件</a>
+<a class="lv3" href="#常に効く除外">常に効く除外</a>
+<a class="lv3" href="#表示件数と並び順">表示件数と並び順</a>
+<a class="lv3" href="#エラー時の扱い">エラー時の扱い</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#バリデーション">バリデーション</a>
-<a class="lv2" href="#権限・認可">権限・認可</a>
-<a class="lv2" href="#画面遷移">画面遷移</a>
-<a class="lv3" href="#遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#表示メッセージ">表示メッセージ</a>
-<a class="lv2" href="#試行制限">試行制限</a>
-<a class="lv2" href="#ログ・監査">ログ・監査</a>
-<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
-<a class="lv2" href="#セッション">セッション</a>
-<a class="lv3" href="#本機能におけるセッション">本機能におけるセッション</a>
-<a class="lv3" href="#セッションへ保存しない情報">セッションへ保存しない情報</a>
-<a class="lv2" href="#Cookie">Cookie</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a>
-<a class="lv2" href="#調査補助-ソース位置">調査補助（ソース位置）</a>
-<a class="lv3" href="#HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</a></nav>
+<a class="lv3" href="#入出力-永続化">入出力: 永続化</a>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -303,108 +289,30 @@ footer {
         <h1>デッキ管理 — デッキ検索・一覧</h1>
       </header>
       
-      <h2 id="概要">概要</h2>
-<p>HareruyaEc プラグインが管理画面に提供する「デッキ管理」において、大会用デッキ（<code>dtb_deck</code> のうちデッキ種別が大会用のもの）を多数の条件で絞り込み、一覧・ページ送り・並び替えする機能である。検索条件・ページ番号・表示件数・ソートはセッションに保持し、GET での再表示時に復元する。一覧上から CSV 出力・一括削除・一括編集の導線が接続されているが、それら個別処理の検証や CSRF の例外の列挙は本書の主題としない。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。pf-eccube3 配下の HareruyaEc プラグイン実装を確認値とする。EC-CUBE コア単体では当ルートは存在しない。</p>
-<p>本機能のカスタマイズ区分はカスタマイズである。挙動は現行リポ（pf-eccube3 の HareruyaEc プラグイン）を参照し、DB関連は ec-cube-enterprise を正とする。</p>
-<p>対象はブラウザ経由の管理画面に限定する。コントローラのメソッド名の列挙は本文の主題としない。本文ではルートbind名やSymfonyのルートnameの網羅は主説明としない。「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。コード探索でbind名が必要なときだけ「調査補助」へ書く。</p>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<ul><li>ec-cube-enterprise にデッキ関連テーブル一式が実装されており、本機能の検索対象は移行先に存在する。</li><li>デッキ（<code>dtb_deck</code>）の主キー列名が異なる。移行先 ec-cube-enterprise では <code>id</code>、現行 pf-eccube3 では <code>deck_id</code> である。本書が <code>dtb_deck.deck_id</code>（主キー）と記す箇所は、移行先では <code>dtb_deck.id</code> に対応する。中間テーブル（<code>dtb_deck_deck_tag</code>、<code>dtb_article_deck</code>、<code>dtb_deck_campaign_tag</code>）の外部キー列は現行・移行先とも <code>deck_id</code> のままである。</li><li>デッキのその他の検索対象列（<code>deck_name</code>、<code>format_id</code>、<code>archetype_id</code>、<code>disp_id</code>、<code>private_flg</code>、<code>event_date</code>、<code>ranking</code>、<code>win_count</code>、<code>loss_count</code>、<code>draw_count</code>、<code>result</code>、<code>event_name_jp</code>、<code>event_name_en</code>、<code>player_name</code>、<code>dci_no</code>、<code>member_id</code>、<code>deck_type_id</code>、<code>event_detail_id</code>、<code>old_deck_id</code> ほか）は現行と同一スキーマである。論理削除列 <code>deleted_at</code> を現行・移行先とも持つ。</li><li>移行先 <code>dtb_deck</code> には現行に無い追加列（<code>player_id</code>、<code>card_image_id</code>、<code>display_token</code> 等）があるが、本機能の検索条件では参照しない。</li><li>カード条件で結合するデッキ内カード（<code>dtb_deck_card</code>、列 <code>deck_id</code>、<code>card_id</code>、<code>board_id</code>、<code>count</code>）は移行先に存在し同一スキーマである。</li></ul>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>ナビからデッキ一覧を開く</td><td><code>GET /{admin_route}/deck</code></td><td>検索フォームを表示する。結果エリアは「検索実行前」相当（件数ヘッダは出ない）。デッキ検索用セッションの一部を削除する。</td></tr><tr><td>条件を入力して「検索」送信</td><td><code>POST /{admin_route}/deck/search/1</code>（フォーム action は常に <code>page_no=1</code>）</td><td>条件がセッションに保存され、1 ページ目の一覧が返る。CSRF は検索フォーム種別で無効化されている。</td></tr><tr><td>ソート項目と昇順・降順を選ぶ</td><td><code>GET /{admin_route}/deck/search/1?sort=…&amp;order=…</code></td><td>ソートがセッションに保存され、1 ページ目から該当順で一覧する。</td></tr><tr><td>ページリンクから N ページ目へ</td><td><code>GET /{admin_route}/deck/search/{page_no}</code></td><td>直前の検索条件とソートをセッションから復元し、N ページ目を表示する。</td></tr><tr><td>表示件数を変える</td><td><code>GET /{admin_route}/deck/search/1?page_count=…</code></td><td><code>mtb_page_max</code> に存在する件数ならセッションに保存し、その件数でページ分割する。</td></tr><tr><td>行のデッキ詳細リンク／編集</td><td><code>GET /{admin_route}/deck/{id}</code></td><td>デッキ編集画面へ遷移する（別機能）。</td></tr></tbody></table></div>
-<hr>
-<h2 id="フロント挙動">フロント挙動</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>ページタイトルは「デッキ管理」。サブタイトル行に新規・CSV 取込ボタン。検索は単一フォーム <code>search_form</code>。1 行目付近にデッキ ID・旧デッキ ID・フォーマット・色（チェックボックス横並び）・アーキタイプ（複数選択）。表示／非表示マスタ・プライベートのラジオ群。イベント日 From／To（単一行日付ウィジェットと「日付クリア」ボタン）、大会名テキスト。順位レンジ、戦績テキスト、勝敗引き分けの上下限、デッキ名・DCI・プレイヤー名。デッキタグ・カード名（候補リスト用の <code>ul.cardNameList</code>）。イベント ID・店舗・登録管理者。フッタに「すべてクリア」リンクと「検索」ボタン。結果部は件数見出し、CSV 出力・旧サイト CSV・一括削除・一括編集アコーディオン、表示件数ドロップダウン、ソート二段ドロップダウン、表（チェックボックス・概要リンク・行メニュー）、ページネーション。</td></tr><tr><td>JS 挙動</td><td>select2 をフォーマット・アーキタイプ・デッキタグ（および一括編集内の同名項目）に付与する。ヘッダ全選択チェックで <code>deckId</code> 属性を持つ行チェックを同期する。「すべてクリア」で検索フォーム内の入力を空にし、チェック・ラジオをオフにする（<code>_token</code> 名一致は除外）。「日付クリア」でイベント日 From／To を空にする。フォーマットまたは色変更時、アーキタイプ選択肢をフォーマット ID・色クラスでフィルタし、無効オプションを切り替える。CSV 出力ボタンは未選択時に alert で中断する。一括編集はチェックされた項目だけ入力域を開き、<code>required.js</code> と連動して必須表示を付ける。ソート UI は <code>sort-method-display.js</code> に依存する。カード名欄は <code>deck_card.js</code>（パブリック資産経由）と data-list でカード名候補 URL を参照する構成である。</td></tr><tr><td>CSS・レイアウト</td><td>select2 CDN、<code>eventlist.css</code> を読み込む。Bootstrap 3 系フォームレイアウト。</td></tr><tr><td>モーダル・ポップアップ</td><td>検索画面専用モーダルはない。一括削除・行削除・一括編集送信はブラウザの <code>confirm</code> に依存する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="デッキ一覧を初期表示する-GET-admin-deck-list">デッキ一覧を初期表示する（GET <code>admin_deck_list</code>）</h3>
-<ol><li>管理画面の認証・共通制約を通過する。</li><li>セッションから <code>admin.deck.search</code>、<code>admin.deck.search.page_no</code>、<code>admin.deck.search.page_count</code> を削除する（<code>admin.deck.sort</code>・<code>admin.deck.order</code> は残りうる）。</li><li>フォーム名 <code>admin_search_deck</code> で検索フォームを生成し、<code>deck.twig</code> を描画する。ページネーションは空配列、<code>page_no</code> は 1、<code>page_count</code> は設定 <code>default_page_count</code>。ソートキー一覧はデッキレポジトリから取得する。</li><li>イベント日 From はフォーム種別の既定データとして「現在日時から設定 <code>HareruyaEc.const.search_form.default_from_term</code>（確認値 <code>-3 month</code>）だけシフトした日付」が入る。</li></ol>
-<h3 id="検索・一覧を表示する-GET-または-POST-m15-01-admin-deck-deck-search">検索・一覧を表示する（GET または POST <code>m15-01_admin_deck_deck_search</code>）</h3>
-<ol><li>管理画面の認証・共通制約を通過する。</li><li>デッキ用レポジトリ参照をセットする。</li><li>フォーム <code>admin_search_deck</code> を生成する。送信前に「有効」とみなされると空一覧で返す分岐があるが、未送信の通常経路では続行する。</li><li>リクエストをフォームに取り込む。</li><li>クエリパラメータまたはセッションから <code>sort</code> を決める。優先順はリクエスト、なければセッション、なければ既定値 <code>default</code>。</li><li>同様に <code>order</code> を決める。既定は <code>DESC</code>。</li><li><code>order</code> が正規表現 <code>^(ASC|DESC|asc|desc)$</code> に一致しない場合、管理画面エラー <code>admin.error.sort</code> を積み、<code>admin_deck_list</code> と同様の初期化処理へ進む（検索条件・ページ関連セッションのみ削除され、<code>admin.deck.sort</code> と <code>admin.deck.order</code> は削除されない）。</li><li>ページマスタを全件取得し、許容される表示件数の一覧を得る。</li><li>表示件数はセッションの <code>admin.deck.search.page_count</code> があればそれを使い、なければ設定 <code>default_page_count</code>（確認値 10）。リクエストに <code>page_count</code> があり、かつページマスタの名前と一致すればセッションへ上書き保存する。</li><li>フォームから送信データが得られない場合、セッション <code>admin.deck.search</code> のビューデータから復元する。ビューと検索データの両方が欠ける場合は <code>admin_deck_list</code> と同等の初期表示へフォールバックする。</li><li>検索データに <code>sort</code>・<code>order</code> を合成する。</li><li>レポジトリが検索データからクエリビルダを構築する。別メソッドで同一条件の件数を取得する。現在ページが最終ページかつそのページのデータが削除済みなどで件数とページの関係がずれる場合、実装はページ番号を 1 減らして調整する。</li><li>セッションへ <code>admin.deck.search.page_no</code>、<code>admin.deck.search</code>、<code>admin.deck.sort</code>、<code>admin.deck.order</code>、<code>admin.deck.search.page_count</code> を書き込む。</li><li>アプリケーションのページネータでクエリビルダをページ分割する（デッキ一覧では <code>wrap-queries</code> を有効にするオプションが指定されている）。Twig を描画する。</li></ol>
-<hr>
-<h2 id="集計条件">集計条件</h2>
-<div class="table-wrap"><table><thead><tr><th>指標</th><th>集計の要点</th></tr></thead><tbody><tr><td>一覧の総件数</td><td><code>getQueryBuilderBySearchData</code> と同等の結合・絞り込みをしたうえで、<code>dtb_deck</code> 主エイリアスに対する <code>count</code> で取得する。一覧クエリと件数クエリで条件が乖離しない。</td></tr><tr><td>一覧の各行</td><td><code>dtb_deck</code> エンティティがページネーションされる。テーブルに出す文言はプロパティおよび関連の遅延参照（アーキタイプ名など）に依存する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="検索実行時の判定順序-グローバル除外">検索実行時の判定順序（グローバル除外）</h2>
-<p>以下は利用者が入力しない前提でもクエリに適用される。</p>
-<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>イベント詳細との結合条件</td><td>イベント詳細が無いデッキは残す。イベント詳細がある場合は、その開始日時が現在より前である行だけが結合対象となり、開始が未来のイベントにだけ紐づくデッキは結果から除外される。</td></tr><tr><td>2</td><td>デッキ種別</td><td>大会用デッキ種別定数に一致する行だけを残す。ユーザー作成デッキ種別などは除外される。</td></tr></tbody></table></div>
-<hr>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<p>検索フォーム入力はセッションへ保存されるが、<code>dtb_deck</code> を更新しない。送信値からクエリビルダへの対応は次のとおりである。</p>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>複数トークン検索</td><td>デッキ名・大会名・戦績文字列・DCI・プレイヤー名は、半角／全角スペースおよびカンマで分割した各トークンについて、対象列へ部分一致条件を付ける。トークン間は論理 AND（いずれかの列への一致でそのトークンは充足）。同一トークン内の複数列は論理 OR。</td></tr><tr><td>複数 ID</td><td>デッキ ID・イベント ID は同様に分割し、数値だけを抽出して IN 検索する。非数値トークンは無視される。</td></tr><tr><td>フォーマット・アーキタイプ・表示マスタ・色</td><td>選択されたマスタ行への IN 一致。色はアーキタイプ経由で色マスタと結合して絞り込む。</td></tr><tr><td>プライベート</td><td>ラジオがちょうど 1 選択のときだけ、その真偽値で一致させる。未選択または両方選択のときは条件を付けない。</td></tr><tr><td>イベント日</td><td>From のみ指定ならその日 0 時以上。To のみ指定なればその日 23:59:59 以下。両方あれば範囲。</td></tr><tr><td>順位・勝敗引き分け</td><td>それぞれ From／To に整数が入っていれば下限・上限を付ける。</td></tr><tr><td>デッキタグ</td><td>選択された各タグについて、<code>dtb_deck</code> とタグの関連がすべて存在する行だけを残す（論理 AND）。</td></tr><tr><td>カード名</td><td>デッキに含まれるカードの日本語名または英語名が、入力文字列と完全一致する行だけを残す（LIKE ではない）。</td></tr><tr><td>旧デッキ ID</td><td>文字列一致（単純等価）。</td></tr><tr><td>店舗</td><td>イベント詳細経由でイベントが店舗マスタと結合され、その店舗が選択値と一致する行だけを残す。イベント詳細が無いデッキはこの条件では基本的に絞り込まれない。</td></tr><tr><td>登録管理者</td><td><code>dtb_deck.member_id</code> が選択された管理者アカウント ID と一致する行だけを残す。</td></tr></tbody></table></div>
-<p>本機能では業務計算（税・ポイント等）は行わない。</p>
-<h3 id="入力項目">入力項目</h3>
-<div class="table-wrap"><table><thead><tr><th>項目名</th><th>必須／任意</th><th>最大長</th><th>初期値</th><th>保存先・扱い</th></tr></thead><tbody><tr><td>デッキ ID</td><td>任意</td><td>文字列 50（設定 <code>stext_len</code>。環境で上書きされうる）</td><td>空</td><td>フォームキー <code>deck_id</code>。数字・カンマ・スペースのみ許容する正規表現。分割後に数値だけ IN。保存しない。</td></tr><tr><td>旧デッキ ID</td><td>任意</td><td>フォーム上限なし（長さ制約なし）</td><td>空</td><td>フォームキー <code>old_deck_id</code>。一致時のみ絞り込み。保存しない。</td></tr><tr><td>フォーマット</td><td>任意</td><td>—（複数選択）</td><td>未選択</td><td>フォームキー <code>formats</code>。空でなければ IN。保存しない。</td></tr><tr><td>色</td><td>任意</td><td>—（チェック複数）</td><td>すべてオフ</td><td>フォームキー <code>color</code>。アーキタイプとの結合で絞り込み。保存しない。</td></tr><tr><td>アーキタイプ</td><td>任意</td><td>—（複数選択）</td><td>未選択</td><td>フォームキー <code>archetypes</code>。保存しない。</td></tr><tr><td>表示／非表示</td><td>任意</td><td>—（マスタ値のチェック複数）</td><td>すべてオフ</td><td>フォームキー <code>disp</code>。保存しない。</td></tr><tr><td>プライベート</td><td>任意</td><td>—（はい／いいえのラジオ複数選択可能な見た目）</td><td>未選択</td><td>フォームキー <code>private</code>。選択が 1 つのときのみ <code>dtb_deck.private_flg</code> で絞り込み。保存しない。</td></tr><tr><td>イベント日（開始）</td><td>任意</td><td>日付 1 件（<code>yyyy-MM-dd</code> ウィジェット）</td><td>現在から <code>-3 month</code>（設定 <code>HareruyaEc.const.search_form.default_from_term</code>）</td><td>フォームキー <code>event_date_from</code>。時刻はクエリ側で 00:00:00 に丸める。保存しない。</td></tr><tr><td>イベント日（終了）</td><td>任意</td><td>同上</td><td>空</td><td>フォームキー <code>event_date_to</code>。23:59:59 に丸める。保存しない。</td></tr><tr><td>大会名</td><td>任意</td><td>文字列 50（<code>stext_len</code>）</td><td>空</td><td>フォームキー <code>event_name</code>。日本語大会名・英語大会名の両列へトークンごとの部分一致 OR、トークン間 AND。保存しない。</td></tr><tr><td>順位（下限／上限）</td><td>任意</td><td>Symfony integer（画面 attr は最小 1）</td><td>空</td><td>フォームキー <code>ranking_from</code>／<code>ranking_to</code>。保存しない。</td></tr><tr><td>戦績</td><td>任意</td><td>文字列 50（<code>stext_len</code>）</td><td>空</td><td>フォームキー <code>result</code>。保存しない。</td></tr><tr><td>勝ち数（下限／上限）</td><td>任意</td><td>Symfony integer（画面 attr は最小 0）</td><td>空</td><td>フォームキー <code>win_count_from</code>／<code>win_count_to</code>。保存しない。</td></tr><tr><td>負け数（下限／上限）</td><td>任意</td><td>同上</td><td>空</td><td>フォームキー <code>loss_count_from</code>／<code>loss_count_to</code>。保存しない。</td></tr><tr><td>引き分け数（下限／上限）</td><td>任意</td><td>同上</td><td>空</td><td>フォームキー <code>draw_count_from</code>／<code>draw_count_to</code>。保存しない。</td></tr><tr><td>デッキ名</td><td>任意</td><td>文字列 50（<code>stext_len</code>）</td><td>空</td><td>フォームキー <code>deck_name</code>。保存しない。</td></tr><tr><td>DCI 番号</td><td>任意</td><td>文字列 50（<code>stext_len</code>）、かつ数字のみ</td><td>空</td><td>フォームキー <code>dci_no</code>。保存しない。</td></tr><tr><td>プレイヤー名</td><td>任意</td><td>文字列 50（<code>stext_len</code>）</td><td>空</td><td>フォームキー <code>player_name</code>。保存しない。</td></tr><tr><td>カード</td><td>任意</td><td>文字列 200（設定 <code>mtext_len</code>）</td><td>空</td><td>フォームキー <code>card</code>。カードマスタ英日名との完全一致でデッキを結合絞り込み。入力補助用 data-list URL を持つ。保存しない。</td></tr><tr><td>デッキタグ</td><td>任意</td><td>—（複数選択）</td><td>未選択</td><td>フォームキー <code>deck_tags</code>。AND 条件。保存しない。</td></tr><tr><td>イベント ID</td><td>任意</td><td>文字列 50（<code>stext_len</code>）、数字・カンマ・スペース</td><td>空</td><td>フォームキー <code>event_id</code>。イベント詳細側のイベント ID で IN。保存しない。</td></tr><tr><td>店舗</td><td>任意</td><td>—（単一選択）</td><td>未選択</td><td>フォームキー <code>shop</code>。保存しない。</td></tr><tr><td>登録管理者</td><td>任意</td><td>—（単一選択）</td><td>未選択</td><td>フォームキー <code>member</code>。保存しない。</td></tr></tbody></table></div>
-<p>フォーム種別にはフォームキー <code>latest</code>（ラベルは翻訳キー <code>form.deck.latest.*</code>）も定義されているが、一覧テンプレートでは出力しておらず、レポジトリの検索処理でも参照しない。したがって画面からは通常操作できず、クエリにも効かない。</p>
-<p>検索フォームは CSRF 保護を無効にしている（プラグインのフォーム種別の既定）。</p>
-<h3 id="エッジケース">エッジケース</h3>
-<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>ソートキーが不正</td><td><code>admin.error.sort</code> を表示し、<code>admin_deck_list</code> と同様に検索条件・ページ関連セッションを削除したうえで一覧初期画面へ戻る（ソート・並び順のセッションキーは削除しない）。</td></tr><tr><td>セッションに検索条件がなく GET のみ</td><td>一覧初期表示へフォールバックする。</td></tr><tr><td>ページ番号がルート制約に合わない</td><td>ルートにマッチしないため到達しない（別経路の 404 に依存）。</td></tr><tr><td>プライベートを複数選択</td><td>絞り込みを付けない。</td></tr><tr><td>未来開始のイベントにのみ紐づくデッキ</td><td>グローバル結合・WHERE により結果に含まれない。</td></tr><tr><td>表示件数パラメータがマスタ外</td><td>セッションを更新せず、直前の表示件数を使う。</td></tr></tbody></table></div>
-<hr>
-<h2 id="並び替え">並び替え</h2>
-<p>ソートキーはレポジトリの連想配列で定義され、Twig では翻訳キー <code>admin.btn.deck.{キー}</code> と <code>admin.btn.ASC</code>／<code>admin.btn.DESC</code> で表示する。</p>
-<div class="table-wrap"><table><thead><tr><th>キー</th><th>並び替代の列（Doctrine のプロパティ名ベース）</th></tr></thead><tbody><tr><td>default</td><td><code>deckId</code></td></tr><tr><td>ranking</td><td><code>ranking</code></td></tr><tr><td>winCount</td><td><code>winCount</code></td></tr><tr><td>lossCount</td><td><code>lossCount</code></td></tr><tr><td>drawCount</td><td><code>drawCount</code></td></tr><tr><td>eventDate</td><td><code>eventDate</code></td></tr><tr><td>eventNameJp</td><td><code>eventNameJp</code></td></tr><tr><td>eventNameEn</td><td><code>eventNameEn</code></td></tr><tr><td>deckName</td><td><code>deckName</code></td></tr><tr><td>dciNo</td><td><code>dciNo</code></td></tr><tr><td>playerName</td><td><code>playerName</code></td></tr></tbody></table></div>
-<p>実装ではキーに対応する文字列をカンマ区切りで持てる設計になっているが、現状はいずれも単一列である。</p>
-<hr>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>一覧と詳細</td><td>一覧は検索時点の DB 状態を読む。詳細画面で更新後、一覧へ戻ればセッションが残っていれば古い条件のまま再検索されうる。</td></tr><tr><td>大会開始時刻</td><td>「開始が未来のイベントに紐づくデッキは一覧に出ない」ため、一覧と「イベント詳細をそのまま見た期待」とはずれる場合がある。</td></tr><tr><td>件数と一覧</td><td>件数取得と一覧クエリは同一ビルダ経路を踏む設計であり、通常は件数とページ内容が対応する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="API-バッチ結果">API/バッチ結果</h2>
-<p>本機能では API 呼び出し・バッチ実行を扱わない。</p>
-<hr>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="初期表示">初期表示</h3>
+<p>一覧の初期表示では、保持していた検索条件・ページ番号・表示件数を破棄し、空の検索条件・空の一覧・ページ番号 1・既定の表示件数で表示する。ソートキーと並び順は破棄しない。</p>
+<p>イベント日の開始側には、現在日時から 3 か月前へシフトした日付を初期値として入れる。</p>
+<h3 id="検索条件">検索条件</h3>
+<p>検索条件は保持するが、デッキのデータは更新しない。</p>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>検索条件</th></tr></thead><tbody><tr><td>デッキ名・大会名・戦績・DCI・プレイヤー名</td><td>半角空白・全角空白・カンマで語に分割し、語ごとに対象項目のいずれかへ部分一致。語どうしは AND、同じ語の中の複数項目は OR</td></tr><tr><td>デッキID・イベントID</td><td>同様に分割し、数値だけを取り出して一致するものに限る。数値でない語は条件にしない</td></tr><tr><td>フォーマット・アーキタイプ・表示マスタ・色</td><td>選択したいずれかに一致。色はアーキタイプ経由で色マスタと突き合わせる</td></tr><tr><td>プライベート</td><td>選択がちょうど 1 件のときだけ、その真偽で一致させる。未選択または両方選択のときは条件にしない</td></tr><tr><td>イベント日</td><td>開始のみのときはその日の 0 時以上、終了のみのときはその日の 23 時 59 分 59 秒以下、両方あるときはその範囲</td></tr><tr><td>順位・勝敗引き分け</td><td>開始側に整数があるときは下限、終了側に整数があるときは上限を付ける</td></tr><tr><td>デッキタグ</td><td>選択した各タグとの関連がすべてあるデッキに限る</td></tr><tr><td>カード名</td><td>デッキに含まれるカードの日本語名または英語名が入力と完全一致するデッキに限る。部分一致では絞らない</td></tr><tr><td>旧デッキID</td><td>完全一致</td></tr><tr><td>店舗</td><td>イベント詳細を経由したイベントの店舗が選択値と一致するデッキに限る。イベント詳細が無いデッキはこの条件では絞られない</td></tr><tr><td>登録管理者</td><td>デッキの登録管理者が選択した管理者アカウントと一致するデッキに限る</td></tr></tbody></table></div>
+<h3 id="常に効く除外">常に効く除外</h3>
+<p>利用者の入力によらず、次の順で対象を絞る。</p>
+<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>イベント詳細の有無と開始日時</td><td>イベント詳細が無いデッキは残す。イベント詳細があるときは開始日時が現在より前のものだけを対象とし、開始が未来のイベントにだけ紐づくデッキは除く</td></tr><tr><td>2</td><td>デッキ種別</td><td>大会用のデッキ種別に一致するデッキだけを残す。ユーザー作成のデッキ種別などは除く</td></tr></tbody></table></div>
+<h3 id="表示件数と並び順">表示件数と並び順</h3>
+<p>表示件数は、保持していた値があるときはそれを使い、無いときは既定の 10 件とする。要求で指定された表示件数は、表示件数マスタの名称と一致するときだけ採用して保持する。</p>
+<p>並び順は要求の指定、無いときは保持していた値、それも無いときは既定値とする。昇順・降順のいずれでもない指定のときは検索を行わず、初期表示と同じ状態へ戻す。このとき検索条件とページ関連の保持値だけを破棄し、ソートキーと並び順の保持値は破棄しない。</p>
+<p>検索条件を受け取れないときは、保持していた検索条件で検索する。保持していた検索条件も無いときは初期表示へ戻す。</p>
+<p>最終ページで件数とページ番号の関係がずれるときは、ページ番号を 1 減らして調整する。</p>
+<h3 id="エラー時の扱い">エラー時の扱い</h3>
+<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>並び順の指定が昇順・降順のいずれでもない</td><td>検索せずエラーを表示し、初期表示と同じ状態へ戻す</td></tr><tr><td>検索条件の検証に失敗した</td><td>検索へ進まず、エラーを付けて同じ画面を再表示する</td></tr></tbody></table></div>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>HTTP クエリ／フォーム POST の検索条件、<code>sort</code>、<code>order</code>、<code>page_no</code>、<code>page_count</code>。</td></tr><tr><td>成功時出力</td><td>HTML（検索フォーム＋該当時は一覧テーブル・ページネーション）。</td></tr><tr><td>失敗時出力</td><td>不正ソート時はフラッシュエラーと初期画面。レポジトリがクエリビルダ以外を返した場合は HTTP 404（通常の検索経路では発生しない想定）。</td></tr><tr><td>副作用</td><td>セッション更新（検索条件・ページ・ソート・表示件数）。</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<p>検索条件として参照する列の例を示す。型や完全一覧はスキーマを正とする。</p>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td>dtb_deck</td><td>id（主キー。現行 pf-eccube3 は deck_id）, deck_name, format_id, archetype_id, disp_id, private_flg, event_date, ranking, win_count, loss_count, draw_count, result, event_name_jp, event_name_en, player_name, dci_no, member_id, deck_type_id, event_detail_id, old_deck_id ほか</td><td>グローバル除外・結合で利用。中間テーブルの外部キーは現行・移行先とも deck_id</td></tr><tr><td>（イベント詳細・イベント経由）</td><td>開始日時、イベント ID、店舗</td><td>結合・絞り込み</td></tr><tr><td>（デッキカード・カード経由）</td><td>カード名（日英）</td><td>カード条件時</td></tr></tbody></table></div>
-<h3 id="DB操作">DB操作</h3>
-<p>本機能は参照系（検索）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>検索</td><td>dtb_deck</td><td>検索条件に合致するレコードを抽出する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="バリデーション">バリデーション</h2>
-<p>サーバ側は Symfony のフォーム制約により、桁・形式エラー時は検索処理に進まずフォームエラーとなる。検索フォームは CSRF をかけない。</p>
-<hr>
-<h2 id="権限・認可">権限・認可</h2>
-<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>デッキ検索・一覧</th></tr></thead><tbody><tr><td>管理画面にログインし当プラグインルートへ到達できる主体</td><td>画面を利用できる（細分化されたロールは EC-CUBE 本体・サイト設定側の設定を正とする）。</td></tr><tr><td>未ログイン</td><td>管理画面共通のログインへ誘導される（本文では細部を確定しない）。</td></tr></tbody></table></div>
-<hr>
-<h2 id="画面遷移">画面遷移</h2>
-<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>行リンク／編集メニュー</td><td>デッキ編集（GET <code>/{admin_route}/deck/{id}</code>）</td></tr><tr><td>サブタイトルの新規</td><td>デッキ新規（GET <code>/{admin_route}/deck/new</code>）</td></tr><tr><td>サブタイトルの CSV 取込</td><td>CSV 取込画面（別ルート）</td></tr><tr><td>CSV 出力・旧 CSV・一括削除・一括編集実行</td><td>各 POST ルート（詳細は別範囲）</td></tr></tbody></table></div>
-<h3 id="遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</h3>
-<div class="table-wrap"><table><thead><tr><th>起点</th><th>遷移前の処理</th><th>遷移後の初期状態</th></tr></thead><tbody><tr><td>一覧から別画面へ（検索結果を維持して戻る場合）</td><td>セッションに検索条件・ページ番号等が残る</td><td><code>m15-01_admin_deck_deck_search</code> の GET で復元される</td></tr><tr><td>削除完了後のリダイレクト（実装）</td><td>セッション <code>admin.deck.search.page_no</code> があればそのページへ、なければ <code>admin_deck_list</code></td><td>ページ番号は削除結果に応じてトレイト側で減算されうる</td></tr></tbody></table></div>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>並び順パラメータ不正</td><td><code>admin.error.sort</code> をフラッシュし、<code>admin_deck_list</code> と同じ処理で検索条件・ページ関連セッションのみ削除した画面を返す（ソート・並び順のセッションキーは削除しない）。</td></tr><tr><td>検索フォームのバリデーションエラー</td><td>検索処理へ進まず、フォームエラー付きで同一テンプレートを再描画する。</td></tr></tbody></table></div>
-<hr>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>検索条件、ソートキー、並び順、ページ番号、表示件数</td></tr><tr><td>成功時出力</td><td>検索条件の入力欄と、該当があるときは一覧とページ送りを含む画面</td></tr><tr><td>失敗時出力</td><td>並び順が不正のときはエラー表示と初期画面</td></tr></tbody></table></div>
+<h3 id="入出力-永続化">入出力: 永続化</h3>
+<p>デッキのデータは更新しない。</p>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
 <h2 id="表示メッセージ">表示メッセージ</h2>
-<p>本機能（デッキ検索・一覧）から遷移する一括操作・個別操作・編集/複製・CSV出力で表示されるフラッシュメッセージ、および一覧・編集画面のブラウザダイアログ（<code>confirm</code>/<code>alert</code>）。文言は <code>ec-cube-enterprise</code> 実ソース（<code>DeckController.php</code> / <code>messages.ja.yaml</code> / <code>Deck/index.twig</code> / <code>Deck/edit.twig</code>）に逐語で存在するものだけを記載する。<code>%x%</code> プレースホルダを持つ逐語テンプレートはプレースホルダのまま残し、実行時値へは置換しない。実行時に決まる可変文言で固定逐語文言を一意に特定できない行は本表に収録しない（除外分は <code>message_inventory/unconfirmed_messages.tsv</code> に監査用として退避済み）。</p>
-<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>画面上の文言(英語)</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M15-01-MSG-001</td><td>管理画面上部</td><td>セッションがタイムアウトしました。もう一度やり直してください。</td><td>（英訳なし）</td><td>一括削除の実行時に、操作の有効期限が切れていたとき</td><td>デッキ検索・一覧画面に遷移する</td></tr><tr><td>M15-01-MSG-002</td><td>管理画面上部</td><td>記事に紐付いているデッキがあるため削除できません。</td><td>（英訳なし）</td><td>記事に使用されているデッキを一括削除しようとしたとき</td><td>デッキ検索・一覧画面に遷移する</td></tr><tr><td>M15-01-MSG-003</td><td>管理画面上部</td><td>削除に失敗しました</td><td>（英訳なし）</td><td>一括削除中にエラーが起きたとき</td><td>デッキ検索・一覧画面に遷移する</td></tr><tr><td>M15-01-MSG-004</td><td>管理画面上部</td><td>削除しました</td><td>（英訳なし）</td><td>選択したデッキを一括削除できたとき</td><td>デッキ検索・一覧画面に遷移する</td></tr><tr><td>M15-01-MSG-005</td><td>管理画面上部</td><td>セッションがタイムアウトしました。もう一度やり直してください。</td><td>（英訳なし）</td><td>一括編集の実行時に、操作の有効期限が切れていたとき</td><td>デッキ検索・一覧画面に遷移する</td></tr><tr><td>M15-01-MSG-006</td><td>管理画面上部</td><td>保存に失敗しました</td><td>（英訳なし）</td><td>一括編集の保存中にエラーが起きたとき</td><td>デッキ検索・一覧画面に遷移する</td></tr><tr><td>M15-01-MSG-007</td><td>管理画面上部</td><td>保存しました</td><td>（英訳なし）</td><td>選択したデッキを一括編集で保存できたとき</td><td>デッキ検索・一覧画面に遷移する</td></tr><tr><td>M15-01-MSG-008</td><td>管理画面上部</td><td>%board% の %row% 行目に、異常な値が入力されています</td><td>（英訳なし）</td><td>デッキを新規登録または編集するとき、カードリストに不正な行があるとき</td><td>デッキ編集画面に留まる</td></tr><tr><td>M15-01-MSG-009</td><td>管理画面上部</td><td>メインボードのカードが、現行フォーマットに則さない形で登録されています。 ／ サイドボードのカードが、現行フォーマットに則さない形で登録されています。 ／ 統率のカードが、現行フォーマットに則さない形で登録されています。 ／ %row% 行目の %name% は存在しません ／ %row% 行目の %name% はフォーマットの範囲から外れています ／ %row% 行目の %name% は禁止カードです ／ %row% 行目の %name% は制限カードです ／ %row% 行目の %name% が2枚以上登録されています ／ %row% 行目の %name% が%count%枚を超えて登録されています ／ ボード内のカード枚数が %count% 枚を上回っています ／ ボード内のカード枚数が %count% 枚を下回っています ／ このフォーマットでは統率用カードを使用しません</td><td>（英訳なし）</td><td>デッキを保存したとき、メインボード、サイドボードまたは統率（command）にフォーマット条件を満たさないカードまたは枚数がある場合</td><td>デッキを保存し、編集画面に遷移する</td></tr><tr><td>M15-01-MSG-010</td><td>管理画面上部</td><td>保存しました</td><td>（英訳なし）</td><td>カードリストに問題がない状態で、デッキを新規登録または編集して保存できたとき</td><td>デッキ編集画面に遷移する</td></tr><tr><td>M15-01-MSG-011</td><td>管理画面上部</td><td>保存に失敗しました</td><td>（英訳なし）</td><td>デッキの新規登録または編集の保存中にエラーが起きたとき</td><td>デッキ編集画面に留まる</td></tr><tr><td>M15-01-MSG-012</td><td>管理画面上部</td><td>セッションがタイムアウトしました。もう一度やり直してください。</td><td>（英訳なし）</td><td>CSV出力の実行時に、操作の有効期限が切れていたとき</td><td>デッキ検索・一覧画面に遷移する</td></tr><tr><td>M15-01-MSG-013</td><td>管理画面上部</td><td>CSV出力対象のデッキが選択されていません。</td><td>（英訳なし）</td><td>CSV出力で、出力するデッキを選択していないとき</td><td>デッキ検索・一覧画面に遷移する</td></tr><tr><td>M15-01-MSG-014</td><td>管理画面上部</td><td>CSV出力対象のデッキが選択されていません。</td><td>（英訳なし）</td><td>CSV出力で、選択したデッキが見つからないとき</td><td>デッキ検索・一覧画面に遷移する</td></tr><tr><td>M15-01-MSG-015</td><td>画面中央（確認ダイアログ）</td><td>選択されたデッキを削除しますか？</td><td>（英訳なし）</td><td>デッキを選択して一括削除を押したとき（送信前の確認）</td><td>選択したデッキの削除処理後、一覧画面に遷移する</td></tr><tr><td>M15-01-MSG-016</td><td>画面中央（確認ダイアログ）</td><td>このデッキを削除しますか？</td><td>（英訳なし）</td><td>一覧でデッキの削除を押したとき（送信前の確認）</td><td>デッキの削除に成功すると一覧画面に遷移し、失敗すると編集画面に遷移する</td></tr><tr><td>M15-05-MSG-001</td><td>画面中央(ダイアログ)</td><td>アーキタイプを選択してください。</td><td>（英訳なし）</td><td>アーキタイプを選択せずにデッキタグを設定しようとしたとき</td><td>デッキ編集画面に留まる</td></tr><tr><td>M15-05-MSG-002</td><td>画面中央(ダイアログ)</td><td>選択されたアーキタイプにデッキタグが設定されていません。</td><td>（英訳なし）</td><td>アーキタイプに設定できるデッキタグがないとき</td><td>デッキ編集画面に留まる</td></tr><tr><td>M15-05-MSG-003</td><td>画面中央(ダイアログ)</td><td>このデッキを削除しますか？</td><td>（英訳なし）</td><td>デッキの削除を実行しようとしたとき（送信前確認）</td><td>OKで削除処理を実行し、キャンセルでデッキ編集画面に留まる</td></tr></tbody></table></div>
-<hr>
-<h2 id="試行制限">試行制限</h2>
-<p>本機能では試行制限を扱わない。</p>
-<hr>
-<h2 id="ログ・監査">ログ・監査</h2>
-<p>本機能固有のアプリケーションログ規約はコードからは限定できない。一覧・検索そのものは標準のアクセスログに残りうる。</p>
-<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
-<ul><li>パスワード</li><li>なりすまし対策トークン</li><li>Cookie 値</li><li>セッション ID の完全値</li><li>Remember Me トークンの原値</li></ul>
-<hr>
-<h2 id="セッション">セッション</h2>
-<h3 id="本機能におけるセッション">本機能におけるセッション</h3>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>検索一覧を開く GET <code>admin_deck_list</code></td><td><code>admin.deck.search</code>、<code>admin.deck.search.page_no</code>、<code>admin.deck.search.page_count</code> を削除する。<code>admin.deck.sort</code> と <code>admin.deck.order</code> は削除しない。</td></tr><tr><td>検索実行後</td><td><code>admin.deck.search.page_no</code>、<code>admin.deck.search</code>、<code>admin.deck.sort</code>、<code>admin.deck.order</code>、<code>admin.deck.search.page_count</code> を保存する。</td></tr></tbody></table></div>
-<h3 id="セッションへ保存しない情報">セッションへ保存しない情報</h3>
-<p>パスワードやクレジットカード番号など、検索フォームに無い項目は保存しない。</p>
-<hr>
-<h2 id="Cookie">Cookie</h2>
-<p>本機能単体ではセッション Cookie 以外の新規 Cookie を設定しない。セッションの詳細は管理画面共通仕様を正とする。</p>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<p>検索・一覧表示のみでは楽観／悲観ロックを持たない。更新系は別ルートのトランザクション境界を正とする。</p>
-<hr>
-<h2 id="調査補助-ソース位置">調査補助（ソース位置）</h2>
-<p>grep やコード検索の手がかりとして、<code>DeckServiceProvider</code>、<code>SearchControllerTrait</code>、<code>SearchDeckType</code>、<code>DtbDeckRepository::getQueryBuilderBySearchData</code>、<code>Resource/template/admin/Deck/deck.twig</code>、<code>Resource/template/admin/assets/js/deck-search.js</code> を参照するとよい。</p>
-<h3 id="HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</h3>
-<ul><li><code>admin_deck_list</code> … <code>GET</code> … <code>/{admin_route}/deck</code>（検索フォームの初期表示。セッションキー <code>admin.deck.search</code>・<code>admin.deck.search.page_no</code>・<code>admin.deck.search.page_count</code> を削除する。<code>admin.deck.sort</code> と <code>admin.deck.order</code> は削除しない。一覧結果は空のまま（件数未定義）。）</li><li><code>m15-01_admin_deck_deck_search</code> … <code>GET, POST</code> … <code>/{admin_route}/deck/search/{page_no}</code>（<code>page_no</code> は正規表現 <code>^[1-9][0-9]*$</code>（1 以上の整数）。検索実行後の一覧、ソート変更、ページ送り、表示件数変更、GET によるセッション復元。）</li></ul>
+<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M15-01-MSG-001</td><td>管理画面上部</td><td>セッションがタイムアウトしました。もう一度やり直してください。</td><td>一括削除の実行時に、操作の有効期限が切れていたとき</td><td>デッキ検索・一覧画面に遷移する</td></tr><tr><td>M15-01-MSG-002</td><td>管理画面上部</td><td>記事に紐付いているデッキがあるため削除できません。</td><td>記事に使用されているデッキを一括削除しようとしたとき</td><td>デッキ検索・一覧画面に遷移する</td></tr><tr><td>M15-01-MSG-003</td><td>管理画面上部</td><td>削除に失敗しました</td><td>一括削除中にエラーが起きたとき</td><td>デッキ検索・一覧画面に遷移する</td></tr><tr><td>M15-01-MSG-004</td><td>管理画面上部</td><td>削除しました</td><td>選択したデッキを一括削除できたとき</td><td>デッキ検索・一覧画面に遷移する</td></tr><tr><td>M15-01-MSG-005</td><td>管理画面上部</td><td>セッションがタイムアウトしました。もう一度やり直してください。</td><td>一括編集の実行時に、操作の有効期限が切れていたとき</td><td>デッキ検索・一覧画面に遷移する</td></tr><tr><td>M15-01-MSG-006</td><td>管理画面上部</td><td>保存に失敗しました</td><td>一括編集の保存中にエラーが起きたとき</td><td>デッキ検索・一覧画面に遷移する</td></tr><tr><td>M15-01-MSG-007</td><td>管理画面上部</td><td>保存しました</td><td>選択したデッキを一括編集で保存できたとき</td><td>デッキ検索・一覧画面に遷移する</td></tr><tr><td>M15-01-MSG-008</td><td>管理画面上部</td><td>%board% の %row% 行目に、異常な値が入力されています</td><td>デッキを新規登録または編集するとき、カードリストに不正な行があるとき</td><td>デッキ編集画面に留まる</td></tr><tr><td>M15-01-MSG-009</td><td>管理画面上部</td><td>メインボードのカードが、現行フォーマットに則さない形で登録されています。 ／ サイドボードのカードが、現行フォーマットに則さない形で登録されています。 ／ 統率のカードが、現行フォーマットに則さない形で登録されています。 ／ %row% 行目の %name% は存在しません ／ %row% 行目の %name% はフォーマットの範囲から外れています ／ %row% 行目の %name% は禁止カードです ／ %row% 行目の %name% は制限カードです ／ %row% 行目の %name% が2枚以上登録されています ／ %row% 行目の %name% が%count%枚を超えて登録されています ／ ボード内のカード枚数が %count% 枚を上回っています ／ ボード内のカード枚数が %count% 枚を下回っています ／ このフォーマットでは統率用カードを使用しません</td><td>デッキを保存したとき、メインボード、サイドボードまたは統率（command）にフォーマット条件を満たさないカードまたは枚数がある場合</td><td>デッキを保存し、編集画面に遷移する</td></tr><tr><td>M15-01-MSG-010</td><td>管理画面上部</td><td>保存しました</td><td>カードリストに問題がない状態で、デッキを新規登録または編集して保存できたとき</td><td>デッキ編集画面に遷移する</td></tr><tr><td>M15-01-MSG-011</td><td>管理画面上部</td><td>保存に失敗しました</td><td>デッキの新規登録または編集の保存中にエラーが起きたとき</td><td>デッキ編集画面に留まる</td></tr><tr><td>M15-01-MSG-012</td><td>管理画面上部</td><td>セッションがタイムアウトしました。もう一度やり直してください。</td><td>CSV出力の実行時に、操作の有効期限が切れていたとき</td><td>デッキ検索・一覧画面に遷移する</td></tr><tr><td>M15-01-MSG-013</td><td>管理画面上部</td><td>CSV出力対象のデッキが選択されていません。</td><td>CSV出力で、出力するデッキを選択していないとき</td><td>デッキ検索・一覧画面に遷移する</td></tr><tr><td>M15-01-MSG-014</td><td>管理画面上部</td><td>CSV出力対象のデッキが選択されていません。</td><td>CSV出力で、選択したデッキが見つからないとき</td><td>デッキ検索・一覧画面に遷移する</td></tr><tr><td>M15-01-MSG-015</td><td>画面中央（確認ダイアログ）</td><td>選択されたデッキを削除しますか？</td><td>デッキを選択して一括削除を押したとき（送信前の確認）</td><td>選択したデッキの削除処理後、一覧画面に遷移する</td></tr><tr><td>M15-01-MSG-016</td><td>画面中央（確認ダイアログ）</td><td>このデッキを削除しますか？</td><td>一覧でデッキの削除を押したとき（送信前の確認）</td><td>デッキの削除に成功すると一覧画面に遷移し、失敗すると編集画面に遷移する</td></tr><tr><td>M15-05-MSG-001</td><td>画面中央(ダイアログ)</td><td>アーキタイプを選択してください。</td><td>アーキタイプを選択せずにデッキタグを設定しようとしたとき</td><td>デッキ編集画面に留まる</td></tr><tr><td>M15-05-MSG-002</td><td>画面中央(ダイアログ)</td><td>選択されたアーキタイプにデッキタグが設定されていません。</td><td>アーキタイプに設定できるデッキタグがないとき</td><td>デッキ編集画面に留まる</td></tr><tr><td>M15-05-MSG-003</td><td>画面中央(ダイアログ)</td><td>このデッキを削除しますか？</td><td>デッキの削除を実行しようとしたとき（送信前確認）</td><td>OKで削除処理を実行し、キャンセルでデッキ編集画面に留まる</td></tr></tbody></table></div>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

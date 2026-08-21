@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,34 +272,16 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#本書で扱うこと">本書で扱うこと</a>
-<a class="lv2" href="#本書で扱わないこと">本書で扱わないこと</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv2" href="#用語">用語</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#フロント挙動">フロント挙動</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#予約済み大会一覧を表示する-GET-locale-mypage-events">予約済み大会一覧を表示する（GET `/{_locale}/mypage/events`）</a>
-<a class="lv2" href="#集計条件">集計条件</a>
-<a class="lv2" href="#表示メッセージ">表示メッセージ</a>
-<a class="lv3" href="#常時表示-正常・静的">常時表示（正常・静的）</a>
-<a class="lv3" href="#メッセージID対応-自動棚卸">メッセージID対応（自動棚卸）</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
-<a class="lv3" href="#エッジケース">エッジケース</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#一覧の対象">一覧の対象</a>
+<a class="lv3" href="#並び順">並び順</a>
+<a class="lv3" href="#一覧の内容">一覧の内容</a>
+<a class="lv3" href="#ステータスの出し分け">ステータスの出し分け</a>
+<a class="lv3" href="#エラー時の扱い">エラー時の扱い</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#バリデーション">バリデーション</a>
-<a class="lv2" href="#権限・認可">権限・認可</a>
-<a class="lv2" href="#画面遷移">画面遷移</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#ログ・監査">ログ・監査</a>
-<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
-<a class="lv2" href="#セッション">セッション</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a></nav>
+<a class="lv3" href="#入出力-永続化">入出力: 永続化</a>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -297,97 +289,27 @@ footer {
         <h1>会員 — 予約済み大会一覧</h1>
       </header>
       
-      <h2 id="概要">概要</h2>
-<p>ログイン済み会員が、自分が申し込んだ大会（イベント）の一覧を閲覧し、各大会の詳細へ遷移できる機能である。マイページ系の「予約済み大会一覧」から入り、会員に紐づく選手情報を起点に、キャンセル以外の申込を開催日時の新しい順で表示する。各行にイベント名、フォーマット、開催日時、ステータス（決済中・イベント終了・申込状態）を並べ、イベント名からイベント詳細へ遷移する。一覧からデッキ登録一覧・マイページへも遷移できる。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインのイベント申込履歴処理、テンプレート（<code>Mypage/event_history.twig</code>）、イベント申込リポジトリの取得処理を正とする。</p>
-<p>本機能のカスタマイズ区分はカスタマイズである。挙動の参照リポはpf-eccube3とし、DB関連の記述（テーブル名・列名・永続化先・副作用のDB更新）は ec-cube-enterprise を正とする。現行と移行先のスキーマ差は「リニューアル移行時の扱い」に集約する。</p>
-<p>対象はブラウザ経由のフロント（会員マイページ）に限定する。フロントのルートは<code>/{_locale}</code>配下にマウントされ、URLは<code>/{_locale}/mypage/events</code>の形をとる。</p>
-<p>本文ではフレームワークのコントローラ型名やメソッド名を主説明としない。本文ではルートbind名の網羅は主説明とせず、「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。コード探索でbind名が必要なときだけ「調査補助」へ書く。</p>
-<hr>
-<h2 id="本書で扱うこと">本書で扱うこと</h2>
-<ul><li>予約済み大会一覧の入口と表示</li><li>一覧の抽出条件（会員に紐づく選手情報の申込、キャンセル除外）・並び順</li><li>各行のフォーマット・開催日時・ステータス表示</li><li>イベント詳細・デッキ登録一覧・マイページへの遷移</li><li>未ログイン・申込0件の扱い</li></ul>
-<hr>
-<h2 id="本書で扱わないこと">本書で扱わないこと</h2>
-<p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
-<ul><li>イベント詳細・イベント申込・決済そのものの仕様（イベント機能を正とする）</li><li>大会デッキ登録編集（大会デッキ登録編集機能を正とする）</li><li>予約済みチーム大会一覧（チーム席順変更系の別画面を正とする）</li></ul>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<p>現行（pf-eccube3）の挙動を正としつつ、DB関連は移行先（ec-cube-enterprise）を正とする。確認できた差は次のとおり。</p>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>イベント申込テーブル</td><td>イベント申込（HareruyaEc）</td><td>申込（<code>dtb_event_entry</code>）。申込状態は申込状況マスタ参照（<code>entry_status_id</code> → <code>mtb_entry_status</code>）。</td></tr><tr><td>選手情報と申込参加者</td><td>選手情報の識別子で申込を抽出</td><td>申込参加者（<code>dtb_entry_player</code>）が選手情報（<code>dtb_player</code>）と申込（<code>dtb_event_entry</code>）を関連づける。抽出は選手情報（<code>dtb_player</code>）を起点とする。</td></tr><tr><td>イベント詳細・イベント</td><td>イベント詳細・イベント</td><td>イベント詳細（<code>dtb_event_detail</code>、開催日時 <code>start_date</code>・終了予定 <code>end_date</code>）、イベント（<code>dtb_event</code>、<code>name_jp</code>／<code>name_en</code>）。</td></tr><tr><td>論理削除の方式</td><td>削除フラグ（<code>del_flg</code> 等）による論理削除</td><td>イベント系・選手系は削除日時（<code>deleted_at</code>）による論理削除とする。キャンセル除外は申込状態（<code>mtb_entry_status</code>）で判定する点は移行後も同じ。</td></tr><tr><td>申込状態の名称表示</td><td>申込状態の名称</td><td>申込状況マスタの名称（<code>name</code>）・英語名称（<code>name_en</code>）を言語に応じて表示する。</td></tr></tbody></table></div>
-<p>移行先での具体的なキャンセル判定・並び順実装は ec-cube-enterprise 実装で要確認とし、本書では現行挙動を正とする。</p>
-<hr>
-<h2 id="用語">用語</h2>
-<div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>会員</td><td>フロントにログインしている顧客。</td></tr><tr><td>選手情報</td><td>会員に1対1で紐づく拡張情報。イベント申込は選手情報に紐づく。</td></tr><tr><td>イベント申込</td><td>会員が大会に申し込んだ1件。申込状態とイベント詳細を持つ。</td></tr><tr><td>イベント詳細</td><td>大会の開催回。開催日時・フォーマットを持つ。</td></tr><tr><td>フォーマット</td><td>大会で用いる構築区分。アイコンで表示する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>マイページの「予約済み大会一覧」ブロック</td><td><code>GET /{_locale}/mypage/events</code></td><td>会員自身の申込（キャンセル除外）を開催日時の新しい順に表示する。</td></tr><tr><td>一覧のイベント名リンク</td><td><code>GET /{_locale}/events/{id}</code></td><td>当該イベント詳細へ遷移する（イベント機能を正とする）。</td></tr><tr><td>「デッキ登録」ボタン</td><td><code>GET /{_locale}/mypage/deckentry_list</code></td><td>デッキ登録可能なイベント一覧へ遷移する。</td></tr><tr><td>「マイページ」ボタン</td><td><code>GET /{_locale}/mypage</code></td><td>マイページトップへ戻る。</td></tr></tbody></table></div>
-<p>フロントのページであり管理画面プレフィックスは付かない。<code>/{_locale}/mypage</code>配下は会員ログインを要する。本一覧はページングを持たず、申込全件を一覧表示する。</p>
-<hr>
-<h2 id="フロント挙動">フロント挙動</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>見出し「予約済み大会一覧」、一覧見出し（イベント名・フォーマット・開催日時・ステータス）、各申込行（フォーマットアイコン・イベント名リンク・開催日時・ステータス）、申込が無い場合の案内、「デッキ登録」ボタン、「マイページ」ボタン。</td></tr><tr><td>JS挙動</td><td>本機能ではJSによる非同期取得や動的な表示切替を扱わない。</td></tr><tr><td>CSS・レイアウト</td><td>フォーマットはコードに対応するアイコンで表示する。決済中はエラー系の見た目、申込完了は完了系の見た目で示す。PC・スマホでフォーマット表示位置を切り替える。</td></tr><tr><td>モーダル・ポップアップ</td><td>本画面専用のモーダルは無い。</td></tr></tbody></table></div>
-<p>ステータスは申込状態に応じて表示を切り替える。申込状態が決済中（識別子1）のときは「決済中」と決済案内のヘルプリンクを表示する。それ以外はイベントが終了済みなら「イベント終了」、未終了なら申込状態の名称を表示する。</p>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="予約済み大会一覧を表示する-GET-locale-mypage-events">予約済み大会一覧を表示する（GET <code>/{_locale}/mypage/events</code>）</h3>
-<ol><li>会員ログインを要求し、ログイン会員に紐づく選手情報を特定する。</li><li>当該選手情報の識別子で、キャンセル以外の申込を取得する。</li><li>取得した申込を開催日時の新しい順でテンプレートへ渡して表示する。</li><li>申込が1件も無い場合は「予約済みの大会はありません。」と表示する。</li></ol>
-<hr>
-<h2 id="集計条件">集計条件</h2>
-<div class="table-wrap"><table><thead><tr><th>指標</th><th>集計の要点</th></tr></thead><tbody><tr><td>予約済み大会一覧</td><td>ログイン会員に紐づく選手情報の申込を対象とする。申込状態がキャンセルのものは除外する。</td></tr><tr><td>並び順</td><td>申込のイベント詳細の開催日時の降順。</td></tr><tr><td>ステータス判定</td><td>申込状態が決済中（識別子1）なら「決済中」。それ以外でイベントが終了済みなら「イベント終了」、未終了なら申込状態の名称。</td></tr></tbody></table></div>
-<hr>
-<h2 id="表示メッセージ">表示メッセージ</h2>
-<h3 id="常時表示-正常・静的">常時表示（正常・静的）</h3>
-<div class="table-wrap"><table><thead><tr><th>種別</th><th>表示文言（日本語）</th><th>表示文言（英語）</th><th>条件</th></tr></thead><tbody><tr><td>0件案内</td><td>予約済みの大会はありません。</td><td>There are no scheduled events scheduled.</td><td>申込が1件も無いとき</td></tr><tr><td>ステータス（決済中）</td><td>決済中</td><td>Proceeding Payment</td><td>申込状態が決済中（識別子1）のとき</td></tr><tr><td>ステータス（終了）</td><td>イベント終了</td><td>Event Finished</td><td>決済中以外でイベントが終了済みのとき</td></tr><tr><td>ステータス（その他）</td><td>（申込状態の名称）</td><td>（申込状況マスタの英語名称 <code>name_en</code>）</td><td>決済中以外でイベントが未終了のとき</td></tr><tr><td>決済案内（ヘルプ）</td><td>決済が中断されました。お手数ですが、約30分後に再度お申込みいただけますようお願いいたします。</td><td>Your payment procedure has been interrupted or suspended. Please try your registration 30 minutes after.</td><td>決済中のヘルプアイコンのツールチップ</td></tr></tbody></table></div>
-<p>英語文言は<code>Mypage/event_history.en.twig</code>の確認値とする。利用者は言語切替（<code>/en/...</code>）で英語表示へ到達する。</p>
-<p>本機能はフォーム送信に伴うフラッシュ・インラインエラーを生成しない。</p>
-<hr>
-<h3 id="メッセージID対応-自動棚卸">メッセージID対応（自動棚卸）</h3>
-<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>画面上の文言(英語)</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>F06-14-MSG-001</td><td>管理画面上部</td><td>プレイヤーID %player_id% が見つかりません。 ／ admin.event.entry.paying_member_customer_not_registered</td><td>（英訳なし） ／ admin.event.entry.paying_member_customer_not_registered</td><td>申込登録時、指定したプレイヤーIDのプレイヤーが存在しない、またはそのプレイヤーに紐づく支払い会員Customerが存在しないとき</td><td>申込登録画面に留まる</td></tr><tr><td>F06-14-MSG-002</td><td>管理画面上部</td><td>保存に失敗しました</td><td>Failed to save</td><td>大会申込の登録時にエラーが起きたとき</td><td>イベント申込新規画面に留まる</td></tr><tr><td>F06-14-MSG-003</td><td>画面上部</td><td>予約済みの大会はありません。</td><td>You have no reserved tournaments.</td><td>大会予約履歴を表示したとき、予約済みの大会がない場合</td><td>大会予約履歴画面に留まる</td></tr></tbody></table></div>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>一覧の対象</td><td>申込は選手情報に紐づく。常にログイン会員自身の申込のみを対象とする。</td></tr><tr><td>キャンセル除外</td><td>申込状態がキャンセルのものは一覧に含めない。</td></tr><tr><td>並び順</td><td>開催日時の降順（新しい大会が上）。</td></tr><tr><td>ステータス表示</td><td>決済中・イベント終了・申込状態名称を条件に応じて出し分ける。</td></tr><tr><td>フォーマット表示</td><td>イベントの各フォーマットのコードに対応するアイコンを並べて表示する。</td></tr></tbody></table></div>
-<p>本機能では一覧表示に伴う入力フォームを持たないため、<code>### 入力項目</code>の表は持たない。</p>
-<h3 id="エッジケース">エッジケース</h3>
-<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>申込0件</td><td>「予約済みの大会はありません。」を表示する。</td></tr><tr><td>申込状態がキャンセル</td><td>一覧に含めない。</td></tr><tr><td>申込状態が決済中</td><td>「決済中」と決済案内のヘルプリンクを表示する。</td></tr><tr><td>開催日時が過去</td><td>イベントが終了済みなら「イベント終了」と表示する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>一覧と申込</td><td>一覧は選手情報に紐づく申込を表示時点で取得する。</td></tr><tr><td>ステータス</td><td>ステータスは表示時点の申込状態とイベントの終了判定に基づく。</td></tr><tr><td>イベント詳細</td><td>イベント名・開催日時・フォーマットはイベント詳細を参照する。詳細側の仕様はイベント機能を正とする。</td></tr></tbody></table></div>
-<hr>
-<h2 id="API-バッチ結果">API/バッチ結果</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>API</td><td>本機能では一覧表示のための同期取得のみで、非同期APIの呼び出しを扱わない。</td></tr><tr><td>バッチ</td><td>本機能ではバッチを実行しない。</td></tr></tbody></table></div>
-<hr>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="一覧の対象">一覧の対象</h3>
+<p>ログイン会員に紐づく選手情報を起点に、その選手情報の申込を取得する。常にログイン会員自身の申込だけを対象とする。</p>
+<p>申込状態がキャンセルのものは一覧に含めない。</p>
+<h3 id="並び順">並び順</h3>
+<p>開催日時の降順とする。新しい大会が上に並ぶ。</p>
+<h3 id="一覧の内容">一覧の内容</h3>
+<p>見出し「予約済み大会一覧」、一覧見出し（イベント名・フォーマット・開催日時・ステータス）、各申込行（フォーマットアイコン・イベント名リンク・開催日時・ステータス）、「デッキ登録」ボタン、「マイページ」ボタンを表示する。申込が1件も無いときは0件案内を表示する。</p>
+<p>フォーマットはイベントの各フォーマットのコードに対応するアイコンで表示する。PCとスマートフォンでフォーマットの表示位置を切り替える。</p>
+<h3 id="ステータスの出し分け">ステータスの出し分け</h3>
+<div class="table-wrap"><table><thead><tr><th>申込状態</th><th>表示</th></tr></thead><tbody><tr><td>決済中（識別子1）</td><td>「決済中」と決済案内のヘルプリンクを表示する。エラー系の見た目とする</td></tr><tr><td>決済中以外で、イベントが終了済み</td><td>「イベント終了」を表示する</td></tr><tr><td>決済中以外で、イベントが未終了</td><td>申込状態の名称を表示する。申込完了は完了系の見た目とする</td></tr></tbody></table></div>
+<h3 id="エラー時の扱い">エラー時の扱い</h3>
+<p>未ログインのときは会員ログインへ誘導する。会員ログインの機能を正とする。</p>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>なし（ログイン会員の選手情報を起点に取得する）。</td></tr><tr><td>成功時出力</td><td>予約済み大会一覧のHTML表示。</td></tr><tr><td>失敗時出力</td><td>未ログイン時は会員ログインへ誘導する。</td></tr><tr><td>副作用</td><td>本機能はデータを更新しない（参照のみ）。</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<p>機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。</p>
-<p>テーブル・列名は ec-cube-enterprise を正とする。</p>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td>選手情報（<code>dtb_player</code>）</td><td>会員参照・選手識別子（<code>id</code>）</td><td>申込取得の抽出キー。会員から特定する。</td></tr><tr><td>申込参加者（<code>dtb_entry_player</code>）</td><td>選手参照（<code>player_id</code>）・申込参照（<code>event_entry_id</code>）</td><td>選手情報と申込を関連づける。一覧の抽出経路。</td></tr><tr><td>イベント申込（<code>dtb_event_entry</code>）</td><td>申込状態参照（<code>entry_status_id</code>）</td><td>キャンセル除外とステータス表示。申込状況マスタ（<code>mtb_entry_status</code>）を参照する。</td></tr><tr><td>イベント詳細（<code>dtb_event_detail</code>）</td><td>開催日時（<code>start_date</code>）・終了予定（<code>end_date</code>）</td><td>並び順とイベント終了判定。</td></tr><tr><td>イベント（<code>dtb_event</code>）</td><td>名称（<code>name_jp</code>／<code>name_en</code>）・フォーマット参照</td><td>イベント名・フォーマットアイコンの表示。</td></tr></tbody></table></div>
-<h3 id="DB操作">DB操作</h3>
-<p>本機能は参照系（検索）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>検索</td><td>dtb_entry_player / dtb_event / dtb_event_detail / dtb_event_entry / dtb_player / mtb_entry_status</td><td>検索条件に合致するレコードを抽出する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="バリデーション">バリデーション</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>ログイン状態</td><td>一覧は会員ログインを要する。未ログインは会員ログインへ誘導する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="権限・認可">権限・認可</h2>
-<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>予約済み大会一覧</th></tr></thead><tbody><tr><td>未ログイン</td><td>アクセス不可。会員ログインへ誘導する。</td></tr><tr><td>ログイン済み会員</td><td>自分の申込のみ閲覧可能。</td></tr></tbody></table></div>
-<hr>
-<h2 id="画面遷移">画面遷移</h2>
-<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>マイページの「予約済み大会一覧」ブロック</td><td>一覧（<code>GET /{_locale}/mypage/events</code>）</td></tr><tr><td>イベント名リンク</td><td>イベント詳細（<code>GET /{_locale}/events/{id}</code>）</td></tr><tr><td>「デッキ登録」ボタン</td><td>デッキ登録一覧（<code>GET /{_locale}/mypage/deckentry_list</code>）</td></tr><tr><td>「マイページ」ボタン</td><td>マイページトップ（<code>/{_locale}/mypage</code>）</td></tr></tbody></table></div>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>未ログインアクセス</td><td>会員ログインへ誘導する（会員ログイン機能を正とする）。</td></tr></tbody></table></div>
-<p>表示文言は表示メッセージ節を正とする。</p>
-<hr>
-<h2 id="ログ・監査">ログ・監査</h2>
-<p>本機能は一覧表示のみで、固有の監査ログを主目的としない。</p>
-<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
-<ul><li>Cookie値</li><li>セッションIDの完全値</li></ul>
-<hr>
-<h2 id="セッション">セッション</h2>
-<p>本機能は一覧表示のためにセッションへ機微情報を保存しない。ログイン状態の判定にのみ会員の認証情報を用いる。</p>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<p>本機能は参照のみでデータを更新しない。楽観ロック・悲観ロックの対象は持たない。</p>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>入力項目は持たない。ログイン会員の選手情報を起点に取得する。</td></tr><tr><td>成功時出力</td><td>予約済み大会一覧の表示。</td></tr><tr><td>失敗時出力</td><td>未ログインのときは会員ログインへ誘導する。</td></tr></tbody></table></div>
+<h3 id="入出力-永続化">入出力: 永続化</h3>
+<p>一覧表示のみを行い、データを更新しない。</p>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
+<h2 id="表示メッセージ">表示メッセージ</h2>
+<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>F06-14-MSG-001</td><td>管理画面上部</td><td>プレイヤーID %player_id% が見つかりません。 ／ admin.event.entry.paying_member_customer_not_registered</td><td>申込登録時、指定したプレイヤーIDのプレイヤーが存在しない、またはそのプレイヤーに紐づく支払い会員Customerが存在しないとき</td><td>申込登録画面に留まる</td></tr><tr><td>F06-14-MSG-002</td><td>管理画面上部</td><td>保存に失敗しました</td><td>大会申込の登録時にエラーが起きたとき</td><td>イベント申込新規画面に留まる</td></tr><tr><td>F06-14-MSG-003</td><td>画面上部</td><td>予約済みの大会はありません。</td><td>大会予約履歴を表示したとき、予約済みの大会がない場合</td><td>大会予約履歴画面に留まる</td></tr><tr><td>—</td><td>管理画面上部</td><td>Failed to save</td><td>大会申込の登録時にエラーが起きたとき（英語表示）</td><td>イベント申込新規画面に留まる</td></tr><tr><td>—</td><td>画面上部</td><td>You have no reserved tournaments.</td><td>大会予約履歴を表示したとき、予約済みの大会がない場合（英語表示）</td><td>大会予約履歴画面に留まる</td></tr><tr><td>—</td><td>一覧本文</td><td>There are no scheduled events scheduled.</td><td>申込が1件も無いとき（英語表示）</td><td>一覧に留まる</td></tr><tr><td>—</td><td>ステータス列</td><td>決済中</td><td>申込状態が決済中（識別子1）のとき</td><td>一覧に留まる</td></tr><tr><td>—</td><td>ステータス列</td><td>Proceeding Payment</td><td>申込状態が決済中（識別子1）のとき（英語表示）</td><td>一覧に留まる</td></tr><tr><td>—</td><td>ステータス列</td><td>イベント終了</td><td>決済中以外でイベントが終了済みのとき</td><td>一覧に留まる</td></tr><tr><td>—</td><td>ステータス列</td><td>Event Finished</td><td>決済中以外でイベントが終了済みのとき（英語表示）</td><td>一覧に留まる</td></tr><tr><td>—</td><td>ステータス列</td><td>（申込状態の名称）</td><td>決済中以外でイベントが未終了のとき。英語表示では申込状況マスタの英語名称を表示する</td><td>一覧に留まる</td></tr><tr><td>—</td><td>決済中のヘルプアイコンのツールチップ</td><td>決済が中断されました。お手数ですが、約30分後に再度お申込みいただけますようお願いいたします。</td><td>決済中のヘルプアイコンを指したとき</td><td>一覧に留まる</td></tr><tr><td>—</td><td>決済中のヘルプアイコンのツールチップ</td><td>Your payment procedure has been interrupted or suspended. Please try your registration 30 minutes after.</td><td>決済中のヘルプアイコンを指したとき（英語表示）</td><td>一覧に留まる</td></tr></tbody></table></div>
+<p>利用者は言語切替で英語表示へ到達する。本機能はフォーム送信に伴うフラッシュ・インラインエラーを生成しない。</p>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

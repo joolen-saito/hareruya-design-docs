@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,31 +272,15 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#本書で扱うこと">本書で扱うこと</a>
-<a class="lv2" href="#本書で扱わないこと">本書で扱わないこと</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv2" href="#用語">用語</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#フロント挙動">フロント挙動</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#イベントを検索する-POST-admin-route-entry-search-event-html">イベントを検索する（POST `/{admin_route}/entry/search/event/html`）</a>
-<a class="lv3" href="#ページを送る-GET-admin-route-entry-search-event-html-page-no">ページを送る（GET `/{admin_route}/entry/search/event/html/{page_no}`）</a>
-<a class="lv3" href="#イベントIDで検索する-POST-admin-route-entry-search-event-id">イベントIDで検索する（POST `/{admin_route}/entry/search/event/id`）</a>
-<a class="lv2" href="#集計条件">集計条件</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
-<a class="lv3" href="#入力項目">入力項目</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#検索の対象と条件">検索の対象と条件</a>
+<a class="lv3" href="#イベントIDによる取得">イベントIDによる取得</a>
+<a class="lv3" href="#画面への出し方">画面への出し方</a>
+<a class="lv3" href="#エラー時の扱い">エラー時の扱い</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#権限・認可">権限・認可</a>
-<a class="lv2" href="#画面遷移">画面遷移</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#ログ・監査">ログ・監査</a>
-<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a></nav>
+<a class="lv3" href="#入出力-永続化">入出力: 永続化</a>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -294,81 +288,22 @@ footer {
         <h1>イベント管理 — イベント申込登録検索</h1>
       </header>
       
-      <h2 id="概要">概要</h2>
-<p>管理画面で、イベント申込を登録する際に対象イベントを検索する機能である。キーワードや日付でイベントを非同期に検索し、結果を一覧（モーダル内）に表示する。イベントIDによる直接検索にも対応する。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインの管理画面イベント申込検索処理、検索フォーム、テンプレート（<code>Entry/search_event.twig</code>）を正とする。本機能のカスタマイズ区分は現行踏襲であり、挙動の確認はpf-eccube3を参照し、永続化先のテーブル・列名などDB関連の記述はec-cube-enterpriseを正とする。</p>
-<p>対象はブラウザ経由の管理画面に限定する。</p>
-<p>本文ではフレームワークのコントローラ型名やメソッド名を主説明としない。管理画面プレフィックスは環境により変わる（<code>admin_route</code>）。「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。</p>
-<hr>
-<h2 id="本書で扱うこと">本書で扱うこと</h2>
-<ul><li>申込登録時のイベント検索（キーワード・日付）</li><li>イベントIDによる直接検索</li><li>非同期検索とモーダル表示・ページ送り</li></ul>
-<hr>
-<h2 id="本書で扱わないこと">本書で扱わないこと</h2>
-<p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
-<ul><li>イベント申込の登録・編集・一括編集（各機能を正とする）</li><li>イベント・日程の管理（イベント機能を正とする）</li></ul>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<p>本機能は現行（pf-eccube3のHareruyaEcプラグイン）の挙動を踏襲する。DB関連の記述は移行先（ec-cube-enterprise）を正とする。</p>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>検索対象テーブル</td><td>イベント（<code>dtb_event</code>）・イベント日程（<code>dtb_event_detail</code>）</td><td>同一スキーマ。<code>dtb_event</code>・<code>dtb_event_detail</code>が存在する。</td></tr><tr><td>削除方式</td><td>論理削除（<code>deleted_at</code>）</td><td>同一（<code>deleted_at</code>による論理削除）。</td></tr></tbody></table></div>
-<p>本機能は参照のみで業務データを更新しないため、移行時に追加で保証する書き込み挙動は無い。</p>
-<hr>
-<h2 id="用語">用語</h2>
-<div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>イベント申込</td><td>イベントへの参加申込。登録時に対象イベントを検索する。</td></tr><tr><td>直接検索</td><td>イベントIDを指定した検索。</td></tr></tbody></table></div>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>申込登録のイベント検索（キーワード・日付）</td><td><code>POST /{admin_route}/entry/search/event/html</code>（非同期）</td><td>入力条件で検索したイベント一覧をモーダル内に表示する。</td></tr><tr><td>検索結果のページ送り</td><td><code>GET /{admin_route}/entry/search/event/html/{page_no}</code>（非同期）</td><td>指定ページの検索結果を表示する。</td></tr><tr><td>イベントIDによる直接検索</td><td><code>POST /{admin_route}/entry/search/event/id</code>（非同期）</td><td>指定IDのイベントを取得する。</td></tr></tbody></table></div>
-<p>管理画面プレフィックスは環境により変わるためプレースホルダで示す。非同期リクエストでない場合は空の検索結果でモーダル枠のみ表示する。</p>
-<hr>
-<h2 id="フロント挙動">フロント挙動</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>イベント検索の入力（キーワード・期間）、検索結果の一覧、ページ送り。モーダル表示に対応する。</td></tr><tr><td>JS挙動</td><td>非同期で検索し、返却内容で結果一覧を更新する。</td></tr><tr><td>モーダル・ポップアップ</td><td>検索結果をモーダルで表示する（<code>modal</code>指定）。</td></tr></tbody></table></div>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="イベントを検索する-POST-admin-route-entry-search-event-html">イベントを検索する（POST <code>/{admin_route}/entry/search/event/html</code>）</h3>
-<ol><li>管理画面の認証・権限を通過する。</li><li>非同期リクエストでない場合は、空の検索結果でモーダル枠のみ表示する。</li><li>検索フォームを生成する。</li><li>検索（POST）では1ページ目とし、キーワード・開始日等の検索条件を組み立てて検索する。</li><li>検索結果を一覧（ページ送り付き）で返す。</li></ol>
-<h3 id="ページを送る-GET-admin-route-entry-search-event-html-page-no">ページを送る（GET <code>/{admin_route}/entry/search/event/html/{page_no}</code>）</h3>
-<ol><li>管理画面の認証・権限を通過する。</li><li>指定ページの検索結果を返す。</li></ol>
-<h3 id="イベントIDで検索する-POST-admin-route-entry-search-event-id">イベントIDで検索する（POST <code>/{admin_route}/entry/search/event/id</code>）</h3>
-<ol><li>管理画面の認証・権限を通過する。</li><li>指定IDのイベントを取得して返す。</li></ol>
-<hr>
-<h2 id="集計条件">集計条件</h2>
-<div class="table-wrap"><table><thead><tr><th>指標</th><th>集計の要点</th></tr></thead><tbody><tr><td>検索対象</td><td>キーワード・開始日等の条件に合致するイベント。</td></tr><tr><td>ページング</td><td>既定の表示件数でページ送りする。</td></tr></tbody></table></div>
-<hr>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>検索条件</td><td>キーワード（複数語）・開始日等で検索する。</td></tr><tr><td>直接検索</td><td>イベントIDで1件を取得する。</td></tr></tbody></table></div>
-<h3 id="入力項目">入力項目</h3>
-<div class="table-wrap"><table><thead><tr><th>項目名</th><th>必須／任意</th><th>最大長</th><th>初期値</th><th>保存先・扱い</th></tr></thead><tbody><tr><td>検索語</td><td>任意</td><td>実装確認値</td><td>空</td><td>イベント検索のキーワード（複数語）。フォームキーは検索語。</td></tr><tr><td>開始日</td><td>任意</td><td>—</td><td>空</td><td>検索の開始日条件。</td></tr></tbody></table></div>
-<hr>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>参照時点</td><td>画面表示またはCSV・帳票出力の実行時点で検索条件に一致するデータを参照する。本機能は参照・出力を主とし、業務データを更新しない。</td></tr><tr><td>一覧・出力の整合</td><td>一覧、CSV、帳票に出る値はそれぞれの実行時点のDB値を基準にする。画面表示後に他処理で更新された値は、再検索または再出力するまで反映しない。</td></tr><tr><td>同時更新</td><td>出力中に他処理が対象データを更新した場合のスナップショット保証は持たない。行ロックを取得せず、読み取り時点の値を出力する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="API-バッチ結果">API/バッチ結果</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>API</td><td>イベント検索は非同期リクエストで、結果をHTML断片またはデータで返す。</td></tr><tr><td>バッチ</td><td>本機能ではバッチを実行しない。</td></tr></tbody></table></div>
-<hr>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="検索の対象と条件">検索の対象と条件</h3>
+<p>イベント申込の登録で紐づけるイベントを検索する。条件はキーワードと開始日などで、キーワードは複数の語を指定できる。検索したときは常に1ページ目から表示し、結果はページ送り付きの一覧として返す。ページを指定したときは、そのページの検索結果を返す。</p>
+<h3 id="イベントIDによる取得">イベントIDによる取得</h3>
+<p>イベントIDを直接指定したときは、そのIDのイベントを1件取得して返す。</p>
+<h3 id="画面への出し方">画面への出し方</h3>
+<p>検索結果は重ねて表示する枠の中に一覧として表示する。非同期の要求でないときは検索を行わず、空の結果として枠だけを表示する。</p>
+<h3 id="エラー時の扱い">エラー時の扱い</h3>
+<div class="table-wrap"><table><thead><tr><th>事象</th><th>扱い</th></tr></thead><tbody><tr><td>非同期でない要求</td><td>検索を行わず、空の結果で枠だけを表示する</td></tr></tbody></table></div>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>検索語・開始日等、ページ番号、イベントID。</td></tr><tr><td>成功時出力</td><td>検索結果の一覧表示（モーダル）。</td></tr><tr><td>失敗時出力</td><td>非同期でない場合は空の結果でモーダル枠のみ表示。</td></tr><tr><td>副作用</td><td>無し（参照のみ）。</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<p>機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。</p>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>dtb_event</code>（イベント）</td><td>名称等</td><td>検索条件の照合に使用する。</td></tr><tr><td><code>dtb_event_detail</code>（イベント日程）</td><td>開催日等</td><td>開始日条件の照合に使用する。</td></tr></tbody></table></div>
-<h3 id="DB操作">DB操作</h3>
-<p>永続化の正は ec-cube-enterprise（テーブル名・操作は ec-cube-enterprise を正典）。当ドメインは承認ワークフローを介さず persist/flush で直接確定する（承認ワークフローは在庫機能固有）。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>登録/更新</td><td>dtb_event / dtb_event_detail</td><td>当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。</td></tr></tbody></table></div>
-<hr>
-<h2 id="権限・認可">権限・認可</h2>
-<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>イベント申込登録検索</th></tr></thead><tbody><tr><td>未ログイン管理者</td><td>アクセス不可。</td></tr><tr><td>ログイン済み管理者</td><td>イベント検索が可能。</td></tr></tbody></table></div>
-<hr>
-<h2 id="画面遷移">画面遷移</h2>
-<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>イベント検索・ページ送り</td><td>画面遷移せず非同期で結果を反映する（モーダル）</td></tr></tbody></table></div>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>非同期でないリクエスト</td><td>空の結果でモーダル枠のみ表示する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="ログ・監査">ログ・監査</h2>
-<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
-<ul><li>Cookie値</li><li>セッションIDの完全値</li></ul>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<p>本機能は参照のみであり、楽観ロック・悲観ロックの対象は持たない。</p>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>検索語・開始日などの検索条件、ページ番号、イベントID</td></tr><tr><td>成功時出力</td><td>検索結果の一覧、またはイベント1件</td></tr><tr><td>失敗時出力</td><td>非同期でない要求のときは空の結果</td></tr></tbody></table></div>
+<h3 id="入出力-永続化">入出力: 永続化</h3>
+<p>本機能はデータを更新しない。</p>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
+<h2 id="表示メッセージ">表示メッセージ</h2>
+<p>この機能はメッセージを表示しない。</p>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

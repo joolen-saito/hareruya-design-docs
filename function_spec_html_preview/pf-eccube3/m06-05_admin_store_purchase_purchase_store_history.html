@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,41 +272,18 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#フロント挙動">フロント挙動</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#初回表示-GET-admin-otcbuyorder-history-ページ番号-0">初回表示（GET `admin_otcbuyorder_history`、ページ番号 0）</a>
-<a class="lv3" href="#検索実行-POST-admin-otcbuyorder-history">検索実行（POST `admin_otcbuyorder_history`）</a>
-<a class="lv3" href="#ページング表示-GET-admin-otcbuyorder-history-page-または-GET-history-に-page-no-pageno">ページング表示（GET `admin_otcbuyorder_history_page` または GET `/history` に `page_no`／`pageno`）</a>
-<a class="lv3" href="#CSV-出力-POST-admin-otcbuyorder-history-export">CSV 出力（POST `admin_otcbuyorder_history_export`）</a>
-<a class="lv2" href="#集計条件">集計条件</a>
-<a class="lv2" href="#一覧・検索時の判定順序-条件の適用">一覧・検索時の判定順序（条件の適用）</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
-<a class="lv3" href="#入力項目">入力項目</a>
-<a class="lv3" href="#エッジケース">エッジケース</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#初期表示">初期表示</a>
+<a class="lv3" href="#検索条件">検索条件</a>
+<a class="lv3" href="#並び順">並び順</a>
+<a class="lv3" href="#表示件数と再検索">表示件数と再検索</a>
+<a class="lv3" href="#一覧・CSVに出す値">一覧・CSVに出す値</a>
+<a class="lv3" href="#CSV出力">CSV出力</a>
+<a class="lv3" href="#エラー時の扱い">エラー時の扱い</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#バリデーション">バリデーション</a>
-<a class="lv2" href="#権限・認可">権限・認可</a>
-<a class="lv2" href="#画面遷移">画面遷移</a>
-<a class="lv3" href="#遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#表示メッセージ">表示メッセージ</a>
-<a class="lv2" href="#試行制限">試行制限</a>
-<a class="lv2" href="#ログ・監査">ログ・監査</a>
-<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
-<a class="lv2" href="#セッション">セッション</a>
-<a class="lv3" href="#本機能におけるセッション">本機能におけるセッション</a>
-<a class="lv3" href="#セッションへ保存しない情報">セッションへ保存しない情報</a>
-<a class="lv2" href="#Cookie">Cookie</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a>
-<a class="lv2" href="#調査補助-grep-用">調査補助（grep 用）</a>
-<a class="lv3" href="#HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</a></nav>
+<a class="lv3" href="#入出力-永続化">入出力: 永続化</a>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -304,108 +291,31 @@ footer {
         <h1>店頭買取管理 — 買取商品履歴（検索/一覧）</h1>
       </header>
       
-      <h2 id="概要">概要</h2>
-<p>管理画面「店頭買取管理」配下の「買取商品履歴」である。店頭買取の実在庫履歴（1行が1件の在庫増減履歴に相当）を検索し、一覧表示する。検索は画面専用フォームから POST で実行し、条件・ページ番号・表示件数・ソート指定はセッションに保持する。検索後は同一画面上に結果テーブルを出し、選択行または直近の検索条件に基づく CSV を別リクエストで返す。</p>
-<p>HareruyaEc プラグイン由来のテンプレートコメントがあるが、本書本文の確認対象は移行先 ec-cube-enterprise の実装とする。</p>
-<p>カスタマイズ区分はカスタマイズである。「利用者視点の入口」以降を含む本文の挙動・DB関連は、移行先 ec-cube-enterprise を確認値としたものであり、現行 pf-eccube3 の挙動を記述したものではない。現行の HareruyaEc プラグインは移植元・比較対象であり、その差は「リニューアル移行時の扱い」に記録する。</p>
-<p>本書は移行先 ec-cube-enterprise 実装のリバース詳細設計である。実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを記述し、対象はブラウザ経由の管理画面に限る。</p>
-<p>本文ではコントローラのメソッド単位の解剖を主題としない。本文ではルートbind名やSymfonyのルートnameの網羅は主説明としない。「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。コード探索でbind名が必要なときだけ「調査補助」へ書く。</p>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<p>買取商品履歴が検索・出力で参照する店頭買取系テーブルは、現行（pf-eccube3のHareruyaEcプラグイン）と移行先（ec-cube-enterprise）でテーブル名・主要列名が一致し、概ね同一スキーマである。<code>dtb_otc_buy_order_stock_history</code>の<code>before_quantity</code>・<code>after_quantity</code>・<code>create_date</code>・<code>member_id</code>・<code>otc_buy_order_stock_id</code>、<code>dtb_otc_buy_order_stock</code>、<code>dtb_otc_buy_order</code>はいずれも同名である。確認できた差分は次のとおりで、DB関連はec-cube-enterpriseを正とする。</p>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3のHareruyaEcプラグイン）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>実在庫履歴・実在庫テーブル</td><td>同名（同一スキーマ）</td><td>同名（同一スキーマ）</td></tr><tr><td>棚戻し列</td><td><code>dtb_otc_buy_order</code>に<code>restocked_flg</code>・<code>restocked_date</code>を持たない</td><td><code>restocked_flg</code>・<code>restocked_date</code>を追加。ただし本履歴の検索・出力列には含まれない</td></tr></tbody></table></div>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>ナビ「店頭買取管理」→「買取商品履歴」</td><td><code>GET /{admin_route}/otcbuyorder/history</code></td><td>検索フォームのみ表示され、結果一覧は出さない（初回）。</td></tr><tr><td>検索フォームの「検索する」</td><td><code>POST /{admin_route}/otcbuyorder/history</code></td><td>入力された条件で一覧を表示する。条件とページ情報をセッションに保存する。</td></tr><tr><td>ページャの各種リンク</td><td><code>GET /{admin_route}/otcbuyorder/history/page/{page_no}</code>（クエリに <code>page_count</code> 等が付く場合あり）</td><td>直近の検索条件をセッションから復元し、指定ページを表示する。</td></tr><tr><td>CSV メニュー「選択した商品履歴取得」</td><td><code>POST /{admin_route}/otcbuyorder/history/export</code></td><td>チェック済み履歴IDだけを CSV に含める。未選択ならエラーメッセージを出して一覧ページへ戻す。</td></tr><tr><td>CSV メニュー「検索結果全件取得」</td><td><code>POST /{admin_route}/otcbuyorder/history/export</code></td><td>セッション上の直近検索条件で絞った全件を CSV に含める。検索状態が無ければエラーメッセージを出して戻す。</td></tr></tbody></table></div>
-<hr>
-<h2 id="フロント挙動">フロント挙動</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>タイトルは「店頭買取管理」、サブタイトルは「買取商品履歴」。メニューは <code>purchase_store</code> と <code>history</code>。検索欄に査定ID、申込者名、会員ID、ステータス（複数チェック）、買取店舗、査定担当者名、商品コード、商品名、買取日時（開始・終了）、基準価格（開始・終了）、買取価格（開始・終了）、言語（チェック）、状態（NM/SP/MP/HP のチェック）、検索ボタン。結果エリアは件数、表示件数ドロップダウン、CSV ドロップダウン、テーブル（チェック、査定番号、申込者、商品コード、商品名、基準価格、買取価格、買取店舗、作業者、買取数、入庫数、増減数、買取日時、更新日時）。0件時は該当なしメッセージ。</td></tr><tr><td>JS 挙動</td><td><code>moment</code> と <code>tempusdominus</code> で <code>datetimepicker-input</code> に日時選択（ロケール ja、形式 <code>YYYY-MM-DD HH:mm</code>）。ヘッダの全選択チェックで <code>otcBuyOrderHistoryId</code> 属性の行チェックを一括切替。CSV の各リンクは <code>export_type</code> 隠し項目を埋めて結果フォームを submit。</td></tr><tr><td>CSS・レイアウト</td><td>Bootstrap 4 系の水平フォームテーマ。ページャと CSV 用ドロップダウンで <code>display:block !important</code> のワークアラウンドを当てている。</td></tr><tr><td>モーダル・ポップアップ</td><td>本機能専用のモーダルは無い。</td></tr></tbody></table></div>
-<p>補足（一覧テンプレートの二重ループ）: 結果テーブルは、ページングオブジェクトに対する外側の <code>{# for #}</code> と、同じコレクションに対する内側の <code>{# for #}</code> がネストした構造になっている。1ページ N 件のとき、同じ N 行から成る表が最大 N 回繰り返し描画されうる（実装を確認値とする）。</p>
-<p>補足（一覧の日付表示）: 「買取日時」列は注文の <code>completeDate</code> が無いとき <code>cancelDate</code> を使う。日付と時刻は2行表示。</p>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="初回表示-GET-admin-otcbuyorder-history-ページ番号-0">初回表示（GET <code>admin_otcbuyorder_history</code>、ページ番号 0）</h3>
-<ol><li>管理画面の認証・共通制約を通過する。</li><li>空の検索フォームを生成する（CSRF 保護はフォーム側で無効）。</li><li><code>pagination</code> を空配列、<code>page_count</code> を <code>eccube_default_page_count</code> にし、テンプレートを返す。一覧は出さない。</li></ol>
-<h3 id="検索実行-POST-admin-otcbuyorder-history">検索実行（POST <code>admin_otcbuyorder_history</code>）</h3>
-<ol><li>コントローラがページ番号 1 でトレイトの検索処理を呼ぶ。</li><li>フォームがリクエストを取り込み、検索データが得られる。</li><li>表示件数はセッションまたは <code>page_count</code> クエリで上書きし、許可された値だけ <code>mtb_page_max</code> 由来の一覧に合わせて矯正する。</li><li><code>sort</code> と <code>order</code> はクエリまたはセッションから決まるが、不正な <code>order</code> 文字列のときはソートエラーメッセージを出し、初回表示相当へ戻る。</li><li>検索データから専用 DTO を経由して履歴のクエリビルダを組み、ページャで Slice する。</li><li>ページ番号・検索条件の表示用データ・ソート・表示件数をセッションキー <code>eccube.admin.otcbuyorder_history.*</code> 系に保存する。</li><li>最終ページで件数が境界に落ちた場合は 1 ページ戻して再ページングする。</li><li>フォームのビュー・ページング・表示件数リスト・フィルタ有効フラグ等をテンプレートへ渡す。</li></ol>
-<h3 id="ページング表示-GET-admin-otcbuyorder-history-page-または-GET-history-に-page-no-pageno">ページング表示（GET <code>admin_otcbuyorder_history_page</code> または GET <code>/history</code> に <code>page_no</code>／<code>pageno</code>）</h3>
-<ol><li>パス上の <code>page_no</code> が正のとき、フォームの <code>handleRequest</code> を経ずにトレイトの検索を呼ぶ（コントローラ実装どおり）。</li><li>検索データがフォームから空のとき、セッションの表示用データを復元して同じ条件で再検索する。</li><li>セッションにも検索が無いとき、初回表示相当の配列を返す。</li></ol>
-<h3 id="CSV-出力-POST-admin-otcbuyorder-history-export">CSV 出力（POST <code>admin_otcbuyorder_history_export</code>）</h3>
-<ol><li><code>export_type</code> を読む。<code>check_export</code> でも <code>all_export</code> でも無ければ例外を投げる（本書ではバリデーション失敗時の利用者向け画面挙動を仕様確定しない）。</li><li><code>check_export</code> のとき、POST の <code>otcBuyOrderHistoryIds</code> が空なら管理画面向けエラー文をフラッシュし、<code>eccube.admin.otcbuyorder_history.search.page_no</code> のページへリダイレクトする。</li><li><code>all_export</code> のとき、セッションの <code>eccube.admin.otcbuyorder_history.search</code> が無ければエラー文をフラッシュし、同様にリダイレクトする。</li><li>それ以外はストリーム応答で CSV を書き、ファイル名 <code>otc_buy_order_history_YmdHis.csv</code>、ログにファイル名のみ情報ログを残す。</li></ol>
-<hr>
-<h2 id="集計条件">集計条件</h2>
-<p>一覧・CSV の対象行は、実在庫履歴を起点に実在庫・店頭買取注文・規格・商品・言語・注文ステータス・店舗（左結合）へ結合した結果集合である。検索条件は次節の業務ルールに従い AND で積み上げる。件数表示はページャの総件数である。</p>
-<div class="table-wrap"><table><thead><tr><th>指標</th><th>集計の要点</th></tr></thead><tbody><tr><td>一覧件数</td><td>上記集合への条件適用後の履歴行数。重複排除の特別処理は無い。</td></tr><tr><td>CSV 全件</td><td>一覧と同じクエリ条件で Slice せずに全行を読み、行配列に変換する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="一覧・検索時の判定順序-条件の適用">一覧・検索時の判定順序（条件の適用）</h2>
-<p>実装はクエリビルダに条件を順に付与し、最後に固定の <code>ORDER BY</code> を付ける。利用者が指定できるソート列の切替は本クエリでは行わない（セッションの sort/order を読んでも履歴クエリは並びを変えない。実装を確認値とする）。</p>
-<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>会員IDが非 null</td><td>注文の会員参照がその ID と一致する一致条件を付与する。空文字列も非 null のため条件に含まれる（実装を確認値とする）。</td></tr><tr><td>2</td><td>申込者名が非 null</td><td>空白・全角半角カンマで分割した各キーワードについて、姓・名・姓カナ・名カナへの部分一致を OR し、キーワード間は AND とする。</td></tr><tr><td>3</td><td>査定IDが非 null</td><td>査定IDの完全一致。空文字列も非 null（実装を確認値とする）。</td></tr><tr><td>4</td><td>査定担当者名が非 null</td><td>注文に紐づく査定担当者名の部分一致。SQL ワイルドカードはエスケープする。</td></tr><tr><td>5</td><td>店舗が非 null</td><td>注文の <code>BaseInfo</code> がその店舗と一致する条件。</td></tr><tr><td>6</td><td>ステータスが1件以上選択</td><td>注文ステータスがそのいずれかに合致。</td></tr><tr><td>7</td><td>商品コードが非 null</td><td>規格コードの完全一致。</td></tr><tr><td>8</td><td>商品名が非 null</td><td>商品名の部分一致。ワイルドカードはエスケープする。</td></tr><tr><td>9</td><td>買取日時（開始または終了）</td><td>注文ステータスがキャンセル（ID 2）のときは <code>cancelDate</code>、それ以外は <code>completeDate</code> に対して境界を付与する。</td></tr><tr><td>10</td><td>買取価格下限</td><td><code>subtotal &gt;= 下限 * quantity</code>（単価条件の代数変形）。</td></tr><tr><td>11</td><td>買取価格上限</td><td><code>subtotal &lt;= 上限 * quantity</code>。上下限は独立に付与しうる。</td></tr><tr><td>12</td><td>基準価格下限／上限</td><td>規格の <code>standardPrice</code> に不等号。</td></tr><tr><td>13</td><td>言語が1個以上</td><td>日本語・英語IDは <code>IN</code>、フォーム値「その他言語」（整数 3）は日本語・英語以外の言語を <code>NOT IN</code> で表す分岐を含む複合条件。規格の <code>Language</code> に追加結合する。</td></tr><tr><td>14</td><td>状態が1個以上</td><td>規格のカード状態IDが選択集合に含まれる。</td></tr><tr><td>最後</td><td>並び</td><td>注文の <code>completeDate</code> 降順、履歴の <code>createDate</code> 降順に固定する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>買取価格（画面・CSV）</td><td>実在庫の <code>getUnitCost()</code> に相当する値を表示・出力する。検索の買取価格帯は上表の不等式で実在庫行に対して評価する。</td></tr><tr><td>増減数</td><td>履歴の <code>afterQuantity - beforeQuantity</code>。一覧は Twig で同様に減算表示。</td></tr><tr><td>ステータス選択肢</td><td>フォームは買取成立・キャンセル・入庫待ち・未登録在庫あり・入庫済み・管理者取消の 6 種のみをクエリ候補として出す（マスタ定数 1,2,11,12,13,14。実装を確認値とする）。</td></tr><tr><td>言語「その他」</td><td>フォーム上は値 3。マスタの日本語・英語 ID 定数には含まれないため、「その他」分岐で <code>NOT IN</code> 条件に回る。</td></tr></tbody></table></div>
-<p>本機能では確定後の永続化更新を行わない。検索条件の保存先はセッションのみである。</p>
-<h3 id="入力項目">入力項目</h3>
-<div class="table-wrap"><table><thead><tr><th>項目名</th><th>必須／任意</th><th>最大長</th><th>初期値</th><th>保存先・扱い</th></tr></thead><tbody><tr><td>査定ID</td><td>任意</td><td>フォーム型および Symfony Length に明示上限なし（DB は <code>dtb_otc_buy_order.assessment_id</code> の定義に従う）</td><td>空</td><td>送信値が非 null のとき完全一致で検索。フォームキー <code>assessment_id</code>。</td></tr><tr><td>申込者名</td><td>任意</td><td>同上</td><td>空</td><td>キーワード分割部分一致検索。キー <code>customer_name</code>。</td></tr><tr><td>会員ID</td><td>任意</td><td>同上</td><td>空</td><td>非 null 時に注文の会員参照で一致検索。キー <code>customer_id</code>。</td></tr><tr><td>ステータス</td><td>任意</td><td>選択肢はマスタからサブセット</td><td>未選択</td><td>複数選択可。キー <code>otc_buy_order_status</code>。空選択時はステータス条件を付けない。</td></tr><tr><td>買取店舗</td><td>任意</td><td>単一選択</td><td>ログイン管理者のデフォルト検索店舗（取得できなければ未選択）</td><td><code>dtb_base_info</code> への単一参照。キー <code>shop</code>。</td></tr><tr><td>査定担当者名</td><td>任意</td><td>フォーム上限なし</td><td>空</td><td>部分一致。キー <code>assessment_member_name</code>。</td></tr><tr><td>買取日時（開始）</td><td>任意</td><td>日時単一行ウィジェット</td><td>空</td><td>キャンセル／非キャンセルで参照列が分岐。キー <code>complete_date_from</code>。</td></tr><tr><td>買取日時（終了）</td><td>任意</td><td>同上</td><td>空</td><td>キー <code>complete_date_to</code>。</td></tr><tr><td>基準価格（開始）</td><td>任意</td><td>整数型</td><td>空</td><td><code>standard_price_from</code>。</td></tr><tr><td>基準価格（終了）</td><td>任意</td><td>整数型</td><td>空</td><td><code>standard_price_to</code>。</td></tr><tr><td>買取価格（開始）</td><td>任意</td><td>整数型</td><td>空</td><td>単価換算の下限。キー <code>buy_price_from</code>。</td></tr><tr><td>買取価格（終了）</td><td>任意</td><td>整数型</td><td>空</td><td>単価換算の上限。キー <code>buy_price_to</code>。</td></tr><tr><td>商品名</td><td>任意</td><td>フォーム上限なし</td><td>空</td><td>部分一致。キー <code>product_name</code>。</td></tr><tr><td>商品コード</td><td>任意</td><td>フォーム上限なし</td><td>空</td><td>規格コード完全一致。キー <code>product_code</code>。</td></tr><tr><td>言語</td><td>任意</td><td>チェック複数（日本語・英語・その他言語）</td><td>未選択</td><td>値は日本語 ID・英語 ID・整数 3。キー <code>language</code>。</td></tr><tr><td>状態</td><td>任意</td><td>チェック複数（NM/SP/MP/HP）</td><td>未選択</td><td>値はカード状態 ID 1〜4。キー <code>condition</code>。</td></tr></tbody></table></div>
-<h3 id="エッジケース">エッジケース</h3>
-<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>検索フォーム CSRF</td><td>本フォームは CSRF 保護を無効にしてあり、トークン無しで POST できる（実装を確認値とする）。</td></tr><tr><td>CSV の export_type 不正</td><td>実装は例外を投げる。利用者向けメッセージの統一は本書で扱わない。</td></tr><tr><td>CSV POST の CSRF</td><td>エクスポートフォームにトークン無し。</td></tr><tr><td>会員ID・査定IDに空文字を入力</td><td>非 null のため条件が付き、意図せず件数 0 になりうる（実装を確認値とする）。</td></tr><tr><td>並び替え UI</td><td>トレイトが sort/order をセッションに持つ一方、履歴一覧クエリは並びを固定するため、画面のソート意図とクエリが一致しない（実装を確認値とする）。</td></tr></tbody></table></div>
-<hr>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>一覧と CSV</td><td>全件 CSV は直近セッションの検索条件をフォームへ再投入してから同一系のクエリで取り直す。選択 CSV は ID 列の集合で取り直す。</td></tr><tr><td>参照時点</td><td>検索リクエスト処理中のコミット済みデータを読む。リアルタイム一致の保証はトランザクション隔離の一般論に従い、本書では追わない。</td></tr><tr><td>店舗名表示</td><td>注文と店舗が左結合のため、店舗無しの注文では店舗名列は空表示になりうる。</td></tr></tbody></table></div>
-<hr>
-<h2 id="API-バッチ結果">API/バッチ結果</h2>
-<p>本機能では外部 HTTP API 呼び出しやバッチ実行を扱わない。</p>
-<hr>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="初期表示">初期表示</h3>
+<p>空の検索フォームと既定の表示件数で画面を表示する。一覧は出さない。</p>
+<h3 id="検索条件">検索条件</h3>
+<p>各条件は入力されたものだけを順に絞り込みへ加える。</p>
+<div class="table-wrap"><table><thead><tr><th>順序</th><th>条件</th><th>絞り込み</th></tr></thead><tbody><tr><td>1</td><td>会員ID</td><td>注文の会員がそのIDと一致する。空文字列も入力ありとして条件に含まれる（実装を確認値とする）</td></tr><tr><td>2</td><td>申込者名</td><td>空白・全角半角カンマで分割した各キーワードについて、姓・名・姓カナ・名カナへの部分一致をORし、キーワード間はANDとする</td></tr><tr><td>3</td><td>査定ID</td><td>査定IDの完全一致。空文字列も入力ありとして扱う（実装を確認値とする）</td></tr><tr><td>4</td><td>査定担当者名</td><td>注文に紐づく査定担当者名の部分一致。ワイルドカード文字はエスケープする</td></tr><tr><td>5</td><td>店舗</td><td>注文の店舗が一致する</td></tr><tr><td>6</td><td>ステータス（1件以上選択）</td><td>注文ステータスが選択したいずれかに一致する</td></tr><tr><td>7</td><td>商品コード</td><td>規格コードの完全一致</td></tr><tr><td>8</td><td>商品名</td><td>商品名の部分一致。ワイルドカード文字はエスケープする</td></tr><tr><td>9</td><td>買取日時（開始または終了）</td><td>注文ステータスがキャンセル（ID2）のときはキャンセル日時、それ以外は買取成立日時に対して境界を付ける</td></tr><tr><td>10</td><td>買取価格下限</td><td>明細の買取価格小計が「下限×数量」以上</td></tr><tr><td>11</td><td>買取価格上限</td><td>明細の買取価格小計が「上限×数量」以下。上下限は独立に付けられる</td></tr><tr><td>12</td><td>基準価格下限／上限</td><td>規格の基準価格に不等号を付ける</td></tr><tr><td>13</td><td>言語（1個以上選択）</td><td>日本語・英語は当該言語IDのいずれかに一致。フォーム値「その他言語」（整数3）は日本語・英語以外の言語に一致する条件として扱う</td></tr><tr><td>14</td><td>状態（1個以上選択）</td><td>規格のカード状態IDが選択集合に含まれる</td></tr></tbody></table></div>
+<p>ステータスの選択肢は、買取成立・キャンセル・入庫待ち・未登録在庫あり・入庫済み・管理者取消の6種（マスタID 1・2・11・12・13・14。実装を確認値とする）である。</p>
+<h3 id="並び順">並び順</h3>
+<p>注文の買取成立日時の降順、履歴の作成日時の降順に固定する。利用者が指定するソート列の切替は履歴の並びに影響しない（実装を確認値とする）。ソート順の指定が昇順・降順のいずれでもないときは、ソートエラーを表示して初期表示相当へ戻す。</p>
+<h3 id="表示件数と再検索">表示件数と再検索</h3>
+<div class="table-wrap"><table><thead><tr><th>場面</th><th>扱い</th></tr></thead><tbody><tr><td>表示件数</td><td>保持した値または画面で指定した値を用い、表示件数マスタに登録された値だけを採用する</td></tr><tr><td>ページ切替</td><td>指定されたページ番号で、保持した検索条件を復元して同じ条件で再検索する</td></tr><tr><td>保持した検索条件が無いとき</td><td>初期表示相当とする</td></tr><tr><td>最終ページで件数が境界に落ちたとき</td><td>1ページ戻して再表示する</td></tr></tbody></table></div>
+<h3 id="一覧・CSVに出す値">一覧・CSVに出す値</h3>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>買取価格</td><td>実在庫の単価を表示・出力する。検索の買取価格帯も実在庫の行に対して評価する</td></tr><tr><td>増減数</td><td>履歴の変更後数量から変更前数量を引いた値</td></tr></tbody></table></div>
+<h3 id="CSV出力">CSV出力</h3>
+<p>出力種別は、選択した商品の出力とすべての商品の出力の2種である。</p>
+<div class="table-wrap"><table><thead><tr><th>出力種別</th><th>扱い</th></tr></thead><tbody><tr><td>選択した商品の出力</td><td>履歴を1件も選択していないときはエラーを表示し、保持したページへ戻る</td></tr><tr><td>すべての商品の出力</td><td>検索条件が保持されていないときはエラーを表示し、保持したページへ戻る</td></tr><tr><td>上記のいずれでもないとき</td><td>出力する。ファイル名は<code>otc_buy_order_history_YmdHis.csv</code>とする</td></tr></tbody></table></div>
+<h3 id="エラー時の扱い">エラー時の扱い</h3>
+<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>ソート順が昇順・降順のいずれでもないとき</td><td>管理画面共通のソートエラーメッセージを表示し、初期表示相当へ戻す</td></tr><tr><td>CSV出力で履歴を1件も選択していないとき</td><td>「1つ以上の商品を選択してください」を表示し一覧へ戻る</td></tr><tr><td>CSV全件出力で検索条件が保持されていないとき</td><td>「条件に一致する商品がありません」を表示し一覧へ戻る</td></tr></tbody></table></div>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>検索フォームの各フィールド、ページ番号、表示件数、CSV の <code>export_type</code> と選択 ID 列。</td></tr><tr><td>成功時出力</td><td>HTML 一覧、または CSV ストリーム。</td></tr><tr><td>失敗時出力</td><td>ソート不正時はフラッシュエラーと初回画面相当。CSV で選択なし・検索無しはフラッシュエラーとリダイレクト。</td></tr><tr><td>副作用</td><td>セッション更新、CSV 時の情報ログ、実行時間制限解除（CSV 処理の前）。</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<p>当機能の検索・表示に直接関係が深い列のみ示す。型の詳細はスキーマを参照する。</p>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>dtb_otc_buy_order_stock_history</code></td><td><code>id</code>, <code>before_quantity</code>, <code>after_quantity</code>, <code>create_date</code>, <code>otc_buy_order_stock_id</code>, <code>member_id</code></td><td>一覧は主にこの行を反復する。</td></tr><tr><td><code>dtb_otc_buy_order_stock</code></td><td><code>quantity</code>, <code>subtotal</code>, 規格参照</td><td>単価条件と買取数表示。</td></tr><tr><td><code>dtb_otc_buy_order</code></td><td><code>assessment_id</code>, 氏名・カナ・会員・ステータス・日時・店舗 等</td><td>申込者・査定番号・日付表示の根拠。</td></tr><tr><td><code>dtb_product_class</code></td><td><code>code</code>, <code>standard_price</code>, 言語・状態参照</td><td>商品コード・基準価格・絞り込み。</td></tr><tr><td><code>dtb_product</code></td><td><code>name</code></td><td>商品名検索・表示。</td></tr></tbody></table></div>
-<h3 id="DB操作">DB操作</h3>
-<p>永続化の正は ec-cube-enterprise（テーブル名・操作は ec-cube-enterprise を正典）。当ドメインは承認ワークフローを介さず persist/flush で直接確定する（承認ワークフローは在庫機能固有）。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>登録/更新</td><td>dtb_otc_buy_order / dtb_otc_buy_order_stock / dtb_otc_buy_order_stock_history / dtb_product / dtb_product_class</td><td>当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。</td></tr></tbody></table></div>
-<hr>
-<h2 id="バリデーション">バリデーション</h2>
-<p>検索フォームは画面ラベルに対し Symfony の厳格な Length や Regex を付けていない。整数フィールドは整数型にマッピングされる。日時は単一テキスト入力をパースする。</p>
-<hr>
-<h2 id="権限・認可">権限・認可</h2>
-<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>本画面（検索・一覧・CSV）</th></tr></thead><tbody><tr><td>管理画面に未ログイン</td><td>管理画面の認証機構により到達前に拒否される（一般論。詳細はセキュリティ設定を正とする）。</td></tr><tr><td>管理画面にログイン済み</td><td>本コントローラにルート単位の追加制限は無く、管理画面ファイアウォール内の利用者が到達しうる（実装を確認値とする）。</td></tr></tbody></table></div>
-<hr>
-<h2 id="画面遷移">画面遷移</h2>
-<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>ナビから初回 GET</td><td>同一 URL の検索のみ画面。</td></tr><tr><td>検索 POST 成功</td><td>同一 URL で結果付き HTML（URL は変わらない）。</td></tr><tr><td>ページャ・表示件数リンク</td><td><code>admin_otcbuyorder_history_page</code> の GET。</td></tr><tr><td>CSV エラー（選択なし／検索なし）</td><td><code>admin_otcbuyorder_history_page</code> へリダイレクト。</td></tr><tr><td>sort の order 不正</td><td>初回表示相当の配列応答。</td></tr></tbody></table></div>
-<h3 id="遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</h3>
-<div class="table-wrap"><table><thead><tr><th>起点</th><th>遷移前の処理</th><th>遷移後の初期状態</th></tr></thead><tbody><tr><td>検索 POST</td><td><code>eccube.admin.otcbuyorder_history.search</code> に表示用データ、<code>page_no</code>・<code>page_count</code>・sort をセッション保存</td><td>同一条件で一覧表示</td></tr><tr><td>GET ページング</td><td>セッションから検索を復元</td><td>指定ページの一覧</td></tr><tr><td>CSV 失敗リダイレクト</td><td>フラッシュエラー設定</td><td>保存済みページ番号の一覧</td></tr></tbody></table></div>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td><code>order</code> パラメータが ASC/DESC 以外</td><td>管理画面共通のソートエラーメッセージを出し、初回表示相当へ。</td></tr><tr><td>CSV で履歴 ID 未選択</td><td>「1つ以上の商品を選択してください」をフラッシュし一覧へ。</td></tr><tr><td>CSV 全件で検索セッション無し</td><td>「条件に一致する商品がありません」をフラッシュし一覧へ。</td></tr></tbody></table></div>
-<hr>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>検索フォームの各項目、ページ番号、表示件数、CSVの出力種別と選択したID列</td></tr><tr><td>成功時出力</td><td>一覧画面、またはCSVファイル</td></tr><tr><td>失敗時出力</td><td>ソート不正時はエラー表示と初期表示相当の画面。CSVで未選択・検索条件なしのときはエラー表示と一覧への遷移</td></tr></tbody></table></div>
+<h3 id="入出力-永続化">入出力: 永続化</h3>
+<p>本機能はデータを更新しない。</p>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
 <h2 id="表示メッセージ">表示メッセージ</h2>
-<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>画面上の文言(英語)</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M06-05-MSG-001</td><td>管理画面上部</td><td>1つ以上の商品を選択してください</td><td>（英訳なし）</td><td>選択せずに、選択した商品のCSVを出力したとき</td><td>エラーを表示し、買取商品履歴（検索／一覧）画面に遷移する</td></tr><tr><td>M06-05-MSG-002</td><td>管理画面上部</td><td>条件に一致する商品がありません</td><td>（英訳なし）</td><td>検索を実行せずに、すべての商品のCSVを出力したとき</td><td>エラーを表示し、買取商品履歴（検索／一覧）画面に遷移する</td></tr><tr><td>M06-05-MSG-003</td><td>買取商品履歴の検索結果ボックス見出し</td><td>検索条件に該当するデータがありませんでした。</td><td>（英訳なし）</td><td>履歴検索POST又は検索条件を復元したページ表示で、paginationは生成されたがtotalItemCountが0の場合。</td><td>履歴一覧テーブル・ページャを表示せず、同じ検索画面に空結果メッセージを表示する。</td></tr><tr><td>M06-05-MSG-004</td><td>本文テキスト</td><td>検索条件に該当するデータがありませんでした。</td><td>（英訳なし）</td><td>買取商品履歴の検索後、<code>pagination</code>は存在するが<code>totalItemCount</code>が0のとき</td><td>同一の検索結果画面に0件通知を表示する</td></tr></tbody></table></div>
-<hr>
-<h2 id="試行制限">試行制限</h2>
-<p>本機能では試行制限を扱わない。</p>
-<hr>
-<h2 id="ログ・監査">ログ・監査</h2>
-<div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>CSV 完了</td><td>情報ログにファイル名（プレフィックス <code>otc_buy_order_history_</code> と日時）。</td></tr></tbody></table></div>
-<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
-<ul><li>パスワード</li><li>なりすまし対策トークン</li><li>Cookie 値</li><li>セッション ID の完全値</li><li>Remember Me トークンの原値</li></ul>
-<hr>
-<h2 id="セッション">セッション</h2>
-<h3 id="本機能におけるセッション">本機能におけるセッション</h3>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>キー接頭辞</td><td><code>eccube.admin.otcbuyorder_history</code>（トレイトの <code>sessionKey</code> が <code>otcbuyorder_history</code>）。</td></tr><tr><td>保存内容</td><td>検索条件の表示用データ、ページ番号、表示件数、ソート列名、昇降順。</td></tr></tbody></table></div>
-<h3 id="セッションへ保存しない情報">セッションへ保存しない情報</h3>
-<p>パスワードや決済の完全なトークン原値など、検索に不要な秘匿情報は保存しない（本画面の実装範囲では該当処理なし）。</p>
-<hr>
-<h2 id="Cookie">Cookie</h2>
-<p>本機能が独自に新たな Cookie を設定する処理は持たない。セッション Cookie は管理画面の一般仕様に従う。</p>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<p>本機能の画面表示・CSV は主に参照クエリであり、一覧表示のために楽観ロックや更新系トランザクション境界を張らない。</p>
-<hr>
-<h2 id="調査補助-grep-用">調査補助（grep 用）</h2>
-<p>実装の所在の目安: <code>src/Eccube/Controller/Admin/OtcBuyOrder/OtcBuyOrderHistoryController.php</code>、<code>src/Eccube/Resource/template/admin/OtcBuyOrder/history.twig</code>、<code>src/Eccube/Repository/DtbOtcBuyOrderStockHistoryRepository.php</code>、<code>src/Eccube/Form/Type/Admin/OtcBuyOrder/OtcBuyOrderHistoryType.php</code>、<code>html/template/admin/assets/js/OtcBuyOrder/otc-buy-order-history.js</code>。</p>
-<h3 id="HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</h3>
-<ul><li><code>admin_otcbuyorder_history</code> … <code>GET, POST</code> … <code>/{admin_route}/otcbuyorder/history</code>（初回表示（GET）、検索送信（POST）。）</li><li><code>admin_otcbuyorder_history_page</code> … <code>GET</code> … <code>/{admin_route}/otcbuyorder/history/page/{page_no}</code>（ページング・表示件数変更後など、セッションに保存した検索条件で指定ページを表示する。<code>page_no</code> は 1 以上の整数。）</li><li><code>admin_otcbuyorder_history_export</code> … <code>POST</code> … <code>/{admin_route}/otcbuyorder/history/export</code>（選択行または検索結果全件の CSV をストリームで返す。）</li></ul>
+<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M06-05-MSG-001</td><td>管理画面上部</td><td>1つ以上の商品を選択してください</td><td>選択せずに、選択した商品のCSVを出力したとき</td><td>エラーを表示し、買取商品履歴（検索／一覧）画面に遷移する</td></tr><tr><td>M06-05-MSG-002</td><td>管理画面上部</td><td>条件に一致する商品がありません</td><td>検索を実行せずに、すべての商品のCSVを出力したとき</td><td>エラーを表示し、買取商品履歴（検索／一覧）画面に遷移する</td></tr><tr><td>M06-05-MSG-003</td><td>買取商品履歴の検索結果ボックス見出し</td><td>検索条件に該当するデータがありませんでした。</td><td>履歴検索、または検索条件を復元したページ表示で、該当件数が0件のとき</td><td>履歴一覧・ページ送りを表示せず、同じ検索画面に空結果メッセージを表示する。</td></tr><tr><td>M06-05-MSG-004</td><td>本文テキスト</td><td>検索条件に該当するデータがありませんでした。</td><td>買取商品履歴の検索後、該当件数が0件のとき</td><td>同一の検索結果画面に0件通知を表示する</td></tr></tbody></table></div>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

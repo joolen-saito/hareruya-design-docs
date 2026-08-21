@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,31 +272,14 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#本書で扱うこと">本書で扱うこと</a>
-<a class="lv2" href="#本書で扱わないこと">本書で扱わないこと</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv2" href="#用語">用語</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#フロント挙動">フロント挙動</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#顧客グループ一覧を表示する-GET-admin-route-customer-group-id">顧客グループ一覧を表示する（GET `/{admin_route}/customer_group/{id}`）</a>
-<a class="lv3" href="#顧客グループを登録・更新する-POST-admin-route-customer-group-new-または-id-update">顧客グループを登録・更新する（POST `/{admin_route}/customer_group/new` または `…/{id}/update`）</a>
-<a class="lv3" href="#顧客グループを削除する-DELETE-admin-route-customer-group-id-delete">顧客グループを削除する（DELETE `/{admin_route}/customer_group/{id}/delete`）</a>
-<a class="lv2" href="#表示メッセージ">表示メッセージ</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
-<a class="lv3" href="#入力項目">入力項目</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#一覧と編集">一覧と編集</a>
+<a class="lv3" href="#登録・更新・削除の判定">登録・更新・削除の判定</a>
+<a class="lv3" href="#エラー時の扱い">エラー時の扱い</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#権限・認可">権限・認可</a>
-<a class="lv2" href="#画面遷移">画面遷移</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#ログ・監査">ログ・監査</a>
-<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a></nav>
+<a class="lv3" href="#入出力-永続化">入出力: 永続化</a>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -294,81 +287,20 @@ footer {
         <h1>会員管理 — 顧客グループ管理</h1>
       </header>
       
-      <h2 id="概要">概要</h2>
-<p>管理画面で、顧客を分類する顧客グループを一覧表示し、新規登録・編集・削除する機能である。登録済みグループの一覧とともに、新規グループの登録、既存グループの編集・削除を行う。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインの管理画面顧客グループ処理、テンプレート（<code>CustomerGroup/index.twig</code>）、顧客グループを扱うエンティティ・リポジトリを正とする。</p>
-<p>本機能のカスタマイズ区分は現行踏襲であり、挙動はpf-eccube3を参照し、DB関連はec-cube-enterpriseを正とする。</p>
-<p>対象はブラウザ経由の管理画面に限定する。</p>
-<p>本文ではフレームワークのコントローラ型名やメソッド名を主説明としない。管理画面プレフィックスは環境により変わる（<code>admin_route</code>）。「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。</p>
-<hr>
-<h2 id="本書で扱うこと">本書で扱うこと</h2>
-<ul><li>顧客グループ一覧の表示</li><li>顧客グループの新規登録・編集・削除</li></ul>
-<hr>
-<h2 id="本書で扱わないこと">本書で扱わないこと</h2>
-<p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
-<ul><li>顧客グループを用いた絞り込み・配信等の利用側仕様（各機能を正とする）</li><li>会員一覧・検索の仕様（会員一覧機能を正とする）</li></ul>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<p>挙動はpf-eccube3を参照し、永続化先の記述はec-cube-enterpriseを正とする。本機能が触れるテーブル・列は現行と移行先で同一スキーマである。</p>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>顧客グループ</td><td>顧客グループ（<code>dtb_customer_group</code>、列<code>name</code>等）</td><td>顧客グループ（<code>dtb_customer_group</code>、列<code>name</code>等）。同一スキーマ。</td></tr></tbody></table></div>
-<p>顧客グループのテーブル名・主要列名は現行と移行先で一致するため、移行に伴う列名・テーブル名の差は無い。移行先では<code>name</code>のほか<code>point_percentage</code>・<code>shop_front_flg</code>・<code>branch_shop_front_flg</code>等の列を保持する。</p>
-<hr>
-<h2 id="用語">用語</h2>
-<div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>顧客グループ</td><td>顧客を分類するための区分。</td></tr></tbody></table></div>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>ナビ「顧客グループ管理」</td><td><code>GET /{admin_route}/customer_group/{id}</code></td><td>登録済み顧客グループの一覧と、選択した（または新規の）グループの編集フォームを表示する。</td></tr><tr><td>「登録」ボタン（新規）</td><td><code>POST /{admin_route}/customer_group/new</code></td><td>新規グループを登録し、一覧へ戻る。</td></tr><tr><td>「更新」ボタン（既存）</td><td><code>POST /{admin_route}/customer_group/{id}/update</code></td><td>既存グループを更新し、一覧へ戻る。</td></tr><tr><td>「削除」ボタン</td><td><code>DELETE /{admin_route}/customer_group/{id}/delete</code></td><td>既存グループを削除し、一覧へ戻る。</td></tr></tbody></table></div>
-<p>管理画面プレフィックスは環境により変わるためプレースホルダで示す。</p>
-<hr>
-<h2 id="フロント挙動">フロント挙動</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>登録済みグループの一覧と、グループの登録・編集フォーム。</td></tr><tr><td>JS挙動</td><td>本機能では送信中心で、動的な表示切替は主としない。</td></tr><tr><td>モーダル・ポップアップ</td><td>本機能専用のモーダルは無い。</td></tr></tbody></table></div>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="顧客グループ一覧を表示する-GET-admin-route-customer-group-id">顧客グループ一覧を表示する（GET <code>/{admin_route}/customer_group/{id}</code>）</h3>
-<ol><li>管理画面の認証・権限を通過する。</li><li>登録済みグループの一覧と、選択した（または新規の）グループの編集フォームを表示する。</li></ol>
-<h3 id="顧客グループを登録・更新する-POST-admin-route-customer-group-new-または-id-update">顧客グループを登録・更新する（POST <code>/{admin_route}/customer_group/new</code> または <code>…/{id}/update</code>）</h3>
-<ol><li>管理画面の認証・権限を通過する。</li><li>送信フォームを検証する。検証に失敗した場合は一覧画面を再表示する。</li><li>検証に成功した場合はグループを保存し、一覧へ戻る。</li></ol>
-<h3 id="顧客グループを削除する-DELETE-admin-route-customer-group-id-delete">顧客グループを削除する（DELETE <code>/{admin_route}/customer_group/{id}/delete</code>）</h3>
-<ol><li>管理画面の認証・権限を通過する。</li><li>当該グループを削除し、一覧へ戻る。</li></ol>
-<hr>
-<h2 id="表示メッセージ">表示メッセージ</h2>
-<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>画面上の文言(英語)</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M08-12-MSG-001</td><td>管理画面上部</td><td>保存しました</td><td>（英訳なし）</td><td>顧客グループを登録または更新して保存したとき</td><td>顧客グループ管理画面に遷移する</td></tr><tr><td>M08-12-MSG-002</td><td>管理画面上部</td><td>この購入グループは商品で使用されているため、 %name% は削除することができません。</td><td>（英訳なし）</td><td>削除しようとした顧客グループに会員が登録されているとき</td><td>エラーを表示し、顧客グループ管理画面に遷移する</td></tr><tr><td>M08-12-MSG-003</td><td>管理画面上部</td><td>削除しました</td><td>（英訳なし）</td><td>顧客グループを削除できたとき</td><td>顧客グループ管理画面に遷移する</td></tr><tr><td>M08-12-MSG-004</td><td>管理画面上部</td><td>関連するデータがあるため「%name%」を削除できませんでした</td><td>（英訳なし）</td><td>顧客グループの削除中にエラーが起きたとき</td><td>エラーを表示し、顧客グループ管理画面に遷移する</td></tr></tbody></table></div>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>登録・更新</td><td>検証に通ったグループを保存する。</td></tr><tr><td>削除</td><td>指定したグループを削除する。</td></tr></tbody></table></div>
-<h3 id="入力項目">入力項目</h3>
-<div class="table-wrap"><table><thead><tr><th>項目名</th><th>必須／任意</th><th>最大長</th><th>初期値</th><th>保存先・扱い</th></tr></thead><tbody><tr><td>顧客グループ名</td><td>必須</td><td>255文字（<code>dtb_customer_group.name</code>）</td><td>新規は空、編集は現行値</td><td>顧客グループ（<code>dtb_customer_group</code>）の列<code>name</code>。検証に通った場合に保存する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>更新単位</td><td>登録・編集・削除の対象データは、フォーム送信またはCSV取込で検証を通過した単位で更新する。保存対象と副作用は処理フロー、入出力、DBカラムの各節を正とする。</td></tr><tr><td>再表示</td><td>保存成功後はDBに確定した値を次回表示・検索・出力の基準にする。検証エラーまたは例外時に確定しない入力値は再表示画面のフォーム値に留まる。</td></tr><tr><td>同時更新</td><td>明示的な楽観ロック・悲観ロックを持たない場合、同一データを複数管理者が同時に更新すると後から保存された内容が残る。</td></tr></tbody></table></div>
-<hr>
-<h2 id="API-バッチ結果">API/バッチ結果</h2>
-<p>本機能ではAPI呼び出し・バッチ実行を扱わない。</p>
-<hr>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="一覧と編集">一覧と編集</h3>
+<p>登録済みのグループの一覧と、選択したグループまたは新規のグループの編集フォームを、同じ画面に表示する。</p>
+<h3 id="登録・更新・削除の判定">登録・更新・削除の判定</h3>
+<div class="table-wrap"><table><thead><tr><th>操作</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>登録・更新</td><td>入力の検証に成功したとき</td><td>グループを保存し、顧客グループ管理画面へ戻って保存済みのメッセージを表示する</td></tr><tr><td>登録・更新</td><td>入力の検証に失敗したとき</td><td>保存せず、一覧画面を再表示する</td></tr><tr><td>削除</td><td>当該グループに会員が登録されているとき</td><td>削除せず、削除できない旨のエラーを表示する</td></tr><tr><td>削除</td><td>削除の途中で関連するデータが見つかったとき</td><td>削除せず、削除できなかった旨のエラーを表示する</td></tr><tr><td>削除</td><td>上記のいずれにも該当しないとき</td><td>当該グループを削除し、一覧へ戻って削除済みのメッセージを表示する</td></tr></tbody></table></div>
+<h3 id="エラー時の扱い">エラー時の扱い</h3>
+<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>入力の検証に失敗したとき</td><td>一覧画面を再表示する。保存しない</td></tr><tr><td>削除できないとき</td><td>エラーを表示し、顧客グループ管理画面へ戻る</td></tr></tbody></table></div>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>グループ名、対象グループID、なりすまし対策トークン。</td></tr><tr><td>成功時出力</td><td>グループの登録・更新・削除、一覧への遷移。</td></tr><tr><td>失敗時出力</td><td>検証失敗時は一覧画面を再表示する。</td></tr><tr><td>副作用</td><td>顧客グループの作成・更新・削除。</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<p>機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。</p>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>dtb_customer_group</code>（顧客グループ）</td><td><code>name</code>（名称）</td><td>登録・編集・削除に使用する。</td></tr></tbody></table></div>
-<h3 id="DB操作">DB操作</h3>
-<p>永続化の正は ec-cube-enterprise（テーブル名・操作は ec-cube-enterprise を正典）。当ドメインは承認ワークフローを介さず persist/flush で直接確定する（承認ワークフローは在庫機能固有）。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>登録/更新</td><td>dtb_customer_group</td><td>当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。</td></tr></tbody></table></div>
-<hr>
-<h2 id="権限・認可">権限・認可</h2>
-<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>顧客グループ管理</th></tr></thead><tbody><tr><td>未ログイン管理者</td><td>アクセス不可。</td></tr><tr><td>ログイン済み管理者</td><td>一覧表示・登録・編集・削除が可能。</td></tr></tbody></table></div>
-<hr>
-<h2 id="画面遷移">画面遷移</h2>
-<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>ナビ「顧客グループ管理」</td><td>一覧（<code>m08-12_admin_customer_customer_group</code>）</td></tr><tr><td>登録・更新・削除後</td><td>一覧（<code>m08-12_admin_customer_customer_group</code>）</td></tr><tr><td>検証失敗</td><td>一覧画面を再表示</td></tr></tbody></table></div>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>検証失敗</td><td>一覧画面を再表示する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="ログ・監査">ログ・監査</h2>
-<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
-<ul><li>Cookie値</li><li>セッションIDの完全値</li></ul>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<p>登録・更新・削除を確定する。本機能は楽観ロック・悲観ロックの対象は持たない。</p>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>グループ名、対象のグループID、なりすまし対策トークン</td></tr><tr><td>成功時出力</td><td>グループを登録・更新・削除し、顧客グループ管理画面へ戻る</td></tr><tr><td>失敗時出力</td><td>検証に失敗したときは一覧画面を再表示する。削除できないときはエラーを表示する</td></tr></tbody></table></div>
+<h3 id="入出力-永続化">入出力: 永続化</h3>
+<div class="table-wrap"><table><thead><tr><th>操作</th><th>契機</th></tr></thead><tbody><tr><td>追加・更新</td><td>入力の検証に成功したとき。顧客グループ</td></tr><tr><td>削除</td><td>削除できたとき。顧客グループ</td></tr></tbody></table></div>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
+<h2 id="表示メッセージ">表示メッセージ</h2>
+<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M08-12-MSG-001</td><td>管理画面上部</td><td>保存しました</td><td>顧客グループを登録または更新して保存したとき</td><td>顧客グループ管理画面に遷移する</td></tr><tr><td>M08-12-MSG-002</td><td>管理画面上部</td><td>この購入グループは商品で使用されているため、 %name% は削除することができません。</td><td>削除しようとした顧客グループに会員が登録されているとき</td><td>エラーを表示し、顧客グループ管理画面に遷移する</td></tr><tr><td>M08-12-MSG-003</td><td>管理画面上部</td><td>削除しました</td><td>顧客グループを削除できたとき</td><td>顧客グループ管理画面に遷移する</td></tr><tr><td>M08-12-MSG-004</td><td>管理画面上部</td><td>関連するデータがあるため「%name%」を削除できませんでした</td><td>顧客グループの削除中にエラーが起きたとき</td><td>エラーを表示し、顧客グループ管理画面に遷移する</td></tr></tbody></table></div>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

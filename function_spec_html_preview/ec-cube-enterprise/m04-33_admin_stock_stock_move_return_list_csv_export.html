@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,21 +272,7 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#文書情報">文書情報</a>
-<a class="lv2" href="#改訂履歴">改訂履歴</a>
-<a class="lv2" href="#1-戻しリストCSV">1. 戻しリストCSV</a>
-<a class="lv3" href="#機能の目的と役割">機能の目的と役割</a>
-<a class="lv3" href="#本書で扱うこと">本書で扱うこと</a>
-<a class="lv3" href="#本書で扱わないこと">本書で扱わないこと</a>
-<a class="lv3" href="#利用者視点の入口-エンドポイント">利用者視点の入口（エンドポイント）</a>
-<a class="lv3" href="#CSV出力仕様">CSV出力仕様</a>
-<a class="lv3" href="#出力対象データと並び順">出力対象データと並び順</a>
-<a class="lv3" href="#プロセスフロー">プロセスフロー</a>
-<a class="lv3" href="#出力前バリデーション-validateReturnListExportIds">出力前バリデーション（`validateReturnListExportIds`）</a>
-<a class="lv3" href="#分岐・遷移・例外">分岐・遷移・例外</a>
-<a class="lv3" href="#状態・データ更新">状態・データ更新</a>
-<a class="lv3" href="#関連設計への接続点">関連設計への接続点</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a></nav>
+      
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -284,119 +280,8 @@ footer {
         <h1>M04-33（戻しリストCSV）</h1>
       </header>
       
-      <h2 id="文書情報">文書情報</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>機能名</td><td>戻しリストCSV</td></tr><tr><td>機能分類</td><td>管理画面 / 在庫管理</td></tr><tr><td>カスタマイズ区分</td><td>新規実装</td></tr><tr><td>作成日</td><td>2026-06-11</td></tr><tr><td>参照元</td><td>excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html</td></tr><tr><td>実装確認</td><td>../ec-cube-enterprise（<code>StockMoveTransferController::exportReturnListCsv</code> / <code>StockMoveTransferReturnListCsvExportService</code> / <code>RestockListCsvRowFormatter</code> / <code>DtbStockMoveTransferRepository::getReturnListExportRows</code> / <code>getMoveToBaseInfoAndStatusByIds</code>）</td></tr></tbody></table></div>
-<h2 id="改訂履歴">改訂履歴</h2>
-<div class="table-wrap"><table><thead><tr><th>日付</th><th>内容</th></tr></thead><tbody><tr><td>2026-06-11</td><td>新規実装機能として、Excel設計書を主、実装を補完情報として初版作成。</td></tr><tr><td>2026-06-12</td><td>ec-cube-enterprise 実装（Controller/Service/Form/Entity）と既存テストを読み込み、実装確認値で具体化。</td></tr></tbody></table></div>
-<h2 id="1-戻しリストCSV">1. 戻しリストCSV</h2>
-<h3 id="機能の目的と役割">機能の目的と役割</h3>
-<p>在庫移動・振替一覧（M04-32 相当）でチェック選択した在庫移動・振替情報をもとに、入庫先（移動先）店舗で棚へ戻すための「戻しリスト」をCSV出力する管理画面機能。入庫先在庫（<code>move_to_product_stock</code>）を商品規格単位に集計し、入庫先店舗ごとに設定された金額閾値（高額区分の閾値1〜3）＋サプライ品で「ピッキング区分」を振り分けて出力する。出力列・整形ルール・並び順は店頭買取／ネット買取の棚戻しリストと共通化されており、<code>RestockListCsvRowFormatter</code> を共用する。</p>
-<p>本機能のカスタマイズ区分は新規実装であり、現行（pf-eccube3）に相当機能は無い。画面項目・CSV列・業務上の閾値仕様は基本設計仕様書（0202_基本設計仕様書(在庫管理機能)）を正とし、URLエンドポイント・出力列・整形・並び順・DBカラムはリニューアル先 ec-cube-enterprise 実装を正とする。</p>
-<h3 id="本書で扱うこと">本書で扱うこと</h3>
-<ul><li>戻しリストCSV出力の入口（エンドポイント）と起動条件</li><li>出力対象データ（選択された在庫移動・振替情報と入庫先在庫明細）</li><li>CSV出力列・整形ルール（ピッキング区分・言語/状態・略称・色/R・商品名整形）</li><li>並び順（ピッキング区分→棚番→言語→状態→Foil→略称タグ→レアリティ→色→カード）</li><li>出力前バリデーション（選択無し・存在しないID・対象外ステータス・権限・入庫先未設定・複数店舗）</li><li>ファイル名・文字コード・ヘッダ行</li><li>エラー時の遷移（一覧への戻し）</li></ul>
-<h3 id="本書で扱わないこと">本書で扱わないこと</h3>
-<p>以下は本書では仕様確定せず、対応機能の設計を正とする。</p>
-<ul><li>在庫移動・振替一覧画面そのもの（検索・表示・選択UI）と、戻しリストPDF出力（M04-34）</li><li>在庫移動CSV登録・在庫振替CSV登録・在庫移動振替一覧CSV出力など同一コントローラの他機能</li><li>入庫先店舗ごとの金額閾値（<code>expensive_threshold1〜3</code>）・棚番マスタ・略称タグ（保管コード）等のマスタ登録（マスタデータ管理側）</li><li>管理画面ログイン認証・権限制御そのもの（共通設計を正とする）</li></ul>
-<h3 id="利用者視点の入口-エンドポイント">利用者視点の入口（エンドポイント）</h3>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント（ルート名）</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>戻しリストCSV出力</td><td><code>POST /%admin%/product/stock/move_transfer/return_list_csv_export</code>（<code>admin_stock_move_transfer_return_list_csv_export</code>）</td><td>一覧で選択した在庫移動・振替情報ID（<code>ids[]</code>）を受け取り、CSRFトークン検証・対象バリデーション後にCSVをダウンロード応答（<code>StreamedResponse</code>）する。検証NG時は一覧（ページ付き）へリダイレクトする。</td></tr></tbody></table></div>
-<ul><li><code>%admin%</code> は管理画面ルートプレフィックス（<code>eccube_admin_route</code>）。管理画面ログインを要する。</li><li>入力は POST の <code>ids[]</code>（在庫移動・振替情報IDの配列）と CSRFトークン <code>_token</code>。<code>set_time_limit(0)</code> で実行時間制限を解除する。</li><li>出力先一覧ページは、セッション <code>eccube.admin.stock.move_transfer.page_no</code>（既定1）を用いて <code>admin_stock_move_transfer_page</code> を生成する。</li></ul>
-<h3 id="CSV出力仕様">CSV出力仕様</h3>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>ヘッダ定数</td><td><code>StockMoveTransferReturnListCsvExportService::CSV_HEADER</code>。1行目にヘッダ名を出力する。</td></tr><tr><td>文字コード</td><td><code>CsvExportService</code> 経由。<code>eccube_csv_export_encoding</code> 設定に従う（UTF-8 設定時は先頭に BOM <code>\xEF\xBB\xBF</code> を付与。既定は <code>SJIS-win</code>）。区切りは <code>eccube_csv_export_separator</code> 設定。</td></tr><tr><td>ファイル名</td><td><code>stock_move_transfer_return_list_{選択IDの最小値を7桁ゼロ詰め}_{YmdHis}.csv</code>（例: <code>stock_move_transfer_return_list_0012345_20260101120000.csv</code>）。<code>Content-Type: application/octet-stream</code>、<code>Content-Disposition: attachment</code>。</td></tr><tr><td>完了ログ</td><td><code>log_info('在庫移動・振替 戻しリストCSV出力完了. ファイル名: …')</code> を記録する。</td></tr></tbody></table></div>
-<p>出力列（<code>CSV_HEADER</code> の順）:</p>
-<div class="table-wrap"><table><thead><tr><th>#</th><th>列名（ヘッダ）</th><th>内部キー</th><th>内容・整形ルール</th></tr></thead><tbody><tr><td>1</td><td>ピッキング区分</td><td><code>pickingType</code></td><td>入庫先店舗の金額閾値（<code>expensive_threshold1〜3</code>）と基準価格で振り分け。閾値を昇順に整列し、基準価格が「最小閾値未満」→<code>{最小閾値}円未満</code>、区間内→<code>{下限}円以上{下限上}円未満</code>、最大閾値以上→<code>{最大閾値}円以上</code>（数値は3桁区切り）。サプライ品（後述）は <code>サプライ</code>。基準価格 null または閾値未設定時は空。</td></tr><tr><td>2</td><td>棚番号</td><td><code>shelfNumber</code></td><td>本店（<code>BaseInfo::TC_TOKYO_ID</code>）の入庫先のみ棚番（<code>dtb_shelf_number.name</code>）を出力。支店は空。</td></tr><tr><td>3</td><td>言語/状態</td><td><code>languageAndCondition</code></td><td><code>{Foilなら"Foil"}{言語コード}/{状態コード}</code>（例 <code>FoilJP/NM</code>）。状態コードが空なら <code>/状態</code> を付けない。サプライ品は <code>サプライ品</code>。</td></tr><tr><td>4</td><td>略称</td><td><code>storageCode</code></td><td>保管コード（略称タグ）名 <code>mtb_storage_code.name</code>。サプライ品は空。</td></tr><tr><td>5</td><td>色/R</td><td><code>colorAndRarity</code></td><td>色名（カードに紐づく <code>mtb_color.name_jp</code> を id 順連結）＋レアリティコード <code>mtb_rarity.code</code>。サプライ品は空。シングルカード以外は色情報が無いため色は付かない。</td></tr><tr><td>6</td><td>数</td><td><code>quantity</code></td><td>商品規格単位に集計した移動点数 <code>SUM(d.move_transfer_quantity)</code>。</td></tr><tr><td>7</td><td>商品名</td><td><code>productName</code></td><td>サプライ品はそのまま。非サプライは商品名から略称タグ（<code>[略称]</code>、無ければ <code>[～]</code>）・<code>【言語/状態】</code>・色・レアリティを除去（受注ピッキングリストと同等ロジック）。</td></tr><tr><td>8</td><td>基準価格</td><td><code>standardPrice</code></td><td>規格の基準価格 <code>dtb_product_class.standard_price</code>（数値、null は空）。</td></tr></tbody></table></div>
-<p>&gt; 「サプライ品」の判定: 商品が物販カテゴリ（<code>Category::GOODS_ID</code>）または予約物販カテゴリ（<code>Category::RESERVED_GOODS_ID</code>）に属するかを <code>EXISTS</code> で判定する（1:N JOIN による数量重複を避けるため EXISTS に分離）。 &gt; 既存テスト <code>testExportByIdsTwoStockMoveTransfersPopulatesCsvColumns</code> は、2件選択時にヘッダ行＋2データ行が出力され各行の列数が <code>CSV_HEADER</code> と一致することを確認している（先頭BOMを除去して比較）。</p>
-<h3 id="出力対象データと並び順">出力対象データと並び順</h3>
-<p><code>DtbStockMoveTransferRepository::getReturnListExportRows($ids)</code> が生SQLで取得する。</p>
-<ul><li>主テーブル: <code>dtb_stock_move_transfer_detail</code>（明細）→ <code>dtb_stock_move_transfer</code>（ヘッダ）→ 入庫先在庫 <code>dtb_product_stock</code>（<code>move_to_product_stock_id</code>）→ <code>dtb_product_class</code> → <code>dtb_product</code>。閾値は入庫先店舗 <code>dtb_base_info</code>（<code>move_to_base_info_id</code>）の <code>expensive_threshold1〜3</code> を参照する。</li><li>集計: 商品規格（<code>pc.id</code>）単位で <code>move_transfer_quantity</code> を <code>SUM</code> する（<code>GROUP BY</code>）。</li><li>時刻: 取得前に接続セッションで <code>SET TIME ZONE 'Asia/Tokyo'</code> を実行する。</li><li>並び順（基本設計の並び順をSQL <code>ORDER BY</code> で実装）:</li></ul>
-<ol><li>ピッキング区分（円未満→円以上〜円未満→円以上→サプライ。サプライは最後）</li><li>棚番（本店のみ <code>dtb_shelf_number.sort_no</code> 昇順。支店は一律0で棚番ソートを行わない）</li><li>言語（<code>mtb_language.id</code> 昇順＝日→英→他言語）</li><li>状態（<code>mtb_card_condition.id</code> 昇順＝NM→HP）</li><li>Foilフラグ（非Foil→Foil）</li><li>略称タグ（<code>mtb_storage_code.rank</code> 昇順）</li><li>レアリティ（<code>mtb_rarity.sort_no</code> 昇順＝M→C）</li><li>色（<code>mtb_color_sequence.sort_no</code> 昇順）</li><li>カード（略称タグが <code>alphabet_sort_flg=true</code> なら英語カード名 <code>mtb_card.name_en</code> 昇順、false ならコレクター番号 <code>mtb_card_detail.card_no</code> 昇順）</li></ol>
-<h3 id="プロセスフロー">プロセスフロー</h3>
-<ol><li><code>POST .../return_list_csv_export</code> を受信。<code>set_time_limit(0)</code>、CSRFトークン検証（<code>isTokenValid()</code>）。</li><li>共通バリデーション <code>validateReturnListExportRequest()</code> を実行。</li></ol>
-<ul><li><code>ids[]</code> を整数化・空要素除去。空なら <code>admin.stock.move_transfer.return_list_csv_export.no_selection</code>（「1つ以上の在庫移動情報を選択してください。」）をエラー表示し一覧へリダイレクト。</li><li><code>StockMoveTransferReturnListCsvExportService::validateReturnListExportIds($ids, $Member)</code> で対象を検証（後述）。エラーがあれば各メッセージを表示し一覧へリダイレクト。</li></ul>
-<ol><li>検証通過後、<code>exportByIds($ids)</code> を呼ぶ。<code>getReturnListExportRows($ids)</code> の行を <code>RestockListCsvRowFormatter::iterateFormattedRows()</code> で整形しながらストリーム出力（ヘッダ行→データ行）。</li><li><code>StreamedResponse</code>（CSVダウンロード）を返し、完了ログを記録する。</li></ol>
-<h3 id="出力前バリデーション-validateReturnListExportIds">出力前バリデーション（<code>validateReturnListExportIds</code>）</h3>
-<p>入庫先店舗・ステータス（<code>getMoveToBaseInfoAndStatusByIds</code>）を取得して以下を判定する。エラーは複数まとめて返す。</p>
-<div class="table-wrap"><table><thead><tr><th>条件</th><th>エラーメッセージ</th></tr></thead><tbody><tr><td>対象データが1件も見つからない</td><td><code>対象のデータが見つかりません。</code></td></tr><tr><td>指定IDが存在しない</td><td><code>ID: {id} は存在しません。</code></td></tr><tr><td>入庫先店舗が未設定（<code>MoveToBaseInfo</code> が null）</td><td><code>ID: {id} は入庫先店舗が設定されていません。</code></td></tr><tr><td>入庫先店舗がログインメンバーの担当店舗（<code>MemberBaseInfo</code>）に無い</td><td><code>ID: {id} は権限のない店舗のデータです。</code></td></tr><tr><td>ステータスが許可対象外</td><td><code>ID: {id} は対象外のステータスです。</code></td></tr><tr><td>複数店舗の入庫先が混在</td><td><code>複数店舗の在庫移動・振替情報を同時に処理することはできません。</code></td></tr></tbody></table></div>
-<p>許可ステータス（<code>ALLOWED_STATUS_IDS</code>、出庫承認済み以降）: 出庫承認済み（<code>STATUS_OUTBOUND_APPROVED=4</code>）／移動中（<code>STATUS_MOVING=5</code>）／入庫承認待ち（<code>STATUS_INBOUND_APPROVAL_PENDING=6</code>）／入庫承認済み（<code>STATUS_INBOUND_APPROVED=7</code>）。新規（1）・差戻し（3）等は対象外。</p>
-<p>&gt; 既存テスト（<code>StockMoveTransferReturnListCsvExportServiceTest</code>）が各分岐を網羅: 存在しないIDのみ→「対象のデータが見つかりません。」のみ、存在しないID＋対象外ステータス混在、権限の無い入庫先、入庫先未設定、複数店舗混在、許可ステータス＋同一店舗＋権限ありの2件は空配列。</p>
-<h3 id="分岐・遷移・例外">分岐・遷移・例外</h3>
-<ul><li>**選択無し / 検証NG**: CSVを返さず <code>admin_stock_move_transfer_page</code>（セッションのページ番号）へリダイレクト（302）。Web テスト <code>testExportReturnListCsvWithNoSelectionRedirectsToIndex</code> / <code>...WithValidationErrorsRedirectsToIndex</code> / <code>...DoesNotExport</code> が確認。</li><li>**検証OK**: <code>exportByIds</code> の <code>StreamedResponse</code> をそのまま返す（HTTP 200・<code>application/octet-stream</code>・添付ファイル名付き）。Web テスト <code>testExportReturnListCsvReturnsStreamedResponseFromExporter</code> が確認。</li><li>**CSRF不正**: <code>isTokenValid()</code> により無効トークンは例外。</li><li>**対象なし**: バリデーションで「対象のデータが見つかりません。」として扱い、出力は行わない。</li></ul>
-<h3 id="状態・データ更新">状態・データ更新</h3>
-<div class="table-wrap"><table><thead><tr><th>対象</th><th>内容</th></tr></thead><tbody><tr><td>主データ</td><td>戻しリストCSVは**参照のみ**で業務データを更新しない（選択IDから集計してCSVを生成するだけ）。</td></tr><tr><td>参照テーブル</td><td><code>dtb_stock_move_transfer</code>（ヘッダ）／<code>dtb_stock_move_transfer_detail</code>（明細）／入庫先在庫 <code>dtb_product_stock</code>（<code>move_to_product_stock_id</code>）／<code>dtb_product_class</code>・<code>dtb_product</code>／入庫先店舗 <code>dtb_base_info</code>（<code>expensive_threshold1〜3</code>）／<code>mtb_shelf_number</code>（棚番）・<code>mtb_storage_code</code>（略称タグ）・<code>mtb_language</code>・<code>mtb_card_condition</code>・<code>mtb_card_detail</code>・<code>mtb_rarity</code>・<code>mtb_card</code>・<code>mtb_color</code>・<code>mtb_color_sequence</code>。</td></tr><tr><td>ログ</td><td>出力完了時にアプリケーションログ（<code>log_info</code>）を記録するのみ。CSV取込履歴・在庫履歴は更新しない。</td></tr></tbody></table></div>
-<h3 id="関連設計への接続点">関連設計への接続点</h3>
-<ul><li>CSV列・整形・閾値・並び順の業務要件は参照元Excel設計書（在庫移動戻しリストCSV出力シート）を正とする。</li><li>URLエンドポイント・出力列・整形ロジック・並び順・DBカラムは <code>../ec-cube-enterprise</code> の <code>StockMoveTransferController</code> / <code>StockMoveTransferReturnListCsvExportService</code> / <code>RestockListCsvRowFormatter</code> / <code>DtbStockMoveTransferRepository</code> 実装を正とする。</li><li>戻しリストPDF出力（M04-34）は本CSVと同一の取得・整形ロジック（<code>getReturnListExportRows</code> / <code>RestockListCsvRowFormatter</code>）を共用する。出力対象選択・バリデーションも共通メソッドを用いる。</li></ul>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<p>本機能は新規実装であり、現行（pf-eccube3）に対応する機能は存在しない。仕様は基本設計仕様書を正とする。</p>
-<p>移行先 ec-cube-enterprise には戻しリストCSV出力の実装（<code>StockMoveTransferReturnListCsvExportService</code>）があり、DB関連の記述はこれを正とする。出力対象は一覧で選択された在庫移動・振替情報であり、在庫移動・振替（テーブル <code>dtb_stock_move_transfer</code>）と明細（テーブル <code>dtb_stock_move_transfer_detail</code>）、および入庫先在庫・入庫先店舗を参照する。店舗ごとの金額閾値（<code>dtb_base_info.expensive_threshold1〜3</code>）・棚番・略称タグなどの出力区分はマスタデータ管理側の設定に従う。列の型・桁・制約の細部は ec-cube-enterprise の Entity / Repository / Migration を正とする。</p>
-<hr>
-<details>
-<summary>Excel設計書からの抽出（原典・テスト網羅の根拠）</summary>
-<pre><code class="language-text">在庫移動戻しリストCSV出力
-ドキュメント名
-在庫管理 基本設計
-セクション
-—
-プロジェクト名
-サイトリニューアル
-作成者
-堀部
-作成日
-2025-08-25
-更新者
-堀部
-更新日
-2025-09-12
-機能No
-M04-33
-機能名
-在庫移動戻しリストCSV出力
-概要
-—
-処理概要（★はカスタマイズ項目）
-CSV出力項目
-識別ID項目名備考
-1ピッキング区分店舗ごとの閾値（ネット買取管理の場合は本店しかないため本店の閾値）とサプライを出力
-●●円未満、●●円以上▲▲円未満、■■円以上、サプライ
-閾値の表示も基準販売価格を参照して行う（セール中で金額が変わっても棚を移動することはないため）
-2棚番号商品がしまってある場所番号(本店のみ)
-支店では非表示
-3言語/状態Foilの場合はFoilをつけて、言語/状態の形式で出力する（例: FoilJP/NM）、サプライ品の場合は「サプライ品」と表示
-4略称商品の略称
-サプライ品の場合は表示しない
-5色/R商品名から取り出した色とレアリティを出力（例: 金R）。シングルカード以外は色に該当するデータがないため、色情報は非表示
-6数商品点数
-7商品名サプライ品でない場合は商品名から略称・言語・状態・色・レアリティを取り除く
-8基準価格基準価格
-カスタマイズ説明
-・カスタマイズ要件
-・在庫移動一覧画面で選択された在庫移動データを元に棚戻しするための戻しリストをダウンロードする
-・本店3F,2F,B2Fや支店で閾値が異なるため、マスターデータ管理にて、店舗ごとに金額の閾値を分けられるようにする
-→フォーマットがそれぞれ3F,2F,B2Fで異なるものとなる
-備考
-３F在庫 現行運用での金額の閾値について
-シングルカード
-低額：4800円未満
-高額：4800円以上
-金庫：基本的にEC在庫で500万以上のものを保管。あとは備品などを入れている
-シングルカード以外
-倉庫：2Fに置ききれない（商品化していない）サプライパックボックス等を保管
-・その他、基本的な仕様は「在庫移動指示リスト ピッキングリスト印刷」に準じる
-機能仕様処理概要（★はカスタマイズ項目）
-印刷対象取得
-★一覧画面で選択された買取情報に紐づく実在庫情報を、対象店舗ごとに指定された閾値情報+サプライで分けて取得する
-・サプライ品でない場合は商品名から略称・言語・状態・色・レアリティを取り除く
-・商品名内に[略称タグ]が含まれない場合は[～]（[]内にある文字を[]ごと）を削除
-・並び順は金額閾値の昇順(最後にサプライ)が最優先となる
-・金額閾値内の並び順は以下の通りとなる
-・棚番（昇順、支店の場合は棚番のソートは行わない）
-・言語（日→英→他言語）
-・状態（NM→HP）
-・Foilフラグ（非Foil→Foil）
-・略称タグ（昇順）
-・レアリティ（M→C）
-・色（マスターデータ色順参照）
-・設定されている略称タグについてコレクター番号でのソートだった場合、コレクター番号（昇順）
-・設定されている略称タグについてアルファベットでのソートだった場合、英語のカード名（昇順）</code></pre>
-</details>
+      <div class="renewal-spec-banner"><h3>リニューアル後の仕様</h3></div>
+
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

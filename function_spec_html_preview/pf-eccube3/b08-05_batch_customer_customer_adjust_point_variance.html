@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,25 +272,14 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#本書で扱うこと">本書で扱うこと</a>
-<a class="lv2" href="#本書で扱わないこと">本書で扱わないこと</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv2" href="#用語">用語</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#ポイント差分発生通知を実行する-customer-batch-adjustPointVariance">ポイント差分発生通知を実行する（`customer:batch adjustPointVariance`）</a>
-<a class="lv2" href="#集計条件">集計条件</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
-<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#対象と補正">対象と補正</a>
+<a class="lv3" href="#通知">通知</a>
+<a class="lv3" href="#エラー時の扱い">エラー時の扱い</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#ログ・監査">ログ・監査</a>
-<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a></nav>
+<a class="lv3" href="#入出力-永続化">入出力: 永続化</a>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -288,67 +287,20 @@ footer {
         <h1>バッチ 会員管理 — ポイント差分発生通知</h1>
       </header>
       
-      <h2 id="概要">概要</h2>
-<p>会員の保有ポイントとポイント履歴の合計に差分がある会員を検出し、保有ポイントを履歴合計へ補正したうえで、差分の一覧を管理者へ通知メールで送信するバッチである。コマンドライン（コンソールコマンド）から実行する。スマレジとEC側のポイントの差分を検知する位置づけである。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインの会員バッチ（ポイント差分補正・通知処理）、ポイント履歴を扱うリポジトリ、通知メール送信処理を正とする。カスタマイズ区分は現行踏襲であり、挙動はpf-eccube3を参照し、DB関連の記述（テーブル名・列名・永続化先）はec-cube-enterpriseを正とする。</p>
-<p>対象はコンソールコマンドであり、ブラウザ経由の画面を持たない。</p>
-<p>本文ではフレームワークのコマンド型名やサービス型名を主説明としない。実行はコンソールのバッチコマンドで行う。</p>
-<hr>
-<h2 id="本書で扱うこと">本書で扱うこと</h2>
-<ul><li>バッチの起動方法（コンソールコマンド）</li><li>保有ポイントと履歴合計の差分検出</li><li>保有ポイントの履歴合計への補正</li><li>差分一覧の管理者への通知</li></ul>
-<hr>
-<h2 id="本書で扱わないこと">本書で扱わないこと</h2>
-<p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
-<ul><li>ポイント付与・利用そのもの（ポイント処理を正とする）</li><li>スマレジ側ポイントの管理</li><li>通知メールの本文・宛先設定（メール設定・テンプレート管理を正とする）</li><li>バッチの起動スケジュール（運用・ジョブ設定を正とする）</li></ul>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<p>挙動の参照は現行（pf-eccube3）、DB関連の記述は移行先（ec-cube-enterprise）を正とする。</p>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>会員の保有ポイント</td><td>プレイヤー拡張テーブルの保有ポイント・会員参照</td><td><code>dtb_player</code>の<code>point</code>（ポイント残高）・会員参照（<code>dtb_customer</code>への関連）</td></tr><tr><td>ポイント履歴</td><td>ポイント履歴テーブルのポイント変動</td><td><code>dtb_point_history</code>の<code>point_change</code>（ポイント増減量）</td></tr></tbody></table></div>
-<p><code>dtb_player</code>・<code>dtb_point_history</code>は移行先ec-cube-enterpriseに存在し、列構成は現行と同一相当である。</p>
-<hr>
-<h2 id="用語">用語</h2>
-<div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>保有ポイント</td><td>会員が現在保持しているポイント。</td></tr><tr><td>履歴合計</td><td>ポイント履歴の増減を合計した値。</td></tr><tr><td>差分</td><td>保有ポイントと履歴合計の差。</td></tr></tbody></table></div>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>実行方法</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>コンソールのバッチコマンド</td><td><code>customer:batch adjustPointVariance</code></td><td>保有ポイントと履歴合計に差分のある会員を検出し、保有ポイントを履歴合計へ補正して差分一覧を管理者へ通知する。</td></tr></tbody></table></div>
-<p>本機能はHTTPで届く画面を持たない。コマンド名が一致しない場合は処理を行わずに終了する。</p>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="ポイント差分発生通知を実行する-customer-batch-adjustPointVariance">ポイント差分発生通知を実行する（<code>customer:batch adjustPointVariance</code>）</h3>
-<ol><li>保有ポイントと履歴合計に差分がある会員の一覧を取得する。</li><li>会員ごとに、保有ポイントを履歴合計へ補正する。</li><li>会員ごとに差分（保有ポイントと履歴合計の差）を算出して一覧に積む。</li><li>補正をすべて確定する。</li><li>メール送信用の経路を準備し、差分一覧があれば管理者へ通知メールを送信する。</li></ol>
-<hr>
-<h2 id="集計条件">集計条件</h2>
-<div class="table-wrap"><table><thead><tr><th>指標</th><th>集計の要点</th></tr></thead><tbody><tr><td>抽出対象</td><td>保有ポイントと履歴合計に差分がある会員。</td></tr><tr><td>差分</td><td>補正前の保有ポイントと履歴合計の差として算出する。</td></tr><tr><td>通知判定</td><td>差分一覧が空でない場合に管理者へ通知する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>補正</td><td>保有ポイントを履歴合計へ合わせる。</td></tr><tr><td>通知内容</td><td>会員ID・履歴合計・補正前保有ポイント・差分を一覧で通知する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="API-バッチ結果">API/バッチ結果</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>バッチ</td><td>入力はコマンド名。成功時は差分会員の保有ポイントを補正し、差分一覧を管理者へ通知する。差分が無ければ通知しない。</td></tr><tr><td>API</td><td>本バッチではAPIを呼び出さない。</td></tr></tbody></table></div>
-<hr>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="対象と補正">対象と補正</h3>
+<p>保有ポイントとポイント履歴の合計に差分がある会員を対象とする。会員ごとに保有ポイントを履歴合計へ合わせ、補正をまとめて確定する。差分が無いときは補正も通知も行わずに完了する。</p>
+<h3 id="通知">通知</h3>
+<p>補正した会員について、会員ID・履歴合計・補正前の保有ポイント・差分を一覧にし、管理者へ通知する。差分が無いときは通知しない。</p>
+<h3 id="エラー時の扱い">エラー時の扱い</h3>
+<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>コマンド名が未指定・不一致</td><td>処理を行わずに終了する</td></tr><tr><td>差分なし</td><td>補正・通知を行わず完了する</td></tr><tr><td>取得・送信時のエラー</td><td>エラーメッセージをコンソールに出力する</td></tr></tbody></table></div>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>コマンド名。</td></tr><tr><td>成功時出力</td><td>保有ポイントの補正、差分一覧の管理者通知メール。</td></tr><tr><td>失敗時出力</td><td>エラーメッセージのコンソール出力。</td></tr><tr><td>副作用</td><td>保有ポイントの補正、通知メール送信。</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<p>機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。</p>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>dtb_player</code>（選手情報）</td><td><code>point</code>（ポイント残高）・会員参照</td><td>差分検出と補正に使用する。</td></tr><tr><td><code>dtb_point_history</code>（ポイント履歴）</td><td><code>point_change</code>（ポイント増減量）</td><td>履歴合計の算出に使用する。</td></tr></tbody></table></div>
-<h3 id="DB操作">DB操作</h3>
-<p>永続化の正は ec-cube-enterprise（テーブル名・操作は ec-cube-enterprise を正典）。当ドメインは承認ワークフローを介さず persist/flush で直接確定する（承認ワークフローは在庫機能固有）。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>登録/更新</td><td>dtb_player / dtb_point_history</td><td>当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。</td></tr></tbody></table></div>
-<hr>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>保有ポイントと履歴</td><td>保有ポイントを履歴合計へ補正し整合させる。補正前の差分は通知で記録する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>コマンド名が未指定・不一致</td><td>処理を行わずに終了する。</td></tr><tr><td>差分なし</td><td>補正・通知を行わず完了する。</td></tr><tr><td>取得・送信時のエラー</td><td>エラーメッセージをコンソールに出力する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="ログ・監査">ログ・監査</h2>
-<div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>開始・完了</td><td>開始・完了のコンソール出力（日時付き）。</td></tr></tbody></table></div>
-<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
-<ul><li>メール送信の認証情報</li></ul>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<p>会員ごとの補正を積み、最後に確定する。本バッチは楽観ロック・悲観ロックの対象は持たない。</p>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>コマンド名</td></tr><tr><td>成功時出力</td><td>保有ポイントの補正と、差分一覧の管理者への通知</td></tr><tr><td>失敗時出力</td><td>エラーメッセージのコンソール出力</td></tr></tbody></table></div>
+<h3 id="入出力-永続化">入出力: 永続化</h3>
+<div class="table-wrap"><table><thead><tr><th>操作</th><th>契機</th></tr></thead><tbody><tr><td>更新</td><td>差分がある会員の保有ポイントを履歴合計へ合わせる補正</td></tr></tbody></table></div>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
+<h2 id="表示メッセージ">表示メッセージ</h2>
+<p>本バッチは画面メッセージを扱わない。</p>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

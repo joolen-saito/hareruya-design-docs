@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,38 +272,19 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#本書で扱うこと">本書で扱うこと</a>
-<a class="lv2" href="#本書で扱わないこと">本書で扱わないこと</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv2" href="#用語">用語</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#フロント挙動">フロント挙動</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#スタート画面を表示する-GET-mypage-identification">スタート画面を表示する（GET `/mypage/identification`）</a>
-<a class="lv3" href="#撮影画面を表示する-POST-mypage-identification-photograph">撮影画面を表示する（POST `/mypage/identification/photograph`）</a>
-<a class="lv3" href="#申請する-POST-mypage-identification-complete">申請する（POST `/mypage/identification/complete`）</a>
-<a class="lv2" href="#表示メッセージ">表示メッセージ</a>
-<a class="lv3" href="#常時表示-正常・静的">常時表示（正常・静的）</a>
-<a class="lv3" href="#エラー・警告-画面全体">エラー・警告（画面全体）</a>
-<a class="lv3" href="#メッセージID対応-自動棚卸">メッセージID対応（自動棚卸）</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
-<a class="lv3" href="#入力項目">入力項目</a>
-<a class="lv3" href="#エッジケース">エッジケース</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#利用できる端末">利用できる端末</a>
+<a class="lv3" href="#スタート画面">スタート画面</a>
+<a class="lv3" href="#撮影画面">撮影画面</a>
+<a class="lv3" href="#申請の判定順序">申請の判定順序</a>
+<a class="lv3" href="#申請の確定">申請の確定</a>
+<a class="lv3" href="#画面に出る要素">画面に出る要素</a>
+<a class="lv3" href="#エラー時の扱い">エラー時の扱い</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#バリデーション">バリデーション</a>
-<a class="lv2" href="#権限・認可">権限・認可</a>
-<a class="lv2" href="#画面遷移">画面遷移</a>
-<a class="lv3" href="#遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#ログ・監査">ログ・監査</a>
-<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
-<a class="lv2" href="#セッション">セッション</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a></nav>
+<a class="lv3" href="#出力-メール">出力: メール</a>
+<a class="lv3" href="#入出力-永続化">入出力: 永続化</a>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -301,101 +292,33 @@ footer {
         <h1>会員 — オンライン本人確認</h1>
       </header>
       
-      <h2 id="概要">概要</h2>
-<p>会員がマイページから、スマートフォン・タブレットのカメラで本人写真と身分証画像を撮影・送信し、オンラインで本人確認を申請する機能である。スタート画面（説明・身分証種別の選択）、撮影画面（画像撮影）、申請完了画面の3段階で進み、申請が成立すると身分証画像をオブジェクトストレージへ保存し、会員の本人確認ステータスを確認中に更新し、本人確認申請完了メールを送信する。本機能はカメラ撮影を伴うため、スマートフォン・タブレットからの利用に限定する。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインのオンライン本人確認処理、身分証種別選択フォーム・身分証画像フォーム、テンプレート（<code>Mypage/online_identification_start.twig</code>・<code>Mypage/online_identification.twig</code>・<code>Mypage/online_identification_done.twig</code>）、身分証画像を扱うリポジトリ、オブジェクトストレージ連携、本人確認申請完了メール送信処理を正とする。</p>
-<p>本機能のカスタマイズ区分は現行踏襲である。画面・処理の挙動は現行リポ（pf-eccube3）を参照し、DB関連（テーブル名・列名・制約・関連）はec-cube-enterpriseを正とする。</p>
-<p>対象はブラウザ経由のフロント（会員マイページ）に限定する。</p>
-<p>本文ではフレームワークのコントローラ型名やメソッド名を主説明としない。本文ではルートbind名の網羅は主説明とせず、「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。コード探索でbind名が必要なときだけ「調査補助」へ書く。</p>
-<hr>
-<h2 id="本書で扱うこと">本書で扱うこと</h2>
-<ul><li>オンライン本人確認のスタート・撮影・申請完了の入口と画面遷移</li><li>スマートフォン・タブレット限定であることと、PCアクセス時の遷移</li><li>身分証種別の選択と必要な撮影画像</li><li>申請成立時の副作用（身分証画像の保存、本人確認ステータスの更新、申請完了メール）</li><li>利用者に表示するメッセージ</li></ul>
-<hr>
-<h2 id="本書で扱わないこと">本書で扱わないこと</h2>
-<p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
-<ul><li>撮影用ページ（カメラ撮影アプリ・JS）の内部仕様</li><li>オブジェクトストレージ連携の内部仕様</li><li>本人確認ステータスの管理者側運用（確認中以降の確認・否認）</li><li>簡易書留による本人確認の運用</li><li>本人確認申請完了メールの本文・件名（メールテンプレート管理機能を正とする）</li></ul>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<p>DB関連はec-cube-enterpriseを正とする。現行（pf-eccube3）と移行先（ec-cube-enterprise）のスキーマ差を次のとおり記録する。</p>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>身分証画像の主キー</td><td><code>dtb_identification_image.identification_image_id</code></td><td><code>dtb_identification_image.id</code>（主キー列名が変わる）。列 <code>player_id</code>・<code>identification_id</code>・<code>identification_image_type_id</code>・<code>url</code>・<code>create_date</code> は同一構成。</td></tr><tr><td>選手情報の主キー・参照</td><td><code>dtb_player.player_id</code></td><td><code>dtb_player.id</code>（主キー列名が変わる）。身分証画像からの参照列は <code>player_id</code>。</td></tr><tr><td>身分証種別の保持</td><td><code>dtb_player.identification_id</code></td><td>同じく <code>identification_id</code>（身分証種別マスタを参照）。</td></tr><tr><td>本人確認ステータスの保持</td><td><code>dtb_player.identity_confirm_status_id</code></td><td>同じく <code>identity_confirm_status_id</code>（本人確認ステータスマスタを参照）。</td></tr></tbody></table></div>
-<p>身分証画像・選手情報の列構成は主キー列名を除き現行・移行先で同一である。</p>
-<hr>
-<h2 id="用語">用語</h2>
-<div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>会員</td><td>フロントにログインしている顧客。</td></tr><tr><td>選手情報</td><td>会員に1対1で紐づく拡張情報。本人確認ステータス・身分証種別を持つ。</td></tr><tr><td>身分証種別</td><td>撮影対象の身分証の種類。種別により必要な撮影枚数が異なる。</td></tr><tr><td>本人確認ステータス</td><td>未確認・確認中・確認済みなどの状態。申請成立で確認中になる。</td></tr></tbody></table></div>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>マイページの「オンライン本人確認」ブロック</td><td><code>GET /mypage/identification</code></td><td>日本語版のマイページに表示し、押下すると説明と本人確認状況、身分証種別の選択フォームを表示する。英語版のマイページではこの入口を表示しない。</td></tr><tr><td>「撮影画面へ」ボタン</td><td><code>POST /mypage/identification/photograph</code></td><td>スマートフォン・タブレットの場合、選択した身分証種別に応じた撮影画面を表示する。PCの場合はスタート画面へ戻す。</td></tr><tr><td>「申請」操作（撮影画像の送信）</td><td><code>POST /mypage/identification/complete</code></td><td>画像を検証・保存し、本人確認ステータスを確認中に更新して申請完了画面を表示する。</td></tr></tbody></table></div>
-<p>フロントのページであり管理画面プレフィックスは付かない。<code>/mypage</code>配下は会員ログインを要する。撮影画面・申請完了はスマートフォン・タブレット限定であり、PCからのアクセスはスタート画面またはマイページへ遷移する。</p>
-<hr>
-<h2 id="フロント挙動">フロント挙動</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>スタート画面は見出し「オンライン本人確認について」、説明、本人確認状況、身分証種別の選択、「撮影画面へ」。撮影画面は見出し「撮影画面」、必要枚数の案内、現在の顔写真・身分証（オモテ／ウラ）等の撮影開始ボタン、最新画像であることへの同意。申請完了画面は見出し「申請完了」、「申請が完了しました。」「確認完了までしばらくお待ちください。」「現在、確認中です」。</td></tr><tr><td>JS挙動</td><td>画像は本サイト提供の撮影用ページ（アプリ）で撮影し、撮影結果を画像データとして送信する。撮影UIの内部仕様は本書では扱わない。</td></tr><tr><td>CSS・レイアウト</td><td>必須項目に必須表示を付す。</td></tr><tr><td>モーダル・ポップアップ</td><td>撮影UIは外部の撮影用ページで行う。本画面専用のモーダルは扱わない。</td></tr></tbody></table></div>
-<p>スタート画面は端末がスマートフォン・タブレットかどうかの判定結果を画面に渡す。撮影画面・申請完了の処理はスマートフォン・タブレット以外では行わない。</p>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="スタート画面を表示する-GET-mypage-identification">スタート画面を表示する（GET <code>/mypage/identification</code>）</h3>
-<ol><li>会員ログインを要求する。会員と選手情報を取得する。</li><li>端末がスマートフォン・タブレットかを判定する。</li><li>身分証種別の選択フォームを生成し、説明・本人確認状況とあわせてスタート画面を表示する。</li></ol>
-<h3 id="撮影画面を表示する-POST-mypage-identification-photograph">撮影画面を表示する（POST <code>/mypage/identification/photograph</code>）</h3>
-<ol><li>スマートフォン・タブレットでない場合はスタート画面へ戻す。</li><li>身分証種別の選択が無い場合はスタート画面へ戻す。</li><li>直前の申請が検証失敗で戻った場合はエラー状態を受け取る。</li><li>選択した身分証種別に応じた撮影フォームを生成し、撮影画面を表示する。</li></ol>
-<h3 id="申請する-POST-mypage-identification-complete">申請する（POST <code>/mypage/identification/complete</code>）</h3>
-<ol><li>スマートフォン・タブレットでない場合はマイページへ戻す。</li><li>身分証種別を含む送信内容が無い場合はマイページへ戻す。</li><li>撮影フォームが送信状態でない場合（直接アクセス等）はマイページへ戻す。</li><li>撮影フォームの検証に失敗した場合は、エラー状態を付けて撮影画面へ戻す。</li><li>画像データを検証する（各画像に拡張子が判別できること）。検証に失敗した場合はエラー画面（画像データのアップロードに失敗しました）を表示して終了する。</li><li>検証に通った各画像をオブジェクトストレージへ保存し、身分証画像として記録する。</li><li>選手情報の身分証種別を更新し、本人確認ステータスを確認中に変更して保存する。</li><li>本人確認申請完了メールを送信する。</li><li>申請完了画面を表示する。</li></ol>
-<hr>
-<h2 id="表示メッセージ">表示メッセージ</h2>
-<h3 id="常時表示-正常・静的">常時表示（正常・静的）</h3>
-<div class="table-wrap"><table><thead><tr><th>種別</th><th>表示文言（日本語）</th><th>条件</th></tr></thead><tbody><tr><td>スタート説明</td><td>事前にオンラインで本人確認を行うことができます。登録後は簡易書留の送付及び取引毎の身分証提示が不要となります。</td><td>スタート画面の表示時</td></tr><tr><td>再アップロード注意</td><td>※「住所」「氏名」「生年月日」のいずれかが変更される場合は、再度身分証のアップロードが必要となります。</td><td>スタート画面の表示時</td></tr><tr><td>撮影案内</td><td>現在の顔写真と身分証写真の計4部または計3部が必要となります。</td><td>撮影画面の表示時</td></tr><tr><td>同意</td><td>本人写真と身分証の画像が、撮影された最新の画像であることに同意します。</td><td>撮影画面の同意項目</td></tr><tr><td>申請完了</td><td>申請が完了しました。／確認完了までしばらくお待ちください。</td><td>申請完了画面の表示時</td></tr><tr><td>確認中表示</td><td>現在、確認中です</td><td>申請完了画面の表示時</td></tr></tbody></table></div>
-<h3 id="エラー・警告-画面全体">エラー・警告（画面全体）</h3>
-<div class="table-wrap"><table><thead><tr><th>表示文言（日本語）</th><th>表示条件（利用者視点）</th><th>表示位置</th><th>備考</th></tr></thead><tbody><tr><td>画像データのアップロードに失敗しました。</td><td>送信画像の拡張子が判別できないとき</td><td>共通エラー画面</td><td>申請を確定しない</td></tr></tbody></table></div>
-<p>撮影フォームの検証失敗時は、エラー状態を付けて撮影画面へ戻す。本機能はフラッシュ・トーストを生成しない。</p>
-<hr>
-<h3 id="メッセージID対応-自動棚卸">メッセージID対応（自動棚卸）</h3>
-<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>画面上の文言(英語)</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>F06-13-MSG-001</td><td>画面中央(ダイアログ)</td><td>本人確認の申請に失敗しました。再度撮影して申請をお願いします。</td><td>（英訳なし）</td><td>本人確認の身分証画像を送信した際に、入力内容に不備があるとき</td><td>撮影画面に留まる</td></tr><tr><td>F06-13-MSG-002</td><td>完了画面本文</td><td>申請が完了しました。&lt;br&gt;確認完了までしばらくお待ちください。</td><td>Your application has been submitted.&lt;br&gt;Please wait until verification is complete.</td><td>本人確認画像を送信して申請が完了したとき</td><td>本人確認申請を受け付け、申請完了画面を表示する</td></tr></tbody></table></div>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>利用端末の限定</td><td>撮影画面・申請はスマートフォン・タブレットに限定する。PCではスタート画面またはマイページへ戻す。</td></tr><tr><td>必要撮影枚数</td><td>身分証種別により必要な撮影画像が異なる（顔写真と身分証のオモテ・ウラ等で計3部または計4部）。マイナンバーカード等は撮影枚数が異なる。</td></tr><tr><td>画像の保存</td><td>撮影画像はオブジェクトストレージへ保存し、身分証画像として会員（選手情報）に紐づけて記録する。</td></tr><tr><td>ステータス更新</td><td>申請成立で本人確認ステータスを確認中に更新する。</td></tr></tbody></table></div>
-<h3 id="入力項目">入力項目</h3>
-<div class="table-wrap"><table><thead><tr><th>項目名</th><th>必須／任意</th><th>最大長</th><th>初期値</th><th>保存先・扱い</th></tr></thead><tbody><tr><td>撮影する身分証の種類</td><td>必須</td><td>—</td><td>未選択</td><td>永続化はスタート時にはしない。フォームキー<code>identification_select.identification</code>（身分証種別マスタの選択）。撮影画面・申請の対象種別を決める。申請成立時に選手情報の身分証種別として保存する。</td></tr><tr><td>撮影画像（本人写真・身分証オモテ・ウラ等）</td><td>必須（種別に応じた枚数）</td><td>—</td><td>無し</td><td>画像データ（撮影用ページで撮影したもの）。フォームキー<code>identification_image</code>配下。拡張子判別後にオブジェクトストレージへ保存し、身分証画像として記録する。</td></tr><tr><td>最新画像であることへの同意</td><td>必須</td><td>—</td><td>未同意</td><td>永続化しない。フォームキー<code>identification_image</code>配下の同意項目。</td></tr></tbody></table></div>
-<p>種別がマイナンバーカードの場合は、他種別と必要な撮影画像の構成が異なる。</p>
-<h3 id="エッジケース">エッジケース</h3>
-<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>PCからアクセス</td><td>撮影画面・申請を行わずスタート画面またはマイページへ戻す。</td></tr><tr><td>身分証種別未選択で撮影画面へ</td><td>スタート画面へ戻す。</td></tr><tr><td>撮影画面へ直接アクセス（未送信）</td><td>マイページへ戻す。</td></tr><tr><td>撮影フォーム検証失敗</td><td>エラー状態を付けて撮影画面へ戻す。</td></tr><tr><td>画像の拡張子が判別不可</td><td>エラー画面を表示し申請を確定しない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>画像と選手情報</td><td>申請成立時、身分証画像の記録と選手情報の身分証種別・本人確認ステータス更新を行う。</td></tr><tr><td>オブジェクトストレージ</td><td>画像はオブジェクトストレージへ保存し、保存先をDBに記録する。</td></tr><tr><td>会員情報変更との関係</td><td>住所・氏名・生年月日の変更時は本人確認ステータスが未確認へ戻り得るため、再申請が必要となる（会員情報変更機能を正とする）。</td></tr></tbody></table></div>
-<hr>
-<h2 id="API-バッチ結果">API/バッチ結果</h2>
-<p>本機能ではAPI呼び出し・バッチ実行を扱わない。身分証画像のオブジェクトストレージ保存と申請完了メール送信は申請成立時に行う。</p>
-<hr>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="利用できる端末">利用できる端末</h3>
+<p>撮影画面の表示と申請はスマートフォン・タブレットに限る。スタート画面では端末がスマートフォン・タブレットかどうかを判定し、その結果を画面に渡す。スマートフォン・タブレット以外のときは、撮影画面ではスタート画面へ、申請ではマイページへ戻す。</p>
+<h3 id="スタート画面">スタート画面</h3>
+<p>会員ログインを必要とする。会員と選手情報を取得し、身分証種別の選択、説明、本人確認状況を表示する。</p>
+<h3 id="撮影画面">撮影画面</h3>
+<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>スマートフォン・タブレットでないとき</td><td>スタート画面へ戻す</td></tr><tr><td>2</td><td>身分証種別の選択が無いとき</td><td>スタート画面へ戻す</td></tr><tr><td>3</td><td>直前の申請が検証に失敗して戻ったとき</td><td>エラー状態を受け取って表示する</td></tr><tr><td>4</td><td>上記以外のとき</td><td>選択した身分証種別に応じた撮影項目を表示する</td></tr></tbody></table></div>
+<p>必要な撮影枚数は身分証種別により異なる。顔写真と身分証のオモテ・ウラで計3部または計4部となる。マイナンバーカードなどは撮影枚数が異なる。画像は本サイトが提供する撮影用ページで撮影し、撮影結果を画像データとして送信する。撮影用ページの内部仕様は本書では扱わない。必須の項目には必須である旨を表示する。</p>
+<h3 id="申請の判定順序">申請の判定順序</h3>
+<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>スマートフォン・タブレットでないとき</td><td>マイページへ戻す</td></tr><tr><td>2</td><td>身分証種別を含む送信内容が無いとき</td><td>マイページへ戻す</td></tr><tr><td>3</td><td>撮影項目が送信状態でないとき（直接アクセスなど）</td><td>マイページへ戻す</td></tr><tr><td>4</td><td>撮影項目の検証に失敗したとき</td><td>エラー状態を付けて撮影画面へ戻す</td></tr><tr><td>5</td><td>画像データの検証に失敗したとき（各画像の拡張子を判別できないとき）</td><td>エラー画面を表示して終了する。申請を確定しない</td></tr><tr><td>6</td><td>上記以外のとき</td><td>申請を確定する</td></tr></tbody></table></div>
+<h3 id="申請の確定">申請の確定</h3>
+<p>検証を通った各画像をオブジェクトストレージへ保存し、身分証画像として選手情報に紐づけて記録する。選手情報の身分証種別を更新し、本人確認ステータスを確認中へ変更して保存する。本人確認申請完了メールを送信し、申請完了画面を表示する。</p>
+<h3 id="画面に出る要素">画面に出る要素</h3>
+<div class="table-wrap"><table><thead><tr><th>画面</th><th>要素</th></tr></thead><tbody><tr><td>スタート画面</td><td>見出し「オンライン本人確認について」、説明、本人確認状況、身分証種別の選択、撮影画面への導線</td></tr><tr><td>撮影画面</td><td>見出し「撮影画面」、必要枚数の案内、顔写真と身分証（オモテ／ウラ）などの撮影の起点、最新画像であることへの同意</td></tr><tr><td>申請完了画面</td><td>見出し「申請完了」、申請完了の文言、確認中である旨の文言</td></tr></tbody></table></div>
+<h3 id="エラー時の扱い">エラー時の扱い</h3>
+<div class="table-wrap"><table><thead><tr><th>事象</th><th>扱い</th></tr></thead><tbody><tr><td>スマートフォン・タブレット以外からのアクセスのとき</td><td>撮影と申請を行わず、スタート画面またはマイページへ戻す</td></tr><tr><td>身分証種別が未選択のとき、未送信のとき、直接アクセスのとき</td><td>スタート画面またはマイページへ戻す</td></tr><tr><td>撮影項目の検証に失敗したとき</td><td>エラー状態を付けて撮影画面へ戻す</td></tr><tr><td>画像データが不正なとき</td><td>共通のエラー画面を表示する。申請を確定しない</td></tr></tbody></table></div>
+<p>本機能は一時的な通知メッセージを生成しない。</p>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>身分証種別、撮影画像（複数）、同意、なりすまし対策トークン。</td></tr><tr><td>成功時出力</td><td>身分証画像の保存、本人確認ステータスの確認中への更新、申請完了画面、申請完了メール送信。</td></tr><tr><td>失敗時出力</td><td>撮影画面の再表示、または画像データエラー画面。</td></tr><tr><td>副作用</td><td>身分証画像の保存、選手情報の身分証種別・本人確認ステータス更新、メール送信。</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<p>機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。テーブル名・列名はec-cube-enterpriseの実装を正とする。</p>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td>選手情報（<code>dtb_player</code>）</td><td><code>identification_id</code></td><td>身分証種別（マスタ参照）。申請成立時に選択種別へ更新する。</td></tr><tr><td>選手情報（<code>dtb_player</code>）</td><td><code>identity_confirm_status_id</code></td><td>本人確認ステータス（マスタ参照）。申請成立時に確認中へ更新する。</td></tr><tr><td>身分証画像（<code>dtb_identification_image</code>）</td><td><code>player_id</code>・<code>identification_id</code>・<code>identification_image_type_id</code>・<code>url</code>・<code>create_date</code></td><td>撮影画像1枚ごとに記録する。選手情報参照（<code>player_id</code>）、身分証種別（<code>identification_id</code>）、画像種別（<code>identification_image_type_id</code>）、保存先URL（<code>url</code>）、作成日時（<code>create_date</code>）。</td></tr></tbody></table></div>
-<h3 id="DB操作">DB操作</h3>
-<p>永続化の正は ec-cube-enterprise（テーブル名・操作は ec-cube-enterprise を正典）。当ドメインは承認ワークフローを介さず persist/flush で直接確定する（承認ワークフローは在庫機能固有）。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>登録/更新</td><td>dtb_identification_image / dtb_player</td><td>当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。</td></tr></tbody></table></div>
-<hr>
-<h2 id="バリデーション">バリデーション</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>身分証種別</td><td>撮影画面・申請の対象として選択を要する。</td></tr><tr><td>撮影画像</td><td>撮影フォームの検証に通ること。各画像はデータURI形式で拡張子が判別できること。</td></tr><tr><td>同意</td><td>最新画像であることへの同意を要する。</td></tr><tr><td>なりすまし対策トークン</td><td>各POSTで検証する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="権限・認可">権限・認可</h2>
-<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>オンライン本人確認</th></tr></thead><tbody><tr><td>未ログイン</td><td>アクセス不可。会員ログインへ誘導する（会員ログイン機能を正とする）。</td></tr><tr><td>ログイン済み会員（PC）</td><td>スタート画面の閲覧は可能。撮影・申請は不可（スタート画面またはマイページへ戻す）。</td></tr><tr><td>ログイン済み会員（スマホ・タブレット）</td><td>撮影・申請が可能。対象は常にログイン中の会員。</td></tr></tbody></table></div>
-<hr>
-<h2 id="画面遷移">画面遷移</h2>
-<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>マイページの「オンライン本人確認」ブロック</td><td>スタート画面（<code>GET /mypage/identification</code>）</td></tr><tr><td>「撮影画面へ」・スマホ／タブレット・種別選択あり</td><td>撮影画面（<code>POST /mypage/identification/photograph</code>）</td></tr><tr><td>「撮影画面へ」・PC</td><td>スタート画面（<code>/mypage/identification</code>）</td></tr><tr><td>申請・検証失敗</td><td>撮影画面（エラー状態付き）</td></tr><tr><td>申請・画像データ不正</td><td>共通エラー画面</td></tr><tr><td>申請・成功</td><td>申請完了画面（<code>Mypage/online_identification_done.twig</code>）</td></tr><tr><td>申請・PCまたは送信内容なし・未送信</td><td>マイページ（<code>/mypage</code>）</td></tr></tbody></table></div>
-<h3 id="遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</h3>
-<div class="table-wrap"><table><thead><tr><th>起点</th><th>遷移前の処理</th><th>遷移後の初期状態</th></tr></thead><tbody><tr><td>申請の検証失敗</td><td>身分証種別とエラー状態を引き継ぐ</td><td>撮影画面を再表示し、エラー状態を反映する</td></tr></tbody></table></div>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>PCアクセス</td><td>撮影・申請を行わずスタート画面またはマイページへ戻す。</td></tr><tr><td>種別未選択・未送信・直接アクセス</td><td>スタート画面またはマイページへ戻す。</td></tr><tr><td>撮影フォーム検証失敗</td><td>エラー状態を付けて撮影画面へ戻す。</td></tr><tr><td>画像データ不正</td><td>共通エラー画面（画像データのアップロードに失敗しました）。申請を確定しない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="ログ・監査">ログ・監査</h2>
-<div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>申請完了</td><td>オンライン本人確認申請完了の情報ログ。</td></tr><tr><td>申請完了メール送信</td><td>メール送信の情報ログ・送信履歴。</td></tr></tbody></table></div>
-<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
-<ul><li>身分証画像データ</li><li>Cookie値</li><li>セッションIDの完全値</li></ul>
-<hr>
-<h2 id="セッション">セッション</h2>
-<p>本機能はセッションへ画像等の機微情報を保存しない。身分証種別・エラー状態はリクエストパラメータで画面間に引き継ぐ。ログイン状態の判定にのみ会員の認証情報を用いる。</p>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<p>申請成立時の身分証画像記録と選手情報の更新を行う。本機能では楽観ロック・悲観ロックの対象は持たない。</p>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>身分証種別、撮影画像（複数）、同意、なりすまし対策トークン</td></tr><tr><td>成功時出力</td><td>身分証画像の保存、本人確認ステータスの確認中への更新、申請完了画面の表示、申請完了メールの送信</td></tr><tr><td>失敗時出力</td><td>撮影画面の再表示、または画像データのエラー画面</td></tr></tbody></table></div>
+<h3 id="出力-メール">出力: メール</h3>
+<div class="table-wrap"><table><thead><tr><th>宛先</th><th>契機</th></tr></thead><tbody><tr><td>申請した会員</td><td>本人確認の申請が確定したとき、本人確認申請完了メールを送信する</td></tr></tbody></table></div>
+<h3 id="入出力-永続化">入出力: 永続化</h3>
+<div class="table-wrap"><table><thead><tr><th>操作</th><th>契機</th></tr></thead><tbody><tr><td>追加</td><td>申請確定時の、身分証画像の記録</td></tr><tr><td>更新</td><td>申請確定時の、選手情報の身分証種別と本人確認ステータス（確認中）</td></tr></tbody></table></div>
+<p>撮影画像そのものはオブジェクトストレージへ保存する。</p>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
+<h2 id="表示メッセージ">表示メッセージ</h2>
+<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>F06-13-MSG-001</td><td>画面中央(ダイアログ)</td><td>本人確認の申請に失敗しました。再度撮影して申請をお願いします。</td><td>本人確認の身分証画像を送信した際に、入力内容に不備があるとき</td><td>撮影画面に留まる</td></tr><tr><td>F06-13-MSG-002</td><td>完了画面本文</td><td>申請が完了しました。&lt;br&gt;確認完了までしばらくお待ちください。</td><td>本人確認画像を送信して申請が完了したとき</td><td>本人確認申請を受け付け、申請完了画面を表示する</td></tr><tr><td>—</td><td>スタート画面の説明</td><td>事前にオンラインで本人確認を行うことができます。登録後は簡易書留の送付及び取引毎の身分証提示が不要となります。</td><td>スタート画面を表示したとき</td><td>—</td></tr><tr><td>—</td><td>スタート画面の注意書き</td><td>※「住所」「氏名」「生年月日」のいずれかが変更される場合は、再度身分証のアップロードが必要となります。</td><td>スタート画面を表示したとき</td><td>—</td></tr><tr><td>—</td><td>撮影画面の案内</td><td>現在の顔写真と身分証写真の計4部または計3部が必要となります。</td><td>撮影画面を表示したとき</td><td>—</td></tr><tr><td>—</td><td>撮影画面の同意項目</td><td>本人写真と身分証の画像が、撮影された最新の画像であることに同意します。</td><td>撮影画面を表示したとき</td><td>—</td></tr><tr><td>—</td><td>申請完了画面</td><td>申請が完了しました。／確認完了までしばらくお待ちください。</td><td>申請完了画面を表示したとき</td><td>—</td></tr><tr><td>—</td><td>申請完了画面</td><td>現在、確認中です</td><td>申請完了画面を表示したとき</td><td>—</td></tr><tr><td>—</td><td>共通エラー画面</td><td>画像データのアップロードに失敗しました。</td><td>送信画像の拡張子を判別できないとき</td><td>申請を確定しない</td></tr></tbody></table></div>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

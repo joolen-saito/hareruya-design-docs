@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,33 +272,14 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#本書で扱うこと">本書で扱うこと</a>
-<a class="lv2" href="#本書で扱わないこと">本書で扱わないこと</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv2" href="#用語">用語</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#フロント挙動">フロント挙動</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#買取履歴一覧を表示する-GET-locale-mypage-purchase-history">買取履歴一覧を表示する（GET `/{_locale}/mypage/purchase_history`）</a>
-<a class="lv2" href="#集計条件">集計条件</a>
-<a class="lv2" href="#表示メッセージ">表示メッセージ</a>
-<a class="lv3" href="#常時表示-正常・静的">常時表示（正常・静的）</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
-<a class="lv3" href="#エッジケース">エッジケース</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#一覧の対象と並び順">一覧の対象と並び順</a>
+<a class="lv3" href="#買取依頼内容の表示">買取依頼内容の表示</a>
+<a class="lv3" href="#表示の規則">表示の規則</a>
+<a class="lv3" href="#エラー時の扱い">エラー時の扱い</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#バリデーション">バリデーション</a>
-<a class="lv2" href="#権限・認可">権限・認可</a>
-<a class="lv2" href="#画面遷移">画面遷移</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#ログ・監査">ログ・監査</a>
-<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
-<a class="lv2" href="#セッション">セッション</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a></nav>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -296,95 +287,23 @@ footer {
         <h1>F06-11（買取一覧）</h1>
       </header>
       
-      <h2 id="概要">概要</h2>
-<p>ログイン済み会員が、自分が行った買取依頼の履歴を一覧で閲覧する機能である。マイページ系の「買取履歴」から入り、会員に紐づく買取注文を依頼の新しい順にページングして表示する。各行に買取依頼日、オーダーID、買取依頼内容の要約（えらんで買取・まとめて買取の代表商品とほか件数）、申込時買取金額合計、処理状態（状態画像）を並べ、オーダーIDと状態画像から買取履歴詳細へ遷移する。</p>
-<p>Excel基本設計上の機能名は「買取一覧」とする。現行画面の見出し・実装上の呼称である「買取履歴一覧」は、実装確認値として本文中に残す。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインの買取履歴一覧処理、テンプレート（<code>Mypage/purchase_history.twig</code>）、買取注文リポジトリの取得処理を正とする。</p>
-<p>本機能のカスタマイズ区分はカスタマイズである。画面・処理の挙動はpf-eccube3を参照し、DB関連（テーブル名・列名・制約・関連）はec-cube-enterpriseを正とする。</p>
-<p>対象はブラウザ経由のフロント（会員マイページ）に限定する。フロントのルートは<code>/{_locale}</code>配下にマウントされ、URLは<code>/{_locale}/mypage/purchase_history</code>の形をとる。</p>
-<p>本文ではフレームワークのコントローラ型名やメソッド名を主説明としない。本文ではルートbind名の網羅は主説明とせず、「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。コード探索でbind名が必要なときだけ「調査補助」へ書く。</p>
-<hr>
-<h2 id="本書で扱うこと">本書で扱うこと</h2>
-<ul><li>買取履歴一覧の入口と表示</li><li>一覧の抽出条件・並び順・ページング</li><li>買取依頼内容の要約表示（えらんで買取・まとめて買取の代表商品とほか件数）</li><li>申込時買取金額合計・処理状態の表示</li><li>削除済み商品・規格を表示できるようにする取り扱い</li><li>未ログイン時の扱い</li></ul>
-<hr>
-<h2 id="本書で扱わないこと">本書で扱わないこと</h2>
-<p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
-<ul><li>買取履歴詳細の表示（買取履歴詳細機能を正とする）</li><li>査定価格の承諾（売却可否の更新）（買取査定承諾機能を正とする）</li><li>買取依頼の作成・査定そのもの（査定申込・買取管理機能を正とする）</li></ul>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<p>DB関連はec-cube-enterpriseを正とする。現行（pf-eccube3）と移行先（ec-cube-enterprise）のスキーマ差を次のとおり記録する。</p>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>買取注文の主キー</td><td><code>dtb_buy_order.buy_order_id</code></td><td><code>dtb_buy_order.id</code>（主キー列名が変わる）。会員参照は <code>customer_id</code>、状態参照は <code>buy_order_status_id</code>。</td></tr><tr><td>買取代表カード</td><td><code>dtb_buy_main_card</code>（列 <code>count</code>・<code>sale_flg</code>・<code>purchase_category</code>・<code>price</code>・<code>product_id</code>・<code>language_id</code>）</td><td>同一スキーマ（同テーブル・同列構成。主キーは <code>id</code>、注文参照は <code>buy_order_id</code>）。</td></tr><tr><td>個別入力商品</td><td><code>dtb_buy_order_indivisual_input_product</code>（列 <code>quantity</code>・<code>sale_flg</code>・<code>name</code>・<code>price</code>）</td><td>同一スキーマ（同テーブル・同列構成。主キーは <code>id</code>、注文参照は <code>buy_order_id</code>）。</td></tr><tr><td>処理状態の参照先</td><td><code>dtb_buy_order.buy_order_status_id</code></td><td>同じく <code>buy_order_status_id</code>。状態マスタを参照する。</td></tr></tbody></table></div>
-<p>買取注文の主キー列名以外は現行・移行先で同一構成である。</p>
-<hr>
-<h2 id="用語">用語</h2>
-<div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>会員</td><td>フロントにログインしている顧客。</td></tr><tr><td>買取注文</td><td>会員が行った買取依頼1件。買取代表カード・個別入力商品・処理状態を持つ。</td></tr><tr><td>えらんで買取</td><td>商品を選んで申し込む買取区分。</td></tr><tr><td>まとめて買取</td><td>商品をまとめて申し込む買取区分。個別入力商品を含む。</td></tr><tr><td>処理状態</td><td>買取注文の進行状態。状態に対応する画像で表示する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>マイページの「買取履歴」ブロック</td><td><code>GET /{_locale}/mypage/purchase_history</code></td><td>日本語版のマイページに表示し、押下すると会員自身の買取注文を新しい順に1ページ目を表示する。英語版のマイページではこの入口を表示しない。</td></tr><tr><td>ページ送りリンク（最初・数字・最後）</td><td><code>GET /{_locale}/mypage/purchase_history?page=（番号）</code></td><td>指定ページの買取履歴を表示する。</td></tr><tr><td>表示件数の選択</td><td><code>GET /{_locale}/mypage/purchase_history?pageSize=（10/20/50/100）</code></td><td>1ページあたりの表示件数を切り替えて表示する。</td></tr><tr><td>オーダーID・処理状態画像</td><td><code>GET /{_locale}/mypage/purchase_history/detail/{id}</code></td><td>当該買取注文の買取履歴詳細へ遷移する。</td></tr><tr><td>「マイページ」ボタン</td><td><code>GET /{_locale}/mypage</code></td><td>マイページトップへ戻る。</td></tr></tbody></table></div>
-<p>フロントのページであり管理画面プレフィックスは付かない。<code>/{_locale}/mypage</code>配下は会員ログインを要する。一覧は検索フォーム（メソッドGET）内に置かれ、<code>page</code>・<code>pageSize</code>をクエリで受け取る。</p>
-<hr>
-<h2 id="フロント挙動">フロント挙動</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>見出し「買取履歴一覧」、会員氏名と「様」、表示件数セレクト、件数範囲・総件数、ページ送り、一覧（買取依頼日・オーダーID・買取依頼内容・申込時買取金額合計・処理状態）、「マイページ」ボタン。</td></tr><tr><td>JS挙動</td><td>履歴用スクリプトを読み込み、表示件数セレクトの変更をページサイズの隠し項目へ反映してGET送信する。</td></tr><tr><td>CSS・レイアウト</td><td>処理状態は状態識別子に対応する画像で示す。オーダーIDは7桁ゼロ詰めで表示する。</td></tr><tr><td>モーダル・ポップアップ</td><td>本画面専用のモーダルは無い。</td></tr></tbody></table></div>
-<p>買取依頼内容は、えらんで買取・まとめて買取の順に、売却対象かつ数量のある代表商品を1件だけ表示し、同区分の残り件数を「ほか○件」として示す。商品の言語・状態（買取用コード）があれば角括弧で併記する。</p>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="買取履歴一覧を表示する-GET-locale-mypage-purchase-history">買取履歴一覧を表示する（GET <code>/{_locale}/mypage/purchase_history</code>）</h3>
-<ol><li>会員ログインを要求し、ログイン会員を特定する。</li><li>GETクエリ一式を受け取り、ページ番号・1ページ件数を決定する（既定はページ1・10件）。</li><li>論理削除フィルタについて、商品・商品規格を対象外に設定し、削除済みの商品・規格も一覧に表示できるようにする。</li><li>当該会員の買取注文を依頼の新しい順で取得し、ページングする。</li><li>取得した買取注文・会員・クエリをテンプレートへ渡して表示する。</li></ol>
-<hr>
-<h2 id="集計条件">集計条件</h2>
-<div class="table-wrap"><table><thead><tr><th>指標</th><th>集計の要点</th></tr></thead><tbody><tr><td>買取履歴一覧</td><td>ログイン会員の買取注文を対象とする。買取代表カードと処理状態を結合する。並びは買取注文識別子の降順、同一注文内の代表カードは申込価格の降順。</td></tr><tr><td>ページング</td><td><code>page</code>・<code>pageSize</code>で分割する。<code>pageSize</code>の選択肢は10・20・50・100。</td></tr><tr><td>買取依頼内容の要約</td><td>えらんで買取・まとめて買取の区分ごとに、売却対象（売却フラグが偽でない）かつ数量のある代表商品を1件抽出し、残りを「ほか○件」とする。</td></tr><tr><td>申込時買取金額合計</td><td>買取注文の申込時買取金額合計を表示する。</td></tr><tr><td>削除済み商品の表示</td><td>商品・商品規格の論理削除フィルタを一時的に外し、削除済みでも一覧に表示する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="表示メッセージ">表示メッセージ</h2>
-<h3 id="常時表示-正常・静的">常時表示（正常・静的）</h3>
-<div class="table-wrap"><table><thead><tr><th>種別</th><th>表示文言（日本語）</th><th>条件</th></tr></thead><tbody><tr><td>件数表示</td><td>（開始）~（終了）件 ／ （総件数）件あります</td><td>一覧表示時に常時</td></tr><tr><td>買取区分ラベル</td><td>えらんで買取：／まとめて買取：</td><td>各区分に該当する代表商品があるとき</td></tr><tr><td>ほか件数</td><td>ほか（件数）件</td><td>同区分に他の対象商品があるとき</td></tr></tbody></table></div>
-<p>本機能はフォーム送信に伴うフラッシュ・インラインエラーを生成しない。</p>
-<hr>
-<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>画面上の文言(英語)</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>F06-11-MSG-001</td><td>画面上部</td><td>買取履歴はありません。</td><td>（英訳なし）</td><td>買取履歴を開き、買取依頼の履歴がないとき</td><td>買取履歴一覧画面に留まる</td></tr></tbody></table></div>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>一覧の対象</td><td>常にログイン会員自身の買取注文のみを対象とする。</td></tr><tr><td>並び順</td><td>買取注文識別子の降順（新しい依頼が上）。</td></tr><tr><td>買取依頼内容</td><td>えらんで買取・まとめて買取の各区分で代表商品を1件表示し、残りを「ほか○件」とする。売却対象でない、または数量0の商品は対象から除く。</td></tr><tr><td>オーダーID表示</td><td>買取注文識別子を7桁ゼロ詰めで表示する。</td></tr><tr><td>処理状態</td><td>処理状態識別子に対応する状態画像を表示する。</td></tr><tr><td>削除済み商品</td><td>商品・規格が論理削除済みでも一覧に表示する。</td></tr></tbody></table></div>
-<p>本機能では一覧表示に伴う入力フォームを持たないため、<code>### 入力項目</code>の表は持たない。ページ・表示件数はGETクエリで受け取る。</p>
-<h3 id="エッジケース">エッジケース</h3>
-<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>買取履歴0件</td><td>件数を0件として一覧領域を空で表示し、件数範囲を0～として表示する。</td></tr><tr><td>区分に対象商品が無い</td><td>その区分の代表商品行を表示しない。</td></tr><tr><td>商品が論理削除済み</td><td>論理削除フィルタを外して名称等を表示する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>一覧と詳細</td><td>一覧の各行は同一の買取注文識別子で詳細へ遷移する。表示時点の処理状態・金額を表示する。</td></tr><tr><td>削除済み商品</td><td>一覧表示の間だけ商品・規格の論理削除フィルタを外す。本機能のリクエスト範囲内の処置とする。</td></tr><tr><td>申込時金額</td><td>申込時買取金額合計は申込時点の値を表示する。査定承諾後の金額は買取履歴詳細機能を正とする。</td></tr></tbody></table></div>
-<hr>
-<h2 id="API-バッチ結果">API/バッチ結果</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>API</td><td>本機能では一覧表示のための同期取得のみで、非同期APIの呼び出しを扱わない。</td></tr><tr><td>バッチ</td><td>本機能ではバッチを実行しない。</td></tr></tbody></table></div>
-<hr>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="一覧の対象と並び順">一覧の対象と並び順</h3>
+<p>ログイン会員自身の買取注文だけを対象とする。買取注文の識別子の降順とし、依頼の新しいものを上に並べる。未ログインのときは会員ログインへ誘導する。</p>
+<p>ページ番号と1ページ件数はクエリで受け取る。指定が無いときはページ1・10件とする。</p>
+<h3 id="買取依頼内容の表示">買取依頼内容の表示</h3>
+<p>えらんで買取・まとめて買取の順に、売却対象で数量のある代表商品を1件だけ表示し、同じ区分の残りを「ほか○件」として示す。売却対象でない商品と、数量が0の商品は対象から除く。商品の言語と状態（買取用コード）があるときは、角括弧で併記する。</p>
+<h3 id="表示の規則">表示の規則</h3>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>表示</th></tr></thead><tbody><tr><td>買取依頼日</td><td>買取注文の依頼日を表示する</td></tr><tr><td>オーダーID</td><td>買取注文の識別子を7桁ゼロ詰めで表示する</td></tr><tr><td>買取依頼内容</td><td>区分ごとの代表商品と、他にもあるときは「ほか○件」</td></tr><tr><td>申込時買取金額合計</td><td>申込時の買取金額の合計を表示する</td></tr><tr><td>処理状態</td><td>処理状態の識別子に対応する状態画像を表示する</td></tr></tbody></table></div>
+<p>商品と規格が論理削除済みのときも一覧に表示する。</p>
+<h3 id="エラー時の扱い">エラー時の扱い</h3>
+<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>未ログインでのアクセス</td><td>会員ログインへ誘導する</td></tr><tr><td>買取依頼の履歴が無いとき</td><td>一覧を表示せず、履歴が無い旨のメッセージを表示する</td></tr></tbody></table></div>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>GETクエリ（<code>page</code>・<code>pageSize</code>等）。</td></tr><tr><td>成功時出力</td><td>買取履歴一覧のHTML表示。</td></tr><tr><td>失敗時出力</td><td>未ログイン時は会員ログインへ誘導する。</td></tr><tr><td>副作用</td><td>本機能はデータを更新しない（参照のみ）。</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<p>機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。テーブル名・列名はec-cube-enterpriseの実装を正とする。</p>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td>買取注文（<code>dtb_buy_order</code>）</td><td><code>customer_id</code></td><td>一覧の抽出キー。会員（顧客）を参照する。</td></tr><tr><td>買取注文（<code>dtb_buy_order</code>）</td><td><code>id</code></td><td>並び順・オーダーID表示・詳細遷移キー。現行（pf-eccube3）の列名は <code>buy_order_id</code>。</td></tr><tr><td>買取注文（<code>dtb_buy_order</code>）</td><td><code>buy_order_status_id</code></td><td>処理状態画像の出し分け。状態マスタを参照する。</td></tr><tr><td>買取代表カード（<code>dtb_buy_main_card</code>）</td><td><code>count</code>・<code>sale_flg</code>・<code>purchase_category</code></td><td>買取依頼内容の代表商品抽出に用いる。</td></tr><tr><td>個別入力商品（<code>dtb_buy_order_indivisual_input_product</code>）</td><td><code>quantity</code>・<code>sale_flg</code></td><td>まとめて買取の対象抽出に用いる。</td></tr></tbody></table></div>
-<h3 id="DB操作">DB操作</h3>
-<p>本機能は参照系（検索）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>検索</td><td>dtb_buy_main_card / dtb_buy_order / dtb_buy_order_indivisual_input_product</td><td>検索条件に合致するレコードを抽出する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="バリデーション">バリデーション</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>ログイン状態</td><td>一覧は会員ログインを要する。未ログインは会員ログインへ誘導する。</td></tr><tr><td>ページ・表示件数</td><td><code>page</code>・<code>pageSize</code>は数値として扱い、未指定・0はページ1・10件の既定とする。表示件数の選択肢は10・20・50・100。</td></tr></tbody></table></div>
-<hr>
-<h2 id="権限・認可">権限・認可</h2>
-<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>買取履歴一覧</th></tr></thead><tbody><tr><td>未ログイン</td><td>アクセス不可。会員ログインへ誘導する。</td></tr><tr><td>ログイン済み会員</td><td>自分の買取注文のみ閲覧可能。</td></tr></tbody></table></div>
-<hr>
-<h2 id="画面遷移">画面遷移</h2>
-<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>マイページの「買取履歴」ブロック</td><td>一覧（<code>GET /{_locale}/mypage/purchase_history</code>）</td></tr><tr><td>ページ送りリンク・表示件数選択</td><td>一覧（<code>?page=…</code>／<code>?pageSize=…</code>）</td></tr><tr><td>オーダーID・処理状態画像</td><td>買取履歴詳細（<code>/{_locale}/mypage/purchase_history/detail/{id}</code>）</td></tr><tr><td>「マイページ」ボタン</td><td>マイページトップ（<code>/{_locale}/mypage</code>）</td></tr></tbody></table></div>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>未ログインアクセス</td><td>会員ログインへ誘導する（会員ログイン機能を正とする）。</td></tr></tbody></table></div>
-<p>表示文言は表示メッセージ節を正とする。</p>
-<hr>
-<h2 id="ログ・監査">ログ・監査</h2>
-<p>本機能は一覧表示のみで、固有の監査ログを主目的としない。</p>
-<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
-<ul><li>Cookie値</li><li>セッションIDの完全値</li></ul>
-<hr>
-<h2 id="セッション">セッション</h2>
-<p>本機能は一覧表示のためにセッションへ機微情報を保存しない。ログイン状態の判定にのみ会員の認証情報を用いる。</p>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<p>本機能は参照のみでデータを更新しない。楽観ロック・悲観ロックの対象は持たない。</p>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>ページ番号と1ページ件数。いずれも指定が無いときはページ1・10件とする</td></tr><tr><td>成功時出力</td><td>買取履歴一覧の表示。会員氏名・件数範囲・総件数・ページ送りをあわせて表示する</td></tr><tr><td>失敗時出力</td><td>未ログインのときは会員ログインへ誘導する</td></tr></tbody></table></div>
+<p>本機能は参照だけを行い、データを更新しない。入力フォームを持たないため、送信に伴うメッセージも持たない。</p>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
+<h2 id="表示メッセージ">表示メッセージ</h2>
+<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>F06-11-MSG-001</td><td>画面上部</td><td>買取履歴はありません。</td><td>買取履歴を開き、買取依頼の履歴がないとき</td><td>買取履歴一覧画面に留まる</td></tr><tr><td>—</td><td>件数表示</td><td>（開始）~（終了）件 ／ （総件数）件あります</td><td>一覧表示時に常時</td><td>買取履歴一覧画面に留まる</td></tr><tr><td>—</td><td>買取区分ラベル</td><td>えらんで買取：／まとめて買取：</td><td>各区分に該当する代表商品があるとき</td><td>買取履歴一覧画面に留まる</td></tr><tr><td>—</td><td>ほか件数</td><td>ほか（件数）件</td><td>同区分に他の対象商品があるとき</td><td>買取履歴一覧画面に留まる</td></tr><tr><td>—</td><td>画面見出し</td><td>買取履歴一覧</td><td>一覧表示時に常時</td><td>買取履歴一覧画面に留まる</td></tr></tbody></table></div>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

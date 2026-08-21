@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,39 +272,17 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#本書で扱うこと">本書で扱うこと</a>
-<a class="lv2" href="#本書で扱わないこと">本書で扱わないこと</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv2" href="#用語">用語</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#フロント挙動">フロント挙動</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#お問い合わせ画面を表示する-GET-locale-contact">お問い合わせ画面を表示する（GET `/{_locale}/contact`）</a>
-<a class="lv3" href="#確認画面を表示する-POST-mode-confirm">確認画面を表示する（POST `mode=confirm`）</a>
-<a class="lv3" href="#送信する-POST-mode-complete">送信する（POST `mode=complete`）</a>
-<a class="lv3" href="#お問い合わせ完了画面を表示する-GET-locale-contact-complete">お問い合わせ完了画面を表示する（GET `/{_locale}/contact/complete`）</a>
-<a class="lv2" href="#表示メッセージ">表示メッセージ</a>
-<a class="lv3" href="#常時表示-正常・静的">常時表示（正常・静的）</a>
-<a class="lv3" href="#エラー・警告-インライン">エラー・警告（インライン）</a>
-<a class="lv3" href="#メッセージID対応-自動棚卸">メッセージID対応（自動棚卸）</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
-<a class="lv3" href="#入力項目">入力項目</a>
-<a class="lv3" href="#エッジケース">エッジケース</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#画面の構成">画面の構成</a>
+<a class="lv3" href="#初期表示">初期表示</a>
+<a class="lv3" href="#件名による表示切替">件名による表示切替</a>
+<a class="lv3" href="#イベントキャンセルの内容転記">イベントキャンセルの内容転記</a>
+<a class="lv3" href="#送信の判定順序">送信の判定順序</a>
+<a class="lv3" href="#エラー時の扱い">エラー時の扱い</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#バリデーション">バリデーション</a>
-<a class="lv2" href="#権限・認可">権限・認可</a>
-<a class="lv2" href="#画面遷移">画面遷移</a>
-<a class="lv3" href="#遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#ログ・監査">ログ・監査</a>
-<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
-<a class="lv2" href="#セッション">セッション</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a></nav>
+<a class="lv3" href="#入出力-永続化">入出力: 永続化</a>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -302,106 +290,30 @@ footer {
         <h1>会員 — お問い合わせ送信</h1>
       </header>
       
-      <h2 id="概要">概要</h2>
-<p>利用者が当店への要望・質問を所定のフォームで入力し、確認のうえ送信する機能である。お問い合わせ画面で件名・お問い合わせ詳細・氏名・電話番号・メールアドレス・内容などを入力し、確認画面で内容を確かめてから送信すると、お問い合わせメールを送信し、お問い合わせ内容を保存したうえでお問い合わせ完了画面へ遷移する。ログイン会員の場合は会員情報を初期表示し、保存時に会員と紐づける。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインのお問い合わせ処理、お問い合わせテンプレート（<code>Contact/index.twig</code>・<code>Contact/confirm.twig</code>・<code>Contact/complete.twig</code>）、お問い合わせフォーム種別（<code>contact</code>）とその拡張、お問い合わせメール送信処理、お問い合わせを扱うリポジトリを正とする。</p>
-<p>本機能のカスタマイズ区分はカスタマイズであり、画面・挙動の参照はpf-eccube3を正とし、永続化（テーブル・列）に関する記述はリニューアル移行先のec-cube-enterpriseを正とする。</p>
-<p>対象はブラウザ経由のフロント（お問い合わせ）に限定する。フロントのルートはサイトルート直下に言語別プレフィックス<code>/{_locale}</code>を付けて公開する。</p>
-<p>本文ではフレームワークのコントローラ型名やメソッド名を主説明としない。ルートbind名の網羅は主説明とせず、「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。</p>
-<hr>
-<h2 id="本書で扱うこと">本書で扱うこと</h2>
-<ul><li>お問い合わせ画面・確認画面・完了画面の入口と画面遷移</li><li>件名・お問い合わせ詳細に応じた入力項目の表示切替</li><li>ログイン会員の初期表示と会員紐づけ</li><li>送信時の副作用（お問い合わせメール送信、お問い合わせ内容の保存）</li></ul>
-<hr>
-<h2 id="本書で扱わないこと">本書で扱わないこと</h2>
-<p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
-<ul><li>お問い合わせ履歴の一覧・詳細・履歴からの送信（お問い合わせ履歴機能を正とする）</li><li>お問い合わせメールの本文・件名の文面（メールテンプレート管理機能を正とする）</li><li>件名・お問い合わせ詳細・店舗・イベント実施店舗の各マスタ登録仕様（各マスタ管理機能を正とする）</li></ul>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<p>現行（pf-eccube3）と移行先（ec-cube-enterprise）でのDB関連の差を記録する。挙動は現行を正とし、永続化先の名称はec-cube-enterpriseを正とする。</p>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>電話番号の保存</td><td><code>dtb_contact.tel01</code>／<code>tel02</code>／<code>tel03</code>の3分割。海外言語ページは<code>telEn</code>を<code>tel01</code>へ格納</td><td><code>dtb_contact.phone_number</code>の単一列。3分割から1列へ統合される。移行時の分割値の連結方式はec-cube-enterprise実装で要確認。</td></tr><tr><td>店舗の保存</td><td>お問い合わせの店舗参照</td><td><code>dtb_contact.base_info_id</code>（拠点情報への参照）。</td></tr><tr><td>件名の保存</td><td>お問い合わせの件名参照</td><td><code>dtb_contact.subject_id</code>（件名マスタへの参照）。</td></tr><tr><td>お問い合わせ詳細・付帯情報・氏名・内容・メール・登録日時</td><td><code>sub_subject_id</code>／<code>attached_info</code>／<code>name01</code>・<code>name02</code>／<code>body</code>／<code>email</code>／<code>create_date</code></td><td>同一スキーマ（同名列が存在）。</td></tr><tr><td>会員紐づけ</td><td>お問い合わせの会員参照</td><td><code>dtb_contact.customer_id</code>（会員への参照）。</td></tr></tbody></table></div>
-<p>イベント名・イベント実施店舗・開催日・開始時間・キャンセル理由・アンケートは現行・移行先とも独立列を持たず、内容（<code>body</code>）へ転記して保存する。</p>
-<hr>
-<h2 id="用語">用語</h2>
-<div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>件名</td><td>お問い合わせの種別。件名ごとに付帯情報欄や店舗欄の表示有無が決まる。</td></tr><tr><td>お問い合わせ詳細</td><td>件名が店舗・イベント関連の場合に選ぶ下位区分（買い物・イベント・イベントキャンセル）。</td></tr><tr><td>付帯情報</td><td>件名に応じて表示する補足入力欄。</td></tr><tr><td>イベントキャンセル申込</td><td>お問い合わせ詳細がキャンセルのとき、イベント名・実施店舗・開催日・開始時間・キャンセル理由・アンケート等を併せて入力する形態。</td></tr><tr><td>会員紐づけ</td><td>ログイン会員、または未ログイン時はメールアドレスから特定した会員へお問い合わせを紐づけること。</td></tr></tbody></table></div>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>ヘッダー等の「お問い合わせ」</td><td><code>GET /{_locale}/contact</code></td><td>お問い合わせ入力フォームを表示する。ログイン会員は会員情報を初期表示する。クエリ<code>eventDetailId</code>があるとイベント関連の初期値を設定する。</td></tr><tr><td>「確認画面へ」送信</td><td><code>POST /{_locale}/contact</code>（<code>mode=confirm</code>）</td><td>入力が妥当なら確認画面を表示する。妥当でない場合は入力画面を再表示する。</td></tr><tr><td>確認画面の「送信をする」</td><td><code>POST /{_locale}/contact</code>（<code>mode=complete</code>）</td><td>お問い合わせメールを送信し内容を保存して、お問い合わせ完了画面へリダイレクトする。</td></tr><tr><td>確認画面の「戻る」</td><td>ブラウザ履歴で前画面へ戻る</td><td>入力画面へ戻る（同一URLの再入力）。</td></tr><tr><td>送信後の表示</td><td><code>GET /{_locale}/contact/complete</code></td><td>お問い合わせ完了画面を表示する。</td></tr></tbody></table></div>
-<p><code>/{_locale}</code>は言語別プレフィックスである。お問い合わせ画面はログインを必須としない。同一URL<code>/contact</code>でGETの初期表示とPOSTの確認・送信を受け、POSTボディの<code>mode</code>で確認・送信を分岐する。</p>
-<hr>
-<h2 id="フロント挙動">フロント挙動</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>見出し「お問い合わせ」と「当店へのご要望は、下記フォームにご記入のうえ送信してください。」の案内。件名、お問い合わせ詳細、付帯情報、店舗、氏名（姓・名）、電話番号、メールアドレス、内容などの入力欄と「確認画面へ」ボタン・「戻る」リンク。確認画面は入力内容と「送信をする」「戻る」を表示する。</td></tr><tr><td>JS挙動</td><td>件名の選択に応じて付帯情報欄・店舗欄の表示・ラベルを切り替える。お問い合わせ詳細がイベントキャンセルのときはイベント名・実施店舗・開催日・開始時間・キャンセル理由・その他理由・アンケート欄を表示し、送信時に必須チェックを行い、内容欄へそれらをまとめて転記する。キャンセル以外ではイベント関連欄をクリアする。</td></tr><tr><td>CSS・レイアウト</td><td>お問い合わせ用のレイアウトを用いる。必須項目には必須マークを表示する。</td></tr><tr><td>モーダル・ポップアップ</td><td>本画面専用のモーダルは無い。イベントキャンセルの必須未入力時はブラウザのアラートで警告する。</td></tr></tbody></table></div>
-<p>カナ欄は画面上は非表示で保持する。電話番号は日本語ページで3分割欄、海外言語ページでは1欄（数値）に切り替える。内容・アンケートは複数行入力（textarea）である。</p>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="お問い合わせ画面を表示する-GET-locale-contact">お問い合わせ画面を表示する（GET <code>/{_locale}/contact</code>）</h3>
-<ol><li>クエリ<code>eventDetailId</code>があり対象イベント詳細が表示中なら、件名・お問い合わせ詳細・イベント名・開催日・開始時間・実施店舗の初期値を設定する。</li><li>お問い合わせフォームを生成する。海外言語ページでは日本語用の電話番号欄を除外する。</li><li>ログイン会員の場合は氏名・カナ・郵便番号・都道府県・住所・メール・電話番号を初期表示する。</li><li>入力フォームを表示する。</li></ol>
-<h3 id="確認画面を表示する-POST-mode-confirm">確認画面を表示する（POST <code>mode=confirm</code>）</h3>
-<ol><li>フォームを検証する。妥当でない場合は入力画面を再表示する。</li><li><code>mode</code>が<code>confirm</code>のため、入力内容を確定表示状態にして確認画面を表示する。</li></ol>
-<h3 id="送信する-POST-mode-complete">送信する（POST <code>mode=complete</code>）</h3>
-<ol><li>フォームを検証する。妥当でない場合は入力画面を再表示する。</li><li>ログイン会員でない場合は、入力メールアドレスから最も適合する会員を特定する（特定できなければ会員紐づけなし）。</li><li>お問い合わせメールを送信する。</li><li>件名・お問い合わせ詳細区分・付帯情報・氏名・電話番号・メール・店舗・内容を保存し、特定できた会員を紐づける。</li><li>お問い合わせ完了画面へリダイレクトする。</li></ol>
-<h3 id="お問い合わせ完了画面を表示する-GET-locale-contact-complete">お問い合わせ完了画面を表示する（GET <code>/{_locale}/contact/complete</code>）</h3>
-<ol><li>お問い合わせ完了画面を表示する。</li></ol>
-<hr>
-<h2 id="表示メッセージ">表示メッセージ</h2>
-<h3 id="常時表示-正常・静的">常時表示（正常・静的）</h3>
-<p>英語ロケール対応がある機能のため（<code>Contact/index.en.twig</code>・<code>Contact/confirm.en.twig</code>・<code>Contact/complete.en.twig</code>）、英語文言を併記する。</p>
-<div class="table-wrap"><table><thead><tr><th>種別</th><th>表示文言（日本語）</th><th>表示文言（英語）</th><th>条件</th></tr></thead><tbody><tr><td>画面見出し</td><td>お問い合わせ</td><td>Contact Us (send Inquiry)</td><td>お問い合わせ画面の表示時</td></tr><tr><td>案内</td><td>当店へのご要望は、下記フォームにご記入のうえ送信してください。</td><td>To contact the shop, please fill out the form below.</td><td>お問い合わせ画面・確認画面の表示時</td></tr><tr><td>キャンセル期限案内</td><td>イベントのキャンセル期限はイベント開催日の前日23時59分までになります。</td><td>Event Cancellation deadline is 23:59pm the day before the event date.</td><td>お問い合わせ詳細がイベントキャンセルのとき</td></tr></tbody></table></div>
-<h3 id="エラー・警告-インライン">エラー・警告（インライン）</h3>
-<div class="table-wrap"><table><thead><tr><th>表示文言（日本語）</th><th>表示文言（英語）</th><th>表示条件（利用者視点）</th><th>表示位置</th><th>備考</th></tr></thead><tbody><tr><td>イベントキャンセル申込で必須項目が未入力である旨の警告</td><td>-</td><td>イベントキャンセル送信時に必須欄が未入力のとき</td><td>ブラウザのアラート</td><td>送信を中止して入力を促す（クライアント側）。アラート文言は項目ごとにJSで組み立てるため英語列は<code>-</code>。</td></tr></tbody></table></div>
-<p>件名・氏名・メール・内容など各項目の必須・形式エラーは各項目直下に表示する。本機能はフラッシュ・トーストを生成しない。</p>
-<hr>
-<h3 id="メッセージID対応-自動棚卸">メッセージID対応（自動棚卸）</h3>
-<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>画面上の文言(英語)</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>F06-22-MSG-001</td><td>画面中央(ダイアログ)</td><td>必須項目が入力されていません。</td><td>Required fields are missing.</td><td>イベントキャンセルに関するお問い合わせで、必須項目が未入力のまま送信したとき</td><td>送信せず現在の画面に留まる</td></tr><tr><td>F06-22-MSG-002</td><td>完了画面本文</td><td>お問い合わせが完了いたしました。&lt;br&gt;ご利用ありがとうございました。</td><td>Thank you very much for your time.&lt;br&gt;We have successfully received your inquiry.&lt;br&gt;A representative from the shop will be in touch with you shortly.</td><td>お問い合わせを送信して保存が完了したとき</td><td>お問い合わせ完了画面へ遷移して本文を表示する。</td></tr></tbody></table></div>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>件名による表示切替</td><td>件名ごとに付帯情報欄・店舗欄の表示有無とラベルが決まる。店舗・イベント関連の件名でお問い合わせ詳細を表示する。</td></tr><tr><td>イベントキャンセルの内容転記</td><td>お問い合わせ詳細がイベントキャンセルのとき、イベント名・実施店舗・開催日・開始時間・キャンセル理由・その他理由・アンケートを内容欄へまとめて転記する。キャンセル以外ではイベント関連欄をクリアする。</td></tr><tr><td>会員紐づけ</td><td>ログイン会員はその会員、未ログイン時は入力メールから最も適合する会員を紐づける。特定できない場合は会員紐づけなしで保存する。</td></tr><tr><td>メール送信と保存の順序</td><td>送信時にお問い合わせメールを送信し、続いてお問い合わせ内容を保存する。</td></tr></tbody></table></div>
-<h3 id="入力項目">入力項目</h3>
-<div class="table-wrap"><table><thead><tr><th>項目名</th><th>必須／任意</th><th>最大長</th><th>初期値</th><th>保存先・扱い</th></tr></thead><tbody><tr><td>件名（タイトル）</td><td>必須</td><td>選択式</td><td>クエリ由来の初期件名または未選択</td><td><code>dtb_contact.subject_id</code>（フォームキー<code>subject</code>）。件名マスタから選択。</td></tr><tr><td>お問い合わせ詳細</td><td>任意（店舗・イベント関連で選択）</td><td>選択式（買い物／イベント／イベントキャンセル）</td><td>未選択またはクエリ由来</td><td><code>dtb_contact.sub_subject_id</code>（フォームキー<code>subSubject</code>）。</td></tr><tr><td>付帯情報</td><td>任意</td><td>フォーム上限なし</td><td>空</td><td><code>dtb_contact.attached_info</code>（フォームキー<code>attachedInfo</code>）。件名に応じて表示・ラベルを切替。</td></tr><tr><td>店舗</td><td>任意</td><td>選択式</td><td>未選択</td><td><code>dtb_contact.base_info_id</code>（拠点情報への参照。フォームキー<code>shop</code>）。件名に応じて表示。</td></tr><tr><td>お問い合わせ時氏名（姓・名）</td><td>必須</td><td>各16文字（<code>name_len</code>）</td><td>ログイン会員の氏名</td><td><code>dtb_contact.name01</code>／<code>name02</code>（フォームキー<code>name</code>）。</td></tr><tr><td>電話番号</td><td>国・言語により扱いが異なる</td><td>国内は3分割／海外は数値1欄</td><td>ログイン会員の電話番号</td><td><code>dtb_contact.phone_number</code>（移行先は単一列。現行は<code>tel01</code>／<code>tel02</code>／<code>tel03</code>の3分割。フォームキー<code>tel</code>、海外は<code>telEn</code>）。海外言語ページは数値検証。</td></tr><tr><td>メールアドレス</td><td>必須</td><td>フォーム上限なし（メール厳格形式）</td><td>ログイン会員のメール</td><td><code>dtb_contact.email</code>（フォームキー<code>email</code>）。未ログイン時は会員特定にも使う。</td></tr><tr><td>内容</td><td>必須</td><td>複数行入力（textarea、フォーム上限なし）</td><td>空</td><td><code>dtb_contact.body</code>（フォームキー<code>contents</code>）。イベントキャンセル時はイベント関連入力を転記。</td></tr><tr><td>イベント名</td><td>キャンセル時必須</td><td>フォーム上限なし</td><td>クエリ由来</td><td>フォームキー<code>eventName</code>。内容欄へ転記（独立保存はしない）。</td></tr><tr><td>イベント実施店舗</td><td>キャンセル時必須</td><td>選択式</td><td>クエリ由来</td><td>フォームキー<code>eventShop</code>。内容欄へ転記。</td></tr><tr><td>イベント開催日・開始時間</td><td>キャンセル時必須</td><td>日付・時刻入力</td><td>クエリ由来</td><td>フォームキー<code>eventDate</code>／<code>eventStartTime</code>。内容欄へ転記。</td></tr><tr><td>キャンセル理由</td><td>キャンセル時必須</td><td>選択式</td><td>未選択</td><td>フォームキー<code>cancelReason</code>。内容欄へ転記。</td></tr><tr><td>その他キャンセル理由</td><td>理由がその他のとき必須</td><td>フォーム上限なし</td><td>空</td><td>フォームキー<code>otherCancelReason</code>。内容欄へ転記。</td></tr><tr><td>アンケート</td><td>キャンセル時必須</td><td>複数行入力（textarea）</td><td>空</td><td>フォームキー<code>questionnaire</code>。内容欄へ転記。</td></tr></tbody></table></div>
-<p>最大長の根拠は<code>src/Eccube/Resource/config/constant.yml.dist</code>の確認値（<code>name_len</code>=16）。氏名カナは画面上非表示で保持する。環境で上書きされている場合は注記が必要である。</p>
-<h3 id="エッジケース">エッジケース</h3>
-<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td><code>eventDetailId</code>が非表示・無効</td><td>イベント関連の初期値を設定せず通常フォームを表示する。</td></tr><tr><td>海外言語ページ</td><td>日本語用電話番号欄を除外し、海外用電話番号（数値）を扱う。</td></tr><tr><td>未ログインでメールから会員特定不可</td><td>会員紐づけなしで保存する。</td></tr><tr><td>イベントキャンセルで必須未入力</td><td>クライアント側で送信を止め、アラートで警告する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>会員紐づけ</td><td>ログイン会員、または未ログイン時の入力メールから特定した会員を保存時に紐づける。特定できない場合は紐づけなし。</td></tr><tr><td>メール送信と保存</td><td>送信時にメールを送り、お問い合わせ内容を保存する。送信の成否は画面表示に反映しない。</td></tr><tr><td>完了画面</td><td>保存・送信後に完了画面へリダイレクトする。</td></tr></tbody></table></div>
-<hr>
-<h2 id="API-バッチ結果">API/バッチ結果</h2>
-<p>本機能ではAPI呼び出し・バッチ実行を扱わない。</p>
-<p>お問い合わせメールの送信は送信処理時に行う。送信の成否は画面のメッセージには反映しない。</p>
-<hr>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="画面の構成">画面の構成</h3>
+<div class="table-wrap"><table><thead><tr><th>区分</th><th>内容</th></tr></thead><tbody><tr><td>見出し・案内</td><td>見出し「お問い合わせ」と、下記フォームへの記入を促す案内を表示する</td></tr><tr><td>入力欄: 件名</td><td>選択に応じて他の欄の表示を切り替える</td></tr><tr><td>入力欄: お問い合わせ詳細</td><td>件名が店舗・イベント関連のときに表示する</td></tr><tr><td>入力欄: 付帯情報</td><td>件名ごとに表示有無とラベルが決まる</td></tr><tr><td>入力欄: 店舗</td><td>件名ごとに表示有無とラベルが決まる</td></tr><tr><td>入力欄: 氏名</td><td>姓と名に分ける</td></tr><tr><td>入力欄: 電話番号</td><td>ページの言語で欄の数が変わる</td></tr><tr><td>入力欄: メールアドレス</td><td>未ログインのときの会員特定にも用いる</td></tr><tr><td>入力欄: 内容</td><td>複数行入力とする</td></tr><tr><td>必須表示</td><td>必須項目には必須マークを表示する</td></tr><tr><td>操作</td><td>入力画面は「確認画面へ」ボタンと「戻る」リンク。確認画面は入力内容と「送信をする」「戻る」を表示する</td></tr><tr><td>カナ欄</td><td>画面上は非表示のまま保持する</td></tr><tr><td>電話番号欄</td><td>日本語ページのときは3分割の欄、海外言語ページのときは1欄（数値）</td></tr><tr><td>内容・アンケート欄</td><td>複数行入力とする</td></tr><tr><td>モーダル</td><td>本画面専用のモーダルは無い。イベントキャンセルで必須欄が未入力のときはブラウザのアラートで警告する</td></tr><tr><td>レイアウト</td><td>お問い合わせ用のレイアウトを用いる</td></tr></tbody></table></div>
+<h3 id="初期表示">初期表示</h3>
+<div class="table-wrap"><table><thead><tr><th>条件</th><th>初期値</th></tr></thead><tbody><tr><td>クエリでイベント詳細を指定し、対象のイベント詳細が表示中のとき</td><td>件名・お問い合わせ詳細・イベント名・開催日・開始時間・実施店舗に初期値を設定する</td></tr><tr><td>ログイン会員のとき</td><td>氏名・カナ・郵便番号・都道府県・住所・メール・電話番号を初期表示する</td></tr><tr><td>海外言語ページのとき</td><td>日本語用の電話番号欄を除いてフォームを組み立てる</td></tr></tbody></table></div>
+<h3 id="件名による表示切替">件名による表示切替</h3>
+<p>件名ごとに、付帯情報欄と店舗欄の表示有無とラベルが決まる。店舗・イベント関連の件名のときはお問い合わせ詳細を表示する。</p>
+<h3 id="イベントキャンセルの内容転記">イベントキャンセルの内容転記</h3>
+<p>お問い合わせ詳細がイベントキャンセルのときだけ、次の欄を表示する。</p>
+<div class="table-wrap"><table><thead><tr><th>欄</th><th>送信時の扱い</th></tr></thead><tbody><tr><td>イベント名</td><td>必須の入力を確認し、内容欄へ転記する</td></tr><tr><td>実施店舗</td><td>必須の入力を確認し、内容欄へ転記する</td></tr><tr><td>開催日</td><td>必須の入力を確認し、内容欄へ転記する</td></tr><tr><td>開始時間</td><td>必須の入力を確認し、内容欄へ転記する</td></tr><tr><td>キャンセル理由</td><td>必須の入力を確認し、内容欄へ転記する</td></tr><tr><td>その他理由</td><td>内容欄へ転記する</td></tr><tr><td>アンケート</td><td>内容欄へ転記する。複数行入力とする</td></tr></tbody></table></div>
+<p>イベントキャンセル以外のときは、イベント関連の欄を消す。</p>
+<h3 id="送信の判定順序">送信の判定順序</h3>
+<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定・処理</th><th>内容</th></tr></thead><tbody><tr><td>1</td><td>入力内容の検証</td><td>妥当でないときは送信せず、入力画面を再表示する</td></tr><tr><td>2</td><td>会員の特定</td><td>ログイン会員のときはその会員とする。未ログインのときは入力メールアドレスから最も適合する会員を特定する。特定できないときは会員の紐づけを行わない</td></tr><tr><td>3</td><td>メール送信</td><td>お問い合わせメールを送信する</td></tr><tr><td>4</td><td>保存</td><td>件名・お問い合わせ詳細区分・付帯情報・氏名・電話番号・メール・店舗・内容を保存し、特定できた会員を紐づける</td></tr><tr><td>5</td><td>遷移</td><td>お問い合わせ完了画面へ遷移する</td></tr></tbody></table></div>
+<p>確認画面は、入力内容の検証を通ったときだけ表示する。妥当でないときは入力画面を再表示する。</p>
+<h3 id="エラー時の扱い">エラー時の扱い</h3>
+<div class="table-wrap"><table><thead><tr><th>事象</th><th>扱い</th></tr></thead><tbody><tr><td>入力の検証に外れたとき</td><td>各項目直下にエラーを表示し、入力画面を再表示する</td></tr><tr><td>イベントキャンセルで必須欄が未入力のとき</td><td>送信を止め、アラートで警告する</td></tr></tbody></table></div>
+<p>件名・氏名・メール・内容など各項目の必須・形式のエラーは、各項目の直下に表示する。本機能はフラッシュ・トーストを生成しない。</p>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>件名・お問い合わせ詳細・付帯情報・店舗・氏名・電話番号・メール・内容などの入力値、<code>mode</code>、クエリ<code>eventDetailId</code>。</td></tr><tr><td>成功時出力</td><td>お問い合わせメール送信、お問い合わせ内容の保存、お問い合わせ完了画面への遷移。</td></tr><tr><td>失敗時出力</td><td>入力画面の再表示（検証エラー）。</td></tr><tr><td>副作用</td><td>お問い合わせメール送信、お問い合わせ内容の保存（会員紐づけ）。</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<p>機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。</p>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>dtb_contact</code></td><td><code>body</code></td><td>お問い合わせ内容。イベントキャンセル時は関連入力を転記した文字列。</td></tr><tr><td><code>dtb_contact</code></td><td><code>sub_subject_id</code></td><td>お問い合わせ詳細区分。</td></tr><tr><td><code>dtb_contact</code></td><td><code>attached_info</code></td><td>付帯情報。</td></tr><tr><td><code>dtb_contact</code></td><td><code>name01</code> / <code>name02</code></td><td>お問い合わせ時氏名。</td></tr><tr><td><code>dtb_contact</code></td><td><code>phone_number</code></td><td>電話番号。移行先は単一列。現行は<code>tel01</code>／<code>tel02</code>／<code>tel03</code>の3分割（海外は<code>telEn</code>を<code>tel01</code>へ格納）。</td></tr><tr><td><code>dtb_contact</code></td><td><code>email</code></td><td>メールアドレス。未ログイン時は会員特定にも使う。</td></tr><tr><td><code>dtb_contact</code></td><td><code>create_date</code></td><td>登録日時。</td></tr><tr><td><code>dtb_contact</code></td><td><code>subject_id</code> / <code>base_info_id</code> / <code>customer_id</code></td><td>件名（件名マスタ参照）・店舗（拠点情報参照）・特定できた会員を紐づける。</td></tr></tbody></table></div>
-<h3 id="DB操作">DB操作</h3>
-<p>永続化の正は ec-cube-enterprise（テーブル名・操作は ec-cube-enterprise を正典）。当ドメインは承認ワークフローを介さず persist/flush で直接確定する（承認ワークフローは在庫機能固有）。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>登録/更新</td><td>dtb_contact</td><td>当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。</td></tr></tbody></table></div>
-<hr>
-<h2 id="バリデーション">バリデーション</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>件名</td><td>必須。件名マスタから選択する。</td></tr><tr><td>氏名</td><td>必須。</td></tr><tr><td>メールアドレス</td><td>必須・メール厳格形式。</td></tr><tr><td>内容</td><td>必須。</td></tr><tr><td>電話番号</td><td>国内は任意（フォーム定義）。海外言語ページの海外用電話番号は必須・数値。</td></tr><tr><td>イベントキャンセル関連</td><td>キャンセル時にクライアント側で必須チェックを行う。</td></tr></tbody></table></div>
-<hr>
-<h2 id="権限・認可">権限・認可</h2>
-<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>お問い合わせ送信</th></tr></thead><tbody><tr><td>未ログイン</td><td>送信できる。入力メールから会員を特定できれば紐づける。</td></tr><tr><td>ログイン済み会員</td><td>送信できる。会員情報を初期表示し、当該会員を紐づける。</td></tr></tbody></table></div>
-<p>本機能はログインを必須としない。</p>
-<hr>
-<h2 id="画面遷移">画面遷移</h2>
-<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>「お問い合わせ」</td><td>お問い合わせ画面（<code>GET /{_locale}/contact</code>）</td></tr><tr><td>「確認画面へ」（<code>mode=confirm</code>・検証通過）</td><td>お問い合わせ確認画面（同一URL再描画）</td></tr><tr><td>「確認画面へ」（検証不成立）</td><td>お問い合わせ画面の再表示</td></tr><tr><td>「送信をする」（<code>mode=complete</code>・検証通過）</td><td>お問い合わせ完了画面（<code>contact_complete</code>へリダイレクト）</td></tr><tr><td>確認画面の「戻る」</td><td>お問い合わせ画面（ブラウザ履歴で前画面）</td></tr></tbody></table></div>
-<h3 id="遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</h3>
-<div class="table-wrap"><table><thead><tr><th>起点</th><th>遷移前の処理</th><th>遷移後の初期状態</th></tr></thead><tbody><tr><td>クエリ<code>eventDetailId</code>付きの表示</td><td>対象イベント詳細の初期値を組み立てる</td><td>件名・お問い合わせ詳細・イベント情報を初期表示する</td></tr></tbody></table></div>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>入力の検証エラー</td><td>各項目直下にエラーを表示し入力画面を再表示する。</td></tr><tr><td>イベントキャンセルの必須未入力</td><td>クライアント側で送信を止めアラートで警告する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="ログ・監査">ログ・監査</h2>
-<p>本機能では業務ログ・監査ログの追記は扱わない（お問い合わせ内容自体が<code>dtb_contact</code>に保存される）。</p>
-<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
-<ul><li>なりすまし対策トークン</li><li>Cookie値</li><li>セッションIDの完全値</li></ul>
-<hr>
-<h2 id="セッション">セッション</h2>
-<p>本機能では業務目的のセッション更新を扱わない。フォーム送信は通常のPOSTで行う。</p>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<p>お問い合わせ内容の保存は単一の保存処理で確定する。本機能では楽観ロック・悲観ロックの対象は持たない。</p>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>件名・お問い合わせ詳細・付帯情報・店舗・氏名・電話番号・メール・内容などの入力値。確認と送信の区別。クエリのイベント詳細ID。</td></tr><tr><td>成功時出力</td><td>お問い合わせメールの送信、お問い合わせ内容の保存、お問い合わせ完了画面への遷移。</td></tr><tr><td>失敗時出力</td><td>検証に外れたときは入力画面の再表示。</td></tr></tbody></table></div>
+<h3 id="入出力-永続化">入出力: 永続化</h3>
+<div class="table-wrap"><table><thead><tr><th>操作</th><th>契機</th></tr></thead><tbody><tr><td>追加</td><td>お問い合わせを送信したとき。特定できた会員を紐づける</td></tr></tbody></table></div>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
+<h2 id="表示メッセージ">表示メッセージ</h2>
+<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>—</td><td>画面見出し</td><td>お問い合わせ</td><td>お問い合わせ画面の表示時</td><td>入力画面に留まる</td></tr><tr><td>—</td><td>画面見出し（英語ページ）</td><td>Contact Us (send Inquiry)</td><td>お問い合わせ画面の表示時</td><td>入力画面に留まる</td></tr><tr><td>—</td><td>案内</td><td>当店へのご要望は、下記フォームにご記入のうえ送信してください。</td><td>お問い合わせ画面・確認画面の表示時</td><td>入力画面・確認画面に留まる</td></tr><tr><td>—</td><td>案内（英語ページ）</td><td>To contact the shop, please fill out the form below.</td><td>お問い合わせ画面・確認画面の表示時</td><td>入力画面・確認画面に留まる</td></tr><tr><td>—</td><td>キャンセル期限案内</td><td>イベントのキャンセル期限はイベント開催日の前日23時59分までになります。</td><td>お問い合わせ詳細がイベントキャンセルのとき</td><td>入力画面に留まる</td></tr><tr><td>—</td><td>キャンセル期限案内（英語ページ）</td><td>Event Cancellation deadline is 23:59pm the day before the event date.</td><td>お問い合わせ詳細がイベントキャンセルのとき</td><td>入力画面に留まる</td></tr><tr><td>—</td><td>ブラウザのアラート</td><td>イベントキャンセル申込で必須項目が未入力である旨の警告</td><td>イベントキャンセル送信時に必須欄が未入力のとき</td><td>送信を中止して入力を促す（クライアント側）。アラート文言は項目ごとに組み立てる</td></tr><tr><td>F06-22-MSG-001</td><td>画面中央(ダイアログ)</td><td>必須項目が入力されていません。</td><td>イベントキャンセルに関するお問い合わせで、必須項目が未入力のまま送信したとき</td><td>送信せず現在の画面に留まる</td></tr><tr><td>F06-22-MSG-001</td><td>画面中央(ダイアログ)（英語ページ）</td><td>Required fields are missing.</td><td>イベントキャンセルに関するお問い合わせで、必須項目が未入力のまま送信したとき</td><td>送信せず現在の画面に留まる</td></tr><tr><td>F06-22-MSG-002</td><td>完了画面本文</td><td>お問い合わせが完了いたしました。&lt;br&gt;ご利用ありがとうございました。</td><td>お問い合わせを送信して保存が完了したとき</td><td>お問い合わせ完了画面へ遷移して本文を表示する。</td></tr><tr><td>F06-22-MSG-002</td><td>完了画面本文（英語ページ）</td><td>Thank you very much for your time.&lt;br&gt;We have successfully received your inquiry.&lt;br&gt;A representative from the shop will be in touch with you shortly.</td><td>お問い合わせを送信して保存が完了したとき</td><td>お問い合わせ完了画面へ遷移して本文を表示する。</td></tr></tbody></table></div>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

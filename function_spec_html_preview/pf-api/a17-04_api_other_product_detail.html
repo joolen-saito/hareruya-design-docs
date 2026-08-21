@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,32 +272,18 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#本書で扱うこと">本書で扱うこと</a>
-<a class="lv2" href="#本書で扱わないこと">本書で扱わないこと</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv2" href="#用語">用語</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#認証・認可">認証・認可</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#商品IDで商品詳細を取得する-GET-product-detail-productId">商品IDで商品詳細を取得する（GET `/product/detail/{productId}`）</a>
-<a class="lv2" href="#表示メッセージ">表示メッセージ</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#取得対象">取得対象</a>
+<a class="lv3" href="#カード商品の扱い">カード商品の扱い</a>
+<a class="lv3" href="#出力する商品規格">出力する商品規格</a>
+<a class="lv3" href="#週間販売数">週間販売数</a>
+<a class="lv3" href="#値の取り方">値の取り方</a>
+<a class="lv3" href="#他機能との境界">他機能との境界</a>
+<a class="lv3" href="#エラー時の扱い">エラー時の扱い</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv3" href="#リクエスト">リクエスト</a>
-<a class="lv3" href="#レスポンス-成功">レスポンス（成功）</a>
-<a class="lv3" href="#レスポンス-失敗">レスポンス（失敗）</a>
-<a class="lv3" href="#サンプルレスポンス">サンプルレスポンス</a>
-<a class="lv3" href="#副作用">副作用</a>
-<a class="lv2" href="#バリデーション">バリデーション</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#権限・認可">権限・認可</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#ログ・監査">ログ・監査</a>
-<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a></nav>
+<a class="lv3" href="#出力-応答項目">出力: 応答項目</a>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -295,122 +291,29 @@ footer {
         <h1>API その他 — 商品IDに紐づく商品詳細の情報を取得</h1>
       </header>
       
-      <h2 id="概要">概要</h2>
-<p>外部連携先（任意門）が商品IDを指定して、商品の詳細情報（商品本体・カード情報・コンディション別の商品規格・画像）を取得するためのAPIである。pf-api（買取・連携用のAPIアプリケーション）が提供するJSON APIで、商品IDと言語に対応する商品詳細を返す。</p>
-<p>本機能のカスタマイズ区分は現行踏襲であり、挙動は現行実装（pf-api）を参照し、DB関連はec-cube-enterpriseを正とする。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-apiの商品詳細取得処理、ルート定義（<code>config/routes.yaml</code>）、商品を扱うリポジトリを正とする。</p>
-<p>対象はJSON APIエンドポイントであり、ブラウザ向けの画面を持たない。本文ではフレームワークのコントローラ型名やメソッド名を主説明としない。「利用者視点の入口」にHTTPメソッドとパスパターンを書く。</p>
-<hr>
-<h2 id="本書で扱うこと">本書で扱うこと</h2>
-<ul><li>商品IDと言語による商品詳細情報・商品規格・カード情報・画像の取得</li><li>表示するコンディションの絞り込み</li><li>該当が無い場合の応答</li></ul>
-<hr>
-<h2 id="本書で扱わないこと">本書で扱わないこと</h2>
-<p>以下は本書では仕様確定せず、実装または別APIの設計を正とする。</p>
-<ul><li>商品名による商品詳細取得（商品名から商品詳細取得APIの設計を正とする）</li><li>買取用商品情報の取得（買取用商品情報取得APIの設計を正とする）</li><li>商品の登録・編集（商品管理を正とする）</li></ul>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<p>商品・商品規格は標準のEC-CUBE構成にカード関連の拡張列を加えた構成であり、現行（pf-api）と移行先（ec-cube-enterprise）でDB関連の記述は移行先を正とする。確認できた対応を以下に記録する。</p>
-<div class="table-wrap"><table><thead><tr><th>応答フィールド</th><th>移行先の列</th></tr></thead><tbody><tr><td><code>product_name</code></td><td><code>dtb_product.name</code></td></tr><tr><td><code>description_detail</code></td><td><code>dtb_product.description_detail</code>（日本語は <code>description_detail_jp</code>）</td></tr><tr><td><code>region_restriction</code></td><td><code>dtb_product</code> の地域制限参照（<code>mtb_region_restriction</code>）</td></tr><tr><td><code>product_code</code></td><td><code>dtb_product_class.product_code</code></td></tr><tr><td><code>high_price_code</code></td><td><code>dtb_product_class.high_price_code</code></td></tr><tr><td><code>card_condition_code</code></td><td><code>dtb_product_class.card_condition_id</code>／<code>card_condition_name</code>（コンディション）</td></tr><tr><td><code>price</code></td><td><code>dtb_product_class.price02</code>（販売価格）</td></tr><tr><td><code>sale_limit</code></td><td><code>dtb_product_class.sale_limit</code></td></tr><tr><td><code>stock</code></td><td><code>dtb_product_class.stock</code></td></tr><tr><td><code>product_class_images</code></td><td><code>dtb_product_class_image</code>（<code>product_image_id</code>、並び順 <code>rank</code>）</td></tr></tbody></table></div>
-<p>カード情報（色・マナコスト・レアリティ等）はカードマスタ（<code>mtb_card</code>・<code>mtb_card_detail</code>）から取得する。</p>
-<hr>
-<h2 id="用語">用語</h2>
-<div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>商品規格</td><td>商品のコンディション等の規格単位。価格・在庫・画像を持つ。</td></tr><tr><td>カード情報</td><td>カード商品に紐づく詳細情報（色・マナコスト・レアリティ等）。</td></tr><tr><td>週間販売数</td><td>直近の販売数の集計値。商品規格ごとの数量を合算する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>商品IDによる商品詳細の取得</td><td><code>GET /product/detail/{productId}</code></td><td>商品IDと言語に対応する商品詳細をJSONで返す。該当が無い場合は404を返す。</td></tr><tr><td>同上（拡張子あり別名）</td><td><code>GET /product/detail/{productId}.json</code></td><td>上と同一処理。</td></tr></tbody></table></div>
-<p>応答形式はJSON。呼び出し元は外部連携先（任意門）。</p>
-<hr>
-<h2 id="認証・認可">認証・認可</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>認証方式</td><td>本APIは<code>jwt-token</code>等による認証を行わない。商品詳細の参照に限定する。</td></tr><tr><td>認可</td><td>呼び出し元は外部連携先（任意門）。アクセス経路の制御はAPI外（ネットワーク・配置）の範囲とし、本書では仕様確定しない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="商品IDで商品詳細を取得する-GET-product-detail-productId">商品IDで商品詳細を取得する（GET <code>/product/detail/{productId}</code>）</h3>
-<ol><li>パスの商品IDと、クエリの言語を受け取る。言語が未指定の場合は日本語を既定とする。</li><li>商品IDと言語で商品詳細を取得する。該当が無い場合は該当なし（HTTP 404）とする。</li><li>先頭の明細から商品本体の情報（商品名・言語・説明・カテゴリ・地域制限）を設定する。カード商品の場合は商品名の先頭に言語コードを付し、カード情報を組み立てる。</li><li>各明細について週間販売数を合算する。</li><li>各明細のうち、良品（NM）または価格が表示下限以上のものだけを商品規格として加え、画像はファイル名からURLへ変換して並べる。</li><li>コード200・週間販売数・商品情報・カード情報・商品規格をJSONで返す。</li></ol>
-<hr>
-<h2 id="表示メッセージ">表示メッセージ</h2>
-<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>画面上の文言(英語)</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>A17-04-MSG-001</td><td>API応答JSON（errors配列）</td><td>商品詳細の取得に失敗しました</td><td>（英訳なし）</td><td>商品詳細レスポンス生成中に例外が発生</td><td>API呼出元でHTTP 500とerrors配列を処理する</td></tr></tbody></table></div>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>対象データ</td><td>リクエストで指定されたID・条件に一致するデータを取得対象とする。抽出条件と該当なし時の扱いは処理フロー・入出力の各節を正とする。</td></tr><tr><td>計算処理</td><td>本APIでは金額・税・ポイント・在庫数量の再計算や丸めを行わない。DBまたはリポジトリから取得した値をJSON応答へ整形して返す。</td></tr><tr><td>応答値</td><td>応答フィールドは取得時点の値を返す。表示用の加工やフロントエンド側の表示制御は呼び出し元クライアントの設計を正とする。</td></tr></tbody></table></div>
-<hr>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="取得対象">取得対象</h3>
+<p>商品IDと言語で商品詳細を取得する。言語が未指定のときは日本語を既定とする。該当が無いときは該当なし（HTTP 404）とする。</p>
+<p>商品本体の情報（商品名・言語・説明・カテゴリ・地域制限）は、取得した明細の先頭から取る。</p>
+<h3 id="カード商品の扱い">カード商品の扱い</h3>
+<p>カード商品のときは商品名の先頭に言語コードを付し、カード情報を組み立てる。カード商品でないときはカード情報を返さない。</p>
+<h3 id="出力する商品規格">出力する商品規格</h3>
+<p>明細のうち、良品（NM）または価格が表示下限以上のものだけを商品規格として返す。画像はファイル名からURLへ変換して並べる。</p>
+<h3 id="週間販売数">週間販売数</h3>
+<p>各明細の週間販売数を合算した値を返す。</p>
+<h3 id="値の取り方">値の取り方</h3>
+<p>金額・税・ポイント・在庫数量の再計算や丸めは行わない。取得時点の値をそのまま応答へ整形して返す。表示用の加工は呼び出し元の設計による。</p>
+<h3 id="他機能との境界">他機能との境界</h3>
+<p>本機能は認証を行わない。呼び出し元は外部連携先であり、アクセス経路の制御は本書の範囲外とする。</p>
+<h3 id="エラー時の扱い">エラー時の扱い</h3>
+<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>商品IDに該当する商品詳細が無い</td><td>該当なし（HTTP 404）・「Not Found」を返す</td></tr></tbody></table></div>
 <h2 id="入出力">入出力</h2>
-<h3 id="リクエスト">リクエスト</h3>
-<div class="table-wrap"><table><thead><tr><th>パラメータ</th><th>位置</th><th>型</th><th>必須／任意</th><th>説明</th></tr></thead><tbody><tr><td><code>productId</code></td><td>パス</td><td>integer</td><td>必須</td><td>取得対象の商品ID。</td></tr><tr><td><code>lang</code></td><td>クエリ</td><td>string</td><td>任意</td><td>言語区分。未指定の場合は日本語（<code>JP</code>）を既定とする。</td></tr></tbody></table></div>
-<h3 id="レスポンス-成功">レスポンス（成功）</h3>
-<p>HTTP 200。</p>
-<div class="table-wrap"><table><thead><tr><th>フィールド</th><th>型</th><th>説明</th></tr></thead><tbody><tr><td><code>code</code></td><td>integer</td><td>処理結果コード。成功時は200。</td></tr><tr><td><code>weekly_sold</code></td><td>integer</td><td>週間販売数。商品規格ごとの数量を合算した値。</td></tr><tr><td><code>product_id</code></td><td>integer</td><td>商品ID。</td></tr><tr><td><code>product_name</code></td><td>string</td><td>商品名。カード商品は先頭に言語コードを付す。</td></tr><tr><td><code>language_code</code></td><td>string</td><td>言語コード。</td></tr><tr><td><code>description_detail</code></td><td>string</td><td>商品説明。</td></tr><tr><td><code>categories</code></td><td>array</td><td>カテゴリ名の配列。</td></tr><tr><td><code>region_restriction</code></td><td>string</td><td>地域制限の名称。</td></tr><tr><td><code>card_detail</code></td><td>object</td><td>カード情報。カード商品でない場合はnull。</td></tr><tr><td><code>card_detail.card_name</code></td><td>string</td><td>カード名。</td></tr><tr><td><code>card_detail.colors</code></td><td>string</td><td>色。</td></tr><tr><td><code>card_detail.mana_cost</code></td><td>string</td><td>マナコスト。</td></tr><tr><td><code>card_detail.rarity</code></td><td>string</td><td>レアリティ名。</td></tr><tr><td><code>card_detail.card_type</code></td><td>string</td><td>カードタイプ。</td></tr><tr><td><code>card_detail.card_text</code></td><td>string</td><td>カードテキスト。</td></tr><tr><td><code>card_detail.flavor</code></td><td>string</td><td>フレーバーテキスト。</td></tr><tr><td><code>card_detail.power_toughness</code></td><td>string</td><td>パワー／タフネス。該当が無い場合はnull。</td></tr><tr><td><code>card_detail.loyalty</code></td><td>string</td><td>忠誠度。該当が無い場合はnull。</td></tr><tr><td><code>card_detail.cardset</code></td><td>string</td><td>カードセット名。</td></tr><tr><td><code>card_detail.cardsetblock</code></td><td>string</td><td>カードセットブロック名。</td></tr><tr><td><code>card_detail.illustrator</code></td><td>string</td><td>イラストレーター名。</td></tr><tr><td><code>card_detail.formats</code></td><td>array</td><td>フォーマット情報。</td></tr><tr><td><code>product_classes</code></td><td>array</td><td>商品規格の配列。</td></tr><tr><td><code>product_classes[].product_class_id</code></td><td>integer</td><td>商品規格ID。</td></tr><tr><td><code>product_classes[].product_code</code></td><td>string</td><td>商品コード。</td></tr><tr><td><code>product_classes[].high_price_code</code></td><td>string</td><td>高額商品コード。</td></tr><tr><td><code>product_classes[].card_condition_code</code></td><td>string</td><td>カードコンディションコード。</td></tr><tr><td><code>product_classes[].price</code></td><td>integer</td><td>販売価格。</td></tr><tr><td><code>product_classes[].sale_limit</code></td><td>integer</td><td>販売上限数。該当が無い場合はnull。</td></tr><tr><td><code>product_classes[].stock</code></td><td>integer</td><td>在庫数。</td></tr><tr><td><code>product_classes[].product_class_images</code></td><td>array</td><td>商品規格画像のURLの配列。</td></tr></tbody></table></div>
-<h3 id="レスポンス-失敗">レスポンス（失敗）</h3>
-<div class="table-wrap"><table><thead><tr><th>HTTPステータス</th><th>条件</th><th>本文の形</th></tr></thead><tbody><tr><td>404</td><td>商品IDに該当する商品詳細が無い</td><td><code>{code, message}</code>（"Not Found"）</td></tr></tbody></table></div>
-<h3 id="サンプルレスポンス">サンプルレスポンス</h3>
-<p>成功時の応答例（実装確認値に基づく代表値）。</p>
-<pre><code class="language-json">{
-  "code": 200,
-  "weekly_sold": 5,
-  "product_id": 100001,
-  "product_name": "【JP】サンプルカード",
-  "language_code": "JP",
-  "description_detail": "サンプルの商品説明。",
-  "categories": ["シングルカード", "サンプルセット"],
-  "region_restriction": "制限なし",
-  "card_detail": {
-    "card_name": "サンプルカード",
-    "colors": "白",
-    "mana_cost": "{1}{W}",
-    "rarity": "レア",
-    "card_type": "クリーチャー",
-    "card_text": "サンプルの効果文。",
-    "flavor": "サンプルのフレーバー。",
-    "power_toughness": "2/2",
-    "loyalty": null,
-    "cardset": "サンプルセット",
-    "cardsetblock": "サンプルブロック",
-    "illustrator": "Sample Illustrator",
-    "formats": ["スタンダード"]
-  },
-  "product_classes": [
-    {
-      "product_class_id": 200001,
-      "product_code": "CARD-0001",
-      "high_price_code": "H001",
-      "card_condition_code": "NM",
-      "price": 480,
-      "sale_limit": null,
-      "stock": 12,
-      "product_class_images": [
-        "https://example.com/s3/sample_1.jpg"
-      ]
-    }
-  ]
-}</code></pre>
-<h3 id="副作用">副作用</h3>
-<p>無し（参照のみ）。</p>
-<p>応答はJSON応答整形を経て返す。本APIのフィールド名はコントローラで組み立てたsnake_caseのキーである。</p>
-<hr>
-<h2 id="バリデーション">バリデーション</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td><code>productId</code></td><td>パスの商品ID。該当する商品詳細が無い場合は該当なし（HTTP 404）とする。</td></tr><tr><td><code>lang</code></td><td>任意。未指定の場合は日本語（<code>JP</code>）を既定とする。</td></tr></tbody></table></div>
-<hr>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>参照時点</td><td>呼び出し時点の商品・商品規格・在庫・価格を返す。本APIはデータを更新しない。</td></tr><tr><td>言語</td><td>指定言語に対応する商品詳細を返す。未指定時は日本語を返す。</td></tr><tr><td>表示条件</td><td>表示下限価格や良品（NM）判定により、応答に含まれる商品規格は実在の規格の一部となることがある。</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<p>機能に直接関係する範囲のみ記載する。型や一覧の細部はスキーマを参照する。</p>
-<p>テーブル名・列名はec-cube-enterpriseを正とする。</p>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td>商品（<code>dtb_product</code>）</td><td>識別子（<code>id</code>）・商品名（<code>name</code>）・説明（<code>description_detail</code>／<code>description_detail_jp</code>）・地域制限（<code>region_restriction_id</code>）</td><td>取得条件・応答の商品情報に用いる。カテゴリは商品カテゴリ参照で取得する。</td></tr><tr><td>商品規格（<code>dtb_product_class</code>）</td><td>識別子（<code>id</code>）・商品コード（<code>product_code</code>）・高額商品コード（<code>high_price_code</code>）・コンディション（<code>card_condition_id</code>／<code>card_condition_name</code>）・販売価格（<code>price02</code>）・販売上限（<code>sale_limit</code>）・在庫（<code>stock</code>）</td><td>応答の商品規格に用いる。</td></tr><tr><td>商品規格画像（<code>dtb_product_class_image</code>）</td><td>商品規格（<code>product_class_id</code>）・商品画像（<code>product_image_id</code>）・並び順（<code>rank</code>）</td><td>応答の商品規格画像に用いる。</td></tr><tr><td>カードマスタ（<code>mtb_card</code>・<code>mtb_card_detail</code>）</td><td>色・マナコスト・レアリティ・カードタイプ・テキスト・セット等</td><td>カード商品の応答に用いる。</td></tr></tbody></table></div>
-<h3 id="DB操作">DB操作</h3>
-<p>本機能は参照系（検索）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>検索</td><td>dtb_product / dtb_product_class / dtb_product_class_image / mtb_card / mtb_card_detail</td><td>検索条件に合致するレコードを抽出する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="権限・認可">権限・認可</h2>
-<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>商品詳細取得</th></tr></thead><tbody><tr><td>クライアント</td><td>外部連携先（任意門）から呼び出す。本APIは認証を行わない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>商品IDに該当する商品詳細が無い</td><td>該当なし（HTTP 404）・「Not Found」のJSONを返す。</td></tr></tbody></table></div>
-<hr>
-<h2 id="ログ・監査">ログ・監査</h2>
-<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
-<ul><li>API接続の認証情報</li><li>Cookie値・セッションIDの完全値</li></ul>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<p>本APIは参照のみであり、楽観ロック・悲観ロックの対象は持たない。</p>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>商品ID（パス・必須）、言語区分（任意・未指定時は日本語）</td></tr><tr><td>成功時出力</td><td>HTTP 200。処理結果コード・週間販売数・商品情報・カード情報・商品規格の配列</td></tr><tr><td>失敗時出力</td><td>HTTP 404。処理結果コードとメッセージ（"Not Found"）</td></tr></tbody></table></div>
+<h3 id="出力-応答項目">出力: 応答項目</h3>
+<div class="table-wrap"><table><thead><tr><th>フィールド</th><th>型</th><th>説明</th></tr></thead><tbody><tr><td>処理結果コード</td><td>integer</td><td>成功時は200。</td></tr><tr><td>週間販売数</td><td>integer</td><td>商品規格ごとの数量を合算した値。</td></tr><tr><td>商品ID</td><td>integer</td><td>商品ID。</td></tr><tr><td>商品名</td><td>string</td><td>カード商品は先頭に言語コードを付す。</td></tr><tr><td>言語コード</td><td>string</td><td>言語コード。</td></tr><tr><td>商品説明</td><td>string</td><td>商品説明。</td></tr><tr><td>カテゴリ</td><td>array</td><td>カテゴリ名の配列。</td></tr><tr><td>地域制限</td><td>string</td><td>地域制限の名称。</td></tr><tr><td>カード情報</td><td>object</td><td>カード名・色・マナコスト・レアリティ名・カードタイプ・カードテキスト・フレーバーテキスト・パワー／タフネス・忠誠度・カードセット名・カードセットブロック名・イラストレーター名・フォーマット情報。カード商品でないときはnull。パワー／タフネスと忠誠度は該当が無いときnull。</td></tr><tr><td>商品規格</td><td>array</td><td>商品規格の配列。要素は商品規格ID・商品コード・高額商品コード・カードコンディションコード・販売価格・販売上限数（該当が無いときnull）・在庫数・商品規格画像URLの配列。</td></tr></tbody></table></div>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
+<h2 id="表示メッセージ">表示メッセージ</h2>
+<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>A17-04-MSG-001</td><td>API応答JSON（errors配列）</td><td>商品詳細の取得に失敗しました</td><td>商品詳細レスポンス生成中に例外が発生</td><td>API呼出元でHTTP 500とerrors配列を処理する</td></tr></tbody></table></div>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

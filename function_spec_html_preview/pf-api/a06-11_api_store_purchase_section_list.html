@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,27 +272,16 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#本書で扱うこと">本書で扱うこと</a>
-<a class="lv2" href="#本書で扱わないこと">本書で扱わないこと</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#部門一覧を取得する-GET-section-json">部門一覧を取得する（GET `/section.json`）</a>
-<a class="lv2" href="#集計条件">集計条件</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#取得対象">取得対象</a>
+<a class="lv3" href="#並び順">並び順</a>
+<a class="lv3" href="#値の取り方">値の取り方</a>
+<a class="lv3" href="#エラー時の扱い">エラー時の扱い</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv3" href="#リクエスト">リクエスト</a>
-<a class="lv3" href="#レスポンス-成功">レスポンス（成功）</a>
-<a class="lv3" href="#レスポンス-失敗">レスポンス（失敗）</a>
-<a class="lv3" href="#サンプルレスポンス">サンプルレスポンス</a>
-<a class="lv3" href="#副作用">副作用</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#権限・認可">権限・認可</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a></nav>
+<a class="lv3" href="#出力-応答フィールド">出力: 応答フィールド</a>
+<a class="lv3" href="#入出力-永続化">入出力: 永続化</a>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -290,77 +289,25 @@ footer {
         <h1>API 店頭買取管理 — 部門一覧を取得</h1>
       </header>
       
-      <h2 id="概要">概要</h2>
-<p>公開対象の部門の一覧を取得するAPIである。pf-apiが提供するJSON APIで、MTGバイヤー（買取アプリ）から呼ばれる。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-apiの部門一覧取得処理、ルート定義、部門マスタを扱うリポジトリを正とする。</p>
-<p>カスタマイズ区分は現行踏襲。挙動の参照リポは現行の買取連携API（pf-api）とし、DB関連はec-cube-enterpriseを正とする。現行と移行先で異なる点は「リニューアル移行時の扱い」に集約する。</p>
-<p>対象はJSON APIエンドポイントであり、ブラウザ向けの画面を持たない。</p>
-<hr>
-<h2 id="本書で扱うこと">本書で扱うこと</h2>
-<ul><li>公開対象の部門一覧の取得</li></ul>
-<hr>
-<h2 id="本書で扱わないこと">本書で扱わないこと</h2>
-<p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
-<ul><li>固定価格部門の取得（固定価格部門取得を正とする）</li><li>部門の管理（部門管理を正とする）</li></ul>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<p>現行（pf-api）と移行先（ec-cube-enterprise）でエンドポイントとDBスキーマの確認値が異なる。挙動は現行を正とし、DB関連は移行先を正とする。</p>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-api）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>エンドポイント</td><td><code>GET /section.json</code></td><td><code>GET /{api_v1_route}/admin/sections.json</code>（API版数プレフィックス付き。プレフィックスは<code>eccube_api_v1_route</code>で決まる）</td></tr><tr><td>部門マスタのテーブル</td><td>部門マスタ（現行スキーマで要確認）</td><td><code>mtb_section</code></td></tr><tr><td>公開対象の判定列</td><td>公開状態の列（現行スキーマで要確認）</td><td><code>mtb_section.visible</code>（表示フラグ）</td></tr><tr><td>並び順</td><td>部門コード昇順</td><td>ec-cube-enterprise 実装で要確認</td></tr></tbody></table></div>
-<p>応答フィールド名（<code>section_id</code>・<code>name</code>・<code>code</code>）はAPI契約であり、移行先でのフィールド名・並び順はec-cube-enterprise実装で要確認とする。</p>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>部門一覧を取得</td><td><code>GET /section.json</code></td><td>公開対象の部門一覧を、コードとメッセージとともにJSONで返す。</td></tr></tbody></table></div>
-<p>応答形式はJSON。MTGバイヤーから呼ばれる。</p>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="部門一覧を取得する-GET-section-json">部門一覧を取得する（GET <code>/section.json</code>）</h3>
-<ol><li>部門マスタのリポジトリから公開対象の部門を取得する。</li><li>コード（200）・メッセージ・部門一覧をJSONで返す。</li></ol>
-<hr>
-<h2 id="集計条件">集計条件</h2>
-<div class="table-wrap"><table><thead><tr><th>指標</th><th>集計の要点</th></tr></thead><tbody><tr><td>取得対象</td><td>公開対象の部門。</td></tr></tbody></table></div>
-<hr>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="取得対象">取得対象</h3>
+<p>公開対象の部門だけを取得する。非公開の部門は含めない。</p>
+<div class="table-wrap"><table><thead><tr><th>部門の状態</th><th>応答</th></tr></thead><tbody><tr><td>公開対象の部門が1件以上あるとき</td><td>当該部門を配列で返す</td></tr><tr><td>公開対象の部門が0件のとき</td><td>空の配列を返し、エラーとしない</td></tr></tbody></table></div>
+<h3 id="並び順">並び順</h3>
+<p>部門コードの昇順とする。取得した後は、いずれの場合も並び順を組み替えない。</p>
+<h3 id="値の取り方">値の取り方</h3>
+<p>金額・ポイント・数量・対応状況・日時は、永続化済みの値または連携元の値をそのまま返す。応答を組み立てるときの丸め・補正は行わない。件数・ページ番号・表示順は既定と上限に従い、取得後に業務値を再計算しない。</p>
+<h3 id="エラー時の扱い">エラー時の扱い</h3>
+<div class="table-wrap"><table><thead><tr><th>事象</th><th>扱い</th></tr></thead><tbody><tr><td>公開対象の部門が0件のとき</td><td>空の一覧を返す。失敗のステータスは返さない</td></tr><tr><td>権限が無いとき、または非公開のデータのとき</td><td>空の結果、または既存のエラー形式で返す</td></tr></tbody></table></div>
 <h2 id="入出力">入出力</h2>
-<h3 id="リクエスト">リクエスト</h3>
-<p>本APIはリクエストパラメータを持たない。</p>
-<h3 id="レスポンス-成功">レスポンス（成功）</h3>
-<p>HTTP 200。公開対象の部門一覧を返す。</p>
-<div class="table-wrap"><table><thead><tr><th>フィールド</th><th>型</th><th>説明</th></tr></thead><tbody><tr><td><code>code</code></td><td>integer</td><td>処理結果コード。成功時は200。</td></tr><tr><td><code>message</code></td><td>string</td><td>処理結果メッセージ。成功時は"get sections success"。</td></tr><tr><td><code>sections</code></td><td>array</td><td>部門の配列。各要素は以下のフィールドを持つ。</td></tr><tr><td><code>sections[].section_id</code></td><td>integer</td><td>部門ID。</td></tr><tr><td><code>sections[].name</code></td><td>string</td><td>部門名。</td></tr><tr><td><code>sections[].code</code></td><td>string</td><td>部門コード。並び順はこのコードの昇順とする。</td></tr></tbody></table></div>
-<h3 id="レスポンス-失敗">レスポンス（失敗）</h3>
-<p>本実装は失敗ステータスを返さない（公開対象が無い場合は空配列の<code>sections</code>を返す）。</p>
-<h3 id="サンプルレスポンス">サンプルレスポンス</h3>
-<p>成功時の応答例（実装確認値に基づく代表値）。</p>
-<pre><code class="language-json">{
-  "code": 200,
-  "message": "get sections success",
-  "sections": [
-    { "section_id": 1, "name": "シングルカード", "code": "01" },
-    { "section_id": 2, "name": "ボックス・パック", "code": "02" }
-  ]
-}</code></pre>
-<h3 id="副作用">副作用</h3>
-<p>無し（参照のみ）。</p>
-<p>応答はJSON応答整形を経て返す。プロパティはcamelCase、日時はISO8601とする。</p>
-<hr>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<ul><li>検索・一覧・取得条件はリクエストパラメータ、ログイン状態、公開状態、店舗・支店条件、既存リポジトリの絞り込み順序を正とする。</li><li>件数、ページ番号、表示順は既存実装のデフォルトと上限に従い、取得後に業務値を再計算しない。</li><li>金額、ポイント、数量、ステータス、日時はDBまたは連携元の永続化済み値を返却し、レスポンス生成時の丸め・補正は行わない。</li><li>条件に一致しない、権限がない、または非公開のデータは空結果または既存のエラー形式で返す。</li></ul>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>参照時点</td><td>呼び出し時点の公開対象の部門を返す。本APIはデータを更新しない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<p>DB関連の記述はec-cube-enterpriseの実装を正とする。</p>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td>部門マスタ（<code>mtb_section</code>）</td><td><code>visible</code>（表示フラグ）</td><td>公開対象の抽出に使用する。</td></tr><tr><td>部門マスタ（<code>mtb_section</code>）</td><td><code>id</code>・<code>name</code>・<code>code</code></td><td>応答内容（部門ID・部門名・部門コード）に使用する。</td></tr></tbody></table></div>
-<h3 id="DB操作">DB操作</h3>
-<p>本機能は参照系（検索）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>検索</td><td>mtb_section</td><td>検索条件に合致するレコードを抽出する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="権限・認可">権限・認可</h2>
-<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>部門一覧取得</th></tr></thead><tbody><tr><td>クライアント</td><td>MTGバイヤー（買取アプリ）から呼び出す。認可方式はpf-apiの方針に従う。</td></tr></tbody></table></div>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>部門が0件</td><td>空の一覧を返す。</td></tr></tbody></table></div>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<p>本APIは参照のみであり、楽観ロック・悲観ロックの対象は持たない。</p>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>パラメータを持たない。</td></tr><tr><td>成功時出力</td><td>HTTP200。処理結果コード、処理結果メッセージ、部門の配列。</td></tr><tr><td>失敗時出力</td><td>失敗のステータスを返さない。</td></tr></tbody></table></div>
+<h3 id="出力-応答フィールド">出力: 応答フィールド</h3>
+<div class="table-wrap"><table><thead><tr><th>フィールド</th><th>型</th><th>内容</th></tr></thead><tbody><tr><td><code>code</code></td><td>integer</td><td>処理結果コード。成功のときは200</td></tr><tr><td><code>message</code></td><td>string</td><td>処理結果メッセージ。成功のときは "get sections success"</td></tr><tr><td><code>sections</code></td><td>array</td><td>部門の配列。公開対象が無いときは空配列</td></tr><tr><td><code>sections[].section_id</code></td><td>integer</td><td>部門ID</td></tr><tr><td><code>sections[].name</code></td><td>string</td><td>部門名</td></tr><tr><td><code>sections[].code</code></td><td>string</td><td>部門コード。並び順はこのコードの昇順とする</td></tr></tbody></table></div>
+<h3 id="入出力-永続化">入出力: 永続化</h3>
+<p>いずれの場合もデータを更新しない。</p>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
+<h2 id="表示メッセージ">表示メッセージ</h2>
+<p>この機能は、いずれの場合もメッセージを扱わない。</p>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

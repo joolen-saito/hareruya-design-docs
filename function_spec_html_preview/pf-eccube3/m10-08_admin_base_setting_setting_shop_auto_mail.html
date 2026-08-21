@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,43 +272,16 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#本書で扱うこと">本書で扱うこと</a>
-<a class="lv2" href="#本書で扱わないこと">本書で扱わないこと</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv2" href="#用語">用語</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#フロント挙動">フロント挙動</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#画面を開く-GET-識別子なし">画面を開く（GET、識別子なし）</a>
-<a class="lv3" href="#画面を開く-GET-識別子あり">画面を開く（GET、識別子あり）</a>
-<a class="lv3" href="#登録-押下-POST-現在行がnull">「登録」押下（POST、現在行がnull）</a>
-<a class="lv3" href="#登録-押下-POST-検証成功">「登録」押下（POST、検証成功）</a>
-<a class="lv3" href="#登録-押下-POST-検証失敗">「登録」押下（POST、検証失敗）</a>
-<a class="lv2" href="#集計条件">集計条件</a>
-<a class="lv2" href="#自動送信対象テンプレ識別子-実装の確認値">自動送信対象テンプレ識別子（実装の確認値）</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
-<a class="lv3" href="#入力項目">入力項目</a>
-<a class="lv3" href="#エッジケース">エッジケース</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#対象のメールテンプレート">対象のメールテンプレート</a>
+<a class="lv3" href="#本文のプレビュー">本文のプレビュー</a>
+<a class="lv3" href="#保存の判定順序">保存の判定順序</a>
+<a class="lv3" href="#入力値の制約">入力値の制約</a>
+<a class="lv3" href="#エラー時の扱い">エラー時の扱い</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#バリデーション">バリデーション</a>
-<a class="lv2" href="#権限・認可">権限・認可</a>
-<a class="lv2" href="#画面遷移">画面遷移</a>
-<a class="lv3" href="#遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#表示メッセージ">表示メッセージ</a>
-<a class="lv2" href="#試行制限">試行制限</a>
-<a class="lv2" href="#ログ・監査">ログ・監査</a>
-<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
-<a class="lv2" href="#セッション">セッション</a>
-<a class="lv3" href="#本機能におけるセッション">本機能におけるセッション</a>
-<a class="lv3" href="#セッションへ保存しない情報">セッションへ保存しない情報</a>
-<a class="lv2" href="#Cookie">Cookie</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a></nav>
+<a class="lv3" href="#入出力-永続化">入出力: 永続化</a>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -306,114 +289,25 @@ footer {
         <h1>店舗設定 — 自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）</h1>
       </header>
       
-      <h2 id="概要">概要</h2>
-<p>管理画面の「店舗設定」配下にある「自動送信メール」から、システムがトリガに応じて送るメールのテンプレート行（件名・名称・ヘッダー・フッター・本文ファイルに紐づくプレビュー用コンテンツ）を編集し、<code>dtb_mail_template</code> に永続化する機能である。画面上のボックス見出しは「自動送信メールテンプレート編集」と表示される。</p>
-<p>標準EC-CUBEの単一「メールテンプレート編集」とは別経路であり、HareruyaEc が店舗設定メニューに「自動送信メール」と「メールテンプレ管理」を分けて登録する。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。既存実装のふるまい、参照するデータ、判定境界、副作用を確認し、仕様の確からしさを把握することを目的とする。</p>
-<p>カスタマイズ区分は現行踏襲であり、挙動の参照リポはpf-eccube3（HareruyaEc プラグインを含む）とする。DB関連の記述（テーブル名・列名・型・制約、保存先・扱い、副作用のDB更新）はec-cube-enterpriseを正とする。現行と移行先でスキーマが異なる箇所は「リニューアル移行時の扱い」に集約する。</p>
-<p>対象はブラウザ経由の管理画面に限定する。</p>
-<p>本書ではSymfonyのルート名、URLパス、コントローラクラス名は扱わない。</p>
-<hr>
-<h2 id="本書で扱うこと">本書で扱うこと</h2>
-<ul><li>「自動送信メール」画面の表示要素、テンプレ選択の変更時挙動、登録ボタン、本文プレビュー領域の生成方法</li><li>入力値の検証と、エラー時・成功時に利用者へ見える結果</li><li>保存先（<code>dtb_mail_template</code>）と、保存時にコントローラが上書きする項目（更新者・更新日時など）</li><li>テンプレ選択に使う対象ID集合（<code>MailTemplate::AUTO_SEND_MAILS</code>）と、当画面から外れるテンプレート行の扱い</li><li>CSRF検証とトークン更新のタイミング（フォーム送信時）</li><li>本文ソース読み込み時にTwigローダへ追加ディレクトリを登録する副作用</li></ul>
-<hr>
-<h2 id="本書で扱わないこと">本書で扱わないこと</h2>
-<p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
-<ul><li>管理画面ログイン、セッション、Remember MeのCookieの詳細</li><li>各テンプレートIDが実際の業務イベントでいつメール送信に使われるかの網羅（<code>MailService</code> 等の送信処理側の実装を正とする）</li><li><code>.twig</code> 本文ファイルの編集をGitやデプロイ以外で行う手順</li><li>標準EC-CUBEの <code>admin.setting.shop.mail.*</code> イベントが当画面のGET/POSTでディスパッチされるかどうか（コアの <code>MailController</code> とは別実装経路のため、プラグイン側処理を正とする）</li><li>メール送信中の宛先・Bcc・Return-Pathの詳細（店舗基本情報メールアドレスや送信サービス実装を正とする）</li></ul>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<p>現行（pf-eccube3 + HareruyaEc）と移行先（ec-cube-enterprise）で、メールテンプレートの永続化に関するスキーマと自動送信判定の仕組みが異なる。挙動説明は現行を確認値とし、DB記述は移行先を主として現行名を括弧で添える。</p>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3 + HareruyaEc）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>主キー列</td><td><code>template_id</code></td><td><code>id</code>（<code>dtb_mail_template.id</code>）</td></tr><tr><td>件名列</td><td><code>subject</code></td><td><code>mail_subject</code>（<code>dtb_mail_template.mail_subject</code>）</td></tr><tr><td>削除方式</td><td><code>del_flg</code> による論理削除</td><td><code>del_flg</code> 列は無い。削除可否は <code>deletable</code>（真偽型）で表す物理削除前提</td></tr><tr><td>自動送信対象の判定</td><td>プラグイン定数 <code>MailTemplate::AUTO_SEND_MAILS</code> の識別子集合に <code>id IN (:ids)</code> で絞り込む</td><td><code>dtb_mail_template.is_auto_send</code>（真偽型、自動送信フラグ）で判定。テンプレ識別には <code>mail_key</code> 列も持つ</td></tr><tr><td>名称・本文ファイル・ヘッダー・フッター・作成者・作成更新</td><td><code>name</code>／<code>file_name</code>／<code>header</code>／<code>footer</code>／<code>creator_id</code>／<code>create_date</code>／<code>update_date</code></td><td>同名（<code>dtb_mail_template</code> 上で一致）</td></tr></tbody></table></div>
-<p>移行先では自動送信対象を定数の識別子リストではなく <code>is_auto_send</code> 列で判定するため、現行の「<code>AUTO_SEND_MAILS</code> に含まれる識別子のみを候補にする」という抽出条件は、移行先では当該フラグが真の行を候補にする形に置き換わる。識別子46を除外する現行固有の扱いは、移行先では当該テンプレ行の <code>is_auto_send</code> 設定で表現される。</p>
-<hr>
-<h2 id="用語">用語</h2>
-<div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>メールテンプレート行</td><td><code>dtb_mail_template</code> の1行。識別子・表示名・本文ファイル名・件名・ヘッダー・フッター等を保持する。</td></tr><tr><td>自動送信対象テンプレート</td><td>HareruyaEc の <code>MailTemplate::AUTO_SEND_MAILS</code> に含まれるテンプレート識別子の集合。当画面のプルダウンはこの集合に属する行だけを候補にする。</td></tr><tr><td>管理者</td><td>管理画面にログインした利用者。保存時はログイン中メンバーを更新者としてテンプレート行に紐づける。</td></tr></tbody></table></div>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>管理ナビの「店舗設定」配下から「自動送信メール」を開く</td><td><code>GET /{admin_route}/mall/auto_mail</code>（ルートプレフィックスは実装を正とする）</td><td>テンプレ選択のセレクトと、名称・件名、本文プレビュー用ボックス、登録ボタンが表示される。テンプレを特定していない初期表示では、最終更新者・最終更新日の表示領域は条件により空に近い状態となりうる。</td></tr><tr><td>テンプレ選択を変更する</td><td><code>GET /{admin_route}/mall/auto_mail/{Mail}</code>（識別子付き。実装を正とする）</td><td>ページ全体が選択した識別子付きの編集表示へ遷移する（同一機能内の別テンプレ編集状態）。</td></tr><tr><td>値を入力して「登録」を押す</td><td><code>POST /{admin_route}/mall/auto_mail/{Mail}</code></td><td>CSRFと入力検証に成功すればDBへ保存し、管理画面向け成功メッセージを積んだうえで、同じテンプレートの編集表示へリダイレクトする。失敗時は同一画面でフォーム検証結果が反映される。</td></tr><tr><td>自動送信対象外の識別子をURL等で直接指定する</td><td><code>GET /{admin_route}/mall/auto_mail/{Mail}</code>（対象外）</td><td>該当行が検索条件に合致しないため、見つからない扱いとなりブラウザには404相当の応答となる。</td></tr><tr><td>未ログイン・権限拒否・管理画面 IP 制限外</td><td>上記パス（到達前）</td><td>管理画面共通の認証・権限・IP 制御の結果として当画面に到達できない（詳細は管理画面認証の実装を正とする）。</td></tr></tbody></table></div>
-<hr>
-<h2 id="フロント挙動">フロント挙動</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>ページタイトル「ショップ設定」、サブタイトル「メール管理」。メイン見出し「自動送信メールテンプレート編集」。最終更新者（管理者名）・最終更新日時を、テンプレ行と更新日時が揃った場合に表示する条件がある（Twig上、更新日の年が2018より大きい場合のみ日時表示）。</td></tr><tr><td>入力項目</td><td>テンプレ選択（セレクト、空選択肢はマスタ型の <code>empty_value</code> 設定に従う）。テンプレ名称（text）。件名（text）。本文領域はフォームの <code>textarea</code> ではなく、サーバが生成したHTMLブロックとして埋め込む（後述の <code>replaceBody</code>）。</td></tr><tr><td>JS挙動</td><td>テンプレ選択変更時に、選択値があれば当機能のベースパスに識別子を付けたGETへ <code>location.href</code> を切り替える。空選択ならベースパスだけへ戻す。</td></tr><tr><td>CSS・レイアウト</td><td>管理画面標準の横型フォーム（Bootstrap 3 horizontal）。登録ボタンは右カラムにブロック表示。</td></tr><tr><td>モーダル・ポップアップ</td><td>本機能専用のモーダルは持たない。</td></tr><tr><td>プラグイン追加欄</td><td>メイン下部に <code>extra-form</code> 領域があり、フォームの子フィールドをループして <code>form_row</code> する。ループ対象はTwigの <code>matches</code> 条件で絞り込む。</td></tr><tr><td>本文プレビュー</td><td>Twig本文ファイルを文字列として読み、注釈ブロック <code>{# ... #}</code> を除去し、改行を <code>&lt;br&gt;</code> に置換したうえ、<code>{{ header }}</code> / <code>{{ footer }}</code> プレースホルダ位置にヘッダー・フッター用の <code>textarea</code> または静的HTMLを挿入する。注文内容インクルード相当の文字列は、設定済み文言への置換が入る。</td></tr></tbody></table></div>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="画面を開く-GET-識別子なし">画面を開く（GET、識別子なし）</h3>
-<ol><li>管理画面の認証・IP 制限・権限拒否の各ルールを通過する。</li><li>メールテンプレート行はまだ特定しない。本文用文字列は必須ではない。</li><li><code>mail</code> フォームを、デフォルトオプション（拡張定義上 <code>autoMail</code> 真）で生成する。テンプレ選択のクエリは「識別子が <code>AUTO_SEND_MAILS</code> に含まれる行のみ」に限定し、名称昇順で並べる。</li><li>テンプレ選択フォームフィールドへ、現在の行オブジェクトはnullのままセットされうる。</li><li>テンプレートを描画する。</li></ol>
-<h3 id="画面を開く-GET-識別子あり">画面を開く（GET、識別子あり）</h3>
-<ol><li>管理画面の認証・IP 制限・権限拒否の各ルールを通過する。</li><li>Doctrineのソフトデリートフィルタ設定を一時変更し、管理者アカウントについてフィルタ除外一覧を書き換える（コントローラコメントでは、関連する管理者行の扱いに影響する意図が示される）。</li><li>「識別子が一致し、かつ識別子が <code>AUTO_SEND_MAILS</code> に含まれる」条件でメールテンプレート行を検索する。見つからなければ404応答とする。</li><li>Twigローダにプラグイン既定本文ディレクトリを追加登録する。</li><li>テンプレート行の <code>file_name</code> で示されるファイルから本文ソースを読み、<code>replaceBody</code> によりプレビュー用HTMLへ変換する。</li><li><code>mail</code> フォームを当該行で生成し、テンプレ選択へ同じ行をセットする。</li><li>描画時に本文HTML・行オブジェクトを渡す。</li></ol>
-<h3 id="登録-押下-POST-現在行がnull">「登録」押下（POST、現在行がnull）</h3>
-<ol><li>フォームをリクエストで処理する。</li><li>コア実装と同様の枝で、現在行がnullのままPOSTされた場合はエラーメッセージを積み、識別子なしの一覧相当表示へリダイレクトする（新規作成フローは未実装として扱う）。</li></ol>
-<h3 id="登録-押下-POST-検証成功">「登録」押下（POST、検証成功）</h3>
-<ol><li>フォームをリクエストで処理する。</li><li><code>FormValidHelper</code> によりCSRFトークンを検証する。不正ならアクセス拒否例外を投げる。検証後は当フォーム名に対応するCSRFトークンを更新する。</li><li>フォーム検証が成功した場合、ログイン中の管理者を更新者として行にセットし、<code>update_date</code> を現在日時で更新する。</li><li>行を永続化し、ユニットオブワークをフラッシュする。</li><li>管理画面向け成功メッセージ（メール保存完了メッセージキー）を積む。</li><li>同一テンプレートの編集表示へリダイレクトする。</li></ol>
-<h3 id="登録-押下-POST-検証失敗">「登録」押下（POST、検証失敗）</h3>
-<ol><li>フォームをリクエストで処理する。</li><li>表示テンプレートを再描画し、項目エラーを利用者に示す。成功メッセージは積まない。本文プレビュー用HTMLはGET時と同様に再計算されうる（コントローラの分岐上、行が取れていれば再度ファイル読込と置換が走る）。</li></ol>
-<hr>
-<h2 id="集計条件">集計条件</h2>
-<p>本機能では件数集計や一覧サマリを行わない。</p>
-<hr>
-<h2 id="自動送信対象テンプレ識別子-実装の確認値">自動送信対象テンプレ識別子（実装の確認値）</h2>
-<p>テンプレ選択の候補は、次の識別子に限定される（HareruyaEc <code>MailTemplate::AUTO_SEND_MAILS</code> の列挙順ではなく、画面では名称昇順で並ぶ）。</p>
-<div class="table-wrap"><table><thead><tr><th>識別子</th></tr></thead><tbody><tr><td>1</td></tr><tr><td>2</td></tr><tr><td>3</td></tr><tr><td>4</td></tr><tr><td>5</td></tr><tr><td>6</td></tr><tr><td>7</td></tr><tr><td>8</td></tr><tr><td>9</td></tr><tr><td>10</td></tr><tr><td>11</td></tr><tr><td>12</td></tr><tr><td>13</td></tr><tr><td>14</td></tr><tr><td>15</td></tr><tr><td>16</td></tr><tr><td>17</td></tr><tr><td>18</td></tr><tr><td>19</td></tr><tr><td>20</td></tr><tr><td>21</td></tr><tr><td>22</td></tr><tr><td>23</td></tr><tr><td>24</td></tr><tr><td>25</td></tr><tr><td>26</td></tr><tr><td>27</td></tr><tr><td>28</td></tr><tr><td>29</td></tr><tr><td>30</td></tr><tr><td>31</td></tr><tr><td>32</td></tr><tr><td>33</td></tr><tr><td>34</td></tr><tr><td>35</td></tr><tr><td>36</td></tr><tr><td>37</td></tr><tr><td>38</td></tr><tr><td>39</td></tr><tr><td>40</td></tr><tr><td>41</td></tr><tr><td>42</td></tr><tr><td>43</td></tr><tr><td>44</td></tr><tr><td>45</td></tr><tr><td>47</td></tr><tr><td>48</td></tr></tbody></table></div>
-<p>定数 <code>ID_EXPIRE_NOTIFICATION</code>（識別子46）はこの集合に含まれない。当画面の検索条件 <code>id IN (:ids)</code> から外れるため、自動送信メニューからは編集対象に現れない（別経路のメールテンプレ管理側の対象となる）。</p>
-<hr>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<p>本機能では金額・数量などの業務計算を行わない。テキスト本文の意味解釈はメール送信時のTwigレンダリングを正とする。</p>
-<h3 id="入力項目">入力項目</h3>
-<div class="table-wrap"><table><thead><tr><th>項目名</th><th>必須／任意</th><th>最大長</th><th>初期値</th><th>保存先・扱い</th></tr></thead><tbody><tr><td>テンプレ選択</td><td>必須</td><td>—（セレクト）</td><td>現在編集中の行（GETで特定した行）</td><td><code>mapped</code> false。変更時はGET遷移で別行へ切り替える。POST値は検証対象だが、行の識別子そのものの変更はリクエストパス側の行で既に決まっている。</td></tr><tr><td>テンプレ名称</td><td>任意</td><td>50 文字（<code>stext_len</code> 確認値）</td><td>DBの <code>name</code></td><td><code>dtb_mail_template.name</code>。空白のみはフォーム検証上は通り得る。</td></tr><tr><td>件名</td><td>必須</td><td>Symfony Length制約は無し（移行先は文字列255、現行はtext型）</td><td>DBの <code>mail_subject</code>（現行<code>subject</code>）</td><td><code>dtb_mail_template.mail_subject</code>（現行<code>subject</code>）。NotBlank。</td></tr><tr><td>ヘッダー</td><td>任意</td><td>Symfony Length制約は無し（DBはtext型）</td><td>DBの <code>header</code></td><td><code>dtb_mail_template.header</code>。textarea。本文プレビュー内に挿入される。</td></tr><tr><td>フッター</td><td>任意</td><td>Symfony Length制約は無し（DBはtext型）</td><td>DBの <code>footer</code></td><td><code>dtb_mail_template.footer</code>。textarea。同上。</td></tr></tbody></table></div>
-<h3 id="エッジケース">エッジケース</h3>
-<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td><code>AUTO_SEND_MAILS</code> に含まれない識別子で開く</td><td>リポジトリ検索が空になり404。</td></tr><tr><td>POSTで現在行null</td><td>エラーフラッシュを積み、識別子なし表示へリダイレクト。</td></tr><tr><td>CSRFトークン不正</td><td>アクセス拒否例外。</td></tr></tbody></table></div>
-<hr>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>一覧との一致</td><td>同一テーブルの行を直接更新する。保存後はリダイレクトGETで同じ行を読み直すため、当画面内ではDB反映後の値と表示が揃う。</td></tr><tr><td>本文ファイルとの関係</td><td><code>file_name</code> は当画面の入力からは変更しない。本文プレビューは常にそのファイルの現在内容に基づく。DB上のヘッダー・フッターは行に保存され、実送信時も行の値が使われる。</td></tr><tr><td>同時更新</td><td>楽観ロックは持たない。最後にflushした更新が生きる。</td></tr></tbody></table></div>
-<hr>
-<h2 id="API-バッチ結果">API/バッチ結果</h2>
-<p>本機能ではAPI呼び出し・バッチ実行を扱わない。</p>
-<hr>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="対象のメールテンプレート">対象のメールテンプレート</h3>
+<div class="table-wrap"><table><thead><tr><th>場面</th><th>対象</th></tr></thead><tbody><tr><td>識別子を指定せずに開いたとき</td><td>メールテンプレート行を特定しない。選択肢だけを表示する</td></tr><tr><td>選択肢の絞り込み</td><td>識別子が自動送信メールの一覧に含まれる行だけとし、名称の昇順で並べる</td></tr><tr><td>識別子を指定して開いたとき</td><td>識別子が一致し、かつ自動送信メールの一覧に含まれる行を対象とする</td></tr><tr><td>識別子を指定しても該当行が無いとき</td><td>見つからない扱い（404）とする</td></tr></tbody></table></div>
+<h3 id="本文のプレビュー">本文のプレビュー</h3>
+<p>対象行のファイル名が示すファイルから本文を読み、プレビュー用のHTMLへ変換して表示する。入力内容の検証に外れて再描画するときも、対象行が取れているときは本文の読み込みと変換をやり直す。</p>
+<h3 id="保存の判定順序">保存の判定順序</h3>
+<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定・処理</th><th>内容</th></tr></thead><tbody><tr><td>1</td><td>操作の有効期限</td><td>不正なときは保存せず、アクセス拒否とする</td></tr><tr><td>2</td><td>対象行の有無</td><td>対象行が無いまま登録したときは、エラーメッセージを表示し、識別子を指定しない表示へ戻す。新規作成は行わない</td></tr><tr><td>3</td><td>入力内容の検証</td><td>外れたときは保存せず、同一画面に項目ごとのエラーを表示する。成功メッセージは表示しない</td></tr><tr><td>4</td><td>更新者と更新日時</td><td>ログイン中の管理者を更新者に、現在日時を更新日時に設定する</td></tr><tr><td>5</td><td>保存</td><td>対象行を保存する</td></tr><tr><td>6</td><td>遷移</td><td>同じテンプレートの編集表示へ戻る</td></tr></tbody></table></div>
+<h3 id="入力値の制約">入力値の制約</h3>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>制約</th></tr></thead><tbody><tr><td>テンプレート名</td><td>必須。255文字以下とする</td></tr><tr><td>件名</td><td>必須。255文字以下とする</td></tr></tbody></table></div>
+<p>金額・数量などの業務計算は行わない。本文の意味の解釈は、メール送信時の変換を正とする。</p>
+<h3 id="エラー時の扱い">エラー時の扱い</h3>
+<div class="table-wrap"><table><thead><tr><th>事象</th><th>扱い</th></tr></thead><tbody><tr><td>入力内容の検証に外れたとき</td><td>保存せず、同一画面を再描画して項目ごとのエラーを表示する</td></tr><tr><td>操作の有効期限が不正なとき</td><td>アクセス拒否とする</td></tr><tr><td>対象のメールテンプレートが無いとき</td><td>見つからない扱い（404）とする</td></tr><tr><td>対象行が無いまま登録したとき</td><td>新規作成を行わず、エラーメッセージを表示する</td></tr></tbody></table></div>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>ブラウザのGET（識別子の有無）とPOST（フォームフィールド・CSRF）。</td></tr><tr><td>成功時出力</td><td>リダイレクト応答と成功フラッシュメッセージ。</td></tr><tr><td>失敗時出力</td><td>再描画HTMLと項目エラー、または404、またはCSRFエラー。</td></tr><tr><td>副作用</td><td><code>dtb_mail_template</code> の更新、Doctrineflush、Twigローダへのディレクトリ追加、ソフトデリートフィルタ設定の一時書き換え。</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td>dtb_mail_template</td><td>id（現行<code>template_id</code>）</td><td>主キー。現行は <code>AUTO_SEND_MAILS</code> への所属で編集対象を絞る。移行先は <code>is_auto_send</code> で絞る。</td></tr><tr><td>dtb_mail_template</td><td>name</td><td>テンプレ名称。フォームから更新。</td></tr><tr><td>dtb_mail_template</td><td>file_name</td><td>本文Twigの論理パス。当画面では更新しない。</td></tr><tr><td>dtb_mail_template</td><td>mail_subject（現行<code>subject</code>）</td><td>件名。フォームから更新。</td></tr><tr><td>dtb_mail_template</td><td>header</td><td>ヘッダー。プレビュー内 <code>textarea</code> から更新。</td></tr><tr><td>dtb_mail_template</td><td>footer</td><td>フッター。プレビュー内 <code>textarea</code> から更新。</td></tr><tr><td>dtb_mail_template</td><td>creator_id</td><td>保存成功時にログイン中管理者へ更新。</td></tr><tr><td>dtb_mail_template</td><td>deletable（現行<code>del_flg</code>）</td><td>削除可否。現行は論理削除フラグ <code>del_flg</code>。当画面の成功路径では変更しない。</td></tr><tr><td>dtb_mail_template</td><td>is_auto_send</td><td>自動送信フラグ。移行先で自動送信対象テンプレを判定する列。当画面の成功路径では変更しない（現行はプラグイン定数で判定し列は持たない）。</td></tr><tr><td>dtb_mail_template</td><td>mail_key</td><td>移行先のテンプレ識別キー。当画面では更新しない（現行に対応列は無い）。</td></tr><tr><td>dtb_mail_template</td><td>create_date</td><td>当画面の成功路径では変更しない。</td></tr><tr><td>dtb_mail_template</td><td>update_date</td><td>保存成功時に現在日時へ更新。</td></tr></tbody></table></div>
-<h3 id="DB操作">DB操作</h3>
-<p>永続化の正は ec-cube-enterprise（テーブル名・操作は ec-cube-enterprise を正典）。当ドメインは承認ワークフローを介さず persist/flush で直接確定する（承認ワークフローは在庫機能固有）。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>登録/更新</td><td>dtb_mail_template</td><td>当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。</td></tr></tbody></table></div>
-<hr>
-<h2 id="バリデーション">バリデーション</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>入力種別</th><th>ルール・扱い</th></tr></thead><tbody><tr><td>テンプレ選択</td><td>select</td><td>必須。空は不可。候補は <code>AUTO_SEND_MAILS</code> のみ。</td></tr><tr><td>テンプレ名称</td><td>text</td><td>任意。最大長は <code>stext_len</code>。</td></tr><tr><td>件名</td><td>text</td><td>必須。空白不可。</td></tr><tr><td>ヘッダー</td><td>textarea</td><td>任意。</td></tr><tr><td>フッター</td><td>textarea</td><td>任意。</td></tr><tr><td>CSRF</td><td>hidden</td><td><code>FormValidHelper</code> で検証。成功後にトークン更新。</td></tr></tbody></table></div>
-<hr>
-<h2 id="権限・認可">権限・認可</h2>
-<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>自動送信メール画面</th></tr></thead><tbody><tr><td>管理画面未ログイン</td><td>管理画面共通のログインフローへ誘導される（実装を正とする）。</td></tr><tr><td>ログイン済みで当パスが権限マスタにより拒否</td><td>アクセス拒否。</td></tr><tr><td>ログイン済みで IP 制限内</td><td>画面表示・保存が可能。</td></tr></tbody></table></div>
-<hr>
-<h2 id="画面遷移">画面遷移</h2>
-<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>テンプレ選択を変更</td><td>同一機能内の別識別子の編集表示（GET）。</td></tr><tr><td>登録成功</td><td>同一識別子の編集表示（リダイレクトGET）。</td></tr><tr><td>POSTかつ編集中行なし</td><td>識別子なしの初期表示へリダイレクト。</td></tr></tbody></table></div>
-<h3 id="遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</h3>
-<div class="table-wrap"><table><thead><tr><th>起点</th><th>遷移前の処理</th><th>遷移後の初期状態</th></tr></thead><tbody><tr><td>登録成功リダイレクト</td><td>成功フラッシュを積む</td><td>同テンプレのDB最新値でフォーム再表示。</td></tr></tbody></table></div>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>フォーム検証エラー</td><td>同一レスポンスで再描画。</td></tr><tr><td>CSRF不正</td><td>アクセス拒否。</td></tr><tr><td>対象テンプレ不在</td><td>404。</td></tr></tbody></table></div>
-<hr>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>識別子の有無を伴う表示要求。登録のときはテンプレート名・件名・本文などの入力値。</td></tr><tr><td>成功時出力</td><td>同じテンプレートの編集表示への遷移と、保存成功のメッセージ。</td></tr><tr><td>失敗時出力</td><td>同一画面の再描画と項目ごとのエラー、見つからない扱い（404）、またはアクセス拒否。</td></tr></tbody></table></div>
+<h3 id="入出力-永続化">入出力: 永続化</h3>
+<div class="table-wrap"><table><thead><tr><th>操作</th><th>契機</th></tr></thead><tbody><tr><td>更新</td><td>対象のテンプレート行を編集して保存したとき。更新者と更新日時もあわせて更新する</td></tr></tbody></table></div>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
 <h2 id="表示メッセージ">表示メッセージ</h2>
-<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>画面上の文言(英語)</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M10-08-MSG-001</td><td>管理画面上部</td><td>保存しました</td><td>（英訳なし）</td><td>選択したメールテンプレートを編集して保存したとき</td><td>店舗設定／自動送信メールテンプレート編集画面に遷移する</td></tr><tr><td>M10-08-MSG-002</td><td>ブラウザダイアログ</td><td>新規作成は許可されていません。</td><td>（英訳なし）</td><td>メールテンプレートを選択せずに登録したとき</td><td>送信せず現在の画面に留まる</td></tr><tr><td>M10-08-MSG-003</td><td>500エラー応答</td><td>新規作成は許可されていません。</td><td>（英訳なし）</td><td>新しいメールテンプレートの画面へ、Mail が未指定のままPOSTしたとき</td><td>null メソッド呼出しエラーで異常終了する</td></tr><tr><td>M10-08-MSG-004</td><td>入力項目直下</td><td>入力されていません。</td><td>（英訳なし）</td><td>必須項目が未入力のまま登録したとき</td><td>店舗設定／自動送信メールテンプレート編集画面に留まる</td></tr><tr><td>M10-08-MSG-005</td><td>入力項目直下</td><td>長すぎます。この値は{{ limit }}文字以下で入力してください。</td><td>（英訳なし）</td><td>テンプレート名または件名が255文字を超えたまま登録したとき</td><td>店舗設定／自動送信メールテンプレート編集画面に留まる</td></tr><tr><td>M10-08-MSG-006</td><td>管理画面上部</td><td>保存しました</td><td>（英訳なし）</td><td>メールテンプレートを編集して保存したとき</td><td>店舗設定／自動送信メールテンプレート編集画面に遷移する</td></tr></tbody></table></div>
-<hr>
-<h2 id="試行制限">試行制限</h2>
-<p>本機能では試行制限を扱わない。</p>
-<hr>
-<h2 id="ログ・監査">ログ・監査</h2>
-<div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>本機能単体</td><td>アプリが専用の監査ログテーブルへ書く処理は持たない。</td></tr></tbody></table></div>
-<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
-<ul><li>パスワード</li><li>CSRFトークンの原値</li><li>Cookie値やセッションIDの完全値</li></ul>
-<hr>
-<h2 id="セッション">セッション</h2>
-<p>本機能はセッションへ編集内容を保持しない。管理画面セッションの存続はフレームワーク任せとする。</p>
-<h3 id="本機能におけるセッション">本機能におけるセッション</h3>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>編集ドラフト</td><td>保持しない。リダイレクト後はDBを正とする。</td></tr></tbody></table></div>
-<h3 id="セッションへ保存しない情報">セッションへ保存しない情報</h3>
-<p>メール本文の下書き全文をセッションに載せる処理は持たない。</p>
-<hr>
-<h2 id="Cookie">Cookie</h2>
-<p>管理画面のセッション用Cookieはフレームワーク共通の挙動に従う。本機能が独自Cookieを発行しない。</p>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<p>明示的な楽観ロック・悲観ロックは持たない。<code>flush</code> はコントローラ単位の呼び出しであり、大規模トランザクション境界はアプリケーション設定に従う。</p>
+<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M10-08-MSG-001</td><td>管理画面上部</td><td>保存しました</td><td>選択したメールテンプレートを編集して保存したとき</td><td>店舗設定／自動送信メールテンプレート編集画面に遷移する</td></tr><tr><td>M10-08-MSG-002</td><td>ブラウザダイアログ</td><td>新規作成は許可されていません。</td><td>メールテンプレートを選択せずに登録したとき</td><td>送信せず現在の画面に留まる</td></tr><tr><td>M10-08-MSG-003</td><td>500エラー応答</td><td>新規作成は許可されていません。</td><td>新しいメールテンプレートの画面へ、対象のメールテンプレートが未指定のまま登録したとき</td><td>異常終了として500エラー応答を返す</td></tr><tr><td>M10-08-MSG-004</td><td>入力項目直下</td><td>入力されていません。</td><td>必須項目が未入力のまま登録したとき</td><td>店舗設定／自動送信メールテンプレート編集画面に留まる</td></tr><tr><td>M10-08-MSG-005</td><td>入力項目直下</td><td>長すぎます。この値は{{ limit }}文字以下で入力してください。</td><td>テンプレート名または件名が255文字を超えたまま登録したとき</td><td>店舗設定／自動送信メールテンプレート編集画面に留まる</td></tr><tr><td>M10-08-MSG-006</td><td>管理画面上部</td><td>保存しました</td><td>メールテンプレートを編集して保存したとき</td><td>店舗設定／自動送信メールテンプレート編集画面に遷移する</td></tr></tbody></table></div>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

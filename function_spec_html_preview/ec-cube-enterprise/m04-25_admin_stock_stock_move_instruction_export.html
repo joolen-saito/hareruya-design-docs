@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,20 +272,7 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#文書情報">文書情報</a>
-<a class="lv2" href="#改訂履歴">改訂履歴</a>
-<a class="lv2" href="#1-在庫移動指示リストエクスポート">1. 在庫移動指示リストエクスポート</a>
-<a class="lv3" href="#機能の目的と役割">機能の目的と役割</a>
-<a class="lv3" href="#本書で扱うこと">本書で扱うこと</a>
-<a class="lv3" href="#本書で扱わないこと">本書で扱わないこと</a>
-<a class="lv3" href="#利用者視点の入口-エンドポイント">利用者視点の入口（エンドポイント）</a>
-<a class="lv3" href="#送り状CSV-StockMoveInstructionLabelCsvExporterService">送り状CSV（`StockMoveInstructionLabelCsvExporterService`）</a>
-<a class="lv3" href="#在庫移動実績入力用CSV雛形-csvTemplateDownload">在庫移動実績入力用CSV雛形（`csvTemplateDownload`）</a>
-<a class="lv3" href="#プロセスフロー">プロセスフロー</a>
-<a class="lv3" href="#分岐・例外">分岐・例外</a>
-<a class="lv3" href="#状態・データ更新">状態・データ更新</a>
-<a class="lv3" href="#関連設計への接続点">関連設計への接続点</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a></nav>
+      
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -283,164 +280,8 @@ footer {
         <h1>M04-25（在庫移動指示リストエクスポート）</h1>
       </header>
       
-      <h2 id="文書情報">文書情報</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>機能名</td><td>在庫移動指示リストエクスポート</td></tr><tr><td>機能分類</td><td>管理画面 / 在庫管理</td></tr><tr><td>カスタマイズ区分</td><td>新規実装</td></tr><tr><td>作成日</td><td>2026-06-11</td></tr><tr><td>参照元</td><td>excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html</td></tr><tr><td>実装確認</td><td>../ec-cube-enterprise（<code>StockMoveInstructionController::exportLabelCsv</code> / <code>::csvTemplateDownload</code> / <code>StockMoveInstructionLabelCsvExporterService</code> / <code>DtbStockMoveInstructionRepository::findByIdsForLabelExport</code> / <code>CsvExportService</code> / Entity <code>DtbStockMoveInstruction</code>・<code>BaseInfo</code>）</td></tr></tbody></table></div>
-<h2 id="改訂履歴">改訂履歴</h2>
-<div class="table-wrap"><table><thead><tr><th>日付</th><th>内容</th></tr></thead><tbody><tr><td>2026-06-11</td><td>新規実装機能として、Excel設計書を主、実装を補完情報として初版作成。</td></tr><tr><td>2026-06-12</td><td>ec-cube-enterprise 実装（Controller/Service/Exporter/Repository）と既存テストを読み込み、出力列・文字コード・ファイル名・整形を実装確認値で具体化。</td></tr></tbody></table></div>
-<h2 id="1-在庫移動指示リストエクスポート">1. 在庫移動指示リストエクスポート</h2>
-<h3 id="機能の目的と役割">機能の目的と役割</h3>
-<p>在庫移動指示一覧で選択した指示を外部参照用にCSV出力する機能。出力は2種類ある。</p>
-<ol><li>**送り状CSV（送り状No.ダウンロード）**: 一覧でチェックした指示IDについて、出庫元店舗を「注文者」、入庫先店舗を「配送先」とした送り状（配送ラベル）形式のCSVを出力する。<code>StockMoveInstructionLabelCsvExporterService</code> が生成する。</li><li>**在庫移動実績入力用CSV雛形**: 送り状No.一括登録（M04-24 のCSV登録）に取り込むための入力用CSV雛形（ヘッダのみ）を出力する。<code>StockMoveInstructionController::csvTemplateDownload</code> が生成する。</li></ol>
-<p>本機能のカスタマイズ区分は新規実装であり、現行（pf-eccube3）に対応実装はない。画面・項目・業務条件は基本設計仕様書（0202_基本設計仕様書(在庫管理機能)）を正とし、URLエンドポイント・出力列・DB関連は ec-cube-enterprise の実装を正とする。</p>
-<h3 id="本書で扱うこと">本書で扱うこと</h3>
-<ul><li>送り状CSVの出力列・対象データ・整形・文字コード・ファイル名</li><li>在庫移動実績入力用CSV雛形の出力列・文字コード・ファイル名</li><li>出力対象の抽出（選択ID・関連店舗のJOIN）</li><li>対象なし／ID無しの扱い</li></ul>
-<h3 id="本書で扱わないこと">本書で扱わないこと</h3>
-<ul><li>一覧・検索・詳細・送り状No.登録・CSV取込・削除（M04-24 を正とする）</li><li>ピッキングリスト印刷（M04-26）</li><li>在庫移動（<code>DtbStockMoveTransfer</code>）自体の登録・承認（M04-09 系）</li></ul>
-<h3 id="利用者視点の入口-エンドポイント">利用者視点の入口（エンドポイント）</h3>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント（ルート名）</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>送り状CSV出力</td><td><code>POST /%admin%/product/stock/move-instruction/labels</code>（<code>admin_stock_move_instruction_labels_export</code>）</td><td>一覧でチェックした指示ID（<code>ids[]</code>）の送り状CSVを <code>StreamedResponse</code> で出力。<code>ids</code> が空配列/未指定は404。<code>isTokenValid()</code> でCSRF検証、<code>set_time_limit(0)</code>。</td></tr><tr><td>実績入力用CSV雛形ダウンロード</td><td><code>GET /%admin%/product/stock/move-instruction/csv-template</code>（<code>admin_stock_move_instruction_csv_download_record</code>）</td><td>ヘッダのみのCSV雛形を <code>StreamedResponse</code> で出力。<code>set_time_limit(0)</code>。</td></tr></tbody></table></div>
-<p><code>%admin%</code> は管理画面ルートプレフィックス（<code>eccube_admin_route</code>）。いずれも管理画面ログインを要する。</p>
-<h3 id="送り状CSV-StockMoveInstructionLabelCsvExporterService">送り状CSV（<code>StockMoveInstructionLabelCsvExporterService</code>）</h3>
-<p>選択した指示IDを <code>DtbStockMoveInstructionRepository::findByIdsForLabelExport($ids)</code> で取得（<code>MoveFromBaseInfo</code>・<code>MoveToBaseInfo</code> と各 <code>Pref</code> をJOIN、<code>id ASC</code>）し、1指示=1行で出力する。</p>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>出力サービス</td><td><code>CsvExportService</code>（<code>fopen</code>/<code>fputcsv</code>/<code>fclose</code>）。文字コードは <code>eccube_csv_export_encoding</code>（既定 <code>SJIS-win</code>、UTF-8時はBOM付与）、区切りは <code>eccube_csv_export_separator</code>。</td></tr><tr><td>ファイル名</td><td><code>stock_move_instruction_labels_YmdHis.csv</code>。</td></tr><tr><td>Content-Type</td><td><code>application/octet-stream</code>、<code>Content-Disposition: attachment</code>。</td></tr><tr><td>ログ</td><td>出力完了時 <code>log_info</code>「在庫移動指示 送り状CSV出力完了. ファイル名: …」。</td></tr></tbody></table></div>
-<p>出力列（ヘッダ23列。出庫元店舗=注文者、入庫先店舗=配送先にマッピング）:</p>
-<div class="table-wrap"><table><thead><tr><th>列</th><th>値（<code>buildRow</code>）</th></tr></thead><tbody><tr><td>注文番号</td><td>移動指示ID</td></tr><tr><td>注文金額合計</td><td><code>standard_total_price</code>（基準価格合計）</td></tr><tr><td>注文者氏名</td><td>出庫元 会社名＋半角空白＋店名（<code>company_name</code>/<code>shop_name</code>）</td></tr><tr><td>注文者カナ</td><td>出庫元 会社名カナ＋半角空白＋店名カナ</td></tr><tr><td>注文者郵便番号</td><td>出庫元 <code>postal_code</code></td></tr><tr><td>注文者都道府県</td><td>出庫元 <code>Pref.name</code></td></tr><tr><td>注文者住所 / 住所2</td><td>出庫元 <code>addr01</code> / <code>addr02</code></td></tr><tr><td>注文者電話番号</td><td>出庫元 <code>phone_number</code></td></tr><tr><td>商品金額合計</td><td><code>standard_total_price</code>（基準価格合計）</td></tr><tr><td>送料 / 送料(税抜) / 手数料 / 手数料(税抜)</td><td>いずれも <code>0</code> 固定</td></tr><tr><td>配送先氏名</td><td>入庫先 会社名＋半角空白＋店名</td></tr><tr><td>配送先カナ</td><td>入庫先 会社名カナ＋半角空白＋店名カナ</td></tr><tr><td>配送先郵便番号</td><td>入庫先 <code>postal_code</code></td></tr><tr><td>配送先都道府県</td><td>入庫先 <code>Pref.name</code></td></tr><tr><td>配送先住所 / 住所2</td><td>入庫先 <code>addr01</code> / <code>addr02</code></td></tr><tr><td>配送先電話番号</td><td>入庫先 <code>phone_number</code></td></tr><tr><td>郵便種別</td><td><code>0</code> 固定（0：ゆうパック）</td></tr><tr><td>発送方法</td><td><code>ゆうパック</code> 固定</td></tr></tbody></table></div>
-<p>氏名/カナは会社名と店名を <code>trim</code> し、両方あれば半角空白1つで連結、片方のみならその値、両方空なら空文字（<code>joinWithHalfWidthSpace</code>）。</p>
-<h3 id="在庫移動実績入力用CSV雛形-csvTemplateDownload">在庫移動実績入力用CSV雛形（<code>csvTemplateDownload</code>）</h3>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>出力列（ヘッダのみ）</td><td><code>移動指示ID</code> / <code>出庫元店舗(名称)</code> / <code>入庫先店舗(名称)</code> / <code>送り状No.</code></td></tr><tr><td>文字コード</td><td><code>eccube_csv_export_encoding</code>（既定 <code>SJIS-win</code>）。UTF-8時のみBOM（<code>\xEF\xBB\xBF</code>）を出力。各列値を <code>mb_convert_encoding(値, encoding, 'UTF-8')</code>。</td></tr><tr><td>区切り</td><td><code>eccube_csv_export_separator</code>（既定 <code>,</code>）。</td></tr><tr><td>ファイル名</td><td><code>stock_move_instruction_record_template_YmdHis.csv</code>。</td></tr><tr><td>Content-Type</td><td><code>text/csv; charset=...</code>（SJIS-win時は <code>windows-31j</code>）、<code>Content-Disposition: attachment</code>。</td></tr></tbody></table></div>
-<p>この雛形のヘッダはM04-24のCSV取込（<code>StockMoveInstructionCsvImportHandler</code>）が要求する4列と一致する。</p>
-<h3 id="プロセスフロー">プロセスフロー</h3>
-<ol><li>一覧でチェックボックス（<code>ids[]</code>）を選択し送り状CSV出力ボタンを押下（JSが非表示フォームにIDを詰めてPOST）、または雛形ダウンロードリンクを押下。</li><li>送り状CSV: CSRF検証 → <code>ids</code> 空なら404 → <code>exportByInstructionIds($ids)</code> で対象指示と関連店舗を取得 → ヘッダ＋各行をストリーム出力。</li><li>雛形: 列ヘッダのみをストリーム出力。</li></ol>
-<h3 id="分岐・例外">分岐・例外</h3>
-<ul><li>**送り状CSVでID無し**: <code>ids</code> が空配列/未指定 → <code>NotFoundHttpException</code>（404）。</li><li>**対象なし**: <code>findByIdsForLabelExport</code> が空（該当指示なし）→ ヘッダのみのCSV（明示エラーなし）。</li></ul>
-<h3 id="状態・データ更新">状態・データ更新</h3>
-<div class="table-wrap"><table><thead><tr><th>対象</th><th>内容</th></tr></thead><tbody><tr><td>主データ</td><td>在庫移動指示 <code>dtb_stock_move_instruction</code> と関連店舗 <code>BaseInfo</code>（出庫元/入庫先・<code>Pref</code>）を**参照のみ**。出力により業務データは更新しない。</td></tr><tr><td>ログ</td><td>送り状CSV出力完了を <code>log_info</code> に記録。</td></tr></tbody></table></div>
-<h3 id="関連設計への接続点">関連設計への接続点</h3>
-<ul><li>出力項目の業務要件は参照元Excel設計書（在庫移動指示詳細シート）を正とする。なおExcel設計が描く「総販売価格/総移動原価/高額・通常別合計」のラベルは在庫移動指示詳細（M04-24）の表示項目であり、本送り状CSVは配送ラベル用途の別フォーマットである。</li><li>URLエンドポイント・出力列・DBカラムは <code>../ec-cube-enterprise</code> の <code>StockMoveInstructionLabelCsvExporterService</code> / <code>csvTemplateDownload</code> / <code>DtbStockMoveInstructionRepository::findByIdsForLabelExport</code> 実装を正とする。</li></ul>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<ul><li>本機能は新規実装であり、現行（pf-eccube3）に同等機能はない。移行後はec-cube-enterpriseの実装が初出となる。</li><li>DB関連はec-cube-enterpriseを正とする。出力元は在庫移動指示（<code>dtb_stock_move_instruction</code>）と関連店舗（<code>BaseInfo</code>、<code>mtb_pref</code>）で、送り状CSVの各列は上記Entityの実カラム/関連から組み立てる。送料・手数料・郵便種別は固定値（0/ゆうパック）。</li><li>送り状CSVは在庫移動（<code>dtb_stock_move_transfer</code>）明細を参照せず、指示親（金額合計・店舗）のみから生成する点に留意（明細単位の出力は本機能では行わない）。</li></ul>
-<details>
-<summary>Excel設計書からの抽出（原典・テスト網羅の根拠）</summary>
-<pre><code class="language-text">在庫移動指示詳細
-ドキュメント名
-在庫管理 基本設計
-セクション
-—
-プロジェクト名
-サイトリニューアル
-作成者
-堀部
-作成日
-2025/8/25
-更新者
-石川
-更新日
-2026-01-28
-機能No
-M04-25
-機能名
-在庫移動指示詳細
-概要
-—
-処理概要 在庫移動指示詳細画面
-図形・テキストボックス内テキスト（26件）
-レイアウト図 在庫移動指示詳細画面
-1-1
-1-2
-1-3
-1-4
-1-5
-1-6
-1-7
-1-14
-1-8
-1-11
-1-10
-1-12
-1-13
-1-15
-1-16
-1-9
-2-1
-2-2
-2-3
-2-4
-2-5
-2-6
-2-7
-2-8
-2-9
-2-10
-画像レイヤー（2枚）: 在庫移動指示詳細 / D7 / image 1 + 在庫移動指示詳細 / D7 / image 2
-機能仕様処理概要 在庫移動指示詳細画面
-在庫移動指示詳細画面概要
-・在庫移動指示の一覧から任意の移動指示IDを押下することでこの画面（在庫移動指示詳細画面）へ遷移する
-権限制御
-・0201_基本設計仕様書(システム設定).xlsxの権限制御シート（機能ID: M11-03）の「2.編集可能店舗処理」に応じた権限制御が行われる
-送状No.
-・在庫移動指示検索画面で送状No.を登録することで、この画面で送状No.を表示できる
-・送状No.の変更はこの画面からのみ可能
-・送状No.が登録されている場合、送り状No.の値がフォームに表示される
-・フォーム内の値を変更し、登録ボタンを押下すると値が保存される
-・変更時の未入力（空白のみ）での更新は許可しない
-（送り状番号を空に戻してステータス変更発送状況を「未」に戻す、移動ステータスを「出庫承認済み」に戻す）ことはできないため）
-備考情報
-・備考情報の内容の登録は、まとめられている移動のステータスが出庫承認済みまたは移動中の時のみ可能
-・備考情報のフォームの値を変更後、登録ボタンを押下すると値が保存される
-登録
-・送り状No.および備考の内容が変更された場合にのみ活性化する
-・登録ボタンを押下すると値が保存される
-・入力チェック
-在庫移動指示詳細 / AG69 / image 3
-・送り状No.が空文字のみの場合フォームにその旨のエラーを表示
-削除
-・発送済みでないかつ送り状No.が登録されていない在庫移動指示のみ削除可能
-・削除ボタンを押下すると削除確認モーダルが表示される
-・削除確認モーダル内の削除ボタンを押下すると移動指示リストが削除され、移動指示リスト作成検索画面へ遷移する
-識別IDラベル書式・制限必須最大値初期値画面部品の説明
-在庫移動指示情報
-1-1在庫移動指示IDラベル---在庫移動指示リスト作成検索 "識別ID3-5" と同様
-登録後自動採番された値を表示
-1-2出庫元店舗ラベル---在庫移動指示リスト作成検索 "識別ID3-6" と同様
-移動指示リストにまとめられている在庫移動の出庫元店舗
-1-3入庫先店舗ラベル---在庫移動指示リスト作成検索 "識別ID3-6" と同様
-移動指示リストにまとめられている在庫移動の入庫先店舗
-1-4在庫移動数ラベル---移動指示リスト含まれる在庫移動の件数
-1-5移動点数ラベル---移動指示リストに含まれる移動する商品の点数
-1-6登録日ラベル---移動指示リストの登録日
-1-7更新日ラベル---移動指示リストの更新日
-1-8最終更新者ラベル---移動指示リストの最終更新者
-1-9送状No.全角・半角-16384文字-送状No.がある場合に値を表示
-数値だけでなく全角・半角を許容する
-1-10総販売価格の合計ラベル---各在庫移動の持つ全ての商品の販売価格の合計金額
-1-11総移動原価の合計ラベル---各在庫移動の持つ総移動原価の合計金額
-1-12●●円以上の商品の合計ラベル---出庫元店舗の高額商品閾値の最も高い価格を取得し閾値とする
-項目名も閾値の値を使って、●●円以上の商品と表記する
-商品の基準価格が●●円以上の商品の合計金額
-1-13●●円未満の商品の合計ラベル---出庫元店舗の高額商品閾値の最も高い価格を取得し閾値とする
-項目名も閾値の値を使って、●●円未満の商品と表記する
-商品の基準価格が●●円未満の商品の合計金額
-1-14備考全角・半角-16384文字-メモの入力は入庫完了以外で入力可能
-1-15登録ボタン---備考の変更内容を登録する処理を実行
-1-16削除ボタン---表示中の指示書リストを削除する処理を実行
-出庫待ち状態の場合のみ削除可能
-在庫移動情報
-2-1在庫移動振替IDリンク---機能No.: M04-09 在庫移動・振替登録 編集（移動）の "識別ID2-3" の値を利用する
-押下することで対象の在庫移動情報へ遷移
-2-2出庫元店舗ラベル---機能No.: M04-09 在庫移動・振替登録 編集（移動）の "識別ID2-1" の値を利用する
-2-3入庫先店舗ラベル---機能No.: M04-09 在庫移動・振替登録 編集（移動）の "識別ID2-2" の値を利用する
-2-4在庫区分ラベル---機能No.: M04-09 在庫移動・振替登録 編集（移動）の "識別ID2-3" の値を利用する
-2-5基準価格合計ラベル---対象の在庫移動が持つ全ての商品の基準価格の合計金額
-2-6移動原価合計ラベル---対象の在庫移動が持つ移動原価の合計金額
-2-7●●円以上の商品の合計ラベル---出庫元店舗の高額商品閾値の最も高い価格を取得し閾値とする
-項目名も閾値の値を使って、●●円以上の商品と表記する
-商品の基準価格が●●円以上の商品の合計金額
-2-8●●円未満の商品の合計ラベル---出庫元店舗の高額商品閾値の最も高い価格を取得し閾値とする
-項目名も閾値の値を使って、●●円未満の商品と表記する
-商品の基準価格が●●円未満の商品の合計金額
-2-9移動点数ラベル---対象の在庫移動に含まれる商品点数の合計
-2-10登録日ラベル---機能No.: M04-09 在庫移動・振替登録 編集（移動）の "識別ID1-4" の値を利用する
-図形・テキストボックス内テキスト（26件）</code></pre>
-</details>
+      <div class="renewal-spec-banner"><h3>リニューアル後の仕様</h3></div>
+
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

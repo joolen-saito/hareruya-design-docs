@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,38 +272,20 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#フロント挙動">フロント挙動</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#取込フォーム画面を開く-GET-admin-deck-csv">取込フォーム画面を開く（GET `admin_deck_csv`）</a>
-<a class="lv3" href="#ファイルを取り込む-POST-m15-06-admin-deck-deck-csv-import">ファイルを取り込む（POST `m15-06_admin_deck_deck_csv_import`）</a>
-<a class="lv2" href="#集計条件">集計条件</a>
-<a class="lv2" href="#取込処理時の判定順序-一覧">取込処理時の判定順序（一覧）</a>
-<a class="lv2" href="#表示メッセージ">表示メッセージ</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
-<a class="lv3" href="#入力項目">入力項目</a>
-<a class="lv3" href="#CSV-論理キー列-画面上のヘッダ行と本文-1-行目で一致させる並び">CSV 論理キー列（画面上のヘッダ行と本文 1 行目で一致させる並び）</a>
-<a class="lv3" href="#エッジケース">エッジケース</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#取込ファイルの形式">取込ファイルの形式</a>
+<a class="lv3" href="#ヘッダ行の項目">ヘッダ行の項目</a>
+<a class="lv3" href="#行ごとの判定順序">行ごとの判定順序</a>
+<a class="lv3" href="#厳密チェック">厳密チェック</a>
+<a class="lv3" href="#登録の判定">登録の判定</a>
+<a class="lv3" href="#デッキ明細の作成">デッキ明細の作成</a>
+<a class="lv3" href="#表示状態とリスト本文">表示状態とリスト本文</a>
+<a class="lv3" href="#代表カード">代表カード</a>
+<a class="lv3" href="#エラー時の扱い">エラー時の扱い</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#バリデーション">バリデーション</a>
-<a class="lv2" href="#権限・認可">権限・認可</a>
-<a class="lv2" href="#画面遷移">画面遷移</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#試行制限">試行制限</a>
-<a class="lv2" href="#ログ・監査">ログ・監査</a>
-<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
-<a class="lv2" href="#セッション">セッション</a>
-<a class="lv2" href="#Cookie">Cookie</a>
-<a class="lv2" href="#排他制御・楽観制御・トランザクション">排他制御・楽観制御・トランザクション</a>
-<a class="lv2" href="#調査補助-grep向け">調査補助（grep向け）</a>
-<a class="lv3" href="#HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a></nav>
+<a class="lv3" href="#入出力-永続化">入出力: 永続化</a>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -301,104 +293,39 @@ footer {
         <h1>デッキ管理 — デッキ登録CSV（取込）</h1>
       </header>
       
-      <h2 id="概要">概要</h2>
-<p>HareruyaEc プラグインが管理画面に提供する「デッキ登録 CSV, TSV」画面である。利用者がアップロードしたファイルの 1 行目を論理キーとして解釈し、イベント系デッキ（<code>dtb_deck</code>）および表示条件が満たされる場合はデッキ明細（<code>dtb_deck_card</code>）まで登録または更新する。区切りは拡張子が <code>tsv</code> のときタブ文字、それ以外はコア設定の CSV 区切り文字および囲み文字を使う。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。本機能のカスタマイズ区分はカスタマイズであり、挙動は現行リポ pf-eccube3 配下の HareruyaEc プラグイン実装を確認値とし、DB関連は ec-cube-enterprise を正とする。</p>
-<p>対象はブラウザ経由の管理画面に限定する。</p>
-<p>コントローラのメソッド名は本文の主題としない。本文ではルートbind名やSymfonyのルートnameの網羅は主説明としない。「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。コード探索でbind名が必要なときだけ「調査補助」へ書く。</p>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<p>現行（pf-eccube3 の HareruyaEc プラグイン）が持つデッキ系テーブルは、移行先（ec-cube-enterprise）ではコア標準のエンティティとして取り込まれている。DB関連の記述は移行先を正とする。</p>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>デッキ本体テーブル</td><td><code>dtb_deck</code>。主キー列は <code>deck_id</code></td><td><code>dtb_deck</code>。主キー列は <code>id</code>。CSV 論理キー <code>deck_id</code> の対応先は移行先では <code>id</code> 列となる</td></tr><tr><td>デッキ明細テーブル</td><td><code>dtb_deck_card</code>（<code>deck_id</code>・<code>card_id</code>・<code>board_id</code>・<code>count</code>）</td><td>同名・同構成。<code>dtb_deck_card</code>（<code>deck_id</code>・<code>card_id</code>・<code>board_id</code>・<code>count</code>）</td></tr><tr><td>表示状態</td><td>表示マスタ ID（<code>disp_id</code>）への写像</td><td>同じく <code>disp_id</code>（公開状態マスタへの外部キー）</td></tr><tr><td>デッキ種別</td><td>デッキ種別 ID</td><td><code>deck_type_id</code>（デッキ種別マスタへの外部キー）。未セット時のイベント種補給は移行先でも同様に要確認</td></tr><tr><td>デッキタグ中間表</td><td>デッキタグの多対多中間表</td><td><code>dtb_deck_deck_tag</code>（<code>deck_id</code>・<code>deck_tag_id</code>）</td></tr></tbody></table></div>
-<p>CSV 論理キーの並び・画面表示・取込処理の判定順序は現行 pf-eccube3 実装を正とする。再取込時の <code>dtb_deck_card</code> 明細削除の有無など挙動面の差は本書の処理フロー・エッジケースを正とし、移行先で同挙動かは ec-cube-enterprise 実装で要確認とする。</p>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>デッキ検索画面（テンプレート <code>deck.twig</code>）の「CSV,TSV取り込み」リンク</td><td><code>GET /{admin_route}/deck/csvimport</code></td><td>ファイル入力、チェック項目、論理キー説明の表が表示される。</td></tr><tr><td>同画面でファイルを選び送信ボタンを押す</td><td><code>POST /{admin_route}/deck/csvimport</code></td><td>検証と取込が走り、結果メッセージとともに GET の取込画面へ戻る。</td></tr></tbody></table></div>
-<p>ホスト名、クエリ、フラグメント、ログイン資格情報を埋め込んだ具体的 URL は本文では書かない。</p>
-<hr>
-<h2 id="フロント挙動">フロント挙動</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>ページタイトルは「デッキ管理」。サブタイトルは「デッキ登録CSV, TSVアップロード」。アップロード箱の見出しは「デッキ登録CSV, TSV」。フォーマット表は「デッキ登録CSV, TSVファイルフォーマット」のボックスに折り込み、アップロードと同ページに縦並びである。説明テーブルの 1 行目セルには論理キー、直下の tbody 行には日本語説明があり、換行が含まれ得て <code>nl2br</code> が当たる。</td></tr><tr><td>JS 挙動</td><td><code>spin.min.js</code> と共通の <code>card-csvimport.js</code> を読み込む（カード CSV 画面と同名スクリプト）。フォーム submit で送信ボタンを無効化し、<code>#spinner</code> にインジケーターを出す設計になる。送信完了までボタンの再有効はページ全体の再読込に委ねられる。</td></tr><tr><td>CSS・レイアウト</td><td>横並びコンポーネント向けフォームレイアウト種別 Bootstrap 横型フォームである。固有の別 CSS はテンプレートに無い。</td></tr><tr><td>モーダル・ポップアップ</td><td>取込送信前後の確認ダイアログは無い。</td></tr><tr><td>アップロード入力補助</td><td><code>import_file</code> には <code>accept</code> に <code>.csv</code>、MIME <code>text/csv</code>、<code>.tsv</code>、<code>text/tsv</code> が並ぶが、MIME 許可リストは送信後検証側で広めに許容されている。</td></tr></tbody></table></div>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="取込フォーム画面を開く-GET-admin-deck-csv">取込フォーム画面を開く（GET <code>admin_deck_csv</code>）</h3>
-<ol><li>管理画面の認証と共通処理を通過する。</li><li>フォーム型 <code>admin_csv_import</code> に、ラベル翻訳キー <code>form.deck.strict</code> のチェック項目 <code>strict</code>（未必須）を結合ビルダで追加したフォームを生成し <code>handleRequest</code> する。</li><li>コントローラ内連想配列 <code>getCsvHeader</code> の論理キー一覧と説明をテンプレートへ渡して描画する。</li></ol>
-<h3 id="ファイルを取り込む-POST-m15-06-admin-deck-deck-csv-import">ファイルを取り込む（POST <code>m15-06_admin_deck_deck_csv_import</code>）</h3>
-<ol><li>管理画面の認証および共通処理を通過する。</li><li>POST 側でもフォーム構成は GET と同様に <code>handleRequest</code> する。</li><li>共有サービスの <code>DeckCsv</code> インスタンスを生成するとき、想定論理キー一覧と「必須論理キー」連想配列、<code>sessionKey</code> 文字列はプレフィクス論理名としてのみ渡される（当機能の処理フローでセッションに検索状態を読み書きする実装は無い）。</li><li><code>$deckCsv-&gt;setIsStrict</code> にチェック <code>strict</code> の値を渡し、その後共通「フォーム有効」のヘルパで CSRF と Symfony バリデーションを評価する。CSRF が不正なときは共通ヘルパがアクセス拒否（HTTP 403）種別へ至るコードパスとなる。</li><li><code>checkFormValid</code> は Symfony 評価が不合格であれば各エラーを管理画面エラー用フラッシュへ積みつつ、このクラス共通の終了処理用リダイレクト応答オブジェクトまで組み立てる。その戻り値をデッキ用インポートコントローラは変数代入も早期 return もしておらず、ソースだけを見ると直後へ処理が進み続けるコード順序になる。この時点での副作用はフラッシュと CSRF の更新に留まって応答転送しない可能性があることを、共通実装順序とセットで読むべきギャップとする。</li><li>アップロードファイル参照は <code>import_file</code> から読み込み、共通 <code>getFormFile</code> はソース上サイズがゼロのときの処理本文が欠けた状態のうえ単に値を返すだけである。コンテローラはこの周辺のみ <code>LogicException</code> を明示キャッチするが、共通実装だけを見ればこの種の例外送出はしない構造にある。</li><li>情報ログ「デッキCSV登録開始」を出す。</li><li>共通取込サービスにより一時ファイル名を乱数ベースで採り、<code>csv_temp_realdir</code> へファイルを書き換え移設する。その後読み込み、Windows とその他環境での文字コード方針、改行統一、<code>removeWhite</code> によるゼロ幅や BOM の除去、<code>CsvImportService</code> へ第一行ヘッダを食わせて反復できる集合体を準備する。区切りは拡張子が文字列一致で <code>tsv</code> のときタブ、その他では <code>csv_import_delimiter</code> と <code>csv_import_enclosure</code> が使われる。この途中でコンストラクタが拒否すると <code>false</code> が返り、リダイレクト応答で終える。</li><li>アップロード後の論理ヘッダ配列が想定側の論理キー配列・任意除外セットを除いた両者の並びまで一致しない場合、<code>admin.csv.error.format.header</code> がメッセージ本文のランタイム例外が投げられ、共通の catch でロールバックとエラー返却になる（翻訳はこの時点では当てずの経路となる）。</li><li>データ集合の件数が 0 だとランタイム例外 <code>admin.csv.error.data.empty</code>。トランザクションはまだ開始前なので、この例外のみロールバック対象にならず取込共通の応答のみになる。</li><li>ORM の SQL ロガーを無効にし、<code>beginTransaction</code> する。</li><li>データ行ごとに次を順番に評価し、異常終了するとロールバックとエラー用フラッシュ、リダイレクトとなる。</li></ol>
-<ul><li>当行の値の個数がヘッダ個数と等しいこと（翻訳付きランタイム例外）</li><li>必須論理キーに相当する説明連想配列への一致ルールでの空文字禁止。ただし <code>main_list</code> についてはリスト非公開に相当する <code>private_flg</code> のとき空文字許容となる分岐のみが共通必須ロジックを上書きする（コメントにより非公開フラグの検証順序との食い違いリスクがコード上に明示されている）。</li><li>フォーマット英名でのレギュレーション存在（翻訳付きランタイム例外）</li><li>アーキタイプの日本語名または英名とフォーマット ID の両方での一致がいずれかで成立すること（無ければ翻訳付きランタイム例外）</li><li>イベント詳細 ID が空でなければ該当行がイベント詳細に存在すること（翻訳付きランタイム例外）</li><li>イベント開催日が機械解釈可能な日時文字列になること、<code>strtotime</code> 失敗は翻訳付きランタイム例外、<code>DateTime</code> へ昇格される</li><li>表示フラグが <code>dtb_deck</code> 側の公開・非公開定数それぞれの文字列表現と完全一致すること、以外はフォーマット系翻訳</li><li>デッキリスト非公開フラグも同様に二値定数との文字列完全一致</li><li>統率者は当該フォーマットが統率を使うマスタフラグがあるときのみ必須。空でなければ「行頭に枚数として 1 と空白を前置したリスト解釈」でカード名が解けること、および解けた名前が有効カードとなること。</li><li>旧デッキ ID が空でなければ半角英数とアンダースコア想定で最大 16 文字の事前正規表現に合致しつつ、<code>dtb_deck</code> 上での重複が無いこと</li><li>リスト検証経路に入る場合は、<code> // </code> をスラッシュ一つへ正規化してからリスト解釈、統率者有無に応じたメインボード側の統率者カード重複削除とテキスト再生成、リスト形式異常および不明名検出、アーキタイプ横断チェックおよび禁止制限チェック結果を読み、そのうちチェックフラグオンなら許容しないエラーへ昇格</li><li>同じくリスト検証経路かつフラグオンならフォーマットマスタ由来の最小・最大枚数との比較</li></ul>
-<ol><li><code>deck_id</code> 列値により Doctrine 側の単行取得規約へ従って既存本体を読み、<code>insertFlg</code> で新規オブジェクト作成と継続的 <code>persist</code> を切り替える。</li><li>本体セッター群で名前・イベント・カウント類・フラグ類・リスト原文・調整済統率テキスト・旧サイト向け連番・代表画像のいずれかを設定する。表示マスタへの ID はプラグイン側 <code>Disp::CSV_TO_DISPID</code> が <code>dtb_deck</code> 由来の公開・非公開二値 CSV 値から EC-CUBE マスタ側の整数へ写像する連想で変換される。ログイン済み運用アカウントから <code>member_id</code> が必ずセットされる。</li><li>「デッキ種別が未セットならイベント種」のデフォルト補給がある。</li><li>リスト検証経路でのみ共通 <code>CardUtil</code> によりボード単位へ <code>dtb_deck_card</code> 新規オブジェクトが積まれる経路となる。統率者はフラグオン形式で入力が済んでいれば常に統率者ボード側へ別途書き込む。</li><li>行番号ベースおよび新規フラグでの <code>flush</code> とキャッシュクリアを間引きし、全行処理後にもう一度フラッシュおよび <code>commit</code>。成功時フラッシュ鍵は <code>admin.register.complete</code> と情報ログ「デッキCSV登録完了」。</li><li>成功および失敗のいずれも <code>DeckCsv.render</code> が一時ファイル名が残っていれば削除を試み、GET <code>admin_deck_csv</code> へ応答ヘッダ付きリダイレクトを組み立てる。</li></ol>
-<hr>
-<h2 id="集計条件">集計条件</h2>
-<p>本機能では売上一覧向けやダッシュボード向けに数値や件数へ集約するクエリ出力はしない。</p>
-<hr>
-<h2 id="取込処理時の判定順序-一覧">取込処理時の判定順序（一覧）</h2>
-<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>multipart 入力とチェックフラグおよび CSRF、ファイル制約が Symfony 評価および CSRF プロバイダ側で許容されるか</td><td>許容のみ後続進行</td></tr><tr><td>2</td><td>一時読込と区切り判定が成立するか</td><td>失敗はリダイレクトのみ</td></tr><tr><td>3</td><td>ヘッダ論理順が期待と一致するか、データが 1 行以上あるか</td><td>ヘッダ空振りおよび空データは異常応答またはロールバック不要の例外のみ</td></tr><tr><td>4</td><td>DB 側トランザクション開始後は行順にヘッダ列長、必須空欄からマスタ照合およびリスト検証（条件付き）へ進む</td><td>最初の異常時点で rollback とエラー用フラッシュ、リダイレクト応答となる</td></tr><tr><td>5</td><td>「厳密」オフならリスト内の複数種エラー状態は昇格しないまま処理が継続し得て、オンなら昇格順を <code>switch</code> が固定する</td><td></td></tr></tbody></table></div>
-<hr>
-<h2 id="表示メッセージ">表示メッセージ</h2>
-<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>画面上の文言(英語)</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M15-06-MSG-001</td><td>管理画面上部</td><td>CSVファイルをアップロードしました</td><td>（英訳なし）</td><td>デッキ登録用CSVファイルを正常にアップロードしたとき</td><td>デッキ登録 CSV（取込）画面に遷移する</td></tr></tbody></table></div>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>リスト枚数総和</td><td>メイン側・サイド側それぞれに対し、リスト検証後の配列各要素の所持枚数字段を合計し、その数をフォーマットマスタ側の許容下限・上限整数と、<code>厳密</code> と組み合わせてのみ比較する。統率者の枚数規定はリスト総和評価の外で扱われるコードパスにある。</td></tr><tr><td>代表カード</td><td>論理キー <code>image_card_name</code> が空でなく有効へ解ける場合、アップロード行はその名前から最適と判定される画像行をセットする。空の場合は現在フォーマットに紐づくアーキタイプ行の既定代表画像を引き続き使うコードパスで上書きする。</td></tr><tr><td>サイト表示状態とリスト本文</td><td>表示フラグが公開側に読み換えられ、かつ非公開フラグが「公開状態」側のときだけ本文テキストと <code>dtb_deck_card</code> が一致する状態を強制検証および再書き換えする。その他組み合わせではリスト本文検証および明細出力は広く省略され、入力した原文はそのまま <code>text_main</code> / <code>text_side</code> にだけ反映され得る。</td></tr></tbody></table></div>
-<h3 id="入力項目">入力項目</h3>
-<div class="table-wrap"><table><thead><tr><th>項目名</th><th>必須／任意</th><th>最大長</th><th>初期値</th><th>保存先・扱い</th></tr></thead><tbody><tr><td>CSV, TSVファイル選択</td><td>必須（Symfony 評価および NotBlank メッセージ）</td><td>設定 <code>csv_size</code> のメガバイト単位上限（確認値として <code>constant.yml.dist</code> は 5 メガバイト）であり、MIME は <code>CsvMimeType</code> 許可セットに入る送信のみ通過対象となる</td><td>（空選択）</td><td>フォーム項目キーは <code>import_file</code>。取込共通が一時パスへ移したあと処理し、処理終わり共通の削除対象となる一時論理ファイル名のみを内部に保持する。</td></tr><tr><td>厳密にチェックする</td><td>任意（既定オンの Twig 側 <code>checked</code> 属性）</td><td>チェック状態のみ</td><td>Twig 側でオンに視覚初期化されている</td><td>論理フラグ項目キーは <code>strict</code>。取込共通のリスト厳密度切替フラグのみをオンオフする。サーバ側での永続領域には書かない。</td></tr></tbody></table></div>
-<h3 id="CSV-論理キー列-画面上のヘッダ行と本文-1-行目で一致させる並び">CSV 論理キー列（画面上のヘッダ行と本文 1 行目で一致させる並び）</h3>
-<p>画面上のヘッダ行は次の並びとなる。日本語説明は括弧ごとコード上のヘッダ連想説明であり、一覧の並び順はソースの <code>DeckCsvController#getCsvHeader</code> を正とする。</p>
-<div class="table-wrap"><table><thead><tr><th>並び順</th><th>論理キー</th><th>画面側の説明ラベルの主な内容（改行混入あり得て本文はテンプレの <code>nl2br</code> が当たる）</th></tr></thead><tbody><tr><td>1</td><td><code>player_name</code></td><td>プレイヤー名</td></tr><tr><td>2</td><td><code>format</code></td><td>フォーマット</td></tr><tr><td>3</td><td><code>archetype</code></td><td>アーキタイプ</td></tr><tr><td>4</td><td><code>event_detail_id</code></td><td>イベント詳細ID</td></tr><tr><td>5</td><td><code>deck_name</code></td><td>デッキ名</td></tr><tr><td>6～8</td><td><code>win_count</code>〜<code>loss_count</code>〜<code>draw_count</code></td><td>勝利数〜敗北数〜引分数</td></tr><tr><td>9</td><td><code>ranking</code></td><td>順位</td></tr><tr><td>10</td><td><code>result</code></td><td>成績</td></tr><tr><td>11</td><td><code>dci_no</code></td><td>DCI番号</td></tr><tr><td>12～13</td><td><code>event_name_en</code>〜<code>event_name_jp</code></td><td>イベント名(英)(日)</td></tr><tr><td>14</td><td><code>event_date</code></td><td>イベント開催日</td></tr><tr><td>15</td><td><code>source_url</code></td><td>参照元</td></tr><tr><td>16</td><td><code>participants</code></td><td>イベント参加人数</td></tr><tr><td>17</td><td><code>disp_flg</code></td><td>表示フラグ（<code>dtb_deck</code> の公開側用二値へ文字列表現対応あり）</td></tr><tr><td>18</td><td><code>private_flg</code></td><td>デッキリスト非公開フラグ</td></tr><tr><td>19～20</td><td><code>main_list</code>〜<code>side_list</code></td><td>メインリスト〜サイドリスト</td></tr><tr><td>21</td><td><code>commander</code></td><td>統率者</td></tr><tr><td>22</td><td><code>deck_id</code></td><td>デッキID（空白なら自動採番の新規、既存値一致なら上書き）</td></tr><tr><td>23</td><td><code>image_card_name</code></td><td>代表カード名</td></tr><tr><td>24</td><td><code>old_deck_id</code></td><td>旧デッキID</td></tr></tbody></table></div>
-<p>必須にコード上カウントされる論理キーは、<code>player_name</code>・<code>format</code>・<code>archetype</code>・<code>event_name_en</code>・<code>event_name_jp</code>・<code>event_date</code>・<code>disp_flg</code>・<code>private_flg</code>・<code>main_list</code>（ただし前面に書いた特例を除く）。</p>
-<h3 id="エッジケース">エッジケース</h3>
-<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>表示はするがリストを非公開にしたい</td><td>メインリスト空欄を必須解釈から外す特例が適用される。リスト検証経路にも入らないため本文・明細チェックおよび <code>dtb_deck_card</code> 反映はしない。統率者有無の評価はフォーマットの統率使用フラグに従ってもリスト検証外で早期に例外になり得る。</td></tr><tr><td>「厳密」オンとオフ</td><td>オンなら禁止・制限超過などに対応する翻訳付き異常種別すべてが昇格される。オフなら昇格しないまま許容または黙読する状態が並ぶ運用モデルとなる。</td></tr><tr><td>CSV 側 <code>deck_id</code> に既存有効 ID を書いて再取込</td><td>コード上明示的な <code>dtb_deck_card</code> 既存削除は無い。そのためリスト検証経路を通すたび <code>CardUtil#setDeckCards</code> は新オブジェクトのみ <code>persist</code> し、<code>flush</code> と commit で既存複製が残り得る。DB 側一意制約が無いときの重複行はサイト表示仕様側でどう読むかに依存するため、一覧整合は保証しない。</td></tr><tr><td>アップロード後にヘッダ不一致</td><td>メッセージが翻訳キーそのまま管理画面フラッシュになり得る。</td></tr><tr><td>Symfony 側でファイル必須違反などフォーム検証無効のみが成立したとき</td><td><code>checkFormValid</code> はエラーをフラッシュしつつリダイレクト応答オブジェクトへまとめるが、この呼び出しの戻り値をコンテローラ側が評価して早期 return しておらず、ソース上そのまま続行コードパスにある。環境での実害（例えば <code>import_file</code> 未取得状態で後続処理が致命的エラーへ至る）は実装側の運用確認を要するギャップである。</td></tr></tbody></table></div>
-<hr>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>画面上の説明文と実入力</td><td>画面上の並び順はソースの論理順と一致させておく運用になる。並びだけ誤ればヘッダ比較で即拒否となる。</td></tr><tr><td>エクスポートとの往復期待</td><td><code>m15-02_admin_deck_deck_csv_export</code> 由来の論理並びとは概ね一致する構成だが詳細項目の細部確認は設計資料 <code>m15-02_admin_deck_deck_csv_export.md</code> を正とする。</td></tr><tr><td><code>dtb_deck_card</code> と再取込</td><td>ソース上削除フローの無さから、複数回放送で明細増殖し得て、リスト検証経路の外では明細とも整合しない状態が並び続け得る。</td></tr></tbody></table></div>
-<hr>
-<h2 id="API-バッチ結果">API/バッチ結果</h2>
-<p>本機能では支店など外部 HTTP API への成功通知およびバッチ起動処理はしない（カード取込機能と異なり送信無し）。</p>
-<hr>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="取込ファイルの形式">取込ファイルの形式</h3>
+<p>1行目をヘッダ行として扱う。拡張子が <code>tsv</code> のときはタブ区切り、それ以外のときは既定の区切り文字と囲み文字を用いる。読み込み時に文字コードを環境ごとの方針で変換し、改行を統一し、ゼロ幅文字とBOMを除去する。取り込んだファイルは一時領域へ乱数由来の名前で移して読み込み、処理の成否によらず、残っていれば削除する。</p>
+<h3 id="ヘッダ行の項目">ヘッダ行の項目</h3>
+<p>画面には、ヘッダ行の並びと各項目の説明を表示する。並びは次のとおりで、本文1行目と一致させる。</p>
+<div class="table-wrap"><table><thead><tr><th>並び順</th><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>1</td><td><code>player_name</code></td><td>プレイヤー名</td></tr><tr><td>2</td><td><code>format</code></td><td>フォーマット</td></tr><tr><td>3</td><td><code>archetype</code></td><td>アーキタイプ</td></tr><tr><td>4</td><td><code>event_detail_id</code></td><td>イベント詳細ID</td></tr><tr><td>5</td><td><code>deck_name</code></td><td>デッキ名</td></tr><tr><td>6</td><td><code>win_count</code></td><td>勝利数</td></tr><tr><td>7</td><td><code>loss_count</code></td><td>敗北数</td></tr><tr><td>8</td><td><code>draw_count</code></td><td>引分数</td></tr><tr><td>9</td><td><code>ranking</code></td><td>順位</td></tr><tr><td>10</td><td><code>result</code></td><td>成績</td></tr><tr><td>11</td><td><code>dci_no</code></td><td>DCI番号</td></tr><tr><td>12</td><td><code>event_name_en</code></td><td>イベント名(英)</td></tr><tr><td>13</td><td><code>event_name_jp</code></td><td>イベント名(日)</td></tr><tr><td>14</td><td><code>event_date</code></td><td>イベント開催日</td></tr><tr><td>15</td><td><code>source_url</code></td><td>参照元</td></tr><tr><td>16</td><td><code>participants</code></td><td>イベント参加人数</td></tr><tr><td>17</td><td><code>disp_flg</code></td><td>表示フラグ</td></tr><tr><td>18</td><td><code>private_flg</code></td><td>デッキリスト非公開フラグ</td></tr><tr><td>19</td><td><code>main_list</code></td><td>メインリスト</td></tr><tr><td>20</td><td><code>side_list</code></td><td>サイドリスト</td></tr><tr><td>21</td><td><code>commander</code></td><td>統率者</td></tr><tr><td>22</td><td><code>deck_id</code></td><td>デッキID。空欄のときは自動採番の新規、既存値と一致するときは上書き</td></tr><tr><td>23</td><td><code>image_card_name</code></td><td>代表カード名</td></tr><tr><td>24</td><td><code>old_deck_id</code></td><td>旧デッキID</td></tr></tbody></table></div>
+<p>必須は <code>player_name</code>・<code>format</code>・<code>archetype</code>・<code>event_name_en</code>・<code>event_name_jp</code>・<code>event_date</code>・<code>disp_flg</code>・<code>private_flg</code>・<code>main_list</code> の9項目である。ただし <code>main_list</code> は、<code>private_flg</code> がデッキリスト非公開のときだけ空欄を許す。</p>
+<h3 id="行ごとの判定順序">行ごとの判定順序</h3>
+<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th></tr></thead><tbody><tr><td>1</td><td>当行の値の個数がヘッダの個数と等しいこと</td></tr><tr><td>2</td><td>必須項目が空欄でないこと（<code>main_list</code> の特例を除く）</td></tr><tr><td>3</td><td><code>format</code> の英名に一致するレギュレーションが存在すること</td></tr><tr><td>4</td><td><code>archetype</code> の日本語名または英名が、当該フォーマットのアーキタイプに一致すること</td></tr><tr><td>5</td><td><code>event_detail_id</code> が空でないときは、該当のイベント詳細が存在すること</td></tr><tr><td>6</td><td><code>event_date</code> が日時として解釈できること</td></tr><tr><td>7</td><td><code>disp_flg</code> がデッキの公開・非公開いずれかの値と完全に一致すること</td></tr><tr><td>8</td><td><code>private_flg</code> が二値のいずれかと完全に一致すること</td></tr><tr><td>9</td><td>統率者を使うフォーマットのときだけ <code>commander</code> を必須とし、空でないときはカード名として解けること、解けた名前が有効なカードであること</td></tr><tr><td>10</td><td><code>old_deck_id</code> が空でないときは、半角英数とアンダースコアで最大16文字であり、既存のデッキと重複しないこと</td></tr><tr><td>11</td><td>リスト検証の経路に入るときは、リスト形式の異常と不明なカード名が無いこと</td></tr></tbody></table></div>
+<p>いずれかが成立しないときは、その行で取込を中止し、それまでの登録を取り消す。</p>
+<p>統率者の判定では、行頭に枚数として 1 と空白を前置した形でカード名を解く。リスト検証では、<code> // </code> をスラッシュ1つへ正規化してからリストを解釈する。統率者があるときは、メインボードから統率者カードの重複を除いてテキストを再生成する。</p>
+<h3 id="厳密チェック">厳密チェック</h3>
+<p>「厳密」を指定したときだけ、次の検査結果をエラーへ昇格する。指定しないときは、リスト内に複数種のエラー状態があっても取込を続ける。</p>
+<div class="table-wrap"><table><thead><tr><th>検査</th></tr></thead><tbody><tr class="section-row"><td colspan="1">アーキタイプ横断チェック</td></tr><tr class="section-row"><td colspan="1">禁止制限チェック</td></tr><tr class="section-row"><td colspan="1">リスト形式の異常・不明なカード名</td></tr><tr class="section-row"><td colspan="1">メイン・サイドそれぞれの枚数総和が、フォーマットの許容下限・上限に収まること</td></tr></tbody></table></div>
+<p>枚数総和は、メインボードとサイドボードそれぞれで、リスト解釈後の各カードの所持枚数を合計した数である。統率者の枚数規定は総和の評価に含めない。</p>
+<h3 id="登録の判定">登録の判定</h3>
+<div class="table-wrap"><table><thead><tr><th><code>deck_id</code> の値</th><th>登録</th></tr></thead><tbody><tr><td>空欄のとき</td><td>新規に採番して登録する</td></tr><tr><td>既存のデッキと一致するとき</td><td>そのデッキを上書きする</td></tr></tbody></table></div>
+<p>デッキ名・イベント情報・勝敗数・順位・成績・各フラグ・リスト原文・調整済みの統率者テキスト・旧サイト向け連番・代表画像を、行の値で設定する。表示フラグは、取込値の公開・非公開から表示区分の値へ読み替える。登録者には操作した管理者アカウントを必ず設定する。デッキ種別が未設定のときは、イベント種別を既定として補う。</p>
+<h3 id="デッキ明細の作成">デッキ明細の作成</h3>
+<p>リスト検証の経路に入る行だけ、ボード単位でデッキ明細を作成する。統率者は、統率者を使う形式で入力が済んでいるときは、常に統率者ボードへ別に書き込む。</p>
+<h3 id="表示状態とリスト本文">表示状態とリスト本文</h3>
+<p>表示フラグが公開へ読み替えられ、かつデッキリスト非公開フラグが公開状態のときだけ、本文テキストとデッキ明細が一致する状態を検証して書き換える。それ以外の組み合わせのときは、リスト本文の検証と明細の出力を広く省略し、入力した原文をメインリスト・サイドリストのテキストにだけ反映する。</p>
+<h3 id="代表カード">代表カード</h3>
+<div class="table-wrap"><table><thead><tr><th><code>image_card_name</code> の値</th><th>代表画像</th></tr></thead><tbody><tr><td>空でなく、有効なカードへ解けるとき</td><td>その名前から最適と判定される画像を設定する</td></tr><tr><td>空のとき</td><td>当該フォーマットに紐づくアーキタイプの既定の代表画像で上書きする</td></tr></tbody></table></div>
+<h3 id="エラー時の扱い">エラー時の扱い</h3>
+<div class="table-wrap"><table><thead><tr><th>事象</th><th>扱い</th></tr></thead><tbody><tr><td>入力内容の検証に外れたとき</td><td>エラーを順に表示する</td></tr><tr><td>取込ファイルを受け取れないとき</td><td>登録せず、取込画面へ戻る</td></tr><tr><td>ファイルの読み込みに失敗したとき</td><td>登録せず、取込画面へ戻る</td></tr><tr><td>ヘッダの並びが期待の並びと一致しないとき</td><td>登録せず、取込画面へ戻る</td></tr><tr><td>データ行が0件のとき</td><td>登録せず、取込画面へ戻る</td></tr><tr><td>行の判定に外れたとき</td><td>それまでの登録を取り消し、エラーを表示して取込画面へ戻る</td></tr></tbody></table></div>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>multipart POST。CSRF とアップロードファイル必須。任意で <code>strict</code>。</td></tr><tr><td>成功時ブラウザ表示</td><td>POST 処理後ヘッダ <code>Location</code> により GET の取込画面へ戻る。成功フラッシュがあり得る。一時ファイルは無い状態が目標。</td></tr><tr><td>失敗時ブラウザ表示</td><td>エラー種別フラッシュとともに同じ GET に戻る。ロールバック対象異常値は開始後にのみ成立。</td></tr><tr><td>副作用</td><td>DB 書き換えおよび必要に応じ <code>dtb_deck_card</code> の追加、情報ログ複数種、フラッシュキューおよび一時領域消去または残存しないよう試行。Redis 側は当 CSV 機能から直接読み書きしないコードパスに留まる（間接効果だけは別サイト機能を正とする）。</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<p>当機能経路での主な更新および参照は次のようなテーブル列に張り付く。型や残りすべての項目はDoctrine定義および DB 実体へ照らすこと。</p>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列または関係論理名</th><th>メモ</th></tr></thead><tbody><tr><td><code>dtb_deck</code></td><td>主キー <code>id</code>（現行 <code>deck_id</code>）。プレイヤー名・各種カウント・名前・フラグ類・リスト原文（<code>text_main</code>・<code>text_side</code>・<code>text_command</code>）・代表画像外部キー・旧サイト向け一意文字列ほか一式</td><td>INSERT および UPDATE が列値から直接更新されるコードパス。CSV 論理キー <code>deck_id</code> の対応先は移行先 <code>dtb_deck.id</code>。</td></tr><tr><td>EC-CUBE 共通表示マスタ</td><td><code>disp_id</code></td><td>CSV 側二値フラグ経由の写像のみでセットされ、プラグイン定数での写像未定義状態はソース上未考慮。</td></tr><tr><td><code>dtb_deck_card</code></td><td>デッキ ID・カード・ボード・枚数ほかの明細項目</td><td>INSERT のみ並ぶ処理が並び、ソース上削除とクリアはしない。</td></tr></tbody></table></div>
-<h3 id="DB操作">DB操作</h3>
-<p>永続化の正は ec-cube-enterprise（テーブル名・操作は ec-cube-enterprise を正典）。当ドメインは承認ワークフローを介さず persist/flush で直接確定する（承認ワークフローは在庫機能固有）。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>登録/更新</td><td>dtb_deck / dtb_deck_card</td><td>当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。</td></tr></tbody></table></div>
-<hr>
-<h2 id="バリデーション">バリデーション</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>multipart 共通</td><td>アップロード必須、サイズおよび MIME と CSRF が Symfony 共通機構側で評価される経路にある。不正 MIME は翻訳付き検証文言で弾く。</td></tr><tr><td>ヘッダ全体</td><td>PHP 両配列での除去付き並び完全一致。</td></tr><tr><td>行データ</td><td>Symfony Length とは別レイヤーの PHP チェックチェーンが並ぶ。リストは正規表現とリポジトリ照会で解釈成否を評価し、フラグオンで禁止制限系へ踏み込む。</td></tr><tr><td><code>old_deck_id</code></td><td>空でなく非重複のみ通過させる単純規則チェックおよび既存クエリチェックがある。</td></tr></tbody></table></div>
-<hr>
-<h2 id="権限・認可">権限・認可</h2>
-<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>アップロード画面と POST 取込への到達可否</th></tr></thead><tbody><tr><td>管理画面共通で認証済みで HareruyaEc の管理側ルート群が有効であること</td><td>アクセス許可の共通ルールに従って本パスにも到達し得て、ソース上だけで機能固有の細かなロール分岐へは達しない。詳細権限モデル本文では仕様確定しない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="画面遷移">画面遷移</h2>
-<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>検索画面上部リンクで取込機能へ進む</td><td>GET <code>/{admin_route}/deck/csvimport</code> で取込機能を読み込む。</td></tr><tr><td>アップロード送信の成功および取込共通の異常復帰</td><td>共通 <code>render</code> が GET <code>/{admin_route}/deck/csvimport</code> に HTTP 302 転送となる。クエリ状態は増やさずにフラッシュのみで状態を伝えるモデルとなる。</td></tr></tbody></table></div>
-<p>本機能でのセッションへ検索状態を読み書きする分岐線はソース上読み取れなかった。</p>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>フォームの Symfony メッセージ群</td><td><code>checkFormValid</code> がメッセージを順にフラッシュへ積み、GET 転送のみ完結するコードパス。</td></tr><tr><td>アップロードファイル取得不可の論理異常種別</td><td>メッセージおよび情報ログのみでフラッシュし、転送のみ。トランザクションは未開始。</td></tr><tr><td>CSV コンストラクタ失敗</td><td>同上。</td></tr><tr><td>ヘッダ形式・ヘッダ件数との列欠落・ランタイム系マスタ異常および形式異常種別すべて</td><td>rollback（開始済のみ）とフラッシュ転送。そのうち異常種別のみが翻訳付きとなる場合があり、ヘッダ系はキー文言の経路となる。</td></tr></tbody></table></div>
-<hr>
-<h2 id="試行制限">試行制限</h2>
-<p>本ソース上に HTTP 側の送信回数制限処理は並ばない。</p>
-<hr>
-<h2 id="ログ・監査">ログ・監査</h2>
-<div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>取込処理が本番の import 関数に進んだ直後と成功の直後</td><td>情報ログ「デッキCSV登録開始」「デッキCSV登録完了」程度の短文。詳細コンテキスト配列無しまたは最小。</td></tr><tr><td>いくつかの異常復帰</td><td>情報ログ「エラーが発生しました」の配列側に文言が入り得て、フラッシュとは別ログストリーム上の短文が残り得る。</td></tr></tbody></table></div>
-<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
-<ul><li>アップロード済みリスト本文に混入し得る利用者入力の一覧は開発者向けにマスクしない設計にあるため運用側で一覧を取らない前提とするログ方針を別途持つことを推奨とするのみ本書には書かず、ソースの網羅的マスク有無についてはログポリシー別紙へ委ねる（秘密値の転記はしない）。</li></ul>
-<p>一般的なログ禁止例（資格情報、Cookie の原値すべて、セッション完全値）は管理画面共通方針に従う。</p>
-<hr>
-<h2 id="セッション">セッション</h2>
-<p>本機能ソース上はアップロード画面の共通 <code>sessionKey</code> 文字列のみを共通オブジェクト構築へ渡している。POST 復帰で検索状態を増殖させない実装のみ確認された。</p>
-<hr>
-<h2 id="Cookie">Cookie</h2>
-<p>サイト閲覧者向けの独自 Cookie は当経路へは介入しないコードパスのみとなる。ブラウザの管理員セッション Cookie は共通と同一。</p>
-<hr>
-<h2 id="排他制御・楽観制御・トランザクション">排他制御・楽観制御・トランザクション</h2>
-<p>Doctrine の単一レイヤでの <code>beginTransaction</code>〜<code>commit</code>／<code>rollback</code> を取込コンテキストで使うモデルとなる。ソース上ロック句や明示バージョン列は並ばず、同一 <code>deck_id</code> の競合同時取込耐性はソースからは保証されないコードパスのみとなる。</p>
-<hr>
-<h2 id="調査補助-grep向け">調査補助（grep向け）</h2>
-<h3 id="HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</h3>
-<ul><li><code>admin_deck_csv</code> … <code>GET</code> … <code>/{admin_route}/deck/csvimport</code>（アップロードフォーム、厳密チェック用チェックボックス、<code>getCsvHeader</code> で固定された論理キーと説明ラベルを表として表示する。）</li><li><code>m15-06_admin_deck_deck_csv_import</code> … <code>POST</code> … <code>/{admin_route}/deck/csvimport</code>（multipart で送られたファイルを検証・取込し、成功または失敗のメッセージをフラッシュに積んだうえで GET <code>admin_deck_csv</code> へ HTTP リダイレクトする。）</li></ul>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>トランザクション境界</td><td>明示的なトランザクション境界が実装にある場合は処理フローの保存処理を正とする。明示境界が無い更新はフォーム処理またはCSV取込後の永続化処理と<code>flush</code>単位で確定する。</td></tr><tr><td>ロック</td><td>行ロック・悲観ロック・楽観ロック・ロックファイルを使用しない。競合時は後から確定した更新が残る。</td></tr><tr><td>例外時</td><td>検証エラーまたは保存前の例外では対象更新を確定しない。保存処理中の例外はエラー処理の節を正とし、未確定の永続化対象はロールバックまたは未flushのまま確定しない。</td></tr></tbody></table></div>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>取込ファイル（必須）と「厳密」の指定（任意）。</td></tr><tr><td>成功時出力</td><td>全行の登録を確定し、完了メッセージとともに取込画面へ戻る。</td></tr><tr><td>失敗時出力</td><td>エラーメッセージとともに取込画面へ戻る。行の判定で外れたときは、それまでの登録を取り消す。</td></tr></tbody></table></div>
+<h3 id="入出力-永続化">入出力: 永続化</h3>
+<div class="table-wrap"><table><thead><tr><th>操作</th><th>契機</th></tr></thead><tbody><tr><td>追加</td><td>デッキIDが空欄の行を取り込んだとき。リスト検証の経路に入る行はデッキ明細も追加する</td></tr><tr><td>更新</td><td>デッキIDが既存のデッキと一致する行を取り込んだとき</td></tr></tbody></table></div>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
+<h2 id="表示メッセージ">表示メッセージ</h2>
+<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M15-06-MSG-001</td><td>管理画面上部</td><td>CSVファイルをアップロードしました</td><td>デッキ登録用CSVファイルを正常にアップロードしたとき</td><td>デッキ登録 CSV（取込）画面に遷移する</td></tr></tbody></table></div>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,34 +272,16 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#本書で扱うこと">本書で扱うこと</a>
-<a class="lv2" href="#本書で扱わないこと">本書で扱わないこと</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv2" href="#用語">用語</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#フロント挙動">フロント挙動</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#画面を開く-GET">画面を開く（GET）</a>
-<a class="lv3" href="#登録-押下-POST-検証成功">「登録」押下（POST、検証成功）</a>
-<a class="lv3" href="#登録-押下-POST-メール項目を含む検証失敗">「登録」押下（POST、メール項目を含む検証失敗）</a>
-<a class="lv2" href="#集計条件">集計条件</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
-<a class="lv3" href="#入力項目">入力項目</a>
-<a class="lv3" href="#エッジケース-メール周辺">エッジケース（メール周辺）</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
-<a class="lv2" href="#入出力-メール設定に限定">入出力（メール設定に限定）</a>
-<a class="lv2" href="#コア実装における送信時のヘッダ割当-確認値">コア実装における送信時のヘッダ割当（確認値）</a>
-<a class="lv2" href="#バリデーション-メール4項目">バリデーション（メール4項目）</a>
-<a class="lv2" href="#権限・認可">権限・認可</a>
-<a class="lv2" href="#画面遷移-メール保存の視点">画面遷移（メール保存の視点）</a>
-<a class="lv3" href="#遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#副作用・ログ・フック-メールに関連する範囲">副作用・ログ・フック（メールに関連する範囲）</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a></nav>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#編集の対象">編集の対象</a>
+<a class="lv3" href="#入力の検証">入力の検証</a>
+<a class="lv3" href="#保存">保存</a>
+<a class="lv3" href="#表示値の取り方">表示値の取り方</a>
+<a class="lv3" href="#エラー時の扱い">エラー時の扱い</a>
+<a class="lv2" href="#入出力">入出力</a>
+<a class="lv3" href="#入出力-永続化">入出力: 永続化</a>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -297,92 +289,26 @@ footer {
         <h1>店舗基本設定のメールアドレス設定（pf-eccube3）</h1>
       </header>
       
-      <h2 id="概要">概要</h2>
-<p>管理画面「店舗設定」の「基本情報設定／SHOPマスター」画面に含まれる、送信用メールヘッダに用いる4種類のメールアドレス（送信元／問い合わせ受付／返信受付／送信エラー受付）の表示・入力検証・永続化に関する機能である。SMTPサーバホストや認証などの転送経路設定は、この画面および同一フォーム型の対象外である。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。参照実装は <code>pf-eccube3</code> コアを確認値とする。標準サービスとは別クラスへの差し替え（プラグイン等）は本書では仕様確定せず、その実装を正とする。</p>
-<p>カスタマイズ区分は現行踏襲であり、挙動の参照リポはpf-eccube3とする。DB関連の記述（テーブル名・列名・型・制約、保存先・扱い、副作用のDB更新）はec-cube-enterpriseを正とする。現行と移行先でスキーマが異なる箇所は「リニューアル移行時の扱い」に集約する。</p>
-<p>対象はブラウザ経由の管理画面に限定する。</p>
-<p>本書の本文ではルート名の網羅やコントローラ実装の手順は扱わない。ただし「利用者視点の入口」には、HTTP メソッドとサイトルートからの相対パスを <code>{admin_route}</code> を含む形で記載する（ホスト名・絶対 URL は書かない）。通知メールのテンプレート編集は別パス <code>/{admin_route}/setting/shop/mail</code> だが、本稿の対象は店舗基本情報フォーム上のメール4項目である。</p>
-<hr>
-<h2 id="本書で扱うこと">本書で扱うこと</h2>
-<ul><li>当画面におけるメール関連4項目の画面上のラベル・入力種別・表示位置</li><li>各項目のサーバ側検証（必須、メール形式）と、HTML上の必須表示との差</li><li>保存先DB列と、インストール時の初期化で4項目に同一値が入る挙動の要点</li><li>保存処理が店舗基本情報エンティティ全体に及ぶこと、成功時のリダイレクトとフラッシュ、表示前後フック</li><li>フックイベント名（文字列）と引数の要点</li><li>コアの <code>MailService</code> が各メール送信で <code>email01</code>〜<code>email04</code> をどのヘッダ用途に割り当てているか（メソッド別の確認値）</li><li>フロントTwigの一部で <code>email02</code> を文面表示に用いる例</li><li><code>BaseInfo</code> 取得のDoctrine結果キャッシュと、<code>BaseInfo</code> 更新後の結果キャッシュ全削除条件</li><li>共有登録の <code>MailService</code> がコンストラクタで <code>BaseInfo</code> を保持する点に起因する、同一リクエスト内での参照鮮度の注意</li></ul>
-<hr>
-<h2 id="本書で扱わないこと">本書で扱わないこと</h2>
-<p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
-<ul><li>管理画面ログイン、CSRF、権限マスタ、管理画面IP制限の詳細全般（店舗基本設定の設計と同じ前提とする）</li><li>SMTP・Swift Mailerのtransport設定、メール実際の到達、SPF／DKIM、バウンスハンドリングの運用仕様</li><li>メールテンプレート本文の編集UI（メール設定画面）および各テンプレートのレイアウト全文</li><li>コア以外の <code>MailService</code> に差し替えた環境でのヘッダ組み立ての差分の完全列挙</li><li>店名・住所など、同一フォーム上のメール以外の項目の詳細検証・業務的意味（店舗基本設定の設計を正とする）</li></ul>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<p>メール4項目の永続化先は、現行（pf-eccube3）と移行先（ec-cube-enterprise）でテーブル名・列名が一致する。列の型・桁に差がある。</p>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>永続化先テーブル・列</td><td><code>dtb_base_info.email01</code>〜<code>email04</code></td><td>同名（同一スキーマ）</td></tr><tr><td>列の型・桁</td><td>text 型相当（フォーム上の最大長制約なし）</td><td>文字列型、桁数255、NULL許容（<code>dtb_base_info.email01</code>〜<code>email04</code>）</td></tr></tbody></table></div>
-<p>列名・テーブル名は同一スキーマであり、移行に伴う改名は無い。フォーム上は引き続き最大長を明示制約せず、必須と厳密メール検証のみを行う挙動を現行の確認値とする。</p>
-<hr>
-<h2 id="用語">用語</h2>
-<div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>店舗基本情報</td><td>ショップ全体設定の複合。永続化先は <code>dtb_base_info</code>。Doctrine上は店舗基本情報エンティティ。識別子既定で1行を取得する。</td></tr><tr><td>メール項目4種</td><td>フォームおよびDB列の <code>email01</code>〜<code>email04</code>。ラベル上は送信元／問い合わせ受付／返信受付／送信エラー受付と対応づけられる（後述）。</td></tr><tr><td>厳密メール検証</td><td>Symfonyバリデータ <code>Email</code> の <code>strict</code> オプションが有効な検証。RFCに沿った構文チェックを行う確認値として記載する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>店舗基本設定画面を開く</td><td><code>GET /{admin_route}/setting/shop</code></td><td>「基本情報編集」ボックス内に、上から順に送信元／問い合わせ受付／返信受付／送信エラー受付の各メール入力欄が表示される。既存値が入力欄に出る。</td></tr><tr><td>4項目を含むフォーム全体を送信し検証に成功する</td><td><code>POST /{admin_route}/setting/shop</code></td><td>メール4列を含む店舗基本情報が永続化され、成功メッセージののち同一画面にリダイレクトされ、再表示で新値が読み込まれる。</td></tr><tr><td>メールのいずれかを空にして送信する</td><td><code>POST /{admin_route}/setting/shop</code></td><td>サーバ検証でエラーとなり、同一画面に留まる。該当フィールドにエラー表示が付く。</td></tr><tr><td>メール形式でない文字列を入力して送信する</td><td><code>POST /{admin_route}/setting/shop</code></td><td>厳密メール検証でエラーとなり、同一画面に留まる。</td></tr></tbody></table></div>
-<hr>
-<h2 id="フロント挙動">フロント挙動</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>「基本情報編集」見出し直下のブロック内で、店舗営業時間の直下にメール4欄がある。並び順は送信元メールアドレス（From）→問い合わせ受付メールアドレス（From, ReplyTo）→返信受付メールアドレス（ReplyTo）→送信エラー受付メールアドレス（ReturnPath）→取り扱い商品（textarea）→メッセージ（textarea）。</td></tr><tr><td>入力項目</td><td>いずれも単一行のメール入力型。Symfonyフォーム種別はメールタイプ（HTML5の入力支援が付く確認値）。各フィールドはフォームビルダ上 <code>required =&gt; false</code> のため、クライアント側のHTML必須属性は付かない確認値となる。サーバ側では別途必須制約がある。</td></tr><tr><td>JS挙動</td><td>メール入力専用のクライアントスクリプトはない。郵便番号補完用の外部スクリプトがページに読み込まれるのみで、メール欄には作用しない。</td></tr><tr><td>CSS・レイアウト</td><td>管理画面標準の横型フォームテーマを用いる。</td></tr><tr><td>モーダル・ポップアップ</td><td>本機能では扱わない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="画面を開く-GET">画面を開く（GET）</h3>
-<ol><li>管理画面の認証・権限・IP制限の各ルールを通過する（詳細は管理画面ログインの実装を正とする）。</li><li>店舗基本情報を識別子既定で取得する。取得クエリはDoctrine結果キャッシュを使用する（保持期間は環境設定の <code>doctrine_cache.result_cache.lifetime</code> を確認値とする）。</li><li>表示用Twigグローバルに、取得した実体の複製を切り離したものを載せる。フォームにバインドする実体とは参照が分かれる。</li><li>店舗マスター用フォームビルダを店舗基本情報実体に対して作成する。ビルド完了前に、識別子文字列 <code>admin.setting.shop.shop.index.initialize</code> のイベントが発火し、プラグイン等がフィールドを追加・変更する場合がある。</li><li>テンプレートを描画し、メール4欄を含むフォームと「登録」ボタンを表示する。</li></ol>
-<h3 id="登録-押下-POST-検証成功">「登録」押下（POST、検証成功）</h3>
-<ol><li>フォームがリクエストを処理する。CSRFおよび各フィールド検証が行われる。</li><li>メール4項目について、いずれも非空であり、かつ厳密メール形式であれば、この部分は通過する。</li><li>フォーム全体が有効なら、店舗基本情報実体が永続化され、フラッシュされる。</li><li>識別子文字列 <code>admin.setting.shop.shop.index.complete</code> のイベントが発火する。引数にフォームおよび店舗基本情報実体へアクセス可能な構造がある。</li><li>DoctrineのpostUpdateにより、設定で結果キャッシュ全削除が有効なときはクエリ結果キャッシュが全削除される。無効なら削除しない。</li><li>管理画面向けの固定キーの成功フラッシュ文言が積まれる。</li><li>店舗基本設定の画面自身へクライアントリダイレクトする。</li><li>リダイレクト後のGETで再度店舗基本情報が読まれ、メール欄には保存後の値が表示される。</li></ol>
-<h3 id="登録-押下-POST-メール項目を含む検証失敗">「登録」押下（POST、メール項目を含む検証失敗）</h3>
-<ol><li>無効なメール値や空値があると、フォーム全体は無効となり永続化は行われない。</li><li>同一テンプレートを再描画し、項目ごとのエラーを付ける。</li><li>成功フラッシュは積まれない。</li><li>Twigグローバルの店舗基本情報複製は、リクエスト冒頭でスナップショットしたままである。入力途中のフォーム値・エラー表示と、グローバル側の文言が一致しない場合がある。</li></ol>
-<hr>
-<h2 id="集計条件">集計条件</h2>
-<p>本機能では件数・合計などの集計を行わない。</p>
-<hr>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<h3 id="入力項目">入力項目</h3>
-<div class="table-wrap"><table><thead><tr><th>項目名</th><th>必須／任意</th><th>最大長</th><th>初期値</th><th>保存先・扱い</th></tr></thead><tbody><tr><td>送信元メールアドレス（From）</td><td>必須</td><td>Symfony Length制約は無し（移行先DBは文字列255・NULL許容、現行はtext型相当）</td><td>DBから読んだ <code>email01</code></td><td><code>dtb_base_info.email01</code>。NotBlank。厳密メール。HTMLの必須属性は付かない確認値。</td></tr><tr><td>問い合わせ受付メールアドレス（From, ReplyTo）</td><td>必須</td><td>同上</td><td>DBから読んだ <code>email02</code></td><td><code>dtb_base_info.email02</code>。同上。</td></tr><tr><td>返信受付メールアドレス（ReplyTo）</td><td>必須</td><td>同上</td><td>DBから読んだ <code>email03</code></td><td><code>dtb_base_info.email03</code>。同上。</td></tr><tr><td>送信エラー受付メールアドレス（ReturnPath）</td><td>必須</td><td>同上</td><td>DBから読んだ <code>email04</code></td><td><code>dtb_base_info.email04</code>。同上。</td></tr></tbody></table></div>
-<p>メール関連の入力に限定する。</p>
-<h3 id="エッジケース-メール周辺">エッジケース（メール周辺）</h3>
-<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>4項目のうち1つだけ空</td><td>NotBlankにより当該項目がエラー。他のメール項目は入力済みでも保存は行わない。</td></tr><tr><td>メール送信処理が同一PHPリクエスト内で続くコードパスがある</td><td>アプリケーションコンテナが共有する <code>MailService</code> は生成時に取得した店舗基本情報参照を保持する。標準の店舗設定画面は保存後リダイレクトのため、この問題は発生しにくい。同一リクエストで設定更新とメール送信を組み合わせる独自処理では、サービスインスタンスの再生成や明示的再読込の有無に依存するため、コードを確認値とする。</td></tr></tbody></table></div>
-<hr>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>単一行編集</td><td><code>dtb_base_info</code> の既定ID行のみを読み書きする。複数ショップ行を切り替えるUIはこのコア画面にはない。</td></tr><tr><td>一覧との突合</td><td>不要（単票編集）。</td></tr><tr><td>メール送信時の読み込み</td><td><code>MailService</code> のコンストラクタでの取得値を参照する。コンテナによりリクエストライフサイクル内でサービスが共有される。別々のHTTPリクエストではアプリケーションコンテナごと構築し直される通常運用では、送信処理の開始回ごとに初めてサービスへ触れた時点で新しい <code>MailService</code> が生成される確認値となる。同一リクエスト内で既に生成済みのインスタンスが古い <code>BaseInfo</code> を保持し続ける点は残る。</td></tr><tr><td>結果キャッシュ</td><td><code>BaseInfo</code> 取得が結果キャッシュを使う。<code>BaseInfo</code> の更新後、設定により結果キャッシュ全削除が走る。この設定が無効な間はTTL内スナップショットが返る確認値となる。</td></tr></tbody></table></div>
-<hr>
-<h2 id="API-バッチ結果">API/バッチ結果</h2>
-<p>本機能ではAPI・バッチ呼び出しを扱わない。</p>
-<hr>
-<h2 id="入出力-メール設定に限定">入出力（メール設定に限定）</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>CSRFトークン、メール項目4つの文字列。その他フォーム項目は店舗基本設定の入力全体に含まれる。</td></tr><tr><td>成功時出力</td><td>管理画面向け保存完了フラッシュ。画面は店舗基本設定へのGET再表示。</td></tr><tr><td>失敗時出力</td><td>同一画面でのフィールドエラー。</td></tr></tbody></table></div>
-<hr>
-<h2 id="コア実装における送信時のヘッダ割当-確認値">コア実装における送信時のヘッダ割当（確認値）</h2>
-<p>Swiftメッセージ組み立てはコアの <code>MailService</code> に集約される。SMTP設定は別。以下はコアソースから抽出したヘッダ利用の対応表である。プラグインで <code>MailService</code> を差し替えた場合は一致しない。</p>
-<div class="table-wrap"><table><thead><tr><th>メール送信の用途（メソッド名）</th><th>From</th><th>To</th><th>Bcc</th><th>Reply-To</th><th>Return-Path</th></tr></thead><tbody><tr><td>仮会員登録確認（購入会員向け）</td><td>email01</td><td>会員のメール</td><td>email01</td><td>email03</td><td>email04</td></tr><tr><td>会員登録完了</td><td>email01</td><td>会員</td><td>email01</td><td>email03</td><td>email04</td></tr><tr><td>退会完了</td><td>email01</td><td>指定メール</td><td>email01</td><td>email03</td><td>email04</td></tr><tr><td>お問い合わせ受付（問い合わせ送信者向け）</td><td>email02</td><td>問い合わせフォームのメール</td><td>email02</td><td>email02</td><td>email04</td></tr><tr><td>注文メール（購入者向け、テンプレートID固定取得）</td><td>email01</td><td>注文メール</td><td>email01</td><td>email03</td><td>email04</td></tr><tr><td>管理画面からの仮会員確認メール再送</td><td>email03</td><td>会員</td><td>email01</td><td>email03</td><td>email04</td></tr><tr><td>管理画面からの受注通知送信</td><td>email01</td><td>注文メール</td><td>email01</td><td>email03</td><td>email04</td></tr><tr><td>パスワード再発行案内</td><td>email01</td><td>会員</td><td>（未設定）</td><td>email03</td><td>email04</td></tr><tr><td>パスワード変更完了通知</td><td>email01</td><td>会員</td><td>（未設定）</td><td>email03</td><td>email04</td></tr></tbody></table></div>
-<p>テンプレート本文側では、複数の会員系メールで「問い合わせは <code>BaseInfo.email02</code> まで」といった文言が出力される構成がある。エラーページ類では支払方法不整合などの文面で <code>email02</code> をそのまま表示するテンプレートがある。</p>
-<hr>
-<h2 id="バリデーション-メール4項目">バリデーション（メール4項目）</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>CSRF</td><td>フレームワーク標準どおりフォーム送信に必須。</td></tr><tr><td>email01〜email04</td><td>それぞれNotBlankおよび厳密メール検証。</td></tr><tr><td>メール項目以外</td><td>同一POSTで検証対象となる。欠損により全体が無効になりうる（店舗名必須など）。</td></tr></tbody></table></div>
-<hr>
-<h2 id="権限・認可">権限・認可</h2>
-<p>店舗基本設定画面と同一。管理画面ログインと権限マスタ・IP制限の組み合わせにより、許可された管理者のみが表示および保存できる。詳細は管理画面共通の認可実装を正とする。</p>
-<hr>
-<h2 id="画面遷移-メール保存の視点">画面遷移（メール保存の視点）</h2>
-<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>フォーム全体が有効かつメール項目も有効で保存完了</td><td>店舗基本設定画面のGET（同一画面）。</td></tr><tr><td>メールを含むいずれかで検証失敗</td><td>同一画面のPOST結果として再描画。</td></tr></tbody></table></div>
-<h3 id="遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</h3>
-<div class="table-wrap"><table><thead><tr><th>起点</th><th>遷移前の処理</th><th>遷移後の初期状態</th></tr></thead><tbody><tr><td>保存成功</td><td>管理画面向け成功フラッシュを積み、店舗基本設定画面へリダイレクト応答を返す</td><td>GETで店舗基本情報を再取得し、フォームとTwigグローバルは保存後の値で初期化される。成功フラッシュが表示される。</td></tr><tr><td>検証失敗</td><td>成功フラッシュは積まない</td><td>同一レスポンスでテンプレートを再描画。フォームには送信値とエラーが載る。Twigグローバルの店舗基本情報複製は、当該リクエストの処理開始時にセットしたスナップショットのまま更新されない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>発生条件</th><th>利用者に見える結果</th><th>永続化</th></tr></thead><tbody><tr><td>CSRFトークン不正</td><td>フレームワーク標準のエラー扱い（管理画面の共通エラー表示に従う）</td><td>行わない</td></tr><tr><td>メールのいずれかが空</td><td>当該フィールドにNotBlankエラー</td><td>行わない</td></tr><tr><td>メール形式が厳密検証で不正</td><td>当該フィールドにメール形式エラー</td><td>行わない</td></tr><tr><td>メールは有効だが店舗名など他必須が欠ける</td><td>メール項目以外にエラー</td><td>行わない</td></tr></tbody></table></div>
-<hr>
-<h2 id="副作用・ログ・フック-メールに関連する範囲">副作用・ログ・フック（メールに関連する範囲）</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>DB書き込み</td><td>成功時、店舗基本情報行が更新される。メール4列がフォーム送信値で上書きされる。コア標準フォームには更新日時の入力欄はないが、<code>update_date</code> 列の自動更新仕組みはDoctrineマッピングおよびライフサイクル側の実装を確認値とする。</td></tr><tr><td>結果キャッシュ</td><td><code>BaseInfo</code> の更新後、<code>ClearCacheEventSubscriber</code> の条件が満たされればDoctrine結果キャッシュが全削除される。</td></tr><tr><td>イベント</td><td><code>admin.setting.shop.shop.index.initialize</code> と <code>admin.setting.shop.shop.index.complete</code>。前者のイベント引数にはフォームビルダおよび店舗基本情報実体が含まれる。後者のイベント引数にはフォームおよび店舗基本情報実体が含まれる。</td></tr><tr><td>メール送信ログ</td><td>メール送信そのものは本画面の保存では起きず、送信処理側でログ出力がある（送信詳細は <code>MailService</code> 呼び出し元を正とする）。本文・宛先の完全値や認証情報を本書へ記載しない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<p>以下の表は、<code>email01</code>〜<code>email04</code> のみを列挙する。登録ボタンは店舗基本設定フォーム全体を保存するため、同一リクエストで他列も更新されうる。その他の列は店舗基本設定の設計を正とする。</p>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td>dtb_base_info</td><td>email01</td><td>送信元メールアドレス（From）。コアでは多くの会員・注文系送信で From／Bcc のアドレスに使用。移行先（ec-cube-enterprise）のDoctrine型は文字列255・NULL許容（現行はtext型相当）。</td></tr><tr><td>dtb_base_info</td><td>email02</td><td>問い合わせ受付メールアドレス。お問い合わせ受付送信では From・Bcc・Reply-To に同一アドレスを使用。複数Twigテンプレート本文で問い合わせ先として表示。</td></tr><tr><td>dtb_base_info</td><td>email03</td><td>返信受付メールアドレス。多くの送信で Reply-To。管理からの仮会員確認再送のみ From にも使用。</td></tr><tr><td>dtb_base_info</td><td>email04</td><td>送信エラー受付メールアドレス。コアの送信メッセージで Return-Path に設定される確認値が多い。</td></tr></tbody></table></div>
-<h3 id="DB操作">DB操作</h3>
-<p>永続化の正は ec-cube-enterprise（テーブル名・操作は ec-cube-enterprise を正典）。当ドメインは承認ワークフローを介さず persist/flush で直接確定する（承認ワークフローは在庫機能固有）。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>登録/更新</td><td>dtb_base_info</td><td>当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。</td></tr></tbody></table></div>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>トランザクション境界</td><td>明示的なトランザクション境界が実装にある場合は処理フローの保存処理を正とする。明示境界が無い更新はフォーム処理またはCSV取込後の永続化処理と<code>flush</code>単位で確定する。</td></tr><tr><td>ロック</td><td>行ロック・悲観ロック・楽観ロック・ロックファイルを使用しない。競合時は後から確定した更新が残る。</td></tr><tr><td>例外時</td><td>検証エラーまたは保存前の例外では対象更新を確定しない。保存処理中の例外はエラー処理の節を正とし、未確定の永続化対象はロールバックまたは未flushのまま確定しない。</td></tr></tbody></table></div>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="編集の対象">編集の対象</h3>
+<p>店舗基本情報のメールアドレス4項目を編集する。ほかの入力項目は店舗基本設定の入力全体に含まれる。</p>
+<h3 id="入力の検証">入力の検証</h3>
+<p>メールアドレス4項目は、いずれも未入力でないこと、かつ厳密なメール形式であることを要する。1項目でも満たさないときは全体を無効とし、保存しない。メールアドレスが妥当でも、店舗名など他の必須項目が欠けるときは保存しない。</p>
+<h3 id="保存">保存</h3>
+<p>検証を通過したときに店舗基本情報を保存し、完了のメッセージを表示して店舗基本設定の画面へ戻る。戻った後の表示には保存後の値が出る。</p>
+<p>検証に失敗したときは同一画面を再表示して項目ごとのエラーを表示し、完了のメッセージは表示しない。</p>
+<h3 id="表示値の取り方">表示値の取り方</h3>
+<p>画面表示に用いる店舗基本情報は、要求の冒頭で取得した内容の複製である。保存対象とは別に保持するため、検証に失敗したときは、入力途中の値やエラー表示と、画面のほかの箇所に出る文言が一致しないことがある。</p>
+<p>店舗基本情報の取得結果は保持され、保持期間は環境の設定による。保存時は、設定で保持内容の全削除が有効なときに保持内容をすべて削除し、無効なときは削除しない。</p>
+<h3 id="エラー時の扱い">エラー時の扱い</h3>
+<div class="table-wrap"><table><thead><tr><th>発生条件</th><th>利用者に見える結果</th><th>保存</th></tr></thead><tbody><tr><td>なりすまし対策の検証に失敗</td><td>管理画面の共通のエラー表示による</td><td>行わない</td></tr><tr><td>メールアドレスのいずれかが未入力</td><td>当該項目に未入力のエラー</td><td>行わない</td></tr><tr><td>メールアドレスの形式が不正</td><td>当該項目にメール形式のエラー</td><td>行わない</td></tr><tr><td>メールアドレスは妥当だが店舗名など他の必須項目が欠ける</td><td>メールアドレス以外の項目にエラー</td><td>行わない</td></tr></tbody></table></div>
+<h2 id="入出力">入出力</h2>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>メールアドレス4項目と、なりすまし対策の検証値</td></tr><tr><td>成功時出力</td><td>完了のメッセージを表示し、店舗基本設定の画面へ戻る</td></tr><tr><td>失敗時出力</td><td>同一画面を再表示し、項目ごとのエラーを表示する</td></tr></tbody></table></div>
+<h3 id="入出力-永続化">入出力: 永続化</h3>
+<div class="table-wrap"><table><thead><tr><th>操作</th><th>契機</th></tr></thead><tbody><tr><td>更新</td><td>検証を通過した保存で、店舗基本情報のメールアドレス4項目を上書きする</td></tr></tbody></table></div>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
+<h2 id="表示メッセージ">表示メッセージ</h2>
+<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>—</td><td>管理画面上部</td><td>保存完了のメッセージ（文言は共通実装を正とする）</td><td>検証を通過して保存したとき</td><td>店舗基本設定の画面へ戻る</td></tr><tr><td>—</td><td>入力項目直下</td><td>未入力・メール形式のエラー（文言は共通実装を正とする）</td><td>メールアドレスが未入力、または形式が不正なとき</td><td>保存せず同一画面に留まる</td></tr></tbody></table></div>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

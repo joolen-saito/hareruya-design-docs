@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,36 +272,15 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#本書で扱うこと">本書で扱うこと</a>
-<a class="lv2" href="#本書で扱わないこと">本書で扱わないこと</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv2" href="#用語">用語</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#フロント挙動">フロント挙動</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#イベント詳細を表示する-GET-locale-events-eventDetailId-detail">イベント詳細を表示する（GET `/{_locale}/events/{eventDetailId}/detail`）</a>
-<a class="lv2" href="#集計条件">集計条件</a>
-<a class="lv2" href="#ボタン出し分け-時の判定順序">`ボタン出し分け` 時の判定順序</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
-<a class="lv3" href="#エッジケース">エッジケース</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#画面構成">画面構成</a>
+<a class="lv3" href="#表示する情報の取り方">表示する情報の取り方</a>
+<a class="lv3" href="#ボタン出し分けの判定順序">ボタン出し分けの判定順序</a>
+<a class="lv3" href="#表示値の求め方">表示値の求め方</a>
+<a class="lv3" href="#エラー時の扱い">エラー時の扱い</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#バリデーション">バリデーション</a>
-<a class="lv2" href="#権限・認可">権限・認可</a>
-<a class="lv2" href="#画面遷移">画面遷移</a>
-<a class="lv3" href="#遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#表示メッセージ">表示メッセージ</a>
-<a class="lv3" href="#常時表示-正常・静的">常時表示（正常・静的）</a>
-<a class="lv2" href="#ログ・監査">ログ・監査</a>
-<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
-<a class="lv2" href="#セッション">セッション</a>
-<a class="lv2" href="#Cookie">Cookie</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a></nav>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -300,102 +289,26 @@ footer {
       </header>
       
       <p>イベント詳細1件の開催情報・事前予約情報を表示し、申込・キャンセル申込・デッキ登録への導線を出し分ける、フロントのイベント詳細参照画面である。</p>
-<h2 id="概要">概要</h2>
-<p>大会詳細は、利用者が選択したイベント詳細1件について、開催店舗・大会名・開催日時・受付時間・フォーマット・定員・参加費・賞品・備考と、事前予約情報（事前予約期間・残り予約数・事前予約参加費）を表示する機能である。ログイン会員かつ申込可能なときは申込ボタンを、申込済みのときはキャンセル申込ボタンを、デッキ登録可能なときはデッキ登録・編集ボタンを出し分ける。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインのイベント詳細処理、テンプレート（<code>Event/show.twig</code>）、イベント詳細エンティティの申込可否・デッキ登録可否・残り予約数の判定を正とする。本機能のカスタマイズ区分はカスタマイズであり、挙動の参照リポはpf-eccube3、DB関連はec-cube-enterpriseを正とする。</p>
-<p>対象はブラウザ経由のフロントに限定する。フロントのルートはロケールを先頭に持つ<code>/{_locale}</code>配下にあり、イベントは<code>/{_locale}/events</code>配下にまとまる。</p>
-<p>本文ではフレームワークのコントローラ型名やメソッド名を主説明としない。本文ではルートbind名の網羅は主説明とせず、「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。コード探索でbind名が必要なときだけ「調査補助」へ書く。</p>
-<hr>
-<h2 id="本書で扱うこと">本書で扱うこと</h2>
-<ul><li>イベント詳細の表示項目と、事前予約情報の表示条件</li><li>申込・キャンセル申込・デッキ登録のボタン出し分け条件</li><li>ログイン会員のデッキ登録状況の判定</li><li>残り予約数の計算と表示条件</li></ul>
-<hr>
-<h2 id="本書で扱わないこと">本書で扱わないこと</h2>
-<p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
-<ul><li>イベント大会TOP（F07-01）・大会詳細検索（F07-02）</li><li>イベント申込から完了まで（F07-04）の申込フォーム・確認・決済・完了</li><li>デッキ登録（デッキ登録機能）・キャンセル申込（問い合わせ機能）</li><li>賞品・備考のHTML編集と多言語の翻訳辞書</li><li>会員ログイン・選手情報登録の仕組み</li></ul>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<p>本機能はカスタマイズ区分がカスタマイズである。現行挙動はpf-eccube3のHareruyaEcプラグインを正とし、DBスキーマと移行後の扱いはec-cube-enterpriseを正とする。イベント関連テーブルはec-cube-enterpriseに移行済みであり、現行と移行先で次の差がある。</p>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>チーム人数</td><td><code>dtb_event.team_member_count</code>（チーム人数の数値、既定1）。残り予約数の除数に用いる。</td><td><code>dtb_event</code>は<code>team_member_count</code>を持たず<code>is_team_battle</code>（チーム戦フラグ、真偽）を持つ。残り予約数のチーム人数換算をどの値で行うかはec-cube-enterprise実装で要確認。</td></tr><tr><td>大会名・備考</td><td><code>dtb_event.name_jp</code>（大会名）・<code>detail_jp</code>（備考）。</td><td><code>dtb_event</code>は<code>name_jp</code>を持つが<code>detail_jp</code>を持たない。移行先での備考の保存先はec-cube-enterprise実装で要確認。</td></tr><tr><td>イベント詳細の各列</td><td><code>dtb_event_detail</code>の受付・事前予約・定員・参加費・賞品・デッキ登録列。</td><td>同一スキーマ。<code>entry_start_date</code>・<code>entry_end_date</code>・<code>online_entry_start_date</code>・<code>online_entry_end_date</code>・<code>entry_flg</code>・<code>capacity</code>・<code>entry_fee</code>・<code>prize_jp</code>・<code>deck_regist_flg</code>・<code>deadline_flg</code>・<code>deck_regist_deadline</code>が存在する。</td></tr><tr><td>申込・申込状況</td><td><code>dtb_event_entry</code>・申込状況マスタ<code>mtb_entry_status</code>。</td><td>同一スキーマ。<code>dtb_event_entry</code>・<code>mtb_entry_status</code>が存在する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="用語">用語</h2>
-<div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>イベント</td><td>大会の親情報。店舗・会場・フォーマット・定員・参加費・賞品・備考などを持つ。</td></tr><tr><td>イベント詳細</td><td>イベントの開催日程1件。詳細画面はイベント詳細IDで参照する。</td></tr><tr><td>事前予約</td><td>オンライン申込。事前予約期間内かつ定員未満で申込可能となる。</td></tr><tr><td>残り予約数</td><td>定員から申込済み人数を引き、チーム人数で割った値。事前予約参加可能な枠数を示す。</td></tr><tr><td>選手情報</td><td>会員に紐づく拡張情報。デッキ登録状況・申込状況の判定に用いる。</td></tr></tbody></table></div>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>イベント詳細を開く</td><td><code>GET /{_locale}/events/{eventDetailId}/detail</code></td><td>当該イベント詳細の開催情報・事前予約情報と、状態に応じたボタンを表示する。</td></tr><tr><td>申込ボタンを押下</td><td><code>GET /{_locale}/events/{eventDetailId}/entry</code></td><td>イベント申込（F07-04）へ遷移する。</td></tr><tr><td>キャンセル申込ボタンを押下</td><td><code>GET /{_locale}/contact?eventDetailId={eventDetailId}</code></td><td>キャンセル申込（問い合わせ機能）へ遷移する。</td></tr><tr><td>デッキ登録・編集ボタンを押下</td><td><code>GET /{_locale}/deckentry/edit?eventDetailId={eventDetailId}</code></td><td>デッキ登録（デッキ登録機能）へ遷移する。</td></tr><tr><td>戻るボタンを押下</td><td><code>GET /{_locale}/events</code>（または日別画面）</td><td>一覧側へ戻る。遷移元のクエリにより戻り先を切り替える。</td></tr></tbody></table></div>
-<p>存在しないイベント詳細IDを指定した場合は、ページが見つからない（HTTP404）として扱う。</p>
-<hr>
-<h2 id="フロント挙動">フロント挙動</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>バナー画像（設定時）、開催店舗、大会名、開催日時、受付時間（設定時）、フォーマット、定員、参加費、賞品、備考。事前予約があれば事前予約期間・残り予約数（期限前のみ）・事前予約参加費。状態に応じて申込・キャンセル申込・デッキ登録のボタン。戻るボタン。</td></tr><tr><td>JS挙動</td><td>本画面専用のJavaScriptによる非同期取得・表示切替は持たない。</td></tr><tr><td>CSS・レイアウト</td><td>項目名と値を行で並べる。フォーマットは名称を並べて表示する。</td></tr><tr><td>モーダル・ポップアップ</td><td>本画面はモーダル・ポップアップ・トーストを表示しない。</td></tr></tbody></table></div>
-<p>参加費・事前予約参加費は0円のとき「無料」、それ以外は金額を桁区切りで「（金額）円」と表示する。</p>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="イベント詳細を表示する-GET-locale-events-eventDetailId-detail">イベント詳細を表示する（GET <code>/{_locale}/events/{eventDetailId}/detail</code>）</h3>
-<ol><li>パスのイベント詳細IDで詳細を取得する。無ければページが見つからない（HTTP404）として扱う。</li><li>詳細から親イベント・店舗・会場・フォーマットを取得する。</li><li>ログイン会員のとき、選手情報を取得する。選手情報があり、当該イベント詳細でデッキ登録済みなら、デッキ登録状況をデッキ編集として扱えるようデッキIDを保持する。</li><li>開催情報・事前予約情報を表示し、申込可否・申込済み・デッキ登録可否の判定でボタンを出し分ける。</li></ol>
-<hr>
-<h2 id="集計条件">集計条件</h2>
-<div class="table-wrap"><table><thead><tr><th>指標</th><th>集計の要点</th></tr></thead><tbody><tr><td>残り予約数</td><td>定員から申込済み人数（取消を除く集計対象の申込）を引き、イベントのチーム人数で割った値。事前予約期限前のときのみ表示する。</td></tr><tr><td>申込済み人数</td><td>当該イベント詳細の申込のうち集計対象ステータスの件数に、チーム人数を掛けた人数。</td></tr><tr><td>デッキ登録状況</td><td>ログイン会員の選手情報と当該イベント詳細でデッキを照合し、登録済みかどうかを判定する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="ボタン出し分け-時の判定順序"><code>ボタン出し分け</code> 時の判定順序</h2>
+<h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="画面構成">画面構成</h3>
+<p>バナー画像（設定時）、開催店舗、大会名、開催日時、受付時間（設定時）、フォーマット、定員、参加費、賞品、備考を項目名と値の行で並べる。事前予約があれば事前予約期間・残り予約数（期限前のみ）・事前予約参加費を並べる。状態に応じて申込・キャンセル申込・デッキ登録の各ボタンと、戻るボタンを表示する。フォーマットは名称を並べて表示する。本画面専用の非同期取得・表示切替は持たず、モーダル・ポップアップ・トーストも表示しない。</p>
+<h3 id="表示する情報の取り方">表示する情報の取り方</h3>
+<p>指定されたイベント詳細IDで詳細を取得し、そこから親イベント・店舗・会場・フォーマットを取得する。詳細が無いときはページが見つからない（HTTP404）として扱う。ログイン会員のときは選手情報を取得し、選手情報があり当該イベント詳細でデッキ登録済みなら、デッキ編集として扱えるようデッキを保持する。</p>
+<h3 id="ボタン出し分けの判定順序">ボタン出し分けの判定順序</h3>
 <div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>申込可能か（事前予約フラグが真、事前予約開始日時以降、事前予約終了日時以前、定員未満）</td><td>可能ならボタン領域を表示する</td></tr><tr><td>2</td><td>申込可能かつログイン会員が未申込か</td><td>該当なら申込ボタンを表示する</td></tr><tr><td>3</td><td>ログイン会員が申込済みか</td><td>該当ならキャンセル申込ボタンを表示する</td></tr><tr><td>4</td><td>デッキ登録可能か（デッキ登録フラグが真、締切フラグが偽、デッキ登録締切が現在以降）</td><td>該当ならデッキ登録（登録済みは編集）ボタンを表示する</td></tr><tr><td>5</td><td>申込不可だがデッキ登録可能</td><td>デッキ登録ボタンのみ表示する</td></tr></tbody></table></div>
-<p>申込可否・申込済み・デッキ登録可否の判定は、いずれも当該イベント詳細とログイン会員の選手情報に基づく。未ログインでは申込済み判定は偽となる。</p>
-<hr>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>申込可能の条件</td><td>事前予約フラグが真、現在が事前予約開始日時以降かつ事前予約終了日時以前、申込済み人数が定員未満であること。</td></tr><tr><td>申込済みの判定</td><td>ログイン会員の選手情報が、当該イベント詳細の取消以外の申込に含まれること。未ログインは偽。</td></tr><tr><td>デッキ登録可能の条件</td><td>デッキ登録フラグが真、締切フラグが偽、デッキ登録締切が現在以降であること。</td></tr><tr><td>残り予約数の表示</td><td>事前予約期限前のときのみ表示する。値は定員から申込済み人数を引き、チーム人数で割る。</td></tr><tr><td>参加費表示</td><td>0円は「無料」、それ以外は桁区切りの「（金額）円」。</td></tr><tr><td>受付時間表示</td><td>受付開始・受付終了の双方が設定されている場合のみ表示する。</td></tr><tr><td>事前予約情報表示</td><td>事前予約フラグが真のとき、事前予約期間・事前予約参加費を表示する。</td></tr></tbody></table></div>
-<p>本機能は詳細表示のみで入力フォームを持たないため、<code>### 入力項目</code>の表は持たない。ボタン押下による遷移のみを受け付ける。</p>
-<h3 id="エッジケース">エッジケース</h3>
-<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>イベント詳細IDが存在しない</td><td>ページが見つからない（HTTP404）として扱う。</td></tr><tr><td>未ログインで詳細を開く</td><td>開催情報を表示する。申込済み判定は偽となり、申込可能なら申込ボタンを表示する。</td></tr><tr><td>定員に達している</td><td>申込可能の条件を満たさず、申込ボタン領域を表示しない。デッキ登録可能ならデッキ登録ボタンのみ表示する。</td></tr><tr><td>事前予約期限後</td><td>残り予約数を表示しない。申込可能の条件も満たさない。</td></tr><tr><td>デッキ登録済み</td><td>デッキ登録ボタンをデッキ編集として表示する。</td></tr><tr><td>バナー画像が未設定</td><td>バナー画像を表示しない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>参照時点</td><td>表示は要求時点で取得した詳細・親イベント・申込済み人数に基づく。表示後の申込・取消は自動反映しない。</td></tr><tr><td>申込可否と申込画面</td><td>詳細画面で申込可能でも、申込画面（F07-04）側で受付期間・定員・重複申込を再判定する。詳細表示時点と申込実行時点の差は申込側を正とする。</td></tr><tr><td>残り予約数</td><td>表示時点の申込済み人数に基づく概算であり、申込確定時の在庫を保証しない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="API-バッチ結果">API/バッチ結果</h2>
-<p>本機能ではAPI呼び出し・バッチ実行を扱わない。詳細・申込済み人数・デッキ登録状況の取得はサーバ側のHTML組み立てのなかでデータベースから読み取る。</p>
-<hr>
+<p>申込済みの判定は、ログイン会員の選手情報が当該イベント詳細の取消以外の申込に含まれることである。未ログインでは偽となる。ログイン会員に選手情報が無いときは、デッキ登録状況・申込済み判定を評価せず申込済みを偽として扱う。</p>
+<h3 id="表示値の求め方">表示値の求め方</h3>
+<p>参加費・事前予約参加費は0円のとき「無料」、それ以外は金額を桁区切りで「（金額）円」と表示する。残り予約数は事前予約期限前のときのみ表示し、値は定員から申込済み人数を引いてチーム人数で割った数である。受付時間は受付開始・受付終了の双方が設定されているときのみ表示する。事前予約期間と事前予約参加費は、事前予約フラグが真のときに表示する。</p>
+<h3 id="エラー時の扱い">エラー時の扱い</h3>
+<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>イベント詳細が存在しない</td><td>ページが見つからない（HTTP404）として扱う</td></tr><tr><td>ログイン会員に選手情報が無い</td><td>デッキ登録状況・申込済み判定を評価せず、申込済みを偽として扱う</td></tr></tbody></table></div>
+<p>利用者向けの個別エラー文言は専用に定義せず、共通の例外処理に委ねる。</p>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>パスのイベント詳細ID。ログイン会員の認証情報（デッキ登録状況・申込済み判定に用いる）。</td></tr><tr><td>成功時出力</td><td>イベント詳細のHTML（開催情報・事前予約情報・状態別ボタン）。</td></tr><tr><td>失敗時出力</td><td>イベント詳細が存在しない場合のページが見つからない（HTTP404）。</td></tr><tr><td>副作用</td><td>本画面は台帳・マスタを更新せず、セッション・クッキーへの書き込みを行わない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<p>機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。</p>
-<p>テーブル名・列名はec-cube-enterpriseを正とし、現行（pf-eccube3）と異なる場合は括弧で添える。</p>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>dtb_event_detail</code></td><td><code>event_detail_id</code></td><td>参照キー。</td></tr><tr><td><code>dtb_event_detail</code></td><td><code>start_date</code></td><td>開催日時の表示に用いる。</td></tr><tr><td><code>dtb_event_detail</code></td><td><code>entry_start_date</code>／<code>entry_end_date</code></td><td>受付時間の表示に用いる（双方設定時のみ）。</td></tr><tr><td><code>dtb_event_detail</code></td><td><code>online_entry_start_date</code>／<code>online_entry_end_date</code></td><td>事前予約期間・申込可否判定に用いる。</td></tr><tr><td><code>dtb_event_detail</code></td><td><code>entry_flg</code></td><td>事前予約情報の表示・申込可否判定に用いる。</td></tr><tr><td><code>dtb_event_detail</code></td><td><code>deck_regist_flg</code>／<code>deadline_flg</code>／<code>deck_regist_deadline</code></td><td>デッキ登録可否判定に用いる。</td></tr><tr><td><code>dtb_event_detail</code></td><td><code>capacity</code>／<code>entry_fee</code>／<code>prize_jp</code></td><td>定員・参加費・賞品の表示に用いる（未設定時はイベント本体の値）。</td></tr><tr><td><code>dtb_event</code></td><td><code>name_jp</code>／<code>is_team_battle</code>（現行は<code>team_member_count</code>、備考は現行<code>detail_jp</code>）</td><td>大会名・残り予約数のチーム人数換算・備考に用いる。移行先は<code>is_team_battle</code>（チーム戦フラグ）を持ち<code>team_member_count</code>・<code>detail_jp</code>を持たない。チーム人数換算と備考の保存先はec-cube-enterprise実装で要確認。</td></tr><tr><td><code>dtb_event_entry</code></td><td>申込・申込ステータス（<code>entry_status_id</code>）</td><td>申込済み人数の集計・申込済み判定に用いる。</td></tr></tbody></table></div>
-<h3 id="DB操作">DB操作</h3>
-<p>本機能は参照系（検索）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>検索</td><td>dtb_event / dtb_event_detail / dtb_event_entry</td><td>検索条件に合致するレコードを抽出する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="バリデーション">バリデーション</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>イベント詳細ID</td><td>数値形式に限る（ルートのパス制約）。存在しなければページが見つからない（HTTP404）。</td></tr><tr><td>ログイン状態</td><td>デッキ登録状況・申込済み判定は会員の認証情報があるときのみ評価する。未ログインは申込済みを偽とする。</td></tr></tbody></table></div>
-<hr>
-<h2 id="権限・認可">権限・認可</h2>
-<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>イベント詳細表示</th><th>申込ボタン</th><th>キャンセル申込・デッキ登録</th></tr></thead><tbody><tr><td>未ログイン</td><td>閲覧できる</td><td>申込可能なら表示するが、申込実行は別機能の認可に従う</td><td>申込済み判定が偽のためキャンセル申込は出ない。デッキ登録は可否条件のみで判定する</td></tr><tr><td>ログイン済み会員</td><td>閲覧できる</td><td>申込可能かつ未申込なら表示する</td><td>申込済みならキャンセル申込、デッキ登録可能ならデッキ登録・編集を表示する</td></tr></tbody></table></div>
-<p>詳細表示は会員ログインを要しない公開画面である。申込・キャンセル申込・デッキ登録の認可は各遷移先機能を正とする。</p>
-<hr>
-<h2 id="画面遷移">画面遷移</h2>
-<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>申込ボタン押下</td><td>イベント申込（F07-04・<code>GET /events/{eventDetailId}/entry</code>）</td></tr><tr><td>キャンセル申込ボタン押下</td><td>キャンセル申込（問い合わせ機能）</td></tr><tr><td>デッキ登録・編集ボタン押下</td><td>デッキ登録機能</td></tr><tr><td>戻るボタン押下</td><td>イベント大会TOP、または日別画面（遷移元クエリにより切替）</td></tr><tr><td>イベント詳細が存在しない</td><td>ページが見つからない（HTTP404）</td></tr></tbody></table></div>
-<h3 id="遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</h3>
-<div class="table-wrap"><table><thead><tr><th>起点</th><th>遷移前の処理</th><th>遷移後の初期状態</th></tr></thead><tbody><tr><td>戻るボタン</td><td>遷移元のクエリ（日別の<code>eventId</code>・<code>eventDate</code>）の有無を確認する。</td><td>クエリがあれば日別画面、無ければイベント大会TOPへ戻る。</td></tr><tr><td>申込ボタン</td><td>イベント詳細IDをパスに渡す。</td><td>申込画面（F07-04）で当該イベント詳細を申込対象として扱う。</td></tr></tbody></table></div>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>イベント詳細が存在しない</td><td>ページが見つからない（HTTP404）として扱う。</td></tr><tr><td>ログイン会員に選手情報が無い</td><td>デッキ登録状況・申込済み判定を評価せず、申込済みを偽として扱う。</td></tr></tbody></table></div>
-<p>本画面は利用者向けの個別エラー文言を専用に定義せず、共通の例外処理に委ねる。</p>
-<hr>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>イベント詳細ID、ログイン会員の認証情報（デッキ登録状況・申込済み判定に用いる）</td></tr><tr><td>成功時出力</td><td>イベント詳細の画面（開催情報・事前予約情報・状態別ボタン）</td></tr><tr><td>失敗時出力</td><td>イベント詳細が存在しないときのページが見つからない（HTTP404）</td></tr></tbody></table></div>
+<p>本機能は詳細表示のみで入力フォームを持たず、ボタン押下による遷移のみを受け付ける。データの更新は行わない。</p>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
 <h2 id="表示メッセージ">表示メッセージ</h2>
-<h3 id="常時表示-正常・静的">常時表示（正常・静的）</h3>
-<div class="table-wrap"><table><thead><tr><th>種別</th><th>表示文言（日本語）</th><th>表示文言（英語）</th><th>条件</th></tr></thead><tbody><tr><td>項目見出し</td><td>開催店舗／大会名／開催日時／受付時間／フォーマット／定員／参加費／賞品／備考</td><td>Event Location／Event／Date／Registration／Format／Capacity／Entry／Prizes／General Information</td><td>詳細表示時</td></tr><tr><td>事前予約見出し</td><td>事前予約情報／事前予約期間／残り予約数／参加費(事前予約)</td><td>Pre-registration Information／Pre-registration Period／Remaining Seats for Event／Entry Fee (For Pre-registration)</td><td>事前予約フラグが真のとき</td></tr><tr><td>参加費</td><td>無料</td><td>Free</td><td>参加費が0円のとき</td></tr><tr><td>ボタン</td><td>申込／キャンセル申込／デッキ登録／デッキ編集</td><td>Register／Cancellation Request／Decklist／Decklist</td><td>状態別ボタン出し分けに従う</td></tr></tbody></table></div>
-<p>本画面は操作結果フラッシュ・トーストを生成しない。</p>
-<hr>
-<h2 id="ログ・監査">ログ・監査</h2>
-<div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>詳細表示</td><td>本画面単体では業務監査ログを追加で書く処理を持たない。</td></tr></tbody></table></div>
-<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
-<ul><li>Cookie値</li><li>セッションIDの完全値</li></ul>
-<hr>
-<h2 id="セッション">セッション</h2>
-<p>本機能は詳細表示のためにセッションを更新しない。ログイン状態の判定にのみ会員の認証情報を用いる。</p>
-<hr>
-<h2 id="Cookie">Cookie</h2>
-<p>本機能は詳細表示のために新たなクッキーを設定しない。</p>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<p>本画面の詳細表示は参照のみであり、業務トランザクションを張らない。残り予約数は表示時点の概算であり、申込確定時のロックは申込機能（F07-04）を正とする。</p>
+<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>—</td><td>項目見出し</td><td>開催店舗／大会名／開催日時／受付時間／フォーマット／定員／参加費／賞品／備考</td><td>詳細表示時</td><td>静的表示</td></tr><tr><td>—</td><td>事前予約欄の見出し</td><td>事前予約情報／事前予約期間／残り予約数／参加費(事前予約)</td><td>事前予約フラグが真のとき</td><td>静的表示</td></tr><tr><td>—</td><td>参加費欄</td><td>無料</td><td>参加費が0円のとき</td><td>静的表示</td></tr><tr><td>—</td><td>ボタン</td><td>申込／キャンセル申込／デッキ登録／デッキ編集</td><td>状態別ボタン出し分けに従う</td><td>各画面へ遷移する</td></tr></tbody></table></div>
+<p>本画面は操作結果のメッセージを生成しない。</p>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

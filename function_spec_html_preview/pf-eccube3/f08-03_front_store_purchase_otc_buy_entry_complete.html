@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,40 +272,18 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#本書で扱うこと">本書で扱うこと</a>
-<a class="lv2" href="#本書で扱わないこと">本書で扱わないこと</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv2" href="#用語">用語</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#フロント挙動">フロント挙動</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#確認・登録する-locale-otcbuy-name-confirm">確認・登録する（`/{_locale}/otcbuy/{name}/confirm`）</a>
-<a class="lv3" href="#完了を表示する-locale-otcbuy-name-complete">完了を表示する（`/{_locale}/otcbuy/{name}/complete`）</a>
-<a class="lv2" href="#査定申込み確認・登録-時の判定順序">`査定申込み確認・登録` 時の判定順序</a>
-<a class="lv2" href="#表示メッセージ">表示メッセージ</a>
-<a class="lv3" href="#常時表示-正常・静的">常時表示（正常・静的）</a>
-<a class="lv3" href="#会員仮登録の結果-完了画面">会員仮登録の結果（完了画面）</a>
-<a class="lv3" href="#エラー・警告-インライン">エラー・警告（インライン）</a>
-<a class="lv3" href="#メッセージID対応-自動棚卸">メッセージID対応（自動棚卸）</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
-<a class="lv3" href="#エッジケース">エッジケース</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#確認・登録の判定順序">確認・登録の判定順序</a>
+<a class="lv3" href="#入力データの引き継ぎ">入力データの引き継ぎ</a>
+<a class="lv3" href="#申込みの登録内容">申込みの登録内容</a>
+<a class="lv3" href="#会員仮登録">会員仮登録</a>
+<a class="lv3" href="#完了画面">完了画面</a>
+<a class="lv3" href="#画面の表示内容">画面の表示内容</a>
+<a class="lv3" href="#エラー時の扱い">エラー時の扱い</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#バリデーション">バリデーション</a>
-<a class="lv2" href="#権限・認可">権限・認可</a>
-<a class="lv2" href="#画面遷移">画面遷移</a>
-<a class="lv3" href="#遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#ログ・監査">ログ・監査</a>
-<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
-<a class="lv2" href="#セッション">セッション</a>
-<a class="lv3" href="#本機能におけるセッション">本機能におけるセッション</a>
-<a class="lv3" href="#セッションへ保存しない情報">セッションへ保存しない情報</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a></nav>
+<a class="lv3" href="#入出力-永続化">入出力: 永続化</a>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -303,108 +291,30 @@ footer {
         <h1>F08-03（店頭買取査定申込登録確認〜完了）</h1>
       </header>
       
-      <h2 id="概要">概要</h2>
-<p>店頭買取の査定申込みにおいて、入力された申込情報を確認し、必要に応じて会員仮登録を行い、査定申込みを登録して査定番号を付与し、完了画面を表示する機能である。確認画面の表示、メールアドレスの重複・パスワード一致のチェック、適格請求書発行事業者の登録番号検証、申込登録、完了表示までを扱う。申込情報の入力自体はF08-02（店頭買取査定申込情報入力）が扱う。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインの店頭買取査定申込処理、テンプレート（<code>OtcBuy/confirm.twig</code>・<code>OtcBuy/complete.twig</code>と各英語版<code>*.en.twig</code>）、査定申込・会員登録・状態履歴の各処理を正とする。</p>
-<p>本機能のカスタマイズ区分はカスタマイズで、画面・処理フローの挙動は現行リポ（pf-eccube3）を参照し、DB関連（テーブル名・列名・保存先）は ec-cube-enterprise を正とする。本機能は言語切替で英語表示へ到達できるため、表示メッセージに英語文言を併記する。</p>
-<p>対象はブラウザ経由のフロント（店頭買取査定申込）に限定する。フロントのルートはロケールセグメント付きで提供され、サイトルートからのパスパターンは<code>/{_locale}</code>配下になる（<code>/{_locale}</code>はサービスプロバイダのマウントで決まる確認値）。店舗は申込ページのパス内の店舗識別名（<code>{name}</code>）で特定する。</p>
-<p>コントローラのメソッド単位の解剖は本文の主題としない。本文ではルートbind名の網羅を主説明とせず、「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。</p>
-<hr>
-<h2 id="本書で扱うこと">本書で扱うこと</h2>
-<ul><li>査定申込みの確認画面の表示と、入力データのセッション・リクエストのマージ</li><li>メールアドレス重複・パスワード一致・登録番号の各チェックと差し戻し</li><li>会員仮登録（任意）の実行とブラックリスト判定</li><li>査定申込みの登録（査定番号付与・状態履歴記録）と完了画面の表示</li></ul>
-<hr>
-<h2 id="本書で扱わないこと">本書で扱わないこと</h2>
-<p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
-<ul><li>査定申込情報の入力フォーム（F08-02 店頭買取査定申込情報入力を正とする）</li><li>会員のアクティベート・本会員化（アカウント登録機能を正とする）</li><li>査定後の買取金額確定・買取明細（店頭買取の査定・買取処理を正とする）</li><li>支店システム連携・確認メール送信の内部仕様</li><li>カート・購入（F04系）の仕様</li></ul>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<p>DB関連は ec-cube-enterprise を正とする。査定申込みの登録先<code>dtb_otc_buy_order</code>・状態履歴・会員・適格請求書発行事業者口座は現行・移行先とも存在するが、店舗参照の列名が異なる。</p>
-<div class="table-wrap"><table><thead><tr><th>対象</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th><th>扱い</th></tr></thead><tbody><tr><td>店舗参照</td><td><code>dtb_otc_buy_order.shop_id</code>（店舗マスタ<code>MtbShop</code>）</td><td><code>dtb_otc_buy_order.base_info_id</code>（店舗基本情報<code>dtb_base_info</code>）</td><td>列名・参照先が<code>shop_id</code>→<code>base_info_id</code>に移る</td></tr><tr><td>査定申込み</td><td><code>dtb_otc_buy_order</code>（<code>assessment_id</code>・<code>otc_buy_order_status_id</code>・<code>adult_flg</code>・<code>apply_date</code>・<code>update_date</code>・<code>customer_id</code>・<code>tel_no</code>・氏名各列・<code>return_supply</code>・<code>free_comment</code>・<code>qualified_invoice_issuer_account_id</code>・<code>qualified_invoice_issuer_flg</code>）</td><td>同名・同列</td><td>同一スキーマ</td></tr><tr><td>状態履歴</td><td><code>dtb_otc_buy_order_status_history</code></td><td>同名</td><td>同一スキーマ</td></tr><tr><td>会員</td><td><code>dtb_customer</code></td><td>同名</td><td>同一スキーマ</td></tr><tr><td>適格請求書発行事業者口座</td><td><code>dtb_qualified_invoice_issuer_account</code>（<code>qualified_invoice_issuer_code</code>）</td><td>同名・同列</td><td>同一スキーマ</td></tr></tbody></table></div>
-<p>挙動・判定順序・画面・メッセージは現行リポ（pf-eccube3）を正とする。</p>
-<hr>
-<h2 id="用語">用語</h2>
-<div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>査定申込み</td><td>店頭買取の査定を申し込む手続き。確定すると査定番号が付く。</td></tr><tr><td>査定番号</td><td>申込みに付与する番号。申込日・店舗ID・連番から組み立てる。</td></tr><tr><td>会員仮登録</td><td>申込みに伴い任意で行う仮会員の登録。</td></tr><tr><td>ブラックリスト</td><td>会員登録を不可とする該当条件。</td></tr><tr><td>適格請求書発行事業者</td><td>インボイス制度の登録事業者。登録番号を任意で入力する。</td></tr><tr><td>状態</td><td>査定申込みのステータス。登録時は完了前の状態を付ける。</td></tr></tbody></table></div>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>確認・登録</td><td><code>GET /{_locale}/otcbuy/{name}/confirm</code>、<code>POST /{_locale}/otcbuy/{name}/confirm</code></td><td>入力データを確認し、重複・一致・登録番号を判定する。確認モードなら確認画面、会員登録モードなら登録、いずれも検証通過時は申込みを登録して完了画面へ遷移する。店舗が無ければ404。</td></tr><tr><td>完了</td><td><code>GET /{_locale}/otcbuy/{name}/complete</code>、<code>POST /{_locale}/otcbuy/{name}/complete</code></td><td>セッションの査定IDから申込みを取得し、査定番号・注意事項・自動遷移を含む完了画面を表示する。査定IDが無ければエントリーへ戻す。</td></tr></tbody></table></div>
-<p>確認画面・完了画面はいずれもパスの店舗識別名で店舗を特定する。完了後は一定秒数で完了画面へ自動再遷移する（査定IDが無いためエントリーへ戻る挙動になる）。</p>
-<hr>
-<h2 id="フロント挙動">フロント挙動</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>確認画面の表示要素</td><td>入力時間タイマー、Language、国、お名前、お名前カナ、郵便番号、住所、生年月日、電話番号、職業、返却希望サプライ（隠し）、電話連絡、大会参加状況、適格請求書発行事業者の設問（はい時は登録番号）、会員登録時はメール・パスワードの会員登録フォーム、個人情報同意を読み取り表示する。</td></tr><tr><td>確認画面のボタン</td><td>会員登録ありは「会員登録して申込み」、なしは「査定申込み」ボタン。入力へ戻る「戻る」ボタン（申込フォームへ送信）。</td></tr><tr><td>完了画面の表示要素</td><td>申込完了文言、申込者氏名、査定番号、買取カウンターでの案内、身分証明書の用意案内、未成年の場合の保護者同意書案内、会員仮登録完了時の案内、「査定申込みへ戻る」ボタン、自動遷移の秒数案内。</td></tr><tr><td>自動遷移</td><td>完了画面はメタ更新で一定秒数後に完了画面のURLへ再遷移する。</td></tr><tr><td>モーダル・ポップアップ</td><td>確認画面はF08-02から引き継ぐモーダルを持ち得る。完了画面に専用モーダルは持たない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="確認・登録する-locale-otcbuy-name-confirm">確認・登録する（<code>/{_locale}/otcbuy/{name}/confirm</code>）</h3>
-<ol><li>店舗を特定する。無ければ404とする。</li><li>セッションの入力データとリクエストの入力データをマージし、申込フォームと適格請求書発行事業者フォームを組む。</li><li>適格請求書発行事業者が「はい」かつ登録番号が不正なら、申込フォーム画面を再表示する。</li><li>エントリー開始かつ申込フォーム送信でない、かつ登録番号未送信などの前提を満たさないときはエントリーへ戻す。</li><li>メールアドレスが入力されている場合、既登録メールか、メールとパスワードが同一かを判定する。いずれかに該当すれば会員登録フォーム画面を該当フラグ付きで再表示する。</li><li>確認モードのときは、フォームを表示専用（freeze）で組み直し、確認画面を表示する。</li><li>会員登録モードのときは会員仮登録を実行し、登録結果（成功・失敗）を保持する。</li><li>エントリーフラグをセッションから除去する。</li><li>申込みに状態（完了前）・成年フラグ・申込日・更新日・店舗を設定する。氏名カナが無ければ氏名で補完する。国が日本以外なら都道府県を国外に設定する。</li><li>適格請求書発行事業者の登録番号があれば申込みへ紐づけ、自由記述に所定コメントを付加して登録する。</li><li>ログイン中なら会員IDを申込みへ設定する。</li><li>申込テーブルをロックし、査定番号（申込日・店舗ID・連番）を採番して申込みを登録し、ロックを解除する。</li><li>状態履歴に完了前の状態を記録する。</li><li>査定IDをセッションへ保存し、完了画面へ遷移する（会員登録ありのときは登録結果をクエリに付ける）。</li></ol>
-<h3 id="完了を表示する-locale-otcbuy-name-complete">完了を表示する（<code>/{_locale}/otcbuy/{name}/complete</code>）</h3>
-<ol><li>セッションから査定IDを取得する。無ければエントリーへ戻す。</li><li>セッションの査定IDを除去する。</li><li>査定IDから申込みを取得し、自動遷移の秒数（オプション値）を取得する。</li><li>完了画面を表示する。会員登録の結果はクエリから受け取る。</li></ol>
-<hr>
-<h2 id="査定申込み確認・登録-時の判定順序"><code>査定申込み確認・登録</code> 時の判定順序</h2>
-<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>店舗が存在するか</td><td>無ければ404</td></tr><tr><td>2</td><td>適格請求書発行事業者ありで登録番号が妥当か</td><td>不正なら申込フォーム画面を再表示</td></tr><tr><td>3</td><td>エントリー開始かつ申込フォーム送信などの前提を満たすか</td><td>満たさなければエントリーへ戻す</td></tr><tr><td>4</td><td>メールが既登録か、メールとパスワードが同一か</td><td>該当すれば会員登録フォーム画面を再表示</td></tr><tr><td>5</td><td>確認モードか</td><td>確認モードなら確認画面を表示</td></tr><tr><td>6</td><td>会員登録モードか</td><td>会員仮登録を実行し結果を保持</td></tr><tr><td>7</td><td>上記を通過</td><td>申込みを登録し、査定番号を採番して完了画面へ遷移</td></tr></tbody></table></div>
-<hr>
-<h2 id="表示メッセージ">表示メッセージ</h2>
-<h3 id="常時表示-正常・静的">常時表示（正常・静的）</h3>
-<div class="table-wrap"><table><thead><tr><th>種別</th><th>表示文言（日本語）</th><th>表示文言（英語）</th><th>条件</th></tr></thead><tbody><tr><td>完了文言</td><td>査定申込みが完了しました。</td><td>Assessment registration is complete.</td><td>完了画面の表示時</td></tr><tr><td>申込者</td><td>（姓）（名） 様</td><td>(First name) (Last name)（敬称なし）</td><td>完了画面の表示時</td></tr><tr><td>査定番号</td><td>査定番号：（査定番号）</td><td>Assessment Number：(number)</td><td>完了画面の表示時</td></tr><tr><td>買取カウンター案内</td><td>買取カウンターでお名前と、査定番号をお伝えいただき、査定希望の商品をお渡しください。</td><td>Please mention your name and the last 4 digits of the Assessment Number above before you hand the items you would brought to sell.</td><td>完了画面の表示時</td></tr><tr><td>身分証明書案内</td><td>身分証明書をご用意ください</td><td>Please prepare your ID when selling your item.</td><td>完了画面の表示時</td></tr><tr><td>未成年案内</td><td>未成年の方は保護者同意書をご用意ください</td><td>If you are under 18, you will need an authorization from an adult by preparing a written consent.</td><td>申込者が成年でないとき</td></tr><tr><td>自動遷移案内</td><td>※（秒数）秒後に自動で査定申込みへ遷移します</td><td>※This page will automatically return to the registration page in (seconds) seconds.</td><td>完了画面の表示時</td></tr><tr><td>確認ボタン</td><td>会員登録して申込み／査定申込み</td><td>Membership and Assessment／Apply for Assessment</td><td>確認画面の表示時（会員登録の有無で切替）</td></tr></tbody></table></div>
-<h3 id="会員仮登録の結果-完了画面">会員仮登録の結果（完了画面）</h3>
-<div class="table-wrap"><table><thead><tr><th>表示文言（日本語）</th><th>表示文言（英語）</th><th>表示条件（利用者視点）</th><th>表示位置</th><th>備考</th></tr></thead><tbody><tr><td>仮会員登録が完了しました。※ページ下部の注意事項を必ずお読みください。</td><td>Pre-registration is complete. Please read the notes at the bottom of the page.</td><td>会員仮登録が成功したとき</td><td>完了画面上部</td><td>クエリ <code>register</code> が成功値のとき</td></tr><tr><td>ご入力いただいた内容では会員登録ができませんでした。お手数ではございますが、晴れる屋オンラインショップからもう一度ご登録ください。</td><td>The information you entered was not valid for membership registration. We apologize for the inconvenience. Please register again from the Hareruya web store.</td><td>会員仮登録が失敗（ブラックリスト該当）のとき</td><td>完了画面上部</td><td>クエリ <code>register</code> が失敗値のとき</td></tr><tr><td>現在、仮登録の状態となっております。（以下、確認メール・URLクリックの案内が続く）</td><td>Pre-registration is complete.（以下、確認メール・URLの案内が続く）</td><td>会員仮登録が成功したとき</td><td>完了画面下部</td><td>確認メールの案内</td></tr></tbody></table></div>
-<h3 id="エラー・警告-インライン">エラー・警告（インライン）</h3>
-<div class="table-wrap"><table><thead><tr><th>表示文言（日本語）</th><th>表示文言（英語）</th><th>表示条件（利用者視点）</th><th>表示位置</th><th>備考</th></tr></thead><tbody><tr><td>既に利用されているメールアドレスです。</td><td>It is already used email address.</td><td>入力メールが既登録のとき</td><td>メールアドレス欄</td><td>会員登録フォーム画面を再表示する</td></tr><tr><td>メールアドレスとパスワードは異なる文字列を使用してください。</td><td>Please use different character string for E-mail and Password.</td><td>メールとパスワードが同一のとき</td><td>パスワード欄</td><td>会員登録フォーム画面を再表示する</td></tr><tr><td>登録番号を入力してください</td><td>Please enter your registration number</td><td>適格請求書発行事業者ありで登録番号が未入力のとき</td><td>登録番号欄</td><td>キー <code>front.otcbuy.error.not_qualified_invoice_issuer_code_input</code></td></tr><tr><td>登録番号に全角を含むことは出来ません</td><td>Registration number cannot include full-width characters</td><td>登録番号に全角が含まれるとき</td><td>登録番号欄</td><td>キー <code>front.otcbuy.error.not_fullwidth_qualified_invoice_issuer_code_input</code></td></tr></tbody></table></div>
-<p>表示文言はテンプレートとロケールメッセージを正とする。</p>
-<hr>
-<h3 id="メッセージID対応-自動棚卸">メッセージID対応（自動棚卸）</h3>
-<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>画面上の文言(英語)</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>F08-03-MSG-001</td><td>会員登録フォームのメールアドレス欄直下</td><td>既に利用されているメールアドレスです。</td><td>It is already used email address.</td><td>店頭買取査定申込の確認送信時、入力メールアドレスに一致する会員が存在する場合</td><td>会員登録フォームを再表示し、確認画面へ進まない。</td></tr><tr><td>F08-03-MSG-002</td><td>会員登録フォームのパスワード欄直下</td><td>メールアドレスとパスワードは異なる文字列を使用してください。</td><td>Please use different character string for E-mail and Password.</td><td>確認処理でメールアドレスとパスワードが完全一致したとき</td><td>会員登録フォームを再表示し、確認・登録処理を中止する</td></tr><tr><td>F08-03-MSG-003</td><td>完了画面上部</td><td>仮会員登録が完了しました。</td><td>Pre-registration is complete.</td><td>会員登録処理が成功し、完了URLの register=1 で完了画面を表示したとき</td><td>査定申込み完了画面を表示する</td></tr><tr><td>F08-03-MSG-004</td><td>完了画面上部</td><td>ご入力いただいた内容では会員登録ができませんでした。</td><td>The information you entered was not valid for membership registration.</td><td>会員登録処理が失敗し、完了URLの register=2 で完了画面を表示したとき</td><td>査定申込みは完了させ、会員登録は行わない</td></tr><tr><td>F08-03-MSG-005</td><td>完了画面上部</td><td>お手数ではございますが、晴れる屋オンラインショップからもう一度ご登録ください。</td><td>We apologize for the inconvenience. Please register again from the Hareruya web store.</td><td>会員登録失敗（ブラックリスト該当）時</td><td>利用者に晴れる屋オンラインショップからの再登録を案内する。査定申込みは完了済み</td></tr><tr><td>F08-03-MSG-006</td><td>本文テキスト（完了画面見出し）</td><td>査定申込みが完了しました。</td><td>（英訳なし）</td><td>査定申込みを登録し、完了画面を表示したとき</td><td>査定番号等を表示し、設定秒数後に査定申込み画面へ自動遷移する</td></tr><tr><td>F08-03-MSG-007</td><td>本文テキスト（会員仮登録案内枠）</td><td>現在、仮登録の状態となっております。</td><td>（英訳なし）</td><td>会員仮登録を伴う査定申込みで register=ENTRY_SUCCESS のとき</td><td>確認メールのURLアクセスによる会員登録完了を案内する</td></tr></tbody></table></div>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>店舗特定</td><td>パスの店舗識別名から店舗を特定する。無ければ404とする。</td></tr><tr><td>入力データのマージ</td><td>セッションの入力データとリクエストの入力データをマージして確認・登録に用いる。</td></tr><tr><td>メール重複</td><td>入力メールが既登録なら会員仮登録できないものとして会員登録フォームへ差し戻す。</td></tr><tr><td>メールとパスワード同一</td><td>同一なら会員登録フォームへ差し戻す。</td></tr><tr><td>成年判定</td><td>生年月日から成年・未成年を判定し成年フラグへ設定する。未成年は完了画面で保護者同意書を案内する。</td></tr><tr><td>氏名カナ補完</td><td>氏名カナが無い場合は氏名で補完する。</td></tr><tr><td>都道府県の国外設定</td><td>国が日本以外のときは都道府県を国外に設定する。</td></tr><tr><td>適格請求書発行事業者</td><td>登録番号があれば申込みへ紐づけ、自由記述に所定コメントを付加する。</td></tr><tr><td>査定番号</td><td>申込日（年月日）・店舗ID（2桁）・連番を連結して採番する。採番中は申込テーブルをロックする。</td></tr><tr><td>状態</td><td>登録時に完了前の状態を付け、状態履歴に記録する。</td></tr><tr><td>会員仮登録</td><td>会員登録モードのときに実行する。ブラックリスト該当なら登録しない。</td></tr></tbody></table></div>
-<p>入力項目の一覧と各検証はF08-02を正とする。本機能は確認・判定・登録の判定境界を扱う。</p>
-<h3 id="エッジケース">エッジケース</h3>
-<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>店舗識別名が該当なし</td><td>404とする。</td></tr><tr><td>エントリー前提を満たさない</td><td>エントリーへ戻す。</td></tr><tr><td>メール既登録／メールとパスワード同一</td><td>会員登録フォームへ差し戻す。</td></tr><tr><td>ブラックリスト該当</td><td>会員登録は行わず、申込みは登録する。完了画面で登録不可を案内する。</td></tr><tr><td>完了画面に査定IDが無い</td><td>エントリーへ戻す。完了後の自動再遷移はこの経路でエントリーへ戻る。</td></tr><tr><td>氏名カナ未入力</td><td>氏名で補完する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>入力とセッション</td><td>確認・登録は、F08-02でセッションへ保存した入力データとリクエストをマージして用いる。</td></tr><tr><td>査定IDの一回性</td><td>登録時に査定IDをセッションへ保存し、完了画面で取得後に除去する。再表示時は査定IDが無くエントリーへ戻る。</td></tr><tr><td>査定番号の一意性</td><td>採番は申込テーブルのロック下で行い、連番の整合を取る。</td></tr><tr><td>状態履歴</td><td>申込登録と同時に完了前の状態を履歴へ記録する。</td></tr><tr><td>会員登録と連携</td><td>会員仮登録が成功した場合、関連情報の登録と支店システムへの連携、確認メール送信を行う（詳細は別機能）。</td></tr></tbody></table></div>
-<hr>
-<h2 id="API-バッチ結果">API/バッチ結果</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>API</td><td>会員仮登録成功時に支店システムへ会員更新を連携する。仮会員設定が有効なら確認メールを送信する。</td></tr><tr><td>バッチ</td><td>本機能ではバッチ実行を扱わない。</td></tr></tbody></table></div>
-<p>連携・メールの内部仕様は別機能を正とする。</p>
-<hr>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="確認・登録の判定順序">確認・登録の判定順序</h3>
+<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>店舗識別名から店舗を特定できるか</td><td>特定できなければページが見つからない扱い（404）とする</td></tr><tr><td>2</td><td>適格請求書発行事業者が「はい」のとき、登録番号が妥当か</td><td>不正なら申込フォーム画面を再表示する</td></tr><tr><td>3</td><td>申込開始かつ申込フォームからの送信であるなどの前提を満たすか</td><td>満たさなければ申込フォームへ戻す</td></tr><tr><td>4</td><td>入力メールアドレスが既登録か、メールアドレスとパスワードが同一か</td><td>いずれかに該当すれば会員登録フォーム画面を該当の状態で再表示する</td></tr><tr><td>5</td><td>確認モードか</td><td>確認モードなら入力内容を表示専用に組み直して確認画面を表示する</td></tr><tr><td>6</td><td>会員登録モードか</td><td>会員仮登録を実行し、成功・失敗の結果を保持する</td></tr><tr><td>7</td><td>上記を通過した</td><td>申込みを登録し、査定番号を採番して完了画面へ移る</td></tr></tbody></table></div>
+<h3 id="入力データの引き継ぎ">入力データの引き継ぎ</h3>
+<p>保持している入力データと今回送信された入力データを併合して、確認と登録に用いる。入力項目の一覧と各検証はF08-02を正とする。</p>
+<h3 id="申込みの登録内容">申込みの登録内容</h3>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>状態</td><td>完了前の状態を設定し、状態履歴にも記録する</td></tr><tr><td>成年フラグ</td><td>生年月日から成年・未成年を判定して設定する。未成年のときは完了画面で保護者同意書を案内する</td></tr><tr><td>氏名カナ</td><td>未入力のときは氏名で補う</td></tr><tr><td>都道府県</td><td>国が日本以外のときは国外に設定する</td></tr><tr><td>適格請求書発行事業者</td><td>登録番号があれば申込みへ紐づけ、自由記述に所定のコメントを付加する</td></tr><tr><td>会員</td><td>ログイン中のときは当該会員を設定する</td></tr><tr><td>査定番号</td><td>申込日（年月日）・店舗ID（2桁）・連番を連結して採番する。採番中は申込みの保管先をロックし、登録後に解除する</td></tr><tr><td>店舗・申込日・更新日</td><td>登録時に設定する</td></tr></tbody></table></div>
+<h3 id="会員仮登録">会員仮登録</h3>
+<p>会員登録モードのときに実行する。ブラックリストに該当するときは会員を登録しない。登録の成否は完了画面の案内に用いる。会員仮登録が失敗しても査定申込みは登録する。</p>
+<h3 id="完了画面">完了画面</h3>
+<p>保持している査定IDから申込みを取得して表示する。査定IDを保持していないときは申込フォームへ戻す。表示のたびに保持している査定IDは取り除く。会員登録の結果は確認・登録からの引き継ぎ値で判定する。完了画面は所定の秒数（オプション値）の経過後に自動で査定申込み画面へ戻る。</p>
+<h3 id="画面の表示内容">画面の表示内容</h3>
+<div class="table-wrap"><table><thead><tr><th>画面</th><th>表示内容</th></tr></thead><tbody><tr><td>確認</td><td>入力時間タイマー、言語、国、お名前、お名前カナ、郵便番号、住所、生年月日、電話番号、職業、返却希望サプライ（画面上は非表示）、電話連絡、大会参加状況、適格請求書発行事業者の設問（「はい」のときは登録番号）、会員登録を伴うときはメールアドレスとパスワードの会員登録欄、個人情報同意を読み取り専用で表示する。ボタンは会員登録の有無で切り替え、入力へ戻る「戻る」ボタンを持つ</td></tr><tr><td>完了</td><td>申込完了の文言、申込者氏名、査定番号、買取カウンターでの案内、身分証明書の用意案内、未成年のときの保護者同意書案内、会員仮登録完了時の案内、「査定申込みへ戻る」ボタン、自動遷移の秒数案内</td></tr></tbody></table></div>
+<p>確認画面はF08-02から引き継ぐモーダルを持ち得る。完了画面に専用のモーダルは無い。</p>
+<h3 id="エラー時の扱い">エラー時の扱い</h3>
+<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>店舗識別名が該当なし</td><td>ページが見つからない扱い（404）とする</td></tr><tr><td>登録番号が不正</td><td>申込フォーム画面を再表示する</td></tr><tr><td>申込開始などの前提を満たさない</td><td>申込フォームへ戻す</td></tr><tr><td>メールアドレスが既登録／メールアドレスとパスワードが同一</td><td>会員登録フォーム画面を該当の状態で再表示する</td></tr><tr><td>ブラックリストに該当</td><td>会員登録を行わず、申込みは登録し、完了画面で登録不可を案内する</td></tr><tr><td>完了画面で査定IDを保持していない</td><td>申込フォームへ戻す</td></tr></tbody></table></div>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>マージした申込入力データ、適格請求書発行事業者データ、送信モード（確認・会員登録）。</td></tr><tr><td>成功時出力</td><td>確認画面、または申込登録後の完了画面。</td></tr><tr><td>失敗時出力</td><td>店舗なしの404、エントリーへの戻し、会員登録フォームへの差し戻し。</td></tr><tr><td>副作用</td><td>査定申込みの登録、査定番号採番、状態履歴記録、会員仮登録（任意）、査定IDのセッション保存・除去。</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<p>機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。</p>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>dtb_otc_buy_order</code></td><td><code>assessment_id</code>・<code>otc_buy_order_status_id</code>・<code>adult_flg</code>・<code>apply_date</code>・<code>update_date</code>・<code>base_info_id</code>（店舗ID。現行は<code>shop_id</code>）・<code>customer_id</code>・<code>tel_no</code>・<code>last_name</code>・<code>first_name</code>・<code>last_name_kana</code>・<code>first_name_kana</code>・<code>return_supply</code>・<code>free_comment</code>・<code>qualified_invoice_issuer_account_id</code>・<code>qualified_invoice_issuer_flg</code></td><td>査定申込みの登録先。査定番号・状態・成年フラグ・店舗・会員IDを設定する。</td></tr><tr><td><code>dtb_otc_buy_order_status_history</code>（査定申込状態履歴）</td><td>状態・記録日時</td><td>完了前の状態を記録する。</td></tr><tr><td><code>dtb_customer</code>（会員）</td><td><code>password</code>（不可逆値として扱う）</td><td>会員仮登録時に登録する。原値・ハッシュは本書に記載しない。</td></tr><tr><td><code>dtb_qualified_invoice_issuer_account</code>（適格請求書発行事業者口座）</td><td><code>qualified_invoice_issuer_code</code>（登録番号）</td><td>設問「はい」のとき紐づける。</td></tr></tbody></table></div>
-<p>会員のパスワード列は不可逆値として扱い、原値を本書に記載しない。</p>
-<h3 id="DB操作">DB操作</h3>
-<p>永続化の正は ec-cube-enterprise（テーブル名・操作は ec-cube-enterprise を正典）。当ドメインは承認ワークフローを介さず persist/flush で直接確定する（承認ワークフローは在庫機能固有）。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>登録/更新</td><td>dtb_customer / dtb_otc_buy_order / dtb_otc_buy_order_status_history / dtb_qualified_invoice_issuer_account</td><td>当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。</td></tr></tbody></table></div>
-<hr>
-<h2 id="バリデーション">バリデーション</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>登録番号</td><td>設問「はい」時に必須。指定桁ちょうど。半角のみ（全角不可）。</td></tr><tr><td>メールアドレス</td><td>既登録でないこと。確認用と一致すること（フォーム検証）。</td></tr><tr><td>パスワード</td><td>メールアドレスと異なること。確認用と一致すること（フォーム検証）。</td></tr><tr><td>申込フォーム全体</td><td>F08-02の検証に従う。確認モードは表示専用で組み直す。</td></tr></tbody></table></div>
-<p>メール重複・メールとパスワード同一は、フォーム検証ではなく本機能のチェックで判定し、会員登録フォームへ差し戻す。</p>
-<hr>
-<h2 id="権限・認可">権限・認可</h2>
-<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>確認・登録・完了</th></tr></thead><tbody><tr><td>未ログイン</td><td>会員登録の有無を選んで申込みを登録できる。会員仮登録はブラックリスト判定に従う。</td></tr><tr><td>会員ログイン</td><td>会員IDを申込みへ紐づけて登録できる。</td></tr></tbody></table></div>
-<hr>
-<h2 id="画面遷移">画面遷移</h2>
-<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>店舗識別名が該当なし</td><td>404</td></tr><tr><td>登録番号が不正</td><td>申込フォーム画面（再表示）</td></tr><tr><td>エントリー前提を満たさない</td><td>エントリー画面</td></tr><tr><td>メール既登録／メールとパスワード同一</td><td>会員登録フォーム画面（再表示）</td></tr><tr><td>確認モード</td><td>確認画面</td></tr><tr><td>登録成功</td><td>完了画面（会員登録ありは結果クエリ付き）</td></tr><tr><td>確認画面の「戻る」</td><td>申込フォーム</td></tr><tr><td>完了画面に査定IDなし</td><td>エントリー画面</td></tr><tr><td>完了画面の自動遷移・「査定申込みへ戻る」</td><td>完了画面のURL（査定IDが無ければエントリーへ）</td></tr></tbody></table></div>
-<h3 id="遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</h3>
-<div class="table-wrap"><table><thead><tr><th>起点</th><th>遷移前の処理</th><th>遷移後の初期状態</th></tr></thead><tbody><tr><td>申込登録</td><td>査定IDをセッションへ保存し、エントリーフラグを除去する</td><td>完了画面が査定IDから申込みを取得して表示する</td></tr><tr><td>完了表示</td><td>セッションの査定IDを除去する</td><td>完了画面の再訪・自動遷移時は査定IDが無くエントリーへ戻る</td></tr></tbody></table></div>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>店舗識別名が該当なし</td><td>404とする。</td></tr><tr><td>登録番号が不正</td><td>申込フォーム画面を再表示する。</td></tr><tr><td>エントリー前提を満たさない</td><td>エントリーへ戻す。</td></tr><tr><td>メール既登録／メールとパスワード同一</td><td>会員登録フォーム画面を該当フラグ付きで再表示する。</td></tr><tr><td>ブラックリスト該当</td><td>会員登録を行わず、申込みは登録し、完了画面で登録不可を案内する。</td></tr><tr><td>完了画面に査定IDなし</td><td>エントリーへ戻す。</td></tr></tbody></table></div>
-<p>表示文言は表示メッセージ節を正とする。</p>
-<hr>
-<h2 id="ログ・監査">ログ・監査</h2>
-<div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>会員登録開始・完了</td><td>会員登録の開始・完了の情報ログ。</td></tr><tr><td>ブラックリスト該当</td><td>該当タグ・キーワードと登録不可の情報ログ。</td></tr></tbody></table></div>
-<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
-<ul><li>パスワード原値</li><li>なりすまし対策トークン</li><li>Cookie値</li><li>セッションIDの完全値</li></ul>
-<hr>
-<h2 id="セッション">セッション</h2>
-<h3 id="本機能におけるセッション">本機能におけるセッション</h3>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>入力データ</td><td>F08-02で保存した申込入力データと適格請求書発行事業者データを参照する。</td></tr><tr><td>エントリーフラグ</td><td>申込登録時に除去する。</td></tr><tr><td>査定ID</td><td>申込登録時に保存し、完了画面で取得後に除去する。</td></tr></tbody></table></div>
-<h3 id="セッションへ保存しない情報">セッションへ保存しない情報</h3>
-<p>決済の機微情報・パスワードの原値はセッションへ保存しない方針で扱う。</p>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<p>査定番号の採番時に申込テーブルをロックし、採番後にロックを解除する。これにより連番の整合を取る。本機能では楽観ロックの版情報を画面に持たない。</p>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>併合した申込入力データ、適格請求書発行事業者の入力、送信モード（確認・会員登録）</td></tr><tr><td>成功時出力</td><td>確認画面、または申込登録後の完了画面</td></tr><tr><td>失敗時出力</td><td>店舗なしの404、申込フォームへの戻し、会員登録フォームへの差し戻し</td></tr></tbody></table></div>
+<h3 id="入出力-永続化">入出力: 永続化</h3>
+<div class="table-wrap"><table><thead><tr><th>操作</th><th>契機</th></tr></thead><tbody><tr><td>追加</td><td>確認を通過したときに、査定申込みと状態履歴を記録する</td></tr><tr><td>追加</td><td>会員登録モードで、ブラックリストに該当しないときに会員を仮登録する</td></tr></tbody></table></div>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
+<h2 id="表示メッセージ">表示メッセージ</h2>
+<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>F08-03-MSG-001</td><td>会員登録フォームのメールアドレス欄直下</td><td>既に利用されているメールアドレスです。</td><td>店頭買取査定申込の確認送信時、入力メールアドレスに一致する会員が存在する場合</td><td>会員登録フォームを再表示し、確認画面へ進まない。</td></tr><tr><td>F08-03-MSG-001</td><td>会員登録フォームのメールアドレス欄直下（英語表示時）</td><td>It is already used email address.</td><td>店頭買取査定申込の確認送信時、入力メールアドレスに一致する会員が存在する場合</td><td>会員登録フォームを再表示し、確認画面へ進まない。</td></tr><tr><td>F08-03-MSG-002</td><td>会員登録フォームのパスワード欄直下</td><td>メールアドレスとパスワードは異なる文字列を使用してください。</td><td>確認処理でメールアドレスとパスワードが完全一致したとき</td><td>会員登録フォームを再表示し、確認・登録処理を中止する</td></tr><tr><td>F08-03-MSG-002</td><td>会員登録フォームのパスワード欄直下（英語表示時）</td><td>Please use different character string for E-mail and Password.</td><td>確認処理でメールアドレスとパスワードが完全一致したとき</td><td>会員登録フォームを再表示し、確認・登録処理を中止する</td></tr><tr><td>F08-03-MSG-003</td><td>完了画面上部</td><td>仮会員登録が完了しました。</td><td>会員登録処理が成功し、完了画面を会員登録成功の状態で表示したとき</td><td>査定申込み完了画面を表示する</td></tr><tr><td>F08-03-MSG-003</td><td>完了画面上部（英語表示時）</td><td>Pre-registration is complete.</td><td>会員登録処理が成功し、完了画面を会員登録成功の状態で表示したとき</td><td>査定申込み完了画面を表示する</td></tr><tr><td>F08-03-MSG-004</td><td>完了画面上部</td><td>ご入力いただいた内容では会員登録ができませんでした。</td><td>会員登録処理が失敗し、完了画面を会員登録失敗の状態で表示したとき</td><td>査定申込みは完了させ、会員登録は行わない</td></tr><tr><td>F08-03-MSG-004</td><td>完了画面上部（英語表示時）</td><td>The information you entered was not valid for membership registration.</td><td>会員登録処理が失敗し、完了画面を会員登録失敗の状態で表示したとき</td><td>査定申込みは完了させ、会員登録は行わない</td></tr><tr><td>F08-03-MSG-005</td><td>完了画面上部</td><td>お手数ではございますが、晴れる屋オンラインショップからもう一度ご登録ください。</td><td>会員登録失敗（ブラックリスト該当）時</td><td>利用者に晴れる屋オンラインショップからの再登録を案内する。査定申込みは完了済み</td></tr><tr><td>F08-03-MSG-005</td><td>完了画面上部（英語表示時）</td><td>We apologize for the inconvenience. Please register again from the Hareruya web store.</td><td>会員登録失敗（ブラックリスト該当）時</td><td>利用者に晴れる屋オンラインショップからの再登録を案内する。査定申込みは完了済み</td></tr><tr><td>F08-03-MSG-006</td><td>本文テキスト（完了画面見出し）</td><td>査定申込みが完了しました。</td><td>査定申込みを登録し、完了画面を表示したとき</td><td>査定番号等を表示し、設定秒数後に査定申込み画面へ自動遷移する</td></tr><tr><td>F08-03-MSG-007</td><td>本文テキスト（会員仮登録案内枠）</td><td>現在、仮登録の状態となっております。</td><td>会員仮登録を伴う査定申込みで、会員登録が成功したとき</td><td>確認メールのURLアクセスによる会員登録完了を案内する</td></tr><tr><td>—</td><td>完了画面（英語表示時）</td><td>Assessment registration is complete.</td><td>完了画面の表示時</td><td>査定番号等を表示し、設定秒数後に査定申込み画面へ自動遷移する</td></tr><tr><td>—</td><td>完了画面の申込者欄</td><td>（姓）（名） 様</td><td>完了画面の表示時</td><td>完了画面に留まる</td></tr><tr><td>—</td><td>完了画面の申込者欄（英語表示時）</td><td>(First name) (Last name)（敬称なし）</td><td>完了画面の表示時</td><td>完了画面に留まる</td></tr><tr><td>—</td><td>完了画面の査定番号欄</td><td>査定番号：（査定番号）</td><td>完了画面の表示時</td><td>完了画面に留まる</td></tr><tr><td>—</td><td>完了画面の査定番号欄（英語表示時）</td><td>Assessment Number：(number)</td><td>完了画面の表示時</td><td>完了画面に留まる</td></tr><tr><td>—</td><td>完了画面</td><td>買取カウンターでお名前と、査定番号をお伝えいただき、査定希望の商品をお渡しください。</td><td>完了画面の表示時</td><td>完了画面に留まる</td></tr><tr><td>—</td><td>完了画面（英語表示時）</td><td>Please mention your name and the last 4 digits of the Assessment Number above before you hand the items you would brought to sell.</td><td>完了画面の表示時</td><td>完了画面に留まる</td></tr><tr><td>—</td><td>完了画面</td><td>身分証明書をご用意ください</td><td>完了画面の表示時</td><td>完了画面に留まる</td></tr><tr><td>—</td><td>完了画面（英語表示時）</td><td>Please prepare your ID when selling your item.</td><td>完了画面の表示時</td><td>完了画面に留まる</td></tr><tr><td>—</td><td>完了画面</td><td>未成年の方は保護者同意書をご用意ください</td><td>申込者が成年でないとき</td><td>完了画面に留まる</td></tr><tr><td>—</td><td>完了画面（英語表示時）</td><td>If you are under 18, you will need an authorization from an adult by preparing a written consent.</td><td>申込者が成年でないとき</td><td>完了画面に留まる</td></tr><tr><td>—</td><td>完了画面</td><td>※（秒数）秒後に自動で査定申込みへ遷移します</td><td>完了画面の表示時</td><td>設定秒数後に査定申込み画面へ自動遷移する</td></tr><tr><td>—</td><td>完了画面（英語表示時）</td><td>※This page will automatically return to the registration page in (seconds) seconds.</td><td>完了画面の表示時</td><td>設定秒数後に査定申込み画面へ自動遷移する</td></tr><tr><td>—</td><td>確認画面のボタン</td><td>会員登録して申込み／査定申込み</td><td>確認画面の表示時（会員登録の有無で切替）</td><td>押下すると申込みを登録し、完了画面へ移る</td></tr><tr><td>—</td><td>確認画面のボタン（英語表示時）</td><td>Membership and Assessment／Apply for Assessment</td><td>確認画面の表示時（会員登録の有無で切替）</td><td>押下すると申込みを登録し、完了画面へ移る</td></tr><tr><td>—</td><td>完了画面上部</td><td>仮会員登録が完了しました。※ページ下部の注意事項を必ずお読みください。</td><td>会員仮登録が成功したとき</td><td>査定申込み完了画面を表示する</td></tr><tr><td>—</td><td>完了画面上部（英語表示時）</td><td>Pre-registration is complete. Please read the notes at the bottom of the page.</td><td>会員仮登録が成功したとき</td><td>査定申込み完了画面を表示する</td></tr><tr><td>—</td><td>完了画面上部</td><td>ご入力いただいた内容では会員登録ができませんでした。お手数ではございますが、晴れる屋オンラインショップからもう一度ご登録ください。</td><td>会員仮登録が失敗（ブラックリスト該当）のとき</td><td>査定申込みは完了させ、会員登録は行わない</td></tr><tr><td>—</td><td>完了画面上部（英語表示時）</td><td>The information you entered was not valid for membership registration. We apologize for the inconvenience. Please register again from the Hareruya web store.</td><td>会員仮登録が失敗（ブラックリスト該当）のとき</td><td>査定申込みは完了させ、会員登録は行わない</td></tr><tr><td>—</td><td>完了画面下部</td><td>現在、仮登録の状態となっております。（以下、確認メール・URLクリックの案内が続く）</td><td>会員仮登録が成功したとき</td><td>確認メールのURLアクセスによる会員登録完了を案内する</td></tr><tr><td>—</td><td>完了画面下部（英語表示時）</td><td>Pre-registration is complete.（以下、確認メール・URLの案内が続く）</td><td>会員仮登録が成功したとき</td><td>確認メールのURLアクセスによる会員登録完了を案内する</td></tr><tr><td>—</td><td>登録番号欄</td><td>登録番号を入力してください</td><td>適格請求書発行事業者ありで登録番号が未入力のとき</td><td>申込フォーム画面を再表示する</td></tr><tr><td>—</td><td>登録番号欄（英語表示時）</td><td>Please enter your registration number</td><td>適格請求書発行事業者ありで登録番号が未入力のとき</td><td>申込フォーム画面を再表示する</td></tr><tr><td>—</td><td>登録番号欄</td><td>登録番号に全角を含むことは出来ません</td><td>登録番号に全角が含まれるとき</td><td>申込フォーム画面を再表示する</td></tr><tr><td>—</td><td>登録番号欄（英語表示時）</td><td>Registration number cannot include full-width characters</td><td>登録番号に全角が含まれるとき</td><td>申込フォーム画面を再表示する</td></tr></tbody></table></div>
+<p>査定申込み完了の見出しと会員仮登録案内の枠について、英語の対応文言はメッセージID対応の棚卸では確認されていない。表示文言はテンプレートとロケールのメッセージを正とする。</p>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

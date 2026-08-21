@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>m05-02_admin_order_order_csv_export（受注管理_受注情報CSV出力） - 機能仕様書</title>
+  <title>受注管理 — 受注CSVダウンロード - 機能仕様書</title>
   <style>
 :root {
   --bg: #ffffff;
@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,148 +272,46 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#フロント挙動">フロント挙動</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#受注CSVをダウンロードする-GET-admin-order-export-order">受注CSVをダウンロードする（GET `admin_order_export_order`）</a>
-<a class="lv3" href="#列値の解決処理がセルを組み立てるとき">列値の解決処理がセルを組み立てるとき</a>
-<a class="lv2" href="#集計条件">集計条件</a>
-<a class="lv2" href="#受注CSV出力時の判定順序-1列あたり">受注CSV出力時の判定順序（1列あたり）</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
-<a class="lv3" href="#入力項目">入力項目</a>
-<a class="lv3" href="#エッジケース">エッジケース</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#出力対象の受注">出力対象の受注</a>
+<a class="lv3" href="#出力する列">出力する列</a>
+<a class="lv3" href="#行の作り方">行の作り方</a>
+<a class="lv3" href="#値の取り方">値の取り方</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#バリデーション">バリデーション</a>
-<a class="lv2" href="#権限・認可">権限・認可</a>
-<a class="lv2" href="#画面遷移">画面遷移</a>
-<a class="lv3" href="#遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#表示メッセージ">表示メッセージ</a>
-<a class="lv2" href="#試行制限">試行制限</a>
-<a class="lv2" href="#ログ・監査">ログ・監査</a>
-<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
-<a class="lv2" href="#セッション">セッション</a>
-<a class="lv3" href="#本機能におけるセッション">本機能におけるセッション</a>
-<a class="lv3" href="#セッションへ保存しない情報">セッションへ保存しない情報</a>
-<a class="lv2" href="#Cookie">Cookie</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a>
-<a class="lv2" href="#文字コード・区切り文字-設定">文字コード・区切り文字（設定）</a>
-<a class="lv2" href="#調査補助-grep用-主説明の正典ではない">調査補助（grep用。主説明の正典ではない）</a>
-<a class="lv3" href="#HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</a></nav>
+<a class="lv3" href="#出力-CSVファイル">出力: CSVファイル</a>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
         <p class="crumb">Source:<br>/home/y-saito/Developments/hareruya-design-docs/functions/pf-eccube3/m05-02_admin_order_order_csv_export.md</p>
-        <h1>m05-02_admin_order_order_csv_export（受注管理_受注情報CSV出力）</h1>
+        <h1>受注管理 — 受注CSVダウンロード</h1>
       </header>
       
-      <h2 id="概要">概要</h2>
-<p>管理画面の「受注管理」受注一覧から、画面上部の「CSVダウンロード」ドロップダウン内の「受注CSVダウンロード」を選んだときに取得する、受注種別の標準CSVである。出力対象の注文集合は、一覧と同じセッションキーに保持された受注検索条件から組み立てたクエリの結果と一致する。CSVの列は有効化された <code>dtb_csv</code> 行（受注CSV種別、<code>enabled</code> が真、<code>sort_no</code> 昇順）の表示名順であり、データ行は受注明細あたり1行となる。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値とするソースは管理画面受注コントローラの受注CSV手順、CSV出力サービスの受注検索クエリ組み立てとストリーム出力、受注一覧テンプレートのリンク、設定 <code>app/config/eccube/packages/eccube.yaml</code> のCSV出力パラメータとする。</p>
-<p>本機能のカスタマイズ区分はカスタマイズである。挙動は現行リポpf-eccube3の受注CSV出力実装を参照し、DB関連の記述はec-cube-enterpriseを正とする。</p>
-<p>対象はブラウザ経由の管理画面に限定する。</p>
-<p>コントローラのメソッド名は本文の主題としない。本文ではルートbind名やSymfonyのルートnameの網羅は主説明としない。「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。コード探索でbind名が必要なときだけ「調査補助」へ書く。</p>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<p>受注CSV出力が参照する永続化テーブルは、現行（pf-eccube3）と移行先（ec-cube-enterprise）で同一の名称を用いる。CSVの列定義は <code>dtb_csv</code>、出力対象の注文本体は <code>dtb_order</code> であり、移行先 ec-cube-enterprise にいずれも実在する。<code>dtb_csv</code> の列（種別・有効 <code>enabled</code>・並び <code>sort_no</code>・表示名 <code>disp_name</code>・エンティティ名 <code>entity_name</code>・フィールド名 <code>field_name</code>・参照フィールド名 <code>reference_field_name</code>）も移行先に存在し、列名・用途に差は確認されない。</p>
-<p>DB関連の記述は ec-cube-enterprise を正とする。CSVのセル値は列定義が指す永続化オブジェクトの各列へ動的に分散するため、列ごとの対応は固定しない。各列の型・桁・制約の細部は ec-cube-enterprise の Entity / Repository / Migration を正とし、現行と移行先でスキーマが食い違う箇所があれば移行先の名称を主とする。本書時点で現行と移行先のスキーマ差は確認されていない。</p>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>受注一覧で検索条件を確定したあと、上部「CSVダウンロード」から「受注CSVダウンロード」を開く</td><td><code>GET /{admin_route}/order/export/order</code>（ルート名 <code>admin_order_export_order</code>）</td><td>直前までにセッションへ保存された受注検索条件と同一条件の注文明細がCSVとしてダウンロードされる。</td></tr><tr><td>検索条件を変えずにCSVだけ欲しい</td><td>上記と同じ</td><td>一覧表示直前にセッションへ書き込まれた検索データがそのまま使われる。一覧を開いていなくても、セッションに検索データが残っていればそれに従う。</td></tr></tbody></table></div>
-<p>一覧テンプレートでは翻訳キー <code>admin.order.order_csv.download</code>（メッセージ値は「受注CSVダウンロード」）がラベルとなる。</p>
-<hr>
-<h2 id="フロント挙動">フロント挙動</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>「CSVダウンロード」ボタンから開くドロップダウンに「受注CSVダウンロード」リンクがある。<code>id</code> は <code>orderCsvDownload</code>。</td></tr><tr><td>JS挙動</td><td>本リンクは通常のアンカー遷移であり、CSV出力専用のクライアント側検証や確認ダイアログはテンプレート上は設けない。</td></tr><tr><td>CSS・レイアウト</td><td>受注CSV専用の追加スタイルはない。</td></tr><tr><td>モーダル・ポップアップ</td><td>出力前の確認モーダルはない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="受注CSVをダウンロードする-GET-admin-order-export-order">受注CSVをダウンロードする（GET <code>admin_order_export_order</code>）</h3>
-<ol><li>管理画面の認証・共通制約を通過する。</li><li><code>set_time_limit(0)</code> でPHPの実行時間制限を無効にする。</li><li>エンティティマネージャ設定のSQLロガーを引数なしで解除し、大量出力時のロギング負荷を抑える（実装はORM設定のメソッド呼び出し1回）。</li><li>ストリーム応答のコールバック内で次項以降を実行する。</li><li>CSV出力サービスへ受注CSV種別を渡して初期化する。リポジトリは受注CSV種別と <code>enabled</code> が真の <code>dtb_csv</code> を <code>sort_no</code> 昇順で読み込む。0件なら後続のヘッダ出力で論理例外となる。</li><li>セッション <code>eccube.admin.order.search</code> を受注検索フォーム型へ投入した検索データから、管理画面用の注文検索クエリビルダを得る。</li><li>ヘッダ出力処理で、読み込んだ各 <code>dtb_csv</code> の表示名を左から並べた1行を、開く→書く→閉じる、で出力する。</li><li>エクスポート対象クエリをセットしたのちデータ出力処理を呼ぶ。内部ではページサイズ100でページネーションを繰り返し、各ページごとに結果行を走査し、各ループ末尾で永続化コンテキストをクリアする。各行（1注文）について、当該注文の受注明細集合を走査する。</li><li>各受注明細について、空の行バッファを用意し、手順5で得た各 <code>dtb_csv</code> 列に対して次を順に試す。注文へデータ解決、値が無ければ同一明細、それでも無ければ当該明細の配送へデータ解決。その後イベントキー <code>admin.order.csv.export.order</code> に相当するイベントを、当該CSV列・明細・行バッファ等とともに発火する。列ごとに得たスカラを行バッファへ積む。</li><li>1明細ぶんの列が揃ったら <code>fputcsv</code> で1行書き、<code>flush</code> する（ページ内の各行処理のあとでも <code>flush</code> する）。</li><li>コールバック外で応答ヘッダに <code>Content-Type: application/octet-stream</code> と <code>Content-Disposition: attachment; filename=</code> に続けてファイル名を付与する。ファイル名は接頭辞 <code>order_</code> と日時 <code>YmdHis</code> と拡張子 <code>.csv</code>。</li><li>コールバック完了後、情報ログに「受注CSV出力ファイル名」とファイル名配列を渡す実装とする。</li></ol>
-<h3 id="列値の解決処理がセルを組み立てるとき">列値の解決処理がセルを組み立てるとき</h3>
-<ol><li>CSV行定義のエンティティ名と、渡された永続化オブジェクトの種類を照合し、異なればnullとみなす。</li><li>CSV行定義のフィールド名がオブジェクトに存在しなければnull。</li><li>値が子エンティティ1件なら参照フィールド名でさらに取り出す。</li><li>値がコレクションなら各要素の参照フィールドを <code>eccube_csv_export_multidata_separator</code> で連結する。</li><li><code>DateTime</code> は <code>eccube_csv_export_date_format</code> で文字列化する。</li><li>真偽値は <code>1</code> または <code>0</code> にする。</li><li>それ以外のスカラは文字列化ルールに従いそのまま使う。</li></ol>
-<hr>
-<h2 id="集計条件">集計条件</h2>
-<p>本機能では売上集計やクロス集計は行わない。抽出対象は管理画面受注検索と同一の注文検索クエリ組み立てに従う。件数は検索結果の注文件数であり、CSVのデータ行数は注文件数と一致しない（明細行数になる）。</p>
-<div class="table-wrap"><table><thead><tr><th>指標</th><th>集計の要点</th></tr></thead><tbody><tr><td>CSVのデータ行数</td><td>抽出された各注文の受注明細件数の合計。明細0件の注文は行を増やさない。</td></tr><tr><td>クエリの注文件数</td><td>一覧の検索結果件数（配送展開ではない注文集約）と同型のビルダに依存する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="受注CSV出力時の判定順序-1列あたり">受注CSV出力時の判定順序（1列あたり）</h2>
-<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>列定義のエンティティ種別が注文本体か</td><td>一致すれば注文から値を取る。</td></tr><tr><td>2</td><td>注文で値が取れない</td><td>当該受注明細から値を取る。</td></tr><tr><td>3</td><td>明細で取れず、明細に配送が紐付く</td><td>その配送から値を取る。</td></tr><tr><td>4</td><td>上記ののち</td><td>イベントで行バッファを改変されうる。</td></tr></tbody></table></div>
-<hr>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<p>本機能では料金の再計算や税の再集計は行わない。CSVセルに出るのは、列定義に紐付いたプロパティの現時点値（および列値解決処理による型変換結果）である。</p>
-<h3 id="入力項目">入力項目</h3>
-<p>本機能ではフォーム入力を受け付けない。検索条件は別画面でセッションへ保存された値のみ参照する。</p>
-<h3 id="エッジケース">エッジケース</h3>
-<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>有効な受注CSV列定義が0件</td><td>ヘッダ出力処理が初期化不完備の論理例外を出す。</td></tr><tr><td>注文に明細がない</td><td>その注文についてCSVデータ行を増やさない。</td></tr><tr><td>セッションに検索データが無い</td><td>空に近い既定の検索データとしてフォームが処理され、一覧の初期検索と同型の絞り込みになりうる（受注検索フォーム型と注文リポジトリの実装を確認値とする）。</td></tr></tbody></table></div>
-<hr>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>一覧との条件一致</td><td>検索セッションキーと同じ入力でクエリを組むため、一覧を表示した直後にCSVを取れば対象注文集合は一致する。</td></tr><tr><td>一覧行数との関係</td><td>一覧が配送単位で複数行でも、CSVは注文→明細単位であり行数は一致しない。</td></tr><tr><td>参照時点</td><td>ストリーム処理中にページごとに永続層から読み直すため、長時間出力中に他処理で注文が更新された場合、前後ページで値の整合は保証しない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="API-バッチ結果">API/バッチ結果</h2>
-<p>本機能では外部HTTPAPI呼び出し・バッチ実行を扱わない。</p>
-<hr>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="出力対象の受注">出力対象の受注</h3>
+<p>セッションに保持した受注検索条件で検索し直し、一致した受注をすべて出力する。一覧で最後に実行した検索と同じ条件になる。検索条件を保持していないときは、条件を空にして検索する。対応状況を条件に含めないときは購入処理中を除いた全対応状況が対象になるため、条件が空でも購入処理中の受注は出力しない。</p>
+<p>一覧のページ番号と表示件数は出力対象に影響しない。表示していたページの受注だけに絞られることはなく、条件に一致する限りすべての受注を出力する。</p>
+<p>保持した検索条件は検索フォームへ入れ直してから使う。フォームの検証結果は出力の可否に影響せず、検証エラーがあっても、フォームが受け取れた条件だけで出力する。</p>
+<p>出力順は注文日の降順に固定である。出力項目に並び順の指定は無い。</p>
+<p>明細を複数持つ受注は、検索の結果に複数回現れる。同じ受注が続けて返ったときは 2 件目以降を出力しないが、続かない位置に同じ受注が現れたときは、その受注を重ねて出力する。</p>
+<h3 id="出力する列">出力する列</h3>
+<p>受注CSVの出力項目のうち、有効なものだけを出力する。並びは出力項目に設定した表示順の昇順とする。見出し行には各出力項目の表示名を出力し、有効な出力項目が 1 件も無いときは、見出し行もデータ行も列を持たない空の行になる。</p>
+<h3 id="行の作り方">行の作り方</h3>
+<p>受注 1 件につき、その受注の明細の件数だけ行を出力する。明細が 3 件ある受注は 3 行になり、明細を 1 件も持たない受注は行を出力しない。</p>
+<h3 id="値の取り方">値の取り方</h3>
+<p>出力項目ごとに、まず受注から値を取る。受注から取った値が空のときだけ、同じ項目名で受注明細から取り直し、どちらからも取れないときは空欄とする。</p>
+<p>出力項目に指定したデータの種別が受注・受注明細のいずれとも一致しないときは空欄とする。項目名が受注・受注明細のどちらにも無いときも空欄とする。</p>
+<p>種別を受注とした出力項目は、受注の値が空のときに明細から取り直しても空のままになる。種別を受注明細とした出力項目は、受注では取れないため常に明細から取る。</p>
+<p>取り出した値は、種類ごとに次の形へ変換して出力する。</p>
+<div class="table-wrap"><table><thead><tr><th>値の種類</th><th>出力する形</th></tr></thead><tbody><tr><td>他のデータを 1 件だけ参照する値</td><td>参照先の、出力項目に指定した項目の値</td></tr><tr><td>他のデータを複数参照する値</td><td>参照先の、出力項目に指定した項目の値を <code>,</code> で連結する。同じ値が複数あるときは 1 つにまとめ、参照先が見つからない要素は連結しない</td></tr><tr><td>日時</td><td><code>Y-m-d H:i:s</code> の形式の文字列</td></tr><tr><td>上記以外</td><td>取り出した値のまま</td></tr></tbody></table></div>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>HTTP GET。ボディなし。セッションの <code>eccube.admin.order.search</code>。</td></tr><tr><td>成功時出力</td><td><code>application/octet-stream</code> のCSV本体。先頭行は列見出し。以降は明細単位。</td></tr><tr><td>失敗時出力</td><td>論理例外時はフレームワークのエラー応答となりうる。運用者向け検証はヘッダ出力前に限られる。</td></tr><tr><td>副作用</td><td>受注データの更新は行わない。ログにファイル名を残す。</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<p>本機能は <code>dtb_csv</code>（CSV種別・有効・並び・表示名・エンティティ名・フィールド名・参照フィールド名）を参照して列を決める。セル値の実体は参照先永続化オブジェクトの各列に分散するため、行ごとの列対応を1表に固定しない。スキーマの細部はマイグレーションとORM定義を正とする。</p>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列（論理）</th><th>メモ</th></tr></thead><tbody><tr><td><code>dtb_csv</code></td><td>種別・<code>enabled</code>・<code>sort_no</code>・表示名・マッピング列</td><td>受注CSV出力のヘッダとデータマッピングの正。</td></tr><tr><td><code>dtb_order</code> ほか</td><td>（列定義に依存）</td><td>列値解決処理が動的に参照する。</td></tr></tbody></table></div>
-<h3 id="DB操作">DB操作</h3>
-<p>本機能は参照系（検索・出力）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>検索</td><td>dtb_csv / dtb_order</td><td>検索条件に合致するレコードを抽出する。抽出結果を所定フォーマットでファイル出力する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="バリデーション">バリデーション</h2>
-<p>CSV出力リクエスト自体に対するフォーム検証はない。列定義と実際の永続化オブジェクト構造が一致しない列は空欄またはnullとして出力されうる。</p>
-<hr>
-<h2 id="権限・認可">権限・認可</h2>
-<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>本機能（受注CSV GET）</th></tr></thead><tbody><tr><td>管理画面にログイン済みで当ルート到達可</td><td>CSVをダウンロードする。</td></tr><tr><td>未認証または管理画面ファイアウォールで拒否</td><td>管理画面共通の拒否応答（ログイン誘導等）に従う。</td></tr></tbody></table></div>
-<hr>
-<h2 id="画面遷移">画面遷移</h2>
-<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>一覧でリンクを開く</td><td>同一タブでファイルダウンロードが始まり、画面遷移はブラウザ次第。</td></tr><tr><td>ヘッダ送出前にコールバック内で例外</td><td>エラーページ表示やログ記録はフレームワーク既定に従う。</td></tr></tbody></table></div>
-<h3 id="遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</h3>
-<div class="table-wrap"><table><thead><tr><th>起点</th><th>遷移前の処理</th><th>遷移後の初期状態</th></tr></thead><tbody><tr><td>受注一覧</td><td>検索フォーム送信やパターン適用でセッション検索データが更新済みであることが多い</td><td>新しいGETがそのセッションを読むだけなので、追加のセッション更新は出力処理では行わない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>CSV種別初期化後に列定義が空</td><td>ヘッダ出力処理が論理例外を送出する。</td></tr><tr><td>長時間出力でのDB切断やIO失敗</td><td>ストリーム中の例外として扱われ、ダウンロードが中途で終わりうる。</td></tr></tbody></table></div>
-<hr>
+<h3 id="出力-CSVファイル">出力: CSVファイル</h3>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>文字コード</td><td><code>SJIS-win</code>。<code>UTF-8</code> から変換し、変換できない文字は環境に設定した代替文字に置き換わる</td></tr><tr><td>区切り文字</td><td><code>,</code></td></tr><tr><td>引用符</td><td>値が <code>,</code>・<code>"</code>・改行のいずれかを含むときだけ、値全体を <code>"</code> で囲む。値の中の <code>"</code> は 2 個続けて出力する</td></tr><tr><td>ファイル名</td><td><code>order_</code> に出力日時を <code>YmdHis</code> の形式でつなぎ、<code>.csv</code> を付けた名前</td></tr><tr><td>応答</td><td>ダウンロードとして返す</td></tr></tbody></table></div>
+<p>ファイルの先頭にバイトオーダーマークを 2 個出力する。見出し行を出力するときにも同じ印を付ける。見出し行の次の行からデータ行を出力する。</p>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
 <h2 id="表示メッセージ">表示メッセージ</h2>
-<p>注: 以下はメッセージ一覧(m05-02スライス)が本機能へ紐付けたフラッシュメッセージ。実ソース上は <code>OrderCsvController</code> の <code>exportForInput</code>（出荷実績インポート用CSVエクスポート, route <code>admin_order_export_for_input</code>）および <code>shippingResultImport</code>（出荷実績CSVアップロード, route <code>admin_shipping_result_csv_upload</code>）由来であり、本doc主機能の受注CSV出力ハンドラ <code>admin_order_export_order</code>(OrderController.php:385)とは別ハンドラのため機能由来は要検証。</p>
-<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>画面上の文言(英語)</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody></tbody></table></div>
-<hr>
-<h2 id="試行制限">試行制限</h2>
-<p>本機能ではAPIレート制限や回数上限を設けない。</p>
-<hr>
-<h2 id="ログ・監査">ログ・監査</h2>
-<div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>受注CSV応答のストリームコールバック完了後</td><td>情報ログに「受注CSV出力ファイル名」と生成ファイル名</td></tr></tbody></table></div>
-<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
-<ul><li>パスワード</li><li>なりすまし対策トークン</li><li>Cookie値</li><li>セッションIDの完全値</li><li>Remember Meトークンの原値</li></ul>
-<p>（受注CSVは個人情報・注文内容を含みうる。保存ログの取り扱いは運用ポリシーを正とする。）</p>
-<hr>
-<h2 id="セッション">セッション</h2>
-<h3 id="本機能におけるセッション">本機能におけるセッション</h3>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>参照</td><td>キー <code>eccube.admin.order.search</code> を読むのみ。</td></tr><tr><td>更新</td><td>本ルートの処理では更新しない。</td></tr></tbody></table></div>
-<h3 id="セッションへ保存しない情報">セッションへ保存しない情報</h3>
-<p>CSVバイナリ本体や一時ファイルパスをセッションに格納しない。</p>
-<hr>
-<h2 id="Cookie">Cookie</h2>
-<p>本機能独自のCookieは使わない。セッションCookieは管理画面共通実装に従う。</p>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<p>CSV出力は読み取り処理を主とし、本ルートの処理で明示的な排他ロックやトランザクション境界は張らない。</p>
-<hr>
-<h2 id="文字コード・区切り文字-設定">文字コード・区切り文字（設定）</h2>
-<p><code>eccube.yaml</code> の確認値は次のとおり。環境で上書きされている場合は実環境の設定を正とする。</p>
-<div class="table-wrap"><table><thead><tr><th>キー</th><th>確認値の例</th><th>CSVへの影響</th></tr></thead><tbody><tr><td><code>eccube_csv_export_separator</code></td><td><code>,</code></td><td>区切り文字</td></tr><tr><td><code>eccube_csv_export_encoding</code></td><td><code>UTF-8</code></td><td><code>fputcsv</code> 前の <code>mb_convert_encoding</code> の宛先。UTF-8のとき先頭にBOMを書く。</td></tr><tr><td><code>eccube_csv_export_date_format</code></td><td><code>Y-m-d H:i:s</code></td><td>日時列の文字列化</td></tr><tr><td><code>eccube_csv_export_multidata_separator</code></td><td><code>,</code></td><td>1セル内の複数値連結</td></tr></tbody></table></div>
-<hr>
-<h2 id="調査補助-grep用-主説明の正典ではない">調査補助（grep用。主説明の正典ではない）</h2>
-<ul><li>PHP パス例: <code>src/Eccube/Controller/Admin/Order/OrderController.php</code>、<code>src/Eccube/Service/CsvExportService.php</code>、<code>src/Eccube/Controller/Admin/Order/OrderCsvController.php</code></li><li>ルート名 <code>admin_order_export_order</code>、<code>admin_order_export_for_input</code></li><li>イベント定数名 <code>ADMIN_ORDER_CSV_EXPORT_ORDER</code></li><li>ログ文言キー「受注CSV出力ファイル名」</li></ul>
-<h3 id="HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</h3>
-<ul><li><code>admin_order_export_order</code> … <code>GET</code> … <code>/{admin_route}/order/export/order</code>（受注CSV種別でCSV出力サービスを初期化し、セッション保存済みの受注検索条件に一致する注文をページング走査してCSVをストリーム返却する。）</li><li><code>admin_order_export_for_input</code> … <code>GET, POST</code> … <code>/{admin_route}/order/export/order</code>（出荷実績取込ワークフロー用。クエリやボディの <code>order_ids</code> から注文ID一覧を取り、受注CSVとは別経路のサービスでCSV化する。本書の「受注CSVダウンロード」本体ではない。）</li></ul>
+<p>本機能は画面メッセージを持たない。</p>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,23 +272,7 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#文書情報">文書情報</a>
-<a class="lv2" href="#改訂履歴">改訂履歴</a>
-<a class="lv2" href="#1-在庫移動・振替CSV登録">1. 在庫移動・振替CSV登録</a>
-<a class="lv3" href="#機能の目的と役割">機能の目的と役割</a>
-<a class="lv3" href="#本書で扱うこと">本書で扱うこと</a>
-<a class="lv3" href="#本書で扱わないこと">本書で扱わないこと</a>
-<a class="lv3" href="#利用者視点の入口-エンドポイント">利用者視点の入口（エンドポイント）</a>
-<a class="lv3" href="#フォーム項目-モーダル">フォーム項目（モーダル）</a>
-<a class="lv3" href="#CSV雛形・必須列">CSV雛形・必須列</a>
-<a class="lv3" href="#取込手順-在庫移動">取込手順（在庫移動）</a>
-<a class="lv3" href="#取込手順-在庫振替">取込手順（在庫振替）</a>
-<a class="lv3" href="#エラー行-不正行の扱い">エラー行／不正行の扱い</a>
-<a class="lv3" href="#状態・データ更新">状態・データ更新</a>
-<a class="lv3" href="#最大行数について">最大行数について</a>
-<a class="lv3" href="#例外処理">例外処理</a>
-<a class="lv3" href="#関連設計への接続点">関連設計への接続点</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a></nav>
+      
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -286,223 +280,8 @@ footer {
         <h1>M04-22（在庫移動・振替CSV登録）</h1>
       </header>
       
-      <h2 id="文書情報">文書情報</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>機能名</td><td>在庫移動・振替CSV登録</td></tr><tr><td>機能分類</td><td>管理画面 / 在庫管理</td></tr><tr><td>カスタマイズ区分</td><td>新規実装</td></tr><tr><td>作成日</td><td>2026-06-11</td></tr><tr><td>参照元</td><td>excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html</td></tr><tr><td>実装確認</td><td>../ec-cube-enterprise（<code>StockMoveTransferController::importStockMoveCsv</code> / <code>importStockTransferCsv</code> / <code>StockMoveCsvImportType</code> / <code>StockTransferCsvImportType</code> / <code>StockMoveCsvImportHandler</code> / <code>StockTransferCsvImportHandler</code> / <code>StockMoveCsvImporter</code> / <code>StockTransferCsvImporter</code>）</td></tr></tbody></table></div>
-<h2 id="改訂履歴">改訂履歴</h2>
-<div class="table-wrap"><table><thead><tr><th>日付</th><th>内容</th></tr></thead><tbody><tr><td>2026-06-11</td><td>新規実装機能として、Excel設計書を主、実装を補完情報として初版作成。</td></tr><tr><td>2026-06-12</td><td>ec-cube-enterprise 実装（Controller/Service/Form/Entity）と既存テストを読み込み、フォーム項目・取込手順・バリデーション・履歴更新を実装確認値で具体化。</td></tr></tbody></table></div>
-<h2 id="1-在庫移動・振替CSV登録">1. 在庫移動・振替CSV登録</h2>
-<h3 id="機能の目的と役割">機能の目的と役割</h3>
-<p>在庫移動・振替検索/一覧（M04-08）画面上のモーダルから、CSVファイルで在庫移動または在庫振替を一括登録する管理画面機能。アップロードした商品コード・点数をもとに、在庫移動振替（親）と明細を作成し、出庫元（振替元）の在庫を点数分減算して在庫変動履歴を記録する。</p>
-<p>本機能のカスタマイズ区分は新規実装であり、対応する現行（pf-eccube3）実装は無い。挙動・画面の業務要件は基本設計仕様書（在庫管理機能 M04-22シート）を正とし、URLエンドポイント・DBカラム・取込処理順序はリニューアル先 ec-cube-enterprise 実装を正とする。</p>
-<h3 id="本書で扱うこと">本書で扱うこと</h3>
-<ul><li>在庫移動CSV登録／在庫振替CSV登録の入口（エンドポイント）とフォーム項目</li><li>CSV雛形（ヘッダ）と必須列</li><li>取込手順・バリデーション・エラー行/不正行の扱い・取込履歴</li><li>登録時の在庫・履歴更新と完了後の遷移</li></ul>
-<h3 id="本書で扱わないこと">本書で扱わないこと</h3>
-<ul><li>在庫移動・振替の検索/一覧（M04-08）、画面からの個別登録/編集（M04-09）の画面仕様</li><li>出庫承認・入庫承認などステータス遷移そのもの（承認系機能を正とする）</li><li>編集可能店舗の権限制御の詳細（M11-03 権限制御を正とする）</li></ul>
-<h3 id="利用者視点の入口-エンドポイント">利用者視点の入口（エンドポイント）</h3>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント（ルート名）</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>在庫移動CSV登録</td><td><code>POST /%admin%/product/stock/move_transfer/move_csv_import</code>（<code>admin_stock_move_transfer_move_csv_import</code>）</td><td>在庫移動CSVを取込。成功時は出庫承認依頼画面へ遷移。</td></tr><tr><td>在庫振替CSV登録</td><td><code>POST /%admin%/product/stock/move_transfer/transfer_csv_import</code>（<code>admin_stock_move_transfer_transfer_csv_import</code>）</td><td>在庫振替CSVを取込。成功時は在庫振替詳細画面へ遷移。</td></tr><tr><td>在庫移動CSV雛形</td><td><code>GET /%admin%/product/stock/move_transfer/move_csv_template</code>（<code>admin_stock_move_transfer_move_csv_template</code>）</td><td><code>stock_move.csv</code>（ヘッダ: 商品コード／移動点数）を出力。</td></tr><tr><td>在庫振替CSV雛形</td><td><code>GET /%admin%/product/stock/move_transfer/transfer_csv_template</code>（<code>admin_stock_move_transfer_transfer_csv_template</code>）</td><td><code>stock_transfer.csv</code>（ヘッダ: 振替元商品コード／振替先商品コード／振替点数）を出力。</td></tr></tbody></table></div>
-<p><code>%admin%</code> は管理画面ルートプレフィックス（<code>eccube_admin_route</code>）。管理画面ログインを要する。登録ルートはすべて一覧画面（<code>admin_stock_move_transfer</code>）上のモーダルからPOSTされる。</p>
-<h3 id="フォーム項目-モーダル">フォーム項目（モーダル）</h3>
-<p>**在庫移動CSV登録（<code>StockMoveCsvImportType</code>、ブロックプレフィックス <code>stock_move_csv_import</code>）**</p>
-<div class="table-wrap"><table><thead><tr><th>フォームキー</th><th>形式</th><th>必須</th><th>内容</th></tr></thead><tbody><tr><td><code>move_from_base_info</code></td><td><code>BaseInfo</code> セレクト</td><td>○</td><td>出庫元店舗</td></tr><tr><td><code>move_to_base_info</code></td><td><code>BaseInfo</code> セレクト</td><td>○</td><td>入庫先店舗</td></tr><tr><td><code>move_from_stock_location_id</code></td><td>ラジオ（EC-CUBE/スマレジ）</td><td>○</td><td>出庫元在庫区分</td></tr><tr><td><code>move_to_stock_location_id</code></td><td>ラジオ（EC-CUBE/スマレジ）</td><td>○</td><td>入庫先在庫区分</td></tr><tr><td><code>import_file</code></td><td>ファイル（mapped=false）</td><td>○</td><td>CSVファイル。<code>NotBlank</code> ＋ <code>File</code>（最大 <code>eccube_csv_size</code> MB）</td></tr></tbody></table></div>
-<p>**在庫振替CSV登録（<code>StockTransferCsvImportType</code>、ブロックプレフィックス <code>stock_transfer_csv_import</code>）**</p>
-<div class="table-wrap"><table><thead><tr><th>フォームキー</th><th>形式</th><th>必須</th><th>内容</th></tr></thead><tbody><tr><td><code>transfer_base_info</code></td><td><code>BaseInfo</code> セレクト</td><td>○</td><td>店舗（振替元・先共通）</td></tr><tr><td><code>transfer_stock_location_id</code></td><td>ラジオ（EC-CUBE/スマレジ）</td><td>○</td><td>在庫区分</td></tr><tr><td><code>approval_department</code></td><td>所属セレクト</td><td>任意</td><td>承認通知先の所属（承認権限保持メンバーの所属）</td></tr><tr><td><code>approval_notification_target_members</code></td><td>メンバー複数選択</td><td>任意</td><td>承認通知メール送付先メンバー（承認権限保持者）</td></tr><tr><td><code>import_file</code></td><td>ファイル（mapped=false）</td><td>○</td><td>CSVファイル。<code>NotBlank</code> ＋ <code>File</code>（最大 <code>eccube_csv_size</code> MB）</td></tr></tbody></table></div>
-<h3 id="CSV雛形・必須列">CSV雛形・必須列</h3>
-<div class="table-wrap"><table><thead><tr><th>種別</th><th>雛形ファイル名</th><th>列（ヘッダ）</th></tr></thead><tbody><tr><td>在庫移動</td><td><code>stock_move.csv</code></td><td>商品コード／移動点数</td></tr><tr><td>在庫振替</td><td><code>stock_transfer.csv</code></td><td>振替元商品コード／振替先商品コード／振替点数</td></tr></tbody></table></div>
-<p>列定義は <code>ColumnDefinitions</code>（<code>productCode</code>・<code>stockMoveQuantity</code>・<code>stockTransferFromProductCode</code>・<code>stockTransferToProductCode</code>・<code>stockTransferQuantity</code>、いずれも必須）に対応する。</p>
-<h3 id="取込手順-在庫移動">取込手順（在庫移動）</h3>
-<ol><li>フォーム検証。不正なら各エラーを <code>addError(..., 'admin')</code> し一覧へリダイレクト。</li><li><code>import_file</code> が null の場合 <code>admin.common.csv_invalid_format</code> を表示し一覧へ。</li><li>行数が <code>ADMIN_CSV_IMPORT_MAX_ROWS</code>（=5010）以上なら <code>admin.csv.error.upload.maxrecord</code>（<code>%maxRecord%</code>=5010）を表示し一覧へ。</li><li><code>StockMoveCsvImportHandler</code> ＋ <code>StockMoveCsvImporter</code> で取込実行。</li></ol>
-<ul><li>**onBeforeImport**: ステータス「新規登録」（<code>MtbStockMoveTransferStatus::STATUS_NEW=1</code>）で在庫移動振替（親）を作成・flush。</li><li>**行検証（onValidateRow）**: ヘッダ形式不一致は <code>admin.csv.error.format.header</code>。商品コード未存在は <code>admin.csv.error.product.not_exists</code>（breakAll）。移動点数が1未満は <code>admin.csv.error.product.invalid</code>（breakAll）。</li><li>**行取込（onReadRow）**: 商品コードから <code>ProductClass</code> を特定し、出庫元/入庫先の <code>ProductStock</code>（店舗・在庫区分一致）を取得。明細（<code>DtbStockMoveTransferDetail</code>：移動点数・基準価格合計・出庫総原価）を作成。在庫変動履歴（変動種別 <code>MtbStockChangeTypeDetail::MOVE_OUTBOUND</code>、履歴元種別 <code>STOCK_MOVE_EDIT</code>）を作成し、出庫元在庫を点数分減算（在庫数・総原価更新）。出庫元/入庫先の在庫が見つからない場合は例外。</li></ul>
-<ol><li>取込エラーがあれば <code>log_info('在庫移動CSV登録 異常終了')</code>、各エラーを表示し一覧へリダイレクト（登録は確定しない）。</li><li>成功時は <code>addSuccess('admin.register.complete')</code>、<code>dtb_csv_import_history</code> に登録（種別 <code>STOCK_MOVE_IMPORT_CSV_ID=17</code>／ファイル名／ログインメンバーID）。在庫移動振替IDがあれば出庫承認依頼画面（<code>admin_stock_move_outbound_approval_request</code>）へ、無ければ一覧へ遷移。</li></ol>
-<h3 id="取込手順-在庫振替">取込手順（在庫振替）</h3>
-<p>在庫移動と同様の前段検証（フォーム・ファイル有無・最大行数）を行い、<code>StockTransferCsvImportHandler</code> ＋ <code>StockTransferCsvImporter</code> で取込。</p>
-<ul><li>**onBeforeImport**: ステータス「振替承認待ち」（<code>STATUS_TRANSFER_APPROVAL_PENDING=8</code>）、移動タイプ＝振替（<code>MOVE_TRANSFER_TYPE_TRANSFER=2</code>）、出庫元/入庫先の店舗・在庫区分を <code>transfer_base_info</code>／<code>transfer_stock_location_id</code> で同一に設定して親を作成・flush。</li><li>**行検証**: 振替元・振替先それぞれの商品コード未存在は <code>admin.csv.error.product.not_exists</code>、振替点数1未満は <code>admin.csv.error.product.invalid</code>（いずれも breakAll）。</li><li>**行取込**: 振替元・振替先の <code>ProductClass</code>／<code>ProductStock</code>（同一店舗・在庫区分）を取得し、明細を作成。在庫変動履歴（変動種別 <code>TRANSFER_OUTBOUND</code>、履歴元種別 <code>STOCK_TRANSFER_EDIT</code>）を記録し、振替元在庫を点数分減算。</li><li>**onAfterImport**: <code>approval_notification_target_members</code> の各メンバーへ承認通知メール（<code>MailService::sendStockApprovalAlertMail</code>、リンクは <code>admin_stock_transfer</code>）を送信。送信失敗時は次のメンバーへ継続。</li><li>成功時は <code>dtb_csv_import_history</code> に種別 <code>STOCK_TRANSFER_IMPORT_CSV_ID=18</code> で登録し、在庫振替詳細（<code>admin_stock_transfer</code>）へ遷移。</li></ul>
-<p>&gt; **Excel要件「振替元・振替先がまったく同一の行が複数あった場合はエラー」を正とする。** 現行ハンドラ内に相当する重複行チェックの明示実装が見当たらないため、**実装側で追加が必要**（テストは重複行→エラーを期待値とする）。</p>
-<h3 id="エラー行-不正行の扱い">エラー行／不正行の扱い</h3>
-<ul><li>行検証でエラーを検出すると <code>breakAll()</code> し、以降の行は処理しない。取込全体は <code>import()</code> のトランザクション内でロールバックされ、エラーは <code>result-&gt;getErrors()</code> 経由で元画面（一覧）に表示される（部分登録は発生しない）。</li><li>不正フォーマット（ヘッダ不一致・空データ）はメッセージストアの該当キー（<code>admin.csv.error.format.header</code>／<code>admin.csv.error.data.empty</code> 等）で扱う。</li><li>エラー発生時、CSV登録モーダルの選択内容はリセットされ、一覧の検索条件・選択状態は維持される（Excel要件・M04-08側）。</li></ul>
-<h3 id="状態・データ更新">状態・データ更新</h3>
-<div class="table-wrap"><table><thead><tr><th>対象</th><th>内容</th></tr></thead><tbody><tr><td>親データ</td><td>在庫移動振替 <code>dtb_stock_move_transfer</code>（移動タイプ・初期ステータス・出庫元/入庫先の店舗ID・在庫区分・登録者 <code>registered_member_id</code>・更新者 <code>updated_member_id</code>）。</td></tr><tr><td>明細</td><td><code>dtb_stock_move_transfer_detail</code>（移動/振替点数・基準価格合計・出庫総原価）。</td></tr><tr><td>在庫</td><td>規格在庫 <code>dtb_product_stock</code>（出庫元/振替元の在庫数・総原価を点数分減算）。</td></tr><tr><td>在庫変動履歴</td><td><code>dtb_stock_history</code>（変動種別＝移動出庫/振替出庫、履歴元種別＝移動編集/振替編集、履歴元IDに在庫移動振替ID）。</td></tr><tr><td>取込履歴</td><td><code>dtb_csv_import_history</code>（<code>csv_import_type_id</code>＝17/18、<code>file_name</code>、<code>member_id</code>）。</td></tr><tr><td>ステータス履歴</td><td>取込時は親に初期ステータスを設定するのみで、<code>dtb_stock_move_transfer_status_history</code> への明示的な履歴行追加は本取込処理内に見当たらない（ステータス遷移は承認系機能側）。Excel設計が取込時点のステータス履歴記録を要する場合はExcelを正とし、実装側の是正対象とする（**要確認**）。</td></tr></tbody></table></div>
-<h3 id="最大行数について">最大行数について</h3>
-<p>**Excel記載の上限（移動10,000件・振替2,000件）を正とする。** 現状の実装は共通定数 <code>ADMIN_CSV_IMPORT_MAX_ROWS=5010</code> 以上で一律エラーとしており、移動・振替で個別上限になっていないためExcel要件と異なる（**実装側の是正対象**）。テストはExcel上限（移動10,000／振替2,000）を境界値として設計する。</p>
-<h3 id="例外処理">例外処理</h3>
-<ul><li>**ファイル未指定**: <code>admin.common.csv_invalid_format</code> を表示し一覧へリダイレクト。</li><li>**最大行数超過**: <code>admin.csv.error.upload.maxrecord</code> を表示し一覧へリダイレクト。</li><li>**在庫未存在**: 出庫元/入庫先（振替元/先）の在庫が見つからない場合は例外を送出し、取込はエラーとして確定しない。</li><li>**権限**: 編集可能店舗の権限制御（M11-03）に従う（共通設計を正とする）。</li></ul>
-<h3 id="関連設計への接続点">関連設計への接続点</h3>
-<ul><li>画面項目・CSV列・上限値の業務要件は参照元Excel設計書（在庫移動CSV登録／在庫振替CSV登録シート）を正とする。</li><li>URLエンドポイント・DBカラム・取込処理順序・エラーメッセージキーは <code>../ec-cube-enterprise</code> の <code>StockMoveTransferController</code> / 各 Import Handler / Importer 実装を正とする。</li><li>取込後の遷移先（出庫承認依頼 M04系・在庫振替詳細）の画面仕様は各機能設計を正とする。</li></ul>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<p>本機能は新規実装であり、現行（pf-eccube3）に対応する在庫移動・振替CSV登録機能は無い。挙動・画面・CSV列は基本設計仕様書（在庫管理機能 M04-22シート）を正とし、DBスキーマ・処理順序は ec-cube-enterprise の実装を正とする。確認できない点は推測せず要確認として残す。</p>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>移動・振替の親データ</td><td><code>dtb_stock_move_transfer</code>（移動振替区分・初期ステータス・出庫元/入庫先の店舗ID・在庫区分・送り状No・登録者・更新者）。移動の初期ステータスは新規登録、振替は振替承認待ち。</td></tr><tr><td>移動・振替の明細</td><td><code>dtb_stock_move_transfer_detail</code>（移動/振替点数・基準価格合計・出庫総原価）。</td></tr><tr><td>在庫・履歴</td><td>出庫元/振替元在庫を <code>dtb_product_stock</code> で減算し、<code>dtb_stock_history</code> に在庫変動履歴を記録する。</td></tr><tr><td>取込履歴</td><td><code>dtb_csv_import_history</code>（<code>member_id</code>・<code>file_name</code>・<code>csv_import_type_id</code>＝17/18）。</td></tr><tr><td>CSV列</td><td>移動は商品コード・移動点数の2列、振替は振替元商品コード・振替先商品コード・振替点数の3列。</td></tr></tbody></table></div>
-<details>
-<summary>Excel設計書からの抽出（原典・テスト網羅の根拠）</summary>
-<pre><code class="language-text">在庫移動CSV登録
-ドキュメント名
-在庫管理 基本設計
-セクション
-—
-プロジェクト名
-サイトリニューアル
-作成者
-堀部
-作成日
-2025-08-25
-更新者
-本田
-更新日
-2025-12-23
-機能No
-M04-22
-機能名
-在庫移動CSV登録
-概要
-—
-処理概要 在庫移動CSV登録モーダル
-図形・テキストボックス内テキスト（9件）
-レイアウト図 在庫移動CSVモーダル
-1-1
-1-2
-1-4
-1-3
-1-5
-1-6
-2-1
-2-2
-2-3
-在庫移動CSV登録 / C8 / image 1
-機能仕様処理概要 在庫移動CSV登録モーダル
-在庫移動CSV登録画面概要
-・在庫移動振替一覧画面から在庫移動CSV出力ボタンを押下し、このモーダル（在庫移動CSV登録モーダル）を表示する
-・選択した条件に対して、CSVの商品コードと移動点数をもとに在庫移動の登録を行う
-・登録処理完了後、ステータスは新規作成となり、移動対象の店舗の対象の商品の在庫が移動点数分減る
-権限制御
-・0201_基本設計仕様書(システム設定).xlsxの権限制御シート（機能ID: M11-03）の「2.編集可能店舗処理」に応じた権限制御が行われる
-登録処理実行時のエラー
-・アップロードされたファイルがcsv以外のファイルの場合
-・CSVファイルが下記のカラム以外の場合（フォーマット不一致エラー）
-・商品コード、移動点数
-・１ファイルあたりに登録できる商品点数の上限を10,000件に設定 上限数について確認する必要がある
-エラー発生時の挙動
-・モーダルを表示する元画面でエラーを扱う
-・本モーダルの選択内容はリセットされる
-在庫移動登録
-・機能ID: M04-09の「処理概要 初期登録画面」に応じた在庫移動登録処理が行われる
-識別IDラベル書式・制限必須最大値初期値画面部品の説明
-1-1出庫元店舗単一選択(セレクトボックス)○--在庫移動・振替登録 編集（移動）の "識別ID2-2" と同様に
-「出庫元店舗」を選択
-1-2出庫元在庫区分単一選択(ラジオボタン)○--在庫移動・振替登録 編集（移動）の "識別ID2-4" と同様に
-「出庫元在庫区分」を選択
-1-3入庫先店舗単一選択(セレクトボックス)○--在庫移動・振替登録 編集（移動）の "識別ID2-2" と同様に
-「入庫先店舗」を選択
-1-4入庫先在庫区分単一選択(ラジオボタン)○--在庫移動・振替登録 編集（移動）の "識別ID2-4" と同様に
-「入庫先在庫区分」を選択
-1-5ファイルを選択ボタン○--ボタンを押下すると、アップロードするためのディレクトリフォームが開き、
-csvファイルをアップロードすることが出来る
-1-6登録ボタン---在庫移動CSV登録処理を実行
-2-1雛形をダウンロードボタン---ボタン押下時に下記のカラムが記入されているCSVファイルを出力する
-CSVのカラムは下記の通り
-商品コード、移動点数
-登録CSV
-識別ID項目名主キー書式・制限必須最大文字数入力例説明
-2-2商品コード○文字列○255ABCD1234在庫移動対象の商品コードを記入
-2-3移動点数○数値○0~999999999100在庫移動対象の商品の移動点数を記入
-図形・テキストボックス内テキスト（9件）
-画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。
-位置テキスト
-C11(1-1)
-R11(1-2)
-C15(1-3)
-R15(1-4)
-C18(1-5)
-C21(1-6)
-Y23(2-1)
-C26(2-2)
-C28(2-3)
-在庫振替CSV登録
-ドキュメント名
-在庫管理 基本設計
-セクション
-—
-プロジェクト名
-サイトリニューアル
-作成者
-堀部
-作成日
-2025-08-25
-更新者
-本田
-更新日
-2025-12-23
-機能No
-M04-22
-機能名
-在庫振替CSV登録
-概要
-—
-処理概要 在庫振替CSV登録モーダル
-図形・テキストボックス内テキスト（10件）
-レイアウト図 在庫振替CSVモーダル
-1-1
-2-1
-1-3
-1-2
-1-5
-1-6
-2-2
-1-4
-2-3
-2-4
-在庫振替CSV登録 / D8 / image 1
-機能仕様処理概要 在庫振替CSV登録モーダル
-在庫振替CSV登録画面概要
-・在庫移動振替一覧画面から在庫振替CSV出力ボタンを押下し、このモーダル（在庫振替CSV登録モーダル）を表示する
-・選択した条件に対して、CSVの振替元商品コードと振替先商品コード、振替点数をもとに在庫振替の登録を行う
-・登録処理完了後、ステータスは振替承認待ちとなり、振替対象の商品の在庫が振替点数分減る
-権限制御
-・0201_基本設計仕様書(システム設定).xlsxの権限制御シート（機能ID: M11-03）の「2.編集可能店舗処理」に応じた権限制御が行われる
-登録処理実行時のエラー
-・アップロードされたファイルがcsv以外のファイルの場合
-・CSVファイルが下記のカラム以外の場合（フォーマット不一致エラー）
-・振替元商品コード、振替先商品コード、移動点数
-・１ファイルあたりに登録できる商品点数の上限を2,000件に設定
-エラー発生時の挙動
-・モーダルを表示する元画面でエラーを扱う
-・本モーダルの選択内容はリセットされる
-在庫移動登録
-・機能ID: M04-09の「処理概要 初期登録画面」に応じた在庫振替登録処理が行われる
-・画面での登録とはことなり、振替元商品コードは同じ商品が複数行あっても許容する（NMの商品をSPとMPにそれぞれ振替するパターンも考えられるため）
-・上記に関連し、振替元商品と振替先商品がまったく同一の行が複数あった場合はエラーとする
-識別IDラベル書式・制限必須最大値初期値画面部品の説明
-1-1店舗単一選択(セレクトボックス)○--在庫移動・振替登録 編集（振替）の "識別ID2-1" と同様に
-「店舗」を選択
-1-2在庫区分単一選択(ラジオボタン)○--在庫移動・振替登録 編集（振替）の "識別ID2-2" と同様に
-「在庫区分」を選択
-1-3承認通知先（所属選択）単一選択(セレクトボックス)---共通処理識別ID1-1参照
-表示内容については下記条件を追加とする
-編集している在庫を保持している店舗の所属マスターデータから取得し選択肢とする
-1-4承認通知先（メンバー選択）複数選択(セレクトボックス)○--承認を行う担当者にメール通知を送るために、対象メンバーを選択するためのフォーム
-共通処理識別ID1-2参照
-1-5ファイルを選択ボタン○--ボタンを押下すると、アップロードするためのディレクトリフォームが開き、
-csvファイルをアップロードすることが出来る
-1-6登録ボタン---在庫振替CSV登録処理を実行
-2-1雛形をダウンロードボタン---ボタン押下時に下記のカラムが記入されているCSVファイルを出力する
-CSVのカラムは下記の通り
-商品コード、移動点数
-登録CSV
-識別ID項目名主キー書式・制限必須最大文字数入力例説明
-2-2振替元商品コード○文字列○255ABCD1234在庫振替元の商品コードを記入
-2-3振替先商品コード○文字列○255ABCD1234在庫振替先の商品コードを記入
-2-4振替点数○数値○0~999999999100在庫振替対象の商品の振替点数を記入
-図形・テキストボックス内テキスト（10件）
-画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。
-位置テキスト
-D11(1-1)
-D14(1-2)
-D18(1-3)
-P18(1-4)
-D21(1-5)
-D24(1-6)
-V26(2-1)
-D28(2-2)
-D30(2-3)
-D32(2-4)</code></pre>
-</details>
+      <div class="renewal-spec-banner"><h3>リニューアル後の仕様</h3></div>
+
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

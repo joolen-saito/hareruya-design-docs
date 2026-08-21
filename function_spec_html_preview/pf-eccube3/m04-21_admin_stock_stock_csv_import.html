@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>M04-21（在庫変更CSV登録） - 機能仕様書</title>
+  <title>在庫管理 — 在庫変更CSV登録 - 機能仕様書</title>
   <style>
 :root {
   --bg: #ffffff;
@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,151 +272,47 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#本書で扱うこと">本書で扱うこと</a>
-<a class="lv2" href="#本書で扱わないこと">本書で扱わないこと</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv2" href="#用語">用語</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#フロント挙動">フロント挙動</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#画面表示">画面表示</a>
-<a class="lv3" href="#アップロード">アップロード</a>
-<a class="lv2" href="#在庫変更CSV取込時の判定順序-1行あたり">在庫変更CSV取込時の判定順序（1行あたり）</a>
-<a class="lv2" href="#集計条件">集計条件</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
-<a class="lv3" href="#入力項目">入力項目</a>
-<a class="lv3" href="#エッジケース">エッジケース</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#取り込むCSV">取り込むCSV</a>
+<a class="lv3" href="#取り込みの判定順序">取り込みの判定順序</a>
+<a class="lv3" href="#在庫数の更新">在庫数の更新</a>
+<a class="lv3" href="#在庫変更履歴の記録">在庫変更履歴の記録</a>
+<a class="lv3" href="#同名ファイルの再取り込み">同名ファイルの再取り込み</a>
+<a class="lv3" href="#他機能との境界">他機能との境界</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#バリデーション">バリデーション</a>
-<a class="lv2" href="#権限・認可">権限・認可</a>
-<a class="lv2" href="#画面遷移">画面遷移</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#表示メッセージ">表示メッセージ</a>
-<a class="lv3" href="#常時表示-正常・静的">常時表示（正常・静的）</a>
-<a class="lv3" href="#エラー・警告-インライン-フラッシュ">エラー・警告（インライン／フラッシュ）</a>
-<a class="lv3" href="#フラッシュ・トースト">フラッシュ・トースト</a>
-<a class="lv3" href="#メッセージID対応-自動棚卸">メッセージID対応（自動棚卸）</a>
-<a class="lv2" href="#ログ・監査">ログ・監査</a>
-<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a>
-<a class="lv2" href="#調査補助-ソース位置の索引">調査補助（ソース位置の索引）</a></nav>
+<a class="lv3" href="#入出力-永続化">入出力: 永続化</a>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
         <p class="crumb">Source:<br>/home/y-saito/Developments/hareruya-design-docs/functions/pf-eccube3/m04-21_admin_stock_stock_csv_import.md</p>
-        <h1>M04-21（在庫変更CSV登録）</h1>
+        <h1>在庫管理 — 在庫変更CSV登録</h1>
       </header>
       
-      <p>在庫変更CSVをアップロードし、各規格の在庫数を一括で増減する取込画面。現行pfと刷新後では、CSV列と変更理由の入力方法が異なる。</p>
-<h2 id="概要">概要</h2>
-<p>現行pfの在庫変更CSV登録は、商品コードと在庫増減数の2列からなるCSVファイルと、画面で入力する共通の変更理由を受け取り、1行ずつ在庫を即時更新する。刷新後のExcel基本設計とec-cube-enterprise実装は、CSVを「商品コード・在庫増減数・仕入単価」の3列とし、在庫変動区分・在庫変動理由・承認通知先を画面で指定して承認待ち情報を登録する。以下では両者を混同せず、現行確認値と刷新後仕様を対比する。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。HareruyaEc プラグインの実装を確認値とする。</p>
-<p>本機能のカスタマイズ区分はカスタマイズである。画面・処理の挙動は現行リポ（pf-eccube3 の HareruyaEc プラグイン）を参照し、DB関連（永続化先のテーブル名・列名・制約）は ec-cube-enterprise を正とする。現行と移行先でスキーマが異なる箇所は「リニューアル移行時の扱い」に集約する。</p>
-<p>対象はブラウザ経由の管理画面に限定する。管理画面プレフィックスは HareruyaEc プラグインの設定キー <code>admin_route</code> で決まるため、本書では <code>%eccube_admin_route%</code> で示す。</p>
-<p>本書の本文ではコントローラのメソッド名は主題としない。ルート bind 名は調査補助へ退避する。</p>
-<hr>
-<h2 id="本書で扱うこと">本書で扱うこと</h2>
-<ul><li>在庫変更CSVアップロード画面の入口と、アップロードフォーム・変更理由・フォーマット・雛形・取込履歴の表示</li><li>アップロード時の検証順序（ファイル必須・サイズ・形式・同名重複・行数上限）</li><li>1行ごとの在庫数更新の計算と検証（存在・在庫マイナス・在庫上限・更新ロック）</li><li>在庫変更履歴の記録、入荷通知メール、支店在庫連携の発火条件</li><li>成否のメッセージと取込履歴への記録</li></ul>
-<hr>
-<h2 id="本書で扱わないこと">本書で扱わないこと</h2>
-<p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
-<ul><li>在庫一括編集の画面入力経路（M04-03 を正とする）</li><li>価格変更・割引率変更など他のCSV取込（同一コントローラだが対象が異なる別機能）</li><li>入荷通知メールの文面・送信基盤、支店在庫連携の通信仕様</li><li>取込履歴一覧ブロックの内部仕様（共通ブロックを正とする）</li><li>管理画面の認証・ログイン・権限マスタの詳細</li></ul>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<p>DB関連は ec-cube-enterprise を正とする。現行（pf-eccube3 の HareruyaEc プラグイン）と移行先（ec-cube-enterprise）でスキーマが異なる主な点を記録する。確認できない点は推測せず要確認として残す。</p>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>在庫変更履歴の主キー</td><td>機能内で <code>dtb_stock_history</code> を直接 INSERT</td><td><code>dtb_stock_history.id</code></td></tr><tr><td>履歴と規格の関連</td><td><code>dtb_stock_history.product_class_id</code></td><td>規格在庫経由 <code>dtb_stock_history.product_stock_id</code> を持つ</td></tr><tr><td>履歴の理由メモ列</td><td><code>dtb_stock_history.memo</code></td><td><code>dtb_stock_history.stock_change_reason</code></td></tr><tr><td>履歴の理由区分</td><td><code>dtb_stock_history.stock_change_type_id</code></td><td><code>dtb_stock_history.stock_change_type_detail_id</code></td></tr><tr><td>入荷集計の保持</td><td><code>dtb_product_sub_class.stock_up_quantity</code></td><td>商品サブ規格テーブルが存在せず <code>dtb_stock_up_quantity</code> テーブルで保持（ec-cube-enterprise 実装で要確認）</td></tr><tr><td>規格の論理削除</td><td><code>dtb_product_class.del_flg</code></td><td>公開フラグ <code>dtb_product_class.visible</code>（del_flg を持たない）</td></tr></tbody></table></div>
-<p>移行先 ec-cube-enterprise の在庫変更履歴は原価単価・総原価・承認者・登録者などの列を追加で持つ。本書は現行 pf-eccube3 の取込挙動を扱い、移行先で追加される列・履歴項目は本節に集約する。</p>
-<hr>
-<h2 id="用語">用語</h2>
-<div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>商品コード</td><td>規格を一意に特定するコード。<code>dtb_product_class.product_code</code>。CSVの1列目。</td></tr><tr><td>在庫増減数</td><td>現在の在庫数へ加算する差分。負数で減算。CSVの2列目。</td></tr><tr><td>変更理由</td><td>取込全体に共通で付ける履歴メモ。フォームキー <code>memo</code>。</td></tr><tr><td>取込種別</td><td>CSV取込の区分。在庫変更CSVの種別IDを用いて取込履歴を記録する。</td></tr><tr><td>在庫変更履歴</td><td>在庫を変えた記録。テーブル <code>dtb_stock_history</code>。</td></tr></tbody></table></div>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>在庫変更CSVアップロード画面を開く</td><td><code>GET /%eccube_admin_route%/product/product_stock_csv_upload</code></td><td>アップロードフォーム・変更理由・フォーマット表・雛形リンク・取込履歴を表示する。</td></tr><tr><td>CSVファイルと変更理由を送信</td><td><code>POST /%eccube_admin_route%/product/product_stock_csv_upload</code></td><td>検証後に1行ずつ在庫を更新し、結果メッセージとエラー行を同一画面に表示する。</td></tr><tr><td>雛形ファイルダウンロード</td><td><code>GET /%eccube_admin_route%/product/product_csv_template/stock</code></td><td>在庫変更CSVの雛形を出力する。</td></tr></tbody></table></div>
-<p>アップロード後も同一画面を再表示し、成功フラッシュまたはエラー一覧を出す。</p>
-<hr>
-<h2 id="フロント挙動">フロント挙動</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>CSVファイル選択欄（受け付けはCSV・TSV相当）、変更理由の入力欄（必須表示）、アップロードボタン、ファイルフォーマット表（列名と必須注記）、雛形ファイルダウンロードリンク、取込履歴一覧。</td></tr><tr><td>JS 挙動</td><td>アップロード中のスピナー表示領域を持つ。本機能ではモーダル・タブの動的切替は扱わない。</td></tr><tr><td>CSS・レイアウト</td><td>管理画面共通のアップロード用ボックス。変更理由欄は必須を赤字注記で示す。</td></tr><tr><td>モーダル・ポップアップ</td><td>表示しない。エラーはファイル選択欄付近とフラッシュに表示する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="画面表示">画面表示</h3>
-<ol><li>利用者が在庫変更CSVアップロード画面を開く。</li><li>アップロードフォームと変更理由欄、フォーマット表（商品コード・在庫増減数）、雛形リンク、在庫変更CSV種別の取込履歴を表示する。</li></ol>
-<h3 id="アップロード">アップロード</h3>
-<ol><li>利用者がCSVファイルと変更理由を送信する。タイムアウトは無効化する。</li><li>フォームを検証する。ファイル未選択・サイズ超過・形式不一致・変更理由未入力・変更理由超過があれば、エラーをフラッシュに並べて同一画面を再表示する。</li><li>直近に同じファイル名で在庫変更CSVを取り込んでいれば「直近でアップロードされたファイル名です。ファイルを確認してください。」を表示して中止する。</li><li>ファイルの行数が上限（5010行）以上なら「…行を超えるCSVファイルは登録できません。」を表示して中止する。</li><li>取込を開始する（ログに開始を記録）。変更理由を取込ハンドラへ渡す。</li><li>1行ずつ取り込む。各行の処理は後述の判定順序に従う。</li><li>取込にエラーがあれば異常終了をログに記録し、結果のエラー行を画面に表示する。</li><li>エラーが無ければ「商品登録CSVファイルをアップロードしました。」を表示し、件数つきで完了をログに記録し、ファイル名を在庫変更CSVの取込履歴に追加する。</li><li>取込完了後、入荷対象があれば入荷通知メールを送り、更新後在庫を支店へ通知する。</li><li>結果（成功フラッシュまたはエラー行）を同一画面で表示する。</li></ol>
-<hr>
-<h2 id="在庫変更CSV取込時の判定順序-1行あたり">在庫変更CSV取込時の判定順序（1行あたり）</h2>
-<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>在庫増減数が0</td><td>更新不要として行をスキップする。</td></tr><tr><td>2</td><td>商品コードから規格を更新ロックして取得</td><td>取得不能なら処理を中断する。商品コードが見つからなければマスタ未存在エラー、2件以上見つかれば商品コード重複エラー、ロック取得失敗なら更新ロックタイムアウトエラー。</td></tr><tr><td>3</td><td>更新後在庫数＝現在庫＋増減数が0未満</td><td>在庫不足エラーとして処理を中断する。</td></tr><tr><td>4</td><td>更新後在庫数が在庫上限を超える</td><td>更新後在庫の桁数検証でエラーとして処理を中断する。</td></tr><tr><td>5</td><td>上記を通過</td><td>規格拡張の入荷集計に増減数を加算し、規格在庫と規格本体の在庫数を更新後在庫で更新し、在庫変更履歴を1件追加する。</td></tr></tbody></table></div>
-<p>更新後在庫が0より大きく、更新前在庫が文字列の0だった規格は入荷通知の対象に加える。更新成立した規格は支店通知の対象に加える。エラーが起きた行があると以後の取込は中断する。</p>
-<hr>
-<h2 id="集計条件">集計条件</h2>
-<div class="table-wrap"><table><thead><tr><th>指標</th><th>集計の要点</th></tr></thead><tbody><tr><td>取込対象行</td><td>CSVの各データ行。在庫増減数が0の行は更新せずスキップする。</td></tr><tr><td>入荷通知対象</td><td>更新前在庫が0で更新後在庫が正に転じた規格を集める。取込成功かつ対象があれば入荷通知メールを送る。</td></tr><tr><td>支店通知対象</td><td>更新が成立した規格IDと更新後在庫を集めて支店へ通知する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>新在庫数の計算</td><td>更新後在庫数＝現在庫＋在庫増減数。</td></tr><tr><td>商品コードの解決</td><td>削除フラグが立っていない商品・規格のうち、商品コードが一致する規格を1件取得する。2件以上は重複エラー。</td></tr><tr><td>履歴の理由メモ</td><td>取込全体で共通の変更理由を各履歴のメモに保存する。</td></tr><tr><td>履歴の理由区分</td><td>在庫変更履歴の理由区分はマスタ更新区分とする。</td></tr><tr><td>入荷集計の加算</td><td>更新成立時、規格拡張の入荷集計に増減数を加算する。</td></tr><tr><td>上限・下限</td><td>更新後在庫が0未満になる行はエラー。更新後在庫が在庫桁数上限を超える行はエラー。</td></tr></tbody></table></div>
-<h3 id="入力項目">入力項目</h3>
-<div class="table-wrap"><table><thead><tr><th>項目名</th><th>必須／任意</th><th>最大長</th><th>初期値</th><th>保存先・扱い</th></tr></thead><tbody><tr><td>CSVファイル選択</td><td>必須</td><td>ファイルサイズ上限は設定 <code>csv_size</code>（MB）。形式はCSV相当</td><td>未選択</td><td>アップロードファイル。フォームキー <code>import_file</code>（未マッピング）。必須・サイズ・形式（MIME）を検証。</td></tr><tr><td>変更理由</td><td>必須</td><td>最大1024文字（設定キー <code>inventory_plan.length.memo</code>）</td><td>空</td><td>フォームキー <code>memo</code>。各行の在庫変更履歴の理由列に共通で保存（移行先 <code>dtb_stock_history.stock_change_reason</code>、現行 <code>dtb_stock_history.memo</code>）。</td></tr></tbody></table></div>
-<p>現行pfのCSV本文は次の2列で、いずれも必須である。</p>
-<div class="table-wrap"><table><thead><tr><th>CSV列</th><th>内容</th></tr></thead><tbody><tr><td>商品コード</td><td><code>dtb_product_class.product_code</code>。規格の特定キー。</td></tr><tr><td>在庫増減数</td><td>現在庫への加算差分。0はスキップ。</td></tr></tbody></table></div>
-<p>フォーマット表のヘッダは「商品コード（必須）」「在庫増減数（必須）」の2列を表示する。</p>
-<p>刷新後のExcel識別ID 2-1およびec-cube-enterpriseの <code>StockChangeCsvController::getStockChangeCsvHeader()</code> / <code>StockChangeCsvImportHandler</code> は、次の3列を必須とする。旧Excelにあった「在庫変動理由」列は雛形から削除され、理由は画面の共通入力として扱う。</p>
-<div class="table-wrap"><table><thead><tr><th>CSV列</th><th>刷新後の扱い</th></tr></thead><tbody><tr><td>商品コード</td><td>対象の商品在庫を特定する必須列。</td></tr><tr><td>在庫増減数</td><td>必須列。入庫・廃棄の区分に応じて符号と更新後在庫を検証する。</td></tr><tr><td>仕入単価</td><td>必須列。<code>StockChangeCsvImportHandler</code> の列定義でも <code>setRequired(true)</code>。</td></tr></tbody></table></div>
-<h3 id="エッジケース">エッジケース</h3>
-<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>在庫増減数0の行</td><td>更新せずスキップする。</td></tr><tr><td>商品コードが見つからない</td><td>マスタ未存在エラーで取込を中断する。</td></tr><tr><td>商品コードが2件以上一致</td><td>商品コード重複エラーで取込を中断する。</td></tr><tr><td>更新ロックが取れない</td><td>更新ロックタイムアウトエラーで取込を中断する。</td></tr><tr><td>更新後在庫が負</td><td>在庫不足エラーで取込を中断する。</td></tr><tr><td>更新後在庫が上限超過</td><td>桁数検証エラーで取込を中断する。</td></tr><tr><td>同名ファイルの再取込</td><td>直近同名なら取込前に中止する。</td></tr><tr><td>行数が上限以上</td><td>行数上限エラーで取込前に中止する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>規格在庫と規格本体</td><td>同一更新で規格在庫 <code>dtb_product_stock.stock</code> と規格本体 <code>dtb_product_class.stock</code> を更新後在庫に揃える。</td></tr><tr><td>履歴との整合</td><td>更新成立した規格ごとに在庫変更履歴を1件作る。変更前在庫・変更後在庫・操作者を記録する。</td></tr><tr><td>取込の中断</td><td>エラー行で取込全体を中断する。中断時点までの永続化はトランザクションの境界に従う（取込基盤の実装を正とする）。</td></tr><tr><td>同時更新</td><td>行ごとに規格在庫へ更新ロックを取得してから更新する。ロックが取れない場合はタイムアウトエラーとする。</td></tr><tr><td>支店連携</td><td>取込完了後に更新後在庫を支店へ通知する。連携の到達保証は連携機能側の設計を正とする。</td></tr></tbody></table></div>
-<hr>
-<h2 id="API-バッチ結果">API/バッチ結果</h2>
-<p>本機能では外部 HTTP API の呼び出しやバッチ実行を扱わない。入荷通知メール送信と支店在庫連携の通知は取込処理内で行う。</p>
-<hr>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="取り込むCSV">取り込むCSV</h3>
+<p>CSVは商品コード・在庫増減数・仕入単価を必須の列とする。現行 pf-eccube3 は商品コードと在庫増減数の2列を必須とする。</p>
+<p>在庫変動理由はCSVの列に持たず、画面で全行に共通の変更理由として入力する。</p>
+<h3 id="取り込みの判定順序">取り込みの判定順序</h3>
+<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>在庫増減数が0か</td><td>0なら更新せず次の行へ進む。</td></tr><tr><td>2</td><td>商品コードから規格を特定できるか</td><td>見つからなければ未存在エラー、2件以上見つかれば重複エラー、他の処理が更新中なら更新中エラーとして中断する。</td></tr><tr><td>3</td><td>更新後の在庫数が0を下回るか</td><td>下回るなら在庫不足エラーとして中断する。</td></tr><tr><td>4</td><td>更新後の在庫数が上限を超えるか</td><td>超えるならエラーとして中断する。</td></tr><tr><td>5</td><td>上記を通過したか</td><td>在庫数を更新し、在庫変更履歴を1件追加し、入荷集計に増減数を加える。</td></tr></tbody></table></div>
+<p>エラーが起きた行があった時点で、以降の取り込みを中断する。</p>
+<h3 id="在庫数の更新">在庫数の更新</h3>
+<p>更新後の在庫数は、現在の在庫数に在庫増減数を加えて求める。</p>
+<p>更新後の在庫数が0より大きく、更新前の在庫数が0だった規格は入荷通知の対象に加える。更新が成立した規格は支店への通知対象に加える。</p>
+<h3 id="在庫変更履歴の記録">在庫変更履歴の記録</h3>
+<p>在庫変動理由の区分はマスタ更新とする。在庫変動理由には画面で入力した共通の変更理由を記録する。</p>
+<h3 id="同名ファイルの再取り込み">同名ファイルの再取り込み</h3>
+<p>直近で取り込んだファイルと同じ名前のファイルは取り込まない。</p>
+<h3 id="他機能との境界">他機能との境界</h3>
+<p>1件ずつの在庫更新は「在庫編集」を、複数件の画面上での更新は「在庫一括編集」（M04-03）を正とする。</p>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>CSVファイル（商品コード・在庫増減数）、共通の変更理由。</td></tr><tr><td>成功時出力</td><td>同一画面で成功フラッシュを表示し、取込履歴にファイル名を追加。</td></tr><tr><td>失敗時出力</td><td>同一画面でエラー行・エラー文言を表示。取込履歴には追加しない。</td></tr><tr><td>副作用</td><td>規格在庫・規格本体在庫の更新、在庫変更履歴の追加、入荷集計の加算、入荷通知メール、支店在庫通知、取込履歴の追加。</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<p>当機能に直接関係する列のみを示す。テーブル名・列名は ec-cube-enterprise を正とし、現行（pf-eccube3）と異なる場合は移行先名を主として現行名を括弧で添える。型の細部はスキーマを参照する。</p>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td>dtb_product_class</td><td>id, product_code, stock, price02, visible（現行 del_flg）</td><td>規格の特定・在庫更新。履歴の販売価格に <code>price02</code> を用いる。</td></tr><tr><td>dtb_product</td><td>id</td><td>公開・有効な商品の規格に限定（現行は del_flg で判定）。</td></tr><tr><td>dtb_product_stock</td><td>stock</td><td>規格在庫の在庫数を更新後在庫で更新。</td></tr><tr><td>dtb_stock_up_quantity（現行 dtb_product_sub_class.stock_up_quantity。ec-cube-enterprise 実装で要確認）</td><td>（入荷集計の列）</td><td>入荷集計の加算。</td></tr><tr><td>dtb_stock_history</td><td>id, product_stock_id（現行 product_class_id）, stock, old_stock, sell_price, stock_change_reason（現行 memo）, stock_change_type_detail_id（現行 stock_change_type_id）, member_id, create_date</td><td>在庫変更履歴を追加。</td></tr><tr><td>dtb_csv_import_history</td><td>id, file_name, csv_import_type_id, member_id, create_date</td><td>取込種別・ファイル名・登録者・登録日。</td></tr></tbody></table></div>
-<h3 id="DB操作">DB操作</h3>
-<p>永続化の正は ec-cube-enterprise（テーブル名・操作は ec-cube-enterprise を正典）。確定できない経路は要確認とする。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>登録</td><td>dtb_csv_import_history</td><td>CSV取込の実行ごとに取込履歴を1件登録する。</td></tr><tr><td>更新</td><td>dtb_product_stock / dtb_product_class</td><td>取込行の在庫数を更新する。ec-cube-enterprise では在庫書込が承認ワークフロー（dtb_stock_edit_approval 系）を経る場合があり、取込経路の永続化モデルは ec-cube-enterprise 実装で要確認。</td></tr><tr><td>登録</td><td>dtb_stock_history</td><td>在庫更新ごとに在庫変更履歴を登録する（即時記録か承認後かは M04-03 のDB操作に準じ要確認）。</td></tr></tbody></table></div>
-<hr>
-<h2 id="バリデーション">バリデーション</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>CSVファイル</td><td>必須・サイズ上限（<code>csv_size</code> MB）・形式（MIME）を検証。</td></tr><tr><td>変更理由</td><td>必須・最大1024文字。</td></tr><tr><td>同名重複</td><td>直近に同名ファイルを取り込んでいれば中止。</td></tr><tr><td>行数上限</td><td>行数が5010行以上なら中止。</td></tr><tr><td>各行</td><td>在庫増減数0はスキップ。商品コードの存在・一意・更新後在庫の下限/上限・更新ロックを判定。</td></tr></tbody></table></div>
-<hr>
-<h2 id="権限・認可">権限・認可</h2>
-<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>在庫変更CSV登録</th></tr></thead><tbody><tr><td>管理画面にログインし当該ルートへ到達できる運用者</td><td>利用できる。細かいロール単位の可否は管理画面のセキュリティ設定と権限マスタの実装を正とする。</td></tr><tr><td>未ログインまたは拒否された主体</td><td>管理画面共通の挙動により利用できない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="画面遷移">画面遷移</h2>
-<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>アップロード画面を開く</td><td>同一画面（フォーム・フォーマット・取込履歴を表示）。</td></tr><tr><td>アップロードが検証エラー・取込エラー</td><td>同一画面を再表示しエラーを表示。</td></tr><tr><td>アップロードが成功</td><td>同一画面を再表示し成功フラッシュを表示。</td></tr><tr><td>雛形ファイルダウンロード</td><td>ファイルダウンロードのストリーム応答。</td></tr></tbody></table></div>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>フォーム検証失敗</td><td>エラーをフラッシュに並べ同一画面を再表示。</td></tr><tr><td>同名ファイル再取込</td><td>中止し同一画面を再表示。</td></tr><tr><td>行数上限超過</td><td>中止し同一画面を再表示。</td></tr><tr><td>行内エラー（存在・在庫・ロック）</td><td>取込を中断しエラー行を表示。取込履歴は追加しない。</td></tr></tbody></table></div>
-<hr>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>CSVファイル、変更理由</td></tr><tr><td>成功時出力</td><td>在庫数の更新、取り込み完了メッセージ</td></tr><tr><td>失敗時出力</td><td>行ごとのエラー一覧、ファイルの検証エラー</td></tr></tbody></table></div>
+<h3 id="入出力-永続化">入出力: 永続化</h3>
+<div class="table-wrap"><table><thead><tr><th>操作</th><th>契機</th></tr></thead><tbody><tr><td>更新（在庫数）</td><td>CSVの行の取り込み</td></tr><tr><td>追加（在庫変更履歴）</td><td>在庫数を更新したとき</td></tr><tr><td>更新（入荷集計）</td><td>在庫数を更新したとき</td></tr></tbody></table></div>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
 <h2 id="表示メッセージ">表示メッセージ</h2>
-<h3 id="常時表示-正常・静的">常時表示（正常・静的）</h3>
-<div class="table-wrap"><table><thead><tr><th>種別</th><th>表示文言（日本語）</th><th>条件</th></tr></thead><tbody><tr><td>必須注記</td><td>変更理由 ※必須</td><td>変更理由欄のラベル。</td></tr><tr><td>フォーマット</td><td>商品コード（必須）／在庫増減数（必須）</td><td>ファイルフォーマット表のヘッダ。</td></tr></tbody></table></div>
-<h3 id="エラー・警告-インライン-フラッシュ">エラー・警告（インライン／フラッシュ）</h3>
-<div class="table-wrap"><table><thead><tr><th>表示文言（日本語）</th><th>表示条件（利用者視点）</th><th>表示位置</th><th>備考</th></tr></thead><tbody><tr><td>ファイルを選択してください。</td><td>ファイル未選択</td><td>フラッシュ</td><td>設定キー <code>admin.csv.error.upload.require</code>。</td></tr><tr><td>CSVファイルは %d MB以下でアップロードしてください。</td><td>サイズ超過</td><td>フラッシュ</td><td>設定キー <code>admin.csv.error.upload.maxsize</code>。</td></tr><tr><td>ファイル形式が異なります。CSVファイルをアップロードしてください。</td><td>形式不一致</td><td>フラッシュ</td><td>設定キー <code>admin.csv.error.upload.mime</code>。</td></tr><tr><td>直近でアップロードされたファイル名です。ファイルを確認してください。</td><td>同名再取込</td><td>フラッシュ</td><td>設定キー <code>admin.csv.error.upload.duplicate</code>。</td></tr><tr><td>%d 行を超えるCSVファイルは登録できません。</td><td>行数上限超過</td><td>フラッシュ</td><td>設定キー <code>admin.csv.error.upload.maxrecord</code>。%d は5010。</td></tr><tr><td>%d 行目の %s ではデータを取得できません。</td><td>商品コード未存在</td><td>エラー行</td><td>設定キー <code>admin.csv.error.product.not_exists</code> 系。</td></tr><tr><td>%d 行目の商品コードの値 %s は重複して登録されてるため更新できません。</td><td>商品コード重複</td><td>エラー行</td><td>設定キー <code>admin.csv.error.product.product_code_duplicated</code>。</td></tr><tr><td>%d 行目の%s : %s の在庫個数が足りません。</td><td>更新後在庫が負</td><td>エラー行</td><td>設定キー <code>admin.csv.error.data.out_of_stock</code>。</td></tr><tr><td>商品コード %s は他の処理により更新中です。少し時間を空けてから再度更新してください。</td><td>更新ロック失敗</td><td>エラー行</td><td>更新ロックタイムアウト。</td></tr></tbody></table></div>
-<h3 id="フラッシュ・トースト">フラッシュ・トースト</h3>
-<div class="table-wrap"><table><thead><tr><th>表示文言（日本語）</th><th>表示条件</th></tr></thead><tbody><tr><td>商品登録CSVファイルをアップロードしました。</td><td>取込がエラーなく完了したとき（設定キー <code>admin.product.csv_import.save.complete</code>）。</td></tr></tbody></table></div>
-<hr>
-<h3 id="メッセージID対応-自動棚卸">メッセージID対応（自動棚卸）</h3>
-<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>画面上の文言(英語)</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M04-21-MSG-001</td><td>管理画面上部</td><td>入力されていません。 ／ 長すぎます。この値は{{ limit }}文字以下で入力してください。 ／ 要素は{{ limit }}個以上でなければなりません。 ／ 選択した値は無効です。 ／ 有効な値ではありません。 ／ 有効なファイルを選択してください。 ／ ファイルのサイズが大きすぎます。許可されている最大サイズは{{ limit }} {{ suffix }}です。 ／ ファイルのサイズが大きすぎます。 ／ ファイルをアップロードできませんでした。 ／ フィールドグループに追加のフィールドを含んではなりません。</td><td>（英訳なし）</td><td>必要項目が未入力、または在庫変更理由が規定文字数を超過した状態で一括登録ボタンを押下したとき</td><td>エラーをフラッシュメッセージとして設定し、在庫変更CSV画面へ遷移する</td></tr><tr><td>M04-21-MSG-002</td><td>画面上部（CSV検証エラー領域）</td><td>CSVにエラーがあります。内容を確認してください。</td><td>（英訳なし）</td><td>CSV登録ボタン押下後、クライアント側CSV検証または<code>admin_stock_change_csv_pre_validate</code>のJSONエラーが1件以上あるとき</td><td>アップロード送信を中止し、同画面でエラー一覧とともに表示する</td></tr></tbody></table></div>
-<h2 id="ログ・監査">ログ・監査</h2>
-<div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>取込開始</td><td>「在庫変更CSV登録開始」を記録。</td></tr><tr><td>取込完了</td><td>「在庫変更CSV登録完了」と件数を記録。取込履歴にファイル名を追加。</td></tr><tr><td>取込異常終了</td><td>「在庫変更CSV登録 異常終了」を記録。</td></tr><tr><td>各行の更新成立</td><td>在庫変更履歴に変更前在庫・変更後在庫・理由メモ・操作者を記録。</td></tr></tbody></table></div>
-<p>操作者は在庫変更履歴の <code>member_id</code> に保持する。</p>
-<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
-<ul><li>パスワード</li><li>なりすまし対策トークン</li><li>Cookie 値</li><li>セッション ID の完全値</li><li>Remember Me トークンの原値</li></ul>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<p>行ごとに該当規格の在庫へ更新ロックを取得してから在庫数を更新する。ロックが取れない場合はタイムアウトとして当該行をエラーにし取込を中断する。取込全体のトランザクション境界は取込基盤の実装を正とする。</p>
-<hr>
-<h2 id="調査補助-ソース位置の索引">調査補助（ソース位置の索引）</h2>
-<p>grep 用のパスのみ示す。ふるまいの正は実装本文とする。</p>
-<ul><li><code>app/Plugin/HareruyaEc/Controller/Admin/Product/ProductCsvController.php</code>（<code>csvProductStock</code> / <code>csvProductStockUpload</code>。ルート <code>admin_product_stock_csv_import</code> / <code>admin_product_stock_csv_upload</code>。<code>CSV_IMPORT_MAX</code> = 5010）</li><li><code>app/Plugin/HareruyaEc/Form/Type/Admin/Product/StockCsvImportType.php</code>（フォーム名 <code>stock_csv_import</code>、<code>memo</code> 必須）、<code>app/Plugin/HareruyaEc/Form/Type/Admin/CsvImportType.php</code></li><li><code>app/Plugin/HareruyaEc/Service/Csv/Importer/Event/ProductStockImportHandler.php</code>（行ごとの更新・履歴・入荷通知）</li><li><code>app/Plugin/HareruyaEc/Resource/template/admin/Product/csv_product_stock.twig</code></li><li><code>app/Plugin/HareruyaEc/config.yml</code>（<code>inventory_plan.length.memo</code> = 1024）</li></ul>
+<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M04-21-MSG-001</td><td>管理画面上部</td><td>入力されていません。 ／ 長すぎます。この値は{{ limit }}文字以下で入力してください。 ／ 要素は{{ limit }}個以上でなければなりません。 ／ 選択した値は無効です。 ／ 有効な値ではありません。 ／ 有効なファイルを選択してください。 ／ ファイルのサイズが大きすぎます。許可されている最大サイズは{{ limit }} {{ suffix }}です。 ／ ファイルのサイズが大きすぎます。 ／ ファイルをアップロードできませんでした。 ／ フィールドグループに追加のフィールドを含んではなりません。</td><td>必要項目が未入力、または在庫変更理由が規定文字数を超過した状態で一括登録ボタンを押下したとき</td><td>エラーをフラッシュメッセージとして設定し、在庫変更CSV画面へ遷移する</td></tr><tr><td>M04-21-MSG-002</td><td>画面上部（CSV検証エラー領域）</td><td>CSVにエラーがあります。内容を確認してください。</td><td>CSV登録ボタン押下後、クライアント側CSV検証または<code>admin_stock_change_csv_pre_validate</code>のJSONエラーが1件以上あるとき</td><td>アップロード送信を中止し、同画面でエラー一覧とともに表示する</td></tr><tr><td>—</td><td>管理画面上部</td><td>商品登録CSVファイルをアップロードしました。</td><td>取り込みがエラーなく完了したとき</td><td>在庫変更CSV登録画面に留まる</td></tr><tr><td>—</td><td>管理画面上部</td><td>ファイルを選択してください。</td><td>ファイルを選択せずに登録したとき</td><td>在庫変更CSV登録画面に留まる</td></tr><tr><td>—</td><td>管理画面上部</td><td>CSVファイルは %d MB以下でアップロードしてください。</td><td>ファイルサイズが上限を超えたとき</td><td>在庫変更CSV登録画面に留まる</td></tr><tr><td>—</td><td>管理画面上部</td><td>ファイル形式が異なります。CSVファイルをアップロードしてください。</td><td>CSV以外の形式を選択したとき</td><td>在庫変更CSV登録画面に留まる</td></tr><tr><td>—</td><td>管理画面上部</td><td>直近でアップロードされたファイル名です。ファイルを確認してください。</td><td>直近と同じ名前のファイルを選択したとき</td><td>在庫変更CSV登録画面に留まる</td></tr><tr><td>—</td><td>管理画面上部</td><td>%d 行を超えるCSVファイルは登録できません。</td><td>行数が上限（5010行）を超えたとき</td><td>在庫変更CSV登録画面に留まる</td></tr><tr><td>—</td><td>エラー行</td><td>%d 行目の %s ではデータを取得できません。</td><td>商品コードに該当する規格が無いとき</td><td>取り込みを中断する</td></tr><tr><td>—</td><td>エラー行</td><td>%d 行目の商品コードの値 %s は重複して登録されてるため更新できません。</td><td>商品コードに該当する規格が複数あるとき</td><td>取り込みを中断する</td></tr><tr><td>—</td><td>エラー行</td><td>%d 行目の%s : %s の在庫個数が足りません。</td><td>更新後の在庫数が0を下回るとき</td><td>取り込みを中断する</td></tr><tr><td>—</td><td>エラー行</td><td>商品コード %s は他の処理により更新中です。少し時間を空けてから再度更新してください。</td><td>他の処理が同じ規格を更新中のとき</td><td>取り込みを中断する</td></tr></tbody></table></div>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

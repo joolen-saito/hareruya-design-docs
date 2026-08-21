@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>m05-22_admin_order_order_shipping_standby_print_delivery_slips_ja（受注管理_出荷指示_納品書印刷（日本語）） - 機能仕様書</title>
+  <title>受注管理 — 出荷指示：納品書印刷（日本語） - 機能仕様書</title>
   <style>
 :root {
   --bg: #ffffff;
@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,134 +272,52 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#フロント挙動">フロント挙動</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#編集画面上で日本語納品書を開く-クライアント">編集画面上で日本語納品書を開く（クライアント）</a>
-<a class="lv3" href="#サーバがリクエストを受理してHTMLで応答するとき-印刷ルート">サーバがリクエストを受理してHTMLで応答するとき（印刷ルート）</a>
-<a class="lv2" href="#集計条件">集計条件</a>
-<a class="lv2" href="#納品書構築-国内-日本語入力-でのクエリ判定順序">納品書構築（国内／日本語入力）でのクエリ判定順序</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
-<a class="lv3" href="#エッジケース">エッジケース</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#印刷対象">印刷対象</a>
+<a class="lv3" href="#納品書の組み立て">納品書の組み立て</a>
+<a class="lv3" href="#差出人・届け先の表示">差出人・届け先の表示</a>
+<a class="lv3" href="#金額の表示">金額の表示</a>
+<a class="lv3" href="#改ページ">改ページ</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#バリデーション">バリデーション</a>
-<a class="lv2" href="#権限・認可">権限・認可</a>
-<a class="lv2" href="#画面遷移">画面遷移</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#試行制限">試行制限</a>
-<a class="lv2" href="#ログ・監査">ログ・監査</a>
-<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
-<a class="lv2" href="#セッション">セッション</a>
-<a class="lv2" href="#Cookie">Cookie</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a>
-<a class="lv2" href="#関連設計">関連設計</a>
-<a class="lv2" href="#調査補助-grep-用">調査補助（grep 用）</a>
-<a class="lv3" href="#HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</a></nav>
+<a class="lv3" href="#出力-納品書">出力: 納品書</a>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
         <p class="crumb">Source:<br>/home/y-saito/Developments/hareruya-design-docs/functions/pf-eccube3/m05-22_admin_order_order_shipping_standby_print_delivery_slips_ja.md</p>
-        <h1>m05-22_admin_order_order_shipping_standby_print_delivery_slips_ja（受注管理_出荷指示_納品書印刷（日本語））</h1>
+        <h1>受注管理 — 出荷指示：納品書印刷（日本語）</h1>
       </header>
       
-      <h2 id="概要">概要</h2>
-<p>管理画面「受注管理」配下ナビ項目「出荷指示リスト」（設定 <code>eccube_nav.yaml</code> のキー <code>shipping_instructions</code> に対応。翻訳キーは <code>admin.order.shipping_instructions</code>）から一覧を検索したうえで特定のリストを編集画面で開き、表に並ぶ受注のうちチェックがオンになっている行のみを送信対象として、サーバ側で配送単位まで展開して国内配送フラグに合致する情報だけから納品書用データを組み立て、<code>delivery_slips.ja.twig</code> 相当のHTMLを新規ブラウザウィンドウで表示する機能である。ボタンラベルは翻訳キー <code>admin.order.print_delivery_slips_ja</code>。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値とする実装起点はSymfonyルート名 <code>admin_shipping_standby_print_delivery_slips</code>、<code>/{admin_route}/standby/{id}/print/delivery/{lang}</code>（本機能では <code>lang=ja</code> のみ説明対象）、出荷指示用コントローラに付与される印刷用ルートアクション、出荷指示リスト用データアクセス層における納品書構築処理が返す配列およびテンプレート <code>@admin/ShippingStandby/delivery_slips.ja.twig</code>、ならびに設定鍵 <code>eccube_admin_route</code>（環境変数 <code>ECCUBE_ADMIN_ROUTE</code>）とする。</p>
-<p>対象はブラウザ経由の管理画面のみとする。</p>
-<p>本機能のカスタマイズ区分は現行踏襲であり、画面挙動と処理フローは現行リポ pf-eccube3 の実装を確認値とし、永続化に関わるテーブル・列の記述は ec-cube-enterprise を正とする。</p>
-<p>コントローラの処理名一覧は本文の主説明としない。本文ではルートbind名やSymfonyのルートnameの網羅は主説明としない。「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。コード探索でbind名が必要なときだけ「調査補助」へ書く。</p>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<p>DB関連の記述は ec-cube-enterprise を正とする。本機能が参照する永続化先は確認時点で現行（pf-eccube3）と移行先（ec-cube-enterprise）で同一スキーマである。</p>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>出荷指示リスト本体・受注対応</td><td><code>dtb_shipping_standby</code>、受注との中間表 <code>dtb_order_shipping_standby</code></td><td>同一スキーマ。</td></tr><tr><td>受注・配送</td><td><code>dtb_order</code>、<code>dtb_shipping</code></td><td>同一スキーマ。</td></tr><tr><td>配送方法の国内／海外判定</td><td><code>dtb_delivery.is_abroad</code>（海外配送フラグ）</td><td>同一スキーマ。日本語経路は海外配送フラグ偽の配送方法に限定する。</td></tr><tr><td>顧客・明細</td><td><code>dtb_customer</code>、<code>dtb_order_item</code></td><td>同一スキーマ。</td></tr></tbody></table></div>
-<p>DB関連の差異は確認時点で認められない。日本語経路の海外配送フラグ偽判定は現行・移行先で同一の挙動として扱う。</p>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>ナビ「受注管理」→「出荷指示リスト」→検索で対象リストを選択し、<code>admin_shipping_standby_edit</code> の編集を開いたうえで、少なくとも1件オンで「納品書印刷（日本語）」を押したとき</td><td><code>POST /{admin_route}/standby/（出荷指示リスト主キー）/print/delivery/ja</code></td><td><code>window.open</code> で空ウィンドウを開く。<code>#form_bulk</code> の <code>action</code> を上記、<code>target</code> を <code>newwin</code> にセットしてPOSTし、ウィンドウ内に国内配送条件を満たして組み立てたHTML納品書を表示する。</td></tr><tr><td>画面上でオン受注キー一覧が空になるPOST（チェックオフのみ等）</td><td>（上記と同様のPOST URL）</td><td>サーバ側でアクセス不存在に相当する異常応答となる。</td></tr><tr><td>メソッドがGETのみでリクエストにオン受注キー一覧が載らない</td><td><code>GET /{admin_route}/standby/（リスト主キー）/print/delivery/ja</code></td><td>POSTと同種の異常応答となる。編集画面上のウィンドウPOST運用とは別検証となる。</td></tr><tr><td><code>order_ids</code> 連想入力のオンキーを受注主キー一覧として読み、当該出荷指示リストに属する送信対象受…</td><td><code>POST /{admin_route}/standby/{id}/print/delivery/{lang}</code></td><td><code>order_ids</code> 連想入力のオンキーを受注主キー一覧として読み、当該出荷指示リストに属する送信対象受注だけに絞り、それらにぶら下がる各配送について配送主キーを一意に集める。続けて納品書データ組み立てのうち日本語向けとなる国内配送フラグ条件を渡したあと、<code>delivery_slips.ja.twig</code> を応答ボディへ返す。</td></tr><tr><td>メソッド制約として許容される。画面上の通常運用ではPOST主体。GETで本文にオン状態に相当する `ord…</td><td><code>GET {lang}=ja</code></td><td>メソッド制約として許容される。画面上の通常運用ではPOST主体。GETで本文にオン状態に相当する <code>order_ids</code> が載らない場合は異常応答となる。</td></tr></tbody></table></div>
-<hr>
-<h2 id="フロント挙動">フロント挙動</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>共通管理フレーム内編集ページ。一覧表の左端にチェック（初期オン）。リスト上部にピッキング・英語納品書などと並んだ「納品書印刷（日本語）」ボタンがある。ヘッダ一括チェックは <code>id="check-all"</code> と各行チェックとの連携は共通 <code>function.js</code> の慣例に依存する確認値とする。</td></tr><tr><td>JS 挙動</td><td><code>#printDeliverySlipsJp</code> クリックで <code>window.open</code>（名前 <code>newwin</code>）、<code>form_bulk.action</code> を日本語URLへ、<code>target=newwin</code>、<code>submit</code>。受注一覧の同名ボタンと異なり、チェック無しを止める <code>alert</code> は実装しない。</td></tr><tr><td>CSS・レイアウト（印刷ウィンドウ）</td><td>単体HTMLで <code>assets/css/deliveryslips.css</code>（<code>admin</code> パッケージ）を読み込む。上部に印刷トリガボタンの帯を置く。</td></tr><tr><td>CSS・レイアウト（編集画面）</td><td>本機能用の追加スタイルブロックはテンプレ <code>edit.twig</code> では空。</td></tr><tr><td>モーダル・ポップアップ</td><td>印刷前の確認ダイアログは無いが、別ウィンドウを開いてPOSTするのみ。</td></tr></tbody></table></div>
-<p>印刷HTML側では <code>select2.min.js</code> を読み込む構造があるが、このテンプレート内でのselect2初期化コードはなく、ウィジェット機能には使っていない（読み込みのみの状態が実装上の確認値）。<code>DOMContentLoaded</code> で <code>#printButton</code> が存在すれば <code>window.print()</code> をひも付ける。</p>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="編集画面上で日本語納品書を開く-クライアント">編集画面上で日本語納品書を開く（クライアント）</h3>
-<ol><li><code>window.open</code> でウィンドウ名 <code>newwin</code> を用意する。</li><li><code>#form_bulk</code> の <code>action</code> に <code>/{admin_route}/standby/{id}/print/delivery/ja</code> に相当するURL、<code>target</code> に <code>newwin</code> をセットする。</li><li><code>#form_bulk</code> をPOST送信する。</li><li>送信本文には、オン状態の各行に対応するキーだけが <code>order_ids[（注文の主キー）]</code> の形で載り、オフではキーごと欠落する。一覧の <code>#form_bulk</code> にあるようなCSRF用hidden入力は、この出荷指示編集側の <code>#form_bulk</code> には載っていない（POSTが共通セキュリティのもとどう検証されるかはフレームワーク・カスタムの確認値）。</li></ol>
-<h3 id="サーバがリクエストを受理してHTMLで応答するとき-印刷ルート">サーバがリクエストを受理してHTMLで応答するとき（印刷ルート）</h3>
-<ol><li>管理ユーザのログイン状態で管理側ファイアウォールを通過する。</li><li>パス <code>{id}</code> の出荷指示リスト実体が取れない場合、アクセス不存在に相当する異常応答となる。</li><li>HTTPリクエストから連想入力 <code>order_ids</code> を読み、そのキーを配列化したものが空ならアクセス不存在に相当する異常応答となる。</li><li>リストにぶら下がる各受注について、手順3の送信キー集合に含まれるものだけ処理対象に残す。</li><li>対象各受注の各配送について配送主キーを集合へ載せ、<code>array</code> のキー再利用で一意化する。</li><li>配送主キー集合が空ならアクセス不存在に相当する異常応答となる。</li><li><code>{lang}=ja</code> のとき納品書組み立てに「海外向けフラグ」の偽判定を渡し、配送ID配列ごとクエリ実行する実装となる（引数順は関数定義どおり）。</li><li>モール共通基本情報を取得し、<code>@admin/ShippingStandby/delivery_slips.ja.twig</code> を描いて返す。</li></ol>
-<p>受注一覧一括の同名データ組み立てルートで行っているPHP実行時間無制限化は、このルートの実装では行わない。</p>
-<hr>
-<h2 id="集計条件">集計条件</h2>
-<div class="table-wrap"><table><thead><tr><th>指標</th><th>集計の要点</th></tr></thead><tbody><tr><td>配送に紐づく注文明細の並びと合計数量</td><td>注文明細用のDoctrineクエリビルダにより列挙・グループ化し、並び順はトレイトと価格帯しきい値二点を用いた式に依存する。</td></tr><tr><td>注文単位の代表行（一覧上部の宛先・送り主・請求項目）</td><td>別クエリで注文および配送側の代表列をグループ集計している。複数配送が同一注文に存在するなどのときの配列キー単位での対応関係について本書では完全な一意対応まで保証しない（エッジケース参照）。</td></tr><tr><td>画面上部の請求欄テーブル値</td><td>「小計」「送料」「手数料」「ポイント使用」「発送手段名」「請求金額（税込）」「内税」相当にデータが渡される。金額表示は共通 <code>price</code> フィルタ等を経由する確認値とする。</td></tr></tbody></table></div>
-<hr>
-<h2 id="納品書構築-国内-日本語入力-でのクエリ判定順序">納品書構築（国内／日本語入力）でのクエリ判定順序</h2>
-<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>呼出側から配送ID配列が渡されている</td><td>SQL条件 <code>WHERE s.id IN (:shippingIds)</code> に載せられる。</td></tr><tr><td>2</td><td>配送方法との内部結合（<code>dtb_delivery.is_abroad</code> が呼出側の海外向けフラグ引数と一致）</td><td>日本語側では海外向けフラグが真の配送方法行はクエリ結果から落ちる。</td></tr><tr><td>3</td><td>会員とプレイヤ紐付けの結合可否</td><td>結合不能な顧客データではクエリ失敗または空になりうる実装となる。</td></tr></tbody></table></div>
-<hr>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>オン受注から配送ID一覧</td><td>チェックオン受注のみが送信キーを持ち、各受注の全配送ぶら下がりの配送主キーを集める。同一注文に複数配送があればそれらすべて載りうる。</td></tr><tr><td>国内配送のみが残る内部結合</td><td>日本語側は配送方法の海外向けフラグが偽のものだけ結合残留。画面上で対象となる配送がすべて海外方法だけのオン受注のみを選ぶと結果行がなくなり、その後のアレイマージまたはORM結果の解釈で実行時異常になりうる。</td></tr><tr><td>DB書込</td><td>しない。フラッシュメッセージや監査ログの機能固有強制出力もソース上載っていない。</td></tr></tbody></table></div>
-<p>永続入力フォームを伴わないため <code>### 入力項目</code> は置かない。</p>
-<h3 id="エッジケース">エッジケース</h3>
-<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>出荷指示リスト <code>{id}</code> が存在しないまたはルート側で読めない</td><td>アクセス不存在に相当する異常応答となる。</td></tr><tr><td><code>order_ids</code> が空</td><td>アクセス不存在に相当する異常応答となる。</td></tr><tr><td>POSTに載ったキーが当リスト所属受注ではないのみ</td><td>集約結果の配送主キー集合が空になりアクセス不存在に相当する異常応答となる。</td></tr><tr><td>国内向けにもかかわらずオン受注ぶら下がり配送がすべて海外向け方法</td><td>クエリ側で行がなく失敗しうる。</td></tr><tr><td>顧客にプレイヤ紐付けがなく結合できない</td><td>クエリ異常または空に至りうる。</td></tr><tr><td>同一注文に配送が複数行ある場合の配列インデックス</td><td>Doctrine のインデックス付き結果において末尾行のみ残るなど、期待と異なる一覧キー単位での行の上書きが起きうる。</td></tr></tbody></table></div>
-<hr>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>親画面チェック状態と印刷内容</td><td>POST時点でブラウザに載っていた状態のみ送信。印刷ウィンドウ表示後に親で一覧や受注状態を変更してもウィンドウ内は自動更新しない。</td></tr><tr><td>配送と請求欄対応</td><td>請求項目は注文側スカラーから渡る構成であり、画面上の複数配送と税額欄との一行対一行対応まで本書では保証しない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="API-バッチ結果">API/バッチ結果</h2>
-<p>本機能ではHTTPS API の呼び出しやバッチ起動は行わない。</p>
-<hr>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="印刷対象">印刷対象</h3>
+<p>指定した出荷指示リストで選択した受注だけを対象とする。指定した出荷指示リストが存在しないときは、納品書を作らず未検出として応答する。</p>
+<p>受注を 1 件も選択していないときも納品書の枠は作るが、中身は空になる。</p>
+<p>配送方法の海外区分が <code>0</code> の受注だけを納品書にする。選択した受注でも、海外区分が異なる配送方法の受注は納品書に出ない。海外向けの配送方法を設定した受注は英語の納品書だけに出る。</p>
+<p>会員情報・プレイヤー情報・配送先のいずれかを持たない受注は納品書に出ない。商品・商品規格・商品サブ情報・商品規格サブ情報のいずれかを持たない明細も納品書に出ない。</p>
+<p>注文者の都道府県が未設定のときは納品書に出ない。配送先の都道府県または国が未設定のときは納品書に出て、その欄だけが空になる。</p>
+<p>配送方法に海外区分の設定が無いときは、日本語・英語のどちらの納品書にも出ない。海外区分は配送方法に設定した値だけで決まり、受注や配送先の国では変わらない。</p>
+<p>出荷指示リストに含まれない受注を選択したときも、その受注の納品書を出す。選択した受注が出荷指示リストに属するかどうかは確かめない。</p>
+<h3 id="納品書の組み立て">納品書の組み立て</h3>
+<p>受注ごとに、注文者と配送先の氏名・郵便番号・都道府県・国・住所・電話番号、配送方法、注文明細、数量の合計、スマレジ会員IDをまとめる。数量の合計は受注単位で明細の数量を合計した値とする。</p>
+<p>郵便番号は、上 3 桁と下 4 桁がどちらも登録されているときだけ <code>-</code> でつなぐ。どちらかが欠けているときは、登録されている郵便番号をそのまま使う。電話番号は 3 つの電話番号値を区切り文字なしで連結し、氏名は姓と名の間に空白を 1 個入れる。</p>
+<p>消費税額は、小計に送料と手数料を足し、値引きを引いた金額から算出する。適格請求書発行事業者の登録番号は設定から読み、納品書に載せる。</p>
+<h3 id="差出人・届け先の表示">差出人・届け先の表示</h3>
+<div class="table-wrap"><table><thead><tr><th>条件</th><th>表示</th></tr></thead><tbody><tr><td>都道府県が海外のとき</td><td>国・地域名を先頭の行に出し、郵便番号の後ろに都道府県を出さない</td></tr><tr><td>都道府県が海外以外のとき</td><td>国・地域名を出さず、郵便番号の後ろに都道府県を出す</td></tr><tr><td>スマレジ会員IDを持つとき</td><td>会員番号としてスマレジ会員IDを出す</td></tr><tr><td>スマレジ会員IDを持たないとき</td><td>会員番号として <code>非会員</code> と出す</td></tr><tr><td>配送方法が店頭スムーズ受取のとき</td><td>受取人署名の欄を見出しの右に出す</td></tr><tr><td>配送方法が店頭スムーズ受取以外のとき</td><td>受取人署名の欄を出さない</td></tr></tbody></table></div>
+<p>差出人として出す自社の名称・住所・電話番号・URL・メールアドレスは納品書に固定で持つ。受注の内容では変わらない。</p>
+<h3 id="金額の表示">金額の表示</h3>
+<div class="table-wrap"><table><thead><tr><th>欄</th><th>出す値</th></tr></thead><tbody><tr><td>お買上額</td><td>受注の小計</td></tr><tr><td>送料</td><td>受注の送料</td></tr><tr><td>手数料</td><td>受注の手数料</td></tr><tr><td>ポイント使用</td><td>受注の値引き額。ポイント数として計算した値ではない</td></tr><tr><td>発送方法</td><td>配送方法の名称</td></tr><tr><td>請求金額(税込)</td><td>受注の合計。内税として消費税額を併記する</td></tr></tbody></table></div>
+<p>明細行には商品情報・価格・数量・合計を出す。合計は価格に数量を掛けた金額とする。金額は 3 桁ごとに区切って出し、ポイント使用の欄は値引きが 0 のときも 0 と出す。</p>
+<p>商品情報には受注したときの商品名を出す。受注のあとに商品名を変えたときも、納品書に出る商品名は変わらない。</p>
+<h3 id="改ページ">改ページ</h3>
+<p>明細 30 行ごとに改ページし、ページの先頭では見出し・注文番号・届け先・差出人・金額の欄を出し直す。ページ番号は現在のページ数と総ページ数を並べて出す。総ページ数は明細の件数を 30 で割った数に 1 を足した数とし、明細が 30 件のときは 1 ページ、31 件のときは 2 ページになる。</p>
+<p>ページの最後の明細の下に合計行を出す。合計行の数量は、そのページまでに出した明細の数量の累計と、受注全体の数量の合計を並べたものとする。</p>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>パス <code>{id}</code>（出荷指示リスト主キー）、連想入力 <code>order_ids</code> のオンキー一覧（論理入力）。</td></tr><tr><td>成功時出力</td><td>UTF-8のHTML。複数ページ風レイアウトと印刷ボタン。標準機能としてCSVやPDFバイナリ本文ではない。</td></tr><tr><td>失敗時出力</td><td>リスト不正・入力不正・結合結果の異常によりアクセス不存在相当または共通例外処理。</td></tr><tr><td>副作用</td><td>DB更新なし、セッション書込みなし。</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<p>参照のみ。代表例として次を記す。JOIN列一覧はDoctrineマッピングとビルダ追跡が正となる。</p>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列（代表）</th><th>メモ</th></tr></thead><tbody><tr><td><code>dtb_shipping_standby</code></td><td>主キー</td><td>パス <code>{id}</code> と編集親。</td></tr><tr><td><code>dtb_order</code></td><td><code>order_no</code>、名前・電話・郵便・住所系、請求・税・値引項目</td><td>「送り主」欄と上部請求欄への供給。</td></tr><tr><td><code>dtb_shipping</code></td><td>宛先名・電話・郵便・住所、<code>pref_id</code>、<code>delivery_id</code>、<code>country</code> 関連</td><td>「お届け先」入力。</td></tr><tr><td><code>dtb_delivery</code></td><td><code>name</code>、<code>is_abroad</code>、<code>id</code></td><td><code>is_abroad</code> で国内／海外、<code>id</code> が日本語テンプレの署名欄分岐に載る確認値として使われる場合がある。手段名へ表示伝搬。</td></tr><tr><td><code>dtb_customer</code> と関連プレイヤ</td><td>スマートレジ様ID列など</td><td>「会員番号／非会員」表現。結合失敗には注意が必要な実装となる。</td></tr><tr><td><code>dtb_order_item</code></td><td><code>product_name</code>、<code>price</code>、<code>quantity</code> ほか並び順用結合対象列</td><td>明細格子・並びグループキー作成。</td></tr></tbody></table></div>
-<h3 id="DB操作">DB操作</h3>
-<p>本機能は参照系（検索・出力）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>検索</td><td>dtb_customer / dtb_delivery / dtb_order / dtb_order_item / dtb_shipping / dtb_shipping_standby</td><td>検索条件に合致するレコードを抽出する。抽出結果を所定フォーマットでファイル出力する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="バリデーション">バリデーション</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>オン受注キー非空・配送主キー集合非空</td><td>満たさなければルート側で異常応答へ至る。その他状態・所有権の二重チェックは本アクション単体では明示しない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="権限・認可">権限・認可</h2>
-<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>印刷パスでのHTML応答</th></tr></thead><tbody><tr><td>未ログイン</td><td>管理側ログインフォームへの誘導対象となる。</td></tr><tr><td>管理画面ログイン済み</td><td><code>%eccube_admin_route%/</code> パターンで管理側ファイアウォールを経由する。その先の機能固有権限粒度はソース上明示が無ければ共通方針に従う。</td></tr></tbody></table></div>
-<hr>
-<h2 id="画面遷移">画面遷移</h2>
-<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>ボタン成功後</td><td>編集ウィンドウ（親）はその場にとどまる。子ウィンドウのみ納品書HTMLが表示される。</td></tr></tbody></table></div>
-<p>本アクションは出荷検索セッションを読んだりフラッシュメッセージを積んだりしない。</p>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>リスト欠、<code>order_ids</code> が空キー一覧、または配送一覧が論理空</td><td>アクセス不存在に相当する異常応答となる。</td></tr><tr><td>クエリ・ORMレイヤの異常</td><td>アプリ共通の例外処理およびログ方針に委ねる。画面に業務文言を載せる保証はない。</td></tr></tbody></table></div>
-<p>画面上で詳細説明しない404運用へ近く、共通エラーページのみを経由しうる。</p>
-<hr>
-<h2 id="試行制限">試行制限</h2>
-<p>本機能ではレートリミットを扱わない。</p>
-<hr>
-<h2 id="ログ・監査">ログ・監査</h2>
-<p>本ルート単体の業務イベントログ強制はソース上読み取れない。</p>
-<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
-<ul><li>パスワード</li><li>なりすまし関連トークン原値一式</li><li>Cookieやセッション完全値転記ログ</li><li>RememberMeトークン原値</li></ul>
-<hr>
-<h2 id="セッション">セッション</h2>
-<p>本ルートはセッション変数への書込をしない。親画面側の検索条件保持とは独立する。</p>
-<hr>
-<h2 id="Cookie">Cookie</h2>
-<p>ブラウザ用の新規Cookie発行は行わず、管理ログイン状態は共通に依存する。</p>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<p>単発読みのためロックや明示トランザクション境界は持たない。</p>
-<hr>
-<h2 id="関連設計">関連設計</h2>
-<p>レイアウト・税制表示など受注一覧向け日本語テンプレと共通の細部は、同一リポジトリメソッド利用の経路にある設計書 <code>m05-09_admin_order_order_print_delivery_slips_ja</code> とテンプレ <code>delivery_slips.ja.twig</code> の実装照合により読み替える。</p>
-<hr>
-<h2 id="調査補助-grep-用">調査補助（grep 用）</h2>
-<ul><li>コントローラ実装ファイル <code>src/Eccube/Controller/Admin/Order/ShippingStandbyController.php</code> メソッド <code>printDeliverySlips</code></li><li>ルート属性名 <code>admin_shipping_standby_print_delivery_slips</code></li><li>編集Twig <code>src/Eccube/Resource/template/admin/ShippingStandby/edit.twig</code>（ <code>#printDeliverySlipsJp</code> と <code>#form_bulk</code> ）</li><li>印刷Twig <code>src/Eccube/Resource/template/admin/ShippingStandby/delivery_slips.ja.twig</code></li><li>納品書データ <code>src/Eccube/Repository/DtbShippingStandbyRepository.php</code> メソッド <code>generateDeliverySlips</code></li></ul>
-<h3 id="HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</h3>
-<ul><li><code>admin_shipping_standby_print_delivery_slips</code> … <code>POST</code> … <code>/{admin_route}/standby/{id}/print/delivery/{lang}</code>（<code>order_ids</code> 連想入力のオンキーを受注主キー一覧として読み、当該出荷指示リストに属する送信対象受注だけに絞り、それらにぶら下がる各配送について配送主キーを一意に集める。続けて納品書データ組み立てのうち日本語向けとなる国内配送フラグ条件を渡したあと、<code>delivery_slips.ja.twig</code> を応答ボディへ返す。）</li><li><code>admin_shipping_standby_print_delivery_slips</code> … <code>GET</code> … <code>{lang}=ja</code>（メソッド制約として許容される。画面上の通常運用ではPOST主体。GETで本文にオン状態に相当する <code>order_ids</code> が載らない場合は異常応答となる。）</li></ul>
+<h3 id="出力-納品書">出力: 納品書</h3>
+<p>選択した受注の納品書を日本語のテンプレートで表示する。受注を複数選んだときは、受注ごとに納品書を続けて出す。</p>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
+<h2 id="表示メッセージ">表示メッセージ</h2>
+<p>本機能は画面メッセージを持たない。</p>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

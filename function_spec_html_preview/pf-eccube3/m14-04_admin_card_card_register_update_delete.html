@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,41 +272,17 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#フロント挙動">フロント挙動</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#新規フォームを表示する-GET-admin-card-new">新規フォームを表示する（GET `admin_card_new`）</a>
-<a class="lv3" href="#編集フォームを表示する-GET-admin-card-edit">編集フォームを表示する（GET `admin_card_edit`）</a>
-<a class="lv3" href="#新規登録または更新を送信する-POST-admin-card-create-または-POST-admin-card-update">新規登録または更新を送信する（POST `admin_card_create` または POST `admin_card_update`）</a>
-<a class="lv3" href="#単体削除を実行する-DELETE-admin-card-delete">単体削除を実行する（DELETE `admin_card_delete`）</a>
-<a class="lv2" href="#集計条件">集計条件</a>
-<a class="lv2" href="#保存時の判定順序">保存時の判定順序</a>
-<a class="lv2" href="#表示メッセージ">表示メッセージ</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
-<a class="lv3" href="#入力項目">入力項目</a>
-<a class="lv3" href="#エッジケース">エッジケース</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#フォームの初期表示">フォームの初期表示</a>
+<a class="lv3" href="#入力項目の制約">入力項目の制約</a>
+<a class="lv3" href="#保存の判定順序">保存の判定順序</a>
+<a class="lv3" href="#支店連携への通知">支店連携への通知</a>
+<a class="lv3" href="#削除の判定順序">削除の判定順序</a>
+<a class="lv3" href="#エラー時の扱い">エラー時の扱い</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#バリデーション">バリデーション</a>
-<a class="lv2" href="#権限・認可">権限・認可</a>
-<a class="lv2" href="#画面遷移">画面遷移</a>
-<a class="lv3" href="#遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#試行制限">試行制限</a>
-<a class="lv2" href="#ログ・監査">ログ・監査</a>
-<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
-<a class="lv2" href="#セッション">セッション</a>
-<a class="lv3" href="#本機能におけるセッション">本機能におけるセッション</a>
-<a class="lv3" href="#セッションへ保存しない情報">セッションへ保存しない情報</a>
-<a class="lv2" href="#Cookie">Cookie</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a>
-<a class="lv2" href="#調査補助-grep-向け">調査補助（grep 向け）</a>
-<a class="lv3" href="#HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</a></nav>
+<a class="lv3" href="#入出力-永続化">入出力: 永続化</a>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -304,106 +290,34 @@ footer {
         <h1>カード管理 — 新規登録・編集・削除（詳細フォーム）</h1>
       </header>
       
-      <h2 id="概要">概要</h2>
-<p>HareruyaEc プラグインが管理画面の「カード管理」に提供する、カードマスタ（および紐づくリーガリティ行・カード詳細・画像）の新規作成・更新・単体削除を行う機能である。一覧の検索・ページング・CSV とは別画面で、同一 Twig テンプレート上のフォーム送信・詳細画面サイドバーの DELETE リンクで完結する部分を扱う。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。pf-eccube3 に配置された HareruyaEc プラグインのソースとプラグイン付属の <code>config.yml</code>（定数ブロック）を確認値とする。</p>
-<p>本機能のカスタマイズ区分はカスタマイズである。現行挙動は pf-eccube3 の HareruyaEc プラグインを参照し、永続化に関わるテーブル名・列名などのDB関連は ec-cube-enterprise を正とする。</p>
-<p>対象はブラウザ経由の管理画面に限定する。コントローラのメソッド名は本文の主説明としない。本文ではルートbind名やSymfonyのルートnameの網羅は主説明としない。「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。コード探索でbind名が必要なときだけ「調査補助」へ書く。</p>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<p>DB関連の記述は ec-cube-enterprise の実装を正とする。カードマスタ・リーガリティ・カード詳細・画像のテーブル名・列名は現行（pf-eccube3）と移行先（ec-cube-enterprise）で同一スキーマだが、削除時に切り離す商品との紐付け列と商品の削除方式が異なる。</p>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>カード基本情報</td><td><code>mtb_card</code>（<code>name_jp</code>/<code>name_en</code>/<code>cmc</code>/<code>color_sequence_id</code> 等）</td><td>同一スキーマ（<code>mtb_card</code>）。</td></tr><tr><td>リーガリティ行</td><td><code>dtb_card_format</code>（<code>card_id</code>/<code>format_id</code>/<code>restriction_id</code>）</td><td>同一スキーマ（<code>dtb_card_format</code>）。</td></tr><tr><td>カード詳細</td><td><code>mtb_card_detail</code></td><td>同一スキーマ（<code>mtb_card_detail</code>）。</td></tr><tr><td>画像</td><td><code>mtb_card_image</code>（<code>url</code> は 128 文字、<code>language_id</code>、<code>back_flg</code>）</td><td>同一スキーマ（<code>mtb_card_image</code>、<code>url</code> 128 文字）。</td></tr><tr><td>カード詳細と商品の紐付け列</td><td><code>dtb_product_sub.card_detail_id</code>（補助表経由）</td><td><code>dtb_product.card_detail_id</code>（商品本体の列。補助表 <code>dtb_product_sub</code> は移行先に存在しない）。削除前の <code>NULL</code> 切り離しは移行先では <code>dtb_product.card_detail_id</code> を対象とする。</td></tr><tr><td>削除可否の商品判定</td><td>論理未削除（<code>dtb_product.del_flg = 0</code>）</td><td>移行先は <code>del_flg</code> を持たず物理削除のため、紐付く商品行の有無で判定する。</td></tr></tbody></table></div>
-<p>入力フォーム・保存・削除の挙動と最大長（プラグイン <code>config.yml</code> の定数）は現行（pf-eccube3）を参照する。<code>dtb_product_sub</code> と <code>del_flg</code> は移行先で上表のとおり読み替える。</p>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>一覧ヘッダの「新規」等から新規画面へ</td><td><code>GET /{admin_route}/card/new</code></td><td>空のフォームが出る。保存ボタン文言は共通メッセージの「登録」側。削除ボタンは無い。</td></tr><tr><td>一覧のカード名リンクから詳細へ</td><td><code>GET /{admin_route}/card/{id}</code></td><td>既存データが埋まったフォームが出る。保存は「更新」。サイドバーに削除リンクがある。</td></tr><tr><td>新規で入力し保存</td><td><code>POST /{admin_route}/card</code></td><td>検証を通れば永続化し、登録完了フラッシュが付いたうえで <code>GET /{admin_route}/card/{新ID}</code> へリダイレクトする。</td></tr><tr><td>編集で入力し保存</td><td><code>POST /{admin_route}/card/{id}</code></td><td>検証を通れば更新し、同じく完了フラッシュのうえで同 URL（編集画面）へリダイレクトする。</td></tr><tr><td>詳細サイドバーで削除を確定（確認ダイアログ後）</td><td><code>DELETE /{admin_route}/card/{id}</code></td><td>削除ブロックでなければ関連解除・子の再帰削除のうえ成功フラッシュ。ブロックならエラーフラッシュで参照元へ戻る。</td></tr><tr><td>サイドバー「戻る」</td><td><code>GET /{admin_route}/card/search/{page_no}</code>（<code>page_no</code> はセッションの <code>admin.card.search.page_no</code>、無ければ 1）</td><td>検索一覧へ戻る。</td></tr></tbody></table></div>
-<hr>
-<h2 id="フロント挙動">フロント挙動</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>タイトルは「カード管理」、サブタイトル「カード詳細」。第 1 ボックスは基本情報（日本語名・英語名・アリーナ名日英・ルールテキスト日英・マナコスト・点数で見たマナコスト・パワー・タフネス・忠誠度・カラー複数・固有色複数・カードタイプ複数 select2・サブタイプ複数 select2・特殊タイプ複数 select2・色順ドロップダウン（ラベルは Twig 上で「色順」）・ステッカーフラグチェック・リーガリティ行リスト・旧商品 ID 2 項目は <code>hidden</code> 行内）。第 2 ボックス群は「詳細情報」としてカード詳細ごとに、画像グリッド（プレビュー・言語ラジオ・表面／裏面ラジオ・ファイル入力・URL hidden）、コレクター No、裏面カード詳細 ID、テキスト／フレーバー日英、パワー・タフネス、セット・レアリティ・レイアウト・イラスト・Foil／プロモチェック・プロモ種別、および「この詳細情報を削除」ボタン（商品に紐づく詳細は文言のみでボタン非表示）。フッタに「詳細情報を追加」。サイドバーに登録／更新ボタン、編集時のみ削除リンク、戻るボタン。</td></tr><tr><td>JS 挙動</td><td><code>required.js</code> が required 指定や <code>.required</code> ラベルへ「※必須」相当のスパンを追記する。<code>card-detail.js</code> がリーガリティ行のプロトタイプ追加・行削除、詳細ブロックの追加・削除、画像ブロックの追加・削除、フォーマット select の重複時に <code>alert</code> と選択クリア、カードタイプ等の select2、画像ファイル選択時のローカルプレビュー（画像 MIME のみ）を行う。</td></tr><tr><td>CSS・レイアウト</td><td>select2 の CDN CSS、管理画面 Bootstrap 横並びテーマ。</td></tr><tr><td>モーダル・ポップアップ</td><td>削除リンクはアンカーに <code>data-method="delete"</code> と確認文言 <code>admin.confirm.card_delete</code> を付与し、ブラウザ確認はフロント共通の配送実装に従う（本書では EC-CUBE 管理画面の DELETE＋CSRF パターンに委ねる）。リーガリティのフォーマット重複時は <code>alert</code> のみ。</td></tr></tbody></table></div>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="新規フォームを表示する-GET-admin-card-new">新規フォームを表示する（GET <code>admin_card_new</code>）</h3>
-<ol><li>管理画面の認証・共通制約を通過する。</li><li>フォーム名 <code>admin_card</code> のビルダをデータ無しで生成し、<code>card_detail.twig</code> を描画する。<code>id</code> は Twig に <code>null</code>、<code>noDeletableCardDetailIds</code> は空配列。</li></ol>
-<h3 id="編集フォームを表示する-GET-admin-card-edit">編集フォームを表示する（GET <code>admin_card_edit</code>）</h3>
-<ol><li>管理画面の認証・共通制約を通過する。</li><li>パス ID が空、または <code>mtb_card</code> が取得できない場合、HTTP 404 で応答する。</li><li>フォーム <code>admin_card</code> を既存カードで生成する。</li><li>当該カードについて、<code>mtb_card_detail</code> と商品規格が結びついている詳細 ID の一覧を取得し、<code>noDeletableCardDetailIds</code> として Twig に渡す。</li><li><code>card_detail.twig</code> を描画する。</li></ol>
-<h3 id="新規登録または更新を送信する-POST-admin-card-create-または-POST-admin-card-update">新規登録または更新を送信する（POST <code>admin_card_create</code> または POST <code>admin_card_update</code>）</h3>
-<ol><li>管理画面の認証・共通制約を通過する。</li><li>フォーム <code>admin_card</code> を空データで生成しコピーを取ったうえで、最初のフォームにリクエストを取り込む。</li><li>パスに ID が無い場合は新規のカードエンティティを用意する。パスに ID がある場合は当該 ID のカードを取得し、無ければ HTTP 403 で応答する。</li><li>既存の場合は手順 2 と同様に <code>noDeletableCardDetailIds</code> を求める（新規は空配列）。</li><li>CSRF 検証と Symfony のフォーム検証を行い、無効なら同テンプレートへエラー付きで再描画する。</li><li>リクエストボディの <code>admin_card</code> とアップロードファイルの <code>admin_card[cardDetails][*][cardImages][*][upload]</code> を走査する。ファイルがある各行は一時ディレクトリへ保存し、オブジェクトストレージへ配置、返却パスを同じキー構造の <code>admin_card</code> 配列の <code>url</code> に書き込む。ファイルが無く <code>url</code> も空の画像行は送信データから当該画像エントリを取り除く。画像コレクションが空になった詳細キーは <code>cardImages</code> キーごと削除する。</li><li>修正後の <code>admin_card</code> をリクエストに戻し、コピーしたフォームにもう一度 <code>handleRequest</code> する。</li><li>親カードに対し、フォームデータをエンティティへ反映する。双方向関連のうちフォームに無い <code>productSubClasses</code>、<code>buyMainCards</code>、<code>deck</code>、<code>deckCards</code>、<code>maybeCards</code>、<code>archetype</code>、<code>productSubs</code> はこのマッピング対象から除外する。</li><li>親を <code>persist</code> し <code>flush</code> し、続けて <code>commit</code> を呼ぶ。</li><li>管理画面成功メッセージキー <code>admin.register.complete</code> を積む。</li><li>支店連携サービスで、当該カード ID の配列を渡して更新通知を送る（成否はログとエラー永続化に記録される実装とする）。</li><li><code>GET /{admin_route}/card/{永続化後のID}</code> へリダイレクトする。</li></ol>
-<h3 id="単体削除を実行する-DELETE-admin-card-delete">単体削除を実行する（DELETE <code>admin_card_delete</code>）</h3>
-<ol><li>管理画面の認証・共通制約を通過する。</li><li>フォーム名を伴わない CSRF 検証（コアのトークン名）を行う。無効ならアクセス拒否例外となる。</li><li>セッションから <code>admin.card.search.page_no</code> を読み、のちのリダイレクト先のページ番号候補とする。</li><li>パス ID を配列の唯一要素とする（一括削除経路は別設計）。</li><li>各 ID が空、またはカードが無い場合は HTTP 404 で応答する。</li><li>次のいずれかなら削除しない。管理画面エラーメッセージ <code>admin.card.delete.failed</code> をカードの混成表示名で整形して積み、以前まで正常削除した ID があれば支店通知にその一覧を渡し、HTTP リファラ URL へリダイレクトする。</li></ol>
-<ul><li>カードに <code>dtb_deck_card</code> が 1 件以上ある</li><li>ネイティブ照会で、論理未削除商品（<code>dtb_product.del_flg = 0</code>）が当該カードのカード詳細経由で 1 件以上ある</li></ul>
-<ol><li>ブロックを抜けた場合、<code>mtb_card_detail</code> と <code>dtb_product_sub</code> の組に対し、当該カード配下の詳細に紐づく規格行の <code>card_detail_id</code> を一括で <code>NULL</code> に更新する。</li><li>親カードに対し子エンティティを再帰的に <code>remove</code> したうえで親も <code>remove</code> し、<code>commit</code> する。</li><li>すべての指定 ID で成功したら成功メッセージキー <code>admin.delete.complete</code> を積み、支店連携に今回の ID 一覧を渡す。</li><li><code>admin.card.search.page_no</code> があれば <code>GET /{admin_route}/card/search/{page_no}</code>、なければ <code>GET /{admin_route}/card</code> へリダイレクトする。</li></ol>
-<hr>
-<h2 id="集計条件">集計条件</h2>
-<p>本機能では一覧の件数集計やダッシュボード指標は行わない。</p>
-<hr>
-<h2 id="保存時の判定順序">保存時の判定順序</h2>
-<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>CSRF（フォーム名 <code>admin_card</code> の入れ子トークン）</td><td>無効ならアクセス拒否。</td></tr><tr><td>2</td><td>Symfony フォーム検証（必須・長さ・正規表現・ファイル MIME／サイズ等）</td><td>無効なら同一画面でエラー表示、保存しない。</td></tr><tr><td>3</td><td>画像各行のファイル有無と既存 URL</td><td>ファイル無しかつ URL 無しなら送信データから画像行を落とす。ファイルありならアップロード後に URL を埋める。</td></tr><tr><td>4</td><td>コレクションに現れない子 ID</td><td>永続化時に当該子孫を ORM から削除する経路に入る。</td></tr></tbody></table></div>
-<hr>
-<h2 id="表示メッセージ">表示メッセージ</h2>
-<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>画面上の文言(英語)</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M14-04-MSG-001</td><td>画面中央(モーダル)</td><td>この操作はあとから取り消すことができません。「%name%」を削除してよろしいですか？</td><td>（英訳なし）</td><td>登録済みカードの削除を選択したとき（削除前の確認）</td><td>カードを削除し、カード一覧画面に遷移する</td></tr><tr><td>M14-04-MSG-002</td><td>管理画面上部</td><td>デッキまたは商品にカードが登録されているため、%card_name% カード情報を削除することができません。</td><td>（英訳なし）</td><td>デッキまたは商品に登録されているカードを削除しようとしたとき</td><td>カード編集画面、またはカード検索・一覧画面に遷移する</td></tr><tr><td>M14-04-MSG-003</td><td>管理画面上部</td><td>削除に失敗しました</td><td>（英訳なし）</td><td>カードを削除する際にエラーが起きたとき</td><td>カード編集画面、またはカード検索・一覧画面に遷移する</td></tr><tr><td>M14-04-MSG-004</td><td>管理画面上部</td><td>削除しました</td><td>（英訳なし）</td><td>カードを削除したとき</td><td>カード検索・一覧画面に遷移する</td></tr><tr><td>M14-04-MSG-005</td><td>管理画面上部</td><td>削除に失敗しました</td><td>（英訳なし）</td><td>カード情報の編集を保存する際、削除できないカード詳細を削除しようとしたとき</td><td>カード編集画面に留まる</td></tr><tr><td>M14-04-MSG-006</td><td>管理画面上部</td><td>保存しました</td><td>（英訳なし）</td><td>カード情報を保存したとき</td><td>カード編集画面に遷移する</td></tr><tr><td>M14-04-MSG-007</td><td>管理画面上部</td><td>保存に失敗しました</td><td>（英訳なし）</td><td>カード情報の保存中にエラーが起きたとき</td><td>カード編集画面に留まる</td></tr></tbody></table></div>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>カード ID</td><td>新規は INSERT 時に採番。編集は hidden の ID で既存行を識別する。</td></tr><tr><td>点数で見たマナコスト</td><td>半角数字と任意の小数点以下。正規表現で整数または小数形式にマッチさせ、必須。</td></tr><tr><td>忠誠度</td><td>任意。最大長に加え、パワー／タフネスに似た記号表現へマッチする正規表現制約がある。</td></tr><tr><td>旧商品 ID（日・英）</td><td>任意。英数字・ハイフン・アンダースコアのみ許可。</td></tr><tr><td>リーガリティ</td><td>各ブロックでフォーマットと制限区分がともに必須（空プレースホルダ無しの制限側）。画面 JS で同一フォーマットの重複選択を拒む。</td></tr><tr><td>画像</td><td>言語・表面／裏面は必須。ファイルは最大 5MB、JPEG／GIF／PNG のみ（プラグイン <code>config.yml</code> の <code>HareruyaEc.const.cardImage.assert</code>）。</td></tr><tr><td>支店連携</td><td>保存成功時・削除成功時（および削除途中失敗時に既に消えた ID がある場合）は、対象カード ID の配列で通知処理を呼ぶ。失敗しても画面の成否フラッシュは保存／削除成功のままとなる実装である。</td></tr></tbody></table></div>
-<h3 id="入力項目">入力項目</h3>
-<div class="table-wrap"><table><thead><tr><th>項目名</th><th>必須／任意</th><th>最大長</th><th>初期値</th><th>保存先・扱い</th></tr></thead><tbody><tr><td>カード名(日)</td><td>任意</td><td>255 文字（<code>HareruyaEc.const.card.length.name</code>）</td><td>新規は空、編集は <code>mtb_card.name_jp</code></td><td><code>mtb_card.name_jp</code>。Symfony Length のみ。</td></tr><tr><td>カード名(英)</td><td>必須</td><td>同上</td><td>新規は空、編集は <code>mtb_card.name_en</code></td><td><code>mtb_card.name_en</code>。NotBlank＋Length。</td></tr><tr><td>アリーナカード名(日)</td><td>任意</td><td>同上</td><td>DB 現行値または空</td><td><code>mtb_card.arena_format_name_jp</code>。</td></tr><tr><td>アリーナカード名(英)</td><td>任意</td><td>同上</td><td>DB 現行値または空</td><td><code>mtb_card.arena_format_name_en</code>。</td></tr><tr><td>ルールテキスト(日)</td><td>任意</td><td>1024 文字（<code>HareruyaEc.const.card.length.text</code>）</td><td>DB 現行値または空</td><td><code>mtb_card.text_jp</code>。複数行 textarea。</td></tr><tr><td>ルールテキスト(英)</td><td>任意</td><td>同上</td><td>DB 現行値または空</td><td><code>mtb_card.text_en</code>。</td></tr><tr><td>マナ・コスト</td><td>任意</td><td>64 文字（<code>HareruyaEc.const.card.length.manaCost</code>）</td><td>DB 現行値または空</td><td><code>mtb_card.mana_cost</code>。</td></tr><tr><td>点数で見たマナコスト</td><td>必須</td><td>テキスト入力だが桁は実データ依存（DB は float 系）</td><td>DB 現行値</td><td><code>mtb_card.cmc</code>。NotBlank＋数値形式の Regex。</td></tr><tr><td>パワー（基本）</td><td>任意</td><td>16 文字（<code>HareruyaEc.const.card.length.power</code>）</td><td>DB 現行値または空</td><td><code>mtb_card.power</code>。</td></tr><tr><td>タフネス（基本）</td><td>任意</td><td>16 文字（<code>HareruyaEc.const.card.length.toughness</code>）</td><td>DB 現行値または空</td><td><code>mtb_card.toughness</code>。</td></tr><tr><td>忠誠度</td><td>任意</td><td>16 文字（<code>HareruyaEc.const.card.length.loyalty</code>）</td><td>DB 現行値または空</td><td><code>mtb_card.loyalty</code>。Length＋記号形式 Regex。</td></tr><tr><td>カラー</td><td>任意</td><td>—</td><td>チェック無し～複数</td><td><code>mtb_card</code> と色マスタの多対多。</td></tr><tr><td>固有色</td><td>任意</td><td>—</td><td>同上</td><td>同上。</td></tr><tr><td>カードタイプ</td><td>任意</td><td>—</td><td>同上</td><td><code>mtb_card</code> とカードタイプマスタの多対多。</td></tr><tr><td>サブタイプ</td><td>任意</td><td>—</td><td>同上</td><td>サブタイプマスタ多対多。</td></tr><tr><td>特殊タイプ</td><td>任意</td><td>—</td><td>同上</td><td>特殊タイプマスタ多対多。</td></tr><tr><td>色順</td><td>任意</td><td>—</td><td>未選択可</td><td><code>mtb_card.color_sequence_id</code>（色順マスタへの外部キー）。</td></tr><tr><td>ステッカーフラグ</td><td>任意</td><td>—</td><td>オフ既定</td><td><code>mtb_card.is_sticker</code>。</td></tr><tr><td>フォーマット（リーガリティ各行）</td><td>必須（行を残す場合）</td><td>—</td><td>編集は各行の現行値</td><td><code>dtb_card_format.format_id</code>。</td></tr><tr><td>リーガリティ（制限区分、各行）</td><td>必須（行を残す場合）</td><td>—</td><td>編集は各行の現行値</td><td><code>dtb_card_format.restriction_id</code>。empty_value は無し。</td></tr><tr><td>現行の日本語商品ID／現行の英語商品ID</td><td>任意</td><td>各 20 文字（<code>old_product_id</code>／<code>old_en_product_id</code>）</td><td>非表示項目。DB 現行値</td><td><code>mtb_card</code> の該当列。英数字・<code>-</code>・<code>_</code> のみ Regex。</td></tr><tr><td>コレクターNo</td><td>任意</td><td>16 文字（<code>HareruyaEc.const.cardDetail.length.card_no</code>）</td><td>詳細ごと</td><td><code>mtb_card_detail</code> のカード番号列。</td></tr><tr><td>裏面カード詳細ID</td><td>任意</td><td>最大 6 桁の数字のみ許容する Regex（空も可）</td><td>詳細ごと</td><td><code>mtb_card_detail</code> の裏面参照。integer ウィジェット。</td></tr><tr><td>ルールテキスト(日)（詳細）</td><td>任意</td><td>1024 文字（<code>cardDetail.length.text</code>）</td><td>詳細ごと</td><td><code>mtb_card_detail.text_jp</code>。</td></tr><tr><td>ルールテキスト(英)（詳細）</td><td>任意</td><td>同上</td><td>詳細ごと</td><td><code>mtb_card_detail.text_en</code>。</td></tr><tr><td>フレーバーテキスト(日)</td><td>任意</td><td>1024 文字（<code>cardDetail.length.flavor</code>）</td><td>詳細ごと</td><td><code>mtb_card_detail.flavor_jp</code>。</td></tr><tr><td>フレーバーテキスト(英)</td><td>任意</td><td>同上</td><td>詳細ごと</td><td><code>mtb_card_detail.flavor_en</code>。</td></tr><tr><td>パワー（詳細）</td><td>任意</td><td>16 文字</td><td>詳細ごと</td><td><code>mtb_card_detail.power</code>。</td></tr><tr><td>タフネス（詳細）</td><td>任意</td><td>16 文字</td><td>詳細ごと</td><td><code>mtb_card_detail.toughness</code>。</td></tr><tr><td>カードセット</td><td>任意</td><td>—</td><td>詳細ごと</td><td><code>mtb_card_detail.cardset_id</code>。</td></tr><tr><td>レアリティ</td><td>必須</td><td>—</td><td>プレースホルダ「レアリティ選択」から選択</td><td><code>mtb_card_detail.rarity_id</code>。</td></tr><tr><td>レイアウト</td><td>必須</td><td>—</td><td>プレースホルダ「レイアウト選択」</td><td><code>mtb_card_detail.card_layout_id</code>。</td></tr><tr><td>イラストレーター</td><td>任意</td><td>—</td><td>プレースホルダ「イラストレーター選択」</td><td><code>mtb_card_detail.illustrator_id</code>。</td></tr><tr><td>Foil</td><td>任意</td><td>—</td><td>チェック</td><td><code>mtb_card_detail.foil_flg</code>。</td></tr><tr><td>プロモ</td><td>任意</td><td>—</td><td>チェック</td><td><code>mtb_card_detail.promotion_flg</code>。</td></tr><tr><td>プロモ種別</td><td>必須</td><td>—</td><td>プレースホルダ「プロモーション選択」</td><td><code>mtb_card_detail.promotion_id</code>。</td></tr><tr><td>言語（画像各行）</td><td>必須</td><td>—</td><td>言語マスタのラジオ</td><td><code>mtb_card_image.language_id</code>。</td></tr><tr><td>表面／裏面（画像各行）</td><td>必須</td><td>—</td><td>定数 <code>HareruyaEc.const.cardImage.face</code> のラベル（表面／裏面）</td><td><code>mtb_card_image.back_flg</code>（0＝表面、1＝裏面の論理値）。</td></tr><tr><td>画像ファイル（画像各行）</td><td>任意</td><td>5MB、JPEG/GIF/PNG</td><td>空</td><td>アップロード時に一時保存後オブジェクトストレージへ送り、戻りパスを hidden の URL に格納。</td></tr><tr><td>画像 URL（hidden）</td><td>条件付き</td><td>DB 定義上 128 文字（<code>mtb_card_image.url</code>）</td><td>既存 URL またはアップロード後のパス</td><td>新規画像でも少なくとも最終的に非空が必要なスキーマ。ファイルと既存 URL がともに無い行は送信直前にデータから除去される。</td></tr></tbody></table></div>
-<p>プラグイン <code>config.yml</code> の数値はデフォルトの確認値である。運用でプラグイン設定を上書きしている場合はその環境の値が正とする。</p>
-<h3 id="エッジケース">エッジケース</h3>
-<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>編集 GET で ID が存在しない</td><td>HTTP 404。</td></tr><tr><td>更新 POST でパス ID のカードが無い</td><td>HTTP 403。</td></tr><tr><td>画像のみ追加しファイルを付けない</td><td>送信データから当該画像エントリが落ち、検証・永続化対象外になり得る。</td></tr><tr><td>DOM 上でリーガリティ行・詳細・画像ブロックを削除して送信</td><td>そのブロックに対応するフィールドが POST に含まれないため、永続化時に既存子が削除扱いになり得る。</td></tr><tr><td>カード詳細が商品規格に引用されている</td><td>Twig 上で「この詳細情報を削除」ボタンを出さず、説明文のみ表示。送信でコレクションから落ちた場合の扱いは ORM の削除経路に従う（利用者が開発者ツールで強制送信した場合の整合は運用外）。</td></tr><tr><td>カード本体を削除しようとするがデッキ採用または未削除商品がある</td><td>削除せずエラーメッセージし、リファラへ戻る。</td></tr><tr><td>支店通知が失敗</td><td>画面は登録／削除成功メッセージのまま。ログと支店更新エラー永続化に残す実装とする。</td></tr></tbody></table></div>
-<hr>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>一覧と詳細</td><td>一覧は検索画面のクエリ時点、詳細は表示時点の DB 値。同時編集の排他は持たない。</td></tr><tr><td>削除直後の一覧</td><td>リダイレクトで検索画面に戻るが、検索条件はセッションの前回状態に依存する（別設計）。</td></tr><tr><td>商品との外部キー</td><td>カード削除直前に、当該カードの全詳細にぶら下がる規格 <code>dtb_product_sub.card_detail_id</code> を <code>NULL</code> に更新する。これにより商品行は残り、カード詳細参照だけ外れる。</td></tr></tbody></table></div>
-<hr>
-<h2 id="API-バッチ結果">API/バッチ結果</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>API</td><td>支店システム向け HTTP 通知が保存・削除のたびに走る。本文の主題は管理画面のため、API の契約詳細は別確認とする。</td></tr><tr><td>バッチ</td><td>本機能ではバッチを起動しない。</td></tr></tbody></table></div>
-<hr>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="フォームの初期表示">フォームの初期表示</h3>
+<p>新規のフォームは、データを持たない状態で開く。編集のフォームは、指定されたカードIDのカードで開く。</p>
+<div class="table-wrap"><table><thead><tr><th>状態</th><th>初期表示</th></tr></thead><tbody><tr><td>新規のとき</td><td>削除できないカード詳細は無い（空とする）</td></tr><tr><td>編集で当該カードがあるとき</td><td>商品規格と結びついているカード詳細のIDの一覧を、削除できないカード詳細として画面へ渡す</td></tr><tr><td>編集でカードIDが空のとき、または該当カードが無いとき</td><td>見つからない扱い（HTTP404）とする</td></tr></tbody></table></div>
+<h3 id="入力項目の制約">入力項目の制約</h3>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>必須／任意</th><th>制約</th></tr></thead><tbody><tr><td>カードID（新規）</td><td>—</td><td>登録時に採番する</td></tr><tr><td>カードID（編集）</td><td>—</td><td>画面が保持するIDで既存のカードを識別する</td></tr><tr><td>点数で見たマナコスト</td><td>必須</td><td>半角数字と任意の小数点以下だけを許す。整数または小数の形式に一致すること</td></tr><tr><td>忠誠度</td><td>任意</td><td>最大長の制限に収まること</td></tr><tr><td>忠誠度の形式</td><td>任意</td><td>パワー・タフネスに似た記号表現の形式に一致すること</td></tr><tr><td>旧商品ID（日）</td><td>任意</td><td>英数字・ハイフン・アンダースコアだけを許す</td></tr><tr><td>旧商品ID（英）</td><td>任意</td><td>英数字・ハイフン・アンダースコアだけを許す</td></tr><tr><td>リーガリティのフォーマット</td><td>必須</td><td>リーガリティのブロックごとに指定すること</td></tr><tr><td>リーガリティの制限区分</td><td>必須</td><td>リーガリティのブロックごとに指定すること。空の選択肢を持たない</td></tr><tr><td>リーガリティの重複</td><td>—</td><td>同一フォーマットを重複して選んだときは画面上で拒む</td></tr><tr><td>画像の言語</td><td>必須</td><td>画像の行ごとに指定すること</td></tr><tr><td>画像の表面・裏面</td><td>必須</td><td>画像の行ごとに指定すること</td></tr><tr><td>画像のファイル</td><td>—</td><td>最大 5MB とする</td></tr><tr><td>画像の形式</td><td>—</td><td>JPEG・GIF・PNG だけを許す</td></tr></tbody></table></div>
+<h3 id="保存の判定順序">保存の判定順序</h3>
+<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定・処理</th><th>内容</th></tr></thead><tbody><tr><td>1</td><td>入力内容の検証</td><td>必須・長さ・形式・ファイルの種類とサイズを検証する。外れたときは保存せず、同一画面にエラーを表示する</td></tr><tr><td>2</td><td>対象カードの特定</td><td>パスにIDが無いときは新規のカードを用意する。IDがあり該当カードが無いときはアクセス拒否（HTTP403）とする</td></tr><tr><td>3</td><td>画像行の整理</td><td>ファイルが無く、かつ既存のURLも空の画像行は送信データから除く。画像が1件も残らないカード詳細は、画像の指定ごと除く</td></tr><tr><td>4</td><td>画像の配置</td><td>ファイルがあるときは一時領域へ保存したうえでオブジェクトストレージへ配置し、返却されたパスを当該画像行のURLへ書き込む</td></tr><tr><td>5</td><td>反映対象の限定</td><td>画面に無い関連（商品規格、買取メインカード、デッキ、デッキ明細、メイビーカード、アーキタイプ、商品サブ）は反映の対象から除く</td></tr><tr><td>6</td><td>子の整理</td><td>画面のコレクションに現れない子のIDは、保存時に当該の子と孫ごと削除する</td></tr></tbody></table></div>
+<p>保存できたときは、当該カードの編集画面へ戻る。</p>
+<h3 id="支店連携への通知">支店連携への通知</h3>
+<div class="table-wrap"><table><thead><tr><th>契機</th><th>渡すもの</th></tr></thead><tbody><tr><td>保存できたとき</td><td>当該カードIDの配列</td></tr><tr><td>すべての指定IDで削除できたとき</td><td>今回のIDの一覧</td></tr><tr><td>削除できないカードがあり、それまでに削除できたIDがあるとき</td><td>削除できたIDの一覧</td></tr></tbody></table></div>
+<p>通知が失敗したときも、画面の表示は保存成功・削除成功のままとする。</p>
+<h3 id="削除の判定順序">削除の判定順序</h3>
+<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定・処理</th><th>内容</th></tr></thead><tbody><tr><td>1</td><td>対象の特定</td><td>単体削除の対象はパスで指定した1件だけとする。IDが空のとき、または該当カードが無いときは見つからない扱い（HTTP404）とする</td></tr><tr><td>2</td><td>削除の可否</td><td>当該カードにデッキ明細が1件以上あるとき、または当該カードのカード詳細を経由する未削除の商品が1件以上あるときは削除しない</td></tr><tr><td>3</td><td>結びつきの解除</td><td>削除するときは、当該カード配下のカード詳細に紐づく商品サブの規格行について、カード詳細の指定を一括で未設定にする</td></tr><tr><td>4</td><td>削除</td><td>親のカードとその子を再帰的に削除する</td></tr></tbody></table></div>
+<p>一括削除は別の機能とする。</p>
+<p>削除しないときは、カードの表示名を差し込んだエラーメッセージを表示する。</p>
+<p>すべての指定IDで削除できたときは、完了メッセージを表示する。</p>
+<p>削除後の戻り先は次のとおりとする。</p>
+<div class="table-wrap"><table><thead><tr><th>状態</th><th>戻り先</th></tr></thead><tbody><tr><td>削除しなかったとき</td><td>直前の画面</td></tr><tr><td>直前のカード検索のページ番号があるとき</td><td>当該ページのカード検索結果</td></tr><tr><td>直前のカード検索のページ番号が無いとき</td><td>カード一覧</td></tr></tbody></table></div>
+<h3 id="エラー時の扱い">エラー時の扱い</h3>
+<div class="table-wrap"><table><thead><tr><th>事象</th><th>扱い</th></tr></thead><tbody><tr><td>入力内容の検証に外れたとき</td><td>保存せず、同一画面に項目ごとのエラーを表示する</td></tr><tr><td>保存で対象カードが存在しないとき</td><td>アクセス拒否（HTTP403）とする</td></tr><tr><td>編集の表示で対象カードが存在しないとき</td><td>見つからない扱い（HTTP404）とする</td></tr><tr><td>削除で対象カードが存在しないとき</td><td>見つからない扱い（HTTP404）とする</td></tr><tr><td>デッキまたは商品に登録されていて削除できないとき</td><td>カードの表示名を差し込んだエラーメッセージを表示し、直前の画面へ戻る</td></tr></tbody></table></div>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td><code>multipart/form-data</code> のフォーム <code>admin_card</code>、および DELETE 時の CSRF トークン（コア規約）。</td></tr><tr><td>成功時出力</td><td>302 で編集 URL または一覧／検索 URL。フラッシュ成功メッセージ。</td></tr><tr><td>失敗時出力</td><td>フォーム再表示（検証エラー）、HTTP 403／404、または削除ブロック時のエラーフラッシュ＋リファラ戻り。</td></tr><tr><td>副作用</td><td>DB の INSERT／UPDATE／DELETE、オブジェクトストレージへのファイル PUT、支店通知、ログ出力。</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<p>機能に直接関係する主な列のみ示す。型・索引の細部はDoctrineマッピングを参照する。</p>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>mtb_card</code></td><td><code>id</code>, <code>name_jp</code>, <code>name_en</code>, <code>arena_format_name_jp</code>, <code>arena_format_name_en</code>, <code>text_jp</code>, <code>text_en</code>, <code>mana_cost</code>, <code>cmc</code>, <code>power</code>, <code>toughness</code>, <code>loyalty</code>, <code>old_product_id</code>, <code>old_en_product_id</code>, <code>is_sticker</code>, <code>color_sequence_id</code>, 他マスタ FK</td><td>カラー等は中間テーブル経由。</td></tr><tr><td><code>dtb_card_format</code></td><td><code>id</code>, <code>card_id</code>, <code>format_id</code>, <code>restriction_id</code></td><td>リーガリティ行。</td></tr><tr><td><code>mtb_card_detail</code></td><td><code>id</code>, <code>card_id</code>, <code>card_no</code>, <code>text_jp</code>, <code>text_en</code>, <code>flavor_jp</code>, <code>flavor_en</code>, <code>power</code>, <code>toughness</code>, <code>cardset_id</code>, <code>rarity_id</code>, <code>card_layout_id</code>, <code>illustrator_id</code>, <code>promotion_id</code>, <code>foil_flg</code>, <code>promotion_flg</code>, 裏面参照列 等</td><td>画面は複数ブロック。</td></tr><tr><td><code>mtb_card_image</code></td><td><code>id</code>, <code>card_detail_id</code>, <code>language_id</code>, <code>back_flg</code>, <code>url</code> 等</td><td><code>url</code> は 128 文字定義。</td></tr><tr><td><code>dtb_product.card_detail_id</code>（現行は <code>dtb_product_sub.card_detail_id</code>）</td><td><code>card_detail_id</code></td><td>カード削除前に対象詳細向けに <code>NULL</code> 更新。移行先 ec-cube-enterprise では商品本体 <code>dtb_product</code> の列で、補助表 <code>dtb_product_sub</code> は存在しない。</td></tr></tbody></table></div>
-<h3 id="DB操作">DB操作</h3>
-<p>永続化の正は ec-cube-enterprise（テーブル名・操作は ec-cube-enterprise を正典）。当ドメインは承認ワークフローを介さず persist/flush で直接確定する（承認ワークフローは在庫機能固有）。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>登録/更新</td><td>dtb_card_format / dtb_product / dtb_product_sub / mtb_card / mtb_card_detail / mtb_card_image</td><td>当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。</td></tr></tbody></table></div>
-<hr>
-<h2 id="バリデーション">バリデーション</h2>
-<p>入力項目表および「保存時の判定順序」を正とする。ファイル制約は Symfony の File アサーションとプラグイン定数で宣言される。</p>
-<hr>
-<h2 id="権限・認可">権限・認可</h2>
-<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>詳細フォーム表示・POST・DELETE</th></tr></thead><tbody><tr><td>管理画面にログインし当ルートへ到達できる主体</td><td>画面を表示し送信・単体削除のリンクを実行できる（細かいロールはコアの管理画面認可に従う）。</td></tr><tr><td>未ログインまたは管理画面外の主体</td><td>管理画面共通の認証により当ルートへ到達しない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="画面遷移">画面遷移</h2>
-<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>新規保存成功</td><td><code>GET /{admin_route}/card/{id}</code>（新採番 ID）。</td></tr><tr><td>更新成功</td><td>同じ <code>GET /{admin_route}/card/{id}</code>。</td></tr><tr><td>検証エラー</td><td>同一 POST 経路の再描画（テンプレートは共通）。</td></tr><tr><td>戻るボタン</td><td><code>GET /{admin_route}/card/search/{page_no}</code>（セッション既定 1）。</td></tr><tr><td>単体削除成功</td><td><code>GET /{admin_route}/card/search/{page_no}</code> または <code>GET /{admin_route}/card</code>（ページ番号セッションの有無）。</td></tr><tr><td>GET 編集で ID 欠損</td><td>HTTP 404。</td></tr><tr><td>POST 更新で ID 不一致データ欠損</td><td>HTTP 403。</td></tr></tbody></table></div>
-<h3 id="遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</h3>
-<div class="table-wrap"><table><thead><tr><th>起点</th><th>遷移前の処理</th><th>遷移後の初期状態</th></tr></thead><tbody><tr><td>保存成功</td><td>フラッシュに登録完了を積む</td><td>編集画面で同カードの最新内容。新規の場合は ID が確定する。</td></tr><tr><td>単体削除成功</td><td>フラッシュに削除完了を積む</td><td>検索一覧または一覧初期。</td></tr></tbody></table></div>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>CSRF 不正</td><td>アクセス拒否（HTTP）。</td></tr><tr><td>フォーム検証エラー</td><td>同一画面にフィールドエラーを表示。</td></tr><tr><td>更新対象カードが存在しない（POST）</td><td>HTTP 403。</td></tr><tr><td>編集表示対象が存在しない（GET）</td><td>HTTP 404。</td></tr><tr><td>削除対象が存在しない</td><td>HTTP 404。</td></tr><tr><td>削除ブロック</td><td><code>admin.card.delete.failed</code> を混成名で整形してエラーフラッシュ、リファラへ。</td></tr></tbody></table></div>
-<hr>
-<h2 id="試行制限">試行制限</h2>
-<p>本機能では試行制限を扱わない。</p>
-<hr>
-<h2 id="ログ・監査">ログ・監査</h2>
-<div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>支店連携成功／失敗</td><td>アプリケーションログにカード ID 列と成否・失敗時 JSON メッセージを出力する実装とする。</td></tr></tbody></table></div>
-<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
-<ul><li>パスワード</li><li>なりすまし対策トークン</li><li>Cookie 値</li><li>セッション ID の完全値</li><li>Remember Me トークンの原値</li></ul>
-<hr>
-<h2 id="セッション">セッション</h2>
-<h3 id="本機能におけるセッション">本機能におけるセッション</h3>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>戻るボタン</td><td>参照のみ。<code>admin.card.search.page_no</code> を読み検索 URL を組み立てる。</td></tr><tr><td>単体削除後のリダイレクト</td><td>同上キーがあればそのページ番号の検索へ、無ければ一覧初期ルートへ。</td></tr></tbody></table></div>
-<h3 id="セッションへ保存しない情報">セッションへ保存しない情報</h3>
-<p>フォーム本体の入力値をセッションに退避する処理は持たない（送信失敗時は同一レスポンスで再表示）。</p>
-<hr>
-<h2 id="Cookie">Cookie</h2>
-<p>本機能が独自に Cookie を読み書きしない。セッション Cookie は管理画面共通の仕組みに従う。</p>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<p>本機能は編集画面単位の楽観ロックを持たない。送信処理の途中で <code>flush</code> および <code>commit</code> が呼ばれるが、アプリが明示トランザクション境界を管理している前提は別コード参照とする。</p>
-<hr>
-<h2 id="調査補助-grep-向け">調査補助（grep 向け）</h2>
-<p>実装の所在をコード検索で辿るときの手がかりとして、次のパスを示す。本文の主説明は論理名とルート名を正とする。</p>
-<ul><li><code>app/Plugin/HareruyaEc/Controller/Admin/CardController.php</code></li><li><code>app/Plugin/HareruyaEc/ServiceProvider/Admin/CardServiceProvider.php</code></li><li><code>app/Plugin/HareruyaEc/Form/Type/Admin/Card/</code></li><li><code>app/Plugin/HareruyaEc/Resource/template/admin/Card/card_detail.twig</code></li><li><code>app/Plugin/HareruyaEc/Resource/template/admin/assets/js/card-detail.js</code></li></ul>
-<h3 id="HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</h3>
-<ul><li><code>admin_card_new</code> … <code>GET</code> … <code>/{admin_route}/card/new</code>（新規用の空フォーム表示。）</li><li><code>admin_card_create</code> … <code>POST</code> … <code>/{admin_route}/card</code>（新規登録の送信処理。）</li><li><code>admin_card_edit</code> … <code>GET</code> … <code>/{admin_route}/card/{id}</code>（既存カードの編集フォーム表示。）</li><li><code>admin_card_update</code> … <code>POST</code> … <code>/{admin_route}/card/{id}</code>（既存カードの更新送信処理。）</li><li><code>admin_card_delete</code> … <code>DELETE</code> … <code>/{admin_route}/card/{id}</code>（単一カードの削除。）</li></ul>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>カードの詳細フォーム（ファイル添付を含む）。削除のときはカードID。</td></tr><tr><td>成功時出力</td><td>保存のときは編集画面への遷移（302）と完了メッセージ。削除のときは検索結果またはカード一覧への遷移（302）と完了メッセージ。</td></tr><tr><td>失敗時出力</td><td>検証に外れたときはフォームの再表示。対象が無いときはアクセス拒否（HTTP403）または見つからない扱い（HTTP404）。削除できないときはエラーメッセージと直前の画面への戻り。</td></tr></tbody></table></div>
+<h3 id="入出力-永続化">入出力: 永続化</h3>
+<div class="table-wrap"><table><thead><tr><th>操作</th><th>契機</th></tr></thead><tbody><tr><td>追加</td><td>カードを新規登録したとき。カード詳細と画像も同時に追加する</td></tr><tr><td>更新</td><td>カードを編集して保存したとき。削除の直前に、商品サブの規格行のカード詳細の指定を未設定にするときも更新する</td></tr><tr><td>削除</td><td>カードを削除したとき。子と孫を再帰的に削除する。保存時に画面のコレクションから消えた子も削除する</td></tr></tbody></table></div>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
+<h2 id="表示メッセージ">表示メッセージ</h2>
+<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M14-04-MSG-001</td><td>画面中央(モーダル)</td><td>この操作はあとから取り消すことができません。「%name%」を削除してよろしいですか？</td><td>登録済みカードの削除を選択したとき（削除前の確認）</td><td>カードを削除し、カード一覧画面に遷移する</td></tr><tr><td>M14-04-MSG-002</td><td>管理画面上部</td><td>デッキまたは商品にカードが登録されているため、%card_name% カード情報を削除することができません。</td><td>デッキまたは商品に登録されているカードを削除しようとしたとき</td><td>カード編集画面、またはカード検索・一覧画面に遷移する</td></tr><tr><td>M14-04-MSG-003</td><td>管理画面上部</td><td>削除に失敗しました</td><td>カードを削除する際にエラーが起きたとき</td><td>カード編集画面、またはカード検索・一覧画面に遷移する</td></tr><tr><td>M14-04-MSG-004</td><td>管理画面上部</td><td>削除しました</td><td>カードを削除したとき</td><td>カード検索・一覧画面に遷移する</td></tr><tr><td>M14-04-MSG-005</td><td>管理画面上部</td><td>削除に失敗しました</td><td>カード情報の編集を保存する際、削除できないカード詳細を削除しようとしたとき</td><td>カード編集画面に留まる</td></tr><tr><td>M14-04-MSG-006</td><td>管理画面上部</td><td>保存しました</td><td>カード情報を保存したとき</td><td>カード編集画面に遷移する</td></tr><tr><td>M14-04-MSG-007</td><td>管理画面上部</td><td>保存に失敗しました</td><td>カード情報の保存中にエラーが起きたとき</td><td>カード編集画面に留まる</td></tr></tbody></table></div>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,28 +272,14 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#フロント挙動">フロント挙動</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#一覧・フォームを表示する-GET-m05-27-admin-order-order-waiting-tag">一覧・フォームを表示する（GET `m05-27_admin_order_order_waiting_tag`）</a>
-<a class="lv3" href="#店名だけを切り替える-POST-m05-27-admin-order-order-waiting-tag">店名だけを切り替える（POST `m05-27_admin_order_order_waiting_tag`）</a>
-<a class="lv3" href="#新規登録する-POST-m05-27-admin-order-order-waiting-tag-store">新規登録する（POST `m05-27_admin_order_order_waiting_tag_store`）</a>
-<a class="lv3" href="#削除する-DELETE-m05-27-admin-order-order-waiting-tag-delete">削除する（DELETE `m05-27_admin_order_order_waiting_tag_delete`）</a>
-<a class="lv2" href="#表示メッセージ">表示メッセージ</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
-<a class="lv3" href="#入力項目">入力項目</a>
-<a class="lv3" href="#エッジケース">エッジケース</a>
-<a class="lv2" href="#画面遷移">画面遷移</a>
-<a class="lv2" href="#権限・認可と画面の対応">権限・認可と画面の対応</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
-<a class="lv2" href="#副作用">副作用</a>
-<a class="lv2" href="#調査補助-grep-向け">調査補助（grep 向け）</a>
-<a class="lv3" href="#HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a></nav>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#一覧の表示">一覧の表示</a>
+<a class="lv3" href="#登録">登録</a>
+<a class="lv3" href="#削除">削除</a>
+<a class="lv2" href="#入出力">入出力</a>
+<a class="lv3" href="#入出力-永続化">入出力: 永続化</a>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -291,71 +287,25 @@ footer {
         <h1>受注管理 — 店頭注文番号札管理</h1>
       </header>
       
-      <h2 id="概要">概要</h2>
-<p>管理画面の「受注管理」配下で、店頭向けモニター等に掲出する英字の「注文番号札」を店舗単位で登録・一覧表示・削除する機能である。ナビゲーションの翻訳キー <code>admin.order.waiting_tag</code> では「店頭注文番号札管理」と表示される。一覧に載る整理番号（数字）やフロントの呼び出しAPIとは別テーブルである。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。ec-cube-enterprise のコア実装を確認値とする。</p>
-<p>本機能のカスタマイズ区分はカスタマイズであり、画面挙動は現行（pf-eccube3）を踏襲しつつ、本書の挙動確認値および永続化に関わるテーブル・列の記述は ec-cube-enterprise を正とする。</p>
-<p>対象はブラウザ経由の管理画面に限定する。</p>
-<p>コントローラのメソッド名は本文の主題としない。本文ではルートbind名やSymfonyのルートnameの網羅は主説明としない。「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。コード探索でbind名が必要なときだけ「調査補助」へ書く。</p>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<p>DB関連の記述は ec-cube-enterprise を正とする。本機能が参照する永続化先は確認時点で現行（pf-eccube3）と移行先（ec-cube-enterprise）で同一スキーマである。</p>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>注文番号札本体</td><td><code>dtb_waiting_tag</code>（主キー <code>id</code>、店舗 <code>base_info_id</code>、札文字列 <code>waiting_tag</code>）</td><td>同一スキーマ。テーブル名・列名とも一致する。</td></tr><tr><td>店舗関連</td><td><code>dtb_waiting_tag.base_info_id</code> が店舗（<code>BaseInfo</code>）への関連</td><td>同一スキーマ。店舗エンティティへの多対一関連として一致する。</td></tr><tr><td>札文字列の長さ</td><td><code>dtb_waiting_tag.waiting_tag</code> は最大10文字。フォーム種別の上限値と一致</td><td>同一スキーマ。DB列長10とフォーム上限が一致する点も変わらない。</td></tr></tbody></table></div>
-<p>DB一意制約の有無は実DBの索引（マイグレーション）を正とし、アプリ層の登録前チェックが <code>waiting_tag</code> 単独である点は現行・移行先で同一の論点として扱う。</p>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>管理画面ナビ「受注管理」配下の「店頭注文番号札管理」</td><td><code>GET /{admin_route}/order/waiting_tag</code></td><td>選択店舗の注文番号札一覧と新規登録フォームが表示される。</td></tr><tr><td>画面上の店名プルダウンを変更する（JavaScript がフォーム送信）</td><td><code>POST /{admin_route}/order/waiting_tag</code></td><td>選択した店舗を基準に一覧が付け替わる。入力欄は送信手順に応じてリセットされうる。DB への登録は行わない。</td></tr><tr><td>「登録」ボタン（ログイン店舗が選択されているときのみ表示）</td><td><code>POST /{admin_route}/order/waiting_tag/new</code></td><td>検証成功時は <code>dtb_waiting_tag</code> に行が追加され、一覧へリダイレクトして成功フラッシュが付く。</td></tr><tr><td>一覧行の「削除」からモーダル確定</td><td><code>DELETE /{admin_route}/order/waiting_tag/{id}/delete</code></td><td>削除処理後、一覧へリダイレクトする。成功時の専用フラッシュはコントローラにない。</td></tr><tr><td>「確認」ボタン（別タブ）</td><td>（環境依存のパス。実装は <code>/{{フォームの店舗選択値}}/waiting_number</code> を組み立てる）</td><td>店頭側の表示確認用リンクとして別タブで開く。</td></tr></tbody></table></div>
-<hr>
-<h2 id="フロント挙動">フロント挙動</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>ページタイトルは <code>admin.order.waiting_tag.title</code>。サブタイトルは <code>admin.order.order_management</code>。新規枠の見出しは <code>admin.common.registration__new</code>。一覧見出しは <code>admin.order.waiting_tag.list</code>（文言は「注文番号札」）。</td></tr><tr><td>JS 挙動</td><td>店名変更で <code>#add_new_waiting_tag</code> の <code>action</code> を <code>m05-27_admin_order_order_waiting_tag</code> に書き換えて自動送信する。削除モーダル表示時に、トリガー要素の <code>data-url</code> を削除確定リンクの <code>href</code> に、<code>data-message</code> をモーダル本文にコピーする。</td></tr><tr><td>CSS・レイアウト</td><td>一覧テーブル行に <code>sortable-item</code> 等のクラスがあるが、本テンプレート内に並べ替え用のスクリプトはない。</td></tr><tr><td>モーダル・ポップアップ</td><td>Bootstrap 系の削除確認モーダル。確定側のアンカーは <code>csrf_token_for_anchor()</code> と <code>data-method="delete"</code> により DELETE 送信になる。</td></tr></tbody></table></div>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="一覧・フォームを表示する-GET-m05-27-admin-order-order-waiting-tag">一覧・フォームを表示する（GET <code>m05-27_admin_order_order_waiting_tag</code>）</h3>
-<ol><li>管理画面の認証・共通制約を通過する。</li><li>新規用の <code>dtb_waiting_tag</code> 行を組み立て、ログイン管理者の店舗を <code>base_info_id</code> にセットする。</li><li>店頭注文番号札用のフォーム種別でフォームを生成する。</li><li><code>dtb_waiting_tag</code> を <code>BaseInfo</code> がフォームの店舗になっている行だけ昇順ソート指定なしで取得し、テンプレートへ渡す（実装は <code>findBy(['BaseInfo' =&gt; $BaseInfo])</code>。順序は実装依存）。</li><li><code>BaseInfo</code> は常にログイン店舗としてテンプレートへ渡す（削除ボタン表示の比較用）。</li></ol>
-<h3 id="店名だけを切り替える-POST-m05-27-admin-order-order-waiting-tag">店名だけを切り替える（POST <code>m05-27_admin_order_order_waiting_tag</code>）</h3>
-<ol><li>フォームにリクエストを bind する。</li><li>bind 後のエンティティから店舗を読み、一覧の検索キーに使う。</li><li>コメントどおり検証エラー表示を避けるため、同一エンティティを載せた新しいフォームインスタンスを生成し、画面へ渡す（この時点では <code>handleRequest</code> しない）。</li><li>一覧・ログイン店舗の渡し方は GET と同型である。</li></ol>
-<h3 id="新規登録する-POST-m05-27-admin-order-order-waiting-tag-store">新規登録する（POST <code>m05-27_admin_order_order_waiting_tag_store</code>）</h3>
-<ol><li>店頭注文番号札用のフォーム種別でデータ無しからフォームを作り、リクエストを処理する。</li><li>未送信または検証失敗のとき、翻訳キー <code>admin.register.failed</code> をエラーフラッシュに積み、同一テンプレートを応答本文付きで描画する（リダイレクトしない）。</li><li>検証成功のとき、登録処理をトランザクション内で実行する。</li><li>登録処理は次を行う。既に同一 <code>waiting_tag</code> 文字列の行が任意の店舗について存在する場合、翻訳キー <code>admin.order.waiting_tag.already_exists</code> のメッセージを例外として投げる（クエリは <code>waiting_tag</code> のみで絞り、<code>base_info_id</code> は条件に含めない。ソースコメントは同一店舗と書くが、実装は店舗横断で一意に近い挙動である）。</li><li>問題なければ <code>persist</code> と <code>flush</code>、コミットする。</li><li>例外時はロールバックし、例外メッセージをエラーフラッシュに積み、手順 2 と同様にテンプレートを描画する。</li><li>成功時は翻訳キー <code>admin.register.complete</code> を成功フラッシュに積み、<code>m05-27_admin_order_order_waiting_tag</code> へリダイレクトする。</li></ol>
-<h3 id="削除する-DELETE-m05-27-admin-order-order-waiting-tag-delete">削除する（DELETE <code>m05-27_admin_order_order_waiting_tag_delete</code>）</h3>
-<ol><li>CSRF 検証を行う（親クラスのトークン検証）。</li><li>パス変数の ID で <code>dtb_waiting_tag</code> を解決する（該当なしはフレームワークの扱いに従う）。</li><li>削除処理をトランザクション内で実行する。</li><li>削除処理は次を行う。<code>waiting_tag</code> 文字列が一致する行が見つからない場合、翻訳キー <code>admin.order.waiting_tag.not_found</code> を例外として投げる（こちらも <code>base_info_id</code> は条件に含めない）。</li><li>リポジトリの <code>delete</code> と <code>flush</code>、コミットする。</li><li>例外時はロールバックし、翻訳キー <code>admin.common.delete_error</code> をエラーフラッシュに積む。</li><li>成否にかかわらず <code>m05-27_admin_order_order_waiting_tag</code> へリダイレクトする。成功専用フラッシュはない。</li></ol>
-<hr>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="一覧の表示">一覧の表示</h3>
+<p>登録済みの店頭注文番号札をすべて表示する。絞り込みも並び替えもページ送りも無いため、登録した件数だけ行が並ぶ。</p>
+<h3 id="登録">登録</h3>
+<p>店頭注文番号札を 1 件ずつ登録する。入力できるのは番号札の値だけで、空のときは登録しない。</p>
+<p>値は半角英字だけを受け付ける。半角英字以外の文字が 1 文字でも含まれるときは登録せず、同じ画面に留まる。数字・記号・空白・全角英字のいずれも受け付けない。</p>
+<p>同じ値がすでに登録されているときも重ねて登録できる。値の重複は確かめない。</p>
+<p>登録できたときは一覧へ戻る。登録できなかったときは一覧へ戻らず、入力した値を残したまま同じ画面を表示する。</p>
+<h3 id="削除">削除</h3>
+<p>一覧から 1 件ずつ削除する。削除の要求には偽造防止のトークンを付け、番号札を探す前に検証する。トークンが不正なときは削除しない。</p>
+<p>指定した番号札が存在しないときは削除しない。IDの指定が無いときも削除しない。</p>
+<p>削除しても、その番号札を使っている受注には影響しない。受注が持つ店頭注文番号は変わらない。</p>
+<h2 id="入出力">入出力</h2>
+<h3 id="入出力-永続化">入出力: 永続化</h3>
+<div class="table-wrap"><table><thead><tr><th>操作</th><th>契機</th></tr></thead><tbody><tr><td>店頭注文番号札の登録</td><td>入力に不備が無いときだけ</td></tr><tr><td>店頭注文番号札の削除</td><td>トークンが正しく、指定した番号札が存在するときだけ</td></tr></tbody></table></div>
+<p>受注側のデータは更新しない。</p>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
 <h2 id="表示メッセージ">表示メッセージ</h2>
-<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>画面上の文言(英語)</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M05-27-MSG-001</td><td>画面中央(ダイアログ/モーダル)</td><td>この操作はあとから取り消すことができません。「%name%」を削除してよろしいですか？</td><td>（英訳なし）</td><td>自店の注文番号札の削除を選び、確認画面を開いたとき</td><td>削除でモーダルを閉じて店頭注文番号札管理画面に遷移、キャンセルでモーダルを閉じる</td></tr><tr><td>M05-27-MSG-002</td><td>管理画面上部</td><td>登録できませんでした。</td><td>（英訳なし）</td><td>注文番号札を登録しようとして、入力内容に不備があるとき</td><td>店頭注文番号札管理画面に留まる</td></tr><tr><td>M05-27-MSG-003</td><td>管理画面上部</td><td>登録が完了しました。</td><td>（英訳なし）</td><td>注文番号札を登録したとき</td><td>店頭注文番号札管理画面に遷移する</td></tr><tr><td>M05-27-MSG-004</td><td>管理画面上部</td><td>削除に失敗しました</td><td>（英訳なし）</td><td>注文番号札を削除しようとして、処理でエラーが起きたとき</td><td>店頭注文番号札管理画面に遷移する</td></tr><tr><td>M05-27-MSG-005</td><td>入力項目直下</td><td>半角英字のみで入力してください</td><td>（英訳なし）</td><td>注文番号札に半角英字以外を入力して登録したとき</td><td>登録せず店頭注文番号札管理画面に留まる</td></tr></tbody></table></div>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>登録可否</td><td><code>waiting_tag</code> 文字列について <code>dtb_waiting_tag</code> を店舗条件なしで検索し、1 件でもあれば登録拒否する（メッセージキー <code>admin.order.waiting_tag.already_exists</code>）。コメントは同一店舗と読めるが、クエリは <code>waiting_tag</code> のみである。</td></tr><tr><td>削除前確認</td><td>削除処理も <code>waiting_tag</code> のみで存在確認し、無ければ <code>admin.order.waiting_tag.not_found</code> で失敗する。</td></tr><tr><td>売上・件数集計</td><td>行わない。</td></tr></tbody></table></div>
-<h3 id="入力項目">入力項目</h3>
-<div class="table-wrap"><table><thead><tr><th>項目名</th><th>必須／任意</th><th>最大長</th><th>初期値</th><th>保存先・扱い</th></tr></thead><tbody><tr><td>店名</td><td>必須</td><td>—</td><td>一覧の対象店（GET 時はログイン店舗に紐づく新規エンティティの店）</td><td><code>dtb_waiting_tag.base_info_id</code>（店舗エンティティ関連）。プルダウンは店舗一覧から単一選択、<code>choice_label</code> は店舗名。</td></tr><tr><td>店頭注文番号札</td><td>必須</td><td>10 文字</td><td>空に近い状態から入力</td><td><code>dtb_waiting_tag.waiting_tag</code>。正規表現は <code>/^[a-zA-Z]+$/</code> のみ（数字不可）。違反時メッセージキー <code>admin.order.waiting_tag.regex_error</code>。長さ上限はフォーム種別内の数値と DB 列長 10 が一致する。<code>constant.yml.dist</code> の長さ定義とは連動しない。</td></tr></tbody></table></div>
-<h3 id="エッジケース">エッジケース</h3>
-<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>英字以外・数字のみ・記号混入</td><td>検証エラー。メッセージは正規表現違反または長さ。</td></tr><tr><td>11 文字以上</td><td><code>Length</code> で不正。</td></tr><tr><td>既に別店舗が同じ <code>waiting_tag</code> を保持</td><td>登録処理が <code>admin.order.waiting_tag.already_exists</code> で失敗し、同一画面にエラーフラッシュ。</td></tr><tr><td>削除対象 ID が存在しない</td><td>ルート解決段階でエラーになりうる（フレームワークの確認値）。</td></tr><tr><td>ログイン店舗以外の店を一覧で見ている</td><td>行は表示されるが、「削除」と「登録」ボタンはログイン店舗選択時のみ活性に見える実装である（テンプレートの <code>BaseInfo.id</code> 比較）。DELETE はコントローラ側でログイン店舗との一致を強制しないため、到達可能性は権限設計に依存する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="画面遷移">画面遷移</h2>
-<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>ナビから開く・初期 GET</td><td><code>m05-27_admin_order_order_waiting_tag</code> をテンプレート描画</td></tr><tr><td>店名プルダウン変更による POST</td><td>同一ルートをテンプレート描画（302 リダイレクトではない）</td></tr><tr><td>登録成功</td><td><code>m05-27_admin_order_order_waiting_tag</code> へ HTTP リダイレクト</td></tr><tr><td>登録失敗（検証または例外）</td><td>同一テンプレートを描画</td></tr><tr><td>DELETE の応答</td><td>成否にかかわらず <code>m05-27_admin_order_order_waiting_tag</code> へ HTTP リダイレクト</td></tr></tbody></table></div>
-<p>遷移後の一覧対象店は、GET・店名 POST のときはフォームに載せた店舗、登録成功リダイレクト後はコントローラが再度組み立てるフォームの既定（ログイン店舗起点）に依存する。</p>
-<hr>
-<h2 id="権限・認可と画面の対応">権限・認可と画面の対応</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>管理エリアへの入場</td><td>本パスは管理画面ルート配下であり、未認証は管理画面共通の認証フローへ寄せられる（詳細は共通設計を正とする）。</td></tr><tr><td>一覧の閲覧範囲</td><td>店名プルダウンで選んだ店舗に紐づく行のみ一覧に出す。他店の札を閲覧できる操作余地がある。</td></tr><tr><td>登録・削除ボタンの見え方</td><td>ログイン店舗 ID と、選択店舗・各行の店舗 ID をテンプレートが比較し、一致するときだけ「登録」「削除」を描画する。</td></tr><tr><td>DELETE ハンドラの検証</td><td>URL で指定した ID の行を削除処理へ渡すのみで、ログイン店舗との一致をサーバ側で再検証しない。ボタン非表示はテンプレート依存である。</td></tr></tbody></table></div>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>場面</th><th>利用者への通知</th><th>HTTP のふるまい</th></tr></thead><tbody><tr><td>登録フォーム未送信または検証失敗</td><td>フラッシュキー <code>admin.register.failed</code></td><td>同一画面を描画</td></tr><tr><td>登録処理が重複等で例外</td><td>例外メッセージ文字列をフラッシュ（例: <code>admin.order.waiting_tag.already_exists</code> の文言）</td><td>同一画面を描画</td></tr><tr><td>登録成功</td><td>フラッシュキー <code>admin.register.complete</code></td><td>一覧ルートへリダイレクト</td></tr><tr><td>削除処理が例外</td><td>フラッシュキー <code>admin.common.delete_error</code>（文言は汎用削除エラー）</td><td>一覧ルートへリダイレクト</td></tr><tr><td>削除成功</td><td>専用フラッシュはコントローラが設定しない</td><td>一覧ルートへリダイレクト</td></tr></tbody></table></div>
-<p>画面上で権限エラーと業務エラーを細かく区別する文言分岐は本機能に限定した記述はない。</p>
-<hr>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>一覧と DB</td><td>一覧はフォームで選択中の店舗に紐づく行のみ。全店横断の一覧はない。</td></tr><tr><td>重複</td><td>アプリ層の登録前チェックは <code>waiting_tag</code> のみ。DB 一意制約はエンティティ定義からは読み取れない（実 DB の索引はマイグレーションを正とする）。</td></tr><tr><td>フロント連携</td><td>フロントは店舗 ID をパラメータに英字札一覧を取得する。管理画面で登録した行がその店舗 ID と一致していれば表示対象になりうる（別機能の実装を正とする）。</td></tr></tbody></table></div>
-<hr>
-<h2 id="API-バッチ結果">API/バッチ結果</h2>
-<p>本機能から外部 HTTP API を呼ばない。バッチ結果画面も扱わない。</p>
-<hr>
-<h2 id="副作用">副作用</h2>
-<div class="table-wrap"><table><thead><tr><th>種別</th><th>内容</th></tr></thead><tbody><tr><td>DB</td><td><code>dtb_waiting_tag</code> の INSERT（登録）、DELETE（削除）。両者ともトランザクション境界あり。</td></tr><tr><td>セッション（フラッシュ）</td><td>登録失敗 <code>admin.register.failed</code>、登録成功 <code>admin.register.complete</code>、登録処理例外メッセージそのもの、削除失敗 <code>admin.common.delete_error</code>。</td></tr><tr><td>ログ</td><td>本コントローラは専用ログ出力を追加していない（共通ログに依存）。</td></tr></tbody></table></div>
-<hr>
-<h2 id="調査補助-grep-向け">調査補助（grep 向け）</h2>
-<p>実装の所在をコード検索するときの目安として記す。設計の正はソースである。</p>
-<ul><li>ルートと画面制御: <code>src/Eccube/Controller/Admin/Order/WaitingTagController.php</code>（店頭注文番号札の一覧・登録・削除）</li><li>フォーム: <code>src/Eccube/Form/Type/Admin/WaitingTagType.php</code></li><li>テンプレート: <code>src/Eccube/Resource/template/admin/Order/waiting_tag.twig</code></li><li>登録・削除処理: <code>src/Eccube/Service/Admin/Order/WaitingTagStoreAction.php</code>、<code>src/Eccube/Service/Admin/Order/WaitingTagDeleteAction.php</code></li><li>エンティティ: <code>src/Eccube/Entity/DtbWaitingTag.php</code></li><li>ナビ: <code>app/config/eccube/packages/eccube_nav.yaml</code> の <code>waiting_tag</code> 子項</li></ul>
-<h3 id="HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</h3>
-<ul><li><code>m05-27_admin_order_order_waiting_tag</code> … <code>GET, POST</code> … <code>/{admin_route}/order/waiting_tag</code>（一覧・新規入力フォームの表示。POST は店名プルダウン変更時の送信用としても使う（保存はしない）。）</li><li><code>m05-27_admin_order_order_waiting_tag_store</code> … <code>POST</code> … <code>/{admin_route}/order/waiting_tag/new</code>（注文番号札の新規登録。）</li><li><code>m05-27_admin_order_order_waiting_tag_delete</code> … <code>DELETE</code> … <code>/{admin_route}/order/waiting_tag/{id}/delete</code>（指定 ID の注文番号札を削除する。<code>id</code> は正の整数。）</li></ul>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>トランザクション境界</td><td>明示的なトランザクション境界が実装にある場合は処理フローの保存処理を正とする。明示境界が無い更新はフォーム処理またはCSV取込後の永続化処理と<code>flush</code>単位で確定する。</td></tr><tr><td>ロック</td><td>行ロック・悲観ロック・楽観ロック・ロックファイルを使用しない。競合時は後から確定した更新が残る。</td></tr><tr><td>例外時</td><td>検証エラーまたは保存前の例外では対象更新を確定しない。保存処理中の例外はエラー処理の節を正とし、未確定の永続化対象はロールバックまたは未flushのまま確定しない。</td></tr></tbody></table></div>
+<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M05-27-MSG-001</td><td>画面中央(ダイアログ/モーダル)</td><td>この操作はあとから取り消すことができません。「%name%」を削除してよろしいですか？</td><td>自店の注文番号札の削除を選び、確認画面を開いたとき</td><td>削除でモーダルを閉じて店頭注文番号札管理画面に遷移、キャンセルでモーダルを閉じる</td></tr><tr><td>M05-27-MSG-002</td><td>管理画面上部</td><td>登録できませんでした。</td><td>注文番号札を登録しようとして、入力内容に不備があるとき</td><td>店頭注文番号札管理画面に留まる</td></tr><tr><td>M05-27-MSG-003</td><td>管理画面上部</td><td>登録が完了しました。</td><td>注文番号札を登録したとき</td><td>店頭注文番号札管理画面に遷移する</td></tr><tr><td>M05-27-MSG-004</td><td>管理画面上部</td><td>削除に失敗しました</td><td>注文番号札を削除しようとして、処理でエラーが起きたとき</td><td>店頭注文番号札管理画面に遷移する</td></tr><tr><td>M05-27-MSG-005</td><td>入力項目直下</td><td>半角英字のみで入力してください</td><td>注文番号札に半角英字以外を入力して登録したとき</td><td>登録せず店頭注文番号札管理画面に留まる</td></tr></tbody></table></div>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

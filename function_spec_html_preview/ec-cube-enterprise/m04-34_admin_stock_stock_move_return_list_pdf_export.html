@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,20 +272,7 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#文書情報">文書情報</a>
-<a class="lv2" href="#改訂履歴">改訂履歴</a>
-<a class="lv2" href="#1-戻しリストPDF">1. 戻しリストPDF</a>
-<a class="lv3" href="#機能の目的と役割">機能の目的と役割</a>
-<a class="lv3" href="#本書で扱うこと">本書で扱うこと</a>
-<a class="lv3" href="#本書で扱わないこと">本書で扱わないこと</a>
-<a class="lv3" href="#利用者視点の入口-エンドポイント">利用者視点の入口（エンドポイント）</a>
-<a class="lv3" href="#印刷用データ構造-出力単位">印刷用データ構造（出力単位）</a>
-<a class="lv3" href="#帳票レイアウト要素-return-list-twig">帳票レイアウト要素（`return_list.twig`）</a>
-<a class="lv3" href="#プロセスフロー">プロセスフロー</a>
-<a class="lv3" href="#分岐・遷移・例外">分岐・遷移・例外</a>
-<a class="lv3" href="#状態・データ更新">状態・データ更新</a>
-<a class="lv3" href="#関連設計への接続点">関連設計への接続点</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a></nav>
+      
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -283,159 +280,8 @@ footer {
         <h1>M04-34（戻しリストPDF）</h1>
       </header>
       
-      <h2 id="文書情報">文書情報</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>機能名</td><td>戻しリストPDF</td></tr><tr><td>機能分類</td><td>管理画面 / 在庫管理</td></tr><tr><td>カスタマイズ区分</td><td>新規実装</td></tr><tr><td>作成日</td><td>2026-06-11</td></tr><tr><td>参照元</td><td>excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html</td></tr><tr><td>実装確認</td><td>../ec-cube-enterprise（<code>StockMoveTransferController::exportReturnListPdf</code> / <code>StockMoveTransferReturnListPdfFormatter</code> / <code>RestockListCsvRowFormatter</code> / <code>DtbStockMoveTransferRepository::getReturnListExportRows</code> / テンプレート <code>@admin/Stock/MoveTransfer/return_list.twig</code>）</td></tr></tbody></table></div>
-<h2 id="改訂履歴">改訂履歴</h2>
-<div class="table-wrap"><table><thead><tr><th>日付</th><th>内容</th></tr></thead><tbody><tr><td>2026-06-11</td><td>新規実装機能として、Excel設計書を主、実装を補完情報として初版作成。</td></tr><tr><td>2026-06-12</td><td>ec-cube-enterprise 実装（Controller/Service/Formatter/Twig）と既存テストを読み込み、実装確認値で具体化。</td></tr></tbody></table></div>
-<h2 id="1-戻しリストPDF">1. 戻しリストPDF</h2>
-<h3 id="機能の目的と役割">機能の目的と役割</h3>
-<p>在庫移動・振替一覧でチェック選択した在庫移動・振替情報をもとに、入庫先（移動先）店舗で棚へ戻すための「戻しリスト」を印刷用レイアウトで表示する管理画面機能。サーバは戻しリストのHTMLを生成し、別ウィンドウ（ポップアップ）で表示してブラウザの印刷ダイアログから印刷する方式。データ取得・整形・並び順は戻しリストCSV（M04-33）と完全に共通化されており（<code>getReturnListExportRows</code> ＋ <code>RestockListCsvRowFormatter</code>）、PDF専用フォーマッタ <code>StockMoveTransferReturnListPdfFormatter</code> が「ピッキング区分（金額閾値）ごとのグループ化」と「1ページ30行のページ分割」を行う。</p>
-<p>本機能のカスタマイズ区分は新規実装であり、現行（pf-eccube3）に相当機能は無い。帳票レイアウト・閾値仕様は基本設計仕様書（0202_基本設計仕様書(在庫管理機能)）を正とし、URLエンドポイント・出力構造・ページ分割・DBカラムはリニューアル先 ec-cube-enterprise 実装を正とする。</p>
-<h3 id="本書で扱うこと">本書で扱うこと</h3>
-<ul><li>戻しリストPDF出力の入口（エンドポイント）と起動条件・レスポンス形式（JSONでHTMLを返す）</li><li>印刷用レイアウト要素（タイトル・閾値グループ・ページング・作成日時・明細列・ページ内小計）</li><li>出力単位（ピッキング区分=金額閾値ごとのグループ、1ページ30行）</li><li>出力前バリデーション（CSVと共通。選択無し・存在しないID・対象外ステータス・権限・入庫先未設定・複数店舗）</li><li>表示制御（印刷ボタンを印刷範囲に含めない、印刷ダイアログ起動）</li></ul>
-<h3 id="本書で扱わないこと">本書で扱わないこと</h3>
-<p>以下は本書では仕様確定せず、対応機能の設計を正とする。</p>
-<ul><li>戻しリストCSV出力（M04-33）の出力列・整形・並び順（同一ロジックを共用。詳細はM04-33を正とする）</li><li>在庫移動・振替一覧画面そのもの（検索・表示・選択UI・ポップアップ起動のJS）</li><li>入庫先店舗ごとの金額閾値・棚番マスタ・略称タグ等のマスタ登録（マスタデータ管理側）</li><li>管理画面ログイン認証・権限制御そのもの（共通設計を正とする）</li></ul>
-<h3 id="利用者視点の入口-エンドポイント">利用者視点の入口（エンドポイント）</h3>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント（ルート名）</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>戻しリストPDF出力</td><td><code>POST /%admin%/product/stock/move_transfer/return_list_pdf_export</code>（<code>admin_stock_move_transfer_return_list_pdf_export</code>）</td><td>選択した在庫移動・振替情報ID（<code>ids[]</code>）を受け取り、CSRF検証・対象バリデーション後に戻しリストHTMLを <code>JsonResponse</code> で返す。成功時 <code>{success:true, html:"…"}</code>、検証NG時 <code>{success:false, redirectUrl:"…一覧ページ…"}</code>。</td></tr></tbody></table></div>
-<ul><li><code>%admin%</code> は管理画面ルートプレフィックス（<code>eccube_admin_route</code>）。管理画面ログインを要する。</li><li>別ウィンドウで開く前提のため、ファイルダウンロードではなくJSONでHTML本文を返す（画面側JSがポップアップに書き込む想定）。</li><li>入力は POST の <code>ids[]</code> と CSRFトークン <code>_token</code>。</li></ul>
-<h3 id="印刷用データ構造-出力単位">印刷用データ構造（出力単位）</h3>
-<p><code>StockMoveTransferReturnListPdfFormatter::buildReturnListDataByStockMoveTransferIds($ids)</code> が、CSVと同じ取得・整形済み行を以下の <code>ReturnList</code> 構造へ変換する。</p>
-<div class="table-wrap"><table><thead><tr><th>要素</th><th>内容</th></tr></thead><tbody><tr><td><code>createdAt</code></td><td>戻しリスト作成日時（<code>Asia/Tokyo</code>、<code>Y/m/d H:i:s</code>）。</td></tr><tr><td><code>maxPageRows</code></td><td>1ページの最大行数。定数 <code>MAX_PAGE_ROWS = 30</code>。</td></tr><tr><td><code>groups[]</code></td><td>ピッキング区分（<code>pickingType</code>＝金額閾値ラベル／<code>サプライ</code>）ごとのグループ。<code>thresholdLabel</code> と <code>pages[]</code> を持つ。SQL由来の行順をグループ内で維持。</td></tr><tr><td><code>groups[].pages[]</code></td><td>グループを30行ごとに分割したページ。<code>currentPage</code>／<code>totalPages</code>／<code>items[]</code>／<code>pageQuantitySubtotal</code>（ページ内の数量合計）を持つ。</td></tr><tr><td><code>pages[].items[]</code></td><td>各明細行。<code>rowNo</code>（ページ内連番1始まり）／<code>shelfNumber</code>／<code>languageAndCondition</code>／<code>storageCode</code>／<code>colorAndRarity</code>／<code>quantity</code>／<code>productName</code>／<code>standardPrice</code>／<code>remarks</code>（常に空文字）。<code>pickingType</code> はグループ化済みのため各行からは除外。</td></tr></tbody></table></div>
-<p>ID未選択時は <code>groups</code> 空・<code>createdAt</code>／<code>maxPageRows</code> のみの構造を返す。</p>
-<h3 id="帳票レイアウト要素-return-list-twig">帳票レイアウト要素（<code>return_list.twig</code>）</h3>
-<p>テンプレート <code>@admin/Stock/MoveTransfer/return_list.twig</code>。CSS は <code>assets/css/pickinglist.css</code>（受注ピッキングリストと共通スタイル）。</p>
-<div class="table-wrap"><table><thead><tr><th>Excel識別ID</th><th>要素</th><th>実装での表現</th></tr></thead><tbody><tr><td>1</td><td>「印刷する」ボタン</td><td><code>&lt;div class="printBox"&gt;</code> 内の <code>#printButton</code>。<code>printBox</code> を印刷範囲外とし、押下でブラウザ印刷ダイアログを起動（CSS/JS制御）。</td></tr><tr><td>2</td><td>商品仕訳（タイトル）</td><td>グループ見出し。<code>thresholdLabel == 'サプライ'</code> なら「戻しリスト（サプライ）」、それ以外は「戻しリスト（商品単位{閾値ラベル}）」。閾値ラベルは基準価格参照のピッキング区分（<code>●●円未満</code>／<code>●●円以上▲▲円未満</code>／<code>■■円以上</code>）。</td></tr><tr><td>3</td><td>ページング</td><td>見出し横に <code>{currentPage}/{totalPages}</code>（閾値グループごとのページ数）。</td></tr><tr><td>4</td><td>作成日時</td><td><code>admin.picking_item_list.create_date</code>：<code>ReturnList.createdAt</code>。</td></tr><tr><td>5</td><td>行番号</td><td>列「No」＝<code>item.rowNo</code>（ページ内連番）。</td></tr><tr><td>6</td><td>棚番号</td><td>列「棚番」＝<code>item.shelfNumber</code>（本店のみ。支店は空）。</td></tr><tr><td>7</td><td>言語/状態</td><td>列「言語/状態」＝<code>item.languageAndCondition</code>（例 <code>FoilJP/NM</code>、サプライ品は「サプライ品」）。</td></tr><tr><td>8</td><td>略称</td><td>列「略称」＝<code>item.storageCode</code>（サプライ品は空）。</td></tr><tr><td>9</td><td>色/R</td><td>列「色/R」＝<code>item.colorAndRarity</code>（サプライ品・色なし商品は空）。</td></tr><tr><td>10</td><td>数</td><td>列「数」＝<code>item.quantity</code>（3桁区切り、数量が1以外は太字）。</td></tr><tr><td>11</td><td>商品名</td><td>列「商品名」＝<code>item.productName</code>（非サプライは略称・言語・状態・色・レアリティ除去）。</td></tr><tr><td>12</td><td>価格</td><td>列「価格」＝<code>item.standardPrice</code>（基準価格）。</td></tr><tr><td>13</td><td>備考</td><td>列「備考」＝<code>item.remarks</code>（実装は常に空文字）。</td></tr><tr><td>14</td><td>ページ内個数小計</td><td>表末尾に <code>admin.picking_item_list.all</code> + <code>page.pageQuantitySubtotal</code> + <code>count</code>（ページ内数量合計）。</td></tr></tbody></table></div>
-<ul><li>1ページ未満の行は <code>maxPageRows</code>（30行）まで空行を補完してレイアウトを揃える。</li><li>タイトル文言キー: <code>admin.stock.move_transfer.return_list.pdf_title</code>（ページタイトル「戻しリスト」）、<code>...title_per_item</code>／<code>...title_per_supply</code>。</li></ul>
-<h3 id="プロセスフロー">プロセスフロー</h3>
-<ol><li><code>POST .../return_list_pdf_export</code> を受信。CSRFトークン検証（<code>isTokenValid()</code>）。</li><li>共通バリデーション <code>validateReturnListExportRequest()</code> を実行（M04-33 と同一）。</li></ol>
-<ul><li><code>ids[]</code> 空→<code>admin.stock.move_transfer.return_list_csv_export.no_selection</code> を表示し <code>{success:false, redirectUrl}</code> を返す。</li><li><code>StockMoveTransferReturnListCsvExportService::validateReturnListExportIds($ids, $Member)</code> でエラーがあれば各メッセージを表示し <code>{success:false, redirectUrl}</code> を返す。</li></ul>
-<ol><li>検証通過後、<code>getReturnListExportRows($ids)</code> の行を <code>RestockListCsvRowFormatter</code> で整形し、<code>StockMoveTransferReturnListPdfFormatter</code> で閾値グループ化・30行ページ分割。</li><li><code>return_list.twig</code> を <code>renderView()</code> でHTML化し、<code>{success:true, html:HTML}</code> をJSONで返す。</li><li>画面側JSが別ウィンドウ（ポップアップ）にHTMLを書き込み、<code>#printButton</code> で印刷ダイアログを起動する。</li></ol>
-<h3 id="分岐・遷移・例外">分岐・遷移・例外</h3>
-<ul><li>**選択無し / 検証NG**: HTTP 200 のまま <code>{success:false, redirectUrl: 一覧ページ}</code> を返す。<code>redirectUrl</code> はセッション <code>eccube.admin.stock.move_transfer.page_no</code>（既定1）から <code>admin_stock_move_transfer_page</code> を生成。Web テスト <code>testExportReturnListPdfWithNoSelectionReturnsJsonRedirect</code> / <code>...WithValidationErrorsReturnsJsonRedirect</code> が確認。</li><li>**検証NG時はデータ取得しない**: バリデーションNGでは <code>getReturnListExportRows</code> を呼ばない。Web テスト <code>testExportReturnListPdfWithValidationErrorsDoesNotFetchExportRows</code>（Repositoryモックで <code>never()</code>）が確認。</li><li>**検証OK**: <code>{success:true, html:string}</code> を返す。Web テスト <code>testExportReturnListPdfReturnsHtmlJson</code> が確認。</li><li>**CSRF不正**: <code>isTokenValid()</code> により無効トークンは例外。</li><li>**ポップアップ/取得失敗（画面側）**: <code>admin.stock.move_transfer.return_list_pdf_export.popup_blocked</code>（ポップアップブロック時）・<code>...fetch_failed</code>（データ取得失敗時）のメッセージキーを用意（画面側で表示）。</li></ul>
-<h3 id="状態・データ更新">状態・データ更新</h3>
-<div class="table-wrap"><table><thead><tr><th>対象</th><th>内容</th></tr></thead><tbody><tr><td>主データ</td><td>戻しリストPDFは**参照のみ**で業務データを更新しない（選択IDから集計してHTMLを生成するだけ。DBへの書き込みは行わない）。</td></tr><tr><td>参照テーブル</td><td>M04-33 と同一（<code>dtb_stock_move_transfer</code> / <code>dtb_stock_move_transfer_detail</code> / 入庫先 <code>dtb_product_stock</code> / <code>dtb_product_class</code> / <code>dtb_product</code> / 入庫先店舗 <code>dtb_base_info</code> の <code>expensive_threshold1〜3</code> / <code>mtb_shelf_number</code>・<code>mtb_storage_code</code>・<code>mtb_language</code>・<code>mtb_card_condition</code>・<code>mtb_card_detail</code>・<code>mtb_rarity</code>・<code>mtb_card</code>・<code>mtb_color</code>・<code>mtb_color_sequence</code>）。</td></tr><tr><td>ログ・履歴</td><td>CSV取込履歴・在庫履歴・ステータス履歴は更新しない。</td></tr></tbody></table></div>
-<h3 id="関連設計への接続点">関連設計への接続点</h3>
-<ul><li>帳票レイアウト・閾値・並び順の業務要件は参照元Excel設計書（在庫移動戻しリストPDFシート）を正とする。</li><li>URLエンドポイント・印刷用データ構造・ページ分割・テンプレートは <code>../ec-cube-enterprise</code> の <code>StockMoveTransferController</code> / <code>StockMoveTransferReturnListPdfFormatter</code> / <code>return_list.twig</code> 実装を正とする。</li><li>出力対象データの取得・整形・並び順・バリデーションは戻しリストCSV（M04-33）と共通（<code>getReturnListExportRows</code> / <code>RestockListCsvRowFormatter</code> / <code>validateReturnListExportIds</code>）。列の意味・整形ルールの詳細はM04-33を正とする。</li></ul>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<p>本機能は新規実装であり、現行（pf-eccube3）に対応する機能は存在しない。仕様は基本設計仕様書を正とする。</p>
-<p>移行先 ec-cube-enterprise には戻しリストPDF出力の実装（<code>StockMoveTransferReturnListPdfFormatter</code> ＋ <code>return_list.twig</code>）があり、DB関連の記述はこれを正とする。印刷対象は一覧で選択された在庫移動・振替情報であり、在庫移動・振替（テーブル <code>dtb_stock_move_transfer</code>）と明細（テーブル <code>dtb_stock_move_transfer_detail</code>）、および入庫先在庫・入庫先店舗を参照する。帳票は印刷用に整形したHTMLを別ウィンドウで表示し、ブラウザの印刷ダイアログで出力する方式であり、DBへの書き込みは行わない。ページ分割は1ページ30行（<code>MAX_PAGE_ROWS=30</code>）、出力単位はピッキング区分（金額閾値）ごとのグループである。列の型・桁・制約の細部は ec-cube-enterprise の Entity / Repository / Migration を正とする。</p>
-<hr>
-<details>
-<summary>Excel設計書からの抽出（原典・テスト網羅の根拠）</summary>
-<pre><code class="language-text">在庫移動戻しリストPDF
-ドキュメント名
-在庫管理 基本設計
-セクション
-—
-プロジェクト名
-サイトリニューアル
-作成者
-堀部
-作成日
-2025-08-25
-更新者
-堀部
-更新日
-2025-09-18
-機能No
-M04-34
-機能名
-在庫移動戻しリストPDF
-概要
-—
-処理概要（★はカスタマイズ項目）
-図形・テキストボックス内テキスト（14件）
-レイアウト図
-1
-3
-4
-5
-6
-7
-8
-9
-10
-11
-12
-13
-14
-2
-在庫移動戻しリストPDF / D9 / image 1
-在庫移動戻しリストPDF / AD49 / image 2
-カスタマイズ説明
-・カスタマイズ要件
-・在庫移動一覧画面で選択された在庫移動データを元に棚戻しするための戻しリストをポップアップにて表示する
-・本店3F,2F,B2Fや支店で閾値が異なるため、マスターデータ管理にて、店舗ごとに金額の閾値を分けられるようにする
-→フォーマットがそれぞれ3F,2F,B2Fで異なるものとなる
-備考
-３F在庫 現行運用での金額の閾値について
-シングルカード
-低額：4800円未満
-高額：4800円以上
-金庫：基本的にEC在庫で500万以上のものを保管。あとは備品などを入れている
-シングルカード以外
-倉庫：2Fに置ききれない（商品化していない）サプライパックボックス等を保管
-・その他、基本的な仕様は「在庫移動指示リスト ピッキングリスト印刷」に準じる
-機能仕様処理概要（★はカスタマイズ項目）
-表示制御
-ページ内で印刷に最適化した状態でページを表示する
-「印刷する」ボタン(1)を印刷範囲に含まない
-印刷ボタン
-PC端末の印刷ダイアログが表示され、印刷を実行する
-印刷対象取得
-★一覧画面で選択された買取情報に紐づく実在庫情報を、対象店舗ごとに指定された閾値情報+サプライで分けて取得する
-・サプライ品でない場合は商品名から略称・言語・状態・色・レアリティを取り除く
-・商品名内に[略称タグ]が含まれない場合は[～]（[]内にある文字を[]ごと）を削除
-・並び順は金額閾値の昇順(最後にサプライ)が最優先となる
-・金額閾値内の並び順は以下の通りとなる
-・棚番（昇順、支店の場合は棚番のソートは行わない）
-・言語（日→英→他言語）
-・状態（NM→HP）
-・Foilフラグ（非Foil→Foil）
-・略称タグ（昇順）
-・レアリティ（M→C）
-・色（マスターデータ色順参照）
-・設定されている略称タグについてコレクター番号でのソートだった場合、コレクター番号（昇順）
-・設定されている略称タグについてアルファベットでのソートだった場合、英語のカード名（昇順）
-識別IDラベル書式・制限必須最大値初期値画面部品の説明
-1印刷するボタン---ボタンを押下すると、PC端末の印刷ダイアログが表示され、印刷を開始する
-2商品仕訳ラベル---店舗ごとの閾値とサプライを出力
-●●円未満、●●円以上▲▲円未満、■■円以上、サプライ
-閾値の表示も基準価格を参照して行う（セール中で金額が変わっても棚を移動することはないため）
-3ページングラベル---閾値ごとのページ数を表示
-4作成日時ラベル---戻しリストを作成した日時
-※「戻しリストPDF」を選択した日時
-5行番号ラベル---各ページ毎に商品に割り振られる行番号
-6棚番号ラベル---商品がしまってある場所番号(本店のみ)
-支店では非表示
-7言語 / 状態ラベル---Foilの場合はFoilをつけて、言語/状態の形式で出力する（例: FoilJP/NM）、サプライ品の場合は「サプライ品」と表示
-8略称ラベル---商品の略称
-サプライ品の場合は表示しない
-9色 / Rラベル---商品情報から取り出した色とレアリティを出力（例: 赤R）。シングルカード以外は色に該当するデータがないため、色情報は非表示
-10数ラベル---商品点数
-11商品名ラベル---サプライ品でない場合は商品名から略称・言語・状態・色・レアリティを取り除く
-12価格ラベル---基準価格を表示する
-13備考ラベル---備考
-14ページ内個数小計ラベル---ページ内の商品個数の総計
-図形・テキストボックス内テキスト（14件）
-画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。
-位置テキスト
-T9(1)
-X11(2)
-AD11(3)
-AO12(4)
-D13(5)
-H13(6)
-L13(7)
-O13(8)
-R13(9)
-T13(10)
-Y13(11)
-AF13(12)
-AI13(13)
-Y43(14)</code></pre>
-</details>
+      <div class="renewal-spec-banner"><h3>リニューアル後の仕様</h3></div>
+
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

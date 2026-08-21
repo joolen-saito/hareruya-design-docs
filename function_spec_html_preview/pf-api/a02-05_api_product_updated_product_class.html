@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,29 +272,16 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#本書で扱うこと">本書で扱うこと</a>
-<a class="lv2" href="#本書で扱わないこと">本書で扱わないこと</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv2" href="#用語">用語</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#更新商品規格を取得する-GET-updateProducts-strFromDate-strToDate">更新商品規格を取得する（GET `/updateProducts/{strFromDate}/{strToDate}`）</a>
-<a class="lv2" href="#集計条件">集計条件</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#取得の対象期間">取得の対象期間</a>
+<a class="lv3" href="#応答の組み立て">応答の組み立て</a>
+<a class="lv3" href="#エラー時の扱い">エラー時の扱い</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv3" href="#リクエスト">リクエスト</a>
-<a class="lv3" href="#レスポンス-成功">レスポンス（成功）</a>
-<a class="lv3" href="#レスポンス-失敗">レスポンス（失敗）</a>
-<a class="lv3" href="#サンプルレスポンス">サンプルレスポンス</a>
-<a class="lv3" href="#副作用">副作用</a>
-<a class="lv2" href="#表示メッセージ">表示メッセージ</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#権限・認可">権限・認可</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a></nav>
+<a class="lv3" href="#入出力-リクエスト">入出力: リクエスト</a>
+<a class="lv3" href="#入出力-応答フィールド">入出力: 応答フィールド</a>
+<a class="lv3" href="#入出力-永続化">入出力: 永続化</a>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -292,104 +289,24 @@ footer {
         <h1>商品管理 — 更新商品規格取得（API）</h1>
       </header>
       
-      <h2 id="概要">概要</h2>
-<p>指定期間内に更新された商品規格を取得するAPIである。pf-apiが提供するJSON APIで、SEOや広告などの外部用途で更新分の商品規格をまとめて取得する。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-apiの更新商品規格取得処理、ルート定義、商品規格を扱うリポジトリを正とする。</p>
-<p>本機能のカスタマイズ区分は現行踏襲で、挙動の参照リポはpf-api、DB関連の記述はec-cube-enterpriseを正とする。</p>
-<p>対象はJSON APIエンドポイントであり、ブラウザ向けの画面を持たない。</p>
-<hr>
-<h2 id="本書で扱うこと">本書で扱うこと</h2>
-<ul><li>指定期間内に更新された商品規格の取得</li><li>件数と結果の応答</li></ul>
-<hr>
-<h2 id="本書で扱わないこと">本書で扱わないこと</h2>
-<p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
-<ul><li>商品規格の更新そのもの（商品管理を正とする）</li><li>取得結果を利用する外部側（SEO・広告等）の仕様</li></ul>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<p>挙動は現行（pf-api）を正とし、DBスキーマは移行先のec-cube-enterpriseを正とする。現行と移行先で次の差がある。</p>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-api）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>更新日時の絞り込み</td><td>商品<code>dtb_product</code>・商品規格<code>dtb_product_class</code>の<code>update_date</code>で期間絞り込みする。</td><td>同一スキーマ。<code>dtb_product.update_date</code>・<code>dtb_product_class.update_date</code>で絞り込む。</td></tr><tr><td>規格の補助列</td><td>カードコンディション・言語・保管コード・スマレジコード等を補助表<code>dtb_product_sub_class</code>に分離して持つ。</td><td>同等の列を商品規格<code>dtb_product_class</code>へ統合する（<code>card_condition_id</code>・<code>language_id</code>・<code>smaregi_product_code</code>等）。補助表は持たない。</td></tr><tr><td>カテゴリ・画像</td><td>応答の<code>categoryId</code>・<code>imageFileName</code>は商品カテゴリ・商品画像の各表を連結して返す。</td><td>同一スキーマ。商品カテゴリ<code>dtb_product_category</code>・商品画像<code>dtb_product_image</code>から連結する。</td></tr></tbody></table></div>
-<p>応答フィールドの命名（camelCase）は移行後も挙動仕様としてpf-apiを正とする。</p>
-<hr>
-<h2 id="用語">用語</h2>
-<div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>商品規格</td><td>商品に紐づく規格単位。</td></tr><tr><td>更新期間</td><td>取得対象を絞る更新日時の範囲。</td></tr></tbody></table></div>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>更新商品規格の取得</td><td><code>GET /updateProducts/{strFromDate}/{strToDate}</code></td><td>指定期間内に更新された商品規格を、件数とともにJSONで返す。</td></tr></tbody></table></div>
-<p>応答形式はJSON。</p>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="更新商品規格を取得する-GET-updateProducts-strFromDate-strToDate">更新商品規格を取得する（GET <code>/updateProducts/{strFromDate}/{strToDate}</code>）</h3>
-<ol><li>パスの開始日・終了日を受け取る。</li><li>開始日を当日0時0分0秒、終了日を当日23時59分59秒として期間を組み立てる。</li><li>商品規格のリポジトリから、更新日時が当該期間内の商品規格を取得する。</li><li>件数（<code>count</code>）と結果（<code>result</code>）をJSONで返す。</li></ol>
-<p>大量件数に備えてメモリ上限を引き上げて処理する。</p>
-<hr>
-<h2 id="集計条件">集計条件</h2>
-<div class="table-wrap"><table><thead><tr><th>指標</th><th>集計の要点</th></tr></thead><tbody><tr><td>取得対象</td><td>更新日時が指定期間（開始日0時〜終了日23時59分59秒）内の商品規格。</td></tr><tr><td>応答</td><td>件数と結果一覧を返す。</td></tr></tbody></table></div>
-<hr>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="取得の対象期間">取得の対象期間</h3>
+<p>パスで受け取った開始日は当日0時0分0秒、終了日は当日23時59分59秒として期間を組み立てる。商品情報・商品規格のいずれかの更新日時が当該期間内にある商品規格を取得対象とする。期間に該当が無いときもエラーとしない。</p>
+<h3 id="応答の組み立て">応答の組み立て</h3>
+<p>件数と商品規格行の配列を返す。0件のときは件数0・空配列とする。商品画像ファイル名・カテゴリID・カテゴリ名は、それぞれカンマ区切りで連結した文字列として返す。金額・ポイント・数量などの派生値は取得した値をそのまま返し、丸め・補正は行わない。大量件数に備え、扱えるメモリの上限を引き上げて処理する。</p>
+<h3 id="エラー時の扱い">エラー時の扱い</h3>
+<div class="table-wrap"><table><thead><tr><th>事象</th><th>扱い</th></tr></thead><tbody><tr><td>期間に該当なし</td><td>件数0・空の結果を返す。専用の失敗ステータスは返さない</td></tr></tbody></table></div>
 <h2 id="入出力">入出力</h2>
-<h3 id="リクエスト">リクエスト</h3>
-<div class="table-wrap"><table><thead><tr><th>パラメータ</th><th>位置</th><th>型</th><th>必須／任意</th><th>説明</th></tr></thead><tbody><tr><td><code>strFromDate</code></td><td>パス</td><td>string</td><td>必須</td><td>取得期間の開始日。当日0時0分0秒に丸めて期間下限とする。日時として解釈できる文字列を渡す。</td></tr><tr><td><code>strToDate</code></td><td>パス</td><td>string</td><td>必須</td><td>取得期間の終了日。当日23時59分59秒に丸めて期間上限とする。日時として解釈できる文字列を渡す。</td></tr></tbody></table></div>
-<p>商品情報・商品規格のいずれかの更新日時が当該期間内にある商品規格を取得対象とする。</p>
-<h3 id="レスポンス-成功">レスポンス（成功）</h3>
-<p>HTTP 200。</p>
-<div class="table-wrap"><table><thead><tr><th>フィールド</th><th>型</th><th>説明</th></tr></thead><tbody><tr><td><code>count</code></td><td>integer</td><td>取得した商品規格の件数。</td></tr><tr><td><code>result</code></td><td>array</td><td>商品規格行の配列。各要素は以下のフィールドを持つオブジェクト。0件のときは空配列。</td></tr><tr><td><code>result[].productId</code></td><td>integer</td><td>商品ID。</td></tr><tr><td><code>result[].productCode</code></td><td>string</td><td>商品コード。</td></tr><tr><td><code>result[].name</code></td><td>string</td><td>商品の日本語名。</td></tr><tr><td><code>result[].nameEn</code></td><td>string</td><td>商品の英語名。</td></tr><tr><td><code>result[].descriptionDetail</code></td><td>string</td><td>商品説明（詳細）。</td></tr><tr><td><code>result[].descriptionDetailEn</code></td><td>string</td><td>商品説明（詳細・英語）。</td></tr><tr><td><code>result[].statusId</code></td><td>integer</td><td>商品ステータスのID。</td></tr><tr><td><code>result[].statusName</code></td><td>string</td><td>商品ステータスの名称。</td></tr><tr><td><code>result[].stock</code></td><td>string</td><td>在庫数。</td></tr><tr><td><code>result[].price02</code></td><td>string</td><td>販売価格列の値。</td></tr><tr><td><code>result[].imageFileName</code></td><td>string</td><td>商品画像ファイル名を連結した文字列（カンマ区切り）。</td></tr><tr><td><code>result[].categoryId</code></td><td>string</td><td>カテゴリIDを連結した文字列（カンマ区切り）。</td></tr><tr><td><code>result[].categoryName</code></td><td>string</td><td>カテゴリ名を連結した文字列（カンマ区切り）。</td></tr><tr><td><code>result[].strageCodeId</code></td><td>integer</td><td>保管コードのID。未設定のときはnull。</td></tr><tr><td><code>result[].storageCodeName</code></td><td>string</td><td>保管コードの名称。未設定のときはnull。</td></tr><tr><td><code>result[].languageCode</code></td><td>string</td><td>言語コード。未設定のときはnull。</td></tr><tr><td><code>result[].cardsetCode</code></td><td>string</td><td>カードセットのコード。未設定のときはnull。</td></tr><tr><td><code>result[].cardConditionCode</code></td><td>string</td><td>カード状態のコード。未設定のときはnull。</td></tr><tr><td><code>result[].productClassUpdateDate</code></td><td>string</td><td>商品規格の更新日時。</td></tr><tr><td><code>result[].productUpdateDate</code></td><td>string</td><td>商品情報の更新日時。</td></tr></tbody></table></div>
-<h3 id="レスポンス-失敗">レスポンス（失敗）</h3>
-<p>本APIは期間に該当が無い場合もエラーとせず、HTTP 200で<code>count</code>が0・<code>result</code>が空配列の応答を返す。専用の失敗ステータスは返さない。</p>
-<h3 id="サンプルレスポンス">サンプルレスポンス</h3>
-<p>成功時の応答例（実装確認値に基づく代表値）。</p>
-<pre><code class="language-json">{
-  "count": 1,
-  "result": [
-    {
-      "productId": 30001,
-      "productCode": "P-40001",
-      "name": "サンプル商品",
-      "nameEn": "Sample Product",
-      "descriptionDetail": "商品説明",
-      "descriptionDetailEn": "Product description",
-      "statusId": 1,
-      "statusName": "公開",
-      "stock": "5",
-      "price02": "300",
-      "imageFileName": "30001.jpg",
-      "categoryId": "10,20",
-      "categoryName": "カテゴリA,カテゴリB",
-      "strageCodeId": null,
-      "storageCodeName": null,
-      "languageCode": "JP",
-      "cardsetCode": "SET",
-      "cardConditionCode": "NM",
-      "productClassUpdateDate": "2026-06-01T10:00:00+09:00",
-      "productUpdateDate": "2026-06-01T10:00:00+09:00"
-    }
-  ]
-}</code></pre>
-<h3 id="副作用">副作用</h3>
-<p>無し（参照のみ）。大量件数に備え、処理中はメモリ上限を引き上げる。</p>
-<p>応答はJSON応答整形を経て返す。プロパティはcamelCase、日時はISO8601とする。</p>
-<hr>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>取得期間の開始日と終了日</td></tr><tr><td>成功時出力</td><td>HTTP 200。件数と商品規格行の配列</td></tr><tr><td>失敗時出力</td><td>該当なしをエラーとしないため、専用の失敗ステータスを返さない</td></tr></tbody></table></div>
+<h3 id="入出力-リクエスト">入出力: リクエスト</h3>
+<div class="table-wrap"><table><thead><tr><th>パラメータ</th><th>位置</th><th>型</th><th>必須／任意</th><th>説明</th></tr></thead><tbody><tr><td><code>strFromDate</code></td><td>パス</td><td>string</td><td>必須</td><td>取得期間の開始日。当日0時0分0秒に丸めて期間下限とする。日時として解釈できる文字列を渡す</td></tr><tr><td><code>strToDate</code></td><td>パス</td><td>string</td><td>必須</td><td>取得期間の終了日。当日23時59分59秒に丸めて期間上限とする。日時として解釈できる文字列を渡す</td></tr></tbody></table></div>
+<h3 id="入出力-応答フィールド">入出力: 応答フィールド</h3>
+<div class="table-wrap"><table><thead><tr><th>フィールド</th><th>型</th><th>説明</th></tr></thead><tbody><tr><td><code>count</code></td><td>integer</td><td>取得した商品規格の件数</td></tr><tr><td><code>result</code></td><td>array</td><td>商品規格行の配列。0件のときは空配列</td></tr><tr><td><code>result[].productId</code></td><td>integer</td><td>商品ID</td></tr><tr><td><code>result[].productCode</code></td><td>string</td><td>商品コード</td></tr><tr><td><code>result[].name</code></td><td>string</td><td>商品の日本語名</td></tr><tr><td><code>result[].nameEn</code></td><td>string</td><td>商品の英語名</td></tr><tr><td><code>result[].descriptionDetail</code></td><td>string</td><td>商品説明（詳細）</td></tr><tr><td><code>result[].descriptionDetailEn</code></td><td>string</td><td>商品説明（詳細・英語）</td></tr><tr><td><code>result[].statusId</code></td><td>integer</td><td>商品ステータスのID</td></tr><tr><td><code>result[].statusName</code></td><td>string</td><td>商品ステータスの名称</td></tr><tr><td><code>result[].stock</code></td><td>string</td><td>在庫数</td></tr><tr><td><code>result[].price02</code></td><td>string</td><td>販売価格</td></tr><tr><td><code>result[].imageFileName</code></td><td>string</td><td>商品画像ファイル名をカンマ区切りで連結した文字列</td></tr><tr><td><code>result[].categoryId</code></td><td>string</td><td>カテゴリIDをカンマ区切りで連結した文字列</td></tr><tr><td><code>result[].categoryName</code></td><td>string</td><td>カテゴリ名をカンマ区切りで連結した文字列</td></tr><tr><td><code>result[].strageCodeId</code></td><td>integer</td><td>保管コードのID。未設定のときはnull</td></tr><tr><td><code>result[].storageCodeName</code></td><td>string</td><td>保管コードの名称。未設定のときはnull</td></tr><tr><td><code>result[].languageCode</code></td><td>string</td><td>言語コード。未設定のときはnull</td></tr><tr><td><code>result[].cardsetCode</code></td><td>string</td><td>カードセットのコード。未設定のときはnull</td></tr><tr><td><code>result[].cardConditionCode</code></td><td>string</td><td>カード状態のコード。未設定のときはnull</td></tr><tr><td><code>result[].productClassUpdateDate</code></td><td>string</td><td>商品規格の更新日時</td></tr><tr><td><code>result[].productUpdateDate</code></td><td>string</td><td>商品情報の更新日時</td></tr></tbody></table></div>
+<h3 id="入出力-永続化">入出力: 永続化</h3>
+<p>本機能はデータを更新しない。</p>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
 <h2 id="表示メッセージ">表示メッセージ</h2>
-<p>本APIは画面を持たないため、画面表示メッセージは定義しない。</p>
-<p>&gt; 是正記録: 旧版の本節には本機能ID接頭の MSG-002 / MSG-003 として管理画面のCSV取込フラッシュ &gt; （<code>CsvImportController::csvClassName</code>:899 / <code>csvClassCategory</code>:1030）が誤って埋め込まれていた。 &gt; いずれも本APIとは無関係のため撤去し、<code>message_inventory</code> の未割当バケット <code>EE-CLASSCSV</code> へ &gt; 退避した（規格CSV取込・規格分類CSV取込の正本設計書は未整備）。</p>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<ul><li>更新対象はリクエストで指定されたIDと認証・権限条件で特定できる既存レコードに限定する。</li><li>入力値は既存バリデーション、状態遷移可否、店舗・支店条件を満たす場合のみ保存する。</li><li>金額・ポイント・数量など派生値が関係する場合は既存サービスの計算結果を正とし、API層で独自の丸め・補正を行わない。</li><li>検証エラー、対象なし、権限不足、状態不整合では保存せず、既存のエラー形式で返す。</li></ul>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>参照時点</td><td>呼び出し時点で当該期間に更新された商品規格を返す。本APIはデータを更新しない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<p>移行先（ec-cube-enterprise）の名称を主とし、現行（pf-api）の配置が異なる場合は括弧で添える。</p>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td>商品規格<code>dtb_product_class</code></td><td><code>update_date</code>・<code>product_code</code>・<code>price02</code>・<code>card_condition_id</code>・<code>language_id</code>・<code>smaregi_product_code</code>（現行は補助列を補助表<code>dtb_product_sub_class</code>に持つ）</td><td>期間絞り込み・応答内容に使用する。</td></tr><tr><td>商品<code>dtb_product</code></td><td><code>update_date</code>・<code>name</code>・<code>name_en</code>・商品説明（詳細）各列</td><td>期間絞り込み・応答内容に使用する。</td></tr><tr><td>在庫<code>dtb_product_stock</code></td><td>在庫数</td><td>応答の<code>stock</code>に使用する。</td></tr><tr><td>商品カテゴリ<code>dtb_product_category</code>・商品画像<code>dtb_product_image</code></td><td>カテゴリID・画像ファイル名</td><td>応答の<code>categoryId</code>・<code>imageFileName</code>の連結に使用する。</td></tr></tbody></table></div>
-<h3 id="DB操作">DB操作</h3>
-<p>永続化の正は ec-cube-enterprise（テーブル名・操作は ec-cube-enterprise を正典）。当ドメインは承認ワークフローを介さず persist/flush で直接確定する（承認ワークフローは在庫機能固有）。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>登録/更新</td><td>dtb_product / dtb_product_category / dtb_product_class / dtb_product_image / dtb_product_stock / dtb_product_sub_class</td><td>当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。</td></tr></tbody></table></div>
-<hr>
-<h2 id="権限・認可">権限・認可</h2>
-<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>更新商品規格取得</th></tr></thead><tbody><tr><td>クライアント</td><td>クライアントから呼び出す。認可方式はpf-apiの方針に従う。</td></tr></tbody></table></div>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>期間に該当なし</td><td>件数0・空の結果を返す。</td></tr></tbody></table></div>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<p>本APIは参照のみであり、楽観ロック・悲観ロックの対象は持たない。</p>
+<p>この機能は画面を持たないためメッセージを扱わない。</p>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

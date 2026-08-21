@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,32 +272,17 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#本書で扱うこと">本書で扱うこと</a>
-<a class="lv2" href="#本書で扱わないこと">本書で扱わないこと</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv2" href="#用語">用語</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#認証・認可">認証・認可</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#店頭買取受注のステータスを更新する-PUT-admin-otcBuyOrder-id-status-json">店頭買取受注のステータスを更新する（PUT `/admin/otcBuyOrder/{id}/status.json`）</a>
-<a class="lv2" href="#表示メッセージ">表示メッセージ</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#認証と担当者">認証と担当者</a>
+<a class="lv3" href="#更新の判定順序">更新の判定順序</a>
+<a class="lv3" href="#更新の内容">更新の内容</a>
+<a class="lv3" href="#店頭買取ステータス">店頭買取ステータス</a>
+<a class="lv3" href="#エラー時の扱い">エラー時の扱い</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv3" href="#リクエスト">リクエスト</a>
-<a class="lv3" href="#レスポンス-成功">レスポンス（成功）</a>
-<a class="lv3" href="#レスポンス-失敗">レスポンス（失敗）</a>
-<a class="lv3" href="#サンプルレスポンス">サンプルレスポンス</a>
-<a class="lv3" href="#副作用">副作用</a>
-<a class="lv2" href="#バリデーション">バリデーション</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#権限・認可">権限・認可</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#ログ・監査">ログ・監査</a>
-<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a></nav>
+<a class="lv3" href="#入出力-リクエスト">入出力: リクエスト</a>
+<a class="lv3" href="#入出力-永続化">入出力: 永続化</a>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -295,88 +290,26 @@ footer {
         <h1>API 店頭買取管理 — 店頭買取受注ステータス更新</h1>
       </header>
       
-      <h2 id="概要">概要</h2>
-<p>買取アプリ（MTGバイヤー）が店頭買取受注のステータスを更新するためのAPIである。pf-api（買取連携用のAPIアプリケーション）が提供するJSON APIで、受注IDで対象を特定し、指定したステータスへ更新するとともに査定担当者・更新日時とステータス変更履歴を保存する。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-apiのステータス更新処理、ルート定義（<code>config/routes.yaml</code>）、店頭買取受注・店頭買取ステータスマスタ・店頭買取ステータス変更履歴を扱うエンティティ、共通の認証処理を正とする。カスタマイズ区分はカスタマイズで、挙動の参照リポはpf-api、DB関連はec-cube-enterpriseを正とする。</p>
-<p>対象はJSON APIエンドポイントであり、ブラウザ向けの画面を持たない。本文ではフレームワークのコントローラ型名やメソッド名を主説明としない。「利用者視点の入口」にHTTPメソッドとパスパターンを書く。</p>
-<hr>
-<h2 id="本書で扱うこと">本書で扱うこと</h2>
-<ul><li>受注IDによる店頭買取受注の特定と、ステータス・査定担当者・更新日時の保存</li><li>ステータス変更履歴の登録</li><li>認証、対象なし、無効なステータス、査定終了後・他担当者査定中の更新可否判定と応答</li></ul>
-<hr>
-<h2 id="本書で扱わないこと">本書で扱わないこと</h2>
-<p>以下は本書では仕様確定せず、実装または別APIの設計を正とする。</p>
-<ul><li>店頭買取受注の詳細更新・査定明細の確定（店頭買取受注詳細更新APIの設計を正とする）</li><li>店頭買取受注のフリーコメント更新・本人確認情報更新（各店頭買取APIの設計を正とする）</li><li>店頭買取受注一覧の取得（店頭買取受注一覧取得APIの設計を正とする）</li><li>ネット買取受注のステータス更新（ネット買取受注ステータス更新APIの設計を正とする）</li><li>ステータスごとの業務上の意味づけや画面表示（買取アプリの設計を正とする）</li><li>トークンの発行（買取アプリ用ログインの設計を正とする）</li></ul>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<p>DB関連はec-cube-enterpriseを正とする。本APIが扱う永続化先は、現行（pf-api）とec-cube-enterpriseで同一スキーマである。</p>
-<div class="table-wrap"><table><thead><tr><th>論理名</th><th>ec-cube-enterprise のテーブル・列</th><th>現行（pf-api）との差</th></tr></thead><tbody><tr><td>店頭買取受注</td><td>テーブル <code>dtb_otc_buy_order</code></td><td>同一スキーマ</td></tr><tr><td>店頭買取受注 受注ID</td><td>列 <code>id</code></td><td>同一</td></tr><tr><td>店頭買取受注 店頭買取ステータスID</td><td>列 <code>otc_buy_order_status_id</code></td><td>同一</td></tr><tr><td>店頭買取受注 査定担当者</td><td>列 <code>member_id</code>（管理者会員への参照）</td><td>同一</td></tr><tr><td>店頭買取受注 更新日時</td><td>列 <code>update_date</code></td><td>同一</td></tr><tr><td>店頭買取ステータスマスタ</td><td>テーブル <code>mtb_otc_buy_order_status</code>、列 <code>id</code></td><td>同一スキーマ</td></tr><tr><td>店頭買取ステータス変更履歴</td><td>テーブル <code>dtb_otc_buy_order_status_history</code>（列 <code>id</code>・<code>otc_buy_order_id</code>・<code>otc_buy_order_status_id</code>・<code>member_id</code>・<code>create_date</code>）</td><td>同一スキーマ。登録日時は <code>create_date</code> 列</td></tr></tbody></table></div>
-<p>挙動・メッセージ・判定順序は現行（pf-api）を正とする。基本設計が現行と異なる追加仕様を描く場合は本APIでは扱わず、差分は本節に集約する。</p>
-<hr>
-<h2 id="用語">用語</h2>
-<div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>店頭買取受注</td><td>店頭で受け付けた買取の受注。受注IDで一意に特定する。</td></tr><tr><td>店頭買取ステータス</td><td>受注の進捗を表す状態。店頭買取ステータスマスタで管理し、IDで指定する。</td></tr><tr><td>査定中・査定再開</td><td>査定が進行中の状態。査定中（6）・査定再開（9）がこれに該当する。</td></tr><tr><td>査定終了</td><td>査定が完了した状態。成立（1）・キャンセル（2）・ダブルチェック済（3）・データ出力済（4）・振込前（7）がこれに該当する。</td></tr><tr><td>査定担当者</td><td>ステータスを更新した管理者会員。トークンから特定する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>店頭買取受注のステータス更新</td><td><code>PUT /admin/otcBuyOrder/{id}/status.json</code></td><td>受注IDの店頭買取受注のステータスと査定担当者・更新日時を保存し、変更履歴を登録する。成功時はコード200のJSONを返す。</td></tr><tr><td>同上（拡張子なし別名）</td><td><code>PUT /admin/otcBuyOrder/{id}/status</code></td><td>上と同一処理。</td></tr></tbody></table></div>
-<p>応答形式はJSON。呼び出し元は買取アプリ（MTGバイヤー）。</p>
-<hr>
-<h2 id="認証・認可">認証・認可</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>認証方式</td><td><code>jwt-token</code>ヘッダのJWTを検証し、ペイロードの利用者IDから管理者会員を引く。署名方式はHS256。</td></tr><tr><td>認証失敗時</td><td>ヘッダ欠落・署名不正・該当する管理者会員なしのいずれも認証拒否（HTTP 401）とする。</td></tr><tr><td>認可</td><td>認証した管理者会員が査定担当者として記録される。査定中・査定再開の受注を査定中・査定再開へ更新できるのは、その受注の査定担当者本人に限る。呼び出し可能なクライアントは買取アプリ。</td></tr></tbody></table></div>
-<p>トークン原値・署名シークレットは本書に記載しない。</p>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="店頭買取受注のステータスを更新する-PUT-admin-otcBuyOrder-id-status-json">店頭買取受注のステータスを更新する（PUT <code>/admin/otcBuyOrder/{id}/status.json</code>）</h3>
-<ol><li><code>jwt-token</code>ヘッダのトークンを検証し、管理者会員を特定する。検証できない場合は認証拒否（HTTP 401）とする。</li><li>パスの受注IDで店頭買取受注を1件取得する。該当が無い場合は該当なし（HTTP 404）とする。</li><li>更新前のステータスを保持する。</li><li>リクエストのステータスID（<code>status</code>）で店頭買取ステータスマスタを引く。該当が無い場合は入力不正（HTTP 400）とし「正しい店頭買取ステータスIDを入力してください」を返す。</li><li>更新前ステータスが査定終了に該当する場合は更新不可とし、入力不正（HTTP 400）を返す。指定ステータスが査定中・査定再開のときは「この査定はすでに終了しているため開くことができません。」、それ以外は「この査定はすでに終了しているためステータスの更新に失敗しました。」を返す。</li><li>更新前ステータスが査定中・査定再開で、かつ指定ステータスも査定中・査定再開で、その受注の査定担当者が認証した管理者会員と異なる場合は、入力不正（HTTP 400）とし「この受注は「（査定担当者名）」が査定中です。」を返す。</li><li>更新前ステータスと指定ステータスが異なる場合のみ、受注のステータス・査定担当者・更新日時を更新し、ステータス変更履歴を1件登録する。更新前後が同じステータスのときは更新も履歴登録も行わない。</li><li>コード200のJSONを返す。</li></ol>
-<hr>
-<h2 id="表示メッセージ">表示メッセージ</h2>
-<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>画面上の文言(英語)</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>A06-05-MSG-001</td><td>API応答JSON（errors配列）</td><td>買取情報が見つかりません</td><td>（英訳なし）</td><td>ステータス更新時、指定した店頭買取受注IDが存在しない</td><td>HTTP 404のJSONを返し、更新処理を中止する</td></tr><tr><td>A06-05-MSG-002</td><td>API応答JSON（errors配列）</td><td>不正なステータス遷移です</td><td>（英訳なし）</td><td>店頭買取受注ステータス更新APIで、受注の現在ステータスが取得できない場合。</td><td>HTTP 400のJSON errorsで更新中止。</td></tr></tbody></table></div>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>更新対象</td><td>リクエストで指定されたID・入力値に対応する業務データを対象にする。対象特定、入力不正、認証・認可の判定順序は処理フローとバリデーションの各節を正とする。</td></tr><tr><td>更新方法</td><td>入力値を対象データへ上書きまたは追加登録する。履歴登録や関連データ更新がある場合は入出力の副作用およびDBカラムの節を正とする。</td></tr><tr><td>計算処理</td><td>本APIでは金額・税・ポイント・在庫数量の再計算や丸めを行わない。ステータスやコメント等の更新は、実装で定義された遷移・存在確認・担当者判定に従う。</td></tr><tr><td>応答値</td><td>成功時は処理結果コードまたは更新後に取得した値を返す。レスポンス値は本API内で独自集計せず、保存結果または取得結果をJSON応答へ整形する。</td></tr></tbody></table></div>
-<hr>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="認証と担当者">認証と担当者</h3>
+<p>トークンを検証して管理者会員を特定する。トークンの欠落・署名不正・該当する管理者会員なしのいずれのときも認証拒否（HTTP 401）とする。認証した管理者会員を査定担当者として記録する。査定中・査定再開の受注を査定中・査定再開へ更新できるのは、その受注の査定担当者本人だけである。呼び出し元は買取アプリで、トークンの原値と署名の秘密値は本書に記載しない。</p>
+<h3 id="更新の判定順序">更新の判定順序</h3>
+<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>認証できるか</td><td>できないなら認証拒否（HTTP 401）</td></tr><tr><td>2</td><td>受注IDに該当する店頭買取受注があるか</td><td>無ければ該当なし（HTTP 404）</td></tr><tr><td>3</td><td>指定ステータスIDが店頭買取ステータスに存在するか</td><td>存在しなければ入力不正（HTTP 400）</td></tr><tr><td>4</td><td>更新前ステータスが査定終了か</td><td>査定終了なら更新せず入力不正（HTTP 400）。指定先が査定中・査定再開のときとそれ以外で文言を分ける</td></tr><tr><td>5</td><td>更新前が査定中・査定再開で、指定も査定中・査定再開か</td><td>その受注の査定担当者が認証した管理者会員と異なるなら入力不正（HTTP 400）</td></tr><tr><td>6</td><td>更新前ステータスと指定ステータスが異なるか</td><td>異なるときだけ更新する。同じときは更新も履歴登録も行わず処理結果コード200を返す</td></tr></tbody></table></div>
+<h3 id="更新の内容">更新の内容</h3>
+<p>更新前後のステータスが異なるときは、受注のステータス・査定担当者・更新日時を更新し、ステータス変更履歴を1件登録する。金額・税・ポイント・在庫数量の再計算や丸めは行わない。応答は本APIで集計せず、処理結果コードを返す。</p>
+<h3 id="店頭買取ステータス">店頭買取ステータス</h3>
+<p>登録されているステータスIDは、成立（1）・キャンセル（2）・ダブルチェック済（3）・データ出力済（4）・商品到着（5）・査定中（6）・振込前（7）・保留（8）・査定再開（9）である。これらに存在しないIDを指定したときは入力不正（HTTP 400）とする。</p>
+<h3 id="エラー時の扱い">エラー時の扱い</h3>
+<div class="table-wrap"><table><thead><tr><th>事象</th><th>扱い</th></tr></thead><tbody><tr><td>認証不可</td><td>認証拒否（HTTP 401）とする。本文を持たない</td></tr><tr><td>受注が存在しない</td><td>該当なし（HTTP 404）とする。本文を持たない</td></tr><tr><td>ステータスIDが不正</td><td>入力不正（HTTP 400）とし、エラー内容を含むJSONを返す</td></tr><tr><td>査定終了後の更新</td><td>入力不正（HTTP 400）とし、指定先に応じた文言を返す</td></tr><tr><td>他担当者が査定中の受注の査定開始</td><td>入力不正（HTTP 400）とし、査定担当者名を含む文言を返す</td></tr><tr><td>保存処理中の例外</td><td>共通の例外処理に委ねる（HTTP 500相当）</td></tr></tbody></table></div>
 <h2 id="入出力">入出力</h2>
-<h3 id="リクエスト">リクエスト</h3>
-<div class="table-wrap"><table><thead><tr><th>パラメータ</th><th>位置</th><th>型</th><th>必須／任意</th><th>説明</th></tr></thead><tbody><tr><td><code>id</code></td><td>パス</td><td>integer</td><td>必須</td><td>更新対象の店頭買取受注ID。</td></tr><tr><td><code>status</code></td><td>ボディ（フォーム値）</td><td>integer</td><td>必須</td><td>設定する店頭買取ステータスID。店頭買取ステータスマスタに存在する値であること。</td></tr><tr><td><code>jwt-token</code></td><td>ヘッダ</td><td>string</td><td>必須</td><td>認証用のJWTトークン。</td></tr></tbody></table></div>
-<p>店頭買取ステータスマスタに登録されているステータスIDは、成立（1）・キャンセル（2）・ダブルチェック済（3）・データ出力済（4）・商品到着（5）・査定中（6）・振込前（7）・保留（8）・査定再開（9）である。これらに存在しないIDを指定した場合は入力不正（HTTP 400）となる。</p>
-<h3 id="レスポンス-成功">レスポンス（成功）</h3>
-<p>HTTP 200。</p>
-<div class="table-wrap"><table><thead><tr><th>フィールド</th><th>型</th><th>説明</th></tr></thead><tbody><tr><td><code>code</code></td><td>integer</td><td>処理結果コード。成功時は200。更新前後が同じステータスでも200を返す。</td></tr></tbody></table></div>
-<h3 id="レスポンス-失敗">レスポンス（失敗）</h3>
-<div class="table-wrap"><table><thead><tr><th>HTTPステータス</th><th>条件</th><th>本文の形</th></tr></thead><tbody><tr><td>401</td><td>トークン欠落・署名不正・該当する管理者会員なし</td><td>認証拒否（本文を持たない）</td></tr><tr><td>404</td><td>受注IDに該当する店頭買取受注が無い</td><td>該当なし（本文を持たない）</td></tr><tr><td>400</td><td>指定ステータスIDが店頭買取ステータスマスタに存在しない</td><td><code>{code, errors}</code>（<code>errors</code>は「正しい店頭買取ステータスIDを入力してください」）</td></tr><tr><td>400</td><td>更新前ステータスが査定終了で、指定ステータスが査定中・査定再開</td><td><code>{code, errors}</code>（<code>errors</code>は「この査定はすでに終了しているため開くことができません。」）</td></tr><tr><td>400</td><td>更新前ステータスが査定終了で、指定ステータスがそれ以外</td><td><code>{code, errors}</code>（<code>errors</code>は「この査定はすでに終了しているためステータスの更新に失敗しました。」）</td></tr><tr><td>400</td><td>査定中・査定再開の受注を、査定担当者本人以外が査定中・査定再開へ更新</td><td><code>{code, errors}</code>（<code>errors</code>は「この受注は「（査定担当者名）」が査定中です。」）</td></tr><tr><td>500</td><td>保存処理中の例外</td><td>共通例外処理に委ねる</td></tr></tbody></table></div>
-<h3 id="サンプルレスポンス">サンプルレスポンス</h3>
-<p>成功時の応答例。</p>
-<pre><code class="language-json">{
-  "code": 200
-}</code></pre>
-<h3 id="副作用">副作用</h3>
-<p>更新前後でステータスが異なる場合に、店頭買取受注のステータス・査定担当者・更新日時を更新し（DB更新）、ステータス変更履歴を1件登録する。履歴には受注ID・更新後ステータスID・更新担当者ID・登録日時を記録する。参照のみではない。更新前後が同じステータスのときは更新も履歴登録も行わない。</p>
-<p>応答はJSON応答整形を経て返す。プロパティはcamelCase、日時はISO8601、<code>serialize_null</code>は有効とする。</p>
-<hr>
-<h2 id="バリデーション">バリデーション</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td><code>status</code></td><td>必須。店頭買取ステータスマスタに存在するIDであること。存在しない場合は入力不正（HTTP 400）とし、「正しい店頭買取ステータスIDを入力してください」を返す。</td></tr><tr><td>ステータス遷移（査定終了）</td><td>更新前が査定終了に該当する場合は更新できない。入力不正（HTTP 400）とし、指定先が査定中・査定再開かどうかでメッセージを切り替える。</td></tr><tr><td>ステータス遷移（査定中の占有）</td><td>更新前と指定先がいずれも査定中・査定再開で、査定担当者が認証会員と異なる場合は更新できない。入力不正（HTTP 400）とし、査定担当者名を含むメッセージを返す。</td></tr><tr><td><code>id</code></td><td>パスの受注ID。該当する店頭買取受注が無い場合は該当なし（HTTP 404）とする。</td></tr></tbody></table></div>
-<hr>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>参照時点</td><td>更新時点で存在する店頭買取受注と店頭買取ステータスマスタを対象に判定・更新する。</td></tr><tr><td>更新範囲</td><td>ステータス・査定担当者・更新日時を更新し、ステータス変更履歴を追加する。受注の他項目（明細・買取合計金額・成立日時等）は本APIでは変更しない。</td></tr><tr><td>同一ステータス</td><td>更新前後が同じステータスのときは受注の更新も履歴登録も行わず、成功（コード200）を返す。</td></tr><tr><td>同時更新</td><td>同一受注への同時更新に対する排他制御は本APIでは持たない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<p>機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。</p>
-<p>テーブル名・列名はec-cube-enterpriseを正とする（現行pf-apiと同一スキーマ）。</p>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td>店頭買取受注（<code>dtb_otc_buy_order</code>）</td><td>受注ID（<code>id</code>）</td><td>受注の特定に用いる。</td></tr><tr><td>店頭買取受注（<code>dtb_otc_buy_order</code>）</td><td>店頭買取ステータスID（<code>otc_buy_order_status_id</code>）</td><td>更新対象。指定したステータスIDで上書きする。</td></tr><tr><td>店頭買取受注（<code>dtb_otc_buy_order</code>）</td><td>査定担当者（<code>member_id</code>）</td><td>認証した管理者会員を記録する。</td></tr><tr><td>店頭買取受注（<code>dtb_otc_buy_order</code>）</td><td>更新日時（<code>update_date</code>）</td><td>更新時点の日時を記録する。</td></tr><tr><td>店頭買取ステータスマスタ（<code>mtb_otc_buy_order_status</code>）</td><td>ステータスID（<code>id</code>）</td><td>指定ステータスの存在確認・査定終了／査定中の判定に用いる。</td></tr><tr><td>店頭買取ステータス変更履歴（<code>dtb_otc_buy_order_status_history</code>）</td><td>受注ID（<code>otc_buy_order_id</code>）・ステータスID（<code>otc_buy_order_status_id</code>）・更新担当者ID（<code>member_id</code>）・登録日時（<code>create_date</code>）</td><td>ステータス変更時に1件追加する。</td></tr></tbody></table></div>
-<h3 id="DB操作">DB操作</h3>
-<p>永続化の正は ec-cube-enterprise（テーブル名・操作は ec-cube-enterprise を正典）。当ドメインは承認ワークフローを介さず persist/flush で直接確定する（承認ワークフローは在庫機能固有）。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>登録/更新</td><td>dtb_otc_buy_order / dtb_otc_buy_order_status_history / mtb_otc_buy_order_status</td><td>当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。</td></tr></tbody></table></div>
-<hr>
-<h2 id="権限・認可">権限・認可</h2>
-<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>店頭買取受注ステータス更新</th></tr></thead><tbody><tr><td>認証済みの管理者会員</td><td>ステータス遷移の制約を満たす範囲でステータス・査定担当者・更新日時を更新できる。</td></tr><tr><td>査定中・査定再開の受注の査定担当者本人</td><td>同受注を査定中・査定再開へ更新できる。</td></tr><tr><td>査定中・査定再開の受注の担当者以外</td><td>同受注を査定中・査定再開へ更新できない（HTTP 400）。</td></tr><tr><td>未認証・トークン不正</td><td>認証拒否（HTTP 401）となり、更新できない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>認証不可</td><td>認証拒否（HTTP 401）とする。</td></tr><tr><td>受注が存在しない</td><td>該当なし（HTTP 404）とする。</td></tr><tr><td>ステータスIDが不正</td><td>入力不正（HTTP 400）とし、「正しい店頭買取ステータスIDを入力してください」を返す。</td></tr><tr><td>査定終了後の更新</td><td>入力不正（HTTP 400）とし、指定先に応じて「この査定はすでに終了しているため開くことができません。」または「この査定はすでに終了しているためステータスの更新に失敗しました。」を返す。</td></tr><tr><td>他担当者が査定中の受注の査定開始</td><td>入力不正（HTTP 400）とし、「この受注は「（査定担当者名）」が査定中です。」を返す。</td></tr><tr><td>保存処理中の例外</td><td>共通例外処理に委ねる（HTTP 500相当）。</td></tr></tbody></table></div>
-<hr>
-<h2 id="ログ・監査">ログ・監査</h2>
-<p>ステータス変更の履歴は店頭買取ステータス変更履歴として永続化する（受注ID・更新後ステータスID・更新担当者ID・登録日時）。アプリケーションログとは別のDB上の業務履歴である。</p>
-<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
-<ul><li>JWTトークンの原値</li><li>署名シークレット（<code>auth_magic</code>）</li><li>Cookie値・セッションIDの完全値</li></ul>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<p>本APIはステータス更新と履歴登録を行う。楽観ロック・悲観ロックの対象は持たず、同一受注への同時更新は後勝ちとなる。査定中・査定再開の占有は査定担当者の比較による業務判定であり、DBレベルのロックではない。</p>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>店頭買取受注ID、設定する店頭買取ステータスID、認証用トークン</td></tr><tr><td>成功時出力</td><td>HTTP 200。処理結果コード。更新前後が同じステータスでも200を返す</td></tr><tr><td>失敗時出力</td><td>HTTP 401（認証不可）、HTTP 404（受注なし）、HTTP 400（入力不正・状態不整合・担当者不一致）、HTTP 500（保存処理中の例外）</td></tr></tbody></table></div>
+<h3 id="入出力-リクエスト">入出力: リクエスト</h3>
+<div class="table-wrap"><table><thead><tr><th>パラメータ</th><th>位置</th><th>型</th><th>必須／任意</th><th>説明</th></tr></thead><tbody><tr><td><code>id</code></td><td>パス</td><td>integer</td><td>必須</td><td>更新対象の店頭買取受注ID</td></tr><tr><td><code>status</code></td><td>ボディ（フォーム値）</td><td>integer</td><td>必須</td><td>設定する店頭買取ステータスID。店頭買取ステータスに存在する値であること</td></tr><tr><td>認証トークン</td><td>ヘッダ</td><td>string</td><td>必須</td><td>管理者会員を特定するためのトークン</td></tr></tbody></table></div>
+<h3 id="入出力-永続化">入出力: 永続化</h3>
+<div class="table-wrap"><table><thead><tr><th>操作</th><th>契機</th></tr></thead><tbody><tr><td>更新</td><td>更新前後のステータスが異なるとき、店頭買取受注のステータス・査定担当者・更新日時を更新する</td></tr><tr><td>追加</td><td>同じ契機で、ステータス変更履歴を1件登録する</td></tr></tbody></table></div>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
+<h2 id="表示メッセージ">表示メッセージ</h2>
+<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>A06-05-MSG-001</td><td>API応答JSON（errors配列）</td><td>買取情報が見つかりません</td><td>ステータス更新時、指定した店頭買取受注IDが存在しない</td><td>HTTP 404のJSONを返し、更新処理を中止する</td></tr><tr><td>A06-05-MSG-002</td><td>API応答JSON（errors配列）</td><td>不正なステータス遷移です</td><td>店頭買取受注ステータス更新APIで、受注の現在ステータスが取得できない場合。</td><td>HTTP 400のJSON errorsで更新中止。</td></tr><tr><td>—</td><td>API応答JSON（errors配列）</td><td>正しい店頭買取ステータスIDを入力してください</td><td>指定したステータスIDが店頭買取ステータスに存在しないとき</td><td>HTTP 400のJSONを返し、更新しない</td></tr><tr><td>—</td><td>API応答JSON（errors配列）</td><td>この査定はすでに終了しているため開くことができません。</td><td>更新前ステータスが査定終了で、指定ステータスが査定中・査定再開のとき</td><td>HTTP 400のJSONを返し、更新しない</td></tr><tr><td>—</td><td>API応答JSON（errors配列）</td><td>この査定はすでに終了しているためステータスの更新に失敗しました。</td><td>更新前ステータスが査定終了で、指定ステータスがそれ以外のとき</td><td>HTTP 400のJSONを返し、更新しない</td></tr><tr><td>—</td><td>API応答JSON（errors配列）</td><td>この受注は「（査定担当者名）」が査定中です。</td><td>査定中・査定再開の受注を、査定担当者本人以外が査定中・査定再開へ更新しようとしたとき</td><td>HTTP 400のJSONを返し、更新しない</td></tr></tbody></table></div>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

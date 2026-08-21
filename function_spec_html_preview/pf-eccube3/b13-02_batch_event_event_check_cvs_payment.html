@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,25 +272,14 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#本書で扱うこと">本書で扱うこと</a>
-<a class="lv2" href="#本書で扱わないこと">本書で扱わないこと</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv2" href="#用語">用語</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#コンビニ支払チェックを実行する-entry-batch-checkCvsPayment">コンビニ支払チェックを実行する（`entry:batch checkCvsPayment`）</a>
-<a class="lv2" href="#集計条件">集計条件</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
-<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#対象の抽出">対象の抽出</a>
+<a class="lv3" href="#照会結果ごとの処理">照会結果ごとの処理</a>
+<a class="lv3" href="#エラー時の扱い">エラー時の扱い</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#ログ・監査">ログ・監査</a>
-<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a></nav>
+<a class="lv3" href="#入出力-永続化">入出力: 永続化</a>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -288,69 +287,24 @@ footer {
         <h1>バッチ イベント管理 — コンビニ支払チェックバッチ</h1>
       </header>
       
-      <h2 id="概要">概要</h2>
-<p>コンビニ決済で入金待ちのイベント申込を対象に、決済サービスへ取引状況を照会して申込みステータスを整合させるバッチである。コマンドライン（コンソールコマンド）から実行する。照会結果に応じてステータスを更新または申込みを取り除き、想定外のエラーは管理者へまとめて通知する。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインの決済チェックバッチ（コンビニ支払チェック処理）、イベント申込を扱うリポジトリ、決済照会・申込履歴処理、エラー通知メール送信処理を正とする。</p>
-<p>本機能のカスタマイズ区分は現行踏襲であり、挙動の確認はpf-eccube3を参照し、DB関連の記述はec-cube-enterpriseを正とする。</p>
-<p>対象はコンソールコマンドであり、ブラウザ経由の画面を持たない。</p>
-<p>本文ではフレームワークのコマンド型名やサービス型名を主説明としない。実行はコンソールのバッチコマンドで行う。</p>
-<hr>
-<h2 id="本書で扱うこと">本書で扱うこと</h2>
-<ul><li>バッチの起動方法（コンソールコマンド）</li><li>コンビニ決済の入金待ちイベント申込の抽出</li><li>決済サービスへの取引照会とステータス整合</li><li>想定外エラーの管理者通知と申込履歴の記録</li></ul>
-<hr>
-<h2 id="本書で扱わないこと">本書で扱わないこと</h2>
-<p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
-<ul><li>決済サービスの照会API仕様</li><li>イベント申込そのものの入力・確定（イベント申込機能を正とする）</li><li>エラー通知メールの本文・宛先設定（メール設定・テンプレート管理を正とする）</li><li>バッチの起動スケジュール（運用・ジョブ設定を正とする）</li></ul>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<p>現行（pf-eccube3のHareruyaEcプラグイン）と移行先（ec-cube-enterprise）の差を記録する。永続化先の正典はec-cube-enterpriseとする。</p>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>イベント申込テーブル</td><td>dtb_event_entry</td><td>dtb_event_entry（同名・概ね同一スキーマ）</td></tr><tr><td>イベント申込の主キー列</td><td>event_entry_id</td><td>id</td></tr><tr><td>申込履歴テーブル</td><td>dtb_entry_history</td><td>dtb_entry_history（同名・概ね同一スキーマ）</td></tr><tr><td>申込ステータス列</td><td>entry_status_id（ステータスマスタ参照）</td><td>entry_status_id（同一）</td></tr><tr><td>決済番号列</td><td>payment_no</td><td>payment_no（同一）</td></tr><tr><td>決済種別</td><td>payment_id（決済参照）</td><td>payment_id（同一）</td></tr><tr><td>論理削除</td><td>deleted_at</td><td>deleted_at（同一）</td></tr><tr><td>バッチ起動方式</td><td>コンソールコマンド <code>entry:batch checkCvsPayment</code></td><td>ec-cube-enterprise実装で要確認</td></tr></tbody></table></div>
-<p>イベント申込・申込履歴のテーブルは現行と移行先で同名・概ね同一スキーマであり、主キー列名のみ差がある。バッチの起動方式（コマンド名・実行基盤）は移行先で異なる可能性があり、ec-cube-enterprise実装で要確認とする。</p>
-<hr>
-<h2 id="用語">用語</h2>
-<div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>コンビニ決済</td><td>コンビニ店頭での支払い決済。</td></tr><tr><td>入金待ち</td><td>入金が確認できていない申込みステータス。</td></tr><tr><td>取引照会</td><td>決済サービスへ取引の状況を問い合わせること。</td></tr></tbody></table></div>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>実行方法</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>コンソールのバッチコマンド</td><td><code>entry:batch checkCvsPayment</code></td><td>コンビニ決済で入金待ちのイベント申込を決済サービスへ照会し、ステータスを整合させる。</td></tr></tbody></table></div>
-<p>本機能はHTTPで届く画面を持たない。コマンド名が一致しない場合は処理を行わずに終了する。</p>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="コンビニ支払チェックを実行する-entry-batch-checkCvsPayment">コンビニ支払チェックを実行する（<code>entry:batch checkCvsPayment</code>）</h3>
-<ol><li>コンビニ決済で入金待ちのイベント申込を抽出する。</li><li>対象が0件の場合は、対象が無い旨を返して終了する。</li><li>申込みごとに決済サービスへ取引を照会し、結果のメッセージと新ステータスを得る。</li><li>取引が存在しない場合は当該申込みの記録を取り除く。入金が確認できた場合は新ステータスへ更新する。</li><li>直前と同じ決済番号の申込みは、前回の照会結果に従って同様の処理を行う。</li><li>取引不在・未完了以外の想定外エラーは1つにまとめ、管理者へ通知メールを送信する。</li><li>申込履歴を記録し、更新を確定する。</li></ol>
-<hr>
-<h2 id="集計条件">集計条件</h2>
-<div class="table-wrap"><table><thead><tr><th>指標</th><th>集計の要点</th></tr></thead><tbody><tr><td>抽出対象</td><td>コンビニ決済で入金待ちのイベント申込。</td></tr><tr><td>照会単位</td><td>申込みごと。同一決済番号は前回結果を流用する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>ステータス整合</td><td>照会結果に応じて、更新・記録除去・エラー通知のいずれかを行う。</td></tr><tr><td>エラー集約</td><td>取引不在・未完了以外のエラーは重複を除いてまとめ、管理者へ通知する。</td></tr><tr><td>履歴記録</td><td>処理した申込みについて申込履歴を記録する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="API-バッチ結果">API/バッチ結果</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>バッチ</td><td>入力はコマンド名。成功時は対象申込みのステータスを整合させる。対象が0件なら何もせず完了する。</td></tr><tr><td>API</td><td>決済サービスへ取引を照会し、結果でステータスを判定する。</td></tr></tbody></table></div>
-<hr>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="対象の抽出">対象の抽出</h3>
+<p>コンビニ決済で入金待ちのイベント申込を抽出する。対象が 0 件のときは、対象が無い旨を返して終える。</p>
+<p>コマンド名が未指定のとき、または一致しないときは処理を行わずに終える。</p>
+<h3 id="照会結果ごとの処理">照会結果ごとの処理</h3>
+<p>申込みごとに決済サービスへ取引を照会し、結果のメッセージと新しいステータスを得る。</p>
+<div class="table-wrap"><table><thead><tr><th>照会結果</th><th>処理</th></tr></thead><tbody><tr><td>取引が存在しない</td><td>当該申込みの記録を取り除く</td></tr><tr><td>入金が確認できた</td><td>新しいステータスへ更新する</td></tr><tr><td>直前と同じ決済番号</td><td>前回の照会結果に従って同じ処理を行う</td></tr><tr><td>取引不在・未完了以外の想定外エラー</td><td>重複を除いて 1 つにまとめ、管理者へ通知する</td></tr></tbody></table></div>
+<p>処理した申込みについて申込履歴を記録し、更新を確定する。</p>
+<h3 id="エラー時の扱い">エラー時の扱い</h3>
+<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>コマンド名が未指定・不一致</td><td>処理を行わずに終える</td></tr><tr><td>対象が 0 件</td><td>対象が無い旨を返して終える</td></tr><tr><td>取引不在・未完了</td><td>記録の除去などの所定の処理を行い、メッセージを集める</td></tr><tr><td>想定外エラー</td><td>重複を除いてまとめ、管理者へ通知する</td></tr></tbody></table></div>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>コマンド名。</td></tr><tr><td>成功時出力</td><td>申込みステータスの更新・記録除去、申込履歴の記録、想定外エラーの管理者通知。</td></tr><tr><td>失敗時出力</td><td>取引不在・未完了等のメッセージ収集、想定外エラーの通知。</td></tr><tr><td>副作用</td><td>申込みステータス更新、記録除去、申込履歴記録、エラー通知メール。</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<p>機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。</p>
-<p>列名はec-cube-enterpriseを正とし、現行（pf-eccube3）と異なる場合は括弧で添える。</p>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td>dtb_event_entry（イベント申込）</td><td>entry_status_id（申込ステータス）・payment_no（決済番号）・payment_id（決済種別）</td><td>抽出・照会・更新に使用する。</td></tr><tr><td>dtb_entry_history（申込履歴）</td><td>event_entry_id（申込み参照）・entry_status_id</td><td>処理結果を記録する。</td></tr></tbody></table></div>
-<h3 id="DB操作">DB操作</h3>
-<p>本機能は参照系（検索）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>検索</td><td>dtb_entry_history / dtb_event_entry</td><td>検索条件に合致するレコードを抽出する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>申込みと決済</td><td>決済サービスの取引状況に合わせて申込みステータスを整合させる。</td></tr><tr><td>履歴</td><td>処理した申込みの履歴を記録する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>コマンド名が未指定・不一致</td><td>処理を行わずに終了する。</td></tr><tr><td>対象0件</td><td>対象が無い旨を返して終了する。</td></tr><tr><td>取引不在・未完了</td><td>記録の除去等の所定処理を行い、メッセージを収集する。</td></tr><tr><td>想定外エラー</td><td>重複を除いてまとめ、管理者へ通知する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="ログ・監査">ログ・監査</h2>
-<div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>処理</td><td>申込履歴の記録。</td></tr><tr><td>想定外エラー</td><td>管理者へのエラー通知メール。</td></tr></tbody></table></div>
-<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
-<ul><li>決済の機微情報</li><li>メール送信の認証情報</li></ul>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<p>照会・更新を積み、最後に確定する。本バッチは楽観ロック・悲観ロックの対象は持たない。</p>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>コマンド名</td></tr><tr><td>成功時出力</td><td>申込みステータスの更新または記録の除去、申込履歴の記録、想定外エラーがあるときの管理者への通知</td></tr><tr><td>失敗時出力</td><td>取引不在・未完了などのメッセージを集め、想定外エラーがあるときは通知する</td></tr></tbody></table></div>
+<p>外部の決済サービスへ取引を照会し、その結果でステータスを判定する。</p>
+<h3 id="入出力-永続化">入出力: 永続化</h3>
+<div class="table-wrap"><table><thead><tr><th>操作</th><th>契機</th></tr></thead><tbody><tr><td>更新</td><td>入金が確認できたとき、申込みのステータスを新しいステータスにする</td></tr><tr><td>削除</td><td>取引が存在しないとき、当該申込みの記録を取り除く</td></tr><tr><td>追加</td><td>処理した申込みについて申込履歴を記録する</td></tr></tbody></table></div>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
+<h2 id="表示メッセージ">表示メッセージ</h2>
+<p>このバッチは画面へ文言を表示しない。</p>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,40 +272,14 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#本書で扱うこと">本書で扱うこと</a>
-<a class="lv2" href="#本書で扱わないこと">本書で扱わないこと</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv2" href="#用語">用語</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#フロント挙動">フロント挙動</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#画面を開く-GET">画面を開く（GET）</a>
-<a class="lv3" href="#設定-押下-POST">「設定」押下（POST）</a>
-<a class="lv3" href="#CSV種別セレクト変更-GET-ブラウザ遷移">CSV種別セレクト変更（GET、ブラウザ遷移）</a>
-<a class="lv2" href="#集計条件">集計条件</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
-<a class="lv3" href="#入力項目">入力項目</a>
-<a class="lv3" href="#有効行とCSVエクスポートの対応">有効行とCSVエクスポートの対応</a>
-<a class="lv3" href="#エッジケース">エッジケース</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#画面の対象">画面の対象</a>
+<a class="lv3" href="#保存">保存</a>
+<a class="lv3" href="#有効な出力項目と出力の対応">有効な出力項目と出力の対応</a>
+<a class="lv3" href="#エラー時の扱い">エラー時の扱い</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#バリデーション">バリデーション</a>
-<a class="lv2" href="#権限・認可">権限・認可</a>
-<a class="lv2" href="#画面遷移">画面遷移</a>
-<a class="lv3" href="#遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#試行制限">試行制限</a>
-<a class="lv2" href="#ログ・監査">ログ・監査</a>
-<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
-<a class="lv2" href="#セッション">セッション</a>
-<a class="lv2" href="#Cookie">Cookie</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a>
-<a class="lv2" href="#副作用-その他">副作用（その他）</a>
-<a class="lv2" href="#参考-CSV種別の確認値">参考（CSV種別の確認値）</a>
+<a class="lv3" href="#入出力-永続化">入出力: 永続化</a>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
 <a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
@@ -304,108 +288,26 @@ footer {
         <h1>店舗設定 — CSV出力項目設定</h1>
       </header>
       
-      <h2 id="概要">概要</h2>
-<p>管理画面の「店舗設定」配下で、各種CSV（商品・会員・受注・配送・カテゴリなど）のエクスポート時に出力する列の集合と順序を、<code>dtb_csv</code>上の有効フラグと並び順で管理する機能である。画面上は2つのリストボックスで「出力しない項目」と「出力する項目」を振り分け、右側の一覧内で順序を変更してから一括保存する。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。対象はブラウザ経由の管理画面に限定する。</p>
-<p>カスタマイズ区分は現行踏襲であり、挙動の参照リポはpf-eccube3とする。DB関連の記述（テーブル名・列名・型・制約、保存先・扱い、副作用のDB更新）はec-cube-enterpriseを正とする。現行と移行先でスキーマが異なる箇所は「リニューアル移行時の扱い」に集約し、列名は移行先名を主として現行名を括弧で添える。</p>
-<p>本書では Symfony のルート名、URL パス、コントローラクラス名は扱わない。</p>
-<hr>
-<h2 id="本書で扱うこと">本書で扱うこと</h2>
-<ul><li>当画面の表示要素（CSV種別セレクト、二列のマルチセレクト、移動・並べ替えボタン、保存ボタン）</li><li>保存時に更新されるDB列と、並びおよび有効／無効の解釈</li><li>CSV種別が存在しないときのエラー扱い</li><li>管理画面の認証・権限・IP制限の枠組み（当画面も同一ルールの対象であること）</li><li>表示前後と保存完了時にディスパッチされるイベント（プラグインがフォームや処理へ差し込む境界）</li><li>各種管理画面から当画面への導線（リンク文言の対応）</li></ul>
-<hr>
-<h2 id="本書で扱わないこと">本書で扱わないこと</h2>
-<p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
-<ul><li>管理画面ログイン、セッション、CSRF検証がフレームワーク全体でどの段階で行われるかの詳細（当コントローラはSymfony Formの<code>handleRequest</code>／<code>isValid</code>を呼ばずリクエストパラメータを直接読む確認値がある）</li><li><code>dtb_csv</code>行の新規追加・削除、列定義（エンティティ名・フィールド名・参照フィールド名・表示名）そのものの編集（マスタデータ投入・プラグイン・マイグレーション等を正とする）</li><li>各一覧画面でCSVファイルを生成する処理の詳細（抽出条件、文字コード、ファイル名、<code>CsvExportService</code>によるセル値の組み立て）</li><li>プラグインがイベントで差し替えた画面・別コントローラ（同一URLでも実体が差し替わる場合がある）の完全列挙</li></ul>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<p>現行（pf-eccube3）と移行先（ec-cube-enterprise）で、CSV出力項目の永続化スキーマが異なる。並び順キーと有効フラグの列名が改名され、補助列が追加されている。挙動説明（左右リストの振り分け・採番）は現行を確認値とし、DB記述は移行先を主とする。</p>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>主キー列</td><td><code>csv_id</code></td><td><code>id</code>（<code>dtb_csv.id</code>）</td></tr><tr><td>並び順キー</td><td><code>rank</code></td><td><code>sort_no</code>（<code>dtb_csv.sort_no</code>）</td></tr><tr><td>有効フラグ</td><td><code>enable_flg</code>（真偽相当のフラグ）</td><td><code>enabled</code>（真偽型、既定真）</td></tr><tr><td>種別への外部キー</td><td><code>csv_type</code></td><td><code>csv_type_id</code>（<code>dtb_csv.csv_type_id</code>）</td></tr><tr><td>補助列</td><td>（無し）</td><td><code>column_name</code>（項目名コメント用の追加列、当画面では更新しない）</td></tr><tr><td>対象エンティティ・フィールド・参照・表示名・作成者・作成更新</td><td><code>entity_name</code>／<code>field_name</code>／<code>reference_field_name</code>／<code>disp_name</code>／<code>creator_id</code>／<code>create_date</code>／<code>update_date</code></td><td>同名（<code>dtb_csv</code> 上で一致）</td></tr><tr><td>CSV種別マスタの並び順</td><td><code>mtb_csv_type.rank</code></td><td><code>mtb_csv_type.sort_no</code></td></tr></tbody></table></div>
-<p>移行先では並び順キーが <code>sort_no</code>、有効フラグが <code>enabled</code> であるため、現行で「<code>rank</code> を1始まりで採番」「<code>enable_flg</code> を有効／無効へ更新」と説明する保存処理は、移行先では <code>sort_no</code> の採番と <code>enabled</code> の更新に読み替える。挙動上の採番ロジックそのものは同等とする。</p>
-<hr>
-<h2 id="用語">用語</h2>
-<div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>CSV出力項目</td><td><code>dtb_csv</code>の1行。エクスポート対象の1列に相当し、種別・対象エンティティ・フィールド・表示名・有効フラグ・並び順を持つ。</td></tr><tr><td>CSV種別</td><td><code>mtb_csv_type</code>の行。商品・会員・受注・配送・カテゴリなど、どのエクスポート定義群を編集しているかを表す。</td></tr><tr><td>管理者</td><td>管理画面にログイン可能な管理者アカウント。管理画面では<code>ROLE_ADMIN</code>が前提となり、権限マスタとIP許可の判定対象となる。</td></tr></tbody></table></div>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>ナビの店舗設定から当画面を開く</td><td><code>GET /{admin_route}/setting/shop/csv/{id}</code>（<code>{id}</code> は CSV 種別。既定は受注向けの確認値）</td><td>既定では受注向けのCSV種別が選ばれた状態で、当該種別の「出力しない」「出力する」の2リストに定義行が振り分けて表示される。CSV種別セレクトと保存ボタンがある。</td></tr><tr><td>CSV種別セレクトを変更する</td><td><code>GET /{admin_route}/setting/shop/csv/{id}</code>（<code>{id}</code> が切り替わる）</td><td>選択した種別の内容を表示するため、ページ全体を再読み込みする（同一機能内の種別切替）。</td></tr><tr><td>ボタンで項目を左右に移動／全移動する</td><td>—（同一ページ上）</td><td>画面内のリストだけが更新され、まだ保存しない。</td></tr><tr><td>「一つ上」「一つ下」「一番上」「一番下」を押す</td><td>—（同上）</td><td>右側「出力する項目」リスト内の選択行の順序が変わる。左側は対象外。</td></tr><tr><td>「設定」を押す</td><td><code>POST /{admin_route}/setting/shop/csv/{id}</code></td><td>左右それぞれのリストに載っている行について、有効／無効と並びがDBに反映される。成功メッセージが出たうえで、同一種別の当画面へ遷移して再表示される。</td></tr><tr><td>存在しない種別IDで画面を開く</td><td><code>GET /{admin_route}/setting/shop/csv/{id}</code></td><td>NotFound相当のエラーになる。</td></tr><tr><td>未ログイン・権限拒否・管理画面IP制限外</td><td>上記パス（到達前）</td><td>管理画面の共通セキュリティルールに従う。</td></tr><tr><td>商品・会員・受注・カテゴリなどの各管理画面にある「出力項目設定」等のリンク</td><td><code>GET /{admin_route}/setting/shop/csv/{id}</code>（文脈に応じた <code>{id}</code>）</td><td>当該画面の文脈に合うCSV種別が既に選ばれた状態で当画面を開ける。</td></tr></tbody></table></div>
-<hr>
-<h2 id="フロント挙動">フロント挙動</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>画面上部タイトル帯は「システム設定／CSV出力項目設定」と表示される。左ナビのアクティブ状態は店舗設定の子メニューに付く。CSV種別はマスタ名（例: 商品CSV、会員CSV）のセレクト。中央左に「CSV出力しない項目」、中央右に「CSV出力する項目」のマルチセレクト（<code>disp_name</code>をラベルにした<code>option</code>）。左右の間に4つの移送ボタン（単件送り・全送りの往復）。右側列に「項目順序」用の4ボタン。右サイドに「設定」ボタン。</td></tr><tr><td>入力項目</td><td>CSV種別セレクト、左マルチセレクト、右マルチセレクト。いずれも保存対象は種別ごとの<code>dtb_csv</code>行の<code>enable_flg</code>と<code>rank</code>である。種別セレクト自体の選択値はPOSTで送るが、サーバ側の保存処理は主に2リストのID配列を解釈する。詳細は「業務ルール・計算」の表を正とする。</td></tr><tr><td>JS 挙動</td><td>移送ボタンは<code>option</code>要素を片方の<code>select</code>から他方へDOM移動する。順序ボタンは右<code>select</code>内で選択された<code>option</code>の前後関係を入れ替える／先頭・末尾へ移動する。種別セレクト変更時は当画面の別種別表示へ遷移する。フォーム送信直前に、左右両<code>select</code>の全<code>option</code>を選択状態にする。</td></tr><tr><td>CSS・レイアウト</td><td>管理画面標準のボックス・グリッド。操作ボタン群に縦方向の余白用インラインスタイルがある。</td></tr><tr><td>モーダル・ポップアップ</td><td>本機能では扱わない。</td></tr><tr><td>拡張フォーム枠</td><td>テンプレート末尾に、プラグイン等が追加した子フォームを行として描画する領域がある。</td></tr></tbody></table></div>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="画面を開く-GET">画面を開く（GET）</h3>
-<ol><li>管理画面の認証・IP制限・権限拒否の各ルールを通過する。</li><li>リクエストから渡された数値をCSV種別IDとみなし、<code>mtb_csv_type</code>から取得する。存在しなければNotFoundとする。</li><li>当該種別に紐づく<code>dtb_csv</code>のうち、無効な行を<code>rank</code>昇順で取得し、左リストの選択肢とする。有効な行も同様に右リストとする。</li><li>フォームビルダにCSV種別セレクト（初期データは取得した種別）、左右のエンティティ型マルチセレクトを追加する。</li><li>表示初期化イベントをディスパッチし、ビルダや出力リストに対するプラグイン処理を許す。</li><li>フォームのビューをテンプレートへ渡し描画する。</li></ol>
-<h3 id="設定-押下-POST">「設定」押下（POST）</h3>
-<ol><li>認証等の共通ルールを通過したうえで、リクエストボディの<code>form</code>配列を読む。Symfony Formのバインド処理は当処理では行わない確認値がある。</li><li><code>form['csv_not_output']</code>キーが存在すれば、その配列の順に各行IDを読み、<code>dtb_csv</code>から行を取得して<code>rank</code>を1から採番し、<code>enable_flg</code>を無効にする。</li><li><code>form['csv_output']</code>キーが存在すれば、同様に有効採番する。配列の順序が右リストの上から下への順に対応する。</li><li>ORMの<code>flush</code>を一度呼ぶ。</li><li>保存完了イベントをディスパッチする。イベント引数にはリクエスト処理開始時に構築したフォームオブジェクトと、初期表示時点の有効行コレクション参照などが載る確認値がある。</li><li>管理画面向け成功メッセージを積み、同一機能の同じ種別の画面へリダイレクトする。</li></ol>
-<h3 id="CSV種別セレクト変更-GET-ブラウザ遷移">CSV種別セレクト変更（GET、ブラウザ遷移）</h3>
-<ol><li>クライアントが別種別IDで当機能へ遷移する。</li><li>「画面を開く（GET）」と同様に読み込む。</li></ol>
-<hr>
-<h2 id="集計条件">集計条件</h2>
-<p>本機能では一覧件数・売上集計などの集計表示を行わない。</p>
-<hr>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<h3 id="入力項目">入力項目</h3>
-<div class="table-wrap"><table><thead><tr><th>項目名</th><th>必須／任意</th><th>最大長</th><th>初期値</th><th>保存先・扱い</th></tr></thead><tbody><tr><td>CSV種別（セレクト）</td><td>必須</td><td>—（セレクト）</td><td>開くときの種別</td><td>サーバの保存処理では2リストの更新が主。種別変更はGET遷移で表現する。</td></tr><tr><td>CSV出力しない項目（左・マルチセレクト）</td><td>任意</td><td>—（複数選択）</td><td>当種別かつ無効の各行</td><td>POSTで配列が送られ、キーが存在すれば列挙順に <code>dtb_csv.enabled</code>（現行<code>enable_flg</code>）無効・<code>dtb_csv.sort_no</code>（現行<code>rank</code>）連番。行が0件なら空配列になり得る。</td></tr><tr><td>CSV出力する項目（右・マルチセレクト）</td><td>任意</td><td>—（複数選択）</td><td>当種別かつ有効の各行</td><td>POSTで配列が送られ、キーが存在すれば列挙順に <code>dtb_csv.enabled</code>（現行<code>enable_flg</code>）有効・<code>dtb_csv.sort_no</code>（現行<code>rank</code>）連番。行が0件なら空配列になり得る。</td></tr><tr><td>CSRF用トークンフィールド</td><td>任意</td><td>—</td><td>—</td><td>画面埋め込み。当コントローラ単体ではフォーム全体の検証に通さない確認値がある。</td></tr></tbody></table></div>
-<p>送信直前スクリプトが左右の全<code>option</code>を選択済みにするため、通常は当該種別の全行がどちらかの配列に含まれる。キー自体が欠落した場合、欠落側のループは実行されず、当該側の行の<code>enable_flg</code>／<code>rank</code>は更新されない。</p>
-<h3 id="有効行とCSVエクスポートの対応">有効行とCSVエクスポートの対応</h3>
-<p>別機能のCSVエクスポート処理は、種別指定後に<code>enable_flg</code>が有効な<code>dtb_csv</code>だけを<code>rank</code>昇順で読み、ヘッダ行は各<code>disp_name</code>、データ行は定義に応じたセル値を出力する。当画面で無効にした列はエクスポート結果に現れない。</p>
-<h3 id="エッジケース">エッジケース</h3>
-<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>種別IDが<code>mtb_csv_type</code>に無い</td><td>NotFound。</td></tr><tr><td>POSTで左または右のキーが無い</td><td>その側の更新ループをスキップし、該当行のフラグ・順序は触れない確認値。</td></tr><tr><td>POSTに含まれる行IDがほか種別の行</td><td>主キーだけで行を解決するため、その行についてもフラグ・順序が更新され得る。種別との整合をリクエストで再検証する処理は持たない確認値。</td></tr><tr><td>片方のリストに項目ゼロ</td><td>送信時もう一方に全行が載る想定。キー欠落時は前表のとおり。</td></tr></tbody></table></div>
-<hr>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>画面とDB</td><td>保存成功後に同一種別で再表示すれば、2リストの内容は<code>flush</code>後のDBと一致する。</td></tr><tr><td>エクスポート結果</td><td>次回のエクスポート処理のヘッダ列と順序は、保存後の有効行の<code>rank</code>と一致する。別管理者が同時に変えた場合は最後の保存が残る。</td></tr><tr><td>表示名・列定義</td><td>当画面で<code>disp_name</code>やエンティティ参照定義は変更しない。プラグインやマイグレーションで変えた場合、当画面のラベルとエクスポート内容はそれぞれ更新後の定義に従う。</td></tr></tbody></table></div>
-<hr>
-<h2 id="API-バッチ結果">API/バッチ結果</h2>
-<p>本機能では扱わない。</p>
-<hr>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="画面の対象">画面の対象</h3>
+<p>指定された値をCSV種別とみなし、CSV種別マスタから取り出す。該当が無いときは対象なしとする。</p>
+<p>当該種別に紐づく出力項目のうち、無効なものだけを並び順の昇順で左のリストに、有効なものだけを同じ並びで右のリストにする。CSV種別を切り替えたときは、切り替え先の種別で同じ読み込みを行う。</p>
+<h3 id="保存">保存</h3>
+<p>保存は入力の検証を経ず、送信内容をそのまま受け取る。</p>
+<p>左のリストが送られたときだけ、その配列の順に各出力項目を取り出し、並び順を 1 から振り直したうえで無効にする。右のリストが送られたときだけ、同じ手順で並び順を振り直したうえで有効にする。どちらのリストも送られないときは、当該のリストの出力項目を変更しない。右のリストの配列の順序が、画面の上から下への順に対応する。</p>
+<p>保存の後は同じCSV種別の画面へ戻す。</p>
+<h3 id="有効な出力項目と出力の対応">有効な出力項目と出力の対応</h3>
+<p>CSVの出力は、種別を指定したうえで有効な出力項目だけを並び順の昇順で使う。ヘッダ行には各出力項目の表示名だけを並べ、データ行は定義に応じた値で埋める。この画面で無効にした列は、出力に現れない。</p>
+<h3 id="エラー時の扱い">エラー時の扱い</h3>
+<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>指定したCSV種別が無い</td><td>対象なしとする</td></tr><tr><td>認証・権限・接続元の制限を満たさない</td><td>管理画面共通の拒否またはログインへの誘導とする</td></tr></tbody></table></div>
+<p>入力の検証を経ないため、この画面の保存では検証エラーの画面を出さない。送られた識別子が実在するかだけが保存の可否を分ける。</p>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td><code>form</code>配列の<code>_token</code>、左・右リストの主キー配列（および種別セレクトの値をフォームが送る）。</td></tr><tr><td>成功時出力</td><td>管理画面の成功フラッシュ（日本語メッセージはロケール定義の確認値として「CSV出力を設定しました。」）。</td></tr><tr><td>失敗時出力</td><td>種別不明時はNotFound。バリデーションエラー画面は当機能のPOST処理では基本定義しない（入力検証はリレーション定義上の主キー妥当性に依存）。</td></tr><tr><td>副作用</td><td>対象<code>dtb_csv</code>行の<code>enabled</code>（現行<code>enable_flg</code>）と<code>sort_no</code>（現行<code>rank</code>）を更新する。イベントにより追加処理が走る。</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td>mtb_csv_type</td><td>id</td><td>小整数の主キー。種別の識別。当画面からは更新しない。</td></tr><tr><td>mtb_csv_type</td><td>name</td><td>種別名。セレクト表示に使う。当画面からは更新しない。</td></tr><tr><td>mtb_csv_type</td><td>sort_no（現行<code>rank</code>）</td><td>マスタ内の並び。当画面からは更新しない。</td></tr><tr><td>dtb_csv</td><td>id（現行<code>csv_id</code>）</td><td>主キー。左右リストの値およびPOST配列の要素。</td></tr><tr><td>dtb_csv</td><td>csv_type_id（現行<code>csv_type</code>）</td><td>種別への外部キー。画面は当種別でフィルタした行だけを選択肢に載せる。</td></tr><tr><td>dtb_csv</td><td>entity_name</td><td>エクスポート時の対象エンティティ。当画面では変更しない。</td></tr><tr><td>dtb_csv</td><td>field_name</td><td>出力フィールド名。当画面では変更しない。</td></tr><tr><td>dtb_csv</td><td>reference_field_name</td><td>関連経由出力時の参照先。当画面では変更しない。</td></tr><tr><td>dtb_csv</td><td>disp_name</td><td>リスト表示・CSVヘッダラベル。当画面では変更しない。</td></tr><tr><td>dtb_csv</td><td>column_name</td><td>項目名コメント用の追加列（移行先のみ）。当画面では変更しない。</td></tr><tr><td>dtb_csv</td><td>sort_no（現行<code>rank</code>）</td><td>出力順。保存時に左リストは無効群の上から順に1始まり、右は有効群も同様。</td></tr><tr><td>dtb_csv</td><td>enabled（現行<code>enable_flg</code>）</td><td>有効／無効。左に載る行は無効、右は有効へ更新する。移行先は真偽型。</td></tr><tr><td>dtb_csv</td><td>creator_id</td><td>作成者。当処理では更新しない。</td></tr><tr><td>dtb_csv</td><td>create_date</td><td>作成日時。当処理では更新しない。</td></tr><tr><td>dtb_csv</td><td>update_date</td><td>更新日時列。当コントローラでは明示的に上書きしない確認値。</td></tr></tbody></table></div>
-<h3 id="DB操作">DB操作</h3>
-<p>永続化の正は ec-cube-enterprise（テーブル名・操作は ec-cube-enterprise を正典）。当ドメインは承認ワークフローを介さず persist/flush で直接確定する（承認ワークフローは在庫機能固有）。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>登録/更新</td><td>dtb_csv / mtb_csv_type</td><td>当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。</td></tr></tbody></table></div>
-<hr>
-<h2 id="バリデーション">バリデーション</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>種別ID</td><td><code>mtb_csv_type</code>に存在しないIDはNotFound。</td></tr><tr><td>行ID</td><td>フォームのマルチセレクトの<code>choices</code>に含まれる行だけが通常操作で選べる。POST改ざん時は主キー存在に依存し、存在しないIDはORMの挙動に従う。</td></tr><tr><td>CSRF</td><td>画面はトークンhiddenを出す。保存処理がSymfony Formの標準検証でトークンを検証するかはフレームワーク全体の扱いを正とする。</td></tr></tbody></table></div>
-<hr>
-<h2 id="権限・認可">権限・認可</h2>
-<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>画面表示・保存</th></tr></thead><tbody><tr><td>管理画面未認証</td><td>管理画面の認証フローへ。</td></tr><tr><td><code>ROLE_ADMIN</code>を持ち、拒否パターンに現在の管理パスが含まれない</td><td>表示・保存可能。</td></tr><tr><td>権限マスタで現在の管理パスが拒否</td><td>アクセス拒否。</td></tr><tr><td>管理画面IP許可リスト外（設定がある場合）</td><td>拒否。</td></tr></tbody></table></div>
-<hr>
-<h2 id="画面遷移">画面遷移</h2>
-<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>保存成功</td><td>同一機能の同一CSV種別の画面（GETで再表示）。</td></tr><tr><td>種別セレクト変更</td><td>別種別の同機能画面（GET）。</td></tr><tr><td>種別不存在</td><td>エラー応答。</td></tr></tbody></table></div>
-<h3 id="遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</h3>
-<div class="table-wrap"><table><thead><tr><th>起点</th><th>遷移前の処理</th><th>遷移後の初期状態</th></tr></thead><tbody><tr><td>保存成功→リダイレクト</td><td>成功フラッシュを積む</td><td>再表示直後に成功メッセージが表示される。</td></tr></tbody></table></div>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>種別なし</td><td>NotFound。</td></tr><tr><td>権限・IP・未認証</td><td>管理画面共通の拒否またはログイン誘導。</td></tr></tbody></table></div>
-<hr>
-<h2 id="試行制限">試行制限</h2>
-<p>本機能では扱わない。</p>
-<hr>
-<h2 id="ログ・監査">ログ・監査</h2>
-<p>当機能固有の監査ログ仕様は定義しない。ORMやフレームワークの一般ログは環境に従う。</p>
-<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
-<ul><li>管理者パスワード</li><li>CSRFトークン</li><li>Cookie値・セッション識別子の完全値</li><li>Remember Meトークン原値</li></ul>
-<hr>
-<h2 id="セッション">セッション</h2>
-<p>当機能は業務用の独自セッションキーを読み書きしない。</p>
-<hr>
-<h2 id="Cookie">Cookie</h2>
-<p>当機能は業務用の独自Cookieを設定しない。</p>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<ul><li><code>dtb_csv</code>に楽観ロック列はない。同時保存は後勝ち。</li><li>当処理は明示的なトランザクション境界を張らず<code>flush</code>する。失敗時の部分更新有無はORMとDB設定に従う。</li></ul>
-<hr>
-<h2 id="副作用-その他">副作用（その他）</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>イベント</td><td>表示初期化時に<code>admin.setting.shop.csv.index.initialize</code>、保存<code>flush</code>後に<code>admin.setting.shop.csv.index.complete</code>がディスパッチされる。</td></tr><tr><td>プラグイン</td><td>イベント購読者がフォーム項目の追加や保存後処理を注入し得る。</td></tr></tbody></table></div>
-<hr>
-<h2 id="参考-CSV種別の確認値">参考（CSV種別の確認値）</h2>
-<p>コアのエンティティ定数とマイグレーション上の名称の対応は次の確認値である。運用DBで改変されている場合はDBを正とする。</p>
-<div class="table-wrap"><table><thead><tr><th>確認値（種別ID）</th><th>マスタ名の例</th></tr></thead><tbody><tr><td>1</td><td>商品CSV</td></tr><tr><td>2</td><td>会員CSV</td></tr><tr><td>3</td><td>受注CSV</td></tr><tr><td>4</td><td>配送CSV</td></tr><tr><td>5</td><td>カテゴリCSV</td></tr></tbody></table></div>
-<hr>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>CSV種別、左と右のリストの出力項目の識別子の配列、なりすまし対策トークン</td></tr><tr><td>成功時出力</td><td>同じCSV種別の設定画面へ戻し、保存の完了メッセージを出す</td></tr><tr><td>失敗時出力</td><td>CSV種別が無いときは対象なしとする</td></tr></tbody></table></div>
+<h3 id="入出力-永続化">入出力: 永続化</h3>
+<div class="table-wrap"><table><thead><tr><th>操作</th><th>契機</th></tr></thead><tbody><tr><td>更新</td><td>出力項目の並び順と有効・無効を、左と右のリストが送られたとき配列の順に振り直す</td></tr></tbody></table></div>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
 <h2 id="表示メッセージ">表示メッセージ</h2>
-<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>画面上の文言(英語)</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M10-10-MSG-001</td><td>管理画面上部</td><td>保存しました</td><td>（英訳なし）</td><td>CSV出力項目設定を保存したとき</td><td>CSV出力項目設定（店舗設定）画面に遷移する</td></tr></tbody></table></div>
+<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M10-10-MSG-001</td><td>管理画面上部</td><td>保存しました</td><td>CSV出力項目設定を保存したとき</td><td>CSV出力項目設定（店舗設定）画面に遷移する</td></tr></tbody></table></div>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

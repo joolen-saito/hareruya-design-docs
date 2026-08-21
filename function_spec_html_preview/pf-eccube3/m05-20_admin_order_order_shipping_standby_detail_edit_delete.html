@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>受注管理 — 出荷指示リスト詳細（備考編集・リスト削除） - 機能仕様書</title>
+  <title>受注管理 — 出荷指示リスト詳細編集/削除 - 機能仕様書</title>
   <style>
 :root {
   --bg: #ffffff;
@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,138 +272,47 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#フロント挙動">フロント挙動</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#詳細を表示する-GET-admin-shipping-standby-edit">詳細を表示する（GET `admin_shipping_standby_edit`）</a>
-<a class="lv3" href="#POST-が-admin-shipping-standby-edit-に届いた場合">POST が `admin_shipping_standby_edit` に届いた場合</a>
-<a class="lv3" href="#備考を保存する-POST-admin-shipping-standby-update">備考を保存する（POST `admin_shipping_standby_update`）</a>
-<a class="lv3" href="#リストを削除する-DELETE-admin-shipping-standby-delete">リストを削除する（DELETE `admin_shipping_standby_delete`）</a>
-<a class="lv2" href="#集計条件">集計条件</a>
-<a class="lv2" href="#表示メッセージ">表示メッセージ</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
-<a class="lv3" href="#入力項目">入力項目</a>
-<a class="lv3" href="#エッジケース">エッジケース</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#操作の種類">操作の種類</a>
+<a class="lv3" href="#詳細の表示">詳細の表示</a>
+<a class="lv3" href="#更新">更新</a>
+<a class="lv3" href="#削除">削除</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#バリデーション">バリデーション</a>
-<a class="lv2" href="#権限・認可">権限・認可</a>
-<a class="lv2" href="#画面遷移">画面遷移</a>
-<a class="lv3" href="#遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#試行制限">試行制限</a>
-<a class="lv2" href="#ログ監査">ログ監査</a>
-<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
-<a class="lv2" href="#セッション">セッション</a>
-<a class="lv3" href="#本機能におけるセッション">本機能におけるセッション</a>
-<a class="lv3" href="#セッションへ保存しない情報">セッションへ保存しない情報</a>
-<a class="lv2" href="#Cookie">Cookie</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a>
-<a class="lv2" href="#調査補助-grep-向け">調査補助（grep 向け）</a>
-<a class="lv3" href="#HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</a></nav>
+<a class="lv3" href="#入出力-永続化">入出力: 永続化</a>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
         <p class="crumb">Source:<br>/home/y-saito/Developments/hareruya-design-docs/functions/pf-eccube3/m05-20_admin_order_order_shipping_standby_detail_edit_delete.md</p>
-        <h1>受注管理 — 出荷指示リスト詳細（備考編集・リスト削除）</h1>
+        <h1>受注管理 — 出荷指示リスト詳細編集/削除</h1>
       </header>
       
-      <h2 id="概要">概要</h2>
-<p>管理画面「受注管理」の「出荷指示」メニューから遷移する出荷指示リストのうち、一覧で選んだ 1 件について、備考（メモ）を保存するほか、当該リスト自体を削除する機能である。詳細画面上部のカードで備考を編集し、同一画面では紐付く受注の一覧・一括操作ボタンも表示されるが、本書が主に追うのは備考の更新 POST とリスト削除 DELETE である。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。ec-cube-enterprise のコア実装を確認値とする。</p>
-<p>対象はブラウザ経由の管理画面に限定する。</p>
-<p>コントローラのメソッド名は本文の主題としない。本文ではルートbind名やSymfonyのルートnameの網羅は主説明としない。「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。コード探索でbind名が必要なときだけ「調査補助」へ書く。</p>
-<p>本機能のカスタマイズ区分は現行踏襲であり、出荷指示機能は現行リポ（pf-eccube3 の HareruyaEc プラグイン）と移行先（ec-cube-enterprise コア）の双方に同名で実装される。挙動は現行リポの実装を踏襲し、DB（永続化先のテーブル・列）は ec-cube-enterprise の実装を正とする。</p>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<p>出荷指示リスト詳細の備考編集・リスト削除は、現行は pf-eccube3 の HareruyaEc プラグインに、移行先は ec-cube-enterprise コアに同名で実装される。永続化先の出荷指示リスト（<code>dtb_shipping_standby</code>）・出荷指示と受注の中間表（<code>dtb_order_shipping_standby</code>）・受注（<code>dtb_order</code>）は、両者で同一スキーマである。備考の保存先 <code>dtb_shipping_standby.comment</code>（ec-cube-enterprise ではテキスト型）・最終更新者 <code>dtb_shipping_standby.member_id</code>、リスト削除時に NULL 一括更新される <code>dtb_order.commit_date</code>、中間表の列（<code>standby_id</code>・<code>order_id</code>）は ec-cube-enterprise の定義を正とする。現行と移行先で差異が判明した場合は、DB記述は ec-cube-enterprise 実装を正とする。</p>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>出荷指示一覧で番号リンクまたは「編集」から詳細を開く</td><td><code>GET /{admin_route}/standby/{id}/edit</code></td><td>備考・登録日時・最終更新者・紐付く受注一覧が表示される。</td></tr><tr><td>詳細で備考を入力し「登録」相当の送信ボタンを押す</td><td><code>POST /{admin_route}/standby/{id}/update</code></td><td>CSRF 付きフォームが検証を通れば備考が保存され、フラッシュ成功のうえ同一詳細へ戻る。</td></tr><tr><td>詳細または一覧のドロップダウンから「リスト削除」相当のリンクを辿る（アンカーに METHOD 上書きと CSRF 属性が付く）</td><td><code>DELETE /{admin_route}/standby/{id}/delete</code></td><td>トークン確認後、リスト削除と関連受注の出荷指示日クリアが行われ、一覧の入口へ戻る。</td></tr></tbody></table></div>
-<hr>
-<h2 id="フロント挙動">フロント挙動</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>詳細上部に出荷指示番号・作成日時・更新日時・最終更新者名、備考用テキストエリア、登録ボタン、ラベルが「リスト削除」の危険色ボタン風入力を内包するリンク。下部に受注テーブル（デフォルトで全行チェック ON）と、ピッキング・納品書・CSV 等のボタン列がある。</td></tr><tr><td>JS 挙動</td><td>印刷・一部 CSV は <code>#form_bulk</code> の <code>action</code> と <code>target</code> を切り替えて送信する。備考フォーム本体にはクライアント側検証は載せない。削除リンクはフレームワークのメソッド偽装で DELETE となる想定のマークアップである。</td></tr><tr><td>CSS・レイアウト</td><td>本機能専用の大きな独自 CSS は載せない。一覧テーブルは <code>.table-responsive</code> の overflow を可視化するインラインスタイルが親画面側にある。</td></tr><tr><td>モーダル・ポップアップ</td><td>詳細テンプレート内に商品恒久的削除用と思われるモーダル断片がテーブル行付近に存在するが、本備考・リスト削除フローではこのモーダルを開くトリガは詳細画面の主要操作としては結び付いていない。印刷は別ウィンドウを開く。</td></tr></tbody></table></div>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="詳細を表示する-GET-admin-shipping-standby-edit">詳細を表示する（GET <code>admin_shipping_standby_edit</code>）</h3>
-<ol><li>管理画面の認証・共通制約を通過する。</li><li>パス <code>{id}</code> でリポジトリがリスト行を受注・受注明細まで内部結合で読み込む。該当が無い、または結合条件により行が得られない場合は空配列扱いとなり HTTP 404 を返す。</li><li>最終更新者は <code>member_id</code> から管理者アカウントを検索し、表示用配列に足す。</li><li>紐付く各受注の ID から注文番号文字列を解決し、テンプレートへ渡す。</li><li>備考は専用フォーム種別で、初期データは現行の <code>comment</code> のみとする。</li><li><code>ShippingStandby/edit.twig</code> を描画する。</li></ol>
-<h3 id="POST-が-admin-shipping-standby-edit-に届いた場合">POST が <code>admin_shipping_standby_edit</code> に届いた場合</h3>
-<ol><li>上記と同様に表示処理のみが走り、備考の保存は行わない。運用上はフォームの <code>action</code> が更新用ルートに向くため、この経路は通常使われない。</li></ol>
-<h3 id="備考を保存する-POST-admin-shipping-standby-update">備考を保存する（POST <code>admin_shipping_standby_update</code>）</h3>
-<ol><li>管理画面の認証・共通制約を通過する。</li><li><code>id</code> で出荷指示リスト行を主キー検索する。無ければ HTTP 404。</li><li>フォームにエンティティを載せてリクエストを取り込む。</li><li>未送信または検証失敗のとき、管理画面の汎用保存エラーメッセージをフラッシュし、<code>admin_shipping_standby_edit</code> へリダイレクトする。</li><li>成功時、トランザクション内で当該行の備考と最終更新者 ID を更新し、コミットする。失敗時はロールバックのうえ例外を再送出する（コントローラでは捕捉しない経路が主である）。</li><li>業務アクション内で引数不正として無効論理引数例外が送出された場合、メッセージをエラーフラッシュし、編集画面へ戻す分岐がある（現行の更新アクション実装本体からこの例外が直接送出される箇所は無い。呼び出し先差し替えを想定した経路として残っている可能性がある）。</li><li>成功時、汎用保存完了メッセージをフラッシュし、<code>admin_shipping_standby_edit</code> へリダイレクトする。</li></ol>
-<h3 id="リストを削除する-DELETE-admin-shipping-standby-delete">リストを削除する（DELETE <code>admin_shipping_standby_delete</code>）</h3>
-<ol><li>管理画面の認証・共通制約を通過する。</li><li>CSRF トークンをリクエスト本文または専用ヘッダから検証する。無効ならアクセス拒否（HTTP 403）となる実装である。</li><li><code>id</code> でリスト行を主キー検索する。無ければ HTTP 404。</li><li>トランザクション内で、紐付く受注配列に対して出荷指示日を NULL に一括更新してから、リスト行を削除しフラッシュしてコミットする。</li><li>無効論理引数例外を捕捉する分岐があるが、現行の削除アクション実装から直接この例外が送出される箇所は無い。</li><li>成功時、汎用削除完了をフラッシュする。</li><li>セッションキー <code>admin.shipping_standby.search.page_no</code> にページ番号が入っていれば、ルート名 <code>admin_shipping_standby_search</code> へ <code>page_no</code> 付きでリダイレクトし、無ければ <code>admin_shipping_standby</code> へリダイレクトする。リポジトリ／trait 側の一覧は <code>eccube.admin.shipping_standby.search.page_no</code> にページを保存しており、キー名が一致しないため、現行コードのみを見ると削除後は多くの場合 <code>admin_shipping_standby</code> 側に落ちる。また <code>admin_shipping_standby_search</code> という名前のルート定義は本リポジトリのルート一覧上は見当たらない（セッションに値が残っていた場合は未定義ルート参照になりうる）。</li></ol>
-<hr>
-<h2 id="集計条件">集計条件</h2>
-<p>本機能では件数集計や売上集計を行わない。</p>
-<hr>
-<h2 id="表示メッセージ">表示メッセージ</h2>
-<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>画面上の文言(英語)</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M05-20-MSG-001</td><td>管理画面上部</td><td>保存に失敗しました</td><td>（英訳なし）</td><td>備考を保存するとき、入力内容に不備があるとき</td><td>出荷指示リスト詳細画面に遷移する</td></tr><tr><td>M05-20-MSG-002</td><td>管理画面上部</td><td>保存しました</td><td>（英訳なし）</td><td>備考を保存したとき</td><td>出荷指示リスト詳細画面に遷移する</td></tr><tr><td>M05-20-MSG-003</td><td>管理画面上部</td><td>削除しました</td><td>（英訳なし）</td><td>出荷指示リストを削除したとき</td><td>出荷指示リスト検索画面に遷移する</td></tr><tr><td>M05-20-MSG-004</td><td>ブラウザ確認ダイアログ（window.confirm）</td><td>削除してもよろしいですか?</td><td>（英訳なし）</td><td>出荷指示リストの削除を実行しようとしたとき（削除前確認）</td><td>確認後に削除処理へ進み、キャンセル時は出荷指示リスト詳細画面に留まる</td></tr></tbody></table></div>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>備考更新</td><td>検証通過後、当該リスト行の備考列と最終更新者 ID 列だけを上書きする。更新日時列を明示的に進める処理はこのアクション内には無い。</td></tr><tr><td>リスト削除</td><td>紐付く各受注の出荷指示日を NULL にしたのち、リスト行を削除する。受注行自体や明細は削除しない。</td></tr><tr><td>詳細の読込結合</td><td>受注に明細が 1 行も無い場合、内部結合によりリストが取得クエリに現れず 404 となりうる。</td></tr></tbody></table></div>
-<h3 id="入力項目">入力項目</h3>
-<div class="table-wrap"><table><thead><tr><th>項目名</th><th>必須／任意</th><th>最大長</th><th>初期値</th><th>保存先・扱い</th></tr></thead><tbody><tr><td>備考</td><td>任意</td><td>3000 文字（設定 <code>eccube_ltext_len</code> の Length。既定の <code>eccube.yaml</code> では 3000）</td><td>当該リスト行の現行 <code>dtb_shipping_standby.comment</code></td><td><code>dtb_shipping_standby.comment</code>。空は許容。フォームキーはスキーマ上 <code>comment</code>。ブロック接頭辞は <code>admin_shipping_standby_edit</code>。</td></tr></tbody></table></div>
-<h3 id="エッジケース">エッジケース</h3>
-<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td><code>{id}</code> が存在しない</td><td>表示・更新・削除とも HTTP 404。</td></tr><tr><td>備考が長さ制約超過</td><td>サーバ側検証エラーとなり、保存エラーフラッシュで編集画面へ戻る。</td></tr><tr><td>リストに受注が無い、または受注に明細が無い</td><td>詳細取得クエリの結合によりヒットしない可能性があり 404。</td></tr><tr><td>削除後リダイレクトのセッションキー</td><td>一覧が書き込むキーと削除処理が読むキーが異なるため、意図した検索結果ページへの復帰は現行では期待しにくい。セッション値が残っていた場合に未定義のルート名を参照しうる分岐がある。</td></tr></tbody></table></div>
-<hr>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>詳細表示と DB</td><td>詳細表示時点の備考と一覧の行は別クエリである。同時編集があれば最後の保存が残る（楽観ロック無し）。</td></tr><tr><td>削除と受注</td><td>削除後、関連受注の出荷指示日は NULL。受注のその他の属性は変えない。</td></tr><tr><td>再表示</td><td>保存成功後はリダイレクトで詳細を再表示するため、フラッシュ後の画面は永続化後の値に追従する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="API-バッチ結果">API/バッチ結果</h2>
-<p>本機能では外部 HTTP API 呼び出しやバッチ実行を扱わない。</p>
-<hr>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="操作の種類">操作の種類</h3>
+<div class="table-wrap"><table><thead><tr><th>操作</th><th>出荷指示リストIDの制限</th><th>結果</th></tr></thead><tbody><tr><td>詳細の表示</td><td>数字だけを受け付ける</td><td>出荷指示リストと含まれる受注を表示する</td></tr><tr><td>更新</td><td>数字だけを受け付ける</td><td>備考と最終更新者を書き換え、同じ詳細画面へ戻る</td></tr><tr><td>削除</td><td>数字だけを受け付ける</td><td>出荷指示リストを削除し、検索結果へ戻る</td></tr><tr><td>ピッキングリスト印刷</td><td>数字だけを受け付ける</td><td>ピッキングリスト印刷の設計書を正とする</td></tr><tr><td>納品書印刷</td><td>数字だけを受け付け、言語は日本語と英語のいずれかに限る</td><td>出荷指示：納品書印刷の設計書を正とする</td></tr><tr><td>取込用CSV出力・送り状CSV出力</td><td>制限なし</td><td>それぞれの設計書を正とする</td></tr></tbody></table></div>
+<p>削除だけは削除専用の要求方法を用い、なりすまし対策トークンを検証する。トークンが不正なときは削除しない。</p>
+<h3 id="詳細の表示">詳細の表示</h3>
+<p>指定した出荷指示リストが見つからないときは、見つからない旨の応答を返して画面を出さない。</p>
+<p>最終更新者は、削除済みの担当者であっても名前を表示できるように、削除済みを除外する絞り込みを外して読み出す。担当者が見つからないときは名前欄を空にする。</p>
+<p>含まれる受注は、受注IDから注文番号をまとめて引き直して表示する。注文番号を持たない受注が含まれるときは、その行の注文番号だけが空になる。登録日と更新日は <code>年/月/日 時:分:秒</code> で表示し、値が無いときは空にする。</p>
+<h3 id="更新">更新</h3>
+<p>備考の入力値でそのまま置き換え、最終更新者を操作した本人に付け替える。更新できたときは同じ出荷指示リストの詳細画面へ戻る。</p>
+<p>備考は複数行の入力で、最大長の制限を設けていない。値が空のときも登録できる。</p>
+<p>備考と最終更新者以外は更新しない。含まれる受注の構成も変わらない。指定した出荷指示リストが見つからないときは更新しない。</p>
+<h3 id="削除">削除</h3>
+<p>削除は次の順で行う。</p>
+<ol><li>指定した出荷指示リストを読み出す。IDが無いか見つからないときは、見つからない旨の応答を返して削除しない。</li><li>含まれる受注の出荷指示日をすべて消す。</li><li>出荷指示リストを削除する。</li></ol>
+<p>受注そのものは削除しない。対応状況も元に戻さないため、削除した出荷指示リストに紐づいていた受注は、対応状況が出荷指示のまま出荷指示日だけが空になる。</p>
+<p>削除後の戻り先は、検索時のページ番号をセッションに保持しているかどうかで決まる。</p>
+<p>| --- | --- | | 保持している | そのページ番号の出荷指示リスト検索結果 | | 保持していない | 出荷指示リスト検索の初期表示 |</p>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>パス <code>id</code>、備考 POST では CSRF と <code>comment</code>、DELETE では CSRF。</td></tr><tr><td>成功時出力</td><td>HTML 詳細、またはリダイレクト応答。フラッシュに成功／失敗メッセージ。</td></tr><tr><td>失敗時出力</td><td>バリデーション失敗時はリダイレクトとエラーフラッシュ。CSRF 失敗は 403。</td></tr><tr><td>副作用</td><td><code>dtb_shipping_standby</code>、<code>dtb_order.commit_date</code> の一括 NULL 化、中間表削除、トランザクションコミット。</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>dtb_shipping_standby</code></td><td><code>id</code></td><td>出荷指示リスト主キー。</td></tr><tr><td><code>dtb_shipping_standby</code></td><td><code>comment</code></td><td>備考。</td></tr><tr><td><code>dtb_shipping_standby</code></td><td><code>member_id</code></td><td>最終更新者。備考保存時にログイン中管理者で上書き。</td></tr><tr><td><code>dtb_shipping_standby</code></td><td><code>create_date</code> / <code>update_date</code></td><td>表示用。備考保存アクションでは触れない。</td></tr><tr><td><code>dtb_order</code></td><td><code>commit_date</code></td><td>リスト削除時に NULL 一括更新。</td></tr><tr><td><code>dtb_order_shipping_standby</code></td><td><code>standby_id</code> / <code>order_id</code></td><td>リスト削除で中間行が消える（テストにより cascade 的に除去されることを確認）。</td></tr></tbody></table></div>
-<h3 id="DB操作">DB操作</h3>
-<p>永続化の正は ec-cube-enterprise（テーブル名・操作は ec-cube-enterprise を正典）。当ドメインは承認ワークフローを介さず persist/flush で直接確定する（承認ワークフローは在庫機能固有）。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>登録/更新</td><td>dtb_order / dtb_order_shipping_standby / dtb_shipping_standby</td><td>当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。</td></tr></tbody></table></div>
-<hr>
-<h2 id="バリデーション">バリデーション</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>備考</td><td>任意。最大長 Length（<code>eccube_ltext_len</code>）。</td></tr><tr><td>CSRF</td><td>更新フォームは標準トークン。DELETE は共通のトークン名とヘッダ／パラメタ検証。</td></tr></tbody></table></div>
-<hr>
-<h2 id="権限・認可">権限・認可</h2>
-<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>詳細表示・備考保存</th><th>リスト削除</th></tr></thead><tbody><tr><td>未ログイン</td><td>管理画面のログイン要件に従う</td><td>同左</td></tr><tr><td>管理画面にログインした管理者</td><td>可能（コントローラ単位の追加ロール注釈は無い）</td><td>可能（DELETE と CSRF を満たすとき）</td></tr></tbody></table></div>
-<hr>
-<h2 id="画面遷移">画面遷移</h2>
-<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>一覧から番号・編集</td><td><code>GET</code> 詳細</td></tr><tr><td>備考保存成功</td><td><code>GET</code> 同一詳細</td></tr><tr><td>備考保存失敗（検証など）</td><td><code>GET</code> 詳細（エラーフラッシュ）</td></tr><tr><td>削除成功（現行の多くのケース）</td><td><code>GET</code> 出荷指示一覧入口 <code>admin_shipping_standby</code></td></tr><tr><td>削除成功（セッションに誤キーで無いページ番号があった場合など）</td><td>ルート <code>admin_shipping_standby_search</code> を指す生成がコード上あるがルート未定義のリスクがある</td></tr></tbody></table></div>
-<h3 id="遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</h3>
-<div class="table-wrap"><table><thead><tr><th>起点</th><th>遷移前の処理</th><th>遷移後の初期状態</th></tr></thead><tbody><tr><td>備考保存・保存失敗</td><td>フラッシュメッセージを積む</td><td>詳細再描画でメッセージ表示</td></tr><tr><td>削除成功</td><td>フラッシュ成功を積む</td><td>一覧側は検索セッションに依存して初期表示または前回検索の復元が行われる（一覧実装を正とする）</td></tr></tbody></table></div>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>対象 <code>id</code> なし</td><td>HTTP 404</td></tr><tr><td>CSRF 無効（DELETE）</td><td>HTTP 403（アクセス拒否扱い）</td></tr><tr><td>フォーム検証失敗</td><td>汎用保存エラー、編集へリダイレクト</td></tr><tr><td>DB 例外（更新・削除）</td><td>トランザクションロールバック後に例外再送出。コントローラでは主に捕捉しないためエラーハンドラ次第</td></tr></tbody></table></div>
-<hr>
-<h2 id="試行制限">試行制限</h2>
-<p>本機能では試行制限を扱わない。</p>
-<hr>
-<h2 id="ログ監査">ログ監査</h2>
-<div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>本機能専用の成功ログ出力</td><td>実装しない</td></tr><tr><td>失敗時</td><td>フレームワークやログ設定に従う</td></tr></tbody></table></div>
-<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
-<ul><li>パスワード</li><li>なりすまし対策トークン</li><li>Cookie 値</li><li>セッション ID の完全値</li><li>Remember Me トークンの原値</li></ul>
-<hr>
-<h2 id="セッション">セッション</h2>
-<h3 id="本機能におけるセッション">本機能におけるセッション</h3>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>削除後のリダイレクト分岐</td><td><code>admin.shipping_standby.search.page_no</code> を読む実装がある。一覧の検索処理は <code>eccube.admin.shipping_standby.search.page_no</code> を用いるため、現行では値が一致しにくい。</td></tr></tbody></table></div>
-<h3 id="セッションへ保存しない情報">セッションへ保存しない情報</h3>
-<p>備考本文をセッションに固有保存する処理は無い。検索条件の保持は一覧機能側のキーで行う。</p>
-<hr>
-<h2 id="Cookie">Cookie</h2>
-<p>本機能では Remember Me 等の独自 Cookie を扱わない。セッション Cookie は管理画面の共通仕様に従う。</p>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<p>備考更新とリスト削除は、サービス層でトランザクション開始・コミット・例外時ロールバックする。行単位の楽観ロック Version 列は持たない。</p>
-<hr>
-<h2 id="調査補助-grep-向け">調査補助（grep 向け）</h2>
-<ul><li><code>src/Eccube/Controller/Admin/Order/ShippingStandbyController.php</code></li><li><code>src/Eccube/Service/Admin/ShippingStandby/UpdateCommentAction.php</code></li><li><code>src/Eccube/Service/Admin/ShippingStandby/DeleteListAction.php</code></li><li><code>src/Eccube/Repository/DtbShippingStandbyRepository.php</code>（<code>findOneByStandbyIdWithOrder</code>）</li><li><code>src/Eccube/Resource/template/admin/ShippingStandby/edit.twig</code></li></ul>
-<h3 id="HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</h3>
-<ul><li><code>admin_shipping_standby_edit</code> … <code>GET, POST</code> … <code>/{admin_route}/standby/{id}/edit</code>（指定 ID の出荷指示リスト詳細を表示する。ルート上は POST も受け付けるが、処理本体は GET 表示のみであり、備考の保存は別ルートへ POST する。）</li><li><code>admin_shipping_standby_update</code> … <code>POST</code> … <code>/{admin_route}/standby/{id}/update</code>（フォーム送信で備考を検証・永続化し、同一詳細へリダイレクトする。）</li><li><code>admin_shipping_standby_delete</code> … <code>DELETE</code> … <code>/{admin_route}/standby/{id}/delete</code>（受注の出荷指示日を消したうえで当該リスト行と中間表の紐付けを削除し、一覧トップへリダイレクトする（詳細は処理フロー）。）</li></ul>
+<h3 id="入出力-永続化">入出力: 永続化</h3>
+<div class="table-wrap"><table><thead><tr><th>操作</th><th>契機</th></tr></thead><tbody><tr><td>出荷指示リストの備考・最終更新者の更新</td><td>更新</td></tr><tr><td>出荷指示リストの削除</td><td>削除</td></tr><tr><td>受注の出荷指示日の消去</td><td>削除。出荷指示リストを消す前に、含まれる受注すべてを対象に行う</td></tr></tbody></table></div>
+<p>受注そのもの、受注明細、対応状況は更新しない。</p>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
+<h2 id="表示メッセージ">表示メッセージ</h2>
+<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M05-20-MSG-001</td><td>管理画面上部</td><td>保存に失敗しました</td><td>備考を保存するとき、入力内容に不備があるとき</td><td>出荷指示リスト詳細画面に遷移する</td></tr><tr><td>M05-20-MSG-002</td><td>管理画面上部</td><td>保存しました</td><td>備考を保存したとき</td><td>出荷指示リスト詳細画面に遷移する</td></tr><tr><td>M05-20-MSG-003</td><td>管理画面上部</td><td>削除しました</td><td>出荷指示リストを削除したとき</td><td>出荷指示リスト検索画面に遷移する</td></tr><tr><td>M05-20-MSG-004</td><td>ブラウザ確認ダイアログ（window.confirm）</td><td>削除してもよろしいですか?</td><td>出荷指示リストの削除を実行しようとしたとき（削除前確認）</td><td>確認後に削除処理へ進み、キャンセル時は出荷指示リスト詳細画面に留まる</td></tr></tbody></table></div>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

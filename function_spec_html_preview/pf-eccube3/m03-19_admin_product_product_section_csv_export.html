@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,33 +272,15 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#フロント挙動">フロント挙動</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#CSV-をダウンロードする-GET-m03-18-admin-product-product-section-export">CSV をダウンロードする（GET `m03-18_admin_product_product_section_export`）</a>
-<a class="lv3" href="#部門-0-件のとき">部門 0 件のとき</a>
-<a class="lv3" href="#カテゴリ-CSV-出力など他エクスポートとの差">カテゴリ CSV 出力など他エクスポートとの差</a>
-<a class="lv2" href="#集計条件">集計条件</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#出力する対象と列">出力する対象と列</a>
+<a class="lv3" href="#出力ファイル">出力ファイル</a>
+<a class="lv3" href="#他のCSV出力との差">他のCSV出力との差</a>
+<a class="lv3" href="#エラー時の扱い">エラー時の扱い</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#バリデーション">バリデーション</a>
-<a class="lv2" href="#権限・認可">権限・認可</a>
-<a class="lv2" href="#画面遷移">画面遷移</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#試行制限">試行制限</a>
-<a class="lv2" href="#ログ・監査">ログ・監査</a>
-<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
-<a class="lv2" href="#セッション">セッション</a>
-<a class="lv2" href="#Cookie">Cookie</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a>
-<a class="lv2" href="#調査補助-実装参照用">調査補助（実装参照用）</a>
-<a class="lv3" href="#HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</a></nav>
+<a class="lv3" href="#入出力-永続化">入出力: 永続化</a>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -296,90 +288,26 @@ footer {
         <h1>商品管理 — 部門 CSV 出力</h1>
       </header>
       
-      <h2 id="概要">概要</h2>
-<p>管理画面の「商品管理」配下である部門一覧・編集画面から、部門マスタ（<code>mtb_section</code>）の全行を 1 ファイルにストリーミング出力する機能である。出力列はソース上で固定されており、店舗設定の CSV 項目マスタ（<code>dtb_csv</code>）は参照しない。行の並びは部門コード昇順である。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値は EC-CUBE Enterprise の <code>src/Eccube</code> 配下（Symfony ルートプレフィックス <code>%eccube_admin_route%</code>）とする。</p>
-<p>本機能のカスタマイズ区分は現行踏襲である。挙動の参照は現行リポ pf-eccube3 の HareruyaEc プラグイン実装を正とし、DB関連は ec-cube-enterprise を正とする。現行と移行先のスキーマ差は「リニューアル移行時の扱い」へ集約する。</p>
-<p>対象はブラウザ経由の管理画面に限定する。</p>
-<p>コントローラのメソッド単位の解剖は本文の主題としない。本文ではルートbind名やSymfonyのルートnameの網羅は主説明としない。「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。コード探索でbind名が必要なときだけ「調査補助」へ書く。</p>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<p>DB関連の正典は ec-cube-enterprise とする。挙動は現行リポ pf-eccube3 の HareruyaEc プラグインを正とし、移行先との差は本節へ集約する。</p>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>出力元の部門マスタ列</td><td><code>mtb_section</code> は部門ID・部門名（<code>name</code>）・部門コード（<code>code</code>）・表示フラグ（<code>visible</code>）のみを持ち、免税区分の列が無い。</td><td><code>mtb_section</code> に免税区分（<code>tax_free_division</code>）とスマレジ部門ID（<code>smaregi_category_id</code>）が加わる。</td></tr><tr><td>出力列セット</td><td>現行の固定列セットには免税区分が含まれない。</td><td>本書の 5 列固定（ID・部門名・部門コード・免税区分・表示フラグ）は移行先の <code>mtb_section</code> の列を正とし、免税区分列は移行先で確定する。</td></tr><tr><td>並び順</td><td>部門コード（<code>code</code>）昇順。両者で同じ。</td><td>同左。</td></tr></tbody></table></div>
-<p><code>mtb_section</code> の <code>id</code>／<code>name</code>／<code>code</code>／<code>visible</code> の列名は現行と移行先で同一スキーマである（免税区分・スマレジ部門ID列を除く）。</p>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>ナビ「商品管理」→「部門管理」で部門一覧を開き、画面上部の「CSV 出力」（<code>admin.product.csv.export</code> の文言）を押す</td><td><code>GET /{admin_route}/product/section/export</code></td><td>ブラウザが <code>section_日時.csv</code> をダウンロードする。1 行目は固定の列見出し、2 行目以降は全件が部門コード昇順。</td></tr><tr><td>部門の編集画面（一覧から ID を辿った GET）でも同一テンプレート上部に同じ CSV 出力リンクがある</td><td>同上</td><td>一覧時と同じ CSV が返る（一覧と編集でフィルタや列が変わる処理は無い）。</td></tr></tbody></table></div>
-<hr>
-<h2 id="フロント挙動">フロント挙動</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td><code>section.twig</code> のヘッダ付近に <code>path('m03-18_admin_product_product_section_export')</code> への <code>a.btn.btn-primary.btn-csv</code>。ラベルは <code>admin.product.csv.export</code>。隣に「CSV 取込」へのリンクあり（本出力とは別ルート）。</td></tr><tr><td>JS 挙動</td><td>CSV 出力専用のクライアント制御は無い。リンクは通常の GET。削除ボタンは別経路の確認付きリンク。</td></tr><tr><td>CSS・レイアウト</td><td>同上 <code>.btn-csv</code> で文字サイズ・パディングを調整。</td></tr><tr><td>モーダル・ポップアップ</td><td>出力前の確認ダイアログは無い。</td></tr></tbody></table></div>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="CSV-をダウンロードする-GET-m03-18-admin-product-product-section-export">CSV をダウンロードする（GET <code>m03-18_admin_product_product_section_export</code>）</h3>
-<ol><li>管理画面の認証・共通制約を通過する。</li><li>リポジトリで部門マスタを部門コード昇順かつ条件無しで全件取得する。</li><li>各エンティティについて、列順どおりにスカラー配列を組み立てる。順は「ID（整数）」「部門名（文字列）」「部門コード（文字列）」「免税区分（整数の getter 値）」「MTGBuyer 表示フラグ（表示なら 1、非表示なら 0）」。</li><li><code>StreamedResponse</code> のコールバック内で CSV 出力サービスを開き、固定の見出し配列を 1 行目に書く。</li><li>手順 3 で得た各行を順に書く。</li><li>ストリームを閉じる。</li><li>応答ヘッダに <code>Content-Type: application/octet-stream</code> と <code>Content-Disposition: attachment; filename=section_YYYYMMDDhhmmss.csv</code> を付与する。</li></ol>
-<h3 id="部門-0-件のとき">部門 0 件のとき</h3>
-<ul><li>手順 4 の見出しのみ書き、データ行は無いファイルとなる。</li></ul>
-<h3 id="カテゴリ-CSV-出力など他エクスポートとの差">カテゴリ CSV 出力など他エクスポートとの差</h3>
-<ul><li>本処理では PHP の実行時間無効化（<code>set_time_limit(0)</code>）や ORM の SQL ロガー向け初期化呼び出しは行わない。</li><li>本処理では情報ログにファイル名を残す実装は無い（カテゴリ CSV 出力とは異なる）。</li></ul>
-<hr>
-<h2 id="集計条件">集計条件</h2>
-<p>本機能では売上・注文件数・件数の DISTINCT 集計などは行わない。出力対象は <code>mtb_section</code> の全行で、並びは部門コード昇順のみである。</p>
-<hr>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>列セット</td><td>ソース定数の見出しどおり 5 列固定。店舗設定の CSV 項目定義では増減しない。</td></tr><tr><td>免税区分</td><td>DB の整数値をそのまま CSV に書く。一覧画面が翻訳キーでラベル表示する文言とは異なる表現になる。</td></tr><tr><td>MTGBuyer 表示フラグ</td><td>真偽を 1／0 の整数で出力する。</td></tr><tr><td>文字コード・区切り</td><td><code>eccube_csv_export_encoding</code> に従い UTF-8 から変換。UTF-8 指定時は BOM を先頭に書く。フィールド区切りは <code>eccube_csv_export_separator</code>。各行は <code>fputcsv</code> 相当（エスケープは実装どおり）で書く。</td></tr></tbody></table></div>
-<p>本機能ではフォーム入力の保存は行わない。入力項目表は置かない。</p>
-<hr>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>一覧画面との対応</td><td>同一マスタを参照する行順は一覧テーブルの表示順と一致しない場合がある。CSV は常に部門コード昇順のみ。</td></tr><tr><td>免税区分の見え方</td><td>一覧はメッセージ翻訳、CSV は数値コード。利用者が見比べるときは変換表が必要。</td></tr><tr><td>部門 CSV 登録とのヘッダ対応</td><td>「部門 CSV 登録」の雛形は別コントローラで別メッセージの列名を使う。運用上は列意味は近いが、先頭列の見出し文字列は同一とは限らない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="API-バッチ結果">API/バッチ結果</h2>
-<p>本機能では API 呼び出し・バッチ実行を扱わない。</p>
-<hr>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="出力する対象と列">出力する対象と列</h3>
+<p>部門マスタを部門コード昇順かつ条件なしで全件取得する。一覧の検索条件や編集中のフォーム値は、画面で指定されたときも出力には渡らない。対象は常に全件である。</p>
+<p>列は5列固定で、店舗設定のCSV項目定義を変えたときも増減しない。1行目には固定の見出しを書く。</p>
+<div class="table-wrap"><table><thead><tr><th>順</th><th>列</th><th>出力する値</th></tr></thead><tbody><tr><td>1</td><td>ID</td><td>部門の主キー（整数）</td></tr><tr><td>2</td><td>部門名</td><td>部門名（文字列）</td></tr><tr><td>3</td><td>部門コード</td><td>部門コード（文字列）</td></tr><tr><td>4</td><td>免税区分</td><td>保持している整数値をそのまま書く。一覧画面がラベルで表示する文言とは異なる表現になる</td></tr><tr><td>5</td><td>MTGBuyer表示フラグ</td><td>表示のときは1、非表示のときは0を書く</td></tr></tbody></table></div>
+<p>部門が0件のときは見出しだけを書き、データ行が無いファイルとなる。</p>
+<h3 id="出力ファイル">出力ファイル</h3>
+<p>ファイル名は<code>section_YYYYMMDDhhmmss.csv</code>とし、出力したときはダウンロードとして応答する。文字コードは出力エンコーディングの設定に従いUTF-8から変換し、UTF-8を指定したときはBOMを先頭に書く。フィールドの区切り文字も出力用の設定値に従う。</p>
+<p>本機能ではフォーム入力の保存を行わないため、保存対象の項目は無い。</p>
+<h3 id="他のCSV出力との差">他のCSV出力との差</h3>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>本機能の扱い</th></tr></thead><tbody><tr><td>実行時間の制限</td><td>出力の間も無効化しない</td></tr><tr><td>出力ファイル名の記録</td><td>出力したときもファイル名を記録しない（カテゴリCSV出力とは異なる）</td></tr></tbody></table></div>
+<h3 id="エラー時の扱い">エラー時の扱い</h3>
+<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>未ログイン・権限不足のとき</td><td>管理画面共通のログイン案内や拒否に従う</td></tr><tr><td>出力の途中で例外が発生したとき</td><td>利用者向けの専用メッセージの分岐は無い</td></tr></tbody></table></div>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>GET にクエリボディは無い。一覧の検索条件や編集中のフォーム値はエクスポートに渡らない（常に全件）。</td></tr><tr><td>成功時出力</td><td>ストリーム本文が CSV。1 行目見出し、2 行目以降データ。</td></tr><tr><td>失敗時出力</td><td>本処理パスにフラッシュメッセージやリダイレクト分岐は実装されていない。認可失敗やサーバ例外は管理画面共通の扱い。</td></tr><tr><td>副作用</td><td>DB 更新は行わない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<p>機能に直接関係する主な参照先（型の細部はスキーマ参照）。</p>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>mtb_section</code></td><td><code>id</code>, <code>name</code>, <code>code</code>, <code>tax_free_division</code>, <code>visible</code></td><td>出力 5 列のソース。</td></tr><tr><td><code>mtb_section</code></td><td><code>smaregi_category_id</code> 等</td><td>本エクスポートでは出力しない。</td></tr></tbody></table></div>
-<h3 id="DB操作">DB操作</h3>
-<p>本機能は参照系（検索・出力）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>検索</td><td>mtb_section</td><td>検索条件に合致するレコードを抽出する。抽出結果を所定フォーマットでファイル出力する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="バリデーション">バリデーション</h2>
-<p>リクエストパラメータの検証は無い。出力内容はマスタの現行値に依存する。</p>
-<hr>
-<h2 id="権限・認可">権限・認可</h2>
-<p>本エンドポイントにルート単位の追加アノテーションは付かない。到達可否は管理画面のファイアウォールとロール付与に従う（詳細は管理画面ログイン設計等を正とする）。</p>
-<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>部門 CSV 出力 GET</th></tr></thead><tbody><tr><td>管理画面として許可されたセッション</td><td>処理が実行され CSV が返る。</td></tr><tr><td>未ログイン・権限不足</td><td>管理画面共通のログイン案内や拒否。</td></tr></tbody></table></div>
-<hr>
-<h2 id="画面遷移">画面遷移</h2>
-<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>「CSV 出力」クリック</td><td>同一タブで GET エクスポート。ブラウザがダウンロード応答を処理。一覧 HTML には戻らない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>未ログイン・権限不足</td><td>管理画面共通のログイン案内や拒否。</td></tr><tr><td>ストリーム中の例外</td><td>利用者向けの専用メッセージ分岐はエクスポート内に無い。</td></tr></tbody></table></div>
-<hr>
-<h2 id="試行制限">試行制限</h2>
-<p>本機能では試行制限を扱わない。</p>
-<hr>
-<h2 id="ログ・監査">ログ・監査</h2>
-<p>本エクスポート処理では情報ログ・エラーログを追加で書く実装は無い。</p>
-<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
-<ul><li>パスワード</li><li>なりすまし対策トークン</li><li>Cookie 値</li><li>セッション ID の完全値</li></ul>
-<hr>
-<h2 id="セッション">セッション</h2>
-<p>本機能のエクスポート処理はセッションを更新しない。</p>
-<hr>
-<h2 id="Cookie">Cookie</h2>
-<p>本機能単体で新たな Cookie を設定しない。</p>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<p>読み取りとストリーム出力のみ。楽観・悲観ロックの対象は持たない。</p>
-<hr>
-<h2 id="調査補助-実装参照用">調査補助（実装参照用）</h2>
-<p>ルートや文言の突き合わせに使うパスの例（本文の主説明ではない）。</p>
-<ul><li><code>src/Eccube/Controller/Admin/Product/SectionController.php</code>（<code>export</code>、固定見出し定数）</li><li><code>src/Eccube/Repository/Master/MtbSectionRepository.php</code>（<code>findAllOrderByCode</code>）</li><li><code>src/Eccube/Service/CsvExportService.php</code>（<code>fopen</code>・<code>fputcsv</code>・<code>fclose</code>、エンコーディングと BOM）</li><li><code>src/Eccube/Resource/template/admin/Product/section.twig</code>（CSV 出力リンク）</li><li><code>tests/Eccube/Tests/Web/Admin/Product/SectionControllerTest.php</code>（<code>testExportReturnsCsvWithHeader</code>）</li></ul>
-<h3 id="HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</h3>
-<ul><li><code>m03-18_admin_product_product_section_export</code> … <code>GET</code> … <code>/{admin_route}/product/section/export</code>（部門 CSV をストリーミング応答として返す。）</li></ul>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>無し。一覧の検索条件や編集中のフォーム値は渡らない</td></tr><tr><td>成功時出力</td><td>CSVファイル。1行目は見出し、2行目以降がデータ</td></tr><tr><td>失敗時出力</td><td>本処理に完了メッセージや遷移の分岐は無い。認可失敗やサーバ例外は管理画面共通の扱いに従う</td></tr></tbody></table></div>
+<h3 id="入出力-永続化">入出力: 永続化</h3>
+<p>本機能はデータを更新しない。</p>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
+<h2 id="表示メッセージ">表示メッセージ</h2>
+<p>本機能は画面メッセージを表示しない。</p>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

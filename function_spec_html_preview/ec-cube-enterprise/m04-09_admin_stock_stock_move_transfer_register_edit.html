@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,25 +272,7 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#文書情報">文書情報</a>
-<a class="lv2" href="#改訂履歴">改訂履歴</a>
-<a class="lv2" href="#1-在庫移動・振替登録-編集">1. 在庫移動・振替登録/編集</a>
-<a class="lv3" href="#機能の目的と役割">機能の目的と役割</a>
-<a class="lv3" href="#本書で扱うこと">本書で扱うこと</a>
-<a class="lv3" href="#本書で扱わないこと">本書で扱わないこと</a>
-<a class="lv3" href="#利用者視点の入口-エンドポイント">利用者視点の入口（エンドポイント）</a>
-<a class="lv3" href="#フォーム項目・バリデーション">フォーム項目・バリデーション</a>
-<a class="lv3" href="#プロセスフロー-移動-登録">プロセスフロー（移動 登録）</a>
-<a class="lv3" href="#プロセスフロー-移動-編集-ピック・出庫承認申請の更新">プロセスフロー（移動 編集＝ピック・出庫承認申請の更新）</a>
-<a class="lv3" href="#プロセスフロー-振替-登録">プロセスフロー（振替 登録）</a>
-<a class="lv3" href="#ステータスと遷移">ステータスと遷移</a>
-<a class="lv3" href="#在庫増減・履歴記録のまとめ">在庫増減・履歴記録のまとめ</a>
-<a class="lv3" href="#トランザクション境界">トランザクション境界</a>
-<a class="lv3" href="#状態・データ更新">状態・データ更新</a>
-<a class="lv3" href="#分岐・遷移・例外-実メッセージキー">分岐・遷移・例外（実メッセージキー）</a>
-<a class="lv3" href="#関連設計への接続点">関連設計への接続点</a>
-<a class="lv2" href="#表示メッセージ">表示メッセージ</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a></nav>
+      <nav class="toc"><a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -288,302 +280,9 @@ footer {
         <h1>在庫管理 — 在庫移動・振替登録/編集</h1>
       </header>
       
-      <h2 id="文書情報">文書情報</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>機能名</td><td>在庫移動・振替登録/編集</td></tr><tr><td>機能分類</td><td>管理画面 / 在庫管理</td></tr><tr><td>カスタマイズ区分</td><td>新規実装</td></tr><tr><td>作成日</td><td>2026-06-11</td></tr><tr><td>参照元</td><td>excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html</td></tr><tr><td>実装確認</td><td>../ec-cube-enterprise（<code>StockMoveController</code> / <code>StockTransferController</code>、<code>StockMoveStoreAction</code> / <code>StockTransferStoreAction</code> / <code>StockMoveOutboundApprovalRequestUpdateAction</code>、<code>StockMoveNewType</code> / <code>StockMoveQuantityType</code> / <code>StockTransferNewType</code> / <code>StockTransferNewDetailType</code>、<code>StockMoveTransferEntityManager</code> / <code>StockMoveTransferDetailEntityManager</code> / <code>StockMoveTransferStatusHistoryEntityManager</code> / <code>ProductStockEntityManager</code> / <code>StockHistoryEntityManager</code> / <code>StockApprovalListEntityManager</code>、<code>DtbStockMoveTransfer</code> / <code>DtbStockMoveTransferDetail</code> / <code>DtbStockMoveTransferStatusHistory</code> / <code>MtbStockMoveTransferStatus</code> / <code>ProductStock</code>、<code>StockMoveTransferEventSubscriber</code>）</td></tr></tbody></table></div>
-<h2 id="改訂履歴">改訂履歴</h2>
-<div class="table-wrap"><table><thead><tr><th>日付</th><th>内容</th></tr></thead><tbody><tr><td>2026-06-11</td><td>新規実装機能として、Excel設計書を主、実装を補完情報として初版作成。</td></tr><tr><td>2026-06-12</td><td>ec-cube-enterprise 実装（Controller/Service/Form/Entity）と既存テストを読み込み、実装確認値で具体化。</td></tr></tbody></table></div>
-<h2 id="1-在庫移動・振替登録-編集">1. 在庫移動・振替登録/編集</h2>
-<h3 id="機能の目的と役割">機能の目的と役割</h3>
-<p>在庫検索一覧（M04-01）でチェックした商品在庫（<code>ProductStock</code>）を持って遷移し、店舗間の在庫「移動（move）」または同一店舗内の在庫区分間の「振替（transfer）」を登録・編集する管理画面機能。</p>
-<ul><li>**移動（move）**: 出庫元店舗・在庫区分から入庫先店舗・在庫区分へ在庫を動かす。登録時点で移動元在庫を減算し、ステータスを「新規登録」とする。以降はピック・出庫承認申請 → 出庫承認 → 入庫承認申請 → 入庫承認の各フェーズを経て入庫先在庫を加算する（承認系フェーズの詳細は別機能の設計を正とする）。ただし出庫元と入庫先が同一店舗の場合は承認不要で、出庫承認申請の更新時に即入庫完了とする。</li><li>**振替（transfer）**: 同一店舗・同一店舗内の在庫区分間で、1対1の商品移動（状態変更による移動。例: ショーケース品＝スマレジ在庫から EC 在庫＝EC-CUBE への移動）を登録する。登録時点で振替元在庫を減算し、ステータスを「振替承認待ち」として承認一覧（<code>DtbStockApprovalList</code>）へ載せる。</li></ul>
-<p>本機能のカスタマイズ区分は新規実装であり、対応する現行（pf-eccube3）実装は無い。画面・項目・業務条件は基本設計仕様書（0202_基本設計仕様書(在庫管理機能)）を正とし、URLエンドポイント・フォーム項目・DBカラム・在庫増減ロジック・トランザクション境界はリニューアル先 ec-cube-enterprise 実装を正とする。</p>
-<h3 id="本書で扱うこと">本書で扱うこと</h3>
-<ul><li>在庫移動の初期登録（<code>admin_stock_move_new</code> / <code>admin_stock_move_store</code>）のフォーム項目・バリデーション・在庫減算・履歴記録</li><li>在庫移動の編集（ピック・出庫承認申請のデータ更新 <code>admin_stock_move_outbound_approval_request_update</code>）における欠品登録・メモ更新・店舗内移動時の入庫先在庫加算</li><li>在庫振替の登録（<code>admin_stock_transfer_new</code> / <code>admin_stock_transfer_store</code>）のフォーム項目・バリデーション・在庫減算・履歴記録・承認一覧登録</li><li>登録/編集に伴うトランザクション境界、ステータス遷移、ステータス履歴の自動記録</li><li>入力不備・対象なし・状態不整合時の扱い（実メッセージキー）</li></ul>
-<h3 id="本書で扱わないこと">本書で扱わないこと</h3>
-<p>以下は本書では仕様確定せず、対応機能・対応シートの設計を正とする。</p>
-<ul><li>出庫承認（<code>admin_stock_move_outbound_approval(_submit)</code>）、入庫承認申請・入庫承認（<code>admin_stock_move_inbound_approval_request(_update)</code> / <code>admin_stock_move_inbound_approval(_submit)</code>）、振替承認（<code>admin_stock_transfer_approval(_submit)</code>）の承認・却下・差し戻し・在庫加算の確定処理</li><li>在庫移動振替一覧（M04 別機能 <code>StockMoveTransferController</code>）、在庫移動実績インポート、在庫移動指示、在庫移動CSV出力、ピックリスト/返品リストPDFの仕様</li><li>在庫検索一覧（M04-01）側の遷移可否判定（複数店舗／複数在庫区分／編集権限なし／在庫0のアラート）。本機能はそれらを通過した在庫を受け取る前提</li><li>管理画面ログイン認証・権限制御そのもの（共通設計を正とする）</li></ul>
-<h3 id="利用者視点の入口-エンドポイント">利用者視点の入口（エンドポイント）</h3>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>ルート名 / HTTPメソッド / path</th><th>ふるまい</th></tr></thead><tbody><tr><td>移動 初期登録画面</td><td><code>admin_stock_move_new</code> / GET,POST / <code>/%admin%/product/stock/move/new</code></td><td>受け取った <code>productStockIds</code>（POST=<code>request</code>、GET=<code>query</code>）から <code>ProductStock</code> を ID昇順取得し、先頭在庫の店舗・在庫区分を出庫元として <code>StockMoveNewType</code> を初期表示する。</td></tr><tr><td>移動 登録処理</td><td><code>admin_stock_move_store</code> / POST / <code>/%admin%/product/stock/move/store</code></td><td>フォーム検証後 <code>StockMoveStoreAction</code> を実行。成功で <code>admin_stock_move_outbound_approval_request</code> へリダイレクト。失敗は同画面再表示。</td></tr><tr><td>移動 ピック・出庫承認申請画面（編集）</td><td><code>admin_stock_move_outbound_approval_request</code> / GET / <code>/%admin%/product/stock/move/outbound_approval_request/{id}</code></td><td>ステータスに応じてリダイレクト判定後、明細・履歴・<code>StockMoveOutboundApprovalRequestType</code> を表示。欠品点数・メモ・承認通知先を編集する画面。</td></tr><tr><td>移動 出庫承認申請の更新（編集確定）</td><td><code>admin_stock_move_outbound_approval_request_update</code> / POST / <code>/%admin%/product/stock/move/outbound_approval_request/{id}/update</code></td><td>欠品登録者・メモを更新。店舗内移動なら入庫先在庫を加算しステータスを「入庫完了」、店舗間なら「出庫承認待ち」へ遷移。</td></tr><tr><td>振替 初期登録画面</td><td><code>admin_stock_transfer_new</code> / GET,POST / <code>/%admin%/product/stock/transfer/new</code></td><td><code>productStockIds</code> から <code>ProductStock</code> を取得し、<code>StockTransferNewType</code>（振替先商品コード入力・承認通知先）と商品検索モーダルを表示。</td></tr><tr><td>振替 登録処理</td><td><code>admin_stock_transfer_store</code> / POST / <code>/%admin%/product/stock/transfer/store</code></td><td>フォーム検証後 <code>StockTransferStoreAction</code> を実行。成功で <code>admin_stock_transfer_approval</code> へリダイレクト。失敗は同画面再表示。</td></tr><tr><td>振替 振替先商品情報取得（補助）</td><td><code>admin_stock_transfer_dest_product_class_info</code> / GET / <code>/%admin%/product/stock/transfer/dest-product-class-info</code></td><td><code>product_class_id</code> から商品名・コード・言語・カード状態・Foil・基準価格をJSONで返す（振替先セル表示用）。<code>product_class_id&lt;=0</code> は400、未存在は404。</td></tr></tbody></table></div>
-<p><code>%admin%</code> は管理画面ルートプレフィックス（<code>eccube_admin_route</code>）。すべて管理画面ログインを要する。<code>{id}</code> 系は <code>requirements: ['id' =&gt; '\d+']</code> かつ <code>#[MapEntity]</code> で <code>DtbStockMoveTransfer</code> を解決し、未存在時は404（既存テスト <code>testOutboundApprovalRequestWithNonExistentId</code>）。</p>
-<p>&gt; 参考: 登録後の以降フェーズ（本書対象外）は移動が <code>admin_stock_move_outbound_approval(_submit)</code> → <code>admin_stock_move_inbound_approval_request(_update)</code> → <code>admin_stock_move_inbound_approval(_submit)</code> → <code>admin_stock_move</code>（完了）、振替が <code>admin_stock_transfer_approval(_submit)</code> → <code>admin_stock_transfer</code>（完了）。</p>
-<h3 id="フォーム項目・バリデーション">フォーム項目・バリデーション</h3>
-<h4 id="移動-登録フォーム-StockMoveNewType-block-prefix-admin-stock-move-new">移動 登録フォーム <code>StockMoveNewType</code>（block prefix <code>admin_stock_move_new</code>）</h4>
-<div class="table-wrap"><table><thead><tr><th>フォームキー</th><th>型</th><th>必須</th><th>内容・制約</th></tr></thead><tbody><tr><td><code>move_from_base_info_id</code></td><td>Hidden</td><td>必須</td><td>出庫元店舗ID（先頭 <code>ProductStock</code> の <code>BaseInfo</code> で初期化）。</td></tr><tr><td><code>move_from_stock_location_id</code></td><td>Hidden</td><td>必須</td><td>出庫元在庫区分（先頭 <code>ProductStock</code> の <code>stockLocationId</code>）。</td></tr><tr><td><code>move_to_base_info</code></td><td>EntityType（<code>BaseInfo</code>, <code>choice_label=shop_name</code>）</td><td>必須</td><td>入庫先店舗。未指定プレースホルダあり。</td></tr><tr><td><code>move_to_stock_location_id</code></td><td>Choice（<code>ProductStock::STOCK_LOCATION_NAME_TO_ID</code>）</td><td>必須</td><td>入庫先在庫区分（EC-CUBE在庫／スマレジ在庫）。</td></tr><tr><td><code>memo</code></td><td>Textarea</td><td>任意</td><td>在庫移動・振替メモ。</td></tr><tr><td><code>stock_move_quantities</code></td><td>Collection（<code>StockMoveQuantityType</code>）</td><td>—</td><td>対象在庫ごとの移動点数。</td></tr><tr><td>└ <code>product_stock_id</code></td><td>Hidden</td><td>—</td><td>移動元 <code>ProductStock</code> ID。</td></tr><tr><td>└ <code>quantity</code></td><td>Integer</td><td>必須</td><td>移動点数。<code>NotBlank</code> / <code>GreaterThanOrEqual(1)</code> / <code>LessThanOrEqual(eccube_product_stock_change_quantity_max)</code>。</td></tr></tbody></table></div>
-<p>追加バリデーション（<code>POST_SUBMIT</code> イベント）:</p>
-<ul><li>出庫元（店舗＋在庫区分）と入庫先（店舗＋在庫区分）が完全一致する場合、<code>admin.stock.move.same_store_same_location_error</code>（「出庫元と入庫先が同じです。」）を <code>move_to_stock_location_id</code> に付与。</li><li>各明細で <code>quantity</code> が当該 <code>ProductStock</code> の現在庫数を超える場合、<code>admin.stock.move.movement_quantity_exceeds_stock</code>（「移動点数が現在の在庫数を超えています。」）を付与（<code>bccomp</code> 判定、<code>StockMoveQuantityType</code>）。</li></ul>
-<h4 id="振替-登録フォーム-StockTransferNewType-block-prefix-admin-stock-transfer-new">振替 登録フォーム <code>StockTransferNewType</code>（block prefix <code>admin_stock_transfer_new</code>）</h4>
-<div class="table-wrap"><table><thead><tr><th>フォームキー</th><th>型</th><th>必須</th><th>内容・制約</th></tr></thead><tbody><tr><td><code>memo</code></td><td>Textarea</td><td>任意</td><td>メモ。</td></tr><tr><td><code>transfer_details</code></td><td>Collection（<code>StockTransferNewDetailType</code>）</td><td>—</td><td>振替明細。</td></tr><tr><td>└ <code>move_from_product_stock_id</code></td><td>Hidden</td><td>必須</td><td>振替元 <code>ProductStock</code> ID。</td></tr><tr><td>└ <code>dest_product_code</code></td><td>Text</td><td>必須</td><td>振替先商品コード。<code>NotBlank</code>（<code>admin.stock.transfer.dest_product_code_required</code>）。</td></tr><tr><td>└ <code>move_transfer_quantity</code></td><td>Integer</td><td>必須</td><td>振替点数。<code>NotBlank</code> / <code>GreaterThanOrEqual(1)</code> / <code>LessThanOrEqual(eccube_product_stock_change_quantity_max)</code>。</td></tr><tr><td><code>approval_department</code></td><td>Choice</td><td>任意</td><td>承認通知先部署（<code>BaseInfo</code> 所属メンバーの部署から生成）。</td></tr><tr><td><code>approval_notification_target_members</code></td><td>Choice（multiple）</td><td>必須</td><td>承認通知先メンバー。<code>Count(min:1)</code>（<code>admin.stock.move.approval_notification_target_required</code>）。</td></tr></tbody></table></div>
-<p><code>base_info</code> には <code>BaseInfoRepository::getMallBaseInfo()</code>（本店EC）を渡す。振替は移動元・移動先とも同一 <code>BaseInfo</code>・同一在庫区分を前提とする。</p>
-<h3 id="プロセスフロー-移動-登録">プロセスフロー（移動 登録）</h3>
-<ol><li><code>admin_stock_move_new</code>（GET/POST）: <code>productStockIds</code> から <code>ProductStock</code> を取得。先頭在庫の店舗名・在庫区分名を表示し、<code>move_from_*</code> と各明細 <code>product_stock_id</code> を初期値に <code>StockMoveNewType</code> を生成。<code>formAction</code> は <code>admin_stock_move_store?productStockIds=...</code>。</li><li><code>admin_stock_move_store</code>（POST）: <code>productStockIds</code> を再取得し、<code>stock_move_quantities</code> を束ねて <code>StockMoveNewType</code> を <code>handleRequest</code>。</li><li>未submit/不正なら <code>admin.common.save_error</code> を表示し同画面（<code>move_new.twig</code>）を再描画。</li><li>正常なら <code>StockMoveStoreInput</code>（出庫元/入庫先 <code>BaseInfo</code>・在庫区分ID・メモ・ログインメンバー・移動点数配列）を組み立て <code>StockMoveStoreAction::handle()</code> を実行。</li><li><code>StockMoveStoreAction</code>（トランザクション内）:</li><li>ステータス <code>STATUS_NEW(1)</code> を取得。</li><li><code>StockMoveTransferEntityManager::save()</code> で <code>DtbStockMoveTransfer</code>（<code>move_transfer_type=1: 移動</code>）を新規作成し flush。</li><li>明細ごとに、移動元 <code>ProductStock</code> と、商品規格＋入庫先店舗＋入庫先在庫区分が一致する移動先 <code>ProductStock</code> を取得（無ければ例外「移動先の商品在庫が見つかりません」）。基準総額（基準価格×点数）・出庫総原価を計算し <code>DtbStockMoveTransferDetail</code> を作成。</li><li>在庫変動履歴 <code>DtbStockHistory</code> を作成（変動種別 <code>MtbStockChangeTypeDetail::MOVE_OUTBOUND</code>、ソース種別 <code>STOCK_MOVE_EDIT</code>、<code>historySourceId=移動振替ID</code>）。</li><li>移動元 <code>ProductStock</code> の在庫数・総原価を減算（<code>ProductStockEntityManager::save()</code>）。</li><li>flush → commit。例外時は rollback。</li><li>成功で <code>admin.common.save_complete</code> を表示し <code>admin_stock_move_outbound_approval_request?id=...</code> へリダイレクト。<code>StockMoveStoreAction</code> 内例外は catch して <code>admin.common.save_error</code> で同画面再表示（既存テスト <code>testStoreException</code>）。</li></ol>
-<h3 id="プロセスフロー-移動-編集-ピック・出庫承認申請の更新">プロセスフロー（移動 編集＝ピック・出庫承認申請の更新）</h3>
-<ol><li><code>admin_stock_move_outbound_approval_request</code>（GET）: 現在ステータスから本ルートが適切かを <code>redirectByMoveTransferStatus()</code> で判定（不適切なら対応画面へリダイレクト）。明細（ID昇順）・ステータス履歴（更新日降順）・<code>StockMoveOutboundApprovalRequestType</code>（欠品点数・メモ・承認通知先）を表示。</li><li><code>admin_stock_move_outbound_approval_request_update</code>（POST）: <code>StockMoveOutboundApprovalRequestUpdateAction::handle()</code> を実行。</li></ol>
-<ul><li>店舗内移動（<code>isSameStore()</code>＝出庫元店舗＝入庫先店舗）なら次ステータスを <code>STATUS_INBOUND_APPROVED(7)</code>、店舗間なら <code>STATUS_OUTBOUND_APPROVAL_PENDING(2)</code> とする。</li><li>欠品点数 &gt; 0 の明細は欠品登録者（<code>StockoutMember</code>）を更新。</li><li>店舗内移動の場合は、入庫数（移動点数−欠品点数）を明細へ反映し、入庫先 <code>ProductStock</code> の在庫数・総原価を加算、変動種別 <code>MOVE_INBOUND</code> で在庫変動履歴を作成（入庫数0の明細はスキップ）。</li><li>在庫承認一覧 <code>DtbStockApprovalList</code>（種別 <code>MOVE_OUTBOUND</code>、未承認）を作成。</li><li>flush → commit。</li></ul>
-<ol><li>成功で <code>admin.common.save_complete</code>。店舗内移動は <code>admin_stock_move_outbound_approval_request</code>（→ステータスが入庫完了のため完了画面へ連鎖リダイレクト）、店舗間は <code>admin_stock_move_outbound_approval</code> へリダイレクト。</li></ol>
-<p>&gt; 欠品点数・差分の編集UIは設計要件（差し戻し・欠品登録）。欠品理由・廃棄理由の区別、差分商品追加は基本設計の業務要件を正とする。</p>
-<h3 id="プロセスフロー-振替-登録">プロセスフロー（振替 登録）</h3>
-<ol><li><code>admin_stock_transfer_new</code>（GET/POST）: <code>productStockIds</code> から <code>ProductStock</code> を取得。本店EC（<code>getMallBaseInfo()</code>）と先頭在庫の在庫区分名を表示し、明細初期値（<code>move_from_product_stock_id</code>）と商品検索モーダル（<code>SearchProductType</code>）付きで <code>StockTransferNewType</code> を生成。</li><li><code>admin_stock_transfer_store</code>（POST）: フォーム検証後 <code>StockTransferStoreInput</code>（本店 <code>BaseInfo</code>・在庫区分・メモ・メンバー・明細配列）で <code>StockTransferStoreAction::handle()</code> を実行。</li><li><code>StockTransferStoreAction</code>（トランザクション内）:</li><li>ステータス <code>STATUS_TRANSFER_APPROVAL_PENDING(8)</code> を取得。</li><li><code>DtbStockMoveTransfer</code>（<code>move_transfer_type=2: 振替</code>、出庫元＝入庫先＝本店、同一在庫区分）を作成し flush。</li><li>明細ごとに、点数≦0または商品コード空はスキップ。振替元 <code>ProductStock</code>（無ければ例外）、振替先商品コードから <code>ProductClass</code>（無ければ「振替先の商品コード「…」が見つかりません」）、振替先 <code>ProductStock</code>（商品規格＋本店＋在庫区分、無ければ例外）を解決。明細作成、在庫変動履歴 <code>TRANSFER_OUTBOUND</code>（ソース <code>STOCK_TRANSFER_EDIT</code>）作成、振替元在庫を減算。</li><li>登録できた明細が0件なら例外「登録可能な振替明細がありません」。</li><li>在庫承認一覧 <code>DtbStockApprovalList</code>（種別 <code>TRANSFER_OUTBOUND</code>、未承認、件数=登録明細数）を作成。</li><li>flush → commit。</li><li>成功で <code>admin.common.save_complete</code> を表示し <code>admin_stock_transfer_approval?id=...</code> へリダイレクト。例外時は catch して <code>admin.common.save_error</code> で同画面（<code>transfer_new.twig</code>）再表示（既存テスト <code>testStoreHandleThrowsReturnsFormView</code>）。</li></ol>
-<h3 id="ステータスと遷移">ステータスと遷移</h3>
-<p><code>MtbStockMoveTransferStatus</code>（<code>mtb_stock_move_transfer_status</code>）の定数:</p>
-<div class="table-wrap"><table><thead><tr><th>ID</th><th>定数</th><th>名称（用途）</th></tr></thead><tbody><tr><td>1</td><td><code>STATUS_NEW</code></td><td>新規登録（移動 登録直後）</td></tr><tr><td>2</td><td><code>STATUS_OUTBOUND_APPROVAL_PENDING</code></td><td>出庫承認待ち</td></tr><tr><td>3</td><td><code>STATUS_REJECTED</code></td><td>却下</td></tr><tr><td>4</td><td><code>STATUS_OUTBOUND_APPROVED</code></td><td>出庫承認済み</td></tr><tr><td>5</td><td><code>STATUS_MOVING</code></td><td>移動中</td></tr><tr><td>6</td><td><code>STATUS_INBOUND_APPROVAL_PENDING</code></td><td>入庫承認待ち</td></tr><tr><td>7</td><td><code>STATUS_INBOUND_APPROVED</code></td><td>入庫完了（店舗内移動の更新確定先・入庫承認確定先）</td></tr><tr><td>8</td><td><code>STATUS_TRANSFER_APPROVAL_PENDING</code></td><td>振替承認待ち（振替 登録直後）</td></tr></tbody></table></div>
-<p>移動のステータス→画面リダイレクト対応（<code>StockMoveController::STATUS_TO_ROUTE</code>）: 1→出庫承認申請、2→出庫承認、3/4/7→完了、5→入庫承認申請、6→入庫承認。現ルートと一致する場合はリダイレクトせず表示（無限ループ防止）。振替のステータス→画面対応（<code>StockTransferController::TRANSFER_STATUS_TO_ROUTE</code>）: 8→承認待ち、3/7→完了。<code>move_transfer_type</code> が振替でない場合や未知ステータスは <code>admin.common.save_error</code> / <code>admin.stock.transfer.approval_status_error</code> を表示し <code>admin_stock_history_new</code> へリダイレクト。</p>
-<h3 id="在庫増減・履歴記録のまとめ">在庫増減・履歴記録のまとめ</h3>
-<ul><li>**登録時の減算**: 移動登録・振替登録の双方で、登録時点に移動（振替）元 <code>ProductStock.stock</code>・<code>total_cost</code> を点数分減算し、変動種別 <code>MOVE_OUTBOUND</code> / <code>TRANSFER_OUTBOUND</code> の在庫変動履歴 <code>DtbStockHistory</code> を記録する（基本設計「在庫移動を新規登録すると移動元店舗の商品在庫が減算」）。</li><li>**入庫時の加算**: 店舗内移動は出庫承認申請の更新で入庫先 <code>ProductStock</code> に即加算（変動種別 <code>MOVE_INBOUND</code>）。店舗間移動・振替は本書対象外の承認フェーズで加算する（基本設計「入庫完了で移動先に加算」）。</li><li>**在庫変動理由**: 在庫変動理由は「在庫移動／在庫振替」とし、<code>stockChangeReason</code> は空文字で登録（理由入力項目は不要という基本設計要件に整合）。</li><li>**ステータス履歴の自動記録**: <code>DtbStockMoveTransfer</code> の永続化/更新時、Doctrine リスナー <code>StockMoveTransferEventSubscriber</code>（<code>postPersist</code> / <code>postUpdate</code>）が <code>move_transfer_status_id</code> の変化を検知した場合のみ <code>DtbStockMoveTransferStatusHistory</code> を <code>StockMoveTransferStatusHistoryEntityManager</code> で追記する（更新者は <code>getUpdatedMember()</code>）。登録Action側は履歴を明示生成せず、ステータス変更を起点に自動記録される。</li></ul>
-<h3 id="トランザクション境界">トランザクション境界</h3>
-<ul><li><code>StockMoveStoreAction</code> / <code>StockTransferStoreAction</code> / <code>StockMoveOutboundApprovalRequestUpdateAction</code> はいずれも <code>EntityManager::beginTransaction()</code> 〜 <code>commit()</code> で囲み、例外時 <code>rollback()</code> のうえ再throwする。本体・明細・在庫更新・在庫変動履歴・承認一覧・ステータス履歴は単一トランザクション内で確定し、失敗時は在庫減算を含め一切確定しない。</li><li>Controller は Action 例外を catch し <code>admin.common.save_error</code> で同一登録画面を再表示する。</li></ul>
-<h3 id="状態・データ更新">状態・データ更新</h3>
-<div class="table-wrap"><table><thead><tr><th>対象</th><th>内容</th></tr></thead><tbody><tr><td>移動振替本体</td><td><code>dtb_stock_move_transfer</code>（<code>move_transfer_type</code>、<code>move_transfer_status_id</code>、<code>move_from_base_info_id</code> / <code>move_from_stock_location_id</code>、<code>move_to_base_info_id</code> / <code>move_to_stock_location_id</code>、<code>memo</code>、<code>rejected_memo</code>、<code>registered_member_id</code>、<code>updated_member_id</code>、各承認者/承認日時、<code>tracking_no</code>、<code>move_instruction_id</code> ほか）。登録系で新規作成・編集系で更新。</td></tr><tr><td>明細</td><td><code>dtb_stock_move_transfer_detail</code>（移動元/移動先 <code>ProductStock</code>、<code>move_transfer_quantity</code>、<code>standard_total_price</code>、<code>outbound_total_cost</code>、<code>stockout_quantity</code>、<code>difference_quantity</code>、<code>move_to_quantity</code>、欠品/差分登録者 ほか）。</td></tr><tr><td>ステータス履歴</td><td><code>dtb_stock_move_transfer_status_history</code>（<code>stock_move_transfer_id</code>、<code>stock_move_transfer_status_id</code>、<code>update_member_id</code>）。ステータス変化時に自動追記。</td></tr><tr><td>在庫</td><td><code>dtb_product_stock</code>（<code>stock</code> / <code>total_cost</code>、store・stock_location単位）を増減。</td></tr><tr><td>在庫変動履歴</td><td><code>dtb_stock_history</code>（変動種別 <code>MOVE_OUTBOUND</code> / <code>MOVE_INBOUND</code> / <code>TRANSFER_OUTBOUND</code>、ソース種別 <code>STOCK_MOVE_EDIT</code> / <code>STOCK_TRANSFER_EDIT</code>、<code>history_source_id=移動振替ID</code>）。</td></tr><tr><td>在庫承認一覧</td><td><code>dtb_stock_approval_list</code>（振替登録・店舗内移動更新で未承認データを作成）。</td></tr></tbody></table></div>
-<h3 id="分岐・遷移・例外-実メッセージキー">分岐・遷移・例外（実メッセージキー）</h3>
-<ul><li>**保存成功**: <code>admin.common.save_complete</code>（移動/振替 登録・更新）。</li><li>**入力不備・保存失敗**: <code>admin.common.save_error</code>（フォーム未submit/不正、Action例外）。同一登録/編集画面を再描画。</li><li>**移動 同一店舗・同一在庫区分指定**: <code>admin.stock.move.same_store_same_location_error</code>。</li><li>**移動 点数が在庫超過**: <code>admin.stock.move.movement_quantity_exceeds_stock</code>。</li><li>**承認通知先未選択**: <code>admin.stock.move.approval_notification_target_required</code>。</li><li>**振替 振替先コード未入力**: <code>admin.stock.transfer.dest_product_code_required</code>。振替先コード不正・在庫なしは Action 例外（メッセージは <code>dest_product_code_not_found</code> / <code>dest_product_code_no_stock</code> 等を画面側で案内、サーバは <code>admin.common.save_error</code>）。</li><li>**状態不整合**: 移動の出庫承認送信で承認待ちでない場合 <code>admin.stock.move.outbound_approval_status_error</code>。振替の承認系で振替区分でない/未知ステータスは <code>admin.stock.transfer.approval_status_error</code>、登録者本人の承認・却下は <code>admin.stock.transfer.approval_self_error</code>（いずれも本書では遷移先として参照）。</li><li>**対象なし（404）**: <code>{id}</code> に該当する <code>DtbStockMoveTransfer</code> が無い場合は <code>#[MapEntity]</code> により404。</li><li>**振替補助API**: <code>admin_stock_transfer_dest_product_class_info</code> は <code>product_class_id&lt;=0</code> で400、<code>ProductClass</code> 未存在で404、正常時JSON。</li></ul>
-<h3 id="関連設計への接続点">関連設計への接続点</h3>
-<ul><li>入口（チェックした在庫を持って遷移、複数店舗／複数在庫区分／編集権限なし／在庫0の遷移可否）は在庫検索一覧（M04-01）を正とする。</li><li>画面項目・帳票（ピック表・返品リストPDF）・CSV列の詳細は参照元Excel設計書の該当シートを正とする。</li><li>承認・却下・差し戻し・欠品/差分確定の各フェーズ、在庫移動振替一覧・在庫移動実績インポート・在庫移動指示、スマレジ連携条件は対応する M04 機能設計を正とする。</li><li>URLエンドポイント・フォーム項目・DBカラム・在庫増減ロジックは <code>../ec-cube-enterprise</code> の <code>StockMoveController</code> / <code>StockTransferController</code>、各 <code>*StoreAction</code> / <code>*UpdateAction</code>、<code>*EntityManager</code>、<code>DtbStockMoveTransfer</code> 群 Entity を正とする。</li></ul>
+      <div class="renewal-spec-banner"><h3>リニューアル後の仕様</h3></div>
 <h2 id="表示メッセージ">表示メッセージ</h2>
-<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>画面上の文言(英語)</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M04-09-MSG-001</td><td>管理画面上部</td><td>保存に失敗しました</td><td>（英訳なし）</td><td>必須項目の未入力など、入力内容に不備があるまま保存したとき</td><td>移動初期登録画面に留まる</td></tr><tr><td>M04-09-MSG-002</td><td>管理画面上部</td><td>この店舗の在庫を編集する権限がありません。</td><td>（英訳なし）</td><td>出庫元店舗の在庫を編集する権限がないとき</td><td>在庫一覧画面に遷移する</td></tr><tr><td>M04-09-MSG-003</td><td>管理画面上部</td><td>保存に失敗しました</td><td>（英訳なし）</td><td>在庫移動の登録中にエラーが起きたとき</td><td>移動初期登録画面に留まる</td></tr><tr><td>M04-09-MSG-004</td><td>管理画面上部</td><td>保存しました</td><td>（英訳なし）</td><td>在庫移動を登録したとき</td><td>移動ピック・出庫承認申請画面に遷移する</td></tr><tr><td>M04-09-MSG-005</td><td>管理画面上部</td><td>保存に失敗しました</td><td>（英訳なし）</td><td>必須項目の未入力など、入力内容に不備があるまま保存したとき</td><td>移動ピック・出庫承認申請画面に留まる</td></tr><tr><td>M04-09-MSG-006</td><td>管理画面上部</td><td>この店舗の在庫を編集する権限がありません。</td><td>（英訳なし）</td><td>出庫元店舗を確認できない、またはその在庫を編集する権限がないとき</td><td>在庫一覧画面に遷移する</td></tr><tr><td>M04-09-MSG-007</td><td>管理画面上部</td><td>保存に失敗しました</td><td>（英訳なし）</td><td>出庫の承認申請を更新中にエラーが起きたとき</td><td>移動ピック・出庫承認申請画面に留まる</td></tr><tr><td>M04-09-MSG-008</td><td>管理画面上部</td><td>保存しました</td><td>（英訳なし）</td><td>出庫の承認申請を更新したとき</td><td>同一店舗は在庫移動完了画面、その他は移動出庫承認画面に遷移する</td></tr><tr><td>M04-09-MSG-009</td><td>管理画面上部</td><td>ピック表を出力できるステータスではありません。</td><td>（英訳なし）</td><td>ピック表を出力できない在庫移動の状態で出力しようとしたとき</td><td>失敗JSON（success:false・redirectUrl）を返し、承認申請画面に遷移する</td></tr><tr><td>M04-09-MSG-010</td><td>管理画面上部</td><td>ピック表を出力する権限がありません。</td><td>（英訳なし）</td><td>出庫元店舗を確認できない状態でピック表を出力しようとしたとき</td><td>失敗JSON（success:false・redirectUrl）を返し、承認申請画面に遷移する</td></tr><tr><td>M04-09-MSG-011</td><td>管理画面上部</td><td>ピック表を出力する権限がありません。</td><td>（英訳なし）</td><td>出庫元店舗のピック表を出力する権限がないとき</td><td>失敗JSON（success:false・redirectUrl）を返し、承認申請画面に遷移する</td></tr><tr><td>M04-09-MSG-012</td><td>管理画面上部</td><td>出庫承認待ちの状態でないため、操作できません。</td><td>（英訳なし）</td><td>出庫承認待ちではない在庫移動を操作しようとしたとき</td><td>移動ピック・出庫承認申請画面に遷移する</td></tr><tr><td>M04-09-MSG-013</td><td>管理画面上部</td><td>保存に失敗しました</td><td>（英訳なし）</td><td>承認操作として使用できない操作を送信したとき</td><td>移動出庫承認画面に遷移する</td></tr><tr><td>M04-09-MSG-014</td><td>管理画面上部</td><td>保存に失敗しました ／ 却下する場合は却下理由を入力してください。</td><td>（英訳なし）</td><td>在庫移動の却下時に入力内容が不正なとき</td><td>移動出庫承認画面に遷移する</td></tr><tr><td>M04-09-MSG-015</td><td>管理画面上部</td><td>承認権限がありません。</td><td>（英訳なし）</td><td>承認する権限がないとき</td><td>移動出庫承認画面に遷移する</td></tr><tr><td>M04-09-MSG-016</td><td>管理画面上部</td><td>保存に失敗しました</td><td>（英訳なし）</td><td>出庫承認を却下する処理中にエラーが起きたとき</td><td>移動出庫承認画面に遷移する</td></tr><tr><td>M04-09-MSG-017</td><td>管理画面上部</td><td>却下しました。</td><td>（英訳なし）</td><td>出庫承認を却下したとき</td><td>移動入庫承認申請画面に遷移する</td></tr><tr><td>M04-09-MSG-018</td><td>管理画面上部</td><td>保存に失敗しました</td><td>（英訳なし）</td><td>出庫承認の処理中にエラーが起きたとき</td><td>移動出庫承認画面に遷移する</td></tr><tr><td>M04-09-MSG-019</td><td>管理画面上部</td><td>承認しました。</td><td>（英訳なし）</td><td>出庫承認を行ったとき</td><td>移動入庫承認申請画面に遷移する</td></tr><tr><td>M04-09-MSG-020</td><td>管理画面上部</td><td>保存に失敗しました</td><td>（英訳なし）</td><td>移動先店舗を確認できないとき</td><td>移動ピック・出庫承認申請画面に遷移する</td></tr><tr><td>M04-09-MSG-021</td><td>管理画面上部</td><td>保存に失敗しました</td><td>（英訳なし）</td><td>画面の有効期限切れなどで、送信を確認できなかったとき</td><td>移動入庫承認申請画面に遷移する</td></tr><tr><td>M04-09-MSG-022</td><td>管理画面上部</td><td>差分CSV登録可能なステータスではありません。 ／ 保存に失敗しました ／ 入庫先の商品在庫が見つかりません。 ／ この商品は既に一覧に登録されています。 ／ 出庫元の商品在庫が見つかりません。</td><td>（英訳なし）</td><td>入庫承認申請画面で差分商品を追加し、追加条件を満たさないとき</td><td>移動入庫承認申請画面に遷移する</td></tr><tr><td>M04-09-MSG-023</td><td>管理画面上部</td><td>保存に失敗しました</td><td>（英訳なし）</td><td>移動先店舗を確認できないとき</td><td>移動ピック・出庫承認申請画面に遷移する</td></tr><tr><td>M04-09-MSG-024</td><td>管理画面上部</td><td>保存に失敗しました</td><td>（英訳なし）</td><td>必須項目の未入力など、入力内容に不備があるまま保存したとき</td><td>移動入庫承認申請画面に留まる</td></tr><tr><td>M04-09-MSG-025</td><td>管理画面上部</td><td>この店舗の在庫を編集する権限がありません。</td><td>（英訳なし）</td><td>移動先店舗の在庫を編集する権限がないとき</td><td>在庫一覧画面に遷移する</td></tr><tr><td>M04-09-MSG-026</td><td>管理画面上部</td><td>保存に失敗しました</td><td>（英訳なし）</td><td>入庫の承認申請を更新中にエラーが起きたとき</td><td>移動入庫承認申請画面に留まる</td></tr><tr><td>M04-09-MSG-027</td><td>管理画面上部</td><td>保存しました</td><td>（英訳なし）</td><td>入庫の承認申請を更新したとき</td><td>移動入庫承認画面に遷移する</td></tr><tr><td>M04-09-MSG-028</td><td>管理画面上部</td><td>保存に失敗しました</td><td>（英訳なし）</td><td>入庫承認操作として使用できない操作を送信したとき</td><td>移動入庫承認画面に遷移する</td></tr><tr><td>M04-09-MSG-029</td><td>管理画面上部</td><td>保存に失敗しました</td><td>（英訳なし）</td><td>入力内容に不備があるまま送信したとき</td><td>移動入庫承認画面に遷移する</td></tr><tr><td>M04-09-MSG-030</td><td>管理画面上部</td><td>承認権限がありません。</td><td>（英訳なし）</td><td>承認する権限がないとき</td><td>移動入庫承認画面に遷移する</td></tr><tr><td>M04-09-MSG-031</td><td>管理画面上部</td><td>保存に失敗しました</td><td>（英訳なし）</td><td>入庫を再確認する処理中にエラーが起きたとき</td><td>移動入庫承認画面に遷移する</td></tr><tr><td>M04-09-MSG-032</td><td>管理画面上部</td><td>保存に失敗しました</td><td>（英訳なし）</td><td>入庫承認の処理中にエラーが起きたとき</td><td>移動入庫承認画面に遷移する</td></tr><tr><td>M04-09-MSG-033</td><td>管理画面上部</td><td>承認しました。</td><td>（英訳なし）</td><td>入庫承認を行ったとき</td><td>在庫移動完了画面に遷移する</td></tr><tr><td>M04-09-MSG-034</td><td>管理画面上部</td><td>戻しリストPDFを出力できるステータスではありません。</td><td>（英訳なし）</td><td>戻しリストPDFを出力できない状態で出力しようとしたとき</td><td>エラー情報をJSONで返す</td></tr><tr><td>M04-09-MSG-035</td><td>管理画面上部</td><td>対象のデータが見つかりません。 ／ ID: %d は入庫先店舗が設定されていません。 ／ ID: %d は権限のない店舗のデータです。 ／ ID: %d は対象外のステータスです。 ／ ID: %d は存在しません。 ／ 複数店舗の在庫移動・振替情報を同時に処理することはできません。</td><td>（英訳なし）</td><td>戻しリストPDFを出力し、対象データ・入庫先店舗・操作権限のいずれかに問題があるとき</td><td>エラー情報をJSONで返す</td></tr><tr><td>M04-09-MSG-036</td><td>管理画面上部</td><td>保存に失敗しました</td><td>（英訳なし）</td><td>必須項目の未入力など、入力内容に不備があるまま保存したとき</td><td>在庫振替初期登録画面に留まる</td></tr><tr><td>M04-09-MSG-037</td><td>管理画面上部</td><td>承認待ちの在庫振替ではありません。または既に処理済みです。</td><td>（英訳なし）</td><td>承認待ちではない、または処理済みの在庫振替を操作しようとしたとき</td><td>在庫履歴一覧画面に遷移する</td></tr><tr><td>M04-09-MSG-038</td><td>管理画面上部</td><td>保存に失敗しました</td><td>（英訳なし）</td><td>在庫振替の登録中にエラーが起きたとき</td><td>在庫振替初期登録画面に留まる</td></tr><tr><td>M04-09-MSG-039</td><td>管理画面上部</td><td>この店舗の在庫を編集する権限がありません。</td><td>（英訳なし）</td><td>基準店舗の在庫を編集する権限がないとき</td><td>在庫一覧画面に遷移する</td></tr><tr><td>M04-09-MSG-040</td><td>管理画面上部</td><td>この店舗の在庫を編集する権限がありません。</td><td>（英訳なし）</td><td>振替元店舗の在庫を編集する権限がないとき</td><td>在庫一覧画面に遷移する</td></tr><tr><td>M04-09-MSG-041</td><td>管理画面上部</td><td>保存に失敗しました</td><td>（英訳なし）</td><td>在庫振替の登録中にエラーが起きたとき</td><td>在庫振替初期登録画面に留まる</td></tr><tr><td>M04-09-MSG-042</td><td>管理画面上部</td><td>保存しました</td><td>（英訳なし）</td><td>在庫振替を登録したとき</td><td>在庫振替承認画面に遷移する</td></tr><tr><td>M04-09-MSG-043</td><td>管理画面上部</td><td>保存に失敗しました</td><td>（英訳なし）</td><td>承認操作として使用できない操作を送信したとき</td><td>在庫振替承認画面に遷移する</td></tr><tr><td>M04-09-MSG-044</td><td>管理画面上部</td><td>保存に失敗しました ／ 却下する場合は却下理由を入力してください。</td><td>（英訳なし）</td><td>在庫振替の却下時に入力内容が不正なとき</td><td>在庫振替承認画面に留まる</td></tr><tr><td>M04-09-MSG-045</td><td>管理画面上部</td><td>承認権限がありません。</td><td>（英訳なし）</td><td>承認する権限がないとき</td><td>在庫振替承認画面に遷移する</td></tr><tr><td>M04-09-MSG-046</td><td>管理画面上部</td><td>保存に失敗しました</td><td>（英訳なし）</td><td>在庫振替を却下する処理中にエラーが起きたとき</td><td>在庫振替承認画面に遷移する</td></tr><tr><td>M04-09-MSG-047</td><td>管理画面上部</td><td>却下しました。</td><td>（英訳なし）</td><td>在庫振替を却下したとき</td><td>在庫振替完了画面に遷移する</td></tr><tr><td>M04-09-MSG-048</td><td>管理画面上部</td><td>保存に失敗しました</td><td>（英訳なし）</td><td>在庫振替を承認する処理中にエラーが起きたとき</td><td>在庫振替承認画面に遷移する</td></tr><tr><td>M04-09-MSG-049</td><td>管理画面上部</td><td>承認しました。</td><td>（英訳なし）</td><td>在庫振替を承認したとき</td><td>在庫振替完了画面に遷移する</td></tr><tr><td>M04-09-MSG-050</td><td>欠品CSV取込モーダル内</td><td>セッションがタイムアウトしました。もう一度やり直してください。</td><td>（英訳なし）</td><td>画面の有効期限切れなどで、送信を確認できなかったとき</td><td>モーダルは開いたまま</td></tr><tr><td>M04-09-MSG-051</td><td>欠品CSV取込モーダル内</td><td>CSVファイルを選択してください。</td><td>（英訳なし）</td><td>CSVファイルを選択せずに取り込もうとしたとき</td><td>モーダルは開いたまま</td></tr><tr><td>M04-09-MSG-052</td><td>欠品CSV取込モーダル内</td><td>欠品CSV登録可能なステータスではありません。</td><td>（英訳なし）</td><td>欠品CSVを登録できない在庫移動の状態で取り込もうとしたとき</td><td>モーダルは開いたまま</td></tr><tr><td>M04-09-MSG-053</td><td>欠品CSV取込モーダル内</td><td>保存に失敗しました</td><td>（英訳なし）</td><td>CSVの取込中にエラーが起きたとき</td><td>モーダルは開いたまま</td></tr><tr><td>M04-09-MSG-054</td><td>差分CSV取込モーダル内</td><td>セッションがタイムアウトしました。もう一度やり直してください。</td><td>（英訳なし）</td><td>画面の有効期限切れなどで、送信を確認できなかったとき</td><td>モーダルは開いたまま</td></tr><tr><td>M04-09-MSG-055</td><td>差分CSV取込モーダル内</td><td>CSVファイルを選択してください。</td><td>（英訳なし）</td><td>CSVファイルを選択せずに取り込もうとしたとき</td><td>モーダルは開いたまま</td></tr><tr><td>M04-09-MSG-056</td><td>差分CSV取込モーダル内</td><td>差分CSV登録可能なステータスではありません。</td><td>（英訳なし）</td><td>差分CSVを登録できない在庫移動の状態で取り込もうとしたとき</td><td>モーダルは開いたまま</td></tr><tr><td>M04-09-MSG-057</td><td>差分CSV取込モーダル内</td><td>保存に失敗しました</td><td>（英訳なし）</td><td>CSVの取込中にエラーが起きたとき</td><td>モーダルは開いたまま</td></tr><tr><td>M04-09-MSG-058</td><td>画面上部フラッシュ</td><td>保存に失敗しました</td><td>（英訳なし）</td><td>在庫振替ではないデータを操作しようとしたとき</td><td>在庫履歴画面に遷移する</td></tr><tr><td>M04-09-MSG-059</td><td>JSアラート</td><td>ポップアップがブロックされているため、ピック表を開けませんでした。ブラウザの設定を確認してください。</td><td>（英訳なし）</td><td>ピック表を開こうとしたが、ブラウザにポップアップをブロックされたとき</td><td>ピック表を出力せず、現在の画面に留まる</td></tr><tr><td>M04-09-MSG-060</td><td>JSアラート</td><td>ピック表用データの取得に失敗しました。</td><td>（英訳なし）</td><td>ピック表用データの取得中にエラーが起きたとき</td><td>ポップアップを閉じ、現在の画面に留まる</td></tr><tr><td>M04-09-MSG-061</td><td>JSアラート</td><td>ポップアップがブロックされているため、戻しリストPDFを開けませんでした。ブラウザの設定を確認してください。</td><td>（英訳なし）</td><td>戻しリストPDFを開こうとしたが、ブラウザにポップアップをブロックされたとき</td><td>戻しリストPDFを出力せず、現在の画面に留まる</td></tr><tr><td>M04-09-MSG-062</td><td>別ウィンドウ</td><td>読み込み中…</td><td>（英訳なし）</td><td>ポップアップを開いた後、データの読み込みが完了するまで</td><td>PDFデータ取得後、ポップアップに戻しリストPDFを表示する</td></tr><tr><td>M04-09-MSG-063</td><td>JSアラート</td><td>戻しリストPDF用データの取得に失敗しました。</td><td>（英訳なし）</td><td>戻しリストPDF用データの取得中にエラーが起きたとき</td><td>ポップアップを閉じ、現在の画面に留まる</td></tr><tr><td>M04-09-MSG-064</td><td>JSアラート</td><td>商品の検索に失敗しました。</td><td>（英訳なし）</td><td>商品を検索中にエラーが起きたとき</td><td>商品検索結果を更新せず、現在の画面に留まる</td></tr><tr><td>M04-09-MSG-065</td><td>JSアラート</td><td>選択されていません</td><td>（英訳なし）</td><td>規格のある商品で、規格を選ばずに追加しようとしたとき</td><td>商品を追加せず、入庫承認申請画面に留まる</td></tr><tr><td>M04-09-MSG-066</td><td>確認モーダル</td><td>この操作はあとから取り消すことができません。在庫移動を新規登録してよろしいですか？</td><td>（英訳なし）</td><td>在庫移動の新規登録を送信するときの確認表示</td><td>OKでモーダルを閉じて在庫移動を登録し、キャンセルでモーダルを閉じる</td></tr><tr><td>M04-09-MSG-067</td><td>確認モーダル</td><td>※新規登録時に、移動対象の商品の在庫が移動点数分減る処理が行われます。</td><td>（英訳なし）</td><td>在庫移動の新規登録を送信するときの確認表示</td><td>OKでモーダルを閉じて在庫移動を登録し、キャンセルでモーダルを閉じる</td></tr><tr><td>M04-09-MSG-068</td><td>確認モーダル</td><td>この操作はあとから取り消すことができません。店舗内入庫を確定してよろしいですか？</td><td>（英訳なし）</td><td>同一店舗への入庫を確定するときの確認表示</td><td>OKでモーダルを閉じて店舗内入庫を確定し、キャンセルでモーダルを閉じる</td></tr><tr><td>M04-09-MSG-069</td><td>確認モーダル</td><td>※欠品点数の登録と入庫処理が完了します。</td><td>（英訳なし）</td><td>同一店舗への入庫を確定するときの確認表示</td><td>OKでモーダルを閉じて店舗内入庫を確定し、キャンセルでモーダルを閉じる</td></tr><tr><td>M04-09-MSG-070</td><td>確認モーダル</td><td>この操作はあとから取り消すことができません。在庫移動を承認申請してよろしいですか？</td><td>（英訳なし）</td><td>他店舗への在庫移動を承認申請するときの確認表示</td><td>OKでモーダルを閉じて承認申請を実行し、キャンセルでモーダルを閉じる</td></tr><tr><td>M04-09-MSG-071</td><td>確認モーダル</td><td>※欠品については、承認申請するボタンをクリックすると欠品登録されます。</td><td>（英訳なし）</td><td>他店舗への在庫移動を承認申請するときの確認表示</td><td>OKでモーダルを閉じて承認申請を実行し、キャンセルでモーダルを閉じる</td></tr><tr><td>M04-09-MSG-072</td><td>確認モーダル</td><td>この操作はあとから取り消すことができません。在庫移動を却下してよろしいですか？</td><td>（英訳なし）</td><td>在庫移動の却下を実行するときの確認表示</td><td>OKでモーダルを閉じて入庫承認申請画面に遷移、キャンセルでモーダルを閉じる</td></tr><tr><td>M04-09-MSG-073</td><td>確認モーダル</td><td>この操作はあとから取り消すことができません。在庫移動を承認してよろしいですか？</td><td>（英訳なし）</td><td>在庫移動の承認を実行するときの確認表示</td><td>OKでモーダルを閉じて入庫承認申請画面に遷移、キャンセルでモーダルを閉じる</td></tr><tr><td>M04-09-MSG-074</td><td>確認モーダル</td><td>この操作はあとから取り消すことができません。入庫処理について承認申請してよろしいですか？</td><td>（英訳なし）</td><td>入庫処理の承認申請を送信するときの確認表示</td><td>OKでモーダルを閉じて入庫承認画面に遷移、キャンセルでモーダルを閉じる</td></tr><tr><td>M04-09-MSG-075</td><td>確認モーダル</td><td>※差分があるものについて、この申請で差分に関わる処理は実行されません。</td><td>（英訳なし）</td><td>入庫処理の承認申請を送信するときの確認表示</td><td>OKでモーダルを閉じて入庫承認画面に遷移、キャンセルでモーダルを閉じる</td></tr><tr><td>M04-09-MSG-076</td><td>確認モーダル</td><td>この操作を行うと再度入庫処理を行うことになりますが、よろしいですか？</td><td>（英訳なし）</td><td>入庫処理を再確認するときの確認表示</td><td>OKでモーダルを閉じて再入庫処理を実行し、キャンセルでモーダルを閉じる</td></tr><tr><td>M04-09-MSG-077</td><td>確認モーダル</td><td>この操作はあとから取り消すことができません。在庫移動を承認してよろしいですか？</td><td>（英訳なし）</td><td>在庫移動の承認を実行するときの確認表示</td><td>OKでモーダルを閉じて在庫移動画面に遷移、キャンセルでモーダルを閉じる</td></tr><tr><td>M04-09-MSG-078</td><td>確認モーダル</td><td>※差分があるものについては出庫元に通知が行きます</td><td>（英訳なし）</td><td>在庫移動の承認を実行するときの確認表示</td><td>OKでモーダルを閉じて在庫移動画面に遷移、キャンセルでモーダルを閉じる</td></tr><tr><td>M04-09-MSG-079</td><td>確認モーダル</td><td>この操作はあとから取り消すことができません。在庫振替を却下してよろしいですか？</td><td>（英訳なし）</td><td>在庫振替の却下を実行するときの確認表示</td><td>OKでモーダルを閉じて在庫振替画面に遷移、キャンセルでモーダルを閉じる</td></tr><tr><td>M04-09-MSG-080</td><td>確認モーダル</td><td>この操作はあとから取り消すことができません。在庫振替を承認してよろしいですか？</td><td>（英訳なし）</td><td>在庫振替の承認を実行するときの確認表示</td><td>OKでモーダルを閉じて在庫振替画面に遷移、キャンセルでモーダルを閉じる</td></tr><tr><td>M04-09-MSG-081</td><td>確認モーダル</td><td>商品を削除（振替対象外）にします。よろしいですか。</td><td>（英訳なし）</td><td>振替対象の商品を削除するときの確認表示</td><td>OKでモーダルを閉じて対象明細を削除し、キャンセルでモーダルを閉じる</td></tr><tr><td>M04-09-MSG-082</td><td>入力項目付近（インライン）</td><td>振替先の商品コードを入力してください。</td><td>（英訳なし）</td><td>振替先の商品コードを入力せずに送信したとき</td><td>新規登録画面に留まる</td></tr><tr><td>M04-09-MSG-083</td><td>画面上部フラッシュ</td><td>却下する場合は却下理由を入力してください。</td><td>（英訳なし）</td><td>却下理由を入力せずに却下しようとしたとき</td><td>承認画面に遷移する</td></tr><tr><td>M04-09-MSG-084</td><td>画面中央(ダイアログ)</td><td>選択されていません</td><td>（英訳なし）</td><td>規格を選ばずに商品を確定しようとしたとき</td><td>送信せず現在の画面に留まる</td></tr><tr><td>M04-09-MSG-085</td><td>画面中央(ダイアログ)</td><td>ポップアップがブロックされているため、ピック表を開けませんでした。ブラウザの設定を確認してください。</td><td>（英訳なし）</td><td>ピック表を開こうとしたが、ブラウザにポップアップをブロックされたとき</td><td>現在の画面に留まる</td></tr><tr><td>M04-09-MSG-086</td><td>画面中央(ダイアログ)</td><td>ピック表用データの取得に失敗しました。</td><td>（英訳なし）</td><td>ピック表用データを取得できなかったとき</td><td>元画面に留まる</td></tr><tr><td>M04-09-MSG-087</td><td>画面中央(ダイアログ)</td><td>ピック表用データの取得に失敗しました。</td><td>（英訳なし）</td><td>ピック表用データの取得中に通信エラーが起きたとき</td><td>元画面に留まる</td></tr><tr><td>M04-09-MSG-088</td><td>画面中央(ダイアログ)</td><td>ポップアップがブロックされているため、戻しリストPDFを開けませんでした。ブラウザの設定を確認してください。</td><td>（英訳なし）</td><td>戻しリストPDFを開こうとしたが、ブラウザにポップアップをブロックされたとき</td><td>現在の画面に留まる</td></tr><tr><td>M04-09-MSG-089</td><td>画面中央(ダイアログ)</td><td>戻しリストPDF用データの取得に失敗しました。</td><td>（英訳なし）</td><td>戻しリストPDF用データを取得できなかったとき</td><td>元画面に留まる</td></tr><tr><td>M04-09-MSG-090</td><td>画面中央(ダイアログ)</td><td>戻しリストPDF用データの取得に失敗しました。</td><td>（英訳なし）</td><td>戻しリストPDF用データの取得中に通信エラーが起きたとき</td><td>元画面に留まる</td></tr><tr><td>M04-09-MSG-091</td><td>画面中央(モーダル)</td><td>セッションがタイムアウトしました。もう一度やり直してください。</td><td>（英訳なし）</td><td>差分CSVの取込時に、画面の有効期限切れなどで送信を確認できなかったとき</td><td>モーダルは開いたまま</td></tr><tr><td>M04-09-MSG-092</td><td>画面中央(モーダル)</td><td>保存に失敗しました</td><td>（英訳なし）</td><td>差分CSVの取込中に通信エラーが起きたとき</td><td>モーダルは開いたまま</td></tr><tr><td>M04-09-MSG-093</td><td>画面中央(モーダル)</td><td>セッションがタイムアウトしました。もう一度やり直してください。</td><td>（英訳なし）</td><td>欠品CSVの取込時に、画面の有効期限切れなどで送信を確認できなかったとき</td><td>モーダルは開いたまま</td></tr><tr><td>M04-09-MSG-094</td><td>画面中央(モーダル)</td><td>保存に失敗しました</td><td>（英訳なし）</td><td>欠品CSVの取込中に通信エラーが起きたとき</td><td>モーダルは開いたまま</td></tr><tr><td>M04-09-MSG-095</td><td>商品検索モーダル内の検索結果領域</td><td>検索に失敗しました。しばらく経ってから再度お試しください。</td><td>（英訳なし）</td><td>入庫承認申請画面の差分商品検索モーダルで、商品検索の通信に失敗したとき。</td><td>検索結果領域をエラーメッセージに置き換え、商品検索モーダルを開いたままにする。</td></tr><tr><td>M04-09-MSG-096</td><td>本文</td><td>在庫が選択されていません。</td><td>（英訳なし）</td><td>在庫移動の完了画面を表示したとき、その在庫移動に紐づく明細が1件もない場合</td><td>明細なしの在庫移動完了画面を表示したままにする</td></tr></tbody></table></div>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<ul><li>本機能は新規実装であり、対応する現行（pf-eccube3）の同等機能は存在しない。仕様は基本設計仕様書（在庫管理機能）を正とする。</li><li>移行先のec-cube-enterpriseでの永続化先は在庫移動振替本体（<code>dtb_stock_move_transfer</code>）、明細（<code>dtb_stock_move_transfer_detail</code>）、ステータス履歴（<code>dtb_stock_move_transfer_status_history</code>）であり、いずれもec-cube-enterprise実装に実在する。在庫は規格在庫（<code>dtb_product_stock</code>）、在庫変動履歴は <code>dtb_stock_history</code>、承認一覧は <code>dtb_stock_approval_list</code> を用いる。</li><li>ステータス遷移（新規登録・出庫承認待ち・出庫承認済み・移動中・入庫承認待ち・入庫完了・却下・振替承認待ち）は <code>mtb_stock_move_transfer_status</code>（ID 1〜8）で管理し、在庫加減算・スマレジ連携・差し戻し/欠品/差分の業務条件は基本設計仕様書を正とする。</li><li>現行に同等のテーブルは無いため、テーブル分割（移動振替本体・明細・ステータス履歴）の構成およびステータス履歴の自動記録（Doctrineリスナー方式）は移行先のec-cube-enterprise実装を正とする。</li></ul>
-<details>
-<summary>Excel設計書からの抽出（原典・テスト網羅の根拠）</summary>
-<pre><code class="language-text">在庫移動・振替登録 編集 (移動)
-ドキュメント名
-在庫管理 基本設計
-セクション
-—
-プロジェクト名
-サイトリニューアル
-作成者
-堀部
-作成日
-2025-08-25
-更新者
-石川
-更新日
-2026-02-06
-機能No
-M04-09
-機能名
-在庫移動・振替登録 編集（移動１（新規））
-概要
-—
-処理概要 初期登録画面
-処理概要 ピック・出庫処理申請画面
-処理概要 出庫承認画面
-処理概要 入庫承認申請画面
-処理概要 入庫承認画面
-処理概要 完了画面
-図形・テキストボックス内テキスト（214件）
-レイアウト図 初期登録画面
-1-2
-1-4
-1-5
-2-1
-1-7
-1-6
-2-2
-2-3
-2-4
-1-1
-3-1
-1-3
-3-2
-3-3
-3-4
-3-5
-3-6
-1-8
-1-9
-1-11
-1-10
-3-7
-4-1
-4-2
-4-3
-5-1
-6-1
-6-2
-6-3
-7-2
-7-1
-画像レイヤー（2枚）: 在庫移動・振替登録 編集 (移動) / B7 / image 9 + 在庫移動・振替登録 編集 (移動) / B7 / image 10
-機能仕様処理概要 初期登録画面
-初期登録画面概要
-・在庫検索一覧画面から任意の商品在庫を選択し、在庫検索一覧画面の「在庫移動登録」ボタンを押下すると、選択商品在庫を移動対象とし、この画面（在庫移動登録の初期画面）へ遷移する
-・選択した商品に対して、移動点数を入力して登録を行う
-・登録後、ステータスは新規作成となり、移動対象の商品の在庫が移動点数分減る
-移動登録ステータス遷移
-アクション
-ステータス
-新規
-登録
-ピック
-欠品
-登録
-新規
-登録
-入庫
-完了
-アクション
-ステータス
-入庫先
-NG
-新規
-登録
-ピック
-欠品
-登録
-出庫
-承認
-発送
-手続き
-着荷
-入庫
-承認
-差分
-通知
-新規
-登録
-出庫
-承認待ち
-却下
-出庫
-承認済み
-移動中
-入庫
-完了
-入庫
-承認待ち
-NG
-差分
-登録
-新規登録画面
-アクション
-ステータス
-入庫先
-NG
-新規
-登録
-ピック
-欠品
-在庫移動・振替登録 編集(振替)
-ドキュメント名
-在庫管理 基本設計
-セクション
-—
-プロジェクト名
-サイトリニューアル
-作成者
-堀部
-作成日
-2025-08-25
-更新者
-石川
-更新日
-2025-11-08
-機能No
-M04-09
-機能名
-在庫移動・振替登録 編集（振替）
-概要
-在庫の振替を行う
-・ 状態変更による移動をこの機能について対応とする
-処理概要 初期登録画面
-処理概要 在庫振替承認待ち画面
-処理概要 入庫完了・却下画面
-処理概要 商品検索モーダル
-図形・テキストボックス内テキスト（66件）
-レイアウト図 初期登録画面
-4-1
-5-1
-5-2
-1-1
-1-2
-1-4
-1-5
-1-6
-2-1
-2-2
-2-3
-2-4
-3-1
-3-2
-3-7
-3-4
-3-11
-3-12
-3-3
-1-3
-3-5
-3-6
-3-9
-3-10
-3-8
-3-13
-3-14
-1-7
-1-8
-1-9
-画像レイヤー（2枚）: 在庫移動・振替登録 編集(振替) / A8 / image 9 + 在庫移動・振替登録 編集(振替) / A8 / image 10
-要件説明（要件定義の内容）
-概要
-在庫の店舗間移動することが可能
-機能
-データの権限について
-・移動元の在庫データに関してはユーザーが編集権限を保持している店舗に関連付けられた在庫データを編集可能とする
-・移動先に関してはユーザーの編集権限がなくても指定することを可能とする
-在庫移動対象について
-・店舗間での在庫移動が可能とする
-※本店EC(2F)から本店バックヤード（3F,B2F）、成田倉庫への移動も含む
-・他店舗への在庫移動の場合、在庫区分区分は同じ区分しか選択できないものとする。ECCUBEの在庫からスマレジ在庫への移動、もしくはその反対のパターンを禁止
-・同一店舗内も移動可能とする。自店舗内移動の場合のみ別区分を選択可能とする。また同一店舗内の移動の場合、承認は不要
-例）同一店舗内にてショーケース品（スマレジ在庫）からEC在庫（EC-CUBE）への移動
-・状態変更による移動をこの機能について対応とする
-※1対１の商品移動
-操作要件
-・在庫検索/一覧画面で選択した商品を移動させることが可能とする
-・商品登録されていない物品や什器などは在庫移動機能の対象外とする
-登録後のデータ変更に関して
-・送付ミス等による在庫状況に問題がある場合、差し戻しを行う為、在庫移動内容の修正・追加を実施できるようにする
-・在庫移動時に入庫側では却下は選択できず、「差し戻し」を選択し、物理在庫と論理在庫が一致するような修正登録を行う
-差し戻し登録について
-・入庫先で発送内容に不備を発見し、問題がある状態になっている論理在庫を物理在庫の状況に合わせるよう管理画面で差分情報を登録する
-数量の不備 --- 差分点数を登録
-発送カードの種類違いのミス --- 差分商品追加からダイアログを開き、ミスのあった商品を在庫移動に追加する
-・差し戻しのステータスが届いた出庫元は内容を確認し、承認を行う。出庫元が承認を行なった檀家で、出庫元の在庫を差し戻し内容に沿って更新を行う
-差し戻し承認前に出庫元による欠品登録は可能とする
-想定以上の点数を送付してしまっている状態で出庫元側で受注等で在庫変動が発生した状態で欠品が発覚するケースが考えられるため
-欠品登録について
-・現行システムの受注登録と同じように、欠品登録を行えるようにする
-欠品登録は移動元店舗が行う
-欠品理由を登録できるようにする
-・廃棄、棚卸ロスは切り出して計上する
-廃棄理由を登録できるようにする
-※廃棄理由と欠品理由は分けて登録し、分析機能で集計できるようにする
-在庫変更理由について
-・在庫変動理由を在庫移動とし入力項目は不要とする
-・在庫変動履歴は、下記の内容を表示する
-1． 受注の時のように、在庫変動による在庫数、増減という表現とする
-2． 店舗移動の移動元と移動先を表示する※○○店から○○店に移動のようなメッセージを表示する
-3． 在庫移動登録IDを表示する
-・詳細は「在庫変動時の履歴作成について」シートを参照
-在庫変動について
-・在庫移動を新規登録すると移動元店舗の商品在庫が減算とする
-・入庫後に入庫完了にされると移動先の店舗に商品在庫が加算とする
-・差し戻し後に移動元店舗側で承認を行うと、差分の修正変動(加算・減算どちらも)が発生する
-・在庫移動が新規登録されたのち、承認されず却下された場合は出庫元の在庫移動を戻す処理を行う(在庫を加算する)
-ステータス管理について
-・在庫移動状況をステータスで管理する
-・「在庫移動実績インポート」にてインポートが行われた際もステータスが変更とする
-※通販チームによって本店から支店に在庫移動する場合などを想定
-在庫移動指示リストについて
-・"在庫移動指示"機能にてリスト作成時対象データとする
-入庫時振り分けについて
-本店に発送する際は、いったんすべて3Fにすればよい。その後統合仕入れにて振り分けを行う。
-そのため、在庫移動時に振り分けは不要
-支店は即入庫されても懸念がなく、合理的であると考えている（本店だと入庫されたことの通知が行くため、配慮が必要）
-移動時スマレジ連携について
-・在庫変動時、連携対象の条件を満たしている場合に限り、スマレジへ商品情報を連携する
-・スマレジに情報がない場合にEC-CUBEから商品マスターの連携を行うとする
-承認プロセスについて</code></pre>
-</details>
+<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M04-09-MSG-001</td><td>管理画面上部</td><td>保存に失敗しました</td><td>必須項目の未入力など、入力内容に不備があるまま保存したとき</td><td>移動初期登録画面に留まる</td></tr><tr><td>M04-09-MSG-002</td><td>管理画面上部</td><td>この店舗の在庫を編集する権限がありません。</td><td>出庫元店舗の在庫を編集する権限がないとき</td><td>在庫一覧画面に遷移する</td></tr><tr><td>M04-09-MSG-003</td><td>管理画面上部</td><td>保存に失敗しました</td><td>在庫移動の登録中にエラーが起きたとき</td><td>移動初期登録画面に留まる</td></tr><tr><td>M04-09-MSG-004</td><td>管理画面上部</td><td>保存しました</td><td>在庫移動を登録したとき</td><td>移動ピック・出庫承認申請画面に遷移する</td></tr><tr><td>M04-09-MSG-005</td><td>管理画面上部</td><td>保存に失敗しました</td><td>必須項目の未入力など、入力内容に不備があるまま保存したとき</td><td>移動ピック・出庫承認申請画面に留まる</td></tr><tr><td>M04-09-MSG-006</td><td>管理画面上部</td><td>この店舗の在庫を編集する権限がありません。</td><td>出庫元店舗を確認できない、またはその在庫を編集する権限がないとき</td><td>在庫一覧画面に遷移する</td></tr><tr><td>M04-09-MSG-007</td><td>管理画面上部</td><td>保存に失敗しました</td><td>出庫の承認申請を更新中にエラーが起きたとき</td><td>移動ピック・出庫承認申請画面に留まる</td></tr><tr><td>M04-09-MSG-008</td><td>管理画面上部</td><td>保存しました</td><td>出庫の承認申請を更新したとき</td><td>同一店舗は在庫移動完了画面、その他は移動出庫承認画面に遷移する</td></tr><tr><td>M04-09-MSG-009</td><td>管理画面上部</td><td>ピック表を出力できるステータスではありません。</td><td>ピック表を出力できない在庫移動の状態で出力しようとしたとき</td><td>失敗JSON（success:false・redirectUrl）を返し、承認申請画面に遷移する</td></tr><tr><td>M04-09-MSG-010</td><td>管理画面上部</td><td>ピック表を出力する権限がありません。</td><td>出庫元店舗を確認できない状態でピック表を出力しようとしたとき</td><td>失敗JSON（success:false・redirectUrl）を返し、承認申請画面に遷移する</td></tr><tr><td>M04-09-MSG-011</td><td>管理画面上部</td><td>ピック表を出力する権限がありません。</td><td>出庫元店舗のピック表を出力する権限がないとき</td><td>失敗JSON（success:false・redirectUrl）を返し、承認申請画面に遷移する</td></tr><tr><td>M04-09-MSG-012</td><td>管理画面上部</td><td>出庫承認待ちの状態でないため、操作できません。</td><td>出庫承認待ちではない在庫移動を操作しようとしたとき</td><td>移動ピック・出庫承認申請画面に遷移する</td></tr><tr><td>M04-09-MSG-013</td><td>管理画面上部</td><td>保存に失敗しました</td><td>承認操作として使用できない操作を送信したとき</td><td>移動出庫承認画面に遷移する</td></tr><tr><td>M04-09-MSG-014</td><td>管理画面上部</td><td>保存に失敗しました ／ 却下する場合は却下理由を入力してください。</td><td>在庫移動の却下時に入力内容が不正なとき</td><td>移動出庫承認画面に遷移する</td></tr><tr><td>M04-09-MSG-015</td><td>管理画面上部</td><td>承認権限がありません。</td><td>承認する権限がないとき</td><td>移動出庫承認画面に遷移する</td></tr><tr><td>M04-09-MSG-016</td><td>管理画面上部</td><td>保存に失敗しました</td><td>出庫承認を却下する処理中にエラーが起きたとき</td><td>移動出庫承認画面に遷移する</td></tr><tr><td>M04-09-MSG-017</td><td>管理画面上部</td><td>却下しました。</td><td>出庫承認を却下したとき</td><td>移動入庫承認申請画面に遷移する</td></tr><tr><td>M04-09-MSG-018</td><td>管理画面上部</td><td>保存に失敗しました</td><td>出庫承認の処理中にエラーが起きたとき</td><td>移動出庫承認画面に遷移する</td></tr><tr><td>M04-09-MSG-019</td><td>管理画面上部</td><td>承認しました。</td><td>出庫承認を行ったとき</td><td>移動入庫承認申請画面に遷移する</td></tr><tr><td>M04-09-MSG-020</td><td>管理画面上部</td><td>保存に失敗しました</td><td>移動先店舗を確認できないとき</td><td>移動ピック・出庫承認申請画面に遷移する</td></tr><tr><td>M04-09-MSG-021</td><td>管理画面上部</td><td>保存に失敗しました</td><td>画面の有効期限切れなどで、送信を確認できなかったとき</td><td>移動入庫承認申請画面に遷移する</td></tr><tr><td>M04-09-MSG-022</td><td>管理画面上部</td><td>差分CSV登録可能なステータスではありません。 ／ 保存に失敗しました ／ 入庫先の商品在庫が見つかりません。 ／ この商品は既に一覧に登録されています。 ／ 出庫元の商品在庫が見つかりません。</td><td>入庫承認申請画面で差分商品を追加し、追加条件を満たさないとき</td><td>移動入庫承認申請画面に遷移する</td></tr><tr><td>M04-09-MSG-023</td><td>管理画面上部</td><td>保存に失敗しました</td><td>移動先店舗を確認できないとき</td><td>移動ピック・出庫承認申請画面に遷移する</td></tr><tr><td>M04-09-MSG-024</td><td>管理画面上部</td><td>保存に失敗しました</td><td>必須項目の未入力など、入力内容に不備があるまま保存したとき</td><td>移動入庫承認申請画面に留まる</td></tr><tr><td>M04-09-MSG-025</td><td>管理画面上部</td><td>この店舗の在庫を編集する権限がありません。</td><td>移動先店舗の在庫を編集する権限がないとき</td><td>在庫一覧画面に遷移する</td></tr><tr><td>M04-09-MSG-026</td><td>管理画面上部</td><td>保存に失敗しました</td><td>入庫の承認申請を更新中にエラーが起きたとき</td><td>移動入庫承認申請画面に留まる</td></tr><tr><td>M04-09-MSG-027</td><td>管理画面上部</td><td>保存しました</td><td>入庫の承認申請を更新したとき</td><td>移動入庫承認画面に遷移する</td></tr><tr><td>M04-09-MSG-028</td><td>管理画面上部</td><td>保存に失敗しました</td><td>入庫承認操作として使用できない操作を送信したとき</td><td>移動入庫承認画面に遷移する</td></tr><tr><td>M04-09-MSG-029</td><td>管理画面上部</td><td>保存に失敗しました</td><td>入力内容に不備があるまま送信したとき</td><td>移動入庫承認画面に遷移する</td></tr><tr><td>M04-09-MSG-030</td><td>管理画面上部</td><td>承認権限がありません。</td><td>承認する権限がないとき</td><td>移動入庫承認画面に遷移する</td></tr><tr><td>M04-09-MSG-031</td><td>管理画面上部</td><td>保存に失敗しました</td><td>入庫を再確認する処理中にエラーが起きたとき</td><td>移動入庫承認画面に遷移する</td></tr><tr><td>M04-09-MSG-032</td><td>管理画面上部</td><td>保存に失敗しました</td><td>入庫承認の処理中にエラーが起きたとき</td><td>移動入庫承認画面に遷移する</td></tr><tr><td>M04-09-MSG-033</td><td>管理画面上部</td><td>承認しました。</td><td>入庫承認を行ったとき</td><td>在庫移動完了画面に遷移する</td></tr><tr><td>M04-09-MSG-034</td><td>管理画面上部</td><td>戻しリストPDFを出力できるステータスではありません。</td><td>戻しリストPDFを出力できない状態で出力しようとしたとき</td><td>エラー情報をJSONで返す</td></tr><tr><td>M04-09-MSG-035</td><td>管理画面上部</td><td>対象のデータが見つかりません。 ／ ID: %d は入庫先店舗が設定されていません。 ／ ID: %d は権限のない店舗のデータです。 ／ ID: %d は対象外のステータスです。 ／ ID: %d は存在しません。 ／ 複数店舗の在庫移動・振替情報を同時に処理することはできません。</td><td>戻しリストPDFを出力し、対象データ・入庫先店舗・操作権限のいずれかに問題があるとき</td><td>エラー情報をJSONで返す</td></tr><tr><td>M04-09-MSG-036</td><td>管理画面上部</td><td>保存に失敗しました</td><td>必須項目の未入力など、入力内容に不備があるまま保存したとき</td><td>在庫振替初期登録画面に留まる</td></tr><tr><td>M04-09-MSG-037</td><td>管理画面上部</td><td>承認待ちの在庫振替ではありません。または既に処理済みです。</td><td>承認待ちではない、または処理済みの在庫振替を操作しようとしたとき</td><td>在庫履歴一覧画面に遷移する</td></tr><tr><td>M04-09-MSG-038</td><td>管理画面上部</td><td>保存に失敗しました</td><td>在庫振替の登録中にエラーが起きたとき</td><td>在庫振替初期登録画面に留まる</td></tr><tr><td>M04-09-MSG-039</td><td>管理画面上部</td><td>この店舗の在庫を編集する権限がありません。</td><td>基準店舗の在庫を編集する権限がないとき</td><td>在庫一覧画面に遷移する</td></tr><tr><td>M04-09-MSG-040</td><td>管理画面上部</td><td>この店舗の在庫を編集する権限がありません。</td><td>振替元店舗の在庫を編集する権限がないとき</td><td>在庫一覧画面に遷移する</td></tr><tr><td>M04-09-MSG-041</td><td>管理画面上部</td><td>保存に失敗しました</td><td>在庫振替の登録中にエラーが起きたとき</td><td>在庫振替初期登録画面に留まる</td></tr><tr><td>M04-09-MSG-042</td><td>管理画面上部</td><td>保存しました</td><td>在庫振替を登録したとき</td><td>在庫振替承認画面に遷移する</td></tr><tr><td>M04-09-MSG-043</td><td>管理画面上部</td><td>保存に失敗しました</td><td>承認操作として使用できない操作を送信したとき</td><td>在庫振替承認画面に遷移する</td></tr><tr><td>M04-09-MSG-044</td><td>管理画面上部</td><td>保存に失敗しました ／ 却下する場合は却下理由を入力してください。</td><td>在庫振替の却下時に入力内容が不正なとき</td><td>在庫振替承認画面に留まる</td></tr><tr><td>M04-09-MSG-045</td><td>管理画面上部</td><td>承認権限がありません。</td><td>承認する権限がないとき</td><td>在庫振替承認画面に遷移する</td></tr><tr><td>M04-09-MSG-046</td><td>管理画面上部</td><td>保存に失敗しました</td><td>在庫振替を却下する処理中にエラーが起きたとき</td><td>在庫振替承認画面に遷移する</td></tr><tr><td>M04-09-MSG-047</td><td>管理画面上部</td><td>却下しました。</td><td>在庫振替を却下したとき</td><td>在庫振替完了画面に遷移する</td></tr><tr><td>M04-09-MSG-048</td><td>管理画面上部</td><td>保存に失敗しました</td><td>在庫振替を承認する処理中にエラーが起きたとき</td><td>在庫振替承認画面に遷移する</td></tr><tr><td>M04-09-MSG-049</td><td>管理画面上部</td><td>承認しました。</td><td>在庫振替を承認したとき</td><td>在庫振替完了画面に遷移する</td></tr><tr><td>M04-09-MSG-050</td><td>欠品CSV取込モーダル内</td><td>セッションがタイムアウトしました。もう一度やり直してください。</td><td>画面の有効期限切れなどで、送信を確認できなかったとき</td><td>モーダルは開いたまま</td></tr><tr><td>M04-09-MSG-051</td><td>欠品CSV取込モーダル内</td><td>CSVファイルを選択してください。</td><td>CSVファイルを選択せずに取り込もうとしたとき</td><td>モーダルは開いたまま</td></tr><tr><td>M04-09-MSG-052</td><td>欠品CSV取込モーダル内</td><td>欠品CSV登録可能なステータスではありません。</td><td>欠品CSVを登録できない在庫移動の状態で取り込もうとしたとき</td><td>モーダルは開いたまま</td></tr><tr><td>M04-09-MSG-053</td><td>欠品CSV取込モーダル内</td><td>保存に失敗しました</td><td>CSVの取込中にエラーが起きたとき</td><td>モーダルは開いたまま</td></tr><tr><td>M04-09-MSG-054</td><td>差分CSV取込モーダル内</td><td>セッションがタイムアウトしました。もう一度やり直してください。</td><td>画面の有効期限切れなどで、送信を確認できなかったとき</td><td>モーダルは開いたまま</td></tr><tr><td>M04-09-MSG-055</td><td>差分CSV取込モーダル内</td><td>CSVファイルを選択してください。</td><td>CSVファイルを選択せずに取り込もうとしたとき</td><td>モーダルは開いたまま</td></tr><tr><td>M04-09-MSG-056</td><td>差分CSV取込モーダル内</td><td>差分CSV登録可能なステータスではありません。</td><td>差分CSVを登録できない在庫移動の状態で取り込もうとしたとき</td><td>モーダルは開いたまま</td></tr><tr><td>M04-09-MSG-057</td><td>差分CSV取込モーダル内</td><td>保存に失敗しました</td><td>CSVの取込中にエラーが起きたとき</td><td>モーダルは開いたまま</td></tr><tr><td>M04-09-MSG-058</td><td>画面上部フラッシュ</td><td>保存に失敗しました</td><td>在庫振替ではないデータを操作しようとしたとき</td><td>在庫履歴画面に遷移する</td></tr><tr><td>M04-09-MSG-059</td><td>JSアラート</td><td>ポップアップがブロックされているため、ピック表を開けませんでした。ブラウザの設定を確認してください。</td><td>ピック表を開こうとしたが、ブラウザにポップアップをブロックされたとき</td><td>ピック表を出力せず、現在の画面に留まる</td></tr><tr><td>M04-09-MSG-060</td><td>JSアラート</td><td>ピック表用データの取得に失敗しました。</td><td>ピック表用データの取得中にエラーが起きたとき</td><td>ポップアップを閉じ、現在の画面に留まる</td></tr><tr><td>M04-09-MSG-061</td><td>JSアラート</td><td>ポップアップがブロックされているため、戻しリストPDFを開けませんでした。ブラウザの設定を確認してください。</td><td>戻しリストPDFを開こうとしたが、ブラウザにポップアップをブロックされたとき</td><td>戻しリストPDFを出力せず、現在の画面に留まる</td></tr><tr><td>M04-09-MSG-062</td><td>別ウィンドウ</td><td>読み込み中…</td><td>ポップアップを開いた後、データの読み込みが完了するまで</td><td>PDFデータ取得後、ポップアップに戻しリストPDFを表示する</td></tr><tr><td>M04-09-MSG-063</td><td>JSアラート</td><td>戻しリストPDF用データの取得に失敗しました。</td><td>戻しリストPDF用データの取得中にエラーが起きたとき</td><td>ポップアップを閉じ、現在の画面に留まる</td></tr><tr><td>M04-09-MSG-064</td><td>JSアラート</td><td>商品の検索に失敗しました。</td><td>商品を検索中にエラーが起きたとき</td><td>商品検索結果を更新せず、現在の画面に留まる</td></tr><tr><td>M04-09-MSG-065</td><td>JSアラート</td><td>選択されていません</td><td>規格のある商品で、規格を選ばずに追加しようとしたとき</td><td>商品を追加せず、入庫承認申請画面に留まる</td></tr><tr><td>M04-09-MSG-066</td><td>確認モーダル</td><td>この操作はあとから取り消すことができません。在庫移動を新規登録してよろしいですか？</td><td>在庫移動の新規登録を送信するときの確認表示</td><td>OKでモーダルを閉じて在庫移動を登録し、キャンセルでモーダルを閉じる</td></tr><tr><td>M04-09-MSG-067</td><td>確認モーダル</td><td>※新規登録時に、移動対象の商品の在庫が移動点数分減る処理が行われます。</td><td>在庫移動の新規登録を送信するときの確認表示</td><td>OKでモーダルを閉じて在庫移動を登録し、キャンセルでモーダルを閉じる</td></tr><tr><td>M04-09-MSG-068</td><td>確認モーダル</td><td>この操作はあとから取り消すことができません。店舗内入庫を確定してよろしいですか？</td><td>同一店舗への入庫を確定するときの確認表示</td><td>OKでモーダルを閉じて店舗内入庫を確定し、キャンセルでモーダルを閉じる</td></tr><tr><td>M04-09-MSG-069</td><td>確認モーダル</td><td>※欠品点数の登録と入庫処理が完了します。</td><td>同一店舗への入庫を確定するときの確認表示</td><td>OKでモーダルを閉じて店舗内入庫を確定し、キャンセルでモーダルを閉じる</td></tr><tr><td>M04-09-MSG-070</td><td>確認モーダル</td><td>この操作はあとから取り消すことができません。在庫移動を承認申請してよろしいですか？</td><td>他店舗への在庫移動を承認申請するときの確認表示</td><td>OKでモーダルを閉じて承認申請を実行し、キャンセルでモーダルを閉じる</td></tr><tr><td>M04-09-MSG-071</td><td>確認モーダル</td><td>※欠品については、承認申請するボタンをクリックすると欠品登録されます。</td><td>他店舗への在庫移動を承認申請するときの確認表示</td><td>OKでモーダルを閉じて承認申請を実行し、キャンセルでモーダルを閉じる</td></tr><tr><td>M04-09-MSG-072</td><td>確認モーダル</td><td>この操作はあとから取り消すことができません。在庫移動を却下してよろしいですか？</td><td>在庫移動の却下を実行するときの確認表示</td><td>OKでモーダルを閉じて入庫承認申請画面に遷移、キャンセルでモーダルを閉じる</td></tr><tr><td>M04-09-MSG-073</td><td>確認モーダル</td><td>この操作はあとから取り消すことができません。在庫移動を承認してよろしいですか？</td><td>在庫移動の承認を実行するときの確認表示</td><td>OKでモーダルを閉じて入庫承認申請画面に遷移、キャンセルでモーダルを閉じる</td></tr><tr><td>M04-09-MSG-074</td><td>確認モーダル</td><td>この操作はあとから取り消すことができません。入庫処理について承認申請してよろしいですか？</td><td>入庫処理の承認申請を送信するときの確認表示</td><td>OKでモーダルを閉じて入庫承認画面に遷移、キャンセルでモーダルを閉じる</td></tr><tr><td>M04-09-MSG-075</td><td>確認モーダル</td><td>※差分があるものについて、この申請で差分に関わる処理は実行されません。</td><td>入庫処理の承認申請を送信するときの確認表示</td><td>OKでモーダルを閉じて入庫承認画面に遷移、キャンセルでモーダルを閉じる</td></tr><tr><td>M04-09-MSG-076</td><td>確認モーダル</td><td>この操作を行うと再度入庫処理を行うことになりますが、よろしいですか？</td><td>入庫処理を再確認するときの確認表示</td><td>OKでモーダルを閉じて再入庫処理を実行し、キャンセルでモーダルを閉じる</td></tr><tr><td>M04-09-MSG-077</td><td>確認モーダル</td><td>この操作はあとから取り消すことができません。在庫移動を承認してよろしいですか？</td><td>在庫移動の承認を実行するときの確認表示</td><td>OKでモーダルを閉じて在庫移動画面に遷移、キャンセルでモーダルを閉じる</td></tr><tr><td>M04-09-MSG-078</td><td>確認モーダル</td><td>※差分があるものについては出庫元に通知が行きます</td><td>在庫移動の承認を実行するときの確認表示</td><td>OKでモーダルを閉じて在庫移動画面に遷移、キャンセルでモーダルを閉じる</td></tr><tr><td>M04-09-MSG-079</td><td>確認モーダル</td><td>この操作はあとから取り消すことができません。在庫振替を却下してよろしいですか？</td><td>在庫振替の却下を実行するときの確認表示</td><td>OKでモーダルを閉じて在庫振替画面に遷移、キャンセルでモーダルを閉じる</td></tr><tr><td>M04-09-MSG-080</td><td>確認モーダル</td><td>この操作はあとから取り消すことができません。在庫振替を承認してよろしいですか？</td><td>在庫振替の承認を実行するときの確認表示</td><td>OKでモーダルを閉じて在庫振替画面に遷移、キャンセルでモーダルを閉じる</td></tr><tr><td>M04-09-MSG-081</td><td>確認モーダル</td><td>商品を削除（振替対象外）にします。よろしいですか。</td><td>振替対象の商品を削除するときの確認表示</td><td>OKでモーダルを閉じて対象明細を削除し、キャンセルでモーダルを閉じる</td></tr><tr><td>M04-09-MSG-082</td><td>入力項目付近（インライン）</td><td>振替先の商品コードを入力してください。</td><td>振替先の商品コードを入力せずに送信したとき</td><td>新規登録画面に留まる</td></tr><tr><td>M04-09-MSG-083</td><td>画面上部フラッシュ</td><td>却下する場合は却下理由を入力してください。</td><td>却下理由を入力せずに却下しようとしたとき</td><td>承認画面に遷移する</td></tr><tr><td>M04-09-MSG-084</td><td>画面中央(ダイアログ)</td><td>選択されていません</td><td>規格を選ばずに商品を確定しようとしたとき</td><td>送信せず現在の画面に留まる</td></tr><tr><td>M04-09-MSG-085</td><td>画面中央(ダイアログ)</td><td>ポップアップがブロックされているため、ピック表を開けませんでした。ブラウザの設定を確認してください。</td><td>ピック表を開こうとしたが、ブラウザにポップアップをブロックされたとき</td><td>現在の画面に留まる</td></tr><tr><td>M04-09-MSG-086</td><td>画面中央(ダイアログ)</td><td>ピック表用データの取得に失敗しました。</td><td>ピック表用データを取得できなかったとき</td><td>元画面に留まる</td></tr><tr><td>M04-09-MSG-087</td><td>画面中央(ダイアログ)</td><td>ピック表用データの取得に失敗しました。</td><td>ピック表用データの取得中に通信エラーが起きたとき</td><td>元画面に留まる</td></tr><tr><td>M04-09-MSG-088</td><td>画面中央(ダイアログ)</td><td>ポップアップがブロックされているため、戻しリストPDFを開けませんでした。ブラウザの設定を確認してください。</td><td>戻しリストPDFを開こうとしたが、ブラウザにポップアップをブロックされたとき</td><td>現在の画面に留まる</td></tr><tr><td>M04-09-MSG-089</td><td>画面中央(ダイアログ)</td><td>戻しリストPDF用データの取得に失敗しました。</td><td>戻しリストPDF用データを取得できなかったとき</td><td>元画面に留まる</td></tr><tr><td>M04-09-MSG-090</td><td>画面中央(ダイアログ)</td><td>戻しリストPDF用データの取得に失敗しました。</td><td>戻しリストPDF用データの取得中に通信エラーが起きたとき</td><td>元画面に留まる</td></tr><tr><td>M04-09-MSG-091</td><td>画面中央(モーダル)</td><td>セッションがタイムアウトしました。もう一度やり直してください。</td><td>差分CSVの取込時に、画面の有効期限切れなどで送信を確認できなかったとき</td><td>モーダルは開いたまま</td></tr><tr><td>M04-09-MSG-092</td><td>画面中央(モーダル)</td><td>保存に失敗しました</td><td>差分CSVの取込中に通信エラーが起きたとき</td><td>モーダルは開いたまま</td></tr><tr><td>M04-09-MSG-093</td><td>画面中央(モーダル)</td><td>セッションがタイムアウトしました。もう一度やり直してください。</td><td>欠品CSVの取込時に、画面の有効期限切れなどで送信を確認できなかったとき</td><td>モーダルは開いたまま</td></tr><tr><td>M04-09-MSG-094</td><td>画面中央(モーダル)</td><td>保存に失敗しました</td><td>欠品CSVの取込中に通信エラーが起きたとき</td><td>モーダルは開いたまま</td></tr><tr><td>M04-09-MSG-095</td><td>商品検索モーダル内の検索結果領域</td><td>検索に失敗しました。しばらく経ってから再度お試しください。</td><td>入庫承認申請画面の差分商品検索モーダルで、商品検索の通信に失敗したとき。</td><td>検索結果領域をエラーメッセージに置き換え、商品検索モーダルを開いたままにする。</td></tr><tr><td>M04-09-MSG-096</td><td>本文</td><td>在庫が選択されていません。</td><td>在庫移動の完了画面を表示したとき、その在庫移動に紐づく明細が1件もない場合</td><td>明細なしの在庫移動完了画面を表示したままにする</td></tr></tbody></table></div>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

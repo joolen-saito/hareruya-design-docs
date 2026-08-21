@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,29 +272,15 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#本書で扱うこと">本書で扱うこと</a>
-<a class="lv2" href="#本書で扱わないこと">本書で扱わないこと</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv2" href="#用語">用語</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#ポップアップ用商品情報を取得する-GET-popup-product-lang-productId">ポップアップ用商品情報を取得する（GET `/popup/product/{lang}/{productId}`）</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#取得できる条件">取得できる条件</a>
+<a class="lv3" href="#値の取り方">値の取り方</a>
+<a class="lv3" href="#エラー時の扱い">エラー時の扱い</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv3" href="#リクエスト">リクエスト</a>
-<a class="lv3" href="#レスポンス-成功">レスポンス（成功）</a>
-<a class="lv3" href="#レスポンス-失敗">レスポンス（失敗）</a>
-<a class="lv3" href="#サンプルレスポンス">サンプルレスポンス</a>
-<a class="lv3" href="#副作用">副作用</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#権限・認可">権限・認可</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#ログ・監査">ログ・監査</a>
-<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a></nav>
+<a class="lv3" href="#出力-商品規格1件の項目">出力: 商品規格1件の項目</a>
+<a class="lv3" href="#入出力-永続化">入出力: 永続化</a>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -292,90 +288,24 @@ footer {
         <h1>API 商品管理 — ポップアップ用商品情報取得</h1>
       </header>
       
-      <h2 id="概要">概要</h2>
-<p>記事内に表示する商品ポップアップ用に、商品IDと言語を指定して商品情報を取得するAPIである。pf-api（記事・買取連携用のAPIアプリケーション）が提供するJSON APIで、記事サイト等から呼び出される。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-apiの商品ポップアップ取得処理、ルート定義（<code>config/routes.yaml</code>）、商品規格を扱うリポジトリを正とする。</p>
-<p>本機能のカスタマイズ区分は現行踏襲であり、挙動の確認はpf-apiを参照する。DB関連の記述はec-cube-enterpriseを正とする方針だが、当機能が参照する商品サブ規格・カード詳細・カードコンディション等のHareruya独自テーブルはec-cube-enterpriseに該当が見当たらないため、現行（pf-api）の名称を残し「ec-cube-enterprise実装で要確認」とする。</p>
-<p>対象はJSON APIエンドポイントであり、ブラウザ向けの画面を持たない。</p>
-<p>本文ではフレームワークのコントローラ型名やメソッド名を主説明としない。「利用者視点の入口」にHTTPメソッドとパスパターンを書く。</p>
-<hr>
-<h2 id="本書で扱うこと">本書で扱うこと</h2>
-<ul><li>商品IDと言語によるポップアップ用商品情報の取得</li><li>該当が無い場合の応答</li></ul>
-<hr>
-<h2 id="本書で扱わないこと">本書で扱わないこと</h2>
-<p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
-<ul><li>記事サイト側のポップアップ表示の仕様</li><li>商品の登録・編集（商品管理を正とする）</li><li>ポップアップ用カード情報取得・旧商品IDによる取得（各APIを正とする）</li></ul>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<p>現行（pf-api）と移行先（ec-cube-enterprise）の差を記録する。永続化先の正典はec-cube-enterpriseとするが、当機能が参照するテーブルの一部はec-cube-enterpriseに該当が見当たらない。</p>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-api）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>主参照テーブル</td><td>dtb_product_sub_class（商品サブ規格。Hareruya独自）</td><td>該当が見当たらない（ec-cube-enterprise実装で要確認）</td></tr><tr><td>商品規格</td><td>dtb_product_class（price01・price02・stock）</td><td>dtb_product_class（同名・price01・price02・stock を確認値とする）</td></tr><tr><td>カード詳細（フォイル区分）</td><td>cardDetail.foilFlg</td><td>該当が見当たらない（ec-cube-enterprise実装で要確認）</td></tr><tr><td>カードコンディション</td><td>cardCondition.code</td><td>該当が見当たらない（ec-cube-enterprise実装で要確認）</td></tr><tr><td>言語</td><td>language.code（言語ランクで絞り込み）</td><td>該当が見当たらない（ec-cube-enterprise実装で要確認）</td></tr><tr><td>商品サブ規格画像</td><td>productSubImage.fileName</td><td>該当が見当たらない（ec-cube-enterprise実装で要確認）</td></tr></tbody></table></div>
-<p>商品規格（dtb_product_class）は現行と移行先で同名。商品サブ規格をはじめとするHareruya独自のカード関連テーブルはec-cube-enterpriseに対応する実装が見当たらないため、現行（pf-api）の名称を主とし、推測でスキーマ化せずec-cube-enterprise実装で要確認とする。</p>
-<hr>
-<h2 id="用語">用語</h2>
-<div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>ポップアップ用商品情報</td><td>記事内ポップアップ表示に必要な商品情報。</td></tr><tr><td>言語</td><td>商品情報の言語区分。</td></tr></tbody></table></div>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>記事内ポップアップ用の商品情報取得</td><td><code>GET /popup/product/{lang}/{productId}</code></td><td>商品IDと言語に対応するポップアップ用商品情報をJSONで返す。該当が無い場合は404を返す。</td></tr></tbody></table></div>
-<p>応答形式はJSON。記事サイト等のクライアントから呼び出される。</p>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="ポップアップ用商品情報を取得する-GET-popup-product-lang-productId">ポップアップ用商品情報を取得する（GET <code>/popup/product/{lang}/{productId}</code>）</h3>
-<ol><li>パスの商品ID・言語を受け取る。</li><li>商品規格のリポジトリから、当該商品ID・言語のポップアップ用商品情報を取得する。</li><li>取得できない場合はコード404・メッセージ「Not Found」のJSONを返す。</li><li>取得できた場合は商品情報をJSONで返す。</li></ol>
-<hr>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>対象データ</td><td>リクエストで指定されたID・条件に一致するデータを取得対象とする。抽出条件と該当なし時の扱いは処理フロー・入出力の各節を正とする。</td></tr><tr><td>計算処理</td><td>本APIでは金額・税・ポイント・在庫数量の再計算や丸めを行わない。DBまたはリポジトリから取得した値をJSON応答へ整形して返す。</td></tr><tr><td>応答値</td><td>応答フィールドは取得時点の値を返す。表示用の加工やフロントエンド側の表示制御は呼び出し元クライアントの設計を正とする。</td></tr></tbody></table></div>
-<hr>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="取得できる条件">取得できる条件</h3>
+<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>指定した商品IDと言語に一致するポップアップ用商品情報が無いとき</td><td>該当なし（HTTP 404）とし、メッセージ「Not Found」を返す</td></tr><tr><td>2</td><td>上記以外のとき</td><td>条件に合致する商品規格を1件返す</td></tr></tbody></table></div>
+<p>言語区分は jp または en のいずれかを想定し、言語ランクの判定だけに用いる。取得できないときは商品情報を返さず、処理結果コードとメッセージだけを返す。</p>
+<h3 id="値の取り方">値の取り方</h3>
+<p>金額・税・ポイント・在庫数量の再計算と丸めを行わない。取得できたときは、その値をそのまま応答へ整形して返す。応答の各項目は取得時点の値とする。表示用の加工と表示制御は呼び出し元の設計による。</p>
+<p>通常価格・販売価格・在庫数は小数を持つ値であり、数値文字列で返す。週間販売数は集計結果であり、数値文字列で返す。商品規格画像のファイル名と商品画像のファイル名は、該当が無いときはnullとする。</p>
+<h3 id="エラー時の扱い">エラー時の扱い</h3>
+<div class="table-wrap"><table><thead><tr><th>事象</th><th>扱い</th></tr></thead><tbody><tr><td>該当する商品規格が無いとき</td><td>処理結果コード404とメッセージ「Not Found」だけを返す</td></tr></tbody></table></div>
 <h2 id="入出力">入出力</h2>
-<h3 id="リクエスト">リクエスト</h3>
-<div class="table-wrap"><table><thead><tr><th>パラメータ</th><th>位置</th><th>型</th><th>必須／任意</th><th>説明</th></tr></thead><tbody><tr><td><code>lang</code></td><td>パス</td><td>string</td><td>必須</td><td>言語区分。<code>jp</code>または<code>en</code>を想定する（言語ランク判定に用いる）。</td></tr><tr><td><code>productId</code></td><td>パス</td><td>integer</td><td>必須</td><td>取得対象の商品ID。</td></tr></tbody></table></div>
-<h3 id="レスポンス-成功">レスポンス（成功）</h3>
-<p>HTTP 200。条件に合致する商品規格を一件返す。</p>
-<div class="table-wrap"><table><thead><tr><th>フィールド</th><th>型</th><th>説明</th></tr></thead><tbody><tr><td><code>productId</code></td><td>integer</td><td>商品ID。</td></tr><tr><td><code>name</code></td><td>string</td><td>商品名。</td></tr><tr><td><code>productClassId</code></td><td>integer</td><td>商品規格ID。</td></tr><tr><td><code>price01</code></td><td>string</td><td>通常価格。Doctrineのdecimal値のため数値文字列で返す。</td></tr><tr><td><code>price02</code></td><td>string</td><td>販売価格。Doctrineのdecimal値のため数値文字列で返す。</td></tr><tr><td><code>stock</code></td><td>string</td><td>在庫数。Doctrineのdecimal値のため数値文字列で返す。</td></tr><tr><td><code>nameEn</code></td><td>string</td><td>英語商品名。</td></tr><tr><td><code>subFileName</code></td><td>string</td><td>商品規格画像のファイル名。該当が無い場合はnull。</td></tr><tr><td><code>fileName</code></td><td>string</td><td>商品画像のファイル名。該当が無い場合はnull。</td></tr><tr><td><code>code</code></td><td>string</td><td>言語コード。</td></tr><tr><td><code>conditionCode</code></td><td>string</td><td>カードコンディションコード。</td></tr><tr><td><code>foilFlg</code></td><td>boolean</td><td>フォイル区分。</td></tr><tr><td><code>weeklySold</code></td><td>string</td><td>週間販売数。集計（SUM）結果のため数値文字列で返す。</td></tr></tbody></table></div>
-<h3 id="レスポンス-失敗">レスポンス（失敗）</h3>
-<div class="table-wrap"><table><thead><tr><th>HTTPステータス</th><th>条件</th><th>本文の形</th></tr></thead><tbody><tr><td>404</td><td>該当する商品規格が無い</td><td><code>{code, message}</code>（"Not Found"）</td></tr></tbody></table></div>
-<h3 id="サンプルレスポンス">サンプルレスポンス</h3>
-<p>成功時の応答例（実装確認値に基づく代表値）。</p>
-<pre><code class="language-json">{
-  "productId": 100001,
-  "name": "サンプルカード",
-  "productClassId": 200001,
-  "price01": "500.00",
-  "price02": "480.00",
-  "stock": "12.00",
-  "nameEn": "Sample Card",
-  "subFileName": "sub_sample.jpg",
-  "fileName": "sample.jpg",
-  "code": "jp",
-  "conditionCode": "A",
-  "foilFlg": false,
-  "weeklySold": "3"
-}</code></pre>
-<h3 id="副作用">副作用</h3>
-<p>無し（参照のみ）。</p>
-<p>応答はJSON応答整形を経て返す。プロパティはcamelCase、日時はISO8601とする。</p>
-<hr>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>参照時点</td><td>呼び出し時点の商品規格情報を返す。本APIはデータを更新しない。</td></tr><tr><td>言語</td><td>指定言語に対応する商品情報を返す。</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<p>機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。商品規格（dtb_product_class）はec-cube-enterpriseと同名。商品サブ規格・カード関連テーブルはec-cube-enterpriseに該当が見当たらないため現行（pf-api）の名称を残し要確認とする。</p>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td>dtb_product_sub_class（商品サブ規格。ec-cube-enterprise実装で要確認）</td><td>商品ID・商品規格ID・言語・カードコンディション参照</td><td>取得条件・応答の主データに使用する。</td></tr><tr><td>dtb_product_class（商品規格）</td><td>price01（通常価格）・price02（販売価格）・stock（在庫数）</td><td>価格・在庫の応答に使用する。</td></tr><tr><td>カード詳細・カードコンディション・言語・商品サブ規格画像（ec-cube-enterprise実装で要確認）</td><td>foilFlg・code・fileName 等</td><td>フォイル区分・コンディションコード・言語コード・画像ファイル名の応答に使用する。</td></tr></tbody></table></div>
-<h3 id="DB操作">DB操作</h3>
-<p>本機能は参照系（検索）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>検索</td><td>dtb_product_class / dtb_product_sub_class</td><td>検索条件に合致するレコードを抽出する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="権限・認可">権限・認可</h2>
-<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>ポップアップ用商品情報取得</th></tr></thead><tbody><tr><td>クライアント</td><td>記事サイト等のクライアントから呼び出す。認可方式はpf-apiの方針に従う。</td></tr></tbody></table></div>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>該当商品情報なし</td><td>コード404・「Not Found」のJSONを返す。</td></tr></tbody></table></div>
-<hr>
-<h2 id="ログ・監査">ログ・監査</h2>
-<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
-<ul><li>API接続の認証情報</li></ul>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<p>本APIは参照のみであり、楽観ロック・悲観ロックの対象は持たない。</p>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>言語区分（パス、必須）、商品ID（パス、必須）</td></tr><tr><td>成功時出力</td><td>HTTP 200。条件に合致する商品規格1件だけの情報</td></tr><tr><td>失敗時出力</td><td>HTTP 404。該当が無いときの処理結果コードとメッセージ「Not Found」</td></tr></tbody></table></div>
+<h3 id="出力-商品規格1件の項目">出力: 商品規格1件の項目</h3>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>型</th><th>内容</th></tr></thead><tbody><tr><td>商品ID</td><td>integer</td><td>商品の識別子</td></tr><tr><td>商品名</td><td>string</td><td>商品名</td></tr><tr><td>商品規格ID</td><td>integer</td><td>商品規格の識別子</td></tr><tr><td>通常価格</td><td>string</td><td>数値文字列で返す</td></tr><tr><td>販売価格</td><td>string</td><td>数値文字列で返す</td></tr><tr><td>在庫数</td><td>string</td><td>数値文字列で返す</td></tr><tr><td>英語商品名</td><td>string</td><td>英語の商品名</td></tr><tr><td>商品規格画像のファイル名</td><td>string</td><td>該当が無いときはnull</td></tr><tr><td>商品画像のファイル名</td><td>string</td><td>該当が無いときはnull</td></tr><tr><td>言語コード</td><td>string</td><td>商品規格の言語コード</td></tr><tr><td>カードコンディションコード</td><td>string</td><td>商品規格のコンディション</td></tr><tr><td>フォイル区分</td><td>boolean</td><td>商品規格のフォイル区分</td></tr><tr><td>週間販売数</td><td>string</td><td>数値文字列で返す</td></tr></tbody></table></div>
+<h3 id="入出力-永続化">入出力: 永続化</h3>
+<p>本APIはデータを更新しない。</p>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
+<h2 id="表示メッセージ">表示メッセージ</h2>
+<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>—</td><td>API応答の処理結果メッセージ</td><td>Not Found</td><td>指定した商品IDと言語に一致する商品規格が無いとき</td><td>該当なし（HTTP 404）で終了する</td></tr></tbody></table></div>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

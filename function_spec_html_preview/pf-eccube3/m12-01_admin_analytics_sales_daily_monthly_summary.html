@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,33 +272,16 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#本書で扱うこと">本書で扱うこと</a>
-<a class="lv2" href="#本書で扱わないこと">本書で扱わないこと</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv2" href="#用語">用語</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#フロント挙動">フロント挙動</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#検索画面初期表示-admin-route-analysis-summary-daily-または-monthly">検索画面初期表示（`/{admin_route}/analysis/summary/daily` または `/monthly`）</a>
-<a class="lv3" href="#集計実行・一覧表示-admin-route-analysis-summary-result">集計実行・一覧表示（`/{admin_route}/analysis/summary/result`）</a>
-<a class="lv2" href="#集計条件">集計条件</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
-<a class="lv3" href="#入力項目">入力項目</a>
-<a class="lv3" href="#エッジケース">エッジケース</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#初期表示">初期表示</a>
+<a class="lv3" href="#集計の実行">集計の実行</a>
+<a class="lv3" href="#算入する条件">算入する条件</a>
+<a class="lv3" href="#計算方法">計算方法</a>
+<a class="lv3" href="#エラー時の扱い">エラー時の扱い</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#バリデーション">バリデーション</a>
-<a class="lv2" href="#権限・認可">権限・認可</a>
-<a class="lv2" href="#画面遷移">画面遷移</a>
-<a class="lv3" href="#遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#ログ・監査">ログ・監査</a>
-<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a></nav>
+<a class="lv3" href="#入出力-永続化">入出力: 永続化</a>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -296,87 +289,25 @@ footer {
         <h1>M12-01（日別/月別集計 集計一覧表示）</h1>
       </header>
       
-      <h2 id="概要">概要</h2>
-<p>分析・集計メニューの日別集計・月別集計は、管理者が指定した集計タイプ（日次/月次）・集計日範囲・表示項目に従い、注文・明細・会員・来客の各指標を期間単位で集計し、一覧表で提示する機能である。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。本機能のカスタマイズ区分はカスタマイズであり、現行挙動の確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインの分析・集計（日次/月次集計）処理、集計用リポジトリ、検索フォーム種別、一覧テンプレートを正とする。DB関連の記述は ec-cube-enterprise の実装を正とする。</p>
-<p>対象はブラウザ経由の管理画面に限定する。本文ではフレームワークのコントローラ型名やメソッド名を主説明としない。管理画面プレフィックスは環境により変わる（<code>admin_route</code>）。「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。</p>
-<p>CSVダウンロードはM12-02で扱う。本書は集計一覧の表示までを扱う。</p>
-<hr>
-<h2 id="本書で扱うこと">本書で扱うこと</h2>
-<ul><li>日次集計・月次集計の初期表示時に設定される検索条件の既定値</li><li>検索条件（集計タイプ・集計日・利用端末・表示項目）の指定による集計結果一覧の表示</li><li>集計の対象データ・結合・除外条件・集計単位・期間の取り扱い</li><li>一覧に表示する列と合計行の算出</li></ul>
-<hr>
-<h2 id="本書で扱わないこと">本書で扱わないこと</h2>
-<p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
-<ul><li>集計結果のCSVダウンロード（M12-02を正とする）</li><li>受注/売上分析、入荷通知依頼、フォーマット売上分析の各集計（M12-03〜M12-08を正とする）</li><li>管理画面へのアクセス制御・ログイン・権限設定の詳細（認証は別設計を正とする）</li><li>受注・会員・商品の各台帳の更新業務（各機能を正とする）</li></ul>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<ul><li>本機能のカスタマイズ区分はカスタマイズであり、現行（pf-eccube3／HareruyaEc プラグイン）の集計挙動を正としつつ、DB関連の記述は ec-cube-enterprise を正とする。</li><li>受注の集計対象列のうち、現行は注文明細を <code>dtb_order_detail</code>、受注ステータスを <code>dtb_order.status</code> で参照する。ec-cube-enterprise では注文明細テーブルが <code>dtb_order_item</code>、受注ステータスが <code>dtb_order.order_status_id</code>（受注ステータスマスタへの外部キー）に相当する。本書のDBカラム節は移行先名を主とし、現行名を括弧で添える。</li><li>会員の集計対象テーブル <code>dtb_player</code>（登録日 <code>create_date</code>、メールマガジン配信フラグ <code>mail_magazine_flg</code>）は現行・移行先（ec-cube-enterprise）で同一スキーマであり、移行先でもそのまま参照する。</li><li>注文日 <code>order_date</code>・顧客 <code>customer_id</code>・利用端末 <code>device_type_id</code>、明細の <code>price</code>・<code>quantity</code>・<code>product_code</code>・<code>product_name</code> は現行・移行先で同名であり、テーブル名のみ上記の差がある。</li><li>本集計機能（HareruyaEc の日次/月次集計）自体は現行プラグインのカスタマイズであり、ec-cube-enterprise 側の集計画面・集計ロジックの有無と差は移行設計で確認する。</li></ul>
-<hr>
-<h2 id="用語">用語</h2>
-<div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>集計タイプ</td><td>日次または月次。集計の期間単位を決める。</td></tr><tr><td>集計日</td><td>集計対象とする注文日の範囲（開始日・終了日）。</td></tr><tr><td>表示項目（注文）</td><td>来客数・注文・リピート注文数・会員数・注文確認・入金・出荷指示・出荷・キャンセルの各指標から表示するものを選ぶ。</td></tr><tr><td>表示項目（明細）</td><td>商品別の注文・注文確認・入金・出荷指示・出荷・キャンセルの各指標から表示するものを選ぶ。</td></tr><tr><td>検索条件セッション</td><td>集計実行時に検索条件を保存するセッション領域。CSVダウンロードが同じ条件で集計するために参照する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>サイドメニュー「日別集計」</td><td><code>GET/POST /{admin_route}/analysis/summary/daily</code></td><td>集計タイプ日次、集計日を当月初日〜当月末日とした検索画面を表示する。</td></tr><tr><td>サイドメニュー「月別集計」</td><td><code>GET/POST /{admin_route}/analysis/summary/monthly</code></td><td>集計タイプ月次、集計日を当月初日の2か月前〜当月末日とした検索画面を表示する。</td></tr><tr><td>検索ボタン押下</td><td><code>POST /{admin_route}/analysis/summary/result</code></td><td>入力された検索条件で集計し、同一画面に集計結果一覧を表示する。</td></tr></tbody></table></div>
-<p>管理画面プレフィックスは環境により変わるためプレースホルダで示す。初期表示の入口は同一処理を共有し、URLに<code>daily</code>を含むかどうかで集計タイプの既定値を切り替える。</p>
-<hr>
-<h2 id="フロント挙動">フロント挙動</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>検索条件のアコーディオン、検索ボタン、集計結果テーブル。集計結果がある場合は日付列に続けて選択した表示項目の列を並べ、最終行に合計行を表示する。購買率の列は値に<code>%</code>を付けて表示する。</td></tr><tr><td>入力項目</td><td>商品名（日/英）・商品コードのテキスト欄、集計タイプのラジオ、集計日From・To、利用端末のチェックボックス、表示項目（注文）のチェックボックス、表示項目（明細）のチェックボックス。表示項目には「全て選択」のチェックボックスを併設する。</td></tr><tr><td>JS挙動</td><td>日付入力にデートタイムピッカーを適用する。表示項目の「全て選択」チェックで配下のチェックボックスを一括切替する。集計値の非同期取得は行わない。</td></tr><tr><td>モーダル・ポップアップ</td><td>本機能専用のモーダルは無い。</td></tr></tbody></table></div>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="検索画面初期表示-admin-route-analysis-summary-daily-または-monthly">検索画面初期表示（<code>/{admin_route}/analysis/summary/daily</code> または <code>/monthly</code>）</h3>
-<ol><li>管理画面の認証・権限を通過する。</li><li>検索条件セッションを破棄する。</li><li>集計日Fromに当月初日、集計日Toに当月末日を設定する。</li><li>URLに<code>daily</code>を含む場合は集計タイプを日次にする。含まない場合は集計タイプを月次にし、集計日Fromを2か月前へ繰り上げる。</li><li>検索フォームを表示する。集計結果は空とする。</li></ol>
-<h3 id="集計実行・一覧表示-admin-route-analysis-summary-result">集計実行・一覧表示（<code>/{admin_route}/analysis/summary/result</code>）</h3>
-<ol><li>検索フォームへ送信値を取り込む。</li><li>検索条件を検索条件セッションへ保存する。</li><li>選択した表示項目から、画面に出す列の見出しを組み立てる。</li><li>集計用リポジトリへ検索条件と表示項目を渡し、期間単位の集計結果と合計を取得する。</li><li>集計結果一覧と合計行を同一画面に表示する。</li></ol>
-<hr>
-<h2 id="集計条件">集計条件</h2>
-<div class="table-wrap"><table><thead><tr><th>指標</th><th>集計の要点</th></tr></thead><tbody><tr><td>集計単位</td><td>集計タイプが日次なら注文日を<code>%Y/%m/%d</code>、月次なら<code>%Y/%m</code>でグループ化する。会員数の集計は会員の登録日（<code>create_date</code>）を同じ単位でグループ化する。</td></tr><tr><td>期間</td><td>集計日Fromから集計日Toまで。来客数の基準となる注文の抽出では、集計日Toに23時間59分59秒を加えて当日終端まで含める。</td></tr><tr><td>来客数・購買数・購買率</td><td>注文を集計日範囲で抽出し、期間単位の注文件数（購買数）を数える。来客数は期間・会員単位でまとめた注文者数を数える。購買率は来客数を購買数で割り100倍して小数点以下を切り捨てる。</td></tr><tr><td>注文・注文確認・入金・出荷指示・出荷・キャンセル</td><td>注文と注文明細を結合し、期間単位で件数・金額・平均単価を算出する。注文は全件、その他の指標は対象の注文ステータスに該当する明細のみを件数・金額に算入する。</td></tr><tr><td>商品別（明細）</td><td>注文と注文明細を結合し、商品名・商品コードの絞り込みを加えたうえで、明細の件数・金額・平均単価を期間単位で算出する。</td></tr><tr><td>会員数・メールニュース登録数</td><td>会員（<code>dtb_player</code>）を登録日の期間単位でグループ化し、登録数とメールマガジン登録フラグが立つ件数を数える。</td></tr><tr><td>リピート注文数</td><td>注文回数が2回以上の会員の注文を、期間単位で件数として数える。</td></tr><tr><td>利用端末</td><td>利用端末が指定された場合、来客数・注文・商品別・リピート・来客者数の各副問い合わせに端末IDの絞り込みを加える。</td></tr></tbody></table></div>
-<p>平均単価は金額合計を数量合計で割った値とし、表示時に切り上げる。期間内で集計結果が無い日付・月は、件数等を0で補完して一覧に並べる。</p>
-<hr>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>件数・金額の算入条件</td><td>注文確認は受注ステータスが新規受付・入金待ち・保留、入金は決済処理中、出荷指示は出荷準備・ピッキング、出荷は出荷済み・対応済み、キャンセルはキャンセルの各ステータスに属する明細のみを算入する。</td></tr><tr><td>平均単価</td><td>金額合計を数量合計で割る。表示時は切り上げる。</td></tr><tr><td>購買率</td><td>来客数を購買数で割り100倍し、小数点以下を切り捨てる。購買数が0の場合は0とする。</td></tr><tr><td>合計行</td><td>一覧の各列について期間分を合算する。購買率の合計は来客数合計を購買数合計で割り100倍して切り上げる。日付列・購買率列は単純合算の対象外とする。</td></tr><tr><td>期間の補完</td><td>集計結果に存在しない日付・月は、表示項目の各列を0として一覧へ補完する。</td></tr><tr><td>商品名・商品コードの絞り込み</td><td>入力語を空白・カンマで分割し、商品コードまたは商品名の部分一致のいずれかに合致する明細を商品別の集計対象とする。</td></tr></tbody></table></div>
-<h3 id="入力項目">入力項目</h3>
-<div class="table-wrap"><table><thead><tr><th>項目名</th><th>必須／任意</th><th>最大長</th><th>初期値</th><th>保存先・扱い</th></tr></thead><tbody><tr><td>商品名（日/英）・商品コード</td><td>任意</td><td>短文相当（<code>stext_len</code>）</td><td>空</td><td>フォームキー <code>multi</code>。商品別集計の商品コード・商品名の部分一致条件に使う。検索条件セッションへ保存。</td></tr><tr><td>集計タイプ</td><td>必須</td><td>—</td><td>入口が<code>daily</code>なら日次、それ以外は月次</td><td>フォームキー <code>summary_type</code>。値は<code>daily</code>/<code>monthly</code>。集計単位を決める。</td></tr><tr><td>集計日From</td><td>必須</td><td>日付</td><td>日次は当月初日、月次は2か月前の初日</td><td>フォームキー <code>summary_date_from</code>。集計対象の注文日下限。</td></tr><tr><td>集計日To</td><td>必須</td><td>日付</td><td>当月末日</td><td>フォームキー <code>summary_date_to</code>。集計対象の注文日上限。集計時に当日終端まで加算する。</td></tr><tr><td>利用端末</td><td>任意</td><td>—</td><td>未選択</td><td>フォームキー <code>device_type</code>。端末マスタの複数選択。各副問い合わせの端末ID絞り込み。</td></tr><tr><td>表示項目（注文）</td><td>任意</td><td>—</td><td>未選択</td><td>フォームキー <code>columns_order</code>。来客数・注文・リピート注文数・会員数・注文確認・入金・出荷指示・出荷・キャンセルから複数選択。</td></tr><tr><td>表示項目（明細）</td><td>任意</td><td>—</td><td>未選択</td><td>フォームキー <code>columns_product</code>。商品別の注文・注文確認・入金・出荷指示・出荷・キャンセルから複数選択。</td></tr></tbody></table></div>
-<p>本フォームはなりすまし対策トークンを使わない（<code>csrf_protection</code>を無効化）。最大長の根拠は<code>constant.yml.dist</code>等の確認値とし環境上書きを注記する。</p>
-<h3 id="エッジケース">エッジケース</h3>
-<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>集計対象が0件</td><td>集計結果が無い日付・月の列を0で補完する。</td></tr><tr><td>購買数が0の日付・月</td><td>購買率を0とする。</td></tr><tr><td>当日の会員登録が無い</td><td>会員数・メールニュース登録数をNULLから0へ補正する。</td></tr><tr><td>表示項目を未選択</td><td>日付列のみの一覧となる。</td></tr><tr><td>平均単価の数量合計が0</td><td>算出式が成立しない明細は集計対象の件数・金額に算入しないため、平均単価は対象明細に依存する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>参照時点</td><td>集計結果は検索実行時にデータベースから読み取った値である。表示後に受注・会員が更新されても表示中の数値は自動更新しない。</td></tr><tr><td>CSVとの整合性</td><td>集計実行で検索条件をセッションへ保存する。CSVダウンロードは同じセッションの検索条件で再集計するため、直近の検索条件と同条件の集計となる。</td></tr><tr><td>一覧と合計の整合性</td><td>合計行は表示中の集計結果を合算した値であり、別問い合わせの再集計ではない。</td></tr><tr><td>更新との整合性</td><td>本機能は参照のみで台帳を更新しない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="API-バッチ結果">API/バッチ結果</h2>
-<p>本機能ではAPI呼び出し・バッチ実行を扱わない。集計はデータベースへの問い合わせで行う。</p>
-<hr>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="初期表示">初期表示</h3>
+<p>初期表示では保持していた検索条件を破棄し、集計結果を空とする。集計日の開始に当月の初日、終了に当月の末日を入れる。</p>
+<p>日別を選んだときは集計タイプを日次とする。日別でないときは集計タイプを月次とし、集計日の開始を 2 か月前へ繰り上げる。</p>
+<h3 id="集計の実行">集計の実行</h3>
+<p>送信された検索条件を保持したうえで、選んだ表示項目から画面に出す列の見出しを組み立てる。検索条件と表示項目で期間単位の集計結果と合計を取り出し、同じ画面に一覧と合計行を並べる。</p>
+<h3 id="算入する条件">算入する条件</h3>
+<div class="table-wrap"><table><thead><tr><th>列</th><th>算入する明細</th></tr></thead><tbody><tr><td>注文確認</td><td>受注ステータスが新規受付・入金待ち・保留のいずれかの明細だけ</td></tr><tr><td>入金</td><td>受注ステータスが決済処理中の明細だけ</td></tr><tr><td>出荷指示</td><td>受注ステータスが出荷準備・ピッキングのいずれかの明細だけ</td></tr><tr><td>出荷</td><td>受注ステータスが出荷済み・対応済みのいずれかの明細だけ</td></tr><tr><td>キャンセル</td><td>受注ステータスがキャンセルの明細だけ</td></tr></tbody></table></div>
+<h3 id="計算方法">計算方法</h3>
+<div class="table-wrap"><table><thead><tr><th>値</th><th>求め方</th></tr></thead><tbody><tr><td>平均単価</td><td>金額合計を数量合計で割る。表示のときに切り上げる</td></tr><tr><td>購買率</td><td>来客数を購買数で割って 100 倍し、小数点以下を切り捨てる。購買数が 0 のときは 0 とする</td></tr><tr><td>合計行</td><td>一覧の各列について期間ぶんを合算する。購買率の合計は、来客数の合計を購買数の合計で割って 100 倍し切り上げる。日付の列と購買率の列は単純な合算の対象としない</td></tr><tr><td>期間の補完</td><td>集計結果に無い日付と月は、表示項目の各列を 0 として一覧に補う</td></tr><tr><td>商品名・商品コードの絞り込み</td><td>入力語を空白とカンマで分割し、商品コードまたは商品名への部分一致のいずれかに合う明細だけを商品別の集計対象とする</td></tr></tbody></table></div>
+<h3 id="エラー時の扱い">エラー時の扱い</h3>
+<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>データの読み取りに失敗した</td><td>アプリケーションの共通の例外処理に委ねる</td></tr><tr><td>認証と権限を満たさない</td><td>集計を表示しない</td></tr></tbody></table></div>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>検索条件（集計タイプ・集計日・利用端末・表示項目・商品名/商品コード）。</td></tr><tr><td>成功時出力</td><td>集計結果一覧と合計行を含む画面。</td></tr><tr><td>失敗時出力</td><td>データ取得失敗時はアプリケーションの共通例外処理に委ねる。</td></tr><tr><td>副作用</td><td>検索条件セッションへの保存。</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<p>機能に直接関係する列のみ記載する。テーブル名・列名は ec-cube-enterprise を正とし、現行 pf-eccube3 と異なる場合は現行名を括弧で添える。型や一覧の細部はスキーマを参照する。</p>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td>dtb_order</td><td>order_date</td><td>集計単位・期間抽出の基準。</td></tr><tr><td>dtb_order</td><td>order_status_id（現行 status）</td><td>指標ごとの受注ステータス絞り込み。受注ステータスマスタへの外部キー。</td></tr><tr><td>dtb_order</td><td>customer_id</td><td>来客数・リピート注文数の集計に使用。</td></tr><tr><td>dtb_order</td><td>device_type_id</td><td>利用端末の絞り込み。</td></tr><tr><td>dtb_order_item（現行 dtb_order_detail）</td><td>price, quantity</td><td>金額・平均単価の算出。</td></tr><tr><td>dtb_order_item（現行 dtb_order_detail）</td><td>product_code, product_name</td><td>商品別集計の絞り込み。</td></tr><tr><td>dtb_player</td><td>create_date</td><td>会員数の集計単位。現行・移行先で同一スキーマ。</td></tr><tr><td>dtb_player</td><td>mail_magazine_flg</td><td>メールニュース登録数の集計。現行・移行先で同一スキーマ。</td></tr></tbody></table></div>
-<h3 id="DB操作">DB操作</h3>
-<p>本機能は参照系（検索）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>検索</td><td>dtb_order / dtb_order_detail / dtb_order_item / dtb_player</td><td>検索条件に合致するレコードを抽出する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="バリデーション">バリデーション</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>商品名（日/英）・商品コード</td><td>短文相当の最大長。</td></tr><tr><td>集計タイプ</td><td>日次・月次のいずれかを必須選択。</td></tr><tr><td>集計日From・To</td><td>必須。日付形式（<code>yyyy-MM-dd</code>）。</td></tr><tr><td>利用端末・表示項目</td><td>任意の複数選択。</td></tr></tbody></table></div>
-<hr>
-<h2 id="権限・認可">権限・認可</h2>
-<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>日次/月次集計一覧</th></tr></thead><tbody><tr><td>未ログイン管理者</td><td>アクセス不可。</td></tr><tr><td>ログイン済み管理者</td><td>検索・集計結果の閲覧が可能。</td></tr></tbody></table></div>
-<hr>
-<h2 id="画面遷移">画面遷移</h2>
-<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>「日別集計」「月別集計」を開く</td><td>集計検索画面（初期状態）。</td></tr><tr><td>検索ボタン押下</td><td>同一画面に集計結果一覧を表示。</td></tr><tr><td>「CSVダウンロード」押下</td><td>集計結果CSVを出力（M12-02）。</td></tr></tbody></table></div>
-<h3 id="遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</h3>
-<div class="table-wrap"><table><thead><tr><th>起点</th><th>遷移前の処理</th><th>遷移後の初期状態</th></tr></thead><tbody><tr><td>検索ボタン押下</td><td>検索条件を検索条件セッションへ保存する。</td><td>CSVダウンロードが同条件で再集計するための条件が保存される。</td></tr></tbody></table></div>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>データベース読み取りの障害</td><td>アプリケーションの共通例外処理に委ねる。</td></tr><tr><td>認証・権限不足</td><td>集計を表示しない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="ログ・監査">ログ・監査</h2>
-<div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>集計表示</td><td>本機能単体で業務監査ログを追加で書く処理は持たない。</td></tr></tbody></table></div>
-<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
-<ul><li>Cookie値</li><li>セッションIDの完全値</li><li>会員の個人情報の詳細本文</li></ul>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<p>本機能は参照のみであり、楽観ロック・悲観ロックの対象は持たない。</p>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>集計タイプ・集計日・利用端末・表示項目・商品名／商品コード</td></tr><tr><td>成功時出力</td><td>集計結果の一覧と合計行を含む画面</td></tr><tr><td>失敗時出力</td><td>データの取得に失敗したときは共通の例外処理に委ねる</td></tr></tbody></table></div>
+<h3 id="入出力-永続化">入出力: 永続化</h3>
+<p>この機能ではデータを更新しない。</p>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
+<h2 id="表示メッセージ">表示メッセージ</h2>
+<p>この機能はエラーメッセージを表示しない。</p>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,40 +272,16 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#フロント挙動">フロント挙動</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#CSVをダウンロードする-POST-export-type-old-goods-account">CSVをダウンロードする（POST、`export_type`=`old_goods_account`）</a>
-<a class="lv3" href="#指定IDの一部だけがデータベースに存在するとき">指定IDの一部だけがデータベースに存在するとき</a>
-<a class="lv2" href="#集計条件">集計条件</a>
-<a class="lv2" href="#CSV列とデータソースの対応">CSV列とデータソースの対応</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
-<a class="lv3" href="#入力項目">入力項目</a>
-<a class="lv3" href="#エッジケース">エッジケース</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#出力の判定順序">出力の判定順序</a>
+<a class="lv3" href="#出力する行">出力する行</a>
+<a class="lv3" href="#ファイルの体裁">ファイルの体裁</a>
+<a class="lv3" href="#入力の扱い">入力の扱い</a>
+<a class="lv3" href="#エラー時の扱い">エラー時の扱い</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#バリデーション">バリデーション</a>
-<a class="lv2" href="#権限・認可">権限・認可</a>
-<a class="lv2" href="#画面遷移">画面遷移</a>
-<a class="lv3" href="#遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#試行制限">試行制限</a>
-<a class="lv2" href="#ログ・監査">ログ・監査</a>
-<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
-<a class="lv2" href="#セッション">セッション</a>
-<a class="lv3" href="#本機能におけるセッション">本機能におけるセッション</a>
-<a class="lv3" href="#セッションへ保存しない情報">セッションへ保存しない情報</a>
-<a class="lv2" href="#Cookie">Cookie</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a>
-<a class="lv2" href="#文字コード・区切り文字-確認値">文字コード・区切り文字（確認値）</a>
-<a class="lv2" href="#セキュリティ補足-CSRF">セキュリティ補足（CSRF）</a>
-<a class="lv2" href="#調査補助-ソース位置の索引">調査補助（ソース位置の索引）</a>
-<a class="lv3" href="#HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</a></nav>
+<a class="lv3" href="#入出力-永続化">入出力: 永続化</a>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -303,108 +289,27 @@ footer {
         <h1>m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）</h1>
       </header>
       
-      <h2 id="概要">概要</h2>
-<p>管理画面の「店頭買取管理」買取一覧で、検索結果からチェックした店頭買取注文を対象に、古物台帳入力向けの項目を1注文1行としたCSVファイルをダウンロード応答として返す機能である。ヘッダ行は日本語ラベル（例:「査定ID」「年月日」）であり、商品CSVのように<code>dtb_csv</code>で項目順をカスタマイズする仕組みは使わない。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。「利用者視点の入口」以降を含む本文の挙動は、移行先 ec-cube-enterprise のSymfony版コアおよび同リポジトリ内のテストをリバースしたものであり、現行 pf-eccube3 の挙動を記述したものではない。テンプレート先頭の pf-eccube3 パスは移植元を示す。</p>
-<p>カスタマイズ区分はカスタマイズである。挙動・DB関連とも移行先 ec-cube-enterprise を確認値とする。現行 pf-eccube3 の HareruyaEc プラグインは移植元・比較対象であり、その差は「リニューアル移行時の扱い」に記録する。</p>
-<p>対象はブラウザ経由の管理画面に限定する。</p>
-<p>コントローラのメソッド名は本文の主題としない。本文ではルートbind名やSymfonyのルートnameの網羅は主説明としない。「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。コード探索でbind名が必要なときだけ「調査補助」へ書く。</p>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<p>古物台帳CSVが参照する店頭買取系テーブルは、現行（pf-eccube3のHareruyaEcプラグイン）と移行先（ec-cube-enterprise）でテーブル名・主要列名が一致し、概ね同一スキーマである。<code>dtb_otc_buy_order</code>の<code>assessment_id</code>・<code>complete_date</code>・<code>total_price</code>・<code>qualified_invoice_issuer_flg</code>・<code>qualified_invoice_issuer_account_id</code>、<code>dtb_otc_buy_order_detail</code>の<code>original_quantity</code>、<code>dtb_otc_buy_order_indivisual_input_product</code>の<code>quantity</code>はいずれも同名である。確認できた差分は次のとおりで、DB関連はec-cube-enterpriseを正とする。</p>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3のHareruyaEcプラグイン）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>古物台帳CSVの抽出列に対応するテーブル・列</td><td>同名（同一スキーマ）</td><td>同名（同一スキーマ）</td></tr><tr><td>棚戻し列</td><td><code>dtb_otc_buy_order</code>に<code>restocked_flg</code>・<code>restocked_date</code>を持たない</td><td><code>restocked_flg</code>・<code>restocked_date</code>を追加。ただし古物台帳CSVの抽出列には含まれない</td></tr></tbody></table></div>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>検索結果が1件以上あり、一覧で注文をチェックし、「CSVダウンロード」→「古物台帳入力用CSV」を選ぶ</td><td><code>POST /%eccube_admin_route%/otcbuyorder/export</code>（フォームに<code>export_type</code>=<code>old_goods_account</code>、複数値<code>otcBuyOrderIds[]</code>）</td><td>選択IDに紐づく行だけを含むCSVがダウンロードされる。</td></tr><tr><td>検索結果が0件で一覧ブロックが「該当なし」表示のみ</td><td>（メニュー自体が描画されない）</td><td>「CSVダウンロード」ドロップダウンは検索結果ヘッダ付近にのみ置かれるため、この入口からは実行できない。</td></tr><tr><td>一覧はあるがチェックを1つも付けずに「古物台帳入力用CSV」を選ぶ</td><td><code>POST /%eccube_admin_route%/otcbuyorder/export</code>（<code>otcBuyOrderIds</code>が実質空）</td><td>エラーフラッシュが出て買取一覧のページ付きルートへリダイレクトされる。</td></tr></tbody></table></div>
-<p>送信フォーム<code>result_form</code>は<code>action</code>が<code>admin_otcbuyorder_export</code>を指す別フォームであり、検索用フォーム<code>search_form</code>とは分離されている。</p>
-<hr>
-<h2 id="フロント挙動">フロント挙動</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>検索結果ボックス内、<code>pagination.totalItemCount &gt; 0</code>のときのみ「CSVダウンロード」ドロップダウンを表示する。配下に「古物台帳入力用CSV」リンク（<code>data-type</code>=<code>old_goods_account</code>）がある。各行に<code>name</code>=<code>otcBuyOrderIds[]</code>のチェックボックスがある。表頭チェック<code>#allCheck</code>で<code>otcBuyOrderId</code>属性を持つチェックを一括オンオフする。</td></tr><tr><td>JS挙動</td><td><code>.export-link</code>クリックで既定のリンク遷移を抑止し、<code>#export_type</code>隠し項目に<code>data-type</code>を代入して<code>#result_form</code>を送信する。戻しリストPDF用タイプだけ別URL・別ウィンドウとなるが、古物台帳用は通常の同一ウィンドウPOSTである。</td></tr><tr><td>CSS・レイアウト</td><td>Bootstrapドロップダウンが非表示になる問題への回避として、<code>#result_list__custom_csv_menu</code>周りに限定したインラインスタイルがある。</td></tr><tr><td>モーダル・ポップアップ</td><td>出力前の確認ダイアログはない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="CSVをダウンロードする-POST-export-type-old-goods-account">CSVをダウンロードする（POST、<code>export_type</code>=<code>old_goods_account</code>）</h3>
-<ol><li>管理画面の認証を通過したリクエストのみが到達する。</li><li>コントローラでPHPの実行時間制限を無効にする（<code>set_time_limit(0)</code>）。</li><li>リクエストボディから<code>export_type</code>を読む。<code>OtcBuyOrderCsvExportService::CSV_TYPES</code>に無いキーのときは例外となり、管理者向けのシステムエラー画面相当の応答になる。</li><li><code>otcBuyOrderIds</code>をすべて整数に変換し、変換結果が空配列のときは翻訳キー<code>admin.purchase.online.csv_export.no_selection</code>のエラーをフラッシュに積み、セッションキー<code>eccube.admin.otcbuyorder.search.page_no</code>があればそのページ番号、無ければ1として<code>admin_otcbuyorder_page</code>へリダイレクトする。</li><li><code>old_goods_account</code>では戻しリスト向けの追加バリデーションは実行しない。</li><li>CSVエクスポート処理に制御を渡す。ストリーム応答のコールバック内で共通CSV出力サービスを開き、UTF-8設定時はBOMを書いたうえで、ヘッダ行にサービス定数に沿った日本語ラベルを出力する。</li><li>リポジトリ層の生SQLイテレータで、指定IDかつ実在する注文のみを行として取得し、ヘッダキー順に値を並べ替えて1行ずつ書く。</li><li>ファイル名は接頭辞<code>old_goods_account_</code>、日時（<code>YmdHis</code>）、拡張子<code>.csv</code>を連結したものとする。<code>Content-Type</code>は<code>application/octet-stream</code>。<code>Content-Disposition</code>は<code>attachment; filename=</code>に前述ファイル名を連結する形式とする。</li><li>応答オブジェクト返却の直前に、情報ログへファイル名を含むメッセージを書く（ログはコールバック内のストリーム送信完了より前に実行される）。</li></ol>
-<h3 id="指定IDの一部だけがデータベースに存在するとき">指定IDの一部だけがデータベースに存在するとき</h3>
-<ol><li>SQLは<code>WHERE o.id IN (:ids)</code>であり、存在しないIDは結果行に現れない。</li><li>存在するIDが1つも無いときもエラーにせず、ヘッダのみのCSVが返る。</li></ol>
-<hr>
-<h2 id="集計条件">集計条件</h2>
-<div class="table-wrap"><table><thead><tr><th>指標</th><th>集計の要点</th></tr></thead><tbody><tr><td>出力対象行</td><td>POSTで渡された店頭買取注文IDのうち、<code>dtb_otc_buy_order</code>に存在するもの。ステータスや店舗によるフィルタはSQLに含まれない。</td></tr><tr><td>数量（<code>totalQuantity</code>）</td><td><code>dtb_otc_buy_order_detail</code>の<code>original_quantity</code>合計と、<code>dtb_otc_buy_order_indivisual_input_product</code>の<code>quantity</code>合計を注文単位で足す。いずれも左外部結合し、無い側は0として扱う。</td></tr><tr><td>並び順</td><td><code>assessment_id</code>降順（文字列並び）。</td></tr></tbody></table></div>
-<hr>
-<h2 id="CSV列とデータソースの対応">CSV列とデータソースの対応</h2>
-<p>ヘッダ行に並ぶ日本語ラベルと、データ行のキー対応は次のとおり（サービス内の配列キー順が出力順）。</p>
-<div class="table-wrap"><table><thead><tr><th>ヘッダラベル（確認値）</th><th>データキー</th><th>内容の要点</th></tr></thead><tbody><tr><td>査定ID</td><td>assessmentId</td><td><code>dtb_otc_buy_order.assessment_id</code>。</td></tr><tr><td>年月日</td><td>completeDate</td><td><code>complete_date</code>を東京タイムゾーン前提で<code>YYYY年M月D日</code>形式の日本語表記（PostgreSQL<code>TO_CHAR</code>。月日は先頭ゼロ無しの指定。グレゴリオ暦）。</td></tr><tr><td>代金</td><td>totalPrice</td><td><code>dtb_otc_buy_order.total_price</code>。</td></tr><tr><td>数量</td><td>totalQuantity</td><td>上記「集計条件」の合計。</td></tr><tr><td>氏名</td><td>fullName</td><td><code>last_name</code>と<code>first_name</code>の間に全角空白を挟んだ連結。</td></tr><tr><td>身分証</td><td>identificationType</td><td><code>mtb_identification.name</code>（外部キー未設定時はNULL）。</td></tr><tr><td>住所</td><td>address</td><td>国IDが日本（マスタ定数392）のときは「県名」「addr01」「addr02」「addr03」を半角空白で<code>CONCAT_WS</code>。海外のときは「国名」「addr03」「addr02」「addr01」の順で同様に連結。</td></tr><tr><td>年齢</td><td>age</td><td><code>apply_date</code>と<code>birth</code>に対してPostgreSQLの<code>AGE</code>で間隔を求め、<code>EXTRACT(YEAR FROM …)</code>で年数のみを出力する（単体テストでは申込日と生年月日から期待される整数と一致する）。</td></tr><tr><td>電話番号</td><td>phoneNumber</td><td>NULLまたは空ならそのまま。それ以外は<code>="番号"</code>形式とし、番号内の二重引用符はCSV向けにエスケープする。</td></tr><tr><td>事業者であるか</td><td>qualifiedInvoiceIssuerFlg</td><td><code>dtb_otc_buy_order.qualified_invoice_issuer_flg</code>。CSV書き込み時は文字列化経路により真が<code>1</code>、偽が空文字になる。</td></tr><tr><td>事業者番号</td><td>qualifiedInvoiceIssuerNumber</td><td><code>dtb_qualified_invoice_issuer_account.qualified_invoice_issuer_code</code>（未紐付け時はNULLで空出力）。</td></tr></tbody></table></div>
-<p>クエリ実行前にDB接続で<code>SET TIME ZONE 'Asia/Tokyo'</code>を発行する。</p>
-<hr>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<p>本機能は画面入力の保存は行わない。送信パラメータは次のとおり扱う。</p>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>export_type</td><td><code>old_goods_account</code>のみが古物台帳用。他値は本書の対象外。</td></tr><tr><td>otcBuyOrderIds</td><td>整数配列として解釈。空ならエラーでリダイレクト。</td></tr></tbody></table></div>
-<h3 id="入力項目">入力項目</h3>
-<p>本機能では永続化フォームの入力項目表は置かない。利用者が操作するのはチェックボックスとドロップダウンによる送信のみである。</p>
-<h3 id="エッジケース">エッジケース</h3>
-<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>明細も個別入力商品も無い注文</td><td>数量は0として出力される。</td></tr><tr><td>電話番号がNULLまたは空</td><td><code>phoneNumber</code>列はNULLまたは空文字のまま出力され、<code>="…"</code>形式にならない。</td></tr><tr><td>身分証・職業・適格請求書アカウントが未設定</td><td>対応列は空またはNULLに準ずる出力となる。</td></tr><tr><td>POSTされたIDがすべて存在しない</td><td>ヘッダのみのCSVが返り、エラーにしない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>一覧との対応</td><td>同一検索結果からチェックしたIDは、その時点のデータベース状態がそのままCSVに反映される。一覧表示後に他処理で注文が変更・削除された場合、再検索せずに出力すると一覧記憶と一致しないことがある。</td></tr><tr><td>トランザクション</td><td>本処理は参照SQLとストリーム出力のみであり、注文データを更新しない（戻しリストCSV種別での別副作用は本機能では扱わない）。</td></tr></tbody></table></div>
-<hr>
-<h2 id="API-バッチ結果">API/バッチ結果</h2>
-<p>本機能ではAPI呼び出し・バッチ実行を扱わない。</p>
-<hr>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="出力の判定順序">出力の判定順序</h3>
+<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>出力種別が古物台帳用でない、かつ既定の出力種別にも無い値のとき</td><td>例外となり、管理者向けのシステムエラー画面相当の応答になる</td></tr><tr><td>2</td><td>選択した店頭買取注文IDを整数へ変換した結果が空のとき</td><td>選択が無い旨のエラーを表示し、店頭買取注文の一覧へ戻す。ページ番号は保持した検索のページ番号を用い、無いときは1とする</td></tr><tr><td>3</td><td>上記以外のとき</td><td>出力を実行する</td></tr></tbody></table></div>
+<p>古物台帳用の出力では、戻しリスト向けの追加の検証を行わない。出力処理には処理時間の上限を設けない。</p>
+<h3 id="出力する行">出力する行</h3>
+<p>指定したIDのうち、実在する注文だけを行として取得する。存在しないIDは結果に現れない。存在するIDが1つも無いときもエラーとせず、ヘッダだけの出力ファイルを返す。値はヘッダの並び順に合わせて1行ずつ書き出す。</p>
+<p>ヘッダ行には出力種別ごとに定めた日本語のラベルを出力する。件数が多いときも1行ずつ書き出す。</p>
+<h3 id="ファイルの体裁">ファイルの体裁</h3>
+<p>ファイル名は old_goods_account_ に出力日時（年月日時分秒）と .csv を連結したものとする。文字コードがUTF-8のときはBOMを先頭に書く。応答の形式種別はバイト列とし、ダウンロードとして扱う指定にファイル名を添える。</p>
+<h3 id="入力の扱い">入力の扱い</h3>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>出力種別</td><td>古物台帳用の値のときだけ本書の対象とする。他の値のときは本書の対象外とする</td></tr><tr><td>店頭買取注文ID</td><td>整数の配列として解釈する。空のときはエラーとして一覧へ戻す</td></tr></tbody></table></div>
+<p>本機能は画面入力の保存を行わない。</p>
+<h3 id="エラー時の扱い">エラー時の扱い</h3>
+<div class="table-wrap"><table><thead><tr><th>事象</th><th>扱い</th></tr></thead><tbody><tr><td>選択した注文が0件のとき</td><td>エラーを表示し、店頭買取注文の一覧へ戻す</td></tr><tr><td>出力種別が未知の値のとき</td><td>例外によりエラー応答となる（不正な改ざんや実装の不整合のとき）</td></tr></tbody></table></div>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>POSTボディの<code>export_type</code>、<code>otcBuyOrderIds</code>（複数フィールド名<code>otcBuyOrderIds[]</code>）。</td></tr><tr><td>成功時出力</td><td><code>StreamedResponse</code>本体にCSVバイト列。先頭行はヘッダ。</td></tr><tr><td>失敗時出力</td><td>選択なしはフラッシュエラー付きリダイレクト。種別不正は例外経由のエラー応答（テストでHTTP500とシステムエラー文言を確認）。</td></tr><tr><td>副作用</td><td><code>old_goods_account</code>では注文レコードを更新しない。情報ログにファイル名が残る。</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<p>当機能のデータ抽出に直接現れる主な列・結合先を示す（型の細部はスキーマ参照）。</p>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列・結合</th><th>メモ</th></tr></thead><tbody><tr><td><code>dtb_otc_buy_order</code></td><td><code>id</code>、<code>assessment_id</code>、<code>complete_date</code>、<code>total_price</code>、<code>last_name</code>、<code>first_name</code>、<code>apply_date</code>、<code>birth</code>、<code>country_id</code>、<code>pref_id</code>、<code>addr01</code>〜<code>addr03</code>、<code>tel_no</code>、<code>job_id</code>、<code>identification_id</code>、<code>qualified_invoice_issuer_flg</code>、<code>qualified_invoice_issuer_account_id</code></td><td>主テーブル。</td></tr><tr><td><code>dtb_otc_buy_order_detail</code></td><td><code>otc_buy_order_id</code>、<code>original_quantity</code></td><td>数量集計サブクエリ。</td></tr><tr><td><code>dtb_otc_buy_order_indivisual_input_product</code></td><td><code>otc_buy_order_id</code>、<code>quantity</code></td><td>数量集計サブクエリ。</td></tr><tr><td><code>mtb_pref</code></td><td><code>name</code></td><td>日本住所の県名。</td></tr><tr><td><code>mtb_country</code></td><td><code>id</code>、<code>name</code></td><td>国内外判定と国名。</td></tr><tr><td><code>mtb_identification</code></td><td><code>name</code></td><td>身分証種別表示名。</td></tr><tr><td><code>mtb_job</code></td><td><code>name</code></td><td>職業表示名。</td></tr><tr><td><code>dtb_qualified_invoice_issuer_account</code></td><td><code>qualified_invoice_issuer_code</code></td><td>事業者番号。</td></tr></tbody></table></div>
-<h3 id="DB操作">DB操作</h3>
-<p>本機能は参照系（検索・出力）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>検索</td><td>dtb_otc_buy_order / dtb_otc_buy_order_detail / dtb_otc_buy_order_indivisual_input_product / dtb_qualified_invoice_issuer_account / mtb_country / mtb_identification 等</td><td>検索条件に合致するレコードを抽出する。抽出結果を所定フォーマットでファイル出力する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="バリデーション">バリデーション</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>export_type</td><td>許可リスト外は例外で失敗する。</td></tr><tr><td>otcBuyOrderIds</td><td>整数化後に空ならエラーメッセージを表示してリダイレクトする。</td></tr><tr><td>店舗権限・ステータス</td><td><code>old_goods_account</code>ではエクスポート前に追加チェックしない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="権限・認可">権限・認可</h2>
-<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>本機能（CSVダウンロード）</th></tr></thead><tbody><tr><td>管理画面未ログイン</td><td>管理画面ログインフローへ誘導される（詳細は管理画面共通セキュリティ設定を正とする）。</td></tr><tr><td>管理画面ログイン済み</td><td>ルートに到達できればエクスポート処理が実行される実装である。店舗単位の編集権限チェックはこの種別では行わない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="画面遷移">画面遷移</h2>
-<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>CSV送信が成功</td><td>ブラウザのファイルダウンロードとして応答（画面ルート遷移なし）。</td></tr><tr><td><code>otcBuyOrderIds</code>が空</td><td><code>admin_otcbuyorder_page</code>へHTTPリダイレクト（ページ番号はセッション確認値）。</td></tr><tr><td><code>export_type</code>不正</td><td>エラー応答（一覧へのアプリ制御リダイレクトではない）。</td></tr></tbody></table></div>
-<h3 id="遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</h3>
-<div class="table-wrap"><table><thead><tr><th>起点</th><th>遷移前の処理</th><th>遷移後の初期状態</th></tr></thead><tbody><tr><td>選択なしエラー</td><td>フラッシュにエラーを積む</td><td>買取一覧の該当ページが再表示され、エラーメッセージが見える。</td></tr></tbody></table></div>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>チェックされた注文が0件</td><td>翻訳メッセージをフラッシュし、<code>admin_otcbuyorder_page</code>へリダイレクト。</td></tr><tr><td><code>export_type</code>が未知</td><td>例外によりエラー応答（運用上は不正改ざんや実装不整合時）。</td></tr></tbody></table></div>
-<hr>
-<h2 id="試行制限">試行制限</h2>
-<p>本機能では試行制限を扱わない。</p>
-<hr>
-<h2 id="ログ・監査">ログ・監査</h2>
-<div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>CSV応答オブジェクト生成直前</td><td>情報ログに「店頭買取CSV出力完了」とファイル名が出力される（種別が古物台帳でも同一文言）。</td></tr></tbody></table></div>
-<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
-<ul><li>パスワード</li><li>なりすまし対策トークン</li><li>Cookie値</li><li>セッションIDの完全値</li><li>Remember Meトークンの原値</li></ul>
-<hr>
-<h2 id="セッション">セッション</h2>
-<h3 id="本機能におけるセッション">本機能におけるセッション</h3>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>選択なし時のリダイレクト先ページ</td><td><code>eccube.admin.otcbuyorder.search.page_no</code>を読む。無ければ1。</td></tr></tbody></table></div>
-<h3 id="セッションへ保存しない情報">セッションへ保存しない情報</h3>
-<p>本機能のCSV出力処理自体はセッションを更新しない（読むのみ）。</p>
-<hr>
-<h2 id="Cookie">Cookie</h2>
-<p>本機能単体で新たにCookieを設定しない。セッション識別子は管理画面共通の仕組みに従う。</p>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<p>本機能は参照とストリーム出力のみであり、<code>old_goods_account</code>において楽観ロック・悲観ロックやアプリ定義のトランザクション境界は持たない。</p>
-<hr>
-<h2 id="文字コード・区切り文字-確認値">文字コード・区切り文字（確認値）</h2>
-<p>共通CSV出力サービスの設定に従う。</p>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>エンコーディング</td><td><code>eccube_csv_export_encoding</code>。既定パッケージ設定では<code>UTF-8</code>。UTF-8のとき先行してBOMバイト列を書く。</td></tr><tr><td>区切り</td><td><code>eccube_csv_export_separator</code>。既定はカンマ。</td></tr><tr><td>クォート</td><td>PHP標準の<code>fputcsv</code>に準ずる（エンクロージャとエスケープ文字はサービス実装の確認値）。</td></tr></tbody></table></div>
-<hr>
-<h2 id="セキュリティ補足-CSRF">セキュリティ補足（CSRF）</h2>
-<p>エクスポート用<code>result_form</code>にSymfonyフォームが自動付与するCSRFフィールドはなく、当エンドポイントでもCSRFトークン検証は行わない。到達制御は管理画面の認証に依存する。</p>
-<hr>
-<h2 id="調査補助-ソース位置の索引">調査補助（ソース位置の索引）</h2>
-<p>グレップやIDE検索の手がかりとして、主な実装位置を示す。</p>
-<ul><li><code>src/Eccube/Controller/Admin/OtcBuyOrder/OtcBuyOrderController.php</code>（ルート<code>admin_otcbuyorder_export</code>）</li><li><code>src/Eccube/Service/Csv/Exporter/OtcBuyOrderCsvExportService.php</code>（<code>CSV_TYPES['old_goods_account']</code>）</li><li><code>src/Eccube/Repository/DtbOtcBuyOrderRepository.php</code>（<code>getOldAccountCsvExportData</code>）</li><li><code>src/Eccube/Resource/template/admin/OtcBuyOrder/index.twig</code>、<code>html/template/admin/assets/js/OtcBuyOrder/otc-buy-order.js</code></li><li><code>tests/Eccube/Tests/Repository/DtbOtcBuyOrderRepositoryTest.php</code>（住所・数量・電話形式など）</li><li><code>tests/Eccube/Tests/Web/Admin/OtcBuyOrder/OtcBuyOrderControllerTest.php</code>（CSV応答の smoke）</li></ul>
-<h3 id="HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</h3>
-<ul><li><code>admin_otcbuyorder_export</code> … <code>POST</code> … <code>/%eccube_admin_route%/otcbuyorder/export</code>（<code>export_type</code>と選択された店頭買取注文IDの一覧を受け取り、種別に応じたCSVまたは別処理へ振り分ける。古物台帳用は<code>export_type</code>=<code>old_goods_account</code>のとき。）</li></ul>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>出力種別、店頭買取注文IDの配列</td></tr><tr><td>成功時出力</td><td>出力ファイルのストリーム。先頭行はヘッダとする</td></tr><tr><td>失敗時出力</td><td>選択が無いときはエラーを表示して一覧へ戻す。種別が不正なときは例外経由のエラー応答となる</td></tr></tbody></table></div>
+<h3 id="入出力-永続化">入出力: 永続化</h3>
+<p>本機能はデータを更新しない。</p>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
+<h2 id="表示メッセージ">表示メッセージ</h2>
+<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>—</td><td>管理画面上部</td><td>（共通の選択なしエラーメッセージ）</td><td>出力する注文を選択せずに実行したとき</td><td>店頭買取注文の一覧へ戻す</td></tr></tbody></table></div>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

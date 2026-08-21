@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,32 +272,15 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#本書で扱うこと">本書で扱うこと</a>
-<a class="lv2" href="#本書で扱わないこと">本書で扱わないこと</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv2" href="#用語">用語</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#フロント挙動">フロント挙動</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#配送先一覧を表示する-GET-admin-route-customer-id-delivery">配送先一覧を表示する（GET `/{admin_route}/customer/{id}/delivery`）</a>
-<a class="lv3" href="#配送先を編集する-GET-POST-admin-route-customer-delivery-id-update">配送先を編集する（GET/POST `/{admin_route}/customer/delivery/{id}/update`）</a>
-<a class="lv3" href="#配送先を削除する-DELETE-admin-route-customer-delivery-id-delete">配送先を削除する（DELETE `/{admin_route}/customer/delivery/{id}/delete`）</a>
-<a class="lv2" href="#表示メッセージ">表示メッセージ</a>
-<a class="lv3" href="#メッセージID対応-自動棚卸">メッセージID対応（自動棚卸）</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
-<a class="lv3" href="#入力項目">入力項目</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#配送先一覧">配送先一覧</a>
+<a class="lv3" href="#配送先の編集">配送先の編集</a>
+<a class="lv3" href="#配送先の削除">配送先の削除</a>
+<a class="lv3" href="#エラー時の扱い">エラー時の扱い</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#権限・認可">権限・認可</a>
-<a class="lv2" href="#画面遷移">画面遷移</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#ログ・監査">ログ・監査</a>
-<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a></nav>
+<a class="lv3" href="#入出力-永続化">入出力: 永続化</a>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -295,84 +288,23 @@ footer {
         <h1>会員管理 — 配送先一覧表示/編集</h1>
       </header>
       
-      <h2 id="概要">概要</h2>
-<p>管理画面で、会員が追加登録した配送先（お届け先）を一覧表示し、各配送先の編集・削除を行う機能である。編集では住所等の内容と配送先名称を保存する。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインの管理画面会員配送先処理、配送先フォーム、配送先を扱うリポジトリ、テンプレート（<code>Customer/delivery.twig</code>・<code>delivery_detail.twig</code>）を正とする。</p>
-<p>本機能のカスタマイズ区分は現行踏襲であり、挙動はpf-eccube3を参照し、DB関連はec-cube-enterpriseを正とする。</p>
-<p>対象はブラウザ経由の管理画面に限定する。</p>
-<p>本文ではフレームワークのコントローラ型名やメソッド名を主説明としない。管理画面プレフィックスは環境により変わる（<code>admin_route</code>）。「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。</p>
-<hr>
-<h2 id="本書で扱うこと">本書で扱うこと</h2>
-<ul><li>会員の追加配送先の一覧表示</li><li>配送先の編集（住所・配送先名称）</li><li>配送先の削除</li></ul>
-<hr>
-<h2 id="本書で扱わないこと">本書で扱わないこと</h2>
-<p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
-<ul><li>会員本体の住所編集（会員情報変更を正とする）</li><li>フロントの配送先登録・変更（配送先登録機能を正とする）</li></ul>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<p>挙動はpf-eccube3を参照し、永続化先の記述はec-cube-enterpriseを正とする。</p>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>配送先本体</td><td>配送先（<code>dtb_customer_address</code>）</td><td>配送先（<code>dtb_customer_address</code>）。同一テーブル名。</td></tr><tr><td>配送先名称の保持</td><td>補助テーブル（<code>dtb_customer_address_sub</code>、列<code>address_name</code>・<code>default_flg</code>）に分離して保持する。</td><td>配送先（<code>dtb_customer_address</code>）の列<code>address_name</code>（届け先名称、128桁）に統合して保持する。補助テーブルは持たない。</td></tr></tbody></table></div>
-<p>配送先名称の保存先は、現行は補助テーブルに分離しているが、移行先では配送先テーブルの列へ統合される。移行時は補助テーブルの<code>address_name</code>を配送先テーブルの<code>address_name</code>へ移送する点に注意する。</p>
-<hr>
-<h2 id="用語">用語</h2>
-<div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>配送先</td><td>会員が追加登録したお届け先。</td></tr><tr><td>配送先名称</td><td>配送先に付ける名称。</td></tr></tbody></table></div>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>会員詳細等の「配送先一覧」</td><td><code>GET /{admin_route}/customer/{id}/delivery</code></td><td>当該会員の追加配送先を一覧表示する。</td></tr><tr><td>配送先の「編集」</td><td><code>GET/POST /{admin_route}/customer/delivery/{id}/update</code></td><td>配送先の編集フォームを表示し、送信時に内容と配送先名称を保存する。</td></tr><tr><td>配送先の「削除」</td><td><code>DELETE /{admin_route}/customer/delivery/{id}/delete</code></td><td>当該配送先を削除する。</td></tr></tbody></table></div>
-<p>管理画面プレフィックスは環境により変わるためプレースホルダで示す。</p>
-<hr>
-<h2 id="フロント挙動">フロント挙動</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>会員の追加配送先の一覧、配送先の編集フォーム。</td></tr><tr><td>JS挙動</td><td>本機能では送信中心で、動的な表示切替は主としない。</td></tr><tr><td>モーダル・ポップアップ</td><td>本機能専用のモーダルは無い。</td></tr></tbody></table></div>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="配送先一覧を表示する-GET-admin-route-customer-id-delivery">配送先一覧を表示する（GET <code>/{admin_route}/customer/{id}/delivery</code>）</h3>
-<ol><li>管理画面の認証・権限を通過する。</li><li>当該会員の追加配送先を一覧表示する。</li></ol>
-<h3 id="配送先を編集する-GET-POST-admin-route-customer-delivery-id-update">配送先を編集する（GET/POST <code>/{admin_route}/customer/delivery/{id}/update</code>）</h3>
-<ol><li>管理画面の認証・権限を通過する。</li><li>配送先IDが無い、または該当配送先が無い場合はページが見つからない扱い（404）とする。</li><li>配送先フォームを生成する。</li><li>送信され検証に通り、郵便番号の整合確認を満たす場合、必須入力された配送先名称を保存し、内容を確定して成功メッセージを表示する。</li><li>配送先の編集画面を表示する。</li></ol>
-<h3 id="配送先を削除する-DELETE-admin-route-customer-delivery-id-delete">配送先を削除する（DELETE <code>/{admin_route}/customer/delivery/{id}/delete</code>）</h3>
-<ol><li>管理画面の認証・権限を通過する。</li><li>当該配送先を削除する。</li></ol>
-<hr>
-<h2 id="表示メッセージ">表示メッセージ</h2>
-<div class="table-wrap"><table><thead><tr><th>種別</th><th>表示文言</th><th>条件</th></tr></thead><tbody><tr><td>成功</td><td>保存完了メッセージ（ロケールキー<code>admin.customer.save.complete</code>）</td><td>配送先の保存が完了したとき</td></tr></tbody></table></div>
-<hr>
-<h3 id="メッセージID対応-自動棚卸">メッセージID対応（自動棚卸）</h3>
-<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>画面上の文言(英語)</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M08-09-MSG-001</td><td>管理画面上部</td><td>保存しました</td><td>（英訳なし）</td><td>配送先の新規登録または編集内容を保存したとき</td><td>配送先編集画面に遷移する</td></tr><tr><td>M08-09-MSG-002</td><td>管理画面上部</td><td>削除しました</td><td>（英訳なし）</td><td>配送先を削除したとき</td><td>会員情報編集画面に遷移する</td></tr><tr><td>M08-09-MSG-003</td><td>管理画面上部</td><td>関連するデータがあるため「%name%」を削除できませんでした</td><td>（英訳なし）</td><td>他のデータで使用中の配送先を削除しようとしたとき</td><td>会員情報編集画面に遷移する</td></tr></tbody></table></div>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>郵便番号整合</td><td>編集保存時に郵便番号の整合を確認する。</td></tr><tr><td>配送先名称</td><td>必須入力とし、配送先名称として保存する。最新Excel基本設計とec-cube-enterpriseのフォーム制約が一致する。</td></tr></tbody></table></div>
-<h3 id="入力項目">入力項目</h3>
-<div class="table-wrap"><table><thead><tr><th>項目名</th><th>必須／任意</th><th>最大長</th><th>初期値</th><th>保存先・扱い</th></tr></thead><tbody><tr><td>配送先の住所等</td><td>配送先フォームに準ずる</td><td>実装確認値</td><td>現行値</td><td>配送先（<code>dtb_customer_address</code>）の各項目（<code>name01</code>・<code>name02</code>・<code>postal_code</code>・<code>addr01</code>・<code>addr02</code>等）。検証・郵便番号整合の確認後に保存する。</td></tr><tr><td>配送先名称</td><td>必須</td><td>128文字（<code>dtb_customer_address.address_name</code>）</td><td>現行値</td><td>配送先名称。移行先は配送先（<code>dtb_customer_address</code>）の列<code>address_name</code>に保存する（現行は補助テーブル<code>dtb_customer_address_sub.address_name</code>）。Excelとec-cube-enterpriseで必須指定が一致する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>参照時点</td><td>画面表示またはCSV・帳票出力の実行時点で検索条件に一致するデータを参照する。本機能は参照・出力を主とし、業務データを更新しない。</td></tr><tr><td>一覧・出力の整合</td><td>一覧、CSV、帳票に出る値はそれぞれの実行時点のDB値を基準にする。画面表示後に他処理で更新された値は、再検索または再出力するまで反映しない。</td></tr><tr><td>同時更新</td><td>出力中に他処理が対象データを更新した場合のスナップショット保証は持たない。行ロックを取得せず、読み取り時点の値を出力する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="API-バッチ結果">API/バッチ結果</h2>
-<p>本機能ではAPI呼び出し・バッチ実行を扱わない。</p>
-<hr>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="配送先一覧">配送先一覧</h3>
+<p>指定された会員の追加配送先を一覧表示する。</p>
+<h3 id="配送先の編集">配送先の編集</h3>
+<p>配送先IDが無い、または該当配送先が無いときはページが見つからない扱い（404）とする。送信内容が検証に通り、かつ郵便番号の整合確認を満たすときに保存し、成功メッセージを表示して配送先の編集画面を表示する。検証または郵便番号整合に失敗したときは保存せず編集画面を再表示する。</p>
+<p>配送先名称は必須入力とし、配送先名称として保存する。最新Excel基本設計と移行先のフォーム制約は一致する。</p>
+<h3 id="配送先の削除">配送先の削除</h3>
+<p>指定された配送先を削除する。他のデータで使用中の配送先は削除できない。</p>
+<h3 id="エラー時の扱い">エラー時の扱い</h3>
+<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>配送先IDが無い・該当なし</td><td>ページが見つからない扱い（404）とする</td></tr><tr><td>検証・郵便番号整合の失敗</td><td>保存せず編集画面を再表示する</td></tr><tr><td>他のデータで使用中の配送先の削除</td><td>削除せず会員情報編集画面へ遷移する</td></tr></tbody></table></div>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>会員ID、配送先ID、配送先の各項目・配送先名称、なりすまし対策トークン。</td></tr><tr><td>成功時出力</td><td>配送先の保存・削除、成功メッセージ。</td></tr><tr><td>失敗時出力</td><td>配送先が無い場合は404、検証失敗時は編集画面を再表示。</td></tr><tr><td>副作用</td><td>配送先の更新・削除。</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<p>機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。</p>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>dtb_customer_address</code>（配送先）</td><td><code>customer_id</code>（会員参照）・<code>name01</code>・<code>name02</code>・<code>postal_code</code>・<code>addr01</code>・<code>addr02</code>等</td><td>一覧・編集・削除に使用する。</td></tr><tr><td><code>dtb_customer_address</code>（配送先）</td><td><code>address_name</code>（届け先名称、128桁）</td><td>編集時に保存する。現行は補助テーブル<code>dtb_customer_address_sub.address_name</code>に保持し、移行先で配送先テーブルの列へ統合する。</td></tr></tbody></table></div>
-<h3 id="DB操作">DB操作</h3>
-<p>永続化の正は ec-cube-enterprise（テーブル名・操作は ec-cube-enterprise を正典）。当ドメインは承認ワークフローを介さず persist/flush で直接確定する（承認ワークフローは在庫機能固有）。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>登録/更新</td><td>dtb_customer_address / dtb_customer_address_sub</td><td>当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。</td></tr></tbody></table></div>
-<hr>
-<h2 id="権限・認可">権限・認可</h2>
-<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>配送先一覧表示/編集</th></tr></thead><tbody><tr><td>未ログイン管理者</td><td>アクセス不可。</td></tr><tr><td>ログイン済み管理者</td><td>当該会員の配送先の閲覧・編集・削除が可能。</td></tr></tbody></table></div>
-<hr>
-<h2 id="画面遷移">画面遷移</h2>
-<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>「配送先一覧」</td><td>配送先一覧（<code>m08-09_admin_customer_customer_delivery</code>）</td></tr><tr><td>編集</td><td>配送先編集画面（<code>m08-09_admin_customer_customer_delivery_edit</code>）</td></tr><tr><td>削除</td><td>配送先一覧へ戻る</td></tr><tr><td>配送先なし</td><td>ページが見つからない扱い（404）</td></tr></tbody></table></div>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>配送先IDが無い・該当なし</td><td>ページが見つからない扱い（404）。</td></tr><tr><td>検証・郵便番号整合の失敗</td><td>保存せず編集画面を再表示する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="ログ・監査">ログ・監査</h2>
-<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
-<ul><li>会員の個人情報の機微値</li><li>Cookie値</li></ul>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<p>配送先の更新・削除を確定する。本機能は楽観ロック・悲観ロックの対象は持たない。</p>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>会員ID、配送先ID、配送先の各項目・配送先名称、なりすまし対策トークン</td></tr><tr><td>成功時出力</td><td>配送先の保存・削除、成功メッセージ</td></tr><tr><td>失敗時出力</td><td>配送先が無いときは404、検証失敗時は編集画面の再表示</td></tr></tbody></table></div>
+<h3 id="入出力-永続化">入出力: 永続化</h3>
+<div class="table-wrap"><table><thead><tr><th>操作</th><th>契機</th></tr></thead><tbody><tr><td>追加・更新</td><td>配送先の編集内容を保存したとき</td></tr><tr><td>削除</td><td>配送先を削除したとき</td></tr></tbody></table></div>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
+<h2 id="表示メッセージ">表示メッセージ</h2>
+<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M08-09-MSG-001</td><td>管理画面上部</td><td>保存しました</td><td>配送先の新規登録または編集内容を保存したとき</td><td>配送先編集画面に遷移する</td></tr><tr><td>M08-09-MSG-002</td><td>管理画面上部</td><td>削除しました</td><td>配送先を削除したとき</td><td>会員情報編集画面に遷移する</td></tr><tr><td>M08-09-MSG-003</td><td>管理画面上部</td><td>関連するデータがあるため「%name%」を削除できませんでした</td><td>他のデータで使用中の配送先を削除しようとしたとき</td><td>会員情報編集画面に遷移する</td></tr></tbody></table></div>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

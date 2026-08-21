@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,27 +272,14 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#本書で扱うこと">本書で扱うこと</a>
-<a class="lv2" href="#本書で扱わないこと">本書で扱わないこと</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv2" href="#用語">用語</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#フロント挙動">フロント挙動</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#メール送信履歴を表示する-GET-admin-route-customer-id-mail-history">メール送信履歴を表示する（GET `/{admin_route}/customer/{id}/mail_history`）</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#表示の判定順序">表示の判定順序</a>
+<a class="lv3" href="#並び順">並び順</a>
+<a class="lv3" href="#エラー時の扱い">エラー時の扱い</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#権限・認可">権限・認可</a>
-<a class="lv2" href="#画面遷移">画面遷移</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#ログ・監査">ログ・監査</a>
-<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a></nav>
+<a class="lv3" href="#入出力-永続化">入出力: 永続化</a>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -290,74 +287,21 @@ footer {
         <h1>会員管理 — メール送信履歴</h1>
       </header>
       
-      <h2 id="概要">概要</h2>
-<p>管理画面で、特定の会員に配信したメールの送信履歴を一覧表示する機能である。メールテンプレートで絞り込み、当該会員へ送信したメールの履歴を新しい順に確認できる。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインの管理画面会員メール履歴処理、メール送信履歴を扱うリポジトリ、テンプレート（<code>Customer/mail_history.twig</code>）を正とする。</p>
-<p>本機能のカスタマイズ区分は現行踏襲であり、挙動の確認はpf-eccube3を参照し、DB関連の記述（テーブル名・列名・保存先）はec-cube-enterpriseを正とする。</p>
-<p>対象はブラウザ経由の管理画面に限定する。</p>
-<p>本文ではフレームワークのコントローラ型名やメソッド名を主説明としない。管理画面プレフィックスは環境により変わる（<code>admin_route</code>）。「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。</p>
-<hr>
-<h2 id="本書で扱うこと">本書で扱うこと</h2>
-<ul><li>特定会員のメール送信履歴の一覧表示</li><li>メールテンプレートによる絞り込み</li></ul>
-<hr>
-<h2 id="本書で扱わないこと">本書で扱わないこと</h2>
-<p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
-<ul><li>メールの送信そのもの（メール一括送信・個別メール機能を正とする）</li><li>メールテンプレートの管理（メールテンプレート管理を正とする）</li></ul>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<p>現行（pf-eccube3、HareruyaEcプラグイン）と移行先（ec-cube-enterprise）でのDB関連の差を記録する。挙動は現行を確認値とし、永続化先の名称はec-cube-enterpriseを正とする。</p>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>会員のメール送信履歴</td><td>HareruyaEcプラグインのメール送信履歴に保持</td><td>会員向けメール送信履歴テーブル<code>dtb_user_mail_history</code>（会員<code>customer_id</code>、テンプレート参照<code>template_id</code>、件名<code>subject</code>、本文<code>mail_body</code>、送信日時<code>send_date</code>）。列名・型はec-cube-enterprise実装を正とする</td></tr><tr><td>メールテンプレート</td><td>テンプレート種類で絞り込み</td><td>テンプレートマスタ<code>dtb_mail_template</code>を参照（絞り込みキーはテンプレートID）</td></tr></tbody></table></div>
-<p>会員へ配信したメールの送信履歴はec-cube-enterpriseの<code>dtb_user_mail_history</code>を正とする。</p>
-<hr>
-<h2 id="用語">用語</h2>
-<div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>メール送信履歴</td><td>会員へ配信したメールの記録。</td></tr><tr><td>メールテンプレート</td><td>送信に用いたテンプレートの種類。絞り込みに使う。</td></tr></tbody></table></div>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>会員詳細等の「メール送信履歴」</td><td><code>GET /{admin_route}/customer/{id}/mail_history</code></td><td>当該会員のメール送信履歴を新しい順に一覧表示する。</td></tr><tr><td>テンプレートで絞り込み</td><td>同URLにテンプレート指定を付けて表示</td><td>指定テンプレートで送信した履歴のみに絞り込む。</td></tr></tbody></table></div>
-<p>管理画面プレフィックスは環境により変わるためプレースホルダで示す。</p>
-<hr>
-<h2 id="フロント挙動">フロント挙動</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>メールテンプレートの絞り込み、当該会員のメール送信履歴の一覧。</td></tr><tr><td>JS挙動</td><td>本機能では絞り込みの送信中心で、動的な表示切替は主としない。</td></tr><tr><td>モーダル・ポップアップ</td><td>本機能専用のモーダルは無い。</td></tr></tbody></table></div>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="メール送信履歴を表示する-GET-admin-route-customer-id-mail-history">メール送信履歴を表示する（GET <code>/{admin_route}/customer/{id}/mail_history</code>）</h3>
-<ol><li>管理画面の認証・権限を通過する。</li><li>パスの会員IDで会員を取得する。存在しない場合はページが見つからない扱い（404）とする。</li><li>テンプレート指定が無い場合は当該会員の全送信履歴を新しい順に取得する。</li><li>テンプレート指定がある場合は当該テンプレートで絞り込んだ送信履歴を取得し、絞り込み条件をフォームに反映する。</li><li>送信履歴の一覧を表示する。</li></ol>
-<hr>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>並び順</td><td>送信履歴を新しい順に表示する。</td></tr><tr><td>絞り込み</td><td>メールテンプレートを指定した場合は当該テンプレートの履歴のみ表示する。</td></tr></tbody></table></div>
-<p>本機能は閲覧専用であり、送信は行わない。</p>
-<hr>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>参照時点</td><td>画面表示またはCSV・帳票出力の実行時点で検索条件に一致するデータを参照する。本機能は参照・出力を主とし、業務データを更新しない。</td></tr><tr><td>一覧・出力の整合</td><td>一覧、CSV、帳票に出る値はそれぞれの実行時点のDB値を基準にする。画面表示後に他処理で更新された値は、再検索または再出力するまで反映しない。</td></tr><tr><td>同時更新</td><td>出力中に他処理が対象データを更新した場合のスナップショット保証は持たない。行ロックを取得せず、読み取り時点の値を出力する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="API-バッチ結果">API/バッチ結果</h2>
-<p>本機能ではAPI呼び出し・バッチ実行を扱わない。</p>
-<hr>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="表示の判定順序">表示の判定順序</h3>
+<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>パスの会員IDに一致する会員が存在しないとき</td><td>ページが見つからない扱い（404）とする</td></tr><tr><td>2</td><td>絞り込みのテンプレート指定が無いとき</td><td>当該会員の全送信履歴を新しい順に取得する</td></tr><tr><td>3</td><td>絞り込みのテンプレート指定があるとき</td><td>当該テンプレートで絞り込んだ送信履歴を取得し、絞り込み条件を入力欄に反映する</td></tr></tbody></table></div>
+<h3 id="並び順">並び順</h3>
+<p>送信履歴は、いずれのときも新しい順に表示する。テンプレートを指定したときは、当該テンプレートの履歴だけを表示する。</p>
+<p>本機能は閲覧だけを行い、いずれのときも送信は行わない。</p>
+<h3 id="エラー時の扱い">エラー時の扱い</h3>
+<div class="table-wrap"><table><thead><tr><th>事象</th><th>扱い</th></tr></thead><tbody><tr><td>会員が存在しないとき</td><td>ページが見つからない扱い（404）とする</td></tr></tbody></table></div>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>会員ID、絞り込みのメールテンプレート。</td></tr><tr><td>成功時出力</td><td>メール送信履歴の一覧表示。</td></tr><tr><td>失敗時出力</td><td>会員が存在しない場合はページが見つからない扱い（404）。</td></tr><tr><td>副作用</td><td>無し（参照のみ）。</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<p>機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。</p>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td>メール送信履歴（<code>dtb_user_mail_history</code>）</td><td><code>customer_id</code>（会員参照）、<code>template_id</code>（テンプレート参照）、<code>subject</code>（件名）、<code>mail_body</code>（本文）、<code>send_date</code>（送信日時）</td><td>一覧表示・絞り込みに使用する。列名はec-cube-enterpriseを正とする。</td></tr></tbody></table></div>
-<h3 id="DB操作">DB操作</h3>
-<p>本機能は参照系（検索）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>検索</td><td>dtb_user_mail_history</td><td>検索条件に合致するレコードを抽出する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="権限・認可">権限・認可</h2>
-<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>メール送信履歴</th></tr></thead><tbody><tr><td>未ログイン管理者</td><td>アクセス不可。</td></tr><tr><td>ログイン済み管理者</td><td>当該会員の送信履歴を閲覧可能。</td></tr></tbody></table></div>
-<hr>
-<h2 id="画面遷移">画面遷移</h2>
-<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>「メール送信履歴」</td><td>履歴一覧（<code>m08-07_admin_customer_customer_mail_history</code>）</td></tr><tr><td>テンプレート絞り込み</td><td>同画面（絞り込み結果）</td></tr></tbody></table></div>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>会員が存在しない</td><td>ページが見つからない扱い（404）。</td></tr></tbody></table></div>
-<hr>
-<h2 id="ログ・監査">ログ・監査</h2>
-<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
-<ul><li>会員のメールアドレス等の機微値</li><li>Cookie値</li></ul>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<p>本機能は参照のみであり、楽観ロック・悲観ロックの対象は持たない。</p>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>会員ID、絞り込みのメールテンプレート。テンプレートの指定は任意で、無いときは全件を対象とする</td></tr><tr><td>成功時出力</td><td>メール送信履歴の一覧</td></tr><tr><td>失敗時出力</td><td>会員が存在しないときはページが見つからない扱い（404）</td></tr></tbody></table></div>
+<h3 id="入出力-永続化">入出力: 永続化</h3>
+<p>本機能はデータを更新しない。</p>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
+<h2 id="表示メッセージ">表示メッセージ</h2>
+<p>本機能は固有の文言を持たない。表示するのは送信履歴の内容である。</p>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

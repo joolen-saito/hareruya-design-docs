@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,39 +272,17 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#フロント挙動">フロント挙動</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#画面を表示する-GET-m16-01-admin-data-top-banner-または-m16-01-admin-data-top-banner-narrow">画面を表示する（GET `m16-01_admin_data_top_banner` または `m16-01_admin_data_top_banner_narrow`）</a>
-<a class="lv3" href="#バナー設定-を送信する-POST-ファイルなし">「バナー設定」を送信する（POST、ファイルなし）</a>
-<a class="lv3" href="#画像をアップロードする-POST-ファイルあり">画像をアップロードする（POST、ファイルあり）</a>
-<a class="lv3" href="#画像を削除する-DELETE">画像を削除する（DELETE）</a>
-<a class="lv2" href="#並び順と永続化の対応">並び順と永続化の対応</a>
-<a class="lv2" href="#集計条件">集計条件</a>
-<a class="lv2" href="#表示メッセージ">表示メッセージ</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
-<a class="lv3" href="#入力項目">入力項目</a>
-<a class="lv3" href="#エッジケース">エッジケース</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#画面の表示">画面の表示</a>
+<a class="lv3" href="#バナー設定の保存">バナー設定の保存</a>
+<a class="lv3" href="#入力の制約">入力の制約</a>
+<a class="lv3" href="#画像のアップロード">画像のアップロード</a>
+<a class="lv3" href="#画像の削除">画像の削除</a>
+<a class="lv3" href="#エラー時の扱い">エラー時の扱い</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#バリデーション">バリデーション</a>
-<a class="lv2" href="#権限・認可">権限・認可</a>
-<a class="lv2" href="#画面遷移">画面遷移</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#試行制限">試行制限</a>
-<a class="lv2" href="#ログ・監査">ログ・監査</a>
-<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
-<a class="lv2" href="#セッション">セッション</a>
-<a class="lv3" href="#セッションへ保存しない情報">セッションへ保存しない情報</a>
-<a class="lv2" href="#Cookie">Cookie</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a>
-<a class="lv2" href="#調査補助-grep向け">調査補助（grep向け）</a>
-<a class="lv3" href="#HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</a></nav>
+<a class="lv3" href="#入出力-永続化">入出力: 永続化</a>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -302,100 +290,33 @@ footer {
         <h1>データ管理 — トップバナー管理</h1>
       </header>
       
-      <h2 id="概要">概要</h2>
-<p>HareruyaEc プラグインが管理画面に提供する「データ管理」配下のトップバナー管理である。画面上部では <code>mtb_top_banner</code> の各スロットについて画像 URL・リンク先・表示タイプ・言語・画像 alt・並び順をまとめて保存する。画面下部（アンカー「画像設定」）ではオブジェクトストレージ上の <code>banner/</code> 配下へ画像ファイルをアップロードし、一覧・削除・公開 URL のコピーを行う。トップバナーではイベントバナーにある「表示店舗」項目は出さない。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。カスタマイズ区分は「カスタマイズ」。画面・挙動は pf-eccube3 に配置された HareruyaEc プラグインのソースを確認値とし、DB関連は ec-cube-enterprise の実装を正とする。EC-CUBE 3 コア単体では当ルートは存在しないが、移行先 ec-cube-enterprise にはコアの同等機能（トップバナーの画像アップロード・一覧・削除）が存在する。</p>
-<p>対象はブラウザ経由の管理画面に限定する。</p>
-<p>本文ではフレームワークのコントローラ型名やメソッド名は主説明としない。本文ではルートbind名やSymfonyのルートnameの網羅は主説明としない。「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。コード探索でbind名が必要なときだけ「調査補助」へ書く。</p>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<ul><li>本機能は画像ファイルをオブジェクトストレージ（<code>banner/</code> プレフィックス配下、店舗別は <code>banner/{html_class}/</code>）に格納し、DBテーブルを持たない。したがってDBスキーマ上の差分は無い。</li><li>画面・挙動は現行（pf-eccube3）の確認値。移行先 ec-cube-enterprise でも同等のアップロード・一覧・削除がコアのアクション（<code>TopBannerUploadAction</code> / <code>TopBannerFileListAction</code> / <code>TopBannerDeleteAction</code> 相当）として提供される。現行はコントローラ内に直書き、移行先はアクションクラスに分離という実装差がある。</li><li>店舗別格納の絞り込みキーが異なる。現行はプラグインの <code>mtb_shop.html_class</code>、移行先は店舗（拠点）<code>dtb_base_info</code> の <code>shop_digit</code> を用いる。移行時はこのキー対応を移行設計で吸収する。</li></ul>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>ナビ「データ管理」→「トップバナー管理」</td><td><code>GET /{admin_route}/banner/top</code></td><td>全店舗向けストレージキー <code>banner/</code> 直下の画像一覧と、DB の全スロット分の入力表が表示される。</td></tr><tr><td>画像一覧のドロップダウンで店舗を選ぶ</td><td><code>GET /{admin_route}/banner/top/{html_class}#upload_wrap</code></td><td>選択店舗のサブフォルダのみを一覧する。バナー設定表は共通。</td></tr><tr><td>「▼画像設定」リンク</td><td>同一ページ内 <code>#upload_wrap</code></td><td>スクロールのみ。別 HTTP リクエストは発生しない。</td></tr><tr><td>「バナー設定」ボタン</td><td><code>POST /{admin_route}/banner/top</code> または <code>POST /{admin_route}/banner/top/{html_class}</code></td><td>CSRF を検証したうえでバナー設定フォームを検証し、成功時は各行を DB に保存して GET にリダイレクトする。</td></tr><tr><td>「アップロード」ボタン（画像ファイル・店舗選択付き）</td><td>同上 POST</td><td>ファイル検証後にストレージへ保存し、<code>#upload_wrap</code> 付きで GET にリダイレクトする。</td></tr><tr><td>一覧の「削除」リンク</td><td><code>DELETE /{admin_route}/banner/top/delete?select_file=…</code> または <code>DELETE …/delete/{html_class}?select_file=…</code></td><td>確認メッセージ後に該当オブジェクトを削除し、<code>#upload_wrap</code> 付き GET へリダイレクトする。</td></tr><tr><td>「画像URLコピー」</td><td>同一ページ内スクリプト</td><td>公開 URL 文字列をクリップボード用処理へ渡す（HTTP 遷移なし）。</td></tr><tr><td>同上（店舗サブディレクトリ文脈）。</td><td><code>DELETE /{admin_route}/banner/top/delete/{html_class}</code></td><td>同上（店舗サブディレクトリ文脈）。</td></tr></tbody></table></div>
-<hr>
-<h2 id="フロント挙動">フロント挙動</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>ページタイトルは「データ管理」。サブタイトルは「トップバナー管理」。上部に案内文「画像とリンク先を入力・変更してください」「空欄にすると表示から削除されます」、「バナー設定」ボタン、エラー時のみ <code>bannerError.message</code>、見出しリンク「▼画像設定」。各スロットは表で、プレビュー画像、画像 URL、リンク先 URL、言語（チェックボックス複数）、表示タイプ、画像 alt 属性、並び順。下部ブロックは店舗ラベル付きセレクト、「画像のアップロード」ファイル入力とアップロードボタン、エラー時のみ <code>error.message</code>、店舗絞り込みドロップダウン、画像プレビュー・更新日時・URL コピー・削除列の表。</td></tr><tr><td>JS 挙動</td><td>「バナー設定」クリック時、<code>hareruyaec_banner_sort_no_*</code> を走査し空ならアラートして送信しない。並び順を数値化し重複があればアラートして送信しない。問題なければ hidden <code>mode</code> をセットして <code>hareruyaec_banner</code> を submit。<code>copy.js</code> の <code>copyString</code> で URL をコピー。削除リンクはアンカー用 CSRF と <code>data-method="delete"</code>、<code>data-message</code> で確認文言を渡す（詳細は共通脚本を正とする）。</td></tr><tr><td>CSS・レイアウト</td><td><code>.bannerInput input { width: 95%; }</code>。Bootstrap 横型フォームテーマをバナー設定フォームに適用。</td></tr><tr><td>モーダル・ポップアップ</td><td>専用モーダルはない。並び順・重複は <code>alert</code>。削除は共通実装の確認ダイアログに依存する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="画面を表示する-GET-m16-01-admin-data-top-banner-または-m16-01-admin-data-top-banner-narrow">画面を表示する（GET <code>m16-01_admin_data_top_banner</code> または <code>m16-01_admin_data_top_banner_narrow</code>）</h3>
-<ol><li>管理画面の認証・共通制約を通過する。</li><li><code>mtb_top_banner</code> を主キー昇順で全件取得する。</li><li>フォーム型 <code>hareruyaec_banner</code> に一覧データを載せてフォームビューを生成する。トップバナーモードでは表示タイプの選択肢が「非表示」「表示」の2値になる。</li><li>画像アップロード用に別フォームを生成する。ファイル入力、テキスト項目（送信処理では未参照）、店舗エンティティの単一選択がある。店舗絞り込み GET のときは当該店舗が既定選択になる実装である。</li><li>ストレージサービスで <code>banner/</code> または <code>banner/{html_class}/</code> のオブジェクト一覧を取得する。一覧は PHP の配列ソートで更新日時の降順に並べ替える。</li><li>並べ替え後、先頭から最大 2000 件だけテンプレートへ渡す。</li><li>Twig を描画する。</li></ol>
-<h3 id="バナー設定-を送信する-POST-ファイルなし">「バナー設定」を送信する（POST、ファイルなし）</h3>
-<ol><li>CSRF を検証する。失敗時はアクセス拒否（HTTP 403）となる実装である。</li><li><code>hareruyaec_banner</code> をバインドして検証する。</li><li>失敗時は <code>bannerError.message</code> に、プラグイン設定 <code>banner.length</code>（既定 255）を埋め込んだ <code>admin.error.text_over</code> を表示する文言をセットする。画像一覧は実装上ルート直下 <code>banner/</code> のみ再取得する場合がある（店舗絞り込み表示との不一致リスク）。HTTP 200 で同一テンプレートを返す。</li><li>成功時、各スロットの「並び順」数値で並べ替えた結果に応じて、フォームのどの画像 URL／リンク／表示タイプ／言語／alt がどの <code>mtb_top_banner</code> 行に書き込まれるかを解決する（並べ替えアルゴリズムは後述「並び順と永続化の対応」）。</li><li>トップバナーでは店舗との関連更新は行わない。</li><li>言語は複数選択の ID 配列から言語エンティティを取得し、多対多を置き換える。</li><li>リンクはフォーム値が欠ける場合は空文字を保存する。</li><li>全行を永続化処理に渡し、一度フラッシュする。</li><li>店舗絞り込みでなければ <code>GET /{admin_route}/banner/top</code> へ、絞り込みなら <code>GET /{admin_route}/banner/top/{html_class}</code> へリダイレクトする（フラッシュメッセージの付与はこの経路では行わない）。</li></ol>
-<h3 id="画像をアップロードする-POST-ファイルあり">画像をアップロードする（POST、ファイルあり）</h3>
-<ol><li>アップロード用フォームをバインドする。CSRF は共通ヘルパで検証する。</li><li>検証失敗時は <code>[false, null]</code> を返し、後段でバナー設定失敗と同様にテンプレート描画へ入る。</li><li>ファイル未選択なら <code>admin.error.select_no_file</code> を表示用エラーにセットする。</li><li>ファイルサイズが 520000 バイト超なら <code>admin.error.size_over</code> をセットする（メッセージに上限値が埋め込まれる）。</li><li><code>exif_imagetype</code> が 1〜3（GIF／JPEG／PNG）のときのみ続行する。それ以外は <code>admin.error.not_image</code>。</li><li>店舗が未選択ならストレージディレクトリは <code>banner/</code>、選択済みなら <code>banner/{htmlClassName}/</code>。</li><li>アップロードしたファイルの推定拡張子と本体をストレージへ送る。</li><li>成功時、店舗未選択なら <code>null</code>、選択済みなら <code>htmlClassName</code> を返し、リダイレクト先の絞り込み判定に使う。</li><li><code>GET</code> に <code>#upload_wrap</code> を付けてリダイレクトする。</li></ol>
-<h3 id="画像を削除する-DELETE">画像を削除する（DELETE）</h3>
-<ol><li>CSRF を検証する。</li><li>クエリ <code>select_file</code> をサーバー側エンコーディングルールに従って変換する（Windows 環境ではマルチバイトのエンコーディング変換が入る実装である）。</li><li>オブジェクトが存在すれば削除する。存在しなくてもエラー画面にはせずリダイレクトする。</li><li><code>GET</code> に <code>#upload_wrap</code> を付けてリダイレクトする。</li></ol>
-<hr>
-<h2 id="並び順と永続化の対応">並び順と永続化の対応</h2>
-<ol><li>各スロットごとにフォーム「並び順」の整数値を読む。</li><li>並び順の値をキーとして、当該スロットの画像 URL・リンク・表示タイプ・言語・alt のフォームフィールド名を値とするマップを組み立てる。</li><li>キーで昇順ソートする。</li><li>ソート後のエントリに 1 から通し番号を振り直す。</li><li>その後、主キー id が k である <code>mtb_top_banner</code> 行に、通し番号 k に対応したフォーム値を書き込む。</li></ol>
-<p>この対応は「主キーが 1 からの連番で欠番がない」前提で整合する。並び順の重複はクライアント脚本で送信を阻むが、サーバー側では重複検証をしない。</p>
-<hr>
-<h2 id="集計条件">集計条件</h2>
-<div class="table-wrap"><table><thead><tr><th>指標</th><th>集計の要点</th></tr></thead><tbody><tr><td>ストレージ一覧の表示件数</td><td>ストレージから取得した配列を更新日時降順に整列したうえで先頭 2000 件。</td></tr><tr><td>ストアフロントのスライドバナー表示件数</td><td>別ブロック実装では最大 10 件。画像 URL が空でない行に限定し、表示タイプが「表示」側の定数値、現在ロケールに対応する言語が結びつく行のみ（詳細はブロック実装を正とする）。</td></tr></tbody></table></div>
-<hr>
-<h2 id="表示メッセージ">表示メッセージ</h2>
-<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>画面上の文言(英語)</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M16-02-MSG-001</td><td>本文</td><td>画像がありません。</td><td>（英訳なし）</td><td>トップバナー画像一覧に表示対象の画像がないとき</td><td>画像なしの一覧を表示し、同一画面に留まる</td></tr></tbody></table></div>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>表示からの除外</td><td>画面上の案内どおり、画像 URL を空にすればフロント抽出クエリ（URL 非空条件）により表示対象外になりうる。</td></tr><tr><td>リンク先 URL</td><td>フォーム検証として最大 255 文字、許容文字種は実装の正規表現による。</td></tr><tr><td>画像 URL</td><td>最大 255 文字。部分一致で <code>admin.hareruyamtg.com</code> を含む文字列は不正とする独自検証がある。</td></tr><tr><td>画像ファイル</td><td>520000 バイト以下かつ GIF／JPEG／PNG のみ。</td></tr></tbody></table></div>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="画面の表示">画面の表示</h3>
+<p>トップバナーを主キー昇順で全件取得し、バナー設定フォームに載せて表示する。トップバナーモードでは表示タイプの選択肢が「非表示」「表示」の2値になる。</p>
+<p>画像アップロード用のフォームは、ファイル入力・テキスト項目（送信時は参照しない）・店舗の単一選択を持つ。店舗で絞り込んで開いたときは当該店舗が既定選択になる。</p>
+<p>画像一覧は、店舗の指定が無いときは<code>banner/</code>、あるときは<code>banner/{店舗の識別名}/</code>のファイル一覧を取得し、更新日時の降順に並べ替えたうえで先頭から最大2000件だけを表示する。</p>
+<h3 id="バナー設定の保存">バナー設定の保存</h3>
+<div class="table-wrap"><table><thead><tr><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>なりすまし対策トークンが不正なとき</td><td>アクセス拒否（HTTP 403）とする</td></tr><tr><td>フォームの検証に失敗したとき</td><td>リンク先URLの上限文字数（既定255）を埋め込んだ文字数超過のエラーを表示し、同一画面を再表示する。このとき画像一覧は<code>banner/</code>直下だけを取り直すことがあり、店舗で絞り込んだ表示とは一致しないことがある</td></tr><tr><td>フォームの検証に成功したとき</td><td>各スロットの「並び順」の数値で並べ替えた結果に従って、画像URL・リンク・表示タイプ・言語・altをどのトップバナー行へ書き込むかを決める</td></tr></tbody></table></div>
+<p>書き込む値の扱いは次のとおりである。</p>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>扱い</th></tr></thead><tbody><tr><td>言語</td><td>選択したID群から言語を取得して関連を置き換える</td></tr><tr><td>リンク</td><td>値が欠けているときは空文字を保存する</td></tr><tr><td>店舗との関連</td><td>トップバナーでは更新しない</td></tr></tbody></table></div>
+<p>保存後は、店舗で絞り込んでいないときはトップバナー画面へ、絞り込んでいるときは当該店舗のトップバナー画面へ戻る。この経路では完了メッセージを表示しない。</p>
+<h3 id="入力の制約">入力の制約</h3>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>表示からの除外</td><td>画像URLを空にすると、URLが空でないことを条件とするフロントの抽出対象から外れることがある</td></tr><tr><td>リンク先URL</td><td>最大255文字。許容文字種は実装の検証規則による</td></tr><tr><td>画像URL</td><td>最大255文字。admin.hareruyamtg.com を含む文字列は不正とする</td></tr><tr><td>画像ファイル</td><td>520000バイト以下かつGIF・JPEG・PNGのみ</td></tr></tbody></table></div>
 <p>本機能では金額計算や税率計算を行わない。</p>
-<h3 id="入力項目">入力項目</h3>
-<p>同一画面上で <code>mtb_top_banner</code> の行数分、以下の項目セットが繰り返す（マイグレーションでは 15 スロットを初期化）。画面ラベルは各行で共通である。</p>
-<div class="table-wrap"><table><thead><tr><th>項目名</th><th>必須／任意</th><th>最大長</th><th>初期値</th><th>保存先・扱い</th></tr></thead><tbody><tr><td>画像URL</td><td>任意</td><td>255 文字（フォームの長さ制約あり）。参照禁止ホスト文字列は検証で拒否</td><td>DB の <code>mtb_top_banner.image_url</code></td><td>カラム <code>image_url</code>。空は許容。</td></tr><tr><td>リンク先URL</td><td>任意</td><td>255 文字（フォームの長さ制約あり）</td><td>DB の <code>mtb_top_banner.link</code></td><td>カラム <code>link</code>。未入力時は空文字を保存。</td></tr><tr><td>言語</td><td>任意</td><td>チェックボックス複数（選択肢は日本語・英語の ID に対応）</td><td>DB が保持する言語関連の現行選択</td><td>中間テーブル <code>dtb_top_banner_language</code> を通じた <code>mtb_language</code> との多対多を置換。</td></tr><tr><td>表示タイプ</td><td>任意</td><td>ドロップダウン（値 0 または 1）</td><td>DB の <code>disp_type</code></td><td>カラム <code>disp_type</code>。0 は「非表示」、1 は「表示」のラベルがフォームに付く。</td></tr><tr><td>画像alt属性</td><td>任意</td><td>フォームは単行テキストで長さ制約なし（DB は text 型）</td><td>DB の <code>mtb_top_banner.image_alt</code></td><td>カラム <code>image_alt</code>。</td></tr><tr><td>並び順</td><td>任意（送信時は脚本で空禁止）</td><td>integer 型入力</td><td>初期表示では当該行の <code>id</code> と同じ値が入る Twig 指定がある</td><td>DB 列ではなく、保存時の並べ替えにのみ利用。</td></tr></tbody></table></div>
-<p>画像アップロード用フォーム（バナー設定フォームとは別）</p>
-<div class="table-wrap"><table><thead><tr><th>項目名</th><th>必須／任意</th><th>最大長</th><th>初期値</th><th>保存先・扱い</th></tr></thead><tbody><tr><td>店舗</td><td>POST 時は未選択可（全店舗ルート）。初期表示フォームでは単一選択が必須に近い設定が二重指定されている</td><td>—</td><td>店舗絞り込み GET では該当店舗</td><td>ストレージパス <code>banner/</code> と <code>banner/{htmlClassName}/</code> の選択にのみ利用。DB 更新はしない。</td></tr><tr><td>画像のアップロード</td><td>アップロード時は実質必須</td><td>520000 バイト以下、GIF／JPEG／PNG</td><td>なし</td><td>ストレージへ保存。ファイル名は実装側で一意化される経路があり、アップロード完了でも <code>mtb_top_banner</code> は自動では更新されない。</td></tr></tbody></table></div>
-<h3 id="エッジケース">エッジケース</h3>
-<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>並び順が空または重複</td><td>クライアント脚本が submit を中止する。サーバーは重複を検知しない。</td></tr><tr><td>主キー id に欠番があるデータセット</td><td>並べ替え結果と id の対応ロジックが崩れるリスクがある（初期マイグレーションは連番前提）。</td></tr><tr><td>アップロード検証失敗かつ店舗絞り込み表示</td><td>エラー再描画では画像一覧をルート直下のみ読む実装箇所があり、一覧が画面モードと不一致になる場合がある。</td></tr><tr><td>画像 URL はあるが言語が未選択</td><td>言語集合が空でも保存処理は続行しうる。フロントの結合条件により表示されない場合がある。</td></tr></tbody></table></div>
-<hr>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>DB とストレージ</td><td>アップロードはストレージのみ更新する。バナー設定で画像 URL を手入力しない限り、新規ファイルとスロットは自動連携しない。</td></tr><tr><td>一覧の並び</td><td>表示はストレージの LastModified 降順。バナー設定の並び順とは独立。</td></tr><tr><td>同時更新</td><td>複数利用者が同一スロットを更新した場合、後勝ちでフラッシュされる一般的な ORM 挙動に依存する（楽観ロックは持たない）。</td></tr></tbody></table></div>
-<hr>
-<h2 id="API-バッチ結果">API/バッチ結果</h2>
-<p>本機能では API 呼び出し・バッチ実行を扱わない。</p>
-<hr>
+<h3 id="画像のアップロード">画像のアップロード</h3>
+<div class="table-wrap"><table><thead><tr><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>フォームの検証に失敗したとき</td><td>バナー設定の失敗と同様に同一画面を再表示する</td></tr><tr><td>ファイルが未選択のとき</td><td>ファイル未選択のエラーを表示する</td></tr><tr><td>ファイルサイズが520000バイトを超えるとき</td><td>上限値を埋め込んだサイズ超過のエラーを表示する</td></tr><tr><td>画像種別がGIF・JPEG・PNGのいずれでもないとき</td><td>画像でない旨のエラーを表示する</td></tr><tr><td>上記を通過したとき</td><td>店舗が未選択なら<code>banner/</code>、選択済みなら<code>banner/{店舗の識別名}/</code>へ、推定した拡張子でファイルを保存する</td></tr></tbody></table></div>
+<p>保存後は、店舗が未選択のときは絞り込み無しの画面へ、選択済みのときは当該店舗の画面へ戻り、アップロード欄の位置を表示する。</p>
+<h3 id="画像の削除">画像の削除</h3>
+<p>なりすまし対策トークンを検証する。指定されたファイル名をサーバー側のエンコーディング規則に従って変換したうえで、対象が存在するときは削除する。存在しないときもエラー画面にはせず、アップロード欄の位置を表示して画面へ戻る。</p>
+<h3 id="エラー時の扱い">エラー時の扱い</h3>
+<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>なりすまし対策トークンが不正なとき</td><td>アクセス拒否（HTTP 403）とする</td></tr><tr><td>バナー設定フォームの検証に失敗したとき</td><td>文字数超過を基にした文言を表示し、同一画面を再表示する</td></tr><tr><td>ファイル未選択・サイズ超過・非画像のとき</td><td>各エラーを表示し、同一画面を再表示する</td></tr><tr><td>削除対象のファイルが存在しないとき</td><td>削除を行わず画面へ戻る</td></tr></tbody></table></div>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>GET はパス <code>{html_class}</code> の有無。POST はバナー設定フォーム本体、または multipart のファイルと店舗選択。DELETE は <code>select_file</code>。いずれも CSRF。</td></tr><tr><td>成功時出力</td><td>リダイレクトまたは HTML。バナー設定成功時はフラッシュ文言は付けずリダイレクトのみ。</td></tr><tr><td>失敗時出力</td><td>同一テンプレート再描画と <code>bannerError</code>／<code>error</code>。403 は CSRF 失敗時。</td></tr><tr><td>副作用</td><td><code>mtb_top_banner</code>・<code>dtb_top_banner_language</code> の更新、ストレージの put／delete。</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>mtb_top_banner</code></td><td><code>id</code></td><td>主キー。並び替え保存ロジックが連番前提で参照する。</td></tr><tr><td><code>mtb_top_banner</code></td><td><code>image_url</code></td><td>varchar 255。</td></tr><tr><td><code>mtb_top_banner</code></td><td><code>link</code></td><td>varchar 255。</td></tr><tr><td><code>mtb_top_banner</code></td><td><code>disp_type</code></td><td>整数。既定 0。</td></tr><tr><td><code>mtb_top_banner</code></td><td><code>image_alt</code></td><td>text、nullable。</td></tr><tr><td><code>dtb_top_banner_language</code></td><td><code>top_banner_id</code>, <code>language_id</code></td><td>多対多の中間。</td></tr></tbody></table></div>
-<h3 id="DB操作">DB操作</h3>
-<p>永続化の正は ec-cube-enterprise（テーブル名・操作は ec-cube-enterprise を正典）。当ドメインは承認ワークフローを介さず persist/flush で直接確定する（承認ワークフローは在庫機能固有）。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>登録/更新</td><td>dtb_top_banner_language / mtb_top_banner</td><td>当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。</td></tr></tbody></table></div>
-<hr>
-<h2 id="バリデーション">バリデーション</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>画像URL</td><td>最大 255 文字。<code>admin.hareruyamtg.com</code> を含むとメッセージキー <code>admin.banner.regex_error</code>。</td></tr><tr><td>リンク先URL</td><td>最大 255 文字。許容文字種は正規表現（英数字と記号の集合）。</td></tr><tr><td>画像ファイル</td><td>サイズ上限 520000。GIF／JPEG／PNG のみ。</td></tr><tr><td>CSRF</td><td>フォーム名ごとのトークン検証。失敗時はアクセス拒否応答。</td></tr></tbody></table></div>
-<hr>
-<h2 id="権限・認可">権限・認可</h2>
-<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>トップバナー画面・POST・DELETE</th></tr></thead><tbody><tr><td>管理画面にログインし当ナビへ到達できる運用者</td><td>画面表示・保存・アップロード・削除の HTTP 処理へ到達できる（細部は管理画面共通の認可設定を正とする）。</td></tr><tr><td>未ログインまたは共通ルールで拒否される利用者</td><td>管理画面の共通挙動に従い当パスへ到達しない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="画面遷移">画面遷移</h2>
-<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>GET 正常</td><td>同一 URL の HTML。</td></tr><tr><td>バナー設定 POST 成功</td><td><code>GET /{admin_route}/banner/top</code> または <code>GET /{admin_route}/banner/top/{html_class}</code>。</td></tr><tr><td>アップロード POST 成功</td><td>上記 GET に <code>#upload_wrap</code>。</td></tr><tr><td>DELETE 成功</td><td>上記 GET に <code>#upload_wrap</code>。</td></tr><tr><td>バナー設定 POST 失敗</td><td>HTTP 200 で同一画面再描画（一覧パスがルート直下のみとなる実装箇所に注意）。</td></tr><tr><td>店舗ドロップダウンで「全て」</td><td><code>GET /{admin_route}/banner/top#upload_wrap</code>。</td></tr><tr><td>店舗ドロップダウンで特定店舗</td><td><code>GET /{admin_route}/banner/top/{html_class}#upload_wrap</code>。</td></tr></tbody></table></div>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>CSRF 不正</td><td>アクセス拒否（HTTP 403）。</td></tr><tr><td>バナー設定フォーム検証失敗</td><td><code>admin.error.text_over</code> を基にした文言を <code>bannerError</code> で表示し同一画面。</td></tr><tr><td>ファイル未選択／サイズ超過／非画像</td><td><code>error</code> に各メッセージを表示し同一画面。</td></tr><tr><td>ストレージ delete でオブジェクト不存在</td><td>削除をスキップしリダイレクト。</td></tr></tbody></table></div>
-<hr>
-<h2 id="試行制限">試行制限</h2>
-<p>本機能では試行制限を扱わない。</p>
-<hr>
-<h2 id="ログ・監査">ログ・監査</h2>
-<p>当コントローラが専用の監査ログを出力する記述は見当たらない。オブジェクトストレージや Web サーバ側の標準ログはインフラ設定を正とする。</p>
-<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
-<ul><li>パスワード</li><li>なりすまし対策トークン</li><li>Cookie 値</li><li>セッション ID の完全値</li><li>Remember Me トークンの原値</li></ul>
-<hr>
-<h2 id="セッション">セッション</h2>
-<p>当機能専用のセッションキー読書きは行わない。CSRF トークンの更新は共通ヘルパが行う。</p>
-<h3 id="セッションへ保存しない情報">セッションへ保存しない情報</h3>
-<p>バナー設定の下書きやアップロードファイル本体をセッションに保持する実装はない。</p>
-<hr>
-<h2 id="Cookie">Cookie</h2>
-<p>管理画面のセッション Cookie に依存するにとどまり、本機能固有の Cookie を新設しない。</p>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<p>明示の楽観ロック・悲観ロックはない。Doctrine の単一トランザクションとしてフラッシュされる範囲に依存する。</p>
-<hr>
-<h2 id="調査補助-grep向け">調査補助（grep向け）</h2>
-<h3 id="HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</h3>
-<ul><li><code>m16-01_admin_data_top_banner</code> … <code>GET</code> … <code>/{admin_route}/banner/top</code>（トップバナー設定画面の表示（全ストレージプレフィックス）。バナー行は <code>mtb_top_banner</code> を id 昇順で読み込む。）</li><li><code>m16-01_admin_data_top_banner_narrow</code> … <code>GET</code> … <code>/{admin_route}/banner/top/{html_class}</code>（同上。画像一覧・削除対象の S3 プレフィックスを <code>banner/{html_class}/</code> に限定する。<code>html_class</code> は店舗マスタの HTML クラス名。）</li><li><code>m16-01_admin_data_top_banner_update</code> … <code>POST</code> … <code>/{admin_route}/banner/top</code>（バナー設定フォームの送信、または画像アップロードフォームの送信（リクエストにファイルフィールドが付くかで分岐）。）</li><li><code>m16-01_admin_data_top_banner_update_narrow</code> … <code>POST</code> … <code>/{admin_route}/banner/top/{html_class}</code>（同上（店舗絞り込み画面から）。）</li><li><code>m16-01_admin_data_top_banner_delete</code> … <code>DELETE</code> … <code>/{admin_route}/banner/top/delete</code>（クエリ <code>select_file</code> で指定したオブジェクトキーをストレージから削除する。）</li><li><code>m16-01_admin_data_top_banner_delete_narrow</code> … <code>DELETE</code> … <code>/{admin_route}/banner/top/delete/{html_class}</code>（同上（店舗サブディレクトリ文脈）。）</li></ul>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>表示は店舗の識別名の有無。保存はバナー設定フォーム本体、またはファイルと店舗選択。削除は対象ファイル名。いずれもなりすまし対策トークンを伴う</td></tr><tr><td>成功時出力</td><td>画面への遷移または画面表示。バナー設定の保存成功時は完了メッセージを付けず遷移だけを行う</td></tr><tr><td>失敗時出力</td><td>同一画面の再表示とエラー表示。なりすまし対策トークン不正のときはアクセス拒否（HTTP 403）</td></tr></tbody></table></div>
+<h3 id="入出力-永続化">入出力: 永続化</h3>
+<div class="table-wrap"><table><thead><tr><th>操作</th><th>契機</th></tr></thead><tbody><tr><td>更新</td><td>バナー設定の保存（画像URL・リンク・表示タイプ・言語・alt）</td></tr></tbody></table></div>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
+<h2 id="表示メッセージ">表示メッセージ</h2>
+<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M16-02-MSG-001</td><td>本文</td><td>画像がありません。</td><td>トップバナー画像一覧に表示対象の画像がないとき</td><td>画像なしの一覧を表示し、同一画面に留まる</td></tr></tbody></table></div>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,29 +272,13 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#本書で扱うこと">本書で扱うこと</a>
-<a class="lv2" href="#本書で扱わないこと">本書で扱わないこと</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv2" href="#用語">用語</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#フロント挙動">フロント挙動</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#集計結果CSVを出力する-admin-route-analysis-summary-export">集計結果CSVを出力する（`/{admin_route}/analysis/summary/export`）</a>
-<a class="lv2" href="#集計条件">集計条件</a>
-<a class="lv2" href="#表示メッセージ">表示メッセージ</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#出力対象の確定">出力対象の確定</a>
+<a class="lv3" href="#出力する列">出力する列</a>
+<a class="lv3" href="#エラー時の扱い">エラー時の扱い</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#権限・認可">権限・認可</a>
-<a class="lv2" href="#画面遷移">画面遷移</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#ログ・監査">ログ・監査</a>
-<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a></nav>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -292,77 +286,18 @@ footer {
         <h1>分析 — 日別/月別集計CSVダウンロード</h1>
       </header>
       
-      <h2 id="概要">概要</h2>
-<p>日別/月別集計のCSVダウンロードは、直前に実行した集計と同じ検索条件で集計し直し、画面一覧と同じ集計結果をCSVとしてストリーミング出力する機能である。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。本機能のカスタマイズ区分はカスタマイズであり、現行挙動の確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインの分析・集計（日次/月次集計）のエクスポート処理、集計用リポジトリ、CSV出力サービスを正とする。DB関連の記述は ec-cube-enterprise の実装を正とする。</p>
-<p>対象はブラウザ経由の管理画面に限定する。本文ではフレームワークのコントローラ型名やメソッド名を主説明としない。管理画面プレフィックスは環境により変わる（<code>admin_route</code>）。「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。</p>
-<p>集計条件・一覧表示はM12-01で扱う。本書はCSV出力の入口・出力列・ファイル形式と、集計条件が一覧と一致することを扱う。</p>
-<hr>
-<h2 id="本書で扱うこと">本書で扱うこと</h2>
-<ul><li>集計結果一覧（M12-01）と同じ検索条件によるCSV出力</li><li>CSVのヘッダ行・データ行・ファイル形式</li><li>集計の対象データ・期間・除外条件が一覧と一致すること</li></ul>
-<hr>
-<h2 id="本書で扱わないこと">本書で扱わないこと</h2>
-<p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
-<ul><li>集計条件・集計ロジックの詳細（M12-01を正とする）</li><li>他の分析・集計機能のCSV（M12-04・M12-06・M12-08を正とする）</li><li>管理画面へのアクセス制御・ログイン・権限設定の詳細</li></ul>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<ul><li>本機能のカスタマイズ区分はカスタマイズであり、現行（pf-eccube3／HareruyaEc プラグイン）のCSV出力挙動を正としつつ、DB関連の記述は ec-cube-enterprise を正とする。</li><li>集計の参照列は M12-01 と一致する。現行は注文明細を <code>dtb_order_detail</code>、受注ステータスを <code>dtb_order.status</code> で参照するが、ec-cube-enterprise では注文明細が <code>dtb_order_item</code>、受注ステータスが <code>dtb_order.order_status_id</code> に相当する。本書のDBカラム節は移行先名を主とし、現行名を括弧で添える。</li><li>会員の集計テーブル <code>dtb_player</code>（<code>create_date</code>・<code>mail_magazine_flg</code>）は現行・移行先（ec-cube-enterprise）で同一スキーマである。</li><li>CSV出力の挙動（BOM・ファイル名・ヘッダ行）は現行プラグインのカスタマイズであり、ec-cube-enterprise 側の相当機能の有無と差は移行設計で確認する。</li></ul>
-<hr>
-<h2 id="用語">用語</h2>
-<div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>検索条件セッション</td><td>集計実行時（M12-01）に保存された検索条件。CSV出力はこれを再集計の条件に使う。</td></tr><tr><td>表示項目</td><td>検索条件で選んだ集計列。CSVのヘッダ列と一致する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>集計結果一覧の「CSVダウンロード」</td><td><code>GET /{admin_route}/analysis/summary/export</code></td><td>検索条件セッションの条件で集計し、集計結果をCSVとして出力する。</td></tr></tbody></table></div>
-<p>管理画面プレフィックスは環境により変わるためプレースホルダで示す。集計結果一覧にCSVダウンロードのリンクが表示されている状態（M12-01で検索を実行済み）で押下する。</p>
-<hr>
-<h2 id="フロント挙動">フロント挙動</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>CSVファイルのダウンロード。画面遷移は伴わない。</td></tr><tr><td>JS挙動</td><td>本機能ではダウンロードのみで、動的な表示切替は扱わない。</td></tr><tr><td>モーダル・ポップアップ</td><td>本機能専用のモーダルは無い。</td></tr></tbody></table></div>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="集計結果CSVを出力する-admin-route-analysis-summary-export">集計結果CSVを出力する（<code>/{admin_route}/analysis/summary/export</code>）</h3>
-<ol><li>管理画面の認証・権限を通過する。</li><li>検索条件セッションから検索条件を取得する。保存が無い場合は空とする。</li><li>取得した検索条件を検索フォームへ取り込み、確定値を得る。</li><li>確定した表示項目から出力列の見出しを組み立てる。</li><li>集計用リポジトリへ検索条件と表示項目を渡し、期間単位の集計結果を取得する（M12-01と同じ集計）。</li><li>CSV出力サービスを開き、BOMを出力する。</li><li>先頭に「日付」、続けて表示項目の見出しを並べたヘッダ行を出力する。</li><li>集計結果の各行を、日付に続けて表示項目の値の順で出力する。購買率の列は値に<code>%</code>を付けて出力する。</li><li>CSV出力サービスを閉じる。</li></ol>
-<hr>
-<h2 id="集計条件">集計条件</h2>
-<div class="table-wrap"><table><thead><tr><th>指標</th><th>集計の要点</th></tr></thead><tbody><tr><td>集計の同一性</td><td>M12-01の集計実行と同じ集計用リポジトリ・検索条件・表示項目で集計する。対象データ・結合・除外・集計単位・期間はM12-01の集計条件と一致する。</td></tr><tr><td>条件の取得元</td><td>検索条件はCSV出力時に保持しているフォームの送信値ではなく、直前の集計実行で保存された検索条件セッションの値とする。</td></tr><tr><td>出力対象</td><td>集計結果の全期間分の行。画面の表示件数制限のような件数の上限を設けない。</td></tr></tbody></table></div>
-<p>集計の対象データ・期間・除外条件の詳細はM12-01の集計条件を正とする。</p>
-<hr>
-<h2 id="表示メッセージ">表示メッセージ</h2>
-<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>画面上の文言(英語)</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M12-02-MSG-001</td><td>管理画面上部</td><td>検索条件がありません。先に検索を実行してください。</td><td>（英訳なし）</td><td>検索を行わずにCSVをダウンロードしようとしたとき</td><td>日別/月別集計 集計一覧表示画面に遷移する</td></tr><tr><td>M12-02-MSG-002</td><td>管理画面上部</td><td>日付の形式が不正です。再度検索を実行してください。</td><td>（英訳なし）</td><td>検索後にCSVをダウンロードしようとした際、検索期間の日付を正しく読み取れないとき</td><td>日別/月別集計 集計一覧表示画面に遷移する</td></tr></tbody></table></div>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>ヘッダ行</td><td>先頭列を「日付」とし、選択した表示項目の見出しを続ける。</td></tr><tr><td>データ行</td><td>日付に続けて表示項目の値を出力する。購買率の列は値に<code>%</code>を付ける。</td></tr><tr><td>値の算出</td><td>件数・金額・平均単価・購買率の算出はM12-01の集計と同一とする。</td></tr></tbody></table></div>
-<p>本機能は画面上の入力フォームを持たない。出力する検索条件は検索条件セッションの値による。</p>
-<hr>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>参照時点</td><td>画面表示またはCSV・帳票出力の実行時点で検索条件に一致するデータを参照する。本機能は参照・出力を主とし、業務データを更新しない。</td></tr><tr><td>一覧・出力の整合</td><td>一覧、CSV、帳票に出る値はそれぞれの実行時点のDB値を基準にする。画面表示後に他処理で更新された値は、再検索または再出力するまで反映しない。</td></tr><tr><td>同時更新</td><td>出力中に他処理が対象データを更新した場合のスナップショット保証は持たない。行ロックを取得せず、読み取り時点の値を出力する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="API-バッチ結果">API/バッチ結果</h2>
-<p>本機能ではAPI呼び出し・バッチ実行を扱わない。CSV出力はストリーミングで行う。</p>
-<hr>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="出力対象の確定">出力対象の確定</h3>
+<p>保持された検索条件を取得する。保存が無いときは空の検索条件とする。取得した検索条件を検索フォームへ取り込んで確定値を得る。確定した表示項目から出力列の見出しを組み立てる。集計は検索条件と表示項目から期間単位で求め、M12-01と同一とする。件数・金額・平均単価・購買率の算出もM12-01の集計と同一とする。本機能は画面上の入力フォームを持たない。</p>
+<h3 id="出力する列">出力する列</h3>
+<p>先頭列を「日付」とし、選択した表示項目の見出しを続ける。データ行は日付に続けて表示項目の値を出力する。購買率の列は値に <code>%</code> を付けて出力する。文字コード判別用のBOMをヘッダ行の前に出力する。</p>
+<h3 id="エラー時の扱い">エラー時の扱い</h3>
+<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>保持された検索条件が空</td><td>空の検索条件で集計し、出力する</td></tr><tr><td>データベース読み取りの障害</td><td>共通の異常処理に委ねる</td></tr><tr><td>認証・権限不足</td><td>出力しない</td></tr></tbody></table></div>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>検索条件セッションに保存された検索条件。</td></tr><tr><td>成功時出力</td><td>集計結果のCSVファイル。ファイル名は<code>report_summary_</code>に出力日時（<code>YmdHis</code>）を付けた<code>.csv</code>。文字コード判別用のBOMを付与する。</td></tr><tr><td>失敗時出力</td><td>データ取得失敗時はアプリケーションの共通例外処理に委ねる。</td></tr><tr><td>副作用</td><td>無し（参照・出力のみ）。</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<p>機能に直接関係する列のみ記載する。テーブル名・列名は ec-cube-enterprise を正とし、現行 pf-eccube3 と異なる場合は現行名を括弧で添える。型や一覧の細部はスキーマを参照する。M12-01の集計で参照する列に一致する。</p>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td>dtb_order</td><td>order_date, order_status_id（現行 status）, customer_id, device_type_id</td><td>集計単位・期間・ステータス・端末の絞り込み。</td></tr><tr><td>dtb_order_item（現行 dtb_order_detail）</td><td>price, quantity, product_code, product_name</td><td>金額・平均単価・商品別絞り込み。</td></tr><tr><td>dtb_player</td><td>create_date, mail_magazine_flg</td><td>会員数・メールニュース登録数。現行・移行先で同一スキーマ。</td></tr></tbody></table></div>
-<h3 id="DB操作">DB操作</h3>
-<p>本機能は参照系（検索・出力）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>検索</td><td>dtb_order / dtb_order_detail / dtb_order_item / dtb_player</td><td>検索条件に合致するレコードを抽出する。抽出結果を所定フォーマットでファイル出力する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="権限・認可">権限・認可</h2>
-<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>集計CSVダウンロード</th></tr></thead><tbody><tr><td>未ログイン管理者</td><td>アクセス不可。</td></tr><tr><td>ログイン済み管理者</td><td>集計結果のCSV出力が可能。</td></tr></tbody></table></div>
-<hr>
-<h2 id="画面遷移">画面遷移</h2>
-<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>「CSVダウンロード」押下</td><td>画面遷移せずCSVを出力する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>検索条件セッションが空</td><td>空の検索条件で集計し、出力する。</td></tr><tr><td>データベース読み取りの障害</td><td>アプリケーションの共通例外処理に委ねる。</td></tr><tr><td>認証・権限不足</td><td>出力しない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="ログ・監査">ログ・監査</h2>
-<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
-<ul><li>Cookie値</li><li>セッションIDの完全値</li><li>会員の個人情報の詳細本文</li></ul>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<p>本機能は参照・出力のみであり、楽観ロック・悲観ロックの対象は持たない。</p>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>保持された検索条件</td></tr><tr><td>成功時出力</td><td>集計結果のCSVファイル。ファイル名は <code>report_summary_</code> に出力日時（<code>YmdHis</code>）を付けた <code>.csv</code>。BOMを付与する</td></tr><tr><td>失敗時出力</td><td>データ取得失敗時は共通の異常処理に委ねる</td></tr></tbody></table></div>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
+<h2 id="表示メッセージ">表示メッセージ</h2>
+<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M12-02-MSG-001</td><td>管理画面上部</td><td>検索条件がありません。先に検索を実行してください。</td><td>検索を行わずにCSVをダウンロードしようとしたとき</td><td>日別/月別集計 集計一覧表示画面に遷移する</td></tr><tr><td>M12-02-MSG-002</td><td>管理画面上部</td><td>日付の形式が不正です。再度検索を実行してください。</td><td>検索後にCSVをダウンロードしようとした際、検索期間の日付を正しく読み取れないとき</td><td>日別/月別集計 集計一覧表示画面に遷移する</td></tr></tbody></table></div>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,40 +272,16 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#フロント挙動">フロント挙動</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#画面を表示する-GET">画面を表示する（GET）</a>
-<a class="lv3" href="#登録または更新する-POST-m03-13-admin-product-product-tag-sales-analysis-store">登録または更新する（POST `m03-13_admin_product_product_tag_sales_analysis_store`）</a>
-<a class="lv3" href="#削除する-DELETE">削除する（DELETE）</a>
-<a class="lv2" href="#集計条件">集計条件</a>
-<a class="lv2" href="#登録・更新時の判定順序">登録・更新時の判定順序</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
-<a class="lv3" href="#入力項目">入力項目</a>
-<a class="lv3" href="#エッジケース">エッジケース</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#一覧と入力欄">一覧と入力欄</a>
+<a class="lv3" href="#保存の判定順序">保存の判定順序</a>
+<a class="lv3" href="#削除の判定順序">削除の判定順序</a>
+<a class="lv3" href="#入力の制限">入力の制限</a>
+<a class="lv3" href="#エラー時の扱い">エラー時の扱い</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#バリデーション">バリデーション</a>
-<a class="lv2" href="#権限・認可">権限・認可</a>
-<a class="lv2" href="#画面遷移">画面遷移</a>
-<a class="lv3" href="#遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#表示メッセージ">表示メッセージ</a>
-<a class="lv2" href="#試行制限">試行制限</a>
-<a class="lv2" href="#ログ・監査">ログ・監査</a>
-<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
-<a class="lv2" href="#セッション">セッション</a>
-<a class="lv3" href="#本機能におけるセッション">本機能におけるセッション</a>
-<a class="lv3" href="#セッションへ保存しない情報">セッションへ保存しない情報</a>
-<a class="lv2" href="#Cookie">Cookie</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a>
-<a class="lv2" href="#調査補助-grep-用">調査補助（grep 用）</a>
-<a class="lv3" href="#HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</a></nav>
+<a class="lv3" href="#入出力-永続化">入出力: 永続化</a>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -303,102 +289,27 @@ footer {
         <h1>商品管理 — 売上分析タグ登録/編集</h1>
       </header>
       
-      <h2 id="概要">概要</h2>
-<p><code>mtb_tag_sales_analysis</code>（売上分析タグマスタ）を管理画面で新規登録・編集し、一覧・ページ送り・表示件数変更を同一画面上に並べて扱う機能である。ナビゲーション上の名称は翻訳キー <code>admin.product.sales_analysis_management</code>（確認値として「売上分析登録/編集」）。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値は ec-cube-enterprise における売上分析タグ用ルートおよび対応した管理画面の一覧・編集処理、入力フォーム定義、マスタ本体 <code>mtb_tag_sales_analysis</code> とテンプレート <code>tag_sales_analysis.twig</code>、コントローラ基底での無効フォーム時応答および CSRF 検証、別画面および CSV により商品へタグを紐付ける経路とする。カスタマイズ区分は現行踏襲であり、現行挙動は pf-eccube3 を参照し、DB関連（テーブル名・列名・型・制約・関連）は ec-cube-enterprise を正とする。</p>
-<p>対象はブラウザ経由の管理画面に限定する。</p>
-<p>コントローラの処理名を本文の中心には置かず、本文ではルートbind名やSymfonyのルートnameの網羅は主説明としない。「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。コード探索でbind名が必要なときだけ「調査補助」へ書く。</p>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<p>現行（pf-eccube3）と移行先（ec-cube-enterprise）のDBスキーマを比較した結果は次のとおり。相違が判明した場合は ec-cube-enterprise 実装を正とする。</p>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>売上分析タグ本体</td><td><code>mtb_tag_sales_analysis</code>（<code>id</code>・<code>name</code>・`<code> </code>rank<code> </code>`）</td><td>同一スキーマ。<code>name</code> は <code>varchar(64)</code>、`<code> </code>rank<code> </code>` は符号なし整数。</td></tr><tr><td>並び順キー</td><td>`<code> </code>rank<code> </code>` 昇順</td><td>同一。<code>sort_no</code> への置き換えは無い。</td></tr><tr><td>商品紐付けの補助表</td><td><code>dtb_product_tag_sales_analysis</code></td><td>同一。移行先にも結合表として存在する。</td></tr><tr><td>注文明細紐付けの補助表</td><td><code>dtb_order_item_tag_sales_analysis</code></td><td>同一。移行先にも結合表として存在する。</td></tr><tr><td>削除方式</td><td>商品・注文明細との紐付けが無いとき物理削除</td><td>同一。論理削除列は持たない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>ナビ「売上分析登録/編集」</td><td><code>GET /{admin_route}/product/tag_sales_analysis</code></td><td>新規フォームと一覧が表示される。既定ページは 1、件数はセッションまたは 10。</td></tr><tr><td>一覧の ID・名称または「編集」</td><td><code>GET /{admin_route}/product/tag_sales_analysis/{id}</code></td><td>当該行がフォームに載る。ページャは編集モード向けルートに切り替わる。</td></tr><tr><td>一覧のページリンク（新規時）</td><td><code>GET /{admin_route}/product/tag_sales_analysis/page/{page_no}</code></td><td>セッションのページ番号が更新される。</td></tr><tr><td>一覧のページリンク（編集時）</td><td><code>GET /{admin_route}/product/tag_sales_analysis/{id}/page/{page_no}</code></td><td>同上。パスの <code>id</code> は編集中の主キー。</td></tr><tr><td>表示件数セレクト変更</td><td>現在ページの GET にクエリ <code>page_count=N</code> を付けて遷移</td><td>セッションの件数が更新され、<code>N</code> が選択肢にある場合のみ（テンプレート上は 10, 50, 100, 300, 500, 1000, 2000, 10000, 12000）。</td></tr><tr><td>「登録」ボタン</td><td><code>POST …/product/tag_sales_analysis/store</code> または <code>…/store/{id}</code></td><td>妥当なら保存し成功メッセージののち一覧 GET へリダイレクト。否なら同画面にエラーが出る。</td></tr><tr><td>「削除」（確認モーダル経由の DELETE）</td><td><code>DELETE /{admin_route}/product/tag_sales_analysis/{id}/delete</code></td><td>紐付けが無ければ行が消える。あれば削除されず説明フラッシュとなる。</td></tr><tr><td>フォーム送信による登録または更新。<code>id</code> がパスにある場合は当該行を更新対象として束ねる。</td><td><code>POST /{admin_route}/product/tag_sales_analysis/store</code></td><td>フォーム送信による登録または更新。<code>id</code> がパスにある場合は当該行を更新対象として束ねる。</td></tr></tbody></table></div>
-<hr>
-<h2 id="フロント挙動">フロント挙動</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>親フレームのタイトルは翻訳キー <code>admin.product.product_management</code>（確認値として「商品管理」）。見出し下は <code>admin.product.tag_sales_analysis</code>（確認値として「売上分析タグ」）。メニューのハイライト配列は <code>product</code> と <code>tag_sales_analysis</code>。上半分カード見出しは編集時「編集」、新規時は新規登録系ラベル。入力は「名称」「並び順」の 2 欄のみ。下半分カードヘッダ右に表示件数セレクト。表は ID（リンク）、名称（リンク）、並び順、編集ボタン、削除ボタン。フッタの変換領域に「登録」ボタン（<code>form="form_tag_sales_analysis"</code> で上半分フォームへ送信）。</td></tr><tr><td>JS 挙動</td><td><code>.js-page-count</code> の change で現在 URL に <code>page_count</code> を付け替えフルページ遷移する。削除ボタンはアンカーに <code>data-method="delete"</code> 等があり、共通スクリプトが DELETE と CSRF を送る実装になる。</td></tr><tr><td>CSS・レイアウト</td><td>ページ見出し用の細い見た目調整のみ。一覧は縞模様テーブル。Bootstrap 4 横型フォームテーマ。</td></tr><tr><td>モーダル・ポップアップ</td><td>削除前に共通の削除確認モーダル文言（<code>admin.common.delete_modal__message</code>。名称が埋め込まれる）。</td></tr></tbody></table></div>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="画面を表示する-GET">画面を表示する（GET）</h3>
-<ol><li>管理画面の共通認証を通過する。</li><li>ルートによって既存エンティティを読み込むか、読み込めないときは（主キーの無い新規ケースのみ）まっさらな行インスタンスをフォームデータとする。</li><li>クエリまたはパスの <code>page_no</code> から現在ページ番号を決め、<code>admin.product.tag_sales_analysis.page_no</code> に書き込む。欠けるときはセッション既存または 1。</li><li>クエリの <code>page_count</code> があれば整数化して <code>admin.product.tag_sales_analysis.page_count</code> に書く。無いときはセッション既存または 10。</li><li>リポジトリのクエリビルダでエイリアス <code>t</code> とし、<code>rank</code> 昇順の一覧を、アプリケーションのページネータで上記ページ番号・件数に分割する。</li><li><code>tag_sales_analysis.twig</code> でフォームの <code>action</code> は新規なら無修飾 <code>store</code>、編集なら同一主キーを付けた <code>store</code> URL とする。</li></ol>
-<h3 id="登録または更新する-POST-m03-13-admin-product-product-tag-sales-analysis-store">登録または更新する（POST <code>m03-13_admin_product_product_tag_sales_analysis_store</code>）</h3>
-<ol><li>GET と同様のエンティティの起点でフォームを生成し、<code>handleRequest</code> で POST をとる。</li><li>送信が無い、または検証に失敗した場合、フラッシュに <code>admin.register.failed</code> を積み（確認値として「登録できませんでした。」）、セッションにあったページ番号と件数で一覧を組みなおして同テンプレートで返す。このとき無効フォームがあるとコントローラ基底の実装により、通常は HTTP ステータス 422 を返す。</li><li>検証が通ったデータを <code>persist</code> し、<code>flush</code> する。単一トランザクション境界はDoctrineの単位に従う（明示トランザクションは張らない実装）。</li><li><code>flush</code> が一意制約違反（永続化層が検知）で終わった場合、フラッシュに <code>admin.error.non_unique</code> を積み（確認値として「値が重複しています。」）、一覧を組みなおした同テンプレートを返す。</li><li>成功時、<code>admin.register.complete</code> を積み、<code>m03-13_admin_product_product_tag_sales_analysis</code> へ HTTP リダイレクトする。リダイレクトパラメータに保存後主キーを渡すため、生成 URL はクエリ <code>id</code> が付く（パス側の <code>{id}</code> は一覧トップには無く、画面は新規モード側のリスト表示に落ちやすい。実装確認値）。</li></ol>
-<h3 id="削除する-DELETE">削除する（DELETE）</h3>
-<ol><li>CSRF が要件を満たすか共通処理で検証し、無効なら例外でアクセス拒否（HTTP 403）となる。</li><li>売上分析タグ行にひも付く商品が 1 件でもあるなら、<code>admin.tag.delete.failed</code> で名称を埋めフラッシュして一覧へリダイレクトする（確認値として「商品で使用されているため、当該名称のタグは削除することができません。」）。</li><li>商品側にひも付きが無くとも、注文明細との結合があるなら、<code>admin.order_tag.delete.failed</code> をフラッシュして一覧へリダイレクトする（確認値として「購入済の商品で使用されているため、当該名称のタグは削除することができません。」）。</li><li>両方とも結合無しなら削除予約後 <code>flush</code> し、<code>admin.common.delete_complete</code> を積んで <code>GET m03-13_admin_product_product_tag_sales_analysis</code> へリダイレクトする。</li></ol>
-<hr>
-<h2 id="集計条件">集計条件</h2>
-<p>本機能では一覧総件数の算出以外に業務寄りの独自集計は行わない。ページャライブラリが総件数を求めるのみである。</p>
-<div class="table-wrap"><table><thead><tr><th>指標</th><th>集計の要点</th></tr></thead><tbody><tr><td>一覧総件数</td><td><code>mtb_tag_sales_analysis</code> 全件を <code>rank</code> 昇順として対象にし、<code>page_count</code> で分割する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="登録・更新時の判定順序">登録・更新時の判定順序</h2>
-<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>フォームが送信済みか、かつ項目検証が通るか</td><td>否ならエラーフラッシュと再描画。</td></tr><tr><td>2</td><td><code>persist</code> と <code>flush</code></td><td>一意制約違反ならエラーフラッシュと再描画。</td></tr><tr><td>3</td><td>上記すべて成功</td><td>成功フラッシュと一覧へのリダイレクト（クエリ <code>id</code> 付き）。</td></tr></tbody></table></div>
-<hr>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>一覧の並び</td><td><code>rank</code> の昇順。一覧上にドラッグ並べ替えの UI は無い。</td></tr><tr><td>並び順の意味</td><td><code>rank</code> が小さい行がクエリ順で先頭に来る。</td></tr></tbody></table></div>
-<p>本機能では加算税率や売上集計などの業務計算を行わない。</p>
-<h3 id="入力項目">入力項目</h3>
-<div class="table-wrap"><table><thead><tr><th>項目名</th><th>必須／任意</th><th>最大長</th><th>初期値</th><th>保存先・扱い</th></tr></thead><tbody><tr><td>名称</td><td>必須</td><td>64（入力 <code>maxlength</code> と検証および列 <code>varchar(64)</code> に一致する実装値）</td><td>新規は空欄、編集は <code>mtb_tag_sales_analysis.name</code></td><td><code>mtb_tag_sales_analysis.name</code>。空白不可（<code>NotBlank</code>）。送信キーは <code>tag_sales_analysis[name]</code>。</td></tr><tr><td>並び順</td><td>必須</td><td>整数・1 から 65535（<code>SMALLINT UNSIGNED</code> と Range 検証の実装値）</td><td>編集時は現行 DB 値。新規モードでの画面初期はフォームウィジェットの空表示に従う</td><td><code>mtb_tag_sales_analysis.rank</code>（Doctrine により列名 `<code> </code>rank<code> </code><code>）。空白不可、</code>Range(min=1,max=65535)<code>。HTML 入力に </code>min<code>/</code>max<code>。送信キーは </code>tag_sales_analysis[rank]`。</td></tr></tbody></table></div>
-<h3 id="エッジケース">エッジケース</h3>
-<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>存在しない <code>id</code> で編集 GET</td><td>ルート引数のマスタ読み込みに失敗し 404 となる。</td></tr><tr><td>DELETE の CSRF 不正</td><td>アクセス拒否（HTTP 403）。</td></tr><tr><td>名称の重複で DB が一意を返す</td><td>フォーム側の単純検証より後に検知され、<code>admin.error.non_unique</code> と再描画。</td></tr><tr><td>商品にだけ紐付き、まだ注文明細に載っていない</td><td>削除処理は実行されず <code>admin.tag.delete.failed</code> と一覧へリダイレクトする。マスタ行は残る。</td></tr><tr><td>注文明細側の関連のみが残っている</td><td>注文明細との結合があると判定されれば <code>admin.order_tag.delete.failed</code> と一覧へリダイレクトする。</td></tr></tbody></table></div>
-<hr>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>一覧とフォーム</td><td>一覧は全件クエリからのページネーション結果。フォームはルート <code>id</code> の 1 行または新規用の未保存インスタンス。同一画面でもデータ起源が別になる。</td></tr><tr><td>商品側の関連</td><td><code>dtb_product_tag_sales_analysis</code> が 1 件でもあれば当該タグを削除しない。一覧の内容と DB は GET 読み込み時点での整合。</td></tr><tr><td>注文明細側の関連</td><td><code>dtb_order_item_tag_sales_analysis</code> が 1 件でも連結されていれば削除しない。</td></tr><tr><td>同時更新</td><td>楽観ロックは持たない。後続の UPDATE が単純に上書きされる。</td></tr></tbody></table></div>
-<hr>
-<h2 id="API-バッチ結果">API/バッチ結果</h2>
-<p>本機能では外部 API を呼ぶ処理や別バッチによる更新を実行しない。</p>
-<hr>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="一覧と入力欄">一覧と入力欄</h3>
+<p>画面は売上分析タグの一覧と入力欄を同時に出す。一覧は並び順の昇順で並べる。並び順の値が小さいものほど先に来る。一覧を並べ替える操作は持たない。</p>
+<p>ページ番号は要求の指定があるときはその値、無いときは保持していた値、それも無いときは 1 とする。表示件数は要求の指定があるときはその値、無いときは保持していた値、それも無いときは 10 件とする。</p>
+<p>編集の対象を指定したときは当該の売上分析タグを入力欄に読み込む。対象を指定しないときは新規の入力欄とする。</p>
+<h3 id="保存の判定順序">保存の判定順序</h3>
+<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>送信済みで、かつ入力の検証を満たすか</td><td>満たさないときは保存せず、保持していたページ番号と表示件数で一覧を組み直して再表示する</td></tr><tr><td>2</td><td>保存できるか</td><td>登録済みの値と重複するときは保存せず、一覧を組み直して再表示する</td></tr><tr><td>3</td><td>上記をすべて満たしたとき</td><td>売上分析タグを登録または更新し、一覧へ戻す</td></tr></tbody></table></div>
+<h3 id="削除の判定順序">削除の判定順序</h3>
+<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>なりすまし対策トークンが有効か</td><td>無効のときはアクセス拒否（HTTP 403）とする</td></tr><tr><td>2</td><td>当該の売上分析タグを使う商品が 1 件でもあるか</td><td>あるときは削除せず、一覧へ戻す</td></tr><tr><td>3</td><td>購入済みの商品として注文明細に紐づくか</td><td>紐づくときは削除せず、一覧へ戻す</td></tr><tr><td>4</td><td>いずれにも紐づかないとき</td><td>削除し、一覧へ戻す</td></tr></tbody></table></div>
+<h3 id="入力の制限">入力の制限</h3>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>制限</th></tr></thead><tbody><tr><td>名称</td><td>必須。64 文字以下</td></tr><tr><td>並び順</td><td>必須。1 以上 65535 以下</td></tr></tbody></table></div>
+<p>税率と売上の集計はこの機能では行わない。</p>
+<h3 id="エラー時の扱い">エラー時の扱い</h3>
+<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>入力の検証を満たさない</td><td>保存せず、一覧を組み直して再表示する</td></tr><tr><td>登録済みの値と重複する</td><td>保存せず、一覧を組み直して再表示する</td></tr><tr><td>削除しようとした売上分析タグを商品が使っている</td><td>削除しない</td></tr><tr><td>削除しようとした売上分析タグが購入済みの商品に紐づく</td><td>削除しない</td></tr><tr><td>削除でなりすまし対策トークンが無効</td><td>アクセス拒否（HTTP 403）とする</td></tr></tbody></table></div>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>GET のページや件数、編集主キー。POST のフォームおよび CSRF トークン。DELETE と CSRF。</td></tr><tr><td>成功時出力</td><td>リダイレクト先の一覧 HTML と成功フラッシュ。または DELETE 後の一覧。</td></tr><tr><td>失敗時出力</td><td>一覧付きフォーム HTML とエラー表示、またはフラッシュのみのリダイレクト応答。</td></tr><tr><td>副作用</td><td><code>mtb_tag_sales_analysis</code> の INSERT/UPDATE または単一行 DELETE（条件付き）。セッションのページ状態変更。フラッシュメッセージ。</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<p>本機能が直接読み書きする主な列は次のとおり（インデックスと一意はマイグレーションとスキーマを参照）。</p>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>mtb_tag_sales_analysis</code></td><td><code>id</code>, <code>name</code>, <code>rank</code></td><td>画面上の入力と対応。<code>rank</code> は列名および予約語のため引用付き宣言。</td></tr></tbody></table></div>
-<h3 id="DB操作">DB操作</h3>
-<p>永続化の正は ec-cube-enterprise。商品系は承認ワークフローを介さず persist/flush で直接確定する（在庫の承認ワークフローとは別系統。<code>ProductController</code>・各CSVサービスで確認）。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>登録/更新</td><td>mtb_tag_sales_analysis</td><td>当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。</td></tr></tbody></table></div>
-<hr>
-<h2 id="バリデーション">バリデーション</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>名称</td><td>必須、長さ最大 64。</td></tr><tr><td>並び順</td><td>必須、整数、1〜65535。小数や文字列混入は検証エラーまたは型変換失敗となる。</td></tr></tbody></table></div>
-<hr>
-<h2 id="権限・認可">権限・認可</h2>
-<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>画面・URL</th></tr></thead><tbody><tr><td>未ログイン</td><td>管理画面配下への到達要件によりログインへ誘導される。</td></tr><tr><td>ログイン済み</td><td><code>/product/tag_sales_analysis</code> で始まる当該管理ルートへの到達は、共通の ROLE 設定に従う。本機能専用の <code>deny_url</code> だけを切り出した構成ファイル依存の記載はしない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="画面遷移">画面遷移</h2>
-<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>表示件数変更</td><td>現在と同種の GET に <code>page_count</code> を載せフル読み込み。</td></tr><tr><td>ページクリック</td><td><code>m03-13_admin_product_product_tag_sales_analysis_page</code> または <code>_edit_page</code>。</td></tr><tr><td>保存成功</td><td><code>GET m03-13_admin_product_product_tag_sales_analysis</code>。クエリ <code>id</code> が付く実装値。</td></tr><tr><td>保存検証失敗・一意エラー</td><td>同一画面 HTML（フォーム状態は送信反映）。DELETE 側のフラッシュのみのときは一覧 GET。</td></tr><tr><td>DELETE 妥当完了</td><td><code>GET m03-13_admin_product_product_tag_sales_analysis</code>。クエリ無し実装値。</td></tr></tbody></table></div>
-<h3 id="遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</h3>
-<div class="table-wrap"><table><thead><tr><th>起点</th><th>遷移前の処理</th><th>遷移後の初期状態</th></tr></thead><tbody><tr><td>GET 表示時</td><td><code>page_no</code> と <code>page_count</code> をセッションに書く</td><td>直後に POST が失敗しても一覧の広さやページが途切れにくい。</td></tr><tr><td>保存後リダイレクト</td><td>成功フラッシュ</td><td>クエリ <code>id</code> は付くが、パス側に <code>{id}</code> が無い一覧トップであり、一覧は再走査される。編集状態を自動で復元しない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>フォーム検証失敗</td><td><code>admin.register.failed</code> と再描画（HTTP 状態は共通の無効フォーム処理に準拠する）。</td></tr><tr><td>一意制約違反</td><td><code>admin.error.non_unique</code> と再描画。</td></tr><tr><td>削除時商品紐付けあり</td><td><code>admin.tag.delete.failed</code> と一覧リダイレクト。タグ本体は削除しない。</td></tr><tr><td>削除時注文明細紐付けあり</td><td><code>admin.order_tag.delete.failed</code> と一覧リダイレクト。</td></tr><tr><td>DELETE CSRF 検証失敗</td><td>アクセス拒否（HTTP 403）。</td></tr></tbody></table></div>
-<hr>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>一覧はページ番号と表示件数、編集は対象の売上分析タグ。保存は入力欄一式となりすまし対策トークン。削除はなりすまし対策トークン</td></tr><tr><td>成功時出力</td><td>一覧と入力欄の画面、または一覧への戻り。完了のメッセージを伴う</td></tr><tr><td>失敗時出力</td><td>一覧と入力欄を含む画面にエラーを表示する。削除できないときはメッセージだけを伴って一覧へ戻す</td></tr></tbody></table></div>
+<h3 id="入出力-永続化">入出力: 永続化</h3>
+<div class="table-wrap"><table><thead><tr><th>操作</th><th>契機</th></tr></thead><tbody><tr><td>追加・更新</td><td>入力の検証を満たし、登録済みの値と重複しないとき</td></tr><tr><td>削除</td><td>商品にも購入済みの商品にも紐づかないとき</td></tr></tbody></table></div>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
 <h2 id="表示メッセージ">表示メッセージ</h2>
-<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>画面上の文言(英語)</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M03-17-MSG-001</td><td>管理画面上部</td><td>登録できませんでした。</td><td>（英訳なし）</td><td>売上分析タグの登録・編集で、入力内容に不備があるまま保存したとき</td><td>商品管理 — 売上分析タグ登録/編集画面に留まる</td></tr><tr><td>M03-17-MSG-002</td><td>管理画面上部</td><td>値が重複しています。</td><td>（英訳なし）</td><td>売上分析タグの登録・編集で、登録済みの値と重複したとき</td><td>商品管理 — 売上分析タグ登録/編集画面に留まる</td></tr><tr><td>M03-17-MSG-003</td><td>管理画面上部</td><td>登録が完了しました。</td><td>（英訳なし）</td><td>売上分析タグの登録・編集を保存したとき</td><td>商品管理 — 売上分析タグ登録/編集画面に遷移する</td></tr><tr><td>M03-17-MSG-004</td><td>管理画面上部</td><td>商品で使用されているため、「%name%」のタグは削除することができません。</td><td>（英訳なし）</td><td>商品で使用中の売上分析タグを削除しようとしたとき</td><td>商品管理 — 売上分析タグ登録/編集画面に遷移する</td></tr><tr><td>M03-17-MSG-005</td><td>管理画面上部</td><td>購入済の商品で使用されているため、「%name%」のタグは削除することができません。</td><td>（英訳なし）</td><td>購入済みの商品で使用中の売上分析タグを削除しようとしたとき</td><td>商品管理 — 売上分析タグ登録/編集画面に遷移する</td></tr><tr><td>M03-17-MSG-006</td><td>管理画面上部</td><td>削除しました</td><td>（英訳なし）</td><td>売上分析タグを削除したとき</td><td>商品管理 — 売上分析タグ登録/編集画面に遷移する</td></tr><tr><td>M03-17-MSG-007</td><td>ブラウザ確認ダイアログ</td><td>この操作はあとから取り消すことができません。「%name%」を削除してよろしいですか？</td><td>（英訳なし）</td><td>売上分析タグの削除を選択したとき（削除前の確認）</td><td>確認後に削除を実行し、商品管理 — 売上分析タグ登録/編集画面に遷移する。キャンセル時は現在の画面に留まる</td></tr><tr><td>M03-17-MSG-008</td><td>名称フィールド直下</td><td>入力されていません。</td><td>（英訳なし）</td><td>名称を入力せずに保存したとき</td><td>商品管理 — 売上分析タグ登録/編集画面に留まる</td></tr><tr><td>M03-17-MSG-009</td><td>名称フィールド直下</td><td>長すぎます。この値は{{ limit }}文字以下で入力してください。</td><td>（英訳なし）</td><td>名称が64文字を超えた状態で保存したとき</td><td>商品管理 — 売上分析タグ登録/編集画面に留まる</td></tr><tr><td>M03-17-MSG-010</td><td>並び順フィールド直下</td><td>入力されていません。</td><td>（英訳なし）</td><td>並び順を入力せずに保存したとき</td><td>商品管理 — 売上分析タグ登録/編集画面に留まる</td></tr><tr><td>M03-17-MSG-011</td><td>並び順フィールド直下</td><td>並び順は {{ min }} から {{ max }} の間で入力してください。</td><td>（英訳なし）</td><td>並び順が1〜65535の範囲外の状態で保存したとき</td><td>商品管理 — 売上分析タグ登録/編集画面に留まる</td></tr><tr><td>M03-17-MSG-012</td><td>画面中央(ダイアログ/モーダル)</td><td>この操作はあとから取り消すことができません。「%name%」を削除してよろしいですか？</td><td>（英訳なし）</td><td>売上分析タグの削除を選択したとき（削除前の確認）</td><td>削除でモーダルを閉じて売上分析タグ登録・編集画面に遷移、キャンセルでモーダルを閉じる</td></tr></tbody></table></div>
-<hr>
-<h2 id="試行制限">試行制限</h2>
-<p>本機能ではログイン試行回数などの試行制限を独自に増やさない。</p>
-<hr>
-<h2 id="ログ・監査">ログ・監査</h2>
-<div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>本画面のみに閉じた専用ログ</td><td>コントローラに明示は無く、フラッシュと HTTP 状態が利用者への主なフィードバックになる。売上分析タグ更新 CSV は別コントローラでログ開始・完了を書く実装がある。</td></tr></tbody></table></div>
-<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
-<ul><li>パスワード</li><li>なりすまし対策トークン</li><li>Cookie 値</li><li>セッション ID の完全値</li><li>Remember Me トークンの原値</li></ul>
-<hr>
-<h2 id="セッション">セッション</h2>
-<h3 id="本機能におけるセッション">本機能におけるセッション</h3>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>GET 表示時</td><td><code>admin.product.tag_sales_analysis.page_no</code> と <code>admin.product.tag_sales_analysis.page_count</code> を更新する。</td></tr><tr><td>POST 側</td><td>一覧再構築に同キーを読むのみで、入力値本体はフォームオブジェクト側に載る。</td></tr></tbody></table></div>
-<h3 id="セッションへ保存しない情報">セッションへ保存しない情報</h3>
-<p>恒久化する入力文字列だけを別キーへ退避する処理はしない。送信失敗時は POST 済みデータがフォームに残る。</p>
-<hr>
-<h2 id="Cookie">Cookie</h2>
-<p>本機能単体での特別仕様 Cookie は無い。管理画面共通のセッション Cookie が前提になる。</p>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<p>当画面では明示トランザクションや楽観バージョン列は利用しない。<code>flush</code> がコミット単位となる。並行編集では後続保存が単純上書きしうる。</p>
-<hr>
-<h2 id="調査補助-grep-用">調査補助（grep 用）</h2>
-<p>ルートプレフィックス <code>m03-13_admin_product_product_tag_sales_analysis</code>。<code>src/Eccube/Controller/Admin/Product/TagSalesAnalysisController.php</code>。<code>TagSalesAnalysisType</code>。<code>Entity/Master/MtbTagSalesAnalysis.php</code>。テンプレート <code>template/admin/Product/tag_sales_analysis.twig</code>。ナビ <code>eccube_nav</code> のキー <code>sales_analysis</code>。テスト <code>TagSalesAnalysisControllerTest</code>。</p>
-<h3 id="HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</h3>
-<ul><li><code>m03-13_admin_product_product_tag_sales_analysis_edit_page</code> … <code>GET</code> … <code>/{admin_route}/product/tag_sales_analysis/{id}/page/{page_no}</code>（編集モードで一覧の指定ページを表示する。<code>id</code> と <code>page_no</code> は 10 進整数。）</li><li><code>m03-13_admin_product_product_tag_sales_analysis_page</code> … <code>GET</code> … <code>/{admin_route}/product/tag_sales_analysis/page/{page_no}</code>（新規モードで一覧の指定ページを表示する。）</li><li><code>m03-13_admin_product_product_tag_sales_analysis_edit</code> … <code>GET</code> … <code>/{admin_route}/product/tag_sales_analysis/{id}</code>（指定行をフォームに載せ、一覧とあわせて表示する。）</li><li><code>m03-13_admin_product_product_tag_sales_analysis</code> … <code>GET</code> … <code>/{admin_route}/product/tag_sales_analysis</code>（新規用フォームと一覧を表示する。）</li><li><code>m03-13_admin_product_product_tag_sales_analysis_store</code> … <code>POST</code> … <code>/{admin_route}/product/tag_sales_analysis/store</code>（フォーム送信による登録または更新。<code>id</code> がパスにある場合は当該行を更新対象として束ねる。）</li><li><code>m03-13_admin_product_product_tag_sales_analysis_delete</code> … <code>DELETE</code> … <code>/{admin_route}/product/tag_sales_analysis/{id}/delete</code>（売上分析タグ行の削除。商品または注文明細と紐付いていれば削除しない。）</li></ul>
+<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M03-17-MSG-001</td><td>管理画面上部</td><td>登録できませんでした。</td><td>売上分析タグの登録・編集で、入力内容に不備があるまま保存したとき</td><td>商品管理 — 売上分析タグ登録/編集画面に留まる</td></tr><tr><td>M03-17-MSG-002</td><td>管理画面上部</td><td>値が重複しています。</td><td>売上分析タグの登録・編集で、登録済みの値と重複したとき</td><td>商品管理 — 売上分析タグ登録/編集画面に留まる</td></tr><tr><td>M03-17-MSG-003</td><td>管理画面上部</td><td>登録が完了しました。</td><td>売上分析タグの登録・編集を保存したとき</td><td>商品管理 — 売上分析タグ登録/編集画面に遷移する</td></tr><tr><td>M03-17-MSG-004</td><td>管理画面上部</td><td>商品で使用されているため、「%name%」のタグは削除することができません。</td><td>商品で使用中の売上分析タグを削除しようとしたとき</td><td>商品管理 — 売上分析タグ登録/編集画面に遷移する</td></tr><tr><td>M03-17-MSG-005</td><td>管理画面上部</td><td>購入済の商品で使用されているため、「%name%」のタグは削除することができません。</td><td>購入済みの商品で使用中の売上分析タグを削除しようとしたとき</td><td>商品管理 — 売上分析タグ登録/編集画面に遷移する</td></tr><tr><td>M03-17-MSG-006</td><td>管理画面上部</td><td>削除しました</td><td>売上分析タグを削除したとき</td><td>商品管理 — 売上分析タグ登録/編集画面に遷移する</td></tr><tr><td>M03-17-MSG-007</td><td>ブラウザ確認ダイアログ</td><td>この操作はあとから取り消すことができません。「%name%」を削除してよろしいですか？</td><td>売上分析タグの削除を選択したとき（削除前の確認）</td><td>確認後に削除を実行し、商品管理 — 売上分析タグ登録/編集画面に遷移する。キャンセル時は現在の画面に留まる</td></tr><tr><td>M03-17-MSG-008</td><td>名称フィールド直下</td><td>入力されていません。</td><td>名称を入力せずに保存したとき</td><td>商品管理 — 売上分析タグ登録/編集画面に留まる</td></tr><tr><td>M03-17-MSG-009</td><td>名称フィールド直下</td><td>長すぎます。この値は{{ limit }}文字以下で入力してください。</td><td>名称が64文字を超えた状態で保存したとき</td><td>商品管理 — 売上分析タグ登録/編集画面に留まる</td></tr><tr><td>M03-17-MSG-010</td><td>並び順フィールド直下</td><td>入力されていません。</td><td>並び順を入力せずに保存したとき</td><td>商品管理 — 売上分析タグ登録/編集画面に留まる</td></tr><tr><td>M03-17-MSG-011</td><td>並び順フィールド直下</td><td>並び順は {{ min }} から {{ max }} の間で入力してください。</td><td>並び順が1〜65535の範囲外の状態で保存したとき</td><td>商品管理 — 売上分析タグ登録/編集画面に留まる</td></tr><tr><td>M03-17-MSG-012</td><td>画面中央(ダイアログ/モーダル)</td><td>この操作はあとから取り消すことができません。「%name%」を削除してよろしいですか？</td><td>売上分析タグの削除を選択したとき（削除前の確認）</td><td>削除でモーダルを閉じて売上分析タグ登録・編集画面に遷移、キャンセルでモーダルを閉じる</td></tr></tbody></table></div>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

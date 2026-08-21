@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,32 +272,15 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#フロント挙動">フロント挙動</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#一覧を表示する-GET-admin-buy-price-list">一覧を表示する（GET `admin_buy_price_list`）</a>
-<a class="lv2" href="#集計条件">集計条件</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#一覧の対象">一覧の対象</a>
+<a class="lv3" href="#表の組み立て">表の組み立て</a>
+<a class="lv3" href="#入力と計算">入力と計算</a>
+<a class="lv3" href="#エラー時の扱い">エラー時の扱い</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#バリデーション">バリデーション</a>
-<a class="lv2" href="#権限・認可">権限・認可</a>
-<a class="lv2" href="#画面遷移">画面遷移</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#表示メッセージ">表示メッセージ</a>
-<a class="lv2" href="#試行制限">試行制限</a>
-<a class="lv2" href="#ログ・監査">ログ・監査</a>
-<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
-<a class="lv2" href="#セッション">セッション</a>
-<a class="lv2" href="#Cookie">Cookie</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a>
-<a class="lv2" href="#調査補助-grep-向け">調査補助（grep 向け）</a>
-<a class="lv3" href="#HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</a></nav>
+<a class="lv3" href="#入出力-永続化">入出力: 永続化</a>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -295,87 +288,26 @@ footer {
         <h1>データ管理 — 買取価格対応表（一覧）</h1>
       </header>
       
-      <h2 id="概要">概要</h2>
-<p>HareruyaEc プラグインが管理画面「データ管理」配下に提供する「買取価格対応表」の一覧である。NM（ニアミント）基準価格ごとに、カード状態（SP・MP・HP 等）と通常版／Foil・プロモ版の組み合わせごとの買取価格をマスタ表 <code>mtb_buy_price_list</code> としてマトリクス表示し、各セルは主キー付きの編集画面へのリンクになる。</p>
-<p>編集画面の表示・POST 更新・CSRF・入力検証・成功時リダイレクトは別紙「データ管理 — 買取価格対応表（編集）」（<code>m16-07_admin_data_data_buy_price_list_edit.md</code>）を正とする。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。カスタマイズ区分は「現行踏襲」。画面・挙動は pf-eccube3 配下の HareruyaEc プラグインのソースを確認値とし、DB関連（テーブル・列・型・制約・関連）は ec-cube-enterprise の実装を正とする。本機能のマスタは両リポで同一スキーマである。</p>
-<p>対象はブラウザ経由の管理画面に限定する。</p>
-<p>本文ではコントローラのメソッド単位の解剖を主題としない。本文ではルートbind名やSymfonyのルートnameの網羅は主説明としない。「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。コード探索でbind名が必要なときだけ「調査補助」へ書く。</p>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<ul><li>本機能の DB は現行（pf-eccube3 の HareruyaEc プラグイン）と移行先（ec-cube-enterprise コア）で同一スキーマである。<code>mtb_buy_price_list</code>・<code>mtb_card_condition</code> のテーブル名・列名・型は一致するため、DB記述はそのまま移行先の正とする。</li><li>画面・挙動は現行（pf-eccube3）の確認値。NM基準価格×カード状態×通常/Foil・プロモの買取価格マトリクス表示という機能は移行先でも同等で、現行はプラグイン提供、移行先はコア提供である。</li><li>現行と移行先でスキーマ差・挙動差は確認されていない。差が生じた場合のみ本節に追記する。</li></ul>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>ナビ「データ管理」→「買取価格対応表」</td><td><code>GET /{admin_route}/buy_price_list</code></td><td>NM価格行と状態×通常／特別版のマトリクスが表示され、各セルは金額リンクになっている。</td></tr><tr><td>一覧の金額セル</td><td><code>GET /{admin_route}/buy_price_list/{id}</code></td><td>編集画面（別紙）。</td></tr></tbody></table></div>
-<hr>
-<h2 id="フロント挙動">フロント挙動</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td><code>{% block title %}</code> は「買取価格対応表」。サブタイトルは「一覧」。メニューは <code>menus = ['data_menu', 'buy_price_list']</code>。表頭二段（ノーマルカード／FOil&amp;プロモ版カード）と、<code>cardConditions</code> のうち <code>id &gt; 1</code> の <code>code</code> を二回繰り返したサブヘッダ。</td></tr><tr><td>JS 挙動</td><td>本機能専用の動的表示・非同期通信はテンプレートに無い。</td></tr><tr><td>CSS・レイアウト</td><td>左端セルの左枠線を付与するインラインスタイルがある。</td></tr><tr><td>モーダル・ポップアップ</td><td>無い。</td></tr></tbody></table></div>
-<p>補足（表頭と列数）: 見出し行では「ノーマルカード」に <code>colspan="3"</code>、「FOil&amp;プロモ版カード」に <code>colspan="4"</code> が静的に書かれている一方、サブ見出しの列は <code>id &gt; 1</code> の条件で生成されるため、カード状態マスタの件数次第では <code>colspan</code> と実列数が一致しない場合がある。データ列の個数は Twig の二重ループの出力に従う（実装を確認値とする）。</p>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="一覧を表示する-GET-admin-buy-price-list">一覧を表示する（GET <code>admin_buy_price_list</code>）</h3>
-<ol><li>管理画面の認証・共通制約を通過する。</li><li>カード状態マスタを識別子昇順で全件取得する。</li><li>買取価格対応表マスタを識別子順で全件取得する（リポジトリの <code>findAll</code> に依存。並びは DB 層の既定順である）。</li><li>取得した各行について、<code>nm_price</code>・<code>special_flg</code>・<code>card_condition_id</code> をキーとする三次元の連想配列に、<code>price</code> と行 <code>id</code> を格納する。</li><li>Twig で一覧表を描画する。行の並びは手順 4 の最外层キー（NM価格）の列挙順に従う。各セルは <code>path('admin_buy_price_list_edit', {id: buyPrice.id})</code> のリンクで金額を表示する。</li></ol>
-<hr>
-<h2 id="集計条件">集計条件</h2>
-<p>本機能では件数集計や売上集計は行わない。出力対象はマスタ全件を階層マップ化した結果である。</p>
-<hr>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<p>一覧画面では入力を受け付けず、DB に格納された <code>price</code> を表示するのみである。価格の意味や参照先（他機能が本表を読むか）は別紙および商品・CSV 系の設計を正とする。</p>
-<p>本機能では業務計算を行わない。</p>
-<hr>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>一覧と DB</td><td>一覧はリクエストごとに <code>findAll</code> した内容をマップ化する。</td></tr><tr><td>セル欠け</td><td>マスタに存在しない組み合わせはセル自体が無い。欠けの検知や警告は一覧では行わない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="API-バッチ結果">API/バッチ結果</h2>
-<p>本機能では API 呼び出し・バッチ実行を扱わない。</p>
-<hr>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="一覧の対象">一覧の対象</h3>
+<p>買取価格対応表の全件を対象とする。絞り込みの条件は持たない。</p>
+<p>カード状態は識別子の昇順で全件を読み出す。買取価格対応表は識別子の順で全件を読み出す。並びはデータベース側の既定の順による。</p>
+<h3 id="表の組み立て">表の組み立て</h3>
+<p>各行をNM価格・特別区分・カード状態の3つをキーとして配置し、買取価格を表示する。行の並びはNM価格の列挙順に従う。</p>
+<p>各金額は当該行の編集画面へのリンクとして表示する。</p>
+<h3 id="入力と計算">入力と計算</h3>
+<p>一覧画面では入力を受け付けない。登録済みの買取価格を表示するだけであり、業務計算を行わない。</p>
+<p>買取価格の意味と、どの機能が本表を参照するかは、別紙および商品・CSV系の設計を正とする。</p>
+<h3 id="エラー時の扱い">エラー時の扱い</h3>
+<p>一覧の表示は対象を1件に特定する指定を受け取らないため、指定した行が存在しないことによる表示の失敗は起きない。</p>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>GET のみ。クエリパラメータによる絞り込みは無い。</td></tr><tr><td>成功時出力</td><td>一覧 HTML。</td></tr><tr><td>失敗時出力</td><td>管理画面共通のエラー経路（認証失効等）に従う。</td></tr><tr><td>副作用</td><td>本ルート単体では DB 更新は行わない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<p>一覧の表示に直接関係する列は次のとおり。更新の詳細は別紙。</p>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>mtb_buy_price_list</code></td><td><code>id</code></td><td>セルリンクおよび編集 URL に使う。</td></tr><tr><td><code>mtb_buy_price_list</code></td><td><code>nm_price</code></td><td>行キー。</td></tr><tr><td><code>mtb_buy_price_list</code></td><td><code>price</code></td><td>セルに表示する金額。</td></tr><tr><td><code>mtb_buy_price_list</code></td><td><code>card_condition_id</code></td><td>列キー。</td></tr><tr><td><code>mtb_buy_price_list</code></td><td><code>special_flg</code></td><td>ノーマル／Foil・プロモブロックの分けに使う。</td></tr></tbody></table></div>
-<h3 id="DB操作">DB操作</h3>
-<p>本機能は参照系（検索）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>検索</td><td>mtb_buy_price_list</td><td>検索条件に合致するレコードを抽出する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="バリデーション">バリデーション</h2>
-<p>一覧画面に利用者入力は無い。検証は不要である。</p>
-<hr>
-<h2 id="権限・認可">権限・認可</h2>
-<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>買取価格対応表 一覧</th></tr></thead><tbody><tr><td>管理画面にログインし当ルートへ到達できる運用者</td><td>一覧を表示できる。</td></tr><tr><td>未到達の主体</td><td>管理画面共通の認証・認可により拒否される。</td></tr></tbody></table></div>
-<hr>
-<h2 id="画面遷移">画面遷移</h2>
-<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>ナビから</td><td><code>GET admin_buy_price_list</code></td></tr><tr><td>セルの金額リンク</td><td><code>GET admin_buy_price_list_edit</code>（詳細は別紙）</td></tr></tbody></table></div>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<p>一覧の <code>GET</code> は主キーを受け取らないため、本ルート単体では「存在しない id」による 404 は発生しない設計である。</p>
-<hr>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>入力項目を持たない。絞り込みの指定も受け取らない。</td></tr><tr><td>成功時出力</td><td>買取価格対応表の一覧。</td></tr><tr><td>失敗時出力</td><td>管理画面共通のエラー経路に従う。</td></tr></tbody></table></div>
+<h3 id="入出力-永続化">入出力: 永続化</h3>
+<p>一覧表示のみを行い、データを更新しない。</p>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
 <h2 id="表示メッセージ">表示メッセージ</h2>
-<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>画面上の文言(英語)</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody></tbody></table></div>
-<p>&gt; 根拠: <code>src/Eccube/Controller/Admin/Data/BuyPriceListController.php:113</code>（<code>addSuccess('admin.register.complete', 'admin')</code>）/ <code>src/Eccube/Resource/locale/messages.ja.yaml:1966</code>。</p>
-<hr>
-<h2 id="試行制限">試行制限</h2>
-<p>本機能では試行制限を扱わない。</p>
-<hr>
-<h2 id="ログ・監査">ログ・監査</h2>
-<p>一覧表示専用の固有ログはコントローラに無い。</p>
-<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
-<ul><li>パスワード</li><li>なりすまし対策トークン</li><li>Cookie 値</li><li>セッション ID の完全値</li><li>Remember Me トークンの原値</li></ul>
-<hr>
-<h2 id="セッション">セッション</h2>
-<p>一覧は検索条件セッションを持たない。</p>
-<hr>
-<h2 id="Cookie">Cookie</h2>
-<p>本機能特有の Cookie 操作は扱わない。</p>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<p>一覧は参照のみであり、本ルートではトランザクション境界を持たない。</p>
-<hr>
-<h2 id="調査補助-grep-向け">調査補助（grep 向け）</h2>
-<p>ルート登録は <code>BuyPriceListServiceProvider.php</code>、一覧処理は <code>BuyPriceListController::index</code>、Twig は <code>Resource/template/admin/BuyPriceList/buy_price_list.twig</code> を参照する。</p>
-<h3 id="HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</h3>
-<ul><li><code>admin_buy_price_list</code> … <code>GET</code> … <code>/{admin_route}/buy_price_list</code>（買取価格対応表の一覧（マトリクス）を表示する。）</li></ul>
+<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody></tbody></table></div>
+<p>一覧画面は利用者向けのメッセージを表示しない。</p>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

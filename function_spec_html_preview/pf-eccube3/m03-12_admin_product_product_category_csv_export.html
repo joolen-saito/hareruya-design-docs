@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,33 +272,15 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#フロント挙動">フロント挙動</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#CSV-をダウンロードする-GET-admin-product-category-export">CSV をダウンロードする（GET `admin_product_category_export`）</a>
-<a class="lv3" href="#カテゴリ-0-件のとき">カテゴリ 0 件のとき</a>
-<a class="lv3" href="#CSV-項目が-1-件も有効で無いとき">CSV 項目が 1 件も有効で無いとき</a>
-<a class="lv2" href="#集計条件">集計条件</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#出力する列">出力する列</a>
+<a class="lv3" href="#出力する対象">出力する対象</a>
+<a class="lv3" href="#出力ファイル">出力ファイル</a>
+<a class="lv3" href="#エラー時の扱い">エラー時の扱い</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#バリデーション">バリデーション</a>
-<a class="lv2" href="#権限・認可">権限・認可</a>
-<a class="lv2" href="#画面遷移">画面遷移</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#試行制限">試行制限</a>
-<a class="lv2" href="#ログ・監査">ログ・監査</a>
-<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
-<a class="lv2" href="#セッション">セッション</a>
-<a class="lv2" href="#Cookie">Cookie</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a>
-<a class="lv2" href="#調査補助-実装参照用">調査補助（実装参照用）</a>
-<a class="lv3" href="#HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</a></nav>
+<a class="lv3" href="#入出力-永続化">入出力: 永続化</a>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -296,90 +288,26 @@ footer {
         <h1>商品管理 — カテゴリ CSV 出力</h1>
       </header>
       
-      <h2 id="概要">概要</h2>
-<p>管理画面の「商品管理」配下であるカテゴリ一覧画面から、店舗設定で有効化されたカテゴリ用 CSV 項目定義（<code>dtb_csv</code>、<code>csv_type_id</code> がカテゴリ CSV 種別）に沿って、全カテゴリ行を 1 ファイルにストリーミング出力する機能である。画面のパンくずやツリー表示順ではなく、永続化上の <code>sort_no</code> 降順でフラットに並べる。対象商品数列はカテゴリエンティティに無い仮想列として、商品カテゴリ紐づけから集計して埋める。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値は EC-CUBE Enterprise の <code>src/Eccube</code> 配下（Symfony ルートプレフィックス <code>%eccube_admin_route%</code>）とする。カスタマイズ区分はカスタマイズであり、現行挙動は pf-eccube3 を参照し、DB関連（テーブル名・列名・型・制約・関連）は ec-cube-enterprise を正とする。</p>
-<p>対象はブラウザ経由の管理画面に限定する。</p>
-<p>コントローラのメソッド単位の解剖は本文の主題としない。本文ではルートbind名やSymfonyのルートnameの網羅は主説明としない。「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。コード探索でbind名が必要なときだけ「調査補助」へ書く。</p>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<p>現行（pf-eccube3）と移行先（ec-cube-enterprise）のDBスキーマを比較した結果は次のとおり。相違が判明した場合は ec-cube-enterprise 実装を正とする。</p>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>CSV項目定義</td><td><code>dtb_csv</code>（<code>csv_type_id</code>・<code>enabled</code>・<code>sort_no</code>・<code>disp_name</code>・<code>entity_name</code>・<code>field_name</code>・<code>reference_field_name</code>）</td><td>同一スキーマ。<code>csv_type_id</code> はカテゴリ種別への参照、並び順キーは <code>sort_no</code>。</td></tr><tr><td>カテゴリ本体</td><td><code>dtb_category</code></td><td>同一スキーマ。</td></tr><tr><td>対象商品数の集計元</td><td><code>dtb_product_category</code>（<code>category_id</code>・<code>product_id</code>）</td><td>同一スキーマ。集計方法に差は無い。</td></tr><tr><td>並び順</td><td>出力は <code>sort_no</code> 降順</td><td>同一。論理削除・物理削除の差は本機能（参照のみ）に無い。</td></tr></tbody></table></div>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>ナビ「商品管理」→「カテゴリ管理」でカテゴリ一覧を開き、右上の「CSVダウンロード」（クラウドアイコン付き）を押す</td><td><code>GET /{admin_route}/product/category/export</code></td><td>ブラウザが <code>category_日時.csv</code> をダウンロードする。中身はヘッダ 1 行と、有効な CSV 項目定義に対応するデータ列を持つ全カテゴリ行。</td></tr><tr><td>同じ画面の「CSV出力項目設定」</td><td><code>GET /{admin_route}/setting/shop/csv/{id}</code>（<code>id</code> はカテゴリ CSV 種別の整数）</td><td>出力列の追加・無効化・並びはここで変わる。本書の列一覧は現行マスタを前提とし、設定変更後はヘッダと列数が変わり得る。</td></tr></tbody></table></div>
-<p>カテゴリ編集画面（<code>…/category/{id}/edit</code>）でも同一テンプレートを使うため、編集時も右上に同じ CSV ダウンロードリンクが出る。</p>
-<hr>
-<h2 id="フロント挙動">フロント挙動</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td><code>category.twig</code> のパンくず右側に <code>url('admin_product_category_export')</code> への <code>a.btn.btn-primary</code>。ラベルは <code>admin.common.csv_download</code>。隣に CSV 項目設定へのリンク。</td></tr><tr><td>JS 挙動</td><td>CSV ダウンロード専用のクライアント制御は無い。リンクは通常の GET 遷移。並び替え用の Ajax は本機能とは別。</td></tr><tr><td>CSS・レイアウト</td><td>管理画面共通のボタン体裁。</td></tr><tr><td>モーダル・ポップアップ</td><td>出力前の確認ダイアログは無い。</td></tr></tbody></table></div>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="CSV-をダウンロードする-GET-admin-product-category-export">CSV をダウンロードする（GET <code>admin_product_category_export</code>）</h3>
-<ol><li>管理画面の認証・共通制約を通過する。</li><li>PHP の実行時間制限を無効にする（<code>set_time_limit(0)</code>）。</li><li>管理用エンティティマネージャの設定で SQL ロガー関連の処理を呼び出す（他 CSV エクスポートと同型）。</li><li><code>csv_type_id</code> がカテゴリ種別かつ <code>enabled</code> が真の <code>dtb_csv</code> 行を、<code>sort_no</code> 昇順で取得する。</li><li><code>StreamedResponse</code> のコールバック内で CSV 出力サービスを開き、手順 4 の各行の表示名を並べて 1 行目を書く。</li><li>全カテゴリを条件なしで取得し、<code>sort_no</code> 降順のみでソートする。ID が正の整数として取れた ID の一覧を作る。</li><li>手順 6 の ID 集合に対し、商品カテゴリ表を SQL で <code>category_id</code> ごとに <code>COUNT(DISTINCT product_id)</code> し、マップを得る。</li><li>手順 6 の各カテゴリについてデータ行を組み立てる。各 CSV 項目定義について、(a) フィールド名が対象商品数の定数と一致すればマップの件数（無ければ 0）を文字列化、(b) それ以外は CSV 出力サービスの「項目定義とエンティティからセル値を取り出す」処理に渡す。得られた値が null または空文字のときは空セルに正規化する。</li><li>各行を CSV 出力サービス経由で書き込み、最後に閉じる。</li><li>応答ヘッダに <code>Content-Type: application/octet-stream</code> と <code>Content-Disposition: attachment; filename=category_YYYYMMDDhhmmss.csv</code> を付与する。</li><li>情報ログに出力ファイル名を記録する。</li></ol>
-<h3 id="カテゴリ-0-件のとき">カテゴリ 0 件のとき</h3>
-<ul><li>手順 5 のヘッダのみ書き、データ行は無いファイルとなる。</li></ul>
-<h3 id="CSV-項目が-1-件も有効で無いとき">CSV 項目が 1 件も有効で無いとき</h3>
-<ul><li>手順 5 でヘッダが空配列になり、続くデータ行は従来どおり各カテゴリ分だけ空列が並ぶ実装になる（運用上は店舗設定で有効項目を残す前提）。</li></ul>
-<hr>
-<h2 id="集計条件">集計条件</h2>
-<div class="table-wrap"><table><thead><tr><th>指標</th><th>集計の要点</th></tr></thead><tbody><tr><td>対象商品数（特例列）</td><td>テーブル <code>dtb_product_category</code>。<code>category_id</code> が当該カテゴリ ID。<code>product_id</code> を DISTINCT して件数。複数行（親子カテゴリへの重複紐づけ）は商品単位で 1 と数える。カテゴリ ID 集合が空のときは集計クエリを発行せず空マップとする。</td></tr></tbody></table></div>
-<p>本機能では売上・注文件数などその他の集計は行わない。</p>
-<hr>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>列セット</td><td>店舗の <code>dtb_csv</code> のうち、カテゴリ CSV 種別かつ有効な行のみ。並びは <code>sort_no</code> 昇順。</td></tr><tr><td>セル値（一般列）</td><td>項目定義のエンティティ名が出力中のカテゴリと一致し、かつフィールド名がカテゴリのオフセット配列に存在するとき値を取り出す。関連エンティティは参照フィールド名でスカラ化。真偽は 1／0 文字列。日時は設定 <code>eccube_csv_export_date_format</code>。コレクションは設定 <code>eccube_csv_export_multidata_separator</code> で連結。一致しない／存在しない場合は null になり、行組み立てで空セルになる。</td></tr><tr><td>セル値（対象商品数）</td><td>エンティティには無いがフィールド名が対象商品数のとき、上記集計マップの値。ID が無いカテゴリは 0 文字列。</td></tr><tr><td>文字コード・区切り</td><td><code>eccube_csv_export_encoding</code> に従い UTF-8 から変換。UTF-8 指定時は BOM を先頭に書く。フィールド区切りは <code>eccube_csv_export_separator</code>。</td></tr></tbody></table></div>
-<p>本機能ではフォーム入力の保存は行わない。入力項目表は置かない。</p>
-<hr>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>一覧画面との対応</td><td>同一マスタ <code>dtb_category</code> を参照するが、CSV の行順は一覧のツリー展開順ではなく全件の <code>sort_no</code> 降順のみ。</td></tr><tr><td>対象商品数の時点</td><td>ダウンロード要求時点の <code>dtb_product_category</code> に基づく。トランザクション分離レベルにより、同時更新との微妙な差は保証しない。</td></tr><tr><td>項目定義変更の反映</td><td>CSV 項目設定を変更すると、次回のエクスポートからヘッダと列内容が変わる。</td></tr></tbody></table></div>
-<hr>
-<h2 id="API-バッチ結果">API/バッチ結果</h2>
-<p>本機能では API 呼び出し・バッチ実行を扱わない。</p>
-<hr>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="出力する列">出力する列</h3>
+<p>出力する列は、カテゴリCSV種別かつ有効なCSV出力項目設定で、表示順の昇順に並べたものである。1行目には各項目の表示名を並べる。</p>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>セル値（一般列）</td><td>項目定義のエンティティ名が出力中のカテゴリと一致し、かつ項目名がカテゴリの保持する項目に存在するときだけ値を取り出す。関連する情報は参照する項目名で単一値にする。真偽は1／0の文字列、日時は出力用の日付書式、複数値は出力用の区切り文字で連結する。一致しないとき、または存在しないときは空セルにする</td></tr><tr><td>セル値（対象商品数）</td><td>項目名が対象商品数のときは、カテゴリごとの商品数の集計値を書く。集計に無いカテゴリは0とする</td></tr><tr><td>対象商品数の集計</td><td>出力対象のカテゴリIDについて、商品カテゴリの紐付けからカテゴリごとに重複を除いた商品数を数える</td></tr><tr><td>値の正規化</td><td>取り出した値が未設定または空文字のときは空セルにする</td></tr></tbody></table></div>
+<h3 id="出力する対象">出力する対象</h3>
+<p>全カテゴリを条件なしで取得し、表示順の降順だけで並べる。検索条件やツリーの親IDは、画面で指定されたときも出力には渡らない。対象は常に全カテゴリである。</p>
+<div class="table-wrap"><table><thead><tr><th>場合</th><th>結果</th></tr></thead><tbody><tr><td>カテゴリが0件のとき</td><td>ヘッダ行だけを書き、データ行が無いファイルとなる</td></tr><tr><td>有効なCSV出力項目が1件も無いとき</td><td>ヘッダが空となり、データ行はカテゴリの件数分だけ空列が並ぶ（運用上は店舗設定で有効項目を残す前提）</td></tr></tbody></table></div>
+<h3 id="出力ファイル">出力ファイル</h3>
+<p>ファイル名は<code>category_YYYYMMDDhhmmss.csv</code>とし、ダウンロードとして応答する。文字コードは出力エンコーディングの設定に従いUTF-8から変換し、UTF-8を指定したときはBOMを先頭に書く。フィールドの区切り文字も出力用の設定値に従う。</p>
+<p>出力の間は実行時間の制限を無効にする。</p>
+<p>本機能ではフォーム入力の保存を行わないため、保存対象の項目は無い。</p>
+<h3 id="エラー時の扱い">エラー時の扱い</h3>
+<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>未ログイン・権限不足のとき</td><td>管理画面共通のログイン案内や拒否に従う</td></tr><tr><td>出力の途中で例外が発生したとき</td><td>利用者向けの専用メッセージの分岐は無い</td></tr></tbody></table></div>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>GET にクエリボディは無い。検索条件やツリーの親 ID はエクスポートに渡らない（常に全カテゴリ）。</td></tr><tr><td>成功時出力</td><td>ストリーム本文が CSV。1 行目ヘッダ、2 行目以降データ。</td></tr><tr><td>失敗時出力</td><td>本処理パスにフラッシュメッセージやリダイレクト分岐は実装されていない。認可失敗やサーバ例外は管理画面共通の扱い。</td></tr><tr><td>副作用</td><td>DB 更新は行わない。情報ログにファイル名を残す。</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<p>機能に直接関係する主な参照先（型の細部はスキーマ参照）。</p>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>dtb_csv</code></td><td><code>csv_type_id</code>, <code>enabled</code>, <code>sort_no</code>, <code>disp_name</code>, <code>entity_name</code>, <code>field_name</code>, <code>reference_field_name</code></td><td>カテゴリ種別・有効・並びで出力形が決まる。</td></tr><tr><td><code>dtb_category</code></td><td>項目定義の <code>field_name</code> に対応する各列</td><td>一般列のソース。</td></tr><tr><td><code>dtb_product_category</code></td><td><code>category_id</code>, <code>product_id</code></td><td>対象商品数の集計のみ。</td></tr></tbody></table></div>
-<h3 id="DB操作">DB操作</h3>
-<p>本機能は参照系（検索・出力）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>検索</td><td>dtb_category / dtb_csv / dtb_product_category</td><td>検索条件に合致するレコードを抽出する。抽出結果を所定フォーマットでファイル出力する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="バリデーション">バリデーション</h2>
-<p>リクエストパラメータの検証は無い。出力内容の整合はマスタとエンティティの状態に依存する。</p>
-<hr>
-<h2 id="権限・認可">権限・認可</h2>
-<p>本コントローラメソッドにルート単位の追加アノテーションは付かない。到達可否は管理画面のファイアウォールとロール付与に従う（詳細は管理画面ログイン設計等を正とする）。</p>
-<hr>
-<h2 id="画面遷移">画面遷移</h2>
-<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>「CSVダウンロード」クリック</td><td>同一タブで GET エクスポート。ブラウザがダウンロード応答を処理。一覧 HTML には戻らない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>未ログイン・権限不足</td><td>管理画面共通のログイン案内や拒否。</td></tr><tr><td>ストリーム中の例外</td><td>利用者向けの専用メッセージ分岐はエクスポート内に無い。</td></tr></tbody></table></div>
-<hr>
-<h2 id="試行制限">試行制限</h2>
-<p>本機能では試行制限を扱わない。</p>
-<hr>
-<h2 id="ログ・監査">ログ・監査</h2>
-<div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>応答組み立て時</td><td>情報ログにカテゴリ CSV のファイル名（<code>category_日時.csv</code> 形式）。</td></tr></tbody></table></div>
-<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
-<ul><li>パスワード</li><li>なりすまし対策トークン</li><li>Cookie 値</li><li>セッション ID の完全値</li></ul>
-<p>（カテゴリ CSV 本文に個人情報が含まれるかは項目定義次第）</p>
-<hr>
-<h2 id="セッション">セッション</h2>
-<p>本機能のエクスポート処理はセッションを更新しない。</p>
-<hr>
-<h2 id="Cookie">Cookie</h2>
-<p>本機能単体で新たな Cookie を設定しない。</p>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<p>読み取りとストリーム出力のみ。楽観・悲観ロックの対象は持たない。</p>
-<hr>
-<h2 id="調査補助-実装参照用">調査補助（実装参照用）</h2>
-<p>ルートや文言の突き合わせに使うパスの例（本文の主説明ではない）。</p>
-<ul><li><code>src/Eccube/Controller/Admin/Product/CategoryController.php</code>（<code>export</code>）</li><li><code>src/Eccube/Service/CsvExportService.php</code>（開封、BOM、エンコーディング、<code>getData</code>）</li><li><code>src/Eccube/Repository/CsvRepository.php</code>（種別・有効・<code>sort_no</code> 順）</li><li><code>src/Eccube/Repository/ProductCategoryRepository.php</code>（<code>getProductCountMapByCategoryIds</code>）</li><li><code>src/Eccube/Resource/template/admin/Product/category.twig</code>（ダウンロードリンク）</li></ul>
-<h3 id="HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</h3>
-<ul><li><code>admin_product_category_export</code> … <code>GET</code> … <code>/{admin_route}/product/category/export</code>（カテゴリ CSV をストリーミング応答として返す。）</li></ul>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>無し。検索条件やツリーの親IDは渡らない</td></tr><tr><td>成功時出力</td><td>CSVファイル。1行目はヘッダ、2行目以降がデータ</td></tr><tr><td>失敗時出力</td><td>本処理に完了メッセージや遷移の分岐は無い。認可失敗やサーバ例外は管理画面共通の扱いに従う</td></tr></tbody></table></div>
+<h3 id="入出力-永続化">入出力: 永続化</h3>
+<p>本機能はデータを更新しない。</p>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
+<h2 id="表示メッセージ">表示メッセージ</h2>
+<p>本機能は画面メッセージを表示しない。</p>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

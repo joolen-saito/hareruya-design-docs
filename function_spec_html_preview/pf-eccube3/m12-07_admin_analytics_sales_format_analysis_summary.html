@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,32 +272,13 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#本書で扱うこと">本書で扱うこと</a>
-<a class="lv2" href="#本書で扱わないこと">本書で扱わないこと</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv2" href="#用語">用語</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#フロント挙動">フロント挙動</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#検索画面初期表示-admin-route-analysis-format-sales">検索画面初期表示（`/{admin_route}/analysis/format_sales`）</a>
-<a class="lv3" href="#集計実行・一覧表示-admin-route-analysis-format-sales-result">集計実行・一覧表示（`/{admin_route}/analysis/format_sales/result`）</a>
-<a class="lv2" href="#集計条件">集計条件</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
-<a class="lv3" href="#入力項目">入力項目</a>
-<a class="lv3" href="#エッジケース">エッジケース</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
-<a class="lv2" href="#入出力">入出力</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#バリデーション">バリデーション</a>
-<a class="lv2" href="#権限・認可">権限・認可</a>
-<a class="lv2" href="#画面遷移">画面遷移</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#ログ・監査">ログ・監査</a>
-<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a></nav>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#初期表示">初期表示</a>
+<a class="lv3" href="#集計の対象">集計の対象</a>
+<a class="lv3" href="#フォーマットの並び">フォーマットの並び</a>
+<a class="lv3" href="#集計値の算出">集計値の算出</a>
+<a class="lv3" href="#エラー時の扱い">エラー時の扱い</a>
+<a class="lv2" href="#入出力">入出力</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -295,88 +286,20 @@ footer {
         <h1>M12-07（フォーマット売上分析 集計一覧表示）</h1>
       </header>
       
-      <h2 id="概要">概要</h2>
-<p>分析・集計メニューのフォーマット売上分析は、管理者が指定した集計月について、売上分析タグ（フォーマット）ごとの日別売上金額を集計し、折れ線グラフと日別の表、フォーマットごとの合計・平均の表で提示する機能である。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインのフォーマット売上分析処理、売上分析タグ集計用リポジトリ、検索フォーム種別、一覧テンプレートを正とする。本機能のカスタマイズ区分はカスタマイズであり、挙動は現行リポpf-eccube3を参照し、DB関連の記述はec-cube-enterpriseを正とする。現行と移行先でテーブル名・列の所在が異なる箇所は「リニューアル移行時の扱い」に集約する。</p>
-<p>対象はブラウザ経由の管理画面に限定する。本文ではフレームワークのコントローラ型名やメソッド名を主説明としない。管理画面プレフィックスは環境により変わる（<code>admin_route</code>）。「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。</p>
-<p>CSVダウンロードはM12-08で扱う。本書は集計一覧（グラフ・表）の表示までを扱う。</p>
-<hr>
-<h2 id="本書で扱うこと">本書で扱うこと</h2>
-<ul><li>フォーマット売上分析の初期表示と集計月の指定による集計表示</li><li>フォーマット（売上分析タグ）ごとの日別売上金額の集計の対象データ・結合・除外条件・集計単位・期間</li><li>日別合計・フォーマットごとの合計と平均の算出</li><li>売上分析タグに紐づかない売上（その他・その他カード）の取り扱い</li></ul>
-<hr>
-<h2 id="本書で扱わないこと">本書で扱わないこと</h2>
-<p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
-<ul><li>集計結果のCSVダウンロード（M12-08を正とする）</li><li>日次/月次集計、受注/売上分析、入荷通知依頼の各集計（M12-01〜M12-06を正とする）</li><li>売上分析タグ（フォーマット）マスタの管理（マスタ管理機能を正とする）</li><li>管理画面へのアクセス制御・ログイン・権限設定の詳細</li></ul>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<p>挙動は現行リポpf-eccube3を正とし、DB関連はec-cube-enterpriseを正とする。現行（pf-eccube3）と移行先（ec-cube-enterprise）でスキーマが異なる箇所を記録する。</p>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>注文明細テーブル</td><td><code>dtb_order_detail</code>（<code>price</code>・<code>quantity</code>）</td><td><code>dtb_order_item</code>（<code>price</code>・<code>quantity</code> は同名）</td></tr><tr><td>明細と売上分析タグの紐づき</td><td><code>dtb_order_detail_sub_tag_sales_analysis</code>（<code>tag_sales_analysis_id</code>・<code>order_detail_id</code>）</td><td><code>dtb_order_item_tag_sales_analysis</code>（<code>tag_sales_analysis_id</code>・<code>order_item_id</code>）</td></tr><tr><td>カード明細の判別列</td><td>規格サブ <code>dtb_product_sub.card_detail_id</code></td><td><code>dtb_product.card_detail_id</code>（商品本体に統合。規格サブは移行先に存在しない）</td></tr><tr><td>フォーマットの並び順</td><td><code>mtb_tag_sales_analysis.rank</code></td><td><code>mtb_tag_sales_analysis.rank</code>（同名。並び順は <code>rank</code> を保持）</td></tr><tr><td>フォーマット名</td><td><code>mtb_tag_sales_analysis.name</code></td><td><code>mtb_tag_sales_analysis.name</code>（同名）</td></tr></tbody></table></div>
-<p>DB列に言及する箇所は移行先（ec-cube-enterprise）の名称を主とし、現行名を括弧で添える。移行先に該当が見当たらない箇所は推測でスキーマ化せず「ec-cube-enterprise 実装で要確認」と残す。</p>
-<hr>
-<h2 id="用語">用語</h2>
-<div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>集計月</td><td>集計対象とする年月。当月の1日から翌月の1日未満までを対象期間とする。</td></tr><tr><td>フォーマット</td><td>売上分析タグ。<code>rank</code>の昇順で並べる。一覧の列の単位となる。</td></tr><tr><td>その他(カード)</td><td>売上分析タグが紐づかず、規格サブにカード明細が紐づく売上。</td></tr><tr><td>その他</td><td>売上分析タグが紐づかず、規格サブにカード明細が紐づかない売上。</td></tr></tbody></table></div>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>サイドメニュー「フォーマット売上分析」</td><td><code>GET /{admin_route}/analysis/format_sales</code></td><td>集計月入力欄を持つ検索画面を表示する。集計結果は表示しない。</td></tr><tr><td>検索ボタン押下</td><td><code>POST /{admin_route}/analysis/format_sales/result</code></td><td>入力された集計月で集計し、同一画面にグラフと表を表示する。</td></tr></tbody></table></div>
-<p>管理画面プレフィックスは環境により変わるためプレースホルダで示す。本機能は他の分析・集計機能と異なり、検索条件をセッションへ保存しない。</p>
-<hr>
-<h2 id="フロント挙動">フロント挙動</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>集計月入力欄、検索ボタン。集計結果がある場合は折れ線グラフ、日別の売上表（日・各フォーマット・合計）、フォーマットごとの合計表、平均表を表示する。金額は金額表示の整形を適用する。</td></tr><tr><td>入力項目</td><td>集計月の入力欄（年月）。デートタイムピッカーを適用する。</td></tr><tr><td>JS挙動</td><td>折れ線グラフの描画ライブラリで、フォーマットごとの日別売上を折れ線グラフとして表示する。集計値の非同期取得は行わない。</td></tr><tr><td>モーダル・ポップアップ</td><td>本機能専用のモーダルは無い。</td></tr></tbody></table></div>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="検索画面初期表示-admin-route-analysis-format-sales">検索画面初期表示（<code>/{admin_route}/analysis/format_sales</code>）</h3>
-<ol><li>管理画面の認証・権限を通過する。</li><li>集計月入力欄を持つ検索フォームを表示する。集計結果は無しとする。</li></ol>
-<h3 id="集計実行・一覧表示-admin-route-analysis-format-sales-result">集計実行・一覧表示（<code>/{admin_route}/analysis/format_sales/result</code>）</h3>
-<ol><li>検索フォームへ送信値を取り込み、集計月を取得する。</li><li>集計月をもとに、売上分析タグごと、および売上分析タグに紐づかない区分ごとの日別売上を集計する。</li><li>売上の無い日を0で補完し、日別の売上表・日別合計・フォーマットごとの合計と平均を算出する。</li><li>グラフと表を同一画面に表示する。</li></ol>
-<hr>
-<h2 id="集計条件">集計条件</h2>
-<div class="table-wrap"><table><thead><tr><th>指標</th><th>集計の要点</th></tr></thead><tbody><tr><td>期間</td><td>集計月の1日から翌月の1日未満まで。注文日（<code>order_date</code>）で抽出する。</td></tr><tr><td>集計単位</td><td>注文日を日（<code>%e</code>）でグループ化し、フォーマット（売上分析タグ）ごとに日別の売上金額を集計する。</td></tr><tr><td>売上金額</td><td>注文明細の単価×数量の合計とする。</td></tr><tr><td>除外条件</td><td>受注ステータスがキャンセルの注文を除外する。</td></tr><tr><td>タグ別売上</td><td>注文・注文明細・明細サブの売上分析タグ紐づきを結合し、指定の売上分析タグIDに一致する明細の売上を日別に集計する。</td></tr><tr><td>その他(カード)</td><td>売上分析タグが紐づかない明細のうち、規格サブのカード明細が紐づく売上を日別に集計する。</td></tr><tr><td>その他</td><td>売上分析タグが紐づかない明細のうち、規格サブのカード明細が紐づかない売上を日別に集計する。</td></tr><tr><td>日別合計</td><td>各日について全フォーマットの売上を合算する。</td></tr><tr><td>フォーマット合計・平均</td><td>フォーマットごとに月内売上の合計と、合計を当月日数で割った平均（小数点以下切り捨て）を算出する。合計行は各フォーマットの合計・平均をさらに合算する。</td></tr></tbody></table></div>
-<p>売上の無い日は0で補完し、当月日数分の日付を一覧に並べる。</p>
-<hr>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>フォーマットの並び</td><td>売上分析タグを<code>rank</code>の昇順で並べ、その後に「その他(カード)」「その他」を加える。</td></tr><tr><td>平均</td><td>フォーマットごとの月内売上合計を当月日数で割り、小数点以下を切り捨てる。</td></tr><tr><td>合計行</td><td>各フォーマットの合計を合算した値、各フォーマットの平均を合算した値を「合計」として算出する。</td></tr><tr><td>日数</td><td>集計月の末日の日付を当月日数とする。</td></tr><tr><td>金額表示</td><td>表・グラフの金額は金額表示の整形を適用する。</td></tr></tbody></table></div>
-<h3 id="入力項目">入力項目</h3>
-<div class="table-wrap"><table><thead><tr><th>項目名</th><th>必須／任意</th><th>最大長</th><th>初期値</th><th>保存先・扱い</th></tr></thead><tbody><tr><td>集計月</td><td>必須</td><td>年月</td><td>空（初回表示時は未設定）</td><td>フォームキー <code>month</code>。年月（<code>yyyy-MM</code>）。当月から翌月未満を対象期間とする。空欄では送信不可。</td></tr></tbody></table></div>
-<p>本フォームの集計月は未入力不可とする。集計結果はセッションへ保存しない。</p>
-<h3 id="エッジケース">エッジケース</h3>
-<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>売上の無い日</td><td>当該日の各フォーマットの売上を0で補完する。</td></tr><tr><td>売上分析タグが紐づかない売上</td><td>「その他(カード)」「その他」の2区分に集計する。</td></tr><tr><td>集計月のフォーマット売上が全て0</td><td>各日・各フォーマットを0として表示し、合計・平均も0となる。</td></tr></tbody></table></div>
-<hr>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>参照時点</td><td>集計結果は検索実行時にデータベースから読み取った値である。表示後の更新は自動反映しない。</td></tr><tr><td>CSVとの整合性</td><td>本機能はCSV出力時に検索条件をセッションから読まず、CSVダウンロードの送信に含まれる集計月で再集計する。同一の集計月であれば集計結果は一致する。</td></tr><tr><td>一覧と合計の整合性</td><td>日別合計・フォーマット合計・平均は、表示中の集計結果から算出した値である。</td></tr><tr><td>更新との整合性</td><td>本機能は参照のみで台帳を更新しない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="API-バッチ結果">API/バッチ結果</h2>
-<p>本機能ではAPI呼び出し・バッチ実行を扱わない。集計はデータベースへの問い合わせで行う。</p>
-<hr>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="初期表示">初期表示</h3>
+<p>集計月の入力欄を持つ検索フォームを表示する。集計結果は表示しない。</p>
+<h3 id="集計の対象">集計の対象</h3>
+<p>集計月をもとに、売上分析タグごと、および売上分析タグに紐づかない区分ごとの日別売上を集計する。売上の無い日は 0 で補完する。日別の売上表・日別合計・フォーマットごとの合計と平均を算出し、グラフと表を同一画面に表示する。</p>
+<h3 id="フォーマットの並び">フォーマットの並び</h3>
+<p>売上分析タグを表示順の昇順で並べ、その後に「その他(カード)」「その他」を加える。</p>
+<h3 id="集計値の算出">集計値の算出</h3>
+<div class="table-wrap"><table><thead><tr><th>値</th><th>算出方法</th></tr></thead><tbody><tr><td>フォーマットごとの平均</td><td>月内売上合計を当月日数で割り、小数点以下を切り捨てる</td></tr><tr><td>合計</td><td>各フォーマットの合計を合算した値、および各フォーマットの平均を合算した値</td></tr><tr><td>当月日数</td><td>集計月の末日の日付</td></tr></tbody></table></div>
+<p>表・グラフの金額には金額表示の整形を適用する。</p>
+<h3 id="エラー時の扱い">エラー時の扱い</h3>
+<p>データベース読み取りの障害はアプリケーションの共通例外処理に委ねる。認証・権限が不足するときは集計を表示しない。</p>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>集計月。</td></tr><tr><td>成功時出力</td><td>折れ線グラフ、日別の売上表、フォーマットごとの合計表・平均表を含む画面。</td></tr><tr><td>失敗時出力</td><td>データ取得失敗時はアプリケーションの共通例外処理に委ねる。</td></tr><tr><td>副作用</td><td>無し（参照のみ。検索条件のセッション保存も行わない）。</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<p>機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。テーブル名・列名はec-cube-enterpriseを正とし、現行（pf-eccube3）と異なる場合は現行名を括弧で添える。</p>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td>dtb_order</td><td>order_date</td><td>集計期間の抽出・日別の集計単位。</td></tr><tr><td>dtb_order</td><td>status</td><td>キャンセル注文の除外。</td></tr><tr><td>dtb_order_item（現行 dtb_order_detail）</td><td>price, quantity</td><td>売上金額の算出。</td></tr><tr><td>dtb_order_item_tag_sales_analysis（現行 dtb_order_detail_sub_tag_sales_analysis）</td><td>tag_sales_analysis_id, order_item_id（現行 order_detail_id）</td><td>明細と売上分析タグの紐づき。</td></tr><tr><td>dtb_product（現行 dtb_product_sub）</td><td>card_detail_id</td><td>その他(カード)・その他の判別。</td></tr><tr><td>mtb_tag_sales_analysis</td><td>rank, name</td><td>フォーマットの並び順・列名。</td></tr></tbody></table></div>
-<h3 id="DB操作">DB操作</h3>
-<p>本機能は参照系（検索）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>検索</td><td>dtb_order / dtb_order_detail / dtb_order_detail_sub_tag_sales_analysis / dtb_order_item / dtb_order_item_tag_sales_analysis / dtb_product 等</td><td>検索条件に合致するレコードを抽出する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="バリデーション">バリデーション</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>集計月</td><td>必須。年月形式（<code>yyyy-MM</code>）。未入力では送信できない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="権限・認可">権限・認可</h2>
-<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>フォーマット売上分析一覧</th></tr></thead><tbody><tr><td>未ログイン管理者</td><td>アクセス不可。</td></tr><tr><td>ログイン済み管理者</td><td>集計結果の閲覧が可能。</td></tr></tbody></table></div>
-<hr>
-<h2 id="画面遷移">画面遷移</h2>
-<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>「フォーマット売上分析」を開く</td><td>集計検索画面（初期状態）。</td></tr><tr><td>検索ボタン押下</td><td>同一画面にグラフと表を表示。</td></tr><tr><td>「CSVダウンロード」押下</td><td>集計結果CSVを出力（M12-08）。</td></tr></tbody></table></div>
-<p>本機能は検索条件をセッションへ保存しないため、CSVダウンロードへ引き継ぐ状態は持たない。CSVダウンロードは送信に含まれる集計月で再集計する。</p>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>データベース読み取りの障害</td><td>アプリケーションの共通例外処理に委ねる。</td></tr><tr><td>認証・権限不足</td><td>集計を表示しない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="ログ・監査">ログ・監査</h2>
-<div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>集計表示</td><td>本機能単体で業務監査ログを追加で書く処理は持たない。</td></tr></tbody></table></div>
-<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
-<ul><li>Cookie値</li><li>セッションIDの完全値</li></ul>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<p>本機能は参照のみであり、楽観ロック・悲観ロックの対象は持たない。</p>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>集計月</td></tr><tr><td>成功時出力</td><td>折れ線グラフ、日別の売上表、フォーマットごとの合計表・平均表を含む画面</td></tr><tr><td>失敗時出力</td><td>データ取得失敗時はアプリケーションの共通例外処理に委ねる</td></tr></tbody></table></div>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

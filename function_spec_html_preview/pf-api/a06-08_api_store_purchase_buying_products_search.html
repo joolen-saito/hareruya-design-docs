@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,28 +272,16 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#本書で扱うこと">本書で扱うこと</a>
-<a class="lv2" href="#本書で扱わないこと">本書で扱わないこと</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#買取用商品情報を検索取得する-GET-search">買取用商品情報を検索取得する（GET `/search`）</a>
-<a class="lv2" href="#集計条件">集計条件</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#検索条件">検索条件</a>
+<a class="lv3" href="#取得結果の並べ方">取得結果の並べ方</a>
+<a class="lv3" href="#値の取り方">値の取り方</a>
+<a class="lv3" href="#エラー時の扱い">エラー時の扱い</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv3" href="#リクエスト">リクエスト</a>
-<a class="lv3" href="#レスポンス-成功">レスポンス（成功）</a>
-<a class="lv3" href="#レスポンス-失敗">レスポンス（失敗）</a>
-<a class="lv3" href="#サンプルレスポンス">サンプルレスポンス</a>
-<a class="lv3" href="#副作用">副作用</a>
-<a class="lv2" href="#表示メッセージ">表示メッセージ</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#権限・認可">権限・認可</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a></nav>
+<a class="lv3" href="#出力-応答フィールド">出力: 応答フィールド</a>
+<a class="lv3" href="#入出力-永続化">入出力: 永続化</a>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -291,108 +289,26 @@ footer {
         <h1>API 店頭買取管理 — カード名から買取用商品情報を取得</h1>
       </header>
       
-      <h2 id="概要">概要</h2>
-<p>検索クエリ（カード名等のパラメータ）から、買取に用いる商品情報を取得するAPIである。pf-apiが提供するJSON APIで、MTGバイヤー（買取アプリ）から呼ばれる。取得結果はカードの索引付きでまとめて返す。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-apiの買取用商品検索処理、ルート定義、商品を扱うリポジトリを正とする。カスタマイズ区分は現行踏襲で、挙動の参照リポはpf-api、DB関連はec-cube-enterpriseを正とする。</p>
-<p>対象はJSON APIエンドポイントであり、ブラウザ向けの画面を持たない。</p>
-<hr>
-<h2 id="本書で扱うこと">本書で扱うこと</h2>
-<ul><li>検索クエリ（カード名等）による買取用商品情報の取得</li><li>索引付きの応答整形</li><li>該当が無い場合の応答</li></ul>
-<hr>
-<h2 id="本書で扱わないこと">本書で扱わないこと</h2>
-<p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
-<ul><li>カード詳細ID・商品IDリストによる買取用商品取得（各APIを正とする）</li><li>検索条件の項目仕様（実装を確認値とする）</li></ul>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<p>DB関連はec-cube-enterpriseを正とする。商品（<code>dtb_product</code>）・商品規格（<code>dtb_product_class</code>）・カード（<code>mtb_card</code>）・カード詳細（<code>mtb_card_detail</code>）はec-cube-enterpriseに同名で実在する。一方、現行（pf-api）が参照する商品サブ（<code>dtb_product_sub</code>）・商品サブクラス（<code>dtb_product_sub_class</code>）のビューと商品サブクラス画像（<code>dtb_product_sub_class_image</code>）は、ec-cube-enterpriseでは商品規格・商品規格画像（<code>dtb_product_class_image</code>）系へ再編されており同名ビューを確認できない。商品名の前方一致検索と買取用の出し分けに用いる該当テーブル・列はec-cube-enterprise実装で要確認とする。挙動（検索条件・索引付け・該当なし時の応答）は現行（pf-api）を正とする。</p>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>カード名から買取用商品情報取得</td><td><code>GET /search</code>（クエリパラメータで条件指定）</td><td>条件に一致する買取用商品情報を、カードの索引付きでJSONで返す。該当が無い場合は404を返す。</td></tr></tbody></table></div>
-<p>応答形式はJSON。MTGバイヤーから呼ばれる。</p>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="買取用商品情報を検索取得する-GET-search">買取用商品情報を検索取得する（GET <code>/search</code>）</h3>
-<ol><li>クエリパラメータの検索条件（カード名等）を受け取る。</li><li>商品のリポジトリから、条件に一致する買取用商品を取得する。</li><li>取得結果が空の場合はページが見つからない扱い（404）とする。</li><li>取得できた場合は、カードの一覧を1始まりの索引で整形してJSONで返す。</li></ol>
-<hr>
-<h2 id="集計条件">集計条件</h2>
-<div class="table-wrap"><table><thead><tr><th>指標</th><th>集計の要点</th></tr></thead><tbody><tr><td>取得対象</td><td>クエリパラメータ（カード名等）の条件に一致する買取用商品。</td></tr><tr><td>応答整形</td><td>カードの一覧を1始まりの索引付きで返す。</td></tr></tbody></table></div>
-<hr>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="検索条件">検索条件</h3>
+<div class="table-wrap"><table><thead><tr><th>パラメータ</th><th>絞り込み</th></tr></thead><tbody><tr><td>カード名</td><td>商品名がこの値で始まる買取用商品だけに限る（前方一致）。<code>%</code> と <code>_</code> はエスケープし、文字そのものとして扱う</td></tr></tbody></table></div>
+<p>カード名は任意である。既定値・必須指定・書式制約はいずれも定義していない。</p>
+<h3 id="取得結果の並べ方">取得結果の並べ方</h3>
+<p>検索で得たカードだけを1始まりの連番でキー付けし直して返す。各カードの配下は、カード詳細ID・言語コード・状態コードの順で入れ子にする。ページングの件数（総件数・1ページあたり件数など）は返さない。</p>
+<h3 id="値の取り方">値の取り方</h3>
+<p>金額・ポイント・数量・対応状況・日時は、永続化済みの値または連携元の値をそのまま返す。応答を組み立てるときの丸め・補正は行わない。件数・ページ番号・表示順は既定と上限に従い、取得後に業務値を再計算しない。</p>
+<h3 id="エラー時の扱い">エラー時の扱い</h3>
+<div class="table-wrap"><table><thead><tr><th>事象</th><th>扱い</th></tr></thead><tbody><tr><td>条件に一致する買取用商品が1件も無いとき</td><td>ページが見つからない扱い（404）とし、標準の例外応答を返す</td></tr><tr><td>権限が無いとき、または非公開のデータのとき</td><td>空の結果、または既存のエラー形式で返す</td></tr><tr><td>呼び出し元が管理者アカウントでないとき</td><td>認証エラーを応答のエラー配列へ格納する</td></tr></tbody></table></div>
 <h2 id="入出力">入出力</h2>
-<h3 id="リクエスト">リクエスト</h3>
-<div class="table-wrap"><table><thead><tr><th>パラメータ</th><th>位置</th><th>型</th><th>必須／任意</th><th>説明</th></tr></thead><tbody><tr><td><code>name</code></td><td>クエリ</td><td>string</td><td>任意</td><td>カード名（商品名）の前方一致検索キー。商品名がこの値で始まる買取用商品を取得する。<code>%</code>と<code>_</code>はエスケープして扱う。</td></tr></tbody></table></div>
-<p><code>name</code>は@QueryParam（パラメータフェッチャ）で受け取る。既定値・必須指定・書式制約はいずれも実装で定義していない。</p>
-<h3 id="レスポンス-成功">レスポンス（成功）</h3>
-<p>HTTP 200。</p>
-<p>応答は<code>cards</code>オブジェクトを最上位に持つ。検索で得たカードを1始まりの連番でキー付けし直して格納する。各カードの配下はカード詳細ID（<code>details</code>）、言語コード（<code>languageClasses</code>）、状態コード（<code>conditionClasses</code>）の順で入れ子になる。</p>
-<div class="table-wrap"><table><thead><tr><th>フィールド</th><th>型</th><th>説明</th></tr></thead><tbody><tr><td><code>cards</code></td><td>object</td><td>1始まりの連番をキーとするオブジェクト。値は各カードの情報。</td></tr><tr><td><code>cards.&lt;n&gt;.cardNameJp</code></td><td>string</td><td>カードの日本語名。</td></tr><tr><td><code>cards.&lt;n&gt;.cardNameEn</code></td><td>string</td><td>カードの英語名。</td></tr><tr><td><code>cards.&lt;n&gt;.imageFileName</code></td><td>string</td><td>カード画像のファイル名。</td></tr><tr><td><code>cards.&lt;n&gt;.details</code></td><td>object</td><td>カード詳細IDをキーとするオブジェクト。値は各カード詳細の情報。</td></tr><tr><td><code>cards.&lt;n&gt;.details.&lt;detailId&gt;.cardsetCode</code></td><td>string</td><td>カードセットのコード。カードセット未設定のときはnull。</td></tr><tr><td><code>cards.&lt;n&gt;.details.&lt;detailId&gt;.cardsetName</code></td><td>string</td><td>カードセットの日本語名。カードセット未設定のときはnull。</td></tr><tr><td><code>cards.&lt;n&gt;.details.&lt;detailId&gt;.foilFlg</code></td><td>boolean</td><td>フォイルか否か。</td></tr><tr><td><code>cards.&lt;n&gt;.details.&lt;detailId&gt;.cardNo</code></td><td>string</td><td>カード番号。</td></tr><tr><td><code>cards.&lt;n&gt;.details.&lt;detailId&gt;.promotionName</code></td><td>string</td><td>プロモーションの日本語名。プロモーション未設定のときはnull。</td></tr><tr><td><code>cards.&lt;n&gt;.details.&lt;detailId&gt;.productId</code></td><td>integer</td><td>商品ID。</td></tr><tr><td><code>cards.&lt;n&gt;.details.&lt;detailId&gt;.productNameJp</code></td><td>string</td><td>商品の日本語名。</td></tr><tr><td><code>cards.&lt;n&gt;.details.&lt;detailId&gt;.productNameEn</code></td><td>string</td><td>商品の英語名。</td></tr><tr><td><code>cards.&lt;n&gt;.details.&lt;detailId&gt;.rarityCode</code></td><td>string</td><td>レアリティのコード。</td></tr><tr><td><code>cards.&lt;n&gt;.details.&lt;detailId&gt;.storageCodeName</code></td><td>string</td><td>保管コードの名称。未設定のときはnull。</td></tr><tr><td><code>cards.&lt;n&gt;.details.&lt;detailId&gt;.languageClasses</code></td><td>object</td><td>言語コードをキーとするオブジェクト。</td></tr><tr><td><code>cards.&lt;n&gt;.details.&lt;detailId&gt;.languageClasses.&lt;languageCode&gt;.conditionClasses</code></td><td>object</td><td>状態コードをキーとするオブジェクト。値は商品規格単位の情報。</td></tr><tr><td><code>…conditionClasses.&lt;conditionCode&gt;.productClassId</code></td><td>integer</td><td>商品規格ID。</td></tr><tr><td><code>…conditionClasses.&lt;conditionCode&gt;.productCode</code></td><td>string</td><td>商品コード。</td></tr><tr><td><code>…conditionClasses.&lt;conditionCode&gt;.buyPrice</code></td><td>integer</td><td>買取価格。未設定のときはnull。</td></tr><tr><td><code>…conditionClasses.&lt;conditionCode&gt;.price</code></td><td>string</td><td>販売価格（販売価格列の値）。</td></tr><tr><td><code>…conditionClasses.&lt;conditionCode&gt;.stock</code></td><td>string</td><td>在庫数。</td></tr><tr><td><code>…conditionClasses.&lt;conditionCode&gt;.sectionId</code></td><td>integer</td><td>部門ID。未設定のときはnull。</td></tr></tbody></table></div>
-<p>ページング用の件数フィールド（<code>total_count</code>・<code>per_page</code>等）は持たない。</p>
-<h3 id="レスポンス-失敗">レスポンス（失敗）</h3>
-<div class="table-wrap"><table><thead><tr><th>HTTPステータス</th><th>条件</th><th>本文の形</th></tr></thead><tbody><tr><td>404</td><td>条件に一致する買取用商品が無い</td><td>標準の例外応答（メッセージを含むJSON）</td></tr></tbody></table></div>
-<h3 id="サンプルレスポンス">サンプルレスポンス</h3>
-<p>成功時の応答例（実装確認値に基づく代表値）。</p>
-<pre><code class="language-json">{
-  "cards": {
-    "1": {
-      "cardNameJp": "サンプルカード",
-      "cardNameEn": "Sample Card",
-      "imageFileName": "10001.jpg",
-      "details": {
-        "20001": {
-          "cardsetCode": "SET",
-          "cardsetName": "サンプルセット",
-          "foilFlg": false,
-          "cardNo": "123",
-          "promotionName": null,
-          "productId": 30001,
-          "productNameJp": "サンプルカード",
-          "productNameEn": "Sample Card",
-          "rarityCode": "R",
-          "storageCodeName": null,
-          "languageClasses": {
-            "JP": {
-              "conditionClasses": {
-                "NM": {
-                  "productClassId": 40001,
-                  "productCode": "P-40001",
-                  "buyPrice": 100,
-                  "price": "300",
-                  "stock": "5",
-                  "sectionId": 1
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-}</code></pre>
-<h3 id="副作用">副作用</h3>
-<p>無し（参照のみ）。</p>
-<p>応答はJSON応答整形を経て返す。プロパティはcamelCase、日時はISO8601とする。</p>
-<hr>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>カード名（<code>name</code>、クエリ、任意）。カード名を省いたときは前方一致の絞り込みを行わない。</td></tr><tr><td>成功時出力</td><td>買取用商品を1件以上取得できたときは HTTP200。<code>cards</code> を最上位に持つJSON。</td></tr><tr><td>失敗時出力</td><td>HTTP404。標準の例外応答（メッセージを含むJSON）。認証エラーのときは、エラー配列へメッセージを格納する。</td></tr></tbody></table></div>
+<h3 id="出力-応答フィールド">出力: 応答フィールド</h3>
+<div class="table-wrap"><table><thead><tr><th>フィールド</th><th>型</th><th>内容</th></tr></thead><tbody><tr><td><code>cards</code></td><td>object</td><td>1始まりの連番をキーとするオブジェクト。値は各カードの情報</td></tr><tr><td><code>cards.&lt;n&gt;.cardNameJp</code></td><td>string</td><td>カードの日本語名</td></tr><tr><td><code>cards.&lt;n&gt;.cardNameEn</code></td><td>string</td><td>カードの英語名</td></tr><tr><td><code>cards.&lt;n&gt;.imageFileName</code></td><td>string</td><td>カード画像のファイル名</td></tr><tr><td><code>cards.&lt;n&gt;.details</code></td><td>object</td><td>カード詳細IDをキーとするオブジェクト。値は各カード詳細の情報</td></tr><tr><td><code>cardsetCode</code></td><td>string</td><td>カードセットのコード。カードセット未設定のときはnull</td></tr><tr><td><code>cardsetName</code></td><td>string</td><td>カードセットの日本語名。カードセット未設定のときはnull</td></tr><tr><td><code>foilFlg</code></td><td>boolean</td><td>フォイルか否か</td></tr><tr><td><code>cardNo</code></td><td>string</td><td>カード番号</td></tr><tr><td><code>promotionName</code></td><td>string</td><td>プロモーションの日本語名。プロモーション未設定のときはnull</td></tr><tr><td><code>productId</code></td><td>integer</td><td>商品ID</td></tr><tr><td><code>productNameJp</code></td><td>string</td><td>商品の日本語名</td></tr><tr><td><code>productNameEn</code></td><td>string</td><td>商品の英語名</td></tr><tr><td><code>rarityCode</code></td><td>string</td><td>レアリティのコード</td></tr><tr><td><code>storageCodeName</code></td><td>string</td><td>保管コードの名称。未設定のときはnull</td></tr><tr><td><code>languageClasses</code></td><td>object</td><td>言語コードをキーとするオブジェクト</td></tr><tr><td><code>conditionClasses</code></td><td>object</td><td>状態コードをキーとするオブジェクト。値は商品規格単位の情報</td></tr><tr><td><code>productClassId</code></td><td>integer</td><td>商品規格ID</td></tr><tr><td><code>productCode</code></td><td>string</td><td>商品コード</td></tr><tr><td><code>buyPrice</code></td><td>integer</td><td>買取価格。未設定のときはnull</td></tr><tr><td><code>price</code></td><td>string</td><td>販売価格</td></tr><tr><td><code>stock</code></td><td>string</td><td>在庫数</td></tr><tr><td><code>sectionId</code></td><td>integer</td><td>部門ID。未設定のときはnull</td></tr></tbody></table></div>
+<p><code>cardsetCode</code> 以降はカード詳細の配下だけに、<code>productClassId</code> 以降は言語コードと状態コードの配下だけに置く。</p>
+<h3 id="入出力-永続化">入出力: 永続化</h3>
+<p>データを更新しない。</p>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
 <h2 id="表示メッセージ">表示メッセージ</h2>
-<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>画面上の文言(英語)</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>A06-08-MSG-001</td><td>API応答JSON（errors配列）</td><td>認証エラー</td><td>（英訳なし）</td><td>カード名検索時にログインユーザーがMemberでない</td><td>MTGバイヤー側で認証を行い再試行する</td></tr></tbody></table></div>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<ul><li>検索・一覧・取得条件はリクエストパラメータ、ログイン状態、公開状態、店舗・支店条件、既存リポジトリの絞り込み順序を正とする。</li><li>件数、ページ番号、表示順は既存実装のデフォルトと上限に従い、取得後に業務値を再計算しない。</li><li>金額、ポイント、数量、ステータス、日時はDBまたは連携元の永続化済み値を返却し、レスポンス生成時の丸め・補正は行わない。</li><li>条件に一致しない、権限がない、または非公開のデータは空結果または既存のエラー形式で返す。</li></ul>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>参照時点</td><td>呼び出し時点の商品情報を返す。本APIはデータを更新しない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<p>テーブル名・列名はec-cube-enterpriseを正とする。</p>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td>商品（<code>dtb_product</code>）</td><td>商品ID・商品名</td><td>商品名の前方一致検索・応答の商品情報に用いる。</td></tr><tr><td>商品規格（<code>dtb_product_class</code>）</td><td>商品規格ID・商品コード・販売価格・在庫数</td><td>応答の規格情報に用いる。</td></tr><tr><td>カード詳細（<code>mtb_card_detail</code>）</td><td>カード詳細ID</td><td>応答のカード詳細情報に用いる。</td></tr><tr><td>カード（<code>mtb_card</code>）</td><td>カードID・カード名</td><td>応答のカード情報・索引付けに用いる。</td></tr><tr><td>商品サブ・商品サブクラス（<code>dtb_product_sub</code>／<code>dtb_product_sub_class</code>）</td><td>検索・買取用の出し分け列</td><td>現行はビューを参照。ec-cube-enterpriseでは商品規格系へ再編済みのため要確認。</td></tr></tbody></table></div>
-<h3 id="DB操作">DB操作</h3>
-<p>本機能は参照系（検索）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>検索</td><td>dtb_product / dtb_product_class / dtb_product_sub / dtb_product_sub_class / mtb_card / mtb_card_detail</td><td>検索条件に合致するレコードを抽出する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="権限・認可">権限・認可</h2>
-<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>カード名から買取用商品情報取得</th></tr></thead><tbody><tr><td>クライアント</td><td>MTGバイヤー（買取アプリ）から呼び出す。認可方式はpf-apiの方針に従う。</td></tr></tbody></table></div>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>該当商品なし</td><td>ページが見つからない扱い（404）。</td></tr></tbody></table></div>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<p>本APIは参照のみであり、楽観ロック・悲観ロックの対象は持たない。</p>
+<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>A06-08-MSG-001</td><td>API応答JSON（errors配列）</td><td>認証エラー</td><td>カード名検索時にログインユーザーが管理者アカウントでないとき</td><td>買取端末側で認証を行い再試行する</td></tr></tbody></table></div>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

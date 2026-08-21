@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,37 +272,16 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#本書で扱うこと">本書で扱うこと</a>
-<a class="lv2" href="#本書で扱わないこと">本書で扱わないこと</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv2" href="#用語">用語</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#フロント挙動">フロント挙動</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#イベント大会TOP・月間表示-GET-locale-events">イベント大会TOP・月間表示（GET `/{_locale}/events`）</a>
-<a class="lv3" href="#複数日程イベントを日別表示する-GET-locale-events-eventId-eventDate">複数日程イベントを日別表示する（GET `/{_locale}/events/{eventId}/{eventDate}/`）</a>
-<a class="lv2" href="#集計条件">集計条件</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
-<a class="lv3" href="#エッジケース">エッジケース</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#画面に表示するもの">画面に表示するもの</a>
+<a class="lv3" href="#表示店舗と表示月の決定">表示店舗と表示月の決定</a>
+<a class="lv3" href="#月間表示の組み立て">月間表示の組み立て</a>
+<a class="lv3" href="#複数日程イベントの日別表示">複数日程イベントの日別表示</a>
+<a class="lv3" href="#エラー時の扱い">エラー時の扱い</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#バリデーション">バリデーション</a>
-<a class="lv2" href="#権限・認可">権限・認可</a>
-<a class="lv2" href="#画面遷移">画面遷移</a>
-<a class="lv3" href="#遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#表示メッセージ">表示メッセージ</a>
-<a class="lv3" href="#常時表示-正常・静的">常時表示（正常・静的）</a>
-<a class="lv2" href="#ログ・監査">ログ・監査</a>
-<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
-<a class="lv2" href="#セッション">セッション</a>
-<a class="lv2" href="#Cookie">Cookie</a>
-<a class="lv3" href="#イベント大会TOPのクッキー">イベント大会TOPのクッキー</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a></nav>
+<a class="lv3" href="#入出力-永続化">入出力: 永続化</a>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -301,105 +290,26 @@ footer {
       </header>
       
       <p>店舗ごとに、選択した月のイベントをカレンダーと日付リストで表示する、フロントのイベント大会TOP画面である。</p>
-<h2 id="概要">概要</h2>
-<p>イベント大会TOPは、利用者が店舗と月を選び、その店舗で開催されるマジック：ザ・ギャザリングの大会を、月間カレンダーと日付ごとのリストで一覧する機能である。表示対象は選択中の店舗・選択中の月に開催されるイベントに限定し、店舗の切替・前月翌月の切替・過去大会の開閉・日付へのスクロール移動を提供する。同一日・同一イベントが複数の日程を持つ場合は、1日内に重複表示しないよう束ねたうえで、複数日程イベントは日別画面（F07-01の日別表示）へ、単一の日程は詳細画面（F07-03）へ誘導する。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインのイベント一覧（TOP）処理・日別イベント処理、テンプレート（<code>Event/index.twig</code>・<code>Event/daily.twig</code>）、イベント詳細リポジトリの月間取得処理を正とする。本機能のカスタマイズ区分はカスタマイズであり、挙動の参照リポはpf-eccube3、DB関連はec-cube-enterpriseを正とする。</p>
-<p>対象はブラウザ経由のフロントに限定する。フロントのルートはロケールを先頭に持つ<code>/{_locale}</code>配下にあり、イベントは<code>/{_locale}/events</code>配下にまとまる。</p>
-<p>本文ではフレームワークのコントローラ型名やメソッド名を主説明としない。本文ではルートbind名の網羅は主説明とせず、「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。コード探索でbind名が必要なときだけ「調査補助」へ書く。</p>
-<hr>
-<h2 id="本書で扱うこと">本書で扱うこと</h2>
-<ul><li>店舗ごと・月ごとのイベント出し分けと、カレンダー・日付リストの表示</li><li>店舗切替・前月翌月切替・過去大会の開閉・日付ジャンプの挙動</li><li>同一日・同一イベントの複数日程の束ね（単一日程と複数日程の表示分け）</li><li>単一日程イベントの詳細遷移、複数日程イベントの日別遷移</li><li>店舗IDのクッキー保持とTOP判定</li></ul>
-<hr>
-<h2 id="本書で扱わないこと">本書で扱わないこと</h2>
-<p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
-<ul><li>イベント詳細検索（F07-02）の検索フォーム・検索結果一覧</li><li>イベント詳細参照（F07-03）の表示内容</li><li>イベント申込から完了まで（F07-04）</li><li>店舗マスタ・会場マスタ・フォーマットマスタ・祝日マスタの管理</li><li>店舗切替セレクトを供給するブロック側の実装</li><li>ロケール選択・多言語切替の仕組み</li></ul>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<p>本機能はカスタマイズ区分がカスタマイズである。現行挙動はpf-eccube3のHareruyaEcプラグインを正とし、DBスキーマと移行後の扱いはec-cube-enterpriseを正とする。イベント関連テーブルはec-cube-enterpriseに移行済みであり、現行と移行先で次の差がある。</p>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>店舗での絞り込み</td><td><code>dtb_event.shop_id</code>で店舗を絞り込み、店舗マスタ<code>mtb_shop</code>を参照する。</td><td><code>dtb_event</code>に<code>shop_id</code>列、<code>mtb_shop</code>テーブルが無い。<code>dtb_event</code>は会場<code>venue_id</code>（会場マスタ<code>mtb_venue</code>）と店舗テナント文脈<code>base_info_id</code>を持つ。店舗単位の絞り込みをどの列で行うかはec-cube-enterprise実装で要確認。</td></tr><tr><td>開催日程テーブル</td><td><code>dtb_event_detail</code>（<code>event_id</code>・<code>start_date</code>・<code>disp_id</code>）。</td><td>同一スキーマ。<code>dtb_event_detail</code>に<code>event_id</code>・<code>start_date</code>・<code>disp_id</code>が存在する。</td></tr><tr><td>表示区分・祝日</td><td>表示区分<code>disp_id</code>、祝日<code>mtb_holiday</code>。</td><td>同一スキーマ。表示区分マスタ<code>mtb_disp</code>、祝日<code>mtb_holiday</code>が存在する。</td></tr><tr><td>論理削除</td><td><code>dtb_event</code>・<code>dtb_event_detail</code>とも<code>deleted_at</code>を持つ。</td><td>同一。<code>deleted_at</code>を持つ。</td></tr></tbody></table></div>
-<p>店舗クッキーの名称・属性は現行実装の確認値として記録し、機能仕様として固定しない。</p>
-<hr>
-<h2 id="用語">用語</h2>
-<div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>店舗</td><td>イベントを開催する晴れる屋の店舗。TOPは1店舗を選択して表示する。</td></tr><tr><td>イベント</td><td>大会の親情報。店舗・会場・フォーマット・定員・参加費などを持つ。</td></tr><tr><td>イベント詳細</td><td>イベントの開催日程1件。同一イベントが複数の開催日を持つことがある。</td></tr><tr><td>月間表示</td><td>選択中の店舗・選択中の月（<code>Ym</code>）に開催日が含まれるイベント詳細の集合。</td></tr><tr><td>複数日程イベント</td><td>同一日に同一イベントの日程が2件以上あるもの。日別画面へ誘導する。</td></tr><tr><td>TOP判定</td><td>クエリの<code>shop</code>・<code>date</code>がいずれも無い初回アクセスかどうかの判定。画面タイトル等の出し分けに用いる。</td></tr></tbody></table></div>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>イベント大会TOPを開く</td><td><code>GET /{_locale}/events</code></td><td>クッキーまたは既定の店舗の当月イベントを、月間カレンダーと日付リストで表示する。</td></tr><tr><td>店舗を切り替える</td><td><code>GET /{_locale}/events?shop={店舗ID}</code></td><td>指定店舗の当月イベントを表示し、店舗IDをクッキーへ保存する。</td></tr><tr><td>月を切り替える</td><td><code>GET /{_locale}/events?shop={店舗ID}&amp;date={Ym}</code></td><td>指定店舗・指定月のイベントを表示する。前月・翌月リンクから遷移する。</td></tr><tr><td>複数日程イベントを押下</td><td><code>GET /{_locale}/events/{eventId}/{eventDate}/</code></td><td>当該イベント・当該日の日別画面を表示する。<code>eventDate</code>は<code>Ymd</code>または<code>all</code>。</td></tr><tr><td>単一日程イベントを押下</td><td><code>GET /{_locale}/events/{eventDetailId}/detail</code></td><td>当該イベント詳細（F07-03）へ遷移する。</td></tr></tbody></table></div>
-<p>存在しない店舗IDを指定した場合は、ページが見つからない（HTTP404）として扱う。</p>
-<hr>
-<h2 id="フロント挙動">フロント挙動</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>選択中の店舗名と月、前月・当月・翌月のタブ、月間カレンダー（曜日見出し・日付セル）、過去の大会の開閉ブロック、開催日ごとのイベントリスト。各イベントはフォーマットアイコン・開始時刻（単一日程時）・イベント名で表示する。</td></tr><tr><td>JS挙動</td><td>店舗切替セレクトの変更で同一パスへ<code>?shop=</code>付きで遷移する。カレンダーの日付リンク押下でその日付の見出し位置までスクロールする。過去の大会の見出し押下で過去ブロックを開閉する。</td></tr><tr><td>CSS・レイアウト</td><td>当日より前の日付セルは非リンクの過去表示にする。日曜・土曜・祝日でセルのクラスを変える。過去の大会ブロックは初期状態で隠し、開閉で表示を切り替える。複数日程と単一日程でリンク先を切り替える。</td></tr><tr><td>モーダル・ポップアップ</td><td>本画面はモーダル・ポップアップ・トーストを表示しない。</td></tr></tbody></table></div>
-<p>本画面はフォーム入力欄を持たない。店舗切替セレクトと、月・日付・イベントへのリンク押下のみで操作する。</p>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="イベント大会TOP・月間表示-GET-locale-events">イベント大会TOP・月間表示（GET <code>/{_locale}/events</code>）</h3>
-<ol><li>クエリの<code>shop</code>、無ければクッキーの<code>shop</code>、いずれも無ければ既定店舗（ID＝1）を表示店舗とする。クエリで店舗が指定され、クッキーと異なる場合はクッキー<code>shop</code>を更新する。</li><li>表示店舗が存在しなければページが見つからない（HTTP404）として扱う。</li><li>クエリの<code>shop</code>・<code>date</code>がいずれも無ければTOP判定を真とし、画面タイトルの出し分けに用いる。</li><li>クエリの<code>date</code>、無ければ当月を表示月（<code>Ym</code>）とする。</li><li>表示店舗・表示月で月間イベント詳細を取得する。詳細は後述の「集計条件」を参照する。</li><li>当月の祝日を取得し、日付セルの装飾に用いる。</li><li>当月の日付イテレータを生成し、各日付の表示用イベント配列を初期化する。</li><li>取得したイベント詳細を開催日ごとに整理する。同一日・同一イベントが2件目以降に現れたら複数日程として束ね、同一日内では同一イベントを重複表示しない。</li><li>月間カレンダーと日付リストを表示する。月初日が当日より前なら過去の大会を持つ、月末日が当日以降なら今後の大会を持つと判定し、過去の大会ブロックの開閉表示に用いる。</li></ol>
-<h3 id="複数日程イベントを日別表示する-GET-locale-events-eventId-eventDate">複数日程イベントを日別表示する（GET <code>/{_locale}/events/{eventId}/{eventDate}/</code>）</h3>
-<ol><li><code>eventId</code>が空ならページが見つからない（HTTP404）として扱う。</li><li><code>eventDate</code>が<code>Ymd</code>形式なら当該日を終端日とし、過去日なら過去フラグを立てる。<code>all</code>なら当日を起点とする。いずれでもなければHTTP404とする。</li><li>当該イベント・当該期間の開催日程を取得する。</li><li>該当が1件なら、その詳細画面（F07-03）へリダイレクトする。</li><li>該当が0件なら、当該イベントの最新開催日程の詳細画面へリダイレクトする。最新日程も無ければHTTP404とする。</li><li>該当が複数件なら、日別画面で開催日程の一覧を表示する。ログイン会員のとき選手情報を渡す。</li></ol>
-<hr>
-<h2 id="集計条件">集計条件</h2>
-<div class="table-wrap"><table><thead><tr><th>指標</th><th>集計の要点</th></tr></thead><tbody><tr><td>月間表示のイベント詳細</td><td>イベント詳細とイベントを内部結合し、イベントの店舗が表示店舗であること、イベントの表示区分が表示であること、イベント詳細の表示区分が表示であること、イベント詳細の開催日が表示月の月初0時から月末23時59分59秒に含まれることで抽出する。開催日昇順・イベント詳細ID昇順で並べる。</td></tr><tr><td>同一日内の束ね</td><td>同一開催日に同一イベントの詳細が2件以上あれば複数日程として束ね、同一日内で同一イベントは1回だけ表示する。</td></tr><tr><td>祝日</td><td>表示月の祝日を取得し、日付セルの装飾に用いる。</td></tr><tr><td>日別表示の抽出</td><td>当該イベントIDで、終端日（指定日）まで、過去日でない限り当日以降の開催日程を、開催日昇順で抽出する。表示区分が表示の日程に限る。</td></tr></tbody></table></div>
-<p>月間表示の取得はクエリキャッシュ・結果キャッシュを併用し、店舗ごとのキー（<code>event_index_{店舗ID}</code>）で一定時間キャッシュする。表示中の数値や一覧が、キャッシュ有効期間内の更新を即時に反映しない場合がある。</p>
-<hr>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>表示店舗の決定</td><td>クエリ<code>shop</code>、クッキー<code>shop</code>、既定店舗（ID＝1）の順に決定する。</td></tr><tr><td>クッキー更新</td><td>クエリで店舗が指定され、現在のクッキー<code>shop</code>と異なる場合のみクッキー<code>shop</code>を更新する。</td></tr><tr><td>TOP判定</td><td><code>shop</code>・<code>date</code>がいずれも無い初回アクセスをTOPとみなす。タイトル・説明文の出し分けに用い、抽出条件は変えない。</td></tr><tr><td>表示月</td><td>クエリ<code>date</code>が無ければ当月（<code>Ym</code>）。前月・翌月は当月から1か月前後で算出する。</td></tr><tr><td>複数日程の判定</td><td>同一日に同一イベントの日程が複数あれば複数日程として束ね、日別画面へ誘導する。単一日程は詳細画面へ誘導する。</td></tr><tr><td>過去・今後の判定</td><td>月初日が当日より前なら過去の大会あり、月末日が当日以降なら今後の大会あり、として過去ブロックの開閉に用いる。</td></tr><tr><td>イベント名・時刻</td><td>カレンダーリストはイベント名を表示し、単一日程は開始時刻も表示する。フォーマットはアイコンで表示する。</td></tr></tbody></table></div>
-<p>本機能はTOP表示・日別表示ともに利用者の入力フォームを持たないため、<code>### 入力項目</code>の表は持たない。店舗切替セレクトと各リンクの操作のみを受け付ける。</p>
-<h3 id="エッジケース">エッジケース</h3>
-<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>店舗IDが存在しない</td><td>ページが見つからない（HTTP404）として扱う。</td></tr><tr><td>当月にイベントが0件</td><td>カレンダーは表示し、日付リストにイベントを表示しない。</td></tr><tr><td>日別表示で該当1件</td><td>その詳細画面（F07-03）へリダイレクトする。</td></tr><tr><td>日別表示で該当0件</td><td>当該イベントの最新日程の詳細画面へリダイレクトする。最新日程も無ければHTTP404。</td></tr><tr><td>日別の<code>eventDate</code>が不正</td><td><code>Ymd</code>でも<code>all</code>でもなければHTTP404とする。</td></tr><tr><td>同一日・同一イベントが複数</td><td>複数日程として束ね、日別画面へ誘導する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>参照時点</td><td>月間表示は要求時点で取得したイベント詳細・祝日に基づく。表示後の更新は自動反映しない。</td></tr><tr><td>キャッシュ</td><td>月間表示は店舗ごとのキーで一定時間キャッシュされ、有効期間内はキャッシュ時点の集合を返すことがある。</td></tr><tr><td>詳細・日別との整合</td><td>TOPから遷移した詳細（F07-03）・日別画面は遷移先の取得結果を正とする。TOPの表示と遷移後の内容の完全一致は保証しない。</td></tr><tr><td>店舗切替とクッキー</td><td>クッキー<code>shop</code>は最後にクエリ指定した店舗を保持する。クッキーと表示店舗の一致は次回以降のTOPアクセスで反映する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="API-バッチ結果">API/バッチ結果</h2>
-<p>本機能ではAPI呼び出し・バッチ実行を扱わない。月間イベントの取得はサーバ側のHTML組み立てのなかでデータベースから読み取る。</p>
-<hr>
+<h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="画面に表示するもの">画面に表示するもの</h3>
+<p>選択中の店舗名と月、前月・当月・翌月のタブ、月間カレンダー（曜日見出し・日付セル）、過去の大会の開閉ブロック、開催日ごとのイベントリストを表示する。各イベントはフォーマットアイコン・開始時刻（単一日程時）・イベント名で表示する。当日より前の日付セルは非リンクの過去表示にする。日曜・土曜・祝日で日付セルの装飾を変える。過去の大会ブロックは初期状態で隠す。本画面はモーダル・ポップアップ・トーストを表示しない。入力フォームを持たず、店舗切替と月・日付・イベントへのリンクだけで操作する。</p>
+<h3 id="表示店舗と表示月の決定">表示店舗と表示月の決定</h3>
+<p>表示店舗はクエリの店舗指定、クッキーの店舗、既定店舗（ID＝1）の順に決定する。クエリで店舗が指定され、クッキーの店舗と異なるときのみクッキーを更新する。表示店舗が存在しないときはページが見つからない（HTTP404）として扱う。表示月はクエリの月指定、無ければ当月とする。前月・翌月は当月から1か月前後で算出する。店舗指定と月指定がいずれも無い初回アクセスはTOPとみなし、タイトル・説明文の出し分けに用いる。抽出条件は変えない。</p>
+<h3 id="月間表示の組み立て">月間表示の組み立て</h3>
+<p>表示店舗・表示月で月間イベント詳細を取得する。当月の祝日を取得し、日付セルの装飾に用いる。当月の各日付について表示用イベント配列を初期化し、取得したイベント詳細を開催日ごとに整理する。同一日・同一イベントが2件目以降に現れたときは複数日程として束ね、同一日内では同一イベントを重複表示しない。月初日が当日より前なら過去の大会あり、月末日が当日以降なら今後の大会ありと判定し、過去の大会ブロックの開閉表示に用いる。カレンダーリストにはイベント名を表示し、単一日程では開始時刻も表示する。</p>
+<h3 id="複数日程イベントの日別表示">複数日程イベントの日別表示</h3>
+<p>イベント識別子が空のときはページが見つからない（HTTP404）として扱う。日付指定が <code>Ymd</code> 形式のときは当該日を終端日とし、過去日のときは過去として扱う。日付指定が <code>all</code> のときは当日を起点とする。いずれでもないときはHTTP404とする。当該イベント・当該期間の開催日程を取得し、該当が1件のときはその詳細画面（F07-03）へ遷移する。該当が0件のときは当該イベントの最新開催日程の詳細画面へ遷移し、最新日程も無いときはHTTP404とする。該当が複数件のときは日別画面で開催日程の一覧を表示する。ログイン会員のときは選手情報を渡す。</p>
+<h3 id="エラー時の扱い">エラー時の扱い</h3>
+<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>店舗IDが存在しない</td><td>ページが見つからない（HTTP404）として扱う</td></tr><tr><td>日別パラメータが不正</td><td>ページが見つからない（HTTP404）として扱う</td></tr><tr><td>日別で該当も最新日程も無い</td><td>ページが見つからない（HTTP404）として扱う</td></tr></tbody></table></div>
+<p>本画面は利用者向けの個別エラー文言を専用に定義せず、共通の異常処理に委ねる。</p>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>クエリの<code>shop</code>・<code>date</code>、クッキー<code>shop</code>。日別はパスの<code>eventId</code>・<code>eventDate</code>。</td></tr><tr><td>成功時出力</td><td>月間カレンダーと日付リストのHTML。日別は開催日程一覧のHTML、または詳細画面・最新日程詳細へのリダイレクト。</td></tr><tr><td>失敗時出力</td><td>店舗なし・不正な日別パラメータ・該当0件かつ最新日程なしの場合のページが見つからない（HTTP404）。</td></tr><tr><td>副作用</td><td>クエリ店舗とクッキーが異なる場合のクッキー<code>shop</code>更新。</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<p>機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。</p>
-<p>テーブル名・列名はec-cube-enterpriseを正とし、現行（pf-eccube3）と異なる場合は括弧で添える。</p>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>dtb_event</code></td><td><code>venue_id</code>／<code>base_info_id</code>（現行は<code>shop_id</code>）</td><td>表示店舗での絞り込みに用いる。現行は<code>shop_id</code>、移行先は<code>shop_id</code>を持たず会場<code>venue_id</code>・店舗テナント文脈<code>base_info_id</code>を持つ。絞り込み列はec-cube-enterprise実装で要確認。</td></tr><tr><td><code>dtb_event</code></td><td><code>disp_id</code></td><td>イベントの表示区分。表示のみ対象。</td></tr><tr><td><code>dtb_event_detail</code></td><td><code>event_id</code></td><td>イベントとの結合・束ねのキー。</td></tr><tr><td><code>dtb_event_detail</code></td><td><code>start_date</code></td><td>開催日。月間抽出・並び順・複数日程判定に用いる。</td></tr><tr><td><code>dtb_event_detail</code></td><td><code>disp_id</code></td><td>イベント詳細の表示区分。表示のみ対象。</td></tr><tr><td><code>mtb_venue</code>（現行は<code>mtb_shop</code>）</td><td>店舗・会場参照</td><td>表示店舗の存在確認・名称表示に用いる。移行先に<code>mtb_shop</code>が無く会場マスタ<code>mtb_venue</code>・店舗基本情報で扱う。ec-cube-enterprise実装で要確認。</td></tr><tr><td><code>mtb_holiday</code></td><td>祝日日付</td><td>当月祝日の日付セル装飾に用いる。</td></tr></tbody></table></div>
-<h3 id="DB操作">DB操作</h3>
-<p>永続化の正は ec-cube-enterprise（テーブル名・操作は ec-cube-enterprise を正典）。当ドメインは承認ワークフローを介さず persist/flush で直接確定する（承認ワークフローは在庫機能固有）。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>登録/更新</td><td>dtb_event / dtb_event_detail / mtb_holiday / mtb_shop / mtb_venue</td><td>当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。</td></tr></tbody></table></div>
-<hr>
-<h2 id="バリデーション">バリデーション</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>店舗ID</td><td>存在しない店舗IDはページが見つからない（HTTP404）として扱う。数値形式の制約はルートのパス制約に従う。</td></tr><tr><td>日別の<code>eventId</code></td><td>数値形式に限る。空ならHTTP404。</td></tr><tr><td>日別の<code>eventDate</code></td><td><code>Ymd</code>形式または<code>all</code>に限る。いずれでもなければHTTP404。</td></tr></tbody></table></div>
-<hr>
-<h2 id="権限・認可">権限・認可</h2>
-<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>イベント大会TOP・日別表示</th></tr></thead><tbody><tr><td>未ログイン</td><td>閲覧できる。会員専用の表示（選手情報）は付かない。</td></tr><tr><td>ログイン済み会員</td><td>閲覧できる。日別表示では選手情報を画面へ渡す。</td></tr></tbody></table></div>
-<p>TOP・日別表示は会員ログインを要しない公開画面である。申込（F07-04）の権限は別機能を正とする。</p>
-<hr>
-<h2 id="画面遷移">画面遷移</h2>
-<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>店舗切替セレクトの変更</td><td>同一画面（<code>?shop=</code>付きで再表示）</td></tr><tr><td>前月・翌月リンク</td><td>イベント大会TOP（<code>?shop=&amp;date=</code>付き）</td></tr><tr><td>単一日程イベントの押下</td><td>イベント詳細（F07-03）</td></tr><tr><td>複数日程イベントの押下</td><td>日別画面（<code>/events/{eventId}/{eventDate}/</code>）</td></tr><tr><td>日別で該当1件</td><td>イベント詳細（F07-03）へリダイレクト</td></tr><tr><td>日別で該当0件</td><td>当該イベント最新日程の詳細へリダイレクト</td></tr><tr><td>店舗なし・不正パラメータ・最新日程なし</td><td>ページが見つからない（HTTP404）</td></tr></tbody></table></div>
-<h3 id="遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</h3>
-<div class="table-wrap"><table><thead><tr><th>起点</th><th>遷移前の処理</th><th>遷移後の初期状態</th></tr></thead><tbody><tr><td>店舗切替</td><td>クエリ店舗とクッキーが異なればクッキー<code>shop</code>を更新する。</td><td>選択店舗の当月イベントを表示する。次回TOPアクセス時もクッキー店舗を初期表示する。</td></tr><tr><td>日別への遷移</td><td>パスに<code>eventId</code>・<code>eventDate</code>を渡す。</td><td>日別画面で当該イベント・当該期間の日程一覧を表示する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>店舗IDが存在しない</td><td>ページが見つからない（HTTP404）として扱う。</td></tr><tr><td>日別パラメータが不正</td><td>ページが見つからない（HTTP404）として扱う。</td></tr><tr><td>日別で該当も最新日程も無い</td><td>ページが見つからない（HTTP404）として扱う。</td></tr></tbody></table></div>
-<p>本画面は利用者向けの個別エラー文言を専用に定義せず、共通の例外処理に委ねる。</p>
-<hr>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>クエリの店舗指定・月指定、クッキーの店舗。日別はパスのイベント識別子・日付指定</td></tr><tr><td>成功時出力</td><td>月間カレンダーと日付リストのHTML。日別は開催日程一覧のHTML、または詳細画面・最新日程詳細への遷移</td></tr><tr><td>失敗時出力</td><td>店舗なし・不正な日別パラメータ・該当0件かつ最新日程なしのときのページが見つからない（HTTP404）</td></tr></tbody></table></div>
+<h3 id="入出力-永続化">入出力: 永続化</h3>
+<div class="table-wrap"><table><thead><tr><th>操作</th><th>契機</th></tr></thead><tbody><tr><td>更新</td><td>クエリで指定された店舗が現在のクッキーの店舗と異なるときの、クッキーの店舗</td></tr></tbody></table></div>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
 <h2 id="表示メッセージ">表示メッセージ</h2>
-<h3 id="常時表示-正常・静的">常時表示（正常・静的）</h3>
-<div class="table-wrap"><table><thead><tr><th>種別</th><th>表示文言（日本語）</th><th>表示文言（英語）</th><th>条件</th></tr></thead><tbody><tr><td>過去開閉</td><td>過去の大会を開く／過去の大会を閉じる</td><td>Click to open past events／Click to close past events</td><td>過去の大会と今後の大会が両方ある月の表示時</td></tr><tr><td>月表示</td><td>（選択月）年（月）月（<code>Y年n月</code>形式）</td><td>（選択月）<code>Y/n</code>形式（例: 2026/6）</td><td>タブ・ページ送りに表示</td></tr></tbody></table></div>
-<p>本画面は申込のような操作結果フラッシュ・トーストを生成しない。</p>
-<hr>
-<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>画面上の文言(英語)</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>F07-01-MSG-001</td><td>イベント一覧付近</td><td>他の期間か内容で再チェックしてください！</td><td>Try a different period or filters.</td><td>イベント検索・絞り込みの条件に一致する結果が無いとき</td><td>イベント大会TOPに留まり、カレンダーを表示し日付リストにイベントを表示しない</td></tr><tr><td>F07-01-MSG-002</td><td>イベント一覧付近</td><td>対象のイベントはありません。</td><td>No events found.</td><td>選択中の店舗・期間に表示対象のイベントがないとき</td><td>イベント大会TOPに留まり、カレンダーを表示し日付リストにイベントを表示しない</td></tr></tbody></table></div>
-<h2 id="ログ・監査">ログ・監査</h2>
-<div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>TOP・日別表示</td><td>本画面単体では業務監査ログを追加で書く処理を持たない。</td></tr></tbody></table></div>
-<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
-<ul><li>Cookie値（店舗クッキーの値を含む）</li><li>セッションIDの完全値</li></ul>
-<hr>
-<h2 id="セッション">セッション</h2>
-<p>本機能はTOP・日別表示のためにセッションを更新しない。表示店舗の保持はセッションではなくクッキー<code>shop</code>で行う。</p>
-<hr>
-<h2 id="Cookie">Cookie</h2>
-<h3 id="イベント大会TOPのクッキー">イベント大会TOPのクッキー</h3>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>クッキー名</td><td><code>shop</code>（確認値）。表示店舗IDを保持する。</td></tr><tr><td>更新条件</td><td>クエリで店舗が指定され、現在のクッキー値と異なる場合に更新する。クエリ指定が無いときは更新しない。</td></tr><tr><td>既定</td><td>クエリ・クッキーともに無ければ既定店舗（ID＝1）を表示する。</td></tr></tbody></table></div>
-<p>クッキーの属性・有効期間の正確な値は実装を確認値とする。</p>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<p>本画面の月間表示・日別表示は参照のみであり、業務トランザクションを張らない。同時アクセス時のロック要件は持たない。</p>
+<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>F07-01-MSG-001</td><td>イベント一覧付近</td><td>他の期間か内容で再チェックしてください！</td><td>イベント検索・絞り込みの条件に一致する結果が無いとき</td><td>イベント大会TOPに留まり、カレンダーを表示し日付リストにイベントを表示しない</td></tr><tr><td>F07-01-MSG-002</td><td>イベント一覧付近</td><td>対象のイベントはありません。</td><td>選択中の店舗・期間に表示対象のイベントがないとき</td><td>イベント大会TOPに留まり、カレンダーを表示し日付リストにイベントを表示しない</td></tr><tr><td>—</td><td>過去の大会ブロックの見出し</td><td>過去の大会を開く／過去の大会を閉じる</td><td>過去の大会と今後の大会が両方ある月の表示時</td><td>過去の大会ブロックを開閉する</td></tr><tr><td>—</td><td>タブ・ページ送り</td><td>（選択月）年（月）月（<code>Y年n月</code>形式）</td><td>月間表示のとき</td><td>—</td></tr></tbody></table></div>
+<p>英語の表示文言は、MSG-001 が Try a different period or filters.、MSG-002 が No events found.、過去の大会の開閉が Click to open past events／Click to close past events、月表示が <code>Y/n</code> 形式（例: 2026/6）である。本画面は操作結果のフラッシュ・トーストを生成しない。</p>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

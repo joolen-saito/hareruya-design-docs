@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,31 +272,17 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#本書で扱うこと">本書で扱うこと</a>
-<a class="lv2" href="#本書で扱わないこと">本書で扱わないこと</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv2" href="#用語">用語</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#認証・認可">認証・認可</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#スマレジ取引通知を取り込む-POST-locale-smaregi-transaction">スマレジ取引通知を取り込む（POST `/{_locale}/smaregi/transaction`）</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#認証と呼び出し元">認証と呼び出し元</a>
+<a class="lv3" href="#取引区分ごとの処理">取引区分ごとの処理</a>
+<a class="lv3" href="#取引明細の振り分け">取引明細の振り分け</a>
+<a class="lv3" href="#更新件数">更新件数</a>
+<a class="lv3" href="#エラー時の扱い">エラー時の扱い</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv3" href="#リクエスト">リクエスト</a>
-<a class="lv3" href="#レスポンス-成功">レスポンス（成功）</a>
-<a class="lv3" href="#レスポンス-失敗">レスポンス（失敗）</a>
-<a class="lv3" href="#サンプルレスポンス">サンプルレスポンス</a>
-<a class="lv3" href="#副作用">副作用</a>
-<a class="lv2" href="#バリデーション">バリデーション</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#権限・認可">権限・認可</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#ログ・監査">ログ・監査</a>
-<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a></nav>
+<a class="lv3" href="#入出力-受信内容">入出力: 受信内容</a>
+<a class="lv3" href="#入出力-永続化">入出力: 永続化</a>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -294,92 +290,32 @@ footer {
         <h1>API 受注管理 — スマレジ受信処理（ポイント履歴取得）</h1>
       </header>
       
-      <h2 id="概要">概要</h2>
-<p>スマレジが送信する取引情報の通知を受け取り、対象会員のポイントとポイント履歴を更新するためのAPIである。pf-eccube3のHareruyaEcプラグインが提供するJSON APIで、通知の区分（通常・取消・打消）に応じて会員ポイントの加減算、ポイント履歴の登録または取消、店頭注文の出荷完了反映を行い、支店コードの明細は支店システムのスマレジ受信APIへ転送する。取消・打消の処理では取引IDからポイント履歴を取得して巻き戻す。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はHareruyaEcプラグインのスマレジ取引取込処理、フロントのルート登録（ControllerProvider）、ポイント履歴テーブル・会員（プレイヤー）・注文サブ・オプションマスタ・ポイント区分マスタを正とする。</p>
-<p>本機能のカスタマイズ区分はカスタマイズで、挙動の参照リポはpf-eccube3（HareruyaEcプラグイン）とする。DB関連の記述（テーブル名・列名・永続化先）はec-cube-enterpriseを正とする。</p>
-<p>対象はJSON APIエンドポイントであり、ブラウザ向けの画面を持たない。本文ではフレームワークのコントローラ型名やメソッド名を主説明としない。「利用者視点の入口」にHTTPメソッドとパスパターンを書く。</p>
-<hr>
-<h2 id="本書で扱うこと">本書で扱うこと</h2>
-<ul><li>スマレジ取引通知の受信と、取引区分（通常・取消・打消）の判定</li><li>会員ポイントの加減算とポイント履歴の登録・取消</li><li>取消・打消時の、取引IDによるポイント履歴の取得と巻き戻し</li><li>対象店舗の明細による店頭注文の出荷完了反映</li><li>支店コードの明細の、支店システムのスマレジ受信APIへの転送と更新件数の合算</li></ul>
-<hr>
-<h2 id="本書で扱わないこと">本書で扱わないこと</h2>
-<p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
-<ul><li>スマレジ側の取引登録・通知送信そのもの（外部システムの仕様を正とする）</li><li>出荷完了反映後の付与ポイントのスマレジ連携（スマレジ連携サービスの設計を正とする）</li><li>支店システム側のスマレジ受信API本体（支店システムの設計を正とする）</li><li>ポイント履歴の閲覧画面（管理画面・フロントのポイント履歴の設計を正とする）</li></ul>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<p>挙動は現行（pf-eccube3）を正とし、永続化に関わる記述は移行先（ec-cube-enterprise）を正とする。</p>
-<div class="table-wrap"><table><thead><tr><th>区分</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>会員（プレイヤー）</td><td>dtb_player。スマレジ会員ID・保有ポイントを保持</td><td>dtb_player。スマレジ会員ID＝smaregi_id、保有ポイント＝point（ポイント残高）、顧客との関連＝customer_id。列名は移行先を正とする</td></tr><tr><td>ポイント履歴</td><td>dtb_point_history。ポイント増減・摘要・発生日・ポイント区分・取引IDを保持</td><td>dtb_point_history。ポイント増減＝point_change、摘要＝note、発生日＝issue_date、ポイント区分＝point_type_id、取引ID＝transaction_id。取消・打消はtransaction_idで特定</td></tr><tr><td>オプションマスタ</td><td>mtb_option</td><td>同一スキーマ（mtb_option）</td></tr><tr><td>ポイント区分マスタ</td><td>mtb_point_type</td><td>同一スキーマ（mtb_point_type。移行先のpoint_type_idはポイント属性IDの呼称）</td></tr><tr><td>注文サブ（出荷完了反映先）</td><td>dtb_order_sub。スマレジコード・出荷日・担当者・付与ポイント等を保持</td><td>ec-cube-enterpriseには注文サブ（dtb_order_sub）に対応するエンティティが見当たらない。出荷完了反映の永続化先はec-cube-enterprise実装で要確認とする</td></tr></tbody></table></div>
-<p>ポイント加減算・取消・打消の取引ID基準の巻き戻しと、店舗コードによる支店転送の挙動は現行（pf-eccube3）を正とする。出荷完了反映の対象表が移行先で変わる場合があるため、永続化先はec-cube-enterprise実装で要確認とする。</p>
-<hr>
-<h2 id="用語">用語</h2>
-<div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>取引情報</td><td>スマレジから送信される売上の取引データ。取引ヘッダと取引明細を含む。</td></tr><tr><td>取引区分</td><td>通知の種別。通常取引・取消・打消レコードを区別する。</td></tr><tr><td>会員（プレイヤー）</td><td>スマレジ会員IDで照合する晴れる屋会員。ポイントの加減算対象。</td></tr><tr><td>ポイント履歴</td><td>会員のポイント増減を記録する明細。取引IDを保持し、取消・打消の特定に用いる。</td></tr><tr><td>支店コード</td><td>商品コードの一部に含まれる店舗識別。自店舗以外は支店システムへ転送する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>スマレジ取引通知の受信</td><td><code>POST /{_locale}/smaregi/transaction</code></td><td>取引情報を受け取り、会員ポイントとポイント履歴を更新し、対象注文を出荷完了に反映し、更新件数を返す。</td></tr></tbody></table></div>
-<p>応答形式はJSON。呼び出し元はスマレジ（および支店システムへの転送経路）。フロントのルートは言語識別子<code>{_locale}</code>配下にマウントされる。</p>
-<hr>
-<h2 id="認証・認可">認証・認可</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>認証方式</td><td>本APIは認証トークンを要求しない。フロントのファイアウォールは匿名アクセスを許可し、本パスにはログイン必須のアクセス制御を設定していない。</td></tr><tr><td>連携用ヘッダ</td><td>支店システムへの転送時に、受信したリクエストの<code>X_contract_id</code>・<code>X_access_token</code>ヘッダを転送先へ引き継ぐ。これらは本APIの呼び出し元認証ではなく、転送先のスマレジ受信APIに渡す資格情報として用いる。</td></tr><tr><td>認証失敗時</td><td>認証判定を行わないため、未認証でも処理を実行する。</td></tr><tr><td>認可</td><td>呼び出し元はスマレジおよび転送経路。利用者の資格情報による絞り込みは行わない。</td></tr></tbody></table></div>
-<p>連携用ヘッダの値は本書に記載しない。</p>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="スマレジ取引通知を取り込む-POST-locale-smaregi-transaction">スマレジ取引通知を取り込む（POST <code>/{_locale}/smaregi/transaction</code>）</h3>
-<ol><li>リクエストボディの<code>params</code>をJSONとして解釈し、<code>data</code>配下のうち取引ヘッダと取引明細を抽出する。</li><li>オプションマスタからスマレジ店舗IDを取得し、3桁ゼロ埋めの店舗コードに整形する。</li><li>取引区分を判定する。</li></ol>
-<ul><li>取消の場合は、会員ポイントを取消方向に補正し、取引IDに一致するポイント履歴を取得して削除する。</li><li>打消レコードの場合は、付与・利用ポイントの正負を反転したうえで取消と同様に補正し、対象履歴を削除する。</li><li>通常取引の場合は、会員ポイントを加減算し、付与・利用それぞれのポイント履歴を登録する。続いて取引明細の各行を処理し、商品コードの店舗コードが自店舗と一致する行は対象注文を出荷完了に反映する。一致しない行は支店分として記録する。</li></ul>
-<ol><li>支店分の明細がある場合は、受信ヘッダの連携用ヘッダを引き継ぎ、支店システムのスマレジ受信APIへ明細を転送する。転送結果に更新件数が含まれる場合は合算し、含まれない場合は転送エラーをログに記録する。</li><li>取引ヘッダの更新件数を合算した値を、更新件数として応答に組み立てて返す（HTTP 200）。</li></ol>
-<hr>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>更新対象</td><td>リクエストで指定されたID・入力値に対応する業務データを対象にする。対象特定、入力不正、認証・認可の判定順序は処理フローとバリデーションの各節を正とする。</td></tr><tr><td>更新方法</td><td>入力値を対象データへ上書きまたは追加登録する。履歴登録や関連データ更新がある場合は入出力の副作用およびDBカラムの節を正とする。</td></tr><tr><td>計算処理</td><td>本APIでは金額・税・ポイント・在庫数量の再計算や丸めを行わない。ステータスやコメント等の更新は、実装で定義された遷移・存在確認・担当者判定に従う。</td></tr><tr><td>応答値</td><td>成功時は処理結果コードまたは更新後に取得した値を返す。レスポンス値は本API内で独自集計せず、保存結果または取得結果をJSON応答へ整形する。</td></tr></tbody></table></div>
-<hr>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="認証と呼び出し元">認証と呼び出し元</h3>
+<p>このAPIは認証トークンを要求しない。認証の判定を行わないため、未認証でも処理を実行する。呼び出し元はスマレジと転送経路であり、利用者の資格情報による絞り込みは行わない。</p>
+<p>支店システムへ転送するときは、受信した連携用ヘッダをそのまま転送先へ引き継ぐ。連携用ヘッダは転送先へ渡す資格情報であり、呼び出し元の認証には使わない。ヘッダの値は本書に記載しない。</p>
+<h3 id="取引区分ごとの処理">取引区分ごとの処理</h3>
+<p>受信した内容から取引ヘッダと取引明細を取り出し、取引区分で処理を分ける。</p>
+<div class="table-wrap"><table><thead><tr><th>取引区分</th><th>処理</th></tr></thead><tbody><tr><td>取消</td><td>会員ポイントを取消の方向に補正し、取引に一致するポイント履歴を削除する</td></tr><tr><td>打消</td><td>付与ポイントと利用ポイントの正負を反転したうえで取消と同様に補正し、対象のポイント履歴を削除する</td></tr><tr><td>通常取引</td><td>会員ポイントを加減算し、付与と利用のポイント履歴をそれぞれ登録する。続いて取引明細の各行を処理する</td></tr></tbody></table></div>
+<h3 id="取引明細の振り分け">取引明細の振り分け</h3>
+<p>店舗コードは、オプション設定のスマレジ店舗IDが 3 桁に満たないときはゼロ埋めして整形した値とする。</p>
+<p>商品コードの店舗コードが自店舗と一致する行だけ、対象の注文を出荷完了に反映する。一致しない行は支店分として記録し、自店舗では注文を更新しない。</p>
+<p>支店分の明細が 1 件でもあるときは、支店システムのスマレジ受信APIへ明細を転送する。転送結果に更新件数が含まれるときは合算し、含まれないときは合算しない。</p>
+<h3 id="更新件数">更新件数</h3>
+<p>応答に返す更新件数は、会員ポイント・ポイント履歴・出荷完了の反映の件数に、支店転送の結果件数が得られるときはそれも合算した値とする。</p>
+<p>会員が見つからないとき、対象のポイント履歴が無いとき、対象の注文が無いときは、その処理の更新件数を 0 として処理を続ける。</p>
+<h3 id="エラー時の扱い">エラー時の扱い</h3>
+<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>受信内容を解釈できない、取引ヘッダが足りない、処理中に例外が起きた</td><td>標準の例外処理に委ねる（HTTP 500 相当）</td></tr><tr><td>会員が見つからない・対象履歴が無い・対象注文が無い</td><td>エラーとせず、その処理の更新件数を 0 として続け、HTTP 200 を返す</td></tr><tr><td>支店転送の結果に件数が含まれない</td><td>転送エラーとして扱い、件数を合算せずに処理を続ける</td></tr></tbody></table></div>
 <h2 id="入出力">入出力</h2>
-<h3 id="リクエスト">リクエスト</h3>
-<div class="table-wrap"><table><thead><tr><th>パラメータ</th><th>位置</th><th>型</th><th>必須／任意</th><th>説明</th></tr></thead><tbody><tr><td><code>params</code></td><td>ボディ（フォーム値）</td><td>string</td><td>必須</td><td>JSON文字列。<code>data</code>配列に取引ヘッダ（<code>TransactionHead</code>）と取引明細（<code>TransactionDetail</code>）を含む。取引ヘッダは会員ID・付与ポイント・利用ポイント・取引ヘッダID・取消区分・打消区分等を持つ。</td></tr><tr><td><code>proc_name</code></td><td>ボディ（フォーム値）</td><td>string</td><td>任意</td><td>スマレジの処理名。支店システムへの転送時にそのまま引き継ぐ。</td></tr><tr><td><code>X_contract_id</code></td><td>ヘッダ</td><td>string</td><td>任意</td><td>支店転送時に転送先へ引き継ぐ契約ID。</td></tr><tr><td><code>X_access_token</code></td><td>ヘッダ</td><td>string</td><td>任意</td><td>支店転送時に転送先へ引き継ぐアクセストークン。</td></tr><tr><td><code>{_locale}</code></td><td>パス</td><td>string</td><td>必須</td><td>言語識別子。処理対象の絞り込みには用いない。</td></tr></tbody></table></div>
-<h3 id="レスポンス-成功">レスポンス（成功）</h3>
-<p>HTTP 200。</p>
-<div class="table-wrap"><table><thead><tr><th>フィールド</th><th>型</th><th>説明</th></tr></thead><tbody><tr><td><code>result</code></td><td>array</td><td>更新結果の配列。要素はオブジェクト1件。</td></tr><tr><td><code>result[].TransactionHead</code></td><td>integer</td><td>更新件数。会員ポイント・ポイント履歴・出荷完了反映の処理件数と、支店転送の結果件数を合算した値。</td></tr></tbody></table></div>
-<h3 id="レスポンス-失敗">レスポンス（失敗）</h3>
-<div class="table-wrap"><table><thead><tr><th>HTTPステータス</th><th>条件</th><th>本文の形</th></tr></thead><tbody><tr><td>500</td><td><code>params</code>の解釈不可、取引ヘッダの不足、処理中の例外</td><td>標準例外ハンドラに委ねる</td></tr></tbody></table></div>
-<p>入力検証・認証判定を明示的に行わないため、400・401は発生しない。会員が見つからない・対象履歴が無い・対象注文が無い場合はその処理の更新件数を0として継続し、200を返す。</p>
-<h3 id="サンプルレスポンス">サンプルレスポンス</h3>
-<p>成功時の応答例（代表値）。</p>
-<pre><code class="language-json">{
-  "result": [
-    {
-      "TransactionHead": 1
-    }
-  ]
-}</code></pre>
-<h3 id="副作用">副作用</h3>
-<p>会員（プレイヤー）の保有ポイントの更新。ポイント履歴の登録（通常取引）または削除（取消・打消）。対象注文の出荷完了反映（受注ステータス・出荷確定日・コミット日・注文サブの出荷日・担当者の更新、ポイント付与処理）。支店システムのスマレジ受信APIへの明細転送。これらはデータベースへ反映する。</p>
-<p>応答はJSON応答整形を経て返す。<code>result</code>配列を持つ連想配列を返し、<code>Content-Type</code>に<code>application/json;charset=UTF-8</code>、キャッシュ抑止と<code>Access-Control-Allow-Origin: *</code>を明示する。</p>
-<hr>
-<h2 id="バリデーション">バリデーション</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td><code>params</code></td><td>JSON文字列として解釈する。形式や必須項目の明示的な検証は行わず、解釈不可・取引ヘッダ不足時は処理中の例外として標準例外ハンドラに委ねる（HTTP 500相当）。</td></tr><tr><td>取引区分</td><td>取消区分・打消区分の値で処理経路を分岐する。いずれにも該当しない場合は通常取引として扱う。</td></tr></tbody></table></div>
-<hr>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>更新の有無</td><td>本APIは参照だけでなく、会員ポイント・ポイント履歴・受注を更新する。</td></tr><tr><td>ポイントと履歴</td><td>通常取引では会員ポイントの加減算とポイント履歴の登録を同一処理内で行う。取消・打消では取引IDに一致するポイント履歴を取得して削除し、会員ポイントを逆方向へ補正する。会員または対象履歴が無い場合は更新しない。</td></tr><tr><td>出荷完了反映</td><td>自店舗の明細に対し、注文サブを商品コードで特定して出荷完了へ反映する。対象注文が無い場合は反映しない。</td></tr><tr><td>支店転送</td><td>自店舗以外の明細は支店システムへ転送し、結果件数を更新件数に合算する。転送に件数が含まれない場合はログに記録し、件数は合算しない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<p>機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。</p>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td>会員（プレイヤー）（dtb_player）</td><td>スマレジ会員ID（smaregi_id）</td><td>取引ヘッダの会員IDで会員を特定する結合キー。</td></tr><tr><td>会員（プレイヤー）（dtb_player）</td><td>保有ポイント（point）</td><td>付与・利用・取消に応じて加減算する。</td></tr><tr><td>ポイント履歴テーブル（dtb_point_history）</td><td>ポイント増減（point_change）・摘要（note）・発生日（issue_date）・ポイント区分（point_type_id）・取引ID（transaction_id）</td><td>通常取引で登録、取消・打消で取引IDをキーに削除する。</td></tr><tr><td>オプションマスタ（mtb_option）</td><td>スマレジ店舗ID</td><td>自店舗の店舗コード判定に用いる。</td></tr><tr><td>ポイント区分マスタ（mtb_point_type）</td><td>購入区分</td><td>登録するポイント履歴の区分に用いる。</td></tr><tr><td>注文サブ（dtb_order_sub。ec-cube-enterprise 実装で要確認）</td><td>スマレジコード・出荷日・担当者・付与ポイント・連携エラー</td><td>出荷完了反映の対象特定と更新に用いる。移行先の対応表は要確認。</td></tr><tr><td>受注</td><td>受注ステータス・コミット日・出荷確定日</td><td>出荷完了への反映に用いる。</td></tr></tbody></table></div>
-<h3 id="DB操作">DB操作</h3>
-<p>永続化の正は ec-cube-enterprise（テーブル名・操作は ec-cube-enterprise を正典）。当ドメインは承認ワークフローを介さず persist/flush で直接確定する（承認ワークフローは在庫機能固有）。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>登録/更新</td><td>dtb_order_sub / dtb_player / dtb_point_history / mtb_option / mtb_point_type</td><td>当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。</td></tr></tbody></table></div>
-<hr>
-<h2 id="権限・認可">権限・認可</h2>
-<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>スマレジ受信処理</th></tr></thead><tbody><tr><td>任意のクライアント（未認証含む）</td><td>処理を実行できる。本APIは呼び出し元の認証・利用者状態による制御を行わない。</td></tr><tr><td>支店システムへの転送</td><td>受信した連携用ヘッダを引き継いで転送先のスマレジ受信APIを呼び出す。</td></tr></tbody></table></div>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td><code>params</code>の解釈不可・取引ヘッダ不足・処理中の例外</td><td>明示的な<code>try-catch</code>は持たず、標準例外ハンドラに委ねる（HTTP 500相当）。</td></tr><tr><td>会員が見つからない・対象履歴が無い・対象注文が無い</td><td>エラーとせず、その処理の更新件数を0として継続し、200を返す。</td></tr><tr><td>支店転送の結果に件数が含まれない</td><td>転送エラーとしてログに記録し、件数を合算しない。処理は継続する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="ログ・監査">ログ・監査</h2>
-<p>支店転送の結果に件数が含まれない場合に、転送エラーである旨と転送結果をログ出力する。</p>
-<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
-<ul><li>連携用ヘッダ（契約ID・アクセストークン）の値</li><li>Cookie値・セッションIDの完全値</li></ul>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<p>本APIは会員ポイント・ポイント履歴・受注を更新する。各処理の末尾で永続化を確定する。明示的な悲観ロック・楽観ロックの取得は行わない。同一取引の重複受信時の整合は、取消・打消が取引IDを基準にポイント履歴を特定して巻き戻す前提に依存する。</p>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>取引ヘッダと取引明細を含む受信内容、スマレジの処理名、支店転送用の連携ヘッダ</td></tr><tr><td>成功時出力</td><td>HTTP 200。更新件数を 1 件の要素として返す</td></tr><tr><td>失敗時出力</td><td>受信内容を解釈できないとき、取引ヘッダが足りないとき、処理中に例外が起きたときは HTTP 500</td></tr></tbody></table></div>
+<h3 id="入出力-受信内容">入出力: 受信内容</h3>
+<div class="table-wrap"><table><thead><tr><th>パラメータ</th><th>位置</th><th>型</th><th>必須／任意</th><th>説明</th></tr></thead><tbody><tr><td><code>params</code></td><td>ボディ</td><td>string</td><td>必須</td><td>取引ヘッダと取引明細を含む。取引ヘッダは会員ID・付与ポイント・利用ポイント・取引ヘッダID・取消区分・打消区分などを持つ</td></tr><tr><td><code>proc_name</code></td><td>ボディ</td><td>string</td><td>任意</td><td>スマレジの処理名。支店転送のときはそのまま引き継ぐ</td></tr><tr><td><code>X_contract_id</code></td><td>ヘッダ</td><td>string</td><td>任意</td><td>支店転送のときに転送先へ引き継ぐ契約ID</td></tr><tr><td><code>X_access_token</code></td><td>ヘッダ</td><td>string</td><td>任意</td><td>支店転送のときに転送先へ引き継ぐアクセストークン</td></tr><tr><td><code>{_locale}</code></td><td>パス</td><td>string</td><td>必須</td><td>言語識別子。処理対象の絞り込みには使わない</td></tr></tbody></table></div>
+<p>入力の検証と認証の判定を行わないため、HTTP 400 と HTTP 401 は発生しない。</p>
+<h3 id="入出力-永続化">入出力: 永続化</h3>
+<div class="table-wrap"><table><thead><tr><th>操作</th><th>契機</th></tr></thead><tbody><tr><td>更新</td><td>会員ポイントを、取消・打消・通常取引のいずれかで補正したとき</td></tr><tr><td>追加</td><td>付与と利用のポイント履歴を、通常取引のとき</td></tr><tr><td>削除</td><td>取引に一致するポイント履歴を、取消または打消のとき</td></tr><tr><td>更新</td><td>対象の注文を、商品コードの店舗コードが自店舗と一致するとき出荷完了に反映する</td></tr></tbody></table></div>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
+<h2 id="表示メッセージ">表示メッセージ</h2>
+<p>本APIは画面へ文言を表示しない。</p>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

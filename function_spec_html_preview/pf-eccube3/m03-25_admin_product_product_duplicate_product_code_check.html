@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,38 +272,15 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#フロント挙動">フロント挙動</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#前ページを開く-admin-product-pre-doubling-check">前ページを開く（`admin_product_pre_doubling_check`）</a>
-<a class="lv3" href="#結果ページを開く-admin-product-doubling-check">結果ページを開く（`admin_product_doubling_check`）</a>
-<a class="lv2" href="#集計条件">集計条件</a>
-<a class="lv2" href="#重複判定時の条件-実装順">重複判定時の条件（実装順）</a>
-<a class="lv2" href="#表示メッセージ">表示メッセージ</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
-<a class="lv3" href="#エッジケース">エッジケース</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#確認前の画面">確認前の画面</a>
+<a class="lv3" href="#抽出する対象">抽出する対象</a>
+<a class="lv3" href="#結果の表示">結果の表示</a>
+<a class="lv3" href="#他機能との境界">他機能との境界</a>
+<a class="lv3" href="#エラー時の扱い">エラー時の扱い</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#バリデーション">バリデーション</a>
-<a class="lv2" href="#権限・認可">権限・認可</a>
-<a class="lv2" href="#画面遷移">画面遷移</a>
-<a class="lv3" href="#遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#試行制限">試行制限</a>
-<a class="lv2" href="#ログ・監査">ログ・監査</a>
-<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
-<a class="lv2" href="#セッション">セッション</a>
-<a class="lv3" href="#本機能におけるセッション">本機能におけるセッション</a>
-<a class="lv3" href="#セッションへ保存しない情報">セッションへ保存しない情報</a>
-<a class="lv2" href="#Cookie">Cookie</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a>
-<a class="lv2" href="#調査補助-grep-向け">調査補助（grep 向け）</a>
-<a class="lv3" href="#HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</a></nav>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -301,100 +288,22 @@ footer {
         <h1>m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）</h1>
       </header>
       
-      <h2 id="概要">概要</h2>
-<p>管理画面の「商品管理」から開き、<code>dtb_product_class.product_code</code> が同一文字列で 2 件以上存在する規格を一覧し、各行から規格編集画面へ別タブで遷移できる参照専用機能である。ナビのラベルはロケールキー <code>admin.product.duplicate_code</code>（日本語メッセージ確認値は「重複コード確認」）であり、前ページのページ見出し・ボタン文言とは異なる。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。ec-cube-enterprise のコア実装を確認値とする。</p>
-<p>本機能のカスタマイズ区分は現行踏襲である。現行挙動は pf-eccube3 を参照し、永続化に関わるテーブル名・列名などのDB関連は ec-cube-enterprise を正とする。</p>
-<p>対象はブラウザ経由の管理画面に限定する。</p>
-<p>コントローラのメソッド単位の解剖は本文の主題としない。実装へ入る起点として「利用者視点の入口」を書く。</p>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<p>DB関連の記述は ec-cube-enterprise の実装を正とする。重複判定の対象列・結合は現行（pf-eccube3）と移行先（ec-cube-enterprise）で同一スキーマである。</p>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>重複判定キー</td><td><code>dtb_product_class.product_code</code>（Doctrine プロパティ <code>code</code> が列 <code>product_code</code> にマップ）</td><td>列名は <code>product_code</code>。重複判定キーは移行先でも <code>dtb_product_class.product_code</code>。</td></tr><tr><td>結合先</td><td><code>dtb_product.id</code>、<code>dtb_product_class.product_id</code></td><td>同一スキーマ。</td></tr></tbody></table></div>
-<p>前ページ・結果ページの参照挙動と URL 生成は現行（pf-eccube3）を参照し、移行先でも同等の標準実装が ec-cube-enterprise に取り込まれている。</p>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>サイドナビ「商品管理」配下の「重複コード確認」（ロケール依存）</td><td><code>GET /{admin_route}/product/pre_doubling_check</code></td><td>前ページが開き、大きなボタンから結果ページへ進める。</td></tr><tr><td>前ページの「重複確認する」ボタン</td><td><code>GET /{admin_route}/product/doubling_check</code></td><td>DB で重複を検索し、無ければメッセージ、あれば表で一覧する。</td></tr><tr><td>結果ページの各セルのリンク（別タブ）</td><td><code>GET /{admin_route}/product/product/class/{id}/edit/{productClassId}</code>（ルート名 <code>admin_product_product_class_edit</code>、<code>id</code> が商品 ID、<code>productClassId</code> が規格 ID）</td><td>該当規格の編集画面を別タブで開く。</td></tr></tbody></table></div>
-<hr>
-<h2 id="フロント挙動">フロント挙動</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>共通フレーム <code>@admin/default_frame.twig</code> を継承。ウィンドウタイトルブロックは「商品管理」のロケール。前ページはサブタイトルが「重複商品コード確認」、本文はカード内に単一のプライマリボタン「重複確認する」。結果ページはサブタイトルが「重複商品コード」。重複があるときは <code>table table-striped</code> の 1 列テーブルで、セルはコード文字列のリンクのみ。重複が無いときはカード内に「重複している商品コードはありません。」の文言のみ。</td></tr><tr><td>JS 挙動</td><td>本機能の Twig に固有のスクリプトや Ajax は無い。</td></tr><tr><td>CSS・レイアウト</td><td>管理画面共通のカード・テーブル・ボタンクラス。</td></tr><tr><td>モーダル・ポップアップ</td><td>使用しない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="前ページを開く-admin-product-pre-doubling-check">前ページを開く（<code>admin_product_pre_doubling_check</code>）</h3>
-<ol><li>管理画面の認証・共通制約を通過する。</li><li>サーバーは空の表示用コンテキストで Twig を描画する（サーバー側で追加の DB 問い合わせは無い）。</li><li>利用者は「重複確認する」を押下して結果ページへ GET で遷移する。</li></ol>
-<h3 id="結果ページを開く-admin-product-doubling-check">結果ページを開く（<code>admin_product_doubling_check</code>）</h3>
-<ol><li>管理画面の認証・共通制約を通過する。</li><li>サーバーは商品規格ストレージに対し raw SQL で「重複している <code>product_code</code> に属する全規格行」を取得する。</li><li>取得した各行について、商品 ID と規格 ID から規格編集ルートの URL を生成する。同一コードに複数行がある場合は URL の配列にまとめる。</li><li>連想配列 <code>products</code> が空なら「重複なし」用 Twig 分岐を使い、空でなければ表分岐でコードごと・行ごとにリンクを描画する。</li></ol>
-<hr>
-<h2 id="集計条件">集計条件</h2>
-<div class="table-wrap"><table><thead><tr><th>指標</th><th>集計の要点</th></tr></thead><tbody><tr><td>重複コードの集合</td><td><code>dtb_product_class</code> を <code>product_code</code> でグループ化し、件数が 2 超のコードだけを残す。<code>product_code IS NOT NULL</code> かつ空文字列でない行だけがグループ化対象。</td></tr><tr><td>一覧に載せる行</td><td>上記コードに該当する全規格行。<code>dtb_product</code> と内部結合し、商品が存在しない孤立行は結果に含まれない。</td></tr><tr><td>並び</td><td><code>product_code</code> 昇順、その後 <code>dtb_product.id</code> 昇順、その後規格 ID 昇順。</td></tr></tbody></table></div>
-<hr>
-<h2 id="重複判定時の条件-実装順">重複判定時の条件（実装順）</h2>
-<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td><code>product_code</code> が NULL</td><td>重複判定の母集団から除外される。</td></tr><tr><td>2</td><td><code>product_code</code> が空文字列</td><td>重複判定の母集団から除外される。</td></tr><tr><td>3</td><td>それ以外で同一値が 2 行以上</td><td>その値は「重複」とみなされ、該当する全行が一覧に載る。</td></tr></tbody></table></div>
-<hr>
-<h2 id="表示メッセージ">表示メッセージ</h2>
-<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>画面上の文言(英語)</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M03-25-MSG-001</td><td>画面上部</td><td>重複している商品コードはありません。</td><td>（英訳なし）</td><td>重複商品コード確認を実行し、重複コードが1件もないとき。</td><td>重複商品コード確認画面に留まる。</td></tr></tbody></table></div>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<p>本機能では利用者からの入力フォームを持たないため、<code>### 入力項目</code> は置かない。</p>
-<p>サーバー側では読み取り専用の参照クエリと URL 生成のみを行い、集計関数による売上計算などは行わない。</p>
-<hr>
-<h3 id="エッジケース">エッジケース</h3>
-<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>重複が 1 件も無い</td><td>結果ページはテーブルを出さず、固定メッセージのみ表示する。</td></tr><tr><td>同一コードが N 件ある</td><td>同一コードのテキストが N 行並び、各行のリンク先 URL は規格ごとに異なる。</td></tr><tr><td><code>product_code</code> が NULL または空文字のみの環境</td><td>重複集合は空になり、「重複なし」メッセージになる。</td></tr><tr><td>空白のみや制御文字のみのコード</td><td>SQL はトリムしないため、値が完全一致する複数行があれば重複として載る。</td></tr></tbody></table></div>
-<hr>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>一覧と DB</td><td>一覧はリクエスト処理中の読み取り時点のコミット済みデータを反映する。同一セッション内のキャッシュ再利用による一覧の長期固定は本機能固有には無い。</td></tr><tr><td>一覧と規格編集</td><td>リンク先は編集画面の初期表示であり、別タブで開いたあとの同時更新との整合は保証しない。</td></tr><tr><td>マルチテナント・接続先</td><td>アプリケーションが用いる既定接続上の <code>dtb_product_class</code> / <code>dtb_product</code> を対象とする。接続切り替えプラグインがある環境ではその設定を正とする。</td></tr></tbody></table></div>
-<hr>
-<h2 id="API-バッチ結果">API/バッチ結果</h2>
-<p>本機能では API 呼び出し・バッチ実行を扱わない。</p>
-<hr>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="確認前の画面">確認前の画面</h3>
+<p>確認を始める前の画面は、表示だけを行い、データの参照をしない。利用者が確認の実行を選ぶと結果画面へ進む。</p>
+<h3 id="抽出する対象">抽出する対象</h3>
+<p>同じ商品コードが2件以上の商品規格に付いているとき、その商品コードに属する商品規格の行をすべて取得する。</p>
+<h3 id="結果の表示">結果の表示</h3>
+<p>重複が1件も無いときは、重複が無い旨のメッセージを表示する。重複があるときは商品コードごとに行を並べ、各行に当該商品規格の編集画面への導線を付ける。同じ商品コードに複数の行があるときは、行ごとに導線を持つ。</p>
+<h3 id="他機能との境界">他機能との境界</h3>
+<p>利用者が入力する検索条件を持たない。参照だけを行い、売上計算などの集計は行わない。データを更新しない。</p>
+<h3 id="エラー時の扱い">エラー時の扱い</h3>
+<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>認証・認可の失敗</td><td>管理画面に共通のふるまい（ログインへの誘導など）による</td></tr><tr><td>データベースアクセスの失敗</td><td>共通のエラー処理に委ねる。本機能が個別に利用者向けの文言を出すことはない</td></tr></tbody></table></div>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>GET のみ。クエリボディやパスパラメータによる検索条件は無い。</td></tr><tr><td>成功時出力</td><td>HTTP 200 と HTML。重複の有無に応じてテーブルまたはメッセージ。</td></tr><tr><td>失敗時出力</td><td>管理画面共通のエラー扱い（認証失敗時のログイン誘導など）。本機能固有のバリデーションエラー画面は無い。</td></tr><tr><td>副作用</td><td>DB の書き込み・セッションキー更新・フラッシュメッセージ追加は行わない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<p>当機能の判定と結合に直接関係する列のみ記載する。型の細部はスキーマを参照する。</p>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>dtb_product_class</code></td><td><code>id</code></td><td>規格 ID。編集 URL の <code>productClassId</code> に使う。</td></tr><tr><td><code>dtb_product_class</code></td><td><code>product_id</code></td><td>商品 FK。</td></tr><tr><td><code>dtb_product_class</code></td><td><code>product_code</code></td><td>重複判定のキー。NULL と空文字は対象外。</td></tr><tr><td><code>dtb_product</code></td><td><code>id</code></td><td>編集 URL の商品 ID に使う。</td></tr></tbody></table></div>
-<h3 id="DB操作">DB操作</h3>
-<p>本機能は参照系（検索）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>検索</td><td>dtb_product / dtb_product_class</td><td>検索条件に合致するレコードを抽出する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="バリデーション">バリデーション</h2>
-<p>利用者入力が無いため、項目別のフォームバリデーションは無い。</p>
-<hr>
-<h2 id="権限・認可">権限・認可</h2>
-<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>前ページ・結果ページの GET</th></tr></thead><tbody><tr><td>管理画面にログインしており、ファイアウォール上パス <code>/{admin_route}/</code> へのアクセスが許可される管理者</td><td>画面を表示できる。</td></tr><tr><td>未ログインまたは管理画面として認証されない</td><td>管理画面の共通ルールに従いログイン画面等へ誘導される。</td></tr></tbody></table></div>
-<p>当ルートに個別のロールアノテーションは無く、商品一覧など他の商品管理画面と同一ファイアウォール配下として扱われる。</p>
-<hr>
-<h2 id="画面遷移">画面遷移</h2>
-<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>ナビから「重複コード確認」を選択</td><td><code>GET …/product/pre_doubling_check</code></td></tr><tr><td>前ページで「重複確認する」を押下</td><td><code>GET …/product/doubling_check</code></td></tr><tr><td>結果ページの表のリンクを押下（別タブ）</td><td>規格編集画面</td></tr></tbody></table></div>
-<h3 id="遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</h3>
-<p>本機能はセッションに検索条件やフラッシュを書き込まない。前ページから結果ページへの遷移もクエリ無しの GET のみである。</p>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>認証・認可の失敗</td><td>管理画面共通の挙動（ログイン誘導など）。</td></tr><tr><td>DB アクセス失敗</td><td>アプリケーション共通のエラーハンドリングに委ねる。本機能が個別に捕捉してユーザ向け文言を出す分岐は無い。</td></tr></tbody></table></div>
-<hr>
-<h2 id="試行制限">試行制限</h2>
-<p>本機能では試行制限を扱わない。</p>
-<hr>
-<h2 id="ログ・監査">ログ・監査</h2>
-<p>本機能は一覧表示のみであり、専用の監査ログ出力はコード上は設けていない。HTTP アクセスログ等はインフラ設定に従う。</p>
-<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
-<ul><li>パスワード</li><li>なりすまし対策トークン</li><li>Cookie 値</li><li>セッション ID の完全値</li><li>Remember Me トークンの原値</li></ul>
-<hr>
-<h2 id="セッション">セッション</h2>
-<h3 id="本機能におけるセッション">本機能におけるセッション</h3>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>前ページ・結果ページの表示</td><td>当機能の処理経路ではセッションへの読み書きを行わない（確認値）。</td></tr></tbody></table></div>
-<h3 id="セッションへ保存しない情報">セッションへ保存しない情報</h3>
-<p>検索条件や一覧状態は本機能では保存しない。</p>
-<hr>
-<h2 id="Cookie">Cookie</h2>
-<p>管理画面ファイアウォールはセッションを利用するため、ブラウザはセッション Cookie を送る。Cookie 名や属性は環境設定に従い、本機能が追加の Cookie を設定しない。</p>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<p>本機能は参照のみであり、楽観ロック・悲観ロックや明示的なトランザクション境界は持たない。</p>
-<hr>
-<h2 id="調査補助-grep-向け">調査補助（grep 向け）</h2>
-<p>実装上のルート属性やテンプレートパスをコード検索するときの手がかりとして、<code>ProductController</code> 内の <code>preDoublingCheck</code> / <code>doublingCheck</code>、<code>ProductClassRepository::getDoublingCode</code>、<code>@admin/Product/pre_doubling_check.twig</code>、<code>@admin/Product/doubling_check.twig</code>、<code>eccube_nav.yaml</code> の <code>duplicate_code</code> を参照する。</p>
-<h3 id="HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</h3>
-<ul><li><code>admin_product_pre_doubling_check</code> … <code>GET</code> … <code>/{admin_route}/product/pre_doubling_check</code>（確認実行へ進む前の説明用中間ページの表示。）</li><li><code>admin_product_doubling_check</code> … <code>GET</code> … <code>/{admin_route}/product/doubling_check</code>（DB を問い合わせて重複一覧または「重複なし」メッセージを表示する。）</li></ul>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>無し。検索条件を受け取らない</td></tr><tr><td>成功時出力</td><td>重複がある商品コードの一覧と各商品規格への導線、または重複が無い旨のメッセージ</td></tr><tr><td>失敗時出力</td><td>管理画面に共通のエラー扱いによる。本機能固有の検証エラー画面は無い</td></tr></tbody></table></div>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
+<h2 id="表示メッセージ">表示メッセージ</h2>
+<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M03-25-MSG-001</td><td>画面上部</td><td>重複している商品コードはありません。</td><td>重複商品コード確認を実行し、重複コードが1件もないとき。</td><td>重複商品コード確認画面に留まる。</td></tr></tbody></table></div>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,32 +272,17 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#本書で扱うこと">本書で扱うこと</a>
-<a class="lv2" href="#本書で扱わないこと">本書で扱わないこと</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv2" href="#用語">用語</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#認証・認可">認証・認可</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#買取アプリ用ログインを行う-POST-admin-login-json">買取アプリ用ログインを行う（POST `/admin/login.json`）</a>
-<a class="lv2" href="#表示メッセージ">表示メッセージ</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#認証の中継">認証の中継</a>
+<a class="lv3" href="#応答の判定">応答の判定</a>
+<a class="lv3" href="#トークンの発行と以降の利用">トークンの発行と以降の利用</a>
+<a class="lv3" href="#エラー時の扱い">エラー時の扱い</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv3" href="#リクエスト">リクエスト</a>
-<a class="lv3" href="#レスポンス-成功">レスポンス（成功）</a>
-<a class="lv3" href="#レスポンス-失敗">レスポンス（失敗）</a>
-<a class="lv3" href="#サンプルレスポンス">サンプルレスポンス</a>
-<a class="lv3" href="#副作用">副作用</a>
-<a class="lv2" href="#バリデーション">バリデーション</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#権限・認可">権限・認可</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#ログ・監査">ログ・監査</a>
-<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a></nav>
+<a class="lv3" href="#入力-リクエスト">入力: リクエスト</a>
+<a class="lv3" href="#出力-レスポンス-成功">出力: レスポンス（成功）</a>
+<a class="lv3" href="#出力-レスポンス-失敗">出力: レスポンス（失敗）</a>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -295,54 +290,22 @@ footer {
         <h1>API 店頭買取管理 — 買取アプリ用ログイン</h1>
       </header>
       
-      <h2 id="概要">概要</h2>
-<p>買取アプリ（MTGバイヤー）が利用者の資格情報で管理者ログインを行い、以降のAPI呼び出しに使うトークンを取得するためのAPIである。pf-api（買取連携用のAPIアプリケーション）が提供するJSON APIで、受け取ったログインIDとパスワードをEC-CUBE管理画面の買取アプリ用ログインへ中継し、認証成功時に会員情報とJWTトークンを返す。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-apiのログイン中継処理、ルート定義（<code>config/routes.yaml</code>）、中継先であるEC-CUBE側（pf-eccube3 HareruyaEc）の買取アプリ用ログインAPIとそのファイアウォール設定を正とする。</p>
-<p>本機能のカスタマイズ区分は現行踏襲で、挙動の参照リポはpf-api（中継先はpf-eccube3 HareruyaEc）とする。DB関連の記述（テーブル名・列名・永続化先）はec-cube-enterpriseを正とする。</p>
-<p>対象はJSON APIエンドポイントであり、ブラウザ向けの画面を持たない。本文ではフレームワークのコントローラ型名やメソッド名を主説明としない。「利用者視点の入口」にHTTPメソッドとパスパターンを書く。</p>
-<hr>
-<h2 id="本書で扱うこと">本書で扱うこと</h2>
-<ul><li>ログインIDとパスワードによる買取アプリ用ログインの中継</li><li>認証成功時に返す会員情報とJWTトークン、およびトークンの以降の用途</li><li>認証失敗時の応答</li></ul>
-<hr>
-<h2 id="本書で扱わないこと">本書で扱わないこと</h2>
-<p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
-<ul><li>EC-CUBE管理ログイン本体の認証判定・二段階認証・試行制限（管理ログイン機能を正とする）</li><li>発行したトークンを用いる各買取APIの認可（各APIの設計を正とする）</li><li>中継先が参照する管理者会員・会員サブ・店舗の登録・編集（各管理機能を正とする）</li></ul>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<p>挙動（ログイン中継・トークン発行）は現行（pf-api／中継先pf-eccube3）を正とし、応答を組み立てる際に参照する会員・店舗の永続化先は移行先（ec-cube-enterprise）を正とする。会員・店舗の参照モデルが現行と移行先で異なる。</p>
-<div class="table-wrap"><table><thead><tr><th>区分</th><th>現行（pf-api／pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>管理者会員</td><td>dtb_member（会員ID＝member_id、氏名）</td><td>dtb_member（id、氏名）。会員IDの主キー名がidになる点に注意</td></tr><tr><td>会員と店舗の関連</td><td>会員サブ（dtb_member_sub）のshop_idで所属店舗を引く</td><td>会員サブ（dtb_member_sub）は廃止。会員（dtb_member）のbase_info_idが所属店舗、編集可能店舗はmember_base_info（dtb_member_base_info）で管理する</td></tr><tr><td>店舗</td><td>店舗マスタ（mtb_shop）。店舗名・住所を保持</td><td>店舗＝BaseInfo（dtb_base_info）。店舗名・住所はBaseInfoの列を参照する</td></tr></tbody></table></div>
-<p>応答フィールド（memberName・memberId・shopName・shopAddr・jwtToken）の構造と、トークンのペイロード（発行者・利用者ID＝管理者会員のID）はリニューアル後も同じ前提とするが、店舗名・店舗住所の取得元が店舗マスタ（mtb_shop）からBaseInfo（dtb_base_info）へ変わる。移行先での店舗紐付け（base_info_id）の取り回しはec-cube-enterprise実装で要確認とする。</p>
-<hr>
-<h2 id="用語">用語</h2>
-<div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>買取アプリ</td><td>店頭買取で利用するクライアント（MTGバイヤー）。本APIの呼び出し元。</td></tr><tr><td>JWTトークン</td><td>認証成功時に発行する署名付きトークン。以降のpf-api買取系APIの認証に用いる。</td></tr><tr><td>買取アプリ用ログインAPI</td><td>中継先となるEC-CUBE側のログイン用エンドポイント。認証済みの管理者会員情報とトークンをJSONで返す。</td></tr></tbody></table></div>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>買取アプリからのログイン</td><td><code>POST /admin/login.json</code></td><td>ログインIDとパスワードを中継して認証し、成功時は会員情報とJWTトークンのJSONを返す。失敗時は認証拒否（HTTP 401）のJSONを返す。</td></tr><tr><td>同上（拡張子なし別名）</td><td><code>POST /admin/login</code></td><td>上と同一処理。</td></tr></tbody></table></div>
-<p>応答形式はJSON。呼び出し元は買取アプリ（MTGバイヤー）。</p>
-<hr>
-<h2 id="認証・認可">認証・認可</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>本APIの認証</td><td>本APIはトークン取得の入口であり、<code>jwt-token</code>ヘッダを要求しない。受け取ったログインID・パスワードを中継先の認証に委ねる。</td></tr><tr><td>認証の中継</td><td>EC-CUBEの買取アプリ用ログイン画面へアクセスしてセッションを確立し、ログインID・パスワードをログイン確認へ送信して認証する。</td></tr><tr><td>トークン発行</td><td>認証成功時、中継先が署名付きJWTトークンを発行して返す。トークンのペイロードは発行者と利用者ID（管理者会員のID）を持つ。署名方式はHS256。</td></tr><tr><td>以降の認可</td><td>呼び出し元は受け取ったトークンを以降のpf-api買取系APIの<code>jwt-token</code>ヘッダに付与する。各APIはトークンの利用者IDから管理者会員を引いて認可する（各APIの設計を正とする）。</td></tr><tr><td>認証失敗時</td><td>中継先が認証情報を返さない場合は認証拒否（HTTP 401）とする。</td></tr></tbody></table></div>
-<p>トークン原値・署名シークレット・パスワードは本書に記載しない。</p>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="買取アプリ用ログインを行う-POST-admin-login-json">買取アプリ用ログインを行う（POST <code>/admin/login.json</code>）</h3>
-<ol><li>リクエストからログインIDとパスワードを受け取る。</li><li>中継先のログイン画面へアクセスし、セッション確立用のCookieを一時ファイルに保存する。一時ファイル名はログインID別とする。</li><li>ログインIDとパスワードを、保存したCookieとともに中継先のログイン確認へ送信する。リダイレクトを追従し、認証成功時はEC-CUBE側の買取アプリ用ログインAPIに到達する。</li><li>一時Cookieファイルを削除する。</li><li>応答本文をJSONとして解釈する。</li><li>解釈結果が空の場合は認証失敗とみなし、応答に含まれるエラー文言を抽出し、コード401とメッセージのJSONを返す。</li><li>解釈できた場合は、中継先が返したJSON（会員名・会員ID・店舗名・店舗住所・JWTトークン）をそのまま返す。</li></ol>
-<hr>
-<h2 id="表示メッセージ">表示メッセージ</h2>
-<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>画面上の文言(英語)</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>A06-01-MSG-001</td><td>API応答JSON（errors配列）</td><td>ログインIDまたはパスワードが入力されていません</td><td>（英訳なし）</td><td>ログインAPIで<code>login_id</code>または<code>password</code>が空のとき</td><td>HTTP 401・<code>{code, errors}</code>を返し、JWTを発行しない</td></tr><tr><td>A06-01-MSG-002</td><td>API応答JSON（errors配列）</td><td>ログインIDまたはパスワードが正しくありません</td><td>（英訳なし）</td><td>ログインAPIで有効なログインIDに対応する会員が見つからないとき</td><td>HTTP 401・<code>{code, errors}</code>を返し、JWTを発行しない</td></tr><tr><td>A06-01-MSG-003</td><td>API応答JSON（errors配列）</td><td>ログインIDまたはパスワードが正しくありません</td><td>（英訳なし）</td><td>ログインAPIで会員は見つかったが、パスワード検証に失敗したとき</td><td>HTTP 401・<code>{code, errors}</code>を返し、JWTを発行しない</td></tr></tbody></table></div>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>更新対象</td><td>リクエストで指定されたID・入力値に対応する業務データを対象にする。対象特定、入力不正、認証・認可の判定順序は処理フローとバリデーションの各節を正とする。</td></tr><tr><td>更新方法</td><td>入力値を対象データへ上書きまたは追加登録する。履歴登録や関連データ更新がある場合は入出力の副作用およびDBカラムの節を正とする。</td></tr><tr><td>計算処理</td><td>本APIでは金額・税・ポイント・在庫数量の再計算や丸めを行わない。ステータスやコメント等の更新は、実装で定義された遷移・存在確認・担当者判定に従う。</td></tr><tr><td>応答値</td><td>成功時は処理結果コードまたは更新後に取得した値を返す。レスポンス値は本API内で独自集計せず、保存結果または取得結果をJSON応答へ整形する。</td></tr></tbody></table></div>
-<hr>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="認証の中継">認証の中継</h3>
+<p>受け取ったログインIDとパスワードは、本APIでは形式検証せず中継先の認証に委ねる。中継先のログイン画面へアクセスしてセッションを確立し、確立したセッションを保ったままログインID・パスワードをログイン確認へ送信する。セッション確立用の一時情報はログインID別に保持し、送信後に削除する。リダイレクトを追従し、認証に成功したときは中継先の買取アプリ用ログインAPIに到達する。</p>
+<h3 id="応答の判定">応答の判定</h3>
+<p>中継先の応答本文をJSONとして解釈する。解釈結果が空のときは認証失敗とみなし、応答に含まれるエラー文言を抽出して、コード401とメッセージのJSONを返す。解釈できたときは、中継先が返した会員名・会員ID・店舗名・店舗住所・トークンをそのまま返す。</p>
+<h3 id="トークンの発行と以降の利用">トークンの発行と以降の利用</h3>
+<p>本APIはトークン取得の入口であり、呼び出しにトークンを要求しない。認証に成功すると中継先が署名付きトークンを発行して返す。トークンは発行者と利用者ID（管理者会員のID）を持つ。呼び出し元は受け取ったトークンを以降の買取系APIに付与し、各APIはトークンの利用者IDから管理者会員を引いて認可する。</p>
+<p>トークン原値・署名シークレット・パスワードは本書に記載しない。金額・税・ポイント・在庫数量の再計算や丸めは行わない。</p>
+<h3 id="エラー時の扱い">エラー時の扱い</h3>
+<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>認証情報が返らない（認証失敗）</td><td>応答からエラー文言を抽出し、コード401・メッセージのJSONを返す。画面上の理由文言をそのまま用い、本API独自の文言は設けない</td></tr><tr><td>中継先への到達不可・処理中の例外</td><td>共通例外処理に委ねる。本API独自のフォールバック文言は設けない</td></tr></tbody></table></div>
 <h2 id="入出力">入出力</h2>
-<h3 id="リクエスト">リクエスト</h3>
-<div class="table-wrap"><table><thead><tr><th>パラメータ</th><th>位置</th><th>型</th><th>必須／任意</th><th>説明</th></tr></thead><tbody><tr><td><code>login_id</code></td><td>ボディ（フォーム値）</td><td>string</td><td>必須</td><td>管理者のログインID。中継先の認証に用いる。pf-api側では形式検証しない。</td></tr><tr><td><code>password</code></td><td>ボディ（フォーム値）</td><td>string</td><td>必須</td><td>管理者のパスワード。中継先の認証に用いる。pf-api側では形式検証しない。</td></tr></tbody></table></div>
-<h3 id="レスポンス-成功">レスポンス（成功）</h3>
-<p>HTTP 200。</p>
-<div class="table-wrap"><table><thead><tr><th>フィールド</th><th>型</th><th>説明</th></tr></thead><tbody><tr><td><code>memberName</code></td><td>string</td><td>認証した管理者会員の氏名。</td></tr><tr><td><code>memberId</code></td><td>integer</td><td>認証した管理者会員のID。発行するトークンの利用者IDにも対応する。</td></tr><tr><td><code>shopName</code></td><td>string</td><td>会員に紐づく店舗名。店舗が紐づかない場合は空文字。</td></tr><tr><td><code>shopAddr</code></td><td>string</td><td>会員に紐づく店舗住所。店舗が紐づかない場合は空文字。</td></tr><tr><td><code>jwtToken</code></td><td>string</td><td>発行したJWTトークン。以降のpf-api買取系APIの<code>jwt-token</code>ヘッダに用いる。</td></tr></tbody></table></div>
-<h3 id="レスポンス-失敗">レスポンス（失敗）</h3>
-<div class="table-wrap"><table><thead><tr><th>HTTPステータス</th><th>条件</th><th>本文の形</th></tr></thead><tbody><tr><td>401</td><td>中継先が認証情報を返さない（資格情報の誤り等による認証失敗）</td><td><code>{code, message}</code>（<code>message</code>は中継先の画面エラー文言から改行表記を除いたもの）</td></tr><tr><td>500</td><td>中継先への到達不可・処理中の例外</td><td>pf-apiの共通例外処理に委ねる</td></tr></tbody></table></div>
-<h3 id="サンプルレスポンス">サンプルレスポンス</h3>
-<p>成功時の応答例（秘匿値はプレースホルダ）。</p>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>管理者のログインID、パスワード</td></tr><tr><td>成功時出力</td><td>HTTP 200。会員名・会員ID・店舗名・店舗住所・発行したトークン</td></tr><tr><td>失敗時出力</td><td>HTTP 401（認証失敗）、HTTP 500（中継先への到達不可・処理中の例外）</td></tr></tbody></table></div>
+<h3 id="入力-リクエスト">入力: リクエスト</h3>
+<div class="table-wrap"><table><thead><tr><th>パラメータ</th><th>位置</th><th>型</th><th>必須／任意</th><th>説明</th></tr></thead><tbody><tr><td><code>login_id</code></td><td>ボディ</td><td>string</td><td>必須</td><td>管理者のログインID。中継先の認証に用いる。本APIでは形式検証しない</td></tr><tr><td><code>password</code></td><td>ボディ</td><td>string</td><td>必須</td><td>管理者のパスワード。中継先の認証に用いる。本APIでは形式検証しない</td></tr></tbody></table></div>
+<h3 id="出力-レスポンス-成功">出力: レスポンス（成功）</h3>
+<div class="table-wrap"><table><thead><tr><th>フィールド</th><th>型</th><th>説明</th></tr></thead><tbody><tr><td><code>memberName</code></td><td>string</td><td>認証した管理者会員の氏名</td></tr><tr><td><code>memberId</code></td><td>integer</td><td>認証した管理者会員のID。発行するトークンの利用者IDにも対応する</td></tr><tr><td><code>shopName</code></td><td>string</td><td>会員に紐づく店舗名。店舗が紐づかない場合は空文字</td></tr><tr><td><code>shopAddr</code></td><td>string</td><td>会員に紐づく店舗住所。店舗が紐づかない場合は空文字</td></tr><tr><td><code>jwtToken</code></td><td>string</td><td>発行したトークン。以降の買取系APIの認証に用いる</td></tr></tbody></table></div>
 <pre><code class="language-json">{
   "memberName": "山田太郎",
   "memberId": 12,
@@ -350,35 +313,11 @@ footer {
   "shopAddr": "東京都千代田区0-0-0",
   "jwtToken": "&lt;jwtToken&gt;"
 }</code></pre>
-<h3 id="副作用">副作用</h3>
-<p>ログインID別の一時Cookieファイルの作成と削除。中継先でのログインセッション確立は中継先（管理ログイン）の範囲。pf-api自身は業務データを更新しない。</p>
-<p>応答はJSON応答整形を経て返す。プロパティはcamelCase、日時はISO8601、<code>serialize_null</code>は有効とする。</p>
-<hr>
-<h2 id="バリデーション">バリデーション</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>ログインID</td><td>pf-api側で形式・必須の検証を行わず、中継先の認証判定に委ねる。未入力・誤りは認証失敗として認証拒否（HTTP 401）となる。</td></tr><tr><td>パスワード</td><td>同上。pf-api側では検証せず、認証成否で扱う。</td></tr></tbody></table></div>
-<hr>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>参照時点</td><td>返す会員情報・店舗情報は認証成功時点で中継先が保持する値である。</td></tr><tr><td>トークン</td><td>発行時点の利用者IDを内包する。pf-apiはトークンを保存しない。</td></tr><tr><td>店舗情報</td><td>会員に店舗が紐づかない場合、店舗名・店舗住所は空文字で返る。</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<p>本APIはpf-api自身では業務テーブルを参照しない。中継先が認証済みの管理者会員・会員サブ・店舗を参照して応答を組み立てる。直接関係する範囲のみを以下に示す。型や一覧の細部はスキーマを参照する。</p>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td>管理者会員（dtb_member）</td><td>氏名・会員ID（移行先はid）</td><td>応答の会員名・会員IDに用いる。トークンの利用者IDにも用いる。</td></tr><tr><td>店舗紐付け</td><td>所属店舗</td><td>会員に紐づく店舗の特定に用いる。現行は会員サブ（dtb_member_sub）のshop_id、移行先は会員（dtb_member）のbase_info_idおよびmember_base_info。</td></tr><tr><td>店舗（移行先はBaseInfo＝dtb_base_info、現行はmtb_shop）</td><td>店舗名・住所</td><td>応答の店舗名・店舗住所に用いる。</td></tr></tbody></table></div>
-<h3 id="DB操作">DB操作</h3>
-<p>永続化の正は ec-cube-enterprise（テーブル名・操作は ec-cube-enterprise を正典）。当ドメインは承認ワークフローを介さず persist/flush で直接確定する（承認ワークフローは在庫機能固有）。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>登録/更新</td><td>dtb_base_info / dtb_member / dtb_member_sub</td><td>当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。</td></tr></tbody></table></div>
-<hr>
-<h2 id="権限・認可">権限・認可</h2>
-<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>買取アプリ用ログイン</th></tr></thead><tbody><tr><td>未認証のクライアント</td><td>ログインのために呼び出せる。資格情報が正しい場合のみトークンを取得できる。</td></tr><tr><td>資格情報が誤りのクライアント</td><td>認証拒否（HTTP 401）となり、トークンを取得できない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>認証情報が返らない（認証失敗）</td><td>応答からエラー文言を抽出し、コード401・メッセージのJSONを返す。画面上の理由文言をそのまま用い、pf-api独自の文言は設けない。</td></tr><tr><td>中継先への到達不可・処理中の例外</td><td>pf-apiの共通例外処理に委ねる。本API独自のフォールバック文言は設けない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="ログ・監査">ログ・監査</h2>
-<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
-<ul><li>パスワード</li><li>JWTトークンの原値</li><li>署名シークレット（<code>auth_magic</code>）</li><li>一時Cookieファイルの中身・Cookie値</li><li>セッションIDの完全値</li></ul>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<p>本APIは認証の中継と応答整形のみであり、業務トランザクションを張ってデータを更新しない。楽観ロック・悲観ロックの対象は持たない。中継時の一時CookieファイルはログインID別の名前で作成し、処理後に削除する。</p>
+<h3 id="出力-レスポンス-失敗">出力: レスポンス（失敗）</h3>
+<div class="table-wrap"><table><thead><tr><th>HTTPステータス</th><th>条件</th><th>本文の形</th></tr></thead><tbody><tr><td>401</td><td>中継先が認証情報を返さない（資格情報の誤り等による認証失敗）</td><td>処理結果コードとメッセージ。メッセージは中継先の画面エラー文言から改行表記を除いたもの</td></tr><tr><td>500</td><td>中継先への到達不可・処理中の例外</td><td>共通例外処理に委ねる</td></tr></tbody></table></div>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
+<h2 id="表示メッセージ">表示メッセージ</h2>
+<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>A06-01-MSG-001</td><td>API応答JSON（errors配列）</td><td>ログインIDまたはパスワードが入力されていません</td><td>ログインAPIでログインIDまたはパスワードが空のとき</td><td>HTTP 401を返し、トークンを発行しない</td></tr><tr><td>A06-01-MSG-002</td><td>API応答JSON（errors配列）</td><td>ログインIDまたはパスワードが正しくありません</td><td>ログインAPIで有効なログインIDに対応する会員が見つからないとき</td><td>HTTP 401を返し、トークンを発行しない</td></tr><tr><td>A06-01-MSG-003</td><td>API応答JSON（errors配列）</td><td>ログインIDまたはパスワードが正しくありません</td><td>ログインAPIで会員は見つかったが、パスワード検証に失敗したとき</td><td>HTTP 401を返し、トークンを発行しない</td></tr></tbody></table></div>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,35 +272,17 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#フロント挙動">フロント挙動</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#編集画面を表示する-m03-02-admin-product-product-edit-bulk-update-buy-price">編集画面を表示する（`m03-02_admin_product_product_edit_bulk_update_buy_price`）</a>
-<a class="lv3" href="#確定する-admin-product-bulk-update-buy-price">確定する（`admin_product_bulk_update_buy_price`）</a>
-<a class="lv2" href="#集計条件">集計条件</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
-<a class="lv3" href="#保存時の買取価格の決め方">保存時の買取価格の決め方</a>
-<a class="lv3" href="#基準価格">基準価格</a>
-<a class="lv3" href="#入力項目">入力項目</a>
-<a class="lv3" href="#エッジケース">エッジケース</a>
-<a class="lv2" href="#フォーム送信時の判定順序">フォーム送信時の判定順序</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#編集画面の対象">編集画面の対象</a>
+<a class="lv3" href="#保存の判定順序">保存の判定順序</a>
+<a class="lv3" href="#買取価格の決め方">買取価格の決め方</a>
+<a class="lv3" href="#基準価格の決め方">基準価格の決め方</a>
+<a class="lv3" href="#価格履歴">価格履歴</a>
+<a class="lv3" href="#エラー時の扱い">エラー時の扱い</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#バリデーション">バリデーション</a>
-<a class="lv2" href="#権限・認可">権限・認可</a>
-<a class="lv2" href="#画面遷移">画面遷移</a>
-<a class="lv3" href="#遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#表示メッセージ">表示メッセージ</a>
-<a class="lv2" href="#副作用・ログ">副作用・ログ</a>
-<a class="lv2" href="#調査補助-grep">調査補助（grep）</a>
-<a class="lv3" href="#HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a></nav>
+<a class="lv3" href="#入出力-永続化">入出力: 永続化</a>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -298,92 +290,28 @@ footer {
         <h1>商品管理 — 買取・基準価格一括編集</h1>
       </header>
       
-      <h2 id="概要">概要</h2>
-<p>管理画面の商品一覧から、チェックした商品について、NM 規格を基点に買取価格と基準価格をまとめて入力し、同一商品・同一言語の通常規格（<code>high_price_code</code> が無い規格）すべてに対して買取価格と基準価格を更新する機能である。画面見出し・ボタン文言はロケール上「買取・基準価格一括編集」であり、基準価格は <code>dtb_product_class.standard_price</code> に対応する。販売価格（<code>dtb_product_class.price02</code>）は当画面からは保存せず、フォーム検証で買取価格の上限比較にのみ使う。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。ec-cube-enterprise のコア実装を確認値とする。</p>
-<p>本機能のカスタマイズ区分はカスタマイズである。画面・処理の挙動は現行リポ（pf-eccube3）の実装を参照し、DB関連（テーブル名・列名・保存先・副作用のDB更新）は ec-cube-enterprise を正とする。</p>
-<p>対象はブラウザ経由の管理画面に限定する。</p>
-<p>本文ではコントローラのメソッド単位の解剖を主題としない。本文ではルートbind名やSymfonyのルートnameの網羅は主説明としない。「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。コード探索でbind名が必要なときだけ「調査補助」へ書く。</p>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<p>本機能が読み書きする価格列・履歴・買取価格表は、移行先 ec-cube-enterprise で実在を確認した。</p>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>基準価格・高額商品コード</td><td><code>dtb_product_class.standard_price</code>・<code>high_price_code</code></td><td>同一（<code>dtb_product_class</code> に実在）</td></tr><tr><td>買取価格</td><td>補助表 <code>dtb_product_sub_class</code> に持つ実装がある</td><td><code>dtb_product_class.buy_price</code> に統合（実在確認済み）。列の所在が現行と異なる</td></tr><tr><td>価格履歴</td><td><code>dtb_price_history</code>（<code>buy_price</code>・<code>old_buy_price</code>・<code>standard_price</code>・<code>old_standard_price</code>）</td><td>同一スキーマ</td></tr><tr><td>買取価格表</td><td><code>mtb_buy_price_list</code>（<code>nm_price</code>・<code>price</code>・<code>special_flg</code>、<code>MAX_NM_PRICE</code>＝10000）</td><td>同一スキーマ</td></tr></tbody></table></div>
-<p>本機能では <code>dtb_product_class.price02</code>（販売価格）を書き換えず、検証時の上限比較にのみ用いる点は現行・移行先で同じ。基本設計が描く本機能固有の追加仕様は無い。</p>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>商品一覧で商品にチェックし「買取・基準価格一括編集」相当のボタンを押す</td><td><code>POST /{admin_route}/product/edit_bulk_update_buy_price</code>（ボディに <code>ids[]</code>）</td><td>選択商品について編集表が開く。</td></tr><tr><td>編集画面をブックマーク相当で開く</td><td><code>GET /{admin_route}/product/edit_bulk_update_buy_price?ids[]=…</code></td><td>同上。複数 ID は <code>ids[]</code> を繰り返す。</td></tr><tr><td><code>ids</code> を付けずに編集 URL へ入る</td><td><code>GET /{admin_route}/product/edit_bulk_update_buy_price</code>（<code>ids</code> 空）</td><td>エラーフラッシュのうえ、セッションの <code>eccube.admin.product.search.page_no</code> を使って <code>GET /{admin_route}/product/page/{page_no}</code> へリダイレクトする。</td></tr><tr><td>「登録」で確定</td><td><code>POST /{admin_route}/product/bulk_update_buy_price</code></td><td>検証成功時は更新後、セッションのページ番号と <code>resume=1</code> 付きで一覧へリダイレクトする。失敗時は同一編集テンプレートを返す。</td></tr><tr><td>「商品一覧」リンク</td><td><code>GET /{admin_route}/product/page/{page_no}</code></td><td>セッションの <code>eccube.admin.product.search.page_no</code>（無ければ 1）へ遷移。保存はしない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="フロント挙動">フロント挙動</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>メニューは <code>product</code> と <code>product_edit</code>。タイトルは商品管理＋副題で一括編集文言。表は商品 ID、商品名、言語、買取価格(NM)、在庫数（NM〜HP）、価格比率（買取-基準の注記付き）、2 行構成で第 2 行は基準価格 (NM〜HP)。公開ステータスが廃止（ID 3）の列は在庫セルを描画しない。規格 ID が 0 の状態列は在庫を 0 表記し、基準価格は <code>-</code>。</td></tr><tr><td>JS 挙動</td><td><code>.js-buy-price</code> と <code>.js-base-price</code>（NM 基準価格）の入力で価格比率を再計算。初期表示時も NM 買取各行に対して一度計算する。</td></tr><tr><td>CSS・レイアウト</td><td>管理画面共通フレーム。表は縦スクロール上限約 70vh、表頭は sticky。</td></tr><tr><td>モーダル・ポップアップ</td><td>なし。</td></tr></tbody></table></div>
-<p>補足: カードヘッダ内の「表示切替」に見える select は <code>name</code> を持たず、送信もサーバー処理も伴わない。</p>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="編集画面を表示する-m03-02-admin-product-product-edit-bulk-update-buy-price">編集画面を表示する（<code>m03-02_admin_product_product_edit_bulk_update_buy_price</code>）</h3>
-<ol><li>管理画面の認証・共通制約を通過する。</li><li><code>ids</code> を取得する。空ならキー <code>eccube.admin.error</code> で <code>admin.product.not_select</code> をフラッシュし、<code>eccube.admin.product.search.page_no</code>（無ければ 1）へ <code>admin_product_page</code> へリダイレクトする。</li><li>リポジトリの集約クエリで、各商品 ID・言語の通常規格のみを横持ちした行配列を得る。</li><li>フォーム種別 <code>BulkUpdateProductPriceType</code> に <code>product_classes</code> として渡し、フォームビューを描画する。隠しフィールド <code>productIds</code> にはカンマ区切りの商品 ID を載せる（一覧で選択した ID の列挙。言語展開後の行数とは一致しない）。</li></ol>
-<h3 id="確定する-admin-product-bulk-update-buy-price">確定する（<code>admin_product_bulk_update_buy_price</code>）</h3>
-<ol><li>管理画面の認証・共通制約を通過する。</li><li>POST の <code>productIds</code> をカンマ分割し、再度集約クエリで <code>product_classes</code> を構築してフォームに束ねる。</li><li><code>handleRequest</code> 後、未送信または検証失敗なら、フォームのエラーを管理画面へ積み、同一テンプレートを 200 で返す。</li><li>検証成功なら、送信された各行について次を行う（全体を 1 トランザクションにまとめない）。</li><li><code>product_class_id_nm</code> が空（0 含む）の行はスキップする。</li><li>当該 NM 規格 ID の行が DB に無ければ例外メッセージ <code>admin.product.to_show_complete</code> を投げ、画面へエラー表示して終える（当行までのコミット済み更新はロールバックされない）。</li><li>商品に買取減額率が無く、入力買取が 0 以外かつ 10000 以下のとき、<code>mtb_buy_price_list</code> に入力買取を <code>nm_price</code> とする行が無ければ例外 <code>admin.product.not_found_nm_price</code>。</li><li>価格履歴の一括 INSERT（販売価格の新旧は NULL）の後、通常規格すべてへ買取・基準価格を更新するネイティブ UPDATE を実行する。1 商品行ごとにトランザクションをコミットする。</li><li>全行で成功したら成功フラッシュ <code>admin.register.complete</code> を積み、<code>admin_product_page</code> へ <code>?resume=1</code> でリダイレクトする。</li></ol>
-<hr>
-<h2 id="集計条件">集計条件</h2>
-<p>編集表 1 行は「商品 ID × 言語」のグループに対応する。リポジトリの抽出条件は次のとおり。</p>
-<div class="table-wrap"><table><thead><tr><th>指標</th><th>集計の要点</th></tr></thead><tbody><tr><td>対象規格</td><td><code>dtb_product_class</code> を商品・言語で結合し、<code>high_price_code</code> が NULL のものに限定する。</td></tr><tr><td>横持ち</td><td>条件 ID 1〜4 について、規格 ID・基準価格・在庫合計・ステータス・割引率・買取価格を条件付き集約する。</td></tr><tr><td>NM の販売価格</td><td>条件 1 の <code>price02</code> を <code>sell_price_nm</code> として 1 つ取る（検証専用）。</td></tr><tr><td>並び</td><td>商品 ID 降順、言語昇順。</td></tr></tbody></table></div>
-<hr>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<h3 id="保存時の買取価格の決め方">保存時の買取価格の決め方</h3>
-<ul><li>入力された NM 買取（<code>nmPrice</code>）が 0 の場合、分岐上は「高額用の率計算」側に進み、状態別に式で 0 に近い値へ丸められる。</li><li><code>nmPrice</code> が 1 以上かつ <code>MtbBuyPriceList::MAX_NM_PRICE</code>（10000）以下で、商品に買取減額率が無い場合、UPDATE は <code>mtb_buy_price_list</code> を NM 価格・状態・Foil/プロモ相当の <code>special_flg</code> で参照し、見つかればその <code>price</code>、見つからなければ <code>nmPrice</code> を各規格の <code>buy_price</code> にセットする SQL パスを使う。</li><li>それ以外（高額帯、または買取減額率あり）は、Foil/プロモか否かと状態 ID に応じた率配列で <code>nmPrice</code> から切り上げ演算し <code>buy_price</code> を決める。率は商品の買取減額率マスタが優先し、無ければ定数既定値を使う。</li></ul>
-<h3 id="基準価格">基準価格</h3>
-<ul><li>入力された <code>standard_price_nm</code> を、同一商品・同一言語・通常規格のすべての行の <code>standard_price</code> に同じ値で書き込む。状態別に基準価格を分けた更新にはならない。</li></ul>
-<h3 id="入力項目">入力項目</h3>
-<div class="table-wrap"><table><thead><tr><th>項目名</th><th>必須／任意</th><th>最大長</th><th>初期値</th><th>保存先・扱い</th></tr></thead><tbody><tr><td>買取価格(NM)</td><td>必須（整数型）</td><td>ウィジェット属性で <code>step</code> 10、<code>max</code> 9999999999。フォーム型は Symfony <code>IntegerType</code>。</td><td>集約クエリの NM 買取</td><td>保存時は上記ルールで全通常規格の <code>dtb_product_class.buy_price</code> を再計算・更新。キーは <code>bulk_update_product_price[product_classes][n][buy_price_nm]</code>。</td></tr><tr><td>基準価格 (NM)</td><td>任意（整数型）</td><td><code>min</code> 0、<code>step</code> 10、上限 9999999999（実装内 10 桁の 9 連結）。</td><td>集約クエリの NM 基準価格</td><td><code>dtb_product_class.standard_price</code> を対象規格すべて同一値で更新。キーは <code>…[standard_price_nm]</code>。</td></tr><tr><td>基準価格 (SP)</td><td>任意だが readonly</td><td>同上（readonly）</td><td>集約値</td><td>POST 値は読み取り専用。保存処理は <code>standard_price_nm</code> のみ用い、SP 列の入力値は更新計算に使わない。</td></tr><tr><td>基準価格 (MP)</td><td>同上</td><td>同上</td><td>同上</td><td>同上</td></tr><tr><td>基準価格 (HP)</td><td>同上</td><td>同上</td><td>同上</td><td>同上</td></tr><tr><td>商品 ID（表示兼隠し）</td><td>隠し</td><td>文字列長の個別制約は Form 型に無い</td><td>集約の商品 ID</td><td><code>…[product_id]</code>。更新キーではなく表示と POST 再構築用。</td></tr><tr><td>言語（隠し）</td><td>隠し</td><td>同上</td><td>集約の言語名</td><td><code>…[language]</code>。検証メッセージに含める。</td></tr><tr><td>NM 規格 ID（隠し）</td><td>隠し</td><td>同上</td><td>集約の NM 規格 ID または 0</td><td><code>…[product_class_id_nm]</code>。保存の基点 ID。0 の行は保存スキップ。</td></tr><tr><td>SP / MP / HP 規格 ID（隠し）</td><td>隠し</td><td>同上</td><td>各状態の規格 ID または 0</td><td>テンプレートの有無判定に使う。保存処理の主経路では参照しない。</td></tr><tr><td>状態ステータス（隠し）</td><td>隠し</td><td>同上</td><td>各状態の公開ステータス ID</td><td>テンプレートで廃止時の空白表示に使う。</td></tr><tr><td>割引率（隠し）</td><td>隠し</td><td>同上</td><td>集約の率</td><td>保存時の率計算は商品に紐づく買取減額率を優先し、フォームの rate は主説明から外れる。</td></tr><tr><td>販売価格（NM）（隠し）</td><td>隠し</td><td>同上</td><td>NM の <code>price02</code></td><td>更新しない。検証コールバックで買取との大小比較に使用。キー <code>…[sell_price_nm]</code>。</td></tr><tr><td>CSRF トークン</td><td>必須</td><td>トークン長はフレームワーク任せ</td><td>セッション発行</td><td><code>…[_token]</code>。</td></tr><tr><td>対象商品 ID 列（隠し）</td><td>実質必須</td><td>カンマ区切り文字列</td><td>編集画面で選択 ID を連結</td><td>フィールド名 <code>productIds</code>。再検索に使う。</td></tr><tr><td>価格比率</td><td>表示のみ</td><td>入力不可</td><td>空→JS が計算</td><td>サーバーへ送らない。</td></tr></tbody></table></div>
-<h3 id="エッジケース">エッジケース</h3>
-<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>複数行送信の途中で例外</td><td>それ以前にコミットした商品グループは保存済みのまま。以降は未処理。</td></tr><tr><td>一覧と別タブで同一規格を編集</td><td>楽観ロックは無い。後勝ち。</td></tr><tr><td>NM 規格が無い商品・言語</td><td><code>product_class_id_nm</code> が 0 となり保存スキップ。表では基準・在庫が <code>-</code> 寄りに見える。</td></tr><tr><td>買取 0</td><td>マスタ存在チェックをスキップし、率 SQL 側の分岐へ進む。</td></tr></tbody></table></div>
-<hr>
-<h2 id="フォーム送信時の判定順序">フォーム送信時の判定順序</h2>
-<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>POST のフォームが送信済みかつ妥当か</td><td>否ならエラーをフラッシュし編集画面を再表示。</td></tr><tr><td>2</td><td>各行の CSRF 等を含む型レベル検証</td><td>コールバックで買取が販売（NM）または基準（NM）を超えないか。</td></tr><tr><td>3</td><td><code>product_class_id_nm</code> が空／0</td><td>当行は保存ループをスキップ。</td></tr><tr><td>4</td><td>規格 ID の実在</td><td>無ければ例外メッセージをフラッシュし再表示。</td></tr><tr><td>5</td><td>マスタ整合（低額帯・減額率なし）</td><td><code>mtb_buy_price_list</code> に該当なしなら例外メッセージをフラッシュし再表示。</td></tr><tr><td>6</td><td>DB 更新</td><td>成功時は当行コミット。</td></tr></tbody></table></div>
-<hr>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>一覧との表示差</td><td>成功後は一覧へ戻り <code>resume</code> でセッション検索を再利用するため、通常は最新の検索結果に反映される。</td></tr><tr><td>販売価格</td><td>当機能では <code>price02</code> を書き換えない。検証は送信時点の値に依存する。</td></tr><tr><td>価格履歴</td><td>対象規格ごとに INSERT される。本経路では販売価格の新旧列は NULL。</td></tr></tbody></table></div>
-<hr>
-<h2 id="API-バッチ結果">API/バッチ結果</h2>
-<p>本機能では外部 API やバッチを扱わない。</p>
-<hr>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="編集画面の対象">編集画面の対象</h3>
+<p>商品一覧で選択した商品を対象とする。選択が空のときは編集画面を開かず、商品一覧へ戻る。戻り先のページ番号は保持している値とし、無ければ1ページ目とする。</p>
+<p>編集画面には、対象商品の商品ID・言語ごとに、通常規格だけを横に並べて表示する。画面が保持する商品IDは一覧で選択したIDの列挙であり、言語で展開した後の行数とは一致しない。</p>
+<h3 id="保存の判定順序">保存の判定順序</h3>
+<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>送信済みかつ妥当か</td><td>否なら編集画面を再表示し、エラーを表示する</td></tr><tr><td>2</td><td>買取価格(NM)が販売価格(NM)または基準価格(NM)を超えていないか</td><td>超えるならエラーを表示し、登録しない</td></tr><tr><td>3</td><td>行の良品（NM）規格が未指定または0</td><td>当該行を保存の対象から外す</td></tr><tr><td>4</td><td>良品（NM）規格が実在するか</td><td>無ければエラーを表示し、編集画面を再表示する</td></tr><tr><td>5</td><td>商品に買取減額率が無く、入力買取が0以外かつ上限（10000）以下のとき、買取価格マスタに該当があるか</td><td>無ければエラーを表示し、編集画面を再表示する</td></tr><tr><td>6</td><td>上記を通過</td><td>価格履歴を追加し、通常規格すべての買取価格と基準価格を更新する</td></tr></tbody></table></div>
+<p>保存は1商品ごとに確定する。全体を一括で確定しないため、途中でエラーになったときも、それまでに確定した更新は取り消されない。</p>
+<h3 id="買取価格の決め方">買取価格の決め方</h3>
+<div class="table-wrap"><table><thead><tr><th>条件</th><th>買取価格</th></tr></thead><tbody><tr><td>入力した買取価格(NM)が0</td><td>率による計算へ進み、状態別の式で0に近い値へ丸めた値とする</td></tr><tr><td>入力した買取価格(NM)が1以上かつ上限（10000）以下で、商品に買取減額率が無い</td><td>買取価格マスタを、良品（NM）価格・状態・Foilやプロモに相当する区分で参照する。見つかればその価格、見つからなければ入力値を各規格の買取価格とする</td></tr><tr><td>上記以外（高額帯、または買取減額率がある）</td><td>Foilやプロモか否かと状態に応じた率で、入力値から切り上げて決める。率は商品の買取減額率マスタを優先し、無ければ既定値を使う</td></tr></tbody></table></div>
+<h3 id="基準価格の決め方">基準価格の決め方</h3>
+<p>入力した基準価格(NM)を、同一商品・同一言語の通常規格すべての基準価格に同じ値で書き込む。状態別に基準価格を分けた更新にはならない。</p>
+<h3 id="価格履歴">価格履歴</h3>
+<p>買取価格と基準価格の更新にあわせて価格履歴を一括で追加する。販売価格の変更前後はいずれも値なしとする。</p>
+<h3 id="エラー時の扱い">エラー時の扱い</h3>
+<div class="table-wrap"><table><thead><tr><th>事象</th><th>利用者へ見える結果</th></tr></thead><tbody><tr><td>検証に失敗</td><td>編集画面を再表示し、エラーを表示する</td></tr><tr><td>良品（NM）規格が不正・削除済み</td><td>編集画面を再表示し、規格が存在しない旨のエラーを表示する</td></tr><tr><td>買取価格マスタに該当が無い（条件を満たす低額帯）</td><td>編集画面を再表示し、買取価格が見つからない旨のエラーを表示する</td></tr><tr><td>商品が未選択</td><td>商品一覧へ戻り、選択を促すメッセージを表示する</td></tr></tbody></table></div>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>編集: <code>ids</code> 配列。確定: <code>productIds</code> と <code>bulk_update_product_price[...]</code> 一式。</td></tr><tr><td>成功時出力</td><td>商品一覧ページへの HTTP リダイレクトと成功フラッシュ。</td></tr><tr><td>失敗時出力</td><td>編集 HTML 200 とエラーフラッシュ、または一覧へのリダイレクトとエラーフラッシュ（<code>ids</code> 空）。</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<p>当機能で主に触る列は次のとおり（履歴は INSERT）。</p>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>dtb_product_class</code></td><td><code>buy_price</code></td><td>条件別に再計算され更新。</td></tr><tr><td><code>dtb_product_class</code></td><td><code>standard_price</code></td><td>入力 <code>standard_price_nm</code> が全通常規格行に反映。</td></tr><tr><td><code>dtb_price_history</code></td><td><code>buy_price</code>, <code>old_buy_price</code>, <code>standard_price</code>, <code>old_standard_price</code> 等</td><td>一括 INSERT。販売関連列は NULL。</td></tr></tbody></table></div>
-<h3 id="DB操作">DB操作</h3>
-<p>永続化の正は ec-cube-enterprise。商品系は承認ワークフローを介さず persist/flush で直接確定する（在庫の承認ワークフローとは別系統。<code>ProductController</code>・各CSVサービスで確認）。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>登録/更新</td><td>dtb_price_history / dtb_product_class</td><td>当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。</td></tr></tbody></table></div>
-<hr>
-<h2 id="バリデーション">バリデーション</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>買取 vs 販売（NM）</td><td>買取が販売を超えると <code>admin.product_class.buyprice_valid_bulk</code>（日本語確認値は販売価格との比較文）。</td></tr><tr><td>買取 vs 基準（NM）</td><td>買取が基準を超えると <code>admin.product.buy_price_exceeds_standard</code>。</td></tr><tr><td>整数・上限</td><td><code>IntegerType</code> とテンプレート属性の組み合わせ。</td></tr></tbody></table></div>
-<hr>
-<h2 id="権限・認可">権限・認可</h2>
-<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>当機能</th></tr></thead><tbody><tr><td>管理画面にログインし当ルートへ到達できる運用者</td><td>当画面の操作が可能である（ルート単体のロール制約は本紙では YAML を網羅しない）。</td></tr><tr><td>未到達の主体</td><td>管理画面共通の認証により拒否される。</td></tr></tbody></table></div>
-<hr>
-<h2 id="画面遷移">画面遷移</h2>
-<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>一覧から一括編集へ</td><td><code>GET/POST m03-02_admin_product_product_edit_bulk_update_buy_price</code></td></tr><tr><td>確定成功</td><td><code>GET admin_product_page</code> に <code>resume</code> クエリ</td></tr><tr><td>確定失敗・例外</td><td>同一編集テンプレート</td></tr><tr><td><code>ids</code> 空で編集 URL</td><td><code>admin_product_page</code></td></tr></tbody></table></div>
-<h3 id="遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</h3>
-<div class="table-wrap"><table><thead><tr><th>起点</th><th>遷移前の処理</th><th>遷移後の初期状態</th></tr></thead><tbody><tr><td>確定成功</td><td>成功フラッシュを積む</td><td>一覧はセッションのページ番号と <code>resume</code> で再検索表示。</td></tr><tr><td><code>ids</code> 空</td><td>エラーフラッシュ</td><td>一覧はセッションのページ番号へ。</td></tr></tbody></table></div>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>事象</th><th>利用者へ見える結果</th></tr></thead><tbody><tr><td>フォーム検証失敗</td><td>編集画面再表示＋エラーメッセージ</td></tr><tr><td>規格 ID 不正・削除済み</td><td>編集画面再表示＋ <code>admin.product.to_show_complete</code></td></tr><tr><td>買取がマスタに無い（条件を満たす低額帯）</td><td>編集画面再表示＋ <code>admin.product.not_found_nm_price</code></td></tr><tr><td><code>ids</code> 未選択</td><td>一覧へ＋ <code>admin.product.not_select</code></td></tr></tbody></table></div>
-<hr>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>編集画面を開くときは対象商品IDの配列。確定時は対象商品IDと、行ごとの買取価格(NM)・基準価格(NM)</td></tr><tr><td>成功時出力</td><td>商品一覧へ戻り、完了のメッセージを表示する。一覧は直前の検索状態を引き継ぐ</td></tr><tr><td>失敗時出力</td><td>編集画面の再表示とエラーメッセージ、または商品未選択のときは商品一覧へ戻りエラーメッセージ</td></tr></tbody></table></div>
+<h3 id="入出力-永続化">入出力: 永続化</h3>
+<div class="table-wrap"><table><thead><tr><th>操作</th><th>契機</th></tr></thead><tbody><tr><td>更新</td><td>保存を通過した商品について、通常規格すべての買取価格と基準価格を更新する</td></tr><tr><td>追加</td><td>同じ契機で価格履歴を追加する</td></tr></tbody></table></div>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
 <h2 id="表示メッセージ">表示メッセージ</h2>
-<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>画面上の文言(英語)</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M03-10-MSG-001</td><td>管理画面上部</td><td>1つ以上の商品を選択してください</td><td>（英訳なし）</td><td>商品を選択せずに一括編集画面を開いたとき</td><td>商品一覧画面に遷移する</td></tr><tr><td>M03-10-MSG-003</td><td>管理画面上部</td><td>登録が完了しました。</td><td>（英訳なし）</td><td>一括編集で価格を更新したとき</td><td>商品一覧画面に遷移する</td></tr><tr><td>M03-10-MSG-002</td><td>管理画面上部</td><td>ID:%productId%（%language%）の買取価格は基準価格「%standardPrice%」以下を指定してください。 ／ 整数で入力してください。</td><td>（英訳なし）</td><td>買取価格(NM)に基準価格(NM)を上回る金額を入力して「登録」ボタンを押下したとき</td><td>登録処理を行わず、買取価格一括更新画面を再表示する</td></tr></tbody></table></div>
-<p>文言は <code>ProductBulkUpdateBuyPriceController</code> のフラッシュ設定と <code>messages.ja.yaml</code>（1962/1963/1964/1965/1966）を正とする。可変部（<code>%…%</code>）はフォーム検証／例外由来。</p>
-<hr>
-<h2 id="副作用・ログ">副作用・ログ</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>DB</td><td>上記 UPDATE・履歴 INSERT。行単位コミット。</td></tr><tr><td>フラッシュ</td><td>成功・エラー・警告メッセージ。</td></tr><tr><td>監査ログ専用出力</td><td>本機能固有のファイルログは主題としない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="調査補助-grep">調査補助（grep）</h2>
-<p>ソース上の受け口は <code>ProductBulkUpdateBuyPriceController</code>、<code>ProductBulkUpdateBuyPriceStoreAction</code>、<code>BulkUpdateProductPriceType</code>、<code>getProductClassForPriceUpdate</code>、<code>updateBuyPriceForAllConditions</code>、<code>insertBuyPriceHistoryForAllConditions</code> などで交差確認できる。</p>
-<h3 id="HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</h3>
-<ul><li><code>m03-02_admin_product_product_edit_bulk_update_buy_price</code> … <code>GET, POST</code> … <code>/{admin_route}/product/edit_bulk_update_buy_price</code>（クエリ（またはボディ）の <code>ids</code> で指定した商品について、言語×商品ごとの一括編集フォームを表示する。<code>ids</code> が空ならエラーフラッシュのうえ商品一覧へリダイレクトする。）</li><li><code>admin_product_bulk_update_buy_price</code> … <code>POST</code> … <code>/{admin_route}/product/bulk_update_buy_price</code>（一括編集フォームの確定。検証成功時は価格更新・価格履歴登録のうえ、セッションに保存された一覧ページへクエリ <code>resume=1</code> 付きでリダイレクトする。）</li></ul>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>トランザクション境界</td><td>保存ループは商品行ごとに価格履歴INSERTと通常規格UPDATEを行い、1商品行ごとにコミットする。全行一括の原子性は持たない。</td></tr><tr><td>ロック</td><td>対象規格への行ロック・悲観ロック・楽観ロック・ロックファイルは使用しない。同じ規格を同時に更新した場合は後から確定した値が残る。</td></tr><tr><td>例外時</td><td>ある行で例外が起きても、それ以前にコミット済みの商品行はロールバックされない。例外行以降は未処理となる。</td></tr></tbody></table></div>
+<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M03-10-MSG-001</td><td>管理画面上部</td><td>1つ以上の商品を選択してください</td><td>商品を選択せずに一括編集画面を開いたとき</td><td>商品一覧画面に遷移する</td></tr><tr><td>M03-10-MSG-003</td><td>管理画面上部</td><td>登録が完了しました。</td><td>一括編集で価格を更新したとき</td><td>商品一覧画面に遷移する</td></tr><tr><td>M03-10-MSG-002</td><td>管理画面上部</td><td>ID:%productId%（%language%）の買取価格は基準価格「%standardPrice%」以下を指定してください。 ／ 整数で入力してください。</td><td>買取価格(NM)に基準価格(NM)を上回る金額を入力して「登録」ボタンを押下したとき</td><td>登録処理を行わず、買取価格一括更新画面を再表示する</td></tr></tbody></table></div>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

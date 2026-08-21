@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,39 +272,15 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#フロント挙動">フロント挙動</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#検索してセッションに条件を置く-POST-admin-otcbuyorder-summary-search">検索してセッションに条件を置く（POST `admin_otcbuyorder_summary_search`）</a>
-<a class="lv3" href="#CSVをダウンロードする-POST-admin-otcbuyorder-summary-export">CSVをダウンロードする（POST `admin_otcbuyorder_summary_export`）</a>
-<a class="lv3" href="#ストリームコールバック内-エクスポートサービス">ストリームコールバック内（エクスポートサービス）</a>
-<a class="lv2" href="#出力列とデータの対応">出力列とデータの対応</a>
-<a class="lv2" href="#集計条件">集計条件</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
-<a class="lv3" href="#入力項目">入力項目</a>
-<a class="lv3" href="#エッジケース">エッジケース</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#検索と検索条件の保持">検索と検索条件の保持</a>
+<a class="lv3" href="#出力の判定順序">出力の判定順序</a>
+<a class="lv3" href="#出力する列">出力する列</a>
+<a class="lv3" href="#エラー時の扱い">エラー時の扱い</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#バリデーション">バリデーション</a>
-<a class="lv2" href="#権限・認可">権限・認可</a>
-<a class="lv2" href="#画面遷移">画面遷移</a>
-<a class="lv3" href="#遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#試行制限">試行制限</a>
-<a class="lv2" href="#ログ・監査">ログ・監査</a>
-<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
-<a class="lv2" href="#セッション">セッション</a>
-<a class="lv3" href="#本機能におけるセッション">本機能におけるセッション</a>
-<a class="lv3" href="#セッションへ保存しない情報">セッションへ保存しない情報</a>
-<a class="lv2" href="#Cookie">Cookie</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a>
-<a class="lv2" href="#調査補助">調査補助</a>
-<a class="lv3" href="#HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</a></nav>
+<a class="lv3" href="#入出力-永続化">入出力: 永続化</a>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -302,105 +288,25 @@ footer {
         <h1>m06-09_admin_store_purchase_otc_buy_order_summary_csv_export（管理画面_店頭買取管理_買取集計データCSV出力）</h1>
       </header>
       
-      <h2 id="概要">概要</h2>
-<p>管理画面の「店頭買取管理」配下「買取集計データ」画面で検索を実行したあとに表示される「日別」ブロックから、POSTで要求するストリーム応答として、集計日×部門単位の買取・販売金額を列にしたCSVをダウンロードする機能である。ナビゲーションの表示名は翻訳キー <code>admin.purchase.store.summary</code> で「買取集計データ」となり、画面内の送信ボタンラベルは「CSVダウンロード」である。店頭買取一覧や買取商品履歴のCSV出力とは別ルートであり、列レイアウトは買取集計用サービス内の固定定義である。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。カスタマイズ区分は現行踏襲であり、現行挙動の参照はpf-eccube3（HareruyaEcプラグイン）、DB関連はec-cube-enterpriseを正とする。現行と移行先のスキーマ差は後述の「リニューアル移行時の扱い」にまとめる。</p>
-<p>対象はブラウザ経由の管理画面に限定する。</p>
-<p>コントローラのメソッド名は本文の主題としない。本文ではルートbind名やSymfonyのルートnameの網羅は主説明としない。「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。コード探索でbind名が必要なときだけ「調査補助」へ書く。</p>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<p>買取集計データCSV出力は現行踏襲機能であり、現行はpf-eccube3のHareruyaEcプラグインに実装される。挙動の参照は現行リポ、DBスキーマと移行後の扱いはec-cube-enterpriseを正とする。現行と移行先で確認できた差は次のとおり。</p>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3 HareruyaEcプラグイン）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>集計テーブルの主キー列</td><td><code>otc_buy_order_summary_id</code></td><td><code>id</code> に統一</td></tr><tr><td>買取店舗の参照</td><td><code>shop_id</code>（参照先は店舗マスタ）</td><td><code>base_info_id</code>（参照先は <code>dtb_base_info</code>）</td></tr><tr><td>部門マスタ</td><td><code>mtb_section</code>（プラグイン定義）</td><td><code>mtb_section</code>（コア標準。同一テーブル名）</td></tr><tr><td>スキーマ配置</td><td>プラグイン配下のyamlマッピング</td><td>コア標準のエンティティ定義</td></tr></tbody></table></div>
-<p>本書のDBカラム節・入力項目の保存先・データ整合性のDB部分は移行先（ec-cube-enterprise）の列名を主とする。集計テーブル名 <code>dtb_otc_buy_order_summary</code> および部門マスタ <code>mtb_section</code> は現行・移行先とも同一である。</p>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>サイドメニュー「店頭買取管理」→「買取集計データ」</td><td><code>GET /{admin_route}/otcbuyorder/summary</code></td><td>検索フォームが開く。</td></tr><tr><td>検索フォームで期間等を指定して「検索する」</td><td><code>POST /{admin_route}/otcbuyorder/summary/search</code></td><td>期間全体の部門別集計表と、日別の表が条件に応じて表示される。成功時、直近の有効な検索条件がセッションキー <code>eccube.admin.otcbuyorder_summary.search</code> に保存される。</td></tr><tr><td>日別ブロックにデータがあり「CSVダウンロード」を押す</td><td><code>POST /{admin_route}/otcbuyorder/summary/export</code></td><td>セッションの検索条件で日別クエリを再走査し、CSVがダウンロードされる。</td></tr><tr><td>検索前や日別0件でボタンが無い状態からエンドポイントだけ叩く</td><td><code>POST /{admin_route}/otcbuyorder/summary/export</code></td><td>セッションに条件が無ければエラーフラッシュのうえ <code>GET .../summary</code> へリダイレクトする。条件があれば0件でもヘッダのみのCSVが返る。</td></tr></tbody></table></div>
-<hr>
-<h2 id="フロント挙動">フロント挙動</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>「CSVダウンロード」は検索後かつ日別テーブルに少なくとも1行あるときだけ、「日別」見出し横に描画される。本体は引数の無い <code>form method=post</code> と <code>submit</code> ボタンだけである。</td></tr><tr><td>JS 挙動</td><td>資産 <code>otc-buy-order-summary.js</code> で日付入力に日付ピッカー、部門・店舗にselect2を付与する。CSV押下にクライアント側の追加検証は無い。</td></tr><tr><td>CSS・レイアウト</td><td>本CSV専用の追加スタイルはない。</td></tr><tr><td>モーダル・ポップアップ</td><td>出力前の確認ダイアログはない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="検索してセッションに条件を置く-POST-admin-otcbuyorder-summary-search">検索してセッションに条件を置く（POST <code>admin_otcbuyorder_summary_search</code>）</h3>
-<ol><li>管理画面の認証・共通制約を通過する。</li><li>検索フォームを受け取り、未送信または無効なら結果なしのテンプレートを返し、セッションキーは更新しない。</li><li>有効ならフォーム実装付属のユーティリティで、送信内容を再表示用のネストした配列に落とし、セッションキー <code>eccube.admin.otcbuyorder_summary.search</code> に保存する。</li><li>同一検索データで、期間全体の部門別集計と、日別集計の2系統をリポジトリから取得し、テンプレートへ渡す。</li></ol>
-<h3 id="CSVをダウンロードする-POST-admin-otcbuyorder-summary-export">CSVをダウンロードする（POST <code>admin_otcbuyorder_summary_export</code>）</h3>
-<ol><li>管理画面の認証・共通制約を通過する。</li><li>PHPの実行時間制限を解除する（実装では制限0秒相当の呼び出し）。</li><li>セッションから <code>eccube.admin.otcbuyorder_summary.search</code> を読む。無ければ管理向けエラーフラッシュに固定和文「検索条件がありません。先に検索を実行してください。」を積み、<code>admin_otcbuyorder_summary</code> へリダイレクトする。</li><li>空の検索フォームにセッション値を再適用し、型どおりに正規化された検索データ配列を得る。</li><li>買取集計CSVエクスポートサービスに検索データを渡し、返却されたストリーミング形式のHTTP応答をそのまま返す。</li></ol>
-<h3 id="ストリームコールバック内-エクスポートサービス">ストリームコールバック内（エクスポートサービス）</h3>
-<ol><li>共通CSV出力サービスで標準出力へのハンドルを開く。設定 <code>eccube_csv_export_encoding</code> が UTF-8 のとき先頭にBOMを書き込む。</li><li>ヘッダ行を1行書く。列順はコード内の固定定義で並べた日本語ラベル（集計日、部門コード、部門、買取金額、販売金額）である。</li><li>リポジトリの日別検索用クエリビルダから結果を取得し、行ごとに連想配列へ整形する。集計日は <code>Y/m/d</code> 形式の文字列、部門名欠落時は <code>未設定</code> 文字列、金額は整数（欠損は0）である。</li><li>各行をヘッダと同じキー順に文字列化し、設定の区切り文字・引用符・エスケープに従ってCSVの1行として書き出す。セル値は設定 <code>eccube_csv_export_encoding</code> に合わせて変換される。</li><li>ハンドルを閉じる。</li><li>応答組み立て時点で情報ログに「買取集計CSV出力完了」とファイル名接頭辞を残す。</li></ol>
-<hr>
-<h2 id="出力列とデータの対応">出力列とデータの対応</h2>
-<p>ヘッダ1行目の並びは次のとおり。2行目以降は日別×部門の集計行ごとに1行である。</p>
-<div class="table-wrap"><table><thead><tr><th>列名（ヘッダ）</th><th>内容</th></tr></thead><tbody><tr><td>集計日</td><td>グループ化した <code>summary_date</code>。<code>Y/m/d</code> の文字列。</td></tr><tr><td>部門コード</td><td>結合した部門の <code>code</code>。結合欠落時は空文字に近い値。</td></tr><tr><td>部門</td><td>結合した部門の <code>name</code>。欠落時は <code>未設定</code>。</td></tr><tr><td>買取金額</td><td>グループ内 <code>buy_price</code> の合計。整数。欠損は0扱い。</td></tr><tr><td>販売金額</td><td>グループ内 <code>sell_price</code> の合計。整数。欠損は0扱い。</td></tr></tbody></table></div>
-<hr>
-<h2 id="集計条件">集計条件</h2>
-<p>画面の日別表とCSVは、同一のクエリビルダ（日付範囲・任意の店舗・任意の部門）を通した結果である。</p>
-<div class="table-wrap"><table><thead><tr><th>指標</th><th>集計の要点</th></tr></thead><tbody><tr><td>対象テーブル</td><td><code>dtb_otc_buy_order_summary</code>（エイリアス <code>otcs</code>）。部門は左外部結合 <code>Section</code>。</td></tr><tr><td>期間</td><td><code>summary_date_from</code> の日付を <code>Y-m-d 00:00:00</code>、<code>summary_date_to</code> を <code>Y-m-d 23:59:59</code> として <code>summary_date</code> が両端に収まる行。</td></tr><tr><td>店舗絞り込み</td><td>フォームの店舗が1件以上選ばれているときだけ <code>BaseInfo IN (:shop)</code>。未選択（空配列）のとき店舗条件は付かず、テナント横断で集計テーブルに存在する店舗行すべてが対象となる。</td></tr><tr><td>部門絞り込み</td><td>フォームの部門が1件以上選ばれているときだけ <code>s.id IN (:section)</code>。</td></tr><tr><td>グループ化</td><td><code>otcs.summaryDate</code> と <code>s.id</code> の組ごとに <code>SUM(buy_price)</code>・<code>SUM(sell_price)</code>。</td></tr><tr><td>並び</td><td>集計日昇順、同一日内は部門コード昇順。</td></tr><tr><td>部門なし行</td><td>左外部結合のため部門が無い行は部門IDがNULLのグループにまとまり、コード・名は空に近い値となる。CSVでは部門名を <code>未設定</code> で埋める。</td></tr></tbody></table></div>
-<p>期間全体の「集計」ブロックは、同じ絞り込みのうえ部門IDのみでグループ化し直した別クエリであり、CSVの行とは一致しない（CSVは日別×部門である）。</p>
-<hr>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<p>本機能のCSVは、SQL集計結果をほぼそのまま列に写すのみで、画面専用の丸めや換算は行わない。金額は整数。</p>
-<h3 id="入力項目">入力項目</h3>
-<p>検索条件はCSVの直前入力ではなく、検索POSTでセッションに保存された内容である。フォーム定義は買取集計画面と同一である。</p>
-<div class="table-wrap"><table><thead><tr><th>項目名</th><th>必須／任意</th><th>最大長</th><th>初期値</th><th>保存先・扱い</th></tr></thead><tbody><tr><td>集計日（開始）</td><td>必須</td><td>―（日付単行テキストウィジェット）</td><td>画面初回は未入力に近い状態から送信を要請</td><td>フォームキー <code>summary_date_from</code>。<code>datetime</code> としてリポジトリで日の開始時刻に変換。</td></tr><tr><td>集計日（終了）</td><td>必須</td><td>同上</td><td>同上</td><td>フォームキー <code>summary_date_to</code>。日の終了時刻に変換。</td></tr><tr><td>部門</td><td>任意</td><td>―（複数選択エンティティ）</td><td>無選択</td><td>フォームキー <code>section</code>。選択があるときだけ部門IDで絞る。</td></tr><tr><td>買取店舗</td><td>任意</td><td>―（複数選択エンティティ）</td><td>ログイン管理者のデフォルト検索店舗が1件なら事前選択</td><td>フォームキー <code>shop</code>。選択があるときだけ <code>dtb_base_info</code> 行で絞る。</td></tr></tbody></table></div>
-<p>補足: 当フォーム種別は <code>csrf_protection</code> が無効である。CSV送信用の空フォームにもトークンは無い。</p>
-<h3 id="エッジケース">エッジケース</h3>
-<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>該当行0件</td><td>ストリームはヘッダ行のみ（テストで1行のみを確認）。</td></tr><tr><td>セッションに検索条件がない</td><td>リダイレクトと固定エラーフラッシュ。</td></tr><tr><td>日別テーブルが空だが期間全体テーブルに行がある</td><td>画面上はCSVボタンが出ないが、直前の成功検索がセッションに残っていれば export を直接叩くとクエリに応じたCSVが得られる。</td></tr><tr><td><code>summaryDate</code> が想定外型</td><td>CSV整形で日付以外なら空文字列を立てる。</td></tr></tbody></table></div>
-<hr>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>画面日別表とCSV</td><td>同一クエリの結果を、画面はエンティティ投影・CSVは配列投影で表示しているため、同一検索条件・同一DB状態なら行内容は対応する。</td></tr><tr><td>集計テーブルと実受注</td><td>集計行はバッチ等で伸縮する。CSVはそのテーブルのスナップショットを読むだけで、出力瞬間の最新受注へ追従する保証は持たない。</td></tr><tr><td>セッションと表示</td><td>セッションは最後に成功した検索の条件である。検索失敗時は直前値が残る。</td></tr></tbody></table></div>
-<hr>
-<h2 id="API-バッチ結果">API/バッチ結果</h2>
-<p>本機能ではAPI呼び出し・バッチ実行を扱わない。</p>
-<hr>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="検索と検索条件の保持">検索と検索条件の保持</h3>
+<p>検索が未送信のとき、または検索条件の検証を満たさないときは、結果なしの画面を返し、保持している検索条件を書き換えない。検証を満たすときだけ、送信内容を再表示できる形にして保持する。</p>
+<p>検証を満たしたときは、同じ検索条件で期間全体の部門別集計と日別集計の 2 つを取り出して画面に表示する。</p>
+<h3 id="出力の判定順序">出力の判定順序</h3>
+<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>保持している検索条件があるか</td><td>無いときは出力せず、買取集計データの画面へ戻す</td></tr><tr><td>2</td><td>保持している検索条件があるとき</td><td>空の検索条件に当該の値を当てはめ、型どおりに整えた検索条件で集計する</td></tr><tr><td>3</td><td>集計できたとき</td><td>ヘッダ行に続けて日別かつ部門別の集計行を書き出す</td></tr></tbody></table></div>
+<h3 id="出力する列">出力する列</h3>
+<p>ヘッダ行は次の順とする。2 行目以降は日別と部門別の組み合わせごとに 1 行とする。</p>
+<div class="table-wrap"><table><thead><tr><th>列名</th><th>内容</th></tr></thead><tbody><tr><td>集計日</td><td>集計の単位となる日付。<code>Y/m/d</code> の形式</td></tr><tr><td>部門コード</td><td>部門のコード。部門が紐づかないときは空文字に近い値</td></tr><tr><td>部門</td><td>部門の名称。部門の名称が欠けるときは <code>未設定</code></td></tr><tr><td>買取金額</td><td>同じ集計単位の買取金額の合計。整数とし、値が欠けるときは 0 とする</td></tr><tr><td>販売金額</td><td>同じ集計単位の販売金額の合計。整数とし、値が欠けるときは 0 とする</td></tr></tbody></table></div>
+<p>集計した結果をそのまま列に写す。画面のための丸めと換算は行わない。</p>
+<h3 id="エラー時の扱い">エラー時の扱い</h3>
+<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>保持している検索条件が無い</td><td>出力せず、エラーを表示して買取集計データの画面へ戻す</td></tr><tr><td>検索の入力が未送信、または検証を満たさない</td><td>検索条件を書き換えず、結果なしの画面を返す</td></tr></tbody></table></div>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>HTTPメソッドPOST、ボディは実質空。検索条件はセッション事前格納値。</td></tr><tr><td>成功時出力</td><td><code>Content-Type: application/octet-stream</code>、<code>Content-Disposition: attachment</code>、ファイル名 <code>otc_buy_order_summary_</code> + 現在日時 <code>YmdHis</code> + <code>.csv</code>。本文は前述のCSVストリーム。</td></tr><tr><td>失敗時出力</td><td>セッション欠如時は302で <code>admin_otcbuyorder_summary</code> へ遷移し、管理向けエラーフラッシュ。</td></tr><tr><td>副作用</td><td>情報ログ1件。DBの更新は行わない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<p>CSVは行セットの投影であり、主に以下を読む。</p>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>dtb_otc_buy_order_summary</code></td><td><code>summary_date</code>集計のグループキー</td><td></td></tr><tr><td><code>dtb_otc_buy_order_summary</code></td><td><code>buy_price</code>合計が買取金額列</td><td></td></tr><tr><td><code>dtb_otc_buy_order_summary</code></td><td><code>sell_price</code>合計が販売金額列</td><td></td></tr><tr><td><code>dtb_otc_buy_order_summary</code></td><td><code>base_info_id</code>店舗条件に使用</td><td></td></tr><tr><td><code>mtb_section</code></td><td><code>code</code>部門コード列</td><td>結合行が無いとき空に近い値</td></tr><tr><td><code>mtb_section</code></td><td><code>name</code>部門名列</td><td>CSVでは欠損時 <code>未設定</code></td></tr></tbody></table></div>
-<h3 id="DB操作">DB操作</h3>
-<p>本機能は参照系（検索・出力）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>検索</td><td>dtb_otc_buy_order_summary / mtb_section</td><td>検索条件に合致するレコードを抽出する。抽出結果を所定フォーマットでファイル出力する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="バリデーション">バリデーション</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>集計日（開始・終了）</td><td>フォーム種別上必須。日付として解釈できない値は検索段階で却下され、セッションは更新されない。</td></tr><tr><td>店舗・部門</td><td>任意。複数選択。</td></tr></tbody></table></div>
-<hr>
-<h2 id="権限・認可">権限・認可</h2>
-<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>本画面・エクスポート</th></tr></thead><tbody><tr><td>未ログイン（管理者）</td><td>管理画面ログインへ誘導される実装が一般的である。</td></tr><tr><td>ログイン済み管理者</td><td>本コントローラに付加されたロール属性は無く、管理画面ファイアウォール内であればルートに到達できる。店舗別の表示制限は当CSV処理では行わない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="画面遷移">画面遷移</h2>
-<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>セッションに検索条件がないままexport</td><td><code>admin_otcbuyorder_summary</code>（リダイレクト）</td></tr><tr><td>問題なくストリーム応答</td><td>ブラウザがファイル保存ダウンロード扱い。画面遷移はしない。</td></tr></tbody></table></div>
-<h3 id="遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</h3>
-<div class="table-wrap"><table><thead><tr><th>起点</th><th>遷移前の処理</th><th>遷移後の初期状態</th></tr></thead><tbody><tr><td>検索POST成功</td><td>セッションへ検索ビューデータを保存</td><td>同一画面に表が現れる。</td></tr><tr><td>CSVのPOST</td><td>セッション読みのみ</td><td>ブラウザのダウンロード挙動のみ。セッションは消さない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>セッションに検索条件がない</td><td>管理向けエラーフラッシュと <code>admin_otcbuyorder_summary</code> へリダイレクト</td></tr></tbody></table></div>
-<hr>
-<h2 id="試行制限">試行制限</h2>
-<p>本機能では試行制限を扱わない。</p>
-<hr>
-<h2 id="ログ・監査">ログ・監査</h2>
-<div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>CSVストリーム応答オブジェクト生成時</td><td>情報ログに買取集計CSV出力完了とファイル名</td></tr></tbody></table></div>
-<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
-<ul><li>パスワード</li><li>なりすまし対策トークン</li><li>Cookie値</li><li>セッションIDの完全値</li><li>Remember Meトークンの原値</li></ul>
-<p>（本処理の実装は上記をログに載せない。）</p>
-<hr>
-<h2 id="セッション">セッション</h2>
-<h3 id="本機能におけるセッション">本機能におけるセッション</h3>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>キー</td><td><code>eccube.admin.otcbuyorder_summary.search</code></td></tr><tr><td>書き込み</td><td>検索POSTが送信されかつフォームが有効なときのみ上書き。</td></tr><tr><td>読み込み</td><td>CSVのPOSTで参照。</td></tr></tbody></table></div>
-<h3 id="セッションへ保存しない情報">セッションへ保存しない情報</h3>
-<p>CSVのバイナリ本体や、出力済みファイルのパスは保存しない。</p>
-<hr>
-<h2 id="Cookie">Cookie</h2>
-<p>本機能単体で新たなCookieを設定しない。</p>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<p>CSV出力は参照のみであり、行ロックや更新トランザクションは持たない。</p>
-<hr>
-<h2 id="調査補助">調査補助</h2>
-<p>実装位置の目安（grep用）。</p>
-<ul><li><code>src/Eccube/Controller/Admin/OtcBuyOrder/OtcBuyOrderSummaryController.php</code></li><li><code>src/Eccube/Service/Csv/Exporter/OtcBuyOrderSummaryCsvExportService.php</code></li><li><code>src/Eccube/Repository/DtbOtcBuyOrderSummaryRepository.php</code></li><li><code>src/Eccube/Resource/template/admin/OtcBuyOrder/summary.twig</code></li></ul>
-<h3 id="HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</h3>
-<ul><li><code>admin_otcbuyorder_summary</code> … <code>GET</code> … <code>/{admin_route}/otcbuyorder/summary</code>（買取集計データ画面の初回表示。検索フォームのみ。）</li><li><code>admin_otcbuyorder_summary_search</code> … <code>POST</code> … <code>/{admin_route}/otcbuyorder/summary/search</code>（検索条件の送信。条件が妥当なとき集計結果を描画し、セッションにCSV出力用の検索条件を保存する。）</li><li><code>admin_otcbuyorder_summary_export</code> … <code>POST</code> … <code>/{admin_route}/otcbuyorder/summary/export</code>（セッションに保存された検索条件で、日別クエリと同一条件の結果をCSVとしてストリーム返却する。条件がセッションに無いときはフラッシュを積み一覧へリダイレクトする。）</li></ul>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>検索は検索条件一式。出力は入力を持たず、保持している検索条件だけを使う</td></tr><tr><td>成功時出力</td><td>添付ファイルとしてのCSV。ファイル名は買取集計を示す接頭辞に出力日時を付けたもの。文字コードは設定に従い、UTF-8 のときは先頭にBOMを付ける</td></tr><tr><td>失敗時出力</td><td>保持している検索条件が無いときはエラーメッセージを伴って買取集計データの画面へ戻す</td></tr></tbody></table></div>
+<h3 id="入出力-永続化">入出力: 永続化</h3>
+<p>この機能ではデータを更新しない。</p>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
+<h2 id="表示メッセージ">表示メッセージ</h2>
+<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>—</td><td>管理画面上部</td><td>検索条件がありません。先に検索を実行してください。</td><td>検索を実行しないままCSV出力を実行したとき</td><td>出力せず、買取集計データの画面へ戻す</td></tr></tbody></table></div>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,42 +272,19 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#本書で扱うこと">本書で扱うこと</a>
-<a class="lv2" href="#本書で扱わないこと">本書で扱わないこと</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv2" href="#用語">用語</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#フロント挙動">フロント挙動</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#イベント一覧を初期表示する">イベント一覧を初期表示する</a>
-<a class="lv3" href="#検索フォームを送信して絞り込む">検索フォームを送信して絞り込む</a>
-<a class="lv3" href="#ページ送り・表示件数変更・ソート変更">ページ送り・表示件数変更・ソート変更</a>
-<a class="lv2" href="#集計条件">集計条件</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#検索条件">検索条件</a>
 <a class="lv3" href="#検索フォームの入力項目">検索フォームの入力項目</a>
-<a class="lv3" href="#エッジケース">エッジケース</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+<a class="lv3" href="#初期表示">初期表示</a>
+<a class="lv3" href="#並び順">並び順</a>
+<a class="lv3" href="#表示件数の決定">表示件数の決定</a>
+<a class="lv3" href="#検索の成立条件">検索の成立条件</a>
+<a class="lv3" href="#ページ番号の補正">ページ番号の補正</a>
+<a class="lv3" href="#表示形式">表示形式</a>
+<a class="lv3" href="#エラー時の扱い">エラー時の扱い</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#バリデーション">バリデーション</a>
-<a class="lv2" href="#権限・認可">権限・認可</a>
-<a class="lv2" href="#画面遷移">画面遷移</a>
-<a class="lv3" href="#遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#表示メッセージ">表示メッセージ</a>
-<a class="lv3" href="#常時表示-正常・静的">常時表示（正常・静的）</a>
-<a class="lv3" href="#エラー・警告-インライン">エラー・警告（インライン）</a>
-<a class="lv2" href="#ログ・監査">ログ・監査</a>
-<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
-<a class="lv2" href="#セッション">セッション</a>
-<a class="lv3" href="#本機能におけるセッション">本機能におけるセッション</a>
-<a class="lv3" href="#セッションへ保存しない情報">セッションへ保存しない情報</a>
-<a class="lv2" href="#Cookie">Cookie</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a>
-<a class="lv2" href="#調査補助-grep">調査補助（grep）</a></nav>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -305,118 +292,34 @@ footer {
         <h1>M13-01（イベント一覧検索）</h1>
       </header>
       
-      <p>管理画面「イベント管理」のイベント一覧で、登録済みのイベントをイベント名・開催日・会場・フォーマット・ルール適用度の条件で検索し、該当イベントを一覧表示する機能である。</p>
-<h2 id="概要">概要</h2>
-<p>イベント一覧検索は、管理者が登録済みのイベントを絞り込み、一覧から編集・削除・新規登録へ進むための入口となる機能である。検索条件・表示件数・ソート条件はセッションに保持し、ページ送りや再表示で復元する。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。既存実装のふるまい、参照するデータ、検索条件の保持、ページング、ソートの挙動を確認し、仕様の確からしさを把握することを目的とする。</p>
-<p>カスタマイズ区分はカスタマイズであり、挙動の参照リポはpf-eccube3、DB関連の記述はec-cube-enterpriseを正とする。</p>
-<p>対象はブラウザ経由の管理画面イベント一覧である。本機能は晴れる屋向けプラグインで提供され、EC-CUBE3系のSilexアプリケーション上で動作する。管理画面プレフィックスはアプリケーション設定<code>admin_route</code>（<code>$app['config']['admin_route']</code>）で決まり、ルートはこの値を連結して登録される。確認観点はプラグインのルート登録（イベント用サービスプロバイダ）とする。</p>
-<p>イベントの編集・削除はM13-02、複製新規はM13-05、申込検索はM13-06、デッキ表示はM13-08を正とする。本書ではコントローラのメソッド単位の解剖を主題としない。</p>
-<hr>
-<h2 id="本書で扱うこと">本書で扱うこと</h2>
-<ul><li>イベント一覧の初期表示と、検索フォーム送信による絞り込みのふるまい</li><li>検索条件（イベント名・開催日From／To・会場・フォーマット・ルール適用度）の判定</li><li>表示件数・ソート条件・検索条件・ページ番号のセッション保持と復元</li><li>ページング、最終ページのデータ消失時の前ページ表示</li><li>一覧から編集・削除・新規登録への導線（入口としての役割に限る）</li></ul>
-<hr>
-<h2 id="本書で扱わないこと">本書で扱わないこと</h2>
-<p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
-<ul><li>イベントの編集・削除・複製新規の業務ルール（M13-02、M13-05を正とする）</li><li>イベント申込の検索・一覧（M13-06を正とする）</li><li>日程登録・繰返し日程登録の入力ルール</li><li>管理画面へのアクセス制御、ログイン、権限設定の詳細</li><li>検索パターンの保存・呼び出し（本一覧フォームでは画面に出していない）</li><li>マスタ（会場・フォーマット・ルール適用度・店舗）の管理画面での編集ルール</li></ul>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<p>現行（pf-eccube3）と移行先（ec-cube-enterprise）の差を記録する。DB関連はec-cube-enterpriseを正とする。検索・ページング・ソートの挙動は現行（pf-eccube3）を正とする。</p>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>イベント主キー</td><td><code>dtb_event.event_id</code></td><td><code>dtb_event.id</code>。列名が<code>event_id</code>から<code>id</code>に変わる。</td></tr><tr><td>イベント詳細主キー</td><td><code>dtb_event_detail.event_detail_id</code></td><td><code>dtb_event_detail.id</code>。</td></tr><tr><td>イベント名検索の対象列（略称）</td><td><code>dtb_event.short_name_jp</code>、<code>short_name_en</code>を検索対象列に含む</td><td>移行先の<code>dtb_event</code>に略称列が見当たらず、移行先での略称検索の扱いはec-cube-enterprise実装で要確認。</td></tr><tr><td>イベント名の桁</td><td><code>name_jp</code>・<code>name_en</code>は最大255文字</td><td><code>name_jp</code>・<code>name_en</code>は最大155文字。桁が縮小する。</td></tr><tr><td>開催日Fromの参照列</td><td><code>dtb_event_detail.start_date</code></td><td>同名の<code>start_date</code>。同一。</td></tr><tr><td>フォーマット結合</td><td><code>dtb_event_format.format_id</code></td><td>同名の中間表<code>dtb_event_format</code>（<code>event_id</code>・<code>format_id</code>）。同一。</td></tr><tr><td>削除方式</td><td><code>deleted_at</code>による論理削除（論理削除レコードは検索対象外）</td><td><code>deleted_at</code>による論理削除。双方とも論理削除で同一。</td></tr></tbody></table></div>
-<p>検索クエリで参照する会場（<code>venue_id</code>）・ルール適用度（<code>rel_id</code>）・公開状態（<code>disp_id</code>）の列名は現行・移行先で同一である。</p>
-<hr>
-<h2 id="用語">用語</h2>
-<div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>イベント</td><td>イベント管理で登録される大会・大会企画の1レコード。テーブルは<code>dtb_event</code>。</td></tr><tr><td>イベント詳細</td><td>1つのイベントにぶら下がる開催日程の1レコード。テーブルは<code>dtb_event_detail</code>。開催日Fromや開催日Toの絞り込みはこの開始日時を参照する。</td></tr><tr><td>検索条件セッション</td><td>表示件数、検索条件、ページ番号、ソートキー、並び順を保持するセッション領域。セッションキー接頭辞は<code>admin.event</code>。</td></tr><tr><td>ルール適用度</td><td>イベントに紐づくルール適用度マスタ（<code>MtbRel</code>）。検索条件の1つ。</td></tr><tr><td>フォーマット</td><td>イベントに紐づくフォーマットマスタ（<code>MtbFormat</code>）。1イベントに複数紐づき得る。検索条件の1つ。</td></tr></tbody></table></div>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>イベント一覧を開く</td><td><code>GET /%admin_route%/event/list</code></td><td>検索フォームを表示し、検索条件セッションを初期化する。一覧結果は表示しない。</td></tr><tr><td>検索フォームを送信</td><td><code>POST /%admin_route%/event/search/{page_no}</code></td><td>検索条件で絞り込み、該当イベントを一覧表示する。条件・表示件数・ソートをセッションに保存する。</td></tr><tr><td>ページ送り・表示件数変更・ソート変更</td><td><code>GET /%admin_route%/event/page/{page_no}</code></td><td>セッションの検索条件を復元し、指定ページ・件数・ソートで再検索して表示する。</td></tr><tr><td>新規登録ボタン</td><td><code>GET /%admin_route%/event/new</code></td><td>イベント登録フォームへ遷移する（M13-02の範囲）。</td></tr><tr><td>行の編集リンク</td><td><code>GET /%admin_route%/event/{id}/edit</code></td><td>イベント編集画面へ遷移する（M13-02の範囲）。</td></tr><tr><td>行の削除リンク</td><td><code>DELETE /%admin_route%/event/{id}/delete</code></td><td>イベント削除を実行する（M13-02の範囲）。</td></tr></tbody></table></div>
-<p><code>/event/search/{page_no}</code>はGETとPOSTの両方を受け付けるルート（<code>match</code>）として登録される。一覧テンプレートのフォームはPOSTで送信する。</p>
-<hr>
-<h2 id="フロント挙動">フロント挙動</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>検索ボックスにイベント名の一行テキスト、開催日From・開催日Toの日付入力、フォーマット・会場・ルール適用度のセレクトを表示する。検索結果がある場合は「検索結果 N件が該当しました」と件数を表示し、イベントID・イベント名（日と英を半角空白区切りで連結）・操作メニューの表を表示する。0件時は「検索条件に該当するデータがありませんでした。」を表示する。</td></tr><tr><td>JS挙動</td><td>select2による会場セレクトの装飾、bootstrap-datetimepickerによる日付入力、検索ボックスの開閉トグル、ソート表示制御のスクリプトを読み込む。件数取得や一覧の非同期差し替えは行わない。</td></tr><tr><td>CSS・レイアウト</td><td>管理画面共通のアコーディオン検索ボックス、表組み、ドロップダウンメニューを用いる。専用CSSは<code>eventlist.css</code>。</td></tr><tr><td>モーダル・ポップアップ</td><td>削除リンクは確認ダイアログ（「このイベント情報を削除してもよろしいですか？」）を経て送信する。検索自体はモーダルを使わない。</td></tr><tr><td>入力項目</td><td>検索フォームの各入力はいずれも任意。開催日Fromは初期表示時に既定値が設定される（後述）。</td></tr></tbody></table></div>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="イベント一覧を初期表示する">イベント一覧を初期表示する</h3>
-<ol><li>管理者がイベント一覧を開く。</li><li>検索フォームを生成する。フォーム名は<code>admin_event_list</code>、CSRF保護は無効。</li><li>検索条件セッション（<code>admin.event.search</code>、<code>admin.event.search.page_no</code>、<code>admin.event.search.page_count</code>）を削除する。</li><li>ソート参照用にイベントリポジトリをセットする。</li><li>一覧結果を空、ページ番号を1、表示件数を既定（<code>default_page_count</code>）として一覧テンプレートを描画する。検索結果テーブルは描画しない。</li></ol>
-<h3 id="検索フォームを送信して絞り込む">検索フォームを送信して絞り込む</h3>
-<ol><li>管理者が検索条件を入力し、検索ボタンを押す。</li><li>検索フォームを生成し、リクエストを反映する。</li><li>ソートキーを決める。優先順位はリクエストの<code>sort</code>、次にセッションのソートキー、無ければ既定（<code>default</code>）。並び順も同様にリクエストの<code>order</code>、セッション、既定（<code>DESC</code>）の順で決める。並び順が<code>ASC</code>／<code>DESC</code>（大文字小文字可）以外なら並び順エラーを表示し、初期表示へ戻す。</li><li>表示件数を決める。優先はセッション値、無ければ既定。リクエストの<code>page_count</code>がページ表示件数マスタに存在する値なら採用しセッションへ保存する。</li><li>フォームから検索条件を取り出す。検索条件が空でセッションに条件が残っていれば、それを復元して再構築する。条件もセッションも無ければ初期表示へ戻す。</li><li>検索条件にソートキー・並び順を付与し、イベントリポジトリで検索クエリと件数を取得する。</li><li>最終ページのデータ削除等で当該ページに表示対象が無くなった場合（件数が前ページまでの件数と一致する場合）、ページ番号を1つ前に補正する。</li><li>ページ番号・検索条件・ソートキー・並び順・表示件数をセッションへ保存する。</li><li>ページネーターで該当ページを取得し、一覧テンプレートを描画する。</li></ol>
-<h3 id="ページ送り・表示件数変更・ソート変更">ページ送り・表示件数変更・ソート変更</h3>
-<ol><li>ページ送り・表示件数・ソートのリンクは検索処理と同じ処理を呼ぶ。</li><li>リクエストにフォーム検索条件が無いため、セッションの検索条件を復元して再検索する。</li><li>リクエストの<code>sort</code>・<code>order</code>・<code>page_count</code>があればそれを優先して反映する。</li></ol>
-<hr>
-<h2 id="集計条件">集計条件</h2>
-<div class="table-wrap"><table><thead><tr><th>指標</th><th>集計の要点</th></tr></thead><tbody><tr><td>検索結果件数</td><td>検索条件で絞り込んだイベント（<code>dtb_event</code>の<code>e</code>）の件数。件数取得は同一の検索クエリビルダに対し<code>count(e)</code>を実行する。イベント詳細・フォーマットを左外部結合するため、開催日条件やフォーマット条件で同一イベントが複数行に展開され得るが、件数は<code>count(e)</code>で求める。</td></tr></tbody></table></div>
-<hr>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>イベント名検索</td><td>入力値の全角空白を半角化したうえで、半角空白・全角空白・カンマで分割する。分割した各語について、イベント名（日）・イベント名（英）・略称（日）・略称（英）の4列に対する部分一致（前後ワイルドカード）をORで結び、語ごとの条件をANDで結ぶ。</td></tr><tr><td>開催日From</td><td>入力日時以降にイベント詳細の開始日時があるイベントを対象とする（<code>ed.startDate &gt;= From</code>）。</td></tr><tr><td>開催日To</td><td>入力日付に1日加算した日時より前にイベント詳細の開始日時があるイベントを対象とする（<code>ed.startDate &lt; To+1日</code>）。実質、指定日を含む日までを対象とする。</td></tr><tr><td>フォーマット</td><td>指定フォーマットIDがイベントのフォーマットに含まれるイベントを対象とする（フォーマット結合の<code>ef.formatId</code>との一致）。</td></tr><tr><td>ルール適用度</td><td>指定ルール適用度IDに一致するイベントを対象とする（<code>e.rel</code>）。</td></tr><tr><td>会場</td><td>指定会場に一致するイベントを対象とする（<code>e.venue</code>）。</td></tr><tr><td>店舗</td><td>一覧検索フォームには店舗欄が定義されるが、一覧テンプレートでは表示せず、検索クエリでも条件に用いない。</td></tr><tr><td>ソート</td><td>ソートキーは<code>default</code>（イベントID）または<code>eventName</code>（イベント名・日）。並び順はソートキーごとに指定の昇順／降順を適用する。</td></tr><tr><td>表示形式</td><td>件数は整数で表示する。一覧の行はイベントIDとイベント名（日と英を半角空白で連結）で構成する。金額計算・税計算・丸め処理は行わない。</td></tr></tbody></table></div>
+      <p>登録済みのイベントをイベント名・開催日・会場・フォーマット・ルール適用度の条件で検索し、該当イベントを一覧表示する。</p>
+<h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="検索条件">検索条件</h3>
+<div class="table-wrap"><table><thead><tr><th>画面上の項目</th><th>検索条件</th></tr></thead><tbody><tr><td>イベント名</td><td>全角空白を半角にしたうえで、半角空白・全角空白・カンマで語に分割する。各語について、イベント名（日）・イベント名（英）・略称（日）・略称（英）への部分一致をORで束ね、語どうしをANDで積み上げる</td></tr><tr><td>開催日From</td><td>入力日時以降に開始日時があるイベントに限定する</td></tr><tr><td>開催日To</td><td>入力日付に1日加えた日時より前に開始日時があるイベントに限定する。指定日を含む日までが対象になる</td></tr><tr><td>フォーマット</td><td>指定したフォーマットを持つイベントに限定する</td></tr><tr><td>ルール適用度</td><td>指定したルール適用度に一致するイベントに限定する</td></tr><tr><td>会場</td><td>指定した会場に一致するイベントに限定する</td></tr></tbody></table></div>
+<p>店舗の欄は検索フォームに定義されるが、一覧では表示せず、検索の条件にも用いない。</p>
 <h3 id="検索フォームの入力項目">検索フォームの入力項目</h3>
-<div class="table-wrap"><table><thead><tr><th>項目名</th><th>必須／任意</th><th>最大長</th><th>初期値</th><th>保存先・扱い</th></tr></thead><tbody><tr><td>イベント名</td><td>任意</td><td><code>stext_len</code>（確認値50、<code>Length</code>の最大に適用）</td><td>空</td><td>検索条件キー<code>multi</code>。永続化しない。イベント名（日）・イベント名（英）・略称（日）・略称（英）への部分一致検索に用いる。</td></tr><tr><td>開催日From</td><td>任意</td><td>日付（<code>yyyy-MM-dd</code>）</td><td>現在日時から<code>search_form.default_from_term</code>（確認値<code>-3 month</code>）を適用した日</td><td>検索条件キー<code>start_date_from</code>。永続化しない。<code>dtb_event_detail.start_date</code>の下限。</td></tr><tr><td>開催日To</td><td>任意</td><td>日付（<code>yyyy-MM-dd</code>）</td><td>空</td><td>検索条件キー<code>start_date_to</code>。永続化しない。<code>dtb_event_detail.start_date</code>の上限（指定日に1日加算した未満）。</td></tr><tr><td>フォーマット</td><td>任意</td><td>セレクト（単一）</td><td>未選択</td><td>検索条件キー<code>formats</code>。永続化しない。フォーマットマスタ（<code>MtbFormat</code>）。<code>dtb_event_format.format_id</code>との一致。</td></tr><tr><td>会場</td><td>任意</td><td>セレクト（単一）</td><td>未選択</td><td>検索条件キー<code>venue</code>。永続化しない。会場マスタ（<code>MtbVenue</code>）。<code>dtb_event.venue_id</code>との一致。</td></tr><tr><td>ルール適用度</td><td>任意</td><td>セレクト（単一）</td><td>未選択</td><td>検索条件キー<code>rel</code>。永続化しない。ルール適用度マスタ（<code>MtbRel</code>）。<code>dtb_event.rel_id</code>との一致。</td></tr></tbody></table></div>
-<p>最大長の数値はプラグイン設定およびコア設定の確認値を記載する。運用環境で上書きされている場合はその環境の値が正とする。店舗欄（キー<code>shop</code>）はフォーム定義に存在するが一覧画面では表示・利用しない。</p>
-<h3 id="エッジケース">エッジケース</h3>
-<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>イベント名が空白・カンマのみ</td><td>分割後の各語が空になり、イベント名条件を追加しない。</td></tr><tr><td>開催日FromとToが逆転</td><td>両条件をANDで適用するため、該当が無ければ0件になる。範囲整合のバリデーションは行わない。</td></tr><tr><td>開催日条件があり詳細が無いイベント</td><td>詳細を左外部結合するが開催日条件は詳細列を参照するため、詳細が無いイベントは開催日条件に一致せず除外される。</td></tr><tr><td>並び順に不正値</td><td>並び順エラーを表示し初期表示へ戻す。</td></tr><tr><td>最終ページのデータが削除され表示対象が無くなった</td><td>ページ番号を1つ前に補正して表示する。</td></tr><tr><td>該当0件</td><td>「検索条件に該当するデータがありませんでした。」を表示する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>参照時点</td><td>一覧の件数と行は、検索実行時にデータベースから読み取った値である。表示後にイベントが更新・削除されても表示中の一覧は自動更新しない。</td></tr><tr><td>検索条件の保持</td><td>検索条件・表示件数・ソートキー・並び順・ページ番号はセッションに保存し、ページ送り・再表示で復元する。一覧初期表示（<code>/event/list</code>）ではこれらを削除する。</td></tr><tr><td>一覧と編集の整合性</td><td>一覧の行から編集・削除へ遷移した後の値の正は、遷移先（M13-02）の処理時点のデータとする。</td></tr><tr><td>件数と行の整合性</td><td>件数は<code>count(e)</code>で求め、表示行はページネーターが取得する。詳細・フォーマットの左外部結合により内部のSQL行は重複し得るが、表示はイベント単位で行う。</td></tr></tbody></table></div>
-<hr>
-<h2 id="API-バッチ結果">API/バッチ結果</h2>
-<p>本機能ではAPI呼び出し・バッチ実行を扱わない。検索結果の一覧表示のためにデータベースを読み取るのみである。</p>
-<hr>
+<div class="table-wrap"><table><thead><tr><th>項目名</th><th>必須／任意</th><th>制約</th><th>初期値</th></tr></thead><tbody><tr><td>イベント名</td><td>任意</td><td>最大50文字（設定の確認値）</td><td>空</td></tr><tr><td>開催日From</td><td>任意</td><td>日付（年月日）</td><td>現在日時の3か月前（設定の確認値）</td></tr><tr><td>開催日To</td><td>任意</td><td>日付（年月日）</td><td>空</td></tr><tr><td>フォーマット</td><td>任意</td><td>フォーマットマスタからの単一選択</td><td>未選択</td></tr><tr><td>会場</td><td>任意</td><td>会場マスタからの単一選択</td><td>未選択</td></tr><tr><td>ルール適用度</td><td>任意</td><td>ルール適用度マスタからの単一選択</td><td>未選択</td></tr></tbody></table></div>
+<p>最大長と初期値は設定の確認値であり、運用環境で上書きされているときはその環境の値を正とする。検索条件はいずれも保存しない。</p>
+<h3 id="初期表示">初期表示</h3>
+<p>一覧の初期表示では、保持している検索条件・ページ番号・表示件数を破棄し、空の検索フォーム・空の一覧・ページ番号1・既定の表示件数で表示する。検索結果の表は描画しない。</p>
+<h3 id="並び順">並び順</h3>
+<p>ソートキーはイベントID（既定）またはイベント名（日）である。ソートキーと並び順は、リクエストの指定・保持している値・既定の順に決める。並び順の既定は降順とする。並び順が昇順・降順のいずれでもないときは、並び順のエラーを表示して初期表示へ戻す。</p>
+<h3 id="表示件数の決定">表示件数の決定</h3>
+<p>保持している表示件数を用い、無ければ既定とする。リクエストで指定された表示件数は、ページ表示件数マスタに登録された値と一致するときだけ採用し、以後の検索のために保持する。</p>
+<h3 id="検索の成立条件">検索の成立条件</h3>
+<p>検索条件が空で、保持している検索条件が残っているときは、それを復元して検索する。条件も保持値も無いときは初期表示へ戻す。</p>
+<p>ページ送り・表示件数変更・ソート変更は検索と同じ処理を行う。これらの操作ではフォームの検索条件が送られないため、保持している検索条件を復元して再検索し、リクエストにソートキー・並び順・表示件数の指定があればそれを優先する。</p>
+<h3 id="ページ番号の補正">ページ番号の補正</h3>
+<p>最終ページのデータ削除などで当該ページに表示対象が無くなったとき、すなわち件数が前ページまでの件数と一致するときは、ページ番号を1つ前に補正する。</p>
+<h3 id="表示形式">表示形式</h3>
+<p>件数は整数で表示する。一覧の行はイベントIDと、イベント名（日）とイベント名（英）を半角空白で連結したもので構成する。金額計算・税計算・丸め処理は行わない。</p>
+<h3 id="エラー時の扱い">エラー時の扱い</h3>
+<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>並び順が不正</td><td>並び順のエラーを表示し、初期表示へ戻す</td></tr><tr><td>検索条件も保持値も無い</td><td>初期表示へ戻す</td></tr><tr><td>検索条件の組み立て結果が想定外</td><td>見つからない扱い（HTTP 404）とする</td></tr><tr><td>データベース読み取りの障害</td><td>共通の例外処理に委ねる</td></tr></tbody></table></div>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>一覧初期表示・ページ送りのGET、検索フォームのPOST（フォーム名<code>admin_event_list</code>、CSRF保護なし）。</td></tr><tr><td>成功時出力</td><td>検索フォームと、該当時はイベント一覧テーブルを含むHTMLをサーバ側で描画する。</td></tr><tr><td>失敗時出力</td><td>並び順不正時は並び順エラーを表示して初期表示へ戻す。検索クエリビルダが想定外の場合はHTTP404とする。</td></tr><tr><td>副作用</td><td>検索条件セッションへの書き込み（検索・ページ送り時）または削除（初期表示時）。台帳の更新は行わない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<p>当機能の検索条件・表示に直接関係する列のみを記載する。型や一覧の細部はスキーマを参照する。</p>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>dtb_event</code></td><td><code>id</code>（現行: <code>event_id</code>）</td><td>一覧表示、既定ソートのキー。</td></tr><tr><td><code>dtb_event</code></td><td><code>name_jp</code>、<code>name_en</code></td><td>イベント名検索と一覧表示。<code>eventName</code>ソートは<code>name_jp</code>。移行先は最大155文字。</td></tr><tr><td><code>dtb_event</code></td><td><code>short_name_jp</code>、<code>short_name_en</code>（ec-cube-enterprise 実装で要確認）</td><td>現行のイベント名検索の対象列。移行先の<code>dtb_event</code>に該当列が見当たらない。</td></tr><tr><td><code>dtb_event</code></td><td><code>rel_id</code></td><td>ルール適用度検索。</td></tr><tr><td><code>dtb_event</code></td><td><code>venue_id</code></td><td>会場検索。</td></tr><tr><td><code>dtb_event_detail</code></td><td><code>start_date</code></td><td>開催日From・To検索の参照列。</td></tr><tr><td><code>dtb_event_format</code></td><td><code>format_id</code></td><td>フォーマット検索の参照列。中間表<code>dtb_event_format</code>。</td></tr></tbody></table></div>
-<h3 id="DB操作">DB操作</h3>
-<p>本機能は参照系（検索）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>検索</td><td>dtb_event / dtb_event_detail / dtb_event_format</td><td>検索条件に合致するレコードを抽出する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="バリデーション">バリデーション</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>イベント名</td><td>最大長<code>stext_len</code>（確認値50）の<code>Length</code>のみ。未入力可。</td></tr><tr><td>開催日From・To</td><td>日付入力（<code>single_text</code>、<code>yyyy-MM-dd</code>）。範囲整合の検証は行わない。</td></tr><tr><td>フォーマット・会場・ルール適用度</td><td>マスタに存在する選択肢に限る。未選択可。</td></tr><tr><td>並び順</td><td><code>ASC</code>／<code>DESC</code>（大文字小文字可）以外を不正として扱い、初期表示へ戻す。</td></tr></tbody></table></div>
-<hr>
-<h2 id="権限・認可">権限・認可</h2>
-<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>イベント一覧の表示・検索</th></tr></thead><tbody><tr><td>未ログイン</td><td>管理画面共通のログイン誘導に従う。</td></tr><tr><td>管理メンバーでログイン済み</td><td>管理画面のアクセス制御がイベント管理のURLを許可するときに到達する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="画面遷移">画面遷移</h2>
-<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>一覧を開く</td><td>同一画面に検索フォームを表示。</td></tr><tr><td>検索フォーム送信</td><td>同一画面に検索結果一覧を表示。</td></tr><tr><td>ページ送り・件数変更・ソート</td><td>同一画面に再検索結果を表示。</td></tr><tr><td>新規登録ボタン</td><td>イベント登録画面（M13-02）。</td></tr><tr><td>行の編集リンク</td><td>イベント編集画面（M13-02）。</td></tr><tr><td>行の削除リンク</td><td>削除実行後、検索結果ページへ戻る（M13-02）。</td></tr></tbody></table></div>
-<h3 id="遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</h3>
-<div class="table-wrap"><table><thead><tr><th>起点</th><th>遷移前の処理</th><th>遷移後の初期状態</th></tr></thead><tbody><tr><td>検索フォーム送信・ページ送り</td><td>検索条件・表示件数・ソートキー・並び順・ページ番号をセッションへ保存する。</td><td>同条件で一覧を再描画する。ページ送りはセッションの条件を復元する。</td></tr><tr><td>一覧初期表示（<code>/event/list</code>）</td><td>検索条件セッションを削除する。</td><td>検索フォームのみを表示し、結果は表示しない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>並び順が不正</td><td>並び順エラーを表示し初期表示へ戻す。</td></tr><tr><td>検索クエリビルダが想定外（クエリビルダでも配列でもない）</td><td>HTTP404。</td></tr><tr><td>検索条件もセッションも無い</td><td>初期表示へ戻す。</td></tr><tr><td>データベース読み取りの障害</td><td>アプリケーションの共通例外処理に委ねる。</td></tr></tbody></table></div>
-<hr>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>一覧の初期表示・ページ送りの表示要求、および検索フォームの送信</td></tr><tr><td>成功時出力</td><td>検索フォームと、該当があるときはイベント一覧の表を表示する</td></tr><tr><td>失敗時出力</td><td>並び順が不正なときは並び順のエラーを表示して初期表示へ戻す。検索条件の組み立て結果が想定外のときは見つからない扱い（HTTP 404）とする</td></tr></tbody></table></div>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
 <h2 id="表示メッセージ">表示メッセージ</h2>
-<h3 id="常時表示-正常・静的">常時表示（正常・静的）</h3>
-<div class="table-wrap"><table><thead><tr><th>種別</th><th>表示文言（日本語）</th><th>条件</th></tr></thead><tbody><tr><td>件数表示</td><td>検索結果 N件が該当しました</td><td>検索結果が1件以上のとき。Nは該当件数。</td></tr><tr><td>0件表示</td><td>検索条件に該当するデータがありませんでした。</td><td>検索結果が0件のとき。</td></tr><tr><td>削除確認</td><td>このイベント情報を削除してもよろしいですか？</td><td>一覧の削除リンク押下時のダイアログ。</td></tr></tbody></table></div>
-<h3 id="エラー・警告-インライン">エラー・警告（インライン）</h3>
-<div class="table-wrap"><table><thead><tr><th>表示文言（日本語）</th><th>表示条件（利用者視点）</th><th>表示位置</th><th>備考</th></tr></thead><tbody><tr><td>並び順エラー（並び順の不正）</td><td>並び順が<code>ASC</code>／<code>DESC</code>以外のとき</td><td>画面上部のフラッシュ領域</td><td>ロケールキーは<code>admin.error.sort</code>。文言は共通実装を正とする。</td></tr></tbody></table></div>
-<hr>
-<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>画面上の文言(英語)</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M13-01-MSG-001</td><td>イベント一覧の対象イベントの操作メニューから開く画面中央のモーダル</td><td>このイベント情報を削除してもよろしいですか？</td><td>（英訳なし）</td><td>編集可能なショップの、日程が未登録のイベントで削除を選択したとき</td><td>削除を確定すると削除要求を実行し、成功時はイベント一覧へリダイレクトする</td></tr></tbody></table></div>
-<h2 id="ログ・監査">ログ・監査</h2>
-<div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>一覧表示・検索</td><td>本機能単体では業務監査ログを追加で書く処理は持たない。</td></tr></tbody></table></div>
-<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
-<ul><li>セッション識別子の完全値</li><li>なりすまし対策トークンやCookieの原値</li></ul>
-<hr>
-<h2 id="セッション">セッション</h2>
-<h3 id="本機能におけるセッション">本機能におけるセッション</h3>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>一覧初期表示（<code>/event/list</code>）</td><td><code>admin.event.search</code>、<code>admin.event.search.page_no</code>、<code>admin.event.search.page_count</code>を削除する。</td></tr><tr><td>検索・ページ送り時</td><td>検索条件（<code>admin.event.search</code>）、ページ番号（<code>admin.event.search.page_no</code>）、ソートキー（<code>admin.event.sort</code>）、並び順（<code>admin.event.order</code>）、表示件数（<code>admin.event.search.page_count</code>）を保存する。</td></tr></tbody></table></div>
-<h3 id="セッションへ保存しない情報">セッションへ保存しない情報</h3>
-<p>イベント本体の永続データはセッションへ保存しない。保存するのは検索条件・表示状態のみとする。</p>
-<hr>
-<h2 id="Cookie">Cookie</h2>
-<p>本機能はイベント一覧表示のために新たなCookieを設定しない。セッションCookieは管理画面共通の仕組みを正とする。</p>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<p>本機能の一覧検索は参照のみであり、業務トランザクションを張らない。同時に複数の管理者が検索してもロックを取り合う要件は持たない。</p>
-<hr>
-<h2 id="調査補助-grep">調査補助（grep）</h2>
-<p>論理説明と切り離し、ソース照合用。</p>
-<pre><code>app/Plugin/HareruyaEc/ServiceProvider/Admin/EventServiceProvider.php
-app/Plugin/HareruyaEc/Controller/Admin/EventController.php
-app/Plugin/HareruyaEc/Controller/Admin/SearchControllerTrait.php
-app/Plugin/HareruyaEc/Form/Type/Admin/Event/EventListType.php
-app/Plugin/HareruyaEc/Repository/DtbEventRepository.php
-app/Plugin/HareruyaEc/Resource/template/admin/Event/eventlist.twig</code></pre>
-<p>bind名（コード探索用）: <code>admin_event_list</code>（GET一覧初期表示）、<code>admin_event_search</code>（GET／POST検索）、<code>admin_event_page</code>（GETページ送り）。</p>
+<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M13-01-MSG-001</td><td>イベント一覧の対象イベントの操作メニューから開く画面中央のモーダル</td><td>このイベント情報を削除してもよろしいですか？</td><td>編集可能なショップの、日程が未登録のイベントで削除を選択したとき</td><td>削除を確定すると削除要求を実行し、成功時はイベント一覧へリダイレクトする</td></tr><tr><td>—</td><td>一覧上部</td><td>検索結果 N件が該当しました</td><td>検索結果が1件以上のとき。Nは該当件数</td><td>一覧を表示する</td></tr><tr><td>—</td><td>一覧上部</td><td>検索条件に該当するデータがありませんでした。</td><td>検索結果が0件のとき</td><td>一覧に留まる</td></tr><tr><td>—</td><td>画面上部</td><td>並び順エラー（文言は共通実装を正とする）</td><td>並び順が昇順・降順のいずれでもないとき</td><td>初期表示へ戻す</td></tr></tbody></table></div>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

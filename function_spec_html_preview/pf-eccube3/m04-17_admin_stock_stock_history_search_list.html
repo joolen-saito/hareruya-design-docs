@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,41 +272,20 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#本書で扱うこと">本書で扱うこと</a>
-<a class="lv2" href="#本書で扱わないこと">本書で扱わないこと</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv2" href="#用語">用語</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#フロント挙動">フロント挙動</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#価格・在庫一覧を開く-初期表示">価格・在庫一覧を開く（初期表示）</a>
-<a class="lv3" href="#検索する・ページ送りする">検索する・ページ送りする</a>
-<a class="lv2" href="#集計条件">集計条件</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
-<a class="lv3" href="#入力項目">入力項目</a>
-<a class="lv3" href="#エッジケース">エッジケース</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#一覧の構成">一覧の構成</a>
+<a class="lv3" href="#検索条件">検索条件</a>
+<a class="lv3" href="#日付の検索対象">日付の検索対象</a>
+<a class="lv3" href="#在庫数での絞り込み">在庫数での絞り込み</a>
+<a class="lv3" href="#他画面から渡された条件">他画面から渡された条件</a>
+<a class="lv3" href="#状態の表示">状態の表示</a>
+<a class="lv3" href="#検索条件の保持">検索条件の保持</a>
+<a class="lv3" href="#並び順が不正な場合">並び順が不正な場合</a>
+<a class="lv3" href="#計算">計算</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#バリデーション">バリデーション</a>
-<a class="lv2" href="#権限・認可">権限・認可</a>
-<a class="lv2" href="#画面遷移">画面遷移</a>
-<a class="lv3" href="#遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#表示メッセージ">表示メッセージ</a>
-<a class="lv3" href="#常時表示-正常・静的">常時表示（正常・静的）</a>
-<a class="lv3" href="#エラー・警告-インライン">エラー・警告（インライン）</a>
-<a class="lv3" href="#メッセージID対応-自動棚卸">メッセージID対応（自動棚卸）</a>
-<a class="lv2" href="#ログ・監査">ログ・監査</a>
-<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
-<a class="lv2" href="#セッション">セッション</a>
-<a class="lv3" href="#本機能におけるセッション">本機能におけるセッション</a>
-<a class="lv3" href="#セッションへ保存しない情報">セッションへ保存しない情報</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a>
-<a class="lv2" href="#調査補助-ソース位置の索引">調査補助（ソース位置の索引）</a></nav>
+<a class="lv3" href="#入出力-永続化">入出力: 永続化</a>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -304,108 +293,36 @@ footer {
         <h1>在庫管理 — 在庫履歴検索/一覧</h1>
       </header>
       
-      <p>商品の価格変更履歴と在庫変更履歴を、共通の検索フォームで条件指定して2つの一覧として表示する画面。</p>
-<h2 id="概要">概要</h2>
-<p>在庫履歴検索/一覧は、価格・在庫一覧画面で検索条件を指定し、価格変更履歴の一覧と在庫変更履歴の一覧を同一画面に並べて表示する機能である。検索条件・表示件数・ソート条件はセッションに保持し、ページ送り後も同一条件で再検索する。価格一覧は検索の共通処理が組み立て、在庫一覧は同じ検索条件をもとに別途追加で組み立てる。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。HareruyaEc プラグインの実装と、検索一覧を駆動する共通処理（SearchControllerTrait）を確認値とする。</p>
-<p>本機能のカスタマイズ区分はカスタマイズであり、挙動は現行リポ pf-eccube3（HareruyaEc プラグイン）を参照し、DB関連は ec-cube-enterprise を正とする。</p>
-<p>対象はブラウザ経由の管理画面に限定する。管理画面プレフィックスは HareruyaEc プラグインの設定キー <code>admin_route</code> で決まるため、本書では <code>%eccube_admin_route%</code> で示す。</p>
-<p>本書の本文ではコントローラのメソッド名は主題としない。ルート bind 名は調査補助へ退避する。</p>
-<hr>
-<h2 id="本書で扱うこと">本書で扱うこと</h2>
-<ul><li>価格・在庫一覧画面を開く入口と、検索フォーム送信・ページ送りの挙動</li><li>検索条件（日付帯・在庫変更理由・商品検索条件・汎用ワード）の指定と保持</li><li>価格変更履歴一覧と在庫変更履歴一覧の2表の列構成と件数表示</li><li>検索条件・表示件数・ソート条件のセッション保持キー</li><li>他画面から商品ID・状態コード・言語を渡して呼ばれた場合の絞り込み</li></ul>
-<hr>
-<h2 id="本書で扱わないこと">本書で扱わないこと</h2>
-<p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
-<ul><li>CSVダウンロード（在庫履歴CSV出力は M04-18 を正とする。価格履歴CSV出力は別機能）</li><li>買取/販売価格履歴（別コントローラの別機能）</li><li>商品検索フォーム本体の各項目仕様（m03-01_admin_product_product_search_list を正とする）</li><li>在庫変更履歴・価格変更履歴の生成元（在庫一括編集・CSV取込・受注処理など各更新機能）</li><li>管理画面の認証・ログイン・権限マスタの詳細</li></ul>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<p>挙動は現行リポ pf-eccube3 を正とし、永続化に関わるテーブル・列は移行先 ec-cube-enterprise を正とする。在庫変更履歴のスキーマは現行と移行先で差があるため、移行先名を主とし現行名を括弧で添える。</p>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3 / HareruyaEc）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>在庫変更履歴の主キー</td><td>stock_history_id</td><td>id（在庫履歴ID）</td></tr><tr><td>在庫変更履歴の備考列</td><td>memo</td><td>stock_change_reason（在庫変動理由(備考)）。欠品理由は shortage_reason</td></tr><tr><td>在庫変更理由区分の参照</td><td>stock_change_type_id で在庫変更履歴に直接ひもづく</td><td>stock_change_type_detail_id（在庫変動理由明細）で参照する。理由名は引き続き mtb_stock_change_type を参照</td></tr><tr><td>状態列のメモ元</td><td>dtb_product_sub_class.memo</td><td>ec-cube-enterprise に dtb_product_sub_class 相当のテーブルが見当たらない（ec-cube-enterprise 実装で要確認）</td></tr><tr><td>規格コード列</td><td>dtb_product_class.code</td><td>dtb_product_class の列名は product_code（Doctrine プロパティは code）</td></tr></tbody></table></div>
-<p>現行の絞り込み・表示挙動は pf-eccube3 を正とし、上記スキーマ差は移行時に ec-cube-enterprise へ合わせる。移行先で対応列を確認しきれない箇所は推測でスキーマ化せず「ec-cube-enterprise 実装で要確認」とする。</p>
-<hr>
-<h2 id="用語">用語</h2>
-<div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>価格変更履歴</td><td>販売価格の変更記録。テーブル <code>dtb_price_history</code>。価格一覧の元データ。</td></tr><tr><td>在庫変更履歴</td><td>在庫数の変更記録。テーブル <code>dtb_stock_history</code>。在庫一覧の元データ。</td></tr><tr><td>在庫変更理由</td><td>在庫を変えた区分。マスタ <code>mtb_stock_change_type</code>。検索条件と表示列に用いる。</td></tr><tr><td>検索条件セッション</td><td>検索フォーム値・表示件数・ページ番号・ソート条件を保持するセッション領域。セッションキー接頭辞は <code>admin.history.…</code>。</td></tr></tbody></table></div>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>価格・在庫一覧を開く</td><td><code>GET /%eccube_admin_route%/product/history</code></td><td>検索フォームを初期表示し、検索条件セッションを消去して一覧は空で表示する。</td></tr><tr><td>「検索する」で送信</td><td><code>POST /%eccube_admin_route%/product/history/search/1</code></td><td>条件を検証・保持し、価格一覧と在庫一覧を1ページ目で組み立てて表示する。</td></tr><tr><td>ページネーションでNページへ</td><td><code>GET /%eccube_admin_route%/product/history/search/{page_no}</code></td><td>セッションの検索条件で価格一覧のNページ目を表示する。</td></tr><tr><td>表示件数プルダウン変更</td><td><code>GET /%eccube_admin_route%/product/history/search/1?page_count=…</code></td><td>ページマスタに存在する件数ならセッションへ保存し、その件数で分割する。</td></tr><tr><td>価格一覧のCSVダウンロード</td><td><code>GET /%eccube_admin_route%/product/history/price/export</code></td><td>価格変更履歴のCSVを出力する（本書では扱わない）。</td></tr><tr><td>在庫一覧のCSVダウンロード</td><td><code>GET /%eccube_admin_route%/product/history/stock/export</code></td><td>在庫変更履歴のCSVを出力する（M04-18 を正とする）。</td></tr></tbody></table></div>
-<p>検索フォームの送信先は常にページ番号1の検索ルートである。ページ送り・表示件数変更は検索ルートへの GET である。</p>
-<hr>
-<h2 id="フロント挙動">フロント挙動</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>上部に検索フォーム。汎用ワード入力（プレースホルダは商品名・カード名・商品コード・備考）と、初期で開いた詳細検索枠。詳細枠には日付（開始・終了）、在庫変更理由（複数選択）、商品検索由来の項目（カテゴリ、種別、エキスパンション、レアリティ、言語、状態、Foil、プロモ、販売価格帯、在庫帯）を表示する。下部に価格変更履歴の件数見出しと表、続いて在庫変更履歴の件数見出しと表、各表にページネーション。</td></tr><tr><td>JS 挙動</td><td>日付入力に日時ピッカー、複数選択に select2 を適用する。検索条件クリアのリンクでフォーム入力を初期化する。ソート表示用のスクリプトを読み込む。</td></tr><tr><td>CSS・レイアウト</td><td>管理画面共通の検索ボックスと結果テーブルのスタイル。詳細検索枠は初期表示で開く。</td></tr><tr><td>モーダル・ポップアップ</td><td>本機能ではモーダル・トーストを表示しない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="価格・在庫一覧を開く-初期表示">価格・在庫一覧を開く（初期表示）</h3>
-<ol><li>利用者が価格・在庫一覧を開く。</li><li>検索条件・ページ番号・表示件数のセッションを消去する。</li><li>検索フォームを空で初期化し、価格一覧・在庫一覧とも空で画面を表示する。</li></ol>
-<h3 id="検索する・ページ送りする">検索する・ページ送りする</h3>
-<ol><li>「検索する」または件数変更・ページ送りで検索ルートへ届く。</li><li>価格履歴は販売価格のみを対象とするフラグを立てる。</li><li>検索フォームを組み立てる。フォームは送信時にエラーが無いとき、共通処理は一覧を空にした初期相当を返す分岐に入る（共通処理の妥当時分岐の実装挙動を確認値とする）。</li><li>リクエストの並び順が想定外（ASC・DESC 以外）のときは並び順エラーを表示して初期表示へ戻す。</li><li>表示件数はリクエスト値がページマスタに存在すればセッションへ保存し、無ければセッションまたは既定件数を使う。</li><li>検索条件はフォーム値、無ければセッション値を復元して用いる。他画面から渡された商品ID・状態コード・言語があれば検索条件へ補う。</li><li>価格変更履歴の検索用クエリと件数を組み立て、ページネーションで価格一覧を作る。</li><li>検索条件・ページ番号・表示件数・ソート条件をセッションへ保存する。</li><li>続いて在庫一覧を追加で組み立てる。セッションの表示件数・ページ番号が無いときは在庫一覧を空配列とする。あれば同じ検索フォームから検索条件を復元し、在庫変更履歴の検索用クエリでページネーションを作る。</li><li>価格一覧と在庫一覧の両方を画面へ渡して表示する。</li></ol>
-<hr>
-<h2 id="集計条件">集計条件</h2>
-<div class="table-wrap"><table><thead><tr><th>指標</th><th>集計の要点</th></tr></thead><tbody><tr><td>価格一覧の件数</td><td>価格変更履歴に検索条件を適用した件数。共通処理が件数取得経路で数える。</td></tr><tr><td>在庫一覧の件数</td><td>在庫変更履歴に検索条件を適用した件数。ページネータがクエリに対して数える。在庫履歴クエリは件数取得時に <code>sh</code> を数える経路を持つ。</td></tr><tr><td>在庫一覧の対象</td><td>在庫変更履歴を、規格・規格拡張・商品・受注補助・状態・言語・操作者へ結合して並べる。</td></tr></tbody></table></div>
-<hr>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>日付帯</td><td>開始は当日0時以降、終了はその日を含めるため終了日の翌日0時未満として扱う（共通の履歴クエリ補助による）。</td></tr><tr><td>在庫変更理由</td><td>選択がある場合のみ、在庫変更履歴の理由区分で絞り込む。</td></tr><tr><td>在庫帯</td><td>検索条件の在庫開始・終了があれば、在庫変更履歴の変更後在庫数で下限・上限を付ける。</td></tr><tr><td>他画面パラメータ優先</td><td>商品ID・状態コード（カード状態コード）・言語が渡された場合は、その条件だけで在庫一覧を絞り、商品ID指定時は登録日降順・状態昇順で並べる。</td></tr><tr><td>状態表示</td><td>規格拡張のメモがあればメモを、無ければ状態名を状態列に表示する。</td></tr><tr><td>本機能の計算</td><td>履歴の集計・再計算は行わない。表示は履歴に記録済みの値をそのまま用いる。</td></tr></tbody></table></div>
-<h3 id="入力項目">入力項目</h3>
-<div class="table-wrap"><table><thead><tr><th>項目名</th><th>必須／任意</th><th>最大長</th><th>初期値</th><th>保存先・扱い</th></tr></thead><tbody><tr><td>汎用ワード</td><td>任意</td><td>フォーム上の桁制約なし</td><td>空</td><td>商品名・カード名・商品コード・備考への横断検索に用いる。フォームキー <code>multi</code>。検索条件セッション <code>admin.history.search</code> に保持。</td></tr><tr><td>在庫変動理由・欠品理由</td><td>任意（刷新後）</td><td>最大16384文字</td><td>空</td><td>Excel識別ID 2-37。刷新後は在庫変動理由と欠品理由を部分一致検索する。現行pfの検索フォームには同名の独立項目はなく、汎用ワードで備考を検索する。</td></tr><tr><td>日付（開始）</td><td>任意</td><td><code>yyyy-MM-dd</code> の単一行日付</td><td>空</td><td>在庫・価格変更履歴の登録日下限。フォームキー <code>date_from</code>。</td></tr><tr><td>日付（終了）</td><td>任意</td><td><code>yyyy-MM-dd</code> の単一行日付</td><td>空</td><td>登録日上限。終了日を含める。フォームキー <code>date_to</code>。</td></tr><tr><td>在庫変更理由</td><td>任意</td><td>—</td><td>無選択</td><td>区分マスタの複数選択。在庫変更履歴の理由区分で絞る。フォームキー <code>stock_change_type_id</code>。</td></tr><tr><td>商品検索条件（カテゴリ・種別・エキスパンション・レアリティ・言語・状態・Foil・プロモ・販売価格帯・在庫帯）</td><td>任意</td><td>商品検索フォームに準ずる</td><td>商品検索フォームの既定</td><td>埋め込みの商品検索フォーム（<code>product</code>）の各キー。価格・在庫一覧の絞り込みに用いる。詳細は m03-01_admin_product_product_search_list を正とする。</td></tr></tbody></table></div>
-<p>検索フォームはなりすまし対策トークンの検証を無効化している（履歴検索の照会用フォームとして設定）。CSRF 検証無効は照会フォームの設定であり、更新は行わない。</p>
-<h3 id="エッジケース">エッジケース</h3>
-<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>初回表示（検索前）</td><td>セッションを消去し、価格一覧・在庫一覧とも空で表示する。</td></tr><tr><td>表示件数・ページ番号がセッションに無い状態で在庫一覧を作ろうとする</td><td>在庫一覧を空配列として扱う。</td></tr><tr><td>並び順が想定外の値</td><td>並び順エラーを表示し初期表示へ戻す。</td></tr><tr><td>検索結果0件</td><td>「検索条件に該当するデータがありませんでした。」を各表で表示する。</td></tr><tr><td>他画面から商品ID・状態コード・言語が渡る</td><td>その条件だけで絞り、通常の検索フォーム条件は適用しない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>価格一覧と在庫一覧</td><td>同一画面の2表は同じ検索条件をもとにするが、別クエリ・別ページネーションである。件数・ページは表ごとに独立する。</td></tr><tr><td>表示時点</td><td>各一覧は表示時点で履歴テーブルを読んだ結果である。表示後の更新は自動反映しない。</td></tr><tr><td>履歴と現在値</td><td>履歴は変更時点の値を記録したもので、商品の現在在庫・現在価格との一致は保証しない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="API-バッチ結果">API/バッチ結果</h2>
-<p>本機能では外部 HTTP API の呼び出しやバッチ実行を扱わない。</p>
-<hr>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="一覧の構成">一覧の構成</h3>
+<p>画面は共通の検索条件で、価格変更履歴の一覧と在庫変更履歴の一覧を並べて表示する。</p>
+<p>初期表示では検索条件を持たず、どちらの一覧も空とする。</p>
+<h3 id="検索条件">検索条件</h3>
+<div class="table-wrap"><table><thead><tr><th>項目名</th><th>必須／任意</th><th>最大長</th><th>初期値</th><th>扱い</th></tr></thead><tbody><tr><td>汎用ワード</td><td>任意</td><td>制限なし</td><td>空</td><td>商品名・カード名・商品コード・備考を横断して検索する。</td></tr><tr><td>在庫変動理由・欠品理由</td><td>任意</td><td>16384文字</td><td>空</td><td>在庫変動理由と欠品理由を部分一致で検索する。現行 pf-eccube3 は独立した項目を持たず、汎用ワードで備考を検索する。</td></tr><tr><td>日付（開始）</td><td>任意</td><td>年月日</td><td>空</td><td>登録日の下限とする。</td></tr><tr><td>日付（終了）</td><td>任意</td><td>年月日</td><td>空</td><td>登録日の上限とする。終了日当日を含める。</td></tr><tr><td>在庫変更理由</td><td>任意</td><td>—</td><td>無選択</td><td>在庫変更理由を複数選択して絞り込む。</td></tr><tr><td>商品検索条件</td><td>任意</td><td>商品検索に準ずる</td><td>商品検索の既定</td><td>カテゴリ・種別・エキスパンション・レアリティ・言語・状態・Foil・プロモ・販売価格帯・在庫帯で絞り込む。詳細は「商品検索/一覧」（M03-01）を正とする。</td></tr></tbody></table></div>
+<h3 id="日付の検索対象">日付の検索対象</h3>
+<p>開始は指定日の0時以降を対象とする。終了は指定日を含めるため、翌日の0時未満までを対象とする。</p>
+<h3 id="在庫数での絞り込み">在庫数での絞り込み</h3>
+<p>在庫の下限・上限を指定した場合は、在庫変更履歴の変更後在庫数で絞り込む。</p>
+<h3 id="他画面から渡された条件">他画面から渡された条件</h3>
+<p>商品・状態コード・言語が他画面から渡された場合は、その条件だけで在庫一覧を絞り込む。商品を指定した場合は登録日の降順、状態の昇順で並べる。</p>
+<h3 id="状態の表示">状態の表示</h3>
+<p>状態は規格拡張のメモがあればメモを表示し、無ければ状態名を表示する。</p>
+<h3 id="検索条件の保持">検索条件の保持</h3>
+<p>検索条件・ページ番号・表示件数・並び順は画面をまたいで保持し、ページ送りと表示件数の変更で再利用する。初期表示では検索条件・ページ番号・表示件数を破棄する。</p>
+<p>表示件数は指定した値が表示件数マスタに存在する場合に保持する。存在しない場合は保持済みの値、または既定の件数を用いる。</p>
+<h3 id="並び順が不正な場合">並び順が不正な場合</h3>
+<p>並び順に昇順・降順以外が指定された場合は、エラーを表示して初期表示に戻す。</p>
+<h3 id="計算">計算</h3>
+<p>履歴の集計と再計算は行わない。表示は履歴に記録済みの値をそのまま用いる。</p>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>検索フォーム（汎用ワード・日付帯・在庫変更理由・商品検索条件）、ページ番号、表示件数、セッションの検索状態、他画面からの商品ID・状態コード・言語。</td></tr><tr><td>成功時出力</td><td>HTML。価格変更履歴一覧と在庫変更履歴一覧、各件数とページネーション。</td></tr><tr><td>失敗時出力</td><td>並び順エラー時はエラー表示で初期表示へ戻す。0件時は該当データなしの見出し。</td></tr><tr><td>副作用</td><td>検索条件セッション・ページ番号・表示件数・ソート条件の保存。</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<p>当機能の一覧が主に参照する列を示す。型の細部はスキーマを参照する。テーブル・列名は移行先 ec-cube-enterprise を正とし、現行（pf-eccube3）と異なる場合は括弧で現行名を添える。</p>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td>dtb_stock_history</td><td>id（現行 stock_history_id）, old_stock, stock, stock_change_reason（現行 memo）, stock_change_type_detail_id（現行 stock_change_type_id）, member_id, create_date</td><td>在庫一覧の表示・絞り込み。理由区分の参照経路が現行と異なる。</td></tr><tr><td>dtb_price_history</td><td>id, sell_price, old_sell_price, standard_price, member_id, create_date</td><td>価格一覧の表示・絞り込み。</td></tr><tr><td>dtb_product_class</td><td>product_code（プロパティ code）</td><td>規格コード（商品コード列）。</td></tr><tr><td>dtb_product_sub_class</td><td>memo</td><td>状態列のメモ表示。ec-cube-enterprise に該当テーブルが見当たらない（ec-cube-enterprise 実装で要確認）。</td></tr><tr><td>dtb_product</td><td>name</td><td>商品名表示。</td></tr><tr><td>mtb_stock_change_type</td><td>name</td><td>在庫変動理由の表示と絞り込み。</td></tr><tr><td>mtb_card_condition</td><td>code</td><td>状態コードでの絞り込み・状態表示。</td></tr><tr><td>mtb_language</td><td>name_jp, code</td><td>言語表示・絞り込み。</td></tr><tr><td>dtb_member</td><td>name</td><td>登録者名の表示。</td></tr></tbody></table></div>
-<h3 id="DB操作">DB操作</h3>
-<p>本機能は参照系（検索・出力）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>検索</td><td>dtb_stock_history（商品・規格・操作者・区分マスタを結合）</td><td>検索条件に合致する在庫変更履歴を抽出し、一覧表示する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="バリデーション">バリデーション</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>日付（開始・終了）</td><td>単一行日付。空可。</td></tr><tr><td>在庫変更理由</td><td>区分マスタの複数選択。空可。</td></tr><tr><td>並び順</td><td>ASC・DESC（大文字小文字）以外はエラーとし初期表示へ戻す。</td></tr><tr><td>商品検索条件</td><td>埋め込みフォームの検証に従う（m03-01_admin_product_product_search_list を正とする）。</td></tr></tbody></table></div>
-<hr>
-<h2 id="権限・認可">権限・認可</h2>
-<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>価格・在庫一覧</th></tr></thead><tbody><tr><td>管理画面にログインし当該ルートへ到達できる運用者</td><td>利用できる。細かいロール単位の可否は管理画面のセキュリティ設定と権限マスタの実装を正とする。</td></tr><tr><td>未ログインまたは拒否された主体</td><td>管理画面共通の挙動により利用できない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="画面遷移">画面遷移</h2>
-<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>価格・在庫一覧を開く</td><td>同一画面（検索前の初期表示）。</td></tr><tr><td>検索する</td><td>同一画面（価格・在庫一覧を表示）。</td></tr><tr><td>ページネーション</td><td>同一画面の別ページ（価格一覧のページ送り）。</td></tr><tr><td>表示件数変更</td><td>同一画面（保存件数で再分割）。</td></tr><tr><td>在庫一覧の名称リンク（在庫履歴行）</td><td>規格編集など各行のリンク先（実装のリンク先に従う）。</td></tr></tbody></table></div>
-<h3 id="遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</h3>
-<div class="table-wrap"><table><thead><tr><th>起点</th><th>遷移前の処理</th><th>遷移後の初期状態</th></tr></thead><tbody><tr><td>ページ送り・件数変更</td><td>検索条件・ページ番号・表示件数・ソートをセッション <code>admin.history.…</code> に保持</td><td>同一条件・指定ページで価格一覧と在庫一覧を再表示する。</td></tr><tr><td>初期表示で開く</td><td>検索条件セッションを消去</td><td>価格一覧・在庫一覧とも空で表示する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>並び順が不正</td><td>並び順エラーを表示し初期表示へ戻す。</td></tr><tr><td>検索クエリが組み立てられない</td><td>共通処理が404相当で中断する。</td></tr><tr><td>検索結果0件</td><td>各表で該当データなしの見出しを表示する。</td></tr></tbody></table></div>
-<hr>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>検索条件、ページ番号、表示件数、他画面から渡された商品・状態コード・言語</td></tr><tr><td>成功時出力</td><td>価格変更履歴の一覧と在庫変更履歴の一覧、各件数、ページ送り</td></tr><tr><td>失敗時出力</td><td>並び順が不正な場合のエラー表示と初期表示への復帰</td></tr></tbody></table></div>
+<h3 id="入出力-永続化">入出力: 永続化</h3>
+<p>一覧の表示ではデータを更新しない。価格変更履歴と在庫変更履歴は参照のみとする。</p>
+<p>一覧から在庫変動理由を変更した場合は、在庫変更履歴を更新する。</p>
+<div class="table-wrap"><table><thead><tr><th>操作</th><th>契機</th></tr></thead><tbody><tr><td>更新（在庫変動理由）</td><td>一覧での在庫変動理由の変更</td></tr></tbody></table></div>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
 <h2 id="表示メッセージ">表示メッセージ</h2>
-<h3 id="常時表示-正常・静的">常時表示（正常・静的）</h3>
-<div class="table-wrap"><table><thead><tr><th>種別</th><th>表示文言（日本語）</th><th>条件</th></tr></thead><tbody><tr><td>件数見出し</td><td>検索結果 N 件 が該当しました</td><td>各一覧で件数が1件以上のとき。</td></tr><tr><td>0件見出し</td><td>検索条件に該当するデータがありませんでした。</td><td>各一覧で件数が0件のとき。</td></tr></tbody></table></div>
-<h3 id="エラー・警告-インライン">エラー・警告（インライン）</h3>
-<div class="table-wrap"><table><thead><tr><th>表示文言（日本語）</th><th>表示条件（利用者視点）</th><th>表示位置</th><th>備考</th></tr></thead><tbody><tr><td>（並び順エラー文言）</td><td>並び順が不正なとき</td><td>画面上部</td><td>設定キー <code>admin.error.sort</code>。文言はロケール定義を正とする。</td></tr></tbody></table></div>
-<hr>
-<h3 id="メッセージID対応-自動棚卸">メッセージID対応（自動棚卸）</h3>
-<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>画面上の文言(英語)</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M04-17-MSG-001</td><td>一覧カード上部（#stockHistoryList .card-body 先頭に prepend）</td><td>保存に失敗しました</td><td>（英訳なし）</td><td>在庫履歴の変動理由を変更して保存できなかったとき</td><td>エラーを表示して在庫履歴検索/一覧画面に留まる</td></tr></tbody></table></div>
-<h2 id="ログ・監査">ログ・監査</h2>
-<div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>一覧表示</td><td>本機能は照会のみで業務監査ログを追加しない。</td></tr></tbody></table></div>
-<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
-<ul><li>パスワード</li><li>なりすまし対策トークン</li><li>Cookie 値</li><li>セッション ID の完全値</li><li>Remember Me トークンの原値</li></ul>
-<hr>
-<h2 id="セッション">セッション</h2>
-<h3 id="本機能におけるセッション">本機能におけるセッション</h3>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>検索条件</td><td>キー <code>admin.history.search</code>。検索時に保存、ページ送り・件数変更で読む。在庫一覧の追加組み立てでも参照する。</td></tr><tr><td>ページ番号</td><td>キー <code>admin.history.search.page_no</code>。</td></tr><tr><td>表示件数</td><td>キー <code>admin.history.search.page_count</code>。</td></tr><tr><td>ソート・並び順</td><td>キー <code>admin.history.sort</code>、<code>admin.history.order</code>。</td></tr><tr><td>初期表示時</td><td>上記のうち検索条件・ページ番号・表示件数を消去する。</td></tr></tbody></table></div>
-<h3 id="セッションへ保存しない情報">セッションへ保存しない情報</h3>
-<p>照会フォームが本来保持しない値（パスワード等）は保存しない。</p>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<p>一覧表示は読み取り主体であり、本機能単体では楽観ロックや明示トランザクション境界を持たない。</p>
-<hr>
-<h2 id="調査補助-ソース位置の索引">調査補助（ソース位置の索引）</h2>
-<p>grep 用のパスのみ示す。ふるまいの正は実装本文とする。</p>
-<ul><li><code>app/Plugin/HareruyaEc/Controller/Admin/Product/HistoryController.php</code>（ルート <code>admin_product_history</code> / <code>admin_product_history_search</code>。在庫一覧は <code>addRenderItem</code> で <code>hareruya_ec.repository.stock_history</code> を用いて追加）</li><li><code>app/Plugin/HareruyaEc/Controller/Admin/SearchControllerTrait.php</code>（<code>sessionKey</code> = <code>history</code>）</li><li><code>app/Plugin/HareruyaEc/Form/Type/Admin/Product/HistoryType.php</code>（フォーム名 <code>admin_product_history</code>）</li><li><code>app/Plugin/HareruyaEc/Repository/DtbStockHistoryRepository.php</code>、<code>DtbPriceHistoryRepository.php</code></li><li><code>app/Plugin/HareruyaEc/Resource/template/admin/Product/historylist.twig</code></li></ul>
+<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M04-17-MSG-001</td><td>一覧の上部</td><td>保存に失敗しました</td><td>在庫履歴の変動理由を変更して保存できなかったとき</td><td>在庫履歴検索/一覧画面に留まる</td></tr><tr><td>—</td><td>一覧の見出し</td><td>検索結果 N 件 が該当しました</td><td>一覧の件数が1件以上のとき</td><td>一覧を表示する</td></tr><tr><td>—</td><td>一覧の見出し</td><td>検索条件に該当するデータがありませんでした。</td><td>一覧の件数が0件のとき</td><td>一覧を表示しない</td></tr><tr><td>—</td><td>管理画面上部</td><td>並び順に関するエラー</td><td>並び順に昇順・降順以外が指定されたとき</td><td>初期表示に戻る</td></tr></tbody></table></div>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

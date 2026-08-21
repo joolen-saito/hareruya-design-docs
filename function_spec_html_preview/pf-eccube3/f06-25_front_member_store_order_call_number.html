@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,34 +272,17 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#本書で扱うこと">本書で扱うこと</a>
-<a class="lv2" href="#本書で扱わないこと">本書で扱わないこと</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv2" href="#用語">用語</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#フロント挙動">フロント挙動</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#モニター画面を表示する-GET-locale-waiting-number-1-・-waiting-number-2">モニター画面を表示する（GET `/{_locale}/waiting_number_1`・`/waiting_number_2`）</a>
-<a class="lv3" href="#ポーリングで番号札を取得する-JSが定期実行">ポーリングで番号札を取得する（JSが定期実行）</a>
-<a class="lv3" href="#注文番号取得API-GET-locale-waiting-api-get-waiting">注文番号取得API（GET `/{_locale}/waiting_api/get_waiting`）</a>
-<a class="lv2" href="#表示メッセージ">表示メッセージ</a>
-<a class="lv3" href="#メッセージID対応-自動棚卸">メッセージID対応（自動棚卸）</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
-<a class="lv3" href="#エッジケース">エッジケース</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#表示する番号札">表示する番号札</a>
+<a class="lv3" href="#表示最大件数と出荷完了の補完">表示最大件数と出荷完了の補完</a>
+<a class="lv3" href="#表示の更新">表示の更新</a>
+<a class="lv3" href="#表示枠の整形">表示枠の整形</a>
+<a class="lv3" href="#店内Wi-Fiパスワードの表示">店内Wi-Fiパスワードの表示</a>
+<a class="lv3" href="#エラー時の扱い">エラー時の扱い</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#バリデーション">バリデーション</a>
-<a class="lv2" href="#権限・認可">権限・認可</a>
-<a class="lv2" href="#画面遷移">画面遷移</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#ログ・監査">ログ・監査</a>
-<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
-<a class="lv2" href="#セッション">セッション</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a></nav>
+<a class="lv3" href="#入出力-永続化">入出力: 永続化</a>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -297,94 +290,26 @@ footer {
         <h1>会員 — 店頭モニターに受注管理から登録した番号札を表示</h1>
       </header>
       
-      <h2 id="概要">概要</h2>
-<p>店頭の店内モニターに、商品準備が完了した注文の呼び出し番号（番号札）を一覧表示する機能である。モニター画面は一定間隔で注文番号取得APIをポーリングし、ピック完了済みの数字の番号札と、受注管理側で登録したアルファベットの番号札を取得して画面へ並べる。前回より新しい番号が増えたときは呼び出し音を鳴らす。表示枠を超える場合は連続する数字をまとめて整形する。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインの注文番号表示処理、注文番号表示テンプレート（<code>Waiting/waiting_number.twig</code>）、ポーリング用JS（<code>Block/js/waiting_get_js.twig</code>・モニター用<code>waiting_monitor.js</code>）、注文番号取得処理、番号札を扱うリポジトリを正とする。</p>
-<p>本機能のカスタマイズ区分はカスタマイズであり、画面・挙動の参照はpf-eccube3を正とし、永続化（テーブル・列）に関する記述はリニューアル移行先のec-cube-enterpriseを正とする。</p>
-<p>対象はブラウザ経由のフロント（店内モニター画面）に限定する。フロントのルートはサイトルート直下に言語別プレフィックス<code>/{_locale}</code>を付けて公開する。</p>
-<p>本文ではフレームワークのコントローラ型名やメソッド名を主説明としない。ルートbind名の網羅は主説明とせず、「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。</p>
-<hr>
-<h2 id="本書で扱うこと">本書で扱うこと</h2>
-<ul><li>店内モニター画面の入口とポーリングによる注文番号の取得・表示</li><li>表示対象の番号札（数字・アルファベット）の集計条件</li><li>表示最大件数を超えた場合の整形と、間の出荷完了番号の補完</li><li>新着時の呼び出し音</li></ul>
-<hr>
-<h2 id="本書で扱わないこと">本書で扱わないこと</h2>
-<p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
-<ul><li>数字の番号札を採番する受注側の処理（店頭注文の受注時に番号を生成する。受注・購入機能を正とする）</li><li>アルファベットの番号札を登録・削除する受注管理の管理画面（番号札管理機能を正とする）</li><li>受注ステータス（ピック完了・出荷完了等）の遷移そのもの（受注管理機能を正とする）</li></ul>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<p>現行（pf-eccube3）と移行先（ec-cube-enterprise）でのDB関連の差を記録する。本機能は表示専用で永続化を行わないため、参照先の名称をec-cube-enterpriseに合わせる。</p>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>数字の番号札</td><td><code>dtb_waiting_number</code>（<code>waiting_number</code>・<code>order_id</code>）</td><td>同名テーブル・同名列が存在。加えて拠点参照<code>base_info_id</code>を持つ（拠点別の採番・表示に用いる）。</td></tr><tr><td>アルファベットの番号札</td><td><code>dtb_waiting_tag</code>（<code>waiting_tag</code>）</td><td>同名テーブル・同名列が存在。加えて拠点参照<code>base_info_id</code>を持つ。</td></tr><tr><td>受注ステータスの参照</td><td>受注テーブル（<code>dtb_order</code>）の受注ステータス</td><td>同一スキーマ（<code>dtb_order</code>が存在）。</td></tr><tr><td>採番カウンタ</td><td>（現行は要確認）</td><td><code>dtb_waiting_number_counter</code>（<code>current_value</code>・<code>base_info_id</code>）を持つ。移行後は拠点別カウンタで採番する。現行の採番方式との対応はec-cube-enterprise実装で要確認。</td></tr></tbody></table></div>
-<hr>
-<h2 id="用語">用語</h2>
-<div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>番号札（数字）</td><td>店頭注文に採番される数値の呼び出し番号。受注ステータスがピック完了のものを表示する。</td></tr><tr><td>番号札（アルファベット）</td><td>受注管理側で登録するアルファベットの番号札。常に全件表示する。</td></tr><tr><td>ピック完了</td><td>商品準備が完了した受注ステータス。表示対象の数字番号札の条件。</td></tr><tr><td>出荷完了</td><td>受け渡し済みの受注ステータス。表示枠超過時の補完判定に使う。</td></tr><tr><td>店内モニター</td><td>店頭に設置する表示専用画面。第1・第2の2画面がある。</td></tr></tbody></table></div>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>店内モニター画面（第1）</td><td><code>GET /{_locale}/waiting_number_1</code></td><td>注文番号表示画面を表示し、JSが注文番号取得APIをポーリングして番号札を並べる。</td></tr><tr><td>店内モニター画面（第2）</td><td><code>GET /{_locale}/waiting_number_2</code></td><td>第1と同一の表示画面を表示する。</td></tr><tr><td>注文番号取得API</td><td><code>GET /{_locale}/waiting_api/get_waiting</code></td><td>ピック完了済みの数字番号札とアルファベット番号札の配列をJSONで返す。</td></tr></tbody></table></div>
-<p><code>/{_locale}</code>は言語別プレフィックスである。第1・第2のモニターは同一テンプレートを表示する。利用者操作は無く、画面表示後はJSが自動でAPIを呼ぶ。</p>
-<hr>
-<h2 id="フロント挙動">フロント挙動</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>番号表示枠（最大25区画の入力欄）に番号札を順に表示する。表示件数に応じて区画の大きさと文字サイズを切り替える。新着検知用の音声要素と、店内Wi-Fiパスワード表示用の要素を持つ。</td></tr><tr><td>JS挙動</td><td>画面読込時に注文番号取得APIを1回呼び、以後10秒ごとにポーリングする。取得結果が前回より新しい番号を含む場合は呼び出し音を鳴らす。取得結果を表示枠へ流し込み、件数に応じて区画・文字サイズを調整する。取得失敗時は表示を変えない。</td></tr><tr><td>CSS・レイアウト</td><td>モニター専用のスタイルを読み込む。番号件数で区画幅と文字サイズを段階的に変える。4文字以上の番号は文字サイズを縮める。</td></tr><tr><td>モーダル・ポップアップ</td><td>モーダルは無い。新着時に音声を再生する。</td></tr></tbody></table></div>
-<p>Wi-Fiパスワード表示はモニター用JSが時刻に基づき定期更新する。注文番号表示とは独立した補助表示である。</p>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="モニター画面を表示する-GET-locale-waiting-number-1-・-waiting-number-2">モニター画面を表示する（GET <code>/{_locale}/waiting_number_1</code>・<code>/waiting_number_2</code>）</h3>
-<ol><li>注文番号表示画面を表示する。番号表示枠・音声要素・ポーリング用JSを読み込む。</li></ol>
-<h3 id="ポーリングで番号札を取得する-JSが定期実行">ポーリングで番号札を取得する（JSが定期実行）</h3>
-<ol><li>画面読込時に注文番号取得APIを呼び、その後10秒ごとに呼ぶ。</li><li>取得結果が前回リストより新しい番号を含むなら呼び出し音を鳴らす。</li><li>取得結果を現在リストへ更新する。</li><li>取得結果を表示枠へ流し込み、件数に応じて区画・文字サイズを調整する。</li><li>取得が失敗した場合は表示を変えない。</li></ol>
-<h3 id="注文番号取得API-GET-locale-waiting-api-get-waiting">注文番号取得API（GET <code>/{_locale}/waiting_api/get_waiting</code>）</h3>
-<ol><li>受注ステータスがピック完了の数字番号札を取得する。</li><li>アルファベットの番号札を全件（ID昇順）取得する。</li><li>数字とアルファベットの合計が表示最大件数を超える場合は、数字番号札のあいだに位置する出荷完了済みの番号も補完して並べる（連続性の確保のため）。</li><li>数字番号札・アルファベット番号札の順に並べた配列をJSONで返す。</li></ol>
-<hr>
-<h2 id="表示メッセージ">表示メッセージ</h2>
-<p>本機能では利用者向けの文言メッセージを扱わない。画面には番号札（数字・アルファベット）のみを表示する。</p>
-<hr>
-<h3 id="メッセージID対応-自動棚卸">メッセージID対応（自動棚卸）</h3>
-<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>画面上の文言(英語)</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>F06-25-MSG-001</td><td>画面中央(ダイアログ)</td><td>waiting number get failed.</td><td>waiting number get failed.</td><td>店頭モニターで番号札の取得に失敗したとき（現在は表示されない）</td><td>店頭モニター画面に留まる</td></tr></tbody></table></div>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>数字番号札の対象</td><td>受注ステータスがピック完了の注文に採番された番号札を対象とする。</td></tr><tr><td>アルファベット番号札の対象</td><td>登録済みのアルファベット番号札を全件（ID昇順）対象とする。</td></tr><tr><td>並び順</td><td>数字番号札を先に、アルファベット番号札を後に並べる。</td></tr><tr><td>表示最大件数</td><td>設定値<code>waiting_monitor_max_size</code>（=25）を上限とする。</td></tr><tr><td>出荷完了の補完</td><td>数字とアルファベットの合計が上限を超える場合、直前に並べた数字の次番号からピック完了の次番号の手前までがすべて出荷完了なら、その区間の番号も並べる。</td></tr><tr><td>クライアント側の整形</td><td>上限を超える場合、JSが連続する数字を「開始〜終了」にまとめて区画数を圧縮する。アルファベットは単独で並べる。</td></tr><tr><td>新着判定</td><td>取得結果が前回より長い、または前回に含まれない要素があるとき新着とみなし音を鳴らす。</td></tr></tbody></table></div>
-<p>本機能は利用者入力のフォームを持たないため入力項目は無い。</p>
-<h3 id="エッジケース">エッジケース</h3>
-<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>ピック完了の数字が0件</td><td>アルファベット番号札のみを返す。</td></tr><tr><td>合計が上限以下</td><td>補完・整形を行わずそのまま並べる。</td></tr><tr><td>間の番号に未出荷が含まれる</td><td>その区間は補完しない。</td></tr><tr><td>API取得失敗</td><td>表示を変更しない（前回表示を維持）。</td></tr></tbody></table></div>
-<hr>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示の鮮度</td><td>10秒ごとのポーリング時点での受注ステータス・番号札を反映する。受注側の更新からモニター反映まで最大1ポーリング分の遅延がある。</td></tr><tr><td>数字とアルファベット</td><td>取得時点の受注ステータスと登録済み番号札を併せて返す。両者の整合は取得時点のDB状態に依存する。</td></tr><tr><td>補完区間</td><td>区間内番号がすべて出荷完了の場合のみ補完するため、未確定の区間は表示しない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="API-バッチ結果">API/バッチ結果</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>API</td><td>注文番号取得API。入力なし。成功時はピック完了の数字番号札とアルファベット番号札を並べた配列をJSON（HTTP200）で返す。失敗時はJSが表示を変えない。再実行は10秒ごとのポーリングで繰り返す。</td></tr><tr><td>バッチ</td><td>本機能ではバッチ実行を扱わない。</td></tr></tbody></table></div>
-<hr>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="表示する番号札">表示する番号札</h3>
+<p>数字の番号札は、受注ステータスがピック完了の注文に採番されたものを対象とする。アルファベットの番号札は登録済みのものを全件、ID昇順で対象とする。並びは数字の番号札を先に、アルファベットの番号札を後にする。</p>
+<h3 id="表示最大件数と出荷完了の補完">表示最大件数と出荷完了の補完</h3>
+<p>表示できる番号札の上限は25件である。数字とアルファベットの合計が上限を超えるときは、番号の連続性を保つため、直前に並べた数字の次の番号からピック完了の次の番号の手前までがすべて出荷完了であれば、その区間の番号も並べる。</p>
+<h3 id="表示の更新">表示の更新</h3>
+<p>画面を開いたときに番号札を1回取得し、以後10秒ごとに取得し直す。取得結果が前回より長いとき、または前回に含まれない要素があるときは新着とみなして呼び出し音を鳴らす。取得に失敗したときは表示を変えず、前回の表示を保ったまま次の取得を待つ。</p>
+<h3 id="表示枠の整形">表示枠の整形</h3>
+<p>番号表示枠は最大25区画で、表示件数に応じて区画の大きさと文字サイズを段階的に切り替える。4文字以上の番号は文字サイズを縮める。上限を超えるときは、連続する数字を「開始〜終了」にまとめて区画数を圧縮する。アルファベットは単独で並べる。</p>
+<h3 id="店内Wi-Fiパスワードの表示">店内Wi-Fiパスワードの表示</h3>
+<p>店内Wi-Fiパスワードは時刻に基づいて定期的に更新して表示する。番号札の表示とは独立した補助表示である。</p>
+<h3 id="エラー時の扱い">エラー時の扱い</h3>
+<div class="table-wrap"><table><thead><tr><th>事象</th><th>扱い</th></tr></thead><tbody><tr><td>番号札の取得に失敗</td><td>表示を変更せず前回の表示を保ち、次の取得で取り直す</td></tr></tbody></table></div>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>なし（APIは受注ステータスと番号札のDB状態を参照する）。</td></tr><tr><td>成功時出力</td><td>モニター画面への番号札一覧の描画、新着時の呼び出し音。</td></tr><tr><td>失敗時出力</td><td>API失敗時は表示を変えない。</td></tr><tr><td>副作用</td><td>なし（表示専用。DB更新は行わない）。</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<p>機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。</p>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>dtb_waiting_number</code></td><td><code>waiting_number</code></td><td>数字の番号札。表示対象の数字。</td></tr><tr><td><code>dtb_waiting_number</code></td><td><code>order_id</code></td><td>紐づく受注。受注ステータスの判定に結合する。</td></tr><tr><td><code>dtb_waiting_number</code></td><td><code>base_info_id</code></td><td>拠点参照（ec-cube-enterpriseで保持。拠点別の採番・表示に用いる）。</td></tr><tr><td><code>dtb_waiting_tag</code></td><td><code>waiting_tag</code></td><td>アルファベットの番号札。全件表示対象。</td></tr><tr><td><code>dtb_waiting_tag</code></td><td><code>base_info_id</code></td><td>拠点参照（ec-cube-enterpriseで保持）。</td></tr><tr><td><code>dtb_order</code></td><td>受注ステータス</td><td>ピック完了・出荷完了の判定に用いる（番号札取得時に結合）。</td></tr></tbody></table></div>
-<h3 id="DB操作">DB操作</h3>
-<p>永続化の正は ec-cube-enterprise（テーブル名・操作は ec-cube-enterprise を正典）。当ドメインは承認ワークフローを介さず persist/flush で直接確定する（承認ワークフローは在庫機能固有）。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>登録/更新</td><td>dtb_order / dtb_waiting_number / dtb_waiting_tag</td><td>当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。</td></tr></tbody></table></div>
-<hr>
-<h2 id="バリデーション">バリデーション</h2>
-<p>本機能では利用者入力の検証を行わない。APIは受注ステータスと番号札を参照して結果を返すのみである。</p>
-<hr>
-<h2 id="権限・認可">権限・認可</h2>
-<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>モニター画面・注文番号取得API</th></tr></thead><tbody><tr><td>未ログイン</td><td>アクセスできる（表示専用画面・API）。</td></tr><tr><td>ログイン済み</td><td>同上。利用者個人の情報は扱わない。</td></tr></tbody></table></div>
-<p>本機能は会員個人を対象とせず、店頭設置のモニターでの表示を前提とする。会員別の制御は行わない。</p>
-<hr>
-<h2 id="画面遷移">画面遷移</h2>
-<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>モニター画面（第1・第2）の表示</td><td>注文番号表示画面（同一テンプレート）</td></tr><tr><td>ポーリング</td><td>同一画面の内容更新（遷移なし）</td></tr></tbody></table></div>
-<p>本機能は画面遷移を伴わず、同一画面の内容をJSが更新する。</p>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>注文番号取得APIの失敗</td><td>JSは表示を変更しない（前回表示を維持）。次のポーリングで再取得する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="ログ・監査">ログ・監査</h2>
-<p>本機能ではログ・監査の追記を扱わない。</p>
-<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
-<ul><li>Cookie値</li><li>セッションIDの完全値</li></ul>
-<hr>
-<h2 id="セッション">セッション</h2>
-<p>本機能ではセッションの更新を扱わない。番号札はDBから取得して表示するのみである。</p>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<p>本機能は表示専用でDBを更新しないため、楽観ロック・悲観ロックの対象は持たない。</p>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>利用者の入力は無い。受注ステータスと番号札の登録状態を参照する</td></tr><tr><td>成功時出力</td><td>モニター画面への番号札一覧の表示、新着時の呼び出し音</td></tr><tr><td>失敗時出力</td><td>取得に失敗したときは表示を変えない</td></tr></tbody></table></div>
+<h3 id="入出力-永続化">入出力: 永続化</h3>
+<p>本機能はデータを更新しない。</p>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
+<h2 id="表示メッセージ">表示メッセージ</h2>
+<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>F06-25-MSG-001</td><td>画面中央(ダイアログ)</td><td>waiting number get failed.</td><td>店頭モニターで番号札の取得に失敗したとき（現在は表示されない）</td><td>店頭モニター画面に留まる</td></tr></tbody></table></div>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

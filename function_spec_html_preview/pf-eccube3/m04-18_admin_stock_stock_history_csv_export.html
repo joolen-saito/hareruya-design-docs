@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,32 +272,15 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#本書で扱うこと">本書で扱うこと</a>
-<a class="lv2" href="#本書で扱わないこと">本書で扱わないこと</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv2" href="#用語">用語</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#フロント挙動">フロント挙動</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#在庫履歴CSVを出力する">在庫履歴CSVを出力する</a>
-<a class="lv2" href="#集計条件">集計条件</a>
-<a class="lv2" href="#表示メッセージ">表示メッセージ</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
-<a class="lv3" href="#エッジケース">エッジケース</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#出力対象の在庫履歴">出力対象の在庫履歴</a>
+<a class="lv3" href="#値の取り方">値の取り方</a>
+<a class="lv3" href="#他機能との境界">他機能との境界</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#バリデーション">バリデーション</a>
-<a class="lv2" href="#権限・認可">権限・認可</a>
-<a class="lv2" href="#画面遷移">画面遷移</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#ログ・監査">ログ・監査</a>
-<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a>
-<a class="lv2" href="#調査補助-ソース位置の索引">調査補助（ソース位置の索引）</a></nav>
+<a class="lv3" href="#出力-CSVファイル">出力: CSVファイル</a>
+<a class="lv3" href="#出力する列">出力する列</a>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -295,94 +288,27 @@ footer {
         <h1>在庫管理 — 在庫履歴CSV出力</h1>
       </header>
       
-      <p>価格・在庫一覧で保持した検索条件で、在庫変更履歴をCSVファイルとしてダウンロードする機能。</p>
-<h2 id="概要">概要</h2>
-<p>在庫履歴CSV出力は、価格・在庫一覧画面（M04-17）の在庫一覧に表示している検索条件を再利用し、在庫変更履歴を1行1件のCSVとしてストリーム出力する機能である。検索条件はセッションに保持された在庫履歴検索条件から復元する。固定のヘッダ行を先頭に書き、文字化け防止のためBOMを付与する。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。HareruyaEc プラグインの実装を確認値とする。</p>
-<p>本機能のカスタマイズ区分はカスタマイズであり、挙動は現行リポ pf-eccube3（HareruyaEc プラグイン）を参照し、DB関連は ec-cube-enterprise を正とする。</p>
-<p>対象はブラウザ経由の管理画面に限定する。管理画面プレフィックスは HareruyaEc プラグインの設定キー <code>admin_route</code> で決まるため、本書では <code>%eccube_admin_route%</code> で示す。</p>
-<p>本書の本文ではコントローラのメソッド名は主題としない。ルート bind 名は調査補助へ退避する。</p>
-<hr>
-<h2 id="本書で扱うこと">本書で扱うこと</h2>
-<ul><li>在庫一覧のCSVダウンロードを押した入口と、出力対象の決まり方</li><li>出力に使う検索条件の復元元（在庫履歴の検索条件セッション）</li><li>CSVのヘッダ列・各行の値・文字コード（BOM）・ファイル名規則</li><li>ストリーム出力の流れ</li></ul>
-<hr>
-<h2 id="本書で扱わないこと">本書で扱わないこと</h2>
-<p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
-<ul><li>在庫履歴の検索フォーム・一覧表示そのもの（M04-17 を正とする）</li><li>価格変更履歴CSV出力・買取/販売価格履歴CSV出力（同一サービスを使う別出力）</li><li>在庫変更履歴の生成（在庫一括編集・CSV取込・受注処理など各更新機能）</li><li>管理画面の認証・ログイン・権限マスタの詳細</li></ul>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<p>挙動は現行リポ pf-eccube3 を正とし、永続化に関わるテーブル・列は移行先 ec-cube-enterprise を正とする。在庫変更履歴のスキーマは現行と移行先で差があるため、移行先名を主とし現行名を括弧で添える。</p>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3 / HareruyaEc）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>在庫変更履歴の主キー</td><td>stock_history_id</td><td>id（在庫履歴ID）</td></tr><tr><td>備考列</td><td>memo</td><td>stock_change_reason（在庫変動理由(備考)）</td></tr><tr><td>在庫変更理由区分の参照</td><td>stock_change_type_id</td><td>stock_change_type_detail_id（理由名は mtb_stock_change_type を参照）</td></tr><tr><td>状態列のメモ元</td><td>dtb_product_sub_class.memo</td><td>ec-cube-enterprise に dtb_product_sub_class 相当が見当たらない（ec-cube-enterprise 実装で要確認）</td></tr><tr><td>規格コード列</td><td>dtb_product_class.code</td><td>dtb_product_class の列名は product_code（プロパティ code）</td></tr></tbody></table></div>
-<p>CSVの出力列・並び・文字コード（BOM）・ファイル名規則は現行 pf-eccube3 を正とし、上記スキーマ差は移行時に ec-cube-enterprise へ合わせる。移行先で対応列を確認しきれない箇所は推測でスキーマ化せず「ec-cube-enterprise 実装で要確認」とする。</p>
-<hr>
-<h2 id="用語">用語</h2>
-<div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>在庫変更履歴</td><td>在庫数の変更記録。テーブル <code>dtb_stock_history</code>。出力の元データ。</td></tr><tr><td>在庫履歴検索条件</td><td>価格・在庫一覧で保持した検索フォーム値。セッションキー <code>admin.history.search</code>。出力の絞り込みに用いる。</td></tr><tr><td>BOM</td><td>UTF-8 のバイト順マーク。Excel での文字化け防止に先頭付与する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>在庫一覧でCSVダウンロードを押下</td><td><code>GET /%eccube_admin_route%/product/history/stock/export</code></td><td>保持した在庫履歴検索条件で在庫変更履歴のCSVをストリーム出力し、ファイルとしてダウンロードさせる。</td></tr></tbody></table></div>
-<p>CSVダウンロードのリンクは価格・在庫一覧の在庫一覧側に置かれた通常のリンクである。出力対象は画面で指定した検索条件にひもづくため、事前に在庫一覧で検索しておく必要がある。</p>
-<hr>
-<h2 id="フロント挙動">フロント挙動</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>専用画面は持たない。価格・在庫一覧の在庫一覧見出し付近のCSVダウンロードリンクから起動する。</td></tr><tr><td>JS 挙動</td><td>本機能では動的表示・モーダルを扱わない。リンク押下でダウンロードが始まる。</td></tr><tr><td>CSS・レイアウト</td><td>価格・在庫一覧のレイアウトに従う。</td></tr><tr><td>モーダル・ポップアップ</td><td>表示しない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="在庫履歴CSVを出力する">在庫履歴CSVを出力する</h3>
-<ol><li>利用者が在庫一覧のCSVダウンロードを押す。</li><li>在庫履歴の検索条件セッション（<code>admin.history.search</code>）から保持中の検索条件を読む。</li><li>在庫履歴検索フォームを生成し、保持値を流し込んで検索条件を復元する。</li><li>復元した検索条件で在庫変更履歴の検索用クエリを組み立てる。</li><li>ストリーム応答を用意し、応答本文の出力時にCSVを書き出す。</li><li>CSV出力ではファイルを開き、BOMを書き、固定ヘッダ行を書く。</li><li>クエリ結果を1件ずつ走査し、1件を在庫履歴の行形式に変換して書く。</li><li>出力を閉じ、ファイル名を付けてダウンロードさせる。</li></ol>
-<hr>
-<h2 id="集計条件">集計条件</h2>
-<div class="table-wrap"><table><thead><tr><th>指標</th><th>集計の要点</th></tr></thead><tbody><tr><td>出力対象</td><td>在庫変更履歴に、保持中の在庫履歴検索条件を適用したレコード。一覧画面と同じ検索用クエリを用いる。ページングは適用せず、該当する全件を反復取得する。</td></tr><tr><td>並び順</td><td>検索条件に応じた並び順（共通の履歴クエリ補助による）。商品ID指定時などは登録日降順・状態昇順となる。</td></tr></tbody></table></div>
-<p>ページ番号・表示件数は出力では使わない。在庫一覧の表示はページ単位だが、CSVは検索条件に一致する全件を対象とする。</p>
-<hr>
-<h2 id="表示メッセージ">表示メッセージ</h2>
-<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>画面上の文言(英語)</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M04-18-MSG-001</td><td>管理画面上部</td><td>存在しない在庫履歴IDが含まれています。 ／ 在庫履歴データが存在しないためエクスポートできません。</td><td>（英訳なし）</td><td>在庫履歴CSVを出力するとき、選択した在庫履歴が存在しない場合、または出力対象の在庫履歴データがない場合。</td><td>CSV出力に失敗し、操作前の画面に戻る。操作前の画面がない場合は在庫履歴一覧画面に遷移する。</td></tr></tbody></table></div>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>出力単位</td><td>在庫変更履歴1件を1行に出力する。</td></tr><tr><td>文字コード</td><td>UTF-8。先頭にBOMを付与する。</td></tr><tr><td>ファイル名</td><td><code>product_stock_history_</code> に出力時刻（年月日時分秒）を付け、拡張子 <code>.csv</code>。</td></tr><tr><td>状態列の値</td><td>規格拡張のメモがあればメモ、無ければ状態名を出力する。</td></tr><tr><td>値の変換</td><td>履歴に記録済みの値をそのまま出力する。集計・再計算は行わない。</td></tr></tbody></table></div>
-<p>本機能は入力フォームを持たないため、入力項目に紐づく表を持たない。出力列は次のとおり。</p>
-<p>CSVヘッダ列（左から）。</p>
-<p>列名は移行先 ec-cube-enterprise を正とし、現行（pf-eccube3）と異なる場合は括弧で現行名を添える。</p>
-<div class="table-wrap"><table><thead><tr><th>列</th><th>値の元</th></tr></thead><tbody><tr><td>商品コード</td><td>規格コード <code>dtb_product_class.product_code</code>（プロパティ code）。</td></tr><tr><td>商品名</td><td><code>dtb_product.name</code>。</td></tr><tr><td>言語</td><td>言語名 <code>mtb_language.name_jp</code>。</td></tr><tr><td>状態</td><td>規格拡張メモ <code>dtb_product_sub_class.memo</code>（ec-cube-enterprise 実装で要確認）。無ければ状態名。</td></tr><tr><td>変更前在庫数</td><td><code>dtb_stock_history.old_stock</code>。</td></tr><tr><td>変更後在庫数</td><td><code>dtb_stock_history.stock</code>。</td></tr><tr><td>備考</td><td><code>dtb_stock_history.stock_change_reason</code>（現行 memo）。</td></tr><tr><td>在庫変動理由</td><td><code>mtb_stock_change_type.name</code>。</td></tr><tr><td>登録日</td><td><code>dtb_stock_history.create_date</code>（<code>Y/m/d H:i</code> 書式）。</td></tr><tr><td>登録者</td><td>操作者名 <code>dtb_member.name</code>。</td></tr></tbody></table></div>
-<h3 id="エッジケース">エッジケース</h3>
-<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>検索条件が未保持（直前に検索していない）</td><td>セッションに検索条件が無い状態でクエリを組み立てる。一覧で検索済みの条件が無ければ条件無しに近い対象となる。条件の正は在庫履歴検索（M04-17）に従う。</td></tr><tr><td>該当0件</td><td>ヘッダ行のみのCSVを出力する。</td></tr><tr><td>大量件数</td><td>結果を1件ずつ反復しながらストリームに書く。</td></tr></tbody></table></div>
-<hr>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>一覧とCSV</td><td>CSVは在庫一覧と同じ検索条件を用いるが、ページングを適用しない全件である。一覧の表示ページとは件数が異なる。</td></tr><tr><td>出力時点</td><td>出力開始時点で在庫変更履歴を読み取った結果である。出力中の更新は反映しない。</td></tr><tr><td>履歴と現在値</td><td>履歴は変更時点の値であり、商品の現在在庫との一致は保証しない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="API-バッチ結果">API/バッチ結果</h2>
-<p>本機能では外部 HTTP API の呼び出しやバッチ実行を扱わない。ストリーム応答としてCSVを直接送る。</p>
-<hr>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="出力対象の在庫履歴">出力対象の在庫履歴</h3>
+<p>出力対象は、在庫履歴検索で保持している検索条件に該当する在庫変更履歴の全件とする。画面の入力項目は持たない。</p>
+<p>該当が0件の場合もヘッダ行だけのCSVを出力する。</p>
+<h3 id="値の取り方">値の取り方</h3>
+<p>在庫変更履歴に記録済みの値をそのまま出力する。集計と再計算は行わない。</p>
+<p>状態の列は、規格拡張のメモがあればメモを出力し、無ければ状態名を出力する。</p>
+<p>登録日は年月日と時分（<code>Y/m/d H:i</code>）の書式で出力する。</p>
+<h3 id="他機能との境界">他機能との境界</h3>
+<p>検索条件の指定と保持は「在庫履歴検索/一覧」（M04-17）を正とする。</p>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>セッションに保持された在庫履歴検索条件。</td></tr><tr><td>成功時出力</td><td>BOM付きUTF-8のCSVファイル。ヘッダ行＋該当全件の在庫履歴行。</td></tr><tr><td>失敗時出力</td><td>ストリーム出力中の例外はアプリケーションの共通処理に委ねる。本機能専用の利用者向けフォールバック文言は持たない。</td></tr><tr><td>副作用</td><td>在庫変更履歴・商品データの更新は行わない（読み取りのみ）。</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<p>当機能の出力が参照する列を示す。型の細部はスキーマを参照する。テーブル・列名は移行先 ec-cube-enterprise を正とし、現行（pf-eccube3）と異なる場合は括弧で現行名を添える。</p>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td>dtb_stock_history</td><td>old_stock, stock, stock_change_reason（現行 memo）, create_date, stock_change_type_detail_id（現行 stock_change_type_id）, member_id</td><td>在庫履歴の出力値・絞り込み。</td></tr><tr><td>dtb_product_class</td><td>product_code（プロパティ code）</td><td>商品コード列。</td></tr><tr><td>dtb_product</td><td>name</td><td>商品名列。</td></tr><tr><td>dtb_product_sub_class</td><td>memo</td><td>状態列のメモ。ec-cube-enterprise に該当テーブルが見当たらない（ec-cube-enterprise 実装で要確認）。</td></tr><tr><td>mtb_stock_change_type</td><td>name</td><td>在庫変動理由列。</td></tr><tr><td>mtb_language</td><td>name_jp</td><td>言語列。</td></tr><tr><td>dtb_member</td><td>name</td><td>登録者列。</td></tr></tbody></table></div>
-<h3 id="DB操作">DB操作</h3>
-<p>本機能は参照系（検索・出力）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>検索</td><td>dtb_stock_history（商品・規格・操作者・区分マスタを結合）</td><td>検索条件に合致する在庫変更履歴を抽出し、CSV出力する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="バリデーション">バリデーション</h2>
-<p>本機能は照会・出力のみで入力フォームを持たない。検索条件の検証は在庫履歴検索（M04-17）の範囲とする。</p>
-<hr>
-<h2 id="権限・認可">権限・認可</h2>
-<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>在庫履歴CSV出力</th></tr></thead><tbody><tr><td>管理画面にログインし当該ルートへ到達できる運用者</td><td>利用できる。細かいロール単位の可否は管理画面のセキュリティ設定と権限マスタの実装を正とする。</td></tr><tr><td>未ログインまたは拒否された主体</td><td>管理画面共通の挙動により利用できない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="画面遷移">画面遷移</h2>
-<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>CSVダウンロードを押下</td><td>画面遷移はせず、ファイルダウンロードのストリーム応答を返す。</td></tr></tbody></table></div>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>出力中の例外</td><td>アプリケーションの共通例外処理に委ねる。</td></tr><tr><td>該当0件</td><td>ヘッダ行のみのCSVを正常に出力する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="ログ・監査">ログ・監査</h2>
-<div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>CSV出力</td><td>本機能は照会・出力のみで業務監査ログを追加しない。</td></tr></tbody></table></div>
-<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
-<ul><li>パスワード</li><li>なりすまし対策トークン</li><li>Cookie 値</li><li>セッション ID の完全値</li><li>Remember Me トークンの原値</li><li>登録者名など個人情報を含むCSV内容のログ転載</li></ul>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<p>出力は読み取り主体であり、本機能単体では楽観ロックや明示トランザクション境界を持たない。</p>
-<hr>
-<h2 id="調査補助-ソース位置の索引">調査補助（ソース位置の索引）</h2>
-<p>grep 用のパスのみ示す。ふるまいの正は実装本文とする。</p>
-<ul><li><code>app/Plugin/HareruyaEc/Controller/Admin/Product/HistoryController.php</code>（<code>exportStockHistory</code>。ルート <code>admin_product_stock_history_export</code>。<code>getQueryBuilderForExport</code> でセッション <code>admin.history.search</code> を復元）</li><li><code>app/Plugin/HareruyaEc/Service/Csv/HistoryCsv.php</code>（<code>exportCsv($qb, 'stock')</code>、<code>convertStockHistoryCsvRow</code>、<code>EXPORT_INFO['stock']</code> のヘッダ定義）</li><li><code>app/Plugin/HareruyaEc/Repository/DtbStockHistoryRepository.php</code>（<code>getQueryBuilderBySearchData</code>）</li></ul>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>在庫履歴検索で保持している検索条件</td></tr><tr><td>成功時出力</td><td>在庫履歴のCSVファイル</td></tr><tr><td>失敗時出力</td><td>出力対象が存在しない場合のエラーメッセージ</td></tr></tbody></table></div>
+<h3 id="出力-CSVファイル">出力: CSVファイル</h3>
+<p>文字コードはUTF-8とし、先頭にBOMを付ける。ファイル名は <code>product_stock_history_</code> に出力時刻（年月日時分秒）を付け、拡張子を <code>.csv</code> とする。</p>
+<p>在庫変更履歴1件を1行として出力する。</p>
+<h3 id="出力する列">出力する列</h3>
+<div class="table-wrap"><table><thead><tr><th>列</th><th>値</th></tr></thead><tbody><tr><td>商品コード</td><td>規格コード</td></tr><tr><td>商品名</td><td>商品名</td></tr><tr><td>言語</td><td>言語名</td></tr><tr><td>状態</td><td>規格拡張のメモ。無ければ状態名</td></tr><tr><td>変更前在庫数</td><td>変更前の在庫数</td></tr><tr><td>変更後在庫数</td><td>変更後の在庫数</td></tr><tr><td>備考</td><td>在庫変更時の備考</td></tr><tr><td>在庫変動理由</td><td>在庫変動理由名</td></tr><tr><td>登録日</td><td>登録日時</td></tr><tr><td>登録者</td><td>操作した管理者の名前</td></tr></tbody></table></div>
+<p>列名は移行先を正とする。</p>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
+<h2 id="表示メッセージ">表示メッセージ</h2>
+<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M04-18-MSG-001</td><td>管理画面上部</td><td>存在しない在庫履歴IDが含まれています。／在庫履歴データが存在しないためエクスポートできません。</td><td>選択した在庫履歴が存在しないとき、または出力対象の在庫履歴が無いとき</td><td>出力せず操作前の画面に戻る。操作前の画面が無い場合は在庫履歴一覧画面に遷移する</td></tr></tbody></table></div>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

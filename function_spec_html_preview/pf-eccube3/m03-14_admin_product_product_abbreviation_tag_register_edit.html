@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,42 +272,15 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#フロント挙動">フロント挙動</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#新規一覧とフォームを表示する-GET-admin-product-storage-code-および-GET-admin-product-storage-code-page">新規一覧とフォームを表示する（`GET admin_product_storage_code` および `GET admin_product_storage_code_page`）</a>
-<a class="lv3" href="#編集一覧とフォームを表示する-GET-admin-product-storage-code-edit-および-GET-admin-product-storage-code-edit-page">編集一覧とフォームを表示する（`GET admin_product_storage_code_edit` および `GET admin_product_storage_code_edit_page`）</a>
-<a class="lv3" href="#略称タグを保存する-POST-admin-product-storage-code-store">略称タグを保存する（`POST admin_product_storage_code_store`）</a>
-<a class="lv3" href="#略称タグを削除する-DELETE-admin-product-storage-code-delete">略称タグを削除する（`DELETE admin_product_storage_code_delete`）</a>
-<a class="lv2" href="#集計条件">集計条件</a>
-<a class="lv2" href="#保存および削除時の判定順序-登録送信">保存および削除時の判定順序（登録送信）</a>
-<a class="lv3" href="#削除">削除</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
-<a class="lv3" href="#入力項目">入力項目</a>
-<a class="lv3" href="#エッジケース">エッジケース</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#一覧と入力欄">一覧と入力欄</a>
+<a class="lv3" href="#保存の判定順序">保存の判定順序</a>
+<a class="lv3" href="#削除の判定順序">削除の判定順序</a>
+<a class="lv3" href="#エラー時の扱い">エラー時の扱い</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#バリデーション">バリデーション</a>
-<a class="lv2" href="#権限・認可">権限・認可</a>
-<a class="lv2" href="#画面遷移">画面遷移</a>
-<a class="lv3" href="#遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#表示メッセージ">表示メッセージ</a>
-<a class="lv2" href="#試行制限">試行制限</a>
-<a class="lv2" href="#ログ・監査">ログ・監査</a>
-<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
-<a class="lv2" href="#セッション">セッション</a>
-<a class="lv3" href="#本機能におけるセッション">本機能におけるセッション</a>
-<a class="lv3" href="#セッションへ保存しない情報">セッションへ保存しない情報</a>
-<a class="lv2" href="#Cookie">Cookie</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a>
-<a class="lv2" href="#調査補助-ソース照合用">調査補助（ソース照合用）</a>
-<a class="lv3" href="#HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</a></nav>
+<a class="lv3" href="#入出力-永続化">入出力: 永続化</a>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -305,103 +288,26 @@ footer {
         <h1>商品管理 — 略称タグ登録/編集</h1>
       </header>
       
-      <h2 id="概要">概要</h2>
-<p>管理画面「商品管理」にある「略称タグ登録／編集」機能である。<code>mtb_storage_code</code> に対応するマスタ一行を画面上部のフォームで新規作成または更新し、下部に同一マスタを並び順でページ分割した一覧を表示する。一覧のリンクから編集モードへ切り替え、同じ送信ボタンで更新する。 同一 Twig 上には CSV 出力・CSV インポート画面へのリンクと、行ごとの削除導線もあるが、そのうち削除の論理と CSV／エクスポートのストリーム仕様は本書では深掘りしない。 本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。 ec-cube-enterprise のコア管理画面におけるルート <code>admin_product_storage_code*</code> 系、テンプレート <code>admin/Product/storage_code.twig</code>、フォーム型 <code>storage_code</code>、<code>mtb_storage_code</code> を確認値とする。カスタマイズ区分は現行踏襲であり、現行挙動は pf-eccube3 を参照し、DB関連（テーブル名・列名・型・制約・関連）は ec-cube-enterprise を正とする。</p>
-<p>対象はブラウザ経由の管理画面に限定する。</p>
-<p>コントローラのメソッド単位の解剖は本文の主説明としない。本文ではルートbind名やSymfonyのルートnameの網羅は主説明としない。「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。コード探索でbind名が必要なときだけ「調査補助」へ書く。</p>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<p>現行（pf-eccube3）と移行先（ec-cube-enterprise）のDBスキーマを比較した結果は次のとおり。相違が判明した場合は ec-cube-enterprise 実装を正とする。</p>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>略称タグ本体</td><td><code>mtb_storage_code</code>（<code>id</code>・<code>name</code>・`<code> </code>rank<code> </code><code>・</code>alphabet_sort_flg`）</td><td>同一スキーマ。<code>name</code> は文字列長 255。</td></tr><tr><td>並び順キー</td><td>`<code> </code>rank<code> </code>` 昇順</td><td>同一。現行・移行先で <code>rank</code> を用い、<code>sort_no</code> への置き換えは無い。</td></tr><tr><td>削除方式</td><td>紐付け商品が無いとき物理削除</td><td>同一。論理削除列は持たない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>ナビから略称タグ登録／編集</td><td><code>GET /{admin_route}/product/storage</code></td><td>上部に登録フォーム、下部に一覧。ページおよび表示件数はセッションまたは既定に従う。</td></tr><tr><td>一覧ページ送りのみ</td><td><code>GET /{admin_route}/product/storage/page/{page_no}</code></td><td>一覧のページが切り替わる。現在のページ番号はセッション <code>admin.product.storage.page_no</code> に書き込む。</td></tr><tr><td>行の id または名称または「変更」</td><td><code>GET /{admin_route}/product/storage/{id}</code></td><td>上部フォームが当該行の内容になり、一覧は表示される。「新規登録へ戻る」がヘッダ付近に出る場合がある。</td></tr><tr><td>編集中のページ送り</td><td><code>GET /{admin_route}/product/storage/{id}/page/{page_no}</code></td><td>編集状態を維持したまま一覧ページだけ変える。ページャはこのルート名を使ってリンクする。</td></tr><tr><td>画面下部「登録」</td><td><code>POST /{admin_route}/product/storage_code/store</code>（新規時）または <code>POST /{admin_route}/product/storage_code/store/{id}</code>（編集時）</td><td>フォームに載った名称・並び順・チェックの内容が検証される。妥当なら保存し、成功フラッシュのあと <code>GET …/product/storage</code> にリダイレクトされる（実装ソースは同名ルートを指し、そのルート既定に <code>page_no</code> などがあるのみで、復帰先パス末尾に編集 <code>{id}</code> を付けない）。妥当でなければ同じ一覧トップ向けへのリダイレクトであり失敗フラッシュのみとなる。一覧に新規行があるなら一覧から再度編集を開ける。</td></tr><tr><td>表示件数プルダウン</td><td><code>GET</code>（現在のパス維持）にクエリ <code>page_count=</code> を追加</td><td><code>.js-page-count</code> の変更でクエリのみ付いて再読込。許容リストは <code>[10, 50, 100, 300, 500, 1000]</code>。選択値はセッション <code>admin.product.storage.page_count</code>。</td></tr><tr><td>行の削除（window.confirm 確認ダイアログ経由）</td><td><code>DELETE /{admin_route}/product/storage_code/{id}/delete</code></td><td>コアの共通トークン名で CSRF が検証される。関連商品がある略称タグは削除されずメッセージ鍵ベースで訳文がフラッシュされる。無関係な略称タグは DELETE 済みフラッシュあり。一覧トップへ戻るリダイレクト。</td></tr></tbody></table></div>
-<hr>
-<h2 id="フロント挙動">フロント挙動</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td><code>menus = ['product', 'storage_code']</code>。タイトル「商品管理」、サブタイトルは新規または編集で切替。親カードの見出しは翻訳キー <code>admin.common.registration__add</code> または <code>admin.common.edit</code>。名称ラベルは翻訳キー <code>admin.setting.shop.trade_law.header.name</code>（日本語確認値は「名称」）、並び順は <code>admin.product.format.format_rank</code>。チェック項目はフォーム型のラベル文字列どおり画面上にチェックボックスとして出る（日本語環境での文言はソース上「アルファベット順ソートフラグ」。一覧表の並び順列はチェック状態に応じて「アルファベット」「コレクター番号」と表示のみで固定文案）。画面上の送信ボタン文言は Twig 側で固定の「登録」（翻訳キーには結び付けていない）。一覧は id・名称へ編集へのリンク、<code>admin.common.edit</code> ボタン、<code>admin.common.delete</code> ボタン（モーダル文言は <code>admin.common.delete_modal__message</code>）。ヘッダ右に CSV 出力・インポート画面へのリンク。編集中表示の「新規登録へ戻る」は <code>admin.common.back_to_new_registration</code>。</td></tr><tr><td>JS 挙動</td><td><code>.js-page-count</code> の change でクエリに <code>page_count</code> をセットしてページ全体を読み込み直す。削除リンクは共通スクリプトにより <code>DELETE</code> メソッド化と確認ダイアログが付く想定であり、詳細は管理画面共通部品とする。</td></tr><tr><td>CSS・レイアウト</td><td>テンプレート内にページ見出し用の細い書式のみ。コンテンツレイアウトは <code>default_frame.twig</code> 系へ準拠。</td></tr><tr><td>モーダル・ポップアップ</td><td>削除前の確認のみ（削除共通）。登録送信前に独自の確認は無い。</td></tr></tbody></table></div>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="新規一覧とフォームを表示する-GET-admin-product-storage-code-および-GET-admin-product-storage-code-page">新規一覧とフォームを表示する（<code>GET admin_product_storage_code</code> および <code>GET admin_product_storage_code_page</code>）</h3>
-<ol><li>管理画面共通の認証を通過する。</li><li>パラメータ <code>StorageCode</code> を渡さないため、処理内では新規エンティティを生成してフォームのデータモデルとする。</li><li>フォーム型 <code>storage_code</code> でフォームビルダを構成し、そのままフォームオブジェクト生成。</li><li>セッションにページ番号（キー確認値 <code>admin.product.storage.page_no</code>）および表示件数（キー確認値 <code>admin.product.storage.page_count</code>）を保存する。クエリまたはパスにある <code>page_no</code>・<code>page_count</code> が優先される。</li><li>リポジトリの並び順 <code>rank</code> 昇順のクエリをページネーションに渡して一覧を用意する。</li><li>Twig で <code>form</code> と <code>pagination</code> と <code>id = null</code>、<code>page_no</code>、<code>page_count</code> を渡して描画。フォーム <code>action</code> は <code>admin_product_storage_code_store</code> とし <code>id</code> 引数は null（生成 URL は末尾セグメントなしの <code>/storage_code/store</code>）。</li></ol>
-<h3 id="編集一覧とフォームを表示する-GET-admin-product-storage-code-edit-および-GET-admin-product-storage-code-edit-page">編集一覧とフォームを表示する（<code>GET admin_product_storage_code_edit</code> および <code>GET admin_product_storage_code_edit_page</code>）</h3>
-<ol><li>ルートコンバータが id に対応する行を読めないとき HTTP 404。</li><li>同上でフォームを組み、その行をデータモデルとしてバインド。</li><li>セッションのページおよび件数処理は新規一覧と同一。</li><li>Twig の <code>id</code> は当該行の主キー。ページャへの route 名だけ <code>admin_product_storage_code_edit_page</code> になり、<code>params</code> に <code>id</code> が含まれる。フォーム <code>action</code> は <code>admin_product_storage_code_store</code> に <code>id</code>。</li></ol>
-<h3 id="略称タグを保存する-POST-admin-product-storage-code-store">略称タグを保存する（<code>POST admin_product_storage_code_store</code>）</h3>
-<ol><li>ルート末尾に <code>{id}</code> があるとき、コンバータが当該行を渡す。末尾が無ければデータモデルを null のままビルダに渡し、その後 <code>handleRequest</code> で投入される。</li><li><code>handleRequest</code> 後、未送信または <code>isValid</code> が偽ならフラッシュ種別エラーとして <code>admin.register.failed</code> を積む（日本語環境での確認文言は「登録できませんでした。」）。</li><li>失敗時は <code>GET …/product/storage</code> へ HTTP 302。編集入力の復元や同一画面でのフィールド直下エラー表示はしない。</li><li><code>isValid</code> が真なら、フォームデータのエンティティをそのまま <code>persist</code> と <code>flush</code> とする。</li><li>成功時はフラッシュ <code>admin.register.complete</code>（日本語環境での確認文言は「登録が完了しました。」）。</li><li>成功後のコードは <code>redirectToRoute('admin_product_storage_code', ['id' =&gt; 保存済みエンティティの主鍵])</code> とある。この名前だけを指しているため復帰先は <code>/{admin_route}/product/storage</code> である。サイトルートに <code>{id}</code> セグメントが無く、Doctrineのエンティティ引数解決は <code>{id}</code> プレースホルダに結びつかないため、<code>$StorageCode</code> 引数は null のまま <code>index</code> に入り、処理先頭で新規オブジェクトへ置き換えられる。画面上部フォームとサブタイトル文言は一覧トップ側の新規状態に読み換わる。<code>redirectToRoute</code> に渡している <code>id</code> キーはSymfonyのサイトルートと一致しない余剰キーとなるためクエリだけへ反映されても画面上の自動編集状態とは結びつかない運用となる。一覧で保存済み一行を確認し、継続編集には <code>GET …/storage/{id}</code> のリンクへ戻る。</li><li>明示的なトランザクション境界はソース上は ORM の <code>flush</code> に任せている。</li></ol>
-<h3 id="略称タグを削除する-DELETE-admin-product-storage-code-delete">略称タグを削除する（<code>DELETE admin_product_storage_code_delete</code>）</h3>
-<ol><li>基底コントローラのトークン検証を通す。共通トークン名のパラメータまたはヘッダ <code>ECCUBE-CSRF-TOKEN</code> と照合され、無効時はフレームワークがアクセス拒否（HTTP 403）となる。</li><li>当該略称タグが 1 件でも商品へ参照されているとき、メッセージ鍵は <code>admin.storage.delete.failed</code>。プレースホルダ <code>%name%</code> は略称タグの名称。この翻訳文面は環境ロードセットに依存する。エラーとしてフラッシュ処理し一覧トップへ戻り、削除は起こらない。</li><li>関連商品が 0 件なら削除し、成功フラッシュ <code>admin.common.delete_complete</code> と一覧トップへのリダイレクト。</li><li>明示的ログの埋め込みはこのメソッド内には無い。</li></ol>
-<hr>
-<h2 id="集計条件">集計条件</h2>
-<p>本機能では金額集計などを行わない。一覧ページネーションのみで、並び順のキーは <code>rank</code> 昇順の全件クエリ結果をウィンドウに切るだけである。</p>
-<hr>
-<h2 id="保存および削除時の判定順序-登録送信">保存および削除時の判定順序（登録送信）</h2>
-<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>送信後のSymfonyフォーム妥当性判定</td><td>不備時はフラッシュのみで <code>GET …/product/storage</code> へリダイレクト。</td></tr><tr><td>2</td><td>妥当で永続化</td><td><code>redirectToRoute('admin_product_storage_code', …)</code> で成功フラッシュ。上部フォームは新規用に再描画される（理由は処理フロー項を正とする）。</td></tr></tbody></table></div>
-<p>（フォーム側 CSRF トークンの不一致についてはSymfonyフォーム処理の側で異常となる。本文では HTTP 状態や例外の細部まで固定しない）</p>
-<h3 id="削除">削除</h3>
-<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>共通 CSRF</td><td>無効時は Symfony アクセス拒否（HTTP 403）。</td></tr><tr><td>2</td><td><code>getProducts</code> のコレクション件数が 0 より大きいか</td><td>はいなら削除せずフラッシュのみ。</td></tr><tr><td>3</td><td>（上記に該当しなければ）物理削除および flush</td><td></td></tr></tbody></table></div>
-<hr>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<p>名称の重複や並び順の重複について、画面フォームとコントローラ単体にはアプリ独自のチェックロジックは無く、DB にユニーク制約があるかは別途スキーマを見ることとする。 アルファベットフラグ自体は並び順数値とは独立した列であり、画面上の一覧「並び順」列はフラグ状態のラベルを表示しているだけであり、並び順数値とは別項目である。 本機能はコア機能に属し、プラグインフォームイベントで拡張され得る点はソース差分での確認値とする。</p>
-<h3 id="入力項目">入力項目</h3>
-<div class="table-wrap"><table><thead><tr><th>項目名</th><th>必須／任意</th><th>最大長</th><th>初期値</th><th>保存先・扱い</th></tr></thead><tbody><tr><td>名称</td><td>必須</td><td>フォーム型にSymfony <code>Length</code> 制約無し。永続先列はDoctrineで文字列長確認値255</td><td>新規は未入力状態でウィジェットだけ描画される。編集は <code>mtb_storage_code.name</code>。</td><td>Symfony <code>NotBlank</code>。キー <code>storage_code[name]</code>。列 <code>mtb_storage_code.name</code>。</td></tr><tr><td>並び順</td><td>必須</td><td>整数入力。検証として <code>Range</code> 最小0最大32767。<code>notInRangeMessage</code> は StorageCodeType.php:51 の直書きリテラル <code>並び順は {{ min }} から {{ max }} の間で入力してください。</code>（翻訳キーではない。M03-14-MSG-010）。</td><td>編集時は現在のランク。</td><td>キー <code>storage_code[rank]</code>。列 <code>mtb_storage_code.rank</code>（マッピング上は名前付きランクカラム）。 Symfony <code>IntegerType</code> と <code>NotBlank</code>。</td></tr><tr><td>アルファベット順ソートフラグ</td><td>任意</td><td>チェックオンオフ論理値</td><td><code>false</code>。編集は列の現在値。</td><td>キー <code>storage_code[alphabetSortFlg]</code>。列 <code>mtb_storage_code.alphabet_sort_flg</code>。チェックオンで真、送信に含まれずならSymfonyチェック種の既定により偽側と解釈される。</td></tr></tbody></table></div>
-<h3 id="エッジケース">エッジケース</h3>
-<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>登録送信で入力不備があったとき</td><td>編集中であっても <code>GET …/product/storage</code> へ戻る。入力エラー一覧はフラッシュのみで一覧トップ状態の画面が返るため、入力途中の復元には向かない。</td></tr><tr class="section-row"><td colspan="2">登録送信が成功した直後も <code>GET …/product/storage</code> へリダイレクトされ、上部フォームは新規状態として再レイアウトされる。一覧側で結果を確認し、必要なら編集へのリンクへ戻る。</td></tr><tr><td><code>/product/storage/{存在しない id}</code> に GET</td><td>404。</td></tr><tr><td>DELETE で商品と紐づいた略称タグ</td><td>メッセージ鍵のみ確定、そのまま一覧トップへ。</td></tr><tr><td>CSV 出力・インポート</td><td>詳細処理は別。画面からは単に別ルートへ遷移する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="データ整合性">データ整合性</h2>
-<p>保存後のリダイレクト先も結局 <code>GET …/product/storage</code> 側の一覧と一覧上のウィンドウ位置はセッションとページ情報に従い再クエリされる。データベース上の値はフラッシュ適用より前で既に確定済みになる。 画面上部フォームに表示されるのは、このGETで新しく組んだ未永続エンティティに基づくため、一覧の各行の名前・並び順と上部フォーム表示は自動では一致しない点に注意する。 他画面で同じ略称タグを同時変更したときのロックやバージョン列はソース上読み取れず、競合結果はデータベース最終勝ちに近い挙動とする（別途楽観鎖フラグがある場合は本体スキーマを見る）。 一覧のページ番号はセッションに残るので、一覧と編集状態の論理的な一致はユーザー操作順に依存する。</p>
-<hr>
-<h2 id="API-バッチ結果">API/バッチ結果</h2>
-<p>管理画面経由でのCSVエクスポート・インポートはそれぞれ別ルートに属する。登録送信自体はブラウザPOSTのみであり、公開APIやキューバッチの起動とは無関係として本節対象にしない。 本機能の登録処理が外部APIを明示的には呼んでいないことを確認値として記載するのみとする。</p>
-<hr>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="一覧と入力欄">一覧と入力欄</h3>
+<p>画面は略称タグの一覧と入力欄を同時に出す。一覧は並び順の昇順で並べ、ページ番号と表示件数を保持する。要求にページ番号または表示件数の指定があるときは、その値を優先する。</p>
+<p>編集の対象を指定したときは当該の略称タグを入力欄に読み込む。対象が無いときは 404 とする。対象を指定しないときは新規の入力欄とする。</p>
+<p>一覧の「並び順」列は、アルファベットかどうかのラベルを表示する。並び順の数値とは別の項目である。</p>
+<h3 id="保存の判定順序">保存の判定順序</h3>
+<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>入力の検証を満たすか</td><td>満たさないときは保存せず、一覧の先頭へ戻す。入力した値は復元せず、入力欄の直下にもエラーを出さない</td></tr><tr><td>2</td><td>検証を満たしたとき</td><td>略称タグを登録または更新し、一覧の先頭へ戻す</td></tr></tbody></table></div>
+<p>保存後は一覧の先頭へ戻り、入力欄は新規の状態で表示する。続けて同じ略称タグを編集するときは、一覧から当該の略称タグを選び直す。</p>
+<p>名称の重複と並び順の重複について、画面側の確認は行わない。</p>
+<h3 id="削除の判定順序">削除の判定順序</h3>
+<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>なりすまし対策トークンが有効か</td><td>無効のときはアクセス拒否（HTTP 403）とする</td></tr><tr><td>2</td><td>当該の略称タグを使う商品が 1 件でもあるか</td><td>あるときは削除せず、一覧の先頭へ戻す</td></tr><tr><td>3</td><td>使う商品が 1 件も無いとき</td><td>削除し、一覧の先頭へ戻す</td></tr></tbody></table></div>
+<h3 id="エラー時の扱い">エラー時の扱い</h3>
+<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>入力の検証を満たさない</td><td>保存せず、一覧の先頭へ戻す</td></tr><tr><td>削除しようとした略称タグを商品が使っている</td><td>削除せず、一覧の先頭へ戻す</td></tr><tr><td>削除でなりすまし対策トークンが無効</td><td>アクセス拒否（HTTP 403）とする</td></tr></tbody></table></div>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>GET 側はページ番号、表示件数、編集対象の id（任意）、POST はフォーム複数項目とSymfonyフォーム用トークン。DELETE は共通 CSRF パラメータ。</td></tr><tr><td>成功時出力</td><td>HTML 一覧とフォームまたはリダイレクトによる再GET。フラッシュ種別により完了・失敗のメッセージ帯がある。CSV系はバイナリストリーム。</td></tr><tr><td>失敗時出力</td><td>バリデーション失敗でもHTMLは一覧トップ向けのみ。異常応答コードはSymfonyとルーターに従う。</td></tr><tr><td>副作用</td><td>INSERT または UPDATE により <code>mtb_storage_code</code>。DELETE で同一行削除。セッションのページ状態更新。フラッシュスタックへの積増。削除で関連チェックのみ、カスケードの詳細はリレーション側のCascade定義および商品側コードを確認する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>mtb_storage_code</code></td><td><code>id</code></td><td>主キー自動採番。</td></tr><tr><td><code>mtb_storage_code</code></td><td><code>name</code></td><td>略称タグ名称。画面上「名称」とラベル付け。</td></tr><tr><td><code>mtb_storage_code</code></td><td>`<code> </code>rank<code> </code>`</td><td>並び順。昇順クエリおよびCSV見出しの「並び順」と対応。</td></tr><tr><td><code>mtb_storage_code</code></td><td><code>alphabet_sort_flg</code></td><td>並び順列のユーザー向け表示と、各種並べ替えSQLで参照される（業務的意味の網羅は本書対象外）。</td></tr></tbody></table></div>
-<h3 id="DB操作">DB操作</h3>
-<p>永続化の正は ec-cube-enterprise。商品系は承認ワークフローを介さず persist/flush で直接確定する（在庫の承認ワークフローとは別系統。<code>ProductController</code>・各CSVサービスで確認）。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>登録/更新</td><td>mtb_storage_code</td><td>当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。</td></tr></tbody></table></div>
-<hr>
-<h2 id="バリデーション">バリデーション</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>名称</td><td>Symfony <code>NotBlank</code>。 Length 明示なしでも255列に対して保存時運用環境およびDB側に従う。</td></tr><tr><td>並び順</td><td><code>NotBlank</code> と <code>IntegerType</code> と 0〜32767 の Range。エラーコメントはソース上日本語ひな型。</td></tr><tr><td>アルファベットフラグ</td><td>必須制約無しのチェック。</td></tr><tr><td>DELETE</td><td>共通CSRFのみ加え、アプリ側は関連商品個数のみを見て拒否または実行。</td></tr></tbody></table></div>
-<hr>
-<h2 id="権限・認可">権限・認可</h2>
-<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>画面上の一覧・編集フォームおよび登録POST</th></tr></thead><tbody><tr><td>未ログイン</td><td>ファイアウォールにより管理画面共通の認証チャレンジへ進むまで本ルートのアクション処理には入らない。</td></tr><tr><td>管理画面ログイン済み運用者</td><td>ルート単位のアノテーションにより追加の許可フラグ情報はソース上読み取っておらず、商品管理へ辿れる主体はいずれも当画面を再利用し得る。</td></tr></tbody></table></div>
-<hr>
-<h2 id="画面遷移">画面遷移</h2>
-<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>一覧の編集へのリンクまたは id または名称リンク</td><td><code>GET …/product/storage/{id}</code></td></tr><tr><td>「新規登録へ戻る」リンク</td><td><code>GET …/product/storage</code></td></tr><tr><td>「登録」押下後成功または失敗</td><td>いずれも <code>GET admin_product_storage_code</code>（サイトルート上は <code>/{admin_route}/product/storage</code>）。成功時のみ成功フラッシュ。失敗時は失敗フラッシュ。</td></tr><tr><td>「CSV 出力」「CSV に取込」</td><td>それぞれ <code>GET …/export</code> と <code>GET …/csv</code>。詳細フォーマットも含め処理は別。</td></tr><tr><td>削除実行後成功または商品紐づけ失敗</td><td><code>GET …/product/storage</code></td></tr></tbody></table></div>
-<h3 id="遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</h3>
-<div class="table-wrap"><table><thead><tr><th>起点</th><th>遷移前の処理</th><th>遷移後の初期状態</th></tr></thead><tbody><tr><td>GET 一覧／編集</td><td>ページおよび件数をセッションに書き込む（キー確認値は本文の処理フローに記載）</td><td>一覧のウィンドウ位置と入力欄の内容が揃っている（失敗復帰の例外は一覧トップに落とすのみ）</td></tr></tbody></table></div>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>フォーム入力不備</td><td>フラッシュ種別エラー、<code>admin.register.failed</code>。リダイレクト先一覧トップ。フィールド側のSymfonyエラー一覧は画面上に復元されず捨てられる構造となる。</td></tr><tr><td>DELETE 時に関連商品がある</td><td>メッセージ鍵ベースでエラーフラッシュ。一覧トップへ。データは削除されない。</td></tr><tr><td>DELETE 時共通CSRF が無効</td><td>Symfony アクセス拒否（HTTP 403）。詳細応答体裁は共通実装による。</td></tr></tbody></table></div>
-<hr>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>一覧はページ番号と表示件数、編集は対象の略称タグ。保存は入力欄一式となりすまし対策トークン。削除はなりすまし対策トークン</td></tr><tr><td>成功時出力</td><td>一覧と入力欄の画面、または一覧の先頭への戻り。完了または失敗のメッセージを伴う</td></tr><tr><td>失敗時出力</td><td>検証を満たさないときも一覧の先頭へ戻す。対象が無いときは 404、トークンが無効のときは HTTP 403</td></tr></tbody></table></div>
+<h3 id="入出力-永続化">入出力: 永続化</h3>
+<div class="table-wrap"><table><thead><tr><th>操作</th><th>契機</th></tr></thead><tbody><tr><td>追加・更新</td><td>入力の検証を満たして保存したとき</td></tr><tr><td>削除</td><td>当該の略称タグを使う商品が 1 件も無いとき</td></tr></tbody></table></div>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
 <h2 id="表示メッセージ">表示メッセージ</h2>
-<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>画面上の文言(英語)</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M03-14-MSG-001</td><td>管理画面上部</td><td>登録できませんでした。</td><td>（英訳なし）</td><td>登録内容に不備があるまま保存したとき</td><td>商品管理 — 略称タグ登録／編集画面に遷移する</td></tr><tr><td>M03-14-MSG-002</td><td>管理画面上部</td><td>登録が完了しました。</td><td>（英訳なし）</td><td>略称タグを登録または編集して保存したとき</td><td>商品管理 — 略称タグ登録／編集画面に遷移する</td></tr><tr><td>M03-14-MSG-003</td><td>管理画面上部</td><td>商品で使用されているため、「%name%」の略称タグは削除することができません。</td><td>（英訳なし）</td><td>商品で使用中の略称タグを削除しようとしたとき</td><td>商品管理 — 略称タグ登録／編集画面に遷移する</td></tr><tr><td>M03-14-MSG-004</td><td>管理画面上部</td><td>削除しました</td><td>（英訳なし）</td><td>使用されていない略称タグを削除したとき</td><td>商品管理 — 略称タグ登録／編集画面に遷移する</td></tr><tr><td>M03-14-MSG-005</td><td>管理画面上部</td><td>入力されていません。</td><td>（英訳なし）</td><td>CSVファイルを選択せずにインポートを実行したとき</td><td>処理を中止し、CSV登録画面に遷移する</td></tr><tr><td>M03-14-MSG-006</td><td>管理画面上部</td><td>CSVのフォーマットが一致しません</td><td>（英訳なし）</td><td>CSVファイルを指定せずにインポートしたとき</td><td>略称タグCSVアップロード画面に遷移する</td></tr><tr><td>M03-14-MSG-007</td><td>管理画面上部</td><td>CSVのフォーマットが一致しません</td><td>（英訳なし）</td><td>形式が正しくないCSVファイルをインポートしたとき</td><td>略称タグCSVアップロード画面に遷移する</td></tr><tr><td>M03-14-MSG-008</td><td>管理画面上部</td><td>登録が完了しました。</td><td>（英訳なし）</td><td>CSVファイルのインポートが完了したとき</td><td>略称タグCSVアップロード画面に遷移する</td></tr><tr><td>M03-14-MSG-009</td><td>ブラウザ確認ダイアログ（window.confirm）</td><td>この操作はあとから取り消すことができません。「%name%」を削除してよろしいですか？</td><td>（英訳なし）</td><td>略称タグの削除ボタンを押したとき（送信前確認）</td><td>承認時はDELETEフォームを送信し、キャンセル時は画面にとどまる</td></tr><tr><td>M03-14-MSG-010</td><td>管理画面上部</td><td>並び順は {{ min }} から {{ max }} の間で入力してください。</td><td>（英訳なし）</td><td>並び順に指定できる範囲外の値を入力して保存したとき</td><td>処理を中止し、略称タグ一覧画面に遷移する</td></tr><tr><td>M03-14-MSG-011</td><td>画面中央(ダイアログ)</td><td>この操作はあとから取り消すことができません。「%name%」を削除してよろしいですか？</td><td>（英訳なし）</td><td>略称タグ一覧の削除ボタンを押したとき（送信前確認）</td><td>キャンセルでモーダルを閉じる</td></tr></tbody></table></div>
-<hr>
-<h2 id="試行制限">試行制限</h2>
-<p>本機能ではレートリミットやロックアウトを設けず、Symfonyセッションを使うのみである。</p>
-<hr>
-<h2 id="ログ・監査">ログ・監査</h2>
-<p>一覧画面の単純参照や単行保存処理にアプリ側で詳細ログを明示的に出力するコードパスは薄い一方、一覧画面とは別にあるCSVインポートのコントローラメソッドはログ関数にメッセージを出す。この登録送信パスだけを見れば、保存成功でも失敗でも管理画面共通の開発ログとは別個のイベントログ強制はソース上読み取れない。</p>
-<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
-<ul><li>パスワード値</li><li>なりすまし対策用のCSRFまたはセッションIDのすべて</li><li>Remember Me に関わる不可逆トークンの原データ</li><li>利用者入力のCSV内部の全部（CSV機能用のログを書くなら項目設計側で検討すること）</li></ul>
-<hr>
-<h2 id="セッション">セッション</h2>
-<h3 id="本機能におけるセッション">本機能におけるセッション</h3>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>GET 一覧または編集</td><td><code>admin.product.storage.page_no</code> と <code>admin.product.storage.page_count</code> が更新または初期化される。</td></tr></tbody></table></div>
-<h3 id="セッションへ保存しない情報">セッションへ保存しない情報</h3>
-<p>略称タグの名称入力途中の復元状態は検証NG時にもセッションに残さず、フラッシュのみに頼っている。</p>
-<hr>
-<h2 id="Cookie">Cookie</h2>
-<p>Symfonyセッション用Cookieのみで、機能固有Cookieは増やしていない。この画面がセッションIDを読むときのCookie名体裁は共通フレームに従い、機能個別値はソース上ここだけからは固定しない。</p>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<p>明示的楽観バージョン列はソース上読み取れない。Doctrineの <code>persist</code> と <code>flush</code> に任せ単行更新となる。</p>
-<hr>
-<h2 id="調査補助-ソース照合用">調査補助（ソース照合用）</h2>
-<p>Symfonyルートおよびコントローラは <code>StorageCodeController</code>、Twig は <code>src/Eccube/Resource/template/admin/Product/storage_code.twig</code>、フォームは <code>storage_code</code> と <code>StorageCodeType</code>、一覧メニューの URL は eccube_nav の <code>abbreviation_tags</code> と <code>admin_product_storage_code</code>。テストクラスがあり登録および検証エラーおよび削除関連の自動検証がある。</p>
-<h3 id="HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</h3>
-<ul><li><code>admin_product_storage_code</code> … <code>GET</code> … <code>/{admin_route}/product/storage</code>（新規用フォーム（未保存エンティティ）と一覧の初期表示、既定ページ 1。）</li><li><code>admin_product_storage_code_page</code> … <code>GET</code> … <code>/{admin_route}/product/storage/page/{page_no}</code>（同上、<code>page_no</code> は 1 以上の整数。）</li><li><code>admin_product_storage_code_edit</code> … <code>GET</code> … <code>/{admin_route}/product/storage/{id}</code>（対象 id の編集フォームと一覧。対象不存在時は HTTP 404。）</li><li><code>admin_product_storage_code_edit_page</code> … <code>GET</code> … <code>/{admin_route}/product/storage/{id}/page/{page_no}</code>（編集モードのままページ送りした一覧表示。）</li><li><code>admin_product_storage_code_store</code> … <code>POST</code> … <code>/{admin_route}/product/storage_code/store/{id}</code>（フォームの登録送信。前者は新規、後者は対象 id 更新時の <code>action</code> に使われる。）</li><li><code>admin_product_storage_code_delete</code> … <code>DELETE</code> … <code>/{admin_route}/product/storage_code/{id}/delete</code>（略称タグ一行の削除（同一画面からのリンク）。）</li></ul>
+<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M03-14-MSG-001</td><td>管理画面上部</td><td>登録できませんでした。</td><td>登録内容に不備があるまま保存したとき</td><td>商品管理 — 略称タグ登録／編集画面に遷移する</td></tr><tr><td>M03-14-MSG-002</td><td>管理画面上部</td><td>登録が完了しました。</td><td>略称タグを登録または編集して保存したとき</td><td>商品管理 — 略称タグ登録／編集画面に遷移する</td></tr><tr><td>M03-14-MSG-003</td><td>管理画面上部</td><td>商品で使用されているため、「%name%」の略称タグは削除することができません。</td><td>商品で使用中の略称タグを削除しようとしたとき</td><td>商品管理 — 略称タグ登録／編集画面に遷移する</td></tr><tr><td>M03-14-MSG-004</td><td>管理画面上部</td><td>削除しました</td><td>使用されていない略称タグを削除したとき</td><td>商品管理 — 略称タグ登録／編集画面に遷移する</td></tr><tr><td>M03-14-MSG-005</td><td>管理画面上部</td><td>入力されていません。</td><td>CSVファイルを選択せずにインポートを実行したとき</td><td>処理を中止し、CSV登録画面に遷移する</td></tr><tr><td>M03-14-MSG-006</td><td>管理画面上部</td><td>CSVのフォーマットが一致しません</td><td>CSVファイルを指定せずにインポートしたとき</td><td>略称タグCSVアップロード画面に遷移する</td></tr><tr><td>M03-14-MSG-007</td><td>管理画面上部</td><td>CSVのフォーマットが一致しません</td><td>形式が正しくないCSVファイルをインポートしたとき</td><td>略称タグCSVアップロード画面に遷移する</td></tr><tr><td>M03-14-MSG-008</td><td>管理画面上部</td><td>登録が完了しました。</td><td>CSVファイルのインポートが完了したとき</td><td>略称タグCSVアップロード画面に遷移する</td></tr><tr><td>M03-14-MSG-009</td><td>ブラウザ確認ダイアログ</td><td>この操作はあとから取り消すことができません。「%name%」を削除してよろしいですか？</td><td>略称タグの削除ボタンを押したとき（送信前確認）</td><td>承認時は削除を実行し、キャンセル時は画面にとどまる</td></tr><tr><td>M03-14-MSG-010</td><td>管理画面上部</td><td>並び順は {{ min }} から {{ max }} の間で入力してください。</td><td>並び順に指定できる範囲外の値を入力して保存したとき</td><td>処理を中止し、略称タグ一覧画面に遷移する</td></tr><tr><td>M03-14-MSG-011</td><td>画面中央(ダイアログ)</td><td>この操作はあとから取り消すことができません。「%name%」を削除してよろしいですか？</td><td>略称タグ一覧の削除ボタンを押したとき（送信前確認）</td><td>キャンセルでモーダルを閉じる</td></tr></tbody></table></div>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

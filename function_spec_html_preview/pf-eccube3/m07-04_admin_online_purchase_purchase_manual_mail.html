@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,42 +272,18 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#フロント挙動">フロント挙動</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#GET-で入力画面を開く">GET で入力画面を開く</a>
-<a class="lv3" href="#POST-mode-change-テンプレート変更">POST mode=change（テンプレート変更）</a>
-<a class="lv3" href="#POST-mode-confirm-確認">POST mode=confirm（確認）</a>
-<a class="lv3" href="#POST-mode-complete-送信">POST mode=complete（送信）</a>
-<a class="lv3" href="#POST-で-mode-が上記以外-または-confirm-complete-で検証失敗">POST で mode が上記以外、または confirm／complete で検証失敗</a>
-<a class="lv2" href="#集計条件">集計条件</a>
-<a class="lv2" href="#送信処理における判定順序">送信処理における判定順序</a>
-<a class="lv2" href="#表示メッセージ">表示メッセージ</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
-<a class="lv3" href="#入力項目">入力項目</a>
-<a class="lv3" href="#エッジケース">エッジケース</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#対象の受注">対象の受注</a>
+<a class="lv3" href="#テンプレートの選択と本文の初期生成">テンプレートの選択と本文の初期生成</a>
+<a class="lv3" href="#確認と送信">確認と送信</a>
+<a class="lv3" href="#メール送信の判定順序">メール送信の判定順序</a>
+<a class="lv3" href="#送信するメール">送信するメール</a>
+<a class="lv3" href="#エラー時の扱い">エラー時の扱い</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#バリデーション">バリデーション</a>
-<a class="lv2" href="#権限・認可">権限・認可</a>
-<a class="lv2" href="#画面遷移">画面遷移</a>
-<a class="lv3" href="#遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#試行制限">試行制限</a>
-<a class="lv2" href="#ログ・監査">ログ・監査</a>
-<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
-<a class="lv2" href="#セッション">セッション</a>
-<a class="lv3" href="#本機能におけるセッション">本機能におけるセッション</a>
-<a class="lv3" href="#セッションへ保存しない情報">セッションへ保存しない情報</a>
-<a class="lv2" href="#Cookie">Cookie</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a>
-<a class="lv2" href="#調査補助-ソース位置の索引">調査補助（ソース位置の索引）</a>
-<a class="lv3" href="#HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</a></nav>
+<a class="lv3" href="#出力-メール">出力: メール</a>
+<a class="lv3" href="#入出力-永続化">入出力: 永続化</a>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -305,106 +291,31 @@ footer {
         <h1>ネット買取管理 — 手動メール通知</h1>
       </header>
       
-      <h2 id="概要">概要</h2>
-<p>管理画面の「ネット買取管理」において、1件のネット買取受注（買取番号に相当する識別子をもつ受注）を対象に、管理者がメールテンプレートと件名・本文を確定して顧客へメールを送り、送信結果をメール履歴として残す機能である。一覧ドロップダウンの「メール通知」と詳細フッターの「手動メール通知」の文言から開ける。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。「利用者視点の入口」以降を含む本文の単一URL・<code>mode</code> 分岐を含む挙動は、移行先 ec-cube-enterprise のコア実装をリバースしたものであり、現行 pf-eccube3 の挙動を記述したものではない。</p>
-<p>本機能のカスタマイズ区分はカスタマイズである。機能の移植元は現行 pf-eccube3 の HareruyaEc プラグインだが、本書本文の挙動とDB関連の記述（テーブル名・列名・保存先・副作用のメール履歴INSERT）は移行先 ec-cube-enterprise のコア実装を正とする。</p>
-<p>対象はブラウザ経由の管理画面に限定する。</p>
-<p>コントローラのメソッド単位の解剖は本文の主題としない。本文ではルートbind名やSymfonyのルートnameの網羅は主説明としない。「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。コード探索でbind名が必要なときだけ「調査補助」へ書く。</p>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>ネット買取一覧の行メニュー「メール通知」</td><td><code>GET /{admin_route}/purchase/{buyOrderId}/mail</code></td><td>手動メール入力画面が開く。</td></tr><tr><td>ネット買取詳細フッター「手動メール通知」（買取IDが無い状態ではリンク自体が描画されない）</td><td><code>GET /{admin_route}/purchase/{buyOrderId}/mail</code></td><td>同上。</td></tr><tr><td>入力画面でテンプレートプルダウンを変更</td><td><code>POST /{admin_route}/purchase/{buyOrderId}/mail</code>（mode=change）</td><td>選択テンプレートの件名とテンプレート本文プレビュー相当の文字列がフォームに再設定される。</td></tr><tr><td>入力画面で「確認」</td><td><code>POST /{admin_route}/purchase/{buyOrderId}/mail</code>（mode=confirm）</td><td>検証に成功すると確認画面が返る。失敗すると入力画面に戻りエラー表示になる。</td></tr><tr><td>確認画面で「送信」</td><td><code>POST /{admin_route}/purchase/{buyOrderId}/mail</code>（mode=complete）</td><td>検証に成功するとメール送信処理が呼ばれ、翻訳キー <code>admin.order.mail_send_complete</code> の成功フラッシュ付きで詳細編集へリダイレクトする。</td></tr><tr><td>確認画面で「手動メール通知入力画面に戻る」</td><td><code>POST /{admin_route}/purchase/{buyOrderId}/mail</code>（mode=back）</td><td>コントローラに back 専用分岐は無いが、フォーム POST のまま入力テンプレートへレンダリングされ、入力内容は維持される。</td></tr><tr><td>存在しない買取IDで開く</td><td><code>GET /{admin_route}/purchase/{buyOrderId}/mail</code></td><td>HTTP 404 を返す。</td></tr></tbody></table></div>
-<hr>
-<h2 id="フロント挙動">フロント挙動</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>ページ見出しは翻訳キーで「買取管理」「手動メール通知」。カード見出しは「手動メール送信」。買取番号行・テンプレ選択・件名入力・複数行の本文入力・下部コンバージョンエリアのリンク・ボタンがある。確認画面ではテンプレ名・件名・本文が静的表示となり、隠しフィールドと非表示の textarea で値を POST に載せる。</td></tr><tr><td>JS 挙動</td><td>入力画面ではテンプレート select の変更時に hidden の mode を change にしてフォーム自動送信する。確認画面では「入力画面に戻る」クリック時に mode を back にして送信する。</td></tr><tr><td>CSS・レイアウト</td><td>確認画面の本文は <code>white-space: pre-wrap</code> の静的ブロックで折り返す。</td></tr><tr><td>モーダル・ポップアップ</td><td>本機能専用モーダルは無い。</td></tr></tbody></table></div>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="GET-で入力画面を開く">GET で入力画面を開く</h3>
-<ol><li>管理画面の認証・共通制約を通過する。</li><li>URL の買取IDでネット買取受注を取得する。無ければ HTTP 404 とする。</li><li>手動メール用フォームビルダを生成し、初期状態のフォームビューをテンプレート <code>admin/Purchase/manual_mail.twig</code> に渡して返す。</li></ol>
-<h3 id="POST-mode-change-テンプレート変更">POST mode=change（テンプレート変更）</h3>
-<ol><li>フォームをリクエストで束ねる。</li><li><code>template</code> 項目のみ検証が通っているとき、選択されたメールテンプレートから本文生成処理を呼ぶ。テンプレートに <code>file_name</code> があるときはその Twig を <code>BuyOrder</code>・ヘッダー・フッター・店舗情報を変数としてレンダリングし文字列を得る。<code>file_name</code> が空や Twig の読込エラー・その他例外では警告ログを残し本文は空文字にする。</li><li>フォームを再生成し、テンプレート選択・テンプレート行の件名・生成本文をセットして入力テンプレートを返す。</li><li><code>template</code> が無効なときはスイッチ分岐で何もせず、その後の共通処理により入力テンプレートを返す。</li></ol>
-<h3 id="POST-mode-confirm-確認">POST mode=confirm（確認）</h3>
-<ol><li>フォームを束ねる。</li><li>送信済みかつフォーム全体が有効なとき、確認テンプレート <code>admin/Purchase/manual_mail_confirm.twig</code> を返す。</li><li>検証エラー時は共通処理により入力テンプレートを返す。</li></ol>
-<h3 id="POST-mode-complete-送信">POST mode=complete（送信）</h3>
-<ol><li>フォームを束ねる。</li><li>送信済みかつフォーム全体が有効で、かつテンプレートが実体として取得できているとき、件名・本文・テンプレート参照をまとめた入力値オブジェクトを組み立て、メール送信サービスの手動買取送信を呼ぶ。</li><li>続けて成功フラッシュを積み、<code>admin_purchase_edit</code> に買取IDを渡してリダイレクトする。</li><li>テンプレート参照が無い場合は分岐を抜け、その後の共通処理で入力画面を返す。</li><li>メール送信サービス側で送信元オプション欠如や送信例外があっても例外は上位へ投げず、コントローラは成功フラッシュとリダイレクトを行う実装である。</li></ol>
-<h3 id="POST-で-mode-が上記以外-または-confirm-complete-で検証失敗">POST で mode が上記以外、または confirm／complete で検証失敗</h3>
-<ol><li>入力テンプレートを返す（フォームの送信状態・エラー表示は Symfony フォームの通常挙動に従う）。</li></ol>
-<hr>
-<h2 id="集計条件">集計条件</h2>
-<p>本機能では一覧件数や売上などの集計を行わない。</p>
-<hr>
-<h2 id="送信処理における判定順序">送信処理における判定順序</h2>
-<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td><code>mtb_option</code> に <code>purchase_mail_address</code> が無い</td><td>致命ログを残して処理を終える。メールは送らない。メール履歴も増やさない。</td></tr><tr><td>2</td><td>メールメッセージを組み立て、<code>mailer-&gt;send</code> を試みる</td><td>成功時は情報ログを残す。</td></tr><tr><td>3</td><td>送信でトランスポート例外</td><td>致命ログを残して処理を終える。メール履歴は増やさない。</td></tr><tr><td>4</td><td>送信成功後</td><td>モール既定の店舗情報を添えてメール履歴エンティティを永続化対象に追加する（このサービスメソッド内では flush は呼ばない。HTTP 経由ではリクエスト終了までに flush される前提）。</td></tr></tbody></table></div>
-<hr>
-<h2 id="表示メッセージ">表示メッセージ</h2>
-<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>画面上の文言(英語)</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M07-04-MSG-001</td><td>管理画面上部</td><td>メールを送信しました。</td><td>（英訳なし）</td><td>手動メール通知を送信したとき</td><td>買取情報編集（買取詳細）画面に遷移する</td></tr></tbody></table></div>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>テンプレート候補</td><td><code>dtb_mail_template</code> で自動送信ではない行のみ。かつ <code>file_name</code> が次に列挙する Twig パス文字列のいずれかであること。並び順はテンプレート名昇順。許容パスは <code>Mail/no_base.twig</code> に加え、<code>Mail/buy_order.twig</code>、<code>Mail/buy_order_assessment.twig</code>、<code>Mail/buy_order_include_delivery_fee.twig</code>、<code>Mail/buy_order_old.twig</code>、<code>Mail/buy_order_assessment_old.twig</code>、<code>Mail/buy_order_include_delivery_fee_old.twig</code>。</td></tr><tr><td>本文初期生成</td><td>選択テンプレートの <code>file_name</code> を Twig としてレンダリングする。変数は <code>BuyOrder</code>、<code>header</code>、<code>footer</code>、<code>BaseInfo</code>（店舗情報）。</td></tr><tr><td>送信メール</td><td>プレーン文本のみ。件名はフォームで確定した文字列をそのまま用いる。宛先は受注に紐づくメールアドレスへ RFC 逸脱文字を許容する実装上の変換を適用した上で設定する。From と Bcc と Reply-To は買取メール送信元アドレスと店舗名。Return-Path は店舗情報のエラー通知メールアドレス参照値。</td></tr></tbody></table></div>
-<h3 id="入力項目">入力項目</h3>
-<div class="table-wrap"><table><thead><tr><th>項目名</th><th>必須／任意</th><th>最大長</th><th>初期値</th><th>保存先・扱い</th></tr></thead><tbody><tr><td>テンプレ選択</td><td>必須</td><td>—</td><td>マスタ選択のプレースホルダ（未選択）。フォームブロック接頭辞は <code>m07-04_admin_online_purchase_purchase_manual_mail</code>。フィールドキーは <code>template</code>。エンティティ <code>dtb_mail_template</code> の選択。確認・送信では hidden で値を維持する。送信完了時はメール履歴にテンプレート参照として記録される。</td><td></td></tr><tr><td>件名</td><td>必須</td><td>フォームに Symfony Length の明示なし。メール履歴の <code>dtb_mail_history.mail_subject</code> は列長255のため、それを超えると永続化時に環境依存で例外になりうる</td><td>GET 直後は空。テンプレート変更が成功すると選択テンプレートの <code>mail_subject</code> が入る</td><td>フィールドキーは <code>subject</code>。受注マスタの列は更新しない。送信および履歴保存でそのまま使用する。</td></tr><tr><td>本文</td><td>必須</td><td>フォームに Symfony Length の明示なし。履歴は <code>dtb_mail_history.mail_body</code> の TEXT に保存</td><td>GET 直後は空。テンプレート変更が成功するとテンプレートレンダリング結果が入る。画面上はラベル文字列無しで textarea のみ表示される（行数属性20）</td><td>フィールドキーは <code>body</code>。<code>mapped false</code>。受注マスタは更新しない。送信および履歴の本文にそのまま使用する。</td></tr></tbody></table></div>
-<h3 id="エッジケース">エッジケース</h3>
-<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>買取IDが存在しない</td><td>GET／POST ともリポジトリ取得でヒットしなければ HTTP 404。</td></tr><tr><td>テンプレート Twig が見つからない／実行時エラー</td><td>本文は空文字になり警告ログのみ。利用者は空本文のまま確認へ進めると検証で止まるか、手入力が必要。</td></tr><tr><td>買取メール送信元アドレス未設定</td><td>送信しない。致命的ログのみ。コントローラは成功メッセージと詳細へリダイレクトする。</td></tr><tr><td>SMTP 等で送信失敗</td><td>送信しない。致命的ログのみ。コントローラは成功メッセージと詳細へリダイレクトする。メール履歴は増えない。</td></tr><tr><td>件名が255文字超（履歴保存時）</td><td>DB 制約により例外になりうる。フォーム側では事前防止しない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>一覧・詳細との表示差</td><td>買取番号表示はいずれも同一のゼロ埋め規則でよむ。本文・件名は受注マスタに書き戻さないため、一覧・詳細を再読込してもメール内容は変わらない。</td></tr><tr><td>メール履歴</td><td>送信が成功した場合のみ履歴行が増える実装である。送信失敗や送信元欠如では履歴は増えない。履歴には同一受注・同一顧客が紐づく。</td></tr></tbody></table></div>
-<hr>
-<h2 id="API-バッチ結果">API/バッチ結果</h2>
-<p>本機能では外部 HTTP API の呼び出しやバッチジョブの起動を行わない。</p>
-<hr>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="対象の受注">対象の受注</h3>
+<p>URLの買取IDでネット買取受注を1件取得する。該当が無いときはHTTP 404とする。取得できたときは、初期状態の入力画面を表示する。</p>
+<h3 id="テンプレートの選択と本文の初期生成">テンプレートの選択と本文の初期生成</h3>
+<p>テンプレートの候補は、自動送信ではないメールテンプレートのうち、買取向けに許可されたものに限る。並び順はテンプレート名の昇順とする。</p>
+<p>テンプレートを変更したときは、テンプレートの項目だけが検証を通っている場合に本文を生成する。テンプレートに雛形の指定があるときは、その雛形へ買取受注・ヘッダー・フッター・店舗情報を渡して本文の文字列を作る。雛形の指定が空のとき、雛形を読み込めないとき、その他の例外が発生したときは、本文を空文字にする。生成後はテンプレートの選択・テンプレートの件名・生成した本文を入力画面に反映する。テンプレートの選択が無効なときは何も行わず、入力画面をそのまま表示する。</p>
+<h3 id="確認と送信">確認と送信</h3>
+<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>確認の要求で、送信済みかつ入力全体が有効なとき</td><td>確認画面を表示する</td></tr><tr><td>2</td><td>確認の要求で、検証に失敗したとき</td><td>入力画面を表示する</td></tr><tr><td>3</td><td>送信の要求で、送信済みかつ入力全体が有効で、選択したテンプレートを実体として取得できたとき</td><td>件名・本文・テンプレートの参照をまとめて手動の買取メール送信を行い、買取情報編集画面へ遷移する</td></tr><tr><td>4</td><td>送信の要求で、テンプレートの参照が取れないとき</td><td>入力画面を表示する</td></tr><tr><td>5</td><td>上記以外の要求のとき</td><td>入力画面を表示する</td></tr></tbody></table></div>
+<h3 id="メール送信の判定順序">メール送信の判定順序</h3>
+<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>買取メール送信元アドレスの設定が無いとき</td><td>処理を終える。メールを送らず、メール履歴も増やさない</td></tr><tr><td>2</td><td>メールを組み立てて送信を試みたとき</td><td>送信に成功したときは次へ進む</td></tr><tr><td>3</td><td>送信で通信の例外が発生したとき</td><td>処理を終える。メール履歴は増やさない</td></tr><tr><td>4</td><td>送信に成功したとき</td><td>モール既定の店舗情報を添えてメール履歴を追加する</td></tr></tbody></table></div>
+<p>送信元アドレスの設定が無いとき、および送信で例外が発生したときも、上位へ例外を渡さない。呼び出し元は成功のメッセージを表示して買取情報編集画面へ遷移する。</p>
+<h3 id="送信するメール">送信するメール</h3>
+<p>本文はプレーンテキストだけとする。件名は入力画面で確定した文字列をそのまま用いる。宛先は受注に紐づくメールアドレスとし、規格から外れた文字を許容する変換を適用したうえで設定する。送信元・Bcc・返信先は買取メール送信元アドレスと店舗名とする。差し戻し先には店舗情報のエラー通知メールアドレスの参照値を用いる。</p>
+<h3 id="エラー時の扱い">エラー時の扱い</h3>
+<div class="table-wrap"><table><thead><tr><th>事象</th><th>扱い</th></tr></thead><tbody><tr><td>存在しない買取IDのとき</td><td>HTTP 404とする</td></tr><tr><td>入力の検証に失敗したとき</td><td>入力画面を再表示し、項目ごとのエラーを表示する</td></tr><tr><td>テンプレートの変更で雛形を読み込めないとき、または実行時に例外が発生したとき</td><td>本文を空にする</td></tr><tr><td>買取メール送信元アドレスが未設定のとき、または送信で例外が発生したとき</td><td>メールを送らずに処理を終える。呼び出し元は成功として買取情報編集画面へ遷移する</td></tr></tbody></table></div>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>パスパラメータの買取ID。POST では CSRF、モード、テンプレートID、件名、本文。</td></tr><tr><td>成功時出力</td><td>入力・確認画面は HTML。送信後は詳細編集への HTTP 302 と成功フラッシュ。</td></tr><tr><td>失敗時出力</td><td>検証エラー時は入力 HTML とフォームエラー。存在しない買取は 404。</td></tr><tr><td>副作用</td><td>条件が整えばメール送信とメール履歴 INSERT、成功フラッシュ、Doctrine の永続化キューへの追加。</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<p>機能が直接更新するのは送信成功時のメール履歴 INSERT が中心である。受注本体やテンプレートマスタは本フォームから更新しない。</p>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>dtb_mail_history</code></td><td><code>mail_subject</code>, <code>mail_body</code>, <code>mail_html_body</code>（HTML本文が無ければ未設定のまま）, <code>send_date</code>, <code>template_id</code>（テンプレート参照。ec-cube-enterprise実装の結合列名）, <code>buy_order_id</code>, <code>customer_id</code>, <code>base_info_id</code></td><td>件名列長255。本文は TEXT。</td></tr></tbody></table></div>
-<h3 id="DB操作">DB操作</h3>
-<p>永続化の正は ec-cube-enterprise（テーブル名・操作は ec-cube-enterprise を正典）。当ドメインは承認ワークフローを介さず persist/flush で直接確定する（承認ワークフローは在庫機能固有）。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>登録/更新</td><td>dtb_mail_history</td><td>当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。</td></tr></tbody></table></div>
-<hr>
-<h2 id="バリデーション">バリデーション</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>テンプレ選択</td><td>NotBlank。</td></tr><tr><td>件名</td><td>NotBlank。</td></tr><tr><td>本文</td><td>NotBlank。データクラスへのマッピングは無く、送信直前に文字列化して渡す。</td></tr></tbody></table></div>
-<hr>
-<h2 id="権限・認可">権限・認可</h2>
-<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>手動メール画面および送信</th></tr></thead><tbody><tr><td>未ログインの一般利用者</td><td>管理画面ファイアウォールにより当パスへ到達しない。</td></tr><tr><td>管理画面にログインできる運用者</td><td>当ルートに追加のアノテーション制約は無く、管理領域へ入れる主体であれば利用できる実装である。テナント別の細分化は別設定を正とする。</td></tr></tbody></table></div>
-<hr>
-<h2 id="画面遷移">画面遷移</h2>
-<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>一覧または詳細からリンク</td><td>GET 入力画面</td></tr><tr><td>入力で確認に成功</td><td>同一 URL の POST 応答として確認 HTML</td></tr><tr><td>確認で送信に成功</td><td><code>/{admin_route}/purchase/{id}/edit</code> へのリダイレクト</td></tr><tr><td>送信処理が実質スキップされてもコントローラがリダイレクトに入った場合</td><td>同上（成功フラッシュは積まれる）</td></tr><tr><td>確認から戻るリンク</td><td>POST の応答として入力 HTML</td></tr></tbody></table></div>
-<h3 id="遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</h3>
-<div class="table-wrap"><table><thead><tr><th>起点</th><th>遷移前の処理</th><th>遷移後の初期状態</th></tr></thead><tbody><tr><td>送信完了後の詳細編集</td><td>セッションへ成功フラッシュを追加</td><td>詳細画面でフラッシュメッセージが表示される。</td></tr></tbody></table></div>
-<p>ネット買取一覧の検索セッションは本機能では読み書きしない。</p>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>存在しない買取ID</td><td>HTTP 404。</td></tr><tr><td>フォーム検証エラー</td><td>入力テンプレート再表示とフィールドエラー。</td></tr><tr><td>Twig 読込不可やテンプレート実行時例外（変更モード）</td><td>警告ログ。本文は空。</td></tr><tr><td>買取メール送信元未設定／送信例外</td><td>メール送信サービスが致命ログのみで終了。コントローラは成功扱いでリダイレクトする実装である。</td></tr></tbody></table></div>
-<hr>
-<h2 id="試行制限">試行制限</h2>
-<p>本機能ではレートリミットや CAPTCHA を設けない。</p>
-<hr>
-<h2 id="ログ・監査">ログ・監査</h2>
-<div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>テンプレート本文生成の Twig 問題</td><td>警告ログに例外メッセージ文字列。</td></tr><tr><td>送信元オプション欠如</td><td>致命ログに論理キー名を含むメッセージ。</td></tr><tr><td>送信トランスポート例外</td><td>致命ログに例外メッセージ。</td></tr><tr><td>送信成功</td><td>情報ログに買取ID。</td></tr></tbody></table></div>
-<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
-<ul><li>パスワード</li><li>なりすまし対策トークン</li><li>Cookie 値</li><li>セッション ID の完全値</li><li>Remember Me トークンの原値</li></ul>
-<hr>
-<h2 id="セッション">セッション</h2>
-<h3 id="本機能におけるセッション">本機能におけるセッション</h3>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>CSRF</td><td>フォームトークンの検証にセッションを用いるのは Symfony の標準動作である。</td></tr><tr><td>検索条件</td><td>ネット買取一覧の検索セッションは本機能では更新しない。</td></tr></tbody></table></div>
-<h3 id="セッションへ保存しない情報">セッションへ保存しない情報</h3>
-<p>件名・本文の下書きをセッションに残す処理は無く、ブラウザバックや別タブでの整合は保証しない。</p>
-<hr>
-<h2 id="Cookie">Cookie</h2>
-<p>管理画面共通のセッション Cookie に依存するのみであり、本機能専用 Cookie は無い。</p>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<p>現行はpf-eccube3のHareruyaEcプラグインが手動メール通知のロジックと買取関連テーブルを保持し、リニューアル後はec-cube-enterpriseのコアへ移載される。DB関連の記述はec-cube-enterpriseを正とする。</p>
-<ul><li>メール履歴テーブル<code>dtb_mail_history</code>のテンプレート参照列は、ec-cube-enterprise実装では結合列名<code>template_id</code>である（<code>mail_template_id</code>ではない）。本書のDBカラム節はこの名称で記す。</li><li>送信成功フラッシュは翻訳キー<code>admin.order.mail_send_complete</code>であり、日本語「メールを送信しました。」に加え、ec-cube-enterpriseの英語ロケール<code>messages.en.yaml</code>に「Email has been sent.」が存在する。買取機能固有メッセージ（<code>admin.purchase.online.*</code>）は日本語のみで英語ロケール資源が無い。</li><li>上記以外のテーブル・列について、現行プラグインと移行先コアの個別の差異は本書では網羅照合していない。差異が疑われる箇所はec-cube-enterprise実装を確認値とする。</li></ul>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<p>本機能は楽観ロックや明示の悲観ロックを持たない。送信と履歴 INSERT は送信サービス呼び出しの通常フローに従う。</p>
-<hr>
-<h2 id="調査補助-ソース位置の索引">調査補助（ソース位置の索引）</h2>
-<p>grep や IDE 検索のための対応ファイルのみ示す。ふるまいの正は本体節と実装である。</p>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>パス</th></tr></thead><tbody><tr><td>ルートとモード分岐</td><td><code>src/Eccube/Controller/Admin/Purchase/MailController.php</code></td></tr><tr><td>フォーム定義</td><td><code>src/Eccube/Form/Type/Admin/Purchase/PurchaseManualMailType.php</code></td></tr><tr><td>Twig（入力／確認）</td><td><code>src/Eccube/Resource/template/admin/Purchase/manual_mail.twig</code>、<code>manual_mail_confirm.twig</code></td></tr><tr><td>送信・履歴</td><td><code>src/Eccube/Service/MailService.php</code>（手動買取送信）、<code>src/Eccube/Service/EntityManager/MailHistoryEntityManager.php</code></td></tr><tr><td>一覧・詳細のリンク</td><td><code>src/Eccube/Resource/template/admin/Purchase/index.twig</code>、<code>detail.twig</code></td></tr></tbody></table></div>
-<h3 id="HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</h3>
-<ul><li><code>m07-04_admin_online_purchase_purchase_manual_mail</code> … <code>GET, POST</code> … <code>/{admin_route}/purchase/{buyOrderId}/mail</code>（GET で入力画面を返す。POST でテンプレート差し込み（mode=change）、確認画面表示（mode=confirm）、送信完了後リダイレクト（mode=complete）、確認から入力へ戻る（mode=back、コントローラに明示分岐は無く既定処理で入力画面へ戻る）を処理する。<code>buyOrderId</code> は正の整数。）</li></ul>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>買取ID（パス）。送信時はなりすまし対策トークン、モード、テンプレートID、件名、本文</td></tr><tr><td>成功時出力</td><td>入力画面と確認画面の表示。送信後は買取情報編集画面への遷移と成功のメッセージ</td></tr><tr><td>失敗時出力</td><td>検証に失敗したときは入力画面と項目ごとのエラー。存在しない買取IDのときはHTTP 404</td></tr></tbody></table></div>
+<h3 id="出力-メール">出力: メール</h3>
+<div class="table-wrap"><table><thead><tr><th>宛先</th><th>契機</th></tr></thead><tbody><tr><td>受注に紐づくメールアドレス</td><td>送信の要求で入力が有効かつテンプレートを取得できたとき</td></tr></tbody></table></div>
+<h3 id="入出力-永続化">入出力: 永続化</h3>
+<div class="table-wrap"><table><thead><tr><th>操作</th><th>契機</th></tr></thead><tbody><tr><td>追加</td><td>送信に成功したときの、通知の送信履歴1件</td></tr></tbody></table></div>
+<p>買取受注そのものは更新しない。</p>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
+<h2 id="表示メッセージ">表示メッセージ</h2>
+<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M07-04-MSG-001</td><td>管理画面上部</td><td>メールを送信しました。</td><td>手動メール通知を送信したとき</td><td>買取情報編集（買取詳細）画面に遷移する</td></tr></tbody></table></div>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

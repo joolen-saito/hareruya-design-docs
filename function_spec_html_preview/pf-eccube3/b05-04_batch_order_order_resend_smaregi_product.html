@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,24 +272,15 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#本書で扱うこと">本書で扱うこと</a>
-<a class="lv2" href="#本書で扱わないこと">本書で扱わないこと</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv2" href="#用語">用語</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#スマレジ商品再連携を実行する-order-batch-resendSmaregiProduct">スマレジ商品再連携を実行する（`order:batch resendSmaregiProduct`）</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
-<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#再連携の対象">再連携の対象</a>
+<a class="lv3" href="#区分の選別">区分の選別</a>
+<a class="lv3" href="#再連携">再連携</a>
+<a class="lv3" href="#エラー時の扱い">エラー時の扱い</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#ログ・監査">ログ・監査</a>
-<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a></nav>
+<a class="lv3" href="#入出力-永続化">入出力: 永続化</a>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -287,64 +288,23 @@ footer {
         <h1>バッチ 受注管理 — スマレジ商品再連携</h1>
       </header>
       
-      <h2 id="概要">概要</h2>
-<p>店頭注文受注のうちスマレジへの商品・在庫連携が完了していないものを抽出し、未連携の区分（商品・在庫）についてスマレジへ再連携するバッチである。コマンドライン（コンソールコマンド）から実行する。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインの受注バッチ（スマレジ商品再連携処理）、受注サブを扱うリポジトリ、スマレジ連携処理を正とする。カスタマイズ区分は現行踏襲であり、挙動の参照リポはpf-eccube3、DB関連はec-cube-enterpriseを正とする。</p>
-<p>対象はコンソールコマンドであり、ブラウザ経由の画面を持たない。</p>
-<p>本文ではフレームワークのコマンド型名やサービス型名を主説明としない。実行はコンソールのバッチコマンドで行う。</p>
-<hr>
-<h2 id="本書で扱うこと">本書で扱うこと</h2>
-<ul><li>バッチの起動方法（コンソールコマンド）</li><li>未連携の受注の抽出</li><li>未連携区分（商品・在庫）の判定と再連携</li></ul>
-<hr>
-<h2 id="本書で扱わないこと">本書で扱わないこと</h2>
-<p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
-<ul><li>スマレジ連携サービスの内部仕様</li><li>初回連携（受注処理側）の仕様</li><li>バッチの起動スケジュール（運用・ジョブ設定を正とする）</li></ul>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<p>現行（pf-eccube3）の挙動と移行先（ec-cube-enterprise）の差を記録する。挙動は現行リポを正とし、DB関連はec-cube-enterpriseを正とする。</p>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>連携状態フラグの持ち方</td><td>受注サブテーブル<code>dtb_order_sub</code>の<code>smaregi_product_flg</code>・<code>smaregi_stock_flg</code>で判定する。</td><td>補助表<code>dtb_order_sub</code>を持たず、<code>smaregi_product_flg</code>（商品連携）・<code>smaregi_stock_flg</code>（在庫連携）を受注<code>dtb_order</code>の列へ統合している。</td></tr><tr><td>スマレジ連携の構成</td><td>HareruyaEcプラグインのスマレジ連携処理で連携する。</td><td>スマレジ連携が標準側へ取り込まれ、<code>SmaregiWebhookEvent</code>・<code>SmaregiPlatformApiCallLog</code>等で構成される（連携処理の詳細はec-cube-enterprise実装で要確認）。</td></tr></tbody></table></div>
-<hr>
-<h2 id="用語">用語</h2>
-<div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>受注サブ</td><td>受注の拡張情報。スマレジ商品・在庫の連携状態フラグを持つ。</td></tr><tr><td>商品連携</td><td>スマレジへ商品情報を連携すること。</td></tr><tr><td>在庫連携</td><td>スマレジへ在庫情報を連携すること。</td></tr></tbody></table></div>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>実行方法</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>コンソールのバッチコマンド</td><td><code>order:batch resendSmaregiProduct</code></td><td>スマレジ未連携の店頭注文受注について、未連携の商品・在庫をスマレジへ再連携する。</td></tr></tbody></table></div>
-<p>本機能はHTTPで届く画面を持たない。コマンド名が一致しない場合は処理を行わずに終了する。</p>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="スマレジ商品再連携を実行する-order-batch-resendSmaregiProduct">スマレジ商品再連携を実行する（<code>order:batch resendSmaregiProduct</code>）</h3>
-<ol><li>メール送信用の経路を準備する。</li><li>スマレジ再連携対象の受注サブを取得する。</li><li>受注サブごとに、商品連携が未完了なら商品、在庫連携が未完了なら在庫を再連携の対象区分に加える。</li><li>当該区分についてスマレジへ再連携する。</li></ol>
-<hr>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>再連携対象</td><td>スマレジ連携が未完了の店頭注文受注。</td></tr><tr><td>区分の選別</td><td>商品・在庫それぞれの連携状態フラグを見て、未完了の区分のみ再連携する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="API-バッチ結果">API/バッチ結果</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>バッチ</td><td>入力はコマンド名。成功時は未連携区分をスマレジへ再連携する。対象が無ければ何もせず完了する。</td></tr><tr><td>API</td><td>スマレジへ未連携の商品・在庫を連携する。</td></tr></tbody></table></div>
-<hr>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="再連携の対象">再連携の対象</h3>
+<p>スマレジ連携が未完了の店頭注文の受注を対象とする。対象が1件も無いときは何もせず完了する。</p>
+<h3 id="区分の選別">区分の選別</h3>
+<p>受注ごとに、商品の連携が未完了なら商品を、在庫の連携が未完了なら在庫を、再連携の区分に加える。連携済みの区分は再連携しない。</p>
+<h3 id="再連携">再連携</h3>
+<p>選別した区分についてスマレジへ連携する。</p>
+<h3 id="エラー時の扱い">エラー時の扱い</h3>
+<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>コマンド名が未指定・不一致</td><td>処理を行わずに終了する</td></tr><tr><td>連携時のエラー</td><td>エラーメッセージをコンソールに出力する</td></tr></tbody></table></div>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>コマンド名。</td></tr><tr><td>成功時出力</td><td>スマレジへの商品・在庫再連携。</td></tr><tr><td>失敗時出力</td><td>エラーメッセージのコンソール出力。</td></tr><tr><td>副作用</td><td>スマレジ連携、連携状態の更新。</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<p>機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。</p>
-<p>テーブル・列名はec-cube-enterpriseを正とする。現行（pf-eccube3）と異なる場合は移行先名を主とし現行名を括弧で添える。</p>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>dtb_order</code>（現行は<code>dtb_order_sub</code>）</td><td><code>smaregi_product_flg</code></td><td>商品連携の要否判定に使用する。</td></tr><tr><td><code>dtb_order</code>（現行は<code>dtb_order_sub</code>）</td><td><code>smaregi_stock_flg</code></td><td>在庫連携の要否判定に使用する。</td></tr></tbody></table></div>
-<h3 id="DB操作">DB操作</h3>
-<p>永続化の正は ec-cube-enterprise（テーブル名・操作は ec-cube-enterprise を正典）。当ドメインは承認ワークフローを介さず persist/flush で直接確定する（承認ワークフローは在庫機能固有）。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>登録/更新</td><td>dtb_order / dtb_order_sub</td><td>当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。</td></tr></tbody></table></div>
-<hr>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>スマレジ連携</td><td>未連携区分のみ再連携し、連携状態を整合させる。</td></tr></tbody></table></div>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>コマンド名が未指定・不一致</td><td>処理を行わずに終了する。</td></tr><tr><td>連携時のエラー</td><td>エラーメッセージをコンソールに出力する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="ログ・監査">ログ・監査</h2>
-<div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>開始・完了</td><td>開始・完了のコンソール出力（日時付き）。</td></tr></tbody></table></div>
-<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
-<ul><li>スマレジ連携の認証情報</li></ul>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<p>本バッチは未連携区分の再連携が主であり、楽観ロック・悲観ロックの対象は持たない。</p>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>コマンド名。</td></tr><tr><td>成功時出力</td><td>未連携の商品・在庫をスマレジへ再連携する。</td></tr><tr><td>失敗時出力</td><td>エラーメッセージのコンソール出力。</td></tr></tbody></table></div>
+<h3 id="入出力-永続化">入出力: 永続化</h3>
+<p>外部連携のみを行い、受注のデータを更新しない。</p>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
+<h2 id="表示メッセージ">表示メッセージ</h2>
+<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody></tbody></table></div>
+<p>画面を持たないため利用者向けのメッセージを表示しない。連携時のエラーはコンソールに出力する。</p>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

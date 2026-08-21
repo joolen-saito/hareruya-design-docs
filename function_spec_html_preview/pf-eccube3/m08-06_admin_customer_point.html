@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,29 +272,14 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#本書で扱うこと">本書で扱うこと</a>
-<a class="lv2" href="#本書で扱わないこと">本書で扱わないこと</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv2" href="#用語">用語</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#フロント挙動">フロント挙動</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#ポイント履歴を表示する-GET-admin-route-customer-point-id-type">ポイント履歴を表示する（GET `/{admin_route}/customer/point/{id}/{type}`）</a>
-<a class="lv3" href="#ポイントを付与する-POST-admin-route-customer-point-id-update-type">ポイントを付与する（POST `/{admin_route}/customer/point/{id}/update/{type}`）</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
-<a class="lv3" href="#入力項目">入力項目</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#ポイント履歴の表示">ポイント履歴の表示</a>
+<a class="lv3" href="#ポイントの付与">ポイントの付与</a>
+<a class="lv3" href="#エラー時の扱い">エラー時の扱い</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#権限・認可">権限・認可</a>
-<a class="lv2" href="#画面遷移">画面遷移</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#ログ・監査">ログ・監査</a>
-<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a></nav>
+<a class="lv3" href="#入出力-永続化">入出力: 永続化</a>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -292,79 +287,20 @@ footer {
         <h1>会員管理 — ポイント付与・ポイント履歴</h1>
       </header>
       
-      <h2 id="概要">概要</h2>
-<p>管理画面で、特定の会員のポイント履歴を一覧表示し、同一画面からポイントを付与（履歴の追加）する機能である。ポイント種別ごとに履歴を確認でき、付与時はポイント変動・備考等を入力して履歴を追加する。</p>
-<p>本書はTODOリストの「ポイント付与」（M08-05）と「ポイント履歴」（M08-06）の2機能を、同一画面で履歴閲覧と付与を行う一連の機能として1冊にまとめる。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインの管理画面会員ポイント処理、ポイント履歴追加フォーム、ポイント履歴を扱うリポジトリ、テンプレート（<code>Customer/point_history.twig</code>・<code>point_type_select.twig</code>）を正とする。</p>
-<p>本機能（ポイント付与・ポイント履歴）のカスタマイズ区分はいずれも現行踏襲であり、挙動の確認はpf-eccube3を参照し、DB関連の記述（テーブル名・列名・保存先）はec-cube-enterpriseを正とする。</p>
-<p>対象はブラウザ経由の管理画面に限定する。</p>
-<p>本文ではフレームワークのコントローラ型名やメソッド名を主説明としない。管理画面プレフィックスは環境により変わる（<code>admin_route</code>）。「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。</p>
-<hr>
-<h2 id="本書で扱うこと">本書で扱うこと</h2>
-<ul><li>ポイント種別の選択</li><li>特定会員のポイント履歴の一覧表示</li><li>ポイント付与（履歴の追加）</li></ul>
-<hr>
-<h2 id="本書で扱わないこと">本書で扱わないこと</h2>
-<p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
-<ul><li>ポイント付与・利用の自動処理（受注・ポイント処理を正とする）</li><li>スマレジポイント連携（ポイント連携バッチを正とする）</li><li>会員一覧・検索の仕様（会員一覧機能を正とする）</li></ul>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<p>現行（pf-eccube3、HareruyaEcプラグイン）と移行先（ec-cube-enterprise）でのDB関連の差を記録する。挙動は現行を確認値とし、永続化先の名称はec-cube-enterpriseを正とする。</p>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>ポイント履歴</td><td>HareruyaEcプラグインのポイント履歴に保持</td><td>ポイント履歴テーブル<code>dtb_point_history</code>（会員<code>customer_id</code>、ポイント変動<code>point_change</code>、備考<code>note</code>、ポイント種別<code>point_type_id</code>、注文参照<code>order_id</code>、付与日<code>issue_date</code>）。同名テーブルのため概ね同一スキーマだが、列名・型はec-cube-enterprise実装を正とする</td></tr><tr><td>会員の保有ポイント</td><td>選手情報の保有ポイント</td><td>選手情報<code>dtb_player.point</code>（会員側<code>dtb_customer.point</code>も保持。付与対象の保有ポイントはec-cube-enterprise実装で要確認）</td></tr></tbody></table></div>
-<p>ポイント種別はポイント種別マスタを参照する。</p>
-<hr>
-<h2 id="用語">用語</h2>
-<div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>ポイント種別</td><td>ポイントの区分。履歴の対象種別を選ぶ。</td></tr><tr><td>ポイント履歴</td><td>ポイントの増減記録。</td></tr><tr><td>付与</td><td>ポイント履歴を追加して会員のポイントを増減すること。</td></tr></tbody></table></div>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>会員のポイント操作で種別選択</td><td><code>GET /{admin_route}/customer/point/{id}/select</code></td><td>ポイント種別の選択画面を表示する。</td></tr><tr><td>ポイント履歴を開く</td><td><code>GET /{admin_route}/customer/point/{id}/{type}</code></td><td>当該会員・種別のポイント履歴一覧と付与フォームを表示する。</td></tr><tr><td>「登録」ボタン（付与）</td><td><code>POST /{admin_route}/customer/point/{id}/update/{type}</code></td><td>入力したポイント変動を履歴に追加し、ポイント履歴画面へ戻る。</td></tr></tbody></table></div>
-<p>管理画面プレフィックスは環境により変わるためプレースホルダで示す。</p>
-<hr>
-<h2 id="フロント挙動">フロント挙動</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>ポイント種別の選択、当該会員のポイント履歴一覧（注文番号を含む）、ポイント付与の入力フォーム。</td></tr><tr><td>JS挙動</td><td>本機能では送信中心で、動的な表示切替は主としない。</td></tr><tr><td>モーダル・ポップアップ</td><td>本機能専用のモーダルは無い。</td></tr></tbody></table></div>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="ポイント履歴を表示する-GET-admin-route-customer-point-id-type">ポイント履歴を表示する（GET <code>/{admin_route}/customer/point/{id}/{type}</code>）</h3>
-<ol><li>管理画面の認証・権限を通過する。</li><li>パスの会員IDで会員を取得する。存在しない場合はページが見つからない扱い（404）とする。</li><li>ポイント付与フォームを生成する。</li><li>当該会員のポイント履歴を新しい順に取得し、各履歴の注文番号を取得する。</li><li>ポイント履歴一覧と付与フォームを表示する。</li></ol>
-<h3 id="ポイントを付与する-POST-admin-route-customer-point-id-update-type">ポイントを付与する（POST <code>/{admin_route}/customer/point/{id}/update/{type}</code>）</h3>
-<ol><li>管理画面の認証・権限を通過し、なりすまし対策トークンを検証する。</li><li>会員・選手情報を取得する。いずれも無い場合はページが見つからない扱い（404）とする。</li><li>ポイント付与フォームを検証する。検証に失敗した場合はポイント履歴画面を再表示する。</li><li>検証に成功した場合は、入力したポイント変動を履歴に追加し、ポイント履歴画面へ戻る。</li></ol>
-<hr>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>種別ごとの履歴</td><td>ポイント種別ごとにポイント履歴を表示する。</td></tr><tr><td>付与</td><td>入力したポイント変動・備考でポイント履歴を追加する。</td></tr><tr><td>注文番号</td><td>履歴に関連する注文番号を取得して表示する。</td></tr></tbody></table></div>
-<h3 id="入力項目">入力項目</h3>
-<div class="table-wrap"><table><thead><tr><th>項目名</th><th>必須／任意</th><th>最大長</th><th>初期値</th><th>保存先・扱い</th></tr></thead><tbody><tr><td>ポイント変動</td><td>必須</td><td>実装確認値</td><td>空</td><td>ポイント履歴のポイント変動。付与時に履歴へ追加する。フォームキーはポイント履歴追加フォームの変動量。</td></tr><tr><td>備考</td><td>任意</td><td>実装確認値</td><td>空</td><td>ポイント履歴の備考。</td></tr></tbody></table></div>
-<p>ポイント種別はパスで指定する。</p>
-<hr>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>更新単位</td><td>登録・編集・削除の対象データは、フォーム送信またはCSV取込で検証を通過した単位で更新する。保存対象と副作用は処理フロー、入出力、DBカラムの各節を正とする。</td></tr><tr><td>再表示</td><td>保存成功後はDBに確定した値を次回表示・検索・出力の基準にする。検証エラーまたは例外時に確定しない入力値は再表示画面のフォーム値に留まる。</td></tr><tr><td>同時更新</td><td>明示的な楽観ロック・悲観ロックを持たない場合、同一データを複数管理者が同時に更新すると後から保存された内容が残る。</td></tr></tbody></table></div>
-<hr>
-<h2 id="API-バッチ結果">API/バッチ結果</h2>
-<p>本機能ではAPI呼び出し・バッチ実行を扱わない。</p>
-<hr>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="ポイント履歴の表示">ポイント履歴の表示</h3>
+<p>パスの会員IDで会員を取得する。存在しないときはページが見つからない扱い（404）とする。当該会員のポイント履歴を新しい順に取得し、各履歴に関連する注文番号を取得して表示する。履歴はポイント種別ごとに表示する。あわせてポイント付与の入力欄を表示する。</p>
+<h3 id="ポイントの付与">ポイントの付与</h3>
+<p>会員と選手情報を取得する。いずれも無いときはページが見つからない扱い（404）とする。入力内容の検証に失敗したときはポイント履歴画面を再表示する。検証に成功したときは、入力したポイント変動・備考でポイント履歴を追加し、ポイント履歴画面へ戻る。</p>
+<h3 id="エラー時の扱い">エラー時の扱い</h3>
+<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>会員・選手情報が存在しない</td><td>ページが見つからない扱い（404）とする</td></tr><tr><td>入力内容の検証失敗</td><td>ポイント履歴画面を再表示する</td></tr><tr><td>なりすまし対策トークン不正</td><td>付与を行わない</td></tr></tbody></table></div>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>会員ID、ポイント種別、ポイント変動・備考、なりすまし対策トークン。</td></tr><tr><td>成功時出力</td><td>ポイント履歴の追加、履歴画面への遷移。</td></tr><tr><td>失敗時出力</td><td>会員・選手情報が無い場合は404、検証失敗時は履歴画面を再表示。</td></tr><tr><td>副作用</td><td>ポイント履歴の追加。</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<p>機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。</p>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td>ポイント履歴（<code>dtb_point_history</code>）</td><td><code>customer_id</code>（会員参照）、<code>point_change</code>（ポイント変動）、<code>note</code>（備考）、<code>point_type_id</code>（種別）、<code>order_id</code>（注文参照）、<code>issue_date</code>（付与日）</td><td>一覧表示・付与に使用する。</td></tr><tr><td>選手情報（<code>dtb_player</code>）</td><td><code>point</code>（保有ポイント）</td><td>付与対象の会員に紐づく。</td></tr></tbody></table></div>
-<h3 id="DB操作">DB操作</h3>
-<p>永続化の正は ec-cube-enterprise（テーブル名・操作は ec-cube-enterprise を正典）。当ドメインは承認ワークフローを介さず persist/flush で直接確定する（承認ワークフローは在庫機能固有）。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>登録/更新</td><td>dtb_player / dtb_point_history</td><td>当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。</td></tr></tbody></table></div>
-<hr>
-<h2 id="権限・認可">権限・認可</h2>
-<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>ポイント付与・履歴</th></tr></thead><tbody><tr><td>未ログイン管理者</td><td>アクセス不可。</td></tr><tr><td>ログイン済み管理者</td><td>当該会員のポイント履歴閲覧・付与が可能。</td></tr></tbody></table></div>
-<hr>
-<h2 id="画面遷移">画面遷移</h2>
-<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>種別選択</td><td>種別選択画面（<code>admin_customer_point_type_select</code>）</td></tr><tr><td>履歴を開く</td><td>ポイント履歴画面（<code>admin_customer_point_history</code>）</td></tr><tr><td>付与成功</td><td>ポイント履歴画面（<code>admin_customer_point_history</code>）</td></tr><tr><td>検証失敗</td><td>ポイント履歴画面を再表示</td></tr><tr><td>会員・選手情報なし</td><td>ページが見つからない扱い（404）</td></tr></tbody></table></div>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>会員・選手情報が存在しない</td><td>ページが見つからない扱い（404）。</td></tr><tr><td>付与フォーム検証失敗</td><td>ポイント履歴画面を再表示する。</td></tr><tr><td>なりすまし対策トークン不正</td><td>付与を行わない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="ログ・監査">ログ・監査</h2>
-<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
-<ul><li>Cookie値</li><li>セッションIDの完全値</li></ul>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<p>ポイント付与時に履歴を追加して確定する。本機能は楽観ロック・悲観ロックの対象は持たない。</p>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>会員ID、ポイント種別、ポイント変動、備考、なりすまし対策トークン</td></tr><tr><td>成功時出力</td><td>ポイント履歴の追加、履歴画面への遷移</td></tr><tr><td>失敗時出力</td><td>会員・選手情報が無いときは404、検証失敗時は履歴画面を再表示</td></tr></tbody></table></div>
+<h3 id="入出力-永続化">入出力: 永続化</h3>
+<div class="table-wrap"><table><thead><tr><th>操作</th><th>契機</th></tr></thead><tbody><tr><td>追加</td><td>ポイント付与の成立時のポイント履歴</td></tr></tbody></table></div>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
+<h2 id="表示メッセージ">表示メッセージ</h2>
+<p>本機能に固有の表示メッセージは、正本に記載が無い。</p>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

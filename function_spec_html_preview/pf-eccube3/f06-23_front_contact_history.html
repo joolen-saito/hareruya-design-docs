@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,33 +272,13 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#本書で扱うこと">本書で扱うこと</a>
-<a class="lv2" href="#本書で扱わないこと">本書で扱わないこと</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv2" href="#用語">用語</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#フロント挙動">フロント挙動</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#お問い合わせ履歴一覧を表示する-GET-contact-history">お問い合わせ履歴一覧を表示する（GET `/contact/history`）</a>
-<a class="lv3" href="#お問い合わせ履歴詳細を表示する-GET-contact-history-id-detail">お問い合わせ履歴詳細を表示する（GET `/contact/history/{id}/detail`）</a>
-<a class="lv2" href="#表示メッセージ">表示メッセージ</a>
-<a class="lv3" href="#常時表示-正常・静的">常時表示（正常・静的）</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
-<a class="lv3" href="#エッジケース">エッジケース</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#対象の絞り込み">対象の絞り込み</a>
+<a class="lv3" href="#並び順と件数">並び順と件数</a>
+<a class="lv3" href="#表示内容">表示内容</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#バリデーション">バリデーション</a>
-<a class="lv2" href="#権限・認可">権限・認可</a>
-<a class="lv2" href="#画面遷移">画面遷移</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#ログ・監査">ログ・監査</a>
-<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
-<a class="lv2" href="#セッション">セッション</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a></nav>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -296,93 +286,21 @@ footer {
         <h1>会員 — お問い合わせ履歴（一覧・詳細）</h1>
       </header>
       
-      <h2 id="概要">概要</h2>
-<p>ログイン済み会員が、自分が過去に送信したお問い合わせの一覧と、その1件ごとの詳細を閲覧する機能である。マイページトップの「お問い合わせ履歴」ブロックから一覧へ入り、一覧の各件名リンクから詳細へ遷移する。いずれも閲覧専用で、当画面からの編集・送信・削除は行わない。</p>
-<p>本書はTODOリストの「お問い合わせ履歴」（F06-23）と「お問い合わせ履歴詳細」（F06-24）の2機能を、同一コントローラ・同一データを参照する一連の閲覧機能として1冊にまとめる。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインのお問い合わせ処理（一覧・詳細）、テンプレート（<code>Contact/history.twig</code>・<code>Contact/history_detail.twig</code>）、お問い合わせを扱うリポジトリを正とする。</p>
-<p>本機能のカスタマイズ区分は現行踏襲であり、画面・挙動の参照はpf-eccube3を正とし、永続化（テーブル・列）に関する記述はリニューアル移行先のec-cube-enterpriseを正とする。</p>
-<p>対象はブラウザ経由のフロント（会員マイページ）に限定する。</p>
-<p>本文ではフレームワークのコントローラ型名やメソッド名を主説明としない。本文ではルートbind名の網羅は主説明とせず、「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。コード探索でbind名が必要なときだけ「調査補助」へ書く。</p>
-<hr>
-<h2 id="本書で扱うこと">本書で扱うこと</h2>
-<ul><li>お問い合わせ履歴一覧の入口・表示内容・並び順</li><li>お問い合わせ履歴詳細の入口・表示内容</li><li>自分のお問い合わせのみ閲覧できるという認可範囲</li><li>画面遷移</li></ul>
-<hr>
-<h2 id="本書で扱わないこと">本書で扱わないこと</h2>
-<p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
-<ul><li>お問い合わせの新規送信・確認・完了（お問い合わせ送信機能を正とする）</li><li>お問い合わせ種別（件名マスタ）の管理</li><li>ログイン認証そのもの（未ログイン時の扱いは会員ログイン機能を正とする）</li></ul>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<p>現行（pf-eccube3）と移行先（ec-cube-enterprise）でのDB関連の差を記録する。本機能は参照のみで永続化を行わないため、参照先の名称をec-cube-enterpriseに合わせる。</p>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>お問い合わせの格納先</td><td>お問い合わせテーブル（<code>dtb_contact</code>）</td><td>同一スキーマ（<code>dtb_contact</code>が存在）。</td></tr><tr><td>並び順・絞り込みキー</td><td>お問い合わせ番号（<code>id</code>）、会員参照</td><td><code>dtb_contact.id</code>（降順）、<code>dtb_contact.customer_id</code>（会員絞り込み）。</td></tr><tr><td>表示項目の列</td><td>送信日時・件名参照・氏名・本文</td><td><code>dtb_contact.create_date</code>／<code>subject_id</code>（件名マスタ参照）／<code>name01</code>・<code>name02</code>／<code>body</code>。同名列が存在し同一スキーマ。</td></tr></tbody></table></div>
-<hr>
-<h2 id="用語">用語</h2>
-<div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>会員</td><td>フロントにログインしている顧客。</td></tr><tr><td>お問い合わせ</td><td>会員が送信した問い合わせ1件。お問い合わせ番号（連番ID）を持つ。</td></tr><tr><td>件名</td><td>お問い合わせ種別。件名マスタの日本語名称を表示する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>マイページトップの「お問い合わせ履歴」ブロック</td><td><code>GET /contact/history</code></td><td>ログイン会員自身のお問い合わせを新しい順に一覧表示する。総件数と各件の日時・件名・お問い合わせ番号を出す。</td></tr><tr><td>一覧の件名リンク</td><td><code>GET /contact/history/{id}/detail</code></td><td>当該お問い合わせ1件の詳細（日時・件名・番号・氏名・本文）を表示する。</td></tr><tr><td>一覧の「マイページ」ボタン</td><td><code>GET /mypage</code>（マイページトップ）</td><td>マイページトップへ戻る。</td></tr><tr><td>詳細の「戻る」リンク</td><td>ブラウザ履歴を1つ戻る（<code>history.go(-1)</code>）</td><td>直前の画面（通常は一覧）へ戻る。サーバへのリクエストは発生しない。</td></tr></tbody></table></div>
-<p>フロントのページであり管理画面プレフィックスは付かない。<code>/contact/history</code>配下は会員ログインを要する。</p>
-<hr>
-<h2 id="フロント挙動">フロント挙動</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>一覧は見出し「お問い合わせ履歴一覧」、会員氏名、総件数（「N件」）、各件の送信日時（<code>Y年m月d日 H:i</code>）・件名（リンク）・お問い合わせ番号、「マイページ」ボタン。詳細は見出し「お問い合わせ履歴詳細」、会員氏名、送信日時（<code>Y/m/d H:i</code>）・件名・お問い合わせ番号、問い合わせ者氏名、本文（改行を反映して表示）、「戻る」リンク。</td></tr><tr><td>JS挙動</td><td>詳細の「戻る」はブラウザ履歴を1つ戻すリンクのみ。非同期取得や動的な表示切替は扱わない。</td></tr><tr><td>CSS・レイアウト</td><td>詳細画面で問い合わせ表示用の追加スタイルを読み込む。利用者の挙動理解に影響する分岐表示はない。</td></tr><tr><td>モーダル・ポップアップ</td><td>本画面専用のモーダルは無い。</td></tr></tbody></table></div>
-<p>一覧は0件でも見出しと総件数「0件」を表示する（後述）。</p>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="お問い合わせ履歴一覧を表示する-GET-contact-history">お問い合わせ履歴一覧を表示する（GET <code>/contact/history</code>）</h3>
-<ol><li>会員ログインを要求する。ログイン会員を特定する。</li><li>お問い合わせを、当該会員のものに絞り、お問い合わせ番号（ID）の降順で取得する。</li><li>一覧テンプレートへ会員と一覧を渡し、総件数と各件を表示する。</li></ol>
-<h3 id="お問い合わせ履歴詳細を表示する-GET-contact-history-id-detail">お問い合わせ履歴詳細を表示する（GET <code>/contact/history/{id}/detail</code>）</h3>
-<ol><li>会員ログインを要求する。ログイン会員を特定する。</li><li>パスの<code>id</code>と当該会員の両方に一致するお問い合わせ1件を取得する。</li><li>詳細テンプレートへ会員と当該お問い合わせを渡し、日時・件名・番号・氏名・本文を表示する。</li></ol>
-<hr>
-<h2 id="表示メッセージ">表示メッセージ</h2>
-<h3 id="常時表示-正常・静的">常時表示（正常・静的）</h3>
-<p>英語ロケール対応がある機能のため（<code>Contact/history.en.twig</code>・<code>Contact/history_detail.en.twig</code>）、英語文言を併記する。</p>
-<div class="table-wrap"><table><thead><tr><th>種別</th><th>表示文言（日本語）</th><th>表示文言（英語）</th><th>条件</th></tr></thead><tbody><tr><td>一覧見出し</td><td>お問い合わせ履歴一覧</td><td>Contact Us History</td><td>一覧画面の表示時</td></tr><tr><td>総件数</td><td>N件（Nは件数）</td><td>N Items（Nは件数）</td><td>一覧画面の表示時</td></tr><tr><td>お問い合わせ番号</td><td>(お問い合わせ番号 : 〈ID〉)</td><td>(inquiry number : 〈ID〉)</td><td>一覧・詳細の各件</td></tr><tr><td>詳細見出し</td><td>お問い合わせ履歴詳細</td><td>Contact Us History Details</td><td>詳細画面の表示時</td></tr></tbody></table></div>
-<p>本機能は閲覧専用であり、エラー・警告のインライン表示やフラッシュ・トーストは生成しない。</p>
-<hr>
-<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>画面上の文言(英語)</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>F06-23-MSG-001</td><td>画面上部</td><td>お問い合わせ履歴はありません。</td><td>You have no inquiry history.</td><td>お問い合わせ履歴を開き、履歴が1件もないとき</td><td>お問い合わせ履歴一覧画面に留まる</td></tr></tbody></table></div>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>並び順</td><td>一覧はお問い合わせ番号（ID）の降順（新しい順）で表示する。</td></tr><tr><td>件数</td><td>総件数は当該会員のお問い合わせ件数。0件のときも「0件」を表示する。</td></tr><tr><td>件名表示</td><td>件名はお問い合わせ種別マスタの日本語名称を表示する。</td></tr><tr><td>日時書式</td><td>一覧は<code>Y年m月d日 H:i</code>、詳細は<code>Y/m/d H:i</code>で送信日時を表示する。</td></tr></tbody></table></div>
-<p>本機能では業務計算を行わない。入力フォームを持たないため入力項目は無い。</p>
-<h3 id="エッジケース">エッジケース</h3>
-<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>お問い合わせが0件</td><td>一覧見出しと「0件」を表示し、明細を出さない。</td></tr><tr><td>他会員のIDを詳細URLに指定</td><td>会員条件で絞るため当該お問い合わせは取得できない。自分以外の内容は表示しない。</td></tr><tr><td>存在しないIDを詳細URLに指定</td><td>取得結果が無く、当該お問い合わせの内容は表示しない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>一覧と詳細</td><td>一覧・詳細とも同じお問い合わせデータを参照する。詳細は一覧で示したお問い合わせ番号と一致する1件を表示する。</td></tr><tr><td>認可範囲</td><td>一覧・詳細とも会員自身のお問い合わせに限定する。他会員のデータは参照しない。</td></tr><tr><td>参照時点</td><td>各画面表示時点のデータを参照する。当機能はデータを更新しない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="API-バッチ結果">API/バッチ結果</h2>
-<p>本機能ではAPI呼び出し・バッチ実行を扱わない。</p>
-<hr>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="対象の絞り込み">対象の絞り込み</h3>
+<p>一覧・詳細とも会員ログインを要求する。一覧はログイン会員のお問い合わせだけを対象とする。詳細は指定されたお問い合わせ番号とログイン会員の両方に一致する1件を対象とする。対象が無いとき、および他会員のお問い合わせ番号を指定したときは、当該内容を表示しない。閲覧専用のため画面上の明示エラーは出さない。未ログインでの閲覧は会員ログインへ誘導する（会員ログイン機能を正とする）。</p>
+<h3 id="並び順と件数">並び順と件数</h3>
+<p>一覧はお問い合わせ番号の降順（新しい順）で表示する。総件数はログイン会員のお問い合わせ件数とし、0件のときも「0件」を表示する。</p>
+<h3 id="表示内容">表示内容</h3>
+<div class="table-wrap"><table><thead><tr><th>画面</th><th>表示項目</th></tr></thead><tbody><tr><td>一覧</td><td>見出し、会員氏名、総件数、各件の送信日時・件名（詳細へのリンク）・お問い合わせ番号、「マイページ」ボタン</td></tr><tr><td>詳細</td><td>見出し、会員氏名、送信日時・件名・お問い合わせ番号、問い合わせ者氏名、本文（改行を反映して表示）、「戻る」リンク</td></tr></tbody></table></div>
+<p>件名はお問い合わせ種別の日本語名称を表示する。送信日時の書式は一覧が <code>Y年m月d日 H:i</code>、詳細が <code>Y/m/d H:i</code> とする。詳細の「戻る」はブラウザ履歴を1つ戻すリンクで、非同期取得や動的な表示切替は持たない。本画面専用のモーダルは無い。日本語と英語のロケールに対応する。</p>
+<p>本機能は業務計算を行わない。入力フォームを持たない。</p>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>一覧は入力なし。詳細はパスのお問い合わせ番号（<code>id</code>）。</td></tr><tr><td>成功時出力</td><td>一覧画面・詳細画面のHTML表示。</td></tr><tr><td>失敗時出力</td><td>対象が無い場合は当該内容を表示しない（閲覧専用のため明示エラーは出さない）。</td></tr><tr><td>副作用</td><td>無し（参照のみ）。</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<p>機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。</p>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>dtb_contact</code></td><td><code>id</code></td><td>お問い合わせ番号。一覧の並び順キー（降順）、詳細の絞り込みキー。</td></tr><tr><td><code>dtb_contact</code></td><td><code>customer_id</code></td><td>会員ごとの絞り込みキー。</td></tr><tr><td><code>dtb_contact</code></td><td><code>create_date</code></td><td>送信日時として表示する。</td></tr><tr><td><code>dtb_contact</code></td><td><code>subject_id</code></td><td>件名マスタへの参照。件名の名称を表示する。</td></tr><tr><td><code>dtb_contact</code></td><td><code>name01</code> / <code>name02</code></td><td>詳細で問い合わせ者氏名として表示する。</td></tr><tr><td><code>dtb_contact</code></td><td><code>body</code></td><td>詳細で本文として表示する。</td></tr></tbody></table></div>
-<h3 id="DB操作">DB操作</h3>
-<p>本機能は参照系（検索）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>検索</td><td>dtb_contact</td><td>検索条件に合致するレコードを抽出する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="バリデーション">バリデーション</h2>
-<p>本機能は閲覧専用であり、利用者入力の検証は行わない。詳細のパス<code>id</code>は会員条件と併せた取得で実質的に絞り込まれる。</p>
-<hr>
-<h2 id="権限・認可">権限・認可</h2>
-<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>一覧・詳細の閲覧</th></tr></thead><tbody><tr><td>未ログイン</td><td>アクセス不可。会員ログインへ誘導する（会員ログイン機能を正とする）。</td></tr><tr><td>ログイン済み会員</td><td>自分自身のお問い合わせのみ閲覧可能。他会員のお問い合わせは取得対象外。</td></tr></tbody></table></div>
-<hr>
-<h2 id="画面遷移">画面遷移</h2>
-<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>マイページトップの「お問い合わせ履歴」ブロック</td><td>一覧（<code>GET /contact/history</code>）</td></tr><tr><td>一覧の件名リンク</td><td>詳細（<code>GET /contact/history/{id}/detail</code>）</td></tr><tr><td>一覧の「マイページ」ボタン</td><td>マイページトップ（<code>/mypage</code>）</td></tr><tr><td>詳細の「戻る」</td><td>ブラウザ履歴を1つ戻る（通常は一覧）</td></tr></tbody></table></div>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>未ログインアクセス</td><td>会員ログインへ誘導する（会員ログイン機能を正とする）。</td></tr><tr><td>対象お問い合わせが存在しない／他会員のID</td><td>当該内容を表示しない。閲覧専用のため画面上の明示エラーは出さない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="ログ・監査">ログ・監査</h2>
-<p>本機能は閲覧専用であり、固有の監査ログは出力しない。</p>
-<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
-<ul><li>Cookie値</li><li>セッションIDの完全値</li></ul>
-<hr>
-<h2 id="セッション">セッション</h2>
-<p>本機能はお問い合わせ閲覧のためにセッションを更新しない。ログイン状態の判定にのみ会員の認証情報を用いる。</p>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<p>本機能は参照のみであり、楽観ロック・悲観ロックの対象は持たない。</p>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>一覧は入力なし。詳細はお問い合わせ番号</td></tr><tr><td>成功時出力</td><td>一覧画面・詳細画面のHTML表示</td></tr><tr><td>失敗時出力</td><td>対象が無い場合は当該内容を表示しない（閲覧専用のため明示エラーは出さない）</td></tr></tbody></table></div>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
+<h2 id="表示メッセージ">表示メッセージ</h2>
+<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>F06-23-MSG-001</td><td>画面上部</td><td>お問い合わせ履歴はありません。</td><td>お問い合わせ履歴を開き、履歴が1件もないとき</td><td>お問い合わせ履歴一覧画面に留まる</td></tr><tr><td>F06-23-MSG-001</td><td>画面上部（英語表示時）</td><td>You have no inquiry history.</td><td>お問い合わせ履歴を開き、履歴が1件もないとき</td><td>お問い合わせ履歴一覧画面に留まる</td></tr><tr><td>—</td><td>一覧見出し</td><td>お問い合わせ履歴一覧</td><td>一覧画面の表示時</td><td>見出しの下に会員氏名と総件数、各件を表示する</td></tr><tr><td>—</td><td>一覧見出し（英語表示時）</td><td>Contact Us History</td><td>一覧画面の表示時</td><td>見出しの下に会員氏名と総件数、各件を表示する</td></tr><tr><td>—</td><td>一覧の総件数欄</td><td>N件（Nは件数）</td><td>一覧画面の表示時</td><td>一覧画面に留まる</td></tr><tr><td>—</td><td>一覧の総件数欄（英語表示時）</td><td>N Items（Nは件数）</td><td>一覧画面の表示時</td><td>一覧画面に留まる</td></tr><tr><td>—</td><td>一覧・詳細の各件</td><td>(お問い合わせ番号 : 〈ID〉)</td><td>一覧・詳細の各件の表示時</td><td>各画面に留まる</td></tr><tr><td>—</td><td>一覧・詳細の各件（英語表示時）</td><td>(inquiry number : 〈ID〉)</td><td>一覧・詳細の各件の表示時</td><td>各画面に留まる</td></tr><tr><td>—</td><td>詳細見出し</td><td>お問い合わせ履歴詳細</td><td>詳細画面の表示時</td><td>見出しの下に会員氏名と当該お問い合わせの内容を表示する</td></tr><tr><td>—</td><td>詳細見出し（英語表示時）</td><td>Contact Us History Details</td><td>詳細画面の表示時</td><td>見出しの下に会員氏名と当該お問い合わせの内容を表示する</td></tr></tbody></table></div>
+<p>本機能は閲覧専用であり、エラー・警告のインライン表示やフラッシュ・トーストは生成しない。</p>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

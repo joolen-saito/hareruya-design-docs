@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,23 +272,7 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#文書情報">文書情報</a>
-<a class="lv2" href="#改訂履歴">改訂履歴</a>
-<a class="lv2" href="#1-欠品履歴CSV出力">1. 欠品履歴CSV出力</a>
-<a class="lv3" href="#機能の目的と役割">機能の目的と役割</a>
-<a class="lv3" href="#本書で扱うこと">本書で扱うこと</a>
-<a class="lv3" href="#本書で扱わないこと">本書で扱わないこと</a>
-<a class="lv3" href="#利用者視点の入口-エンドポイント">利用者視点の入口（エンドポイント）</a>
-<a class="lv3" href="#起動方法-入力">起動方法（入力）</a>
-<a class="lv3" href="#出力対象データと表示順">出力対象データと表示順</a>
-<a class="lv3" href="#CSV出力列">CSV出力列</a>
-<a class="lv3" href="#文字コード・ファイル名・レスポンス">文字コード・ファイル名・レスポンス</a>
-<a class="lv3" href="#プロセスフロー">プロセスフロー</a>
-<a class="lv3" href="#分岐・遷移・例外">分岐・遷移・例外</a>
-<a class="lv3" href="#状態・データ更新">状態・データ更新</a>
-<a class="lv3" href="#関連設計への接続点">関連設計への接続点</a>
-<a class="lv2" href="#表示メッセージ">表示メッセージ</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a></nav>
+      <nav class="toc"><a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -286,236 +280,10 @@ footer {
         <h1>在庫管理 — 欠品履歴CSV出力</h1>
       </header>
       
-      <h2 id="文書情報">文書情報</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>機能名</td><td>欠品履歴CSV出力</td></tr><tr><td>機能分類</td><td>管理画面 / 在庫管理</td></tr><tr><td>カスタマイズ区分</td><td>新規実装</td></tr><tr><td>作成日</td><td>2026-06-11</td></tr><tr><td>参照元</td><td>excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html</td></tr><tr><td>実装確認</td><td>../ec-cube-enterprise（<code>StockHistoryController::csvStockHistoryDispozalExport</code> / <code>Service\Csv\StockHistoryDisposalCsv</code> / <code>Service\Csv\AbstractCsvService</code> / <code>CsvExportService</code> / <code>DtbStockHistoryRepository::getStockHistories</code> ・ <code>getQueryBuilderBySearchDataForAdmin</code> / Entity <code>DtbStockHistory</code>・<code>ProductStock</code>・<code>ProductClass</code>・<code>Product</code>）</td></tr></tbody></table></div>
-<h2 id="改訂履歴">改訂履歴</h2>
-<div class="table-wrap"><table><thead><tr><th>日付</th><th>内容</th></tr></thead><tbody><tr><td>2026-06-11</td><td>新規実装機能として、Excel設計書を主、実装を補完情報として初版作成。</td></tr><tr><td>2026-06-12</td><td>ec-cube-enterprise 実装（Controller/Service/Form/Entity）と既存テストを読み込み、実装確認値で具体化。</td></tr></tbody></table></div>
-<h2 id="1-欠品履歴CSV出力">1. 欠品履歴CSV出力</h2>
-<h3 id="機能の目的と役割">機能の目的と役割</h3>
-<p>欠品履歴検索一覧（M04-19）で検索・表示した欠品履歴（検索結果全件。一覧フォームが <code>ids[]</code> を自動送信し、行のチェック選択UIは無い）を対象にCSVとして出力する管理画面機能。欠品（在庫変動理由区分が廃棄系＝廃棄／欠品減算（受注）／欠品減算（移動））に該当する在庫変動履歴（<code>dtb_stock_history</code>）を、本店・支店・スマレジ（実店頭）在庫を横断して1ファイルに出力する。</p>
-<p>本機能のカスタマイズ区分は新規実装であり、対応する現行（pf-eccube3）実装は無い。出力対象・出力列の業務要件は基本設計仕様書（0202_基本設計仕様書(在庫管理機能) M04-20シート）を正とし、URLエンドポイント・出力列の永続化元・整形・文字コード・ファイル名はリニューアル先 ec-cube-enterprise 実装を正とする。</p>
-<p>実装上、欠品履歴の一覧表示（M04-19）と在庫変動履歴の一覧表示（M04-17相当）は同一コントローラ <code>StockHistoryController</code> で扱われ、欠品履歴は検索時に「欠品検索（<code>disposal_search</code>）」が指定された状態を指す。CSV出力も、在庫履歴CSV（<code>admin_stock_history_csv_export</code>）と欠品履歴CSV（<code>admin_stock_history_disposal_csv_export</code>）の2系統に分かれており、本書は後者（欠品履歴＝disposal）を扱う。</p>
-<h3 id="本書で扱うこと">本書で扱うこと</h3>
-<ul><li>欠品履歴CSV出力の入口（エンドポイント）と起動方法（一覧で選択した行のID配列を受け取る）</li><li>出力対象データの取得と表示順</li><li>CSV出力列（15列）と各列の永続化元・整形</li><li>文字コード・ファイル名・レスポンスヘッダ</li><li>対象なし・ID未指定・不正IDなどの例外時の挙動</li></ul>
-<h3 id="本書で扱わないこと">本書で扱わないこと</h3>
-<p>以下は本書では仕様確定せず、対応機能の設計を正とする。</p>
-<ul><li>欠品履歴検索一覧（M04-19）の検索条件・一覧項目・欠品理由インライン編集</li><li>在庫履歴（廃棄系以外）のCSV出力（<code>admin_stock_history_csv_export</code>、在庫履歴CSV）。本書とはヘッダ定義・対象が異なる</li><li>管理画面ログイン認証・権限制御そのもの（共通設計を正とする）</li></ul>
-<h3 id="利用者視点の入口-エンドポイント">利用者視点の入口（エンドポイント）</h3>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント（ルート名）</th><th>HTTPメソッド</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>欠品履歴CSV出力</td><td><code>/%admin%/product/stock/history/disposal/csv_export</code>（<code>admin_stock_history_disposal_csv_export</code>）</td><td>POST</td><td>リクエストの <code>ids[]</code>（在庫履歴ID配列。一覧フォームが検索結果全件分を hidden で自動送信する）を受け取り、該当する欠品履歴のCSVを <code>StreamedResponse</code> で返す。対象が無い場合は一覧へリダイレクト。</td></tr></tbody></table></div>
-<p>（参考・本書対象外）在庫履歴CSV出力は <code>/%admin%/product/stock/history/csv_export</code>（<code>admin_stock_history_csv_export</code>、POST）。欠品履歴一覧の表示は <code>/%admin%/product/stock/history</code>（<code>admin_stock_history</code>。ページ送りは <code>admin_stock_history_page</code> / <code>admin_stock_history_page_count</code>）。</p>
-<p><code>%admin%</code> は管理画面ルートプレフィックス（<code>eccube_admin_route</code>）。すべて管理画面ログインを要する。</p>
-<h3 id="起動方法-入力">起動方法（入力）</h3>
-<ul><li>入口は POST のみ。出力対象は**在庫履歴ID配列** <code>ids[]</code>（<code>dtb_stock_history.id</code>）。一覧画面のCSV出力フォームには検索結果全件分の <code>ids[]</code> が hidden で自動設定されて送信される（行のチェック選択UIは無い。<code>history.twig:595-608</code>、<code>PaginationAll</code>）。</li><li>コントローラは <code>ids</code> を <code>intval</code> 変換し、0以下を除外して有効なIDのみ採用する（<code>array_filter(...) fn($id) =&gt; $id &gt; 0</code>）。有効IDが0件の場合はエラー応答。</li><li>一覧側で「欠品検索」状態のときに表示・選択された行が対象となる前提（廃棄系の在庫変動区分に限定された一覧から選択される）。</li></ul>
-<h3 id="出力対象データと表示順">出力対象データと表示順</h3>
-<ul><li>対象データは <code>DtbStockHistoryRepository::getStockHistories($ids)</code> が取得する。<code>sh.id IN (:ids)</code> で選択IDの在庫履歴を取得し、<code>ProductStock</code>・<code>Member</code>・<code>ProductClass</code>・<code>Product</code>・<code>CardDetail</code> を結合する。</li><li>表示順（CSV行順）は以下の3段ソート。Excel M04-19の一覧ソート要件と一致する。</li></ul>
-<ol><li>商品コード <code>pc.code</code> の降順（第一ソート）</li><li>店舗 <code>ps.baseInfo</code> の降順（第二ソート＝店舗IDの降順）</li><li>登録日時 <code>sh.createDate</code> の降順（第三ソート＝最新順）</li></ol>
-<ul><li>本店・支店・スマレジの在庫はすべて EC-CUBE のDB（<code>dtb_stock_history</code> / <code>dtb_product_stock</code>）が保持するため、通常の検索で横断的に出力される。</li></ul>
-<h3 id="CSV出力列">CSV出力列</h3>
-<p><code>StockHistoryController::getStockHistoryDisposalCsvHeader()</code> で定義したヘッダ（表示名）をそのまま1行目に出力し、<code>StockHistoryDisposalCsv::convertExportCsvRows()</code> で各行を生成する。列は以下の15列・この順。</p>
-<div class="table-wrap"><table><thead><tr><th>#</th><th>列名（ヘッダ）</th><th>値の取得元</th><th>整形</th></tr></thead><tbody><tr><td>1</td><td>商品コード</td><td><code>ProductClass::getCode()</code></td><td>—</td></tr><tr><td>2</td><td>商品名</td><td><code>Product::getName()</code></td><td>—</td></tr><tr><td>3</td><td>言語</td><td><code>ProductClass::getLanguageNameJp()</code></td><td>日本語名</td></tr><tr><td>4</td><td>状態</td><td><code>ProductClass::getCardCondition()-&gt;getCode()</code></td><td>カード状態コード</td></tr><tr><td>5</td><td>Foil</td><td>（固定で空文字）</td><td>Foilマスタ未実装のため空（実装上 TODO）</td></tr><tr><td>6</td><td>店舗</td><td><code>ProductStock::getBaseInfo()</code></td><td>—</td></tr><tr><td>7</td><td>在庫場所</td><td><code>ProductStock::getLocationName()</code></td><td>EC-CUBE / スマレジ（<code>STOCK_LOCATION_*</code>）</td></tr><tr><td>8</td><td>登録元</td><td><code>DtbStockHistory::getHistorySourceType()</code></td><td>—</td></tr><tr><td>9</td><td>欠品点数</td><td><code>DtbStockHistory::getStock()</code></td><td>—</td></tr><tr><td>10</td><td>欠品時販売価格</td><td><code>DtbStockHistory::getSellPrice()</code></td><td>—</td></tr><tr><td>11</td><td>欠品理由</td><td><code>DtbStockHistory::getStockChangeReason()</code></td><td>—</td></tr><tr><td>12</td><td>登録日</td><td><code>DtbStockHistory::getRegisteredAt()</code></td><td><code>Y-m-d H:i</code>（null時は空）</td></tr><tr><td>13</td><td>登録者</td><td><code>DtbStockHistory::getRegisteredMember()</code></td><td>—</td></tr><tr><td>14</td><td>最終更新日</td><td><code>DtbStockHistory::getUpdateDate()</code></td><td><code>Y-m-d H:i</code>（null時は空）</td></tr><tr><td>15</td><td>最終更新者</td><td><code>DtbStockHistory::getUpdateMember()</code></td><td>—</td></tr></tbody></table></div>
-<p>各行は <code>ProductStock</code>（<code>product_stock_id</code> から）→ <code>ProductClass</code> → <code>Product</code> を辿って商品情報を補完する。ヘッダのキー順に値を並べ、未設定値は空文字で出力する。</p>
-<p>&gt; **Excel設計書のCSV列（16列）を正とする。** 現状の実装（disposalヘッダ15列）はExcel設計と差異があり、以下は実装側の是正対象（テストはExcel期待値=16列で設計する）: &gt; - Excelは「7 在庫区分」を求めるが、実装は「在庫場所」列（<code>ProductStock::getLocationName()</code> の EC-CUBE / スマレジ）として出力している。列名・粒度をExcel（在庫区分：EC-CUBE在庫／スマレジ在庫）に合わせる必要がある。 &gt; - Excelは「9 登録元ID」を求めるが、欠品履歴CSV（disposalヘッダ）には**登録元ID列が無い**（在庫履歴CSV側のヘッダには <code>登録元ID</code> が存在する）。Excel設計どおり列を追加する必要がある（実装側の欠落）。</p>
-<h3 id="文字コード・ファイル名・レスポンス">文字コード・ファイル名・レスポンス</h3>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>値</th></tr></thead><tbody><tr><td>文字コード</td><td><code>eccube_csv_export_encoding</code>（既定 <code>SJIS-win</code>）。各セルは <code>mb_convert_encoding($value, 設定エンコード, 'UTF-8')</code> で変換して出力する（<code>CsvExportService</code>）。</td></tr><tr><td>Content-Type</td><td><code>text/csv;charset=windows-31j</code>（<code>SJIS-win</code> の場合 <code>windows-31j</code> に読み替え。それ以外は設定値そのまま）。</td></tr><tr><td>Content-Disposition</td><td><code>attachment; filename=&lt;ファイル名&gt;</code>（ダウンロード）。</td></tr><tr><td>ファイル名</td><td><code>stock_history_disposal_</code> + 出力時刻 <code>YmdHis</code> + <code>.csv</code>（例: <code>stock_history_disposal_20260612153000.csv</code>）。<code>AbstractCsvService::createFileName()</code> で生成。</td></tr><tr><td>出力方式</td><td><code>StreamedResponse</code>。コールバック内で <code>fopen()</code> → ヘッダ行 <code>fputcsv()</code> → 各行 <code>fputcsv()</code> → <code>fclose()</code>。出力前に <code>set_time_limit(0)</code> とSQLロガー無効化でメモリ・タイムアウト対策を行う。</td></tr></tbody></table></div>
-<p>ファイル名生成時に <code>log_info('欠品履歴CSV出力ファイル名', [$filename])</code> をアプリケーションログへ出力する。</p>
-<h3 id="プロセスフロー">プロセスフロー</h3>
-<ol><li>欠品履歴一覧（<code>admin_stock_history</code>、欠品検索状態）でCSVダウンロードを実行（POST）。フォームに hidden で自動設定された検索結果全件分の <code>ids[]</code> を送信（行のチェック選択UIは無い）。</li><li>コントローラ <code>csvStockHistoryDispozalExport()</code> が <code>ids</code> を整数化し、0以下を除外。有効IDが0件なら <code>responseNoStockHistoryIdError()</code> でエラーリダイレクト（後述）。</li><li><code>set_time_limit(0)</code>・SQLロガー無効化のうえ、<code>StockHistoryDisposalCsv</code> をヘッダ定義（<code>getStockHistoryDisposalCsvHeader()</code> / 必須ヘッダ <code>getRequiredStockHistoryCsvHeader()</code>）とともに生成。</li><li><code>exportCsv($ids)</code> を実行。<code>getStockHistories($ids)</code> で対象在庫履歴を取得（前述のソート順）。</li><li>取得0件の場合は <code>RuntimeException</code>（<code>admin.csv.error.export.not_registered_stock_history_id</code>）。<code>convertExportCsvRows()</code> 結果が0件の場合は <code>admin.csv.error.export.no_stock_history_data</code>。</li><li>正常時は <code>StreamedResponse</code> を生成し、文字コード変換・ヘッダ設定のうえCSVをストリーム出力する。</li></ol>
-<h3 id="分岐・遷移・例外">分岐・遷移・例外</h3>
-<div class="table-wrap"><table><thead><tr><th>条件</th><th>挙動</th></tr></thead><tbody><tr><td><code>ids</code> パラメータ無し / 空配列 / 0以下のみ（有効ID0件）</td><td><code>responseNoStockHistoryIdError()</code>：<code>addError('eccube.admin.error', trans('admin.stock_history.not_select'))</code> を実行し、<code>admin_stock_history_page</code>（セッション <code>eccube.admin.stock_history.search.page_no</code> の現在ページ、既定1）へリダイレクト。※第2引数=namespace 誤用によりフラッシュは <code>eccube.admin.stock_history.not_select.error</code> バッグへ格納され、<code>alert.twig</code> が購読するバッグではないため画面には表示されないと推定（要実機確認。M04-20-MSG-002 参照）。</td></tr><tr><td>指定IDに該当する在庫履歴が存在しない / 変換結果が空</td><td><code>StockHistoryDisposalCsv::exportCsv()</code> が <code>RuntimeException</code> を送出。コントローラが <code>addError($e-&gt;getMessage(), 'admin')</code> でメッセージ表示し、リファラがあればリファラへ、無ければ <code>admin_stock_history</code> へリダイレクト。</td></tr><tr><td>正常</td><td><code>StreamedResponse</code>（HTTP 200、<code>text/csv</code>、<code>attachment</code>）を返す。</td></tr></tbody></table></div>
-<p>既存テスト <code>StockHistoryDisposalCsvControllerTest</code> で、ID無し・idsパラメータ無し・無効ID（0/-1/空）・存在しないID（999999）はいずれもリダイレクト、正常系（廃棄区分の履歴を <code>disposal_search=1</code> で検索して得たIDを送信）は HTTP 200・<code>text/csv</code>・<code>attachment</code> を返すことを確認済み。</p>
-<h3 id="状態・データ更新">状態・データ更新</h3>
-<div class="table-wrap"><table><thead><tr><th>対象</th><th>内容</th></tr></thead><tbody><tr><td>主データ</td><td>欠品履歴CSV出力は**参照のみ**で業務データを更新しない（在庫・履歴の更新は行わない）。</td></tr><tr><td>参照テーブル</td><td><code>dtb_stock_history</code>（<code>DtbStockHistory</code>）。商品情報は <code>dtb_product_stock</code> → <code>dtb_product_class</code> → <code>dtb_product</code> を結合参照。区分は <code>mtb_stock_change_type</code> / <code>mtb_stock_change_type_detail</code>（欠品＝<code>MtbStockChangeType::DISPOSAL</code> 配下）。</td></tr><tr><td>ログ</td><td>出力ファイル名を <code>log_info</code> でアプリケーションログに記録する。</td></tr></tbody></table></div>
-<p>&gt; 欠品理由の更新（<code>DtbStockHistoryRepository::updateDisposalReason</code>、<code>dtb_stock_history.stock_change_reason</code> / <code>update_member_id</code> / <code>update_date</code> を更新）は欠品履歴一覧側（<code>admin_stock_history_update</code>）の機能であり、本CSV出力では行わない。</p>
-<h3 id="関連設計への接続点">関連設計への接続点</h3>
-<ul><li>出力対象・出力列の業務要件は、参照元Excel設計書（欠品履歴CSV出力 M04-20、欠品履歴検索一覧 M04-19）を正とする。</li><li>出力列の永続化元・整形・文字コード・ファイル名・ソート順は <code>../ec-cube-enterprise</code> の <code>StockHistoryController</code> / <code>StockHistoryDisposalCsv</code> / <code>AbstractCsvService</code> / <code>CsvExportService</code> / <code>DtbStockHistoryRepository</code> / Entity 実装を正とする。</li><li>出力対象IDの供給元（一覧フォームが自動送信する検索結果全件分の <code>ids[]</code>）は欠品履歴検索一覧（M04-19）。一覧の「欠品検索」状態が前提となる。</li></ul>
+      <div class="renewal-spec-banner"><h3>リニューアル後の仕様</h3></div>
 <h2 id="表示メッセージ">表示メッセージ</h2>
-<p>欠品履歴一覧（＝欠品検索状態）と同一画面で発生するメッセージ。表示形態はフラッシュ／インページアラート／インラインフォームエラーが混在する。文言はすべて ec-cube-enterprise 実ソース由来の逐語リテラル（<code>messages.ja.yaml</code>／<code>validators.ja.yaml</code> のロケール解決値、またはロケール未定義キーの生文字列）で、単一の逐語文言に確定できないものは本表に収録しない（除外分は <code>message_inventory/unconfirmed_messages.tsv</code> に監査用として退避済み）。</p>
-<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>画面上の文言(英語)</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M04-20-MSG-001</td><td>管理画面上部</td><td>存在しない在庫履歴IDが含まれています。 ／ 在庫履歴データが存在しないためエクスポートできません。</td><td>（英訳なし）</td><td>選択した在庫履歴IDに該当する履歴がない、またはCSV出力対象データがない状態で欠品履歴CSVを出力したとき</td><td>エラーメッセージを表示し、遷移元の画面へ戻る。遷移元がない場合は在庫履歴一覧画面に遷移する</td></tr><tr><td>M04-20-MSG-002</td><td>管理画面上部</td><td>eccube.admin.error</td><td>（英訳なし）</td><td>欠品履歴CSVを出力するとき、出力対象が選ばれていないとき</td><td>欠品履歴検索/一覧画面に遷移する</td></tr><tr><td>M04-20-MSG-003</td><td>当該入力欄直下</td><td>不正な日付です。</td><td>（英訳なし）</td><td>欠品履歴を検索するとき、1900年1月1日より前の日付を指定したとき</td><td>欠品履歴検索/一覧画面に留まる</td></tr></tbody></table></div>
+<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M04-20-MSG-001</td><td>管理画面上部</td><td>存在しない在庫履歴IDが含まれています。 ／ 在庫履歴データが存在しないためエクスポートできません。</td><td>選択した在庫履歴IDに該当する履歴がない、またはCSV出力対象データがない状態で欠品履歴CSVを出力したとき</td><td>エラーメッセージを表示し、遷移元の画面へ戻る。遷移元がない場合は在庫履歴一覧画面に遷移する</td></tr><tr><td>M04-20-MSG-002</td><td>管理画面上部</td><td>eccube.admin.error</td><td>欠品履歴CSVを出力するとき、出力対象が選ばれていないとき</td><td>欠品履歴検索/一覧画面に遷移する</td></tr><tr><td>M04-20-MSG-003</td><td>当該入力欄直下</td><td>不正な日付です。</td><td>欠品履歴を検索するとき、1900年1月1日より前の日付を指定したとき</td><td>欠品履歴検索/一覧画面に留まる</td></tr></tbody></table></div>
 <p>&gt; 注: 同一コントローラ／同一画面（<code>history.twig</code>）に属するが本CSV出力機能（M04-20）本体のトリガーではないメッセージ（欠品理由編集・在庫履歴CSV出力・在庫変動理由の非同期編集・検索フォーム由来）は、codex+fable5 の批判レビューにより M04-17/M04-18/M04-19 側の各機能へ再割当済み。</p>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<p>本機能は新規実装であり、現行（pf-eccube3）に対応する欠品履歴CSV出力機能は無い。挙動・出力列は基本設計仕様書（在庫管理機能 M04-20シート）を正とし、DBスキーマ・整形は ec-cube-enterprise の実装を正とする。確認できない点は推測せず要確認として残す。</p>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>出力対象の在庫履歴</td><td><code>dtb_stock_history</code>（移行先で実在）。在庫変動理由区分が廃棄系（廃棄・欠品減算（受注）・欠品減算（移動）＝<code>MtbStockChangeType::DISPOSAL</code> 配下の <code>StockChangeTypeDetail</code>）の履歴を、一覧で選択したIDに限定して出力する。</td></tr><tr><td>欠品履歴の参照</td><td><code>dtb_stock_history</code> を参照。欠品理由は <code>stock_change_reason</code>、最終更新は <code>update_date</code> / <code>update_member_id</code>。</td></tr><tr><td>CSV列の追加仕様</td><td>**Excelの列要件（店舗・在庫区分・登録元・登録元ID・欠品時販売価格・欠品理由・最終更新日・最終更新者）を正とする。** 実装の disposal ヘッダは「在庫区分」を「在庫場所」として出力し「登録元ID」を欠くため、Excel設計に合わせる是正が必要（実装側の乖離）。</td></tr><tr><td>文字コード</td><td><code>eccube_csv_export_encoding</code>（既定 <code>SJIS-win</code>／Content-Type は <code>windows-31j</code>）。</td></tr></tbody></table></div>
-<details>
-<summary>Excel設計書からの抽出（原典・テスト網羅の根拠）</summary>
-<pre><code class="language-text">欠品履歴検索一覧(検索結果)
-ドキュメント名
-在庫管理 基本設計
-セクション
-—
-プロジェクト名
-サイトリニューアル
-作成者
-佐藤
-作成日
-2025/8/25
-更新者
-加藤
-更新日
-2025-11-07
-機能No
-M04-19
-概要
-在庫一覧で欠品のみを選択時の一覧画面
-処理概要（★はカスタマイズ項目）
-図形・テキストボックス内テキスト（19件）
-欠品履歴検索一覧(検索結果)
-レイアウト図
-1-1
-1-2
-2-2
-2-3
-2-4
-2-5
-2-6
-2-7
-2-8
-2-9
-2-1
-2-10
-2-12
-2-13
-3-1
-2-14
-2-16
-2-15
-2-11
-欠品履歴検索一覧(検索結果) / B8 / image 1
-カスタマイズ説明
-・カスタマイズ要件
-・本店在庫・支店在庫・スマレジ（実店頭）の在庫情報を横断的に検索が可能とする
-・最終欠品理由の記載を追加する
-運用想定として金額次第では行わないこととする（捜索を1種合計で、980円以下は行わない）
-→理由区分をキーワード選択とし、理由の説明をフリーワードの二つとする 欠品理由はキーワード選択を行わないことになりました
-→振替の場合は欠品から振替を行えるようにしたい※ユースケース確認 振替の要件はなくなりました
-・欠品登録時に総在庫を減らす処理を行う
-※欠品のため総原価は変えない
-・カスタマイズ要件に記載の内容以外は現行踏襲とする。
-機能仕様処理概要（★はカスタマイズ項目）
-★1.一覧表示
-1-1.検索した結果の在庫変動履歴の内、在庫変動理由区分が「廃棄」（親区分）、「欠品減算（受注）」・「欠品減算（移動）」（子区分）の履歴を検索し表示
-1-1-1.入庫承認待ち在庫情報は表示しない
-1-2.在庫履歴情報の一覧は、下記ソート順とする
-1-2-1.第一ソートを商品コードの降順とする※現行踏襲
-1-2-2.第二ソートを店舗のIDを降順とする※在庫区分でのソートは行わない
-1-2-3.第三ソートを各レコードの「登録日時」の降順（最新順）で表示する
-★2.表示条件
-2-1.在庫変動履歴の検索で欠品履歴一覧を表示を選択された場合に表示
-★3.表示項目カスタマイズ追加
-3-1.現行より、下記項目の追加を行う
-・識別ID:2-6店舗を追加
-・識別ID:2-7在庫区分を追加
-・識別ID:2-8登録元を追加
-・識別ID:2-9登録元IDを追加
-・識別ID:2-11欠品時販売価格を追加
-・識別ID:2-12欠品理由を追加
-・識別ID:2-15最終更新日を追加
-・識別ID:2-16最終更新者を追加
-識別IDラベル書式・制限必須最大値初期値画面部品の説明
-上部表示項目
-1-1表示件数単一選択--50件EC-CUBE標準のマスタデータ管理の最大ページ表示にて、設定されている表示件数の選択肢を表示する
-1-2CSVダウンロードボタン---在庫変動履歴CSVを出力する
-リスト表示項目
-2-1商品コード文字列---「在庫編集」シート識別ID:1-5商品コードを参照
-2-2商品名リンク---「在庫編集」シート識別ID:1-3商品名を参照
-商品名を押下すると、押下した商品在庫の在庫編集画面を別タブで表示
-※運用想定では欠品商品を発見した場合の補填目的で設置
-2-3言語文字列---「在庫編集」シート識別ID:1-6言語を参照
-2-4状態文字列---「在庫編集」シート識別ID:1-7状態を参照
-2-5Foil文字列---「在庫編集」シート識別ID:1-8Foilを参照
-2-6店舗文字列---「在庫編集」シート識別ID:2-2店舗を参照
-2-7在庫区分文字列---「在庫編集」シート識別ID:2-3在庫区分を参照
-2-8登録元テキスト---「在庫履歴検索一覧(検索結果)」シート識別ID:2-8登録元を参照
-2-9登録元IDリンク---「在庫履歴検索一覧(検索結果)」シート識別ID:2-9登録元IDを参照
-2-10欠品点数文字列---欠品登録された商品に対する欠品点数を表示
-2-11欠品時販売価格テキスト---欠品登録時の販売販売価格を表示
-受注の場合は、受注情報で保持している販売価格を参照
-移動の場合も、移動情報で保持している販売価格を参照
-2-12欠品理由テキスト---欠品理由を表示する
-・編集機能
-欠品理由の編集ができるようペンのアイコンを押下するとテキストエリアが表示され、再びペンのアイコンを押下すると編集内容が登録される
-更新された場合は、更新された更新日と、ログインしているメンバーを更新者として更新する
-2-13登録日日付(yyyy/mm/dd hh:mm)---「在庫編集」シート識別ID:4-6登録日を参照
-2-14登録者文字列---「在庫編集」シート識別ID:4-7登録者を参照
-2-15最終更新日日付(yyyy/mm/dd hh:mm)---「在庫履歴検索一覧(検索結果)」シート識別ID:2-26最終更新日を参照
-2-16最終更新者文字列---「在庫履歴検索一覧(検索結果)」シート識別ID:2-27最終更新者を参照
-画面下部
-3-1 ページング リンク - - - 再検索実行し、移動先内容の範囲の内容を表示する画面に遷移する
-※在庫編集承認一覧(検索入力)の内容を表示する
-図形・テキストボックス内テキスト（19件）
-画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。
-位置テキスト
-AQ7(1-1)
-AT7(1-2)
-B8(2-1)
-F8(2-2)
-H8(2-3)
-J8(2-4)
-K8(2-5)
-M8(2-6)
-N8(2-7)
-P8(2-8)
-R8(2-9)
-V8(2-10)
-X8(2-11)
-欠品履歴CSV出力
-ドキュメント名
-在庫管理 基本設計
-セクション
-—
-プロジェクト名
-サイトリニューアル
-作成者
-佐藤
-作成日
-2025/8/25
-更新者
-加藤
-更新日
-2025-11-12
-機能No
-M04-20
-機能名
-欠品履歴CSV出力
-概要
-在庫一覧で欠品のみを選択時の一覧CSV出力
-処理概要（★はカスタマイズ項目）
-CSV出力項目
-識別ID項目名備考
-1商品コード
-2商品名
-3言語
-4状態
-5Foil
-6店舗
-7在庫区分
-8登録元
-9登録元ID
-10欠品点数
-11欠品時販売価格
-12欠品理由
-13登録日
-14登録者
-15最終更新日
-16最終更新者
-カスタマイズ説明
-・カスタマイズ要件
-・欠品履歴を検索した結果をCSVとして出力
-※本店・支店・スマレジの在庫を横断して出力可能とする
-・カスタマイズ要件に記載の内容以外は現行踏襲とする。
-機能仕様処理概要（★はカスタマイズ項目）
-・在庫履歴検索一覧(検索入力)の検索条件でデータを取得しCSV出力する
-・一覧表示されている順番と同じ順でCSV出力する
-※参照情報は「在庫編集承認一覧(検索結果)」シート1-1を参照
-★・現行より、下記項目の追加を行う
-識別ID:6店舗を追加
-識別ID:7在庫区分を追加
-識別ID:8登録元を追加
-識別ID:9登録元IDを追加
-識別ID:11欠品時販売価格を追加
-識別ID:12欠品理由を追加
-識別ID:15最終更新日を追加
-識別ID:16最終更新者を追加</code></pre>
-</details>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

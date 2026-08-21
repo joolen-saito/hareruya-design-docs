@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,41 +272,19 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#本書で扱うこと">本書で扱うこと</a>
-<a class="lv2" href="#本書で扱わないこと">本書で扱わないこと</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv2" href="#用語">用語</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#フロント挙動">フロント挙動</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#会員登録画面を表示する-GET-locale-entry">会員登録画面を表示する（GET `/{_locale}/entry`）</a>
-<a class="lv3" href="#確認画面を表示する-POST-mode-confirm">確認画面を表示する（POST `mode=confirm`）</a>
-<a class="lv3" href="#仮登録を実行する-POST-mode-complete">仮登録を実行する（POST `mode=complete`）</a>
-<a class="lv3" href="#仮会員登録完了画面を表示する-GET-locale-entry-complete">仮会員登録完了画面を表示する（GET `/{_locale}/entry/complete`）</a>
-<a class="lv2" href="#仮登録実行時の判定順序">仮登録実行時の判定順序</a>
-<a class="lv2" href="#表示メッセージ">表示メッセージ</a>
-<a class="lv3" href="#常時表示-正常・静的">常時表示（正常・静的）</a>
-<a class="lv3" href="#エラー・警告-インライン">エラー・警告（インライン）</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
-<a class="lv3" href="#入力項目">入力項目</a>
-<a class="lv3" href="#エッジケース">エッジケース</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#画面構成">画面構成</a>
+<a class="lv3" href="#国による入力欄の切替">国による入力欄の切替</a>
+<a class="lv3" href="#支店からの遷移">支店からの遷移</a>
+<a class="lv3" href="#確認画面">確認画面</a>
+<a class="lv3" href="#仮登録の判定順序">仮登録の判定順序</a>
+<a class="lv3" href="#仮登録で作成する情報">仮登録で作成する情報</a>
+<a class="lv3" href="#仮会員設定による分岐">仮会員設定による分岐</a>
+<a class="lv3" href="#エラー時の扱い">エラー時の扱い</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#バリデーション">バリデーション</a>
-<a class="lv2" href="#権限・認可">権限・認可</a>
-<a class="lv2" href="#画面遷移">画面遷移</a>
-<a class="lv3" href="#遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#ログ・監査">ログ・監査</a>
-<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
-<a class="lv2" href="#セッション">セッション</a>
-<a class="lv3" href="#本機能におけるセッション">本機能におけるセッション</a>
-<a class="lv3" href="#セッションへ保存しない情報">セッションへ保存しない情報</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a></nav>
+<a class="lv3" href="#入出力-永続化">入出力: 永続化</a>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -304,111 +292,32 @@ footer {
         <h1>F06-01（仮会員登録）</h1>
       </header>
       
-      <h2 id="概要">概要</h2>
-<p>新規会員登録は、未ログインの利用者が会員情報を入力し、確認画面を経て仮会員として登録したうえで、登録したメールアドレス宛に本会員化（アクティベート）用のURLを記載した仮会員登録完了メールを送信する機能である。本店からの登録に加え、支店から会員登録画面へ遷移した場合は遷移元の店舗名をセッションに記録する。入力・確認・仮登録・完了メール送信までを本書の範囲とし、メールのURLを開いて本会員へ昇格するアクティベート処理は別機能（本会員登録）を正とする。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインの会員登録処理、会員登録テンプレート（<code>Entry/index.twig</code>・<code>Entry/confirm.twig</code>・<code>Entry/complete.twig</code>と各英語版<code>*.en.twig</code>）、会員登録完了画面、会員登録フォーム種別とその拡張、ブラックリスト判定、仮会員登録完了メール送信処理を正とする。</p>
-<p>本機能のカスタマイズ区分はカスタマイズで、画面・処理フローの挙動は現行リポ（pf-eccube3）を参照し、DB関連（テーブル名・列名・保存先）は ec-cube-enterprise を正とする。本機能は言語切替で英語表示へ到達できるため、表示メッセージに英語文言を併記する。</p>
-<p>対象はブラウザ経由のフロント（会員登録）に限定する。フロントのページは言語別パスセグメント<code>/{_locale}</code>を前提とし、本書のパスは<code>/{_locale}</code>配下の確認値として記載する。実装上のルート登録はサイトルート直下であり、言語セグメントの付与はフロント共通のロケール処理に従う。</p>
-<p>本文ではフレームワークのコントローラ型名やメソッド名を主説明としない。ルートbind名の網羅は主説明とせず、「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。コード探索でbind名が必要なときだけ「調査補助」へ書く。</p>
-<hr>
-<h2 id="本書で扱うこと">本書で扱うこと</h2>
-<ul><li>会員登録画面・会員登録確認画面・仮会員登録完了画面の入口と画面遷移</li><li>入力フォームの項目・必須・最大長・初期値と保存先</li><li>確認から仮登録（complete）までの判定順序と副作用</li><li>支店から遷移した場合の店舗名のセッション記録</li><li>ブラックリスト該当時の遷移</li><li>仮会員設定（仮会員を経るか否か）による完了後の分岐</li><li>利用者に表示するメッセージ</li></ul>
-<hr>
-<h2 id="本書で扱わないこと">本書で扱わないこと</h2>
-<p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
-<ul><li>本会員化（アクティベート）処理（本会員登録機能を正とする）</li><li>仮会員登録完了メール・本会員登録完了メールの本文・件名（メールテンプレート管理機能を正とする）</li><li>ブラックリスト登録エラー画面の表示仕様（別機能を正とする）</li><li>国・都道府県・住所・電話番号などの各フォーム部品の内部仕様（共通フォーム部品を正とする）</li><li>スマレジ連携・支店連携サービスの内部仕様</li></ul>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<p>DB関連は ec-cube-enterprise を正とする。会員と選手情報は現行・移行先とも存在するが、会員の一部の列名が現行（EC-CUBE3系）と移行先（EC-CUBE4系の ec-cube-enterprise）で異なる。</p>
-<div class="table-wrap"><table><thead><tr><th>対象</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th><th>扱い</th></tr></thead><tbody><tr><td>郵便番号</td><td>分割2列<code>zip01</code>・<code>zip02</code></td><td>単一列<code>postal_code</code>（桁数8）</td><td>列の統合。本店登録は分割欄から組み立てて保存する</td></tr><tr><td>性別</td><td><code>sex</code>（関連列）</td><td><code>sex_id</code></td><td>列名差</td></tr><tr><td>職業</td><td><code>job</code>（関連列）</td><td><code>job_id</code></td><td>列名差</td></tr><tr><td>都道府県</td><td><code>pref</code>（関連列）</td><td><code>pref_id</code></td><td>列名差</td></tr><tr><td>会員ステータス</td><td><code>status</code>（関連列）</td><td><code>customer_status_id</code></td><td>列名差。仮会員として作成する点は同じ</td></tr><tr><td>電話番号・FAX</td><td><code>tel01</code>・<code>tel02</code>・<code>tel03</code>・<code>fax01</code>・<code>fax02</code>・<code>fax03</code></td><td>同名・同列</td><td>同一スキーマ（移行先も3分割を維持）</td></tr><tr><td>氏名・カナ・メール・パスワード・ソルト・秘密キー・住所・生年月日・会社名</td><td><code>name01</code>・<code>name02</code>・<code>kana01</code>・<code>kana02</code>・<code>email</code>・<code>password</code>・<code>salt</code>・<code>secret_key</code>・<code>addr01</code>・<code>addr02</code>・<code>birth</code>・<code>company_name</code></td><td>同名・同列</td><td>同一スキーマ</td></tr><tr><td>選手情報</td><td><code>dtb_player</code>（<code>first_name_jp</code>・<code>last_name_jp</code>・<code>first_name_en</code>・<code>last_name_en</code>・<code>email</code>）</td><td>同名・同列</td><td>同一スキーマ</td></tr></tbody></table></div>
-<p>挙動・画面・処理フロー・メッセージ・UIバリデーションは現行リポ（pf-eccube3）を正とする。</p>
-<hr>
-<h2 id="用語">用語</h2>
-<div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>仮会員</td><td>入会申込はしたが本会員化前の会員。ログイン不可の状態。</td></tr><tr><td>本会員</td><td>アクティベート済みでログイン可能な会員。</td></tr><tr><td>秘密キー</td><td>会員ごとに発行される一意のキー。アクティベートURLに含む。</td></tr><tr><td>選手情報</td><td>会員に1対1で紐づく拡張情報。会員登録時に同時作成する。</td></tr><tr><td>仮会員設定</td><td>店舗基本情報の設定。有効な場合は仮会員登録完了メールを送り完了画面を表示し、無効な場合は登録後すぐ本会員化URLへ遷移させる。</td></tr><tr><td>ブラックリスト</td><td>会員登録を拒否する対象を登録したリスト。該当時は登録エラー画面へ遷移する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>会員登録画面</td><td><code>GET /{_locale}/entry</code></td><td>会員情報入力フォームを表示する。支店からの遷移時は店舗名をセッションに記録する。</td></tr><tr><td>「同意する」ボタン（確認へ）</td><td><code>POST /{_locale}/entry</code>（<code>mode=confirm</code>）</td><td>入力を検証し、問題なければ確認画面を表示する。検証エラー時は入力画面を再表示する。</td></tr><tr><td>「登録する」ボタン（仮登録実行）</td><td><code>POST /{_locale}/entry</code>（<code>mode=complete</code>）</td><td>会員・住所・選手情報を作成し、仮会員設定に応じて完了画面または本会員化URLへ遷移する。</td></tr><tr><td>確認画面の「戻る」ボタン</td><td><code>POST /{_locale}/entry</code>（<code>mode=back</code>）</td><td>入力画面へ戻る。</td></tr><tr><td>仮会員登録完了画面</td><td><code>GET /{_locale}/entry/complete</code></td><td>仮会員状態である旨と本会員登録の案内を表示する（仮会員設定が有効なときの遷移先）。</td></tr><tr><td>ブラックリスト登録エラー画面</td><td><code>GET /{_locale}/entry/regist_error</code></td><td>会員登録不可の旨を表示する（ブラックリスト該当時の遷移先）。</td></tr></tbody></table></div>
-<p>会員登録画面のクエリ<code>shop</code>がある場合、その店舗名を支店用セッションキーに記録する。会員登録画面・確認画面・仮登録実行は同一エンドポイント（<code>/entry</code>）で受け、POSTボディの<code>mode</code>で確認・実行・戻るを分岐する。</p>
-<hr>
-<h2 id="フロント挙動">フロント挙動</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>会員登録画面は見出し「会員情報登録」と入力フォーム（お名前、お名前（フリガナ）、電話番号、FAX、メールアドレス、メールアドレス（確認）、国、郵便番号、住所、パスワード、パスワード（確認）、生年月日、性別、会社名、職業、MTG Companion登録名）、「同意する」ボタン、トップへ戻るリンク。確認画面は見出し「会員情報登録確認」と入力値の確認表示、「登録する」「戻る」ボタン。完了画面は見出し「新規会員登録（完了）」と仮会員状態・本会員登録の案内。</td></tr><tr><td>JS挙動</td><td>ログインID（メールアドレス）とパスワードが一致する場合は送信を成立させない判定を持つ。郵便番号・住所などの入力補助は共通フォーム部品に従う。本機能固有の非同期取得は扱わない。</td></tr><tr><td>CSS・レイアウト</td><td>必須項目にはチェック画像（<code>alt="必須"</code>）を付す。利用者の挙動理解に影響する分岐表示は、国の選択に応じた郵便番号・都道府県欄の表示切替である。</td></tr><tr><td>モーダル・ポップアップ</td><td>本画面専用のモーダルは無い。</td></tr></tbody></table></div>
-<p>国の選択により入力欄が変わる。日本以外（または海外を示す都道府県）の場合は、3分割の郵便番号欄に代えて単一の郵便番号欄（<code>zipcode</code>）を表示し、都道府県欄を隠す。日本の場合は3分割郵便番号欄を表示する。</p>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="会員登録画面を表示する-GET-locale-entry">会員登録画面を表示する（GET <code>/{_locale}/entry</code>）</h3>
-<ol><li>新規の会員情報を生成し、会員登録フォームを組み立てる。国コードは送信値またはクエリから決める。</li><li>クエリ<code>shop</code>がある場合、その店舗名を支店用セッションキーに記録する。</li><li><code>isChange</code>指定時、またはフォームが送信状態でない・検証に通らない場合は、会員登録画面（<code>Entry/index.twig</code>）を表示する。</li></ol>
-<h3 id="確認画面を表示する-POST-mode-confirm">確認画面を表示する（POST <code>mode=confirm</code>）</h3>
-<ol><li>送信フォームを検証する。</li><li>ログインID（メールアドレス）とパスワードが一致する場合は登録へ進まず、会員登録画面を再表示する。</li><li>検証に通った場合になりすまし対策トークンを再生成する。</li><li>フォームを確定表示（freeze）に組み替え、確認画面（<code>Entry/confirm.twig</code>）を表示する。</li></ol>
-<h3 id="仮登録を実行する-POST-mode-complete">仮登録を実行する（POST <code>mode=complete</code>）</h3>
-<ol><li>送信フォームを検証する。検証エラー時・ID＝パスワード時は会員登録画面を再表示する。</li><li>ソルトを生成し、パスワードを暗号化し、一意の秘密キーを採番し、国を設定する。</li><li>ブラックリストに該当する場合は登録を行わず、登録エラー画面へリダイレクトする。</li><li>会員住所・住所サブ・選手情報を作成する。海外の場合は住所に郵便番号を設定する。</li><li>会員・会員住所・住所サブ・選手情報を保存して確定する。</li><li>支店システムへ当該会員の更新を通知する。</li><li>仮会員設定が有効な場合は仮会員登録完了メールを送信し、仮会員登録完了画面（<code>/{_locale}/entry/complete</code>）へリダイレクトする。</li><li>仮会員設定が無効な場合は本会員化URL（<code>/{_locale}/entry/activate/{secret_key}</code>）へリダイレクトする。</li></ol>
-<h3 id="仮会員登録完了画面を表示する-GET-locale-entry-complete">仮会員登録完了画面を表示する（GET <code>/{_locale}/entry/complete</code>）</h3>
-<ol><li>仮会員状態である旨と、メール内のURLから本会員登録を行う案内を表示する。</li></ol>
-<hr>
-<h2 id="仮登録実行時の判定順序">仮登録実行時の判定順序</h2>
-<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>フォーム検証に通るか</td><td>通らないなら会員登録画面を再表示する</td></tr><tr><td>2</td><td>ログインID（メールアドレス）とパスワードが同一でないか</td><td>同一なら登録へ進まず会員登録画面を再表示する</td></tr><tr><td>3</td><td>ブラックリストに該当しないか</td><td>該当するなら登録せず登録エラー画面へリダイレクトする</td></tr><tr><td>4</td><td>上記を通過</td><td>会員・住所・選手情報を作成・確定し、支店連携後に仮会員設定に応じて完了画面または本会員化URLへ遷移する</td></tr><tr><td>5</td><td>仮会員設定が有効か</td><td>有効なら仮会員登録完了メールを送信し完了画面へ。無効なら本会員化URLへ遷移する</td></tr></tbody></table></div>
-<hr>
-<h2 id="表示メッセージ">表示メッセージ</h2>
-<h3 id="常時表示-正常・静的">常時表示（正常・静的）</h3>
-<div class="table-wrap"><table><thead><tr><th>種別</th><th>表示文言（日本語）</th><th>表示文言（英語）</th><th>条件</th></tr></thead><tbody><tr><td>入力画面見出し</td><td>会員情報登録</td><td>Registration</td><td>会員登録画面の表示時</td></tr><tr><td>確認画面見出し</td><td>会員情報登録確認</td><td>Registration</td><td>確認画面の表示時</td></tr><tr><td>確認画面案内</td><td>下記の内容で送信してもよろしいでしょうか？&lt;br&gt;よろしければ、一番下の「会員登録をする」ボタンをクリックしてください。</td><td>Please review the inputted information below and confirm that it is correct.</td><td>確認画面の表示時</td></tr><tr><td>完了画面見出し</td><td>新規会員登録（完了）</td><td>Your account registration is not yet complete.</td><td>仮会員登録完了画面の表示時</td></tr><tr><td>完了画面案内</td><td>現在仮会員の状態です。&lt;br&gt;ご入力いただいたメールアドレス宛てに、ご連絡が届いておりますので、本会員登録になった上でお買い物をお楽しみください。</td><td>Thank you for registering your account.&lt;br&gt;We have sent a mail to confirm your given mail address.&lt;br&gt;To complete your account registration, please access the URL link written on the confirmation mail.&lt;br&gt;Please confirm our sent mail and we thank you for your cooperation.</td><td>仮会員登録完了画面の表示時</td></tr></tbody></table></div>
-<h3 id="エラー・警告-インライン">エラー・警告（インライン）</h3>
-<div class="table-wrap"><table><thead><tr><th>表示文言（日本語）</th><th>表示文言（英語）</th><th>表示条件（利用者視点）</th><th>表示位置</th><th>備考</th></tr></thead><tbody><tr><td>国と都道府県の組み合わせが正しくありません。</td><td>The combination of country and region is incorrect.</td><td>国と都道府県の組み合わせが整合しないとき</td><td>国欄の直下</td><td>フォーム送信時の検証</td></tr><tr><td>各入力項目の必須・形式エラー</td><td>（共通フォーム部品の英語メッセージ）</td><td>必須未入力・形式不正・最大長超過のとき</td><td>各入力欄の直下</td><td>文言は共通フォーム部品の検証メッセージを正とする</td></tr></tbody></table></div>
-<p>仮会員登録完了画面・確認画面の文言は静的表示である。本機能はフラッシュ・トーストを生成しない。</p>
-<hr>
-<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>画面上の文言(英語)</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>F06-01-MSG-001</td><td>エラー画面本文</td><td>ご入力いただいた内容は使用できません。&lt;br&gt;もう一度、登録ページへアクセスして登録情報の変更をお願いいたします。</td><td>The information you have entered is invalid.&lt;br&gt;Please change your information and try again.</td><td>会員登録時にブラックリスト照合へ該当したとき</td><td>会員登録を行わず、登録エラー画面に遷移する</td></tr><tr><td>F06-01-MSG-002</td><td>完了画面本文</td><td>ご入力いただいたメールアドレス宛に、確認メールをお送りさせていただきました。&lt;br&gt;メールに記載のURLをクリックしてページにアクセスいただきますと、会員登録が完了いたします。&lt;br&gt;お手数おかけしますが、ご確認のほどよろしくお願いいたします。&lt;br&gt;※携帯電話のメールアドレスをご使用いただいている場合、フィルタリング機能でブロックされていまっている可能性がございます。&lt;br&gt;※メールが届かない場合、迷惑メールやフィルタ設定を見直していただき、メールが届かない旨をお問い合わせよりご連絡ください。</td><td>We have sent a verification email to your email address.&lt;br&gt;Please complete your sign-up by clicking on the URL in the email.</td><td>会員登録を完了したとき</td><td>仮会員として登録し、仮会員登録完了画面を表示する</td></tr><tr><td>F06-01-MSG-003</td><td>入力項目付近</td><td>生年月日(月)を選択してください</td><td>Please select your birth month</td><td>会員登録または会員情報変更で生年月日の月を選択せずに入力を進めたとき</td><td>生年月日の月を選択するまで入力画面に留まる</td></tr><tr><td>F06-01-MSG-004</td><td>入力項目付近</td><td>生年月日(年)を選択してください</td><td>Please select your birth year</td><td>生年月日の年を選択せずに入力欄を離れる、または送信したとき</td><td>入力エラーを表示し、会員登録画面または会員情報変更画面に留まる</td></tr><tr><td>F06-01-MSG-005</td><td>入力項目付近</td><td>有効なメールアドレスを入力してください</td><td>Please enter a valid email address</td><td>メールアドレスまたは確認用メールアドレスを有効な形式で入力しないとき</td><td>入力エラーを表示し、会員登録画面または会員情報変更画面に留まる</td></tr><tr><td>F06-01-MSG-006</td><td>入力項目付近</td><td>メールアドレスが一致しません</td><td>Email addresses do not match</td><td>確認用メールアドレスがメールアドレスと一致しないとき</td><td>入力エラーを表示し、会員登録画面または会員情報変更画面に留まる</td></tr><tr><td>F06-01-MSG-007</td><td>入力項目付近</td><td>メールアドレスを入力してください</td><td>Please enter your email address</td><td>メールアドレスを入力せずに入力欄を離れる、または送信したとき</td><td>入力エラーを表示し、会員登録画面または会員情報変更画面に留まる</td></tr><tr><td>F06-01-MSG-008</td><td>入力項目付近</td><td>メールアドレス(確認)を入力してください</td><td>Please enter your email address (confirmation)</td><td>確認用メールアドレスを入力せずに入力欄を離れる、または送信したとき</td><td>入力エラーを表示し、会員登録画面または会員情報変更画面に留まる</td></tr><tr><td>F06-01-MSG-009</td><td>入力項目付近</td><td>セイを入力してください</td><td>Please enter your last name (kana)</td><td>姓のフリガナを入力せずに入力欄を離れる、または送信したとき</td><td>入力エラーを表示し、会員登録画面または会員情報変更画面に留まる</td></tr><tr><td>F06-01-MSG-010</td><td>入力項目付近</td><td>メイを入力してください</td><td>Please enter your first name (kana)</td><td>名のフリガナを入力せずに入力欄を離れる、または送信したとき</td><td>入力エラーを表示し、会員登録画面または会員情報変更画面に留まる</td></tr><tr><td>F06-01-MSG-011</td><td>入力項目付近</td><td>カタカナで入力してください</td><td>Please enter in katakana</td><td>姓または名のフリガナをカタカナ以外で入力したとき</td><td>入力エラーを表示し、会員登録画面または会員情報変更画面に留まる</td></tr><tr><td>F06-01-MSG-012</td><td>入力項目付近</td><td>姓を入力してください</td><td>Please enter your last name</td><td>姓を入力せずに入力欄を離れる、または送信したとき</td><td>入力エラーを表示し、会員登録画面、会員情報変更画面、またはお届け先登録・編集画面に留まる</td></tr><tr><td>F06-01-MSG-013</td><td>入力項目付近</td><td>名を入力してください</td><td>Please enter your first name</td><td>名を入力せずに入力欄を離れる、または送信したとき</td><td>入力エラーを表示し、会員登録画面、会員情報変更画面、またはお届け先登録・編集画面に留まる</td></tr><tr><td>F06-01-MSG-014</td><td>入力項目付近</td><td>パスワードは%min%文字以上で入力してください</td><td>Password must be at least %min% characters</td><td>パスワードまたは確認用パスワードが設定された最小文字数に満たないとき</td><td>入力エラーを表示し、会員登録画面または会員情報変更画面に留まる</td></tr><tr><td>F06-01-MSG-015</td><td>入力項目付近</td><td>郵便番号は数字のみ入力してください</td><td>Please enter the postal code using numbers only</td><td>郵便番号欄に数字以外を入力して入力を確定しようとしたとき</td><td>会員登録入力画面に留まる</td></tr></tbody></table></div>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>ID＝パスワードの禁止</td><td>メールアドレスとパスワードが同一の場合は登録へ進めない。</td></tr><tr><td>ブラックリスト判定</td><td>仮登録実行時に会員情報がブラックリストに該当するかを判定し、該当時は登録せず登録エラー画面へ遷移する。</td></tr><tr><td>仮会員設定による分岐</td><td>仮会員設定が有効なら完了メールを送り完了画面を表示する。無効なら登録後すぐ本会員化URLへ遷移し本会員化を行わせる。</td></tr><tr><td>秘密キー</td><td>仮登録時に一意の秘密キーを採番し、本会員化URLに用いる。</td></tr><tr><td>選手情報の同時作成</td><td>会員作成時に選手情報を同時作成し、氏名（日本語・英語）・メールアドレスを設定する。</td></tr><tr><td>支店からの遷移</td><td>クエリ<code>shop</code>がある場合、店舗名を支店用セッションキーに記録する。</td></tr><tr><td>業務計算</td><td>本機能では金額・件数・在庫などの業務計算を行わない。</td></tr></tbody></table></div>
-<h3 id="入力項目">入力項目</h3>
-<div class="table-wrap"><table><thead><tr><th>項目名</th><th>必須／任意</th><th>最大長</th><th>初期値</th><th>保存先・扱い</th></tr></thead><tbody><tr><td>お名前</td><td>必須</td><td>姓名各欄は氏名用フォーム部品の上限に従う</td><td>空</td><td><code>dtb_customer</code>の姓（<code>name01</code>）・名（<code>name02</code>）。フォームキー<code>name</code>。選手情報の日本語姓名にも設定する。</td></tr><tr><td>お名前（フリガナ）</td><td>必須</td><td>カナ用フォーム部品の上限に従う</td><td>空</td><td><code>dtb_customer</code>のカナ（<code>kana01</code>／<code>kana02</code>）。フォームキー<code>kana</code>。</td></tr><tr><td>電話番号</td><td>必須</td><td>電話番号3分割用フォーム部品の各欄上限に従う</td><td>空</td><td><code>dtb_customer</code>の電話番号。フォームキー<code>tel</code>。</td></tr><tr><td>FAX</td><td>任意</td><td>電話番号3分割用フォーム部品の各欄上限に従う</td><td>空</td><td><code>dtb_customer</code>のFAX番号。フォームキー<code>fax</code>。</td></tr><tr><td>メールアドレス</td><td>必須</td><td>メール用フォーム部品の上限に従う（再入力一致を要する）</td><td>空</td><td><code>dtb_customer</code>のメールアドレス（<code>email</code>）。フォームキー<code>email</code>（確認再入力を含む）。選手情報のメールにも設定する。</td></tr><tr><td>メールアドレス（確認）</td><td>必須</td><td>同上</td><td>空</td><td>メールアドレスとの一致を検証する。不一致は「同じメールアドレスを入力してください。」。</td></tr><tr><td>国</td><td>必須</td><td>選択（国マスタ）</td><td>日本語表示時は日本、英語表示時は未選択</td><td>フォームキー<code>country</code>。都道府県との整合を検証する。海外の場合は単一郵便番号欄を表示する。</td></tr><tr><td>郵便番号</td><td>必須</td><td>日本は3＋4桁の分割欄、海外は郵便番号欄（住所サブの郵便番号長設定に従う）</td><td>空</td><td>フォームキー<code>zip</code>（日本）または<code>zipcode</code>（海外）。海外時は会員住所の郵便番号へ設定する。</td></tr><tr><td>住所</td><td>必須</td><td>住所用フォーム部品の上限に従う</td><td>空</td><td><code>dtb_customer</code>の都道府県（<code>pref_id</code>。現行は<code>pref</code>）・住所（<code>addr01</code>／<code>addr02</code>）。フォームキー<code>pref</code>・<code>addr01</code>・<code>addr02</code>。</td></tr><tr><td>パスワード</td><td>必須</td><td>パスワード用フォーム部品の上限に従う（再入力一致を要する）</td><td>空</td><td><code>dtb_customer</code>のパスワード（<code>password</code>）・ソルト（<code>salt</code>）。フォームキー<code>password</code>。ソルトで暗号化した不可逆値のみ保存する。原値を記載しない。</td></tr><tr><td>パスワード（確認）</td><td>必須</td><td>同上</td><td>空</td><td>パスワードとの一致を検証する。不一致は「同じパスワードを入力してください。」。</td></tr><tr><td>生年月日</td><td>必須</td><td>年・月・日の選択（年は当年から所定年数前まで）</td><td>未選択</td><td><code>dtb_customer</code>の生年月日（<code>birth</code>）。フォームキー<code>birth</code>。未来日を不可とする。</td></tr><tr><td>性別</td><td>任意</td><td>選択（性別マスタ）</td><td>未選択</td><td><code>dtb_customer</code>の性別（<code>sex_id</code>。現行は<code>sex</code>）。フォームキー<code>sex</code>。</td></tr><tr><td>会社名</td><td>任意</td><td>短文用の最大長（<code>stext_len</code>の確認値、既定255文字）</td><td>空</td><td><code>dtb_customer</code>の会社名（<code>company_name</code>）。フォームキー<code>company_name</code>。</td></tr><tr><td>職業</td><td>任意</td><td>選択（職業マスタ）</td><td>未選択</td><td><code>dtb_customer</code>の職業（<code>job_id</code>。現行は<code>job</code>）。フォームキー<code>job</code>。</td></tr><tr><td>MTG Companion登録名</td><td>任意</td><td>各欄128文字</td><td>空</td><td>会員本体には保存せず、選手情報の英語姓名（<code>first_name_en</code>／<code>last_name_en</code>）として保存する。フォームキー<code>first_name_en</code>・<code>last_name_en</code>。</td></tr></tbody></table></div>
-<p>最大長は各共通フォーム部品の上限に従う。具体文字数は<code>src/Eccube/Resource/config/constant.yml.dist</code>の該当キー（<code>stext_len</code>・<code>mtext_len</code>等）を確認値とする。MTG Companion登録名は会員登録フォーム拡張で追加され、各128文字の上限を持つ。</p>
-<h3 id="エッジケース">エッジケース</h3>
-<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>メールアドレスとパスワードが同一</td><td>登録へ進めず会員登録画面を再表示する。</td></tr><tr><td>ブラックリストに該当</td><td>会員を作成せず登録エラー画面へリダイレクトする。</td></tr><tr><td>国と都道府県の不整合</td><td>国欄に整合エラーを表示し登録しない。</td></tr><tr><td>海外の国を選択</td><td>3分割郵便番号欄に代えて単一郵便番号欄を表示し、会員住所へ郵便番号を設定する。</td></tr><tr><td>仮会員設定が無効</td><td>完了画面を経ず、登録後すぐ本会員化URLへ遷移する。</td></tr><tr><td><code>mode</code>が<code>confirm</code>・<code>complete</code>・<code>back</code>以外</td><td>いずれの分岐にも入らず会員登録画面を表示する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>会員・住所・選手情報</td><td>仮登録実行時、会員・会員住所・住所サブ・選手情報を同一トランザクションで保存・確定する。</td></tr><tr><td>秘密キー</td><td>採番した秘密キーで会員を一意に識別し、本会員化URLとして整合させる。</td></tr><tr><td>支店システム</td><td>仮登録確定後に更新通知を行う。支店側反映の時点整合は本書では保証しない。</td></tr><tr><td>完了メール</td><td>仮会員設定が有効なときのみ仮会員登録完了メールを送信する。送信の成否は画面表示には反映しない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="API-バッチ結果">API/バッチ結果</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>API</td><td>本機能では外部API呼び出しを直接行わない（スマレジ会員登録は本会員化時に行う）。支店連携の更新通知のみ仮登録確定後に行う。</td></tr><tr><td>バッチ</td><td>本機能ではバッチ実行を扱わない。</td></tr></tbody></table></div>
-<p>仮会員登録完了メールの送信は仮登録確定後に行う。送信の成否は画面のメッセージには反映しない。</p>
-<hr>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="画面構成">画面構成</h3>
+<p>会員登録画面は、見出し「会員情報登録」と入力フォーム（お名前、お名前（フリガナ）、電話番号、FAX、メールアドレス、メールアドレス（確認）、国、郵便番号、住所、パスワード、パスワード（確認）、生年月日、性別、会社名、職業、MTG Companion登録名）、「同意する」ボタン、トップへ戻るリンクで構成する。確認画面は見出し「会員情報登録確認」と入力値の確認表示、「登録する」「戻る」ボタンで構成する。完了画面は見出し「新規会員登録（完了）」と仮会員状態・本会員登録の案内で構成する。必須項目にはチェック画像を付す。本画面専用のモーダルは無い。</p>
+<h3 id="国による入力欄の切替">国による入力欄の切替</h3>
+<p>国の選択により入力欄が変わる。日本以外、または海外を示す都道府県のときは、3分割の郵便番号欄に代えて単一の郵便番号欄を表示し、都道府県欄を隠す。日本のときは3分割の郵便番号欄を表示する。</p>
+<h3 id="支店からの遷移">支店からの遷移</h3>
+<p>店舗の指定付きで会員登録画面を開いたときは、その店舗名を支店からの遷移情報として保持する。</p>
+<h3 id="確認画面">確認画面</h3>
+<p>送信内容を検証し、通った場合はなりすまし対策トークンを再生成したうえで、入力値を変更できない形に組み替えて確認画面を表示する。</p>
+<h3 id="仮登録の判定順序">仮登録の判定順序</h3>
+<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>入力内容の検証に通るか</td><td>通らないなら会員登録画面を再表示する</td></tr><tr><td>2</td><td>ログインID（メールアドレス）とパスワードが同一でないか</td><td>同一なら登録へ進まず会員登録画面を再表示する</td></tr><tr><td>3</td><td>ブラックリストに該当しないか</td><td>該当するなら登録せず登録エラー画面へ遷移する</td></tr><tr><td>4</td><td>上記を通過</td><td>会員・住所・選手情報を作成・確定し、支店連携後に仮会員設定に応じて遷移する</td></tr><tr><td>5</td><td>仮会員設定が有効か</td><td>有効なら仮会員登録完了メールを送信し完了画面へ。無効なら本会員化URLへ遷移する</td></tr></tbody></table></div>
+<h3 id="仮登録で作成する情報">仮登録で作成する情報</h3>
+<p>パスワードは暗号化して保持する。一意の秘密キーを採番し、本会員化URLに用いる。国を設定する。会員住所・住所サブ・選手情報を会員と同時に作成し、選手情報には氏名（日本語・英語）とメールアドレスを設定する。海外のときは住所に郵便番号を設定する。作成後は支店システムへ当該会員の更新を通知する。</p>
+<p>金額・件数・在庫などの業務計算は行わない。</p>
+<h3 id="仮会員設定による分岐">仮会員設定による分岐</h3>
+<p>仮会員設定が有効なら、仮会員登録完了メールを送り、仮会員状態である旨とメール内のURLから本会員登録を行う案内を仮会員登録完了画面に表示する。無効なら登録後すぐ本会員化URLへ遷移し、本会員化を行わせる。</p>
+<h3 id="エラー時の扱い">エラー時の扱い</h3>
+<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>入力内容の検証エラー</td><td>会員登録画面を再表示する。表示文言は共通フォーム部品の検証メッセージを正とする</td></tr><tr><td>メールアドレスとパスワードが同一</td><td>登録へ進めず会員登録画面を再表示する</td></tr><tr><td>ブラックリスト該当</td><td>会員を作成せず登録エラー画面へ遷移する</td></tr><tr><td>国・都道府県の不整合</td><td>国欄に整合エラーを表示し登録しない</td></tr></tbody></table></div>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>会員情報の各入力項目、なりすまし対策トークン、<code>mode</code>、クエリ<code>shop</code>（任意）。</td></tr><tr><td>成功時出力</td><td>仮会員登録完了画面または本会員化URLへの遷移、仮会員登録完了メール送信（仮会員設定有効時）。</td></tr><tr><td>失敗時出力</td><td>会員登録画面の再表示（検証エラー）、または登録エラー画面（ブラックリスト該当）。</td></tr><tr><td>副作用</td><td>会員・会員住所・住所サブ・選手情報の作成、秘密キー採番、支店連携、メール送信、支店用セッションキーへの店舗名記録。</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<p>機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。</p>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>dtb_customer</code></td><td><code>name01</code> / <code>name02</code> / <code>kana01</code> / <code>kana02</code></td><td>氏名・フリガナ。</td></tr><tr><td><code>dtb_customer</code></td><td><code>email</code></td><td>メールアドレス。確認再入力と一致を要する。</td></tr><tr><td><code>dtb_customer</code></td><td><code>password</code> / <code>salt</code></td><td>ソルトで暗号化した不可逆値として保存する。原値を記載しない。</td></tr><tr><td><code>dtb_customer</code></td><td><code>secret_key</code></td><td>採番した秘密キー。本会員化URLの照合に使用する。</td></tr><tr><td><code>dtb_customer</code></td><td><code>birth</code> / <code>sex_id</code>（現行は<code>sex</code>） / <code>job_id</code>（現行は<code>job</code>） / <code>company_name</code> / <code>tel01</code> / <code>tel02</code> / <code>tel03</code> / <code>fax01</code> / <code>fax02</code> / <code>fax03</code> / <code>pref_id</code>（現行は<code>pref</code>） / <code>addr01</code> / <code>addr02</code> / <code>postal_code</code>（現行は分割<code>zip01</code>・<code>zip02</code>）</td><td>会員属性・連絡先・住所。郵便番号は移行先で単一列に統合する。</td></tr><tr><td><code>dtb_customer</code></td><td><code>customer_status_id</code>（会員ステータス参照。現行は<code>status</code>）</td><td>仮会員として作成する。</td></tr><tr><td><code>dtb_player</code></td><td><code>first_name_jp</code> / <code>last_name_jp</code> / <code>first_name_en</code> / <code>last_name_en</code> / <code>email</code></td><td>会員作成時に同時作成する選手情報。</td></tr></tbody></table></div>
-<h3 id="DB操作">DB操作</h3>
-<p>永続化の正は ec-cube-enterprise（テーブル名・操作は ec-cube-enterprise を正典）。当ドメインは承認ワークフローを介さず persist/flush で直接確定する（承認ワークフローは在庫機能固有）。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>登録/更新</td><td>dtb_customer / dtb_player</td><td>当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。</td></tr></tbody></table></div>
-<hr>
-<h2 id="バリデーション">バリデーション</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>メールアドレス</td><td>必須。再入力と一致を要する。不一致は「同じメールアドレスを入力してください。」。</td></tr><tr><td>パスワード</td><td>必須。再入力と一致を要する。不一致は「同じパスワードを入力してください。」。</td></tr><tr><td>生年月日</td><td>必須。未来日を不可とする。</td></tr><tr><td>国・都道府県</td><td>必須。組み合わせの整合を検証する。不整合は「国と都道府県の組み合わせが正しくありません。」。</td></tr><tr><td>MTG Companion登録名</td><td>任意。各欄128文字以内。</td></tr><tr><td>ID＝パスワード</td><td>メールアドレスとパスワードが同一の場合は登録へ進めない。</td></tr><tr><td>なりすまし対策トークン</td><td>確認・仮登録の各送信で検証する。検証通過時にトークンを再生成する。</td></tr></tbody></table></div>
-<p>各入力部品の必須・形式・最大長は共通フォーム部品の検証に従う。CSRFトークンはフレームワークの管理範囲とし、本書では業務データとして扱わない。</p>
-<hr>
-<h2 id="権限・認可">権限・認可</h2>
-<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>会員登録画面・仮登録処理</th></tr></thead><tbody><tr><td>未ログイン</td><td>利用可。会員登録を行える。</td></tr><tr><td>ログイン済み会員</td><td>会員登録画面へアクセスは可能だが、本機能は新規登録用のため通常は会員情報変更を利用する。</td></tr></tbody></table></div>
-<p>会員登録はログイン前のアクセスを前提とする。本機能は管理画面プレフィックスを持たないフロント機能である。</p>
-<hr>
-<h2 id="画面遷移">画面遷移</h2>
-<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>会員登録画面の表示</td><td>会員登録画面（<code>GET /{_locale}/entry</code>）</td></tr><tr><td>「同意する」押下（<code>mode=confirm</code>）・検証通過</td><td>会員情報登録確認画面（同一URL再描画）</td></tr><tr><td>「同意する」押下・検証エラー</td><td>会員登録画面（エラー付き再描画）</td></tr><tr><td>「戻る」押下（<code>mode=back</code>）</td><td>会員登録画面</td></tr><tr><td>「登録する」押下（<code>mode=complete</code>）・仮会員設定有効</td><td>仮会員登録完了画面（<code>/{_locale}/entry/complete</code>へリダイレクト）</td></tr><tr><td>「登録する」押下・仮会員設定無効</td><td>本会員化URL（<code>/{_locale}/entry/activate/{secret_key}</code>へリダイレクト）</td></tr><tr><td>ブラックリスト該当</td><td>登録エラー画面（<code>/{_locale}/entry/regist_error</code>へリダイレクト）</td></tr><tr><td>完了画面・会員登録画面のトップへ戻るリンク</td><td>支店指定があれば支店トップ、なければ本店トップ</td></tr></tbody></table></div>
-<h3 id="遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</h3>
-<div class="table-wrap"><table><thead><tr><th>起点</th><th>遷移前の処理</th><th>遷移後の初期状態</th></tr></thead><tbody><tr><td>支店から会員登録画面へ遷移</td><td>クエリ<code>shop</code>の店舗名を支店用セッションキーに記録する</td><td>完了画面のトップへ戻る先を支店トップに切り替える</td></tr></tbody></table></div>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>フォーム検証エラー</td><td>会員登録画面を再表示する。表示文言は共通フォーム部品の検証メッセージを正とする。</td></tr><tr><td>メールアドレス＝パスワード</td><td>登録へ進めず会員登録画面を再表示する。</td></tr><tr><td>ブラックリスト該当</td><td>会員を作成せず登録エラー画面へリダイレクトする。</td></tr><tr><td>国・都道府県の不整合</td><td>国欄に整合エラーを表示し登録しない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="ログ・監査">ログ・監査</h2>
-<div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>確認画面表示</td><td>会員登録確認の開始・完了の情報ログ。</td></tr><tr><td>仮登録実行</td><td>会員登録開始・完了の情報ログ。</td></tr><tr><td>ブラックリスト該当</td><td>該当タグ・キーワードと登録不可の情報ログ。</td></tr><tr><td>完了後リダイレクト</td><td>仮会員登録完了画面または本会員登録画面へのリダイレクトの情報ログ。</td></tr><tr><td>完了メール送信</td><td>メール送信の情報ログ・送信履歴の保存（仮会員設定有効時）。</td></tr></tbody></table></div>
-<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
-<ul><li>パスワード</li><li>秘密キーの完全値</li><li>なりすまし対策トークン</li><li>Cookie値</li><li>セッションIDの完全値</li></ul>
-<hr>
-<h2 id="セッション">セッション</h2>
-<h3 id="本機能におけるセッション">本機能におけるセッション</h3>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>支店用店舗名</td><td>クエリ<code>shop</code>がある場合、店舗名を支店用セッションキーに記録する。完了画面のトップへ戻る先の切替に用いる。</td></tr><tr><td>なりすまし対策トークン</td><td>確認・仮登録の各送信で検証し、検証通過時に再生成する。</td></tr></tbody></table></div>
-<h3 id="セッションへ保存しない情報">セッションへ保存しない情報</h3>
-<p>入力パスワードはセッションへ保存しない。暗号化して会員に保存し、照合・登録に用いるのみとする。</p>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<p>仮登録実行時の会員・会員住所・住所サブ・選手情報の作成は同一トランザクションで確定する。本機能では楽観ロック・悲観ロックの対象は持たない。</p>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>会員情報の各入力項目、なりすまし対策トークン、遷移元の店舗指定（任意）</td></tr><tr><td>成功時出力</td><td>仮会員登録完了画面または本会員化URLへの遷移、仮会員登録完了メールの送信（仮会員設定が有効なとき）</td></tr><tr><td>失敗時出力</td><td>会員登録画面の再表示（検証エラー）、登録エラー画面（ブラックリスト該当）</td></tr></tbody></table></div>
+<h3 id="入出力-永続化">入出力: 永続化</h3>
+<div class="table-wrap"><table><thead><tr><th>操作</th><th>契機</th></tr></thead><tbody><tr><td>追加</td><td>仮登録の実行時に、会員・会員住所・住所サブ・選手情報を作成する</td></tr></tbody></table></div>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
+<h2 id="表示メッセージ">表示メッセージ</h2>
+<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>—</td><td>会員登録画面見出し</td><td>会員情報登録</td><td>会員登録画面の表示時</td><td>静的表示</td></tr><tr><td>—</td><td>確認画面見出し</td><td>会員情報登録確認</td><td>確認画面の表示時</td><td>静的表示</td></tr><tr><td>—</td><td>確認画面本文</td><td>下記の内容で送信してもよろしいでしょうか？&lt;br&gt;よろしければ、一番下の「会員登録をする」ボタンをクリックしてください。</td><td>確認画面の表示時</td><td>静的表示</td></tr><tr><td>—</td><td>完了画面見出し</td><td>新規会員登録（完了）</td><td>仮会員登録完了画面の表示時</td><td>静的表示</td></tr><tr><td>—</td><td>完了画面本文</td><td>現在仮会員の状態です。&lt;br&gt;ご入力いただいたメールアドレス宛てに、ご連絡が届いておりますので、本会員登録になった上でお買い物をお楽しみください。</td><td>仮会員登録完了画面の表示時</td><td>静的表示</td></tr><tr><td>—</td><td>国欄の直下</td><td>国と都道府県の組み合わせが正しくありません。</td><td>国と都道府県の組み合わせが整合しないとき</td><td>登録せず会員登録画面に留まる</td></tr><tr><td>—</td><td>各入力欄の直下</td><td>各入力項目の必須・形式エラー</td><td>必須未入力・形式不正・最大長超過のとき</td><td>文言は共通フォーム部品の検証メッセージを正とする</td></tr><tr><td>F06-01-MSG-001</td><td>エラー画面本文</td><td>ご入力いただいた内容は使用できません。&lt;br&gt;もう一度、登録ページへアクセスして登録情報の変更をお願いいたします。</td><td>会員登録時にブラックリスト照合へ該当したとき</td><td>会員登録を行わず、登録エラー画面に遷移する</td></tr><tr><td>F06-01-MSG-002</td><td>完了画面本文</td><td>ご入力いただいたメールアドレス宛に、確認メールをお送りさせていただきました。&lt;br&gt;メールに記載のURLをクリックしてページにアクセスいただきますと、会員登録が完了いたします。&lt;br&gt;お手数おかけしますが、ご確認のほどよろしくお願いいたします。&lt;br&gt;※携帯電話のメールアドレスをご使用いただいている場合、フィルタリング機能でブロックされていまっている可能性がございます。&lt;br&gt;※メールが届かない場合、迷惑メールやフィルタ設定を見直していただき、メールが届かない旨をお問い合わせよりご連絡ください。</td><td>会員登録を完了したとき</td><td>仮会員として登録し、仮会員登録完了画面を表示する</td></tr><tr><td>F06-01-MSG-003</td><td>入力項目付近</td><td>生年月日(月)を選択してください</td><td>会員登録または会員情報変更で生年月日の月を選択せずに入力を進めたとき</td><td>生年月日の月を選択するまで入力画面に留まる</td></tr><tr><td>F06-01-MSG-004</td><td>入力項目付近</td><td>生年月日(年)を選択してください</td><td>生年月日の年を選択せずに入力欄を離れる、または送信したとき</td><td>入力エラーを表示し、会員登録画面または会員情報変更画面に留まる</td></tr><tr><td>F06-01-MSG-005</td><td>入力項目付近</td><td>有効なメールアドレスを入力してください</td><td>メールアドレスまたは確認用メールアドレスを有効な形式で入力しないとき</td><td>入力エラーを表示し、会員登録画面または会員情報変更画面に留まる</td></tr><tr><td>F06-01-MSG-006</td><td>入力項目付近</td><td>メールアドレスが一致しません</td><td>確認用メールアドレスがメールアドレスと一致しないとき</td><td>入力エラーを表示し、会員登録画面または会員情報変更画面に留まる</td></tr><tr><td>F06-01-MSG-007</td><td>入力項目付近</td><td>メールアドレスを入力してください</td><td>メールアドレスを入力せずに入力欄を離れる、または送信したとき</td><td>入力エラーを表示し、会員登録画面または会員情報変更画面に留まる</td></tr><tr><td>F06-01-MSG-008</td><td>入力項目付近</td><td>メールアドレス(確認)を入力してください</td><td>確認用メールアドレスを入力せずに入力欄を離れる、または送信したとき</td><td>入力エラーを表示し、会員登録画面または会員情報変更画面に留まる</td></tr><tr><td>F06-01-MSG-009</td><td>入力項目付近</td><td>セイを入力してください</td><td>姓のフリガナを入力せずに入力欄を離れる、または送信したとき</td><td>入力エラーを表示し、会員登録画面または会員情報変更画面に留まる</td></tr><tr><td>F06-01-MSG-010</td><td>入力項目付近</td><td>メイを入力してください</td><td>名のフリガナを入力せずに入力欄を離れる、または送信したとき</td><td>入力エラーを表示し、会員登録画面または会員情報変更画面に留まる</td></tr><tr><td>F06-01-MSG-011</td><td>入力項目付近</td><td>カタカナで入力してください</td><td>姓または名のフリガナをカタカナ以外で入力したとき</td><td>入力エラーを表示し、会員登録画面または会員情報変更画面に留まる</td></tr><tr><td>F06-01-MSG-012</td><td>入力項目付近</td><td>姓を入力してください</td><td>姓を入力せずに入力欄を離れる、または送信したとき</td><td>入力エラーを表示し、会員登録画面、会員情報変更画面、またはお届け先登録・編集画面に留まる</td></tr><tr><td>F06-01-MSG-013</td><td>入力項目付近</td><td>名を入力してください</td><td>名を入力せずに入力欄を離れる、または送信したとき</td><td>入力エラーを表示し、会員登録画面、会員情報変更画面、またはお届け先登録・編集画面に留まる</td></tr><tr><td>F06-01-MSG-014</td><td>入力項目付近</td><td>パスワードは%min%文字以上で入力してください</td><td>パスワードまたは確認用パスワードが設定された最小文字数に満たないとき</td><td>入力エラーを表示し、会員登録画面または会員情報変更画面に留まる</td></tr><tr><td>F06-01-MSG-015</td><td>入力項目付近</td><td>郵便番号は数字のみ入力してください</td><td>郵便番号欄に数字以外を入力して入力を確定しようとしたとき</td><td>会員登録入力画面に留まる</td></tr></tbody></table></div>
+<p>確認画面と仮会員登録完了画面の文言は静的表示である。本機能はフラッシュ・トーストを生成しない。</p>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

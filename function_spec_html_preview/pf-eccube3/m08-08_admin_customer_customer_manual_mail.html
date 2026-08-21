@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,35 +272,15 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#本書で扱うこと">本書で扱うこと</a>
-<a class="lv2" href="#本書で扱わないこと">本書で扱わないこと</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv2" href="#用語">用語</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#フロント挙動">フロント挙動</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#手動メール作成画面を表示する-GET-admin-route-customer-manual-mail-・-admin-route-customer-manual-mail-customerId-templateId">手動メール作成画面を表示する（GET `/{admin_route}/customer/manual_mail`・`/{admin_route}/customer/manual_mail/{customerId}/{templateId}`）</a>
-<a class="lv3" href="#手動メールを送信する-POST-admin-route-customer-manual-mail-customerId-templateId">手動メールを送信する（POST `/{admin_route}/customer/manual_mail/{customerId}/{templateId}`）</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
-<a class="lv3" href="#入力項目">入力項目</a>
-<a class="lv3" href="#エッジケース">エッジケース</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#対象会員とテンプレート">対象会員とテンプレート</a>
+<a class="lv3" href="#作成画面の初期表示">作成画面の初期表示</a>
+<a class="lv3" href="#送信">送信</a>
+<a class="lv3" href="#送信履歴">送信履歴</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#バリデーション">バリデーション</a>
-<a class="lv2" href="#権限・認可">権限・認可</a>
-<a class="lv2" href="#画面遷移">画面遷移</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#表示メッセージ">表示メッセージ</a>
-<a class="lv3" href="#フラッシュ・トースト">フラッシュ・トースト</a>
-<a class="lv3" href="#メッセージID対応-自動棚卸">メッセージID対応（自動棚卸）</a>
-<a class="lv2" href="#ログ・監査">ログ・監査</a>
-<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a>
-<a class="lv2" href="#調査補助-grep">調査補助（grep）</a></nav>
+<a class="lv3" href="#入出力-永続化">入出力: 永続化</a>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -298,102 +288,24 @@ footer {
         <h1>会員管理 — 手動メール通知</h1>
       </header>
       
-      <h2 id="概要">概要</h2>
-<p>管理画面「会員管理」で、特定の会員に対してメールを手動で作成・送信する機能である。会員編集画面や会員一覧の操作メニューから対象会員を指定して開き、会員向けメールテンプレートを選ぶと件名と本文がテンプレートから差し込まれ、必要に応じて編集して送信する。送信したメールは会員のメール送信履歴として記録する。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインの手動メール通知処理、メール送信サービス（手動メール送信）、手動メール通知テンプレート（<code>Customer/manual_mail.twig</code>）を正とする。</p>
-<p>本機能のカスタマイズ区分はカスタマイズであり、画面・挙動の確認はpf-eccube3を参照し、DB関連の記述（テーブル名・列名・保存先）はec-cube-enterpriseを正とする。</p>
-<p>対象はブラウザ経由の管理画面に限定する。会員検索・一覧（M08-01を正とする）、会員登録・編集（M08-04を正とする）、メール一括送信（会員へのメール一括送信を正とする）、メール送信履歴の閲覧（メール送信履歴を正とする）、メールテンプレートの管理（メールテンプレート管理を正とする）は別機能とする。</p>
-<p>本文ではフレームワークのコントローラ型名やメソッド名を主説明としない。管理画面プレフィックスはコア設定<code>admin_route</code>で決まり、環境により変わる。「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。コード探索でルートbind名が必要なときだけ「調査補助」へ書く。</p>
-<hr>
-<h2 id="本書で扱うこと">本書で扱うこと</h2>
-<ul><li>対象会員を指定した手動メール作成画面の表示</li><li>メールテンプレートの選択と件名・本文の差し込み</li><li>件名・本文を編集して送信する流れ</li><li>送信時の宛先・差出人・控えの扱い</li><li>送信したメールのメール送信履歴への記録</li></ul>
-<hr>
-<h2 id="本書で扱わないこと">本書で扱わないこと</h2>
-<p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
-<ul><li>メール一括送信（複数会員への一括送信を正とする）</li><li>メールテンプレートの作成・編集（メールテンプレート管理を正とする）</li><li>メール送信履歴の一覧・絞り込み表示（メール送信履歴を正とする）</li><li>買取向けの手動メール送信（買取の手動メール送信を正とする）</li><li>メール本文の文字コード変換・送信基盤の内部仕様（フレームワーク・メール基盤を正とする）</li></ul>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<p>現行（pf-eccube3、HareruyaEcプラグイン）と移行先（ec-cube-enterprise）でのDB関連の差を記録する。挙動は現行を確認値とし、永続化先の名称はec-cube-enterpriseを正とする。</p>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>送信したメールの記録</td><td>HareruyaEcプラグインのメール送信履歴に1件記録</td><td>会員向けメール送信履歴テーブル<code>dtb_user_mail_history</code>（会員<code>customer_id</code>、テンプレート<code>template_id</code>、件名<code>subject</code>、本文<code>mail_body</code>、送信日時<code>send_date</code>）。同表は作成者列<code>creator_id</code>を持つが、手動メールでの設定有無はec-cube-enterprise実装で要確認</td></tr><tr><td>メールテンプレート</td><td>会員向けベースのテンプレートを参照</td><td>テンプレートマスタ<code>dtb_mail_template</code>（件名<code>mail_subject</code>、ヘッダ<code>header</code>、フッタ<code>footer</code>、本文ファイル<code>file_name</code>、キー<code>mail_key</code>）</td></tr><tr><td>差出人・控え</td><td>店舗の基本情報</td><td>店舗基本情報<code>dtb_base_info</code>のメールアドレス</td></tr><tr><td>会員の宛先・氏名</td><td><code>dtb_customer</code></td><td><code>dtb_customer.email</code>・<code>name01</code>・<code>name02</code>（同一）</td></tr></tbody></table></div>
-<hr>
-<h2 id="用語">用語</h2>
-<div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>手動メール通知</td><td>管理者が対象会員へ任意の件名・本文でメールを手動送信する操作。</td></tr><tr><td>メールテンプレート</td><td>件名・ヘッダ・フッタ・本文ファイルを持つ送信用テンプレート。会員向けはベース種別が会員・会員（英語）・ベースなしのいずれか。</td></tr><tr><td>メール送信履歴</td><td>送信したメールの記録。件名・本文・送信日時・会員・テンプレートを保持する。</td></tr><tr><td>差出人・控え</td><td>店舗の基本情報のメールアドレス。差出人と控え（Bcc）に用いる。</td></tr></tbody></table></div>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>会員を指定して手動メールを開く</td><td><code>GET /{admin_route}/customer/manual_mail</code>（クエリで会員IDを指定）</td><td>対象会員の手動メール作成画面を表示する。テンプレート未選択なら本文・件名は空。</td></tr><tr><td>テンプレートを選んで開く</td><td><code>GET /{admin_route}/customer/manual_mail/{customerId}/{templateId}</code></td><td>指定テンプレートの件名・本文を差し込んだ作成画面を表示する。</td></tr><tr><td>手動メールを送信する</td><td><code>POST /{admin_route}/customer/manual_mail/{customerId}/{templateId}</code></td><td>件名・本文を検証し、対象会員へ送信して送信履歴を記録し、同じ作成画面へ戻る。</td></tr></tbody></table></div>
-<p>管理画面プレフィックスはコア設定<code>admin_route</code>で決まり、環境により変わるためプレースホルダで示す。会員ID指定が無い場合・会員が存在しない場合はページが見つからない扱い（404）とする。</p>
-<hr>
-<h2 id="フロント挙動">フロント挙動</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>見出し「手動メール送信」、会員名、メールテンプレートの選択、件名、本文（テンプレート選択時のみ複数行入力）、送信ボタン、会員編集画面に戻るリンク。</td></tr><tr><td>JS挙動</td><td>メールテンプレートの選択を変更すると、選択したテンプレートIDを付けた手動メールURLへ遷移して件名・本文を差し込む。テンプレート未選択へ戻すと会員IDのみ付けたURLへ遷移する。</td></tr><tr><td>CSS・レイアウト</td><td>管理画面共通の横型フォームテーマ。本文は20行のテキストエリア。</td></tr><tr><td>モーダル・ポップアップ</td><td>本画面専用のモーダルは持たない。</td></tr></tbody></table></div>
-<p>メールテンプレート選択は1欄。件名は1欄。本文はテンプレート選択時に表示する複数行入力（textarea）で、テンプレートのヘッダ・フッタは隠し入力として送信に含める。</p>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="手動メール作成画面を表示する-GET-admin-route-customer-manual-mail-・-admin-route-customer-manual-mail-customerId-templateId">手動メール作成画面を表示する（GET <code>/{admin_route}/customer/manual_mail</code>・<code>/{admin_route}/customer/manual_mail/{customerId}/{templateId}</code>）</h3>
-<ol><li>管理画面の認証・権限を通過する。</li><li>会員IDを取得する。会員ID指定が無い場合はページが見つからない扱い（404）とする。</li><li>会員IDで会員を取得する。存在しない場合はページが見つからない扱い（404）とする。</li><li>テンプレートID指定がある場合、会員向けベース（会員・会員英語・ベースなし）に該当するテンプレートのみを対象とする。該当が無い場合はページが見つからない扱い（404）とする。</li><li>テンプレートのヘッダ・フッタ・会員・店舗基本情報を差し込んで本文を組み立てる。</li><li>メール作成フォームを生成し、選択中テンプレートをセットする。</li><li>作成画面を表示する。</li></ol>
-<h3 id="手動メールを送信する-POST-admin-route-customer-manual-mail-customerId-templateId">手動メールを送信する（POST <code>/{admin_route}/customer/manual_mail/{customerId}/{templateId}</code>）</h3>
-<ol><li>フォームを送信状態で受け取り、検証する。</li><li>検証に通った場合、対象会員へ手動メールを送信する。差出人と控え（Bcc）は店舗基本情報のメールアドレス、宛先は会員のメールアドレス、件名と本文は送信内容を用いる。</li><li>送信したメールをメール送信履歴として記録する（件名・本文・送信日時・会員・テンプレート）。</li><li>送信成功を表示する。</li><li>同じ会員・テンプレートの作成画面へ戻る。</li></ol>
-<hr>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>対象会員</td><td>パスまたはクエリの会員IDで特定する1名。会員ID無し・会員なしは404。</td></tr><tr><td>対象テンプレート</td><td>会員向けベース（会員・会員英語・ベースなし）に該当するテンプレートのみ選択対象とする。該当しないテンプレートIDは404。</td></tr><tr><td>件名・本文の差し込み</td><td>テンプレート選択時に件名と、ヘッダ・フッタ・会員・店舗基本情報を差し込んだ本文を組み立てる。</td></tr><tr><td>宛先・差出人・控え</td><td>宛先は会員のメールアドレス、差出人と控え（Bcc）は店舗基本情報のメールアドレス、返信先・返送先も店舗基本情報のメールアドレスを用いる。</td></tr><tr><td>送信履歴</td><td>送信のたびにメール送信履歴を1件記録する。会員・テンプレート・件名・本文・送信日時を保持する。手動メールでは作成者の記録は持たない。</td></tr></tbody></table></div>
-<p>本機能は会員データ自体の更新は行わない。メール送信と履歴記録を行う。</p>
-<h3 id="入力項目">入力項目</h3>
-<div class="table-wrap"><table><thead><tr><th>項目名</th><th>必須／任意</th><th>最大長</th><th>初期値</th><th>保存先・扱い</th></tr></thead><tbody><tr><td>メールテンプレート</td><td>任意</td><td>選択</td><td>未選択（指定があればそのテンプレート）</td><td>フォームキー<code>template</code>。会員向けベースのテンプレートのみ対象。選択で件名・本文を差し込む。</td></tr><tr><td>件名</td><td>必須</td><td>メール作成フォームに準ずる</td><td>テンプレートの件名</td><td>フォームキー<code>mail[subject]</code>。送信メールの件名。</td></tr><tr><td>本文</td><td>必須</td><td>複数行入力（textarea、20行）</td><td>テンプレートから組み立てた本文</td><td>フォームキー<code>mail_body</code>。送信メールの本文。テンプレート選択時のみ表示。</td></tr><tr><td>ヘッダ・フッタ</td><td>テンプレート由来</td><td>隠し入力</td><td>テンプレートのヘッダ・フッタ</td><td>フォームキー<code>mail[header]</code>・<code>mail[footer]</code>。本文組み立てに用いる。</td></tr></tbody></table></div>
-<p>最大長はメール作成フォームの確認値とする。本文はテンプレートを選択して初めて入力欄が表示される。</p>
-<h3 id="エッジケース">エッジケース</h3>
-<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>会員ID指定なし</td><td>ページが見つからない扱い（404）。</td></tr><tr><td>存在しない会員ID</td><td>ページが見つからない扱い（404）。</td></tr><tr><td>会員向けベース外のテンプレートID</td><td>ページが見つからない扱い（404）。</td></tr><tr><td>テンプレート未選択で表示</td><td>件名・本文の入力欄は出さない（本文textareaはテンプレート選択時のみ）。</td></tr><tr><td>検証失敗で送信</td><td>送信せず同じ作成画面へ戻す。</td></tr></tbody></table></div>
-<hr>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>送信と履歴</td><td>送信成功時にメール送信履歴を1件記録する。履歴は送信時点の件名・本文・送信日時を保持する。</td></tr><tr><td>テンプレートとの関係</td><td>履歴は送信に用いたテンプレートを参照する。テンプレート本文の後日変更は履歴に遡及しない。</td></tr><tr><td>宛先</td><td>会員のメールアドレスを送信時点で読む。送信後に会員のメールが変わっても送信済みメールには影響しない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="API-バッチ結果">API/バッチ結果</h2>
-<p>本機能ではバッチ実行を扱わない。メール送信はメール送信基盤を通じて行う。送信基盤の失敗時の扱いはメール基盤を正とする。</p>
-<hr>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="対象会員とテンプレート">対象会員とテンプレート</h3>
+<p>対象会員は指定された会員IDで特定する1名とする。会員IDの指定が無いとき、および該当する会員が存在しないときは、ページが見つからない扱い（404）とする。</p>
+<p>テンプレートを指定したときは、会員向けベース（会員・会員英語・ベースなし）に該当するテンプレートのみを選択対象とする。該当しないテンプレートを指定したときはページが見つからない扱い（404）とする。</p>
+<h3 id="作成画面の初期表示">作成画面の初期表示</h3>
+<p>テンプレートの件名を件名欄に設定する。本文はテンプレートのヘッダ・フッタ・会員・店舗基本情報を差し込んで組み立てる。組み立てた内容と選択中テンプレートを設定したメール作成フォームを表示する。</p>
+<h3 id="送信">送信</h3>
+<p>入力の検証に通ったときだけ対象会員へ手動メールを送信する。検証に通らないときは送信せず作成画面へ戻す。宛先は会員のメールアドレス、差出人と控え（Bcc）は店舗基本情報のメールアドレス、返信先・返送先も店舗基本情報のメールアドレスとする。件名と本文は送信内容を用いる。送信後は同じ会員・テンプレートの作成画面へ戻る。</p>
+<h3 id="送信履歴">送信履歴</h3>
+<p>送信のたびにメール送信履歴を1件記録する。記録する内容は会員・テンプレート・件名・本文・送信日時である。手動メールでは作成者の記録は持たない。</p>
+<p>会員データ自体は更新しない。</p>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>会員ID、テンプレートID、件名、本文、ヘッダ・フッタ、なりすまし対策トークン。</td></tr><tr><td>成功時出力</td><td>メール送信、メール送信履歴の記録、送信成功フラッシュ、作成画面への再表示。</td></tr><tr><td>失敗時出力</td><td>検証失敗時は作成画面の再表示。会員・テンプレート不正は404。</td></tr><tr><td>副作用</td><td>会員へのメール送信、メール送信履歴の永続化。</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<p>機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。</p>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>dtb_customer</code></td><td><code>email</code>、<code>name01</code>、<code>name02</code></td><td>宛先と画面の会員名表示。</td></tr><tr><td>メールテンプレート（<code>dtb_mail_template</code>）</td><td><code>mail_subject</code>（件名）、<code>header</code>（ヘッダ）、<code>footer</code>（フッタ）、<code>file_name</code>（本文ファイル）、<code>mail_key</code></td><td>件名・本文の差し込み、対象テンプレート判定。</td></tr><tr><td>メール送信履歴（<code>dtb_user_mail_history</code>）</td><td><code>customer_id</code>（会員参照）、<code>template_id</code>（テンプレート参照）、<code>subject</code>（件名）、<code>mail_body</code>（本文）、<code>send_date</code>（送信日時）</td><td>送信のたびに1件記録する。作成者列<code>creator_id</code>の手動メールでの設定有無はec-cube-enterprise実装で要確認。</td></tr><tr><td>店舗基本情報（<code>dtb_base_info</code>）</td><td>各メールアドレス・店舗名</td><td>差出人・控え・返信先・返送先。</td></tr></tbody></table></div>
-<h3 id="DB操作">DB操作</h3>
-<p>永続化の正は ec-cube-enterprise（テーブル名・操作は ec-cube-enterprise を正典）。当ドメインは承認ワークフローを介さず persist/flush で直接確定する（承認ワークフローは在庫機能固有）。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>登録/更新</td><td>dtb_base_info / dtb_customer / dtb_mail_template / dtb_user_mail_history</td><td>当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。</td></tr></tbody></table></div>
-<hr>
-<h2 id="バリデーション">バリデーション</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>件名</td><td>メール作成フォームの検証に従う。</td></tr><tr><td>本文</td><td>複数行入力。画面側で入力必須。</td></tr><tr><td>メールテンプレート</td><td>会員向けベースのテンプレートのみ選択対象。範囲外IDは404。</td></tr><tr><td>なりすまし対策トークン</td><td>送信POSTで検証する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="権限・認可">権限・認可</h2>
-<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>手動メール通知</th></tr></thead><tbody><tr><td>未ログイン管理者</td><td>アクセス不可。</td></tr><tr><td>ログイン済み管理者</td><td>アクセス制御リストが許可する範囲で作成・送信が可能。</td></tr></tbody></table></div>
-<hr>
-<h2 id="画面遷移">画面遷移</h2>
-<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>会員一覧・編集から手動メール通知</td><td>手動メール作成画面（<code>m08-08_admin_customer_customer_manual_mail</code>）</td></tr><tr><td>テンプレート選択</td><td>同画面（テンプレート差し込み、<code>m08-08_admin_customer_customer_manual_mail_edit</code>）</td></tr><tr><td>送信成功</td><td>同じ会員・テンプレートの作成画面（<code>m08-08_admin_customer_customer_manual_mail_edit</code>）</td></tr><tr><td>検証失敗</td><td>同じ作成画面へ戻す</td></tr><tr><td>会員編集画面に戻る</td><td>会員登録・編集（<code>m08-04_admin_customer_customer_edit</code>、M08-04）</td></tr></tbody></table></div>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>会員ID指定なし・会員なし</td><td>ページが見つからない扱い（404）。</td></tr><tr><td>会員向けベース外のテンプレートID</td><td>ページが見つからない扱い（404）。</td></tr><tr><td>フォーム検証失敗</td><td>送信せず作成画面へ戻す。</td></tr></tbody></table></div>
-<hr>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>会員ID、テンプレートID、件名、本文、ヘッダ・フッタ、なりすまし対策トークン</td></tr><tr><td>成功時出力</td><td>メール送信、メール送信履歴の記録、送信完了の通知、作成画面の再表示</td></tr><tr><td>失敗時出力</td><td>検証失敗時は作成画面の再表示。会員・テンプレート不正は404</td></tr></tbody></table></div>
+<h3 id="入出力-永続化">入出力: 永続化</h3>
+<div class="table-wrap"><table><thead><tr><th>操作</th><th>契機</th></tr></thead><tbody><tr><td>追加</td><td>手動メールの送信成功時にメール送信履歴を1件記録する</td></tr></tbody></table></div>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
 <h2 id="表示メッセージ">表示メッセージ</h2>
-<h3 id="フラッシュ・トースト">フラッシュ・トースト</h3>
-<div class="table-wrap"><table><thead><tr><th>表示文言（日本語）</th><th>表示条件</th></tr></thead><tbody><tr><td>メール送信が完了しました。</td><td>手動メール送信成功時</td></tr></tbody></table></div>
-<hr>
-<h3 id="メッセージID対応-自動棚卸">メッセージID対応（自動棚卸）</h3>
-<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>画面上の文言(英語)</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M08-08-MSG-001</td><td>管理画面上部</td><td>メール送信が完了しました。</td><td>（英訳なし）</td><td>手動メールを送信し、送信履歴の記録が完了したとき</td><td>会員登録/編集画面に遷移する</td></tr></tbody></table></div>
-<h2 id="ログ・監査">ログ・監査</h2>
-<div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>送信成功</td><td>メール送信履歴に件名・本文・送信日時・会員・テンプレートを記録する。</td></tr></tbody></table></div>
-<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
-<ul><li>会員のメールアドレス・氏名等の個人情報をアプリログへ出すこと</li><li>なりすまし対策トークン・Cookie値・セッションIDの完全値</li></ul>
-<p>メール本文・件名は業務記録としてメール送信履歴に保存するが、アプリの動作ログには個人情報を残さない。</p>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<p>手動メール送信と送信履歴の記録を行う。本機能では楽観ロック・悲観ロックの対象は持たない。</p>
-<hr>
-<h2 id="調査補助-grep">調査補助（grep）</h2>
-<p>論理説明と切り離し、ソース照合用。</p>
-<pre><code>app/Plugin/HareruyaEc/Controller/Admin/CustomerController.php
-app/Plugin/HareruyaEc/ServiceProvider/Admin/CustomerServiceProvider.php
-app/Plugin/HareruyaEc/Form/Type/Admin/Customer/CustomerMailTemplateType.php
-app/Plugin/HareruyaEc/Service/MailService.php
-app/Plugin/HareruyaEc/Entity/MailTemplate.php
-app/Plugin/HareruyaEc/Resource/template/admin/Customer/manual_mail.twig</code></pre>
-<p>bind名: <code>m08-08_admin_customer_customer_manual_mail</code>、<code>m08-08_admin_customer_customer_manual_mail_edit</code>。</p>
+<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M08-08-MSG-001</td><td>管理画面上部</td><td>メール送信が完了しました。</td><td>手動メールを送信し、送信履歴の記録が完了したとき</td><td>会員登録/編集画面に遷移する</td></tr></tbody></table></div>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

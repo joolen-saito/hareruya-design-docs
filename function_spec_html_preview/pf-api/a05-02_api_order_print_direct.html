@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,32 +272,18 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#概要">概要</a>
-<a class="lv2" href="#本書で扱うこと">本書で扱うこと</a>
-<a class="lv2" href="#本書で扱わないこと">本書で扱わないこと</a>
-<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
-<a class="lv2" href="#用語">用語</a>
-<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
-<a class="lv2" href="#認証・認可">認証・認可</a>
-<a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#印刷情報を送信する-GET-order-print-direct-ConnectionType-が-GetRequest">印刷情報を送信する（GET `/order/print/direct`、`ConnectionType`が`GetRequest`）</a>
-<a class="lv3" href="#印刷済みステータスへ更新する-POST-order-print-direct-ConnectionType-が-SetResponse">印刷済みステータスへ更新する（POST `/order/print/direct`、`ConnectionType`が`SetResponse`）</a>
-<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#動作の分岐">動作の分岐</a>
+<a class="lv3" href="#印刷対象の受注">印刷対象の受注</a>
+<a class="lv3" href="#印刷済みステータスへの更新">印刷済みステータスへの更新</a>
+<a class="lv3" href="#認証を行わない">認証を行わない</a>
+<a class="lv3" href="#金額・在庫の再計算">金額・在庫の再計算</a>
+<a class="lv3" href="#エラー時の扱い">エラー時の扱い</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv3" href="#リクエスト">リクエスト</a>
-<a class="lv3" href="#レスポンス-成功">レスポンス（成功）</a>
-<a class="lv3" href="#レスポンス-失敗">レスポンス（失敗）</a>
-<a class="lv3" href="#サンプルレスポンス">サンプルレスポンス</a>
-<a class="lv3" href="#副作用">副作用</a>
-<a class="lv2" href="#バリデーション">バリデーション</a>
-<a class="lv2" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#DBカラム">DBカラム</a>
-<a class="lv3" href="#DB操作">DB操作</a>
-<a class="lv2" href="#権限・認可">権限・認可</a>
-<a class="lv2" href="#エラー処理">エラー処理</a>
-<a class="lv2" href="#ログ・監査">ログ・監査</a>
-<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
-<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a></nav>
+<a class="lv3" href="#出力-印刷情報XMLの構造">出力: 印刷情報XMLの構造</a>
+<a class="lv3" href="#入出力-永続化">入出力: 永続化</a>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -295,120 +291,33 @@ footer {
         <h1>API 受注管理 — 注文印刷（印刷情報送信・印刷済み更新）</h1>
       </header>
       
-      <h2 id="概要">概要</h2>
-<p>店頭のスタック用紙プリンタ（印刷クライアント）が、印刷対象の受注からスタック用紙の印刷情報を取得し、印刷完了後に該当受注のステータスを印刷済み相当へ更新するためのAPIである。pf-api（受注・買取連携用のAPIアプリケーション）が提供するエンドポイントで、リクエストパラメータ<code>ConnectionType</code>の値によって動作が2系統に分岐する。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-apiの注文印刷処理、ルート定義（<code>config/routes.yaml</code>）、受注の印刷情報取得処理、店頭注文番号の参照、受注ステータスのマスタ定義を正とする。</p>
-<p>本機能のカスタマイズ区分はカスタマイズで、挙動の参照リポはpf-api、DB関連の記述はec-cube-enterpriseを正とする。</p>
-<p>本エンドポイントの応答はJSONではなく、印刷情報を表すXML（<code>GetRequest</code>系）または空応答（<code>SetResponse</code>系）である。本文ではフレームワークのコントローラ型名やメソッド名を主説明としない。「利用者視点の入口」にHTTPメソッドとパスパターンを書く。</p>
-<p>本書は次の2つの機能を1つのエンドポイントとして扱う。</p>
-<ul><li>A05-01 注文印刷_印刷情報をプリンタへ送信（<code>ConnectionType</code>が<code>GetRequest</code>の分岐）</li><li>A05-02 注文印刷_該当受注のステータスを印刷済みに変更（<code>ConnectionType</code>が<code>SetResponse</code>の分岐）</li></ul>
-<hr>
-<h2 id="本書で扱うこと">本書で扱うこと</h2>
-<ul><li>印刷対象受注の抽出と、スタック用紙の印刷情報（XML）の生成・送信（<code>GetRequest</code>）</li><li>印刷完了後の該当受注のステータス更新（<code>SetResponse</code>）</li><li>印刷情報のXMLログファイルへの書き出しという副作用</li><li>本エンドポイントの認証有無</li></ul>
-<hr>
-<h2 id="本書で扱わないこと">本書で扱わないこと</h2>
-<p>以下は本書では仕様確定せず、実装または別APIの設計を正とする。</p>
-<ul><li>印刷クライアント側の通信制御・再送・プリンタ機種仕様（呼び出し元クライアントの仕様を正とする）</li><li>店頭注文番号そのものの採番・参照API（A05-03 店頭注文番号取得の設計を正とする）</li><li>受注ステータスの遷移ルール全般（受注管理の各設計を正とする）</li><li>まとめ買取・買取受注に関する各API（ネット買取・店頭買取の各設計を正とする）</li></ul>
-<hr>
-<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<p>挙動は現行（pf-api）を正とし、DBスキーマは移行先のec-cube-enterpriseを正とする。現行と移行先で次の差がある。</p>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-api）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>受注補助情報の配置</td><td>注文番号・スマレジコード・ブラウザ印刷フラグ・確定日時等を補助表<code>dtb_order_sub</code>に分離して持つ。</td><td>同等の列を受注<code>dtb_order</code>へ統合する（<code>order_number</code>・<code>smaregi_code</code>・<code>browser_print_flg</code>・<code>confirm_date</code>等）。補助表は持たない。</td></tr><tr><td>印刷済み（ピック中）への更新</td><td>受注ステータスの更新と補助表の確定日時更新で印刷済み相当を表す。</td><td>受注<code>dtb_order</code>の<code>picking_date</code>・<code>pick_finish_date</code>・<code>browser_print_flg</code>で印刷・ピック状態を保持する。</td></tr><tr><td>店頭注文番号（待ち番号）</td><td>補助表<code>dtb_order_sub</code>の<code>waiting_number</code>で持つ。</td><td>店頭注文番号<code>dtb_order_number</code>の<code>value</code>（および受注<code>dtb_order</code>の<code>order_number</code>）で持つ。</td></tr><tr><td>配送方法の判別</td><td>配送<code>dtb_shipping</code>の配送方法で店頭受取・スムーズ店頭受取を判別する。</td><td>同一スキーマ。<code>dtb_shipping</code>の配送方法で判別する。</td></tr></tbody></table></div>
-<p>応答形式（XML・空応答）とプリンタ向けレイアウトは移行後も挙動仕様としてpf-apiを正とする。</p>
-<hr>
-<h2 id="用語">用語</h2>
-<div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>スタック用紙</td><td>店頭で受注内容を印字するロール紙。1受注ごとに1枚分の印刷情報を生成する。</td></tr><tr><td>印刷情報</td><td>プリンタが解釈するXML。<code>ePOSPrint</code>要素ごとに1受注分の印字レイアウトを持つ。</td></tr><tr><td>店頭注文番号</td><td>店頭受取の受注に紐づく待ち番号。印刷情報の店頭注文番号欄に印字する。</td></tr><tr><td>ブラウザ印刷フラグ</td><td>受注の補助情報が持つフラグ。ブラウザ経由の印刷待ち受注を印刷対象に含める判定に用いる。</td></tr><tr><td>印刷ログファイル</td><td>印刷不具合検証のために生成した印刷情報のXMLを保存するファイル。</td></tr></tbody></table></div>
-<hr>
-<h2 id="利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>印刷情報をプリンタへ送信（A05-01）</td><td><code>GET /order/print/direct</code>（<code>ConnectionType</code>が<code>GetRequest</code>）</td><td>印刷対象受注のスタック用紙印刷情報をXMLで返す。対象が無い場合は空のデータを返す。</td></tr><tr><td>該当受注のステータスを印刷済みに変更（A05-02）</td><td><code>POST /order/print/direct</code>（<code>ConnectionType</code>が<code>SetResponse</code>）</td><td>印刷完了として受け取った受注のステータスをピック中へ更新し、空の本文を返す。</td></tr></tbody></table></div>
-<p>同一パス<code>/order/print/direct</code>がGETとPOSTの両方で同じ処理に割り当てられており、分岐は<code>ConnectionType</code>の値で決まる。応答形式はXMLまたは空応答であり、JSONではない。呼び出し元は店頭のスタック用紙プリンタ（印刷クライアント）。</p>
-<hr>
-<h2 id="認証・認可">認証・認可</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>認証方式</td><td>本エンドポイントは認証処理を行わない。<code>jwt-token</code>ヘッダの検証も管理ログインのプロキシも経由しない。pf-apiの他の管理系APIが用いる共通の認証処理を呼び出さず、未認証で実行できる。</td></tr><tr><td>認証失敗時</td><td>認証判定そのものを持たないため、認証失敗による拒否（HTTP 401）を返さない。</td></tr><tr><td>認可</td><td>呼び出し可能なクライアントは店頭のスタック用紙プリンタ（印刷クライアント）。アプリケーション層での利用者照合は行わない。</td></tr></tbody></table></div>
-<p>未認証で実行できる点は本書の確認値である。トークン原値・署名シークレットは本書に記載しない。</p>
-<hr>
-<h2 id="処理フロー">処理フロー</h2>
-<h3 id="印刷情報を送信する-GET-order-print-direct-ConnectionType-が-GetRequest">印刷情報を送信する（GET <code>/order/print/direct</code>、<code>ConnectionType</code>が<code>GetRequest</code>）</h3>
-<ol><li>リクエストの<code>ConnectionType</code>を読み、値が<code>GetRequest</code>であることを判定する。</li><li>印刷対象の受注一覧を取得する。店頭受取で注文受領の受注、スムーズ店頭受取で所定の支払方法かつ未確定・未出荷・未取消・未受領・店頭予約日なし・スマレジコードありの受注、ブラウザ印刷フラグが立つ受注を対象とし、最大10件を取得する。</li><li>受注ごとに、注文日・合計金額・店頭注文番号・スマレジコード・問い合わせ有無・注文詳細URLを組み立て、1受注分の印刷情報（<code>ePOSPrint</code>要素）を生成する。配送がスムーズ店頭受取の場合は合計金額欄を「スムーズ店頭受取」とする。</li><li>全受注分を束ねたスタック用紙の印刷情報XMLを生成する。対象受注が無い場合はXMLを生成せず空文字とする。</li><li>生成した印刷情報が空でない場合、印刷不具合検証のため印刷情報のXMLをログファイルへ書き出す（副作用）。</li><li>印刷情報XMLを応答本体としてストリーム送信する。応答のContent-Typeは<code>application/octet-stream</code>とする。</li></ol>
-<h3 id="印刷済みステータスへ更新する-POST-order-print-direct-ConnectionType-が-SetResponse">印刷済みステータスへ更新する（POST <code>/order/print/direct</code>、<code>ConnectionType</code>が<code>SetResponse</code>）</h3>
-<ol><li>リクエストの<code>ConnectionType</code>を読み、値が<code>SetResponse</code>であることを判定する。</li><li>POSTで受け取った<code>ResponseFile</code>のXMLを解析する。解析に失敗した場合は内容とエラーを記録して更新を行わずに戻る。</li><li>XMLの直接印刷結果が偽、または印刷結果要素が1件も無い場合は内容を記録して更新を行わずに戻る。</li><li>印刷結果要素ごとに、印刷ジョブIDの先頭部分から受注IDを取り出し、対象受注を特定する。受注が見つからない場合はエラーを記録して次の要素へ進む。</li><li>対象受注の補助情報のブラウザ印刷フラグが立っている場合は、そのフラグを倒すだけに留める。立っていない場合は受注のステータスをピック中へ更新し、補助情報の確定日時に現在時刻を設定する。</li><li>各受注の更新を反映する。</li><li>空の本文（HTTP 200、<code>text/xml</code>）を返す。</li></ol>
-<hr>
-<h2 id="業務ルール・計算">業務ルール・計算</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>更新対象</td><td>リクエストで指定されたID・入力値に対応する業務データを対象にする。対象特定、入力不正、認証・認可の判定順序は処理フローとバリデーションの各節を正とする。</td></tr><tr><td>更新方法</td><td>入力値を対象データへ上書きまたは追加登録する。履歴登録や関連データ更新がある場合は入出力の副作用およびDBカラムの節を正とする。</td></tr><tr><td>計算処理</td><td>本APIでは金額・税・ポイント・在庫数量の再計算や丸めを行わない。ステータスやコメント等の更新は、実装で定義された遷移・存在確認・担当者判定に従う。</td></tr><tr><td>応答値</td><td>成功時は処理結果コードまたは更新後に取得した値を返す。レスポンス値は本API内で独自集計せず、保存結果または取得結果をJSON応答へ整形する。</td></tr></tbody></table></div>
-<hr>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="動作の分岐">動作の分岐</h3>
+<p>接続種別 ConnectionType の値で動作が分かれる。</p>
+<div class="table-wrap"><table><thead><tr><th>接続種別の値</th><th>動作</th></tr></thead><tbody><tr><td>GetRequest</td><td>印刷情報を送信する</td></tr><tr><td>SetResponse</td><td>印刷済みステータスへ更新する</td></tr><tr><td>上記のいずれにも一致しないとき</td><td>処理を行わず、応答を組み立てない</td></tr></tbody></table></div>
+<h3 id="印刷対象の受注">印刷対象の受注</h3>
+<p>印刷情報の送信では、次のいずれかに当たる受注だけを対象とし、最大10件を取得する。</p>
+<div class="table-wrap"><table><thead><tr><th>対象</th><th>条件</th></tr></thead><tbody><tr><td>店頭受取の受注</td><td>対応状況が注文受領のとき</td></tr><tr><td>スムーズ店頭受取の受注</td><td>所定の支払方法で、未確定・未出荷・未取消・未受領・店頭予約日なし・スマレジコードありのとき</td></tr><tr><td>ブラウザ印刷を指定した受注</td><td>補助情報のブラウザ印刷フラグが立つとき</td></tr></tbody></table></div>
+<p>受注ごとに注文日・合計金額・店頭注文番号・スマレジコード・問い合わせ有無・注文詳細URLを組み立て、1受注分の印刷情報とする。配送がスムーズ店頭受取のときは、合計金額欄を「スムーズ店頭受取」とする。全受注分を束ねてスタック用紙の印刷情報XMLとする。</p>
+<div class="table-wrap"><table><thead><tr><th>対象受注</th><th>生成する印刷情報</th></tr></thead><tbody><tr><td>1件以上あるとき</td><td>受注ごとの印刷情報を束ねたXML。XMLをログファイルへ書き出す（印刷不具合の検証に用いる記録）</td></tr><tr><td>1件も無いとき</td><td>XMLを生成せず空文字とする。ログファイルの書き出しも行わない</td></tr></tbody></table></div>
+<h3 id="印刷済みステータスへの更新">印刷済みステータスへの更新</h3>
+<p>受け取った印刷結果のXMLを解析する。印刷結果要素ごとに、印刷ジョブIDの先頭部分から受注IDを取り出して対象受注を特定する。</p>
+<div class="table-wrap"><table><thead><tr><th>対象受注の状態</th><th>更新内容</th></tr></thead><tbody><tr><td>補助情報のブラウザ印刷フラグが立っているとき</td><td>フラグを倒すだけに留め、対応状況は変えない</td></tr><tr><td>補助情報のブラウザ印刷フラグが立っていないとき</td><td>対応状況をピック中へ更新し、補助情報の確定日時に現在時刻を設定する</td></tr></tbody></table></div>
+<h3 id="認証を行わない">認証を行わない</h3>
+<p>本エンドポイントは認証処理を行わない。他の管理系APIが用いる共通の認証処理を経由せず、未認証のまま実行できる。認証の判定を持たない限り、認証失敗による拒否（HTTP401）は返さない。呼び出し元は店頭のスタック用紙プリンタだけで、利用者の照合は行わない。</p>
+<h3 id="金額・在庫の再計算">金額・在庫の再計算</h3>
+<p>金額・税・ポイント・在庫数量の再計算と丸めは、いずれの分岐でも行わない。</p>
+<h3 id="エラー時の扱い">エラー時の扱い</h3>
+<div class="table-wrap"><table><thead><tr><th>事象</th><th>扱い</th></tr></thead><tbody><tr><td>接続種別が想定値のいずれにも一致しないとき</td><td>処理を行わず、応答を組み立てない</td></tr><tr><td>印刷情報の送信で対象受注が無いとき</td><td>空のデータを返す</td></tr><tr><td>印刷結果XMLの解析に失敗したとき</td><td>更新を行わずに戻る</td></tr><tr><td>直接印刷結果が偽のとき、または印刷結果要素が1件も無いとき</td><td>更新を行わずに戻る</td></tr><tr><td>印刷ジョブIDに対応する受注が見つからないとき</td><td>その要素を除き、次の要素へ進む</td></tr><tr><td>印刷情報生成・データ取得・ファイル書き出し中に例外が起きたとき</td><td>共通例外処理に委ねる（HTTP500相当）</td></tr></tbody></table></div>
 <h2 id="入出力">入出力</h2>
-<h3 id="リクエスト">リクエスト</h3>
-<div class="table-wrap"><table><thead><tr><th>パラメータ</th><th>位置</th><th>型</th><th>必須／任意</th><th>説明</th></tr></thead><tbody><tr><td><code>ConnectionType</code></td><td>クエリまたはボディ</td><td>string</td><td>必須</td><td>動作の分岐。<code>GetRequest</code>で印刷情報送信、<code>SetResponse</code>でステータス更新。いずれにも一致しない場合は処理を行わず本文を返さない。</td></tr><tr><td><code>ResponseFile</code></td><td>ボディ</td><td>string</td><td><code>SetResponse</code>時に必須</td><td>プリンタが返した印刷結果のXML文字列。直接印刷結果の真偽と印刷結果要素（印刷ジョブID）を含む。<code>SetResponse</code>の更新対象の特定に用いる。</td></tr></tbody></table></div>
-<p><code>ConnectionType</code>はGET・POSTいずれのリクエストからも取得する。<code>ResponseFile</code>はPOST本文から取得する。</p>
-<h3 id="レスポンス-成功">レスポンス（成功）</h3>
-<p>応答はJSONではない。分岐ごとに応答形式が異なる。</p>
-<div class="table-wrap"><table><thead><tr><th>分岐</th><th>HTTPステータス</th><th>Content-Type</th><th>本体</th></tr></thead><tbody><tr><td><code>GetRequest</code>（A05-01）</td><td>200</td><td><code>application/octet-stream</code></td><td>スタック用紙の印刷情報XMLをストリーム送信する。対象受注が無い場合は空のデータ。</td></tr><tr><td><code>SetResponse</code>（A05-02）</td><td>200</td><td><code>text/xml; charset=utf-8</code></td><td>空の本文（本文長0）。</td></tr></tbody></table></div>
-<p><code>GetRequest</code>が返すXMLの構造は次のとおり。</p>
-<div class="table-wrap"><table><thead><tr><th>要素</th><th>説明</th></tr></thead><tbody><tr><td><code>PrintRequestInfo</code></td><td>ルート要素。バージョン属性を持ち、配下に受注ごとの<code>ePOSPrint</code>を並べる。</td></tr><tr><td><code>ePOSPrint</code></td><td>受注1件分の印刷情報。印刷先・タイムアウト・印刷ジョブID（受注ID）と印字レイアウトを持つ。</td></tr><tr><td><code>ePOSPrint/Parameter/printjobid</code></td><td>印刷ジョブID。受注IDを用いる。<code>SetResponse</code>での受注特定に対応する。</td></tr><tr><td><code>ePOSPrint/PrintData</code></td><td>印字レイアウト。店頭注文番号・注文詳細URLのQRコード・注文日・注文番号・お客様名・合計金額・スマレジコードのバーコード・各種チェック欄を含む。</td></tr></tbody></table></div>
-<h3 id="レスポンス-失敗">レスポンス（失敗）</h3>
-<p>本エンドポイントは認証・入力検証による明示的なエラー応答を組み立てない。異常時のふるまいは次のとおり。</p>
-<div class="table-wrap"><table><thead><tr><th>HTTPステータス</th><th>条件</th><th>本文の形</th></tr></thead><tbody><tr><td>200</td><td><code>GetRequest</code>で対象受注が無い</td><td>空のデータ（XML本体を持たない）</td></tr><tr><td>200</td><td><code>SetResponse</code>で<code>ResponseFile</code>の解析失敗、直接印刷結果が偽、印刷結果要素が無い、または受注が見つからない</td><td>空の本文。更新は行わず、内容とエラーをログに記録する。</td></tr><tr><td>（応答なし）</td><td><code>ConnectionType</code>が<code>GetRequest</code>・<code>SetResponse</code>のいずれにも一致しない</td><td>応答を組み立てず本文を返さない。</td></tr><tr><td>500</td><td>印刷情報生成中・データ取得中・ファイル書き出し中の例外</td><td>共通例外処理に委ねる</td></tr></tbody></table></div>
-<h3 id="サンプルレスポンス">サンプルレスポンス</h3>
-<p><code>GetRequest</code>時の応答本体の代表例（実装確認値に基づくXML構造。受注IDなどは代表値）。</p>
-<pre><code class="language-xml">&lt;?xml version="1.0" encoding="utf-8"?&gt;
-&lt;PrintRequestInfo Version="3.00"&gt;
-  &lt;ePOSPrint&gt;
-    &lt;Parameter&gt;
-      &lt;devid&gt;local_printer&lt;/devid&gt;
-      &lt;timeout&gt;10000&lt;/timeout&gt;
-      &lt;printjobid&gt;1000001&lt;/printjobid&gt;
-    &lt;/Parameter&gt;
-    &lt;PrintData&gt;
-      &lt;epos-print xmlns="http://www.epson-pos.com/schemas/2011/03/epos-print"&gt;
-        &lt;text lang="ja"/&gt;
-        &lt;page&gt;
-          &lt;text&gt;店頭注文番号&lt;/text&gt;
-          &lt;symbol type="qrcode_model_2"&gt;https://example.test/admin/order/1000001/edit&lt;/symbol&gt;
-          &lt;text&gt;注文番号&lt;/text&gt;
-          &lt;text&gt;20260603-0001&lt;/text&gt;
-          &lt;text&gt;お客様名&lt;/text&gt;
-          &lt;text&gt;テスト 太郎&lt;/text&gt;
-          &lt;text&gt;合計金額&lt;/text&gt;
-          &lt;text&gt;\1,500&lt;/text&gt;
-          &lt;barcode type="jan13"&gt;4900000000000&lt;/barcode&gt;
-        &lt;/page&gt;
-        &lt;cut type="feed"/&gt;
-      &lt;/epos-print&gt;
-    &lt;/PrintData&gt;
-  &lt;/ePOSPrint&gt;
-&lt;/PrintRequestInfo&gt;</code></pre>
-<p><code>SetResponse</code>時は本文を持たない（HTTP 200、<code>text/xml</code>、本文長0）。</p>
-<h3 id="副作用">副作用</h3>
-<p>本エンドポイントは参照のみではなく、次の副作用を持つ。</p>
-<ul><li>印刷ログファイルの書き出し（<code>GetRequest</code>）。生成した印刷情報が空でない場合、印刷情報のXMLをログ保存ディレクトリ（<code>var/log/print_logs/</code>配下）にタイムスタンプと一意名を付けたファイルとして書き出す。ディレクトリが存在しない場合は作成する。</li><li>受注ステータスの更新（<code>SetResponse</code>）。印刷結果に含まれる受注について、ブラウザ印刷フラグが立つ場合はフラグを倒し、立たない場合は受注のステータスをピック中へ更新し、補助情報の確定日時に現在時刻を設定する。これらはデータベースへの更新である。</li></ul>
-<p>応答はXMLまたは空応答であり、JSON応答整形・camelCaseのプロパティ命名は適用しない。</p>
-<hr>
-<h2 id="バリデーション">バリデーション</h2>
-<p>本エンドポイントはフォーム型やマスタ存在チェックによる入力検証を行わない。<code>ConnectionType</code>が想定値（<code>GetRequest</code>・<code>SetResponse</code>）に一致しない場合は処理を行わず応答を組み立てない。<code>SetResponse</code>では<code>ResponseFile</code>のXML解析に失敗した場合と直接印刷結果が偽・印刷結果要素なしの場合に更新を行わずログに記録して戻る。</p>
-<hr>
-<h2 id="データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>参照時点</td><td><code>GetRequest</code>は呼び出し時点の印刷対象受注（最大10件）を取得して印刷情報を返す。</td></tr><tr><td>更新の有無</td><td><code>GetRequest</code>は受注ステータスを更新しない（印刷ログファイルの書き出しのみ）。<code>SetResponse</code>は受注ステータスと補助情報を更新する。</td></tr><tr><td>取得と更新の一致</td><td><code>GetRequest</code>で抽出した受注集合と<code>SetResponse</code>で更新される受注集合は同一トランザクションで保証されない。<code>SetResponse</code>はプリンタが返した<code>ResponseFile</code>の印刷ジョブID（受注ID）を基準に対象を特定する。</td></tr><tr><td>印刷とステータスの関係</td><td><code>GetRequest</code>は印刷情報を返した時点では受注を未印刷のまま残し、<code>SetResponse</code>を受け取って初めてピック中へ更新する。両者の呼び出しの間に受注が変化し得る。</td></tr></tbody></table></div>
-<hr>
-<h2 id="DBカラム">DBカラム</h2>
-<p>機能に直接関係する列のみ記載する。移行先（ec-cube-enterprise）の名称を主とし、現行（pf-api）で配置が異なる列は括弧で添える。型や一覧の細部はスキーマを参照する。</p>
-<p>現行は注文番号・スマレジコード・ブラウザ印刷フラグ・確定日時等を補助表<code>dtb_order_sub</code>に持つが、移行先はこれらを受注<code>dtb_order</code>へ統合する。</p>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td>受注<code>dtb_order</code></td><td>受注ID</td><td>印刷ジョブIDと注文詳細URLに用いる。<code>SetResponse</code>の対象特定にも用いる。</td></tr><tr><td>受注<code>dtb_order</code></td><td>受注ステータス（<code>order_status_id</code>）</td><td>印刷対象抽出の条件、および<code>SetResponse</code>でピック中へ更新する対象。</td></tr><tr><td>受注<code>dtb_order</code></td><td><code>picking_date</code>・<code>pick_finish_date</code></td><td><code>SetResponse</code>でピック中へ更新する際に設定する。</td></tr><tr><td>受注<code>dtb_order</code></td><td>注文日（<code>order_date</code>）</td><td>印刷情報の注文日欄。</td></tr><tr><td>受注<code>dtb_order</code></td><td>注文者氏名・氏名カナ</td><td>印刷情報のお客様名欄（カナを優先し、無ければ氏名）。</td></tr><tr><td>受注<code>dtb_order</code></td><td>合計金額（<code>payment_total</code>）</td><td>印刷情報の合計金額欄。スムーズ店頭受取時は文言に置換する。</td></tr><tr><td>受注<code>dtb_order</code></td><td><code>order_number</code>（現行は補助表<code>dtb_order_sub</code>の<code>order_number</code>）</td><td>印刷情報の注文番号欄。抽出条件で注文番号ありを必須とする。</td></tr><tr><td>受注<code>dtb_order</code></td><td><code>smaregi_code</code>（現行は<code>dtb_order_sub</code>）</td><td>印刷情報のバーコードに用いる。抽出条件にも用いる。</td></tr><tr><td>受注<code>dtb_order</code></td><td><code>browser_print_flg</code>（現行は<code>dtb_order_sub</code>）</td><td>印刷対象抽出の条件。<code>SetResponse</code>では立つ場合にフラグを倒すだけに留める。</td></tr><tr><td>受注<code>dtb_order</code></td><td><code>confirm_date</code>（現行は<code>dtb_order_sub</code>）</td><td><code>SetResponse</code>でステータス更新時に現在時刻を設定する。抽出条件では未設定を要求する。</td></tr><tr><td>受注<code>dtb_order</code></td><td>出荷日時・取消日時・受領日時・店頭予約日時（現行は<code>dtb_order_sub</code>の各日時列）</td><td>スムーズ店頭受取の抽出条件で未設定を要求する。</td></tr><tr><td>店頭注文番号<code>dtb_order_number</code></td><td><code>value</code>（現行は補助表<code>dtb_order_sub</code>の<code>waiting_number</code>）</td><td>印刷情報の店頭注文番号欄。受注IDで引く。</td></tr><tr><td>配送<code>dtb_shipping</code></td><td>配送方法</td><td>店頭受取・スムーズ店頭受取の判別。抽出条件と合計金額欄の文言切替に用いる。</td></tr></tbody></table></div>
-<h3 id="DB操作">DB操作</h3>
-<p>本機能は参照系（検索・出力）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>検索</td><td>dtb_order / dtb_order_number / dtb_order_sub / dtb_shipping</td><td>検索条件に合致するレコードを抽出する。抽出結果を所定フォーマットでファイル出力する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="権限・認可">権限・認可</h2>
-<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>注文印刷（印刷情報送信・印刷済み更新）</th></tr></thead><tbody><tr><td>店頭のスタック用紙プリンタ（印刷クライアント）</td><td>認証なしで印刷情報の取得とステータス更新を実行できる。</td></tr><tr><td>その他のクライアント</td><td>アプリケーション層での照合を行わないため、到達できれば同様に実行できる。利用制御はネットワーク・経路側に依存する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td><code>ConnectionType</code>が想定値に一致しない</td><td>処理を行わず応答を組み立てない。</td></tr><tr><td><code>GetRequest</code>で対象受注が無い</td><td>空のデータを返す。ログファイルの書き出しも行わない。</td></tr><tr><td><code>SetResponse</code>で<code>ResponseFile</code>の解析失敗</td><td>内容とエラーをログに記録し、更新を行わずに戻る。</td></tr><tr><td><code>SetResponse</code>で直接印刷結果が偽・印刷結果要素なし</td><td>内容をログに記録し、更新を行わずに戻る。</td></tr><tr><td><code>SetResponse</code>で受注が見つからない</td><td>該当受注IDのエラーをログに記録し、その要素を飛ばして次へ進む。</td></tr><tr><td>印刷情報生成・データ取得・ファイル書き出し中の例外</td><td>共通例外処理に委ねる（HTTP 500相当）。</td></tr></tbody></table></div>
-<hr>
-<h2 id="ログ・監査">ログ・監査</h2>
-<p><code>SetResponse</code>では、<code>ResponseFile</code>の解析失敗・直接印刷結果が偽・印刷結果要素なし・受注が見つからない場合に、その内容やエラーをログへ記録する。<code>GetRequest</code>では、生成した印刷情報のXMLを印刷不具合検証用のログファイル（<code>var/log/print_logs/</code>配下）へ書き出す。</p>
-<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
-<ul><li>JWTトークンの原値</li><li>署名シークレット（<code>auth_magic</code>）</li><li>Cookie値・セッションIDの完全値</li></ul>
-<hr>
-<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
-<p><code>GetRequest</code>は受注を更新せず、ロックの対象を持たない。<code>SetResponse</code>は受注ごとに更新を反映するが、印刷結果に含まれる受注集合に対する明示的な悲観ロック・楽観ロックは設けていない。<code>GetRequest</code>で抽出した受注と<code>SetResponse</code>で更新する受注は別リクエストであり、同一トランザクション境界で保証しない。</p>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>接続種別（ConnectionType）。クエリとボディのいずれからも受け取る。必須。印刷済み更新のときは、印刷結果XML（ResponseFile）をボディで受け取る。印刷結果XMLは直接印刷結果の真偽と、印刷ジョブIDを持つ印刷結果要素を含む。</td></tr><tr><td>成功時出力</td><td>印刷情報の送信は HTTP200、Content-Type は application/octet-stream で、印刷情報XMLをストリーム送信する。対象受注が無いときは空のデータ。印刷済み更新は HTTP200、Content-Type は text/xml; charset=utf-8 で、本文長0の空応答。</td></tr><tr><td>失敗時出力</td><td>認証・入力検証による明示的なエラー応答を組み立てない。更新できないときも空の本文を返す。例外のときは HTTP500 相当。</td></tr></tbody></table></div>
+<h3 id="出力-印刷情報XMLの構造">出力: 印刷情報XMLの構造</h3>
+<div class="table-wrap"><table><thead><tr><th>要素</th><th>内容</th></tr></thead><tbody><tr><td>PrintRequestInfo</td><td>ルート要素。バージョン属性を持ち、配下に受注ごとの ePOSPrint を並べる</td></tr><tr><td>ePOSPrint</td><td>受注1件分の印刷情報。印刷先・タイムアウト・印刷ジョブID・印字レイアウトを持つ</td></tr><tr><td>印刷ジョブID</td><td>受注ID。印刷済み更新で受注を特定するときに用いる</td></tr><tr><td>印字レイアウト</td><td>店頭注文番号、注文詳細URLのQRコード、注文日、注文番号、お客様名、合計金額、スマレジコードのバーコード、各種チェック欄</td></tr></tbody></table></div>
+<h3 id="入出力-永続化">入出力: 永続化</h3>
+<div class="table-wrap"><table><thead><tr><th>操作</th><th>契機</th></tr></thead><tbody><tr><td>更新</td><td>印刷済み更新で、ブラウザ印刷フラグが立っていないときに、受注の対応状況をピック中へ、補助情報の確定日時を現在時刻へ設定する</td></tr><tr><td>更新</td><td>印刷済み更新で、ブラウザ印刷フラグが立っているときに、そのフラグを倒す</td></tr></tbody></table></div>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
+<h2 id="表示メッセージ">表示メッセージ</h2>
+<p>この機能はメッセージを扱わない。</p>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>
