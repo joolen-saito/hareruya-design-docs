@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -268,50 +278,25 @@ footer {
     <main class="doc-content">
       <header class="page-header">
         <h1>API コンテンツ 基本設計仕様書（詳細設計）</h1>
-        <p class="crumb">専用の基本設計（Excel）シートが無い機能群の詳細設計書をまとめたページです。各機能の正本は Markdown です。</p>
+        <p class="crumb">専用の基本設計（Excel）シートが無い機能群の現行仕様をまとめたページです。各機能の正本は Markdown です。</p>
       </header>
       <section class="doc-section" id="a08-01">
   <header class="page-header">
     <p class="crumb">Source:<br>functions/pf-api/a08-01_api_top_banner_get.md</p>
     <h1>A08-01 トップバナーIDのトップバナー情報を取得 ／ API データ管理 — トップバナーIDのトップバナー情報を取得</h1>
   </header>
-  <h2 id="a08-01-概要">概要</h2>
-<p>トップバナーIDを指定してトップバナー情報を取得するAPIである。pf-apiが提供するJSON APIである。TODOリストの「コンテンツ管理」（A08-01）と「データ管理」（A16-01）の同一エンドポイントをまとめる。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-apiのトップバナー取得処理、ルート定義、トップバナーマスタを扱うリポジトリを正とする。本機能のカスタマイズ区分は現行踏襲であり、挙動はpf-apiの実装を参照し、DB関連（テーブル・列）の記述はec-cube-enterpriseを正とする。</p>
-<p>対象はJSON APIエンドポイントであり、ブラウザ向けの画面を持たない。</p>
-<hr>
-<h2 id="a08-01-本書で扱うこと">本書で扱うこと</h2>
-<ul><li>トップバナーIDによるトップバナー情報の取得</li><li>該当が無い場合の応答</li></ul>
-<hr>
-<h2 id="a08-01-本書で扱わないこと">本書で扱わないこと</h2>
-<p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
-<ul><li>指定言語のトップバナー一覧取得（一覧取得APIを正とする）</li><li>トップバナーの設定・管理（トップバナー管理を正とする）</li></ul>
-<hr>
-<h2 id="a08-01-リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<p>本機能は現行踏襲であり、挙動の参照は現行のpf-api、DB関連の正はec-cube-enterpriseとする。テーブル名・列名は現行と移行先で一致する。移行先ではトップバナーマスタに表示用の追加列があるが、本APIの応答項目（ID・画像URL・リンク・表示タイプ・関連言語）には影響しない。</p>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>現行（pf-api）</th><th>移行先（ec-cube-enterprise）</th><th>扱い</th></tr></thead><tbody><tr><td>トップバナーマスタ</td><td><code>mtb_top_banner</code>（id・image_url・link・disp_type）</td><td><code>mtb_top_banner</code>（id・image_url・link・disp_typeに加え、image_alt・sort_no）</td><td>同名テーブル。移行先は alt属性（<code>image_alt</code>）と表示順（<code>sort_no</code>）の列を持つ。本APIの応答には含めない。</td></tr><tr><td>言語関連</td><td><code>dtb_top_banner_language</code>（top_banner_id・language_id）</td><td><code>dtb_top_banner_language</code>（top_banner_id・language_id）</td><td>同一スキーマ。トップバナーと言語の多対多関連。</td></tr><tr><td>言語マスタ</td><td><code>mtb_language</code>（id・name_jp・name_en・code）</td><td><code>mtb_language</code>（id・name_jp・name_en・code・sort_no）</td><td>同名テーブル。移行先は並び順（<code>sort_no</code>）の列を持つ。応答の言語名・言語コードに用いる。</td></tr></tbody></table></div>
-<hr>
-<h2 id="a08-01-利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>トップバナーIDのトップバナー情報取得</td><td><code>GET /topBanner/{id}</code></td><td>トップバナーIDに対応するトップバナー情報をJSONで返す。該当が無い場合は404を返す。</td></tr></tbody></table></div>
-<p>応答形式はJSON。</p>
-<hr>
-<h2 id="a08-01-処理フロー">処理フロー</h2>
-<h3 id="a08-01-トップバナー情報を取得する-GET-topBanner-id">トップバナー情報を取得する（GET <code>/topBanner/{id}</code>）</h3>
-<ol><li>パスのトップバナーIDを受け取る。</li><li>トップバナーマスタのリポジトリから当該IDのトップバナーを取得する。</li><li>取得できない場合はコード404のJSONを返す。</li><li>取得できた場合はトップバナー情報をJSONで返す。</li></ol>
-<hr>
-<h2 id="a08-01-業務ルール・計算">業務ルール・計算</h2>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>対象データ</td><td>リクエストで指定されたID・条件に一致するデータを取得対象とする。抽出条件と該当なし時の扱いは処理フロー・入出力の各節を正とする。</td></tr><tr><td>計算処理</td><td>本APIでは金額・税・ポイント・在庫数量の再計算や丸めを行わない。DBまたはリポジトリから取得した値をJSON応答へ整形して返す。</td></tr><tr><td>応答値</td><td>応答フィールドは取得時点の値を返す。表示用の加工やフロントエンド側の表示制御は呼び出し元クライアントの設計を正とする。</td></tr></tbody></table></div>
-<hr>
+  <h2 id="a08-01-業務ロジック">業務ロジック</h2>
+<h3 id="a08-01-取得対象">取得対象</h3>
+<p>パスで指定されたトップバナーIDに一致するトップバナーを取得対象とする。該当するトップバナーが存在しないときはコード404のJSONを返す。</p>
+<h3 id="a08-01-応答値">応答値</h3>
+<p>応答フィールドは取得時点の値をそのまま返す。金額・税・ポイント・在庫数量の再計算や丸めは行わない。表示用の加工や表示制御は呼び出し元クライアントの設計を正とする。</p>
 <h2 id="a08-01-入出力">入出力</h2>
-<h3 id="a08-01-リクエスト">リクエスト</h3>
-<div class="table-wrap"><table><thead><tr><th>パラメータ</th><th>位置</th><th>型</th><th>必須／任意</th><th>説明</th></tr></thead><tbody><tr><td><code>id</code></td><td>パス</td><td>integer</td><td>必須</td><td>取得対象のトップバナーID。</td></tr></tbody></table></div>
-<h3 id="a08-01-レスポンス-成功">レスポンス（成功）</h3>
+<h3 id="a08-01-入出力-リクエスト">入出力: リクエスト</h3>
+<div class="table-wrap"><table><thead><tr><th>パラメータ</th><th>位置</th><th>型</th><th>必須／任意</th><th>説明</th></tr></thead><tbody><tr><td><code>id</code></td><td>パス</td><td>integer</td><td>必須</td><td>取得対象のトップバナーID</td></tr></tbody></table></div>
+<h3 id="a08-01-入出力-レスポンス-成功">入出力: レスポンス（成功）</h3>
 <p>HTTP 200。</p>
-<div class="table-wrap"><table><thead><tr><th>フィールド</th><th>型</th><th>説明</th></tr></thead><tbody><tr><td><code>id</code></td><td>integer</td><td>トップバナーID。</td></tr><tr><td><code>imageUrl</code></td><td>string</td><td>画像URL。</td></tr><tr><td><code>link</code></td><td>string</td><td>リンク先URL。</td></tr><tr><td><code>dispType</code></td><td>integer</td><td>表示タイプ。</td></tr><tr><td><code>languages</code></td><td>array</td><td>関連する言語の配列。要素はオブジェクトで、子フィールドは<code>id</code>（integer、言語ID）、<code>nameJp</code>（string、言語名・日本語）、<code>nameEn</code>（string、言語名・英語）、<code>code</code>（string、言語コード）。</td></tr></tbody></table></div>
-<h3 id="a08-01-レスポンス-失敗">レスポンス（失敗）</h3>
-<div class="table-wrap"><table><thead><tr><th>HTTPステータス</th><th>条件</th><th>本文の形</th></tr></thead><tbody><tr><td>404</td><td>該当IDのトップバナーが存在しない</td><td><code>{code, message}</code>（"Not Found"）</td></tr></tbody></table></div>
-<h3 id="a08-01-サンプルレスポンス">サンプルレスポンス</h3>
-<p>成功時の応答例（実装確認値に基づく代表値）。</p>
+<div class="table-wrap"><table><thead><tr><th>フィールド</th><th>型</th><th>説明</th></tr></thead><tbody><tr><td><code>id</code></td><td>integer</td><td>トップバナーID</td></tr><tr><td><code>imageUrl</code></td><td>string</td><td>画像URL</td></tr><tr><td><code>link</code></td><td>string</td><td>リンク先URL</td></tr><tr><td><code>dispType</code></td><td>integer</td><td>表示タイプ</td></tr><tr><td><code>languages</code></td><td>array</td><td>関連する言語の配列。要素はオブジェクトで、子フィールドは<code>id</code>（integer、言語ID）、<code>nameJp</code>（string、言語名・日本語）、<code>nameEn</code>（string、言語名・英語）、<code>code</code>（string、言語コード）</td></tr></tbody></table></div>
+<p>応答例（実装確認値に基づく代表値）。</p>
 <pre><code class="language-json">{
   "id": 1,
   "imageUrl": "https://example.com/banner/top_001.png",
@@ -321,71 +306,28 @@ footer {
     { "id": 1, "nameJp": "日本語", "nameEn": "Japanese", "code": "ja" }
   ]
 }</code></pre>
-<h3 id="a08-01-副作用">副作用</h3>
-<p>無し（参照のみ）。</p>
-<p>応答はJSON応答整形を経て返す。プロパティはcamelCase、日時はISO8601とする。</p>
-<hr>
-<h2 id="a08-01-データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>参照時点</td><td>呼び出し時点のトップバナーマスタ情報を返す。本APIはデータを更新しない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="a08-01-DBカラム">DBカラム</h2>
-<p>機能に直接関係する範囲のみ記載する。テーブル名・列名はec-cube-enterpriseを正とする。</p>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td>トップバナーマスタ（<code>mtb_top_banner</code>）</td><td>id・image_url・link・disp_type</td><td>トップバナーIDで取得し、応答の画像URL・リンク・表示タイプに用いる。</td></tr><tr><td>トップバナー言語関連（<code>dtb_top_banner_language</code>）</td><td>top_banner_id・language_id</td><td>トップバナーと言語の多対多関連。</td></tr><tr><td>言語マスタ（<code>mtb_language</code>）</td><td>id・name_jp・name_en・code</td><td>応答の関連言語（言語名・言語コード）に用いる。</td></tr></tbody></table></div>
-<h3 id="a08-01-DB操作">DB操作</h3>
-<p>本機能は参照系（検索）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>検索</td><td>dtb_top_banner_language / mtb_language / mtb_top_banner</td><td>検索条件に合致するレコードを抽出する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="a08-01-権限・認可">権限・認可</h2>
-<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>トップバナー情報取得</th></tr></thead><tbody><tr><td>クライアント</td><td>クライアントから呼び出す。認可方式はpf-apiの方針に従う。</td></tr></tbody></table></div>
-<hr>
-<h2 id="a08-01-エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>該当トップバナーなし</td><td>コード404のJSONを返す。</td></tr></tbody></table></div>
-<hr>
-<h2 id="a08-01-排他制御・トランザクション">排他制御・トランザクション</h2>
-<p>本APIは参照のみであり、楽観ロック・悲観ロックの対象は持たない。</p>
+<h3 id="a08-01-入出力-レスポンス-失敗">入出力: レスポンス（失敗）</h3>
+<div class="table-wrap"><table><thead><tr><th>HTTPステータス</th><th>条件</th><th>本文の形</th></tr></thead><tbody><tr><td>404</td><td>該当IDのトップバナーが存在しない</td><td><code>{code, message}</code>（"Not Found"）</td></tr></tbody></table></div>
 </section>
 <section class="doc-section" id="a08-02">
   <header class="page-header">
     <p class="crumb">Source:<br>functions/pf-api/a08-02_api_top_banner_list.md</p>
     <h1>A08-02 指定言語の設定済みトップバナー一覧を取得 ／ API データ管理 — 指定言語の設定済みトップバナー一覧を取得</h1>
   </header>
-  <h2 id="a08-02-概要">概要</h2>
-<p>言語コードを指定して、設定済みのトップバナー一覧を取得するAPIである。pf-apiが提供するJSON APIである。TODOリストの「コンテンツ管理」（A08-02）と「データ管理」（A16-02）の同一エンドポイントをまとめる。</p>
-<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-apiのトップバナー一覧取得処理、ルート定義、トップバナー・言語マスタを扱うリポジトリを正とする。本機能のカスタマイズ区分は現行踏襲であり、挙動はpf-apiの実装を参照し、DB関連（テーブル・列）の記述はec-cube-enterpriseを正とする。</p>
-<p>対象はJSON APIエンドポイントであり、ブラウザ向けの画面を持たない。</p>
-<hr>
-<h2 id="a08-02-本書で扱うこと">本書で扱うこと</h2>
-<ul><li>指定言語の設定済みトップバナー一覧の取得</li><li>言語が存在しない場合の応答</li></ul>
-<hr>
-<h2 id="a08-02-本書で扱わないこと">本書で扱わないこと</h2>
-<p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
-<ul><li>トップバナーIDによる単一取得（単一取得APIを正とする）</li><li>トップバナーの設定・管理（トップバナー管理を正とする）</li></ul>
-<hr>
-<h2 id="a08-02-リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-<p>本機能は現行踏襲であり、挙動の参照は現行のpf-api、DB関連の正はec-cube-enterpriseとする。テーブル名・列名は現行と移行先で一致する。移行先ではトップバナーマスタと言語マスタに表示用の追加列があるが、本APIの絞り込み条件・応答項目には影響しない。</p>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>現行（pf-api）</th><th>移行先（ec-cube-enterprise）</th><th>扱い</th></tr></thead><tbody><tr><td>トップバナーマスタ</td><td><code>mtb_top_banner</code>（id・image_url・link・disp_type）</td><td><code>mtb_top_banner</code>（id・image_url・link・disp_typeに加え、image_alt・sort_no）</td><td>同名テーブル。移行先は alt属性（<code>image_alt</code>）と表示順（<code>sort_no</code>）の列を持つ。設定状態・言語で絞り込む。</td></tr><tr><td>言語関連</td><td><code>dtb_top_banner_language</code>（top_banner_id・language_id）</td><td><code>dtb_top_banner_language</code>（top_banner_id・language_id）</td><td>同一スキーマ。トップバナーと言語の多対多関連。</td></tr><tr><td>言語マスタ</td><td><code>mtb_language</code>（id・name_jp・name_en・code）</td><td><code>mtb_language</code>（id・name_jp・name_en・code・sort_no）</td><td>同名テーブル。移行先は並び順（<code>sort_no</code>）の列を持つ。言語コードの存在確認に用いる。</td></tr></tbody></table></div>
-<hr>
-<h2 id="a08-02-利用者視点の入口">利用者視点の入口</h2>
-<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>指定言語の設定済みトップバナー一覧取得</td><td><code>GET /topBanners/{languageCode}</code></td><td>指定言語の設定済みトップバナー一覧をJSONで返す。言語が存在しない場合は404を返す。</td></tr></tbody></table></div>
-<p>応答形式はJSON。</p>
-<hr>
-<h2 id="a08-02-処理フロー">処理フロー</h2>
-<h3 id="a08-02-トップバナー一覧を取得する-GET-topBanners-languageCode">トップバナー一覧を取得する（GET <code>/topBanners/{languageCode}</code>）</h3>
-<ol><li>パスの言語コードを受け取る。</li><li>指定言語の設定済みトップバナー一覧を取得する。</li><li>一覧が空、または当該言語コードが言語マスタに存在しない場合はコード404のJSONを返す。</li><li>取得できた場合はトップバナー一覧をJSONで返す。</li></ol>
-<hr>
-<h2 id="a08-02-集計条件">集計条件</h2>
-<div class="table-wrap"><table><thead><tr><th>指標</th><th>集計の要点</th></tr></thead><tbody><tr><td>取得対象</td><td>指定言語の設定済みトップバナー。</td></tr><tr><td>言語確認</td><td>言語コードが言語マスタに存在することを確認する。</td></tr></tbody></table></div>
-<hr>
+  <h2 id="a08-02-業務ロジック">業務ロジック</h2>
+<h3 id="a08-02-取得する対象">取得する対象</h3>
+<p>指定された言語コードの設定済みトップバナー一覧を取得する。一覧が空、かつ当該言語コードが言語マスタに存在しないときはコード404のJSONを返す。</p>
+<h3 id="a08-02-応答値の扱い">応答値の扱い</h3>
+<p>金額・ポイント・数量・ステータス・日時は永続化済みの値を返し、応答生成時の丸め・補正は行わない。件数・表示順は取得結果に従い、取得後に業務値を再計算しない。</p>
+<h3 id="a08-02-エラー時の扱い">エラー時の扱い</h3>
+<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>一覧が空・言語が存在しない</td><td>コード404・「Language code is not found」のJSONを返す</td></tr></tbody></table></div>
 <h2 id="a08-02-入出力">入出力</h2>
-<h3 id="a08-02-リクエスト">リクエスト</h3>
-<div class="table-wrap"><table><thead><tr><th>パラメータ</th><th>位置</th><th>型</th><th>必須／任意</th><th>説明</th></tr></thead><tbody><tr><td><code>languageCode</code></td><td>パス</td><td>string</td><td>必須</td><td>絞り込み対象の言語コード。</td></tr></tbody></table></div>
-<h3 id="a08-02-レスポンス-成功">レスポンス（成功）</h3>
-<p>HTTP 200。本APIはトップバナーオブジェクトの配列をそのまま返す（ラップオブジェクトを持たない）。各要素のフィールドは次のとおり。</p>
-<div class="table-wrap"><table><thead><tr><th>フィールド</th><th>型</th><th>説明</th></tr></thead><tbody><tr><td><code>id</code></td><td>integer</td><td>トップバナーID。</td></tr><tr><td><code>imageUrl</code></td><td>string</td><td>画像URL。</td></tr><tr><td><code>link</code></td><td>string</td><td>リンク先URL。</td></tr><tr><td><code>dispType</code></td><td>integer</td><td>表示タイプ。</td></tr><tr><td><code>languages</code></td><td>array</td><td>関連する言語の配列。要素はオブジェクトで、子フィールドは<code>id</code>（integer、言語ID）、<code>nameJp</code>（string、言語名・日本語）、<code>nameEn</code>（string、言語名・英語）、<code>code</code>（string、言語コード）。</td></tr></tbody></table></div>
-<h3 id="a08-02-レスポンス-失敗">レスポンス（失敗）</h3>
-<div class="table-wrap"><table><thead><tr><th>HTTPステータス</th><th>条件</th><th>本文の形</th></tr></thead><tbody><tr><td>404</td><td>一覧が空かつ当該言語コードが言語マスタに存在しない</td><td><code>{code, message}</code>（"Language code is not found"）</td></tr></tbody></table></div>
-<h3 id="a08-02-サンプルレスポンス">サンプルレスポンス</h3>
-<p>成功時の応答例（実装確認値に基づく代表値）。</p>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>絞り込み対象の言語コード</td></tr><tr><td>成功時出力</td><td>HTTP 200。トップバナーの配列</td></tr><tr><td>失敗時出力</td><td>HTTP 404。一覧が空かつ言語コードが存在しないとき</td></tr></tbody></table></div>
+<h3 id="a08-02-入力-リクエスト">入力: リクエスト</h3>
+<div class="table-wrap"><table><thead><tr><th>パラメータ</th><th>位置</th><th>型</th><th>必須／任意</th><th>説明</th></tr></thead><tbody><tr><td><code>languageCode</code></td><td>パス</td><td>string</td><td>必須</td><td>絞り込み対象の言語コード</td></tr></tbody></table></div>
+<h3 id="a08-02-出力-レスポンス-成功">出力: レスポンス（成功）</h3>
+<p>トップバナーの配列をそのまま返す（ラップオブジェクトを持たない）。</p>
+<div class="table-wrap"><table><thead><tr><th>フィールド</th><th>型</th><th>説明</th></tr></thead><tbody><tr><td><code>id</code></td><td>integer</td><td>トップバナーID</td></tr><tr><td><code>imageUrl</code></td><td>string</td><td>画像URL</td></tr><tr><td><code>link</code></td><td>string</td><td>リンク先URL</td></tr><tr><td><code>dispType</code></td><td>integer</td><td>表示タイプ</td></tr><tr><td><code>languages</code></td><td>array</td><td>関連する言語の配列。子フィールドは<code>id</code>（言語ID）、<code>nameJp</code>（言語名・日本語）、<code>nameEn</code>（言語名・英語）、<code>code</code>（言語コード）</td></tr></tbody></table></div>
 <pre><code class="language-json">[
   {
     "id": 1,
@@ -397,30 +339,11 @@ footer {
     ]
   }
 ]</code></pre>
-<h3 id="a08-02-副作用">副作用</h3>
-<p>無し（参照のみ）。</p>
-<p>応答はJSON応答整形を経て返す。プロパティはcamelCase、日時はISO8601とする。</p>
-<hr>
-<h2 id="a08-02-業務ルール・計算">業務ルール・計算</h2>
-<ul><li>検索・一覧・取得条件はリクエストパラメータ、ログイン状態、公開状態、店舗・支店条件、既存リポジトリの絞り込み順序を正とする。</li><li>件数、ページ番号、表示順は既存実装のデフォルトと上限に従い、取得後に業務値を再計算しない。</li><li>金額、ポイント、数量、ステータス、日時はDBまたは連携元の永続化済み値を返却し、レスポンス生成時の丸め・補正は行わない。</li><li>条件に一致しない、権限がない、または非公開のデータは空結果または既存のエラー形式で返す。</li></ul>
-<h2 id="a08-02-データ整合性">データ整合性</h2>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>参照時点</td><td>呼び出し時点の設定済みトップバナーを返す。本APIはデータを更新しない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="a08-02-DBカラム">DBカラム</h2>
-<p>機能に直接関係する範囲のみ記載する。テーブル名・列名はec-cube-enterpriseを正とする。</p>
-<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td>トップバナーマスタ（<code>mtb_top_banner</code>）</td><td>id・image_url・link・disp_type</td><td>指定言語の設定済みトップバナーの取得・応答に用いる。</td></tr><tr><td>トップバナー言語関連（<code>dtb_top_banner_language</code>）</td><td>top_banner_id・language_id</td><td>言語による絞り込みに用いる多対多関連。</td></tr><tr><td>言語マスタ（<code>mtb_language</code>）</td><td>id・name_jp・name_en・code</td><td>言語コードの存在確認、応答の関連言語に用いる。</td></tr></tbody></table></div>
-<h3 id="a08-02-DB操作">DB操作</h3>
-<p>本機能は参照系（検索）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。</p>
-<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>検索</td><td>dtb_top_banner_language / mtb_language / mtb_top_banner</td><td>検索条件に合致するレコードを抽出する。</td></tr></tbody></table></div>
-<hr>
-<h2 id="a08-02-権限・認可">権限・認可</h2>
-<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>トップバナー一覧取得</th></tr></thead><tbody><tr><td>クライアント</td><td>クライアントから呼び出す。認可方式はpf-apiの方針に従う。</td></tr></tbody></table></div>
-<hr>
-<h2 id="a08-02-エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>一覧が空・言語が存在しない</td><td>コード404のJSONを返す。</td></tr></tbody></table></div>
-<hr>
-<h2 id="a08-02-排他制御・トランザクション">排他制御・トランザクション</h2>
-<p>本APIは参照のみであり、楽観ロック・悲観ロックの対象は持たない。</p>
+<h3 id="a08-02-出力-レスポンス-失敗">出力: レスポンス（失敗）</h3>
+<div class="table-wrap"><table><thead><tr><th>HTTPステータス</th><th>条件</th><th>本文の形</th></tr></thead><tbody><tr><td>404</td><td>一覧が空かつ当該言語コードが言語マスタに存在しない</td><td>処理結果コードと "Language code is not found" のメッセージ</td></tr></tbody></table></div>
+<div class="renewal-spec-banner"><h3 id="a08-02-リニューアル後の仕様">リニューアル後の仕様</h3></div>
+<h2 id="a08-02-表示メッセージ">表示メッセージ</h2>
+<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>—</td><td>API応答JSON</td><td>Language code is not found</td><td>一覧が空かつ言語コードが言語マスタに存在しないとき</td><td>HTTP 404を返して終了する</td></tr></tbody></table></div>
 </section>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>

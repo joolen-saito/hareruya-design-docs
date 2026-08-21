@@ -705,36 +705,6 @@
     .artifact-map-body > ul a[aria-current="page"]::before { content: ""; position: absolute; left: -13px; top: 0.15em; bottom: 0.15em; width: 2px; background: var(--accent); }
     .artifact-map details ul a[aria-current="page"]::before { content: ""; position: absolute; left: -31px; top: 0.15em; bottom: 0.15em; width: 2px; background: var(--accent); }
     .sidebar-title { margin: 0 0 14px; padding: 0; color: var(--text); font-size: 11px; font-weight: 600; letter-spacing: 0.06em; }
-/* endpoint-supplement-style:start */
-    .endpoint-supplement .table-wrap {
-      overflow-x: auto;
-      margin: 14px 0 22px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: var(--panel);
-    }
-    .endpoint-supplement table {
-      width: 100%;
-      min-width: 760px;
-      border-collapse: collapse;
-      font-size: 13px;
-    }
-    .endpoint-supplement th,
-    .endpoint-supplement td {
-      border: 1px solid var(--line-soft);
-      padding: 7px 9px;
-      text-align: left;
-      vertical-align: top;
-    }
-    .endpoint-supplement th {
-      background: var(--band);
-      font-weight: 700;
-      white-space: nowrap;
-    }
-    .endpoint-supplement tbody tr:nth-child(even) {
-      background: #fffaf0;
-    }
-    /* endpoint-supplement-style:end */
     /* function-design-embed:start */
     .function-design-embed {
       margin-top: 36px;
@@ -793,6 +763,20 @@
       margin: 18px 0 8px;
       color: var(--muted);
       font-size: 14px;
+    }
+
+    .function-design-body .renewal-spec-banner {
+      margin: 34px 0 0;
+      padding-top: 20px;
+      border-top: 2px solid var(--clay);
+    }
+
+    .function-design-body .renewal-spec-banner h3 {
+      margin: 0;
+      padding: 0;
+      border: 0;
+      color: var(--clay);
+      font-size: 20px;
     }
 
     .function-design-body p {
@@ -1188,64 +1172,35 @@
       <section class="function-design-embed" id="function-design-a05-01-a05-01_api_order_print_direct" data-source="functions/pf-api/a05-01_api_order_print_direct.md">
         <header class="function-design-header">
           <p class="function-design-source">Source:<br>functions/pf-api/a05-01_api_order_print_direct.md</p>
-          <h3>詳細設計書</h3>
+          <h3>現行仕様</h3>
           <h4>A05-01 注文印刷_印刷情報をプリンタへ送信 / API 受注管理 — 注文印刷（印刷情報送信・印刷済み更新）</h4>
         </header>
         <div class="function-design-body">
-          <h2 id="function-design-a05-01-a05-01_api_order_print_direct-概要">概要</h2>
-          <p>店頭のスタック用紙プリンタ（印刷クライアント）が、印刷対象の受注からスタック用紙の印刷情報を取得し、印刷完了後に該当受注のステータスを印刷済み相当へ更新するためのAPIである。pf-api（受注・買取連携用のAPIアプリケーション）が提供するエンドポイントで、リクエストパラメータ<code>ConnectionType</code>の値によって動作が2系統に分岐する。</p>
-          <p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-apiの注文印刷処理、ルート定義（<code>config/routes.yaml</code>）、受注の印刷情報取得処理、店頭注文番号の参照、受注ステータスのマスタ定義を正とする。</p>
-          <p>本機能のカスタマイズ区分はカスタマイズで、挙動の参照リポはpf-api、DB関連の記述はec-cube-enterpriseを正とする。</p>
-          <p>本エンドポイントの応答はJSONではなく、印刷情報を表すXML（<code>GetRequest</code>系）または空応答（<code>SetResponse</code>系）である。本文ではフレームワークのコントローラ型名やメソッド名を主説明としない。「利用者視点の入口」にHTTPメソッドとパスパターンを書く。</p>
-          <p>本書は次の2つの機能を1つのエンドポイントとして扱う。</p>
-          <ul><li>A05-01 注文印刷_印刷情報をプリンタへ送信（<code>ConnectionType</code>が<code>GetRequest</code>の分岐）</li><li>A05-02 注文印刷_該当受注のステータスを印刷済みに変更（<code>ConnectionType</code>が<code>SetResponse</code>の分岐）</li></ul>
-          <hr>
-          <h2 id="function-design-a05-01-a05-01_api_order_print_direct-本書で扱うこと">本書で扱うこと</h2>
-          <ul><li>印刷対象受注の抽出と、スタック用紙の印刷情報（XML）の生成・送信（<code>GetRequest</code>）</li><li>印刷完了後の該当受注のステータス更新（<code>SetResponse</code>）</li><li>印刷情報のXMLログファイルへの書き出しという副作用</li><li>本エンドポイントの認証有無</li></ul>
-          <hr>
-          <h2 id="function-design-a05-01-a05-01_api_order_print_direct-本書で扱わないこと">本書で扱わないこと</h2>
-          <p>以下は本書では仕様確定せず、実装または別APIの設計を正とする。</p>
-          <ul><li>印刷クライアント側の通信制御・再送・プリンタ機種仕様（呼び出し元クライアントの仕様を正とする）</li><li>店頭注文番号そのものの採番・参照API（A05-03 店頭注文番号取得の設計を正とする）</li><li>受注ステータスの遷移ルール全般（受注管理の各設計を正とする）</li><li>まとめ買取・買取受注に関する各API（ネット買取・店頭買取の各設計を正とする）</li></ul>
-          <hr>
-          <h2 id="function-design-a05-01-a05-01_api_order_print_direct-リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-          <p>挙動は現行（pf-api）を正とし、DBスキーマは移行先のec-cube-enterpriseを正とする。現行と移行先で次の差がある。</p>
-          <div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-api）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>受注補助情報の配置</td><td>注文番号・スマレジコード・ブラウザ印刷フラグ・確定日時等を補助表<code>dtb_order_sub</code>に分離して持つ。</td><td>同等の列を受注<code>dtb_order</code>へ統合する（<code>order_number</code>・<code>smaregi_code</code>・<code>browser_print_flg</code>・<code>confirm_date</code>等）。補助表は持たない。</td></tr><tr><td>印刷済み（ピック中）への更新</td><td>受注ステータスの更新と補助表の確定日時更新で印刷済み相当を表す。</td><td>受注<code>dtb_order</code>の<code>picking_date</code>・<code>pick_finish_date</code>・<code>browser_print_flg</code>で印刷・ピック状態を保持する。</td></tr><tr><td>店頭注文番号（待ち番号）</td><td>補助表<code>dtb_order_sub</code>の<code>waiting_number</code>で持つ。</td><td>店頭注文番号<code>dtb_order_number</code>の<code>value</code>（および受注<code>dtb_order</code>の<code>order_number</code>）で持つ。</td></tr><tr><td>配送方法の判別</td><td>配送<code>dtb_shipping</code>の配送方法で店頭受取・スムーズ店頭受取を判別する。</td><td>同一スキーマ。<code>dtb_shipping</code>の配送方法で判別する。</td></tr></tbody></table></div>
-          <p>応答形式（XML・空応答）とプリンタ向けレイアウトは移行後も挙動仕様としてpf-apiを正とする。</p>
-          <hr>
-          <h2 id="function-design-a05-01-a05-01_api_order_print_direct-用語">用語</h2>
-          <div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>スタック用紙</td><td>店頭で受注内容を印字するロール紙。1受注ごとに1枚分の印刷情報を生成する。</td></tr><tr><td>印刷情報</td><td>プリンタが解釈するXML。<code>ePOSPrint</code>要素ごとに1受注分の印字レイアウトを持つ。</td></tr><tr><td>店頭注文番号</td><td>店頭受取の受注に紐づく待ち番号。印刷情報の店頭注文番号欄に印字する。</td></tr><tr><td>ブラウザ印刷フラグ</td><td>受注の補助情報が持つフラグ。ブラウザ経由の印刷待ち受注を印刷対象に含める判定に用いる。</td></tr><tr><td>印刷ログファイル</td><td>印刷不具合検証のために生成した印刷情報のXMLを保存するファイル。</td></tr></tbody></table></div>
-          <hr>
-          <h2 id="function-design-a05-01-a05-01_api_order_print_direct-利用者視点の入口">利用者視点の入口</h2>
-          <div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>印刷情報をプリンタへ送信（A05-01）</td><td><code>GET /order/print/direct</code>（<code>ConnectionType</code>が<code>GetRequest</code>）</td><td>印刷対象受注のスタック用紙印刷情報をXMLで返す。対象が無い場合は空のデータを返す。</td></tr><tr><td>該当受注のステータスを印刷済みに変更（A05-02）</td><td><code>POST /order/print/direct</code>（<code>ConnectionType</code>が<code>SetResponse</code>）</td><td>印刷完了として受け取った受注のステータスをピック中へ更新し、空の本文を返す。</td></tr></tbody></table></div>
-          <p>同一パス<code>/order/print/direct</code>がGETとPOSTの両方で同じ処理に割り当てられており、分岐は<code>ConnectionType</code>の値で決まる。応答形式はXMLまたは空応答であり、JSONではない。呼び出し元は店頭のスタック用紙プリンタ（印刷クライアント）。</p>
-          <hr>
-          <h2 id="function-design-a05-01-a05-01_api_order_print_direct-認証・認可">認証・認可</h2>
-          <div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>認証方式</td><td>本エンドポイントは認証処理を行わない。<code>jwt-token</code>ヘッダの検証も管理ログインのプロキシも経由しない。pf-apiの他の管理系APIが用いる共通の認証処理を呼び出さず、未認証で実行できる。</td></tr><tr><td>認証失敗時</td><td>認証判定そのものを持たないため、認証失敗による拒否（HTTP 401）を返さない。</td></tr><tr><td>認可</td><td>呼び出し可能なクライアントは店頭のスタック用紙プリンタ（印刷クライアント）。アプリケーション層での利用者照合は行わない。</td></tr></tbody></table></div>
-          <p>未認証で実行できる点は本書の確認値である。トークン原値・署名シークレットは本書に記載しない。</p>
-          <hr>
-          <h2 id="function-design-a05-01-a05-01_api_order_print_direct-処理フロー">処理フロー</h2>
-          <h3 id="function-design-a05-01-a05-01_api_order_print_direct-印刷情報を送信する-GET-order-print-direct-ConnectionType-が-GetRequest">印刷情報を送信する（GET <code>/order/print/direct</code>、<code>ConnectionType</code>が<code>GetRequest</code>）</h3>
-          <ol><li>リクエストの<code>ConnectionType</code>を読み、値が<code>GetRequest</code>であることを判定する。</li><li>印刷対象の受注一覧を取得する。店頭受取で注文受領の受注、スムーズ店頭受取で所定の支払方法かつ未確定・未出荷・未取消・未受領・店頭予約日なし・スマレジコードありの受注、ブラウザ印刷フラグが立つ受注を対象とし、最大10件を取得する。</li><li>受注ごとに、注文日・合計金額・店頭注文番号・スマレジコード・問い合わせ有無・注文詳細URLを組み立て、1受注分の印刷情報（<code>ePOSPrint</code>要素）を生成する。配送がスムーズ店頭受取の場合は合計金額欄を「スムーズ店頭受取」とする。</li><li>全受注分を束ねたスタック用紙の印刷情報XMLを生成する。対象受注が無い場合はXMLを生成せず空文字とする。</li><li>生成した印刷情報が空でない場合、印刷不具合検証のため印刷情報のXMLをログファイルへ書き出す（副作用）。</li><li>印刷情報XMLを応答本体としてストリーム送信する。応答のContent-Typeは<code>application/octet-stream</code>とする。</li></ol>
-          <h3 id="function-design-a05-01-a05-01_api_order_print_direct-印刷済みステータスへ更新する-POST-order-print-direct-ConnectionType-が-SetResponse">印刷済みステータスへ更新する（POST <code>/order/print/direct</code>、<code>ConnectionType</code>が<code>SetResponse</code>）</h3>
-          <ol><li>リクエストの<code>ConnectionType</code>を読み、値が<code>SetResponse</code>であることを判定する。</li><li>POSTで受け取った<code>ResponseFile</code>のXMLを解析する。解析に失敗した場合は内容とエラーを記録して更新を行わずに戻る。</li><li>XMLの直接印刷結果が偽、または印刷結果要素が1件も無い場合は内容を記録して更新を行わずに戻る。</li><li>印刷結果要素ごとに、印刷ジョブIDの先頭部分から受注IDを取り出し、対象受注を特定する。受注が見つからない場合はエラーを記録して次の要素へ進む。</li><li>対象受注の補助情報のブラウザ印刷フラグが立っている場合は、そのフラグを倒すだけに留める。立っていない場合は受注のステータスをピック中へ更新し、補助情報の確定日時に現在時刻を設定する。</li><li>各受注の更新を反映する。</li><li>空の本文（HTTP 200、<code>text/xml</code>）を返す。</li></ol>
-          <hr>
-          <h2 id="function-design-a05-01-a05-01_api_order_print_direct-業務ルール・計算">業務ルール・計算</h2>
-          <div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>更新対象</td><td>リクエストで指定されたID・入力値に対応する業務データを対象にする。対象特定、入力不正、認証・認可の判定順序は処理フローとバリデーションの各節を正とする。</td></tr><tr><td>更新方法</td><td>入力値を対象データへ上書きまたは追加登録する。履歴登録や関連データ更新がある場合は入出力の副作用およびDBカラムの節を正とする。</td></tr><tr><td>計算処理</td><td>本APIでは金額・税・ポイント・在庫数量の再計算や丸めを行わない。ステータスやコメント等の更新は、実装で定義された遷移・存在確認・担当者判定に従う。</td></tr><tr><td>応答値</td><td>成功時は処理結果コードまたは更新後に取得した値を返す。レスポンス値は本API内で独自集計せず、保存結果または取得結果をJSON応答へ整形する。</td></tr></tbody></table></div>
-          <hr>
+          <h2 id="function-design-a05-01-a05-01_api_order_print_direct-業務ロジック">業務ロジック</h2>
+          <h3 id="function-design-a05-01-a05-01_api_order_print_direct-呼び出し元">呼び出し元</h3>
+          <p>呼び出すのは店頭のスタック用紙プリンタ（印刷クライアント）である。本エンドポイントは認証の判定を持たず、未認証で実行できる（確認値）。認証判定を持たないため、認証失敗による拒否は返さない。利用者の照合も行わない。</p>
+          <h3 id="function-design-a05-01-a05-01_api_order_print_direct-動作の分岐">動作の分岐</h3>
+          <p>接続種別が印刷情報要求のときは印刷情報を送信し、印刷結果応答のときは印刷済みへの更新を行う。いずれにも一致しない値のときは処理を行わず、応答を組み立てない。接続種別はGET・POSTのいずれの要求からも読み取る。</p>
+          <h3 id="function-design-a05-01-a05-01_api_order_print_direct-印刷対象の受注">印刷対象の受注</h3>
+          <p>次のいずれかに当たる受注を最大10件取得する。</p>
+          <ul><li>店頭受取で注文受領の受注</li><li>スムーズ店頭受取で、所定の支払方法かつ未確定・未出荷・未取消・未受領・店頭予約日なし・スマレジコードありの受注</li><li>ブラウザ印刷フラグが立つ受注</li></ul>
+          <p>対象受注が無いときは印刷情報を生成せず、空のデータを返す。</p>
+          <h3 id="function-design-a05-01-a05-01_api_order_print_direct-印刷情報の組み立て">印刷情報の組み立て</h3>
+          <p>受注ごとに、注文日・合計金額・店頭注文番号・スマレジコード・問い合わせ有無・注文詳細URLを組み立て、1受注分の印刷情報を生成する。配送がスムーズ店頭受取のときは、合計金額欄を「スムーズ店頭受取」とする。全受注分を束ねてスタック用紙の印刷情報を生成する。生成した印刷情報が空でないときは、印刷不具合の検証のため印刷情報を記録する。</p>
+          <h3 id="function-design-a05-01-a05-01_api_order_print_direct-印刷済みへの更新">印刷済みへの更新</h3>
+          <p>受け取った印刷結果を解析し、印刷結果要素ごとに印刷ジョブIDの先頭部分から受注IDを取り出して対象受注を特定する。対象受注の補助情報のブラウザ印刷フラグが立っているときは、そのフラグを倒すだけに留める。立っていないときは受注のステータスをピック中へ更新し、補助情報の確定日時に現在時刻を設定する。</p>
+          <p>本APIでは金額・税・ポイント・在庫数量の再計算や丸めを行わない。ステータスの更新は、実装で定義された遷移・存在確認に従う。</p>
+          <h3 id="function-design-a05-01-a05-01_api_order_print_direct-エラー時の扱い">エラー時の扱い</h3>
+          <div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>接続種別が想定値に一致しない</td><td>処理を行わず応答を組み立てない</td></tr><tr><td>印刷情報要求で対象受注が無い</td><td>空のデータを返す。印刷情報の記録も行わない</td></tr><tr><td>印刷結果応答で印刷結果の解析に失敗</td><td>内容とエラーを記録し、更新を行わずに戻る</td></tr><tr><td>印刷結果応答で直接印刷結果が偽・印刷結果要素なし</td><td>内容を記録し、更新を行わずに戻る</td></tr><tr><td>印刷結果応答で受注が見つからない</td><td>該当受注IDのエラーを記録し、その要素を飛ばして次へ進む</td></tr><tr><td>印刷情報生成・データ取得・記録の書き出し中の例外</td><td>共通例外処理に委ねる（HTTP 500相当）</td></tr></tbody></table></div>
           <h2 id="function-design-a05-01-a05-01_api_order_print_direct-入出力">入出力</h2>
-          <h3 id="function-design-a05-01-a05-01_api_order_print_direct-リクエスト">リクエスト</h3>
-          <div class="table-wrap"><table><thead><tr><th>パラメータ</th><th>位置</th><th>型</th><th>必須／任意</th><th>説明</th></tr></thead><tbody><tr><td><code>ConnectionType</code></td><td>クエリまたはボディ</td><td>string</td><td>必須</td><td>動作の分岐。<code>GetRequest</code>で印刷情報送信、<code>SetResponse</code>でステータス更新。いずれにも一致しない場合は処理を行わず本文を返さない。</td></tr><tr><td><code>ResponseFile</code></td><td>ボディ</td><td>string</td><td><code>SetResponse</code>時に必須</td><td>プリンタが返した印刷結果のXML文字列。直接印刷結果の真偽と印刷結果要素（印刷ジョブID）を含む。<code>SetResponse</code>の更新対象の特定に用いる。</td></tr></tbody></table></div>
-          <p><code>ConnectionType</code>はGET・POSTいずれのリクエストからも取得する。<code>ResponseFile</code>はPOST本文から取得する。</p>
-          <h3 id="function-design-a05-01-a05-01_api_order_print_direct-レスポンス-成功">レスポンス（成功）</h3>
+          <h3 id="function-design-a05-01-a05-01_api_order_print_direct-入出力-リクエスト">入出力: リクエスト</h3>
+          <div class="table-wrap"><table><thead><tr><th>パラメータ</th><th>位置</th><th>型</th><th>必須／任意</th><th>説明</th></tr></thead><tbody><tr><td>ConnectionType</td><td>クエリまたはボディ</td><td>string</td><td>必須</td><td>動作の分岐。<code>GetRequest</code>で印刷情報送信、<code>SetResponse</code>でステータス更新。いずれにも一致しない場合は処理を行わず本文を返さない</td></tr><tr><td><code>ResponseFile</code></td><td>ボディ</td><td>string</td><td><code>SetResponse</code>時に必須</td><td>プリンタが返した印刷結果のXML文字列。直接印刷結果の真偽と印刷結果要素（印刷ジョブID）を含む。更新対象の特定に用いる</td></tr></tbody></table></div>
+          <h3 id="function-design-a05-01-a05-01_api_order_print_direct-入出力-レスポンス-成功">入出力: レスポンス（成功）</h3>
           <p>応答はJSONではない。分岐ごとに応答形式が異なる。</p>
-          <div class="table-wrap"><table><thead><tr><th>分岐</th><th>HTTPステータス</th><th>Content-Type</th><th>本体</th></tr></thead><tbody><tr><td><code>GetRequest</code>（A05-01）</td><td>200</td><td><code>application/octet-stream</code></td><td>スタック用紙の印刷情報XMLをストリーム送信する。対象受注が無い場合は空のデータ。</td></tr><tr><td><code>SetResponse</code>（A05-02）</td><td>200</td><td><code>text/xml; charset=utf-8</code></td><td>空の本文（本文長0）。</td></tr></tbody></table></div>
-          <p><code>GetRequest</code>が返すXMLの構造は次のとおり。</p>
-          <div class="table-wrap"><table><thead><tr><th>要素</th><th>説明</th></tr></thead><tbody><tr><td><code>PrintRequestInfo</code></td><td>ルート要素。バージョン属性を持ち、配下に受注ごとの<code>ePOSPrint</code>を並べる。</td></tr><tr><td><code>ePOSPrint</code></td><td>受注1件分の印刷情報。印刷先・タイムアウト・印刷ジョブID（受注ID）と印字レイアウトを持つ。</td></tr><tr><td><code>ePOSPrint/Parameter/printjobid</code></td><td>印刷ジョブID。受注IDを用いる。<code>SetResponse</code>での受注特定に対応する。</td></tr><tr><td><code>ePOSPrint/PrintData</code></td><td>印字レイアウト。店頭注文番号・注文詳細URLのQRコード・注文日・注文番号・お客様名・合計金額・スマレジコードのバーコード・各種チェック欄を含む。</td></tr></tbody></table></div>
-          <h3 id="function-design-a05-01-a05-01_api_order_print_direct-レスポンス-失敗">レスポンス（失敗）</h3>
-          <p>本エンドポイントは認証・入力検証による明示的なエラー応答を組み立てない。異常時のふるまいは次のとおり。</p>
-          <div class="table-wrap"><table><thead><tr><th>HTTPステータス</th><th>条件</th><th>本文の形</th></tr></thead><tbody><tr><td>200</td><td><code>GetRequest</code>で対象受注が無い</td><td>空のデータ（XML本体を持たない）</td></tr><tr><td>200</td><td><code>SetResponse</code>で<code>ResponseFile</code>の解析失敗、直接印刷結果が偽、印刷結果要素が無い、または受注が見つからない</td><td>空の本文。更新は行わず、内容とエラーをログに記録する。</td></tr><tr><td>（応答なし）</td><td><code>ConnectionType</code>が<code>GetRequest</code>・<code>SetResponse</code>のいずれにも一致しない</td><td>応答を組み立てず本文を返さない。</td></tr><tr><td>500</td><td>印刷情報生成中・データ取得中・ファイル書き出し中の例外</td><td>共通例外処理に委ねる</td></tr></tbody></table></div>
-          <h3 id="function-design-a05-01-a05-01_api_order_print_direct-サンプルレスポンス">サンプルレスポンス</h3>
-          <p><code>GetRequest</code>時の応答本体の代表例（実装確認値に基づくXML構造。受注IDなどは代表値）。</p>
+          <div class="table-wrap"><table><thead><tr><th>分岐</th><th>HTTPステータス</th><th>Content-Type</th><th>本体</th></tr></thead><tbody><tr><td><code>GetRequest</code>（A05-01）</td><td>200</td><td><code>application/octet-stream</code></td><td>スタック用紙の印刷情報XMLをストリーム送信する。対象受注が無い場合は空のデータ</td></tr><tr><td><code>SetResponse</code>（A05-02）</td><td>200</td><td><code>text/xml; charset=utf-8</code></td><td>空の本文（本文長0）</td></tr></tbody></table></div>
+          <p>印刷情報要求が返すXMLの構造は次のとおり。</p>
+          <div class="table-wrap"><table><thead><tr><th>要素</th><th>説明</th></tr></thead><tbody><tr><td><code>PrintRequestInfo</code></td><td>ルート要素。バージョン属性を持ち、配下に受注ごとの印刷情報要素を並べる</td></tr><tr><td><code>ePOSPrint</code></td><td>受注1件分の印刷情報。印刷先・タイムアウト・印刷ジョブID（受注ID）と印字レイアウトを持つ</td></tr><tr><td><code>ePOSPrint/Parameter/printjobid</code></td><td>印刷ジョブID。受注IDを用いる。印刷結果応答での受注特定に対応する</td></tr><tr><td><code>ePOSPrint/PrintData</code></td><td>印字レイアウト。店頭注文番号・注文詳細URLのQRコード・注文日・注文番号・お客様名・合計金額・スマレジコードのバーコード・各種チェック欄を含む</td></tr></tbody></table></div>
+          <p>応答本体の代表例（実装確認値に基づくXML構造。受注IDなどは代表値）。</p>
           <pre><code class="language-xml">&lt;?xml version="1.0" encoding="utf-8"?&gt;
           &lt;PrintRequestInfo Version="3.00"&gt;
             &lt;ePOSPrint&gt;
@@ -1273,39 +1228,11 @@
               &lt;/PrintData&gt;
             &lt;/ePOSPrint&gt;
           &lt;/PrintRequestInfo&gt;</code></pre>
-          <p><code>SetResponse</code>時は本文を持たない（HTTP 200、<code>text/xml</code>、本文長0）。</p>
-          <h3 id="function-design-a05-01-a05-01_api_order_print_direct-副作用">副作用</h3>
-          <p>本エンドポイントは参照のみではなく、次の副作用を持つ。</p>
-          <ul><li>印刷ログファイルの書き出し（<code>GetRequest</code>）。生成した印刷情報が空でない場合、印刷情報のXMLをログ保存ディレクトリ（<code>var/log/print_logs/</code>配下）にタイムスタンプと一意名を付けたファイルとして書き出す。ディレクトリが存在しない場合は作成する。</li><li>受注ステータスの更新（<code>SetResponse</code>）。印刷結果に含まれる受注について、ブラウザ印刷フラグが立つ場合はフラグを倒し、立たない場合は受注のステータスをピック中へ更新し、補助情報の確定日時に現在時刻を設定する。これらはデータベースへの更新である。</li></ul>
-          <p>応答はXMLまたは空応答であり、JSON応答整形・camelCaseのプロパティ命名は適用しない。</p>
-          <hr>
-          <h2 id="function-design-a05-01-a05-01_api_order_print_direct-バリデーション">バリデーション</h2>
-          <p>本エンドポイントはフォーム型やマスタ存在チェックによる入力検証を行わない。<code>ConnectionType</code>が想定値（<code>GetRequest</code>・<code>SetResponse</code>）に一致しない場合は処理を行わず応答を組み立てない。<code>SetResponse</code>では<code>ResponseFile</code>のXML解析に失敗した場合と直接印刷結果が偽・印刷結果要素なしの場合に更新を行わずログに記録して戻る。</p>
-          <hr>
-          <h2 id="function-design-a05-01-a05-01_api_order_print_direct-データ整合性">データ整合性</h2>
-          <div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>参照時点</td><td><code>GetRequest</code>は呼び出し時点の印刷対象受注（最大10件）を取得して印刷情報を返す。</td></tr><tr><td>更新の有無</td><td><code>GetRequest</code>は受注ステータスを更新しない（印刷ログファイルの書き出しのみ）。<code>SetResponse</code>は受注ステータスと補助情報を更新する。</td></tr><tr><td>取得と更新の一致</td><td><code>GetRequest</code>で抽出した受注集合と<code>SetResponse</code>で更新される受注集合は同一トランザクションで保証されない。<code>SetResponse</code>はプリンタが返した<code>ResponseFile</code>の印刷ジョブID（受注ID）を基準に対象を特定する。</td></tr><tr><td>印刷とステータスの関係</td><td><code>GetRequest</code>は印刷情報を返した時点では受注を未印刷のまま残し、<code>SetResponse</code>を受け取って初めてピック中へ更新する。両者の呼び出しの間に受注が変化し得る。</td></tr></tbody></table></div>
-          <hr>
-          <h2 id="function-design-a05-01-a05-01_api_order_print_direct-DBカラム">DBカラム</h2>
-          <p>機能に直接関係する列のみ記載する。移行先（ec-cube-enterprise）の名称を主とし、現行（pf-api）で配置が異なる列は括弧で添える。型や一覧の細部はスキーマを参照する。</p>
-          <p>現行は注文番号・スマレジコード・ブラウザ印刷フラグ・確定日時等を補助表<code>dtb_order_sub</code>に持つが、移行先はこれらを受注<code>dtb_order</code>へ統合する。</p>
-          <div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td>受注<code>dtb_order</code></td><td>受注ID</td><td>印刷ジョブIDと注文詳細URLに用いる。<code>SetResponse</code>の対象特定にも用いる。</td></tr><tr><td>受注<code>dtb_order</code></td><td>受注ステータス（<code>order_status_id</code>）</td><td>印刷対象抽出の条件、および<code>SetResponse</code>でピック中へ更新する対象。</td></tr><tr><td>受注<code>dtb_order</code></td><td><code>picking_date</code>・<code>pick_finish_date</code></td><td><code>SetResponse</code>でピック中へ更新する際に設定する。</td></tr><tr><td>受注<code>dtb_order</code></td><td>注文日（<code>order_date</code>）</td><td>印刷情報の注文日欄。</td></tr><tr><td>受注<code>dtb_order</code></td><td>注文者氏名・氏名カナ</td><td>印刷情報のお客様名欄（カナを優先し、無ければ氏名）。</td></tr><tr><td>受注<code>dtb_order</code></td><td>合計金額（<code>payment_total</code>）</td><td>印刷情報の合計金額欄。スムーズ店頭受取時は文言に置換する。</td></tr><tr><td>受注<code>dtb_order</code></td><td><code>order_number</code>（現行は補助表<code>dtb_order_sub</code>の<code>order_number</code>）</td><td>印刷情報の注文番号欄。抽出条件で注文番号ありを必須とする。</td></tr><tr><td>受注<code>dtb_order</code></td><td><code>smaregi_code</code>（現行は<code>dtb_order_sub</code>）</td><td>印刷情報のバーコードに用いる。抽出条件にも用いる。</td></tr><tr><td>受注<code>dtb_order</code></td><td><code>browser_print_flg</code>（現行は<code>dtb_order_sub</code>）</td><td>印刷対象抽出の条件。<code>SetResponse</code>では立つ場合にフラグを倒すだけに留める。</td></tr><tr><td>受注<code>dtb_order</code></td><td><code>confirm_date</code>（現行は<code>dtb_order_sub</code>）</td><td><code>SetResponse</code>でステータス更新時に現在時刻を設定する。抽出条件では未設定を要求する。</td></tr><tr><td>受注<code>dtb_order</code></td><td>出荷日時・取消日時・受領日時・店頭予約日時（現行は<code>dtb_order_sub</code>の各日時列）</td><td>スムーズ店頭受取の抽出条件で未設定を要求する。</td></tr><tr><td>店頭注文番号<code>dtb_order_number</code></td><td><code>value</code>（現行は補助表<code>dtb_order_sub</code>の<code>waiting_number</code>）</td><td>印刷情報の店頭注文番号欄。受注IDで引く。</td></tr><tr><td>配送<code>dtb_shipping</code></td><td>配送方法</td><td>店頭受取・スムーズ店頭受取の判別。抽出条件と合計金額欄の文言切替に用いる。</td></tr></tbody></table></div>
-          <h3 id="function-design-a05-01-a05-01_api_order_print_direct-DB操作">DB操作</h3>
-          <p>本機能は参照系（検索・出力）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。</p>
-          <div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>検索</td><td>dtb_order / dtb_order_number / dtb_order_sub / dtb_shipping</td><td>検索条件に合致するレコードを抽出する。抽出結果を所定フォーマットでファイル出力する。</td></tr></tbody></table></div>
-          <hr>
-          <h2 id="function-design-a05-01-a05-01_api_order_print_direct-権限・認可">権限・認可</h2>
-          <div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>注文印刷（印刷情報送信・印刷済み更新）</th></tr></thead><tbody><tr><td>店頭のスタック用紙プリンタ（印刷クライアント）</td><td>認証なしで印刷情報の取得とステータス更新を実行できる。</td></tr><tr><td>その他のクライアント</td><td>アプリケーション層での照合を行わないため、到達できれば同様に実行できる。利用制御はネットワーク・経路側に依存する。</td></tr></tbody></table></div>
-          <hr>
-          <h2 id="function-design-a05-01-a05-01_api_order_print_direct-エラー処理">エラー処理</h2>
-          <div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td><code>ConnectionType</code>が想定値に一致しない</td><td>処理を行わず応答を組み立てない。</td></tr><tr><td><code>GetRequest</code>で対象受注が無い</td><td>空のデータを返す。ログファイルの書き出しも行わない。</td></tr><tr><td><code>SetResponse</code>で<code>ResponseFile</code>の解析失敗</td><td>内容とエラーをログに記録し、更新を行わずに戻る。</td></tr><tr><td><code>SetResponse</code>で直接印刷結果が偽・印刷結果要素なし</td><td>内容をログに記録し、更新を行わずに戻る。</td></tr><tr><td><code>SetResponse</code>で受注が見つからない</td><td>該当受注IDのエラーをログに記録し、その要素を飛ばして次へ進む。</td></tr><tr><td>印刷情報生成・データ取得・ファイル書き出し中の例外</td><td>共通例外処理に委ねる（HTTP 500相当）。</td></tr></tbody></table></div>
-          <hr>
-          <h2 id="function-design-a05-01-a05-01_api_order_print_direct-ログ・監査">ログ・監査</h2>
-          <p><code>SetResponse</code>では、<code>ResponseFile</code>の解析失敗・直接印刷結果が偽・印刷結果要素なし・受注が見つからない場合に、その内容やエラーをログへ記録する。<code>GetRequest</code>では、生成した印刷情報のXMLを印刷不具合検証用のログファイル（<code>var/log/print_logs/</code>配下）へ書き出す。</p>
-          <h3 id="function-design-a05-01-a05-01_api_order_print_direct-ログに出してはいけないもの">ログに出してはいけないもの</h3>
-          <ul><li>JWTトークンの原値</li><li>署名シークレット（<code>auth_magic</code>）</li><li>Cookie値・セッションIDの完全値</li></ul>
-          <hr>
-          <h2 id="function-design-a05-01-a05-01_api_order_print_direct-排他制御・トランザクション">排他制御・トランザクション</h2>
-          <p><code>GetRequest</code>は受注を更新せず、ロックの対象を持たない。<code>SetResponse</code>は受注ごとに更新を反映するが、印刷結果に含まれる受注集合に対する明示的な悲観ロック・楽観ロックは設けていない。<code>GetRequest</code>で抽出した受注と<code>SetResponse</code>で更新する受注は別リクエストであり、同一トランザクション境界で保証しない。</p>
+          <h3 id="function-design-a05-01-a05-01_api_order_print_direct-入出力-レスポンス-失敗">入出力: レスポンス（失敗）</h3>
+          <p>認証・入力検証による明示的なエラー応答は組み立てない。</p>
+          <div class="table-wrap"><table><thead><tr><th>HTTPステータス</th><th>条件</th><th>本文の形</th></tr></thead><tbody><tr><td>200</td><td>印刷情報要求で対象受注が無い</td><td>空のデータ（XML本体を持たない）</td></tr><tr><td>200</td><td>印刷結果応答で解析失敗、直接印刷結果が偽、印刷結果要素が無い、または受注が見つからない</td><td>空の本文。更新は行わず、内容とエラーを記録する</td></tr><tr><td>（応答なし）</td><td>接続種別が想定値のいずれにも一致しない</td><td>応答を組み立てず本文を返さない</td></tr><tr><td>500</td><td>印刷情報生成中・データ取得中・記録の書き出し中の例外</td><td>共通例外処理に委ねる</td></tr></tbody></table></div>
+          <h3 id="function-design-a05-01-a05-01_api_order_print_direct-入出力-永続化">入出力: 永続化</h3>
+          <div class="table-wrap"><table><thead><tr><th>操作</th><th>契機</th></tr></thead><tbody><tr><td>更新</td><td>印刷結果応答で、ブラウザ印刷フラグが立つ受注はそのフラグを倒す</td></tr><tr><td>更新</td><td>印刷結果応答で、ブラウザ印刷フラグが立たない受注はステータスをピック中にし、補助情報の確定日時に現在時刻を設定する</td></tr></tbody></table></div>
         </div>
       </section>
       <!-- function-design-embed:end a05-01-a05-01_api_order_print_direct -->
@@ -1422,124 +1349,37 @@
       <section class="function-design-embed" id="function-design-a05-02-a05-02_api_order_print_direct" data-source="functions/pf-api/a05-02_api_order_print_direct.md">
         <header class="function-design-header">
           <p class="function-design-source">Source:<br>functions/pf-api/a05-02_api_order_print_direct.md</p>
-          <h3>詳細設計書</h3>
+          <h3>現行仕様</h3>
           <h4>A05-02 注文印刷_該当受注のステータスを印刷済みに変更 / API 受注管理 — 注文印刷（印刷情報送信・印刷済み更新）</h4>
         </header>
         <div class="function-design-body">
-          <h2 id="function-design-a05-02-a05-02_api_order_print_direct-概要">概要</h2>
-          <p>店頭のスタック用紙プリンタ（印刷クライアント）が、印刷対象の受注からスタック用紙の印刷情報を取得し、印刷完了後に該当受注のステータスを印刷済み相当へ更新するためのAPIである。pf-api（受注・買取連携用のAPIアプリケーション）が提供するエンドポイントで、リクエストパラメータ<code>ConnectionType</code>の値によって動作が2系統に分岐する。</p>
-          <p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-apiの注文印刷処理、ルート定義（<code>config/routes.yaml</code>）、受注の印刷情報取得処理、店頭注文番号の参照、受注ステータスのマスタ定義を正とする。</p>
-          <p>本機能のカスタマイズ区分はカスタマイズで、挙動の参照リポはpf-api、DB関連の記述はec-cube-enterpriseを正とする。</p>
-          <p>本エンドポイントの応答はJSONではなく、印刷情報を表すXML（<code>GetRequest</code>系）または空応答（<code>SetResponse</code>系）である。本文ではフレームワークのコントローラ型名やメソッド名を主説明としない。「利用者視点の入口」にHTTPメソッドとパスパターンを書く。</p>
-          <p>本書は次の2つの機能を1つのエンドポイントとして扱う。</p>
-          <ul><li>A05-01 注文印刷_印刷情報をプリンタへ送信（<code>ConnectionType</code>が<code>GetRequest</code>の分岐）</li><li>A05-02 注文印刷_該当受注のステータスを印刷済みに変更（<code>ConnectionType</code>が<code>SetResponse</code>の分岐）</li></ul>
-          <hr>
-          <h2 id="function-design-a05-02-a05-02_api_order_print_direct-本書で扱うこと">本書で扱うこと</h2>
-          <ul><li>印刷対象受注の抽出と、スタック用紙の印刷情報（XML）の生成・送信（<code>GetRequest</code>）</li><li>印刷完了後の該当受注のステータス更新（<code>SetResponse</code>）</li><li>印刷情報のXMLログファイルへの書き出しという副作用</li><li>本エンドポイントの認証有無</li></ul>
-          <hr>
-          <h2 id="function-design-a05-02-a05-02_api_order_print_direct-本書で扱わないこと">本書で扱わないこと</h2>
-          <p>以下は本書では仕様確定せず、実装または別APIの設計を正とする。</p>
-          <ul><li>印刷クライアント側の通信制御・再送・プリンタ機種仕様（呼び出し元クライアントの仕様を正とする）</li><li>店頭注文番号そのものの採番・参照API（A05-03 店頭注文番号取得の設計を正とする）</li><li>受注ステータスの遷移ルール全般（受注管理の各設計を正とする）</li><li>まとめ買取・買取受注に関する各API（ネット買取・店頭買取の各設計を正とする）</li></ul>
-          <hr>
-          <h2 id="function-design-a05-02-a05-02_api_order_print_direct-リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-          <p>挙動は現行（pf-api）を正とし、DBスキーマは移行先のec-cube-enterpriseを正とする。現行と移行先で次の差がある。</p>
-          <div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-api）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>受注補助情報の配置</td><td>注文番号・スマレジコード・ブラウザ印刷フラグ・確定日時等を補助表<code>dtb_order_sub</code>に分離して持つ。</td><td>同等の列を受注<code>dtb_order</code>へ統合する（<code>order_number</code>・<code>smaregi_code</code>・<code>browser_print_flg</code>・<code>confirm_date</code>等）。補助表は持たない。</td></tr><tr><td>印刷済み（ピック中）への更新</td><td>受注ステータスの更新と補助表の確定日時更新で印刷済み相当を表す。</td><td>受注<code>dtb_order</code>の<code>picking_date</code>・<code>pick_finish_date</code>・<code>browser_print_flg</code>で印刷・ピック状態を保持する。</td></tr><tr><td>店頭注文番号（待ち番号）</td><td>補助表<code>dtb_order_sub</code>の<code>waiting_number</code>で持つ。</td><td>店頭注文番号<code>dtb_order_number</code>の<code>value</code>（および受注<code>dtb_order</code>の<code>order_number</code>）で持つ。</td></tr><tr><td>配送方法の判別</td><td>配送<code>dtb_shipping</code>の配送方法で店頭受取・スムーズ店頭受取を判別する。</td><td>同一スキーマ。<code>dtb_shipping</code>の配送方法で判別する。</td></tr></tbody></table></div>
-          <p>応答形式（XML・空応答）とプリンタ向けレイアウトは移行後も挙動仕様としてpf-apiを正とする。</p>
-          <hr>
-          <h2 id="function-design-a05-02-a05-02_api_order_print_direct-用語">用語</h2>
-          <div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>スタック用紙</td><td>店頭で受注内容を印字するロール紙。1受注ごとに1枚分の印刷情報を生成する。</td></tr><tr><td>印刷情報</td><td>プリンタが解釈するXML。<code>ePOSPrint</code>要素ごとに1受注分の印字レイアウトを持つ。</td></tr><tr><td>店頭注文番号</td><td>店頭受取の受注に紐づく待ち番号。印刷情報の店頭注文番号欄に印字する。</td></tr><tr><td>ブラウザ印刷フラグ</td><td>受注の補助情報が持つフラグ。ブラウザ経由の印刷待ち受注を印刷対象に含める判定に用いる。</td></tr><tr><td>印刷ログファイル</td><td>印刷不具合検証のために生成した印刷情報のXMLを保存するファイル。</td></tr></tbody></table></div>
-          <hr>
-          <h2 id="function-design-a05-02-a05-02_api_order_print_direct-利用者視点の入口">利用者視点の入口</h2>
-          <div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>印刷情報をプリンタへ送信（A05-01）</td><td><code>GET /order/print/direct</code>（<code>ConnectionType</code>が<code>GetRequest</code>）</td><td>印刷対象受注のスタック用紙印刷情報をXMLで返す。対象が無い場合は空のデータを返す。</td></tr><tr><td>該当受注のステータスを印刷済みに変更（A05-02）</td><td><code>POST /order/print/direct</code>（<code>ConnectionType</code>が<code>SetResponse</code>）</td><td>印刷完了として受け取った受注のステータスをピック中へ更新し、空の本文を返す。</td></tr></tbody></table></div>
-          <p>同一パス<code>/order/print/direct</code>がGETとPOSTの両方で同じ処理に割り当てられており、分岐は<code>ConnectionType</code>の値で決まる。応答形式はXMLまたは空応答であり、JSONではない。呼び出し元は店頭のスタック用紙プリンタ（印刷クライアント）。</p>
-          <hr>
-          <h2 id="function-design-a05-02-a05-02_api_order_print_direct-認証・認可">認証・認可</h2>
-          <div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>認証方式</td><td>本エンドポイントは認証処理を行わない。<code>jwt-token</code>ヘッダの検証も管理ログインのプロキシも経由しない。pf-apiの他の管理系APIが用いる共通の認証処理を呼び出さず、未認証で実行できる。</td></tr><tr><td>認証失敗時</td><td>認証判定そのものを持たないため、認証失敗による拒否（HTTP 401）を返さない。</td></tr><tr><td>認可</td><td>呼び出し可能なクライアントは店頭のスタック用紙プリンタ（印刷クライアント）。アプリケーション層での利用者照合は行わない。</td></tr></tbody></table></div>
-          <p>未認証で実行できる点は本書の確認値である。トークン原値・署名シークレットは本書に記載しない。</p>
-          <hr>
-          <h2 id="function-design-a05-02-a05-02_api_order_print_direct-処理フロー">処理フロー</h2>
-          <h3 id="function-design-a05-02-a05-02_api_order_print_direct-印刷情報を送信する-GET-order-print-direct-ConnectionType-が-GetRequest">印刷情報を送信する（GET <code>/order/print/direct</code>、<code>ConnectionType</code>が<code>GetRequest</code>）</h3>
-          <ol><li>リクエストの<code>ConnectionType</code>を読み、値が<code>GetRequest</code>であることを判定する。</li><li>印刷対象の受注一覧を取得する。店頭受取で注文受領の受注、スムーズ店頭受取で所定の支払方法かつ未確定・未出荷・未取消・未受領・店頭予約日なし・スマレジコードありの受注、ブラウザ印刷フラグが立つ受注を対象とし、最大10件を取得する。</li><li>受注ごとに、注文日・合計金額・店頭注文番号・スマレジコード・問い合わせ有無・注文詳細URLを組み立て、1受注分の印刷情報（<code>ePOSPrint</code>要素）を生成する。配送がスムーズ店頭受取の場合は合計金額欄を「スムーズ店頭受取」とする。</li><li>全受注分を束ねたスタック用紙の印刷情報XMLを生成する。対象受注が無い場合はXMLを生成せず空文字とする。</li><li>生成した印刷情報が空でない場合、印刷不具合検証のため印刷情報のXMLをログファイルへ書き出す（副作用）。</li><li>印刷情報XMLを応答本体としてストリーム送信する。応答のContent-Typeは<code>application/octet-stream</code>とする。</li></ol>
-          <h3 id="function-design-a05-02-a05-02_api_order_print_direct-印刷済みステータスへ更新する-POST-order-print-direct-ConnectionType-が-SetResponse">印刷済みステータスへ更新する（POST <code>/order/print/direct</code>、<code>ConnectionType</code>が<code>SetResponse</code>）</h3>
-          <ol><li>リクエストの<code>ConnectionType</code>を読み、値が<code>SetResponse</code>であることを判定する。</li><li>POSTで受け取った<code>ResponseFile</code>のXMLを解析する。解析に失敗した場合は内容とエラーを記録して更新を行わずに戻る。</li><li>XMLの直接印刷結果が偽、または印刷結果要素が1件も無い場合は内容を記録して更新を行わずに戻る。</li><li>印刷結果要素ごとに、印刷ジョブIDの先頭部分から受注IDを取り出し、対象受注を特定する。受注が見つからない場合はエラーを記録して次の要素へ進む。</li><li>対象受注の補助情報のブラウザ印刷フラグが立っている場合は、そのフラグを倒すだけに留める。立っていない場合は受注のステータスをピック中へ更新し、補助情報の確定日時に現在時刻を設定する。</li><li>各受注の更新を反映する。</li><li>空の本文（HTTP 200、<code>text/xml</code>）を返す。</li></ol>
-          <hr>
-          <h2 id="function-design-a05-02-a05-02_api_order_print_direct-業務ルール・計算">業務ルール・計算</h2>
-          <div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>更新対象</td><td>リクエストで指定されたID・入力値に対応する業務データを対象にする。対象特定、入力不正、認証・認可の判定順序は処理フローとバリデーションの各節を正とする。</td></tr><tr><td>更新方法</td><td>入力値を対象データへ上書きまたは追加登録する。履歴登録や関連データ更新がある場合は入出力の副作用およびDBカラムの節を正とする。</td></tr><tr><td>計算処理</td><td>本APIでは金額・税・ポイント・在庫数量の再計算や丸めを行わない。ステータスやコメント等の更新は、実装で定義された遷移・存在確認・担当者判定に従う。</td></tr><tr><td>応答値</td><td>成功時は処理結果コードまたは更新後に取得した値を返す。レスポンス値は本API内で独自集計せず、保存結果または取得結果をJSON応答へ整形する。</td></tr></tbody></table></div>
-          <hr>
+          <h2 id="function-design-a05-02-a05-02_api_order_print_direct-業務ロジック">業務ロジック</h2>
+          <h3 id="function-design-a05-02-a05-02_api_order_print_direct-動作の分岐">動作の分岐</h3>
+          <p>接続種別 ConnectionType の値で動作が分かれる。</p>
+          <div class="table-wrap"><table><thead><tr><th>接続種別の値</th><th>動作</th></tr></thead><tbody><tr><td>GetRequest</td><td>印刷情報を送信する</td></tr><tr><td>SetResponse</td><td>印刷済みステータスへ更新する</td></tr><tr><td>上記のいずれにも一致しないとき</td><td>処理を行わず、応答を組み立てない</td></tr></tbody></table></div>
+          <h3 id="function-design-a05-02-a05-02_api_order_print_direct-印刷対象の受注">印刷対象の受注</h3>
+          <p>印刷情報の送信では、次のいずれかに当たる受注だけを対象とし、最大10件を取得する。</p>
+          <div class="table-wrap"><table><thead><tr><th>対象</th><th>条件</th></tr></thead><tbody><tr><td>店頭受取の受注</td><td>対応状況が注文受領のとき</td></tr><tr><td>スムーズ店頭受取の受注</td><td>所定の支払方法で、未確定・未出荷・未取消・未受領・店頭予約日なし・スマレジコードありのとき</td></tr><tr><td>ブラウザ印刷を指定した受注</td><td>補助情報のブラウザ印刷フラグが立つとき</td></tr></tbody></table></div>
+          <p>受注ごとに注文日・合計金額・店頭注文番号・スマレジコード・問い合わせ有無・注文詳細URLを組み立て、1受注分の印刷情報とする。配送がスムーズ店頭受取のときは、合計金額欄を「スムーズ店頭受取」とする。全受注分を束ねてスタック用紙の印刷情報XMLとする。</p>
+          <div class="table-wrap"><table><thead><tr><th>対象受注</th><th>生成する印刷情報</th></tr></thead><tbody><tr><td>1件以上あるとき</td><td>受注ごとの印刷情報を束ねたXML。XMLをログファイルへ書き出す（印刷不具合の検証に用いる記録）</td></tr><tr><td>1件も無いとき</td><td>XMLを生成せず空文字とする。ログファイルの書き出しも行わない</td></tr></tbody></table></div>
+          <h3 id="function-design-a05-02-a05-02_api_order_print_direct-印刷済みステータスへの更新">印刷済みステータスへの更新</h3>
+          <p>受け取った印刷結果のXMLを解析する。印刷結果要素ごとに、印刷ジョブIDの先頭部分から受注IDを取り出して対象受注を特定する。</p>
+          <div class="table-wrap"><table><thead><tr><th>対象受注の状態</th><th>更新内容</th></tr></thead><tbody><tr><td>補助情報のブラウザ印刷フラグが立っているとき</td><td>フラグを倒すだけに留め、対応状況は変えない</td></tr><tr><td>補助情報のブラウザ印刷フラグが立っていないとき</td><td>対応状況をピック中へ更新し、補助情報の確定日時に現在時刻を設定する</td></tr></tbody></table></div>
+          <h3 id="function-design-a05-02-a05-02_api_order_print_direct-認証を行わない">認証を行わない</h3>
+          <p>本エンドポイントは認証処理を行わない。他の管理系APIが用いる共通の認証処理を経由せず、未認証のまま実行できる。認証の判定を持たない限り、認証失敗による拒否（HTTP401）は返さない。呼び出し元は店頭のスタック用紙プリンタだけで、利用者の照合は行わない。</p>
+          <h3 id="function-design-a05-02-a05-02_api_order_print_direct-金額・在庫の再計算">金額・在庫の再計算</h3>
+          <p>金額・税・ポイント・在庫数量の再計算と丸めは、いずれの分岐でも行わない。</p>
+          <h3 id="function-design-a05-02-a05-02_api_order_print_direct-エラー時の扱い">エラー時の扱い</h3>
+          <div class="table-wrap"><table><thead><tr><th>事象</th><th>扱い</th></tr></thead><tbody><tr><td>接続種別が想定値のいずれにも一致しないとき</td><td>処理を行わず、応答を組み立てない</td></tr><tr><td>印刷情報の送信で対象受注が無いとき</td><td>空のデータを返す</td></tr><tr><td>印刷結果XMLの解析に失敗したとき</td><td>更新を行わずに戻る</td></tr><tr><td>直接印刷結果が偽のとき、または印刷結果要素が1件も無いとき</td><td>更新を行わずに戻る</td></tr><tr><td>印刷ジョブIDに対応する受注が見つからないとき</td><td>その要素を除き、次の要素へ進む</td></tr><tr><td>印刷情報生成・データ取得・ファイル書き出し中に例外が起きたとき</td><td>共通例外処理に委ねる（HTTP500相当）</td></tr></tbody></table></div>
           <h2 id="function-design-a05-02-a05-02_api_order_print_direct-入出力">入出力</h2>
-          <h3 id="function-design-a05-02-a05-02_api_order_print_direct-リクエスト">リクエスト</h3>
-          <div class="table-wrap"><table><thead><tr><th>パラメータ</th><th>位置</th><th>型</th><th>必須／任意</th><th>説明</th></tr></thead><tbody><tr><td><code>ConnectionType</code></td><td>クエリまたはボディ</td><td>string</td><td>必須</td><td>動作の分岐。<code>GetRequest</code>で印刷情報送信、<code>SetResponse</code>でステータス更新。いずれにも一致しない場合は処理を行わず本文を返さない。</td></tr><tr><td><code>ResponseFile</code></td><td>ボディ</td><td>string</td><td><code>SetResponse</code>時に必須</td><td>プリンタが返した印刷結果のXML文字列。直接印刷結果の真偽と印刷結果要素（印刷ジョブID）を含む。<code>SetResponse</code>の更新対象の特定に用いる。</td></tr></tbody></table></div>
-          <p><code>ConnectionType</code>はGET・POSTいずれのリクエストからも取得する。<code>ResponseFile</code>はPOST本文から取得する。</p>
-          <h3 id="function-design-a05-02-a05-02_api_order_print_direct-レスポンス-成功">レスポンス（成功）</h3>
-          <p>応答はJSONではない。分岐ごとに応答形式が異なる。</p>
-          <div class="table-wrap"><table><thead><tr><th>分岐</th><th>HTTPステータス</th><th>Content-Type</th><th>本体</th></tr></thead><tbody><tr><td><code>GetRequest</code>（A05-01）</td><td>200</td><td><code>application/octet-stream</code></td><td>スタック用紙の印刷情報XMLをストリーム送信する。対象受注が無い場合は空のデータ。</td></tr><tr><td><code>SetResponse</code>（A05-02）</td><td>200</td><td><code>text/xml; charset=utf-8</code></td><td>空の本文（本文長0）。</td></tr></tbody></table></div>
-          <p><code>GetRequest</code>が返すXMLの構造は次のとおり。</p>
-          <div class="table-wrap"><table><thead><tr><th>要素</th><th>説明</th></tr></thead><tbody><tr><td><code>PrintRequestInfo</code></td><td>ルート要素。バージョン属性を持ち、配下に受注ごとの<code>ePOSPrint</code>を並べる。</td></tr><tr><td><code>ePOSPrint</code></td><td>受注1件分の印刷情報。印刷先・タイムアウト・印刷ジョブID（受注ID）と印字レイアウトを持つ。</td></tr><tr><td><code>ePOSPrint/Parameter/printjobid</code></td><td>印刷ジョブID。受注IDを用いる。<code>SetResponse</code>での受注特定に対応する。</td></tr><tr><td><code>ePOSPrint/PrintData</code></td><td>印字レイアウト。店頭注文番号・注文詳細URLのQRコード・注文日・注文番号・お客様名・合計金額・スマレジコードのバーコード・各種チェック欄を含む。</td></tr></tbody></table></div>
-          <h3 id="function-design-a05-02-a05-02_api_order_print_direct-レスポンス-失敗">レスポンス（失敗）</h3>
-          <p>本エンドポイントは認証・入力検証による明示的なエラー応答を組み立てない。異常時のふるまいは次のとおり。</p>
-          <div class="table-wrap"><table><thead><tr><th>HTTPステータス</th><th>条件</th><th>本文の形</th></tr></thead><tbody><tr><td>200</td><td><code>GetRequest</code>で対象受注が無い</td><td>空のデータ（XML本体を持たない）</td></tr><tr><td>200</td><td><code>SetResponse</code>で<code>ResponseFile</code>の解析失敗、直接印刷結果が偽、印刷結果要素が無い、または受注が見つからない</td><td>空の本文。更新は行わず、内容とエラーをログに記録する。</td></tr><tr><td>（応答なし）</td><td><code>ConnectionType</code>が<code>GetRequest</code>・<code>SetResponse</code>のいずれにも一致しない</td><td>応答を組み立てず本文を返さない。</td></tr><tr><td>500</td><td>印刷情報生成中・データ取得中・ファイル書き出し中の例外</td><td>共通例外処理に委ねる</td></tr></tbody></table></div>
-          <h3 id="function-design-a05-02-a05-02_api_order_print_direct-サンプルレスポンス">サンプルレスポンス</h3>
-          <p><code>GetRequest</code>時の応答本体の代表例（実装確認値に基づくXML構造。受注IDなどは代表値）。</p>
-          <pre><code class="language-xml">&lt;?xml version="1.0" encoding="utf-8"?&gt;
-          &lt;PrintRequestInfo Version="3.00"&gt;
-            &lt;ePOSPrint&gt;
-              &lt;Parameter&gt;
-                &lt;devid&gt;local_printer&lt;/devid&gt;
-                &lt;timeout&gt;10000&lt;/timeout&gt;
-                &lt;printjobid&gt;1000001&lt;/printjobid&gt;
-              &lt;/Parameter&gt;
-              &lt;PrintData&gt;
-                &lt;epos-print xmlns="http://www.epson-pos.com/schemas/2011/03/epos-print"&gt;
-                  &lt;text lang="ja"/&gt;
-                  &lt;page&gt;
-                    &lt;text&gt;店頭注文番号&lt;/text&gt;
-                    &lt;symbol type="qrcode_model_2"&gt;https://example.test/admin/order/1000001/edit&lt;/symbol&gt;
-                    &lt;text&gt;注文番号&lt;/text&gt;
-                    &lt;text&gt;20260603-0001&lt;/text&gt;
-                    &lt;text&gt;お客様名&lt;/text&gt;
-                    &lt;text&gt;テスト 太郎&lt;/text&gt;
-                    &lt;text&gt;合計金額&lt;/text&gt;
-                    &lt;text&gt;\1,500&lt;/text&gt;
-                    &lt;barcode type="jan13"&gt;4900000000000&lt;/barcode&gt;
-                  &lt;/page&gt;
-                  &lt;cut type="feed"/&gt;
-                &lt;/epos-print&gt;
-              &lt;/PrintData&gt;
-            &lt;/ePOSPrint&gt;
-          &lt;/PrintRequestInfo&gt;</code></pre>
-          <p><code>SetResponse</code>時は本文を持たない（HTTP 200、<code>text/xml</code>、本文長0）。</p>
-          <h3 id="function-design-a05-02-a05-02_api_order_print_direct-副作用">副作用</h3>
-          <p>本エンドポイントは参照のみではなく、次の副作用を持つ。</p>
-          <ul><li>印刷ログファイルの書き出し（<code>GetRequest</code>）。生成した印刷情報が空でない場合、印刷情報のXMLをログ保存ディレクトリ（<code>var/log/print_logs/</code>配下）にタイムスタンプと一意名を付けたファイルとして書き出す。ディレクトリが存在しない場合は作成する。</li><li>受注ステータスの更新（<code>SetResponse</code>）。印刷結果に含まれる受注について、ブラウザ印刷フラグが立つ場合はフラグを倒し、立たない場合は受注のステータスをピック中へ更新し、補助情報の確定日時に現在時刻を設定する。これらはデータベースへの更新である。</li></ul>
-          <p>応答はXMLまたは空応答であり、JSON応答整形・camelCaseのプロパティ命名は適用しない。</p>
-          <hr>
-          <h2 id="function-design-a05-02-a05-02_api_order_print_direct-バリデーション">バリデーション</h2>
-          <p>本エンドポイントはフォーム型やマスタ存在チェックによる入力検証を行わない。<code>ConnectionType</code>が想定値（<code>GetRequest</code>・<code>SetResponse</code>）に一致しない場合は処理を行わず応答を組み立てない。<code>SetResponse</code>では<code>ResponseFile</code>のXML解析に失敗した場合と直接印刷結果が偽・印刷結果要素なしの場合に更新を行わずログに記録して戻る。</p>
-          <hr>
-          <h2 id="function-design-a05-02-a05-02_api_order_print_direct-データ整合性">データ整合性</h2>
-          <div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>参照時点</td><td><code>GetRequest</code>は呼び出し時点の印刷対象受注（最大10件）を取得して印刷情報を返す。</td></tr><tr><td>更新の有無</td><td><code>GetRequest</code>は受注ステータスを更新しない（印刷ログファイルの書き出しのみ）。<code>SetResponse</code>は受注ステータスと補助情報を更新する。</td></tr><tr><td>取得と更新の一致</td><td><code>GetRequest</code>で抽出した受注集合と<code>SetResponse</code>で更新される受注集合は同一トランザクションで保証されない。<code>SetResponse</code>はプリンタが返した<code>ResponseFile</code>の印刷ジョブID（受注ID）を基準に対象を特定する。</td></tr><tr><td>印刷とステータスの関係</td><td><code>GetRequest</code>は印刷情報を返した時点では受注を未印刷のまま残し、<code>SetResponse</code>を受け取って初めてピック中へ更新する。両者の呼び出しの間に受注が変化し得る。</td></tr></tbody></table></div>
-          <hr>
-          <h2 id="function-design-a05-02-a05-02_api_order_print_direct-DBカラム">DBカラム</h2>
-          <p>機能に直接関係する列のみ記載する。移行先（ec-cube-enterprise）の名称を主とし、現行（pf-api）で配置が異なる列は括弧で添える。型や一覧の細部はスキーマを参照する。</p>
-          <p>現行は注文番号・スマレジコード・ブラウザ印刷フラグ・確定日時等を補助表<code>dtb_order_sub</code>に持つが、移行先はこれらを受注<code>dtb_order</code>へ統合する。</p>
-          <div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td>受注<code>dtb_order</code></td><td>受注ID</td><td>印刷ジョブIDと注文詳細URLに用いる。<code>SetResponse</code>の対象特定にも用いる。</td></tr><tr><td>受注<code>dtb_order</code></td><td>受注ステータス（<code>order_status_id</code>）</td><td>印刷対象抽出の条件、および<code>SetResponse</code>でピック中へ更新する対象。</td></tr><tr><td>受注<code>dtb_order</code></td><td><code>picking_date</code>・<code>pick_finish_date</code></td><td><code>SetResponse</code>でピック中へ更新する際に設定する。</td></tr><tr><td>受注<code>dtb_order</code></td><td>注文日（<code>order_date</code>）</td><td>印刷情報の注文日欄。</td></tr><tr><td>受注<code>dtb_order</code></td><td>注文者氏名・氏名カナ</td><td>印刷情報のお客様名欄（カナを優先し、無ければ氏名）。</td></tr><tr><td>受注<code>dtb_order</code></td><td>合計金額（<code>payment_total</code>）</td><td>印刷情報の合計金額欄。スムーズ店頭受取時は文言に置換する。</td></tr><tr><td>受注<code>dtb_order</code></td><td><code>order_number</code>（現行は補助表<code>dtb_order_sub</code>の<code>order_number</code>）</td><td>印刷情報の注文番号欄。抽出条件で注文番号ありを必須とする。</td></tr><tr><td>受注<code>dtb_order</code></td><td><code>smaregi_code</code>（現行は<code>dtb_order_sub</code>）</td><td>印刷情報のバーコードに用いる。抽出条件にも用いる。</td></tr><tr><td>受注<code>dtb_order</code></td><td><code>browser_print_flg</code>（現行は<code>dtb_order_sub</code>）</td><td>印刷対象抽出の条件。<code>SetResponse</code>では立つ場合にフラグを倒すだけに留める。</td></tr><tr><td>受注<code>dtb_order</code></td><td><code>confirm_date</code>（現行は<code>dtb_order_sub</code>）</td><td><code>SetResponse</code>でステータス更新時に現在時刻を設定する。抽出条件では未設定を要求する。</td></tr><tr><td>受注<code>dtb_order</code></td><td>出荷日時・取消日時・受領日時・店頭予約日時（現行は<code>dtb_order_sub</code>の各日時列）</td><td>スムーズ店頭受取の抽出条件で未設定を要求する。</td></tr><tr><td>店頭注文番号<code>dtb_order_number</code></td><td><code>value</code>（現行は補助表<code>dtb_order_sub</code>の<code>waiting_number</code>）</td><td>印刷情報の店頭注文番号欄。受注IDで引く。</td></tr><tr><td>配送<code>dtb_shipping</code></td><td>配送方法</td><td>店頭受取・スムーズ店頭受取の判別。抽出条件と合計金額欄の文言切替に用いる。</td></tr></tbody></table></div>
-          <h3 id="function-design-a05-02-a05-02_api_order_print_direct-DB操作">DB操作</h3>
-          <p>本機能は参照系（検索・出力）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。</p>
-          <div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>検索</td><td>dtb_order / dtb_order_number / dtb_order_sub / dtb_shipping</td><td>検索条件に合致するレコードを抽出する。抽出結果を所定フォーマットでファイル出力する。</td></tr></tbody></table></div>
-          <hr>
-          <h2 id="function-design-a05-02-a05-02_api_order_print_direct-権限・認可">権限・認可</h2>
-          <div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>注文印刷（印刷情報送信・印刷済み更新）</th></tr></thead><tbody><tr><td>店頭のスタック用紙プリンタ（印刷クライアント）</td><td>認証なしで印刷情報の取得とステータス更新を実行できる。</td></tr><tr><td>その他のクライアント</td><td>アプリケーション層での照合を行わないため、到達できれば同様に実行できる。利用制御はネットワーク・経路側に依存する。</td></tr></tbody></table></div>
-          <hr>
-          <h2 id="function-design-a05-02-a05-02_api_order_print_direct-エラー処理">エラー処理</h2>
-          <div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td><code>ConnectionType</code>が想定値に一致しない</td><td>処理を行わず応答を組み立てない。</td></tr><tr><td><code>GetRequest</code>で対象受注が無い</td><td>空のデータを返す。ログファイルの書き出しも行わない。</td></tr><tr><td><code>SetResponse</code>で<code>ResponseFile</code>の解析失敗</td><td>内容とエラーをログに記録し、更新を行わずに戻る。</td></tr><tr><td><code>SetResponse</code>で直接印刷結果が偽・印刷結果要素なし</td><td>内容をログに記録し、更新を行わずに戻る。</td></tr><tr><td><code>SetResponse</code>で受注が見つからない</td><td>該当受注IDのエラーをログに記録し、その要素を飛ばして次へ進む。</td></tr><tr><td>印刷情報生成・データ取得・ファイル書き出し中の例外</td><td>共通例外処理に委ねる（HTTP 500相当）。</td></tr></tbody></table></div>
-          <hr>
-          <h2 id="function-design-a05-02-a05-02_api_order_print_direct-ログ・監査">ログ・監査</h2>
-          <p><code>SetResponse</code>では、<code>ResponseFile</code>の解析失敗・直接印刷結果が偽・印刷結果要素なし・受注が見つからない場合に、その内容やエラーをログへ記録する。<code>GetRequest</code>では、生成した印刷情報のXMLを印刷不具合検証用のログファイル（<code>var/log/print_logs/</code>配下）へ書き出す。</p>
-          <h3 id="function-design-a05-02-a05-02_api_order_print_direct-ログに出してはいけないもの">ログに出してはいけないもの</h3>
-          <ul><li>JWTトークンの原値</li><li>署名シークレット（<code>auth_magic</code>）</li><li>Cookie値・セッションIDの完全値</li></ul>
-          <hr>
-          <h2 id="function-design-a05-02-a05-02_api_order_print_direct-排他制御・トランザクション">排他制御・トランザクション</h2>
-          <p><code>GetRequest</code>は受注を更新せず、ロックの対象を持たない。<code>SetResponse</code>は受注ごとに更新を反映するが、印刷結果に含まれる受注集合に対する明示的な悲観ロック・楽観ロックは設けていない。<code>GetRequest</code>で抽出した受注と<code>SetResponse</code>で更新する受注は別リクエストであり、同一トランザクション境界で保証しない。</p>
+          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>接続種別（ConnectionType）。クエリとボディのいずれからも受け取る。必須。印刷済み更新のときは、印刷結果XML（ResponseFile）をボディで受け取る。印刷結果XMLは直接印刷結果の真偽と、印刷ジョブIDを持つ印刷結果要素を含む。</td></tr><tr><td>成功時出力</td><td>印刷情報の送信は HTTP200、Content-Type は application/octet-stream で、印刷情報XMLをストリーム送信する。対象受注が無いときは空のデータ。印刷済み更新は HTTP200、Content-Type は text/xml; charset=utf-8 で、本文長0の空応答。</td></tr><tr><td>失敗時出力</td><td>認証・入力検証による明示的なエラー応答を組み立てない。更新できないときも空の本文を返す。例外のときは HTTP500 相当。</td></tr></tbody></table></div>
+          <h3 id="function-design-a05-02-a05-02_api_order_print_direct-出力-印刷情報XMLの構造">出力: 印刷情報XMLの構造</h3>
+          <div class="table-wrap"><table><thead><tr><th>要素</th><th>内容</th></tr></thead><tbody><tr><td>PrintRequestInfo</td><td>ルート要素。バージョン属性を持ち、配下に受注ごとの ePOSPrint を並べる</td></tr><tr><td>ePOSPrint</td><td>受注1件分の印刷情報。印刷先・タイムアウト・印刷ジョブID・印字レイアウトを持つ</td></tr><tr><td>印刷ジョブID</td><td>受注ID。印刷済み更新で受注を特定するときに用いる</td></tr><tr><td>印字レイアウト</td><td>店頭注文番号、注文詳細URLのQRコード、注文日、注文番号、お客様名、合計金額、スマレジコードのバーコード、各種チェック欄</td></tr></tbody></table></div>
+          <h3 id="function-design-a05-02-a05-02_api_order_print_direct-入出力-永続化">入出力: 永続化</h3>
+          <div class="table-wrap"><table><thead><tr><th>操作</th><th>契機</th></tr></thead><tbody><tr><td>更新</td><td>印刷済み更新で、ブラウザ印刷フラグが立っていないときに、受注の対応状況をピック中へ、補助情報の確定日時を現在時刻へ設定する</td></tr><tr><td>更新</td><td>印刷済み更新で、ブラウザ印刷フラグが立っているときに、そのフラグを倒す</td></tr></tbody></table></div>
+          <div class="renewal-spec-banner"><h3 id="function-design-a05-02-a05-02_api_order_print_direct-リニューアル後の仕様">リニューアル後の仕様</h3></div>
+          <h2 id="function-design-a05-02-a05-02_api_order_print_direct-表示メッセージ">表示メッセージ</h2>
+          <p>この機能はメッセージを扱わない。</p>
         </div>
       </section>
       <!-- function-design-embed:end a05-02-a05-02_api_order_print_direct -->
@@ -1616,86 +1456,28 @@
       <section class="function-design-embed" id="function-design-a05-03-a05-03_api_order_order_store_call_number" data-source="functions/pf-eccube3/a05-03_api_order_order_store_call_number.md">
         <header class="function-design-header">
           <p class="function-design-source">Source:<br>functions/pf-eccube3/a05-03_api_order_order_store_call_number.md</p>
-          <h3>詳細設計書</h3>
+          <h3>現行仕様</h3>
           <h4>A05-03 店頭注文番号取得 / API 受注管理 — 店頭注文番号取得</h4>
         </header>
         <div class="function-design-body">
-          <h2 id="function-design-a05-03-a05-03_api_order_order_store_call_number-概要">概要</h2>
-          <p>店内モニター（店頭注文番号表示画面）が、ピック済みになった店頭注文番号のリストを取得するためのAPIである。pf-eccube3のHareruyaEcプラグインが提供するJSON APIで、ピック完了ステータスの注文に紐づく注文番号札（数字）と、注文番号札（アルファベット）を1つの配列にまとめて返す。</p>
-          <p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はHareruyaEcプラグインの店頭注文番号取得処理、フロントのルート登録（ControllerProvider）、注文番号テーブル・注文番号札テーブル・受注ステータスを正とする。</p>
-          <p>本機能のカスタマイズ区分はカスタマイズで、挙動の参照リポはpf-eccube3（HareruyaEcプラグイン）とする。DB関連の記述（テーブル名・列名・永続化先）はec-cube-enterpriseを正とする。</p>
-          <p>対象はJSON APIエンドポイントであり、ブラウザ向けの画面を持たない。本文ではフレームワークのコントローラ型名やメソッド名を主説明としない。「利用者視点の入口」にHTTPメソッドとパスパターンを書く。</p>
-          <hr>
-          <h2 id="function-design-a05-03-a05-03_api_order_order_store_call_number-本書で扱うこと">本書で扱うこと</h2>
-          <ul><li>ピック完了ステータスの注文に紐づく注文番号札（数字）の取得</li><li>注文番号札（アルファベット）の取得と連結</li><li>画面表示最大件数を超える場合の出荷完了番号の補完</li></ul>
-          <hr>
-          <h2 id="function-design-a05-03-a05-03_api_order_order_store_call_number-本書で扱わないこと">本書で扱わないこと</h2>
-          <p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
-          <ul><li>店頭注文番号表示画面そのものの描画と定期取得（フロント画面の設計を正とする）</li><li>注文番号札（数字）の発番・登録、注文番号札（アルファベット）の管理（店頭注文番号札管理の設計を正とする）</li><li>注文番号テーブルの初期化（店頭注文番号初期化バッチの設計を正とする）</li><li>受注ステータスの遷移そのもの（受注管理の設計を正とする）</li></ul>
-          <hr>
-          <h2 id="function-design-a05-03-a05-03_api_order_order_store_call_number-リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-          <p>現行（pf-eccube3）と移行先（ec-cube-enterprise）でDBスキーマは同一である。</p>
-          <div class="table-wrap"><table><thead><tr><th>区分</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>注文番号テーブル</td><td>dtb_waiting_number（id、order_id、waiting_number＝店舗販売用整理番号）</td><td>同一スキーマ（dtb_waiting_number、同名列）</td></tr><tr><td>注文番号札テーブル</td><td>dtb_waiting_tag（id、waiting_tag）</td><td>同一スキーマ（dtb_waiting_tag、同名列）</td></tr><tr><td>受注ステータス</td><td>受注（dtb_order）のステータス列で判定</td><td>同一スキーマ（受注のステータス列）</td></tr></tbody></table></div>
-          <p>抽出条件・補完ロジック・本APIのエンドポイント自体のリニューアル後仕様はec-cube-enterprise実装で要確認とし、本書は現行（pf-eccube3）の挙動を正とする。永続化に関わるテーブル・列名は上記のとおり移行先と同一であるため、現行名をそのまま用いる。</p>
-          <hr>
-          <h2 id="function-design-a05-03-a05-03_api_order_order_store_call_number-用語">用語</h2>
-          <div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>注文番号札（数字）</td><td>注文ごとに採番した数値の呼び出し番号。注文番号テーブルが注文IDと対で保持する。</td></tr><tr><td>注文番号札（アルファベット）</td><td>数値とは別に管理する英字の呼び出し番号。注文番号札テーブルが保持する。</td></tr><tr><td>ピック完了</td><td>受注ステータスのうちピック済みを指す状態。</td></tr><tr><td>出荷完了</td><td>受注ステータスのうち出荷を終えた状態。表示件数超過時の補完判定に用いる。</td></tr></tbody></table></div>
-          <hr>
-          <h2 id="function-design-a05-03-a05-03_api_order_order_store_call_number-利用者視点の入口">利用者視点の入口</h2>
-          <div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>店頭注文番号リストの取得</td><td><code>GET /{_locale}/waiting_api/get_waiting</code></td><td>ピック完了の注文番号札（数字）と注文番号札（アルファベット）を1配列にまとめて返す。</td></tr></tbody></table></div>
-          <p>応答形式はJSON。呼び出し元は店内モニター（店頭注文番号表示画面）からの定期取得。フロントのルートは言語識別子<code>{_locale}</code>配下にマウントされる。</p>
-          <hr>
-          <h2 id="function-design-a05-03-a05-03_api_order_order_store_call_number-認証・認可">認証・認可</h2>
-          <div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>認証方式</td><td>本APIは認証トークンを要求しない。フロントのファイアウォールは匿名アクセスを許可し、本パスにはログイン必須のアクセス制御を設定していない。</td></tr><tr><td>認証失敗時</td><td>認証判定を行わないため、未認証でも取得できる。</td></tr><tr><td>認可</td><td>呼び出し元は店内モニターの表示画面。利用者の資格情報による絞り込みは行わない。</td></tr></tbody></table></div>
-          <hr>
-          <h2 id="function-design-a05-03-a05-03_api_order_order_store_call_number-処理フロー">処理フロー</h2>
-          <h3 id="function-design-a05-03-a05-03_api_order_order_store_call_number-店頭注文番号リストを取得する-GET-locale-waiting-api-get-waiting">店頭注文番号リストを取得する（GET <code>/{_locale}/waiting_api/get_waiting</code>）</h3>
-          <ol><li>ピック完了ステータスの注文に紐づく注文番号札（数字）の一覧を取得する。注文番号テーブルと受注を注文IDで結合し、受注ステータスがピック完了の行に限定する。</li><li>注文番号札（アルファベット）の一覧をID昇順で取得する。</li><li>数字の件数とアルファベットの件数の合計が画面表示最大件数を超える場合は、出荷完了ステータスの注文番号札（数字）も取得し、欠番の補完を行う。直前に追加した番号の次から対象番号の手前までの連番がすべて出荷完了であれば、その間の番号を配列に加える。超えない場合は補完を行わない。</li><li>ピック完了の注文番号札（数字）を配列へ順に追加する。</li><li>注文番号札（アルファベット）を配列の末尾へ順に追加する。</li><li>数字と英字を含む1つの配列をJSONで返す（HTTP 200）。</li></ol>
-          <hr>
-          <h2 id="function-design-a05-03-a05-03_api_order_order_store_call_number-集計条件">集計条件</h2>
-          <div class="table-wrap"><table><thead><tr><th>指標</th><th>集計の要点</th></tr></thead><tbody><tr><td>ピック完了の注文番号札（数字）</td><td>注文番号テーブルと受注を注文IDで結合し、受注ステータスがピック完了の行のみを対象とする。並び順は注文番号テーブルの既定（主キー順）。</td></tr><tr><td>注文番号札（アルファベット）</td><td>注文番号札テーブルの全件をID昇順で取得する。</td></tr><tr><td>出荷完了の補完</td><td>ピック完了と英字の合計件数が画面表示最大件数（既定25）を超える場合のみ、ピック完了番号の間にある欠番を、その区間がすべて出荷完了のときに補完する。</td></tr></tbody></table></div>
-          <hr>
+          <h2 id="function-design-a05-03-a05-03_api_order_order_store_call_number-業務ロジック">業務ロジック</h2>
+          <h3 id="function-design-a05-03-a05-03_api_order_order_store_call_number-返す番号の構成">返す番号の構成</h3>
+          <p>ピック完了の注文に紐づく注文番号札（数字）を先頭側に、注文番号札（アルファベット）を末尾側に並べた1つの配列を返す。数字はピック完了の受注に限定して取得し、アルファベットは識別子の昇順で取得する。該当が無いときは空配列を返す。</p>
+          <h3 id="function-design-a05-03-a05-03_api_order_order_store_call_number-欠番の補完">欠番の補完</h3>
+          <p>数字の件数とアルファベットの件数の合計が画面表示の最大件数を超えるときだけ、出荷完了の注文番号札（数字）も取得して欠番を補う。直前に加えた番号の次から対象番号の手前までの連番がすべて出荷完了であれば、その間の番号を配列に加える。最大件数を超えないときは補完しない。</p>
+          <h3 id="function-design-a05-03-a05-03_api_order_order_store_call_number-認証">認証</h3>
+          <p>本APIは認証を要求しない。認証判定を行わないため、未認証でも取得できる。呼び出し元は店内モニターの表示画面であり、利用者の資格情報による絞り込みは行わない。</p>
+          <h3 id="function-design-a05-03-a05-03_api_order_order_store_call_number-エラー時の扱い">エラー時の扱い</h3>
+          <div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>取得処理中の例外</td><td>標準例外ハンドラに委ねる（HTTP 500相当）</td></tr><tr><td>該当データなし</td><td>エラーとせず、空配列をHTTP 200で返す</td></tr></tbody></table></div>
           <h2 id="function-design-a05-03-a05-03_api_order_order_store_call_number-入出力">入出力</h2>
-          <h3 id="function-design-a05-03-a05-03_api_order_order_store_call_number-リクエスト">リクエスト</h3>
-          <p>本APIはリクエストパラメータを持たない。パスパラメータ<code>{_locale}</code>は言語識別子であり、取得対象の絞り込みには用いない。</p>
-          <h3 id="function-design-a05-03-a05-03_api_order_order_store_call_number-レスポンス-成功">レスポンス（成功）</h3>
-          <p>HTTP 200。応答本体はラッパオブジェクトを持たず、注文番号を要素とする1次元配列である。</p>
-          <div class="table-wrap"><table><thead><tr><th>フィールド</th><th>型</th><th>説明</th></tr></thead><tbody><tr><td>（応答本体）</td><td>array</td><td>注文番号の配列。先頭側にピック完了の注文番号札（数字、表示件数超過時は間の出荷完了番号を含む）、末尾側に注文番号札（アルファベット）を連結する。数字要素はinteger、英字要素はstringとなる。</td></tr></tbody></table></div>
-          <h3 id="function-design-a05-03-a05-03_api_order_order_store_call_number-レスポンス-失敗">レスポンス（失敗）</h3>
-          <div class="table-wrap"><table><thead><tr><th>HTTPステータス</th><th>条件</th><th>本文の形</th></tr></thead><tbody><tr><td>500</td><td>取得処理中の例外</td><td>標準例外ハンドラに委ねる</td></tr></tbody></table></div>
-          <p>入力検証・認証判定を行わないため、400・401は発生しない。該当データが無い場合は空配列を200で返す。</p>
-          <h3 id="function-design-a05-03-a05-03_api_order_order_store_call_number-サンプルレスポンス">サンプルレスポンス</h3>
+          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>リクエストパラメータを持たない。パスの言語識別子は取得対象の絞り込みに使わない</td></tr><tr><td>成功時出力</td><td>HTTP 200。注文番号を要素とする1次元配列。数字要素は整数、英字要素は文字列となる</td></tr><tr><td>失敗時出力</td><td>取得中の例外はHTTP 500として標準例外ハンドラに委ねる。入力検証と認証判定を行わないため、400・401は発生しない</td></tr></tbody></table></div>
           <p>成功時の応答例（代表値）。</p>
           <pre><code class="language-json">[101, 102, 103, "A", "B"]</code></pre>
-          <h3 id="function-design-a05-03-a05-03_api_order_order_store_call_number-副作用">副作用</h3>
-          <p>無し（参照のみ）。本APIはデータを更新しない。</p>
-          <p>応答はJSON応答整形を経て返す。応答本体は配列であり、<code>Content-Type</code>は<code>application/json</code>を明示する。</p>
-          <hr>
-          <h2 id="function-design-a05-03-a05-03_api_order_order_store_call_number-バリデーション">バリデーション</h2>
-          <p>本APIは入力パラメータを持たないため、入力検証を行わない。</p>
-          <hr>
-          <h2 id="function-design-a05-03-a05-03_api_order_order_store_call_number-業務ルール・計算">業務ルール・計算</h2>
-          <ul><li>本機能の判定・集計・表示条件は既存実装のリポジトリ、サービス、フォーム定義を正とする。</li><li>金額・ポイント・数量・ステータス・日時は永続化済み値または既存サービスの計算結果を使用し、画面・API層で独自補正しない。</li><li>条件不一致、権限不足、検証エラー時は業務データを更新せず、既存のエラー形式または画面遷移に従う。</li></ul>
-          <h2 id="function-design-a05-03-a05-03_api_order_order_store_call_number-データ整合性">データ整合性</h2>
-          <div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>参照時点</td><td>呼び出し時点でピック完了・出荷完了の受注ステータスを持つ注文番号、および注文番号札（アルファベット）を返す。本APIはデータを更新しない。</td></tr><tr><td>補完の前提</td><td>出荷完了番号の補完は表示件数超過時のみ行い、超えない場合はピック完了番号と英字のみを返す。</td></tr><tr><td>数字と英字の順序</td><td>数字を先に、英字を後に連結する。数字はピック完了の取得順、英字はID昇順とする。</td></tr></tbody></table></div>
-          <hr>
-          <h2 id="function-design-a05-03-a05-03_api_order_order_store_call_number-DBカラム">DBカラム</h2>
-          <p>機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。</p>
-          <div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td>注文番号テーブル</td><td>注文番号</td><td>応答に用いる数字の呼び出し番号。</td></tr><tr><td>注文番号テーブル</td><td>注文ID</td><td>受注との結合キー。受注ステータスの判定に用いる。</td></tr><tr><td>受注</td><td>受注ステータス</td><td>ピック完了・出荷完了の判定に用いる。</td></tr><tr><td>注文番号札テーブル</td><td>注文番号札</td><td>応答に連結する英字の呼び出し番号。</td></tr><tr><td>注文番号札テーブル</td><td>ID</td><td>英字の取得順（昇順）に用いる。</td></tr></tbody></table></div>
-          <hr>
-          <h2 id="function-design-a05-03-a05-03_api_order_order_store_call_number-権限・認可">権限・認可</h2>
-          <div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>店頭注文番号取得</th></tr></thead><tbody><tr><td>任意のクライアント（未認証含む）</td><td>取得できる。本APIは認証・利用者状態による制御を行わない。</td></tr></tbody></table></div>
-          <hr>
-          <h2 id="function-design-a05-03-a05-03_api_order_order_store_call_number-エラー処理">エラー処理</h2>
-          <div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>取得処理中の例外</td><td>明示的な<code>try-catch</code>は持たず、標準例外ハンドラに委ねる（HTTP 500相当）。</td></tr><tr><td>該当データなし</td><td>エラーとせず、空配列を200で返す。</td></tr></tbody></table></div>
-          <hr>
-          <h2 id="function-design-a05-03-a05-03_api_order_order_store_call_number-ログ・監査">ログ・監査</h2>
-          <p>本APIは参照のみであり、固有のログ・監査出力を持たない。</p>
-          <h3 id="function-design-a05-03-a05-03_api_order_order_store_call_number-ログに出してはいけないもの">ログに出してはいけないもの</h3>
-          <ul><li>Cookie値・セッションIDの完全値</li></ul>
-          <hr>
-          <h2 id="function-design-a05-03-a05-03_api_order_order_store_call_number-排他制御・トランザクション">排他制御・トランザクション</h2>
-          <p>本APIは参照のみであり、楽観ロック・悲観ロックの対象を持たない。トランザクションを張ってデータを更新しない。</p>
+          <h3 id="function-design-a05-03-a05-03_api_order_order_store_call_number-入出力-永続化">入出力: 永続化</h3>
+          <p>本APIは業務データを更新しない。</p>
+          <div class="renewal-spec-banner"><h3 id="function-design-a05-03-a05-03_api_order_order_store_call_number-リニューアル後の仕様">リニューアル後の仕様</h3></div>
+          <h2 id="function-design-a05-03-a05-03_api_order_order_store_call_number-表示メッセージ">表示メッセージ</h2>
+          <p>本APIは画面メッセージを扱わない。</p>
         </div>
       </section>
       <!-- function-design-embed:end a05-03-a05-03_api_order_order_store_call_number -->
@@ -1719,7 +1501,6 @@
           </dl>
           <nav class="sheet-jump" aria-label="シート内ジャンプ">
             <a href="#sheet-6-spec-1">処理概要（★はカスタマイズ項目）</a>
-            <a href="#sheet-6-shapes">図形・テキストボックス内テキスト（7件）</a>
           </nav>
           <div class="doc-flow">
             <p class="doc-p" style="--lv:0"><span class="src-cell" data-excel-book="0505" data-excel-sheet="スマレジ受信処理" data-excel-ref="0505:スマレジ受信処理!B6">GET</span>　<span class="src-cell" data-excel-book="0505" data-excel-sheet="スマレジ受信処理" data-excel-ref="0505:スマレジ受信処理!C6">POST</span>　<span class="src-cell" data-excel-book="0505" data-excel-sheet="スマレジ受信処理" data-excel-ref="0505:スマレジ受信処理!D6">PUT</span>　<span class="src-cell" data-excel-book="0505" data-excel-sheet="スマレジ受信処理" data-excel-ref="0505:スマレジ受信処理!E6">DELETE</span>　<span class="src-cell" data-excel-book="0505" data-excel-sheet="スマレジ受信処理" data-excel-ref="0505:スマレジ受信処理!F6">PATCH</span>　<span class="src-cell" data-excel-book="0505" data-excel-sheet="スマレジ受信処理" data-excel-ref="0505:スマレジ受信処理!G6">OPTIONS</span>　<span class="src-cell" data-excel-book="0505" data-excel-sheet="スマレジ受信処理" data-excel-ref="0505:スマレジ受信処理!H6">HEAD</span>　<span class="src-cell" data-excel-book="0505" data-excel-sheet="スマレジ受信処理" data-excel-ref="0505:スマレジ受信処理!K6">有</span>　<span class="src-cell" data-excel-book="0505" data-excel-sheet="スマレジ受信処理" data-excel-ref="0505:スマレジ受信処理!L6">無</span>　<span class="src-cell" data-excel-book="0505" data-excel-sheet="スマレジ受信処理" data-excel-ref="0505:スマレジ受信処理!O6">〇</span></p>
@@ -1935,153 +1716,45 @@
             <h3 class="doc-h doc-h-section" style="--lv:0"><span class="src-cell" data-excel-book="0505" data-excel-sheet="スマレジ受信処理" data-excel-ref="0505:スマレジ受信処理!B189">レスポンスデータサンプル</span></h3>
             <p class="doc-p" style="--lv:1"><span class="src-cell" data-excel-book="0505" data-excel-sheet="スマレジ受信処理" data-excel-ref="0505:スマレジ受信処理!C191">※ 右記URLを参照　</span>　<span class="src-cell" data-excel-book="0505" data-excel-sheet="スマレジ受信処理" data-excel-ref="0505:スマレジ受信処理!I191">https://www1.smaregi.dev/apidoc/#operation/getTransactionsTransactionId</span></p>
           </div>
-          <section class="shape-block" id="sheet-6-shapes">
-            <h3 class="shape-title">図形・テキストボックス内テキスト（7件）</h3>
-            <p class="shape-note">画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。</p>
-            <div class="item-table-wrap">
-              <table class="item-table shape-table">
-                <thead>
-                  <tr><th>位置</th><th>テキスト</th></tr>
-                </thead>
-                <tbody>
-                  <tr data-shape-index="1" data-shape-ref="D37" data-excel-book="0505" data-excel-sheet="スマレジ受信処理" data-excel-ref="0505:スマレジ受信処理!D37"><td class="shape-ref">D37</td><td>スマレジ</td></tr>
-                  <tr data-shape-index="2" data-shape-ref="D37" data-excel-book="0505" data-excel-sheet="スマレジ受信処理" data-excel-ref="0505:スマレジ受信処理!D37"><td class="shape-ref">D37</td><td>ECCUBE</td></tr>
-                  <tr data-shape-index="3" data-shape-ref="D37" data-excel-book="0505" data-excel-sheet="スマレジ受信処理" data-excel-ref="0505:スマレジ受信処理!D37"><td class="shape-ref">D37</td><td>A. ★スマレジ取引IDを送信</td></tr>
-                  <tr data-shape-index="4" data-shape-ref="D37" data-excel-book="0505" data-excel-sheet="スマレジ受信処理" data-excel-ref="0505:スマレジ受信処理!D37"><td class="shape-ref">D37</td><td>B. ★スマレジ取引IDで取引詳細を要求</td></tr>
-                  <tr data-shape-index="5" data-shape-ref="D37" data-excel-book="0505" data-excel-sheet="スマレジ受信処理" data-excel-ref="0505:スマレジ受信処理!D37"><td class="shape-ref">D37</td><td>C. ★スマレジ取引情報を返す</td></tr>
-                  <tr data-shape-index="6" data-shape-ref="D37" data-excel-book="0505" data-excel-sheet="スマレジ受信処理" data-excel-ref="0505:スマレジ受信処理!D37"><td class="shape-ref">D37</td><td>取引完了</td></tr>
-                  <tr data-shape-index="7" data-shape-ref="D37" data-excel-book="0505" data-excel-sheet="スマレジ受信処理" data-excel-ref="0505:スマレジ受信処理!D37"><td class="shape-ref">D37</td><td>スマレジ取引情報取得</td></tr>
-                </tbody>
-              </table>
-            </div>
-          </section>
-          <details class="connector-ledger" data-connector-unresolved="0" data-connector-noted="5">
-            <summary>コネクタ解決台帳（記録 5件 / 未解決 0件）</summary>
-            <div class="item-table-wrap">
-              <table class="item-table">
-                <thead><tr><th>connector id</th><th>アンカー</th><th>理由</th><th>状態</th></tr></thead>
-                <tbody>
-                  <tr data-connector-state="soft" data-excel-ref="0505:スマレジ受信処理!D37"><td>3</td><td>0505:スマレジ受信処理!D37</td><td>ambiguous_geometry</td><td>soft</td></tr>
-                  <tr data-connector-state="soft" data-excel-ref="0505:スマレジ受信処理!D37"><td>5</td><td>0505:スマレジ受信処理!D37</td><td>undirected</td><td>soft</td></tr>
-                  <tr data-connector-state="soft" data-excel-ref="0505:スマレジ受信処理!D37"><td>16</td><td>0505:スマレジ受信処理!D37</td><td>ambiguous_geometry</td><td>soft</td></tr>
-                  <tr data-connector-state="soft" data-excel-ref="0505:スマレジ受信処理!D37"><td>14</td><td>0505:スマレジ受信処理!D37</td><td>no_connection</td><td>soft</td></tr>
-                  <tr data-connector-state="soft" data-excel-ref="0505:スマレジ受信処理!D37"><td>12</td><td>0505:スマレジ受信処理!D37</td><td>geometry_inferred</td><td>soft</td></tr>
-                </tbody>
-              </table>
-            </div>
-          </details>
         </div>
       <!-- function-design-embed:start a05-04-a05-04_api_order_order_smaregi_receive -->
       <section class="function-design-embed" id="function-design-a05-04-a05-04_api_order_order_smaregi_receive" data-source="functions/pf-eccube3/a05-04_api_order_order_smaregi_receive.md">
         <header class="function-design-header">
           <p class="function-design-source">Source:<br>functions/pf-eccube3/a05-04_api_order_order_smaregi_receive.md</p>
-          <h3>詳細設計書</h3>
+          <h3>現行仕様</h3>
           <h4>A05-04 スマレジ受信処理 / API 受注管理 — スマレジ受信処理（ポイント履歴取得）</h4>
         </header>
         <div class="function-design-body">
-          <h2 id="function-design-a05-04-a05-04_api_order_order_smaregi_receive-概要">概要</h2>
-          <p>スマレジが送信する取引情報の通知を受け取り、対象会員のポイントとポイント履歴を更新するためのAPIである。pf-eccube3のHareruyaEcプラグインが提供するJSON APIで、通知の区分（通常・取消・打消）に応じて会員ポイントの加減算、ポイント履歴の登録または取消、店頭注文の出荷完了反映を行い、支店コードの明細は支店システムのスマレジ受信APIへ転送する。取消・打消の処理では取引IDからポイント履歴を取得して巻き戻す。</p>
-          <p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はHareruyaEcプラグインのスマレジ取引取込処理、フロントのルート登録（ControllerProvider）、ポイント履歴テーブル・会員（プレイヤー）・注文サブ・オプションマスタ・ポイント区分マスタを正とする。</p>
-          <p>本機能のカスタマイズ区分はカスタマイズで、挙動の参照リポはpf-eccube3（HareruyaEcプラグイン）とする。DB関連の記述（テーブル名・列名・永続化先）はec-cube-enterpriseを正とする。</p>
-          <p>対象はJSON APIエンドポイントであり、ブラウザ向けの画面を持たない。本文ではフレームワークのコントローラ型名やメソッド名を主説明としない。「利用者視点の入口」にHTTPメソッドとパスパターンを書く。</p>
-          <hr>
-          <h2 id="function-design-a05-04-a05-04_api_order_order_smaregi_receive-本書で扱うこと">本書で扱うこと</h2>
-          <ul><li>スマレジ取引通知の受信と、取引区分（通常・取消・打消）の判定</li><li>会員ポイントの加減算とポイント履歴の登録・取消</li><li>取消・打消時の、取引IDによるポイント履歴の取得と巻き戻し</li><li>対象店舗の明細による店頭注文の出荷完了反映</li><li>支店コードの明細の、支店システムのスマレジ受信APIへの転送と更新件数の合算</li></ul>
-          <hr>
-          <h2 id="function-design-a05-04-a05-04_api_order_order_smaregi_receive-本書で扱わないこと">本書で扱わないこと</h2>
-          <p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
-          <ul><li>スマレジ側の取引登録・通知送信そのもの（外部システムの仕様を正とする）</li><li>出荷完了反映後の付与ポイントのスマレジ連携（スマレジ連携サービスの設計を正とする）</li><li>支店システム側のスマレジ受信API本体（支店システムの設計を正とする）</li><li>ポイント履歴の閲覧画面（管理画面・フロントのポイント履歴の設計を正とする）</li></ul>
-          <hr>
-          <h2 id="function-design-a05-04-a05-04_api_order_order_smaregi_receive-リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
-          <p>挙動は現行（pf-eccube3）を正とし、永続化に関わる記述は移行先（ec-cube-enterprise）を正とする。</p>
-          <div class="table-wrap"><table><thead><tr><th>区分</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>会員（プレイヤー）</td><td>dtb_player。スマレジ会員ID・保有ポイントを保持</td><td>dtb_player。スマレジ会員ID＝smaregi_id、保有ポイント＝point（ポイント残高）、顧客との関連＝customer_id。列名は移行先を正とする</td></tr><tr><td>ポイント履歴</td><td>dtb_point_history。ポイント増減・摘要・発生日・ポイント区分・取引IDを保持</td><td>dtb_point_history。ポイント増減＝point_change、摘要＝note、発生日＝issue_date、ポイント区分＝point_type_id、取引ID＝transaction_id。取消・打消はtransaction_idで特定</td></tr><tr><td>オプションマスタ</td><td>mtb_option</td><td>同一スキーマ（mtb_option）</td></tr><tr><td>ポイント区分マスタ</td><td>mtb_point_type</td><td>同一スキーマ（mtb_point_type。移行先のpoint_type_idはポイント属性IDの呼称）</td></tr><tr><td>注文サブ（出荷完了反映先）</td><td>dtb_order_sub。スマレジコード・出荷日・担当者・付与ポイント等を保持</td><td>ec-cube-enterpriseには注文サブ（dtb_order_sub）に対応するエンティティが見当たらない。出荷完了反映の永続化先はec-cube-enterprise実装で要確認とする</td></tr></tbody></table></div>
-          <p>ポイント加減算・取消・打消の取引ID基準の巻き戻しと、店舗コードによる支店転送の挙動は現行（pf-eccube3）を正とする。出荷完了反映の対象表が移行先で変わる場合があるため、永続化先はec-cube-enterprise実装で要確認とする。</p>
-          <hr>
-          <h2 id="function-design-a05-04-a05-04_api_order_order_smaregi_receive-用語">用語</h2>
-          <div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>取引情報</td><td>スマレジから送信される売上の取引データ。取引ヘッダと取引明細を含む。</td></tr><tr><td>取引区分</td><td>通知の種別。通常取引・取消・打消レコードを区別する。</td></tr><tr><td>会員（プレイヤー）</td><td>スマレジ会員IDで照合する晴れる屋会員。ポイントの加減算対象。</td></tr><tr><td>ポイント履歴</td><td>会員のポイント増減を記録する明細。取引IDを保持し、取消・打消の特定に用いる。</td></tr><tr><td>支店コード</td><td>商品コードの一部に含まれる店舗識別。自店舗以外は支店システムへ転送する。</td></tr></tbody></table></div>
-          <hr>
-          <h2 id="function-design-a05-04-a05-04_api_order_order_smaregi_receive-利用者視点の入口">利用者視点の入口</h2>
-          <div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>スマレジ取引通知の受信</td><td><code>POST /{_locale}/smaregi/transaction</code></td><td>取引情報を受け取り、会員ポイントとポイント履歴を更新し、対象注文を出荷完了に反映し、更新件数を返す。</td></tr></tbody></table></div>
-          <p>応答形式はJSON。呼び出し元はスマレジ（および支店システムへの転送経路）。フロントのルートは言語識別子<code>{_locale}</code>配下にマウントされる。</p>
-          <hr>
-          <h2 id="function-design-a05-04-a05-04_api_order_order_smaregi_receive-認証・認可">認証・認可</h2>
-          <div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>認証方式</td><td>本APIは認証トークンを要求しない。フロントのファイアウォールは匿名アクセスを許可し、本パスにはログイン必須のアクセス制御を設定していない。</td></tr><tr><td>連携用ヘッダ</td><td>支店システムへの転送時に、受信したリクエストの<code>X_contract_id</code>・<code>X_access_token</code>ヘッダを転送先へ引き継ぐ。これらは本APIの呼び出し元認証ではなく、転送先のスマレジ受信APIに渡す資格情報として用いる。</td></tr><tr><td>認証失敗時</td><td>認証判定を行わないため、未認証でも処理を実行する。</td></tr><tr><td>認可</td><td>呼び出し元はスマレジおよび転送経路。利用者の資格情報による絞り込みは行わない。</td></tr></tbody></table></div>
-          <p>連携用ヘッダの値は本書に記載しない。</p>
-          <hr>
-          <h2 id="function-design-a05-04-a05-04_api_order_order_smaregi_receive-処理フロー">処理フロー</h2>
-          <h3 id="function-design-a05-04-a05-04_api_order_order_smaregi_receive-スマレジ取引通知を取り込む-POST-locale-smaregi-transaction">スマレジ取引通知を取り込む（POST <code>/{_locale}/smaregi/transaction</code>）</h3>
-          <ol><li>リクエストボディの<code>params</code>をJSONとして解釈し、<code>data</code>配下のうち取引ヘッダと取引明細を抽出する。</li><li>オプションマスタからスマレジ店舗IDを取得し、3桁ゼロ埋めの店舗コードに整形する。</li><li>取引区分を判定する。</li></ol>
-          <ul><li>取消の場合は、会員ポイントを取消方向に補正し、取引IDに一致するポイント履歴を取得して削除する。</li><li>打消レコードの場合は、付与・利用ポイントの正負を反転したうえで取消と同様に補正し、対象履歴を削除する。</li><li>通常取引の場合は、会員ポイントを加減算し、付与・利用それぞれのポイント履歴を登録する。続いて取引明細の各行を処理し、商品コードの店舗コードが自店舗と一致する行は対象注文を出荷完了に反映する。一致しない行は支店分として記録する。</li></ul>
-          <ol><li>支店分の明細がある場合は、受信ヘッダの連携用ヘッダを引き継ぎ、支店システムのスマレジ受信APIへ明細を転送する。転送結果に更新件数が含まれる場合は合算し、含まれない場合は転送エラーをログに記録する。</li><li>取引ヘッダの更新件数を合算した値を、更新件数として応答に組み立てて返す（HTTP 200）。</li></ol>
-          <hr>
-          <h2 id="function-design-a05-04-a05-04_api_order_order_smaregi_receive-業務ルール・計算">業務ルール・計算</h2>
-          <div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>更新対象</td><td>リクエストで指定されたID・入力値に対応する業務データを対象にする。対象特定、入力不正、認証・認可の判定順序は処理フローとバリデーションの各節を正とする。</td></tr><tr><td>更新方法</td><td>入力値を対象データへ上書きまたは追加登録する。履歴登録や関連データ更新がある場合は入出力の副作用およびDBカラムの節を正とする。</td></tr><tr><td>計算処理</td><td>本APIでは金額・税・ポイント・在庫数量の再計算や丸めを行わない。ステータスやコメント等の更新は、実装で定義された遷移・存在確認・担当者判定に従う。</td></tr><tr><td>応答値</td><td>成功時は処理結果コードまたは更新後に取得した値を返す。レスポンス値は本API内で独自集計せず、保存結果または取得結果をJSON応答へ整形する。</td></tr></tbody></table></div>
-          <hr>
+          <h2 id="function-design-a05-04-a05-04_api_order_order_smaregi_receive-業務ロジック">業務ロジック</h2>
+          <h3 id="function-design-a05-04-a05-04_api_order_order_smaregi_receive-認証と呼び出し元">認証と呼び出し元</h3>
+          <p>このAPIは認証トークンを要求しない。認証の判定を行わないため、未認証でも処理を実行する。呼び出し元はスマレジと転送経路であり、利用者の資格情報による絞り込みは行わない。</p>
+          <p>支店システムへ転送するときは、受信した連携用ヘッダをそのまま転送先へ引き継ぐ。連携用ヘッダは転送先へ渡す資格情報であり、呼び出し元の認証には使わない。ヘッダの値は本書に記載しない。</p>
+          <h3 id="function-design-a05-04-a05-04_api_order_order_smaregi_receive-取引区分ごとの処理">取引区分ごとの処理</h3>
+          <p>受信した内容から取引ヘッダと取引明細を取り出し、取引区分で処理を分ける。</p>
+          <div class="table-wrap"><table><thead><tr><th>取引区分</th><th>処理</th></tr></thead><tbody><tr><td>取消</td><td>会員ポイントを取消の方向に補正し、取引に一致するポイント履歴を削除する</td></tr><tr><td>打消</td><td>付与ポイントと利用ポイントの正負を反転したうえで取消と同様に補正し、対象のポイント履歴を削除する</td></tr><tr><td>通常取引</td><td>会員ポイントを加減算し、付与と利用のポイント履歴をそれぞれ登録する。続いて取引明細の各行を処理する</td></tr></tbody></table></div>
+          <h3 id="function-design-a05-04-a05-04_api_order_order_smaregi_receive-取引明細の振り分け">取引明細の振り分け</h3>
+          <p>店舗コードは、オプション設定のスマレジ店舗IDが 3 桁に満たないときはゼロ埋めして整形した値とする。</p>
+          <p>商品コードの店舗コードが自店舗と一致する行だけ、対象の注文を出荷完了に反映する。一致しない行は支店分として記録し、自店舗では注文を更新しない。</p>
+          <p>支店分の明細が 1 件でもあるときは、支店システムのスマレジ受信APIへ明細を転送する。転送結果に更新件数が含まれるときは合算し、含まれないときは合算しない。</p>
+          <h3 id="function-design-a05-04-a05-04_api_order_order_smaregi_receive-更新件数">更新件数</h3>
+          <p>応答に返す更新件数は、会員ポイント・ポイント履歴・出荷完了の反映の件数に、支店転送の結果件数が得られるときはそれも合算した値とする。</p>
+          <p>会員が見つからないとき、対象のポイント履歴が無いとき、対象の注文が無いときは、その処理の更新件数を 0 として処理を続ける。</p>
+          <h3 id="function-design-a05-04-a05-04_api_order_order_smaregi_receive-エラー時の扱い">エラー時の扱い</h3>
+          <div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>受信内容を解釈できない、取引ヘッダが足りない、処理中に例外が起きた</td><td>標準の例外処理に委ねる（HTTP 500 相当）</td></tr><tr><td>会員が見つからない・対象履歴が無い・対象注文が無い</td><td>エラーとせず、その処理の更新件数を 0 として続け、HTTP 200 を返す</td></tr><tr><td>支店転送の結果に件数が含まれない</td><td>転送エラーとして扱い、件数を合算せずに処理を続ける</td></tr></tbody></table></div>
           <h2 id="function-design-a05-04-a05-04_api_order_order_smaregi_receive-入出力">入出力</h2>
-          <h3 id="function-design-a05-04-a05-04_api_order_order_smaregi_receive-リクエスト">リクエスト</h3>
-          <div class="table-wrap"><table><thead><tr><th>パラメータ</th><th>位置</th><th>型</th><th>必須／任意</th><th>説明</th></tr></thead><tbody><tr><td><code>params</code></td><td>ボディ（フォーム値）</td><td>string</td><td>必須</td><td>JSON文字列。<code>data</code>配列に取引ヘッダ（<code>TransactionHead</code>）と取引明細（<code>TransactionDetail</code>）を含む。取引ヘッダは会員ID・付与ポイント・利用ポイント・取引ヘッダID・取消区分・打消区分等を持つ。</td></tr><tr><td><code>proc_name</code></td><td>ボディ（フォーム値）</td><td>string</td><td>任意</td><td>スマレジの処理名。支店システムへの転送時にそのまま引き継ぐ。</td></tr><tr><td><code>X_contract_id</code></td><td>ヘッダ</td><td>string</td><td>任意</td><td>支店転送時に転送先へ引き継ぐ契約ID。</td></tr><tr><td><code>X_access_token</code></td><td>ヘッダ</td><td>string</td><td>任意</td><td>支店転送時に転送先へ引き継ぐアクセストークン。</td></tr><tr><td><code>{_locale}</code></td><td>パス</td><td>string</td><td>必須</td><td>言語識別子。処理対象の絞り込みには用いない。</td></tr></tbody></table></div>
-          <h3 id="function-design-a05-04-a05-04_api_order_order_smaregi_receive-レスポンス-成功">レスポンス（成功）</h3>
-          <p>HTTP 200。</p>
-          <div class="table-wrap"><table><thead><tr><th>フィールド</th><th>型</th><th>説明</th></tr></thead><tbody><tr><td><code>result</code></td><td>array</td><td>更新結果の配列。要素はオブジェクト1件。</td></tr><tr><td><code>result[].TransactionHead</code></td><td>integer</td><td>更新件数。会員ポイント・ポイント履歴・出荷完了反映の処理件数と、支店転送の結果件数を合算した値。</td></tr></tbody></table></div>
-          <h3 id="function-design-a05-04-a05-04_api_order_order_smaregi_receive-レスポンス-失敗">レスポンス（失敗）</h3>
-          <div class="table-wrap"><table><thead><tr><th>HTTPステータス</th><th>条件</th><th>本文の形</th></tr></thead><tbody><tr><td>500</td><td><code>params</code>の解釈不可、取引ヘッダの不足、処理中の例外</td><td>標準例外ハンドラに委ねる</td></tr></tbody></table></div>
-          <p>入力検証・認証判定を明示的に行わないため、400・401は発生しない。会員が見つからない・対象履歴が無い・対象注文が無い場合はその処理の更新件数を0として継続し、200を返す。</p>
-          <h3 id="function-design-a05-04-a05-04_api_order_order_smaregi_receive-サンプルレスポンス">サンプルレスポンス</h3>
-          <p>成功時の応答例（代表値）。</p>
-          <pre><code class="language-json">{
-            "result": [
-              {
-                "TransactionHead": 1
-              }
-            ]
-          }</code></pre>
-          <h3 id="function-design-a05-04-a05-04_api_order_order_smaregi_receive-副作用">副作用</h3>
-          <p>会員（プレイヤー）の保有ポイントの更新。ポイント履歴の登録（通常取引）または削除（取消・打消）。対象注文の出荷完了反映（受注ステータス・出荷確定日・コミット日・注文サブの出荷日・担当者の更新、ポイント付与処理）。支店システムのスマレジ受信APIへの明細転送。これらはデータベースへ反映する。</p>
-          <p>応答はJSON応答整形を経て返す。<code>result</code>配列を持つ連想配列を返し、<code>Content-Type</code>に<code>application/json;charset=UTF-8</code>、キャッシュ抑止と<code>Access-Control-Allow-Origin: *</code>を明示する。</p>
-          <hr>
-          <h2 id="function-design-a05-04-a05-04_api_order_order_smaregi_receive-バリデーション">バリデーション</h2>
-          <div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td><code>params</code></td><td>JSON文字列として解釈する。形式や必須項目の明示的な検証は行わず、解釈不可・取引ヘッダ不足時は処理中の例外として標準例外ハンドラに委ねる（HTTP 500相当）。</td></tr><tr><td>取引区分</td><td>取消区分・打消区分の値で処理経路を分岐する。いずれにも該当しない場合は通常取引として扱う。</td></tr></tbody></table></div>
-          <hr>
-          <h2 id="function-design-a05-04-a05-04_api_order_order_smaregi_receive-データ整合性">データ整合性</h2>
-          <div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>更新の有無</td><td>本APIは参照だけでなく、会員ポイント・ポイント履歴・受注を更新する。</td></tr><tr><td>ポイントと履歴</td><td>通常取引では会員ポイントの加減算とポイント履歴の登録を同一処理内で行う。取消・打消では取引IDに一致するポイント履歴を取得して削除し、会員ポイントを逆方向へ補正する。会員または対象履歴が無い場合は更新しない。</td></tr><tr><td>出荷完了反映</td><td>自店舗の明細に対し、注文サブを商品コードで特定して出荷完了へ反映する。対象注文が無い場合は反映しない。</td></tr><tr><td>支店転送</td><td>自店舗以外の明細は支店システムへ転送し、結果件数を更新件数に合算する。転送に件数が含まれない場合はログに記録し、件数は合算しない。</td></tr></tbody></table></div>
-          <hr>
-          <h2 id="function-design-a05-04-a05-04_api_order_order_smaregi_receive-DBカラム">DBカラム</h2>
-          <p>機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。</p>
-          <div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td>会員（プレイヤー）（dtb_player）</td><td>スマレジ会員ID（smaregi_id）</td><td>取引ヘッダの会員IDで会員を特定する結合キー。</td></tr><tr><td>会員（プレイヤー）（dtb_player）</td><td>保有ポイント（point）</td><td>付与・利用・取消に応じて加減算する。</td></tr><tr><td>ポイント履歴テーブル（dtb_point_history）</td><td>ポイント増減（point_change）・摘要（note）・発生日（issue_date）・ポイント区分（point_type_id）・取引ID（transaction_id）</td><td>通常取引で登録、取消・打消で取引IDをキーに削除する。</td></tr><tr><td>オプションマスタ（mtb_option）</td><td>スマレジ店舗ID</td><td>自店舗の店舗コード判定に用いる。</td></tr><tr><td>ポイント区分マスタ（mtb_point_type）</td><td>購入区分</td><td>登録するポイント履歴の区分に用いる。</td></tr><tr><td>注文サブ（dtb_order_sub。ec-cube-enterprise 実装で要確認）</td><td>スマレジコード・出荷日・担当者・付与ポイント・連携エラー</td><td>出荷完了反映の対象特定と更新に用いる。移行先の対応表は要確認。</td></tr><tr><td>受注</td><td>受注ステータス・コミット日・出荷確定日</td><td>出荷完了への反映に用いる。</td></tr></tbody></table></div>
-          <h3 id="function-design-a05-04-a05-04_api_order_order_smaregi_receive-DB操作">DB操作</h3>
-          <p>永続化の正は ec-cube-enterprise（テーブル名・操作は ec-cube-enterprise を正典）。当ドメインは承認ワークフローを介さず persist/flush で直接確定する（承認ワークフローは在庫機能固有）。</p>
-          <div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>登録/更新</td><td>dtb_order_sub / dtb_player / dtb_point_history / mtb_option / mtb_point_type</td><td>当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。</td></tr></tbody></table></div>
-          <hr>
-          <h2 id="function-design-a05-04-a05-04_api_order_order_smaregi_receive-権限・認可">権限・認可</h2>
-          <div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>スマレジ受信処理</th></tr></thead><tbody><tr><td>任意のクライアント（未認証含む）</td><td>処理を実行できる。本APIは呼び出し元の認証・利用者状態による制御を行わない。</td></tr><tr><td>支店システムへの転送</td><td>受信した連携用ヘッダを引き継いで転送先のスマレジ受信APIを呼び出す。</td></tr></tbody></table></div>
-          <hr>
-          <h2 id="function-design-a05-04-a05-04_api_order_order_smaregi_receive-エラー処理">エラー処理</h2>
-          <div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td><code>params</code>の解釈不可・取引ヘッダ不足・処理中の例外</td><td>明示的な<code>try-catch</code>は持たず、標準例外ハンドラに委ねる（HTTP 500相当）。</td></tr><tr><td>会員が見つからない・対象履歴が無い・対象注文が無い</td><td>エラーとせず、その処理の更新件数を0として継続し、200を返す。</td></tr><tr><td>支店転送の結果に件数が含まれない</td><td>転送エラーとしてログに記録し、件数を合算しない。処理は継続する。</td></tr></tbody></table></div>
-          <hr>
-          <h2 id="function-design-a05-04-a05-04_api_order_order_smaregi_receive-ログ・監査">ログ・監査</h2>
-          <p>支店転送の結果に件数が含まれない場合に、転送エラーである旨と転送結果をログ出力する。</p>
-          <h3 id="function-design-a05-04-a05-04_api_order_order_smaregi_receive-ログに出してはいけないもの">ログに出してはいけないもの</h3>
-          <ul><li>連携用ヘッダ（契約ID・アクセストークン）の値</li><li>Cookie値・セッションIDの完全値</li></ul>
-          <hr>
-          <h2 id="function-design-a05-04-a05-04_api_order_order_smaregi_receive-排他制御・トランザクション">排他制御・トランザクション</h2>
-          <p>本APIは会員ポイント・ポイント履歴・受注を更新する。各処理の末尾で永続化を確定する。明示的な悲観ロック・楽観ロックの取得は行わない。同一取引の重複受信時の整合は、取消・打消が取引IDを基準にポイント履歴を特定して巻き戻す前提に依存する。</p>
+          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>取引ヘッダと取引明細を含む受信内容、スマレジの処理名、支店転送用の連携ヘッダ</td></tr><tr><td>成功時出力</td><td>HTTP 200。更新件数を 1 件の要素として返す</td></tr><tr><td>失敗時出力</td><td>受信内容を解釈できないとき、取引ヘッダが足りないとき、処理中に例外が起きたときは HTTP 500</td></tr></tbody></table></div>
+          <h3 id="function-design-a05-04-a05-04_api_order_order_smaregi_receive-入出力-受信内容">入出力: 受信内容</h3>
+          <div class="table-wrap"><table><thead><tr><th>パラメータ</th><th>位置</th><th>型</th><th>必須／任意</th><th>説明</th></tr></thead><tbody><tr><td><code>params</code></td><td>ボディ</td><td>string</td><td>必須</td><td>取引ヘッダと取引明細を含む。取引ヘッダは会員ID・付与ポイント・利用ポイント・取引ヘッダID・取消区分・打消区分などを持つ</td></tr><tr><td><code>proc_name</code></td><td>ボディ</td><td>string</td><td>任意</td><td>スマレジの処理名。支店転送のときはそのまま引き継ぐ</td></tr><tr><td><code>X_contract_id</code></td><td>ヘッダ</td><td>string</td><td>任意</td><td>支店転送のときに転送先へ引き継ぐ契約ID</td></tr><tr><td><code>X_access_token</code></td><td>ヘッダ</td><td>string</td><td>任意</td><td>支店転送のときに転送先へ引き継ぐアクセストークン</td></tr><tr><td><code>{_locale}</code></td><td>パス</td><td>string</td><td>必須</td><td>言語識別子。処理対象の絞り込みには使わない</td></tr></tbody></table></div>
+          <p>入力の検証と認証の判定を行わないため、HTTP 400 と HTTP 401 は発生しない。</p>
+          <h3 id="function-design-a05-04-a05-04_api_order_order_smaregi_receive-入出力-永続化">入出力: 永続化</h3>
+          <div class="table-wrap"><table><thead><tr><th>操作</th><th>契機</th></tr></thead><tbody><tr><td>更新</td><td>会員ポイントを、取消・打消・通常取引のいずれかで補正したとき</td></tr><tr><td>追加</td><td>付与と利用のポイント履歴を、通常取引のとき</td></tr><tr><td>削除</td><td>取引に一致するポイント履歴を、取消または打消のとき</td></tr><tr><td>更新</td><td>対象の注文を、商品コードの店舗コードが自店舗と一致するとき出荷完了に反映する</td></tr></tbody></table></div>
+          <div class="renewal-spec-banner"><h3 id="function-design-a05-04-a05-04_api_order_order_smaregi_receive-リニューアル後の仕様">リニューアル後の仕様</h3></div>
+          <h2 id="function-design-a05-04-a05-04_api_order_order_smaregi_receive-表示メッセージ">表示メッセージ</h2>
+          <p>本APIは画面へ文言を表示しない。</p>
         </div>
       </section>
       <!-- function-design-embed:end a05-04-a05-04_api_order_order_smaregi_receive -->
 </section>
-
-
-<!-- endpoint-supplement:start -->
-<section class="endpoint-supplement">
-  <div class="sheet-doc">
-    <hr>
-    <h1>実装差分追補</h1>
-    <p>この節は Controller の本番利用 route と既存の「利用者視点の入口」を突合し、利用者が画面操作・ファイル出力・外部API呼び出しとして到達する入口を追補したものである。Block内部描画や CORS 用 OPTIONS は含めない。</p>
-    <h2 id="endpoint-supplement-user-entry">利用者視点の入口</h2>
-    <div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>サーバダイレクト印刷APIを実行する</td><td>`POST /api/order/prints/direct/{base_info_id}`</td><td>リクエスト内容を処理し、JSON等のレスポンスで結果を返す。</td></tr></tbody></table></div>
-  </div>
-</section>
-<!-- endpoint-supplement:end -->
 
     </main>
   </div>
