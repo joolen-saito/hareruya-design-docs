@@ -904,7 +904,11 @@ def cause_key_group_errors(findings: list[dict]) -> list[str]:
             bases |= {m.split(":")[0].split("/")[-1].rsplit(".", 1)[0]
                       for m in re.findall(r"[\w./\-]+\.\w+", v.get("実装参照") or "")}
         head = key.split("-", 1)[0]
-        if bases and head not in bases:
+        # 接頭辞は拡張子の有無どちらでもよい。`StockHistoryCsv` でも `StockHistoryCsv.php` でも
+        # 指している実装ファイルは同じで、揺れを弾いても得るものが無い
+        # （2026-08-22 実測: 0202 でゲート6の違反34件は全部これだけだった）。
+        head_base = head.rsplit(".", 1)[0] if "." in head else head
+        if bases and head not in bases and head_base not in bases:
             ids = ", ".join(v["要求ID"] for v in members[:3])
             errors.append(
                 f"根本原因 {key!r} の先頭 {head!r} が、このキーの指摘が挙げる実装ファイルの"

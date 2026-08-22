@@ -30,12 +30,26 @@ def _load(doc: str):
 
 
 def check(doc: str, sheet: str) -> int:
+    """1シート分（または大きいシートを分けた1区画分）を検査する。
+
+    大きいシートは複数の担当者で分ける。**その場合は必ずファイルを分ける**
+    （`parts/sheet-51__part2.tsv` のように）。1つのファイルへ並行に書かせると
+    後から書いた側が前の内容を消す（2026-08-22 実測: 0202 の sheet-51 で
+    144行が一度まるごと消え、最終的に410件が未判定のまま残った）。
+    `merge` は `parts/*.tsv` を全部読むので、ファイル名は分かれていてよい。
+
+    `--sheet` には区画名（`sheet-51__part2`）とシートID（`sheet-51`）のどちらも渡せる。
+    区画を渡したときは、そのファイルにある行だけを検査し、判定漏れは見ない
+    （他の区画がまだ無いのは当然のため）。
+    """
     outdir, reqs = _load(doc)
     part = outdir / "parts" / f"{sheet}.tsv"
     if not part.is_file():
         print(f"NG: {part} が無い")
         return 1
-    want = [r for r in reqs if r["シート"] == sheet]
+    partial = "__part" in sheet
+    sheet_id = sheet.split("__part")[0]
+    want = [r for r in reqs if r["シート"] == sheet_id]
     if not want:
         print(f"NG: {sheet} は requirements.tsv に存在しない")
         return 1
@@ -62,7 +76,8 @@ def check(doc: str, sheet: str) -> int:
         seen.add(rid)
         errors.extend(H.validate_verdict(v, by_id[rid], sheets))
 
-    unjudged = [r["要求ID"] for r in want if r["要求ID"] not in seen]
+    # 区画ファイルでは判定漏れを見ない（他の区画はまだ書かれていないのが当然）。
+    unjudged = [] if partial else [r["要求ID"] for r in want if r["要求ID"] not in seen]
     if unjudged:
         errors.append(f"判定漏れ {len(unjudged)}件: {unjudged[:15]}")
     if errors:
