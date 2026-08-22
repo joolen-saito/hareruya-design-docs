@@ -227,8 +227,8 @@ git status --short functions/_archive/                # 0件であること（�
 
 ```bash
 python3 .cursor/skills/function-spec-html-render/scripts/detect_csv_format_only.py --unregistered
-python3 .cursor/skills/function-spec-html-render/scripts/detect_superseded_specs.py
-python3 .cursor/skills/function-spec-html-render/scripts/detect_phase2_specs.py
+python3 .cursor/skills/function-spec-html-render/scripts/detect_superseded_specs.py check
+python3 .cursor/skills/function-spec-html-render/scripts/detect_phase2_specs.py check
 ```
 
 | 台帳 | 意味 | 出力への効き方 |
@@ -247,6 +247,10 @@ python3 .cursor/skills/function-spec-html-render/scripts/detect_phase2_specs.py
 
 **候補は機械が出し、登録は人が確認して行う。** 未登録の候補が残っている状態で次へ進まない
 （`--unregistered` は未登録があれば終了コード1）。
+
+superseded / phase2 の2本は `scan` / `baseline` / `check` のサブコマンドを取る。
+台帳が最新かを見るのは `check`（新規の指示・注記が出れば非0）。サブコマンドを省くと
+usage を出して**何も検査せず終了コード0を返す**ため、通ったと誤読しない（2026-08-22 実測）。
 
 ### 2. Markdown正本を正典から書く
 
