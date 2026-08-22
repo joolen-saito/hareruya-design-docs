@@ -219,6 +219,23 @@ ProductClassUpdateAction / ProductClassDeleteAction / InventoryReflectService �
 `OVER_REPORT`（過剰指摘＝指摘から取り下げ） / `DUPLICATE`（重複＝畳む先へ寄せる） /
 `OVER_SEVERE`（重要度過大） / `WRONG_KIND` / `CONFIRMED`。
 
+### レビュアーに書かせること
+
+レビュアーの返す形が `reviews.tsv` の列と揃っていないと、**適用が黙って空振りする。**
+
+- `OVER_SEVERE` と言うなら **`提案重要度` に「いくつが正か」を必ず書かせる。**
+  0202 では22件のうち16件が空で、理由文にも書かれていなかった。
+  空のまま build すると重要度は据え置かれるが「レビューを適用した」という記録だけ残る。
+  いまは `[gate7] ★重要度が据え置き N件` として報せる。**この行が出たら埋めてから閉じる。**
+- `DUPLICATE` と言うなら `畳む先` に要求IDを書かせる。畳む先が無ければ何もできない。
+- 判定値は `OVER_REPORT / DUPLICATE / WRONG_KIND / OVER_SEVERE / CONFIRMED` の5つだけ。
+  反証エージェントが `REFUTED` を返したことがある（＝指摘として成り立たない＝`OVER_REPORT`）。
+  語彙を固定して渡すこと。
+
+**反証エージェントは parts を直接直すことがある。** その場合レビュー結果は既に反映済みで、
+`reviews.tsv` に載っていても build では「適用対象外」になる（判定が既に MATCHED 等）。
+これは二重適用を避ける正しい振る舞いだが、**適用件数が少なく見える**ので驚かないこと。
+
 ### 判定が割れたら重いほうを採る
 
 重さの順は **取り下げ > 重複 > 種別違い > 重要度過大 > 確認済**。

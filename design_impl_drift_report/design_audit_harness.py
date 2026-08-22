@@ -952,7 +952,7 @@ def load_reviews(outdir: Path) -> dict[str, dict]:
     return merged
 
 
-def apply_reviews(verdicts: list[dict], reviews: dict[str, dict]) -> tuple[int, int, int]:
+def apply_reviews(verdicts: list[dict], reviews: dict[str, dict]) -> tuple[int, int, int, list[str]]:
     """レビュー結果を判定へ反映する。(取り下げ, 重複, 重要度) の件数を返す。
 
     重複は**既存の根本原因キーへ寄せる**。新しいキーを作ってはいけない
@@ -962,6 +962,7 @@ def apply_reviews(verdicts: list[dict], reviews: dict[str, dict]) -> tuple[int, 
     """
     by_id = {(v.get("要求ID") or "").strip(): v for v in verdicts}
     dropped = folded = resev = 0
+    skipped: list[str] = []  # 重要度過大と言われたが、正しい重要度が書かれていないもの
 
     # まず取り下げ。取り下げたものは畳む対象から外す。
     for rid, rv in reviews.items():
@@ -1012,7 +1013,8 @@ def apply_reviews(verdicts: list[dict], reviews: dict[str, dict]) -> tuple[int, 
             v = by_id[rid]
             if (v.get("根本原因") or "").strip() == canon:
                 continue
-            rv = reviews[rid]
+            # 畳む先はレビューに載っていないことがある（A→B と書かれただけの B）。
+            rv = reviews.get(rid) or {}
             who, why = rv.get("レビュアー", "review"), (rv.get("理由") or "").strip()
             v["根本原因"] = canon
             v["判定根拠"] = (f"[gate7/{who}] {members[0]} と同じ実装欠陥として畳む。{why} "
@@ -1024,12 +1026,16 @@ def apply_reviews(verdicts: list[dict], reviews: dict[str, dict]) -> tuple[int, 
         if not v or v.get("判定") not in FOLDABLE or rv["判定"] != "OVER_SEVERE":
             continue
         sev = (rv.get("提案重要度") or "").strip()
+        who, why = rv.get("レビュアー", "review"), (rv.get("理由") or "").strip()
         if sev in SEVERITY_LEVELS:
-            who, why = rv.get("レビュアー", "review"), (rv.get("理由") or "").strip()
             v["重要度"] = sev
             v["判定根拠"] = f"[gate7/{who}] 重要度を {sev} へ。{why} " + (v.get("判定根拠") or "")
             resev += 1
-    return dropped, folded, resev
+        else:
+            # 重要度過大と言いながら、いくつが正なのかを書いていない。
+            # 黙って据え置くと「レビューを適用した」という記録だけが残るので、必ず報せる。
+            skipped.append(f"{rid}（{who}）")
+    return dropped, folded, resev, skipped
 
 
 def cmd_build(doc_key: str, partial: bool = False) -> None:
@@ -1085,11 +1091,15 @@ def cmd_build(doc_key: str, partial: bool = False) -> None:
     # --- ゲート7: レビュー結果を適用する（判定が割れたら重いほうを採る） ---
     reviews = load_reviews(outdir)
     if reviews:
-        d, f_, r_ = apply_reviews(verdicts, reviews)
+        d, f_, r_, skipped = apply_reviews(verdicts, reviews)
         who = sorted({x.strip() for rv in reviews.values()
                       for x in (rv.get("レビュアー") or "").split("+") if x.strip()})
         print(f"[gate7] レビュー {len(reviews)}件を適用（{'/'.join(who) or '不明'}）: "
               f"取り下げ {d} / 重複として畳む {f_} / 重要度の修正 {r_}")
+        if skipped:
+            print(f"[gate7] ★重要度が据え置き {len(skipped)}件: 重要度過大と指摘されたが"
+                  f"「いくつが正か」が reviews.tsv に無い。提案重要度 列を埋めること\n"
+                  f"        {', '.join(skipped[:8])}" + (" …" if len(skipped) > 8 else ""))
 
     head = impl_head()
     # TSV の列は利用者指示（2026-08-20）で絞る。

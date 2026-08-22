@@ -11,21 +11,21 @@
 
 | 判定 | 意味 | 件数 | 掲載 |
 | --- | --- | ---: | :---: |
-| 未実装 | 設計の要求に対応する実装が無い | 117 | ○ |
+| 未実装 | 設計の要求に対応する実装が無い | 116 | ○ |
 | 実装違い | 実装はあるが設計と違う | 185 | ○ |
-| 設計裁定待ち | 正本内部で記述が矛盾し設計裁定待ち | 65 | — |
+| 設計裁定待ち | 正本内部で記述が矛盾し設計裁定待ち | 64 | — |
 | 設計どおり | 設計どおり実装されている | 3045 | — |
-| 対象外 | 見出し・表示メッセージ節など実装対象の記述でない | 1663 | — |
+| 対象外 | 見出し・表示メッセージ節など実装対象の記述でない | 1665 | — |
 | 確定不能 | 実データ・実行時挙動に依存し静的解析では確定できない | 21 | — |
 | **合計** | | **5096** | |
 
-## 不具合 144件（P1 4 / P2 68 / P3 72）
+## 不具合 139件（P1 4 / P2 66 / P3 69）
 
 - **P1**: 業務が回らず商売が止まる、またはデータの整合性が壊れる。手作業でも代替できない
 - **P2**: 迂回すれば回る。手作業・再実行・別経路で業務は完了できるが、コア業務の正しさ・効率、または顧客体験を損なう
 - **P3**: 業務は回る。業務の完了・データ・判断に影響しない（見出し・ボタン文言・列名の相違／並び順・桁区切りの相違など）
 
-実装実態が同一の指摘 155件は重複として代表へ折り畳んだ（判定そのものは 299件。折り畳んだ要求IDは各指摘の「同じ実装実態でまとまる要求」に全件を書く）。
+実装実態が同一の指摘 159件は重複として代表へ折り畳んだ（判定そのものは 298件。折り畳んだ要求IDは各指摘の「同じ実装実態でまとまる要求」に全件を書く）。
 
 | 要求ID | 機能 | 区分 | 種別 | 重要度 | 内容 |
 | --- | --- | --- | --- | --- | --- |
@@ -38,8 +38,6 @@
 | sheet-13-R114 | 在庫移動・振替検索一覧(検索・結果) | 実装違い | IO | P2 | 一覧の出庫日時・入庫日時に、その在庫移動・振替が出庫・入庫された日時が表示される |
 | sheet-14-R379 | 在庫移動・振替登録 編集 (移動) | 実装違い | ふるまい | P2 | 出庫承認画面で却下したとき、欠品点数が登録されている商品は、出庫元へ戻す仕入の総原価を「登録時の出庫総原価×（移動点数−欠品点数）÷移動点数」の金額とし、欠品分に相当する原価は戻さない。 |
 | sheet-14-R502 | 在庫移動・振替登録 編集 (移動) | 未実装 | ふるまい | P2 | 入庫承認の承認時に、差分が発生した商品について出庫元へ通知が届く。 |
-| sheet-15-R125 | 在庫移動・振替登録 編集(振替) | 実装違い | ふるまい | P2 | [振替先]商品コード欄に商品コードを入れてカーソルを外すと、その商品コードの商品名・言語・状態・Foil・基準価格が振替先の欄に表示される。 |
-| sheet-15-R139 | 在庫移動・振替登録 編集(振替) | 実装違い | ふるまい | P2 | 在庫一覧リンクで戻ったとき、直前の検索条件に加えて振替対象として選択済みの在庫がチェックされた状態で表示される。 |
 | sheet-15-R146 | 在庫移動・振替登録 編集(振替) | 未実装 | ふるまい | P2 | 振替対象の商品と振替先商品コードが同一の場合、登録は行われずエラーとして知らされる。 |
 | sheet-15-R147 | 在庫移動・振替登録 編集(振替) | 未実装 | ふるまい | P2 | 在庫振替の登録が完了したとき、承認通知先で選択されたユーザに承認を促す通知メールが届く。 |
 | sheet-15-R166 | 在庫移動・振替登録 編集(振替) | 実装違い | IO | P2 | 振替元の基準価格は振替当時の値が明細に残り、以後に基準価格が変わっても承認待ち画面・完了画面では振替当時の基準価格が表示される。 |
@@ -58,6 +56,7 @@
 | sheet-20-R006 | 在庫分割結合情報CSV出力 | 実装違い | IO | P2 | 在庫分割結合CSVの店舗列に、一覧画面の店舗列と同じ店舗名（例: 大宮）が出力される |
 | sheet-22-R079 | 在庫履歴検索一覧(検索入力) | 未実装 | IO | P2 | Foilを選択して検索すると、選択したFoil区分の在庫履歴だけに絞り込まれる。 |
 | sheet-22-R083 | 在庫履歴検索一覧(検索入力) | 実装違い | IO | P2 | 在庫数(from)に入力した値以上の在庫数を持つ履歴が、変更前在庫数・変更後在庫数のどちらかで一致すれば検索結果に出る。 |
+| sheet-22-R090 | 在庫履歴検索一覧(検索入力) | 未実装 | ふるまい | P2 | 在庫増減数のFrom>Toを入力した場合はエラーを表示し検索を行わない。 |
 | sheet-22-R148 | 在庫履歴検索一覧(検索入力) | 実装違い | IO | P2 | 入力した文字列が在庫変動理由または欠品理由のどちらかに含まれる在庫履歴が検索結果に出る。 |
 | sheet-23-R008 | 在庫履歴検索一覧(検索結果) | 実装違い | ふるまい | P2 | 在庫変動履歴には、その変動が起きた時点の商品の買取価格が残り、一覧の仕入単価にはその時点の値が出る。あとで商品の買取価格を変えても、過去の履歴行の仕入単価は変わらない。 |
 | sheet-23-R088 | 在庫履歴検索一覧(検索結果) | 実装違い | ふるまい | P2 | 登録元が店頭買取の行では、登録元IDの買取番号を押すと、その買取番号の店頭買取編集画面が別タブで開く。 |
@@ -70,7 +69,6 @@
 | sheet-26-R010 | 欠品履歴CSV出力 | 未実装 | IO | P2 | 欠品履歴CSVに「登録元ID」列が出力され、その欠品履歴を作った元データの番号が入る |
 | sheet-27-R007 | 在庫変更CSV登録 | 実装違い | ふるまい | P2 | 在庫が減る行では、CSVに書かれた仕入単価は使わず、対象在庫の在庫数と総原価の比率から求めた減少額が総原価増減数として記録・表示される。 |
 | sheet-27-R040 | 在庫変更CSV登録 | 実装違い | IO | P2 | 在庫編集承認一覧に、そのCSV登録による総原価の増減額が合計総原価増減数として表示される。 |
-| sheet-27-R085 | 在庫変更CSV登録 | 未実装 | IO | P2 | CSV登録時に指定した承認通知先のメンバーが、在庫編集承認一覧で通知送付者として確認できる。 |
 | sheet-27-R134 | 在庫変更CSV登録 | 実装違い | ふるまい | P2 | 同じ商品コードの商品規格が複数ある行、削除済みの商品規格しか一致しない行、他の処理が同じ商品規格を扱っている行は、いずれもエラーになり取り込まれない。 |
 | sheet-27-R140 | 在庫変更CSV登録 | 未実装 | ふるまい | P2 | 直近に取り込んだCSVと同じファイル名のファイルを選んで登録すると、取り込まれずに注意が表示される。 |
 | sheet-28-R014 | 在庫移動CSV登録 | 実装違い | ふるまい | P2 | 1ファイルにつき10,000件までの商品を登録でき、それを超えたときだけ上限超過のエラーになる。 |
@@ -81,7 +79,6 @@
 | sheet-31-R017 | 在庫結合CSV登録 | 実装違い | ふるまい | P2 | CSVの結合元在庫数が結合元商品の在庫数を超える場合はエラーになり、1件も登録されないこと |
 | sheet-32-R125 | 在庫移動指示検索 | 未実装 | ふるまい | P2 | 自分に紐づく編集可能店舗以外の在庫移動指示は、画面で参照できても送り状No.の登録・変更、在庫移動実績CSVでの一括登録、削除といった更新が権限エラーとなり、更新できない |
 | sheet-32-R134 | 在庫移動指示検索 | 実装違い | ふるまい | P2 | CSVに1件でもエラーがあれば登録は行われず、どの移動指示にも送り状No.が登録されないまま、行番号と移動指示IDを組にしたエラーメッセージが最大20件表示される |
-| sheet-33-R007 | 在庫移動指示詳細 | 未実装 | ふるまい | P2 | 編集可能店舗として許可されていない店舗の在庫移動指示は、送り状No.・備考の更新も削除もできず権限エラーとなる（参照だけは可能）。 |
 | sheet-34-R003 | 在庫移動指示リスト ピッキングリスト印刷 | 未実装 | ふるまい | P2 | 移動指示リスト詳細画面にピッキングリスト作成の操作があり、押下すると当該移動指示のピック表が別画面に表示される。 |
 | sheet-39-R007 | 棚卸計画編集 | 実装違い | IO | P2 | CSV出力を押すと、その棚卸計画に登録されている棚卸商品が画面の絞り込み状態にかかわらず全件CSVに出る。 |
 | sheet-45-R036 | 在庫編集承認一覧(検索結果) | 実装違い | ふるまい | P2 | 廃棄を却下したとき、対象在庫の総原価が「却下時点の総原価 + 廃棄申請時に記録された総原価増減数の符号反転」の値になる。 |
@@ -96,6 +93,7 @@
 | sheet-51-R214 | 別添資料_在庫変動時の履歴作成について | 実装違い | ふるまい | P2 | 買取自動入庫バッチの入庫先は、買取を行った支店のEC在庫だけになる。同じ支店にスマレジ在庫があっても、そちらの在庫数と総原価は増えない。 |
 | sheet-51-R217 | 別添資料_在庫変動時の履歴作成について | 実装違い | IO | P2 | 買取自動入庫で作られる在庫履歴の変更後原価単価が、入庫後の総原価÷入庫後の在庫数を四捨五入した値（例では10900÷11＝991）になる。 |
 | sheet-51-R229 | 別添資料_在庫変動時の履歴作成について | 実装違い | IO | P2 | 在庫移動を登録したときの出庫の在庫履歴で、変更後総原価が出庫後に在庫が実際に持つ総原価（例では10000から移動分2308を引いた7692）と一致し、増減数は出庫を表す負の数になる。 |
+| sheet-51-R231 | 別添資料_在庫変動時の履歴作成について | 実装違い | IO | P2 | 出庫の在庫履歴の変更後総原価が「変更前総原価−(変更前総原価×(出庫数÷総在庫))」の結果（例では7692）になる。 |
 | sheet-51-R281 | 別添資料_在庫変動時の履歴作成について | 実装違い | IO | P2 | 在庫振替の入庫の在庫履歴で、変更前原価単価が振替前の総原価÷振替前の在庫数（例では8000÷10＝800）になる。 |
 | sheet-6-R106 | 在庫編集 | 実装違い | IO | P2 | 在庫変動区分の選択肢には、手動で選ぶ10区分（入庫/問屋仕入・入庫/他店仕入・入庫/GOOD抜き・入庫/発見・入庫/その他・廃棄/廃棄(破損)・廃棄/廃棄(他事業移動)・廃棄/廃棄(イベント商品)・廃 |
 | sheet-6-R142 | 在庫編集 | 実装違い | IO | P2 | 親区分が廃棄（出庫）のとき、総原価増減数には「現在の総原価 ×（在庫増減数 ÷ 在庫数）」を四捨五入した額、すなわち登録によって実際に減る総原価と同じ額が表示される。 |
@@ -105,7 +103,6 @@
 | sheet-13-R088 | 在庫移動・振替検索一覧(検索・結果) | 実装違い | ふるまい | P3 | 検索条件をクリアを押すと、詳細検索条件（登録日・登録者・出庫承認者・出庫日・振替入庫承認者・入庫日）だけが空になり、在庫移動・振替IDや店舗・在庫区分・移動タイプ・ステータスといった上段の検索条件は入 |
 | sheet-14-R115 | 在庫移動・振替登録 編集 (移動) | 未実装 | IO | P3 | 在庫の更新に失敗して登録が取り消された場合、画面上部のエラー表示欄に、操作をやり直す（再実行する）よう促す文言が表示される。 |
 | sheet-14-R155 | 在庫移動・振替登録 編集 (移動) | 実装違い | IO | P3 | 登録ボタン押下時点の在庫数が在庫移動対象商品に記録され、その後に売上などで在庫が動いても移動前在庫数として登録時点の値が表示される。 |
-| sheet-14-R159 | 在庫移動・振替登録 編集 (移動) | 実装違い | IO | P3 | 登録時に記録される在庫変動履歴の変更後総原価が、実際に減算された後の総原価と同じ値になる。 |
 | sheet-14-R198 | 在庫移動・振替登録 編集 (移動) | 実装違い | IO | P3 | 移動点数は1以上1000000以下の整数だけを受け付け、1000000を超える値はエラーとなる。 |
 | sheet-14-R210 | 在庫移動・振替登録 編集 (移動) | 実装違い | ふるまい | P3 | 初期登録画面の在庫一覧リンクから戻ったとき、直前の検索条件に加えて在庫一覧で選んでいた商品の選択状態も元のまま復元される。 |
 | sheet-14-R230 | 在庫移動・振替登録 編集 (移動) | 実装違い | IO | P3 | CSVの行の並び順が在庫移動戻しリストPDFの並び順（ピッキング区分・棚番・言語・状態・Foil・略称タグ・レアリティ・色などの順）と同じになる。 |
@@ -139,7 +136,6 @@
 | sheet-22-R035 | 在庫履歴検索一覧(検索入力) | 実装違い | ふるまい | P3 | 入力値が画面部品一覧表の最大値を超える場合は、検索せずにエラーを表示する。 |
 | sheet-22-R045 | 在庫履歴検索一覧(検索入力) | 未実装 | IO | P3 | 初期表示で、ログインしているメンバーのデフォルト検索表示店舗が選択された状態になる。 |
 | sheet-22-R088 | 在庫履歴検索一覧(検索入力) | 実装違い | IO | P3 | 在庫増減数(from)には-99999999～99999999の値を入力でき、マイナスの増減数でも検索できる。 |
-| sheet-22-R090 | 在庫履歴検索一覧(検索入力) | 未実装 | ふるまい | P3 | 在庫増減数のFrom>Toを入力した場合はエラーを表示し検索を行わない。 |
 | sheet-22-R120 | 在庫履歴検索一覧(検索入力) | 実装違い | IO | P3 | 登録元の選択肢が、在庫編集・在庫一括更新・在庫変更CSV登録・在庫移動・在庫振替・在庫分割・在庫結合・在庫棚卸・受注・店頭買取・ネット買取の11種で表示される。 |
 | sheet-22-R146 | 在庫履歴検索一覧(検索入力) | 実装違い | IO | P3 | 最終更新日(to)に入力した日はその日いっぱいまでが検索対象に含まれる。 |
 | sheet-22-R149 | 在庫履歴検索一覧(検索入力) | 実装違い | ふるまい | P3 | 検索条件をクリアを押すと、アコーディオン内の識別ID2-1～2-37だけが空になり、上部表示項目（商品名・カード名・商品コード、店舗、在庫区分）の入力は残る。 |
@@ -154,7 +150,6 @@
 | sheet-26-R008 | 欠品履歴CSV出力 | 実装違い | IO | P3 | 欠品履歴CSVの7列目の見出しが「在庫区分」となり、値としてEC-CUBE／スマレジの別が出力される |
 | sheet-27-R120 | 在庫変更CSV登録 | 実装違い | IO | P3 | 承認日は年月日に加えて時刻（時分）まで表示される。 |
 | sheet-29-R029 | 在庫振替CSV登録 | 実装違い | ふるまい | P3 | 承認通知先メンバーを1人も選ばずに登録しようとした場合は登録されず、必須である旨のエラーが表示されること |
-| sheet-3-R006 | 共通処理 | 実装違い | IO | P3 | 登録処理が異常終了したとき、編集画面上に、失敗した旨に加えて数分後に再実行してほしいという案内を含むエラーが表示される |
 | sheet-3-R036 | 共通処理 | 実装違い | IO | P3 | 所属選択の選択肢が、所属マスタに設定された並び順の昇順で並ぶ |
 | sheet-30-R030 | 在庫分割CSV登録 | 実装違い | ふるまい | P3 | 承認通知先メンバーを1人も選ばずに登録しようとした場合は登録されず、必須である旨のエラーが表示されること |
 | sheet-32-R150 | 在庫移動指示検索 | 実装違い | ふるまい | P3 | 移動指示が1件も選択されていない間は在庫移動実績入力用CSVダウンロードと送り状CSVダウンロードの両方が押せず、行を選択して初めて両方が押せるようになる |
@@ -278,29 +273,6 @@
 - 判定根拠: 承認系で送信されるメールは承認依頼メール（sendStockApprovalAlertMail）と在庫承認一覧のステータス変更メールだけで、在庫移動の差分を出庫元へ知らせる経路がソース中に無い。
 - 確信度: high
 
-### sheet-15-R125 在庫移動・振替登録 編集(振替) — 実装違い／ふるまい／P2
-
-- 正本: sheet-15（在庫移動・振替登録 編集(振替)） HTML行 3510 付近
-- 正本引用: 「・[振替先]商品コードを入力し、フォームからカーソルが外れた際、入力した商品コードに紐づく振替先の商品名、言語、状態、Foil、基準価格を表示する」
-- 設計期待値: [振替先]商品コード欄に商品コードを入れてカーソルを外すと、その商品コードの商品名・言語・状態・Foil・基準価格が振替先の欄に表示される。
-- 画像確認: sheet-15_img2.png（初期登録画面レイアウト）で在庫移動・振替情報／入出庫基本情報／在庫移動・振替内容／メモ／フッタの構成を確認。 img2では振替先商品コード欄に商品コードが直接入っている行が描かれている。
-- 実装参照: `src/Eccube/Resource/template/admin/Stock/transfer_new.twig:342`
-- 実装実態: 振替先商品コード欄が readonly で描画され、入力欄からカーソルが外れた時に振替先情報を表示する処理が無い。表示されるのは商品検索モーダルで決定したときだけ。
-- 同じ実装実態でまとまる要求: sheet-15-R131（在庫移動・振替登録 編集(振替)）
-- 判定根拠: 振替先商品コードの入力欄は読み取り専用で描画されており、フォーカスが外れた時に商品情報を引く処理が存在しない。振替先の商品名・言語・状態・Foil・基準価格は商品検索モーダルで商品を決定したときにだけ表示される。
-- 確信度: high
-
-### sheet-15-R139 在庫移動・振替登録 編集(振替) — 実装違い／ふるまい／P2
-
-- 正本: sheet-15（在庫移動・振替登録 編集(振替)） HTML行 3525 付近
-- 正本引用: 「・在庫一覧の検索条件と、振替対象商品の選択状態を維持し遷移を行う」
-- 設計期待値: 在庫一覧リンクで戻ったとき、直前の検索条件に加えて振替対象として選択済みの在庫がチェックされた状態で表示される。
-- 画像確認: sheet-15_img1.png のフッタ『在庫一覧』リンクを確認。選択状態の維持は図からは判定できないため本文の記述で判定。
-- 実装参照: `src/Eccube/Resource/template/admin/Stock/transfer_new.twig:409;src/Eccube/Controller/Admin/Stock/StockListController.php:163-190;src/Eccube/Resource/template/admin/Stock/stock_list_index.twig:574-583`
-- 実装実態: 在庫一覧へは検索条件の復元指示だけを付けて戻り、検索条件は保存済みの内容から復元されるが、選択済み在庫IDはどこにも保持されず、一覧のチェックボックスは常に未選択で描画される。
-- 判定根拠: 在庫一覧へ戻ると検索条件は復元されるが、振替対象として選んでいた在庫のチェック状態は復元されず、選び直しのたびに全件を選択し直す必要がある。
-- 確信度: high
-
 ### sheet-15-R146 在庫移動・振替登録 編集(振替) — 未実装／ふるまい／P2
 
 - 正本: sheet-15（在庫移動・振替登録 編集(振替)） HTML行 3532 付近
@@ -355,7 +327,8 @@
 - 画像確認: レイアウト図(sheet-15_img2.png/img1.png)＝初期登録画面を確認。レイアウト図では振替先の商品コードが通常の入力欄として描かれ、その下に検索ボタンがある。
 - 実装参照: `src/Eccube/Resource/template/admin/Stock/transfer_new.twig:342;src/Eccube/Form/Type/Admin/StockTransferNewDetailType.php:47-57`
 - 実装実態: 振替先商品コード欄は読み取り専用で描画されており、キーボードから直接入力できない。値を入れる手段は商品検索モーダルで選ぶ経路だけである。
-- 判定根拠: src/Eccube/Resource/template/admin/Stock/transfer_new.twig:342 が入力欄に読み取り専用属性を付けて描画している。フォーム定義（src/Eccube/Form/Type/Admin/StockTransferNewDetailType.php:47-57）は未入力チェックだけで、半角英数の書式チェックも無い。
+- 同じ実装実態でまとまる要求: sheet-15-R125（在庫移動・振替登録 編集(振替) / 実装参照 `src/Eccube/Resource/template/admin/Stock/transfer_new.twig:342`）、sheet-15-R131（在庫移動・振替登録 編集(振替) / 実装参照 `src/Eccube/Resource/template/admin/Stock/transfer_new.twig:342`）
+- 判定根拠: [gate7/codex] sheet-15-R125 と同じ実装欠陥として畳む。sheet-15-R125へ畳む src/Eccube/Resource/template/admin/Stock/transfer_new.twig:342 が入力欄に読み取り専用属性を付けて描画している。フォーム定義（src/Eccube/Form/Type/Admin/StockTransferNewDetailType.php:47-57）は未入力チェックだけで、半角英数の書式チェックも無い。
 - 確信度: high
 
 ### sheet-15-R221 在庫移動・振替登録 編集(振替) — 実装違い／ふるまい／P2
@@ -366,7 +339,8 @@
 - 画像確認: レイアウト図(sheet-15_img2.png/img1.png)＝初期登録画面を確認。フッタの在庫一覧リンクの配置を確認。
 - 実装参照: `src/Eccube/Resource/template/admin/Stock/transfer_new.twig:409;src/Eccube/Resource/template/admin/Stock/stock_list_index.twig:571-583;src/Eccube/Resource/template/admin/Stock/stock_list_index.twig:758-766`
 - 実装実態: 戻った先の在庫一覧では検索条件は復元されるが、振替対象として選んでいた行のチェックはすべて外れており、選び直しの際に元の選択を入れ直す必要がある。
-- 判定根拠: src/Eccube/Resource/template/admin/Stock/transfer_new.twig:409 は検索条件の復元指示だけを付けて在庫一覧へ戻る。src/Eccube/Controller/Admin/Stock/StockListController.php:162-192 は検索条件のみ復元し、src/Eccube/Resource/template/admin/Stock/stock_list_index.twig:571-583 の選択欄は常に未選択で描画され、選択状態を保持・復元する処理が無い。
+- 同じ実装実態でまとまる要求: sheet-15-R139（在庫移動・振替登録 編集(振替) / 実装参照 `src/Eccube/Resource/template/admin/Stock/transfer_new.twig:409;src/Eccube/Controller/Admin/Stock/StockListController.php:163-190;src/Eccube/Resource/template/admin/Stock/stock_list_index.twig:574-583`）
+- 判定根拠: [gate7/codex] sheet-15-R139 と同じ実装欠陥として畳む。sheet-15-R139へ畳む src/Eccube/Resource/template/admin/Stock/transfer_new.twig:409 は検索条件の復元指示だけを付けて在庫一覧へ戻る。src/Eccube/Controller/Admin/Stock/StockListController.php:162-192 は検索条件のみ復元し、src/Eccube/Resource/template/admin/Stock/stock_list_index.twig:571-583 の選択欄は常に未選択で描画され、選択状態を保持・復元する処理が無い。
 - 確信度: med
 
 ### sheet-15-R286 在庫移動・振替登録 編集(振替) — 実装違い／ふるまい／P2
@@ -507,6 +481,18 @@
 - 判定根拠: src/Eccube/Repository/DtbStockHistoryRepository.php:222-227 は sh.stock（変更後在庫）のみを比較する。変更前在庫はsrc/Eccube/Entity/DtbStockHistory.php:108 に別項目として保持され、一覧にも「変更前在庫」列として表示される（src/Eccube/Resource/template/admin/Stock/history.twig:752）。
 - 確信度: high
 
+### sheet-22-R090 在庫履歴検索一覧(検索入力) — 未実装／ふるまい／P2
+
+- 正本: sheet-22（在庫履歴検索一覧(検索入力)） HTML行 5396 付近
+- 正本引用: 「在庫増減数(From)>在庫増減数(To)の場合エラーとし検索を行わない」
+- 設計期待値: 在庫増減数のFrom>Toを入力した場合はエラーを表示し検索を行わない。
+- 画像確認: レイアウト図（sheet-22_img1.png）で該当箇所を確認した。
+- 実装参照: `src/Eccube/Form/Type/Admin/StockHistoryType.php:510-562`
+- 実装実態: 在庫増減数のFrom>Toを検査しておらず、逆転入力でもエラーにならずそのまま0件の結果になる。
+- 同じ実装実態でまとまる要求: sheet-22-R100（在庫履歴検索一覧(検索入力)）、sheet-22-R107（在庫履歴検索一覧(検索入力) / 実装参照 `src/Eccube/Form/Type/Admin/StockHistoryType.php:510-562; src/Eccube/Form/Type/Admin/StockHistoryType.php:274-293`）、sheet-22-R116（在庫履歴検索一覧(検索入力) / 実装参照 `src/Eccube/Form/Type/Admin/StockHistoryType.php:510-562; src/Eccube/Form/Type/Admin/StockHistoryType.php:294-309`）、sheet-22-R036（在庫履歴検索一覧(検索入力)）
+- 判定根拠: [gate7/refute] 重要度を P2 へ。事実は確認できた（StockHistoryType.php:510-562 に在庫増減数の比較が無い）。ただしR036と同一欠陥で、実害は0件表示止まり・入力訂正で即回避できる。P2→P3へ修正した。 src/Eccube/Form/Type/Admin/StockHistoryType.php:510-562 の入力後チェックに在庫増減数の比較が無い（登録日・在庫数・変更時販売価格・承認日・最終更新日のみ）。
+- 確信度: high
+
 ### sheet-22-R148 在庫履歴検索一覧(検索入力) — 実装違い／IO／P2
 
 - 正本: sheet-22（在庫履歴検索一覧(検索入力)） HTML行 5454 付近
@@ -644,17 +630,6 @@
 - 判定根拠: 在庫編集承認一覧はこの項目をそのまま合計総原価増減数として表示するため（src/Eccube/Service/Admin/Stock/ApprovalListRowBuilder.php:110,129, src/Eccube/Entity/DtbStockApprovalList.php:273-286）、CSV登録の行だけ増減額ではなく現在の総原価合計が出る。
 - 確信度: high
 
-### sheet-27-R085 在庫変更CSV登録 — 未実装／IO／P2
-
-- 正本: sheet-27（在庫変更CSV登録） HTML行 6098 付近
-- 正本引用: 「2-13.承認通知先にて指定したメンバーを通知送付者として在庫編集承認一覧に表示されるようにする」
-- 設計期待値: CSV登録時に指定した承認通知先のメンバーが、在庫編集承認一覧で通知送付者として確認できる。
-- 画像確認: img1の履歴一覧・承認一覧の列に通知送付者が無いことを確認。
-- 実装参照: `src/Eccube/Controller/Admin/Stock/StockChangeCsvController.php:336-341;src/Eccube/Service/Csv/Importer/Event/StockChangeCsvImportHandler.php:329;src/Eccube/Repository/DtbStockEditApprovalDetailRepository.php:60-115;src/Eccube/Service/Admin/Stock/ApprovalListRowBuilder.php:118-136`
-- 実装実態: 承認通知先で選んだメンバーはメール送信に使われるだけで、どこにも登録されていない（src/Eccube/Controller/Admin/Stock/StockChangeCsvController.php:336-341）。明細登録に渡す値にも所属だけがあり、実際の登録文には含まれない（src/Eccube/Service/Csv/Importer/Event/StockChangeCsvImportHandler.php:329, src/Eccube/Repository/DtbStockEditApprovalDetailRepository.php:62-113）。在庫編集承認一覧の表示項目にも通知送付者は無い（src/Eccube/Service/Admin/Stock/ApprovalListRowBuilder.php:118-136）。
-- 判定根拠: 指定した通知先が保存されないため、承認者側で誰に通知が行ったかを画面で確認できない。なお在庫編集承認一覧(検索結果)シートの表示項目（2-1〜2-12）にも通知送付者の列は定義されておらず、表示先の定義自体が正本に無い。
-- 確信度: med
-
 ### sheet-27-R134 在庫変更CSV登録 — 実装違い／ふるまい／P2
 
 - 正本: sheet-27（在庫変更CSV登録） HTML行 6153 付近
@@ -754,6 +729,7 @@
 - 画像確認: img2=移動指示リスト一覧（チェックボックス/移動指示IDリンク/送り状No.列の登録ボタン/発送状況「済」「未」/ページネーション）を確認。画面上に権限による活性/非活性の差を示す表現は無い
 - 実装参照: `src/Eccube/Controller/Admin/Stock/StockMoveInstructionController.php:283-331;src/Eccube/Controller/Admin/Stock/StockMoveInstructionController.php:456-544;src/Eccube/Controller/Admin/Stock/StockMoveInstructionController.php:336-365;src/Eccube/Form/Type/Admin/SearchStockMoveInstructionType.php:49-69`
 - 実装実態: 送り状No.登録（src/Eccube/Controller/Admin/Stock/StockMoveInstructionController.php:283-331）、在庫移動実績CSV登録（src/Eccube/Controller/Admin/Stock/StockMoveInstructionController.php:456-544）、詳細更新、削除（src/Eccube/Controller/Admin/Stock/StockMoveInstructionController.php:336-365）のいずれにも編集可能店舗の判定が無く、出庫元店舗が自分の編集可能店舗でない在庫移動指示でも更新できる。出庫元店舗・入庫先店舗のプルダウンも全店舗が対象で絞り込まれていない（src/Eccube/Form/Type/Admin/SearchStockMoveInstructionType.php:49-69）
+- 同じ実装実態でまとまる要求: sheet-33-R007（在庫移動指示詳細 / 実装参照 `src/Eccube/Controller/Admin/Stock/StockMoveInstructionController.php:190-278; src/Eccube/Controller/Admin/Stock/StockMoveInstructionController.php:336-361`）
 - 判定根拠: 参照先の 0201 権限制御シート 2-1 は在庫管理メニュー配下の機能について編集可能店舗のデータのみ編集可能とし、2-4 は権限のない店舗の情報は表示するが更新処理時に権限エラーとすると定める。ee には Member::isEditableShop（src/Eccube/Entity/Member.php:78）があり、在庫系の他画面ではsrc/Eccube/Controller/Admin/Stock/StockTransferController.php:244 のように更新前判定として使われているが、在庫移動指示の更新経路には一切現れない。src/Eccube/Security/Voter/AuthorityVoter.php:33 のURL単位判定はアクセス可否の制御であって、店舗単位の編集可否ではない
 - 確信度: med
 
@@ -767,17 +743,6 @@
 - 実装実態: エラー行はスキップされるだけで後続行の処理が続き、エラーが混在していてもエラーの無い行の送り状No.登録が確定する（src/Eccube/Service/Csv/Importer/CsvImporter.php:270-275 は打ち切りが起きていなければエラー有りでも確定させる。在庫移動実績CSVの行エラーは src/Eccube/Service/Csv/Importer/Event/StockMoveInstructionCsvImportHandler.php:97-101 で行スキップ扱い）。その結果、エラー一覧と「送り状No.を一括登録しました。」が同時に出る（src/Eccube/Controller/Admin/Stock/StockMoveInstructionController.php:484-491）。またエラーメッセージは「N行目: 移動指示が見つかりません」の形式で、移動指示IDを含まない
 - 判定根拠: 設計は「エラーがある場合、登録処理を終了し」＋「エラーがなければ登録処理を行う」（sheet-32-R136）で全件成立か全件不成立かを求めているが、実装は部分成立になる。20件超のときの切り詰め自体は src/Eccube/Controller/Admin/Stock/StockMoveInstructionController.php:479-483 で設計どおりだが、登録を止めない点と、メッセージに移動指示IDが入らない点が設計と異なる
 - 確信度: high
-
-### sheet-33-R007 在庫移動指示詳細 — 未実装／ふるまい／P2
-
-- 正本: sheet-33（在庫移動指示詳細） HTML行 6978 付近
-- 正本引用: 「・0201_基本設計仕様書(システム設定).xlsxの権限制御シート（機能ID: M11-03）の「2.編集可能店舗処理」に応じた権限制御が行われる」
-- 設計期待値: 編集可能店舗として許可されていない店舗の在庫移動指示は、送り状No.・備考の更新も削除もできず権限エラーとなる（参照だけは可能）。
-- 画像確認: img1(在庫移動指示詳細のレイアウト図)を確認。店舗による表示差の注記は図に無い。
-- 実装参照: `src/Eccube/Controller/Admin/Stock/StockMoveInstructionController.php:190-278; src/Eccube/Controller/Admin/Stock/StockMoveInstructionController.php:336-361`
-- 実装実態: 送り状No.・備考の更新（src/Eccube/Controller/Admin/Stock/StockMoveInstructionController.php:190-278）も削除（src/Eccube/Controller/Admin/Stock/StockMoveInstructionController.php:336-361）も、ログイン中の担当者の編集可能店舗と出庫元店舗を突き合わせていない。編集可能店舗に含まれない店舗の在庫移動指示でも更新・削除が通る。
-- 判定根拠: 参照元のM11-03「2.編集可能店舗処理」は、在庫管理の機能では編集可能店舗の店舗データのみ編集可能とし（2-1）、編集権限の無い店舗は画面参照は許すが更新時に権限エラーとする（2-3/2-4）と定める。ee内でも同じ考え方で実装されている箇所がある（src/Eccube/Controller/Admin/Event/EventController.php:294 と src/Eccube/Resource/template/admin/Event/edit.twig:405 が参照は許し操作だけ塞ぐ、src/Eccube/Controller/Admin/Stock/StockMoveController.php:527-536 が出庫元店舗と突き合わせて拒否する）。在庫移動指示詳細の更新・削除にはその判定が無く、共通の権限判定側にも店舗単位の制限は無い（src/Eccube/Security/Voter/AuthorityVoter.php）。なお参照が可能なこと自体は2-3/2-4どおりで指摘に含めない。
-- 確信度: med
 
 ### sheet-34-R003 在庫移動指示リスト ピッキングリスト印刷 — 未実装／ふるまい／P2
 
@@ -832,7 +797,7 @@
 - 画像確認: sheet-45_img1 では承認済・却下済の在庫編集行の承認対象もリンク表示（青字）になっている。
 - 実装参照: `src/Eccube/Service/Admin/Stock/ApprovalListRowBuilder.php:62-64; src/Eccube/Service/Admin/Stock/ApprovalListRowBuilder.php:86-92; src/Eccube/Resource/template/admin/Stock/approval_list.twig:514-523`
 - 実装実態: モーダルを開くリンクになるのは、承認状態が未承認かつ登録者がログインユーザー以外の行だけ（src/Eccube/Service/Admin/Stock/ApprovalListRowBuilder.php:90-92、src/Eccube/Resource/template/admin/Stock/approval_list.twig:515-518）。承認済・却下済の行や自分が登録した行では、遷移先の無いリンク（href="#"）が描画されるだけで押下しても何も表示されない（src/Eccube/Service/Admin/Stock/ApprovalListRowBuilder.php:63、src/Eccube/Resource/template/admin/Stock/approval_list.twig:520-522）。
-- 同じ実装実態でまとまる要求: sheet-45-R126（在庫編集承認一覧(検索結果) / 実装参照 `src/Eccube/Service/Admin/Stock/ApprovalListRowBuilder.php:62-64;src/Eccube/Service/Admin/Stock/ApprovalListRowBuilder.php:90-92;src/Eccube/Resource/template/admin/Stock/approval_list.twig:514-522`）、sheet-45-R135（在庫編集承認一覧(検索結果) / 実装参照 `src/Eccube/Service/Admin/Stock/ApprovalListRowBuilder.php:62-64;src/Eccube/Service/Admin/Stock/ApprovalListRowBuilder.php:90-92;src/Eccube/Resource/template/admin/Stock/approval_list.twig:514-522`）、sheet-45-R141（在庫編集承認一覧(検索結果) / 実装参照 `src/Eccube/Service/Admin/Stock/ApprovalListRowBuilder.php:62-64;src/Eccube/Service/Admin/Stock/ApprovalListRowBuilder.php:90-92;src/Eccube/Resource/template/admin/Stock/approval_list.twig:514-522;src/Eccube/Service/Admin/Stock/StockEditLineItemRowBuilder.php:47-49`）、sheet-45-R151（在庫編集承認一覧(検索結果) / 実装参照 `src/Eccube/Service/Admin/Stock/ApprovalListRowBuilder.php:62-64;src/Eccube/Service/Admin/Stock/ApprovalListRowBuilder.php:90-92;src/Eccube/Resource/template/admin/Stock/approval_list.twig:514-522`）、sheet-45-R161（在庫編集承認一覧(検索結果) / 実装参照 `src/Eccube/Service/Admin/Stock/ApprovalListRowBuilder.php:62-64;src/Eccube/Service/Admin/Stock/ApprovalListRowBuilder.php:90-92;src/Eccube/Resource/template/admin/Stock/approval_list.twig:514-522`）、sheet-45-R167（在庫編集承認一覧(検索結果) / 実装参照 `src/Eccube/Service/Admin/Stock/ApprovalListRowBuilder.php:62-64;src/Eccube/Service/Admin/Stock/ApprovalListRowBuilder.php:90-92;src/Eccube/Resource/template/admin/Stock/approval_list.twig:514-522;src/Eccube/Service/Admin/Stock/StockEditLineItemRowBuilder.php:51-57`）
+- 同じ実装実態でまとまる要求: sheet-45-R135（在庫編集承認一覧(検索結果) / 実装参照 `src/Eccube/Service/Admin/Stock/ApprovalListRowBuilder.php:62-64;src/Eccube/Service/Admin/Stock/ApprovalListRowBuilder.php:90-92;src/Eccube/Resource/template/admin/Stock/approval_list.twig:514-522`）、sheet-45-R151（在庫編集承認一覧(検索結果) / 実装参照 `src/Eccube/Service/Admin/Stock/ApprovalListRowBuilder.php:62-64;src/Eccube/Service/Admin/Stock/ApprovalListRowBuilder.php:90-92;src/Eccube/Resource/template/admin/Stock/approval_list.twig:514-522`）、sheet-45-R161（在庫編集承認一覧(検索結果) / 実装参照 `src/Eccube/Service/Admin/Stock/ApprovalListRowBuilder.php:62-64;src/Eccube/Service/Admin/Stock/ApprovalListRowBuilder.php:90-92;src/Eccube/Resource/template/admin/Stock/approval_list.twig:514-522`）、sheet-45-R126（在庫編集承認一覧(検索結果) / 実装参照 `src/Eccube/Service/Admin/Stock/ApprovalListRowBuilder.php:62-64;src/Eccube/Service/Admin/Stock/ApprovalListRowBuilder.php:90-92;src/Eccube/Resource/template/admin/Stock/approval_list.twig:514-522`）、sheet-45-R141（在庫編集承認一覧(検索結果) / 実装参照 `src/Eccube/Service/Admin/Stock/ApprovalListRowBuilder.php:62-64;src/Eccube/Service/Admin/Stock/ApprovalListRowBuilder.php:90-92;src/Eccube/Resource/template/admin/Stock/approval_list.twig:514-522;src/Eccube/Service/Admin/Stock/StockEditLineItemRowBuilder.php:47-49`）、sheet-45-R167（在庫編集承認一覧(検索結果) / 実装参照 `src/Eccube/Service/Admin/Stock/ApprovalListRowBuilder.php:62-64;src/Eccube/Service/Admin/Stock/ApprovalListRowBuilder.php:90-92;src/Eccube/Resource/template/admin/Stock/approval_list.twig:514-522;src/Eccube/Service/Admin/Stock/StockEditLineItemRowBuilder.php:51-57`）
 - 判定根拠: src/Eccube/Service/Admin/Stock/ApprovalListRowBuilder.php:63 で承認対象リンクの初期値が "#" で、在庫移動/振替/分割/結合のときだけ実URLが設定される（src/Eccube/Service/Admin/Stock/ApprovalListRowBuilder.php:67-84）。編集系3種は "#" のまま src/Eccube/Resource/template/admin/Stock/approval_list.twig:520 の分岐へ落ちる。
 - 確信度: high
 
@@ -936,8 +901,20 @@
 - 画像確認: sheet-51 の画像12枚を一通り確認。img1/img3 は現行画面の参考、img2/img4〜img9 は計算式、img10〜img12 は在庫編集・CSVの項目で、この行に関わる追加の文言は画像内に無い。
 - 実装参照: `src/Eccube/Service/Admin/Stock/StockMoveStoreAction.php:104-138;src/Eccube/Resource/template/admin/Stock/history.twig:784`
 - 実装実態: 在庫そのものには減算後の総原価7692を保存する一方、在庫履歴の変更後総原価には正の移動数を渡して求めた加算後の値（10000＋2308＝12308）を入れている（StockMoveStoreAction.php:119,123,135）。増減数も正の3が入る（同 113）。在庫履歴一覧の変更後総原価列（history.twig:784）に在庫の実額と食い違う値が出る。
-- 同じ実装実態でまとまる要求: sheet-51-R231（別添資料_在庫変動時の履歴作成について / 実装参照 `src/Eccube/Service/Admin/Stock/StockMoveStoreAction.php:104-138`）、sheet-51-R280（別添資料_在庫変動時の履歴作成について / 実装参照 `src/Eccube/Service/Admin/Stock/StockTransferStoreAction.php:110-143;src/Eccube/Resource/template/admin/Stock/history.twig:784`）
-- 判定根拠: 同じ出庫を作る在庫移動CSV取込は減算後の値を履歴に入れており（StockMoveCsvImportHandler.php:178-194）、在庫分割の出庫も負の増減数と減算後の総原価を入れている（StockSplitRegisterAction.php:161-170）。StockMoveStoreAction だけ符号の扱いが違う。
+- 同じ実装実態でまとまる要求: sheet-14-R159（在庫移動・振替登録 編集 (移動) / 実装参照 `src/Eccube/Service/Admin/Stock/StockMoveStoreAction.php:106-120;src/Eccube/Service/Csv/Importer/Event/StockMoveCsvImportHandler.php:180-194`）
+- 判定根拠: [gate7/review] sheet-14-R159 と同じ実装欠陥として畳む。 同じ出庫を作る在庫移動CSV取込は減算後の値を履歴に入れており（StockMoveCsvImportHandler.php:178-194）、在庫分割の出庫も負の増減数と減算後の総原価を入れている（StockSplitRegisterAction.php:161-170）。StockMoveStoreAction だけ符号の扱いが違う。
+- 確信度: high
+
+### sheet-51-R231 別添資料_在庫変動時の履歴作成について — 実装違い／IO／P2
+
+- 正本: sheet-51（別添資料_在庫変動時の履歴作成について） HTML行 8886 付近
+- 正本引用: 「     ※出庫の場合は入力なし  ※変更後総原価 = 変更前総原価 ー （変更前総原価 × (出庫数 / 総在庫））    ※在庫変動理由はシステムにより自動登録する 10000 - (10000 × (3 / 13)) = 10000 - 2308(2307.69…を四捨五入) = 7692」
+- 設計期待値: 出庫の在庫履歴の変更後総原価が「変更前総原価−(変更前総原価×(出庫数÷総在庫))」の結果（例では7692）になる。
+- 画像確認: sheet-51 の画像12枚を一通り確認。img1/img3 は現行画面の参考、img2/img4〜img9 は計算式、img10〜img12 は在庫編集・CSVの項目で、この行に関わる追加の文言は画像内に無い。
+- 実装参照: `src/Eccube/Service/Admin/Stock/StockMoveStoreAction.php:104-138`
+- 実装実態: 履歴の変更後総原価は正の移動数で getTotalCostAfterChange を呼ぶため引き算ではなく足し算になり、例の条件では7692ではなく12308が入る（StockMoveStoreAction.php:123,135）。
+- 同じ実装実態でまとまる要求: sheet-51-R280（別添資料_在庫変動時の履歴作成について / 実装参照 `src/Eccube/Service/Admin/Stock/StockTransferStoreAction.php:110-143;src/Eccube/Resource/template/admin/Stock/history.twig:784`）
+- 判定根拠: ProductStock::getTotalCostAfterChange は「総原価＋総原価×(増減数/在庫数)」なので、減算にするには負の増減数を渡す必要がある（ProductStock.php:333-345）。在庫本体の更新側は負値を渡していて正しい（StockMoveStoreAction.php:105）。
 - 確信度: high
 
 ### sheet-51-R281 別添資料_在庫変動時の履歴作成について — 実装違い／IO／P2
@@ -1026,6 +1003,7 @@
 - 画像確認: sheet-14の画像26枚を通覧。本行に対応する記述は画像内に無い。
 - 実装参照: `src/Eccube/Controller/Admin/Stock/StockMoveController.php:279-291; src/Eccube/Resource/locale/messages.ja.yaml:4582-4624`
 - 実装実態: 登録処理が失敗した場合に画面上部へ出るのは汎用の「保存に失敗しました」（admin.common.save_error）のみで、再実行を促す文言は表示されない。在庫移動用のメッセージ定義（messages.ja.yaml:4582-4624）にも再実行を促す文言は存在しない。
+- 同じ実装実態でまとまる要求: sheet-3-R006（共通処理 / 実装参照 `src/Eccube/Controller/Admin/Stock/StockApprovalController.php:126-131;src/Eccube/Resource/locale/messages.ja.yaml:1596`）
 - 判定根拠: StockMoveController.php:279-291 の失敗時分岐が addError('admin.common.save_error') だけを積む。messages.ja.yaml を「再実行」「再度お試し」で検索しても在庫移動用の文言は無く（在庫反映の admin.product.inventory_plan.stock_reflect_error のような文言に相当するものが無い）、設計が求める再実行案内が画面に出ない。
 - 確信度: high
 
@@ -1038,17 +1016,6 @@
 - 実装参照: `src/Eccube/Entity/DtbStockMoveTransferDetail.php:85-132;src/Eccube/Resource/template/admin/Stock/move_outbound_approval_request.twig:399`
 - 実装実態: 在庫移動対象商品に登録時点の在庫数を保持する項目が無く、ピック画面の移動前在庫数は「現在の移動元在庫数＋移動点数」で毎回計算している。登録後に別要因で在庫が増減すると表示値が登録時点の在庫数とずれる。
 - 判定根拠: 在庫数の保存項目が明細に存在せず、表示は現在在庫からの逆算であることを確認した。
-- 確信度: med
-
-### sheet-14-R159 在庫移動・振替登録 編集 (移動) — 実装違い／IO／P3
-
-- 正本: sheet-14（在庫移動・振替登録 編集 (移動)） HTML行 2696 付近
-- 正本引用: 「・入力された移動点数分、在庫移動対象商品の在庫と総原価を減らし、在庫変動履歴を登録する」
-- 設計期待値: 登録時に記録される在庫変動履歴の変更後総原価が、実際に減算された後の総原価と同じ値になる。
-- 画像確認: 初期登録画面のレイアウト図はsheet-14_img1.png/img2.png（登録確認モーダルはimg3.png、出庫総原価の計算式はimg8.png）。
-- 実装参照: `src/Eccube/Service/Admin/Stock/StockMoveStoreAction.php:106-120;src/Eccube/Service/Csv/Importer/Event/StockMoveCsvImportHandler.php:180-194`
-- 実装実態: 在庫と総原価の減算自体は移動点数分の減算で正しく行われるが、在庫変動履歴に記録する変更後総原価だけが減算ではなく加算した値になっている。同じ在庫移動登録でもCSV取込経路は減算後の値を記録しており、画面登録経路だけ在庫履歴の総原価が実際の在庫と食い違う。
-- 判定根拠: 減算後の総原価と履歴に渡す変更後総原価の算出符号が逆であることを確認した。
 - 確信度: med
 
 ### sheet-14-R198 在庫移動・振替登録 編集 (移動) — 実装違い／IO／P3
@@ -1422,18 +1389,6 @@
 - 判定根拠: src/Eccube/Form/Type/Admin/StockHistoryType.php:258-265 が入力欄の下限を0にしている。項目表の最大値欄は -99999999～99999999。
 - 確信度: med
 
-### sheet-22-R090 在庫履歴検索一覧(検索入力) — 未実装／ふるまい／P3
-
-- 正本: sheet-22（在庫履歴検索一覧(検索入力)） HTML行 5396 付近
-- 正本引用: 「在庫増減数(From)>在庫増減数(To)の場合エラーとし検索を行わない」
-- 設計期待値: 在庫増減数のFrom>Toを入力した場合はエラーを表示し検索を行わない。
-- 画像確認: レイアウト図（sheet-22_img1.png）で該当箇所を確認した。
-- 実装参照: `src/Eccube/Form/Type/Admin/StockHistoryType.php:510-562`
-- 実装実態: 在庫増減数のFrom>Toを検査しておらず、逆転入力でもエラーにならずそのまま0件の結果になる。
-- 同じ実装実態でまとまる要求: sheet-22-R100（在庫履歴検索一覧(検索入力)）、sheet-22-R107（在庫履歴検索一覧(検索入力) / 実装参照 `src/Eccube/Form/Type/Admin/StockHistoryType.php:510-562; src/Eccube/Form/Type/Admin/StockHistoryType.php:274-293`）、sheet-22-R116（在庫履歴検索一覧(検索入力) / 実装参照 `src/Eccube/Form/Type/Admin/StockHistoryType.php:510-562; src/Eccube/Form/Type/Admin/StockHistoryType.php:294-309`）、sheet-22-R036（在庫履歴検索一覧(検索入力)）
-- 判定根拠: src/Eccube/Form/Type/Admin/StockHistoryType.php:510-562 の入力後チェックに在庫増減数の比較が無い（登録日・在庫数・変更時販売価格・承認日・最終更新日のみ）。
-- 確信度: high
-
 ### sheet-22-R120 在庫履歴検索一覧(検索入力) — 実装違い／IO／P3
 
 - 正本: sheet-22（在庫履歴検索一覧(検索入力)） HTML行 5426 付近
@@ -1601,17 +1556,6 @@
 - 実装参照: `src/Eccube/Form/Type/Admin/StockTransferCsvImportType.php:88-104; src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:355-395; src/Eccube/Resource/template/admin/Stock/MoveTransfer/index.twig:952-966`
 - 実装実態: モーダルには必須バッジ付きで表示されるが（src/Eccube/Resource/template/admin/Stock/MoveTransfer/index.twig:954）、メンバー欄は任意扱いで未入力を止める検証が無く、未選択のまま登録しても取り込みはそのまま実行され承認通知メールだけが送られない
 - 判定根拠: src/Eccube/Form/Type/Admin/StockTransferCsvImportType.php:88-104 のメンバー欄には必須の指定が無く、src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:361-369 の入力検証も通ってしまう。画像でも「承認通知先 必須」と表示されている
-- 確信度: med
-
-### sheet-3-R006 共通処理 — 実装違い／IO／P3
-
-- 正本: sheet-3（共通処理） HTML行 1130 付近
-- 正本引用: 「1-1-1.編集画面上で、失敗した旨を通知するため、失敗した旨と数分後に再実行してもらうエラーを表示する」
-- 設計期待値: 登録処理が異常終了したとき、編集画面上に、失敗した旨に加えて数分後に再実行してほしいという案内を含むエラーが表示される
-- 画像確認: sheet-3 には images/sheet-3_img*.png が1枚も無い（画像0枚）。共通処理シートは文章と表のみで、図中文言に依存する判定は無い
-- 実装参照: `src/Eccube/Controller/Admin/Stock/StockApprovalController.php:126-131;src/Eccube/Resource/locale/messages.ja.yaml:1596`
-- 実装実態: 登録処理の例外を捕捉した際に編集画面へ戻して表示するのは「保存に失敗しました」の一文のみで、数分後に再実行してほしいという案内が含まれない
-- 判定根拠: StockApprovalController.php:128 が addError で表示する文言は messages.ja.yaml:1596 の admin.common.save_error＝「保存に失敗しました」。失敗した旨は出るが、設計が求める再実行の案内が画面に出ない
 - 確信度: med
 
 ### sheet-3-R036 共通処理 — 実装違い／IO／P3
@@ -1857,7 +1801,7 @@
 | sheet-24 | 在庫変動履歴CSV出力 | 70 | 0 | 7 | 0 | 63 |
 | sheet-25 | 欠品履歴検索一覧(検索結果) | 87 | 1 | 9 | 1 | 76 |
 | sheet-26 | 欠品履歴CSV出力 | 32 | 1 | 2 | 0 | 29 |
-| sheet-27 | 在庫変更CSV登録 | 154 | 20 | 5 | 1 | 128 |
+| sheet-27 | 在庫変更CSV登録 | 154 | 19 | 5 | 1 | 129 |
 | sheet-28 | 在庫移動CSV登録 | 36 | 0 | 1 | 0 | 35 |
 | sheet-29 | 在庫振替CSV登録 | 40 | 1 | 1 | 2 | 36 |
 | sheet-30 | 在庫分割CSV登録 | 42 | 0 | 2 | 0 | 40 |
@@ -1883,5 +1827,5 @@
 | sheet-50 | エラー表示 | 15 | 0 | 0 | 0 | 15 |
 | sheet-51 | 別添資料_在庫変動時の履歴作成について | 431 | 2 | 32 | 6 | 391 |
 | sheet-52 | 別添資料_在庫移動ステータス遷移概要 | 105 | 0 | 0 | 10 | 95 |
-| sheet-53 | 別添資料_リコメンドCSV出力仕様 | 26 | 0 | 0 | 1 | 25 |
+| sheet-53 | 別添資料_リコメンドCSV出力仕様 | 26 | 0 | 0 | 0 | 26 |
 
