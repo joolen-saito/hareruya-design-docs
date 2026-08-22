@@ -2,101 +2,40 @@
 
 ## 業務ロジック
 
-### 取得対象
+### 応答に含めない商品規格
 
-パスで指定されたカード詳細IDが属するカードに紐づく買取用商品を取得する。取得結果が空のときはページが見つからない扱い（404）とする。
+次のいずれかに当てはまる商品規格は、応答に含めない。
 
-### 応答値の扱い
+- 商品に商品画像が1件も結び付いていない
+- カード詳細にレアリティが結び付いていない
+- 商品規格に、買取価格・部門IDを保持する付随情報が結び付いていない
+- その付随情報に言語が結び付いていない
+- その付随情報に状態が結び付いていない
 
-金額・税・ポイント・在庫数量の再計算や丸めは行わない。取得時点の値をJSON応答へ整形して返す。表示用の加工と表示制御は呼び出し元クライアントの設計を正とする。
+カードセット・プロモーション・略称タグは結び付いていなくても応答から除かず、該当項目を値なしで返す。
 
-### 応答の階層
+### 同じ組に複数の商品規格が該当したときの扱い
 
-応答はカードIDをキーとする `cards` オブジェクトを最上位に持つ階層構造とする。各カードの配下にカード詳細ID（`details`）、言語コード（`languageClasses`）、状態コード（`conditionClasses`）の順で入れ子になる。
+同じカードID・カード詳細ID・言語・状態の組に複数の商品規格が該当した場合、応答に残るのは1件だけで、後から取得したものが先のものを上書きする。取得順は指定していないため、どれが残るかは定まらない。
 
-### エラー時の扱い
+### 応答値の加工
 
-| エラー内容 | 処理 |
-|------------|------|
-| 該当する買取用商品が無い | ページが見つからない扱い（404）とし、標準の例外応答（メッセージを含むJSON）を返す |
+金額・在庫数量の再計算、丸め、桁区切りなどの整形は行わない。保持している値をそのまま応答へ入れる。
 
 ## 入出力
 
-| 種類 | 内容 |
-|------|------|
-| 入力 | パスのカード詳細ID（`detailId`、整数、必須）。このIDが属するカードに紐づく買取用商品を取得する |
-| 成功時出力 | HTTP 200。買取用商品情報のJSON |
-| 失敗時出力 | HTTP 404。該当する買取用商品が無いとき |
+### 出力: 値が無いときの扱い
 
-### 出力: 応答フィールド
+次の項目は、値が設定されていないとき項目自体は省略せず、値なしで返す。
 
-| フィールド | 型 | 説明 |
-|------------|----|------|
-| `cards` | object | カードIDをキーとするオブジェクト。値は各カードの情報。 |
-| `cards.<cardId>.cardNameJp` | string | カードの日本語名。 |
-| `cards.<cardId>.cardNameEn` | string | カードの英語名。 |
-| `cards.<cardId>.imageFileName` | string | カード画像のファイル名。 |
-| `cards.<cardId>.details` | object | カード詳細IDをキーとするオブジェクト。値は各カード詳細の情報。 |
-| `cards.<cardId>.details.<detailId>.cardsetCode` | string | カードセットのコード。カードセット未設定のときはnull。 |
-| `cards.<cardId>.details.<detailId>.cardsetName` | string | カードセットの日本語名。カードセット未設定のときはnull。 |
-| `cards.<cardId>.details.<detailId>.foilFlg` | boolean | フォイルか否か。 |
-| `cards.<cardId>.details.<detailId>.cardNo` | string | カード番号。 |
-| `cards.<cardId>.details.<detailId>.promotionName` | string | プロモーションの日本語名。プロモーション未設定のときはnull。 |
-| `cards.<cardId>.details.<detailId>.productId` | integer | 商品ID。 |
-| `cards.<cardId>.details.<detailId>.productNameJp` | string | 商品の日本語名。 |
-| `cards.<cardId>.details.<detailId>.productNameEn` | string | 商品の英語名。 |
-| `cards.<cardId>.details.<detailId>.rarityCode` | string | レアリティのコード。 |
-| `cards.<cardId>.details.<detailId>.storageCodeName` | string | 保管コードの名称。未設定のときはnull。 |
-| `cards.<cardId>.details.<detailId>.languageClasses` | object | 言語コードをキーとするオブジェクト。 |
-| `cards.<cardId>.details.<detailId>.languageClasses.<languageCode>.conditionClasses` | object | 状態コードをキーとするオブジェクト。値は商品規格単位の情報。 |
-| `…conditionClasses.<conditionCode>.productClassId` | integer | 商品規格ID。 |
-| `…conditionClasses.<conditionCode>.productCode` | string | 商品コード。 |
-| `…conditionClasses.<conditionCode>.buyPrice` | integer | 買取価格。未設定のときはnull。 |
-| `…conditionClasses.<conditionCode>.price` | string | 販売価格（販売価格列の値）。 |
-| `…conditionClasses.<conditionCode>.stock` | string | 在庫数。 |
-| `…conditionClasses.<conditionCode>.sectionId` | integer | 部門ID。未設定のときはnull。 |
-
-成功時の応答例（実装確認値に基づく代表値）。
-
-```json
-{
-  "cards": {
-    "10001": {
-      "cardNameJp": "サンプルカード",
-      "cardNameEn": "Sample Card",
-      "imageFileName": "10001.jpg",
-      "details": {
-        "20001": {
-          "cardsetCode": "SET",
-          "cardsetName": "サンプルセット",
-          "foilFlg": false,
-          "cardNo": "123",
-          "promotionName": null,
-          "productId": 30001,
-          "productNameJp": "サンプルカード",
-          "productNameEn": "Sample Card",
-          "rarityCode": "R",
-          "storageCodeName": null,
-          "languageClasses": {
-            "JP": {
-              "conditionClasses": {
-                "NM": {
-                  "productClassId": 40001,
-                  "productCode": "P-40001",
-                  "buyPrice": 100,
-                  "price": "300",
-                  "stock": "5",
-                  "sectionId": 1
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-}
-```
+| 項目 | 値が無いときの応答 |
+| --- | --- |
+| カードセットコード | 値なし |
+| カードセット名 | 値なし |
+| プロモーション名 | 値なし |
+| 略称タグ名 | 値なし |
+| 買取価格 | 値なし |
+| 部門ID | 値なし |
 
 ## 表示メッセージ
 
@@ -106,3 +45,19 @@
 | A06-06-MSG-002 | API応答JSON（errors配列） | カードが見つかりません | 指定カード詳細IDに対応する買取用カードが0件 | 対象カード詳細IDを確認して再検索する |
 
 いずれのメッセージも英訳を持たない。
+
+## 出典
+
+| 小見出し | 重要度 | 出典 |
+| --- | --- | --- |
+| 応答に含めない商品規格 | P1 | pf-api:src/Repository/DtbProductRepository.php:128-145 |
+| 応答に含めない商品規格 | P1 | pf-api:src/Resources/config/doctrine/DtbProduct.orm.yml:97-103 |
+| 応答に含めない商品規格 | P1 | pf-api:src/Resources/config/doctrine/MtbCardDetail.orm.yml:143-152 |
+| 同じ組に複数の商品規格が該当したときの扱い | P1 | pf-api:src/Repository/HierarchicalDataTrait.php:38-49 |
+| 同じ組に複数の商品規格が該当したときの扱い | P1 | pf-api:src/Repository/DtbProductRepository.php:15-42 |
+| 同じ組に複数の商品規格が該当したときの扱い | P1 | pf-api:src/Repository/DtbProductRepository.php:172-177 |
+| 応答値の加工 | P1 | pf-api:src/Controller/ProductController.php:161-173 |
+| 出力: 値が無いときの扱い | P2 | pf-api:src/Repository/DtbProductRepository.php:135-137 |
+| 出力: 値が無いときの扱い | P2 | pf-api:src/Resources/config/doctrine/DtbProductSubClass.orm.yml:31-33 |
+| 出力: 値が無いときの扱い | P2 | pf-api:src/Resources/config/doctrine/DtbProductSubClass.orm.yml:139-145 |
+| 出力: 値が無いときの扱い | P2 | pf-api:config/packages/fos_rest.yaml:16-17 |
