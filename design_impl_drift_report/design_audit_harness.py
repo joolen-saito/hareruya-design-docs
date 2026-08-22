@@ -323,6 +323,63 @@ def scoped_out_reason(req: dict) -> str:
     return ""
 
 
+# ---- ゲート5: シート単位の除外（利用者決定 2026-08-22） -------------------
+#
+# シートまるごとが廃止／Ph2のことがあり、その場合そのシートの要求は全て調査対象外。
+# 標準機能（EC-CUBE標準のまま使う28機能）も調査対象外。
+# 行単位のゲート1では「宣言している行」と「識別ID一致」しか落ちないため、
+# シート全体が対象外のときに残りの行が判定へ流れてしまう。
+
+ATTRIBUTION = REPO / "functions" / "source-attribution-all.tsv"
+SHEET_MAP = REPO / "functions" / "function-sheet-map.tsv"
+
+
+@functools.lru_cache(maxsize=1)
+def sheet_exclusions() -> dict[tuple[str, str], str]:
+    """(書番, シートID) -> 除外理由。理由が付くシートは全要求を対象外にする。"""
+    out: dict[tuple[str, str], str] = {}
+
+    # 1) 標準機能のシート。
+    #    シート対応は **状態=確定（一致根拠=機能No欄が一致・スコア1.00）** の行だけを使う。
+    #    候補行はシート名が似ているだけで付くため、これを信じると
+    #    「標準機能が同居している」と誤認してカスタマイズ機能のシートを巻き添えにする
+    #    （2026-08-22 実測: 0201/sheet-6 は M11-03 カスタマイズが確定なのに、
+    #     M11-04 標準がスコア0.00の候補として並んでいた）。
+    #    なお確定行395件に標準機能は1件も無い。標準28機能はExcel設計書のシートを持たない。
+    #    したがって現状この経路で落ちるシートは0件で、将来標準シートが現れたときの備えである。
+    kubun: dict[str, str] = {}
+    if ATTRIBUTION.is_file():
+        for r in csv.DictReader(ATTRIBUTION.open(encoding="utf-8"), delimiter="\t"):
+            kubun[(r.get("機能No") or "").strip()] = (r.get("カスタマイズ区分") or "").strip()
+    per_sheet: dict[tuple[str, str], list[str]] = {}
+    if SHEET_MAP.is_file():
+        for r in csv.DictReader(SHEET_MAP.open(encoding="utf-8"), delimiter="\t"):
+            if (r.get("状態") or "").strip() != "確定":
+                continue
+            book, sid = (r.get("ブック") or "").strip(), (r.get("シートID") or "").strip()
+            fno = (r.get("機能No") or "").strip()
+            if book and sid and book != "-" and fno:
+                per_sheet.setdefault((book, sid), []).append(fno)
+    for key, fnos in per_sheet.items():
+        known = [kubun.get(f) for f in fnos if kubun.get(f)]
+        if known and all(k == "標準" for k in known):
+            out[key] = f"標準機能のシート（{'/'.join(fnos)}）。調査対象外"
+
+    # 2) シートまるごとが廃止／Ph2。FUNCTION_SCOPE のものだけを対象にする
+    #    （ITEM_SCOPE は機能自体がフェーズ1対象なのでシートごと落としてはいけない）。
+    for e in scoped_out_entries():
+        if e["scope"] != "FUNCTION_SCOPE":
+            continue
+        for sid in e["sheetIds"]:
+            out.setdefault((e["book"], sid),
+                           f"シートまるごと{e['kind']}（台帳 {e['id']}「{e['target']}」）。調査対象外")
+    return out
+
+
+def sheet_exclusion_reason(book: str, sheet_id: str) -> str:
+    return sheet_exclusions().get((book, sheet_id), "")
+
+
 # ---- ブロック文脈（利用者指摘 2026-08-22） ---------------------------------
 #
 # Excel設計書は1つの仕様を複数行に分けて書く。カスタマイズの★は先頭行にしか付かず、
@@ -388,6 +445,8 @@ def cmd_inventory(doc_key: str) -> None:
             path = outdir / "images" / f"{s.sheet_id}_img{n}.{ext}"
             path.write_bytes(base64.b64decode(b64))
         reqs = extract_requirements(s.sheet_id, s.title, lines)
+        for r in reqs:
+            r["書番"] = doc_key.split("_")[0]
         if not reqs and imgs:
             # 本文テキストを持たず画像だけのシート。判定漏れで素通りしないよう1件立てる。
             reqs = [{
@@ -406,7 +465,7 @@ def cmd_inventory(doc_key: str) -> None:
         })
 
     assign_blocks(all_reqs)
-    cols = ["要求ID", "シート", "シート名", "区分", "シート内行", "HTML行",
+    cols = ["要求ID", "書番", "シート", "シート名", "区分", "シート内行", "HTML行",
             "ブロックID", "ブロック見出し", "カスタマイズ", "同ブロック", "表ヘッダ", "要求文"]
     with (outdir / "requirements.tsv").open("w", encoding="utf-8", newline="") as fh:
         w = csv.DictWriter(fh, fieldnames=cols, delimiter="\t", lineterminator="\n")
@@ -661,6 +720,12 @@ def validate_verdict(v: dict, req: dict, sheets: "Sheets") -> list[str]:
             v["判定根拠"] = ("[policy] カスタマイズ説明の★識別IDずれは指摘対象外（利用者指示 2026-08-19）。"
                            "追加すべき列は項目表側の識別IDで決まり、実装は追随済み。"
                            + (v.get("判定根拠") or ""))
+
+    # --- ゲート5: シートまるごと対象外（標準機能／シート単位の廃止・Ph2） ---
+    reason = sheet_exclusion_reason(req.get("書番", ""), req.get("シート", ""))
+    if reason and verdict != "OUT_OF_SCOPE":
+        v["判定"] = verdict = "OUT_OF_SCOPE"
+        v["判定根拠"] = f"[gate5] {reason}。" + (v.get("判定根拠") or "")
 
     # --- ゲート1: Ph2・廃止は機械で対象外へ落とす（利用者決定 2026-08-22） ---
     # 規約（AUDIT_SCOPE）で既に対象外と決まっているものをエージェントに判定させない。
