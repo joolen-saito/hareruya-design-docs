@@ -291,41 +291,19 @@ footer {
       
       <h2 id="業務ロジック">業務ロジック</h2>
 <h3 id="取得する対象">取得する対象</h3>
-<p>指定されたネット買取受注IDリストをカンマで分解し、当該買取受注IDに紐づく買取代表カードの一覧を取得する。該当0件のときは空配列を返す。</p>
+<p>該当する買取代表カードが1件も無いときは、エラーとせず空配列を返す。ネット買取受注IDを1件も指定しなかったときや空文字を指定したときも、該当0件として空配列を返す。</p>
 <h3 id="申込時買取価格の付与">申込時買取価格の付与</h3>
-<p>取得した買取代表カードの代表カードIDに紐づく申込時買取価格を引き当て、カード状態コードをキーとする申込時買取価格として各買取代表カードに付与する。一致する申込時価格が無い代表カードには付与しない。</p>
-<p>金額・税・ポイント・在庫数量の再計算は行わない。取得した値をそのまま応答へ整形して返す。</p>
+<p>一致する申込時買取価格が1件も無い買取代表カードには、申込時買取価格の項目そのものを付けない（空のオブジェクトも返さない）。</p>
+<p>査定金額・申込時買取価格の再計算や表示用の丸めは行わず、取得した値をそのまま応答へ返す。</p>
 <h3 id="エラー時の扱い">エラー時の扱い</h3>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>認証不可</td><td>認証拒否（HTTP 401）とする</td></tr><tr><td>該当0件</td><td>エラーとせず空配列を返す</td></tr><tr><td>取得処理中の例外</td><td>処理失敗（HTTP 500）として共通例外処理に委ねる</td></tr></tbody></table></div>
+<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>認証不可</td><td>認証拒否（HTTP 401）とする</td></tr><tr><td>該当0件</td><td>エラーとせず空配列を返す</td></tr><tr><td>取得処理中の例外</td><td>処理失敗（HTTP 500）とする</td></tr></tbody></table></div>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>ネット買取受注IDリスト、認証トークン</td></tr><tr><td>成功時出力</td><td>HTTP 200。申込時買取価格を付与した買取代表カードの配列</td></tr><tr><td>失敗時出力</td><td>HTTP 401（認証不可）、HTTP 500（取得処理中の例外）</td></tr></tbody></table></div>
 <h3 id="入力-リクエスト">入力: リクエスト</h3>
-<div class="table-wrap"><table><thead><tr><th>パラメータ</th><th>位置</th><th>型</th><th>必須／任意</th><th>説明</th></tr></thead><tbody><tr><td><code>ids</code></td><td>ボディ</td><td>string</td><td>任意</td><td>カンマ区切りのネット買取受注IDリスト。未指定・空文字のときは空文字を分解した配列で検索するため、結果は0件となる</td></tr><tr><td><code>jwt-token</code></td><td>ヘッダ</td><td>string</td><td>必須</td><td>認証用のトークン</td></tr></tbody></table></div>
+<div class="table-wrap"><table><thead><tr><th>パラメータ</th><th>位置</th><th>説明</th></tr></thead><tbody><tr><td>認証トークン</td><td>ヘッダ</td><td>認証用のトークン。ヘッダに無いときは認証拒否とする</td></tr></tbody></table></div>
 <h3 id="出力-レスポンス-成功">出力: レスポンス（成功）</h3>
-<div class="table-wrap"><table><thead><tr><th>フィールド</th><th>型</th><th>説明</th></tr></thead><tbody><tr><td>（ルート）</td><td>array</td><td>買取代表カードの配列。0件のときは空配列</td></tr><tr><td><code>[].buyMainCardId</code></td><td>integer</td><td>買取代表カードID</td></tr><tr><td><code>[].buyOrderId</code></td><td>integer</td><td>ネット買取受注ID</td></tr><tr><td><code>[].productId</code></td><td>integer</td><td>商品ID</td></tr><tr><td><code>[].languageId</code></td><td>integer</td><td>言語ID。未設定のときはnull</td></tr><tr><td><code>[].foilFlg</code></td><td>boolean</td><td>フォイルか否か。未設定のときはnull</td></tr><tr><td><code>[].count</code></td><td>integer</td><td>枚数。未設定のときはnull</td></tr><tr><td><code>[].price</code></td><td>integer</td><td>査定金額。未設定のときはnull</td></tr><tr><td><code>[].cardConditionId</code></td><td>integer</td><td>カード状態ID。未設定のときはnull</td></tr><tr><td><code>[].saleFlg</code></td><td>boolean</td><td>売却フラグ。未設定のときはnull</td></tr><tr><td><code>[].purchaseCategory</code></td><td>integer</td><td>買取カテゴリ</td></tr><tr><td><code>[].applicationPrice</code></td><td>object</td><td>カード状態コードをキーとするオブジェクト。値は当該状態の申込時買取価格</td></tr></tbody></table></div>
-<p>成功時の応答例。</p>
-<pre><code class="language-json">[
-  {
-    "buyMainCardId": 1001,
-    "buyOrderId": 5001,
-    "productId": 30001,
-    "languageId": 1,
-    "foilFlg": false,
-    "count": 2,
-    "price": 500,
-    "cardConditionId": 1,
-    "saleFlg": false,
-    "purchaseCategory": 1,
-    "applicationPrice": {
-      "NM": 500,
-      "PL": 400
-    }
-  }
-]</code></pre>
-<p>該当0件時の応答例。</p>
-<pre><code class="language-json">[]</code></pre>
+<p>枚数・査定金額・言語ID・Foilフラグ・カード状態ID・売却フラグは、未設定のとき null をそのまま返す（既定値で補わない）。買取代表カードID・ネット買取受注ID・商品ID・買取カテゴリは常に値を持つ。</p>
 <h3 id="出力-レスポンス-失敗">出力: レスポンス（失敗）</h3>
-<div class="table-wrap"><table><thead><tr><th>HTTPステータス</th><th>条件</th><th>本文の形</th></tr></thead><tbody><tr><td>401</td><td>トークン欠落・署名不正・該当する管理者会員なし</td><td>認証拒否（本文を持たない）</td></tr><tr><td>500</td><td>取得処理中の例外</td><td>共通例外処理に委ねる</td></tr></tbody></table></div>
+<div class="table-wrap"><table><thead><tr><th>HTTPステータス</th><th>条件</th><th>本文の形</th></tr></thead><tbody><tr><td>401</td><td>トークン欠落・署名不正・該当する管理者なし</td><td>認証拒否（本文を持たない）</td></tr><tr><td>500</td><td>取得処理中の例外</td><td>処理失敗として返す</td></tr></tbody></table></div>
 <div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
 <h2 id="表示メッセージ">表示メッセージ</h2>
 <div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody></tbody></table></div>

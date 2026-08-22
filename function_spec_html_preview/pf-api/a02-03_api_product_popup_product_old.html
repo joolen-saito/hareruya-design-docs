@@ -273,11 +273,11 @@ footer {
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
       <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
-<a class="lv3" href="#取得対象">取得対象</a>
-<a class="lv3" href="#エラー時の扱い">エラー時の扱い</a>
+<a class="lv3" href="#取得対象の絞り込みと優先順位">取得対象の絞り込みと優先順位</a>
+<a class="lv3" href="#販売数の集計">販売数の集計</a>
+<a class="lv3" href="#金額・在庫数の加工">金額・在庫数の加工</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv3" href="#出力-フィールド">出力: フィールド</a>
-<a class="lv3" href="#入出力-永続化">入出力: 永続化</a>
+<a class="lv3" href="#出力-該当データが無いときの応答本文">出力: 該当データが無いときの応答本文</a>
 <a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
 <a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
@@ -288,29 +288,18 @@ footer {
       </header>
       
       <h2 id="業務ロジック">業務ロジック</h2>
-<h3 id="取得対象">取得対象</h3>
-<p>パスの旧商品IDに対応する商品情報を1件返す。旧商品IDはカードの旧商品IDまたは旧英語商品IDと突き合わせる。該当する商品が無いときはコード404・メッセージ「Not Found」を返す。</p>
-<p>金額・在庫数の再計算や丸めは行わない。取得した値をそのまま返す。表示用の加工は呼び出し元クライアントの設計に従う。</p>
-<h3 id="エラー時の扱い">エラー時の扱い</h3>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>該当商品情報なし</td><td>コード404・「Not Found」を返す</td></tr></tbody></table></div>
+<h3 id="取得対象の絞り込みと優先順位">取得対象の絞り込みと優先順位</h3>
+<p>パスの旧商品IDは、カードの旧商品IDと旧英語商品IDのどちらか一方に一致すれば対象とする。</p>
+<p>対象にするのは、削除済みでない商品・削除済みでない商品規格で、かつ公開状態の商品だけである。</p>
+<p>条件に合う商品が複数あるときは、次の優先順に並べて先頭の1件だけを返す。</p>
+<ol><li>特殊カードセットでないもの</li><li>プロモーションでないもの</li><li>カードセットのリリース日が新しいもの</li><li>Foilでないもの</li><li>パスの言語コードと一致する言語のもの</li><li>パスの言語コードに対応する画像優先度を持つ画像のもの</li></ol>
+<h3 id="販売数の集計">販売数の集計</h3>
+<p>週間販売数は、返す商品とパスの言語コードに紐づく商品規格の販売数を合計した値である。商品規格が複数あるときは合算する。</p>
+<h3 id="金額・在庫数の加工">金額・在庫数の加工</h3>
+<p>金額・在庫数の再計算や丸めは行わず、保持している値をそのまま返す。</p>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>パスの旧商品ID（必須、整数）</td></tr><tr><td>成功時出力</td><td>HTTP 200。条件に合致する商品を1件返す</td></tr><tr><td>失敗時出力</td><td>HTTP 404。コードとメッセージ（"Not Found"）</td></tr></tbody></table></div>
-<h3 id="出力-フィールド">出力: フィールド</h3>
-<div class="table-wrap"><table><thead><tr><th>フィールド</th><th>型</th><th>説明</th></tr></thead><tbody><tr><td>productId</td><td>integer</td><td>商品ID。</td></tr><tr><td>name</td><td>string</td><td>商品名。</td></tr><tr><td>productClassId</td><td>integer</td><td>商品規格ID。</td></tr><tr><td>price01</td><td>string</td><td>通常価格。小数を持つ値のため数値文字列で返す。</td></tr><tr><td>price02</td><td>string</td><td>販売価格。小数を持つ値のため数値文字列で返す。</td></tr><tr><td>stock</td><td>string</td><td>在庫数。小数を持つ値のため数値文字列で返す。</td></tr><tr><td>nameEn</td><td>string</td><td>英語商品名。</td></tr><tr><td>fileName</td><td>string</td><td>商品画像のファイル名。</td></tr><tr><td>cardId</td><td>integer</td><td>紐づくカードID。</td></tr></tbody></table></div>
-<p>成功時の応答例（実装確認値に基づく代表値）。</p>
-<pre><code class="language-json">{
-  "productId": 100001,
-  "name": "サンプルカード",
-  "productClassId": 200001,
-  "price01": "500.00",
-  "price02": "480.00",
-  "stock": "12.00",
-  "nameEn": "Sample Card",
-  "fileName": "sample.jpg",
-  "cardId": 300001
-}</code></pre>
-<h3 id="入出力-永続化">入出力: 永続化</h3>
-<p>本APIは業務データを更新しない。</p>
+<h3 id="出力-該当データが無いときの応答本文">出力: 該当データが無いときの応答本文</h3>
+<p>該当する商品が無いときの応答本文は、コードとメッセージ「Not Found」の2項目を持つ。</p>
 <div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
 <h2 id="表示メッセージ">表示メッセージ</h2>
 <p>本APIは画面メッセージを扱わない。</p>

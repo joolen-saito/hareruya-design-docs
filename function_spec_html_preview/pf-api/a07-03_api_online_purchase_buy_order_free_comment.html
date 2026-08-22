@@ -275,9 +275,8 @@ footer {
       <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
 <a class="lv3" href="#更新の判定順序">更新の判定順序</a>
 <a class="lv3" href="#更新する内容">更新する内容</a>
-<a class="lv3" href="#認証">認証</a>
-<a class="lv3" href="#エラー時の扱い">エラー時の扱い</a>
 <a class="lv2" href="#入出力">入出力</a>
+<a class="lv3" href="#失敗時の応答">失敗時の応答</a>
 <a class="lv3" href="#入出力-永続化">入出力: 永続化</a>
 <a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
 <a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
@@ -290,16 +289,14 @@ footer {
       
       <h2 id="業務ロジック">業務ロジック</h2>
 <h3 id="更新の判定順序">更新の判定順序</h3>
-<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>認証トークンから管理者を特定できない</td><td>認証拒否（HTTP 401）とする</td></tr><tr><td>2</td><td>指定した受注IDのネット買取受注が無い</td><td>該当なし（HTTP 404）とする</td></tr><tr><td>3</td><td>コメントが未指定</td><td>入力不正（HTTP 400）とし、エラーメッセージを返す</td></tr><tr><td>4</td><td>上記のいずれにも該当しない</td><td>コメントを更新する</td></tr></tbody></table></div>
+<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>認証トークンが無い、署名が不正、またはトークンが示す管理者が存在しない</td><td>認証拒否（HTTP 401）とする</td></tr><tr><td>2</td><td>指定した受注IDのネット買取受注が無い</td><td>該当なし（HTTP 404）とする</td></tr><tr><td>3</td><td>コメントが未指定</td><td>入力不正（HTTP 400）とし、「コメントを入力してください」を返す</td></tr><tr><td>4</td><td>上記のいずれにも該当しない</td><td>コメントを更新する</td></tr><tr><td>5</td><td>更新の保存中に例外が発生</td><td>処理失敗（HTTP 500）とし、例外メッセージを返す。更新は取り消し、コメントは更新前のままにする</td></tr></tbody></table></div>
+<p>コメントが空文字で送られたときは未指定として扱わず、コメントを空にして更新する。</p>
 <h3 id="更新する内容">更新する内容</h3>
-<p>ネット買取受注のメモ（フリーコメント）を指定値で上書きし、更新担当者に認証した管理者を設定する。保存は一括で確定し、途中で例外が発生したときは取り消す。</p>
-<p>金額・税・ポイント・在庫数量の再計算や丸めは行わない。応答は保存結果を返し、独自の集計は行わない。</p>
-<h3 id="認証">認証</h3>
-<p>認証トークンを検証し、その内容から管理者を特定する。トークンが無い、署名が不正、該当する管理者が無いときは、いずれも認証拒否（HTTP 401）とする。呼び出し元は買取アプリである。トークン原値・署名シークレットは本書に記載しない。</p>
-<h3 id="エラー時の扱い">エラー時の扱い</h3>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>認証不可</td><td>認証拒否（HTTP 401）とする</td></tr><tr><td>受注が存在しない</td><td>該当なし（HTTP 404）とする</td></tr><tr><td>コメント未指定</td><td>入力不正（HTTP 400）とし、「コメントを入力してください」を返す</td></tr><tr><td>保存処理中の例外</td><td>処理失敗（HTTP 500）とし、例外メッセージを返す。保存は取り消す</td></tr></tbody></table></div>
+<p>コメントの更新とあわせて、更新担当者に、認証したトークンが示す管理者を設定する。</p>
+<p>金額・税・ポイント・在庫数量の再計算や丸めは行わない。</p>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>ネット買取受注ID（必須）、設定するフリーコメント（必須）、認証トークン（必須）</td></tr><tr><td>成功時出力</td><td>HTTP 200。処理結果コード200</td></tr><tr><td>失敗時出力</td><td>HTTP 401（本文なし）、HTTP 404（本文なし）、HTTP 400・HTTP 500（処理結果コードとエラーメッセージ）</td></tr></tbody></table></div>
+<h3 id="失敗時の応答">失敗時の応答</h3>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>失敗時出力</td><td>HTTP 401、HTTP 404、HTTP 400、HTTP 500。HTTP 400 と HTTP 500 では処理結果コードとエラーメッセージを返す</td></tr></tbody></table></div>
 <h3 id="入出力-永続化">入出力: 永続化</h3>
 <div class="table-wrap"><table><thead><tr><th>操作</th><th>契機</th></tr></thead><tbody><tr><td>更新</td><td>ネット買取受注のメモ（フリーコメント）と更新担当者を、コメント更新の成功時に上書きする</td></tr></tbody></table></div>
 <div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>

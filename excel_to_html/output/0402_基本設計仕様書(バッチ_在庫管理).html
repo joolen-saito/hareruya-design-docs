@@ -1133,7 +1133,7 @@
             <div class="doc-bullet" style="--lv:1"><span class="doc-marker"><span class="src-cell" data-excel-book="0402" data-excel-sheet="期間別入庫数集計バッチ" data-excel-ref="0402:期間別入庫数集計バッチ!C56">・</span></span><span><span class="src-cell" data-excel-book="0402" data-excel-sheet="期間別入庫数集計バッチ" data-excel-ref="0402:期間別入庫数集計バッチ!D56">エラーが発生した場合集計できなかった旨をメールで送信する</span></span></div>
           </div>
         </div>
-      <!-- function-design-embed:start b02-03-b02-03_batch_product_product_storage_period_summary -->
+            <!-- function-design-embed:start b02-03-b02-03_batch_product_product_storage_period_summary -->
       <section class="function-design-embed" id="function-design-b02-03-b02-03_batch_product_product_storage_period_summary" data-source="functions/pf-eccube3/b02-03_batch_product_product_storage_period_summary.md">
         <header class="function-design-header">
           <p class="function-design-source">Source:<br>functions/pf-eccube3/b02-03_batch_product_product_storage_period_summary.md</p>
@@ -1142,29 +1142,24 @@
         </header>
         <div class="function-design-body">
           <h2 id="function-design-b02-03-b02-03_batch_product_product_storage_period_summary-業務ロジック">業務ロジック</h2>
-          <h3 id="function-design-b02-03-b02-03_batch_product_product_storage_period_summary-集計の単位と対象">集計の単位と対象</h3>
-          <p>商品規格単位で集計する。対象は在庫変動区分が入庫またはマスタ更新の在庫履歴である。</p>
-          <p>集計値は、在庫履歴のうち在庫が旧在庫を上回る分の合計とする。</p>
-          <h3 id="function-design-b02-03-b02-03_batch_product_product_storage_period_summary-集計する期間">集計する期間</h3>
-          <p>前日・3日・週・2週・3週・月・90日・180日・365日の各期間について入庫数を求める。</p>
-          <h3 id="function-design-b02-03-b02-03_batch_product_product_storage_period_summary-反映先">反映先</h3>
-          <p>商品規格サブの入庫数の列（前日・3日・週・月・90日・180日・365日・2週・3週）を更新する。当日に相当する列は0で初期化する。</p>
-          <p>集計対象が1件も無いときは更新しない。</p>
-          <h3 id="function-design-b02-03-b02-03_batch_product_product_storage_period_summary-更新の進め方">更新の進め方</h3>
-          <p>100件ごとに変更を反映しながら処理し、最後に残りの変更を反映して終える。</p>
-          <h3 id="function-design-b02-03-b02-03_batch_product_product_storage_period_summary-再実行">再実行</h3>
-          <p>実行時点のデータで集計し直し、対象の商品規格の入庫数の列を上書きする。重複した加算は起きない。</p>
-          <h3 id="function-design-b02-03-b02-03_batch_product_product_storage_period_summary-エラー時の扱い">エラー時の扱い</h3>
-          <div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>コマンド名が未指定・不一致</td><td>処理を行わずに終了する</td></tr><tr><td>対象なし</td><td>更新を行わず完了する</td></tr><tr><td>処理中の例外</td><td>エラーメッセージをコンソールに出力する。途中で止まったときは反映済みの行のみ更新が残る</td></tr></tbody></table></div>
+          <h3 id="function-design-b02-03-b02-03_batch_product_product_storage_period_summary-集計値の求め方">集計値の求め方</h3>
+          <p>集計値は、在庫が直前の在庫を上回った履歴だけを取り出し、その増加分（在庫と直前の在庫の差）を合計したものである。在庫が減った履歴・変わらない履歴は0として数え、減少分を差し引かない。</p>
+          <h3 id="function-design-b02-03-b02-03_batch_product_product_storage_period_summary-期間の数え方">期間の数え方</h3>
+          <p>期間に入るかどうかの判定は登録日時の日付部分だけで行い、時刻は見ない。</p>
+          <p>前日以外の各期間は、起動日からその期間の日数だけさかのぼった日を始点とし、その日を含めて起動日当日までの履歴を数える。</p>
+          <p>「1ヶ月」は暦の月ではなく28日として数える。</p>
+          <h3 id="function-design-b02-03-b02-03_batch_product_product_storage_period_summary-集計に現れない単位の扱い">集計に現れない単位の扱い</h3>
+          <p>対象の在庫変動履歴が1件も無い単位は集計結果に現れず、更新の対象にならない。前回の集計値がそのまま残る。</p>
+          <h3 id="function-design-b02-03-b02-03_batch_product_product_storage_period_summary-起動と異常時の扱い">起動と異常時の扱い</h3>
+          <div class="table-wrap"><table><thead><tr><th>状況</th><th>ふるまい</th></tr></thead><tbody><tr><td>起動時に処理の名前が指定されていない、または対応する処理が無い名前である</td><td>何も集計せず、その旨を実行結果として返して終了する</td></tr><tr><td>集計結果が1件も無い</td><td>何も更新せずに完了する</td></tr><tr><td>処理の途中で異常が起きた</td><td>それまでに反映した分は残る。全体をまとめて取り消さない</td></tr></tbody></table></div>
           <h2 id="function-design-b02-03-b02-03_batch_product_product_storage_period_summary-入出力">入出力</h2>
-          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>コマンド名。引数は取らない。</td></tr><tr><td>成功時出力</td><td>商品規格サブの入庫数の列が最新の集計値で更新される。</td></tr><tr><td>失敗時出力</td><td>エラーメッセージのコンソール出力。途中で止まったときは反映済みの行のみ更新が残る。</td></tr></tbody></table></div>
-          <p>実行の前提は、集計対象の期間内に入庫・マスタ更新の在庫履歴が存在することである。</p>
+          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>起動時に受け取る処理の名前。集計のための引数は取らない。</td></tr><tr><td>成功時出力</td><td>集計結果に現れた単位の入庫数だけが、求め直した値で置き換わる。現れなかった単位は前回の値のまま残る。</td></tr><tr><td>失敗時出力</td><td>途中で異常が起きた場合、それまでに反映した分だけが残る。</td></tr></tbody></table></div>
           <h3 id="function-design-b02-03-b02-03_batch_product_product_storage_period_summary-入出力-永続化">入出力: 永続化</h3>
-          <div class="table-wrap"><table><thead><tr><th>操作</th><th>契機</th></tr></thead><tbody><tr><td>商品規格サブの入庫数の列の更新</td><td>集計結果の行ごと</td></tr></tbody></table></div>
+          <div class="table-wrap"><table><thead><tr><th>操作</th><th>契機</th></tr></thead><tbody><tr><td>入庫数の集計値の反映</td><td>集計結果の1行ごと（行単位で確定する）</td></tr></tbody></table></div>
           <div class="renewal-spec-banner"><h3 id="function-design-b02-03-b02-03_batch_product_product_storage_period_summary-リニューアル後の仕様">リニューアル後の仕様</h3></div>
           <h2 id="function-design-b02-03-b02-03_batch_product_product_storage_period_summary-表示メッセージ">表示メッセージ</h2>
           <div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody></tbody></table></div>
-          <p>画面を持たないため利用者向けのメッセージを表示しない。処理中の例外はエラーメッセージとしてコンソールに出力する。</p>
+          <p>画面を持たないため利用者向けのメッセージを表示しない。</p>
         </div>
       </section>
       <!-- function-design-embed:end b02-03-b02-03_batch_product_product_storage_period_summary -->

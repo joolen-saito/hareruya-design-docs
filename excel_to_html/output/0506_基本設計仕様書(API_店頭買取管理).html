@@ -1103,7 +1103,7 @@
             <h3 class="doc-h doc-h-section" style="--lv:0"><span class="src-cell" data-excel-book="0506" data-excel-sheet="買取アプリ用ログイン" data-excel-ref="0506:買取アプリ用ログイン!B71">レスポンスデータサンプル</span></h3>
           </div>
         </div>
-      <!-- function-design-embed:start a06-01-a06-01_api_store_purchase_admin_login -->
+            <!-- function-design-embed:start a06-01-a06-01_api_store_purchase_admin_login -->
       <section class="function-design-embed" id="function-design-a06-01-a06-01_api_store_purchase_admin_login" data-source="functions/pf-api/a06-01_api_store_purchase_admin_login.md">
         <header class="function-design-header">
           <p class="function-design-source">Source:<br>functions/pf-api/a06-01_api_store_purchase_admin_login.md</p>
@@ -1112,30 +1112,14 @@
         </header>
         <div class="function-design-body">
           <h2 id="function-design-a06-01-a06-01_api_store_purchase_admin_login-業務ロジック">業務ロジック</h2>
-          <h3 id="function-design-a06-01-a06-01_api_store_purchase_admin_login-認証の中継">認証の中継</h3>
-          <p>受け取ったログインIDとパスワードは、本APIでは形式検証せず中継先の認証に委ねる。中継先のログイン画面へアクセスしてセッションを確立し、確立したセッションを保ったままログインID・パスワードをログイン確認へ送信する。セッション確立用の一時情報はログインID別に保持し、送信後に削除する。リダイレクトを追従し、認証に成功したときは中継先の買取アプリ用ログインAPIに到達する。</p>
-          <h3 id="function-design-a06-01-a06-01_api_store_purchase_admin_login-応答の判定">応答の判定</h3>
-          <p>中継先の応答本文をJSONとして解釈する。解釈結果が空のときは認証失敗とみなし、応答に含まれるエラー文言を抽出して、コード401とメッセージのJSONを返す。解釈できたときは、中継先が返した会員名・会員ID・店舗名・店舗住所・トークンをそのまま返す。</p>
+          <h3 id="function-design-a06-01-a06-01_api_store_purchase_admin_login-失敗したときの応答本文">失敗したときの応答本文</h3>
+          <div class="table-wrap"><table><thead><tr><th>事象</th><th>応答</th></tr></thead><tbody><tr><td>中継先が認証情報を返さない（認証失敗）</td><td>処理結果コードとメッセージの2項目を返す。メッセージは中継先のログイン画面に出る理由文言をそのまま用い、改行表記を取り除いたもの。本API独自の文言は設けない</td></tr><tr><td>中継先へ到達できない</td><td>到達の成否を判定しない。中継先の応答が得られないときも、認証情報が返らないときと同じ扱いになる</td></tr></tbody></table></div>
           <h3 id="function-design-a06-01-a06-01_api_store_purchase_admin_login-トークンの発行と以降の利用">トークンの発行と以降の利用</h3>
-          <p>本APIはトークン取得の入口であり、呼び出しにトークンを要求しない。認証に成功すると中継先が署名付きトークンを発行して返す。トークンは発行者と利用者ID（管理者会員のID）を持つ。呼び出し元は受け取ったトークンを以降の買取系APIに付与し、各APIはトークンの利用者IDから管理者会員を引いて認可する。</p>
-          <p>トークン原値・署名シークレット・パスワードは本書に記載しない。金額・税・ポイント・在庫数量の再計算や丸めは行わない。</p>
-          <h3 id="function-design-a06-01-a06-01_api_store_purchase_admin_login-エラー時の扱い">エラー時の扱い</h3>
-          <div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>認証情報が返らない（認証失敗）</td><td>応答からエラー文言を抽出し、コード401・メッセージのJSONを返す。画面上の理由文言をそのまま用い、本API独自の文言は設けない</td></tr><tr><td>中継先への到達不可・処理中の例外</td><td>共通例外処理に委ねる。本API独自のフォールバック文言は設けない</td></tr></tbody></table></div>
+          <p>発行されるトークンは、発行者と利用者ID（認証した管理者会員のID）を持つ。以降の各APIは受け取ったトークンの利用者IDから管理者会員を引いて認可し、会員を引けないときは認可しない。</p>
+          <p>トークン原値・署名シークレット・パスワードは本書に記載しない。</p>
           <h2 id="function-design-a06-01-a06-01_api_store_purchase_admin_login-入出力">入出力</h2>
-          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>管理者のログインID、パスワード</td></tr><tr><td>成功時出力</td><td>HTTP 200。会員名・会員ID・店舗名・店舗住所・発行したトークン</td></tr><tr><td>失敗時出力</td><td>HTTP 401（認証失敗）、HTTP 500（中継先への到達不可・処理中の例外）</td></tr></tbody></table></div>
-          <h3 id="function-design-a06-01-a06-01_api_store_purchase_admin_login-入力-リクエスト">入力: リクエスト</h3>
-          <div class="table-wrap"><table><thead><tr><th>パラメータ</th><th>位置</th><th>型</th><th>必須／任意</th><th>説明</th></tr></thead><tbody><tr><td><code>login_id</code></td><td>ボディ</td><td>string</td><td>必須</td><td>管理者のログインID。中継先の認証に用いる。本APIでは形式検証しない</td></tr><tr><td><code>password</code></td><td>ボディ</td><td>string</td><td>必須</td><td>管理者のパスワード。中継先の認証に用いる。本APIでは形式検証しない</td></tr></tbody></table></div>
-          <h3 id="function-design-a06-01-a06-01_api_store_purchase_admin_login-出力-レスポンス-成功">出力: レスポンス（成功）</h3>
-          <div class="table-wrap"><table><thead><tr><th>フィールド</th><th>型</th><th>説明</th></tr></thead><tbody><tr><td><code>memberName</code></td><td>string</td><td>認証した管理者会員の氏名</td></tr><tr><td><code>memberId</code></td><td>integer</td><td>認証した管理者会員のID。発行するトークンの利用者IDにも対応する</td></tr><tr><td><code>shopName</code></td><td>string</td><td>会員に紐づく店舗名。店舗が紐づかない場合は空文字</td></tr><tr><td><code>shopAddr</code></td><td>string</td><td>会員に紐づく店舗住所。店舗が紐づかない場合は空文字</td></tr><tr><td><code>jwtToken</code></td><td>string</td><td>発行したトークン。以降の買取系APIの認証に用いる</td></tr></tbody></table></div>
-          <pre><code class="language-json">{
-            "memberName": "山田太郎",
-            "memberId": 12,
-            "shopName": "晴れる屋テスト店",
-            "shopAddr": "東京都千代田区0-0-0",
-            "jwtToken": "&lt;jwtToken&gt;"
-          }</code></pre>
-          <h3 id="function-design-a06-01-a06-01_api_store_purchase_admin_login-出力-レスポンス-失敗">出力: レスポンス（失敗）</h3>
-          <div class="table-wrap"><table><thead><tr><th>HTTPステータス</th><th>条件</th><th>本文の形</th></tr></thead><tbody><tr><td>401</td><td>中継先が認証情報を返さない（資格情報の誤り等による認証失敗）</td><td>処理結果コードとメッセージ。メッセージは中継先の画面エラー文言から改行表記を除いたもの</td></tr><tr><td>500</td><td>中継先への到達不可・処理中の例外</td><td>共通例外処理に委ねる</td></tr></tbody></table></div>
+          <h3 id="function-design-a06-01-a06-01_api_store_purchase_admin_login-店舗が紐づかない会員のとき">店舗が紐づかない会員のとき</h3>
+          <p>認証した会員に店舗が紐づかない場合、店舗名・店舗住所は空文字を返す。</p>
           <div class="renewal-spec-banner"><h3 id="function-design-a06-01-a06-01_api_store_purchase_admin_login-リニューアル後の仕様">リニューアル後の仕様</h3></div>
           <h2 id="function-design-a06-01-a06-01_api_store_purchase_admin_login-表示メッセージ">表示メッセージ</h2>
           <div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>A06-01-MSG-001</td><td>API応答JSON（errors配列）</td><td>ログインIDまたはパスワードが入力されていません</td><td>ログインAPIでログインIDまたはパスワードが空のとき</td><td>HTTP 401を返し、トークンを発行しない</td></tr><tr><td>A06-01-MSG-002</td><td>API応答JSON（errors配列）</td><td>ログインIDまたはパスワードが正しくありません</td><td>ログインAPIで有効なログインIDに対応する会員が見つからないとき</td><td>HTTP 401を返し、トークンを発行しない</td></tr><tr><td>A06-01-MSG-003</td><td>API応答JSON（errors配列）</td><td>ログインIDまたはパスワードが正しくありません</td><td>ログインAPIで会員は見つかったが、パスワード検証に失敗したとき</td><td>HTTP 401を返し、トークンを発行しない</td></tr></tbody></table></div>
@@ -1226,7 +1210,7 @@
             <h3 class="doc-h doc-h-section" style="--lv:0"><span class="src-cell" data-excel-book="0506" data-excel-sheet="店頭買取情報取得" data-excel-ref="0506:店頭買取情報取得!B80">レスポンスデータサンプル</span></h3>
           </div>
         </div>
-      <!-- function-design-embed:start a06-02-a06-02_api_store_purchase_otc_buy_order_list -->
+            <!-- function-design-embed:start a06-02-a06-02_api_store_purchase_otc_buy_order_list -->
       <section class="function-design-embed" id="function-design-a06-02-a06-02_api_store_purchase_otc_buy_order_list" data-source="functions/pf-api/a06-02_api_store_purchase_otc_buy_order_list.md">
         <header class="function-design-header">
           <p class="function-design-source">Source:<br>functions/pf-api/a06-02_api_store_purchase_otc_buy_order_list.md</p>
@@ -1236,48 +1220,16 @@
         <div class="function-design-body">
           <h2 id="function-design-a06-02-a06-02_api_store_purchase_otc_buy_order_list-業務ロジック">業務ロジック</h2>
           <h3 id="function-design-a06-02-a06-02_api_store_purchase_otc_buy_order_list-取得対象">取得対象</h3>
-          <p>店頭買取ステータスが商品到着・査定中・振込前・保留・査定再開のいずれかである店頭買取受注を、受注ID昇順で返す。該当が無い場合は空配列を返す。</p>
+          <p>取得対象の買取情報は店頭買取受注IDの昇順で返す。該当が無い場合は空配列を返す。職業または国が紐づいていない受注は、対象ステータスであっても結果に含まれない。</p>
           <h3 id="function-design-a06-02-a06-02_api_store_purchase_otc_buy_order_list-店舗による絞り込み">店舗による絞り込み</h3>
-          <p>認証した管理者会員の会員サブ情報から所属店舗を決める。店舗が得られた場合はその店舗の受注に限定し、会員サブ情報が無い場合は店舗による絞り込みを行わず査定対象の受注を一律に返す。絞り込み対象の店舗はクライアントから指定できない。</p>
+          <p>認証した管理者会員に会員サブ情報が無く所属店舗が定まらない場合は、店舗による絞り込みを行わず、取得対象の買取情報を一律に返す。</p>
           <h3 id="function-design-a06-02-a06-02_api_store_purchase_otc_buy_order_list-認証">認証</h3>
-          <p>認証用トークンのヘッダを検証し、その利用者IDから管理者会員を特定する。署名方式はHS256である。ヘッダ欠落・署名不正・該当する管理者会員なしのいずれも認証拒否（HTTP 401）とする。呼び出し可能なクライアントは買取アプリである。トークン原値・署名シークレットは本書に記載しない。</p>
+          <p>認証用トークンのヘッダを検証し、その利用者IDから管理者会員を特定する。署名方式はHS256である。ヘッダ欠落・署名不正・該当する管理者会員なしのいずれも認証拒否（HTTP 401）とする。トークン原値・署名シークレットは本書に記載しない。</p>
           <h3 id="function-design-a06-02-a06-02_api_store_purchase_otc_buy_order_list-エラー時の扱い">エラー時の扱い</h3>
           <div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>認証不可</td><td>認証拒否（HTTP 401）とする</td></tr><tr><td>受注取得・整形処理中の例外</td><td>共通例外処理に委ねる（HTTP 500相当）</td></tr></tbody></table></div>
           <h2 id="function-design-a06-02-a06-02_api_store_purchase_otc_buy_order_list-入出力">入出力</h2>
-          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>認証用トークンのヘッダのみ。ほかのリクエストパラメータを持たない</td></tr><tr><td>成功時出力</td><td>HTTP 200。査定対象の店頭買取受注の配列。ラッパオブジェクトや件数フィールドを持たない。該当が無い場合は空配列</td></tr><tr><td>失敗時出力</td><td>認証できないときはHTTP 401（本文を持たない）。取得・整形中の例外はHTTP 500として共通例外処理に委ねる</td></tr></tbody></table></div>
-          <h3 id="function-design-a06-02-a06-02_api_store_purchase_otc_buy_order_list-出力-受注ごとのフィールド">出力: 受注ごとのフィールド</h3>
-          <div class="table-wrap"><table><thead><tr><th>フィールド</th><th>型</th><th>説明</th></tr></thead><tbody><tr><td><code>otcBuyOrderId</code></td><td>integer</td><td>店頭買取受注ID。</td></tr><tr><td><code>assessmentId</code></td><td>integer</td><td>査定ID。</td></tr><tr><td><code>applyDate</code></td><td>string</td><td>申込日時。ISO8601形式の日時文字列。</td></tr><tr><td><code>freeComment</code></td><td>string</td><td>受注に付与されたフリーコメント。未設定の場合はnull。</td></tr><tr><td><code>memberName</code></td><td>string</td><td>査定担当者の会員名。紐づく会員が無い場合はnull。</td></tr><tr><td><code>otcOrderStatusId</code></td><td>integer</td><td>店頭買取ステータスのID。</td></tr><tr><td><code>returnSupply</code></td><td>integer</td><td>返送品の扱いを表す区分値。</td></tr><tr><td><code>callFlg</code></td><td>boolean</td><td>連絡要否のフラグ。</td></tr><tr><td><code>adultFlg</code></td><td>boolean</td><td>成人区分のフラグ。</td></tr><tr><td><code>playingFlg</code></td><td>boolean</td><td>プレイ用区分のフラグ。</td></tr><tr><td><code>orderStatusName</code></td><td>string</td><td>店頭買取ステータスの名称。</td></tr><tr><td><code>identificationId</code></td><td>integer</td><td>本人確認のID。未登録の場合は0。</td></tr><tr><td><code>qualifiedInvoiceIssuerFlg</code></td><td>boolean</td><td>適格請求書発行事業者の該当フラグ。</td></tr><tr><td><code>qualifiedInvoiceIssuerConfirmationFlg</code></td><td>boolean</td><td>適格請求書発行事業者の確認済みフラグ。</td></tr><tr><td><code>qualifiedInvoiceIssuerCode</code></td><td>string</td><td>適格請求書発行事業者の登録番号。紐づく口座が無い場合はnull。</td></tr><tr><td><code>customerInfo</code></td><td>object</td><td>申込者情報のオブジェクト。</td></tr><tr><td><code>customerInfo.firstName</code></td><td>string</td><td>申込者の名。</td></tr><tr><td><code>customerInfo.lastName</code></td><td>string</td><td>申込者の姓。</td></tr><tr><td><code>customerInfo.birth</code></td><td>string</td><td>申込者の生年月日。ISO8601形式の日時文字列。</td></tr><tr><td><code>customerInfo.telNo</code></td><td>string</td><td>申込者の電話番号。</td></tr><tr><td><code>customerInfo.zipcode</code></td><td>string</td><td>申込者の郵便番号。</td></tr><tr><td><code>customerInfo.jobName</code></td><td>string</td><td>申込者の職業名。</td></tr><tr><td><code>customerInfo.address</code></td><td>string</td><td>申込者の住所。国に応じて都道府県名または国名と住所1・住所2を半角空白区切りで連結した文字列。</td></tr></tbody></table></div>
-          <p>成功時の応答例（実装確認値に基づく代表値。個人情報は最小限の代表値とする）。</p>
-          <pre><code class="language-json">[
-            {
-              "otcBuyOrderId": 2001,
-              "assessmentId": 30001,
-              "applyDate": "2026-06-01T11:00:00+09:00",
-              "freeComment": null,
-              "memberName": "買取担当 太郎",
-              "otcOrderStatusId": 6,
-              "returnSupply": 0,
-              "callFlg": false,
-              "adultFlg": true,
-              "playingFlg": false,
-              "orderStatusName": "査定中",
-              "identificationId": 0,
-              "qualifiedInvoiceIssuerFlg": false,
-              "qualifiedInvoiceIssuerConfirmationFlg": false,
-              "qualifiedInvoiceIssuerCode": null,
-              "customerInfo": {
-                "firstName": "一郎",
-                "lastName": "山田",
-                "birth": "1990-01-01T00:00:00+09:00",
-                "telNo": "0312345678",
-                "zipcode": "1000001",
-                "jobName": "会社員",
-                "address": "東京都 千代田区千代田 1-1"
-              }
-            }
-          ]</code></pre>
-          <h3 id="function-design-a06-02-a06-02_api_store_purchase_otc_buy_order_list-入出力-永続化">入出力: 永続化</h3>
-          <p>本APIは業務データを更新しない。</p>
+          <h3 id="function-design-a06-02-a06-02_api_store_purchase_otc_buy_order_list-出力-値の表し方と未設定時のふるまい">出力: 値の表し方と未設定時のふるまい</h3>
+          <div class="table-wrap"><table><thead><tr><th>フィールド</th><th>ふるまい</th></tr></thead><tbody><tr><td><code>applyDate</code></td><td>ISO8601形式の日時文字列で返す。</td></tr><tr><td><code>freeComment</code></td><td>未設定の場合はnull。</td></tr><tr><td><code>memberName</code></td><td>査定担当者が紐づいていない場合はnull。</td></tr><tr><td><code>identificationId</code></td><td>本人確認が未登録の場合は0。</td></tr><tr><td><code>qualifiedInvoiceIssuerCode</code></td><td>適格請求書発行事業者の口座が紐づいていない場合はnull。</td></tr><tr><td><code>customerInfo.birth</code></td><td>ISO8601形式の日時文字列で返す。</td></tr><tr><td><code>customerInfo.address</code></td><td>国が日本のときは都道府県名・住所1・住所2、それ以外の国のときは国名・住所2・住所1 の順に、半角空白区切りで連結した1つの文字列で返す。</td></tr></tbody></table></div>
           <div class="renewal-spec-banner"><h3 id="function-design-a06-02-a06-02_api_store_purchase_otc_buy_order_list-リニューアル後の仕様">リニューアル後の仕様</h3></div>
           <h2 id="function-design-a06-02-a06-02_api_store_purchase_otc_buy_order_list-表示メッセージ">表示メッセージ</h2>
           <p>本APIは画面メッセージを扱わない。</p>
@@ -1390,7 +1342,7 @@
             <h3 class="doc-h doc-h-section" style="--lv:0"><span class="src-cell" data-excel-book="0506" data-excel-sheet="店頭買取情報更新" data-excel-ref="0506:店頭買取情報更新!B126">レスポンスデータサンプル</span></h3>
           </div>
         </div>
-      <!-- function-design-embed:start a06-03-a06-03_api_store_purchase_otc_buy_order_update -->
+            <!-- function-design-embed:start a06-03-a06-03_api_store_purchase_otc_buy_order_update -->
       <section class="function-design-embed" id="function-design-a06-03-a06-03_api_store_purchase_otc_buy_order_update" data-source="functions/pf-api/a06-03_api_store_purchase_otc_buy_order_update.md">
         <header class="function-design-header">
           <p class="function-design-source">Source:<br>functions/pf-api/a06-03_api_store_purchase_otc_buy_order_update.md</p>
@@ -1401,26 +1353,20 @@
           <h2 id="function-design-a06-03-a06-03_api_store_purchase_otc_buy_order_update-業務ロジック">業務ロジック</h2>
           <h3 id="function-design-a06-03-a06-03_api_store_purchase_otc_buy_order_update-更新対象の特定">更新対象の特定</h3>
           <p>指定された受注IDの店頭買取受注1件を更新対象とする。該当が無いときは該当なし（HTTP 404）とする。受注の現在のステータスや担当者による更新制限は本APIでは課さない。</p>
-          <h3 id="function-design-a06-03-a06-03_api_store_purchase_otc_buy_order_update-明細の入れ替え">明細の入れ替え</h3>
-          <p>受注に紐づく既存の明細・個別入力商品・在庫・在庫履歴を削除したうえで、送られた明細を1件ずつ登録する。商品規格IDが空の明細は個別入力商品として登録し、商品規格IDがある明細は明細として登録する。いずれも部門IDがあり該当部門が存在するときだけ部門を設定する。商品規格に紐づく明細は商品規格ごとに数量を集計し、在庫と在庫履歴を作る。</p>
+          <h3 id="function-design-a06-03-a06-03_api_store_purchase_otc_buy_order_update-部門の設定と実在庫の集約">部門の設定と実在庫の集約</h3>
+          <p>明細・個別入力商品には、部門IDが指定され、かつ該当する部門が存在するときだけ部門を設定する。該当する部門が無い部門IDは無視し、部門なしで登録する。</p>
+          <p>実在庫は商品規格ごとに数量を合算して1件にまとめる。同じ商品規格の明細が複数送られたときも、実在庫は商品規格につき1件になる。実在庫履歴には合算後の数量・査定担当者・現在日時を記録する。</p>
           <h3 id="function-design-a06-03-a06-03_api_store_purchase_otc_buy_order_update-買取合計金額">買取合計金額</h3>
-          <p>明細の単価×数量を合算し、10円単位へ切り上げた額を買取合計金額とする。</p>
+          <p>送られた査定明細すべて（個別入力商品を含む）について単価×数量を合算し、10円単位へ切り上げた額を買取合計金額とする。</p>
           <h3 id="function-design-a06-03-a06-03_api_store_purchase_otc_buy_order_update-受注への反映">受注への反映</h3>
-          <p>受注にステータス・買取合計金額・明細・個別入力商品・在庫を設定する。査定担当者には認証した管理者会員を、更新日時には現在日時を設定する。指定ステータスが成立（1）のときは成立日時を、それ以外のときはキャンセル日時を現在日時に設定する。受注が適格請求書発行事業者に該当するときだけ、確認済みフラグを指定値で更新する。</p>
-          <p>更新前と指定ステータスが異なるときは、ステータス変更履歴を1件登録する。</p>
+          <p>査定担当者には認証した管理者会員を、更新日時には現在日時を設定する。適格請求書発行事業者に該当する受注のときだけ、確認済みフラグを指定値で更新する（該当しない受注では、指定されても更新しない）。</p>
+          <p>更新前と指定ステータスが異なるときだけ、ステータス変更履歴を1件登録する。同じステータスが指定されたときは履歴を残さない。</p>
           <h3 id="function-design-a06-03-a06-03_api_store_purchase_otc_buy_order_update-エラー時の扱い">エラー時の扱い</h3>
           <div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>認証不可</td><td>認証拒否（HTTP 401）とする</td></tr><tr><td>受注が存在しない</td><td>該当なし（HTTP 404）とする</td></tr><tr><td>入力検証エラー</td><td>入力不正（HTTP 400）とし、全メッセージを<code>errors</code>配列で返す。削除・登録・保存は行わない</td></tr><tr><td>削除・登録・保存処理中の例外</td><td>共通例外処理に委ねる（HTTP 500相当）</td></tr></tbody></table></div>
           <p>検証エラーは複数件をまとめる。受注全体の検証と明細各件の検証を合算した全メッセージを返す。</p>
           <h2 id="function-design-a06-03-a06-03_api_store_purchase_otc_buy_order_update-入出力">入出力</h2>
-          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>更新対象の受注ID、更新後のステータス、査定明細の配列、適格請求書発行事業者の確認済みフラグ、認証トークン</td></tr><tr><td>成功時出力</td><td>HTTP 200。処理結果コード200</td></tr><tr><td>失敗時出力</td><td>HTTP 401（認証不可）、HTTP 404（受注なし）、HTTP 400（入力検証エラー）、HTTP 500（処理中の例外）</td></tr></tbody></table></div>
           <h3 id="function-design-a06-03-a06-03_api_store_purchase_otc_buy_order_update-入力-リクエスト">入力: リクエスト</h3>
-          <div class="table-wrap"><table><thead><tr><th>パラメータ</th><th>位置</th><th>型</th><th>必須／任意</th><th>説明</th></tr></thead><tbody><tr><td><code>id</code></td><td>パス</td><td>integer</td><td>必須</td><td>更新対象の店頭買取受注ID</td></tr><tr><td><code>order_status</code></td><td>ボディ</td><td>integer</td><td>必須</td><td>更新後の店頭買取ステータスID。店頭買取ステータスマスタに存在する値であること</td></tr><tr><td><code>order_details</code></td><td>ボディ</td><td>array</td><td>必須</td><td>査定明細の配列。1件以上であること</td></tr><tr><td><code>order_details[].product_class_id</code></td><td>ボディ</td><td>integer</td><td>任意</td><td>商品規格ID。空のときは個別入力商品として扱う。整数のみ</td></tr><tr><td><code>order_details[].name</code></td><td>ボディ</td><td>string</td><td>必須</td><td>商品名。最大65535文字</td></tr><tr><td><code>order_details[].quantity</code></td><td>ボディ</td><td>integer</td><td>任意</td><td>数量。整数のみ</td></tr><tr><td><code>order_details[].price</code></td><td>ボディ</td><td>integer</td><td>任意</td><td>単価。整数のみ</td></tr><tr><td><code>order_details[].sell_price</code></td><td>ボディ</td><td>integer</td><td>任意</td><td>販売価格。整数のみ</td></tr><tr><td><code>order_details[].section_id</code></td><td>ボディ</td><td>integer</td><td>任意</td><td>部門ID。該当部門が存在する場合のみ設定する。整数のみ</td></tr><tr><td><code>qualified_invoice_issuer_confirmation_flg</code></td><td>ボディ</td><td>boolean</td><td>任意</td><td>適格請求書発行事業者の確認済みフラグ。受注が適格請求書発行事業者に該当する場合のみ反映する</td></tr><tr><td><code>jwt-token</code></td><td>ヘッダ</td><td>string</td><td>必須</td><td>認証用のトークン</td></tr></tbody></table></div>
-          <p>ボディの項目はフォーム値として受け取り、明細各項目のキーはスネークケースで指定する。</p>
-          <h3 id="function-design-a06-03-a06-03_api_store_purchase_otc_buy_order_update-出力-レスポンス-成功">出力: レスポンス（成功）</h3>
-          <div class="table-wrap"><table><thead><tr><th>フィールド</th><th>型</th><th>説明</th></tr></thead><tbody><tr><td><code>code</code></td><td>integer</td><td>処理結果コード。成功時は200</td></tr></tbody></table></div>
-          <pre><code class="language-json">{
-            "code": 200
-          }</code></pre>
+          <div class="table-wrap"><table><thead><tr><th>パラメータ</th><th>位置</th><th>型</th><th>必須／任意</th><th>説明</th></tr></thead><tbody><tr><td><code>jwt-token</code></td><td>ヘッダ</td><td>string</td><td>必須</td><td>認証用のトークン</td></tr></tbody></table></div>
           <h3 id="function-design-a06-03-a06-03_api_store_purchase_otc_buy_order_update-出力-レスポンス-失敗">出力: レスポンス（失敗）</h3>
           <div class="table-wrap"><table><thead><tr><th>HTTPステータス</th><th>条件</th><th>本文の形</th></tr></thead><tbody><tr><td>401</td><td>トークン欠落・署名不正・該当する管理者会員なし</td><td>認証拒否（本文を持たない）</td></tr><tr><td>404</td><td>受注IDに該当する店頭買取受注が無い</td><td>該当なし（本文を持たない）</td></tr><tr><td>400</td><td>ステータス未指定</td><td><code>errors</code>に「ステータスを選択してください。」を含む</td></tr><tr><td>400</td><td>ステータスIDが店頭買取ステータスマスタに存在しない</td><td><code>errors</code>に「MtbOtcBuyOrderStatusに{指定ID}が見つかりません。」を含む</td></tr><tr><td>400</td><td>明細が未指定または空</td><td><code>errors</code>に「1つ以上の商品を選んでください。」を含む</td></tr><tr><td>400</td><td>明細の商品名が未入力</td><td><code>errors</code>に商品名必須の検証メッセージを含む</td></tr><tr><td>400</td><td>明細の商品名が最大長超過</td><td><code>errors</code>に「商品名は、 65535 以下で入力してください。」を含む</td></tr><tr><td>400</td><td>明細の商品規格ID・数量・単価・販売価格・部門IDが整数でない</td><td><code>errors</code>に該当項目の整数形式メッセージを含む</td></tr><tr><td>500</td><td>削除・登録・保存処理中の例外</td><td>共通例外処理に委ねる</td></tr></tbody></table></div>
           <pre><code class="language-json">{
@@ -1429,8 +1375,6 @@
               "1つ以上の商品を選んでください。"
             ]
           }</code></pre>
-          <h3 id="function-design-a06-03-a06-03_api_store_purchase_otc_buy_order_update-入出力-永続化">入出力: 永続化</h3>
-          <div class="table-wrap"><table><thead><tr><th>操作</th><th>契機</th></tr></thead><tbody><tr><td>削除</td><td>更新時に、受注に紐づく既存の明細・個別入力商品・在庫・在庫履歴を削除する</td></tr><tr><td>追加</td><td>送られた明細から、明細・個別入力商品・在庫・在庫履歴を登録する</td></tr><tr><td>追加</td><td>更新前と指定ステータスが異なるとき、ステータス変更履歴を1件登録する</td></tr><tr><td>更新</td><td>受注のステータス・買取合計金額・査定担当者・更新日時・成立日時またはキャンセル日時、確認済みフラグを更新する</td></tr></tbody></table></div>
           <div class="renewal-spec-banner"><h3 id="function-design-a06-03-a06-03_api_store_purchase_otc_buy_order_update-リニューアル後の仕様">リニューアル後の仕様</h3></div>
           <h2 id="function-design-a06-03-a06-03_api_store_purchase_otc_buy_order_update-表示メッセージ">表示メッセージ</h2>
           <div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>A06-03-MSG-001</td><td>API応答JSON（errors配列）</td><td>商品規格IDが指定されていません</td><td>店頭買取受注詳細更新APIで、明細の商品規格IDがnullの場合。</td><td>HTTP 400のJSON errorsで処理中止。</td></tr><tr><td>A06-03-MSG-002</td><td>API応答JSON（errors配列）</td><td>商品規格IDが存在しません</td><td>店頭買取受注詳細更新APIで、指定された商品規格IDに該当する商品規格が存在しない場合。</td><td>HTTP 400のJSON errorsで処理中止。</td></tr></tbody></table></div>
@@ -1498,7 +1442,7 @@
             <h3 class="doc-h doc-h-section" style="--lv:0"><span class="src-cell" data-excel-book="0506" data-excel-sheet="店頭買取情報コメント更新" data-excel-ref="0506:店頭買取情報コメント更新!B57">レスポンスデータサンプル</span></h3>
           </div>
         </div>
-      <!-- function-design-embed:start a06-04-a06-04_api_store_purchase_otc_buy_order_free_comment -->
+            <!-- function-design-embed:start a06-04-a06-04_api_store_purchase_otc_buy_order_free_comment -->
       <section class="function-design-embed" id="function-design-a06-04-a06-04_api_store_purchase_otc_buy_order_free_comment" data-source="functions/pf-api/a06-04_api_store_purchase_otc_buy_order_free_comment.md">
         <header class="function-design-header">
           <p class="function-design-source">Source:<br>functions/pf-api/a06-04_api_store_purchase_otc_buy_order_free_comment.md</p>
@@ -1508,15 +1452,16 @@
         <div class="function-design-body">
           <h2 id="function-design-a06-04-a06-04_api_store_purchase_otc_buy_order_free_comment-業務ロジック">業務ロジック</h2>
           <h3 id="function-design-a06-04-a06-04_api_store_purchase_otc_buy_order_free_comment-更新の判定順序">更新の判定順序</h3>
-          <div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>認証用トークンを検証できないとき</td><td>認証拒否（HTTP 401）とし、本文を持たない</td></tr><tr><td>2</td><td>指定した受注IDに該当する店頭買取受注が無いとき</td><td>該当なし（HTTP 404）とし、本文を持たない</td></tr><tr><td>3</td><td>コメントが未指定のとき</td><td>入力不正（HTTP 400）とし、「コメントを入力してください」を返す</td></tr><tr><td>4</td><td>上記のいずれにも該当しないとき</td><td>フリーコメントを指定値で更新し、更新担当者に認証した管理者会員を設定して保存する</td></tr></tbody></table></div>
-          <h3 id="function-design-a06-04-a06-04_api_store_purchase_otc_buy_order_free_comment-他機能との境界">他機能との境界</h3>
-          <p>認証用トークンを検証し、トークンに含まれる利用者IDから管理者会員を引く。署名方式はHS256とする。トークンが無い、署名が不正、該当する管理者会員が無いときは、いずれも認証拒否（HTTP 401）とする。呼び出し可能なクライアントは買取アプリとする。トークンの原値と署名シークレットは本書に記載しない。</p>
-          <h3 id="function-design-a06-04-a06-04_api_store_purchase_otc_buy_order_free_comment-エラー時の扱い">エラー時の扱い</h3>
-          <div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>トークンが無い、署名が不正、該当する管理者会員が無い</td><td>認証拒否（HTTP 401）とする</td></tr><tr><td>受注IDに該当する店頭買取受注が無い</td><td>該当なし（HTTP 404）とする</td></tr><tr><td>コメントが未指定</td><td>入力不正（HTTP 400）とし、処理結果コードとエラー内容を返す</td></tr></tbody></table></div>
+          <div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>認証用トークンを検証できないとき</td><td>認証拒否（HTTP 401）とする</td></tr><tr><td>2</td><td>指定した受注IDに該当する店頭買取受注が無いとき</td><td>該当なし（HTTP 404）とする</td></tr><tr><td>3</td><td>コメントの項目自体が送られていないとき</td><td>入力不正（HTTP 400）とし、「コメントを入力してください」を返す</td></tr><tr><td>4</td><td>上記のいずれにも該当しないとき</td><td>コメントを更新し、あわせて更新担当者に認証した管理者会員を設定する</td></tr></tbody></table></div>
+          <p>コメントの項目が空文字で送られたときは未指定として扱わず、コメントを空にして更新する。</p>
+          <h3 id="function-design-a06-04-a06-04_api_store_purchase_otc_buy_order_free_comment-認証の判定">認証の判定</h3>
+          <p>認証用トークンの署名方式はHS256とする。トークンに含まれる利用者IDから管理者会員を引き、トークンが無いとき・署名が不正なとき・該当する管理者会員が無いときは、いずれも認証拒否（HTTP 401）とする。</p>
           <h2 id="function-design-a06-04-a06-04_api_store_purchase_otc_buy_order_free_comment-入出力">入出力</h2>
-          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>店頭買取受注のID（パス・必須）、フリーコメント（必須。未指定のときは入力不正とする）、認証用トークン（ヘッダ・必須）</td></tr><tr><td>成功時出力</td><td>HTTP 200。処理結果コード</td></tr><tr><td>失敗時出力</td><td>認証できないときはHTTP 401、受注が無いときはHTTP 404、コメントが未指定のときはHTTP 400</td></tr></tbody></table></div>
+          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>更新対象の店頭買取受注のID（エンドポイントのパス・必須）、認証用トークン（リクエストヘッダ・必須）</td></tr><tr><td>失敗時出力</td><td>認証できないときはHTTP 401、受注が無いときはHTTP 404、コメントが送られていないときはHTTP 400</td></tr></tbody></table></div>
+          <h3 id="function-design-a06-04-a06-04_api_store_purchase_otc_buy_order_free_comment-入出力-受け付けるパス">入出力: 受け付けるパス</h3>
+          <p>エンドポイントは拡張子 <code>.json</code> の付いたパスと、付かないパスの双方を同じ処理として受け付ける。</p>
           <h3 id="function-design-a06-04-a06-04_api_store_purchase_otc_buy_order_free_comment-入出力-永続化">入出力: 永続化</h3>
-          <div class="table-wrap"><table><thead><tr><th>操作</th><th>契機</th></tr></thead><tbody><tr><td>更新</td><td>認証と対象の確認を通過し、コメントが指定されているとき。店頭買取受注のフリーコメントと更新担当者</td></tr></tbody></table></div>
+          <div class="table-wrap"><table><thead><tr><th>操作</th><th>契機</th></tr></thead><tbody><tr><td>更新</td><td>認証と対象の確認を通過し、コメントが送られているとき。店頭買取受注のフリーコメントと更新担当者</td></tr></tbody></table></div>
           <div class="renewal-spec-banner"><h3 id="function-design-a06-04-a06-04_api_store_purchase_otc_buy_order_free_comment-リニューアル後の仕様">リニューアル後の仕様</h3></div>
           <h2 id="function-design-a06-04-a06-04_api_store_purchase_otc_buy_order_free_comment-表示メッセージ">表示メッセージ</h2>
           <div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>—</td><td>応答本文のエラー内容</td><td>コメントを入力してください</td><td>コメントを指定せずに更新したとき</td><td>更新せず、入力不正（HTTP 400）を返す</td></tr></tbody></table></div>
@@ -1598,7 +1543,7 @@
             <h3 class="doc-h doc-h-section" style="--lv:0"><span class="src-cell" data-excel-book="0506" data-excel-sheet="店頭買取情報ステータス更新" data-excel-ref="0506:店頭買取情報ステータス更新!B73">レスポンスデータサンプル</span></h3>
           </div>
         </div>
-      <!-- function-design-embed:start a06-05-a06-05_api_store_purchase_otc_buy_order_status -->
+            <!-- function-design-embed:start a06-05-a06-05_api_store_purchase_otc_buy_order_status -->
       <section class="function-design-embed" id="function-design-a06-05-a06-05_api_store_purchase_otc_buy_order_status" data-source="functions/pf-api/a06-05_api_store_purchase_otc_buy_order_status.md">
         <header class="function-design-header">
           <p class="function-design-source">Source:<br>functions/pf-api/a06-05_api_store_purchase_otc_buy_order_status.md</p>
@@ -1608,21 +1553,17 @@
         <div class="function-design-body">
           <h2 id="function-design-a06-05-a06-05_api_store_purchase_otc_buy_order_status-業務ロジック">業務ロジック</h2>
           <h3 id="function-design-a06-05-a06-05_api_store_purchase_otc_buy_order_status-認証と担当者">認証と担当者</h3>
-          <p>トークンを検証して管理者会員を特定する。トークンの欠落・署名不正・該当する管理者会員なしのいずれのときも認証拒否（HTTP 401）とする。認証した管理者会員を査定担当者として記録する。査定中・査定再開の受注を査定中・査定再開へ更新できるのは、その受注の査定担当者本人だけである。呼び出し元は買取アプリで、トークンの原値と署名の秘密値は本書に記載しない。</p>
+          <p>トークンはリクエストヘッダで受け取る。トークンの欠落・署名不正・該当する管理者会員なしのいずれのときも認証拒否（HTTP 401）とし、受注も履歴も書き換えない。認証で特定した管理者会員を、更新時に記録する査定担当者として扱う。トークンの原値と署名の秘密値は本書に記載しない。</p>
           <h3 id="function-design-a06-05-a06-05_api_store_purchase_otc_buy_order_status-更新の判定順序">更新の判定順序</h3>
-          <div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>認証できるか</td><td>できないなら認証拒否（HTTP 401）</td></tr><tr><td>2</td><td>受注IDに該当する店頭買取受注があるか</td><td>無ければ該当なし（HTTP 404）</td></tr><tr><td>3</td><td>指定ステータスIDが店頭買取ステータスに存在するか</td><td>存在しなければ入力不正（HTTP 400）</td></tr><tr><td>4</td><td>更新前ステータスが査定終了か</td><td>査定終了なら更新せず入力不正（HTTP 400）。指定先が査定中・査定再開のときとそれ以外で文言を分ける</td></tr><tr><td>5</td><td>更新前が査定中・査定再開で、指定も査定中・査定再開か</td><td>その受注の査定担当者が認証した管理者会員と異なるなら入力不正（HTTP 400）</td></tr><tr><td>6</td><td>更新前ステータスと指定ステータスが異なるか</td><td>異なるときだけ更新する。同じときは更新も履歴登録も行わず処理結果コード200を返す</td></tr></tbody></table></div>
+          <div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>認証できるか</td><td>できないなら認証拒否（HTTP 401）</td></tr><tr><td>2</td><td>受注IDに該当する店頭買取受注があるか</td><td>無ければ該当なし（HTTP 404）</td></tr><tr><td>3</td><td>指定ステータスIDが店頭買取ステータスに存在するか</td><td>存在しなければ入力不正（HTTP 400）</td></tr><tr><td>4</td><td>更新前ステータスと指定ステータスが異なるか</td><td>異なるときだけ書き込む。同じときは受注も履歴も書き換えず成功として応答する</td></tr></tbody></table></div>
           <h3 id="function-design-a06-05-a06-05_api_store_purchase_otc_buy_order_status-更新の内容">更新の内容</h3>
-          <p>更新前後のステータスが異なるときは、受注のステータス・査定担当者・更新日時を更新し、ステータス変更履歴を1件登録する。金額・税・ポイント・在庫数量の再計算や丸めは行わない。応答は本APIで集計せず、処理結果コードを返す。</p>
-          <h3 id="function-design-a06-05-a06-05_api_store_purchase_otc_buy_order_status-店頭買取ステータス">店頭買取ステータス</h3>
-          <p>登録されているステータスIDは、成立（1）・キャンセル（2）・ダブルチェック済（3）・データ出力済（4）・商品到着（5）・査定中（6）・振込前（7）・保留（8）・査定再開（9）である。これらに存在しないIDを指定したときは入力不正（HTTP 400）とする。</p>
+          <p>更新前後のステータスが異なるときだけ書き込みを行う。このとき店頭買取受注には、査定担当者と更新日時も記録する。金額・税・ポイント・在庫数量の再計算や丸めは行わない。</p>
           <h3 id="function-design-a06-05-a06-05_api_store_purchase_otc_buy_order_status-エラー時の扱い">エラー時の扱い</h3>
-          <div class="table-wrap"><table><thead><tr><th>事象</th><th>扱い</th></tr></thead><tbody><tr><td>認証不可</td><td>認証拒否（HTTP 401）とする。本文を持たない</td></tr><tr><td>受注が存在しない</td><td>該当なし（HTTP 404）とする。本文を持たない</td></tr><tr><td>ステータスIDが不正</td><td>入力不正（HTTP 400）とし、エラー内容を含むJSONを返す</td></tr><tr><td>査定終了後の更新</td><td>入力不正（HTTP 400）とし、指定先に応じた文言を返す</td></tr><tr><td>他担当者が査定中の受注の査定開始</td><td>入力不正（HTTP 400）とし、査定担当者名を含む文言を返す</td></tr><tr><td>保存処理中の例外</td><td>共通の例外処理に委ねる（HTTP 500相当）</td></tr></tbody></table></div>
+          <div class="table-wrap"><table><thead><tr><th>事象</th><th>扱い</th></tr></thead><tbody><tr><td>認証不可</td><td>認証拒否（HTTP 401）とする。errors配列を持つ応答本文は返さない</td></tr><tr><td>受注が存在しない</td><td>該当なし（HTTP 404）とする。errors配列を持つ応答本文は返さない</td></tr><tr><td>ステータスIDが不正</td><td>入力不正（HTTP 400）とし、エラー内容を含むJSONを返す</td></tr></tbody></table></div>
           <h2 id="function-design-a06-05-a06-05_api_store_purchase_otc_buy_order_status-入出力">入出力</h2>
-          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>店頭買取受注ID、設定する店頭買取ステータスID、認証用トークン</td></tr><tr><td>成功時出力</td><td>HTTP 200。処理結果コード。更新前後が同じステータスでも200を返す</td></tr><tr><td>失敗時出力</td><td>HTTP 401（認証不可）、HTTP 404（受注なし）、HTTP 400（入力不正・状態不整合・担当者不一致）、HTTP 500（保存処理中の例外）</td></tr></tbody></table></div>
-          <h3 id="function-design-a06-05-a06-05_api_store_purchase_otc_buy_order_status-入出力-リクエスト">入出力: リクエスト</h3>
-          <div class="table-wrap"><table><thead><tr><th>パラメータ</th><th>位置</th><th>型</th><th>必須／任意</th><th>説明</th></tr></thead><tbody><tr><td><code>id</code></td><td>パス</td><td>integer</td><td>必須</td><td>更新対象の店頭買取受注ID</td></tr><tr><td><code>status</code></td><td>ボディ（フォーム値）</td><td>integer</td><td>必須</td><td>設定する店頭買取ステータスID。店頭買取ステータスに存在する値であること</td></tr><tr><td>認証トークン</td><td>ヘッダ</td><td>string</td><td>必須</td><td>管理者会員を特定するためのトークン</td></tr></tbody></table></div>
+          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>成功時出力</td><td>更新前後が同じステータスでも成功（HTTP 200）を返す</td></tr><tr><td>失敗時出力</td><td>HTTP 401（認証不可）、HTTP 404（受注なし）、HTTP 400（入力不正）</td></tr></tbody></table></div>
           <h3 id="function-design-a06-05-a06-05_api_store_purchase_otc_buy_order_status-入出力-永続化">入出力: 永続化</h3>
-          <div class="table-wrap"><table><thead><tr><th>操作</th><th>契機</th></tr></thead><tbody><tr><td>更新</td><td>更新前後のステータスが異なるとき、店頭買取受注のステータス・査定担当者・更新日時を更新する</td></tr><tr><td>追加</td><td>同じ契機で、ステータス変更履歴を1件登録する</td></tr></tbody></table></div>
+          <div class="table-wrap"><table><thead><tr><th>操作</th><th>契機</th></tr></thead><tbody><tr><td>更新</td><td>更新前後のステータスが異なるとき、店頭買取受注に査定担当者と更新日時を記録する</td></tr><tr><td>追加</td><td>同じ契機で、ステータス変更履歴を1件残す。履歴は対象の受注、設定したステータス、登録した管理者会員、登録日時を持つ</td></tr></tbody></table></div>
           <div class="renewal-spec-banner"><h3 id="function-design-a06-05-a06-05_api_store_purchase_otc_buy_order_status-リニューアル後の仕様">リニューアル後の仕様</h3></div>
           <h2 id="function-design-a06-05-a06-05_api_store_purchase_otc_buy_order_status-表示メッセージ">表示メッセージ</h2>
           <div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>A06-05-MSG-001</td><td>API応答JSON（errors配列）</td><td>買取情報が見つかりません</td><td>ステータス更新時、指定した店頭買取受注IDが存在しない</td><td>HTTP 404のJSONを返し、更新処理を中止する</td></tr><tr><td>A06-05-MSG-002</td><td>API応答JSON（errors配列）</td><td>不正なステータス遷移です</td><td>店頭買取受注ステータス更新APIで、受注の現在ステータスが取得できない場合。</td><td>HTTP 400のJSON errorsで更新中止。</td></tr><tr><td>—</td><td>API応答JSON（errors配列）</td><td>正しい店頭買取ステータスIDを入力してください</td><td>指定したステータスIDが店頭買取ステータスに存在しないとき</td><td>HTTP 400のJSONを返し、更新しない</td></tr><tr><td>—</td><td>API応答JSON（errors配列）</td><td>この査定はすでに終了しているため開くことができません。</td><td>更新前ステータスが査定終了で、指定ステータスが査定中・査定再開のとき</td><td>HTTP 400のJSONを返し、更新しない</td></tr><tr><td>—</td><td>API応答JSON（errors配列）</td><td>この査定はすでに終了しているためステータスの更新に失敗しました。</td><td>更新前ステータスが査定終了で、指定ステータスがそれ以外のとき</td><td>HTTP 400のJSONを返し、更新しない</td></tr><tr><td>—</td><td>API応答JSON（errors配列）</td><td>この受注は「（査定担当者名）」が査定中です。</td><td>査定中・査定再開の受注を、査定担当者本人以外が査定中・査定再開へ更新しようとしたとき</td><td>HTTP 400のJSONを返し、更新しない</td></tr></tbody></table></div>
@@ -1737,7 +1678,7 @@
             <h3 class="doc-h doc-h-section" style="--lv:0"><span class="src-cell" data-excel-book="0506" data-excel-sheet="カード詳細IDから買取用商品情報を取得" data-excel-ref="0506:カード詳細IDから買取用商品情報を取得!B96">レスポンスデータサンプル</span></h3>
           </div>
         </div>
-      <!-- function-design-embed:start a06-06-a06-06_api_buying_products_by_detail -->
+            <!-- function-design-embed:start a06-06-a06-06_api_buying_products_by_detail -->
       <section class="function-design-embed" id="function-design-a06-06-a06-06_api_buying_products_by_detail" data-source="functions/pf-api/a06-06_api_buying_products_by_detail.md">
         <header class="function-design-header">
           <p class="function-design-source">Source:<br>functions/pf-api/a06-06_api_buying_products_by_detail.md</p>
@@ -1746,56 +1687,18 @@
         </header>
         <div class="function-design-body">
           <h2 id="function-design-a06-06-a06-06_api_buying_products_by_detail-業務ロジック">業務ロジック</h2>
-          <h3 id="function-design-a06-06-a06-06_api_buying_products_by_detail-取得対象">取得対象</h3>
-          <p>パスで指定されたカード詳細IDが属するカードに紐づく買取用商品を取得する。取得結果が空のときはページが見つからない扱い（404）とする。</p>
-          <h3 id="function-design-a06-06-a06-06_api_buying_products_by_detail-応答値の扱い">応答値の扱い</h3>
-          <p>金額・税・ポイント・在庫数量の再計算や丸めは行わない。取得時点の値をJSON応答へ整形して返す。表示用の加工と表示制御は呼び出し元クライアントの設計を正とする。</p>
-          <h3 id="function-design-a06-06-a06-06_api_buying_products_by_detail-応答の階層">応答の階層</h3>
-          <p>応答はカードIDをキーとする <code>cards</code> オブジェクトを最上位に持つ階層構造とする。各カードの配下にカード詳細ID（<code>details</code>）、言語コード（<code>languageClasses</code>）、状態コード（<code>conditionClasses</code>）の順で入れ子になる。</p>
-          <h3 id="function-design-a06-06-a06-06_api_buying_products_by_detail-エラー時の扱い">エラー時の扱い</h3>
-          <div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>該当する買取用商品が無い</td><td>ページが見つからない扱い（404）とし、標準の例外応答（メッセージを含むJSON）を返す</td></tr></tbody></table></div>
+          <h3 id="function-design-a06-06-a06-06_api_buying_products_by_detail-応答に含めない商品規格">応答に含めない商品規格</h3>
+          <p>次のいずれかに当てはまる商品規格は、応答に含めない。</p>
+          <ul><li>商品に商品画像が1件も結び付いていない</li><li>カード詳細にレアリティが結び付いていない</li><li>商品規格に、買取価格・部門IDを保持する付随情報が結び付いていない</li><li>その付随情報に言語が結び付いていない</li><li>その付随情報に状態が結び付いていない</li></ul>
+          <p>カードセット・プロモーション・略称タグは結び付いていなくても応答から除かず、該当項目を値なしで返す。</p>
+          <h3 id="function-design-a06-06-a06-06_api_buying_products_by_detail-同じ組に複数の商品規格が該当したときの扱い">同じ組に複数の商品規格が該当したときの扱い</h3>
+          <p>同じカードID・カード詳細ID・言語・状態の組に複数の商品規格が該当した場合、応答に残るのは1件だけで、後から取得したものが先のものを上書きする。取得順は指定していないため、どれが残るかは定まらない。</p>
+          <h3 id="function-design-a06-06-a06-06_api_buying_products_by_detail-応答値の加工">応答値の加工</h3>
+          <p>金額・在庫数量の再計算、丸め、桁区切りなどの整形は行わない。保持している値をそのまま応答へ入れる。</p>
           <h2 id="function-design-a06-06-a06-06_api_buying_products_by_detail-入出力">入出力</h2>
-          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>パスのカード詳細ID（<code>detailId</code>、整数、必須）。このIDが属するカードに紐づく買取用商品を取得する</td></tr><tr><td>成功時出力</td><td>HTTP 200。買取用商品情報のJSON</td></tr><tr><td>失敗時出力</td><td>HTTP 404。該当する買取用商品が無いとき</td></tr></tbody></table></div>
-          <h3 id="function-design-a06-06-a06-06_api_buying_products_by_detail-出力-応答フィールド">出力: 応答フィールド</h3>
-          <div class="table-wrap"><table><thead><tr><th>フィールド</th><th>型</th><th>説明</th></tr></thead><tbody><tr><td><code>cards</code></td><td>object</td><td>カードIDをキーとするオブジェクト。値は各カードの情報。</td></tr><tr><td><code>cards.&lt;cardId&gt;.cardNameJp</code></td><td>string</td><td>カードの日本語名。</td></tr><tr><td><code>cards.&lt;cardId&gt;.cardNameEn</code></td><td>string</td><td>カードの英語名。</td></tr><tr><td><code>cards.&lt;cardId&gt;.imageFileName</code></td><td>string</td><td>カード画像のファイル名。</td></tr><tr><td><code>cards.&lt;cardId&gt;.details</code></td><td>object</td><td>カード詳細IDをキーとするオブジェクト。値は各カード詳細の情報。</td></tr><tr><td><code>cards.&lt;cardId&gt;.details.&lt;detailId&gt;.cardsetCode</code></td><td>string</td><td>カードセットのコード。カードセット未設定のときはnull。</td></tr><tr><td><code>cards.&lt;cardId&gt;.details.&lt;detailId&gt;.cardsetName</code></td><td>string</td><td>カードセットの日本語名。カードセット未設定のときはnull。</td></tr><tr><td><code>cards.&lt;cardId&gt;.details.&lt;detailId&gt;.foilFlg</code></td><td>boolean</td><td>フォイルか否か。</td></tr><tr><td><code>cards.&lt;cardId&gt;.details.&lt;detailId&gt;.cardNo</code></td><td>string</td><td>カード番号。</td></tr><tr><td><code>cards.&lt;cardId&gt;.details.&lt;detailId&gt;.promotionName</code></td><td>string</td><td>プロモーションの日本語名。プロモーション未設定のときはnull。</td></tr><tr><td><code>cards.&lt;cardId&gt;.details.&lt;detailId&gt;.productId</code></td><td>integer</td><td>商品ID。</td></tr><tr><td><code>cards.&lt;cardId&gt;.details.&lt;detailId&gt;.productNameJp</code></td><td>string</td><td>商品の日本語名。</td></tr><tr><td><code>cards.&lt;cardId&gt;.details.&lt;detailId&gt;.productNameEn</code></td><td>string</td><td>商品の英語名。</td></tr><tr><td><code>cards.&lt;cardId&gt;.details.&lt;detailId&gt;.rarityCode</code></td><td>string</td><td>レアリティのコード。</td></tr><tr><td><code>cards.&lt;cardId&gt;.details.&lt;detailId&gt;.storageCodeName</code></td><td>string</td><td>保管コードの名称。未設定のときはnull。</td></tr><tr><td><code>cards.&lt;cardId&gt;.details.&lt;detailId&gt;.languageClasses</code></td><td>object</td><td>言語コードをキーとするオブジェクト。</td></tr><tr><td><code>cards.&lt;cardId&gt;.details.&lt;detailId&gt;.languageClasses.&lt;languageCode&gt;.conditionClasses</code></td><td>object</td><td>状態コードをキーとするオブジェクト。値は商品規格単位の情報。</td></tr><tr><td><code>…conditionClasses.&lt;conditionCode&gt;.productClassId</code></td><td>integer</td><td>商品規格ID。</td></tr><tr><td><code>…conditionClasses.&lt;conditionCode&gt;.productCode</code></td><td>string</td><td>商品コード。</td></tr><tr><td><code>…conditionClasses.&lt;conditionCode&gt;.buyPrice</code></td><td>integer</td><td>買取価格。未設定のときはnull。</td></tr><tr><td><code>…conditionClasses.&lt;conditionCode&gt;.price</code></td><td>string</td><td>販売価格（販売価格列の値）。</td></tr><tr><td><code>…conditionClasses.&lt;conditionCode&gt;.stock</code></td><td>string</td><td>在庫数。</td></tr><tr><td><code>…conditionClasses.&lt;conditionCode&gt;.sectionId</code></td><td>integer</td><td>部門ID。未設定のときはnull。</td></tr></tbody></table></div>
-          <p>成功時の応答例（実装確認値に基づく代表値）。</p>
-          <pre><code class="language-json">{
-            "cards": {
-              "10001": {
-                "cardNameJp": "サンプルカード",
-                "cardNameEn": "Sample Card",
-                "imageFileName": "10001.jpg",
-                "details": {
-                  "20001": {
-                    "cardsetCode": "SET",
-                    "cardsetName": "サンプルセット",
-                    "foilFlg": false,
-                    "cardNo": "123",
-                    "promotionName": null,
-                    "productId": 30001,
-                    "productNameJp": "サンプルカード",
-                    "productNameEn": "Sample Card",
-                    "rarityCode": "R",
-                    "storageCodeName": null,
-                    "languageClasses": {
-                      "JP": {
-                        "conditionClasses": {
-                          "NM": {
-                            "productClassId": 40001,
-                            "productCode": "P-40001",
-                            "buyPrice": 100,
-                            "price": "300",
-                            "stock": "5",
-                            "sectionId": 1
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }</code></pre>
+          <h3 id="function-design-a06-06-a06-06_api_buying_products_by_detail-出力-値が無いときの扱い">出力: 値が無いときの扱い</h3>
+          <p>次の項目は、値が設定されていないとき項目自体は省略せず、値なしで返す。</p>
+          <div class="table-wrap"><table><thead><tr><th>項目</th><th>値が無いときの応答</th></tr></thead><tbody><tr><td>カードセットコード</td><td>値なし</td></tr><tr><td>カードセット名</td><td>値なし</td></tr><tr><td>プロモーション名</td><td>値なし</td></tr><tr><td>略称タグ名</td><td>値なし</td></tr><tr><td>買取価格</td><td>値なし</td></tr><tr><td>部門ID</td><td>値なし</td></tr></tbody></table></div>
           <div class="renewal-spec-banner"><h3 id="function-design-a06-06-a06-06_api_buying_products_by_detail-リニューアル後の仕様">リニューアル後の仕様</h3></div>
           <h2 id="function-design-a06-06-a06-06_api_buying_products_by_detail-表示メッセージ">表示メッセージ</h2>
           <div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>A06-06-MSG-001</td><td>API応答JSON（errors配列）</td><td>認証エラー</td><td>カード詳細ID取得時に、ログイン中の利用者が管理者でない</td><td>MTGバイヤー側で認証を行い再試行する</td></tr><tr><td>A06-06-MSG-002</td><td>API応答JSON（errors配列）</td><td>カードが見つかりません</td><td>指定カード詳細IDに対応する買取用カードが0件</td><td>対象カード詳細IDを確認して再検索する</td></tr></tbody></table></div>
@@ -1870,7 +1773,7 @@
             <h3 class="doc-h doc-h-section" style="--lv:0"><span class="src-cell" data-excel-book="0506" data-excel-sheet="商品IDリストから買取用商品情報を取得" data-excel-ref="0506:商品IDリストから買取用商品情報を取得!B68">レスポンスデータサンプル</span></h3>
           </div>
         </div>
-      <!-- function-design-embed:start a06-07-a06-07_api_buying_products_by_ids -->
+            <!-- function-design-embed:start a06-07-a06-07_api_buying_products_by_ids -->
       <section class="function-design-embed" id="function-design-a06-07-a06-07_api_buying_products_by_ids" data-source="functions/pf-api/a06-07_api_buying_products_by_ids.md">
         <header class="function-design-header">
           <p class="function-design-source">Source:<br>functions/pf-api/a06-07_api_buying_products_by_ids.md</p>
@@ -1880,19 +1783,19 @@
         <div class="function-design-body">
           <h2 id="function-design-a06-07-a06-07_api_buying_products_by_ids-業務ロジック">業務ロジック</h2>
           <h3 id="function-design-a06-07-a06-07_api_buying_products_by_ids-取得対象の決め方">取得対象の決め方</h3>
-          <p>商品IDリストはカンマ区切りの文字列で受け取り、カンマで分解してIDの配列とする。当該商品IDに紐づく買取用商品を取得する。</p>
-          <p>商品IDリストが空または未指定のときは、空文字を分解した配列で検索するため結果は0件になる。</p>
+          <p>商品画像・カード・カード詳細・レアリティ・言語・カード状態のいずれかが登録されていない商品は、削除済みでなくても結果に含まれない。カードセット・プロモーション・保管コードは未設定でも結果に含まれる。</p>
+          <p>商品IDリストが未指定・空文字のときも入力エラーとはせず、該当する商品が無いものとして扱う。</p>
+          <h3 id="function-design-a06-07-a06-07_api_buying_products_by_ids-同じ組に複数の商品規格が該当したときの扱い">同じ組に複数の商品規格が該当したときの扱い</h3>
+          <p>同じカードID・カード詳細ID・言語コード・状態コードの組に複数の商品規格が該当した場合、応答に残るのは1件だけで、後から取得したものが先のものを上書きする。取得順は指定していないため、どれが残るかは定まらない。</p>
           <h3 id="function-design-a06-07-a06-07_api_buying_products_by_ids-値の取り方">値の取り方</h3>
-          <p>取得した値をそのまま応答へ整形して返す。表示用の丸め・税計算・ポイント計算・在庫数量の再計算は行わない。件数や一覧を返す場合は、検索条件を適用したあとの対象を基準にする。</p>
+          <p>取得した値をそのまま応答へ整形して返す。表示用の丸め・税計算・ポイント計算・在庫数量の再計算は行わない。</p>
           <h3 id="function-design-a06-07-a06-07_api_buying_products_by_ids-エラー時の扱い">エラー時の扱い</h3>
           <p>カード商品以外のIDだけで0件になった場合もエラーとせず、0件の結果を返す。該当0件に対する専用の失敗ステータスは持たない。</p>
           <h2 id="function-design-a06-07-a06-07_api_buying_products_by_ids-入出力">入出力</h2>
-          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>カンマ区切りの商品IDリスト（任意）。</td></tr><tr><td>成功時出力</td><td>HTTP 200。カードIDをキーとする階層構造のJSON。0件のときは空配列。</td></tr><tr><td>失敗時出力</td><td>買取アプリの利用者が管理者アカウントでないときは認証エラーを返す。</td></tr></tbody></table></div>
+          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>成功時出力</td><td>最上位のカード一覧の配下をカードIDでキー付けした階層構造。該当が0件のときは空配列を返す。</td></tr></tbody></table></div>
           <h3 id="function-design-a06-07-a06-07_api_buying_products_by_ids-入出力-応答の構造">入出力: 応答の構造</h3>
-          <p>カードIDをキーとする最上位のオブジェクトを持ち、その配下にカード詳細ID、言語コード、状態コードの順で入れ子になる。</p>
+          <p>応答は最上位にカード一覧を1つ持ち、その配下がカードIDをキーとするオブジェクトになる。以下カード詳細ID、言語コード、状態コードの順で入れ子になる。</p>
           <div class="table-wrap"><table><thead><tr><th>階層</th><th>内容</th></tr></thead><tbody><tr><td>カード</td><td>カードの日本語名、カードの英語名、カード画像のファイル名。</td></tr><tr><td>カード詳細</td><td>カードセットのコード、カードセットの日本語名、フォイルか否か、カード番号、プロモーションの日本語名、商品ID、商品の日本語名、商品の英語名、レアリティのコード、保管コードの名称。カードセット・プロモーション・保管コードが未設定のときは値なしとする。</td></tr><tr><td>言語</td><td>言語コードをキーとし、配下に状態コードごとの商品規格情報を持つ。</td></tr><tr><td>状態</td><td>商品規格ID、商品コード、買取価格（未設定のときは値なし）、販売価格、在庫数、部門ID（未設定のときは値なし）。</td></tr></tbody></table></div>
-          <h3 id="function-design-a06-07-a06-07_api_buying_products_by_ids-入出力-永続化">入出力: 永続化</h3>
-          <p>参照のみで、買取用商品・商品規格・在庫のいずれも更新しない。</p>
           <div class="renewal-spec-banner"><h3 id="function-design-a06-07-a06-07_api_buying_products_by_ids-リニューアル後の仕様">リニューアル後の仕様</h3></div>
           <h2 id="function-design-a06-07-a06-07_api_buying_products_by_ids-表示メッセージ">表示メッセージ</h2>
           <div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>A06-07-MSG-001</td><td>API応答JSON（errors配列）</td><td>認証エラー</td><td>商品IDリスト取得時にログインユーザーがMemberでない</td><td>MTGバイヤー側で認証を行い再試行する</td></tr></tbody></table></div>
@@ -1971,7 +1874,7 @@
             <h3 class="doc-h doc-h-section" style="--lv:0"><span class="src-cell" data-excel-book="0506" data-excel-sheet="カード名から買取用商品情報を取得" data-excel-ref="0506:カード名から買取用商品情報を取得!B69">レスポンスデータサンプル</span></h3>
           </div>
         </div>
-      <!-- function-design-embed:start a06-08-a06-08_api_store_purchase_buying_products_search -->
+            <!-- function-design-embed:start a06-08-a06-08_api_store_purchase_buying_products_search -->
       <section class="function-design-embed" id="function-design-a06-08-a06-08_api_store_purchase_buying_products_search" data-source="functions/pf-api/a06-08_api_store_purchase_buying_products_search.md">
         <header class="function-design-header">
           <p class="function-design-source">Source:<br>functions/pf-api/a06-08_api_store_purchase_buying_products_search.md</p>
@@ -1981,21 +1884,21 @@
         <div class="function-design-body">
           <h2 id="function-design-a06-08-a06-08_api_store_purchase_buying_products_search-業務ロジック">業務ロジック</h2>
           <h3 id="function-design-a06-08-a06-08_api_store_purchase_buying_products_search-検索条件">検索条件</h3>
-          <div class="table-wrap"><table><thead><tr><th>パラメータ</th><th>絞り込み</th></tr></thead><tbody><tr><td>カード名</td><td>商品名がこの値で始まる買取用商品だけに限る（前方一致）。<code>%</code> と <code>_</code> はエスケープし、文字そのものとして扱う</td></tr></tbody></table></div>
-          <p>カード名は任意である。既定値・必須指定・書式制約はいずれも定義していない。</p>
+          <p>カード名に含まれる <code>%</code> と <code>_</code> はエスケープし、ワイルドカードではなく文字そのものとして扱う。</p>
+          <h3 id="function-design-a06-08-a06-08_api_store_purchase_buying_products_search-応答に含めない商品規格">応答に含めない商品規格</h3>
+          <p>商品または商品規格に次のいずれかが結び付いていない場合、その商品規格は応答に含めない。</p>
+          <ul><li>商品に結び付く商品画像</li><li>商品に結び付く付随情報と、そこにぶら下がるカード詳細・カード・レアリティ</li><li>買取価格・部門IDを保持する商品規格の付随情報と、そこにぶら下がる言語・状態</li></ul>
+          <h3 id="function-design-a06-08-a06-08_api_store_purchase_buying_products_search-同じ区分に複数の商品規格が該当したときの扱い">同じ区分に複数の商品規格が該当したときの扱い</h3>
+          <p>応答はカード・カード詳細・言語・状態の組でひとつの商品規格を保持する。同じ組に複数の商品規格が該当した場合、応答に残るのは最後に取得した1件だけで、それ以外は応答から失われる。</p>
           <h3 id="function-design-a06-08-a06-08_api_store_purchase_buying_products_search-取得結果の並べ方">取得結果の並べ方</h3>
           <p>検索で得たカードだけを1始まりの連番でキー付けし直して返す。各カードの配下は、カード詳細ID・言語コード・状態コードの順で入れ子にする。ページングの件数（総件数・1ページあたり件数など）は返さない。</p>
           <h3 id="function-design-a06-08-a06-08_api_store_purchase_buying_products_search-値の取り方">値の取り方</h3>
-          <p>金額・ポイント・数量・対応状況・日時は、永続化済みの値または連携元の値をそのまま返す。応答を組み立てるときの丸め・補正は行わない。件数・ページ番号・表示順は既定と上限に従い、取得後に業務値を再計算しない。</p>
-          <h3 id="function-design-a06-08-a06-08_api_store_purchase_buying_products_search-エラー時の扱い">エラー時の扱い</h3>
-          <div class="table-wrap"><table><thead><tr><th>事象</th><th>扱い</th></tr></thead><tbody><tr><td>条件に一致する買取用商品が1件も無いとき</td><td>ページが見つからない扱い（404）とし、標準の例外応答を返す</td></tr><tr><td>権限が無いとき、または非公開のデータのとき</td><td>空の結果、または既存のエラー形式で返す</td></tr><tr><td>呼び出し元が管理者アカウントでないとき</td><td>認証エラーを応答のエラー配列へ格納する</td></tr></tbody></table></div>
+          <p>買取価格・販売価格・在庫数は、永続化済みの値をそのまま返す。応答を組み立てるときの丸め・補正・再計算は行わない。</p>
           <h2 id="function-design-a06-08-a06-08_api_store_purchase_buying_products_search-入出力">入出力</h2>
-          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>カード名（<code>name</code>、クエリ、任意）。カード名を省いたときは前方一致の絞り込みを行わない。</td></tr><tr><td>成功時出力</td><td>買取用商品を1件以上取得できたときは HTTP200。<code>cards</code> を最上位に持つJSON。</td></tr><tr><td>失敗時出力</td><td>HTTP404。標準の例外応答（メッセージを含むJSON）。認証エラーのときは、エラー配列へメッセージを格納する。</td></tr></tbody></table></div>
+          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>成功時出力</td><td>最上位に <code>cards</code> を置き、その配下にカードごとの情報を入れて返す。</td></tr></tbody></table></div>
           <h3 id="function-design-a06-08-a06-08_api_store_purchase_buying_products_search-出力-応答フィールド">出力: 応答フィールド</h3>
           <div class="table-wrap"><table><thead><tr><th>フィールド</th><th>型</th><th>内容</th></tr></thead><tbody><tr><td><code>cards</code></td><td>object</td><td>1始まりの連番をキーとするオブジェクト。値は各カードの情報</td></tr><tr><td><code>cards.&lt;n&gt;.cardNameJp</code></td><td>string</td><td>カードの日本語名</td></tr><tr><td><code>cards.&lt;n&gt;.cardNameEn</code></td><td>string</td><td>カードの英語名</td></tr><tr><td><code>cards.&lt;n&gt;.imageFileName</code></td><td>string</td><td>カード画像のファイル名</td></tr><tr><td><code>cards.&lt;n&gt;.details</code></td><td>object</td><td>カード詳細IDをキーとするオブジェクト。値は各カード詳細の情報</td></tr><tr><td><code>cardsetCode</code></td><td>string</td><td>カードセットのコード。カードセット未設定のときはnull</td></tr><tr><td><code>cardsetName</code></td><td>string</td><td>カードセットの日本語名。カードセット未設定のときはnull</td></tr><tr><td><code>foilFlg</code></td><td>boolean</td><td>フォイルか否か</td></tr><tr><td><code>cardNo</code></td><td>string</td><td>カード番号</td></tr><tr><td><code>promotionName</code></td><td>string</td><td>プロモーションの日本語名。プロモーション未設定のときはnull</td></tr><tr><td><code>productId</code></td><td>integer</td><td>商品ID</td></tr><tr><td><code>productNameJp</code></td><td>string</td><td>商品の日本語名</td></tr><tr><td><code>productNameEn</code></td><td>string</td><td>商品の英語名</td></tr><tr><td><code>rarityCode</code></td><td>string</td><td>レアリティのコード</td></tr><tr><td><code>storageCodeName</code></td><td>string</td><td>保管コードの名称。未設定のときはnull</td></tr><tr><td><code>languageClasses</code></td><td>object</td><td>言語コードをキーとするオブジェクト</td></tr><tr><td><code>conditionClasses</code></td><td>object</td><td>状態コードをキーとするオブジェクト。値は商品規格単位の情報</td></tr><tr><td><code>productClassId</code></td><td>integer</td><td>商品規格ID</td></tr><tr><td><code>productCode</code></td><td>string</td><td>商品コード</td></tr><tr><td><code>buyPrice</code></td><td>integer</td><td>買取価格。未設定のときはnull</td></tr><tr><td><code>price</code></td><td>string</td><td>販売価格</td></tr><tr><td><code>stock</code></td><td>string</td><td>在庫数</td></tr><tr><td><code>sectionId</code></td><td>integer</td><td>部門ID。未設定のときはnull</td></tr></tbody></table></div>
           <p><code>cardsetCode</code> 以降はカード詳細の配下だけに、<code>productClassId</code> 以降は言語コードと状態コードの配下だけに置く。</p>
-          <h3 id="function-design-a06-08-a06-08_api_store_purchase_buying_products_search-入出力-永続化">入出力: 永続化</h3>
-          <p>データを更新しない。</p>
           <div class="renewal-spec-banner"><h3 id="function-design-a06-08-a06-08_api_store_purchase_buying_products_search-リニューアル後の仕様">リニューアル後の仕様</h3></div>
           <h2 id="function-design-a06-08-a06-08_api_store_purchase_buying_products_search-表示メッセージ">表示メッセージ</h2>
           <div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>A06-08-MSG-001</td><td>API応答JSON（errors配列）</td><td>認証エラー</td><td>カード名検索時にログインユーザーが管理者アカウントでないとき</td><td>買取端末側で認証を行い再試行する</td></tr></tbody></table></div>
@@ -2068,7 +1971,7 @@
             <h3 class="doc-h doc-h-section" style="--lv:0"><span class="src-cell" data-excel-book="0506" data-excel-sheet="部門一覧を取得" data-excel-ref="0506:部門一覧を取得!B62">レスポンスデータサンプル</span></h3>
           </div>
         </div>
-      <!-- function-design-embed:start a06-11-a06-11_api_store_purchase_section_list -->
+            <!-- function-design-embed:start a06-11-a06-11_api_store_purchase_section_list -->
       <section class="function-design-embed" id="function-design-a06-11-a06-11_api_store_purchase_section_list" data-source="functions/pf-api/a06-11_api_store_purchase_section_list.md">
         <header class="function-design-header">
           <p class="function-design-source">Source:<br>functions/pf-api/a06-11_api_store_purchase_section_list.md</p>
@@ -2077,21 +1980,11 @@
         </header>
         <div class="function-design-body">
           <h2 id="function-design-a06-11-a06-11_api_store_purchase_section_list-業務ロジック">業務ロジック</h2>
-          <h3 id="function-design-a06-11-a06-11_api_store_purchase_section_list-取得対象">取得対象</h3>
-          <p>公開対象の部門だけを取得する。非公開の部門は含めない。</p>
-          <div class="table-wrap"><table><thead><tr><th>部門の状態</th><th>応答</th></tr></thead><tbody><tr><td>公開対象の部門が1件以上あるとき</td><td>当該部門を配列で返す</td></tr><tr><td>公開対象の部門が0件のとき</td><td>空の配列を返し、エラーとしない</td></tr></tbody></table></div>
-          <h3 id="function-design-a06-11-a06-11_api_store_purchase_section_list-並び順">並び順</h3>
-          <p>部門コードの昇順とする。取得した後は、いずれの場合も並び順を組み替えない。</p>
-          <h3 id="function-design-a06-11-a06-11_api_store_purchase_section_list-値の取り方">値の取り方</h3>
-          <p>金額・ポイント・数量・対応状況・日時は、永続化済みの値または連携元の値をそのまま返す。応答を組み立てるときの丸め・補正は行わない。件数・ページ番号・表示順は既定と上限に従い、取得後に業務値を再計算しない。</p>
-          <h3 id="function-design-a06-11-a06-11_api_store_purchase_section_list-エラー時の扱い">エラー時の扱い</h3>
-          <div class="table-wrap"><table><thead><tr><th>事象</th><th>扱い</th></tr></thead><tbody><tr><td>公開対象の部門が0件のとき</td><td>空の一覧を返す。失敗のステータスは返さない</td></tr><tr><td>権限が無いとき、または非公開のデータのとき</td><td>空の結果、または既存のエラー形式で返す</td></tr></tbody></table></div>
+          <h3 id="function-design-a06-11-a06-11_api_store_purchase_section_list-取得できる部門が無いときの扱い">取得できる部門が無いときの扱い</h3>
+          <p>取得できる部門が1件も無いときも、成功として応答する。部門の配列を空にして返し、取得できないことを表す応答や失敗のステータスには置き換えない。</p>
           <h2 id="function-design-a06-11-a06-11_api_store_purchase_section_list-入出力">入出力</h2>
-          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>パラメータを持たない。</td></tr><tr><td>成功時出力</td><td>HTTP200。処理結果コード、処理結果メッセージ、部門の配列。</td></tr><tr><td>失敗時出力</td><td>失敗のステータスを返さない。</td></tr></tbody></table></div>
-          <h3 id="function-design-a06-11-a06-11_api_store_purchase_section_list-出力-応答フィールド">出力: 応答フィールド</h3>
-          <div class="table-wrap"><table><thead><tr><th>フィールド</th><th>型</th><th>内容</th></tr></thead><tbody><tr><td><code>code</code></td><td>integer</td><td>処理結果コード。成功のときは200</td></tr><tr><td><code>message</code></td><td>string</td><td>処理結果メッセージ。成功のときは "get sections success"</td></tr><tr><td><code>sections</code></td><td>array</td><td>部門の配列。公開対象が無いときは空配列</td></tr><tr><td><code>sections[].section_id</code></td><td>integer</td><td>部門ID</td></tr><tr><td><code>sections[].name</code></td><td>string</td><td>部門名</td></tr><tr><td><code>sections[].code</code></td><td>string</td><td>部門コード。並び順はこのコードの昇順とする</td></tr></tbody></table></div>
-          <h3 id="function-design-a06-11-a06-11_api_store_purchase_section_list-入出力-永続化">入出力: 永続化</h3>
-          <p>いずれの場合もデータを更新しない。</p>
+          <h3 id="function-design-a06-11-a06-11_api_store_purchase_section_list-値を付けて呼び出したときの扱い">値を付けて呼び出したときの扱い</h3>
+          <p>呼び出しに値を付けても応答は変わらず、値が付いていることを理由に呼び出しを拒否することもない。</p>
           <div class="renewal-spec-banner"><h3 id="function-design-a06-11-a06-11_api_store_purchase_section_list-リニューアル後の仕様">リニューアル後の仕様</h3></div>
           <h2 id="function-design-a06-11-a06-11_api_store_purchase_section_list-表示メッセージ">表示メッセージ</h2>
           <p>この機能は、いずれの場合もメッセージを扱わない。</p>
@@ -2163,7 +2056,7 @@
             <h3 class="doc-h doc-h-section" style="--lv:0"><span class="src-cell" data-excel-book="0506" data-excel-sheet="固定価格部門の部門情報を取得" data-excel-ref="0506:固定価格部門の部門情報を取得!B68">レスポンスデータサンプル</span></h3>
           </div>
         </div>
-      <!-- function-design-embed:start a06-12-a06-12_api_store_purchase_fixed_price_section -->
+            <!-- function-design-embed:start a06-12-a06-12_api_store_purchase_fixed_price_section -->
       <section class="function-design-embed" id="function-design-a06-12-a06-12_api_store_purchase_fixed_price_section" data-source="functions/pf-api/a06-12_api_store_purchase_fixed_price_section.md">
         <header class="function-design-header">
           <p class="function-design-source">Source:<br>functions/pf-api/a06-12_api_store_purchase_fixed_price_section.md</p>
@@ -2172,23 +2065,11 @@
         </header>
         <div class="function-design-body">
           <h2 id="function-design-a06-12-a06-12_api_store_purchase_fixed_price_section-業務ロジック">業務ロジック</h2>
-          <h3 id="function-design-a06-12-a06-12_api_store_purchase_fixed_price_section-取得する値">取得する値</h3>
-          <p>オプションマスタから固定価格部門の設定値（部門ID）を取得し、処理結果コードとともに返す。リクエストパラメータは受け取らない。</p>
-          <p>固定価格部門の設定値は文字列として保持されているため、応答でも文字列で返す。</p>
-          <p>取得時点の値をそのまま返し、金額・税・ポイント・在庫数量の再計算や丸めは行わない。表示用の加工は呼び出し元クライアントの設計を正とする。</p>
-          <h3 id="function-design-a06-12-a06-12_api_store_purchase_fixed_price_section-エラー時の扱い">エラー時の扱い</h3>
-          <div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>オプションマスタに固定価格部門の設定が無いとき</td><td>参照できず例外となり、共通の例外応答（HTTP 500）を返す</td></tr></tbody></table></div>
+          <h3 id="function-design-a06-12-a06-12_api_store_purchase_fixed_price_section-設定値の扱い">設定値の扱い</h3>
+          <p>追加システム設定に登録された固定価格商品部門IDを、加工せずそのまま返す。実在する部門かどうかの照合、桁揃え・前後空白の除去は行わない。</p>
           <h2 id="function-design-a06-12-a06-12_api_store_purchase_fixed_price_section-入出力">入出力</h2>
-          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>無し</td></tr><tr><td>成功時出力</td><td>HTTP 200。処理結果コードと固定価格部門の部門ID</td></tr><tr><td>失敗時出力</td><td>設定が存在しないときは共通の例外応答（HTTP 500）</td></tr></tbody></table></div>
-          <h3 id="function-design-a06-12-a06-12_api_store_purchase_fixed_price_section-出力-レスポンス">出力: レスポンス</h3>
-          <div class="table-wrap"><table><thead><tr><th>フィールド</th><th>型</th><th>説明</th></tr></thead><tbody><tr><td><code>code</code></td><td>integer</td><td>処理結果コード。成功したときは200</td></tr><tr><td><code>section_id</code></td><td>string</td><td>固定価格部門の部門ID。設定値が文字列型のため文字列で返す</td></tr></tbody></table></div>
-          <p>成功時の応答例（実装確認値に基づく代表値）。</p>
-          <pre><code class="language-json">{
-            "code": 200,
-            "section_id": "1"
-          }</code></pre>
-          <h3 id="function-design-a06-12-a06-12_api_store_purchase_fixed_price_section-入出力-永続化">入出力: 永続化</h3>
-          <p>本APIはデータを更新しない。</p>
+          <h3 id="function-design-a06-12-a06-12_api_store_purchase_fixed_price_section-出力-設定が無いときの応答">出力: 設定が無いときの応答</h3>
+          <p>追加システム設定に固定価格商品部門IDが登録されていないときは、部門IDを取得できずエラーとなり、HTTP 500 のエラー応答になる。このときレスポンスデータは返らない。</p>
           <div class="renewal-spec-banner"><h3 id="function-design-a06-12-a06-12_api_store_purchase_fixed_price_section-リニューアル後の仕様">リニューアル後の仕様</h3></div>
           <h2 id="function-design-a06-12-a06-12_api_store_purchase_fixed_price_section-表示メッセージ">表示メッセージ</h2>
           <p>本APIは画面メッセージを扱わない。</p>
@@ -2262,7 +2143,7 @@
             <h3 class="doc-h doc-h-section" style="--lv:0"><span class="src-cell" data-excel-book="0506" data-excel-sheet="本人確認更新" data-excel-ref="0506:本人確認更新!B63">レスポンスデータサンプル</span></h3>
           </div>
         </div>
-      <!-- function-design-embed:start a06-13-a06-13_api_store_purchase_otc_buy_order_identification -->
+            <!-- function-design-embed:start a06-13-a06-13_api_store_purchase_otc_buy_order_identification -->
       <section class="function-design-embed" id="function-design-a06-13-a06-13_api_store_purchase_otc_buy_order_identification" data-source="functions/pf-api/a06-13_api_store_purchase_otc_buy_order_identification.md">
         <header class="function-design-header">
           <p class="function-design-source">Source:<br>functions/pf-api/a06-13_api_store_purchase_otc_buy_order_identification.md</p>
@@ -2271,20 +2152,20 @@
         </header>
         <div class="function-design-body">
           <h2 id="function-design-a06-13-a06-13_api_store_purchase_otc_buy_order_identification-業務ロジック">業務ロジック</h2>
-          <h3 id="function-design-a06-13-a06-13_api_store_purchase_otc_buy_order_identification-更新の判定順序">更新の判定順序</h3>
-          <div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>トークンを検証して管理者会員を特定できるか</td><td>特定できないときは認証拒否（HTTP 401）とする</td></tr><tr><td>2</td><td>パスの受注IDで店頭買取受注を取得できるか</td><td>取得できないときは該当なし（HTTP 404）とする</td></tr><tr><td>3</td><td>証明書IDが本人確認証明書マスタに存在するか</td><td>存在しないときは入力不正（HTTP 400）とし、エラーメッセージを返す</td></tr><tr><td>4</td><td>上記をすべて通過したとき</td><td>本人確認証明書を設定して保存し、処理結果コード200を返す</td></tr></tbody></table></div>
-          <p>呼び出し可能なクライアントは買取アプリである。トークンの署名方式はHS256とする。トークン原値・署名シークレットは本書に記載しない。</p>
-          <h3 id="function-design-a06-13-a06-13_api_store_purchase_otc_buy_order_identification-更新する内容">更新する内容</h3>
-          <p>店頭買取受注に本人確認証明書を設定し、更新担当者に認証した管理者会員を、更新日時に現在時刻を設定する。更新できたときは処理結果コード200だけを返す。金額・税・ポイント・在庫数量の再計算や丸めは行わない。応答は保存結果を整形して返し、本API内で独自に集計しない。</p>
-          <h3 id="function-design-a06-13-a06-13_api_store_purchase_otc_buy_order_identification-エラー時の扱い">エラー時の扱い</h3>
-          <div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>認証できないとき</td><td>認証拒否（HTTP 401）とする</td></tr><tr><td>受注が存在しないとき</td><td>該当なし（HTTP 404）とする</td></tr><tr><td>証明書IDが不正なとき</td><td>入力不正（HTTP 400）とし、「正しい証明書IDを入力してください」を返す</td></tr></tbody></table></div>
+          <h3 id="function-design-a06-13-a06-13_api_store_purchase_otc_buy_order_identification-認証">認証</h3>
+          <p>認証用トークンをヘッダ <code>jwt-token</code> で受け取り、署名方式 HS256 で検証したうえで、トークンが指す管理者会員を特定する。ヘッダが無いとき、署名が不正なとき、トークンが指す管理者会員が存在しないときは、いずれも認証拒否（HTTP 401）とし、更新しない。</p>
+          <h3 id="function-design-a06-13-a06-13_api_store_purchase_otc_buy_order_identification-判定の順序">判定の順序</h3>
+          <p>認証、店頭買取受注の取得、証明書IDの妥当性の順に判定し、成立しないものが出た時点で処理を打ち切り、以降の判定は行わない。認証できないときは受注IDと証明書IDの誤りは判定されず、受注が存在しないときは証明書IDの誤りは判定されない。</p>
+          <p>証明書IDを送っていないときは、マスタに存在しない値を送ったときと同じ扱いになる。</p>
+          <h3 id="function-design-a06-13-a06-13_api_store_purchase_otc_buy_order_identification-更新する項目">更新する項目</h3>
+          <p>証明書のほかに、更新担当者へ認証で特定した管理者会員を、更新日時へ更新時点の日時を設定する。</p>
           <h2 id="function-design-a06-13-a06-13_api_store_purchase_otc_buy_order_identification-入出力">入出力</h2>
-          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>店頭買取受注ID、本人確認証明書のID、認証用トークン。証明書IDは必須で、未指定のときは入力不正となる</td></tr><tr><td>成功時出力</td><td>更新できたときはHTTP 200。処理結果コード200</td></tr><tr><td>失敗時出力</td><td>認証拒否（HTTP 401）、該当なし（HTTP 404）、入力不正（HTTP 400）</td></tr></tbody></table></div>
-          <h3 id="function-design-a06-13-a06-13_api_store_purchase_otc_buy_order_identification-入力-リクエスト">入力: リクエスト</h3>
-          <div class="table-wrap"><table><thead><tr><th>パラメータ</th><th>位置</th><th>型</th><th>必須／任意</th><th>説明</th></tr></thead><tbody><tr><td><code>id</code></td><td>パス</td><td>integer</td><td>必須</td><td>更新対象の店頭買取受注ID</td></tr><tr><td><code>identification</code></td><td>ボディ（フォーム値）</td><td>integer</td><td>必須</td><td>設定する本人確認証明書のID。本人確認証明書マスタに存在しない値のときは入力不正（HTTP 400）となる</td></tr><tr><td><code>jwt-token</code></td><td>ヘッダ</td><td>string</td><td>必須</td><td>認証用のトークン</td></tr></tbody></table></div>
-          <h3 id="function-design-a06-13-a06-13_api_store_purchase_otc_buy_order_identification-出力-レスポンス">出力: レスポンス</h3>
-          <div class="table-wrap"><table><thead><tr><th>フィールド</th><th>型</th><th>説明</th></tr></thead><tbody><tr><td><code>code</code></td><td>integer</td><td>処理結果コード。成功したときは200</td></tr></tbody></table></div>
-          <div class="table-wrap"><table><thead><tr><th>HTTPステータス</th><th>条件</th><th>本文の形</th></tr></thead><tbody><tr><td>401</td><td>トークン欠落・署名不正・該当する管理者会員なしのとき</td><td>認証拒否（本文を持たない）</td></tr><tr><td>404</td><td>受注IDに該当する店頭買取受注が無いとき</td><td>該当なし（本文を持たない）</td></tr><tr><td>400</td><td>証明書IDが本人確認証明書マスタに存在しないとき（未指定を含む）</td><td><code>{code, errors}</code>（<code>errors</code>は「正しい証明書IDを入力してください」）</td></tr></tbody></table></div>
+          <h3 id="function-design-a06-13-a06-13_api_store_purchase_otc_buy_order_identification-入力-認証情報">入力: 認証情報</h3>
+          <div class="table-wrap"><table><thead><tr><th>パラメータ</th><th>位置</th><th>型</th><th>必須／任意</th><th>説明</th></tr></thead><tbody><tr><td><code>jwt-token</code></td><td>ヘッダ</td><td>string</td><td>必須</td><td>認証用のトークン</td></tr></tbody></table></div>
+          <h3 id="function-design-a06-13-a06-13_api_store_purchase_otc_buy_order_identification-出力-認証できないとき">出力: 認証できないとき</h3>
+          <div class="table-wrap"><table><thead><tr><th>HTTPステータス</th><th>条件</th></tr></thead><tbody><tr><td>401</td><td>認証用トークンの欠落・署名不正・トークンが指す管理者会員なしのとき</td></tr></tbody></table></div>
+          <h3 id="function-design-a06-13-a06-13_api_store_purchase_otc_buy_order_identification-入出力-エンドポイントの別名">入出力: エンドポイントの別名</h3>
+          <p>拡張子 <code>.json</code> を付けないパス（<code>/api/admin/otcBuyOrder/{id}/identification</code>）でも、同じメソッドで同じ更新を受け付ける。</p>
           <h3 id="function-design-a06-13-a06-13_api_store_purchase_otc_buy_order_identification-入出力-永続化">入出力: 永続化</h3>
           <div class="table-wrap"><table><thead><tr><th>操作</th><th>契機</th></tr></thead><tbody><tr><td>更新</td><td>本人確認更新（本人確認証明書・更新担当者・更新日時）</td></tr></tbody></table></div>
           <div class="renewal-spec-banner"><h3 id="function-design-a06-13-a06-13_api_store_purchase_otc_buy_order_identification-リニューアル後の仕様">リニューアル後の仕様</h3></div>

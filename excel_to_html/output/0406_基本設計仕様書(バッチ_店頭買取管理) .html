@@ -1103,7 +1103,7 @@
             <div class="doc-bullet" style="--lv:1"><span class="doc-marker"><span class="src-cell" data-excel-book="0406" data-excel-sheet="買取集計バッチ" data-excel-ref="0406:買取集計バッチ!C50">・</span></span><span><span class="src-cell" data-excel-book="0406" data-excel-sheet="買取集計バッチ" data-excel-ref="0406:買取集計バッチ!D50">部門が登録されていない商品が存在する場合は、エラーメールを送信する</span></span></div>
           </div>
         </div>
-      <!-- function-design-embed:start b06-02-b06-02_batch_purchase_purchase_summary -->
+            <!-- function-design-embed:start b06-02-b06-02_batch_purchase_purchase_summary -->
       <section class="function-design-embed" id="function-design-b06-02-b06-02_batch_purchase_purchase_summary" data-source="functions/pf-eccube3/b06-02_batch_purchase_purchase_summary.md">
         <header class="function-design-header">
           <p class="function-design-source">Source:<br>functions/pf-eccube3/b06-02_batch_purchase_purchase_summary.md</p>
@@ -1112,25 +1112,19 @@
         </header>
         <div class="function-design-body">
           <h2 id="function-design-b06-02-b06-02_batch_purchase_purchase_summary-業務ロジック">業務ロジック</h2>
-          <h3 id="function-design-b06-02-b06-02_batch_purchase_purchase_summary-集計日の決め方">集計日の決め方</h3>
-          <p>引数で日付が指定されていればその日付、指定が無ければ前日を集計日とする。いずれも当日0時0分0秒を起点とする。</p>
-          <h3 id="function-design-b06-02-b06-02_batch_purchase_purchase_summary-集計対象">集計対象</h3>
-          <p>集計日の0時0分0秒から23時59分59秒までに完了日がある店頭買取を対象とする。対象とする状態は、完了・ダブルチェック済み・入力済みである。明細は元数量が0より大きい行、個別入力商品は数量が0より大きい行を集計する。</p>
+          <h3 id="function-design-b06-02-b06-02_batch_purchase_purchase_summary-集計対象とする明細">集計対象とする明細</h3>
+          <p>明細は元数量が0より大きい行、個別入力商品は数量が0より大きい行を集計する。</p>
           <h3 id="function-design-b06-02-b06-02_batch_purchase_purchase_summary-集計する値">集計する値</h3>
-          <div class="table-wrap"><table><thead><tr><th>項目</th><th>算出</th></tr></thead><tbody><tr><td>買取金額</td><td>明細と個別入力商品のそれぞれで単価と数量を掛け、合算する</td></tr><tr><td>売価金額</td><td>明細と個別入力商品のそれぞれで売価単価と数量を掛け、合算する</td></tr><tr><td>端数調整分</td><td>査定合計金額の1の位の切り上げ分を、オプションで指定した特定部門の買取金額として加える。当該分の売価金額は0とする</td></tr></tbody></table></div>
-          <p>集計は店舗と部門の組み合わせごとに合算する。</p>
-          <h3 id="function-design-b06-02-b06-02_batch_purchase_purchase_summary-登録の手順">登録の手順</h3>
-          <p>同じ集計日の既存の買取集計を削除したうえで、集計結果を一括登録する。集計結果が0件のときは削除だけを行い、登録しない。同じ集計日で再実行しても当日分が重複しないため、冪等である。</p>
-          <h3 id="function-design-b06-02-b06-02_batch_purchase_purchase_summary-部門未設定商品の通知">部門未設定商品の通知</h3>
-          <p>集計日の店頭買取のうち部門が未設定の商品を抽出し、該当があるときは商品名・商品コードの一覧を本文に載せて管理者へ通知する。宛先が未設定のときは送らずに終える。</p>
+          <div class="table-wrap"><table><thead><tr><th>項目</th><th>算出</th></tr></thead><tbody><tr><td>買取金額</td><td>明細と個別入力商品のそれぞれで単価と数量を掛け、合算する</td></tr><tr><td>売価金額</td><td>明細と個別入力商品のそれぞれで売価単価と数量を掛け、合算する</td></tr><tr><td>端数調整分</td><td>オプションで指定した特定部門の買取金額として計上し、当該分の売価金額は0とする。端数が0以下になる買取は計上しない</td></tr></tbody></table></div>
           <h3 id="function-design-b06-02-b06-02_batch_purchase_purchase_summary-エラー時の扱い">エラー時の扱い</h3>
-          <div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>コマンド名が未指定・不一致</td><td>処理を行わずに終了する</td></tr><tr><td>集計対象が0件</td><td>既存の当日分集計を削除し、登録は行わずに完了する</td></tr><tr><td>集計・登録中の例外</td><td>登録を取り消し、エラー内容を添えた集計エラーの通知を管理者へ送る</td></tr><tr><td>通知の宛先が未設定</td><td>通知を送らずに当該処理を終了する</td></tr></tbody></table></div>
-          <h3 id="function-design-b06-02-b06-02_batch_purchase_purchase_summary-他機能との境界">他機能との境界</h3>
-          <p>外部システムへの連携は行わない。集計対象の店頭買取が無いときも実行できる。</p>
+          <div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>コマンド名が未指定・不一致</td><td>処理を行わずに終了する</td></tr><tr><td>集計対象が0件</td><td>集計データの登録を行わずに完了する</td></tr><tr><td>集計・登録中の例外</td><td>登録を取り消し、エラー内容を添えた集計エラーの通知を管理者へ送る</td></tr><tr><td>通知の宛先が未設定</td><td>通知を送らずに当該処理を終了する</td></tr></tbody></table></div>
+          <h3 id="function-design-b06-02-b06-02_batch_purchase_purchase_summary-部門未設定商品の通知">部門未設定商品の通知</h3>
+          <p>通知の本文には商品名と商品コードを1件1行で並べる。個別入力商品は商品コードを空欄とする。通知の対象は集計対象日に買取が成立した店頭買取のすべてで、集計対象の状態による絞り込みは行わない。</p>
+          <h3 id="function-design-b06-02-b06-02_batch_purchase_purchase_summary-通知の宛先">通知の宛先</h3>
+          <p>部門未設定商品の通知と集計エラーの通知は同じ宛先設定を用いる。宛先はカンマ区切りで複数を指定でき、未設定のときはいずれの通知も送らずに終える。</p>
           <h2 id="function-design-b06-02-b06-02_batch_purchase_purchase_summary-入出力">入出力</h2>
-          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>コマンド名と、任意の集計日（年月日）</td></tr><tr><td>成功時出力</td><td>同じ集計日の既存集計を削除し、当日分の集計を登録する。部門未設定商品があるときは管理者へ通知する</td></tr><tr><td>失敗時出力</td><td>登録を取り消し、エラー内容を添えた集計エラーの通知を管理者へ送る</td></tr></tbody></table></div>
-          <h3 id="function-design-b06-02-b06-02_batch_purchase_purchase_summary-入出力-永続化">入出力: 永続化</h3>
-          <div class="table-wrap"><table><thead><tr><th>操作</th><th>契機</th></tr></thead><tbody><tr><td>削除</td><td>集計の登録前に、同じ集計日の既存の買取集計を削除する</td></tr><tr><td>登録</td><td>集計結果が1件以上あるときに、買取集計へ一括登録する</td></tr></tbody></table></div>
+          <h3 id="function-design-b06-02-b06-02_batch_purchase_purchase_summary-引数と結果">引数と結果</h3>
+          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>実行するバッチのコマンド名</td></tr><tr><td>出力</td><td>管理者への通知（部門未設定商品の一覧・集計エラーの内容）</td></tr></tbody></table></div>
           <div class="renewal-spec-banner"><h3 id="function-design-b06-02-b06-02_batch_purchase_purchase_summary-リニューアル後の仕様">リニューアル後の仕様</h3></div>
           <h2 id="function-design-b06-02-b06-02_batch_purchase_purchase_summary-表示メッセージ">表示メッセージ</h2>
           <div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>—</td><td>管理者への通知</td><td>部門未設定商品の一覧（商品名・商品コード）</td><td>集計日の店頭買取に部門未設定の商品があるとき</td><td>通知を送り、集計を続ける</td></tr><tr><td>—</td><td>管理者への通知</td><td>集計エラーの内容</td><td>集計・登録の途中で例外が発生したとき</td><td>登録を取り消して終了する</td></tr></tbody></table></div>

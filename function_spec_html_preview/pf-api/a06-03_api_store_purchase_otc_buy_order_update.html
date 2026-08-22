@@ -274,15 +274,13 @@ footer {
       <p class="sidebar-title">On this page</p>
       <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
 <a class="lv3" href="#更新対象の特定">更新対象の特定</a>
-<a class="lv3" href="#明細の入れ替え">明細の入れ替え</a>
+<a class="lv3" href="#部門の設定と実在庫の集約">部門の設定と実在庫の集約</a>
 <a class="lv3" href="#買取合計金額">買取合計金額</a>
 <a class="lv3" href="#受注への反映">受注への反映</a>
 <a class="lv3" href="#エラー時の扱い">エラー時の扱い</a>
 <a class="lv2" href="#入出力">入出力</a>
 <a class="lv3" href="#入力-リクエスト">入力: リクエスト</a>
-<a class="lv3" href="#出力-レスポンス-成功">出力: レスポンス（成功）</a>
 <a class="lv3" href="#出力-レスポンス-失敗">出力: レスポンス（失敗）</a>
-<a class="lv3" href="#入出力-永続化">入出力: 永続化</a>
 <a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
 <a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
@@ -295,26 +293,20 @@ footer {
       <h2 id="業務ロジック">業務ロジック</h2>
 <h3 id="更新対象の特定">更新対象の特定</h3>
 <p>指定された受注IDの店頭買取受注1件を更新対象とする。該当が無いときは該当なし（HTTP 404）とする。受注の現在のステータスや担当者による更新制限は本APIでは課さない。</p>
-<h3 id="明細の入れ替え">明細の入れ替え</h3>
-<p>受注に紐づく既存の明細・個別入力商品・在庫・在庫履歴を削除したうえで、送られた明細を1件ずつ登録する。商品規格IDが空の明細は個別入力商品として登録し、商品規格IDがある明細は明細として登録する。いずれも部門IDがあり該当部門が存在するときだけ部門を設定する。商品規格に紐づく明細は商品規格ごとに数量を集計し、在庫と在庫履歴を作る。</p>
+<h3 id="部門の設定と実在庫の集約">部門の設定と実在庫の集約</h3>
+<p>明細・個別入力商品には、部門IDが指定され、かつ該当する部門が存在するときだけ部門を設定する。該当する部門が無い部門IDは無視し、部門なしで登録する。</p>
+<p>実在庫は商品規格ごとに数量を合算して1件にまとめる。同じ商品規格の明細が複数送られたときも、実在庫は商品規格につき1件になる。実在庫履歴には合算後の数量・査定担当者・現在日時を記録する。</p>
 <h3 id="買取合計金額">買取合計金額</h3>
-<p>明細の単価×数量を合算し、10円単位へ切り上げた額を買取合計金額とする。</p>
+<p>送られた査定明細すべて（個別入力商品を含む）について単価×数量を合算し、10円単位へ切り上げた額を買取合計金額とする。</p>
 <h3 id="受注への反映">受注への反映</h3>
-<p>受注にステータス・買取合計金額・明細・個別入力商品・在庫を設定する。査定担当者には認証した管理者会員を、更新日時には現在日時を設定する。指定ステータスが成立（1）のときは成立日時を、それ以外のときはキャンセル日時を現在日時に設定する。受注が適格請求書発行事業者に該当するときだけ、確認済みフラグを指定値で更新する。</p>
-<p>更新前と指定ステータスが異なるときは、ステータス変更履歴を1件登録する。</p>
+<p>査定担当者には認証した管理者会員を、更新日時には現在日時を設定する。適格請求書発行事業者に該当する受注のときだけ、確認済みフラグを指定値で更新する（該当しない受注では、指定されても更新しない）。</p>
+<p>更新前と指定ステータスが異なるときだけ、ステータス変更履歴を1件登録する。同じステータスが指定されたときは履歴を残さない。</p>
 <h3 id="エラー時の扱い">エラー時の扱い</h3>
 <div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>認証不可</td><td>認証拒否（HTTP 401）とする</td></tr><tr><td>受注が存在しない</td><td>該当なし（HTTP 404）とする</td></tr><tr><td>入力検証エラー</td><td>入力不正（HTTP 400）とし、全メッセージを<code>errors</code>配列で返す。削除・登録・保存は行わない</td></tr><tr><td>削除・登録・保存処理中の例外</td><td>共通例外処理に委ねる（HTTP 500相当）</td></tr></tbody></table></div>
 <p>検証エラーは複数件をまとめる。受注全体の検証と明細各件の検証を合算した全メッセージを返す。</p>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>更新対象の受注ID、更新後のステータス、査定明細の配列、適格請求書発行事業者の確認済みフラグ、認証トークン</td></tr><tr><td>成功時出力</td><td>HTTP 200。処理結果コード200</td></tr><tr><td>失敗時出力</td><td>HTTP 401（認証不可）、HTTP 404（受注なし）、HTTP 400（入力検証エラー）、HTTP 500（処理中の例外）</td></tr></tbody></table></div>
 <h3 id="入力-リクエスト">入力: リクエスト</h3>
-<div class="table-wrap"><table><thead><tr><th>パラメータ</th><th>位置</th><th>型</th><th>必須／任意</th><th>説明</th></tr></thead><tbody><tr><td><code>id</code></td><td>パス</td><td>integer</td><td>必須</td><td>更新対象の店頭買取受注ID</td></tr><tr><td><code>order_status</code></td><td>ボディ</td><td>integer</td><td>必須</td><td>更新後の店頭買取ステータスID。店頭買取ステータスマスタに存在する値であること</td></tr><tr><td><code>order_details</code></td><td>ボディ</td><td>array</td><td>必須</td><td>査定明細の配列。1件以上であること</td></tr><tr><td><code>order_details[].product_class_id</code></td><td>ボディ</td><td>integer</td><td>任意</td><td>商品規格ID。空のときは個別入力商品として扱う。整数のみ</td></tr><tr><td><code>order_details[].name</code></td><td>ボディ</td><td>string</td><td>必須</td><td>商品名。最大65535文字</td></tr><tr><td><code>order_details[].quantity</code></td><td>ボディ</td><td>integer</td><td>任意</td><td>数量。整数のみ</td></tr><tr><td><code>order_details[].price</code></td><td>ボディ</td><td>integer</td><td>任意</td><td>単価。整数のみ</td></tr><tr><td><code>order_details[].sell_price</code></td><td>ボディ</td><td>integer</td><td>任意</td><td>販売価格。整数のみ</td></tr><tr><td><code>order_details[].section_id</code></td><td>ボディ</td><td>integer</td><td>任意</td><td>部門ID。該当部門が存在する場合のみ設定する。整数のみ</td></tr><tr><td><code>qualified_invoice_issuer_confirmation_flg</code></td><td>ボディ</td><td>boolean</td><td>任意</td><td>適格請求書発行事業者の確認済みフラグ。受注が適格請求書発行事業者に該当する場合のみ反映する</td></tr><tr><td><code>jwt-token</code></td><td>ヘッダ</td><td>string</td><td>必須</td><td>認証用のトークン</td></tr></tbody></table></div>
-<p>ボディの項目はフォーム値として受け取り、明細各項目のキーはスネークケースで指定する。</p>
-<h3 id="出力-レスポンス-成功">出力: レスポンス（成功）</h3>
-<div class="table-wrap"><table><thead><tr><th>フィールド</th><th>型</th><th>説明</th></tr></thead><tbody><tr><td><code>code</code></td><td>integer</td><td>処理結果コード。成功時は200</td></tr></tbody></table></div>
-<pre><code class="language-json">{
-  "code": 200
-}</code></pre>
+<div class="table-wrap"><table><thead><tr><th>パラメータ</th><th>位置</th><th>型</th><th>必須／任意</th><th>説明</th></tr></thead><tbody><tr><td><code>jwt-token</code></td><td>ヘッダ</td><td>string</td><td>必須</td><td>認証用のトークン</td></tr></tbody></table></div>
 <h3 id="出力-レスポンス-失敗">出力: レスポンス（失敗）</h3>
 <div class="table-wrap"><table><thead><tr><th>HTTPステータス</th><th>条件</th><th>本文の形</th></tr></thead><tbody><tr><td>401</td><td>トークン欠落・署名不正・該当する管理者会員なし</td><td>認証拒否（本文を持たない）</td></tr><tr><td>404</td><td>受注IDに該当する店頭買取受注が無い</td><td>該当なし（本文を持たない）</td></tr><tr><td>400</td><td>ステータス未指定</td><td><code>errors</code>に「ステータスを選択してください。」を含む</td></tr><tr><td>400</td><td>ステータスIDが店頭買取ステータスマスタに存在しない</td><td><code>errors</code>に「MtbOtcBuyOrderStatusに{指定ID}が見つかりません。」を含む</td></tr><tr><td>400</td><td>明細が未指定または空</td><td><code>errors</code>に「1つ以上の商品を選んでください。」を含む</td></tr><tr><td>400</td><td>明細の商品名が未入力</td><td><code>errors</code>に商品名必須の検証メッセージを含む</td></tr><tr><td>400</td><td>明細の商品名が最大長超過</td><td><code>errors</code>に「商品名は、 65535 以下で入力してください。」を含む</td></tr><tr><td>400</td><td>明細の商品規格ID・数量・単価・販売価格・部門IDが整数でない</td><td><code>errors</code>に該当項目の整数形式メッセージを含む</td></tr><tr><td>500</td><td>削除・登録・保存処理中の例外</td><td>共通例外処理に委ねる</td></tr></tbody></table></div>
 <pre><code class="language-json">{
@@ -323,8 +315,6 @@ footer {
     "1つ以上の商品を選んでください。"
   ]
 }</code></pre>
-<h3 id="入出力-永続化">入出力: 永続化</h3>
-<div class="table-wrap"><table><thead><tr><th>操作</th><th>契機</th></tr></thead><tbody><tr><td>削除</td><td>更新時に、受注に紐づく既存の明細・個別入力商品・在庫・在庫履歴を削除する</td></tr><tr><td>追加</td><td>送られた明細から、明細・個別入力商品・在庫・在庫履歴を登録する</td></tr><tr><td>追加</td><td>更新前と指定ステータスが異なるとき、ステータス変更履歴を1件登録する</td></tr><tr><td>更新</td><td>受注のステータス・買取合計金額・査定担当者・更新日時・成立日時またはキャンセル日時、確認済みフラグを更新する</td></tr></tbody></table></div>
 <div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
 <h2 id="表示メッセージ">表示メッセージ</h2>
 <div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>A06-03-MSG-001</td><td>API応答JSON（errors配列）</td><td>商品規格IDが指定されていません</td><td>店頭買取受注詳細更新APIで、明細の商品規格IDがnullの場合。</td><td>HTTP 400のJSON errorsで処理中止。</td></tr><tr><td>A06-03-MSG-002</td><td>API応答JSON（errors配列）</td><td>商品規格IDが存在しません</td><td>店頭買取受注詳細更新APIで、指定された商品規格IDに該当する商品規格が存在しない場合。</td><td>HTTP 400のJSON errorsで処理中止。</td></tr></tbody></table></div>

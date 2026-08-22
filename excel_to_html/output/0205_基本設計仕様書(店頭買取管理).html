@@ -1124,7 +1124,7 @@
             </table>
           </div>
         </div>
-      <!-- function-design-embed:start m06-01-m06-01_admin_store_purchase_purchase_store_search_list -->
+            <!-- function-design-embed:start m06-01-m06-01_admin_store_purchase_purchase_store_search_list -->
       <section class="function-design-embed" id="function-design-m06-01-m06-01_admin_store_purchase_purchase_store_search_list" data-source="functions/pf-eccube3/m06-01_admin_store_purchase_purchase_store_search_list.md">
         <header class="function-design-header">
           <p class="function-design-source">Source:<br>functions/pf-eccube3/m06-01_admin_store_purchase_purchase_store_search_list.md</p>
@@ -1139,23 +1139,25 @@
     </div>
         <div class="function-design-body">
           <h2 id="function-design-m06-01-m06-01_admin_store_purchase_purchase_store_search_list-業務ロジック">業務ロジック</h2>
+          <h3 id="function-design-m06-01-m06-01_admin_store_purchase_purchase_store_search_list-フェーズ2対応-フェーズ1では実装しない">フェーズ2対応（フェーズ1では実装しない）</h3>
+          <ul><li>Excel基本設計 0205「買取商品（キャンセル）CSV出力」はフェーズ2対応。フェーズ1では実装しない。</li></ul>
           <h3 id="function-design-m06-01-m06-01_admin_store_purchase_purchase_store_search_list-初期表示">初期表示</h3>
-          <p>検索フォームを項目の既定値つきで表示する。一覧は表示しない。表示件数は設定の既定値とする。</p>
+          <p>検索画面を開いた時点では一覧を表示しない。表示件数は設定の既定値とする。検索画面を開き直したときは、保持していた検索条件・ページ番号・表示件数を破棄する。</p>
           <h3 id="function-design-m06-01-m06-01_admin_store_purchase_purchase_store_search_list-検索の実行">検索の実行</h3>
           <div class="table-wrap"><table><thead><tr><th>項目</th><th>決め方</th></tr></thead><tbody><tr><td>ソートキー</td><td>要求の指定があればそれを用い、無いときは保持している値、それも無いときは既定のソートキーとする</td></tr><tr><td>並び順</td><td>要求の指定があればそれを用い、無いときは保持している値、それも無いときは降順とする</td></tr><tr><td>表示件数</td><td>保持している値があればそれを用い、無いときは既定値とする。要求された値が妥当なときは保持している値を更新する</td></tr><tr><td>検索条件</td><td>送信された条件を用いる。条件が空に見えるときは保持している検索条件を復元する</td></tr></tbody></table></div>
+          <p>既定のソートキーは1種類だけで、既定の並び順は降順であるため、一覧は買取情報の登録が新しいものから順に並ぶ。</p>
           <p>並び順が昇順・降順のいずれにも合致しないときは、エラーを表示して処理を打ち切る。</p>
           <p>件数を数え直した結果、最終ページの件数がちょうど境界になった直後などで対象ページが空になるときは、ページ番号を1つ戻して取得する。</p>
           <p>検索条件・ページ番号・ソートキー・並び順・表示件数は画面をまたいで保持する。ページを移動したときと表示件数を変えたときは、保持している検索条件を復元して該当ページを表示する。</p>
-          <p>一覧の査定IDから買取詳細へ遷移する。詳細は本書では扱わない。</p>
+          <h3 id="function-design-m06-01-m06-01_admin_store_purchase_purchase_store_search_list-検索条件の当てはめ方">検索条件の当てはめ方</h3>
+          <div class="table-wrap"><table><thead><tr><th>検索条件</th><th>当てはめ方</th></tr></thead><tbody><tr><td>査定ID</td><td>完全一致</td></tr><tr><td>会員ID</td><td>完全一致</td></tr><tr><td>申込者名</td><td>空白またはカンマで語に分け、語ごとに姓・名・姓カナ・名カナのいずれかへ部分一致するものを対象とする。語が複数あるときはすべての語に一致するものだけを対象とする</td></tr><tr><td>買取金額(From)・(To)</td><td>From が To より大きいときはエラーとせず、両者を入れ替えて検索する</td></tr><tr><td>ステータス</td><td>指定しないときは、ステータスが買取キャンセルの買取情報を検索結果から除く。ステータスに買取キャンセルを指定したときは表示する</td></tr></tbody></table></div>
           <h3 id="function-design-m06-01-m06-01_admin_store_purchase_purchase_store_search_list-値の取り方">値の取り方</h3>
-          <p>金額・ポイント・数量・ステータス・日時は、保存済みの値をそのまま表示し、表示時の丸め・補正を行わない。件数・ページ番号・表示順は既定と上限に従い、取得後に業務値を再計算しない。条件に一致しないデータ、権限が無いデータ、非公開のデータは空結果として扱う。</p>
-          <h3 id="function-design-m06-01-m06-01_admin_store_purchase_purchase_store_search_list-フェーズ2対応-フェーズ1では実装しない">フェーズ2対応（フェーズ1では実装しない）</h3>
-          <p>Excel基本設計 0205「買取商品（キャンセル）CSV出力」はフェーズ2対応であり、フェーズ1では実装しない（この項目だけ）。Excel原文: 「買取商品（キャンセル）CSVはPh2の要件となるためPh1では実装しない」</p>
+          <p>買取金額は、金額の前に通貨記号を付け、3桁ごとに区切って表示する。小数は表示しない。申込者は姓と名を空白で区切って表示する。</p>
+          <p>査定担当者は、ステータスを買取成立へ変更した履歴のうち最も新しいものの担当者を表示し、その履歴が無いときは最終更新者を表示する。削除済みの担当者も名前を表示する。</p>
           <h3 id="function-design-m06-01-m06-01_admin_store_purchase_purchase_store_search_list-エラー時の扱い">エラー時の扱い</h3>
-          <div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>CSV出力で買取注文を1件も選択していないとき</td><td>エラーを表示し、保持している検索ページの一覧へ戻す</td></tr><tr><td>並び順の指定が不正なとき</td><td>エラーを表示し、一覧に留まる</td></tr><tr><td>検索条件に該当するデータが無いとき</td><td>一覧とページ送りを表示せず、該当なしのメッセージを表示する</td></tr></tbody></table></div>
+          <div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>CSV出力で買取注文を1件も選択していないとき</td><td>エラーを表示し、要求元の一覧画面へ戻す</td></tr><tr><td>並び順の指定が不正なとき</td><td>エラーを表示し、検索画面の初期表示へ戻す（保持していた検索条件・ページ番号・表示件数は破棄され、一覧は表示しない）</td></tr><tr><td>検索条件に該当するデータが無いとき</td><td>該当件数の見出し・表示件数の選択・ダウンロード操作・一覧・ページ送りをいずれも表示せず、該当なしのメッセージだけを表示する</td></tr></tbody></table></div>
           <h2 id="function-design-m06-01-m06-01_admin_store_purchase_purchase_store_search_list-入出力">入出力</h2>
           <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>検索フォームの各項目、ページ番号、表示件数、ソートキーと並び順。一覧にソートの操作は無く、保持している値を引き継ぐ</td></tr><tr><td>成功時出力</td><td>検索フォームと、検索したときは一覧・ページ送り・表示件数の選択肢</td></tr><tr><td>失敗時出力</td><td>並び順が不正なときなどはエラーを表示し、一覧を表示しない</td></tr></tbody></table></div>
-          <p>本機能は参照だけを行い、データを更新しない。</p>
           <div class="renewal-spec-banner"><h3 id="function-design-m06-01-m06-01_admin_store_purchase_purchase_store_search_list-リニューアル後の仕様">リニューアル後の仕様</h3></div>
           <h2 id="function-design-m06-01-m06-01_admin_store_purchase_purchase_store_search_list-表示メッセージ">表示メッセージ</h2>
           <div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M06-01-MSG-001</td><td>管理画面上部</td><td>1つ以上の買取注文情報を選択してください。</td><td>CSV出力で買取注文を選択していないとき</td><td>買取検索/一覧画面に遷移する</td></tr><tr><td>M06-01-MSG-002</td><td>管理画面上部</td><td>対象のデータが見つかりません。 ／ ID: %d は権限のない店舗のデータです。 ／ ID: %d は対象外のステータスです。 ／ 複数店舗の買取情報を同時に処理することはできません。</td><td>棚戻しリストCSVを出力しようとした際、選択した買取情報が存在しない、操作権限のない店舗に属する、または対象外のステータスであるとき。</td><td>エラーを表示し、買取一覧画面に遷移する。</td></tr><tr><td>M06-01-MSG-004</td><td>管理画面上部</td><td>1つ以上の買取注文情報を選択してください。</td><td>PDF出力で買取注文を選択していないとき</td><td>買取検索/一覧画面に遷移する</td></tr><tr><td>M06-01-MSG-005</td><td>管理画面上部</td><td>対象のデータが見つかりません。 ／ ID: %d は権限のない店舗のデータです。 ／ ID: %d は対象外のステータスです。 ／ 複数店舗の買取情報を同時に処理することはできません。</td><td>棚戻しリストPDFを出力しようとした際、選択した買取情報が存在しない、操作権限のない店舗に属する、または対象外のステータスであるとき。</td><td>買取検索/一覧画面に遷移する</td></tr><tr><td>M06-01-MSG-006</td><td>画面中央の警告ダイアログ</td><td>PDF出力する買取情報をひとつ以上選択してください。</td><td>戻しリストPDF出力で買取情報を選択していないとき</td><td>買取一覧画面に留まる。</td></tr><tr><td>M06-01-MSG-007</td><td>画面中央の警告ダイアログ</td><td>ポップアップがブロックされているため、PDFを開けませんでした。ブラウザの設定を確認してください。</td><td>PDFを開こうとしたとき、ブラウザがポップアップをブロックしたとき</td><td>買取一覧画面に留まる。</td></tr><tr><td>M06-01-MSG-008</td><td>画面中央の警告ダイアログ</td><td>PDF用データの取得に失敗しました。</td><td>PDF用データの取得に失敗したとき</td><td>ポップアップを閉じ、買取一覧画面に留まる。</td></tr><tr><td>M06-01-MSG-009</td><td>検索フォーム項目下インライン</td><td>不正な日付です。</td><td>検索条件の査定申込日時または買取日時に古すぎる日付を指定したとき</td><td>入力エラーが表示され、買取一覧画面に留まる。</td></tr><tr><td>M06-01-MSG-010</td><td>管理画面上部フラッシュ</td><td>admin.error.sort</td><td>検索結果の並び順に不正な値を指定したとき</td><td>エラーを表示し、一覧画面に留まる。</td></tr><tr><td>M06-01-MSG-003</td><td>管理画面上部</td><td>編集可能な店舗と買取情報の買取店舗が一致しません。 ／ 入庫済みのステータスは管理者取消以外に変更できません。 ／ 商品マスターに登録されていない商品明細が含まれているため、入庫済みに変更できません。 ／ 実在庫情報が登録されていない個別入力商品が含まれているため、入庫済みに変更できません。</td><td>ステータス変更画面で変更を実行したとき、編集可能な店舗と買取店舗が一致しない、または入庫済みから管理者取消以外へ変更しようとした場合</td><td>ステータス変更画面へ戻る</td></tr><tr><td>M06-01-MSG-011</td><td>買取一覧の検索結果ボックス見出し</td><td>検索条件に該当するデータがありませんでした。</td><td>買取一覧の検索、または保持した検索条件を復元したページ表示で、該当件数が0件のとき</td><td>買取一覧の表とページ送りを表示せず、同じ検索画面に空結果メッセージを表示する。</td></tr></tbody></table></div>
@@ -1347,7 +1349,7 @@
             </table>
           </div>
         </div>
-</section>
+      </section>
       <section class="sheet-panel" id="sheet-6">
         <div class="sheet-heading">
           <h2>【新規】買取商品一覧CSV出力項目</h2>
@@ -2220,7 +2222,7 @@
             </table>
           </div>
         </div>
-      <!-- function-design-embed:start m06-03-m06-03_admin_store_purchase_purchase_store_otc_buy_info_edit -->
+            <!-- function-design-embed:start m06-03-m06-03_admin_store_purchase_purchase_store_otc_buy_info_edit -->
       <section class="function-design-embed" id="function-design-m06-03-m06-03_admin_store_purchase_purchase_store_otc_buy_info_edit" data-source="functions/pf-eccube3/m06-03_admin_store_purchase_purchase_store_otc_buy_info_edit.md">
         <header class="function-design-header">
           <p class="function-design-source">Source:<br>functions/pf-eccube3/m06-03_admin_store_purchase_purchase_store_otc_buy_info_edit.md</p>
@@ -2244,34 +2246,19 @@
           <h3 id="function-design-m06-03-m06-03_admin_store_purchase_purchase_store_otc_buy_info_edit-フェーズ2対応-フェーズ1では実装しない">フェーズ2対応（フェーズ1では実装しない）</h3>
           <ul><li>一部キャンセル（※Excel基本設計 0205「一部キャンセル」はフェーズ2対応。フェーズ1では実装しない）。フェーズ2対応。Excel原文: 「一部キャンセルはPh2の要件となるためPh1では実装しない」（0205 買取詳細）</li></ul>
           <h3 id="function-design-m06-03-m06-03_admin_store_purchase_purchase_store_otc_buy_info_edit-Excel基本設計により廃止された仕様-刷新後は実装不要">Excel基本設計により廃止された仕様（刷新後は実装不要）</h3>
-          <ul><li>ダブルチェック＆保存ボタン（※Excel基本設計 0205 識別ID:15 により廃止。刷新後は実装しない）。削除。 これに伴い実装不要: ダブルチェック済みステータス（STATUS_DOUBLE_CHECKED=3）／ダブルチェック日時（double_check_date）／買取集計・CSV出力のダブルチェック済み前提の絞り込み。</li><li>ダブルチェック日時（※Excel基本設計 0205 識別ID:9 により廃止。刷新後は実装しない）。削除。</li></ul>
+          <ul><li>ダブルチェック＆保存ボタン（※Excel基本設計 0205 識別ID:15 により廃止。刷新後は実装しない）。削除。 これに伴い実装不要: ダブルチェック済みステータス／ダブルチェック日時／買取集計・CSV出力のダブルチェック済み前提の絞り込み。</li><li>ダブルチェック日時（※Excel基本設計 0205 識別ID:9 により廃止。刷新後は実装しない）。削除。</li></ul>
           <h2 id="function-design-m06-03-m06-03_admin_store_purchase_purchase_store_otc_buy_info_edit-業務ロジック">業務ロジック</h2>
           <h3 id="function-design-m06-03-m06-03_admin_store_purchase_purchase_store_otc_buy_info_edit-詳細の表示">詳細の表示</h3>
           <p>指定した店頭買取注文が無いときは表示しない。</p>
-          <p>明細は買取価格の降順、次に明細IDの昇順で並べる。ステータス変更履歴は当該注文に紐づくものを作成日時の降順で表示する。ステータスの表示名は店頭買取ステータスマスタの対応表から取る。</p>
-          <p>実在庫の表示行は、カード状態IDの昇順、次に買取金額の降順、次に商品規格IDの昇順で並べる。実在庫の編集行は、高額商品の規格一覧と、通常商品を全カード状態（NM, SP, MP, HP）へ展開した規格一覧を結合したものとする。</p>
-          <p>画面はフリーコメント欄と商品検索欄を持つ。</p>
+          <p>削除済みのメンバー・商品・商品規格も、この画面では表示する。</p>
           <h3 id="function-design-m06-03-m06-03_admin_store_purchase_purchase_store_otc_buy_info_edit-保存の判定順序">保存の判定順序</h3>
-          <div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>店頭買取注文が存在するか</td><td>無ければ表示しない</td></tr><tr><td>2</td><td>入力が妥当か</td><td>妥当でなければ保存せず、成功・失敗いずれのメッセージも出さずに詳細画面へ戻る</td></tr><tr><td>3</td><td>在庫の増減指定に 0 以外が残っているか</td><td>残っていれば在庫更新を行う。すべて 0 または未送信ならフリーコメントなど入力で変わった項目だけを保存する</td></tr><tr><td>4</td><td>在庫更新の店舗一致・ステータス・数量下限</td><td>いずれかに反することは保存しない</td></tr></tbody></table></div>
-          <p>在庫更新は、操作者の編集可能店舗と買取店舗が一致し、ステータスが未登録在庫ありまたは入庫待ちで、増減後の数量が負にならないときだけ行う。これらに反するときはエラー文言を表示する。</p>
-          <p>保存の成否にかかわらず、同じ買取詳細画面へ戻る。</p>
+          <div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>店頭買取注文が存在するか</td><td>無ければ表示しない</td></tr><tr><td>2</td><td>在庫の増減指定に 0 以外が残っているか</td><td>残っている商品規格だけ在庫を更新する。すべて 0 または未送信なら、フリーコメントなど入力で変わった項目だけを保存する</td></tr><tr><td>3</td><td>増減後の数量が正の値になるか</td><td>ならない商品規格は数量を 0 として保存する。更新そのものは止めない</td></tr></tbody></table></div>
+          <p>保存後は同じ買取詳細画面へ戻る。</p>
           <h3 id="function-design-m06-03-m06-03_admin_store_purchase_purchase_store_otc_buy_info_edit-在庫の増減">在庫の増減</h3>
-          <p>在庫の増減で指定した商品規格だけ、変更前の数量を記録した在庫履歴を残す。増減後の数量に応じて原価の小計を配分し直す。対象には既存の実在庫と新規の行が混在しうる。</p>
-          <p>在庫を増減したときは注文の更新日時を更新する。フリーコメントだけを変えたときは更新日時を更新しない。</p>
-          <h3 id="function-design-m06-03-m06-03_admin_store_purchase_purchase_store_otc_buy_info_edit-個別入力商品への規格登録">個別入力商品への規格登録</h3>
-          <p>送信情報が不正なときは登録しない。注文または個別入力商品が存在しない、個別入力商品が当該注文に属さないときも登録しない。指定した商品規格が見つからないときはエラー文言を表示する。</p>
-          <p>登録は、操作者の編集可能店舗が一致し、ステータスが未登録在庫ありで、当該行が未登録のときだけ行う。実在庫を新規に作るか既存へ加算し、個別入力行へ商品規格を設定する。全行が登録済みになったときはステータスを入庫待ちへ進める。</p>
-          <h3 id="function-design-m06-03-m06-03_admin_store_purchase_purchase_store_otc_buy_info_edit-経理払出し済への変更">経理払出し済への変更</h3>
-          <p>送信情報が不正なときは変更しない。注文が存在しない、操作者が管理者アカウントでないときも変更しない。操作者の編集可能店舗と買取店舗が一致しないときは変更しない。現在のステータスが経理払出し待ちでないときはエラー文言を表示する。条件を満たすときは買取完了へ進める。</p>
-          <h3 id="function-design-m06-03-m06-03_admin_store_purchase_purchase_store_otc_buy_info_edit-入庫済への変更">入庫済への変更</h3>
-          <p>送信情報が不正なときは変更しない。注文が存在しない、操作者が管理者アカウントでないときも変更しない。操作者の編集可能店舗と買取店舗が一致しないときは変更しない。条件を満たすときは入庫済へ進める。</p>
-          <h3 id="function-design-m06-03-m06-03_admin_store_purchase_purchase_store_otc_buy_info_edit-Excel基本設計との関係">Excel基本設計との関係</h3>
-          <p>Excel基本設計 0205 識別ID:15 および識別ID:9 により廃止された仕様である。現行実装のふるまいは本書に残すが、刷新後の実装・テストの対象外とする。</p>
-          <p>「一部キャンセル」はフェーズ2対応であり、フェーズ1では実装しない。Excel原文は「一部キャンセルはPh2の要件となるためPh1では実装しない」である。</p>
+          <p>在庫履歴には、変更前と変更後の数量を記録する。新規に追加した商品規格には変更前の数量を記録しない。</p>
+          <p>保存すると、買取情報の最終更新者を操作した担当者に、更新日時を保存した時刻に更新する。在庫の増減が無くフリーコメントなどだけを変えたときも同じである。</p>
           <h2 id="function-design-m06-03-m06-03_admin_store_purchase_purchase_store_otc_buy_info_edit-入出力">入出力</h2>
-          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>対象の店頭買取注文。保存時はフリーコメントなどの入力項目と在庫の増減指定。個別登録時は商品規格の指定。</td></tr><tr><td>成功時出力</td><td>買取詳細画面への遷移と成功メッセージ。処理ごとに文言が異なる。</td></tr><tr><td>失敗時出力</td><td>買取詳細画面への遷移とエラーメッセージ。対象が存在しないときは表示しない。</td></tr></tbody></table></div>
-          <h3 id="function-design-m06-03-m06-03_admin_store_purchase_purchase_store_otc_buy_info_edit-入出力-永続化">入出力: 永続化</h3>
-          <div class="table-wrap"><table><thead><tr><th>操作</th><th>契機</th></tr></thead><tbody><tr><td>実在庫の登録・更新</td><td>在庫の増減、個別入力商品への規格登録</td></tr><tr><td>在庫履歴の登録</td><td>在庫の増減で指定した商品規格ごと</td></tr><tr><td>買取注文の更新</td><td>フリーコメントなどの保存、在庫増減時の更新日時、ステータス変更</td></tr></tbody></table></div>
+          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>対象の店頭買取注文。保存時はフリーコメントなどの入力項目と在庫の増減指定。</td></tr><tr><td>成功時出力</td><td>買取詳細画面への遷移と成功メッセージ。</td></tr><tr><td>失敗時出力</td><td>対象の店頭買取注文が無いときは、詳細も保存結果も表示しない。</td></tr></tbody></table></div>
           <div class="renewal-spec-banner"><h3 id="function-design-m06-03-m06-03_admin_store_purchase_purchase_store_otc_buy_info_edit-リニューアル後の仕様">リニューアル後の仕様</h3></div>
           <h2 id="function-design-m06-03-m06-03_admin_store_purchase_purchase_store_otc_buy_info_edit-表示メッセージ">表示メッセージ</h2>
           <div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M06-03-MSG-001</td><td>管理画面上部</td><td>admin.common.csrf_token_error</td><td>経理払出し済みへの変更を送信した際、送信情報が不正なとき</td><td>買取詳細画面に遷移する</td></tr><tr><td>M06-03-MSG-002</td><td>管理画面上部</td><td>この機能は管理者によって制限されています。</td><td>経理払出し済みへの変更を行う権限がないとき</td><td>買取詳細画面に遷移する</td></tr><tr><td>M06-03-MSG-003</td><td>管理画面上部</td><td>経理払出し待ちステータスの買取ではありません</td><td>経理払出し待ちではない買取を更新しようとしたとき</td><td>買取詳細画面に遷移する</td></tr><tr><td>M06-03-MSG-004</td><td>管理画面上部</td><td>保存しました</td><td>経理払出し待ちから買取完了へ変更を保存したとき</td><td>買取詳細画面に遷移する</td></tr><tr><td>M06-03-MSG-005</td><td>管理画面上部</td><td>admin.common.csrf_token_error</td><td>入庫済みへの変更を送信した際、送信情報が不正なとき</td><td>買取詳細画面に遷移する</td></tr><tr><td>M06-03-MSG-006</td><td>管理画面上部</td><td>保存しました</td><td>入庫済みへの変更を保存したとき</td><td>買取詳細画面に遷移する</td></tr><tr><td>M06-03-MSG-007</td><td>管理画面上部</td><td>保存しました</td><td>買取詳細の変更を保存したとき</td><td>買取詳細画面に遷移する</td></tr><tr><td>M06-03-MSG-008</td><td>管理画面上部</td><td>admin.common.csrf_token_error</td><td>個別入力商品の実在庫登録を送信した際、送信情報が不正なとき</td><td>買取詳細画面に遷移する</td></tr><tr><td>M06-03-MSG-009</td><td>管理画面上部</td><td>商品規格が見つかりません。</td><td>個別入力商品の実在庫登録で、指定した商品規格が見つからないとき</td><td>買取詳細画面に遷移する</td></tr><tr><td>M06-03-MSG-010</td><td>管理画面上部</td><td>実在庫登録が完了しました。</td><td>個別入力商品の実在庫登録を完了したとき</td><td>買取詳細画面に遷移する</td></tr><tr><td>M06-03-MSG-011</td><td>画面中央の警告ダイアログ</td><td>商品の検索に失敗しました。</td><td>商品検索でエラーが起きたとき</td><td>商品検索モーダルを表示したまま、詳細画面に留まる</td></tr><tr><td>M06-03-MSG-012</td><td>画面中央の確認ダイアログ</td><td>経理払出し済みに変更します。よろしいですか？</td><td>経理払出し済みに変更しようとしたとき（送信前確認）</td><td>確定すると経理払出し済みへの変更を実行し、詳細画面に遷移する。取り消すと詳細画面に留まる</td></tr><tr><td>M06-03-MSG-013</td><td>画面中央の確認ダイアログ</td><td>編集した内容は元に戻ります。解除しますか？</td><td>実在庫の編集を解除しようとしたとき（編集内容を破棄する確認）</td><td>確定すると編集内容を破棄して表示モードに戻り、詳細画面に留まる。取り消すと編集モードに留まる</td></tr><tr><td>—</td><td>管理画面上部</td><td>編集可能な店舗と買取情報の買取店舗が一致しません。</td><td>編集可能店舗と買取店舗が一致しない状態で在庫を更新しようとしたとき</td><td>更新せず買取詳細画面に遷移する</td></tr><tr><td>—</td><td>管理画面上部</td><td>未登録在庫ありまたは入庫待ちステータスの場合のみ実在庫の更新が可能です。</td><td>未登録在庫ありでも入庫待ちでもないステータスで在庫を更新しようとしたとき</td><td>更新せず買取詳細画面に遷移する</td></tr><tr><td>—</td><td>管理画面上部</td><td>商品規格ID … の数量が負になります …</td><td>増減後の数量が負になる指定で在庫を更新しようとしたとき</td><td>更新せず買取詳細画面に遷移する</td></tr></tbody></table></div>
@@ -2396,7 +2383,7 @@
             </table>
           </div>
         </div>
-      <!-- function-design-embed:start m06-04-m06-04_admin_store_purchase_purchase_store_status_change -->
+            <!-- function-design-embed:start m06-04-m06-04_admin_store_purchase_purchase_store_status_change -->
       <section class="function-design-embed" id="function-design-m06-04-m06-04_admin_store_purchase_purchase_store_status_change" data-source="functions/pf-eccube3/m06-04_admin_store_purchase_purchase_store_status_change.md">
         <header class="function-design-header">
           <p class="function-design-source">Source:<br>functions/pf-eccube3/m06-04_admin_store_purchase_purchase_store_status_change.md</p>
@@ -2406,26 +2393,19 @@
         <div class="function-design-body">
           <h2 id="function-design-m06-04-m06-04_admin_store_purchase_purchase_store_status_change-業務ロジック">業務ロジック</h2>
           <h3 id="function-design-m06-04-m06-04_admin_store_purchase_purchase_store_status_change-ステータス変更画面">ステータス変更画面</h3>
-          <p>指定された店頭買取受注が無いときは404応答とする。変更後ステータスは空の状態で表示し、初期選択値を持たない（プレースホルダは「ステータスを選択」）。</p>
-          <p>変更後ステータスの選択肢は、店頭買取ステータスマスタのうち廃止IDを除き、ID昇順で表示する。</p>
-          <p>保存に成功したときは店頭買取詳細へ遷移する。業務上の理由で更新を拒否したときは、メッセージを表示して同一店頭買取IDのステータス変更画面へ戻す（詳細には戻さない）。フォームが未送信または妥当でないときは、同一画面を再表示して項目ごとのエラーを表示する。</p>
-          <h3 id="function-design-m06-04-m06-04_admin_store_purchase_purchase_store_status_change-ステータス変更の判定順序">ステータス変更の判定順序</h3>
-          <div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>編集可能店舗と買取店舗の一致</td><td>不一致なら拒否（画面別に戻り先と例外種別が異なる）</td></tr><tr><td>2</td><td>現在が入庫済みか</td><td>入庫済みなら次が管理者取消でなければ拒否</td></tr><tr><td>3</td><td>次が入庫済みか</td><td>明細・個別入力の商品規格必須チェックを行う</td></tr><tr><td>4</td><td>次が買取成立か</td><td>成立なら続けて入庫待ち系の最終ステータスへ2回目の更新を行う</td></tr><tr><td>5</td><td>入庫待ちから入庫済みか</td><td>条件を満たせば在庫入庫処理を行う</td></tr></tbody></table></div>
-          <p>次が入庫済みのときの必須チェックは、数量が正の明細に未紐付けの商品規格が無いか、個別入力商品に商品規格未紐付けの実在庫が無いかを見る。違反したときは拒否する。</p>
+          <p>指定された店頭買取受注が無いときは404応答とする。変更後ステータスは初期選択を持たず、選ばれていない間は「ステータスを選択」と表示する。</p>
+          <p>変更後ステータスの選択肢には、その買取が現在持っているステータスを出さない。</p>
+          <p>保存に成功したときは店頭買取詳細へ遷移する。</p>
           <h3 id="function-design-m06-04-m06-04_admin_store_purchase_purchase_store_status_change-ステータス更新で行うこと">ステータス更新で行うこと</h3>
-          <p>更新は一連の処理としてまとめて行い、途中で失敗したときはすべて取り消す。</p>
-          <div class="table-wrap"><table><thead><tr><th>更新対象</th><th>内容</th></tr></thead><tbody><tr><td>店頭買取受注の更新日時</td><td>現在時刻に更新する</td></tr><tr><td>ステータスに紐づく日付</td><td>買取成立・キャンセル・入庫のうち、受注側の対応表に載るものだけをステータス遷移に応じて埋める。同一ステータスへの更新と買取成立の重複上書きは抑止する</td></tr><tr><td>ステータス本体</td><td>次ステータスへ更新し、店頭買取ステータス履歴に1件追記する</td></tr><tr><td>買取成立後の自動遷移</td><td>個別入力商品が空なら入庫待ち（ID13）、空でなければ未登録在庫あり（ID12）へ、同じ処理の中で再度更新し履歴を追記する</td></tr><tr><td>在庫反映</td><td>入庫待ちから入庫済みへ移すときだけ、店頭買取実在庫を商品在庫へ反映し在庫履歴を残す（変更種別は店頭買取入庫）</td></tr><tr><td>集計サマリ</td><td>新旧ステータスが買取集計データ対象ステータスの集合の内外に跨り、かつ買取成立日時が既に入っているときだけ、買取成立日の日付単位で集計サマリを再計算する</td></tr></tbody></table></div>
-          <p>入庫待ちから入庫済みへ移すときは、先に入庫済みへ更新して二重入庫を抑止し、その更新が実際に行われたときだけ在庫反映を行う。</p>
-          <p>本機能では金額再計算や税計算を行わない。</p>
-          <h3 id="function-design-m06-04-m06-04_admin_store_purchase_purchase_store_status_change-詳細画面からのステータス変更">詳細画面からのステータス変更</h3>
-          <div class="table-wrap"><table><thead><tr><th>操作</th><th>内容</th></tr></thead><tbody><tr><td>経理払出し済</td><td>なりすまし対策トークンを検証する。ログイン利用者が管理者アカウントでなければ認証エラーとする。店頭買取受注の店舗と利用者の編集可能店舗が一致しないときはエラーとし、利用者向け表現はアプリケーション全体のエラー表示に従う。現在ステータスが経理払出し待ちでないときはエラーを表示して詳細へ戻る。条件を満たすときは次ステータスを買取成立（ID1）として更新する</td></tr><tr><td>入庫済みにする</td><td>なりすまし対策トークンを検証する。ログイン利用者が管理者アカウントでなければ認証エラーとする。店舗が一致しないときはエラーとする。次ステータスを入庫済み（ID11）として更新する</td></tr></tbody></table></div>
-          <p>いずれも成功時は保存完了、失敗時は拒否の理由を表示し、詳細へ戻る。詳細画面の操作は常に表示される。「入庫済みにする」は現在ステータスの事前確認を行わず、店舗一致・入庫済みの前提・マスタ紐付けの検査で拒否する。</p>
-          <h3 id="function-design-m06-04-m06-04_admin_store_purchase_purchase_store_status_change-エラー時の扱い">エラー時の扱い</h3>
-          <div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>対象IDが無いとき</td><td>404応答とする</td></tr><tr><td>なりすまし対策トークン不一致</td><td>エラーを表示して詳細へ戻る</td></tr><tr><td>店舗不一致（フォーム経由）</td><td>メッセージを表示してステータス変更画面へ戻る</td></tr><tr><td>店舗不一致（詳細画面からの実行）</td><td>エラーとし、利用者向け表現はアプリケーション全体のエラー表示に従う</td></tr><tr><td>入庫済みからの違反遷移</td><td>業務上の拒否として扱う</td></tr><tr><td>入庫済み化で商品規格が未登録のとき</td><td>メッセージを表示して拒否する</td></tr></tbody></table></div>
+          <p>更新は一連の処理としてまとめて行い、途中で失敗したときは確定しない。</p>
+          <div class="table-wrap"><table><thead><tr><th>更新対象</th><th>内容</th></tr></thead><tbody><tr><td>ステータスに紐づく日付</td><td>現在と同じステータスへ変更したときは日付を書き換えない。買取成立日が既に入っているときは、再度買取成立へ変更しても買取成立日を上書きしない</td></tr><tr><td>買取集計データ</td><td>変更前と変更後で買取集計の対象に出入りがあったときだけ、買取成立日の当日分を作り直す（当日分を消したうえで、その日に買取が成立した明細と個別入力商品から、店舗・部門ごとの買取金額と販売金額を集計し直す）。同じ処理の中で行うため、作り直しに失敗したときはステータス変更も確定しない</td></tr></tbody></table></div>
+          <p>ステータス変更では、店頭買取受注の更新日時と担当者を書き換えない。金額の再計算や税計算も行わない。</p>
+          <h3 id="function-design-m06-04-m06-04_admin_store_purchase_purchase_store_status_change-更新できなかったときの扱い">更新できなかったときの扱い</h3>
+          <div class="table-wrap"><table><thead><tr><th>内容</th><th>処理</th></tr></thead><tbody><tr><td>対象の店頭買取受注が無いとき</td><td>404応答とする</td></tr><tr><td>なりすまし対策トークンが一致しないとき</td><td>アクセス拒否として扱い、更新しない</td></tr><tr><td>変更後ステータスが選ばれていないか、選択肢に無いとき</td><td>更新せず、同じ店頭買取のステータス変更画面を開き直す。開き直すため、どの項目が不正かは画面に残らない</td></tr></tbody></table></div>
           <h2 id="function-design-m06-04-m06-04_admin_store_purchase_purchase_store_status_change-入出力">入出力</h2>
-          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>店頭買取受注ID、フォームまたは詳細画面の操作による次ステータス、なりすまし対策トークン、ログイン利用者</td></tr><tr><td>成功時出力</td><td>画面遷移と保存完了またはエラーのメッセージ</td></tr><tr><td>失敗時出力</td><td>妥当性エラーはフォーム再表示、業務上の拒否はメッセージ付きの画面遷移、トークン不一致はメッセージ付きの画面遷移、存在なしは404応答</td></tr></tbody></table></div>
+          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>店頭買取受注ID、変更後ステータス、なりすまし対策トークン、ログイン利用者</td></tr><tr><td>成功時出力</td><td>店頭買取詳細への遷移と完了メッセージ</td></tr><tr><td>失敗時出力</td><td>存在しないIDは404応答、トークン不一致はアクセス拒否、選択が妥当でないときはステータス変更画面へ戻る</td></tr></tbody></table></div>
           <h3 id="function-design-m06-04-m06-04_admin_store_purchase_purchase_store_status_change-入出力-永続化">入出力: 永続化</h3>
-          <div class="table-wrap"><table><thead><tr><th>操作</th><th>契機</th></tr></thead><tbody><tr><td>更新</td><td>ステータス変更（ステータス本体・更新日時・ステータスに紐づく日付）</td></tr><tr><td>更新</td><td>入庫時の商品在庫反映</td></tr><tr><td>更新</td><td>買取成立日の集計サマリ再計算</td></tr><tr><td>追加</td><td>ステータス履歴の追記、在庫履歴の追記</td></tr></tbody></table></div>
+          <div class="table-wrap"><table><thead><tr><th>操作</th><th>契機</th></tr></thead><tbody><tr><td>更新</td><td>ステータス変更に伴う、ステータスに紐づく日付の記録</td></tr><tr><td>削除・追加</td><td>買取集計の対象に出入りがあったときの、買取成立日当日分の買取集計データの作り直し</td></tr></tbody></table></div>
           <div class="renewal-spec-banner"><h3 id="function-design-m06-04-m06-04_admin_store_purchase_purchase_store_status_change-リニューアル後の仕様">リニューアル後の仕様</h3></div>
           <h2 id="function-design-m06-04-m06-04_admin_store_purchase_purchase_store_status_change-表示メッセージ">表示メッセージ</h2>
           <div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M06-04-MSG-001</td><td>管理画面上部</td><td>この機能は管理者によって制限されています。</td><td>買取ステータス変更画面を開こうとしたが、利用権限がないとき</td><td>買取情報編集画面に遷移する</td></tr><tr><td>M06-04-MSG-002</td><td>管理画面上部</td><td>この機能は管理者によって制限されています。</td><td>買取ステータスを更新しようとしたが、利用権限がないとき</td><td>買取情報編集画面に遷移する</td></tr><tr><td>M06-04-MSG-003</td><td>管理画面上部</td><td>保存しました</td><td>買取ステータスの変更を保存したとき</td><td>買取情報編集画面に遷移する</td></tr><tr><td>—</td><td>管理画面上部</td><td>経理払出し待ちステータスの買取ではありません</td><td>経理払出し済を実行したが、現在ステータスが経理払出し待ちでないとき</td><td>更新せず、店頭買取詳細へ戻る</td></tr><tr><td>—</td><td>変更後ステータスの選択欄</td><td>ステータスを選択</td><td>ステータス変更画面を表示したとき</td><td>画面に留まる</td></tr></tbody></table></div>
@@ -2542,7 +2522,7 @@
             </table>
           </div>
         </div>
-      <!-- function-design-embed:start m06-05-m06-05_admin_store_purchase_purchase_store_history -->
+            <!-- function-design-embed:start m06-05-m06-05_admin_store_purchase_purchase_store_history -->
       <section class="function-design-embed" id="function-design-m06-05-m06-05_admin_store_purchase_purchase_store_history" data-source="functions/pf-eccube3/m06-05_admin_store_purchase_purchase_store_history.md">
         <header class="function-design-header">
           <p class="function-design-source">Source:<br>functions/pf-eccube3/m06-05_admin_store_purchase_purchase_store_history.md</p>
@@ -2552,26 +2532,20 @@
         <div class="function-design-body">
           <h2 id="function-design-m06-05-m06-05_admin_store_purchase_purchase_store_history-業務ロジック">業務ロジック</h2>
           <h3 id="function-design-m06-05-m06-05_admin_store_purchase_purchase_store_history-初期表示">初期表示</h3>
-          <p>空の検索フォームと既定の表示件数で画面を表示する。一覧は出さない。</p>
-          <h3 id="function-design-m06-05-m06-05_admin_store_purchase_purchase_store_history-検索条件">検索条件</h3>
-          <p>各条件は入力されたものだけを順に絞り込みへ加える。</p>
-          <div class="table-wrap"><table><thead><tr><th>順序</th><th>条件</th><th>絞り込み</th></tr></thead><tbody><tr><td>1</td><td>会員ID</td><td>注文の会員がそのIDと一致する。空文字列も入力ありとして条件に含まれる（実装を確認値とする）</td></tr><tr><td>2</td><td>申込者名</td><td>空白・全角半角カンマで分割した各キーワードについて、姓・名・姓カナ・名カナへの部分一致をORし、キーワード間はANDとする</td></tr><tr><td>3</td><td>査定ID</td><td>査定IDの完全一致。空文字列も入力ありとして扱う（実装を確認値とする）</td></tr><tr><td>4</td><td>査定担当者名</td><td>注文に紐づく査定担当者名の部分一致。ワイルドカード文字はエスケープする</td></tr><tr><td>5</td><td>店舗</td><td>注文の店舗が一致する</td></tr><tr><td>6</td><td>ステータス（1件以上選択）</td><td>注文ステータスが選択したいずれかに一致する</td></tr><tr><td>7</td><td>商品コード</td><td>規格コードの完全一致</td></tr><tr><td>8</td><td>商品名</td><td>商品名の部分一致。ワイルドカード文字はエスケープする</td></tr><tr><td>9</td><td>買取日時（開始または終了）</td><td>注文ステータスがキャンセル（ID2）のときはキャンセル日時、それ以外は買取成立日時に対して境界を付ける</td></tr><tr><td>10</td><td>買取価格下限</td><td>明細の買取価格小計が「下限×数量」以上</td></tr><tr><td>11</td><td>買取価格上限</td><td>明細の買取価格小計が「上限×数量」以下。上下限は独立に付けられる</td></tr><tr><td>12</td><td>基準価格下限／上限</td><td>規格の基準価格に不等号を付ける</td></tr><tr><td>13</td><td>言語（1個以上選択）</td><td>日本語・英語は当該言語IDのいずれかに一致。フォーム値「その他言語」（整数3）は日本語・英語以外の言語に一致する条件として扱う</td></tr><tr><td>14</td><td>状態（1個以上選択）</td><td>規格のカード状態IDが選択集合に含まれる</td></tr></tbody></table></div>
-          <p>ステータスの選択肢は、買取成立・キャンセル・入庫待ち・未登録在庫あり・入庫済み・管理者取消の6種（マスタID 1・2・11・12・13・14。実装を確認値とする）である。</p>
-          <h3 id="function-design-m06-05-m06-05_admin_store_purchase_purchase_store_history-並び順">並び順</h3>
-          <p>注文の買取成立日時の降順、履歴の作成日時の降順に固定する。利用者が指定するソート列の切替は履歴の並びに影響しない（実装を確認値とする）。ソート順の指定が昇順・降順のいずれでもないときは、ソートエラーを表示して初期表示相当へ戻す。</p>
-          <h3 id="function-design-m06-05-m06-05_admin_store_purchase_purchase_store_history-表示件数と再検索">表示件数と再検索</h3>
-          <div class="table-wrap"><table><thead><tr><th>場面</th><th>扱い</th></tr></thead><tbody><tr><td>表示件数</td><td>保持した値または画面で指定した値を用い、表示件数マスタに登録された値だけを採用する</td></tr><tr><td>ページ切替</td><td>指定されたページ番号で、保持した検索条件を復元して同じ条件で再検索する</td></tr><tr><td>保持した検索条件が無いとき</td><td>初期表示相当とする</td></tr><tr><td>最終ページで件数が境界に落ちたとき</td><td>1ページ戻して再表示する</td></tr></tbody></table></div>
-          <h3 id="function-design-m06-05-m06-05_admin_store_purchase_purchase_store_history-一覧・CSVに出す値">一覧・CSVに出す値</h3>
-          <div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>買取価格</td><td>実在庫の単価を表示・出力する。検索の買取価格帯も実在庫の行に対して評価する</td></tr><tr><td>増減数</td><td>履歴の変更後数量から変更前数量を引いた値</td></tr></tbody></table></div>
+          <p>検索画面を開いたときは、保持していた検索条件・ページ番号・表示件数を破棄し、一覧を表示しない。表示件数は既定値に戻る。</p>
+          <h3 id="function-design-m06-05-m06-05_admin_store_purchase_purchase_store_history-検索条件の扱い">検索条件の扱い</h3>
+          <div class="table-wrap"><table><thead><tr><th>条件</th><th>扱い</th></tr></thead><tbody><tr><td>商品コード</td><td>入力した値と完全に一致するものだけを対象とする</td></tr><tr><td>商品名</td><td>部分一致の検索語に含まれる <code>%</code> <code>_</code> は特殊文字として扱わず、そのままの文字として一致させる</td></tr><tr><td>言語</td><td>「その他言語」を選んだときは、日本語・英語以外のすべての言語を対象とする。他の言語と併せて選んだときは、いずれかに該当すればよい</td></tr></tbody></table></div>
+          <h3 id="function-design-m06-05-m06-05_admin_store_purchase_purchase_store_history-削除済みデータの扱い">削除済みデータの扱い</h3>
+          <p>削除済みの商品・規格・作業者に紐づく履歴も、検索結果とCSVに表示・出力する。</p>
+          <h3 id="function-design-m06-05-m06-05_admin_store_purchase_purchase_store_history-表示件数とページ切替">表示件数とページ切替</h3>
+          <div class="table-wrap"><table><thead><tr><th>場面</th><th>扱い</th></tr></thead><tbody><tr><td>表示件数の指定</td><td>選択肢にある値のときだけ採用し、以後の検索・ページ送りへ引き継ぐ。選択肢にない値が指定されたときは直前の値のままとする</td></tr><tr><td>ページ切替</td><td>指定されたページ番号で、保持した検索条件を復元して同じ条件で再検索する</td></tr><tr><td>保持した検索条件が無いとき</td><td>初期表示と同じ画面を返す</td></tr><tr><td>該当件数が前のページまでの表示合計と等しくなり、そのページに表示するデータが無くなったとき</td><td>1ページ戻して表示する</td></tr></tbody></table></div>
+          <h3 id="function-design-m06-05-m06-05_admin_store_purchase_purchase_store_history-並び順の指定">並び順の指定</h3>
+          <p>昇順・降順のいずれでもない並び順が指定されたときは、ソートエラーを表示して初期表示と同じ画面へ戻す。</p>
           <h3 id="function-design-m06-05-m06-05_admin_store_purchase_purchase_store_history-CSV出力">CSV出力</h3>
-          <p>出力種別は、選択した商品の出力とすべての商品の出力の2種である。</p>
-          <div class="table-wrap"><table><thead><tr><th>出力種別</th><th>扱い</th></tr></thead><tbody><tr><td>選択した商品の出力</td><td>履歴を1件も選択していないときはエラーを表示し、保持したページへ戻る</td></tr><tr><td>すべての商品の出力</td><td>検索条件が保持されていないときはエラーを表示し、保持したページへ戻る</td></tr><tr><td>上記のいずれでもないとき</td><td>出力する。ファイル名は<code>otc_buy_order_history_YmdHis.csv</code>とする</td></tr></tbody></table></div>
-          <h3 id="function-design-m06-05-m06-05_admin_store_purchase_purchase_store_history-エラー時の扱い">エラー時の扱い</h3>
-          <div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>ソート順が昇順・降順のいずれでもないとき</td><td>管理画面共通のソートエラーメッセージを表示し、初期表示相当へ戻す</td></tr><tr><td>CSV出力で履歴を1件も選択していないとき</td><td>「1つ以上の商品を選択してください」を表示し一覧へ戻る</td></tr><tr><td>CSV全件出力で検索条件が保持されていないとき</td><td>「条件に一致する商品がありません」を表示し一覧へ戻る</td></tr></tbody></table></div>
+          <div class="table-wrap"><table><thead><tr><th>出力種別</th><th>扱い</th></tr></thead><tbody><tr><td>選択した商品履歴取得</td><td>履歴を1件も選択していないときはエラーを表示し、直前のページへ戻る。選択があれば、保持した検索条件に加えて選択した履歴だけに絞って出力する</td></tr><tr><td>検索結果全件取得</td><td>保持した検索条件に一致する履歴を、表示中のページによらず全件出力する</td></tr></tbody></table></div>
+          <p>ファイル名は <code>otc_buy_order_detail_history_</code> に出力時刻（年月日時分秒）を付けたCSVとする。</p>
           <h2 id="function-design-m06-05-m06-05_admin_store_purchase_purchase_store_history-入出力">入出力</h2>
-          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>検索フォームの各項目、ページ番号、表示件数、CSVの出力種別と選択したID列</td></tr><tr><td>成功時出力</td><td>一覧画面、またはCSVファイル</td></tr><tr><td>失敗時出力</td><td>ソート不正時はエラー表示と初期表示相当の画面。CSVで未選択・検索条件なしのときはエラー表示と一覧への遷移</td></tr></tbody></table></div>
-          <h3 id="function-design-m06-05-m06-05_admin_store_purchase_purchase_store_history-入出力-永続化">入出力: 永続化</h3>
-          <p>本機能はデータを更新しない。</p>
+          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>検索フォームの各項目、ページ番号、表示件数、CSVの出力種別と選択した履歴の識別子</td></tr><tr><td>成功時出力</td><td>一覧画面、またはCSVファイル</td></tr><tr><td>失敗時出力</td><td>並び順が不正なときはエラー表示と初期表示相当の画面。CSVで履歴を1件も選択していないときはエラー表示と直前のページ</td></tr></tbody></table></div>
           <div class="renewal-spec-banner"><h3 id="function-design-m06-05-m06-05_admin_store_purchase_purchase_store_history-リニューアル後の仕様">リニューアル後の仕様</h3></div>
           <h2 id="function-design-m06-05-m06-05_admin_store_purchase_purchase_store_history-表示メッセージ">表示メッセージ</h2>
           <div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M06-05-MSG-001</td><td>管理画面上部</td><td>1つ以上の商品を選択してください</td><td>選択せずに、選択した商品のCSVを出力したとき</td><td>エラーを表示し、買取商品履歴（検索／一覧）画面に遷移する</td></tr><tr><td>M06-05-MSG-002</td><td>管理画面上部</td><td>条件に一致する商品がありません</td><td>検索を実行せずに、すべての商品のCSVを出力したとき</td><td>エラーを表示し、買取商品履歴（検索／一覧）画面に遷移する</td></tr><tr><td>M06-05-MSG-003</td><td>買取商品履歴の検索結果ボックス見出し</td><td>検索条件に該当するデータがありませんでした。</td><td>履歴検索、または検索条件を復元したページ表示で、該当件数が0件のとき</td><td>履歴一覧・ページ送りを表示せず、同じ検索画面に空結果メッセージを表示する。</td></tr><tr><td>M06-05-MSG-004</td><td>本文テキスト</td><td>検索条件に該当するデータがありませんでした。</td><td>買取商品履歴の検索後、該当件数が0件のとき</td><td>同一の検索結果画面に0件通知を表示する</td></tr></tbody></table></div>
@@ -2676,7 +2650,7 @@
             </table>
           </div>
         </div>
-</section>
+      </section>
       <section class="sheet-panel" id="sheet-14">
         <div class="sheet-heading">
           <h2>買取商品履歴CSV出力</h2>
@@ -2719,7 +2693,7 @@
             </table>
           </div>
         </div>
-</section>
+      </section>
       <section class="sheet-panel" id="sheet-15">
         <div class="sheet-heading">
           <h2>買取集計データ(検索入力)</h2>
@@ -2786,7 +2760,7 @@
             </table>
           </div>
         </div>
-      <!-- function-design-embed:start m06-08-m06-08_admin_store_purchase_purchase_store_summary -->
+            <!-- function-design-embed:start m06-08-m06-08_admin_store_purchase_purchase_store_summary -->
       <section class="function-design-embed" id="function-design-m06-08-m06-08_admin_store_purchase_purchase_store_summary" data-source="functions/pf-eccube3/m06-08_admin_store_purchase_purchase_store_summary.md">
         <header class="function-design-header">
           <p class="function-design-source">Source:<br>functions/pf-eccube3/m06-08_admin_store_purchase_purchase_store_summary.md</p>
@@ -2796,16 +2770,21 @@
         <div class="function-design-body">
           <h2 id="function-design-m06-08-m06-08_admin_store_purchase_purchase_store_summary-業務ロジック">業務ロジック</h2>
           <h3 id="function-design-m06-08-m06-08_admin_store_purchase_purchase_store_summary-初期表示">初期表示</h3>
-          <p>集計日が未入力の検索欄を表示し、集計結果は表示しない。買取店舗は、操作者の既定検索店舗が取れたときだけ1件選択済みで初期化する。</p>
-          <h3 id="function-design-m06-08-m06-08_admin_store_purchase_purchase_store_summary-検索と一覧表示">検索と一覧表示</h3>
-          <p>送信内容が検証に通らないときは、集計結果を表示せず、各入力欄の直下に項目ごとのエラーを表示する。検証に成功したときは、その検索条件で期間全体・部門別の集計と日別・部門別の集計をそれぞれ求め、同じ画面に2つの表として表示する。いずれかの結果が空のときは、その表に代えて空結果のメッセージを表示する。</p>
-          <p>検索条件は保持し、CSV出力では保持した条件を読み戻して同じ条件を再構成する。検索を実行せずにCSV出力したときは、検索条件が無い旨のメッセージを表示して一覧画面へ戻す。</p>
+          <p>初期表示では検索欄だけを表示し、集計結果の表は表示しない。</p>
+          <h3 id="function-design-m06-08-m06-08_admin_store_purchase_purchase_store_summary-検索条件の絞り込み">検索条件の絞り込み</h3>
+          <p>集計日(From)は指定された日付の0時0分0秒以降を対象とする。部門・買取店舗は選択が無いときは絞り込み条件に加えず、全部門・全店舗が対象になる。</p>
+          <h3 id="function-design-m06-08-m06-08_admin_store_purchase_purchase_store_summary-検証に失敗したとき">検証に失敗したとき</h3>
+          <p>送信内容が検証に通らないときは、集計結果を表示せず、各入力欄の直下に項目ごとのエラーを表示する。</p>
+          <h3 id="function-design-m06-08-m06-08_admin_store_purchase_purchase_store_summary-該当データが無いとき">該当データが無いとき</h3>
+          <p>期間全体の集計と日別の集計は、それぞれ別に該当有無を判定する。結果が空になった側だけ、表に代えて空結果のメッセージを表示する。片方に結果があるときは、その側の表は表示する。日別の集計結果が空のときは、CSVダウンロードのボタンも表示しない。</p>
+          <h3 id="function-design-m06-08-m06-08_admin_store_purchase_purchase_store_summary-検索条件の保持とCSV出力">検索条件の保持とCSV出力</h3>
+          <p>検索を実行したときの送信内容は、検証に失敗したときも含めて保持する。CSV出力は保持した条件を読み戻して同じ条件で集計する。買取集計データ画面を開き直すと、保持していた検索条件は失われる。</p>
           <h3 id="function-design-m06-08-m06-08_admin_store_purchase_purchase_store_summary-集計値の扱い">集計値の扱い</h3>
-          <p>画面は既存の集計行の参照のみで、検索によって集計データを書き換えない。金額は通貨表示に整形する。画面からの再集計や按分は行わない。</p>
+          <p>検索によって集計データを書き換えることはなく、画面からの再集計や按分も行わない。金額は通貨表示に整形する。部門が設定されていない集計行は、部門名を「未設定」と表示する。</p>
           <h3 id="function-design-m06-08-m06-08_admin_store_purchase_purchase_store_summary-エラー時の扱い">エラー時の扱い</h3>
-          <div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>検証失敗</td><td>一覧は非表示のまま、項目ごとのエラーを表示する</td></tr><tr><td>CSV出力時に検索条件が無い</td><td>検索条件が無い旨のメッセージを表示し、一覧画面へ戻す</td></tr></tbody></table></div>
+          <div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>検証失敗</td><td>一覧は非表示のまま、項目ごとのエラーを表示する</td></tr></tbody></table></div>
           <h2 id="function-design-m06-08-m06-08_admin_store_purchase_purchase_store_summary-入出力">入出力</h2>
-          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>集計日の期間、買取店舗などの検索項目</td></tr><tr><td>成功時出力</td><td>期間全体の集計表と日別の集計表、または空結果のメッセージ</td></tr><tr><td>失敗時出力</td><td>同一画面上の検証エラー</td></tr></tbody></table></div>
+          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>失敗時出力</td><td>同一画面上の検証エラー</td></tr></tbody></table></div>
           <p>本機能は集計データを更新しない。</p>
           <div class="renewal-spec-banner"><h3 id="function-design-m06-08-m06-08_admin_store_purchase_purchase_store_summary-リニューアル後の仕様">リニューアル後の仕様</h3></div>
           <h2 id="function-design-m06-08-m06-08_admin_store_purchase_purchase_store_summary-表示メッセージ">表示メッセージ</h2>
@@ -2934,7 +2913,7 @@
             </table>
           </div>
         </div>
-      <!-- function-design-embed:start m06-09-m06-09_admin_store_purchase_otc_buy_order_summary_csv_export -->
+            <!-- function-design-embed:start m06-09-m06-09_admin_store_purchase_otc_buy_order_summary_csv_export -->
       <section class="function-design-embed" id="function-design-m06-09-m06-09_admin_store_purchase_otc_buy_order_summary_csv_export" data-source="functions/pf-eccube3/m06-09_admin_store_purchase_otc_buy_order_summary_csv_export.md">
         <header class="function-design-header">
           <p class="function-design-source">Source:<br>functions/pf-eccube3/m06-09_admin_store_purchase_otc_buy_order_summary_csv_export.md</p>
@@ -2943,21 +2922,20 @@
         </header>
         <div class="function-design-body">
           <h2 id="function-design-m06-09-m06-09_admin_store_purchase_otc_buy_order_summary_csv_export-業務ロジック">業務ロジック</h2>
-          <h3 id="function-design-m06-09-m06-09_admin_store_purchase_otc_buy_order_summary_csv_export-検索と検索条件の保持">検索と検索条件の保持</h3>
-          <p>検索が未送信のとき、または検索条件の検証を満たさないときは、結果なしの画面を返し、保持している検索条件を書き換えない。検証を満たすときだけ、送信内容を再表示できる形にして保持する。</p>
-          <p>検証を満たしたときは、同じ検索条件で期間全体の部門別集計と日別集計の 2 つを取り出して画面に表示する。</p>
-          <h3 id="function-design-m06-09-m06-09_admin_store_purchase_otc_buy_order_summary_csv_export-出力の判定順序">出力の判定順序</h3>
-          <div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>保持している検索条件があるか</td><td>無いときは出力せず、買取集計データの画面へ戻す</td></tr><tr><td>2</td><td>保持している検索条件があるとき</td><td>空の検索条件に当該の値を当てはめ、型どおりに整えた検索条件で集計する</td></tr><tr><td>3</td><td>集計できたとき</td><td>ヘッダ行に続けて日別かつ部門別の集計行を書き出す</td></tr></tbody></table></div>
-          <h3 id="function-design-m06-09-m06-09_admin_store_purchase_otc_buy_order_summary_csv_export-出力する列">出力する列</h3>
-          <p>ヘッダ行は次の順とする。2 行目以降は日別と部門別の組み合わせごとに 1 行とする。</p>
-          <div class="table-wrap"><table><thead><tr><th>列名</th><th>内容</th></tr></thead><tbody><tr><td>集計日</td><td>集計の単位となる日付。<code>Y/m/d</code> の形式</td></tr><tr><td>部門コード</td><td>部門のコード。部門が紐づかないときは空文字に近い値</td></tr><tr><td>部門</td><td>部門の名称。部門の名称が欠けるときは <code>未設定</code></td></tr><tr><td>買取金額</td><td>同じ集計単位の買取金額の合計。整数とし、値が欠けるときは 0 とする</td></tr><tr><td>販売金額</td><td>同じ集計単位の販売金額の合計。整数とし、値が欠けるときは 0 とする</td></tr></tbody></table></div>
-          <p>集計した結果をそのまま列に写す。画面のための丸めと換算は行わない。</p>
-          <h3 id="function-design-m06-09-m06-09_admin_store_purchase_otc_buy_order_summary_csv_export-エラー時の扱い">エラー時の扱い</h3>
-          <div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>保持している検索条件が無い</td><td>出力せず、エラーを表示して買取集計データの画面へ戻す</td></tr><tr><td>検索の入力が未送信、または検証を満たさない</td><td>検索条件を書き換えず、結果なしの画面を返す</td></tr></tbody></table></div>
+          <h3 id="function-design-m06-09-m06-09_admin_store_purchase_otc_buy_order_summary_csv_export-出力する範囲">出力する範囲</h3>
+          <p>CSV出力の要求そのものは検索条件を持たない。直前の検索で用いた検索条件（集計日の期間・買取店舗・部門）を保持しておき、同じ条件で集計し直して出力する。</p>
+          <p>集計日の期間は、開始日の0時0分0秒から含めて集計する。</p>
+          <p>CSVダウンロードの導線は、検索結果に日別の集計が1件以上あるときだけ画面に出る。</p>
+          <h3 id="function-design-m06-09-m06-09_admin_store_purchase_otc_buy_order_summary_csv_export-ヘッダ行">ヘッダ行</h3>
+          <p>1行目に項目名のヘッダ行を置き、2行目以降に集計結果を書き出す。</p>
+          <h3 id="function-design-m06-09-m06-09_admin_store_purchase_otc_buy_order_summary_csv_export-値が欠けるときの扱い">値が欠けるときの扱い</h3>
+          <div class="table-wrap"><table><thead><tr><th>列</th><th>値が欠けるときの出力</th></tr></thead><tbody><tr><td>部門コード</td><td>部門が紐づかないときは空欄</td></tr><tr><td>部門</td><td>部門の名称が取れないときは 未設定</td></tr></tbody></table></div>
+          <h3 id="function-design-m06-09-m06-09_admin_store_purchase_otc_buy_order_summary_csv_export-金額の書式">金額の書式</h3>
+          <p>買取金額と販売金額は、集計した値を整数のまま出す。画面の一覧では通貨の書式に整えて表示するが、CSVには桁区切りや通貨記号を付けない。</p>
           <h2 id="function-design-m06-09-m06-09_admin_store_purchase_otc_buy_order_summary_csv_export-入出力">入出力</h2>
-          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>検索は検索条件一式。出力は入力を持たず、保持している検索条件だけを使う</td></tr><tr><td>成功時出力</td><td>添付ファイルとしてのCSV。ファイル名は買取集計を示す接頭辞に出力日時を付けたもの。文字コードは設定に従い、UTF-8 のときは先頭にBOMを付ける</td></tr><tr><td>失敗時出力</td><td>保持している検索条件が無いときはエラーメッセージを伴って買取集計データの画面へ戻す</td></tr></tbody></table></div>
-          <h3 id="function-design-m06-09-m06-09_admin_store_purchase_otc_buy_order_summary_csv_export-入出力-永続化">入出力: 永続化</h3>
-          <p>この機能ではデータを更新しない。</p>
+          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>持たない。直前の検索で用いた検索条件を使う</td></tr><tr><td>成功時出力</td><td>添付ファイルとしてのCSV。ファイル名は買取集計を示す接頭辞に出力日時（年月日時分秒）を続けたもの</td></tr></tbody></table></div>
+          <h3 id="function-design-m06-09-m06-09_admin_store_purchase_otc_buy_order_summary_csv_export-文字コードと区切り文字">文字コードと区切り文字</h3>
+          <p>ファイルの先頭にUTF-8のバイト順マークを書き出す。各値は設定した出力文字コードへ変換して書き出し、列の区切り文字も設定に従う。</p>
           <div class="renewal-spec-banner"><h3 id="function-design-m06-09-m06-09_admin_store_purchase_otc_buy_order_summary_csv_export-リニューアル後の仕様">リニューアル後の仕様</h3></div>
           <h2 id="function-design-m06-09-m06-09_admin_store_purchase_otc_buy_order_summary_csv_export-表示メッセージ">表示メッセージ</h2>
           <div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>—</td><td>管理画面上部</td><td>検索条件がありません。先に検索を実行してください。</td><td>検索を実行しないままCSV出力を実行したとき</td><td>出力せず、買取集計データの画面へ戻す</td></tr></tbody></table></div>

@@ -273,11 +273,11 @@ footer {
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
       <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
-<a class="lv3" href="#取得対象">取得対象</a>
-<a class="lv3" href="#応答値の扱い">応答値の扱い</a>
-<a class="lv3" href="#エラー時の扱い">エラー時の扱い</a>
+<a class="lv3" href="#取得できない記事">取得できない記事</a>
+<a class="lv3" href="#一件に絞り込めないとき">一件に絞り込めないとき</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv3" href="#出力-応答フィールド">出力: 応答フィールド</a>
+<a class="lv3" href="#受け付けるURL">受け付けるURL</a>
+<a class="lv3" href="#該当データなしのときの応答本文">該当データなしのときの応答本文</a>
 <a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
 <a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
@@ -288,29 +288,15 @@ footer {
       </header>
       
       <h2 id="業務ロジック">業務ロジック</h2>
-<h3 id="取得対象">取得対象</h3>
-<p>クエリで指定されたWP投稿IDに一致する記事を1件取得する。取得できないときはコード404のJSONを返す。</p>
-<h3 id="応答値の扱い">応答値の扱い</h3>
-<p>応答に含めるのは公開指定の項目のみとする。削除日時は公開の対象外であり、応答に含まれない。金額・ポイント・数量・ステータス・日時は永続化済みの値をそのまま返し、応答生成時の丸め・補正は行わない。件数・ページ番号・表示順は既定と上限に従い、取得後に業務値を再計算しない。条件に一致しない、権限がない、または非公開のデータは空結果または既定のエラー形式で返す。</p>
-<h3 id="エラー時の扱い">エラー時の扱い</h3>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>該当記事なし</td><td>コード404のJSONを返す</td></tr></tbody></table></div>
+<h3 id="取得できない記事">取得できない記事</h3>
+<p>削除日時が入っている記事は検索の対象から外れる。指定されたWPの投稿IDが削除済みの記事のものだけであれば、該当データなしとして扱う。</p>
+<h3 id="一件に絞り込めないとき">一件に絞り込めないとき</h3>
+<p>WPの投稿IDには一意性の保証がなく、同じWPの投稿IDを持つ記事が複数登録されている状態があり得る。そのWPの投稿IDを指定した場合は1件に絞り込めずエラーとなり、正常応答も該当データなしの応答も返さない。</p>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>クエリの <code>wpPostId</code>（整数、必須）。これに一致する記事を1件取得する</td></tr><tr><td>成功時出力</td><td>HTTP 200。記事情報1件のJSON</td></tr><tr><td>失敗時出力</td><td>HTTP 404。<code>{code, message}</code> の形</td></tr></tbody></table></div>
-<h3 id="出力-応答フィールド">出力: 応答フィールド</h3>
-<div class="table-wrap"><table><thead><tr><th>フィールド</th><th>型</th><th>説明</th></tr></thead><tbody><tr><td><code>articleId</code></td><td>integer</td><td>記事ID。</td></tr><tr><td><code>wpPostId</code></td><td>integer</td><td>WP投稿ID。</td></tr><tr><td><code>wpTypeId</code></td><td>integer</td><td>WP種別ID。</td></tr><tr><td><code>url</code></td><td>string</td><td>URL。</td></tr><tr><td><code>updateDate</code></td><td>string</td><td>更新日時。</td></tr><tr><td><code>createDate</code></td><td>string</td><td>作成日時。</td></tr><tr><td><code>cards</code></td><td>array</td><td>関連カードの一覧。</td></tr><tr><td><code>archetypes</code></td><td>array</td><td>関連アーキタイプの一覧。</td></tr><tr><td><code>decks</code></td><td>array</td><td>関連デッキの一覧。</td></tr><tr><td><code>eventDetails</code></td><td>array</td><td>関連イベント詳細の一覧。</td></tr></tbody></table></div>
-<p>成功時の応答例（実装確認値に基づく代表値）。</p>
-<pre><code class="language-json">{
-  "articleId": 1001,
-  "wpPostId": 2001,
-  "wpTypeId": 1,
-  "url": "https://example.com/article/2001",
-  "updateDate": "2026-06-01T12:00:00+09:00",
-  "createDate": "2020-01-01T00:00:00+09:00",
-  "cards": [],
-  "archetypes": [],
-  "decks": [],
-  "eventDetails": []
-}</code></pre>
+<h3 id="受け付けるURL">受け付けるURL</h3>
+<p>拡張子を付けないURL <code>/article</code> でも、同じ取得ができる。</p>
+<h3 id="該当データなしのときの応答本文">該当データなしのときの応答本文</h3>
+<p>該当データなしのときの応答本文は、コードとメッセージの2項目だけを持つJSONである。コードには応答のステータスコードと同じ値が入る。</p>
 <div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
 <h2 id="表示メッセージ">表示メッセージ</h2>
 <div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>—</td><td>API応答JSON</td><td>Not Found</td><td>条件に一致する記事が無いとき</td><td>HTTP 404 を返す</td></tr></tbody></table></div>

@@ -273,12 +273,13 @@ footer {
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
       <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
-<a class="lv3" href="#更新の判定順序">更新の判定順序</a>
-<a class="lv3" href="#更新する内容">更新する内容</a>
-<a class="lv3" href="#エラー時の扱い">エラー時の扱い</a>
+<a class="lv3" href="#認証">認証</a>
+<a class="lv3" href="#判定の順序">判定の順序</a>
+<a class="lv3" href="#更新する項目">更新する項目</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv3" href="#入力-リクエスト">入力: リクエスト</a>
-<a class="lv3" href="#出力-レスポンス">出力: レスポンス</a>
+<a class="lv3" href="#入力-認証情報">入力: 認証情報</a>
+<a class="lv3" href="#出力-認証できないとき">出力: 認証できないとき</a>
+<a class="lv3" href="#入出力-エンドポイントの別名">入出力: エンドポイントの別名</a>
 <a class="lv3" href="#入出力-永続化">入出力: 永続化</a>
 <a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
 <a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
@@ -290,20 +291,20 @@ footer {
       </header>
       
       <h2 id="業務ロジック">業務ロジック</h2>
-<h3 id="更新の判定順序">更新の判定順序</h3>
-<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>トークンを検証して管理者会員を特定できるか</td><td>特定できないときは認証拒否（HTTP 401）とする</td></tr><tr><td>2</td><td>パスの受注IDで店頭買取受注を取得できるか</td><td>取得できないときは該当なし（HTTP 404）とする</td></tr><tr><td>3</td><td>証明書IDが本人確認証明書マスタに存在するか</td><td>存在しないときは入力不正（HTTP 400）とし、エラーメッセージを返す</td></tr><tr><td>4</td><td>上記をすべて通過したとき</td><td>本人確認証明書を設定して保存し、処理結果コード200を返す</td></tr></tbody></table></div>
-<p>呼び出し可能なクライアントは買取アプリである。トークンの署名方式はHS256とする。トークン原値・署名シークレットは本書に記載しない。</p>
-<h3 id="更新する内容">更新する内容</h3>
-<p>店頭買取受注に本人確認証明書を設定し、更新担当者に認証した管理者会員を、更新日時に現在時刻を設定する。更新できたときは処理結果コード200だけを返す。金額・税・ポイント・在庫数量の再計算や丸めは行わない。応答は保存結果を整形して返し、本API内で独自に集計しない。</p>
-<h3 id="エラー時の扱い">エラー時の扱い</h3>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>認証できないとき</td><td>認証拒否（HTTP 401）とする</td></tr><tr><td>受注が存在しないとき</td><td>該当なし（HTTP 404）とする</td></tr><tr><td>証明書IDが不正なとき</td><td>入力不正（HTTP 400）とし、「正しい証明書IDを入力してください」を返す</td></tr></tbody></table></div>
+<h3 id="認証">認証</h3>
+<p>認証用トークンをヘッダ <code>jwt-token</code> で受け取り、署名方式 HS256 で検証したうえで、トークンが指す管理者会員を特定する。ヘッダが無いとき、署名が不正なとき、トークンが指す管理者会員が存在しないときは、いずれも認証拒否（HTTP 401）とし、更新しない。</p>
+<h3 id="判定の順序">判定の順序</h3>
+<p>認証、店頭買取受注の取得、証明書IDの妥当性の順に判定し、成立しないものが出た時点で処理を打ち切り、以降の判定は行わない。認証できないときは受注IDと証明書IDの誤りは判定されず、受注が存在しないときは証明書IDの誤りは判定されない。</p>
+<p>証明書IDを送っていないときは、マスタに存在しない値を送ったときと同じ扱いになる。</p>
+<h3 id="更新する項目">更新する項目</h3>
+<p>証明書のほかに、更新担当者へ認証で特定した管理者会員を、更新日時へ更新時点の日時を設定する。</p>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>店頭買取受注ID、本人確認証明書のID、認証用トークン。証明書IDは必須で、未指定のときは入力不正となる</td></tr><tr><td>成功時出力</td><td>更新できたときはHTTP 200。処理結果コード200</td></tr><tr><td>失敗時出力</td><td>認証拒否（HTTP 401）、該当なし（HTTP 404）、入力不正（HTTP 400）</td></tr></tbody></table></div>
-<h3 id="入力-リクエスト">入力: リクエスト</h3>
-<div class="table-wrap"><table><thead><tr><th>パラメータ</th><th>位置</th><th>型</th><th>必須／任意</th><th>説明</th></tr></thead><tbody><tr><td><code>id</code></td><td>パス</td><td>integer</td><td>必須</td><td>更新対象の店頭買取受注ID</td></tr><tr><td><code>identification</code></td><td>ボディ（フォーム値）</td><td>integer</td><td>必須</td><td>設定する本人確認証明書のID。本人確認証明書マスタに存在しない値のときは入力不正（HTTP 400）となる</td></tr><tr><td><code>jwt-token</code></td><td>ヘッダ</td><td>string</td><td>必須</td><td>認証用のトークン</td></tr></tbody></table></div>
-<h3 id="出力-レスポンス">出力: レスポンス</h3>
-<div class="table-wrap"><table><thead><tr><th>フィールド</th><th>型</th><th>説明</th></tr></thead><tbody><tr><td><code>code</code></td><td>integer</td><td>処理結果コード。成功したときは200</td></tr></tbody></table></div>
-<div class="table-wrap"><table><thead><tr><th>HTTPステータス</th><th>条件</th><th>本文の形</th></tr></thead><tbody><tr><td>401</td><td>トークン欠落・署名不正・該当する管理者会員なしのとき</td><td>認証拒否（本文を持たない）</td></tr><tr><td>404</td><td>受注IDに該当する店頭買取受注が無いとき</td><td>該当なし（本文を持たない）</td></tr><tr><td>400</td><td>証明書IDが本人確認証明書マスタに存在しないとき（未指定を含む）</td><td><code>{code, errors}</code>（<code>errors</code>は「正しい証明書IDを入力してください」）</td></tr></tbody></table></div>
+<h3 id="入力-認証情報">入力: 認証情報</h3>
+<div class="table-wrap"><table><thead><tr><th>パラメータ</th><th>位置</th><th>型</th><th>必須／任意</th><th>説明</th></tr></thead><tbody><tr><td><code>jwt-token</code></td><td>ヘッダ</td><td>string</td><td>必須</td><td>認証用のトークン</td></tr></tbody></table></div>
+<h3 id="出力-認証できないとき">出力: 認証できないとき</h3>
+<div class="table-wrap"><table><thead><tr><th>HTTPステータス</th><th>条件</th></tr></thead><tbody><tr><td>401</td><td>認証用トークンの欠落・署名不正・トークンが指す管理者会員なしのとき</td></tr></tbody></table></div>
+<h3 id="入出力-エンドポイントの別名">入出力: エンドポイントの別名</h3>
+<p>拡張子 <code>.json</code> を付けないパス（<code>/api/admin/otcBuyOrder/{id}/identification</code>）でも、同じメソッドで同じ更新を受け付ける。</p>
 <h3 id="入出力-永続化">入出力: 永続化</h3>
 <div class="table-wrap"><table><thead><tr><th>操作</th><th>契機</th></tr></thead><tbody><tr><td>更新</td><td>本人確認更新（本人確認証明書・更新担当者・更新日時）</td></tr></tbody></table></div>
 <div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>

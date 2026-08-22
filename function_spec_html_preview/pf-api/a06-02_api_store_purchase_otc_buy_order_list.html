@@ -278,8 +278,7 @@ footer {
 <a class="lv3" href="#認証">認証</a>
 <a class="lv3" href="#エラー時の扱い">エラー時の扱い</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv3" href="#出力-受注ごとのフィールド">出力: 受注ごとのフィールド</a>
-<a class="lv3" href="#入出力-永続化">入出力: 永続化</a>
+<a class="lv3" href="#出力-値の表し方と未設定時のふるまい">出力: 値の表し方と未設定時のふるまい</a>
 <a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
 <a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
@@ -291,48 +290,16 @@ footer {
       
       <h2 id="業務ロジック">業務ロジック</h2>
 <h3 id="取得対象">取得対象</h3>
-<p>店頭買取ステータスが商品到着・査定中・振込前・保留・査定再開のいずれかである店頭買取受注を、受注ID昇順で返す。該当が無い場合は空配列を返す。</p>
+<p>取得対象の買取情報は店頭買取受注IDの昇順で返す。該当が無い場合は空配列を返す。職業または国が紐づいていない受注は、対象ステータスであっても結果に含まれない。</p>
 <h3 id="店舗による絞り込み">店舗による絞り込み</h3>
-<p>認証した管理者会員の会員サブ情報から所属店舗を決める。店舗が得られた場合はその店舗の受注に限定し、会員サブ情報が無い場合は店舗による絞り込みを行わず査定対象の受注を一律に返す。絞り込み対象の店舗はクライアントから指定できない。</p>
+<p>認証した管理者会員に会員サブ情報が無く所属店舗が定まらない場合は、店舗による絞り込みを行わず、取得対象の買取情報を一律に返す。</p>
 <h3 id="認証">認証</h3>
-<p>認証用トークンのヘッダを検証し、その利用者IDから管理者会員を特定する。署名方式はHS256である。ヘッダ欠落・署名不正・該当する管理者会員なしのいずれも認証拒否（HTTP 401）とする。呼び出し可能なクライアントは買取アプリである。トークン原値・署名シークレットは本書に記載しない。</p>
+<p>認証用トークンのヘッダを検証し、その利用者IDから管理者会員を特定する。署名方式はHS256である。ヘッダ欠落・署名不正・該当する管理者会員なしのいずれも認証拒否（HTTP 401）とする。トークン原値・署名シークレットは本書に記載しない。</p>
 <h3 id="エラー時の扱い">エラー時の扱い</h3>
 <div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>認証不可</td><td>認証拒否（HTTP 401）とする</td></tr><tr><td>受注取得・整形処理中の例外</td><td>共通例外処理に委ねる（HTTP 500相当）</td></tr></tbody></table></div>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>認証用トークンのヘッダのみ。ほかのリクエストパラメータを持たない</td></tr><tr><td>成功時出力</td><td>HTTP 200。査定対象の店頭買取受注の配列。ラッパオブジェクトや件数フィールドを持たない。該当が無い場合は空配列</td></tr><tr><td>失敗時出力</td><td>認証できないときはHTTP 401（本文を持たない）。取得・整形中の例外はHTTP 500として共通例外処理に委ねる</td></tr></tbody></table></div>
-<h3 id="出力-受注ごとのフィールド">出力: 受注ごとのフィールド</h3>
-<div class="table-wrap"><table><thead><tr><th>フィールド</th><th>型</th><th>説明</th></tr></thead><tbody><tr><td><code>otcBuyOrderId</code></td><td>integer</td><td>店頭買取受注ID。</td></tr><tr><td><code>assessmentId</code></td><td>integer</td><td>査定ID。</td></tr><tr><td><code>applyDate</code></td><td>string</td><td>申込日時。ISO8601形式の日時文字列。</td></tr><tr><td><code>freeComment</code></td><td>string</td><td>受注に付与されたフリーコメント。未設定の場合はnull。</td></tr><tr><td><code>memberName</code></td><td>string</td><td>査定担当者の会員名。紐づく会員が無い場合はnull。</td></tr><tr><td><code>otcOrderStatusId</code></td><td>integer</td><td>店頭買取ステータスのID。</td></tr><tr><td><code>returnSupply</code></td><td>integer</td><td>返送品の扱いを表す区分値。</td></tr><tr><td><code>callFlg</code></td><td>boolean</td><td>連絡要否のフラグ。</td></tr><tr><td><code>adultFlg</code></td><td>boolean</td><td>成人区分のフラグ。</td></tr><tr><td><code>playingFlg</code></td><td>boolean</td><td>プレイ用区分のフラグ。</td></tr><tr><td><code>orderStatusName</code></td><td>string</td><td>店頭買取ステータスの名称。</td></tr><tr><td><code>identificationId</code></td><td>integer</td><td>本人確認のID。未登録の場合は0。</td></tr><tr><td><code>qualifiedInvoiceIssuerFlg</code></td><td>boolean</td><td>適格請求書発行事業者の該当フラグ。</td></tr><tr><td><code>qualifiedInvoiceIssuerConfirmationFlg</code></td><td>boolean</td><td>適格請求書発行事業者の確認済みフラグ。</td></tr><tr><td><code>qualifiedInvoiceIssuerCode</code></td><td>string</td><td>適格請求書発行事業者の登録番号。紐づく口座が無い場合はnull。</td></tr><tr><td><code>customerInfo</code></td><td>object</td><td>申込者情報のオブジェクト。</td></tr><tr><td><code>customerInfo.firstName</code></td><td>string</td><td>申込者の名。</td></tr><tr><td><code>customerInfo.lastName</code></td><td>string</td><td>申込者の姓。</td></tr><tr><td><code>customerInfo.birth</code></td><td>string</td><td>申込者の生年月日。ISO8601形式の日時文字列。</td></tr><tr><td><code>customerInfo.telNo</code></td><td>string</td><td>申込者の電話番号。</td></tr><tr><td><code>customerInfo.zipcode</code></td><td>string</td><td>申込者の郵便番号。</td></tr><tr><td><code>customerInfo.jobName</code></td><td>string</td><td>申込者の職業名。</td></tr><tr><td><code>customerInfo.address</code></td><td>string</td><td>申込者の住所。国に応じて都道府県名または国名と住所1・住所2を半角空白区切りで連結した文字列。</td></tr></tbody></table></div>
-<p>成功時の応答例（実装確認値に基づく代表値。個人情報は最小限の代表値とする）。</p>
-<pre><code class="language-json">[
-  {
-    "otcBuyOrderId": 2001,
-    "assessmentId": 30001,
-    "applyDate": "2026-06-01T11:00:00+09:00",
-    "freeComment": null,
-    "memberName": "買取担当 太郎",
-    "otcOrderStatusId": 6,
-    "returnSupply": 0,
-    "callFlg": false,
-    "adultFlg": true,
-    "playingFlg": false,
-    "orderStatusName": "査定中",
-    "identificationId": 0,
-    "qualifiedInvoiceIssuerFlg": false,
-    "qualifiedInvoiceIssuerConfirmationFlg": false,
-    "qualifiedInvoiceIssuerCode": null,
-    "customerInfo": {
-      "firstName": "一郎",
-      "lastName": "山田",
-      "birth": "1990-01-01T00:00:00+09:00",
-      "telNo": "0312345678",
-      "zipcode": "1000001",
-      "jobName": "会社員",
-      "address": "東京都 千代田区千代田 1-1"
-    }
-  }
-]</code></pre>
-<h3 id="入出力-永続化">入出力: 永続化</h3>
-<p>本APIは業務データを更新しない。</p>
+<h3 id="出力-値の表し方と未設定時のふるまい">出力: 値の表し方と未設定時のふるまい</h3>
+<div class="table-wrap"><table><thead><tr><th>フィールド</th><th>ふるまい</th></tr></thead><tbody><tr><td><code>applyDate</code></td><td>ISO8601形式の日時文字列で返す。</td></tr><tr><td><code>freeComment</code></td><td>未設定の場合はnull。</td></tr><tr><td><code>memberName</code></td><td>査定担当者が紐づいていない場合はnull。</td></tr><tr><td><code>identificationId</code></td><td>本人確認が未登録の場合は0。</td></tr><tr><td><code>qualifiedInvoiceIssuerCode</code></td><td>適格請求書発行事業者の口座が紐づいていない場合はnull。</td></tr><tr><td><code>customerInfo.birth</code></td><td>ISO8601形式の日時文字列で返す。</td></tr><tr><td><code>customerInfo.address</code></td><td>国が日本のときは都道府県名・住所1・住所2、それ以外の国のときは国名・住所2・住所1 の順に、半角空白区切りで連結した1つの文字列で返す。</td></tr></tbody></table></div>
 <div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
 <h2 id="表示メッセージ">表示メッセージ</h2>
 <p>本APIは画面メッセージを扱わない。</p>

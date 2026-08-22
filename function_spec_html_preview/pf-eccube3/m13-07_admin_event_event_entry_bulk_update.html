@@ -273,10 +273,9 @@ footer {
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
       <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
-<a class="lv3" href="#一括編集の判定順序">一括編集の判定順序</a>
-<a class="lv3" href="#エラー時の扱い">エラー時の扱い</a>
+<a class="lv3" href="#一括編集の受け付け条件">一括編集の受け付け条件</a>
+<a class="lv3" href="#一括更新後の一覧表示">一括更新後の一覧表示</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv3" href="#入出力-永続化">入出力: 永続化</a>
 <a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
 <a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
@@ -287,15 +286,13 @@ footer {
       </header>
       
       <h2 id="業務ロジック">業務ロジック</h2>
-<h3 id="一括編集の判定順序">一括編集の判定順序</h3>
-<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定・処理</th><th>内容</th></tr></thead><tbody><tr><td>1</td><td>呼び出しの形式</td><td>非同期の呼び出しでないときは更新せず、失敗メッセージを返す</td></tr><tr><td>2</td><td>入力内容の検証</td><td>外れたときは更新せず、エラー内容を返す</td></tr><tr><td>3</td><td>対象の取得</td><td>指定された申込IDの申込だけを取得する</td></tr><tr><td>4</td><td>更新</td><td>申込ごとに、申込ステータスを指定された値へ揃える</td></tr><tr><td>5</td><td>履歴</td><td>申込ごとに申込履歴を記録する</td></tr><tr><td>6</td><td>確定</td><td>変更を確定し、完了メッセージを返す</td></tr></tbody></table></div>
-<p>対象の行を1件も選ばずに実行したときは、一括更新を中止する。</p>
-<h3 id="エラー時の扱い">エラー時の扱い</h3>
-<div class="table-wrap"><table><thead><tr><th>事象</th><th>扱い</th></tr></thead><tbody><tr><td>非同期でない呼び出しのとき</td><td>更新せず、失敗メッセージを返す</td></tr><tr><td>入力内容の検証に外れたとき</td><td>更新せず、エラー内容を返す</td></tr><tr><td>対象の行を1件も選んでいないとき</td><td>一括更新を中止し、イベント申込一覧に留まる</td></tr></tbody></table></div>
+<h3 id="一括編集の受け付け条件">一括編集の受け付け条件</h3>
+<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>満たさないときの扱い</th></tr></thead><tbody><tr><td>1</td><td>対象の行が1件以上選ばれていること</td><td>一括更新を要求せず中止し、イベント申込一覧に留まる</td></tr><tr><td>2</td><td>非同期の呼び出しであること</td><td>更新せず、失敗メッセージを応答として返す</td></tr><tr><td>3</td><td>入力内容の検証を満たすこと</td><td>更新せず、エラー内容を応答として返す</td></tr></tbody></table></div>
+<p>判定はこの順に行い、満たさない判定が出た時点で以降の更新を行わない。</p>
+<h3 id="一括更新後の一覧表示">一括更新後の一覧表示</h3>
+<p>一括更新の結果はメッセージとして応答に返すだけで、イベント申込一覧の再読み込みも一括編集の入力領域の閉じ込みも行わない。一覧に表示中の申込状況は、一覧を再表示するまで更新前の値のまま残る。</p>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>申込ステータスと、対象の申込ID群。</td></tr><tr><td>成功時出力</td><td>申込ステータスの一括更新、申込履歴の記録、完了メッセージ。</td></tr><tr><td>失敗時出力</td><td>非同期でないとき、検証に外れたときのエラー内容。</td></tr></tbody></table></div>
-<h3 id="入出力-永続化">入出力: 永続化</h3>
-<div class="table-wrap"><table><thead><tr><th>操作</th><th>契機</th></tr></thead><tbody><tr><td>更新</td><td>一括編集で、対象の申込の申込ステータスを指定値へ更新するとき</td></tr><tr><td>追加</td><td>申込ステータスを更新した申込ごとに、申込履歴を1件記録する</td></tr></tbody></table></div>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>成功時出力</td><td>完了メッセージを応答として返す。画面遷移は行わない。</td></tr><tr><td>失敗時出力</td><td>非同期でない呼び出しのときは失敗メッセージを、検証に外れたときは検証エラーの内容を、応答として返す。</td></tr></tbody></table></div>
 <div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
 <h2 id="表示メッセージ">表示メッセージ</h2>
 <div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M13-07-MSG-001</td><td>画面中央(ダイアログ)</td><td>更新する行にチェックを入れてください。</td><td>イベント申込一覧で対象行を選択せず一括更新を実行したとき</td><td>一括更新を中止し、イベント申込一覧に留まる</td></tr><tr><td>—</td><td>一括更新の応答</td><td>失敗メッセージ</td><td>非同期でないとき、または検証に外れたとき</td><td>更新せず、応答として返す</td></tr><tr><td>—</td><td>一括更新の応答</td><td>完了メッセージ</td><td>一括更新が完了したとき</td><td>応答として返す</td></tr></tbody></table></div>

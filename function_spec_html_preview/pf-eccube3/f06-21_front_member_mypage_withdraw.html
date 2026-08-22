@@ -273,10 +273,13 @@ footer {
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
       <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
-<a class="lv3" href="#画面の構成">画面の構成</a>
-<a class="lv3" href="#本人確認">本人確認</a>
-<a class="lv3" href="#退会の確定順序">退会の確定順序</a>
+<a class="lv3" href="#ログイン状態と画面の開閉">ログイン状態と画面の開閉</a>
+<a class="lv3" href="#画面のふるまい">画面のふるまい</a>
+<a class="lv3" href="#なりすまし対策の照合">なりすまし対策の照合</a>
+<a class="lv3" href="#退会で削除する会員以外のデータ">退会で削除する会員以外のデータ</a>
+<a class="lv3" href="#退会後の再ログイン">退会後の再ログイン</a>
 <a class="lv2" href="#入出力">入出力</a>
+<a class="lv3" href="#入出力-退会完了メール">入出力: 退会完了メール</a>
 <a class="lv3" href="#入出力-永続化">入出力: 永続化</a>
 <a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
 <a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
@@ -288,24 +291,26 @@ footer {
       </header>
       
       <h2 id="業務ロジック">業務ロジック</h2>
-<h3 id="画面の構成">画面の構成</h3>
-<p>退会は退会前画面・退会確認画面・退会完了画面の3画面で進める。いずれも会員ログインを要求し、未ログインのときは会員ログインへ誘導する（会員ログイン機能を正とする）。</p>
-<div class="table-wrap"><table><thead><tr><th>画面</th><th>表示内容</th></tr></thead><tbody><tr><td>退会前</td><td>見出し、会員氏名（姓名）と注意文、「戻る」「退会手続きへ」ボタン</td></tr><tr><td>退会確認</td><td>見出し、注意事項、現在パスワードの入力欄と案内、「戻る」「退会する」ボタン</td></tr><tr><td>退会完了</td><td>見出し、完了メッセージ、「ホームへ戻る」リンク</td></tr></tbody></table></div>
-<p>入力欄は現在パスワードの1項目のみで、退会確認画面にだけ表示する。退会前画面にはパスワード欄を出さない。退会確認画面のパスワード欄は画面上は必須の体裁で表示するが、入力定義は任意入力である。送信は通常のフォーム送信で、非同期取得や動的な表示切替は行わない。本画面専用のモーダルは無い。日本語と英語のロケールに対応する。</p>
-<p>退会前画面・退会確認画面の「戻る」でマイページトップへ戻る間は、会員データを変更しない。</p>
-<h3 id="本人確認">本人確認</h3>
-<p>入力された現在パスワードを会員のソルトで暗号化した値が、保存済みのパスワードと一致するときだけ退会を確定する。一致しないときは退会せず、退会確認画面を再表示してパスワード誤りのメッセージを表示する。</p>
-<h3 id="退会の確定順序">退会の確定順序</h3>
-<div class="table-wrap"><table><thead><tr><th>順序</th><th>処理</th><th>失敗時</th></tr></thead><tbody><tr><td>1</td><td>本人確認</td><td>退会せず退会確認画面を再表示する</td></tr><tr><td>2</td><td>スマレジへ会員の利用停止を連携する</td><td>退会を中止し、会員データを残したままエラーメッセージを表示して退会確認画面を再表示する</td></tr><tr><td>3</td><td>選手情報を削除する</td><td>—</td></tr><tr><td>4</td><td>会員のメールアドレスを、ランダム文字列と <code>@dummy.dummy</code> を連結したダミー値へ置き換える</td><td>—</td></tr><tr><td>5</td><td>会員の削除フラグを立てる（論理削除）</td><td>—</td></tr><tr><td>6</td><td>変更を確定する</td><td>—</td></tr><tr><td>7</td><td>支店システムへ当該会員の更新を通知する</td><td>—</td></tr><tr><td>8</td><td>退会完了メールを退会前のメールアドレス宛に送信する（運営アドレスをBCCに含む）</td><td>—</td></tr><tr><td>9</td><td>認証トークンを破棄してログアウトし、退会完了画面へ移る</td><td>—</td></tr></tbody></table></div>
-<p>会員は物理削除せず削除フラグを立てる。メールアドレスをダミー値へ置き換えることで、退会後の再利用・再ログインを防ぐ。スマレジ連携が成功した後にのみ会員の論理削除と選手情報の削除を確定する。</p>
+<h3 id="ログイン状態と画面の開閉">ログイン状態と画面の開閉</h3>
+<p>退会前画面・退会確認画面は会員ログインを要求し、未ログインのときは会員ログインへ誘導する（会員ログイン機能を正とする）。退会完了画面は退会でログアウトした直後に表示するため、ログインしていなくても開ける。</p>
+<h3 id="画面のふるまい">画面のふるまい</h3>
+<p>送信は通常のフォーム送信で、非同期取得や動的な表示切替は行わない。本画面専用のモーダルは無い。日本語と英語のロケールに対応する。</p>
+<p>「戻る」で退会を中止したときは、会員データを変更しない。</p>
+<h3 id="なりすまし対策の照合">なりすまし対策の照合</h3>
+<p>「退会手続きへ」「退会する」を押したときに、なりすまし対策のための照合値が欠けている・一致しないときは、退会手続きを進めず、メッセージも出さずに退会前画面を表示する。</p>
+<h3 id="退会で削除する会員以外のデータ">退会で削除する会員以外のデータ</h3>
+<p>退会を確定したとき、会員に紐づく選手情報も削除する。スマレジ連携に失敗して退会を中止したときは、選手情報も削除しない。</p>
+<h3 id="退会後の再ログイン">退会後の再ログイン</h3>
+<p>退会した会員は、退会前のメールアドレスではログインできない。</p>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>退会確定時の現在パスワード、なりすまし対策トークン、画面の遷移区分</td></tr><tr><td>成功時出力</td><td>退会完了画面への遷移、退会完了メール送信、ログアウト</td></tr><tr><td>失敗時出力</td><td>退会確認画面の再表示（パスワード誤り、または連携失敗のメッセージ付き）</td></tr></tbody></table></div>
+<h3 id="入出力-退会完了メール">入出力: 退会完了メール</h3>
+<p>宛先は退会前のメールアドレスで、運営アドレスをBCCに含む。日本語ロケールと英語ロケールで別のメールテンプレートを使う。</p>
 <h3 id="入出力-永続化">入出力: 永続化</h3>
-<div class="table-wrap"><table><thead><tr><th>操作</th><th>契機</th></tr></thead><tbody><tr><td>削除</td><td>退会確定時に選手情報を削除する</td></tr><tr><td>更新</td><td>退会確定時に会員のメールアドレスをダミー値へ置き換え、削除フラグを立てる</td></tr></tbody></table></div>
+<div class="table-wrap"><table><thead><tr><th>操作</th><th>契機</th></tr></thead><tbody><tr><td>削除</td><td>退会確定時に、会員に紐づく選手情報を削除する</td></tr><tr><td>登録</td><td>退会完了メールの送信内容を、会員のメール送信履歴として残す</td></tr></tbody></table></div>
 <div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
 <h2 id="表示メッセージ">表示メッセージ</h2>
 <div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>F06-21-MSG-001</td><td>入力項目直下</td><td>パスワードに誤りがあります。</td><td>退会手続きで、パスワードが未入力または正しくないとき</td><td>退会確認画面に留まる</td></tr><tr><td>F06-21-MSG-001</td><td>入力項目直下（英語表示時）</td><td>The password is incorrect.</td><td>退会手続きで、パスワードが未入力または正しくないとき</td><td>退会確認画面に留まる</td></tr><tr><td>F06-21-MSG-001</td><td>入力項目直下（英語表示時）</td><td>Password contains an error.</td><td>退会確定時に入力パスワードが現在のパスワードと一致しないとき（英語文言の別の確認値）</td><td>退会は行わず退会確認画面を再表示する</td></tr><tr><td>F06-21-MSG-002</td><td>入力項目直下</td><td>退会処理の途中でエラーが発生しました。</td><td>退会手続きを完了しようとしたときに、退会処理でエラーが起きたとき</td><td>退会確認画面に留まる</td></tr><tr><td>F06-21-MSG-002</td><td>入力項目直下（英語表示時）</td><td>An error occurred during the withdrawal process.</td><td>退会手続きを完了しようとしたときに、退会処理でエラーが起きたとき</td><td>退会確認画面に留まる</td></tr><tr><td>—</td><td>退会前画面</td><td>退会</td><td>退会前画面の表示時</td><td>退会前画面に留まる</td></tr><tr><td>—</td><td>退会前画面（英語表示時）</td><td>Hareruya Membership is canceled</td><td>退会前画面の表示時</td><td>退会前画面に留まる</td></tr><tr><td>—</td><td>退会前画面</td><td>退会手続きの前に、ご確認ください。&lt;br&gt;会員を退会された場合、現在保存されている購入履歴や個人情報はすべて削除されますが、よろしいでしょうか？</td><td>退会前画面の表示時</td><td>「退会手続きへ」で退会確認画面へ進む</td></tr><tr><td>—</td><td>退会前画面（英語表示時）</td><td>Before proceeding to cancel your account, please confirm that if your account is canceled, all your personal information and your purchase history will be deleted.</td><td>退会前画面の表示時</td><td>「退会手続きへ」で退会確認画面へ進む</td></tr><tr><td>—</td><td>退会確認画面</td><td>退会手続き</td><td>退会確認画面の表示時</td><td>退会確認画面に留まる</td></tr><tr><td>—</td><td>退会確認画面（英語表示時）</td><td>Cancel Procedure</td><td>退会確認画面の表示時</td><td>退会確認画面に留まる</td></tr><tr><td>—</td><td>退会確認画面</td><td>退会手続きを実行してもよろしいでしょうか。</td><td>退会確認画面の表示時</td><td>退会確認画面に留まる</td></tr><tr><td>—</td><td>退会確認画面（英語表示時）</td><td>May we proceed to cancel your account?</td><td>退会確認画面の表示時</td><td>退会確認画面に留まる</td></tr><tr><td>—</td><td>退会確認画面</td><td>[注意事項]&lt;br&gt;退会手続きが完了しますと、現在保存されている購入履歴や個人情報はすべて削除されます。</td><td>退会確認画面の表示時</td><td>退会確認画面に留まる</td></tr><tr><td>—</td><td>退会確認画面（英語表示時）</td><td>[Warning]&lt;br&gt;When we complete canceling your account, all your personal information and your purchase history will be deleted.</td><td>退会確認画面の表示時</td><td>退会確認画面に留まる</td></tr><tr><td>—</td><td>退会確認画面のパスワード欄</td><td>現在のパスワードを入力し、「退会する」ボタンを押してください。</td><td>退会確認画面の表示時</td><td>「退会する」で退会を確定する</td></tr><tr><td>—</td><td>退会確認画面のパスワード欄（英語表示時）</td><td>Please enter your current password, then click Cancel account.</td><td>退会確認画面の表示時</td><td>「退会する」で退会を確定する</td></tr><tr><td>—</td><td>退会完了画面</td><td>退会完了</td><td>退会完了画面の表示時</td><td>退会完了画面に留まる</td></tr><tr><td>—</td><td>退会完了画面（英語表示時）</td><td>Withdrawal Complete</td><td>退会完了画面の表示時</td><td>退会完了画面に留まる</td></tr><tr><td>—</td><td>退会完了画面</td><td>退会を完了いたしました。&lt;br&gt;ご利用ありがとうございました。またのご利用をお待ちしております。</td><td>退会完了画面の表示時</td><td>「ホームへ戻る」でトップページへ戻る</td></tr><tr><td>—</td><td>退会完了画面（英語表示時）</td><td>Withdrawal procedure from membership is completed.&lt;br&gt;Thank you for your use. We look forward to serving you again soon.</td><td>退会完了画面の表示時</td><td>「ホームへ戻る」でトップページへ戻る</td></tr></tbody></table></div>
-<p>退会処理の途中でエラーが発生した旨の文言について、英語テンプレートに対応する文言は見当たらない。本機能はこれ以外の通知を生成しない。</p>
+<p>本機能はこれ以外の通知を生成しない。</p>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

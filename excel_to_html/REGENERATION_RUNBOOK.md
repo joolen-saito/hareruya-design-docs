@@ -318,6 +318,48 @@ cd excel_to_html && uv run python verify.py
 非表示シート／廃止仕様バナー。**`verify.py` は Excel→HTML の忠実性しか見ない。**
 Markdown書き直しの欠落は手順3のゲートで止める。ここで代替できると考えない。
 
+### 5.5 verify のNGを直す（2026-08-22 判明）
+
+`verify.py` は**廃止・フェーズ2の明記が本文にあること**を要求する。台帳（`superseded_specs.json` /
+`phase2_specs.json`）への登録とバナーの自動生成では足りない。
+
+第4段の点検で、この明記が「Excel原文の引き写しで、台帳がバナーを出すので三重定義」と判断されて
+**21本から削除され、verify が30件のNGを出した**（廃止22・Ph2 8）。手順3の3ゲート
+（quality / completeness / citation）はこの型の欠落を見ないため、verify まで来ないと分からない。
+
+**この明記が要るのは verify の規約だからであって、②不具合調査のためではない。**
+2026-08-22 に実測した事実:
+
+- 台帳バナーは `FUNCTION_SCOPE` / `ITEM_SCOPE` の**両方で立つ**。項目単位でも
+  `superseded-target` / `phase2-target` が対象を名指しする（0214では11項目、0302では
+  「PC版ナビゲーション上の通知」を明示）。
+- Excel原文にも同じ事実が残る（0214「DCIナンバーの項目を廃止とする」`!C48`、
+  0302「※通知はフェーズ2以降で設計予定とする」`!D154`）。
+- 不具合調査ハーネス（`design_audit_harness.py` / `lib_design_doc.py`）は
+  `superseded_specs.json` も `phase2_specs.json` も参照しない。判定エージェントが
+  正本HTMLを読んで OUT_OF_SCOPE を付ける（[[AUDIT_SCOPE]] の規約）。
+
+つまり本文の明記は**3つ目の情報源**であり、これが無くても調査の判定材料は揃う。
+それでも戻すのは、verify の網を1つ減らすほうが後で高くつくという判断による
+（バナー生成が壊れても検知できなくなる）。第4段の「三重定義だから消す」という判断自体は
+事実として正しかった。
+
+直し方は verify のNGメッセージが1件ずつ文言を提示する。`## 業務ロジック` 配下の h3 として戻す
+（第4段以前の配置と同じ）。戻したら再生成からやり直して verify を通す。
+
+### 5.6 0000_共通仕様 は別系統で作る
+
+`build_orphan_group_html.py` の `GROUPS` に 0000 は入っていない。専用ハーネスで作る。
+
+```bash
+python3 .cursor/skills/common-spec/scripts/build_common_spec.py extract
+python3 .cursor/skills/common-spec/scripts/build_common_spec.py build
+python3 .cursor/skills/common-spec/scripts/build_common_spec.py verify
+```
+
+手順4の3本だけを回すと 0000 のHTMLが生成されず、台帳に `DONE` と書いてあっても実体が無い状態に
+なる（2026-08-22 実測）。
+
 ### 6. 台帳へ記録してコミットする
 
 `design_impl_drift_report/html_regen_checklist_state.tsv` の `再生成` と `再生成備考` を更新する。

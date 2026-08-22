@@ -273,12 +273,11 @@ footer {
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
       <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
-<a class="lv3" href="#取得対象">取得対象</a>
-<a class="lv3" href="#応答値の扱い">応答値の扱い</a>
-<a class="lv3" href="#応答の階層">応答の階層</a>
-<a class="lv3" href="#エラー時の扱い">エラー時の扱い</a>
+<a class="lv3" href="#応答に含めない商品規格">応答に含めない商品規格</a>
+<a class="lv3" href="#同じ組に複数の商品規格が該当したときの扱い">同じ組に複数の商品規格が該当したときの扱い</a>
+<a class="lv3" href="#応答値の加工">応答値の加工</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv3" href="#出力-応答フィールド">出力: 応答フィールド</a>
+<a class="lv3" href="#出力-値が無いときの扱い">出力: 値が無いときの扱い</a>
 <a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
 <a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
@@ -289,56 +288,18 @@ footer {
       </header>
       
       <h2 id="業務ロジック">業務ロジック</h2>
-<h3 id="取得対象">取得対象</h3>
-<p>パスで指定されたカード詳細IDが属するカードに紐づく買取用商品を取得する。取得結果が空のときはページが見つからない扱い（404）とする。</p>
-<h3 id="応答値の扱い">応答値の扱い</h3>
-<p>金額・税・ポイント・在庫数量の再計算や丸めは行わない。取得時点の値をJSON応答へ整形して返す。表示用の加工と表示制御は呼び出し元クライアントの設計を正とする。</p>
-<h3 id="応答の階層">応答の階層</h3>
-<p>応答はカードIDをキーとする <code>cards</code> オブジェクトを最上位に持つ階層構造とする。各カードの配下にカード詳細ID（<code>details</code>）、言語コード（<code>languageClasses</code>）、状態コード（<code>conditionClasses</code>）の順で入れ子になる。</p>
-<h3 id="エラー時の扱い">エラー時の扱い</h3>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>該当する買取用商品が無い</td><td>ページが見つからない扱い（404）とし、標準の例外応答（メッセージを含むJSON）を返す</td></tr></tbody></table></div>
+<h3 id="応答に含めない商品規格">応答に含めない商品規格</h3>
+<p>次のいずれかに当てはまる商品規格は、応答に含めない。</p>
+<ul><li>商品に商品画像が1件も結び付いていない</li><li>カード詳細にレアリティが結び付いていない</li><li>商品規格に、買取価格・部門IDを保持する付随情報が結び付いていない</li><li>その付随情報に言語が結び付いていない</li><li>その付随情報に状態が結び付いていない</li></ul>
+<p>カードセット・プロモーション・略称タグは結び付いていなくても応答から除かず、該当項目を値なしで返す。</p>
+<h3 id="同じ組に複数の商品規格が該当したときの扱い">同じ組に複数の商品規格が該当したときの扱い</h3>
+<p>同じカードID・カード詳細ID・言語・状態の組に複数の商品規格が該当した場合、応答に残るのは1件だけで、後から取得したものが先のものを上書きする。取得順は指定していないため、どれが残るかは定まらない。</p>
+<h3 id="応答値の加工">応答値の加工</h3>
+<p>金額・在庫数量の再計算、丸め、桁区切りなどの整形は行わない。保持している値をそのまま応答へ入れる。</p>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>パスのカード詳細ID（<code>detailId</code>、整数、必須）。このIDが属するカードに紐づく買取用商品を取得する</td></tr><tr><td>成功時出力</td><td>HTTP 200。買取用商品情報のJSON</td></tr><tr><td>失敗時出力</td><td>HTTP 404。該当する買取用商品が無いとき</td></tr></tbody></table></div>
-<h3 id="出力-応答フィールド">出力: 応答フィールド</h3>
-<div class="table-wrap"><table><thead><tr><th>フィールド</th><th>型</th><th>説明</th></tr></thead><tbody><tr><td><code>cards</code></td><td>object</td><td>カードIDをキーとするオブジェクト。値は各カードの情報。</td></tr><tr><td><code>cards.&lt;cardId&gt;.cardNameJp</code></td><td>string</td><td>カードの日本語名。</td></tr><tr><td><code>cards.&lt;cardId&gt;.cardNameEn</code></td><td>string</td><td>カードの英語名。</td></tr><tr><td><code>cards.&lt;cardId&gt;.imageFileName</code></td><td>string</td><td>カード画像のファイル名。</td></tr><tr><td><code>cards.&lt;cardId&gt;.details</code></td><td>object</td><td>カード詳細IDをキーとするオブジェクト。値は各カード詳細の情報。</td></tr><tr><td><code>cards.&lt;cardId&gt;.details.&lt;detailId&gt;.cardsetCode</code></td><td>string</td><td>カードセットのコード。カードセット未設定のときはnull。</td></tr><tr><td><code>cards.&lt;cardId&gt;.details.&lt;detailId&gt;.cardsetName</code></td><td>string</td><td>カードセットの日本語名。カードセット未設定のときはnull。</td></tr><tr><td><code>cards.&lt;cardId&gt;.details.&lt;detailId&gt;.foilFlg</code></td><td>boolean</td><td>フォイルか否か。</td></tr><tr><td><code>cards.&lt;cardId&gt;.details.&lt;detailId&gt;.cardNo</code></td><td>string</td><td>カード番号。</td></tr><tr><td><code>cards.&lt;cardId&gt;.details.&lt;detailId&gt;.promotionName</code></td><td>string</td><td>プロモーションの日本語名。プロモーション未設定のときはnull。</td></tr><tr><td><code>cards.&lt;cardId&gt;.details.&lt;detailId&gt;.productId</code></td><td>integer</td><td>商品ID。</td></tr><tr><td><code>cards.&lt;cardId&gt;.details.&lt;detailId&gt;.productNameJp</code></td><td>string</td><td>商品の日本語名。</td></tr><tr><td><code>cards.&lt;cardId&gt;.details.&lt;detailId&gt;.productNameEn</code></td><td>string</td><td>商品の英語名。</td></tr><tr><td><code>cards.&lt;cardId&gt;.details.&lt;detailId&gt;.rarityCode</code></td><td>string</td><td>レアリティのコード。</td></tr><tr><td><code>cards.&lt;cardId&gt;.details.&lt;detailId&gt;.storageCodeName</code></td><td>string</td><td>保管コードの名称。未設定のときはnull。</td></tr><tr><td><code>cards.&lt;cardId&gt;.details.&lt;detailId&gt;.languageClasses</code></td><td>object</td><td>言語コードをキーとするオブジェクト。</td></tr><tr><td><code>cards.&lt;cardId&gt;.details.&lt;detailId&gt;.languageClasses.&lt;languageCode&gt;.conditionClasses</code></td><td>object</td><td>状態コードをキーとするオブジェクト。値は商品規格単位の情報。</td></tr><tr><td><code>…conditionClasses.&lt;conditionCode&gt;.productClassId</code></td><td>integer</td><td>商品規格ID。</td></tr><tr><td><code>…conditionClasses.&lt;conditionCode&gt;.productCode</code></td><td>string</td><td>商品コード。</td></tr><tr><td><code>…conditionClasses.&lt;conditionCode&gt;.buyPrice</code></td><td>integer</td><td>買取価格。未設定のときはnull。</td></tr><tr><td><code>…conditionClasses.&lt;conditionCode&gt;.price</code></td><td>string</td><td>販売価格（販売価格列の値）。</td></tr><tr><td><code>…conditionClasses.&lt;conditionCode&gt;.stock</code></td><td>string</td><td>在庫数。</td></tr><tr><td><code>…conditionClasses.&lt;conditionCode&gt;.sectionId</code></td><td>integer</td><td>部門ID。未設定のときはnull。</td></tr></tbody></table></div>
-<p>成功時の応答例（実装確認値に基づく代表値）。</p>
-<pre><code class="language-json">{
-  "cards": {
-    "10001": {
-      "cardNameJp": "サンプルカード",
-      "cardNameEn": "Sample Card",
-      "imageFileName": "10001.jpg",
-      "details": {
-        "20001": {
-          "cardsetCode": "SET",
-          "cardsetName": "サンプルセット",
-          "foilFlg": false,
-          "cardNo": "123",
-          "promotionName": null,
-          "productId": 30001,
-          "productNameJp": "サンプルカード",
-          "productNameEn": "Sample Card",
-          "rarityCode": "R",
-          "storageCodeName": null,
-          "languageClasses": {
-            "JP": {
-              "conditionClasses": {
-                "NM": {
-                  "productClassId": 40001,
-                  "productCode": "P-40001",
-                  "buyPrice": 100,
-                  "price": "300",
-                  "stock": "5",
-                  "sectionId": 1
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-}</code></pre>
+<h3 id="出力-値が無いときの扱い">出力: 値が無いときの扱い</h3>
+<p>次の項目は、値が設定されていないとき項目自体は省略せず、値なしで返す。</p>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>値が無いときの応答</th></tr></thead><tbody><tr><td>カードセットコード</td><td>値なし</td></tr><tr><td>カードセット名</td><td>値なし</td></tr><tr><td>プロモーション名</td><td>値なし</td></tr><tr><td>略称タグ名</td><td>値なし</td></tr><tr><td>買取価格</td><td>値なし</td></tr><tr><td>部門ID</td><td>値なし</td></tr></tbody></table></div>
 <div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
 <h2 id="表示メッセージ">表示メッセージ</h2>
 <div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>A06-06-MSG-001</td><td>API応答JSON（errors配列）</td><td>認証エラー</td><td>カード詳細ID取得時に、ログイン中の利用者が管理者でない</td><td>MTGバイヤー側で認証を行い再試行する</td></tr><tr><td>A06-06-MSG-002</td><td>API応答JSON（errors配列）</td><td>カードが見つかりません</td><td>指定カード詳細IDに対応する買取用カードが0件</td><td>対象カード詳細IDを確認して再検索する</td></tr></tbody></table></div>

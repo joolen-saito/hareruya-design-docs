@@ -273,12 +273,11 @@ footer {
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
       <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
-<a class="lv3" href="#取得対象">取得対象</a>
-<a class="lv3" href="#値の取り方">値の取り方</a>
+<a class="lv3" href="#取得の範囲と並び">取得の範囲と並び</a>
 <a class="lv3" href="#エラー時の扱い">エラー時の扱い</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv3" href="#出力-応答フィールド">出力: 応答フィールド</a>
-<a class="lv3" href="#入出力-永続化">入出力: 永続化</a>
+<a class="lv3" href="#入力-認証">入力: 認証</a>
+<a class="lv3" href="#出力-値が未設定のときの扱い">出力: 値が未設定のときの扱い</a>
 <a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
 <a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
@@ -289,19 +288,17 @@ footer {
       </header>
       
       <h2 id="業務ロジック">業務ロジック</h2>
-<h3 id="取得対象">取得対象</h3>
-<p>ネット買取受注IDリストをカンマで分解し、分解して得たIDに紐づく個別入力商品だけを取得する。</p>
-<div class="table-wrap"><table><thead><tr><th>入力の状態</th><th>取得結果</th></tr></thead><tbody><tr><td>1件以上のIDを指定したとき</td><td>当該のネット買取受注に紐づく個別入力商品の一覧</td></tr><tr><td>未指定・空文字のとき</td><td>空文字を分解した配列で検索する結果、0件となる</td></tr><tr><td>該当が1件も無いとき</td><td>空配列とし、エラーとしない</td></tr></tbody></table></div>
-<h3 id="値の取り方">値の取り方</h3>
-<p>取得した値をそのまま応答へ整形する。金額・税・ポイント・在庫数量の再計算は行わない。表示用の丸めも行わない。件数を返す場合は、検索条件を適用した後の対象だけを基準にする。</p>
+<h3 id="取得の範囲と並び">取得の範囲と並び</h3>
+<p>指定されたネット買取受注IDのうち、紐づく個別入力商品が無いIDは結果に現れず、該当した分だけを返す。該当が1件も無いときは空配列を返し、エラーとしない。</p>
+<p>返す順序は定めていない。</p>
+<p>取得した値をそのまま応答へ整形する。金額の再計算・表示用の丸めは行わない。</p>
 <h3 id="エラー時の扱い">エラー時の扱い</h3>
-<div class="table-wrap"><table><thead><tr><th>事象</th><th>扱い</th></tr></thead><tbody><tr><td>トークンが欠落しているとき、署名が不正なとき、該当する管理者アカウントが無いとき</td><td>認証拒否（HTTP401）とし、本文を返さない</td></tr><tr><td>該当が0件のとき</td><td>エラーとせず、HTTP200で空配列を返す</td></tr><tr><td>取得処理中に例外が起きたとき</td><td>処理失敗（HTTP500）として共通例外処理に委ねる</td></tr></tbody></table></div>
+<div class="table-wrap"><table><thead><tr><th>事象</th><th>扱い</th></tr></thead><tbody><tr><td>トークンが欠落しているとき、署名が不正なとき、該当する管理者アカウントが無いとき</td><td>認証拒否（HTTP401）とする</td></tr><tr><td>該当が0件のとき</td><td>エラーとせず、HTTP200で空配列を返す</td></tr><tr><td>取得処理中に例外が起きたとき</td><td>処理失敗（HTTP500）として共通例外処理に委ねる</td></tr></tbody></table></div>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>ネット買取受注IDリスト（<code>ids</code>、ボディ、任意、カンマ区切りの文字列）。認証用トークン（<code>jwt-token</code>、ヘッダ、必須、署名方式はHS256）。トークンのペイロードの利用者IDから管理者アカウントを引く。</td></tr><tr><td>成功時出力</td><td>HTTP200。個別入力商品の配列。該当が0件のときは空配列。</td></tr><tr><td>失敗時出力</td><td>認証できないときはHTTP401（本文なし）。例外のときはHTTP500。</td></tr></tbody></table></div>
-<h3 id="出力-応答フィールド">出力: 応答フィールド</h3>
-<div class="table-wrap"><table><thead><tr><th>フィールド</th><th>型</th><th>内容</th></tr></thead><tbody><tr><td>（ルート）</td><td>array</td><td>個別入力商品の配列。0件のときは空配列</td></tr><tr><td><code>buyOrderIndivisualInputProductId</code></td><td>integer</td><td>ネット買取注文個別入力商品ID</td></tr><tr><td><code>buyOrderId</code></td><td>integer</td><td>ネット買取受注ID</td></tr><tr><td><code>name</code></td><td>string</td><td>商品名</td></tr><tr><td><code>price</code></td><td>integer</td><td>査定金額。未設定のときはnull</td></tr><tr><td><code>count</code></td><td>integer</td><td>個数。未設定のときはnull</td></tr><tr><td><code>saleFlg</code></td><td>boolean</td><td>売却フラグ。未設定のときはnull</td></tr></tbody></table></div>
-<h3 id="入出力-永続化">入出力: 永続化</h3>
-<p>いずれの場合もデータを更新しない。</p>
+<h3 id="入力-認証">入力: 認証</h3>
+<div class="table-wrap"><table><thead><tr><th>パラメータ</th><th>位置</th><th>必須／任意</th><th>説明</th></tr></thead><tbody><tr><td>jwt-token</td><td>ヘッダ</td><td>必須</td><td>認証用のトークン。署名方式はHS256。ペイロードの利用者IDに一致する管理者アカウントを引き当て、見つからないときは認証拒否とする</td></tr></tbody></table></div>
+<h3 id="出力-値が未設定のときの扱い">出力: 値が未設定のときの扱い</h3>
+<p>買取金額・枚数・売却フラグは、値が未設定のときnullを返す。</p>
 <div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
 <h2 id="表示メッセージ">表示メッセージ</h2>
 <p>この機能は、いずれの場合もメッセージを扱わない。</p>

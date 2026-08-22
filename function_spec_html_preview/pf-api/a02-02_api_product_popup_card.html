@@ -274,13 +274,13 @@ footer {
       <p class="sidebar-title">On this page</p>
       <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
 <a class="lv3" href="#取得の対象">取得の対象</a>
-<a class="lv3" href="#並びの決め方">並びの決め方</a>
-<a class="lv3" href="#応答の値">応答の値</a>
-<a class="lv3" href="#エラー時の扱い">エラー時の扱い</a>
+<a class="lv3" href="#並び順の優先順位">並び順の優先順位</a>
+<a class="lv3" href="#週間販売数の求め方">週間販売数の求め方</a>
+<a class="lv3" href="#応答の値の扱い">応答の値の扱い</a>
+<a class="lv3" href="#該当が無いときの応答本文">該当が無いときの応答本文</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv3" href="#入出力-リクエスト">入出力: リクエスト</a>
-<a class="lv3" href="#入出力-応答フィールド">入出力: 応答フィールド</a>
-<a class="lv3" href="#入出力-永続化">入出力: 永続化</a>
+<a class="lv3" href="#入出力-クエリパラメータ">入出力: クエリパラメータ</a>
+<a class="lv3" href="#入出力-値を持たないことがあるフィールド">入出力: 値を持たないことがあるフィールド</a>
 <a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
 <a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
@@ -292,21 +292,22 @@ footer {
       
       <h2 id="業務ロジック">業務ロジック</h2>
 <h3 id="取得の対象">取得の対象</h3>
-<p>指定されたカードID・言語・フォイル有無・価格の条件に対応する商品規格を1件取得する。該当が無いときはコード404と「Not Found」を返す。</p>
-<h3 id="並びの決め方">並びの決め方</h3>
-<div class="table-wrap"><table><thead><tr><th>指定</th><th>並び</th></tr></thead><tbody><tr><td>フォイル有無に真値を指定</td><td>フォイル区分の降順</td></tr><tr><td>フォイル有無に偽値を指定</td><td>フォイル区分の昇順</td></tr><tr><td>フォイル有無が未指定</td><td>非フォイルを優先する</td></tr><tr><td>価格に <code>high</code> を指定</td><td>販売価格の降順</td></tr><tr><td>価格にそれ以外の値を指定</td><td>販売価格の昇順</td></tr><tr><td>価格が未指定</td><td>価格では並べ替えない</td></tr></tbody></table></div>
-<h3 id="応答の値">応答の値</h3>
-<p>取得時点の値をそのまま返し、金額・税・ポイント・在庫数量の再計算や丸めは行わない。表示用の加工は呼び出し元の設計に委ねる。</p>
-<h3 id="エラー時の扱い">エラー時の扱い</h3>
-<div class="table-wrap"><table><thead><tr><th>事象</th><th>扱い</th></tr></thead><tbody><tr><td>該当する商品規格が無い</td><td>コード404と「Not Found」を含むJSONを返す</td></tr></tbody></table></div>
+<p>指定されたカードIDに紐づく商品規格のうち、商品と商品規格がいずれも削除されておらず、かつ商品の公開状態が公開であるものだけを対象とする。対象を後述の優先順で並べ、先頭の1件だけを返す。</p>
+<h3 id="並び順の優先順位">並び順の優先順位</h3>
+<p>対象が複数あるときにどの1件を返すかは、次の順で決める。上の条件で並びが決まらないときに、次の条件へ移る。</p>
+<div class="table-wrap"><table><thead><tr><th>順位</th><th>適用する場面</th><th>並び</th></tr></thead><tbody><tr><td>1</td><td>フォイル有無の指定があるとき</td><td>フォイル区分。指定が真値なら降順、偽値なら昇順</td></tr><tr><td>2</td><td>価格の並び指定があるとき</td><td>販売価格。<code>high</code> なら降順、それ以外の値なら昇順</td></tr><tr><td>3</td><td>常に</td><td>特殊なカードセットでないものを優先</td></tr><tr><td>4</td><td>常に</td><td>プロモーションでないものを優先</td></tr><tr><td>5</td><td>常に</td><td>カードセットの発売日が新しいものを優先</td></tr><tr><td>6</td><td>フォイル有無の指定が無いとき</td><td>非フォイルを優先</td></tr><tr><td>7</td><td>常に</td><td>在庫数が1以上のものを優先</td></tr><tr><td>8</td><td>常に</td><td>指定された言語コードと一致する言語のものを優先</td></tr><tr><td>9</td><td>常に</td><td>カードの状態の昇順</td></tr><tr><td>10</td><td>常に</td><td>商品規格に結び付いた画像に定められた順序の昇順</td></tr><tr><td>11</td><td>常に</td><td>サブ画像のファイル名を持つものを優先</td></tr></tbody></table></div>
+<p>フォイル有無の指定があるときは、その指定が特殊セット・プロモーション・発売日より優先される。指定が無いときの非フォイル優先はそれらより後に効く。</p>
+<h3 id="週間販売数の求め方">週間販売数の求め方</h3>
+<p>週間販売数は、取得した商品規格と同じ商品かつ同じ言語コードを持つ商品規格すべての1週間販売数を合計した値を返す。取得した1件分だけの値ではない。</p>
+<h3 id="応答の値の扱い">応答の値の扱い</h3>
+<p>取得時点の値をそのまま返し、金額・在庫数の再計算や丸めは行わない。</p>
+<h3 id="該当が無いときの応答本文">該当が無いときの応答本文</h3>
+<p>該当する商品規格が1件も無いとき、応答本文はコードとメッセージだけを持つJSONになり、メッセージは <code>Not Found</code> を返す。商品情報のフィールドは含まない。</p>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>カードID、言語、フォイル有無（任意）、価格の並び指定（任意）</td></tr><tr><td>成功時出力</td><td>HTTP 200。条件に合致する商品規格を1件返す</td></tr><tr><td>失敗時出力</td><td>HTTP 404。該当する商品規格が無いとき</td></tr></tbody></table></div>
-<h3 id="入出力-リクエスト">入出力: リクエスト</h3>
-<div class="table-wrap"><table><thead><tr><th>パラメータ</th><th>位置</th><th>型</th><th>必須／任意</th><th>説明</th></tr></thead><tbody><tr><td><code>lang</code></td><td>パス</td><td>string</td><td>必須</td><td>言語区分。<code>jp</code>または<code>en</code>を想定し、言語の優先順の判定に用いる</td></tr><tr><td><code>cardId</code></td><td>パス</td><td>integer</td><td>必須</td><td>取得対象のカードID</td></tr><tr><td><code>foil_flg</code></td><td>クエリ</td><td>string</td><td>任意</td><td>フォイル優先の指定。フォイル区分の並び順に反映する</td></tr><tr><td><code>price</code></td><td>クエリ</td><td>string</td><td>任意</td><td>価格の並び指定</td></tr></tbody></table></div>
-<h3 id="入出力-応答フィールド">入出力: 応答フィールド</h3>
-<div class="table-wrap"><table><thead><tr><th>フィールド</th><th>型</th><th>説明</th></tr></thead><tbody><tr><td><code>productId</code></td><td>integer</td><td>商品ID</td></tr><tr><td><code>name</code></td><td>string</td><td>商品名</td></tr><tr><td><code>productClassId</code></td><td>integer</td><td>商品規格ID</td></tr><tr><td><code>price01</code></td><td>string</td><td>通常価格。小数を持つ値のため数値文字列で返す</td></tr><tr><td><code>price02</code></td><td>string</td><td>販売価格。小数を持つ値のため数値文字列で返す</td></tr><tr><td><code>stock</code></td><td>string</td><td>在庫数。小数を持つ値のため数値文字列で返す</td></tr><tr><td><code>nameEn</code></td><td>string</td><td>英語商品名</td></tr><tr><td><code>subFileName</code></td><td>string</td><td>商品規格画像のファイル名。該当が無いときはnull</td></tr><tr><td><code>fileName</code></td><td>string</td><td>商品画像のファイル名。該当が無いときはnull</td></tr><tr><td><code>code</code></td><td>string</td><td>言語コード</td></tr><tr><td><code>conditionCode</code></td><td>string</td><td>カードコンディションコード</td></tr><tr><td><code>beltUrl</code></td><td>string</td><td>帯リンクのURL。該当が無いときはnull</td></tr><tr><td><code>weeklySold</code></td><td>string</td><td>週間販売数。合計した結果のため数値文字列で返す</td></tr></tbody></table></div>
-<h3 id="入出力-永続化">入出力: 永続化</h3>
-<p>本機能はデータを更新しない。</p>
+<h3 id="入出力-クエリパラメータ">入出力: クエリパラメータ</h3>
+<div class="table-wrap"><table><thead><tr><th>パラメータ</th><th>位置</th><th>型</th><th>必須／任意</th><th>説明</th></tr></thead><tbody><tr><td><code>foil_flg</code></td><td>クエリ</td><td>string</td><td>任意</td><td>フォイル有無の指定。指定があるときだけ並び順の第1優先に使う</td></tr><tr><td><code>price</code></td><td>クエリ</td><td>string</td><td>任意</td><td>価格の並び指定。指定があるときだけ販売価格を並び順に使う</td></tr></tbody></table></div>
+<h3 id="入出力-値を持たないことがあるフィールド">入出力: 値を持たないことがあるフィールド</h3>
+<div class="table-wrap"><table><thead><tr><th>フィールド</th><th>値が無いときの応答</th></tr></thead><tbody><tr><td><code>subFileName</code></td><td>null</td></tr><tr><td><code>fileName</code></td><td>null</td></tr><tr><td><code>beltUrl</code></td><td>null。帯リンクのURLで、応答には常に含める</td></tr></tbody></table></div>
 <div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
 <h2 id="表示メッセージ">表示メッセージ</h2>
 <p>この機能は画面を持たないためメッセージを扱わない。</p>
