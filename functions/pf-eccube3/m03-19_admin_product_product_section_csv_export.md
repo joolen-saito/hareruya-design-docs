@@ -35,10 +35,6 @@
 | 成功時出力 | CSVファイル。1行目は見出し、2行目以降がデータ |
 | 失敗時出力 | 本処理に完了メッセージや遷移の分岐は無い。認可失敗やサーバ例外は管理画面共通の扱いに従う |
 
-### 入出力: 永続化
-
-本機能はデータを更新しない。
-
 ## 表示メッセージ
 
 本機能は画面メッセージを表示しない。
@@ -53,4 +49,3 @@
 | 出力ファイル | P3 | pf-eccube3:src/Eccube/Resource/config/constant.yml.dist:249 |
 | エラー時の扱い | P1 | pf-eccube3:src/Eccube/Application.php:541-546 |
 | エラー時の扱い | P3 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Product/SectionController.php:150-178 |
-| 入出力: 永続化 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Product/SectionController.php:150-178 |

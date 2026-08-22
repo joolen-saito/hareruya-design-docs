@@ -20,10 +20,6 @@
 | 入力 | 認証用トークンをリクエストヘッダで受け取る |
 | 失敗時出力 | 認証できないときは HTTP 401。まとめて買取商品IDの設定が無いときは HTTP 500 相当 |
 
-### 入出力: 永続化
-
-この機能ではデータを更新しない。
-
 ## 表示メッセージ
 
 本APIは画面へ文言を表示しない。
@@ -35,4 +31,3 @@
 | 認証と呼び出し元 | P1 | pf-api:src/Controller/BaseController.php:23 |
 | エラー時の扱い | P1 | pf-api:src/Controller/BaseController.php:26 |
 | エラー時の扱い | P1 | pf-api:src/Controller/Admin/OptionController.php:20 |
-| 入出力: 永続化 | P3 | pf-api:src/Controller/Admin/OptionController.php:20 |

@@ -36,10 +36,6 @@
 | 成功時出力 | 入荷通知依頼の出力ファイル。ファイル名は request_report_ に出力日時（年月日時分秒）を付けた .csv とする |
 | 失敗時出力 | データ取得に失敗したときは共通の例外処理に委ねる |
 
-### 入出力: 永続化
-
-本機能はデータを更新しない。
-
 ## 表示メッセージ
 
 | メッセージID | 表示位置 | 画面上の文言 | 表示条件 | 後続処理 |
@@ -59,4 +55,3 @@
 | 出力する件数 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Analysis/RequestController.php:97 |
 | ファイルの体裁 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Analysis/RequestController.php:119-122 |
 | ファイルの体裁 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Analysis/RequestController.php:95 |
-| 入出力: 永続化 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Analysis/RequestController.php:81 |

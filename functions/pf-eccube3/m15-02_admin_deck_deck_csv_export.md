@@ -59,10 +59,6 @@
 | 成功時出力 | CSVファイル。ファイル名は接頭辞と日時から作る。 |
 | 失敗時出力 | エラーメッセージと直前の画面への戻り。ダウンロードは始まらない。 |
 
-### 入出力: 永続化
-
-いずれの場合もデータを更新しない。
-
 ## 表示メッセージ
 
 出力に成功したときは画面にメッセージを出さず、ファイルの応答だけを返す。未選択のときと、選択したデッキが
@@ -81,4 +77,3 @@
 | 列の値の作り方 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Entity/Disp.php:19-24 |
 | 応答とファイル名 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Service/Csv/AbstractCsvService.php:331-341 |
 | 応答とファイル名 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Service/Csv/AbstractCsvService.php:343-352 |
-| 入出力: 永続化 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Service/Csv/DeckCsv.php:186-219 |

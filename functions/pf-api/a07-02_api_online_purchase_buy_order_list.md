@@ -37,10 +37,6 @@
 
 ## 入出力
 
-### 入出力: 永続化
-
-本APIはデータを更新しない。
-
 ## 表示メッセージ
 
 本APIは画面の文言を持たない。
@@ -52,4 +48,3 @@
 | 件数と並び順 | P2 | pf-api:src/Repository/DtbBuyOrderRepository.php:33 |
 | 値の作り方 | P3 | pf-api:src/Repository/DtbBuyOrderRepository.php:42-57 |
 | エラー時の扱い | P2 | pf-api:src/Controller/Admin/BuyOrderController.php:40 |
-| 入出力: 永続化 | P3 | pf-api:src/Controller/Admin/BuyOrderController.php:40 |

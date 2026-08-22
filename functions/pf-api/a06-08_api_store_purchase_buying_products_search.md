@@ -62,10 +62,6 @@
 
 `cardsetCode` 以降はカード詳細の配下だけに、`productClassId` 以降は言語コードと状態コードの配下だけに置く。
 
-### 入出力: 永続化
-
-データを更新しない。
-
 ## 表示メッセージ
 
 | メッセージID | 表示位置 | 画面上の文言 | 表示条件 | 後続処理 |
@@ -85,4 +81,3 @@
 | 値の取り方 | P1 | pf-api:src/Repository/DtbProductRepository.php:276-279 |
 | 出力: 応答フィールド | P1 | pf-api:src/Repository/DtbProductRepository.php:266-289 |
 | 出力: 応答フィールド | P1 | pf-api:src/Repository/DtbProductRepository.php:15-42 |
-| 入出力: 永続化 | P3 | pf-api:src/Controller/ProductController.php:200-217 |

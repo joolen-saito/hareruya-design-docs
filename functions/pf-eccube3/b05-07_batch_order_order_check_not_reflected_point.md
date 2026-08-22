@@ -16,10 +16,6 @@
 | 差出人 | 店舗基本情報に登録された店名とメールアドレス。返信先・返送先も店舗基本情報の登録値を使う |
 | 本文 | 先頭に見出し行「オーダーID」を置き、続けて抽出した注文IDを注文IDの降順で並べる |
 
-### 入出力: 永続化
-
-本バッチは受注・会員・ポイント履歴を更新しない。
-
 ## 表示メッセージ
 
 本バッチは画面メッセージを扱わない。
@@ -34,4 +30,3 @@
 | 通知メールの内容 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Repository/OrderRepository.php:1923 |
 | 通知メールの内容 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Service/MailService.php:1548 |
 | 通知メールの内容 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Service/MailService.php:1549 |
-| 入出力: 永続化 | P3 | 0405:sheet-9 |

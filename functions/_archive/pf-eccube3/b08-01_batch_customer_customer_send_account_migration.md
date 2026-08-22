@@ -44,3 +44,13 @@
 - メール送信の認証情報
 ---
 ### 業務ルール・計算
+
+---
+
+## 0203に無い定型節（設計書からは削除・2026-08-19）
+
+### 入出力: 永続化
+会員のデータを更新しない。
+
+出典（節と対で退避）:
+| 入出力: 永続化 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Service/Customer/SendAccountMigration.php:30-51 |

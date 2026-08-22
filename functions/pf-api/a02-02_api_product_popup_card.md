@@ -55,10 +55,6 @@
 | `fileName` | null |
 | `beltUrl` | null。帯リンクのURLで、応答には常に含める |
 
-### 入出力: 永続化
-
-本機能はデータを更新しない。
-
 ## 表示メッセージ
 
 この機能は画面を持たないためメッセージを扱わない。
@@ -78,4 +74,3 @@
 | 入出力: クエリパラメータ | P2 | pf-api:src/Controller/ProductController.php:89-93 |
 | 入出力: 値を持たないことがあるフィールド | P3 | pf-api:src/Repository/DtbProductSubClassRepository.php:103-105 |
 | 入出力: 値を持たないことがあるフィールド | P3 | pf-api:src/Resources/config/doctrine/DtbProductSubClass.orm.yml:45-52 |
-| 入出力: 永続化 | P3 | pf-api:src/Controller/ProductController.php:87-105 |

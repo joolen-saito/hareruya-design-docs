@@ -42,10 +42,6 @@
 | 成功時出力 | CSVのストリーム。ファイル名は product_card_ と出力日時（年月日時分秒）と .csv の連結 |
 | 失敗時出力 | エラーメッセージを表示し、直前の画面または商品一覧へ戻る |
 
-### 入出力: 永続化
-
-本機能はデータを更新しない。
-
 ### 出力: 商品単位の列
 
 同一商品から複数行が出るとき、次の列は行をまたいで同じ値が繰り返される。
@@ -104,7 +100,6 @@
 | ファイルの体裁 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Service/Csv/AbstractCsvService.php:331 |
 | ファイルの体裁 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Service/CsvExportService.php:360 |
 | エラー時の扱い | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Product/ProductCsvController.php:2269 |
-| 入出力: 永続化 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Service/Csv/ProductCardCsv.php:132 |
 | 出力: 商品単位の列 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Service/Csv/ProductCardCsv.php:432 |
 | 出力: 規格ごとの列 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Service/Csv/ProductCardCsv.php:457 |
 | 出力: 規格ごとの列 | P3 | pf-eccube3:src/Eccube/Entity/DeliveryDate.php:15 |

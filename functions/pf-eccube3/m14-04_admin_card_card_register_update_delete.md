@@ -9,16 +9,6 @@
 | 新規のとき | どのカードにも紐づかない状態でフォームを開く |
 | 編集のとき | パスで指定したカードIDのカードの内容でフォームを開く |
 
-### 入力項目の制約
-
-| 項目 | 必須／任意 | 制約 |
-| --- | --- | --- |
-| カードID（新規） | — | 登録時に採番する |
-| カードID（編集） | — | 画面が保持するIDで既存のカードを識別する |
-| 旧商品ID（日） | 任意 | 英数字・ハイフン・アンダースコアだけを許す |
-| 旧商品ID（英） | 任意 | 英数字・ハイフン・アンダースコアだけを許す |
-| リーガリティの重複 | — | 同一フォーマットを重複して選んだときは画面上で拒み、選んだ内容を空へ戻す |
-
 ### 保存の判定順序
 
 | 順序 | 判定・処理 | 内容 |
@@ -101,9 +91,6 @@
 | --- | --- | --- |
 | フォームの初期表示 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/CardController.php:50 |
 | フォームの初期表示 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/CardController.php:72 |
-| 入力項目の制約 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Form/Type/Admin/Card/CardType.php:229 |
-| 入力項目の制約 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Resource/doctrine/Plugin.HareruyaEc.Entity.MtbCard.dcm.yml:20 |
-| 入力項目の制約 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/admin/assets/js/card-detail.js:76 |
 | 保存の判定順序 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/CardController.php:87 |
 | 保存の判定順序 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/FormToEntityOperationHelper.php:92 |
 | 支店連携への通知 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/CardController.php:150 |

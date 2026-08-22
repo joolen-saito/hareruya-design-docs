@@ -58,10 +58,6 @@
 | `…conditionClasses.<conditionCode>.stock` | string | 在庫数 |
 | `…conditionClasses.<conditionCode>.sectionId` | integer | 部門ID。未設定のときはnull |
 
-### 入出力: 永続化
-
-本機能はデータを更新しない。
-
 ## 表示メッセージ
 
 この機能は画面を持たないためメッセージを扱わない。

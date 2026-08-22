@@ -43,10 +43,6 @@
 | 成功時出力 | 買取希望品カートの表示、または追加成功を示す応答 |
 | 失敗時出力 | 追加の上限超過は HTTP400、規格の指定が空のときは HTTP500 相当 |
 
-### 入出力: 永続化
-
-買取カートの内容は買取手続きの完了まで保持するだけで、この機能では受注や商品のデータを更新しない。
-
 ## 表示メッセージ
 
 | メッセージID | 表示位置 | 画面上の文言 | 表示条件 | 後続処理 |
@@ -76,4 +72,3 @@
 | 数量の更新と削除 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/PurchaseController.php:654-678 |
 | 数量の更新と削除 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/PurchaseController.php:464-480 |
 | エラー時の扱い | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/PurchaseController.php:852-865 |
-| 入出力: 永続化 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/PurchaseController.php:446-451 |

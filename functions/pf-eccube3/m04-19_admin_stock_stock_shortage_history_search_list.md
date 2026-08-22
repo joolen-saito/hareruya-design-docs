@@ -49,10 +49,6 @@
 | 成功時出力 | 欠品履歴の一覧、件数、ページ送り |
 | 失敗時出力 | 並び順が不正な場合のエラー表示と初期表示への復帰 |
 
-### 入出力: 永続化
-
-一覧の表示ではデータを更新しない。欠品履歴は参照のみとする。
-
 ## 表示メッセージ
 
 | メッセージID | 表示位置 | 画面上の文言 | 表示条件 | 後続処理 |
@@ -77,4 +73,3 @@
 | ページ送り | P3 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/SearchControllerTrait.php:186-189 |
 | 並び順が不正な場合 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/SearchControllerTrait.php:140-143 |
 | 計算 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Repository/DtbStockoutHistoryRepository.php:36-80 |
-| 入出力: 永続化 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Repository/DtbStockoutHistoryRepository.php:36-80 |

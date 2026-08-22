@@ -37,10 +37,6 @@
 | 言語 | 言語コードをキーとし、配下に状態コードごとの商品規格情報を持つ。 |
 | 状態 | 商品規格ID、商品コード、買取価格（未設定のときは値なし）、販売価格、在庫数、部門ID（未設定のときは値なし）。 |
 
-### 入出力: 永続化
-
-参照のみで、買取用商品・商品規格・在庫のいずれも更新しない。
-
 ## 表示メッセージ
 
 | メッセージID | 表示位置 | 画面上の文言 | 表示条件 | 後続処理 |
@@ -59,4 +55,3 @@
 | 値の取り方 | P1 | pf-api:src/Controller/ProductController.php:181-193 |
 | エラー時の扱い | P2 | pf-api:src/Controller/ProductController.php:190 |
 | 入出力: 応答の構造 | P1 | pf-api:src/Repository/DtbProductRepository.php:15-42 |
-| 入出力: 永続化 | P2 | pf-api:src/Repository/DtbProductRepository.php:185-238 |

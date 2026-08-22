@@ -116,3 +116,19 @@
 本機能が独自に Cookie を読み書きしない。セッション Cookie は管理画面共通の仕組みに従う。
 ---
 ### 業務ルール・計算
+
+---
+
+## 0203に無い定型節（設計書からは削除・2026-08-19）
+
+### 入力項目の制約
+| 項目 | 必須／任意 | 制約 |
+| --- | --- | --- |
+| カードID（新規） | — | 登録時に採番する |
+| カードID（編集） | — | 画面が保持するIDで既存のカードを識別する |
+| 旧商品ID（日） | 任意 | 英数字・ハイフン・アンダースコアだけを許す |
+| 旧商品ID（英） | 任意 | 英数字・ハイフン・アンダースコアだけを許す |
+| リーガリティの重複 | — | 同一フォーマットを重複して選んだときは画面上で拒み、選んだ内容を空へ戻す |
+| 入力項目の制約 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Form/Type/Admin/Card/CardType.php:229 |
+| 入力項目の制約 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Resource/doctrine/Plugin.HareruyaEc.Entity.MtbCard.dcm.yml:20 |
+| 入力項目の制約 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/admin/assets/js/card-detail.js:76 |

@@ -48,3 +48,13 @@
 | ログイン済み管理者 | 抽出結果のCSV出力が可能。 |
 ---
 ### 業務ルール・計算
+
+---
+
+## 0203に無い定型節（設計書からは削除・2026-08-19）
+
+### 入出力: 永続化
+本機能はデータを更新しない。
+
+出典（節と対で退避）:
+| 入出力: 永続化 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Analysis/RequestController.php:81 |

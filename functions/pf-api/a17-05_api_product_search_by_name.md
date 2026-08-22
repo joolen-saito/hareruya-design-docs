@@ -35,10 +35,6 @@
 
 該当なし（HTTP 404）のときは、処理結果コードとメッセージの2項目だけを返し、商品の配列は含めない。
 
-### 入出力: 永続化
-
-本APIはデータを更新しない。
-
 ## 表示メッセージ
 
 | メッセージID | 表示位置 | 画面上の文言 | 表示条件 | 後続処理 |
@@ -60,4 +56,3 @@
 | 商品規格の絞り込み | P2 | pf-api:src/Repository/DtbProductSubClassRepository.php:416 |
 | 商品規格の絞り込み | P3 | pf-api:src/Repository/DtbProductSubClassRepository.php:437 |
 | 出力: 失敗時の応答 | P2 | pf-api:src/Controller/ProductController.php:311 |
-| 入出力: 永続化 | P3 | pf-api:src/Controller/ProductController.php:306 |

@@ -29,10 +29,6 @@
 
 返信先には基本情報に登録された返信先アドレスを、宛先不達の返送先には基本情報に登録されたエラー返送先アドレスを設定する。
 
-### 入出力: 永続化
-
-会員のデータを更新しない。
-
 ## 表示メッセージ
 
 | メッセージID | 表示位置 | 画面上の文言 | 表示条件 | 後続処理 |
@@ -51,4 +47,3 @@
 | コンソールへの出力 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Command/CustomerBatch.php:50-52 |
 | コンソールへの出力 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Service/Customer/SendAccountMigration.php:47-49 |
 | 送信するメールの返信先とエラー返送先 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Service/MailService.php:914-915 |
-| 入出力: 永続化 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Service/Customer/SendAccountMigration.php:30-51 |

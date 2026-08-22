@@ -32,10 +32,6 @@
 | 成功時出力 | モニター画面への番号札一覧の表示 |
 | 失敗時出力 | 取得に失敗したときは表示を変えない |
 
-### 入出力: 永続化
-
-本機能はデータを更新しない。
-
 ## 表示メッセージ
 
 | メッセージID | 表示位置 | 画面上の文言 | 表示条件 | 後続処理 |
@@ -50,4 +46,3 @@
 | 新着の判定 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/Block/js/waiting_get_js.twig:5 |
 | 表示枠の整形 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/Block/js/waiting_get_js.twig:32 |
 | エラー時の扱い | P2 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/Block/js/waiting_get_js.twig:136 |
-| 入出力: 永続化 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Controller/WaitingNumberController.php |

@@ -35,10 +35,6 @@
 | `customerInfo.birth` | ISO8601形式の日時文字列で返す。 |
 | `customerInfo.address` | 国が日本のときは都道府県名・住所1・住所2、それ以外の国のときは国名・住所2・住所1 の順に、半角空白区切りで連結した1つの文字列で返す。 |
 
-### 入出力: 永続化
-
-本APIは業務データを更新しない。
-
 ## 表示メッセージ
 
 本APIは画面メッセージを扱わない。
@@ -52,4 +48,3 @@
 | 認証 | P1 | pf-api:src/Controller/BaseController.php:23 |
 | エラー時の扱い | P1 | pf-api:src/Controller/BaseController.php:26 |
 | 出力: 値の表し方と未設定時のふるまい | P2 | pf-api:src/Repository/DtbOtcBuyOrderRepository.php:64 |
-| 入出力: 永続化 | P3 | pf-api:src/Controller/Admin/OtcBuyOrderController.php:32 |

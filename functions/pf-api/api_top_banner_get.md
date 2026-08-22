@@ -36,10 +36,6 @@
 | `dispType` | integer | 表示タイプ |
 | `languages` | array | 関連する言語の配列。各要素は `id`・`nameJp`・`nameEn`・`code` |
 
-### 入出力: 永続化
-
-この機能ではデータを更新しない。
-
 ## 表示メッセージ
 
 本APIは画面へ文言を表示しない。

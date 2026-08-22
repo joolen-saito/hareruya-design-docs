@@ -48,10 +48,6 @@
 | 成功時出力 | 検索条件の入力欄と、該当があるときは一覧とページ送りを含む画面 |
 | 失敗時出力 | 並び順が不正のときはエラー表示と初期画面 |
 
-### 入出力: 永続化
-
-デッキのデータは更新しない。
-
 ## 表示メッセージ
 
 | メッセージID | 表示位置 | 画面上の文言 | 表示条件 | 後続処理 |
@@ -85,4 +81,3 @@
 | 選択肢の並び | P3 | pf-eccube3:app/Plugin/HareruyaEc/Form/Type/Admin/Deck/SearchDeckType.php:32 |
 | 大会開始前のデッキの扱い | P2 | pf-eccube3:app/Plugin/HareruyaEc/Repository/DtbDeckRepository.php:124 |
 | 表示件数と並び順 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/SearchControllerTrait.php:85 |
-| 入出力: 永続化 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/SearchControllerTrait.php:85 |
