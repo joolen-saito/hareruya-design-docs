@@ -26,6 +26,9 @@ from __future__ import annotations
 import argparse
 import base64
 import csv
+import difflib
+import functools
+import json
 import re
 import subprocess
 import sys
@@ -79,6 +82,30 @@ NOISE = re.compile(
 PIN = re.compile(r"^\(?\d+(-\d+)?\)?$")
 IMG_CAPTION = re.compile(r"/ [A-Z]{1,3}\d+ / image \d+$|^画像レイヤー（\d+枚）:")
 DATE_LIKE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+
+
+# 表のヘッダ行。全セルが短いラベルで、仕様の語（助詞・述語）を含まない行を見出しとみなす。
+_HEADER_LABELS = {
+    "識別ID", "メッセージID", "項目名", "項目", "種類", "内容", "条件", "備考", "説明", "コード",
+    "操作", "契機", "事象", "扱い", "順序", "判定", "結果", "処理", "エラー内容", "書式・制限",
+    "必須", "最大値", "初期値", "表示位置", "画面上の文言", "表示文言", "文言", "No", "No.",
+    "パラメータ", "型", "必須/任意", "値", "説明・制約", "区分", "対象", "分類",
+}
+
+
+def _is_table_header(line: str) -> bool:
+    cells = [c.strip() for c in line.split("\t") if c.strip()]
+    return len(cells) >= 2 and all(c in _HEADER_LABELS for c in cells)
+
+
+class _HeaderRe:
+    """re 互換の薄いラッパ（既存の match() 呼び出しに合わせる）。"""
+    @staticmethod
+    def match(line: str):
+        return _is_table_header(line) or None
+
+
+TABLE_HEADER_RE = _HeaderRe
 
 
 def classify_sections(lines: list[str]) -> list[str]:
@@ -143,6 +170,7 @@ def extract_requirements(sheet_id: str, title: str, lines: list[str]) -> list[di
                 break
     reqs: list[dict] = []
     seq = 0
+    table_header = ""
     for i, (line, sec) in enumerate(zip(lines, secs), start=1):
         if sec in ("HEADER", "LAYOUT", "LEDGER", "SOURCE"):
             continue
@@ -160,9 +188,17 @@ def extract_requirements(sheet_id: str, title: str, lines: list[str]) -> list[di
             "REQUIREMENT": "要件説明",
             "BODY": "本文",
         }.get(sec, sec)
+        # 表のヘッダ行は要求ではないが、**捨てずに覚える**。
+        # Excelは同一行の別セルに備考を書くため、どの列が何かを知らないと
+        # 「備考」を仕様と読み違えて誤った指摘が出る（利用者指摘 2026-08-22）。
         if sec == "ITEMS" and line.startswith("識別ID\t"):
+            table_header = line
             continue
         if sec == "MESSAGES" and line.startswith("メッセージID\t"):
+            table_header = line
+            continue
+        if "\t" in line and TABLE_HEADER_RE.match(line):
+            table_header = line
             continue
         seq += 1
         reqs.append({
@@ -171,6 +207,7 @@ def extract_requirements(sheet_id: str, title: str, lines: list[str]) -> list[di
             "シート名": title,
             "区分": kind,
             "シート内行": str(i),
+            "表ヘッダ": table_header,
             "要求文": line,
         })
     return reqs
@@ -185,6 +222,148 @@ def sheet_line_offset(book: Path, sheet) -> tuple[int, int]:
     lo = next(i for i, o in enumerate(offs, 1) if o >= sheet.start)
     hi = max(i for i, o in enumerate(offs, 1) if o < sheet.end)
     return lo, hi
+
+
+
+# ---- ゲート用の台帳（利用者決定 2026-08-22） --------------------------------
+#
+# 過剰指摘を止める設計。**判定の機会が増えるほど誤判定の機会も増える**という理由で、
+# 「見出し・表のヘッダ・Ph2・廃止」のように規約で既に対象外と決まっているものは
+# エージェントに判定させず機械で落とす。落とすのは確実なものだけで、迷ったら残す。
+
+REPO = ROOT.parent            # 設計書リポジトリのルート
+NON_REQ_LEDGER = ROOT / "non_requirement_lines.tsv"
+_JSON_PUNCT_RE = re.compile(r"^[\s{}\[\],]+$")
+
+
+@functools.lru_cache(maxsize=1)
+def non_requirement_lines() -> tuple[frozenset[str], bool]:
+    """(完全一致で落とす行の集合, JSON構造記号を落とすか)。"""
+    exact: set[str] = set()
+    json_punct = False
+    if not NON_REQ_LEDGER.is_file():
+        return frozenset(), False
+    for raw in NON_REQ_LEDGER.read_text(encoding="utf-8").splitlines():
+        if raw.startswith("#") or not raw.strip():
+            continue
+        cells = raw.split("\t")
+        if cells[0] == "種別":
+            continue
+        if cells[0] == "EXACT" and len(cells) >= 2:
+            # 値そのものにタブを含む表ヘッダがあるため、末尾の理由列だけを落として復元する。
+            exact.add("\t".join(cells[1:-1]) if len(cells) > 2 else cells[1])
+        elif cells[0] == "JSON_PUNCT":
+            json_punct = True
+    return frozenset(exact), json_punct
+
+
+def non_requirement_reason(text: str) -> str:
+    """要求ではないと機械で断定できるなら理由を返す。断定できなければ空文字。"""
+    t = text.strip()
+    exact, json_punct = non_requirement_lines()
+    if t in exact:
+        return "非要求行の台帳に一致（見出し・表のヘッダ・表紙）"
+    if json_punct and t and _JSON_PUNCT_RE.match(t):
+        return "JSONサンプルの構造記号だけの行"
+    return ""
+
+
+@functools.lru_cache(maxsize=1)
+def scoped_out_entries() -> tuple[dict, ...]:
+    """Ph2・廃止の台帳を1つに束ねる。ITEM_SCOPE も含めて全件返す。"""
+    out = []
+    for path, kind in ((REPO / "functions" / "phase2_specs.json", "フェーズ2対応"),
+                       (REPO / "functions" / "superseded_specs.json", "廃止")):
+        if not path.is_file():
+            continue
+        data = json.loads(path.read_text(encoding="utf-8"))
+        recs = next((v for v in data.values() if isinstance(v, list)), []) if isinstance(data, dict) else data
+        for r in recs:
+            if r.get("verdict") == "not-superseded":
+                continue
+            out.append({
+                "kind": kind, "id": r.get("id", ""), "book": r.get("book", ""),
+                "scope": r.get("scope", ""), "target": (r.get("target") or "").strip(),
+                "identifierId": (r.get("identifierId") or "").strip(),
+                "sheetIds": {sh.get("sheetId") for sh in r.get("sheets", []) if sh.get("sheetId")},
+            })
+    return tuple(out)
+
+
+# 行そのものが「これはPh2だ／廃止だ」と宣言している型。これは確実なので機械で落とす。
+_DECLARES_RE = re.compile(
+    r"はフェーズ2対応|フェーズ1では実装しない|により廃止|刷新後は実装しない"
+    r"|フェーズ2以降で設計予定|本節はフェーズ1の実装・テスト対象")
+
+
+def scoped_out_reason(req: dict) -> str:
+    """Ph2・廃止と機械で断定できるなら理由を返す。曖昧なものは空文字（＝人が判定）。
+
+    確実と見なすのは次の2つだけ:
+      1. 行そのものが宣言している（「…はフェーズ2対応」「…により廃止」）。
+      2. 項目定義の行の識別IDが、台帳の identifierId と一致する。
+    target の部分一致だけでは落とさない。機能はフェーズ1で項目だけがPh2という
+    ITEM_SCOPE があり、target 語を含むフェーズ1の要求を巻き添えにするため。
+    """
+    text = req.get("要求文", "")
+    if _DECLARES_RE.search(text):
+        return "行そのものがPh2・廃止を宣言している（台帳と同義）"
+    if req.get("区分") != "項目定義":
+        return ""
+    m = re.match(r"\s*([0-9]+(?:-[0-9]+)*)\t", text)
+    if not m:
+        return ""
+    ident = m.group(1)
+    for e in scoped_out_entries():
+        if not e["identifierId"] or e["identifierId"] != ident:
+            continue
+        if e["sheetIds"] and req.get("シート") not in e["sheetIds"]:
+            continue
+        return f"{e['kind']}の台帳 {e['id']}（識別ID {ident}「{e['target']}」）に一致"
+    return ""
+
+
+# ---- ブロック文脈（利用者指摘 2026-08-22） ---------------------------------
+#
+# Excel設計書は1つの仕様を複数行に分けて書く。カスタマイズの★は先頭行にしか付かず、
+# 後続行にも同じカスタマイズ要件が続く。行を単位に切ると、
+#   ★権限による制御            ← 見出しだけで仕様が無い
+#   ・識別ID:5「会場」に…       ← 実体。★が無い
+#   ・エンハンスで対応済みであり、対応内容を踏襲する   ← 直前行の但し書き
+# のように、単独では判定できない断片が母集合に並ぶ。単独で判定させると誤った指摘が出る。
+# 抽出の単位は行のままにして（判定漏れ0を保つため）、**各行に所属ブロックを持たせる**。
+
+_BLOCK_HEAD_RE = re.compile(r"^\s*[★☆]")
+
+
+def assign_blocks(reqs: list[dict]) -> None:
+    """同一シート内で連続する要求を意味のまとまりへ束ね、各行に文脈を持たせる。
+
+    切れ目は「★で始まる行」「区分が変わる」「シートが変わる」「行番号が飛ぶ」。
+    ★の属性はブロック内の後続行へ伝播させる（★は先頭行にしか付かないため）。
+    """
+    blk = 0
+    prev = None
+    for r in reqs:
+        head = _BLOCK_HEAD_RE.match(r["要求文"] or "")
+        gap = prev is not None and (
+            r["シート"] != prev["シート"] or r["区分"] != prev["区分"]
+            or int(r["シート内行"]) != int(prev["シート内行"]) + 1)
+        if head or gap or prev is None:
+            blk += 1
+            cur_head = r["要求文"].strip() if head else ""
+            cur_custom = "★" if head else ""
+        r["ブロックID"] = f"{r['シート']}-B{blk:03d}"
+        r["ブロック見出し"] = cur_head
+        r["カスタマイズ"] = cur_custom
+        prev = r
+    # ブロックに属する要求IDを相互に持たせる（判定時に前後を必ず読ませるため）
+    members: dict[str, list[str]] = {}
+    for r in reqs:
+        members.setdefault(r["ブロックID"], []).append(r["要求ID"])
+    for r in reqs:
+        ids = members[r["ブロックID"]]
+        r["同ブロック"] = ",".join(x for x in ids if x != r["要求ID"])
 
 
 def cmd_inventory(doc_key: str) -> None:
@@ -226,7 +405,9 @@ def cmd_inventory(doc_key: str) -> None:
             "画像": str(len(imgs)), "要求候補": str(len(reqs)),
         })
 
-    cols = ["要求ID", "シート", "シート名", "区分", "シート内行", "HTML行", "要求文"]
+    assign_blocks(all_reqs)
+    cols = ["要求ID", "シート", "シート名", "区分", "シート内行", "HTML行",
+            "ブロックID", "ブロック見出し", "カスタマイズ", "同ブロック", "表ヘッダ", "要求文"]
     with (outdir / "requirements.tsv").open("w", encoding="utf-8", newline="") as fh:
         w = csv.DictWriter(fh, fieldnames=cols, delimiter="\t", lineterminator="\n")
         w.writeheader()
@@ -259,6 +440,12 @@ VALID = {
     "OUT_OF_SCOPE",   # 実装対象の要求ではない（見出し・凡例・他機能の記述など。理由必須）
 }
 FINDING = {"DRIFT", "NOT_IMPLEMENTED"}
+
+# 指摘の設計根拠として認める引用の最小長。表のセル片・見出しを弾くための下限で、
+# 「文として読める単位か」を機械で近似する（利用者決定 2026-08-22）。
+MIN_QUOTE_CHARS = 12
+# 見出しだけ・セル片だけの引用。★見出しは後続行に本体があるため単独では根拠にできない。
+_FRAGMENT_RE = re.compile(r"^[★☆]\S{0,14}$|^[-・|\s]*$")
 
 # ---- 指摘ポリシー（利用者指示 2026-08-19 / 機械ゲート化） -------------------
 #
@@ -352,7 +539,52 @@ def dedupe_by_impl_actual(reported: list[dict], reqs: dict) -> tuple[list[dict],
             folded[rep["要求ID"]] = [x["要求ID"] for x in rest]
             folded_count += len(rest)
 
+    kept, folded, folded_count = fold_similar(kept, reqs, folded, folded_count)
     return kept, folded, folded_count
+
+
+# 類似指摘の折りたたみ（利用者指示 2026-08-22）
+#
+# 根本原因キーの完全一致だけで畳んでいたころ、書き手が並列だとキーの文言が揺れて
+# 同じ欠陥が畳まれず件数が膨らんだ（実測: 折込率 73% → 7%、指摘 35件 → 161件）。
+# キーが揺れても畳めるよう、正規化した文字列の類似度で2巡目を回す。
+SIMILARITY_THRESHOLD = 0.86
+
+
+def _fold_signature(v: dict) -> str:
+    """畳むかどうかを測る対象。根本原因＋実装実態＋設計期待値をつないだもの。"""
+    return norm(v.get("根本原因", "")) + "|" + norm(v.get("実装実態", "")) + "|" + norm(v.get("設計期待値", ""))
+
+
+def fold_similar(kept: list[dict], reqs: dict, folded: dict[str, list[str]],
+                 folded_count: int) -> tuple[list[dict], dict[str, list[str]], int]:
+    """完全一致で畳み残った指摘のうち、類似しているものを代表1件へ寄せる。
+
+    代表の選び方は完全一致の折りたたみと同じ（重要度 → 区分 → 要求ID）。
+    畳んだ要求IDは代表に持たせ、成果物にも必ず出す（黙って落とさない）。
+    """
+    findings = [v for v in kept if v.get("判定") in FINDING]
+    others = [v for v in kept if v.get("判定") not in FINDING]
+    findings.sort(key=lambda x: (SEVERITY_ORDER.get(x.get("重要度", ""), 9),
+                                 SECTION_ORDER.get(reqs[x["要求ID"]]["区分"], 9),
+                                 x["要求ID"]))
+    reps: list[dict] = []
+    sigs: list[str] = []
+    for v in findings:
+        sig = _fold_signature(v)
+        hit = -1
+        for i, other in enumerate(sigs):
+            if sig and other and difflib.SequenceMatcher(None, sig, other).ratio() >= SIMILARITY_THRESHOLD:
+                hit = i
+                break
+        if hit < 0:
+            reps.append(v)
+            sigs.append(sig)
+            continue
+        rep_id = reps[hit]["要求ID"]
+        folded.setdefault(rep_id, []).extend([v["要求ID"]] + folded.pop(v["要求ID"], []))
+        folded_count += 1
+    return others + reps, folded, folded_count
 
 
 _IMPL_REF_RE = re.compile(r"^([\w./\-]+\.[A-Za-z0-9]+)(?::(\d+)(?:-(\d+))?)?$")
@@ -430,6 +662,20 @@ def validate_verdict(v: dict, req: dict, sheets: "Sheets") -> list[str]:
                            "追加すべき列は項目表側の識別IDで決まり、実装は追随済み。"
                            + (v.get("判定根拠") or ""))
 
+    # --- ゲート1: Ph2・廃止は機械で対象外へ落とす（利用者決定 2026-08-22） ---
+    # 規約（AUDIT_SCOPE）で既に対象外と決まっているものをエージェントに判定させない。
+    # 判定の機会が増えるほど誤判定の機会も増えるため。落とすのは確実なものだけ。
+    reason = scoped_out_reason(req)
+    if reason and verdict != "OUT_OF_SCOPE":
+        v["判定"] = verdict = "OUT_OF_SCOPE"
+        v["判定根拠"] = f"[gate1] {reason}。" + (v.get("判定根拠") or "")
+
+    # --- ゲート2: 見出し・表のヘッダ・表紙は機械で対象外へ落とす ---
+    reason = non_requirement_reason(req.get("要求文", ""))
+    if reason and verdict != "OUT_OF_SCOPE":
+        v["判定"] = verdict = "OUT_OF_SCOPE"
+        v["判定根拠"] = f"[gate2] {reason}。" + (v.get("判定根拠") or "")
+
     quote = (v.get("設計根拠_引用") or "").strip()
     if verdict in QUOTE_REQUIRED:
         if not quote:
@@ -437,6 +683,19 @@ def validate_verdict(v: dict, req: dict, sheets: "Sheets") -> list[str]:
         elif norm(quote) not in sheets.norm_text(req["シート"]):
             errors.append(f"{rid}: 引用が {req['シート']} 本文に存在しない（捏造ゲート）: {quote[:60]!r}")
     if verdict in FINDING:
+        # --- ゲート4: 断片行だけを根拠に指摘を立てない（利用者指摘 2026-08-22） ---
+        # Excel設計書は1つの仕様を複数行・同一行の別セルに分けて書く。表のセル片や
+        # ★見出しだけを引用して指摘を立てると、但し書き（「エンハンスで対応済み」等）を
+        # 読み落とした誤指摘になる。引用は文として読める単位を要求する。
+        if quote and len(norm(quote)) < MIN_QUOTE_CHARS:
+            errors.append(
+                f"{rid}: 設計根拠_引用が短すぎる（{len(norm(quote))}字 < {MIN_QUOTE_CHARS}字）。"
+                "表のセル片や見出しだけを根拠にしない。同ブロックの行や同一行の他セルを"
+                "含めて、文として読める単位で引用すること")
+        if quote and _FRAGMENT_RE.match(quote.strip()):
+            errors.append(
+                f"{rid}: 設計根拠_引用が見出し・セル片（{quote.strip()[:24]!r}）。"
+                "その見出しが説明している本体を引用すること")
         # --- ポリシー3: I/O かふるまいかの明示を必須にする ---
         kind = (v.get("乖離種別") or "").strip()
         if kind not in DRIFT_KINDS:
