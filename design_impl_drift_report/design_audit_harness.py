@@ -317,6 +317,13 @@ def scoped_out_reason(req: dict) -> str:
     for e in scoped_out_entries():
         if not e["identifierId"] or e["identifierId"] != ident:
             continue
+        # **書番を必ず照合する。** 識別IDは書をまたいで同じ値が振られるため、
+        # 書番を見ないと他書の台帳が当書の要求に当たる
+        # （2026-08-22 実測: 0306-8-2「画面上部のログインユーザ名表示」の識別ID「2」が
+        #  0204 sheet-8「CSVファイルのアップロード」に当たり、実在する未実装指摘を
+        #  対象外へ落としかけた。判定エージェントの申告で発覚。書番照合なしで6件が誤ヒット）。
+        if e["book"] and e["book"] != (req.get("書番") or ""):
+            continue
         if e["sheetIds"] and req.get("シート") not in e["sheetIds"]:
             continue
         return f"{e['kind']}の台帳 {e['id']}（識別ID {ident}「{e['target']}」）に一致"
@@ -809,9 +816,12 @@ def validate_verdict(v: dict, req: dict, sheets: "Sheets") -> list[str]:
             errors.append(f"{rid}: 設計期待値 が空")
         if not (v.get("実装実態") or "").strip():
             errors.append(f"{rid}: 実装実態 が空")
-        if not (v.get("根本原因") or "").strip():
+        cause = (v.get("根本原因") or "").strip()
+        if not cause:
             errors.append(f"{rid}: 根本原因 が空（同じ実装欠陥から出た指摘には同じキーを書く。"
                           "1つの欠陥を要求の数だけ指摘に割らないこと）")
+        else:
+            errors.extend(check_cause_key(rid, cause, v.get("実装参照") or ""))
     if verdict == "MATCHED":
         # 実装のどこを見て「設計どおり」と判断したのかを、実在するファイル:行で必ず示させる。
         refs = inline_impl_refs(v.get("判定根拠", "")) + inline_impl_refs(v.get("実装参照", ""))
@@ -826,6 +836,66 @@ def validate_verdict(v: dict, req: dict, sheets: "Sheets") -> list[str]:
         errors.append(f"{rid}: 判定根拠 が空")
     if (v.get("確信度") or "").strip() not in ("high", "med", "low"):
         errors.append(f"{rid}: 確信度は high/med/low")
+    return errors
+
+
+# ---- 根本原因キーの命名規約（利用者決定 2026-08-22） ----------------------
+#
+# キーの表記が揺れると、同じ欠陥が別々の指摘として残る。0204 の実測では
+# 日本語48種・英数74種が混在し、同一欠陥が2つのキーに割れた組が5つあった
+# （例 price-bulk-no-smaregi-sync と 買取・基準価格一括編集がスマレジ未連携。
+#  実装実態の類似度は0.50で、ゲート3の閾値0.86には届かない）。
+# 33バッチが並列で書く以上、文言の一致に頼るのは無理がある。
+#
+# **キーは「実装ファイル名 + 欠陥の短い英数説明」に固定する。**
+# 同じファイルの同じ欠陥なら、書き手が違っても同じキーになる。
+# 先頭はファイル名なので `.` を含みうる（messages.ja のような多段拡張子）。
+CAUSE_KEY_RE = re.compile(r"^[A-Za-z][A-Za-z0-9_.]*(?:-[a-z0-9]+)+$")
+
+
+def check_cause_key(rid: str, cause: str, impl_ref: str) -> list[str]:
+    """根本原因キーが規約どおりか。違反の説明を返す。"""
+    errors: list[str] = []
+    if not CAUSE_KEY_RE.match(cause):
+        errors.append(
+            f"{rid}: 根本原因 {cause!r} が規約に合わない。"
+            "「実装ファイル名-欠陥の短い説明」の形で、英数字とハイフンだけで書くこと"
+            "（例 ProductBulkUpdateBuyPriceStoreAction-no-smaregi-sync）。"
+            "日本語で書くと書き手ごとに揺れ、同じ欠陥が別々の指摘として残る")
+        return errors
+    # 接頭辞と実装参照の照合は**行ごとにはやらない**。
+    # 1つの欠陥が複数の実装ファイルにまたがるのは正常だからである
+    # （2026-08-22 実測: 支店システムへの通知の未移植は ProductClassUpdateAction /
+    #  ProductClassDeleteAction / InventoryReflectService など5ファイルに同じ形で出る。
+    #  行ごとに照合すると、この systemic な欠陥を1件に畳めなくなる）。
+    # 照合はグループ単位で cmd_build が行う（cause_key_group_errors）。
+    return errors
+
+
+def cause_key_group_errors(findings: list[dict]) -> list[str]:
+    """根本原因キーごとに、接頭辞がそのグループのどれかの実装ファイルを指しているかを見る。
+
+    行ごとではなくグループ単位で見るのは、1つの欠陥が複数ファイルにまたがるため。
+    接頭辞は「その欠陥の代表となる実装ファイル」であればよい。
+    """
+    groups: dict[str, list[dict]] = {}
+    for v in findings:
+        key = (v.get("根本原因") or "").strip()
+        if key:
+            groups.setdefault(key, []).append(v)
+    errors: list[str] = []
+    for key, members in sorted(groups.items()):
+        bases: set[str] = set()
+        for v in members:
+            bases |= {m.split(":")[0].split("/")[-1].rsplit(".", 1)[0]
+                      for m in re.findall(r"[\w./\-]+\.\w+", v.get("実装参照") or "")}
+        head = key.split("-", 1)[0]
+        if bases and head not in bases:
+            ids = ", ".join(v["要求ID"] for v in members[:3])
+            errors.append(
+                f"根本原因 {key!r} の先頭 {head!r} が、このキーの指摘が挙げる実装ファイルの"
+                f"どれとも一致しない（{sorted(bases)[:4]} / 要求 {ids}）。"
+                "先頭はこの欠陥の代表となる実装ファイル名にすること")
     return errors
 
 
@@ -862,6 +932,9 @@ def cmd_build(doc_key: str, partial: bool = False) -> None:
         errors.extend(validate_verdict(v, reqs[rid], sheets))
         if before != v.get("判定"):
             policy_star += 1
+
+    # ゲート6の接頭辞照合はグループ単位で行う（1つの欠陥は複数ファイルにまたがりうる）
+    errors.extend(cause_key_group_errors([v for v in verdicts if v.get("判定") in FINDING]))
 
     unjudged = sorted(set(reqs) - seen)
     if unjudged and not partial:
