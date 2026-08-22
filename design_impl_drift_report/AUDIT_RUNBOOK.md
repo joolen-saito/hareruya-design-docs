@@ -53,27 +53,43 @@ python3 design_impl_drift_report/design_audit_harness.py inventory --doc <書番
 
 ---
 
-## 判定（ワークフロー）
+## 段取り（1書 = 1ワークフロー）
 
-1書 = 1ワークフロー。シート単位で並列に判定し、シートごとに `verdicts.tsv` の断片を書く。
+0204 での実測（3,968要求 / 68シート）を添えて書く。
 
-```
-phase('判定')   シートごとに1エージェント。requirements.tsv の当該シート行だけを担当
-phase('検証')   指摘（DRIFT / NOT_IMPLEMENTED）だけを別エージェントが反証する
-phase('確定')   audit_part.py merge → design_audit_harness.py build
-```
+| 段 | 中身 | 0204 の実測 |
+| --- | --- | --- |
+| 1 | `inventory` で母集合を作る | 3,968要求 / 68シート |
+| 2 | **判定** — 並列に全要求へ判定を付ける | 33バッチ・約65分 |
+| 3 | **反証** — 指摘だけを別エージェントが反証 | 17本 |
+| 3' | **codex** — 別系統の敵対レビュー（**2・3と並行で起動**） | 1巡・約25分 |
+| 4 | `reviews.tsv` に3と3'の結果をまとめる | 25行 |
+| 5 | `audit_part.py merge` → `design_audit_harness.py build` | 指摘111件 |
+| 6 | 台帳へ記録してコミット | — |
+
+### 2. 判定
+
+**シートをバッチへ束ねる。** シート単位で1エージェントにすると68体になり多すぎる。
+1バッチ 150〜170要求・1〜4シートを目安に、大きいシートは単独で置く。
 
 各エージェントに渡すもの:
 
-- 担当シートの要求行（`同ブロック` `表ヘッダ` `ブロック見出し` を含む全列）
+- 担当シートの要求行（`同ブロック` `表ヘッダ` `ブロック見出し` `カスタマイズ` を含む全列）
 - `design_audit/<書番>/sheets/<sheetId>.txt`（シート本文の全文）
 - `design_audit/<書番>/images/<sheetId>_img*.png`（レイアウト図。**画像を見ずに「実装が無い」と判定しない**）
 - ee 実装（`/home/y-saito/Developments/ec-cube-enterprise`）
 
-各エージェントが返すもの: `VERDICT_COLUMNS` の全列。**担当シートの全要求に判定を付ける**
-（判定漏れ0。取り込まないものも OUT_OF_SCOPE / UNVERIFIABLE として理由付きで残す）。
+各エージェントが返すもの: `VERDICT_COLUMNS` の全列を `parts/<sheetId>.tsv` へ。
+**担当シートの全要求に判定を付ける**（判定漏れ0。取り込まないものも
+OUT_OF_SCOPE / UNVERIFIABLE として理由付きで残す）。
 
-自己検証は `audit_part.py check` で行う。ゲートに落ちたまま次へ進まない。
+自己検証は `audit_part.py check --doc <書> --sheet <シート>` で行う。
+**exit 0 になるまで直させる。** ゲートに落ちたまま次へ進まない。
+
+### 3・3'. 反証と codex
+
+**必ず並行で起動する。** 逐次にすると待ち時間が倍になり、得るものは無い。
+詳細は下の「レビューと、その適用」。
 
 ---
 
