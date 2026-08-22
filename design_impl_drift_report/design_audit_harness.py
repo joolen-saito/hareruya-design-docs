@@ -506,6 +506,8 @@ VALID = {
     "OUT_OF_SCOPE",   # 実装対象の要求ではない（見出し・凡例・他機能の記述など。理由必須）
 }
 FINDING = {"DRIFT", "NOT_IMPLEMENTED"}
+# 重複として畳む対象。DESIGN_ISSUE も同じ設計矛盾から複数の要求に出るため含める。
+FOLDABLE = FINDING | {"DESIGN_ISSUE"}
 
 # 指摘の設計根拠として認める引用は「仕様が書いてあるか」で決める（利用者決定 2026-08-22）。
 #
@@ -614,10 +616,21 @@ def dedupe_by_impl_actual(reported: list[dict], reqs: dict) -> tuple[list[dict],
     for v in reported:
         # 根本原因が書かれていればそれで畳む。書き手ごとに文言が揺れても同じ欠陥は1件になる。
         key = norm(v.get("根本原因", "")) or norm(v.get("実装実態", ""))
-        if v["判定"] not in FINDING or key == "":
+        # DESIGN_ISSUE も畳む対象にする。**同じ設計矛盾を指す指摘が複数の要求から出る**ため
+        # （2026-08-22 実測: 0204 sheet-50/51 で、同じ「CSVに買取価格の列が無い」矛盾が
+        #  4要求ずつ並んで成果物に載っていた。FINDING だけを畳んでいたので素通りしていた）。
+        # 群は「指摘」と「設計裁定待ち」で分ける。DRIFT と NOT_IMPLEMENTED は
+        # どちらも実装の欠陥を指す同じ主張なので**混ぜる**。同じ欠陥を、ある要求からは
+        # 「実装が無い」、別の要求からは「実装が違う」と書くことがあるためである
+        # （2026-08-22 実測: 判定で群を切ったせいで、キーが完全一致する5組が
+        #  別々の指摘として残った。例 sheet-28-R036(NI) と sheet-28-R045(DRIFT) は
+        #  ともに StorageCodeController-name-duplicate-not-checked）。
+        # DESIGN_ISSUE は「設計が矛盾している」という別の主張なので混ぜない。
+        bucket = "FINDING" if v["判定"] in FINDING else v["判定"]
+        if v["判定"] not in FOLDABLE or key == "":
             passthrough.append(v)
             continue
-        groups.setdefault(key, []).append(v)
+        groups.setdefault((bucket, key), []).append(v)
 
     kept: list[dict] = list(passthrough)
     folded: dict[str, list[str]] = {}
@@ -656,15 +669,16 @@ def fold_similar(kept: list[dict], reqs: dict, folded: dict[str, list[str]],
     代表の選び方は完全一致の折りたたみと同じ（重要度 → 区分 → 要求ID）。
     畳んだ要求IDは代表に持たせ、成果物にも必ず出す（黙って落とさない）。
     """
-    findings = [v for v in kept if v.get("判定") in FINDING]
-    others = [v for v in kept if v.get("判定") not in FINDING]
+    findings = [v for v in kept if v.get("判定") in FOLDABLE]
+    others = [v for v in kept if v.get("判定") not in FOLDABLE]
     findings.sort(key=lambda x: (SEVERITY_ORDER.get(x.get("重要度", ""), 9),
                                  SECTION_ORDER.get(reqs[x["要求ID"]]["区分"], 9),
                                  x["要求ID"]))
     reps: list[dict] = []
     sigs: list[str] = []
     for v in findings:
-        sig = _fold_signature(v)
+        bucket = "FINDING" if v.get("判定") in FINDING else v.get("判定", "")
+        sig = bucket + "|" + _fold_signature(v)
         hit = -1
         for i, other in enumerate(sigs):
             if sig and other and difflib.SequenceMatcher(None, sig, other).ratio() >= SIMILARITY_THRESHOLD:
@@ -899,6 +913,121 @@ def cause_key_group_errors(findings: list[dict]) -> list[str]:
     return errors
 
 
+# ---- ゲート7: レビュー結果の適用（利用者決定 2026-08-22） ------------------
+#
+# 重複と過剰指摘は**指摘から取り下げる**。反証・codex のレビュー結果を
+# `design_audit/<書>/reviews.tsv` に置き、build が機械的に適用する。
+# 人がTSVを手で書き換えると、何をなぜ落としたかが残らない。
+#
+# 列: 要求ID / レビュアー / 判定 / 畳む先 / 提案重要度 / 理由
+#
+# **判定が割れたら重いほうを採る。一番重いのは指摘からの取り下げである。**
+# 独立した2者が見て片方だけが問題を挙げた場合、見落としの側に倒すより
+# 取り下げの側に倒すほうが安全という利用者判断による。
+REVIEW_VERDICTS = ("OVER_REPORT", "DUPLICATE", "WRONG_KIND", "OVER_SEVERE", "CONFIRMED")
+REVIEW_WEIGHT = {v: i for i, v in enumerate(REVIEW_VERDICTS)}  # 小さいほど重い
+
+
+def load_reviews(outdir: Path) -> dict[str, dict]:
+    """レビュー結果を要求IDごとに1つへまとめる。割れたら重いほうを採る。"""
+    path = outdir / "reviews.tsv"
+    if not path.is_file():
+        return {}
+    merged: dict[str, dict] = {}
+    with path.open(encoding="utf-8") as fh:
+        for r in csv.DictReader(fh, delimiter="\t"):
+            rid = (r.get("要求ID") or "").strip()
+            verdict = (r.get("判定") or "").strip()
+            if not rid or verdict not in REVIEW_WEIGHT:
+                continue
+            cur = merged.get(rid)
+            if cur is None or REVIEW_WEIGHT[verdict] < REVIEW_WEIGHT[cur["判定"]]:
+                merged[rid] = dict(r, 判定=verdict)
+            elif REVIEW_WEIGHT[verdict] == REVIEW_WEIGHT[cur["判定"]]:
+                cur["レビュアー"] = f"{cur.get('レビュアー','')}+{r.get('レビュアー','')}"
+    return merged
+
+
+def apply_reviews(verdicts: list[dict], reviews: dict[str, dict]) -> tuple[int, int, int]:
+    """レビュー結果を判定へ反映する。(取り下げ, 重複, 重要度) の件数を返す。
+
+    重複は**既存の根本原因キーへ寄せる**。新しいキーを作ってはいけない
+    （2026-08-22 実測: `__dup__<相手>` という固有キーを振ったところ、
+     すでに同じキーで畳まれていた組がほどけ、件数が114→118へ増えた）。
+    A→B と B→A の相互参照があるので、連結成分ごとに代表キーを1つ決める。
+    """
+    by_id = {(v.get("要求ID") or "").strip(): v for v in verdicts}
+    dropped = folded = resev = 0
+
+    # まず取り下げ。取り下げたものは畳む対象から外す。
+    for rid, rv in reviews.items():
+        v = by_id.get(rid)
+        if not v or v.get("判定") not in FOLDABLE or rv["判定"] != "OVER_REPORT":
+            continue
+        who, why = rv.get("レビュアー", "review"), (rv.get("理由") or "").strip()
+        v["判定"] = "OUT_OF_SCOPE"
+        v["判定根拠"] = f"[gate7/{who}] 規約により対象外。{why} " + (v.get("判定根拠") or "")
+        dropped += 1
+
+    # 重複は連結成分にまとめ、成分ごとに1つの既存キーへ寄せる。
+    parent: dict[str, str] = {}
+
+    def find(x: str) -> str:
+        parent.setdefault(x, x)
+        while parent[x] != x:
+            parent[x] = parent[parent[x]]
+            x = parent[x]
+        return x
+
+    def union(a: str, b: str) -> None:
+        ra, rb = find(a), find(b)
+        if ra != rb:
+            parent[rb] = ra
+
+    pairs: list[tuple[str, str]] = []
+    for rid, rv in reviews.items():
+        if rv["判定"] != "DUPLICATE":
+            continue
+        target = (rv.get("畳む先") or "").strip()
+        v, t = by_id.get(rid), by_id.get(target)
+        if not (v and t) or v.get("判定") not in FOLDABLE or t.get("判定") not in FOLDABLE:
+            continue
+        union(rid, target)
+        pairs.append((rid, target))
+
+    comps: dict[str, list[str]] = {}
+    for rid in {x for p in pairs for x in p}:
+        comps.setdefault(find(rid), []).append(rid)
+    for members in comps.values():
+        # 代表キーは、成分の中で最も要求IDが小さいものが持つ既存キー。
+        members.sort()
+        canon = (by_id[members[0]].get("根本原因") or "").strip()
+        if not canon:
+            continue
+        for rid in members[1:]:
+            v = by_id[rid]
+            if (v.get("根本原因") or "").strip() == canon:
+                continue
+            rv = reviews[rid]
+            who, why = rv.get("レビュアー", "review"), (rv.get("理由") or "").strip()
+            v["根本原因"] = canon
+            v["判定根拠"] = (f"[gate7/{who}] {members[0]} と同じ実装欠陥として畳む。{why} "
+                          + (v.get("判定根拠") or ""))
+            folded += 1
+
+    for rid, rv in reviews.items():
+        v = by_id.get(rid)
+        if not v or v.get("判定") not in FOLDABLE or rv["判定"] != "OVER_SEVERE":
+            continue
+        sev = (rv.get("提案重要度") or "").strip()
+        if sev in SEVERITY_LEVELS:
+            who, why = rv.get("レビュアー", "review"), (rv.get("理由") or "").strip()
+            v["重要度"] = sev
+            v["判定根拠"] = f"[gate7/{who}] 重要度を {sev} へ。{why} " + (v.get("判定根拠") or "")
+            resev += 1
+    return dropped, folded, resev
+
+
 def cmd_build(doc_key: str, partial: bool = False) -> None:
     outdir = AUDIT_DIR / doc_key
     req_path, ver_path = outdir / "requirements.tsv", outdir / "verdicts.tsv"
@@ -948,6 +1077,15 @@ def cmd_build(doc_key: str, partial: bool = False) -> None:
 
     if policy_star:
         print(f"[policy] ★識別IDずれ {policy_star}件を自動で対象外にした")
+
+    # --- ゲート7: レビュー結果を適用する（判定が割れたら重いほうを採る） ---
+    reviews = load_reviews(outdir)
+    if reviews:
+        d, f_, r_ = apply_reviews(verdicts, reviews)
+        who = sorted({x.strip() for rv in reviews.values()
+                      for x in (rv.get("レビュアー") or "").split("+") if x.strip()})
+        print(f"[gate7] レビュー {len(reviews)}件を適用（{'/'.join(who) or '不明'}）: "
+              f"取り下げ {d} / 重複として畳む {f_} / 重要度の修正 {r_}")
 
     head = impl_head()
     # TSV の列は利用者指示（2026-08-20）で絞る。

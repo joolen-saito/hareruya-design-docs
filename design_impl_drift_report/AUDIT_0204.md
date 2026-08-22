@@ -12,28 +12,28 @@
 | 判定 | 意味 | 件数 | 掲載 |
 | --- | --- | ---: | :---: |
 | 未実装 | 設計の要求に対応する実装が無い | 114 | ○ |
-| 実装違い | 実装はあるが設計と違う | 125 | ○ |
-| 設計裁定待ち | 正本内部で記述が矛盾し設計裁定待ち | 30 | — |
+| 実装違い | 実装はあるが設計と違う | 123 | ○ |
+| 設計裁定待ち | 正本内部で記述が矛盾し設計裁定待ち | 28 | — |
 | 設計どおり | 設計どおり実装されている | 2447 | — |
-| 対象外 | 見出し・表示メッセージ節など実装対象の記述でない | 1235 | — |
+| 対象外 | 見出し・表示メッセージ節など実装対象の記述でない | 1239 | — |
 | 確定不能 | 実データ・実行時挙動に依存し静的解析では確定できない | 17 | — |
 | **合計** | | **3968** | |
 
-## 不具合 105件（P1 5 / P2 53 / P3 47）
+## 不具合 104件（P1 5 / P2 48 / P3 51）
 
 - **P1**: 業務が回らず商売が止まる、またはデータの整合性が壊れる。手作業でも代替できない
 - **P2**: 迂回すれば回る。手作業・再実行・別経路で業務は完了できるが、コア業務の正しさ・効率、または顧客体験を損なう
 - **P3**: 業務は回る。業務の完了・データ・判断に影響しない（見出し・ボタン文言・列名の相違／並び順・桁区切りの相違など）
 
-実装実態が同一の指摘 117件は重複として代表へ折り畳んだ（判定そのものは 222件。折り畳んだ要求IDは各指摘の「同じ実装実態でまとまる要求」に全件を書く）。
+実装実態が同一の指摘 123件は重複として代表へ折り畳んだ（判定そのものは 227件。折り畳んだ要求IDは各指摘の「同じ実装実態でまとまる要求」に全件を書く）。
 
 | 要求ID | 機能 | 区分 | 種別 | 重要度 | 内容 |
 | --- | --- | --- | --- | --- | --- |
 | sheet-48-R049 | 高額商品価格変更CSVアップロード | 実装違い | ふるまい | P1 | 高額対象の規格が無い行に当たったとき、その時点で取込を止め、それまでの行の価格更新も後続の行の更新も一切残らないこと。また削除済みの商品・規格は価格更新の対象にならないこと。 |
 | sheet-62-R011 | 別添資料__スマレジ連携機能一覧 | 未実装 | ふるまい | P1 | 買取・基準価格一括編集で更新した価格が、その場でスマレジ側の商品にも反映される |
 | sheet-62-R036 | 別添資料__スマレジ連携機能一覧 | 未実装 | ふるまい | P1 | 高額商品価格変更CSV登録で更新した価格がスマレジ側へ反映される |
-| sheet-62-R040 | 別添資料__スマレジ連携機能一覧 | 未実装 | ふるまい | P1 | 部門更新CSV登録で商品に設定した部門がスマレジ側の商品へ反映される |
 | sheet-66-R006 | 別添資料__スマレジ連携__呼び出しAPIについて | 未実装 | ふるまい | P1 | 商品を廃止したとき、その商品に紐づく規格がスマレジ側から取り除かれる |
+| sheet-66-R038 | 別添資料__スマレジ連携__呼び出しAPIについて | 未実装 | ふるまい | P1 | 部門更新CSV登録で商品に設定した部門が、スマレジ側の商品の部門にも反映される（常に更新として扱われる） |
 | sheet-11-R089 | グッズ商品CSV登録 | 実装違い | ふるまい | P2 | 商品カテゴリ(ID)列には、サプライ・グッズ／予約グッズ／情報商材の系統に属するカテゴリだけを受け付け、それ以外のカテゴリを指定した行はエラーにして取り込まない。 |
 | sheet-13-R039 | グッズ商品CSVフォーマット | 実装違い | IO | P2 | CSVの原価単価に設定した値が、取り込んだ商品に登録・更新される。 |
 | sheet-16-R024 | 売上分析タグ登録編集 | 実装違い | IO | P2 | 編集の画面を開いているときは、新規登録の入力欄へ戻す操作が画面にある。存在しない売上分析タグを指定した編集表示・保存は、画面を出さず・何も登録せず、見つからない旨の応答になる。 |
@@ -48,7 +48,6 @@
 | sheet-23-R103 | 買取・基準価格一括編集 | 未実装 | ふるまい | P2 | 登録が完了したとき、対象商品の商品情報が更新されたことが支店システムへ通知される。通知に失敗しても画面は完了のままとし、失敗した対象が連携エラーとして記録される。 |
 | sheet-27-R026 | タグ登録 | 未実装 | ふるまい | P2 | タイトル(日)に値があるとき、その値が日本語の商品検索ページのページタイトルとして表示される。 |
 | sheet-27-R041 | タグ登録 | 実装違い | ふるまい | P2 | 存在しないタグIDを指定して開いたときは、画面を返さず要求を受け付けない。 |
-| sheet-27-R052 | タグ登録 | 実装違い | ふるまい | P2 | 保存が完了すると、保存したタグの内容が入力欄に入った編集画面へ遷移する。 |
 | sheet-28-R036 | 略称タグ登録 | 未実装 | ふるまい | P2 | 既存の略称タグと同じ名称で保存しようとしたときは保存せず、一覧画面へ戻して失敗を知らせる。 |
 | sheet-3-R034 | 商品マスター(検索入力) | 実装違い | IO | P2 | 商品名(日/英)欄に語を入れて検索すると、日本語の商品名に一致する商品だけでなく、英語の商品名に一致する商品も結果に出る。 |
 | sheet-3-R037 | 商品マスター(検索入力) | 実装違い | IO | P2 | カード名欄に語を入れて検索すると、日本語のカード名に一致する商品だけでなく、英語のカード名に一致する商品も結果に出る。 |
@@ -57,17 +56,14 @@
 | sheet-32-R045 | 部門登録 | 実装違い | IO | P2 | 存在しない部門IDで編集画面を開こうとしたときは、その旨（見つかりません）の応答を返し、画面を出さない。 |
 | sheet-32-R050 | 部門登録 | 未実装 | ふるまい | P2 | 部門名または部門コードが既存の部門と同じ値のときは登録・更新せず、値が重複している旨を画面にエラー表示する。 |
 | sheet-34-R033 | 部門登録CSVアップロード | 未実装 | ふるまい | P2 | 同じファイルの中でID・部門名・部門コードが重複していたら、どの列の何行目かを示すエラーを出して1件も取り込まない。 |
-| sheet-36-R019 | 棚番登録 編集 | 実装違い | ふるまい | P2 | 存在しない棚番号IDを指定して編集画面を開こうとしたときは、ページが見つからない扱いになる。 |
-| sheet-36-R024 | 棚番登録 編集 | 実装違い | ふるまい | P2 | 棚番号の登録・更新が完了した後は、保存した棚番号が編集対象として読み込まれた画面（見出しが編集、名称と並び順に保存値が入った状態）が表示される。 |
+| sheet-36-R036 | 棚番登録 編集 | 実装違い | ふるまい | P2 | 存在しない棚番号を指定した要求に対しては、ページが見つからない扱いの応答を返す。 |
 | sheet-38-R009 | 購入グループ管理 | 実装違い | ふるまい | P2 | 予約商品フラグが立っている購入グループに属する商品は、フロントの買取一覧にも買取詳細にも出てこない。 |
-| sheet-39-R049 | 買取・販売価格履歴検索 | 実装違い | ふるまい | P2 | 買取/販売価格履歴画面を新たに開くと、前回の検索条件・ページ番号・表示件数は残らず、次の検索は既定の表示件数（10件）から始まる。 |
 | sheet-39-R061 | 買取・販売価格履歴検索 | 実装違い | ふるまい | P2 | 商品マスターの一覧から価格履歴を開いたときは、渡された商品（NM指定の導線では加えて状態）だけを条件に検索し、一覧は登録日時の新しい順、同じ日時では状態の昇順で並ぶ。 |
 | sheet-42-R047 | 基準価格変更CSVアップロード | 未実装 | IO | P2 | 基準価格変更CSVアップロード画面から低価格帯カード価格変更CSVを出力できる。 |
 | sheet-42-R060 | 基準価格変更CSVアップロード | 実装違い | ふるまい | P2 | 1行の買取価格が同じ行の基準価格（販売価格）を上回るときは、その行でエラーを表示して取込全体を打ち切り、価格を更新しない。 |
 | sheet-42-R071 | 基準価格変更CSVアップロード | 未実装 | ふるまい | P2 | 取込確定後、取り込んだ商品IDが重複を除いて支店システムへ通知される。 |
 | sheet-44-R006 | セール用価格変更CSVアップロード | 実装違い | ふるまい | P2 | セールフラグを無効へ切り替えた商品規格の販売価格が、登録済の基準価格と同じ額になること。 |
 | sheet-44-R044 | セール用価格変更CSVアップロード | 実装違い | ふるまい | P2 | CSVの価格が反映されていない旨のアラートが画面に出たうえで、その取込自体は成功として扱われ、完了メッセージが出てCSVインポート履歴にも記録されること。 |
-| sheet-44-R066 | セール用価格変更CSVアップロード | 実装違い | ふるまい | P2 | CSV・TSV・テキスト・表計算のいずれでもない種類のファイルをアップロードしたとき、取込を行わずに同じ画面へ戻ること。 |
 | sheet-44-R100 | セール用価格変更CSVアップロード | 未実装 | ふるまい | P2 | 取込が成功したとき、取り込んだ商品が重複なくまとめて支店システムへ通知され、支店側に価格の変更が伝わること。 |
 | sheet-45-R007 | セール用価格変更CSVフォーマット | 実装違い | IO | P2 | セールフラグを空欄にした行はエラーとして扱われ、その行の販売価格・買取価格・セールフラグは更新されない。 |
 | sheet-45-R022 | セール用価格変更CSVフォーマット | 実装違い | ふるまい | P2 | セール用価格変更CSVの取込で価格が変わり連携条件を満たすようになった商品規格は、スマレジ連携の対象（連携フラグ有効）になる。 |
@@ -79,16 +75,14 @@
 | sheet-6-R024 | セール用価格変更CSV出力 | 実装違い | IO | P2 | セール用価格変更CSVの1行は状態NMの規格1件に対応し、状態がNM以外の規格は行として出力されない。規格があっても状態NMの規格が1件も無い商品は行が出ない。 |
 | sheet-63-R016 | 別添資料__スマレジ連携__商品連携項目 | 実装違い | IO | P2 | スマレジの品番には、スマレジ商品コードではなくECCUBEの商品コードが入る。 |
 | sheet-63-R044 | 別添資料__スマレジ連携__商品連携項目 | 実装違い | ふるまい | P2 | 商品編集の商品削除でも、スマレジ側の該当商品が削除される。 |
-| sheet-65-R010 | 別添資料__スマレジ連携対象商品 | 実装違い | ふるまい | P2 | シングルカードの自動判定は基準価格が300円以上かつ状態がSP・MP・HP・その他規格のときにスマレジ連携フラグがONになること。 |
 | sheet-65-R013 | 別添資料__スマレジ連携対象商品 | 実装違い | ふるまい | P2 | いったんONになったスマレジ連携フラグは、手動でOFFにしない限り、その後に連携条件を満たさなくなってもONのままで連携が続くこと。 |
 | sheet-65-R016 | 別添資料__スマレジ連携対象商品 | 実装違い | ふるまい | P2 | 商品の状態が公開・非公開のいずれでも連携対象になり、非公開にしただけでスマレジ連携が外れないこと。 |
-| sheet-65-R017 | 別添資料__スマレジ連携対象商品 | 実装違い | ふるまい | P2 | 連携対象は状態が公開または非公開の商品規格に限られ、廃止になった商品規格はスマレジから外れること。 |
+| sheet-65-R037 | 別添資料__スマレジ連携対象商品 | 実装違い | ふるまい | P2 | カード商品CSV取込の自動判定は基準価格が300円以上かつ状態がSP・MP・HP・その他規格のときにスマレジ連携フラグがONになること。 |
 | sheet-65-R052 | 別添資料__スマレジ連携対象商品 | 実装違い | ふるまい | P2 | 基準価格変更CSVでシングルカードの基準価格を閾値以上に上げたとき、スマレジ連携フラグがONになり連携対象に入ること。 |
 | sheet-65-R076 | 別添資料__スマレジ連携対象商品 | 実装違い | IO | P2 | カード商品CSVで新規登録した状態NM以外の商品規格の部門が「ショーケース品」になり、その部門でスマレジに登録されること。 |
 | sheet-8-R023 | カード商品CSV登録 | 実装違い | ふるまい | P2 | 新規登録行では、CSVの「基準価格」の値が商品規格の基準価格と販売価格の双方に反映される（セール外と同じ扱い）。 |
 | sheet-8-R068 | カード商品CSV登録 | 未実装 | ふるまい | P2 | CSVファイルのアップロードボタンを押下すると確認モーダルが表示され、利用者が確認したうえで取込が始まる。 |
 | sheet-11-R069 | グッズ商品CSV登録 | 未実装 | IO | P3 | CSVインポート履歴の一覧の上に、該当する履歴の全件数を表示する。 |
-| sheet-12-R081 | グッズ商品CSV出力 | 実装違い | IO | P3 | グッズ商品CSVの「発送日目安(ID)」列には、規格に設定された発送日目安の名称を出力する。 |
 | sheet-16-R030 | 売上分析タグ登録編集 | 実装違い | IO | P3 | 保存が通ったあとの画面では、いま保存した売上分析タグの名称と並び順が入力欄に入った状態で表示される。 |
 | sheet-19-R038 | 商品公開CSV登録 | 実装違い | IO | P3 | 雛形をダウンロードしたとき、保存されるファイルの名前が product_status.csv になる。 |
 | sheet-19-R040 | 商品公開CSV登録 | 実装違い | ふるまい | P3 | 取込ファイルの見出しや値にゼロ幅スペースが混じっていても、混じっていない場合と同じように取り込める。 |
@@ -104,6 +98,7 @@
 | sheet-25-R073 | カテゴリ登録 | 実装違い | IO | P3 | サブカテゴリ名のリンクを押すと、そのカテゴリの登録内容が入った編集画面が開く |
 | sheet-25-R088 | カテゴリ登録 | 実装違い | IO | P3 | 上限（5）と同じ階層になるカテゴリでは入力欄と保存ボタンを表示せず、編集も子カテゴリ作成も本画面からできない |
 | sheet-25-R095 | カテゴリ登録 | 実装違い | IO | P3 | 編集中のカテゴリは兄弟カテゴリ一覧で編集への入口が出ず、編集中であることが分かる表示になる |
+| sheet-27-R052 | タグ登録 | 実装違い | ふるまい | P3 | 保存が完了すると、保存したタグの内容が入力欄に入った編集画面へ遷移する。 |
 | sheet-27-R057 | タグ登録 | 実装違い | ふるまい | P3 | タグの削除は、ID 8 以上の登録済みタグに対してだけ受け付け、ID 7 以下のあらかじめ用意された固定タグは削除できない。 |
 | sheet-28-R016 | 略称タグ登録 | 実装違い | IO | P3 | 略称タグ一覧の件数は10件・50件・100件・300件・500件・1000件・2000件・10000件・12000件から選べる。 |
 | sheet-28-R028 | 略称タグ登録 | 実装違い | IO | P3 | 一覧のID・名称・並び順のいずれを押しても、その行の略称タグが入力欄へ読み込まれる。 |
@@ -115,14 +110,17 @@
 | sheet-32-R053 | 部門登録 | 実装違い | ふるまい | P3 | 部門の新規登録画面を開いた直後、MTGBuyer表示フラグはチェックが入った（表示する）状態で表示される。 |
 | sheet-36-R006 | 棚番登録 編集 | 実装違い | IO | P3 | 並び順は必須で、0以上32767以下の値だけを登録・更新できる。範囲を外れた値を送ったときは登録されず、入力の誤りとして知らされる。 |
 | sheet-36-R011 | 棚番登録 編集 | 実装違い | ふるまい | P3 | 一覧の並び順欄を押すと、その行の名称と並び順が入力欄に読み込まれ編集できる状態になる。 |
+| sheet-36-R024 | 棚番登録 編集 | 実装違い | ふるまい | P3 | 棚番号の登録・更新が完了した後は、保存した棚番号が編集対象として読み込まれた画面（見出しが編集、名称と並び順に保存値が入った状態）が表示される。 |
 | sheet-37-R005 | 棚番号CSVフォーマット | 実装違い | IO | P3 | 棚番号登録CSVの並び順は0〜32767の整数だけを受け付け、範囲を超える値が書かれた行はエラーとして取り込まない。 |
 | sheet-38-R029 | 購入グループ管理 | 実装違い | ふるまい | P3 | 購入グループを保存した後は、保存した購入グループが編集対象として読み込まれた状態の画面（見出しが編集、各入力欄に保存値が入った状態）が表示される。 |
 | sheet-38-R037 | 購入グループ管理 | 実装違い | IO | P3 | 購入グループに支払方法・配送方法が1件も登録されていない一覧行では、その欄は何も表示されない空欄になる。 |
 | sheet-39-R021 | 買取・販売価格履歴検索 | 実装違い | IO | P3 | Foil欄には『Foil』『ノーマル』『特殊』の3つのチェック項目が表示される。 |
+| sheet-39-R049 | 買取・販売価格履歴検索 | 実装違い | ふるまい | P3 | 買取/販売価格履歴画面を新たに開くと、前回の検索条件・ページ番号・表示件数は残らず、次の検索は既定の表示件数（10件）から始まる。 |
 | sheet-39-R063 | 買取・販売価格履歴検索 | 実装違い | IO | P3 | 画面から検索した一覧は、同じ商品規格の履歴がまとまって並び、その中で登録日時の新しい順に並ぶ。 |
 | sheet-39-R067 | 買取・販売価格履歴検索 | 実装違い | IO | P3 | ダウンロードされるCSVのファイル名が『product_buy_sale_price_history_』＋実行時刻（年月日時分秒）＋『.csv』になる。 |
 | sheet-42-R056 | 基準価格変更CSVアップロード | 実装違い | IO | P3 | 雛形ファイルのダウンロード名が simple_price.csv になる。 |
 | sheet-44-R054 | セール用価格変更CSVアップロード | 実装違い | IO | P3 | CSVファイル選択のボタンに ファイルを選択 と表示されること。 |
+| sheet-44-R066 | セール用価格変更CSVアップロード | 実装違い | ふるまい | P3 | CSV・TSV・テキスト・表計算のいずれでもない種類のファイルをアップロードしたとき、取込を行わずに同じ画面へ戻ること。 |
 | sheet-48-R038 | 高額商品価格変更CSVアップロード | 実装違い | IO | P3 | 雛形ファイルダウンロードで保存されるファイルの名前が simple_high_price.csv であること。 |
 | sheet-48-R041 | 高額商品価格変更CSVアップロード | 実装違い | IO | P3 | ファイルを選ばずにCSV取込を実行したとき、画面上部にCSVデータが無い旨のエラーが表示されること。 |
 | sheet-5-R087 | 商品登録編集 | 実装違い | ふるまい | P3 | サイズ・重量は0以上999999999以下だけを受け付け、9桁を超える値や負の値では商品を更新せずエラーを表示する。 |
@@ -134,6 +132,7 @@
 | sheet-58-R047 | カテゴリ登録CSVアップロード | 実装違い | IO | P3 | 雛形ファイルダウンロードで落ちてくるファイルの名前が category.csv であること。 |
 | sheet-65-R014 | 別添資料__スマレジ連携対象商品 | 未実装 | ふるまい | P3 | スマレジ連携フラグを自動でONにする金額の閾値を、プログラム改修なしに変更できること。 |
 | sheet-7-R058 | 商品情報カスタムCSV出力 | 未実装 | IO | P3 | 商品情報カスタムCSV出力の出力項目として「商品削除フラグ」を選べ、商品が削除済みかどうかを示す値が列に出力される。 |
+| sheet-9-R108 | カード商品CSV出力 | 実装違い | IO | P3 | カード商品CSVの「発送日目安(ID)」列には、規格に設定された発送日目安の名称を出力する（未設定のときは空文字）。 |
 
 ### sheet-48-R049 高額商品価格変更CSVアップロード — 実装違い／ふるまい／P1
 
@@ -154,7 +153,7 @@
 - 画像確認: 本シートは画像0枚（別添資料の表のみ）。レイアウト図は無く、表本文で判定した。
 - 実装参照: `src/Eccube/Controller/Admin/Product/ProductBulkUpdateBuyPriceController.php:85-120;src/Eccube/Service/Admin/Product/ProductBulkUpdateBuyPriceStoreAction.php:64-136`
 - 実装実態: 一括編集は買取価格・基準価格の履歴登録と商品規格の更新を行うだけで、スマレジ側へは何も送られない。
-- 同じ実装実態でまとまる要求: sheet-66-R018（別添資料__スマレジ連携__呼び出しAPIについて）、sheet-65-R047（別添資料__スマレジ連携対象商品 / 実装参照 `src/Eccube/Service/Admin/Product/ProductBulkUpdateBuyPriceStoreAction.php:65-137`）、sheet-65-R048（別添資料__スマレジ連携対象商品 / 実装参照 `src/Eccube/Service/Admin/Product/ProductBulkUpdateBuyPriceStoreAction.php:65-137`）、sheet-65-R050（別添資料__スマレジ連携対象商品 / 実装参照 `src/Eccube/Service/Admin/Product/ProductBulkUpdateBuyPriceStoreAction.php:65-137`）、sheet-65-R054（別添資料__スマレジ連携対象商品 / 実装参照 `src/Eccube/Service/Csv/Importer/Event/SimpleHighPriceImportHandler.php:75-100`）、sheet-66-R019（別添資料__スマレジ連携__呼び出しAPIについて）、sheet-66-R020（別添資料__スマレジ連携__呼び出しAPIについて）、sheet-66-R023（別添資料__スマレジ連携__呼び出しAPIについて）、sheet-68-R013（別添資料__スマレジ連携__機能改修一覧 / 実装参照 `src/Eccube/Service/Admin/Product/ProductBulkUpdateBuyPriceStoreAction.php:65-137`）、sheet-68-R014（別添資料__スマレジ連携__機能改修一覧 / 実装参照 `src/Eccube/Service/Admin/Product/ProductBulkUpdateBuyPriceStoreAction.php:65-137`）、sheet-68-R019（別添資料__スマレジ連携__機能改修一覧 / 実装参照 `src/Eccube/Service/Csv/Importer/Event/SimpleHighPriceImportHandler.php:75-100;src/Eccube/Controller/Admin/Product/Csv/ProductSimpleHighPriceCsvController.php:124-197`）、sheet-68-R020（別添資料__スマレジ連携__機能改修一覧 / 実装参照 `src/Eccube/Service/Csv/Importer/Event/SimpleHighPriceImportHandler.php:75-100`）
+- 同じ実装実態でまとまる要求: sheet-63-R015（別添資料__スマレジ連携__商品連携項目 / 実装参照 `src/Eccube/Service/Admin/Product/ProductBulkUpdateBuyPriceStoreAction.php:107-134; src/Eccube/Service/Csv/Importer/Event/SimpleHighPriceImportHandler.php:79-95; src/Eccube/Service/Csv/Importer/Event/SaleHighPriceImportHandler.php:140-158`）、sheet-66-R018（別添資料__スマレジ連携__呼び出しAPIについて）、sheet-65-R047（別添資料__スマレジ連携対象商品 / 実装参照 `src/Eccube/Service/Admin/Product/ProductBulkUpdateBuyPriceStoreAction.php:65-137`）、sheet-65-R048（別添資料__スマレジ連携対象商品 / 実装参照 `src/Eccube/Service/Admin/Product/ProductBulkUpdateBuyPriceStoreAction.php:65-137`）、sheet-65-R050（別添資料__スマレジ連携対象商品 / 実装参照 `src/Eccube/Service/Admin/Product/ProductBulkUpdateBuyPriceStoreAction.php:65-137`）、sheet-65-R054（別添資料__スマレジ連携対象商品 / 実装参照 `src/Eccube/Service/Csv/Importer/Event/SimpleHighPriceImportHandler.php:75-100`）、sheet-66-R019（別添資料__スマレジ連携__呼び出しAPIについて）、sheet-66-R020（別添資料__スマレジ連携__呼び出しAPIについて）、sheet-66-R023（別添資料__スマレジ連携__呼び出しAPIについて）、sheet-68-R013（別添資料__スマレジ連携__機能改修一覧 / 実装参照 `src/Eccube/Service/Admin/Product/ProductBulkUpdateBuyPriceStoreAction.php:65-137`）、sheet-68-R014（別添資料__スマレジ連携__機能改修一覧 / 実装参照 `src/Eccube/Service/Admin/Product/ProductBulkUpdateBuyPriceStoreAction.php:65-137`）、sheet-68-R019（別添資料__スマレジ連携__機能改修一覧 / 実装参照 `src/Eccube/Service/Csv/Importer/Event/SimpleHighPriceImportHandler.php:75-100;src/Eccube/Controller/Admin/Product/Csv/ProductSimpleHighPriceCsvController.php:124-197`）、sheet-68-R020（別添資料__スマレジ連携__機能改修一覧 / 実装参照 `src/Eccube/Service/Csv/Importer/Event/SimpleHighPriceImportHandler.php:75-100`）
 - 判定根拠: 実装位置 src/Eccube/Controller/Admin/Product/ProductBulkUpdateBuyPriceController.php:86（更新処理）と src/Eccube/Service/Admin/Product/ProductBulkUpdateBuyPriceStoreAction.php:64-136。両ファイルともスマレジ連携の呼び出しが無く、他のスマレジ連携箇所（src/Eccube/Controller/Admin/Product/ProductController.php:843, src/Eccube/Controller/Admin/Product/ProductClassController.php:403, src/Eccube/Controller/Admin/Product/Csv/ProductStandardPriceCsvController.php:169）のような投入も行われない。
 - 確信度: high
 
@@ -170,18 +169,6 @@
 - 判定根拠: 実装位置 src/Eccube/Controller/Admin/Product/Csv/ProductSimpleHighPriceCsvController.php:124（取込）と src/Eccube/Service/Csv/Importer/Event/SimpleHighPriceImportHandler.php。両者ともスマレジ連携の投入が無く、同種の他CSV（src/Eccube/Controller/Admin/Product/Csv/ProductStandardPriceCsvController.php:169, src/Eccube/Controller/Admin/Product/Csv/CardCsvController.php:219, src/Eccube/Controller/Admin/Product/Csv/GoodsCsvController.php:186, src/Eccube/Controller/Admin/Product/Csv/ProductPriceCsvController.php:170）にはある投入処理が欠けている。
 - 確信度: high
 
-### sheet-62-R040 別添資料__スマレジ連携機能一覧 — 未実装／ふるまい／P1
-
-- 正本: sheet-62（別添資料__スマレジ連携機能一覧） HTML行 7651 付近
-- 正本引用: 「38	商品CSV管理	部門更新CSV登録	現行踏襲	◯	即時	◯」
-- 設計期待値: 部門更新CSV登録で商品に設定した部門がスマレジ側の商品へ反映される
-- 画像確認: 本シートは画像0枚（別添資料の表のみ）。レイアウト図は無く、表本文で判定した。
-- 実装参照: `src/Eccube/Controller/Admin/Product/Csv/ProductSectionCsvController.php:124-200;src/Eccube/Service/Csv/Importer/Event/ProductSectionUpdateImportHandler.php:1-198`
-- 実装実態: 部門更新CSVの取込は商品側の部門を更新するだけで、スマレジ側へは何も送られない。
-- 同じ実装実態でまとまる要求: sheet-63-R015（別添資料__スマレジ連携__商品連携項目 / 実装参照 `src/Eccube/Service/Admin/Product/ProductBulkUpdateBuyPriceStoreAction.php:107-134; src/Eccube/Service/Csv/Importer/Event/SimpleHighPriceImportHandler.php:79-95; src/Eccube/Service/Csv/Importer/Event/SaleHighPriceImportHandler.php:140-158`）、sheet-66-R038（別添資料__スマレジ連携__呼び出しAPIについて）、sheet-63-R010（別添資料__スマレジ連携__商品連携項目 / 実装参照 `src/Eccube/Service/Csv/Importer/Event/ProductSectionUpdateImportHandler.php:87; src/Eccube/Service/Csv/Importer/Event/ProductSectionUpdateImportHandler.php:152-170`）、sheet-65-R045（別添資料__スマレジ連携対象商品 / 実装参照 `src/Eccube/Service/Csv/Importer/Event/ProductSectionUpdateImportHandler.php:186-197;src/Eccube/Repository/ProductClassRepository.php:2179-2188`）、sheet-65-R080（別添資料__スマレジ連携対象商品 / 実装参照 `src/Eccube/Service/Csv/Importer/Event/ProductSectionUpdateImportHandler.php:186-197;src/Eccube/Service/Admin/Product/ProductClassUpdateAction.php:100-110`）、sheet-68-R023（別添資料__スマレジ連携__機能改修一覧 / 実装参照 `src/Eccube/Service/Csv/Importer/Event/ProductSectionUpdateImportHandler.php:180-197;src/Eccube/Controller/Admin/Product/Csv/ProductSectionCsvController.php:150-200`）
-- 判定根拠: 実装位置 src/Eccube/Controller/Admin/Product/Csv/ProductSectionCsvController.php:124（取込）と src/Eccube/Service/Csv/Importer/Event/ProductSectionUpdateImportHandler.php。両者ともスマレジ連携の投入が無い。部門マスタ側のCSV取込（src/Eccube/Service/Csv/Importer/Event/SectionMasterImportHandler.php:80-88）には連携があるのと対照的である。
-- 確信度: high
-
 ### sheet-66-R006 別添資料__スマレジ連携__呼び出しAPIについて — 未実装／ふるまい／P1
 
 - 正本: sheet-66（別添資料__スマレジ連携__呼び出しAPIについて） HTML行 7893 付近
@@ -190,7 +177,20 @@
 - 画像確認: 本シートは画像0枚（別添資料の表のみ）。レイアウト図は無く、表本文で判定した。
 - 実装参照: `src/Eccube/Controller/Admin/Product/ProductController.php:1077-1150;src/Eccube/Controller/Admin/Product/ProductController.php:1461-1520`
 - 実装実態: 商品の削除でも公開ステータスを廃止に変更する一括操作でも、紐づく規格のスマレジ側削除は行われない。スマレジ側の削除が投入されるのは規格単位の削除・非表示化だけ。
-- 判定根拠: 実装位置 src/Eccube/Controller/Admin/Product/ProductController.php:1078（商品削除）と src/Eccube/Controller/Admin/Product/ProductController.php:1461-1520（公開ステータス一括変更）。どちらにもスマレジ削除の投入が無い。削除投入は src/Eccube/Controller/Admin/Product/ProductClassController.php:432-484 と src/Eccube/Service/Admin/Product/ProductClassDeleteAction.php:54-76 の規格単位の経路のみで、送信は src/Eccube/MessageHandler/SmaregiProductClassDeleteMessageHandler.php:90。
+- 同じ実装実態でまとまる要求: sheet-65-R017（別添資料__スマレジ連携対象商品 / 実装参照 `src/Eccube/Service/Admin/Product/ProductClassUpdateAction.php:57-64;src/Eccube/Service/Admin/Product/ProductClassUpdateAction.php:100-110;src/Eccube/MessageHandler/SmaregiProductClassUpsertMessageHandler.php:80-92`）、sheet-65-R057（別添資料__スマレジ連携対象商品 / 実装参照 `src/Eccube/Controller/Admin/Product/ProductController.php:760-856;src/Eccube/Controller/Admin/Product/ProductController.php:1459-1520`）、sheet-65-R058（別添資料__スマレジ連携対象商品 / 実装参照 `src/Eccube/Service/Admin/Product/ProductClassUpdateAction.php:57-110`）、sheet-65-R059（別添資料__スマレジ連携対象商品 / 実装参照 `src/Eccube/Service/Csv/Importer/Event/ProductCardImportHandler.php:688-694;src/Eccube/Service/Csv/Importer/Event/ProductCardImportHandler.php:941-954`）、sheet-65-R060（別添資料__スマレジ連携対象商品 / 実装参照 `src/Eccube/Service/Csv/Importer/Event/ProductGoodsImportHandler.php:578-615`）
+- 判定根拠: [gate7/refute+codex] sheet-65-R057 と同じ実装欠陥として畳む。実装事実自体は正しい（src/Eccube/Controller/Admin/Product/ProductController.php:1077-1150 の商品削除、同:1461-1520 の bulkProductStatus のいずれにもスマレジ削除投入が無く、grep の結果 dispatchDeleteMessage の呼び出しは src/Eccube/Service/Admin/Pr 実装位置 src/Eccube/Controller/Admin/Product/ProductController.php:1078（商品削除）と src/Eccube/Controller/Admin/Product/ProductController.php:1461-1520（公開ステータス一括変更）。どちらにもスマレジ削除の投入が無い。削除投入は src/Eccube/Controller/Admin/Product/ProductClassController.php:432-484 と src/Eccube/Service/Admin/Product/ProductClassDeleteAction.php:54-76 の規格単位の経路のみで、送信は src/Eccube/MessageHandler/SmaregiProductClassDeleteMessageHandler.php:90。
+- 確信度: high
+
+### sheet-66-R038 別添資料__スマレジ連携__呼び出しAPIについて — 未実装／ふるまい／P1
+
+- 正本: sheet-66（別添資料__スマレジ連携__呼び出しAPIについて） HTML行 7925 付近
+- 正本引用: 「必ず更新となる」
+- 設計期待値: 部門更新CSV登録で商品に設定した部門が、スマレジ側の商品の部門にも反映される（常に更新として扱われる）
+- 画像確認: 本シートは画像0枚（別添資料の表のみ）。レイアウト図は無く、表本文で判定した。
+- 実装参照: `src/Eccube/Controller/Admin/Product/Csv/ProductSectionCsvController.php:124-200;src/Eccube/Service/Csv/Importer/Event/ProductSectionUpdateImportHandler.php:1-198`
+- 実装実態: 部門更新CSVの取込は商品側の部門を更新するだけで、スマレジ側へは何も送られない。
+- 同じ実装実態でまとまる要求: sheet-62-R040（別添資料__スマレジ連携機能一覧）、sheet-63-R010（別添資料__スマレジ連携__商品連携項目 / 実装参照 `src/Eccube/Service/Csv/Importer/Event/ProductSectionUpdateImportHandler.php:87; src/Eccube/Service/Csv/Importer/Event/ProductSectionUpdateImportHandler.php:152-170`）、sheet-65-R045（別添資料__スマレジ連携対象商品 / 実装参照 `src/Eccube/Service/Csv/Importer/Event/ProductSectionUpdateImportHandler.php:186-197;src/Eccube/Repository/ProductClassRepository.php:2179-2188`）、sheet-65-R080（別添資料__スマレジ連携対象商品 / 実装参照 `src/Eccube/Service/Csv/Importer/Event/ProductSectionUpdateImportHandler.php:186-197;src/Eccube/Service/Admin/Product/ProductClassUpdateAction.php:100-110`）、sheet-68-R023（別添資料__スマレジ連携__機能改修一覧 / 実装参照 `src/Eccube/Service/Csv/Importer/Event/ProductSectionUpdateImportHandler.php:180-197;src/Eccube/Controller/Admin/Product/Csv/ProductSectionCsvController.php:150-200`）
+- 判定根拠: 実装位置 src/Eccube/Controller/Admin/Product/Csv/ProductSectionCsvController.php:124 と src/Eccube/Service/Csv/Importer/Event/ProductSectionUpdateImportHandler.php。どちらにもスマレジ連携の投入が無い。部門マスタ側のCSV取込（src/Eccube/Service/Csv/Importer/Event/SectionMasterImportHandler.php:80-88）には投入があるのと対照的である。
 - 確信度: high
 
 ### sheet-11-R089 グッズ商品CSV登録 — 実装違い／ふるまい／P2
@@ -353,17 +353,6 @@
 - 判定根拠: src/Eccube/Controller/Admin/Product/TagController.php:69-71 は該当タグが取れなかった場合と指定が無い場合を区別せず、どちらも新規タグとして画面を組み立てる。src/Eccube/Controller/Admin/Product/TagController.php:119-121 の登録処理も同様。存在しないIDでも受け付けを止める判定が無い。
 - 確信度: high
 
-### sheet-27-R052 タグ登録 — 実装違い／ふるまい／P2
-
-- 正本: sheet-27（タグ登録） HTML行 4325 付近
-- 正本引用: 「保存が完了したときは、保存したタグの編集画面へ遷移する。」
-- 設計期待値: 保存が完了すると、保存したタグの内容が入力欄に入った編集画面へ遷移する。
-- 画像確認: 画像16枚を確認。画像5(C7)=タグ登録フォーム全体（名称(日)/名称(英)/並び順/優先表示商品のみを表示/その他の設定/登録ボタン）、画像4(B38)=一覧(ID/名称(日)/名称(英)/並び順/編集)、画像1(AU36)=件数プルダウン、画像16(F46)=ページング、画像2/3/7/9/11ほかはフリーエリア(日/英)・優先表示商品・タイトル・説明の各ラベル。
-- 実装参照: `src/Eccube/Controller/Admin/Product/TagController.php:173;src/Eccube/Controller/Admin/Product/TagController.php:63-71`
-- 実装実態: 保存後に遷移する先はタグ登録/編集画面だが、保存したタグが編集対象として引き継がれず、入力欄が空の新規登録状態で表示される。続けて同じタグを直すには一覧から編集ボタンを押し直す必要がある。
-- 判定根拠: src/Eccube/Controller/Admin/Product/TagController.php:173 は保存したタグのIDを付けて戻しているが、遷移先の画面はIDを画面の経路から受け取る作りのため(src/Eccube/Controller/Admin/Product/TagController.php:63-67)、この形で渡したIDは編集対象として拾われない。結果として src/Eccube/Controller/Admin/Product/TagController.php:69-71 の新規登録扱いになる。
-- 確信度: high
-
 ### sheet-28-R036 略称タグ登録 — 未実装／ふるまい／P2
 
 - 正本: sheet-28（略称タグ登録） HTML行 4461 付近
@@ -457,27 +446,16 @@
 - 判定根拠: 部門マスタ取込は行ごとの形式チェックとID列の存在確認しか行わず（src/Eccube/Service/Csv/Importer/Event/SectionMasterImportHandler.php:103-132）、行をまたいだ検証は空で登録されている（src/Eccube/Service/Csv/Importer/Event/SectionMasterImportHandler.php:182-187）。同一ファイル内でID・部門名・部門コードが重複していても中止せず、そのまま登録・更新される（src/Eccube/Service/Csv/Importer/Event/SectionMasterImportHandler.php:134-165）。同種の取込（棚番号）には重複エラーの用意がある（src/Eccube/Service/Csv/Importer/MessageStore.php:528-531）ため、部門だけ判定が無い。
 - 確信度: high
 
-### sheet-36-R019 棚番登録 編集 — 実装違い／ふるまい／P2
+### sheet-36-R036 棚番登録 編集 — 実装違い／ふるまい／P2
 
-- 正本: sheet-36（棚番登録 編集） HTML行 5132 付近
-- 正本引用: 「編集対象の指定が無いときは新規登録として空の入力欄を表示する。指定されたIDの棚番号が存在しないときはページが見つからない扱い（404）とする。」
-- 設計期待値: 存在しない棚番号IDを指定して編集画面を開こうとしたときは、ページが見つからない扱いになる。
+- 正本: sheet-36（棚番登録 編集） HTML行 5152 付近
+- 正本引用: 「失敗時出力 同じ画面の再表示とエラーメッセージ、または棚番号登録CSVアップロード画面への戻り。対象が存在しないときは404」
+- 設計期待値: 存在しない棚番号を指定した要求に対しては、ページが見つからない扱いの応答を返す。
 - 画像確認: sheet-36_img1.png（棚番号一覧画面。上部に CSV出力／CSV入力、新規追加の名称・並び順欄と登録ボタン、一覧の ID／名称／並び順・編集・削除、img3 のページャ、img4 の10件セレクタを確認）
 - 実装参照: `src/Eccube/Controller/Admin/Product/ShelfNumberController.php:70-79`
-- 実装実態: 編集対象の指定が無いときは空の入力欄を表示する点は一致するが、存在しないIDを指定しても404にならず、新規登録の空フォームを付けた一覧画面が正常応答で返る。
-- 同じ実装実態でまとまる要求: sheet-36-R036（棚番登録 編集）
-- 判定根拠: src/Eccube/Controller/Admin/Product/ShelfNumberController.php:74 の引数が null 許容のため、該当する棚番号が見つからないときも例外にならず src/Eccube/Controller/Admin/Product/ShelfNumberController.php:76-78 で新規の空データに差し替わる。削除側（src/Eccube/Controller/Admin/Product/ShelfNumberController.php:196-198）は明示的に見つからない扱いにしており、表示側だけ抜けている。
-- 確信度: high
-
-### sheet-36-R024 棚番登録 編集 — 実装違い／ふるまい／P2
-
-- 正本: sheet-36（棚番登録 編集） HTML行 5138 付近
-- 正本引用: 「3 上記を満たす 登録完了を表示し、保存した棚番号を編集対象とした画面へ戻る」
-- 設計期待値: 棚番号の登録・更新が完了した後は、保存した棚番号が編集対象として読み込まれた画面（見出しが編集、名称と並び順に保存値が入った状態）が表示される。
-- 画像確認: sheet-36_img1.png（棚番号一覧画面。上部に CSV出力／CSV入力、新規追加の名称・並び順欄と登録ボタン、一覧の ID／名称／並び順・編集・削除、img3 のページャ、img4 の10件セレクタを確認）
-- 実装参照: `src/Eccube/Controller/Admin/Product/ShelfNumberController.php:178-180`
-- 実装実態: 「登録が完了しました。」は表示されるが、戻り先が編集対象を持たない棚番号一覧画面になり、保存した棚番号は入力欄に読み込まれない（見出しも「新規追加」のままになる）。
-- 判定根拠: src/Eccube/Controller/Admin/Product/ShelfNumberController.php:180 の戻り先は src/Eccube/Controller/Admin/Product/ShelfNumberController.php:73 の一覧用URLで、パスに棚番号IDを持たないため付与したIDが画面に効かない。編集対象付きで戻るなら src/Eccube/Controller/Admin/Product/ShelfNumberController.php:72 の編集用URLでなければならない。
+- 実装実態: 同じ画面の再表示とエラーメッセージ、CSVアップロード画面への戻りは実装されているが、対象が存在しないときの見つからない扱いは削除処理だけで、編集画面の表示では効かず正常応答が返る。
+- 同じ実装実態でまとまる要求: sheet-36-R019（棚番登録 編集）
+- 判定根拠: src/Eccube/Controller/Admin/Product/ShelfNumberController.php:150-156 の再表示と src/Eccube/Controller/Admin/Product/ShelfNumberController.php:342 の戻りは一致。存在しないIDの扱いは src/Eccube/Controller/Admin/Product/ShelfNumberController.php:74-78 で新規扱いに落ちる（sheet-36-R019 と同じ欠陥）。
 - 確信度: high
 
 ### sheet-38-R009 購入グループ管理 — 実装違い／ふるまい／P2
@@ -490,17 +468,6 @@
 - 実装実態: 予約商品フラグが立った購入グループの商品でも、買取詳細画面は通常どおり表示される。買取一覧だけが除外されている。
 - 同じ実装実態でまとまる要求: sheet-38-R002（購入グループ管理）
 - 判定根拠: src/Eccube/Service/UniSearch/UniSearchService.php:123 と src/Eccube/Service/UniSearch/UniSearchService.php:194-196 で買取一覧は除外している。買取詳細が使う src/Eccube/Repository/ProductRepository.php:198-205 には購入グループの予約商品フラグによる除外条件が無い（sheet-38-R002 と同じ欠陥）。
-- 確信度: high
-
-### sheet-39-R049 買取・販売価格履歴検索 — 実装違い／ふるまい／P2
-
-- 正本: sheet-39（買取・販売価格履歴検索） HTML行 5450 付近
-- 正本引用: 「空の検索フォームだけを表示し、一覧は表示しない。初期表示を開いた時点で、保持していた検索条件・ページ番号・表示件数は破棄される。表示件数は設定の既定値で始まる。」
-- 設計期待値: 買取/販売価格履歴画面を新たに開くと、前回の検索条件・ページ番号・表示件数は残らず、次の検索は既定の表示件数（10件）から始まる。
-- 画像確認: 画像1(B7 買取・販売価格履歴一覧の画面キャプチャ)で検索フォーム・検索結果一覧の全項目を確認。画像2は枠線のみで文言なし。
-- 実装参照: `src/Eccube/Controller/Admin/Product/BuySalePriceHistoryController.php:206-226;src/Eccube/Controller/Admin/SearchControllerTrait.php:154-166`
-- 実装実態: 初期表示は検索フォームだけを組み立てて返すが、前回の検索条件・ページ番号・表示件数は残ったままで、続けて検索すると前回選んだ表示件数（例: 500件）のまま結果が出る。
-- 判定根拠: src/Eccube/Controller/Admin/Product/BuySalePriceHistoryController.php:206-226 の初期表示は保持済みの検索条件・ページ番号・表示件数を消していない。src/Eccube/Controller/Admin/SearchControllerTrait.php:154-166 は保持値があればそれを優先して表示件数に使うため、既定値には戻らない。
 - 確信度: high
 
 ### sheet-39-R061 買取・販売価格履歴検索 — 実装違い／ふるまい／P2
@@ -571,18 +538,6 @@
 - 実装実態: アラートがエラーと同じ入れ物に積まれるため、取込結果がエラーありと判定される。その結果、完了メッセージが出ず、CSVインポート履歴にも記録されない。一方でデータベースの更新は確定するので、画面上は失敗に見えるのに価格は書き換わった状態になる。
 - 同じ実装実態でまとまる要求: sheet-44-R052（セール用価格変更CSVアップロード / 実装参照 `src/Eccube/Service/Csv/Importer/Event/ProductPriceImportHandler.php:341;src/Eccube/Service/Csv/Importer/CsvImporter.php:283;src/Eccube/Controller/Admin/Product/Csv/ProductPriceCsvController.php:182-194`）、sheet-61-R083（別添資料_CSVアップロードによる基準価格と販売価格の更新 / 実装参照 `src/Eccube/Service/Csv/Importer/Event/ProductPriceImportHandler.php:334;src/Eccube/Service/Csv/Importer/MessageStore.php:85-90;src/Eccube/Controller/Admin/Product/Csv/ProductPriceCsvController.php:182-188`）、sheet-61-R112（別添資料_CSVアップロードによる基準価格と販売価格の更新 / 実装参照 `src/Eccube/Service/Csv/Importer/Event/ProductPriceImportHandler.php:334;src/Eccube/Service/Csv/Importer/MessageStore.php:85-90;src/Eccube/Controller/Admin/Product/Csv/ProductPriceCsvController.php:182-188`）
 - 判定根拠: src/Eccube/Service/Csv/Importer/Event/ProductPriceImportHandler.php:334 はアラートを addMessage（エラー側）で積んでいる（情報側は src/Eccube/Service/Csv/Importer/MessageStore.php:100-105 の addInfo）。src/Eccube/Service/Csv/Importer/CsvImporter.php:283 でエラー配列に入り、src/Eccube/Controller/Admin/Product/Csv/ProductPriceCsvController.php:182-186 のエラー分岐に落ちるため src/Eccube/Controller/Admin/Product/Csv/ProductPriceCsvController.php:188-194 の完了メッセージと履歴登録が実行されない。一方 src/Eccube/Service/Csv/Importer/CsvImporter.php:270-272 では hasBreak が偽なのでコミットされる。
-- 確信度: high
-
-### sheet-44-R066 セール用価格変更CSVアップロード — 実装違い／ふるまい／P2
-
-- 正本: sheet-44（セール用価格変更CSVアップロード） HTML行 5968 付近
-- 正本引用: 「ファイルが選ばれていない、ファイルの大きさが上限を超える、ファイルの種類がCSV・TSV・テキスト・表計算のいずれでもない、のいずれかに当たるときは取込を行わず、同じ画面を再表示する。」
-- 設計期待値: CSV・TSV・テキスト・表計算のいずれでもない種類のファイルをアップロードしたとき、取込を行わずに同じ画面へ戻ること。
-- 画像確認: レイアウト図(sheet-44_img1.png)を確認。画面上に該当する表示は無く、取込処理の内部仕様のため図からは判定できない。
-- 実装参照: `src/Eccube/Form/Type/Admin/CsvImportType.php:48-58;src/Eccube/Resource/template/admin/Product/base_csv_upload.twig:20`
-- 実装実態: アップロードされたファイルの種類を検査していないため、CSV以外の種類のファイルでも取込処理に進む。ファイル未選択とサイズ超過は取込に進まない点は設計どおり。
-- 同じ実装実態でまとまる要求: sheet-52-R022（部門更新CSV登録 / 実装参照 `src/Eccube/Form/Type/Admin/CsvImportType.php:48-58`）
-- 判定根拠: src/Eccube/Form/Type/Admin/CsvImportType.php:52-57 の検査は未入力とサイズ上限だけで、ファイル種類の検査が無い。src/Eccube/Resource/template/admin/Product/base_csv_upload.twig:20 の accept 指定は画面側の候補絞り込みにすぎず、送信されたファイルの種類は検査されない。
 - 確信度: high
 
 ### sheet-44-R100 セール用価格変更CSVアップロード — 未実装／ふるまい／P2
@@ -713,18 +668,6 @@
 - 判定根拠: 正本は「商品削除できる機能」として商品編集・規格登録・カード商品CSV登録・グッズ商品CSV登録に〇を付けている。ee で削除連携があるのは規格登録経路だけで、商品編集から商品を消すとスマレジ側に商品が残り、POSで販売できる状態が続く。カード/グッズCSVには削除手段自体が無いためその2列は判断を保留し、商品編集の欠落のみを指摘する。
 - 確信度: high
 
-### sheet-65-R010 別添資料__スマレジ連携対象商品 — 実装違い／ふるまい／P2
-
-- 正本: sheet-65（別添資料__スマレジ連携対象商品） HTML行 7809 付近
-- 正本引用: 「・基準価格が300円以上かつ状態がSP、MP、HP、その他規格である場合は自動でスマレジ連携フラグがONになる」
-- 設計期待値: シングルカードの自動判定は基準価格が300円以上かつ状態がSP・MP・HP・その他規格のときにスマレジ連携フラグがONになること。
-- 画像確認: 本シートに画像は0枚（別添資料のためレイアウト図なし）。
-- 実装参照: `src/Eccube/Service/Csv/Importer/Event/ProductCardImportHandler.php:688-694;src/Eccube/Service/Csv/Importer/Event/ProductCardImportHandler.php:941-954`
-- 実装実態: 自動判定に渡しているのは基準価格ではなく販売価格（商品の割引率を掛けた値）で、基準価格が300円以上でも販売価格が300円未満なら連携フラグがONにならない。
-- 同じ実装実態でまとまる要求: sheet-65-R037（別添資料__スマレジ連携対象商品）
-- 判定根拠: src/Eccube/Service/Csv/Importer/Event/ProductCardImportHandler.php:689 で $sellPrice = PriceUtil::discount($baseSellPrice, 割引率) を作り、src/Eccube/Service/Csv/Importer/Event/ProductCardImportHandler.php:691 でその販売価格を自動判定に渡している。基準価格は同じループの src/Eccube/Service/Csv/Importer/Event/ProductCardImportHandler.php:685-690 で $newStandardPrice として別に算出されており、判定には使われていない。
-- 確信度: high
-
 ### sheet-65-R013 別添資料__スマレジ連携対象商品 — 実装違い／ふるまい／P2
 
 - 正本: sheet-65（別添資料__スマレジ連携対象商品） HTML行 7812 付近
@@ -749,18 +692,15 @@
 - 判定根拠: src/Eccube/Service/Csv/Importer/Event/ProductCardImportHandler.php:944-946 と src/Eccube/Service/Csv/Importer/Event/ProductGoodsImportHandler.php:579-582 が DISPLAY_HIDE を廃止と同列に扱い、連携フラグを無効へ落としている。正本は非公開も連携対象と定めている。
 - 確信度: high
 
-### sheet-65-R017 別添資料__スマレジ連携対象商品 — 実装違い／ふるまい／P2
+### sheet-65-R037 別添資料__スマレジ連携対象商品 — 実装違い／ふるまい／P2
 
-- 正本: sheet-65（別添資料__スマレジ連携対象商品） HTML行 7816 付近
-- 正本引用: 「シングルカード以外　・連携対象の商品について、商品規格編集画面またはグッズ商品CSV登録画面でスマレジ連携フラグを手動で立てた商品規格のみ連携を行う
-共通の条件　・商品の状態が公開または非公開
-・商品規格の状態が公開または非公開」
-- 設計期待値: 連携対象は状態が公開または非公開の商品規格に限られ、廃止になった商品規格はスマレジから外れること。
+- 正本: sheet-65（別添資料__スマレジ連携対象商品） HTML行 7836 付近
+- 正本引用: 「基準価格が300円以上かつ状態がSP、MP、HP、その他規格である場合は自動でスマレジ連携フラグがONになる」
+- 設計期待値: カード商品CSV取込の自動判定は基準価格が300円以上かつ状態がSP・MP・HP・その他規格のときにスマレジ連携フラグがONになること。
 - 画像確認: 本シートに画像は0枚（別添資料のためレイアウト図なし）。
-- 実装参照: `src/Eccube/Service/Admin/Product/ProductClassUpdateAction.php:57-64;src/Eccube/Service/Admin/Product/ProductClassUpdateAction.php:100-110;src/Eccube/MessageHandler/SmaregiProductClassUpsertMessageHandler.php:80-92`
-- 実装実態: 商品規格を廃止にして保存しても、スマレジ連携フラグがONならそのまま連携（登録・更新）が行われ、スマレジ側から外れない。連携投入時にも商品規格の状態は見ていない。
-- 同じ実装実態でまとまる要求: sheet-65-R057（別添資料__スマレジ連携対象商品 / 実装参照 `src/Eccube/Controller/Admin/Product/ProductController.php:760-856;src/Eccube/Controller/Admin/Product/ProductController.php:1459-1520`）、sheet-65-R058（別添資料__スマレジ連携対象商品 / 実装参照 `src/Eccube/Service/Admin/Product/ProductClassUpdateAction.php:57-110`）、sheet-65-R059（別添資料__スマレジ連携対象商品 / 実装参照 `src/Eccube/Service/Csv/Importer/Event/ProductCardImportHandler.php:688-694;src/Eccube/Service/Csv/Importer/Event/ProductCardImportHandler.php:941-954`）、sheet-65-R060（別添資料__スマレジ連携対象商品 / 実装参照 `src/Eccube/Service/Csv/Importer/Event/ProductGoodsImportHandler.php:578-615`）
-- 判定根拠: src/Eccube/Service/Admin/Product/ProductClassUpdateAction.php:59-61 は在庫がある場合の廃止を止めるだけで、廃止として保存できた場合も src/Eccube/Service/Admin/Product/ProductClassUpdateAction.php:106 で通常どおり連携を投入する。src/Eccube/MessageHandler/SmaregiProductClassUpsertMessageHandler.php:80-92 の連携処理にも商品規格の状態による除外は無い。
+- 実装参照: `src/Eccube/Service/Csv/Importer/Event/ProductCardImportHandler.php:688-694;src/Eccube/Service/Csv/Importer/Event/ProductCardImportHandler.php:941-954`
+- 実装実態: 自動判定に渡しているのは基準価格ではなく販売価格（商品の割引率を掛けた値）で、基準価格が300円以上でも販売価格が300円未満ならフラグがONにならない。
+- 判定根拠: src/Eccube/Service/Csv/Importer/Event/ProductCardImportHandler.php:689 で算出した販売価格を src/Eccube/Service/Csv/Importer/Event/ProductCardImportHandler.php:691 で自動判定に渡している。基準価格 $newStandardPrice は src/Eccube/Service/Csv/Importer/Event/ProductCardImportHandler.php:685-690 で別に算出され判定に使われない。状態の条件（NM以外）は src/Eccube/Service/Csv/Importer/Event/ProductCardImportHandler.php:949 で一致している。
 - 確信度: high
 
 ### sheet-65-R052 別添資料__スマレジ連携対象商品 — 実装違い／ふるまい／P2
@@ -819,18 +759,6 @@
 - 同じ実装実態でまとまる要求: sheet-19-R029（商品公開CSV登録 / 実装参照 `src/Eccube/Resource/template/admin/Product/csv_import_history.twig:2-18`）
 - 判定根拠: 履歴一覧のテンプレートには表題・件数プルダウン・明細表・ページャしか無く、総件数を出す記述が無い（src/Eccube/Resource/template/admin/Product/csv_import_history.twig:1-20, src/Eccube/Resource/template/admin/Product/csv_import_history.twig:35-65）。画面を組み立てる側も総件数を渡していない（src/Eccube/Controller/Admin/Product/Csv/GoodsCsvController.php:113-128）。引用は画面構成表の識別ID 5 と 6 の2行を続けて採った（識別ID 5 の行は項目名だけで述語が無いため、同じ表の隣接行を含めた）。指摘の対象は識別ID 5『該当件数』のみ。
 - 確信度: high
-
-### sheet-12-R081 グッズ商品CSV出力 — 実装違い／IO／P3
-
-- 正本: sheet-12（グッズ商品CSV出力） HTML行 2563 付近
-- 正本引用: 「「発送日目安(ID)」列に入るのは発送日目安のIDではなく名称である。」
-- 設計期待値: グッズ商品CSVの「発送日目安(ID)」列には、規格に設定された発送日目安の名称を出力する。
-- 画像確認: sheet-12 はレイアウト図0枚（images/ に sheet-12_img* は無い）。列定義・文言・エラー時のふるまいはすべて本文で確認した。
-- 実装参照: `src/Eccube/Service/Csv/ProductGoodsCsv.php:161`
-- 実装実態: 発送日目安の識別子（数値）を出力しており、名称は出力されない。
-- 同じ実装実態でまとまる要求: sheet-9-R108（カード商品CSV出力 / 実装参照 `src/Eccube/Service/Csv/ProductCardCsv.php:163`）
-- 判定根拠: 「発送日目安(ID)」列の出力値が、設計の言う発送日目安の名称ではなく発送日目安の識別子になっている。現行実装（pf-eccube3 のグッズ商品CSV出力）は発送日目安マスタの表示名を書き出していた。同じ行の他の記述は設計どおり: タグIDは重複除去のうえカンマ連結（src/Eccube/Service/Csv/ProductGoodsCsv.php:108-112,142）、売上分析タグIDと商品画像ファイル名もカンマ連結（src/Eccube/Service/Csv/ProductGoodsCsv.php:117-120,141／src/Eccube/Service/Csv/ProductGoodsCsv.php:104-107,137）、カテゴリIDは空の値を除いてカンマ連結（src/Eccube/Service/Csv/ProductGoodsCsv.php:138、src/Eccube/Util/StringUtil.php:334-344）、「規格画像」は商品側の画像のファイル名（src/Eccube/Service/Csv/ProductGoodsCsv.php:137）、「略称タグ(ID)」は未設定のとき空文字（src/Eccube/Service/Csv/ProductGoodsCsv.php:140）。
-- 確信度: med
 
 ### sheet-16-R030 売上分析タグ登録編集 — 実装違い／IO／P3
 
@@ -1000,6 +928,17 @@
 - 判定根拠: 一覧行の描画は src/Eccube/Resource/template/admin/Product/category.twig:420-468 で、行ごとに編集中カテゴリと突き合わせる分岐が無い。表示データを組む src/Eccube/Controller/Admin/Product/CategoryController.php:615-634 でも編集対象は渡すが一覧側では使っていない。
 - 確信度: med
 
+### sheet-27-R052 タグ登録 — 実装違い／ふるまい／P3
+
+- 正本: sheet-27（タグ登録） HTML行 4325 付近
+- 正本引用: 「保存が完了したときは、保存したタグの編集画面へ遷移する。」
+- 設計期待値: 保存が完了すると、保存したタグの内容が入力欄に入った編集画面へ遷移する。
+- 画像確認: 画像16枚を確認。画像5(C7)=タグ登録フォーム全体（名称(日)/名称(英)/並び順/優先表示商品のみを表示/その他の設定/登録ボタン）、画像4(B38)=一覧(ID/名称(日)/名称(英)/並び順/編集)、画像1(AU36)=件数プルダウン、画像16(F46)=ページング、画像2/3/7/9/11ほかはフリーエリア(日/英)・優先表示商品・タイトル・説明の各ラベル。
+- 実装参照: `src/Eccube/Controller/Admin/Product/TagController.php:173;src/Eccube/Controller/Admin/Product/TagController.php:63-71`
+- 実装実態: 保存後に遷移する先はタグ登録/編集画面だが、保存したタグが編集対象として引き継がれず、入力欄が空の新規登録状態で表示される。続けて同じタグを直すには一覧から編集ボタンを押し直す必要がある。
+- 判定根拠: [gate7/refute+codex] 重要度を P3 へ。事実関係は正しい。src/Eccube/Controller/Admin/Product/TagController.php:173 は redirectToRoute('admin_product_tag', ['id' => ...]) だが、同:66（path '/product/tag'、defaults id=null）は id を経路に持たないためクエリ ?id=N として生成され、遷 src/Eccube/Controller/Admin/Product/TagController.php:173 は保存したタグのIDを付けて戻しているが、遷移先の画面はIDを画面の経路から受け取る作りのため(src/Eccube/Controller/Admin/Product/TagController.php:63-67)、この形で渡したIDは編集対象として拾われない。結果として src/Eccube/Controller/Admin/Product/TagController.php:69-71 の新規登録扱いになる。
+- 確信度: high
+
 ### sheet-27-R057 タグ登録 — 実装違い／ふるまい／P3
 
 - 正本: sheet-27（タグ登録） HTML行 4330 付近
@@ -1122,6 +1061,17 @@
 - 判定根拠: src/Eccube/Resource/template/admin/Product/shelf_number.twig:134-136 は数値をそのまま出力しており、src/Eccube/Resource/template/admin/Product/shelf_number.twig:129 や src/Eccube/Resource/template/admin/Product/shelf_number.twig:132 のようなリンクになっていない。
 - 確信度: high
 
+### sheet-36-R024 棚番登録 編集 — 実装違い／ふるまい／P3
+
+- 正本: sheet-36（棚番登録 編集） HTML行 5138 付近
+- 正本引用: 「3 上記を満たす 登録完了を表示し、保存した棚番号を編集対象とした画面へ戻る」
+- 設計期待値: 棚番号の登録・更新が完了した後は、保存した棚番号が編集対象として読み込まれた画面（見出しが編集、名称と並び順に保存値が入った状態）が表示される。
+- 画像確認: sheet-36_img1.png（棚番号一覧画面。上部に CSV出力／CSV入力、新規追加の名称・並び順欄と登録ボタン、一覧の ID／名称／並び順・編集・削除、img3 のページャ、img4 の10件セレクタを確認）
+- 実装参照: `src/Eccube/Controller/Admin/Product/ShelfNumberController.php:178-180`
+- 実装実態: 「登録が完了しました。」は表示されるが、戻り先が編集対象を持たない棚番号一覧画面になり、保存した棚番号は入力欄に読み込まれない（見出しも「新規追加」のままになる）。
+- 判定根拠: [gate7/refute+codex] 重要度を P3 へ。事実関係は反証できず成立する。src/Eccube/Controller/Admin/Product/ShelfNumberController.php:180 は `redirectToRoute('admin_product_shelf_number', ['id' => $ShelfNumber->getId()])` だが、同ファイル73行のルート `admin_product_shelf src/Eccube/Controller/Admin/Product/ShelfNumberController.php:180 の戻り先は src/Eccube/Controller/Admin/Product/ShelfNumberController.php:73 の一覧用URLで、パスに棚番号IDを持たないため付与したIDが画面に効かない。編集対象付きで戻るなら src/Eccube/Controller/Admin/Product/ShelfNumberController.php:72 の編集用URLでなければならない。
+- 確信度: high
+
 ### sheet-37-R005 棚番号CSVフォーマット — 実装違い／IO／P3
 
 - 正本: sheet-37（棚番号CSVフォーマット） HTML行 5208 付近
@@ -1166,6 +1116,17 @@
 - 判定根拠: src/Eccube/Form/Type/Admin/SearchProductType.php:164-174 の選択肢ラベルは src/Eccube/Resource/locale/messages.ja.yaml:2213-2215 に対応し、それぞれ『なし』『通常』『特殊』と定義されている。画像1でも該当欄は『Foil』『ノーマル』表記。
 - 確信度: med
 
+### sheet-39-R049 買取・販売価格履歴検索 — 実装違い／ふるまい／P3
+
+- 正本: sheet-39（買取・販売価格履歴検索） HTML行 5450 付近
+- 正本引用: 「空の検索フォームだけを表示し、一覧は表示しない。初期表示を開いた時点で、保持していた検索条件・ページ番号・表示件数は破棄される。表示件数は設定の既定値で始まる。」
+- 設計期待値: 買取/販売価格履歴画面を新たに開くと、前回の検索条件・ページ番号・表示件数は残らず、次の検索は既定の表示件数（10件）から始まる。
+- 画像確認: 画像1(B7 買取・販売価格履歴一覧の画面キャプチャ)で検索フォーム・検索結果一覧の全項目を確認。画像2は枠線のみで文言なし。
+- 実装参照: `src/Eccube/Controller/Admin/Product/BuySalePriceHistoryController.php:206-226;src/Eccube/Controller/Admin/SearchControllerTrait.php:154-166`
+- 実装実態: 初期表示は検索フォームだけを組み立てて返すが、前回の検索条件・ページ番号・表示件数は残ったままで、続けて検索すると前回選んだ表示件数（例: 500件）のまま結果が出る。
+- 判定根拠: [gate7/refute] 重要度を P3 へ。事実は正しい。src/Eccube/Controller/Admin/Product/BuySalePriceHistoryController.php:204-224 の indexInitialForm はフォームを組むだけでセッション（eccube.admin.product.buy_sale_price_history.search*）を一切消しておらず、src/Eccube/Contro src/Eccube/Controller/Admin/Product/BuySalePriceHistoryController.php:206-226 の初期表示は保持済みの検索条件・ページ番号・表示件数を消していない。src/Eccube/Controller/Admin/SearchControllerTrait.php:154-166 は保持値があればそれを優先して表示件数に使うため、既定値には戻らない。
+- 確信度: high
+
 ### sheet-39-R063 買取・販売価格履歴検索 — 実装違い／IO／P3
 
 - 正本: sheet-39（買取・販売価格履歴検索） HTML行 5464 付近
@@ -1209,6 +1170,18 @@
 - 実装実態: 同じ位置のボタンに 参照 と表示される。押下でOS標準のファイル選択ウィンドウが開く挙動は設計どおり。
 - 判定根拠: src/Eccube/Resource/template/admin/Product/base_csv_upload.twig:9-12 がファイル選択ボタンの表示文字に admin.common.browse を当てており、src/Eccube/Resource/locale/messages.ja.yaml:1751 でその文言は 参照 と定義されている。レイアウト図のラベルは ファイルを選択。
 - 確信度: med
+
+### sheet-44-R066 セール用価格変更CSVアップロード — 実装違い／ふるまい／P3
+
+- 正本: sheet-44（セール用価格変更CSVアップロード） HTML行 5968 付近
+- 正本引用: 「ファイルが選ばれていない、ファイルの大きさが上限を超える、ファイルの種類がCSV・TSV・テキスト・表計算のいずれでもない、のいずれかに当たるときは取込を行わず、同じ画面を再表示する。」
+- 設計期待値: CSV・TSV・テキスト・表計算のいずれでもない種類のファイルをアップロードしたとき、取込を行わずに同じ画面へ戻ること。
+- 画像確認: レイアウト図(sheet-44_img1.png)を確認。画面上に該当する表示は無く、取込処理の内部仕様のため図からは判定できない。
+- 実装参照: `src/Eccube/Form/Type/Admin/CsvImportType.php:48-58;src/Eccube/Resource/template/admin/Product/base_csv_upload.twig:20`
+- 実装実態: アップロードされたファイルの種類を検査していないため、CSV以外の種類のファイルでも取込処理に進む。ファイル未選択とサイズ超過は取込に進まない点は設計どおり。
+- 同じ実装実態でまとまる要求: sheet-52-R022（部門更新CSV登録 / 実装参照 `src/Eccube/Form/Type/Admin/CsvImportType.php:48-58`）
+- 判定根拠: [gate7/refute] 重要度を P3 へ。実装事実は正しい。src/Eccube/Form/Type/Admin/CsvImportType.php:47-56 の import_file 制約は Assert\NotBlank と Assert\File(['maxSize' => ...])（54-55行）だけで mimeTypes 指定が無く、ee 全体を grep しても CSV 取込系フォームに mimeTypes は無い（ある src/Eccube/Form/Type/Admin/CsvImportType.php:52-57 の検査は未入力とサイズ上限だけで、ファイル種類の検査が無い。src/Eccube/Resource/template/admin/Product/base_csv_upload.twig:20 の accept 指定は画面側の候補絞り込みにすぎず、送信されたファイルの種類は検査されない。
+- 確信度: high
 
 ### sheet-48-R038 高額商品価格変更CSVアップロード — 実装違い／IO／P3
 
@@ -1332,6 +1305,17 @@
 - 判定根拠: 設計は識別ID1〜99を出力項目として定義しているが、57「商品削除フラグ」だけが実装側の列定義に存在しない。出力列の台帳(app/DoctrineMigrations/Version20260804120000.php:48-155)と列定義(src/Eccube/Service/ProductAllCsv.php:177-757)の双方に該当ラベルが無く、残る98項目はすべて対応する列がある。商品・商品規格の項目定義(src/Eccube/Entity/Product.php:1-60, src/Eccube/Entity/ProductClass.php:1-60)にも削除フラグに当たる項目が無いため値の元も無い。重要度は、欠けるのが1列で他の98列の出力・後続業務は成立するためP3とした。
 - 確信度: high
 
+### sheet-9-R108 カード商品CSV出力 — 実装違い／IO／P3
+
+- 正本: sheet-9（カード商品CSV出力） HTML行 2193 付近
+- 正本引用: 「列名は(ID)だが、出力する値は規格に設定された発送日目安の名称。未設定のときは空文字」
+- 設計期待値: カード商品CSVの「発送日目安(ID)」列には、規格に設定された発送日目安の名称を出力する（未設定のときは空文字）。
+- 画像確認: sheet-9 はレイアウト図0枚（images/ に sheet-9_img* は無い）。文言・列定義は本文のみで確認。
+- 実装参照: `src/Eccube/Service/Csv/ProductCardCsv.php:163`
+- 実装実態: 発送日目安の識別子（数値）を出力しており、名称は出力されない。
+- 判定根拠: 規格ごとの列「発送日目安(ID)」の出力値が、設計の言う発送日目安の名称ではなく発送日目安の識別子になっている。現行実装（pf-eccube3 app/Plugin/HareruyaEc/Service/Csv/ProductCardCsv.php:465）はマスタの表示名を書き出していた。列自体はヘッダ定義 src/Eccube/Controller/Admin/Product/Csv/ProductCsvController.php:363 に存在し、未設定時に空文字になる点は設計どおり。
+- 確信度: med
+
 ## 掲載しなかった判定
 
 - 実装実態が空欄の判定 14件（正本内部の記述が食い違い、実装と突き合わせる前に設計裁定が要るもの）
@@ -1354,11 +1338,11 @@
 | sheet-7 | 商品情報カスタムCSV出力 | 105 | 1 | 0 | 0 | 104 |
 | sheet-8 | カード商品CSV登録 | 152 | 1 | 1 | 0 | 150 |
 | sheet-9 | カード商品CSV出力 | 114 | 0 | 1 | 0 | 113 |
-| sheet-10 | カード商品CSVフォーマット | 60 | 0 | 0 | 1 | 59 |
+| sheet-10 | カード商品CSVフォーマット | 60 | 0 | 0 | 0 | 60 |
 | sheet-11 | グッズ商品CSV登録 | 136 | 2 | 1 | 0 | 133 |
-| sheet-12 | グッズ商品CSV出力 | 93 | 0 | 1 | 0 | 92 |
+| sheet-12 | グッズ商品CSV出力 | 93 | 0 | 0 | 0 | 93 |
 | sheet-13 | グッズ商品CSVフォーマット | 83 | 0 | 3 | 0 | 80 |
-| sheet-14 | 商品タグ更新CSV登録 | 68 | 0 | 0 | 1 | 67 |
+| sheet-14 | 商品タグ更新CSV登録 | 68 | 0 | 0 | 0 | 68 |
 | sheet-15 | 商品タグ更新CSVフォーマット | 4 | 0 | 0 | 0 | 4 |
 | sheet-16 | 売上分析タグ登録編集 | 55 | 0 | 5 | 1 | 49 |
 | sheet-17 | 売上分析タグ更新CSV登録 | 56 | 0 | 0 | 0 | 56 |
@@ -1409,7 +1393,7 @@
 | sheet-62 | 別添資料__スマレジ連携機能一覧 | 43 | 3 | 0 | 2 | 38 |
 | sheet-63 | 別添資料__スマレジ連携__商品連携項目 | 72 | 0 | 4 | 0 | 68 |
 | sheet-64 | 別添資料__スマレジ部門連携項目 | 30 | 0 | 0 | 0 | 30 |
-| sheet-65 | 別添資料__スマレジ連携対象商品 | 82 | 12 | 8 | 1 | 61 |
+| sheet-65 | 別添資料__スマレジ連携対象商品 | 82 | 12 | 7 | 1 | 62 |
 | sheet-66 | 別添資料__スマレジ連携__呼び出しAPIについて | 45 | 7 | 0 | 2 | 36 |
 | sheet-67 | 別添資料__一括更新系の処理結果について | 5 | 0 | 0 | 0 | 5 |
 | sheet-68 | 別添資料__スマレジ連携__機能改修一覧 | 25 | 5 | 1 | 2 | 17 |
