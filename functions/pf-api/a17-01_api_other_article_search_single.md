@@ -2,62 +2,38 @@
 
 ## 業務ロジック
 
-### 取得対象
+### 取得できない記事
 
-クエリで指定されたWP投稿IDに一致する記事を1件取得する。取得できないときはコード404のJSONを返す。
+削除日時が入っている記事は検索の対象から外れる。指定されたWPの投稿IDが削除済みの記事のものだけであれば、該当データなしとして扱う。
 
-### 応答値の扱い
+### 一件に絞り込めないとき
 
-応答に含めるのは公開指定の項目のみとする。削除日時は公開の対象外であり、応答に含まれない。金額・ポイント・数量・ステータス・日時は永続化済みの値をそのまま返し、応答生成時の丸め・補正は行わない。件数・ページ番号・表示順は既定と上限に従い、取得後に業務値を再計算しない。条件に一致しない、権限がない、または非公開のデータは空結果または既定のエラー形式で返す。
-
-### エラー時の扱い
-
-| エラー内容 | 処理 |
-|------------|------|
-| 該当記事なし | コード404のJSONを返す |
+WPの投稿IDには一意性の保証がなく、同じWPの投稿IDを持つ記事が複数登録されている状態があり得る。そのWPの投稿IDを指定した場合は1件に絞り込めずエラーとなり、正常応答も該当データなしの応答も返さない。
 
 ## 入出力
 
-| 種類 | 内容 |
-|------|------|
-| 入力 | クエリの `wpPostId`（整数、必須）。これに一致する記事を1件取得する |
-| 成功時出力 | HTTP 200。記事情報1件のJSON |
-| 失敗時出力 | HTTP 404。`{code, message}` の形 |
+### 受け付けるURL
 
-### 出力: 応答フィールド
+拡張子を付けないURL `/article` でも、同じ取得ができる。
 
-| フィールド | 型 | 説明 |
-|------------|----|------|
-| `articleId` | integer | 記事ID。 |
-| `wpPostId` | integer | WP投稿ID。 |
-| `wpTypeId` | integer | WP種別ID。 |
-| `url` | string | URL。 |
-| `updateDate` | string | 更新日時。 |
-| `createDate` | string | 作成日時。 |
-| `cards` | array | 関連カードの一覧。 |
-| `archetypes` | array | 関連アーキタイプの一覧。 |
-| `decks` | array | 関連デッキの一覧。 |
-| `eventDetails` | array | 関連イベント詳細の一覧。 |
+### 該当データなしのときの応答本文
 
-成功時の応答例（実装確認値に基づく代表値）。
-
-```json
-{
-  "articleId": 1001,
-  "wpPostId": 2001,
-  "wpTypeId": 1,
-  "url": "https://example.com/article/2001",
-  "updateDate": "2026-06-01T12:00:00+09:00",
-  "createDate": "2020-01-01T00:00:00+09:00",
-  "cards": [],
-  "archetypes": [],
-  "decks": [],
-  "eventDetails": []
-}
-```
+該当データなしのときの応答本文は、コードとメッセージの2項目だけを持つJSONである。コードには応答のステータスコードと同じ値が入る。
 
 ## 表示メッセージ
 
 | メッセージID | 表示位置 | 画面上の文言 | 表示条件 | 後続処理 |
 | --- | --- | --- | --- | --- |
 | — | API応答JSON | Not Found | 条件に一致する記事が無いとき | HTTP 404 を返す |
+
+## 出典
+
+| 小見出し | 重要度 | 出典 |
+| --- | --- | --- |
+| 取得できない記事 | P2 | pf-api:config/packages/doctrine.yaml:28-31 |
+| 取得できない記事 | P2 | pf-api:src/Entity/DtbArticle.php:10-16 |
+| 一件に絞り込めないとき | P2 | pf-api:src/Repository/DtbArticleRepository.php:19-29 |
+| 一件に絞り込めないとき | P2 | pf-api:src/Resources/config/doctrine/DtbArticle.orm.yml:16-25 |
+| 受け付けるURL | P2 | pf-api:config/routes.yaml:145-151 |
+| 受け付けるURL | P2 | pf-api:config/packages/fos_rest.yaml:2-8 |
+| 該当データなしのときの応答本文 | P2 | pf-api:src/Controller/ArticleController.php:92-108 |

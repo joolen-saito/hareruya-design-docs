@@ -15,6 +15,8 @@
 | 表示件数 | 保持している値があればそれを用い、無いときは既定値とする。要求された値が妥当なときは保持している値を更新する |
 | 検索条件 | 送信された条件を用いる。条件が空に見えるときは保持している検索条件を復元する |
 
+既定のソートキーは1種類だけで、既定の並び順は降順であるため、一覧は買取情報の登録が新しいものから順に並ぶ。
+
 並び順が昇順・降順のいずれにも合致しないときは、エラーを表示して処理を打ち切る。
 
 件数を数え直した結果、最終ページの件数がちょうど境界になった直後などで対象ページが空になるときは、ページ番号を1つ戻して取得する。
@@ -33,7 +35,7 @@
 
 ### 値の取り方
 
-金額・数量・ステータス・日時は、保存済みの値をそのまま表示し、表示時の丸め・補正を行わない。
+買取金額は、金額の前に通貨記号を付け、3桁ごとに区切って表示する。小数は表示しない。申込者は姓と名を空白で区切って表示する。
 
 査定担当者は、ステータスを買取成立へ変更した履歴のうち最も新しいものの担当者を表示し、その履歴が無いときは最終更新者を表示する。削除済みの担当者も名前を表示する。
 
@@ -75,9 +77,11 @@
 | --- | --- | --- |
 | 初期表示 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/SearchControllerTrait.php:49 |
 | 検索の実行 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/SearchControllerTrait.php:85 |
+| 検索の実行 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Repository/DtbOtcBuyOrderRepository.php:23 |
 | 検索条件の当てはめ方 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Repository/DtbOtcBuyOrderRepository.php:39 |
-| 値の取り方 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/admin/OtcBuyOrder/index.twig:167 |
-| 値の取り方 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Entity/DtbOtcBuyOrder.php:1273 |
+| 値の取り方 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/admin/OtcBuyOrder/index.twig:166-167 |
+| 値の取り方 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Entity/DtbOtcBuyOrder.php:1273 |
+| 値の取り方 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/admin/OtcBuyOrder/index.twig:169 |
 | エラー時の扱い | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/OtcBuyOrder/OtcBuyOrderController.php:170 |
 | エラー時の扱い | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/SearchControllerTrait.php:140 |
 | エラー時の扱い | P3 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/admin/OtcBuyOrder/index.twig:105 |
