@@ -279,7 +279,14 @@ def scoped_out_entries() -> tuple[dict, ...]:
         data = json.loads(path.read_text(encoding="utf-8"))
         recs = next((v for v in data.values() if isinstance(v, list)), []) if isinstance(data, dict) else data
         for r in recs:
-            if r.get("verdict") == "not-superseded":
+            # **判定が確定していないものは落とさない。**
+            # not-superseded は「廃止ではない」と確定したもの。
+            # needs-triage は「まだ決めていない」もので、target も「（要判定）」と書かれている。
+            # 決まっていないものを対象外にすると、Ph1だった場合に丸ごと見落とす
+            # （2026-08-23 実測: 0302-sheet-notification-annex を確定Ph2として落としており、
+            #  判定エージェントが「台帳のトリアージがPh1に転ぶなら59件を再判定する必要がある」と
+            #  申告して発覚。phase2_specs.json に needs-triage は4件ある）。
+            if r.get("verdict") in ("not-superseded", "needs-triage"):
                 continue
             out.append({
                 "kind": kind, "id": r.get("id", ""), "book": r.get("book", ""),
