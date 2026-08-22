@@ -285,6 +285,8 @@ def scoped_out_entries() -> tuple[dict, ...]:
                 "kind": kind, "id": r.get("id", ""), "book": r.get("book", ""),
                 "scope": r.get("scope", ""), "target": (r.get("target") or "").strip(),
                 "identifierId": (r.get("identifierId") or "").strip(),
+                "replacement": (r.get("replacement") or "").strip(),
+                "renewalImpl": (r.get("renewalImpl") or "").strip(),
                 "sheetIds": {sh.get("sheetId") for sh in r.get("sheets", []) if sh.get("sheetId")},
             })
     return tuple(out)
@@ -374,8 +376,18 @@ def sheet_exclusions() -> dict[tuple[str, str], str]:
 
     # 2) シートまるごとが廃止／Ph2。FUNCTION_SCOPE のものだけを対象にする
     #    （ITEM_SCOPE は機能自体がフェーズ1対象なのでシートごと落としてはいけない）。
+    #
+    #    **「再編」は廃止ではない。** 提供の形だけを変えてシートの仕様は生きている、
+    #    という台帳エントリがある。これをシートごと落とすと本物の指摘が消える
+    #    （2026-08-23 実測: 0303-sheet-5 は「商品詳細検索画面（独立画面）は廃止し、
+    #     商品一覧上のモーダルへ再編。これに伴い実装不要: 独立した詳細検索画面の表示と
+    #     その画面遷移」で、廃止されたのは画面遷移だけ。モーダル側の仕様は生きており、
+    #     判定エージェントが見つけた DRIFT 2件がゲートで消えていた）。
+    #    replacement / renewalImpl に置き換え先が書かれているものはシートごと落とさない。
     for e in scoped_out_entries():
         if e["scope"] != "FUNCTION_SCOPE":
+            continue
+        if e.get("replacement") or e.get("renewalImpl"):
             continue
         for sid in e["sheetIds"]:
             out.setdefault((e["book"], sid),
