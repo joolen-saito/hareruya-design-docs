@@ -1,0 +1,2060 @@
+Reading additional input from stdin...
+OpenAI Codex v0.147.0
+--------
+workdir: /home/y-saito/Developments
+model: gpt-5.6-sol
+provider: openai
+approval: never
+sandbox: read-only
+reasoning effort: high
+reasoning summaries: none
+session id: 01a02eae-4bf6-73d0-b610-1f7ea3a7743d
+--------
+user
+# 敵対レビュー: 設計書0507（0507）の不具合調査結果
+
+指摘は 4 件です。
+
+あなたは**指摘を反証する役**です。既定は疑う側に置いてください。
+
+## レビュー対象（成果物）
+
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/AUDIT_0507.tsv （全件）
+
+列: 要求ID / シート名 / 区分 / 判定 / 重要度 / 乖離種別 / 設計要件 / 実装実態 / 判定根拠
+
+判定の詳細（設計根拠の引用・実装参照・根本原因キー）はこちら:
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/design_audit/0507/verdicts.tsv
+
+## 正本（オラクル）
+
+- 設計: /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/design_audit/0507/sheets/<シートID>.txt
+  （正本HTML設計書 0507 のシート本文を機械抽出したもの。**設計の正はここだけ**）
+  レイアウト図は /home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/design_audit/0507/images/<シートID>_img*.png
+- 実装: /home/y-saito/Developments/ec-cube-enterprise （ee）。**実装の正はここだけ**
+
+## 正本でないもの
+
+- /home/y-saito/Developments/pf-eccube3 ほかの現行ソースは移行元であって、eeの正ではない
+- Excel設計書（xlsx）は上記シート本文へ変換済み。原本を読む必要はない
+
+## 探してほしいもの（優先順）
+
+### 1. ハルシネーション（最優先）
+
+引用も実装参照も実在するのに、**主張だけが事実と違う**もの。機械検査では捕まりません。
+すでに機械で次は確認済みなので、ここを繰り返す必要はありません。
+
+- 設計根拠_引用が正本シート本文に逐語で実在すること（全件すべて実在）
+- 実装参照が ee 内に実在するファイル:行であること（全件すべて実在）
+
+疑ってほしいのは次です。
+
+- 「〜していない」と書いてあるが、実は**別の場所でやっている**
+  （親クラス・トレイト・イベントリスナ・サブスクライバ・ミドルウェア・
+   フォームの制約・バリデータ・DBの制約・Doctrineのライフサイクル）
+- 「実装が無い」と書いてあるが、**探し方が悪くて見つけられていない**だけ
+- 実装の分岐の読み違い（条件の向き・early return・例外経路）
+- 行番号がずれていて、引用した行が主張と関係ない
+
+### 2. 過剰指摘
+
+次は規約で対象外です。指摘になっていたら挙げてください。
+
+- 実装手段の差（通信方式・認可設定・内部配線・クラス名・呼び出し順・join の種類）
+- 応答にも画面にも出ない内部挙動
+- 現行仕様に書かれた現行ソースの不具合・不用意な副作用（踏襲対象ではない）。
+  ただし機能として定義された挙動（警告表示・並び順・据え置き時間等）は要求として扱う
+- 現行仕様とリニューアル後の仕様が食い違う箇所は**後者が優先**。現行仕様側は対象外
+- 廃止・フェーズ2と正本が宣言しているもの
+- 見出し・表の見出し行・区分行・前置き・運用想定・背景説明
+- 設計根拠_引用が**仕様を述べていない**もの（項目名・備考・表のヘッダの読み違い）
+
+### 3. 重複
+
+根本原因キーが違っても、実装実態が同じ欠陥を指していれば重複です。
+機械で「判定＋実装実態の完全一致」は確認済みです。**文言が違う重複**を探してください。
+
+### 4. 重要度の過大
+
+P1/P2/P3 が業務影響と迂回可否に見合っているか。
+
+## 指摘対象外（これを指摘しても却下します）
+
+- 設計書の書き方・粒度・文体
+- 指摘が**少なすぎる**という主張（過小報告の指摘は別途人が見ます）
+- 正本シート本文に無いことを根拠にした「設計にこう書くべき」という主張
+- MATCHED・OUT_OF_SCOPE・UNVERIFIABLE と判定したものの妥当性
+  （成果物には載っていません。本レビューの範囲外）
+
+## 出力形式
+
+指摘が無ければ `NONE` の1語だけ。
+
+指摘ごとに次を書いてください。
+
+```
+要求ID:
+判定: ハルシネーション | 過剰指摘 | 重複 | 重要度過大
+主張: 成果物が何と言っているか
+実際: 実装の file:line を必ず示す。何行目に何と書いてあるか
+修正案: 取り下げ / 判定をこう変える / 重要度をこうする / どの要求IDへ畳む
+```
+
+**重要度過大と判断したときは、修正案に「P3へ変更する」のように正しい重要度を必ず書いてください。**
+書かないと修正が適用されず、重要度は過大なまま残ります。
+**重複と判断したときは、修正案に畳む先の要求ID（sheet-N-RNNN）を必ず書いてください。**
+```
+```
+
+**実装の file:line を伴わない指摘は書かないでください。**
+warning: Codex could not find bubblewrap on PATH. Install bubblewrap with your OS package manager. See the sandbox prerequisites: https://developers.openai.com/codex/concepts/sandboxing#prerequisites. Codex will use the bundled bubblewrap in the meantime.
+codex
+`design-impl-drift-audit` スキルを使います。設計正本と ee 実装を突き合わせ、4件それぞれについて「別経路に実装がないか」「対象外や重複でないか」「重要度が妥当か」を敵対的に検証します。
+exec
+/bin/bash -lc "sed -n '1,240p' /home/y-saito/.codex/skills/design-impl-drift-audit/SKILL.md" in /home/y-saito/Developments
+ succeeded in 0ms:
+---
+name: design-impl-drift-audit
+description: Compare HTML design specifications against an implementation to find functional drift and produce an evidence-backed HTML report. Use when Codex is asked to treat design docs as the source of truth, audit code such as controllers/services/forms/repositories/templates/batches/CSV definitions, continue a partially completed drift report, or update findings JSON/HTML for gaps between design and implementation.
+---
+
+# Design Impl Drift Audit
+
+## Purpose
+
+Use this skill to audit functional differences between HTML design specifications and an implementation repository, with the design docs treated as authoritative. Produce or continue a report that lists concrete differences with design locations, implementation locations, confidence, severity, and impact.
+
+## Repository Discovery
+
+1. Find the design-doc directory and implementation directory from the user request. If omitted, infer from nearby names such as `*-design-docs` and application repos.
+2. Look for an existing report before starting new work. Prefer directories named `design_impl_drift_report`, existing `findings.json`, per-function `findings/*.json`, and `index.html`.
+3. Count total target specs and audited specs so the report clearly states scope and remaining work.
+4. Preserve existing findings. Append or refine; do not overwrite unrelated prior work.
+
+## Audit Workflow
+
+For each target HTML spec:
+
+1. Identify the feature ID, route/action name, UI template, CSV/batch/API behavior, and acceptance rules from the HTML design spec.
+2. Extract a requirement inventory from the HTML spec before looking at code. This inventory must include not only route/screen names, but every concrete requirement in 処理概要, 図形・テキストボックス, 項目表, 表示メッセージ, 業務ルール・計算, 入力項目, エッジケース, データ整合性, API/バッチ結果, 入出力, DB操作, バリデーション, 権限・認可, 画面遷移, エラー処理, ログ・監査, セッション, Cookie, and 排他制御. Treat bullets such as "押下時", "場合", "登録/更新/保存", "遷移", "保持", "表示/非表示", "表示切り替え", "エリアを表示", "誘導", "エラー", "判定", "連携", time limits, thresholds, and retry/idempotency rules as auditable requirements. 秒後/分後, `画面を表示してから`, 自動遷移, タイマー, and store/kiosk/account-specific forced redirects are material requirements even if the route and template already exist.
+3. For every extracted requirement, create or mentally maintain a `requirementTrace` row with: `requirementId`, `designRef`, `designRequirement`, `implementationSearchTerms`, `implementationRefs`, `implementationActual`, `traceVerdict` (`MATCHED|DRIFT|NOT_FOUND|UNCERTAIN|PHASE2_EXCLUDED`), and `traceReason`. A feature cannot be marked no-drift until all material requirements have a trace verdict other than `NOT_FOUND` or unresolved `UNCERTAIN`.
+4. Search the implementation with `rg` across likely files: controllers, services, repositories, form types, entities, migrations, Twig/templates, commands/batches, route definitions, JavaScript, CSV exporters/importers, and PDF/print services. Search by business terms from the requirement, route names, translation keys, DB columns, state names, constants, statuses, time values, thresholds, and side-effect verbs. For timer or auto-navigation requirements, explicitly search client and server paths for `setTimeout`, `setInterval`, millisecond/second constants such as `60000` and `60 * 1000`, `location.href`, `location.assign`, `location.replace`, redirect routes, and the condition that limits the behavior. For a negative result, also search nearby implemented flows so the report can explain why they do not satisfy the design.
+5. Compare behavior and user-facing text, not just names. Check input fields, validation, defaults, search conditions, session persistence, buttons/actions, labels, button text, messages, translation keys/locales, permissions, status transitions, CSV columns, sort/order rules, scheduled timing, timeouts/expiration, thresholds, client-side timers, forced auto-navigation, side effects, idempotency, external integrations, conditional display toggles, alternate UI areas, and error handling.
+6. Do not treat "route/controller/template exists" as sufficient. Existence only satisfies the route/screen requirement. It does not satisfy individual rules inside the screen, such as timeout handling, cart retention, validation branches, status transitions, DB writes, logging prohibitions, conditional hide/show behavior, alternative contact/help areas, or external API retry behavior.
+7. For conditional display requirements, audit each side of the condition separately. If the HTML says "Aの場合はXを非表示、Yを表示 / A以外はXを表示、Yを非表示", record trace rows for the condition detector, X visibility, Y visibility, and the inverse condition. A nearby notice or route is not enough unless the cited template/JS actually renders the required area under the required condition.
+8. For labels, button text, messages, and translation keys, do a dedicated near-match pass. Extract user-visible Japanese text from the HTML item/message tables and compare it with implementation locale values and Twig/Form usage. Treat punctuation, okurigana, missing characters, long-vowel marks, wording changes such as `商品を追加` vs `商品の追加`, and business-term changes such as `返金` vs `送金` as audit targets.
+9. A text drift finding is complete only when it cites both the translation/source value and the display path that uses it, such as `messages.ja.yaml` plus the `FormType` label or Twig `|trans` call. If the implementation value exists but no display path is verified, mark it `UNCERTAIN` instead of presenting it as confirmed.
+10. Do not stamp all functions as if every standard aspect was fully checked. Separate "standard audit target aspects" from actual evidence. For each finding, list the aspects actually supported by evidence; for no-drift functions, include a requirement trace summary naming the concrete HTML requirements checked and implementation refs searched.
+11. Record only actionable drift. If evidence is incomplete, mark the finding `UNCERTAIN` and explain what remains ambiguous.
+12. For every drift finding, split the result into implementation-ready fields: `designExpectation`, `implementationActual`, `comparisonRows`, `comparisonSummary`, `mismatchReason`, `impact`, `fixTarget`, `requiredChange`, `implementationRefs`, and, when available, short design/implementation snippets from the cited lines. Do not rely on a generic prose paragraph alone.
+13. Each `comparisonRows` entry must answer all four questions explicitly: comparison item, exact design value/requirement, exact implementation value/behavior, and why those two do not match. If any of those four cells would be vague, continue investigating before recording the finding.
+14. Treat phase labels such as Ph2 as auxiliary context. They can be stored, but the main report must not use phase status as a substitute for concrete behavioral differences and exact implementation locations.
+15. If the HTML design spec explicitly says the whole function or scoped subfeature is `フェーズ2で実装する`, `Ph2で対応`, or `Ph1では実装しない`, do not report absence of that planned Phase 2 work as drift or as a clear implementation gap. You may keep a secondary audit note that non-implementation was confirmed, but exclude it from finding counts and implementation-gap counts. Only keep a finding when there is a concrete non-phase mismatch, such as an implemented Phase 1 path behaving differently from the design or user-facing text differing.
+16. When no drift is found, add the function to the audited set with an empty findings list only after the requirement trace gate passes. If material HTML requirements are untraced, do not mark `AUDITED_NO_DRIFT_FOUND`; mark the function as requiring review or add `UNCERTAIN` findings with the unresolved requirements.
+17. Do not let one confirmed finding hide other requirements in the same function. A function with `AUDITED_WITH_FINDINGS` can still have untraced material requirements; keep those requirements visible in the trace gate until each one is converted to a confirmed finding, an uncertain finding, a matched trace row, or a documented phase/design non-implementation exclusion.
+18. For explicitly registered critical requirements, the harness should carry a missing-finding template or an equivalent escalation rule. If the trace is not covered by an existing finding, promote it into findings automatically or fail the quality gate loudly. Do not rely on a hand-maintained `ADDITIONAL_FINDINGS` list as the only path for user-reported or high-risk missing behavior such as timeouts, cart retention, one-minute/30-minute limits, store-account auto redirects, conditional UI areas, status transitions, external calls, or destructive side effects.
+19. The HTML report must not expose broad source-signal candidates as if they were implementation gaps. A requirement-level list in the main report must be limited to confirmed or explicitly uncertain actionable drift derived from findings, such as `NOT_FOUND` or `DRIFT` requirement traces and concrete comparison rows. If a source-signal scan is used for triage, keep it out of the main HTML report unless each row has been verified against implementation source and written as a concrete finding.
+20. Do not hide time-based or automatic-navigation requirements merely because they are not confirmed findings yet. Requirements involving `画面を表示してから`, seconds/minutes after display, auto redirect/navigation, or timeout-to-cart/top behavior should appear in a separate focused untraced-requirement audit queue when they remain uncovered. This queue is not a confirmed defect count; it exists so these high-risk requirements are reviewed against Controller/Twig/JavaScript/Service source instead of being buried among broad requirement-trace failures.
+
+## Function-Level Implementation Gap Audit
+
+For every HTML spec sheet, maintain a function-level implementation audit even when no drift finding is confirmed yet.
+
+- Extract implementation search terms from the HTML design: route names, URL paths, translation keys, class/controller/service names, batch/API/CSV names, and high-signal business terms from the sheet title and requirement text.
+- Search implementation source by function across Controller, Form, Service, Repository, Entity, Migration, Twig, Command/Batch, CSV, PDF/print, API/webhook, locale/messages, JavaScript, and configuration files.
+- Store a `functionImplementationAudit` object with `verdict`, `designDerivedTerms`, `candidateRefs`, `candidateCount`, `strongSignalCount`, `searchedAreas`, and `auditNote`.
+- Use separate verdicts:
+  - `CONFIRMED_IMPLEMENTATION_GAP`: a concrete drift finding already proves missing implementation.
+  - `NO_IMPLEMENTATION_ENTRY_FOUND`: no entry candidate was found from design-derived terms; treat as an additional-review candidate, not an automatic confirmed defect.
+  - `IMPLEMENTATION_ENTRY_FOUND`: strong source evidence such as route, class, translation key, or path was found.
+  - `IMPLEMENTATION_CANDIDATE_FOUND`: weak business-term candidates were found but the entry point is not proven.
+  - `PHASE2_NONIMPLEMENTATION_EXPECTED`: HTML design explicitly scopes non-implementation to Phase 2/Ph1 exclusion.
+  - `DESIGN_NONIMPLEMENTATION_EXPECTED`: HTML design explicitly says the function or scoped behavior is not implemented by code, such as `実装しない`, `実装不要`, or infrastructure/external-service configuration replacing application code.
+- Use `DESIGN_NONIMPLEMENTATION_EXPECTED` as the function-level verdict only when the non-implementation statement applies to the whole function or the implementation entry itself, for example an external WordPress server, Docker image cron, Aurora parameter group, or a bare whole-sheet `実装しない`. If the text only excludes a scoped subfeature, UI alert, HTML hint, logging detail, partial Phase 2 item, or internal job, keep the function's source-entry verdict and mention the scoped exclusion only in the trace/audit note.
+- The report must show both confirmed implementation-gap findings and function-level no-entry candidates. Do not merge these counts: implementers need confirmed defects for fixing and no-entry candidates for review planning.
+- A function-level candidate is not enough to mark the detailed requirements as implemented. Requirement trace still controls no-drift status.
+- Do not set report metadata such as `auditComplete` or narrative notes to "complete" merely because every sheet has a function-level implementation audit. If any material requirement trace remains unresolved, state that all sheets have function-entry coverage but requirement-level audit is incomplete.
+- For infrastructure-oriented sheets such as Step Functions, Lambda, WAF/S3 jobs, cron configured outside the application, or managed database settings, distinguish "not found in the requested implementation repository" from "not implemented anywhere". A confirmed implementation-gap finding may be scoped to the audited repository, but the report must say when external infrastructure repositories or cloud configuration were not checked.
+
+## Requirement Trace Gate
+
+Before marking a function no-drift, verify the following:
+
+- Every material HTML requirement has a trace row. Material means it changes behavior, data, display, validation, permission, transition, side effect, external communication, schedule, retry/idempotency, logging/audit, CSV/API/PDF/batch I/O, or user-visible text.
+- Each trace row includes exact design text or a tight paraphrase plus line/anchor reference, not only the sheet title.
+- Each matched row cites the implementation path and line(s) that actually execute or render the behavior. A nearby class, route, or template is not enough unless the cited code contains the relevant condition/value/side effect.
+- Each missing row is converted to a confirmed or uncertain finding. Use confirmed only after searching the direct path and nearby alternative implementations.
+- Missing rows remain failures even if the function already has other findings. The gate is requirement-scoped, not function-scoped.
+- If an explicit critical requirement has a configured missing-finding template, regenerate the report from the harness and verify the promoted finding appears in both JSON and HTML with design value, implementation behavior, mismatch reason, fix target, and search evidence.
+- If a missing row does not yet have enough evidence for a confirmed or uncertain actionable finding, do not count it as an implementation gap and do not put it in the main HTML fix list. Keep the function in an incomplete requirement-trace state, and promote the row only after implementation source has been checked enough to state the exact design requirement, exact implementation behavior, and mismatch reason.
+- A generic `auditEvidence` string is not a substitute for requirement traces.
+- Negative searches must list the searched terms/areas and why nearby hits do not satisfy the design.
+
+## Finding Format
+
+Store findings in a machine-readable JSON structure. Use this shape for each finding:
+
+```json
+{
+  "id": "stable-feature-id-001",
+  "functionId": "m04-01_admin_stock_stock_search_list",
+  "functionName": "在庫一覧",
+  "severity": "high|med|low",
+  "dimension": "①機能/ルート未実装",
+  "confidence": "CONFIRMED|UNCERTAIN",
+  "design": {
+    "file": "path/to/spec.html",
+    "lines": "215-220",
+    "summary": "設計書に書かれている仕様"
+  },
+  "implementation": {
+    "file": "path/to/source.php or 不在",
+    "lines": "337-344",
+    "summary": "実装側の状態"
+  },
+  "difference": "設計と実装の具体的な差分",
+  "comparisonRows": [
+    {
+      "item": "比較項目名",
+      "design": "設計書の値・要求。列名、HTTPメソッド、パス、保存先、表示文言、条件、状態遷移などを具体値で書く",
+      "implementation": "実装の値・挙動。実際の列名、メソッド、パス、保存先、文言、条件、処理順を具体値で書く",
+      "mismatch": "なぜ一致しないのか。実装者が直すべき差分を一文で書く"
+    }
+  ],
+  "requirementTrace": [
+    {
+      "requirementId": "stable-requirement-id",
+      "designRef": "path/to/spec.html:123",
+      "designRequirement": "HTML設計書の個別要求",
+      "implementationSearchTerms": ["検索語", "route_name", "methodName"],
+      "implementationRefs": ["src/...php:123"],
+      "implementationActual": "実装で確認できた挙動、または不在判定",
+      "traceVerdict": "MATCHED|DRIFT|NOT_FOUND|UNCERTAIN|PHASE2_EXCLUDED",
+      "traceReason": "なぜその判定か"
+    }
+  ],
+  "comparisonSummary": "設計はX、実装はY、したがってZが違う",
+  "mismatchReason": "乖離と判断した具体的な理由",
+  "impact": "ユーザー・業務・データへの影響",
+  "fixTarget": "修正対象のファイル/ルート/サービス/不在箇所",
+  "requiredChange": "設計に合わせる場合に必要な修正",
+  "implementationRefs": ["src/...php:123"],
+  "implementationSnippets": ["123: 実装コードの短い断片"],
+  "evidence": ["短い根拠。ファイル名と行番号を含める"]
+}
+```
+
+The HTML report should make these fields visible as separate blocks so an implementer can answer: what exact value does the design require, what exact value does the code implement, why is that a mismatch, exactly where is the code, and what should be changed.
+
+Use stable IDs and Japanese text when the existing report is Japanese. Keep dimensions consistent with existing findings when continuing a report.
+
+## Severity Guidance
+
+- `high`: missing feature/route, wrong critical business rule, destructive or externally visible behavior, missing required import/export/batch/PDF flow.
+- `med`: partial implementation, wrong filtering/sorting/session behavior, missing non-critical columns or validation, incompatible screen behavior.
+- `low`: copy/display/default-state differences, ambiguous design wording, minor workflow variance.
+
+## Report Generation
+
+If the project already has a report generator, use it. Otherwise copy or adapt `scripts/build_report.py` from this skill into the report directory, then run it from the repository root or pass paths as needed.
+
+The HTML report must include:
+
+- summary counts: total findings, severities, audited functions, functions with drift
+- scope and remaining work
+- per-function sections
+- each finding with severity, confidence, dimension, audit aspects including label/message/translation-key differences when applicable, design reference, implementation reference, design expectation, implementation actual behavior, `comparisonRows`, mismatch reason, impact, fix target, required change, and evidence
+- a comparison table with columns: 比較項目 / 設計書の値・要求 / 実装の値・挙動 / 乖離理由
+- links or file paths precise enough for a developer to inspect
+- short cited design and implementation snippets when available
+- phase/Ph2 data only as hidden or secondary metadata, never as a report column or primary summary
+- a function-level implementation audit section showing verdict counts, no-entry candidates, candidate source references, and the search terms that produced them
+- a requirement-level difference list derived only from confirmed/uncertain findings, showing the exact design requirement, implementation behavior, mismatch reason, implementation refs, and a link back to the finding. Do not include broad unverified source-signal queues in the main HTML report.
+- a focused untraced-requirement section for small, high-risk classes such as display-time timers, automatic redirects, and timeout navigation. Keep it separate from confirmed difference and implementation-gap counts, and include search terms/candidate refs so the next audit step is concrete.
+
+After editing findings, validate JSON and regenerate HTML:
+
+```bash
+python3 -m json.tool path/to/design_impl_drift_report/findings.json
+python3 path/to/design_impl_drift_report/build_report.py
+```
+
+## Quality Bar
+
+- Treat the HTML design spec as source of truth even when implementation looks intentional.
+- Cite exact file paths and line numbers whenever available.
+- Distinguish `不在` from “not found yet”; use `不在` only after searching likely implementation areas.
+- Avoid broad claims such as “not implemented” without search evidence or contrasting nearby implemented features.
+- Do not classify Phase 2 planned non-implementation as a defect. A missing route, CSV, batch, API, table, or screen is only a drift finding when the design expects it in the audited implementation phase.
+- For label/message drift, prefer exact line evidence and a verified render path over fuzzy string similarity. Fuzzy or near-match scans are candidate generators; they are not findings until source and display usage are confirmed.
+- When an external reviewer or another agent reports candidates, verify each candidate against the HTML design and implementation source before adding it. Keep rejected or ambiguous candidates out of confirmed counts, or mark them `UNCERTAIN` with the unresolved reason.
+- For absent implementations, include the searched terms/areas, nearby implementation files with line numbers, and a concrete reason those nearby files do not satisfy the design. Do not leave `implRef` as only `不在` in the final report.
+- Reject vague findings. A finding is not complete until it names the exact design value and exact implementation value that differ.
+- Keep the report cumulative and resumable.
+
+exec
+/bin/bash -lc "wc -l hareruya-design-docs/design_impl_drift_report/AUDIT_0507.tsv hareruya-design-docs/design_impl_drift_report/design_audit/0507/verdicts.tsv && sed -n '1,20p' hareruya-design-docs/design_impl_drift_report/AUDIT_0507.tsv && sed -n '1,30p' hareruya-design-docs/design_impl_drift_report/design_audit/0507/verdicts.tsv" in /home/y-saito/Developments
+ succeeded in 0ms:
+     5 hareruya-design-docs/design_impl_drift_report/AUDIT_0507.tsv
+   383 hareruya-design-docs/design_impl_drift_report/design_audit/0507/verdicts.tsv
+   388 total
+要求ID	シート名	区分	判定	重要度	乖離種別	設計要件	実装実態	判定根拠
+sheet-4-R044	ネット買取受注一覧取得	現行仕様	実装違い	P2	IO	査定申込日を、年月日と時刻を「T」でつなぎ時差を添えた日時表記（ISO8601）の文字列として返す。	applyDate を「2025/09/18 10:21:07」の形（年/月/日 空白 時:分:秒）の文字列で返しており、ISO8601の日時表記になっていない（src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderController.php:73）。	src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderController.php:73 の書式指定は Y/m/d H:i:s で、日付と時刻の区切り記号も時差も持たない。現行(pf)は受注日を日時値のまま応答へ渡しており（/home/y-saito/Developments/pf-api/src/Repository/DtbBuyOrderRepository.php:46 で orderDate をそのまま選択、応答整形は共通の直列化に委ねる）ISO8601で出るため、正本の記述は現行の挙動と一致する。差分はee側の書式指定にある。
+sheet-6-R015	ネット買取受注ステータス更新	機能仕様	設計裁定待ち				実装の更新先は査定中=10・査定中断=11・査定再開=12（src/Eccube/Service/App/MTGBuyer/V1/Admin/BuyOrder/UpdateStatusAction.php:28-50、src/Eccube/Entity/Master/MtbBuyOrderStatus.php:46-51）で、名称は設計と一致するがIDは6/8/9ではない。	同シートの更新不可リストでは 6 は振込依頼済み、8 は振込失敗、9 はキャンセル済みとされており（sheet-6-R024・sheet-6-R026・sheet-6-R030）、買取ステータスマスタの定義（src/Eccube/Entity/Master/MtbBuyOrderStatus.php:38-45）もそれに一致する。同じシート内でIDと名称の対応が二重になっているため、更新先の正しいIDがどちらかを設計で確定する必要がある。名称ベースでは実装（src/Eccube/Service/App/MTGBuyer/V1/Admin/BuyOrder/UpdateStatusAction.php:28-50）と一致する。
+sheet-7-R045	ネット買取注文の査定終了処理	機能仕様	実装違い	P2	IO	リクエストの検証に失敗したときは、入力不正としてHTTP 400 と エラーメッセージの配列を返す。	検証失敗時のHTTPステータスは422で返る（tests/Eccube/Tests/Web/App/MTGBuyer/V1/Admin/BuyOrderControllerTest.php:717 が HTTP_UNPROCESSABLE_ENTITY を期待している）。body は {code:422, errors:[...]}（src/Eccube/EventListener/ExceptionListener.php:101,140-143）。	ステータスコード表の「400　バリデーションエラー」は述語を持たない断片のため、同じ内容を述べているリニューアル後仕様の行を引用した。src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderController.php:171 の本文マッピングは検証失敗時に422を投げる既定のままで、400へ寄せる指定が無い。tests/Eccube/Tests/Web/App/MTGBuyer/V1/Admin/BuyOrderControllerTest.php:717 が422を期待して固定している。
+sheet-9-R031	複数ネット買取IDから個別入力商品の一覧を取得	現行仕様	実装違い	P3	IO	申込時買取価格が1件も対応しない買取代表カードでは、応答にその項目自体を含めない（空の入れ物も返さない）。	対応する申込時買取価格が1件も無くても applicationPrice の項目を必ず持たせ、中身が空のまま返す（src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyMainCardController.php:63-67 で空の入れ物を作り、src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyMainCardController.php:80 で無条件に項目へ入れている）。	src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyMainCardController.php:63 が空の入れ物を先に作り、src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyMainCardController.php:64-67 で対応する価格があるときだけ中身を詰め、src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyMainCardController.php:80 は条件なしに項目へ入れる。したがって価格が1件も無い買取代表カードでも項目が応答に現れる（tests/Eccube/Tests/Web/App/MTGBuyer/V1/Admin/BuyMainCardControllerTest.php:138 は価格がある場合の確認だけで、無い場合の確認は無い）。現行(pf)は一致する価格があったときだけ項目を作るため、価格が無い買取代表カードには項目が現れない（/home/y-saito/Developments/pf-api/src/Controller/Admin/BuyMainCardController.php:39-45）。正本の記述は現行の挙動と一致し、差分はee側にある。なお本シートの現行仕様節は Source が a07-06（買取代表カード＝ネット買取受注の商品一覧）で、sheet-8 の現行仕様節（a07-07 個別入力商品の一覧）と入れ替わって取り込まれている。この行は買取代表カード側の記述なので、その機能の実装で判定した。
+要求ID	判定	重要度	指摘区分	乖離種別	設計根拠_引用	設計期待値	実装参照	実装実態	判定根拠	画像確認メモ	確信度	根本原因
+sheet-1-R001	OUT_OF_SCOPE								表紙の宛先表記であり、実装対象の要求ではない。		high	
+sheet-1-R002	OUT_OF_SCOPE								表紙の機能名表記であり、実装対象の要求ではない。		high	
+sheet-1-R003	OUT_OF_SCOPE								表紙の文書種別表記であり、実装対象の要求ではない。		high	
+sheet-1-R004	OUT_OF_SCOPE								改訂履歴表のヘッダ行であり、実装対象の要求ではない。		high	
+sheet-1-R005	OUT_OF_SCOPE								改訂履歴（新規作成）の記録であり、実装対象の要求ではない。		high	
+sheet-1-R006	OUT_OF_SCOPE								改訂履歴の記録。指す仕様本体はA07-05（sheet-7）に記載されており、表紙の履歴行そのものは実装対象の要求ではない。		high	
+sheet-2-R001	OUT_OF_SCOPE								目次の見出し・章立ての列挙であり、実装対象の要求ではない。仕様本体は各シートに記載。		high	
+sheet-2-R002	OUT_OF_SCOPE								目次の見出し・章立ての列挙であり、実装対象の要求ではない。仕様本体は各シートに記載。		high	
+sheet-2-R003	OUT_OF_SCOPE								目次の見出し・章立ての列挙であり、実装対象の要求ではない。仕様本体は各シートに記載。		high	
+sheet-2-R004	OUT_OF_SCOPE								目次の見出し・章立ての列挙であり、実装対象の要求ではない。仕様本体は各シートに記載。		high	
+sheet-2-R005	OUT_OF_SCOPE								目次の見出し・章立ての列挙であり、実装対象の要求ではない。仕様本体は各シートに記載。		high	
+sheet-2-R006	OUT_OF_SCOPE								目次の見出し・章立ての列挙であり、実装対象の要求ではない。仕様本体は各シートに記載。		high	
+sheet-2-R007	OUT_OF_SCOPE								目次の見出し・章立ての列挙であり、実装対象の要求ではない。仕様本体は各シートに記載。		high	
+sheet-2-R008	OUT_OF_SCOPE								目次の見出し・章立ての列挙であり、実装対象の要求ではない。仕様本体は各シートに記載。		high	
+sheet-2-R009	OUT_OF_SCOPE								目次の見出し・章立ての列挙であり、実装対象の要求ではない。仕様本体は各シートに記載。		high	
+sheet-3-R001	OUT_OF_SCOPE								HTTPメソッド／認証有無の選択肢を並べた記入欄の行であり、それ自体は仕様を述べていない。選択結果は sheet-3-R004 で判定した。		high	
+sheet-3-R002	OUT_OF_SCOPE								項目名（ラベル）のみの行。値は sheet-3-R003 で判定した。		high	
+sheet-3-R003	MATCHED						src/Eccube/Controller/App/MTGBuyer/V1/Admin/OptionController.php:35		/api/admin/optionBulkPurchaseId.json で GET を受け付ける定義が src/Eccube/Controller/App/MTGBuyer/V1/Admin/OptionController.php:35 に存在する（%eccube_api_v1_route% が /api/v1 に展開され /api/v1/admin/optionBulkPurchaseId.json となる）。	sheet-3_img1.png を確認。追加システム設定画面の「まとめて買取商品ID」欄（値 70578）が本APIの取得元であることを確認した。	high	
+sheet-3-R004	MATCHED						src/Eccube/Controller/App/MTGBuyer/V1/Admin/OptionController.php:25;src/Eccube/Controller/App/MTGBuyer/V1/Admin/OptionController.php:35		GET のみ受け付ける定義が src/Eccube/Controller/App/MTGBuyer/V1/Admin/OptionController.php:35。認証必須は同ファイル25行の認証済み限定指定で、未認証・不正トークンはいずれも 401 になる（src/Eccube/Security/AccessToken/JwtTokenHandler.php:44-52, src/Eccube/Security/AccessToken/JwtTokenHandler.php:74-79）。	sheet-3_img1.png を確認。追加システム設定画面の「まとめて買取商品ID」欄（値 70578）が本APIの取得元であることを確認した。	high	
+sheet-3-R005	MATCHED						src/Eccube/Security/AccessToken/JwtTokenHeaderExtractor.php:29;src/Eccube/Controller/App/MTGBuyer/V1/Admin/OptionController.php:44		トークンはリクエストヘッダから取り出して検証する（src/Eccube/Security/AccessToken/JwtTokenHeaderExtractor.php:29-41, src/Eccube/Security/AccessToken/JwtTokenService.php:77-93）。応答は JSON で返す（src/Eccube/Controller/App/MTGBuyer/V1/Admin/OptionController.php:44）。リクエスト書式は取得系でパラメータが無いため差異が生じない。	sheet-3_img1.png を確認。追加システム設定画面の「まとめて買取商品ID」欄（値 70578）が本APIの取得元であることを確認した。	high	
+sheet-3-R006	OUT_OF_SCOPE								カスタマイズ区分（現行踏襲）の宣言であり、それ自体は実装対象の挙動を述べていない。		high	
+sheet-3-R007	MATCHED						src/Eccube/Controller/App/MTGBuyer/V1/Admin/OptionController.php:36		MTGBuyer 向けAPIとしてまとめて買取商品の商品IDを返す処理が src/Eccube/Controller/App/MTGBuyer/V1/Admin/OptionController.php:36-45 に存在する。	sheet-3_img1.png を確認。追加システム設定画面の「まとめて買取商品ID」欄（値 70578）が本APIの取得元であることを確認した。	high	
+sheet-3-R008	OUT_OF_SCOPE								括弧書きの理由説明（背景）であり、実装すべき挙動を述べていない。		high	
+sheet-3-R009	MATCHED						src/Eccube/Controller/App/MTGBuyer/V1/Admin/OptionController.php:38;src/Eccube/Entity/Master/MtbOption.php:80;src/Eccube/Resource/template/admin/Setting/Shop/additional_system.twig:129		追加システム設定の「まとめて買取商品ID」設定値を読み出して返す（src/Eccube/Controller/App/MTGBuyer/V1/Admin/OptionController.php:38-44、キーは src/Eccube/Entity/Master/MtbOption.php:80、設定画面の入力欄は src/Eccube/Resource/template/admin/Setting/Shop/additional_system.twig:129-133）。	sheet-3_img1.png を確認。追加システム設定画面の「まとめて買取商品ID」欄（値 70578）が本APIの取得元であることを確認した。	high	
+sheet-3-R010	OUT_OF_SCOPE								「リクエストパラメータ」という節見出しであり、実装対象の要求ではない。		high	
+sheet-3-R011	OUT_OF_SCOPE								リクエストパラメータ表のヘッダ行であり、実装対象の要求ではない。		high	
+sheet-3-R012	OUT_OF_SCOPE								リクエストパラメータ表のヘッダ行の続きであり、実装対象の要求ではない。		high	
+sheet-3-R013	MATCHED						src/Eccube/Controller/App/MTGBuyer/V1/Admin/OptionController.php:36		リクエストパラメータを受け取らない実装になっている（src/Eccube/Controller/App/MTGBuyer/V1/Admin/OptionController.php:36 は引数を取らず、リクエストの内容を参照しない）。	sheet-3_img1.png を確認。追加システム設定画面の「まとめて買取商品ID」欄（値 70578）が本APIの取得元であることを確認した。	high	
+sheet-3-R014	OUT_OF_SCOPE								サンプル欄の見出しであり、実装対象の要求ではない。		high	
+
+exec
+/bin/bash -lc "rg -n '"'^sheet-(4-R044|6-R015|7-R045|9-R031)'"\\t' hareruya-design-docs/design_impl_drift_report/design_audit/0507/verdicts.tsv && for s in 4 6 7 9; do echo sheet-"'$s; rg -n '"'R044|R015|R045|R031' hareruya-design-docs/design_impl_drift_report/design_audit/0507/sheets/sheet-"'$s.txt; done' in /home/y-saito/Developments
+ exited 1 in 0ms:
+91:sheet-4-R044	DRIFT	P2	実装違い	IO	査定申込日はISO8601形式の日時文字列で返す。	査定申込日を、年月日と時刻を「T」でつなぎ時差を添えた日時表記（ISO8601）の文字列として返す。	src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderController.php:73	applyDate を「2025/09/18 10:21:07」の形（年/月/日 空白 時:分:秒）の文字列で返しており、ISO8601の日時表記になっていない（src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderController.php:73）。	src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderController.php:73 の書式指定は Y/m/d H:i:s で、日付と時刻の区切り記号も時差も持たない。現行(pf)は受注日を日時値のまま応答へ渡しており（/home/y-saito/Developments/pf-api/src/Repository/DtbBuyOrderRepository.php:46 で orderDate をそのまま選択、応答整形は共通の直列化に委ねる）ISO8601で出るため、正本の記述は現行の挙動と一致する。差分はee側の書式指定にある。	sheet-4_img1.png はMTGBuyer側「お客様選択」画面。列は 買取番号／申込み時間／氏名／買取カテゴリ／査定担当者／フリーコメント欄で、行ごとに「査定中断」「査定前」ボタン、右上に「更新」ボタン。本APIが返す netBuyOrderId・applyDate・氏名・memberName・freeComment・netOrderStatusId がこの画面の各列に対応する（買取カテゴリ列は買取商品一覧取得APIのpurchaseCategory由来）。画像内に本APIへの追加I/O要求は無い（画面はMTGBuyer側の実装でeeの対象外）。 画像の申込み時間欄は「8/27/2025 2:07:06 AM」だがこれはMTGBuyer側の表示整形であり、API応答の書式を定めるものではない。	high	BuyOrderController-apply-date-not-iso8601
+151:sheet-6-R015	DESIGN_ISSUE				6: 査定中		src/Eccube/Service/App/MTGBuyer/V1/Admin/BuyOrder/UpdateStatusAction.php:28-50	実装の更新先は査定中=10・査定中断=11・査定再開=12（src/Eccube/Service/App/MTGBuyer/V1/Admin/BuyOrder/UpdateStatusAction.php:28-50、src/Eccube/Entity/Master/MtbBuyOrderStatus.php:46-51）で、名称は設計と一致するがIDは6/8/9ではない。	同シートの更新不可リストでは 6 は振込依頼済み、8 は振込失敗、9 はキャンセル済みとされており（sheet-6-R024・sheet-6-R026・sheet-6-R030）、買取ステータスマスタの定義（src/Eccube/Entity/Master/MtbBuyOrderStatus.php:38-45）もそれに一致する。同じシート内でIDと名称の対応が二重になっているため、更新先の正しいIDがどちらかを設計で確定する必要がある。名称ベースでは実装（src/Eccube/Service/App/MTGBuyer/V1/Admin/BuyOrder/UpdateStatusAction.php:28-50）と一致する。	sheet-6 に画像は無い（images/ に sheet-6_img*.png が存在しない）。レイアウト図由来の文言は無し。	med	
+251:sheet-7-R045	DRIFT	P2	実装違い	IO	ステータスが未選択のとき 入力不正（HTTP 400）で終了する	リクエストの検証に失敗したときは、入力不正としてHTTP 400 と エラーメッセージの配列を返す。	src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderController.php:171; tests/Eccube/Tests/Web/App/MTGBuyer/V1/Admin/BuyOrderControllerTest.php:717	検証失敗時のHTTPステータスは422で返る（tests/Eccube/Tests/Web/App/MTGBuyer/V1/Admin/BuyOrderControllerTest.php:717 が HTTP_UNPROCESSABLE_ENTITY を期待している）。body は {code:422, errors:[...]}（src/Eccube/EventListener/ExceptionListener.php:101,140-143）。	ステータスコード表の「400　バリデーションエラー」は述語を持たない断片のため、同じ内容を述べているリニューアル後仕様の行を引用した。src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderController.php:171 の本文マッピングは検証失敗時に422を投げる既定のままで、400へ寄せる指定が無い。tests/Eccube/Tests/Web/App/MTGBuyer/V1/Admin/BuyOrderControllerTest.php:717 が422を期待して固定している。	sheet-7_img1.png（MTGBuyerのネット買取査定画面）を確認。左下に「査定完了」ボタン、明細表に商品名・言語・状態・フォイル・枚数・買取価格・小計の列があり、シート本文の項目と一致する。ee側の画面ではないため実装対象はAPIのみ。	high	BuyOrderController-validation-error-422-not-400
+368:sheet-9-R031	DRIFT	P3	実装違い	IO	一致する申込時買取価格が1件も無い買取代表カードには、申込時買取価格の項目そのものを付けない（空のオブジェクトも返さない）。	申込時買取価格が1件も対応しない買取代表カードでは、応答にその項目自体を含めない（空の入れ物も返さない）。	src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyMainCardController.php:63-67;src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyMainCardController.php:80	対応する申込時買取価格が1件も無くても applicationPrice の項目を必ず持たせ、中身が空のまま返す（src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyMainCardController.php:63-67 で空の入れ物を作り、src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyMainCardController.php:80 で無条件に項目へ入れている）。	src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyMainCardController.php:63 が空の入れ物を先に作り、src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyMainCardController.php:64-67 で対応する価格があるときだけ中身を詰め、src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyMainCardController.php:80 は条件なしに項目へ入れる。したがって価格が1件も無い買取代表カードでも項目が応答に現れる（tests/Eccube/Tests/Web/App/MTGBuyer/V1/Admin/BuyMainCardControllerTest.php:138 は価格がある場合の確認だけで、無い場合の確認は無い）。現行(pf)は一致する価格があったときだけ項目を作るため、価格が無い買取代表カードには項目が現れない（/home/y-saito/Developments/pf-api/src/Controller/Admin/BuyMainCardController.php:39-45）。正本の記述は現行の挙動と一致し、差分はee側にある。なお本シートの現行仕様節は Source が a07-06（買取代表カード＝ネット買取受注の商品一覧）で、sheet-8 の現行仕様節（a07-07 個別入力商品の一覧）と入れ替わって取り込まれている。この行は買取代表カード側の記述なので、その機能の実装で判定した。	sheet-9_img1.png はMTGBuyer側「お客様選択」画面（sheet-4・sheet-8と同じ画像）。列は 買取番号／申込み時間／氏名／買取カテゴリ／査定担当者／フリーコメント欄で、右上に「更新」ボタン、行ごとに「査定中断」「査定前」ボタン。個別入力商品そのものは画面に写っておらず、画像内に本APIへの追加I/O要求（項目・文言）は無い（画面はMTGBuyer側の実装でeeの対象外）。	med	BuyMainCardController-application-price-always-present
+sheet-4
+sheet-6
+sheet-7
+sheet-9
+
+exec
+/bin/bash -lc "find hareruya-design-docs/design_impl_drift_report/design_audit/0507/sheets -maxdepth 1 -type f -printf '%f\\n' | sort && sed -n '1,220p' ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderController.php && sed -n '1,140p' ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyMainCardController.php" in /home/y-saito/Developments
+ succeeded in 0ms:
+sheet-1.txt
+sheet-2.txt
+sheet-3.txt
+sheet-4.txt
+sheet-5.txt
+sheet-6.txt
+sheet-7.txt
+sheet-8.txt
+sheet-9.txt
+<?php
+
+declare(strict_types=1);
+
+/*
+ * This file is part of EC-CUBE
+ *
+ * Copyright(c) EC-CUBE CO.,LTD. All Rights Reserved.
+ *
+ * http://www.ec-cube.co.jp/
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+namespace Eccube\Controller\App\MTGBuyer\V1\Admin;
+
+use Eccube\Controller\AbstractController;
+use Eccube\Dto\App\MTGBuyer\V1\Admin\UpdateBuyOrderDto;
+use Eccube\Entity\DtbBuyOrder;
+use Eccube\Entity\Master\MtbBuyOrderStatus;
+use Eccube\Entity\Member;
+use Eccube\Exception\App\BaseApiException;
+use Eccube\Exception\App\InternalException;
+use Eccube\Exception\App\InvalidParameterException;
+use Eccube\Exception\App\MissingRequiredParameterException;
+use Eccube\Exception\App\NotFoundException;
+use Eccube\Exception\App\UnauthenticatedException;
+use Eccube\Repository\DtbBuyOrderRepository;
+use Eccube\Repository\Master\MtbBuyOrderStatusRepository;
+use Eccube\Service\App\MTGBuyer\V1\Admin\BuyOrder\ActionInput\UpdateBuyOrderInput;
+use Eccube\Service\App\MTGBuyer\V1\Admin\BuyOrder\ActionInput\UpdateFreeCommentInput;
+use Eccube\Service\App\MTGBuyer\V1\Admin\BuyOrder\ActionInput\UpdateStatusInput;
+use Eccube\Service\App\MTGBuyer\V1\Admin\BuyOrder\UpdateBuyOrderAction;
+use Eccube\Service\App\MTGBuyer\V1\Admin\BuyOrder\UpdateFreeCommentAction;
+use Eccube\Service\App\MTGBuyer\V1\Admin\BuyOrder\UpdateStatusAction;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
+use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
+
+#[IsGranted('IS_AUTHENTICATED_FULLY')]
+class BuyOrderController extends AbstractController
+{
+    public function __construct(
+        private readonly DtbBuyOrderRepository $buyOrderRepository,
+        private readonly MtbBuyOrderStatusRepository $buyOrderStatusRepository,
+        private readonly UpdateFreeCommentAction $updateFreeCommentAction,
+        private readonly UpdateStatusAction $updateStatusAction,
+        private readonly UpdateBuyOrderAction $updateBuyOrderAction,
+    ) {
+    }
+
+    /**
+     * ネット買取受注一覧取得
+     */
+    #[Route('/%eccube_api_v1_route%/admin/buyOrders.json', name: 'api_admin_buy_orders_product_arrival', methods: ['GET'])]
+    public function getProductArrivalBuyOrders(): JsonResponse
+    {
+        $buyOrders = $this->buyOrderRepository->findToAssessBuyOrders();
+
+        $response = array_map(function (array $buyOrder): array {
+            $address = implode(' ', array_filter([
+                $buyOrder['prefName'],
+                $buyOrder['addr01'],
+                $buyOrder['addr02'],
+            ]));
+
+            return [
+                'netBuyOrderId' => (string) $buyOrder['id'],
+                'applyDate' => $buyOrder['orderDate']->format('Y/m/d H:i:s'),
+                'freeComment' => $buyOrder['memo'] ?? '',
+                'memberName' => $buyOrder['memberName'] ?? '',
+                'netOrderStatusId' => (string) $buyOrder['buyOrderStatusId'],
+                'customerInfo' => [
+                    'firstName' => $buyOrder['firstName'],
+                    'lastName' => $buyOrder['lastName'],
+                    'telNo' => $buyOrder['telNo'] ?? '',
+                    'zipcode' => $buyOrder['zipcode'],
+                    'address' => $address,
+                ],
+            ];
+        }, $buyOrders);
+
+        return new JsonResponse($response);
+    }
+
+    /**
+     * ネット買取受注コメント更新
+     */
+    #[Route('/%eccube_api_v1_route%/admin/buyOrder/{id}/freeComment.json', name: 'api_admin_buy_order_update_free_comment', methods: ['PUT'])]
+    public function updateFreeComment(int $id, Request $request): JsonResponse
+    {
+        $raw = $request->request->get('free_comment');
+        if ($raw === null) {
+            throw new MissingRequiredParameterException('コメントを入力してください');
+        }
+
+        $BuyOrder = $this->buyOrderRepository->find($id);
+        if (!$BuyOrder instanceof DtbBuyOrder) {
+            throw new NotFoundException('買取情報が見つかりません');
+        }
+
+        $Member = $this->getUser();
+        if (!$Member instanceof Member) {
+            throw new UnauthenticatedException('認証エラー');
+        }
+
+        try {
+            $input = new UpdateFreeCommentInput($BuyOrder, $Member, (string) $raw);
+            $this->updateFreeCommentAction->handle($input);
+
+            // システムエラーの場合は隠蔽して500エラーを返す
+        } catch (\Throwable $e) {
+            throw new InternalException('システムエラーが発生しました', $e);
+        }
+
+        return new JsonResponse(['code' => Response::HTTP_OK], Response::HTTP_OK);
+    }
+
+    /**
+     * ネット買取受注ステータス更新
+     */
+    #[Route('/%eccube_api_v1_route%/admin/buyOrder/{id}/status.json', name: 'api_admin_buy_order_update_status', methods: ['PUT'])]
+    public function updateStatus(int $id, Request $request): JsonResponse
+    {
+        $BuyOrder = $this->buyOrderRepository->find($id);
+        if (!$BuyOrder instanceof DtbBuyOrder) {
+            throw new NotFoundException('買取情報が見つかりません');
+        }
+
+        $statusId = $request->request->get('status');
+        if ($statusId === null || $statusId === '' || !ctype_digit((string) $statusId)) {
+            // 旧システム互換性目的：「店頭」ではないが、「店頭買取」という表現を使っている
+            throw new MissingRequiredParameterException('正しい店頭買取ステータスIDを入力してください');
+        }
+
+        $BuyOrderStatus = $this->buyOrderStatusRepository->find((int) $statusId);
+        if (!$BuyOrderStatus instanceof MtbBuyOrderStatus) {
+            // 旧システム互換性目的：「店頭」ではないが、「店頭買取」という表現を使っている
+            throw new InvalidParameterException('正しい店頭買取ステータスIDを入力してください');
+        }
+
+        $Member = $this->getUser();
+        if (!$Member instanceof Member) {
+            throw new UnauthenticatedException('認証エラー');
+        }
+
+        try {
+            $input = new UpdateStatusInput($BuyOrder, $Member, $BuyOrderStatus);
+            $this->updateStatusAction->handle($input);
+
+            // カスタムエラーの場合はそのまま返す
+        } catch (BaseApiException $e) {
+            throw $e;
+            // システムエラーの場合は隠蔽して500エラーを返す
+        } catch (\Throwable $e) {
+            throw new InternalException('システムエラーが発生しました', $e);
+        }
+
+        return new JsonResponse(['code' => Response::HTTP_OK], Response::HTTP_OK);
+    }
+
+    /**
+     * ネット買取注文の査定終了処理
+     * このAPIは、他のAPIとは異なりJSON形式のリクエストが前提となる
+     */
+    #[Route('/%eccube_api_v1_route%/admin/buyOrder/{id}.json', name: 'api_admin_buy_order_update', methods: ['PUT'])]
+    public function updateBuyOrder(int $id, #[MapRequestPayload] UpdateBuyOrderDto $updateBuyOrderDto): JsonResponse
+    {
+        $BuyOrder = $this->buyOrderRepository->find($id);
+        if (!$BuyOrder instanceof DtbBuyOrder) {
+            throw new NotFoundException('買取情報が見つかりません');
+        }
+
+        $Member = $this->getUser();
+        if (!$Member instanceof Member) {
+            throw new UnauthenticatedException('認証エラー');
+        }
+
+        $BuyOrderStatus = $this->buyOrderStatusRepository->find($updateBuyOrderDto->orderStatusId);
+        if (!$BuyOrderStatus instanceof MtbBuyOrderStatus) {
+            throw new InvalidParameterException('正しい買取ステータスIDを入力してください');
+        }
+
+        try {
+            $input = new UpdateBuyOrderInput(
+                $BuyOrder,
+                $Member,
+                $BuyOrderStatus,
+                $updateBuyOrderDto->orderDetails
+            );
+
+            $this->updateBuyOrderAction->handle($input);
+
+            // カスタムエラーの場合はそのまま返す
+        } catch (BaseApiException $e) {
+            throw $e;
+            // システムエラーの場合は隠蔽して500エラーを返す
+        } catch (\Throwable $e) {
+            throw new InternalException('システムエラーが発生しました', $e);
+        }
+
+        return new JsonResponse(['code' => Response::HTTP_OK], Response::HTTP_OK);
+    }
+}
+<?php
+
+declare(strict_types=1);
+
+/*
+ * This file is part of EC-CUBE
+ *
+ * Copyright(c) EC-CUBE CO.,LTD. All Rights Reserved.
+ *
+ * http://www.ec-cube.co.jp/
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+namespace Eccube\Controller\App\MTGBuyer\V1\Admin;
+
+use Eccube\Controller\AbstractController;
+use Eccube\Entity\DtbBuyMainCard;
+use Eccube\Repository\DtbBuyMainCardRepository;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
+
+#[IsGranted('IS_AUTHENTICATED_FULLY')]
+class BuyMainCardController extends AbstractController
+{
+    public function __construct(
+        private readonly DtbBuyMainCardRepository $buyMainCardRepository,
+    ) {
+    }
+
+    /**
+     * 複数ネット買取IDからネット買取受注の商品一覧を取得
+     */
+    #[Route('/%eccube_api_v1_route%/admin/buyMainCard.json', name: 'api_admin_buy_main_card', methods: ['POST'])]
+    public function getByBuyOrderIds(Request $request): JsonResponse
+    {
+        $ids = $request->request->get('ids');
+
+        // 旧システム互換目的：クライアントAppが空のリクエストを送信する可能性があり、400エラーで返すとハンドリングできないため空配列を返す
+        if ($ids === null || $ids === '') {
+            return new JsonResponse([]);
+        }
+
+        // カンマ区切りを配列に変換し、数字のみをフィルタリング
+        $buyOrderIds = array_filter(
+            explode(',', $ids),
+            static fn (string $id) => preg_match('/^\d+$/', trim($id)) === 1
+        );
+        $buyOrderIds = array_map('intval', $buyOrderIds);
+
+        // 有効なIDがない場合は空配列を返す
+        if (empty($buyOrderIds)) {
+            return new JsonResponse([]);
+        }
+
+        $BuyMainCards = $this->buyMainCardRepository->findByBuyOrderIdsWithApplicationPrices($buyOrderIds);
+
+        $response = array_map(function (DtbBuyMainCard $BuyMainCard): array {
+            // 状態（NM、SP等）をキーにした買取価格を整形
+            $pricesByCondition = [];
+            foreach ($BuyMainCard->getApplicationPrices() as $ApplicationPrice) {
+                $conditionCode = $ApplicationPrice->getCardCondition()->getCode();
+                $pricesByCondition[$conditionCode] = $ApplicationPrice->getApplicationPrice();
+            }
+
+            return [
+                'buyMainCardId' => $BuyMainCard->getId(),
+                'buyOrderId' => $BuyMainCard->getBuyOrder()->getId(),
+                'productId' => $BuyMainCard->getProduct()->getId(),
+                'languageId' => $BuyMainCard->getLanguage()?->getId(),
+                'foilFlg' => $BuyMainCard->getFoilFlg(),
+                'count' => $BuyMainCard->getCount(),
+                'price' => $BuyMainCard->getPrice(),
+                'cardConditionId' => $BuyMainCard->getCardCondition()?->getId(),
+                'saleFlg' => $BuyMainCard->getSaleFlg(),
+                'purchaseCategory' => $BuyMainCard->getPurchaseCategory(),
+                'applicationPrice' => $pricesByCondition,
+            ];
+        }, $BuyMainCards);
+
+        return new JsonResponse($response);
+    }
+}
+
+codex
+まず引用行の周辺文脈を確認しています。特に現行仕様側の2件は、同じシートのリニューアル後仕様が上書きしていないか、また API 項目表のヘッダやサンプルを要求と誤読していないかを重点的に見ます。
+exec
+/bin/bash -lc 'for f in 4 6 7 9; do echo ====sheet-$f; nl -ba hareruya-design-docs/design_impl_drift_report/design_audit/0507/sheets/sheet-$f.txt | sed -n '"'1,260p'; done" in /home/y-saito/Developments
+ succeeded in 0ms:
+====sheet-4
+     1	# sheet-4 ネット買取受注一覧取得 (HTML行 1094-1195 / 画像 1枚)
+     2	
+     3	ネット買取受注一覧取得
+     4	ドキュメント名
+     5	ネット買取管理　基本設計
+     6	セクション
+     7	—
+     8	プロジェクト名
+     9	ネット買取管理機能
+    10	作成者
+    11	石川
+    12	作成日
+    13	2025-09-18
+    14	更新者
+    15	石川
+    16	更新日
+    17	2025-09-18
+    18	機能No
+    19	A07-02
+    20	機能名
+    21	ネット買取受注一覧取得
+    22	概要
+    23	MTGバイヤーで査定する対象の買取情報を取得する
+    24	処理概要（★はカスタマイズ項目）
+    25	GET　POST　PUT　DELETE　PATCH　OPTIONS　HEAD　有　無　〇
+    26	エンドポイントURL
+    27	/api/admin/buyOrders.json
+    28	プロトコル　HTTP　メソッド　GET　認証の有無　有　認証方式　IP制限
+    29	トークン　リクエスト書式　クエリ　レスポンス書式　JSON
+    30	カスタマイズ説明
+    31	・現行踏襲
+    32	機能仕様処理概要（★はカスタマイズ項目）
+    33	・MTGBuyerで以下の画面を出すための情報を取得するためのAPI
+    34	ネット買取受注一覧取得 / D22 / image 1
+    35	・査定完了前のネット買取情報を取得する
+    36	・取得対象ステータスは「商品到着」「査定中」「査定中断」「査定再開」
+    37	リクエストパラメータ
+    38	項目名　型　必須　最大文字数
+    39	または最大値　入力例　備考
+    40	なし
+    41	リクエストパラメータサンプル
+    42	ステータスコード
+    43	コード　説明
+    44	200
+    45	レスポンスデータ
+    46	名前	型	説明
+    47	買取情報のJSON配列	配列	「商品到着」「査定前」「査定中」「査定中断」「査定再開」ステータスの買取情報のJSON配列
+    48	netBuyOrderId	文字列	ネット買取ID
+    49	applyDate	文字列	査定申込日
+    50	freeComment	文字列	フリーコメント
+    51	memberName	文字列	査定担当者
+    52	netOrderStatusId	文字列	ネット買取ステータスID
+    53	customerInfo	オブジェクト	買取を申し込んだ顧客の情報が入ったオブジェクト
+    54	firstName	文字列	名
+    55	lastName	文字列	姓
+    56	telNo	文字列	電話番号
+    57	zipcode	文字列	郵便番号
+    58	address	文字列	住所
+    59	レスポンスデータサンプル
+    60	Source:
+    61	functions/pf-api/a07-02_api_online_purchase_buy_order_list.md
+    62	現行仕様
+    63	A07-02 ネット買取受注一覧取得 / API ネット買取管理 — ネット買取受注一覧取得
+    64	業務ロジック
+    65	認証と呼び出しの可否
+    66	順序	判定	結果
+    67	1	要求ヘッダに認証トークンが無いとき	認証拒否（HTTP 401）
+    68	2	トークンの署名が不正なとき	認証拒否（HTTP 401）
+    69	3	トークンが指す利用者に対応する管理者会員が無いとき	認証拒否（HTTP 401）
+    70	4	認証を通過したとき	一覧を返す
+    71	トークンは要求ヘッダで受け取る。署名方式はHS256とする。トークンの原値と署名の秘密値は本書に記載しない。
+    72	認証した管理者会員による絞り込みは行わない。どの管理者会員のトークンで呼び出しても、同じ一覧を返す。
+    73	件数と並び順
+    74	ネット買取受注IDの昇順で返す。件数の上限と頁分割を持たず、対象の受注をすべて1回の応答で返す。対象の受注が1件も無いときは、空の配列を返す。
+    75	値の作り方
+    76	住所は、都道府県名・住所1・住所2を半角空白1個で区切って連結した1つの文字列として返す。
+    77	査定申込日はISO8601形式の日時文字列で返す。
+    78	フリーコメントが未設定の受注、および査定担当者が紐づいていない受注では、その項目を空値として返す。項目そのものを応答から省かない。
+    79	エラー時の扱い
+    80	事象	扱い
+    81	認証できないとき	認証拒否（HTTP 401）とする
+    82	トークンが復号できない形式のとき（許可外の署名方式を含む）	共通の異常応答（HTTP 500相当）とする。認証拒否（HTTP 401）とはしない
+    83	受注の取得または整形の途中で処理が失敗したとき	共通の異常応答（HTTP 500相当）とする
+    84	入出力
+    85	リニューアル後の仕様
+    86	表示メッセージ
+    87	本APIは画面の文言を持たない。
+====sheet-6
+     1	# sheet-6 ネット買取受注ステータス更新 (HTML行 1285-1392 / 画像 0枚)
+     2	
+     3	ネット買取受注ステータス更新
+     4	ドキュメント名
+     5	ネット買取管理　基本設計
+     6	セクション
+     7	—
+     8	プロジェクト名
+     9	ネット買取管理機能
+    10	作成者
+    11	石川
+    12	作成日
+    13	2025-09-18
+    14	更新者
+    15	石川
+    16	更新日
+    17	2025-09-18
+    18	機能No
+    19	A07-04
+    20	機能名
+    21	ネット買取受注ステータス更新
+    22	概要
+    23	MTGバイヤーでのステータス更新を反映する
+    24	処理概要（★はカスタマイズ項目）
+    25	GET　POST　PUT　DELETE　PATCH　OPTIONS　HEAD　有　無　〇
+    26	エンドポイントURL
+    27	/api/admin/buyOrder/{id}/status.json
+    28	プロトコル　HTTP　メソッド　PUT　認証の有無　有　認証方式　IP制限
+    29	トークン　リクエスト書式　クエリ　レスポンス書式　JSON
+    30	カスタマイズ説明
+    31	・新しく増えた買取受注ステータスについては更新できないようにする
+    32	・このAPIで更新できるのは今まで通り査定中、査定中断、査定再開であり、入庫待ちや入庫済みには更新できないよう制御を入れる
+    33	機能仕様処理概要（★はカスタマイズ項目）
+    34	・MTGBuyerで査定を開始したり、中断した際にステータス変更を行うAPI
+    35	★買取情報の現在のステータスが以下の場合に更新可能
+    36	2: 商品到着
+    37	10: 査定中
+    38	11: 査定中断
+    39	12: 査定再開
+    40	・以下のステータスに更新可能
+    41	6: 査定中
+    42	8: 査定中断
+    43	9: 査定再開
+    44	★以下のステータスには更新不可
+    45	1: 注文
+    46	3: MTGBuyer査定完了
+    47	13: 査定内容連絡済み
+    48	4: 査定内容承諾
+    49	5: 簡易書留送付済み
+    50	6: 振込依頼済み
+    51	7: 振込完了
+    52	8: 振込失敗
+    53	15: 未登録在庫あり
+    54	16: 入庫待ち
+    55	14: 入庫済み
+    56	9: キャンセル済み
+    57	・査定者本人を除き、査定中または査定再開のものは査定開始できない
+    58	・買取情報のステータスを更新する
+    59	・買取情報のステータス更新履歴を登録する
+    60	リクエストパラメータ
+    61	項目名	型	必須	最大文字数
+    62	または最大値	入力例	備考
+    63	ネット買取注文ステータス	数値	〇		1	マスターにあるステータス以外はエラー
+    64	リクエストパラメータサンプル
+    65	ステータスコード
+    66	コード　説明
+    67	200
+    68	レスポンスデータ
+    69	名前　型　説明
+    70	なし
+    71	レスポンスデータサンプル
+    72	Source:
+    73	functions/pf-api/a07-04_api_online_purchase_buy_order_status.md
+    74	現行仕様
+    75	A07-04 ネット買取受注ステータス更新 / API ネット買取管理 — ネット買取受注ステータス更新
+    76	業務ロジック
+    77	更新対象の特定と認証
+    78	認証は要求ヘッダの jwt-token に載せたトークンで行う。トークンが無い、署名が不正、トークンの利用者に該当する管理者会員が無いときは認証拒否（HTTP 401）とし、以降の判定を行わない。
+    79	指定された受注IDに該当するネット買取受注が無いときは、該当なし（HTTP 404）とする。
+    80	更新前後が同じステータスのとき
+    81	更新前ステータスと指定ステータスが同じときは、受注の更新もステータス変更履歴の登録も行わず、正常終了（HTTP 200）とする。
+    82	再計算しない値
+    83	金額・税・ポイント・在庫数量の再計算や丸めは行わない。
+    84	入出力
+    85	出力: レスポンス（失敗）
+    86	判定は表の上から順に行い、最初に該当した条件の応答を返して以降の判定を行わない。エラーメッセージを返す応答の本文は、処理結果コードとエラーメッセージの配列を持つ。
+    87	HTTPステータス	条件	エラーメッセージ
+    88	401	トークン欠落・署名不正・該当する管理者会員なし	組み立てず、HTTPステータスだけで返す
+    89	404	受注IDに該当するネット買取受注が無い	組み立てず、HTTPステータスだけで返す
+    90	400	指定ステータスIDが買取ステータスマスタに存在しない	正しい店頭買取ステータスIDを入力してください
+    91	400	更新前ステータスが査定終了で、指定ステータスが査定中・査定再開	この査定はすでに終了しているため開くことができません。
+    92	400	更新前ステータスが査定終了で、指定ステータスがそれ以外	この査定はすでに終了しているためステータスの更新に失敗しました。
+    93	400	更新前・指定ステータスがともに査定中・査定再開で、更新前の査定担当者が認証した管理者会員と異なる	この受注は「（査定担当者名）」が査定中です。
+    94	500	保存処理中の例外	例外の内容をそのまま返す
+    95	入出力: 永続化
+    96	操作	契機
+    97	更新	更新前と指定ステータスが異なるとき、受注のステータス・更新担当者・更新日時を更新する。更新担当者には認証した管理者会員を記録する
+    98	追加	同じ契機で、ステータス変更履歴を1件追加する。履歴には対象受注・設定したステータス・更新した管理者会員・登録日時を記録する
+    99	更新と履歴の追加はひとまとまりで行い、途中で例外が起きたときはどちらも取り消す。
+   100	リニューアル後の仕様
+   101	表示メッセージ
+   102	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+   103	A07-04-MSG-001	API応答JSON（errors配列）	買取情報が見つかりません	ステータス更新で、指定IDのネット買取受注が存在しないとき	APIはエラーJSONを返して終了
+   104	A07-04-MSG-002	API応答JSON（errors配列）	正しい店頭買取ステータスIDを入力してください	ステータス更新で、ステータスIDが未指定・空文字・数字以外のとき	APIはエラーJSONを返して終了
+   105	A07-04-MSG-003	API応答JSON（errors配列）	正しい店頭買取ステータスIDを入力してください	ステータス更新で、指定ステータスIDが買取ステータスマスタに存在しないとき	APIはエラーJSONを返して終了
+   106	A07-04-MSG-004	API応答JSON（errors配列）	認証エラー	ステータス更新処理で、認証した利用者が管理者会員でないとき	APIはエラーJSONを返して終了
+====sheet-7
+     1	# sheet-7 ネット買取注文の査定終了処理 (HTML行 1393-1522 / 画像 1枚)
+     2	
+     3	ネット買取注文の査定終了処理
+     4	ドキュメント名
+     5	ネット買取管理　基本設計
+     6	セクション
+     7	—
+     8	プロジェクト名
+     9	ネット買取管理機能
+    10	作成者
+    11	石川
+    12	作成日
+    13	2025-09-18
+    14	更新者
+    15	石川
+    16	更新日
+    17	2025-09-18
+    18	機能No
+    19	A07-05
+    20	機能名
+    21	ネット買取注文の査定終了処理
+    22	概要
+    23	MTGバイヤーで査定した買取情報を更新する
+    24	処理概要（★はカスタマイズ項目）
+    25	GET　POST　PUT　DELETE　PATCH　OPTIONS　HEAD　有　無　〇
+    26	エンドポイントURL
+    27	/api/admin/buyOrder/{_buyOrderId}.json
+    28	プロトコル　HTTP　メソッド　PUT　認証の有無　有　認証方式　IP制限
+    29	トークン　リクエスト書式　クエリ　レスポンス書式　JSON
+    30	カスタマイズ説明
+    31	・査定完了時、実在庫情報を登録する
+    32	・Foilフラグは「なし」「通常」「特殊」の3種のIDをリクエストとして受け付ける
+    33	機能仕様処理概要（★はカスタマイズ項目）
+    34	★MTGBuyerのネット買取査定画面で査定完了ボタンをクリックした際に呼ばれるAPI
+    35	ネット買取注文の査定終了処理 / D23 / image 1
+    36	★2026/4/30木村：ECCUBE_HARERUYA-743により、実在庫の操作をしない。
+    37	・送信されてきた以下の情報を更新および登録する
+    38	①、②についてはすでに登録済みのデータがあれば、更新を行う
+    39	①ネット買取注文詳細（商品規格IDが登録されている場合はこちらを登録）
+    40	②申込時買取金額
+    41	③ネット買取注文個別入力商品（商品規格IDが未登録の場合はこちらを登録）
+    42	★2026/4/30木村：ECCUBE_HARERUYA-743により、実在庫の操作をしない。
+    43	★
+    44	⑥ネット買取情報
+    45	⑥-1ステータス
+    46	⑥-2合計金額
+    47	⑥-3更新者
+    48	⑥-4更新日
+    49	⑦ネット買取情報ステータス履歴
+    50	・まとめて買取の商品ID（固定の商品ID、固定の金額）の明細を削除する
+    51	・送信されてきた買取注文詳細、個別入力商品以外は削除する
+    52	・買取注文詳細のサプライ品はMTGBuyerでは査定しないもののため、削除しない
+    53	・Foilフラグは「なし」「通常」「特殊」の3種のIDをリクエストとして受け付ける
+    54	★リクエストとしては3種を受け付けるが、MTGBuyerはFoil有無の2種のみを持つため、リクエストされたfoil_flgは利用せず、API内部処理でproduct_class_idからfoilを特定することとする。　2026/4/30木村：MTGBuyerはfoil_flgを3種扱わず、2種のままとする
+    55	リクエストパラメータ
+    56	項目名	型	必須	最大文字数
+    57	または最大値	入力例	備考
+    58	order_status	数値(整数)	〇		1	ネット買取注文ステータス、マスターにあるステータス以外はエラー
+    59	order_details	配列				査定を行った商品情報の配列
+    60	product_class_id	数値(整数)			123456	商品規格ID
+    61	name	文字列	〇	65535	【EN】セラの天使	商品名
+    62	quantity	数値(整数)			1	数量
+    63	price	数値(整数)			1000	買取金額
+    64	language_id	数値(整数)			1	言語ID
+    65	condition_id	数値(整数)			2	状態ID
+    66	foil_flg	数値(整数)			1	Foilフラグ（「なし」「通常」）の2種のID、特殊Foilは通常Foilとして扱う）
+    67	purchase_category	数値(整数)			0	買取カテゴリ（まとめて買取か、えらんで買取か）
+    68	リクエストパラメータサンプル
+    69	ステータスコード
+    70	コード　説明
+    71	200　成功
+    72	400　バリデーションエラー
+    73	500　例外発生
+    74	レスポンスデータ
+    75	名前　型　説明
+    76	なし
+    77	レスポンスデータサンプル
+    78	Source:
+    79	functions/pf-api/a07-05_api_online_purchase_buy_order_end.md
+    80	現行仕様
+    81	A07-05 ネット買取注文の査定終了処理 / API ネット買取管理 — ネット買取注文の査定終了処理
+    82	業務ロジック
+    83	処理できる条件
+    84	順序	判定	結果
+    85	1	認証トークンが無いとき、署名が不正なとき、または該当する管理者会員がないとき	認証拒否（HTTP 401）
+    86	2	パスの受注IDに一致するネット買取受注がないとき	該当なし（HTTP 404）
+    87	3	入力検証に1件以上失敗したとき	エラーメッセージの配列を返す
+    88	4	上記以外のとき	査定終了処理を実行する
+    89	認証は要求ヘッダのトークンを検証し、その利用者IDに対応する管理者会員を特定する。署名方式はHS256とする。トークンの原値と署名の秘密値は本書に記載しない。認証した管理者会員を受注の更新担当者として記録し、ステータス変更時の履歴にも記録する。
+    90	入力検証
+    91	明細の配列は1件以上あること。空のとき、および配列でないときは入力不正とする。入力検証は明細をすべて検査し、失敗したものを1件ずつエラーメッセージの配列に積んで一括で返す。1件目で打ち切らない。
+    92	明細の処理
+    93	明細は1件ずつ処理する。商品規格IDが0の明細は個別入力商品として扱い、同名の既存があるときは更新し、無いときは新規に作る。それ以外の明細は商品規格から買取代表カードを特定し、同一条件の既存があるときは更新し、無いときは新規に作り、同一受注内で商品・言語・フォイル区分が一致するえらんで買取の既存買取代表カードから、状態ごとの申込時買取価格を引き継ぐ。既存の状態が未設定のカードはNM相当として突合する。
+    94	各明細の単価×数量を合計額に加算する。
+    95	受注に既存登録されているカードのうち、まとめて買取の商品のものは申込時買取価格を削除する。カード詳細IDが未設定の明細はサプライ・パック相当として単価×数量を合計額に加算する。単価が未設定のものは加算しない。
+    96	合計額と受注の更新
+    97	合計額は10円単位で切り上げる。
+    98	削除する既存の買取代表カードに紐づく申込時買取価格も、併せて削除する。
+    99	ステータス履歴を登録するのは、更新前後でステータスが変わったときだけである。変わらないときは登録しない。
+   100	本処理では金額・税・ポイントの再計算や丸めを、上記の合計額の切り上げを除いて行わない。
+   101	エラー時の扱い
+   102	受注の更新から履歴登録までは一括で確定し、途中で失敗したときは全体を取り消す。更新処理中に例外が発生したときは、確定していない更新内容をすべて取り消したうえで、例外メッセージの配列を応答に含める。
+   103	入出力
+   104	入出力: リクエスト
+   105	項目	位置	型	必須／任意	内容
+   106	ネット買取受注ID	パス	integer	必須	該当が無いときは該当なし（HTTP 404）
+   107	認証トークン	ヘッダ	string	必須	検証して利用者IDから管理者会員を特定する
+   108	明細の配列	ボディ	array	必須	空のとき、配列以外のときは入力不正
+   109	入出力: レスポンス
+   110	認証拒否（HTTP 401）と該当なし（HTTP 404）は本文を持たない。入力不正と内部エラーのときはエラーメッセージの配列を返す。
+   111	入出力: 永続化
+   112	操作	契機
+   113	削除	今回保持しない既存の買取代表カードに紐づく申込時買取価格
+   114	削除	まとめて買取の商品に紐づく申込時買取価格
+   115	リニューアル後の仕様
+   116	表示メッセージ
+   117	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+   118	A07-05-MSG-001	API応答JSON（errors配列）	買取情報が見つかりません	査定終了処理で、指定IDのネット買取受注が存在しないとき	APIはエラーJSONを返して終了
+   119	—	API応答のエラーメッセージ配列	ステータスを選択してください。	ステータスが未選択のとき	入力不正（HTTP 400）で終了する
+   120	—	API応答のエラーメッセージ配列	1つ以上の商品を選んでください。	明細の配列が空のとき	入力不正（HTTP 400）で終了する
+====sheet-9
+     1	# sheet-9 複数ネット買取IDから個別入力商品の一覧を取得 (HTML行 1634-1772 / 画像 1枚)
+     2	
+     3	複数ネット買取IDから個別入力商品の一覧を取得
+     4	ドキュメント名
+     5	ネット買取管理　基本設計
+     6	セクション
+     7	—
+     8	プロジェクト名
+     9	ネット買取管理機能
+    10	作成者
+    11	石川
+    12	作成日
+    13	2025-09-18
+    14	更新者
+    15	石川
+    16	更新日
+    17	2025-09-18
+    18	機能No
+    19	A07-06
+    20	機能名
+    21	複数ネット買取IDから個別入力商品の一覧を取得
+    22	概要
+    23	ネット買取IDから買取個別商品情報を取得
+    24	処理概要（★はカスタマイズ項目）
+    25	GET　POST　PUT　DELETE　PATCH　OPTIONS　HEAD　有　無　〇
+    26	エンドポイントURL
+    27	/api/admin/buyOrderIndivisualInputProduct.json
+    28	プロトコル　HTTP　メソッド　POST　認証の有無　有　認証方式　IP制限
+    29	トークン　リクエスト書式　クエリ　レスポンス書式　JSON
+    30	カスタマイズ説明
+    31	・現行踏襲
+    32	機能仕様処理概要（★はカスタマイズ項目）
+    33	・MTGBuyerで以下の画面で一覧表示されたネット買取情報に紐づく個別商品情報を取得するAPI
+    34	複数ネット買取IDから個別入力商品の一覧を取得 / D22 / image 1
+    35	・リクエストで指定された複数のネット買取IDから紐づく個別商品情報を取得する
+    36	リクエストパラメータ
+    37	項目名	型	必須	最大文字数
+    38	または最大値	入力例	備考
+    39	ids	文字列	〇		9132,9135,9136,9137	ネット買取IDをカンマ区切りで指定する
+    40	リクエストパラメータサンプル
+    41	ステータスコード
+    42	コード　説明
+    43	200　成功
+    44	レスポンスデータ
+    45	名前	型	説明
+    46	買取個別商品の配列	配列	買取個別商品の配列
+    47	buyOrderIndivisualInputProductId	数値(整数)	買取個別商品ID
+    48	buyOrderId	数値(整数)	買取ID
+    49	name	文字列	商品名
+    50	price	数値(整数)	買取金額
+    51	count	数値(整数)	枚数
+    52	saleFlg	文字列	売却フラグ(true,false)
+    53	レスポンスデータサンプル
+    54	Source:
+    55	functions/pf-api/a07-06_api_online_purchase_buy_main_card.md
+    56	現行仕様
+    57	A07-06 複数ネット買取IDからネット買取受注の商品一覧を取得 / API ネット買取管理 — 複数ネット買取IDからネット買取受注の商品一覧を取得
+    58	業務ロジック
+    59	取得する対象
+    60	該当する買取代表カードが1件も無いときは、エラーとせず空配列を返す。ネット買取受注IDを1件も指定しなかったときや空文字を指定したときも、該当0件として空配列を返す。
+    61	申込時買取価格の付与
+    62	一致する申込時買取価格が1件も無い買取代表カードには、申込時買取価格の項目そのものを付けない（空のオブジェクトも返さない）。
+    63	査定金額・申込時買取価格の再計算や表示用の丸めは行わず、取得した値をそのまま応答へ返す。
+    64	エラー時の扱い
+    65	エラー内容	処理
+    66	認証不可	認証拒否（HTTP 401）とする
+    67	該当0件	エラーとせず空配列を返す
+    68	取得処理中の例外	処理失敗（HTTP 500）とする
+    69	入出力
+    70	入力: リクエスト
+    71	パラメータ	位置	説明
+    72	認証トークン	ヘッダ	認証用のトークン。ヘッダに無いときは認証拒否とする
+    73	出力: レスポンス（成功）
+    74	枚数・査定金額・言語ID・Foilフラグ・カード状態ID・売却フラグは、未設定のとき null をそのまま返す（既定値で補わない）。買取代表カードID・ネット買取受注ID・商品ID・買取カテゴリは常に値を持つ。
+    75	出力: レスポンス（失敗）
+    76	HTTPステータス	条件	本文の形
+    77	401	トークン欠落・署名不正・該当する管理者なし	認証拒否（本文を持たない）
+    78	500	取得処理中の例外	処理失敗として返す
+    79	リニューアル後の仕様
+    80	表示メッセージ
+    81	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+    82	本APIは画面へ表示するメッセージを返さない。
+
+exec
+/bin/bash -lc "nl -ba ec-cube-enterprise/src/Eccube/Dto/App/MTGBuyer/V1/Admin/UpdateBuyOrderDto.php | sed -n '1,220p'; nl -ba ec-cube-enterprise/tests/Eccube/Tests/Web/App/MTGBuyer/V1/Admin/BuyOrderControllerTest.php | sed -n '650,750p'; nl -ba ec-cube-enterprise/src/Eccube/EventListener/ExceptionListener.php | sed -n '60,170p'; rg -n \"MapRequestPayload|validationFailedStatusCode|UnprocessableEntity|ValidationFailedException|HttpExceptionInterface\" ec-cube-enterprise/src ec-cube-enterprise/config ec-cube-enterprise/app ec-cube-enterprise/tests | head -200" in /home/y-saito/Developments
+ succeeded in 634ms:
+ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php:47:use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
+ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php:130:    public function updateOtcBuyOrder(int $id, #[MapRequestPayload] UpdateOtcBuyOrderDto $updateOtcBuyOrderDto): JsonResponse
+ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderController.php:40:use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
+ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderController.php:171:    public function updateBuyOrder(int $id, #[MapRequestPayload] UpdateBuyOrderDto $updateBuyOrderDto): JsonResponse
+ec-cube-enterprise/tests/Eccube/Tests/Fixture/Api/Controller/FixtureController.php:47:use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
+ec-cube-enterprise/tests/Eccube/Tests/Fixture/Api/Controller/FixtureController.php:116:    public function generateMember(#[MapRequestPayload] CreateMemberDto $createMemberDto): Response
+ec-cube-enterprise/tests/Eccube/Tests/Fixture/Api/Controller/FixtureController.php:615:    public function updateTradelaw(#[MapRequestPayload] UpdateTradeLawDto $tradeLawDto)
+ec-cube-enterprise/tests/Eccube/Tests/Fixture/Api/Controller/FixtureController.php:633:    public function removeMasterDataTestData(#[MapRequestPayload] CreateMasterDataDto $masterDataDto)
+ec-cube-enterprise/tests/Eccube/Tests/Fixture/Api/Controller/FixtureController.php:658:    public function createMasterData(#[MapRequestPayload] CreateMasterDataDto $createMasterDataDto): Response
+ec-cube-enterprise/tests/Eccube/Tests/Fixture/Api/Controller/FixtureController.php:684:    public function generateNewTaxRate(#[MapRequestPayload] CreateTaxRateDto $createTaxRateDto): Response
+ec-cube-enterprise/tests/Eccube/Tests/Fixture/Api/Controller/FixtureController.php:745:    public function generateClassCategory(#[MapRequestPayload] CreateProductClassCategoryDto $classCategoryDto): Response
+ec-cube-enterprise/src/Eccube/EventListener/LogListener.php:24:use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
+ec-cube-enterprise/src/Eccube/EventListener/LogListener.php:116:        if ($e instanceof HttpExceptionInterface && $e->getStatusCode() < 500) {
+ec-cube-enterprise/src/Eccube/EventListener/ExceptionListener.php:24:use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
+ec-cube-enterprise/src/Eccube/EventListener/ExceptionListener.php:52:            $statusCode = $exception instanceof HttpExceptionInterface
+ec-cube-enterprise/src/Eccube/EventListener/ExceptionListener.php:55:            $message = $exception instanceof HttpExceptionInterface && $exception->getMessage()
+ec-cube-enterprise/src/Eccube/EventListener/ExceptionListener.php:90:            } elseif ($exception instanceof HttpExceptionInterface) {
+ec-cube-enterprise/src/Eccube/EventListener/ExceptionListener.php:160:        } elseif ($exception instanceof HttpExceptionInterface) {
+
+exec
+/bin/bash -lc "nl -ba ec-cube-enterprise/src/Eccube/Repository/DtbBuyMainCardRepository.php | sed -n '1,260p'; rg -n \"findByBuyOrderIdsWithApplicationPrices|applicationPrice|ApplicationPrices|getApplicationPrices\" ec-cube-enterprise/src/Eccube ec-cube-enterprise/tests/Eccube/Tests/Web/App/MTGBuyer/V1/Admin | head -300" in /home/y-saito/Developments
+ succeeded in 0ms:
+     1	<?php
+     2	
+     3	declare(strict_types=1);
+     4	
+     5	/*
+     6	 * This file is part of EC-CUBE
+     7	 *
+     8	 * Copyright(c) EC-CUBE CO.,LTD. All Rights Reserved.
+     9	 *
+    10	 * http://www.ec-cube.co.jp/
+    11	 *
+    12	 * For the full copyright and license information, please view the LICENSE
+    13	 * file that was distributed with this source code.
+    14	 */
+    15	
+    16	namespace Eccube\Repository;
+    17	
+    18	use Doctrine\ORM\Query\Expr\Join;
+    19	use Doctrine\Persistence\ManagerRegistry;
+    20	use Eccube\Entity\DtbBuyMainCard;
+    21	
+    22	/**
+    23	 * @extends AbstractRepository<DtbBuyMainCard>
+    24	 */
+    25	class DtbBuyMainCardRepository extends AbstractRepository
+    26	{
+    27	    public function __construct(ManagerRegistry $registry)
+    28	    {
+    29	        parent::__construct($registry, DtbBuyMainCard::class);
+    30	    }
+    31	
+    32	    /**
+    33	     * 買取情報取得
+    34	     *
+    35	     * @return DtbBuyMainCard[]
+    36	     */
+    37	    public function getBuyMainCardsSortedByProductId(int $buyOrderId, ?int $purchaseCategory = null): mixed
+    38	    {
+    39	        $qb = $this->createQueryBuilder('bmc')
+    40	            ->select('bmc, MIN(minBmc.id) AS HIDDEN minBuyMainCardId')
+    41	            ->addSelect('(CASE WHEN bmc.CardCondition IS NULL THEN 1 ELSE 0 END) AS HIDDEN card_condition_is_null')
+    42	            ->innerJoin('bmc.Product', 'p')
+    43	            ->innerJoin(DtbBuyMainCard::class, 'minBmc', Join::WITH, 'minBmc.Product = p AND IDENTITY(minBmc.BuyOrder) = :buyOrderId')
+    44	            ->where('IDENTITY(bmc.BuyOrder) = :buyOrderId')
+    45	            ->setParameter('buyOrderId', $buyOrderId)
+    46	            ->groupBy('bmc.id')
+    47	            ->orderBy('minBuyMainCardId', 'ASC')
+    48	            ->addOrderBy('IDENTITY(bmc.Language)', 'ASC')
+    49	            ->addOrderBy('card_condition_is_null', 'ASC')
+    50	            ->addOrderBy('IDENTITY(bmc.CardCondition)', 'ASC')
+    51	            ->addOrderBy('bmc.id', 'ASC');
+    52	
+    53	        if ($purchaseCategory) {
+    54	            $qb->andWhere('bmc.purchaseCategory = :purchaseCategory')
+    55	                ->setParameter('purchaseCategory', $purchaseCategory);
+    56	        }
+    57	
+    58	        return $qb->getQuery()->getResult();
+    59	    }
+    60	
+    61	    /**
+    62	     * 買取カテゴリで買取情報を取得する
+    63	     * 取得に際してキャンセル商品を先頭にソートする
+    64	     *
+    65	     * @return DtbBuyMainCard[]
+    66	     */
+    67	    public function getBuyMainCardsByPurchaseCategory(int $buyOrderId, int $purchaseCategory): array
+    68	    {
+    69	        return $this->createQueryBuilder('bmc')
+    70	            ->select([
+    71	                'bmc',
+    72	                'p',
+    73	                'MIN(minBmc.id) AS HIDDEN minBuyMainCardId',
+    74	                '(CASE WHEN bmc.CardCondition IS NULL THEN 1 ELSE 0 END) AS HIDDEN card_condition_is_null',
+    75	                '(CASE WHEN bmc.saleFlg = :cancel THEN 1 ELSE 0 END) AS HIDDEN is_canceled',
+    76	            ])
+    77	            ->join('bmc.Product', 'p')
+    78	            ->join(DtbBuyMainCard::class, 'minBmc', 'WITH', 'minBmc.Product = p AND IDENTITY(minBmc.BuyOrder) = :buyOrderId')
+    79	            ->where('IDENTITY(bmc.BuyOrder) = :buyOrderId')
+    80	            ->andWhere('bmc.purchaseCategory = :purchaseCategory')
+    81	            ->setParameter('buyOrderId', $buyOrderId)
+    82	            ->setParameter('purchaseCategory', $purchaseCategory)
+    83	            ->setParameter('cancel', DtbBuyMainCard::NOT_SALE)
+    84	            ->groupBy('bmc.id, p.id')
+    85	            ->orderBy('is_canceled', 'DESC')
+    86	            ->addOrderBy('minBuyMainCardId', 'ASC')
+    87	            ->addOrderBy('IDENTITY(bmc.Language)', 'ASC')
+    88	            ->addOrderBy('card_condition_is_null', 'ASC')
+    89	            ->addOrderBy('IDENTITY(bmc.CardCondition)', 'ASC')
+    90	            ->addOrderBy('bmc.id', 'ASC')
+    91	            ->getQuery()
+    92	            ->getResult();
+    93	    }
+    94	
+    95	    /**
+    96	     * まとめて買取の合計金額を取得する
+    97	     */
+    98	    public function getBulkPurchaseTotalPrice(int $buyOrderId): int
+    99	    {
+   100	        $result = $this->createQueryBuilder('bmc')
+   101	            ->join('bmc.BuyOrder', 'bo')
+   102	            ->select('SUM(bmc.price * bmc.count)')
+   103	            ->where('IDENTITY(bmc.BuyOrder) = :buyOrderId')
+   104	            ->andWhere('bmc.purchaseCategory = :purchaseCategory')
+   105	            ->setParameter('buyOrderId', $buyOrderId)
+   106	            ->setParameter('purchaseCategory', DtbBuyMainCard::BULK_TYPE)
+   107	            ->groupBy('bo.id')
+   108	            ->getQuery()
+   109	            ->getOneOrNullResult();
+   110	
+   111	        return $result[1] ?? 0;
+   112	    }
+   113	
+   114	    /**
+   115	     * まとめて買取の承諾済み合計金額を取得する
+   116	     */
+   117	    public function getBulkPurchaseAcceptanceTotalPrice(int $buyOrderId): int
+   118	    {
+   119	        $result = $this->createQueryBuilder('bmc')
+   120	            ->join('bmc.BuyOrder', 'bo')
+   121	            ->select('SUM(bmc.price * bmc.count)')
+   122	            ->where('IDENTITY(bmc.BuyOrder) = :buyOrderId')
+   123	            ->andWhere('bmc.purchaseCategory = :purchaseCategory')
+   124	            ->andWhere('bmc.saleFlg = :saleFlg')
+   125	            ->setParameter('buyOrderId', $buyOrderId)
+   126	            ->setParameter('purchaseCategory', DtbBuyMainCard::BULK_TYPE)
+   127	            ->setParameter('saleFlg', DtbBuyMainCard::SALE)
+   128	            ->groupBy('bo.id')
+   129	            ->getQuery()
+   130	            ->getOneOrNullResult();
+   131	
+   132	        return !is_null($result) ? $result[1] : 0;
+   133	    }
+   134	
+   135	    /**
+   136	     * ネット買取IDの配列から買取代表カード情報を取得する
+   137	     *
+   138	     * @param int[] $buyOrderIds
+   139	     *
+   140	     * @return DtbBuyMainCard[]
+   141	     */
+   142	    public function findByBuyOrderIdsWithApplicationPrices(array $buyOrderIds): array
+   143	    {
+   144	        return $this->createQueryBuilder('buyMainCard')
+   145	            ->leftJoin('buyMainCard.ApplicationPrices', 'applicationPrice')
+   146	            ->addSelect('applicationPrice')
+   147	            ->leftJoin('applicationPrice.CardCondition', 'cardCondition')
+   148	            ->addSelect('cardCondition')
+   149	            ->where('IDENTITY(buyMainCard.BuyOrder) IN (:buyOrderIds)')
+   150	            ->setParameter('buyOrderIds', $buyOrderIds)
+   151	            ->getQuery()
+   152	            ->getResult()
+   153	        ;
+   154	    }
+   155	}
+ec-cube-enterprise/tests/Eccube/Tests/Web/App/MTGBuyer/V1/Admin/BuyMainCardControllerTest.php:138:        $this->assertArrayHasKey('applicationPrice', $firstResponse);
+ec-cube-enterprise/tests/Eccube/Tests/Web/App/MTGBuyer/V1/Admin/BuyMainCardControllerTest.php:139:        $this->assertSame(2600, $firstResponse['applicationPrice']['NM']);
+ec-cube-enterprise/tests/Eccube/Tests/Web/App/MTGBuyer/V1/Admin/BuyMainCardControllerTest.php:140:        $this->assertSame(2000, $firstResponse['applicationPrice']['SP']);
+ec-cube-enterprise/src/Eccube/Repository/DtbBuyMainCardRepository.php:142:    public function findByBuyOrderIdsWithApplicationPrices(array $buyOrderIds): array
+ec-cube-enterprise/src/Eccube/Repository/DtbBuyMainCardRepository.php:145:            ->leftJoin('buyMainCard.ApplicationPrices', 'applicationPrice')
+ec-cube-enterprise/src/Eccube/Repository/DtbBuyMainCardRepository.php:146:            ->addSelect('applicationPrice')
+ec-cube-enterprise/src/Eccube/Repository/DtbBuyMainCardRepository.php:147:            ->leftJoin('applicationPrice.CardCondition', 'cardCondition')
+ec-cube-enterprise/src/Eccube/Repository/DtbBuyOrderRepository.php:326:            ->leftJoin('bmc.ApplicationPrices', 'ap')
+ec-cube-enterprise/src/Eccube/Repository/DtbBuyOrderRepository.php:704:    //                 'SUM(ap.applicationPrice) AS applicationTotalPrice',
+ec-cube-enterprise/src/Eccube/Repository/DtbBuyOrderRepository.php:709:    //             ->leftJoin('bmc.applicationPrices', 'ap', 'WITH', 'ap.cardCondition = :cardCondition')
+ec-cube-enterprise/src/Eccube/Dto/Front/Mypage/PurchaseHistoryNetCardLineViewDto.php:31:        public ?int $applicationPrice,
+ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyMainCardController.php:59:        $BuyMainCards = $this->buyMainCardRepository->findByBuyOrderIdsWithApplicationPrices($buyOrderIds);
+ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyMainCardController.php:64:            foreach ($BuyMainCard->getApplicationPrices() as $ApplicationPrice) {
+ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyMainCardController.php:80:                'applicationPrice' => $pricesByCondition,
+ec-cube-enterprise/src/Eccube/Form/Type/Admin/Purchase/ApplicationPriceType.php:32:            ->add('applicationPrice', PriceType::class, [
+ec-cube-enterprise/src/Eccube/Service/Front/Purchase/PurchaseOrderSubmitAction.php:234:            $applicationPriceEntities = [];
+ec-cube-enterprise/src/Eccube/Service/Front/Purchase/PurchaseOrderSubmitAction.php:248:                $applicationPriceEntities[] = $ApplicationPrice;
+ec-cube-enterprise/src/Eccube/Service/Front/Purchase/PurchaseOrderSubmitAction.php:251:            $BuyMainCard->setApplicationPrices(new ArrayCollection($applicationPriceEntities));
+ec-cube-enterprise/src/Eccube/Form/Type/Admin/Purchase/BuyMainCardType.php:106:            ->add('applicationPrices', CollectionType::class, [
+ec-cube-enterprise/src/Eccube/Form/Type/Admin/Purchase/BuyMainCardType.php:114:        $builder->get('applicationPrices')->addModelTransformer(new CallbackTransformer(
+ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/purchase_history_detail_net.twig:107:                        <td>{% if line.applicationPrice is not null %}{{ line.applicationPrice|price }}{% endif %}</td>
+ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/purchase_history_detail_net.twig:161:                                <td>{% if row.applicationPrice is not null %}{{ row.applicationPrice|price }}{% endif %}</td>
+ec-cube-enterprise/src/Eccube/Service/Front/Mypage/PurchaseHistory/PurchaseHistoryNetDetailAction.php:162:            applicationPrice: $BuyMainCard->getNMApplicationPrice(),
+ec-cube-enterprise/src/Eccube/Service/App/MTGBuyer/V1/Admin/BuyOrder/BuildBuyMainCard.php:36:        private readonly DtbApplicationPriceRepository $applicationPriceRepository,
+ec-cube-enterprise/src/Eccube/Service/App/MTGBuyer/V1/Admin/BuyOrder/BuildBuyMainCard.php:84:            $ApplicationPrices = $this->buildInheritedApplicationPrices(
+ec-cube-enterprise/src/Eccube/Service/App/MTGBuyer/V1/Admin/BuyOrder/BuildBuyMainCard.php:91:            $BuyMainCard->setApplicationPrices(new ArrayCollection($ApplicationPrices));
+ec-cube-enterprise/src/Eccube/Service/App/MTGBuyer/V1/Admin/BuyOrder/BuildBuyMainCard.php:156:    private function buildInheritedApplicationPrices(
+ec-cube-enterprise/src/Eccube/Service/App/MTGBuyer/V1/Admin/BuyOrder/BuildBuyMainCard.php:176:        $OldApplicationPrices = $this->applicationPriceRepository->findBy(['BuyMainCard' => $OldBuyMainCard->getId()]);
+ec-cube-enterprise/src/Eccube/Service/App/MTGBuyer/V1/Admin/BuyOrder/BuildBuyMainCard.php:177:        $newApplicationPrices = [];
+ec-cube-enterprise/src/Eccube/Service/App/MTGBuyer/V1/Admin/BuyOrder/BuildBuyMainCard.php:179:        foreach ($OldApplicationPrices as $OldApplicationPrice) {
+ec-cube-enterprise/src/Eccube/Service/App/MTGBuyer/V1/Admin/BuyOrder/BuildBuyMainCard.php:186:            $newApplicationPrices[] = $NewApplicationPrice;
+ec-cube-enterprise/src/Eccube/Service/App/MTGBuyer/V1/Admin/BuyOrder/BuildBuyMainCard.php:189:        return $newApplicationPrices;
+ec-cube-enterprise/src/Eccube/Entity/DtbBuyOrder.php:440:            if (count($BuyMainCard->getApplicationPrices()) === 1) {
+ec-cube-enterprise/src/Eccube/Entity/DtbBuyOrder.php:441:                $applicationTotalPrice += $BuyMainCard->getCount() * $BuyMainCard->getApplicationPrices()[0]->getApplicationPrice();
+ec-cube-enterprise/src/Eccube/Entity/DtbBuyOrder.php:444:            foreach ($BuyMainCard->getApplicationPrices() as $applicationPrice) {
+ec-cube-enterprise/src/Eccube/Entity/DtbBuyOrder.php:445:                if (MtbCardCondition::NM === $applicationPrice->getCardCondition()->getId()) {
+ec-cube-enterprise/src/Eccube/Entity/DtbBuyOrder.php:446:                    $applicationTotalPrice += $BuyMainCard->getCount() * $applicationPrice->getApplicationPrice();
+ec-cube-enterprise/src/Eccube/Entity/DtbBuyMainCard.php:80:    private Collection $ApplicationPrices;
+ec-cube-enterprise/src/Eccube/Entity/DtbBuyMainCard.php:85:        $this->ApplicationPrices = new ArrayCollection();
+ec-cube-enterprise/src/Eccube/Entity/DtbBuyMainCard.php:230:     * @param Collection<int, DtbApplicationPrice> $applicationPrices
+ec-cube-enterprise/src/Eccube/Entity/DtbBuyMainCard.php:232:    public function setApplicationPrices(Collection $applicationPrices): DtbBuyMainCard
+ec-cube-enterprise/src/Eccube/Entity/DtbBuyMainCard.php:234:        $this->ApplicationPrices = $applicationPrices;
+ec-cube-enterprise/src/Eccube/Entity/DtbBuyMainCard.php:242:    public function getApplicationPrices(): Collection
+ec-cube-enterprise/src/Eccube/Entity/DtbBuyMainCard.php:244:        return $this->ApplicationPrices;
+ec-cube-enterprise/src/Eccube/Entity/DtbBuyMainCard.php:249:        /** @var DtbApplicationPrice $applicationPrice */
+ec-cube-enterprise/src/Eccube/Entity/DtbBuyMainCard.php:250:        foreach ($this->ApplicationPrices as $applicationPrice) {
+ec-cube-enterprise/src/Eccube/Entity/DtbBuyMainCard.php:251:            if ($applicationPrice->getCardCondition()->getId() === MtbCardCondition::NM) {
+ec-cube-enterprise/src/Eccube/Entity/DtbBuyMainCard.php:252:                return $applicationPrice->getApplicationPrice();
+ec-cube-enterprise/src/Eccube/Entity/DtbApplicationPrice.php:34:    private int $applicationPrice;
+ec-cube-enterprise/src/Eccube/Entity/DtbApplicationPrice.php:37:    #[ORM\ManyToOne(targetEntity: DtbBuyMainCard::class, inversedBy: 'ApplicationPrices')]
+ec-cube-enterprise/src/Eccube/Entity/DtbApplicationPrice.php:58:        return $this->applicationPrice;
+ec-cube-enterprise/src/Eccube/Entity/DtbApplicationPrice.php:61:    public function setApplicationPrice(int $applicationPrice): DtbApplicationPrice
+ec-cube-enterprise/src/Eccube/Entity/DtbApplicationPrice.php:63:        $this->applicationPrice = $applicationPrice;
+
+exec
+/bin/bash -lc "nl -ba hareruya-design-docs/design_impl_drift_report/design_audit/0507/sheets/sheet-8.txt | sed -n '1,220p'; nl -ba ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderIndividualInputProductController.php 2>/dev/null | sed -n '1,160p'; rg -n \"Indivisual|IndividualInput|buyOrderInd\" ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin ec-cube-enterprise/src/Eccube/Repository | head -100" in /home/y-saito/Developments
+ succeeded in 0ms:
+     1	# sheet-8 複数ネット買取IDからネット買取受注の商品一覧を取得 (HTML行 1523-1633 / 画像 1枚)
+     2	
+     3	複数ネット買取IDからネット買取受注の商品一覧を取得
+     4	ドキュメント名
+     5	ネット買取管理　基本設計
+     6	セクション
+     7	—
+     8	プロジェクト名
+     9	ネット買取管理機能
+    10	作成者
+    11	石川
+    12	作成日
+    13	2025-09-18
+    14	更新者
+    15	石川
+    16	更新日
+    17	2025-09-18
+    18	機能No
+    19	A07-05
+    20	機能名
+    21	複数ネット買取IDからネット買取受注の商品一覧を取得
+    22	概要
+    23	ネット買取IDから買取商品情報を取得
+    24	処理概要（★はカスタマイズ項目）
+    25	GET　POST　PUT　DELETE　PATCH　OPTIONS　HEAD　有　無　〇
+    26	エンドポイントURL
+    27	/api/admin/buyMainCard.json
+    28	プロトコル　HTTP　メソッド　POST　認証の有無　有　認証方式　IP制限
+    29	トークン　リクエスト書式　クエリ　レスポンス書式　JSON
+    30	カスタマイズ説明
+    31	・Foilフラグについて真/偽ではなく、「なし」「通常」「特殊」の3種のIDを返すようにする
+    32	機能仕様処理概要（★はカスタマイズ項目）
+    33	・MTGBuyerで以下の画面で一覧表示されたネット買取情報に紐づく買取商品情報を取得するAPI
+    34	複数ネット買取IDからネット買取受注の商品一覧を取得 / D22 / image 1
+    35	・リクエストで指定された複数のネット買取IDから紐づく買取商品情報を取得する
+    36	・Foilフラグの取得時、真/偽ではなく、「なし」「通常」「特殊」の3種のIDを返すようにする
+    37	リクエストパラメータ
+    38	項目名	型	必須	最大文字数
+    39	または最大値	入力例	備考
+    40	ids	文字列	〇		9132,9135,9136,9137	ネット買取IDをカンマ区切りで指定する
+    41	リクエストパラメータサンプル
+    42	ステータスコード
+    43	コード　説明
+    44	200　成功
+    45	レスポンスデータ
+    46	名前	型	説明
+    47	買取商品の配列	配列	買取商品の配列
+    48	buyMainCardId	数値(整数)	買取商品ID
+    49	buyOrderId	数値(整数)	買取ID
+    50	productId	数値(整数)	商品ID
+    51	languageId	数値(整数)	言語ID
+    52	foilFlg	数値(整数)	Foilフラグ（「なし」「通常」「特殊」の3種のID）trueまたはfalseを返していたところをIDにする
+    53	count	数値(整数)	枚数
+    54	price	数値(整数)	買取金額
+    55	cardConditionId	数値(整数)	カード状態
+    56	saleFlg	文字列	売却フラグ(true,false)
+    57	purchaseCategory	数値(整数)	カード情報に紐づくカード詳細情報をすべて保持するオブジェクト
+    58	applicationPrice	オブジェクト	買取カテゴリ（まとめて買取か、えらんで買取か）
+    59	状態ごとの買取金額	文字列	状態（NM、SP等）をキーにした買取価格
+    60	レスポンスデータサンプル
+    61	Source:
+    62	functions/pf-api/a07-07_api_online_purchase_buy_order_indivisual_input_product.md
+    63	現行仕様
+    64	A07-07 複数ネット買取IDから個別入力商品の一覧を取得 / API ネット買取管理 — 複数ネット買取IDから個別入力商品の一覧を取得
+    65	業務ロジック
+    66	取得の範囲と並び
+    67	指定されたネット買取受注IDのうち、紐づく個別入力商品が無いIDは結果に現れず、該当した分だけを返す。該当が1件も無いときは空配列を返し、エラーとしない。
+    68	返す順序は定めていない。
+    69	取得した値をそのまま応答へ整形する。金額の再計算・表示用の丸めは行わない。
+    70	エラー時の扱い
+    71	事象	扱い
+    72	トークンが欠落しているとき、署名が不正なとき、該当する管理者アカウントが無いとき	認証拒否（HTTP401）とする
+    73	該当が0件のとき	エラーとせず、HTTP200で空配列を返す
+    74	取得処理中に例外が起きたとき	処理失敗（HTTP500）として共通例外処理に委ねる
+    75	入出力
+    76	入力: 認証
+    77	パラメータ	位置	必須／任意	説明
+    78	jwt-token	ヘッダ	必須	認証用のトークン。署名方式はHS256。ペイロードの利用者IDに一致する管理者アカウントを引き当て、見つからないときは認証拒否とする
+    79	出力: 値が未設定のときの扱い
+    80	買取金額・枚数・売却フラグは、値が未設定のときnullを返す。
+    81	リニューアル後の仕様
+    82	表示メッセージ
+    83	この機能は、いずれの場合もメッセージを扱わない。
+ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderIndivisualInputProductController.php:19:use Eccube\Entity\DtbBuyOrderIndivisualInputProduct;
+ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderIndivisualInputProductController.php:20:use Eccube\Repository\DtbBuyOrderIndivisualInputProductRepository;
+ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderIndivisualInputProductController.php:27:class BuyOrderIndivisualInputProductController extends AbstractController
+ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderIndivisualInputProductController.php:30:        private readonly DtbBuyOrderIndivisualInputProductRepository $repository,
+ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderIndivisualInputProductController.php:37:    #[Route(path: '/%eccube_api_v1_route%/admin/buyOrderIndivisualInputProduct.json', name: 'api_admin_buy_order_indivisual_input_product', methods: ['POST'])]
+ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderIndivisualInputProductController.php:59:        $BuyOrderIndivisualInputProducts = $this->repository->findBy(['BuyOrder' => $buyOrderIds]);
+ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderIndivisualInputProductController.php:62:            static fn (DtbBuyOrderIndivisualInputProduct $Product) => [
+ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderIndivisualInputProductController.php:63:                'buyOrderIndivisualInputProductId' => $Product->getId(),
+ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderIndivisualInputProductController.php:70:            $BuyOrderIndivisualInputProducts
+ec-cube-enterprise/src/Eccube/Repository/DtbOtcBuyOrderRepository.php:409:     * * 2. BuyOrderIndividualInput
+ec-cube-enterprise/src/Eccube/Repository/DtbOtcBuyOrderRepository.php:820:     * 2. OtcBuyOrderIndivisualInputProduct（個別入力商品）のセクション別集計
+ec-cube-enterprise/src/Eccube/Repository/DtbOtcBuyOrderIndivisualInputProductRepository.php:20:use Eccube\Entity\DtbOtcBuyOrderIndivisualInputProduct;
+ec-cube-enterprise/src/Eccube/Repository/DtbOtcBuyOrderIndivisualInputProductRepository.php:23: * @extends AbstractRepository<DtbOtcBuyOrderIndivisualInputProduct>
+ec-cube-enterprise/src/Eccube/Repository/DtbOtcBuyOrderIndivisualInputProductRepository.php:25:class DtbOtcBuyOrderIndivisualInputProductRepository extends AbstractRepository
+ec-cube-enterprise/src/Eccube/Repository/DtbOtcBuyOrderIndivisualInputProductRepository.php:29:        parent::__construct($registry, DtbOtcBuyOrderIndivisualInputProduct::class);
+ec-cube-enterprise/src/Eccube/Repository/DtbBuyOrderStockRepository.php:22:use Eccube\Entity\DtbBuyOrderIndivisualInputProduct;
+ec-cube-enterprise/src/Eccube/Repository/DtbBuyOrderStockRepository.php:70:            $this->sumIndivisualInputProductQuantities($stockIds),
+ec-cube-enterprise/src/Eccube/Repository/DtbBuyOrderStockRepository.php:121:    private function sumIndivisualInputProductQuantities(array $stockIds): array
+ec-cube-enterprise/src/Eccube/Repository/DtbBuyOrderStockRepository.php:128:                DtbBuyOrderIndivisualInputProduct::class,
+ec-cube-enterprise/src/Eccube/Repository/DtbOtcBuyOrderStockRepository.php:22:use Eccube\Entity\DtbOtcBuyOrderIndivisualInputProduct;
+ec-cube-enterprise/src/Eccube/Repository/DtbOtcBuyOrderStockRepository.php:118:            $this->sumIndivisualInputProductQuantities($stockIds),
+ec-cube-enterprise/src/Eccube/Repository/DtbOtcBuyOrderStockRepository.php:161:    private function sumIndivisualInputProductQuantities(array $stockIds): array
+ec-cube-enterprise/src/Eccube/Repository/DtbOtcBuyOrderStockRepository.php:168:                DtbOtcBuyOrderIndivisualInputProduct::class,
+ec-cube-enterprise/src/Eccube/Repository/DtbBuyOrderIndivisualInputProductRepository.php:19:use Eccube\Entity\DtbBuyOrderIndivisualInputProduct;
+ec-cube-enterprise/src/Eccube/Repository/DtbBuyOrderIndivisualInputProductRepository.php:22: * @extends AbstractRepository<DtbBuyOrderIndivisualInputProduct>
+ec-cube-enterprise/src/Eccube/Repository/DtbBuyOrderIndivisualInputProductRepository.php:24:class DtbBuyOrderIndivisualInputProductRepository extends AbstractRepository
+ec-cube-enterprise/src/Eccube/Repository/DtbBuyOrderIndivisualInputProductRepository.php:28:        parent::__construct($registry, DtbBuyOrderIndivisualInputProduct::class);
+ec-cube-enterprise/src/Eccube/Repository/DtbBuyOrderRepository.php:29:use Eccube\Entity\DtbBuyOrderIndivisualInputProduct;
+ec-cube-enterprise/src/Eccube/Repository/DtbBuyOrderRepository.php:268:            ->leftJoin('bo.BuyOrderIndivisualInputProducts', 'boiip')
+ec-cube-enterprise/src/Eccube/Repository/DtbBuyOrderRepository.php:273:            ->setParameter('boiipCancel', DtbBuyOrderIndivisualInputProduct::NOT_SALE);
+ec-cube-enterprise/src/Eccube/Repository/DtbBuyOrderRepository.php:429:        // BuyOrderIndivisualInputProducts の商品点数を集計
+ec-cube-enterprise/src/Eccube/Repository/DtbBuyOrderRepository.php:433:            ->join('b.BuyOrderIndivisualInputProducts', 'boi')
+
+exec
+/bin/bash -lc "nl -ba ec-cube-enterprise/src/Eccube/Service/App/MTGBuyer/V1/Admin/BuyOrder/UpdateStatusAction.php | sed -n '1,180p'; nl -ba ec-cube-enterprise/src/Eccube/Entity/Master/MtbBuyOrderStatus.php | sed -n '1,110p'; rg -n \"APPRAISAL|査定中|査定中断|査定再開|PRODUCT_ARRIVAL\" ec-cube-enterprise/src/Eccube/Service/App/MTGBuyer/V1/Admin/BuyOrder ec-cube-enterprise/src/Eccube/Entity/Master/MtbBuyOrderStatus.php ec-cube-enterprise/app/DoctrineMigrations ec-cube-enterprise/src/Eccube/Resource/doctrine ec-cube-enterprise/tests/Eccube/Tests/Web/App/MTGBuyer/V1/Admin/BuyOrderControllerTest.php | head -300" in /home/y-saito/Developments
+ succeeded in 0ms:
+     1	<?php
+     2	
+     3	declare(strict_types=1);
+     4	
+     5	/*
+     6	 * This file is part of EC-CUBE
+     7	 *
+     8	 * Copyright(c) EC-CUBE CO.,LTD. All Rights Reserved.
+     9	 *
+    10	 * http://www.ec-cube.co.jp/
+    11	 *
+    12	 * For the full copyright and license information, please view the LICENSE
+    13	 * file that was distributed with this source code.
+    14	 */
+    15	
+    16	namespace Eccube\Service\App\MTGBuyer\V1\Admin\BuyOrder;
+    17	
+    18	use Doctrine\ORM\EntityManagerInterface;
+    19	use Eccube\Entity\Master\MtbBuyOrderStatus;
+    20	use Eccube\Exception\App\InternalException;
+    21	use Eccube\Exception\App\InvalidStatusTransitionException;
+    22	use Eccube\Service\App\MTGBuyer\V1\Admin\BuyOrder\ActionInput\UpdateStatusInput;
+    23	use Eccube\Service\EntityManager\BuyOrderStatusHistoryEntityManager;
+    24	use Psr\Log\LoggerInterface;
+    25	
+    26	class UpdateStatusAction
+    27	{
+    28	    private const FROM_STATUS_TO_ALLOWED_STATUSES = [
+    29	        // 商品到着 -> 査定中, 査定中断, 査定再開
+    30	        MtbBuyOrderStatus::PRODUCT_ARRIVAL => [
+    31	            MtbBuyOrderStatus::ASSESSING,
+    32	            MtbBuyOrderStatus::PENDING,
+    33	            MtbBuyOrderStatus::RESUMPTION,
+    34	        ],
+    35	        // 査定中 -> 査定中断, 査定再開
+    36	        MtbBuyOrderStatus::ASSESSING => [
+    37	            MtbBuyOrderStatus::PENDING,
+    38	            MtbBuyOrderStatus::RESUMPTION,
+    39	        ],
+    40	        // 査定中断 -> 査定中, 査定再開
+    41	        MtbBuyOrderStatus::PENDING => [
+    42	            MtbBuyOrderStatus::ASSESSING,
+    43	            MtbBuyOrderStatus::RESUMPTION,
+    44	        ],
+    45	        // 査定再開 -> 査定中, 査定中断
+    46	        MtbBuyOrderStatus::RESUMPTION => [
+    47	            MtbBuyOrderStatus::ASSESSING,
+    48	            MtbBuyOrderStatus::PENDING,
+    49	        ],
+    50	    ];
+    51	
+    52	    public function __construct(
+    53	        private readonly EntityManagerInterface $entityManager,
+    54	        private readonly LoggerInterface $logger,
+    55	        private readonly BuyOrderStatusHistoryEntityManager $buyOrderStatusHistoryEntityManager,
+    56	    ) {
+    57	    }
+    58	
+    59	    /**
+    60	     * ステータスを更新する
+    61	     * 更新前ステータス [2: 商品到着, 10: 査定中, 11: 査定中断, 12: 査定再開]
+    62	     * 更新後ステータス [10: 査定中, 11: 査定中断, 12: 査定再開]
+    63	     * ただし、査定中 -> 査定再開のステータス更新ができるのは BuyOrderの更新者(Member)のみ
+    64	     */
+    65	    public function handle(UpdateStatusInput $input): void
+    66	    {
+    67	        $CurrentStatus = $input->BuyOrder->getBuyOrderStatus();
+    68	        $currentStatusId = $CurrentStatus->getId();
+    69	        $nextStatusId = $input->NewBuyOrderStatus->getId();
+    70	
+    71	        if ($currentStatusId === $nextStatusId) {
+    72	            return;
+    73	        }
+    74	
+    75	        // 遷移ルールに定義されていないステータスからは変更不可
+    76	        // 旧システムとの互換性目的：メッセージを分けているのはクライアント側がAPIのメッセージをそのまま表示するため
+    77	        if (!isset(self::FROM_STATUS_TO_ALLOWED_STATUSES[$currentStatusId])) {
+    78	            $message = $input->NewBuyOrderStatus->isAssessmentActive()
+    79	                ? 'この査定はすでに終了しているため開くことができません。'
+    80	                : 'この査定はすでに終了しているためステータスの更新に失敗しました。';
+    81	
+    82	            throw new InvalidStatusTransitionException($message);
+    83	        }
+    84	
+    85	        // 遷移ルールに定義されていないステータス先へ変更不可
+    86	        if (!in_array($nextStatusId, self::FROM_STATUS_TO_ALLOWED_STATUSES[$currentStatusId], true)) {
+    87	            throw new InvalidStatusTransitionException('不正なステータス遷移です');
+    88	        }
+    89	
+    90	        // 査定者本人を除き、査定中または査定再開のものは査定アクティブ状態にできない
+    91	        if (
+    92	            $CurrentStatus->isAssessmentActive()
+    93	            && $input->NewBuyOrderStatus->isAssessmentActive()
+    94	            && $input->Member !== $input->BuyOrder->getMember()
+    95	        ) {
+    96	            throw new InvalidStatusTransitionException("この受注は「{$input->BuyOrder->getMember()->getName()}」が査定中です。");
+    97	        }
+    98	
+    99	        $this->entityManager->beginTransaction();
+   100	        try {
+   101	            $now = new \DateTime();
+   102	            $input->BuyOrder
+   103	                ->setBuyOrderStatus($input->NewBuyOrderStatus)
+   104	                ->setMember($input->Member)
+   105	                ->setUpdateDate($now);
+   106	
+   107	            $this->buyOrderStatusHistoryEntityManager->save($input->BuyOrder, $input->NewBuyOrderStatus, $input->Member, $now);
+   108	
+   109	            $this->entityManager->flush();
+   110	            $this->entityManager->commit();
+   111	        } catch (\Throwable $e) {
+   112	            $this->entityManager->rollback();
+   113	            $this->logger->error('Failed to update buy order status', ['exception' => $e, 'buyOrderId' => $input->BuyOrder->getId(), 'currentStatusId' => $currentStatusId, 'nextStatusId' => $nextStatusId, 'memberId' => $input->Member->getId()]);
+   114	            throw new InternalException('システムエラーが発生しました', $e);
+   115	        }
+   116	    }
+   117	}
+     1	<?php
+     2	
+     3	declare(strict_types=1);
+     4	
+     5	/*
+     6	 * This file is part of EC-CUBE
+     7	 *
+     8	 * Copyright(c) EC-CUBE CO.,LTD. All Rights Reserved.
+     9	 *
+    10	 * http://www.ec-cube.co.jp/
+    11	 *
+    12	 * For the full copyright and license information, please view the LICENSE
+    13	 * file that was distributed with this source code.
+    14	 */
+    15	
+    16	namespace Eccube\Entity\Master;
+    17	
+    18	use Doctrine\DBAL\Types\Types;
+    19	use Doctrine\ORM\Mapping as ORM;
+    20	use Eccube\Entity\AbstractEntity;
+    21	use Eccube\Repository\Master\MtbBuyOrderStatusRepository;
+    22	
+    23	#[ORM\Table(name: 'mtb_buy_order_status')]
+    24	#[ORM\HasLifecycleCallbacks]
+    25	#[ORM\Entity(repositoryClass: MtbBuyOrderStatusRepository::class)]
+    26	class MtbBuyOrderStatus extends AbstractEntity implements \Stringable
+    27	{
+    28	    // 注文
+    29	    public const ORDERED = 1;
+    30	    // カード(商品)到着
+    31	    public const PRODUCT_ARRIVAL = 2;
+    32	    // MTGBuyer査定完了
+    33	    public const APPRAISAL_COMPLETE = 3;
+    34	    // 査定内容承諾
+    35	    public const APPRAISAL_ACCEPTANCE = 4;
+    36	    // 簡易書留送付済み
+    37	    public const IDENTIFY_VERIFIED = 5;
+    38	    // 振込依頼済み
+    39	    public const TRANSFER_REQUESTED = 6;
+    40	    // 振込完了
+    41	    public const TRANSFER_COMPLETE = 7;
+    42	    // 振込失敗
+    43	    public const TRANSFER_FAILED = 8;
+    44	    // キャンセル済み
+    45	    public const CANCELED = 9;
+    46	    // 査定中
+    47	    public const ASSESSING = 10;
+    48	    // 査定中断
+    49	    public const PENDING = 11;
+    50	    // 査定再開
+    51	    public const RESUMPTION = 12;
+    52	    // 査定内容連絡済み
+    53	    public const COMMUNICATED = 13;
+    54	    // 入庫済み（仕入れ完了）
+    55	    public const STOCKING_COMPLETE = 14;
+    56	    // 未登録在庫あり
+    57	    public const UNREGISTERED_STOCK = 15;
+    58	    // 入庫待ち
+    59	    public const WAITING_FOR_STOCK = 16;
+    60	
+    61	    public const BUY_ORDER_STATUS = [
+    62	        self::ORDERED => 'request',
+    63	        self::PRODUCT_ARRIVAL => 'arrival',
+    64	        self::APPRAISAL_COMPLETE => 'appraisal',
+    65	        self::APPRAISAL_ACCEPTANCE => 'acceptance',
+    66	        self::IDENTIFY_VERIFIED => 'identify',
+    67	        self::TRANSFER_REQUESTED => 'transfer_request',
+    68	        self::TRANSFER_COMPLETE => 'transfer_complete',
+    69	        self::TRANSFER_FAILED => 'transfer_fail',
+    70	        self::CANCELED => 'cancellation',
+    71	        self::ASSESSING => 'assessing',
+    72	        self::PENDING => 'pending',
+    73	        self::RESUMPTION => 'resumption',
+    74	        self::COMMUNICATED => 'communicated',
+    75	        self::STOCKING_COMPLETE => 'stocking_complete',
+    76	        self::UNREGISTERED_STOCK => 'unregistered_stock',
+    77	        self::WAITING_FOR_STOCK => 'waiting_for_stock',
+    78	    ];
+    79	
+    80	    /** 査定アクティブ状態のステータス */
+    81	    private const ASSESSMENT_ACTIVE_STATUSES = [
+    82	        self::ASSESSING,
+    83	        self::RESUMPTION,
+    84	    ];
+    85	
+    86	    /**
+    87	     * 買取詳細の実在庫操作が可能な買取ステータス ID。
+    88	     * 査定内容承諾〜入庫待ちの運用ステータス。
+    89	     *
+    90	     * @var list<int>
+    91	     */
+    92	    public const BUY_ORDER_STOCK_EDITABLE_STATUS_IDS = [
+    93	        self::APPRAISAL_ACCEPTANCE,
+    94	        self::IDENTIFY_VERIFIED,
+    95	        self::TRANSFER_REQUESTED,
+    96	        self::TRANSFER_COMPLETE,
+    97	        self::TRANSFER_FAILED,
+    98	        self::UNREGISTERED_STOCK,
+    99	        self::WAITING_FOR_STOCK,
+   100	    ];
+   101	
+   102	    #[ORM\Column(name: 'id', type: Types::INTEGER, options: ['unsigned' => true, 'comment' => '買取注文ステータスID'])]
+   103	    #[ORM\Id]
+   104	    #[ORM\GeneratedValue(strategy: 'IDENTITY')]
+   105	    private int $id;
+   106	
+   107	    #[ORM\Column(name: 'name', type: Types::STRING, length: 255, nullable: true, options: ['comment' => 'ステータス名'])]
+   108	    private ?string $name = null;
+   109	
+   110	    #[ORM\Column(name: '`rank`', type: Types::INTEGER, nullable: true, options: ['comment' => 'ランク'])]
+ec-cube-enterprise/tests/Eccube/Tests/Web/App/MTGBuyer/V1/Admin/BuyOrderControllerTest.php:55:     * 対象ステータス（商品到着、査定中、査定中断、査定再開）の4件のみ取得できること
+ec-cube-enterprise/tests/Eccube/Tests/Web/App/MTGBuyer/V1/Admin/BuyOrderControllerTest.php:67:            MtbBuyOrderStatus::PRODUCT_ARRIVAL,
+ec-cube-enterprise/tests/Eccube/Tests/Web/App/MTGBuyer/V1/Admin/BuyOrderControllerTest.php:114:        $this->assertSame((string) MtbBuyOrderStatus::PRODUCT_ARRIVAL, $firstResponse['netOrderStatusId']);
+ec-cube-enterprise/tests/Eccube/Tests/Web/App/MTGBuyer/V1/Admin/BuyOrderControllerTest.php:180:        $BuyOrderStatus = $this->entityManager->find(MtbBuyOrderStatus::class, MtbBuyOrderStatus::PRODUCT_ARRIVAL);
+ec-cube-enterprise/tests/Eccube/Tests/Web/App/MTGBuyer/V1/Admin/BuyOrderControllerTest.php:215:        $BuyOrderStatus = $this->entityManager->find(MtbBuyOrderStatus::class, MtbBuyOrderStatus::PRODUCT_ARRIVAL);
+ec-cube-enterprise/tests/Eccube/Tests/Web/App/MTGBuyer/V1/Admin/BuyOrderControllerTest.php:275:        $BuyOrderStatus = $this->entityManager->find(MtbBuyOrderStatus::class, MtbBuyOrderStatus::PRODUCT_ARRIVAL);
+ec-cube-enterprise/tests/Eccube/Tests/Web/App/MTGBuyer/V1/Admin/BuyOrderControllerTest.php:313:        $BuyOrderStatus = $this->entityManager->find(MtbBuyOrderStatus::class, MtbBuyOrderStatus::PRODUCT_ARRIVAL);
+ec-cube-enterprise/tests/Eccube/Tests/Web/App/MTGBuyer/V1/Admin/BuyOrderControllerTest.php:340:        $PrevStatus = $this->entityManager->find(MtbBuyOrderStatus::class, MtbBuyOrderStatus::PRODUCT_ARRIVAL);
+ec-cube-enterprise/tests/Eccube/Tests/Web/App/MTGBuyer/V1/Admin/BuyOrderControllerTest.php:370:        $BuyOrderStatus = $this->entityManager->find(MtbBuyOrderStatus::class, MtbBuyOrderStatus::PRODUCT_ARRIVAL);
+ec-cube-enterprise/tests/Eccube/Tests/Web/App/MTGBuyer/V1/Admin/BuyOrderControllerTest.php:401:        $BuyOrderStatus = $this->entityManager->find(MtbBuyOrderStatus::class, MtbBuyOrderStatus::PRODUCT_ARRIVAL);
+ec-cube-enterprise/tests/Eccube/Tests/Web/App/MTGBuyer/V1/Admin/BuyOrderControllerTest.php:432:        $BuyOrderStatus = $this->entityManager->find(MtbBuyOrderStatus::class, MtbBuyOrderStatus::PRODUCT_ARRIVAL);
+ec-cube-enterprise/tests/Eccube/Tests/Web/App/MTGBuyer/V1/Admin/BuyOrderControllerTest.php:463:        $BuyOrderStatus = $this->entityManager->find(MtbBuyOrderStatus::class, MtbBuyOrderStatus::PRODUCT_ARRIVAL);
+ec-cube-enterprise/tests/Eccube/Tests/Web/App/MTGBuyer/V1/Admin/BuyOrderControllerTest.php:523:        $BuyOrderStatus = $this->entityManager->find(MtbBuyOrderStatus::class, MtbBuyOrderStatus::PRODUCT_ARRIVAL);
+ec-cube-enterprise/tests/Eccube/Tests/Web/App/MTGBuyer/V1/Admin/BuyOrderControllerTest.php:559:        $BuyOrderStatus = $this->entityManager->find(MtbBuyOrderStatus::class, MtbBuyOrderStatus::PRODUCT_ARRIVAL);
+ec-cube-enterprise/tests/Eccube/Tests/Web/App/MTGBuyer/V1/Admin/BuyOrderControllerTest.php:586:        $BuyOrderStatus = $this->entityManager->find(MtbBuyOrderStatus::class, MtbBuyOrderStatus::PRODUCT_ARRIVAL);
+ec-cube-enterprise/tests/Eccube/Tests/Web/App/MTGBuyer/V1/Admin/BuyOrderControllerTest.php:591:            'order_status' => MtbBuyOrderStatus::APPRAISAL_COMPLETE,
+ec-cube-enterprise/tests/Eccube/Tests/Web/App/MTGBuyer/V1/Admin/BuyOrderControllerTest.php:625:            'order_status' => MtbBuyOrderStatus::APPRAISAL_COMPLETE,
+ec-cube-enterprise/tests/Eccube/Tests/Web/App/MTGBuyer/V1/Admin/BuyOrderControllerTest.php:658:        $BuyOrderStatus = $this->entityManager->find(MtbBuyOrderStatus::class, MtbBuyOrderStatus::PRODUCT_ARRIVAL);
+ec-cube-enterprise/tests/Eccube/Tests/Web/App/MTGBuyer/V1/Admin/BuyOrderControllerTest.php:700:        $BuyOrderStatus = $this->entityManager->find(MtbBuyOrderStatus::class, MtbBuyOrderStatus::PRODUCT_ARRIVAL);
+ec-cube-enterprise/tests/Eccube/Tests/Web/App/MTGBuyer/V1/Admin/BuyOrderControllerTest.php:742:                    'order_status' => MtbBuyOrderStatus::APPRAISAL_COMPLETE,
+ec-cube-enterprise/tests/Eccube/Tests/Web/App/MTGBuyer/V1/Admin/BuyOrderControllerTest.php:749:                    'order_status' => MtbBuyOrderStatus::APPRAISAL_COMPLETE,
+ec-cube-enterprise/tests/Eccube/Tests/Web/App/MTGBuyer/V1/Admin/BuyOrderControllerTest.php:756:                    'order_status' => MtbBuyOrderStatus::APPRAISAL_COMPLETE,
+ec-cube-enterprise/tests/Eccube/Tests/Web/App/MTGBuyer/V1/Admin/BuyOrderControllerTest.php:771:                    'order_status' => MtbBuyOrderStatus::APPRAISAL_COMPLETE,
+ec-cube-enterprise/tests/Eccube/Tests/Web/App/MTGBuyer/V1/Admin/BuyOrderControllerTest.php:791:        $BuyOrderStatus = $this->entityManager->find(MtbBuyOrderStatus::class, MtbBuyOrderStatus::PRODUCT_ARRIVAL);
+ec-cube-enterprise/tests/Eccube/Tests/Web/App/MTGBuyer/V1/Admin/BuyOrderControllerTest.php:796:            'order_status' => MtbBuyOrderStatus::APPRAISAL_COMPLETE,
+ec-cube-enterprise/src/Eccube/Entity/Master/MtbBuyOrderStatus.php:31:    public const PRODUCT_ARRIVAL = 2;
+ec-cube-enterprise/src/Eccube/Entity/Master/MtbBuyOrderStatus.php:33:    public const APPRAISAL_COMPLETE = 3;
+ec-cube-enterprise/src/Eccube/Entity/Master/MtbBuyOrderStatus.php:35:    public const APPRAISAL_ACCEPTANCE = 4;
+ec-cube-enterprise/src/Eccube/Entity/Master/MtbBuyOrderStatus.php:46:    // 査定中
+ec-cube-enterprise/src/Eccube/Entity/Master/MtbBuyOrderStatus.php:48:    // 査定中断
+ec-cube-enterprise/src/Eccube/Entity/Master/MtbBuyOrderStatus.php:50:    // 査定再開
+ec-cube-enterprise/src/Eccube/Entity/Master/MtbBuyOrderStatus.php:63:        self::PRODUCT_ARRIVAL => 'arrival',
+ec-cube-enterprise/src/Eccube/Entity/Master/MtbBuyOrderStatus.php:64:        self::APPRAISAL_COMPLETE => 'appraisal',
+ec-cube-enterprise/src/Eccube/Entity/Master/MtbBuyOrderStatus.php:65:        self::APPRAISAL_ACCEPTANCE => 'acceptance',
+ec-cube-enterprise/src/Eccube/Entity/Master/MtbBuyOrderStatus.php:93:        self::APPRAISAL_ACCEPTANCE,
+ec-cube-enterprise/src/Eccube/Service/App/MTGBuyer/V1/Admin/BuyOrder/UpdateStatusAction.php:29:        // 商品到着 -> 査定中, 査定中断, 査定再開
+ec-cube-enterprise/src/Eccube/Service/App/MTGBuyer/V1/Admin/BuyOrder/UpdateStatusAction.php:30:        MtbBuyOrderStatus::PRODUCT_ARRIVAL => [
+ec-cube-enterprise/src/Eccube/Service/App/MTGBuyer/V1/Admin/BuyOrder/UpdateStatusAction.php:35:        // 査定中 -> 査定中断, 査定再開
+ec-cube-enterprise/src/Eccube/Service/App/MTGBuyer/V1/Admin/BuyOrder/UpdateStatusAction.php:40:        // 査定中断 -> 査定中, 査定再開
+ec-cube-enterprise/src/Eccube/Service/App/MTGBuyer/V1/Admin/BuyOrder/UpdateStatusAction.php:45:        // 査定再開 -> 査定中, 査定中断
+ec-cube-enterprise/src/Eccube/Service/App/MTGBuyer/V1/Admin/BuyOrder/UpdateStatusAction.php:61:     * 更新前ステータス [2: 商品到着, 10: 査定中, 11: 査定中断, 12: 査定再開]
+ec-cube-enterprise/src/Eccube/Service/App/MTGBuyer/V1/Admin/BuyOrder/UpdateStatusAction.php:62:     * 更新後ステータス [10: 査定中, 11: 査定中断, 12: 査定再開]
+ec-cube-enterprise/src/Eccube/Service/App/MTGBuyer/V1/Admin/BuyOrder/UpdateStatusAction.php:63:     * ただし、査定中 -> 査定再開のステータス更新ができるのは BuyOrderの更新者(Member)のみ
+ec-cube-enterprise/src/Eccube/Service/App/MTGBuyer/V1/Admin/BuyOrder/UpdateStatusAction.php:90:        // 査定者本人を除き、査定中または査定再開のものは査定アクティブ状態にできない
+ec-cube-enterprise/src/Eccube/Service/App/MTGBuyer/V1/Admin/BuyOrder/UpdateStatusAction.php:96:            throw new InvalidStatusTransitionException("この受注は「{$input->BuyOrder->getMember()->getName()}」が査定中です。");
+ec-cube-enterprise/app/DoctrineMigrations/Version20251125140433.php:110:                'name' => '査定中',
+ec-cube-enterprise/app/DoctrineMigrations/Version20251125140433.php:115:                'name' => '査定中断',
+ec-cube-enterprise/app/DoctrineMigrations/Version20251125140433.php:120:                'name' => '査定再開',
+ec-cube-enterprise/app/DoctrineMigrations/Version20251125163434.php:85:                'name' => '査定中',
+ec-cube-enterprise/app/DoctrineMigrations/Version20251125163434.php:93:                'name' => '査定中断',
+ec-cube-enterprise/app/DoctrineMigrations/Version20251125163434.php:97:                'name' => '査定再開',
+
+exec
+/bin/bash -lc "rg -n \"P1|P2|P3|重要度|severity\" hareruya-design-docs/design_impl_drift_report -g '*.md' -g '*.txt' -g '*.py' -g '*.html' | head -200" in /home/y-saito/Developments
+ succeeded in 0ms:
+hareruya-design-docs/design_impl_drift_report/review_audit_0501/prompt.md:11:列: 要求ID / シート名 / 区分 / 判定 / 重要度 / 乖離種別 / 設計要件 / 実装実態 / 判定根拠
+hareruya-design-docs/design_impl_drift_report/review_audit_0501/prompt.md:65:### 4. 重要度の過大
+hareruya-design-docs/design_impl_drift_report/review_audit_0501/prompt.md:67:P1/P2/P3 が業務影響と迂回可否に見合っているか。
+hareruya-design-docs/design_impl_drift_report/review_audit_0501/prompt.md:85:判定: ハルシネーション | 過剰指摘 | 重複 | 重要度過大
+hareruya-design-docs/design_impl_drift_report/review_audit_0501/prompt.md:88:修正案: 取り下げ / 判定をこう変える / 重要度をこうする / どの要求IDへ畳む
+hareruya-design-docs/design_impl_drift_report/review_audit_0501/prompt.md:91:**重要度過大と判断したときは、修正案に「P3へ変更する」のように正しい重要度を必ず書いてください。**
+hareruya-design-docs/design_impl_drift_report/review_audit_0501/prompt.md:92:書かないと修正が適用されず、重要度は過大なまま残ります。
+hareruya-design-docs/design_impl_drift_report/AUDIT_JUDGING_RULES.md:27:4. DRIFT / NOT_IMPLEMENTED は `重要度`(P1/P2/P3)・`指摘区分`(未実装/実装違い)・`乖離種別`(IO/ふるまい)・
+hareruya-design-docs/design_impl_drift_report/AUDIT_JUDGING_RULES.md:74:## 重要度（業務影響で決める。機能名で機械的に決めない）
+hareruya-design-docs/design_impl_drift_report/AUDIT_JUDGING_RULES.md:76:- **P1**: 業務が回らず商売が止まる／データ整合性が壊れる／手作業でも代替できない。
+hareruya-design-docs/design_impl_drift_report/AUDIT_JUDGING_RULES.md:80:- **P2**: 迂回すれば回る（手作業・再実行・別経路）。CSV一括登録・イベント・デッキ・分析・コンテンツ。
+hareruya-design-docs/design_impl_drift_report/AUDIT_JUDGING_RULES.md:81:- **P3**: 業務は回る。見出し・ボタン文言・列名の相違／並び順・桁区切りの相違。
+hareruya-design-docs/design_impl_drift_report/AUDIT_JUDGING_RULES.md:83:例外は影響と迂回可否で判断する（受注管理でも文言差は P3、CSV一括登録でも取り込めない＝データ登録不能なら P1）。
+hareruya-design-docs/design_impl_drift_report/AUDIT_JUDGING_RULES.md:107:集約後の掲載予定の指摘から、P1・P2・P3 を各5件、決定的な手順（等間隔抽出。乱数を使わない）で選び、
+hareruya-design-docs/design_impl_drift_report/AUDIT_JUDGING_RULES.md:116:5. 重要度が業務影響として妥当か。過大な重要度は過剰指摘と同じ害がある。
+hareruya-design-docs/design_impl_drift_report/TOTAL_WORK_AND_BASIS.md:306:期間短縮（工数は減らない）としては、区分別・ドメイン別の並列化、改修完了順の結合テスト着手、P1先行がある。ただし**並列化には統合コストが伴う**（rebase、競合解消、共有基盤の変更調整、依存変更による再テスト）。共有基盤・DBスキーマ・共通APIを先行凍結し、依存グラフで波を作るのが前提になる。
+hareruya-design-docs/design_impl_drift_report/AUDIT_0406.md:22:## 不具合 1件（P1 1 / P2 0 / P3 0）
+hareruya-design-docs/design_impl_drift_report/AUDIT_0406.md:24:- **P1**: 業務が回らず商売が止まる、またはデータの整合性が壊れる。手作業でも代替できない
+hareruya-design-docs/design_impl_drift_report/AUDIT_0406.md:25:- **P2**: 迂回すれば回る。手作業・再実行・別経路で業務は完了できるが、コア業務の正しさ・効率、または顧客体験を損なう
+hareruya-design-docs/design_impl_drift_report/AUDIT_0406.md:26:- **P3**: 業務は回る。業務の完了・データ・判断に影響しない（見出し・ボタン文言・列名の相違／並び順・桁区切りの相違など）
+hareruya-design-docs/design_impl_drift_report/AUDIT_0406.md:30:| 要求ID | 機能 | 区分 | 種別 | 重要度 | 内容 |
+hareruya-design-docs/design_impl_drift_report/AUDIT_0406.md:32:| sheet-4-R019 | 買取集計バッチ | 実装違い | ふるまい | P1 | 集計対象日の店頭買取に部門が登録されていない商品があるとき、その一覧が管理者宛の通知として届く。集計はそのまま続き、バッチは正常終了する。 |
+hareruya-design-docs/design_impl_drift_report/AUDIT_0406.md:34:### sheet-4-R019 買取集計バッチ — 実装違い／ふるまい／P1
+hareruya-design-docs/design_impl_drift_report/review_audit_0508/prompt.md:11:列: 要求ID / シート名 / 区分 / 判定 / 重要度 / 乖離種別 / 設計要件 / 実装実態 / 判定根拠
+hareruya-design-docs/design_impl_drift_report/review_audit_0508/prompt.md:65:### 4. 重要度の過大
+hareruya-design-docs/design_impl_drift_report/review_audit_0508/prompt.md:67:P1/P2/P3 が業務影響と迂回可否に見合っているか。
+hareruya-design-docs/design_impl_drift_report/review_audit_0508/prompt.md:85:判定: ハルシネーション | 過剰指摘 | 重複 | 重要度過大
+hareruya-design-docs/design_impl_drift_report/review_audit_0508/prompt.md:88:修正案: 取り下げ / 判定をこう変える / 重要度をこうする / どの要求IDへ畳む
+hareruya-design-docs/design_impl_drift_report/review_audit_0508/prompt.md:91:**重要度過大と判断したときは、修正案に「P3へ変更する」のように正しい重要度を必ず書いてください。**
+hareruya-design-docs/design_impl_drift_report/review_audit_0508/prompt.md:92:書かないと修正が適用されず、重要度は過大なまま残ります。
+hareruya-design-docs/design_impl_drift_report/EFFORT_SUMMARY.md:4:うち **改修対象(P1-P4)は 965件**、設計判断待ち/要再調査が 42件。
+hareruya-design-docs/design_impl_drift_report/EFFORT_SUMMARY.md:11:## 改修区分別（P1-P4のみ）
+hareruya-design-docs/design_impl_drift_report/EFFORT_SUMMARY.md:30:| P1 | 64 | 54 | 174 | 455 | 業務ロジック |
+hareruya-design-docs/design_impl_drift_report/EFFORT_SUMMARY.md:31:| P2 | 314 | 168 | 542 | 1432 | 業務ロジック |
+hareruya-design-docs/design_impl_drift_report/EFFORT_SUMMARY.md:32:| P3 | 318 | 181 | 584 | 1554 | 外部インタフェース契約 |
+hareruya-design-docs/design_impl_drift_report/EFFORT_SUMMARY.md:41:| P1 | 14 | 5 | 2 | 5 | 22 | 0 | 15 | 1 | 64 |
+hareruya-design-docs/design_impl_drift_report/EFFORT_SUMMARY.md:42:| P2 | 41 | 84 | 9 | 35 | 93 | 16 | 36 | 0 | 314 |
+hareruya-design-docs/design_impl_drift_report/EFFORT_SUMMARY.md:43:| P3 | 88 | 52 | 23 | 14 | 84 | 17 | 28 | 12 | 318 |
+hareruya-design-docs/design_impl_drift_report/EFFORT_SUMMARY.md:52:| 第1波 | 実害high（P1）を区分を問わず全部 | 64 | 174 | 174 |
+hareruya-design-docs/design_impl_drift_report/TRIAGE_SUMMARY.md:25:| P1 | 64 | 実害 high（業務停止・データ不整合・外部連携断） |
+hareruya-design-docs/design_impl_drift_report/TRIAGE_SUMMARY.md:26:| P2 | 314 | 実害 med かつ設計書に裏付けあり |
+hareruya-design-docs/design_impl_drift_report/TRIAGE_SUMMARY.md:27:| P3 | 318 | 実害 med かつ旧実装由来（移植漏れ） |
+hareruya-design-docs/design_impl_drift_report/TRIAGE_SUMMARY.md:74:## ドメイン別 要修正件数（P1-P3）
+hareruya-design-docs/design_impl_drift_report/TRIAGE_SUMMARY.md:76:| ドメイン | P1 | P2 | P3 | P4 | 設計判断 | 要再調査 | クローズ |
+hareruya-design-docs/design_impl_drift_report/TRIAGE_SUMMARY.md:115:## P1（実害 high）一覧
+hareruya-design-docs/design_impl_drift_report/TRIAGE_SUMMARY.md:197:- 実害（severityOpinion）はレビュアーの見立てであり、業務側の合意ではない。
+hareruya-design-docs/design_impl_drift_report/FRONT_LEGACY_EXCLUSION.md:24:| 246 | F02-02 | F02-02 スマホ版ナビゲーション | P3 | 0.2 | 一部解消-残差あり | 言語（ja／en）による表示項目の出し分け：英語表示では上部ナビの『買取』『デッキ構築』を表示せず、『選手一覧』を加える |
+hareruya-design-docs/design_impl_drift_report/FRONT_LEGACY_EXCLUSION.md:26:| 248 | F02-04 | F02-04 支店スマホ版ナビゲーション | P3 | 1.5 | 要修正-移植漏れ(設計書追記も要) | 店舗紹介ページのスマホ表示で、登録済みの右カラム項目だけをセクションナビへ並べ（値の無いセクションは非表示）、『店舗案内 |
+hareruya-design-docs/design_impl_drift_report/FRONT_LEGACY_EXCLUSION.md:27:| 249 | F02-04 | F02-04 支店スマホ版ナビゲーション | P3 | 0.75 | 要修正-移植漏れ(設計書追記も要) | 店舗紹介ページのスマホ・タブレット表示で『閲覧店舗を選択』とともに並び順付きの全店舗一覧（タブレット用店舗一覧）を表示し |
+hareruya-design-docs/design_impl_drift_report/FRONT_LEGACY_EXCLUSION.md:28:| 253 | F03-03 | F03-03 商品詳細検索 | P3 | 0.5 | 要修正-移植漏れ(設計書追記も要) | カテゴリの選択肢は、フロント検索で非表示とする親配下（dtb_category.front_search_hide_fl |
+hareruya-design-docs/design_impl_drift_report/FRONT_LEGACY_EXCLUSION.md:29:| 254 | F03-05 | F03-05 商品リコメンド | P3 | 0.15 | 要修正-移植漏れ(設計書追記も要) | マイページで種別 mypage のおすすめブロックを非同期取得し、会員の最新注文商品（最高額商品）を基準商品としておすす |
+hareruya-design-docs/design_impl_drift_report/FRONT_LEGACY_EXCLUSION.md:31:| 257 | F03-06 | F03-06 最近チェックした商品 | P3 | 0.15 | 要修正-移植漏れ(設計書追記も要) | 履歴Cookie(history)が無い/空のとき、見出しに加えて履歴無しメッセージ『最近見た商品はありません。』（英語 |
+hareruya-design-docs/design_impl_drift_report/FRONT_LEGACY_EXCLUSION.md:33:| 261 | F03-08 | F03-08 お気に入り | P3 | 0.25 | 要修正-移植漏れ(設計書追記も要) | お気に入り解除で選手情報が無い（未ログイン相当）場合は HTTP400 として処理し、画面文言（メッセージ）は返さない。 |
+hareruya-design-docs/design_impl_drift_report/FRONT_LEGACY_EXCLUSION.md:37:| 266 | F04-03 | F04-03 配送先の新規登録_変更 | P3 | 0.5 | 要修正-移植漏れ(設計書追記も要) | 新規登録時、アドレス帳件数が登録上限（20）以上なら『お届け先登録数の上限を超えています。』(front.shoppin |
+hareruya-design-docs/design_impl_drift_report/FRONT_LEGACY_EXCLUSION.md:39:| 270 | F04-03 | F04-03 配送先の新規登録_確認 | P3 | 0.5 | 要修正-移植漏れ(設計書追記も要) | 国が日本で都道府県が国外、または国が日本以外で都道府県が国外でない場合は不整合として国の項目にエラーを付与し編集画面を再 |
+hareruya-design-docs/design_impl_drift_report/FRONT_LEGACY_EXCLUSION.md:40:| 274 | F05-03 | F05-03 ネット買取商品一覧 | P3 | 0.5 | 要修正-移植漏れ(設計書追記も要) | 買取特集タグが1件指定のとき、そのタグの説明文（フリーエリア）を買取商品一覧の上部に表示する。 |
+hareruya-design-docs/design_impl_drift_report/FRONT_LEGACY_EXCLUSION.md:42:| 276 | F05-04 | F05-04 ネット買取商品詳細 | P3 | 1.0 | 要修正-移植漏れ(設計書追記も要) | GET /{_locale}/purchase/forward/{oldCode} で旧商品コードを新商品コードにマッピ |
+hareruya-design-docs/design_impl_drift_report/FRONT_LEGACY_EXCLUSION.md:44:| 286 | F06-03 | F06-03 ログイン | P3 | 0.2 | 要修正-移植漏れ(設計書追記も要) | 会員ログイン画面に、旧サイト会員向けの常時表示案内『旧サイトで会員登録がお済みの方へ、パスワード再設定のお願い / シス |
+hareruya-design-docs/design_impl_drift_report/FRONT_LEGACY_EXCLUSION.md:45:| 292 | F06-05 | F06-05 マイページ | P3 | 0.75 | 要修正-移植漏れ(設計書追記も要) | マイページトップ表示時、直前に商品検索からの戻り先がセッションにある場合は、マイページを表示せずその検索画面へリダイレク |
+hareruya-design-docs/design_impl_drift_report/FRONT_LEGACY_EXCLUSION.md:49:| 320 | F06-16 | F06-16 大会デッキ登録編集 | P3 | 0.25 | 要修正-移植漏れ(設計書追記も要) | 編集画面の『キャンセル』リンクは GET /{_locale}/events（イベント一覧）へ遷移し、編集せずイベント一 |
+hareruya-design-docs/design_impl_drift_report/FRONT_LEGACY_EXCLUSION.md:50:| 324 | F06-18 | F06-18 会員情報変更 | P1 | 0.5 | 要修正-移植漏れ(設計書追記も要) | 住所系（国・郵便番号・都道府県・住所）変更時に確認済み・簡易書留確認済みなら本人確認ステータスを未確認へ戻す。住所にはカ |
+hareruya-design-docs/design_impl_drift_report/FRONT_LEGACY_EXCLUSION.md:51:| 325 | F06-18 | F06-18 会員情報変更 | P3 | 0.75 | 要修正-移植漏れ(設計書追記も要) | 国と都道府県の組み合わせが不正（国が日本かつ都道府県が海外、または国が海外かつ都道府県が国内）のとき、フォーム送信後の検 |
+hareruya-design-docs/design_impl_drift_report/FRONT_LEGACY_EXCLUSION.md:52:| 327 | F06-21 | F06-21 退会 | P3 | 3.0 | 要修正-移植漏れ(設計書追記も要) | 退会成立時に選手情報（dtb_player の該当行）を削除する。会員の論理削除と選手情報の削除を同一トランザクションで |
+hareruya-design-docs/design_impl_drift_report/FRONT_LEGACY_EXCLUSION.md:53:| 332 | F06-22 | F06-22 お問い合わせ | P3 | 0.25 | 要修正-移植漏れ(設計書追記も要) | 案内文『当店へのご要望は、下記フォームにご記入のうえ送信してください。』(英: To contact the shop, |
+hareruya-design-docs/design_impl_drift_report/FRONT_LEGACY_EXCLUSION.md:55:| 335 | F06-23 | F06-23 お問い合わせ履歴 | P3 | 0 | 要修正-移植漏れ(設計書追記も要) | 詳細の『戻る』はブラウザ履歴を1つ戻すリンクのみ（history.go(-1)）。サーバへのリクエストは発生しない。 |
+hareruya-design-docs/design_impl_drift_report/FRONT_LEGACY_EXCLUSION.md:56:| 336 | F06-24 | F06-24 お問い合わせ履歴詳細 | P3 | 0 | 要修正-移植漏れ(設計書追記も要) | 詳細の「戻る」リンクは、ブラウザ履歴を1つ戻す（history.go(-1)）リンクのみで、サーバへのリクエストは発生し |
+hareruya-design-docs/design_impl_drift_report/FRONT_LEGACY_EXCLUSION.md:57:| 337 | F06-24 | F06-24 お問い合わせ履歴詳細 | P3 | 0.75 | 要修正-移植漏れ(設計書追記も要) | 存在しないID／他会員IDを詳細URLに指定した場合、取得結果が無いため当該お問い合わせの内容を表示しないだけで、閲覧専 |
+hareruya-design-docs/design_impl_drift_report/FRONT_LEGACY_EXCLUSION.md:59:| 347 | F07-03 | F07-03 大会詳細 | P3 | 0.2 | 要修正-移植漏れ(設計書追記も要) | 4-8 戻るボタン：遷移前のページに遷移する（遷移元のクエリにより戻り先を切り替える／日別画面などへ戻る）。 |
+hareruya-design-docs/design_impl_drift_report/AUDIT_0201.md:22:## 不具合 7件（P1 1 / P2 3 / P3 3）
+hareruya-design-docs/design_impl_drift_report/AUDIT_0201.md:24:- **P1**: 業務が回らず商売が止まる、またはデータの整合性が壊れる。手作業でも代替できない
+hareruya-design-docs/design_impl_drift_report/AUDIT_0201.md:25:- **P2**: 迂回すれば回る。手作業・再実行・別経路で業務は完了できるが、コア業務の正しさ・効率、または顧客体験を損なう
+hareruya-design-docs/design_impl_drift_report/AUDIT_0201.md:26:- **P3**: 業務は回る。業務の完了・データ・判断に影響しない（見出し・ボタン文言・列名の相違／並び順・桁区切りの相違など）
+hareruya-design-docs/design_impl_drift_report/AUDIT_0201.md:30:| 要求ID | 機能 | 区分 | 種別 | 重要度 | 内容 |
+hareruya-design-docs/design_impl_drift_report/AUDIT_0201.md:32:| sheet-5-R018 | 権限管理 | 未実装 | ふるまい | P1 | 権限URLマスタに機能を追加した直後は、どの権限からもアクセス不可であること。 |
+hareruya-design-docs/design_impl_drift_report/AUDIT_0201.md:33:| sheet-4-R055 | メンバー管理 | 実装違い | IO | P2 | 権限グループの選択肢に、登録されている全権限を出すこと。 |
+hareruya-design-docs/design_impl_drift_report/AUDIT_0201.md:34:| sheet-4-R070 | メンバー管理 | 未実装 | ふるまい | P2 | スマレジ用アカウントを有効にできるメンバーは同時に1人までとし、他に有効なメンバーが居る状態で有効化したときはエラーを表示して編集画面へ戻り、スマレジ用アカウントを変更しないこと。 |
+hareruya-design-docs/design_impl_drift_report/AUDIT_0201.md:35:| sheet-6-R012 | 権限制御 | 実装違い | ふるまい | P2 | 在庫管理・受注管理・店頭買取管理・イベント管理以外の機能では、編集可能店舗による制限をかけず、アクセスできるメンバーはそのまま編集できること。 |
+hareruya-design-docs/design_impl_drift_report/AUDIT_0201.md:36:| sheet-3-R050 | メンバー管理一覧 | 実装違い | ふるまい | P3 | 削除で対象メンバーが存在しないときは、削除警告を表示して一覧へ戻すこと。404 にはしないこと。 |
+hareruya-design-docs/design_impl_drift_report/AUDIT_0201.md:37:| sheet-4-R049 | メンバー管理 | 実装違い | IO | P3 | 所属店舗を必須入力とし、未選択のまま登録・編集できないこと。 |
+hareruya-design-docs/design_impl_drift_report/AUDIT_0201.md:38:| sheet-5-R074 | 権限管理 | 実装違い | IO | P3 | 複製はリンクとして配置すること。 |
+hareruya-design-docs/design_impl_drift_report/AUDIT_0201.md:40:### sheet-5-R018 権限管理 — 未実装／ふるまい／P1
+hareruya-design-docs/design_impl_drift_report/AUDIT_0201.md:51:### sheet-4-R055 メンバー管理 — 実装違い／IO／P2
+hareruya-design-docs/design_impl_drift_report/AUDIT_0201.md:61:### sheet-4-R070 メンバー管理 — 未実装／ふるまい／P2
+hareruya-design-docs/design_impl_drift_report/AUDIT_0201.md:72:### sheet-6-R012 権限制御 — 実装違い／ふるまい／P2
+hareruya-design-docs/design_impl_drift_report/AUDIT_0201.md:82:### sheet-3-R050 メンバー管理一覧 — 実装違い／ふるまい／P3
+hareruya-design-docs/design_impl_drift_report/AUDIT_0201.md:93:### sheet-4-R049 メンバー管理 — 実装違い／IO／P3
+hareruya-design-docs/design_impl_drift_report/AUDIT_0201.md:103:### sheet-5-R074 権限管理 — 実装違い／IO／P3
+hareruya-design-docs/design_impl_drift_report/AUDIT_0416.md:22:## 不具合 8件（P1 0 / P2 3 / P3 5）
+hareruya-design-docs/design_impl_drift_report/AUDIT_0416.md:24:- **P1**: 業務が回らず商売が止まる、またはデータの整合性が壊れる。手作業でも代替できない
+hareruya-design-docs/design_impl_drift_report/AUDIT_0416.md:25:- **P2**: 迂回すれば回る。手作業・再実行・別経路で業務は完了できるが、コア業務の正しさ・効率、または顧客体験を損なう
+hareruya-design-docs/design_impl_drift_report/AUDIT_0416.md:26:- **P3**: 業務は回る。業務の完了・データ・判断に影響しない（見出し・ボタン文言・列名の相違／並び順・桁区切りの相違など）
+hareruya-design-docs/design_impl_drift_report/AUDIT_0416.md:30:| 要求ID | 機能 | 区分 | 種別 | 重要度 | 内容 |
+hareruya-design-docs/design_impl_drift_report/AUDIT_0416.md:32:| sheet-14-R002 | データベースデッドロック感知 | 未実装 | IO | P2 | データベースでデッドロックが起きている状態を検知したとき、管理者のメールアドレスへ通知が届く |
+hareruya-design-docs/design_impl_drift_report/AUDIT_0416.md:33:| sheet-7-R002 | WAF不正アクセスログ集計処理 | 未実装 | ふるまい | P2 | 前日分の不正アクセスと判断されたアクセスログが日次でまとめられ、集計結果が残る。 |
+hareruya-design-docs/design_impl_drift_report/AUDIT_0416.md:34:| sheet-9-R002 | Redash用データベース作成 | 未実装 | ふるまい | P2 | 分析用に使うデータベースが本番とは別に用意される |
+hareruya-design-docs/design_impl_drift_report/AUDIT_0416.md:35:| sheet-10-R018 | EC-CUBE 同期ディレクトリ処理バッチ | 未実装 | IO | P3 | S3に置かれたsitemap.xmlの内容が、ECサーバの /var/ec-cube/html/sitemap.xml に反映され、公開されるサイトマップがS3側の最新内容になる。 |
+hareruya-design-docs/design_impl_drift_report/AUDIT_0416.md:36:| sheet-13-R008 | S3画像サイズチェック処理 | 実装違い | IO | P3 | ファイル名とサイズの一覧取得の対象は、商品サムネイル・商品サムネイル(オリジナル画像)・バナー画像・商品画像・絵文字(シンボル)の5種の置き場所に限られ、それ以外の画像は容量超過の通知対象にならない。 |
+hareruya-design-docs/design_impl_drift_report/AUDIT_0416.md:37:| sheet-13-R042 | S3画像サイズチェック処理 | 実装違い | IO | P3 | 超過アラートは、設計が定める通知先（BCCは r9y9k6q2h2i8d9b5@sekappy-dev.slack.com）にも届く。 |
+hareruya-design-docs/design_impl_drift_report/AUDIT_0416.md:38:| sheet-13-R043 | S3画像サイズチェック処理 | 実装違い | IO | P3 | 通知メールの件名は「画像ファイルサイズ超過アラート」である。 |
+hareruya-design-docs/design_impl_drift_report/AUDIT_0416.md:39:| sheet-8-R011 | 月次商品情報スナップショット | 実装違い | ふるまい | P3 | 復元される一時的なDBクラスタの名前は monthly-inventory-check である。 |
+hareruya-design-docs/design_impl_drift_report/AUDIT_0416.md:41:### sheet-14-R002 データベースデッドロック感知 — 未実装／IO／P2
+hareruya-design-docs/design_impl_drift_report/AUDIT_0416.md:53:### sheet-7-R002 WAF不正アクセスログ集計処理 — 未実装／ふるまい／P2
+hareruya-design-docs/design_impl_drift_report/AUDIT_0416.md:65:### sheet-9-R002 Redash用データベース作成 — 未実装／ふるまい／P2
+hareruya-design-docs/design_impl_drift_report/AUDIT_0416.md:77:### sheet-10-R018 EC-CUBE 同期ディレクトリ処理バッチ — 未実装／IO／P3
+hareruya-design-docs/design_impl_drift_report/AUDIT_0416.md:89:### sheet-13-R008 S3画像サイズチェック処理 — 実装違い／IO／P3
+hareruya-design-docs/design_impl_drift_report/AUDIT_0416.md:101:### sheet-13-R042 S3画像サイズチェック処理 — 実装違い／IO／P3
+hareruya-design-docs/design_impl_drift_report/AUDIT_0416.md:112:### sheet-13-R043 S3画像サイズチェック処理 — 実装違い／IO／P3
+hareruya-design-docs/design_impl_drift_report/AUDIT_0416.md:123:### sheet-8-R011 月次商品情報スナップショット — 実装違い／ふるまい／P3
+hareruya-design-docs/design_impl_drift_report/AUDIT_0207.md:22:## 不具合 30件（P1 0 / P2 11 / P3 19）
+hareruya-design-docs/design_impl_drift_report/AUDIT_0207.md:24:- **P1**: 業務が回らず商売が止まる、またはデータの整合性が壊れる。手作業でも代替できない
+hareruya-design-docs/design_impl_drift_report/AUDIT_0207.md:25:- **P2**: 迂回すれば回る。手作業・再実行・別経路で業務は完了できるが、コア業務の正しさ・効率、または顧客体験を損なう
+hareruya-design-docs/design_impl_drift_report/AUDIT_0207.md:26:- **P3**: 業務は回る。業務の完了・データ・判断に影響しない（見出し・ボタン文言・列名の相違／並び順・桁区切りの相違など）
+hareruya-design-docs/design_impl_drift_report/AUDIT_0207.md:30:| 要求ID | 機能 | 区分 | 種別 | 重要度 | 内容 |
+hareruya-design-docs/design_impl_drift_report/AUDIT_0207.md:32:| sheet-10-R014 | ポイント付与 | 実装違い | ふるまい | P2 | 付与後のポイント残高が0未満になるかどうかは、画面に表示され付与で更新される当該会員の選手情報のポイント残高で判定し、0未満になる入力だけを付与できないようにする。 |
+hareruya-design-docs/design_impl_drift_report/AUDIT_0207.md:33:| sheet-11-R012 | ポイント付与（キャンペーン、特別対応） | 実装違い | IO | P2 | ポイント増減量に999999999を超える値を入力して保存すると入力エラーとなり、ポイント履歴は登録されない。 |
+hareruya-design-docs/design_impl_drift_report/AUDIT_0207.md:34:| sheet-18-R037 | オンライン本人確認 | 未実装 | ふるまい | P2 | モーダルに表示されている身分証画像を押すと、その種別の画像だけが大きく表示される。 |
+hareruya-design-docs/design_impl_drift_report/AUDIT_0207.md:35:| sheet-20-R016 | 顧客グループ管理 | 実装違い | ふるまい | P2 | 「店内注文専用アカウント」を有効にした顧客グループに属する会員が注文したとき、その注文に店頭用の注文番号が発行される。 |
+hareruya-design-docs/design_impl_drift_report/AUDIT_0207.md:36:| sheet-20-R041 | 顧客グループ管理 | 実装違い | ふるまい | P2 | ポイント還元率に負の数を入力して登録したとき、保存されずに入力エラーが表示される。 |
+hareruya-design-docs/design_impl_drift_report/AUDIT_0207.md:37:| sheet-20-R044 | 顧客グループ管理 | 実装違い | IO | P2 | 顧客グループの支払方法欄に、支払方法設定に登録されている支払方法がすべて選択肢として並ぶ。 |
+hareruya-design-docs/design_impl_drift_report/AUDIT_0207.md:38:| sheet-21-R017 | ブラックリスト管理 | 実装違い | ふるまい | P2 | 行の削除ボタンを押した時点で、その行のブラックリスト登録が削除される。 |
+hareruya-design-docs/design_impl_drift_report/AUDIT_0207.md:39:| sheet-22-R035 | 会員登録仮登録完了メール再送 | 未実装 | ふるまい | P2 | 仮登録メールを再送すると、その会員のメール履歴に1件（対象会員・用いたテンプレート・件名・本文・送信日時）が残り、会員のメール履歴画面から確認できる。 |
+hareruya-design-docs/design_impl_drift_report/AUDIT_0207.md:40:| sheet-3-R089 | 会員検索一覧(検索入力) | 実装違い | ふるまい | P2 | 会員ID・メールアドレス・お名前の欄に空白またはカンマで区切って複数の語を入れたとき、語ごとに会員ID・メールアドレス・氏名・氏名カナのいずれかへ部分一致し、すべての語を満たす会員だけが検索結果に出る |
+hareruya-design-docs/design_impl_drift_report/AUDIT_0207.md:41:| sheet-9-R038 | 会員登録編集 | 未実装 | ふるまい | P2 | 本人確認ステータスを未確認以外から未確認へ変えて会員情報を登録したとき、身分証有効期限が入力済みなら身分証有効期限が空欄になって保存される。 |
+hareruya-design-docs/design_impl_drift_report/AUDIT_0207.md:42:| sheet-9-R138 | 会員登録編集 | 実装違い | IO | P2 | 買取履歴欄の買取番号リンクを押すと、その買取申込の買取詳細画面が開く。 |
+hareruya-design-docs/design_impl_drift_report/AUDIT_0207.md:43:| sheet-14-R009 | メール配信履歴 | 実装違い | IO | P3 | 絞り込み欄の見出しは「テンプレートで絞り込む」と表示され、テンプレートを選んでいない状態では選択欄に「すべてのメールを表示する」と表示される。 |
+hareruya-design-docs/design_impl_drift_report/AUDIT_0207.md:44:| sheet-15-R021 | 手動メール通知(入力画面) | 実装違い | ふるまい | P3 | 会員向けベース（会員・会員英語・ベースなし）に該当しないテンプレートや自動送信メールのテンプレートを指定して手動メール作成画面を開こうとしたときは、画面を開かずページが見つからない扱いにする。 |
+hareruya-design-docs/design_impl_drift_report/AUDIT_0207.md:45:| sheet-17-R032 | 配送先編集 | 実装違い | IO | P3 | 配送先の一覧では、配送先ごとに配送先名称・郵便番号・配送先都道府県・住所・配送先氏名・配送先氏名カナ・電話番号・配送先会社名が並ぶ。都道府県が海外または未登録の配送先は、郵便番号と都道府県の代わりに海 |
+hareruya-design-docs/design_impl_drift_report/AUDIT_0207.md:46:| sheet-17-R033 | 配送先編集 | 実装違い | IO | P3 | 既定の配送先として印が付いた配送先には編集と削除の操作を出さず、それ以外の配送先にだけ出す。 |
+hareruya-design-docs/design_impl_drift_report/AUDIT_0207.md:47:| sheet-17-R039 | 配送先編集 | 実装違い | IO | P3 | 配送先の削除確認には、対象の配送先名称が示される。 |
+hareruya-design-docs/design_impl_drift_report/AUDIT_0207.md:48:| sheet-18-R035 | オンライン本人確認 | 未実装 | IO | P3 | 本人確認の閲覧権限が無い担当者がオンライン本人確認のモーダルを開いたとき、身分証画像は表示されず、各画像枠に「閲覧不可」という文言が表示される。 |
+hareruya-design-docs/design_impl_drift_report/AUDIT_0207.md:49:| sheet-20-R039 | 顧客グループ管理 | 実装違い | IO | P3 | 顧客グループ管理画面を開いた直後は入力フォームの見出しが「新規追加」と表示され、一覧から既存の顧客グループを選ぶと「編集」に変わる。 |
+hareruya-design-docs/design_impl_drift_report/AUDIT_0207.md:50:| sheet-20-R040 | 顧客グループ管理 | 実装違い | ふるまい | P3 | 名称を空のまま、または255文字を超える名称で登録したとき、保存されずに入力エラーが表示される。 |
+hareruya-design-docs/design_impl_drift_report/AUDIT_0207.md:51:| sheet-20-R058 | 顧客グループ管理 | 実装違い | ふるまい | P3 | 存在しない顧客グループを指定して編集画面を開こうとしたとき、画面も一覧も表示されず、ページが見つからない扱いになる。 |
+hareruya-design-docs/design_impl_drift_report/AUDIT_0207.md:52:| sheet-22-R029 | 会員登録仮登録完了メール再送 | 実装違い | IO | P3 | 再送される仮登録メールの差出人が、店舗基本情報の返信受付メールアドレス（表示名は店名）で届く。 |
+hareruya-design-docs/design_impl_drift_report/AUDIT_0207.md:53:| sheet-22-R033 | 会員登録仮登録完了メール再送 | 実装違い | IO | P3 | 管理画面の表示言語が英語のときも、再送される仮登録メールは日本語のテンプレートの内容（件名・本文）で届く。 |
+hareruya-design-docs/design_impl_drift_report/AUDIT_0207.md:54:| sheet-22-R036 | 会員登録仮登録完了メール再送 | 実装違い | ふるまい | P3 | 仮登録メールを再送しても会員の登録内容は変わらず、先に送った仮登録メールに載っていた本登録用URLもそのまま使える。 |
+hareruya-design-docs/design_impl_drift_report/AUDIT_0207.md:55:| sheet-4-R055 | 会員検索一覧(検索結果) | 実装違い | IO | P3 | 行末のサブメニューを開くと、編集・削除・メール通知・仮会員メール再送の4つが選べる。 |
+hareruya-design-docs/design_impl_drift_report/AUDIT_0207.md:56:| sheet-5-R036 | メール一括送信 | 実装違い | IO | P3 | メールの文字コード設定を iso-2022-jp にしているとき、一括送信されるメールの本文が iso-2022-jp の文字コードで届く（設定していないときは変換されない）。 |
+hareruya-design-docs/design_impl_drift_report/AUDIT_0207.md:57:| sheet-6-R012 | メール一括送信確認 | 実装違い | IO | P3 | メール一括送信確認画面の下部の操作領域に「戻る」という名のボタンが置かれ、押すとメール一括送信入力画面に戻る。 |
+hareruya-design-docs/design_impl_drift_report/AUDIT_0207.md:58:| sheet-9-R109 | 会員登録編集 | 実装違い | IO | P3 | 会員ステータスは「仮会員」「本会員」の2つが画面上に並んで表示され、どちらか一方を直接選べる。 |
+hareruya-design-docs/design_impl_drift_report/AUDIT_0207.md:59:| sheet-9-R156 | 会員登録編集 | 実装違い | IO | P3 | 購入履歴欄には新しいものから最大100件までが表示され、それより古い受注は画面に出ない。 |
+hareruya-design-docs/design_impl_drift_report/AUDIT_0207.md:60:| sheet-9-R159 | 会員登録編集 | 実装違い | IO | P3 | 受注番号が付いていない受注は、購入履歴欄の受注番号の欄に「-」が表示される。 |
+hareruya-design-docs/design_impl_drift_report/AUDIT_0207.md:61:| sheet-9-R160 | 会員登録編集 | 実装違い | IO | P3 | 買取履歴欄の買取番号は7桁のゼロ埋め（例 0012345）で表示される。 |
+hareruya-design-docs/design_impl_drift_report/AUDIT_0207.md:63:### sheet-10-R014 ポイント付与 — 実装違い／ふるまい／P2
+hareruya-design-docs/design_impl_drift_report/AUDIT_0207.md:74:### sheet-11-R012 ポイント付与（キャンペーン、特別対応） — 実装違い／IO／P2
+hareruya-design-docs/design_impl_drift_report/AUDIT_0207.md:86:### sheet-18-R037 オンライン本人確認 — 未実装／ふるまい／P2
+hareruya-design-docs/design_impl_drift_report/AUDIT_0207.md:97:### sheet-20-R016 顧客グループ管理 — 実装違い／ふるまい／P2
+hareruya-design-docs/design_impl_drift_report/AUDIT_0207.md:110:### sheet-20-R041 顧客グループ管理 — 実装違い／ふるまい／P2
+hareruya-design-docs/design_impl_drift_report/AUDIT_0207.md:121:### sheet-20-R044 顧客グループ管理 — 実装違い／IO／P2
+hareruya-design-docs/design_impl_drift_report/AUDIT_0207.md:132:### sheet-21-R017 ブラックリスト管理 — 実装違い／ふるまい／P2
+hareruya-design-docs/design_impl_drift_report/AUDIT_0207.md:143:### sheet-22-R035 会員登録仮登録完了メール再送 — 未実装／ふるまい／P2
+hareruya-design-docs/design_impl_drift_report/AUDIT_0207.md:154:### sheet-3-R089 会員検索一覧(検索入力) — 実装違い／ふるまい／P2
+hareruya-design-docs/design_impl_drift_report/AUDIT_0207.md:165:### sheet-9-R038 会員登録編集 — 未実装／ふるまい／P2
+hareruya-design-docs/design_impl_drift_report/AUDIT_0207.md:176:### sheet-9-R138 会員登録編集 — 実装違い／IO／P2
+hareruya-design-docs/design_impl_drift_report/AUDIT_0207.md:187:### sheet-14-R009 メール配信履歴 — 実装違い／IO／P3
+hareruya-design-docs/design_impl_drift_report/AUDIT_0207.md:195:- 判定根拠: 項目表の識別ID:1 はラベルを「テンプレートで絞り込む」、初期値を「すべてのメールを表示する」と定めており、レイアウト図でも同じ2つの文言が描かれている。実装の画面文言はいずれも異なる（src/Eccube/Resource/template/admin/Customer/mail_history.twig:40、src/Eccube/Resource/locale/messages.ja.yaml:2561、src/Eccube/Form/Type/Master/MailTemplateType.php:35）。絞り込みそのもののふるまい（選択で絞り込み・未選択で全件）は一致しており、差は画面に出る文言だけなのでP3とした。
+hareruya-design-docs/design_impl_drift_report/AUDIT_0207.md:198:### sheet-15-R021 手動メール通知(入力画面) — 実装違い／ふるまい／P3
+hareruya-design-docs/design_impl_drift_report/AUDIT_0207.md:210:### sheet-17-R032 配送先編集 — 実装違い／IO／P3
+hareruya-design-docs/design_impl_drift_report/AUDIT_0207.md:221:### sheet-17-R033 配送先編集 — 実装違い／IO／P3
+hareruya-design-docs/design_impl_drift_report/AUDIT_0207.md:232:### sheet-17-R039 配送先編集 — 実装違い／IO／P3
+hareruya-design-docs/design_impl_drift_report/AUDIT_0207.md:243:### sheet-18-R035 オンライン本人確認 — 未実装／IO／P3
+hareruya-design-docs/design_impl_drift_report/AUDIT_0207.md:255:### sheet-20-R039 顧客グループ管理 — 実装違い／IO／P3
+hareruya-design-docs/design_impl_drift_report/AUDIT_0207.md:266:### sheet-20-R040 顧客グループ管理 — 実装違い／ふるまい／P3
+hareruya-design-docs/design_impl_drift_report/AUDIT_0207.md:277:### sheet-20-R058 顧客グループ管理 — 実装違い／ふるまい／P3
+hareruya-design-docs/design_impl_drift_report/AUDIT_0207.md:288:### sheet-22-R029 会員登録仮登録完了メール再送 — 実装違い／IO／P3
+hareruya-design-docs/design_impl_drift_report/AUDIT_0207.md:299:### sheet-22-R033 会員登録仮登録完了メール再送 — 実装違い／IO／P3
+hareruya-design-docs/design_impl_drift_report/AUDIT_0207.md:310:### sheet-22-R036 会員登録仮登録完了メール再送 — 実装違い／ふるまい／P3
+hareruya-design-docs/design_impl_drift_report/AUDIT_0207.md:321:### sheet-4-R055 会員検索一覧(検索結果) — 実装違い／IO／P3
+hareruya-design-docs/design_impl_drift_report/AUDIT_0207.md:332:### sheet-5-R036 メール一括送信 — 実装違い／IO／P3
+hareruya-design-docs/design_impl_drift_report/AUDIT_0207.md:343:### sheet-6-R012 メール一括送信確認 — 実装違い／IO／P3
+hareruya-design-docs/design_impl_drift_report/AUDIT_0207.md:354:### sheet-9-R109 会員登録編集 — 実装違い／IO／P3
+hareruya-design-docs/design_impl_drift_report/AUDIT_0207.md:365:### sheet-9-R156 会員登録編集 — 実装違い／IO／P3
+hareruya-design-docs/design_impl_drift_report/AUDIT_0207.md:377:### sheet-9-R159 会員登録編集 — 実装違い／IO／P3
+hareruya-design-docs/design_impl_drift_report/AUDIT_0207.md:388:### sheet-9-R160 会員登録編集 — 実装違い／IO／P3
+hareruya-design-docs/design_impl_drift_report/AUDIT_SCOPE.md:83:## 5. 重要度は業務影響で決める
+hareruya-design-docs/design_impl_drift_report/AUDIT_SCOPE.md:87:| 重要度 | 定義 | 0202での件数 |
+hareruya-design-docs/design_impl_drift_report/AUDIT_SCOPE.md:89:| **P1** | 業務が回らず商売が止まる／データ整合性が壊れる／手作業でも代替できない | 11 |
+hareruya-design-docs/design_impl_drift_report/AUDIT_SCOPE.md:90:| **P2** | 迂回すれば回る（手作業・再実行・別経路）が、正しさ・効率・顧客体験を損なう | 69 |
+hareruya-design-docs/design_impl_drift_report/AUDIT_SCOPE.md:91:| **P3** | 業務は回る（見出し・ボタン文言・列名の相違／並び順・桁区切りの相違） | 81 |
+hareruya-design-docs/design_impl_drift_report/AUDIT_SCOPE.md:94:- 在庫振替で在庫が負数になる → **P1**（データ整合性が壊れる）
+hareruya-design-docs/design_impl_drift_report/AUDIT_SCOPE.md:95:- CSV一括登録で結合元在庫が黙って切り下げられる → **P2**（取込後に手作業修正と承認ゲートがある）
+hareruya-design-docs/design_impl_drift_report/AUDIT_SCOPE.md:96:- 一覧の列見出しが「コード」でなく「商品コード」 → **P3**
+hareruya-design-docs/design_impl_drift_report/AUDIT_SCOPE.md:98:**指摘が正しくても重要度が過大なら、対応の優先順位を歪めるので過剰指摘と同じ害がある。**
+hareruya-design-docs/design_impl_drift_report/AUDIT_SCOPE.md:123:| **抜き取り検査**（設計書1冊ごと） | P1は全件、P2/P3は各5件を反証専任にかける。**取り下げ率が2割を超えたら、その冊は判定からやり直す** |
+hareruya-design-docs/design_impl_drift_report/AUDIT_SCOPE.md:128:指摘そのものは1件も崩れなかった一方、P1 は 14件中3件が過大で、是正して11件にした。
+hareruya-design-docs/design_impl_drift_report/audit_harness.py:77:                "severity": "high",
+hareruya-design-docs/design_impl_drift_report/audit_harness.py:173:                "severity": "med",
+hareruya-design-docs/design_impl_drift_report/audit_harness.py:1268:        "severity": "high",
+hareruya-design-docs/design_impl_drift_report/audit_harness.py:1333:        "severity": "high",
+hareruya-design-docs/design_impl_drift_report/audit_harness.py:1399:        "severity": "med",
+hareruya-design-docs/design_impl_drift_report/audit_harness.py:1467:        "severity": "low",
+hareruya-design-docs/design_impl_drift_report/audit_harness.py:1491:        "severity": "low",
+hareruya-design-docs/design_impl_drift_report/audit_harness.py:1515:        "severity": "low",
+hareruya-design-docs/design_impl_drift_report/audit_harness.py:1539:        "severity": "low",
+hareruya-design-docs/design_impl_drift_report/audit_harness.py:1563:        "severity": "low",
+hareruya-design-docs/design_impl_drift_report/audit_harness.py:1587:        "severity": "low",
+hareruya-design-docs/design_impl_drift_report/audit_harness.py:1611:        "severity": "low",
+hareruya-design-docs/design_impl_drift_report/audit_harness.py:1635:        "severity": "low",
+hareruya-design-docs/design_impl_drift_report/audit_harness.py:1659:        "severity": "low",
+hareruya-design-docs/design_impl_drift_report/audit_harness.py:1683:        "severity": "low",
+
+exec
+/bin/bash -lc "nl -ba ec-cube-enterprise/tests/Eccube/Tests/Web/App/MTGBuyer/V1/Admin/BuyOrderControllerTest.php | sed -n '35,135p'; sed -n '70,90p' hareruya-design-docs/design_impl_drift_report/AUDIT_JUDGING_RULES.md; rg -n \"HTTP.*422|422.*400|ISO8601|Y/m/d H:i:s|applyDate\" hareruya-design-docs/design_impl_drift_report/AUDIT_*.tsv hareruya-design-docs/design_impl_drift_report/AUDIT_*.md | head -100" in /home/y-saito/Developments
+ succeeded in 0ms:
+    35	    {
+    36	        parent::setUp();
+    37	
+    38	        $this->jwtTokenService = static::getContainer()->get(JwtTokenService::class);
+    39	        $this->Member = $this->createMember();
+    40	
+    41	        // 買取受注の子テーブルを先に削除（PostgreSQL の FK 制約のため削除順が必須）
+    42	        $this->deleteAllRows([
+    43	            'dtb_buy_order_stock_history',
+    44	            'dtb_buy_order_stock',
+    45	            'dtb_application_price',
+    46	            'dtb_buy_main_card',
+    47	            'dtb_buy_order_indivisual_input_product',
+    48	            'dtb_buy_order_status_histry',
+    49	            'dtb_buy_order',
+    50	        ]);
+    51	    }
+    52	
+    53	    /**
+    54	     * getProductArrivalBuyOrders - 正常系
+    55	     * 対象ステータス（商品到着、査定中、査定中断、査定再開）の4件のみ取得できること
+    56	     *
+    57	     * @group HARERUYA
+    58	     */
+    59	    public function testGetProductArrivalBuyOrders(): void
+    60	    {
+    61	        // Arrange
+    62	        $Customer = $this->createCustomer();
+    63	        $Pref = $this->entityManager->find(Pref::class, 13);
+    64	        $Member = $this->entityManager->getRepository(Member::class)->find(1);
+    65	
+    66	        $targetStatuses = [
+    67	            MtbBuyOrderStatus::PRODUCT_ARRIVAL,
+    68	            MtbBuyOrderStatus::ASSESSING,
+    69	            MtbBuyOrderStatus::PENDING,
+    70	            MtbBuyOrderStatus::RESUMPTION,
+    71	        ];
+    72	
+    73	        // 対象ステータスの買取受注を作成
+    74	        $CreatedBuyOrders = [];
+    75	        foreach ($targetStatuses as $statusId) {
+    76	            $BuyOrderStatus = $this->entityManager->find(MtbBuyOrderStatus::class, $statusId);
+    77	            $CreatedBuyOrders[] = $this->createBuyOrder($Customer, $BuyOrderStatus, $Pref, $Member);
+    78	        }
+    79	
+    80	        // 対象外ステータスの買取受注を作成
+    81	        $NonTargetStatus = $this->entityManager->find(MtbBuyOrderStatus::class, MtbBuyOrderStatus::TRANSFER_COMPLETE);
+    82	        $this->createBuyOrder($Customer, $NonTargetStatus, $Pref, $Member);
+    83	
+    84	        $token = $this->jwtTokenService->createToken($this->Member->getId());
+    85	
+    86	        // Act
+    87	        $this->client->request(Request::METHOD_GET, '/api/v1/admin/buyOrders.json', [], [], ['HTTP_JWT_TOKEN' => $token]);
+    88	
+    89	        // Assert
+    90	        $this->assertSame(Response::HTTP_OK, $this->client->getResponse()->getStatusCode());
+    91	
+    92	        $responseData = json_decode($this->client->getResponse()->getContent(), true);
+    93	        $this->assertIsArray($responseData);
+    94	        $this->assertCount(4, $responseData);
+    95	
+    96	        // 取得したステータスIDが対象の4つのみであること
+    97	        $responseStatusIds = array_map(fn ($item) => (int) $item['netOrderStatusId'], $responseData);
+    98	        $this->assertEqualsCanonicalizing($targetStatuses, $responseStatusIds);
+    99	
+   100	        // ID昇順でソートされていること
+   101	        $createdBuyOrderIds = array_map(fn ($buyOrder) => $buyOrder->getId(), $CreatedBuyOrders);
+   102	        sort($createdBuyOrderIds);
+   103	        $responseBuyOrderIds = array_map(fn ($item) => (int) $item['netBuyOrderId'], $responseData);
+   104	        $this->assertSame($createdBuyOrderIds, $responseBuyOrderIds);
+   105	
+   106	        // レスポンスデータの検証
+   107	        $FirstBuyOrder = $CreatedBuyOrders[0];
+   108	        $firstResponse = $responseData[0];
+   109	        $this->assertSame((string) $FirstBuyOrder->getId(), $firstResponse['netBuyOrderId']);
+   110	        // 日付フォーマットの検証
+   111	        $this->assertMatchesRegularExpression('/^\d{4}\/\d{2}\/\d{2} \d{2}:\d{2}:\d{2}$/', $firstResponse['applyDate']);
+   112	        $this->assertSame($FirstBuyOrder->getMemo(), $firstResponse['freeComment']);
+   113	        $this->assertSame('管理者', $firstResponse['memberName']);
+   114	        $this->assertSame((string) MtbBuyOrderStatus::PRODUCT_ARRIVAL, $firstResponse['netOrderStatusId']);
+   115	        $customerInfo = $firstResponse['customerInfo'];
+   116	        $this->assertSame($FirstBuyOrder->getFirstName(), $customerInfo['firstName']);
+   117	        $this->assertSame($FirstBuyOrder->getLastName(), $customerInfo['lastName']);
+   118	        $this->assertSame($FirstBuyOrder->getTelNo(), $customerInfo['telNo']);
+   119	        $this->assertSame($FirstBuyOrder->getZipcode(), $customerInfo['zipcode']);
+   120	        $expectedAddress = implode(' ', [
+   121	            $FirstBuyOrder->getPref()->getName(),
+   122	            $FirstBuyOrder->getAddr01(),
+   123	            $FirstBuyOrder->getAddr02(),
+   124	        ]);
+   125	        $this->assertSame($expectedAddress, $customerInfo['address']);
+   126	    }
+   127	
+   128	    /**
+   129	     * getProductArrivalBuyOrders - 正常系
+   130	     * 対象ステータスのネット買取受注がない場合は空配列を返すこと
+   131	     *
+   132	     * @group HARERUYA
+   133	     */
+   134	    public function testGetProductArrivalBuyOrdersWhenEmpty(): void
+   135	    {
+
+項目表・レイアウト図・機能仕様・現行仕様のあいだで記述が食い違い、**どちらが正か決められない**もの**だけ**。
+実装と突き合わせる前に設計裁定が要る。`実装実態` は空にする（成果物には載らず、件数だけ残る）。
+
+## 重要度（業務影響で決める。機能名で機械的に決めない）
+
+- **P1**: 業務が回らず商売が止まる／データ整合性が壊れる／手作業でも代替できない。
+  受注・買取・出荷・商品金額・金額相当（ポイント付与/失効）・決済・在庫・メール通知・
+  外部連携（スマレジ/ユニサーチ/プリンター）・認証・認可・セキュリティ・法令要件、
+  および登録フォームのバリデーション（そもそも登録できない）。
+- **P2**: 迂回すれば回る（手作業・再実行・別経路）。CSV一括登録・イベント・デッキ・分析・コンテンツ。
+- **P3**: 業務は回る。見出し・ボタン文言・列名の相違／並び順・桁区切りの相違。
+
+例外は影響と迂回可否で判断する（受注管理でも文言差は P3、CSV一括登録でも取り込めない＝データ登録不能なら P1）。
+
+## 画像を見ること
+
+正本の文言はレイアウト図の画像に入っていることが多い。**画像を見ずに「実装が無い」と判定すると誤る。**
+`design_audit/<doc>/images/<sheet-id>_imgN.png` を読み、根拠にしたときは `画像確認メモ` に書く。
+
+## 手順
+hareruya-design-docs/design_impl_drift_report/AUDIT_0507.tsv:2:sheet-4-R044	ネット買取受注一覧取得	現行仕様	実装違い	P2	IO	査定申込日を、年月日と時刻を「T」でつなぎ時差を添えた日時表記（ISO8601）の文字列として返す。	applyDate を「2025/09/18 10:21:07」の形（年/月/日 空白 時:分:秒）の文字列で返しており、ISO8601の日時表記になっていない（src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderController.php:73）。	src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderController.php:73 の書式指定は Y/m/d H:i:s で、日付と時刻の区切り記号も時差も持たない。現行(pf)は受注日を日時値のまま応答へ渡しており（/home/y-saito/Developments/pf-api/src/Repository/DtbBuyOrderRepository.php:46 で orderDate をそのまま選択、応答整形は共通の直列化に委ねる）ISO8601で出るため、正本の記述は現行の挙動と一致する。差分はee側の書式指定にある。
+hareruya-design-docs/design_impl_drift_report/AUDIT_0507.tsv:4:sheet-7-R045	ネット買取注文の査定終了処理	機能仕様	実装違い	P2	IO	リクエストの検証に失敗したときは、入力不正としてHTTP 400 と エラーメッセージの配列を返す。	検証失敗時のHTTPステータスは422で返る（tests/Eccube/Tests/Web/App/MTGBuyer/V1/Admin/BuyOrderControllerTest.php:717 が HTTP_UNPROCESSABLE_ENTITY を期待している）。body は {code:422, errors:[...]}（src/Eccube/EventListener/ExceptionListener.php:101,140-143）。	ステータスコード表の「400　バリデーションエラー」は述語を持たない断片のため、同じ内容を述べているリニューアル後仕様の行を引用した。src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderController.php:171 の本文マッピングは検証失敗時に422を投げる既定のままで、400へ寄せる指定が無い。tests/Eccube/Tests/Web/App/MTGBuyer/V1/Admin/BuyOrderControllerTest.php:717 が422を期待して固定している。
+hareruya-design-docs/design_impl_drift_report/AUDIT_0506.tsv:10:sheet-4-R056	店頭買取情報取得	現行仕様	実装違い	P3	IO	applyDate はISO8601形式の日時文字列（例 2024-09-20T10:47:29+09:00）で返す。	applyDate を 'Y/m/d H:i:s' 形式（例 2024/09/20 10:47:29）で返している（src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php:97）。テストも同じ書式を期待値にしている（tests/Eccube/Tests/Web/App/MTGBuyer/V1/Admin/OtcBuyOrderControllerTest.php:124）。	[gate7/refute] 重要度を P3 へ。指摘自体は成立する。引用「applyDate ISO8601形式の日時文字列で返す。」は sheets/sheet-4.txt:90 に逐語で実在し、区分は現行仕様（カスタマイズ説明=現行踏襲、リニューアル後の仕様側に日時書式の上書き記述は無く sheet-4.txt:99 は「本APIは画面メッセージを扱わない」のみ）。同ブロック(sheet-4-R054..R062)の表は「出力: 値の表し方 ISO8601は日付と時刻をハイフン区切り・T連結で表す書式で、スラッシュ区切り・空白連結の値はこれに当たらない。同APIを読むMTGBuyerが申込み時間を解釈する値であり、書式差は日時の解釈失敗や誤表示につながる。同じ節の他のふるまい（freeComment・memberName・qualifiedInvoiceIssuerCode のnull）は一致しているため、この行だけが外れている。
+hareruya-design-docs/design_impl_drift_report/AUDIT_0506.tsv:14:sheet-5-R081	店頭買取情報更新	現行仕様	実装違い	P2	IO	入力検証に失敗したときは入力不正（HTTP 400）を返し、検出した全メッセージがerrors配列の要素として返る。データの削除・登録・保存は行われない。	リクエスト本文の検証に失敗すると入力不正（400）ではなく422が返り、errors には違反を1つの文字列に連結した1要素だけが入る。この応答を期待するテストが tests/Eccube/Tests/Web/App/MTGBuyer/V1/Admin/OtcBuyOrderControllerTest.php:330-350 にある。削除・登録・保存が行われない点は一致。	正常系以外の応答コードを tests/Eccube/Tests/Web/App/MTGBuyer/V1/Admin/OtcBuyOrderControllerTest.php が422で固定しており、明細の商品名未入力・ステータス範囲外・明細空・単価負数のいずれも422になる。正本（現行仕様・レスポンスサンプルとも）は400。
+hareruya-design-docs/design_impl_drift_report/AUDIT_0507.md:32:| sheet-4-R044 | ネット買取受注一覧取得 | 実装違い | IO | P2 | 査定申込日を、年月日と時刻を「T」でつなぎ時差を添えた日時表記（ISO8601）の文字列として返す。 |
+hareruya-design-docs/design_impl_drift_report/AUDIT_0507.md:39:- 正本引用: 「査定申込日はISO8601形式の日時文字列で返す。」
+hareruya-design-docs/design_impl_drift_report/AUDIT_0507.md:40:- 設計期待値: 査定申込日を、年月日と時刻を「T」でつなぎ時差を添えた日時表記（ISO8601）の文字列として返す。
+hareruya-design-docs/design_impl_drift_report/AUDIT_0507.md:41:- 画像確認: sheet-4_img1.png はMTGBuyer側「お客様選択」画面。列は 買取番号／申込み時間／氏名／買取カテゴリ／査定担当者／フリーコメント欄で、行ごとに「査定中断」「査定前」ボタン、右上に「更新」ボタン。本APIが返す netBuyOrderId・applyDate・氏名・memberName・freeComment・netOrderStatusId がこの画面の各列に対応する（買取カテゴリ列は買取商品一覧取得APIのpurchaseCategory由来）。画像内に本APIへの追加I/O要求は無い（画面はMTGBuyer側の実装でeeの対象外）。 画像の申込み時間欄は「8/27/2025 2:07:06 AM」だがこれはMTGBuyer側の表示整形であり、API応答の書式を定めるものではない。
+hareruya-design-docs/design_impl_drift_report/AUDIT_0507.md:43:- 実装実態: applyDate を「2025/09/18 10:21:07」の形（年/月/日 空白 時:分:秒）の文字列で返しており、ISO8601の日時表記になっていない（src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderController.php:73）。
+hareruya-design-docs/design_impl_drift_report/AUDIT_0507.md:44:- 判定根拠: src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderController.php:73 の書式指定は Y/m/d H:i:s で、日付と時刻の区切り記号も時差も持たない。現行(pf)は受注日を日時値のまま応答へ渡しており（/home/y-saito/Developments/pf-api/src/Repository/DtbBuyOrderRepository.php:46 で orderDate をそのまま選択、応答整形は共通の直列化に委ねる）ISO8601で出るため、正本の記述は現行の挙動と一致する。差分はee側の書式指定にある。
+hareruya-design-docs/design_impl_drift_report/AUDIT_0507.md:54:- 実装実態: 検証失敗時のHTTPステータスは422で返る（tests/Eccube/Tests/Web/App/MTGBuyer/V1/Admin/BuyOrderControllerTest.php:717 が HTTP_UNPROCESSABLE_ENTITY を期待している）。body は {code:422, errors:[...]}（src/Eccube/EventListener/ExceptionListener.php:101,140-143）。
+hareruya-design-docs/design_impl_drift_report/AUDIT_0507.md:55:- 判定根拠: ステータスコード表の「400　バリデーションエラー」は述語を持たない断片のため、同じ内容を述べているリニューアル後仕様の行を引用した。src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderController.php:171 の本文マッピングは検証失敗時に422を投げる既定のままで、400へ寄せる指定が無い。tests/Eccube/Tests/Web/App/MTGBuyer/V1/Admin/BuyOrderControllerTest.php:717 が422を期待して固定している。
+hareruya-design-docs/design_impl_drift_report/AUDIT_0506.md:44:| sheet-4-R056 | 店頭買取情報取得 | 実装違い | IO | P3 | applyDate はISO8601形式の日時文字列（例 2024-09-20T10:47:29+09:00）で返す。 |
+hareruya-design-docs/design_impl_drift_report/AUDIT_0506.md:102:- 画像確認: sheet-4_img1.png はMTGBuyer側「お客様選択」画面。列見出しは 査定番号／申込み時間／氏名／査定担当者／フリーコメント欄、行ごとに「査定中断」ボタン、右上に「更新」ボタン。本APIが返す assessmentId・applyDate・氏名・memberName・freeComment がこの画面の各列に対応する。画像内に本APIの追加I/O要求は無い（画面はMTGBuyer側の実装でeeの対象外）。
+hareruya-design-docs/design_impl_drift_report/AUDIT_0506.md:128:- 判定根拠: 正常系以外の応答コードを tests/Eccube/Tests/Web/App/MTGBuyer/V1/Admin/OtcBuyOrderControllerTest.php が422で固定しており、明細の商品名未入力・ステータス範囲外・明細空・単価負数のいずれも422になる。正本（現行仕様・レスポンスサンプルとも）は400。
+hareruya-design-docs/design_impl_drift_report/AUDIT_0506.md:191:- 正本引用: 「applyDate ISO8601形式の日時文字列で返す。」
+hareruya-design-docs/design_impl_drift_report/AUDIT_0506.md:192:- 設計期待値: applyDate はISO8601形式の日時文字列（例 2024-09-20T10:47:29+09:00）で返す。
+hareruya-design-docs/design_impl_drift_report/AUDIT_0506.md:193:- 画像確認: sheet-4_img1.png はMTGBuyer側「お客様選択」画面。列見出しは 査定番号／申込み時間／氏名／査定担当者／フリーコメント欄、行ごとに「査定中断」ボタン、右上に「更新」ボタン。本APIが返す assessmentId・applyDate・氏名・memberName・freeComment がこの画面の各列に対応する。画像内に本APIの追加I/O要求は無い（画面はMTGBuyer側の実装でeeの対象外）。
+hareruya-design-docs/design_impl_drift_report/AUDIT_0506.md:195:- 実装実態: applyDate を 'Y/m/d H:i:s' 形式（例 2024/09/20 10:47:29）で返している（src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php:97）。テストも同じ書式を期待値にしている（tests/Eccube/Tests/Web/App/MTGBuyer/V1/Admin/OtcBuyOrderControllerTest.php:124）。
+hareruya-design-docs/design_impl_drift_report/AUDIT_0506.md:196:- 判定根拠: [gate7/refute] 重要度を P3 へ。指摘自体は成立する。引用「applyDate ISO8601形式の日時文字列で返す。」は sheets/sheet-4.txt:90 に逐語で実在し、区分は現行仕様（カスタマイズ説明=現行踏襲、リニューアル後の仕様側に日時書式の上書き記述は無く sheet-4.txt:99 は「本APIは画面メッセージを扱わない」のみ）。同ブロック(sheet-4-R054..R062)の表は「出力: 値の表し方 ISO8601は日付と時刻をハイフン区切り・T連結で表す書式で、スラッシュ区切り・空白連結の値はこれに当たらない。同APIを読むMTGBuyerが申込み時間を解釈する値であり、書式差は日時の解釈失敗や誤表示につながる。同じ節の他のふるまい（freeComment・memberName・qualifiedInvoiceIssuerCode のnull）は一致しているため、この行だけが外れている。
+hareruya-design-docs/design_impl_drift_report/AUDIT_0506.md:204:- 画像確認: sheet-4_img1.png はMTGBuyer側「お客様選択」画面。列見出しは 査定番号／申込み時間／氏名／査定担当者／フリーコメント欄、行ごとに「査定中断」ボタン、右上に「更新」ボタン。本APIが返す assessmentId・applyDate・氏名・memberName・freeComment がこの画面の各列に対応する。画像内に本APIの追加I/O要求は無い（画面はMTGBuyer側の実装でeeの対象外）。
+
+codex
+要求ID: sheet-4-R044
+判定: 重要度過大
+主張: ISO8601ではなく `Y/m/d H:i:s` 形式で査定申込日を返す差異をP2としている。
+実際: src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderController.php:73 は `format('Y/m/d H:i:s')` としており、tests/Eccube/Tests/Web/App/MTGBuyer/V1/Admin/BuyOrderControllerTest.php:111 も同形式を明示的に検証している。指摘自体は成立するが、差異は日時の表現形式に限られ、業務処理やデータ更新を妨げる実装証拠はない。
+修正案: P3へ変更する。
+tokens used
+77,506
+要求ID: sheet-4-R044
+判定: 重要度過大
+主張: ISO8601ではなく `Y/m/d H:i:s` 形式で査定申込日を返す差異をP2としている。
+実際: src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderController.php:73 は `format('Y/m/d H:i:s')` としており、tests/Eccube/Tests/Web/App/MTGBuyer/V1/Admin/BuyOrderControllerTest.php:111 も同形式を明示的に検証している。指摘自体は成立するが、差異は日時の表現形式に限られ、業務処理やデータ更新を妨げる実装証拠はない。
+修正案: P3へ変更する。
