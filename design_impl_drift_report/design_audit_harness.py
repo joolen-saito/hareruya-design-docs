@@ -713,19 +713,38 @@ def fold_similar(kept: list[dict], reqs: dict, folded: dict[str, list[str]],
     return others + reps, folded, folded_count
 
 
-_IMPL_REF_RE = re.compile(r"^([\w./\-]+\.[A-Za-z0-9]+)(?::(\d+)(?:-(\d+))?)?$")
+# 実装参照の書式。拡張子を持たない実装ファイル（dockerbuild/eccube/crontab 等）も許す。
+# パス区切りを1つ以上含むことだけを要求し、実在は verify_impl_ref が確かめる。
+_IMPL_REF_RE = re.compile(r"^([\w./\-]*/[\w./\-]+)(?::(\d+)(?:-(\d+))?)?$")
 
 # 判定根拠の文中に埋め込まれた実装引用（例: src/Eccube/.../MemberController.php:63）を拾う。
 # MATCHED は「設計どおり実装されている」という主張なので、その根拠となる実在の位置を必ず1つ以上要求する。
 # ここを空けておくと、母集合を全部 MATCHED にする手抜きが捏造ゼロゲートを素通りしてしまう。
+# 実装の位置として認めるパス。**ee のトップレベル構成に合わせる。**
+# 当初は src|app|codeception|tests|bin|config だけで、拡張子も php 系に限っていた。
+# インフラ・バッチ系の書では実装が script/ops/*.sh・dockerbuild/*・infra/*.ts にあるため、
+# 正しい MATCHED を書けず UNVERIFIABLE へ逃がすしかなくなっていた
+# （2026-08-23 実測: 0416 で16件。担当エージェントが「_INLINE_REF_RE が script/ 配下の .sh を
+#  許すようになればこの16件はそのまま MATCHED へ反転できる」と申告して発覚）。
+# 拡張子を持たない実装ファイル（dockerbuild/eccube/crontab 等）も拾えるようにする。
+_IMPL_DIRS = "src|app|codeception|tests|bin|config|script|scripts|dockerbuild|infra|html|e2e-tests|plugin_repos|repos"
+_IMPL_EXTS = "php|twig|yaml|yml|js|jsx|ts|tsx|json|xml|sql|md|sh|bash|conf|ini|env|lock|txt|csv|tsv|css|scss|html"
 _INLINE_REF_RE = re.compile(
-    r"(?:src|app|codeception|tests|bin|config)/[\w./\-]+\.(?:php|twig|yaml|yml|js|json|xml|sql|md)"
+    rf"(?:{_IMPL_DIRS})/[\w./\-]+"
+    rf"(?:\.(?:{_IMPL_EXTS})|/[\w\-]+)"      # 拡張子付き、または拡張子なしの末尾ファイル名
     r"(?::\d+(?:-\d+)?)?"
 )
 
 
 def inline_impl_refs(text: str) -> list[str]:
-    return _INLINE_REF_RE.findall(text or "")
+    """判定根拠の文中から実装位置を拾う。**実在するものだけを返す。**
+
+    拾う範囲を ee のトップレベル構成まで広げた副作用で、文中の「html/sitemap.xml」のような
+    実在しないパスまで拾うようになった。MATCHED の位置として使えるのは実在するものだけなので、
+    ここで実在を確かめて落とす（2026-08-23 実測: 0416 で2件がゲートに落ちた）。
+    """
+    hits = _INLINE_REF_RE.findall(text or "")
+    return [h for h in hits if not verify_impl_ref(h)]
 
 
 def verify_impl_ref(ref: str) -> list[str]:
