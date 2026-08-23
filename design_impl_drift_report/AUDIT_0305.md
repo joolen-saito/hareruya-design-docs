@@ -19,13 +19,13 @@
 | 確定不能 | 実データ・実行時挙動に依存し静的解析では確定できない | 9 | — |
 | **合計** | | **956** | |
 
-## 不具合 15件（P1 0 / P2 4 / P3 11）
+## 不具合 14件（P1 0 / P2 4 / P3 10）
 
 - **P1**: 業務が回らず商売が止まる、またはデータの整合性が壊れる。手作業でも代替できない
 - **P2**: 迂回すれば回る。手作業・再実行・別経路で業務は完了できるが、コア業務の正しさ・効率、または顧客体験を損なう
 - **P3**: 業務は回る。業務の完了・データ・判断に影響しない（見出し・ボタン文言・列名の相違／並び順・桁区切りの相違など）
 
-実装実態が同一の指摘 18件は重複として代表へ折り畳んだ（判定そのものは 33件。折り畳んだ要求IDは各指摘の「同じ実装実態でまとまる要求」に全件を書く）。
+実装実態が同一の指摘 19件は重複として代表へ折り畳んだ（判定そのものは 33件。折り畳んだ要求IDは各指摘の「同じ実装実態でまとまる要求」に全件を書く）。
 
 | 要求ID | 機能 | 区分 | 種別 | 重要度 | 内容 |
 | --- | --- | --- | --- | --- | --- |
@@ -35,7 +35,6 @@
 | sheet-5-R155 | ネット買取商品一覧 | 実装違い | ふるまい | P2 | 買取商品一覧の1ページあたりの表示件数は、指定が無いときは60件とする |
 | sheet-3-R143 | ネット買取トップページ | 実装違い | ふるまい | P3 | 目玉買取商品のカードでは、カード商品のときだけ言語ラベルを出し、カード以外の商品には出さないこと。 |
 | sheet-4-R014 | ネット買取商品検索 | 実装違い | IO | P3 | タグ・カテゴリを指定した買取商品検索の結果URLは、パス部分にタグ名・カテゴリ名が現れる。 |
-| sheet-4-R058 | ネット買取商品検索 | 実装違い | ふるまい | P3 | 表示件数の指定が無いとき、買取商品検索の結果一覧は1ページに60件表示する。 |
 | sheet-5-R092 | ネット買取商品一覧 | 実装違い | ふるまい | P3 | 商品数が1のときにマイナスを押すと、商品数が20になる |
 | sheet-5-R153 | ネット買取商品一覧 | 未実装 | IO | P3 | タグを1件だけ指定して買取商品一覧を開いたとき、そのタグに登録された説明文を一覧の上部に表示する |
 | sheet-6-R015 | ネット買取商品詳細 | 実装違い | IO | P3 | 買取商品詳細のパンくずは、ホームアイコンに続けてその商品のカテゴリだけを並べ、末尾もカテゴリで終わる。 |
@@ -87,7 +86,8 @@
 - 設計期待値: 買取商品一覧の1ページあたりの表示件数は、指定が無いときは60件とする
 - 実装参照: `src/Eccube/Controller/Front/Purchase/PurchaseController.php:711-722; src/Eccube/Resource/template/default/Purchase/search.twig:42`
 - 実装実態: 指定が無いときの1ページ件数が20件になる。既定値を表示件数マスタの並び順の先頭から採っており、その先頭は20件である（src/Eccube/Resource/doctrine/import_csv/ja/mtb_product_list_max.csv:2）。販売の商品一覧は60件を先に探してから並び順の先頭に落とす（src/Eccube/Controller/Front/ProductController.php:2223-2226）
-- 判定根拠: 買取側は 60件を探す処理が無く、いきなり表示件数マスタの並び順の先頭（20件）を既定にしている（src/Eccube/Controller/Front/Purchase/PurchaseController.php:711-717）。指定があれば変更できる点（src/Eccube/Controller/Front/Purchase/PurchaseController.php:719-722）は設計どおり
+- 同じ実装実態でまとまる要求: sheet-4-R058（ネット買取商品検索 / 実装参照 `src/Eccube/Controller/Front/Purchase/PurchaseController.php:710-717;src/Eccube/Resource/doctrine/import_csv/ja/mtb_product_list_max.csv:2`）
+- 判定根拠: [gate7/codex] sheet-4-R058 と同じ実装欠陥として畳む。sheet-4-R058へ畳む 買取側は 60件を探す処理が無く、いきなり表示件数マスタの並び順の先頭（20件）を既定にしている（src/Eccube/Controller/Front/Purchase/PurchaseController.php:711-717）。指定があれば変更できる点（src/Eccube/Controller/Front/Purchase/PurchaseController.php:719-722）は設計どおり
 - 確信度: med
 
 ### sheet-3-R143 ネット買取トップページ — 実装違い／ふるまい／P3
@@ -110,16 +110,6 @@
 - 実装実態: パスに入るのは名称ではなく数値ID（/purchase/search/cate/123/tag/45）で、タグ名・カテゴリ名はURLに現れない。
 - 同じ実装実態でまとまる要求: sheet-4-R015（ネット買取商品検索）、sheet-4-R016（ネット買取商品検索）、sheet-4-R017（ネット買取商品検索）
 - 判定根拠: パスの受け口は数値のみを受け付ける（src/Eccube/Controller/Front/Purchase/PurchaseController.php:397-401 の categoryId・tagId）。検索実行側もカテゴリID・タグIDを連結してパスを作る（src/Eccube/Resource/template/default/Block/js/product_list_search_path_form_submit_js.twig:64-73）。名称でパスを作る箇所は ee 内に見当たらない。
-- 確信度: med
-
-### sheet-4-R058 ネット買取商品検索 — 実装違い／ふるまい／P3
-
-- 正本: sheet-4（ネット買取商品検索） HTML行 1431 付近
-- 正本引用: 「1ページの表示件数は、指定がないときは60件とする。表示するページは、指定がないときは1ページ目とする。」
-- 設計期待値: 表示件数の指定が無いとき、買取商品検索の結果一覧は1ページに60件表示する。
-- 実装参照: `src/Eccube/Controller/Front/Purchase/PurchaseController.php:710-717;src/Eccube/Resource/doctrine/import_csv/ja/mtb_product_list_max.csv:2`
-- 実装実態: 表示件数の指定が無いときは表示件数マスタの並び順が最も早い行（20件）が使われ、1ページ20件になる。ページ番号の既定が1ページ目である点は設計どおり。
-- 判定根拠: 件数未指定時の1ページ件数は src/Eccube/Controller/Front/Purchase/PurchaseController.php:710-717 で表示件数マスタの先頭行の値になり、そのマスタは20/40/60で先頭が20（src/Eccube/Resource/doctrine/import_csv/ja/mtb_product_list_max.csv:2）。60を既定にする箇所は買取検索側に無い（買取トップのブロックだけが60を使う src/Eccube/Service/UniSearch/UniSearchService.php:55）。ページ番号は指定が無ければ1（src/Eccube/Controller/Front/Purchase/PurchaseController.php:726-729）。
 - 確信度: med
 
 ### sheet-5-R092 ネット買取商品一覧 — 実装違い／ふるまい／P3
