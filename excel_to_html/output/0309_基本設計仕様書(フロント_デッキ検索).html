@@ -1,0 +1,555 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>フロント デッキ検索 - 基本設計仕様書（詳細設計）</title>
+  <style>
+:root {
+  --bg: #ffffff;
+  --panel: #fffdf8;
+  --text: #2b2a26;
+  --muted: #7a756a;
+  --line: #d6cdbd;
+  --line-soft: #ebe2d3;
+  --band: #f3ede1;
+  --clay: #c25a37;
+  --clay-soft: #f4e6dd;
+  --olive: #5f7048;
+  --olive-soft: #e9ecdf;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Yu Gothic", Meiryo, sans-serif;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.page {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 32px;
+  max-width: 1480px;
+  margin: 0 auto;
+  padding: 28px 28px 64px;
+}
+.sidebar {
+  position: sticky;
+  top: 24px;
+  align-self: start;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  padding-right: 12px;
+  border-right: 1px solid var(--line-soft);
+}
+.sidebar-title {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.toc a {
+  display: block;
+  padding: 4px 0 4px 12px;
+  border-left: 2px solid var(--line-soft);
+  color: var(--muted);
+  text-decoration: none;
+}
+.toc a:hover { color: var(--clay); border-left-color: var(--clay); }
+.toc .lv3 { padding-left: 24px; font-size: 13px; }
+.doc-content { min-width: 0; }
+header.page-header {
+  margin-bottom: 24px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+.crumb {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+h1 { margin: 0; font-size: 28px; line-height: 1.3; }
+h2 {
+  margin: 34px 0 12px;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+}
+h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
+h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
+p { margin: 9px 0; }
+a { color: var(--clay); }
+code {
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--band);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 90%;
+}
+pre {
+  overflow-x: auto;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+pre code { padding: 0; background: transparent; }
+hr { margin: 26px 0; border: 0; border-top: 1px solid var(--line); }
+ul, ol { margin: 9px 0; padding-left: 26px; }
+li { margin: 3px 0; }
+.table-wrap {
+  overflow-x: auto;
+  margin: 14px 0 22px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+th, td {
+  border: 1px solid var(--line-soft);
+  padding: 7px 9px;
+  text-align: left;
+  vertical-align: top;
+}
+th {
+  position: sticky;
+  top: 0;
+  background: var(--band);
+  font-weight: 700;
+  white-space: nowrap;
+}
+tbody tr:nth-child(even) { background: #fffaf0; }
+.screen-item-table table { min-width: 1120px; }
+.section-row td {
+  background: var(--olive-soft);
+  color: var(--olive);
+  font-weight: 700;
+}
+.tabbed-note {
+  white-space: pre-wrap;
+  overflow-x: auto;
+  padding: 10px 12px;
+  border-left: 3px solid var(--olive);
+  background: var(--panel);
+}
+details {
+  margin: 34px 0 12px;
+}
+details > summary {
+  cursor: pointer;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+  font-weight: 700;
+  list-style: revert;
+}
+details[open] > summary { margin-bottom: 12px; }
+footer {
+  margin-top: 48px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+}
+@media (max-width: 900px) {
+  .page { display: block; padding: 20px 16px 48px; }
+  .sidebar {
+    position: static;
+    max-height: none;
+    margin-bottom: 24px;
+    padding-right: 0;
+    border-right: 0;
+    border-bottom: 1px solid var(--line-soft);
+    padding-bottom: 16px;
+  }
+  h1 { font-size: 23px; }
+}
+    /* superseded-notice:start */
+    .superseded-notice {
+      margin: 0 0 18px;
+      padding: 12px 14px;
+      border: 1px solid #d9a1a1;
+      border-left: 5px solid #b3413a;
+      border-radius: 6px;
+      background: #fdf3f2;
+      font-size: 13px;
+      line-height: 1.7;
+    }
+    .superseded-badge {
+      display: inline-block;
+      margin-right: 8px;
+      padding: 2px 9px;
+      border-radius: 999px;
+      background: #b3413a;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .superseded-notice-head {
+      margin: 0 0 8px;
+    }
+    .superseded-notice-list {
+      margin: 0;
+      padding-left: 1.2em;
+    }
+    .superseded-notice-list > li {
+      margin: 6px 0;
+    }
+    .superseded-target {
+      font-weight: 700;
+    }
+    .superseded-implied {
+      display: block;
+      margin-top: 2px;
+      color: #6b4a47;
+    }
+    .superseded-notice a {
+      color: #8c322c;
+    }
+    /* superseded-notice:end */
+    /* phase2-notice:start */
+    .phase2-notice {
+      margin: 0 0 18px;
+      padding: 12px 14px;
+      border: 1px solid #9aa8c7;
+      border-left: 5px solid #3f5b96;
+      border-radius: 6px;
+      background: #f2f5fb;
+      font-size: 13px;
+      line-height: 1.7;
+    }
+    .phase2-badge {
+      display: inline-block;
+      margin-right: 8px;
+      padding: 2px 9px;
+      border-radius: 999px;
+      background: #3f5b96;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .phase2-notice-head {
+      margin: 0 0 8px;
+    }
+    .phase2-notice-list {
+      margin: 0;
+      padding-left: 1.2em;
+    }
+    .phase2-notice-list > li {
+      margin: 6px 0;
+    }
+    .phase2-target {
+      font-weight: 700;
+    }
+    .phase2-notice a {
+      color: #2f4677;
+    }
+    /* phase2-notice:end */
+  </style>
+</head>
+<body>
+  <div class="page">
+    <aside class="sidebar">
+      <p class="sidebar-title">フロント デッキ検索</p>
+      <nav class="toc"><a class="lv1" href="#f09-01">F09-01 デッキ検索TOP</a>
+<a class="lv1" href="#f09-02">F09-02 デッキ検索結果</a>
+<a class="lv1" href="#f09-03">F09-03 メタゲーム一覧</a>
+<a class="lv1" href="#f09-04">F09-04 採用枚数ランキング</a>
+<a class="lv1" href="#f09-05">F09-05 その他デッキ一覧</a>
+<a class="lv1" href="#f09-06">F09-06 デッキリスト詳細</a>
+<a class="lv1" href="#f09-07">F09-07 デッキリスト書き出し</a>
+<a class="lv1" href="#f09-08">F09-08 デッキ一括購入</a></nav>
+    </aside>
+    <main class="doc-content">
+      <header class="page-header">
+        <h1>フロント デッキ検索 基本設計仕様書（詳細設計）</h1>
+        <p class="crumb">専用の基本設計（Excel）シートが無い機能群の現行仕様をまとめたページです。各機能の正本は Markdown です。</p>
+      </header>
+      <section class="doc-section" id="f09-01">
+  <header class="page-header">
+    <p class="crumb">Source:<br>functions/pf-eccube3/f09-01_front_deck_deck_index.md</p>
+    <h1>F09-01 デッキ検索TOP ／ フロント デッキ検索 — デッキ検索TOP</h1>
+  </header>
+  <h2 id="f09-01-業務ロジック">業務ロジック</h2>
+<h3 id="f09-01-メタゲーム上位の集計">メタゲーム上位の集計</h3>
+<p>集計対象はランキング表示の対象に設定されたフォーマットだけで、表示順の昇順に並べる。フォーマットごとに、大会デッキかつ公開のデッキを集計期間で絞り、アーキタイプ単位のデッキ数を多い順に上位3件まで示す。</p>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>扱い</th></tr></thead><tbody><tr><td>対象フォーマット</td><td>ランキング表示の対象が有効なフォーマットだけを対象とする</td></tr><tr><td>対象デッキ</td><td>デッキ種別が大会デッキ、かつ表示区分が公開のものだけを対象とする</td></tr><tr><td>集計期間の開始</td><td>当日からフォーマットごとのメタ集計日数を引いた日の<code>00:00:00</code></td></tr><tr><td>集計期間の終了</td><td>当日の<code>23:59:59</code></td></tr><tr><td>期間判定に使う日付</td><td>大会の開催日</td></tr><tr><td>集計単位</td><td>アーキタイプ</td></tr><tr><td>並び順</td><td>デッキ数の降順</td></tr><tr><td>表示件数</td><td>上位3件。4位以下はメタゲーム一覧が受け持つ</td></tr><tr><td>ユーザーデッキ</td><td>集計に含めない</td></tr></tbody></table></div>
+<h3 id="f09-01-その他フォーマットの案内">その他フォーマットの案内</h3>
+<p>その他メタゲームの対象に設定されたフォーマットを表示順の昇順に並べ、各フォーマットのメタゲーム一覧への入口とする。対象が1件も無いときは何も並べない。</p>
+<h3 id="f09-01-直近の大会">直近の大会</h3>
+<p>直近大会マスタのうち、開催日が設定され、日本語名と英語名がどちらも空でない大会を識別子の昇順に並べ、開催日・フォーマット名・大会名・参加人数を示す。条件を満たす大会が1件も無いときは直近の大会の区画そのものを表示しない。</p>
+<h3 id="f09-01-画面から引き継ぐ検索条件">画面から引き継ぐ検索条件</h3>
+<div class="table-wrap"><table><thead><tr><th>起点</th><th>遷移先</th><th>引き継ぐ条件</th></tr></thead><tbody><tr><td>メタゲーム上位のアーキタイプ</td><td>デッキ検索結果</td><td>アーキタイプIDと、開催日時の開始＝当該フォーマットの集計期間の開始日</td></tr><tr><td>4位以下を見る</td><td>メタゲーム一覧</td><td>フォーマットID</td></tr><tr><td>フォーマット名の見出し</td><td>メタゲーム一覧</td><td>フォーマットID</td></tr><tr><td>その他</td><td>その他デッキ一覧</td><td>引き継がない</td></tr><tr><td>直近の大会の1件</td><td>デッキ検索結果</td><td>開催日時の開始と終了＝その大会の開催日、大会名＝その大会の日本語名</td></tr></tbody></table></div>
+<h3 id="f09-01-検索条件">検索条件</h3>
+<p>検索条件はデッキ検索結果へGETで渡す。デッキ検索TOP・デッキ検索結果・メタゲーム一覧・デッキリスト詳細は同一の検索条件の様式を共有する。</p>
+<div class="table-wrap"><table><thead><tr><th>画面上の項目</th><th>画面上の項目（英語）</th><th>検索条件</th></tr></thead><tbody><tr><td>フォーマット</td><td>Format</td><td>受け取ったフォーマットIDのいずれかに一致。選択肢を検索対象の設定で絞るのは画面側で、受け取ったID自体は再判定しない</td></tr><tr><td>アーキタイプ</td><td>Archetype</td><td>選択したアーキタイプIDのいずれかに一致。カンマ区切りの文字列で渡す</td></tr><tr><td>開催日時（開始）</td><td>Date</td><td>大会の開催日が、指定日の<code>00:00:00</code>以上</td></tr><tr><td>開催日時（終了）</td><td>Date</td><td>大会の開催日が、指定日の<code>23:59:59</code>以下</td></tr><tr><td>参加人数（下限）</td><td>Participants</td><td>参加人数が指定値以上</td></tr><tr><td>参加人数（上限）</td><td>Participants</td><td>参加人数が指定値以下</td></tr><tr><td>タグ</td><td>Tag</td><td>選択したデッキタグIDのいずれかを持つデッキだけを対象とする</td></tr><tr><td>カード名</td><td>Card</td><td>採用カードの日本語名または英語名に完全一致するカードを含むデッキだけを対象とする</td></tr><tr><td>プレイヤー名</td><td>Player</td><td>プレイヤー名への部分一致</td></tr><tr><td>大会名</td><td>Tournament</td><td>大会の日本語名または英語名への部分一致</td></tr><tr><td>成績</td><td>Result</td><td>優勝デッキのみ（Winning deck only）は順位が1位、TOP8以上のみ（Top 8 decks only）は順位が1位以上8位以下。掲載デッキすべて（List All Decks）は絞り込まない</td></tr><tr><td>公開/非公開</td><td>Viewable/Private</td><td>公開リストのみ（Viewable Only）はデッキリストが公開のものだけを対象とする。非公開リストを含む（Private List Included）は絞り込まない</td></tr></tbody></table></div>
+<h3 id="f09-01-検索条件の初期値と入力の扱い">検索条件の初期値と入力の扱い</h3>
+<p>開催日時の開始の初期値は当日の6か月前、成績の初期値は「掲載デッキすべて」、公開/非公開の初期値は「非公開リストを含む」とする。他の項目の初期値は空とする。日付は<code>Y/m/d</code>の形式で解釈し、この形式に合わない値は条件にしない。カード名の入力に含まれる<code>+</code>は<code>/</code>へ置き換えてから突き合わせる。プレイヤー名と大会名は入力値のワイルドカード文字<code>%</code>と<code>_</code>をエスケープして文字そのものとして扱う。</p>
+<p>アーキタイプの選択は、フォーマットと色による絞り込みとアーキタイプ名の入力補助を備えた選択画面で行い、選択結果をカンマ区切りの識別子として検索条件に載せる。カード名の入力補助にはカード名の一覧ファイルを用いる。</p>
+<h3 id="f09-01-集計に用いるデータ">集計に用いるデータ</h3>
+<div class="table-wrap"><table><thead><tr><th>データ</th><th>用途</th></tr></thead><tbody><tr><td>デッキ</td><td>大会デッキで表示区分が公開のものだけを数える</td></tr><tr><td>アーキタイプ</td><td>集計の単位とし、区画に出す名称と画像にも用いる</td></tr><tr><td>フォーマット</td><td>ランキング表示の対象かどうかと、メタ集計日数と表示順を持つ</td></tr><tr><td>直近大会マスタ</td><td>直近の大会の区画に出す大会だけを持つ</td></tr><tr><td>デッキリストの公開状態</td><td>集計の条件にしない。デッキリストが非公開でも数える</td></tr></tbody></table></div>
+<h3 id="f09-01-検索条件の送信様式">検索条件の送信様式</h3>
+<div class="table-wrap"><table><thead><tr><th>画面上の項目</th><th>送信の形</th></tr></thead><tbody><tr><td>フォーマット</td><td>選択したフォーマットごとに、その識別子を鍵にした配列の要素として送る</td></tr><tr><td>アーキタイプ</td><td>選択した識別子をカンマで連ねた1つの値として送る</td></tr><tr><td>タグ</td><td>選択したタグの識別子を配列として送る</td></tr><tr><td>大会名</td><td>入力欄の値のほかに、同じ名前の隠し項目も送る</td></tr><tr><td>表示件数</td><td>デッキ検索TOPからは値を入れずに送る。値が入るのはデッキ検索結果で件数を変えたときだけ</td></tr><tr><td>検索の実行</td><td>入力値の妥当性を判定せずに送る。形式を判定するのは日付だけで、参加人数などは形式を判定せず、空でなければそのまま条件にする</td></tr></tbody></table></div>
+<h3 id="f09-01-エッジケース">エッジケース</h3>
+<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>ランキング表示の対象フォーマットが0件のとき</td><td>メタゲームの区画を1つも出さない</td></tr><tr><td>あるフォーマットの集計結果が0件のとき</td><td>そのフォーマットの首位のアーキタイプの区画を出さず、4位以下への入口だけを残す</td></tr><tr><td>その他メタゲームの対象が0件のとき</td><td>その他フォーマットの区画にはその他デッキ一覧への入口だけが残る</td></tr><tr><td>その他フォーマットが多いとき</td><td>フォーマットの識別子が8のものの直後で区画を分けて折り返す</td></tr><tr><td>直近大会の登録が0件のとき</td><td>直近の大会の区画そのものを出さない</td></tr><tr><td>集計期間の開始日</td><td><code>Y/m/d</code>の形式の文字列として検索条件へ引き継ぐ</td></tr></tbody></table></div>
+<h2 id="f09-01-入出力">入出力</h2>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>なし。検索条件を伴わずに開く</td></tr><tr><td>成功時出力</td><td>メタゲーム上位・その他フォーマット・直近の大会・検索条件の入力欄を載せた画面</td></tr><tr><td>失敗時出力</td><td>なし。集計結果が0件でも同じ画面を返す</td></tr></tbody></table></div>
+<h3 id="f09-01-入出力-永続化">入出力: 永続化</h3>
+<p>デッキ情報を登録・更新・削除しない。</p>
+<div class="table-wrap"><table><thead><tr><th>操作</th><th>契機</th></tr></thead><tbody><tr><td>キャッシュへの保存</td><td>メタゲーム上位の集計結果をフォーマットごとに保存する。保持時間は3600秒</td></tr><tr><td>キャッシュへの保存</td><td>同じ集計結果を、フォーマットと上限件数を鍵とする結果キャッシュにも保存する。保持時間は60秒</td></tr></tbody></table></div>
+<div class="renewal-spec-banner"><h3 id="f09-01-リニューアル後の仕様">リニューアル後の仕様</h3></div>
+<h2 id="f09-01-表示メッセージ">表示メッセージ</h2>
+<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>画面上の文言(英語)</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>—</td><td>画面上部の見出し</td><td>デッキ検索</td><td>Deck Search</td><td>常時</td><td>—</td></tr><tr><td>—</td><td>メタゲームの区画</td><td>（フォーマット名）メタゲーム</td><td>（フォーマット名） Metagame</td><td>常時</td><td>—</td></tr><tr><td>—</td><td>アーキタイプの区画</td><td>デッキ数：</td><td>Decks:</td><td>集計結果が1件以上のとき</td><td>—</td></tr><tr><td>—</td><td>メタゲームの区画</td><td>もっと見る</td><td>See more</td><td>常時</td><td>メタゲーム一覧へ遷移する</td></tr><tr><td>—</td><td>フォーマットの区画</td><td>その他</td><td>Other</td><td>常時</td><td>その他デッキ一覧へ遷移する</td></tr><tr><td>—</td><td>直近の大会の見出し</td><td>直近の大会でデッキ検索</td><td>Deck Search by Tournament</td><td>直近大会の登録が1件以上のとき</td><td>—</td></tr><tr><td>—</td><td>直近の大会の各行</td><td>（人数）名</td><td>（人数） players</td><td>直近大会の登録が1件以上のとき</td><td>—</td></tr><tr><td>—</td><td>検索条件の見出し</td><td>デッキ詳細検索</td><td>Deck Detailed Search</td><td>常時</td><td>—</td></tr><tr><td>—</td><td>開催日時の入力欄</td><td>20xx/xx/xx</td><td>20xx/xx/xx</td><td>未入力のとき</td><td>—</td></tr><tr><td>—</td><td>参加人数の入力欄</td><td>半角数字で入力</td><td>Enter half-width numbers</td><td>未入力のとき</td><td>—</td></tr><tr><td>—</td><td>カード名の入力欄</td><td>カード名を入力してください</td><td>Keyword</td><td>未入力のとき</td><td>—</td></tr><tr><td>—</td><td>プレイヤー名の入力欄</td><td>プレイヤー名を入力してください</td><td>Keyword</td><td>未入力のとき</td><td>—</td></tr><tr><td>—</td><td>大会名の入力欄</td><td>大会名を入力してください</td><td>Keyword</td><td>未入力のとき</td><td>—</td></tr><tr><td>—</td><td>検索条件の操作</td><td>検索</td><td>Search</td><td>常時</td><td>検索条件をデッキ検索結果へ渡す</td></tr><tr><td>—</td><td>検索条件の操作</td><td>クリア</td><td>Reset</td><td>常時</td><td>入力済みの検索条件を空に戻す</td></tr><tr><td>—</td><td>アーキタイプ選択の操作</td><td>リセット</td><td>Reset</td><td>アーキタイプ選択を開いたとき</td><td>選択済みのアーキタイプを空に戻す</td></tr><tr><td>—</td><td>アーキタイプ選択の見出し</td><td>フォーマット</td><td>Choose format</td><td>アーキタイプ選択を開いたとき</td><td>—</td></tr><tr><td>—</td><td>アーキタイプ選択の見出し</td><td>色</td><td>Archetype sorted by color</td><td>アーキタイプ選択を開いたとき</td><td>—</td></tr><tr><td>—</td><td>アーキタイプ選択の入力欄</td><td>アーキタイプ名を入力してください。</td><td>Enter an archetype name.</td><td>アーキタイプ選択を開いたとき</td><td>—</td></tr><tr><td>—</td><td>アーキタイプ選択の操作</td><td>選択</td><td>Select</td><td>アーキタイプ選択を開いたとき</td><td>選択したアーキタイプを検索条件へ載せる</td></tr></tbody></table></div>
+</section>
+<section class="doc-section" id="f09-02">
+  <header class="page-header">
+    <p class="crumb">Source:<br>functions/pf-eccube3/f09-02_front_deck_deck_result.md</p>
+    <h1>F09-02 デッキ検索結果 ／ フロント デッキ検索 — デッキ検索結果</h1>
+  </header>
+  <h2 id="f09-02-業務ロジック">業務ロジック</h2>
+<h3 id="f09-02-一覧に載せるデッキ">一覧に載せるデッキ</h3>
+<p>検索条件の指定によらず、次の条件を常に満たすデッキだけを一覧に載せる。</p>
+<div class="table-wrap"><table><thead><tr><th>条件</th><th>扱い</th></tr></thead><tbody><tr><td>表示区分</td><td>公開のものだけを対象とする</td></tr><tr><td>デッキ種別</td><td>大会デッキだけを対象とする。ユーザーデッキは載せない</td></tr><tr><td>アーキタイプ</td><td>設定されているデッキだけを対象とする。未設定のデッキは載せない</td></tr><tr><td>大会の開催日</td><td>当日の<code>23:59:59</code>以下だけを対象とする。開催日が先の大会のデッキは載せない</td></tr><tr><td>デッキタグの指定があるとき</td><td>指定したデッキタグのいずれかを持つデッキだけを対象とする</td></tr><tr><td>カード名の指定があるとき</td><td>指定した名称のカードを採用しているデッキだけを対象とする</td></tr></tbody></table></div>
+<p>利用者が指定する検索条件の突き合わせ方はデッキ検索TOP（F09-01）を正とする。</p>
+<h3 id="f09-02-並び順">並び順</h3>
+<p>大会の開催日の降順、大会名（日本語）の昇順、順位の昇順の順に並べる。同じ大会のデッキは順位の高いものが先になる。</p>
+<h3 id="f09-02-件数とページの決定">件数とページの決定</h3>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>扱い</th></tr></thead><tbody><tr><td>ページ番号の既定</td><td><code>1</code></td></tr><tr><td>1ページあたりの件数の既定</td><td><code>20</code>件</td></tr><tr><td>1ページあたりの件数の指定</td><td>検索条件として受け取った値を検証せずに抽出へ使う。未指定・空文字・<code>0</code>のときは<code>20</code>件とする。画面が用意する選択肢は<code>20</code>件・<code>40</code>件・<code>60</code>件・<code>80</code>件・<code>100</code>件</td></tr><tr><td>総件数</td><td>条件に一致するデッキを重複排除して数えた件数</td></tr><tr><td>総ページ数</td><td>総件数を1ページあたりの件数で割って切り上げた数。件数の指定が無いときは<code>20</code>件で割る</td></tr><tr><td>ページ送りの範囲</td><td>現在ページの前後4ページ分までを並べ、それを超える範囲は省略の印にまとめる</td></tr><tr><td>範囲外のページ番号</td><td>ページ番号を丸めない。総件数が1件以上でもHTTP 200のまま一覧が空になり、該当なしの案内を出す</td></tr></tbody></table></div>
+<h3 id="f09-02-表示件数を変えたときのふるまい">表示件数を変えたときのふるまい</h3>
+<p>表示件数を変えると、入力欄に載っている検索条件すべてに指定した件数を添えて検索し直す。開催日時の開始が未指定のときは、入力欄の既定値である6か月前が条件に加わる。ページ番号は引き継がず、1ページ目から表示する。</p>
+<h3 id="f09-02-該当0件のときの応答">該当0件のときの応答</h3>
+<p>該当が0件のときは、検索条件の入力欄を載せた同じ画面をHTTP 404で返す。一覧の領域には該当なしの案内だけを出す。</p>
+<h3 id="f09-02-一覧の各件に載せる内容">一覧の各件に載せる内容</h3>
+<div class="table-wrap"><table><thead><tr><th>表示項目</th><th>値</th></tr></thead><tbody><tr><td>画像</td><td>デッキに代表カード画像があるときはその画像、無いときは画像なし用の既定画像</td></tr><tr><td>デッキリストの状態</td><td>デッキリストが非公開のときだけ非公開の印を付ける</td></tr><tr><td>デッキタグ</td><td>そのデッキに紐づくタグの名称をすべて並べる</td></tr><tr><td>フォーマット</td><td>フォーマットに対応する記号</td></tr><tr><td>アーキタイプ</td><td>日本語名と英語名を<code>/</code>で連結した文字列</td></tr><tr><td>プレイヤー</td><td>プレイヤー名</td></tr><tr><td>大会名</td><td>大会の日本語名</td></tr><tr><td>成績</td><td>デッキの成績</td></tr><tr><td>参加人数</td><td>大会の参加人数</td></tr><tr><td>開催日</td><td>大会の開催日を<code>Y/m/d</code>の形式で表す</td></tr></tbody></table></div>
+<h3 id="f09-02-見出しと説明文の組み立て">見出しと説明文の組み立て</h3>
+<p>指定された検索条件から見出しの語を組み立て、<code>/</code>で連結した文字列に「のデッキ検索一覧」を付けて画面の題名とする。語に採るのはフォーマット名・アーキタイプ名・カード名・プレイヤー名・大会名・タグ名・開催日時の期間・参加人数の範囲・成績の選択・公開状態の選択で、指定の無い条件は語に加えない。条件を1件も指定していないときは題名も説明文も組み立てない。</p>
+<div class="table-wrap"><table><thead><tr><th>条件の指定</th><th>見出しの語</th></tr></thead><tbody><tr><td>開催日時の開始と終了の両方</td><td>開始と終了を<code>～</code>でつないだ日付</td></tr><tr><td>開催日時の開始だけ</td><td>開始の日付に<code>～</code>を付けた文字列</td></tr><tr><td>開催日時の終了だけ</td><td><code>～</code>に終了の日付を付けた文字列</td></tr><tr><td>参加人数の下限と上限の両方</td><td>下限と上限を人数で示した範囲</td></tr><tr><td>参加人数の下限だけ</td><td>下限以上を示す文字列</td></tr><tr><td>参加人数の上限だけ</td><td>上限以下を示す文字列</td></tr></tbody></table></div>
+<h2 id="f09-02-入出力">入出力</h2>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>検索条件・ページ番号・1ページあたりの件数。いずれも未指定を許す</td></tr><tr><td>成功時出力</td><td>該当が1件以上のとき、HTTP 200でデッキの一覧とページ送りを載せた画面</td></tr><tr><td>失敗時出力</td><td>該当が0件のとき、HTTP 404で該当なしの案内を載せた同じ画面</td></tr></tbody></table></div>
+<h3 id="f09-02-入出力-永続化">入出力: 永続化</h3>
+<p>デッキ情報を登録・更新・削除しない。キャッシュへの保存も行わない。</p>
+<div class="renewal-spec-banner"><h3 id="f09-02-リニューアル後の仕様">リニューアル後の仕様</h3></div>
+<h2 id="f09-02-表示メッセージ">表示メッセージ</h2>
+<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>画面上の文言(英語)</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>—</td><td>画面上部の見出し</td><td>デッキ検索結果</td><td>Deck search results</td><td>常時</td><td>—</td></tr><tr><td>—</td><td>件数の表示領域</td><td>検索結果</td><td>Search results</td><td>該当が1件以上のとき</td><td>—</td></tr><tr><td>—</td><td>一覧の領域</td><td>ご指定の条件に一致するデッキが見つかりませんでした。</td><td>We could not find a deck that matched your criteria.</td><td>該当が0件のとき</td><td>一覧を表示せず、HTTP 404を返す</td></tr><tr><td>—</td><td>表示件数の指定欄</td><td>表示件数</td><td>Results per page</td><td>常時</td><td>—</td></tr><tr><td>—</td><td>一覧の各件</td><td>プレイヤー</td><td>Player</td><td>該当が1件以上のとき</td><td>—</td></tr><tr><td>—</td><td>一覧の各件</td><td>大会名</td><td>Tournament</td><td>該当が1件以上のとき</td><td>—</td></tr><tr><td>—</td><td>一覧の各件</td><td>成績</td><td>Standing</td><td>該当が1件以上のとき</td><td>—</td></tr><tr><td>—</td><td>一覧の各件</td><td>参加人数</td><td>Players</td><td>該当が1件以上のとき</td><td>—</td></tr><tr><td>—</td><td>一覧の各件</td><td>開催日</td><td>Date</td><td>該当が1件以上のとき</td><td>—</td></tr><tr><td>—</td><td>画面の題名</td><td>（条件の語）のデッキ検索一覧</td><td>（条件の語） Deck Search Results</td><td>検索条件を1件以上指定したとき</td><td>—</td></tr></tbody></table></div>
+</section>
+<section class="doc-section" id="f09-03">
+  <header class="page-header">
+    <p class="crumb">Source:<br>functions/pf-eccube3/f09-03_front_deck_deck_metagame.md</p>
+    <h1>F09-03 メタゲーム一覧 ／ フロント デッキ検索 — メタゲーム一覧</h1>
+  </header>
+  <h2 id="f09-03-業務ロジック">業務ロジック</h2>
+<h3 id="f09-03-対象フォーマットの特定">対象フォーマットの特定</h3>
+<p>画面はフォーマットの識別子を伴って開く。識別子に一致するフォーマットが無いときはHTTP 404を返し、一覧を表示しない。フォーマットがランキング表示の対象であるかどうかは問わない。</p>
+<h3 id="f09-03-集計の対象と単位">集計の対象と単位</h3>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>扱い</th></tr></thead><tbody><tr><td>対象デッキ</td><td>デッキ種別が大会デッキ、かつ表示区分が公開のものだけを対象とする</td></tr><tr><td>対象フォーマット</td><td>画面が受け取ったフォーマットに一致するものだけを対象とする</td></tr><tr><td>集計期間の開始</td><td>当日からフォーマットごとのメタ集計日数を引いた日の<code>00:00:00</code></td></tr><tr><td>集計期間の終了</td><td>当日の<code>23:59:59</code></td></tr><tr><td>期間判定に使う日付</td><td>大会の開催日</td></tr><tr><td>集計単位</td><td>アーキタイプ</td></tr><tr><td>並び順</td><td>デッキ数の降順</td></tr><tr><td>上限</td><td>1000件</td></tr></tbody></table></div>
+<h3 id="f09-03-集計に用いるデータ">集計に用いるデータ</h3>
+<div class="table-wrap"><table><thead><tr><th>データ</th><th>用途</th></tr></thead><tbody><tr><td>デッキ</td><td>大会デッキで表示区分が公開のものだけを数える</td></tr><tr><td>アーキタイプ</td><td>集計の単位とし、一覧に出す名称と画像にも用いる</td></tr><tr><td>フォーマット</td><td>メタ集計日数を持ち、集計期間の開始日を決める</td></tr><tr><td>大会の開催日</td><td>集計期間に入るかどうかの判定だけに用いる</td></tr><tr><td>デッキリストの公開状態</td><td>集計の条件にしない。デッキリストが非公開でも数える</td></tr></tbody></table></div>
+<h3 id="f09-03-使用率の算出">使用率の算出</h3>
+<p>使用率は、そのアーキタイプのデッキ数を集計期間内の総デッキ数で割り、100を掛けて小数点以下2桁に丸めた値とする。総デッキ数の算出条件はアーキタイプ別の集計と同一で、アーキタイプによる分類だけを行わない。分母もアーキタイプが設定されたデッキだけを数えるため、未設定のデッキはどちらにも入らない。</p>
+<p>該当が0件のときは使用率を算出せず、該当なしの案内だけを出す。</p>
+<h3 id="f09-03-一覧の各件に載せる内容">一覧の各件に載せる内容</h3>
+<div class="table-wrap"><table><thead><tr><th>表示項目</th><th>値</th></tr></thead><tbody><tr><td>画像</td><td>アーキタイプの代表カード画像</td></tr><tr><td>アーキタイプ名</td><td>日本語名</td></tr><tr><td>デッキ数</td><td>集計期間内の該当デッキ数</td></tr><tr><td>使用率</td><td>小数点以下2桁の百分率</td></tr></tbody></table></div>
+<h3 id="f09-03-画面から引き継ぐ検索条件">画面から引き継ぐ検索条件</h3>
+<div class="table-wrap"><table><thead><tr><th>起点</th><th>遷移先</th><th>引き継ぐ条件</th></tr></thead><tbody><tr><td>一覧のアーキタイプ</td><td>デッキ検索結果</td><td>アーキタイプIDと、開催日時の開始＝集計期間の開始日</td></tr><tr><td>採用枚数ランキング</td><td>採用枚数ランキング</td><td>フォーマットID</td></tr><tr><td>戻る</td><td>デッキ検索TOP</td><td>引き継がない</td></tr></tbody></table></div>
+<p>検索条件の入力欄を画面下部に備え、その突き合わせ方はデッキ検索TOP（F09-01）を正とする。</p>
+<h3 id="f09-03-エッジケース">エッジケース</h3>
+<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>フォーマットの識別子が数字以外のとき</td><td>入口の条件に合わないため画面へ到達しない</td></tr><tr><td>集計結果が0件のとき</td><td>使用率を算出せず、該当なしの案内だけを出す</td></tr><tr><td>アーキタイプが1000件を超えるとき</td><td>デッキ数の多い上位1000件までを載せる</td></tr><tr><td>デッキ数が同数のアーキタイプがあるとき</td><td>並び順は指定しない</td></tr><tr><td>集計期間の開始日</td><td>一覧の見出しにも<code>Y/m/d</code>の形式で示す</td></tr><tr><td>集計期間に入る大会が1つも無いとき</td><td>総デッキ数が0になり、該当なしの案内だけを出す</td></tr><tr><td>同じアーキタイプのデッキが期間内に複数あるとき</td><td>1件のアーキタイプにまとめて数える</td></tr><tr><td>アーキタイプに代表カード画像が無いとき</td><td>画像なし用の既定画像を出す</td></tr><tr><td>フォーマットが検索対象に設定されていないとき</td><td>画面下部の入力欄にそのフォーマットの選択肢が出ない</td></tr><tr><td>デッキリストが非公開のデッキがあるとき</td><td>集計には含め、一覧の件数にも数える</td></tr><tr><td>ランキング表示の対象でないフォーマットの識別子を指定したとき</td><td>一覧を開ける。対象かどうかを判定しない</td></tr><tr><td>使用率を足し合わせたとき</td><td>小数点以下2桁への丸めにより、合計が100%にならないことがある</td></tr><tr><td>デッキ種別がユーザーデッキのデッキがあるとき</td><td>集計に含めない</td></tr><tr><td>アーキタイプが未設定のデッキがあるとき</td><td>集計にも総デッキ数にも含めない</td></tr><tr><td>検索対象に設定されていないフォーマットの識別子を指定したとき</td><td>集計はできるが、見出しと遷移先に使うフォーマットを画面が解決できない</td></tr></tbody></table></div>
+<h2 id="f09-03-入出力">入出力</h2>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>フォーマットの識別子</td></tr><tr><td>成功時出力</td><td>アーキタイプ別のデッキ数と使用率を並べた画面</td></tr><tr><td>失敗時出力</td><td>識別子に一致するフォーマットが無いときはHTTP 404</td></tr></tbody></table></div>
+<h3 id="f09-03-入出力-永続化">入出力: 永続化</h3>
+<p>デッキ情報を登録・更新・削除しない。</p>
+<div class="table-wrap"><table><thead><tr><th>操作</th><th>契機</th></tr></thead><tbody><tr><td>キャッシュへの保存</td><td>アーキタイプ別の集計結果をフォーマットと集計期間の組ごとに保存する。保持時間は3600秒</td></tr><tr><td>キャッシュへの保存</td><td>集計期間内の総デッキ数をフォーマットと集計期間の組ごとに保存する。保持時間は3600秒</td></tr><tr><td>キャッシュへの保存</td><td>アーキタイプ別の集計結果を、鍵をフォーマットと上限件数の組とする結果キャッシュにも保存する。保持時間は60秒</td></tr></tbody></table></div>
+<div class="renewal-spec-banner"><h3 id="f09-03-リニューアル後の仕様">リニューアル後の仕様</h3></div>
+<h2 id="f09-03-表示メッセージ">表示メッセージ</h2>
+<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>画面上の文言(英語)</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>—</td><td>画面上部の見出し</td><td>（フォーマット名）メタゲーム</td><td>（フォーマット名） Metagame</td><td>常時</td><td>—</td></tr><tr><td>—</td><td>一覧の各件</td><td>デッキ数：</td><td>Decks:</td><td>該当が1件以上のとき</td><td>—</td></tr><tr><td>—</td><td>一覧の各件</td><td>使用率：</td><td>Usage:</td><td>該当が1件以上のとき</td><td>—</td></tr><tr><td>—</td><td>一覧の領域</td><td>ご指定の条件に一致するデッキが見つかりませんでした。</td><td>No decks matched the specified conditions.</td><td>該当が0件のとき</td><td>一覧を表示しない</td></tr><tr><td>—</td><td>画面上部の導線</td><td>採用枚数ランキング</td><td>Top Cards Ranking</td><td>常時</td><td>採用枚数ランキングへ遷移する</td></tr><tr><td>—</td><td>画面下部の導線</td><td>戻る</td><td>Back</td><td>常時</td><td>デッキ検索TOPへ遷移する</td></tr></tbody></table></div>
+</section>
+<section class="doc-section" id="f09-04">
+  <header class="page-header">
+    <p class="crumb">Source:<br>functions/pf-eccube3/f09-04_front_deck_deck_usage_ranking.md</p>
+    <h1>F09-04 採用枚数ランキング ／ フロント デッキ検索 — 採用枚数ランキング</h1>
+  </header>
+  <h2 id="f09-04-業務ロジック">業務ロジック</h2>
+<h3 id="f09-04-対象フォーマットの特定">対象フォーマットの特定</h3>
+<p>画面はフォーマットの識別子を伴って開く。識別子に一致するフォーマットが無いときはHTTP 404を返し、ランキングを表示しない。</p>
+<h3 id="f09-04-採用枚数の集計">採用枚数の集計</h3>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>扱い</th></tr></thead><tbody><tr><td>対象デッキ</td><td>デッキ種別が大会デッキ、かつ表示区分が公開で、画面が受け取ったフォーマットに一致するものだけを対象とする</td></tr><tr><td>集計期間の開始</td><td>当日からフォーマットごとのメタ集計日数を引いた日の<code>00:00:00</code></td></tr><tr><td>集計期間の終了</td><td>当日の<code>23:59:59</code></td></tr><tr><td>期間判定に使う日付</td><td>大会の開催日</td></tr><tr><td>集計単位</td><td>カード</td></tr><tr><td>集計値</td><td>対象デッキでの採用枚数の合計。カード種別と特殊種別を結び付けると行が重複するため、その数の積で割って重複を相殺する。特殊種別が0件のときは1で割る</td></tr><tr><td>表示件数</td><td>スペル・土地のそれぞれ上位18件</td></tr><tr><td>並び順</td><td>採用枚数の降順、色の並び順の昇順、英語カード名の昇順</td></tr></tbody></table></div>
+<h3 id="f09-04-集計に用いるデータ">集計に用いるデータ</h3>
+<div class="table-wrap"><table><thead><tr><th>データ</th><th>用途</th></tr></thead><tbody><tr><td>採用カード</td><td>採用枚数の合計を求める元にする</td></tr><tr><td>カード種別</td><td>土地かどうかの判定と、集計値を割る数に用いる</td></tr><tr><td>特殊種別</td><td>基本土地かどうかの判定と、集計値を割る数に用いる</td></tr><tr><td>フォーマット</td><td>メタ集計日数と、基本土地を含めるかどうかの設定を持つ</td></tr><tr><td>デッキリストの公開状態</td><td>集計の条件にしない。デッキリストが非公開でも数える</td></tr></tbody></table></div>
+<h3 id="f09-04-スペルと土地の振り分け">スペルと土地の振り分け</h3>
+<p>カード種別に土地を含むかどうかで振り分ける。土地のランキングは土地を含むカードだけ、スペルのランキングは土地を含まないカードだけを対象とする。1枚のカードが両方に載ることはない。</p>
+<h3 id="f09-04-基本土地の扱い">基本土地の扱い</h3>
+<p>フォーマットに基本土地を含める設定が無いときは、特殊種別が基本土地のカードを集計から除く。特殊種別を持たないカードは、この除外の対象にしない。</p>
+<h3 id="f09-04-カード画像と商品への導線">カード画像と商品への導線</h3>
+<p>各件にはカードの表側の画像を1枚載せる。選ぶ優先順は、特殊セットでないもの、プロモーションでないもの、カードセットの発売日が新しいもの、Foilでないもの、表示中の言語に一致するもの、カード詳細の識別子が小さいものとする。ランキングの各件は、そのカードの商品検索へ引き渡す入口を兼ねる。</p>
+<h3 id="f09-04-画面から引き継ぐ条件">画面から引き継ぐ条件</h3>
+<div class="table-wrap"><table><thead><tr><th>起点</th><th>遷移先</th><th>引き継ぐ条件</th></tr></thead><tbody><tr><td>デッキ検索ページ</td><td>デッキ検索TOP</td><td>引き継がない</td></tr><tr><td>戻る</td><td>メタゲーム一覧</td><td>フォーマットID</td></tr><tr><td>ランキングの各件</td><td>商品検索</td><td>カードID</td></tr></tbody></table></div>
+<h3 id="f09-04-エッジケース">エッジケース</h3>
+<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>フォーマットの識別子が数字以外のとき</td><td>入口の条件に合わないため画面へ到達しない</td></tr><tr><td>集計結果が0件のとき</td><td>そのランキングの区画には1件も並べない</td></tr><tr><td>集計値に小数が出るとき</td><td>画面には小数点以下を丸めた整数の枚数で示す</td></tr><tr><td>カードの画像を選べなかったとき</td><td>画像の代わりに読み込み中の画像のまま残す</td></tr><tr><td>上位18件目と同数のカードがあるとき</td><td>並び順で先に来る18件までを載せる</td></tr><tr><td>カードが複数のカード種別を持つとき</td><td>その数で集計値を割る</td></tr><tr><td>カードが複数の特殊種別を持つとき</td><td>その数でも集計値を割る</td></tr><tr><td>カードが特殊種別を持たないとき</td><td>特殊種別による割り算を行わない</td></tr><tr><td>基本土地を含める設定が有効のとき</td><td>基本土地も集計に含める</td></tr><tr><td>集計期間に入る大会が1つも無いとき</td><td>どちらのランキングも0件になる</td></tr><tr><td>デッキリストが非公開のデッキがあるとき</td><td>採用枚数に含めて数える</td></tr><tr><td>同じカードが複数のデッキにあるとき</td><td>採用枚数を合計して1件として数える</td></tr><tr><td>デッキ種別がユーザーデッキのデッキがあるとき</td><td>採用枚数に含めない</td></tr><tr><td>集計値が同じカードが並ぶとき</td><td>色の並び順、次に英語カード名の昇順で先後を決める</td></tr><tr><td>基本土地を含める設定が無効のとき</td><td>特殊種別が基本土地のカードを除く</td></tr><tr><td>カードの画像が言語ごとにあるとき</td><td>言語の一致は5番目の優先順で、先に発売日とFoilの別で絞り込む</td></tr><tr><td>同じカードの組で別の言語のキャッシュがあるとき</td><td>キャッシュの鍵はカードの識別子だけなので、言語を判定し直さずキャッシュの内容を使う</td></tr></tbody></table></div>
+<h2 id="f09-04-入出力">入出力</h2>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>フォーマットの識別子</td></tr><tr><td>成功時出力</td><td>スペルと土地それぞれ上位18件の採用枚数ランキングを載せた画面</td></tr><tr><td>失敗時出力</td><td>識別子に一致するフォーマットが無いときはHTTP 404</td></tr></tbody></table></div>
+<h3 id="f09-04-入出力-永続化">入出力: 永続化</h3>
+<p>デッキ情報とカード情報を登録・更新・削除しない。</p>
+<div class="table-wrap"><table><thead><tr><th>操作</th><th>契機</th></tr></thead><tbody><tr><td>キャッシュへの保存</td><td>採用枚数の集計結果を、フォーマットと土地の別と基本土地を含める設定の組ごとに保存する。保持時間は3600秒</td></tr><tr><td>キャッシュへの保存</td><td>同じ組を鍵とする結果キャッシュにも保存する。保持時間は3600秒</td></tr><tr><td>キャッシュへの保存</td><td>カード画像の選択結果をカード識別子の組ごとに保存する。保持時間は600秒</td></tr></tbody></table></div>
+<div class="renewal-spec-banner"><h3 id="f09-04-リニューアル後の仕様">リニューアル後の仕様</h3></div>
+<h2 id="f09-04-表示メッセージ">表示メッセージ</h2>
+<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>画面上の文言(英語)</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>—</td><td>画面上部の見出し</td><td>（フォーマット名）採用枚数ランキング</td><td>Top Cards in （フォーマット名） Ranking</td><td>常時</td><td>英語では接頭辞を付け、フォーマット名も英語名にする</td></tr><tr><td>—</td><td>集計期間の表示</td><td>（集計期間の開始日）～</td><td>（集計期間の開始日）～</td><td>常時</td><td>—</td></tr><tr><td>—</td><td>切替の見出し</td><td>スペル採用枚数ランキング</td><td>Spell Top Cards Ranking</td><td>常時</td><td>スペルのランキングに切り替える</td></tr><tr><td>—</td><td>切替の見出し</td><td>土地採用枚数ランキング</td><td>Land Top Cards Ranking</td><td>常時</td><td>土地のランキングに切り替える</td></tr><tr><td>—</td><td>ランキングの各件</td><td>（順位）位</td><td>（順位）</td><td>該当が1件以上のとき</td><td>—</td></tr><tr><td>—</td><td>ランキングの各件</td><td>（枚数）枚</td><td>×（枚数）</td><td>該当が1件以上のとき</td><td>—</td></tr><tr><td>—</td><td>商品ポップアップ</td><td>在庫:</td><td>Stock:</td><td>ランキングの1件から商品ポップアップを開いたとき</td><td>—</td></tr><tr><td>—</td><td>商品ポップアップ</td><td>カートに追加</td><td>Add to cart</td><td>ランキングの1件から商品ポップアップを開いたとき</td><td>商品をカートへ入れる</td></tr><tr><td>—</td><td>商品ポップアップ</td><td>週間販売数</td><td>Weekly sold</td><td>ランキングの1件から商品ポップアップを開いたとき</td><td>—</td></tr><tr><td>—</td><td>商品ポップアップ</td><td>点</td><td>units</td><td>週間販売数を出すとき</td><td>—</td></tr><tr><td>—</td><td>商品ポップアップ</td><td>商品をカートに入れました</td><td>Added to cart</td><td>カートへ入れたとき</td><td>—</td></tr><tr><td>—</td><td>商品ポップアップ</td><td>買い物かごを見る</td><td>View cart</td><td>カートへ入れたとき</td><td>買い物かごへ遷移する</td></tr><tr><td>—</td><td>商品ポップアップ</td><td>同名商品検索</td><td>Same-name search</td><td>ランキングの1件から商品ポップアップを開いたとき</td><td>同名商品の検索結果へ遷移する</td></tr><tr><td>—</td><td>画面上部の導線</td><td>デッキ検索ページ</td><td>Deck Search Top</td><td>常時</td><td>デッキ検索TOPへ遷移する</td></tr><tr><td>—</td><td>画面下部の導線</td><td>戻る</td><td>Back</td><td>常時</td><td>メタゲーム一覧へ遷移する</td></tr></tbody></table></div>
+</section>
+<section class="doc-section" id="f09-05">
+  <header class="page-header">
+    <p class="crumb">Source:<br>functions/pf-eccube3/f09-05_front_deck_deck_others.md</p>
+    <h1>F09-05 その他デッキ一覧 ／ フロント デッキ検索 — その他デッキ一覧</h1>
+  </header>
+  <h2 id="f09-05-業務ロジック">業務ロジック</h2>
+<h3 id="f09-05-対象フォーマットの決定">対象フォーマットの決定</h3>
+<p>対象は、ランキング表示の対象でもその他メタゲームの対象でもないフォーマットだけを対象とする。どちらか一方でも対象に設定されているフォーマットのデッキは載せない。該当するフォーマットが1件も無いときは、どのフォーマットにも一致しない条件で抽出する。</p>
+<h3 id="f09-05-一覧に載せるデッキ">一覧に載せるデッキ</h3>
+<div class="table-wrap"><table><thead><tr><th>条件</th><th>扱い</th></tr></thead><tbody><tr><td>フォーマット</td><td>対象フォーマットのいずれかに一致するものだけを対象とする</td></tr><tr><td>表示区分</td><td>公開のものだけを対象とする</td></tr><tr><td>デッキ種別</td><td>大会デッキだけを対象とする。ユーザーデッキは載せない</td></tr><tr><td>アーキタイプ</td><td>設定されているデッキだけを対象とする。未設定のデッキは載せない</td></tr><tr><td>大会の開催日</td><td>当日の<code>23:59:59</code>以下だけを対象とする</td></tr><tr><td>利用者が指定した検索条件</td><td>受け取らない。フォーマット以外の絞り込みは行わない</td></tr></tbody></table></div>
+<h3 id="f09-05-並び順と件数">並び順と件数</h3>
+<p>大会の開催日の降順、大会名（日本語）の昇順、順位の昇順の順に並べる。表示するのは1ページ目の<code>20</code>件だけで、ページ番号は<code>1</code>に固定する。総件数は条件に一致するデッキを重複排除して数えた件数とする。2ページ目以降への入口は、対象フォーマットを検索条件として引き継いだデッキ検索結果（F09-02）へ向ける。</p>
+<h3 id="f09-05-表示に使う画面">表示に使う画面</h3>
+<p>デッキ検索結果（F09-02）と同一の画面で表示し、各件に載せる内容も同一とする。該当が0件のときも同じ画面を返し、一覧の領域に該当なしの案内を出す。デッキ検索結果と違い、該当が0件でもHTTP 200を返す。</p>
+<h3 id="f09-05-エッジケース">エッジケース</h3>
+<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>対象フォーマットが0件のとき</td><td>どのフォーマットにも一致しないため該当は0件になる</td></tr><tr><td>総件数が<code>20</code>件を超えるとき</td><td>2ページ目以降はデッキ検索結果として開く</td></tr><tr><td>開催日が先の大会のデッキがあるとき</td><td>当日までのものだけを載せる</td></tr><tr><td>デッキリストが非公開のデッキがあるとき</td><td>表示区分が公開であれば載せ、非公開の印を付ける</td></tr><tr><td>入口にクエリを付けて開いたとき</td><td>その内容を条件にせず、対象フォーマットだけで抽出する</td></tr><tr><td>デッキ種別がユーザーデッキのデッキがあるとき</td><td>一覧に載せない</td></tr><tr><td>対象フォーマットが1件だけのとき</td><td>そのフォーマットのデッキだけを載せる</td></tr></tbody></table></div>
+<h3 id="f09-05-検索条件の入力欄">検索条件の入力欄</h3>
+<p>画面下部の入力欄には、その他デッキの対象フォーマットのうち検索対象に設定されているものが選択済みで載る。ここから検索するとその選択もあわせて再送し、デッキ検索結果を開く。対象フォーマットのうち検索対象に設定されていないものは選択肢に現れず、引き継がれない。</p>
+<h2 id="f09-05-入出力">入出力</h2>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>なし。検索条件を伴わずに開く</td></tr><tr><td>成功時出力</td><td>対象フォーマットのデッキを<code>20</code>件まで並べた画面。HTTP 200</td></tr><tr><td>失敗時出力</td><td>なし。該当が0件でもHTTP 200で該当なしの案内を返す</td></tr></tbody></table></div>
+<h3 id="f09-05-入出力-永続化">入出力: 永続化</h3>
+<p>デッキ情報を登録・更新・削除しない。キャッシュへの保存も行わない。</p>
+<div class="renewal-spec-banner"><h3 id="f09-05-リニューアル後の仕様">リニューアル後の仕様</h3></div>
+<h2 id="f09-05-表示メッセージ">表示メッセージ</h2>
+<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>画面上の文言(英語)</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>—</td><td>画面上部の見出し</td><td>デッキ検索結果</td><td>Deck search results</td><td>常時</td><td>—</td></tr><tr><td>—</td><td>件数の表示領域</td><td>検索結果</td><td>Search results</td><td>該当が1件以上のとき</td><td>—</td></tr><tr><td>—</td><td>一覧の領域</td><td>ご指定の条件に一致するデッキが見つかりませんでした。</td><td>We could not find a deck that matched your criteria.</td><td>該当が0件のとき</td><td>一覧を表示しない</td></tr></tbody></table></div>
+</section>
+<section class="doc-section" id="f09-06">
+  <header class="page-header">
+    <p class="crumb">Source:<br>functions/pf-eccube3/f09-06_front_deck_deck_show.md</p>
+    <h1>F09-06 デッキリスト詳細 ／ フロント デッキ検索 — デッキリスト詳細</h1>
+  </header>
+  <h2 id="f09-06-業務ロジック">業務ロジック</h2>
+<h3 id="f09-06-表示できるデッキの条件">表示できるデッキの条件</h3>
+<div class="table-wrap"><table><thead><tr><th>条件</th><th>結果</th></tr></thead><tbody><tr><td>デッキの識別子が空のとき</td><td>HTTP 404</td></tr><tr><td>識別子に一致するデッキが無いとき</td><td>HTTP 404</td></tr><tr><td>表示区分が非公開のとき</td><td>HTTP 404</td></tr><tr><td>デッキ種別がユーザーデッキのとき</td><td>HTTP 404</td></tr><tr><td>表示区分が限定公開のとき</td><td>詳細を表示する。限定公開用の値の一致は求めない</td></tr><tr><td>デッキリストが非公開のとき</td><td>詳細の情報欄だけを表示し、カードリストは空とする</td></tr></tbody></table></div>
+<h3 id="f09-06-カードリストの分類">カードリストの分類</h3>
+<p>採用カードを次の順序で判定し、最初に一致した分類へ入れる。分類ごとの枚数は、その分類に入ったカードの採用枚数の合計とする。</p>
+<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>分類</th></tr></thead><tbody><tr><td>1</td><td>配置がサイドボード</td><td>サイドボード</td></tr><tr><td>2</td><td>配置が統率者</td><td>統率者</td></tr><tr><td>3</td><td>カードが土地</td><td>土地</td></tr><tr><td>4</td><td>カードがクリーチャー</td><td>クリーチャー</td></tr><tr><td>5</td><td>カードの識別子を持つ</td><td>呪文</td></tr><tr><td>6</td><td>上のいずれにも当たらない</td><td>Unknown</td></tr></tbody></table></div>
+<p>メインボードの枚数は、統率者・呪文・クリーチャー・土地・Unknownの枚数を合計した値とする。統率者は枚数が0のとき区画ごと表示せず、Unknownは枚数が1以上のときだけ区画を表示する。</p>
+<h3 id="f09-06-カード画像">カード画像</h3>
+<p>分類ごとに、その分類のカードの識別子を集めて表側の画像を1枚ずつ選ぶ。選ぶ優先順は、特殊セットでないもの、プロモーションでないもの、カードセットの発売日が新しいもの、Foilでないもの、表示中の言語に一致するもの、カード詳細の識別子が小さいものとする。</p>
+<h3 id="f09-06-情報欄に載せる内容">情報欄に載せる内容</h3>
+<div class="table-wrap"><table><thead><tr><th>表示項目</th><th>表示項目（英語）</th><th>値</th></tr></thead><tbody><tr><td>デッキ名</td><td>Deck name</td><td>デッキ名</td></tr><tr><td>大会名</td><td>Tournament</td><td>大会の日本語名。大会名を条件にしたデッキ検索結果への入口を兼ねる</td></tr><tr><td>フォーマット</td><td>Format</td><td>フォーマットの日本語名。フォーマットが未設定のときは空</td></tr><tr><td>アーキタイプ</td><td>Archetype</td><td>アーキタイプの日本語名。アーキタイプを条件にしたデッキ検索結果への入口を兼ねる</td></tr><tr><td>プレイヤー</td><td>Player</td><td>プレイヤー名。プレイヤー名を条件にしたデッキ検索結果への入口を兼ねる</td></tr><tr><td>タグ</td><td>Tag</td><td>デッキタグの名称を<code>, </code>で連ねる。各タグを条件にしたデッキ検索結果への入口を兼ねる</td></tr><tr><td>成績</td><td>Score</td><td>勝数と敗数がそろうときは<code>勝-敗</code>。引分が0でないときは<code>-引分</code>を、勝敗の表記の有無と関わりなく成績の文字列の前に置く</td></tr><tr><td>開催日</td><td>Date</td><td>大会の開催日を<code>Y/m/d</code>の形式で表す</td></tr><tr><td>引用元URL</td><td>Source URL</td><td>引用元のURL</td></tr></tbody></table></div>
+<h3 id="f09-06-デッキリストの書き出し">デッキリストの書き出し</h3>
+<p>デッキリストが公開のときだけ書き出しの入口を出す。</p>
+<div class="table-wrap"><table><thead><tr><th>入口</th><th>条件</th><th>引き渡す値</th></tr></thead><tbody><tr><td>Magic Online用テキスト</td><td>デッキリストが公開のとき</td><td>デッキID</td></tr><tr><td>アリーナ用インポートテキスト</td><td>デッキリストが公開で、フォーマットがアリーナ対応のとき</td><td>デッキIDと言語<code>en</code></td></tr><tr><td>日本語テキスト</td><td>デッキリストが公開で、フォーマットがアリーナ対応のとき</td><td>デッキIDと言語<code>jp</code>。取得先の経路は表示言語を英語にする</td></tr></tbody></table></div>
+<p>書き出しの内容はデッキリスト書き出し（F09-07）を正とする。</p>
+<h3 id="f09-06-画面から引き継ぐ検索条件">画面から引き継ぐ検索条件</h3>
+<div class="table-wrap"><table><thead><tr><th>起点</th><th>遷移先</th><th>引き継ぐ条件</th></tr></thead><tbody><tr><td>同じ大会のデッキを見る</td><td>デッキ検索結果</td><td>大会名＝大会の英語名と、開催日</td></tr><tr><td>同じアーキタイプのデッキを見る</td><td>デッキ検索結果</td><td>アーキタイプID</td></tr><tr><td>このデッキを一括購入する</td><td>デッキ一括購入</td><td>デッキID</td></tr><tr><td>戻る</td><td>デッキ検索TOP</td><td>引き継がない</td></tr></tbody></table></div>
+<p>同じ大会のデッキを見るが引き渡す開催日は、検索条件として解釈されない。開催日時の絞り込みに使う条件名と一致しないため、大会名だけで絞り込んだ結果になる。</p>
+<h3 id="f09-06-旧URLからの引き継ぎ">旧URLからの引き継ぎ</h3>
+<p>旧デッキIDを伴う入口は、次の順序で遷移先を決める。</p>
+<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>旧デッキIDに一致するデッキがある</td><td>そのデッキの詳細へHTTP 301で転送する</td></tr><tr><td>2</td><td>現デッキIDに一致するデッキがある</td><td>そのデッキの詳細へHTTP 301で転送する</td></tr><tr><td>3</td><td>どちらにも一致しないとき</td><td>デッキ検索TOPへHTTP 302で転送する</td></tr></tbody></table></div>
+<p>旧デッキIDは英数字だけを受け付ける。転送先の判定では表示区分もデッキ種別も見ないため、転送先で404になることがある。</p>
+<h3 id="f09-06-エッジケース">エッジケース</h3>
+<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>統率者の枚数が0のとき</td><td>統率者の区画を出さない</td></tr><tr><td>Unknownの枚数が0のとき</td><td>Unknownの区画を出さない</td></tr><tr><td>デッキタグが0件のとき</td><td>タグの欄を空にする</td></tr><tr><td>引用元URLが未設定のとき</td><td>引用元URLの欄を空にする</td></tr><tr><td>勝数と敗数のいずれかが未設定のとき</td><td>勝敗の表記を出さない。引分が0でなければ<code>-引分</code>は出す</td></tr><tr><td>引分が0のとき</td><td>引分の表記を出さない</td></tr><tr><td>カードの画像を選べなかったとき</td><td>画像なし用の画像を出し、商品への入口を付けない</td></tr><tr><td>同じカードの組で別の言語のキャッシュがあるとき</td><td>キャッシュの鍵はカードの識別子だけなので、言語を判定し直さずキャッシュの内容を使う</td></tr><tr><td>デッキリストが非公開のとき</td><td>カードリストの枚数はすべて0になる</td></tr></tbody></table></div>
+<h2 id="f09-06-入出力">入出力</h2>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>デッキの識別子。旧URLからの入口では旧デッキID</td></tr><tr><td>成功時出力</td><td>カードリストと情報欄を載せた詳細画面</td></tr><tr><td>失敗時出力</td><td>表示できる条件を満たさないときはHTTP 404。旧URLで該当が無いときはデッキ検索TOPへの転送</td></tr></tbody></table></div>
+<h3 id="f09-06-入出力-永続化">入出力: 永続化</h3>
+<p>デッキ情報を登録・更新・削除しない。</p>
+<div class="table-wrap"><table><thead><tr><th>操作</th><th>契機</th></tr></thead><tbody><tr><td>キャッシュへの保存</td><td>カード画像の選択結果をカード識別子の組ごとに保存する。保持時間は600秒</td></tr></tbody></table></div>
+<div class="renewal-spec-banner"><h3 id="f09-06-リニューアル後の仕様">リニューアル後の仕様</h3></div>
+<h2 id="f09-06-表示メッセージ">表示メッセージ</h2>
+<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>画面上の文言(英語)</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>—</td><td>カードリストの領域</td><td>デッキリスト非公開</td><td>Deck list is private</td><td>デッキリストが非公開のとき</td><td>カードリストを表示しない</td></tr><tr><td>—</td><td>カードリストの区画</td><td>統率者（枚数）</td><td>Commander（枚数）</td><td>統率者の枚数が1以上のとき</td><td>—</td></tr><tr><td>—</td><td>カードリストの区画</td><td>メインボード（枚数）</td><td>Mainboard（枚数）</td><td>デッキリストが公開のとき</td><td>—</td></tr><tr><td>—</td><td>カードリストの区画</td><td>土地（枚数）</td><td>Land（枚数）</td><td>デッキリストが公開のとき</td><td>—</td></tr><tr><td>—</td><td>カードリストの区画</td><td>クリーチャー（枚数）</td><td>Creature（枚数）</td><td>デッキリストが公開のとき</td><td>—</td></tr><tr><td>—</td><td>カードリストの区画</td><td>呪文（枚数）</td><td>Spell（枚数）</td><td>デッキリストが公開のとき</td><td>—</td></tr><tr><td>—</td><td>カードリストの区画</td><td>サイドボード（枚数）</td><td>Sideboard（枚数）</td><td>デッキリストが公開のとき</td><td>—</td></tr><tr><td>—</td><td>カードリストの行</td><td>不明なカード</td><td>Unknown card</td><td>カードの識別子を持たない採用カードがあるとき</td><td>—</td></tr><tr><td>—</td><td>書き出しの入口</td><td>Magic Online用テキスト</td><td>Text in Magic Online format</td><td>デッキリストが公開のとき</td><td>デッキリストのテキストを取得する</td></tr><tr><td>—</td><td>書き出しの入口</td><td>アリーナ用インポートテキスト</td><td>Text In MTG Arena format</td><td>デッキリストが公開で、フォーマットがアリーナ対応のとき</td><td>デッキリストのテキストを写し取る</td></tr><tr><td>—</td><td>書き出しの入口</td><td>日本語テキスト</td><td>Japanese text</td><td>デッキリストが公開で、フォーマットがアリーナ対応のとき</td><td>デッキリストのテキストを写し取る</td></tr><tr><td>—</td><td>書き出し完了の通知</td><td>クリップボードにコピーしました。※相棒はアリーナで別途指定していただく必要がございます。</td><td>Copy to clipboard.*When using Companion cards, please directly edit your Arena deck.</td><td>アリーナ形式のテキストを写し取ったとき</td><td>—</td></tr><tr><td>—</td><td>購入の入口</td><td>このデッキを一括購入する</td><td>Buy this deck</td><td>常時</td><td>デッキ一括購入へ遷移する</td></tr><tr><td>—</td><td>画面下部の導線</td><td>同じ大会のデッキを見る</td><td>View other decks from the same tournament</td><td>常時</td><td>デッキ検索結果へ遷移する</td></tr><tr><td>—</td><td>画面下部の導線</td><td>同じアーキタイプのデッキを見る</td><td>View other decks of the same archetype</td><td>常時</td><td>デッキ検索結果へ遷移する</td></tr></tbody></table></div>
+</section>
+<section class="doc-section" id="f09-07">
+  <header class="page-header">
+    <p class="crumb">Source:<br>functions/pf-eccube3/f09-07_front_deck_deck_export.md</p>
+    <h1>F09-07 デッキリスト書き出し ／ フロント デッキ検索 — デッキリスト書き出し</h1>
+  </header>
+  <h2 id="f09-07-業務ロジック">業務ロジック</h2>
+<h3 id="f09-07-書き出しの2経路">書き出しの2経路</h3>
+<p>デッキリストの書き出しには、ファイルとして受け取る経路と、画面が写し取るためのテキストを受け取る経路がある。</p>
+<div class="table-wrap"><table><thead><tr><th>経路</th><th>受け取り方</th><th>応答の形式</th></tr></thead><tbody><tr><td>Magic Online用テキスト</td><td>ファイルとして受け取る</td><td>添付ファイルの<code>text/plain</code></td></tr><tr><td>アリーナ形式のテキスト</td><td>画面が受け取り、クリップボードへ写す</td><td>JSON</td></tr><tr><td>公開状態の判定</td><td>ファイル経路だけが表示区分とデッキリストの公開状態を見る</td><td>—</td></tr><tr><td>デッキ種別の判定</td><td>どちらの経路も、ユーザーデッキのときは応じない</td><td>—</td></tr></tbody></table></div>
+<h3 id="f09-07-ファイルとして受け取る経路の条件">ファイルとして受け取る経路の条件</h3>
+<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>デッキの識別子が空のとき</td><td>HTTP 404</td></tr><tr><td>2</td><td>識別子に一致するデッキが無いとき</td><td>HTTP 404</td></tr><tr><td>3</td><td>表示区分が非公開のとき</td><td>HTTP 404</td></tr><tr><td>4</td><td>デッキリストが非公開のとき</td><td>HTTP 404</td></tr><tr><td>5</td><td>デッキ種別がユーザーデッキのとき</td><td>HTTP 404</td></tr><tr><td>6</td><td>上のいずれにも当たらないとき</td><td>デッキリストのファイルを返す</td></tr></tbody></table></div>
+<p>限定公開のデッキは、限定公開用の値の一致を求めずに書き出せる。</p>
+<h3 id="f09-07-ファイルの名称と内容">ファイルの名称と内容</h3>
+<p>ファイル名はアーキタイプの英語名の空白文字を<code>_</code>へ置き換え、<code>.txt</code>を付けた文字列とする。内容は英語カード名の<code>枚数 カード名</code>を1行ずつ並べたもので、サイドボードの前に<code>Sideboard</code>の行を挟む。統率者とメインボードの見出し行は入れない。カード名はアリーナで通る名称への対応表で置き換え、対応表に無い名称はそのまま残す。</p>
+<h3 id="f09-07-テキストとして受け取る経路の条件">テキストとして受け取る経路の条件</h3>
+<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>デッキの識別子が空のとき</td><td>HTTP 404。本文はJSONで、処理結果は失敗、内容は<code>Not Found</code></td></tr><tr><td>2</td><td>識別子に一致するデッキが無いとき</td><td>HTTP 404。本文は同上</td></tr><tr><td>3</td><td>デッキ種別がユーザーデッキのとき</td><td>HTTP 404。本文は同上</td></tr><tr><td>4</td><td>上のいずれにも当たらないとき</td><td>HTTP 200。処理結果は成功、デッキリストのテキストを返す</td></tr></tbody></table></div>
+<p>この経路は表示区分とデッキリストの公開状態を判定しないため、非公開のデッキでも識別子を指定すればテキストを受け取れる。</p>
+<h3 id="f09-07-言語の指定による内容の違い">言語の指定による内容の違い</h3>
+<div class="table-wrap"><table><thead><tr><th>言語の指定</th><th>カード名</th><th>見出し行</th></tr></thead><tbody><tr><td><code>en</code></td><td>英語名をアリーナで通る名称へ置き換えた値</td><td>統率者があるときは<code>Commander</code>、続けて<code>Deck</code>、サイドボードの前に<code>Sideboard</code></td></tr><tr><td><code>en</code>以外</td><td>日本語名</td><td>統率者があるときは<code>統率者</code>、続けて<code>デッキ</code>、サイドボードの前に<code>サイドボード</code></td></tr></tbody></table></div>
+<p>どちらの言語でも、カード名に含まれる<code>/</code>は<code> // </code>へ置き換える。デッキリスト詳細からの入口は、アリーナ用インポートテキストが<code>en</code>、日本語テキストが<code>jp</code>を言語として渡す。言語の指定が無いときのふるまいは正本コードからは確認できない。</p>
+<h3 id="f09-07-デッキリストの組み立て">デッキリストの組み立て</h3>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>扱い</th></tr></thead><tbody><tr><td>行の形</td><td><code>枚数 カード名</code>を1行とする</td></tr><tr><td>区画の順序</td><td>統率者、メインボード、サイドボードの順に並べる。この3つ以外の配置は書き出さない</td></tr><tr><td>区画の区切り</td><td>サイドボードがあるときだけ、その前に空行と見出し行を挟む</td></tr><tr><td>改行</td><td>復帰と改行の2文字を用いる</td></tr><tr><td>末尾</td><td>末尾の空白と改行を落とす</td></tr><tr><td>デッキリストがキャッシュにあるとき</td><td>キャッシュの内容から指定の言語で組み立てる</td></tr><tr><td>デッキリストがキャッシュに無いとき</td><td>採用カードから組み立てる</td></tr></tbody></table></div>
+<h3 id="f09-07-応答の形式">応答の形式</h3>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>ファイルとして受け取る経路</th><th>テキストとして受け取る経路</th></tr></thead><tbody><tr><td>内容の種別</td><td><code>text/plain</code></td><td><code>application/json</code></td></tr><tr><td>添付の指定</td><td>ファイル名を指定した添付として返す</td><td>添付にしない</td></tr><tr><td>本文の作り</td><td>デッキリストのテキストだけを流し込む</td><td>処理結果とデッキリストのテキストを組にする</td></tr><tr><td>会員の状態</td><td>ログインの有無を問わない</td><td>ログインの有無を問わない</td></tr><tr><td>失敗したとき</td><td>HTTP 404。共通のエラー画面を返す</td><td>処理結果が失敗であることを示すJSONとHTTP 404</td></tr></tbody></table></div>
+<h3 id="f09-07-エッジケース">エッジケース</h3>
+<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>アーキタイプの英語名に空白を含むとき</td><td>空白を<code>_</code>へ置き換えたファイル名にする</td></tr><tr><td>対応表に無いカード名のとき</td><td>置き換えずに元の名称のまま書き出す</td></tr><tr><td>サイドボードが0枚のとき</td><td>サイドボードの見出し行を入れない</td></tr><tr><td>統率者が0枚のとき</td><td>統率者の見出し行を入れない</td></tr><tr><td>分割カードのとき</td><td>名称の<code>/</code>を<code> // </code>へ置き換える</td></tr><tr><td>デッキリストが非公開のとき</td><td>ファイル経路はHTTP 404、テキスト経路は書き出しに応じる</td></tr><tr><td>表示区分が限定公開のとき</td><td>限定公開用の値の一致を求めずに書き出す</td></tr><tr><td>採用カードが0件のとき</td><td>中身のないテキストを返す</td></tr><tr><td>メインボード・サイドボード・統率者以外の配置にカードがあるとき</td><td>書き出しに含めない</td></tr><tr><td>アーキタイプが未設定のとき</td><td>ファイル名の組み立てに使う値が無く、ふるまいは正本コードからは確認できない</td></tr><tr><td>言語の指定が<code>en</code>以外のとき</td><td>対応表による置き換えを行わない</td></tr><tr><td>会員でないとき</td><td>どちらの経路も同じ結果を返す</td></tr></tbody></table></div>
+<h2 id="f09-07-入出力">入出力</h2>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>デッキの識別子。テキストとして受け取る経路では言語の指定も伴う</td></tr><tr><td>成功時出力</td><td>ファイル経路は添付ファイルとしてのデッキリスト。テキスト経路はJSONで、処理結果が成功であることとデッキリストのテキスト</td></tr><tr><td>失敗時出力</td><td>ファイル経路はHTTP 404の共通のエラー画面。テキスト経路はHTTP 404で、処理結果が失敗であることと<code>Not Found</code></td></tr></tbody></table></div>
+<h3 id="f09-07-入出力-永続化">入出力: 永続化</h3>
+<p>デッキ情報を登録・更新・削除しない。</p>
+<div class="table-wrap"><table><thead><tr><th>操作</th><th>契機</th></tr></thead><tbody><tr><td>キャッシュへの保存</td><td>行わない。デッキリストのテキストは、デッキIDを鍵にしたキャッシュに保存済みのときだけそこから組み立てる</td></tr></tbody></table></div>
+<div class="renewal-spec-banner"><h3 id="f09-07-リニューアル後の仕様">リニューアル後の仕様</h3></div>
+<h2 id="f09-07-表示メッセージ">表示メッセージ</h2>
+<p>本機能は画面へ文言を表示しない。書き出しの入口と完了の通知はデッキリスト詳細（F09-06）を正とする。</p>
+</section>
+<section class="doc-section" id="f09-08">
+  <header class="page-header">
+    <p class="crumb">Source:<br>functions/pf-eccube3/f09-08_front_deck_deck_bulk.md</p>
+    <h1>F09-08 デッキ一括購入 ／ フロント デッキ検索 — デッキ一括購入</h1>
+  </header>
+  <h2 id="f09-08-業務ロジック">業務ロジック</h2>
+<h3 id="f09-08-初期表示に載せるカードリスト">初期表示に載せるカードリスト</h3>
+<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>デッキの識別子が無いとき</td><td>カードリスト欄を空にして表示する</td></tr><tr><td>2</td><td>識別子に一致するデッキが無いとき</td><td>未ログイン、またはプレイヤーを持たない会員では、カードリスト欄を空にして表示する。プレイヤーを持つ会員では応答を返せない</td></tr><tr><td>3</td><td>表示区分が非公開、またはデッキリストが非公開のとき</td><td>会員のプレイヤーがそのデッキのプレイヤーと一致するときだけカードリストを載せる。一致しないときと未ログインのときは空にする</td></tr><tr><td>4</td><td>表示区分が限定公開で、限定公開用の値が一致しないとき</td><td>カードリスト欄を空にして表示する</td></tr><tr><td>5</td><td>上のいずれにも当たらないとき</td><td>英語カード名のデッキリストをカードリスト欄に載せる</td></tr></tbody></table></div>
+<h3 id="f09-08-購入条件の指定">購入条件の指定</h3>
+<div class="table-wrap"><table><thead><tr><th>画面上の項目</th><th>画面上の項目（英語）</th><th>初期値</th><th>選択肢と絞り込み</th></tr></thead><tbody><tr><td>言語</td><td>Language</td><td>日本語のみ</td><td>日本語のみ（Japanese）・英語のみ（English）・日・英のみ（Japanese or English）は該当言語の商品規格だけを対象とする。指定しない（他言語を含む）（Not specified (including other languages)）は言語で絞り込まない</td></tr><tr><td>状態</td><td>Condition</td><td>NM</td><td>NMはNMだけ、NM・SPはこの2つ、NM・SP・MPはこの3つだけを対象とする。NM・SP・MP・HPは状態で絞り込まない</td></tr><tr><td>通常/Foil</td><td>Normal / Foil</td><td>通常カードのみ</td><td>通常カードのみ（Normal）は通常、Foilカードのみ（Foil）は箔押しだけを対象とする。指定しない（Not specified）は絞り込まない</td></tr><tr><td>優先条件</td><td>Preferences</td><td>安いカード優先</td><td>安いカード優先（Prior to Cheapest Card）は販売価格の昇順、高いカード優先（Prior to Expensive Card）は販売価格の降順</td></tr></tbody></table></div>
+<p>言語で日・英のみ、または指定しない（他言語を含む）を選んだときに日本語優先と英語優先が優先条件に加わり、日本語のみ・英語のみに戻すと除かれる。通常/Foilで指定しないを選んだときに通常カード優先とFoilカード優先が加わる。</p>
+<h3 id="f09-08-在庫を引く条件">在庫を引く条件</h3>
+<div class="table-wrap"><table><thead><tr><th>条件</th><th>扱い</th></tr></thead><tbody><tr><td>商品</td><td>削除されておらず、公開中の商品だけを対象とする</td></tr><tr><td>商品規格</td><td>削除されておらず、販売価格が0より大きいものだけを対象とする</td></tr><tr><td>カード名</td><td>入力されたカード名が、カードの日本語名または英語名に一致するものだけを対象とする</td></tr><tr><td>状態がNM以外</td><td>同一言語のNMの販売価格が<code>100</code>円を超えるものだけを対象とする</td></tr><tr><td>販売価格</td><td><code>100</code>円以上、または状態がNMのものだけを対象とする</td></tr><tr><td>並び順</td><td>在庫が0のものを後ろへ回し、次に優先条件、最後にカードセットの発売日の降順</td></tr></tbody></table></div>
+<h3 id="f09-08-数量の割り当て">数量の割り当て</h3>
+<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>該当する商品規格がすべて在庫0のとき</td><td>並び順の先頭の商品規格に希望枚数をそのまま割り当てる</td></tr><tr><td>在庫のある商品規格があるとき</td><td>在庫0のものを除き、並び順に沿って在庫数の範囲で割り当てる</td></tr><tr><td>割り当て済みの枚数が希望枚数に達したとき</td><td>それ以降の商品規格には割り当てない</td></tr><tr><td>最後の商品規格まで達したとき</td><td>希望枚数との差分を割り当てる</td></tr></tbody></table></div>
+<p>同じカード名が複数行に現れるときは、枚数を合計して1件の希望として扱う。カード名に<code> // </code>を含む分割カードだけは合算されず、後の行の枚数で置き換わる。</p>
+<h3 id="f09-08-カードリストの書式">カードリストの書式</h3>
+<div class="table-wrap"><table><thead><tr><th>行の内容</th><th>扱い</th></tr></thead><tbody><tr><td><code>枚数 カード名</code></td><td>枚数と名称に切り分ける</td></tr><tr><td><code>枚数 カード名 (セット略号) 収録番号</code></td><td>枚数と名称に切り分ける</td></tr><tr><td><code>Sideboard</code>・<code>サイドボード</code>・<code>Deck</code>・<code>デッキ</code></td><td>区切りとして読み飛ばす</td></tr><tr><td>空行</td><td>読み飛ばす</td></tr><tr><td><code>相棒</code>・<code>Companion</code></td><td>その行と次の1行を読み飛ばす</td></tr><tr><td>読み飛ばす行だけを入力したとき</td><td>解析結果が0件になる。未記載の判定へは戻らず、空の条件のまま商品と在庫の判定へ進む。この経路のふるまいは正本コードからは確認できない</td></tr><tr><td>上のいずれにも当たらない行</td><td>書式の誤りとして行番号と入力内容を示す</td></tr><tr><td>カード名の<code> // </code></td><td><code>/</code>へ置き換えて突き合わせる</td></tr></tbody></table></div>
+<p>空行も1行として数え、行番号にも行数にも含める。行数は<code>500</code>行までとし、これを超えるときは書式の判定を行わない。</p>
+<h3 id="f09-08-判定の順序">判定の順序</h3>
+<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>カードリストが空のとき</td><td>未記載として通知し、以降を判定しない</td></tr><tr><td>2</td><td>書式に合わない行がある</td><td>書式の誤りとして通知し、以降を判定しない</td></tr><tr><td>3</td><td>商品が見つからないカードがある</td><td>商品なしとして通知し、以降を判定しない</td></tr><tr><td>4</td><td>指定した条件で在庫を引けないカードがある</td><td>在庫不足として通知し、割り当て結果を返さない</td></tr><tr><td>5</td><td>上のいずれにも当たらない</td><td>商品規格と数量の組を返す</td></tr></tbody></table></div>
+<p>判定はいずれもHTTP 200で応答し、処理結果が成功か失敗かで区別する。本機能が返すのは商品規格と数量の組までとする。カートへの追加は買い物かご（F04-01）が受け持ち、画面は組を引き渡したのち買い物かごへ移る。</p>
+<h3 id="f09-08-エッジケース">エッジケース</h3>
+<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>同じカード名が複数行にあるとき</td><td>枚数を合計して1件の希望とする</td></tr><tr><td>同じ分割カードが複数行にあるとき</td><td>合算されず、後の行の枚数で置き換わる</td></tr><tr><td>空行を含めた行数が<code>500</code>行を超えるとき</td><td>行ごとの判定を行わず、行数の誤りだけを示す</td></tr><tr><td><code>相棒</code>の行があるとき</td><td>その行と直後の1行を読み飛ばす</td></tr><tr><td>カード名に<code>///</code>を含むとき</td><td>送信の直前に<code>//</code>へ置き換える</td></tr><tr><td>希望枚数が在庫の合計を超えるとき</td><td>最後の商品規格に不足分を含めた枚数を割り当てる</td></tr><tr><td>商品が見つからない行があるとき</td><td>在庫の判定へ進まない</td></tr><tr><td>購入条件を変えずに再送したとき</td><td>送信せず、内容が変わっていないことを画面で知らせる</td></tr><tr><td>言語・状態・通常/Foilが未指定または選択肢に無い値のとき</td><td>その条件では絞り込まない</td></tr><tr><td>優先条件が未指定または選択肢に無い値のとき</td><td>安いカード優先として扱う</td></tr></tbody></table></div>
+<h3 id="f09-08-誤りの示し方">誤りの示し方</h3>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>扱い</th></tr></thead><tbody><tr><td>並び</td><td>先頭に総括の文言を置き、続けて誤りのある行を並べる</td></tr><tr><td>書式の誤りの行番号</td><td>入力の1行目を1として、空行も数えた位置を示す</td></tr><tr><td>商品なしの行番号</td><td>カード名を重複排除した並びの位置を示すため、読み飛ばした行や重複した行があるときは入力の行番号とずれる</td></tr><tr><td>在庫不足の行番号</td><td>商品なしと同じ数え方をする</td></tr><tr><td>誤りが複数の種類にまたがるとき</td><td>先に判定した種類の誤りだけを示す</td></tr></tbody></table></div>
+<h2 id="f09-08-入出力">入出力</h2>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>カードリストのテキスト、言語・状態・通常/Foil・優先条件の指定</td></tr><tr><td>成功時出力</td><td>HTTP 200。処理結果が成功であることと、商品規格の識別子と数量の組の一覧</td></tr><tr><td>失敗時出力</td><td>HTTP 200。処理結果が失敗であることと、先頭に総括の文言を置いた誤りの一覧</td></tr></tbody></table></div>
+<h3 id="f09-08-入出力-永続化">入出力: 永続化</h3>
+<p>デッキ情報を登録・更新・削除しない。商品と在庫も更新しない。カートへの追加は買い物かご（F04-01）が受け持つ。</p>
+<div class="renewal-spec-banner"><h3 id="f09-08-リニューアル後の仕様">リニューアル後の仕様</h3></div>
+<h2 id="f09-08-表示メッセージ">表示メッセージ</h2>
+<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>画面上の文言(英語)</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>—</td><td>画面上部の見出し</td><td>カードリストで購入</td><td>Cardlist</td><td>常時</td><td>—</td></tr><tr><td>—</td><td>書式の説明</td><td>以下の形式がご利用いただけます。言語は日または英が使用可能です。</td><td>The following formats can be used.</td><td>常時</td><td>—</td></tr><tr><td>—</td><td>書式の説明</td><td>形式1</td><td>Format 1</td><td>常時</td><td>—</td></tr><tr><td>—</td><td>書式の説明</td><td>形式2</td><td>Format 2</td><td>常時</td><td>—</td></tr><tr><td>—</td><td>カードリストの入力欄</td><td>4 Tarmogoyf</td><td>4 Tarmogoyf</td><td>入力欄が空のとき</td><td>—</td></tr><tr><td>—</td><td>購入条件の見出し</td><td>購入条件を指定</td><td>Narrow Details</td><td>常時</td><td>—</td></tr><tr><td>—</td><td>誤りの一覧</td><td>デッキリストが記載されていません。デッキリスト内に数量とカード名の入力をお願いいたします。</td><td>Decklist is Not Listed.</td><td>カードリストが空のとき</td><td>判定を打ち切る</td></tr><tr><td>—</td><td>誤りの一覧</td><td>デッキリストの書式が正しくありません。</td><td>The deck list format is invalid.</td><td>書式に合わない行があるとき</td><td>続けて行ごとの誤りを並べる</td></tr><tr><td>—</td><td>誤りの一覧</td><td>最大行数は500行までとなっております。現在: （行数）行</td><td>The maximum number of rows is 500. You have used （行数） rows.</td><td>空行を含めた行数が500行を超えるとき</td><td>判定を打ち切る</td></tr><tr><td>—</td><td>誤りの一覧</td><td>商品が存在しないカードが含まれています。</td><td>The deck list contains cards that are not available as products.</td><td>商品が見つからないカードがあるとき</td><td>続けて行ごとの誤りを並べる</td></tr><tr><td>—</td><td>誤りの一覧</td><td>指定された条件で在庫が不足しているカードがあります。</td><td>Some cards do not have enough stock under the specified conditions.</td><td>指定した条件で在庫を引けないカードがあるとき</td><td>続けて行ごとの誤りを並べる</td></tr><tr><td>—</td><td>誤りの一覧</td><td>（行番号）行目: （カード名）</td><td>line （行番号）: （カード名）</td><td>行ごとの誤りを示すとき</td><td>—</td></tr><tr><td>—</td><td>購入の入口</td><td>カートに追加</td><td>Add to Cart</td><td>常時</td><td>割り当て結果を買い物かごへ引き渡す</td></tr></tbody></table></div>
+</section>
+      <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
+    </main>
+  </div>
+</body>
+</html>
