@@ -122,7 +122,6 @@
 
 ### `excel_to_html/output/0210_基本設計仕様書(コンテンツ管理).html`
 - M09-04 ページ管理 -> `sheet-3` from `functions/pf-eccube3/m09-04_admin_content_content_page.md`
-- M09-07 ブロック管理 -> `sheet-5` from `functions/pf-eccube3/m09-07_admin_content_content_block.md`
 - M09-10 支店トップページ管理 -> `sheet-7` from `functions/pf-eccube3/m09-10_admin_content_content_branch_top_page.md`
 
 ### `excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能).html`
@@ -291,8 +290,8 @@
 - A02-01 ポップアップ用商品情報取得 -> `sheet-3` from `functions/pf-api/a02-01_api_product_popup_product.md`
 - A02-02 ポップアップ用カード情報取得 -> `sheet-4` from `functions/pf-api/a02-02_api_product_popup_card.md`
 - A02-03 ポップアップ用商品情報取得（旧商品ID） -> `sheet-5` from `functions/pf-api/a02-03_api_product_popup_product_old.md`
-- A02-04 ポップアップ用カード情報取得（旧商品ID） -> `sheet-6` from `functions/pf-api/a02-04_api_product_popup_card_old.md`
 - A02-05 更新商品規格取得 -> `sheet-7` from `functions/pf-api/a02-05_api_product_updated_product_class.md`
+- A05-04 スマレジ受信処理 -> `sheet-6` from `functions/pf-eccube3/a05-04_api_order_order_smaregi_receive.md`
 
 ### `excel_to_html/output/0505_基本設計仕様書(API_受注管理).html`
 - A05-01 注文印刷_印刷情報をプリンタへ送信 -> `sheet-3` from `functions/pf-api/a05-01_api_order_print_direct.md`
@@ -352,6 +351,7 @@ Excel基本設計仕様書に専用の画面シートが無い機能は、リニ
 寄せると、その画面の仕様と読み違えるため。廃止の裁定は [[superseded-spec]] の台帳
 （`functions/superseded_specs.json`）で確定させる。
 
+- A02-04 API / 商品管理 / ポップアップ用カード情報取得（旧商品ID） from `functions/pf-api/a02-04_api_product_popup_card_old.md`（todo-list.md line 339）
 - A06-09 API / 店頭買取管理 / 商品名から商品詳細の情報を取得 from `functions/pf-api/a06-09_api_product_search_by_name.md`（todo-list.md line 353）
 - A06-10 API / 店頭買取管理 / 商品IDリストから買取用商品情報を取得する from `functions/pf-api/a06-10_api_buying_products_by_ids.md`（todo-list.md line 354）
 - A06-15 API / 店頭買取管理 / 店頭買取情報同一所属店舗メンバー取得 from `functions/ec-cube-enterprise/a06-15_api_store_purchase_otc_buy_order_same_store_members.md`（todo-list.md line 359）
