@@ -122,6 +122,7 @@
 
 ### `excel_to_html/output/0210_基本設計仕様書(コンテンツ管理).html`
 - M09-04 ページ管理 -> `sheet-3` from `functions/pf-eccube3/m09-04_admin_content_content_page.md`
+- M09-07 ブロック管理 -> `sheet-5` from `functions/pf-eccube3/m09-07_admin_content_content_block.md`
 - M09-10 支店トップページ管理 -> `sheet-7` from `functions/pf-eccube3/m09-10_admin_content_content_branch_top_page.md`
 
 ### `excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能).html`
@@ -290,8 +291,8 @@
 - A02-01 ポップアップ用商品情報取得 -> `sheet-3` from `functions/pf-api/a02-01_api_product_popup_product.md`
 - A02-02 ポップアップ用カード情報取得 -> `sheet-4` from `functions/pf-api/a02-02_api_product_popup_card.md`
 - A02-03 ポップアップ用商品情報取得（旧商品ID） -> `sheet-5` from `functions/pf-api/a02-03_api_product_popup_product_old.md`
+- A02-04 ポップアップ用カード情報取得（旧商品ID） -> `sheet-6` from `functions/pf-api/a02-04_api_product_popup_card_old.md`
 - A02-05 更新商品規格取得 -> `sheet-7` from `functions/pf-api/a02-05_api_product_updated_product_class.md`
-- A05-04 スマレジ受信処理 -> `sheet-6` from `functions/pf-eccube3/a05-04_api_order_order_smaregi_receive.md`
 
 ### `excel_to_html/output/0505_基本設計仕様書(API_受注管理).html`
 - A05-01 注文印刷_印刷情報をプリンタへ送信 -> `sheet-3` from `functions/pf-api/a05-01_api_order_print_direct.md`
@@ -351,79 +352,86 @@ Excel基本設計仕様書に専用の画面シートが無い機能は、リニ
 寄せると、その画面の仕様と読み違えるため。廃止の裁定は [[superseded-spec]] の台帳
 （`functions/superseded_specs.json`）で確定させる。
 
-- A02-04 API / 商品管理 / ポップアップ用カード情報取得（旧商品ID） from `functions/pf-api/a02-04_api_product_popup_card_old.md`（todo-list.md line 339）
-- A06-09 API / 店頭買取管理 / 商品名から商品詳細の情報を取得 from `functions/pf-api/a06-09_api_product_search_by_name.md`（todo-list.md line 353）
-- A06-10 API / 店頭買取管理 / 商品IDリストから買取用商品情報を取得する from `functions/pf-api/a06-10_api_buying_products_by_ids.md`（todo-list.md line 354）
-- A06-15 API / 店頭買取管理 / 店頭買取情報同一所属店舗メンバー取得 from `functions/ec-cube-enterprise/a06-15_api_store_purchase_otc_buy_order_same_store_members.md`（todo-list.md line 359）
-- A06-17 API / 店頭買取管理 / 買取用商品情報取得 from `functions/pf-api/a06-17_api_buying_products_by_detail.md`（todo-list.md line 361）
-- A06-18 API / 店頭買取管理 / 買取用商品情報一括取得 from `functions/pf-api/a06-18_api_buying_products_by_ids.md`（todo-list.md line 362）
-- A08-01 API / コンテンツ管理 / トップバナーIDのトップバナー情報を取得 from `functions/pf-api/a08-01_api_top_banner_get.md`（todo-list.md line 370）
-- A08-02 API / コンテンツ管理 / 指定言語の設定済みトップバナー一覧を取得 from `functions/pf-api/a08-02_api_top_banner_list.md`（todo-list.md line 371）
-- A15-01 API / デッキビルダー / ログイン from `functions/pf-api/a15-01_api_deck_builder_deck_login.md`（todo-list.md line 375）
-- A15-02 API / デッキビルダー / ログアウト from `functions/pf-api/a15-02_api_deck_builder_deck_logout.md`（todo-list.md line 376）
-- A15-03 API / デッキビルダー / ユーザー情報参照 from `functions/pf-api/a15-03_api_deck_builder_deck_user_get.md`（todo-list.md line 377）
-- A15-04 API / デッキビルダー / 他ユーザー情報参照 from `functions/pf-api/a15-04_api_deck_builder_deck_user_other_get.md`（todo-list.md line 378）
-- A15-05 API / デッキビルダー / ユーザー情報変更 from `functions/pf-api/a15-05_api_deck_builder_deck_user_update.md`（todo-list.md line 379）
-- A15-06 API / デッキビルダー / マスタ検索 from `functions/pf-api/a15-06_api_deck_builder_deck_master.md`（todo-list.md line 380）
-- A15-07 API / デッキビルダー / アーキタイプ検索 from `functions/pf-api/a15-07_api_deck_builder_deck_archetype_search.md`（todo-list.md line 381）
-- A15-08 API / デッキビルダー / カード検索 from `functions/pf-api/a15-08_api_deck_builder_deck_card_search.md`（todo-list.md line 382）
-- A15-09 API / デッキビルダー / デッキ情報登録 from `functions/pf-api/a15-09_api_deck_builder_deck_register.md`（todo-list.md line 383）
-- A15-10 API / デッキビルダー / デッキ情報登更新 from `functions/pf-api/a15-10_api_deck_builder_deck_update.md`（todo-list.md line 384）
-- A15-11 API / デッキビルダー / デッキ情報削除 from `functions/pf-api/a15-11_api_deck_builder_deck_delete.md`（todo-list.md line 385）
-- A15-12 API / デッキビルダー / デッキ情報参照 from `functions/pf-api/a15-12_api_deck_builder_deck_get.md`（todo-list.md line 386）
-- A15-13 API / デッキビルダー / デッキ情報検索 from `functions/pf-api/a15-13_api_deck_builder_deck_search.md`（todo-list.md line 387）
-- A15-14 API / デッキビルダー / メタゲーム情報参照 from `functions/pf-api/a15-14_api_deck_builder_deck_metagame.md`（todo-list.md line 388）
-- A15-15 API / デッキビルダー / 採用枚数情報参照 from `functions/pf-api/a15-15_api_deck_builder_deck_usage_card.md`（todo-list.md line 389）
-- A15-16 API / デッキビルダー / 直近大会情報取得 from `functions/pf-api/a15-16_api_deck_builder_deck_recent_event.md`（todo-list.md line 390）
-- A15-17 API / デッキビルダー / デッキ登録インポート from `functions/pf-api/a15-17_api_deck_builder_deck_import_register.md`（todo-list.md line 391）
-- A15-18 API / デッキビルダー / デッキ更新インポート from `functions/pf-api/a15-18_api_deck_builder_deck_import_update.md`（todo-list.md line 392）
-- B08-04 バッチ / 会員管理 / 必須項目が空欄の会員発生通知 from `functions/pf-eccube3/b08-04_batch_customer_customer_check_blank_required.md`（todo-list.md line 324）
-- B17-01 バッチ / その他 / 最新記事jsonファイル作成 from `functions/pf-eccube3/b17-01_batch_other_create_latest_article_list.md`（todo-list.md line 333）
+- A06-09 API / 店頭買取管理 / 商品名から商品詳細の情報を取得 from `functions/pf-api/a06-09_api_product_search_by_name.md`（todo-list.md line 361）
+- A06-10 API / 店頭買取管理 / 商品IDリストから買取用商品情報を取得する from `functions/pf-api/a06-10_api_buying_products_by_ids.md`（todo-list.md line 362）
+- A06-15 API / 店頭買取管理 / 店頭買取情報同一所属店舗メンバー取得 from `functions/ec-cube-enterprise/a06-15_api_store_purchase_otc_buy_order_same_store_members.md`（todo-list.md line 367）
+- A06-17 API / 店頭買取管理 / 買取用商品情報取得 from `functions/pf-api/a06-17_api_buying_products_by_detail.md`（todo-list.md line 369）
+- A06-18 API / 店頭買取管理 / 買取用商品情報一括取得 from `functions/pf-api/a06-18_api_buying_products_by_ids.md`（todo-list.md line 370）
+- A08-01 API / コンテンツ管理 / トップバナーIDのトップバナー情報を取得 from `functions/pf-api/a08-01_api_top_banner_get.md`（todo-list.md line 378）
+- A08-02 API / コンテンツ管理 / 指定言語の設定済みトップバナー一覧を取得 from `functions/pf-api/a08-02_api_top_banner_list.md`（todo-list.md line 379）
+- A15-01 API / デッキビルダー / ログイン from `functions/pf-api/a15-01_api_deck_builder_deck_login.md`（todo-list.md line 383）
+- A15-02 API / デッキビルダー / ログアウト from `functions/pf-api/a15-02_api_deck_builder_deck_logout.md`（todo-list.md line 384）
+- A15-03 API / デッキビルダー / ユーザー情報参照 from `functions/pf-api/a15-03_api_deck_builder_deck_user_get.md`（todo-list.md line 385）
+- A15-04 API / デッキビルダー / 他ユーザー情報参照 from `functions/pf-api/a15-04_api_deck_builder_deck_user_other_get.md`（todo-list.md line 386）
+- A15-05 API / デッキビルダー / ユーザー情報変更 from `functions/pf-api/a15-05_api_deck_builder_deck_user_update.md`（todo-list.md line 387）
+- A15-06 API / デッキビルダー / マスタ検索 from `functions/pf-api/a15-06_api_deck_builder_deck_master.md`（todo-list.md line 388）
+- A15-07 API / デッキビルダー / アーキタイプ検索 from `functions/pf-api/a15-07_api_deck_builder_deck_archetype_search.md`（todo-list.md line 389）
+- A15-08 API / デッキビルダー / カード検索 from `functions/pf-api/a15-08_api_deck_builder_deck_card_search.md`（todo-list.md line 390）
+- A15-09 API / デッキビルダー / デッキ情報登録 from `functions/pf-api/a15-09_api_deck_builder_deck_register.md`（todo-list.md line 391）
+- A15-10 API / デッキビルダー / デッキ情報登更新 from `functions/pf-api/a15-10_api_deck_builder_deck_update.md`（todo-list.md line 392）
+- A15-11 API / デッキビルダー / デッキ情報削除 from `functions/pf-api/a15-11_api_deck_builder_deck_delete.md`（todo-list.md line 393）
+- A15-12 API / デッキビルダー / デッキ情報参照 from `functions/pf-api/a15-12_api_deck_builder_deck_get.md`（todo-list.md line 394）
+- A15-13 API / デッキビルダー / デッキ情報検索 from `functions/pf-api/a15-13_api_deck_builder_deck_search.md`（todo-list.md line 395）
+- A15-14 API / デッキビルダー / メタゲーム情報参照 from `functions/pf-api/a15-14_api_deck_builder_deck_metagame.md`（todo-list.md line 396）
+- A15-15 API / デッキビルダー / 採用枚数情報参照 from `functions/pf-api/a15-15_api_deck_builder_deck_usage_card.md`（todo-list.md line 397）
+- A15-16 API / デッキビルダー / 直近大会情報取得 from `functions/pf-api/a15-16_api_deck_builder_deck_recent_event.md`（todo-list.md line 398）
+- A15-17 API / デッキビルダー / デッキ登録インポート from `functions/pf-api/a15-17_api_deck_builder_deck_import_register.md`（todo-list.md line 399）
+- A15-18 API / デッキビルダー / デッキ更新インポート from `functions/pf-api/a15-18_api_deck_builder_deck_import_update.md`（todo-list.md line 400）
+- B08-04 バッチ / 会員管理 / 必須項目が空欄の会員発生通知 from `functions/pf-eccube3/b08-04_batch_customer_customer_check_blank_required.md`（todo-list.md line 332）
+- B17-01 バッチ / その他 / 最新記事jsonファイル作成 from `functions/pf-eccube3/b17-01_batch_other_create_latest_article_list.md`（todo-list.md line 341）
 - F06-19 フロント / 会員 / クレジットカード情報登録・変更 from `functions/ec-cube-enterprise/f06-19_front_member_mypage_credit_card.md`（todo-list.md line 53）
-- M01-01 管理画面 / ログイン / パスワード認証 from `functions/ec-cube-enterprise/m01-01_admin_login_login.md`（todo-list.md line 65）
-- M01-02 管理画面 / ログイン / 二段階認証 from `functions/ec-cube-enterprise/m01-02_admin_login_two_factor_auth.md`（todo-list.md line 66）
-- M02-01 管理画面 / TOPページ / 受注状況 from `functions/ec-cube-enterprise/m02-01_admin_home_home_order_status.md`（todo-list.md line 67）
-- M02-02 管理画面 / TOPページ / 売上状況 from `functions/ec-cube-enterprise/m02-02_admin_home_home_sales_status.md`（todo-list.md line 68）
-- M02-03 管理画面 / TOPページ / 売上状況グラフ from `functions/ec-cube-enterprise/m02-03_admin_home_home_sales_chart.md`（todo-list.md line 69）
-- M02-04 管理画面 / TOPページ / ショップ状況 from `functions/ec-cube-enterprise/m02-04_admin_home_home_shop_status.md`（todo-list.md line 70）
-- M02-05 管理画面 / TOPページ / EC-CUBEのお知らせ from `functions/ec-cube-enterprise/m02-05_admin_home_home_ec_cube_news.md`（todo-list.md line 71）
-- M02-06 管理画面 / TOPページ / おすすめプラグイン from `functions/ec-cube-enterprise/m02-06_admin_home_home_recommend_plugins.md`（todo-list.md line 72）
-- M03-34 管理画面 / 商品管理 / 割引率変更CSV登録 from `functions/pf-eccube3/m03-34_admin_product_product_discount_csv_import.md`（todo-list.md line 108）
-- M03-36 管理画面 / 商品管理 / 買取減額率変更CSV登録 from `functions/pf-eccube3/m03-36_admin_product_product_buy_discount_csv_import.md`（todo-list.md line 110）
-- M04-11 管理画面 / 在庫管理 / 在庫移動・振替情報カスタムCSV出力 from `functions/pf-eccube3/m04-11_admin_stock_product_stock_history_csv_export.md`（todo-list.md line 125）
-- M04-15 管理画面 / 在庫管理 / 在庫分割結合情報カスタムCSV出力 from `functions/ec-cube-enterprise/m04-15_admin_stock_stock_split_join_custom_csv_export.md`（todo-list.md line 129）
-- M04-27 管理画面 / 在庫管理 / 在庫移動実績入力用CSV出力 from `functions/ec-cube-enterprise/m04-27_admin_stock_stock_move_result_csv_export.md`（todo-list.md line 141）
-- M04-29 管理画面 / 在庫管理 / 在庫移動実績 インポート from `functions/ec-cube-enterprise/m04-29_admin_stock_stock_move_result_csv_import.md`（todo-list.md line 144）
-- M05-12 管理画面 / 受注管理 / 対応状況一括変更 from `functions/ec-cube-enterprise/m05-12_admin_order_order_bulk_status_change.md`（todo-list.md line 161）
-- M05-13 管理画面 / 受注管理 / 問い合わせ番号（出荷伝票番号）入力機能 from `functions/ec-cube-enterprise/m05-13_admin_order_order_tracking_number.md`（todo-list.md line 162）
-- M05-14 管理画面 / 受注管理 / 対応状況設定 from `functions/ec-cube-enterprise/m05-14_admin_order_order_status_change.md`（todo-list.md line 163）
-- M05-15 管理画面 / 受注管理 / 各種メール送信 from `functions/ec-cube-enterprise/m05-15_admin_order_order_mail.md`（todo-list.md line 164）
-- M05-16 管理画面 / 受注管理 / ショップ用メモ登録機能 from `functions/ec-cube-enterprise/m05-16_admin_order_order_shop_memo.md`（todo-list.md line 165）
-- M05-17 管理画面 / 受注管理 / 配達用メモ登録機能 from `functions/ec-cube-enterprise/m05-17_admin_order_order_shipping_memo.md`（todo-list.md line 166）
-- M08-03 管理画面 / 会員管理 / 顧客情報CSV出力 from `functions/pf-eccube3/m08-03_admin_customer_customer_csv_export.md`（todo-list.md line 201）
-- M08-15 管理画面 / 会員管理 / 会員顧客分析タグ情報CSV出力 from `functions/ec-cube-enterprise/m08-15_admin_customer_customer_analysis_tag_csv_export.md`（todo-list.md line 213）
-- M08-16 管理画面 / 会員管理 / 会員顧客分析タグ登録アップロード from `functions/ec-cube-enterprise/m08-16_admin_customer_customer_analysis_tag_csv_import.md`（todo-list.md line 214）
-- M09-01 管理画面 / コンテンツ管理 / 新着情報管理 from `functions/ec-cube-enterprise/m09-01_admin_content_content_news.md`（todo-list.md line 215）
-- M09-02 管理画面 / コンテンツ管理 / ファイル管理 from `functions/ec-cube-enterprise/m09-02_admin_content_content_file.md`（todo-list.md line 216）
-- M09-03 管理画面 / コンテンツ管理 / レイアウト管理 from `functions/ec-cube-enterprise/m09-03_admin_content_content_layout.md`（todo-list.md line 217）
-- M09-05 管理画面 / コンテンツ管理 / CSS管理 from `functions/ec-cube-enterprise/m09-05_admin_content_content_css.md`（todo-list.md line 219）
-- M09-06 管理画面 / コンテンツ管理 / JavaScript管理 from `functions/ec-cube-enterprise/m09-06_admin_content_content_js.md`（todo-list.md line 220）
-- M09-08 管理画面 / コンテンツ管理 / キャッシュ管理 from `functions/ec-cube-enterprise/m09-08_admin_content_content_cache.md`（todo-list.md line 222）
-- M09-09 管理画面 / コンテンツ管理 / メンテナンス管理 from `functions/ec-cube-enterprise/m09-09_admin_content_content_maintenance.md`（todo-list.md line 223）
-- M10-05 管理画面 / （基本設定） / 配送料無料条件設定 from `functions/pf-eccube3/m10-05_admin_base_setting_setting_shop_delivery_free_conditions.md`（todo-list.md line 229）
-- M10-06 管理画面 / （基本設定） / 配送業者/配送料/配送時間設定 from `functions/pf-eccube3/m10-06_admin_base_setting_setting_shop_delivery.md`（todo-list.md line 230）
-- M10-11 管理画面 / （基本設定） / 受注対応状況設定 from `functions/ec-cube-enterprise/m10-11_admin_base_setting_setting_shop_order_status.md`（todo-list.md line 235）
-- M10-12 管理画面 / （基本設定） / 定休日カレンダー設定 from `functions/ec-cube-enterprise/m10-12_admin_base_setting_setting_shop_calendar.md`（todo-list.md line 236）
-- M10-14 管理画面 / （基本設定） / 店舗一覧 from `functions/ec-cube-enterprise/m10-14_admin_base_setting_setting_shop_mall_shop_list.md`（todo-list.md line 238）
-- M11-04 管理画面 / システム情報設定（設定） / ログイン履歴 from `functions/ec-cube-enterprise/m11-04_admin_system_setting_setting_system_login_history.md`（todo-list.md line 244）
-- M11-05 管理画面 / システム情報設定（設定） / マスタデータ管理 from `functions/ec-cube-enterprise/m11-05_admin_system_setting_setting_system_masterdata.md`（todo-list.md line 245）
-- M11-06 管理画面 / システム情報設定（設定） / システム情報 from `functions/ec-cube-enterprise/m11-06_admin_system_setting_setting_system_system_info.md`（todo-list.md line 246）
-- M14-02 管理画面 / カード管理 / カード情報CSV出力 from `functions/pf-eccube3/m14-02_admin_card_card_csv_export.md`（todo-list.md line 273）
-- M14-03 管理画面 / カード管理 / 一括削除 from `functions/pf-eccube3/m14-03_admin_card_card_bulk_delete.md`（todo-list.md line 274）
-- M15-03 管理画面 / デッキ管理 / 一括削除 from `functions/pf-eccube3/m15-03_admin_deck_deck_bulk_delete.md`（todo-list.md line 284）
-- M15-04 管理画面 / デッキ管理 / 一括編集 from `functions/pf-eccube3/m15-04_admin_deck_deck_bulk_update.md`（todo-list.md line 285）
-- M15-05 管理画面 / デッキ管理 / デッキ新規登録/編集/削除/複製 from `functions/pf-eccube3/m15-05_admin_deck_deck_edit.md`（todo-list.md line 286）
-- M15-11 管理画面 / デッキ管理 / 直近の大会編集 from `functions/pf-eccube3/m15-11_admin_deck_deck_latest_event.md`（todo-list.md line 292）
-- O01-01 その他 / MTGバイヤー / 店頭買取 from `functions/pf-eccube3/o01-01_other_mtg_buyer_mtg_buyer_store_purchase.md`（todo-list.md line 400）
-- O01-02 その他 / MTGバイヤー / ネット買取 from `functions/pf-eccube3/o01-02_other_mtg_buyer_mtg_buyer_online_purchase.md`（todo-list.md line 401）
-- O01-03 その他 / MTGバイヤー / 入庫モード from `functions/pf-eccube3/o01-03_other_mtg_buyer_mtg_buyer_stock_inbound.md`（todo-list.md line 402）
+- F09-01 フロント / デッキ検索 / デッキ検索TOP from `functions/pf-eccube3/f09-01_front_deck_deck_index.md`（todo-list.md line 65）
+- F09-02 フロント / デッキ検索 / デッキ検索結果 from `functions/pf-eccube3/f09-02_front_deck_deck_result.md`（todo-list.md line 66）
+- F09-03 フロント / デッキ検索 / メタゲーム一覧 from `functions/pf-eccube3/f09-03_front_deck_deck_metagame.md`（todo-list.md line 67）
+- F09-04 フロント / デッキ検索 / 採用枚数ランキング from `functions/pf-eccube3/f09-04_front_deck_deck_usage_ranking.md`（todo-list.md line 68）
+- F09-05 フロント / デッキ検索 / その他デッキ一覧 from `functions/pf-eccube3/f09-05_front_deck_deck_others.md`（todo-list.md line 69）
+- F09-06 フロント / デッキ検索 / デッキリスト詳細 from `functions/pf-eccube3/f09-06_front_deck_deck_show.md`（todo-list.md line 70）
+- F09-07 フロント / デッキ検索 / デッキリスト書き出し from `functions/pf-eccube3/f09-07_front_deck_deck_export.md`（todo-list.md line 71）
+- F09-08 フロント / デッキ検索 / デッキ一括購入 from `functions/pf-eccube3/f09-08_front_deck_deck_bulk.md`（todo-list.md line 72）
+- M01-01 管理画面 / ログイン / パスワード認証 from `functions/ec-cube-enterprise/m01-01_admin_login_login.md`（todo-list.md line 73）
+- M01-02 管理画面 / ログイン / 二段階認証 from `functions/ec-cube-enterprise/m01-02_admin_login_two_factor_auth.md`（todo-list.md line 74）
+- M02-01 管理画面 / TOPページ / 受注状況 from `functions/ec-cube-enterprise/m02-01_admin_home_home_order_status.md`（todo-list.md line 75）
+- M02-02 管理画面 / TOPページ / 売上状況 from `functions/ec-cube-enterprise/m02-02_admin_home_home_sales_status.md`（todo-list.md line 76）
+- M02-03 管理画面 / TOPページ / 売上状況グラフ from `functions/ec-cube-enterprise/m02-03_admin_home_home_sales_chart.md`（todo-list.md line 77）
+- M02-04 管理画面 / TOPページ / ショップ状況 from `functions/ec-cube-enterprise/m02-04_admin_home_home_shop_status.md`（todo-list.md line 78）
+- M02-05 管理画面 / TOPページ / EC-CUBEのお知らせ from `functions/ec-cube-enterprise/m02-05_admin_home_home_ec_cube_news.md`（todo-list.md line 79）
+- M02-06 管理画面 / TOPページ / おすすめプラグイン from `functions/ec-cube-enterprise/m02-06_admin_home_home_recommend_plugins.md`（todo-list.md line 80）
+- M03-34 管理画面 / 商品管理 / 割引率変更CSV登録 from `functions/pf-eccube3/m03-34_admin_product_product_discount_csv_import.md`（todo-list.md line 116）
+- M03-36 管理画面 / 商品管理 / 買取減額率変更CSV登録 from `functions/pf-eccube3/m03-36_admin_product_product_buy_discount_csv_import.md`（todo-list.md line 118）
+- M04-11 管理画面 / 在庫管理 / 在庫移動・振替情報カスタムCSV出力 from `functions/pf-eccube3/m04-11_admin_stock_product_stock_history_csv_export.md`（todo-list.md line 133）
+- M04-15 管理画面 / 在庫管理 / 在庫分割結合情報カスタムCSV出力 from `functions/ec-cube-enterprise/m04-15_admin_stock_stock_split_join_custom_csv_export.md`（todo-list.md line 137）
+- M04-27 管理画面 / 在庫管理 / 在庫移動実績入力用CSV出力 from `functions/ec-cube-enterprise/m04-27_admin_stock_stock_move_result_csv_export.md`（todo-list.md line 149）
+- M04-29 管理画面 / 在庫管理 / 在庫移動実績 インポート from `functions/ec-cube-enterprise/m04-29_admin_stock_stock_move_result_csv_import.md`（todo-list.md line 152）
+- M05-12 管理画面 / 受注管理 / 対応状況一括変更 from `functions/ec-cube-enterprise/m05-12_admin_order_order_bulk_status_change.md`（todo-list.md line 169）
+- M05-13 管理画面 / 受注管理 / 問い合わせ番号（出荷伝票番号）入力機能 from `functions/ec-cube-enterprise/m05-13_admin_order_order_tracking_number.md`（todo-list.md line 170）
+- M05-14 管理画面 / 受注管理 / 対応状況設定 from `functions/ec-cube-enterprise/m05-14_admin_order_order_status_change.md`（todo-list.md line 171）
+- M05-15 管理画面 / 受注管理 / 各種メール送信 from `functions/ec-cube-enterprise/m05-15_admin_order_order_mail.md`（todo-list.md line 172）
+- M05-16 管理画面 / 受注管理 / ショップ用メモ登録機能 from `functions/ec-cube-enterprise/m05-16_admin_order_order_shop_memo.md`（todo-list.md line 173）
+- M05-17 管理画面 / 受注管理 / 配達用メモ登録機能 from `functions/ec-cube-enterprise/m05-17_admin_order_order_shipping_memo.md`（todo-list.md line 174）
+- M08-03 管理画面 / 会員管理 / 顧客情報CSV出力 from `functions/pf-eccube3/m08-03_admin_customer_customer_csv_export.md`（todo-list.md line 209）
+- M08-15 管理画面 / 会員管理 / 会員顧客分析タグ情報CSV出力 from `functions/ec-cube-enterprise/m08-15_admin_customer_customer_analysis_tag_csv_export.md`（todo-list.md line 221）
+- M08-16 管理画面 / 会員管理 / 会員顧客分析タグ登録アップロード from `functions/ec-cube-enterprise/m08-16_admin_customer_customer_analysis_tag_csv_import.md`（todo-list.md line 222）
+- M09-01 管理画面 / コンテンツ管理 / 新着情報管理 from `functions/ec-cube-enterprise/m09-01_admin_content_content_news.md`（todo-list.md line 223）
+- M09-02 管理画面 / コンテンツ管理 / ファイル管理 from `functions/ec-cube-enterprise/m09-02_admin_content_content_file.md`（todo-list.md line 224）
+- M09-03 管理画面 / コンテンツ管理 / レイアウト管理 from `functions/ec-cube-enterprise/m09-03_admin_content_content_layout.md`（todo-list.md line 225）
+- M09-05 管理画面 / コンテンツ管理 / CSS管理 from `functions/ec-cube-enterprise/m09-05_admin_content_content_css.md`（todo-list.md line 227）
+- M09-06 管理画面 / コンテンツ管理 / JavaScript管理 from `functions/ec-cube-enterprise/m09-06_admin_content_content_js.md`（todo-list.md line 228）
+- M09-08 管理画面 / コンテンツ管理 / キャッシュ管理 from `functions/ec-cube-enterprise/m09-08_admin_content_content_cache.md`（todo-list.md line 230）
+- M09-09 管理画面 / コンテンツ管理 / メンテナンス管理 from `functions/ec-cube-enterprise/m09-09_admin_content_content_maintenance.md`（todo-list.md line 231）
+- M10-05 管理画面 / （基本設定） / 配送料無料条件設定 from `functions/pf-eccube3/m10-05_admin_base_setting_setting_shop_delivery_free_conditions.md`（todo-list.md line 237）
+- M10-06 管理画面 / （基本設定） / 配送業者/配送料/配送時間設定 from `functions/pf-eccube3/m10-06_admin_base_setting_setting_shop_delivery.md`（todo-list.md line 238）
+- M10-11 管理画面 / （基本設定） / 受注対応状況設定 from `functions/ec-cube-enterprise/m10-11_admin_base_setting_setting_shop_order_status.md`（todo-list.md line 243）
+- M10-12 管理画面 / （基本設定） / 定休日カレンダー設定 from `functions/ec-cube-enterprise/m10-12_admin_base_setting_setting_shop_calendar.md`（todo-list.md line 244）
+- M10-14 管理画面 / （基本設定） / 店舗一覧 from `functions/ec-cube-enterprise/m10-14_admin_base_setting_setting_shop_mall_shop_list.md`（todo-list.md line 246）
+- M11-04 管理画面 / システム情報設定（設定） / ログイン履歴 from `functions/ec-cube-enterprise/m11-04_admin_system_setting_setting_system_login_history.md`（todo-list.md line 252）
+- M11-05 管理画面 / システム情報設定（設定） / マスタデータ管理 from `functions/ec-cube-enterprise/m11-05_admin_system_setting_setting_system_masterdata.md`（todo-list.md line 253）
+- M11-06 管理画面 / システム情報設定（設定） / システム情報 from `functions/ec-cube-enterprise/m11-06_admin_system_setting_setting_system_system_info.md`（todo-list.md line 254）
+- M14-02 管理画面 / カード管理 / カード情報CSV出力 from `functions/pf-eccube3/m14-02_admin_card_card_csv_export.md`（todo-list.md line 281）
+- M14-03 管理画面 / カード管理 / 一括削除 from `functions/pf-eccube3/m14-03_admin_card_card_bulk_delete.md`（todo-list.md line 282）
+- M15-03 管理画面 / デッキ管理 / 一括削除 from `functions/pf-eccube3/m15-03_admin_deck_deck_bulk_delete.md`（todo-list.md line 292）
+- M15-04 管理画面 / デッキ管理 / 一括編集 from `functions/pf-eccube3/m15-04_admin_deck_deck_bulk_update.md`（todo-list.md line 293）
+- M15-05 管理画面 / デッキ管理 / デッキ新規登録/編集/削除/複製 from `functions/pf-eccube3/m15-05_admin_deck_deck_edit.md`（todo-list.md line 294）
+- M15-11 管理画面 / デッキ管理 / 直近の大会編集 from `functions/pf-eccube3/m15-11_admin_deck_deck_latest_event.md`（todo-list.md line 300）
+- O01-01 その他 / MTGバイヤー / 店頭買取 from `functions/pf-eccube3/o01-01_other_mtg_buyer_mtg_buyer_store_purchase.md`（todo-list.md line 408）
+- O01-02 その他 / MTGバイヤー / ネット買取 from `functions/pf-eccube3/o01-02_other_mtg_buyer_mtg_buyer_online_purchase.md`（todo-list.md line 409）
+- O01-03 その他 / MTGバイヤー / 入庫モード from `functions/pf-eccube3/o01-03_other_mtg_buyer_mtg_buyer_stock_inbound.md`（todo-list.md line 410）
