@@ -40,6 +40,14 @@
 
 最終ページで件数とページ番号の関係がずれるときは、ページ番号を 1 減らして調整する。
 
+### カードリストの行の書式
+
+デッキの新規登録・編集では、カードリストを統率・メインボード・サイドボードの3つに分けて受け取り、それぞれを改行ごとの行に分けて読む。空行は読み飛ばす。
+
+各行は、半角数字の枚数、半角スペース1つ、空白以外の文字で始まるカード名の順で始まらなければならない。
+
+行の形の判定で形の合わない行を検出すると、デッキもカードリストも保存せず、入力内容を残したままデッキ編集画面を表示する。このときメインボード・サイドボード・統率のそれぞれについて、最初に形の合わない行の行番号を示してM15-01-MSG-008を表示する。
+
 ## 入出力
 
 | 種類 | 内容 |
@@ -81,3 +89,6 @@
 | 選択肢の並び | P3 | pf-eccube3:app/Plugin/HareruyaEc/Form/Type/Admin/Deck/SearchDeckType.php:32 |
 | 大会開始前のデッキの扱い | P2 | pf-eccube3:app/Plugin/HareruyaEc/Repository/DtbDeckRepository.php:124 |
 | 表示件数と並び順 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/SearchControllerTrait.php:85 |
+| カードリストの行の書式 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Util/CardUtil.php:53 |
+| カードリストの行の書式 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/DeckController.php:124 |
+| カードリストの行の書式 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/DeckController.php:143 |

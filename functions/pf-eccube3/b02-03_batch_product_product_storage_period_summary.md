@@ -14,6 +14,8 @@
 
 「1ヶ月」は暦の月ではなく28日として数える。
 
+起動日の366日前の履歴は取得の対象に含むが、どの期間の集計値にも加えない。最も長い365日間の期間は、起動日の365日前を始点とする。
+
 ### 集計に現れない単位の扱い
 
 対象の在庫変動履歴が1件も無い単位は集計結果に現れず、更新の対象にならない。前回の集計値がそのまま残る。
@@ -53,6 +55,7 @@
 | --- | --- | --- |
 | 集計値の求め方 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Repository/DtbStockHistoryRepository.php:308-328 |
 | 期間の数え方 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Repository/DtbStockHistoryRepository.php:310-318 |
+| 期間の数え方 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Repository/DtbStockHistoryRepository.php:323-324 |
 | 集計に現れない単位の扱い | P2 | pf-eccube3:app/Plugin/HareruyaEc/Repository/DtbStockHistoryRepository.php:327 |
 | 起動と異常時の扱い | P2 | pf-eccube3:app/Plugin/HareruyaEc/Command/ProductBatch.php:42-58 |
 | 入出力: 永続化 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Service/Product/UpdateProductSummaryForStockUp.php:28-41 |

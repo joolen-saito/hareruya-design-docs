@@ -36,6 +36,8 @@
 | 指定IDに対応する商品が1件も無いとき | 選択した商品が見つからない旨のエラーとする |
 | その他の実行時エラーのとき | エラーメッセージを表示し、直前の画面へ戻る |
 
+指定IDに対応する商品が1件も無いときは、CSV出力を要求した画面（要求元として送られた画面）へ戻す。商品一覧から出力したときは、出力を要求したページの商品一覧へ戻る。
+
 ## 入出力
 
 ### 入出力の対応
@@ -69,6 +71,7 @@
 | 出力する行と値 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Product/ProductCsvController.php:2085 |
 | エラー時の扱い | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Product/ProductCsvController.php:2269 |
 | エラー時の扱い | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Product/ProductCsvController.php:1704 |
+| エラー時の扱い | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Product/ProductCsvController.php:1706-1709 |
 | 入出力の対応 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Service/Csv/ProductPriceCsv.php:133 |
 | 入出力の対応 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Service/CsvExportService.php:369 |
 | 入出力の対応 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Service/CsvExportService.php:362 |

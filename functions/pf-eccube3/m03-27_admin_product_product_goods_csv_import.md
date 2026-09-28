@@ -27,6 +27,10 @@
 
 確定できたときだけ、店舗連携の取込後処理を成功として呼ぶ。確定できないときは取込内容を取り消し、店舗連携の取込後処理を失敗として呼ぶ。
 
+価格の整合は、買取価格が販売価格を上回る行をエラーとする。買取価格と販売価格が同額の行はエラーにしない。
+
+確定できたときは、取り込んだ商品を支店システムへ通知する。通知は取り込んだ商品から重複を除いた一覧で1回行う。通知に失敗しても取込は確定したままとし、通知できなかった商品を連携エラーとして残す。
+
 ### 商品と規格の扱い
 
 | 項目 | 内容 |
@@ -101,3 +105,11 @@
 | M03-27-MSG-001 | 管理画面上部 | CSVのフォーマットが一致しません | CSV登録で、CSVファイルを選択せずに送信したとき | 管理画面_商品管理_グッズ商品CSV登録画面に遷移する |
 | M03-27-MSG-002 | 管理画面上部 | %maxRecord% 行を超えるCSVファイルは登録できません。 | 登録できる行数の上限以上のCSVをアップロードしたとき | 管理画面_商品管理_グッズ商品CSV登録画面に遷移する |
 | M03-27-MSG-003 | 管理画面上部 | CSVファイルをアップロードしました | CSV登録で、CSVの内容にエラーがなく登録できたとき | 管理画面_商品管理_グッズ商品CSV登録画面に遷移する |
+
+## 出典
+
+| 小見出し | 重要度 | 出典 |
+| --- | --- | --- |
+| 判定順序 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Service/Csv/Importer/Validator/PriceConsistencyRowValidator.php:43 |
+| 判定順序 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Service/Csv/Importer/Event/ProductGoodsImportHandler.php:149 |
+| 判定順序 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Service/BranchUpdateService.php:66 |

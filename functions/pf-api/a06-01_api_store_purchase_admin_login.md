@@ -15,6 +15,10 @@
 
 トークン原値・署名シークレット・パスワードは本書に記載しない。
 
+### ログイン成功後の買取アプリ
+
+買取アプリは、本APIが認証情報を返したとき、応答の利用者情報を保持してモード選択画面へ移る。モード選択画面は店頭買取・ネット買取・入庫モードを選ぶ画面である。
+
 ## 入出力
 
 ### 店舗が紐づかない会員のとき
@@ -37,4 +41,6 @@
 | 失敗したときの応答本文 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/admin/login.twig:25 |
 | トークンの発行と以降の利用 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Api/AdminLoginController.php:24-36 |
 | トークンの発行と以降の利用 | P1 | pf-api:src/Controller/BaseController.php:23-44 |
+| ログイン成功後の買取アプリ | P2 | front-application:MTGBuyer/Screen/Login.xaml.cs:63-71 |
+| ログイン成功後の買取アプリ | P2 | front-application:MTGBuyer/Screen/ModeSelect.xaml:55-69 |
 | 店舗が紐づかない会員のとき | P3 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Api/AdminLoginController.php:16-22 |

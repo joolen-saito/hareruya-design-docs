@@ -13,6 +13,12 @@
 
 指定言語は絞り込みには使わず、並び順の優先にだけ使う。そのため指定言語の商品規格を持たない商品でも、他の言語の商品規格を1件返す。
 
+並び順4の指定言語に対応する順位は、指定言語が jp のとき2、en のとき1である。商品規格画像の順位がこの値と一致する商品規格を先にする。
+
+並び順の4条件がすべて等しい商品規格が複数あるときは、どれを返すかを定めない。4条件より後の並び順は無い。
+
+カード詳細が紐づかない商品は対象にならず、該当なしとする。
+
 ### 週間販売数の数え方
 
 週間販売数は、返した商品規格1件の値ではなく、その商品が持つ商品規格のうち、返した商品規格と同じ言語コードのものの週間販売数量を合計した値とする。
@@ -39,6 +45,9 @@
 | --- | --- | --- |
 | 返す1件の選び方 | P2 | pf-api:src/Repository/DtbProductSubClassRepository.php:33-72 |
 | 返す1件の選び方 | P2 | pf-api:src/Entity/MtbCardCondition.php:10-14 |
+| 返す1件の選び方 | P2 | pf-api:src/Repository/DtbProductSubClassRepository.php:17 |
+| 返す1件の選び方 | P2 | pf-api:src/Repository/DtbProductSubClassRepository.php:47-50 |
+| 返す1件の選び方 | P2 | pf-api:src/Repository/DtbProductSubClassRepository.php:39 |
 | 週間販売数の数え方 | P3 | pf-api:src/Repository/DtbProductSubClassRepository.php:227-241 |
 | 値の取り方 | P2 | pf-api:src/Repository/DtbProductSubClassRepository.php:40-69 |
 | 該当が無いときの応答本文 | P3 | pf-api:src/Controller/ProductController.php:61-77 |

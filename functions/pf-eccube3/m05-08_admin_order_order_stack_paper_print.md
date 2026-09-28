@@ -6,9 +6,15 @@
 
 要求に受注IDが 1 件も含まれないときは、印刷内容を組み立てず、対象が見つからない応答を返す。この応答にメッセージは含めない。
 
+受注IDを 1 件以上受け取り、そのいずれにも一致する受注が無いときは、受注を 1 件も更新せず、印刷予約を受け付けた応答を返す。この応答は正常に予約できたときと同じである。
+
 ### 注文番号が未採番のときの扱い
 
 対象受注に注文番号が未採番のものが 1 件でもあるときは、他の対象受注も含めて 1 件も更新せずに終了する。
+
+### 対応状況と印刷済みの更新
+
+対象受注は、対応状況に関わらずブラウザ印刷済みにする。対応状況が注文受領の受注だけ、対応状況をピック中にし、注文確定日に処理した日時を設定する。注文受領以外の受注は、対応状況と注文確定日を変更しない。
 
 ### 担当者の更新
 
@@ -51,3 +57,6 @@
 | 担当者の更新 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Order/OrderController.php:400 |
 | 入出力: 永続化 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Order/OrderController.php:400 |
 | 応答待ちの打ち切り | P2 | pf-eccube3:html/print_window.html:20 |
+| 印刷対象の指定 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Order/OrderController.php:264-269 |
+| 対応状況と印刷済みの更新 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Order/OrderController.php:259 |
+| 対応状況と印刷済みの更新 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Order/OrderController.php:393-396 |

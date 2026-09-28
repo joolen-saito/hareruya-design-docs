@@ -18,6 +18,12 @@
 
 ヘッダ行には出力種別ごとに定めた日本語のラベルを出力する。件数が多いときも1行ずつ書き出す。
 
+### 列の値
+
+身分証の列には、買取注文に登録した身分証の種別名をそのまま出力する。身分証の種別は、自動車運転免許証・パスポート・健康保険被保険者証・外国人登録証明書・住民基本台帳カード・学生証、会社員証・身体障害者手帳・マイナンバーカードの8種類である。
+
+事業者であるかの列には、買取注文の適格請求書発行事業者の区分を変換せずに出力する。事業者のときは `1`、事業者でないときは空欄になる。
+
 ### ファイルの体裁
 
 ファイル名は old_goods_account_ に出力日時（年月日時分秒）と .csv を連結したものとする。文字コードがUTF-8のときはBOMを先頭に書く。応答の形式種別はバイト列とし、ダウンロードとして扱う指定にファイル名を添える。
@@ -51,3 +57,14 @@
 | メッセージID | 表示位置 | 画面上の文言 | 表示条件 | 後続処理 |
 | --- | --- | --- | --- | --- |
 | — | 管理画面上部 | （共通の選択なしエラーメッセージ） | 出力する注文を選択せずに実行したとき | 店頭買取注文の一覧へ戻す |
+
+## 出典
+
+| 小見出し | 重要度 | 出典 |
+| --- | --- | --- |
+| 列の値 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Repository/DtbOtcBuyOrderRepository.php:127 |
+| 列の値 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Resource/doctrine/migration/Version20190131014300.php:14 |
+| 列の値 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Resource/doctrine/migration/Version20210415164657.php:12 |
+| 列の値 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Service/Csv/OtcBuyOrderCsv.php:105 |
+| 列の値 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Service/Csv/OtcBuyOrderCsv.php:110 |
+| 列の値 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Resource/doctrine/Plugin.HareruyaEc.Entity.DtbOtcBuyOrder.dcm.yml:183 |

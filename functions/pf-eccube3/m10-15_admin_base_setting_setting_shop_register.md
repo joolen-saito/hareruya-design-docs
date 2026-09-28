@@ -34,6 +34,14 @@
 
 会社名(カナ)・店名(カナ)は、ひらがなで入力しても全角カタカナへ直して保存する。濁点・半濁点は1文字にまとめる。
 
+### ショップカラーの入力
+
+ショップカラーは必須で、「#」に続けて半角英数字を並べた7文字以内の値だけを受け付ける。
+
+「#」で始まらない値や記号を含む値は保存せず、「半角英数字で入力してください。」と表示する。
+
+受け付けたショップカラーは店舗情報に保存する。
+
 ## 入出力
 
 | 種類 | 内容 |
@@ -79,4 +87,7 @@
 | 保存後の戻り先 | P3 | ec-cube:app/Customize/Controller/Admin/Integration/BranchController.php:152-154 |
 | 保存後の戻り先 | P3 | ec-cube:src/Eccube/Resource/locale/messages.ja.yaml:401 |
 | カナ項目の変換 | P3 | ec-cube:app/Customize/Form/Type/Admin/Integration/BranchManagementType.php:351-381 |
+| ショップカラーの入力 | P2 | ec-cube:app/Customize/Form/Type/Admin/Integration/BranchManagementType.php:241-252 |
+| ショップカラーの入力 | P2 | ec-cube:app/config/eccube/packages/branch_config.yaml:7 |
+| ショップカラーの入力 | P2 | ec-cube:app/Customize/Entity/BaseInfoTrait.php:247 |
 | 入出力: 永続化 | P1 | ec-cube:app/Customize/Controller/Admin/Integration/BranchController.php:130-150 |

@@ -18,6 +18,8 @@
 
 再実行すると実行時点のデータで集計し直し、対象の販売数を上書きする。重複して加算されることはない。途中で失敗したときは、それまでに反映した分の更新だけが残る。
 
+販売数の更新は商品規格ごとに1件ずつ確定する。処理中に例外が起きたときは、それまでに更新した商品規格の販売数は反映済みのまま残り、未処理の商品規格は更新されない。
+
 ### エラー時の扱い
 
 | エラー内容 | 処理 |
@@ -30,9 +32,11 @@
 
 | 種類 | 内容 |
 |------|------|
-| 入力 | コマンド名。引数は取らない |
+| 入力 | コマンド名とバッチ名。第2引数以降は集計に使用しない |
 | 実行時出力 | 実行時刻を伴う開始と完了のメッセージをコンソールへ出力する |
 | 終了状態 | コマンド名が未指定・不一致のときは異常終了、それ以外は正常終了として返す |
+
+起動するコマンドは `product:batch` で、第1引数のバッチ名に `updateProductSummary` を指定する。第2引数以降を指定したときも、集計の対象は変わらない。
 
 ## 表示メッセージ
 
@@ -48,3 +52,11 @@
 | 反映先 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Repository/OrderDetailRepository.php:341-350 |
 | 再実行 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Service/Product/UpdateProductSummary.php:31-41 |
 | エラー時の扱い | P2 | pf-eccube3:app/Plugin/HareruyaEc/Command/ProductBatch.php:45-58 |
+| 再実行 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Service/Product/UpdateProductSummary.php:34-42 |
+| 再実行 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Repository/DtbProductSubClassRepository.php:645 |
+| 入出力 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Command/ProductBatch.php:12-24 |
+| 入出力 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Command/ProductBatch.php:30-32 |
+| 入出力 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Command/ProductBatch.php:33-36 |
+| 入出力 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Command/ProductBatch.php:53 |
+| 入出力 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Command/ProductBatch.php:66-73 |
+| 入出力 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Service/Product/UpdateProductSummary.php:19-23 |

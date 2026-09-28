@@ -8,6 +8,8 @@
 
 行はNM買取価格ごとに1行を置く。行にも列にも並び替えの指定を持たないため、読み出した順のまま表示する。
 
+買取価格が1件も登録されていないときも一覧画面を表示する。このとき列の見出しだけを表示し、データ行は出さない。一覧が空であることを知らせるメッセージは表示しない。
+
 ### 買取価格が登録されていない組み合わせ
 
 各行には、そのNM買取価格に対して買取価格が登録されている特別区分とカード状態の組み合わせだけを並べる。登録の無い組み合わせに空欄のセルは置かない。
@@ -39,6 +41,8 @@
 | --- | --- | --- |
 | 一覧の対象と並び | P3 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/BuyPriceListController.php:19-33 |
 | 一覧の対象と並び | P3 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/admin/BuyPriceList/buy_price_list.twig:35-44 |
+| 一覧の対象と並び | P3 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/BuyPriceListController.php:24 |
+| 一覧の対象と並び | P3 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/admin/BuyPriceList/buy_price_list.twig:35 |
 | 買取価格が登録されていない組み合わせ | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/BuyPriceListController.php:24-27 |
 | 買取価格が登録されていない組み合わせ | P1 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/admin/BuyPriceList/buy_price_list.twig:35-44 |
 | 金額の表示書式 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/admin/BuyPriceList/buy_price_list.twig:37-40 |

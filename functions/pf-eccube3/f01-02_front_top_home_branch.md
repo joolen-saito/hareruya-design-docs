@@ -16,7 +16,13 @@
 | 6 | 同一商品では、条件2・4を満たすもののうち、言語とカードの状態が最も上位の1件だけを残すこと |
 | 7 | 同一商品・同一言語に、状態NMかつ販売価格1円以上の商品規格が、表示している支店の在庫として登録されていること（在庫数は問わない） |
 
+条件6の上位は言語から比べ、言語IDが小さいものを上位とする。言語IDが同じときは、カード状態IDが小さいものを上位とする。
+
 並び順は表示のたびに無作為とし、1区画あたり最大3件を表示する。タイル属性がピックアップ商品のタイルだけはタイルタグではなく、表示している支店の在庫にピックアップの指定がある商品規格を対象とする。
+
+### SALE中の商品のカードの状態
+
+SALE中の商品には、同一商品の商品規格のうちカード状態IDが最も小さいものだけを載せる。NMのカード状態IDは1である。比べる相手は同一商品のすべての商品規格で、セール中かどうか・在庫の有無・表示対象かどうかを問わない。カード状態IDが最も小さい商品規格がセール中でないときは、その商品をSALE中の商品に載せない。カード状態IDが同じ商品規格は、言語が違ってもすべて載せる。
 
 ### 区画に割り当てが無いときの表示
 
@@ -56,6 +62,10 @@
 | タイルに載せる商品の抽出条件 | P2 | ec-cube:app/Customize/Repository/ProductClassRepository.php:296-390 |
 | タイルに載せる商品の抽出条件 | P2 | ec-cube:app/Customize/Entity/ProductTrait.php:13-14 |
 | 区画に割り当てが無いときの表示 | P2 | ec-cube:app/Customize/Controller/TopController.php:97-110 |
+| タイルに載せる商品の抽出条件 | P2 | ec-cube:app/Customize/Repository/ProductClassRepository.php:237-238 |
+| SALE中の商品のカードの状態 | P2 | ec-cube:app/Customize/Repository/ProductClassRepository.php:147-162 |
+| SALE中の商品のカードの状態 | P2 | ec-cube:app/Customize/Controller/Block/FirstViewController.php:140 |
+| SALE中の商品のカードの状態 | P2 | ec-cube:app/Customize/Entity/MtbCardCondition.php:15 |
 | タイルの商品表示 | P3 | ec-cube:app/template/default/Block/tile.twig:52-70 |
 | お取り寄せサービス・高額買取バナーの表示位置 | P3 | ec-cube:app/template/default/index.twig:9-25 |
 | お取り寄せサービス・高額買取バナーの表示位置 | P3 | ec-cube:app/template/default/index.twig:73-80 |

@@ -22,6 +22,7 @@
 | --- | --- | --- |
 | 追加 | 登録の実行時 | 会員情報と会員住所に加えて、住所の付帯情報と選手情報を同時に作る |
 | 追加 | 同上 | 住所の付帯情報は既定の住所名を持ち、既定のお届け先として作る |
+| 追加 | 同上 | 既定の住所名は「会員情報住所 / Membership Information Address」とする |
 | 追加 | 同上 | 選手情報には、お名前(姓・名)、MTG Campaign 登録名(姓・名)、メールアドレス、デッキ登録用ユーザーIDを持たせる |
 | 追加 | 同上 | 国が日本以外のときは、会員住所にも入力した郵便番号を控える |
 
@@ -63,3 +64,4 @@
 | 国の選択肢の並び | P3 | pf-eccube3:app/Plugin/HareruyaEc/Form/Extension/Front/EntryTypeExtension.php:101 |
 | 国の選択肢の並び | P3 | pf-eccube3:app/Plugin/HareruyaEc/Resource/locale/message.ja.yml:701 |
 | 入出力: 永続化 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/EntryController.php:114-147 |
+| 入出力: 永続化 | P1 | pf-eccube3:app/Plugin/HareruyaEc/config.yml:151 |

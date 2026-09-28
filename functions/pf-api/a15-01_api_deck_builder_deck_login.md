@@ -25,6 +25,10 @@
 
 呼び出し元は受け取ったアクセストークンを、以降のデッキビルダーAPIの認証ヘッダに付与する。各APIはトークンの利用者ID（会員ID）からプレイヤーを引いて認可する。認可の内容は各APIの設計を正とする。
 
+アクセストークンは要求ヘッダ jwt-token で受け取る。
+アクセストークンで認可する後続APIは、POST /user/logout、GET /user（デッキユーザーIDの指定が無いとき）、PUT /user、POST /deck、PUT /deck/{id}、DELETE /deck/{id}、GET /deck/{id}（非公開デッキのとき、または限定公開デッキで閲覧用トークンが一致しないとき）、GET /decks（mode=private のとき）、POST /deck/import、PUT /deck/import/{id} である。
+ヘッダが無いとき、署名を検証できないとき、利用者IDに対応するプレイヤーが無いときは、GET /deck/{id} を除く後続APIはHTTP 401を返す。
+
 ### 認証の要否
 
 本APIはトークン取得の入口であり、認証ヘッダを要求しない。未認証のクライアントが呼び出せる。なりすまし対策トークンの検証は行わず、定義外の追加項目を許容する。
@@ -41,6 +45,14 @@
 | 成功時出力 | HTTP 200。結果コード200、結果メッセージ、発行したアクセストークン、開始したセッションのID。 |
 | 失敗時出力 | 入力検証に失敗したときはHTTP 400。会員が無いかパスワードが一致しないときはHTTP 401。いずれも結果コードと結果メッセージを返す。処理中の例外はデッキビルダーAPIの共通例外処理に委ねる。 |
 
+### 入出力: エンドポイントと項目名
+
+エンドポイントは POST /user/login とする。
+要求項目は、メールアドレスを id、パスワードを password で受け取る。
+成功時の応答項目は code（数値の200）、message、access_token（アクセストークンの文字列）、session_id（セッションIDの文字列）とする。
+失敗時の応答項目は code と message の2項目とする。
+失敗時の code には、HTTPステータスと同じ400または401を入れる。
+
 ## 表示メッセージ
 
 | メッセージID | 表示位置 | 画面上の文言 | 表示条件 | 後続処理 |
@@ -48,3 +60,14 @@
 | — | API応答JSON | Authentication success | 認証に成功したとき | アクセストークンとセッションIDを返す |
 | — | API応答JSON | Required fields have not been filled in. Or the input format is incorrect | 必須未入力、メールアドレス形式不正、パスワード形式不正など入力検証に失敗したとき | 認証せずHTTP 400で返す |
 | — | API応答JSON | ID or password does not match | 該当する会員が無い、またはパスワードが一致しないとき | 認証せずHTTP 401で返す |
+
+## 出典
+| 小見出し | 重要度 | 出典 |
+| --- | --- | --- |
+| 以降の認可 | P2 | deck-api:src/Controller/BaseController.php:58-86 |
+| 以降の認可 | P2 | deck-api:config/routes.yaml:1-68 |
+| 以降の認可 | P2 | deck-api:src/Controller/DeckController.php:55-58 |
+| 入出力: エンドポイントと項目名 | P2 | deck-api:config/routes.yaml:1-4 |
+| 入出力: エンドポイントと項目名 | P2 | deck-api:src/Form/Type/LoginType.php:16-28 |
+| 入出力: エンドポイントと項目名 | P2 | deck-api:src/Controller/LoginController.php:68-73 |
+| 入出力: エンドポイントと項目名 | P2 | deck-api:src/Controller/BaseController.php:97-104 |

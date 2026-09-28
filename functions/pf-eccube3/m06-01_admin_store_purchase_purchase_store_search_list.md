@@ -22,6 +22,8 @@
 
 並び順が昇順・降順のいずれにも合致しないときは、エラーを表示して処理を打ち切る。
 
+要求で指定できるソートキーは `default` の1種類で、買取情報のIDの順に並べる。並び順の要求値として受け付けるのは `ASC`・`DESC`・`asc`・`desc` の4つである。
+
 件数を数え直した結果、最終ページの件数がちょうど境界になった直後などで対象ページが空になるときは、ページ番号を1つ戻して取得する。
 
 検索条件・ページ番号・ソートキー・並び順・表示件数は画面をまたいで保持する。ページを移動したときと表示件数を変えたときは、保持している検索条件を復元して該当ページを表示する。
@@ -81,6 +83,8 @@
 | 初期表示 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/SearchControllerTrait.php:49 |
 | 検索の実行 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/SearchControllerTrait.php:85 |
 | 検索の実行 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Repository/DtbOtcBuyOrderRepository.php:23 |
+| 検索の実行 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Repository/DtbOtcBuyOrderRepository.php:108 |
+| 検索の実行 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/SearchControllerTrait.php:140 |
 | 検索条件の当てはめ方 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Repository/DtbOtcBuyOrderRepository.php:39 |
 | 値の取り方 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/admin/OtcBuyOrder/index.twig:166-167 |
 | 値の取り方 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Entity/DtbOtcBuyOrder.php:1273 |

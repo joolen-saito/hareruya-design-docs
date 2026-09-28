@@ -19,6 +19,10 @@
 
 ログイン済みの会員であっても、会員に選手情報が紐づいていないときは、すべての言語で未登録として扱う。
 
+### 入荷通知の依頼と取消
+
+入荷通知の依頼と取消は、確認で了承したときだけ送信する。了承しなかったときは送信せず、依頼の状態を変えない。依頼に成功すると、その商品規格の入荷通知依頼が登録され、入荷通知の表示を「通知待ち」に切り替える。取消に成功すると、入荷通知の表示を「入荷時に通知」に切り替える。
+
 ### 買取の詳細への導線を出さない場合
 
 買取の詳細への導線の判定では、高額商品コードが登録されている規格を対象から外す。買取価格の条件を満たす良品の規格が、高額商品コードの付いたものだけのときは導線を表示しない。
@@ -67,3 +71,7 @@
 | 旧商品コードからの転送 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/ProductController.php:346 |
 | エラー時の扱い | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/ProductController.php:196 |
 | 入出力: 永続化 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/ProductController.php:450 |
+| 入荷通知の依頼と取消 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/Block/js/product_js.twig:184-205 |
+| 入荷通知の依頼と取消 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/Block/js/product_js.twig:278-296 |
+| 入荷通知の依頼と取消 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/CartController.php:162-171 |
+| 入荷通知の依頼と取消 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Resource/locale/message.ja.yml:1496-1502 |

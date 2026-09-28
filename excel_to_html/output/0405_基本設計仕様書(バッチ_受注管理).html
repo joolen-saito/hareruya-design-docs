@@ -1279,6 +1279,9 @@
           <p>受注1件ごとに更新をまとめて確定するため、1件の失敗を他の受注へ波及させない。処理中に例外が発生した受注はエラーメッセージを出力し、次の受注へ進む。在庫の更新を確定したあとに注文完了メールを再送信するので、メールの再送信で例外が起きても、その受注の在庫履歴と販売数の更新は残る。対象の受注が無いときは何もせずに完了する。</p>
           <h3 id="function-design-b05-02-b05-02_batch_order_order_resend_mail-受注番号の桁揃え">受注番号の桁揃え</h3>
           <p>在庫履歴と注文完了メールに載せる受注番号は、8桁のゼロ埋めにする。受注番号がまだ採番されていない受注では空欄になる。</p>
+          <h3 id="function-design-b05-02-b05-02_batch_order_order_resend_mail-在庫履歴の登録内容">在庫履歴の登録内容</h3>
+          <p>在庫履歴と販売数は、注文完了時と同じ処理で登録・更新する。登録する在庫履歴の内容は注文完了時と同じになる。</p>
+          <div class="table-wrap"><table><thead><tr><th>記録項目</th><th>値</th></tr></thead><tbody><tr><td>件数</td><td>受注明細1行ごとに1件</td></tr><tr><td>変動種別</td><td>受注</td></tr><tr><td>変動後の在庫数</td><td>商品規格の現在の在庫数</td></tr><tr><td>変動前の在庫数</td><td>商品規格の現在の在庫数に明細の数量を足した値</td></tr><tr><td>メモ</td><td>「受注による減算 注文番号：&lt;8桁の受注番号&gt; 受注時価格：&lt;明細の価格&gt; 円」</td></tr></tbody></table></div>
           <h3 id="function-design-b05-02-b05-02_batch_order_order_resend_mail-再送するメールの言語">再送するメールの言語</h3>
           <p>会員の都道府県が海外のときは英語、それ以外のときは日本語のテンプレートで再送する。テンプレートは支払方法ごとに定めたものを使う。</p>
           <h2 id="function-design-b05-02-b05-02_batch_order_order_resend_mail-入出力">入出力</h2>
@@ -1363,6 +1366,7 @@
           <p>失われるのは店頭注文番号だけである。受注そのものは残り、金額の再計算や集計は、いずれの場合も行わない。</p>
           <h3 id="function-design-b05-03-b05-03_batch_order_order_store_call_number_initialize-起動できなかったときの扱い">起動できなかったときの扱い</h3>
           <p>コマンド名が未指定のとき、および対応するバッチが無い名前を指定したときは、初期化を行わずに終了する。店頭注文番号と採番カウンタは、いずれも変わらない。</p>
+          <p>起動するコマンドは <code>order:batch</code> で、第1引数にバッチ名 <code>truncateWaitingNumber</code> を指定する。バッチ名が未指定・不一致のときは、実行日時に続けて「Nothing args or command.」をコンソールへ出力し、終了コード1で終了する。</p>
           <h2 id="function-design-b05-03-b05-03_batch_order_order_store_call_number_initialize-入出力">入出力</h2>
           <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>コマンド名。引数は使わない。実行条件は特に無く、対象が0件でも実行できる。</td></tr><tr><td>成功時出力</td><td>正常に終わったときは、実行結果の通知を出さない。</td></tr></tbody></table></div>
           <div class="renewal-spec-banner"><h3 id="function-design-b05-03-b05-03_batch_order_order_store_call_number_initialize-リニューアル後の仕様">リニューアル後の仕様</h3></div>
@@ -1519,6 +1523,7 @@
           <h2 id="function-design-b05-05-b05-05_batch_order_order_delete_smaregi_product-業務ロジック">業務ロジック</h2>
           <h3 id="function-design-b05-05-b05-05_batch_order_order_delete_smaregi_product-起動時の指定">起動時の指定</h3>
           <div class="table-wrap"><table><thead><tr><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>コマンド名が未指定、または本バッチのコマンド名と一致しないとき</td><td>連携を行わずに終了する。実行日時を添えて、引数またはコマンドが無い旨をコンソールへ出力し、異常終了として扱う</td></tr></tbody></table></div>
+          <p>起動するコマンドは <code>order:batch</code> で、第1引数にバッチ名 <code>deleteSmaregiProduct</code> を指定する。バッチ名が未指定・不一致のときにコンソールへ出す文言は「Nothing args or command.」で、このときの終了コードは1である。</p>
           <h3 id="function-design-b05-05-b05-05_batch_order_order_delete_smaregi_product-対象が無いとき・連携が失敗したときの続き">対象が無いとき・連携が失敗したときの続き</h3>
           <div class="table-wrap"><table><thead><tr><th>状況</th><th>ふるまい</th></tr></thead><tbody><tr><td>対象が1件も無いとき</td><td>連携を行わずに完了する</td></tr><tr><td>スマレジから応答が返らない、または応答に結果が含まれないとき</td><td>その受注の連携を失敗として扱う</td></tr><tr><td>ある受注の連携が失敗したとき</td><td>その受注は連携済みとして扱わないまま次の受注へ進み、残りの受注の連携は続ける</td></tr><tr><td>連携に失敗した受注</td><td>対象の条件に当てはまる限り、次回以降の実行でも再び対象になる</td></tr></tbody></table></div>
           <h2 id="function-design-b05-05-b05-05_batch_order_order_delete_smaregi_product-入出力">入出力</h2>
@@ -1527,6 +1532,8 @@
           <div class="table-wrap"><table><thead><tr><th>対象</th><th>内容</th></tr></thead><tbody><tr><td>連携が失敗したとき</td><td>何も更新しない。失敗した事実を残す更新も行わないため、後から失敗した受注を抽出することはできない</td></tr></tbody></table></div>
           <h3 id="function-design-b05-05-b05-05_batch_order_order_delete_smaregi_product-連携失敗の通知">連携失敗の通知</h3>
           <div class="table-wrap"><table><thead><tr><th>状況</th><th>内容</th></tr></thead><tbody><tr><td>通知先のメールアドレスが設定されていないとき</td><td>通知を行わない（連携の失敗は誰にも伝わらない）</td></tr><tr><td>通知するとき</td><td>注文番号・処理名・エラーコード・スマレジから返ったエラーの内容を載せる</td></tr><tr><td>通知するとき</td><td>エラーコードの先頭の数字で、認証の失敗・設定の失敗・データの誤り・それ以外の例外を区別して知らせる</td></tr></tbody></table></div>
+          <p>通知するときの本文の先頭の文は、エラーコードの先頭1桁が次の値のとき、それぞれ次の文になる。</p>
+          <div class="table-wrap"><table><thead><tr><th>エラーコードの先頭1桁</th><th>本文の先頭の文</th></tr></thead><tbody><tr><td>1</td><td>スマレジとの認証に失敗しました。</td></tr><tr><td>2</td><td>スマレジの設定に失敗しました。</td></tr><tr><td>3・4</td><td>データエラーが発生しました。</td></tr><tr><td>上記以外</td><td>例外エラーが発生しました。</td></tr></tbody></table></div>
           <div class="renewal-spec-banner"><h3 id="function-design-b05-05-b05-05_batch_order_order_delete_smaregi_product-リニューアル後の仕様">リニューアル後の仕様</h3></div>
           <h2 id="function-design-b05-05-b05-05_batch_order_order_delete_smaregi_product-表示メッセージ">表示メッセージ</h2>
           <p>本バッチは画面を持たず、利用者向けの文言を持たない。</p>
@@ -1591,6 +1598,8 @@
           <p>通知先は、システム設定の「スマレジ通信エラー送信メールアドレス」に登録されたメールアドレスとする。この設定が空のときは、二重登録を検出していても通知メールを送らずに終了する。</p>
           <h3 id="function-design-b05-06-b05-06_batch_order_order_check_duplicate_point-通知後の扱い">通知後の扱い</h3>
           <p>ポイント残高の補正は、通知を受けた管理者の手作業に委ねる。本バッチは検出結果を通知するだけで、受注・会員のポイント残高・ポイント履歴のいずれも更新しない。</p>
+          <h3 id="function-design-b05-06-b05-06_batch_order_order_check_duplicate_point-異常が起きたとき">異常が起きたとき</h3>
+          <p>ポイント履歴の取得や通知メールの送信で例外が起きたときは、その時点で処理を打ち切る。例外の内容はコンソールの標準エラー出力へ出し、終了コードは0以外になる。異常を記録する専用の画面やログは無く、確認できるのはコンソールの出力だけである。</p>
           <h2 id="function-design-b05-06-b05-06_batch_order_order_check_duplicate_point-入出力">入出力</h2>
           <h3 id="function-design-b05-06-b05-06_batch_order_order_check_duplicate_point-出力-メール">出力: メール</h3>
           <div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>件名</td><td>ポイント重複登録通知メール</td></tr><tr><td>差出人</td><td>店舗基本情報に登録された店名とメールアドレス。返信先・返送先も店舗基本情報の登録値を使う</td></tr><tr><td>本文</td><td>「ポイントの重複登録を検知しました。」「注文番号を確認してポイント残高を修正してください。」の2行に続けて、「注文番号:」の見出し行を置き、その後へ検出した注文番号を1行1件で並べる</td></tr></tbody></table></div>
@@ -1669,6 +1678,10 @@
           <h2 id="function-design-b05-07-b05-07_batch_order_order_check_not_reflected_point-業務ロジック">業務ロジック</h2>
           <h3 id="function-design-b05-07-b05-07_batch_order_order_check_not_reflected_point-通知先が未設定のとき">通知先が未設定のとき</h3>
           <p>通知先メールアドレスが未設定のときは、該当する注文があってもメールを送らずに終了する。通知先はシステム設定の「ポイント利用が反映されない決済の送信先メールアドレス」から取り、カンマ区切りで複数のあて先を指定できる。</p>
+          <h3 id="function-design-b05-07-b05-07_batch_order_order_check_not_reflected_point-決済会社の出力情報との照合">決済会社の出力情報との照合</h3>
+          <p>決済会社の出力情報は、ソニーペイメントサービス決済プラグインが注文ごとに保持する決済状態から読む。決済状態の金額が、購入金額合計と支払合計のうち大きい方と一致する注文だけを対象にする。決済状態を持たない注文は対象にならない。</p>
+          <h3 id="function-design-b05-07-b05-07_batch_order_order_check_not_reflected_point-異常が起きたとき">異常が起きたとき</h3>
+          <p>注文の取得や通知メールの送信で例外が起きたときは、その時点で処理を打ち切る。例外の内容はコンソールの標準エラー出力へ出し、終了コードは0以外になる。異常を記録する専用の画面やログは無く、確認できるのはコンソールの出力だけである。</p>
           <h2 id="function-design-b05-07-b05-07_batch_order_order_check_not_reflected_point-入出力">入出力</h2>
           <h3 id="function-design-b05-07-b05-07_batch_order_order_check_not_reflected_point-通知メールの内容">通知メールの内容</h3>
           <div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>件名</td><td>ポイント利用が反映されない決済を通知するメール</td></tr><tr><td>差出人</td><td>店舗基本情報に登録された店名とメールアドレス。返信先・返送先も店舗基本情報の登録値を使う</td></tr><tr><td>本文</td><td>先頭に見出し行「オーダーID」を置き、続けて抽出した注文IDを注文IDの降順で並べる</td></tr></tbody></table></div>
@@ -1740,6 +1753,8 @@
           <h2 id="function-design-b05-08-b05-08_batch_order_smaregi_check_error_order-入出力">入出力</h2>
           <h3 id="function-design-b05-08-b05-08_batch_order_smaregi_check_error_order-実行時の指定">実行時の指定</h3>
           <p>実行するバッチの名前を指定して起動する。名前の指定が無いとき、および定義されていない名前を指定したときは、何も処理せずに終了コード1で終了する。処理を終えたときは終了コード0を返す。</p>
+          <p>起動するコマンドは <code>smaregi:batch</code> で、第1引数にバッチ名を指定する。本バッチのバッチ名は <code>checkSmaregiErrorOrder</code> である。</p>
+          <p>定義されている名前は <code>createCustomer</code>・<code>checkCustomer</code>・<code>updatePoint</code>・<code>checkSmaregiErrorOrder</code>・<code>checkSmaregiTransaction</code> の5つだけである。これ以外の名前は、大文字と小文字だけが違う名前（<code>checksmaregierrororder</code> など）も含め、定義されていない名前として扱う。</p>
           <div class="renewal-spec-banner"><h3 id="function-design-b05-08-b05-08_batch_order_smaregi_check_error_order-リニューアル後の仕様">リニューアル後の仕様</h3></div>
           <h2 id="function-design-b05-08-b05-08_batch_order_smaregi_check_error_order-表示メッセージ">表示メッセージ</h2>
           <div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody></tbody></table></div>

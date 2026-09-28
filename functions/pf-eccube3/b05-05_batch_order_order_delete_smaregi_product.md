@@ -8,6 +8,8 @@
 |------|------|
 | コマンド名が未指定、または本バッチのコマンド名と一致しないとき | 連携を行わずに終了する。実行日時を添えて、引数またはコマンドが無い旨をコンソールへ出力し、異常終了として扱う |
 
+起動するコマンドは `order:batch` で、第1引数にバッチ名 `deleteSmaregiProduct` を指定する。バッチ名が未指定・不一致のときにコンソールへ出す文言は「Nothing args or command.」で、このときの終了コードは1である。
+
 ### 対象が無いとき・連携が失敗したときの続き
 
 | 状況 | ふるまい |
@@ -37,6 +39,15 @@
 | 通知するとき | 注文番号・処理名・エラーコード・スマレジから返ったエラーの内容を載せる |
 | 通知するとき | エラーコードの先頭の数字で、認証の失敗・設定の失敗・データの誤り・それ以外の例外を区別して知らせる |
 
+通知するときの本文の先頭の文は、エラーコードの先頭1桁が次の値のとき、それぞれ次の文になる。
+
+| エラーコードの先頭1桁 | 本文の先頭の文 |
+| --- | --- |
+| 1 | スマレジとの認証に失敗しました。 |
+| 2 | スマレジの設定に失敗しました。 |
+| 3・4 | データエラーが発生しました。 |
+| 上記以外 | 例外エラーが発生しました。 |
+
 ## 表示メッセージ
 
 本バッチは画面を持たず、利用者向けの文言を持たない。
@@ -46,6 +57,8 @@
 | 小見出し | 重要度 | 出典 |
 | --- | --- | --- |
 | 起動時の指定 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Command/OrderBatch.php:41-49 |
+| 起動時の指定 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Command/OrderBatch.php:17 |
+| 連携失敗の通知 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Service/MailService.php:1388-1401 |
 | 対象が無いとき・連携が失敗したときの続き | P1 | pf-eccube3:app/Plugin/HareruyaEc/Service/Order/DeleteSmaregiProduct.php:34-36 |
 | 対象が無いとき・連携が失敗したときの続き | P1 | pf-eccube3:app/Plugin/HareruyaEc/Service/SmaregiService.php:49-59 |
 | 対象が無いとき・連携が失敗したときの続き | P1 | pf-eccube3:app/Plugin/HareruyaEc/Repository/DtbOrderSubRepository.php:161-173 |

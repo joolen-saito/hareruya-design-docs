@@ -28,6 +28,10 @@
 | 成功時出力 | HTTP 200。処理結果コード200とメッセージ「Update user information」 |
 | 失敗時出力 | HTTP 401（認証不可）、HTTP 400（ユーザー名未指定）、HTTP 500（更新中の例外） |
 
+### 入出力: エンドポイント
+
+エンドポイントは PUT /user とする。
+
 ### 入力: リクエスト
 
 | パラメータ | 位置 | 型 | 必須／任意 | 説明 |
@@ -74,3 +78,8 @@
 | — | API応答JSON | Invalid request parameters | ユーザー名が未指定のとき | HTTP 400を返し、更新しない |
 | — | API応答JSON | Access Token is incorrect | 認証トークンを検証できないとき | HTTP 401を返し、更新しない |
 | — | API応答JSON | Authentication failed | 認証トークンに該当するプレイヤーが無いとき | HTTP 401を返し、更新しない |
+
+## 出典
+| 小見出し | 重要度 | 出典 |
+| --- | --- | --- |
+| 入出力: エンドポイント | P2 | deck-api:config/routes.yaml:13-16 |

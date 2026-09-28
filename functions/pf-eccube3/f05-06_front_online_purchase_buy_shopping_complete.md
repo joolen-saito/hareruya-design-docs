@@ -50,6 +50,8 @@
 
 進捗はSTEP3として示す。
 
+完了画面を表示するときは、保持していたオーダーIDを取り出してから、買取カートの内容とオーダーIDの保持をどちらも削除する。削除後は買取カートが空になる。
+
 ## 入出力
 
 | 種類 | 内容 |
@@ -101,3 +103,4 @@
 | 確定時の判定順序 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/PurchaseController.php:253 |
 | 完了画面 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/Purchase/complete.twig:23 |
 | 入出力: 永続化 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/PurchaseController.php:315 |
+| 完了画面 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/PurchaseController.php:401-410 |

@@ -41,6 +41,14 @@
 
 取込で登録・更新の対象になったカードIDを重複を除いて集め、支店システムへ更新を通知する。通知に失敗したときは支店更新エラーとして記録し、取込自体の成功表示は取り消さない。
 
+通知は、重複を除いたカードIDを ids[] として1件ずつ並べたフォーム形式の本文を、支店システムの更新通知の宛先へPOSTで送る。
+
+支店システムの応答が成功を示さないときを通知の失敗とする。
+
+通知の成否は、対象のカードIDをカンマ区切りで並べてアプリケーションログに記録する。
+
+支店更新エラーには、対象のカードIDをカンマ区切りで並べた値、対象の種別（カード）、支店システムの応答内容、記録した日時を残す。
+
 ### エラー時の扱い
 
 | 事象 | 扱い |
@@ -73,5 +81,9 @@
 | 列ごとの取り込み方 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Service/Csv/AbstractCsvService.php:77 |
 | 取り込みの確定 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/CardCsvController.php:70-82 |
 | 支店への通知 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Service/BranchUpdateService.php:32 |
+| 支店への通知 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Service/Csv/CardCsv.php:125 |
+| 支店への通知 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Service/BranchUpdateService.php:32-44 |
+| 支店への通知 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Service/BranchUpdateService.php:120-127 |
+| 支店への通知 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Service/BranchUpdateService.php:205-218 |
 | エラー時の扱い | P2 | pf-eccube3:app/Plugin/HareruyaEc/Service/Csv/AbstractCsvService.php:208 |
 | エラー時の扱い | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/CardCsvController.php:59-82 |

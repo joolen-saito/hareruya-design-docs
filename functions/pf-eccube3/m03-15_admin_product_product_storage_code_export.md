@@ -20,7 +20,7 @@
 
 ### 出力: CSVファイル
 
-ヘッダ行を先頭に出力し、続けて略称タグを1件1行で出力する。ファイル先頭にはBOMを付ける。区切り文字は出力用の設定値（配布既定はカンマ）とする。ファイル名は `storage_code_` に出力時刻（年月日時分秒）を付け、拡張子を `.csv` とする。画面には表示せず、添付ファイルとしてダウンロードさせる。
+ヘッダ行を先頭に出力し、続けて略称タグを1件1行で出力する。ファイル先頭にはBOMを付ける。BOMはUTF-8のBOM（バイト列 EF BB BF）で、ファイル先頭に1回だけ付ける。出力の文字コードの設定にかかわらず、同じ3バイトを付ける。区切り文字は出力用の設定値（配布既定はカンマ）とする。ファイル名は `storage_code_` に出力時刻（年月日時分秒）を付け、拡張子を `.csv` とする。画面には表示せず、添付ファイルとしてダウンロードさせる。
 
 ## 出典
 
@@ -32,3 +32,4 @@
 | 出力: CSVファイル | P2 | pf-eccube3:app/Plugin/HareruyaEc/ServiceProvider/HareruyaEcServiceProvider.php:604 |
 | 出力: CSVファイル | P2 | pf-eccube3:app/Plugin/HareruyaEc/Service/CsvExportService.php:362-371 |
 | 出力: CSVファイル | P2 | pf-eccube3:src/Eccube/Resource/config/constant.yml.dist:249 |
+| 出力: CSVファイル | P2 | pf-eccube3:app/Plugin/HareruyaEc/Service/CsvExportService.php:369-371 |

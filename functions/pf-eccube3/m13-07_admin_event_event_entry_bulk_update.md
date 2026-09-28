@@ -12,6 +12,8 @@
 
 判定はこの順に行い、満たさない判定が出た時点で以降の更新を行わない。
 
+順序3の検証は、申込状況が選ばれていることを求める。申込状況が「申込状況選択」のままのときは申込を1件も更新せず、「申込状況は必須です。」を応答として返す。
+
 ### 一括更新後の一覧表示
 
 一括更新の結果はメッセージとして応答に返すだけで、イベント申込一覧の再読み込みも一括編集の入力領域の閉じ込みも行わない。一覧に表示中の申込状況は、一覧を再表示するまで更新前の値のまま残る。
@@ -37,4 +39,6 @@
 | --- | --- | --- |
 | 一括編集の受け付け条件 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/EntryController.php:590-616 |
 | 一括編集の受け付け条件 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/admin/assets/js/entrylist.js:68-78 |
+| 一括編集の受け付け条件 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Form/Type/Admin/Entry/BulkUpdateType.php:25-32 |
+| 一括編集の受け付け条件 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Resource/locale/message.ja.yml:550-551 |
 | 一括更新後の一覧表示 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/admin/assets/js/entrylist.js:79-94 |

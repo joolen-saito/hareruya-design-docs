@@ -39,6 +39,10 @@
 
 削除を実行したときも、削除できずに中止したときも、一覧画面へ戻す。
 
+### CSV出力
+
+CSV出力は、確認画面を挟まずに略称タグのCSVファイルをダウンロードさせ、画面は遷移しない。ファイル名は storage_code_ に出力時刻（年月日時分秒）と .csv を付けたものとする。出力する内容は略称タグCSV出力（M03-15）を正とする。
+
 ## 入出力
 
 | 種類 | 内容 |
@@ -84,3 +88,5 @@
 | 削除の判定順序 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Product/StorageCodeController.php:85-103 |
 | 削除の判定順序 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/FormValidHelper.php:39-46 |
 | 入出力: 永続化 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Product/StorageCodeController.php:64-75 |
+| CSV出力 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Product/StorageCodeController.php:112-140 |
+| CSV出力 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/admin/Product/storage_code.twig:13-14 |

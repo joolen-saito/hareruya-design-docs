@@ -17,6 +17,8 @@
 
 イベント詳細が存在しないときはページが見つからない（HTTP404）として扱う。受付期間外、またはログイン会員が申込済みのときはイベント詳細（F07-03）へ戻す。
 
+定員に達しているとき（申込済み人数が定員以上のとき）も、申込対象の選択を表示せずイベント詳細（F07-03）へ戻す。
+
 別日程の同イベントとして扱うのは、ログイン会員の選手情報で申込可能なものだけである。
 
 ### 支払方法の選択
@@ -50,6 +52,10 @@
 申込対象ごとに申込と申込選手（ログイン会員と仮選手）を作成する。支払番号は申込群に共通で、`EV`・先頭申込の作成日時（年月日と時分。時は12時間表記）・ハイフン・10桁ゼロ詰めの申込ID をこの順に連結した値である。
 
 登録結果は、無料のときは完了画面用の対象詳細IDを、有料のときは支払番号と金額を返す。
+
+申込フォームは、支払方法が指定されていないとき、または指定した支払方法が登録済みの支払方法に当たらないときに不正とする。申込フォームが不正のときは、「支払い前イベント登録エラー」とフォームの全検証エラーをエラーログに記録する。
+
+なりすまし対策トークンが無効のときは、エラーログを記録せずアクセス拒否として扱う。非同期でない要求も、エラーログを記録しない。
 
 ### 申込可否の判定
 
@@ -121,9 +127,13 @@
 | Excel基本設計により廃止された仕様 | P2 | 0214:sheet-5 |
 | Excel基本設計により廃止された仕様 | P2 | 0214:sheet-15 |
 | 申込対象の選択 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/EventController.php:225-259 |
+| 申込対象の選択 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Entity/DtbEventDetail.php:840-842 |
 | 支払方法の選択 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/EventController.php:270-320 |
 | 申込内容の確認 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/EventController.php:331-386 |
 | 申込の登録 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/EventController.php:418-580 |
+| 申込の登録 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/EventController.php:425-431 |
+| 申込の登録 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/FormValidHelper.php:18-47 |
+| 申込の登録 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Form/Type/Front/Event/RegistrationType.php:24-31 |
 | 申込可否の判定 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/EventController.php:777-782 |
 | 申込可否の判定 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/EventController.php:874-882 |
 | 申込可否の判定 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Entity/DtbEventDetail.php:836-843 |

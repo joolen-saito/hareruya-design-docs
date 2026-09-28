@@ -6,6 +6,8 @@
 
 画像一覧は保管先のパスの降順で並べ、表示するのは先頭2000件までとする。更新日付の順ではないので、全店舗を表示するときは店舗ごとの区分の降順にまとまり、同じ区分の中では後から保管したものほど先に並ぶ。保管先の区分（フォルダ）そのものは一覧に出さず、ファイルだけを並べる。
 
+更新日付には、保管先に記録された画像ファイルの最終更新日時を「年/月/日 時:分:秒」（例: 2026/09/28 10:15:30）の形で表示する。
+
 アップロードまたはバナー設定に失敗して画面を再表示するときは、店舗による絞り込みも2000件の上限も適用せず、全店舗の画像を保管先のパスの昇順で一覧に出す。アップロードに失敗したときは絞り込み中の店舗の表示も解除され、全店舗を表示している状態に戻る。
 
 ### アップロードできる画像の種別
@@ -61,6 +63,7 @@
 | 一覧の並びと表示上限 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/BannerController.php:87 |
 | 一覧の並びと表示上限 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/BannerController.php:267 |
 | 一覧の並びと表示上限 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Service/S3AccessService.php:114 |
+| 一覧の並びと表示上限 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/admin/Banner/banner.twig:203-205 |
 | アップロードできる画像の種別 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/BannerController.php:200 |
 | 保管するファイル名 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/BannerController.php:209 |
 | 保管するファイル名 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Service/S3AccessService.php:47 |

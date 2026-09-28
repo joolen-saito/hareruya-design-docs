@@ -16,6 +16,10 @@
 
 デッキ本体と採用カードの整合性を検証できないときは入力不正（HTTP 400）とする。
 
+一時保存の保存先は Redis とする。
+一時保存のキーは、「deck_」にデッキIDを付けた値（例: deck_123）とする。
+確定保存したときは、当該デッキIDのキーが存在すれば Redis から削除する。
+
 ### 応答の内容
 
 処理結果コードと処理結果メッセージ（「Deck update success」）を返す。公開範囲が限定公開のときだけ、閲覧用トークンをあわせて返す。
@@ -55,3 +59,11 @@
 ## 表示メッセージ
 
 本APIは画面を持たない。応答本文の処理結果メッセージは入出力の節を正とする。
+
+## 出典
+| 小見出し | 重要度 | 出典 |
+| --- | --- | --- |
+| 保存先の切り替え | P2 | deck-api:src/Controller/DeckController.php:290-294 |
+| 保存先の切り替え | P2 | deck-api:src/Service/DeckService.php:254-268 |
+| 保存先の切り替え | P2 | deck-api:src/Service/DeckService.php:456-458 |
+| 保存先の切り替え | P2 | deck-api:config/services.yaml:15 |

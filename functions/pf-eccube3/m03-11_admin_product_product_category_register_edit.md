@@ -32,6 +32,10 @@
 
 編集中のカテゴリは、兄弟カテゴリの一覧で編集への入口を持たず、編集中である旨を示す。
 
+### CSV出力項目設定
+
+CSV出力項目設定は、システム設定のCSV出力項目設定画面を、カテゴリCSVを対象とした状態で開く。カテゴリCSVのダウンロードとは別の操作である。
+
 ### 保存後の遷移
 
 保存に成功したときは、新規登録・編集のいずれも、保存したカテゴリの編集画面へ遷移する。
@@ -82,3 +86,4 @@
 | 兄弟カテゴリ一覧の操作 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/admin/Product/category.twig:210-213 |
 | 保存後の遷移 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Product/CategoryController.php:148 |
 | 入出力: 永続化 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Product/CategoryController.php:77-84 |
+| CSV出力項目設定 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/admin/Product/category.twig:185-186 |

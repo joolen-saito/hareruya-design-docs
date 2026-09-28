@@ -1325,6 +1325,8 @@
           <p>商品画像は先に読み込み中の画像を表示し、読み進めて表示位置に入った時点で実画像へ差し替える。商品画像が登録されていないときは、画像なしを表す代替画像を同じ手順で表示する。買取価格は商品データの登録値をそのまま表示するだけで、本機能では計算しない。本ページではショップ名の見出しを表示しない。</p>
           <h3 id="function-design-f05-01-f05-01_front_online_purchase_buy_top-カート追加の応答">カート追加の応答</h3>
           <p>「カートに追加」の押下は画面遷移を伴わず非同期で行い、処理中は押下したボタンの位置に読み込み中の表示を出す。処理が終わると読み込み中の表示を消してボタンを元に戻し、成否いずれの結果も押下した商品の位置にダイアログで知らせる。ダイアログの文言と、閉じるまでのふるまい（自動的に閉じるか、利用者が閉じるまで残るか）はF05-05を正とする。買取カートへ追加するふるまいもF05-05を正とする。</p>
+          <h3 id="function-design-f05-01-f05-01_front_online_purchase_buy_top-カテゴリ一覧">カテゴリ一覧</h3>
+          <p>カテゴリ一覧は、販売側の商品カテゴリ一覧と同じデータ（カードセット、レアリティ、カテゴリ）から、同じツリー構造と表示項目で表示する。各カテゴリの遷移先は、販売側の商品検索に代えて買取商品検索とする。販売側と異なり、遷移先に並び順の指定を付けない。販売側だけが表示する決済・受取・発送・ポイントの販促バナーは表示しない。</p>
           <h3 id="function-design-f05-01-f05-01_front_online_purchase_buy_top-商品数の入力範囲">商品数の入力範囲</h3>
           <p>商品数の初期値は1とする。増減ボタンで設定できる値は1から20までとする。</p>
           <h2 id="function-design-f05-01-f05-01_front_online_purchase_buy_top-入出力">入出力</h2>
@@ -1462,12 +1464,17 @@
           <p>表示順、並び順、カードIDも入力欄を出さないが、検索ボタンからの再検索では引き継がない。一覧の絞り込み操作で検索し直すときにだけ引き継ぐ。</p>
           <h3 id="function-design-f05-02-f05-02_front_online_purchase_buy_product_search-検索の成立条件">検索の成立条件</h3>
           <p>検索条件が空のときは、検索フォームだけを表示する。全件検索に相当する条件のときは検索を実行せず、空の結果として扱う。</p>
+          <p>全件検索に相当するのは、商品名・カテゴリ・カードセット・フォーマット・価格の下限・価格の上限・イラストレーター・サブタイプがいずれも空で、色・固有色・マナコスト・レアリティ・カードタイプ・Foil・言語・タグ・カードIDがいずれも指定されず、在庫の指定が無いか在庫あり・なしのすべてを表示する指定のときである。</p>
+          <p>検索結果が0件のときは、全件検索に相当する条件で空の結果としたときも含めて、該当なしの案内を付けた一覧を表示し、HTTPステータス404で応答する。</p>
           <h3 id="function-design-f05-02-f05-02_front_online_purchase_buy_product_search-付随して取得するもの">付随して取得するもの</h3>
           <p>買取特集タグが指定されているときは、対応する説明文（イベント・セールの説明）を取得する。カードIDが指定されているときは、対象のカード情報を取得する。</p>
+          <p>取得したカード情報の日本語名は、ページタイトルとパンくずの検索条件に表示する。カードIDは検索条件にも加わり、一覧はそのカードIDの商品だけに絞り込まれる。</p>
+          <h3 id="function-design-f05-02-f05-02_front_online_purchase_buy_product_search-色とカードタイプの論理演算子">色とカードタイプの論理演算子</h3>
+          <p>色とカードタイプは、それぞれ論理演算子「or」「and」の単一選択を持ち、初期値は「or」とする。「and」のときは、選んだ色（カードタイプ）をすべて持つ商品だけを抽出する。「or」のときは、選んだ色（カードタイプ）を1つでも持つ商品を抽出する。色（カードタイプ）を1つも選ばないときは、論理演算子にかかわらずその条件では絞り込まない。</p>
           <h3 id="function-design-f05-02-f05-02_front_online_purchase_buy_product_search-表示件数">表示件数</h3>
           <p>1ページの表示件数は、指定がないときは60件とする。表示するページは、指定がないときは1ページ目とする。</p>
           <h2 id="function-design-f05-02-f05-02_front_online_purchase_buy_product_search-入出力">入出力</h2>
-          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>検索フォームの各条件。</td></tr><tr><td>成功時出力</td><td>検索フォーム、または絞り込み結果の一覧。</td></tr><tr><td>失敗時出力</td><td>本機能固有のエラー応答は持たない。</td></tr></tbody></table></div>
+          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>検索フォームの各条件。</td></tr><tr><td>成功時出力</td><td>検索フォーム、または絞り込み結果の一覧。</td></tr><tr><td>失敗時出力</td><td>検索結果が0件のときは、該当なしの案内を付けた一覧をHTTPステータス404で返す。</td></tr></tbody></table></div>
           <div class="renewal-spec-banner"><h3 id="function-design-f05-02-f05-02_front_online_purchase_buy_product_search-リニューアル後の仕様">リニューアル後の仕様</h3></div>
           <h2 id="function-design-f05-02-f05-02_front_online_purchase_buy_product_search-表示メッセージ">表示メッセージ</h2>
           <div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>—</td><td>検索ボタン</td><td>検索</td><td>検索フォームの表示時</td><td>指定した条件で検索する</td></tr><tr><td>—</td><td>カード名の入力欄</td><td>カード名の入力欄に表示する案内文言</td><td>検索フォームの表示時</td><td>検索フォームに留まる</td></tr></tbody></table></div>
@@ -1707,8 +1714,11 @@
           <p>タグが1件だけ指定されているときは、そのタグに登録された説明文を一覧の上部に表示する。</p>
           <h3 id="function-design-f05-03-f05-03_front_online_purchase_buy_product_list-表示件数">表示件数</h3>
           <p>1ページの件数は既定60件で、指定によって変更できる。</p>
+          <p>件数はURLのクエリパラメータ pageSize で指定する。pageSize が空または0のときは60件とする。それ以外の値は上限を設けずにそのまま1ページの件数とする。</p>
           <h3 id="function-design-f05-03-f05-03_front_online_purchase_buy_product_list-画面の内容">画面の内容</h3>
           <p>絞り込みにはマナコストがあり、色の選択をすべて解除する操作を持つ。 商品画像は遅延読み込みし、読み込みが済むまで読み込み中の画像を表示する。 絞り込みの行と表示順の行は、PCとスマートフォンで表示する内容を出し分ける。 一覧の下部には検索フォームを表示する。</p>
+          <h3 id="function-design-f05-03-f05-03_front_online_purchase_buy_product_list-カテゴリ一覧">カテゴリ一覧</h3>
+          <p>カテゴリ一覧は、販売側の商品カテゴリ一覧と同じデータ（カードセット、レアリティ、カテゴリ）から、同じツリー構造と表示項目で表示する。各カテゴリの遷移先は、販売側の商品検索に代えて買取商品検索とする。販売側と異なり、遷移先に並び順の指定を付けない。販売側だけが表示する決済・受取・発送・ポイントの販促バナーは表示しない。</p>
           <h3 id="function-design-f05-03-f05-03_front_online_purchase_buy_product_list-買取価格とカート追加">買取価格とカート追加</h3>
           <p>各商品規格に登録済みの買取価格を表示する。本機能では価格を計算しない。</p>
           <p>数量欄の初期値は1点とする。数量上限の判定と、追加完了・追加失敗・上限超過のダイアログは、ネット買取カート（F05-05）を正とする。</p>
@@ -1945,12 +1955,14 @@
         <div class="function-design-body">
           <h2 id="function-design-f05-04-f05-04_front_online_purchase_buy_product_detail-業務ロジック">業務ロジック</h2>
           <h3 id="function-design-f05-04-f05-04_front_online_purchase_buy_product_detail-画面のふるまい">画面のふるまい</h3>
-          <div class="table-wrap"><table><thead><tr><th>対象</th><th>ふるまい</th></tr></thead><tbody><tr><td>カートへの追加</td><td>非同期で買取カートへ登録し、完了・失敗・上限超過のダイアログを表示する（F05-05を正とする）</td></tr><tr><td>買取数量</td><td>詳細画面で選べる買取数量は1〜20とする</td></tr><tr><td>商品クラスの切り替え</td><td>選んだ商品クラスを選択状態にし、対応する商品画像へ切り替える。選択した言語・商品クラスは画面のURLの指定へ反映する</td></tr><tr><td>同名カード一覧の商品画像</td><td>読み込み中の画像を先に出し、一覧に表示された時点で実画像へ差し替える</td></tr></tbody></table></div>
+          <div class="table-wrap"><table><thead><tr><th>対象</th><th>ふるまい</th></tr></thead><tbody><tr><td>カートへの追加</td><td>非同期で買取カートへ登録し、完了・失敗・上限超過のダイアログを表示する（F05-05を正とする）</td></tr><tr><td>買取数量</td><td>詳細画面で選べる買取数量は1〜20とする</td></tr><tr><td>カート追加の上限超過</td><td>同じ規格について、買取カート内の数量と追加する数量の合計が20点を超えるときは、数量を保存せず、上限超過のダイアログを表示する</td></tr><tr><td>カート追加の失敗</td><td>規格の指定が空の追加はエラー応答とし、押した「カートに追加」の付近に追加失敗を通知する。買取カートは変更しない</td></tr><tr><td>商品クラスの切り替え</td><td>選んだ商品クラスを選択状態にし、対応する商品画像へ切り替える。選択した言語・商品クラスは画面のURLの指定へ反映する</td></tr><tr><td>同名カード一覧の商品画像</td><td>読み込み中の画像を先に出し、一覧に表示された時点で実画像へ差し替える</td></tr></tbody></table></div>
           <h3 id="function-design-f05-04-f05-04_front_online_purchase_buy_product_detail-初期表示の決め方">初期表示の決め方</h3>
           <p>商品IDから商品詳細を取得する。取得できないときはページなし（HTTP404）とする。</p>
           <div class="table-wrap"><table><thead><tr><th>項目</th><th>決め方</th></tr></thead><tbody><tr><td>初期表示言語</td><td>指定された言語が有効ならその言語、無効・未指定なら先頭の言語とする</td></tr><tr><td>初期表示の商品クラス</td><td>指定されたクラスが有効ならそのクラス、無効・未指定なら当該言語の先頭クラスとする</td></tr></tbody></table></div>
           <h3 id="function-design-f05-04-f05-04_front_online_purchase_buy_product_detail-買取価格と同名カード">買取価格と同名カード</h3>
           <div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>買取価格表示</td><td>状態ごとに登録済みの買取価格をそのまま表示する。本機能では価格を計算しない</td></tr><tr><td>同名カードの抽出</td><td>基本土地のときは同名カードの一覧を取得しない</td></tr></tbody></table></div>
+          <h3 id="function-design-f05-04-f05-04_front_online_purchase_buy_product_detail-カテゴリ一覧">カテゴリ一覧</h3>
+          <p>カテゴリ一覧は、販売側の商品カテゴリ一覧と同じデータ（カードセット、レアリティ、カテゴリ）から、同じツリー構造と表示項目で表示する。各カテゴリの遷移先は、販売側の商品検索に代えて買取商品検索とする。販売側と異なり、遷移先に並び順の指定を付けない。販売側だけが表示する決済・受取・発送・ポイントの販促バナーは表示しない。</p>
           <h3 id="function-design-f05-04-f05-04_front_online_purchase_buy_product_detail-旧商品コードからの転送">旧商品コードからの転送</h3>
           <p>旧商品コードから新商品コードへの対応を取得する。対応が無いときはトップページへ戻す。新商品コードで商品を取得できないときもトップページへ戻す。取得できたときは、その商品の買取商品詳細（商品ID・言語付き）へ遷移する。</p>
           <h3 id="function-design-f05-04-f05-04_front_online_purchase_buy_product_detail-エラー時の扱い">エラー時の扱い</h3>
@@ -2237,6 +2249,7 @@
           <div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>買取カートがあるか</td><td>無ければカート画面へ戻す</td></tr><tr><td>2</td><td>ログイン済みか</td><td>未ログインなら買取ログイン画面へ戻す</td></tr><tr><td>3</td><td>入力（確認内容、該当時は登録番号）が妥当か</td><td>不備があれば記入画面を再表示する</td></tr><tr><td>4</td><td>上記を通過</td><td>登録処理を行い、完了画面へ移す</td></tr><tr><td>5</td><td>登録の途中で例外が起きたか</td><td>登録内容をすべて取り消し、例外として扱う</td></tr></tbody></table></div>
           <h3 id="function-design-f05-06-f05-06_front_online_purchase_buy_shopping_complete-完了画面">完了画面</h3>
           <p>進捗はSTEP3として示す。</p>
+          <p>完了画面を表示するときは、保持していたオーダーIDを取り出してから、買取カートの内容とオーダーIDの保持をどちらも削除する。削除後は買取カートが空になる。</p>
           <h2 id="function-design-f05-06-f05-06_front_online_purchase_buy_shopping_complete-入出力">入出力</h2>
           <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>買取カートの内容、会員情報、記入画面での入力内容</td></tr><tr><td>成功時出力</td><td>完了画面（保持したオーダーIDを表示する）</td></tr><tr><td>失敗時出力</td><td>入力不備時は記入画面の再表示、買取カートが無いときや未ログイン時は各画面への移動</td></tr></tbody></table></div>
           <h3 id="function-design-f05-06-f05-06_front_online_purchase_buy_shopping_complete-入出力-永続化">入出力: 永続化</h3>

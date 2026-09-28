@@ -31,6 +31,17 @@
 
 非同期の追加は追加後のカート内容（商品明細と合計）を返し、画面遷移を伴う追加は買い物かご画面を表示する。カート内容の取得だけを求める要求にも同じカート内容を返す。
 
+要求の送信先と受け取る値は、方式ごとに次のとおりとする。
+
+| 方式 | 送信先 | 受け取る値 | 応答 |
+| --- | --- | --- | --- |
+| 1件の追加（非同期） | POST /cart/add | JSON本文の product_class_id・quantity、またはフォーム値 product_class_id・quantity | 追加後のカート内容 |
+| 複数件の追加（非同期） | POST /cart/add_bulk | フォーム値 cart_list（要素ごとに product_class_id・quantity） | 追加後のカート内容 |
+| 1件の追加（画面遷移あり） | POST /cart/add_show | フォーム値 product_class_id・quantity | 成否にかかわらず買い物かご画面へ遷移する |
+| カート内容の取得 | GET /cart/get | なし | カート内容 |
+
+JSON本文を読むのは、フォーム値に product_class_id も quantity も無いときである。複数件の追加で cart_list が無い、または並びでないときは、1件も追加しない。カート内容の応答は、カートの内容（cart）と、カートを識別する値（cookie）を持つJSONとする。
+
 ### 入荷通知依頼
 
 | 条件 | 結果 |
@@ -40,6 +51,8 @@
 | すでに同じ商品規格の依頼がある | その依頼を取り消す |
 | 依頼件数が上限に達している | 依頼を登録せず、上限値を添えて失敗を返す |
 | 上記以外 | 依頼を登録する |
+
+依頼の送信先は POST /cart/pushReceive で、商品規格をフォーム値 product_class_id で渡す。取消では依頼に削除日時を記録し、依頼の行は残す。依頼件数の上限値は、オプションマスタの入荷通知上限件数で決まる。上限と比べる依頼件数は、その会員の依頼のうち削除日時が記録されていないものの件数である。
 
 ### カートが空のとき
 
@@ -91,5 +104,11 @@
 | 操作の改ざん防止 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/Cart/index.twig:48-51 |
 | カートへの追加 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/CartController.php:45-106 |
 | 入荷通知依頼 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/CartController.php:129-172 |
+| カートへの追加 | P1 | pf-eccube3:app/Plugin/HareruyaEc/ControllerProvider/FrontControllerProvider.php:161-168 |
+| カートへの追加 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/CartController.php:216-224 |
+| カートへの追加 | P1 | pf-eccube3:src/Eccube/Controller/CartController.php:107-167 |
+| 入荷通知依頼 | P2 | pf-eccube3:app/Plugin/HareruyaEc/ControllerProvider/FrontControllerProvider.php:187-188 |
+| 入荷通知依頼 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Resource/doctrine/Plugin.HareruyaEc.Entity.DtbProductRequest.dcm.yml:56-60 |
+| 入荷通知依頼 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Repository/DtbProductRequestRepository.php:58-64 |
 | カートが空のとき | P3 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/Cart/index.twig:81-110 |
 | 入出力: 永続化 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/CartController.php:129-172 |

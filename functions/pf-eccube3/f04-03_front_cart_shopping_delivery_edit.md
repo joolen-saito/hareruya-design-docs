@@ -18,6 +18,10 @@
 
 国が日本のときは、郵便番号欄の脇に日本郵便の郵便番号検索ページを開く外部リンクを置く。英語ページでは「Search post code」と表示する。
 
+### 配送先氏名カナの文字種
+
+配送先氏名カナは、全角カタカナ・半角カタカナ・長音記号「ー」・半角英字だけを受け付ける。ひらがなは全角カタカナに変換してから判定する。漢字・数字・記号・全角英字を含むときは入力エラーとし、編集画面を再表示する。
+
 ### 配送先名称の文字数
 
 配送先名称は128文字を超えると入力エラーとする。
@@ -29,6 +33,10 @@
 ### 登録上限の判定
 
 新規登録では、編集画面を開くときと登録を確定するときの両方でアドレス帳の登録件数を判定する。上限に達しているときは編集画面を表示せず、上限超過のエラーを表示してご注文方法指定へ戻す。既存の配送先を変更するときは登録件数を判定しない。
+
+### 確認画面を経た登録
+
+編集画面からの送信が検証を通ると、確認画面を表示する。確認画面を表示した時点では、配送先を登録・更新しない。確認画面からの送信で配送先を登録・更新し、ご注文方法指定へ戻る。確認画面から戻るときは、入力内容を保ったまま編集画面を再表示する。
 
 ### 登録後の配送先への反映
 
@@ -85,3 +93,10 @@
 | 郵便番号欄の外部リンク | P3 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/Shopping/delivery_edit.twig:119 |
 | 日本語以外のページでの入力欄 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Form/Extension/Front/CustomerAddressTypeExtension.php:109 |
 | 入出力: 永続化 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/ShoppingController.php:998 |
+| 確認画面を経た登録 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/ShoppingController.php:958-969 |
+| 確認画面を経た登録 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/ShoppingController.php:994-1018 |
+| 確認画面を経た登録 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/ShoppingController.php:839-917 |
+| 確認画面を経た登録 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/Shopping/delivery_edit.twig:24 |
+| 確認画面を経た登録 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/Shopping/delivery_confirm.twig:21 |
+| 配送先氏名カナの文字種 | P2 | pf-eccube3:src/Eccube/Form/Type/KanaType.php:45 |
+| 配送先氏名カナの文字種 | P2 | pf-eccube3:src/Eccube/Form/Type/KanaType.php:60 |

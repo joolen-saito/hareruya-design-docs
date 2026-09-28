@@ -20,6 +20,17 @@
 
 グループ分けに使うのは受注明細の価格である。価格の欄に出すのは商品規格の販売価格なので、受注のあとに販売価格を変えたときは、価格の欄とグループが食い違う。
 
+### 並び順
+
+明細はカードの明細をカード以外の明細より先にし、次に棚番号の並び順、言語、カード状態の順に比べる。言語とカード状態の比べ方と、最後のキーは次のとおりとする。
+
+| キー | 並べ方 |
+| --- | --- |
+| 言語 | 言語IDの昇順 |
+| カード状態 | 言語が同じ明細の中で、カード状態IDの昇順 |
+| カード番号 | 略称タグがアルファベット順の対象のときは、カード番号を持つ明細を先にし、カードの英語名の昇順に並べる。対象でないときは、カード番号を数値として読んだ値の昇順に並べる |
+| 最後のキー | それまでのキーがすべて同じ明細は、カード番号の文字列の昇順に並べる |
+
 ### 数量
 
 明細の数量の合計を、色数とカテゴリ数で割った値をその明細の数量とする。色が紐づかない明細は色数を 1 として扱う。
@@ -69,3 +80,5 @@
 | 改ページ | P3 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/admin/ShippingStandby/picking_list.twig:1 |
 | 出力: ピッキングリスト | P3 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/admin/ShippingStandby/picking_list.twig:44-59 |
 | 出力: ピッキングリスト | P3 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/admin/ShippingStandby/picking_list.twig:294-304 |
+| 並び順 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Repository/SortProductTrait.php:49-68 |
+| 並び順 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Repository/DtbShippingStandbyRepository.php:196 |

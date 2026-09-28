@@ -41,6 +41,12 @@
 
 イベント名の欄は、イベント名（日）とイベント名（英）を半角空白で連結して表示する。
 
+### 日程が登録されたイベントの削除
+
+一覧の各イベントの削除は、日程の登録の有無にかかわらず表示する。
+
+日程が1件以上登録されたイベントは削除せず、「日程情報が存在する場合、イベント情報を削除することができません。」と表示して要求元の画面へ戻す。
+
 ### エラー時の扱い
 
 | エラー内容 | 処理 |
@@ -77,4 +83,7 @@
 | 検索の成立条件 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/SearchControllerTrait.php:161 |
 | ページ番号の補正 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/SearchControllerTrait.php:186 |
 | 表示形式 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/admin/Event/eventlist.twig:159 |
+| 日程が登録されたイベントの削除 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/admin/Event/eventlist.twig:165 |
+| 日程が登録されたイベントの削除 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/EventController.php:168-173 |
+| 日程が登録されたイベントの削除 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Resource/locale/message.ja.yml:1071 |
 | エラー時の扱い | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/SearchControllerTrait.php:140 |

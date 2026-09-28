@@ -32,6 +32,16 @@
 
 件数を数え直した結果、最終行の削除などで現在ページが空になるときは、ページ番号を1つ減らして取得する。
 
+### カード名リスト作成
+
+カード名リスト作成は、サジェスト用のファイルとして cardNameList.json と、フォーマットコードを持つフォーマットごとの cardNameList_{フォーマットコード}.json を、ユーザーデータ領域の list 配下に作る。同じ名前のファイルがあるときは上書きする。
+
+作ったファイルは、ユーザーデータの公開パス配下の /list/ から取得できる。
+
+cardNameList.json は、全カードと特別サジェストのカード名(英)と、カード名(英)と異なるときのカード名(日)を並べたJSONの配列である。カード名の「/」は「+」に置き換える。
+
+cardNameList_{フォーマットコード}.json は、そのフォーマットに対応するカードのカード名(英)と、カード名(英)と異なるときのカード名(日)を並べたJSONの配列である。
+
 ### エラー時の扱い
 
 | エラー内容 | 処理 |
@@ -78,6 +88,9 @@
 | 初期表示 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/SearchControllerTrait.php:49 |
 | 検索条件 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Repository/MtbCardRepository.php:52 |
 | 並び順と表示件数 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/SearchControllerTrait.php:119 |
+| カード名リスト作成 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Service/ListText/CreateCardNameList.php:12-60 |
+| カード名リスト作成 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Service/ListText/AbstractListText.php:21-31 |
+| カード名リスト作成 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/DeckentryController.php:81 |
 | 検索の成立条件 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/SearchControllerTrait.php:161 |
 | エラー時の扱い | P3 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/SearchControllerTrait.php:140 |
 | エラー時の扱い | P3 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/admin/Card/card.twig:264 |

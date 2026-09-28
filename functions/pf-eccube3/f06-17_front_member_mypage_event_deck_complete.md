@@ -14,8 +14,12 @@
 | 2 | 選手情報が特定できるか | できないなら登録しない |
 | 3 | 妥当なフォーマットが特定できるか | できないなら登録しない |
 | 4 | イベント詳細が登録可（存在・登録フラグ有効・期限内）か | 不可なら登録しない |
-| 5 | メイン・サイドの書式が正しいか | 誤りなら保存せず、入力とエラー内容を保持してデッキ編集画面へ戻す |
+| 5 | メイン・サイドの書式が正しいか | 誤りなら保存せず、アリーナ表記を実カード名へ置き換えた後の内容とエラー内容を保持してデッキ編集画面へ戻す |
 | 6 | 上記を通過 | デッキを上書きまたは新規作成し、デッキ登録完了画面へ遷移する |
+
+### 書式の誤り（順序5）
+
+メイン・サイドの各行は「枚数 カード名 (セット略号) コレクター番号」または「枚数 カード名」の書式でなければ誤りとする。空行は読み飛ばす。誤りがあったときは、アリーナ表記のカード名を実カード名に置き換えた後の内容を保持してデッキ編集画面へ戻す。メインボード・サイドボード別の書式誤りの案内は、誤りのあったボードの入力欄の上にだけ表示し、誤った行は示さない。
 
 ### 登録内容
 
@@ -47,7 +51,7 @@
 |------|------|
 | 入力 | 対象のイベント詳細、フォーマット指定、メイン・サイドのカードリスト、なりすまし対策トークン。確認時は対象のデッキ。 |
 | 成功時出力 | デッキの保存、デッキ登録完了画面への遷移、デッキ登録完了メールの送信。 |
-| 失敗時出力 | 書式エラー時は入力を保持したデッキ編集画面。条件を満たさないときは画面を表示しない。 |
+| 失敗時出力 | 書式エラー時はアリーナ表記を実カード名へ置き換えた後の内容を保持したデッキ編集画面。条件を満たさないときは画面を表示しない。 |
 
 ### 入出力: 永続化
 
@@ -96,3 +100,9 @@
 | 登録完了画面 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/Mypage/deckentry_check.twig:76 |
 | 他機能との境界 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Controller/DeckentryController.php:187 |
 | 入出力: 永続化 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/DeckentryController.php:246 |
+| 書式の誤り（順序5） | P1 | pf-eccube3:app/Plugin/HareruyaEc/Util/CardUtil.php:44-56 |
+| 書式の誤り（順序5） | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/DeckentryController.php:176-197 |
+| 書式の誤り（順序5） | P1 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/Mypage/deckentry.twig:129-132 |
+| 書式の誤り（順序5） | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/DeckentryController.php:170-172 |
+| 登録の判定順序 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/DeckentryController.php:170-190 |
+| 入出力 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/DeckentryController.php:170-190 |

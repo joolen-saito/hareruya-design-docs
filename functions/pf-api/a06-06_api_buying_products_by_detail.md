@@ -37,6 +37,8 @@
 | 買取価格 | 値なし |
 | 部門ID | 値なし |
 
+値なしはJSONの null で返す。空文字にはしない。
+
 ## 表示メッセージ
 
 | メッセージID | 表示位置 | 画面上の文言 | 表示条件 | 後続処理 |
@@ -61,3 +63,4 @@
 | 出力: 値が無いときの扱い | P2 | pf-api:src/Resources/config/doctrine/DtbProductSubClass.orm.yml:31-33 |
 | 出力: 値が無いときの扱い | P2 | pf-api:src/Resources/config/doctrine/DtbProductSubClass.orm.yml:139-145 |
 | 出力: 値が無いときの扱い | P2 | pf-api:config/packages/fos_rest.yaml:16-17 |
+| 出力: 値が無いときの扱い | P2 | pf-api:config/bundles.php:15 |

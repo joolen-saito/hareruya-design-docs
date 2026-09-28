@@ -14,6 +14,10 @@
 
 「カートに追加」の押下は画面遷移を伴わず非同期で行い、処理中は押下したボタンの位置に読み込み中の表示を出す。処理が終わると読み込み中の表示を消してボタンを元に戻し、成否いずれの結果も押下した商品の位置にダイアログで知らせる。ダイアログの文言と、閉じるまでのふるまい（自動的に閉じるか、利用者が閉じるまで残るか）はF05-05を正とする。買取カートへ追加するふるまいもF05-05を正とする。
 
+### カテゴリ一覧
+
+カテゴリ一覧は、販売側の商品カテゴリ一覧と同じデータ（カードセット、レアリティ、カテゴリ）から、同じツリー構造と表示項目で表示する。各カテゴリの遷移先は、販売側の商品検索に代えて買取商品検索とする。販売側と異なり、遷移先に並び順の指定を付けない。販売側だけが表示する決済・受取・発送・ポイントの販促バナーは表示しない。
+
 ### 商品数の入力範囲
 
 商品数の初期値は1とする。増減ボタンで設定できる値は1から20までとする。
@@ -46,3 +50,6 @@
 | カート追加の応答 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/Block/js/purchase_js.twig:3-42 |
 | 商品数の入力範囲 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/Block/purchase_product.twig:29-31 |
 | 商品数の入力範囲 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/assets/js/ec.js:288-317 |
+| カテゴリ一覧 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Block/CategoryController.php:10-32 |
+| カテゴリ一覧 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/Block/purchase_category.twig:6-25 |
+| カテゴリ一覧 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Resource/doctrine/migration/Version20190131015500.php:47-81 |

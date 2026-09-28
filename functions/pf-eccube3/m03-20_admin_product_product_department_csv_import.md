@@ -27,6 +27,8 @@ ID列に値があっても、その値に一致する部門が無いときは、
 
 区切り文字は、ファイルの拡張子が tsv のときはタブ、それ以外のときは設定値（配布時の確認値はカンマ）とする。文字コードが UTF-8 でないときは UTF-8 へ変換して読み取る。ゼロ幅スペースとゼロ幅ノーブレークスペースは読み取り時に取り除く。
 
+ファイルの種類は、ファイルに添えて送られた形式種別で判定し、text/plain、text/csv、text/tab-separated-values、application/vnd.ms-excel の4つを受け付ける。表計算の形式種別（application/vnd.ms-excel）で送られたファイルも、区切り文字で区切ったテキストとして読み取る。表計算ソフトの保存形式の中身は解析しない。見出しは1行目から読み取る。
+
 ### エラー時の扱い
 
 | エラー内容 | 処理 |
@@ -80,3 +82,4 @@ ID列に値があっても、その値に一致する部門が無いときは、
 | 取込ファイルの読み取り | P2 | pf-eccube3:app/Plugin/HareruyaEc/Service/Csv/AbstractCsvService.php:355-371 |
 | エラー時の扱い | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Product/SectionController.php:207-242 |
 | 入出力: 永続化 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Service/Csv/SectionCsv.php:103-127 |
+| 取込ファイルの読み取り | P2 | pf-eccube3:app/Plugin/HareruyaEc/Form/Type/Admin/CsvMimeTypeValidator.php:20 |

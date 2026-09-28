@@ -6,6 +6,8 @@
 
 編集の対象は、既定の識別子で読み込んだヘルプ情報1件だけとする。画面を開いたときに当該ヘルプ情報を読み込み、利用規約の入力欄へ載せる。
 
+既定の識別子のヘルプ情報が無いときも、エラーの表示や別の画面への遷移は行わず、利用規約の入力欄が空欄の編集画面を表示する。
+
 保存で書き換えるのは利用規約の本文だけであり、同じヘルプ情報が持つ他の項目（特定商取引法の表記など）は、この画面の保存では変更しない。
 
 ### 保存の判定順序
@@ -19,6 +21,8 @@
 | 5 | 遷移 | 同じ編集画面へ戻る |
 
 利用規約の本文が空のときは検証に外れる。検証に外れたときはデータを更新しない。
+
+利用規約の本文には、最大文字数と文字種の制約は無い。空でなければ、どの文字数・文字種でも検証に外れない。
 
 ## 入出力
 
@@ -48,7 +52,9 @@
 | 編集対象 | P2 | pf-eccube3:src/Eccube/Controller/Admin/Setting/Shop/CustomerAgreementController.php:42 |
 | 編集対象 | P1 | pf-eccube3:src/Eccube/Form/Type/Admin/CustomerAgreementType.php:45-52 |
 | 編集対象 | P1 | pf-eccube3:src/Eccube/Controller/Admin/Setting/Shop/TradelawController.php:43 |
+| 編集対象 | P2 | pf-eccube3:src/Eccube/Repository/HelpRepository.php:44-47 |
 | 保存の判定順序 | P2 | pf-eccube3:src/Eccube/Form/Type/Admin/CustomerAgreementType.php:46 |
+| 保存の判定順序 | P2 | pf-eccube3:src/Eccube/Form/Type/Admin/CustomerAgreementType.php:44-48 |
 | 保存の判定順序 | P2 | pf-eccube3:src/Eccube/Controller/Admin/Setting/Shop/CustomerAgreementController.php:58-78 |
 | 入出力: 永続化 | P2 | pf-eccube3:src/Eccube/Doctrine/EventSubscriber/SaveEventSubscriber.php:72 |
 | 入出力: 登録した本文の表示先 | P2 | pf-eccube3:src/Eccube/Resource/template/default/Help/agreement.twig:34 |

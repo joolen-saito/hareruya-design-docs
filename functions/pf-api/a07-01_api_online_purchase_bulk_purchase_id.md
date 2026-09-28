@@ -6,6 +6,10 @@
 
 認証用トークンはリクエストヘッダで受け取る。トークンの署名を検証し（署名方式はHS256）、トークンが持つ利用者IDから管理者会員を特定する。トークン欠落・署名不正・該当する管理者会員なしのいずれの場合も認証拒否とする。
 
+### 買取アプリでの商品IDの扱い
+
+買取アプリは、ネット買取受注の買取代表カードに本APIが返す商品IDのものが含まれるとき、その受注を顧客一覧の買取カテゴリで「まとめて買取」と表示する。本APIが返す商品IDの買取代表カードは、その受注の買取代表カードの一覧から除く。
+
 ### エラー時の扱い
 
 | エラー内容 | 処理 |
@@ -29,5 +33,7 @@
 | 小見出し | 重要度 | 出典 |
 | --- | --- | --- |
 | 認証と呼び出し元 | P1 | pf-api:src/Controller/BaseController.php:23 |
+| 買取アプリでの商品IDの扱い | P2 | front-application@f60bb01:MTGBuyer/Screen/CustomerList/CustomerListViewModel.cs:146-164 |
+| 買取アプリでの商品IDの扱い | P2 | front-application@f60bb01:MTGBuyer/Entity/NetBuyOrder.cs:115-141 |
 | エラー時の扱い | P1 | pf-api:src/Controller/BaseController.php:26 |
 | エラー時の扱い | P1 | pf-api:src/Controller/Admin/OptionController.php:20 |

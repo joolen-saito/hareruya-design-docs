@@ -18,6 +18,8 @@
 
 種別ごとに編集ロックの境界値を持つ。行を識別するキーの値が境界値以下の行では、並び順の列以外を読み取り専用にする。ロック行では表示開始日時・表示終了日時も日時ピッカーを使わず読み取り専用のままとする。
 
+表示開始日時・表示終了日時を持つ種別はキャンペーンタグだけである。キャンペーンタグは編集ロックなしのため、ロック行に表示開始日時・表示終了日時が現れることはない。
+
 | 画面ラベル | 編集ロックの境界値 |
 |------------|--------------------|
 | カードレイアウト | 5 |
@@ -86,6 +88,8 @@
 | 入出力: 永続化 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/HareruyaMasterdataController.php:112-164 |
 | 編集ロック | P2 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/admin/HareruyaMasterdata/index.twig:70-76 |
 | 編集ロック | P2 | pf-eccube3:app/Plugin/HareruyaEc/Entity/MtbSubtype.php:11 |
+| 編集ロック | P2 | pf-eccube3:app/Plugin/HareruyaEc/Entity/MtbCampaignTag.php:32 |
+| 編集ロック | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/HareruyaMasterdataController.php:57 |
 | エラー時の扱い | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/HareruyaMasterdataController.php:97-99 |
 | エラー時の扱い | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/HareruyaMasterdataController.php:124-128 |
 | 種別の確定 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Form/Type/Admin/HareruyaMasterdata/HareruyaMasterdataType.php:23-48 |

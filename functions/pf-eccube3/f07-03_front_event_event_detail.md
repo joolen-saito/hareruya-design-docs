@@ -20,6 +20,12 @@
 
 申込済みの判定は、ログイン会員に対応する選手情報が、当該イベント詳細の取消以外の申込に含まれることである。未ログインのとき、およびログイン会員に対応する選手情報が無いときは、申込済みを偽として扱う。デッキ登録のボタンは、申込のボタン領域を表示する状態のときにかぎり、ログイン会員の選手情報で当該イベント詳細のデッキが登録済みならデッキ編集の文言で表示する。申込のボタン領域を表示せずデッキ登録だけができる状態のときは、登録済みでも文言はデッキ登録のままである。
 
+### 申込・キャンセル申込の表示条件
+
+申込とキャンセル申込の導線は、エントリーフラグが真で、現在日時が事前予約期間の開始日時以上かつ終了日時以下で、定員が申込済み人数より多いときだけ表示する。事前予約期間の開始日時・終了日時ちょうどは、期間内として扱う。
+
+キャンセル申込の導線は、この条件を満たすときにかぎり、申込済みの会員に表示する。定員到達・事前予約期間外・エントリーフラグが偽のいずれかにあたるときは、申込済みの会員にもキャンセル申込の導線を表示しない。
+
 ### エラー時の扱い
 
 | エラー内容 | 処理 |
@@ -66,3 +72,5 @@
 | 申込済みの判定とデッキ登録済みの扱い | P2 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/Event/show.twig:128 |
 | 申込済みの判定とデッキ登録済みの扱い | P2 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/Event/show.twig:135 |
 | エラー時の扱い | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/EventController.php:120 |
+| 申込・キャンセル申込の表示条件 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Entity/DtbEventDetail.php:836-843 |
+| 申込・キャンセル申込の表示条件 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/Event/show.twig:113-125 |

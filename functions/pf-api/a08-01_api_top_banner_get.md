@@ -30,6 +30,8 @@ HTTP 200。
 | `dispType` | integer | 表示タイプ |
 | `languages` | array | 関連する言語の配列。要素はオブジェクトで、子フィールドは`id`（integer、言語ID）、`nameJp`（string、言語名・日本語）、`nameEn`（string、言語名・英語）、`code`（string、言語コード） |
 
+応答フィールドは上表の5項目だけである。金額・税・ポイント・在庫数量に当たる項目は持たない。
+
 応答例（実装確認値に基づく代表値）。
 
 ```json
@@ -49,3 +51,10 @@ HTTP 200。
 | HTTPステータス | 条件 | 本文の形 |
 |----------------|------|----------|
 | 404 | 該当IDのトップバナーが存在しない | `{code, message}`（"Not Found"） |
+
+## 出典
+
+| 小見出し | 重要度 | 出典 |
+| --- | --- | --- |
+| 入出力: レスポンス（成功） | P2 | pf-api:src/Controller/BannerController.php:35 |
+| 入出力: レスポンス（成功） | P2 | pf-api:src/Entity/MtbTopBanner.php:11-43 |

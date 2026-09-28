@@ -24,6 +24,10 @@
 |------------|------|----|-----------|------|
 | `jwt-token` | ヘッダ | string | 必須 | 認証用のトークン |
 
+### 出力: 更新できたとき
+
+更新できたときは HTTP 200 とし、処理結果コード200だけを持つJSON（`{"code":200}`）を応答本文として返す。空の本文や空のオブジェクトは返さない。
+
 ### 出力: 認証できないとき
 
 | HTTPステータス | 条件 |
@@ -57,6 +61,7 @@
 | 判定の順序 | P1 | pf-api:src/Controller/Admin/OtcBuyOrderIdentificationController.php:20-44 |
 | 更新する項目 | P1 | pf-api:src/Controller/Admin/OtcBuyOrderIdentificationController.php:46-53 |
 | 入力: 認証情報 | P1 | pf-api:src/Controller/BaseController.php:25-29 |
+| 出力: 更新できたとき | P2 | pf-api:src/Controller/Admin/OtcBuyOrderIdentificationController.php:55-59 |
 | 出力: 認証できないとき | P1 | pf-api:src/Controller/BaseController.php:26-42 |
 | 入出力: エンドポイントの別名 | P2 | pf-api:config/routes.yaml:53-56 |
 | 入出力: 永続化 | P1 | pf-api:src/Controller/Admin/OtcBuyOrderIdentificationController.php:47-53 |

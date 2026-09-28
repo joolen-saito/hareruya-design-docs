@@ -16,6 +16,10 @@
 
 メンバー以外の利用者には拒否URLを適用しない。
 
+管理画面にログインしていない利用者が管理画面のパスへ要求したときは、要求した画面を表示せず、管理画面のログイン画面を表示する。
+
+フロントにログインした会員も、管理画面ではログインしていない利用者として扱う。
+
 ### 特殊拒否URLによる身分証画像の閲覧制限
 
 拒否URLには、画面のパスのほかに、機能単位で閲覧を止めるための値を登録できる。権限管理画面は、その値を「特殊拒否URL一覧」として画面右側に一覧表示する。現行で扱う値は「身分証閲覧不可権限」の1件である。
@@ -49,6 +53,10 @@
 | 拒否URLの一覧 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Setting/System/AuthorityController.php:48 |
 | 保存の扱い | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Setting/System/AuthorityController.php:58 |
 | アクセス拒否の判定 | P1 | pf-eccube3:src/Eccube/Security/Voter/AuthorityVoter.php:74 |
+| アクセス拒否の判定 | P1 | pf-eccube3:src/Eccube/Security/Voter/AuthorityVoter.php:66 |
+| アクセス拒否の判定 | P1 | pf-eccube3:src/Eccube/Application.php:541-558 |
+| アクセス拒否の判定 | P1 | pf-eccube3:src/Eccube/Application.php:597-598 |
+| アクセス拒否の判定 | P1 | pf-eccube3:src/Eccube/Application.php:639 |
 | 特殊拒否URLによる身分証画像の閲覧制限 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/AdminController.php:43 |
 | 特殊拒否URLによる身分証画像の閲覧制限 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/admin/Customer/edit.twig:599 |
 | 特殊拒否URLによる身分証画像の閲覧制限 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/admin/Setting/System/authority.twig:121 |

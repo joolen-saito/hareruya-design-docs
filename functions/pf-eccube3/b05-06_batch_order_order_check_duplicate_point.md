@@ -10,6 +10,10 @@
 
 ポイント残高の補正は、通知を受けた管理者の手作業に委ねる。本バッチは検出結果を通知するだけで、受注・会員のポイント残高・ポイント履歴のいずれも更新しない。
 
+### 異常が起きたとき
+
+ポイント履歴の取得や通知メールの送信で例外が起きたときは、その時点で処理を打ち切る。例外の内容はコンソールの標準エラー出力へ出し、終了コードは0以外になる。異常を記録する専用の画面やログは無く、確認できるのはコンソールの出力だけである。
+
 ## 入出力
 
 ### 出力: メール
@@ -33,5 +37,7 @@
 | 通知メールの送信可否 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Form/Type/Admin/ConfigType.php:130 |
 | 通知後の扱い | P2 | pf-eccube3:app/Plugin/HareruyaEc/Service/Order/CheckDuplicatePoint.php:30-54 |
 | 通知後の扱い | P3 | pf-eccube3:app/Plugin/HareruyaEc/Service/MailService.php:1441-1442 |
+| 異常が起きたとき | P2 | pf-eccube3:app/Plugin/HareruyaEc/Service/Order/CheckDuplicatePoint.php:30-54 |
+| 異常が起きたとき | P2 | pf-eccube3:app/Plugin/HareruyaEc/Command/OrderBatch.php:51-54 |
 | 出力: メール | P2 | pf-eccube3:app/Plugin/HareruyaEc/Service/MailService.php:1440-1460 |
 | 出力: メール | P3 | pf-eccube3:app/Plugin/HareruyaEc/Util/OrderUtil.php:23 |

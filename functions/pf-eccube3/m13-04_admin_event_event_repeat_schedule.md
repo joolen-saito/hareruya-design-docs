@@ -16,6 +16,8 @@
 
 作成した日程の登録者には、操作した担当者を記録する。
 
+作成した日程の定員・参加費・公開状態・賞品（日）・賞品（英）には、親イベントの値をそのまま設定する。繰り返し日程登録の入力項目には、これらの項目は無い。
+
 オンライン受付の開始・終了とデッキ登録締切の日時は、その日程の日付から指定の前日数を引いた日に、指定の時刻を組み合わせたものとする。
 
 ### 該当する日が無いとき
@@ -46,6 +48,8 @@
 | 登録の判定順序 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/RepeatScheduleController.php:27-82 |
 | 作成した日程に設定される値 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/RepeatScheduleController.php:96-122 |
 | 作成した日程に設定される値 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Repository/MtbHolidayRepository.php:44 |
+| 作成した日程に設定される値 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Entity/DtbEventDetail.php:165-173 |
+| 作成した日程に設定される値 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Form/Type/Admin/Schedule/RepeatScheduleType.php:31-138 |
 | 該当する日が無いとき | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/RepeatScheduleController.php:90 |
 | 入力 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/FormValidHelper.php:39-47 |
 | 入力 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/admin/Schedule/repeatschedule.twig:26 |

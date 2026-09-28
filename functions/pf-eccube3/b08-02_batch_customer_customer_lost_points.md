@@ -6,6 +6,8 @@
 
 起動時に渡されたバッチ名が未指定のとき、または定義済みのバッチ名のいずれとも一致しないときは、失効処理を一切行わない。一致したときだけ失効処理を実行する。
 
+起動コマンドは `customer:batch` で、バッチ名を第1引数に渡す。ポイント失効のバッチ名は `lostPoint` である。定義済みのバッチ名は `sendAccountMigration`・`lostPoint`・`complementPointHistory`・`pointExpireNotification`・`checkBlankRequiredItemCustomer`・`adjustPointVariance`・`idExpireNotification` の7つである。
+
 ### 対象会員の絞り込み
 
 スマレジ会員IDが登録されていない会員は、有効期限を過ぎたポイントを持っていても対象に含めない。
@@ -29,6 +31,8 @@
 | 入力 | 起動時に渡すバッチ名 |
 | 出力 | 終了状態。失効処理を実行したときは正常終了、バッチ名が未指定・不一致のときは異常終了とする |
 
+バッチ名が未指定・不一致のときの終了コードは1である。
+
 ## 表示メッセージ
 
 このバッチは画面へ文言を表示しない。
@@ -42,3 +46,5 @@
 | 会員ごとの処理間隔 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Service/Customer/LostPoints.php:41 |
 | 更新の確定 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Service/Customer/LostPoints.php:63 |
 | 起動引数と終了状態 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Command/CustomerBatch.php:46 |
+| 起動時のバッチ名 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Command/CustomerBatch.php:12-28 |
+| 起動引数と終了状態 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Command/CustomerBatch.php:43-46 |

@@ -8,6 +8,8 @@
 
 商品本体の情報（商品名・言語コード・商品説明・カテゴリ・言語別販売分けフラグ）は、取得した明細の先頭から取る。
 
+明細は言語ID、状態（カードコンディション）ID、商品規格IDの昇順に並べる。先頭の明細は、この並びで最初に来る明細である。
+
 ### カード商品の扱い
 
 カード情報を持つ商品（カード商品）のときは、商品名の先頭に言語コードを付す。カード商品でないときはカード詳細情報を空（null）で返す。パワーとタフネスは値が無いとき空（null）とし、忠誠度も値が無いとき空（null）とする。
@@ -44,6 +46,8 @@
 | --- | --- | --- |
 | 取得対象 | P1 | pf-api:src/Repository/DtbProductRepository.php:343-362 |
 | 取得対象 | P1 | pf-api:src/Controller/ProductController.php:410 |
+| 取得対象 | P1 | pf-api:src/Repository/DtbProductRepository.php:365-368 |
+| 取得対象 | P1 | pf-api:src/Controller/ProductController.php:421-422 |
 | カード商品の扱い | P2 | pf-api:src/Controller/ProductController.php:425 |
 | カード商品の扱い | P2 | pf-api:src/Controller/ProductController.php:433-444 |
 | 出力する商品規格 | P1 | pf-api:src/Controller/ProductController.php:454 |

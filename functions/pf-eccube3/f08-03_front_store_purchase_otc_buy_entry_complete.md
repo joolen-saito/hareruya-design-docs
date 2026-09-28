@@ -33,9 +33,13 @@
 
 会員登録モードのときに実行する。会員仮登録が失敗しても査定申込みは登録する。会員を仮登録したときは、支店システムへ会員情報の更新を連携する。連携に失敗しても会員仮登録と査定申込みは成立し、失敗した連携は連携エラーとして記録する。
 
+連携の失敗は、支店システムの応答に成功の指定が無いときに判定する。連携エラーには、対象種別（会員）、対象の会員ID、支店システムの応答内容、記録日時を記録する。
+
 ### 完了画面
 
 保持している査定IDから申込みを取得して表示する。査定IDを保持していないときは店頭買取査定申込前ログイン画面へ戻す。査定IDの保持は完了画面の表示時に解除するため、完了画面を再度開いたときも店頭買取査定申込前ログイン画面へ戻る。
+
+完了画面の「査定申込みへ戻る」と一定秒数後の自動遷移は、いずれも完了画面を再度開き、店頭買取査定申込前ログイン画面へ戻る。
 
 ## 入出力
 
@@ -100,3 +104,6 @@
 | 会員仮登録 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/OtcBuyController.php:344 |
 | 会員仮登録 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Service/BranchUpdateService.php:49 |
 | 完了画面 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/OtcBuyController.php:315 |
+| 完了画面 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/OtcBuy/complete.twig:4 |
+| 完了画面 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/OtcBuy/complete.twig:93 |
+| 会員仮登録 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Service/BranchUpdateService.php:199-217 |

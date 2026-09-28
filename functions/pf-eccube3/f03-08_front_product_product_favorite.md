@@ -22,6 +22,8 @@
 
 お気に入りに登録した商品がセール対象になると、その会員の登録メールアドレスへ通知を送る。通知は会員ごとに1通へまとめ、対象となったお気に入り商品を並べて知らせる。
 
+1通へまとめる範囲は、1回の実行で見つかったセール対象のお気に入り商品すべてである。まとめるための期間の区切りは設けない。
+
 ### 一覧に表示する対象
 
 会員ログインを要求し、ログインしていなければ会員ログイン画面へ誘導する。表示するのは、その会員がお気に入りに登録した商品のうち公開中のものに限る。高額商品コードを持つ商品は、在庫があるものだけを表示する。同一商品でも言語が異なれば別の行として並べる。
@@ -65,3 +67,4 @@
 | 一覧に表示する対象 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Repository/DtbProductSubClassRepository.php:1617 |
 | 一覧に表示する対象 | P2 | pf-eccube3:app/Plugin/HareruyaEc/ServiceProvider/HareruyaEcServiceProvider.php:315 |
 | 受け取る値と返す応答 | P2 | pf-eccube3:app/Plugin/HareruyaEc/ControllerProvider/FrontControllerProvider.php:69 |
+| セール通知 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Service/Product/SaleNotificationService.php:34-67 |

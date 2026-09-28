@@ -12,6 +12,8 @@
 | 4 | 対応表の作成 | カード状態IDと買取減額率IDの2段のキーで減額率を保持する。同じキーが重複するときは、後から読み込んだ値で上書きする |
 | 5 | 表の出力 | 買取減額率とカード状態の二重の繰り返しで、組の数だけ表のセルを出力する |
 
+減額率はカード状態と買取減額率の組ごとに1件しか登録できない。順序4の上書きが起きる重複は、登録済みのデータでは生じない。
+
 ### セルの値
 
 | セルの状態 | 表示 |
@@ -43,3 +45,11 @@
 | メッセージID | 表示位置 | 画面上の文言 | 表示条件 | 後続処理 |
 | --- | --- | --- | --- | --- |
 | — | 一覧表のセル | 未定義 | 当該のカード状態と買取減額率の組に減額率が無いとき | 一覧画面に留まる |
+
+## 出典
+
+| 小見出し | 重要度 | 出典 |
+| --- | --- | --- |
+| 一覧の組み立て | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/BuyDiscountController.php:24 |
+| 一覧の組み立て | P2 | pf-eccube3:app/Plugin/HareruyaEc/Resource/doctrine/Plugin.HareruyaEc.Entity.DtbBuyDiscountCardCondition.dcm.yml:6 |
+| 一覧の組み立て | P2 | pf-eccube3:app/Plugin/HareruyaEc/Resource/doctrine/Plugin.HareruyaEc.Entity.DtbBuyDiscountCardCondition.dcm.yml:14 |

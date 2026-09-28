@@ -17,6 +17,14 @@
 
 ご注文番号は8桁のゼロ埋めで表示する。TC注文番号は呼び出し番号の下4桁を4桁のゼロ埋めで表示する。
 
+### 購入グループ別の完了画面の表示
+
+購入者の顧客グループが店内アカウントのときは、注文確定時に受注の呼び出し番号を登録する。
+
+受注に呼び出し番号があるときは、ご注文番号に代えてTC注文番号を表示し、その下に「※店内のパソコンからご注文のお客様は、商品の用意が完了すると、店内注文モニターにTC注文番号が表示されます。TC注文番号が表示されましたら、レジカウンターまでお越しください。」を表示する。
+
+受注に呼び出し番号が無いときは、ご注文番号を表示し、その下に「注文完了メールをお送りしました。届かない場合はお手数ですが当店のヘルプページを御覧ください。」を表示する。文中の「ヘルプページ」の遷移先は、オンラインショップのヘルプページ（/ja/user_data/help_onlineshop#block20）とする。
+
 ### ポイントの消費時期
 
 注文を確定した時点で使用ポイントを消費する。ただしSPLINKS決済（コンビニ・クレジットカード）のときは、注文確定時ではなく購入完了画面の表示時に消費する。
@@ -59,6 +67,8 @@
 | 購入完了時の判定順序 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/ShoppingController.php:404-458 |
 | 注文番号の書式 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/Shopping/complete.twig:34-40 |
 | 注文番号の書式 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Controller/ShoppingController.php:474-475 |
+| 購入グループ別の完了画面の表示 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Service/ShoppingService.php:536-541 |
+| 購入グループ別の完了画面の表示 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/Shopping/complete.twig:33-53 |
 | ポイントの消費時期 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/ShoppingController.php:338 |
 | ポイントの消費時期 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/ShoppingController.php:520-523 |
 | 完了処理で行う連携 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/ShoppingController.php:460-468 |

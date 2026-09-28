@@ -1213,8 +1213,12 @@
           <h3 id="function-design-f04-01-f04-01_front_cart_cart_index-カートへの追加">カートへの追加</h3>
           <p>商品規格と数量を受け取ってカートへ追加する。数量の指定が無いときは1とする。要求はJSON本文でもフォームの値でも受け付ける。複数商品をまとめて追加する要求も受け付け、追加する商品の並びが渡されないときは追加せず失敗として扱う。追加に失敗したときはエラーメッセージを出す。</p>
           <p>非同期の追加は追加後のカート内容（商品明細と合計）を返し、画面遷移を伴う追加は買い物かご画面を表示する。カート内容の取得だけを求める要求にも同じカート内容を返す。</p>
+          <p>要求の送信先と受け取る値は、方式ごとに次のとおりとする。</p>
+          <div class="table-wrap"><table><thead><tr><th>方式</th><th>送信先</th><th>受け取る値</th><th>応答</th></tr></thead><tbody><tr><td>1件の追加（非同期）</td><td>POST /cart/add</td><td>JSON本文の product_class_id・quantity、またはフォーム値 product_class_id・quantity</td><td>追加後のカート内容</td></tr><tr><td>複数件の追加（非同期）</td><td>POST /cart/add_bulk</td><td>フォーム値 cart_list（要素ごとに product_class_id・quantity）</td><td>追加後のカート内容</td></tr><tr><td>1件の追加（画面遷移あり）</td><td>POST /cart/add_show</td><td>フォーム値 product_class_id・quantity</td><td>成否にかかわらず買い物かご画面へ遷移する</td></tr><tr><td>カート内容の取得</td><td>GET /cart/get</td><td>なし</td><td>カート内容</td></tr></tbody></table></div>
+          <p>JSON本文を読むのは、フォーム値に product_class_id も quantity も無いときである。複数件の追加で cart_list が無い、または並びでないときは、1件も追加しない。カート内容の応答は、カートの内容（cart）と、カートを識別する値（cookie）を持つJSONとする。</p>
           <h3 id="function-design-f04-01-f04-01_front_cart_cart_index-入荷通知依頼">入荷通知依頼</h3>
           <div class="table-wrap"><table><thead><tr><th>条件</th><th>結果</th></tr></thead><tbody><tr><td>対象の商品規格が存在しない</td><td>依頼を受け付けず失敗を返す</td></tr><tr><td>未ログイン</td><td>依頼を受け付けずログインを促す。ログイン後に戻れるよう直前の画面を覚えておく</td></tr><tr><td>すでに同じ商品規格の依頼がある</td><td>その依頼を取り消す</td></tr><tr><td>依頼件数が上限に達している</td><td>依頼を登録せず、上限値を添えて失敗を返す</td></tr><tr><td>上記以外</td><td>依頼を登録する</td></tr></tbody></table></div>
+          <p>依頼の送信先は POST /cart/pushReceive で、商品規格をフォーム値 product_class_id で渡す。取消では依頼に削除日時を記録し、依頼の行は残す。依頼件数の上限値は、オプションマスタの入荷通知上限件数で決まる。上限と比べる依頼件数は、その会員の依頼のうち削除日時が記録されていないものの件数である。</p>
           <h3 id="function-design-f04-01-f04-01_front_cart_cart_index-カートが空のとき">カートが空のとき</h3>
           <p>商品が1件も無いときは、商品行・集計欄・購入手続きへのボタン・カート一括削除を出さず、買い物かごが空である案内だけを出す。他の商品を見るボタンは空のときも出す。</p>
           <h2 id="function-design-f04-01-f04-01_front_cart_cart_index-入出力">入出力</h2>
@@ -1904,12 +1908,16 @@
           <p>国が日本で都道府県が国外、または国が日本以外で都道府県が国外でないときは不整合とし、国の項目にエラーを付けて編集画面を再表示する。</p>
           <h3 id="function-design-f04-03-f04-03_front_cart_shopping_delivery_edit-郵便番号欄の外部リンク">郵便番号欄の外部リンク</h3>
           <p>国が日本のときは、郵便番号欄の脇に日本郵便の郵便番号検索ページを開く外部リンクを置く。英語ページでは「Search post code」と表示する。</p>
+          <h3 id="function-design-f04-03-f04-03_front_cart_shopping_delivery_edit-配送先氏名カナの文字種">配送先氏名カナの文字種</h3>
+          <p>配送先氏名カナは、全角カタカナ・半角カタカナ・長音記号「ー」・半角英字だけを受け付ける。ひらがなは全角カタカナに変換してから判定する。漢字・数字・記号・全角英字を含むときは入力エラーとし、編集画面を再表示する。</p>
           <h3 id="function-design-f04-03-f04-03_front_cart_shopping_delivery_edit-配送先名称の文字数">配送先名称の文字数</h3>
           <p>配送先名称は128文字を超えると入力エラーとする。</p>
           <h3 id="function-design-f04-03-f04-03_front_cart_shopping_delivery_edit-住所の文字数">住所の文字数</h3>
           <p>住所1・住所2は、それぞれ全角を2・半角を1として数えた長さが90を超えると入力エラーとする。</p>
           <h3 id="function-design-f04-03-f04-03_front_cart_shopping_delivery_edit-登録上限の判定">登録上限の判定</h3>
           <p>新規登録では、編集画面を開くときと登録を確定するときの両方でアドレス帳の登録件数を判定する。上限に達しているときは編集画面を表示せず、上限超過のエラーを表示してご注文方法指定へ戻す。既存の配送先を変更するときは登録件数を判定しない。</p>
+          <h3 id="function-design-f04-03-f04-03_front_cart_shopping_delivery_edit-確認画面を経た登録">確認画面を経た登録</h3>
+          <p>編集画面からの送信が検証を通ると、確認画面を表示する。確認画面を表示した時点では、配送先を登録・更新しない。確認画面からの送信で配送先を登録・更新し、ご注文方法指定へ戻る。確認画面から戻るときは、入力内容を保ったまま編集画面を再表示する。</p>
           <h3 id="function-design-f04-03-f04-03_front_cart_shopping_delivery_edit-登録後の配送先への反映">登録後の配送先への反映</h3>
           <p>登録が成立すると、登録した配送先がその注文の1件目の配送先として設定される。配送先が複数に分かれている注文でも、設定されるのは1件目だけである。</p>
           <h3 id="function-design-f04-03-f04-03_front_cart_shopping_delivery_edit-エラー時の扱い">エラー時の扱い</h3>
@@ -2133,6 +2141,10 @@
           <p>受注ステータス異常のときは、更新による再通知を避けるため引き継いだ受注情報を初期化する。決済記録不整合のときは初期化しないため、再表示しても同じエラー画面になる。</p>
           <h3 id="function-design-f04-04-f04-04_front_cart_shopping_complete-注文番号の書式">注文番号の書式</h3>
           <p>ご注文番号は8桁のゼロ埋めで表示する。TC注文番号は呼び出し番号の下4桁を4桁のゼロ埋めで表示する。</p>
+          <h3 id="function-design-f04-04-f04-04_front_cart_shopping_complete-購入グループ別の完了画面の表示">購入グループ別の完了画面の表示</h3>
+          <p>購入者の顧客グループが店内アカウントのときは、注文確定時に受注の呼び出し番号を登録する。</p>
+          <p>受注に呼び出し番号があるときは、ご注文番号に代えてTC注文番号を表示し、その下に「※店内のパソコンからご注文のお客様は、商品の用意が完了すると、店内注文モニターにTC注文番号が表示されます。TC注文番号が表示されましたら、レジカウンターまでお越しください。」を表示する。</p>
+          <p>受注に呼び出し番号が無いときは、ご注文番号を表示し、その下に「注文完了メールをお送りしました。届かない場合はお手数ですが当店のヘルプページを御覧ください。」を表示する。文中の「ヘルプページ」の遷移先は、オンラインショップのヘルプページ（/ja/user_data/help_onlineshop#block20）とする。</p>
           <h3 id="function-design-f04-04-f04-04_front_cart_shopping_complete-ポイントの消費時期">ポイントの消費時期</h3>
           <p>注文を確定した時点で使用ポイントを消費する。ただしSPLINKS決済（コンビニ・クレジットカード）のときは、注文確定時ではなく購入完了画面の表示時に消費する。</p>
           <h3 id="function-design-f04-04-f04-04_front_cart_shopping_complete-完了処理で行う連携">完了処理で行う連携</h3>
@@ -2269,7 +2281,7 @@
         <div class="function-design-body">
           <h2 id="function-design-f06-06-f06-06_front_member_mypage_order_history-業務ロジック">業務ロジック</h2>
           <h3 id="function-design-f06-06-f06-06_front_member_mypage_order_history-画面に出す内容">画面に出す内容</h3>
-          <div class="table-wrap"><table><thead><tr><th>領域</th><th>内容</th></tr></thead><tbody><tr><td>見出し</td><td>画面の見出しに「購入履歴一覧」を出す</td></tr><tr><td>件数</td><td>全件数と、現在のページが何件目から何件目までかを出す</td></tr><tr><td>注文内容</td><td>注文明細の商品名を列挙する。明細が複数のときはすべて並べる</td></tr><tr><td>各注文の操作</td><td>この注文内容で再度購入する。押したときは、その注文の商品と数量をカートへ投入し、買い物かご画面へ遷移する</td></tr><tr><td>処理状態からの遷移</td><td>処理状態の表示から注文購入履歴詳細へ遷移できる</td></tr><tr><td>レイアウト</td><td>PCで表示したときとスマートフォンで表示したときで、列の見せ方を切り替える</td></tr></tbody></table></div>
+          <div class="table-wrap"><table><thead><tr><th>領域</th><th>内容</th></tr></thead><tbody><tr><td>見出し</td><td>画面の見出しに「購入履歴一覧」を出す</td></tr><tr><td>件数</td><td>全件数と、現在のページが何件目から何件目までかを出す</td></tr><tr><td>注文内容</td><td>注文明細の商品名を列挙する。明細が複数のときはすべて並べる</td></tr><tr><td>各注文の操作</td><td>この注文内容で再度購入する。押したときは、その注文の商品と数量をカートへ投入し、買い物かご画面へ遷移する</td></tr><tr><td>処理状態からの遷移</td><td>処理状態の表示から注文購入履歴詳細へ遷移できる</td></tr><tr><td>レイアウト</td><td>PCで表示したときとスマートフォンで表示したときで、列の見せ方を切り替える</td></tr><tr><td>マイページへの導線</td><td>マイページトップ（マイページ画面）へ遷移する</td></tr></tbody></table></div>
           <h3 id="function-design-f06-06-f06-06_front_member_mypage_order_history-一覧の抽出">一覧の抽出</h3>
           <p>会員ログインを要求する。未ログインのときは会員ログインへ誘導する（会員ログイン機能を正とする）。</p>
           <div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>抽出条件</td><td>当該会員の注文のうち、処理中のときは除外する</td></tr><tr><td>並び順</td><td>新しい注文を先頭にする（注文IDの降順）</td></tr><tr><td>ページ番号</td><td>指定された値を用いる。指定が無いときは1ページ目とする</td></tr><tr><td>注文金額合計</td><td>注文の保持値を表示する。集計の再計算は行わない</td></tr></tbody></table></div>

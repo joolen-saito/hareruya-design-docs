@@ -22,6 +22,8 @@
 | 6 | 部門コードに一致する部門が存在しないとき | 部門コードでデータを取得できない旨のエラーを積み、全体を中止する |
 | 7 | 上記のいずれにも該当しないとき | 商品コードが一致するすべての規格の部門を更新する |
 
+ファイルの種別は、アップロード時に送られた種別が `text/plain`・`text/csv`・`text/tab-separated-values`・`application/vnd.ms-excel` のいずれかであるかで判定する。拡張子では判定しない。
+
 全体を中止したときは、それまでに読んだ行の更新も含めて何も反映しない。同一のCSV内に同じ商品コードが複数行あるときは、最後の行の部門で確定する。
 
 ## 入出力
@@ -29,6 +31,8 @@
 ### 入出力: 取り込むファイルの読み取り
 
 拡張子が tsv のファイルはタブ区切りとして読み、それ以外は設定した区切り文字（配布時の既定はカンマ）で読む。文字コードがUTF-8以外のファイルは変換して読み取り、ファイル全体から幅の無い空白を取り除く。
+
+`application/vnd.ms-excel` の種別で受け付けたファイルも、同じ規則でテキストとして区切って読む。
 
 ### 入出力: 永続化
 
@@ -63,3 +67,5 @@
 | 入出力: 取り込むファイルの読み取り | P2 | pf-eccube3:app/Plugin/HareruyaEc/Service/Csv/Importer/CsvImporter.php:131-164 |
 | 入出力: 取り込むファイルの読み取り | P3 | pf-eccube3:src/Eccube/Resource/config/constant.yml.dist:256 |
 | 入出力: 永続化 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Product/ProductCsvController.php:848-856 |
+| 取込の判定順序 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Form/Type/Admin/CsvMimeTypeValidator.php:21 |
+| 入出力: 取り込むファイルの読み取り | P2 | pf-eccube3:app/Plugin/HareruyaEc/Service/Csv/Importer/CsvImporter.php:162 |

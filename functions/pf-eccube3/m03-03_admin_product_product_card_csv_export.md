@@ -25,7 +25,7 @@
 
 ### ファイルの体裁
 
-ファイル名は product_card_ に出力日時（年月日時分秒）と .csv を連結したものとする。先頭にBOMを付ける。値は設定の出力文字コードへ変換して書き出し、区切り文字も設定に従う。囲み文字とエスケープ文字はCSV出力の既定に従う。応答には出力文字コードに応じた形式種別と、ダウンロードとして扱う指定を付ける。設定値が SJIS-win のときは、形式種別上は windows-31j として扱う。
+ファイル名は product_card_ に出力日時（年月日時分秒）と .csv を連結したものとする。先頭にBOMを付ける。値は設定の出力文字コードへ変換して書き出し、区切り文字も設定に従う。囲み文字とエスケープ文字はCSV出力の既定に従う。囲み文字はダブルクォート（"）、エスケープ文字はバックスラッシュ（\）である。応答には出力文字コードに応じた形式種別と、ダウンロードとして扱う指定を付ける。設定値が SJIS-win のときは、形式種別上は windows-31j として扱う。
 
 ### エラー時の扱い
 
@@ -102,6 +102,7 @@
 | 出力行の作り方 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Repository/DtbProductSubClassRepository.php:268 |
 | ファイルの体裁 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Service/Csv/AbstractCsvService.php:331 |
 | ファイルの体裁 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Service/CsvExportService.php:360 |
+| ファイルの体裁 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Service/CsvExportService.php:362 |
 | エラー時の扱い | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Product/ProductCsvController.php:2269 |
 | 出力: 商品単位の列 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Service/Csv/ProductCardCsv.php:432 |
 | 出力: 規格ごとの列 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Service/Csv/ProductCardCsv.php:457 |
