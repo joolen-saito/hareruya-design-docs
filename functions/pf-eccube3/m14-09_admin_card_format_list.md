@@ -8,7 +8,7 @@
 
 ### 一覧に出す値
 
-フォーマット名と認定は、いずれも和名と英名を「 / 」でつないだ1つの文字列として表示する。認定が設定されていないフォーマットは、認定欄を空欄にする。
+フォーマット名と認定は、いずれも和名と英名を「 / 」でつないだ1つの文字列として表示する。認定が設定されていないフォーマットは、認定欄を空欄にする。フォーマット名は、そのフォーマットのフォーマット詳細画面への参照として表示する。参照先のフォーマット詳細画面には、そのフォーマットの登録内容を表示する。
 
 ### 削除できない条件
 
@@ -61,6 +61,7 @@
 | 一覧に出す範囲 | P3 | pf-eccube3:app/Plugin/HareruyaEc/ServiceProvider/HareruyaEcServiceProvider.php:387 |
 | 一覧に出す値 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/admin/Format/format.twig:38 |
 | 一覧に出す値 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/admin/Format/format.twig:45 |
+| 一覧に出す値 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/FormatController.php:62 |
 | 削除できない条件 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/FormatController.php:161 |
 | 削除したときに一緒に消えるもの | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/FormatController.php:168 |
 | 削除したときに一緒に消えるもの | P1 | pf-eccube3:app/Plugin/HareruyaEc/Resource/doctrine/Plugin.HareruyaEc.Entity.MtbFormat.dcm.yml:15 |

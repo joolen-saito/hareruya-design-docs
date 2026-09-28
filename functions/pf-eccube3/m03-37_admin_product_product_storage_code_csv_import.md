@@ -37,6 +37,8 @@
 
 取り込みが最後まで通ったときにかぎり、更新した商品を支店システムへ通知する。
 
+通知は取り込んだ商品IDから重複を除いた一覧で1回行う。同じ商品IDの行が複数あっても、通知とやり直し用の記録に含む商品IDは1つである。
+
 通知に失敗しても取り込みは成功のままとし、画面にはエラーを出さない。失敗した対象は、あとで連携をやり直せるように記録する。
 
 ### 取込履歴
@@ -104,3 +106,4 @@
 | 入出力: 永続化 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Repository/DtbProductSubRepository.php:171 |
 | 入出力: 永続化 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Repository/DtbCsvImportHistoryRepository.php:25 |
 | 入出力: 永続化 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Service/BranchUpdateService.php:205 |
+| 支店システムへの連携 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Service/Csv/Importer/Event/StorageCodeImportHandler.php:65 |

@@ -26,6 +26,10 @@
 
 中継結果に対しては、金額・税・ポイント・在庫数量の再計算や丸め、本API独自の集計を行わない。
 
+### POST以外のメソッドで要求したとき
+
+POST以外のメソッド（GET・PUT・DELETEなど）で要求したときも受け付けるが、必須項目が欠けているときと同じく処理を打ち切り、本文に空の配列（`[]`）だけを返す。処理名と連携内容はPOSTデータからだけ読み取る。このときはスマレジへの中継、保有ポイントの更新、ポイント履歴の追加をいずれも行わない。
+
 ## 入出力
 
 ### 入出力: 永続化
@@ -36,6 +40,8 @@
 | 追加 | ポイント付与の対象行からプレイヤーを特定できたとき | ポイント履歴1件 |
 
 保有ポイントの更新とポイント履歴の追加は同一の登録処理でまとめて確定する。プレイヤーを特定できないときは、いずれも行わない。
+
+保有ポイントの更新とポイント履歴の追加のどちらか片方の書き込みが失敗したときは、両方とも確定しない。
 
 ### 失敗時の応答本文
 
@@ -64,6 +70,9 @@
 | 中継に使う接続情報と応答値の扱い | P1 | pf-eccube3:app/Plugin/HareruyaEc/Service/Smaregi/CustomerService.php:283-295 |
 | 中継に使う接続情報と応答値の扱い | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Api/PointGranterController.php:30-36 |
 | 入出力: 永続化 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Api/PointGranterController.php:47-61 |
+| 入出力: 永続化 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Api/PointGranterController.php:59-61 |
+| POST以外のメソッドで要求したとき | P2 | pf-eccube3:app/Plugin/HareruyaEc/ControllerProvider/AdminApiControllerProvider.php:18 |
+| POST以外のメソッドで要求したとき | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Api/PointGranterController.php:24-28 |
 | 失敗時の応答本文 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Api/PointGranterController.php:26-28 |
 | 失敗時の応答本文 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Api/PointGranterController.php:38-40 |
 | 応答に付けるヘッダ | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Api/PointGranterController.php:75-86 |

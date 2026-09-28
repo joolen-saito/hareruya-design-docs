@@ -29,6 +29,8 @@
 | 新たに登録できる祝日が1件以上あるとき | 登録し、登録した件数を表示する |
 | 新たに登録できる祝日が無いとき | 登録可能な祝日が無かった旨を表示する |
 
+期間内の各日が祝日かどうかと祝日の名称は、アプリケーションに組み込んだ祝日ライブラリで求める。外部のサービスへの問い合わせは行わない。
+
 ### 削除の判定順序
 
 | 順序 | 判定・処理 | 内容 |
@@ -89,6 +91,8 @@
 | 一覧の表示 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/HolidayController.php:30-43 |
 | 手入力での追加の判定順序 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/HolidayController.php:82-115 |
 | 一括登録 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/HolidayController.php:125-190 |
+| 一括登録 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/HolidayController.php:144 |
+| 一括登録 | P2 | pf-eccube3:composer.json:62 |
 | 削除の判定順序 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/HolidayController.php:54-72 |
 | エラー時の扱い | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/FormValidHelper.php:39-49 |
 | 入出力: 永続化 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/HolidayController.php:201-209 |

@@ -8,6 +8,8 @@
 |------|------|
 | カートへの追加 | 非同期で買取カートへ登録し、完了・失敗・上限超過のダイアログを表示する（F05-05を正とする） |
 | 買取数量 | 詳細画面で選べる買取数量は1〜20とする |
+| カート追加の上限超過 | 同じ規格について、買取カート内の数量と追加する数量の合計が20点を超えるときは、数量を保存せず、上限超過のダイアログを表示する |
+| カート追加の失敗 | 規格の指定が空の追加はエラー応答とし、押した「カートに追加」の付近に追加失敗を通知する。買取カートは変更しない |
 | 商品クラスの切り替え | 選んだ商品クラスを選択状態にし、対応する商品画像へ切り替える。選択した言語・商品クラスは画面のURLの指定へ反映する |
 | 同名カード一覧の商品画像 | 読み込み中の画像を先に出し、一覧に表示された時点で実画像へ差し替える |
 
@@ -26,6 +28,10 @@
 |------|------|
 | 買取価格表示 | 状態ごとに登録済みの買取価格をそのまま表示する。本機能では価格を計算しない |
 | 同名カードの抽出 | 基本土地のときは同名カードの一覧を取得しない |
+
+### カテゴリ一覧
+
+カテゴリ一覧は、販売側の商品カテゴリ一覧と同じデータ（カードセット、レアリティ、カテゴリ）から、同じツリー構造と表示項目で表示する。各カテゴリの遷移先は、販売側の商品検索に代えて買取商品検索とする。販売側と異なり、遷移先に並び順の指定を付けない。販売側だけが表示する決済・受取・発送・ポイントの販促バナーは表示しない。
 
 ### 旧商品コードからの転送
 
@@ -68,3 +74,8 @@
 | 買取価格と同名カード | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/PurchaseController.php:583-598 |
 | 旧商品コードからの転送 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/PurchaseController.php:634-646 |
 | エラー時の扱い | P3 | pf-eccube3:app/Plugin/HareruyaEc/Controller/PurchaseController.php:556-557 |
+| カテゴリ一覧 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Block/CategoryController.php:10-32 |
+| カテゴリ一覧 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/Block/purchase_category.twig:6-25 |
+| カテゴリ一覧 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Resource/doctrine/migration/Version20190131015500.php:47-81 |
+| 画面のふるまい | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/PurchaseController.php:420-454 |
+| 画面のふるまい | P1 | pf-eccube3:app/Plugin/HareruyaEc/Entity/ProductClass.php:12 |

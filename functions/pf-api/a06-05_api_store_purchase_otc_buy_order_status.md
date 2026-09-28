@@ -15,6 +15,8 @@
 | 3 | 指定ステータスIDが店頭買取ステータスに存在するか | 存在しなければ入力不正（HTTP 400） |
 | 4 | 更新前ステータスと指定ステータスが異なるか | 異なるときだけ書き込む。同じときは受注も履歴も書き換えず成功として応答する |
 
+ステータスIDを省略したときも、店頭買取ステータスに存在しないときと同じく入力不正（HTTP 400）とし、受注も履歴も書き換えない。
+
 ### 更新の内容
 
 更新前後のステータスが異なるときだけ書き込みを行う。このとき店頭買取受注には、査定担当者と更新日時も記録する。金額・税・ポイント・在庫数量の再計算や丸めは行わない。
@@ -58,6 +60,7 @@
 | --- | --- | --- |
 | 認証と担当者 | P1 | pf-api:src/Controller/BaseController.php:23 |
 | 更新の判定順序 | P1 | pf-api:src/Controller/Admin/OtcBuyOrderStatusController.php:25 |
+| 更新の判定順序 | P1 | pf-api:src/Controller/Admin/OtcBuyOrderStatusController.php:35-46 |
 | 更新の内容 | P1 | pf-api:src/Controller/Admin/OtcBuyOrderStatusController.php:74 |
 | エラー時の扱い | P1 | pf-api:src/Controller/Admin/OtcBuyOrderStatusController.php:39 |
 | 入出力: 永続化 | P1 | pf-api:src/Controller/Admin/OtcBuyOrderStatusController.php:82 |

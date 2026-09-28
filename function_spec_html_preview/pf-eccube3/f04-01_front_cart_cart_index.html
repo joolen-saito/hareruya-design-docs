@@ -304,8 +304,12 @@ footer {
 <h3 id="カートへの追加">カートへの追加</h3>
 <p>商品規格と数量を受け取ってカートへ追加する。数量の指定が無いときは1とする。要求はJSON本文でもフォームの値でも受け付ける。複数商品をまとめて追加する要求も受け付け、追加する商品の並びが渡されないときは追加せず失敗として扱う。追加に失敗したときはエラーメッセージを出す。</p>
 <p>非同期の追加は追加後のカート内容（商品明細と合計）を返し、画面遷移を伴う追加は買い物かご画面を表示する。カート内容の取得だけを求める要求にも同じカート内容を返す。</p>
+<p>要求の送信先と受け取る値は、方式ごとに次のとおりとする。</p>
+<div class="table-wrap"><table><thead><tr><th>方式</th><th>送信先</th><th>受け取る値</th><th>応答</th></tr></thead><tbody><tr><td>1件の追加（非同期）</td><td>POST /cart/add</td><td>JSON本文の product_class_id・quantity、またはフォーム値 product_class_id・quantity</td><td>追加後のカート内容</td></tr><tr><td>複数件の追加（非同期）</td><td>POST /cart/add_bulk</td><td>フォーム値 cart_list（要素ごとに product_class_id・quantity）</td><td>追加後のカート内容</td></tr><tr><td>1件の追加（画面遷移あり）</td><td>POST /cart/add_show</td><td>フォーム値 product_class_id・quantity</td><td>成否にかかわらず買い物かご画面へ遷移する</td></tr><tr><td>カート内容の取得</td><td>GET /cart/get</td><td>なし</td><td>カート内容</td></tr></tbody></table></div>
+<p>JSON本文を読むのは、フォーム値に product_class_id も quantity も無いときである。複数件の追加で cart_list が無い、または並びでないときは、1件も追加しない。カート内容の応答は、カートの内容（cart）と、カートを識別する値（cookie）を持つJSONとする。</p>
 <h3 id="入荷通知依頼">入荷通知依頼</h3>
 <div class="table-wrap"><table><thead><tr><th>条件</th><th>結果</th></tr></thead><tbody><tr><td>対象の商品規格が存在しない</td><td>依頼を受け付けず失敗を返す</td></tr><tr><td>未ログイン</td><td>依頼を受け付けずログインを促す。ログイン後に戻れるよう直前の画面を覚えておく</td></tr><tr><td>すでに同じ商品規格の依頼がある</td><td>その依頼を取り消す</td></tr><tr><td>依頼件数が上限に達している</td><td>依頼を登録せず、上限値を添えて失敗を返す</td></tr><tr><td>上記以外</td><td>依頼を登録する</td></tr></tbody></table></div>
+<p>依頼の送信先は POST /cart/pushReceive で、商品規格をフォーム値 product_class_id で渡す。取消では依頼に削除日時を記録し、依頼の行は残す。依頼件数の上限値は、オプションマスタの入荷通知上限件数で決まる。上限と比べる依頼件数は、その会員の依頼のうち削除日時が記録されていないものの件数である。</p>
 <h3 id="カートが空のとき">カートが空のとき</h3>
 <p>商品が1件も無いときは、商品行・集計欄・購入手続きへのボタン・カート一括削除を出さず、買い物かごが空である案内だけを出す。他の商品を見るボタンは空のときも出す。</p>
 <h2 id="入出力">入出力</h2>

@@ -20,6 +20,8 @@
 
 失敗したときの再実行は、同じコマンドを起動し直して行う。抽出は何度実行しても同じ結果になるため、再実行したときは同じ内容を再度通知しうる。
 
+通知済みかどうかは記録せず、判定もしない。起動のたびに、その時点で部門未設定の商品規格を抽出し直し、1件以上あれば通知メールを送る。同じ内容の通知を重ねて送ることは抑止しない。
+
 ## 入出力
 
 ### 入力と出力
@@ -44,4 +46,5 @@
 | 抽出の対象 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Repository/DtbProductSubClassRepository.php:1524 |
 | 通知先 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Service/MailService.php:1179 |
 | 再実行 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Service/Product/CheckNoSectionProduct.php:28 |
+| 再実行 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Service/Product/CheckNoSectionProduct.php:35-46 |
 | 入力と出力 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Command/ProductBatch.php:39 |

@@ -11,6 +11,9 @@
 | 3 | 対象デッキの所有者が認証したプレイヤーと一致するか | 一致しないなら認証拒否（HTTP 401） |
 | 4 | 上記を通過 | 削除日時を設定して論理削除し、処理結果コード200を返す |
 
+論理削除済みのデッキは、デッキIDに該当するデッキとして扱わない。
+論理削除済みのデッキIDを再び指定したときは、該当なし（HTTP 404）とし、削除日時を設定し直さない。
+
 ### 認証と認可
 
 トークンを検証し、その内容に含まれる顧客IDからプレイヤーを特定する。トークンの欠落・署名不正・該当するプレイヤーなしのいずれのときも認証拒否とする。削除できるのは対象デッキの所有者本人だけで、所有者でないときも認証拒否とする。呼び出し元はデッキビルダーアプリで、トークンの原値と署名の秘密値は本書に記載しない。
@@ -18,6 +21,9 @@
 ### 削除の内容
 
 対象デッキに削除日時を設定して論理削除し、当該デッキの一時保存があれば併せて削除する。この一連の処理は1つのまとまりとして行い、例外が起きたときはすべて取り消して処理失敗（HTTP 500）とする。金額・税・ポイント・在庫数量の再計算は行わない。応答は本APIで集計せず、処理結果をそのまま返す。
+
+一時保存の保存先は Redis とする。
+一時保存のキーは、「deck_」にデッキIDを付けた値（例: deck_123）とする。
 
 ### エラー時の扱い
 
@@ -65,3 +71,14 @@
 | — | APIレスポンス（JSON body・message） | The deck does not exist | デッキIDに該当するデッキが無いとき | HTTP 404を返し、削除しない |
 | — | APIレスポンス（JSON body・message） | Access Token is incorrect | トークンの欠落・署名不正・該当するプレイヤーが無いとき | HTTP 401を返し、削除しない |
 | — | APIレスポンス（JSON body・message） | Authentication failed | 対象デッキの所有者でないとき | HTTP 401を返し、削除しない |
+
+## 出典
+| 小見出し | 重要度 | 出典 |
+| --- | --- | --- |
+| 削除の判定順序 | P2 | deck-api:src/Entity/DtbDeck.php:15 |
+| 削除の判定順序 | P2 | deck-api:config/packages/doctrine.yaml:41-44 |
+| 削除の判定順序 | P2 | deck-api:src/Resources/config/doctrine/DtbDeck.orm.yml:379-380 |
+| 削除の判定順序 | P2 | deck-api:src/Controller/DeckController.php:134-139 |
+| 削除の内容 | P2 | deck-api:src/Service/DeckService.php:263-283 |
+| 削除の内容 | P2 | deck-api:src/Service/DeckService.php:456-458 |
+| 削除の内容 | P2 | deck-api:config/services.yaml:15 |

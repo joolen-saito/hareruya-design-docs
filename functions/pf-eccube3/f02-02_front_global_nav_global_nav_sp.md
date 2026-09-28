@@ -12,6 +12,8 @@
 
 ### 候補リスト
 
+商品検索の入力欄への入力のたびに、入力中の文字列をキーワードとしてユニサーチへ候補を要求する。要求する候補の件数は16件で、検索履歴も併せて求める。ログイン中は、会員を識別するハッシュ値を添えて要求する。候補リストには、返された検索履歴・キーワード・カードセット・商品名サジェストを表示する。
+
 商品検索の候補リストを取得できないときは、候補リストを表示しない。このときも、入力したキーワードでの検索の送信は続けられる。
 
 ### フェーズ2対応（フェーズ1では実装しない）
@@ -38,4 +40,7 @@ Excel基本設計 0302「スマホ版ナビゲーション上の通知」はフ�
 | 商品検索のキーワード再表示 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/Block/base_sp_navigator_unisuggest.twig:26 |
 | 候補リスト | P3 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/Block/js/unisuggest_js.twig:146 |
 | 候補リスト | P3 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/Block/base_sp_navigator_unisuggest.twig:25 |
+| 候補リスト | P3 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/Block/js/unisuggest_js.twig:47-49 |
+| 候補リスト | P3 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/Block/js/unisuggest_js.twig:137-141 |
+| 候補リスト | P3 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/Block/js/unisuggest_js.twig:152-195 |
 | フェーズ2対応（フェーズ1では実装しない） | P3 | 0302:sheet-4 |

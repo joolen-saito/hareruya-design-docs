@@ -18,6 +18,8 @@
 
 お気に入り登録商品がセール状態になったことを知らせる通知メールは、顧客グループの店頭フロント区分または支店店頭フロント区分が立つ会員を配信対象から除外する。
 
+配信対象は、セール通知の一括処理（product:batch saleNotification）を実行するたびに、その時点のお気に入り登録・セール状態・顧客グループの区分から抽出する。
+
 ## 入出力
 
 | 種類 | 内容 |
@@ -54,4 +56,5 @@
 | 番号札の採番 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Repository/DtbCustomerGroupRepository.php:22-25 |
 | セール通知メールの配信対象 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Repository/DtbFavoriteProductRepository.php:45 |
 | セール通知メールの配信対象 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Service/Product/SaleNotificationService.php:26-31 |
+| セール通知メールの配信対象 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Command/ProductBatch.php:22-32 |
 | 入出力: 永続化 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Service/ShoppingService.php:537-542 |

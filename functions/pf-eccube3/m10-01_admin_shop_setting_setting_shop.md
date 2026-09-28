@@ -12,6 +12,7 @@
 |------|------|
 | 入力の検証に成功したとき | 店舗基本情報を保存し、店舗基本設定画面を開き直す |
 | 入力の検証に失敗したとき | 保存せず、同じ画面を再表示して該当項目の近傍にエラーを表示する |
+| なりすまし対策トークンが欠落または一致しないとき | 保存せず、同じ画面を入力内容のまま再表示する。トークンの誤りを示すエラーは画面に表示しない |
 
 入力の検証に失敗して再表示したときは、画面の見出しなどに出る店舗名は保存済みの内容のままで、入力中の値は反映されない。
 
@@ -105,6 +106,8 @@
 | 初期表示 | P3 | pf-eccube3:src/Eccube/Controller/Admin/Setting/Shop/ShopController.php:37 |
 | 保存の判定 | P2 | pf-eccube3:src/Eccube/Controller/Admin/Setting/Shop/ShopController.php:58 |
 | 保存の判定 | P2 | pf-eccube3:src/Eccube/Controller/Admin/Setting/Shop/ShopController.php:76 |
+| 保存の判定 | P2 | pf-eccube3:src/Eccube/Controller/Admin/Setting/Shop/ShopController.php:52-58 |
+| 保存の判定 | P2 | pf-eccube3:src/Eccube/Resource/template/admin/Setting/Shop/shop_master.twig:43 |
 | 郵便番号・住所の入力 | P3 | pf-eccube3:src/Eccube/Form/Type/ZipType.php:95 |
 | 郵便番号・住所の入力 | P3 | pf-eccube3:src/Eccube/Form/Type/AddressType.php:102 |
 | 郵便番号・住所の入力 | P3 | pf-eccube3:src/Eccube/Resource/template/admin/Setting/Shop/shop_master.twig:34 |

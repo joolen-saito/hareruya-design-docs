@@ -12,6 +12,10 @@
 
 該当するトップバナーが無いときの応答本文は、コードとメッセージの2項目を持つJSONで、コードは404、メッセージは「Not Found」。
 
+### 入出力: バナーIDを付けない要求
+
+バナーIDを付けないパス（/topBanner/）へ要求したときは、受け付けるパスに一致せず、HTTPステータス404になる。このときは該当が無いときの応答本文（コード404・メッセージ「Not Found」のJSON）を返さない。該当が無いときの応答本文を返すのは、バナーIDを付けたパスで該当するトップバナーが無いときだけである。
+
 ## 表示メッセージ
 
 この機能は画面を持たないためメッセージを扱わない。
@@ -22,3 +26,5 @@
 | --- | --- | --- |
 | 取得対象の絞り込み | P2 | pf-api:src/Controller/BannerController.php:22-24 |
 | 入出力: 該当が無いときの応答本文 | P2 | pf-api:src/Controller/BannerController.php:26-30 |
+| 入出力: バナーIDを付けない要求 | P2 | pf-api:config/routes.yaml:157-158 |
+| 入出力: バナーIDを付けない要求 | P2 | pf-api:src/Controller/BannerController.php:20-30 |

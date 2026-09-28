@@ -14,6 +14,10 @@ PC向けに登録されたブロックだけを一覧の対象とし、ブロッ
 
 同じ端末種別にすでに同じファイル名のブロックがあるときは登録・更新できず、ファイル名欄にエラーを表示する。編集では自分自身を除いて重複を判定するため、ファイル名を変えないまま保存できる。
 
+### ファイル名の編集可否
+
+ファイル名を編集できるかは、ブロックの削除可否だけで決まる。削除できるブロックではファイル名の入力欄を表示する。削除できないブロックではファイル名を表示するだけで入力欄を出さず、編集できない。ファイル名の文字列を `/user_data` と照合する判定は行わない。
+
 ### ファイル名変更時の旧ファイル
 
 ファイル名を変更して更新したときは、変更前のファイル名で保存されていた同じ言語のテンプレートファイルが残っていれば、そのファイルを削除する。
@@ -61,6 +65,8 @@ PC向けに登録されたブロックだけを一覧の対象とし、ブロッ
 | 編集画面のブロックデータ初期表示 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Content/ContentController.php:206-226 |
 | 編集画面のブロックデータ初期表示 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Content/ContentController.php:83 |
 | ファイル名の一意性 | P2 | pf-eccube3:src/Eccube/Form/Type/Admin/BlockType.php:85-110 |
+| ファイル名の編集可否 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Content/BlockController.php:151 |
+| ファイル名の編集可否 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/admin/Content/block_edit.twig:64-69 |
 | ファイル名変更時の旧ファイル | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Content/ContentController.php:263-268 |
 | 削除できないブロックへの削除要求 | P2 | pf-eccube3:src/Eccube/Controller/Admin/Content/BlockController.php:176-197 |
 | 入出力: 永続化 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Content/ContentController.php:241 |

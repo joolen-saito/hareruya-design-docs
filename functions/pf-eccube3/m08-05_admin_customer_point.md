@@ -18,6 +18,10 @@
 
 ポイント付与が成立したとき、その会員の選手情報が持つポイント残高を「更新前の残高＋入力したポイント増減量」に更新する。増減量が負のときは残高が減る。
 
+### スマレジへのポイント連携
+
+ポイント付与では、スマレジの会員ポイントを相対値で更新する要求を送る。要求の会員IDには、その会員の選手情報が持つスマレジ会員IDを入れる。要求のポイントには、入力したポイント増減量をそのまま入れる。
+
 ### エラー時の扱い
 
 | 事象 | 扱い |
@@ -59,5 +63,7 @@
 | 付与できない条件 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/CustomerController.php:393-401 |
 | 付与できない条件 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/CustomerController.php:416-424 |
 | ポイント残高の更新 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/CustomerController.php:393-404 |
+| スマレジへのポイント連携 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/CustomerController.php:416 |
+| スマレジへのポイント連携 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Service/Smaregi/CustomerService.php:570-593 |
 | エラー時の扱い | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/CustomerController.php:339 |
 | 入出力: 永続化 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/CustomerController.php:403-404 |

@@ -22,6 +22,8 @@
 
 同一カード詳細に複数言語の画像があっても、先に保存に成功した1枚だけが圧縮ファイルに載る。
 
+画像なしのメッセージは、圧縮ファイルを返す応答と同じ要求では画面に表示しない。次に管理画面を表示したときに、その画面にエラーとして表示する。
+
 ### 言語別の作成
 
 カード詳細が0件のカードセットIDがあってもエラーとせず、次のIDへ進む。
@@ -73,6 +75,9 @@
 | 対象カード詳細の絞り込み | P2 | pf-eccube3:app/Plugin/HareruyaEc/Repository/MtbCardDetailRepository.php:348 |
 | 未選択のままの実行 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/admin/Cardset/card_set.twig:22 |
 | セット別の作成 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/CardSetController.php:323 |
+| セット別の作成 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/CardSetController.php:360 |
+| セット別の作成 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/CardSetController.php:373-376 |
+| セット別の作成 | P2 | pf-eccube3:src/Eccube/Application/ApplicationTrait.php:28 |
 | 言語別の作成 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/CardSetController.php:424 |
 | 画像ファイルの名前 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Service/S3AccessService.php:184 |
 | デッドリンクの更新 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/CardSetController.php:343 |

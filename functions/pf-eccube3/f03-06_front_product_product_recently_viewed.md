@@ -25,6 +25,8 @@
 
 サムネイルに使う画像は、その商品に登録された商品画像のうち表示順が最も先の1枚とする。
 
+閲覧履歴の保存期限は、商品詳細を開くたびに、その時点から730日後へ更新する。
+
 ### エラー時の扱い
 
 | 事象 | 扱い |
@@ -60,4 +62,6 @@
 | 表示するもの | P3 | pf-eccube3:app/Plugin/HareruyaEc/Resource/locale/message.ja.yml:329 |
 | 表示するもの | P3 | pf-eccube3:app/Plugin/HareruyaEc/Resource/locale/message.en.yml:313 |
 | 一覧に並べる商品 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Repository/ProductRepository.php:488-535 |
+| 一覧に並べる商品 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/ProductController.php:295 |
+| 一覧に並べる商品 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/ProductController.php:453 |
 | エラー時の扱い | P3 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Block/HistoryController.php:13-31 |

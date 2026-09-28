@@ -6,6 +6,8 @@
 
 画面を開いたときは、登録済みの表記1件を読み込み、各項目の初期表示にする。
 
+登録済みの表記が無いときも、エラーの表示や別の画面への遷移は行わず、全項目が空欄の編集画面を表示する。
+
 ### 保存の判定順序
 
 | 順序 | 判定 | 結果 |
@@ -42,6 +44,8 @@
 | 小見出し | 重要度 | 出典 |
 | --- | --- | --- |
 | 編集の対象 | P2 | pf-eccube3:src/Eccube/Controller/Admin/Setting/Shop/TradelawController.php:43 |
+| 編集の対象 | P2 | pf-eccube3:src/Eccube/Repository/HelpRepository.php:44-47 |
+| 編集の対象 | P2 | pf-eccube3:src/Eccube/Controller/Admin/Setting/Shop/TradelawController.php:45-46 |
 | 保存の判定順序 | P1 | pf-eccube3:src/Eccube/Controller/Admin/Setting/Shop/TradelawController.php:61-79 |
 | 保存の判定順序 | P1 | pf-eccube3:src/Eccube/Form/Type/TelType.php:79-96 |
 | 保存の判定順序 | P1 | pf-eccube3:src/Eccube/Form/Type/TelType.php:70 |

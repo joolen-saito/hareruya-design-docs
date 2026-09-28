@@ -29,6 +29,8 @@
 
 取込中は、同じ行を他の処理が押さえているときの待ち時間を5秒とする。
 
+5秒待っても押さえが外れないときは、取込を継続せずに中止し、それまでの更新をすべて取り消す。この中止では完了のメッセージを出さず、取込履歴にも残さない。
+
 ### 更新の対象となる商品規格
 
 対象は、行の商品コードに一致し、高額商品コードを持つ商品規格1件とする。削除済みの商品・商品規格は対象にしない。
@@ -101,3 +103,4 @@
 | 支店システムへの通知と取込履歴 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Service/Csv/Importer/Event/HighPriceImportHandler.php:74 |
 | 支店システムへの通知と取込履歴 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Service/BranchUpdateService.php:66 |
 | 支店システムへの通知と取込履歴 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Product/ProductCsvController.php:1081 |
+| 取込の中止と取り消し | P1 | pf-eccube3:app/Plugin/HareruyaEc/Service/Csv/Importer/CsvImporter.php:288 |

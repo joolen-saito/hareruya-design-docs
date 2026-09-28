@@ -8,6 +8,8 @@
 
 一覧はバナーIDの昇順で並べる。
 
+指定した言語コードが登録されていれば、一覧に含めるバナーが1件も残らないときもコード200を返し、応答本文は空の配列（`[]`）になる。
+
 ## 入出力
 
 ### 受け付けるパス
@@ -27,5 +29,6 @@
 | 小見出し | 重要度 | 出典 |
 | --- | --- | --- |
 | 一覧に含めるバナー | P2 | pf-api:src/Repository/MtbTopBannerRepository.php:17 |
+| 一覧に含めるバナー | P2 | pf-api:src/Controller/BannerController.php:44-59 |
 | 受け付けるパス | P2 | pf-api:config/routes.yaml:163 |
 | 失敗時の応答本文 | P2 | pf-api:src/Controller/BannerController.php:53 |

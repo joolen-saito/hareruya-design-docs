@@ -8,7 +8,9 @@
 
 ### 応答値の扱い
 
-金額・ポイント・数量・ステータス・日時は永続化済みの値を返し、応答生成時の丸め・補正は行わない。件数・表示順は取得結果に従い、取得後に業務値を再計算しない。
+件数・表示順は取得結果に従い、取得後に業務値を再計算しない。
+
+一覧はトップバナーIDの昇順で返す。言語コードで絞り込んだときも同じ順とし、取得後に並べ替えない。
 
 ### エラー時の扱い
 
@@ -42,6 +44,8 @@
 | `dispType` | integer | 表示タイプ |
 | `languages` | array | 関連する言語の配列。子フィールドは`id`（言語ID）、`nameJp`（言語名・日本語）、`nameEn`（言語名・英語）、`code`（言語コード） |
 
+各要素の応答フィールドは上表の5項目だけである。金額・ポイント・数量・ステータス・日時に当たる項目は持たない。
+
 ```json
 [
   {
@@ -67,3 +71,13 @@
 | メッセージID | 表示位置 | 画面上の文言 | 表示条件 | 後続処理 |
 |---|---|---|---|---|
 | — | API応答JSON | Language code is not found | 一覧が空かつ言語コードが言語マスタに存在しないとき | HTTP 404を返して終了する |
+
+## 出典
+
+| 小見出し | 重要度 | 出典 |
+| --- | --- | --- |
+| 応答値の扱い | P2 | pf-api:src/Repository/MtbTopBannerRepository.php:28 |
+| 応答値の扱い | P2 | pf-api:src/Controller/BannerController.php:46-61 |
+| 出力: レスポンス（成功） | P2 | pf-api:src/Controller/BannerController.php:61 |
+| 出力: レスポンス（成功） | P2 | pf-api:src/Entity/MtbTopBanner.php:11-43 |
+| 応答値の扱い | P2 | pf-api:src/Entity/MtbTopBanner.php:11-43 |

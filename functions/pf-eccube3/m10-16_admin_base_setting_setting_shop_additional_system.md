@@ -22,6 +22,14 @@
 | スマレジ通信エラー送信メールアドレス | 任意 | 文字列 | smaregierror@hareruyamtg.com | 入力があるときだけ厳密なメールアドレス形式 |
 | タイトルを変更する商品ID( , 区切り) | 任意 | 文字列 | 空文字 | 数字とカンマのみ |
 
+### 入力値の上限
+
+入荷通知最大数・レコメンドの検索期間（日数）・買取査定申込み完了画面の自動遷移秒数・まとめて買取商品ID・固定価格商品部門ID・Small packetが選択可能な合計金額の閾値・英語サイト専用タグIDには、入力の検証で上限値を設けていない。
+
+スマレジ契約ID・スマレジアクセストークン・スマレジへの送信URLは、文字種と形式だけを検証し、文字数の上限を設けていない。
+
+配送日指定が繰上る時刻(hh:mm)は00:00〜23:59の時刻の形式だけを受け付け、入荷通知メールの許可は選択肢の値だけを受け付ける。
+
 ### 保存の対象
 
 保存はなりすまし対策トークンの検証を通ったときだけ行う。保存では再度設定のマスタを全件読み、送信内容に同じキーがあり、かつ文字列として比較した送信値が現在の設定値と異なる項目だけを更新する。更新した項目には、更新した管理者の識別子と更新日時を記録する。値が同じ項目は更新せず、更新した管理者の識別子も更新日時も書き換えない。
@@ -86,6 +94,11 @@
 | 設定項目（項目定義に記載のないもの） | P2 | pf-eccube3:app/Plugin/HareruyaEc/Form/Type/Admin/ConfigType.php:27 |
 | 設定項目（項目定義に記載のないもの） | P2 | pf-eccube3:app/Plugin/HareruyaEc/Form/Type/Admin/ConfigType.php:129 |
 | 設定項目（項目定義に記載のないもの） | P2 | pf-eccube3:app/Plugin/HareruyaEc/Form/Type/Admin/ConfigType.php:172 |
+| 入力値の上限 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Form/Type/Admin/ConfigType.php:18-24 |
+| 入力値の上限 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Form/Type/Admin/ConfigType.php:74-111 |
+| 入力値の上限 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Form/Type/Admin/ConfigType.php:163-199 |
+| 入力値の上限 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Form/Type/Admin/ConfigType.php:280-297 |
+| 入力値の上限 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Resource/doctrine/Plugin.HareruyaEc.Entity.MtbOption.dcm.yml:28 |
 | 保存の対象 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/ConfigController.php:43 |
 | 保存の対象 | P1 | pf-eccube3:src/Eccube/Doctrine/EventSubscriber/SaveEventSubscriber.php:72 |
 | 設定値の利用先 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Service/MailService.php:122 |

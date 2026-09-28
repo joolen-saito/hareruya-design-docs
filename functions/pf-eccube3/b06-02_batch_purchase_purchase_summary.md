@@ -23,6 +23,8 @@
 | 集計・登録中の例外 | 登録を取り消し、エラー内容を添えた集計エラーの通知を管理者へ送る |
 | 通知の宛先が未設定 | 通知を送らずに当該処理を終了する |
 
+コマンド名が未指定・不一致のときは、終了コード1で終了する。このとき、実行日時を添えた「Nothing args or command.」をコンソールへ出力する。
+
 ### 部門未設定商品の通知
 
 通知の本文には商品名と商品コードを1件1行で並べる。個別入力商品は商品コードを空欄とする。通知の対象は集計対象日に買取が成立した店頭買取のすべてで、集計対象の状態による絞り込みは行わない。
@@ -39,6 +41,8 @@
 | --- | --- |
 | 入力 | 実行するバッチのコマンド名 |
 | 出力 | 管理者への通知（部門未設定商品の一覧・集計エラーの内容） |
+
+起動コマンドは `otcBuyOrder:batch` で、コマンド名を第1引数に渡す。有効なコマンド名は `updateSummary` の1つだけである。
 
 ## 表示メッセージ
 
@@ -60,3 +64,5 @@
 | 通知の宛先 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Service/MailService.php:1219-1227 |
 | 引数と結果 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Command/OtcBuyOrderBatch.php:37 |
 | 引数と結果 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Service/OtcBuyOrder/SummaryService.php:58-66 |
+| エラー時の扱い | P1 | pf-eccube3:app/Plugin/HareruyaEc/Command/OtcBuyOrderBatch.php:33-41 |
+| 引数と結果 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Command/OtcBuyOrderBatch.php:12-22 |

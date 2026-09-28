@@ -14,6 +14,8 @@ PC端末種別のページをID昇順で表示する。IDが 0 のページは�
 
 ページIDに該当するページが無いときは、編集画面を表示せず、システムエラーの画面を表示する。テンプレート本文欄には、該当ページのテンプレートファイルの内容を初期表示する。
 
+URLとファイル名を編集できるかは、ページの編集可否区分だけで決まる。編集可否区分が既定（初期投入）のページでは、URLとファイル名を表示するだけで入力欄を出さず、編集できない。それ以外のページでは、URLとファイル名の入力欄を表示する。URL・ファイル名の文字列を `/user_data` と照合する判定は行わない。
+
 ### 保存時のふるまい
 
 編集でファイル名を変えて保存したときは、変更前の名前のテンプレートファイルが残っていればそれを削除する。
@@ -74,6 +76,9 @@ PC端末種別のページをID昇順で表示する。IDが 0 のページは�
 | 新規作成の初期表示 | P2 | pf-eccube3:src/Eccube/Repository/PageLayoutRepository.php:178 |
 | 編集の初期表示 | P2 | pf-eccube3:src/Eccube/Repository/PageLayoutRepository.php:86 |
 | 編集の初期表示 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Content/ContentController.php:206 |
+| 編集の初期表示 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Content/PageController.php:80-83 |
+| 編集の初期表示 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Content/PageController.php:195 |
+| 編集の初期表示 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/admin/Content/page_edit.twig:59-77 |
 | 保存時のふるまい | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Content/ContentController.php:251 |
 | URLの一意性 | P2 | pf-eccube3:src/Eccube/Form/Type/Admin/MainEditType.php:142 |
 | 削除 | P2 | pf-eccube3:src/Eccube/Controller/Admin/Content/PageController.php:166 |

@@ -40,6 +40,14 @@ CSV種別またはカスタム定義を選び直したときは、その時点�
 
 出力ファイルの名前は、CSV種別ごとの接頭辞に出力時刻（年月日時分秒）を続けたものとする。
 
+| CSV種別 | 接頭辞 |
+| --- | --- |
+| 商品 | `product_` |
+| 受注 | `order_` |
+| 配送 | `shipping_` |
+
+ファイル名は、接頭辞・出力時刻（`YmdHis`）・`.csv` を区切り記号を挟まずにつないだものである（例: `product_20260928153000.csv`）。
+
 ### エラー時の扱い
 
 | エラー内容 | 処理 |
@@ -85,6 +93,7 @@ CSV種別またはカスタム定義を選び直したときは、その時点�
 | 削除 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Setting/Shop/CsvController.php:103-118 |
 | 出力の並び | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/CustomExportCsvController.php:25-87 |
 | 出力の並び | P2 | pf-eccube3:app/Plugin/HareruyaEc/Service/CsvExportService.php:34-114 |
+| 出力の並び | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/CustomExportCsvController.php:77-78 |
 | エラー時の扱い | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Setting/Shop/CsvController.php:105-109 |
 | エラー時の扱い | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Setting/Shop/CsvController.php:130-138 |
 | 入出力: 永続化 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Setting/Shop/CsvController.php:57-90 |

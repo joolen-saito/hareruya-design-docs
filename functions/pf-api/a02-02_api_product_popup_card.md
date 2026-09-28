@@ -47,6 +47,8 @@
 | `foil_flg` | クエリ | string | 任意 | フォイル有無の指定。指定があるときだけ並び順の第1優先に使う |
 | `price` | クエリ | string | 任意 | 価格の並び指定。指定があるときだけ販売価格を並び順に使う |
 
+`foil_flg` が空文字か `0` のときは偽値として扱う。それ以外の値のときは、`false` を含めて真値として扱う。
+
 ### 入出力: 値を持たないことがあるフィールド
 
 | フィールド | 値が無いときの応答 |
@@ -72,5 +74,6 @@
 | 応答の値の扱い | P2 | pf-api:src/Repository/DtbProductSubClassRepository.php:129-147 |
 | 該当が無いときの応答本文 | P2 | pf-api:src/Controller/ProductController.php:95-102 |
 | 入出力: クエリパラメータ | P2 | pf-api:src/Controller/ProductController.php:89-93 |
+| 入出力: クエリパラメータ | P2 | pf-api:src/Repository/DtbProductSubClassRepository.php:111-113 |
 | 入出力: 値を持たないことがあるフィールド | P3 | pf-api:src/Repository/DtbProductSubClassRepository.php:103-105 |
 | 入出力: 値を持たないことがあるフィールド | P3 | pf-api:src/Resources/config/doctrine/DtbProductSubClass.orm.yml:45-52 |

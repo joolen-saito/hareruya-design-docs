@@ -12,6 +12,7 @@
 | 各注文の操作 | この注文内容で再度購入する。押したときは、その注文の商品と数量をカートへ投入し、買い物かご画面へ遷移する |
 | 処理状態からの遷移 | 処理状態の表示から注文購入履歴詳細へ遷移できる |
 | レイアウト | PCで表示したときとスマートフォンで表示したときで、列の見せ方を切り替える |
+| マイページへの導線 | マイページトップ（マイページ画面）へ遷移する |
 
 ### 一覧の抽出
 
@@ -62,3 +63,4 @@
 | 一覧の抽出 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Mypage/ShoppingController.php:32-36 |
 | 再購入 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Mypage/ShoppingController.php:124-155 |
 | エラー時の扱い | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Mypage/ShoppingController.php:126-139 |
+| 画面に出す内容 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/Mypage/shopping_history.twig:166-168 |

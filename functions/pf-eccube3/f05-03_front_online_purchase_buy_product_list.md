@@ -19,12 +19,18 @@
 
 1ページの件数は既定60件で、指定によって変更できる。
 
+件数はURLのクエリパラメータ pageSize で指定する。pageSize が空または0のときは60件とする。それ以外の値は上限を設けずにそのまま1ページの件数とする。
+
 ### 画面の内容
 
 絞り込みにはマナコストがあり、色の選択をすべて解除する操作を持つ。
 商品画像は遅延読み込みし、読み込みが済むまで読み込み中の画像を表示する。
 絞り込みの行と表示順の行は、PCとスマートフォンで表示する内容を出し分ける。
 一覧の下部には検索フォームを表示する。
+
+### カテゴリ一覧
+
+カテゴリ一覧は、販売側の商品カテゴリ一覧と同じデータ（カードセット、レアリティ、カテゴリ）から、同じツリー構造と表示項目で表示する。各カテゴリの遷移先は、販売側の商品検索に代えて買取商品検索とする。販売側と異なり、遷移先に並び順の指定を付けない。販売側だけが表示する決済・受取・発送・ポイントの販促バナーは表示しない。
 
 ### 買取価格とカート追加
 
@@ -61,3 +67,8 @@
 | 画面の内容 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/Block/purchase_product.twig:9 |
 | 買取価格とカート追加 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/Block/purchase_product.twig:20 |
 | 買取価格とカート追加 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/Block/purchase_product.twig:30 |
+| カテゴリ一覧 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Block/CategoryController.php:10-32 |
+| カテゴリ一覧 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/Block/purchase_category.twig:6-25 |
+| カテゴリ一覧 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Resource/doctrine/migration/Version20190131015500.php:47-81 |
+| 表示件数 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Controller/PurchaseController.php:522 |
+| 表示件数 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Controller/ProductSearchTrait.php:40-42 |

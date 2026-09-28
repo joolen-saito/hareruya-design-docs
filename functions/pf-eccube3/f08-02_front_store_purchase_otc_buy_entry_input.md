@@ -20,6 +20,8 @@
 
 申込フォーム・会員登録フォームのキャンセルは、エントリーへ戻る。会員登録フォームは会員登録をスキップして確認へ進む導線も持つ。
 
+申込フォームと会員登録フォームは、それぞれ画面を表示した時点から10分の入力時間を数える。入力時間は画面ごとに10分から数え直す。10分を過ぎると、入力内容を消去してエントリーへ戻す。
+
 ### 入力の初期値と検証
 
 | 項目 | 扱い |
@@ -29,6 +31,12 @@
 | 返却希望サプライ | 選択肢はスリーブとストレージボックスの2つ（英語表示では Sleeves と Storage Box） |
 | 氏名・氏名カナ | 空白文字を含む入力は受け付けない |
 | 会員登録の入力 | 会員登録をスキップするときは入力を求めない |
+
+### 会員登録時のブラックリスト照合
+
+会員登録ありで申し込んだときは、入力した氏名・電話番号・住所のいずれか1つでもブラックリストと一致すれば会員登録を行わない。一致しても査定申込みは登録する。
+
+照合する値は、氏名が姓と名、電話番号が3区分、住所が都道府県名・住所1・住所2をそれぞれ連結し、半角・全角の空白を除いたものである。各値をブラックリストの同じ区分（氏名・電話番号・住所）のキーワードと完全一致で照合する。ブラックリスト側のキーワードからは空白を除かない。
 
 ### 他機能との境界
 
@@ -65,6 +73,7 @@
 | — | 申込フォーム・会員登録フォーム上部（英語表示時） | Remaining time to input: | 申込フォームまたは会員登録フォームを表示したとき | 残り時間を表示する |
 | — | 会員登録フォーム | 初めてご利用のお客様は、こちらから会員登録をお願いいたします。次回以降の査定申込みが簡単になるほか、通販で便利にお買い物ができるようになります。 | 会員登録フォームを表示したとき | 会員登録の入力を促す |
 | — | 会員登録フォーム（英語表示時） | If you are a first-time customer, please register for membership here. Registering for membership will make it easier to apply for future assessments and to shop conveniently at the Hareruya web store. | 会員登録フォームを表示したとき | 会員登録の入力を促す |
+| — | 申込フォーム上に重ねて表示する説明の見出し | 適格請求書発行事業者について | 適格請求書発行事業者についての説明を開いたとき | 申込フォームから遷移せず、インボイス制度の概要と、事業者は登録番号を入力して申し込む旨を表示する |
 | — | 申込フォームの住所欄 | ※町名・番地の入力漏れはご注意ください。 | 日本語の申込フォームを表示したとき。英語の申込フォームはこの注意文を持たない | 住所の入力を促す |
 | — | ログインフォーム直下 | ログイン失敗の文言 | エントリーのログインに失敗したとき | 認証の最終エラーを表示する。文言は会員ログインを正とする |
 | — | 登録番号欄 | 登録番号を入力してください | 適格請求書発行事業者ありで登録番号が未入力のとき | 申込を確定せず入力画面に留まる |
@@ -86,5 +95,13 @@
 | 入力の初期値と検証 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/OtcBuyController.php:96 |
 | 入力の初期値と検証 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Form/Type/Front/OtcBuy/OtcBuyOrderType.php:175 |
 | 入力の初期値と検証 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Form/Type/Front/OtcBuy/OtcBuyOrderType.php:265 |
+| 画面の進み方 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/Block/js/otc_buy_order_js.twig:145-150 |
+| 画面の進み方 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/Block/js/otc_buy_register_customer_js.twig:48-53 |
+| 画面の進み方 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/OtcBuy/index.twig:20 |
+| 会員登録時のブラックリスト照合 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/OtcBuyController.php:385-393 |
+| 会員登録時のブラックリスト照合 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Repository/DtbBlacklistRepository.php:20-50 |
+| 会員登録時のブラックリスト照合 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Util/StringUtil.php:78 |
+| 表示メッセージ | P3 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/OtcBuy/index.twig:185 |
+| 表示メッセージ | P3 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/OtcBuy/index.twig:290-301 |
 | 他機能との境界 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Controller/OtcBuyController.php:172 |
 | エラー時の扱い | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/OtcBuyController.php:44 |

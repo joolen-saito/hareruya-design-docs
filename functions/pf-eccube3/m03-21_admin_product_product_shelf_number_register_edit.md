@@ -26,7 +26,7 @@
 
 ### CSV出力の内容
 
-棚番号を全件、並び順の昇順で出力する。見出し行に続けて各行を出力し、ファイルの先頭には文字コードの目印を付ける。ファイル名は shelf_number_YYYYMMDDHHmmss.csv の形式とし、ファイルとしてダウンロードさせる。
+棚番号を全件、並び順の昇順で出力する。見出し行に続けて各行を出力し、ファイルの先頭には文字コードの目印を付ける。文字コードの目印はUTF-8のBOM（バイト列 EF BB BF）で、ファイル先頭に1回だけ付ける。出力の文字コードの設定にかかわらず、同じ3バイトを付ける。ファイル名は shelf_number_YYYYMMDDHHmmss.csv の形式とし、ファイルとしてダウンロードさせる。
 
 ### CSV取込の受付
 
@@ -88,3 +88,4 @@ IDが空または 0 の行は新規登録とする。IDを指定した行は、�
 | CSV取込の行ごとの検査 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Service/Csv/ShelfNumberCsv.php:22-72 |
 | CSV取込の行ごとの検査 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Product/ShelfNumberController.php:194-208 |
 | 入出力: 永続化 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Product/ShelfNumberController.php:67 |
+| CSV出力の内容 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Service/CsvExportService.php:369-371 |

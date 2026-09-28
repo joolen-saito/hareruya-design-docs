@@ -66,6 +66,8 @@
 | お名前（フリガナ） | 確認済みのときだけ |
 | 生年月日 | 確認済みのときだけ |
 
+表の「確認済み」は、本人確認ステータスの選択肢の「オンライン本人確認済み」を指す。
+
 本人確認用情報の変更があるときは、登録の前に確認を求める。
 
 続行を選んだときだけ、本人確認ステータスの送信値を未確認へ書き換えてから送信する。
@@ -125,6 +127,7 @@
 | 入力値の制約 | P1 | pf-eccube3:src/Eccube/Entity/Customer.php:285-288 |
 | 新規登録で会員住所へ写す項目 | P2 | pf-eccube3:src/Eccube/Controller/Admin/Customer/CustomerEditController.php:88-108 |
 | 本人確認ステータスの自動降格 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/admin/Customer/edit.twig:36-84 |
+| 本人確認ステータスの自動降格 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Resource/doctrine/migration/Version20230713161826.php:24 |
 | エラー時の扱い | P2 | pf-eccube3:src/Eccube/Controller/Admin/Customer/CustomerEditController.php:45-46 |
 | エラー時の扱い | P2 | pf-eccube3:src/Eccube/Controller/Admin/Customer/CustomerEditController.php:74 |
 | 入出力: 永続化 | P3 | pf-eccube3:src/Eccube/Controller/Admin/Customer/CustomerEditController.php:108-123 |

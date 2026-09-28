@@ -18,6 +18,8 @@
 
 コマンド名が未指定のとき、および対応するバッチが無い名前を指定したときは、初期化を行わずに終了する。店頭注文番号と採番カウンタは、いずれも変わらない。
 
+起動するコマンドは `order:batch` で、第1引数にバッチ名 `truncateWaitingNumber` を指定する。バッチ名が未指定・不一致のときは、実行日時に続けて「Nothing args or command.」をコンソールへ出力し、終了コード1で終了する。
+
 ## 入出力
 
 | 種類 | 内容 |
@@ -38,3 +40,5 @@
 | 実行の影響 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Repository/DtbWaitingNumberRepository.php:18 |
 | 実行の影響 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Resource/doctrine/Plugin.HareruyaEc.Entity.DtbWaitingNumber.dcm.yml:16-23 |
 | 起動できなかったときの扱い | P2 | pf-eccube3:app/Plugin/HareruyaEc/Command/OrderBatch.php:45-49 |
+| 起動できなかったときの扱い | P2 | pf-eccube3:app/Plugin/HareruyaEc/Command/OrderBatch.php:15 |
+| 起動できなかったときの扱い | P2 | pf-eccube3:app/Plugin/HareruyaEc/Command/OrderBatch.php:28 |

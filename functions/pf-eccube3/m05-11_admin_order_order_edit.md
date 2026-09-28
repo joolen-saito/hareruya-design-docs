@@ -14,6 +14,8 @@
 
 会員IDを 1 件指定して、その会員の内容を注文者情報の入力欄へ呼び出す。指定したIDに一致する会員が無いときは、未検出として返す。
 
+一致する会員が無いときは、注文者情報の入力欄を変更せず、「search customer(by id) failed.」と表示する。
+
 最終購入日時は 年/月/日 時:分:秒 の形式とし、未設定のときは空にする。購入金額は通貨の表記に整える。
 
 ### 商品の検索
@@ -188,3 +190,4 @@
 | 入出力: 永続化 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Order/EditController.php:594 |
 | 入出力: 永続化 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Order/EditController.php:1033 |
 | 入出力: 永続化 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Repository/DtbStockHistoryRepository.php:35-54 |
+| 会員の呼び出し | P3 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/admin/Order/search_customer.twig:38-40 |

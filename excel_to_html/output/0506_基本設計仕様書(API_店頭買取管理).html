@@ -1117,6 +1117,8 @@
           <h3 id="function-design-a06-01-a06-01_api_store_purchase_admin_login-トークンの発行と以降の利用">トークンの発行と以降の利用</h3>
           <p>発行されるトークンは、発行者と利用者ID（認証した管理者会員のID）を持つ。以降の各APIは受け取ったトークンの利用者IDから管理者会員を引いて認可し、会員を引けないときは認可しない。</p>
           <p>トークン原値・署名シークレット・パスワードは本書に記載しない。</p>
+          <h3 id="function-design-a06-01-a06-01_api_store_purchase_admin_login-ログイン成功後の買取アプリ">ログイン成功後の買取アプリ</h3>
+          <p>買取アプリは、本APIが認証情報を返したとき、応答の利用者情報を保持してモード選択画面へ移る。モード選択画面は店頭買取・ネット買取・入庫モードを選ぶ画面である。</p>
           <h2 id="function-design-a06-01-a06-01_api_store_purchase_admin_login-入出力">入出力</h2>
           <h3 id="function-design-a06-01-a06-01_api_store_purchase_admin_login-店舗が紐づかない会員のとき">店舗が紐づかない会員のとき</h3>
           <p>認証した会員に店舗が紐づかない場合、店舗名・店舗住所は空文字を返す。</p>
@@ -1556,6 +1558,7 @@
           <p>トークンはリクエストヘッダで受け取る。トークンの欠落・署名不正・該当する管理者会員なしのいずれのときも認証拒否（HTTP 401）とし、受注も履歴も書き換えない。認証で特定した管理者会員を、更新時に記録する査定担当者として扱う。トークンの原値と署名の秘密値は本書に記載しない。</p>
           <h3 id="function-design-a06-05-a06-05_api_store_purchase_otc_buy_order_status-更新の判定順序">更新の判定順序</h3>
           <div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>認証できるか</td><td>できないなら認証拒否（HTTP 401）</td></tr><tr><td>2</td><td>受注IDに該当する店頭買取受注があるか</td><td>無ければ該当なし（HTTP 404）</td></tr><tr><td>3</td><td>指定ステータスIDが店頭買取ステータスに存在するか</td><td>存在しなければ入力不正（HTTP 400）</td></tr><tr><td>4</td><td>更新前ステータスと指定ステータスが異なるか</td><td>異なるときだけ書き込む。同じときは受注も履歴も書き換えず成功として応答する</td></tr></tbody></table></div>
+          <p>ステータスIDを省略したときも、店頭買取ステータスに存在しないときと同じく入力不正（HTTP 400）とし、受注も履歴も書き換えない。</p>
           <h3 id="function-design-a06-05-a06-05_api_store_purchase_otc_buy_order_status-更新の内容">更新の内容</h3>
           <p>更新前後のステータスが異なるときだけ書き込みを行う。このとき店頭買取受注には、査定担当者と更新日時も記録する。金額・税・ポイント・在庫数量の再計算や丸めは行わない。</p>
           <h3 id="function-design-a06-05-a06-05_api_store_purchase_otc_buy_order_status-エラー時の扱い">エラー時の扱い</h3>
@@ -1699,6 +1702,7 @@
           <h3 id="function-design-a06-06-a06-06_api_buying_products_by_detail-出力-値が無いときの扱い">出力: 値が無いときの扱い</h3>
           <p>次の項目は、値が設定されていないとき項目自体は省略せず、値なしで返す。</p>
           <div class="table-wrap"><table><thead><tr><th>項目</th><th>値が無いときの応答</th></tr></thead><tbody><tr><td>カードセットコード</td><td>値なし</td></tr><tr><td>カードセット名</td><td>値なし</td></tr><tr><td>プロモーション名</td><td>値なし</td></tr><tr><td>略称タグ名</td><td>値なし</td></tr><tr><td>買取価格</td><td>値なし</td></tr><tr><td>部門ID</td><td>値なし</td></tr></tbody></table></div>
+          <p>値なしはJSONの null で返す。空文字にはしない。</p>
           <div class="renewal-spec-banner"><h3 id="function-design-a06-06-a06-06_api_buying_products_by_detail-リニューアル後の仕様">リニューアル後の仕様</h3></div>
           <h2 id="function-design-a06-06-a06-06_api_buying_products_by_detail-表示メッセージ">表示メッセージ</h2>
           <div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>A06-06-MSG-001</td><td>API応答JSON（errors配列）</td><td>認証エラー</td><td>カード詳細ID取得時に、ログイン中の利用者が管理者でない</td><td>MTGバイヤー側で認証を行い再試行する</td></tr><tr><td>A06-06-MSG-002</td><td>API応答JSON（errors配列）</td><td>カードが見つかりません</td><td>指定カード詳細IDに対応する買取用カードが0件</td><td>対象カード詳細IDを確認して再検索する</td></tr></tbody></table></div>
@@ -1894,6 +1898,8 @@
           <p>検索で得たカードだけを1始まりの連番でキー付けし直して返す。各カードの配下は、カード詳細ID・言語コード・状態コードの順で入れ子にする。ページングの件数（総件数・1ページあたり件数など）は返さない。</p>
           <h3 id="function-design-a06-08-a06-08_api_store_purchase_buying_products_search-値の取り方">値の取り方</h3>
           <p>買取価格・販売価格・在庫数は、永続化済みの値をそのまま返す。応答を組み立てるときの丸め・補正・再計算は行わない。</p>
+          <h3 id="function-design-a06-08-a06-08_api_store_purchase_buying_products_search-買取アプリでの検索結果の扱い">買取アプリでの検索結果の扱い</h3>
+          <p>買取アプリは、本APIの応答のカード詳細のうち、査定画面で選択中の言語・状態・フォイル有無に合うものだけを候補カードとし、それまでの候補カードと置き換える。先頭の候補カードを識別結果として表示する。合う候補カードが1件も無いときは「指定されたカードが見つかりませんでした。」と表示する。</p>
           <h2 id="function-design-a06-08-a06-08_api_store_purchase_buying_products_search-入出力">入出力</h2>
           <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>成功時出力</td><td>最上位に <code>cards</code> を置き、その配下にカードごとの情報を入れて返す。</td></tr></tbody></table></div>
           <h3 id="function-design-a06-08-a06-08_api_store_purchase_buying_products_search-出力-応答フィールド">出力: 応答フィールド</h3>
@@ -2162,6 +2168,8 @@
           <h2 id="function-design-a06-13-a06-13_api_store_purchase_otc_buy_order_identification-入出力">入出力</h2>
           <h3 id="function-design-a06-13-a06-13_api_store_purchase_otc_buy_order_identification-入力-認証情報">入力: 認証情報</h3>
           <div class="table-wrap"><table><thead><tr><th>パラメータ</th><th>位置</th><th>型</th><th>必須／任意</th><th>説明</th></tr></thead><tbody><tr><td><code>jwt-token</code></td><td>ヘッダ</td><td>string</td><td>必須</td><td>認証用のトークン</td></tr></tbody></table></div>
+          <h3 id="function-design-a06-13-a06-13_api_store_purchase_otc_buy_order_identification-出力-更新できたとき">出力: 更新できたとき</h3>
+          <p>更新できたときは HTTP 200 とし、処理結果コード200だけを持つJSON（<code>{"code":200}</code>）を応答本文として返す。空の本文や空のオブジェクトは返さない。</p>
           <h3 id="function-design-a06-13-a06-13_api_store_purchase_otc_buy_order_identification-出力-認証できないとき">出力: 認証できないとき</h3>
           <div class="table-wrap"><table><thead><tr><th>HTTPステータス</th><th>条件</th></tr></thead><tbody><tr><td>401</td><td>認証用トークンの欠落・署名不正・トークンが指す管理者会員なしのとき</td></tr></tbody></table></div>
           <h3 id="function-design-a06-13-a06-13_api_store_purchase_otc_buy_order_identification-入出力-エンドポイントの別名">入出力: エンドポイントの別名</h3>

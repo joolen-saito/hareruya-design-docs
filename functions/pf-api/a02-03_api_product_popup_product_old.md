@@ -17,6 +17,10 @@
 5. パスの言語コードと一致する言語のもの
 6. パスの言語コードに対応する画像優先度を持つ画像のもの
 
+6条件がすべて等しい商品が複数あるときは、どれを返すかを定めない。6条件より後の並び順は無い。
+
+旧商品IDを持つのはカードだけである。カード詳細とカードが紐づかない商品は、どの旧商品IDを指定しても対象にならない。
+
 ### 販売数の集計
 
 週間販売数は、返す商品とパスの言語コードに紐づく商品規格の販売数を合計した値である。商品規格が複数あるときは合算する。
@@ -40,6 +44,8 @@
 | 小見出し | 重要度 | 出典 |
 | --- | --- | --- |
 | 取得対象の絞り込みと優先順位 | P2 | pf-api:src/Repository/DtbProductSubClassRepository.php:168 |
+| 取得対象の絞り込みと優先順位 | P2 | pf-api:src/Repository/DtbProductSubClassRepository.php:187-192 |
+| 取得対象の絞り込みと優先順位 | P2 | pf-api:src/Repository/DtbProductSubClassRepository.php:177-178 |
 | 販売数の集計 | P3 | pf-api:src/Repository/DtbProductSubClassRepository.php:227 |
 | 金額・在庫数の加工 | P3 | pf-api:src/Repository/DtbProductSubClassRepository.php:194 |
 | 出力: 該当データが無いときの応答本文 | P2 | pf-api:src/Controller/ProductController.php:137 |

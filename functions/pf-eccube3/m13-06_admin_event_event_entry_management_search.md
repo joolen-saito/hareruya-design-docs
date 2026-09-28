@@ -41,6 +41,12 @@
 
 最終ページの表示対象が無くなったときは、ページ番号を1つ前に戻す。
 
+### 申込状況での並べ替え
+
+申込状況で並べ替えるときは、決済中・入金待ち・申込済み・入金期限切れ・キャンセル済み・支払番号が存在しないの順を昇順とし、降順はその逆とする。
+
+並べ替えの値が同じ申込どうしは、エントリーIDの降順に並べる。
+
 ### イベント詳細を指定した表示
 
 特定の日程を指定して開いたときは、その日程を検索条件に設定し、並び順は既定とする。検索モードはイベント申込検索に固定する。
@@ -73,3 +79,6 @@
 | 検索の成立条件 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/SearchControllerTrait.php:140-173 |
 | 表示件数と並び順の決定 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/SearchControllerTrait.php:120-196 |
 | イベント詳細を指定した表示 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/EntryController.php:929-1002 |
+| 申込状況での並べ替え | P2 | pf-eccube3:app/Plugin/HareruyaEc/Repository/DtbEntryPlayerRepository.php:20-24 |
+| 申込状況での並べ替え | P2 | pf-eccube3:app/Plugin/HareruyaEc/Repository/DtbEntryPlayerRepository.php:160-163 |
+| 申込状況での並べ替え | P2 | pf-eccube3:app/Plugin/HareruyaEc/Resource/doctrine/migration/Version20180119142000.php:337-374 |

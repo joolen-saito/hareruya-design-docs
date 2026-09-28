@@ -26,6 +26,19 @@
 
 マイデッキ一覧は、本人が作成したデッキを作成日の降順で並べる。
 
+### インポートの取り込み
+
+インポートは、貼り付けたテキストを改行で行に分け、「枚数 カード名 (セット略号) コレクター番号」または「枚数 カード名」の書式に行頭が一致する行を読み取る（例:「4 Lightning Bolt (LEA) 161」「4 Lightning Bolt」）。読み取った行は「枚数 カード名」の形にして、メインボードとサイドボードの入力欄をその内容で置き換える。
+
+- 先頭行が「Deck」または「デッキ」のときは、その行を読み飛ばす。
+- 「Sideboard」または「サイドボード」の行より後の行は、サイドボードへ入れる。
+- 「Companion」または「相棒」の行と、その次の行は読み飛ばす。
+- 行頭がどちらの書式にも一致しない行は取り込まず、エラーも表示しない。
+
+### 大会デッキ登録ご利用ガイドの遷移先
+
+大会デッキ登録ご利用ガイドの遷移先は、イベントのヘルプページ（/ja/user_data/help_event）の #block5 の位置とする。遷移先へ引き継ぐ情報は無い。
+
 ### 入力の解釈
 
 メインボードとサイドボードの入力は、アリーナ表記のカード名を実カード名に置き換えたうえで解釈し、置き換えた後のテキストを保存する。
@@ -59,6 +72,8 @@
 ### 新規に作るときのプレイヤー名
 
 選手情報の英字の姓名を半角スペースでつないだものをプレイヤー名とする。英字の姓名がいずれも空のときは、会員の住所地が海外なら会員の氏名を、そうでなければ会員の氏名カナを用いる。
+
+英字の姓・名の一方だけが空のときは、空の側を空文字として半角スペースでつなぐ。姓だけが空なら先頭に、名だけが空なら末尾に半角スペースが残る（例: 「 TARO」「YAMADA 」）。
 
 ### デッキを構成するカードとして保存しないもの
 
@@ -146,3 +161,6 @@
 | 他機能との境界 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/DeckentryController.php:289-318 |
 | 他機能との境界 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/DeckentryController.php:326-332 |
 | 入出力: 永続化 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/DeckentryController.php:199-247 |
+| インポートの取り込み | P2 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/assets/js/deck_regist.js:61-94 |
+| 大会デッキ登録ご利用ガイドの遷移先 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/Mypage/deckentry.twig:32 |
+| 新規に作るときのプレイヤー名 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/DeckentryController.php:219-222 |

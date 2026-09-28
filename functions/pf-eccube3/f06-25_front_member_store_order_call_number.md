@@ -6,6 +6,8 @@
 
 数字の番号札は、受注ステータスがピック完了の注文に採番されたものを対象とする。アルファベットの番号札は登録済みのものを全件対象とする。並びは数字の番号札を先に、アルファベットの番号札を後にする。
 
+アルファベットの番号札どうしは、登録IDの昇順に並べる。表示上限を超えるときも、アルファベットの番号札を対象から外す処理は行わない。
+
 ### 表示最大件数と出荷完了の補完
 
 表示できる番号札の上限は25件である。数字とアルファベットの合計が上限を超えるときは、番号の連続性を保つため、直前に並べた数字の次の番号から、次に並べるピック完了の番号の手前までがすべて出荷完了であれば、その区間の番号も並べる。区間に出荷完了でない番号が1つでもあれば、その区間は並べない。
@@ -17,6 +19,8 @@
 ### 表示枠の整形
 
 上限を超えるときは、連続する数字を「開始〜終了」の1枠にまとめて枠数を圧縮する。アルファベットは単独の枠に並べる。枠に並べた番号の件数が増えるほど、番号の文字サイズを段階的に小さくする。さらに4文字以上になった番号は、枠に収めるため文字サイズを縮めて表示する。番号を並べた残りの枠は空欄にする。
+
+表示枠は25枠である。整形後の枠が25を超えるときは、先頭から25枠だけを表示し、26枠目以降の番号札は表示しない。
 
 ### エラー時の扱い
 
@@ -46,3 +50,7 @@
 | 新着の判定 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/Block/js/waiting_get_js.twig:5 |
 | 表示枠の整形 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/Block/js/waiting_get_js.twig:32 |
 | エラー時の扱い | P2 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/Block/js/waiting_get_js.twig:136 |
+| 表示する番号札 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/WaitingNumberController.php:42 |
+| 表示する番号札 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/WaitingNumberController.php:73-75 |
+| 表示枠の整形 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/Waiting/waiting_number.twig:29-30 |
+| 表示枠の整形 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/Block/js/waiting_get_js.twig:98-104 |

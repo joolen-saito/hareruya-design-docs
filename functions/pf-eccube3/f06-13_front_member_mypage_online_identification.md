@@ -13,6 +13,8 @@
 | 1 | スマートフォン判定に該当しない端末のとき | スタート画面へ戻す |
 | 2 | 身分証種別の選択が送られていないとき（直接アクセスなど） | スタート画面へ戻す |
 
+撮影画面へ入るときは、判定の結果にかかわらず何も登録・更新しない。身分証画像と選手情報への記録は、撮影画面からの申請が確定したときに行う。
+
 ### 申請の判定順序
 
 | 順序 | 判定 | 結果 |
@@ -25,7 +27,7 @@
 
 ### 申請の確定
 
-検証を通った各画像をオブジェクトストレージへ保存し、身分証画像として選手情報に紐づけて記録する。選手情報の身分証種別を更新し、本人確認ステータスを確認中へ変更して保存する。そのうえで本人確認申請完了メールを送信する。
+検証を通った各画像をオブジェクトストレージへ保存し、身分証画像として選手情報に紐づけて記録する。身分証画像の記録は、送信された画像（顔写真・表面・裏面・斜め）ごとに1件ずつ作り、選手・身分証種別・画像種別・保存先・作成日時を持たせる。選手情報の身分証種別を更新し、本人確認ステータスを確認中へ変更して保存する。そのうえで本人確認申請完了メールを送信する。
 
 ### 画面の見出し
 
@@ -88,3 +90,6 @@
 | 入出力: なりすまし対策トークン | P1 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/Mypage/online_identification.twig:30 |
 | 出力: メール | P1 | pf-eccube3:app/Plugin/HareruyaEc/Service/MailService.php:1085 |
 | 入出力: 永続化 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Mypage/IdentificationController.php:173 |
+| 撮影画面へ入るときの判定 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Mypage/IdentificationController.php:54-78 |
+| 申請の確定 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Mypage/IdentificationController.php:134-146 |
+| 申請の確定 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Mypage/IdentificationController.php:183-191 |

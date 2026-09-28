@@ -21,6 +21,10 @@
 | お客様名 | カナ氏名（姓と名を空白でつなぐ）を印刷する。カナ氏名が無いときは氏名を印刷する |
 | 店頭注文番号 | 受注に店頭注文番号が採番されていないときは空欄にする |
 
+### 印刷データの保存
+
+送信する印刷データXMLが空でないとき、同じ内容をAPIサーバのアプリケーション配下の `var/log/print_logs/` にファイルとして保存する。ファイル名は `print_YYYYMMDD_HHMMSS_<一意ID>.xml` とし、要求1回につき1ファイルを作る。保存先のディレクトリが無いときは作成する。印刷データXMLが空のときは保存しない。
+
 ## 入出力
 
 ### 応答の形式
@@ -33,4 +37,6 @@
 | --- | --- | --- |
 | 印刷対象の受注 | P1 | pf-api:src/Repository/DtbOrderRepository.php:21-63 |
 | 印刷内容の決定 | P3 | pf-api:src/Controller/Admin/OrderController.php:134-145 |
+| 印刷データの保存 | P2 | pf-api:src/Controller/Admin/OrderController.php:39-48 |
+| 印刷データの保存 | P2 | ec-cube:app/Customize/Controller/Api/OrderController.php:54-61 |
 | 応答の形式 | P2 | pf-api:src/Controller/Admin/OrderController.php:50-54 |

@@ -26,6 +26,10 @@
 
 買取価格・販売価格・在庫数は、永続化済みの値をそのまま返す。応答を組み立てるときの丸め・補正・再計算は行わない。
 
+### 買取アプリでの検索結果の扱い
+
+買取アプリは、本APIの応答のカード詳細のうち、査定画面で選択中の言語・状態・フォイル有無に合うものだけを候補カードとし、それまでの候補カードと置き換える。先頭の候補カードを識別結果として表示する。合う候補カードが1件も無いときは「指定されたカードが見つかりませんでした。」と表示する。
+
 ## 入出力
 
 | 種類 | 内容 |
@@ -79,5 +83,7 @@
 | 取得結果の並べ方 | P2 | pf-api:src/Controller/ProductController.php:200-217 |
 | 取得結果の並べ方 | P2 | pf-api:src/Repository/DtbProductRepository.php:15-42 |
 | 値の取り方 | P1 | pf-api:src/Repository/DtbProductRepository.php:276-279 |
+| 買取アプリでの検索結果の扱い | P2 | front-application@f60bb01:MTGBuyer/Screen/Assessment/MainWindow.xaml.cs:218-228 |
+| 買取アプリでの検索結果の扱い | P2 | front-application@f60bb01:MTGBuyer/Screen/Assessment/MainWindow.xaml.cs:805-845 |
 | 出力: 応答フィールド | P1 | pf-api:src/Repository/DtbProductRepository.php:266-289 |
 | 出力: 応答フィールド | P1 | pf-api:src/Repository/DtbProductRepository.php:15-42 |

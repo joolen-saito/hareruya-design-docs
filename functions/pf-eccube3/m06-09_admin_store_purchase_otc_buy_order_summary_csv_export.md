@@ -31,6 +31,7 @@ CSVダウンロードの導線は、検索結果に日別の集計が1件以上�
 | --- | --- |
 | 入力 | 持たない。直前の検索で用いた検索条件を使う |
 | 成功時出力 | 添付ファイルとしてのCSV。ファイル名は買取集計を示す接頭辞に出力日時（年月日時分秒）を続けたもの |
+| ファイル名の接頭辞 | `otc_buy_order_summary_` の固定文字列。ファイル名は `otc_buy_order_summary_` ＋出力日時（`YmdHis`）＋ `.csv` となる |
 
 ### 文字コードと区切り文字
 
@@ -52,5 +53,6 @@ CSVダウンロードの導線は、検索結果に日別の集計が1件以上�
 | ヘッダ行 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/OtcBuyOrder/OtcBuyOrderSummaryController.php:112 |
 | 値が欠けるときの扱い | P3 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/OtcBuyOrder/OtcBuyOrderSummaryController.php:123 |
 | 金額の書式 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/admin/OtcBuyOrder/summary.twig:152 |
+| 入出力 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/OtcBuyOrder/OtcBuyOrderSummaryController.php:135 |
 | 文字コードと区切り文字 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Service/CsvExportService.php:369 |
 | 文字コードと区切り文字 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Service/CsvExportService.php:362 |

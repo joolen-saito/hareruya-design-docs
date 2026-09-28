@@ -20,6 +20,10 @@
 
 実行するバッチの名前を指定して起動する。名前の指定が無いとき、および定義されていない名前を指定したときは、何も処理せずに終了コード1で終了する。処理を終えたときは終了コード0を返す。
 
+起動するコマンドは `smaregi:batch` で、第1引数にバッチ名を指定する。本バッチのバッチ名は `checkSmaregiErrorOrder` である。
+
+定義されている名前は `createCustomer`・`checkCustomer`・`updatePoint`・`checkSmaregiErrorOrder`・`checkSmaregiTransaction` の5つだけである。これ以外の名前は、大文字と小文字だけが違う名前（`checksmaregierrororder` など）も含め、定義されていない名前として扱う。
+
 ## 表示メッセージ
 
 | メッセージID | 表示位置 | 画面上の文言 | 表示条件 | 後続処理 |
@@ -38,3 +42,5 @@
 | 流量制御 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Service/Smaregi/CheckSmaregiErrorOrder.php:44-46 |
 | 実行時の指定 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Command/SmaregiBatch.php:37-45 |
 | 実行時の指定 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Command/SmaregiBatch.php:47-52 |
+| 実行時の指定 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Command/SmaregiBatch.php:12-18 |
+| 実行時の指定 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Command/SmaregiBatch.php:24 |

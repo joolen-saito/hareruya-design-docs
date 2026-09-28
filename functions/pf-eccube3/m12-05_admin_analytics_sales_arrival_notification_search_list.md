@@ -22,6 +22,16 @@
 | 販売金額(From)／(To) | Fromは指定額を含め、Toは指定額を含まない |
 | キーワード検索 | 半角空白・全角空白・カンマで区切って複数語を指定でき、指定した語をすべて満たすものを部分一致で絞り込む |
 
+### 並び替え
+
+並び替え(項目)の選択肢は「指定なし」「商品名」「会員名」「販売金額」の4つである。
+
+「商品名」「会員名」「販売金額」を選んだときは、一覧の商品名・会員名・販売金額の値で、並び替え(並び順)の昇順または降順に並べる。
+
+会員名は、姓と名を全角空白でつないだ値で比べる。
+
+「指定なし」のときは並び順を指定しない。
+
 ### エラー時の扱い
 
 | エラー内容 | 処理 |
@@ -58,5 +68,9 @@
 | 検索と一覧の表示 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/admin/Analysis/request.twig:128 |
 | 検索条件の効き方 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Repository/DtbProductRequestRepository.php:126 |
 | 検索条件の効き方 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Util/SqlUtil.php:98 |
+| 並び替え | P2 | pf-eccube3:app/Plugin/HareruyaEc/Form/Type/Admin/Analysis/RequestType.php:10-14 |
+| 並び替え | P2 | pf-eccube3:app/Plugin/HareruyaEc/Form/Type/Admin/Analysis/RequestType.php:82-88 |
+| 並び替え | P2 | pf-eccube3:app/Plugin/HareruyaEc/Repository/DtbProductRequestRepository.php:16-20 |
+| 並び替え | P2 | pf-eccube3:app/Plugin/HareruyaEc/Repository/DtbProductRequestRepository.php:234-238 |
 | エラー時の扱い | P3 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/admin/Analysis/request.twig:191 |
 | 入力と出力 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Analysis/RequestController.php:86 |

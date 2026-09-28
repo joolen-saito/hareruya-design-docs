@@ -21,6 +21,10 @@
 
 セール対象商品のみの絞り込みは、そのときの表示順を保ったまま絞り込みの有無を反転させる。表示順の切り替えも、そのときの絞り込みを保ったまま並びだけを変える。絞り込みと表示順の指定は画面のURLに残るため、再読込しても同じ絞り込み・並びで表示される。
 
+### お気に入り登録の上限
+
+お気に入り登録は1会員あたり100件までとする。登録済みが100件以上のときは、商品詳細などからの追加を受け付けず、登録操作の付近に「お気に入り登録は100件までです。」と表示する。このとき登録操作の表示は登録前の状態のまま変えない。
+
 ### 価格順の基準
 
 価格順の並び替えは、同一商品の状態ごとの販売価格のうち最も高い価格を基準にする。
@@ -63,3 +67,6 @@
 | 画面に出す見出し | P3 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/Mypage/favorite_list.twig:25 |
 | 一覧を表示できないときの扱い | P1 | pf-eccube3:app/Plugin/HareruyaEc/ServiceProvider/HareruyaEcServiceProvider.php:315 |
 | 一覧を表示できないときの扱い | P1 | pf-eccube3:app/Plugin/HareruyaEc/ServiceProvider/HareruyaEcServiceProvider.php:277 |
+| お気に入り登録の上限 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/ProductController.php:378-381 |
+| お気に入り登録の上限 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Entity/DtbFavoriteProduct.php:10 |
+| お気に入り登録の上限 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/Block/js/product_js.twig:387-392 |

@@ -14,6 +14,8 @@
 
 同じ起動を繰り返すと、同じ対象へ再び通知することがある。
 
+送信済みかどうかは判定しない。起動のたびに、その時点でセール中のお気に入り商品を持つ会員を抽出し直し、該当する会員へ通知メールを送る。通知回数の上限や重複の抑止は無い。メール送信履歴は送信のたびに残るが、会員には紐づけず、送信済みの判定には使わない。
+
 ### エラー時の扱い
 
 | 事象 | 扱い |
@@ -26,6 +28,8 @@
 | 種類 | 内容 |
 | --- | --- |
 | 成功時出力 | 開始と完了の出力 |
+
+開始と完了は、コンソールの標準出力へ1行ずつ出す。どちらの行も実行時刻とバッチ名（`saleNotification`）を含み、処理件数は含まない。
 
 ### 入出力: 永続化
 
@@ -47,6 +51,9 @@
 | 通知メールの体裁 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/Mail/sale_notification.twig |
 | 通知メールの体裁 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/Mail/sale_notification.en.twig |
 | 再実行 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Service/Product/SaleNotificationService.php:27-68 |
+| 再実行 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Service/MailService.php:1275 |
+| 再実行 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Service/MailService.php:1823-1824 |
+| 入出力 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Command/ProductBatch.php:53-56 |
 | エラー時の扱い | P2 | pf-eccube3:app/Plugin/HareruyaEc/Command/ProductBatch.php:39-58 |
 | エラー時の扱い | P2 | pf-eccube3:app/Plugin/HareruyaEc/Service/Product/SaleNotificationService.php:27-68 |
 | 入出力: 永続化 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Service/MailService.php:1276 |

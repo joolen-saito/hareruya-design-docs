@@ -1633,7 +1633,7 @@
           <h3 id="function-design-m03-02-m03-02_admin_product_product_edit-商品を更新する">商品を更新する</h3>
           <ol><li>入力値の検証に失敗した場合は、同じ編集画面を再表示する（入力値と項目ごとのエラーを保持する）。</li><li>検証に合格した場合、カード検索でカードが選択されていれば、そのカードを当該商品のカードとして設定する。選択されていないときは、当該商品のカードを変えない。</li><li>商品カテゴリは、既存の登録を一度すべて削除したうえで、選択したカテゴリとその上位カテゴリを重複なく採番して登録し直す。</li><li>商品タグは、既存の登録を一度すべて削除したうえで、選択したタグを重複を除いて登録し直す。</li><li>売上分析タグは、選択した内容で既存の登録を置き換える。1件も選択しなかったときは、登録済みの売上分析タグをすべて解除する。</li><li>追加した画像とカードから引き継いだ画像を当該商品の画像として登録し、画面で指定された並び順を各画像に与える。</li><li>更新日を更新時点の日時にする。</li><li>更新が完了すると、同じ商品の編集画面へ戻る。</li><li>本画面では販売価格・在庫の計算や丸めを行わない。価格・在庫は商品規格（M03-09）で扱う。</li></ol>
           <h3 id="function-design-m03-02-m03-02_admin_product_product_edit-支店システムへの更新通知">支店システムへの更新通知</h3>
-          <ol><li>商品の更新が完了すると、当該商品が更新されたことを支店システムへ通知する。</li><li>通知に失敗しても商品の更新自体は成功として扱い、画面にエラーは出さない。失敗した商品は再連携の対象として記録し、後から送り直せるようにする。</li></ol>
+          <ol><li>商品の更新が完了すると、当該商品が更新されたことを支店システムへ通知する。</li><li>通知に失敗しても商品の更新自体は成功として扱い、画面にエラーは出さない。失敗した商品は再連携の対象として記録し、後から送り直せるようにする。</li><li>再連携は、支店連携の一括処理（branch:batch updateBranch）を実行したときに、記録済みの再連携対象をすべて送り直す。</li><li>送り直しに成功した再連携対象は、記録から削除する。失敗した再連携対象は記録に残し、支店システムの応答内容で記録を更新する。</li><li>再連携対象は、送り直しに成功するまで、一括処理を実行するたびに送り直す。</li></ol>
           <h3 id="function-design-m03-02-m03-02_admin_product_product_edit-商品画像を追加する-非同期">商品画像を追加する（非同期）</h3>
           <ol><li>非同期でない要求は不正要求（HTTP400）とする。</li><li>アップロードされたファイルが1件も無い場合は不正要求（HTTP400）とする。</li><li>画像以外の種別のファイルが含まれる場合は、対応していないメディア種別（HTTP415）とする。</li><li>受け付けた画像は元の拡張子のまま一意な名前で預かり、その名前の一覧を返す。画像が当該商品に登録されるのは、商品を更新したときである。</li></ol>
           <h2 id="function-design-m03-02-m03-02_admin_product_product_edit-入出力">入出力</h2>
@@ -1717,6 +1717,7 @@
           <div class="table-wrap"><table><thead><tr><th>値</th><th>決め方</th></tr></thead><tbody><tr><td>言語(ID)</td><td>規格の言語ID。設定が無いときは空欄</td></tr><tr><td>セールフラグ</td><td>セールでないとき、および値が無いときは0、セール中のときは1</td></tr><tr><td>帯URL</td><td>規格の帯URL。設定が無いときは空欄</td></tr><tr><td>タグ(ID)</td><td>商品に紐づくタグIDを並び順のままカンマで連結する。一意化しないため、同じIDが複数含まれることがある</td></tr></tbody></table></div>
           <h3 id="function-design-m03-05-m03-05_admin_product_product_sale_price_csv_export-エラー時の扱い">エラー時の扱い</h3>
           <div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>商品IDを1件も受け取らなかったとき</td><td>商品未選択のエラーを表示し、保持しているページ番号の商品一覧へ戻る</td></tr><tr><td>指定IDに対応する商品が1件も無いとき</td><td>選択した商品が見つからない旨のエラーとする</td></tr><tr><td>その他の実行時エラーのとき</td><td>エラーメッセージを表示し、直前の画面へ戻る</td></tr></tbody></table></div>
+          <p>指定IDに対応する商品が1件も無いときは、CSV出力を要求した画面（要求元として送られた画面）へ戻す。商品一覧から出力したときは、出力を要求したページの商品一覧へ戻る。</p>
           <h2 id="function-design-m03-05-m03-05_admin_product_product_sale_price_csv_export-入出力">入出力</h2>
           <h3 id="function-design-m03-05-m03-05_admin_product_product_sale_price_csv_export-入出力の対応">入出力の対応</h3>
           <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>商品一覧で選択した商品IDの並び</td></tr><tr><td>成功時出力</td><td>CSVファイル。ファイル名は接頭辞<code>product_price_</code>と出力日時と拡張子<code>.csv</code>を連結したもの。先頭にはBOMを付与する。値はUTF-8から設定の出力エンコーディングへ変換して出力し、区切り文字は出力用の設定値による</td></tr><tr><td>失敗時出力</td><td>エラーメッセージ付きで商品一覧または直前の画面へ戻る</td></tr></tbody></table></div>
@@ -2033,6 +2034,8 @@
           <h3 id="function-design-m03-26-m03-26_admin_product_product_card_csv_import-判定順序">判定順序</h3>
           <div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>ヘッダ行とデータ行があるか</td><td>不備のときは取込前にエラーとし、商品データは変更しない</td></tr><tr><td>2</td><td>各行の列数とヘッダ名が定義どおりか</td><td>不一致または未定義の列名があるときは全体を中断する</td></tr><tr><td>3</td><td>各列の必須・型・マスタ存在・複数値の形式</td><td>いずれかを満たさないときは全体を中断する</td></tr><tr><td>4</td><td>販売価格と買取価格の大小</td><td>買取価格が販売価格を上回るときは全体を中断する</td></tr><tr><td>5</td><td>更新かつ公開ステータスを廃止に変える行の在庫</td><td>在庫が 1 件でも残っているときは全体を中断する</td></tr><tr><td>6</td><td>カード詳細IDの該当件数</td><td>不存在のときも複数件に該当するときも全体を中断する</td></tr><tr><td>7</td><td>更新対象の商品IDの実在</td><td>指定があるのに存在しないときは全体を中断する</td></tr><tr><td>8</td><td>同一のカード詳細を別の商品が既に持つか</td><td>持つときは当該行だけを取り込まない</td></tr><tr><td>9</td><td>新規行の商品コードが全ステータスの商品に重複するか</td><td>重複するときは当該行だけを取り込まない</td></tr><tr><td>10</td><td>規格の一意制約</td><td>違反したときは取込全体を取り消す</td></tr></tbody></table></div>
           <p>エラーが 1 件も無いときだけ、取り込んだ内容を確定し、取込履歴を 1 件加える。エラーがあるときは取込内容を取り消す。</p>
+          <h3 id="function-design-m03-26-m03-26_admin_product_product_card_csv_import-商品削除フラグの扱い">商品削除フラグの扱い</h3>
+          <p>商品削除フラグに 1 を指定した行は、商品を削除済みにする。商品の行は消さず、削除済みの区分を立てる。商品を削除済みにした行では、商品規格の追加と更新を行わない。既存の商品規格の削除済みの区分は変えない。</p>
           <h3 id="function-design-m03-26-m03-26_admin_product_product_card_csv_import-Excel基本設計により廃止された仕様">Excel基本設計により廃止された仕様</h3>
           <p>以下は Excel基本設計 0204 識別ID:29 により廃止された。現行のふるまいとして残すが、刷新後の実装とテストの対象外とする。</p>
           <h4 id="function-design-m03-26-m03-26_admin_product_product_card_csv_import-CSV列">CSV列</h4>
@@ -2179,7 +2182,7 @@
           <p>タグIDは重複を除いたうえでカンマ連結する。売上分析タグIDはカンマ連結する。規格画像は、規格に紐付く商品画像のファイル名をカンマ連結する。</p>
           <p>1行目にヘッダ行、2行目以降にデータ行を出力する。ヘッダの定義はカード商品CSV取込と共有する。</p>
           <h3 id="function-design-m03-03-m03-03_admin_product_product_card_csv_export-ファイルの体裁">ファイルの体裁</h3>
-          <p>ファイル名は product_card_ に出力日時（年月日時分秒）と .csv を連結したものとする。先頭にBOMを付ける。値は設定の出力文字コードへ変換して書き出し、区切り文字も設定に従う。囲み文字とエスケープ文字はCSV出力の既定に従う。応答には出力文字コードに応じた形式種別と、ダウンロードとして扱う指定を付ける。設定値が SJIS-win のときは、形式種別上は windows-31j として扱う。</p>
+          <p>ファイル名は product_card_ に出力日時（年月日時分秒）と .csv を連結したものとする。先頭にBOMを付ける。値は設定の出力文字コードへ変換して書き出し、区切り文字も設定に従う。囲み文字とエスケープ文字はCSV出力の既定に従う。囲み文字はダブルクォート（"）、エスケープ文字はバックスラッシュ（\）である。応答には出力文字コードに応じた形式種別と、ダウンロードとして扱う指定を付ける。設定値が SJIS-win のときは、形式種別上は windows-31j として扱う。</p>
           <h3 id="function-design-m03-03-m03-03_admin_product_product_card_csv_export-エラー時の扱い">エラー時の扱い</h3>
           <div class="table-wrap"><table><thead><tr><th>事象</th><th>扱い</th></tr></thead><tbody><tr><td>商品IDを1件も受け取らなかったとき</td><td>出力せず商品一覧へ戻る。ページ番号は直前の商品検索で保持しているものを用いる</td></tr><tr><td>受け取ったIDに対応する商品が1件も無いとき</td><td>出力せず、直前の画面へ戻る</td></tr><tr><td>その他の実行時の異常</td><td>同上</td></tr></tbody></table></div>
           <p>本機能は入力項目の最大長・必須の検証を持たない。</p>
@@ -2439,6 +2442,8 @@
           <h3 id="function-design-m03-27-m03-27_admin_product_product_goods_csv_import-判定順序">判定順序</h3>
           <div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>ファイルが選択されているか、入力に不備が無いか</td><td>不備のときは取り込まず、アップロード画面へ戻す</td></tr><tr><td>2</td><td>概算行数が <code>5010</code> 未満か</td><td><code>5010</code> 以上のときは取り込まず、アップロード画面へ戻す</td></tr><tr><td>3</td><td>ヘッダ行とデータ行があるか</td><td>不備のときは取込前にエラーとし、商品データは変更しない</td></tr><tr><td>4</td><td>各行の列数・各列の検証・行単位の検証</td><td>価格の整合・店舗連携の条件付き必須・廃止時の在庫のいずれかを満たさないときは全体を中断する</td></tr><tr><td>5</td><td>行ごとの存在確認</td><td>更新時の商品IDの不存在、規格件数の不一致、新規時の商品コード重複のときは当該行を取り込まない</td></tr><tr><td>6</td><td>取込全体の確定可否</td><td>エラーが 1 件も無いときだけ確定し、成功メッセージと取込履歴を残す</td></tr></tbody></table></div>
           <p>確定できたときだけ、店舗連携の取込後処理を成功として呼ぶ。確定できないときは取込内容を取り消し、店舗連携の取込後処理を失敗として呼ぶ。</p>
+          <p>価格の整合は、買取価格が販売価格を上回る行をエラーとする。買取価格と販売価格が同額の行はエラーにしない。</p>
+          <p>確定できたときは、取り込んだ商品を支店システムへ通知する。通知は取り込んだ商品から重複を除いた一覧で1回行う。通知に失敗しても取込は確定したままとし、通知できなかった商品を連携エラーとして残す。</p>
           <h3 id="function-design-m03-27-m03-27_admin_product_product_goods_csv_import-商品と規格の扱い">商品と規格の扱い</h3>
           <div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>商品カテゴリ</td><td>サプライ・グッズ・予約グッズ・情報商材のカテゴリだけを選べる。対象のカテゴリが 1 件も無いときは必須にせず選択の検証も行わない。登録時は指定したカテゴリに加えて祖先カテゴリを付ける</td></tr><tr><td>規格の状態区分</td><td>グッズ商品はカード状態をニアミント固定として新規の規格を作る</td></tr><tr><td>価格</td><td>販売価格・買取価格・基準価格は小数を切り捨てて整数にする</td></tr><tr><td>セール中の規格</td><td>既存の規格がセール中のときは、更新時にCSVの販売価格ではなく基準価格を販売価格に入れる</td></tr><tr><td>商品公開ステータス</td><td>非公開または廃止のときは店舗連携フラグを無効にする</td></tr><tr><td>規格画像</td><td>列が空または未指定のときは画像を差し替えない。指定があるときは日本語固定で差し替える</td></tr><tr><td>新規の規格</td><td>公開中の店舗と在庫場所の組み合わせぶんだけ、在庫を数量 0 で作る</td></tr></tbody></table></div>
           <p>締め日と税計算の業務処理はこの機能では行わない。</p>
@@ -2804,6 +2809,7 @@
           <h3 id="function-design-m03-28-m03-28_admin_product_product_product_tag_csv_import-CSVの列仕様">CSVの列仕様</h3>
           <div class="table-wrap"><table><thead><tr><th>項目名（見出し行）</th><th>必須／任意</th><th>値の制約</th><th>保存先・扱い</th></tr></thead><tbody><tr><td>商品 ID</td><td>必須</td><td>符号なし整数として検証する。桁上限の追加指定は無い。0 も数値としては許容し、その後の実在チェックへ進む</td><td>商品を特定する検索キーとして使う。該当する商品が無いときは当該行で全体を中断する</td></tr><tr><td>タグ ID</td><td>必須</td><td>複数の値はコンマで区切る。囲み文字は共通の設定に従う。各値は 0 以上の整数とする。未入力および空白だけのときは必須違反とする。列挙した各IDがタグとして存在すること</td><td>実在を確認したIDを整数の配列にし、その集合で当該商品の商品タグを作り直す</td></tr></tbody></table></div>
           <p>商品タグの更新は差分の適用ではない。当該商品の既存の商品タグをすべて削除したうえで、CSVに列挙した順で登録し直す。</p>
+          <p>同じ商品IDの行が複数あるときは、後の行のタグ ID で作り直した商品タグが残る。</p>
           <p>商品IDの実在チェックは、商品が存在するかどうかだけで判定する。廃止扱いの公開ステータスの商品も対象から除かない。</p>
           <h3 id="function-design-m03-28-m03-28_admin_product_product_product_tag_csv_import-取込の判定順序">取込の判定順序</h3>
           <div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>入力内容の検証とアップロードサイズの上限</td><td>外れたときはエラーを表示するだけとし、登録には進まない</td></tr><tr><td>2</td><td>取込ファイルの有無</td><td>ファイルが無いときはフォーマット不一致のエラーを表示して中止する</td></tr><tr><td>3</td><td>事前の行数カウント</td><td>ダブルクォート内の改行を除いた改行数が 5010 以上のときはエラーを表示して中止する</td></tr><tr><td>4</td><td>ヘッダ行とデータ行の読み取り</td><td>ヘッダ行が読めないとき、またはデータ行が無いときはエラーとし、登録には進まない</td></tr><tr><td>5</td><td>各データ行の列数</td><td>2 と一致しないときはエラーへ集約し、全体を中断する</td></tr><tr><td>6</td><td>列ごとの単体検証</td><td>必須、数値、複数値の各部分の数値、タグIDの実在を検証する。外れたときは以降の行を処理せず、当該取込を確定しない</td></tr><tr><td>7</td><td>商品IDの実在</td><td>該当する商品が無いときはエラーを積み、以降の行を処理しない</td></tr><tr><td>8</td><td>置換</td><td>すべての判定を通った行について、既存の商品タグを削除したうえでCSVの順に登録する</td></tr></tbody></table></div>
@@ -2811,6 +2817,7 @@
           <h3 id="function-design-m03-28-m03-28_admin_product_product_product_tag_csv_import-取込後の処理">取込後の処理</h3>
           <div class="table-wrap"><table><thead><tr><th>結果</th><th>処理</th></tr></thead><tbody><tr><td>エラーが1件も無いとき</td><td>完了メッセージを表示し、取込履歴に取込種別・アップロードしたファイル名・利用者IDを登録する</td></tr><tr><td>取込種別が未設定のとき</td><td>取込履歴を登録しない</td></tr><tr><td>エラーが1件以上あるとき</td><td>各エラーを表示する</td></tr><tr><td>いずれの結果のときも</td><td>商品タグ更新CSV登録画面へ戻る</td></tr></tbody></table></div>
           <p>取込の更新者は、操作したログイン利用者とする。</p>
+          <p>取込を確定したときは、取り込んだ商品を支店システムへ通知する。通知は取り込んだ商品IDから重複を除いた一覧で1回行う。通知に失敗しても取込は確定したままとし、通知できなかった商品を連携エラーとして残す。</p>
           <h3 id="function-design-m03-28-m03-28_admin_product_product_product_tag_csv_import-エラー時の扱い">エラー時の扱い</h3>
           <div class="table-wrap"><table><thead><tr><th>事象</th><th>扱い</th></tr></thead><tbody><tr><td>入力内容の検証に外れたとき、ファイルが無いとき、行数が上限以上のとき</td><td>エラーを表示するだけとし、登録を開始しない</td></tr><tr><td>ヘッダ不備・データ無し・行の検証・商品不存在・タグ不存在のとき</td><td>エラーを表示し、変更を確定しない</td></tr><tr><td>取込処理の内部で例外が起きたとき</td><td>変更を取り消したうえで例外をそのまま伝える</td></tr></tbody></table></div>
           <h2 id="function-design-m03-28-m03-28_admin_product_product_product_tag_csv_import-入出力">入出力</h2>
@@ -3442,6 +3449,9 @@
           <p>対象の商品が存在しない場合はページが見つからない扱いとする。</p>
           <h3 id="function-design-m03-08-m03-08_admin_product_product_product_class_list-戻り先">戻り先</h3>
           <p>商品一覧から遷移した場合は、戻るリンクの遷移先を商品一覧とし、検索条件を保持した状態で戻る。それ以外は商品編集を遷移先とする。</p>
+          <h3 id="function-design-m03-08-m03-08_admin_product_product_product_class_list-商品規格の初期化">商品規格の初期化</h3>
+          <p>商品規格を初期化すると、対象商品の商品規格のうち、言語と状態がいずれも設定されたものをすべて削除済みにする。言語または状態が設定されていない商品規格は削除済みにしない。</p>
+          <p>削除済みにする商品規格が1件も無いときは、何も変更せずに商品規格一覧へ戻る。初期化を終えたときも商品規格一覧へ戻る。</p>
           <h3 id="function-design-m03-08-m03-08_admin_product_product_product_class_list-他機能との境界">他機能との境界</h3>
           <p>規格の登録・編集・削除は「商品規格登録/編集」を正とする。規格分類と規格の管理はそれぞれの一覧を正とする。</p>
           <p>税額・割引の計算は行わない。</p>
@@ -4124,6 +4134,8 @@
           <p>新規登録では、親カテゴリの表示順に応じて新規カテゴリの表示順を決め、それより大きい表示順を持つカテゴリを先にまとめて繰り上げてから登録する。</p>
           <h3 id="function-design-m03-11-m03-11_admin_product_product_category_register_edit-兄弟カテゴリ一覧の操作">兄弟カテゴリ一覧の操作</h3>
           <p>編集中のカテゴリは、兄弟カテゴリの一覧で編集への入口を持たず、編集中である旨を示す。</p>
+          <h3 id="function-design-m03-11-m03-11_admin_product_product_category_register_edit-CSV出力項目設定">CSV出力項目設定</h3>
+          <p>CSV出力項目設定は、システム設定のCSV出力項目設定画面を、カテゴリCSVを対象とした状態で開く。カテゴリCSVのダウンロードとは別の操作である。</p>
           <h3 id="function-design-m03-11-m03-11_admin_product_product_category_register_edit-保存後の遷移">保存後の遷移</h3>
           <p>保存に成功したときは、新規登録・編集のいずれも、保存したカテゴリの編集画面へ遷移する。</p>
           <h2 id="function-design-m03-11-m03-11_admin_product_product_category_register_edit-入出力">入出力</h2>
@@ -4499,6 +4511,8 @@
           <h3 id="function-design-m03-14-m03-14_admin_product_product_abbreviation_tag_register_edit-削除の判定順序">削除の判定順序</h3>
           <div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>なりすまし対策トークンが有効か</td><td>無効のときはアクセス拒否（HTTP 403）とする</td></tr><tr><td>2</td><td>指定した略称タグが存在するか</td><td>存在しないときは 404 とする</td></tr></tbody></table></div>
           <p>削除を実行したときも、削除できずに中止したときも、一覧画面へ戻す。</p>
+          <h3 id="function-design-m03-14-m03-14_admin_product_product_abbreviation_tag_register_edit-CSV出力">CSV出力</h3>
+          <p>CSV出力は、確認画面を挟まずに略称タグのCSVファイルをダウンロードさせ、画面は遷移しない。ファイル名は storage_code_ に出力時刻（年月日時分秒）と .csv を付けたものとする。出力する内容は略称タグCSV出力（M03-15）を正とする。</p>
           <h2 id="function-design-m03-14-m03-14_admin_product_product_abbreviation_tag_register_edit-入出力">入出力</h2>
           <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>一覧・編集は対象の略称タグの指定（指定が無いときは新規）。保存は入力欄一式となりすまし対策トークン。削除は対象の略称タグの指定となりすまし対策トークン</td></tr><tr><td>成功時出力</td><td>保存した略称タグを入力欄へ読み込んだ一覧画面、または削除後の一覧画面。完了メッセージを伴う</td></tr><tr><td>失敗時出力</td><td>入力の検証を満たさないとき・名称が重複したときは一覧画面へ戻し、失敗メッセージを伴う。対象が無いときは 404、なりすまし対策トークンが無効のときは HTTP 403</td></tr></tbody></table></div>
           <h3 id="function-design-m03-14-m03-14_admin_product_product_abbreviation_tag_register_edit-入出力-永続化">入出力: 永続化</h3>
@@ -4565,7 +4579,7 @@
           <h2 id="function-design-m03-15-m03-15_admin_product_product_storage_code_export-入出力">入出力</h2>
           <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>なし</td></tr><tr><td>成功時出力</td><td>略称タグのCSVファイル</td></tr><tr><td>失敗時出力</td><td>なし</td></tr></tbody></table></div>
           <h3 id="function-design-m03-15-m03-15_admin_product_product_storage_code_export-出力-CSVファイル">出力: CSVファイル</h3>
-          <p>ヘッダ行を先頭に出力し、続けて略称タグを1件1行で出力する。ファイル先頭にはBOMを付ける。区切り文字は出力用の設定値（配布既定はカンマ）とする。ファイル名は <code>storage_code_</code> に出力時刻（年月日時分秒）を付け、拡張子を <code>.csv</code> とする。画面には表示せず、添付ファイルとしてダウンロードさせる。</p>
+          <p>ヘッダ行を先頭に出力し、続けて略称タグを1件1行で出力する。ファイル先頭にはBOMを付ける。BOMはUTF-8のBOM（バイト列 EF BB BF）で、ファイル先頭に1回だけ付ける。出力の文字コードの設定にかかわらず、同じ3バイトを付ける。区切り文字は出力用の設定値（配布既定はカンマ）とする。ファイル名は <code>storage_code_</code> に出力時刻（年月日時分秒）を付け、拡張子を <code>.csv</code> とする。画面には表示せず、添付ファイルとしてダウンロードさせる。</p>
         </div>
       </section>
       <!-- function-design-embed:end m03-15-m03-15_admin_product_product_storage_code_export -->
@@ -5008,6 +5022,7 @@
           <p>ID列に値があっても、その値に一致する部門が無いときは、更新ではなく新規の部門として登録する。</p>
           <h3 id="function-design-m03-20-m03-20_admin_product_product_department_csv_import-取込ファイルの読み取り">取込ファイルの読み取り</h3>
           <p>区切り文字は、ファイルの拡張子が tsv のときはタブ、それ以外のときは設定値（配布時の確認値はカンマ）とする。文字コードが UTF-8 でないときは UTF-8 へ変換して読み取る。ゼロ幅スペースとゼロ幅ノーブレークスペースは読み取り時に取り除く。</p>
+          <p>ファイルの種類は、ファイルに添えて送られた形式種別で判定し、text/plain、text/csv、text/tab-separated-values、application/vnd.ms-excel の4つを受け付ける。表計算の形式種別（application/vnd.ms-excel）で送られたファイルも、区切り文字で区切ったテキストとして読み取る。表計算ソフトの保存形式の中身は解析しない。見出しは1行目から読み取る。</p>
           <h3 id="function-design-m03-20-m03-20_admin_product_product_department_csv_import-エラー時の扱い">エラー時の扱い</h3>
           <div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>なりすまし対策トークンが不正</td><td>アクセスを拒否し、取込を行わない</td></tr><tr><td>ファイルを選択していない・大きさが上限を超える・種類が不正</td><td>エラーを表示する</td></tr><tr><td>見出し行が読めない</td><td>メッセージを表示せず、アップロード画面へ戻る</td></tr><tr><td>見出し名・データ行・列数の不備</td><td>エラーを表示し、取り込み前の状態へ戻す</td></tr><tr><td>ファイル内またはマスタとの重複</td><td>列名と行番号を示すエラーを表示し、取り込み前の状態へ戻す</td></tr></tbody></table></div>
           <h2 id="function-design-m03-20-m03-20_admin_product_product_department_csv_import-入出力">入出力</h2>
@@ -5170,7 +5185,7 @@
           <h3 id="function-design-m03-21-m03-21_admin_product_product_shelf_number_register_edit-削除の可否">削除の可否</h3>
           <p>なりすまし対策トークンの検証を通らない要求は受け付けない。対象の棚番号が存在しないときはページが見つからない扱い（404）とする。当該棚番号を使用している商品規格が1件でもあるときは削除せず、使用中である旨を表示する。1件も無いときは削除する。いずれの場合も棚番号一覧へ戻る。</p>
           <h3 id="function-design-m03-21-m03-21_admin_product_product_shelf_number_register_edit-CSV出力の内容">CSV出力の内容</h3>
-          <p>棚番号を全件、並び順の昇順で出力する。見出し行に続けて各行を出力し、ファイルの先頭には文字コードの目印を付ける。ファイル名は shelf_number_YYYYMMDDHHmmss.csv の形式とし、ファイルとしてダウンロードさせる。</p>
+          <p>棚番号を全件、並び順の昇順で出力する。見出し行に続けて各行を出力し、ファイルの先頭には文字コードの目印を付ける。文字コードの目印はUTF-8のBOM（バイト列 EF BB BF）で、ファイル先頭に1回だけ付ける。出力の文字コードの設定にかかわらず、同じ3バイトを付ける。ファイル名は shelf_number_YYYYMMDDHHmmss.csv の形式とし、ファイルとしてダウンロードさせる。</p>
           <h3 id="function-design-m03-21-m03-21_admin_product_product_shelf_number_register_edit-CSV取込の受付">CSV取込の受付</h3>
           <p>取込ファイルの見出しが定義と一致しないとき、および明細行が1行も無いときは、エラーを表示して棚番号登録CSVアップロード画面へ戻る。</p>
           <h3 id="function-design-m03-21-m03-21_admin_product_product_shelf_number_register_edit-CSV取込の行ごとの検査">CSV取込の行ごとの検査</h3>
@@ -6611,6 +6626,7 @@
           <ul><li>行の列数がフォーマットの列数と一致しない。</li><li>フォーマットにある列が行に見つからない。</li><li>必須の列が空、または形式が合わない。</li><li>指定したタグが存在しない。</li><li>買取価格が販売価格を上回る。</li><li>対象の商品規格が見つからない。</li></ul>
           <p>行の不備を見つけたときは、完了のメッセージを出さず、取込履歴にも残さない。取込の途中で処理が続けられなくなったときも、それまでの更新をすべて取り消す。</p>
           <p>取込中は、同じ行を他の処理が押さえているときの待ち時間を5秒とする。</p>
+          <p>5秒待っても押さえが外れないときは、取込を継続せずに中止し、それまでの更新をすべて取り消す。この中止では完了のメッセージを出さず、取込履歴にも残さない。</p>
           <h3 id="function-design-m03-33-m03-33_admin_product_product_sale_high_price_csv_import-更新の対象となる商品規格">更新の対象となる商品規格</h3>
           <p>対象は、行の商品コードに一致し、高額商品コードを持つ商品規格1件とする。削除済みの商品・商品規格は対象にしない。</p>
           <h3 id="function-design-m03-33-m03-33_admin_product_product_sale_high_price_csv_import-更新する項目">更新する項目</h3>
@@ -6814,10 +6830,12 @@
           <p>見出し行だけを持つCSVを出力する。ファイル名は <code>product_section_update.csv</code> とする。</p>
           <h3 id="function-design-m03-35-m03-35_admin_product_product_section_csv_import-取込の判定順序">取込の判定順序</h3>
           <div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>ファイルを選択していないとき、ファイルの種別がテキスト・CSV・タブ区切り・表計算のいずれでもないとき、またはファイルの大きさが上限（設定値。配布時の既定は5メガバイト）を超えるとき</td><td>エラーを表示してアップロード画面へ戻り、取込を開始しない</td></tr><tr><td>2</td><td>見出し行が読めないとき、または2行目以降のデータ行が無いとき</td><td>エラーを表示し、取込を行わない</td></tr><tr><td>3</td><td>データ行の列数が2でないとき</td><td>全体を中止する</td></tr><tr><td>4</td><td>見出しに商品コード・部門コードの列が無いとき、または商品コードが空のとき</td><td>全体を中止する</td></tr><tr><td>5</td><td>削除されていない商品の規格に、商品コードが一致するものが無いとき</td><td>商品コードでデータを取得できない旨のエラーを積み、全体を中止する</td></tr><tr><td>6</td><td>部門コードに一致する部門が存在しないとき</td><td>部門コードでデータを取得できない旨のエラーを積み、全体を中止する</td></tr><tr><td>7</td><td>上記のいずれにも該当しないとき</td><td>商品コードが一致するすべての規格の部門を更新する</td></tr></tbody></table></div>
+          <p>ファイルの種別は、アップロード時に送られた種別が <code>text/plain</code>・<code>text/csv</code>・<code>text/tab-separated-values</code>・<code>application/vnd.ms-excel</code> のいずれかであるかで判定する。拡張子では判定しない。</p>
           <p>全体を中止したときは、それまでに読んだ行の更新も含めて何も反映しない。同一のCSV内に同じ商品コードが複数行あるときは、最後の行の部門で確定する。</p>
           <h2 id="function-design-m03-35-m03-35_admin_product_product_section_csv_import-入出力">入出力</h2>
           <h3 id="function-design-m03-35-m03-35_admin_product_product_section_csv_import-入出力-取り込むファイルの読み取り">入出力: 取り込むファイルの読み取り</h3>
           <p>拡張子が tsv のファイルはタブ区切りとして読み、それ以外は設定した区切り文字（配布時の既定はカンマ）で読む。文字コードがUTF-8以外のファイルは変換して読み取り、ファイル全体から幅の無い空白を取り除く。</p>
+          <p><code>application/vnd.ms-excel</code> の種別で受け付けたファイルも、同じ規則でテキストとして区切って読む。</p>
           <h3 id="function-design-m03-35-m03-35_admin_product_product_section_csv_import-入出力-永続化">入出力: 永続化</h3>
           <div class="table-wrap"><table><thead><tr><th>操作</th><th>契機</th></tr></thead><tbody><tr><td>追加</td><td>エラーなく取込を終えたとき。取込履歴を1件（種別は部門更新、ファイル名はアップロードしたファイルの名称、実行した利用者）</td></tr></tbody></table></div>
           <div class="renewal-spec-banner"><h3 id="function-design-m03-35-m03-35_admin_product_product_section_csv_import-リニューアル後の仕様">リニューアル後の仕様</h3></div>
@@ -6957,6 +6975,7 @@
           <p>同じ商品IDの行が複数あるときは、後の行の内容が残る。</p>
           <h3 id="function-design-m03-37-m03-37_admin_product_product_storage_code_csv_import-支店システムへの連携">支店システムへの連携</h3>
           <p>取り込みが最後まで通ったときにかぎり、更新した商品を支店システムへ通知する。</p>
+          <p>通知は取り込んだ商品IDから重複を除いた一覧で1回行う。同じ商品IDの行が複数あっても、通知とやり直し用の記録に含む商品IDは1つである。</p>
           <p>通知に失敗しても取り込みは成功のままとし、画面にはエラーを出さない。失敗した対象は、あとで連携をやり直せるように記録する。</p>
           <h3 id="function-design-m03-37-m03-37_admin_product_product_storage_code_csv_import-取込履歴">取込履歴</h3>
           <p>取り込みが最後まで通ったときにかぎり、取り込んだファイル名・日時・作業者を履歴に残す。エラーで終わったときは履歴に残さない。</p>

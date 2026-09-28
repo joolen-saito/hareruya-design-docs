@@ -1078,10 +1078,12 @@
           <p>当日分の販売数の列は毎回0で初期化する。集計対象期間に受注明細が1件も無かった集計単位は更新の対象にならず、前回までの販売数がそのまま残る（0にはならない）。集計結果が1件も無いときは何も更新しない。</p>
           <h3 id="function-design-b02-01-b02-01_batch_product_product_sales_period_summary-再実行">再実行</h3>
           <p>再実行すると実行時点のデータで集計し直し、対象の販売数を上書きする。重複して加算されることはない。途中で失敗したときは、それまでに反映した分の更新だけが残る。</p>
+          <p>販売数の更新は商品規格ごとに1件ずつ確定する。処理中に例外が起きたときは、それまでに更新した商品規格の販売数は反映済みのまま残り、未処理の商品規格は更新されない。</p>
           <h3 id="function-design-b02-01-b02-01_batch_product_product_sales_period_summary-エラー時の扱い">エラー時の扱い</h3>
           <div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>コマンド名が未指定・不一致</td><td>集計を行わず、実行時刻を伴うエラーメッセージをコンソールへ出力して終了する</td></tr><tr><td>集計対象なし</td><td>更新を行わず完了する</td></tr><tr><td>処理中の例外</td><td>そこで処理を打ち切り、完了メッセージを出力しない。反映済みの分の更新は残る</td></tr></tbody></table></div>
           <h2 id="function-design-b02-01-b02-01_batch_product_product_sales_period_summary-入出力">入出力</h2>
-          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>コマンド名。引数は取らない</td></tr><tr><td>実行時出力</td><td>実行時刻を伴う開始と完了のメッセージをコンソールへ出力する</td></tr><tr><td>終了状態</td><td>コマンド名が未指定・不一致のときは異常終了、それ以外は正常終了として返す</td></tr></tbody></table></div>
+          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>コマンド名とバッチ名。第2引数以降は集計に使用しない</td></tr><tr><td>実行時出力</td><td>実行時刻を伴う開始と完了のメッセージをコンソールへ出力する</td></tr><tr><td>終了状態</td><td>コマンド名が未指定・不一致のときは異常終了、それ以外は正常終了として返す</td></tr></tbody></table></div>
+          <p>起動するコマンドは <code>product:batch</code> で、第1引数のバッチ名に <code>updateProductSummary</code> を指定する。第2引数以降を指定したときも、集計の対象は変わらない。</p>
           <div class="renewal-spec-banner"><h3 id="function-design-b02-01-b02-01_batch_product_product_sales_period_summary-リニューアル後の仕様">リニューアル後の仕様</h3></div>
           <h2 id="function-design-b02-01-b02-01_batch_product_product_sales_period_summary-表示メッセージ">表示メッセージ</h2>
           <p>本バッチは画面メッセージを扱わない。</p>
@@ -1229,6 +1231,7 @@
           <p>期間に入るかどうかの判定は登録日時の日付部分だけで行い、時刻は見ない。</p>
           <p>前日以外の各期間は、起動日からその期間の日数だけさかのぼった日を始点とし、その日を含めて起動日当日までの履歴を数える。</p>
           <p>「1ヶ月」は暦の月ではなく28日として数える。</p>
+          <p>起動日の366日前の履歴は取得の対象に含むが、どの期間の集計値にも加えない。最も長い365日間の期間は、起動日の365日前を始点とする。</p>
           <h3 id="function-design-b02-03-b02-03_batch_product_product_storage_period_summary-集計に現れない単位の扱い">集計に現れない単位の扱い</h3>
           <p>対象の在庫変動履歴が1件も無い単位は集計結果に現れず、更新の対象にならない。前回の集計値がそのまま残る。</p>
           <h3 id="function-design-b02-03-b02-03_batch_product_product_storage_period_summary-起動と異常時の扱い">起動と異常時の扱い</h3>
@@ -1302,6 +1305,7 @@
           <p>差出人は店舗基本情報の店名とメールアドレスとし、返信先とエラー返送先も店舗基本情報の設定値を使う。</p>
           <h3 id="function-design-b02-04-b02-04_batch_product_product_no_section_check-再実行">再実行</h3>
           <p>失敗したときの再実行は、同じコマンドを起動し直して行う。抽出は何度実行しても同じ結果になるため、再実行したときは同じ内容を再度通知しうる。</p>
+          <p>通知済みかどうかは記録せず、判定もしない。起動のたびに、その時点で部門未設定の商品規格を抽出し直し、1件以上あれば通知メールを送る。同じ内容の通知を重ねて送ることは抑止しない。</p>
           <h2 id="function-design-b02-04-b02-04_batch_product_product_no_section_check-入出力">入出力</h2>
           <h3 id="function-design-b02-04-b02-04_batch_product_product_no_section_check-入力と出力">入力と出力</h3>
           <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>起動時のコマンド名</td></tr><tr><td>成功時出力</td><td>開始と完了をコンソールへ出力し、終了コード0を返す</td></tr><tr><td>失敗時出力</td><td>コマンド名が不正なときは、その旨をコンソールへ出力し、終了コード1を返す</td></tr></tbody></table></div>
@@ -1376,10 +1380,12 @@
           <p>本文は会員の氏名で始まり（英語のメールは名・姓の順）、続けて対象商品を1商品1行で並べる。各行の先頭にはお気に入りを登録した言語のコードを付け、商品名は日本語のメールでは日本語名、英語のメールでは英語名を出す。差出人は基本情報設定のショップ名と代表メールアドレス、返信先とエラー戻し先も基本情報設定に従い、件名・ヘッダー・フッターはメールテンプレートに登録された内容を用いる。</p>
           <h3 id="function-design-b02-05-b02-05_batch_product_product_favorite_sale_notification-再実行">再実行</h3>
           <p>同じ起動を繰り返すと、同じ対象へ再び通知することがある。</p>
+          <p>送信済みかどうかは判定しない。起動のたびに、その時点でセール中のお気に入り商品を持つ会員を抽出し直し、該当する会員へ通知メールを送る。通知回数の上限や重複の抑止は無い。メール送信履歴は送信のたびに残るが、会員には紐づけず、送信済みの判定には使わない。</p>
           <h3 id="function-design-b02-05-b02-05_batch_product_product_favorite_sale_notification-エラー時の扱い">エラー時の扱い</h3>
           <div class="table-wrap"><table><thead><tr><th>事象</th><th>扱い</th></tr></thead><tbody><tr><td>起動時の指定が不正</td><td>処理を行わずに終了し、指定が不正である旨を出力する</td></tr><tr><td>抽出・送信の途中で異常が起きた</td><td>その時点で処理が止まり、以降の会員には通知されない。完了の出力も行わない</td></tr></tbody></table></div>
           <h2 id="function-design-b02-05-b02-05_batch_product_product_favorite_sale_notification-入出力">入出力</h2>
           <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>成功時出力</td><td>開始と完了の出力</td></tr></tbody></table></div>
+          <p>開始と完了は、コンソールの標準出力へ1行ずつ出す。どちらの行も実行時刻とバッチ名（<code>saleNotification</code>）を含み、処理件数は含まない。</p>
           <h3 id="function-design-b02-05-b02-05_batch_product_product_favorite_sale_notification-入出力-永続化">入出力: 永続化</h3>
           <div class="table-wrap"><table><thead><tr><th>操作</th><th>契機</th></tr></thead><tbody><tr><td>登録</td><td>通知メールを送信するたびに、件名・本文・送信日時と用いたメールテンプレートをメール送信履歴として残す</td></tr></tbody></table></div>
           <div class="renewal-spec-banner"><h3 id="function-design-b02-05-b02-05_batch_product_product_favorite_sale_notification-リニューアル後の仕様">リニューアル後の仕様</h3></div>
@@ -1438,6 +1444,7 @@
           <h2 id="function-design-b02-06-b02-06_batch_product_product_stock_initialize-業務ロジック">業務ロジック</h2>
           <h3 id="function-design-b02-06-b02-06_batch_product_product_stock_initialize-実行できる条件">実行できる条件</h3>
           <p>バッチ名と、複製先となる新規店舗の支店IDを引数に指定して実行する。支店IDを指定しないときは、支店IDの指定を促すメッセージを出力し、複製を行わずに終了する。バッチ名が未指定のとき、またはこのバッチで実行できる名称と一致しないときは、その旨を出力し、複製を行わずに終了する。</p>
+          <p>起動するコマンドは <code>productStock:batch</code> で、第1引数にバッチ名 <code>initialStockRegistration</code>、第2引数に複製先の支店IDを指定する。このコマンドで実行できるバッチ名は <code>initialStockRegistration</code> の1件だけである。</p>
           <h3 id="function-design-b02-06-b02-06_batch_product_product_stock_initialize-複製先に設定する値">複製先に設定する値</h3>
           <p>作成日時と更新日時には実行時刻を設定する。登録者には固定の管理者（ID 1）を設定する。複製先はピックアップ商品にしない。</p>
           <h3 id="function-design-b02-06-b02-06_batch_product_product_stock_initialize-再実行したとき">再実行したとき</h3>
@@ -1446,6 +1453,8 @@
           <div class="table-wrap"><table><thead><tr><th>事象</th><th>扱い</th></tr></thead><tbody><tr><td>バッチ名が未指定のとき、または一致しないとき</td><td>複製を行わずに終了する。開始と完了の出力も行わない</td></tr><tr><td>支店IDの引数が無いとき</td><td>指定を促すメッセージを出力して終了する。完了の出力は行わない</td></tr><tr><td>複製の登録に失敗したとき</td><td>完了のメッセージを出力しない</td></tr></tbody></table></div>
           <h2 id="function-design-b02-06-b02-06_batch_product_product_stock_initialize-入出力">入出力</h2>
           <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>バッチ名、複製先となる新規店舗の支店ID</td></tr><tr><td>実行条件</td><td>複製先の支店IDが引数で指定されていること</td></tr><tr><td>成功時出力</td><td>実行時刻を伴う開始と完了の処理経過の出力</td></tr><tr><td>失敗時出力</td><td>支店IDの指定を促すメッセージ、またはバッチ名が未指定・不一致である旨の出力</td></tr></tbody></table></div>
+          <p>出力はいずれもコンソールの標準出力へ出す。</p>
+          <div class="table-wrap"><table><thead><tr><th>状況</th><th>出力</th></tr></thead><tbody><tr><td>バッチ名が未指定・不一致のとき</td><td>実行時刻に続けて「nothing args or command.」を1行出力し、終了コード1で終了する。開始と完了の行は出力しない</td></tr><tr><td>支店IDの引数が無いとき</td><td>開始の行に続けて「Failed to Initial Stock Registration. Need Input Argument Shop ID.」を出力して終了する。完了の行は出力しない</td></tr><tr><td>複製を終えたとき</td><td>実行時刻とバッチ名を付けた開始の行（<code>initialStockRegistration : start.</code>）と完了の行（<code>initialStockRegistration : complete.</code>）を出力する。どちらの行にも複製先の支店IDは含まない</td></tr></tbody></table></div>
           <div class="renewal-spec-banner"><h3 id="function-design-b02-06-b02-06_batch_product_product_stock_initialize-リニューアル後の仕様">リニューアル後の仕様</h3></div>
           <h2 id="function-design-b02-06-b02-06_batch_product_product_stock_initialize-表示メッセージ">表示メッセージ</h2>
           <p>本バッチは画面に表示する文言を持たない。</p>

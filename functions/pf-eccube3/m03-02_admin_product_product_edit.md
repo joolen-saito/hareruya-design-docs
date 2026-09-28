@@ -35,6 +35,9 @@
 
 1. 商品の更新が完了すると、当該商品が更新されたことを支店システムへ通知する。
 2. 通知に失敗しても商品の更新自体は成功として扱い、画面にエラーは出さない。失敗した商品は再連携の対象として記録し、後から送り直せるようにする。
+3. 再連携は、支店連携の一括処理（branch:batch updateBranch）を実行したときに、記録済みの再連携対象をすべて送り直す。
+4. 送り直しに成功した再連携対象は、記録から削除する。失敗した再連携対象は記録に残し、支店システムの応答内容で記録を更新する。
+5. 再連携対象は、送り直しに成功するまで、一括処理を実行するたびに送り直す。
 
 ### 商品画像を追加する（非同期）
 
@@ -84,4 +87,6 @@
 | 支店システムへの更新通知 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Service/BranchUpdateService.php:66-77 |
 | 支店システムへの更新通知 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Service/BranchUpdateService.php:94-111 |
 | 支店システムへの更新通知 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Service/BranchUpdateService.php:205-218 |
+| 支店システムへの更新通知 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Service/BranchUpdateBatchService.php:18-45 |
+| 支店システムへの更新通知 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Command/BranchUpdateBatch.php:13-23 |
 | 商品画像を追加する（非同期） | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Product/ProductController.php:273-303 |

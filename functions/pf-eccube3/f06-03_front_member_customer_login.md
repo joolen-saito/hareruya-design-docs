@@ -33,9 +33,13 @@
 
 店舗基本情報でログイン状態の保持が有効なときに、保持の選択欄を表示する。保持を有効にした場合は、ログイン状態を既定で1年間保持する。
 
+### パスワードポリシーの「ID」
+
+ECCUBE4系のパスワードポリシーで、パスワードと同じ値を許可しない「ID」はメールアドレスである。ECCUBE4の会員登録とパスワード再設定では、パスワードがメールアドレスと同じ値のとき「パスワードはメールアドレスと同じ値を設定できません。」と表示して受け付けない。会員登録では、パスワードが空のときはこの比較を行わない。
+
 ### ログイン後の遷移
 
-遷移先の指定があればその指定先へ、無ければ既定の遷移先へ進む。ログアウトすると会員の認証状態を終了し、直前に見ていた画面へ戻す。直前の画面が分からないときはトップへ戻す。
+遷移先の指定があればその指定先へ、無ければ既定の遷移先へ進む。既定の遷移先はサイトのルート（/）とする。ログアウトすると会員の認証状態を終了し、直前に見ていた画面へ戻す。直前の画面が分からないときはトップへ戻す。
 
 ## 入出力
 
@@ -74,3 +78,6 @@
 | ログイン状態の保持 | P1 | pf-eccube3:app/Plugin/HareruyaEc/ServiceProvider/HareruyaEcServiceProvider.php:288-292 |
 | ログイン後の遷移 | P2 | pf-eccube3:app/Plugin/HareruyaEc/ServiceProvider/HareruyaEcServiceProvider.php:282 |
 | ログイン後の遷移 | P2 | pf-eccube3:app/Plugin/HareruyaEc/ServiceProvider/HareruyaEcServiceProvider.php:286 |
+| パスワードポリシーの「ID」 | P2 | ec-cube:src/Eccube/Resource/locale/messages.ja.yaml:49 |
+| パスワードポリシーの「ID」 | P2 | ec-cube:src/Eccube/Form/Type/Front/EntryType.php:120-122 |
+| パスワードポリシーの「ID」 | P2 | ec-cube:src/Eccube/Form/Type/Front/PasswordResetType.php:62 |

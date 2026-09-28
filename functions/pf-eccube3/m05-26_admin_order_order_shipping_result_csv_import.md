@@ -33,6 +33,8 @@
 
 出荷日が空の行の読み飛ばしは、順 3 と順 4 のあいだで行う。したがって注文番号が空の行、該当する受注が無い行は、出荷日が空でもエラーになり、取り込み全体が取り消される。逆に、出荷日が空の行は、注文者が会員でなくてもエラーにならない。
 
+送り状No.は数値かどうかを判定せず、変換もしない。英字や記号を含む値でもエラーにならず、取り込んだ文字列のまま受注の送り状No.に保存する。
+
 ### 配送先の更新
 
 受注にすでに出荷日が入っていて受注側を更新しない行でも、配送先の発送日は取り込んだ出荷日で更新する。更新するのはその受注のすべての配送先である。
@@ -71,6 +73,8 @@
 | 取り込み前の検査 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Order/OrderCsvController.php:242 |
 | 取り込み前の検査 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Service/Csv/AbstractCsvService.php:208 |
 | 行ごとの処理 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Service/Csv/OrderCsv.php:62 |
+| 行ごとの処理 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Service/Csv/OrderCsv.php:90 |
+| 行ごとの処理 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Resource/doctrine/Plugin.HareruyaEc.Entity.DtbOrderSub.dcm.yml:57 |
 | 配送先の更新 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Service/Csv/OrderCsv.php:99 |
 | 更新を確定したあとの処理 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Order/OrderCsvController.php:261 |
 | 更新を確定したあとの処理 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Service/PointService.php:39 |
