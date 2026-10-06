@@ -1,0 +1,377 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>フロント アクセス解析 - 基本設計仕様書（詳細設計）</title>
+  <style>
+:root {
+  --bg: #ffffff;
+  --panel: #fffdf8;
+  --text: #2b2a26;
+  --muted: #7a756a;
+  --line: #d6cdbd;
+  --line-soft: #ebe2d3;
+  --band: #f3ede1;
+  --clay: #c25a37;
+  --clay-soft: #f4e6dd;
+  --olive: #5f7048;
+  --olive-soft: #e9ecdf;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Yu Gothic", Meiryo, sans-serif;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.page {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 32px;
+  max-width: 1480px;
+  margin: 0 auto;
+  padding: 28px 28px 64px;
+}
+.sidebar {
+  position: sticky;
+  top: 24px;
+  align-self: start;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  padding-right: 12px;
+  border-right: 1px solid var(--line-soft);
+}
+.sidebar-title {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.toc a {
+  display: block;
+  padding: 4px 0 4px 12px;
+  border-left: 2px solid var(--line-soft);
+  color: var(--muted);
+  text-decoration: none;
+}
+.toc a:hover { color: var(--clay); border-left-color: var(--clay); }
+.toc .lv3 { padding-left: 24px; font-size: 13px; }
+.doc-content { min-width: 0; }
+header.page-header {
+  margin-bottom: 24px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+.crumb {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+h1 { margin: 0; font-size: 28px; line-height: 1.3; }
+h2 {
+  margin: 34px 0 12px;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+}
+h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
+h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
+p { margin: 9px 0; }
+a { color: var(--clay); }
+code {
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--band);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 90%;
+}
+pre {
+  overflow-x: auto;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+pre code { padding: 0; background: transparent; }
+hr { margin: 26px 0; border: 0; border-top: 1px solid var(--line); }
+ul, ol { margin: 9px 0; padding-left: 26px; }
+li { margin: 3px 0; }
+.table-wrap {
+  overflow-x: auto;
+  margin: 14px 0 22px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+th, td {
+  border: 1px solid var(--line-soft);
+  padding: 7px 9px;
+  text-align: left;
+  vertical-align: top;
+}
+th {
+  position: sticky;
+  top: 0;
+  background: var(--band);
+  font-weight: 700;
+  white-space: nowrap;
+}
+tbody tr:nth-child(even) { background: #fffaf0; }
+.screen-item-table table { min-width: 1120px; }
+.section-row td {
+  background: var(--olive-soft);
+  color: var(--olive);
+  font-weight: 700;
+}
+.tabbed-note {
+  white-space: pre-wrap;
+  overflow-x: auto;
+  padding: 10px 12px;
+  border-left: 3px solid var(--olive);
+  background: var(--panel);
+}
+details {
+  margin: 34px 0 12px;
+}
+details > summary {
+  cursor: pointer;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+  font-weight: 700;
+  list-style: revert;
+}
+details[open] > summary { margin-bottom: 12px; }
+footer {
+  margin-top: 48px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+}
+@media (max-width: 900px) {
+  .page { display: block; padding: 20px 16px 48px; }
+  .sidebar {
+    position: static;
+    max-height: none;
+    margin-bottom: 24px;
+    padding-right: 0;
+    border-right: 0;
+    border-bottom: 1px solid var(--line-soft);
+    padding-bottom: 16px;
+  }
+  h1 { font-size: 23px; }
+}
+    /* superseded-notice:start */
+    .superseded-notice {
+      margin: 0 0 18px;
+      padding: 12px 14px;
+      border: 1px solid #d9a1a1;
+      border-left: 5px solid #b3413a;
+      border-radius: 6px;
+      background: #fdf3f2;
+      font-size: 13px;
+      line-height: 1.7;
+    }
+    .superseded-badge {
+      display: inline-block;
+      margin-right: 8px;
+      padding: 2px 9px;
+      border-radius: 999px;
+      background: #b3413a;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .superseded-notice-head {
+      margin: 0 0 8px;
+    }
+    .superseded-notice-list {
+      margin: 0;
+      padding-left: 1.2em;
+    }
+    .superseded-notice-list > li {
+      margin: 6px 0;
+    }
+    .superseded-target {
+      font-weight: 700;
+    }
+    .superseded-implied {
+      display: block;
+      margin-top: 2px;
+      color: #6b4a47;
+    }
+    .superseded-notice a {
+      color: #8c322c;
+    }
+    /* superseded-notice:end */
+    /* phase2-notice:start */
+    .phase2-notice {
+      margin: 0 0 18px;
+      padding: 12px 14px;
+      border: 1px solid #9aa8c7;
+      border-left: 5px solid #3f5b96;
+      border-radius: 6px;
+      background: #f2f5fb;
+      font-size: 13px;
+      line-height: 1.7;
+    }
+    .phase2-badge {
+      display: inline-block;
+      margin-right: 8px;
+      padding: 2px 9px;
+      border-radius: 999px;
+      background: #3f5b96;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .phase2-notice-head {
+      margin: 0 0 8px;
+    }
+    .phase2-notice-list {
+      margin: 0;
+      padding-left: 1.2em;
+    }
+    .phase2-notice-list > li {
+      margin: 6px 0;
+    }
+    .phase2-target {
+      font-weight: 700;
+    }
+    .phase2-notice a {
+      color: #2f4677;
+    }
+    /* phase2-notice:end */
+  </style>
+</head>
+<body>
+  <div class="page">
+    <aside class="sidebar">
+      <p class="sidebar-title">フロント アクセス解析</p>
+      <nav class="toc"><a class="lv1" href="#f10-01">F10-01 会員IDの連携</a>
+<a class="lv1" href="#f10-02">F10-02 購入完了の売上連携</a>
+<a class="lv1" href="#f10-03">F10-03 閲覧商品の連携</a></nav>
+    </aside>
+    <main class="doc-content">
+      <header class="page-header">
+        <h1>フロント アクセス解析 基本設計仕様書（詳細設計）</h1>
+        <p class="crumb">専用の基本設計（Excel）シートが無い機能群の現行仕様をまとめたページです。各機能の正本は Markdown です。</p>
+      </header>
+      <section class="doc-section" id="f10-01">
+  <header class="page-header">
+    <p class="crumb">Source:<br>functions/pf-eccube3/f10-01_front_analytics_customer_id.md</p>
+    <h1>F10-01 会員IDの連携 ／ フロント アクセス解析 — 会員IDの連携</h1>
+  </header>
+  <h2 id="f10-01-業務ロジック">業務ロジック</h2>
+<h3 id="f10-01-連携の仕組み">連携の仕組み</h3>
+<div class="table-wrap"><table><thead><tr><th>担い手</th><th>範囲</th></tr></thead><tbody><tr><td>当機能</td><td>会員IDを、ページ内の受け渡し領域（<code>dataLayer</code>）へ積むところまでを担う</td></tr><tr><td>タグの管理サービス（Googleタグマネージャ）</td><td>受け渡し領域を読み、アクセス解析（Googleアナリティクス）へ送る。送る内容はタグの管理サービス側の設定だけで決まる</td></tr><tr><td>受け渡し領域がまだ無いとき</td><td>空の領域を用意してから積む</td></tr><tr><td>受け渡し領域がすでにあるとき</td><td>既存の内容を残し、末尾へ足す</td></tr></tbody></table></div>
+<h3 id="f10-01-会員IDを積む条件">会員IDを積む条件</h3>
+<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>会員としてログインしているとき</td><td>会員IDを1件積む</td></tr><tr><td>2</td><td>ログインしていないとき</td><td>何も積まない。受け渡し領域の用意も行わない</td></tr></tbody></table></div>
+<h3 id="f10-01-積む値">積む値</h3>
+<div class="table-wrap"><table><thead><tr><th>項目名</th><th>値</th></tr></thead><tbody><tr><td><code>uid</code></td><td>ログインしている会員の会員ID。数値のまま積む。積むのはこの1項目だけで、氏名・メールアドレスなどは積まない</td></tr></tbody></table></div>
+<h3 id="f10-01-積む位置と対象ページ">積む位置と対象ページ</h3>
+<p>当機能は、ページの先頭部（head）へ置くブロック「GoogleAnalytics用会員ID連携スクリプト」として提供する。ページごとのレイアウト設定で、このブロックを先頭部へ置いているページだけが会員IDを積む。</p>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>扱い</th></tr></thead><tbody><tr><td>導入時の配置</td><td>導入時点で存在したPC向けの全ページについて、先頭部の1番目へ置く</td></tr><tr><td>導入時に先頭部の1番目に他のブロックがあるとき</td><td>そのブロックを2番目へ下げる。下げる対象はPC向けのページに限らず、先頭部の1番目にあるブロックすべてである</td></tr><tr><td>導入後にページを追加したとき</td><td>自動では置かれない。ページごとに先頭部へ置く設定をした場合だけ積む</td></tr><tr><td>本人確認の3ページ</td><td>オンライン本人確認の入力・撮影・完了の各ページに限り、ページの追加と同時に先頭部の1番目へ置く</td></tr><tr><td>ブロックを削除しようとしたとき</td><td>管理画面から削除できないブロックとして登録してあるため、削除できない</td></tr></tbody></table></div>
+<h3 id="f10-01-エッジケース">エッジケース</h3>
+<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>レイアウト設定で先頭部からブロックを外したページを開いたとき</td><td>ログインしている場合でも会員IDを積まない</td></tr><tr><td>同じページの他の箇所が先に受け渡し領域へ値を積んでいるとき</td><td>既存の値を残し、会員IDを末尾へ足す</td></tr><tr><td>仮会員・退会済みの会員のとき</td><td>ログインできないため、会員IDを積まない</td></tr><tr><td>英語サイトのとき</td><td>日本語サイトと同じ条件・同じ値で積む</td></tr></tbody></table></div>
+<h2 id="f10-01-入出力">入出力</h2>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>ログイン中の会員の情報</td></tr><tr><td>出力</td><td>ページの先頭部に埋め込むスクリプト。会員としてログインしているときだけ出力し、ログインしていない場合は何も出力しない</td></tr></tbody></table></div>
+<h3 id="f10-01-入出力-永続化">入出力: 永続化</h3>
+<p>会員・受注などの業務データを登録・更新・削除しない。</p>
+<div class="table-wrap"><table><thead><tr><th>操作</th><th>契機</th></tr></thead><tbody><tr><td>ブロックの登録</td><td>機能の導入時に、ブロックの一覧へ1件登録する</td></tr><tr><td>ブロックの配置</td><td>機能の導入時、および本人確認の3ページの追加時に、ページのレイアウト設定へ配置を登録する</td></tr></tbody></table></div>
+<div class="renewal-spec-banner"><h3 id="f10-01-リニューアル後の仕様">リニューアル後の仕様</h3></div>
+<h2 id="f10-01-表示メッセージ">表示メッセージ</h2>
+<p>本機能は画面へ文言を表示しない。</p>
+</section>
+<section class="doc-section" id="f10-02">
+  <header class="page-header">
+    <p class="crumb">Source:<br>functions/pf-eccube3/f10-02_front_analytics_purchase.md</p>
+    <h1>F10-02 購入完了の売上連携 ／ フロント アクセス解析 — 購入完了の売上連携</h1>
+  </header>
+  <h2 id="f10-02-業務ロジック">業務ロジック</h2>
+<h3 id="f10-02-連携の仕組み">連携の仕組み</h3>
+<div class="table-wrap"><table><thead><tr><th>担い手</th><th>範囲</th></tr></thead><tbody><tr><td>当機能</td><td>注文完了画面で売上の値を、ページ内の受け渡し領域（<code>dataLayer</code>）へ積むところまでを担う</td></tr><tr><td>タグの管理サービス（Googleタグマネージャ）</td><td>受け渡し領域を読み、アクセス解析（Googleアナリティクス）へ送る。送る内容はタグの管理サービス側の設定だけで決まる</td></tr><tr><td>受け渡し領域がまだ無いとき</td><td>空の領域を用意してから積む</td></tr><tr><td>受け渡し領域がすでにあるとき</td><td>既存の内容を残し、末尾へ足す</td></tr></tbody></table></div>
+<h3 id="f10-02-積む契機">積む契機</h3>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>扱い</th></tr></thead><tbody><tr><td>契機</td><td>購入処理が完了し、注文完了画面を表示するときだけ積む。購入処理が途中で止まった場合は積まない</td></tr><tr><td>回数</td><td>注文完了画面の表示1回につき1件</td></tr><tr><td>言語</td><td>日本語サイトのときも英語サイトのときも、同じ項目名で積む</td></tr><tr><td>積む位置</td><td>ページの先頭部（head）。ページごとのレイアウト設定で先頭部へ置くブロックより前に積む</td></tr></tbody></table></div>
+<h3 id="f10-02-積む値">積む値</h3>
+<div class="table-wrap"><table><thead><tr><th>項目名</th><th>値</th><th>形式</th></tr></thead><tbody><tr><td><code>transactionId</code></td><td>受注ID。8桁に満たないときは、8桁になるまで左を0で埋める。8桁を超えるときはそのまま</td><td>文字列</td></tr><tr><td><code>transactionAffiliation</code></td><td>受注の1件目のお届け先に設定された配送方法の名称。お届け先が複数ある場合も1件目だけを使う</td><td>文字列</td></tr><tr><td><code>transactionTotal</code></td><td>受注の商品小計。税込単価に数量を掛けた金額を、受注明細の全行について合計した金額</td><td>文字列</td></tr><tr><td><code>transactionTax</code></td><td>常に0。消費税がかかる注文のときも0のまま</td><td>数値</td></tr><tr><td><code>transactionShipping</code></td><td>受注の送料合計</td><td>文字列</td></tr><tr><td><code>transactionMailaddress</code></td><td>注文完了画面を表示した時点でログインしている会員のメールアドレス。受注に保存されたメールアドレスは使わない</td><td>文字列</td></tr><tr><td><code>transactionProducts</code></td><td>受注明細ごとの商品の値の並び。下表のとおり</td><td>配列</td></tr></tbody></table></div>
+<p>上の7項目は、1つの要素にまとめて積む。項目ごとに別の要素へ分けない。入れ子になるのは <code>transactionProducts</code> だけである。</p>
+<p><code>transactionTotal</code> は税込の商品小計だけを積む。送料・手数料・値引き・ポイント利用があるときも、それらを反映した支払合計にはしない。</p>
+<h3 id="f10-02-商品の値">商品の値</h3>
+<p><code>transactionProducts</code> は、受注明細1行につき1件を、受注明細の並び順で並べる。1件は下表の5項目を持つ要素である。</p>
+<div class="table-wrap"><table><thead><tr><th>項目名</th><th>値</th><th>形式</th></tr></thead><tbody><tr><td><code>sku</code></td><td>受注明細の商品コード</td><td>文字列</td></tr><tr><td><code>name</code></td><td>受注明細の商品名</td><td>文字列</td></tr><tr><td><code>category</code></td><td>常に空文字。商品にカテゴリが設定されている場合も空のまま</td><td>文字列</td></tr><tr><td><code>price</code></td><td>受注明細の税抜の単価</td><td>文字列</td></tr><tr><td><code>quantity</code></td><td>受注明細の数量。同じ商品が別の行にあるときも、行ごとの数量のまま積む</td><td>文字列</td></tr></tbody></table></div>
+<p><code>price</code> は税抜、<code>transactionTotal</code> は税込である。消費税がかかる注文のときは、<code>price</code> に <code>quantity</code> を掛けた金額の合計と <code>transactionTotal</code> は一致しない。</p>
+<p>商品名などに日本語を含むときは、文字コードの置き換え表記（<code>\uXXXX</code>）にせず、そのままの文字で出力する。</p>
+<h3 id="f10-02-エッジケース">エッジケース</h3>
+<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>受注明細が複数行のとき</td><td>明細の行数ぶん、商品の値を並べる。同じ商品が別の行にあるときもまとめない</td></tr><tr><td>お届け先が複数あるとき</td><td>1件目のお届け先の配送方法の名称だけを積む</td></tr><tr><td>送料が0円のとき</td><td><code>transactionShipping</code> は0を積む</td></tr><tr><td>ポイントを利用した注文</td><td><code>transactionTotal</code> は商品小計のままで、利用ポイントを差し引かない</td></tr><tr><td>注文完了画面を再読み込みしたとき</td><td>注文完了画面を1回表示した時点で購入処理中の受注の控えを消すため、再読み込みするとTOP画面へ移動し、値を積まない</td></tr><tr><td>会員としてログインしていない状態で注文完了画面を表示したとき</td><td><code>transactionMailaddress</code> は空文字を積む。注文時に入力したメールアドレスは積まない</td></tr><tr><td>消費税</td><td>税額にかかわらず <code>transactionTax</code> は0を積む</td></tr></tbody></table></div>
+<h2 id="f10-02-入出力">入出力</h2>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>購入処理が完了した受注（受注ID、商品小計、送料合計、1件目のお届け先の配送方法、受注明細）と、ログインしている会員のメールアドレス。購入処理が完了した受注が無いときは受け取らない</td></tr><tr><td>出力</td><td>注文完了画面の先頭部に埋め込むスクリプト。注文完了画面を表示するときだけ出力する</td></tr></tbody></table></div>
+<h3 id="f10-02-入出力-永続化">入出力: 永続化</h3>
+<p>受注・会員などの業務データを、当機能としては登録・更新・削除しない。受注の確定は注文の機能（F04-04）が行う。</p>
+<div class="renewal-spec-banner"><h3 id="f10-02-リニューアル後の仕様">リニューアル後の仕様</h3></div>
+<h2 id="f10-02-表示メッセージ">表示メッセージ</h2>
+<p>本機能は画面へ文言を表示しない。</p>
+</section>
+<section class="doc-section" id="f10-03">
+  <header class="page-header">
+    <p class="crumb">Source:<br>functions/pf-eccube3/f10-03_front_analytics_retargeting.md</p>
+    <h1>F10-03 閲覧商品の連携 ／ フロント アクセス解析 — 閲覧商品の連携</h1>
+  </header>
+  <h2 id="f10-03-業務ロジック">業務ロジック</h2>
+<h3 id="f10-03-連携の仕組み">連携の仕組み</h3>
+<div class="table-wrap"><table><thead><tr><th>担い手</th><th>範囲</th></tr></thead><tbody><tr><td>当機能</td><td>買い物かご・商品詳細・商品一覧・TOP画面で、利用者が見ている商品の値を、ページ内の受け渡し領域（<code>dataLayer</code>）へ積むところまでを担う</td></tr><tr><td>タグの管理サービス（Googleタグマネージャ）</td><td>受け渡し領域を読み、アクセス解析（Googleアナリティクス）へ送る。送る内容はタグの管理サービス側の設定だけで決まる</td></tr><tr><td>受け渡し領域がまだ無いとき</td><td>空の領域を用意してから積む</td></tr><tr><td>受け渡し領域がすでにあるとき</td><td>既存の内容を残し、末尾へ足す</td></tr></tbody></table></div>
+<h3 id="f10-03-画面ごとの値">画面ごとの値</h3>
+<div class="table-wrap"><table><thead><tr><th>画面</th><th>項目名</th><th>値</th><th>形式</th></tr></thead><tbody><tr><td>買い物かご</td><td><code>gtm_cart_ids</code></td><td>かごに入っている商品の商品IDの並び</td><td>数値の配列</td></tr><tr><td>買い物かご</td><td><code>gtm_cart_value</code></td><td>かごの合計金額（税込）。かごが空のときは0</td><td>数値</td></tr><tr><td>商品詳細</td><td><code>gtm_product_id</code></td><td>表示している商品の商品ID</td><td>数値</td></tr><tr><td>商品詳細</td><td><code>gtm_product_value</code></td><td>初期表示する言語・商品規格の税抜の販売価格</td><td>数値</td></tr><tr><td>商品の並びを差し込む画面（商品一覧・TOP画面・商品詳細）</td><td><code>gtm_search_ids</code></td><td>差し込む商品の商品IDの並び</td><td>数値の配列</td></tr></tbody></table></div>
+<div class="table-wrap"><table><thead><tr><th>画面</th><th>1件の要素が持つ項目</th></tr></thead><tbody><tr><td>買い物かご</td><td><code>gtm_cart_ids</code> と <code>gtm_cart_value</code> の2項目を、同じ1つの要素にまとめて積む</td></tr><tr><td>商品詳細</td><td><code>gtm_product_id</code> と <code>gtm_product_value</code> の2項目を、同じ1つの要素にまとめて積む</td></tr><tr><td>商品の並びを差し込む画面</td><td><code>gtm_search_ids</code> の1項目だけを持つ要素を積む</td></tr></tbody></table></div>
+<div class="table-wrap"><table><thead><tr><th>条件</th><th>扱い</th></tr></thead><tbody><tr><td>会員としてログインしていないとき</td><td>ログインしているときと同じ値を積む</td></tr><tr><td>英語サイトのとき</td><td>日本語サイトと同じ項目名で積む。商品詳細の販売価格だけは、英語サイトで初期表示する言語・商品規格の値になるため、日本語サイトと違う値になりうる</td></tr></tbody></table></div>
+<h3 id="f10-03-買い物かご">買い物かご</h3>
+<p>買い物かご画面を表示するたびに1件だけ積む。かごの中身を画面上で変えたときは、画面を表示し直した時点で積み直す。</p>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>扱い</th></tr></thead><tbody><tr><td>商品IDの並び順</td><td>かごの明細の並び順。同じ商品IDが2回目以降に出たときは飛ばす</td></tr><tr><td>同じ商品が複数の明細にあるとき</td><td>同じ商品IDは1回だけ並べる。商品規格（言語・状態）が違っても、商品が同じなら1つにまとめる</td></tr><tr><td>かごの合計金額</td><td>税込の販売価格に数量を掛けた金額を、かごの明細の全行について合計した金額。送料・手数料がかかる場合もそれらは含めない</td></tr></tbody></table></div>
+<h3 id="f10-03-商品詳細">商品詳細</h3>
+<p>商品詳細画面を表示するたびに、<code>gtm_product_id</code> と <code>gtm_product_value</code> を持つ値を1件だけ積む。同名の商品の並びを差し込む商品では、これとは別に <code>gtm_search_ids</code> も積む（下の「商品一覧」）。</p>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>扱い</th></tr></thead><tbody><tr><td>商品ID</td><td>表示している商品の商品ID。商品規格を切り替えたときも同じ値のまま</td></tr><tr><td>販売価格</td><td>画面を開いた時点で選択された状態になる言語・商品規格の税抜の販売価格。利用者が画面上で言語や状態を切り替えても、積み直さない</td></tr></tbody></table></div>
+<p>初期表示する言語・商品規格は次の順で決まる。</p>
+<div class="table-wrap"><table><thead><tr><th>順序</th><th>条件</th><th>初期表示</th></tr></thead><tbody><tr><td>1</td><td>画面を開くときに言語の指定があり、その言語の商品があるとき</td><td>指定された言語</td></tr><tr><td>2</td><td>言語の指定が無いとき</td><td>日本語サイトでは日本語版、英語サイトでは英語版</td></tr><tr><td>3</td><td>上で決まった言語の商品が無いとき</td><td>商品が持つ言語のうち先頭の言語</td></tr><tr><td>4</td><td>画面を開くときに商品規格の指定があり、決まった言語にその商品規格があるとき</td><td>指定された商品規格</td></tr><tr><td>5</td><td>商品規格の指定が無い、または決まった言語にその商品規格が無いとき</td><td>決まった言語の先頭の商品規格</td></tr></tbody></table></div>
+<h3 id="f10-03-商品一覧">商品一覧</h3>
+<p>商品の並びを画面の表示後に取得して差し込む箇所では、差し込む商品の並び1つにつき1件積む。1つの画面に商品の並びが複数あるときは、その数だけ積む。</p>
+<div class="table-wrap"><table><thead><tr><th>画面</th><th>差し込む商品の並び</th></tr></thead><tbody><tr><td>商品一覧</td><td>一覧の商品の並び。検索結果の場合も同じ</td></tr><tr><td>TOP画面</td><td>画面に配置した商品リスト（新着・値下げ・おすすめ）ごとの商品の並び</td></tr><tr><td>商品詳細</td><td>同名の商品の並び。カードの商品で、かつ基本土地でない場合だけ差し込む</td></tr><tr><td>お気に入り一覧・入荷通知一覧</td><td>商品の並びを後から差し込まないため、積まない</td></tr></tbody></table></div>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>扱い</th></tr></thead><tbody><tr><td>商品IDの並び順</td><td>差し込む商品の並び順。同じ商品IDが2回目以降に出たときは飛ばす</td></tr><tr><td>同じ商品が複数あるとき</td><td>同じ商品IDは1回だけ並べる</td></tr><tr><td>検索結果が0件のとき</td><td>商品の並びを差し込まないため、<code>gtm_search_ids</code> を積まない</td></tr></tbody></table></div>
+<h3 id="f10-03-エッジケース">エッジケース</h3>
+<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>かごが空のとき</td><td>買い物かご画面の扱いに従う。商品IDの並びは空、合計金額は0になる</td></tr><tr><td>商品詳細で、商品が非公開などで表示できないとき</td><td>商品詳細画面を表示しないため、値を積まない</td></tr><tr><td>商品一覧で、検索結果が0件のとき</td><td>商品の並びを差し込まず、値を積まない。空の並びも積まない</td></tr><tr><td>商品一覧で、同じ商品が言語の違いで複数の行に出るとき</td><td>同じ商品IDは1回だけ並べる</td></tr></tbody></table></div>
+<h2 id="f10-03-入出力">入出力</h2>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>買い物かごの明細と合計金額／表示する商品の商品IDと初期表示の商品規格の販売価格／一覧に差し込む商品の並び</td></tr><tr><td>出力</td><td>各画面に埋め込むスクリプト。各画面を表示するときだけ出力する</td></tr></tbody></table></div>
+<h3 id="f10-03-入出力-永続化">入出力: 永続化</h3>
+<p>商品・買い物かごなどの業務データを登録・更新・削除しない。</p>
+<div class="renewal-spec-banner"><h3 id="f10-03-リニューアル後の仕様">リニューアル後の仕様</h3></div>
+<h2 id="f10-03-表示メッセージ">表示メッセージ</h2>
+<p>本機能は画面へ文言を表示しない。</p>
+</section>
+      <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
+    </main>
+  </div>
+</body>
+</html>
