@@ -19,7 +19,47 @@ FIX = {
 }
 
 
+# 機能設計書を直接の出典にしていた機能（作った時点では、シートに別機能の機能設計書が埋め込まれていた）。
+# 埋め込みを直してHTMLに載ったので、「<機能ID> 機能設計書 / <小見出し>」を「<書番> <シート名> / 現行仕様 <小見出し>」へ直す。
+# 小見出し「表示メッセージ」は、HTMLでは現行仕様の外（リニューアル後の仕様）に出るので「<書番> <シート名> / 表示メッセージ」にする。
+# 機能ID: (作業ファイル, 書番とシート名)
+TO_SHEET = {
+    "M15-11": ("sheetmap/cases/M15-11_sm_test_cases.tsv", "0212 直近の大会管理"),
+    "M15-05": ("sheetmap/cases/M15-05_sm_test_cases.tsv", "0212 デッキ編集"),
+    "A07-07": ("mtgbuyer/cases/A07-07_mb_test_cases.tsv", "0507 複数ネット買取IDから個別入力商品の一覧を取得"),
+    "O01-01": ("mtgbuyer/cases/O01-01_mb_test_cases.tsv", "0601 MTGバイヤー店頭買取査定"),
+}
+
+
+def to_sheet():
+    import re
+    for fid, (rel, sheet) in TO_SHEET.items():
+        p = CG / rel
+        L = [l for l in p.read_text(encoding="utf-8").split("\n") if l]
+        col = L[0].split("\t").index("出典")
+        n = 0
+        for i, l in enumerate(L[1:], 1):
+            f = l.split("\t")
+            out, changed = [], False
+            for part in [x.strip() for x in f[col].split("｜") if x.strip()]:
+                pre = f"{fid} 機能設計書 / "
+                if not part.startswith(pre):
+                    out.append(part); continue
+                changed = True
+                heads = [h.strip() for h in re.split(r"[、,]", part[len(pre):]) if h.strip()]
+                cur = [h for h in heads if h != "表示メッセージ"]
+                if cur:
+                    out.append(f"{sheet} / 現行仕様 " + "、".join(cur))
+                if "表示メッセージ" in heads:
+                    out.append(f"{sheet} / 表示メッセージ")
+            if changed:
+                f[col] = "｜".join(dict.fromkeys(out)); L[i] = "\t".join(f); n += 1
+        p.write_text("\n".join(L) + "\n", encoding="utf-8")
+        print(f"{fid}: 出典をHTMLのシートへ直した {n}件")
+
+
 def main():
+    to_sheet()
     (PC / "source_changes").mkdir(exist_ok=True)
     for fid, (old, new, why) in FIX.items():
         p = CG / f"cases/{fid}_test_cases.tsv"
