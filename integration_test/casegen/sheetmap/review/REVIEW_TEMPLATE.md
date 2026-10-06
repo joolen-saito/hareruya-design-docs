@@ -2,6 +2,7 @@
 
 あなたはレビュアーである。著者とは別人として、下のケースを根拠と突き合わせ、誤りを指摘せよ。ファイルは変更しない。出力は日本語。
 レビューは事実確認に限る。設計書に無い仕様を足す提案はしない。
+`sheetmap/review/` にある他の機能のファイル、および `*_out.txt`（レビューの生の出力。自分の出力先を含む）は読まない。指摘は必ずこの依頼の対象ファイルを自分で読んで出す（他のレビューの出力を写した指摘は破棄する）。
 
 ## 対象
 
@@ -10,7 +11,7 @@
 ## 根拠（正）
 
 - HTML設計書の対象シート: {SHEETS}。文字に起こしたものが `hareruya-design-docs/integration_test/casegen/sheetmap/materials/{FID}_sheet.txt`、1行ずつ要求IDを振ったものが `{FID}_requirements.tsv`。HTML本体は `hareruya-design-docs/excel_to_html/output/{BOOK}_*.html`。
-- 期待結果の根拠は上のシートに書いてあることに限る。実装（`/home/y-saito/Developments/ec-cube-enterprise`）や現行ソースは、事前準備・シードの作り方と手順の実行可能性を確かめるためにだけ読む。実装と設計書が違うことは指摘しない（検出すべき乖離なのでケースは設計書どおりでよい）。
+- 期待結果の根拠は上のシートと、同じ冊子の別シートでこの機能のふるまいを書いている箇所に限る（依頼元の裁定A。`sheetmap/FIX_R1_BRIEF.md`。出典に併記してあるシートは根拠として認める。観点表の「観点内で確定」の判定単位は、適用条件が設計書から言えれば使える＝裁定B）。実装（`/home/y-saito/Developments/ec-cube-enterprise`）や現行ソースは、事前準備・シードの作り方と手順の実行可能性を確かめるためにだけ読む。実装と設計書が違うことは指摘しない（検出すべき乖離なのでケースは設計書どおりでよい）。
 {NOTE}
 - 規約は `sheetmap/GEN_SHEETMAP_PROMPT.md`（依頼文の型）、範囲は `integration_test/SCOPE.md`、前提条件は `casegen/precond/README.md`（P1〜P13）、判定単位は `integration_test/viewpoint_canonical/viewpoints_canonical.tsv`。
 
