@@ -32,6 +32,8 @@
 | - [x] | フロント | 店頭買取管理 | 店頭買取査定申込前ログイン | F08-01 | 現行踏襲 | 店頭買取査定申込前ログイン時に表示する | [md](pf-eccube3/f08-01_front_store_purchase_otc_buy_entry_login.md) / [html](../function_spec_html_preview/pf-eccube3/f08-01_front_store_purchase_otc_buy_entry_login.html) |
 | - [x] | フロント | 店頭買取管理 | 店頭買取査定申込情報入力 | F08-02 | カスタマイズ | 店頭買取査定申込情報入力を表示する | [md](pf-eccube3/f08-02_front_store_purchase_otc_buy_entry_input.md) / [html](../function_spec_html_preview/pf-eccube3/f08-02_front_store_purchase_otc_buy_entry_input.html) |
 | - [x] | フロント | 店頭買取管理 | 店頭買取査定申込登録確認～完了 | F08-03 | カスタマイズ | 店頭買取査定申込登録確認～完了に表示する | [md](pf-eccube3/f08-03_front_store_purchase_otc_buy_entry_complete.md) / [html](../function_spec_html_preview/pf-eccube3/f08-03_front_store_purchase_otc_buy_entry_complete.html) |
+| - [ ] | フロント | 店頭買取管理 | 会員登録フォーム | F08-04 | カスタマイズ | 会員登録フォーム画面を表示します。 |  |
+| - [ ] | フロント | 店頭買取管理 | 店頭買取査定申込確認 | F08-05 | カスタマイズ | 店頭買取査定申込確認を表示します。 |  |
 | - [x] | フロント | 会員 | 新規会員登録 | F06-01 | カスタマイズ | 会員情報を仮会員で登録できます。 | [md](pf-eccube3/f06-01_front_member_customer_entry.md) / [html](../function_spec_html_preview/pf-eccube3/f06-01_front_member_customer_entry.html) |
 | - [x] | フロント | 会員 | 本会員登録 | F06-02 | 現行踏襲 | 既に仮会員登録した会員情報を本会員で登録できます。 | [md](pf-eccube3/f06-02_front_member_entry_activate.md) / [html](../function_spec_html_preview/pf-eccube3/f06-02_front_member_entry_activate.html) |
 | - [x] | フロント | 会員 | ログイン | F06-03 | カスタマイズ | 本店と支店で会員ログインができます。 | [md](pf-eccube3/f06-03_front_member_customer_login.md) / [html](../function_spec_html_preview/pf-eccube3/f06-03_front_member_customer_login.html) |
@@ -58,6 +60,7 @@
 | - [x] | フロント | 会員 | お問い合わせ履歴詳細 | F06-24 | 現行踏襲 | お問い合わせ履歴1件の詳細情報を表示します。 | [md](pf-eccube3/f06-24_front_contact_history.md) / [html](../function_spec_html_preview/pf-eccube3/f06-24_front_contact_history.html) |
 | - [x] | フロント | 会員 | 店頭注文呼び出し番号表示 | F06-25 | カスタマイズ | 店頭のモニターに、受注管理画面から登録した店頭注文番号札を表示します。 | [md](pf-eccube3/f06-25_front_member_store_order_call_number.md) / [html](../function_spec_html_preview/pf-eccube3/f06-25_front_member_store_order_call_number.html) |
 | - [x] | フロント | 会員 | 店頭PC用アカウント制御 | F06-26 | カスタマイズ | 店頭PC用アカウントでログインした際に、通常会員とは異なる制御を行います。 | [md](pf-eccube3/f06-26_front_member_store_pc_account_control.md) / [html](../function_spec_html_preview/pf-eccube3/f06-26_front_member_store_pc_account_control.html) |
+| - [ ] | フロント | 会員 | パスワード設定（ポリシー違反用） | F06-27 | 新規実装 | ポリシー違反のパスワードの再設定を促す |  |
 | - [x] | フロント | イベント | イベント大会TOP | F07-01 | カスタマイズ | 店舗ごとにイベントを表示できます。 | [md](pf-eccube3/f07-01_front_event_event_top.md) / [html](../function_spec_html_preview/pf-eccube3/f07-01_front_event_event_top.html) |
 | - [x] | フロント | イベント | 大会詳細検索 | F07-02 | カスタマイズ | イベントを検索できます。 | [md](pf-eccube3/f07-02_front_event_event_search.md) / [html](../function_spec_html_preview/pf-eccube3/f07-02_front_event_event_search.html) |
 | - [x] | フロント | イベント | 大会詳細 | F07-03 | カスタマイズ | イベントの詳細を参照できます。 | [md](pf-eccube3/f07-03_front_event_event_detail.md) / [html](../function_spec_html_preview/pf-eccube3/f07-03_front_event_event_detail.html) |
@@ -207,6 +210,9 @@
 | - [x] | 管理画面 | ネット買取管理 | 買取商品（キャンセル）CSV | M07-07 | 新規実装 |  | 生成済み: 2026-06-11 [md](ec-cube-enterprise/m07-07_admin_online_purchase_purchase_online_product_cancel_csv_export.md) / [html](../function_spec_html_preview/ec-cube-enterprise/m07-07_admin_online_purchase_purchase_online_product_cancel_csv_export.html) |
 | - [x] | 管理画面 | ネット買取管理 | 戻しリストCSV | M07-08 | 新規実装 |  | 生成済み: 2026-06-11 [md](ec-cube-enterprise/m07-08_admin_online_purchase_purchase_online_return_list_csv_export.md) / [html](../function_spec_html_preview/ec-cube-enterprise/m07-08_admin_online_purchase_purchase_online_return_list_csv_export.html) |
 | - [x] | 管理画面 | ネット買取管理 | 戻しリストPDF | M07-09 | 新規実装 |  | 生成済み: 2026-06-11 [md](ec-cube-enterprise/m07-09_admin_online_purchase_purchase_online_return_list_pdf_export.md) / [html](../function_spec_html_preview/ec-cube-enterprise/m07-09_admin_online_purchase_purchase_online_return_list_pdf_export.html) |
+| - [ ] | 管理画面 | ネット買取管理 | 買取商品履歴検索/一覧 | M07-10 | 新規実装 | 実在庫情報変更履歴の検索 |  |
+| - [ ] | 管理画面 | ネット買取管理 | 買取商品履歴全件CSV出力 | M07-11 | 新規実装 | 買取商品履歴のCSV出力 |  |
+| - [ ] | 管理画面 | ネット買取管理 | 買取商品履歴選択CSV出力 | M07-12 | 新規実装 | 買取商品履歴のCSV出力 |  |
 | - [x] | 管理画面 | 会員管理 | 会員検索/一覧 | M08-01 | カスタマイズ | 顧客情報の検索、一覧表示が行えます。 | [md](pf-eccube3/m08-01_admin_customer_customer_search_list.md) / [html](../function_spec_html_preview/pf-eccube3/m08-01_admin_customer_customer_search_list.html) |
 | - [x] | 管理画面 | 会員管理 | メール一括送信 | M08-02 | 現行踏襲 | 一覧から選択した顧客に対してメールを一括で送信することができます。 | [md](pf-eccube3/m08-02_admin_customer_customer_mail_all.md) / [html](../function_spec_html_preview/pf-eccube3/m08-02_admin_customer_customer_mail_all.html) |
 | - [x] | 管理画面 | 会員管理 | 顧客情報CSV出力 | M08-03 | 現行踏襲 | 顧客情報のCSV出力が行えます。 | [md](pf-eccube3/m08-03_admin_customer_customer_csv_export.md) / [html](../function_spec_html_preview/pf-eccube3/m08-03_admin_customer_customer_csv_export.html) |
@@ -335,12 +341,17 @@
 | - [x] | バッチ | 会員管理 | 必須項目が空欄の会員発生通知 | B08-04 | 現行踏襲 | 必須項目が空欄の会員について管理者あてにメールを送信する | [md](pf-eccube3/b08-04_batch_customer_customer_check_blank_required.md) / [html](../function_spec_html_preview/pf-eccube3/b08-04_batch_customer_customer_check_blank_required.html) |
 | - [x] | バッチ | 会員管理 | ポイント差分発生通知 | B08-05 | 現行踏襲 | スマレジとEC-CUBEのポイントの差分があれば管理者あてにメールを送信する | [md](pf-eccube3/b08-05_batch_customer_customer_adjust_point_variance.md) / [html](../function_spec_html_preview/pf-eccube3/b08-05_batch_customer_customer_adjust_point_variance.html) |
 | - [x] | バッチ | 会員管理 | スマレジ使用ポイント連携 | B08-06 | 現行踏襲 | スマレジで使用したポイントを連携する | [md](pf-eccube3/b08-06_batch_customer_smaregi_update_point.md) / [html](../function_spec_html_preview/pf-eccube3/b08-06_batch_customer_smaregi_update_point.html) |
+| - [ ] | バッチ | 会員管理 | 身分証有効期限切れ通知 | B08-07 | 現行踏襲 | 身分証の有効期限切れ間近のユーザーの身分証データ削除およびメール通知を行い、管理者には該当ユーザー一覧をメール送信を行う |  |
 | - [x] | バッチ | イベント管理 | 決済処理中チェックバッチ | B13-01 | 現行踏襲 | イベント申込データのうち、申込みステータスが30分以上「決済中」のものをチェックする | [md](pf-eccube3/b13-01_batch_event_event_check_processing_payment.md) / [html](../function_spec_html_preview/pf-eccube3/b13-01_batch_event_event_check_processing_payment.html) |
 | - [x] | バッチ | イベント管理 | コンビニ支払チェックバッチ | B13-02 | 現行踏襲 | コンビニ決済のステータスチェックを行う | [md](pf-eccube3/b13-02_batch_event_event_check_cvs_payment.md) / [html](../function_spec_html_preview/pf-eccube3/b13-02_batch_event_event_check_cvs_payment.html) |
 | - [ ] | バッチ | インフラ |  |  | 現行踏襲 | WordPressの最新ファイルをS3に日次で転送 |  |
 | - [ ] | バッチ | インフラ |  |  | 現行踏襲 | WordPressの最新ファイルをS3に毎分で転送 |  |
 | - [x] | バッチ | インフラ |  |  | 現行踏襲 | S3のファイルを自サーバに転送 | [md](pf-eccube3/batch_s3_file_sync.md) / [html](../function_spec_html_preview/pf-eccube3/batch_s3_file_sync.html) |
 | - [x] | バッチ | インフラ |  |  | 現行踏襲 | S3のファイルを自サーバに転送 | [md](pf-eccube3/batch_s3_file_sync.md) / [html](../function_spec_html_preview/pf-eccube3/batch_s3_file_sync.html) |
+| - [ ] | バッチ | インフラ | 月次商品情報スナップショット | B16-06 | カスタマイズ | 月末に店舗・商品規格ごとに一部の事項を抽出し、集計結果をS3に保存する |  |
+| - [ ] | バッチ | インフラ | サイトマップ生成処理 | B16-09 | カスタマイズ | フロント側のサイトマップを作成し、S3バケットにアップロードを行う |  |
+| - [ ] | バッチ | インフラ | ステージングデータベース保守バッチ | B16-10 | 現行踏襲 | 定期的にステージング環境を最新の本番環境に近い状態に保つためのメンテナンス処理を行う |  |
+| - [ ] | バッチ | インフラ | S3画像サイズチェック処理 | B16-11 | 現行踏襲 | S3にアップロードされている画像内に規定している容量超過しているファイルを通知する |  |
 | - [x] | バッチ | その他 | 最新記事jsonファイル作成 | B17-01 | 現行踏襲 | 最新記事20件の情報をjsonファイルとして作成する | [md](pf-eccube3/b17-01_batch_other_create_latest_article_list.md) / [html](../function_spec_html_preview/pf-eccube3/b17-01_batch_other_create_latest_article_list.html) |
 | - [x] | API | 在庫管理 | スマレジ連携処理 | A01-01 | 新規実装 | 在庫処理に関連するスマレジとの連携処理 | 生成済み: 2026-06-11 [md](ec-cube-enterprise/a01-01_api_stock_smaregi_stock_sync.md) / [html](../function_spec_html_preview/ec-cube-enterprise/a01-01_api_stock_smaregi_stock_sync.html) |
 | - [x] | API | 在庫管理 | スマレジwebhook連携エラー再連携 | A01-02 | 新規実装 | スマレジ連携のwebhookで連携エラーになったものを再連携する | 生成済み: 2026-06-11 [md](ec-cube-enterprise/a01-02_api_stock_smaregi_webhook_error_retry.md) / [html](../function_spec_html_preview/ec-cube-enterprise/a01-02_api_stock_smaregi_webhook_error_retry.html) |
