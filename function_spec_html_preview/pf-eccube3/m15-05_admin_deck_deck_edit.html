@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,25 +272,17 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#新規入力画面を表示する-GET-admin-deck-new">新規入力画面を表示する（GET `admin_deck_new`）</a>
-<a class="lv3" href="#複製入力用の新規画面を表示する-GET-admin-deck-duplicate">複製入力用の新規画面を表示する（GET `admin_deck_duplicate`）</a>
-<a class="lv3" href="#既存デッキの編集画面を表示する-GET-m15-05-admin-deck-deck-edit">既存デッキの編集画面を表示する（GET `m15-05_admin_deck_deck_edit`）</a>
-<a class="lv3" href="#登録または更新する-POST-admin-deck-create-または-admin-deck-update">登録または更新する（POST `admin_deck_create` または `admin_deck_update`）</a>
-<a class="lv3" href="#複製保存する-POST-admin-deck-copy">複製保存する（POST `admin_deck_copy`）</a>
-<a class="lv3" href="#単体削除する-DELETE-admin-deck-delete">単体削除する（DELETE `admin_deck_delete`）</a>
-<a class="lv3" href="#登録-更新処理におけるリスト解釈の判定順序">登録／更新処理におけるリスト解釈の判定順序</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#画面の表示">画面の表示</a>
+<a class="lv3" href="#デッキリストの解釈順序">デッキリストの解釈順序</a>
+<a class="lv3" href="#登録・更新">登録・更新</a>
+<a class="lv3" href="#複製">複製</a>
+<a class="lv3" href="#削除">削除</a>
+<a class="lv3" href="#エラー時の扱い">エラー時の扱い</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv3" href="#ログ・監査">ログ・監査</a>
-<a class="lv2" href="#業務ロジック">業務ロジック</a>
-<a class="lv3" href="#業務ルール・計算">業務ルール・計算</a>
-<a class="lv3" href="#データ整合性">データ整合性</a>
-<a class="lv3" href="#権限・認可">権限・認可</a>
-<a class="lv3" href="#セッション">セッション</a>
-<a class="lv3" href="#Cookie">Cookie</a>
-<a class="lv3" href="#排他制御・トランザクション">排他制御・トランザクション</a>
-<a class="lv2" href="#表示メッセージ">表示メッセージ</a>
-<a class="lv2" href="#エラー処理">エラー処理</a></nav>
+<a class="lv3" href="#入出力-永続化">入出力: 永続化</a>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -288,58 +290,34 @@ footer {
         <h1>デッキ管理 — 新規登録・編集・削除・複製</h1>
       </header>
       
-      <h2 id="処理フロー">処理フロー</h2>
-<h3 id="新規入力画面を表示する-GET-admin-deck-new">新規入力画面を表示する（GET <code>admin_deck_new</code>）</h3>
-<ol><li>管理画面の共通制約を通過する。</li><li>モデルとして新規デッキ行を用意し、<code>admin_deck</code> 名前のフォームを生成する。</li><li><code>admin_deck_copy</code>（空データ）、イベント検索用 <code>admin_event_list</code>、カード検索用 <code>admin_search_card</code> を補助フォームとして生成する。</li><li>プレイヤー・イベント詳細が未設定でも、モデル側に ID が載っていれば対応する表示名・日時を項目へ補完する。</li><li>管理者会員検索ではソフト削除除外から <code>Member</code> のみ除外し、モデルにある <code>member_id</code> の会員名をサイド情報として渡す場合がある。</li><li><code>deck_detail.twig</code> をレンダする。<code>id</code> は未設定であり、一覧戻りはセッションの <code>admin.deck.search.page_no</code> 既定 1 で組み立てる。</li></ol>
-<h3 id="複製入力用の新規画面を表示する-GET-admin-deck-duplicate">複製入力用の新規画面を表示する（GET <code>admin_deck_duplicate</code>）</h3>
-<ol><li>手順は新規画面とほぼ同様であるが、<code>duplicateId</code> で既存デッキを読み込みモデルとして用いる。</li><li>Twig には <code>id</code> を渡さないため、画面上は新規同様であり、フォーム送信先も <code>POST</code> の <code>admin_deck_create</code> となる。</li></ol>
-<h3 id="既存デッキの編集画面を表示する-GET-m15-05-admin-deck-deck-edit">既存デッキの編集画面を表示する（GET <code>m15-05_admin_deck_deck_edit</code>）</h3>
-<ol><li>パス <code>{id}</code> の行を読み込めなければ 404 とする。</li><li>モデル読み込み後の処理は「新規表示」と同型。</li><li>代表カードは <code>card_image_id</code> があれば解決済み画像を Twig に渡す。</li><li>削除・アンカー・複製モーダルは <code>id</code> があるときだけ表示するブロックにある。</li></ol>
-<h3 id="登録または更新する-POST-admin-deck-create-または-admin-deck-update">登録または更新する（POST <code>admin_deck_create</code> または <code>admin_deck_update</code>）</h3>
-<ol><li>対応するモデルを用意し（更新で見つからない場合は 404）、<code>admin_deck</code> フォームにリクエストを取り込む。</li><li>フォームの CSRF と Symfony の妥当性チェックが <code>FormValidHelper</code> により行われる前に、<code>textMain</code>、<code>textSide</code>、<code>textCommand</code> それぞれをリスト解釈関数へ渡す。戻りが整数のときは、その値を行番号としてフロント用翻訳 <code>front.deckentry.error.invalid</code> を管理画面へエラー表示し、リストエラー状態とする。</li><li>Symfony フォームが無効、またはリスト解釈に失敗した場合、同一 Twig を再表示して終える（フラッシュのみ、リダイレクトしない）。</li><li>モデル側にプレイヤー ID が入力されていれば関連プレイヤー行へ紐付け直す。</li><li>「編集者」としてログイン済み管理会員 ID を <code>member_id</code> に格納する。</li><li>代表カード ID の扱い: 更新でない新規のみ、ID がセットされていれば代表カード行を名前解決する。ID が空なら、選択中アーキタイプの既定代表カード画像を設定する。</li><li>モデルを永続化し flush したあと、<code>deck_cards</code> コレクションの既存要素をすべて <code>remove</code> する。</li><li>解釈済みリストを三ボードごとに子行作成ユーティリティへ渡し、永続化する。管理側では、マスタに存在しない名前は子行へ載せず捨て、設定どおりの「不明参照」の文字列だけはカウント付きで子へ載せられる。</li><li>flush 後、モデルの「現行フォーマット」フラグが真かつフォーマットがセットされているとき、リスト整合・フォーマット制限チェックを走らせ、問題があれば警告カテゴリとしてボード単位ごとにメッセージを追加する。この検査はエラーとはせず送信は完了扱いのままとする。</li><li>登録完了の成功フラッシュを積む。</li><li><code>POST</code> が更新なら、その <code>deck_id</code>。新規作成なら採番後の <code>deck_id</code> を付けて <code>GET</code> の <code>m15-05_admin_deck_deck_edit</code> へ HTTP リダイレクトする。</li></ol>
-<h3 id="複製保存する-POST-admin-deck-copy">複製保存する（POST <code>admin_deck_copy</code>）</h3>
-<ol><li><code>admin_deck_copy</code> フォームへリクエストを投入する。この経路では <code>FormValidHelper</code>（CSRF と Symfony 妥当性）を経由しない。</li><li>「複製」整数が PHP の整数型であり、かつ 1 以上かつ設定 <code>deck.copy_max</code>（既定値 310）以下でなければ、エラー用翻訳 <code>admin.deck.error.copy_count</code> を積み、元の編集画面 URL へそのまま戻す。</li><li>元デッキが取得できない場合は <code>admin.register.failed</code> を積み同様に戻す。</li><li>回数だけループし、元のデッキ行を言語標準の <code>clone</code> で複製、<code>articles</code> は空に設定し、<code>member_id</code> を操作者へ更新して永続化し flush したうえで、元デッキの各デッキカード行についてもクローン生成し親を差し替えて追加保存する。</li><li>完了時は成功フラッシュとして <code>admin.deck.copy</code> 形式文言に回数が埋め込まれ、ステップ 2 と同じ編集画面 URL に戻す。</li></ol>
-<h3 id="単体削除する-DELETE-admin-deck-delete">単体削除する（DELETE <code>admin_deck_delete</code>）</h3>
-<ol><li>フォーム検証とは別の共通 CSRF 検証のみを明示的に実行する。</li><li>一覧に戻る際に使う <code>page_no</code> をセッションから読むキーは <code>admin.deck.search.page_no</code> とする。</li><li>処理対象 ID リストはパス単体削除では <code>id</code> 一要素のみ。</li><li>各行について、モデル未取得なら 404。</li><li>記事コレクションの件数が 0 でなければ、エラー <code>admin.deck.is_used.article</code> を積み、Referer があればそこへ戻して終える。</li><li>デッキカード行をすべて remove したあと、<code>member_id</code> を操作者に更新して一度 flush（更新反映）したうえでデッキ行自体を remove・flushする。</li><li>成功フラッシュ <code>admin.delete.complete</code> のあと、<code>page_no</code> があれば <code>m15-01_admin_deck_deck_search</code> でそのページへ、無ければ <code>admin_deck_list</code> へリダイレクトする。</li><li>パス側 <code>id</code> 不在で POST に ID 配列も無いときはフラッシュなく一覧相当へだけ戻す分岐がある（本書の一覧操作は詳細しない）。</li></ol>
-<hr>
-<h3 id="登録-更新処理におけるリスト解釈の判定順序">登録／更新処理におけるリスト解釈の判定順序</h3>
-<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>テキストが空または空白のみ</td><td>空配列へ扱う。送信はリストエラーにしない。</td></tr><tr><td>2</td><td>非空の各行が <code>数量 カード名</code> または拡張正規表現に合う行形式か</td><td>合わない行があれば、その 1 始まり行番号を整数で返し、エラー文言に載せて送信中止。</td></tr><tr><td>3</td><td>カード名の正規化後、マスタ照合または不明参照許可文字列か</td><td>未解決なら子生成時は捨て、管理では不明許可のみ子へ残せる。</td></tr><tr><td>4</td><td>同一リスト内での同一カード重複</td><td>件数だけ合算した一要素へまとめる。</td></tr></tbody></table></div>
-<hr>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="画面の表示">画面の表示</h3>
+<div class="table-wrap"><table><thead><tr><th>開き方</th><th>表示内容</th></tr></thead><tbody><tr><td>新規登録</td><td>空のデッキを対象に入力欄を表示する。イベント検索・カード検索の補助入力を添える</td></tr><tr><td>複製入力</td><td>指定された既存デッキの内容を読み込んで表示する。画面上は新規登録と同じ扱いで、保存すると新規のデッキとして登録する</td></tr><tr><td>編集</td><td>指定されたデッキを読み込んで表示する。該当するデッキが無いときはページが見つからない扱い（404）とする</td></tr></tbody></table></div>
+<p>プレイヤーとイベント詳細は、識別子が設定されていれば対応する表示名・日時を項目へ補う。代表カードの画像は、代表カードが設定されていれば解決した画像を表示する。削除・複製の確認モーダルは、既存デッキを開いたときだけ表示する。一覧へ戻る際のページ番号は、保持している値（既定 1）を用いる。</p>
+<h3 id="デッキリストの解釈順序">デッキリストの解釈順序</h3>
+<p>メイン・サイド・コマンドの各テキストを、次の順序で解釈する。</p>
+<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>テキストが空または空白のみ</td><td>空のリストとして扱う。エラーにはしない</td></tr><tr><td>2</td><td>空でない各行が「数量 カード名」の形式に合うか</td><td>合わない行があれば、1 から数えたその行番号を返し、行番号を含むエラーを表示して登録を中止する</td></tr><tr><td>3</td><td>カード名を正規化したうえで、カードに一致するか、不明参照として許可された文字列か</td><td>いずれにも当たらない名前は登録しない。管理画面では不明参照として許可された文字列だけを残せる</td></tr><tr><td>4</td><td>同じリスト内に同じカードが複数ある</td><td>枚数を合算して1件にまとめる</td></tr></tbody></table></div>
+<h3 id="登録・更新">登録・更新</h3>
+<p>デッキリストの解釈に失敗したとき、または入力値の検証に通らないときは、同じ画面を再表示して終える（画面遷移しない）。</p>
+<p>検証に通ったときは次を行う。プレイヤーが入力されていれば当該プレイヤーへ紐付け直す。編集者としてログイン中の管理者を記録する。代表カードは、新規登録のときに限り、指定があれば名前を解決して設定し、指定が無ければ選択中のアーキタイプの既定の代表カード画像を設定する。</p>
+<p>デッキを保存したうえで、当該デッキのカードをすべて削除し、解釈済みのリストからメイン・サイド・コマンドごとに作り直す。</p>
+<p>保存後、「現行フォーマット」が真でフォーマットが設定されているときは、リストの整合とフォーマットの制限を検査する。問題があればボード単位で警告を表示する。この検査はエラーとせず、保存は完了したままとする。完了後は当該デッキの編集画面へ移る。</p>
+<p>本機能では金額・ポイントの算出を行わない。フォーマットの警告は、ボードごとの最小・最大枚数、サイドとの合算、カードの使用可否の情報にもとづく。検出の順序は内部の実装順に依存するが、画面上は警告のみで保存は済んでいる。</p>
+<h3 id="複製">複製</h3>
+<p>複製する回数が整数で、かつ 1 以上、設定の上限（既定値 310）以下でなければ、エラーを表示して元の編集画面へ戻る。複製元のデッキを取得できないときも保存失敗を表示して戻る。この経路では入力の共通検証を経由しない。</p>
+<p>条件を満たすときは指定回数だけデッキを複製する。複製したデッキは記事の紐付けを空にし、編集者を操作者に更新する。複製元の各デッキカードも複製して、複製したデッキへ付け替える。完了時は複製した回数を含む完了メッセージを表示し、元の編集画面へ戻る。</p>
+<h3 id="削除">削除</h3>
+<p>なりすまし対策トークンを検証する。対象のデッキを取得できないときはページが見つからない扱い（404）とする。当該デッキに紐づく記事が1件以上あるときは削除せず、使用中である旨を表示して直前の画面へ戻る。</p>
+<p>削除するときは、デッキカードをすべて削除し、編集者を操作者に更新したうえでデッキ自体を削除する。削除後は、保持しているページ番号があればデッキ検索のそのページへ、無ければデッキ一覧へ戻る。削除対象の指定がまったく無いときは、メッセージを出さず一覧相当へ戻る。</p>
+<h3 id="エラー時の扱い">エラー時の扱い</h3>
+<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>デッキリストの行形式が不正</td><td>入力を保持したまま同じ画面を再表示し、行番号とボード名を含む文言を表示する</td></tr><tr><td>削除時のなりすまし対策トークンが無効</td><td>アクセスを拒否する（共通の処理に委ねる）</td></tr><tr><td>記事に使用中で削除できない</td><td>エラーを表示し、直前の画面へ戻る</td></tr><tr><td>複製回数が不正</td><td>エラーを表示し、編集画面へ戻る</td></tr></tbody></table></div>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>HTML フォームの POST／DELETE と、一覧からのアンカー DELETE。一部 JSON リストを補助。</td></tr><tr><td>成功時出力</td><td>通常 HTML 一覧または編集再表示／HTTP 302 リダイレクトおよび成功フラッシュ。</td></tr><tr><td>失敗時出力</td><td>同一 Twig による再描画またはエラー・警告フラッシュ。</td></tr><tr><td>副作用</td><td>DB の <code>dtb_deck</code> と子の <code>dtb_deck_card</code> の増減、記事との関連チェックのみが削除側の論理ブロックとなる。Redis キャッシュ経路は詳細側では直接触れない実装としてある。</td></tr></tbody></table></div>
-<hr>
-<h3 id="ログ・監査">ログ・監査</h3>
-<p>通常のフラッシュのみ。リスト警告以外に専用の監査ファイル出力はしない。</p>
-<hr>
-<h2 id="業務ロジック">業務ロジック</h2>
-<h3 id="業務ルール・計算">業務ルール・計算</h3>
-<p>本機能単体での金額・ポイント等の算出はしない。送信後オプションの「現行フォーマット」警告は、<code>getCheckedCardList</code> に基づき、フォーマット別のボードごとの最小・最大枚数、サイドとの合算視点、およびカード合法性情報（公開エントリー向けチェック再利用）によりメッセージを積む。ここでの禁止・制限・レストリクション等の検出順はユーティリティ実装順に依存するが、画面上は警告のみであり保存は済んでいる。</p>
-<h4 id="入力項目">入力項目</h4>
-<p>編集 Twig の論理グループ順に並べる。「保存先・扱い」にSymfony の名前と列の対応を書く。</p>
-<div class="table-wrap"><table><thead><tr><th>項目名</th><th>必須／任意</th><th>最大長</th><th>初期値</th><th>保存先・扱い</th></tr></thead><tbody><tr><td>デッキ名</td><td>任意</td><td>255（<code>deck.length.short_name</code>。Symfony Length と input maxlength）</td><td>モデルまたは空</td><td><code>dtb_deck.deck_name</code>（フィールド <code>deckName</code>）。空保存可。</td></tr><tr><td>デッキリストを非公開にする（チェック）</td><td>任意</td><td>—</td><td>モデルのブール状態</td><td><code>dtb_deck.private_flg</code>。チェックは integer／boolean の変換子で永続ブールへ。OFF は公開相当。</td></tr><tr><td>デッキ種別（ラベルは翻訳キー経由の名称）</td><td>必須</td><td>—</td><td>モデルまたはマスタ選択必須</td><td><code>dtb_deck</code> の種別関連。NOT NULL と Symfony NotBlank が効く種別選択。イベント種別選択時のみ後述イベント系の公開時必須が掛かる。</td></tr><tr><td>フォーマット</td><td>必須</td><td>—</td><td>モデルまたは未選択あり得ない状態</td><td><code>dtb_deck.format_id</code> と関連。並び順はマスタ側 <code>rank</code>。クライアントでアーキタイプ候補を切替。</td></tr><tr><td>アーキタイプ</td><td>必須</td><td>—</td><td>モデル</td><td><code>dtb_deck.archetype_id</code>。画面では初期は disabled でも JS で有効化。</td></tr><tr><td>デッキタグ</td><td>任意</td><td>—</td><td>多対多関連</td><td><code>mtb_deck_tag</code> と紐付く集合。自動設定ボタンは選択中アーキタイプ由来の定型タグ候補を select2 で一括セット。</td></tr><tr><td>代表カード画像（画面上は画像と名称表示）</td><td>任意</td><td>—</td><td>モデルの <code>card_image_id</code> と解決画像</td><td>hidden で整数 ID を受け、<code>number</code> 型ウィジェット。未設定送信時のアーキタイプ画像フォールバックはサーバのみ。モーダル・AJAX 連係あり。</td></tr><tr><td>公開状態</td><td>必須</td><td>—</td><td>モデルの表示区分</td><td><code>master.disp</code>。公開とイベント種別の組み合わせ時にイベント三項目へ条件付き必須。</td></tr><tr><td>プレイヤー（検索で決定／クリアあり）</td><td>任意</td><td>—</td><td>検索で hidden の player ID と表示名／DCI 表示</td><td><code>dtb_deck.player_id</code>・表示名フィールドとの整合。名前・DCI はプレイヤーからの初期補完あり。</td></tr><tr><td>プレイヤー名（テキスト）</td><td>任意</td><td>64（<code>deck.length.player</code> の Length／maxlength）</td><td>モデルまたはプレイヤー由来</td><td><code>dtb_deck.player_name</code>。</td></tr><tr><td>DCI ナンバー</td><td>任意</td><td>Symfony Length はプラグイン上 <code>deck.length.short_name</code>（既定 255）・半角数字の Regex。DB 側列長はDoctrine定義では 16 文字で乖離がある点に注意（実データは桁内に収める運用前提）</td><td>モデルまたはプレイヤー由来</td><td><code>dtb_deck.dci_no</code>。空は可（数字のみ許可 Validator）。</td></tr><tr><td>イベントを検索（モーダル）</td><td>任意</td><td>—</td><td>イベント詳細 ID と名称・開始</td><td><code>dtb_deck.event_detail_id</code> と補完的なイベント名称・開始。クリアあり。</td></tr><tr><td>イベント名称（JP）／（EN）</td><td>公開かつイベント種別のとき必須。その他任意</td><td>各 255（<code>deck.length.name</code>）</td><td>モデルまたはイベント詳細由来</td><td><code>dtb_deck.event_name_*</code>。custom constraint <code>RequireWhenDisplayed</code> と Length。</td></tr><tr><td>大会開催日時</td><td>上記と同様の公開かつイベント種別のとき必須。その他任意</td><td>日時ウィジェット、書式設定 <code>HareruyaEc.const.format.datetime</code></td><td>モデルまたはイベント詳細開始</td><td><code>dtb_deck.event_date</code>。単一行テキスト日時ウィジェット。</td></tr><tr><td>順位</td><td>任意</td><td>HTML number の既定上下限として <code>deck.max.number</code>（99999999）と 1、<code>LessThanOrEqual</code>・<code>GreaterThan(0)</code>。空入力時は Symfony の integer の空扱い</td><td>モデルまたは空相当</td><td><code>dtb_deck.ranking</code>。</td></tr><tr><td>成績</td><td>任意</td><td>32（<code>deck.length.result</code>）</td><td>モデルまたは空</td><td><code>dtb_deck.result</code>。プレースホルダのみ補助。</td></tr><tr><td>引用元 URL</td><td>任意</td><td>255（<code>deck.length.url</code>）</td><td>モデルまたは空</td><td><code>dtb_deck.source_url</code>。URL 形式チェックなし・長さのみ。</td></tr><tr><td>大会参加人数</td><td>任意</td><td>順位と同一の整数制約群</td><td>モデルまたは空</td><td><code>dtb_deck.participants</code>。</td></tr><tr><td>コマンダー／メイン／サイド（リスト）</td><td>任意</td><td>textarea、行見た目は <code>deck.list_rows</code>（既定30行）、文字列長のSymfony Length は未設定だが DB の text とフロント都合による</td><td>モデルの各テキスト列</td><td><code>dtb_deck.text_command</code>／<code>text_main</code>／<code>text_side</code>。送信前に解釈失敗するとエラー。**勝敗数 win／loss／draw は本フォームに無く、更新時も画面からは変更されない。**</td></tr></tbody></table></div>
-<h4 id="エッジケース">エッジケース</h4>
-<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>リスト解釈は通るが公開時必須のイベント系が欠ける</td><td>Symfony チェックが先に効き送信は再表示のみ。</td></tr><tr><td>記事へ参照されているデッキを削除する</td><td>DELETE 時に中止し一覧へ Referer で戻る。</td></tr><tr><td>複製処理の回数フィールド欠落・小数・過大値</td><td>アプリ側で整数範囲に外れれば複製しない。</td></tr></tbody></table></div>
-<hr>
-<h3 id="データ整合性">データ整合性</h3>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>モデルテキスト列とデッキカード子行</td><td>毎送信で子は全削除後にリストから再生成する。整合は保存処理が完了した時点で一致するまで進むが、異常終了すると途中状態の可能性がある（明示的トランザクション境界はシングル処理内の複数 flush に依存）。</td></tr><tr><td>画面上のプレイヤー／イベント／代表カード</td><td>モデルと補助表示が食い違わないように、イベント三項目やプレイヤー名／DCI は ID 側があれば空欄でも補完して表示することがある。</td></tr><tr><td>一覧の検索条件</td><td>削除・更新リダイレクトはページキーを見るのみで、一覧の入力条件ストアは詳細側では更新しない。</td></tr></tbody></table></div>
-<hr>
-<h3 id="権限・認可">権限・認可</h3>
-<p>ログイン済みの管理アカウントのみが管理ルートツリーにぶら下がる前提とする。行ごとのオブジェクト単位許可コードはプラグイン当該処理では分岐しない。</p>
-<hr>
-<h3 id="セッション">セッション</h3>
-<p>一覧からの復帰ページのキーだけが削除時に読まれる。その他、この編集機能がセッションに新規キーを書くことは主目的としない。</p>
-<hr>
-<h3 id="Cookie">Cookie</h3>
-<p>標準セッション用クッキーに依存する点のみであり、機能特有の別 Cookie は置かない。</p>
-<hr>
-<h3 id="排他制御・トランザクション">排他制御・トランザクション</h3>
-<p>明示宣言のロックはしない。並行編集での last-write-wins と、flush 順序に起因する競合耐性はデータベースの既定に委ねる。</p>
-<hr>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>デッキの入力項目（メイン・サイド・コマンドの各テキスト、プレイヤー、イベント詳細、代表カード、フォーマットなど）、複製する回数、削除対象のデッキ、なりすまし対策トークン</td></tr><tr><td>成功時出力</td><td>デッキの登録・更新・複製・削除、完了メッセージ、編集画面または一覧への移動</td></tr><tr><td>失敗時出力</td><td>同じ画面の再表示、またはエラー・警告メッセージを伴う戻り</td></tr></tbody></table></div>
+<h3 id="入出力-永続化">入出力: 永続化</h3>
+<div class="table-wrap"><table><thead><tr><th>操作</th><th>契機</th></tr></thead><tbody><tr><td>追加・更新</td><td>デッキの登録・更新が検証に通ったとき</td></tr><tr><td>削除・追加</td><td>デッキの保存時に、当該デッキのカードを全件削除して解釈済みリストから作り直す</td></tr><tr><td>追加</td><td>複製時に、指定回数分のデッキとそのデッキカードを作成する</td></tr><tr><td>削除</td><td>デッキの削除時に、デッキカードとデッキ自体を削除する</td></tr></tbody></table></div>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
 <h2 id="表示メッセージ">表示メッセージ</h2>
 <div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M15-05-MSG-004</td><td>管理画面上部</td><td>セッションがタイムアウトしました。もう一度やり直してください。</td><td>デッキを削除するとき、セッションの有効期限が切れているとき</td><td>デッキ検索・一覧画面に遷移する</td></tr><tr><td>M15-05-MSG-005</td><td>管理画面上部</td><td>記事に紐付いているデッキがあるため削除できません。</td><td>記事に使用されているデッキを削除しようとしたとき</td><td>デッキ編集画面に遷移する</td></tr><tr><td>M15-05-MSG-006</td><td>管理画面上部</td><td>削除に失敗しました</td><td>デッキの削除中にエラーが起きたとき</td><td>デッキ編集画面に遷移する</td></tr><tr><td>M15-05-MSG-007</td><td>管理画面上部</td><td>削除しました</td><td>デッキを削除したとき</td><td>デッキ検索・一覧画面に遷移する</td></tr><tr><td>M15-05-MSG-008</td><td>管理画面上部</td><td>セッションがタイムアウトしました。もう一度やり直してください。</td><td>デッキを複製するとき、セッションの有効期限が切れているとき</td><td>デッキ編集画面に遷移する</td></tr><tr><td>M15-05-MSG-009</td><td>管理画面上部</td><td>保存に失敗しました</td><td>デッキの複製を保存するとき、入力内容に不備があるとき</td><td>デッキ編集画面に遷移する</td></tr><tr><td>M15-05-MSG-010</td><td>管理画面上部</td><td>保存に失敗しました</td><td>デッキの複製を保存中にエラーが起きたとき</td><td>デッキ編集画面に遷移する</td></tr><tr><td>M15-05-MSG-011</td><td>管理画面上部</td><td>保存しました</td><td>デッキを複製して保存したとき</td><td>デッキ編集画面に遷移する</td></tr></tbody></table></div>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>リスト解釈の行フォーマット不正</td><td>入力保持のまま Twig 再描画、<code>front.deckentry.error.invalid</code> とボード別ラベルを含む文言。</td></tr><tr><td>CSRF が POST 単体削除で無効</td><td>アクセス拒否例外（共通ハンドラに委ねる）。</td></tr><tr><td>記事使用中で削除できない</td><td>エラーフラッシュのみ、一覧へ類似遷移。</td></tr><tr><td>複製回数不備</td><td><code>admin.deck.error.copy_count</code> と編集への戻り。</td></tr></tbody></table></div>
-<hr>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

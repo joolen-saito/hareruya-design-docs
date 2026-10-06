@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,15 +272,13 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#必須項目空欄会員チェックを実行する-customer-batch-checkBlankRequiredItemCustomer">必須項目空欄会員チェックを実行する（`customer:batch checkBlankRequiredItemCustomer`）</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#対象の判定">対象の判定</a>
+<a class="lv3" href="#通知">通知</a>
+<a class="lv3" href="#エラー時の扱い">エラー時の扱い</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv3" href="#API-バッチ結果">API/バッチ結果</a>
-<a class="lv3" href="#ログ・監査">ログ・監査</a>
-<a class="lv2" href="#業務ロジック">業務ロジック</a>
-<a class="lv3" href="#業務ルール・計算">業務ルール・計算</a>
-<a class="lv3" href="#データ整合性">データ整合性</a>
-<a class="lv2" href="#エラー処理">エラー処理</a></nav>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -278,30 +286,22 @@ footer {
         <h1>バッチ 会員管理 — 必須項目が空欄の会員発生通知</h1>
       </header>
       
-      <h2 id="処理フロー">処理フロー</h2>
-<h3 id="必須項目空欄会員チェックを実行する-customer-batch-checkBlankRequiredItemCustomer">必須項目空欄会員チェックを実行する（<code>customer:batch checkBlankRequiredItemCustomer</code>）</h3>
-<ol><li>メール送信用の経路を準備する。</li><li>必須項目が空欄である会員の一覧を取得する。</li><li>該当する会員がある場合は、その一覧で管理者へアラートメールを送信する。</li></ol>
-<hr>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="対象の判定">対象の判定</h3>
+<p>必須項目が空欄である会員の一覧を取り出す。空文字・値なし・未設定のいずれかのときを不備の候補として扱う。項目ごとの許容条件は、会員の必須項目の定義に従う。</p>
+<p>空欄の判定は会員のデータの現在値だけを見る。画面の入力補正と既定値の付与は行わない。</p>
+<p>コマンド名が未指定のとき、または一致しないときは処理を行わずに終える。</p>
+<h3 id="通知">通知</h3>
+<p>該当する会員が 1 件でもあるときは、その一覧で管理者へアラートを通知する。該当が 1 件も無いときは通知せずに終える。</p>
+<p>このバッチは検出と通知だけを行い、会員情報を補ったり更新したりしない。</p>
+<h3 id="エラー時の扱い">エラー時の扱い</h3>
+<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>コマンド名が未指定・不一致</td><td>処理を行わずに終える</td></tr><tr><td>該当が 1 件も無い</td><td>何もせずに終える</td></tr><tr><td>取得または送信でエラーが起きた</td><td>エラーメッセージを出力する</td></tr></tbody></table></div>
 <h2 id="入出力">入出力</h2>
-<h3 id="API-バッチ結果">API/バッチ結果</h3>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>バッチ</td><td>入力はコマンド名。成功時は該当会員があれば管理者へアラートメールを送信し、無ければメールを送らず完了する。</td></tr><tr><td>API</td><td>本バッチではAPIを呼び出さない。</td></tr></tbody></table></div>
-<hr>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>コマンド名。</td></tr><tr><td>成功時出力</td><td>該当時の管理者アラートメール送信。</td></tr><tr><td>失敗時出力</td><td>エラーメッセージのコンソール出力。</td></tr><tr><td>副作用</td><td>アラートメール送信。</td></tr></tbody></table></div>
-<hr>
-<h3 id="ログ・監査">ログ・監査</h3>
-<div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>開始・完了</td><td>開始・完了のコンソール出力（日時付き）。</td></tr></tbody></table></div>
-<h4 id="ログに出してはいけないもの">ログに出してはいけないもの</h4>
-<ul><li>会員の個人情報の機微値</li><li>メール送信の認証情報</li></ul>
-<hr>
-<h2 id="業務ロジック">業務ロジック</h2>
-<h3 id="業務ルール・計算">業務ルール・計算</h3>
-<ul><li>必須項目の空欄判定は会員DB上の現行値を対象とし、画面フォームの入力補正や既定値付与は行わない。</li><li>空文字、NULL、未設定値を不備候補として扱い、項目別の許容条件は既存の会員必須項目定義に従う。</li><li>バッチは検出と通知・ログ出力を目的とし、会員情報を直接補完・更新しない。</li></ul>
-<h3 id="データ整合性">データ整合性</h3>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>対象抽出時点</td><td>バッチ実行時点で抽出条件に一致するデータを対象にする。実行後に変更されたデータは次回実行の対象判定に従う。</td></tr><tr><td>途中失敗・再実行</td><td>途中失敗時に確定済みの副作用が残るかはAPI・バッチ結果およびエラー処理の節を正とする。未処理条件に残るデータは再実行時に再抽出される。</td></tr><tr><td>同時実行</td><td>ロックファイルや行ロックの有無は排他制御・トランザクションの節を正とする。明示ロックが無い場合、多重実行時の重複検知・通知抑止は保証しない。</td></tr></tbody></table></div>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>コマンド名が未指定・不一致</td><td>処理を行わずに終了する。</td></tr><tr><td>該当なし</td><td>何もせず完了する。</td></tr><tr><td>取得・送信時のエラー</td><td>エラーメッセージをコンソールに出力する。</td></tr></tbody></table></div>
-<hr>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>コマンド名</td></tr><tr><td>成功時出力</td><td>該当する会員があるときの管理者へのアラート通知</td></tr><tr><td>失敗時出力</td><td>エラーメッセージの出力</td></tr></tbody></table></div>
+<p>このバッチは外部APIを呼び出さない。</p>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
+<h2 id="表示メッセージ">表示メッセージ</h2>
+<p>このバッチは画面へ文言を表示しない。</p>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>

@@ -71,6 +71,19 @@ python3 .cursor/skills/function-spec-html-render/scripts/integrate_function_docs
 - 見出しIDとブロックIDには `function-design-<機能No>-<Markdownファイル名>` 系の接頭辞を付けて衝突を避ける。
 - 統合結果と未統合一覧を `functions/function-doc-excel-integration-report.md` に出力する。
 
+#### Excelの機能No欄が誤っているシート
+
+シートの機能No欄が誤記で、別機能の機能設計書が埋め込まれる（または埋め込まれない）ときは、Excel正本を変えずに `SHEET_FEATURE_OVERRIDES`（キーは書番とシートID）へ正しい機能Noを足す。
+上書きしたシートの機能No欄には、Excel由来の値を残したまま「正しくは <機能No>」の注記が付く（`apply_feature_no_corrections()`。値を書き換えると verify.py のセル文言網羅が落ちる）。
+複数機能が共有するシートで、埋め込む機能を選ぶためだけに上書きするときは `FEATURE_NO_NOTE_EXEMPT` にも載せて注記を出さない。
+
+全機能を再埋め込みすると、対象と関係の無いシートまでその時点の Markdown で作り直される。上書きを足したシートだけ直したいときは対象を絞る。
+
+```bash
+python3 .cursor/skills/function-spec-html-render/scripts/integrate_function_docs_into_excel_html.py --only-sheets 0212:sheet-5,0212:sheet-14
+python3 .cursor/skills/function-spec-html-render/scripts/integrate_function_docs_into_excel_html.py --fix-feature-no   # 機能No欄の注記だけ当て直す
+```
+
 追記後は次を確認する。
 
 ```bash

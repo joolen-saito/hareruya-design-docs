@@ -217,7 +217,74 @@ SHEET_FEATURE_OVERRIDES = {
     ("0203", "sheet-18"): ("M05-19", "出荷指示リスト検索"),
     ("0203", "sheet-19"): ("M05-20", "出荷指示リスト詳細編集/削除"),
     ("0203", "sheet-22"): ("M05-23", "出荷指示：納品書印刷（英語）"),
+    # 2026-10-06 追加。根拠は各冊子の目次（機能Noつきでシート名が並ぶ）と機能一覧（todo-list.md）の機能名。
+    # 一覧は integration_test/casegen/sheetmap/README.md。
+    ("0202", "sheet-13"): ("M04-08", "在庫移動・振替検索/一覧"),        # 機能No欄は M04-09
+    ("0202", "sheet-37"): ("M04-31", "棚卸計画"),                       # 機能No欄は M04-35
+    ("0202", "sheet-38"): ("M04-31", "棚卸計画"),                       # 機能No欄は M04-35
+    ("0202", "sheet-39"): ("M04-31", "棚卸計画"),                       # 機能No欄は M04-35
+    ("0202", "sheet-42"): ("M04-31", "棚卸計画"),                       # 機能No欄は M04-35
+    ("0202", "sheet-43"): ("M04-31", "棚卸計画"),                       # 機能No欄は M04-35
+    ("0202", "sheet-44"): ("M04-32", "承認一覧"),                       # 機能No欄は M04-38
+    ("0202", "sheet-45"): ("M04-32", "承認一覧"),                       # 機能No欄は M04-38
+    ("0203", "sheet-11"): ("M05-07", "送り状CSV出力"),                  # 機能No欄は M05-24
+    ("0204", "sheet-46"): ("M03-43", "低価格帯カード価格変更CSV出力"),  # 機能No欄は M03-44（登録）
+    ("0206", "sheet-7"): ("M07-06", "買取商品一覧CSV"),                 # 機能No欄は M07-05
+    ("0206", "sheet-8"): ("M07-07", "買取商品（キャンセル）CSV"),       # 機能No欄は M07-05
+    ("0206", "sheet-10"): ("M07-09", "戻しリストPDF"),                  # 機能No欄は M07-08
+    # 0212 デッキ一覧(検索結果) は目次で「M15-01, M15-02, M15-03, M15-04」。M15-01 の現行仕様は検索入力の
+    # シートに出るので、このシートには M15-02（デッキCSV出力）を出す。上書きしないと M15-02 が
+    # 名前の類似で「デッキ登録CSV」へ割り当たる。
+    ("0212", "sheet-4"): ("M15-02", "デッキCSV出力"),                   # 機能No欄は M15-01
+    ("0212", "sheet-5"): ("M15-05", "デッキ新規登録/編集/削除/複製"),   # 機能No欄は M15-02
+    ("0212", "sheet-13"): ("M15-10", "アーキタイプ登録CSV"),            # 機能No欄は M15-06
+    ("0212", "sheet-14"): ("M15-11", "直近の大会編集"),                 # 機能No欄は F06-10
+    ("0213", "sheet-7"): ("M16-05", "割引率一覧表示"),                  # 機能No欄は M16-08
+    ("0214", "sheet-14"): ("M13-09", "CSVダウンロード"),                # 機能No欄は M13-9
+    ("0305", "sheet-11"): ("F06-15", "買取履歴詳細"),                   # 機能No欄は F06-12
+    ("0408", "sheet-6"): ("B08-04", "必須項目が空欄の会員発生通知"),    # 機能No欄は B16-04
+    ("0507", "sheet-8"): ("A07-06", "複数ネット買取IDからネット買取受注の商品一覧を取得"),  # 機能No欄は A07-05
+    ("0507", "sheet-9"): ("A07-07", "複数ネット買取IDから個別入力商品の一覧を取得"),  # 機能No欄は A07-06
+    ("0601", "sheet-3"): ("O01-01", "店頭買取"),                        # 機能No欄は M06-01
 }
+
+# 機能No欄の誤記は、Excel由来の値を残したまま、その直後に正しい機能Noを注記する（2026-10-06 ユーザー依頼）。
+# 値そのものを書き換えると Excel 正本との照合（verify.py のセル文言網羅）が落ちる。
+# 上書きはするが、機能No欄は誤記ではないシート（複数機能が共有するシートで、埋め込む機能を選ぶための上書き）
+FEATURE_NO_NOTE_EXEMPT = {("0212", "sheet-4")}
+FEATURE_NO_FIX_BEGIN = "<!-- feature-no-correction:start -->"
+FEATURE_NO_FIX_END = "<!-- feature-no-correction:end -->"
+FEATURE_NO_FIX_RE = re.compile(re.escape(FEATURE_NO_FIX_BEGIN) + r".*?" + re.escape(FEATURE_NO_FIX_END), re.DOTALL)
+
+
+def apply_feature_no_corrections(html_path, document: str) -> str:
+    """上書き台帳に載るシートの機能No欄へ「正しくは <機能No>」の注記を付ける。何度当てても同じ結果になる。"""
+    document = FEATURE_NO_FIX_RE.sub("", document)
+    book = html_path.name.split("_")[0]
+    targets = {sid: no for (b, sid), (no, _name) in SHEET_FEATURE_OVERRIDES.items()
+               if b == book and (b, sid) not in FEATURE_NO_NOTE_EXEMPT}
+    if not targets:
+        return document
+    starts = list(SECTION_RE.finditer(document))
+    for pos in range(len(starts) - 1, -1, -1):
+        match = starts[pos]
+        correct = targets.get(match.group("id"))
+        if not correct:
+            continue
+        end = starts[pos + 1].start() if pos + 1 < len(starts) else len(document)
+        section = document[match.start():end]
+        for kv in KV_PAIR_RE.finditer(section):
+            if strip_html_text(kv.group("label")) != "機能No":
+                continue
+            if normalize_feature_no(strip_html_text(kv.group("value"))) == normalize_feature_no(correct):
+                break
+            note = (f'{FEATURE_NO_FIX_BEGIN}<span class="feature-no-correction" style="margin-left:.5em;color:#b3261e;font-weight:600;">'
+                    f'（正しくは {html.escape(correct)}。Excel基本設計の機能No欄の誤記）</span>{FEATURE_NO_FIX_END}')
+            at = match.start() + kv.end("value")
+            document = document[:at] + note + document[at:]
+            break
+    return document
+
 
 
 # 【新規】画面のシートには機能設計書（現行仕様）を埋め込まない（2026-08-19 ユーザー決定）。
@@ -262,7 +329,21 @@ class SheetRef:
     heading: str
 
 
+def parse_only_sheets(argv: list[str]) -> dict[str, set[str]]:
+    """`--only-sheets 0212:sheet-4,0212:sheet-5` を {書番: {シートID}} にする。指定が無ければ空。"""
+    only: dict[str, set[str]] = defaultdict(set)
+    if "--only-sheets" in argv:
+        for item in argv[argv.index("--only-sheets") + 1].split(","):
+            book, _, sheet_id = item.strip().partition(":")
+            if not re.fullmatch(r"\d{4}", book) or not re.fullmatch(r"sheet-\d+", sheet_id):
+                raise SystemExit(f"--only-sheets の書式は <書番>:<シートID>（例 0212:sheet-5）: {item!r}")
+            only[book].add(sheet_id)
+    return only
+
+
 def main() -> int:
+    only_sheets = parse_only_sheets(sys.argv[1:])
+    fix_only = "--fix-feature-no" in sys.argv[1:]
     converter = load_converter()
     rows = parse_todo_rows()
     sheet_index, sheets = build_sheet_index()
@@ -293,6 +374,10 @@ def main() -> int:
         primary.add(dedup_key)
         deduped.append((row, sheet))
     assignments = deduped
+    if only_sheets or fix_only:
+        # 対象のシートだけを作り直す。ほかのシートのブロックは描画もしない（プレビューHTMLも触らない）
+        assignments = [(row, sheet) for row, sheet in assignments
+                       if sheet.section_id in only_sheets.get(sheet.html_path.name.split("_")[0], set())]
 
     matched: list[tuple[TodoRow, SheetRef, str]] = []
     skipped_empty: list[TodoRow] = []
@@ -318,6 +403,24 @@ def main() -> int:
     grouped: dict[Path, list[tuple[TodoRow, SheetRef, str]]] = defaultdict(list)
     for item in matched:
         grouped[item[1].html_path].append(item)
+
+    if only_sheets or fix_only:
+        touched = 0
+        for html_path in sorted(EXCEL_OUTPUT.glob("*.html")):
+            book = html_path.name.split("_")[0]
+            if book in only_sheets:
+                integrate_html_only(html_path, grouped.get(html_path, []), only_sheets[book])
+                touched += 1
+            elif any(b == book for b, _sid in SHEET_FEATURE_OVERRIDES):
+                before = html_path.read_text(encoding="utf-8")
+                after = apply_feature_no_corrections(html_path, before)
+                if after != before:
+                    html_path.write_text(after, encoding="utf-8")
+                    touched += 1
+        print(f"対象シートだけを作り直した: {sum(len(v) for v in only_sheets.values())}シート / 書き換えたHTML {touched}冊")
+        for row, sheet, _block in matched:
+            print(f"  {sheet.html_path.name.split('_')[0]} {sheet.section_id} ← {row.feature_no} {row.source.name}")
+        return 0
 
     for html_path, items in sorted(grouped.items()):
         integrate_html(html_path, items)
@@ -762,6 +865,38 @@ def render_block(converter, row: TodoRow, key: str, note: str | None = None,
       {BLOCK_END_PREFIX} {key} -->"""
 
 
+def integrate_html_only(html_path: Path, items: list[tuple[TodoRow, SheetRef, str]], only: set[str]) -> None:
+    """`only` に挙げたシートの埋め込みブロックだけを作り直す。ほかのシートは1文字も変えない。
+
+    全機能を再埋め込みすると、今回の対象と関係の無いシートまで、その時点の Markdown で作り直される。
+    対象を絞って直したいとき（機能No欄の上書きを足したときなど）に使う。
+    """
+    document = html_path.read_text(encoding="utf-8")
+    by_sheet: dict[str, list[str]] = defaultdict(list)
+    for _row, ref, block in items:
+        if ref.section_id in only:
+            by_sheet[ref.section_id].append(block)
+    block_re = re.compile(
+        r"\n?\s*" + re.escape(BLOCK_BEGIN_PREFIX) + r".*?" + re.escape(BLOCK_END_PREFIX) + r"[^\n]*\n?",
+        re.DOTALL,
+    )
+    starts = list(SECTION_RE.finditer(document))
+    limit = body_limit(document)
+    for pos in range(len(starts) - 1, -1, -1):
+        match = starts[pos]
+        if match.group("id") not in only:
+            continue
+        end = starts[pos + 1].start() if pos + 1 < len(starts) else max(limit, match.end())
+        section = block_re.sub("\n", document[match.start():end])
+        close = section.rfind("</section>")
+        if close == -1:
+            continue
+        blocks = "".join(block + "\n" for block in by_sheet.get(match.group("id"), []))
+        document = document[:match.start()] + section[:close] + blocks + section[close:] + document[end:]
+    document = apply_feature_no_corrections(html_path, document)
+    html_path.write_text(document, encoding="utf-8")
+
+
 def integrate_html(html_path: Path, items: list[tuple[TodoRow, SheetRef, str]]) -> None:
     document = html_path.read_text(encoding="utf-8")
     document = strip_existing_embeds(document)
@@ -787,6 +922,7 @@ def integrate_html(html_path: Path, items: list[tuple[TodoRow, SheetRef, str]]) 
 
     for offset, block in sorted(inserts, reverse=True):
         document = document[:offset] + block + document[offset:]
+    document = apply_feature_no_corrections(html_path, document)
     html_path.write_text(document, encoding="utf-8")
 
 
@@ -836,6 +972,7 @@ def build_sheet_index_for_document(html_path: Path, document: str) -> dict[str, 
 
 
 def strip_existing_embeds(document: str) -> str:
+    document = FEATURE_NO_FIX_RE.sub("", document)
     document = re.sub(
         r"\n?\s*" + re.escape(BLOCK_BEGIN_PREFIX) + r".*?" + re.escape(BLOCK_END_PREFIX) + r"[^\n]*\n?",
         "\n",

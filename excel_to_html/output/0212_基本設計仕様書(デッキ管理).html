@@ -1337,7 +1337,38 @@
             </table>
           </div>
         </div>
+      <!-- function-design-embed:start m15-02-m15-02_admin_deck_deck_csv_export -->
+      <section class="function-design-embed" id="function-design-m15-02-m15-02_admin_deck_deck_csv_export" data-source="functions/pf-eccube3/m15-02_admin_deck_deck_csv_export.md">
+        <header class="function-design-header">
+          <p class="function-design-source">Source:<br>functions/pf-eccube3/m15-02_admin_deck_deck_csv_export.md</p>
+          <h3>現行仕様</h3>
+          <h4>M15-02 デッキCSV出力 / デッキ管理 — デッキ CSV 出力</h4>
+        </header>
+        <div class="function-design-body">
+          <h2 id="function-design-m15-02-m15-02_admin_deck_deck_csv_export-業務ロジック">業務ロジック</h2>
+          <h3 id="function-design-m15-02-m15-02_admin_deck_deck_csv_export-出力対象の決め方">出力対象の決め方</h3>
+          <div class="table-wrap"><table><thead><tr><th>選択の状態</th><th>扱い</th></tr></thead><tbody><tr><td>デッキIDを1件も選択せずに実行したとき</td><td>出力せず、必須のエラーを表示して直前の画面へ戻す。ダウンロードは始めない。画面側でも未選択の送信を既定で止める</td></tr><tr><td>該当するデッキが1件も無いとき</td><td>出力せず、未登録のエラーを表示して直前の画面へ戻す。ダウンロードは始めない</td></tr><tr><td>指定したIDの一部だけが存在しないとき</td><td>該当が1件以上あれば処理を続ける。該当しないIDは出力に現れない</td></tr></tbody></table></div>
+          <p>並び順は、利用者が一覧で選択したときの表示順と一致するとは限らない。</p>
+          <p>一覧の一括編集フォームの他の項目もあわせて送信されるが、この出力では読まない。</p>
+          <h3 id="function-design-m15-02-m15-02_admin_deck_deck_csv_export-出力の構成">出力の構成</h3>
+          <p>見出し行に論理キーを出力し、続けてデータ行を出力する。デッキ1件につき1行とする。</p>
+          <div class="table-wrap"><table><thead><tr><th>順序</th><th>出力</th></tr></thead><tbody><tr><td>1</td><td>UTF-8のBOM。文字コードの設定がどの値のときも先頭に出力する</td></tr><tr><td>2</td><td>論理キーの見出し行。1行だけ出力する</td></tr><tr><td>3</td><td>データ行。該当するデッキが複数あるときは、件数分を出力する</td></tr></tbody></table></div>
+          <p>区切り文字は設定に従う。本文の文字コードは設定によらずUTF-8とし、先頭のBOMと合わせる。 応答が示す文字集合は設定から決まるため（「応答とファイル名」）、設定がUTF-8以外のときは 応答の表記と本文の文字コードが一致しない。</p>
+          <h3 id="function-design-m15-02-m15-02_admin_deck_deck_csv_export-列の値の作り方">列の値の作り方</h3>
+          <div class="table-wrap"><table><thead><tr><th>列</th><th>値の作り方</th></tr></thead><tbody><tr><td>フォーマット</td><td>紐づくフォーマットがあるときはその英語名、無いときは空文字とする</td></tr><tr><td>アーキタイプ</td><td>紐づくアーキタイプがあるときはその日本語名、無いときは空文字とする</td></tr><tr><td>統率者名</td><td>統率者ボードに紐づくカードがあるときはその英語名、無いときは空文字とする</td></tr><tr><td>代表カード名</td><td>代表カード画像に紐づくカードがあるときはその英語名、無いときは空文字とする</td></tr><tr><td>メインリスト・サイドリスト</td><td>登録されているデッキリストのテキストをそのまま出力する</td></tr><tr><td>イベント開催日</td><td>日時が無いときは空文字、あるときは <code>Y-m-d H:i:s</code> の書式とする</td></tr><tr><td>表示フラグ</td><td>公開のときは 1、非公開のときは 0 を出力する。限定公開には対応する値が無く、空欄になる</td></tr></tbody></table></div>
+          <h3 id="function-design-m15-02-m15-02_admin_deck_deck_csv_export-応答とファイル名">応答とファイル名</h3>
+          <p>接頭辞 <code>deck_</code>、出力時点の日時（<code>YmdHis</code>）、拡張子 <code>.csv</code> を連結した名前とし、添付ファイルとして返す。</p>
+          <p>文字コードの設定が SJIS-win のときは、応答の文字集合の表記だけを windows-31j に読み替える。</p>
+          <div class="table-wrap"><table><thead><tr><th>応答ヘッダ</th><th>値</th></tr></thead><tbody><tr><td>内容の種別</td><td>設定の文字コードに基づく <code>text/csv;charset=…</code> とする</td></tr><tr><td>内容の配置</td><td>添付ファイルとし、ファイル名を付ける</td></tr></tbody></table></div>
+          <h2 id="function-design-m15-02-m15-02_admin_deck_deck_csv_export-入出力">入出力</h2>
+          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>一覧で選択したデッキIDの配列。</td></tr><tr><td>成功時出力</td><td>CSVファイル。ファイル名は接頭辞と日時から作る。</td></tr><tr><td>失敗時出力</td><td>エラーメッセージと直前の画面への戻り。ダウンロードは始まらない。</td></tr></tbody></table></div>
+          <div class="renewal-spec-banner"><h3 id="function-design-m15-02-m15-02_admin_deck_deck_csv_export-リニューアル後の仕様">リニューアル後の仕様</h3></div>
+          <h2 id="function-design-m15-02-m15-02_admin_deck_deck_csv_export-表示メッセージ">表示メッセージ</h2>
+          <p>出力に成功したときは画面にメッセージを出さず、ファイルの応答だけを返す。未選択のときと、選択したデッキが 1件も見つからないときのエラー文言は、デッキ検索・一覧（M15-01）の表示メッセージ一覧に含める。</p>
+        </div>
       </section>
+      <!-- function-design-embed:end m15-02-m15-02_admin_deck_deck_csv_export -->
+</section>
       <section class="sheet-panel" id="sheet-5">
         <div class="sheet-heading">
           <h2>デッキ編集</h2>
@@ -1351,7 +1382,7 @@
             <div class="kv"><dt><span class="src-cell" data-excel-book="0212" data-excel-sheet="デッキ編集" data-excel-ref="0212:デッキ編集!AC2">作成日</span></dt><dd><span class="src-cell" data-excel-book="0212" data-excel-sheet="デッキ編集" data-excel-ref="0212:デッキ編集!AG2">2025-05-02</span></dd></div>
             <div class="kv"><dt><span class="src-cell" data-excel-book="0212" data-excel-sheet="デッキ編集" data-excel-ref="0212:デッキ編集!AK2">更新者</span></dt><dd>—</dd></div>
             <div class="kv"><dt><span class="src-cell" data-excel-book="0212" data-excel-sheet="デッキ編集" data-excel-ref="0212:デッキ編集!AS2">更新日</span></dt><dd>—</dd></div>
-            <div class="kv"><dt><span class="src-cell" data-excel-book="0212" data-excel-sheet="デッキ編集" data-excel-ref="0212:デッキ編集!A4">機能No</span></dt><dd><span class="src-cell" data-excel-book="0212" data-excel-sheet="デッキ編集" data-excel-ref="0212:デッキ編集!D4">M15-02</span></dd></div>
+            <div class="kv"><dt><span class="src-cell" data-excel-book="0212" data-excel-sheet="デッキ編集" data-excel-ref="0212:デッキ編集!A4">機能No</span></dt><dd><span class="src-cell" data-excel-book="0212" data-excel-sheet="デッキ編集" data-excel-ref="0212:デッキ編集!D4">M15-02</span><!-- feature-no-correction:start --><span class="feature-no-correction" style="margin-left:.5em;color:#b3261e;font-weight:600;">（正しくは M15-05。Excel基本設計の機能No欄の誤記）</span><!-- feature-no-correction:end --></dd></div>
             <div class="kv"><dt><span class="src-cell" data-excel-book="0212" data-excel-sheet="デッキ編集" data-excel-ref="0212:デッキ編集!I4">機能名</span></dt><dd><span class="src-cell" data-excel-book="0212" data-excel-sheet="デッキ編集" data-excel-ref="0212:デッキ編集!N4">デッキ編集</span></dd></div>
             <div class="kv"><dt><span class="src-cell" data-excel-book="0212" data-excel-sheet="デッキ編集" data-excel-ref="0212:デッキ編集!AC4">概要</span></dt><dd><span class="src-cell" data-excel-book="0212" data-excel-sheet="デッキ編集" data-excel-ref="0212:デッキ編集!AG4">デッキの各種情報を編集する。</span></dd></div>
           </dl>
@@ -1636,37 +1667,45 @@
             </table>
           </div>
         </div>
-      <!-- function-design-embed:start m15-02-m15-02_admin_deck_deck_csv_export -->
-      <section class="function-design-embed" id="function-design-m15-02-m15-02_admin_deck_deck_csv_export" data-source="functions/pf-eccube3/m15-02_admin_deck_deck_csv_export.md">
+      <!-- function-design-embed:start m15-05-m15-05_admin_deck_deck_edit -->
+      <section class="function-design-embed" id="function-design-m15-05-m15-05_admin_deck_deck_edit" data-source="functions/pf-eccube3/m15-05_admin_deck_deck_edit.md">
         <header class="function-design-header">
-          <p class="function-design-source">Source:<br>functions/pf-eccube3/m15-02_admin_deck_deck_csv_export.md</p>
+          <p class="function-design-source">Source:<br>functions/pf-eccube3/m15-05_admin_deck_deck_edit.md</p>
           <h3>現行仕様</h3>
-          <h4>M15-02 デッキCSV出力 / デッキ管理 — デッキ CSV 出力</h4>
+          <h4>M15-05 デッキ新規登録/編集/削除/複製 / デッキ管理 — 新規登録・編集・削除・複製</h4>
         </header>
         <div class="function-design-body">
-          <h2 id="function-design-m15-02-m15-02_admin_deck_deck_csv_export-業務ロジック">業務ロジック</h2>
-          <h3 id="function-design-m15-02-m15-02_admin_deck_deck_csv_export-出力対象の決め方">出力対象の決め方</h3>
-          <div class="table-wrap"><table><thead><tr><th>選択の状態</th><th>扱い</th></tr></thead><tbody><tr><td>デッキIDを1件も選択せずに実行したとき</td><td>出力せず、必須のエラーを表示して直前の画面へ戻す。ダウンロードは始めない。画面側でも未選択の送信を既定で止める</td></tr><tr><td>該当するデッキが1件も無いとき</td><td>出力せず、未登録のエラーを表示して直前の画面へ戻す。ダウンロードは始めない</td></tr><tr><td>指定したIDの一部だけが存在しないとき</td><td>該当が1件以上あれば処理を続ける。該当しないIDは出力に現れない</td></tr></tbody></table></div>
-          <p>並び順は、利用者が一覧で選択したときの表示順と一致するとは限らない。</p>
-          <p>一覧の一括編集フォームの他の項目もあわせて送信されるが、この出力では読まない。</p>
-          <h3 id="function-design-m15-02-m15-02_admin_deck_deck_csv_export-出力の構成">出力の構成</h3>
-          <p>見出し行に論理キーを出力し、続けてデータ行を出力する。デッキ1件につき1行とする。</p>
-          <div class="table-wrap"><table><thead><tr><th>順序</th><th>出力</th></tr></thead><tbody><tr><td>1</td><td>UTF-8のBOM。文字コードの設定がどの値のときも先頭に出力する</td></tr><tr><td>2</td><td>論理キーの見出し行。1行だけ出力する</td></tr><tr><td>3</td><td>データ行。該当するデッキが複数あるときは、件数分を出力する</td></tr></tbody></table></div>
-          <p>区切り文字は設定に従う。本文の文字コードは設定によらずUTF-8とし、先頭のBOMと合わせる。 応答が示す文字集合は設定から決まるため（「応答とファイル名」）、設定がUTF-8以外のときは 応答の表記と本文の文字コードが一致しない。</p>
-          <h3 id="function-design-m15-02-m15-02_admin_deck_deck_csv_export-列の値の作り方">列の値の作り方</h3>
-          <div class="table-wrap"><table><thead><tr><th>列</th><th>値の作り方</th></tr></thead><tbody><tr><td>フォーマット</td><td>紐づくフォーマットがあるときはその英語名、無いときは空文字とする</td></tr><tr><td>アーキタイプ</td><td>紐づくアーキタイプがあるときはその日本語名、無いときは空文字とする</td></tr><tr><td>統率者名</td><td>統率者ボードに紐づくカードがあるときはその英語名、無いときは空文字とする</td></tr><tr><td>代表カード名</td><td>代表カード画像に紐づくカードがあるときはその英語名、無いときは空文字とする</td></tr><tr><td>メインリスト・サイドリスト</td><td>登録されているデッキリストのテキストをそのまま出力する</td></tr><tr><td>イベント開催日</td><td>日時が無いときは空文字、あるときは <code>Y-m-d H:i:s</code> の書式とする</td></tr><tr><td>表示フラグ</td><td>公開のときは 1、非公開のときは 0 を出力する。限定公開には対応する値が無く、空欄になる</td></tr></tbody></table></div>
-          <h3 id="function-design-m15-02-m15-02_admin_deck_deck_csv_export-応答とファイル名">応答とファイル名</h3>
-          <p>接頭辞 <code>deck_</code>、出力時点の日時（<code>YmdHis</code>）、拡張子 <code>.csv</code> を連結した名前とし、添付ファイルとして返す。</p>
-          <p>文字コードの設定が SJIS-win のときは、応答の文字集合の表記だけを windows-31j に読み替える。</p>
-          <div class="table-wrap"><table><thead><tr><th>応答ヘッダ</th><th>値</th></tr></thead><tbody><tr><td>内容の種別</td><td>設定の文字コードに基づく <code>text/csv;charset=…</code> とする</td></tr><tr><td>内容の配置</td><td>添付ファイルとし、ファイル名を付ける</td></tr></tbody></table></div>
-          <h2 id="function-design-m15-02-m15-02_admin_deck_deck_csv_export-入出力">入出力</h2>
-          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>一覧で選択したデッキIDの配列。</td></tr><tr><td>成功時出力</td><td>CSVファイル。ファイル名は接頭辞と日時から作る。</td></tr><tr><td>失敗時出力</td><td>エラーメッセージと直前の画面への戻り。ダウンロードは始まらない。</td></tr></tbody></table></div>
-          <div class="renewal-spec-banner"><h3 id="function-design-m15-02-m15-02_admin_deck_deck_csv_export-リニューアル後の仕様">リニューアル後の仕様</h3></div>
-          <h2 id="function-design-m15-02-m15-02_admin_deck_deck_csv_export-表示メッセージ">表示メッセージ</h2>
-          <p>出力に成功したときは画面にメッセージを出さず、ファイルの応答だけを返す。未選択のときと、選択したデッキが 1件も見つからないときのエラー文言は、デッキ検索・一覧（M15-01）の表示メッセージ一覧に含める。</p>
+          <h2 id="function-design-m15-05-m15-05_admin_deck_deck_edit-業務ロジック">業務ロジック</h2>
+          <h3 id="function-design-m15-05-m15-05_admin_deck_deck_edit-画面の表示">画面の表示</h3>
+          <div class="table-wrap"><table><thead><tr><th>開き方</th><th>表示内容</th></tr></thead><tbody><tr><td>新規登録</td><td>空のデッキを対象に入力欄を表示する。イベント検索・カード検索の補助入力を添える</td></tr><tr><td>複製入力</td><td>指定された既存デッキの内容を読み込んで表示する。画面上は新規登録と同じ扱いで、保存すると新規のデッキとして登録する</td></tr><tr><td>編集</td><td>指定されたデッキを読み込んで表示する。該当するデッキが無いときはページが見つからない扱い（404）とする</td></tr></tbody></table></div>
+          <p>プレイヤーとイベント詳細は、識別子が設定されていれば対応する表示名・日時を項目へ補う。代表カードの画像は、代表カードが設定されていれば解決した画像を表示する。削除・複製の確認モーダルは、既存デッキを開いたときだけ表示する。一覧へ戻る際のページ番号は、保持している値（既定 1）を用いる。</p>
+          <h3 id="function-design-m15-05-m15-05_admin_deck_deck_edit-デッキリストの解釈順序">デッキリストの解釈順序</h3>
+          <p>メイン・サイド・コマンドの各テキストを、次の順序で解釈する。</p>
+          <div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>テキストが空または空白のみ</td><td>空のリストとして扱う。エラーにはしない</td></tr><tr><td>2</td><td>空でない各行が「数量 カード名」の形式に合うか</td><td>合わない行があれば、1 から数えたその行番号を返し、行番号を含むエラーを表示して登録を中止する</td></tr><tr><td>3</td><td>カード名を正規化したうえで、カードに一致するか、不明参照として許可された文字列か</td><td>いずれにも当たらない名前は登録しない。管理画面では不明参照として許可された文字列だけを残せる</td></tr><tr><td>4</td><td>同じリスト内に同じカードが複数ある</td><td>枚数を合算して1件にまとめる</td></tr></tbody></table></div>
+          <h3 id="function-design-m15-05-m15-05_admin_deck_deck_edit-登録・更新">登録・更新</h3>
+          <p>デッキリストの解釈に失敗したとき、または入力値の検証に通らないときは、同じ画面を再表示して終える（画面遷移しない）。</p>
+          <p>検証に通ったときは次を行う。プレイヤーが入力されていれば当該プレイヤーへ紐付け直す。編集者としてログイン中の管理者を記録する。代表カードは、新規登録のときに限り、指定があれば名前を解決して設定し、指定が無ければ選択中のアーキタイプの既定の代表カード画像を設定する。</p>
+          <p>デッキを保存したうえで、当該デッキのカードをすべて削除し、解釈済みのリストからメイン・サイド・コマンドごとに作り直す。</p>
+          <p>保存後、「現行フォーマット」が真でフォーマットが設定されているときは、リストの整合とフォーマットの制限を検査する。問題があればボード単位で警告を表示する。この検査はエラーとせず、保存は完了したままとする。完了後は当該デッキの編集画面へ移る。</p>
+          <p>本機能では金額・ポイントの算出を行わない。フォーマットの警告は、ボードごとの最小・最大枚数、サイドとの合算、カードの使用可否の情報にもとづく。検出の順序は内部の実装順に依存するが、画面上は警告のみで保存は済んでいる。</p>
+          <h3 id="function-design-m15-05-m15-05_admin_deck_deck_edit-複製">複製</h3>
+          <p>複製する回数が整数で、かつ 1 以上、設定の上限（既定値 310）以下でなければ、エラーを表示して元の編集画面へ戻る。複製元のデッキを取得できないときも保存失敗を表示して戻る。この経路では入力の共通検証を経由しない。</p>
+          <p>条件を満たすときは指定回数だけデッキを複製する。複製したデッキは記事の紐付けを空にし、編集者を操作者に更新する。複製元の各デッキカードも複製して、複製したデッキへ付け替える。完了時は複製した回数を含む完了メッセージを表示し、元の編集画面へ戻る。</p>
+          <h3 id="function-design-m15-05-m15-05_admin_deck_deck_edit-削除">削除</h3>
+          <p>なりすまし対策トークンを検証する。対象のデッキを取得できないときはページが見つからない扱い（404）とする。当該デッキに紐づく記事が1件以上あるときは削除せず、使用中である旨を表示して直前の画面へ戻る。</p>
+          <p>削除するときは、デッキカードをすべて削除し、編集者を操作者に更新したうえでデッキ自体を削除する。削除後は、保持しているページ番号があればデッキ検索のそのページへ、無ければデッキ一覧へ戻る。削除対象の指定がまったく無いときは、メッセージを出さず一覧相当へ戻る。</p>
+          <h3 id="function-design-m15-05-m15-05_admin_deck_deck_edit-エラー時の扱い">エラー時の扱い</h3>
+          <div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>デッキリストの行形式が不正</td><td>入力を保持したまま同じ画面を再表示し、行番号とボード名を含む文言を表示する</td></tr><tr><td>削除時のなりすまし対策トークンが無効</td><td>アクセスを拒否する（共通の処理に委ねる）</td></tr><tr><td>記事に使用中で削除できない</td><td>エラーを表示し、直前の画面へ戻る</td></tr><tr><td>複製回数が不正</td><td>エラーを表示し、編集画面へ戻る</td></tr></tbody></table></div>
+          <h2 id="function-design-m15-05-m15-05_admin_deck_deck_edit-入出力">入出力</h2>
+          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>デッキの入力項目（メイン・サイド・コマンドの各テキスト、プレイヤー、イベント詳細、代表カード、フォーマットなど）、複製する回数、削除対象のデッキ、なりすまし対策トークン</td></tr><tr><td>成功時出力</td><td>デッキの登録・更新・複製・削除、完了メッセージ、編集画面または一覧への移動</td></tr><tr><td>失敗時出力</td><td>同じ画面の再表示、またはエラー・警告メッセージを伴う戻り</td></tr></tbody></table></div>
+          <h3 id="function-design-m15-05-m15-05_admin_deck_deck_edit-入出力-永続化">入出力: 永続化</h3>
+          <div class="table-wrap"><table><thead><tr><th>操作</th><th>契機</th></tr></thead><tbody><tr><td>追加・更新</td><td>デッキの登録・更新が検証に通ったとき</td></tr><tr><td>削除・追加</td><td>デッキの保存時に、当該デッキのカードを全件削除して解釈済みリストから作り直す</td></tr><tr><td>追加</td><td>複製時に、指定回数分のデッキとそのデッキカードを作成する</td></tr><tr><td>削除</td><td>デッキの削除時に、デッキカードとデッキ自体を削除する</td></tr></tbody></table></div>
+          <div class="renewal-spec-banner"><h3 id="function-design-m15-05-m15-05_admin_deck_deck_edit-リニューアル後の仕様">リニューアル後の仕様</h3></div>
+          <h2 id="function-design-m15-05-m15-05_admin_deck_deck_edit-表示メッセージ">表示メッセージ</h2>
+          <div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M15-05-MSG-004</td><td>管理画面上部</td><td>セッションがタイムアウトしました。もう一度やり直してください。</td><td>デッキを削除するとき、セッションの有効期限が切れているとき</td><td>デッキ検索・一覧画面に遷移する</td></tr><tr><td>M15-05-MSG-005</td><td>管理画面上部</td><td>記事に紐付いているデッキがあるため削除できません。</td><td>記事に使用されているデッキを削除しようとしたとき</td><td>デッキ編集画面に遷移する</td></tr><tr><td>M15-05-MSG-006</td><td>管理画面上部</td><td>削除に失敗しました</td><td>デッキの削除中にエラーが起きたとき</td><td>デッキ編集画面に遷移する</td></tr><tr><td>M15-05-MSG-007</td><td>管理画面上部</td><td>削除しました</td><td>デッキを削除したとき</td><td>デッキ検索・一覧画面に遷移する</td></tr><tr><td>M15-05-MSG-008</td><td>管理画面上部</td><td>セッションがタイムアウトしました。もう一度やり直してください。</td><td>デッキを複製するとき、セッションの有効期限が切れているとき</td><td>デッキ編集画面に遷移する</td></tr><tr><td>M15-05-MSG-009</td><td>管理画面上部</td><td>保存に失敗しました</td><td>デッキの複製を保存するとき、入力内容に不備があるとき</td><td>デッキ編集画面に遷移する</td></tr><tr><td>M15-05-MSG-010</td><td>管理画面上部</td><td>保存に失敗しました</td><td>デッキの複製を保存中にエラーが起きたとき</td><td>デッキ編集画面に遷移する</td></tr><tr><td>M15-05-MSG-011</td><td>管理画面上部</td><td>保存しました</td><td>デッキを複製して保存したとき</td><td>デッキ編集画面に遷移する</td></tr></tbody></table></div>
         </div>
       </section>
-      <!-- function-design-embed:end m15-02-m15-02_admin_deck_deck_csv_export -->
+      <!-- function-design-embed:end m15-05-m15-05_admin_deck_deck_edit -->
 </section>
       <section class="sheet-panel" id="sheet-6">
         <div class="sheet-heading">
@@ -2278,7 +2317,7 @@
             <div class="kv"><dt><span class="src-cell" data-excel-book="0212" data-excel-sheet="アーキタイプ登録CSV" data-excel-ref="0212:アーキタイプ登録CSV!AC2">作成日</span></dt><dd><span class="src-cell" data-excel-book="0212" data-excel-sheet="アーキタイプ登録CSV" data-excel-ref="0212:アーキタイプ登録CSV!AG2">2025-05-07</span></dd></div>
             <div class="kv"><dt><span class="src-cell" data-excel-book="0212" data-excel-sheet="アーキタイプ登録CSV" data-excel-ref="0212:アーキタイプ登録CSV!AK2">更新者</span></dt><dd>—</dd></div>
             <div class="kv"><dt><span class="src-cell" data-excel-book="0212" data-excel-sheet="アーキタイプ登録CSV" data-excel-ref="0212:アーキタイプ登録CSV!AS2">更新日</span></dt><dd>—</dd></div>
-            <div class="kv"><dt><span class="src-cell" data-excel-book="0212" data-excel-sheet="アーキタイプ登録CSV" data-excel-ref="0212:アーキタイプ登録CSV!A4">機能No</span></dt><dd><span class="src-cell" data-excel-book="0212" data-excel-sheet="アーキタイプ登録CSV" data-excel-ref="0212:アーキタイプ登録CSV!D4">M15-06</span></dd></div>
+            <div class="kv"><dt><span class="src-cell" data-excel-book="0212" data-excel-sheet="アーキタイプ登録CSV" data-excel-ref="0212:アーキタイプ登録CSV!A4">機能No</span></dt><dd><span class="src-cell" data-excel-book="0212" data-excel-sheet="アーキタイプ登録CSV" data-excel-ref="0212:アーキタイプ登録CSV!D4">M15-06</span><!-- feature-no-correction:start --><span class="feature-no-correction" style="margin-left:.5em;color:#b3261e;font-weight:600;">（正しくは M15-10。Excel基本設計の機能No欄の誤記）</span><!-- feature-no-correction:end --></dd></div>
             <div class="kv"><dt><span class="src-cell" data-excel-book="0212" data-excel-sheet="アーキタイプ登録CSV" data-excel-ref="0212:アーキタイプ登録CSV!I4">機能名</span></dt><dd><span class="src-cell" data-excel-book="0212" data-excel-sheet="アーキタイプ登録CSV" data-excel-ref="0212:アーキタイプ登録CSV!N4">アーキタイプ登録CSV</span></dd></div>
             <div class="kv"><dt><span class="src-cell" data-excel-book="0212" data-excel-sheet="アーキタイプ登録CSV" data-excel-ref="0212:アーキタイプ登録CSV!AC4">概要</span></dt><dd>—</dd></div>
           </dl>
@@ -2317,7 +2356,7 @@
             <div class="kv"><dt><span class="src-cell" data-excel-book="0212" data-excel-sheet="直近の大会管理" data-excel-ref="0212:直近の大会管理!AC2">作成日</span></dt><dd><span class="src-cell" data-excel-book="0212" data-excel-sheet="直近の大会管理" data-excel-ref="0212:直近の大会管理!AG2">2025-05-07</span></dd></div>
             <div class="kv"><dt><span class="src-cell" data-excel-book="0212" data-excel-sheet="直近の大会管理" data-excel-ref="0212:直近の大会管理!AK2">更新者</span></dt><dd>—</dd></div>
             <div class="kv"><dt><span class="src-cell" data-excel-book="0212" data-excel-sheet="直近の大会管理" data-excel-ref="0212:直近の大会管理!AS2">更新日</span></dt><dd>—</dd></div>
-            <div class="kv"><dt><span class="src-cell" data-excel-book="0212" data-excel-sheet="直近の大会管理" data-excel-ref="0212:直近の大会管理!A4">機能No</span></dt><dd><span class="src-cell" data-excel-book="0212" data-excel-sheet="直近の大会管理" data-excel-ref="0212:直近の大会管理!D4">F06-10</span></dd></div>
+            <div class="kv"><dt><span class="src-cell" data-excel-book="0212" data-excel-sheet="直近の大会管理" data-excel-ref="0212:直近の大会管理!A4">機能No</span></dt><dd><span class="src-cell" data-excel-book="0212" data-excel-sheet="直近の大会管理" data-excel-ref="0212:直近の大会管理!D4">F06-10</span><!-- feature-no-correction:start --><span class="feature-no-correction" style="margin-left:.5em;color:#b3261e;font-weight:600;">（正しくは M15-11。Excel基本設計の機能No欄の誤記）</span><!-- feature-no-correction:end --></dd></div>
             <div class="kv"><dt><span class="src-cell" data-excel-book="0212" data-excel-sheet="直近の大会管理" data-excel-ref="0212:直近の大会管理!I4">機能名</span></dt><dd><span class="src-cell" data-excel-book="0212" data-excel-sheet="直近の大会管理" data-excel-ref="0212:直近の大会管理!N4">直近の大会管理</span></dd></div>
             <div class="kv"><dt><span class="src-cell" data-excel-book="0212" data-excel-sheet="直近の大会管理" data-excel-ref="0212:直近の大会管理!AC4">概要</span></dt><dd><span class="src-cell" data-excel-book="0212" data-excel-sheet="直近の大会管理" data-excel-ref="0212:直近の大会管理!AG4">直近の大会(フロントのデッキ検索画面上に表示)の情報を更新する</span></dd></div>
           </dl>
@@ -2369,44 +2408,32 @@
             </table>
           </div>
         </div>
-      <!-- function-design-embed:start f06-10-f06-10_front_member_mypage_point_history -->
-      <section class="function-design-embed" id="function-design-f06-10-f06-10_front_member_mypage_point_history" data-source="functions/pf-eccube3/f06-10_front_member_mypage_point_history.md">
+      <!-- function-design-embed:start m15-11-m15-11_admin_deck_deck_latest_event -->
+      <section class="function-design-embed" id="function-design-m15-11-m15-11_admin_deck_deck_latest_event" data-source="functions/pf-eccube3/m15-11_admin_deck_deck_latest_event.md">
         <header class="function-design-header">
-          <p class="function-design-source">Source:<br>functions/pf-eccube3/f06-10_front_member_mypage_point_history.md</p>
+          <p class="function-design-source">Source:<br>functions/pf-eccube3/m15-11_admin_deck_deck_latest_event.md</p>
           <h3>現行仕様</h3>
-          <h4>F06-10 ポイント履歴 / F06-10（ポイント履歴）</h4>
+          <h4>M15-11 直近の大会編集 / デッキ管理 — 直近の大会管理（編集）</h4>
         </header>
-        <div class="superseded-notice">
-      <p class="superseded-notice-head"><span class="superseded-badge">刷新後は実装不要</span>本節は現行実装（pf-eccube3）からのリバースです。次の記述は Excel基本設計により廃止されており、刷新後に実装する必要はありません。</p>
-      <ul class="superseded-notice-list">
-        <li><span class="superseded-target">画面上部のログインユーザ名表示（ポイント履歴）</span> は削除（<a href="0306_%E5%9F%BA%E6%9C%AC%E8%A8%AD%E8%A8%88%E4%BB%95%E6%A7%98%E6%9B%B8%28%E3%83%95%E3%83%AD%E3%83%B3%E3%83%88_%E4%BC%9A%E5%93%A1%29.html#item-sheet-10-2">0306 ポイント履歴 識別ID:2</a>）</li>
-      </ul>
-    </div>
         <div class="function-design-body">
-          <h2 id="function-design-f06-10-f06-10_front_member_mypage_point_history-業務ロジック">業務ロジック</h2>
-          <h3 id="function-design-f06-10-f06-10_front_member_mypage_point_history-刷新後は実装しない-廃止">刷新後は実装しない（廃止）</h3>
-          <ul><li>Excel基本設計 0306 ポイント履歴 識別ID:2 により廃止。刷新後は実装しない。</li></ul>
-          <h3 id="function-design-f06-10-f06-10_front_member_mypage_point_history-画面上部の表示">画面上部の表示</h3>
-          <p>画面の見出しは「ポイント履歴一覧」とする。現在のポイントと次に消失するポイントの数値は強調表示する。画面に出すポイント数はいずれも桁区切りで表示する。本画面専用のモーダルは持たない。</p>
-          <h3 id="function-design-f06-10-f06-10_front_member_mypage_point_history-一覧の対象と受け取るクエリ">一覧の対象と受け取るクエリ</h3>
-          <p>常にログイン会員自身のポイント履歴のみを対象とする。ページ番号と1ページ表示件数はクエリで受け取る。いずれも数値として解釈し、指定が無いとき・0のとき・数値として解釈できないときは既定に戻す（ページ番号の既定は1ページ目）。ページ送りのリンクは、押下時点の表示件数の指定をそのまま引き継ぐ。</p>
-          <h3 id="function-design-f06-10-f06-10_front_member_mypage_point_history-表示件数の選択肢">表示件数の選択肢</h3>
-          <p>表示件数として選べるのは 10件・20件・50件・100件 の4つとする。表示件数を選び直したときはページ番号を引き継がず、1ページ目から表示し直す。</p>
-          <h3 id="function-design-f06-10-f06-10_front_member_mypage_point_history-ポイント値と有効期限の表示">ポイント値と有効期限の表示</h3>
-          <p>履歴行のポイント値は、増減値がプラスのとき先頭に「+」を付けて表示し、マイナスはそのまま表示する。獲得と利用で表示色を切り替える。有効期限はプラスの履歴にのみ表示し、発行日にポイント失効日数の設定を加えた日とする。注文番号のリンクは別タブで開く。</p>
-          <h3 id="function-design-f06-10-f06-10_front_member_mypage_point_history-失効見込みの算定">失効見込みの算定</h3>
-          <p>選手情報の現在ポイントを起点に、有効期限内の獲得履歴を新しい順に差し引き、残高を使い切る履歴を失効見込みとする。同じ発行日の獲得履歴は合算して1件分として扱う。表示額は、失効見込み額と現在ポイントのうち小さい方とする。</p>
-          <h3 id="function-design-f06-10-f06-10_front_member_mypage_point_history-エラー時の扱い">エラー時の扱い</h3>
-          <div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>未ログインアクセス</td><td>会員ログインへ誘導する（会員ログイン機能を正とする）</td></tr></tbody></table></div>
-          <h2 id="function-design-f06-10-f06-10_front_member_mypage_point_history-入出力">入出力</h2>
-          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>ページ番号・1ページ件数のクエリ</td></tr><tr><td>成功時出力</td><td>ポイント履歴一覧と現在ポイント・失効見込みのHTML表示</td></tr><tr><td>失敗時出力</td><td>未ログイン時は会員ログインへ誘導する</td></tr></tbody></table></div>
-          <div class="renewal-spec-banner"><h3 id="function-design-f06-10-f06-10_front_member_mypage_point_history-リニューアル後の仕様">リニューアル後の仕様</h3></div>
-          <h2 id="function-design-f06-10-f06-10_front_member_mypage_point_history-表示メッセージ">表示メッセージ</h2>
-          <div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>F06-10-MSG-001</td><td>本文</td><td>ポイント履歴はありません。</td><td>ポイント履歴を開き、履歴がないとき</td><td>ポイント履歴画面に留まる</td></tr><tr><td>—</td><td>一覧上部</td><td>現在のポイント：（保有ポイント）ポイント</td><td>一覧表示時に常時</td><td>—</td></tr><tr><td>—</td><td>一覧上部</td><td>次に消失するポイント：（失効見込み額）ポイント（失効日）</td><td>失効見込みがある場合</td><td>—</td></tr><tr><td>—</td><td>一覧上部</td><td>（開始）~（終了）件 ／ （総件数）件あります</td><td>一覧表示時に常時</td><td>—</td></tr></tbody></table></div>
-          <p>英語の表示文言は、MSG-001 が No point history found.、現在ポイントが Current Points : （保有ポイント） Points、失効見込みが Next Points to be Expired: （失効見込み額） Points （失効日）、件数表示が [（開始） ~ （終了）] ／ （総件数） Items である。本機能はフォーム送信に伴うフラッシュ・インラインエラーを生成しない。</p>
+          <h2 id="function-design-m15-11-m15-11_admin_deck_deck_latest_event-業務ロジック">業務ロジック</h2>
+          <h3 id="function-design-m15-11-m15-11_admin_deck_deck_latest_event-編集画面の表示">編集画面の表示</h3>
+          <p>直近の大会設定を全件、主キーの昇順で読み込み、表として一覧表示する。行ごとの編集項目は、開催日・フォーマット・大会名（日本語）・大会名（英語）・参加者数の5項目とする。</p>
+          <h3 id="function-design-m15-11-m15-11_admin_deck_deck_latest_event-一括更新">一括更新</h3>
+          <p>送信内容の検証が通ったときは、直近の大会設定を再度主キーの昇順で全件取得し、行ごとに対応する入力値で上書きして保存する。保存後は成功メッセージを表示し、編集画面へ戻る。</p>
+          <p>本機能では数値の合算や順位計算などの業務計算は行わない。入力の検証と保存のみを行う。</p>
+          <h3 id="function-design-m15-11-m15-11_admin_deck_deck_latest_event-エラー時の扱い">エラー時の扱い</h3>
+          <div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>なりすまし対策トークン不正</td><td>入力内容の検証エラーと同じ扱いに縮退する。トークンはフォームに含まれるため、不正時は検証が不成立となり、メッセージを出さずに同じ画面を再描画する。アクセス拒否（HTTP 403）は返さない</td></tr><tr><td>入力内容の検証エラー</td><td>保存せず同じ画面を再描画する。項目別のメッセージは各項目の直下に表示する</td></tr></tbody></table></div>
+          <h2 id="function-design-m15-11-m15-11_admin_deck_deck_latest_event-入出力">入出力</h2>
+          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>行ごとの5項目（開催日・フォーマット・大会名（日本語）・大会名（英語）・参加者数）、なりすまし対策トークン</td></tr><tr><td>成功時出力</td><td>直近の大会設定の更新、成功メッセージ、編集画面への遷移</td></tr><tr><td>失敗時出力</td><td>保存せず同じ画面を再描画し、項目別のメッセージを各項目の直下に表示する</td></tr></tbody></table></div>
+          <h3 id="function-design-m15-11-m15-11_admin_deck_deck_latest_event-入出力-永続化">入出力: 永続化</h3>
+          <div class="table-wrap"><table><thead><tr><th>操作</th><th>契機</th></tr></thead><tbody><tr><td>更新</td><td>一括更新の成立時の、全行の開催日・フォーマット・大会名（日本語）・大会名（英語）・参加者数</td></tr></tbody></table></div>
+          <div class="renewal-spec-banner"><h3 id="function-design-m15-11-m15-11_admin_deck_deck_latest_event-リニューアル後の仕様">リニューアル後の仕様</h3></div>
+          <h2 id="function-design-m15-11-m15-11_admin_deck_deck_latest_event-表示メッセージ">表示メッセージ</h2>
+          <div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M15-11-MSG-001</td><td>管理画面上部</td><td>保存しました</td><td>直近の大会設定を保存したとき</td><td>直近の大会管理（編集）画面に遷移する</td></tr><tr><td>M15-11-MSG-002</td><td>管理画面上部</td><td>保存に失敗しました</td><td>直近の大会設定の保存中にエラーが起きたとき</td><td>直近の大会管理（編集）画面に留まる</td></tr></tbody></table></div>
         </div>
       </section>
-      <!-- function-design-embed:end f06-10-f06-10_front_member_mypage_point_history -->
+      <!-- function-design-embed:end m15-11-m15-11_admin_deck_deck_latest_event -->
 </section>
 
     </main>

@@ -176,6 +176,8 @@ def check(fid, own_all):
     rn = renames(fid)
     sc_all = step_changes(fid)
     oc_all = oracle_changes(fid)
+    scp = PC / f"source_changes/{fid}.tsv"
+    src_all = {r["テストID"]: r for r in read(scp)} if scp.exists() else {}
     bs = PC / f"baseline/{fid}_seed_data.tsv"
     old_names = seed_names(read(bs)) if bs.exists() else set()
     new_names = seed_names(S)
@@ -258,6 +260,10 @@ def check(fid, own_all):
             continue
         for col in FIXED:
             if x[col] != b[col]:
+                # 出典だけは、設計書の側が動いたとき（埋め込み先の訂正など）に source_changes へ宣言して変えられる
+                if col == "出典" and src_all.get(x["テストID"], {}).get("新出典", "") == x[col] \
+                        and src_all[x["テストID"]].get("理由", "").strip():
+                    continue
                 err.append(("G6", x["テストID"], f"{col} が変わった"))
         if b["実行区分"] == "保留":
             if any(x[c] != b[c] for c in b):

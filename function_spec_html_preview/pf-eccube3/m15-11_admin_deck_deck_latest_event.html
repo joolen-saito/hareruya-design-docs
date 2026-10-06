@@ -81,6 +81,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -262,19 +272,14 @@ footer {
   <div class="page">
     <aside class="sidebar">
       <p class="sidebar-title">On this page</p>
-      <nav class="toc"><a class="lv2" href="#処理フロー">処理フロー</a>
-<a class="lv3" href="#編集画面を表示する-GET-admin-latest-event-deck-list">編集画面を表示する（GET `admin_latest_event_deck_list`）</a>
-<a class="lv3" href="#一括更新する-POST-admin-latest-event-deck-list-update">一括更新する（POST `admin_latest_event_deck_list_update`）</a>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#編集画面の表示">編集画面の表示</a>
+<a class="lv3" href="#一括更新">一括更新</a>
+<a class="lv3" href="#エラー時の扱い">エラー時の扱い</a>
 <a class="lv2" href="#入出力">入出力</a>
-<a class="lv3" href="#ログ・監査">ログ・監査</a>
-<a class="lv2" href="#業務ロジック">業務ロジック</a>
-<a class="lv3" href="#業務ルール・計算">業務ルール・計算</a>
-<a class="lv3" href="#データ整合性">データ整合性</a>
-<a class="lv3" href="#権限・認可">権限・認可</a>
-<a class="lv3" href="#Cookie">Cookie</a>
-<a class="lv3" href="#排他制御・トランザクション">排他制御・トランザクション</a>
-<a class="lv2" href="#表示メッセージ">表示メッセージ</a>
-<a class="lv2" href="#エラー処理">エラー処理</a></nav>
+<a class="lv3" href="#入出力-永続化">入出力: 永続化</a>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
     </aside>
     <main class="doc-content">
       <header class="page-header">
@@ -282,48 +287,21 @@ footer {
         <h1>デッキ管理 — 直近の大会管理（編集）</h1>
       </header>
       
-      <h2 id="処理フロー">処理フロー</h2>
-<h3 id="編集画面を表示する-GET-admin-latest-event-deck-list">編集画面を表示する（GET <code>admin_latest_event_deck_list</code>）</h3>
-<ol><li>管理画面の共通制約を通過する。</li><li>フォーム型名 <code>latest_event_deck</code> でフォームビルダを生成する。ビルド時にリポジトリから全件を読み、行 ID ごとにフィールド名 <code>eventDate_{id}</code>・<code>format_{id}</code>・<code>eventNameJp_{id}</code>・<code>eventNameEn_{id}</code>・<code>participants_{id}</code> を追加する。ソース上の読み出しは <code>findAll([], ['id' =&gt; 'ASC'])</code> と記述されているが、<code>mtb_latest_event_deck</code> 用リポジトリはこのメソッドを上書きしておらず、Doctrine 標準の親実装との関係は実行環境のクラス解決に依存する。意図は主キー昇順の全行取得である。</li><li>同じリポジトリ経路で取得したコレクションを Twig に <code>eventList</code> として渡し、テンプレートで各行を表として描画する。</li></ol>
-<h3 id="一括更新する-POST-admin-latest-event-deck-list-update">一括更新する（POST <code>admin_latest_event_deck_list_update</code>）</h3>
-<ol><li>管理画面の共通制約を通過する。</li><li>同一フォーム型でリクエストをバインドする。</li><li>共通トレイトの処理で CSRF を検証する。検証に失敗した場合はアクセス拒否（HTTP 403）となる。</li><li>フォーム全体が無効な場合、フラッシュに <code>admin.register.failed</code> を積み、<code>GET admin_latest_event_deck_list</code> へリダイレクトする（フィールドエラーを再表示する処理はない）。</li><li>フォームが有効な場合、リポジトリから再度全件を <code>id</code> 昇順で取得する。</li><li>取得した各行について、同名サフィックスのフォーム項目から値を読み取り、行のセッターで上書きする。すべて <code>persist</code> のうえ <code>flush</code> する。</li><li>フラッシュに <code>admin.register.complete</code> を積み、<code>GET admin_latest_event_deck_list</code> へリダイレクトする。</li></ol>
-<hr>
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="編集画面の表示">編集画面の表示</h3>
+<p>直近の大会設定を全件、主キーの昇順で読み込み、表として一覧表示する。行ごとの編集項目は、開催日・フォーマット・大会名（日本語）・大会名（英語）・参加者数の5項目とする。</p>
+<h3 id="一括更新">一括更新</h3>
+<p>送信内容の検証が通ったときは、直近の大会設定を再度主キーの昇順で全件取得し、行ごとに対応する入力値で上書きして保存する。保存後は成功メッセージを表示し、編集画面へ戻る。</p>
+<p>本機能では数値の合算や順位計算などの業務計算は行わない。入力の検証と保存のみを行う。</p>
+<h3 id="エラー時の扱い">エラー時の扱い</h3>
+<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>なりすまし対策トークン不正</td><td>入力内容の検証エラーと同じ扱いに縮退する。トークンはフォームに含まれるため、不正時は検証が不成立となり、メッセージを出さずに同じ画面を再描画する。アクセス拒否（HTTP 403）は返さない</td></tr><tr><td>入力内容の検証エラー</td><td>保存せず同じ画面を再描画する。項目別のメッセージは各項目の直下に表示する</td></tr></tbody></table></div>
 <h2 id="入出力">入出力</h2>
-<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>POST ボディのフォーム項目（行 ID ごとの5項目）と CSRF。</td></tr><tr><td>成功時出力</td><td>HTTP 302 で <code>GET /{admin_route}/latest_event_deck</code> へ。フラッシュで登録完了メッセージ。</td></tr><tr><td>失敗時出力</td><td>検証失敗時も 302 で同 URL へ。フラッシュで登録失敗メッセージ。CSRF 失敗時は 403 応答。</td></tr><tr><td>副作用</td><td><code>mtb_latest_event_deck</code> の全行が、送信時点のフォーム内容で上書き保存される。</td></tr></tbody></table></div>
-<hr>
-<h3 id="ログ・監査">ログ・監査</h3>
-<div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>本画面のコントローラ単体</td><td>専用の業務ログ出力は実装されていない。</td></tr></tbody></table></div>
-<h4 id="ログに出してはいけないもの">ログに出してはいけないもの</h4>
-<ul><li>パスワード</li><li>なりすまし対策トークン</li><li>Cookie 値</li><li>セッション ID の完全値</li><li>Remember Me トークンの原値</li></ul>
-<hr>
-<h2 id="業務ロジック">業務ロジック</h2>
-<h3 id="業務ルール・計算">業務ルール・計算</h3>
-<p>本機能では数値の合算や順位計算などの業務計算を行わない。入力の検証・保存のみである。</p>
-<h4 id="入力項目">入力項目</h4>
-<p>各スロット（<code>mtb_latest_event_deck</code> の 1 行）について同じラベルの項目が繰り返される。以下は 1 スロット分の論理項目である。フォーム上の項目キーは <code>{論理名}_{行の id}</code>。</p>
-<div class="table-wrap"><table><thead><tr><th>項目名</th><th>必須／任意</th><th>最大長</th><th>初期値</th><th>保存先・扱い</th></tr></thead><tbody><tr><td>イベント開催日</td><td>任意（同一表内の他欄に入力があると JS により HTML5 必須になる）</td><td>日時形式は <code>HareruyaEc.const.format.datetime</code>（既定 <code>yyyy-MM-dd HH:mm</code>）。Symfony <code>datetime</code> 型、ウィジェットは単一行テキスト</td><td>当該行の <code>event_date</code> 列の現行値（無ければ未入力相当）</td><td><code>mtb_latest_event_deck.event_date</code>。キー <code>eventDate_{id}</code>。未入力は Symfony 上も任意。</td></tr><tr><td>フォーマット</td><td>任意（同上）</td><td>選択肢はフォーマットマスタ（<code>mtb_format</code> 相当）の一覧。プレースホルダは翻訳キー <code>form.deck.format.empty_value</code></td><td>当該行の <code>format_id</code> に紐づくマスタ（無ければ未選択）</td><td><code>mtb_latest_event_deck.format_id</code>（関連エンティティ経由）。キー <code>format_{id}</code>。</td></tr><tr><td>イベント名（日）</td><td>任意（同上）</td><td>255 文字。Symfony <code>Length</code> max および <code>maxlength</code> 属性は <code>HareruyaEc.const.deck.length.name</code>（既定 255）</td><td>当該行の <code>event_name_jp</code></td><td><code>mtb_latest_event_deck.event_name_jp</code>。キー <code>eventNameJp_{id}</code>。</td></tr><tr><td>イベント名（英）</td><td>任意（同上）</td><td>同上</td><td>当該行の <code>event_name_en</code></td><td><code>mtb_latest_event_deck.event_name_en</code>。キー <code>eventNameEn_{id}</code>。</td></tr><tr><td>イベント参加人数</td><td>任意（同上）</td><td>整数。0 以上 <code>HareruyaEc.const.deck.max.number</code>（既定 99999999）以下。HTML の <code>min</code>/<code>max</code> 属性も同じ</td><td>当該行の <code>participants</code></td><td><code>mtb_latest_event_deck.participants</code>。キー <code>participants_{id}</code>。</td></tr></tbody></table></div>
-<hr>
-<h4 id="エッジケース">エッジケース</h4>
-<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>データベース上にスロット行が 0 件</td><td>フォームは CSRF トークンのみ相当になり、表ブロックは描画されない。送信しても更新対象のループが回らず、<code>flush</code> のみで実質変化はない想定である。</td></tr><tr><td>検証エラー（文字長超過・参加人数範囲外など）</td><td><code>admin.register.failed</code> のみ表示し、入力値は再表示されない（同 GET では DB の旧値が再度載る）。</td></tr><tr><td>一部の表だけ入力した状態で送信</td><td>値の入った表では HTML5 <code>required</code> が付くため、ブラウザの制約で送信が止まる場合がある。サーバ側の Symfony は原則すべて任意のため、空欄と値ありが混在した送信が届いた場合は、空欄に対応する列は NULL に近い形で永続化される。</td></tr><tr><td>複数管理者が同時に保存</td><td>最後に成功した <code>flush</code> が全行を上書きする。楽観的排他はない。</td></tr></tbody></table></div>
-<hr>
-<h3 id="データ整合性">データ整合性</h3>
-<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>管理画面の再表示</td><td>保存後は常に <code>GET</code> で全件読み直すため、当画面で表示する値と DB の内容は一致する。</td></tr><tr><td>店舗側「直近の大会」表示</td><td>リポジトリの表示用抽出は「イベント日時が非 NULL」「日本語イベント名が空文字でない」「英語イベント名が空文字でない」のすべてを満たす行のみである。管理画面では空のスロットも一覧に出るため、店舗側に出る行集合と一致しない。</td></tr><tr><td>行数</td><td>マイグレーションでは 5 件の初期行を想定した投入がある。アプリ上は「全件」を編集対象とし、行数固定の検証はしない。</td></tr></tbody></table></div>
-<hr>
-<h3 id="権限・認可">権限・認可</h3>
-<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>直近の大会管理画面の表示・更新</th></tr></thead><tbody><tr><td>管理画面の認証を通過した運用者（当プラグインの管理ルートへ到達できる者）</td><td>本機能の GET・POST を利用できる。本ルート専用の追加ロール制約はサービスプロバイダにない。</td></tr></tbody></table></div>
-<hr>
-<h3 id="Cookie">Cookie</h3>
-<p>本機能特有の Cookie 操作はない。セッション Cookie は管理画面の共通動作に従う。</p>
-<hr>
-<h3 id="排他制御・トランザクション">排他制御・トランザクション</h3>
-<p>データベースの楽観ロック・悲観ロックは用いない。更新処理は単一リクエスト内で <code>flush</code> により一括コミットされる。同時更新は最後勝ちである。</p>
-<hr>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>行ごとの5項目（開催日・フォーマット・大会名（日本語）・大会名（英語）・参加者数）、なりすまし対策トークン</td></tr><tr><td>成功時出力</td><td>直近の大会設定の更新、成功メッセージ、編集画面への遷移</td></tr><tr><td>失敗時出力</td><td>保存せず同じ画面を再描画し、項目別のメッセージを各項目の直下に表示する</td></tr></tbody></table></div>
+<h3 id="入出力-永続化">入出力: 永続化</h3>
+<div class="table-wrap"><table><thead><tr><th>操作</th><th>契機</th></tr></thead><tbody><tr><td>更新</td><td>一括更新の成立時の、全行の開催日・フォーマット・大会名（日本語）・大会名（英語）・参加者数</td></tr></tbody></table></div>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
 <h2 id="表示メッセージ">表示メッセージ</h2>
 <div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th><th>後続処理</th></tr></thead><tbody><tr><td>M15-11-MSG-001</td><td>管理画面上部</td><td>保存しました</td><td>直近の大会設定を保存したとき</td><td>直近の大会管理（編集）画面に遷移する</td></tr><tr><td>M15-11-MSG-002</td><td>管理画面上部</td><td>保存に失敗しました</td><td>直近の大会設定の保存中にエラーが起きたとき</td><td>直近の大会管理（編集）画面に留まる</td></tr></tbody></table></div>
-<hr>
-<h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>CSRF トークン不正</td><td>フォーム検証エラーと同一経路に縮退する。<code>LatestEventDeckController::index</code>（<code>LatestEventDeckController.php:40-62</code>）は <code>isTokenValid()</code> を呼ばず 403 も返さない。CSRF トークンは <code>form_widget(form._token)</code> としてフォームに含まれるため、不正時は <code>$form-&gt;isValid()</code> が false となり <code>if</code> を通過せず、フラッシュを出さずに同一テンプレートを再描画する。</td></tr><tr><td>フォーム検証エラー</td><td>フラッシュメッセージは出さず、同一テンプレート <code>@admin/Deck/latest_event_deck.twig</code> を再描画する。項目別メッセージは <code>form_errors</code> で各項目直下に表示する（<code>LatestEventDeckController.php:58-61</code>、<code>latest_event_deck.twig:81,91,98,105,112</code>）。</td></tr></tbody></table></div>
-<hr>
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
   </div>
