@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>バッチ インフラ — S3画像サイズチェック処理 - 機能仕様書</title>
+  <style>
+:root {
+  --bg: #ffffff;
+  --panel: #fffdf8;
+  --text: #2b2a26;
+  --muted: #7a756a;
+  --line: #d6cdbd;
+  --line-soft: #ebe2d3;
+  --band: #f3ede1;
+  --clay: #c25a37;
+  --clay-soft: #f4e6dd;
+  --olive: #5f7048;
+  --olive-soft: #e9ecdf;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Yu Gothic", Meiryo, sans-serif;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.page {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 32px;
+  max-width: 1480px;
+  margin: 0 auto;
+  padding: 28px 28px 64px;
+}
+.sidebar {
+  position: sticky;
+  top: 24px;
+  align-self: start;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  padding-right: 12px;
+  border-right: 1px solid var(--line-soft);
+}
+.sidebar-title {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.toc a {
+  display: block;
+  padding: 4px 0 4px 12px;
+  border-left: 2px solid var(--line-soft);
+  color: var(--muted);
+  text-decoration: none;
+}
+.toc a:hover { color: var(--clay); border-left-color: var(--clay); }
+.toc .lv3 { padding-left: 24px; font-size: 13px; }
+.doc-content { min-width: 0; }
+header.page-header {
+  margin-bottom: 24px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+.crumb {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+h1 { margin: 0; font-size: 28px; line-height: 1.3; }
+h2 {
+  margin: 34px 0 12px;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+}
+h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
+h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
+p { margin: 9px 0; }
+a { color: var(--clay); }
+code {
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--band);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 90%;
+}
+pre {
+  overflow-x: auto;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+pre code { padding: 0; background: transparent; }
+hr { margin: 26px 0; border: 0; border-top: 1px solid var(--line); }
+ul, ol { margin: 9px 0; padding-left: 26px; }
+li { margin: 3px 0; }
+.table-wrap {
+  overflow-x: auto;
+  margin: 14px 0 22px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+th, td {
+  border: 1px solid var(--line-soft);
+  padding: 7px 9px;
+  text-align: left;
+  vertical-align: top;
+}
+th {
+  position: sticky;
+  top: 0;
+  background: var(--band);
+  font-weight: 700;
+  white-space: nowrap;
+}
+tbody tr:nth-child(even) { background: #fffaf0; }
+.screen-item-table table { min-width: 1120px; }
+.section-row td {
+  background: var(--olive-soft);
+  color: var(--olive);
+  font-weight: 700;
+}
+.tabbed-note {
+  white-space: pre-wrap;
+  overflow-x: auto;
+  padding: 10px 12px;
+  border-left: 3px solid var(--olive);
+  background: var(--panel);
+}
+details {
+  margin: 34px 0 12px;
+}
+details > summary {
+  cursor: pointer;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+  font-weight: 700;
+  list-style: revert;
+}
+details[open] > summary { margin-bottom: 12px; }
+footer {
+  margin-top: 48px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+}
+@media (max-width: 900px) {
+  .page { display: block; padding: 20px 16px 48px; }
+  .sidebar {
+    position: static;
+    max-height: none;
+    margin-bottom: 24px;
+    padding-right: 0;
+    border-right: 0;
+    border-bottom: 1px solid var(--line-soft);
+    padding-bottom: 16px;
+  }
+  h1 { font-size: 23px; }
+}
+    /* superseded-notice:start */
+    .superseded-notice {
+      margin: 0 0 18px;
+      padding: 12px 14px;
+      border: 1px solid #d9a1a1;
+      border-left: 5px solid #b3413a;
+      border-radius: 6px;
+      background: #fdf3f2;
+      font-size: 13px;
+      line-height: 1.7;
+    }
+    .superseded-badge {
+      display: inline-block;
+      margin-right: 8px;
+      padding: 2px 9px;
+      border-radius: 999px;
+      background: #b3413a;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .superseded-notice-head {
+      margin: 0 0 8px;
+    }
+    .superseded-notice-list {
+      margin: 0;
+      padding-left: 1.2em;
+    }
+    .superseded-notice-list > li {
+      margin: 6px 0;
+    }
+    .superseded-target {
+      font-weight: 700;
+    }
+    .superseded-implied {
+      display: block;
+      margin-top: 2px;
+      color: #6b4a47;
+    }
+    .superseded-notice a {
+      color: #8c322c;
+    }
+    /* superseded-notice:end */
+    /* phase2-notice:start */
+    .phase2-notice {
+      margin: 0 0 18px;
+      padding: 12px 14px;
+      border: 1px solid #9aa8c7;
+      border-left: 5px solid #3f5b96;
+      border-radius: 6px;
+      background: #f2f5fb;
+      font-size: 13px;
+      line-height: 1.7;
+    }
+    .phase2-badge {
+      display: inline-block;
+      margin-right: 8px;
+      padding: 2px 9px;
+      border-radius: 999px;
+      background: #3f5b96;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .phase2-notice-head {
+      margin: 0 0 8px;
+    }
+    .phase2-notice-list {
+      margin: 0;
+      padding-left: 1.2em;
+    }
+    .phase2-notice-list > li {
+      margin: 6px 0;
+    }
+    .phase2-target {
+      font-weight: 700;
+    }
+    .phase2-notice a {
+      color: #2f4677;
+    }
+    /* phase2-notice:end */
+  </style>
+</head>
+<body>
+  <div class="page">
+    <aside class="sidebar">
+      <p class="sidebar-title">On this page</p>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#実行の前提">実行の前提</a>
+<a class="lv3" href="#ファイル一覧の取得">ファイル一覧の取得</a>
+<a class="lv3" href="#商品サムネイルとオリジナル画像の切り分け">商品サムネイルとオリジナル画像の切り分け</a>
+<a class="lv3" href="#規定サイズの判定">規定サイズの判定</a>
+<a class="lv3" href="#超過ファイルの一覧の作成">超過ファイルの一覧の作成</a>
+<a class="lv3" href="#通知の判定と送信">通知の判定と送信</a>
+<a class="lv2" href="#入出力">入出力</a>
+<a class="lv3" href="#入出力-永続化">入出力: 永続化</a>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
+    </aside>
+    <main class="doc-content">
+      <header class="page-header">
+        <p class="crumb">Source:<br>/home/y-saito/Developments/hareruya-design-docs/functions/ec-cube-enterprise/b16-11_batch_infra_s3_image_size_check.md</p>
+        <h1>バッチ インフラ — S3画像サイズチェック処理</h1>
+      </header>
+      
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="実行の前提">実行の前提</h3>
+<p>バケット名、結果表示用の公開URLの先頭部分、作業用の保存先は、設定で与える。設定が未設定のときも空のときも、あらかじめ決めた既定値が使われる。</p>
+<p>オブジェクトストレージの接続先、リージョン、認証情報も設定で与える。接続先が空のときは、既定の接続先に接続する。</p>
+<p>作業用の保存先が無いときは、実行の初めに作る。</p>
+<p>一覧の取得、切り分け、判定、メール送信のいずれかで異常が起きたときは、その時点で打ち切って異常終了する。打ち切ったときはメールを送らない。メール件名の生成（文字コードの変換と日時の取得）の失敗は検出せず、メールの送信は続く。</p>
+<p>この処理には、同時に複数実行したときの待機や排他が無い。同時に実行したものは、同じ作業用の一覧を共有する。</p>
+<h3 id="ファイル一覧の取得">ファイル一覧の取得</h3>
+<p>画像種別ごとに、対象のパスの配下を階層の深さによらずすべて辿り、ファイルのパスとサイズ（バイト数）の一覧を作る。ファイルのパスは、空白を含むとき最初の空白の手前までしか取れない。</p>
+<p>商品サムネイルの3つの対象は1つの一覧にまとめる。ほかの画像種別は、それぞれ別の一覧にする。</p>
+<p>Excelに無い対象として、設定で与えたバケットの img/goods/iwatatest/ の配下も一覧にする。この一覧は、ほかの画像種別とは別に作る。</p>
+<p>各一覧は順に作り直す。途中で異常終了したときは、まだ作り直していない一覧には前回の内容が残り、作り直している最中の一覧は空か途中までの内容になる。実行の終了時に作業用の一覧は削除しない。</p>
+<h3 id="商品サムネイルとオリジナル画像の切り分け">商品サムネイルとオリジナル画像の切り分け</h3>
+<p>商品サムネイルの対象のうち、オリジナル画像の対象の配下にあるファイルは、商品サムネイルの一覧にも含まれる。商品サムネイルの一覧から、オリジナル画像の一覧にある行（パスとサイズの両方が同じ行）を取り除く。取り除いたファイルは、商品サムネイルとしては判定せず、オリジナル画像の基準だけで判定する。</p>
+<h3 id="規定サイズの判定">規定サイズの判定</h3>
+<p>基準のkBは、1kBを1024バイトとして数える。サイズはバイト数で比べる。</p>
+<p>設定で与えたバケットの img/goods/iwatatest/ の配下は、512000バイト以上を超過とする。</p>
+<p>超過したファイルは、パスとサイズ（バイト数を1024で割ったkB値）の1行にする。画像種別による区別は結果に残らない。</p>
+<h3 id="超過ファイルの一覧の作成">超過ファイルの一覧の作成</h3>
+<p>すべての画像種別の超過分を1つにまとめ、行の文字列の昇順に並べる。次に、各行に現れるバケットのパスの先頭部分（s3://とバケット名）を、行頭に限らずすべて結果表示用の公開URLの先頭部分に置き換える。</p>
+<p>超過が1件も無いときは、この一覧が空になる。</p>
+<h3 id="通知の判定と送信">通知の判定と送信</h3>
+<p>一覧が空でないとき、実行日時を「年月日-時:分:秒」の形（例 20250919-10:00:00）にして「&lt;実行日時&gt; :not empty」を出力する。一覧が空のときは「&lt;実行日時&gt; :empty」を出力し、メールを送らずに終える。</p>
+<p>一覧が空でないときにメールを送るのは、送信可否の設定が小文字の true と完全に一致するときだけとする。ほかの値のとき、未設定のとき、空のときは、メールを送らず、「[MAIL_ENABLED=false] メール送信をスキップします。検出結果:」に続けて超過ファイルの一覧をそのまま出力する。</p>
+<p>メールの差出人、宛先、CC、BCCは設定で与える。メールの文字コードはUTF-8の平文とする。送信元アドレスには差出人と同じものを使う。メールの送信に失敗したときは異常終了する。</p>
+<h2 id="入出力">入出力</h2>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>バケット名、公開URLの先頭部分、作業用の保存先、オブジェクトストレージの接続先・リージョン・認証情報、メールの送信可否と差出人・宛先・CC・BCCは設定で与える</td></tr><tr><td>成功時出力</td><td>超過があるときは「&lt;実行日時&gt; :not empty」を出力する。送信可否の設定が小文字の true と一致するときは、通知メールを送る。超過が無いときは「&lt;実行日時&gt; :empty」を出力する</td></tr><tr><td>失敗時出力</td><td>異常が起きたときは、メールを送らずに異常終了する。メールの送信に失敗したときも異常終了する</td></tr></tbody></table></div>
+<h3 id="入出力-永続化">入出力: 永続化</h3>
+<div class="table-wrap"><table><thead><tr><th>操作</th><th>契機</th></tr></thead><tbody><tr><td>作成（上書き）</td><td>実行のたびに、画像種別ごとのファイル一覧、切り分けや並べ替えのための中間の一覧、取り除き後の一覧、超過ファイルの一覧を作業用の保存先に作る。作り直した一覧は前回の内容を上書きし、実行後も削除しない</td></tr></tbody></table></div>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
+<h2 id="表示メッセージ">表示メッセージ</h2>
+<p>この機能は、いずれの場合も画面のメッセージを扱わない。</p>
+      <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
+    </main>
+  </div>
+</body>
+</html>

@@ -32,8 +32,8 @@
 | - [x] | フロント | 店頭買取管理 | 店頭買取査定申込前ログイン | F08-01 | 現行踏襲 | 店頭買取査定申込前ログイン時に表示する | [md](pf-eccube3/f08-01_front_store_purchase_otc_buy_entry_login.md) / [html](../function_spec_html_preview/pf-eccube3/f08-01_front_store_purchase_otc_buy_entry_login.html) |
 | - [x] | フロント | 店頭買取管理 | 店頭買取査定申込情報入力 | F08-02 | カスタマイズ | 店頭買取査定申込情報入力を表示する | [md](pf-eccube3/f08-02_front_store_purchase_otc_buy_entry_input.md) / [html](../function_spec_html_preview/pf-eccube3/f08-02_front_store_purchase_otc_buy_entry_input.html) |
 | - [x] | フロント | 店頭買取管理 | 店頭買取査定申込登録確認～完了 | F08-03 | カスタマイズ | 店頭買取査定申込登録確認～完了に表示する | [md](pf-eccube3/f08-03_front_store_purchase_otc_buy_entry_complete.md) / [html](../function_spec_html_preview/pf-eccube3/f08-03_front_store_purchase_otc_buy_entry_complete.html) |
-| - [ ] | フロント | 店頭買取管理 | 会員登録フォーム | F08-04 | カスタマイズ | 会員登録フォーム画面を表示します。 |  |
-| - [ ] | フロント | 店頭買取管理 | 店頭買取査定申込確認 | F08-05 | カスタマイズ | 店頭買取査定申込確認を表示します。 |  |
+| - [x] | フロント | 店頭買取管理 | 会員登録フォーム | F08-04 | カスタマイズ | 会員登録フォーム画面を表示します。 | [md](pf-eccube3/f08-04_front_store_purchase_otc_buy_entry_register_customer.md) / [html](../function_spec_html_preview/pf-eccube3/f08-04_front_store_purchase_otc_buy_entry_register_customer.html) |
+| - [x] | フロント | 店頭買取管理 | 店頭買取査定申込確認 | F08-05 | カスタマイズ | 店頭買取査定申込確認を表示します。 | [md](pf-eccube3/f08-05_front_store_purchase_otc_buy_entry_confirm.md) / [html](../function_spec_html_preview/pf-eccube3/f08-05_front_store_purchase_otc_buy_entry_confirm.html) |
 | - [x] | フロント | 会員 | 新規会員登録 | F06-01 | カスタマイズ | 会員情報を仮会員で登録できます。 | [md](pf-eccube3/f06-01_front_member_customer_entry.md) / [html](../function_spec_html_preview/pf-eccube3/f06-01_front_member_customer_entry.html) |
 | - [x] | フロント | 会員 | 本会員登録 | F06-02 | 現行踏襲 | 既に仮会員登録した会員情報を本会員で登録できます。 | [md](pf-eccube3/f06-02_front_member_entry_activate.md) / [html](../function_spec_html_preview/pf-eccube3/f06-02_front_member_entry_activate.html) |
 | - [x] | フロント | 会員 | ログイン | F06-03 | カスタマイズ | 本店と支店で会員ログインができます。 | [md](pf-eccube3/f06-03_front_member_customer_login.md) / [html](../function_spec_html_preview/pf-eccube3/f06-03_front_member_customer_login.html) |
@@ -348,10 +348,10 @@
 | - [ ] | バッチ | インフラ |  |  | 現行踏襲 | WordPressの最新ファイルをS3に毎分で転送 |  |
 | - [x] | バッチ | インフラ |  |  | 現行踏襲 | S3のファイルを自サーバに転送 | [md](pf-eccube3/batch_s3_file_sync.md) / [html](../function_spec_html_preview/pf-eccube3/batch_s3_file_sync.html) |
 | - [x] | バッチ | インフラ |  |  | 現行踏襲 | S3のファイルを自サーバに転送 | [md](pf-eccube3/batch_s3_file_sync.md) / [html](../function_spec_html_preview/pf-eccube3/batch_s3_file_sync.html) |
-| - [ ] | バッチ | インフラ | 月次商品情報スナップショット | B16-06 | カスタマイズ | 月末に店舗・商品規格ごとに一部の事項を抽出し、集計結果をS3に保存する |  |
-| - [ ] | バッチ | インフラ | サイトマップ生成処理 | B16-09 | カスタマイズ | フロント側のサイトマップを作成し、S3バケットにアップロードを行う |  |
-| - [ ] | バッチ | インフラ | ステージングデータベース保守バッチ | B16-10 | 現行踏襲 | 定期的にステージング環境を最新の本番環境に近い状態に保つためのメンテナンス処理を行う |  |
-| - [ ] | バッチ | インフラ | S3画像サイズチェック処理 | B16-11 | 現行踏襲 | S3にアップロードされている画像内に規定している容量超過しているファイルを通知する |  |
+| - [x] | バッチ | インフラ | 月次商品情報スナップショット | B16-06 | カスタマイズ | 月末に店舗・商品規格ごとに一部の事項を抽出し、集計結果をS3に保存する | [md](ec-cube-enterprise/b16-06_batch_infra_monthly_inventory_snapshot.md) / [html](../function_spec_html_preview/ec-cube-enterprise/b16-06_batch_infra_monthly_inventory_snapshot.html) |
+| - [x] | バッチ | インフラ | サイトマップ生成処理 | B16-09 | カスタマイズ | フロント側のサイトマップを作成し、S3バケットにアップロードを行う | [md](ec-cube-enterprise/b16-09_batch_infra_sitemap_generation.md) / [html](../function_spec_html_preview/ec-cube-enterprise/b16-09_batch_infra_sitemap_generation.html) |
+| - [x] | バッチ | インフラ | ステージングデータベース保守バッチ | B16-10 | 現行踏襲 | 定期的にステージング環境を最新の本番環境に近い状態に保つためのメンテナンス処理を行う | [md](ec-cube-enterprise/b16-10_batch_infra_stg_db_maintenance.md) / [html](../function_spec_html_preview/ec-cube-enterprise/b16-10_batch_infra_stg_db_maintenance.html) |
+| - [x] | バッチ | インフラ | S3画像サイズチェック処理 | B16-11 | 現行踏襲 | S3にアップロードされている画像内に規定している容量超過しているファイルを通知する | [md](ec-cube-enterprise/b16-11_batch_infra_s3_image_size_check.md) / [html](../function_spec_html_preview/ec-cube-enterprise/b16-11_batch_infra_s3_image_size_check.html) |
 | - [x] | バッチ | その他 | 最新記事jsonファイル作成 | B17-01 | 現行踏襲 | 最新記事20件の情報をjsonファイルとして作成する | [md](pf-eccube3/b17-01_batch_other_create_latest_article_list.md) / [html](../function_spec_html_preview/pf-eccube3/b17-01_batch_other_create_latest_article_list.html) |
 | - [x] | API | 在庫管理 | スマレジ連携処理 | A01-01 | 新規実装 | 在庫処理に関連するスマレジとの連携処理 | 生成済み: 2026-06-11 [md](ec-cube-enterprise/a01-01_api_stock_smaregi_stock_sync.md) / [html](../function_spec_html_preview/ec-cube-enterprise/a01-01_api_stock_smaregi_stock_sync.html) |
 | - [x] | API | 在庫管理 | スマレジwebhook連携エラー再連携 | A01-02 | 新規実装 | スマレジ連携のwebhookで連携エラーになったものを再連携する | 生成済み: 2026-06-11 [md](ec-cube-enterprise/a01-02_api_stock_smaregi_webhook_error_retry.md) / [html](../function_spec_html_preview/ec-cube-enterprise/a01-02_api_stock_smaregi_webhook_error_retry.html) |
