@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>バッチ 会員管理 — 身分証有効期限切れ通知 - 機能仕様書</title>
+  <style>
+:root {
+  --bg: #ffffff;
+  --panel: #fffdf8;
+  --text: #2b2a26;
+  --muted: #7a756a;
+  --line: #d6cdbd;
+  --line-soft: #ebe2d3;
+  --band: #f3ede1;
+  --clay: #c25a37;
+  --clay-soft: #f4e6dd;
+  --olive: #5f7048;
+  --olive-soft: #e9ecdf;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Yu Gothic", Meiryo, sans-serif;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.page {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 32px;
+  max-width: 1480px;
+  margin: 0 auto;
+  padding: 28px 28px 64px;
+}
+.sidebar {
+  position: sticky;
+  top: 24px;
+  align-self: start;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  padding-right: 12px;
+  border-right: 1px solid var(--line-soft);
+}
+.sidebar-title {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.toc a {
+  display: block;
+  padding: 4px 0 4px 12px;
+  border-left: 2px solid var(--line-soft);
+  color: var(--muted);
+  text-decoration: none;
+}
+.toc a:hover { color: var(--clay); border-left-color: var(--clay); }
+.toc .lv3 { padding-left: 24px; font-size: 13px; }
+.doc-content { min-width: 0; }
+header.page-header {
+  margin-bottom: 24px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+.crumb {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+h1 { margin: 0; font-size: 28px; line-height: 1.3; }
+h2 {
+  margin: 34px 0 12px;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+}
+h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
+h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
+p { margin: 9px 0; }
+a { color: var(--clay); }
+code {
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--band);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 90%;
+}
+pre {
+  overflow-x: auto;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+pre code { padding: 0; background: transparent; }
+hr { margin: 26px 0; border: 0; border-top: 1px solid var(--line); }
+ul, ol { margin: 9px 0; padding-left: 26px; }
+li { margin: 3px 0; }
+.table-wrap {
+  overflow-x: auto;
+  margin: 14px 0 22px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+th, td {
+  border: 1px solid var(--line-soft);
+  padding: 7px 9px;
+  text-align: left;
+  vertical-align: top;
+}
+th {
+  position: sticky;
+  top: 0;
+  background: var(--band);
+  font-weight: 700;
+  white-space: nowrap;
+}
+tbody tr:nth-child(even) { background: #fffaf0; }
+.screen-item-table table { min-width: 1120px; }
+.section-row td {
+  background: var(--olive-soft);
+  color: var(--olive);
+  font-weight: 700;
+}
+.tabbed-note {
+  white-space: pre-wrap;
+  overflow-x: auto;
+  padding: 10px 12px;
+  border-left: 3px solid var(--olive);
+  background: var(--panel);
+}
+details {
+  margin: 34px 0 12px;
+}
+details > summary {
+  cursor: pointer;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+  font-weight: 700;
+  list-style: revert;
+}
+details[open] > summary { margin-bottom: 12px; }
+footer {
+  margin-top: 48px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+}
+@media (max-width: 900px) {
+  .page { display: block; padding: 20px 16px 48px; }
+  .sidebar {
+    position: static;
+    max-height: none;
+    margin-bottom: 24px;
+    padding-right: 0;
+    border-right: 0;
+    border-bottom: 1px solid var(--line-soft);
+    padding-bottom: 16px;
+  }
+  h1 { font-size: 23px; }
+}
+    /* superseded-notice:start */
+    .superseded-notice {
+      margin: 0 0 18px;
+      padding: 12px 14px;
+      border: 1px solid #d9a1a1;
+      border-left: 5px solid #b3413a;
+      border-radius: 6px;
+      background: #fdf3f2;
+      font-size: 13px;
+      line-height: 1.7;
+    }
+    .superseded-badge {
+      display: inline-block;
+      margin-right: 8px;
+      padding: 2px 9px;
+      border-radius: 999px;
+      background: #b3413a;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .superseded-notice-head {
+      margin: 0 0 8px;
+    }
+    .superseded-notice-list {
+      margin: 0;
+      padding-left: 1.2em;
+    }
+    .superseded-notice-list > li {
+      margin: 6px 0;
+    }
+    .superseded-target {
+      font-weight: 700;
+    }
+    .superseded-implied {
+      display: block;
+      margin-top: 2px;
+      color: #6b4a47;
+    }
+    .superseded-notice a {
+      color: #8c322c;
+    }
+    /* superseded-notice:end */
+    /* phase2-notice:start */
+    .phase2-notice {
+      margin: 0 0 18px;
+      padding: 12px 14px;
+      border: 1px solid #9aa8c7;
+      border-left: 5px solid #3f5b96;
+      border-radius: 6px;
+      background: #f2f5fb;
+      font-size: 13px;
+      line-height: 1.7;
+    }
+    .phase2-badge {
+      display: inline-block;
+      margin-right: 8px;
+      padding: 2px 9px;
+      border-radius: 999px;
+      background: #3f5b96;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .phase2-notice-head {
+      margin: 0 0 8px;
+    }
+    .phase2-notice-list {
+      margin: 0;
+      padding-left: 1.2em;
+    }
+    .phase2-notice-list > li {
+      margin: 6px 0;
+    }
+    .phase2-target {
+      font-weight: 700;
+    }
+    .phase2-notice a {
+      color: #2f4677;
+    }
+    /* phase2-notice:end */
+  </style>
+</head>
+<body>
+  <div class="page">
+    <aside class="sidebar">
+      <p class="sidebar-title">On this page</p>
+      <nav class="toc"><a class="lv2" href="#業務ロジック">業務ロジック</a>
+<a class="lv3" href="#対象の判定">対象の判定</a>
+<a class="lv3" href="#会員ごとの更新と送信">会員ごとの更新と送信</a>
+<a class="lv3" href="#会員宛メール">会員宛メール</a>
+<a class="lv3" href="#管理者宛メール">管理者宛メール</a>
+<a class="lv3" href="#実行するバッチの名前">実行するバッチの名前</a>
+<a class="lv2" href="#入出力">入出力</a>
+<a class="lv3" href="#入出力-永続化">入出力: 永続化</a>
+<a class="lv2" href="#リニューアル後の仕様">リニューアル後の仕様</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a></nav>
+    </aside>
+    <main class="doc-content">
+      <header class="page-header">
+        <p class="crumb">Source:<br>/home/y-saito/Developments/hareruya-design-docs/functions/pf-eccube3/b08-07_batch_customer_id_expire_notification.md</p>
+        <h1>バッチ 会員管理 — 身分証有効期限切れ通知</h1>
+      </header>
+      
+      <h2 id="業務ロジック">業務ロジック</h2>
+<h3 id="対象の判定">対象の判定</h3>
+<p>実行した日に事前通知日数を加えた日の0時0分を基準日時とし、身分証有効期限日が基準日時以前の会員を対象とする。身分証有効期限日が既に過ぎている会員も対象に含む。</p>
+<p>対象は身分証有効期限日だけで決め、本人確認ステータスでは絞り込まない。身分証有効期限日が未設定の会員は対象にならない。</p>
+<p>対象の並び順は定めていない。</p>
+<h3 id="会員ごとの更新と送信">会員ごとの更新と送信</h3>
+<p>対象の会員を1件ずつ処理する。会員ごとに、更新を確定してから、その会員へメールを送る。</p>
+<p>途中で異常が起きて処理が中断したときは、その時点で打ち切る。それまでに処理した会員の更新と送信は取り消さない。打ち切ったときは管理者宛メールを送らない。</p>
+<p>メールの送信結果が0通のときは異常として扱わない。配信履歴を保存して次の会員へ進み、最後に管理者宛メールも送る。</p>
+<h3 id="会員宛メール">会員宛メール</h3>
+<p>会員宛メールの件名と本文は、メールテンプレート「身分証有効期限切れ通知メール」に登録されたものを使う。</p>
+<p>本文に会員ごとの差し込みは無く、すべての会員に同じ文面を送る。会員の住所や表示言語によらず、日本語の文面を送る。</p>
+<p>返信先には基本情報の返信受付メールアドレスを、送信エラーの戻り先には基本情報の送信エラー受付メールアドレスを設定する。</p>
+<p>送信した件名・本文・送信日時を、その会員のメール配信履歴として保存する。配信履歴には使用したメールテンプレートを紐づけ、作成者は設定しない。</p>
+<h3 id="管理者宛メール">管理者宛メール</h3>
+<p>管理者宛メールは、対象の会員すべての処理が終わった後に1通だけ送る。</p>
+<p>宛先は、追加システム設定の「身分証の有効期限切れ会員送信メールアドレス」に設定されたメールアドレスとする。カンマで区切った複数のメールアドレスが設定されているときは、そのすべてに送る。</p>
+<p>この設定が空のときは、管理者宛メールを送らずに終える。このときも、会員の更新と会員宛メールの送信は済んでいる。</p>
+<p>本文の氏名は、会員の姓と名を半角空白でつないだものとする。</p>
+<p>返信先と送信エラーの戻り先は、会員宛メールと同じものを設定する。</p>
+<p>管理者宛メールはメール配信履歴に保存しない。</p>
+<h3 id="実行するバッチの名前">実行するバッチの名前</h3>
+<p>実行するバッチの名前を引数で受け取る。引数が無いとき、または実行できるバッチの名前と一致しないときは、実行日時を添えたメッセージを出力し、何も処理せずに異常終了する。</p>
+<p>バッチの名前に続けて追加の引数を指定できるが、このバッチでは使わない。追加の引数を9個まで指定したときは通常どおり処理する。10個すべてを指定したときは、処理を始める前に異常終了する。</p>
+<h2 id="入出力">入出力</h2>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>実行するバッチの名前。追加の引数（9個まで。このバッチでは使わない）</td></tr><tr><td>成功時出力</td><td>開始時に「Command start:」に続けて年/月/日 時:分:秒を、完了時に「Command complete:」に続けて年/月/日 時:分:秒を出力する</td></tr><tr><td>失敗時出力</td><td>実行するバッチの名前が一致しないときに、角括弧で囲んだ年/月/日 時:分に続けて「Nothing args or command.」を出力する</td></tr></tbody></table></div>
+<p>本バッチでは、いずれの場合も他のAPIを呼び出さない。</p>
+<h3 id="入出力-永続化">入出力: 永続化</h3>
+<div class="table-wrap"><table><thead><tr><th>操作</th><th>契機</th></tr></thead><tbody><tr><td>登録</td><td>会員への通知を送信したときの、その会員の配信履歴（件名・本文・送信日時・使用したテンプレート）</td></tr></tbody></table></div>
+<div class="renewal-spec-banner"><h3 id="リニューアル後の仕様">リニューアル後の仕様</h3></div>
+<h2 id="表示メッセージ">表示メッセージ</h2>
+<p>この機能は、いずれの場合も画面のメッセージを扱わない。</p>
+      <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
+    </main>
+  </div>
+</body>
+</html>

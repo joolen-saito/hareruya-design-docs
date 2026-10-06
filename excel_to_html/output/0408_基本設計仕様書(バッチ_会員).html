@@ -1697,7 +1697,50 @@
             <div class="doc-bullet" style="--lv:0"><span class="doc-marker"><span class="src-cell" data-excel-book="0408" data-excel-sheet="身分証有効期限切れ通知" data-excel-ref="0408:身分証有効期限切れ通知!B99">・</span></span><span><span class="src-cell" data-excel-book="0408" data-excel-sheet="身分証有効期限切れ通知" data-excel-ref="0408:身分証有効期限切れ通知!C99">該当処理なし</span></span></div>
           </div>
         </div>
+      <!-- function-design-embed:start b08-07-b08-07_batch_customer_id_expire_notification -->
+      <section class="function-design-embed" id="function-design-b08-07-b08-07_batch_customer_id_expire_notification" data-source="functions/pf-eccube3/b08-07_batch_customer_id_expire_notification.md">
+        <header class="function-design-header">
+          <p class="function-design-source">Source:<br>functions/pf-eccube3/b08-07_batch_customer_id_expire_notification.md</p>
+          <h3>現行仕様</h3>
+          <h4>B08-07 身分証有効期限切れ通知 / バッチ 会員管理 — 身分証有効期限切れ通知</h4>
+        </header>
+        <div class="function-design-body">
+          <h2 id="function-design-b08-07-b08-07_batch_customer_id_expire_notification-業務ロジック">業務ロジック</h2>
+          <h3 id="function-design-b08-07-b08-07_batch_customer_id_expire_notification-対象の判定">対象の判定</h3>
+          <p>実行した日に事前通知日数を加えた日の0時0分を基準日時とし、身分証有効期限日が基準日時以前の会員を対象とする。身分証有効期限日が既に過ぎている会員も対象に含む。</p>
+          <p>対象は身分証有効期限日だけで決め、本人確認ステータスでは絞り込まない。身分証有効期限日が未設定の会員は対象にならない。</p>
+          <p>対象の並び順は定めていない。</p>
+          <h3 id="function-design-b08-07-b08-07_batch_customer_id_expire_notification-会員ごとの更新と送信">会員ごとの更新と送信</h3>
+          <p>対象の会員を1件ずつ処理する。会員ごとに、更新を確定してから、その会員へメールを送る。</p>
+          <p>途中で異常が起きて処理が中断したときは、その時点で打ち切る。それまでに処理した会員の更新と送信は取り消さない。打ち切ったときは管理者宛メールを送らない。</p>
+          <p>メールの送信結果が0通のときは異常として扱わない。配信履歴を保存して次の会員へ進み、最後に管理者宛メールも送る。</p>
+          <h3 id="function-design-b08-07-b08-07_batch_customer_id_expire_notification-会員宛メール">会員宛メール</h3>
+          <p>会員宛メールの件名と本文は、メールテンプレート「身分証有効期限切れ通知メール」に登録されたものを使う。</p>
+          <p>本文に会員ごとの差し込みは無く、すべての会員に同じ文面を送る。会員の住所や表示言語によらず、日本語の文面を送る。</p>
+          <p>返信先には基本情報の返信受付メールアドレスを、送信エラーの戻り先には基本情報の送信エラー受付メールアドレスを設定する。</p>
+          <p>送信した件名・本文・送信日時を、その会員のメール配信履歴として保存する。配信履歴には使用したメールテンプレートを紐づけ、作成者は設定しない。</p>
+          <h3 id="function-design-b08-07-b08-07_batch_customer_id_expire_notification-管理者宛メール">管理者宛メール</h3>
+          <p>管理者宛メールは、対象の会員すべての処理が終わった後に1通だけ送る。</p>
+          <p>宛先は、追加システム設定の「身分証の有効期限切れ会員送信メールアドレス」に設定されたメールアドレスとする。カンマで区切った複数のメールアドレスが設定されているときは、そのすべてに送る。</p>
+          <p>この設定が空のときは、管理者宛メールを送らずに終える。このときも、会員の更新と会員宛メールの送信は済んでいる。</p>
+          <p>本文の氏名は、会員の姓と名を半角空白でつないだものとする。</p>
+          <p>返信先と送信エラーの戻り先は、会員宛メールと同じものを設定する。</p>
+          <p>管理者宛メールはメール配信履歴に保存しない。</p>
+          <h3 id="function-design-b08-07-b08-07_batch_customer_id_expire_notification-実行するバッチの名前">実行するバッチの名前</h3>
+          <p>実行するバッチの名前を引数で受け取る。引数が無いとき、または実行できるバッチの名前と一致しないときは、実行日時を添えたメッセージを出力し、何も処理せずに異常終了する。</p>
+          <p>バッチの名前に続けて追加の引数を指定できるが、このバッチでは使わない。追加の引数を9個まで指定したときは通常どおり処理する。10個すべてを指定したときは、処理を始める前に異常終了する。</p>
+          <h2 id="function-design-b08-07-b08-07_batch_customer_id_expire_notification-入出力">入出力</h2>
+          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>実行するバッチの名前。追加の引数（9個まで。このバッチでは使わない）</td></tr><tr><td>成功時出力</td><td>開始時に「Command start:」に続けて年/月/日 時:分:秒を、完了時に「Command complete:」に続けて年/月/日 時:分:秒を出力する</td></tr><tr><td>失敗時出力</td><td>実行するバッチの名前が一致しないときに、角括弧で囲んだ年/月/日 時:分に続けて「Nothing args or command.」を出力する</td></tr></tbody></table></div>
+          <p>本バッチでは、いずれの場合も他のAPIを呼び出さない。</p>
+          <h3 id="function-design-b08-07-b08-07_batch_customer_id_expire_notification-入出力-永続化">入出力: 永続化</h3>
+          <div class="table-wrap"><table><thead><tr><th>操作</th><th>契機</th></tr></thead><tbody><tr><td>登録</td><td>会員への通知を送信したときの、その会員の配信履歴（件名・本文・送信日時・使用したテンプレート）</td></tr></tbody></table></div>
+          <div class="renewal-spec-banner"><h3 id="function-design-b08-07-b08-07_batch_customer_id_expire_notification-リニューアル後の仕様">リニューアル後の仕様</h3></div>
+          <h2 id="function-design-b08-07-b08-07_batch_customer_id_expire_notification-表示メッセージ">表示メッセージ</h2>
+          <p>この機能は、いずれの場合も画面のメッセージを扱わない。</p>
+        </div>
       </section>
+      <!-- function-design-embed:end b08-07-b08-07_batch_customer_id_expire_notification -->
+</section>
 
     </main>
   </div>
