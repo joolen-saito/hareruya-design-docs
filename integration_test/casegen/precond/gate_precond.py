@@ -158,7 +158,9 @@ def dedicated_idents_all():
 def check(fid, own_all):
     err = []
     C, S = load(fid)
-    base = {r["テストID"]: r for r in read(PC / f"baseline/{fid}_test_cases.tsv")}
+    # 基線が無い機能は、書き直しの後で新設したもの（added_cases.tsv に全ケースが載る）
+    bp = PC / f"baseline/{fid}_test_cases.tsv"
+    base = {r["テストID"]: r for r in read(bp)} if bp.exists() else {}
     rn = renames(fid)
     sc_all = step_changes(fid)
     oc_all = oracle_changes(fid)
@@ -220,8 +222,18 @@ def check(fid, own_all):
             err.append(("G4", r["シードID"], f"ケース専用のシードIDの末尾がケース番号でない（{use[r['シードID']][0]}）"))
 
     # G6 固定列・テストID集合・保留
-    if set(base) != {x["テストID"] for x in C}:
-        err.append(("G6", fid, "テストIDの集合が基線と違う"))
+    # 保留ケースは excluded_hold_cases.tsv へ移した（依頼者決定 2026-10-01）。基線からそれを差し引いて照合する
+    exp = CG / "excluded_hold_cases.tsv"
+    excluded = {r["テストID"] for r in read(exp)} if exp.exists() else set()
+    # 書き直しの後で足したケース（機能間データ連携など）は added_cases.tsv に載せる。基線は書き換えない
+    adp = PC / "added_cases.tsv"
+    added = {r["テストID"] for r in read(adp) if r["テストID"].startswith(f"IT-{fid}-")} if adp.exists() else set()
+    if (set(base) - excluded) | added != {x["テストID"] for x in C}:
+        err.append(("G6", fid, "テストIDの集合が基線（保留除外後）＋追加分（added_cases.tsv）と違う"))
+    if added & set(base):
+        err.append(("G6", fid, "added_cases.tsv のテストIDが基線と重なる"))
+    if any(x["実行区分"] == "保留" for x in C):
+        err.append(("G6", fid, "保留ケースが残っている（excluded_hold_cases.tsv へ移す）"))
     for x in C:
         b = base.get(x["テストID"])
         if not b:
