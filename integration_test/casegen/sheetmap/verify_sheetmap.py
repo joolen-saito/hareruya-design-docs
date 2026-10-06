@@ -13,7 +13,8 @@ HDR = ["テストID", "判定ID", "要求ID", "連鎖ID", "観点ID", "優先度
        "事前準備", "手順", "期待結果", "出典"]
 SHDR = ["シードID", "区分", "論理名", "状態・属性", "用途", "投入方法", "共有"]
 # シートに別機能の機能設計書が埋め込まれている機能。現行仕様は機能設計書を直接読み、出典は「<機能ID> 機能設計書 / <小見出し>」と書く
-DOCS = {"M15-11": "functions/pf-eccube3/m15-11_admin_deck_deck_latest_event.md"}
+DOCS = {"M15-11": "functions/pf-eccube3/m15-11_admin_deck_deck_latest_event.md",
+        "M15-05": "functions/pf-eccube3/m15-05_admin_deck_deck_edit.md"}
 BAN = re.compile(r"失敗させる|該当する操作|同上|いくつか|別の画面|要確認|TBD|設計どおり|設計書どおり|仕様どおり|正しいこと|正しく")
 PHYS = re.compile(r"\b(?:dtb|mtb|plg)_\w+|\b[a-z]+(?:_[a-z0-9]+){1,}\b|\badmin\.[a-z_.]+")
 LATER = re.compile(r"手順\d|返した値|発番した|発番された")

@@ -161,6 +161,18 @@ def check(fid, own_all):
     # 基線が無い機能は、書き直しの後で新設したもの（added_cases.tsv に全ケースが載る）
     bp = PC / f"baseline/{fid}_test_cases.tsv"
     base = {r["テストID"]: r for r in read(bp)} if bp.exists() else {}
+    # 別の機能IDのファイルから付け替えたケース（moved_cases.tsv）。移す前の基線を、新しいテストIDで照合に使う
+    mvp = PC / "moved_cases.tsv"
+    moved = read(mvp) if mvp.exists() else []
+    moved_out = {r["旧テストID"] for r in moved if r["旧テストID"].startswith(f"IT-{fid}-")}
+    moved_src = set()
+    for r in moved:
+        if r["新テストID"].startswith(f"IT-{fid}-"):
+            sfid = r["旧テストID"][3:-4]
+            ob = {x["テストID"]: x for x in read(PC / f"baseline/{sfid}_test_cases.tsv")}.get(r["旧テストID"])
+            if ob:
+                base[r["新テストID"]] = dict(ob, テストID=r["新テストID"])
+                moved_src.add(sfid)
     rn = renames(fid)
     sc_all = step_changes(fid)
     oc_all = oracle_changes(fid)
@@ -168,6 +180,12 @@ def check(fid, own_all):
     old_names = seed_names(read(bs)) if bs.exists() else set()
     new_names = seed_names(S)
     base_seed_text = bs.read_text(encoding="utf-8") if bs.exists() else ""
+    for sfid in sorted(moved_src):                  # 付け替えたケースの改名は、移す前の機能の基線シードで確かめる
+        sbs = PC / f"baseline/{sfid}_seed_data.tsv"
+        if sbs.exists():
+            old_names |= seed_names(read(sbs))
+            base_seed_text += sbs.read_text(encoding="utf-8")
+    cur_seed_text = " ".join(r.get("状態・属性", "") + " " + r.get("投入方法", "") for r in S)
     cur_seed_text = " ".join(r.get("状態・属性", "") + " " + r.get("投入方法", "") for r in S)
 
     ap = PC / "rename_approvals.tsv"
@@ -228,8 +246,8 @@ def check(fid, own_all):
     # 書き直しの後で足したケース（機能間データ連携など）は added_cases.tsv に載せる。基線は書き換えない
     adp = PC / "added_cases.tsv"
     added = {r["テストID"] for r in read(adp) if r["テストID"].startswith(f"IT-{fid}-")} if adp.exists() else set()
-    if (set(base) - excluded) | added != {x["テストID"] for x in C}:
-        err.append(("G6", fid, "テストIDの集合が基線（保留除外後）＋追加分（added_cases.tsv）と違う"))
+    if (set(base) - excluded - moved_out) | added != {x["テストID"] for x in C}:
+        err.append(("G6", fid, "テストIDの集合が基線（保留除外・付け替え後）＋追加分（added_cases.tsv）と違う"))
     if added & set(base):
         err.append(("G6", fid, "added_cases.tsv のテストIDが基線と重なる"))
     if any(x["実行区分"] == "保留" for x in C):

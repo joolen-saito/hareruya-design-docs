@@ -2,7 +2,8 @@
 """レビュー依頼文を作る。 make_prompts.py <巡> [機能ID...]  → review/<機能ID>_r<巡>_prompt.md"""
 import csv, pathlib, sys, collections
 G = pathlib.Path(__file__).resolve().parents[1]
-NOTE = {"M15-11": "- 対象シートに埋め込まれた「現行仕様」は F06-10（ポイント履歴）のもの（埋め込みの取り違え）なので根拠にしていない。M15-11 の現行仕様は機能設計書 `hareruya-design-docs/functions/pf-eccube3/m15-11_admin_deck_deck_latest_event.md` を直接の根拠にしており、出典は「M15-11 機能設計書 / <小見出し>」と書いている。"}
+NOTE = {"M15-05": "- 対象シートに埋め込まれた「現行仕様」は M15-02（デッキCSV出力）のもの（埋め込みの取り違え）なので根拠にしていない。M15-05 の現行仕様は機能設計書 `hareruya-design-docs/functions/pf-eccube3/m15-05_admin_deck_deck_edit.md` を直接の根拠にしており、出典は「M15-05 機能設計書 / <小見出し>」と書いている。",
+        "M15-11": "- 対象シートに埋め込まれた「現行仕様」は F06-10（ポイント履歴）のもの（埋め込みの取り違え）なので根拠にしていない。M15-11 の現行仕様は機能設計書 `hareruya-design-docs/functions/pf-eccube3/m15-11_admin_deck_deck_latest_event.md` を直接の根拠にしており、出典は「M15-11 機能設計書 / <小見出し>」と書いている。"}
 T = collections.OrderedDict(); N = {}
 for r in csv.DictReader((G / "targets.tsv").open(encoding="utf-8"), delimiter="\t"):
     if r["扱い"] == "ケース作成":
