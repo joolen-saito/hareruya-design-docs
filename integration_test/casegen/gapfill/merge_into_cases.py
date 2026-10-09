@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """抜けを埋めるケース（gapfill/cases・13列）を、機能ごとのケースファイル（cases/・11列）へ足す。
 
-何度実行しても同じ結果になる: 以前足した行（gf_map.tsv に載っているテストID・今回のシード表のシードID）を
+何度実行しても同じ結果になる: 以前足した行（gf_map.tsv に載っているテストID・gf_seeds.tsv に載っているシードID）を
 cases/ から取り除いてから、gapfill/cases の今の内容を末尾へ足す。既存のケースとシードには触れない。
 判定IDと指摘IDは gf_map.tsv に残す。足したテストIDは precond/added_cases.tsv に載せる。
 sheetmap・nosheet・ga の merge_into_cases.py を流すと該当機能のファイルが作り直されるので、その後にこれを流し直す。
@@ -37,6 +37,10 @@ def main():
     newseed = set()
     for fid in fids:
         newseed |= {r[0] for r in rows(G / f"cases/{fid}_gf_seed_data.tsv")[1]}
+    # 前回足したシード（著者が外した・番号を振り直した分を含む）も取り除く
+    cur_seed = [[r[0], fid] for fid in fids for r in rows(G / f"cases/{fid}_gf_seed_data.tsv")[1]]
+    if (G / "gf_seeds.tsv").exists():
+        newseed |= {r[0] for r in rows(G / "gf_seeds.tsv")[1]}
     op = [r for r in op if r[1] not in newseed and not r[4].startswith("gapfill/")]
     for fid in fids:
         h, C = rows(G / f"cases/{fid}_gf_test_cases.tsv")
@@ -73,6 +77,7 @@ def main():
             op.append([fid, s_, uns[s_], ",".join(ts), "gapfill/（既存シードの未確定の前提を追加ケースが使う）",
                        "未整備" if "未整備" in uns[s_] and "未確定" not in uns[s_] else "未確定"])
     write(G / "gf_map.tsv", ["テストID", "判定ID", "機能ID", "指摘ID"], m)
+    write(G / "gf_seeds.tsv", ["シードID", "機能ID"], cur_seed)
     write(CG / "precond/open_preconditions.tsv", oph, op)
     ah, A = rows(CG / "precond/added_cases.tsv")
     new = {x[0] for x in m}
