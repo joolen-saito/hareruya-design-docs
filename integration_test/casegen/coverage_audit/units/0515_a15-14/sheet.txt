@@ -1,0 +1,74 @@
+L0001	Source:
+L0002	functions/pf-api/a15-14_api_deck_builder_deck_metagame.md
+L0003	A15-14 メタゲーム情報参照 ／ API デッキビルダー — メタゲーム情報参照
+L0004	業務ロジック
+L0005	集計対象
+L0006	format_id に一致するフォーマットを取得する。単一値・複数値のいずれも指定できる。各フォーマットについて、フォーマットのメタ範囲で区切った集計範囲内の公開・大会デッキを、アーキタイプ別に件数集計する。count を指定したときは、件数上位から最大 count 件のアーキタイプに絞る。アーキタイプ別集計は件数降順で返す。
+L0007	メタ範囲の単位は日数とする。 集計範囲は、実行日からメタ範囲の日数だけ前の日の0時0分0秒から、実行日の23時59分59秒までとする。 集計範囲の両端の日時は集計範囲に含める。 集計対象は、大会日付が集計範囲内にある公開・大会デッキとする。
+L0008	占有率の算出
+L0009	フォーマットごとに全アーキタイプの件数合計を求め、各アーキタイプの件数を合計で割って占有率を算出する。占有率は百分率で小数第2位までとする。
+L0010	認証と公開範囲
+L0011	本APIは認証を行わない。認証用のトークンヘッダの検証とプレイヤーの特定をいずれも行わず、誰でも呼び出せる参照系である。認証起因のHTTP 401は返さない。公開デッキのみを集計対象とし、利用者状態によらず同一の集計結果を返す。呼び出し可能なクライアントはデッキビルダーアプリ。
+L0012	値の扱い
+L0013	件数・ページ番号・表示順は既定と上限に従う。条件に一致しない、または非公開のデータは空結果または既定のエラー形式で返す。
+L0014	フォーマットが存在し集計対象のデッキが0件のときは、HTTP 200・処理結果コード200で、そのフォーマットのアーキタイプ別集計を空の配列で返す。 アーキタイプ別集計の項目に、金額・ポイント・ステータスに当たる項目は無い。 デッキ件数は保存された値ではなく、集計対象のデッキを数えて求める。 占有率は保存された値ではなく、デッキ件数から算出する。
+L0015	エラー時の扱い
+L0016	エラー内容	処理
+L0017	format_id 未指定	入力不正（HTTP 400）とし、「invalid request parameter」を返す
+L0018	該当フォーマットなし	該当なし（HTTP 404）とし、「format not found」を返す
+L0019	集計処理中の異常	共通の異常処理に委ねる（HTTP 500相当）
+L0020	入出力
+L0021	種類	内容
+L0022	入力	クエリの format_id（整数または配列、必須）と count（整数、任意）。count 未指定のときは全件を返す
+L0023	成功時出力	HTTP 200。処理結果コードとフォーマットごとの集計結果を持つJSON。JSONキーはsnake_caseで組み立てる
+L0024	失敗時出力	HTTP 400（format_id 未指定）、HTTP 404（該当フォーマットなし）。いずれも {code, message} の形。HTTP 500 は共通の異常処理に委ねる
+L0025	出力: 応答フィールド
+L0026	フィールド	型	説明
+L0027	code	integer	処理結果コード。成功時は200。
+L0028	formats	array	フォーマットごとの集計結果の配列。
+L0029	formats[].id	integer	フォーマット識別子。
+L0030	formats[].name_jp	string	フォーマットの日本語名。
+L0031	formats[].name_en	string	フォーマットの英語名。
+L0032	formats[].from_date	string	集計範囲の開始日時。Y/m/d h:m:s書式の文字列。
+L0033	formats[].archetypes	array	アーキタイプ別の集計結果の配列。件数降順。
+L0034	formats[].archetypes[].id	integer	アーキタイプ識別子。
+L0035	formats[].archetypes[].name_jp	string	アーキタイプの日本語名。
+L0036	formats[].archetypes[].name_en	string	アーキタイプの英語名。
+L0037	formats[].archetypes[].card_image	string	アーキタイプを代表するカード画像のURL。未設定のときはnull。
+L0038	formats[].archetypes[].deck_count	integer	集計範囲内のデッキ件数。
+L0039	formats[].archetypes[].rate	number	フォーマット内での占有率（百分率、小数第2位まで）。
+L0040	成功時の応答例（実装確認値に基づく代表値）。
+L0041	{
+L0042	"code": 200,
+L0043	"formats": [
+L0044	{
+L0045	"id": 1,
+L0046	"name_jp": "スタンダード",
+L0047	"name_en": "Standard",
+L0048	"from_date": "2026/05/04 00:05:00",
+L0049	"archetypes": [
+L0050	{
+L0051	"id": 101,
+L0052	"name_jp": "白単アグロ",
+L0053	"name_en": "Mono White Aggro",
+L0054	"card_image": "https://example.invalid/images/101.jpg",
+L0055	"deck_count": 42,
+L0056	"rate": 35.0
+L0057	},
+L0058	{
+L0059	"id": 102,
+L0060	"name_jp": "青赤コントロール",
+L0061	"name_en": "Izzet Control",
+L0062	"card_image": null,
+L0063	"deck_count": 18,
+L0064	"rate": 15.0
+L0065	}
+L0066	]
+L0067	}
+L0068	]
+L0069	}
+L0070	リニューアル後の仕様
+L0071	表示メッセージ
+L0072	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0073	—	API応答JSON	invalid request parameter	format_id が未指定のとき	HTTP 400 を返す
+L0074	—	API応答JSON	format not found	format_id に一致するフォーマットが1件も無いとき	HTTP 404 を返す

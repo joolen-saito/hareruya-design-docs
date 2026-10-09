@@ -1,0 +1,154 @@
+L0001	注文印刷_印刷情報をプリンタへ送信
+L0002	ドキュメント名受注管理 基本設計
+L0003	セクション—
+L0004	プロジェクト名受注管理機能
+L0005	作成者堀部
+L0006	作成日2025-05-27
+L0007	更新者—
+L0008	更新日—
+L0009	機能NoA05-01
+L0010	機能名注文印刷_印刷情報をプリンタへ送信
+L0011	概要アクセスしてきた店舗のプリンタに対して印刷情報を返す
+L0012	処理概要（★はカスタマイズ項目）
+L0013	GET POST PUT DELETE PATCH OPTIONS HEAD 有 無 〇
+L0014	エンドポイントURL
+L0015	/api/order/print/direct/{店舗ID}
+L0016	プロトコル HTTP メソッド GET 認証の有無 有 認証方式 IP制限 リクエスト書式 クエリ レスポンス書式 XML
+L0017	カスタマイズ説明
+L0018	本店・支店のシステムを統合するので、注文印刷情報のAPIも処理を一本化する。
+L0019	本店のプリンタはエンドポイントURLに店舗IDを追加する必要があるので、設定変更が必要
+L0020	本店・支店のシステムを統合するので、支店側のプリンタに設定されているエンドポイントURLはドメインが変更となるので全て設定変更が必要
+L0021	現状は印刷完了ステータスに更新するAPI (A05-02)と処理を受けるメソッドが共通で、クエリ「ConnectionType」で処理が分岐しているので、
+L0022	A05-02とエンドポイントを分ける
+L0023	現状	/order/print/direct?ConnectionType=GetRequest	GETで受信
+L0024		/order/print/direct?ConnectionType=SetResponse	POSTで受信	※ RoutingでGetとPostで登録を行なっているが、同じメソッドを登録している
+L0025	機能仕様処理概要（★はカスタマイズ項目）
+L0026	★ 各店舗に設置されているプリンタから定期的(間隔:30秒)にこのAPIにアクセス(エンドポイントURL変更)
+L0027	URLに店舗ID(shop_id)を引数として持つ
+L0028	・バーコードが印刷されていない問題が発生しないようにするため、注文データをXML形式にする前に受注データにスマレジの商品コードが存在するかどうか確認する
+L0029	スマレジの商品コードが存在しない場合はスマレジコードが採番されていない可能性があるため何もしない
+L0030	・店舗IDからその店舗の未印刷の注文データを抽出し、各注文データごとに印刷できるようにプリンタ仕様に合わせてXMLの書式にして返す。
+L0031	未印刷データがなければ空文字''を返す
+L0032	※ プリンタのxmlの仕様 https://www2.epson.jp/support/manual/SDP_UM_JA_REVW.ZIP
+L0033	・印刷データXMLをログに出力する
+L0034	リクエストパラメータ
+L0035	項目名	型	必須	最大文字数
+L0036	または最大値	入力例	備考
+L0037	店舗ID	数値(整数)	〇		123	受取店舗の店舗ID(shop_id)
+L0038	リクエストパラメータサンプル
+L0039	/api/order/print/direct/123
+L0040	ステータスコード
+L0041	コード 説明
+L0042	200 正常終了
+L0043	404 店舗ID(shop_id)が無い、整数以外の型、存在しない店舗ID(shop_id) ※支店での処理を踏襲
+L0044	レスポンスデータ
+L0045	名前	型	説明
+L0046	印刷データ(XML)	文字型	専用の言語(フォーマット)で記述された印刷レイアウトデータを注文データ数分出力
+L0047	印刷データの動的変更部分については、別表「印刷レイアウトデータの動的変更箇所」参照のこと
+L0048	印刷位置や罫線情報については、サンプルデータを参照のこと
+L0049	印刷レイアウトデータの動的変更箇所
+L0050	名前	型	説明
+L0051	受注情報ID	数値(整数)	注文詳細URLと生成と、印刷情報データを一意に定めるXML向けの情報として使用
+L0052	店頭注文番号	文字型	店頭注文番号
+L0053	注文詳細URL	文字型	管理画面の受注詳細情報ページのURL。QRコードにして印刷する
+L0054	備考	文字型	受注情報の問合せに値があれば、「問い合わせ有」と表示。それ以外は空欄
+L0055	注文日	日付（YYYY/MM/DD）	注文日
+L0056	注文番号	数値(整数)	注文番号
+L0057	お客様名	文字型	お客様名
+L0058	合計金額	数値(整数)	注文の合計金額。ただしスムーズ店頭受取の場合、「スムーズ店頭受取」と表示
+L0059	変更後金額	数値(整数)	スマレジコード。バーコードにして印刷
+L0060	高額	文字型	固定値で「□」を出力
+L0061	※内部処理としてはデータを差し込んでいるが、差し込むデータが現状固定値で「□」になっている
+L0062	レスポンスデータサンプル
+L0063	<?xml version="1.0" encoding="utf-8"?>
+L0064	<PrintRequestInfo Version="3.00">
+L0065	<ePOSPrint>
+L0066	<Parameter>
+L0067	<devid>local_printer</devid>
+L0068	<timeout>10000</timeout>
+L0069	<printjobid>{$order['order_id']}</printjobid>
+L0070	</Parameter>
+L0071	<PrintData>
+L0072	<epos-print xmlns="http://www.epson-pos.com/schemas/2011/03/epos-print">
+L0073	<text lang="ja"/>
+L0074	<page>
+L0075	<area x="0" y="0" width="512" height="751"/>
+L0076	<rectangle x1="0" y1="0" x2="511" y2="200" style="thin"/>
+L0077	<position x="18" y="25"/>
+L0078	<text>店頭注文番号</text>
+L0079	<rectangle x1="0" y1="0" x2="511" y2="200" style="thin"/>
+L0080	<position x="200" y="150"/>
+L0081	<text width="5" height="5">{$order['order_number']}</text>
+L0082	<rectangle x1="0" y1="200" x2="511" y2="400" style="thin"/>
+L0083	<rectangle x1="0" y1="200" x2="175" y2="400" style="thin"/>
+L0084	<position x="18" y="225"/>
+L0085	<text width="1" height="1">注文詳細URL</text>
+L0086	<position x="14" y="243"/>
+L0087	<symbol type="qrcode_model_2" level="default" width="5" height="0" size="0">{$uri}admin/order/{$order['order_id']}/edit</symbol>
+L0088	<position x="179" y="230"/>
+L0089	<text>備考 {$contactText}</text>
+L0090	<rectangle x1="0" y1="400" x2="210" y2="450" style="thin"/>
+L0091	<position x="25" y="434"/>
+L0092	<text>注文日</text>
+L0093	<rectangle x1="210" y1="400" x2="511" y2="450" style="thin"/>
+L0094	<position x="235" y="434"/>
+L0095	<text>{$orderDate}</text>
+L0096	<rectangle x1="0" y1="450" x2="210" y2="500" style="thin"/>
+L0097	<position x="25" y="484"/>
+L0098	<text>注文番号</text>
+L0099	<rectangle x1="210" y1="450" x2="511" y2="500" style="thin"/>
+L0100	<position x="235" y="484"/>
+L0101	<text>{$order['order_no']}</text>
+L0102	<rectangle x1="0" y1="500" x2="210" y2="550" style="thin"/>
+L0103	<position x="25" y="534"/>
+L0104	<text>お客様名</text>
+L0105	<rectangle x1="210" y1="500" x2="511" y2="550" style="thin"/>
+L0106	<position x="235" y="534"/>
+L0107	<text>{$orderName}</text>
+L0108	<rectangle x1="0" y1="550" x2="210" y2="600" style="thin"/>
+L0109	<position x="25" y="584"/>
+L0110	<text>合計金額</text>
+L0111	<rectangle x1="210" y1="550" x2="511" y2="600" style="thin"/>
+L0112	<position x="235" y="584"/>
+L0113	<text>{$paymentTotal}</text>
+L0114	<rectangle x1="0" y1="600" x2="210" y2="650" style="thin"/>
+L0115	<position x="25" y="634"/>
+L0116	<text>変更後金額</text>
+L0117	<rectangle x1="210" y1="600" x2="511" y2="650" style="thin"/>
+L0118	<position x="8" y="720"/>
+L0119	<barcode type="jan13" hri="below" font="font_b" width="2" height="50">{$order['smaregi_code']}</barcode>
+L0120	<position x="225" y="684"/>
+L0121	<text>高額 {$order['expensive']}</text>
+L0122	<position x="370" y="684"/>
+L0123	<text>サプライ □</text>
+L0124	<position x="225" y="734"/>
+L0125	<text>欠品 □</text>
+L0126	<position x="370" y="734"/>
+L0127	<text>Wチェック□</text>
+L0128	</page>
+L0129	<cut type="feed"/>
+L0130	</epos-print>
+L0131	</PrintData>
+L0132	</ePOSPrint>
+L0133	</PrintRequestInfo>
+L0134	Source:
+L0135	functions/pf-api/a05-01_api_order_print_direct.md
+L0136	現行仕様
+L0137	A05-01 注文印刷_印刷情報をプリンタへ送信 / API 受注管理 — 注文印刷（印刷情報の送信）
+L0138	業務ロジック
+L0139	印刷対象の受注
+L0140	次のいずれかに当たる受注を、1回の要求につき最大10件まで取り出す。
+L0141	対象	条件
+L0142	店頭受取の受注	注文番号が採番済みで、対応状況が注文受領のとき
+L0143	スムーズ店頭受取の受注	所定の支払方法（クレジット決済・支払いなし）で、対応状況が購入処理中でなく、確定日時・注文確定日・出荷日・取消日・受領日・店頭予約日がいずれも未設定で、スマレジコードが採番済みのとき
+L0144	ブラウザ印刷を指定した受注	補助情報のブラウザ印刷フラグが立つとき
+L0145	1件の受注に配送が複数あっても、印刷情報は受注1件につき1枚にまとめる。
+L0146	印刷内容の決定
+L0147	印刷欄	決め方
+L0148	お客様名	カナ氏名（姓と名を空白でつなぐ）を印刷する。カナ氏名が無いときは氏名を印刷する
+L0149	店頭注文番号	受注に店頭注文番号が採番されていないときは空欄にする
+L0150	印刷データの保存
+L0151	送信する印刷データXMLが空でないとき、同じ内容をAPIサーバのアプリケーション配下の var/log/print_logs/ にファイルとして保存する。ファイル名は print_YYYYMMDD_HHMMSS_<一意ID>.xml とし、要求1回につき1ファイルを作る。保存先のディレクトリが無いときは作成する。印刷データXMLが空のときは保存しない。
+L0152	入出力
+L0153	応答の形式
+L0154	印刷情報は本文をストリーム送信する。応答の内容種別（Content-Type）は application/octet-stream とする。
