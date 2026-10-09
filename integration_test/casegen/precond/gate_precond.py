@@ -8,6 +8,9 @@ G5 の一意性は、指定した機能に限らず cases/ の全機能のケー
 """
 import csv, glob, re, sys, pathlib, collections
 
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+import terms  # noqa: E402
+
 CG = pathlib.Path(__file__).resolve().parents[1]
 PC = CG / "precond"
 FIXED = ["テストID", "要求ID", "連鎖ID", "観点ID", "優先度", "実行区分", "出典"]
@@ -173,6 +176,11 @@ def check(fid, own_all):
             if ob:
                 base[r["新テストID"]] = dict(ob, テストID=r["新テストID"])
                 moved_src.add(sfid)
+    # 用語の置き換え（依頼者決定 2026-10-06。terms.py）。基線は書き換えず、照合の前に当てる
+    for b in base.values():
+        if b["実行区分"] != "保留":
+            for c in ("手順", "期待結果"):
+                b[c] = terms.T(b[c])
     rn = renames(fid)
     sc_all = step_changes(fid)
     oc_all = oracle_changes(fid)
@@ -187,7 +195,6 @@ def check(fid, own_all):
         if sbs.exists():
             old_names |= seed_names(read(sbs))
             base_seed_text += sbs.read_text(encoding="utf-8")
-    cur_seed_text = " ".join(r.get("状態・属性", "") + " " + r.get("投入方法", "") for r in S)
     cur_seed_text = " ".join(r.get("状態・属性", "") + " " + r.get("投入方法", "") for r in S)
 
     ap = PC / "rename_approvals.tsv"
