@@ -6,7 +6,7 @@
 
 1. `sheetmap/GEN_SHEETMAP_PROMPT.md`（ケースの書式と決まり）、`sheetmap/FIX_R1_BRIEF.md`（裁定A〜L、C'）、`sheetmap/FIX_R2_BRIEF.md`（決まりM〜O）
 2. `integration_test/SCOPE.md`（結合テストの範囲。単体・e2e へ送るもの）、`casegen/precond/README.md`（前提条件 P1〜P13）
-3. `integration_test/viewpoint_canonical/viewpoints_canonical.tsv`（判定単位。IT-0348 出力項目の構成・並び、IT-0349 レコードの並び順、IT-0350 通知メールの内容を含む）
+3. `integration_test/viewpoint_canonical/viewpoints_canonical.tsv`（判定単位。IT-0348 出力項目の構成・並び、IT-0349 レコードの並び順、IT-0350 通知メールの内容、IT-0351〜0354 バッチの異常終了の状態・異常終了後の後続処理・一時的な資源の後片付け・出力メッセージを含む）
 4. `sheetmap/materials/<FID>_sheet.txt`。**「Source:」の行より後ろが、今回新しく載った現行仕様**。それより前が Excel 由来の本文
 5. 既存の `sheetmap/cases/<FID>_sm_test_cases.tsv`・`<FID>_sm_seed_data.tsv`、`sheetmap/gen_<FID>/report.md`
 6. 手本: `sheetmap/review/B08-07_cur_dispositions.md`（仕分けの書き方）
