@@ -228,6 +228,8 @@ def check(fid, own_all):
     # 改名先の番号がシードから消えるので、改名先の検査をしない（期待結果・手順の変更は宣言で確かめる）
     np_ = PC / "screen_noted_cases.tsv"
     noted = {r["テストID"] for r in read(np_)} if np_.exists() else set()
+    exo_ = CG / "excluded_open_cases.tsv"      # 外したケースの改名は、改名先を定義するシードも外れているので検査しない
+    noted |= {r["テストID"] for r in read(exo_)} if exo_.exists() else set()
     for t, pairs in rn.items():
         if t in noted:
             continue
@@ -260,9 +262,14 @@ def check(fid, own_all):
     # 保留ケースは excluded_hold_cases.tsv へ移した（依頼者決定 2026-10-01）。基線からそれを差し引いて照合する
     exp = CG / "excluded_hold_cases.tsv"
     excluded = {r["テストID"] for r in read(exp)} if exp.exists() else set()
+    # テストできない・作り方が未確定のケースは excluded_open_cases.tsv へ移した（依頼者決定 2026-10-14。exclude_open.py）
+    exo = CG / "excluded_open_cases.tsv"
+    excluded_open = {r["テストID"] for r in read(exo)} if exo.exists() else set()
+    excluded |= excluded_open
     # 書き直しの後で足したケース（機能間データ連携など）は added_cases.tsv に載せる。基線は書き換えない
     adp = PC / "added_cases.tsv"
     added = {r["テストID"] for r in read(adp) if r["テストID"].startswith(f"IT-{fid}-")} if adp.exists() else set()
+    added -= excluded_open
     if (set(base) - excluded - moved_out) | added != {x["テストID"] for x in C}:
         err.append(("G6", fid, "テストIDの集合が基線（保留除外・付け替え後）＋追加分（added_cases.tsv）と違う"))
     if added & set(base):

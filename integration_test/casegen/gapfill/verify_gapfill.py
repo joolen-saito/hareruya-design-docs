@@ -35,6 +35,14 @@ def main(fids):
         for r in read(pathlib.Path(p)):
             if r.get("シードID") not in gfseed:
                 other_seed[f].add((r.get("シードID", ""), (r.get("共有") or "").strip()))
+    # 作り方が未確定で外したケース・シード（../exclude_open.py）も、既存のものとして数える
+    exo_ids = set()
+    if (CG / "excluded_open_seeds.tsv").exists():
+        for r in read(CG / "excluded_open_seeds.tsv"):
+            if r["シードID"] not in gfseed:
+                other_seed[r["機能ID"]].add((r["シードID"], (r.get("共有") or "").strip()))
+    if (CG / "excluded_open_cases.tsv").exists():
+        exo_ids = {r["テストID"] for r in read(CG / "excluded_open_cases.tsv")}
     all_old = {s for v in other_seed.values() for s, _ in v}
     total = bad = 0
     for fid in (fids or sorted(T)):
@@ -135,7 +143,7 @@ def main(fids):
             if not (r.get("投入方法") or "").strip() or "同上" in "".join(v or "" for v in r.values()):
                 err.append(("シード", s, "投入方法が空、または「同上」"))
         seen = collections.Counter(r["指摘ID"] for r in D)
-        live = {l.split("\t", 1)[0] for l in open(CG / f"cases/{fid}_test_cases.tsv", encoding="utf-8")} - gfmap
+        live = ({l.split("\t", 1)[0] for l in open(CG / f"cases/{fid}_test_cases.tsv", encoding="utf-8")} | exo_ids) - gfmap
         cased = {g.strip() for x in C for g in re.split(r"[,、]", x["指摘ID"])}
         for g in gaps:
             if seen[g] != 1:

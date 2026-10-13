@@ -21,6 +21,8 @@ for fid in (sys.argv[1:] or T):
     if not p.exists():
         print(f"{fid}: 未判定"); bad += 1; continue
     live = {l.split("\t", 1)[0] for l in open(CG / f"cases/{fid}_test_cases.tsv", encoding="utf-8")}
+    if (CG / "excluded_open_cases.tsv").exists():     # 作り方が未確定で外したケースも、判定の対象としては実在する
+        live |= {l.split("\t", 1)[0] for l in open(CG / "excluded_open_cases.tsv", encoding="utf-8")}
     gaps = {r["指摘ID"]: r for r in rd(G / f"targets/{fid}_gaps.tsv")}
     err, seen = [], collections.Counter()
     for r in rd(p):

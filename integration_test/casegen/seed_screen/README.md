@@ -45,7 +45,7 @@
 | ケースの正本へ当てる | `apply.py`（`../cases/` のシード表とケースを置き換える。何度流しても同じ） |
 | 前提条件の検査の不合格の直し | `GATEFIX_PROMPT.md`・`mk_gatefix.py`・`gatefix/` |
 
-**`apply.py` は上書きの重ね書きである。** `sheetmap/`・`nosheet/`・`gapfill/`・`ga/` の `merge_into_cases.py` を流すと `../cases/` は作業ファイルの内容（書き直し前）へ戻るので、そのあとに必ず `python3 seed_screen/apply.py` → `python3 build_all_test_cases.py` を流す。
+**`apply.py` は上書きの重ね書きである。** `sheetmap/`・`nosheet/`・`gapfill/`・`ga/` の `merge_into_cases.py` を流すと `../cases/` は作業ファイルの内容（書き直し前）へ戻るので、そのあとに必ず `python3 seed_screen/apply.py` → `python3 exclude_open.py` → `python3 build_all_test_cases.py` を流す。
 
 前提条件の検査（`../precond/gate_precond.py`）との関係:
 - 期待結果・手順を変えた基線のケースには、`apply.py` が `precond/oracle_changes/`・`step_changes/` へ宣言を書く（類型T4: 画面が自動で振る番号は、画面で登録したときに控えた値を使う。2026-10-09 依頼者）。

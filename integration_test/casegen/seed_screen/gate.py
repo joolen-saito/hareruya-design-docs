@@ -19,6 +19,8 @@ NUM = re.compile(r"(?<![0-9A-Za-z\-_.@/])\d{5,}(?![0-9A-Za-z\-_.@])")
 def rd(p):
     return list(csv.DictReader(open(p, encoding="utf-8"), delimiter="\t", quoting=csv.QUOTE_NONE))
 T = [r["機能ID"] for r in rd(G / "targets.tsv")]
+EXO = rd(CG / "excluded_open_cases.tsv") if (CG / "excluded_open_cases.tsv").exists() else []
+EXS = rd(CG / "excluded_open_seeds.tsv") if (CG / "excluded_open_seeds.tsv").exists() else []
 bad, allr, tot, why, ncase = 0, [], collections.Counter(), collections.Counter(), 0
 for fid in (sys.argv[1:] or T):
     IN = {r["シードID"]: r for r in rd(G / f"in/{fid}.tsv")}
@@ -54,6 +56,9 @@ for fid in (sys.argv[1:] or T):
             err.append(f"{s}: {seen[s]}行（1行であること）")
     C = {r["テストID"]: r for r in rd(CG / f"cases/{fid}_test_cases.tsv")}
     SD = {r["シードID"]: r for r in rd(CG / f"cases/{fid}_seed_data.tsv")}
+    if EXO:      # 作り方が未確定で外したケース・シード（exclude_open.py）も、書き直しの対象としては実在する
+        C.update({r["テストID"]: {k[2:]: v for k, v in r.items() if k.startswith("元_")} for r in EXO if r["機能ID"] == fid and r["テストID"] not in C})
+        SD.update({r["シードID"]: r for r in EXS if r["機能ID"] == fid and r["シードID"] not in SD})
     changed = {}
     for r in rd(cp):
         t = (r.get("テストID") or "").strip()

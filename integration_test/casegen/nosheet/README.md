@@ -43,7 +43,8 @@
 2. `python3 nosheet/verify_nosheet.py`
 3. `python3 nosheet/merge_into_cases.py`
 4. `python3 seed_screen/apply.py`（画面で作る形への書き直しを当て直す。merge は ../cases/ を書き直し前へ戻すため）
-5. `python3 build_all_test_cases.py` と `python3 precond/gate_precond.py --all`
+5. `python3 exclude_open.py`（テストできない・作り方が未確定のケースを外し直す。precond/README.md）
+6. `python3 build_all_test_cases.py` と `python3 precond/gate_precond.py --all`
 
 ## 残っていること
 
