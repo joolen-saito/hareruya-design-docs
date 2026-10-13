@@ -54,7 +54,8 @@
 1. `gapfill/cases/<機能ID>_gf_*.tsv` を直す
 2. `python3 gapfill/verify_gapfill.py`
 3. `python3 gapfill/merge_into_cases.py`
-4. `python3 build_all_test_cases.py` と `python3 precond/gate_precond.py --all`
+4. `python3 seed_screen/apply.py`（画面で作る形への書き直しを当て直す。merge は ../cases/ を書き直し前へ戻すため）
+5. `python3 build_all_test_cases.py` と `python3 precond/gate_precond.py --all`
 
 `sheetmap/`・`nosheet/`・`ga/` の `merge_into_cases.py` は該当機能のケースファイルを作り直すので、流したら 3 を流し直す。
 

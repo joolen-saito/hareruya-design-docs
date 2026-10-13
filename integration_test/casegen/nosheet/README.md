@@ -42,7 +42,8 @@
 1. `nosheet/cases/<機能ID>_ns_test_cases.tsv`・`_ns_seed_data.tsv` を直す
 2. `python3 nosheet/verify_nosheet.py`
 3. `python3 nosheet/merge_into_cases.py`
-4. `python3 build_all_test_cases.py` と `python3 precond/gate_precond.py --all`
+4. `python3 seed_screen/apply.py`（画面で作る形への書き直しを当て直す。merge は ../cases/ を書き直し前へ戻すため）
+5. `python3 build_all_test_cases.py` と `python3 precond/gate_precond.py --all`
 
 ## 残っていること
 

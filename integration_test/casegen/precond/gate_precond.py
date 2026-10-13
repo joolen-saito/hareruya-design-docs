@@ -75,6 +75,8 @@ def is_ident(t):
 
 def idents(text):
     out = set()
+    # 〔注文番号-M0526-012〕のような「控えた番号」の呼び名（類型T4）は、データの識別子ではない
+    text = re.sub(r"〔[^〕]*〕", " ", text)
     # 「SMA-A01-O01〜SMA-A01-O15」「K099-01〜K099-99」は途中も展開して数える
     for a, x, b, y in RANGE.findall(text):
         if re.search(r"[A-Za-z]", a) and (b in ("", a)) and len(x) == len(y) and int(x) <= int(y) and int(y) - int(x) <= 2000:
@@ -222,7 +224,13 @@ def check(fid, own_all):
         # 「旧名-ケース番号」の形か、ケース番号で終わり今のシードで定義された名前
         return new == f"{old}-{t[-3:]}" or (new.endswith(t[-3:]) and new in cur_seed_text)
 
+    # 画面が振る番号を「控えた番号」へ置き換えたケース（類型T4。seed_screen/apply.py が書く）は、
+    # 改名先の番号がシードから消えるので、改名先の検査をしない（期待結果・手順の変更は宣言で確かめる）
+    np_ = PC / "screen_noted_cases.tsv"
+    noted = {r["テストID"] for r in read(np_)} if np_.exists() else set()
     for t, pairs in rn.items():
+        if t in noted:
+            continue
         for old, new in pairs:
             if not ok_rename(t, old, new):
                 err.append(("G6", t, f"改名できるのは識別子か、シードでID・名称等として定義した値だけ: {old!r}→{new!r}"))
