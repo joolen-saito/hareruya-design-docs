@@ -38,11 +38,23 @@ def main(codes):
     cat = functions()
     old_seed = set()
     for p in glob.glob(str(CG / "cases/*_seed_data.tsv")):
-        old_seed |= {r.get("シードID", "") for r in read(pathlib.Path(p))}
+        # 合流で写した連携のシード（S-<機能ID>-<群>- の形。合流前の cases/ にこの形は無い）は既存に数えない
+        old_seed |= {r.get("シードID", "") for r in read(pathlib.Path(p))
+                     if not re.match(r"^S-[A-Z]\d\d-\d\d-(?:P[A-F]|Q[A-N])-", r.get("シードID", ""))}
     all_seed = collections.Counter()
     for p in glob.glob(str(P / "cases/*_seed_data.tsv")):
         for r in read(pathlib.Path(p)):
             all_seed[r.get("シードID", "")] += 1
+    # 合流後に作業ファイルから消したケース（sync_pub.py が merged_map.tsv から外し、gone に残す）
+    merged_gone = set()
+    gp = P / "merged_gone.tsv"
+    if gp.exists():
+        merged_gone = {r["旧テストID"] for r in read(gp)}
+    # 作業ファイルから消して、まだ sync_pub.py を流していないもの
+    present = set()
+    for p in glob.glob(str(P / "cases/*_test_cases.tsv")):
+        present |= {r["テストID"] for r in read(pathlib.Path(p))}
+    merged_gone |= {r["旧テストID"] for r in read(P / "merged_map.tsv")} - present
     total = bad = 0
     for code in sorted(groups):
         if codes and code not in codes:
@@ -76,6 +88,9 @@ def main(codes):
                 err.append(("ID", t, f"IT-<機能ID>-{code}<3桁> の形でない")); continue
             fid, n = m.group(1), int(m.group(2))
             seq[fid] += 1
+            # 合流後に消したケース（merged_map.tsv に旧IDが残らない番号）は詰めない。合流先の番号と対応を保つため
+            while n > seq[fid] and f"IT-{fid}-{code}{seq[fid]:03d}" in merged_gone:
+                seq[fid] += 1
             if n != seq[fid]:
                 err.append(("ID", t, f"{fid} の連番は {seq[fid]:03d} であるべき"))
             up, down = x["上流機能"].strip(), x["下流機能"].strip()
