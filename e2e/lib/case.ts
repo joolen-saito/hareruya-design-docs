@@ -54,8 +54,8 @@ export function caseTest(testId: string, body: CaseBody): void {
     await hideDebugToolbar(page.context());
     const notes = new Notes();
     await test.step(`事前準備: ${c.事前準備}`, async () => {
-      await buildSeeds(browser, seedIdsOf(c), notes);
-      for (const id of seedIdsOf(c)) {
+      const usedSeedIds = await buildSeeds(browser, seedIdsOf(c), notes);
+      for (const id of usedSeedIds) {
         for (const m of seedIssues.get(id) ?? []) test.info().annotations.push({ type: "シード作成時の問題", description: `${id}: ${m}` });
       }
       // ケースの文に出てくる呼び名が、すべて控えてあること

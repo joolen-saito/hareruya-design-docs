@@ -17,14 +17,45 @@ export type SeedRow = {
 const CASE_HEAD = ["テストID", "要求ID", "連鎖ID", "観点ID", "優先度", "実行区分", "使用シード", "事前準備", "手順", "期待結果", "出典"];
 const SEED_HEAD = ["シードID", "区分", "論理名", "状態・属性", "用途", "投入方法", "共有"];
 
+/** TSV の引用セルを復元する（セル内の二重引用符は "" として保存される）。 */
+function parseTsvLine(line: string): string[] {
+  const cells: string[] = [];
+  let value = "";
+  let quoted = false;
+  let closed = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (quoted) {
+      if (ch === '"' && line[i + 1] === '"') { value += '"'; i++; }
+      else if (ch === '"') { quoted = false; closed = true; }
+      else value += ch;
+    } else if (ch === "\t") {
+      cells.push(value);
+      value = "";
+      closed = false;
+    } else if (ch === '"' && value === "" && !closed) {
+      quoted = true;
+    } else if (closed) {
+      throw new Error("引用セルの閉じ引用符の後に文字がある");
+    } else {
+      value += ch;
+    }
+  }
+  if (quoted) throw new Error("引用セルが閉じられていない");
+  cells.push(value);
+  return cells;
+}
+
 /** 見出し・列数・IDの形と重複を確かめて読む。崩れた正本を黙って読み進めない */
 function readTsv<T>(file: string, head: string[], idPattern: RegExp): Map<string, T> {
-  const lines = fs.readFileSync(file, "utf-8").split("\n").filter((l) => l.length > 0);
+  const lines = fs.readFileSync(file, "utf-8").split(/\r?\n/).filter((l) => l.length > 0);
   const name = path.basename(file);
   if (lines[0] !== head.join("\t")) throw new Error(`${name}: 見出しが想定と違う（${lines[0]}）`);
   const out = new Map<string, T>();
   lines.slice(1).forEach((l, i) => {
-    const cells = l.split("\t");
+    let cells: string[];
+    try { cells = parseTsvLine(l); }
+    catch (e) { throw new Error(`${name} ${i + 2}行目: ${(e as Error).message}`); }
     if (cells.length !== head.length) throw new Error(`${name} ${i + 2}行目: 列数が ${cells.length}（${head.length} のはず）`);
     if (!idPattern.test(cells[0])) throw new Error(`${name} ${i + 2}行目: IDの形が違う（${cells[0]}）`);
     if (out.has(cells[0])) throw new Error(`${name}: ${cells[0]} が重複している`);
@@ -72,7 +103,7 @@ export function seedIdsOf(c: CaseRow): string[] {
   return c.使用シード.split(/[,、]/).map((s) => s.trim()).filter((s) => s && s !== "—");
 }
 
-/** 「1. …／2. …」の手順を、番号ごとに分ける */
+/** 「1. …／2. …」の番号付き境界だけで分ける。画面名やURLに含まれる「／」は手順の一部。 */
 export function stepsOf(c: CaseRow): string[] {
-  return c.手順.split("／").map((s) => s.trim()).filter(Boolean);
+  return c.手順.split(/／(?=\d+\.\s)/).map((s) => s.trim()).filter(Boolean);
 }

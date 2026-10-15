@@ -63,8 +63,10 @@ function order(seedIds: string[]): string[] {
   return out;
 }
 
-export async function buildSeeds(browser: Browser, seedIds: string[], notes: Notes): Promise<void> {
-  for (const id of order(seedIds)) {
+/** ケースが利用した全シードIDを返す（依存先と共有シードの再利用も含む）。 */
+export async function buildSeeds(browser: Browser, seedIds: string[], notes: Notes): Promise<string[]> {
+  const usedIds = order(seedIds);
+  for (const id of usedIds) {
     const seed = getSeed(id);
     const shared = seed.共有.trim() === "共有可";
     if (shared && sharedDone.has(id)) {
@@ -84,6 +86,7 @@ export async function buildSeeds(browser: Browser, seedIds: string[], notes: Not
     }
     if (shared) sharedDone.set(id, added);
   }
+  return usedIds;
 }
 
 /** ケースが使うシード（依存先を含む）に、データを消す作り方のものがあるか。共有環境では、そのケースを実行しない */
