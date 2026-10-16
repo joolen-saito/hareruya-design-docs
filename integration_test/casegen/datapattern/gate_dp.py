@@ -28,7 +28,16 @@ def ids_of(fn, col="テストID"):
 
 
 ALL = ids_of("all_test_cases.tsv")
+# 監査の後、既存ケースと設計書の食い違いの裁定（2026-10-16。conflicts/）で保留へ外したケース（論点ID QD-）。
+# 監査が「ケースあり」で挙げたテストIDがこれに当たるときは、テストIDの実在の検査を通し、件数だけを出す
+RULED = {r[0] for r in rows(C / "excluded_hold_cases.tsv")[1:] if r[2].startswith("QD-")}   # 列: テストID 機能ID 論点ID …
+# フェーズ2見送り・実装しない機能として外したケース（2026-10-16。../exclude_scope.py）も同じ扱いにする
+if (C / "excluded_scope_cases.tsv").exists():
+    RULED |= {r[0] for r in rows(C / "excluded_scope_cases.tsv")[1:]}
+ruled_hits = []
 EXC = ids_of("excluded_hold_cases.tsv") | ids_of("excluded_open_cases.tsv")
+if (C / "excluded_scope_cases.tsv").exists():   # 2026-10-16 フェーズ2見送り・実装しない機能として外したもの
+    EXC |= ids_of("excluded_scope_cases.tsv")
 
 
 def nlines(p):
@@ -83,7 +92,9 @@ def check(fid):
             if not tids:
                 err.append(f"{iid}: ケースありなのにテストIDが空")
             for t in tids:
-                if t not in ALL:
+                if t in RULED:
+                    ruled_hits.append((iid, t))
+                elif t not in ALL:
                     err.append(f"{iid}: テストIDが all_test_cases.tsv に無い {t}")
             if not d["結果"].strip():
                 err.append(f"{iid}: 結果が空")
@@ -146,6 +157,9 @@ def main():
         elif len(fids) <= 20:
             print(f"○ {f}")
     print(f"合格 {len(fids) - bad} / {len(fids)}")
+    if ruled_hits:
+        print(f"（参考）監査が挙げた既存ケースのうち、裁定で保留へ外したもの・対象外として外したもの {len(ruled_hits)}件: "
+              + "、".join(f"{i}→{t}" for i, t in ruled_hits))
     sys.exit(1 if bad else 0)
 
 

@@ -40,7 +40,8 @@ def labels(steps):
     for clause in LABEL_CLAUSE.findall(steps):
         out |= set(re.findall(r"を\s*([^\s／、。を]+?)(?=\s*(?:、|$))", clause + "、"))
     return out
-KINDS = {"準備移動", "改名", "発番値控え", "データ指示", "中継置換", "非同期完了待ち"}
+# 裁定訂正: 設計書の中の食い違いの裁定（2026-10-16 依頼者決定。datapattern/conflicts/）で手順を直したもの
+KINDS = {"準備移動", "改名", "発番値控え", "データ指示", "中継置換", "非同期完了待ち", "裁定訂正"}
 UNSETTLED = re.compile(r"未確定|未整備")
 FUTURE = re.compile(r"手順\s*\d|返した値|返す値|発番した|発番する値")
 
@@ -266,10 +267,13 @@ def check(fid, own_all):
     exo = CG / "excluded_open_cases.tsv"
     excluded_open = {r["テストID"] for r in read(exo)} if exo.exists() else set()
     excluded |= excluded_open
+    # フェーズ2見送り・実装しない機能のケースは excluded_scope_cases.tsv へ移した（依頼者決定 2026-10-16。exclude_scope.py）
+    exs = CG / "excluded_scope_cases.tsv"
+    excluded |= {r["テストID"] for r in read(exs)} if exs.exists() else set()
     # 書き直しの後で足したケース（機能間データ連携など）は added_cases.tsv に載せる。基線は書き換えない
     adp = PC / "added_cases.tsv"
     added = {r["テストID"] for r in read(adp) if r["テストID"].startswith(f"IT-{fid}-")} if adp.exists() else set()
-    added -= excluded_open
+    added -= excluded   # 作り方が未確定で外したもの、裁定で保留へ外したもの（2026-10-16。追加分も保留へ外すことがある）
     if (set(base) - excluded - moved_out) | added != {x["テストID"] for x in C}:
         err.append(("G6", fid, "テストIDの集合が基線（保留除外・付け替え後）＋追加分（added_cases.tsv）と違う"))
     if added & set(base):

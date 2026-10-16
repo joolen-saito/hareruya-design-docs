@@ -17,6 +17,8 @@
 960件のうち21件は、前提の作り方が未確定（中継・スタブ、現在日時の固定など）で `../exclude_open.py` が外した（`../excluded_open_cases.tsv`）。テストに残るのは939件。
 `verify_dp.py`（960件）・`gate_dp.py`（349機能）・`../precond/gate_precond.py --all` は合格。合流は追加だけで、既存のケース・シードは1行も変えていない。
 
+2026-10-16 の食い違いの裁定（`conflicts/`）で、足したケースのうち3件（A05-02-017・018、M16-06-014）を「ケースにしない」に変えた。いまは **957件・278機能**（ケース化 877・ケースにしない 25）。同じ裁定で既存ケースも直したので、全体は **11,685件・349機能**。その後、フェーズ2見送り・実装しない機能のケースを外して **11,679件・346機能**（`../exclude_scope.py`）。下の表の数は合流時（2026-10-15）のもの。
+
 | 段 | 件数 |
 | --- | --- |
 | 監査（349機能） | 抜け 1,235件 |
@@ -50,7 +52,7 @@
 1巡目の指摘で多かったのは「抜けを確かめていない」46件（1回目の結果を見ずに2回目だけ見る、など）、「成立しない前提・手順」41件、「ケースにできる」19件。
 2巡目は「成立しない前提・手順」20件、「抜けを確かめていない」17件。
 
-既存ケースと設計書の食い違い、設計書の中の食い違いは、監査・著者・レビューの途中で **52件** 見つかった（`existing_case_conflicts.txt`）。既存ケースは変えていない。どちらを正とするかは設計の裁定が要る。
+既存ケースと設計書の食い違い、設計書の中の食い違いは、監査・著者・レビューの途中で **52件** 見つかった（`existing_case_conflicts.txt`）。2026-10-16 に依頼者の決めた優先順位で裁定し、ケースへ当てた（`conflicts/README.md`）。
 
 ## 観点表（`../../viewpoint_canonical/build_canonical.py` の `ADD_DATAPAT`）
 
@@ -94,7 +96,9 @@ codex のレビュー1巡（依頼文 `../../viewpoint_canonical/review/prompt_d
 2. `python3 datapattern/verify_dp.py`
 3. `python3 datapattern/merge_dp.py`
 4. `python3 seed_screen/apply.py`（画面で作る形への書き直しを当て直す。merge は ../cases/ を書き直し前へ戻すため）
+4b. `python3 datapattern/conflicts/apply_rulings.py`（食い違いの裁定を当て直す。seed_screen/apply.py の後）
 5. `python3 exclude_open.py`（テストできない・作り方が未確定のケースを外し直す。precond/README.md）
+5b. `python3 exclude_scope.py`（フェーズ2見送り・実装しない機能のケースを外す。2026-10-16）
 6. `python3 build_all_test_cases.py` と `python3 precond/gate_precond.py --all`
 
 `sheetmap/`・`nosheet/`・`ga/`・`gapfill/` の `merge_into_cases.py` は該当機能のケースファイルを作り直すので、流したら 3 から流し直す。

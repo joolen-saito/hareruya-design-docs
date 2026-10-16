@@ -8,7 +8,7 @@
 行は消さず excluded_open_cases.tsv へ移す（除外理由つき。元の11列は「元_」付きで持つ）。
 外したケースだけが使っていたシードは excluded_open_seeds.tsv へ移す。
 何度流しても同じ。各 merge_into_cases.py と seed_screen/apply.py は cases/ へケースを戻すので、そのあとに必ずこれを流し、
-最後に build_all_test_cases.py を流す。作り方が決まったら、シードの投入方法と open_preconditions.tsv を直してから
+そのあと exclude_scope.py（フェーズ2見送り・実装しない機能の除外）、最後に build_all_test_cases.py を流す。作り方が決まったら、シードの投入方法と open_preconditions.tsv を直してから
 merge → apply → これ、の順に流し直せば戻る（excluded_open_cases.tsv は毎回、いま外れているケースだけで作り直す）。
 """
 import csv, glob, pathlib, re, collections

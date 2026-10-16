@@ -5,7 +5,7 @@
 cases/ から取り除いてから、datapattern/cases の今の内容を末尾へ足す。既存のケースとシードには触れない。
 判定IDと項目IDは dp_map.tsv に残す。足したテストIDは precond/added_cases.tsv に載せる。
 sheetmap・nosheet・ga・gapfill の merge を流すと該当機能のファイルが作り直されるので、その後にこれを流し直す。
-流したあとは ../seed_screen/apply.py → ../exclude_open.py → ../build_all_test_cases.py → ../precond/gate_precond.py --all。
+流したあとは ../seed_screen/apply.py → conflicts/apply_rulings.py → ../exclude_open.py → ../exclude_scope.py → ../build_all_test_cases.py → ../precond/gate_precond.py --all。
 """
 import csv, glob, pathlib, re
 
