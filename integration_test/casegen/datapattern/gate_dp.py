@@ -92,7 +92,7 @@ def check(fid):
             if not tids:
                 err.append(f"{iid}: ケースありなのにテストIDが空")
             for t in tids:
-                if t in RULED:
+                if t in RULED or t in EXC:   # 監査の後に外れたもの（裁定の保留・対象外・作り方が未確定）
                     ruled_hits.append((iid, t))
                 elif t not in ALL:
                     err.append(f"{iid}: テストIDが all_test_cases.tsv に無い {t}")
@@ -158,7 +158,7 @@ def main():
             print(f"○ {f}")
     print(f"合格 {len(fids) - bad} / {len(fids)}")
     if ruled_hits:
-        print(f"（参考）監査が挙げた既存ケースのうち、裁定で保留へ外したもの・対象外として外したもの {len(ruled_hits)}件: "
+        print(f"（参考）監査が挙げた既存ケースのうち、監査の後に外れたもの（裁定の保留・対象外・作り方が未確定） {len(ruled_hits)}件: "
               + "、".join(f"{i}→{t}" for i, t in ruled_hits))
     sys.exit(1 if bad else 0)
 
