@@ -19,8 +19,9 @@ def sources(root, fid):
             parts.append(t)
     lines = [re.sub(r"\s+", " ", l).strip() for l in "\n".join(parts).split("\n")]
     return [l for l in lines if l]
-rows = [l.rstrip("\n").split("\t") for l in open(NEW/"integration_test/casegen/all_test_cases.tsv", encoding="utf-8")][1:]
-hold = collections.Counter("-".join(r[0].split("-")[1:3]) for r in rows if r[5] == "保留")
+rows = [l.rstrip("\n").split("\t") for l in open(NEW/"integration_test/casegen/all_test_cases.tsv", encoding="utf-8")]
+ik, rows = rows[0].index("実行区分"), rows[1:]   # 一覧の列は変わることがある（2026-10-16 に要求ID・優先度を外した）。位置でなく見出しで引く
+hold = collections.Counter("-".join(r[0].split("-")[1:3]) for r in rows if r[ik] == "保留")
 out = {}
 for fid in sorted(hold):
     a, b = sources(OLD, fid), sources(NEW, fid)

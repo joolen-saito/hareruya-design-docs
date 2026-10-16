@@ -5,9 +5,10 @@ spec = importlib.util.spec_from_file_location("sd", S/"srcdiff_lib.py"); sd = im
 diff = json.load(open(S/"srcdiff.json", encoding="utf-8"))
 rows = [l.rstrip("\n").split("\t") for l in open(NEW/"integration_test/casegen/all_test_cases.tsv", encoding="utf-8")]
 hdr, rows = rows[0], rows[1:]
+ik = hdr.index("実行区分")   # 一覧の列は変わることがある（2026-10-16 に要求ID・優先度を外した）。位置でなく見出しで引く
 byf = collections.defaultdict(list)
 for r in rows:
-    if r[5] == "保留": byf["-".join(r[0].split("-")[1:3])].append(r)
+    if r[ik] == "保留": byf["-".join(r[0].split("-")[1:3])].append(r)
 (S/"src").mkdir(exist_ok=True); (S/"batch").mkdir(exist_ok=True); (S/"judge").mkdir(exist_ok=True)
 for fid in byf:
     (S/f"src/{fid}.txt").write_text("\n".join(sd.sources(NEW, fid)) + "\n", encoding="utf-8")
