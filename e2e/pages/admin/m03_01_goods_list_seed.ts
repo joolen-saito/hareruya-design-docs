@@ -22,6 +22,63 @@ export async function readGoodsProductId(page: Page, code: string, name: string)
   return id;
 }
 
+/** 正本が商品名で検索して商品IDを控えると定めたシードで使う。商品名で1件を特定し、画面が振った商品 ID を返す。 */
+export async function readGoodsProductIdByName(page: Page, name: string, code: string): Promise<string> {
+  const search = new ProductSearchPage(page);
+  await search.open();
+  await search.field("product_name").fill(name);
+  await search.submitAndWaitForResult();
+  const rows = page.locator('tr[id^="ex-product-"]');
+  await expect(rows, `商品名「${name}」の検索結果は1件`).toHaveCount(1);
+  const row = rows.first();
+  await expect(row.locator("td:nth-child(3) a"), `${name} の商品名`).toHaveText(name);
+  await expect(row.locator("td:nth-child(4)"), `${name} の商品コード`).toHaveText(code);
+  const id = (await row.locator("td:nth-child(2)").innerText()).trim();
+  if (!/^\d+$/.test(id)) throw new Error(`${name} の採番商品 ID を画面から読めない: ${id}`);
+  await expect(row, `${name} の採番 ID と結果行`).toHaveAttribute("id", `ex-product-${id}`);
+  return id;
+}
+
+/**
+ * 正本が「商品名で検索し、言語の3項目をすべてチェックして、商品コードの行ごとに商品IDを控える」と定めたシードで使う。
+ * 商品コード→商品ID を返す。
+ */
+export async function readGoodsProductIdsByNameAllLanguages(page: Page, name: string, codes: string[]): Promise<Map<string, string>> {
+  const search = new ProductSearchPage(page);
+  await search.open();
+  await search.ensureDetailVisible();
+  await search.field("product_name").fill(name);
+  for (const option of await search.choiceOptions("language")) await search.setChecked("language", option.value, true);
+  expect((await search.checkedChoices("language")).map((c) => c.label), "言語の3項目をすべてチェック").toEqual(["日本語", "英語", "その他言語"]);
+  await search.submitAndWaitForResult();
+  const rows = page.locator('tr[id^="ex-product-"]');
+  await expect(rows, `商品名「${name}」の検索結果は${codes.length}件`).toHaveCount(codes.length);
+  const ids = new Map<string, string>();
+  for (const row of await rows.all()) {
+    await expect(row.locator("td:nth-child(3) a"), `${name} の商品名`).toHaveText(name);
+    const code = (await row.locator("td:nth-child(4)").innerText()).trim();
+    const id = (await row.locator("td:nth-child(2)").innerText()).trim();
+    if (!codes.includes(code)) throw new Error(`商品名「${name}」の結果に、正本に無い商品コード ${code} がある`);
+    if (!/^\d+$/.test(id)) throw new Error(`${code} の採番商品 ID を画面から読めない: ${id}`);
+    await expect(row, `${code} の採番 ID と結果行`).toHaveAttribute("id", `ex-product-${id}`);
+    ids.set(code, id);
+  }
+  return ids;
+}
+
+/** 正本が「該当件数がN件であることを確かめる」と定めたシードで使う。商品名で検索した該当件数を返す */
+export async function countGoodsByName(page: Page, name: string): Promise<number> {
+  const search = new ProductSearchPage(page);
+  await search.open();
+  await search.field("product_name").fill(name);
+  await search.submitAndWaitForResult();
+  const total = page.getByText(/^検索結果：\d+件が該当しました$/);
+  if (await total.count() === 0) return 0;
+  const m = ((await total.first().textContent()) ?? "").match(/検索結果：(\d+)件/);
+  if (!m) throw new Error(`商品名「${name}」の該当件数を画面から読めない`);
+  return Number(m[1]);
+}
+
 /** 正本が登録前の完全削除を命じたケースだけで使う。検索名に一致する商品以外は消さない。 */
 export async function removeProductsMatchingName(page: Page, name: string, includeEnglish = false): Promise<void> {
   const search = new ProductSearchPage(page);
@@ -37,7 +94,8 @@ export async function removeProductsMatchingName(page: Page, name: string, inclu
       await expect.poll(() => search.checkedValues(field), `${field} の絞り込みを外す`).toEqual([]);
     }
     await search.field("product_name").fill(name);
-    await search.form.locator(".admin-product-search-submit").click();
+    // 結果画面の読み込みを待ってから数える（押した直後に数えると、押す前の画面の0件を見て清掃を飛ばす）
+    await search.submitAndWaitForResult();
     const rows = page.locator('tr[id^="ex-product-"]');
     const count = await rows.count();
     if (count === 0) {

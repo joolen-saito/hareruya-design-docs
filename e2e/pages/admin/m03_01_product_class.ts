@@ -29,6 +29,30 @@ export async function openClassListFromProductEdit(page: Page, productId: string
   await expect(page).toHaveURL(adminUrl(`/product/product/class/${productId}`));
 }
 
+/**
+ * 言語の番号を、画面で一覧にしているのは商品規格の登録画面の「言語」欄だけである。
+ * 既存の商品（初期条件で検索した結果の先頭）の規格一覧から「新規作成」を開き、言語欄の選択肢（番号と名前）を読む。
+ * 規格は保存しない。
+ */
+export async function readLanguageChoicesFromClassForm(page: Page): Promise<{ id: string; label: string }[]> {
+  await page.goto(adminUrl("/product"));
+  await Promise.all([
+    page.waitForNavigation({ waitUntil: "domcontentloaded" }),
+    page.locator("form#search_form .admin-product-search-submit").click(),
+  ]);
+  const first = page.locator('tr[id^="ex-product-"]').first();
+  await expect(first, "言語の番号を読むための既存の商品が一覧にある").toBeVisible();
+  const productId = (await first.locator("td:nth-child(2)").innerText()).trim();
+  await first.locator("td:nth-child(3) a").click();
+  await openClassListFromProductEdit(page, productId);
+  await page.locator('#ex-product_class-header a[href$="/new"]').click();
+  const language = page.locator("form#form #admin_product_class_Language");
+  await expect(language, "商品規格の登録画面の言語欄").toBeVisible();
+  return language.locator("option").evaluateAll((nodes) => nodes
+    .map((n) => ({ id: (n as HTMLOptionElement).value, label: n.textContent?.trim() ?? "" }))
+    .filter((o) => /^\d+$/.test(o.id)));
+}
+
 function activeRows(page: Page) {
   return page.locator("#ex-product_class tbody tr");
 }

@@ -127,6 +127,19 @@ export class ProductSearchPage {
     await this.page.keyboard.press("Escape");
   }
 
+  /**
+   * 「検索する >」を押し、結果画面が読み込まれるまで待つ。結果画面には、該当件数か該当なしのどちらかが必ず出る。
+   * 押した直後の行数は押す前の画面のものなので、件数で判断する処理（清掃など）はこれを使う。
+   */
+  async submitAndWaitForResult(): Promise<void> {
+    await Promise.all([
+      this.page.waitForNavigation({ waitUntil: "domcontentloaded" }),
+      this.form.locator(".admin-product-search-submit").click(),
+    ]);
+    const outcome = this.page.getByText(/^(検索結果：\d+件が該当しました|検索条件に合致するデータが見つかりませんでした)$/);
+    await expect(outcome.first(), "検索結果の画面（該当件数か、該当なしの表示）").toBeVisible();
+  }
+
   async detailState(): Promise<{ visible: boolean; expanded: string | null }> {
     return { visible: await this.detail.isVisible(), expanded: await this.detailToggle.getAttribute("aria-expanded") };
   }
