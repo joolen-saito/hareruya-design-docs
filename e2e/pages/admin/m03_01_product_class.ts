@@ -115,6 +115,9 @@ export async function replaceNmWithSpClass(
   await expect(spRow.locator("td:first-child"), "新規格は公開").toHaveText("公開");
 
   await nmRow.getByRole("link", { name: "編集" }).click();
+  // 画面のスクリプトの読み込み前に削除を確定すると、削除の要求にならず、ただのリンクの移動になる（2026-10-16 に009で起きた）
+  await page.waitForURL(/\/product\/product\/class\/\d+\/edit\/\d+/);
+  await page.waitForLoadState("load");
   await page.getByRole("link", { name: "商品規格を削除" }).click();
   const deleteModal = page.locator("#deleteConfirmModal");
   await expect(deleteModal).toBeVisible();

@@ -31,6 +31,15 @@ export class StockListPage {
     ]);
   }
 
+  /** 検索欄「店舗」の選択肢（値が店舗ID）から、店舗IDの店名を読む。店舗一覧は親店舗を表示しないので、こちらで読む */
+  async shopNameById(id: string): Promise<string> {
+    await this.page.goto(adminUrl("/product/stock"));
+    await expect(this.form, "在庫検索一覧の検索欄").toBeVisible();
+    const option = this.form.locator(`#admin_search_stock_list_base_info option[value="${id}"]`);
+    await expect(option, `検索欄「店舗」に店舗ID ${id} の選択肢が1件`).toHaveCount(1);
+    return ((await option.textContent()) ?? "").trim();
+  }
+
   /** 店舗名と在庫区分（EC-CUBE・スマレジ）が一致する行 */
   row(code: string, shopName: string, locationName: string): Locator {
     return this.rows

@@ -203,13 +203,21 @@ export async function openEventCreate(page: Page): Promise<EventForm> {
   await page.goto(adminUrl("/event"));
   await page.getByRole("link", { name: "新規作成" }).click();
   await expect(page).toHaveURL(/\/event\/create/);
-  return new EventForm(page);
+  return readyForm(page, "イベント登録画面");
+}
+
+/** URL が変わっただけでは選択肢がまだ描画されていない。読み込みを終え、入力欄が出るまで待つ（選択肢を数える前に要る） */
+async function readyForm(page: Page, 画面: string): Promise<EventForm> {
+  await page.waitForLoadState("load");
+  const form = new EventForm(page);
+  await expect(form.イベント名日, `${画面}のイベント名(日)の欄`).toBeVisible();
+  return form;
 }
 
 /** イベント編集画面を開く */
 export async function openEventEdit(page: Page, イベントID: string): Promise<EventForm> {
   await page.goto(adminUrl(`/event/${イベントID}/edit`));
-  return new EventForm(page);
+  return readyForm(page, "イベント編集画面");
 }
 
 /** イベント登録画面で登録し、振られたイベントIDを返す（登録後に遷移した画面のアドレスから読む） */

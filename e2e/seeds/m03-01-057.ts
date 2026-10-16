@@ -14,8 +14,11 @@ import {
 import { M0301_ADMIN } from "./m03-01";
 
 const NAME = "状態別表示商品-057";
-/** 在庫数(通販+TC東京)に数えられる店舗（本店）。画面の店舗名 */
-const MAIN_SHOP = "トーナメントセンター 東京";
+/**
+ * 在庫数(通販+TC東京)に数えられる店舗（本店）。アプリは店舗ID 1 の店舗を TC東京として数える。
+ * 店名は環境で違う（作り直す前のDBは「トーナメントセンター 東京」、ダンプに戻したDBは「Hareruya」）ので、在庫検索一覧の検索欄「店舗」から読む。
+ */
+const TC_TOKYO_ID = "1";
 const classes = [
   { condition: "NM", code: "M0301S-057-NM", stock: "1" },
   { condition: "SP", code: "M0301S-057-SP", stock: "2" },
@@ -29,6 +32,7 @@ defineSeed("S-M03-01-GROUP-057", { needs: ["S-M03-01-ADM", "S-M03-01-MASTERS-REA
   const sectionId = notes.get("〔部門ID-M0301-共有〕");
   // 承認する管理者（登録者の M03-01試験管理者 とは別の、承認権限を持つ管理者）の名前を画面から読む
   const approverName = await withAdminSession(browser, SETUP_ADMIN, (page) => loggedInMemberName(page));
+  const MAIN_SHOP = await withAdminSession(browser, SETUP_ADMIN, (page) => new StockListPage(page).shopNameById(TC_TOKYO_ID));
   const registeredBy = await withAdminSession(browser, M0301_ADMIN, async (page) => {
     const registrant = await loggedInMemberName(page);
     if (registrant === approverName) throw new Error(`${seed.シードID}: 登録者と承認者が同じ管理者になっている`);
