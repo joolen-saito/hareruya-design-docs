@@ -179,8 +179,18 @@ export function buildGoodsCsv(
   return Buffer.from(`${csvLine(template.headers)}\n${csvRows.join("\n")}\n`, "utf8");
 }
 
-export async function uploadGoodsCsv(page: Page, csv: Buffer, name: string): Promise<void> {
+/**
+ * waitMs を渡すと、取込の結果の画面へ移るまで最大その時間待つ（数千行の取込は保存の結果の既定の待ち時間を超えるため）。
+ */
+export async function uploadGoodsCsv(page: Page, csv: Buffer, name: string, waitMs?: number): Promise<void> {
   await page.goto(adminUrl("/product/product_goods_csv_upload"));
   await page.locator("#upload-form input[type=file]").setInputFiles({ name, mimeType: "text/csv", buffer: csv });
-  await page.locator("#upload-button").click();
+  if (waitMs === undefined) {
+    await page.locator("#upload-button").click();
+    return;
+  }
+  await Promise.all([
+    page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: waitMs }),
+    page.locator("#upload-button").click(),
+  ]);
 }

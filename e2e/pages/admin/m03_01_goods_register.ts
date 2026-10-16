@@ -35,6 +35,8 @@ export async function registerGoodsCsv(page: Page, args: {
   lines: GoodsLine[];
   common?: Record<string, string>;
   onWarning: (warning: string) => void;
+  /** 取込の結果の画面へ移るまで待つ最大の時間（数千行の取込で使う） */
+  uploadWaitMs?: number;
 }): Promise<{ japaneseLanguageId: string }> {
   const template = await downloadGoodsCsvTemplate(page);
   const japaneseLanguageId = await readJapaneseLanguageId(page);
@@ -53,7 +55,7 @@ export async function registerGoodsCsv(page: Page, args: {
     "商品コード": line.code, "商品名(日)": line.nameJp, "商品名(英)": line.nameEn,
     ...line.values,
   })));
-  await uploadGoodsCsv(page, csv, args.fileName);
+  await uploadGoodsCsv(page, csv, args.fileName, args.uploadWaitMs);
   for (const warning of await expectSaved(page, args.what)) args.onWarning(warning);
   return { japaneseLanguageId };
 }

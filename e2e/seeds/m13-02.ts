@@ -2,7 +2,8 @@
  * M13-02 イベント登録/編集 のシードの作り方（画面操作）。
  * 値はシード表（integration_test/casegen/cases/M13-02_seed_data.tsv）の状態・属性と投入方法のとおり。
  */
-import { MEMBER_NAMES, SETUP_ADMIN } from "../config/env";
+import { SETUP_ADMIN } from "../config/env";
+import { entryMemberNames } from "./members";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
 import { Account, withAdminSession } from "../lib/session";
 import { Page } from "@playwright/test";
@@ -265,11 +266,6 @@ const オンライン日程 = (開始時間: string, 開始: string, 終了: str
 const 十一月オンライン = オンライン日程("2026-11-01 10:00", "2026-10-25 12:00", "2026-10-31 23:00");
 const 十二月オンライン = オンライン日程("2026-12-01 10:00", "2026-11-24 12:00", "2026-11-30 23:00");
 
-/** 申込に使う会員（会員登録済み）。人数ぶんを先頭から使う */
-function members(n: number): string[] {
-  if (MEMBER_NAMES.length < n) throw new Error(`申込を登録するのに会員が ${n} 人要る。会員登録済みの会員の名前を E2E_MEMBER_NAMES で与える（いま ${MEMBER_NAMES.length} 人）`);
-  return MEMBER_NAMES.slice(0, n);
-}
 
 /**
  * イベントと日程を登録し、申込日程（呼び名の末尾 entry.suffix の日程）に申込を登録して、イベントID・日程ID・申込IDを控える。
@@ -277,12 +273,14 @@ function members(n: number): string[] {
  */
 function defineEntrySeed(seedId: string, n: string, input: EventInput, schedules: [string, ScheduleInput][], entry: { suffix: string; labels: string[] }, after?: (page: Page, イベントID: string, 日程ID: string) => Promise<void>): void {
   defineSeed(seedId, { needs: ["S-M13-02-ADM"] }, async ({ browser, notes }) => {
+    // 申込に使う会員（会員登録済み。いなければフロントの新規会員登録画面で登録する）。人数ぶんを先頭から使う
+    const 会員 = await entryMemberNames(browser, entry.labels.length);
     await withAdminSession(browser, M1302_ADMIN, async (page) => {
       const id = await registerEvent(page, input);
       notes.set(`〔イベントID-M1302-${n}〕`, id);
       for (const [suffix, v] of schedules) notes.set(`〔日程ID-M1302-${n}${suffix}〕`, await registerSchedule(page, id, v));
       const 申込日程 = schedules.find(([suffix]) => suffix === entry.suffix)![1];
-      const ids = await registerEntries(page, input.イベント名日!, notes.get(`〔日程ID-M1302-${n}${entry.suffix}〕`), 申込日程.開始時間, members(entry.labels.length));
+      const ids = await registerEntries(page, input.イベント名日!, notes.get(`〔日程ID-M1302-${n}${entry.suffix}〕`), 申込日程.開始時間, 会員);
       entry.labels.forEach((l, i) => notes.set(`〔申込ID-M1302-${n}${l}〕`, ids[i]));
       if (after) await after(page, id, notes.get(`〔日程ID-M1302-${n}${entry.suffix}〕`));
     });

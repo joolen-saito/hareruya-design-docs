@@ -135,10 +135,10 @@ export class ProductPageCountPage {
     }));
   }
 
-  /** 商品検索入力画面に欄がなければ、step 2 自体を手順不可として明示不合格にする。 */
+  /** 商品マスター(検索結果)画面の件数セレクトボックスへ、開発者ツールで値777の option を足して選び、change を発火する。 */
   async selectInjectedCount777(): Promise<void> {
     const select = this.page.locator("#page_count_pulldown");
-    await expect(select, "IT-M03-01-043 手順2不可: 商品マスター(検索入力)画面に件数セレクトボックスがない").toHaveCount(1);
+    await expect(select, "商品マスター(検索結果)画面の件数セレクトボックス").toHaveCount(1);
     await select.evaluate((node) => {
       const field = node as HTMLSelectElement;
       if (!field.options.length) throw new Error("件数セレクトボックスに基準となるURL選択肢がない");

@@ -10,13 +10,16 @@ export class ProductResultPaging {
     this.rows = page.locator('tr[id^="ex-product-"]');
   }
 
-  /** 件数欄で「n件」を選ぶ。画面は選んだ件数の1ページ目へ移動する */
-  async chooseCount(n: number): Promise<void> {
+  /**
+   * 件数欄で「n件」を選ぶ。画面は選んだ件数の1ページ目へ移動する。
+   * waitMs は移動を待つ最大の時間（数千件の表示は既定の待ち時間を超える）
+   */
+  async chooseCount(n: number, waitMs?: number): Promise<void> {
     await expect(this.countSelect, "商品マスター(検索結果)の件数欄").toBeVisible();
     const label = `${n}件`;
     await expect(this.countSelect.locator("option").filter({ hasText: new RegExp(`^${n}件$`) }), `件数「${label}」の選択肢`).toHaveCount(1);
     await Promise.all([
-      this.page.waitForNavigation({ waitUntil: "domcontentloaded" }),
+      this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: waitMs }),
       this.countSelect.selectOption({ label }),
     ]);
     await expect(this.countSelect).toBeVisible();

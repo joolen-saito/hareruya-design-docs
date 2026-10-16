@@ -1,4 +1,4 @@
-/** M03-01-035〜038・042: 商品マスター(検索結果)の表示件数・ページ送りと、検索条件の保持・破棄。 */
+/** M03-01-035〜039・042: 商品マスター(検索結果)の表示件数・ページ送りと、検索条件の保持・破棄。 */
 import { expect, test } from "@playwright/test";
 import { BASE_URL } from "../../config/env";
 import { caseTest } from "../../lib/case";
@@ -152,6 +152,28 @@ caseTest("IT-M03-01-038", async ({ page, browser, notes, step, expected }) => {
   } finally {
     await contextB.close();
   }
+});
+
+caseTest("IT-M03-01-039", async ({ page, step, expected }) => {
+  await loginAdmin(page, M0301_ADMIN);
+  const search = new ProductSearchPage(page);
+  const paging = new ProductResultPaging(page);
+  await step(1, () => openFresh(search));
+  await step(2, async () => {
+    await search.field("product_name").fill("上限商品-039");
+  });
+  await step(3, () => search.submitAndWaitForResult());
+  // 12000件の表示は手元で90秒前後かかる（既存の3,135件で23秒）
+  await step(4, () => paging.chooseCount(12000, 600_000));
+  await expected(async () => {
+    expect.soft(await paging.totalCount(), "該当件数は12001件").toBe(12001);
+    expect.soft(await paging.selectedCountLabel(), "表示件数は12000件").toBe("12000件");
+    expect.soft(await paging.currentPage(), "1ページ目を表示している").toBe("1");
+    const names = await paging.productNames();
+    expect.soft(names.length, "1ページ目に12000件の商品が表示される").toBe(12000);
+    expect.soft(names.filter((n) => !/^上限商品-039-\d{5}$/.test(n)), "表示された商品はすべて「上限商品-039」の商品").toEqual([]);
+    expect.soft(new Set(names).size, "1ページ目の商品に重複が無い").toBe(names.length);
+  });
 });
 
 caseTest("IT-M03-01-042", async ({ page, step, expected }) => {

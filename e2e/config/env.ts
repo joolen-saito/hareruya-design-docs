@@ -46,9 +46,13 @@ export const SETUP_ADMIN = {
 
 /**
  * 会員登録済みの会員の名前（イベント申込を画面から登録するときにプレイヤー検索で選ぶ）。2人以上をカンマ区切りで与える。
- * local の既定値は、開発用コンテナの初期データにいる会員。
+ * 与えないときは、シード表の「該当する会員が無ければ、フロントの新規会員登録画面で会員を登録しておく」に従い、
+ * E2E が試験用の会員をフロントの会員登録画面で登録して使う（本登録のメールを読むので local だけ。seeds/members.ts）。
  */
-export const MEMBER_NAMES = env("E2E_MEMBER_NAMES", ENV_NAME === "local" ? "太郎,通知" : "").split(",").map((v) => v.trim()).filter(Boolean);
+export const MEMBER_NAMES = env("E2E_MEMBER_NAMES", "").split(",").map((v) => v.trim()).filter(Boolean);
+
+/** 手元の環境のメールの受け口（mailcatcher）。会員の本登録のメールを読む。local でだけ使う */
+export const MAIL_URL = env("E2E_MAIL_URL", ENV_NAME === "local" ? "http://localhost:1080" : "").replace(/\/$/, "");
 
 /** DB確認（実行区分が「ブラウザ+DB確認」のケースの照会）。参照だけに使う */
 const dbMode = process.env.E2E_DB_URL ? "url" : env("E2E_DB_MODE", profile.db);
@@ -56,6 +60,8 @@ if (dbMode !== "docker" && dbMode !== "url" && dbMode !== "none") throw new Erro
 export const DB_MODE: Profile["db"] = dbMode;
 export const DB_URL = process.env.E2E_DB_URL || "";
 export const DB_CONTAINER = env("E2E_DB_CONTAINER", "ec-cube-enterprise-postgres_primary-1");
+/** 管理画面に項目が無いアプリの設定値を確かめる（読み取りだけ）ときの、手元のアプリのコンテナ。local でだけ使う */
+export const APP_CONTAINER = env("E2E_APP_CONTAINER", "ec-cube-enterprise-ec-cube-1");
 
 export const REPO_ROOT = path.resolve(__dirname, "..", "..");
 export const CASEGEN_DIR = path.join(REPO_ROOT, "integration_test", "casegen");

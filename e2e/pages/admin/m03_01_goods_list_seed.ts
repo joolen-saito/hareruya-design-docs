@@ -84,15 +84,8 @@ export async function removeProductsMatchingName(page: Page, name: string, inclu
   const search = new ProductSearchPage(page);
   const removedIds = new Set<string>();
   for (;;) {
-    await search.open();
-    await search.ensureDetailVisible();
     // 同名0件の確認では、既定の「公開・NM・高額商品除外」による見落としを避ける。
-    for (const field of ["status", "card_condition", "expensive"]) {
-      for (const option of await search.choiceOptions(field)) {
-        if (option.checked) await search.setChecked(field, option.value, false);
-      }
-      await expect.poll(() => search.checkedValues(field), `${field} の絞り込みを外す`).toEqual([]);
-    }
+    await openSearchWithoutDefaultFilters(search);
     await search.field("product_name").fill(name);
     // 結果画面の読み込みを待ってから数える（押した直後に数えると、押す前の画面の0件を見て清掃を飛ばす）
     await search.submitAndWaitForResult();
@@ -126,16 +119,61 @@ export async function removeProductsMatchingName(page: Page, name: string, inclu
       if (removedIds.has(id)) throw new Error(`${name} の商品 ID ${id} は完全削除後も残っている`);
       removedIds.add(id);
     }
-    await page.locator("#trigger_check_all").check();
-    const deleteButton = page.locator('#btn_bulk button[data-bs-target="#bulkDeleteModal"]');
-    await expect(deleteButton, `${name} の完全削除操作`).toBeVisible();
-    await deleteButton.click();
-    const modal = page.locator("#bulkDeleteModal");
-    await expect(modal).toBeVisible();
-    await modal.locator("#bulkDelete").click();
-    await expect(modal.locator("#bulkDeleteDone"), `${name} の削除処理完了`).toBeVisible();
-    const errors = (await modal.locator("#bulkErrors li").allInnerTexts()).map((s) => s.trim()).filter(Boolean);
-    if (errors.length > 0) throw new Error(`${name} を完全削除できない: ${errors.join(" / ")}`);
-    await Promise.all([page.waitForEvent("load"), modal.locator("#bulkDeleteDone").click()]);
+    await bulkDeleteListed(page, name);
   }
+}
+
+/**
+ * 正本が登録前に商品コードで検索して完全削除すると定めたシードで使う（固定の商品コードを再実行で重ねない）。
+ * 結果の行の商品コードがすべて code と一致するときだけ消す。違う行が混ざれば消さずに止める。
+ */
+export async function removeProductsMatchingCode(page: Page, code: string): Promise<string[]> {
+  const search = new ProductSearchPage(page);
+  const removedIds = new Set<string>();
+  for (;;) {
+    await openSearchWithoutDefaultFilters(search);
+    await search.field("product_code").fill(code);
+    await search.submitAndWaitForResult();
+    const rows = page.locator('tr[id^="ex-product-"]');
+    if (await rows.count() === 0) {
+      await expect(page.locator("#form_bulk"), `商品コード ${code} の商品が残っていない`).toHaveCount(0);
+      return [...removedIds];
+    }
+    for (const row of await rows.all()) {
+      const id = (await row.locator("td:nth-child(2)").innerText()).trim();
+      const actual = (await row.locator("td:nth-child(4)").innerText()).trim();
+      if (!/^\d+$/.test(id)) throw new Error(`商品コード ${code} の清掃対象の商品 ID を画面で確認できない: ${id}`);
+      if (actual !== code) throw new Error(`商品コード ${code} の検索結果に別の商品コードの行がある（ID=${id}, 商品コード=${actual}）。消さずに止める`);
+      if (removedIds.has(id)) throw new Error(`商品コード ${code} の商品 ID ${id} は完全削除後も残っている`);
+      removedIds.add(id);
+    }
+    await bulkDeleteListed(page, `商品コード ${code}`);
+  }
+}
+
+/** 商品マスター(検索入力)を開き、既定でチェックされている絞り込み（公開状態・状態・高額商品）を外す */
+async function openSearchWithoutDefaultFilters(search: ProductSearchPage): Promise<void> {
+  await search.open();
+  await search.ensureDetailVisible();
+  for (const field of ["status", "card_condition", "expensive"]) {
+    for (const option of await search.choiceOptions(field)) {
+      if (option.checked) await search.setChecked(field, option.value, false);
+    }
+    await expect.poll(() => search.checkedValues(field), `${field} の絞り込みを外す`).toEqual([]);
+  }
+}
+
+/** 商品マスター(検索結果)の行をすべて選び、「完全に削除」する */
+async function bulkDeleteListed(page: Page, what: string): Promise<void> {
+  await page.locator("#trigger_check_all").check();
+  const deleteButton = page.locator('#btn_bulk button[data-bs-target="#bulkDeleteModal"]');
+  await expect(deleteButton, `${what} の完全削除操作`).toBeVisible();
+  await deleteButton.click();
+  const modal = page.locator("#bulkDeleteModal");
+  await expect(modal).toBeVisible();
+  await modal.locator("#bulkDelete").click();
+  await expect(modal.locator("#bulkDeleteDone"), `${what} の削除処理完了`).toBeVisible();
+  const errors = (await modal.locator("#bulkErrors li").allInnerTexts()).map((s) => s.trim()).filter(Boolean);
+  if (errors.length > 0) throw new Error(`${what} を完全削除できない: ${errors.join(" / ")}`);
+  await Promise.all([page.waitForEvent("load"), modal.locator("#bulkDeleteDone").click()]);
 }
