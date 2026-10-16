@@ -10,6 +10,9 @@
 - それ以外の行: 事前準備・手順は「旧⇒新」の置き換え（‖ 区切りで複数）、期待結果は丸ごと差し替える。シードは「シードID|列|旧⇒新」。
   ケースが excluded_open_cases.tsv に外れているとき（作り方が未確定）は、その表の「元_」列を直す（exclude_open.py が戻すときに直った値で戻る）。
 - 新出典の欄があれば出典を差し替える（裁定と食い違う出典の書き方を直す）。
+- added_seeds.tsv に裁定と同じテストID・項目の行があれば、そのシードを cases/ のシード表に置き（同じシードIDがあれば差し替える）、
+  ケースの使用シードに足す。ケース専用のシードを足したケースは、読み取りだけの宣言（precond/readonly_cases/）から外す。
+  事前準備への書き足し（新が旧を含む置き換え）は、新が既にあれば済みとみなす。
 - 基線（../../precond/baseline/）にあるケースは、期待結果の変更を precond/oracle_changes/ に、手順の変更を precond/step_changes/（種別「裁定訂正」）に、
   出典の変更を precond/source_changes/ に宣言する。
   既に行があれば（類型T4 など）新しい値に差し替え、理由と承認に裁定を書き足す。
@@ -42,6 +45,8 @@ def pairs(s):
 
 def replace(text, spec, where, err):
     for old, new in pairs(spec):
+        if old in new and new in text:  # 書き足し（新が旧を含む）は、新が既にあれば済み
+            continue
         if old in text:
             text = text.replace(old, new)
         elif new and new not in text:   # 削る置き換え（新が空）は、旧が無ければ削り済みとみなす
@@ -80,6 +85,13 @@ def main():
     hh, H = rows(CG / "excluded_hold_cases.tsv")
     hsh, HS = rows(CG / "excluded_hold_seeds.tsv")
     held = {r[0] for r in H}
+    ap = G / "added_seeds.tsv"
+    ah, A = rows(ap) if ap.exists() else ([], [])
+    A = [dict(zip(ah, r)) for r in A]
+    for a in A:
+        if not any(r["テストID"] == a["テストID"] and r["項目"] == a["項目"] for r in R):
+            print(f"  誤り: added_seeds.tsv の {a['テストID']} {a['項目']} に当たる裁定が rulings.tsv に無い")
+            return 1
     err, done = [], {"直した": 0, "保留へ外した": 0, "済み": 0}
     for fid in sorted({r["テストID"][3:9] for r in R}):
         cp, sp = CG / f"cases/{fid}_test_cases.tsv", CG / f"cases/{fid}_seed_data.tsv"
@@ -122,7 +134,9 @@ def main():
                 ei = {c: i for i, c in enumerate(eh)}
                 get = lambda c: erow[ei["元_" + c]]
                 def put(c, v): erow[ei["元_" + c]] = v
-            before = (get("事前準備"), get("手順"), get("期待結果"), get("出典"))
+            state = lambda: (get("事前準備"), get("手順"), get("期待結果"), get("出典"), get("使用シード"),
+                             "\n".join("\t".join(x) for x in S))
+            before = state()
             if rl.get("新出典"):
                 put("出典", rl["新出典"])
             if rl["事前準備の置換"]:
@@ -138,7 +152,23 @@ def main():
                     err.append(f"{tid}: シード {sid} が cases/ に無い")
                     continue
                 srow[si[col]] = replace(srow[si[col]], rep, f"{sid} {col}", err)
-            done["直した" if before != (get("事前準備"), get("手順"), get("期待結果"), get("出典")) else "済み"] += 1
+            for a in [a for a in A if a["テストID"] == tid and a["項目"] == item]:
+                new = [a[c] for c in sh]
+                at = next((i for i, x in enumerate(S) if x[0] == a["シードID"]), None)
+                if at is None:
+                    S.append(new)
+                else:
+                    S[at] = new
+                used = [s.strip() for s in get("使用シード").split(",") if s.strip()]
+                if a["シードID"] not in used:
+                    put("使用シード", ",".join(used + [a["シードID"]]))
+                if a["共有"] == "ケース専用":
+                    rp = PC / f"readonly_cases/{fid}.tsv"
+                    if rp.exists():
+                        rh_, ro = rows(rp)
+                        if any(x[0] == tid for x in ro):
+                            write(rp, rh_, [x for x in ro if x[0] != tid])
+            done["直した" if before != state() else "済み"] += 1
             if tid not in base:
                 continue
             why = f"{rl['根拠']}（{item}）"
