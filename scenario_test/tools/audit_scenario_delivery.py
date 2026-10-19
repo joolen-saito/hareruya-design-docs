@@ -6,6 +6,7 @@ import csv
 import hashlib
 import html
 import json
+import posixpath
 import re
 import sys
 from collections import Counter, defaultdict
@@ -126,17 +127,50 @@ def main() -> None:
 
 
 def publish(summary: dict, items: list[dict], files: list[Path]) -> None:
-    lines = ["# 作成済みシナリオテストの観点一覧", "", "<!-- generated-by: audit_scenario_delivery.py -->", "",
+    # 第1部（観点の体系）は 外部資料観点/tools/build.py が生成した断片を取り込む。
+    framework_dir = BASE / "外部資料観点"
+    framework = (framework_dir / "観点体系.md").read_text().rstrip()
+    # 断片のリンクは 外部資料観点/ からの相対なので、この文書（scenario_test/）からの相対に直す。
+    framework = re.sub(r"\]\((?!https?:|#|/)([^)]+)\)",
+                       lambda m: "](" + posixpath.normpath("外部資料観点/" + m[1]) + ")", framework)
+    label_map = {r["テスト観点"]: r for r in read_tsv(framework_dir / "label_map.tsv")}
+    unmapped = sorted(set(summary["by_viewpoint"]) - set(label_map))
+    assert not unmapped, f"観点の対応が未定義のテスト観点（外部資料観点/tools/spec.py の LABEL_MAP に追加する）: {unmapped}"
+    groups = re.findall(r"^\| (SV-\d\d) \| ([^|]+?) \| (\d+) \|$", framework, re.M)
+    n_viewpoints = sum(int(n) for _, _, n in groups)
+    viewpoint_rows = re.findall(r"^\| (SV-\d\d)-\d\d \|", framework, re.M)
+    assert groups and Counter(viewpoint_rows) == {g: int(n) for g, _, n in groups}, "観点体系.md の分類表と観点の行が一致しない（第1部の取り込み失敗）"
+    group_ids = {g for g, _, _ in groups}
+    for label, row in label_map.items():
+        assert row["分類"] in group_ids and f"| {row['対応する観点']} |" in framework, f"対応表の観点が第1部に無い: {label} {row['対応する観点']}"
+    lines = ["# シナリオテスト観点", "", "<!-- generated-by: audit_scenario_delivery.py（第1部は 外部資料観点/観点体系.md を取り込む） -->", "",
+             "シナリオテストで確認すべき観点と、作成済みテスト項目の観点をまとめる。目的は、システムが業務に必要な品質を満たし、実際の業務が開始から完了まで回ることを判断できるケースにすること。[目的と完了基準](システムテストの目的と完了基準.md)に従う。", "",
+             f"- 第1部 観点の体系: 確認すべき観点（{len(groups)}分類・{n_viewpoints}件）。IPA などの公開資料から整理した。",
+             "- 第2部 作成済みテスト項目の観点: `test_items/all_scenario_test_items.tsv` の集計と、第1部の観点への対応。", "",
+             "## 第1部 観点の体系", "", framework, "",
+             "## 第2部 作成済みテスト項目の観点", "",
              "- 集計元: `test_items/all_scenario_test_items.tsv`", "- 補完・再照合日: 2026-10-09",
              f"- シナリオ: {summary['scenario_count']}件 / テスト項目: {summary['item_count']}件 / 業務工程: {summary['step_count']}件", "",
              "HTML設計書と採用業務フローを根拠に作成した項目の集計。件数自体は要件網羅率や実機合格率を示さない。", "",
-             "目的は、システムが業務に必要な品質を満たし、実際の業務が開始から完了まで回ることを判断できるケースにすること。[目的と完了基準](システムテストの目的と完了基準.md)に従う。", "",
-             "| テスト観点 | 項目数 | 対象業務 |", "|---|---:|---|"]
+             "「対応する観点」は、テスト観点の付与規則から著者が対応づけた第1部の観点（[対応表](外部資料観点/label_map.tsv)）。項目のテスト観点の値そのものは変えていない。", "",
+             "| テスト観点 | 項目数 | 対象業務 | 対応する観点 |", "|---|---:|---|---|"]
     for viewpoint, count in sorted(summary["by_viewpoint"].items()):
         businesses = sorted({r["機能名"].split(" — ")[0] for r in items if r["テスト観点"] == viewpoint})
-        lines.append(f"| {viewpoint} | {count} | {' / '.join(businesses)} |")
+        mapping = label_map[viewpoint]
+        related = f"（関連: {mapping['関連する観点']}）" if mapping["関連する観点"] else ""
+        lines.append(f"| {viewpoint} | {count} | {' / '.join(businesses)} | {mapping['対応する観点']} {mapping['観点名']}{related} |")
+    by_group: dict[str, list[tuple[str, int]]] = defaultdict(list)
+    for viewpoint, count in sorted(summary["by_viewpoint"].items()):
+        by_group[label_map[viewpoint]["分類"]].append((viewpoint, count))
+    lines.extend(["", "### 分類ごとの作成済み項目", "",
+                  "各テスト観点を「対応する観点」の分類で数えた。テスト観点は1項目に1つなので、0件の分類は、その分類を主な観点とする項目が無いことを示す。項目の内容が他の分類の観点を含むことはある。権限・入力検証・重複処理などは機能・結合テストとの対応も含めて評価し、性能・同時実行・復旧などは受入要件がある場合にその要件に対応するテストと結果で評価する（[目的と完了基準](システムテストの目的と完了基準.md)「品質を判断する範囲」）。", "",
+                  "| 分類 | 名前 | 作成済みのテスト観点 | 項目数 |", "|---|---|---|---:|"])
+    for gid, gname, _ in groups:
+        members = by_group.get(gid, [])
+        names = " / ".join(f"{v}（{c}）" for v, c in members) or "—"
+        lines.append(f"| {gid} | {gname} | {names} | {sum(c for _, c in members)} |")
     lines.extend(["", "- 業務分岐とその出典は各SCNの経路条件・データパターンに記載する。",
-                  "- データ連鎖は産出側と消費側の照合項目を作成する。照合キー未確定は実施保留として残す。",
+                  "- データ連鎖は産出側と消費側の照合項目を作成する。終端の工程では成果物を作業元の確定値と照合し、後続工程への受け渡しは判定しない。照合キー未確定は実施保留として残す。",
                   "- 他層委譲は現行の結合テスト正本に実在するIDを参照する。未対応・準備未確定を別表示し、実行済みとは扱わない。",
                   "- [同期検証結果](coverage/delivery_summary.json) / [出典補完記録](coverage/source_contracts.json)",
                   "- [実施手順の修正結果と現在の準備条件](coverage/execution_repairs/README.md)", ""])
