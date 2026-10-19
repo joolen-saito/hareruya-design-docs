@@ -53,6 +53,21 @@ def main() -> None:
             quote = re.sub(r"\s+", "", html.unescape(item["quote"]))
             assert quote and (quote in normalized_sources[source] or quote in raw_sources[source]), f"出典引用が原典に存在しない: {contract['contract_id']} {source}"
             evidence_count += 1
+    # 観点の当てはめ契約（項目・経路）の引用も同じ方法で照合する。
+    viewpoint_path = BASE / "coverage/viewpoint_contracts.json"
+    viewpoint_contracts = json.loads(viewpoint_path.read_text()) if viewpoint_path.is_file() else {}
+    for contract in viewpoint_contracts.get("items", []) + viewpoint_contracts.get("routes", []):
+        evidence = contract.get("evidence", []) + [e for step in contract.get("steps", []) for e in step.get("evidence", [])]
+        assert evidence, f"観点の契約に根拠が無い: {contract['contract_id']}"
+        for item in evidence:
+            source = item["file"]
+            if source not in normalized_sources:
+                raw = (ROOT / source).read_text()
+                raw_sources[source] = re.sub(r"\s+", "", html.unescape(raw))
+                normalized_sources[source] = re.sub(r"\s+", "", html.unescape(re.sub(r"<[^>]+>", "", raw)))
+            quote = re.sub(r"\s+", "", html.unescape(item["quote"]))
+            assert quote and (quote in normalized_sources[source] or quote in raw_sources[source]), f"観点の契約の引用が原典に存在しない: {contract['contract_id']} {source}"
+            evidence_count += 1
     paths = sorted((BASE / "scenario").glob("SCN-*.md"))
     scns = {p.name.split("_", 1)[0]: p for p in paths}
     assert len(scns) == len(paths), "SCN-ID重複"
@@ -134,6 +149,11 @@ def publish(summary: dict, items: list[dict], files: list[Path]) -> None:
     framework = re.sub(r"\]\((?!https?:|#|/)([^)]+)\)",
                        lambda m: "](" + posixpath.normpath("外部資料観点/" + m[1]) + ")", framework)
     label_map = {r["テスト観点"]: r for r in read_tsv(framework_dir / "label_map.tsv")}
+    # 観点の当てはめ契約から作った項目は「SV-xx-yy 観点名」を値に持つので、その観点自身に対応づける。
+    for viewpoint in summary["by_viewpoint"]:
+        m = re.match(r"(SV-\d\d-\d\d) (.+)$", viewpoint)
+        if m and viewpoint not in label_map:
+            label_map[viewpoint] = {"テスト観点": viewpoint, "対応する観点": m[1], "観点名": m[2], "分類": m[1][:5], "関連する観点": ""}
     unmapped = sorted(set(summary["by_viewpoint"]) - set(label_map))
     assert not unmapped, f"観点の対応が未定義のテスト観点（外部資料観点/tools/spec.py の LABEL_MAP に追加する）: {unmapped}"
     groups = re.findall(r"^\| (SV-\d\d) \| ([^|]+?) \| (\d+) \|$", framework, re.M)

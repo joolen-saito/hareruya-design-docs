@@ -175,7 +175,7 @@
 ## トレーサビリティ
 - **カバーする業務フロー番号**: 商品登録・編集 / パターン6 / 経路2
 - **期待する主要機能No**: M14-01, M14-04, M14-05, M14-06, M14-08, M03-26, M03-03, M03-11, M03-12, M03-41, M03-45, M03-01, M03-02, M03-27, M03-35, M03-20, M03-38, M03-30, M03-31, M03-32, M03-33, M03-34, M04-01, M04-21, M04-12, M04-13, M04-23
-- **シナリオに紐づく機能No**: M03-26, M04-02, M14-01, M14-04, M04-32, M03-02, M04-01, M03-01
+- **シナリオに紐づく機能No**: M03-26, M04-02, M14-01, M14-04, M04-01, M04-32, M03-02, M03-01
 - **触れる画面と既存ケース**:
   | 画面 | 機能No | 機能仕様 | 既存ケース |
   |---|---|---|---|
@@ -183,9 +183,9 @@
   | 在庫管理 — 在庫編集機能 | M04-02 | `functions/ec-cube-enterprise/m04-02_admin_stock_stock_edit.md` | `integration_test/manual_test_cases/ketsugo_manual_cases_active.tsv`（0件、機構別の該当IDは他層委譲表） |
   | カード管理 — カード検索（一覧・条件抽出） | M14-01 | `functions/pf-eccube3/m14-01_admin_card_card_search.md` | `integration_test/manual_test_cases/ketsugo_manual_cases_active.tsv`（56件、機構別の該当IDは他層委譲表） |
   | カード管理 — 新規登録・編集・削除（詳細フォーム） | M14-04 | `functions/pf-eccube3/m14-04_admin_card_card_register_update_delete.md` | `integration_test/manual_test_cases/ketsugo_manual_cases_active.tsv`（59件、機構別の該当IDは他層委譲表） |
+  | 在庫管理 — 在庫検索/一覧 | M04-01 | `functions/ec-cube-enterprise/m04-01_admin_stock_stock_search_list.md` | `integration_test/manual_test_cases/ketsugo_manual_cases_active.tsv`（0件、機構別の該当IDは他層委譲表） |
   | 在庫管理 — 承認一覧 | M04-32 | `functions/ec-cube-enterprise/m04-32_admin_stock_stock_approval_list.md` | `integration_test/manual_test_cases/ketsugo_manual_cases_active.tsv`（0件、機構別の該当IDは他層委譲表） |
   | 商品管理 — 商品編集機能 | M03-02 | `functions/pf-eccube3/m03-02_admin_product_product_edit.md` | `integration_test/manual_test_cases/ketsugo_manual_cases_active.tsv`（64件、機構別の該当IDは他層委譲表） |
-  | 在庫管理 — 在庫検索/一覧 | M04-01 | `functions/ec-cube-enterprise/m04-01_admin_stock_stock_search_list.md` | `integration_test/manual_test_cases/ketsugo_manual_cases_active.tsv`（0件、機構別の該当IDは他層委譲表） |
   | 商品管理 — 商品検索・一覧 | M03-01 | `functions/pf-eccube3/m03-01_admin_product_product_search_list.md` | `integration_test/manual_test_cases/ketsugo_manual_cases_active.tsv`（45件、機構別の該当IDは他層委譲表） |
 - **関連HTML設計書**:
   - `excel_to_html/output/0204_基本設計仕様書(商品管理).html`

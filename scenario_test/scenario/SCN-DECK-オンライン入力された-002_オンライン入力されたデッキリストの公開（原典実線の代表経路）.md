@@ -146,15 +146,15 @@
 ## トレーサビリティ
 - **カバーする業務フロー番号**: デッキ登録 / パターン2 / 経路1
 - **期待する主要機能No**: M15-08, M15-09, M15-10, A15-07, M15-05, M15-06, A15-09, A15-17, M15-01, F06-14, F06-16, F06-17, A15-10, A15-12, A15-13, M15-11, M13-01, M13-08, A15-16
-- **シナリオに紐づく機能No**: M15-05, F06-14, F06-17, M15-01, F06-16
+- **シナリオに紐づく機能No**: M15-05, F06-16, F06-17, F06-14, M15-01
 - **触れる画面と既存ケース**:
   | 画面 | 機能No | 機能仕様 | 既存ケース |
   |---|---|---|---|
   | デッキ管理 — 新規登録・編集・削除・複製 | M15-05 | `functions/pf-eccube3/m15-05_admin_deck_deck_edit.md` | `integration_test/manual_test_cases/ketsugo_manual_cases_active.tsv`（62件、機構別の該当IDは他層委譲表） |
-  | 会員 — 予約済み大会一覧 | F06-14 | `functions/pf-eccube3/f06-14_front_member_mypage_event_reserved_list.md` | `integration_test/manual_test_cases/ketsugo_manual_cases_active.tsv`（54件、機構別の該当IDは他層委譲表） |
-  | F06-17（大会に登録するデッキの確認・登録） | F06-17 | `functions/pf-eccube3/f06-17_front_member_mypage_event_deck_complete.md` | `integration_test/manual_test_cases/ketsugo_manual_cases_active.tsv`（66件、機構別の該当IDは他層委譲表） |
-  | デッキ管理 — デッキ検索・一覧 | M15-01 | `functions/pf-eccube3/m15-01_admin_deck_deck_search.md` | `integration_test/manual_test_cases/ketsugo_manual_cases_active.tsv`（56件、機構別の該当IDは他層委譲表） |
   | F06-16（大会デッキ登録編集） | F06-16 | `functions/pf-eccube3/f06-16_front_member_mypage_event_deck_edit.md` | `integration_test/manual_test_cases/ketsugo_manual_cases_active.tsv`（67件、機構別の該当IDは他層委譲表） |
+  | F06-17（大会に登録するデッキの確認・登録） | F06-17 | `functions/pf-eccube3/f06-17_front_member_mypage_event_deck_complete.md` | `integration_test/manual_test_cases/ketsugo_manual_cases_active.tsv`（66件、機構別の該当IDは他層委譲表） |
+  | 会員 — 予約済み大会一覧 | F06-14 | `functions/pf-eccube3/f06-14_front_member_mypage_event_reserved_list.md` | `integration_test/manual_test_cases/ketsugo_manual_cases_active.tsv`（54件、機構別の該当IDは他層委譲表） |
+  | デッキ管理 — デッキ検索・一覧 | M15-01 | `functions/pf-eccube3/m15-01_admin_deck_deck_search.md` | `integration_test/manual_test_cases/ketsugo_manual_cases_active.tsv`（56件、機構別の該当IDは他層委譲表） |
 - **関連HTML設計書**:
   - `excel_to_html/output/0212_基本設計仕様書(デッキ管理).html`
   - `excel_to_html/output/0515_基本設計仕様書(API_デッキビルダー).html`

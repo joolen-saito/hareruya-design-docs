@@ -154,15 +154,15 @@
 ## トレーサビリティ
 - **カバーする業務フロー番号**: イベント管理 / パターン2 / 経路1
 - **期待する主要機能No**: M13-06, M13-07, M13-10, M13-11, M13-12, F07-01, F07-02, F07-03, F07-04, B13-01, B13-02, M13-08, F06-16, F06-17, M15-01, M15-05
-- **シナリオに紐づく機能No**: F06-16, F06-17, F07-01, F07-04, F07-03
+- **シナリオに紐づく機能No**: F06-16, F06-17, F07-04, F07-03, F07-01
 - **触れる画面と既存ケース**:
   | 画面 | 機能No | 機能仕様 | 既存ケース |
   |---|---|---|---|
   | F06-16（大会デッキ登録編集） | F06-16 | `functions/pf-eccube3/f06-16_front_member_mypage_event_deck_edit.md` | `integration_test/manual_test_cases/ketsugo_manual_cases_active.tsv`（67件、機構別の該当IDは他層委譲表） |
   | F06-17（大会に登録するデッキの確認・登録） | F06-17 | `functions/pf-eccube3/f06-17_front_member_mypage_event_deck_complete.md` | `integration_test/manual_test_cases/ketsugo_manual_cases_active.tsv`（66件、機構別の該当IDは他層委譲表） |
-  | F07-01（イベント大会TOP） | F07-01 | `functions/pf-eccube3/f07-01_front_event_event_top.md` | `integration_test/manual_test_cases/ketsugo_manual_cases_active.tsv`（63件、機構別の該当IDは他層委譲表） |
   | F07-04（大会申込～完了） | F07-04 | `functions/pf-eccube3/f07-04_front_event_event_entry_complete.md` | `integration_test/manual_test_cases/ketsugo_manual_cases_active.tsv`（62件、機構別の該当IDは他層委譲表） |
   | F07-03（大会詳細） | F07-03 | `functions/pf-eccube3/f07-03_front_event_event_detail.md` | `integration_test/manual_test_cases/ketsugo_manual_cases_active.tsv`（51件、機構別の該当IDは他層委譲表） |
+  | F07-01（イベント大会TOP） | F07-01 | `functions/pf-eccube3/f07-01_front_event_event_top.md` | `integration_test/manual_test_cases/ketsugo_manual_cases_active.tsv`（63件、機構別の該当IDは他層委譲表） |
 - **関連HTML設計書**:
   - `excel_to_html/output/0214_基本設計仕様書(イベント管理).html`
   - `excel_to_html/output/0307_基本設計仕様書(フロント_イベント).html`

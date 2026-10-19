@@ -12,7 +12,12 @@ def append(repo: Path, scenarios: list, docs: list, g) -> None:
     RECORDS.clear()
     path = repo / "scenario_test/coverage/source_contracts.json"
     data = json.loads(path.read_text())
-    for category in ("missing_pattern_resolutions", "cross_business_routes", "html_routes"):
+    pairs = [(data, category) for category in ("missing_pattern_resolutions", "cross_business_routes", "html_routes")]
+    # 観点の当てはめで足す経路（scenario_id を必ず持つ）。
+    viewpoint_path = repo / "scenario_test/coverage/viewpoint_contracts.json"
+    if viewpoint_path.is_file():
+        pairs.append((json.loads(viewpoint_path.read_text()), "routes"))
+    for data, category in pairs:
         for record in data.get(category, []):
             if not record["disposition"].startswith("adopted"):
                 continue

@@ -154,15 +154,15 @@
 ## トレーサビリティ
 - **カバーする業務フロー番号**: 商品登録・編集 / パターン1 / 経路1
 - **期待する主要機能No**: M14-01, M14-04, M14-05, M14-06, M14-08, M03-26, M03-03, M03-11, M03-12, M03-41, M03-45, M03-37, M03-20, M03-27, M03-35, M03-01, M03-02, M03-38, M03-30, M03-31, M03-32, M03-33, M03-34
-- **シナリオに紐づく機能No**: M03-14, M14-08, M14-06, M03-01, M03-27
+- **シナリオに紐づく機能No**: M03-14, M14-08, M14-06, M03-27, M03-01
 - **触れる画面と既存ケース**:
   | 画面 | 機能No | 機能仕様 | 既存ケース |
   |---|---|---|---|
   | 商品管理 — 略称タグ登録/編集 | M03-14 | `functions/pf-eccube3/m03-14_admin_product_product_abbreviation_tag_register_edit.md` | `integration_test/manual_test_cases/ketsugo_manual_cases_active.tsv`（59件、機構別の該当IDは他層委譲表） |
   | カード管理 — カードセット新規登録・編集・削除 | M14-08 | `functions/pf-eccube3/m14-08_admin_card_cardset_register_update_delete.md` | `integration_test/manual_test_cases/ketsugo_manual_cases_active.tsv`（58件、機構別の該当IDは他層委譲表） |
   | カード管理 — カードセット一覧 | M14-06 | `functions/pf-eccube3/m14-06_admin_card_cardset_list.md` | `integration_test/manual_test_cases/ketsugo_manual_cases_active.tsv`（65件、機構別の該当IDは他層委譲表） |
-  | 商品管理 — 商品検索・一覧 | M03-01 | `functions/pf-eccube3/m03-01_admin_product_product_search_list.md` | `integration_test/manual_test_cases/ketsugo_manual_cases_active.tsv`（45件、機構別の該当IDは他層委譲表） |
   | 商品管理 — グッズ商品CSV登録 | M03-27 | `functions/pf-eccube3/m03-27_admin_product_product_goods_csv_import.md` | `integration_test/manual_test_cases/ketsugo_manual_cases_active.tsv`（75件、機構別の該当IDは他層委譲表） |
+  | 商品管理 — 商品検索・一覧 | M03-01 | `functions/pf-eccube3/m03-01_admin_product_product_search_list.md` | `integration_test/manual_test_cases/ketsugo_manual_cases_active.tsv`（45件、機構別の該当IDは他層委譲表） |
 - **関連HTML設計書**:
   - `excel_to_html/output/0204_基本設計仕様書(商品管理).html`
   - `excel_to_html/output/0208_基本設計仕様書(カード管理).html`

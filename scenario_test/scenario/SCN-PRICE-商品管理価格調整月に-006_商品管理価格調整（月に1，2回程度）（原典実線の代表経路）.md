@@ -150,14 +150,14 @@
 ## トレーサビリティ
 - **カバーする業務フロー番号**: 価格管理 / パターン6 / 経路1
 - **期待する主要機能No**: M03-05, M03-31, M03-34, M09-02
-- **シナリオに紐づく機能No**: M03-06, M03-30, M10-13, M03-01
+- **シナリオに紐づく機能No**: M03-06, M03-30, M03-01, M10-13
 - **触れる画面と既存ケース**:
   | 画面 | 機能No | 機能仕様 | 既存ケース |
   |---|---|---|---|
   | 商品管理 — カスタムデータ CSV ダウンロード（商品情報） | M03-06 | `functions/pf-eccube3/m03-06_admin_product_product_custom_csv_export.md` | `integration_test/manual_test_cases/ketsugo_manual_cases_active.tsv`（84件、機構別の該当IDは他層委譲表） |
   | 商品管理 — 価格変更CSV登録 | M03-30 | `functions/pf-eccube3/m03-30_admin_product_product_product_price_csv_import.md` | `integration_test/manual_test_cases/ketsugo_manual_cases_active.tsv`（75件、機構別の該当IDは他層委譲表） |
-  | 店舗設定 — カスタムCSV出力項目設定（店舗設定/システム設定） | M10-13 | `functions/pf-eccube3/m10-13_admin_base_setting_setting_shop_csv_custom.md` | `integration_test/manual_test_cases/ketsugo_manual_cases_active.tsv`（80件、機構別の該当IDは他層委譲表） |
   | 商品管理 — 商品検索・一覧 | M03-01 | `functions/pf-eccube3/m03-01_admin_product_product_search_list.md` | `integration_test/manual_test_cases/ketsugo_manual_cases_active.tsv`（45件、機構別の該当IDは他層委譲表） |
+  | 店舗設定 — カスタムCSV出力項目設定（店舗設定/システム設定） | M10-13 | `functions/pf-eccube3/m10-13_admin_base_setting_setting_shop_csv_custom.md` | `integration_test/manual_test_cases/ketsugo_manual_cases_active.tsv`（80件、機構別の該当IDは他層委譲表） |
 - **関連HTML設計書**:
   - `excel_to_html/output/0204_基本設計仕様書(商品管理).html`
   - `excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能).html`

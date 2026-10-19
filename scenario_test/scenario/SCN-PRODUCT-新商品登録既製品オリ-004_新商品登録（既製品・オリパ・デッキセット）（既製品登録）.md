@@ -180,7 +180,7 @@
 ## トレーサビリティ
 - **カバーする業務フロー番号**: 商品登録・編集 / パターン4 / 経路1
 - **期待する主要機能No**: M03-11, M03-12, M03-41, M03-45, M03-01, M03-02, M03-26, M03-27, M03-35, M03-03, M03-20, M03-38, M03-30, M03-31, M03-32, M03-33, M03-34, M04-01, M04-21, M04-12, M04-13, M04-23
-- **シナリオに紐づく機能No**: M03-01, M03-02, M03-27, M04-01, M04-21, M04-32, M03-06
+- **シナリオに紐づく機能No**: M03-01, M03-02, M03-27, M04-01, M04-21, M03-06, M04-32
 - **触れる画面と既存ケース**:
   | 画面 | 機能No | 機能仕様 | 既存ケース |
   |---|---|---|---|
@@ -189,8 +189,8 @@
   | 商品管理 — グッズ商品CSV登録 | M03-27 | `functions/pf-eccube3/m03-27_admin_product_product_goods_csv_import.md` | `integration_test/manual_test_cases/ketsugo_manual_cases_active.tsv`（75件、機構別の該当IDは他層委譲表） |
   | 在庫管理 — 在庫検索/一覧 | M04-01 | `functions/ec-cube-enterprise/m04-01_admin_stock_stock_search_list.md` | `integration_test/manual_test_cases/ketsugo_manual_cases_active.tsv`（0件、機構別の該当IDは他層委譲表） |
   | 在庫管理 — 在庫変更CSV登録 | M04-21 | `functions/pf-eccube3/m04-21_admin_stock_stock_csv_import.md` | `integration_test/manual_test_cases/ketsugo_manual_cases_active.tsv`（84件、機構別の該当IDは他層委譲表） |
-  | 在庫管理 — 承認一覧 | M04-32 | `functions/ec-cube-enterprise/m04-32_admin_stock_stock_approval_list.md` | `integration_test/manual_test_cases/ketsugo_manual_cases_active.tsv`（0件、機構別の該当IDは他層委譲表） |
   | 商品管理 — カスタムデータ CSV ダウンロード（商品情報） | M03-06 | `functions/pf-eccube3/m03-06_admin_product_product_custom_csv_export.md` | `integration_test/manual_test_cases/ketsugo_manual_cases_active.tsv`（84件、機構別の該当IDは他層委譲表） |
+  | 在庫管理 — 承認一覧 | M04-32 | `functions/ec-cube-enterprise/m04-32_admin_stock_stock_approval_list.md` | `integration_test/manual_test_cases/ketsugo_manual_cases_active.tsv`（0件、機構別の該当IDは他層委譲表） |
 - **関連HTML設計書**:
   - `excel_to_html/output/0204_基本設計仕様書(商品管理).html`
   - `excel_to_html/output/0208_基本設計仕様書(カード管理).html`

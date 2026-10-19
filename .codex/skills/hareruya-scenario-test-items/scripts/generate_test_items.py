@@ -1,9 +1,18 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import os as _os
+import sys as _sys
+
+if __name__ == "__main__" and _os.environ.get("PYTHONHASHSEED") != "0":
+    # 集合の並びが実行ごとに変わると出力の順序が揺れるため、ハッシュの種を固定して起動し直す。
+    _os.environ["PYTHONHASHSEED"] = "0"
+    _os.execv(_sys.executable, [_sys.executable, *_sys.argv])
+
 import argparse
 import csv
 import re
+import sys
 from dataclasses import dataclass, field, replace
 from functools import lru_cache
 from io import StringIO
@@ -12,6 +21,7 @@ from pathlib import Path
 from business_assertions import assertions_for, named_location, resolve_link_identity, STOCK, ORDER
 from source_contract_lookup import reviewed_contract, execution_repairs
 from lineage_gaps import unresolved_lineage_evidence
+import viewpoint_items
 
 
 GENERATED_MARKER = "<!-- generated-by: hareruya-scenario-test-items -->"
@@ -1818,6 +1828,8 @@ def test_items_for(s: ScenarioDoc) -> list[TestItem]:
     items.extend(concrete_assertion_items(s, len(items) + 1))
     items.extend(subflow_items(s, len(items) + 1))
     items.extend(normal_variation_items(s, len(items) + 1))
+    # 観点の当てはめ契約（scenario_test/coverage/viewpoint_contracts.json）の項目は最後に足す。
+    items.extend(viewpoint_items.items_for(s, len(items) + 1, sys.modules[__name__]))
     return apply_route_acceptance(s, items)
 
 
