@@ -19,10 +19,11 @@
   既に行があれば（類型T4 など）新しい値に差し替え、理由と承認に裁定を書き足す。
 
 何度流しても同じ（置き換えは旧が無く新があれば済みとみなす）。
+最後に product_csv/apply.py（商品登録画面で商品を作るシードの書き直し）も呼ぶ。
 流す順は merge（sheetmap・nosheet・ga・gapfill・datapattern/merge_dp.py）→ seed_screen/apply.py → これ → exclude_open.py
 → exclude_scope.py → build_all_test_cases.py → precond/gate_precond.py --all。seed_screen/apply.py が cases/ と oracle_changes/ を書き直すので、必ずその後に流す。
 """
-import pathlib, sys
+import importlib.util, pathlib, sys
 
 G = pathlib.Path(__file__).resolve().parent
 CG = G.parents[1]
@@ -195,7 +196,13 @@ def main():
     print(" / ".join(f"{k} {v}件" for k, v in done.items()))
     for e in err:
         print("  誤り:", e)
-    return 1 if err else 0
+    # 商品登録画面で商品を作るシードの書き直し（2026-10-19 依頼者決定。../../product_csv/）も続けて当てる。
+    # seed_screen/apply.py がシード表を書き直すので、裁定と同じくその後に当てる必要がある
+    spec = importlib.util.spec_from_file_location("product_csv_apply", CG / "product_csv/apply.py")
+    pc = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(pc)
+    rc = pc.main()
+    return 1 if err or rc else 0
 
 
 if __name__ == "__main__":

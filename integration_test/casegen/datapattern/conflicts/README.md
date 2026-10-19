@@ -56,7 +56,7 @@ Excel が触れていない条件を埋め込みが足しているだけのも�
 
 1. merge（sheetmap・nosheet・ga・gapfill の `merge_into_cases.py`、`../merge_dp.py`）
 2. `python3 seed_screen/apply.py`
-3. `python3 datapattern/conflicts/apply_rulings.py`（seed_screen/apply.py が cases/ と oracle_changes/ を書き直すので、必ずその後）
+3. `python3 datapattern/conflicts/apply_rulings.py`（seed_screen/apply.py が cases/ と oracle_changes/ を書き直すので、必ずその後。最後に `product_csv/apply.py`〔商品登録画面で商品を作るシードの書き直し、2026-10-19〕も呼ぶ）
 4. `python3 exclude_open.py`、続けて `python3 exclude_scope.py`（フェーズ2見送り・実装しない機能の除外。2026-10-16）
 5. `python3 build_all_test_cases.py` と `python3 precond/gate_precond.py --all`、`python3 datapattern/gate_dp.py`
 
@@ -86,7 +86,7 @@ Excel が触れていない条件を埋め込みが足しているだけのも�
 
 シードを新しく足すときは `added_seeds.tsv`（裁定と同じテストID・項目、シード表と同じ列）に書く。`apply_rulings.py` がシード表に置き、ケースの使用シードに足す。ケース専用のシードを足したケースは、読み取りだけの宣言（`precond/readonly_cases/`）から外す（E04 で IT-M03-01-043 を外した）。事前準備への書き足し（新が旧を含む置き換え）は、新が既にあれば済みとみなす（流し直しで重ならない）。
 
-商品登録画面で商品を作るシードは、上の「別の論点」のとおりほかにも多数ある。E03 で直したのは IT-M03-11-036 のシードだけ。
+商品登録画面で商品を作るシードは、上の「別の論点」のとおりほかにも多数あった。E03 で直したのは IT-M03-11-036 のシードだけ。残りは 2026-10-19 に `../../product_csv/` でまとめて直した（2,418件。`apply_rulings.py` が最後に `product_csv/apply.py` を呼ぶ）。
 
 ## 機能をまたぐ遷移の判定で見つけたケースの誤り（2026-10-19 追記）
 
@@ -102,5 +102,5 @@ codex の事実確認は3巡（`review/K1〜K3`）。指摘は1巡目・2巡目�
 
 `rulings.tsv` に任意の列「裁定日」を足した。`apply_rulings.py` は期待結果の変更の承認（`precond/oracle_changes/`）にこの日付を書く。空の行（C・E の項目）は 2026-10-16 のまま。
 
-F06-15 には、商品登録画面で商品を作るシードがほかに28件ある。K03 で直したのは S-F06-15-MYPAGE-006 だけ。
+F06-15 には、商品登録画面で商品を作るシードがほかに28件あった。K03 で直したのは S-F06-15-MYPAGE-006 だけで、残りは `../../product_csv/` で直した。
 買取の申込みで「ネット買取規約同意」のチェックを書いていないシードは、ほかに276件ある（M07-01 62件、M07-09・A07-05 各39件、F06-15 28件など。2026-10-19 時点）。グッズ商品CSVのアップロードの後の確認モーダル（M03-27 L0092）を書いていないシードは898件ある（E03 で直した S-M03-11-DELETE-036 も）。どちらも直していない。
