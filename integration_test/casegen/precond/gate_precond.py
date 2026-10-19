@@ -189,6 +189,9 @@ def check(fid, own_all):
     oc_all = oracle_changes(fid)
     scp = PC / f"source_changes/{fid}.tsv"
     src_all = {r["テストID"]: r for r in read(scp)} if scp.exists() else {}
+    # 実行区分の誤記の訂正（2026-10-19〜）。基線の値が「旧実行区分」と一致するものだけ認める
+    kcp = PC / "kind_changes.tsv"
+    kind_all = {r["テストID"]: r for r in read(kcp)} if kcp.exists() else {}
     bs = PC / f"baseline/{fid}_seed_data.tsv"
     old_names = seed_names(read(bs)) if bs.exists() else set()
     new_names = seed_names(S)
@@ -289,6 +292,11 @@ def check(fid, own_all):
                 # 出典だけは、設計書の側が動いたとき（埋め込み先の訂正など）に source_changes へ宣言して変えられる
                 if col == "出典" and src_all.get(x["テストID"], {}).get("新出典", "") == x[col] \
                         and src_all[x["テストID"]].get("理由", "").strip():
+                    continue
+                # 実行区分は、誤記の訂正を kind_changes.tsv に宣言したときだけ変えられる
+                kc = kind_all.get(x["テストID"], {})
+                if col == "実行区分" and kc.get("旧実行区分") == b[col] and kc.get("新実行区分") == x[col] \
+                        and kc.get("理由", "").strip():
                     continue
                 err.append(("G6", x["テストID"], f"{col} が変わった"))
         if b["実行区分"] == "保留":
