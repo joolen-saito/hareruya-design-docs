@@ -35,6 +35,7 @@ FORBIDDEN = (
     "記載順に実行する",
     "元シナリオの正常系実行手順",
     "...",
+    "処理結果が操作対象のサービス、帳票または現物に残り",
 )
 EXPECTED_ALLOWED_ENDING_RE = re.compile(r"(される|されない|できる|である)こと。$")
 
@@ -176,11 +177,45 @@ def validate_file(repo: Path, path: Path) -> list[str]:
     flow_types: set[str] = set()
     ifids: set[str] = set()
     has_route_item = False
+    lineage_ids: set[str] = set()
+    covered_dp_ids: set[str] = set()
+    varied_dp_ids: set[str] = set()
     for idx, row in enumerate(rows[1:], 2):
         if len(row) != len(EXPECTED_HEADER):
             errors.append(f"row {idx}: expected {len(EXPECTED_HEADER)} columns, got {len(row)}")
             continue
         function_name, tid, ifid, viewpoint, priority, item_name, precondition, input_data, steps, expected, observation = row
+        if viewpoint == "業務データ差分":
+            varied_dp_ids.update(re.findall(r"差分実行ID: (DP-N\d{3})", steps))
+            for marker in ("条件設定:", "差分対象工程:", "差分固有判定:"):
+                if marker not in steps:
+                    errors.append(f"row {idx}: business variation lacks {marker}")
+            if "variation-comparison.tsv" not in observation:
+                errors.append(f"row {idx}: business variation lacks value comparison evidence")
+        if viewpoint == "別業務引き継ぎ":
+            if "subflow-identity.tsv" not in observation or "別業務判定根拠:" not in observation:
+                errors.append(f"row {idx}: subflow lacks identity comparison/source evidence")
+            blocked = "実施区分: 実施保留" in precondition
+            if blocked and "解除条件:" not in precondition and "実施保留条件:" not in precondition:
+                errors.append(f"row {idx}: blocked subflow lacks a release condition")
+            if not blocked and "【別業務展開" not in steps:
+                errors.append(f"row {idx}: subflow has no executable child steps")
+        if viewpoint == "データ連鎖":
+            lineage_ids.update(re.findall(r"連鎖ID[=:]\s*(DL-[\w-]+)", input_data + "\n" + precondition))
+            if "判定根拠:" not in observation:
+                errors.append(f"row {idx}: lineage assertion lacks source evidence")
+            if "保留" in expected and "実施保留" not in precondition:
+                errors.append(f"row {idx}: unresolved lineage is presented as executable")
+            if "原典未定義" in observation and "実施保留" not in precondition:
+                errors.append(f"row {idx}: undefined lineage identity must remain blocked")
+            if "未実施・保留" not in precondition and "comparison.tsv" not in observation:
+                errors.append(f"row {idx}: lineage assertion lacks producer/consumer comparison evidence")
+        if " 判定: " in item_name:
+            for marker in ("判定用準備:", "判定根拠:"):
+                if marker not in precondition:
+                    errors.append(f"row {idx}: concrete assertion missing {marker}")
+            if "比較規則:" not in observation or "具体照合:" not in steps:
+                errors.append(f"row {idx}: concrete assertion has no comparison rule")
         if not function_name.strip():
             errors.append(f"row {idx}: empty 機能名")
         if not tid.startswith("STI-"):
@@ -190,10 +225,15 @@ def validate_file(repo: Path, path: Path) -> list[str]:
         seen_ids.add(tid)
         if not ifid.strip():
             errors.append(f"row {idx}: empty I/FID")
-        if re.match(r"^[A-Z]\d{2}-\d{2}$", ifid.strip(), re.I):
-            ifids.add(ifid.strip().upper())
+        ifids.update(re.findall(r"\b[A-Z]\d{2}-\d{2}\b", ifid.upper()))
         if viewpoint == "業務経路" or "経路全体" in item_name:
             has_route_item = True
+            expected_step_label = scenario_classification if scenario_classification in {"正常系", "代替系", "異常系"} else ""
+            inner_labels = set(re.findall(r"(?:^|\n)\d+\.\s+(正常系|代替系|異常系)#", steps))
+            if expected_step_label and any(label != expected_step_label for label in inner_labels):
+                errors.append(
+                    f"row {idx}: route steps use {sorted(inner_labels)} but route classification is {expected_step_label}"
+                )
         # フロー種別はテスト項目名の接頭辞（正常系/代替系/異常系）から判定する
         m = re.match(r"(正常系|代替系|異常系)", item_name)
         if not m:
@@ -205,6 +245,19 @@ def validate_file(repo: Path, path: Path) -> list[str]:
         for label, value in (("I/FID", ifid), ("テスト観点", viewpoint), ("テスト項目名", item_name), ("前提条件", precondition), ("入力データ/リクエスト内容", input_data), ("操作手順/実行方法", steps), ("期待結果／レスポンス", expected), ("確認対象", observation)):
             if not value.strip():
                 errors.append(f"row {idx}: empty {label}")
+        for marker in ("準備手順:", "実施区分:", "対象状態:"):
+            if marker not in precondition:
+                errors.append(f"row {idx}: 前提条件 missing execution marker {marker}")
+        for marker in ("【準備確認】", "【操作】", "【操作後確認】"):
+            if marker not in steps:
+                errors.append(f"row {idx}: 操作手順 missing phase {marker}")
+        for marker in ("確認場所:", "照合キー:", "合格条件:", "不合格条件:", "証跡保存先:", "必須証跡:", "判定記録:"):
+            if marker not in observation:
+                errors.append(f"row {idx}: 確認対象 missing verdict marker {marker}")
+        if f"scenario_test/exec/evidence/{tid}/" not in observation:
+            errors.append(f"row {idx}: evidence path does not match test id {tid}")
+        if "外部システム/ツール上" in steps:
+            errors.append(f"row {idx}: generic external-system operation remains")
         if not has_allowed_expected_ending(expected):
             errors.append(
                 f"row {idx}: 期待結果／レスポンス must end with one of "
@@ -220,6 +273,7 @@ def validate_file(repo: Path, path: Path) -> list[str]:
             errors.append(f"row {idx}: duplicate execution tuple")
         seen_exec.add(key)
         row_dp_ids = set(re.findall(r"DP-[NAEB]\d{3}", "\n".join((item_name, precondition, input_data))))
+        covered_dp_ids.update(row_dp_ids)
         if scenario_dp_ids and not row_dp_ids:
             errors.append(f"row {idx}: missing data pattern id")
         for dp_id in sorted(row_dp_ids):
@@ -231,6 +285,17 @@ def validate_file(repo: Path, path: Path) -> list[str]:
         errors.append("missing flow-typed test items")
     if not has_route_item:
         errors.append("missing route-level test item")
+    for dp_id in sorted(scenario_dp_ids - covered_dp_ids):
+        errors.append(f"missing data-pattern execution: {dp_id}")
+    for dp in table_after(scenario_text, "## データパターン"):
+        if "業務データ差分" in " ".join(dp.values()) and dp.get("パターンID") not in varied_dp_ids:
+            errors.append(f"missing independent business-variation execution: {dp.get('パターンID')}")
+    lineage_section = re.search(r"^## データ連鎖[^\n]*\n(?P<body>.*?)(?=^## |\Z)", scenario_text, re.M | re.S)
+    source_lineage_ids = set(re.findall(r"^\|\s*(DL-[\w-]+)\s*\|", lineage_section.group("body"), re.M)) if lineage_section else set()
+    for lid in sorted(source_lineage_ids - lineage_ids):
+        errors.append(f"missing data-lineage assertion: {lid}")
+    for lid in sorted(lineage_ids - source_lineage_ids):
+        errors.append(f"lineage assertion has no source: {lid}")
     if scenario_classification in {"正常系", "代替系", "異常系"} and scenario_classification not in flow_types:
         errors.append(f"missing primary route test items: {scenario_classification}")
     for branch_flow_type in sorted(branch_flow_types):

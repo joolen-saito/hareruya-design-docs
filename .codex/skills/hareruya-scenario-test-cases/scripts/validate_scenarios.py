@@ -30,6 +30,25 @@ UNRESOLVED = ("UNRESOLVED_FUNCTION_SPEC", "UNRESOLVED_HTML_DESIGN_DOC")
 # 許可ラベルは空。以降、出力に `要確認` が1つでもあれば検証エラー＝要確認ゼロを機械保証する。
 ALLOWED_UNRESOLVED_LABELS: tuple[str, ...] = ()
 VAGUE_EXECUTION = ("実行できる注文、商品、会員、在庫、買取、イベント等の対象データ", "対象業務が次の担当者へ引き渡せる状態")
+GENERIC_FINAL_STATES = ("対象データが完了状態として追跡できる", "原典終端まで到達する")
+
+# 業務フロー冒頭の正本方針と同じ規則。旧版・非採用To-Beをトレース元に戻す退行を検出する。
+CANONICAL_PATTERN_SOURCES: dict[str, dict[str, str]] = {
+    "店頭買取": {"*": "06_店頭買取.md"},
+    "在庫管理": {"*": "12_在庫管理.md"},
+    "商品登録・編集": {
+        "1": "09_商品登録・編集.md", "2": "09_商品登録・編集.md",
+        "3": "09_商品登録・編集.md", "4": "10_商品登録・編集_tobe.md",
+        "5": "09_商品登録・編集.md", "6": "10_商品登録・編集_tobe.md",
+        "7": "10_商品登録・編集_tobe.md", "8": "09_商品登録・編集.md",
+        "9": "10_商品登録・編集_tobe.md",
+    },
+    "通販受注管理": {
+        "4": "17_通販受注管理_tobe.md",
+        "13": "17_通販受注管理_tobe.md",
+        "*": "16_通販受注管理.md",
+    },
+}
 
 
 def read(path: Path) -> str:
@@ -114,6 +133,20 @@ def feature_list(text: str, label: str) -> list[str]:
     return [part.strip().upper() for part in value.split(",") if re.match(r"^[A-Z]\d{2}-\d{2}$", part.strip(), re.I)]
 
 
+def observable_assertion(value: str) -> bool:
+    """特定の文末ではなく、判定できる結果と観測対象があるかを見る。
+
+    留保注記は本文の合否条件とは分ける。『作業が完了すること』だけでは
+    保存先/状態/照合先が分からないため受理しない。
+    """
+    core = value.split("実施保留条件:", 1)[0]
+    if "確認できること" in core:
+        return True
+    target = re.search(r"受注|注文|申込|商品|在庫|数量|金額|ポイント|会員|参加者|大会|デッキ|タグ|カード|CSV|帳票|メール|送り状|氏名|日付|日時|情報|内容|ファイル|記録|結果|条件|状態|担当|工数|店舗|引渡し|処理|番号|ID", core)
+    outcome = re.search(r"一致|照合|記録|保存|登録|更新|反映|表示|除外|含まれない|加算|減算|増加|減少|紐づ|紐付|受信|受け付け|取得|出力|引き継|渡せる|共有|指定できる|開始できる|進める|フラグが立つ|済みとなる|済みになる|中となる|が付けられ|が採番|入庫待ち|未登録在庫あり|入庫完了|増える|減る|確定できる", core)
+    return bool(target and outcome)
+
+
 def validate_route_metadata(text: str) -> list[str]:
     errors: list[str] = []
     required = ("経路ID", "経路種別", "親業務フローパターン", "業務経路条件", "最終業務状態")
@@ -133,8 +166,54 @@ def validate_route_metadata(text: str) -> list[str]:
     elif not re.search(r"/\s*経路\d+", flow_no):
         errors.append("business flow number does not include route number")
     linked = feature_list(text, "シナリオに紐づく機能No")
-    if len(linked) > 8:
-        errors.append(f"linked function numbers look over-assigned for one route: {len(linked)}")
+    used = {f for row in table_after(text,"## メインフロー（正常系）")
+            for f in re.findall(r"[A-Z]\d{2}-\d{2}",row.get("利用画面・機能",""))}
+    if used - set(linked):
+        errors.append(f"main-flow functions missing in linked function numbers: {', '.join(sorted(used-set(linked)))}")
+    if set(linked) - used:
+        errors.append(f"linked functions not used in main flow: {', '.join(sorted(set(linked)-used))}")
+    final_state = bullet_value(text, "最終業務状態")
+    for phrase in GENERIC_FINAL_STATES:
+        if phrase in final_state:
+            errors.append(f"generic final state is not a test oracle: {phrase}")
+    if final_state and not observable_assertion(final_state):
+        errors.append("final business state does not identify an observable pass/fail result")
+    if route_kind in {"主要代替", "業務異常"}:
+        condition = bullet_value(text, "業務経路条件")
+        if "実線" not in condition and "原典本文" not in condition:
+            errors.append("alternative/error route has no solid edge or quoted source paragraph")
+    return errors
+
+
+def validate_canonical_source(text: str) -> list[str]:
+    parent = bullet_value(text, "親業務フローパターン")
+    source = re.search(r"^\s*- 出典: `scenario_test/markdown/([^`]+\.md)`", text, re.M)
+    match = re.match(r"(.+?)\s*/\s*パターン(\d+)\s*/", parent)
+    if not match or not source:
+        return []
+    business, number = match.group(1).strip(), match.group(2)
+    rules = CANONICAL_PATTERN_SOURCES.get(business)
+    if not rules:
+        return []
+    expected = rules.get(number, rules.get("*"))
+    if expected and source.group(1) != expected:
+        return [f"non-canonical business-flow source: {source.group(1)} (expected {expected})"]
+    return []
+
+
+def validate_operation_direction(text: str) -> list[str]:
+    errors: list[str] = []
+    for row in table_after(text, "## メインフロー（正常系）"):
+        action = row.get("業務行動", "").lower()
+        screen = row.get("利用画面・機能", "").lower()
+        action_input = any(word in action for word in ("インポート", "取込", "取り込", "アップロード", "csv登録"))
+        action_output = any(word in action for word in ("エクスポート", "出力", "ダウンロード"))
+        screen_input = any(word in screen for word in ("インポート", "取込", "import", "csv登録"))
+        screen_output = any(word in screen for word in ("エクスポート", "出力", "ダウンロード", "export"))
+        if action_input and screen_output and not screen_input and not (action_output and any(word in action for word in ("lineworks", "ラインワークス", "共有フォルダー", "共有フォルダ"))):
+            errors.append(f"input operation is mapped to an output function: {row.get('#', '?')}")
+        if action_output and screen_input and not screen_output:
+            errors.append(f"output operation is mapped to an input function: {row.get('#', '?')}")
     return errors
 
 
@@ -194,7 +273,19 @@ def validate_file(repo: Path, path: Path, strict: bool) -> list[str]:
     if not re.search(r"ST-(ORDER|PICKUP|STOCK|BUY|OBUY|PURCHASE|PRODUCT|PRICE|EVENT|DECK|CARD|DATA)-", text):
         errors.append("missing fixed ST-* seed identifier")
     errors.extend(validate_route_metadata(text))
+    errors.extend(validate_canonical_source(text))
+    errors.extend(validate_operation_direction(text))
     errors.extend(validate_data_patterns(text))
+    evidence = bullet_value(text, "分岐根拠")
+    if evidence.startswith("原典本文"):
+        match = re.match(r"原典本文 (.+?\.md) .+?「(.+)」$", evidence)
+        if not match:
+            errors.append("source paragraph evidence has no file/quote")
+        else:
+            source_path = repo / "scenario_test/markdown" / match.group(1)
+            source_text = read(source_path) if source_path.exists() else ""
+            if match.group(2) not in source_text:
+                errors.append("source paragraph evidence quote no longer exists")
     exec_header = re.search(r"^## 実行手順（正常系）\n(\|.+\|)\n(\|[-|]+\|)", text, re.M)
     if not exec_header:
         errors.append("missing executable normal procedure table")
@@ -206,6 +297,11 @@ def validate_file(repo: Path, path: Path, strict: bool) -> list[str]:
     exec_rows = re.findall(r"^\| \d+ \| [^|]+ \| [^|]+ \| [^|]+ \| [^|]+ \| [^|]+ \|$", text, re.M)
     if not exec_rows:
         errors.append("missing executable procedure rows")
+    for row in table_after(text, "## 実行手順（正常系）"):
+        if not observable_assertion(row.get("期待結果", "")):
+            errors.append(f"normal step {row.get('#', '?')} has no observable pass/fail assertion")
+        if not row.get("確認対象", "") or row.get("確認対象") == "-":
+            errors.append(f"normal step {row.get('#', '?')} has no observation target")
     alt_header = re.search(r"^## 代替フロー / 異常系分岐\n(\|.+\|)\n(\|[-|]+\|)", text, re.M)
     if not alt_header:
         errors.append("missing alternative/error branch table")
@@ -255,7 +351,11 @@ def validate_file(repo: Path, path: Path, strict: bool) -> list[str]:
     elif int(summary.group(1)) < 1 and not delegated:
         errors.append("edge-case summary count is 0 but ## 他層委譲（結合テスト） is missing")
     if delegated:
-        delegation_rows = re.findall(r"^\| [^|]+ \| IT-[^|]+ \| [^|]+ \| (委譲済|未整備[^|]*) \|$", text, re.M)
+        delegation_rows = table_after(text,"## 他層委譲（結合テスト）")
+        if not delegation_rows:
+            section=re.search(r"^## 他層委譲（結合テスト）\n(.*?)(?=^## |\Z)",text,re.M|re.S)
+            body=section.group(1) if section else ""
+            delegation_rows=re.findall(r"^\| [^|]+ \| IT[AB]-[^|]+ \| [^|]+ \| [^|]+ \|$",body,re.M)
         if not delegation_rows:
             errors.append("他層委譲 table has no delegation rows")
     return errors
@@ -267,6 +367,8 @@ def validate_coverage_table(repo: Path, scenario_files: list[Path]) -> list[str]
         return ["missing coverage table: scenario_test/scenario/03_カバレッジ表.md"]
     text = read(coverage_path)
     errors: list[str] = []
+    linked_by_id={re.search(r"^# (SCN-\S+)",read(path),re.M).group(1):feature_list(read(path),"シナリオに紐づく機能No")
+                  for path in scenario_files if re.search(r"^# (SCN-\S+)",read(path),re.M)}
     required_columns = ("経路ID", "経路種別", "業務経路条件", "最終業務状態", "正常系", "代替系", "異常系", "外部連携", "データ更新", "経路手順数", "代替/異常手順数", "期待機能不足", "HTML不足", "実行エッジ数", "主なエッジケース", "確認対象", "他層委譲", "委譲未整備", "非EC-CUBE作業", "番号重複警告")
     for column in required_columns:
         if column not in text:
@@ -298,7 +400,7 @@ def validate_coverage_table(repo: Path, scenario_files: list[Path]) -> list[str]
         if edge_count == 0:
             if abnormal_mark != "-":
                 errors.append(f"coverage table marks 異常系=○ with 0 execution edges: {cells[2]}")
-            if delegated_ok + delegated_gap < 1:
+            if delegated_ok + delegated_gap < 1 and linked_by_id.get(cells[2]):
                 errors.append(f"coverage table has 0 edges and no delegation rows: {cells[2]}")
     return errors
 
@@ -315,6 +417,37 @@ def validate_feature_ledger(repo: Path) -> list[str]:
     for label in ("covered", "source-backed-uncovered", "excluded-ph2"):
         if label not in text:
             errors.append(f"feature ledger missing classification: {label}")
+    return errors
+
+
+def validate_source_coverage(repo: Path, scenario_files: list[Path]) -> list[str]:
+    coverage = repo / "scenario_test" / "scenario" / "04_業務フロー正本カバレッジ.md"
+    if not coverage.exists():
+        return ["missing canonical source coverage: scenario_test/scenario/04_業務フロー正本カバレッジ.md"]
+    text = read(coverage)
+    errors: list[str] = []
+    for column in ("業務", "出典", "原典パターン番号", "パターン名", "状態", "生成SCN数"):
+        if column not in text:
+            errors.append(f"canonical source coverage missing column: {column}")
+    generated_total = 0
+    for line in text.splitlines():
+        if not line.startswith("| ") or "`scenario_test/" not in line:
+            continue
+        cells = split_md_row(line)
+        if len(cells) != 6:
+            errors.append(f"canonical source coverage row has invalid columns: {line[:80]}")
+            continue
+        try:
+            count = int(cells[5])
+        except ValueError:
+            errors.append(f"canonical source coverage has invalid SCN count: {cells[1]}")
+            continue
+        if cells[4].startswith("生成済み"):
+            generated_total += count
+        if "本文欠落" in cells[4] and count != 0:
+            errors.append(f"missing-body pattern must have 0 generated scenarios: {cells[1]} #{cells[2]}")
+    if generated_total != len(scenario_files):
+        errors.append(f"canonical source coverage count mismatch: ledger={generated_total} files={len(scenario_files)}")
     return errors
 
 
@@ -365,6 +498,10 @@ def main() -> int:
     for error in validate_feature_ledger(repo):
         failed += 1
         print(f"NG scenario_test/scenario/05_設計書カバレッジ.md")
+        print(f"  - {error}")
+    for error in validate_source_coverage(repo, files):
+        failed += 1
+        print("NG scenario_test/scenario/04_業務フロー正本カバレッジ.md")
         print(f"  - {error}")
     for error in validate_route_groups(repo, files):
         failed += 1

@@ -47,6 +47,12 @@ python3 .codex/skills/hareruya-scenario-test-items/scripts/validate_test_items.p
 
 ## Generation Rules
 
+- 目的と完了基準は `scenario_test/システムテストの目的と完了基準.md` に従う。経路全体は最後の工程だけで判定せず、代表案件で実施する全工程・具体照合・データ連鎖・別業務引き継ぎの必須判定を対応付ける。排他的な分岐・別DPを同じ案件の必須判定へ混ぜない。
+- 準備不足の保留は実施区分へ記載し、本来の業務期待結果を「保留として記録できること」へ置換しない。必須判定の保留を経路全体へ継承し、保留一覧を作っただけでテスト設計完了としない。
+- 実行準備は `execution_repairs` の業務別手順を使い、乱数fixtureの作成成功を業務初期状態の成立とみなさない。単独工程は必要な先行操作を展開し、継続実施中は同じ実IDを保持する。
+- 補正契約の具体的な数量・単価・状態・承認者を汎用期待値へ置き換えない。複数のI/FIDを通る工程も各機能の観測点を維持し、DPの変更値を準備と後工程へ引き継ぐ。
+- `scenario_test/tools/audit_execution_repairs.py` で修正前全項目との対応と現在の実施区分を再集計する。資料・先行工程の保留を実施区分にも反映し、保留を合格扱いしない。
+
 - Match the integration-test case format (`*_it_cases.md`) exactly: H1 `# <業務> — <シナリオ名> シナリオ試験テストケース`, an `元シナリオ` link, the observable-result policy sentence, a `## 関連機能No対応概要` table, a `## テストケースTSV` heading with the standard preamble, and a `tsv` code fence.
 - Use the fixed 11-column format (integration it_cases columns plus `確認対象`; no テストレベル column):
   `機能名`, `テストID`, `I/FID`, `テスト観点`, `優先度`, `テスト項目名`, `前提条件`, `入力データ/リクエスト内容`, `操作手順/実行方法`, `期待結果／レスポンス`, `確認対象`
@@ -66,6 +72,10 @@ python3 .codex/skills/hareruya-scenario-test-items/scripts/validate_test_items.p
 - Assign `I/FID` at the route-step grain. Normal rows use the source normal-flow feature No; branch/error rows may use the operation's screen/function from `触れる画面と既存ケース` when it is an actual exercised/observed function. Do not assign the whole parent scenario feature list to a row.
 - `## 関連機能No対応概要` must list every expected/linked feature No from the source scenario with status `テスト項目化`, `参照のみ`, or `対象外`; features not emitted in `I/FID` need an explicit reason.
 - Test item names and execution steps must state who performs the operation and what business action is executed.
+- Every row must be independently readable as `準備→操作→合否判定`: `前提条件` includes `準備手順`, `実施区分`, and `対象状態`; `操作手順/実行方法` includes `【準備確認】`, `【操作】`, and `【操作後確認】`; `確認対象` includes `確認場所`, `照合キー`, `合格条件`, `不合格条件`, `証跡保存先`, `必須証跡`, and `判定記録`.
+- Use the verified local development startup, fixture endpoints, and credentials from `../ec-cube-enterprise/AGENTS.md` and its test fixture implementation. Treat generated `st-user-*` / `ST-*` values as logical IDs, not login credentials; record their mapping to fixture-returned IDs in `scenario_test/exec/test_result_template.tsv`.
+- Incorporate `scenario_test/exec/feasibility/feasibility_by_step.tsv` and `feasibility_by_scenario.tsv`. A missing design or unknown execution mechanism must be labeled with an explicit blocked execution class and concrete release condition; do not silently present it as executable.
+- Use a named screen, API method/path, external service, file, form, ledger, or physical object. Do not leave the generated step as generic `外部システム/ツール上`.
 - Test item names must state the business result being checked, not just "正常確認".
 - Expected results must be observable on screen, data state, CSV/report, mail/notification, external system, or operation history.
 - Do not output vague phrases such as `設計どおり`, `設計書に記載のとおり`, `要確認`, `UI標準`, `何らか`, `必要に応じ`, `適宜`, or reference-only execution text like `記載順に実行する`.
@@ -79,3 +89,11 @@ python3 .codex/skills/hareruya-scenario-test-items/scripts/validate_test_items.p
 - `references/CHECKLIST.md`: review checklist.
 - `scripts/generate_test_items.py`: project-specific generator.
 - `scripts/validate_test_items.py`: validator for generated Markdown/TSV.
+
+## 出典補完の項目化（2026-10-09）
+
+- SCNの全DL行を項目化する。実連鎖・起点・終端を区別し、未知キーを単一シードで成功扱いしない。
+- DP-N002以降の出典付き業務データ差分も実行対象にする。代表データだけを読み取って捨てない。
+- `business_assertions.py` のHTML根拠・金額/数量/状態/宛先/CSV照合を使用する。原典引用の確認なしに定型的な成功期待を足さない。
+- 別業務参照の工程を実行可能な形で展開し、親の実データを共有する。未採番IDは子の登録時に採番して記録する。参照先保留条件も継承する。
+- 最後に `scenario_test/tools/audit_scenario_delivery.py` で実行用TSVまで同期を照合する。机上可否と実際のテスト実行は区別する。

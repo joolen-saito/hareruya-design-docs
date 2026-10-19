@@ -4,10 +4,13 @@
 - Every generated `SCN-*.md` has `## システムテストカバレッジ`.
 - Every generated `SCN-*.md` has `## エッジケース要約`.
 - Every generated `SCN-*.md` has `## 実行用テストデータ` with fixed seed IDs.
-- Every generated `SCN-*.md` has `## データパターン` with multiple `DP-*` IDs covering normal representative, normal boundary, and branch/error data.
+- Every generated `SCN-*.md` has `## データパターン` with a normal representative `DP-*` and source-backed branch/error data where the business flow has a branch.
 - Every generated `SCN-*.md` has route metadata: `経路ID`, `経路種別`, `親業務フローパターン`, `業務経路条件`, and `最終業務状態`.
 - Every generated `SCN-*.md` has `業務フロー番号` / `カバーする業務フロー番号` that includes both parent pattern and route, such as `パターン1 / 経路2`.
 - Parent business-flow patterns with source-backed major alternatives or business-abnormal outcomes are expanded to multiple route-level `SCN` files, not collapsed into one scenario.
+- Route-level alternatives are generated only from actual `判断` nodes and solid flow edges. Keywords alone never create or remove a route.
+- If the source does not label an edge Yes/No or normal/error, the first listed solid edge is called the representative route; its business meaning is not guessed from words such as `返金` or `キャンセル`.
+- Same-named branch targets are disambiguated by swimlane or source node number.
 - `DP-*` entries remain data-pattern variations inside one route and are not used as a substitute for route-level SCN splitting.
 - Every generated `SCN-*.md` has `## 実行手順（正常系）` with operation, input/target, and expected result.
 - Every generated `SCN-*.md` has `## 実行手順（代替系・異常系）` with operation, input/target, and expected result for each branch.
@@ -22,14 +25,20 @@
 - `03_カバレッジ表.md` never marks `異常系=○` for a route whose `実行エッジ数` is 0.
 - Main-flow steps come from source business-flow rows, not from imagined UI details.
 - Physical work (picking, packing, mailing, barcode labelling, signatures) and external-tool work (スマレジ, Backlog, spreadsheets, mailer) carry NO EC-CUBE feature number. Their 利用画面・機能 is `該当なし（物理作業…）` / `該当なし（外部システム…）` and their 確認対象 is the physical artifact or the external system, never an EC-CUBE screen.
-- No step is given a feature number by a "leftover document" fallback. A step whose design doc cannot be identified is marked `要確認（EC-CUBE工程だが機能Noを特定できない）`, not filled with an arbitrary one.
-- Steps that the business flow marks as 手作業 but that mention CSV/インポート/画面 are marked `要確認`, not asserted to be physical.
+- No step is given a feature number by a "leftover document" fallback. A step whose design doc cannot be identified uses the business-flow-only operation and observable business result, without inventing a screen or leaving `要確認`.
+- Input operations (import/upload/register) are never assigned to output/export functions, and output operations are never assigned to input/import functions.
+- Steps that the business flow marks as 手作業 but that mention CSV/インポート/画面 are triaged as a system-including manual operation; they are not asserted to be physical.
+- A mapped source row's actor comes from its swimlane; actor words appearing as objects in the row text do not override the lane.
 - Index-listed business-flow patterns with no body rows are reported as warnings (a To-Be new business would otherwise produce zero scenarios).
+- `04_業務フロー正本カバレッジ.md` exists, uses the canonical-source pattern inventory as its denominator, and lists missing-body patterns with generated SCN count 0.
+- Canonical-source rules are applied before deduplication. A generated scenario must not cite an obsolete or non-adopted To-Be source.
 - Main-flow steps are written from a business perspective: `担当者`, `業務行動`, `利用画面・機能`, and `確認する業務結果`.
 - Main-flow actions do not expose raw business-flow row IDs such as `R336:` as the primary operation text.
 - Test data must be concrete enough for a human tester: use fixed IDs such as `ST-ORDER-*`, `ST-STOCK-*`, `ST-CARD-*`, `ST-EVENT-*`, or equivalent.
 - Execution steps must not say only `対象業務が次の担当者へ引き渡せる状態`; they must identify a status, history, amount, count, file, or external result to check.
 - Expected results are observable on screen, in exported files, in mail, or in external-system state.
+- Every final business state names an observable pass/fail result; generic text such as `対象データが完了状態として追跡できる` is forbidden.
+- Data-chain producer/artifact/consumer node references stay inside the parent pattern's source-row/node scope; cross-pattern links are generation failures.
 - Cross-system scenarios include the external system in `関連システム`.
 - High-risk business scenarios include observable edge-case checks for data inconsistency or failed external integration. Duplicate processing and missing authorization are mechanism-level (IT-08 / IT-15) and belong to the delegation table, not to scenario edge cases, unless the business flow branches on them.
 - Alternative/error route-level scenarios are allowed only when the source business flow contains a branch, exception, cancellation, refund, shortage, mismatch, rejection, or similar condition that changes business judgment, downstream work, or final state. They must not be mixed into the normal representative route.

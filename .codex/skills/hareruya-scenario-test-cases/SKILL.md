@@ -54,6 +54,10 @@ The generator writes:
 
 ## Generation Rules
 
+- テストケースのゴールは `scenario_test/システムテストの目的と完了基準.md` に従い、品質と業務成立を判定できる状態にすること。完了条件は最終工程に加え、同じ案件で全必須工程・データ連鎖・別業務引き継ぎの期待結果が成立することとする。原本・規則・準備データの不足が業務成立の確認を妨げる経路はテスト設計未完了と扱う。
+- 実施手順の再照合結果は `scenario_test/coverage/execution_repairs/*_contracts.json` と `scripts/execution_repairs*.py` に保存している。生成器は元契約と補正契約を統合する。元の `source_contracts.json` だけを読んで、解決済みの旧手順へ戻さない。
+- 修正前1552項目との対応は `scenario_test/tools/audit_execution_repairs.py` で確認する。誤経路の整理には原典根拠を残し、原本未取得や実行手段未確定を合格・実施可能へ変更しない。
+
 - Treat business-flow Markdown as the trace origin. Do not invent workflows that are not present in `scenario_test/markdown`.
 - Consolidate duplicate as-is / to-be patterns by business, pattern number, and normalized pattern name. Prefer `*_tobe.md` when duplicate patterns exist.
 - Use HTML/function design docs only to identify screens, APIs, batches, endpoints, data behavior, and existing function-spec paths.
@@ -96,7 +100,7 @@ The generator writes:
 ## 層の分離（結合テストとの重複禁止）
 
 - **機構的異常系（権限 / 必須・形式不正 / 重複実行 / 検索0件）はシステムテスト層で重ねない**。これらは `integration-test-viewpoints.md` の IT-15 / IT-22 / IT-08 / IT-23・IT-14 が機能単位で網羅する観点であり、シナリオ側に置くと同じ確認を二重に持つだけで業務観点は増えない。シナリオ層が担うのは、業務判断・後続作業・最終業務状態が変わる分岐に限る。
-- 委譲は `## 他層委譲（結合テスト）` に出す。**委譲先は観点ID（IT-15 等）ではなく `integration_test/*_it_cases.md` に実在するテストID**で示す。観点IDだけでは「どのケースで試験したか」を特定できず実行証跡にならない。委譲先が存在しない場合は `未整備` と表示し、穴を隠さない。
+- 委譲は `## 他層委譲（結合テスト）` に出す。**委譲先は観点ID（IT-15 等）ではなく 現行正本 `integration_test/manual_test_cases/ketsugo_manual_cases_active.tsv` に実在し、当該条件を操作するテストID**で示す。観点IDだけでは「どのケースで試験したか」を特定できず実行証跡にならない。対応ケースを特定できない場合は `対応未確認` と表示し、機能ごとの差を隠さない。ケースの存在・準備の確定・実施結果は区別する。
 - `edge_case_matches` のキーワードに `対象` / `確認` / `登録` / `更新` / `変更` のような汎用語を入れてはならない。業務フロー本文にその語が1つあるだけで発火し、ほぼ全シナリオへ結合テスト相当のケースが混入する。
 - **業務分岐が無い経路は「分岐0件」が正しい姿**。COMMON を件数合わせで埋め戻さない。0件の経路は `代替系` / `異常系` を `-` と表示し、`## 他層委譲（結合テスト）` で担保先を示す。カバレッジ表で `異常系=○` と偽ってはならない（`validate_scenarios.py` が検出する）。
 - `03_カバレッジ表.md` は `実行エッジ数`（このシナリオで実際に実行する業務分岐の延べ件数）と `他層委譲` / `委譲未整備` を分離する。**延べ件数であってユニークな異常条件数ではない**ため、層の分離前後で網羅率として直接比較しない。
@@ -195,3 +199,13 @@ Manual review is required when:
 - The generator cannot find any related design docs.
 - A scenario crosses external systems such as GMO, MTGバイヤー, スマレジ, Wordpress, or ポイントグランター.
 - A generated scenario has more than one high-risk business outcome, such as payment plus inventory plus shipment.
+
+## 出典補完と再生成時の整合（2026-10-09）
+
+- `scenario_test/coverage/source_contracts.json` は原典引用付きの工程補完。`source_contract_adapter.py` が適用する。業務フロー本文の欠落をHTMLで補う場合は、その由来を明示する。
+- `route_evidence.py` は原典本文の分岐・時間条件・業務データ差分を扱う。引用ガードを通し、根拠のない組合せは追加しない。
+- `supplemental_scenarios.py` はHTML明記の在庫移動準備と同一受注の購入から発送までを扱う。元フローの図形や線を新造したと扱わない。
+- `references/route-id-baseline.json` の既存IDを保持する。新增経路は初回レビュー後に追記し、途中挿入で採番済みIDをずらさない。
+- 別業務参照は対象SCN・工程・適用条件・共有キーを明記する。参照先のシードを再作成せず、工程の保留条件を親へ引き継ぐ。
+- 完了時はSCN生成→机上可否台帳→STI生成→可否台帳再生成→STI再生成→シナリオ集約TSV→実行用TSVを同期する。意図した件数変更をレビューし、2つの生成器の固定件数ゲートを更新する。
+- `scenario_test/tools/audit_scenario_delivery.py` で原典引用・SCN/項目/実行用表/可否台帳の集合・全データ連鎖の項目化を照合する。構造検証の合格を実機合格や未確定要件ゼロと混同しない。

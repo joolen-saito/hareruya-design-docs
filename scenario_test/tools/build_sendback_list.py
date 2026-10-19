@@ -1,174 +1,198 @@
 #!/usr/bin/env python3
-"""優先差し戻しリスト生成器。
-
-全 SCN-*.md の `## データ連鎖` 表から、金銭・在庫・受注ステータスに関わる高リスク連鎖だけを
-抽出し、業務側が A/B/C に仕分ける差し戻しリスト（md + tsv）を生成する。
-
-- 目的: データのつながりオラクルを「実行可能なテスト」へ昇格させるための業務判断依頼。
-- 捏造ゼロ: 内容は生成済み SCN のデータ連鎖行をそのまま集約するだけ。新たな結線・キーは作らない。
-- 判定列(業務記入用): A=受け渡しあり(キー確認) / B=終端・テスト不要 / C=図の引き忘れ(原典補記)。
-
-分類（高リスク観点）:
-  金銭   : 返金/決済/入金/出金/振込/売上/請求/ポイント/買取金額
-  在庫   : 在庫/入庫/出庫/棚卸/欠品/移動/補充/仕入/引当
-  受注状態: 受注/注文/出荷/配送/対応状況/発送/ピッキング
-"""
+"""Export every researched lineage gap; the TSV is the durable answer master."""
 from __future__ import annotations
 
 import argparse
+import csv
+import hashlib
+import json
+import os
 import re
+from collections import Counter
 from pathlib import Path
 
-CATEGORIES: dict[str, tuple[str, ...]] = {
-    "金銭": ("返金", "決済", "入金", "出金", "振込", "売上", "請求", "ポイント", "買取"),
+SOURCE = "scenario_test/coverage/lineage_resolution_review.tsv"
+DESTINATION = "scenario_test/scenario/12_優先差し戻しリスト"
+IDENTITY = ("業務", "産出工程", "データ/帳票", "消費工程")
+ANSWERS = ("業務回答", "確定照合キー・比較規則", "根拠資料・備考")
+COLUMNS = ("差戻ID", "一覧区分", "優先度", "観点", *IDENTITY, "残件種別", "対象件数",
+           "対象SCN/連鎖ID", "未確定理由", "調査出典", "必要な判断", *ANSWERS)
+SOURCE_COLUMNS = ("業務", "成果物", "産出工程", "消費工程", "残件種別", "対象件数",
+                  "対象SCN/連鎖ID", "未確定理由", "調査出典", "必要な判断")
+CATEGORIES = {
+    "金銭": ("返金", "決済", "入金", "出金", "振込", "銀行", "売上", "請求", "ポイント", "買取", "価格"),
     "在庫": ("在庫", "入庫", "出庫", "棚卸", "欠品", "移動", "補充", "仕入", "引当"),
-    "受注状態": ("受注", "注文", "出荷", "配送", "対応状況", "発送", "ピッキング", "ピック"),
+    "受注状態": ("受注", "注文", "出荷", "配送", "発送", "ピッキング", "ピック"),
 }
-# 金銭・在庫・受注状態のどれにも該当しない連鎖は本リストの対象外（帳票印刷・軽微データ等）。
-
-DL_RE = re.compile(r"^\|\s*DL-\d+\s*\|")
-TITLE_RE = re.compile(r"^#\s*(SCN-\S+)\s+(.*)$")
 
 
-def categorize(text: str) -> str | None:
-    for cat, words in CATEGORIES.items():
-        if any(w in text for w in words):
-            return cat
-    return None
+def read_tsv(path: Path, required=()) -> list[dict[str, str]]:
+    if not path.exists():
+        return []
+    with path.open(encoding="utf-8-sig", newline="") as file:
+        reader = csv.DictReader(file, delimiter="\t")
+        if not set(required).issubset(reader.fieldnames or []):
+            raise ValueError(f"{path}: required columns are missing")
+        rows = list(reader)
+    if any(None in row or any(value is None for value in row.values()) for row in rows):
+        raise ValueError(f"{path}: malformed TSV; existing answers were not overwritten")
+    return rows
 
 
-def parse_scn(path: Path) -> tuple[str, str, str, list[tuple[str, str, str, str, str]]]:
-    sid = business = title = ""
-    rows: list[tuple[str, str, str, str, str]] = []
-    in_chain = False
-    for line in path.read_text(encoding="utf-8").splitlines():
-        m = TITLE_RE.match(line)
-        if m and not sid:
-            sid, title = m.group(1), m.group(2).strip()
+def identity(row: dict[str, str]) -> tuple[str, ...]:
+    return tuple(re.sub(r"\s+", " ", row.get(key, "")).strip() for key in IDENTITY)
+
+
+def stable_id(row: dict[str, str]) -> str:
+    encoded = json.dumps(identity(row), ensure_ascii=False, separators=(",", ":")).encode()
+    return "SB-" + hashlib.sha256(encoded).hexdigest()[:12].upper()
+
+
+def classify(row: dict[str, str]) -> tuple[str, str]:
+    text = " ".join(row.get(key, "") for key in IDENTITY)
+    for category, words in CATEGORIES.items():
+        if any(word in text for word in words):
+            return "P1", category
+    return "P2", "業務データ"
+
+
+def target_refs(value: str) -> list[str]:
+    return [part.strip() for part in value.split(" / ") if part.strip()]
+
+
+def old_answers(row: dict[str, str]) -> dict[str, str]:
+    result = {key: row.get(key, "") for key in ANSWERS}
+    # Preserve legacy responses verbatim without interpreting B as test exclusion.
+    for old, new in (("業務判定(A/B/C)", ANSWERS[0]), ("確定照合キー", ANSWERS[1]), ("消費先/備考", ANSWERS[2])):
+        if row.get(old, "").strip():
+            value = f"旧形式の回答: {row[old]}" if old == "業務判定(A/B/C)" else row[old]
+            result[new] = result[new] + "\n" + value if result[new] else value
+    return result
+
+
+def build_rows(source: list[dict[str, str]], previous: list[dict[str, str]]) -> list[dict[str, str]]:
+    existing = {}
+    for row in previous:
+        sid = row.get("差戻ID") or stable_id(row)
+        if sid in existing:
+            raise ValueError(f"duplicate previous review ID: {sid}; answers were not overwritten")
+        existing[sid] = row
+    current, seen, all_refs = [], set(), set()
+    for source_row in source:
+        row = {key: source_row.get(key, "") for key in COLUMNS}
+        row["データ/帳票"] = source_row["成果物"]
+        row["差戻ID"] = stable_id(row)
+        if row["差戻ID"] in seen:
+            raise ValueError(f"duplicate researched gap: {row['差戻ID']}")
+        seen.add(row["差戻ID"])
+        refs = target_refs(row["対象SCN/連鎖ID"])
+        if not refs or len(refs) != int(row["対象件数"]) or len(refs) != len(set(refs)):
+            raise ValueError(f"{row['差戻ID']}: occurrence count differs from SCN/DL references")
+        if any(not re.fullmatch(r"SCN-.+/DL-[\w-]+", ref) or ref in all_refs for ref in refs):
+            raise ValueError(f"{row['差戻ID']}: malformed or duplicate SCN/DL reference")
+        all_refs.update(refs)
+        for required in ("未確定理由", "調査出典", "必要な判断"):
+            if not row[required].strip():
+                raise ValueError(f"{row['差戻ID']}: missing {required}")
+        row["一覧区分"] = "現行残件"
+        row["優先度"], row["観点"] = classify(row)
+        row.update(old_answers(existing.pop(row["差戻ID"], {})))
+        current.append(row)
+    # Removed or re-keyed gaps retain answers as history, never on a guessed match.
+    history = []
+    for sid, old in existing.items():
+        answers = old_answers(old)
+        if not any(value.strip() for value in answers.values()):
             continue
-        if line.startswith("- **親業務フローパターン**:") and not business:
-            business = line.split(":", 1)[1].split("/")[0].strip()
-            continue
-        if line.startswith("## データ連鎖"):
-            in_chain = True
-            continue
-        if in_chain and line.startswith("## "):
-            in_chain = False
-            continue
-        if in_chain and DL_RE.match(line):
-            cells = [c.strip() for c in line.strip("|").split("|")]
-            if len(cells) >= 7:
-                _dl, producer, artifact, consumer, _expected, key, verdict = cells[:7]
-                rows.append((producer, artifact, consumer, key, verdict))
-    return sid, business, title, rows
+        row = {key: old.get(key, "") for key in COLUMNS}
+        row.update(answers)
+        row["差戻ID"], row["一覧区分"] = sid, "回答履歴（現行残件対象外）"
+        history.append(row)
+    current.sort(key=lambda row: (row["優先度"], row["観点"], row["業務"], row["データ/帳票"], row["差戻ID"]))
+    return current + sorted(history, key=lambda row: row["差戻ID"])
+
+
+def md_cell(value: str) -> str:
+    return value.replace("&", "&amp;").replace("|", "&#124;").replace("\r\n", "\n").replace("\n", "<br>")
+
+
+def source_links(repo: Path, output: Path, text: str) -> str:
+    pattern = r"(?:scenario_test|excel_to_html)/[^\s]+?\.(?:md|tsv|json|html)(?:#sheet-\d+)?"
+    def replace(match):
+        reference = match.group()
+        path, _, anchor = reference.partition("#")
+        if not (repo / path).is_file():
+            return reference
+        relative = os.path.relpath(repo / path, output.parent) + ("#" + anchor if anchor else "")
+        return f"[{path.rsplit('/', 1)[-1]}](<{relative}>)"
+    return re.sub(pattern, replace, text)
+
+
+def render(repo: Path, rows: list[dict[str, str]], output: Path) -> str:
+    current = [row for row in rows if row["一覧区分"] == "現行残件"]
+    history = [row for row in rows if row["一覧区分"] != "現行残件"]
+    priorities = Counter(row["優先度"] for row in current)
+    occurrences = sum(int(row["対象件数"]) for row in current)
+    lines = ["# 優先差し戻しリスト（調査済み残件の確認依頼）", "",
+             f"現行の未解決事項は **{len(current)}種類・{occurrences}出現** です。P1は{priorities['P1']}件、P2は{priorities['P2']}件です。全件を掲載しています。", "",
+             "- 生成元: [データ連鎖の残件調査台帳](../coverage/lineage_resolution_review.tsv)。調査理由・出典・必要な判断を引き継いでいます。",
+             "- P1は金銭・在庫・受注状態に関係する項目、P2はその他の業務データです。いずれも未解決事項で、優先度は確認順の目安です。",
+             "- 終端の成果物も内容の照合が必要です。産出元が不明な入力は、取得元と原本を確定して受領内容を確認します。",
+             "- 回答を受けた後、根拠を照合してシナリオと判定条件へ反映します。回答だけで合格・網羅済みにはしません。", "",
+             "## 回答方法", "",
+             "[回答用TSV](12_優先差し戻しリスト.tsv)の末尾3列「業務回答」「確定照合キー・比較規則」「根拠資料・備考」に記入してください。各項目の「必要な判断」に沿い、実ファイル、項目名、取得元、比較方法を示してください。", "",
+             "TSVを回答の正本とし、このMarkdownは閲覧用です。差戻IDと自動生成列は変更せず、Markdownの回答欄は直接編集しないでください。再生成時は同じ差戻IDの回答を保持し、現行残件から外れた回答も履歴として残します。", "",
+             "## 現行残件一覧", "",
+             "| 差戻ID | 優先度 | 観点 | 業務 | データ/帳票 | 残件種別 | 出現数 |",
+             "|---|---|---|---|---|---|---:|"]
+    for row in current:
+        lines.append("| " + " | ".join([f"[{row['差戻ID']}](#{row['差戻ID'].lower()})", row["優先度"], row["観点"], row["業務"],
+                                            md_cell(row["データ/帳票"]), row["残件種別"], row["対象件数"]]) + " |")
+    lines += ["", "## 項目別の調査内容", ""]
+    for row in current + history:
+        lines += [f"<a id=\"{row['差戻ID'].lower()}\"></a>", f"### {row['差戻ID']} — {row['業務']} / {row['データ/帳票']}", "",
+                  f"- 一覧区分: {row['一覧区分']} / 優先度: {row['優先度']} / 観点: {row['観点']}",
+                  f"- 原典の接続: {row['産出工程']} → {row['データ/帳票']} → {row['消費工程']}",
+                  f"- 残件種別: {row['残件種別']}", f"- 未確定理由: {row['未確定理由']}",
+                  f"- 必要な判断: {row['必要な判断']}", "", "**調査出典**", "", source_links(repo, output, row["調査出典"]), "", "**対象シナリオと連鎖**", ""]
+        for ref in target_refs(row["対象SCN/連鎖ID"]):
+            sid = ref.rsplit("/", 1)[0]
+            paths = sorted((repo / "scenario_test/scenario").glob(f"{sid}_*.md"))
+            if row["一覧区分"] == "現行残件" and len(paths) != 1:
+                raise ValueError(f"{ref}: current scenario cannot be resolved uniquely")
+            link = f"[{ref}](<{os.path.relpath(paths[0], output.parent)}>)" if len(paths) == 1 else ref
+            lines.append("- " + link)
+        lines += ["", "**記入済み回答（TSVから反映）**", ""]
+        lines.extend(f"- {key}: {md_cell(row[key]) if row[key].strip() else '未記入'}" for key in ANSWERS)
+        lines.append("")
+    if history:
+        lines += [f"回答履歴は{len(history)}件です。現行残件の件数には含めていません。", ""]
+    lines += ["---", "", "再生成: `python3 scenario_test/tools/build_sendback_list.py --repo .`", ""]
+    return "\n".join(lines)
+
+
+def generate(repo: Path) -> tuple[int, int, int]:
+    source_path = repo / SOURCE
+    if not source_path.is_file():
+        raise FileNotFoundError(source_path)
+    tsv, md = (repo / (DESTINATION + suffix) for suffix in (".tsv", ".md"))
+    rows = build_rows(read_tsv(source_path, SOURCE_COLUMNS), read_tsv(tsv))
+    markdown = render(repo, rows, md)  # Validate all references before writing.
+    with tsv.open("w", encoding="utf-8", newline="") as file:
+        writer = csv.DictWriter(file, fieldnames=COLUMNS, delimiter="\t", lineterminator="\n", quoting=csv.QUOTE_ALL)
+        writer.writeheader()
+        writer.writerows(rows)
+    md.write_text(markdown, encoding="utf-8")
+    current = [row for row in rows if row["一覧区分"] == "現行残件"]
+    return len(current), sum(int(row["対象件数"]) for row in current), len(rows) - len(current)
 
 
 def main() -> None:
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--repo", default=".")
-    args = ap.parse_args()
-    repo = Path(args.repo).resolve()
-    scen_dir = repo / "scenario_test" / "scenario"
-
-    # 同じデータ受け渡しが経路違いの複数SCNに現れるため、ユニークな受け渡し単位で集約する
-    # （業務側が同じ判断を何度もせずに済む）。図形番号(#N)は経路で変わるので除いて正規化する。
-    def strip_no(s: str) -> str:
-        return re.sub(r"#\d+\s*", "", s).strip()
-
-    grouped: dict[tuple, dict] = {}
-    for path in sorted(scen_dir.glob("SCN-*.md")):
-        sid, business, title, rows = parse_scn(path)
-        for producer, artifact, consumer, key, verdict in rows:
-            cat = categorize(f"{producer} {artifact} {consumer}")
-            if cat is None:
-                continue
-            has_key = bool(re.search(r"=(ST-|晴)", key))
-            key_field = key.split("=", 1)[0] if has_key else "（未定義）"
-            prod_n, art_n, cons_n = strip_no(producer), strip_no(artifact), strip_no(consumer)
-            gkey = (cat, business, prod_n, art_n, cons_n, verdict, key_field)
-            g = grouped.setdefault(gkey, {
-                "priority": "P2" if ("連鎖あり" in verdict and has_key) else "P1",
-                "category": cat, "business": business,
-                "producer": prod_n, "artifact": art_n, "consumer": cons_n,
-                "key": key_field, "verdict": verdict, "scenarios": set(),
-            })
-            g["scenarios"].add(sid)
-
-    items = list(grouped.values())
-    for it in items:
-        it["count"] = len(it["scenarios"])
-        it["example"] = sorted(it["scenarios"])[0]
-    order_cat = {"金銭": 0, "在庫": 1, "受注状態": 2}
-    items.sort(key=lambda x: (x["priority"], order_cat[x["category"]], x["business"], -x["count"], x["artifact"]))
-
-    # tsv
-    tsv = scen_dir / "12_優先差し戻しリスト.tsv"
-    cols = ["優先度", "観点", "業務", "産出工程", "データ/帳票", "消費工程", "既定照合キー", "判定",
-            "該当SCN数", "代表SCN", "業務判定(A/B/C)", "確定照合キー", "消費先/備考"]
-    with tsv.open("w", encoding="utf-8") as f:
-        f.write("\t".join(cols) + "\n")
-        for it in items:
-            f.write("\t".join([
-                it["priority"], it["category"], it["business"],
-                it["producer"], it["artifact"], it["consumer"], it["key"], it["verdict"],
-                str(it["count"]), it["example"], "", "", "",
-            ]) + "\n")
-
-    # md
-    p1 = [it for it in items if it["priority"] == "P1"]
-    p2 = [it for it in items if it["priority"] == "P2"]
-    by_cat: dict[str, int] = {}
-    for it in items:
-        by_cat[it["category"]] = by_cat.get(it["category"], 0) + 1
-
-    md = scen_dir / "12_優先差し戻しリスト.md"
-    lines: list[str] = []
-    lines.append("# 優先差し戻しリスト（データ連鎖の業務判断依頼）")
-    lines.append("")
-    lines.append("- 生成元: 全 `SCN-*.md` の `## データ連鎖` 表（`tools/build_sendback_list.py` で機械抽出）")
-    lines.append("- 対象: **金銭・在庫・受注状態**に関わる高リスク連鎖のみ（帳票印刷等の軽微データは除外）")
-    lines.append("- 捏造ゼロ: 生成済みシナリオの連鎖行をそのまま集約。新たな結線・キーは作っていない。")
-    lines.append("")
-    lines.append("## この表で業務側にお願いすること")
-    lines.append("")
-    lines.append("各行の **業務判定(A/B/C)** 列を埋めてください。それ以外は記入不要です。")
-    lines.append("")
-    lines.append("| 判定 | 意味 | 記入例 |")
-    lines.append("|---|---|---|")
-    lines.append("| **A** | このデータは次工程で本当に使われる。**既定照合キーで正しい**（違えば「確定照合キー」欄に正しいキーを記入） | A |")
-    lines.append("| **B** | 印刷して保管／外部で完結など**終端**。連鎖テスト不要 | B |")
-    lines.append("| **C** | 本当は繋がっているのに業務フロー図が**線を引き忘れ**ている（消費工程を備考へ） | C: 消費先=◯◯ |")
-    lines.append("")
-    lines.append("- **A** と判定された行は、既定照合キーで「産出→消費を同一キーで追跡」する実行可能テストに昇格します。")
-    lines.append("- **C** は業務フロー原典を補記のうえ再生成すると、連鎖が自動で復活します。")
-    lines.append("")
-    lines.append("## サマリ")
-    lines.append("")
-    total_scn = sum(it["count"] for it in items)
-    lines.append(f"- ユニークな受け渡し: **{len(items)}件**（延べ {total_scn} SCN）。P1=業務判断が必要な穴 {len(p1)} / P2=実行可能・キー妥当性のみ {len(p2)}")
-    lines.append("- 観点別(ユニーク): " + " / ".join(f"{c} {by_cat.get(c,0)}" for c in ("金銭", "在庫", "受注状態")))
-    lines.append("- 同じデータ受け渡しは経路違いの複数SCNで共通なので、**1行に集約**（該当SCN数を併記）。1行に回答すれば全該当SCNへ反映されます。")
-    lines.append("")
-
-    def emit(title: str, rows: list[dict[str, str]]) -> None:
-        lines.append(f"## {title}（{len(rows)}件）")
-        lines.append("")
-        lines.append("| 観点 | 業務 | 産出工程 | データ/帳票 | 消費工程 | 既定照合キー | 判定 | 該当SCN数 | 代表SCN | 業務判定(A/B/C) |")
-        lines.append("|---|---|---|---|---|---|---|---:|---|---|")
-        for it in rows:
-            lines.append("| " + " | ".join([
-                it["category"], it["business"],
-                it["producer"], it["artifact"], it["consumer"], it["key"], it["verdict"],
-                str(it["count"]), it["example"], " ",
-            ]) + " |")
-        lines.append("")
-
-    emit("P1: 業務判断が必要な穴（消費先未定義／照合キー未定義）", p1)
-    emit("P2: 実行可能（既定照合キーの妥当性チェックのみ）", p2)
-
-    md.write_text("\n".join(lines) + "\n", encoding="utf-8")
-    print(f"wrote {md} ({len(items)} items: P1={len(p1)} P2={len(p2)})")
-    print(f"wrote {tsv}")
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--repo", default=".")
+    args = parser.parse_args()
+    count, occurrences, history = generate(Path(args.repo).resolve())
+    print(f"sendback: {count} current gaps / {occurrences} occurrences / {history} retained answer history")
 
 
 if __name__ == "__main__":

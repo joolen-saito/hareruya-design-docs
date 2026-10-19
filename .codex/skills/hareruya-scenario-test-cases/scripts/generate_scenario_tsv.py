@@ -46,6 +46,8 @@ HEADER = [
     "期待する主要機能No",
     "シナリオに紐づく機能No",
     "トレーサビリティ",
+    "データ連鎖",
+    "他層委譲（結合テスト）",
 ]
 
 # 集約TSVの並び順は scenario_test/test_items 側の集約TSV/索引と揃える。
@@ -244,6 +246,8 @@ def scenario_row(repo: Path, path: Path) -> list[str]:
         bold_value(text, "期待する主要機能No"),
         bold_value(text, "シナリオに紐づく機能No"),
         section(text, "## トレーサビリティ"),
+        section(text, "## データ連鎖"),
+        section(text, "## 他層委譲（結合テスト）"),
     ]
 
 

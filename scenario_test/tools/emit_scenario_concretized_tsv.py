@@ -1,39 +1,13 @@
 #!/usr/bin/env python3
-"""シナリオテスト項目(scenario_test/test_items/all_scenario_test_items.tsv・11列)を、
-結合テストの具体化TSV(integration_test/e2e/exec/tsv/m03-*_concretized.tsv・13列。
-F04系4本は11列の旧仕様なので参照しない)と同じ列構成・整形規則へ機械変換する。
-括弧最小化(結合テスト側 strip_parens)だけは適用しない。シナリオ層では括弧が
-『経路R01（正常代表）』のように原典の識別情報を担っており、除去すると情報が落ちるため。
+"""11列のシナリオ項目を、業務別14列の実行用TSVへ情報を保持して変換する。
 
-出力: scenario_test/exec/tsv/sti-<業務コード>_concretized.tsv（業務別10本・14列）
+元の前提条件から使用シードを分離し、操作の行境界を「 ⏎ 」として保持する。
+期待結果の文末だけを統一する。自動検証は「—」、テスト実施方法は「手動」。
+出力を逆変換して元の全列と照合し、件数・ID・業務別ファイルの欠落を検知する。
 
-列構成（先頭13列は結合テスト具体化TSVと同一。14列目はシナリオ層固有）:
-  機能名 / テストID / I/FID / テスト観点 / 優先度 / テスト項目名 / 前提条件 /
-  使用シード / 入力データ/リクエスト内容 / 操作手順/実行方法 / 期待結果／レスポンス /
-  自動検証（内部: session/DB/URL） / 実行方法 / 確認対象
-
-変換規則（`実行方法` 列を除き、すべて元TSVからの決定的な導出。値の新規創作はしない）:
-  - 前提条件: 12キーの構造化ブロブを1行に再構成する。落とすのは他列で完全に復元できる
-    業務(→機能名の ' — ' 前)／元シナリオの表題(→' — ' 後)／データパターンID・種別(→入力データ列)／
-    シードデータ(→使用シード列) だけ。業務経路条件は全行保持し、前提差分がその後続分である
-    1,033行では追加分のみを『追加前提』として出す（逆変換で再結合する）。
-    復元可能性は主張ではなく G8 の逆変換が全行で検証する。
-  - 使用シード: 前提条件の「シードデータ:」以降を分離して独立列にする（実値をそのまま転記）。
-  - 入力データ: データパターンID・種別・目的・入力を1行へ。
-  - 操作手順: セル内改行を除去し「担当者: X／1. … 2. …」の1行に平坦化する。担当者は
-    ステップ実施者で主アクター（シナリオ全体の主担当）とは別概念のため必ず残す。
-    従属行「対象: …」は直前の手順へ併合する。
-  - 期待結果: 文末の句点を落として「〜こと」で統一（結合テスト側 Gate B13 と同一）。
-  - 自動検証（内部）: シナリオ層は業務要件の充足を画面・現物で観測する層であり、
-    元データに内部状態(session/DB/URL)の観測仕様が存在しないため一律「—」。
-  - 実行方法: **この列だけは元TSVからの導出ではない**。列の意味は「テストの実行方法」で、
-    シナリオ層に自動実行ハーネスが存在しないという事実から一律「手動」とする（業務そのものの
-    実行形態ではない。例: 業務が夜間バッチでも、テストは人が起動・観測するので「手動」）。
-    確認手段の要約は行わない。確認対象から行全体のラベルを導くと必ず他列と矛盾する
-    （EXEC_VALUES のコメントに3度の破綻を記録）。更新有無は14列目の確認対象に原文で残る。
-  - 確認対象: 元の値を逐語で転記する（重複要素も出現回数どおり残す）。
-
-使い方: python3 scenario_test/tools/emit_scenario_concretized_tsv.py
+正本: scenario_test/test_items/all_scenario_test_items.tsv
+出力: scenario_test/exec/tsv/sti-<業務コード>_concretized.tsv
+既知の規模は意図した正本変更をレビューしたときだけ更新する。
 """
 from __future__ import annotations
 
@@ -60,7 +34,7 @@ OUT_COLS = [
 # 前提条件ブロブの固定キー（出現順）。G2 のラウンドトリップ検証で構造を保証する。
 PRE_KEYS = ["元シナリオ", "業務", "経路ID", "経路種別", "業務経路条件", "最終業務状態",
             "主アクター", "関連システム", "データパターンID", "データパターン種別",
-            "前提差分", "シードデータ"]
+            "前提差分", "シードデータ", "準備手順"]
 
 # 実行方法は全行「手動」の一値。確認対象からラベルを導く試みは3度すべて破綻した:
 #   (1) 既定を「EC-CUBE画面確認」→ 関連システムにEC-CUBEが無い行にも付き捏造になった
@@ -75,12 +49,13 @@ EXEC_VALUES = ("手動",)
 # 元TSVの規模。ここが変わる＝正本(all_scenario_test_items.tsv)が更新されたということなので、
 # 意図した更新かを人が確認してから定数を直す。入力と出力の両方が同時に1行落ちるような
 # 静かな欠落は、入力自身を基準にした照合では検出できない。
-EXPECTED_TOTAL = 1067
+# 2026-10-09 実施手順修正。旧1552件の対応は execution_repairs/item_migration.tsv で検証。
+EXPECTED_TOTAL = 1574
 EXPECTED_BY_BIZ = {
-    "商品登録・編集": ("product", 101), "価格管理": ("price", 37), "店頭買取": ("kaitori", 78),
-    "仕入れ業務": ("shiire", 39), "在庫管理": ("zaiko", 261), "店頭受取受注管理": ("order", 141),
-    "通販受注管理": ("tsuhan", 171), "ネット買取": ("online", 150), "イベント管理": ("event", 67),
-    "デッキ登録": ("deck", 22),
+    "商品登録・編集": ("product", 108), "価格管理": ("price", 46), "店頭買取": ("kaitori", 137),
+    "仕入れ業務": ("shiire", 54), "在庫管理": ("zaiko", 491), "店頭受取受注管理": ("order", 124),
+    "通販受注管理": ("tsuhan", 285), "ネット買取": ("online", 175), "イベント管理": ("event", 117),
+    "デッキ登録": ("deck", 37),
 }
 
 
@@ -128,9 +103,9 @@ def build_precondition(p: "OrderedDict[str, str]") -> str:
     いずれも G8 の逆変換で入力と完全一致することを検証する。"""
     scn = p["元シナリオ"].split(" ", 1)[0]          # SCN-… のIDのみ（表題は機能名にある）
     cond, delta = p["業務経路条件"].strip(), p["前提差分"].strip()
-    # 前提差分は 1,033行で「業務経路条件＋追加の前提」の形。全文再掲を避け、差分側は
+    # 前提差分が「業務経路条件＋追加の前提」の形なら、全文再掲を避け、差分側は
     # 追加分だけを『追加前提』として出す。ラベルで形を区別するので逆変換で再結合でき、
-    # G8が全行で復元を検証する（前方一致しない34行は両方を全文で残す）。
+    # G8が全行で復元を検証する（前方一致しない行は両方を全文で残す）。
     if delta.startswith(cond):
         rest = delta[len(cond):].strip()
         tail = f"追加前提: {rest}" if rest else ""
@@ -144,13 +119,14 @@ def build_precondition(p: "OrderedDict[str, str]") -> str:
         tail,
         f"最終業務状態: {p['最終業務状態']}",
         f"関連システム: {p['関連システム']}",
+        f"準備手順: {one_line(p['準備手順'])}",
     ]
     return "／".join(one_line(x) for x in parts if x)
 
 
 def parse_input(text: str) -> dict[str, str]:
     """『データパターンID=… / 種別=… [/ 分岐ID=…] / 目的=… / 入力=…』を分解する。
-    分岐ID は分岐/異常行(34件)にのみ現れる独立フィールドで、種別に含めてはならない。"""
+    分岐ID は分岐/異常行にのみ現れる独立フィールドで、種別に含めてはならない。"""
     m = re.match(r"データパターンID=(?P<dpid>.*?) / 種別=(?P<kind>.*?)"
                  r"(?: / 分岐ID=(?P<branch>.*?))?"
                  r" / 目的=(?P<purpose>.*?)(?: / 入力=(?P<data>.*))?$", text, flags=re.S)
@@ -171,8 +147,8 @@ def parse_input(text: str) -> dict[str, str]:
         hits = len(re.findall(r"(?:^| / )" + re.escape(label) + r"=", text))
         if hits > 1:
             raise GateError(f"入力データのフィールド '{label}' が{hits}回出現: {text[:120]}")
-    # G7: 分岐IDとデータパターンIDの整合。実データでは DP-A/DP-E の34行が必ず同記号の分岐IDを
-    # 持ち(A22/E12)、DP-Nの1,033行は持たない。この対応が崩れる入力＝分岐IDの欠落や取り違えで、
+    # G7: 分岐IDとデータパターンIDの整合。DP-A/DP-Eは必ず同記号の分岐IDを
+    # 持ち、DP-Nは持たない。この対応が崩れる入力＝分岐IDの欠落や取り違えで、
     # ラウンドトリップだけでは検出できない(欠落した入力もそれ自体は自己整合するため)。
     m2 = re.match(r"DP-([NAE])\d+$", d["dpid"])
     if not m2:
@@ -201,27 +177,8 @@ def build_input(d: dict[str, str]) -> str:
 
 
 def build_steps(text: str) -> str:
-    """複数行の手順を1行へ平坦化する。先頭の『担当者: X』はステップ実施者であり
-    主アクターとは別概念のため保持する。『対象: …』の従属行は直前の手順へ併合する。"""
-    actor = ""
-    steps: list[str] = []
-    for raw in text.splitlines():
-        line = raw.strip()
-        if not line:
-            continue
-        if line.startswith("担当者: ") and not steps and not actor:
-            actor = line
-            continue
-        if re.match(r"^\d+\.\s", line):
-            steps.append(line)
-        elif steps:
-            steps[-1] += f"、{line}"
-        else:
-            steps.append(line)
-    body = one_line(" ".join(steps))
-    if actor and body:
-        return f"{one_line(actor)}／{body}"
-    return body or one_line(actor) or "—"
+    """複数行の手順を、行境界を失わない ` ⏎ ` 区切りで1行化する。"""
+    return " ⏎ ".join(one_line(raw) for raw in text.splitlines() if raw.strip()) or "—"
 
 
 def norm_expect(text: str) -> str:
@@ -304,7 +261,8 @@ def restore(out: list[str]) -> list[str]:
     m = re.match(r"元シナリオ (?P<scn>\S+)／経路(?P<rid>[^（]+)（(?P<rkind>[^）]+)）"
                  r"／主アクター: (?P<actor>.*?)／業務経路条件: (?P<cond>.*?)"
                  r"(?:／(?P<label>追加前提|前提差分): (?P<tail>.*?))?"
-                 r"／最終業務状態: (?P<final>.*?)／関連システム: (?P<sys>.*)$", o["前提条件"])
+                 r"／最終業務状態: (?P<final>.*?)／関連システム: (?P<sys>.*?)"
+                 r"／準備手順: (?P<prep>.*)$", o["前提条件"])
     if not m:
         raise GateError(f"{o['テストID']}: 前提条件を逆変換できない")
     g = m.groupdict()
@@ -330,23 +288,14 @@ def restore(out: list[str]) -> list[str]:
         f"関連システム: {g['sys']}", f"データパターンID: {gi['dpid']}",
         f"データパターン種別: {gi['kind']}", f"前提差分: {g['delta']}",
         f"シードデータ: {o['使用シード']}",
+        f"準備手順: {g['prep']}",
     ])
     inp = " / ".join([f"データパターンID={gi['dpid']}", f"種別={gi['kind']}"]
                      + ([f"分岐ID={gi['branch']}"] if gi["branch"] else [])
                      + [f"目的={gi['purpose']}"]
                      + ([f"入力={gi['data']}"] if gi["data"] else []))
 
-    actor, _, body = o["操作手順/実行方法"].partition("／")
-    lines = [actor]
-    nums = [int(x) for x in re.findall(r"(?:^|\s)(\d+)\. ", body)]
-    if nums != list(range(1, len(nums) + 1)):
-        raise GateError(f"{o['テストID']}: 手順番号が連番でない {nums}")
-    chunks = re.split(r"(?:^|\s)\d+\. ", body)[1:]
-    for i, chunk in enumerate(chunks, 1):
-        head, sep, tail = chunk.partition("、対象: ")
-        lines.append(f"{i}. {head}")
-        if sep:
-            lines.append(f"対象: {tail}")
+    lines = o["操作手順/実行方法"].split(" ⏎ ")
 
     return [o["機能名"], o["テストID"], "-" if o["I/FID"] == "—" else o["I/FID"],
             o["テスト観点"], o["優先度"], o["テスト項目名"], pre, inp,

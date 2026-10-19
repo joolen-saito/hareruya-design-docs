@@ -3,9 +3,11 @@ from __future__ import annotations
 
 import argparse
 import html
+import json
 import re
+import sys
 from collections import Counter
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Iterable
 
@@ -198,6 +200,16 @@ class Pattern:
     number: str
     name: str
     rows: list[str]
+    # 原典上の識別・図形スコープ。番号重複を勝手に改番せず、出典＋番号＋名称で識別する。
+    source_number: str = ""
+    source_start: int = 0
+    source_end: int = 10**9
+    node_scope: set[str] = field(default_factory=set)
+    row_nodes: dict[str, str] = field(default_factory=dict)
+    row_lanes: dict[str, str] = field(default_factory=dict)
+    nodes: dict[str, "FlowNode"] = field(default_factory=dict)
+    flow_edges: list["FlowEdge"] = field(default_factory=list)
+    source_path: str = ""
 
 
 @dataclass(frozen=True)
@@ -209,6 +221,9 @@ class BusinessRoute:
     final_state: str
     rows: tuple[str, ...]
     edge_cases: tuple["EdgeCase", ...]
+    preparation: str = ""
+    inputs: tuple[tuple[str, str], ...] = ()
+    evidence: str = ""
 
 
 @dataclass
@@ -291,7 +306,11 @@ def summarize_text(text: str, limit: int = 1600) -> str:
 
 def build_design_index(repo: Path) -> list[DesignDoc]:
     docs: list[DesignDoc] = []
-    for path in sorted((repo / "functions").glob("**/*.md")):
+    function_root = repo / "functions"
+    for path in sorted(function_root.glob("**/*.md")):
+        # `_archive` は旧仕様の退避先。現行画面名・機能紐付けの候補に混ぜない。
+        if "_archive" in path.relative_to(function_root).parts:
+            continue
         text = read_text(path)
         docs.append(DesignDoc(path.relative_to(repo), title_from_markdown(text, path.stem), summarize_text(text), "function", feature_no_from_path(path)))
     for path in sorted((repo / "excel_to_html" / "output").glob("*.html")):
@@ -420,7 +439,7 @@ def parse_patterns(text: str) -> list[Pattern]:
         number = m.group(1).strip()
         name = clean_cell(m.group(2))
         if re.fullmatch(r"\d+", number) and name:
-            candidates.append(Pattern(number, name, []))
+            candidates.append(Pattern(number, name, [], source_number=number))
     # Some flow sheets list the parent pattern only in the index section and
     # start the reconstructed flow at child rows such as 10-①. Preserve those
     # parents so system-test coverage does not skip the business flow.
@@ -433,15 +452,16 @@ def parse_patterns(text: str) -> list[Pattern]:
             continue
         number = m.group(1).strip()
         name = clean_cell(m.group(2))
-        if int(number) < 10 or number in existing_numbers or number not in child_prefixes:
+        if number in existing_numbers or number not in child_prefixes:
             continue
-        candidates.append(Pattern(number, name, []))
+        candidates.append(Pattern(number, name, [], source_number=number))
         existing_numbers.add(number)
     if not candidates:
         for line in text.splitlines():
             m = re.search(r"- \*\*R\d+\*\*:\s*([0-9]+)\s*｜\s*(.+)$", line)
             if m:
-                candidates.append(Pattern(m.group(1), clean_cell(m.group(2)), []))
+                number = m.group(1)
+                candidates.append(Pattern(number, clean_cell(m.group(2)), [], source_number=number))
     seen: set[tuple[str, str]] = set()
     patterns: list[Pattern] = []
     for p in candidates:
@@ -451,9 +471,8 @@ def parse_patterns(text: str) -> list[Pattern]:
             patterns.append(p)
     if not patterns:
         title = title_from_markdown(text, "業務フロー")
-        patterns.append(Pattern("1", title, []))
+        patterns.append(Pattern("1", title, [], source_number="1"))
     assign_rows(text, patterns)
-    renumber_duplicate_patterns(patterns)
     sort_pattern_rows(patterns)
     return patterns
 
@@ -508,6 +527,7 @@ EXTERNAL_TOOL_WORDS = (
     "メール", "メーラー", "thunderbird", "wordpress", "ラインワークス",
     "line", "gメール", "コンパニオン", "splinks", "電話", "slack", "チャット", "フォーム",
     "海外発送管理アプリ", "mtgバイヤー", "ポイントグランター",
+    "aws", "s3",
 )
 # 「手作業」ノードだが、システム（EC-CUBE または外部ツール）の操作記述を含む語。
 # 物理作業と断定して「EC-CUBE操作なし」と書くと嘘になるため、要確認へ落とす。
@@ -631,9 +651,12 @@ FREE_END = "(自由端)"
 @dataclass(frozen=True)
 class FlowNode:
     number: str
+    phase: str
     lane: str
     kind: str
     text: str
+    source_row: int = 0
+    source_col: int = 0
 
 
 @dataclass(frozen=True)
@@ -660,10 +683,13 @@ def parse_flow_nodes_numbered(text: str) -> dict[str, FlowNode]:
         cells = [c.strip() for c in line.strip("|").split("|")]
         if len(cells) < 5:
             continue
-        number, lane, kind, node_text = cells[0], cells[2], cells[3], cells[4]
+        number, phase, lane, kind, node_text = cells[0], cells[1], cells[2], cells[3], cells[4]
         if not number.isdigit() or not node_text or node_text == "—":
             continue
-        nodes.setdefault(number, FlowNode(number, lane, kind, node_text))
+        pos = re.search(r"\((\d+),(\d+)\)", cells[5] if len(cells) > 5 else "")
+        source_row = int(pos.group(1)) if pos else 0
+        source_col = int(pos.group(2)) if pos else 0
+        nodes.setdefault(number, FlowNode(number, phase, lane, kind, node_text, source_row, source_col))
     return nodes
 
 
@@ -965,6 +991,8 @@ def assign_rows(text: str, patterns: list[Pattern]) -> None:
             last_rnum = rnum
             if p is not None:
                 active[num] = p
+                if not p.source_start and rnum is not None:
+                    p.source_start = rnum
                 row = clean_cell(line)
                 if row:
                     if row not in p.rows:
@@ -979,6 +1007,8 @@ def assign_rows(text: str, patterns: list[Pattern]) -> None:
             current = None
             last_rnum = rnum
             if p is not None:
+                if not p.source_start and rnum is not None:
+                    p.source_start = rnum
                 row = clean_cell(line)
                 if row:
                     if row not in p.rows:
@@ -990,8 +1020,8 @@ def assign_rows(text: str, patterns: list[Pattern]) -> None:
         # 作業内容が複数行に分割されている場合の後半取りこぼし（例:「からcsvファイルを
         # ダウンロードする」）を防ぐ。ただし R番号が大きく飛ぶ補足行（別作業）は連結しない。
         if current is not None and "**[作業内容]**" in line:
-            if last_rnum is not None and rnum is not None and rnum - last_rnum > MERGE_GAP:
-                continue
+            # 作業内容は次の番号付き行まで同一工程。図の配置上の空白行数は
+            # 意味の境界ではない（06 R59→63、R88→92の経理/在庫条件を落とさない）。
             cont = re.sub(r"^-?\s*R\d+:\s*", "", clean_cell(line)).strip()
             if cont:
                 p, idx = current  # type: ignore[misc]
@@ -999,6 +1029,65 @@ def assign_rows(text: str, patterns: list[Pattern]) -> None:
                     sep = ROW_SEP if ROW_SEP not in p.rows[idx] else " "
                     p.rows[idx] = f"{p.rows[idx]}{sep}{cont}"
                     last_rnum = rnum
+
+    # 親パターンの原典行範囲を確定する。番号ではなく、本文中の親見出し位置を境界にする。
+    # 同じ番号が複数回出る在庫管理でも、別パターンの図形を混ぜないための一次スコープとなる。
+    ordered = sorted((p for p in patterns if p.source_start), key=lambda p: p.source_start)
+    for idx, p in enumerate(ordered):
+        p.source_end = ordered[idx + 1].source_start if idx + 1 < len(ordered) else 10**9
+
+    numbered_nodes = parse_flow_nodes_numbered(text)
+    all_edges = parse_flow_edges(text)
+    for p in patterns:
+        p.node_scope = {
+            number for number, node in numbered_nodes.items()
+            if p.source_start <= node.source_row < p.source_end
+        }
+        p.nodes = {number: numbered_nodes[number] for number in p.node_scope}
+        p.flow_edges = [
+            edge for edge in all_edges
+            if not edge.is_data and edge.src_no in p.node_scope and (not edge.dst_no or edge.dst_no in p.node_scope)
+        ]
+        # 作業概要と図形テキストをパターン範囲内で照合する。同名図形が複数あれば、
+        # 元MarkdownのR行に最も近い図形を採用する。
+        for row in p.rows:
+            summary = ROW_SUMMARY.get(primary_text(row), "") or row_title(row)
+            norm = normalize_node_text(summary)
+            candidates = [
+                node for number, node in numbered_nodes.items()
+                if number in p.node_scope and normalize_node_text(node.text) == norm
+            ]
+            if not candidates and norm:
+                candidates = [
+                    node for number, node in numbered_nodes.items()
+                    if number in p.node_scope
+                    and node.kind not in NON_STEP_NODE_KINDS
+                    and (norm in normalize_node_text(node.text) or normalize_node_text(node.text) in norm)
+                ]
+            if candidates:
+                rnum = int(row_r_number(row) or "0")
+                chosen = min(candidates, key=lambda node: (abs(node.source_row - rnum), int(node.number)))
+                p.row_nodes[primary_text(row)] = chosen.number
+                p.row_lanes[primary_text(row)] = chosen.lane
+
+        # 作業概要と図形名が異なる場合も、同じ原典行位置の工程を参照する。
+        # 遠い部分一致（「注文情報確認」→「注文」等）は分岐側を取り違えるため
+        # 近接する図形が一意に定まる場合に限って補正する。
+        for row in p.rows:
+            rnum = int(row_r_number(row) or "0")
+            existing = p.nodes.get(p.row_nodes.get(primary_text(row), ""))
+            if existing and abs(existing.source_row - rnum) <= 2:
+                continue
+            nearby = [n for n in p.nodes.values()
+                      if 0 <= rnum - n.source_row <= 3
+                      and n.kind not in DATA_NODE_KINDS + ("注釈(吹き出し)", "borderCallout2", "フェーズ区切り")
+                      and len(normalize_node_text(n.text)) >= 4
+                      and not n.text.startswith("移動ステータス")]
+            nearby.sort(key=lambda n: (rnum - n.source_row, int(n.number)))
+            if nearby and (len(nearby) == 1 or nearby[0].source_row != nearby[1].source_row):
+                chosen = nearby[0]
+                p.row_nodes[primary_text(row)] = chosen.number
+                p.row_lanes[primary_text(row)] = chosen.lane
 
     # 作業種別の判定は継続行の連結後に行う。作業内容が複数行に分かれている場合、
     # 「CSVを作成する」等のシステム操作の記述が継続行側にあり、1行目だけでは物理作業と
@@ -1008,7 +1097,12 @@ def assign_rows(text: str, patterns: list[Pattern]) -> None:
             key = primary_text(row)
             summary = ROW_SUMMARY.get(key, "")
             if summary:
-                ROW_WORK_KIND[key] = classify_work(summary, classification_text(row), nodes)
+                node = numbered_nodes.get(p.row_nodes.get(key, ""))
+                scoped_nodes = (
+                    {normalize_node_text(node.text): (node.lane, node.kind)}
+                    if node is not None else nodes
+                )
+                ROW_WORK_KIND[key] = classify_work(summary, classification_text(row), scoped_nodes)
 
 
 def sub_step_index(row: str) -> int:
@@ -1182,6 +1276,9 @@ def is_structural_row(row: str) -> bool:
         return True
     if concept in STRUCTURAL_CONCEPTS:
         return True
+    # 時刻だけの行は実行タイミングの注記であって操作ではない。
+    if re.fullmatch(r"\d{1,2}時(?:頃|ごろ)?", concept):
+        return True
     # 「〜有無」「〜分岐」のみの判断ノード（作業内容を伴わない短い見出し）
     return bool(re.fullmatch(r".{0,10}(有無|分岐)", concept))
 
@@ -1197,11 +1294,22 @@ def is_pattern_header_row(row: str, pattern: Pattern) -> bool:
     return bool(pattern.number) and row_leading_number(row) == pattern.number
 
 
+def is_decision_row(row: str, pattern: Pattern) -> bool:
+    number = pattern.row_nodes.get(primary_text(row), "")
+    node = pattern.nodes.get(number)
+    return node is not None and node.kind in {"判断", "diamond"}
+
+
 def normal_flow_rows(pattern: Pattern) -> list[str]:
+    """原典の業務工程を保持する。
+
+    語句（場合/差異/不備など）で工程を落とさない。経路ごとの除外は、判断ノードの実線出口を
+    使う `routes_for_pattern` 側だけで行う。
+    """
     rows = [
         row
         for row in pattern.rows
-        if not is_branch_row(row, pattern.name) and not is_structural_row(row)
+        if not is_structural_row(row) or is_decision_row(row, pattern)
     ]
     # 下位ステップがあるなら、見出し行（パターン名の繰り返し）は除外して実作業を先頭にする。
     detailed = [row for row in rows if not is_pattern_header_row(row, pattern)]
@@ -1213,11 +1321,12 @@ def normal_flow_rows(pattern: Pattern) -> list[str]:
 
 
 def branch_flow_rows(pattern: Pattern) -> list[str]:
-    return [row for row in pattern.rows if is_branch_row(row, pattern.name)]
+    # 旧キーワード分類は使わない。分岐は原図の判断ノード＋実線出口から作る。
+    return [row for row in normal_flow_rows(pattern) if is_decision_row(row, pattern)]
 
 
 NON_ECCUBE_SCREEN = "非EC-CUBE作業（メール/電話/Thunderbird・外部アプリ／EC-CUBE参照のみ）"
-NON_ECCUBE_EXPECT = "メール/電話/外部アプリ側で対応が記録され、EC-CUBEの受注・在庫は更新されないこと。"
+NON_ECCUBE_EXPECT = "メール/電話/外部アプリ側の対応記録が存在し、EC-CUBEの受注・在庫が更新されていないことを確認できること。"
 NON_ECCUBE_OBSERVATION = "メール/外部アプリの対応記録、EC-CUBEの受注・在庫の更新有無"
 
 
@@ -1262,33 +1371,37 @@ def assign_step_docs(business_title: str, pattern: Pattern, docs: list[DesignDoc
     for i in by_keyword:
         concept = row_concept(rows[i])
         for keyword, feature in kw_feats:
-            if keyword in concept and feature in by_feature and feature not in EXCLUDED_FEATURE_IDS:
+            if (
+                keyword in concept
+                and feature in by_feature
+                and feature not in EXCLUDED_FEATURE_IDS
+                and operation_direction_compatible(rows[i], by_feature[feature])
+            ):
                 doc = by_feature[feature]
                 if doc.path not in used:
                     result[i] = doc
                     used.add(doc.path)
                     break
-    # 2nd pass: 未割当行に、設計書名との部分文字列一致が最大の未使用docを割り当てる
-    # （日本語は tokenize では語分割できないため、2〜4文字の部分列一致で近さを測る）。
-    # 例:「注文完了…」行に「カテゴリ一覧」画面が位置順で当たる誤りを防ぐ（Claude Codeレビュー指摘）。
-    remaining = [d for d in docs if d.path not in used]
-    for i in assignable:
-        if result[i] is not None:
-            continue
-        row_text = full_text(rows[i])
-        best, best_score = None, 0
-        for d in remaining:
-            score = title_row_affinity(row_text, d.title)
-            if score > best_score:
-                best, best_score = d, score
-        # 類似度ゼロなら割り当てない。「余っている設計書の先頭」を機械的に埋めると、
-        # 根拠のない機能Noが付き（貼替作業に「セール用価格変更CSV出力」等）、その画面で
-        # 観測できない期待結果を生む。未特定は黙って埋めず、要確認として可視化する。
-        if best is None:
-            continue
-        result[i] = best
-        remaining.remove(best)
+    # 類似度だけの第2候補割当は行わない。正確なキーワード対応または人手トリアージが無い工程は、
+    # 業務フロー記載の操作として残す。誤った画面を断定するより情報を不足側に倒す。
     return result
+
+
+def operation_direction_compatible(row: str, doc: DesignDoc) -> bool:
+    """取込/出力など、業務動詞と機能仕様の方向が逆なら割り当てない。"""
+    action = normalize_node_text(full_text(row)).lower()
+    title = normalize_node_text(doc.title + " " + doc.path.stem).lower()
+    input_words = ("インポート", "取込", "取り込", "アップロード", "csv登録")
+    output_words = ("エクスポート", "出力", "ダウンロード", "csvexport")
+    action_input = any(word in action for word in input_words)
+    action_output = any(word in action for word in output_words)
+    doc_input = any(word in title for word in input_words) or "import" in title
+    doc_output = any(word in title for word in output_words) or "export" in title or "download" in title
+    if action_input and doc_output and not doc_input:
+        return False
+    if action_output and doc_input and not doc_output:
+        return False
+    return True
 
 
 def title_row_affinity(row_text: str, title: str) -> int:
@@ -1311,7 +1424,7 @@ def step_rows(business_title: str, pattern: Pattern, docs: list[DesignDoc]) -> l
     non_eccube = is_non_eccube_pattern(pattern)
     step_docs = assign_step_docs(business_title, pattern, docs)
     for idx, row in enumerate(rows, 1):
-        actor = infer_actor(row, main_actor)
+        actor = actor_for_row(pattern, row, main_actor)
         action = business_action_from_row(row, pattern.name)
         doc = step_docs[idx - 1]
         feature = doc.feature_no if doc else "-"
@@ -1330,7 +1443,9 @@ def step_rows(business_title: str, pattern: Pattern, docs: list[DesignDoc]) -> l
         else:
             # doc未特定（要確認だった工程）。08トリアージレジスタの判定で具体化する。
             screen, feature, observation = resolve_step_via_triage(business_title, row)
-        result.append((actor, action, screen, feature, expect, observation))
+        import source_contract_adapter
+        contract = source_contract_adapter.find(business_title, pattern, row, action)
+        result.append(source_contract_adapter.apply(contract, (actor, action, screen, feature, expect, observation), sys.modules[__name__]))
     return result
 
 
@@ -1373,7 +1488,12 @@ def resolve_step_via_triage(business_title: str, row: str) -> tuple[str, str, st
     if judge in ("TRACE-IN", "AUTO") and feature and not uncertain:
         # 機能Noは「M04-09,M04-32」等の複数（工程が触れる画面群）のことがある。作業の操作動詞で
         # 主画面を選ぶ（CSV/出力→出力系、取込→取込系、承認→承認系）。無ければ実在する先頭。
-        feats = [f.strip().upper() for f in feature.split(",") if f.strip() and f.strip().upper() in FEATURE_DOC]
+        feats = [
+            f.strip().upper() for f in feature.split(",")
+            if f.strip()
+            and f.strip().upper() in FEATURE_DOC
+            and operation_direction_compatible(row, FEATURE_DOC[f.strip().upper()])
+        ]
         primary = pick_primary_feature(row, feats)
         if primary:
             doc = FEATURE_DOC[primary]
@@ -1431,6 +1551,36 @@ def infer_actor(text: str, default_actor: str) -> str:
     return default_actor
 
 
+def actor_from_lane(lane: str, fallback: str) -> str:
+    """原図のスイムレーンを担当者名へ変換する。本文中の目的語よりレーンを優先する。"""
+    compact = normalize_node_text(lane)
+    lane_map = (
+        ("お客様", "お客様"),
+        ("店舗統括", "店舗統括チーム"),
+        ("店舗", "店舗チーム"),
+        ("顧客戦略", "顧客戦略チーム"),
+        ("トレード", "トレードチーム"),
+        ("通販", "通販チーム"),
+        ("商品管理", "商品管理チーム"),
+        ("支店", "支店担当者"),
+        ("経理", "経理担当"),
+    )
+    for marker, actor in lane_map:
+        if marker in compact:
+            return actor
+    # システムレーンは人間へ読み替えない。自動処理主体として原典名を保持する。
+    if any(marker in compact for marker in ("EC-CUBE", "スマレジ", "MTG", "Wordpress", "SPLINKS", "デッキ", "ポイント")):
+        return lane
+    return fallback
+
+
+def actor_for_row(pattern: Pattern, row: str, default_actor: str) -> str:
+    lane = pattern.row_lanes.get(primary_text(row), "")
+    if lane and lane not in ("—", "その他"):
+        return actor_from_lane(lane, default_actor)
+    return infer_actor(row, default_actor)
+
+
 def business_action_from_row(row: str, scenario_name: str) -> str:
     # 表示（業務行動/操作）は全文を使い、複数行に分割された作業内容の後半も含める。
     value = re.sub(r"^-?\s*R\d+:\s*", "", full_text(row)).strip()
@@ -1442,6 +1592,9 @@ def business_action_from_row(row: str, scenario_name: str) -> str:
     parts = value.split(" ", 1)
     if len(parts) == 2 and len(parts[0]) <= 18:
         title, detail = parts
+        # 作業内容が注記だけなら、注記を操作として実行せず作業概要を使う。
+        if detail.lstrip().startswith("※"):
+            return normalize_business_sentence(title, append_action=True)
         detail = normalize_business_sentence(detail)
         if detail:
             return f"{title}として、{detail}"
@@ -1470,7 +1623,11 @@ def normalize_business_sentence(value: str, append_action: bool = False) -> str:
     value = re.sub(r"おこない$", "行う", value)
     value = re.sub(r"行い$", "行う", value)
     value = value.strip(" 、。")
-    if append_action and not re.search(r"(する|行う|確認する|報告する|更新する|登録する|出力する|依頼する|発送する|受け取る)$", value):
+    if append_action and not re.search(r"(する|行う|確認する|報告する|更新する|登録する|出力する|依頼する|発送する|受け取る|移る|進む)$", value):
+        if value.endswith("へ"):
+            return value + "進む"
+        if value.endswith("を"):
+            return value + "行う"
         return f"{value}を行う"
     return value
 
@@ -1516,6 +1673,8 @@ def observation_point(text: str) -> str:
     """業務フローの語から、観測可能な確認点を具体化する（創作せず語彙に沿う）。"""
     if any(w in text for w in ("CSV", "帳票", "ダウンロード", "出力", "印刷", "PDF")):
         return "出力されたCSV/帳票の件数と内容"
+    if any(w in text for w in ("受領", "受信")) and any(w in text for w in ("メール", "通知")):
+        return "受信したメール/通知の内容と受信日時"
     if any(w in text for w in ("メール", "通知", "連絡")):
         return "送信されたメール/通知の内容と送信状態"
     if any(w in text for w in ("在庫", "入庫", "出庫", "棚卸", "移動", "欠品", "引当", "補充")):
@@ -1542,7 +1701,11 @@ def first_verb_clause(detail: str) -> str:
     例:「…登録する 新規登録 今まで…」→「…登録する」。ただし
     「…商品CSV出力」 からcsvファイルをダウンロードする」のように主文が名詞止めの
     場合は、動詞終止する継続節まで含める（取りこぼし防止）。"""
-    verb_end = re.compile(r"(する|した|される|できる|れる|られる|行う|なる|[うくぐすつぬぶむる])$")
+    verb_end = re.compile(
+        r"(する|した|される|できる|れる|られる|行う|なる|登録|出力|送付|送信|更新|変更|確認|"
+        r"作成|実施|反映|通知|連絡|返信|移動|入庫|出庫|決済|返金|公開|取込|インポート|"
+        r"集計|受付|査定|仕入|発送|振込|共有|保存|検索|選択|指定|入力|受領|終了|完了|対応|[うくぐすつぬぶむる])$"
+    )
     acc = ""
     for seg in detail.split(" "):
         acc = f"{acc} {seg}".strip() if acc else seg
@@ -1555,17 +1718,17 @@ def clean_detail(row: str) -> str:
     """期待結果の素材となる作業内容（URL除去・最初の動詞節・冗長トリム）。"""
     detail = normalize_business_sentence(row_detail(row))
     detail = re.sub(r"https?://\S+", "", detail)
+    detail = detail.split("※", 1)[0].strip(" 、。")
+    if not detail:
+        detail = row_title(row).strip(" 、。")
     detail = re.sub(r"\s+", " ", detail).strip(" 、。")
     detail = first_verb_clause(detail)
-    if len(detail) > 90:
-        head = detail[:90]
-        detail = head[: head.rindex("、")] if "、" in head else head
     return detail
 
 
 # サ変名詞（する を付けて動詞化できる語）の末尾。「完了」→「完了すること」等の整合に使う。
 SAHEN_SUFFIX = re.compile(
-    r"(完了|受領|報告|登録|出力|送付|送信|更新|変更|確認|作成|削除|実施|反映|付与|通知|委譲|移動|"
+    r"(完了|終了|処理|振替|受領|報告|連絡|返信|対応|記載|登録|出力|送付|送信|更新|変更|確認|作成|削除|実施|反映|付与|通知|委譲|移動|"
     r"入庫|出庫|承認|差戻|却下|決済|返金|公開|取込|集計|申込|受付|査定|仕入|発送|配送|引渡|振込|"
     r"出金|入金|抽出|印刷|統合|補充|廃棄|貸出|借用|依頼|連携|同期|保存|検索|選択|指定|入力|参照)$"
 )
@@ -1576,6 +1739,17 @@ def koto_form(detail: str) -> str:
     d = detail.rstrip(" 、。")
     if not d:
         return "所定の業務結果が得られる"
+    d = re.sub(r"となります$", "となる", d)
+    d = re.sub(r"こととなる$", "こと", d)
+    d = re.sub(r"メール受領$", "メールを受領", d)
+    if d.endswith("こと"):
+        return d
+    if d.endswith("へ"):
+        return d + "進むこと"
+    if d.endswith("を"):
+        return d + "行うこと"
+    if d.endswith("もの"):
+        return d + "であること"
     if d.endswith("する"):
         return d + "こと"
     if re.search(r"(される|できる|れる|られる)$", d):
@@ -1584,7 +1758,8 @@ def koto_form(detail: str) -> str:
         return d + "こと"
     if SAHEN_SUFFIX.search(d):
         return d + "すること"
-    return d + "こと"
+    # 名詞止めの業務行は原典の作業ラベル。無理に動詞を推測せず、その作業の完了を判定対象にする。
+    return d + "が完了したこと"
 
 
 def expected_assertion(row: str) -> str:
@@ -1592,7 +1767,10 @@ def expected_assertion(row: str) -> str:
     detail = clean_detail(row)
     if not detail:
         return "所定の業務結果が得られること。"
-    return koto_form(detail) + "。"
+    claim = koto_form(detail)
+    if claim.endswith("確認できること"):
+        return claim + "。"
+    return f"{claim}を、{expected_observation(row)}で確認できること。"
 
 
 def expected_observation(row: str) -> str:
@@ -1608,6 +1786,11 @@ def seed_suffix(s: Scenario) -> str:
 
 
 def execution_seed(s: Scenario) -> dict[str, str]:
+    import supplemental_scenarios
+    import execution_repairs
+    supplemental_seed = supplemental_scenarios.seed(s.sid)
+    if supplemental_seed is not None:
+        return execution_repairs.transform("seed", s, supplemental_seed, sys.modules[__name__])
     suffix = seed_suffix(s)
     common = {
         "担当者アカウント": f"st-user-{suffix.lower()}",
@@ -1681,7 +1864,10 @@ def execution_seed(s: Scenario) -> dict[str, str]:
         },
     }
     common.update(by_business.get(s.business_title, {"対象ID": f"ST-DATA-{suffix}", "処理状態": "未処理"}))
-    return common
+    common.update(dict(s.route.inputs))
+    import source_contract_adapter
+    values = source_contract_adapter.augment_seed(s, common, sys.modules[__name__])
+    return execution_repairs.transform("seed", s, values, sys.modules[__name__])
 
 
 def render_seed_table(seed: dict[str, str]) -> str:
@@ -1831,6 +2017,8 @@ def branch_pattern_input(s: Scenario, case: EdgeCase, branch_id: str, seed: dict
     c = case.condition
     base = suffixed_target(seed, branch_id)
     scenario_tag = seed_suffix(s)
+    if s.route.inputs:
+        return " / ".join([base] + [f"{key}={value}" for key, value in s.route.inputs])
     if "権限" in c:
         return f"担当者アカウント=st-user-{scenario_tag.lower()}-readonly / {base} / 権限=参照のみ"
     if "重複" in c or "二重" in c:
@@ -1869,6 +2057,10 @@ def data_patterns_for(s: Scenario, seed: dict[str, str]) -> list[DataPattern]:
         route_precondition = f"{route_precondition} 標準権限の担当者でログインし、標準マスタと基準シードデータを使用する。"
     else:
         route_precondition = "標準権限の担当者でログインし、標準マスタと基準シードデータを使用する。"
+    route_precondition += " " + s.route.preparation
+    route_input = seed_input_summary(seed)
+    if s.route.inputs:
+        route_input += " / " + " / ".join(f"{key}={value}" for key, value in s.route.inputs)
     patterns: list[DataPattern] = [
         DataPattern(
             "DP-N001",
@@ -1876,7 +2068,7 @@ def data_patterns_for(s: Scenario, seed: dict[str, str]) -> list[DataPattern]:
             normal_target,
             f"{s.route.kind}の代表データで業務経路を確認する。",
             route_precondition,
-            seed_input_summary(seed),
+            route_input,
             f"{normal_observation}<br>{s.route.final_state}",
         )
     ]
@@ -1893,12 +2085,15 @@ def data_patterns_for(s: Scenario, seed: dict[str, str]) -> list[DataPattern]:
                 "代替系" if prefix == "A" else "異常系",
                 f"分岐{branch_id}",
                 case.condition,
-                branch_precondition_delta(case),
+                s.route.preparation or branch_precondition_delta(case),
                 branch_pattern_input(s, case, branch_id, seed),
                 case.observation,
             )
         )
-    return patterns
+    from route_evidence import supplement_data_patterns
+    import execution_repairs
+    values = supplement_data_patterns(s, seed, patterns, sys.modules[__name__])
+    return execution_repairs.transform("data_patterns", s, values, sys.modules[__name__])
 
 
 def render_data_pattern_rows(patterns: list[DataPattern]) -> str:
@@ -1974,11 +2169,11 @@ HTML_CHAIN_RESOLUTIONS: tuple[tuple[tuple[str, ...], tuple[str, ...], str, str, 
     # === consumer: HTMLが下流処理を明記 ===
     (("棚卸計画",), (), "consumer",
      "棚卸確定（dtb_inventory_plan→dtb_product_stock）",
-     "棚卸計画(dtb_inventory_plan)の確定・実数反映時にdtb_product_stockの在庫が更新されること（反映時点は実装依存）",
+     "棚卸在庫反映画面（0202 sheet-43）の反映操作により、対象店舗・棚・商品の在庫が棚卸実数に更新されること",
      "0202_在庫管理"),
     (("出金",), (), "consumer",
      "店頭買取情報更新API→EC-CUBE連携",
-     "スマレジの出金取引ID/出金コードが店頭買取情報更新API(PUT /admin/otcBuyOrder/{id}/status.json)でEC-CUBEへ連携されること"
+     "スマレジの端末取引ID（smaregi_transaction_id）が店頭買取情報更新API（PUT /api/admin/otcBuyOrder/{_otcBuyOrderId}.json）で同じ買取へ連携されること"
      "（経理払い出し済で買取成立にする旨をHTMLに記載）",
      "0601_MTGBuyer"),
     # === note: 保存先/ステータスの記載はあるが消費先は明記なし（自由端は要確認のまま注記） ===
@@ -1986,12 +2181,12 @@ HTML_CHAIN_RESOLUTIONS: tuple[tuple[tuple[str, ...], tuple[str, ...], str, str, 
     # 更新しないとHTMLが明記するため、consumerにはせず注記に留める（codecレビュー指摘）。
     (("在庫移動指示",), (), "note",
      "在庫移動・振替（dtb_stock_move_transfer / dtb_stock_move_instruction）",
-     "HTML設計書では在庫移動指示は在庫移動・振替のtracking_noに反映される旨が記載（在庫移動実績CSV取込では在庫数・移動ステータスは更新しないと明記）",
+     "現行HTML 0202 sheet-32では移動指示ID・送り状No.を在庫移動実績CSVから登録し、発送状況を済、移動ステータスを移動中に更新する。入庫による数量加算は入庫承認工程で確認する",
      "0202_在庫管理"),
     # 在庫変更CSV: 承認ワークフロー経由の在庫反映は実装依存とHTMLが留保するため、断定せず注記に留める。
     (("在庫変更CSV",), (), "note",
      "在庫変更CSV取込（dtb_csv_import_history→在庫編集承認情報/在庫変更履歴）",
-     "HTML設計書では在庫変更CSV取込がdtb_csv_import_historyを登録し在庫編集承認情報・在庫変更履歴を登録する旨が記載（承認後の在庫反映ワークフローは実装依存）",
+     "現行HTML 0202の在庫変更CSV取込では取込履歴・在庫編集承認情報・在庫変更履歴を記録する。登録と承認による在庫反映を分け、承認確定後の対象店舗・商品・数量を照合する",
      "0202_在庫管理"),
     (("受注", "出荷"), ("店頭受取受注管理", "通販受注管理"), "note",
      "受注ステータス（dtb_order.order_status_id）",
@@ -2053,48 +2248,37 @@ def data_chain_rows(s: Scenario, seed: "dict[str, str] | None" = None) -> str:
     できること**である。ここは業務フロー図の点線（データ遷移線）だけを根拠にし、原典に
     無い結線・照合キーは創作しない。接続先が無い場合は `自由端` として穴を可視化する。
     """
+    import supplemental_scenarios
+    supplemental_chain = supplemental_scenarios.chain_rows(s.sid)
+    if supplemental_chain is not None:
+        return supplemental_chain
     graph = flow_graph(s.flow_path)
     empty = ("| - | - | - | - | 業務フロー図にデータ遷移線（点線）の記載がないため、データ連鎖は "
              "`## 完了条件` の最終業務状態で観測する。 | - | データ遷移線なし（完了条件で観測） |")
     if graph is None or not graph.edges:
         return empty
 
-    # 行→ノード候補を引く。同名図形は複数番号にマッチするため、まず一意に定まる行
-    # （＝アンカー）だけでこのシナリオのノード番号スコープを推定し、同名の曖昧行は
-    # その範囲内の出現に解決する。範囲外の別パターンの点線は当該シナリオへ帰属させない。
+    # 親パターンの本文行範囲から先に確定した図形集合だけを使う。同名ノードの多数決で
+    # スコープを推定すると、別パターンの大きな連結成分へ吸われるため禁止する。
+    scope: set[str] = set(s.pattern.node_scope)
     row_candidates: list[list[str]] = []
     for row in s.route.rows:
-        summary = ROW_SUMMARY.get(primary_text(row), "") or row_title(row)
-        node = lookup_node(summary, graph.norm_nodes) or lookup_node_by_body(row_detail(row), graph.norm_nodes)
-        row_candidates.append(graph.node_numbers(node[2]) if node else [])
-    # スコープ＝アンカーが最も多く属する連結成分。番号範囲ではなくグラフの接続成分で
-    # パターン境界を切る。1シナリオ＝1パターン＝1成分なので、同名図形が別成分へ誤マッチ
-    # した単発アンカー（例:「注文情報確認」が別パターンの「注文」に一致）は多数決で捨てる。
-    anchors = [nums[0] for nums in row_candidates if len(nums) == 1]
-    scope: set[str] | None = None
-    if anchors:
-        comp_votes: dict[frozenset[str], int] = {}
-        for a in anchors:
-            comp = graph.component_of(a)
-            comp_votes[comp] = comp_votes.get(comp, 0) + 1
-        top = max(comp_votes.values())
-        scope = set()
-        for comp, votes in comp_votes.items():
-            if votes == top:
-                scope |= comp
-
-    def resolve(nums: list[str]) -> list[str]:
-        if scope is None:
-            return nums if len(nums) == 1 else []  # アンカー無し→一意行のみ
-        # 一意一致でもスコープ外なら捨てる（別成分へ誤マッチした少数派アンカーの除去）。
-        return [n for n in nums if n in scope]
+        number = s.pattern.row_nodes.get(primary_text(row), "")
+        row_candidates.append([number] if number and number in scope else [])
 
     seed = seed or {}
     lines: list[str] = []
     seen: set[tuple[str, str, str]] = set()
     for nums in row_candidates:
-        for number in resolve(nums):
+        for number in nums:
             for link in graph.data_links(number, scope):
+                import execution_repairs
+                if execution_repairs.exclude_data_link(s, link):
+                    continue
+                # パターン外参照は生成器の欠陥なので、黙って表へ混入させない。
+                refs = {n for n in (link.producer_no, link.artifact_no, link.consumer_no) if n}
+                if not refs <= scope:
+                    raise ValueError(f"data-link scope violation: {s.sid}: {sorted(refs - scope)}")
                 key = (link.producer_no, link.artifact_no, link.consumer_no)
                 if key in seen:
                     continue
@@ -2103,15 +2287,15 @@ def data_chain_rows(s: Scenario, seed: "dict[str, str] | None" = None) -> str:
                 # 照合キーはアーティファクト（原典が名付けたデータオブジェクト）名のみから導出する。
                 # 周辺工程語を混ぜると、返金メール連鎖に受注番号を付ける等の誤りが出る（codex指摘）。
                 derived = chain_key(link.artifact_text, seed)
-                # 照合キーが原典に無い場合は、実行用テストデータのシードID単一環境で同一性を担保する
-                # （「要（業務）確認」は使わず、確定した実行方法を書く）。
-                key_cell = derived if derived else "照合キーは原典未定義（シードID単一データ環境で同一性を担保）"
+                # 単一シードだけでは産出側と消費側の同一性を証明できない。
+                # HTMLに定義があるキーは下段で補い、未確定のものは保留とする。
+                key_cell = derived if derived else "照合キーは原典未定義（実施保留。単一シードで同一性を代用しない）"
                 html = html_chain_resolution(link.artifact_text, s.business_title)
                 html_note = f" {html[2]}（出典: {html[3]}）。" if html else ""
                 if link.producer_no and link.consumer_no:
                     producer = f"#{link.producer_no} {link.producer_text}"
                     consumer = f"#{link.consumer_no} {link.consumer_text}"
-                    tail = f"（照合キー {derived} で同一）" if derived else "（シードID単一データ環境で同一性を担保）"
+                    tail = f"（照合キー {derived} で同一）" if derived else "（照合キー確定後に実施。未確定の間は合否を保留）"
                     expected = (
                         f"「{link.producer_text}」で産出/更新された「{link.artifact_text}」を、"
                         f"後続工程「{link.consumer_text}」が同一対象として参照できること{tail}。" + html_note
@@ -2125,8 +2309,8 @@ def data_chain_rows(s: Scenario, seed: "dict[str, str] | None" = None) -> str:
                         expected = f"「{link.producer_text}」で産出/更新された「{link.artifact_text}」について、{html[2]}（出典: {html[3]}）。"
                         verdict = "連鎖あり（HTML設計書由来）"
                     else:
-                        # 業務フロー図に消費先の点線が無い＝この産出データはこの経路の終端。
-                        # 産出データは完了条件の最終業務状態で観測する（「要確認」ではなく確定した観測方法）。
+                        # 図に消費先がなければこの経路の成果物として観測する。
+                        # 図の自由端だけでは実際の後続業務が存在しないとは断定しない。
                         consumer = "終端（業務フロー図に消費先の記載なし）"
                         expected = f"「{link.producer_text}」で「{link.artifact_text}」が産出/更新され、`## 完了条件` の最終業務状態で確認できること。" + html_note
                         verdict = "終端（消費先の記載なし・完了条件で観測）"
@@ -2139,7 +2323,31 @@ def data_chain_rows(s: Scenario, seed: "dict[str, str] | None" = None) -> str:
                     f"| DL-{len(lines) + 1:02d} | {producer} | {artifact} | {consumer} | {expected} | "
                     f"{key_cell} | {verdict} |"
                 )
-    return "\n".join(lines) if lines else empty
+    # STI側と同じHTML列定義を使い、SCNだけに「キー未定義」を残さない。
+    item_scripts = Path(__file__).resolve().parents[2] / "hareruya-scenario-test-items/scripts"
+    if str(item_scripts) not in sys.path:
+        sys.path.append(str(item_scripts))
+    from business_assertions import resolve_link_identity
+    promoted = []
+    for line in lines:
+        cells = [value.strip() for value in line.strip("|").split("|")]
+        import execution_repairs
+        recovered = (execution_repairs.resolve_link_identity(cells[2], cells[1], s.business_title)
+                     or resolve_link_identity(cells[2], cells[1], s.business_title))
+        if "在庫移動実績" in cells[2]:
+            recovered = ("移動指示ID（対象在庫移動に紐づく実ID）", "移動指示ID・送り状No.", "商品コードをCSV列に追加せず、元の在庫移動IDとの対応を保持する。", "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-32")
+        if recovered:
+            key, fields, prep, source = recovered
+            cells[5] = key
+            cells[4] = cells[4].replace("（照合キー確定後に実施。未確定の間は合否を保留）", f"（照合キー {key} で同一対象を比較）")
+            cells[4] += f" 照合値: {fields}。{prep} 出典: {source}"
+        if "起点" in cells[6]:
+            origin = execution_repairs.resolve_link_origin(cells[2], cells[1], s.business_title)
+            if origin:
+                cells[4] += " 起点取得の補完根拠: " + origin
+                cells[6] = "起点（図の産出元記載なし・取得方法を出典補完）"
+        promoted.append("| " + " | ".join(cells) + " |")
+    return "\n".join(promoted) if promoted else empty
 
 
 def render_execution_steps(s: Scenario, seed: dict[str, str]) -> str:
@@ -2147,6 +2355,8 @@ def render_execution_steps(s: Scenario, seed: dict[str, str]) -> str:
     route_pattern = scenario_route_pattern(s)
     for idx, (actor, action, screen, feature, expect, observation) in enumerate(step_rows(s.business_title, route_pattern, s.docs), 1):
         target = step_target(action, seed)
+        import supplemental_scenarios
+        target = supplemental_scenarios.step_target(s.sid, idx, seed) or target
         work = row_work_kind(normal_flow_rows(route_pattern)[idx - 1]) if idx - 1 < len(normal_flow_rows(route_pattern)) else WORK_UNKNOWN
         if s.non_eccube:
             operation = f"メール/電話/外部アプリ（Thunderbird等）で「{action}」を実施する（EC-CUBEは参照のみ）"
@@ -2160,6 +2370,10 @@ def render_execution_steps(s: Scenario, seed: dict[str, str]) -> str:
             operation = f"業務フロー記載の操作として「{action}」を実施し、業務結果を確認する（専用の機能設計書なし）"
         else:
             operation = f"{screen}で「{action}」を行う"
+        import source_contract_adapter
+        source_row = normal_flow_rows(route_pattern)[idx - 1]
+        contract = source_contract_adapter.find(s.business_title, route_pattern, source_row, action)
+        operation = source_contract_adapter.operation(contract, operation)
         rows.append(f"| {idx} | {actor} | {operation} | {target} | {expect} | {observation} |")
     return "\n".join(rows)
 
@@ -2240,6 +2454,8 @@ def render_alternative_execution_steps(s: Scenario, seed: dict[str, str]) -> str
         screen = edge_case_screen(case, docs, actor)
         base = primary_target(seed)
         edge_in = edge_input_data(case)
+        if s.route.inputs:
+            edge_in = branch_pattern_input(s, case, branch_id, seed)
         if not screen:
             # 画面を語彙一致で特定できない場合、08トリアージレジスタ（分岐元行のR番号）で解決を試みる。
             tri_screen, _f, _o = resolve_step_via_triage(s.business_title, case.source_row or "")
@@ -2264,18 +2480,20 @@ def render_alternative_execution_steps(s: Scenario, seed: dict[str, str]) -> str
     return "\n".join(rows)
 
 
-def render_scenario(s: Scenario, repo: Path) -> str:
+def _render_scenario_base(s: Scenario, repo: Path) -> str:
     main, sub, systems, priority = actor_meta(s.business_title)
     seed = execution_seed(s)
     route_pattern = scenario_route_pattern(s)
     data_patterns = data_patterns_for(s, seed)
     related_doc_lines = "\n".join(f"  - `{d.path}`" for d in s.html_docs) or "  - `UNRESOLVED_HTML_DESIGN_DOC`"
     trace_rows = []
+    from delegation_contracts import case_index, SOURCE as it_source
+    current_cases = case_index(repo)
     for d in s.docs:
-        e2e = f"integration_test/e2e/{d.path.stem.replace('-', '_')}_e2e_cases.md"
-        trace_rows.append(f"  | {d.title} | {d.feature_no} | `{d.path}` | `{e2e}` |")
+        ids = [r['テストID'] for r in current_cases.get(d.feature_no, [])]
+        trace_rows.append(f"  | {d.title} | {d.feature_no} | `{d.path}` | `{it_source}`（{len(ids)}件、機構別の該当IDは他層委譲表） |")
     if not trace_rows:
-        trace_rows.append("  | UNRESOLVED_FUNCTION_SPEC | - | - | - |")
+        trace_rows.append("  | 直接操作するEC-CUBE機能の紐付けなし（業務フロー参照・現場/外部作業・操作先未確定の区分は各工程に明記） | - | 業務フロー出典・source_contracts.json | - |")
     step_lines = []
     for idx, (actor, action, screen, feature, expect, observation) in enumerate(step_rows(s.business_title, route_pattern, s.docs), 1):
         step_lines.append(f"| {idx} | {actor} | {action} | {screen}（{feature}） | {expect} |")
@@ -2323,6 +2541,7 @@ def render_scenario(s: Scenario, repo: Path) -> str:
 - **親業務フローパターン**: {s.business_title} / パターン{s.pattern.number} / {s.pattern.name}
 - **業務経路条件**: {s.route.condition}
 - **最終業務状態**: {s.route.final_state}
+- **分岐根拠**: {s.route.evidence or '業務フローの判断図形と実線出口'}
 - **トレース元要件**:
   - 業務フロー番号: {s.business_title} / パターン{s.pattern.number} / 経路{route_number(s.route.route_id)}
   - 出典: `{s.flow_path}`
@@ -2333,7 +2552,7 @@ def render_scenario(s: Scenario, repo: Path) -> str:
 - **関連システム**: {systems}
 
 ## 事前条件・テストデータ・環境
-- **事前条件**: `{seed['担当者アカウント']}` でログインでき、以下のシードデータを検索・更新できる。
+- **事前条件**: 実施者識別子 `{seed['担当者アカウント']}` を証跡へ記録し、各工程の担当者権限を持つ実アカウントでログインできる。以下の論理IDは実データの採番値と対応付ける。
 - **テストデータ(SEED)**: `{primary_target(seed)}` を正常系の主対象として使用する。
 - **環境/マスタ**: 店舗、支払方法、配送方法、商品カテゴリ、在庫区分、外部連携先はテスト環境の標準マスタを使用する。
 
@@ -2380,7 +2599,9 @@ def render_scenario(s: Scenario, repo: Path) -> str:
 
 ## 完了条件（業務的ゴール／データ状態の最終確認）
 - {s.route.final_state}
-- 画面、CSV/帳票、メール、外部システムのいずれかで、処理結果が確認できる。
+- 同じ案件の実IDを引き継ぎ、経路内の全工程の期待結果とデータ連鎖・別業務への引き継ぎが、各工程で指定した確認場所の原本と実測値に一致する。
+- 必須判定に不合格がある場合は経路不合格とする。未実施・保留・証跡不足がある場合は経路を合格にしない。
+- 別のデータパターン・代替分岐は別案件で実施して判定する。排他的な状態を一つの案件へ混在させない。
 
 ## システムテストカバレッジ
 | 観点 | カバー |
@@ -2393,9 +2614,9 @@ def render_scenario(s: Scenario, repo: Path) -> str:
 {edge_summary}
 
 ## 他層委譲（結合テスト）
-権限・必須/形式・重複実行・0件検索は機構的な確認であり、結合テスト層（`integration-test-viewpoints.md`）が
-機能単位で網羅する。本シナリオでは重複して実行せず、下表の結合テストケースで担保する。
-`未整備` は結合テスト側に該当ケースが無いことを示す実在の穴であり、隠さずに出す。
+権限・必須/形式・重複実行・0件検索は結合テスト層の機構的な確認に分担する。
+現行正本 `integration_test/manual_test_cases/ketsugo_manual_cases_active.tsv` の操作・期待結果を照合した参照先を示す。
+ケースの実在、実行準備、実行結果を区別する。対応未確認は対象機能の該当ケースを特定できない状態であり、適用外や試験済みとは扱わない。
 
 | 機構的観点 | 委譲先IT観点 | 結合テストケースID | 状態 |
 |---|---|---|---|
@@ -2412,8 +2633,13 @@ def render_scenario(s: Scenario, repo: Path) -> str:
 - **関連HTML設計書**:
 {related_doc_lines}
 - **関連テスト観点**: 業務フロー、業務経路（担当者・画面をまたぐ引き継ぎ）、最終業務状態、ステータス更新、CSV/帳票、メール、外部連携、DB更新。
-- **本シナリオで実行しない観点**: 画面遷移・バック・リロード・値引き継ぎ（IT-03）、および `## 他層委譲（結合テスト）` に挙げた機構的異常系。
+- **本シナリオで実行しない観点**: 画面単位の遷移・バック・リロード・値引き継ぎ、および `## 他層委譲（結合テスト）` に挙げた機構的異常系。業務工程間で同じデータを引き渡す確認は本シナリオの対象とする。
 """
+
+
+def render_scenario(s: Scenario, repo: Path) -> str:
+    import execution_repairs
+    return execution_repairs.transform("repair_text", s, _render_scenario_base(s, repo), sys.modules[__name__])
 
 
 def edge_case_branch_ids(edge_cases: list[EdgeCase]) -> list[tuple[str, EdgeCase]]:
@@ -2438,7 +2664,7 @@ def render_edge_case_rows(edge_cases: list[EdgeCase]) -> str:
 
 
 # 機構的異常系（権限・必須/形式・重複実行・0件）はシステムテスト層で重ねず、結合テスト層へ委譲する。
-# 委譲先は観点ID（IT-15 等）ではなく、`integration_test/*_it_cases.md` に実在するテストIDで示す。
+# 委譲先は現行 `integration_test/manual_test_cases/ketsugo_manual_cases_active.tsv` の実在IDで示す。
 # 観点IDだけの参照は「どのケースで試験したか」を特定できず、実行証跡にならない。
 DELEGATED_MECHANISMS: tuple[tuple[str, tuple[str, ...]], ...] = (
     ("担当者に必要な権限がない", ("IT-15",)),
@@ -2476,23 +2702,9 @@ def it_case_index(repo: Path) -> dict[str, dict[str, list[str]]]:
 
 def delegation_rows(s: Scenario, repo: Path) -> list[tuple[str, str, str, str]]:
     """(機構的観点, 委譲先IT観点, 結合テストケースID, 状態) を返す。"""
-    index = it_case_index(repo)
-    features = [d.feature_no.upper() for d in s.docs if d.feature_no != "-"]
-    rows: list[tuple[str, str, str, str]] = []
-    for condition, viewpoints in DELEGATED_MECHANISMS:
-        ids: list[str] = []
-        for feature in features:
-            for viewpoint in viewpoints:
-                ids.extend(index.get(feature, {}).get(viewpoint, []))
-        vp = " / ".join(viewpoints)
-        if ids:
-            shown = "<br>".join(f"`{i}`" for i in ids[:3])
-            if len(ids) > 3:
-                shown += f"<br>ほか {len(ids) - 3} 件"
-            rows.append((condition, vp, shown, "委譲済"))
-        else:
-            rows.append((condition, vp, "-", "未整備（結合テスト側に該当ケースなし）"))
-    return rows
+    from delegation_contracts import delegation_rows as current_delegation_rows
+    used = {part for _a,_b,_c,feature,_d,_e in step_rows(s.business_title, scenario_route_pattern(s), s.docs) for part in feature.split("・") if part != "-"}
+    return current_delegation_rows(repo, sorted(used))
 
 
 def render_delegation_rows(s: Scenario, repo: Path) -> str:
@@ -2768,7 +2980,22 @@ def route_flow_label(route: BusinessRoute) -> str:
 
 
 def route_as_pattern(pattern: Pattern, route: BusinessRoute) -> Pattern:
-    return Pattern(pattern.number, pattern.name, list(route.rows))
+    route_rows = list(route.rows)
+    keys = {primary_text(row) for row in route_rows}
+    return Pattern(
+        pattern.number,
+        pattern.name,
+        route_rows,
+        source_number=pattern.source_number or pattern.number,
+        source_start=pattern.source_start,
+        source_end=pattern.source_end,
+        node_scope=set(pattern.node_scope),
+        row_nodes={key: value for key, value in pattern.row_nodes.items() if key in keys},
+        row_lanes={key: value for key, value in pattern.row_lanes.items() if key in keys},
+        nodes=dict(pattern.nodes),
+        flow_edges=list(pattern.flow_edges),
+        source_path=pattern.source_path,
+    )
 
 
 def scenario_route_pattern(s: Scenario) -> Pattern:
@@ -2788,10 +3015,124 @@ def is_major_alternative_row(row: str, pattern: Pattern) -> bool:
 
 
 def base_route_rows(pattern: Pattern) -> list[str]:
-    rows = [row for row in normal_flow_rows(pattern) if not is_major_alternative_row(row, pattern)]
-    if rows:
-        return rows
     return normal_flow_rows(pattern)
+
+
+def solid_reachable(pattern: Pattern, start: str) -> set[str]:
+    adjacency: dict[str, list[str]] = {}
+    for edge in pattern.flow_edges:
+        if edge.dst_no:
+            adjacency.setdefault(edge.src_no, []).append(edge.dst_no)
+    seen: set[str] = set()
+    stack = [start]
+    while stack:
+        current = stack.pop()
+        if current in seen or current not in pattern.node_scope:
+            continue
+        seen.add(current)
+        stack.extend(adjacency.get(current, ()))
+    return seen
+
+
+def decision_choices(pattern: Pattern) -> list[tuple[FlowNode, list[FlowNode]]]:
+    """原図の判断ノードと実線出口を返す。語句推測による分岐生成は行わない。"""
+    result: list[tuple[FlowNode, list[FlowNode]]] = []
+    for node in sorted(pattern.nodes.values(), key=lambda n: (n.source_row, n.source_col, int(n.number))):
+        if node.kind not in {"判断", "diamond"}:
+            continue
+        targets: list[FlowNode] = []
+        for edge in pattern.flow_edges:
+            if edge.src_no != node.number or not edge.dst_no:
+                continue
+            target = pattern.nodes.get(edge.dst_no)
+            if target and target.number not in {item.number for item in targets}:
+                targets.append(target)
+        if len(targets) >= 2:
+            result.append((node, targets))
+    return result
+
+
+def branch_abnormal_score(text: str) -> int:
+    value = normalize_node_text(text)
+    if re.search(r"(問題|差異|欠品|不足|不備).*(ない|無し|なし)", value):
+        return -20
+    score = 0
+    for word in ("問題あり", "差異がある", "欠品あり", "不足", "不備", "失敗", "エラー", "不可", "拒否", "棄却", "却下", "差戻"):
+        if word in value:
+            score += 20
+    for word in ("キャンセル", "返金", "未登録", "対象外", "期限超過"):
+        if word in value:
+            score += 10
+    for word in ("完了", "成立", "問題ない", "差異がない", "欠品なし"):
+        if word in value:
+            score -= 5
+    return score
+
+
+def normal_choice_index(targets: list[FlowNode]) -> int:
+    """原典に Yes/No や正常/異常の線ラベルが無いため、記載順の第1出口を代表経路にする。
+
+    出口名の「返金」「キャンセル」等だけで正常性を推測すると、返金業務そのものの正常完了を
+    異常側へ誤分類する。異常種別は明示的な失敗・不備等だけで判定し、代表出口は原典の順序を
+    保持する。
+    """
+    return 0
+
+
+def target_choice_label(target: FlowNode, siblings: list[FlowNode]) -> str:
+    """同名出口をスイムレーンで識別し、人間が分岐先を一意に追える表記にする。"""
+    same_text = [node for node in siblings if normalize_node_text(node.text) == normalize_node_text(target.text)]
+    if len(same_text) == 1:
+        return target.text
+    lane = target.lane.strip()
+    if lane and lane != "—" and len({node.lane for node in same_text}) > 1:
+        return f"{target.text}（{lane}）"
+    return f"{target.text}（原典ノード#{target.number}）"
+
+
+def rows_for_decision_selection(pattern: Pattern, selected: dict[str, str]) -> list[str]:
+    """未選択出口だけに属する工程を除外し、選択出口と合流後工程を残す。"""
+    excluded: set[str] = set()
+    for decision, targets in decision_choices(pattern):
+        chosen = selected.get(decision.number, targets[normal_choice_index(targets)].number)
+        reaches = {target.number: solid_reachable(pattern, target.number) for target in targets}
+        common = set.intersection(*(set(value) for value in reaches.values())) if reaches else set()
+        for target in targets:
+            if target.number != chosen:
+                excluded |= reaches[target.number] - common
+    rows = [
+        row for row in normal_flow_rows(pattern)
+        if pattern.row_nodes.get(primary_text(row), "") not in excluded
+    ]
+    return rows or normal_flow_rows(pattern)
+
+
+def row_for_node(pattern: Pattern, number: str) -> str | None:
+    for row in pattern.rows:
+        if pattern.row_nodes.get(primary_text(row)) == number:
+            return row
+    return None
+
+
+def final_state_from_rows(pattern: Pattern, rows: list[str]) -> str:
+    for row in reversed(rows):
+        if is_decision_row(row, pattern):
+            continue
+        result = expected_assertion(row).strip()
+        if result and result != "こと。":
+            return result
+    return f"{pattern.name}の原典終端まで到達すること。"
+
+
+def decision_condition(decision: FlowNode, target: FlowNode, siblings: list[FlowNode]) -> str:
+    return f"{decision.text}の判断結果として実線で「{target_choice_label(target, siblings)}」へ進む場合"
+
+
+def decision_route_kind(target: FlowNode) -> str:
+    text = normalize_node_text(target.text)
+    if any(word in text for word in ("失敗", "不備", "差異がある", "欠品あり", "不足", "拒否", "棄却", "却下", "差戻", "不可")):
+        return "業務異常"
+    return "主要代替"
 
 
 def rows_for_alternative_route(pattern: Pattern, route_row: str) -> list[str]:
@@ -2883,7 +3224,6 @@ def supporting_edge_cases(all_cases: list[EdgeCase], route_case: EdgeCase | None
 
 
 def routes_for_pattern(business_title: str, pattern: Pattern) -> list[BusinessRoute]:
-    all_cases = edge_cases_for(business_title, pattern)
     routes: list[BusinessRoute] = []
     next_id = 1
 
@@ -2893,59 +3233,64 @@ def routes_for_pattern(business_title: str, pattern: Pattern) -> list[BusinessRo
         next_id += 1
         return value
 
-    base_rows = tuple(base_route_rows(pattern))
+    decisions = decision_choices(pattern)
+    normal_selection = {
+        decision.number: targets[normal_choice_index(targets)].number
+        for decision, targets in decisions
+    }
+    base_rows_list = rows_for_decision_selection(pattern, normal_selection)
+    normal_conditions = [
+        decision_condition(decision, targets[normal_choice_index(targets)], targets)
+        for decision, targets in decisions
+    ]
+    normal_condition = "、かつ".join(normal_conditions) if normal_conditions else "原典に記載された全工程を順に実施する。"
     routes.append(
         BusinessRoute(
             rid(),
             "正常代表",
-            f"{pattern.name}（必須業務ステップで完了）",
-            "必須業務ステップのみを実施し、条件付き登録・保留・棄却を発生させない。",
-            f"{pattern.name}の対象データが完了状態として追跡できる。",
-            base_rows,
-            supporting_edge_cases(all_cases),
+            f"{pattern.name}（原典実線の代表経路）",
+            normal_condition,
+            final_state_from_rows(pattern, base_rows_list),
+            tuple(base_rows_list),
+            (),
         )
     )
 
-    seen_route_rows: set[str] = set()
-    for row in normal_flow_rows(pattern):
-        if not is_major_alternative_row(row, pattern):
-            continue
-        key = row_concept(row)
-        if key in seen_route_rows:
-            continue
-        seen_route_rows.add(key)
-        routes.append(
-            BusinessRoute(
-                rid(),
-                "主要代替",
-                route_title_from_row(pattern, row),
-                route_condition_from_row(row),
-                route_final_state_from_row(pattern, row),
-                tuple(rows_for_alternative_route(pattern, row)),
-                supporting_edge_cases(all_cases),
+    # 各判断ノードについて、正常出口以外を1つずつ選んだ実線経路を作る。
+    # 他の判断ノードは正常出口のままとし、組合せ水増しをしない。
+    seen: set[tuple[str, str]] = set()
+    for decision, targets in decisions:
+        normal_idx = normal_choice_index(targets)
+        for idx, target in enumerate(targets):
+            if idx == normal_idx:
+                continue
+            key = (decision.number, target.number)
+            if key in seen:
+                continue
+            seen.add(key)
+            selection = dict(normal_selection)
+            selection[decision.number] = target.number
+            route_rows = rows_for_decision_selection(pattern, selection)
+            condition = decision_condition(decision, target, targets)
+            final_state = final_state_from_rows(pattern, route_rows)
+            kind = decision_route_kind(target)
+            source_row = row_for_node(pattern, target.number) or row_for_node(pattern, decision.number) or ""
+            observation = expected_observation(source_row) if source_row else f"判断「{decision.text}」の結果と後続工程「{target.text}」"
+            case_kind = "E" if kind == "業務異常" else "A"
+            case = EdgeCase(case_kind, condition, final_state.rstrip("。"), observation, source_row)
+            routes.append(
+                BusinessRoute(
+                    rid(),
+                    kind,
+                    f"{pattern.name}（{decision.text}：{target_choice_label(target, targets)}）",
+                    condition,
+                    final_state,
+                    tuple(route_rows),
+                    (case,),
+                )
             )
-        )
-
-    seen_cases: set[tuple[str, str]] = set()
-    for case in all_cases:
-        if not is_route_level_edge_case(case):
-            continue
-        key = (case.kind, case.condition)
-        if key in seen_cases:
-            continue
-        seen_cases.add(key)
-        routes.append(
-            BusinessRoute(
-                rid(),
-                "業務異常" if case.kind == "E" else "主要代替",
-                route_title_from_case(pattern, case),
-                case.condition,
-                route_final_state_from_case(case),
-                tuple(rows_for_edge_route(pattern, case)),
-                (case,) + supporting_edge_cases(all_cases, case)[:2],
-            )
-        )
-    return routes
+    from route_evidence import supplement_routes
+    return supplement_routes(business_title, pattern, routes, sys.modules[__name__])
 
 
 def coverage_for(business_title: str, pattern: Pattern, docs: list[DesignDoc], route: "BusinessRoute") -> dict[str, bool]:
@@ -2983,23 +3328,45 @@ def normalize_name(value: str) -> str:
     return value
 
 
-def source_priority(flow_path: Path) -> int:
-    name = flow_path.name
-    if "_tobe" in name or "tobe" in name:
-        return 3
-    if name.startswith("13_在庫管理_tobe") or name.startswith("10_商品登録・編集_tobe") or name.startswith("17_通販受注管理_tobe"):
-        return 3
-    return 1
+CANONICAL_PATTERN_SOURCES: dict[str, dict[str, str]] = {
+    # 各業務フロー冒頭R3の明示方針を正とする。ファイル名の `_tobe` は正本判定に使わない。
+    "店頭買取": {"*": "06_店頭買取.md"},
+    "在庫管理": {"*": "12_在庫管理.md"},
+    # 09 R3: To-Beを使うのは在庫変更を伴う4・6・7。9はTo-Beにだけ存在する追加業務。
+    "商品登録・編集": {
+        "1": "09_商品登録・編集.md", "2": "09_商品登録・編集.md",
+        "3": "09_商品登録・編集.md", "4": "10_商品登録・編集_tobe.md",
+        "5": "09_商品登録・編集.md", "6": "10_商品登録・編集_tobe.md",
+        "7": "10_商品登録・編集_tobe.md", "8": "09_商品登録・編集.md",
+        "9": "10_商品登録・編集_tobe.md",
+    },
+    # 16/17 R3: 発送業務は既存To-Beを正とし、それ以外の現行業務は16を使う。
+    "通販受注管理": {
+        "4": "17_通販受注管理_tobe.md",
+        "13": "17_通販受注管理_tobe.md",
+        "*": "16_通販受注管理.md",
+    },
+}
+
+
+def canonical_source_name(business_title: str, pattern_number: str) -> str | None:
+    rules = CANONICAL_PATTERN_SOURCES.get(business_title)
+    if not rules:
+        return None
+    return rules.get(pattern_number, rules.get("*"))
 
 
 def dedupe_patterns(items: list[tuple[Path, str, str, str, Pattern]]) -> list[tuple[Path, str, str, str, Pattern]]:
-    chosen: dict[tuple[str, str, str], tuple[Path, str, str, str, Pattern]] = {}
+    chosen: dict[tuple[str, str, str, str], tuple[Path, str, str, str, Pattern]] = {}
     for item in items:
         flow_path, _flow_title, business_title, _text, pattern = item
-        key = (business_title, pattern.number, normalize_name(pattern.name))
-        current = chosen.get(key)
-        if current is None or source_priority(flow_path) > source_priority(current[0]):
-            chosen[key] = item
+        original_number = pattern.source_number or pattern.number
+        canonical = canonical_source_name(business_title, original_number)
+        if canonical and flow_path.name != canonical:
+            continue
+        # 同一番号でも別名なら原典上の別パターン。出典＋番号＋名称で保持する。
+        key = (business_title, str(flow_path), original_number, normalize_name(pattern.name))
+        chosen.setdefault(key, item)
     return sorted(chosen.values(), key=lambda x: (BUSINESS_CODES.get(x[2], ("ZZZ", "", "", "", ""))[0], int(x[4].number) if x[4].number.isdigit() else 999, normalize_name(x[4].name), str(x[0])))
 
 
@@ -3022,6 +3389,10 @@ def discover_flows(repo: Path, only: str | None) -> list[tuple[Path, str, str, s
 
 def generate(repo: Path, only: str | None, max_docs: int) -> list[Scenario]:
     reset_generation_state()
+    import source_contract_adapter
+    source_contract_adapter.configure(repo)
+    import execution_repairs
+    execution_repairs.configure(repo, sys.modules[__name__])
     docs = build_design_index(repo)
     load_triage_register(repo, docs)
     candidates: list[tuple[Path, str, str, str, Pattern]] = []
@@ -3029,46 +3400,91 @@ def generate(repo: Path, only: str | None, max_docs: int) -> list[Scenario]:
     patterns_by_business: dict[str, list[Pattern]] = {}
     for flow_path, flow_title, business_title, text in discover_flows(repo, only):
         patterns = parse_patterns(text)
+        for pattern in patterns:
+            pattern.source_path = str(flow_path)
         patterns_by_business.setdefault(business_title, []).extend(patterns)
         for num, name in index_pattern_entries(text):
             index_entries.setdefault(business_title, []).append((flow_path, num, name))
         FLOW_TEXT_BY_PATH[flow_path] = text
         for pattern in patterns:
             candidates.append((flow_path, flow_title, business_title, text, pattern))
-    # 索引にあるのに、その業務のどのフロー本文にも作業行が無いパターンを検出する。
+    candidates = dedupe_patterns(candidates)
+    # 正本索引だけを分母にして、本文欠落/名称ドリフトを検出する。旧版・非採用To-Beの索引を
+    # 混ぜると、実在本文を欠落と誤報するため、正本マニフェスト適用後に判定する。
+    canonical_patterns: dict[str, list[Pattern]] = {}
+    for _path, _title, business_title, _text, pattern in candidates:
+        canonical_patterns.setdefault(business_title, []).append(pattern)
     for business_title, entries in index_entries.items():
-        known = patterns_by_business.get(business_title, [])
+        known = canonical_patterns.get(business_title, [])
         for flow_path, num, name in entries:
+            canonical = canonical_source_name(business_title, num)
+            if canonical and flow_path.name != canonical:
+                continue
             status = index_pattern_status(num, name, known)
             if status:
                 MISSING_PATTERNS.append((flow_path, num, name, status))
-    candidates = dedupe_patterns(candidates)
     # 同一業務フローファイル内で「同じ番号だが別名」のパターンを検出（在庫管理 #7 等）。
     # codexレビュー指摘#5：番号の欠落/重複で追跡が曖昧になる問題を可視化する。
     number_names: dict[tuple[Path, str], set[str]] = {}
     for flow_path, _flow_title, _business_title, _text, pattern in candidates:
         number_names.setdefault((flow_path, pattern.number), set()).add(normalize_name(pattern.name))
     scenarios: list[Scenario] = []
+    baseline_path = Path(__file__).resolve().parent.parent / "references/route-id-baseline.json"
+    baseline = json.loads(read_text(baseline_path)) if baseline_path.exists() else {}
     counters: dict[str, int] = {}
+    for sid in baseline.values():
+        code = next((v[0] for v in BUSINESS_CODES.values() if sid.startswith(f"SCN-{v[0]}-")), "FLOW")
+        counters[code] = max(counters.get(code, 0), int(sid.rsplit("-", 1)[-1]))
     for flow_path, _flow_title, business_title, text, pattern in candidates:
         for route in routes_for_pattern(business_title, pattern):
             code = BUSINESS_CODES.get(business_title, ("FLOW", "", "", "", ""))[0]
-            counters[code] = counters.get(code, 0) + 1
-            sid = scenario_id(business_title, pattern, counters[code])
+            parent = f"{business_title} / パターン{pattern.number} / {pattern.name}"
+            sid = baseline.get(f"{parent}|{route.route_id}")
+            if sid is None:
+                counters[code] = counters.get(code, 0) + 1
+                sid = scenario_id(business_title, pattern, counters[code])
             title = route.title
             route_pattern = route_as_pattern(pattern, route)
             rel_docs, html_docs = related_docs_with_dictionary(business_title, text, route_pattern, docs, max_docs)
+            # HTMLで同定した実使用機能を、旧キーワード辞書の上限件数により落とさない。
+            for row in normal_flow_rows(route_pattern):
+                contract = source_contract_adapter.find(business_title, route_pattern, row, business_action_from_row(row, pattern.name))
+                if contract:
+                    for feature in contract["function_ids"]:
+                        doc = FEATURE_DOC.get(feature)
+                        if doc is not None and all(d.feature_no != feature for d in rel_docs):
+                            rel_docs.append(doc)
+            for _ in range(8):
+                used_features = {part for step in step_rows(business_title, route_pattern, rel_docs) for part in step[3].split("・") if part != "-"}
+                next_docs = [FEATURE_DOC[f] for f in sorted(used_features) if f in FEATURE_DOC]
+                if {d.feature_no for d in rel_docs} == {d.feature_no for d in next_docs}:
+                    break
+                rel_docs = next_docs
+            else:
+                raise ValueError(f"機能対応が収束しない: {sid}")
+            if not route.evidence:
+                route_rows = normal_flow_rows(route_pattern)
+                if route_rows:
+                    last_contract = source_contract_adapter.find(business_title, route_pattern, route_rows[-1], business_action_from_row(route_rows[-1], pattern.name))
+                    if last_contract and last_contract.get("expected_result"):
+                        from dataclasses import replace
+                        route = replace(route, final_state=last_contract["expected_result"])
             coverage = coverage_for(business_title, route_pattern, rel_docs, route)
             non_eccube = is_non_eccube_pattern(route_pattern)
             dup_number = len(number_names.get((flow_path, pattern.number), set())) > 1
             scenarios.append(Scenario(sid, title, business_title, flow_path, pattern, route, rel_docs, html_docs, coverage, non_eccube, dup_number))
-    return scenarios
+    import supplemental_scenarios
+    supplemental_scenarios.append(repo, scenarios, docs, sys.modules[__name__])
+    return [execution_repairs.prepare_scenario(s, sys.modules[__name__]) for s in scenarios]
 
 
 def all_feature_index(repo: Path) -> dict[str, tuple[Path, str]]:
     """functions/**/*.md に実在する全機能No -> (相対パス, タイトル)。"""
     index: dict[str, tuple[Path, str]] = {}
-    for path in sorted((repo / "functions").glob("**/*.md")):
+    function_root = repo / "functions"
+    for path in sorted(function_root.glob("**/*.md")):
+        if "_archive" in path.relative_to(function_root).parts:
+            continue
         fno = feature_no_from_path(path)
         if fno == "-":
             continue
@@ -3096,9 +3512,9 @@ def classify_feature(fno: str, traced_ids: set[str], traced_prefixes: set[str]) 
         return ("covered", "シナリオがトレースしている")
     oos = OUT_OF_SCOPE_FEATURES.get(fno) or OUT_OF_SCOPE_FEATURES.get(prefix)
     if oos:
-        return (f"out-of-scope:{oos[0]}", oos[1])
+        return (f"out-of-scope:{oos[0]}", oos[1].replace("で担保", "で確認する対象（ケースと実行結果は別途確認）"))
     if prefix in traced_prefixes:
-        return ("area-covered-feature-uncovered", "同一業務領域はシナリオ化済み。個別機能は機能テスト層(integration_test)で担保")
+        return ("area-covered-feature-uncovered", "同一業務領域はシナリオ化済み。個別機能は未トレースで、結合テストの対応ケース・対象範囲の確認が必要")
     return ("source-backed-uncovered", "業務フロー領域に接点があり得るが未トレース（要判定：カバー要否を人手で判断）")
 
 
@@ -3121,7 +3537,8 @@ def write_feature_ledger(repo: Path, scenarios: list[Scenario], dry_run: bool) -
         "",
         "業務フロー準拠のシステムテストとして、`functions/**/*.md` に実在する全機能Noが",
         "シナリオからトレースされているかを誠実に分類する。`covered` 以外＝網羅漏れではなく、",
-        "業務フロー対象外（設定/フロント表示/連携単体）や機能テスト層で担保する領域を含む。",
+        "業務フロー対象外（設定/フロント表示/連携単体）や結合テスト層で確認する領域を含む。",
+        "分類は機能Noの参照状況であり、要件単位の網羅や結合テストの実行結果を保証しない。既存分類名のintegration-testedも試験済みという意味ではない。",
         "`source-backed-uncovered`（要判定）が、業務フロー接点があり得るのに未トレースの真の穴候補。",
         "",
         "## サマリ",
@@ -3129,10 +3546,10 @@ def write_feature_ledger(repo: Path, scenarios: list[Scenario], dry_run: bool) -
         "| 分類 | 件数 | 意味 |",
         "|---|---|---|",
         f"| covered | {counts.get('covered', 0)} | シナリオがトレース |",
-        f"| area-covered-feature-uncovered | {counts.get('area-covered-feature-uncovered', 0)} | 業務領域はカバー済み・個別機能は機能テスト層で担保 |",
+        f"| area-covered-feature-uncovered | {counts.get('area-covered-feature-uncovered', 0)} | 業務領域は参照あり・個別機能は未参照。結合ケースと適用範囲を要確認 |",
         f"| out-of-scope:platform-base | {counts.get('out-of-scope:platform-base', 0)} | ログイン/ホーム/設定/マスタ等の管理基盤 |",
-        f"| out-of-scope:front-display | {counts.get('out-of-scope:front-display', 0)} | フロント表示・共通部品（機能テスト層で担保） |",
-        f"| out-of-scope:integration-tested | {counts.get('out-of-scope:integration-tested', 0)} | 外部連携API（integration_test層で担保） |",
+        f"| out-of-scope:front-display | {counts.get('out-of-scope:front-display', 0)} | フロント表示・共通部品（機能テスト層の対象。対応ケース・結果は別途確認） |",
+        f"| out-of-scope:integration-tested | {counts.get('out-of-scope:integration-tested', 0)} | 外部連携API（結合テスト層の対象。対応ケース・結果は別途確認） |",
         f"| excluded-ph2 | {counts.get('excluded-ph2', 0)} | Ph2対応（Ph1対象外） |",
         f"| **source-backed-uncovered（要判定）** | **{counts.get('source-backed-uncovered', 0)}** | **業務フロー接点があり得るが未トレース。要人手判断** |",
         f"| 合計 | {total} | functions/ 実在機能No |",
@@ -3199,7 +3616,7 @@ def write_index(repo: Path, scenarios: list[Scenario], dry_run: bool) -> None:
         route_pattern = scenario_route_pattern(s)
         expected = ", ".join(expected_features(s.business_title, route_pattern)) or "-"
         actual = ", ".join(d.feature_no for d in s.docs if d.feature_no != "-") or "-"
-        fdocs = "<br>".join(f"`{d.path}`" for d in s.docs) or "`UNRESOLVED_FUNCTION_SPEC`"
+        fdocs = "<br>".join(f"`{d.path}`" for d in s.docs) or "業務フロー参照・現場/外部作業・操作先未確定（各工程の区分を参照）"
         hdocs = "<br>".join(f"`{d.path}`" for d in s.html_docs) or "`UNRESOLVED_HTML_DESIGN_DOC`"
         flow_key = f"{s.flow_path}#{s.pattern.number}/経路{route_number(s.route.route_id)}:{s.title}"
         trace.append(f"| {s.business_title} | {s.sid} | {s.route.route_id} | {s.route.kind} | {table_cell(s.route.condition)} | {table_cell(s.route.final_state)} | `{flow_key}` | {expected} | {actual} | {fdocs} | {hdocs} |")
@@ -3207,8 +3624,8 @@ def write_index(repo: Path, scenarios: list[Scenario], dry_run: bool) -> None:
         "# システムテストカバレッジ表（自動生成）",
         "",
         "`実行エッジ数` は本シナリオで実際に実行する業務分岐の延べ件数（ユニークな異常条件数ではない）。",
-        "`他層委譲` は機構的異常系（権限/必須・形式/重複実行/0件検索）を結合テストのケースIDへ委譲した件数、",
-        "`委譲未整備` は委譲先の結合テストケースが存在しない件数＝実在の穴。",
+        "`他層委譲` は機構的観点について現行結合テストの参照ケースを特定した機能・条件の件数（実施済みを意味しない）、",
+        "`委譲未整備` は条件を実行するケースを特定できない件数。適用要否と追加要否の確認対象。",
         "`代替系` / `異常系` は実行する業務分岐から決まり、分岐が無い経路は `-` になる。",
         "",
         "| 業務 | 業務フローキー | シナリオID | 経路ID | 経路種別 | 業務経路条件 | 最終業務状態 | 正常系 | 代替系 | 異常系 | 外部連携 | データ更新 | CSV/帳票 | メール/通知 | 経路手順数 | 代替/異常手順数 | 期待機能不足 | HTML不足 | 実行エッジ数 | 主なエッジケース | 確認対象 | 他層委譲 | 委譲未整備 | 非EC-CUBE作業 | 番号重複警告 |",
@@ -3225,8 +3642,8 @@ def write_index(repo: Path, scenarios: list[Scenario], dry_run: bool) -> None:
         html_gap = ", ".join(sorted(expected_html_set - actual_html_set)) or "-"
         flow_key = f"{s.flow_path}#{s.pattern.number}/経路{route_number(s.route.route_id)}:{s.title}"
         delegated = delegation_rows(s, repo)
-        delegated_ok = sum(1 for *_rest, state in delegated if state == "委譲済")
-        delegated_gap = len(delegated) - delegated_ok
+        delegated_ok = sum(1 for *_rest, state in delegated if state.startswith("参照ケースあり"))
+        delegated_gap = sum(1 for *_rest, state in delegated if state.startswith("対応未確認"))
         edge_conditions = html_escape_br(case.condition for case in list(s.route.edge_cases)[:3]) if s.route.edge_cases else "業務分岐なし"
         edge_observations = html_escape_br(case.observation for case in list(s.route.edge_cases)[:3]) if s.route.edge_cases else "-"
         coverage.append(
@@ -3241,15 +3658,42 @@ def write_index(repo: Path, scenarios: list[Scenario], dry_run: bool) -> None:
             f"{delegated_ok} | {delegated_gap} | "
             f"{coverage_mark(s.non_eccube)} | {coverage_mark(s.dup_number)} |"
         )
+    source_coverage = [
+        "# 業務フロー正本カバレッジ（自動生成）",
+        "",
+        "分母は生成できたSCNではなく、正本マニフェストで採用した業務フローパターン。",
+        "HTMLに明記された工程による補完は「HTML補完」と表示する。業務間接続は追加の横断試験として分け、元の業務フロー本文があると扱わない。",
+        "",
+        "| 業務 | 出典 | 原典パターン番号 | パターン名 | 状態 | 生成SCN数 |",
+        "|---|---|---|---|---|---|",
+    ]
+    parent_counts: Counter[tuple[str, Path, str, str]] = Counter(
+        (s.business_title, s.flow_path, s.pattern.source_number or s.pattern.number, s.pattern.name)
+        for s in scenarios
+    )
+    for (business, path, number, name), count in sorted(
+        parent_counts.items(), key=lambda item: (item[0][0], str(item[0][1]), int(item[0][2]) if item[0][2].isdigit() else 999, item[0][3])
+    ):
+        import supplemental_scenarios
+        supplements = [r for r in supplemental_scenarios.RECORDS.values() if r["pattern_name"] == name]
+        status = "生成済み"
+        if supplements:
+            status += "（業務間接続）" if "CROSS" in supplements[0]["contract_id"] else "（HTML補完）"
+        source_coverage.append(f"| {business} | `{path}` | {number} | {table_cell(name)} | {status} | {count} |")
+    for path, number, name, status in sorted(MISSING_PATTERNS, key=lambda item: (str(item[0]), item[1], item[2])):
+        business = business_title_for_flow(title_from_markdown(FLOW_TEXT_BY_PATH.get(path, ""), path.stem))
+        source_coverage.append(f"| {business} | `{path}` | {number} | {table_cell(name)} | {table_cell(status)} | 0 |")
     if dry_run:
         print(f"would write {out / '01_シナリオ一覧.md'}")
         print(f"would write {out / '02_トレーサビリティ.md'}")
         print(f"would write {out / '03_カバレッジ表.md'}")
+        print(f"would write {out / '04_業務フロー正本カバレッジ.md'}")
         write_feature_ledger(repo, scenarios, dry_run)
         return
     (out / "01_シナリオ一覧.md").write_text("\n".join(rows) + "\n", encoding="utf-8")
     (out / "02_トレーサビリティ.md").write_text("\n".join(trace) + "\n", encoding="utf-8")
     (out / "03_カバレッジ表.md").write_text("\n".join(coverage) + "\n", encoding="utf-8")
+    (out / "04_業務フロー正本カバレッジ.md").write_text("\n".join(source_coverage) + "\n", encoding="utf-8")
     write_feature_ledger(repo, scenarios, dry_run)
 
 

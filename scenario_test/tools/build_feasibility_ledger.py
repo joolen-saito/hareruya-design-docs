@@ -1,37 +1,18 @@
 #!/usr/bin/env python3
-"""シナリオテストどおりにシステムを動かしたとき、業務フローの各工程が実行できるかを机上で判定する。
+"""シナリオ工程の実施可否を、現在の資料で机上判定する。
 
-出力:
-  scenario_test/exec/feasibility/feasibility_by_step.tsv     工程単位（SCNメインフロー）
-  scenario_test/exec/feasibility/feasibility_by_scenario.tsv シナリオ単位のロールアップ
+SCNの実使用機能、source_contracts.jsonの保留条件と別業務参照、未解決の
+実装乖離台帳、STIの実在IDを照合する。別業務参照は子工程の保留・指摘を
+親へ継承する。旧09の「設計なし」文言は固定語で再適用しない。
 
-判定材料（すべて実在ファイルからの機械読み取り。推測で埋めない）:
-  1. scenario_test/scenario/SCN-*.md の `## メインフロー` — 工程ごとの「利用画面・機能」。
-     機能No / 「専用の機能設計書なし」/「EC-CUBE操作なし」/「業務判断」が原典側で明示されている。
-  2. design_impl_drift_report/drift_findings_list_open.tsv — 機能No単位の未解決乖離
-     （指摘区分: 未実装 / 実装違い）。
-  3. functions/**/*.md — 機能Noの設計書が実在するか。
-  4. scenario_test/test_items/all_scenario_test_items.tsv — 工程に対応するテストID。
-
-判定の意味（過大な断定をしないための区別）:
-  - 実行不能(設計書が見つからない) : 09_設計ギャップ差し戻しリストで人手調査済みの工程。
-                      機能設計書が見つからず、設計側の確定待ち。
-  - 判定不能(実行手段が未特定)     : SCN側で「専用の機能設計書なし」と出ている工程のうち、
-                      まだ人手調査されていないもの。生成器は08トリアージでUNKNOWN/未収載の工程に
-                      このラベルを出す（generate_scenarios.py:1389）。「設計書が無い」ことの確認では
-                      なく「どの機能で実行するか未特定」であり、断定はしない。
-  - 要確認(未実装指摘あり) : 使用する機能に「未実装」指摘がある。指摘は機能単位なので、当該工程の
-                      操作に当たるかは指摘内容を人が見て判断する（自動では断定しない）。
-  - 要注意(実装違い指摘あり) : 使用する機能に「実装違い」指摘がある。動くが設計と挙動が異なりうる。
-  - 実行可(乖離指摘なし)   : 使用する機能に未解決の乖離指摘が無い。
-  - 対象外(システム外)     : 現場作業・外部システム作業・業務判断。EC-CUBEの実行可否とは無関係。
-
-使い方: python3 scenario_test/tools/build_feasibility_ledger.py
+出力はexec/feasibility/feasibility_by_step.tsvとfeasibility_by_scenario.tsv。
+「実行可」は台帳上の指摘がないという意味で、実機合格を意味しない。
 """
 from __future__ import annotations
 
 import csv
 import glob
+import json
 import os
 import re
 import sys
@@ -39,6 +20,8 @@ from collections import Counter, OrderedDict, defaultdict
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / ".codex/skills/hareruya-scenario-test-cases/scripts"))
+import execution_repairs
 SCN_DIR = ROOT / "scenario_test/scenario"
 ITEMS = ROOT / "scenario_test/test_items/all_scenario_test_items.tsv"
 GAP_DOC = ROOT / "scenario_test/scenario/09_設計ギャップ差し戻しリスト.md"
@@ -48,6 +31,7 @@ OUT_DIR = ROOT / "scenario_test/exec/feasibility"
 # SCNメインフローの「利用画面・機能」が機能Noを持たないときのラベル→区分。
 # 原典が明示している文言だけを見る（推測で分類しない）。
 LABEL_KINDS = [
+    ("別業務フロー参照", "業務参照"),
     ("専用の機能設計書なし", "実行手段未特定"),
     ("現場作業", "システム外（現場）"),
     ("外部システム/ツール作業", "システム外（外部）"),
@@ -55,16 +39,7 @@ LABEL_KINDS = [
     ("業務判断", "業務判断"),
 ]
 
-# 09_設計ギャップ差し戻しリストで人手調査済みの工程を見分ける語（同文書の見出し・工程欄から採る）。
-# ここに載る工程だけが「設計書が見つからない」と確認済み。それ以外は未調査＝判定不能に留める。
-INVESTIGATED_GAPS = [
-    ("出庫の承認", "G1 在庫移動の承認確定・入庫確定"),
-    ("入庫済みへの変更", "G1 在庫移動の承認確定・入庫確定"),
-    ("2F在庫へ入庫", "G1 在庫移動の承認確定・入庫確定"),
-    ("着荷対応及び入庫対応", "G1 在庫移動の承認確定・入庫確定"),
-    ("棚卸結果の反映", "G2 棚卸結果の在庫反映"),
-    ("査定承諾メール", "G3 ネット買取の査定承諾処理・承諾メール送信"),
-]
+# 過去の09の分類を固定文言で再適用しない。現在のSCNとHTML補完結果を判定元にする。
 
 STEP_COLS = ["業務", "シナリオID", "経路種別", "工程#", "担当者", "業務行動", "利用画面・機能",
              "機能No", "区分", "判定", "根拠", "未実装指摘", "実装違い指摘", "重要度high",
@@ -83,8 +58,9 @@ VERDICT_RANK = [V_NG, V_UNK, V_CHK, V_WARN, V_OK, "対象外(システム外の�
 
 
 # 既知の規模。ここが動く＝SCN側が再生成されたということなので、意図した変化かを人が確認してから直す。
-EXPECTED_SCN = 158
-EXPECTED_STEPS = 878
+EXPECTED_SCN = 129
+# execution_repairs/step_count_changes.json: 承認等11工程追加、誤った3工程を整理。
+EXPECTED_STEPS = 830
 
 
 class GateError(Exception):
@@ -155,7 +131,7 @@ def parse_scn(path: Path) -> dict:
             if len(c) < 7:
                 continue
             v = c[6]
-            key = "終端" if v.startswith("終端") else ("要確認" if "要確認" in v else "実行可能")
+            key = "要確認" if any(w in " ".join(c[5:7]) for w in ("未定義", "要確認", "未特定")) else ("終端" if v.startswith("終端") else "実行可能")
             chain[key] += 1
 
     return {"sid": sid, "title": title.group(1).strip() if title else sid, "biz": biz,
@@ -178,10 +154,7 @@ def classify(screen: str) -> tuple[list[str], str]:
 def step_verdict(kind: str, drift: list[dict], action: str) -> tuple[str, str]:
     """(判定, 根拠) を返す。断定できるのは人手調査済みの設計ギャップだけ。"""
     if kind == "実行手段未特定":
-        for word, gap in INVESTIGATED_GAPS:
-            if word in action:
-                return V_NG, f"09_設計ギャップ差し戻しリスト {gap}（設計書が見つからないと調査済み）"
-        return V_UNK, "SCNが「専用の機能設計書なし」と出力（08トリアージでUNKNOWN/未収載＝機能が未特定。設計書の不在を確認したものではない）"
+        return V_UNK, "現在のSCNで実行手段未特定。source_contracts.jsonの調査記録と残件を参照（設計書不在とは断定しない）"
     if kind != "システム操作":
         return V_OUT, f"{kind}（EC-CUBEの実行可否とは無関係）"
     un = sum(d["未実装"] for d in drift)
@@ -226,6 +199,41 @@ def main() -> int:
         print(f"NG SCN数が想定と違う: {len(paths)}（想定{EXPECTED_SCN}）")
         return 1
 
+    parsed = {value["sid"]: value for value in (parse_scn(path) for path in paths)}
+    contracts = execution_repairs.contracts(ROOT)
+
+    def reference_verdict(scenario, step, seen=None):
+        seen = set() if seen is None else seen
+        identity = (scenario["sid"], step["no"])
+        if identity in seen:
+            return V_UNK, "業務参照の循環を解消する必要がある", []
+        seen = seen | {identity}
+        features, category = classify(step["screen"])
+        if "実施保留条件:" in step["result"]:
+            return V_UNK, step["result"].split("実施保留条件:", 1)[1].strip(), features
+        if category != "業務参照":
+            verdict, reason = step_verdict(category, [drift[f] for f in features if f in drift], step["action"])
+            return verdict, reason, features
+        contract = next((c for c in contracts if c["business"] == scenario["biz"] and (c["source_action"] == step["action"] or step["action"].startswith(c["source_action"] + " "))), None)
+        if not contract:
+            return V_UNK, "別業務参照の根拠契約を特定できない", []
+        results = []
+        for target in contract.get("subflow_targets", []):
+            other = parsed.get(target["scenario_id"])
+            if not other:
+                return V_UNK, "参照先シナリオが存在しない: " + target["scenario_id"], []
+            for number in target["target_steps"]:
+                child = next((r for r in other["steps"] if r["no"] == str(number)), None)
+                if not child:
+                    return V_UNK, "参照先工程が存在しない: " + target["scenario_id"] + "#" + str(number), []
+                results.append(reference_verdict(other, child, seen))
+        if not results:
+            return V_UNK, "別業務参照の対象工程が未確定", []
+        rank = {v: n for n, v in enumerate(VERDICT_RANK + [V_OUT])}
+        worst = min(results, key=lambda r: rank.get(r[0], 0))
+        all_features = sorted({f for r in results for f in r[2]})
+        return worst[0], "参照先工程の判定を継承: " + worst[1], all_features
+
     step_rows, scn_rows = [], []
     tally = Counter()
     for path in paths:
@@ -239,6 +247,11 @@ def main() -> int:
                 raise GateError(f"{s['sid']} #{st['no']}: 設計書に無い機能No {unknown}")
             d = [drift[n] for n in nos if n in drift]
             verdict, reason = step_verdict(kind, d, st["action"])
+            if kind == "業務参照":
+                verdict, reason, nos = reference_verdict(s, st)
+                d = [drift[n] for n in nos if n in drift]
+            if "実施保留条件:" in st["result"]:
+                verdict, reason = V_UNK, st["result"].split("実施保留条件:", 1)[1].strip()
             counts[kind] += 1
             counts[verdict] += 1
             tally[verdict] += 1
@@ -260,7 +273,7 @@ def main() -> int:
                 ", ".join(items.get((s["sid"], st["no"]), [])) or "—",
             ])
 
-        sys_steps = counts["システム操作"]
+        sys_steps = counts["システム操作"] + counts["業務参照"]
         if counts[V_NG]:
             v = V_NG
         elif counts[V_UNK]:
