@@ -1,9 +1,9 @@
 """保留ケースをバッチに分け、機能ごとの最新出典テキストと差分を書き出す。"""
-import json, sys, pathlib, collections, importlib.util
+import csv, json, sys, pathlib, collections, importlib.util
 S = pathlib.Path(sys.argv[1]); NEW = pathlib.Path('/home/y-saito/Developments/hareruya-design-docs')
 spec = importlib.util.spec_from_file_location("sd", S/"srcdiff_lib.py"); sd = importlib.util.module_from_spec(spec); spec.loader.exec_module(sd)
 diff = json.load(open(S/"srcdiff.json", encoding="utf-8"))
-rows = [l.rstrip("\n").split("\t") for l in open(NEW/"integration_test/casegen/all_test_cases.tsv", encoding="utf-8")]
+rows = list(csv.reader(open(NEW/"integration_test/casegen/all_test_cases.tsv", encoding="utf-8"), delimiter="\t"))   # 一覧はセル内で改行している（2026-10-19）。行で切らない
 hdr, rows = rows[0], rows[1:]
 ik = hdr.index("実行区分")   # 一覧の列は変わることがある（2026-10-16 に要求ID・優先度を外した）。位置でなく見出しで引く
 byf = collections.defaultdict(list)
@@ -22,8 +22,9 @@ for fid in sorted(byf):
     cur.append(fid)
 batches.append(cur)
 for i, fs in enumerate(batches, 1):
-    with open(S/f"batch/b{i:02d}.tsv", "w", encoding="utf-8") as w:
-        w.write("\t".join(hdr) + "\n")
+    with open(S/f"batch/b{i:02d}.tsv", "w", encoding="utf-8", newline="") as w:
+        cw = csv.writer(w, delimiter="\t", lineterminator="\n")
+        cw.writerow(hdr)
         for f in fs:
-            for r in byf[f]: w.write("\t".join(r) + "\n")
+            cw.writerows(byf[f])
     print(f"b{i:02d}", sum(len(byf[f]) for f in fs), fs[0], "..", fs[-1], len(fs))
