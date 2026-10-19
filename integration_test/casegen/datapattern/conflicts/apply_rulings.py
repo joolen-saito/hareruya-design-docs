@@ -10,6 +10,7 @@
 - それ以外の行: 事前準備・手順は「旧⇒新」の置き換え（‖ 区切りで複数）、期待結果は丸ごと差し替える。シードは「シードID|列|旧⇒新」。
   ケースが excluded_open_cases.tsv に外れているとき（作り方が未確定）は、その表の「元_」列を直す（exclude_open.py が戻すときに直った値で戻る）。
 - 新出典の欄があれば出典を差し替える（裁定と食い違う出典の書き方を直す）。
+- 裁定日の欄は、承認に書く日付。空の行は 2026-10-16（最初の裁定の日）とする。
 - added_seeds.tsv に裁定と同じテストID・項目の行があれば、そのシードを cases/ のシード表に置き（同じシードIDがあれば差し替える）、
   ケースの使用シードに足す。ケース専用のシードを足したケースは、読み取りだけの宣言（precond/readonly_cases/）から外す。
   事前準備への書き足し（新が旧を含む置き換え）は、新が既にあれば済みとみなす。
@@ -26,8 +27,8 @@ import pathlib, sys
 G = pathlib.Path(__file__).resolve().parent
 CG = G.parents[1]
 PC = CG / "precond"
-DAY = "2026-10-16"
-APPROVAL = f"{DAY} 依頼者裁定（既存ケースと設計書の食い違いの裁定。datapattern/conflicts/rulings.tsv %s）"
+DAY = "2026-10-16"  # 裁定日の欄が空の行の裁定日
+APPROVAL = "%s 依頼者裁定（既存ケースと設計書の食い違いの裁定。datapattern/conflicts/rulings.tsv %s）"
 
 
 def rows(p):
@@ -180,7 +181,7 @@ def main():
                 upsert(PC / f"oracle_changes/{fid}.tsv", ["テストID", "新期待結果", "理由", "承認"], tid, lambda o: {
                     "テストID": tid, "新期待結果": get("期待結果"),
                     "理由": append_once(o["理由"] if o else "", why),
-                    "承認": append_once(o["承認"] if o else "", APPROVAL % item)}, err)
+                    "承認": append_once(o["承認"] if o else "", APPROVAL % (rl.get("裁定日") or DAY, item))}, err)
             if rl["手順の置換"]:
                 upsert(PC / f"step_changes/{fid}.tsv", ["テストID", "種別", "新手順", "理由"], tid, lambda o: {
                     "テストID": tid, "新手順": get("手順"),

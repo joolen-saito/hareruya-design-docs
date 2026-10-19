@@ -38,7 +38,7 @@
 | CH-0909 | 開催時間ボタンの遷移先が、画面項目表は大会詳細画面、機能仕様は大会申込画面で、予約枠で分かれる論点が保留（IT-F07-01-018） |
 
 - 合流: 1件（F02-04）。合流のあと `../seed_screen/apply.py` → `../datapattern/conflicts/apply_rulings.py` → `../exclude_open.py` → `../exclude_scope.py` → `../build_all_test_cases.py` → `../precond/gate_precond.py --all` 合格。
-- 既存ケースの気づき（直していない。各 `gen_<群>/report.md`）:
+- 既存ケースの気づき（各 `gen_<群>/report.md`。2026-10-19 に3件とも直した。`../datapattern/conflicts/rulings.tsv` の K01〜K03）:
   - IT-M11-02-010 は必須の所属店舗を入力しておらず、登録完了まで進めない（CA の1巡目の指摘）。
   - IT-M03-05-011 は商品一覧へ戻ることを確かめるが、設計書が定める検索条件・表示件数の引継ぎ（m03-01 機能設計書:27、m03-05 機能設計書:39）は期待結果に無い。
   - IT-F06-15-006 のシードは、刷新後に無い（404）商品登録画面で商品を作っている。
