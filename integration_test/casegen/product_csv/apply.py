@@ -51,6 +51,8 @@ def main():
     done = {"置き換えた": 0, "済み": 0, "当てない機能（gate 不合格）": 0}
     err = []
     applied = load_applied()
+    lp = CG / "runnable/work/applied.tsv"   # 後段の直しが当てた文のハッシュ（流し直しで、その文を済みとみなす）
+    later = {(r[0], r[1], r[2]): r[3] for r in rows(lp)[1]} if lp.exists() else {}
     for op in sorted((P / "out").glob("*.tsv")):
         fid = op.stem
         e, _ = gate.check(fid)
@@ -81,6 +83,9 @@ def main():
                     applied[(sid, col)] = digest(new)
             if all(s[i] == new for i, _, _, new in pairs):
                 done["済み"] += 1
+                continue
+            if all(s[i] == new or later.get(("シード", sid, col)) == digest(s[i]) for i, col, _, new in pairs):
+                done["済み"] += 1   # 後段の直し（../runnable/apply.py）がこの書き直しの上に重ねた文
                 continue
             if any(s[i] not in (old, new) and digest(s[i]) != applied.get((sid, col)) for i, col, old, new in pairs):
                 err.append(f"{fid} {sid}: シードの文が書き直しの元と違う（上流で変わった）")

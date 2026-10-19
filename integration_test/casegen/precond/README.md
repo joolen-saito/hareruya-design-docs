@@ -56,7 +56,7 @@
 内訳は、作り方が未確定 1,744、試験環境の決定待ち 113、実装上その状態を作れない 35。残りは 10,556件・345機能（20機能は全ケースが外れた）。
 
 - 行は消さず `../excluded_open_cases.tsv`（除外理由・未確定の内容つき。元の11列は「元_」付き）へ移した。外したケースだけが使っていたシード 2,458件は `../excluded_open_seeds.tsv`。
-- 道具は `../exclude_open.py`（何度流しても同じ）。**各 `merge_into_cases.py` と `seed_screen/apply.py` は外したケースを `cases/` へ戻すので、そのあとに必ず流す。** 順序は merge → `seed_screen/apply.py` → `datapattern/conflicts/apply_rulings.py` → `exclude_open.py` → `exclude_scope.py` → `build_all_test_cases.py`。
+- 道具は `../exclude_open.py`（何度流しても同じ）。**各 `merge_into_cases.py` と `seed_screen/apply.py` は外したケースを `cases/` へ戻すので、そのあとに必ず流す。** 順序は merge → `seed_screen/apply.py` → `datapattern/conflicts/apply_rulings.py`（最後に `product_csv/apply.py` と `runnable/apply.py` も当たる）→ `exclude_open.py` → `exclude_scope.py` → `build_all_test_cases.py`。
 - 作り方が決まったら、シードの投入方法（と `open_preconditions.tsv`）を直してから同じ順に流し直すと戻る。
 - 検査 G6 は、基線・追加分からこの除外分を差し引いて照合する。保留（設計書に正解が無い）の除外 `excluded_hold_cases.tsv` とは別の表で、意味を混ぜていない。
 
@@ -72,6 +72,12 @@
   - 共有の定義だけを使い、未確定の項目に触れないもの: S-M05-03-DEFS、S-F06-05-BASIC、IT-A05-04-002（GETを送るだけで、認証も取引の取得も要らない）。
   - 名前の役割の語が同じだけで、作り方が決まっているもの: ポイントの設定、ユニサーチの接続先、ee の開発用の正常応答、スマレジの試験環境への接続。
   - S-M03-10-SMAREGI-ENV: ee の商品APIのクライアントは、模擬応答のときも呼び出しを記録する（SmaregiPlatformApiCallRecorder）。シードの書き方は実装と合っている。
+
+## 試験環境で用意できる前提の解消（依頼者決定 2026-10-19）
+
+依頼者決定「バッチの実行、スマレジなど外部の試験環境、メールの受け取りは環境準備できる」（中継・模擬応答、時刻の固定、障害を起こす手段は用意しない）。作り方が未確定で外したケースを止めていた項目（未確定のシード 944・未確定の前提の行 879）を1件ずつ判定し、この3つだけで決まるものは作り方を書いて解消した。止めていた項目がすべて解消したケース 183件が一覧へ戻った（11,713件 → 11,896件・346機能）。
+解消した前提の行 81 は `open_preconditions.tsv` から `resolved_preconditions.tsv`（解消の書き方・区分・根拠・決定つき）へ移した。シードは投入方法を書き直した（外した表 `../excluded_open_seeds.tsv` を直し、`exclude_open.py` が直った文で戻す）。
+同じ日の依頼者決定「おすすめで進めて」で、人が補って実行できるもの（決まった番号の読み替え、必須のチェック、確認モーダル、割引率、在庫の承認）も書き足した。道具・判定・レビューは `../runnable/README.md`。`../datapattern/conflicts/apply_rulings.py` が最後に `../runnable/apply.py` を呼ぶ。
 
 ## E2E で作成を保留した入力ファイルを使うケースの除外（依頼者決定 2026-10-16）
 

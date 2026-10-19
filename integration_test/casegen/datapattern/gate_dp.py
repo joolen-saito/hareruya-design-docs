@@ -35,6 +35,7 @@ RULED = {r[0] for r in rows(C / "excluded_hold_cases.tsv")[1:] if r[2].startswit
 if (C / "excluded_scope_cases.tsv").exists():
     RULED |= {r[0] for r in rows(C / "excluded_scope_cases.tsv")[1:]}
 ruled_hits = []
+back_hits = []   # 「除外済み」と判定したケースのうち、監査の後に一覧へ戻ったもの（2026-10-19 runnable/ で作り方が決まった）
 EXC = ids_of("excluded_hold_cases.tsv") | ids_of("excluded_open_cases.tsv")
 if (C / "excluded_scope_cases.tsv").exists():   # 2026-10-16 フェーズ2見送り・実装しない機能として外したもの
     EXC |= ids_of("excluded_scope_cases.tsv")
@@ -102,7 +103,9 @@ def check(fid):
             if not tids:
                 err.append(f"{iid}: 除外済みなのにテストIDが空")
             for t in tids:
-                if t not in EXC:
+                if t in ALL:
+                    back_hits.append((iid, t))
+                elif t not in EXC:
                     err.append(f"{iid}: テストIDが除外の一覧に無い {t}")
         elif j == "抜け":
             if not d["理由"].strip():
@@ -157,6 +160,9 @@ def main():
         elif len(fids) <= 20:
             print(f"○ {f}")
     print(f"合格 {len(fids) - bad} / {len(fids)}")
+    if back_hits:
+        print(f"（参考）監査が「除外済み」としたケースのうち、監査の後に一覧へ戻ったもの（作り方が決まった） {len(back_hits)}件: "
+              + "、".join(f"{i}→{t}" for i, t in back_hits))
     if ruled_hits:
         print(f"（参考）監査が挙げた既存ケースのうち、監査の後に外れたもの（裁定の保留・対象外・作り方が未確定） {len(ruled_hits)}件: "
               + "、".join(f"{i}→{t}" for i, t in ruled_hits))

@@ -56,7 +56,7 @@ Excel が触れていない条件を埋め込みが足しているだけのも�
 
 1. merge（sheetmap・nosheet・ga・gapfill の `merge_into_cases.py`、`../merge_dp.py`）
 2. `python3 seed_screen/apply.py`
-3. `python3 datapattern/conflicts/apply_rulings.py`（seed_screen/apply.py が cases/ と oracle_changes/ を書き直すので、必ずその後。最後に `product_csv/apply.py`〔商品登録画面で商品を作るシードの書き直し、2026-10-19〕も呼ぶ）
+3. `python3 datapattern/conflicts/apply_rulings.py`（seed_screen/apply.py が cases/ と oracle_changes/ を書き直すので、必ずその後。最後に `product_csv/apply.py`〔商品登録画面で商品を作るシードの書き直し、2026-10-19〕と `runnable/apply.py`〔書かれたとおりに実行できるようにする直し、2026-10-19〕も呼ぶ。後段が当てた文は `runnable/work/applied.tsv` で見分け、裁定は済みとみなす）
 4. `python3 exclude_open.py`、続けて `python3 exclude_scope.py`（フェーズ2見送り・実装しない機能の除外。2026-10-16）
 5. `python3 build_all_test_cases.py` と `python3 precond/gate_precond.py --all`、`python3 datapattern/gate_dp.py`
 
@@ -104,3 +104,7 @@ codex の事実確認は3巡（`review/K1〜K3`）。指摘は1巡目・2巡目�
 
 F06-15 には、商品登録画面で商品を作るシードがほかに28件あった。K03 で直したのは S-F06-15-MYPAGE-006 だけで、残りは `../../product_csv/` で直した。
 買取の申込みで「ネット買取規約同意」のチェックを書いていないシードは、ほかに276件ある（M07-01 62件、M07-09・A07-05 各39件、F06-15 28件など。2026-10-19 時点）。グッズ商品CSVのアップロードの後の確認モーダル（M03-27 L0092）を書いていないシードは898件ある（E03 で直した S-M03-11-DELETE-036 も）。どちらも直していない。
+
+## 後段の直しとの関係（2026-10-20）
+
+`../../runnable/` の直し（確認モーダルの確定など）は、この裁定を当てた後の文に重なる。E04 で足したシード S-M03-01-PAGING-043 は `apply_rulings.py` が毎回 `added_seeds.tsv` から置き直すので、確認モーダルの書き足しを `added_seeds.tsv` の側にも入れた。

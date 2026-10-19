@@ -1,0 +1,1944 @@
+Reading additional input from stdin...
+OpenAI Codex v0.162.1
+--------
+workdir: /home/y-saito/Developments
+model: gpt-6-sol
+provider: openai
+approval: never
+sandbox: read-only
+reasoning effort: high
+reasoning summaries: none
+session id: 01a1549d-0ef4-74f3-8eb9-254aa26556b8
+--------
+user
+# 環境で戻すと判定した項目の事実確認（1巡目、EB）
+
+あなたはレビュアーです。作り方が未確定で結合テストから外していたケースについて、「試験環境を用意すれば作り方が決まる」と判定した項目と、その書き直しが正しいかを確かめてください。ファイルは読むだけにし、書き換えないでください。作業ディレクトリは `/home/y-saito/Developments/hareruya-design-docs`。
+
+## 何をしたか
+
+依頼者決定（2026-10-19）: バッチの実行、スマレジなど外部の試験環境、メールの受け取りは試験環境で用意できる。中継・模擬応答（通信の記録・保留・転送、応答の差し替え、エラー応答）、時刻の固定、障害を起こす手段（DB の停止、タイムアウトなど）は用意しない。
+外したケースを止めていた項目（投入方法に未確定・未整備があるシード、未確定の前提の行）を1件ずつ判定し、「環境で解消」としたものは、未確定を残さない作り方に書き直した。止めていた項目が全部「環境で解消」になったケースは、ケース一覧に戻る。判定の決まりは `integration_test/casegen/runnable/ENV_PROMPT.md`。
+
+対象（判定が「環境で解消」の行だけを見る）: A01-02、B02-02、B02-05、B05-01、B05-04、B05-09、B06-01、B06-02、B08-02、B08-03
+- 直す前: `integration_test/casegen/runnable/env/in/<名前>.tsv`（今の文・状態・属性・止めているケース・手がかり）
+- 判定と書き直し: `integration_test/casegen/runnable/env/out/<名前>.tsv`（判定・区分・新しい投入方法・新しい状態・属性・根拠・理由）。行は in と同じ順。前提の行の「新しい投入方法」は解消の書き方
+- 戻るケースの一覧: `integration_test/casegen/runnable/env/restored.tsv`。ケースの中身は `integration_test/casegen/excluded_open_cases.tsv`（「元_」の列）、外したシードは `integration_test/casegen/excluded_open_seeds.tsv`
+- 未確定の前提の全体: `integration_test/casegen/precond/open_preconditions.tsv`
+
+## 正本
+
+- 設計書の写し: `integration_test/casegen/datapattern/units/<機能ID>/design.txt`（行頭 L0001 が行番号）。無い機能は `integration_test/casegen/coverage_audit/units.tsv` で書番・シートIDを引き `coverage_audit/units/<書番>_<シートID>/sheet.txt`
+- 実装: `/home/y-saito/Developments/ec-cube-enterprise`
+
+## 確かめること
+
+1. 「環境で解消」の項目に、用意しないもの（中継・模擬、時刻の固定、障害）や、ほかの理由（値を指定して入れる手段が無い、設計書に定めが無い、他のケースのデータと分けられない）が残っていないか。外部の試験環境は本物のふるまいをするので、外部にエラーを返させる・応答を止める・通信の中身を記録して確かめる、は用意できない。
+2. 書き直した投入方法が、設計書・実装にある画面・設定・操作で書かれ、そのとおりに作れるか。未確定のまま残っている部分が無いか。
+3. 戻るケースの事前準備・手順・期待結果が、書き直したシードで成り立つか（戻ったケースが、別の理由でまだ実行できないことはないか）。
+4. 物理名（テーブル名・列名）を書いていないか。商品を新しく作るなら商品登録画面（新規）を使っていないか。
+
+## 指摘にしないもの
+
+- 「解消しない」と判定した行（保守的な判定は指摘しない）
+- 戻るケースの事前準備・手順・期待結果に残る固定の番号（会員IDなど）を、シードが控える呼び名へ置き換えること。2回目の直し（`integration_test/casegen/runnable/fix2/`）で行う
+- 戻るケースのシードの、商品の作り方（グッズ商品CSV登録）・割引率・在庫の承認・在庫無制限の抜け。2回目の直しで行う
+- グッズ商品CSVのアップロードの確認モーダルが実装に無いこと（設計書 M03-27 L0092 との食い違いとして依頼者に報告済み）
+- 直した部分以外の元の不備、ケースそのものの不備、言い回しの好み、細かくする提案
+- 何度も流したときの重複（試験は新しいDBで流す前提）
+
+## 出力
+
+指摘が無ければ `NONE` の1語だけを出力してください。
+指摘があれば、1件ごとに次の形で書いてください。同じ型の誤りが多くの行にあるときは、1件にまとめ、該当する対象IDを全部挙げてください。
+
+```
+### 指摘N（重大度: Major / Minor）対象: <名前> <対象ID>
+主張: 判定・書き直しの記述
+実際: 設計書・実装・ケースの記述（file:line）
+判定: 用意しないものが残る／事実の誤り／前提不成立／手順不備／推測
+修正案: （「解消しないにする」か、書き直しの直し方）
+```
+warning: Codex could not find bubblewrap on PATH. Install bubblewrap with your OS package manager. See the sandbox prerequisites: https://developers.openai.com/codex/concepts/sandboxing#prerequisites. Codex will use the bundled bubblewrap in the meantime.
+2026-10-19T14:42:25.133008Z ERROR rmcp::transport::worker: worker quit with fatal: Transport channel closed, when AuthRequired(AuthRequiredError { www_authenticate_header: "Bearer resource_metadata=\"https://mcp.firecrawl.dev/.well-known/oauth-protected-resource/v2/mcp-oauth\", error=\"invalid_token\", error_description=\"Firecrawl credentials required: OAuth access token (Authorization: Bearer fco_...) or API key (x-firecrawl-api-key)\"" })
+codex
+対象の判定行を元の記述、設計書、実装、復帰ケースの順に照合します。ファイルは読み取りのみで確認します。
+exec
+/bin/bash -lc 'cat integration_test/casegen/runnable/ENV_PROMPT.md' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+# 作り方が未確定で外したケースを、環境で戻せるか判定して書く（担当 {BATCH}: {NAMES}）
+
+あなたは結合テストのシード（テストデータの作り方）を確定させる担当です。作業ディレクトリは `/home/y-saito/Developments/hareruya-design-docs`。
+
+## 背景
+
+作り方が決まっていないデータを使うケース 1,939件を、結合テストのケース一覧から外してある（2026-10-14。`integration_test/casegen/precond/README.md`「テストできない・作り方が未確定のケースの除外」）。外した理由は、シードの投入方法にある「未確定」「未整備」と、`integration_test/casegen/precond/open_preconditions.tsv`（未確定の前提）の行。
+
+依頼者決定（2026-10-19）: **次の3つは試験環境で用意できる。**
+
+| 用意できる | 中身 |
+| --- | --- |
+| バッチ | 試験環境でバッチを起動して実行させ、終わるのを待つ手段。バッチの実行設定（参照先・定期起動の設定など）を試験用に変えられる |
+| 外部の試験環境 | スマレジなど外部システムの試験用の環境・アカウント。その管理画面や API でデータを作り、ECCUBE からの接続先にする。外部システムは本物のふるまいをする（こちらで応答を作り変えたり、止めたり、遅らせたりはできない） |
+| メール | 試験環境が送るメールを受け取り、宛先・件名・本文を見られる受信箱 |
+
+**次は用意しない**（同じ日の依頼者決定）: 中継・模擬応答（通信の記録・保留・転送、外部の応答の差し替え、エラー応答を返す仕組み）、時刻の固定、障害を起こす手段（DB の停止、タイムアウトなど）。
+
+ほかの理由（値を指定してデータを入れる手段が無い、設計書に定めが無い・食い違う、他のケースのデータと分けられない、など）も、この決定では解消しない。
+
+## 入力
+
+- `integration_test/casegen/runnable/env/in/<名前>.tsv`: 外したケースを止めている項目。列は `種別	対象ID	列	今の文	状態・属性	止めているケース	手がかり`。
+  - 種別「シード」: 投入方法に未確定・未整備があるシード。今の文はその投入方法。
+  - 種別「前提」: 未確定の前提の行。今の文は「未確定の内容」、手がかりにその行の対象・手がかり・状態。
+- `integration_test/casegen/runnable/env/in/<機能ID>_cases.tsv`: その機能の外したケースと、止めている項目の対象ID（ケースは止めている項目が**全部**解消したときだけ戻る）。
+- 外したケースの中身: `integration_test/casegen/excluded_open_cases.tsv`（「元_」の列）。外したシードの全体: `integration_test/casegen/excluded_open_seeds.tsv`。
+- 「未確定（未確定の前提を参照）」とだけ書いたシードは、同じ機能の前提の行（このファイルか `precond/open_preconditions.tsv`）に中身がある。
+- 設計書の写し: `integration_test/casegen/datapattern/units/<機能ID>/design.txt`。無い機能は `integration_test/casegen/coverage_audit/units.tsv` で機能から書番・シートIDを引き、`coverage_audit/units/<書番>_<シートID>/sheet.txt`。
+- 実装: `/home/y-saito/Developments/ec-cube-enterprise`（読むだけ）。
+- 確定済みのシードの書き方の例: 「試験環境のメール配送設定で受信箱を指定する」「試験環境のバッチ設定、実行コンソール設定およびアプリケーション設定で行う」「試験環境の配備設定でスマレジ試験環境の接続先、契約情報および認証情報を設定する」。
+
+## 判定
+
+項目ごとに決める。
+
+| 判定 | いつ |
+| --- | --- |
+| 環境で解消 | その項目の未確定・未整備の**すべて**が、上の3つ（バッチ・外部の試験環境・メール）を用意すれば決まる |
+| 解消しない | 1つでも、用意しないもの（中継・模擬、時刻、障害）か、ほかの理由が残る |
+
+区分の欄には、その項目の未確定の中身をすべて、次の語から選んで「・」でつなぐ: バッチ／外部の試験環境／メール／中継・模擬／時刻／障害／作り方／設計／分離／その他。
+- 作り方: 値を指定してデータを入れる手段・画面が無い、実装上その状態を作れない、など
+- 設計: 設計書に定めが無い・食い違う、期待結果が決まらない
+- 分離: 他のケースのデータと分けられない、専用DB・初期化の手段が要る
+
+迷うときの決め方:
+- 外部システムに、正常な取引・商品・会員などのデータを作るだけなら「外部の試験環境」。外部にエラーを返させる、応答を止める・遅らせる、通信を記録して中身を確かめる、こちらから外部のふりをして送る、は「中継・模擬」。
+- バッチの実行の手段・起動経路・接続先が決まっていないだけなら「バッチ」。バッチの対象になる「本番」「ステージング」の環境・クラウドの資源そのものを試験用に作る必要があるなら「その他」（用意できるのはバッチを動かす手段であって、本番相当の基盤ではない）。
+- メールが届いたこと・本文を見るだけなら「メール」。送信の失敗を起こすのは「障害」。
+
+## 環境で解消のときに書くこと
+
+- シード: 新しい投入方法に、**未確定・未整備を残さない全文**を書く。どの環境の、どの画面・操作で、何の値を入れるかまで書く（「試験環境の〇〇で〇〇を設定する」「スマレジ試験環境の管理画面で、商品コード〇〇の商品を在庫10で登録する」「試験環境の受信箱で、宛先〇〇のメールを消してから始める」）。元の投入方法のうち未確定に関係しない部分は一字も変えない。状態・属性を変える必要があれば新しい状態・属性に全文を書く（要らなければ空）。
+  - 商品を新しく作るなら、商品登録画面（新規）は使えない。`integration_test/casegen/product_csv/PROMPT.md` の決まりでグッズ商品CSV登録で作る（確認モーダルの確定、割引率、規格・在庫の作り方）。
+  - ネット買取の申込みをするなら「ネット買取規約同意」にチェックし、モーダルの「申込み」を押す（F05-06 L0060・L0062〜L0066・L0108）。
+  - バッチの書き方は用語の規約に従う（`integration_test/casegen/precond/README.md`「用語の置き換え」。バッチと書き、AWS の製品名や「非同期処理ダッシュボード」と書かない）。
+  - 物理名（テーブル名・列名など）は書かない（`.cursor/skills/logical-naming/SKILL.md`）。呼び名〔…〕は消さない。
+- 前提: 新しい投入方法の欄に「解消の書き方」を1〜2文で書く（何を用意すれば、その前提がどう満たされるか）。同じ中身のシードの行があれば、そのシードの書き方と食い違わないようにする。
+- 根拠: 確かめた設計書の行・実装の箇所。
+
+## 解消しないとき
+
+新しい投入方法・新しい状態・属性は空。理由の欄に、残る未確定を具体的に書く（例「スマレジにエラー応答を返させる手段が要る（中継・模擬は用意しない）」）。
+
+## 出力
+
+`integration_test/casegen/runnable/env/out/<名前>.tsv`。タブ区切り・見出し付き・UTF-8。入力の項目を1行ずつ、漏れなく同じ順で。
+
+`種別	対象ID	判定	区分	新しい投入方法	新しい状態・属性	根拠	理由`
+
+- セルの中にタブと改行を入れない。書くときは Python で `"\t".join(...)` を使う（csv.writer は使わない）。
+
+## 守ること
+
+- 書いてよいのは `integration_test/casegen/runnable/env/out/` の担当のファイルと、作業用フォルダ `integration_test/casegen/runnable/work/{BATCH}/` だけ。ほかのファイルは読むだけ。
+- **git の変更操作（add・commit・push・checkout・stash など）は一切しない。** 外部サービスへの書き込みもしない。
+- 推測で「環境で解消」にしない。設計書と実装で、その状態が試験環境の操作で本当に作れることを確かめる。決めきれないものは「解消しない」にして理由を書く。
+- 書き終えたら `python3 integration_test/casegen/runnable/gate.py env {NAMES}` を流し、不合格が無くなるまで直す。検査を通すためだけの文を足さない。検査が誤っていると思うときは、直さずに返答で知らせる。
+- 返答は3行以内: ファイルごとの 環境で解消／解消しない の件数、gate の結果、知らせたいこと。
+
+exec
+/bin/bash -lc "pwd && rg --files -g 'AGENTS.md' -g 'ENV_PROMPT.md' -g '*.tsv' integration_test/casegen/runnable/env | head -80" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+/home/y-saito/Developments/hareruya-design-docs
+integration_test/casegen/runnable/env/restored.tsv
+integration_test/casegen/runnable/env/out/M08-05.tsv
+integration_test/casegen/runnable/env/out/M03-06.tsv
+integration_test/casegen/runnable/env/out/F03-07.tsv
+integration_test/casegen/runnable/env/out/A02-05.tsv
+integration_test/casegen/runnable/env/out/M04-03.tsv
+integration_test/casegen/runnable/env/out/B05-07.tsv
+integration_test/casegen/runnable/env/out/M04-21.tsv
+integration_test/casegen/runnable/env/out/F09-01.tsv
+integration_test/casegen/runnable/env/out/M10-07.tsv
+integration_test/casegen/runnable/env/out/O01-02.tsv
+integration_test/casegen/runnable/env/out/A15-03.tsv
+integration_test/casegen/runnable/env/out/M05-23.tsv
+integration_test/casegen/runnable/env/out/F09-05.tsv
+integration_test/casegen/runnable/env/out/A06-02.tsv
+integration_test/casegen/runnable/env/out/F02-01.tsv
+integration_test/casegen/runnable/env/out/F02-04.tsv
+integration_test/casegen/runnable/env/out/F10-02.tsv
+integration_test/casegen/runnable/env/out/F03-01.tsv
+integration_test/casegen/runnable/env/out/M04-23.tsv
+integration_test/casegen/runnable/env/out/F04-04.tsv
+integration_test/casegen/runnable/env/out/M03-10.tsv
+integration_test/casegen/runnable/env/out/F03-08.tsv
+integration_test/casegen/runnable/env/out/B08-07@1.tsv
+integration_test/casegen/runnable/env/out/M04-14.tsv
+integration_test/casegen/runnable/env/out/M13-10.tsv
+integration_test/casegen/runnable/env/out/B16-09@1.tsv
+integration_test/casegen/runnable/env/out/F01-01.tsv
+integration_test/casegen/runnable/env/out/B08-06.tsv
+integration_test/casegen/runnable/env/out/M03-37.tsv
+integration_test/casegen/runnable/env/out/F05-01.tsv
+integration_test/casegen/runnable/env/out/O01-03.tsv
+integration_test/casegen/runnable/env/out/F02-03.tsv
+integration_test/casegen/runnable/env/out/B05-08.tsv
+integration_test/casegen/runnable/env/out/M03-33.tsv
+integration_test/casegen/runnable/env/out/B02-03.tsv
+integration_test/casegen/runnable/env/out/B05-06.tsv
+integration_test/casegen/runnable/env/out/M05-10.tsv
+integration_test/casegen/runnable/env/out/M04-13.tsv
+integration_test/casegen/runnable/env/out/M07-07.tsv
+integration_test/casegen/runnable/env/out/F08-05.tsv
+integration_test/casegen/runnable/env/out/F06-15.tsv
+integration_test/casegen/runnable/env/out/M15-01.tsv
+integration_test/casegen/runnable/env/out/M15-05.tsv
+integration_test/casegen/runnable/env/out/M04-30.tsv
+integration_test/casegen/runnable/env/out/F06-03.tsv
+integration_test/casegen/runnable/env/out/B08-04.tsv
+integration_test/casegen/runnable/env/out/M03-32.tsv
+integration_test/casegen/runnable/env/out/M05-21.tsv
+integration_test/casegen/runnable/env/out/B08-03.tsv
+integration_test/casegen/runnable/env/out/A15-02.tsv
+integration_test/casegen/runnable/env/out/B06-01.tsv
+integration_test/casegen/runnable/env/out/O01-01@3.tsv
+integration_test/casegen/runnable/env/out/M05-04.tsv
+integration_test/casegen/runnable/env/out/M05-09.tsv
+integration_test/casegen/runnable/env/out/B16-10@1.tsv
+integration_test/casegen/runnable/env/out/M12-03.tsv
+integration_test/casegen/runnable/env/out/A15-06.tsv
+integration_test/casegen/runnable/env/out/M07-12.tsv
+integration_test/casegen/runnable/env/out/M06-12.tsv
+integration_test/casegen/runnable/env/out/M03-11.tsv
+integration_test/casegen/runnable/env/out/F06-05.tsv
+integration_test/casegen/runnable/env/out/A15-13.tsv
+integration_test/casegen/runnable/env/out/M15-11.tsv
+integration_test/casegen/runnable/env/out/M08-04.tsv
+integration_test/casegen/runnable/env/out/A06-08.tsv
+integration_test/casegen/runnable/env/out/A06-03.tsv
+integration_test/casegen/runnable/env/out/M05-06.tsv
+integration_test/casegen/runnable/env/out/M05-24.tsv
+integration_test/casegen/runnable/env/out/M07-05.tsv
+integration_test/casegen/runnable/env/out/F06-26.tsv
+integration_test/casegen/runnable/env/out/M07-10.tsv
+integration_test/casegen/runnable/env/out/M05-26.tsv
+integration_test/casegen/runnable/env/out/M03-04.tsv
+integration_test/casegen/runnable/env/out/M05-22.tsv
+integration_test/casegen/runnable/env/out/B16-06.tsv
+integration_test/casegen/runnable/env/out/B05-02.tsv
+integration_test/casegen/runnable/env/out/M03-25.tsv
+integration_test/casegen/runnable/env/out/F07-04.tsv
+integration_test/casegen/runnable/env/out/A15-14.tsv
+
+exec
+/bin/bash -lc "rg --files -g 'AGENTS.md' /home/y-saito/Developments/hareruya-design-docs /home/y-saito/Developments/ec-cube-enterprise | head -80" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+/home/y-saito/Developments/ec-cube-enterprise/AGENTS.md
+
+exec
+/bin/bash -lc 'cat AGENTS.md' in /home/y-saito/Developments/ec-cube-enterprise
+ succeeded in 0ms:
+# Agent Instructions
+
+# 開発環境
+
+- アプリの起動: `docker compose -f docker-compose.yml -f docker-compose.pgsql.yml -f docker-compose.dev.yml up -d --wait`
+- ユーザーフロントURL: http://localhost:8080/ja
+- 管理画面ログインURL: http://localhost:8080/admin/login
+- 管理画面クレデンシャル: ID=admin PW=password
+- データ投入: `docker compose exec ec-cube bin/console eccube:seed:card` && `docker compose exec ec-cube bin/console eccube:seed:product`
+  - 商品シードはカードシード未投入だと外部キー制約違反になるため、上記の順で実行する。
+- データベース接続: `docker compose -f docker-compose.yml -f docker-compose.pgsql.yml -f docker-compose.dev.yml exec -T -e PGPASSWORD=secret postgres_primary psql -U dbuser -d eccubedb`（サービス名指定で実行可能）。
+- APP_DEBUG=1 のため管理画面には Symfony Web Debug Toolbar が表示される。
+- Doctrineマイグレーションは、起動後に `docker compose -f docker-compose.yml -f docker-compose.pgsql.yml -f docker-compose.dev.yml exec -T ec-cube bin/console doctrine:migrations:migrate --no-interaction` で適用できる。
+- Docker起動時にホスト側の`composer.json`および`composer.lock`がプラグイン設定により変更される場合がある。タスクと無関係な差分は検証後に`git checkout -- composer.json composer.lock`で戻してから差分確認する。
+
+## フロントJS（イベント関連）
+
+ハレルヤのフロント JS は TAM からビルド済みで納品されるが、**イベント関連
+（`hareruya-event.js`）のみビルド前ソースを当リポジトリで管理している**。
+
+- ソースとビルド設定: `frontend/hareruya/`
+- ビルド: `cd frontend/hareruya && npm ci && npm run build`
+  - 出力先は `html/template/default/assets/hareruya/js/hareruya-event.js`
+  - **成果物はコミット対象**。ソースを変更したらビルドして一緒にコミットする
+- 型検査: `cd frontend/hareruya && npm run typecheck`
+- Node 22.12 以上が必須（rspack の要件）。`.nvmrc` / volta で 22.18.0 を固定している
+
+リポジトリ直下の `gulpfile.js` / `webpack.config.js`（出力 `html/bundle`）は
+EC-CUBE 本体のビルドであり、これとは無関係。Node のバージョン要件も異なるため
+意図的に分離している。混ぜないこと。
+
+`data-*` 属性と CSS クラス名は TAM のマークアップとの契約のため、変更せず追加のみとする。
+詳細は `frontend/hareruya/README.md` を参照。
+
+## Lint/Format
+
+実装完了前に以下のコマンドを実行して、Lint/Formatのチェックを行うこと。対象ファイルは変更差分のみでOK。
+
+### PHP CS Fixer
+
+```
+docker compose exec -T -e XDEBUG_MODE=off ec-cube vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php --dry-run --diff --path-mode=intersection <変更差分のファイルパス>
+```
+
+### PHPStan
+
+```
+docker compose exec -T -e XDEBUG_MODE=off ec-cube vendor/bin/phpstan analyze --error-format=github <変更差分のファイルパス>
+```
+# コーディング規約
+## Action クラス
+
+- `src/Eccube/Service/**/*Action.php` の public メソッドは `handle()` のみとする（`__construct` を除く）。
+- 複数の public メソッドを持たせない。Action は単一のユースケース入口であり、共通クラス化しない。
+- 一覧の QueryBuilder 取得なども `handle()` の戻り値で表現する（例: `StockListSearchAction`）。
+- 共通化が必要なロジックは Util・Repository・専用クラス等に切り出す。
+
+# テスト実装と実行
+
+- PHPUnit実行ファイルは `bin/phpunit` ではなくコンテナ内の `vendor/bin/phpunit`。例: `docker compose -f docker-compose.yml -f docker-compose.pgsql.yml -f docker-compose.dev.yml exec -T ec-cube vendor/bin/phpunit tests/Eccube/Tests/Web/Admin/Product/ProductControllerTest.php --filter 'testRoutingAdminProductProductNewGet|testProductRegistrationButtonTranslation'`
+- 全てのユニットテストはクラスか各関数のいずれかに `@group HARERUYA` もしくは `#[Group(name: 'HARERUYA')]` アノテーションが必要。
+- このチェックアウトではホストにPHPおよび`vendor/`が存在しないため、PHP構文確認・PHPUnit・PHP CS Fixerは`ec-cube`コンテナ内で実行する。起動後の公開ポートは管理画面を含むApacheが`8080`、Caddyが`8000`である。
+- FormTypeのテストは、項目ごとにテストケースを分けるとsetUp実行によるテスト時間の増加に繋がりやすいため、`tests/Eccube/Tests/Form/Type/Admin/SearchProductTypeTest.php#L160` を参考にデータ駆動形式で検証する。
+- テストの層は「変更したファイルの位置」ではなく「責務の所在」で決める。`src/Eccube/Service/**/*Action.php` のロジックは `tests/Eccube/Tests/Service/**` で検証し、Controller経由のリクエストで間接的に確認しない。
+- Controller IT はカーネル起動・フィクスチャ投入・HTTP往復を伴い最も実行コストが高いため、ルーティング・権限・リダイレクト・Form→Actionの受け渡しなど、Controller自身の責務を検証する場合に限る。
+- assert の根拠は変更差分ではなく仕様から取る。
+- 各テストメソッドには、実装を読まなくても意図が分かるよう、次のフォーマットで PHPDoc コメントを記載すること。1行目は「対象 - 正常系/異常系」、2行目は期待する振る舞いを「〜こと」で書く。例: `tests/Eccube/Tests/Entity/DtbEventDetailHasFinishedTest.php`
+```php
+/**
+ * hasFinished - 正常系
+ * 開催日当日は開始時刻を過ぎても終了扱いにならないこと
+ */
+```
+
+## 自動テストを追加するかの判断
+
+「この変更が将来壊れたとき、振る舞いが変わるか、表示だけが変わるか」で決める。振る舞いが変わるなら自動テストを追加し、表示だけなら目視で確認して自動テストは追加しない。
+
+| 変更の性質 | 検証手段 |
+| --- | --- |
+| 条件分岐・計算・状態遷移・クエリ条件・バリデーションのルール・権限・永続化 | 自動テストを追加する |
+| CSV の列順・列数・キーとの対応、API 応答のキー構成 | 自動テストを追加する |
+| twig 内の `{% if %}` / `{% for %}` などの分岐・計算 | 自動テストを追加する（可能な限り Action / Service 側で検証し、Controller IT にしない） |
+| 表示文言のみ（`messages.*.yaml` の値、twig の静的文字列、ラベル・プレースホルダ・バリデーションメッセージの文面） | 自動テストを追加せず、目視で確認する |
+| PHP 内の文言のみ（CSV 見出し文字列・メール件名・API のラベル文字列など、値の並びや対応は変えないもの） | 自動テストを追加せず、目視で確認する |
+| CSS・レイアウトのみ | 自動テストを追加せず、目視で確認する |
+
+自動テストを追加しない場合は、確認した画面（URL または操作）と確認結果を作業報告に書く。
+
+### やらないこと
+
+- 画面表示の文言確認を目的とした Controller IT の新規追加・拡張（「Controller IT は Controller 自身の責務を検証する場合に限る」の具体例）
+- 既存テストの PHPDoc を書き換えて別目的の検証を相乗りさせること。既存テストの意図は変えない。同じクラスに新しいテストメソッドを追加するのは可
+
+### 既存テストの維持
+
+- 文言を変更したら `tests/` 配下を旧文言で grep し、fail する既存テストを洗い出す。
+- fail する既存テストの修正は「テストの追加」ではなく必須の維持作業として行う。
+- 修正は期待値の更新で行い、assert の削除はしない。削除してよいのは、その assert が検証していた文言自体が無くなった場合のみ。
+
+## テスト粒度
+
+以下の基準で選択すること：
+- UT：ロジックが単体で完結しており、外部依存がない場合
+- IT：DB・フレームワーク・外部依存が関わる場合
+原則としてUTを優先するが、無理にモックを増やすことは禁止であり、その場合はITを選択すること
+
+## テストの独立性
+
+前提としてDBがクリーンな状態でテストされるようになっている。
+ただし、シーケンスなどは継続されている。
+
+## 保守性
+
+実装変更に強く、過剰に内部実装に依存しないように実装すること。
+
+## セルフチェック（必須）
+
+以下を満たしているか確認すること：
+
+- 実装を読まなくてもテストの意図が理解できるか？
+- flakyなテストになっていないか？
+- Testはpassするか？
+
+exec
+/bin/bash -lc "rg '"'^(A01-02|B02-02|B02-05|B05-01|B05-04|B05-09|B06-01|B06-02|B08-02|B08-03)'"' integration_test/casegen/runnable/env/restored.tsv; head -2 integration_test/casegen/runnable/env/restored.tsv; head -1 integration_test/casegen/excluded_open_cases.tsv; head -1 integration_test/casegen/excluded_open_seeds.tsv" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+テストID	止めていた項目
+IT-B02-02-001	前提-718971a356
+テストID	機能ID	除外理由	未確定の内容	元_テストID	元_要求ID	元_連鎖ID	元_観点ID	元_優先度	元_実行区分	元_使用シード	元_事前準備	元_手順	元_期待結果	元_出典
+機能ID	使用していた除外ケース	シードID	区分	論理名	状態・属性	用途	投入方法	共有
+
+exec
+/bin/bash -lc 'for n in A01-02 B02-02 B02-05 B05-01 B05-04 B05-09 B06-01 B06-02 B08-02 B08-03; do echo "### $n"; nl -ba integration_test/casegen/runnable/env/out/$n.tsv | head -60; done' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+### A01-02
+     1	種別	対象ID	判定	区分	新しい投入方法	新しい状態・属性	根拠	理由
+     2	シード	S-A01-02-EXEC	環境で解消	バッチ	試験環境のバッチ設定、実行コンソール設定およびアプリケーション設定で、バッチA01-02「スマレジwebhook連携エラー再連携」を手動で起動できるようにし、試験実行者に起動と実行結果参照の権限を与える。起動したら、管理画面の非同期処理のジョブ一覧で、待機中・実行中のジョブがともに0件になるまで待つことで、在庫再連携の子処理を含む実行の完了を確かめる。		設計書0501 sheet-4 L0015-L0016・L0030（バッチの起動方法はAWS Step Functions、スケジュール起動）・L0022（起動前5時間の在庫変動履歴取得）・L0043（実行結果）／確定済みの書き方 S-B05-03-BATCH-ENV・S-B02-01-BATCH-ENV	
+     3	シード	S-A01-02-RELAY	解消しない	中継・模擬				商品ごとにWebhookを保留・転送し、残存通知を破棄し、送受信記録を区切る中継が要る。中継・模擬は用意しない
+     4	前提	前提-2790e464e6	環境で解消	バッチ	試験環境のバッチ設定、実行コンソール設定およびアプリケーション設定でバッチA01-02を手動起動できるようにすれば、起動と、非同期処理のジョブが0件になるまで待つことによる完了確認が試験環境の操作で決まる。S-A01-02-EXECの書き方と同じ。		設計書0501 sheet-4 L0015-L0016・L0030（バッチの起動方法はAWS Step Functions、スケジュール起動）・L0022（起動前5時間の在庫変動履歴取得）・L0043（実行結果）／確定済みの書き方 S-B05-03-BATCH-ENV・S-B02-01-BATCH-ENV	
+     5	前提	前提-8803a81260	解消しない	中継・模擬				S-A01-02-RELAYと同じ
+     6	シード	S-A01-02-STORE-PICKUP-007	解消しない	作り方・中継・模擬				店頭受取受注からスマレジの一時商品を作る操作が設計書に無く、Webhookを保留して2個販売する手順は中継・模擬になる
+     7	前提	前提-e67aa785d8	解消しない	作り方				店頭受取受注からスマレジの一時商品A0102-OTC-007を作り販売可能にする操作が、設計書にもee実装にも確認できない
+     8	シード	S-A01-02-API-RECORDER	解消しない	中継・模擬				プラットフォームAPIと廃止予定スマレジAPIが受けた要求を記録・参照し、履歴を0件へ区切る手段が要る。通信を記録する中継・模擬は用意しない。廃止予定スマレジAPIの受け口を模擬で立てるのも用意しない
+     9	前提	前提-095a2bf1ff	解消しない	中継・模擬				S-A01-02-API-RECORDERと同じ
+    10	前提	前提-801963d255	環境で解消	バッチ	試験環境のバッチ設定、実行コンソール設定およびアプリケーション設定でバッチA01-02を手動起動できるようにすれば、起動と、非同期処理のジョブが0件になるまで待つことによる完了確認が試験環境の操作で決まる。S-A01-02-EXECの書き方と同じ。		設計書0501 sheet-4 L0015-L0016・L0030（バッチの起動方法はAWS Step Functions、スケジュール起動）・L0022（起動前5時間の在庫変動履歴取得）・L0043（実行結果）／確定済みの書き方 S-B05-03-BATCH-ENV・S-B02-01-BATCH-ENV	
+    11	前提	前提-8a8d7869dd	解消しない	中継・模擬				S-A01-02-RELAYと同じ
+### B02-02
+     1	種別	対象ID	判定	区分	新しい投入方法	新しい状態・属性	根拠	理由
+     2	前提	前提-718971a356	環境で解消	バッチ	試験環境のバッチ設定、実行コンソール設定およびアプリケーション設定で、バッチB02-02（入荷通知キャンセル。実行コンソールでeccube:cancel-product-requestを入力引数なしで起動する）の参照先を専用試験DBに設定し、試験者へ起動・実行結果参照の権限を付ける。起動した実行の開始・完了の出力（実行日時つき）で結果を確認する。		CancelProductRequestCommand.php:34（コマンド名）、B02-02 design.txt L0053-L0059（引数なし・開始時と完了時の出力）、B02-01 の確定済み S-B02-01-BATCH-ENV の書き方	
+     3	前提	前提-3fd3328b64	環境で解消	バッチ	試験環境のバッチ設定、実行コンソール設定およびアプリケーション設定で、バッチB02-02の参照先を専用試験DBに設定し、試験者へ起動・実行結果参照の権限を付ける。同じ中身のシードS-B02-02-L-ENVと同じ書き方。		CancelProductRequestCommand.php:34、B02-02 design.txt L0053-L0059、S-B02-02-L-ENVの投入方法	
+### B02-05
+     1	種別	対象ID	判定	区分	新しい投入方法	新しい状態・属性	根拠	理由
+     2	シード	S-B02-05-BATCH-ENV	環境で解消	バッチ	試験環境のバッチ設定、実行コンソール設定およびアプリケーション設定で、バッチB02-05（お気に入り商品セール通知。実行コンソールでeccube:favorite-sale-notificationを入力引数なしで起動する）を手動起動でき、起動した実行の状態と履歴（開始・完了の出力。実行時刻とバッチ名saleNotificationを含む）を確認できるようにし、試験者へ起動と履歴参照の権限を付ける。ケース開始時に実行中件数が0件であることを確かめてから始める。		FavoriteSaleNotificationCommand.php:34（コマンド名）、B02-05 design.txt L0052-L0057（開始・完了の出力とバッチ名）、B02-01 の確定済み S-B02-01-BATCH-ENV の書き方	
+     3	前提	前提-ba7311f2f8	環境で解消	バッチ	試験環境のバッチ設定、実行コンソール設定およびアプリケーション設定で、B02-05を実行コンソールからeccube:favorite-sale-notificationとして手動起動でき、試験者に起動と履歴参照の権限があり、起動した実行を開始・完了の出力（実行時刻とバッチ名saleNotification）で識別できるようにする。シードS-B02-05-BATCH-ENVと同じ書き方。		FavoriteSaleNotificationCommand.php:34、B02-05 design.txt L0052-L0057	
+     4	前提	前提-67bf0c65c8	環境で解消	バッチ	試験環境のバッチ設定、実行コンソール設定およびアプリケーション設定で、B02-05をeccube:favorite-sale-notificationとして手動起動でき、試験者に起動と履歴参照の権限があるようにする。シードS-B02-05-BATCH-ENVと同じ書き方。		FavoriteSaleNotificationCommand.php:34、B02-05 design.txt L0052-L0057	
+### B05-01
+     1	種別	対象ID	判定	区分	新しい投入方法	新しい状態・属性	根拠	理由
+     2	シード	S-B05-01-BATCH	環境で解消	バッチ	試験環境のバッチ設定および実行コンソール設定で、バッチB05-01「店頭受取注文商品スマレジ連携バッチ」を手動起動できるようにする（実行コンソールでeccube:order:otc-smaregi-postを起動できる権限を持たせ、定期起動は停止する）。開始時にB05-01の実行中と未完了の受注別処理が0件であることを確認し、起動後は非同期処理の待機中・実行中のジョブが0件になるまで待って完了を確認する		precond/README.md 非同期完了待ち（T3）、確定済みバッチ設定の書き方、ee実装 Command/OtcOrderSmaregiPostCommand.php（eccube:order:otc-smaregi-post）、HTML設計書は10分おきのバッチ起動を定義	
+     3	前提	前提-5d34281f47	環境で解消	バッチ	解消の書き方: 試験環境のバッチ設定と実行コンソール設定でB05-01を手動起動できるようにし、定期起動を止め、非同期処理のジョブが0件になるまで待って完了を確認する（S-B05-01-BATCHと同じ書き方）。		ee実装 Command/OtcOrderSmaregiPostCommand.php、precond/README.md 非同期完了待ち	
+     4	シード	S-B05-01-API-OK	解消しない	中継・模擬				要求履歴0件の確認と受け取った要求の確認は通信の記録・表示にあたり中継・模擬が要る（用意しない）
+     5	前提	前提-9ff45a0f92	解消しない	中継・模擬・障害				商品コード単位の通信遮断の切替と要求履歴の初期化・表示は中継・模擬・障害で、用意しない
+     6	シード	S-B05-01-CLOCK	解消しない	時刻				現在日時の固定は用意しない
+     7	前提	前提-cb3e286b02	解消しない	時刻				現在日時の固定は用意しない
+     8	シード	S-B05-01-API-PRODUCT-DOWN	解消しない	中継・模擬・障害				商品登録だけへの通信遮断は障害・中継で、用意しない
+     9	シード	S-B05-01-MAILBOX-017	環境で解消	メール	試験環境のメール配送設定で受信箱を指定し、試験環境の受信箱で、宛先smaregi-error-b0501-017@example.testのメールを消して受信メール0件にしてから始める		precond/README.md 非同期完了待ちの項、確定済みメール配送設定の書き方、HTML設計書は追加設定の送信先へのエラーメール送信を定義	
+    10	前提	前提-2c99cee270	環境で解消	メール	解消の書き方: 試験環境のメール配送設定で受信箱を指定し、ケース専用の宛先（smaregi-error-b0501-017@example.test・同-020@example.test）のメールを開始時に消して0件にし、受信箱で届いたメールを参照する（S-B05-01-MAILBOX-017・020と同じ書き方）。		HTML設計書・ee実装は追加設定の送信先へのエラーメール送信を定義	
+    11	シード	S-B05-01-API-STOCK-DOWN	解消しない	中継・模擬・障害				在庫登録だけへの通信遮断は障害・中継で、用意しない
+    12	シード	S-B05-01-MAILBOX-020	環境で解消	メール	試験環境のメール配送設定で受信箱を指定し、試験環境の受信箱で、宛先smaregi-error-b0501-020@example.testのメールを消して受信メール0件にしてから始める		precond/README.md 非同期完了待ちの項、確定済みメール配送設定の書き方、HTML設計書は追加設定の送信先へのエラーメール送信を定義	
+    13	シード	S-B05-01-BATCH-026	解消しない	時刻				現在日時の固定は用意しない（手動起動はバッチで解決するが時刻が残る）
+    14	シード	S-B05-01-API-026	解消しない	中継・模擬				受け取った要求の履歴を0件から確認することは通信の記録・表示にあたり中継・模擬が要る
+    15	前提	前提-4354b163ac	解消しない	時刻				現在日時の固定は用意しない
+    16	前提	前提-097434ee9c	解消しない	中継・模擬				受け取った要求の履歴の確認は中継・模擬が要る
+### B05-04
+     1	種別	対象ID	判定	区分	新しい投入方法	新しい状態・属性	根拠	理由
+     2	シード	S-B05-04-API-OK	解消しない	中継・模擬			入力の項目と手がかり、excluded_open_cases の元ケースを確認	S-B05-04-API-OK: 要求履歴の確認と0件化、応答の切替は中継・模擬が要り用意しない（スマレジ試験環境自体は要求履歴を見せない）
+     3	シード	S-B05-04-EXCLUDED-001	解消しない	分離			入力の項目と手がかり、excluded_open_cases の元ケースを確認	本ケース以外の対象受注を0件にするケース単位のDB分離・復元が要り、環境の用意では決まらない
+     4	前提	前提-a09439cfc6	解消しない	中継・模擬			入力の項目と手がかり、excluded_open_cases の元ケースを確認	応答なし・結果を含まない応答への切替と要求履歴の確認・初期化が要り、要求履歴の確認と0件化、応答の切替は中継・模擬が要り用意しない（スマレジ試験環境自体は要求履歴を見せない）
+     5	前提	前提-27c17076af	解消しない	分離			入力の項目と手がかり、excluded_open_cases の元ケースを確認	本ケース以外の対象受注を0件にするケース単位のDB分離・復元が要り、環境の用意では決まらない
+     6	前提	前提-73b0617453	解消しない	設計			入力の項目と手がかり、excluded_open_cases の元ケースを確認	基線手順のバッチ名を引数で受け取る受注バッチがee実装に無く、設計書の起動方法と実装が食い違う（バッチを動かす手段の用意では決まらない）
+     7	シード	S-B05-04-MATRIX-002	解消しない	中継・模擬・分離			入力の項目と手がかり、excluded_open_cases の元ケースを確認	外部状態の初期化(S-B05-04-API-OK)に要求履歴の0件化が要り中継・模擬が必要。かつ本ケース以外の対象受注を0件にするケース単位のDB分離・復元が要り、環境の用意では決まらない
+     8	シード	S-B05-04-PRODUCT-003	解消しない	分離			入力の項目と手がかり、excluded_open_cases の元ケースを確認	本ケース以外の対象受注を0件にするケース単位のDB分離・復元が要り、環境の用意では決まらない
+     9	シード	S-B05-04-PRODUCT-004	解消しない	分離			入力の項目と手がかり、excluded_open_cases の元ケースを確認	本ケース以外の対象受注を0件にするケース単位のDB分離・復元が要り、環境の用意では決まらない
+    10	シード	S-B05-04-STOCK-005	解消しない	分離			入力の項目と手がかり、excluded_open_cases の元ケースを確認	本ケース以外の対象受注を0件にするケース単位のDB分離・復元が要り、環境の用意では決まらない
+    11	シード	S-B05-04-STOCK-006	解消しない	分離			入力の項目と手がかり、excluded_open_cases の元ケースを確認	本ケース以外の対象受注を0件にするケース単位のDB分離・復元が要り、環境の用意では決まらない
+    12	シード	S-B05-04-BOTH-007	解消しない	分離			入力の項目と手がかり、excluded_open_cases の元ケースを確認	本ケース以外の対象受注を0件にするケース単位のDB分離・復元が要り、環境の用意では決まらない
+    13	シード	S-B05-04-BOTH-008	解消しない	分離			入力の項目と手がかり、excluded_open_cases の元ケースを確認	本ケース以外の対象受注を0件にするケース単位のDB分離・復元が要り、環境の用意では決まらない
+    14	シード	S-B05-04-NONE-009	解消しない	分離			入力の項目と手がかり、excluded_open_cases の元ケースを確認	試験環境全体で対象受注を0件にするケース単位のDB分離・復元が要り、環境の用意では決まらない
+    15	前提	前提-14a8e36ad1	解消しない	分離			入力の項目と手がかり、excluded_open_cases の元ケースを確認	ケース識別子で絞れない全受注抽出のため、他ケースの受注を変えない分離・復元が要る
+    16	シード	S-B05-04-API-ERROR-MATRIX	解消しない	中継・模擬			入力の項目と手がかり、excluded_open_cases の元ケースを確認	商品登録APIに応答なし・結果を含まない応答を返させる手段が要る（中継・模擬は用意しない）
+    17	シード	S-B05-04-ERROR-ORDERS-010	解消しない	中継・模擬・分離			入力の項目と手がかり、excluded_open_cases の元ケースを確認	応答なし・結果なしの再現は中継・模擬が要る。かつ本ケース以外の対象受注を0件にするケース単位のDB分離・復元が要り、環境の用意では決まらない
+    18	シード	S-B05-04-API-PRODUCT-NORESPONSE	解消しない	中継・模擬			入力の項目と手がかり、excluded_open_cases の元ケースを確認	特定の商品コードの商品登録APIだけ応答なしにする手段が要る（中継・模擬は用意しない）
+    19	シード	S-B05-04-CONTINUE-012	解消しない	中継・模擬・分離			入力の項目と手がかり、excluded_open_cases の元ケースを確認	外部状態の初期化(S-B05-04-API-PRODUCT-NORESPONSE)に応答の切替が要る。かつ本ケース以外の対象受注を0件にするケース単位のDB分離・復元が要り、環境の用意では決まらない
+    20	シード	S-B05-04-CONTINUE-013	解消しない	中継・模擬・分離			入力の項目と手がかり、excluded_open_cases の元ケースを確認	外部状態の初期化(S-B05-04-API-PRODUCT-NORESPONSE)に応答の切替が要る。かつ本ケース以外の対象受注を0件にするケース単位のDB分離・復元が要り、環境の用意では決まらない
+    21	シード	S-B05-04-MATRIX-014	解消しない	中継・模擬・分離			入力の項目と手がかり、excluded_open_cases の元ケースを確認	外部状態の初期化(S-B05-04-API-OK)に要求履歴の0件化が要る。かつ本ケース以外の対象受注を0件にするケース単位のDB分離・復元が要り、環境の用意では決まらない
+    22	シード	S-B05-04-MATRIX-015	解消しない	中継・模擬・分離			入力の項目と手がかり、excluded_open_cases の元ケースを確認	外部状態の初期化(S-B05-04-API-OK)に要求履歴の0件化が要る。かつ本ケース以外の対象受注を0件にするケース単位のDB分離・復元が要り、環境の用意では決まらない
+    23	シード	S-B05-04-PRODUCTLINKED-019	環境で解消	外部の試験環境	DBへの直接投入で受注・配送・受注明細を作る（画面で作れない理由: 受注IDと注文番号は自動採番で指定できず、スマレジ商品コード・削除フラグ・商品連携・在庫連携は管理画面にもフロント画面にも入力欄が無い）。受注ID=504019001、注文番号=B0504-019-ORDER-001、スマレジ商品コード=2504019-001、削除フラグ=false、商品連携=true、在庫連携=false。店舗・会員・配送方法はS-B05-04-CONTEXTの店舗レコードID 950504001・会員ID 650504001・店頭受取を参照させ、注文ステータス=注文受領、注文合計金額=1000、スマレジ連携エラーなしにする。同じ受注IDの行が残っているときは削除してから入れ直す。続けてDBへの直接投入で、本シード以外の受注のうち「スマレジ商品コードが登録済み・スマレジ削除フラグが立っていない・商品連携か在庫連携のどちらかが未連携」に当たる受注を検索し、当たった受注すべての商品連携と在庫連携を連携済みに更新して、再検索で本シードの受注だけが残ることを確かめる（画面で作れない理由: 連携区分を変える画面項目が無い）。外部商品1件・対象在庫0件は、スマレジ試験環境の管理画面で、スマレジ店舗ID 1に商品コード2504019-001の商品を1件登録し、在庫は登録しない（在庫数を入れず入庫もしない）。同じ商品コードの商品が残っているときは、管理画面で削除してから登録し直す。		ee src/Eccube/Service/Smaregi/Api/SmaregiProductApiClient.php listByProductCode（商品コードで外部商品を検索）／B05-05 S-B05-05-DP-REPEAT-016 の確定済みの書き方（スマレジ試験環境の管理画面で商品コードの商品を登録）／入力の未確定箇所は外部商品・在庫の作り方だけ	
+    24	前提	前提-a75ba218c7	環境で解消	外部の試験環境	解消の書き方: 外部商品1件・対象在庫0件は、スマレジ試験環境の管理画面で、スマレジ店舗ID 1に商品コード2504019-001の商品を1件登録し、在庫は登録しない（在庫数を入れず入庫もしない）。同じ商品コードの商品が残っているときは、管理画面で削除してから登録し直す。 同じ中身のシード(S-B05-04-PRODUCTLINKED-019)の書き方と同じ。		ee src/Eccube/Service/Smaregi/Api/SmaregiProductApiClient.php listByProductCode（商品コードで外部商品を検索）／B05-05 S-B05-05-DP-REPEAT-016 の確定済みの書き方（スマレジ試験環境の管理画面で商品コードの商品を登録）／入力の未確定箇所は外部商品・在庫の作り方だけ	
+    25	前提	前提-ff3b402eb6	解消しない	中継・模擬			入力の項目と手がかり、excluded_open_cases の元ケースを確認	S-B05-04-API-OKの要求履歴の確認・0件化が要る（中継・模擬は用意しない）
+    26	シード	S-B05-04-STOCKLINKED-020	環境で解消	外部の試験環境	DBへの直接投入で受注・配送・受注明細を作る（画面で作れない理由: 受注IDと注文番号は自動採番で指定できず、スマレジ商品コード・削除フラグ・商品連携・在庫連携は管理画面にもフロント画面にも入力欄が無い）。受注ID=504020001、注文番号=B0504-020-ORDER-001、スマレジ商品コード=2504020-001、削除フラグ=false、商品連携=false、在庫連携=true。店舗・会員・配送方法はS-B05-04-CONTEXTの店舗レコードID 950504001・会員ID 650504001・店頭受取を参照させ、注文ステータス=注文受領、注文合計金額=1000、スマレジ連携エラーなしにする。同じ受注IDの行が残っているときは削除してから入れ直す。続けてDBへの直接投入で、本シード以外の受注のうち「スマレジ商品コードが登録済み・スマレジ削除フラグが立っていない・商品連携か在庫連携のどちらかが未連携」に当たる受注を検索し、当たった受注すべての商品連携と在庫連携を連携済みに更新して、再検索で本シードの受注だけが残ることを確かめる（画面で作れない理由: 連携区分を変える画面項目が無い）。外部商品0件・対象在庫0件は、スマレジ試験環境の管理画面で商品コード2504020-001の商品を検索し、残っていれば削除して0件にしておく（商品も在庫も登録しない）。		ee src/Eccube/Service/Smaregi/Api/SmaregiProductApiClient.php listByProductCode（商品コードで外部商品を検索）／B05-05 S-B05-05-DP-REPEAT-016 の確定済みの書き方（スマレジ試験環境の管理画面で商品コードの商品を登録）／入力の未確定箇所は外部商品・在庫の作り方だけ	
+    27	前提	前提-b630ba5e09	環境で解消	外部の試験環境	解消の書き方: 外部商品0件・対象在庫0件は、スマレジ試験環境の管理画面で商品コード2504020-001の商品を検索し、残っていれば削除して0件にしておく（商品も在庫も登録しない）。 同じ中身のシード(S-B05-04-STOCKLINKED-020)の書き方と同じ。		ee src/Eccube/Service/Smaregi/Api/SmaregiProductApiClient.php listByProductCode（商品コードで外部商品を検索）／B05-05 S-B05-05-DP-REPEAT-016 の確定済みの書き方（スマレジ試験環境の管理画面で商品コードの商品を登録）／入力の未確定箇所は外部商品・在庫の作り方だけ	
+    28	シード	S-B05-04-API-STOCK-ERROR-021	解消しない	中継・模擬			入力の項目と手がかり、excluded_open_cases の元ケースを確認	在庫登録APIに応答なし・結果を含まない応答を商品コード別に返させる手段と要求履歴の0件化が要る（中継・模擬は用意しない）
+    29	シード	S-B05-04-STOCK-ERROR-ORDERS-021	環境で解消	外部の試験環境	DBへの直接投入で受注・配送・受注明細を作る（画面で作れない理由: 受注IDと注文番号は自動採番で指定できず、スマレジ商品コード・削除フラグ・商品連携・在庫連携は管理画面にもフロント画面にも入力欄が無い）。受注ID 504021001=注文番号B0504-021-ORDER-001・スマレジ商品コード2504021-001、受注ID 504021002=注文番号B0504-021-ORDER-002・スマレジ商品コード2504021-002の2件。両受注とも削除フラグ=false、商品連携=true、在庫連携=false。店舗・会員・配送方法はS-B05-04-CONTEXTの店舗レコードID 950504001・会員ID 650504001・店頭受取を参照させ、注文ステータス=注文受領、注文合計金額=1000、スマレジ連携エラーなしにする。同じ受注IDの行が残っているときは削除してから入れ直す。続けてDBへの直接投入で、本シード以外の受注のうち「スマレジ商品コードが登録済み・スマレジ削除フラグが立っていない・商品連携か在庫連携のどちらかが未連携」に当たる受注を検索し、当たった受注すべての商品連携と在庫連携を連携済みに更新して、再検索で本シードの受注だけが残ることを確かめる（画面で作れない理由: 連携区分を変える画面項目が無い）。両商品コードの外部商品1件・在庫0件は、スマレジ試験環境の管理画面で、スマレジ店舗ID 1に商品コード2504021-001と2504021-002の商品を1件ずつ登録し、在庫は登録しない（在庫数を入れず入庫もしない）。同じ商品コードの商品が残っているときは、管理画面で削除してから登録し直す。		ee src/Eccube/Service/Smaregi/Api/SmaregiProductApiClient.php listByProductCode（商品コードで外部商品を検索）／B05-05 S-B05-05-DP-REPEAT-016 の確定済みの書き方（スマレジ試験環境の管理画面で商品コードの商品を登録）／入力の未確定箇所は外部商品・在庫の作り方だけ	
+    30	前提	前提-c8964d152c	解消しない	中継・模擬			入力の項目と手がかり、excluded_open_cases の元ケースを確認	在庫登録APIの応答を商品コード別に切り替える手段と要求履歴の0件化が要る（中継・模擬は用意しない）
+    31	前提	前提-9f9fc37397	環境で解消	外部の試験環境	解消の書き方: 両商品コードの外部商品1件・在庫0件は、スマレジ試験環境の管理画面で、スマレジ店舗ID 1に商品コード2504021-001と2504021-002の商品を1件ずつ登録し、在庫は登録しない（在庫数を入れず入庫もしない）。同じ商品コードの商品が残っているときは、管理画面で削除してから登録し直す。 同じ中身のシード(S-B05-04-STOCK-ERROR-ORDERS-021)の書き方と同じ。		ee src/Eccube/Service/Smaregi/Api/SmaregiProductApiClient.php listByProductCode（商品コードで外部商品を検索）／B05-05 S-B05-05-DP-REPEAT-016 の確定済みの書き方（スマレジ試験環境の管理画面で商品コードの商品を登録）／入力の未確定箇所は外部商品・在庫の作り方だけ	
+### B05-09
+     1	種別	対象ID	判定	区分	新しい投入方法	新しい状態・属性	根拠	理由
+     2	シード	S-B05-09-API	解消しない	中継・模擬				取引一覧・取引詳細・ポイント連携の応答をケースごとに切り替え、受信した要求を記録して0件へ戻す手段が要る（中継・模擬は用意しない）
+     3	前提	前提-a6569eaaa1	解消しない	中継・模擬				応答の切替と受信履歴の初期化・確認をする試験サーバーが要る（中継・模擬は用意しない）
+     4	前提	前提-54665801cf	環境で解消	バッチ	試験環境のバッチ設定、実行コンソール設定およびアプリケーション設定でバッチB05-09「スマレジ取引Webhook連携エラー再連携」を手動起動できるようにし、試験実行者に起動と実行結果参照の権限を与えれば、起動と、起動した実行が終わって非同期処理のジョブが0件になるまで待つことによる完了確認が、試験環境の操作で決まる。基線の手順で名指しされる起動コマンドの有無にかかわらず、バッチの起動は試験環境のバッチ設定で決まる。		設計書0405 sheet-11（coverage_audit/units/0405_sheet-11）／ee実装 SmaregiTransactionBackfillCommand.php（引数 from・to は任意）・SmaregiTransactionBackfillAction.php（対象取引ごとに子処理を投入）	
+     5	前提	前提-64e1672c9d	環境で解消	バッチ	試験環境のバッチ設定、実行コンソール設定およびアプリケーション設定でバッチB05-09「スマレジ取引Webhook連携エラー再連携」を手動起動できるようにし、試験実行者に起動と実行結果参照の権限を与えれば、起動と、起動した実行が終わって非同期処理のジョブが0件になるまで待つことによる完了確認が、試験環境の操作で決まる。受注・ポイントの反映は対象取引ごとの子処理が行うので、バッチの実行完了ではなく非同期処理のジョブが0件になるのを待つ。		設計書0405 sheet-11（coverage_audit/units/0405_sheet-11）／ee実装 SmaregiTransactionBackfillCommand.php（引数 from・to は任意）・SmaregiTransactionBackfillAction.php（対象取引ごとに子処理を投入）	
+     6	前提	前提-df7a714fdd	環境で解消	外部の試験環境	試験環境の配備設定でスマレジ試験環境の接続先、契約情報および認証情報を設定し、再連携処理がその外部の試験環境へ接続するようにすれば、基線が使う接続先・契約・認証の設定値が実際の要求に使われる。		設計書0405 sheet-11（coverage_audit/units/0405_sheet-11）／ee実装 SmaregiTransactionBackfillCommand.php（引数 from・to は任意）・SmaregiTransactionBackfillAction.php（対象取引ごとに子処理を投入）／ee実装は接続先・契約ID・認証情報を配備設定から読む（SmaregiTransactionBackfillAction.php の getAccessToken・listTransactions 呼び出し）／確定済みの書き方「試験環境の配備設定でスマレジ試験環境の接続先、契約情報および認証情報を設定する」	
+     7	シード	S-B05-09-CLOCK	解消しない	時刻				業務日時を指定した日本時間へ固定する手段が要る（時刻の固定は用意しない）
+     8	前提	前提-51640e5969	解消しない	時刻				業務日時を指定日時へ固定して戻す手段が要る（時刻の固定は用意しない）
+     9	前提	前提-06d854014c	解消しない	時刻・設計				基線の確定日・出荷日の期待（バッチ起動前後の日時）とee実装（スマレジ取引日時を設定）が食い違い、業務日時の固定も要る（時刻の固定は用意しない）
+    10	前提	前提-7ac3f22ceb	解消しない	設計				設計書は通常取引だけを取得すると定める一方、ee実装は一覧取得で取引区分を絞らず取得後に対象外を除外する。要求条件に関する設計と実装の食い違いが残り、環境では解消しない
+    11	前提	前提-daa5f3a239	解消しない	中継・模擬・設計				取引情報の取得異常を起こすにはスマレジにエラー応答を返させる手段が要り（中継・模擬は用意しない）、基線の終了コード0とee実装の異常終了コードの食い違いも残る
+    12	前提	前提-1fa6cad623	解消しない	中継・模擬				S-B05-09-APIと同じ。応答の切替と受信履歴の初期化・確認が要る（中継・模擬は用意しない）
+    13	前提	前提-a8b286ad64	解消しない	時刻				S-B05-09-CLOCKと同じ。業務日時の固定が要る（時刻の固定は用意しない）
+    14	前提	前提-5acd5fc9ea	環境で解消	外部の試験環境	試験環境の配備設定でスマレジ試験環境の接続先、契約情報および認証情報を設定し、再連携処理がその外部の試験環境へ接続するようにすれば、基線が使う接続先・契約・認証の設定値が実際の要求に使われる。前提-df7a714fdd（S-B05-09-CONFIG）と同じ書き方。		設計書0405 sheet-11（coverage_audit/units/0405_sheet-11）／ee実装 SmaregiTransactionBackfillCommand.php（引数 from・to は任意）・SmaregiTransactionBackfillAction.php（対象取引ごとに子処理を投入）／ee実装は接続先・契約ID・認証情報を配備設定から読む／確定済みの書き方「試験環境の配備設定でスマレジ試験環境の接続先、契約情報および認証情報を設定する」	
+    15	シード	S-B05-09-DP-MIX-035	解消しない	作り方・中継・模擬・設計				会員ID・受注・ポイント履歴を指定してDBへ直接設定する手順が残り、スマレジAPI試験サーバーの応答設定（中継・模擬は用意しない）が要り、返品(キャンセル)の更新の表し方も設計書から決まらない
+    16	前提	前提-ae969feea9	解消しない	作り方・中継・模擬・設計				S-B05-09-DP-MIX-035と同じ
+    17	シード	S-B05-09-DP-MIX-036	解消しない	作り方・中継・模擬・設計				会員ID・受注・ポイント履歴を指定してDBへ直接設定する手順が残り、スマレジAPI試験サーバーの応答設定（中継・模擬は用意しない）が要り、返品(キャンセル)の更新の表し方も設計書から決まらない
+    18	前提	前提-5156a78045	解消しない	作り方・中継・模擬・設計				S-B05-09-DP-MIX-036と同じ
+### B06-01
+     1	種別	対象ID	判定	区分	新しい投入方法	新しい状態・属性	根拠	理由
+     2	シード	S-B06-01-STORE-WAIT-001	解消しない	作り方・設計				店頭買取・商品・在庫を記載のIDでDBへ直接登録する手順が残り（IDを指定する画面が無い）、設計書の12: 入庫待ちとee実装の番号（13）の食い違いも残る
+     3	前提	前提-ec7cac217d	解消しない	設計				設計書は店頭買取ステータス12を入庫待ちとするが、ee実装は13を入庫待ち・自動入庫対象とする。設計と実装の番号差は環境では解消しない
+     4	前提	前提-e06885a646	環境で解消	バッチ	試験環境のバッチ設定、実行コンソール設定およびアプリケーション設定でバッチB06-01「買取自動入庫バッチ」を手動起動できるようにし、試験実行者に起動と実行結果参照の権限を与えれば、起動と、起動した実行が終わって非同期処理のジョブが0件になるまで待つことによる完了確認が、試験環境の操作で決まる。バッチに渡す入力はない。		設計書0406 sheet-3（実行トリガー スケジュール起動・毎日15:00）／ee実装 BuyOrderAutoStockCommand.php（入力引数なし・同期処理）／確定済みの書き方 S-A01-02-EXEC	
+     5	シード	S-B06-01-STORE-WAIT-004	解消しない	作り方・設計				店頭買取・商品・在庫を記載のIDでDBへ直接登録する手順が残り（IDを指定する画面が無い）、設計書の12: 入庫待ちとee実装の番号（13）の食い違いも残る
+     6	シード	S-B06-01-STORE-WAIT-006	解消しない	作り方・設計				店頭買取・商品・在庫を記載のIDでDBへ直接登録する手順が残り（IDを指定する画面が無い）、設計書の12: 入庫待ちとee実装の番号（13）の食い違いも残る
+     7	シード	S-B06-01-STORE-WAIT-007	解消しない	作り方・設計				店頭買取・商品・在庫を記載のIDでDBへ直接登録する手順が残り（IDを指定する画面が無い）、設計書の12: 入庫待ちとee実装の番号（13）の食い違いも残る
+     8	シード	S-B06-01-STORE-WAIT-010	解消しない	作り方・設計				店頭買取・商品・在庫を記載のIDでDBへ直接登録する手順が残り（IDを指定する画面が無い）、設計書の12: 入庫待ちとee実装の番号（13）の食い違いも残る
+     9	前提	前提-1bfd9bf1cf	解消しない	設計				入荷通知後の依頼状態について、設計書（削除日を登録しない）とee実装（状態を更新しない）で通知済みを判定するデータ項目が決まらない
+    10	前提	前提-4141566dd4	環境で解消	バッチ	試験環境のバッチ設定、実行コンソール設定およびアプリケーション設定でバッチB06-01「買取自動入庫バッチ」を手動起動できるようにし、試験実行者に起動と実行結果参照の権限を与えれば、起動と、起動した実行が終わって非同期処理のジョブが0件になるまで待つことによる完了確認が、試験環境の操作で決まる。バッチに渡す入力はない。S-B06-01-ENV と同じ書き方。		設計書0406 sheet-3（実行トリガー スケジュール起動・毎日15:00）／ee実装 BuyOrderAutoStockCommand.php（入力引数なし・同期処理）／確定済みの書き方 S-A01-02-EXEC	
+### B06-02
+     1	種別	対象ID	判定	区分	新しい投入方法	新しい状態・属性	根拠	理由
+     2	シード	S-B06-02-EXEC	環境で解消	バッチ	試験環境のバッチ設定、実行コンソール設定およびアプリケーション設定で、バッチB06-02「買取集計バッチ」を手動で起動できるようにし、試験実行者に起動と実行結果参照の権限を与える。集計対象日を指定するケースでは、起動時の入力に集計対象日（年-月-日の形式）を渡し、省略するケースでは何も渡さずに起動する。起動したバッチの実行が終わり、さらに非同期処理の待機中・実行中のジョブがともに0件になるまで待つことで、実行の完了を確かめる。実行結果は実行履歴で確かめる。買取集計データは、実行後に試験環境のDBで参照する。		設計書0406 sheet-4（L0017 集計対象日はバッチの引数があればその日付、なければ実行日の前日／L0022 毎日3時のスケジュール起動）／ee実装 OtcBuyOrderAggregateSummaryCommand.php（集計対象日 Y-m-d を任意の入力として受け取る・同期処理）／確定済みの書き方 S-A01-02-EXEC	
+     3	前提	前提-73274a4b52	環境で解消	バッチ	試験環境のバッチ設定、実行コンソール設定およびアプリケーション設定でバッチB06-02「買取集計バッチ」を手動起動できるようにし、試験実行者に起動と実行結果参照の権限を与えれば、起動と、起動した実行が終わって非同期処理のジョブが0件になるまで待つことによる完了確認が、試験環境の操作で決まる。集計対象日を指定するケースでは、起動時の入力に集計対象日（年-月-日の形式）を渡し、省略するケースでは何も渡さずに起動する。		設計書0406 sheet-4（L0017 集計対象日はバッチの引数があればその日付、なければ実行日の前日／L0022 毎日3時のスケジュール起動）／ee実装 OtcBuyOrderAggregateSummaryCommand.php（集計対象日 Y-m-d を任意の入力として受け取る・同期処理）／確定済みの書き方 S-A01-02-EXEC	
+     4	シード	S-B06-02-CLOCK	解消しない	時刻				バッチが参照する現在日時を2026-09-04 03:00:00へ固定する手段が要る（時刻の固定は用意しない）
+     5	前提	前提-590fbb9d6a	解消しない	時刻				現在時刻の固定が要る（時刻の固定は用意しない）
+     6	前提	前提-fb7d6f2be3	環境で解消	バッチ	試験環境のバッチ設定、実行コンソール設定およびアプリケーション設定でバッチB06-02「買取集計バッチ」を手動起動できるようにし、試験実行者に起動と実行結果参照の権限を与えれば、起動と、起動した実行が終わって非同期処理のジョブが0件になるまで待つことによる完了確認が、試験環境の操作で決まる。集計対象日を指定するケースでは、起動時の入力に集計対象日（年-月-日の形式）を渡し、省略するケースでは何も渡さずに起動する。S-B06-02-EXEC と同じ書き方。		設計書0406 sheet-4（L0017 集計対象日はバッチの引数があればその日付、なければ実行日の前日／L0022 毎日3時のスケジュール起動）／ee実装 OtcBuyOrderAggregateSummaryCommand.php（集計対象日 Y-m-d を任意の入力として受け取る・同期処理）／確定済みの書き方 S-A01-02-EXEC	
+     7	前提	前提-adf99d33f9	環境で解消	バッチ	試験環境のバッチ設定、実行コンソール設定およびアプリケーション設定でバッチB06-02「買取集計バッチ」を手動起動できるようにし、試験実行者に起動と実行結果参照の権限を与えれば、起動と、起動した実行が終わって非同期処理のジョブが0件になるまで待つことによる完了確認が、試験環境の操作で決まる。集計対象日を指定するケースでは、起動時の入力に集計対象日（年-月-日の形式）を渡し、省略するケースでは何も渡さずに起動する。S-B06-02-EXEC と同じ書き方。		設計書0406 sheet-4（L0017 集計対象日はバッチの引数があればその日付、なければ実行日の前日／L0022 毎日3時のスケジュール起動）／ee実装 OtcBuyOrderAggregateSummaryCommand.php（集計対象日 Y-m-d を任意の入力として受け取る・同期処理）／確定済みの書き方 S-A01-02-EXEC	
+     8	前提	前提-d4e15a3230	解消しない	時刻				S-B06-02-CLOCKと同じ。現在時刻の固定が要る（時刻の固定は用意しない）
+### B08-02
+     1	種別	対象ID	判定	区分	新しい投入方法	新しい状態・属性	根拠	理由
+     2	シード	S-B08-02-RUN	環境で解消	バッチ	試験環境のバッチ設定、実行コンソール設定およびアプリケーション設定で、バッチB08-02「ポイント失効」を手動で起動できるようにし、試験実行者に起動と実行結果参照の権限を与える。日次スケジュールは、ケース開始時に必要に応じて有効または停止にする。ケース開始時に、同じバッチが実行中でなく、非同期処理の待機中・実行中のジョブが0件であることを確かめてから始める。起動したバッチの実行が終わり、さらに非同期処理の待機中・実行中のジョブがともに0件になるまで待つことで、実行の完了を確かめる。実行結果は実行履歴で確かめる。		設計書0408 sheet-4（L0028 実行トリガー スケジュール起動・毎日0:00）／ee実装 LostPointsCommand.php（入力引数なし）・LostPointsAction.php（commit後にスマレジ連携メッセージを投入）／確定済みの書き方 S-A01-02-EXEC	
+     3	シード	S-B08-02-API	解消しない	中継・模擬・障害				会員別に接続後無応答を設定でき、ポイント増減APIの受信履歴を消去・確認できる手段が要る（応答の制御・通信の記録は用意しない）
+     4	前提	前提-d107b3038d	環境で解消	バッチ	試験環境のバッチ設定、実行コンソール設定およびアプリケーション設定でバッチB08-02「ポイント失効」を手動起動できるようにし、試験実行者に起動と実行結果参照の権限を与えれば、起動と、起動した実行が終わって非同期処理のジョブが0件になるまで待つことによる完了確認が、試験環境の操作で決まる。日次スケジュールは、ケース開始時に必要に応じて有効または停止にする。ケース開始時に、同じバッチが実行中でなく、非同期処理の待機中・実行中のジョブが0件であることを確かめてから始める。		設計書0408 sheet-4（L0028 実行トリガー スケジュール起動・毎日0:00）／ee実装 LostPointsCommand.php（入力引数なし）・LostPointsAction.php（commit後にスマレジ連携メッセージを投入）／確定済みの書き方 S-A01-02-EXEC	
+     5	前提	前提-78bd6798f0	解消しない	中継・模擬・障害				会員別の接続後無応答の切替とポイント増減API受信履歴の操作が要る（中継・模擬、障害は用意しない）
+     6	シード	S-B08-02-L-ENV	環境で解消	バッチ	試験環境の基本設定でポイント有効期間と業務タイムゾーンを設定し、DB投入で付与型のポイント属性を用意する。バッチの手動起動は、試験環境のバッチ設定、実行コンソール設定およびアプリケーション設定で、バッチB08-02「ポイント失効」を手動で起動できるようにし、試験実行者に起動と実行結果参照の権限を与えて行う。起動したバッチの実行が終わり、さらに非同期処理の待機中・実行中のジョブがともに0件になるまで待つことで、実行の完了を確かめる。実行結果は実行履歴で確かめる。		設計書0408 sheet-4（L0028 実行トリガー スケジュール起動・毎日0:00）／ee実装 LostPointsCommand.php（入力引数なし）・LostPointsAction.php（commit後にスマレジ連携メッセージを投入）／確定済みの書き方 S-A01-02-EXEC	
+     7	前提	前提-40781ce7b5	環境で解消	バッチ	試験環境のバッチ設定、実行コンソール設定およびアプリケーション設定でバッチB08-02「ポイント失効」を手動起動できるようにし、試験実行者に起動と実行結果参照の権限を与えれば、起動と、起動した実行が終わって非同期処理のジョブが0件になるまで待つことによる完了確認が、試験環境の操作で決まる。S-B08-02-RUN と同じ書き方。		設計書0408 sheet-4（L0028 実行トリガー スケジュール起動・毎日0:00）／ee実装 LostPointsCommand.php（入力引数なし）・LostPointsAction.php（commit後にスマレジ連携メッセージを投入）／確定済みの書き方 S-A01-02-EXEC	
+     8	前提	前提-f0aa308c15	解消しない	中継・模擬・障害				S-B08-02-APIと同じ。接続後無応答の設定と受信履歴の操作が要る（中継・模擬、障害は用意しない）
+### B08-03
+     1	種別	対象ID	判定	区分	新しい投入方法	新しい状態・属性	根拠	理由
+     2	前提	前提-45b0582019	環境で解消	バッチ・メール	試験環境のバッチ設定、実行コンソール設定およびアプリケーション設定でバッチB08-03「ポイント有効期限通知」を手動起動できるようにし、試験実行者に起動と実行結果参照の権限を与えれば、起動と、起動した実行が終わって非同期処理のジョブが0件になるまで待つことによる完了確認が、試験環境の操作で決まる。メール送信はバッチの中で行われるので、バッチの実行が終わった後に、試験環境の受信箱で宛先のメールを確かめる。起動した実行が終わった時点でメール送信も終わっている。		設計書0408（会員 バッチ機能 L0029 実行トリガー スケジュール起動・毎日0:05）／ee実装 PointExpireNotificationCommand.php（入力引数なし）・PointExpireNotificationAction.php／確定済みの書き方 S-A01-02-EXEC	
+     3	前提	前提-dc2ae46d25	環境で解消	バッチ・メール	試験環境のバッチ設定、実行コンソール設定およびアプリケーション設定でバッチB08-03「ポイント有効期限通知」を手動起動できるようにし、試験実行者に起動と実行結果参照の権限を与えれば、起動と、起動した実行が終わって非同期処理のジョブが0件になるまで待つことによる完了確認が、試験環境の操作で決まる。メール送信はバッチの中で行われるので、バッチの実行が終わった後に、試験環境の受信箱で宛先のメールを確かめる。S-B08-03-ENV と同じ書き方。		設計書0408（会員 バッチ機能 L0029 実行トリガー スケジュール起動・毎日0:05）／ee実装 PointExpireNotificationCommand.php（入力引数なし）・PointExpireNotificationAction.php／確定済みの書き方 S-A01-02-EXEC	
+     4	シード	S-B08-03-NOARG-015	解消しない	設計				刷新後のバッチは実行するバッチの名前を受け取る入力が無く、名前を指定せずに起動する状態は作れない。設計書の入力と実装の食い違いで、環境では解消しない
+     5	前提	前提-d6af487e2e	解消しない	設計				刷新後のバッチは実行するバッチの名前を受け取る入力が無く、名前を指定せずに起動する状態は作れない。設計書の入力と実装の食い違いで、環境では解消しない
+     6	シード	S-B08-03-NOARG-016	解消しない	設計				刷新後のバッチは実行するバッチの名前を受け取る入力が無く、名前を指定せずに起動する状態は作れない。設計書の入力と実装の食い違いで、環境では解消しない
+     7	前提	前提-c2c54b719a	解消しない	設計				刷新後のバッチは実行するバッチの名前を受け取る入力が無く、名前を指定せずに起動する状態は作れない。設計書の入力と実装の食い違いで、環境では解消しない
+     8	シード	S-B08-03-NOARG-017	解消しない	設計				刷新後のバッチは実行するバッチの名前を受け取る入力が無く、名前を指定せずに起動する状態は作れない。設計書の入力と実装の食い違いで、環境では解消しない
+     9	前提	前提-ce35c6f25c	解消しない	設計				刷新後のバッチは実行するバッチの名前を受け取る入力が無く、名前を指定せずに起動する状態は作れない。設計書の入力と実装の食い違いで、環境では解消しない
+    10	シード	S-B08-03-BADCMD-018	解消しない	設計				刷新後のバッチは実行するバッチの名前を受け取る入力が無く、一致しない名前を指定して起動する状態は作れない。設計書の入力と実装の食い違いで、環境では解消しない
+    11	前提	前提-d404940428	解消しない	設計				刷新後のバッチは実行するバッチの名前を受け取る入力が無く、一致しない名前を指定して起動する状態は作れない。設計書の入力と実装の食い違いで、環境では解消しない
+    12	シード	S-B08-03-BADCMD-019	解消しない	設計				刷新後のバッチは実行するバッチの名前を受け取る入力が無く、一致しない名前を指定して起動する状態は作れない。設計書の入力と実装の食い違いで、環境では解消しない
+    13	前提	前提-ceabf8a8a4	解消しない	設計				刷新後のバッチは実行するバッチの名前を受け取る入力が無く、一致しない名前を指定して起動する状態は作れない。設計書の入力と実装の食い違いで、環境では解消しない
+    14	シード	S-B08-03-BADCMD-020	解消しない	設計				刷新後のバッチは実行するバッチの名前を受け取る入力が無く、一致しない名前を指定して起動する状態は作れない。設計書の入力と実装の食い違いで、環境では解消しない
+    15	前提	前提-7568d4de72	解消しない	設計				刷新後のバッチは実行するバッチの名前を受け取る入力が無く、一致しない名前を指定して起動する状態は作れない。設計書の入力と実装の食い違いで、環境では解消しない
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+import csv,pathlib
+p=pathlib.Path('integration_test/casegen/runnable/env')
+for name in 'A01-02 B02-02 B02-05 B05-01 B05-04 B05-09 B06-01 B06-02 B08-02 B08-03'.split():
+ a=list(csv.DictReader(open(p/'in'/f'{name}.tsv'),delimiter='\\t'));b=list(csv.DictReader(open(p/'out'/f'{name}.tsv'),delimiter='\\t'))
+ print('\\n###',name,'total',len(b),'resolved',sum(x['判定']=='環境で解消' for x in b))
+ for i,(x,y) in enumerate(zip(a,b),2):
+  if y['判定']"'!='"'環境で解消':continue
+  print(f\"[{i}] {y['種別']} {y['対象ID']} cases={x['止めているケース']}\\n OLD {x['今の文']}\\n NEW {y['新しい投入方法']}\\n ATTR {y['新しい状態・属性']}\")
+PY" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+
+### A01-02 total 10 resolved 3
+[2] シード S-A01-02-EXEC cases=IT-A01-02-001,IT-A01-02-002,IT-A01-02-003,IT-A01-02-004,IT-A01-02-005,IT-A01-02-006,IT-A01-02-007,IT-A01-02-012
+ OLD 構築・完了待ちの方法は未確定（未確定の前提を参照）
+ NEW 試験環境のバッチ設定、実行コンソール設定およびアプリケーション設定で、バッチA01-02「スマレジwebhook連携エラー再連携」を手動で起動できるようにし、試験実行者に起動と実行結果参照の権限を与える。起動したら、管理画面の非同期処理のジョブ一覧で、待機中・実行中のジョブがともに0件になるまで待つことで、在庫再連携の子処理を含む実行の完了を確かめる。
+ ATTR 
+[4] 前提 前提-2790e464e6 cases=IT-A01-02-001,IT-A01-02-002,IT-A01-02-003,IT-A01-02-004,IT-A01-02-005,IT-A01-02-006,IT-A01-02-007
+ OLD A01-02用バッチの配備・起動方法と、起動した実行の完了を確認する方法が設計書とee実装から確定できない（在庫再連携の子処理の完了待ちは類型T3で手順に足した）
+ NEW 試験環境のバッチ設定、実行コンソール設定およびアプリケーション設定でバッチA01-02を手動起動できるようにすれば、起動と、非同期処理のジョブが0件になるまで待つことによる完了確認が試験環境の操作で決まる。S-A01-02-EXECの書き方と同じ。
+ ATTR 
+[10] 前提 前提-801963d255 cases=IT-A01-02-012
+ OLD 構築・完了待ちの方法は未確定（未確定の前提を参照）
+ NEW 試験環境のバッチ設定、実行コンソール設定およびアプリケーション設定でバッチA01-02を手動起動できるようにすれば、起動と、非同期処理のジョブが0件になるまで待つことによる完了確認が試験環境の操作で決まる。S-A01-02-EXECの書き方と同じ。
+ ATTR 
+
+### B02-02 total 2 resolved 2
+[2] 前提 前提-718971a356 cases=IT-B02-02-001,IT-B02-02-002,IT-B02-02-003,IT-B02-02-004,IT-B02-02-005,IT-B02-02-010,IT-B02-02-011,IT-B02-02-012
+ OLD B02-02を手動起動する対象バッチの識別子、試験者に必要な起動・実行結果参照の権限、参照先を専用試験DBへ切り替える方法、起動した実行の開始日時・終了日時・実行結果を確認する方法が確定できない
+ NEW 試験環境のバッチ設定、実行コンソール設定およびアプリケーション設定で、バッチB02-02（入荷通知キャンセル。実行コンソールでeccube:cancel-product-requestを入力引数なしで起動する）の参照先を専用試験DBに設定し、試験者へ起動・実行結果参照の権限を付ける。起動した実行の開始・完了の出力（実行日時つき）で結果を確認する。
+ ATTR 
+[3] 前提 前提-3fd3328b64 cases=IT-B02-02-009
+ OLD 未確定: B02-02を手動起動する対象バッチの識別子、試験者に必要な起動・実行結果参照の権限、参照先を専用試験DBへ切り替える方法、起動した実行の開始日時・終了日時・実行結果を確認する方法が確定できない（precond/open_preconditions.tsv の S-B02-02-BATCH-ENV の未確定と同じ）
+ NEW 試験環境のバッチ設定、実行コンソール設定およびアプリケーション設定で、バッチB02-02の参照先を専用試験DBに設定し、試験者へ起動・実行結果参照の権限を付ける。同じ中身のシードS-B02-02-L-ENVと同じ書き方。
+ ATTR 
+
+### B02-05 total 3 resolved 3
+[2] シード S-B02-05-BATCH-ENV cases=IT-B02-05-001,IT-B02-05-002,IT-B02-05-003,IT-B02-05-004,IT-B02-05-005,IT-B02-05-006,IT-B02-05-007,IT-B02-05-008,IT-B02-05-009,IT-B02-05-010,IT-B02-05-011,IT-B02-05-012,IT-B02-05-013,IT-B02-05-014,IT-B02-05-020
+ OLD 未確定。対象バッチの識別子、手動起動方法および必要権限が設計書とee実装にない
+ NEW 試験環境のバッチ設定、実行コンソール設定およびアプリケーション設定で、バッチB02-05（お気に入り商品セール通知。実行コンソールでeccube:favorite-sale-notificationを入力引数なしで起動する）を手動起動でき、起動した実行の状態と履歴（開始・完了の出力。実行時刻とバッチ名saleNotificationを含む）を確認できるようにし、試験者へ起動と履歴参照の権限を付ける。ケース開始時に実行中件数が0件であることを確かめてから始める。
+ ATTR 
+[3] 前提 前提-ba7311f2f8 cases=IT-B02-05-001,IT-B02-05-002,IT-B02-05-003,IT-B02-05-004,IT-B02-05-005,IT-B02-05-006,IT-B02-05-007,IT-B02-05-008,IT-B02-05-009,IT-B02-05-010,IT-B02-05-011,IT-B02-05-012,IT-B02-05-013,IT-B02-05-014
+ OLD B02-05を手動起動する対象バッチの識別子、試験者に必要な権限、起動した実行を履歴上で識別する方法が確定できない
+ NEW 試験環境のバッチ設定、実行コンソール設定およびアプリケーション設定で、B02-05を実行コンソールからeccube:favorite-sale-notificationとして手動起動でき、試験者に起動と履歴参照の権限があり、起動した実行を開始・完了の出力（実行時刻とバッチ名saleNotification）で識別できるようにする。シードS-B02-05-BATCH-ENVと同じ書き方。
+ ATTR 
+[4] 前提 前提-67bf0c65c8 cases=IT-B02-05-020
+ OLD 未確定。対象バッチの識別子、手動起動方法および必要権限が設計書とee実装にない
+ NEW 試験環境のバッチ設定、実行コンソール設定およびアプリケーション設定で、B02-05をeccube:favorite-sale-notificationとして手動起動でき、試験者に起動と履歴参照の権限があるようにする。シードS-B02-05-BATCH-ENVと同じ書き方。
+ ATTR 
+
+### B05-01 total 15 resolved 5
+[2] シード S-B05-01-BATCH cases=IT-B05-01-001,IT-B05-01-004,IT-B05-01-005,IT-B05-01-006,IT-B05-01-007,IT-B05-01-008,IT-B05-01-009,IT-B05-01-010,IT-B05-01-012,IT-B05-01-013,IT-B05-01-014,IT-B05-01-015,IT-B05-01-016,IT-B05-01-017,IT-B05-01-018,IT-B05-01-019,IT-B05-01-020,IT-B05-01-021
+ OLD 作り方は未確定（未確定の前提を参照）
+ NEW 試験環境のバッチ設定および実行コンソール設定で、バッチB05-01「店頭受取注文商品スマレジ連携バッチ」を手動起動できるようにする（実行コンソールでeccube:order:otc-smaregi-postを起動できる権限を持たせ、定期起動は停止する）。開始時にB05-01の実行中と未完了の受注別処理が0件であることを確認し、起動後は非同期処理の待機中・実行中のジョブが0件になるまで待って完了を確認する
+ ATTR 
+[3] 前提 前提-5d34281f47 cases=IT-B05-01-001,IT-B05-01-004,IT-B05-01-005,IT-B05-01-006,IT-B05-01-007,IT-B05-01-008,IT-B05-01-009,IT-B05-01-010,IT-B05-01-012,IT-B05-01-013,IT-B05-01-014,IT-B05-01-015,IT-B05-01-016,IT-B05-01-017,IT-B05-01-018,IT-B05-01-019,IT-B05-01-020,IT-B05-01-021
+ OLD B05-01を手動起動するバッチの識別方法、必要権限、起動した実行の識別方法、および非同期の受注別処理まで完了したことを確認する方法が設計書とee実装から確定できない
+ NEW 解消の書き方: 試験環境のバッチ設定と実行コンソール設定でB05-01を手動起動できるようにし、定期起動を止め、非同期処理のジョブが0件になるまで待って完了を確認する（S-B05-01-BATCHと同じ書き方）。
+ ATTR 
+[9] シード S-B05-01-MAILBOX-017 cases=IT-B05-01-017
+ OLD 作り方は未確定（未確定の前提を参照）
+ NEW 試験環境のメール配送設定で受信箱を指定し、試験環境の受信箱で、宛先smaregi-error-b0501-017@example.testのメールを消して受信メール0件にしてから始める
+ ATTR 
+[10] 前提 前提-2c99cee270 cases=IT-B05-01-017,IT-B05-01-020
+ OLD ケース専用メールアドレスのメールボックスを用意し、開始時に受信メールを0件へ戻してブラウザで参照する方法が設計書とee実装にない
+ NEW 解消の書き方: 試験環境のメール配送設定で受信箱を指定し、ケース専用の宛先（smaregi-error-b0501-017@example.test・同-020@example.test）のメールを開始時に消して0件にし、受信箱で届いたメールを参照する（S-B05-01-MAILBOX-017・020と同じ書き方）。
+ ATTR 
+[12] シード S-B05-01-MAILBOX-020 cases=IT-B05-01-020
+ OLD 作り方は未確定（未確定の前提を参照）
+ NEW 試験環境のメール配送設定で受信箱を指定し、試験環境の受信箱で、宛先smaregi-error-b0501-020@example.testのメールを消して受信メール0件にしてから始める
+ ATTR 
+
+### B05-04 total 30 resolved 6
+[23] シード S-B05-04-PRODUCTLINKED-019 cases=IT-B05-04-019
+ OLD DBへの直接投入で受注・配送・受注明細を作る（画面で作れない理由: 受注IDと注文番号は自動採番で指定できず、スマレジ商品コード・削除フラグ・商品連携・在庫連携は管理画面にもフロント画面にも入力欄が無い）。受注ID=504019001、注文番号=B0504-019-ORDER-001、スマレジ商品コード=2504019-001、削除フラグ=false、商品連携=true、在庫連携=false。店舗・会員・配送方法はS-B05-04-CONTEXTの店舗レコードID 950504001・会員ID 650504001・店頭受取を参照させ、注文ステータス=注文受領、注文合計金額=1000、スマレジ連携エラーなしにする。同じ受注IDの行が残っているときは削除してから入れ直す。続けてDBへの直接投入で、本シード以外の受注のうち「スマレジ商品コードが登録済み・スマレジ削除フラグが立っていない・商品連携か在庫連携のどちらかが未連携」に当たる受注を検索し、当たった受注すべての商品連携と在庫連携を連携済みに更新して、再検索で本シードの受注だけが残ることを確かめる（画面で作れない理由: 連携区分を変える画面項目が無い）。未確定: 外部商品1件・対象在庫0件の作り方。試験環境の接続先（スマレジ開発環境の試験用契約か、模擬サーバか）を試験環境の構築担当が決めれば、商品コード2504019-001の商品をスマレジ店舗ID 1に1件登録し在庫を0にする手順が確定する
+ NEW DBへの直接投入で受注・配送・受注明細を作る（画面で作れない理由: 受注IDと注文番号は自動採番で指定できず、スマレジ商品コード・削除フラグ・商品連携・在庫連携は管理画面にもフロント画面にも入力欄が無い）。受注ID=504019001、注文番号=B0504-019-ORDER-001、スマレジ商品コード=2504019-001、削除フラグ=false、商品連携=true、在庫連携=false。店舗・会員・配送方法はS-B05-04-CONTEXTの店舗レコードID 950504001・会員ID 650504001・店頭受取を参照させ、注文ステータス=注文受領、注文合計金額=1000、スマレジ連携エラーなしにする。同じ受注IDの行が残っているときは削除してから入れ直す。続けてDBへの直接投入で、本シード以外の受注のうち「スマレジ商品コードが登録済み・スマレジ削除フラグが立っていない・商品連携か在庫連携のどちらかが未連携」に当たる受注を検索し、当たった受注すべての商品連携と在庫連携を連携済みに更新して、再検索で本シードの受注だけが残ることを確かめる（画面で作れない理由: 連携区分を変える画面項目が無い）。外部商品1件・対象在庫0件は、スマレジ試験環境の管理画面で、スマレジ店舗ID 1に商品コード2504019-001の商品を1件登録し、在庫は登録しない（在庫数を入れず入庫もしない）。同じ商品コードの商品が残っているときは、管理画面で削除してから登録し直す。
+ ATTR 
+[24] 前提 前提-a75ba218c7 cases=IT-B05-04-019
+ OLD DBへの直接投入で受注・配送・受注明細を作る（画面で作れない理由: 受注IDと注文番号は自動採番で指定できず、スマレジ商品コード・削除フラグ・商品連携・在庫連携は管理画面にもフロント画面にも入力欄が無い）。受注ID=504019001、注文番号=B0504-019-ORDER-001、スマレジ商品コード=2504019-001、削除フラグ=false、商品連携=true、在庫連携=false。店舗・会員・配送方法はS-B05-04-CONTEXTの店舗レコードID 950504001・会員ID 650504001・店頭受取を参照させ、注文ステータス=注文受領、注文合計金額=1000、スマレジ連携エラーなしにする。同じ受注IDの行が残っているときは削除してから入れ直す。続けてDBへの直接投入で、本シード以外の受注のうち「スマレジ商品コードが登録済み・スマレジ削除フラグが立っていない・商品連携か在庫連携のどちらかが未連携」に当たる受注を検索し、当たった受注すべての商品連携と在庫連携を連携済みに更新して、再検索で本シードの受注だけが残ることを確かめる（画面で作れない理由: 連携区分を変える画面項目が無い）。未確定: 外部商品1件・対象在庫0件の作り方。試験環境の接続先（スマレジ開発環境の試験用契約か、模擬サーバか）を試験環境の構築担当が決めれば、商品コード2504019-001の商品をスマレジ店舗ID 1に1件登録し在庫を0にする手順が確定する
+ NEW 解消の書き方: 外部商品1件・対象在庫0件は、スマレジ試験環境の管理画面で、スマレジ店舗ID 1に商品コード2504019-001の商品を1件登録し、在庫は登録しない（在庫数を入れず入庫もしない）。同じ商品コードの商品が残っているときは、管理画面で削除してから登録し直す。 同じ中身のシード(S-B05-04-PRODUCTLINKED-019)の書き方と同じ。
+ ATTR 
+[26] シード S-B05-04-STOCKLINKED-020 cases=IT-B05-04-020
+ OLD DBへの直接投入で受注・配送・受注明細を作る（画面で作れない理由: 受注IDと注文番号は自動採番で指定できず、スマレジ商品コード・削除フラグ・商品連携・在庫連携は管理画面にもフロント画面にも入力欄が無い）。受注ID=504020001、注文番号=B0504-020-ORDER-001、スマレジ商品コード=2504020-001、削除フラグ=false、商品連携=false、在庫連携=true。店舗・会員・配送方法はS-B05-04-CONTEXTの店舗レコードID 950504001・会員ID 650504001・店頭受取を参照させ、注文ステータス=注文受領、注文合計金額=1000、スマレジ連携エラーなしにする。同じ受注IDの行が残っているときは削除してから入れ直す。続けてDBへの直接投入で、本シード以外の受注のうち「スマレジ商品コードが登録済み・スマレジ削除フラグが立っていない・商品連携か在庫連携のどちらかが未連携」に当たる受注を検索し、当たった受注すべての商品連携と在庫連携を連携済みに更新して、再検索で本シードの受注だけが残ることを確かめる（画面で作れない理由: 連携区分を変える画面項目が無い）。未確定: 外部商品0件・対象在庫0件の作り方。試験環境の接続先（スマレジ開発環境の試験用契約か、模擬サーバか）を試験環境の構築担当が決めれば、商品コード2504020-001の商品と在庫を外部から消す手順が確定する
+ NEW DBへの直接投入で受注・配送・受注明細を作る（画面で作れない理由: 受注IDと注文番号は自動採番で指定できず、スマレジ商品コード・削除フラグ・商品連携・在庫連携は管理画面にもフロント画面にも入力欄が無い）。受注ID=504020001、注文番号=B0504-020-ORDER-001、スマレジ商品コード=2504020-001、削除フラグ=false、商品連携=false、在庫連携=true。店舗・会員・配送方法はS-B05-04-CONTEXTの店舗レコードID 950504001・会員ID 650504001・店頭受取を参照させ、注文ステータス=注文受領、注文合計金額=1000、スマレジ連携エラーなしにする。同じ受注IDの行が残っているときは削除してから入れ直す。続けてDBへの直接投入で、本シード以外の受注のうち「スマレジ商品コードが登録済み・スマレジ削除フラグが立っていない・商品連携か在庫連携のどちらかが未連携」に当たる受注を検索し、当たった受注すべての商品連携と在庫連携を連携済みに更新して、再検索で本シードの受注だけが残ることを確かめる（画面で作れない理由: 連携区分を変える画面項目が無い）。外部商品0件・対象在庫0件は、スマレジ試験環境の管理画面で商品コード2504020-001の商品を検索し、残っていれば削除して0件にしておく（商品も在庫も登録しない）。
+ ATTR 
+[27] 前提 前提-b630ba5e09 cases=IT-B05-04-020
+ OLD DBへの直接投入で受注・配送・受注明細を作る（画面で作れない理由: 受注IDと注文番号は自動採番で指定できず、スマレジ商品コード・削除フラグ・商品連携・在庫連携は管理画面にもフロント画面にも入力欄が無い）。受注ID=504020001、注文番号=B0504-020-ORDER-001、スマレジ商品コード=2504020-001、削除フラグ=false、商品連携=false、在庫連携=true。店舗・会員・配送方法はS-B05-04-CONTEXTの店舗レコードID 950504001・会員ID 650504001・店頭受取を参照させ、注文ステータス=注文受領、注文合計金額=1000、スマレジ連携エラーなしにする。同じ受注IDの行が残っているときは削除してから入れ直す。続けてDBへの直接投入で、本シード以外の受注のうち「スマレジ商品コードが登録済み・スマレジ削除フラグが立っていない・商品連携か在庫連携のどちらかが未連携」に当たる受注を検索し、当たった受注すべての商品連携と在庫連携を連携済みに更新して、再検索で本シードの受注だけが残ることを確かめる（画面で作れない理由: 連携区分を変える画面項目が無い）。未確定: 外部商品0件・対象在庫0件の作り方。試験環境の接続先（スマレジ開発環境の試験用契約か、模擬サーバか）を試験環境の構築担当が決めれば、商品コード2504020-001の商品と在庫を外部から消す手順が確定する
+ NEW 解消の書き方: 外部商品0件・対象在庫0件は、スマレジ試験環境の管理画面で商品コード2504020-001の商品を検索し、残っていれば削除して0件にしておく（商品も在庫も登録しない）。 同じ中身のシード(S-B05-04-STOCKLINKED-020)の書き方と同じ。
+ ATTR 
+[29] シード S-B05-04-STOCK-ERROR-ORDERS-021 cases=IT-B05-04-021
+ OLD DBへの直接投入で受注・配送・受注明細を作る（画面で作れない理由: 受注IDと注文番号は自動採番で指定できず、スマレジ商品コード・削除フラグ・商品連携・在庫連携は管理画面にもフロント画面にも入力欄が無い）。受注ID 504021001=注文番号B0504-021-ORDER-001・スマレジ商品コード2504021-001、受注ID 504021002=注文番号B0504-021-ORDER-002・スマレジ商品コード2504021-002の2件。両受注とも削除フラグ=false、商品連携=true、在庫連携=false。店舗・会員・配送方法はS-B05-04-CONTEXTの店舗レコードID 950504001・会員ID 650504001・店頭受取を参照させ、注文ステータス=注文受領、注文合計金額=1000、スマレジ連携エラーなしにする。同じ受注IDの行が残っているときは削除してから入れ直す。続けてDBへの直接投入で、本シード以外の受注のうち「スマレジ商品コードが登録済み・スマレジ削除フラグが立っていない・商品連携か在庫連携のどちらかが未連携」に当たる受注を検索し、当たった受注すべての商品連携と在庫連携を連携済みに更新して、再検索で本シードの受注だけが残ることを確かめる（画面で作れない理由: 連携区分を変える画面項目が無い）。未確定: 両商品コードの外部商品1件・在庫0件の作り方。試験環境の接続先（スマレジ開発環境の試験用契約か、模擬サーバか）を試験環境の構築担当が決めれば、商品コード2504021-001と2504021-002の商品をスマレジ店舗ID 1に1件ずつ登録し在庫を0にする手順が確定する
+ NEW DBへの直接投入で受注・配送・受注明細を作る（画面で作れない理由: 受注IDと注文番号は自動採番で指定できず、スマレジ商品コード・削除フラグ・商品連携・在庫連携は管理画面にもフロント画面にも入力欄が無い）。受注ID 504021001=注文番号B0504-021-ORDER-001・スマレジ商品コード2504021-001、受注ID 504021002=注文番号B0504-021-ORDER-002・スマレジ商品コード2504021-002の2件。両受注とも削除フラグ=false、商品連携=true、在庫連携=false。店舗・会員・配送方法はS-B05-04-CONTEXTの店舗レコードID 950504001・会員ID 650504001・店頭受取を参照させ、注文ステータス=注文受領、注文合計金額=1000、スマレジ連携エラーなしにする。同じ受注IDの行が残っているときは削除してから入れ直す。続けてDBへの直接投入で、本シード以外の受注のうち「スマレジ商品コードが登録済み・スマレジ削除フラグが立っていない・商品連携か在庫連携のどちらかが未連携」に当たる受注を検索し、当たった受注すべての商品連携と在庫連携を連携済みに更新して、再検索で本シードの受注だけが残ることを確かめる（画面で作れない理由: 連携区分を変える画面項目が無い）。両商品コードの外部商品1件・在庫0件は、スマレジ試験環境の管理画面で、スマレジ店舗ID 1に商品コード2504021-001と2504021-002の商品を1件ずつ登録し、在庫は登録しない（在庫数を入れず入庫もしない）。同じ商品コードの商品が残っているときは、管理画面で削除してから登録し直す。
+ ATTR 
+[31] 前提 前提-9f9fc37397 cases=IT-B05-04-021
+ OLD DBへの直接投入で受注・配送・受注明細を作る（画面で作れない理由: 受注IDと注文番号は自動採番で指定できず、スマレジ商品コード・削除フラグ・商品連携・在庫連携は管理画面にもフロント画面にも入力欄が無い）。受注ID 504021001=注文番号B0504-021-ORDER-001・スマレジ商品コード2504021-001、受注ID 504021002=注文番号B0504-021-ORDER-002・スマレジ商品コード2504021-002の2件。両受注とも削除フラグ=false、商品連携=true、在庫連携=false。店舗・会員・配送方法はS-B05-04-CONTEXTの店舗レコードID 950504001・会員ID 650504001・店頭受取を参照させ、注文ステータス=注文受領、注文合計金額=1000、スマレジ連携エラーなしにする。同じ受注IDの行が残っているときは削除してから入れ直す。続けてDBへの直接投入で、本シード以外の受注のうち「スマレジ商品コードが登録済み・スマレジ削除フラグが立っていない・商品連携か在庫連携のどちらかが未連携」に当たる受注を検索し、当たった受注すべての商品連携と在庫連携を連携済みに更新して、再検索で本シードの受注だけが残ることを確かめる（画面で作れない理由: 連携区分を変える画面項目が無い）。未確定: 両商品コードの外部商品1件・在庫0件の作り方。試験環境の接続先（スマレジ開発環境の試験用契約か、模擬サーバか）を試験環境の構築担当が決めれば、商品コード2504021-001と2504021-002の商品をスマレジ店舗ID 1に1件ずつ登録し在庫を0にする手順が確定する
+ NEW 解消の書き方: 両商品コードの外部商品1件・在庫0件は、スマレジ試験環境の管理画面で、スマレジ店舗ID 1に商品コード2504021-001と2504021-002の商品を1件ずつ登録し、在庫は登録しない（在庫数を入れず入庫もしない）。同じ商品コードの商品が残っているときは、管理画面で削除してから登録し直す。 同じ中身のシード(S-B05-04-STOCK-ERROR-ORDERS-021)の書き方と同じ。
+ ATTR 
+
+### B05-09 total 17 resolved 4
+[4] 前提 前提-54665801cf cases=IT-B05-09-001,IT-B05-09-002,IT-B05-09-003,IT-B05-09-004,IT-B05-09-005,IT-B05-09-006,IT-B05-09-007,IT-B05-09-008,IT-B05-09-009,IT-B05-09-010,IT-B05-09-011,IT-B05-09-012,IT-B05-09-013,IT-B05-09-014,IT-B05-09-015,IT-B05-09-016,IT-B05-09-017,IT-B05-09-018,IT-B05-09-019,IT-B05-09-020,IT-B05-09-021,IT-B05-09-022,IT-B05-09-023,IT-B05-09-024,IT-B05-09-025,IT-B05-09-026,IT-B05-09-027,IT-B05-09-028
+ OLD 基線の「smaregi:batch checkSmaregiTransaction」は現行ee実装に存在せず、現行実装の専用コマンドへの置換はP8の許可された手順変更種別に該当しない
+ NEW 試験環境のバッチ設定、実行コンソール設定およびアプリケーション設定でバッチB05-09「スマレジ取引Webhook連携エラー再連携」を手動起動できるようにし、試験実行者に起動と実行結果参照の権限を与えれば、起動と、起動した実行が終わって非同期処理のジョブが0件になるまで待つことによる完了確認が、試験環境の操作で決まる。基線の手順で名指しされる起動コマンドの有無にかかわらず、バッチの起動は試験環境のバッチ設定で決まる。
+ ATTR 
+[5] 前提 前提-64e1672c9d cases=IT-B05-09-001,IT-B05-09-002,IT-B05-09-003,IT-B05-09-004,IT-B05-09-005,IT-B05-09-006,IT-B05-09-007,IT-B05-09-008,IT-B05-09-009,IT-B05-09-010,IT-B05-09-011,IT-B05-09-012,IT-B05-09-013,IT-B05-09-014,IT-B05-09-015,IT-B05-09-016,IT-B05-09-017,IT-B05-09-018,IT-B05-09-019,IT-B05-09-020,IT-B05-09-021,IT-B05-09-022,IT-B05-09-023,IT-B05-09-024,IT-B05-09-026,IT-B05-09-027,IT-B05-09-028
+ OLD 現行ee実装ではバッチ本体の完了後に受注反映を非同期の子処理が行うため、基線の「実行完了後」が受注・ポイント・ログの反映完了を意味しない。対象子処理の完了を識別して待つ結合試験上の方法が定義されていない
+ NEW 試験環境のバッチ設定、実行コンソール設定およびアプリケーション設定でバッチB05-09「スマレジ取引Webhook連携エラー再連携」を手動起動できるようにし、試験実行者に起動と実行結果参照の権限を与えれば、起動と、起動した実行が終わって非同期処理のジョブが0件になるまで待つことによる完了確認が、試験環境の操作で決まる。受注・ポイントの反映は対象取引ごとの子処理が行うので、バッチの実行完了ではなく非同期処理のジョブが0件になるのを待つ。
+ ATTR 
+[6] 前提 前提-df7a714fdd cases=IT-B05-09-001,IT-B05-09-002,IT-B05-09-003,IT-B05-09-004,IT-B05-09-005,IT-B05-09-006,IT-B05-09-007,IT-B05-09-008,IT-B05-09-009,IT-B05-09-010,IT-B05-09-011,IT-B05-09-012,IT-B05-09-013,IT-B05-09-014,IT-B05-09-015,IT-B05-09-016,IT-B05-09-017,IT-B05-09-018,IT-B05-09-019,IT-B05-09-020,IT-B05-09-021,IT-B05-09-022,IT-B05-09-023,IT-B05-09-024,IT-B05-09-026,IT-B05-09-027,IT-B05-09-028
+ OLD HTML設計書と基線はオプションマスタの接続先URL・契約ID・アクセストークンを使用するが、現行ee実装の再連携処理は別の接続設定を参照しており、基線の設定値を実際の要求へ使用させる方法を確認できない
+ NEW 試験環境の配備設定でスマレジ試験環境の接続先、契約情報および認証情報を設定し、再連携処理がその外部の試験環境へ接続するようにすれば、基線が使う接続先・契約・認証の設定値が実際の要求に使われる。
+ ATTR 
+[14] 前提 前提-5acd5fc9ea cases=IT-B05-09-032,IT-B05-09-033,IT-B05-09-034
+ OLD 未確定: HTML設計書と基線はオプションマスタの接続先URL・契約ID・アクセストークンを使用するが、現行ee実装の再連携処理は別の接続設定を参照しており、基線の設定値を実際の要求へ使用させる方法を確認できない（precond/open_preconditions.tsv の S-B05-09-CONFIG の未確定と同じ）
+ NEW 試験環境の配備設定でスマレジ試験環境の接続先、契約情報および認証情報を設定し、再連携処理がその外部の試験環境へ接続するようにすれば、基線が使う接続先・契約・認証の設定値が実際の要求に使われる。前提-df7a714fdd（S-B05-09-CONFIG）と同じ書き方。
+ ATTR 
+
+### B06-01 total 9 resolved 2
+[4] 前提 前提-e06885a646 cases=IT-B06-01-001,IT-B06-01-002,IT-B06-01-003,IT-B06-01-004,IT-B06-01-005,IT-B06-01-006,IT-B06-01-007,IT-B06-01-008,IT-B06-01-009,IT-B06-01-010
+ OLD B06-01の買取自動入庫バッチを手動起動する対象バッチの識別子、起動時の入力、試験者に必要な権限、起動した実行を実行履歴上で識別して完了を確認する方法が、設計書とee実装から確定できない
+ NEW 試験環境のバッチ設定、実行コンソール設定およびアプリケーション設定でバッチB06-01「買取自動入庫バッチ」を手動起動できるようにし、試験実行者に起動と実行結果参照の権限を与えれば、起動と、起動した実行が終わって非同期処理のジョブが0件になるまで待つことによる完了確認が、試験環境の操作で決まる。バッチに渡す入力はない。
+ ATTR 
+[10] 前提 前提-4141566dd4 cases=IT-B06-01-015,IT-B06-01-016,IT-B06-01-017,IT-B06-01-018,IT-B06-01-019,IT-B06-01-020,IT-B06-01-021,IT-B06-01-022,IT-B06-01-023,IT-B06-01-024,IT-B06-01-025,IT-B06-01-026,IT-B06-01-027,IT-B06-01-028,IT-B06-01-029,IT-B06-01-030,IT-B06-01-031
+ OLD 未確定: B06-01の買取自動入庫バッチを手動起動する対象バッチの識別子、起動時の入力、試験者に必要な権限、起動した実行を実行履歴上で識別して完了を確認する方法が、設計書とee実装から確定できない（precond/open_preconditions.tsv の S-B06-01-ENV の未確定と同じ）
+ NEW 試験環境のバッチ設定、実行コンソール設定およびアプリケーション設定でバッチB06-01「買取自動入庫バッチ」を手動起動できるようにし、試験実行者に起動と実行結果参照の権限を与えれば、起動と、起動した実行が終わって非同期処理のジョブが0件になるまで待つことによる完了確認が、試験環境の操作で決まる。バッチに渡す入力はない。S-B06-01-ENV と同じ書き方。
+ ATTR 
+
+### B06-02 total 7 resolved 4
+[2] シード S-B06-02-EXEC cases=IT-B06-02-001,IT-B06-02-002,IT-B06-02-003,IT-B06-02-004,IT-B06-02-005,IT-B06-02-006,IT-B06-02-007,IT-B06-02-008,IT-B06-02-009,IT-B06-02-010,IT-B06-02-011,IT-B06-02-012,IT-B06-02-013,IT-B06-02-014,IT-B06-02-023,IT-B06-02-026
+ OLD 試験環境構築時に用意する（対象の識別、権限、対象日の入力方法および実行履歴の識別方法は未確定の前提を参照）
+ NEW 試験環境のバッチ設定、実行コンソール設定およびアプリケーション設定で、バッチB06-02「買取集計バッチ」を手動で起動できるようにし、試験実行者に起動と実行結果参照の権限を与える。集計対象日を指定するケースでは、起動時の入力に集計対象日（年-月-日の形式）を渡し、省略するケースでは何も渡さずに起動する。起動したバッチの実行が終わり、さらに非同期処理の待機中・実行中のジョブがともに0件になるまで待つことで、実行の完了を確かめる。実行結果は実行履歴で確かめる。買取集計データは、実行後に試験環境のDBで参照する。
+ ATTR 
+[3] 前提 前提-73274a4b52 cases=IT-B06-02-001,IT-B06-02-002,IT-B06-02-003,IT-B06-02-004,IT-B06-02-005,IT-B06-02-006,IT-B06-02-007,IT-B06-02-008,IT-B06-02-009,IT-B06-02-010,IT-B06-02-011,IT-B06-02-012,IT-B06-02-013,IT-B06-02-014
+ OLD B06-02を手動起動する対象バッチの識別子、試験者に必要な権限、対象日の入力項目、起動した実行を履歴上で識別する方法が設計書とee実装から確定できない
+ NEW 試験環境のバッチ設定、実行コンソール設定およびアプリケーション設定でバッチB06-02「買取集計バッチ」を手動起動できるようにし、試験実行者に起動と実行結果参照の権限を与えれば、起動と、起動した実行が終わって非同期処理のジョブが0件になるまで待つことによる完了確認が、試験環境の操作で決まる。集計対象日を指定するケースでは、起動時の入力に集計対象日（年-月-日の形式）を渡し、省略するケースでは何も渡さずに起動する。
+ ATTR 
+[6] 前提 前提-fb7d6f2be3 cases=IT-B06-02-020,IT-B06-02-021,IT-B06-02-022,IT-B06-02-027,IT-B06-02-028,IT-B06-02-029
+ OLD 未確定: B06-02を手動起動する対象バッチの識別子、試験者に必要な権限、対象日の入力項目、起動した実行を履歴上で識別する方法が設計書とee実装から確定できない（precond/open_preconditions.tsv の S-B06-02-EXEC の未確定と同じ）
+ NEW 試験環境のバッチ設定、実行コンソール設定およびアプリケーション設定でバッチB06-02「買取集計バッチ」を手動起動できるようにし、試験実行者に起動と実行結果参照の権限を与えれば、起動と、起動した実行が終わって非同期処理のジョブが0件になるまで待つことによる完了確認が、試験環境の操作で決まる。集計対象日を指定するケースでは、起動時の入力に集計対象日（年-月-日の形式）を渡し、省略するケースでは何も渡さずに起動する。S-B06-02-EXEC と同じ書き方。
+ ATTR 
+[7] 前提 前提-adf99d33f9 cases=IT-B06-02-023,IT-B06-02-026
+ OLD 試験環境構築時に用意する（対象の識別、権限、対象日の入力方法および実行履歴の識別方法は未確定の前提を参照）
+ NEW 試験環境のバッチ設定、実行コンソール設定およびアプリケーション設定でバッチB06-02「買取集計バッチ」を手動起動できるようにし、試験実行者に起動と実行結果参照の権限を与えれば、起動と、起動した実行が終わって非同期処理のジョブが0件になるまで待つことによる完了確認が、試験環境の操作で決まる。集計対象日を指定するケースでは、起動時の入力に集計対象日（年-月-日の形式）を渡し、省略するケースでは何も渡さずに起動する。S-B06-02-EXEC と同じ書き方。
+ ATTR 
+
+### B08-02 total 7 resolved 4
+[2] シード S-B08-02-RUN cases=IT-B08-02-001,IT-B08-02-002,IT-B08-02-003,IT-B08-02-004,IT-B08-02-005,IT-B08-02-006,IT-B08-02-007,IT-B08-02-008,IT-B08-02-009
+ OLD バッチの対象、手動起動、日次スケジュールの有効化・停止方法は未確定（未確定の前提を参照）
+ NEW 試験環境のバッチ設定、実行コンソール設定およびアプリケーション設定で、バッチB08-02「ポイント失効」を手動で起動できるようにし、試験実行者に起動と実行結果参照の権限を与える。日次スケジュールは、ケース開始時に必要に応じて有効または停止にする。ケース開始時に、同じバッチが実行中でなく、非同期処理の待機中・実行中のジョブが0件であることを確かめてから始める。起動したバッチの実行が終わり、さらに非同期処理の待機中・実行中のジョブがともに0件になるまで待つことで、実行の完了を確かめる。実行結果は実行履歴で確かめる。
+ ATTR 
+[4] 前提 前提-d107b3038d cases=IT-B08-02-001,IT-B08-02-002,IT-B08-02-003,IT-B08-02-004,IT-B08-02-005,IT-B08-02-006,IT-B08-02-007,IT-B08-02-008,IT-B08-02-009
+ OLD B08-02を実行するバッチの識別方法、手動起動方法、日次スケジュールの有効化・停止方法が設計書とee実装に無い
+ NEW 試験環境のバッチ設定、実行コンソール設定およびアプリケーション設定でバッチB08-02「ポイント失効」を手動起動できるようにし、試験実行者に起動と実行結果参照の権限を与えれば、起動と、起動した実行が終わって非同期処理のジョブが0件になるまで待つことによる完了確認が、試験環境の操作で決まる。日次スケジュールは、ケース開始時に必要に応じて有効または停止にする。ケース開始時に、同じバッチが実行中でなく、非同期処理の待機中・実行中のジョブが0件であることを確かめてから始める。
+ ATTR 
+[6] シード S-B08-02-L-ENV cases=IT-B08-02-014,IT-B08-02-015,IT-B08-02-016
+ OLD 試験環境の基本設定でポイント有効期間と業務タイムゾーンを設定し、DB投入で付与型のポイント属性を用意する。バッチの手動起動は実行コンソールで行う（起動対象の特定は既存シードS-B08-02-RUNと同じ未確定事項）
+ NEW 試験環境の基本設定でポイント有効期間と業務タイムゾーンを設定し、DB投入で付与型のポイント属性を用意する。バッチの手動起動は、試験環境のバッチ設定、実行コンソール設定およびアプリケーション設定で、バッチB08-02「ポイント失効」を手動で起動できるようにし、試験実行者に起動と実行結果参照の権限を与えて行う。起動したバッチの実行が終わり、さらに非同期処理の待機中・実行中のジョブがともに0件になるまで待つことで、実行の完了を確かめる。実行結果は実行履歴で確かめる。
+ ATTR 
+[7] 前提 前提-40781ce7b5 cases=IT-B08-02-014,IT-B08-02-015,IT-B08-02-016
+ OLD B08-02を実行するバッチの手動起動方法が設計書とee実装に無い（S-B08-02-RUN と同じ未確定事項）
+ NEW 試験環境のバッチ設定、実行コンソール設定およびアプリケーション設定でバッチB08-02「ポイント失効」を手動起動できるようにし、試験実行者に起動と実行結果参照の権限を与えれば、起動と、起動した実行が終わって非同期処理のジョブが0件になるまで待つことによる完了確認が、試験環境の操作で決まる。S-B08-02-RUN と同じ書き方。
+ ATTR 
+
+### B08-03 total 14 resolved 2
+[2] 前提 前提-45b0582019 cases=IT-B08-03-001,IT-B08-03-002,IT-B08-03-003,IT-B08-03-004,IT-B08-03-005,IT-B08-03-006,IT-B08-03-007,IT-B08-03-008,IT-B08-03-009,IT-B08-03-010
+ OLD B08-03「ポイント有効期限通知」を試験者が手動起動する対象バッチの識別子、起動と実行結果参照に要る権限、起動した実行の完了（メール送信まで終わったこと）を確かめる方法が確定できない。各ケースは起動直後にメール受信やメール送信履歴を確認するため実行完了を確かめる手順が要るが、ee実装ではメール送信はバッチの中で行われ非同期処理のジョブとして現れないため、類型T3の待ち方は使えない
+ NEW 試験環境のバッチ設定、実行コンソール設定およびアプリケーション設定でバッチB08-03「ポイント有効期限通知」を手動起動できるようにし、試験実行者に起動と実行結果参照の権限を与えれば、起動と、起動した実行が終わって非同期処理のジョブが0件になるまで待つことによる完了確認が、試験環境の操作で決まる。メール送信はバッチの中で行われるので、バッチの実行が終わった後に、試験環境の受信箱で宛先のメールを確かめる。起動した実行が終わった時点でメール送信も終わっている。
+ ATTR 
+[3] 前提 前提-dc2ae46d25 cases=IT-B08-03-014,IT-B08-03-021
+ OLD 未確定: B08-03「ポイント有効期限通知」を試験者が手動起動する対象バッチの識別子、起動と実行結果参照に要る権限、起動した実行の完了（メール送信まで終わったこと）を確かめる方法が確定できない。各ケースは起動直後にメール受信やメール送信履歴を確認するため実行完了を確かめる手順が要るが、ee実装ではメール送信はバッチの中で行われ非同期処理のジョブとして現れないため、類型T3の待ち方は使えない（precond/open_preconditions.tsv の S-B08-03-ENV の未確定と同じ）
+ NEW 試験環境のバッチ設定、実行コンソール設定およびアプリケーション設定でバッチB08-03「ポイント有効期限通知」を手動起動できるようにし、試験実行者に起動と実行結果参照の権限を与えれば、起動と、起動した実行が終わって非同期処理のジョブが0件になるまで待つことによる完了確認が、試験環境の操作で決まる。メール送信はバッチの中で行われるので、バッチの実行が終わった後に、試験環境の受信箱で宛先のメールを確かめる。S-B08-03-ENV と同じ書き方。
+ ATTR 
+
+codex
+判定行を突き合わせ、外部環境で作る在庫状態と、復帰ケースで指定するバッチ操作を重点的に確認しています。
+exec
+/bin/bash -lc "python3 - <<'PY'
+import csv,collections
+p='integration_test/casegen/'
+rest=list(csv.DictReader(open(p+'runnable/env/restored.tsv'),delimiter='\\t')); cases={r['テストID']:r for r in csv.DictReader(open(p+'excluded_open_cases.tsv'),delimiter='\\t') for _ in [0] if (r.__setitem__('テストID',r['元_テストID']) or True)}
+g=collections.defaultdict(list)
+for r in rest:
+ if r['テストID'] in cases and cases[r['テストID']]['機能ID'] in 'A01-02 B02-02 B02-05 B05-01 B05-04 B05-09 B06-01 B06-02 B08-02 B08-03'.split():g[cases[r['テストID']]['機能ID']].append(r['テストID'])
+for n,v in g.items():print(n,len(v),','.join(v))
+PY" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+B02-02 9 IT-B02-02-001,IT-B02-02-002,IT-B02-02-003,IT-B02-02-004,IT-B02-02-005,IT-B02-02-009,IT-B02-02-010,IT-B02-02-011,IT-B02-02-012
+B02-05 15 IT-B02-05-001,IT-B02-05-002,IT-B02-05-003,IT-B02-05-004,IT-B02-05-005,IT-B02-05-006,IT-B02-05-007,IT-B02-05-008,IT-B02-05-009,IT-B02-05-010,IT-B02-05-011,IT-B02-05-012,IT-B02-05-013,IT-B02-05-014,IT-B02-05-020
+B05-01 1 IT-B05-01-001
+B05-09 1 IT-B05-09-025
+B06-01 22 IT-B06-01-002,IT-B06-01-003,IT-B06-01-005,IT-B06-01-008,IT-B06-01-009,IT-B06-01-015,IT-B06-01-016,IT-B06-01-017,IT-B06-01-018,IT-B06-01-019,IT-B06-01-020,IT-B06-01-021,IT-B06-01-022,IT-B06-01-023,IT-B06-01-024,IT-B06-01-025,IT-B06-01-026,IT-B06-01-027,IT-B06-01-028,IT-B06-01-029,IT-B06-01-030,IT-B06-01-031
+B06-02 21 IT-B06-02-001,IT-B06-02-002,IT-B06-02-003,IT-B06-02-004,IT-B06-02-006,IT-B06-02-007,IT-B06-02-008,IT-B06-02-009,IT-B06-02-010,IT-B06-02-011,IT-B06-02-012,IT-B06-02-013,IT-B06-02-014,IT-B06-02-020,IT-B06-02-021,IT-B06-02-022,IT-B06-02-023,IT-B06-02-026,IT-B06-02-027,IT-B06-02-028,IT-B06-02-029
+B08-02 4 IT-B08-02-006,IT-B08-02-014,IT-B08-02-015,IT-B08-02-016
+B08-03 12 IT-B08-03-001,IT-B08-03-002,IT-B08-03-003,IT-B08-03-004,IT-B08-03-005,IT-B08-03-006,IT-B08-03-007,IT-B08-03-008,IT-B08-03-009,IT-B08-03-010,IT-B08-03-014,IT-B08-03-021
+
+exec
+/bin/bash -lc "rg -n 'S-B05-09-CONFIG|S-B05-09-EXEC|S-B08-03-ENV|S-B02-02-L-ENV' integration_test/casegen/excluded_open_seeds.tsv | head -25" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+175:B02-02	IT-B02-02-009	S-B02-02-L-ENV	実行環境	B02-02専用バッチ実行環境	参照先=専用試験DB／B02-02の実行中件数=0／入力引数なしで手動起動可能／試験者は当該実行の実行結果を確認できる／ケース実行中にスケジュール起動が重ならない	B02-02の実行環境は1件だけ存在するため共有可。ケースが開始時に必要な値を設定する	バッチの試験環境でB02-02の参照先を専用試験DBに設定し、試験者へ起動・実行結果参照権限を付与する。実行一覧で実行中0件を確認し、スケジュール起動と重ならない時間帯に実施する	共有可
+382:B05-09	IT-B05-09-001,IT-B05-09-002,IT-B05-09-003,IT-B05-09-004,IT-B05-09-005,IT-B05-09-006,IT-B05-09-007,IT-B05-09-008,IT-B05-09-009,IT-B05-09-010,IT-B05-09-011,IT-B05-09-012,IT-B05-09-013,IT-B05-09-014,IT-B05-09-015,IT-B05-09-016,IT-B05-09-017,IT-B05-09-018,IT-B05-09-019,IT-B05-09-020,IT-B05-09-021,IT-B05-09-022,IT-B05-09-023,IT-B05-09-024,IT-B05-09-026,IT-B05-09-027,IT-B05-09-028	S-B05-09-CONFIG	接続設定	スマレジ接続設定	接続先URL=https://smaregi-b0509.example.test／契約ID=contract-b0509／アクセストークン=token-b0509	スマレジ取引情報取得用の単一設定。各ケースが開始時に必要な値を自分で設定する	管理画面の追加システム設定で「スマレジへの送信URL」に https://smaregi-b0509.example.test を入れて「登録」ボタンを押す。契約ID=contract-b0509 とアクセストークン=token-b0509 は、ハイフンを含み画面で指定できないためDBへ直接設定する。接続先はスマレジAPI試験サーバーへ向ける	共有可
+383:B05-09	IT-B05-09-001,IT-B05-09-002,IT-B05-09-003,IT-B05-09-004,IT-B05-09-005,IT-B05-09-006,IT-B05-09-007,IT-B05-09-008,IT-B05-09-009,IT-B05-09-010,IT-B05-09-011,IT-B05-09-012,IT-B05-09-013,IT-B05-09-014,IT-B05-09-015,IT-B05-09-016,IT-B05-09-017,IT-B05-09-018,IT-B05-09-019,IT-B05-09-020,IT-B05-09-021,IT-B05-09-022,IT-B05-09-023,IT-B05-09-024,IT-B05-09-025,IT-B05-09-026,IT-B05-09-027,IT-B05-09-028	S-B05-09-EXEC	試験環境	バッチ実行環境	日本時間で動作する実行コンソールを利用できる／バッチを起動する権限、終了コード・コンソール出力・実行ログを参照する権限を持つ／非同期処理のワーカーが起動している	全ケースのバッチ起動と結果確認。どのケースも権限設定を変更しない	試験環境構築時に実行コンソール、ログ参照権限および非同期処理ワーカーを用意する	共有可
+408:B05-09	IT-B05-09-022	S-B05-09-CONFIG-PROBE-022	スマレジAPI	接続設定確認用空応答(022)	取引取得応答は正常かつ取引0件／接続先・契約ID・アクセストークンを確認する受信履歴は0件	IT-B05-09-022専用。接続設定の受渡しだけを確認する	スマレジAPI試験サーバーへ空の正常応答を設定する	ケース専用
+522:B08-03	IT-B08-03-001,IT-B08-03-002,IT-B08-03-003,IT-B08-03-004,IT-B08-03-005,IT-B08-03-006,IT-B08-03-007,IT-B08-03-008,IT-B08-03-009,IT-B08-03-010,IT-B08-03-015,IT-B08-03-016,IT-B08-03-017,IT-B08-03-018,IT-B08-03-019,IT-B08-03-020	S-B08-03-ENV	基本設定・メールテンプレート・バッチ実行環境	ポイント有効期限通知環境	ポイント有効期間=183日／事前通知日数=30日および7日／送信元メールアドレス=info@hareruyamtg.com／日本語件名=※重要【晴れる屋】ポイント有効期限のお知らせ／英語件名=【Hareruya】 Your points are about to expire／日本語本文と英語本文=0408「ポイント有効期限通知」記載の全文／バッチB08-03を手動起動できる／開始時のB08-03実行中件数=0件／試験対象の実行中に定期実行、他の手動実行および他のメール送信処理が重ならない	通知対象日、有効期限日、送信元、件名、本文およびメール送信履歴件数の確認。各ケースが開始時に必要な値を自分で設定する	管理画面の基本設定画面で送信元メールアドレスにinfo@hareruyamtg.comを入れて登録ボタンを押す。管理画面の自動送信メールの設定画面でテンプレートに日本語のポイント有効期限通知メールを選び、件名に「※重要【晴れる屋】ポイント有効期限のお知らせ」、ヘッダーとフッターに0408「ポイント有効期限通知」の日本語メール本文の該当部分を入れて登録ボタンを押す。同じ画面でテンプレートに英語のポイント有効期限通知メールを選び、件名に「【Hareruya】 Your points are about to expire」、ヘッダーとフッターに0408「ポイント有効期限通知」の英語メール本文の該当部分を入れて登録ボタンを押す。本文のうちヘッダー・フッター以外の定型部分は画面で指定できないため、システムに同梱のテンプレートをそのまま使う（DBにもファイルにも手を入れない）。ポイント有効期間（183日）と事前通知日数（30日・7日）は画面で指定できないため、システムの設定ファイルの値が記載値であることを確かめる（既定値。DBには持たない）。バッチの管理画面でB08-03の実行中件数が0件であることを確かめ、試験対象の実行中に定期実行、他の手動実行および他のメール送信処理が重ならない時間を確保する	共有可
+
+exec
+/bin/bash -lc "rg -n '"'^.*IT-B05-09-025|''^.*IT-B02-02-001|''^.*IT-B02-05-001|''^.*IT-B08-02-006|''^.*IT-B08-03-001'"' integration_test/casegen/excluded_open_cases.tsv" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+168:IT-B02-02-001	B02-02	作り方が未確定	S-B02-02-BATCH-ENV: B02-02を手動起動する対象バッチの識別子、試験者に必要な起動・実行結果参照の権限、参照先を専用試験DBへ切り替える方法、起動した実行の開始日時・終了日時・実行結果を確認する方法が確定できない	IT-B02-02-001	REQ-0404-sheet-4-R001,REQ-0404-sheet-4-R005,REQ-0404-sheet-4-R007,REQ-0404-sheet-4-R008,REQ-0404-sheet-4-R009,REQ-0404-sheet-4-R011,REQ-0404-sheet-4-R013,REQ-0404-sheet-4-R014,REQ-0404-sheet-4-R019,REQ-0404-sheet-4-R020,REQ-0404-sheet-4-R021		ITA-05,ITA-07,ITA-11	P1	ブラウザ+DB確認	S-B02-02-BATCH-ENV,S-B02-02-PRODUCT-UNIT-001	① 開始時にB02-02の参照先を専用試験DBに設定し、実行中件数が0件であることを確認する。ケース実行中にスケジュール起動が重ならず、試験者は入力引数なしの手動起動、当該実行の開始日時・終了日時・実行結果および専用試験DBを確認できる（S-B02-02-BATCH-ENV）／② 試験会員ID 〔会員ID-B0202-001〕を用意する。商品ID 〔商品ID-B0202-001A〕は非公開、商品ID 〔商品ID-B0202-001B〕は廃止で、各商品に公開中の商品規格ID 〔商品規格ID-B0202-001A〕、〔商品規格ID-B0202-001B〕が1件ずつあり、商品と商品規格は削除されていない。商品単位の入荷通知リクエストID 〔入荷通知リクエストID-B0202-001A〕、〔入荷通知リクエストID-B0202-001B〕は試験会員、各商品IDおよび日本語に紐づき、商品規格は指定されておらず、削除日時は未設定である。会員ID・商品ID・商品規格ID・入荷通知リクエストIDは登録時に振られた番号を控えてある（S-B02-02-PRODUCT-UNIT-001）	1. バッチB02-02「入荷通知キャンセル」を入力引数を指定せず起動し、実行の開始日時と終了日時を記録する／2. 実行完了後、DBで入荷通知リクエストID 〔入荷通知リクエストID-B0202-001A〕、〔入荷通知リクエストID-B0202-001B〕を確認する	商品ID 〔商品ID-B0202-001A〕、〔商品ID-B0202-001B〕で商品に紐づく商品単位の入荷通知リクエストID 〔入荷通知リクエストID-B0202-001A〕、〔入荷通知リクエストID-B0202-001B〕の削除日時に、それぞれ当該実行の開始日時から終了日時までの日時が設定され、論理削除されること	0404 入荷通知キャンセル / カスタマイズ説明 商品単位の通知キャンセルについて・商品公開ステータス変更に伴う通知キャンセル削除条件、機能仕様 処理概要・入力データ詳細・入力データ検索条件・実行結果詳細（現行仕様 業務ロジック「対象の入荷通知リクエスト」の削除済み・不存在条件とは食い違うため刷新を採用）
+181:IT-B02-05-001	B02-05	作り方が未確定	S-B02-05-BATCH-ENV: 未確定	IT-B02-05-001	REQ-0404-sheet-7-R001,REQ-0404-sheet-7-R004,REQ-0404-sheet-7-R011,REQ-0404-sheet-7-R013,REQ-0404-sheet-7-R017,REQ-0404-sheet-7-R021		ITA-05,ITA-07,ITA-11,ITB-08	P1	ブラウザのみ	S-B02-05-BATCH-ENV,S-B02-05-GROUPS,S-B02-05-JP-MATRIX-001,S-B02-05-SHOP,S-B02-05-TEMPLATE-JP,S-B02-05-MAILBOX	① B02-05を起動して履歴を確認でき、開始時の実行中件数を0件にする（S-B02-05-BATCH-ENV）／② 通常会員グループは店内注文専用でも支店店内注文専用でもない（S-B02-05-GROUPS）／③ 会員ID 〔会員ID-B0205-001〕（登録時に振られた会員IDを控えてある）・jp-target-b0205-001@example.testは東京都の本会員で、商品ID 〔商品ID-B0205-001A〕（登録時に振られた商品IDを控えてある）のJP側と〔商品ID-B0205-001B〕のEN側がセール有効、〔商品ID-B0205-001C〕のJP側がセール無効であり、この会員以外の通知対象は0件である（S-B02-05-JP-MATRIX-001）／④ 開始時にショップ名=B02-05試験店、代表メールアドレス=sender-b0205@example.test、返信先=reply-b0205@example.test、エラー戻し先=error-b0205@example.testに設定する（S-B02-05-SHOP）／⑤ 開始時に日本語テンプレートを件名=B02-05日本語セール通知、ヘッダー=日本語通知ヘッダー、フッター=日本語通知フッターに設定する（S-B02-05-TEMPLATE-JP）／⑥ 開始時にMailCatcherの受信メールを0件にする（S-B02-05-MAILBOX）	1. バッチB02-05「お気に入り商品セール通知」を起動する／2. jp-target-b0205-001@example.testのメール受信確認画面を開く	jp-target-b0205-001@example.test宛てに1通送信され、本文の商品一覧に「【JP】セール商品JP」と「【EN】セール商品EN」が含まれ、「【JP】通常商品」が含まれないこと	0404 お気に入り商品セール通知 / カスタマイズ説明 概要、機能仕様 処理概要・入力データ元・入力データ詳細・入力データ検索条件・実行結果詳細
+328:IT-B05-09-025	B05-09	作り方が未確定	基線のバッチ起動方法: 基線の「smaregi:batch checkSmaregiTransaction」は現行ee実装に存在せず、現行実装の専用コマンドへの置換はP8の許可された手順変更種別に該当しない	IT-B05-09-025	REQ-0405-sheet-11-R033,REQ-0405-sheet-11-R037		ITA-04,ITA-10,ITA-14	P2	ブラウザのみ	S-B05-09-EXEC	① 実行コンソールを利用でき、コンソール出力と終了コードを確認できる（S-B05-09-EXEC）	1. 実行コンソールで「smaregi:batch B05-09以外」を起動する／2. コンソール出力と終了コードを確認する	実行日時を添えた該当なしのメッセージがコンソールに表示され、終了コードが1になること	0405 スマレジ取引連携エラー再連携 / 現行仕様 業務ロジック エラー時の扱い・入出力 入力と出力
+394:IT-B08-02-006	B08-02	作り方が未確定	S-B08-02-RUN: 未確定（未確定の前提を参照）	IT-B08-02-006	REQ-0408-sheet-4-R045		ITA-08,ITA-11,ITA-24	P1	ブラウザ+DB確認	S-B08-02-CONFIG,S-B08-02-RUN,S-B08-02-NO-SMAREGI-006	① ポイント有効期間を183日、業務タイムゾーンをAsia/Tokyo、ポイント属性ID 1を付与型に設定する（S-B08-02-CONFIG）／② 日次スケジュールを停止し、実行中のポイント失効処理が無い状態にする（S-B08-02-RUN）／③ 他のB08-02試験会員が存在しない状態で、会員ID 〔会員ID-B0802-006〕、プレイヤーデータID 〔プレイヤーデータID-B0802-006〕を登録する。スマレジ会員IDは未登録、ポイント残高は100、ポイント履歴は184日前12:00の+100だけ、失効履歴は0件とする（登録時に振られた会員ID・プレイヤーデータIDを控えてある。〔会員ID-B0802-006〕・〔プレイヤーデータID-B0802-006〕）（S-B08-02-NO-SMAREGI-006）	1. バッチB08-02「ポイント失効」を手動起動する／2. 実行完了後、DBで会員ID 〔会員ID-B0802-006〕のポイント残高とポイント履歴を確認する	スマレジ会員IDが未登録の会員ID 〔会員ID-B0802-006〕は、有効期限を過ぎたポイントを持っていてもポイント残高が100のままで失効履歴が追加されないこと	0408 ポイント失効 / 現行仕様 業務ロジック 対象会員の絞り込み
+405:IT-B08-03-001	B08-03	作り方が未確定	S-B08-03-ENV: B08-03「ポイント有効期限通知」を試験者が手動起動する対象バッチの識別子、起動と実行結果参照に要る権限、起動した実行の完了（メール送信まで終わったこと）を確かめる方法が確定できない。各ケースは起動直後にメール受信やメール送信履歴を確認するため実行完了を確かめる手順が要るが、ee実装ではメール送信はバッチの中で行われ非同期処理のジョブとして現れないため、類型T3の待ち方は使えない	IT-B08-03-001	REQ-0408-sheet-5-R005,REQ-0408-sheet-5-R007,REQ-0408-sheet-5-R008,REQ-0408-sheet-5-R009,REQ-0408-sheet-5-R012,REQ-0408-sheet-5-R013,REQ-0408-sheet-5-R015,REQ-0408-sheet-5-R017,REQ-0408-sheet-5-R018,REQ-0408-sheet-5-R021,REQ-0408-sheet-5-R024,REQ-0408-sheet-5-R026,REQ-0408-sheet-5-R027,REQ-0408-sheet-5-R036,REQ-0408-sheet-5-R091	—	ITA-05,ITA-07,ITA-11,ITB-08	P1	ブラウザのみ	S-B08-03-DB,S-B08-03-ENV,S-B08-03-30-JP-001,S-B08-03-MAILBOX	① 試験DBへ基準データを再投入し、本ケース以外のB08-03ケース専用データが存在せず、本ケース専用会員以外の30日前・7日前通知対象会員を0件にする（S-B08-03-DB）／② 開始時にポイント有効期間を183日、事前通知日数を30日と7日、送信元をinfo@hareruyamtg.com、日本語・英語の件名と本文を0408記載値に設定し、B08-03の実行中件数を0件にする（S-B08-03-ENV）／③ 会員ID 〔会員ID-B0803-001〕（登録時に振られた会員IDを控えてある）、メールアドレスjp30-b0803-001@example.test、東京都、稼働中、未削除、プレイヤーID 〔プレイヤーID-B0803-001〕（登録時に振られたプレイヤーIDを控えてある）、スマレジ会員ID SM-B0803-001-001、ポイント残高120、154日前の獲得50、153日前の指定日獲得150、指定日までの残ポイント200、メール送信履歴0件で登録する（S-B08-03-30-JP-001）／④ 開始時にjp30-b0803-001@example.testの受信履歴を0件にする（S-B08-03-MAILBOX）	1. バッチB08-03「ポイント有効期限通知」を起動する／2. jp30-b0803-001@example.testのメール受信確認画面を開く	jp30-b0803-001@example.test宛てにポイント有効期限通知メールが1通送信され、本文に実行日から30日後の有効期限日が記載されること	0408 ポイント有効期限通知 / 機能仕様 処理内容・入力データ詳細・入力データ検索条件；業務ロジック 通知する有効期限日
+
+exec
+/bin/bash -lc "rg --files integration_test/casegen/datapattern/units/B02-02 integration_test/casegen/datapattern/units/B02-05 integration_test/casegen/datapattern/units/B05-09 integration_test/casegen/datapattern/units/B08-03 2>/dev/null; rg --files src | rg 'CancelProductRequestCommand|FavoriteSaleNotificationCommand|PointExpireNotificationCommand|OtcBuyOrderAggregateSummaryCommand|LostPointsCommand|BuyOrderAutoStockCommand|OtcOrderSmaregiPostCommand' " in /home/y-saito/Developments/ec-cube-enterprise
+ succeeded in 0ms:
+src/Eccube/Command/FavoriteSaleNotificationCommand.php
+src/Eccube/Command/OtcOrderSmaregiPostCommand.php
+src/Eccube/Command/BuyOrderAutoStockCommand.php
+src/Eccube/Command/PointExpireNotificationCommand.php
+src/Eccube/Command/LostPointsCommand.php
+src/Eccube/Command/CancelProductRequestCommand.php
+src/Eccube/Command/OtcBuyOrderAggregateSummaryCommand.php
+
+exec
+/bin/bash -lc "rg -n 'checkSmaregiTransaction|smaregi:batch|SmaregiTransactionWebhook|Smaregi.*Retry|Retry.*Smaregi' src app config 2>/dev/null | head -100" in /home/y-saito/Developments/ec-cube-enterprise
+ succeeded in 0ms:
+exec
+/bin/bash -lc "rg -n 'B05-09|スマレジ取引Webhook連携エラー再連携' integration_test/casegen/coverage_audit/units.tsv | head -8; rg -n 'スマレジ|在庫|商品' integration_test/casegen/datapattern/units/B05-04/design.txt | head -40" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+438:0405	sheet-11	スマレジ取引連携エラー再連携	B05-09	現行踏襲	監査	64	1618	33
+rg: integration_test/casegen/datapattern/units/B05-04/design.txt: IO error for operation on integration_test/casegen/datapattern/units/B05-04/design.txt: No such file or directory (os error 2)
+
+exec
+/bin/bash -lc 'nl -ba src/Eccube/Command/FavoriteSaleNotificationCommand.php | head -130; nl -ba src/Eccube/Command/CancelProductRequestCommand.php | head -120; nl -ba src/Eccube/Command/PointExpireNotificationCommand.php | head -100' in /home/y-saito/Developments/ec-cube-enterprise
+ succeeded in 0ms:
+     1	<?php
+     2	
+     3	declare(strict_types=1);
+     4	
+     5	/*
+     6	 * This file is part of EC-CUBE
+     7	 *
+     8	 * Copyright(c) EC-CUBE CO.,LTD. All Rights Reserved.
+     9	 *
+    10	 * http://www.ec-cube.co.jp/
+    11	 *
+    12	 * For the full copyright and license information, please view the LICENSE
+    13	 * file that was distributed with this source code.
+    14	 */
+    15	
+    16	namespace Eccube\Command;
+    17	
+    18	use Eccube\Service\Product\BatchFavoriteSaleNotificationAction;
+    19	use Symfony\Component\Console\Attribute\AsCommand;
+    20	use Symfony\Component\Console\Command\Command;
+    21	use Symfony\Component\Console\Input\InputInterface;
+    22	use Symfony\Component\Console\Output\OutputInterface;
+    23	use Symfony\Component\Console\Style\SymfonyStyle;
+    24	
+    25	/**
+    26	 * お気に入り商品セール通知バッチ（B02-05）
+    27	 *
+    28	 * お気に入り登録商品がセール中の会員にメール通知する。
+    29	 *
+    30	 * 【使い方】
+    31	 *
+    32	 *   bin/console eccube:favorite-sale-notification
+    33	 */
+    34	#[AsCommand(name: 'eccube:favorite-sale-notification', description: 'お気に入り商品セール通知バッチ')]
+    35	class FavoriteSaleNotificationCommand extends Command
+    36	{
+    37	    public function __construct(private readonly BatchFavoriteSaleNotificationAction $batchFavoriteSaleNotificationAction)
+    38	    {
+    39	        parent::__construct();
+    40	    }
+    41	
+    42	    #[\Override]
+    43	    protected function execute(InputInterface $input, OutputInterface $output): int
+    44	    {
+    45	        $io = new SymfonyStyle($input, $output);
+    46	
+    47	        try {
+    48	            $count = $this->batchFavoriteSaleNotificationAction->handle();
+    49	        } catch (\Exception $e) {
+    50	            $io->error('お気に入り商品セール通知でエラーが発生しました: '.$e->getMessage());
+    51	
+    52	            return Command::FAILURE;
+    53	        }
+    54	
+    55	        if ($count === 0) {
+    56	            $io->success('セール中のお気に入り商品はありませんでした。');
+    57	        } else {
+    58	            $io->success(sprintf('お気に入り商品セール通知を%d名に送信しました。', $count));
+    59	        }
+    60	
+    61	        return Command::SUCCESS;
+    62	    }
+    63	}
+     1	<?php
+     2	
+     3	declare(strict_types=1);
+     4	
+     5	/*
+     6	 * This file is part of EC-CUBE
+     7	 *
+     8	 * Copyright(c) EC-CUBE CO.,LTD. All Rights Reserved.
+     9	 *
+    10	 * http://www.ec-cube.co.jp/
+    11	 *
+    12	 * For the full copyright and license information, please view the LICENSE
+    13	 * file that was distributed with this source code.
+    14	 */
+    15	
+    16	namespace Eccube\Command;
+    17	
+    18	use Eccube\Service\Product\BatchCancelProductRequestAction;
+    19	use Symfony\Component\Console\Attribute\AsCommand;
+    20	use Symfony\Component\Console\Command\Command;
+    21	use Symfony\Component\Console\Input\InputInterface;
+    22	use Symfony\Component\Console\Output\OutputInterface;
+    23	use Symfony\Component\Console\Style\SymfonyStyle;
+    24	
+    25	/**
+    26	 * 入荷通知キャンセルバッチ（B02-02）
+    27	 *
+    28	 * 商品・商品規格の公開ステータスが非公開・廃止の入荷通知リクエストを論理削除する。
+    29	 *
+    30	 * 【使い方】
+    31	 *
+    32	 *   bin/console eccube:cancel-product-request
+    33	 */
+    34	#[AsCommand(name: 'eccube:cancel-product-request', description: '入荷通知キャンセルバッチ')]
+    35	class CancelProductRequestCommand extends Command
+    36	{
+    37	    public function __construct(private readonly BatchCancelProductRequestAction $batchCancelProductRequestAction)
+    38	    {
+    39	        parent::__construct();
+    40	    }
+    41	
+    42	    #[\Override]
+    43	    protected function execute(InputInterface $input, OutputInterface $output): int
+    44	    {
+    45	        $io = new SymfonyStyle($input, $output);
+    46	
+    47	        try {
+    48	            $count = $this->batchCancelProductRequestAction->handle();
+    49	        } catch (\Exception $e) {
+    50	            $io->error('入荷通知キャンセル処理でエラーが発生しました: '.$e->getMessage());
+    51	
+    52	            return Command::FAILURE;
+    53	        }
+    54	
+    55	        $io->success(sprintf('入荷通知キャンセルが完了しました。（%d件）', $count));
+    56	
+    57	        return Command::SUCCESS;
+    58	    }
+    59	}
+     1	<?php
+     2	
+     3	declare(strict_types=1);
+     4	
+     5	/*
+     6	 * This file is part of EC-CUBE
+     7	 *
+     8	 * Copyright(c) EC-CUBE CO.,LTD. All Rights Reserved.
+     9	 *
+    10	 * http://www.ec-cube.co.jp/
+    11	 *
+    12	 * For the full copyright and license information, please view the LICENSE
+    13	 * file that was distributed with this source code.
+    14	 */
+    15	
+    16	namespace Eccube\Command;
+    17	
+    18	use Eccube\Service\Admin\Customer\PointExpireNotificationAction;
+    19	use Symfony\Component\Console\Attribute\AsCommand;
+    20	use Symfony\Component\Console\Command\Command;
+    21	use Symfony\Component\Console\Input\InputInterface;
+    22	use Symfony\Component\Console\Output\OutputInterface;
+    23	use Symfony\Component\Console\Style\SymfonyStyle;
+    24	
+    25	#[AsCommand(name: 'eccube:customer:point-expire-notification', description: 'ポイント有効期限通知バッチ')]
+    26	class PointExpireNotificationCommand extends Command
+    27	{
+    28	    public function __construct(
+    29	        private readonly PointExpireNotificationAction $pointExpireNotificationAction,
+    30	    ) {
+    31	        parent::__construct();
+    32	    }
+    33	
+    34	    #[\Override]
+    35	    protected function execute(InputInterface $input, OutputInterface $output): int
+    36	    {
+    37	        $io = new SymfonyStyle($input, $output);
+    38	        $io->text('ポイント有効期限通知バッチ開始');
+    39	
+    40	        try {
+    41	            $this->pointExpireNotificationAction->handle();
+    42	        } catch (\Throwable $e) {
+    43	            $io->error([
+    44	                'ポイント有効期限通知処理でエラーが発生しました',
+    45	                $e->getMessage(),
+    46	            ]);
+    47	
+    48	            return Command::FAILURE;
+    49	        }
+    50	
+    51	        $io->success('ポイント有効期限通知処理が完了しました。');
+    52	
+    53	        return Command::SUCCESS;
+    54	    }
+    55	}
+
+exec
+/bin/bash -lc "rg -n -i 'transaction.*error|error.*transaction|checkSmaregi|smaregi:batch|webhook.*retry|retry.*webhook' src/Eccube/Command src/Eccube/Service | head -100" in /home/y-saito/Developments/ec-cube-enterprise
+ succeeded in 0ms:
+src/Eccube/Service/Smaregi/SmaregiCustomerService.php:468:            $this->logger->error('Smaregi customer point updated but response has no transactionHeadIds', [
+src/Eccube/Service/Smaregi/SmaregiCustomerService.php:544:            $this->logger->error('Smaregi customer point updated but response has no transactionHeadIds', [
+src/Eccube/Service/Smaregi/SmaregiCustomerService.php:587:     * @return array{ok:bool,statusCode:int,failurePhase:?string,error:?string,transactionHeadIds:list<string>,smaregiCustomerId:?string}
+src/Eccube/Service/Smaregi/SmaregiCustomerService.php:654:     * @return array{ok:bool,statusCode:int,failurePhase:?string,error:?string,transactionHeadIds:list<string>,smaregiCustomerId:?string}
+src/Eccube/Service/Smaregi/SmaregiTransactionProcessingLock.php:138:            $this->logger->error('Failed to release Smaregi transaction lock', [
+src/Eccube/Service/Smaregi/Webhook/Transaction/SmaregiTransactionProcessDispatcher.php:82:                $this->logger->error('Failed to persist Smaregi transaction process job failure state', [
+src/Eccube/Service/Smaregi/Webhook/Transaction/SmaregiTransactionProcessDispatcher.php:89:            $this->logger->error('Smaregi transaction process message dispatch failed', [
+src/Eccube/Service/Smaregi/Api/SmaregiTransactionApiClient.php:80:                $this->logger->error('Smaregi transaction response parse failed', [
+src/Eccube/Service/Smaregi/Api/SmaregiTransactionApiClient.php:182:            $this->logger->error('Smaregi transaction platform API call log (success) record failed', $logContext + [
+src/Eccube/Service/Smaregi/Api/SmaregiTransactionApiClient.php:197:            $this->logger->error('Smaregi transaction API request success log failed', $logContext + [
+src/Eccube/Service/Smaregi/Api/SmaregiTransactionApiClient.php:242:            $this->logger->error('Smaregi transaction platform API call log (failure) record failed', $logContext + [
+src/Eccube/Service/Smaregi/Api/SmaregiTransactionApiClient.php:251:            $this->logger->error('Smaregi transaction API request failed', $logContext + [
+src/Eccube/Service/Smaregi/Webhook/Transaction/SmaregiTransactionBackfillAction.php:165:                $this->logger->error('Failed to list Smaregi transactions', [
+src/Eccube/Service/Smaregi/Webhook/Transaction/SmaregiTransactionBackfillAction.php:190:            $this->logger->error('Smaregi transaction list exceeded max pages; some transactions may be unprocessed', [
+src/Eccube/Service/Smaregi/Webhook/Transaction/Processor/SmaregiTransactionDisposedProcessor.php:91:            $this->logger->error('No matching ECCUBE order for disposed Smaregi transaction; manual check required', [
+src/Eccube/Service/Smaregi/Webhook/Transaction/Processor/SmaregiTransactionCanceledProcessor.php:81:            $this->logger->error('No matching ECCUBE order for canceled Smaregi transaction; manual check required', [
+src/Eccube/Service/App/PointGranter/LegacyRequestParser.php:207:            throw new PointGranterRequestException(LegacyResponseBuilder::ERROR_VALIDATION, '入力チェックエラーです。', sprintf('transactionHeadDivision=%s は連携対象外です。', $division));
+src/Eccube/Command/PaymentStatusCheckCommand.php:77:                static fn (string $paymentNo): string => 'OrderId<'.$paymentNo.'> There was a Transaction Error',
+
+exec
+/bin/bash -lc "sed -n '1,110p' integration_test/casegen/coverage_audit/units/0405_sheet-11/sheet.txt 2>/dev/null | head -110; rg -n 'API|商品|在庫|エラー' integration_test/casegen/coverage_audit/units/0405_sheet-6/sheet.txt 2>/dev/null | head -35" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+L0001	スマレジ取引連携エラー再連携
+L0002	ドキュメント名受注管理 基本設計
+L0003	セクション—
+L0004	プロジェクト名受注管理機能
+L0005	作成者堀部
+L0006	作成日2025-06-11
+L0007	更新者堀部
+L0008	更新日2025-10-30
+L0009	機能NoB05-09
+L0010	機能名スマレジ取引連携エラー再連携
+L0011	概要スマレジ連携でwebhookで連携エラーになったものを再連携する
+L0012	処理概要（★はカスタマイズ項目）
+L0013	カスタマイズ説明
+L0014	本店・支店の処理を統合
+L0015	全店舗のデータをともに処理対象とする
+L0016	スマレジ受信処理(A05-04)で追加した連携項目も連携するようにする
+L0017	※項目の詳細についてはスマレジ受信処理(A05-04)を参照のこと
+L0018	機能仕様処理概要（★はカスタマイズ項目）
+L0019	1. APIでバッチ駆動時間から5時間前までの間の取引データを取得する
+L0020	※手動でのバッチ実行時に期間指定されている場合はその期間内の取引データを取得する
+L0021	2. 取引連携されていないデータを再連携処理する
+L0022	★処理内容は、スマレジ受信処理(A05-04)と処理概要2から手順と同様の処理を実行する
+L0023	実行トリガー スケジュール起動(Step Functions) 実行タイミング 毎時1分
+L0024	入力データ元 スマレジプラットフォームAPI 出力先(フォーマット) DB
+L0025	入力データ詳細
+L0026	期間指定したい場合はバッチ実行時に日時を指定し実行する
+L0027	Webhookが何らかの理由で失敗したスマレジ取引情報
+L0028	スマレジ側のwebhookにはリトライ処理が実装されていないので、取引が連携済みか確認が必要
+L0029	以下の条件下でwebhookに失敗している場合、再連携処理を実行
+L0030	・ポイント処理に不整合がある場合
+L0031	・スマレジ取引IDがECCUBE側に登録されていない場合
+L0032	・スマレジ取引IDがECCUBE側に登録されている状態で返品(キャンセル)等、スマレジ側に更新があった場合(取引の更新日時に差異がある場合)
+L0033	※ キャンセルの場合は、対象の受注データをキャンセルにする
+L0034	入力データ検索条件
+L0035	項目名 条件 備考
+L0036	スマレジ取引データ.取引更新時間 バッチ駆動時間(X)からバッチ駆動時間よりY時間前(X-Y hours)の間
+L0037	実行結果詳細 ※主にDBの登録・更新結果について記載
+L0038	Webhookに失敗した処理が、スマレジ受信処理(A05-04)と同等の処理が完了した状態になる
+L0039	エラーハンドリング
+L0040	際連携時にエラーがあった場合、スマレジから返ってきているエラー内容をログに出力する
+L0041	Source:
+L0042	functions/pf-eccube3/b05-09_batch_order_smaregi_check_transaction.md
+L0043	現行仕様
+L0044	B05-09 スマレジ取引連携エラー再連携 / バッチ 受注管理 — スマレジ取引連携エラー再連携
+L0045	業務ロジック
+L0046	取引情報の取得
+L0047	スマレジへの接続設定（接続先URL、契約ID、アクセストークン）をオプションマスタから取得し、取引情報の取得に用いる。取得する取引は、取引区分が通常のものに限る。
+L0048	再連携結果の記録
+L0049	再連携の対象と判定した取引の取引IDをログに出力する。再連携した取引が1件以上あるときは、その件数をログに出力する。
+L0050	エラー時の扱い
+L0051	エラー内容	処理
+L0052	実行時の指定が本バッチと一致しない	実行日時を添えた該当なしのメッセージをコンソールへ出力し、再連携を行わずに終了する。終了コードは1
+L0053	取引情報の取得失敗	失敗内容をコンソールへ出力し、再連携を行わずに終了する。終了コードは成功時と同じ0
+L0054	取得結果が空	何もせず正常終了する
+L0055	入出力
+L0056	入出力: 入力と出力
+L0057	種類	内容
+L0058	入力	バッチ実行時に指定する対象バッチ名、スマレジ接続設定（接続先URL・契約ID・アクセストークン）
+L0059	成功時出力	再連携の対象と判定した取引IDと、再連携した件数のログ出力
+L0060	失敗時出力	取得失敗内容のコンソール出力
+L0061	リニューアル後の仕様
+L0062	表示メッセージ
+L0063	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0064	本バッチは画面へメッセージを表示しない。
+1:L0001	スマレジ商品再連携
+10:L0010	機能名スマレジ商品再連携
+14:L0014	・スマレジ連携APIについて、呼び出しを廃止予定のスマレジAPIからプラットフォームAPIに変更
+17:L0017	・スマレジ商品コードが登録されている
+19:L0019	・スマレジ商品未連携もしくは、スマレジ在庫連携未連携
+21:L0021	・商品情報の更新
+22:L0022	・スマレジ商品情報未連携の場合は、商品情報の更新をする
+23:L0023	・連携に失敗した場合はスマレジ通信エラーメール送信
+24:L0024	・在庫情報の更新
+25:L0025	・スマレジ在庫情報未連携の場合は、在庫情報の更新をする
+26:L0026	・連携に失敗した場合はスマレジ通信エラーメール送信
+31:L0031	・スマレジ商品コードが登録されている
+33:L0033	・スマレジ商品連携が未連携 もしくはスマレジ在庫連携が未連携
+36:L0036	注文データ.スマレジ商品コード スマレジ商品コードが登録されている
+38:L0038	注文データ.スマレジ商品連携フラグ or
+39:L0039	注文データ.スマレジ在庫連携フラグ スマレジ商品連携が未連携
+40:L0040	もしくはスマレジ在庫連携が未連携
+42:L0042	スマレジ商品連携が未連携の場合
+43:L0043	スマレジプラットフォームAPIでスマレジに商品を登録する
+44:L0044	スマレジ登録が成功したら、当該注文データのスマレジ商品連携フラグを立てる
+45:L0045	スマレジ在庫連携が未連携の場合
+46:L0046	スマレジプラットフォームAPIでスマレジに在庫を登録する
+47:L0047	スマレジ登録が成功したら、当該注文データのスマレジ在庫連携フラグを立てる
+48:L0048	※ 一つの注文データで、スマジレ商品連携、スマレジ在庫連携どちらも未連携になっている状態も想定されるので注意
+49:L0049	エラーハンドリング
+50:L0050	・エラーが発生した場合、発生したスマレジ連携ごとにメールで管理者に通知
+54:L0054	B05-04 スマレジ商品再連携 / バッチ 受注管理 — スマレジ商品再連携
+63:L0063	1件の受注で商品と在庫の両方が未連携のとき、商品の連携が失敗すると、同じ受注の在庫の連携は行わずに次の受注へ進む。失敗した区分は未連携のまま残るため、その受注は次回の起動でも対象になる。
+
+exec
+/bin/bash -lc "rg --files integration_test/casegen/datapattern/units | rg '/(B02-02|B02-05|B08-03|B06-02)/design.txt'; sed -n '45,63p' integration_test/casegen/datapattern/units/B02-05/design.txt; sed -n '45,65p' integration_test/casegen/datapattern/units/B02-02/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+integration_test/casegen/datapattern/units/B02-05/design.txt
+integration_test/casegen/datapattern/units/B06-02/design.txt
+integration_test/casegen/datapattern/units/B02-02/design.txt
+integration_test/casegen/datapattern/units/B08-03/design.txt
+L0044	お気に入りは商品と言語の組で保持し、セール中かどうかもその組で判定する。お気に入りに登録した言語の側がセール中である商品だけが通知の対象になる。会員グループに「店内注文専用アカウント」または「支店店内注文専用アカウント」が設定されている会員は対象にしない。対象が無いときはメールを送らずに完了する。
+L0045	通知メールの体裁
+L0046	本文は会員の氏名で始まり（英語のメールは名・姓の順）、続けて対象商品を1商品1行で並べる。各行の先頭にはお気に入りを登録した言語のコードを付け、商品名は日本語のメールでは日本語名、英語のメールでは英語名を出す。差出人は基本情報設定のショップ名と代表メールアドレス、返信先とエラー戻し先も基本情報設定に従い、件名・ヘッダー・フッターはメールテンプレートに登録された内容を用いる。
+L0047	再実行
+L0048	同じ起動を繰り返すと、同じ対象へ再び通知することがある。
+L0049	送信済みかどうかは判定しない。起動のたびに、その時点でセール中のお気に入り商品を持つ会員を抽出し直し、該当する会員へ通知メールを送る。通知回数の上限や重複の抑止は無い。メール送信履歴は送信のたびに残るが、会員には紐づけず、送信済みの判定には使わない。
+L0050	エラー時の扱い
+L0051	事象	扱い
+L0052	起動時の指定が不正	処理を行わずに終了し、指定が不正である旨を出力する
+L0053	抽出・送信の途中で異常が起きた	その時点で処理が止まり、以降の会員には通知されない。完了の出力も行わない
+L0054	入出力
+L0055	種類	内容
+L0056	成功時出力	開始と完了の出力
+L0057	開始と完了は、コンソールの標準出力へ1行ずつ出す。どちらの行も実行時刻とバッチ名（saleNotification）を含み、処理件数は含まない。
+L0058	入出力: 永続化
+L0059	操作	契機
+L0060	登録	通知メールを送信するたびに、件名・本文・送信日時と用いたメールテンプレートをメール送信履歴として残す
+L0061	リニューアル後の仕様
+L0062	表示メッセージ
+L0044	削除日時が未設定の入荷通知リクエストのうち、次のいずれかに当てはまるものを対象とする。対象が無いときは何も更新せずに完了する。
+L0045	紐づく商品規格が削除済みである
+L0046	紐づく商品が存在しない
+L0047	紐づく商品が削除済みである
+L0048	紐づく商品規格のデータそのものが存在しない入荷通知リクエストは、対象にならない。
+L0049	再実行の扱い
+L0050	削除日時が未設定の行だけを対象とするため、既に論理削除済みの行が再び対象になることはなく、重複して削除することもない。
+L0051	エラー時の扱い
+L0052	事象	扱い
+L0053	起動時の指定が不正	該当するバッチが無い旨を出力し、処理を行わずに終了する
+L0054	一括更新の失敗	更新は反映されず、完了の出力を行わずに終了する
+L0055	入出力
+L0056	起動と実行結果
+L0057	種類	内容
+L0058	入力	起動時の指定のみで、引数は取らない
+L0059	実行結果	実行の開始時と完了時に、実行日時を添えて出力する
+L0060	失敗時	完了の出力を行わない
+L0061	リニューアル後の仕様
+L0062	表示メッセージ
+L0063	この機能は画面を持たないためメッセージを扱わない。
+
+exec
+/bin/bash -lc "rg -n -i 'Smaregi.*Backfill|Backfill.*Command|transaction.*backfill' src/Eccube/Command src/Eccube/Service/Smaregi/Webhook/Transaction | head -80; rg -n '設定|connect|base_url|endpoint|url|contract|token' src/Eccube/Service/Smaregi/Webhook/Transaction/SmaregiTransactionBackfillAction.php | head -80" in /home/y-saito/Developments/ec-cube-enterprise
+ succeeded in 0ms:
+src/Eccube/Service/Smaregi/Webhook/Transaction/SmaregiTransactionProcessDispatcher.php:29: * Webhook 連携エラー再連携バッチ ({@see SmaregiTransactionBackfillAction}) の双方から再利用する。
+src/Eccube/Service/Smaregi/Webhook/Transaction/SmaregiTransactionBackfillAction.php:40: * (在庫側 {@see \Eccube\Service\Smaregi\Stock\SmaregiStockBackfillAction} と同方針)。
+src/Eccube/Service/Smaregi/Webhook/Transaction/SmaregiTransactionBackfillAction.php:61:final readonly class SmaregiTransactionBackfillAction
+src/Eccube/Service/Smaregi/Webhook/Transaction/SmaregiTransactionBackfillAction.php:198:        $this->logger->info('Smaregi transaction backfill finished', $summary);
+src/Eccube/Service/Smaregi/Webhook/Transaction/SmaregiTransactionBackfillAction.php:261:                $this->logger->info('Smaregi transaction skipped for backfill: unsupported transactionHeadDivision', [
+src/Eccube/Service/Smaregi/Webhook/Transaction/SmaregiTransactionBackfillAction.php:293:                $this->logger->info('Smaregi transaction enqueued for backfill', [
+src/Eccube/Service/Smaregi/Webhook/Transaction/SmaregiTransactionBackfillAction.php:302:                $this->logger->warning('Failed to enqueue Smaregi transaction backfill job', [
+src/Eccube/Command/SmaregiStockBackfillCommand.php:18:use Eccube\Service\Smaregi\Stock\SmaregiStockBackfillAction;
+src/Eccube/Command/SmaregiStockBackfillCommand.php:32: * {@see SmaregiStockBackfillAction::LOOKBACK_HOURS} 時間前までの在庫変動日時を対象とする。
+src/Eccube/Command/SmaregiStockBackfillCommand.php:34:#[AsCommand(name: 'eccube:smaregi:stock:backfill', description: 'スマレジ在庫変動Webhook連携エラー再連携バッチ (未連携の在庫変動を子ジョブとして enqueue する)')]
+src/Eccube/Command/SmaregiStockBackfillCommand.php:35:class SmaregiStockBackfillCommand extends Command
+src/Eccube/Command/SmaregiStockBackfillCommand.php:38:        private readonly SmaregiStockBackfillAction $stockBackfillAction,
+src/Eccube/Command/SmaregiStockBackfillCommand.php:46:        $format = SmaregiStockBackfillAction::DATE_TIME_FORMAT;
+src/Eccube/Command/SmaregiStockBackfillCommand.php:49:            ->addArgument('from', InputArgument::OPTIONAL, sprintf('在庫変動日時の開始 (%s 形式、未指定時は to の %d 時間前)', $format, SmaregiStockBackfillAction::LOOKBACK_HOURS), '')
+src/Eccube/Command/SmaregiTransactionBackfillCommand.php:18:use Eccube\Service\Smaregi\Webhook\Transaction\SmaregiTransactionBackfillAction;
+src/Eccube/Command/SmaregiTransactionBackfillCommand.php:32: * {@see SmaregiTransactionBackfillAction::LOOKBACK_HOURS} 時間前までの取引更新日時を対象とする。
+src/Eccube/Command/SmaregiTransactionBackfillCommand.php:34:#[AsCommand(name: 'eccube:smaregi:transaction:backfill', description: 'スマレジ取引Webhook連携エラー再連携バッチ (未連携の取引を子ジョブとして enqueue する)')]
+src/Eccube/Command/SmaregiTransactionBackfillCommand.php:35:class SmaregiTransactionBackfillCommand extends Command
+src/Eccube/Command/SmaregiTransactionBackfillCommand.php:38:        private readonly SmaregiTransactionBackfillAction $transactionBackfillAction,
+src/Eccube/Command/SmaregiTransactionBackfillCommand.php:46:        $format = SmaregiTransactionBackfillAction::DATE_TIME_FORMAT;
+src/Eccube/Command/SmaregiTransactionBackfillCommand.php:49:            ->addArgument('from', InputArgument::OPTIONAL, sprintf('取引更新日時の開始 (%s 形式、未指定時は to の %d 時間前)', $format, SmaregiTransactionBackfillAction::LOOKBACK_HOURS), '')
+src/Eccube/Command/SmaregiTransactionBackfillCommand.php:66:            $summary = $this->transactionBackfillAction->handle(
+src/Eccube/Command/SmaregiOrderShippingBackfillCommand.php:38: *   vendor/bin/console eccube:smaregi:order:backfill-shipping --dry-run
+src/Eccube/Command/SmaregiOrderShippingBackfillCommand.php:39: *   vendor/bin/console eccube:smaregi:order:backfill-shipping
+src/Eccube/Command/SmaregiOrderShippingBackfillCommand.php:42:    name: 'eccube:smaregi:order:backfill-shipping',
+src/Eccube/Command/SmaregiOrderShippingBackfillCommand.php:45:final class SmaregiOrderShippingBackfillCommand extends Command
+
+exec
+/bin/bash -lc "rg -n '"'^.*IT-B02-02-009|''^.*IT-B02-05-020'"' integration_test/casegen/excluded_open_cases.tsv; rg -n 'S-B02-02-BATCH-ENV|S-B02-05-BATCH-ENV' integration_test/casegen/excluded_open_seeds.tsv | head -10" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+173:IT-B02-02-009	B02-02	作り方が未確定	S-B02-02-L-ENV: 未確定: B02-02を手動起動する対象バッチの識別子、試験者に必要な起動・実行結果参照の権限、参照先を専用試験DBへ切り替える方法、起動した実行の開始日時・終了日時・実行結果を確認する方法が確定できない（precond/open_preconditions.tsv の S-B02-02-BATCH-ENV の未確定と同じ）	IT-B02-02-009	REQ-0404-sheet-4-R025		ITA-05	P1	ブラウザ+DB確認	S-B02-02-L-LIMIT,S-B02-02-L-ENV,S-B02-02-L-DATA-009	① 開始時に追加システム設定の入荷通知最大数を20に設定する（S-B02-02-L-LIMIT）／② B02-02の参照先を専用試験DBに設定し、実行中件数が0件であることを確認する。ケース実行中にスケジュール起動が重ならず、試験者は入力引数なしの手動起動と当該実行の実行結果を確認できる（S-B02-02-L-ENV）／③ 会員ID 〔会員ID-B0202-009〕の会員Aが本会員・利用可能で、メールアドレスb0202-l-001@example.testでログインできる。会員Aの入荷通知リクエストは20件で、うち19件（リクエストID 〔入荷通知リクエストID-B0202-009A〕〜〔入荷通知リクエストID-B0202-009S〕）は公開中の商品規格ID 〔商品規格ID-B0202-009A〕〜〔商品規格ID-B0202-009S〕（削除されていない商品ID 〔商品ID-B0202-009A〕〜〔商品ID-B0202-009S〕に属する）を指定し、残る1件（リクエストID 〔入荷通知リクエストID-B0202-009T〕）は削除済みの商品ID 〔商品ID-B0202-009T〕に属する商品規格ID 〔商品規格ID-B0202-009T〕を指定している。20件とも削除日時は未設定で、取り消し済みの依頼は無い。会員ID・商品ID・商品規格ID・入荷通知リクエストIDは登録時に振られた番号を控えてある（S-B02-02-L-DATA-009）／④ 商品名「入荷通知上限確認商品001」（商品規格ID 〔商品規格ID-B0202-009U〕）が本店公開、本店EC-CUBE在庫0、SOLDOUTで、会員Aの依頼が0件である（S-B02-02-L-DATA-009）	1. バッチB02-02「入荷通知キャンセル」を入力引数を指定せず起動する／2. 実行一覧で当該実行が完了になるまで待つ（上限30分）／3. 会員Aで本店にログインする／4. 商品「入荷通知上限確認商品001」の商品詳細画面を開く／5. 「入荷時に通知」を押し、確認が表示されたら了承する／6. DBで会員Aの入荷通知リクエストを確認する	手順5で入荷通知の依頼が上限超過とならずに受け付けられ、会員Aの有効な入荷通知依頼が19件から上限値の20件へ増えて、商品規格ID 〔商品規格ID-B0202-009U〕の依頼が保存されること	上流: B02-02 機能設計書 / 対象の入荷通知リクエスト、再実行の扱い｜下流: F03-07 機能設計書 / 依頼と取り消しの判定順序
+195:IT-B02-05-020	B02-05	作り方が未確定	S-B02-05-BATCH-ENV: 未確定	IT-B02-05-020			ITA-08	P1	ブラウザ+DB確認	S-B02-05-BATCH-ENV,S-B02-05-GROUPS,S-B02-05-HIST-NOMEMBER-020,S-B02-05-SHOP,S-B02-05-TEMPLATE-JP,S-B02-05-MAILBOX	① B02-05を起動して履歴を確認でき、開始時の実行中件数を0件にする（S-B02-05-BATCH-ENV）／② 通常会員グループは通知対象となる区分である（S-B02-05-GROUPS）／③ 会員ID 〔会員ID-B0205-020〕（登録時に振られた会員IDを控えてある）・b0205-020-target@example.testは東京都の本会員で、JP側セール有効の商品ID 〔商品ID-B0205-020A〕（登録時に振られた商品IDを控えてある）・〔商品ID-B0205-020B〕をお気に入り登録しており、通知対象はこの会員だけ、開始時のメール送信履歴は0件である（S-B02-05-HIST-NOMEMBER-020）／④ 開始時にショップ名=B02-05試験店、代表メールアドレス=sender-b0205@example.test、返信先=reply-b0205@example.test、エラー戻し先=error-b0205@example.testに設定する（S-B02-05-SHOP）／⑤ 開始時に日本語テンプレートを件名=B02-05日本語セール通知、ヘッダー=日本語通知ヘッダー、フッター=日本語通知フッターに設定する（S-B02-05-TEMPLATE-JP）／⑥ 開始時にMailCatcherの受信メールを0件にする（S-B02-05-MAILBOX）	1. DBでメール送信履歴の件数を記録する／2. バッチB02-05「お気に入り商品セール通知」を起動する／3. DBで追加されたメール送信履歴の会員の指定を確認する	追加されたメール送信履歴は1件で、その履歴には会員ID 〔会員ID-B0205-020〕を含むどの会員も紐づいていない（会員の指定が空である）こと	0404 お気に入り商品セール通知 / 現行仕様 業務ロジック 再実行、入出力: 永続化
+173:B02-02	IT-B02-02-001,IT-B02-02-002,IT-B02-02-003,IT-B02-02-004,IT-B02-02-005,IT-B02-02-010,IT-B02-02-011,IT-B02-02-012	S-B02-02-BATCH-ENV	実行環境	B02-02専用バッチ実行環境	参照先=専用試験DB／B02-02の実行中件数=0／入力引数なしで手動起動可能／試験者は当該実行の開始日時・終了日時・実行結果を確認でき、専用試験DBを参照できる／ケース実行中にスケジュール起動が重ならない	B02-02の実行環境は1件だけ存在するため共有可。各ケースが開始時に必要な値を自分で設定する	バッチの試験環境でB02-02の参照先を専用試験DBに設定し、試験者へ起動・実行結果参照権限と試験DB参照権限を付与する。実行一覧で実行中0件を確認し、スケジュール起動と重ならない時間帯に実施する	共有可
+190:B02-05	IT-B02-05-001,IT-B02-05-002,IT-B02-05-003,IT-B02-05-004,IT-B02-05-005,IT-B02-05-006,IT-B02-05-007,IT-B02-05-008,IT-B02-05-009,IT-B02-05-010,IT-B02-05-011,IT-B02-05-012,IT-B02-05-013,IT-B02-05-014,IT-B02-05-020	S-B02-05-BATCH-ENV	実行環境	B02-05 バッチ実行環境	B02-05のバッチを手動起動でき、起動した実行の状態と履歴を確認できる／ケース開始時の実行中件数=0	バッチを使うケースの実行環境。1件だけ存在する試験環境のため共有可。各ケースが開始時に実行中件数を0件にする	未確定。対象バッチの識別子、手動起動方法および必要権限が設計書とee実装にない	共有可
+
+exec
+/bin/bash -lc "nl -ba src/Eccube/Command/SmaregiTransactionBackfillCommand.php | sed -n '25,100p'; nl -ba src/Eccube/Service/Smaregi/Api/SmaregiTransactionApiClient.php | sed -n '35,130p'; rg -n 'SmaregiTransactionApiClient|SMAREGI.*(API|BASE|TOKEN|CONTRACT)|smaregi.*(base_url|contract)' src config .env* 2>/dev/null | head -100" in /home/y-saito/Developments/ec-cube-enterprise
+ succeeded in 0ms:
+    25	
+    26	/**
+    27	 * スマレジ取引 Webhook 連携エラー再連携バッチ。
+    28	 *
+    29	 * スマレジ側 Webhook にリトライ機構が無いため、受信失敗した取引を後追いで補完する。
+    30	 * 毎時起動する想定 (スケジュールは Step Functions 等の外部設定)。
+    31	 * 期間を指定しない場合はバッチ駆動時間から
+    32	 * {@see SmaregiTransactionBackfillAction::LOOKBACK_HOURS} 時間前までの取引更新日時を対象とする。
+    33	 */
+    34	#[AsCommand(name: 'eccube:smaregi:transaction:backfill', description: 'スマレジ取引Webhook連携エラー再連携バッチ (未連携の取引を子ジョブとして enqueue する)')]
+    35	class SmaregiTransactionBackfillCommand extends Command
+    36	{
+    37	    public function __construct(
+    38	        private readonly SmaregiTransactionBackfillAction $transactionBackfillAction,
+    39	    ) {
+    40	        parent::__construct();
+    41	    }
+    42	
+    43	    #[\Override]
+    44	    protected function configure(): void
+    45	    {
+    46	        $format = SmaregiTransactionBackfillAction::DATE_TIME_FORMAT;
+    47	
+    48	        $this
+    49	            ->addArgument('from', InputArgument::OPTIONAL, sprintf('取引更新日時の開始 (%s 形式、未指定時は to の %d 時間前)', $format, SmaregiTransactionBackfillAction::LOOKBACK_HOURS), '')
+    50	            ->addArgument('to', InputArgument::OPTIONAL, sprintf('取引更新日時の終了 (%s 形式、未指定時はバッチ駆動時間)', $format), '');
+    51	    }
+    52	
+    53	    #[\Override]
+    54	    protected function execute(InputInterface $input, OutputInterface $output): int
+    55	    {
+    56	        $io = new SymfonyStyle($input, $output);
+    57	
+    58	        /** @var string $from */
+    59	        $from = $input->getArgument('from');
+    60	        /** @var string $to */
+    61	        $to = $input->getArgument('to');
+    62	
+    63	        $io->text('スマレジ取引Webhook連携エラー再連携バッチ開始');
+    64	
+    65	        try {
+    66	            $summary = $this->transactionBackfillAction->handle(
+    67	                $from === '' ? null : $from,
+    68	                $to === '' ? null : $to,
+    69	            );
+    70	        } catch (\Throwable $e) {
+    71	            $io->error([
+    72	                'スマレジ取引再連携処理でエラーが発生しました',
+    73	                $e->getMessage(),
+    74	            ]);
+    75	
+    76	            return Command::FAILURE;
+    77	        }
+    78	
+    79	        $message = sprintf(
+    80	            'スマレジ取引再連携処理が完了しました。対象期間=%s〜%s 取得=%d件 再連携(enqueue)=%d件 (未連携=%d件 更新差分=%d件 ポイント不整合=%d件) スキップ=%d件 失敗=%d件',
+    81	            $summary['from'],
+    82	            $summary['to'],
+    83	            $summary['fetched'],
+    84	            $summary['enqueued'],
+    85	            $summary['notLinked'],
+    86	            $summary['updated'],
+    87	            $summary['pointMismatch'],
+    88	            $summary['skipped'],
+    89	            $summary['failed'],
+    90	        );
+    91	
+    92	        // API 取得失敗等で一部失敗があった場合はエラー出力 + 非正常終了として扱い、監視で検知できるようにする。
+    93	        if ($summary['failed'] > 0) {
+    94	            $io->error($message);
+    95	
+    96	            return Command::FAILURE;
+    97	        }
+    98	
+    99	        $io->success($message);
+   100	
+    35	        'with_discounts' => 'all',
+    36	        'with_store' => 'all',
+    37	        'with_customer' => 'all',
+    38	        'with_staff' => 'all',
+    39	    ];
+    40	
+    41	    public function __construct(
+    42	        private readonly ClientInterface $httpClient,
+    43	        private readonly LoggerInterface $logger,
+    44	        private readonly SmaregiPlatformApiCallRecorder $platformApiCallRecorder,
+    45	        private readonly TransactionResponseParser $responseParser,
+    46	    ) {
+    47	    }
+    48	
+    49	    /**
+    50	     * @return array{statusCode:int,headers:array<string,array<string>>,body:string,json:array<string,mixed>|null,dto:TransactionDto|null}
+    51	     */
+    52	    public function getTransaction(
+    53	        string $apiUrl,
+    54	        string $contractId,
+    55	        string $accessToken,
+    56	        string $transactionHeadId,
+    57	    ): array {
+    58	        $url = sprintf(
+    59	            '%s/%s/pos/transactions/%s',
+    60	            rtrim($apiUrl, '/'),
+    61	            $contractId,
+    62	            rawurlencode($transactionHeadId),
+    63	        );
+    64	
+    65	        $response = $this->requestGet(
+    66	            SmaregiPlatformApiCallLog::OPERATION_TRANSACTION_GET,
+    67	            $url,
+    68	            $accessToken,
+    69	            self::TRANSACTION_GET_FIXED_QUERY,
+    70	            [
+    71	                'transactionHeadId' => $transactionHeadId,
+    72	            ],
+    73	        );
+    74	
+    75	        $dto = null;
+    76	        if (is_array($response['json'])) {
+    77	            try {
+    78	                $dto = $this->responseParser->parse($response['json']);
+    79	            } catch (\Throwable $e) {
+    80	                $this->logger->error('Smaregi transaction response parse failed', [
+    81	                    'transactionHeadId' => $transactionHeadId,
+    82	                    'error' => $e->getMessage(),
+    83	                ]);
+    84	            }
+    85	        }
+    86	
+    87	        return $response + ['dto' => $dto];
+    88	    }
+    89	
+    90	    /**
+    91	     * 取引一覧を取得する（Webhook 未達期間の受信漏れを補完する再連携バッチ等で使用する）.
+    92	     *
+    93	     * ページング（page / limit）と期間指定は公式 API のクエリキーに準拠して呼び出し側が $query に指定し、
+    94	     * ページ送りのループも呼び出し側で制御する（在庫の {@see SmaregiStockApiClient::listStocks} と同方針）。
+    95	     * 参考: https://developers.smaregi.dev/platform-api-reference/apis/pos/operations/gettransactions/
+    96	     *
+    97	     * @param array<string,string> $query page / limit / 期間指定 等の公式クエリキー
+    98	     *
+    99	     * @return array{statusCode:int,headers:array<string,array<string>>,body:string,json:array<int,array<string,mixed>>|null}
+   100	     */
+   101	    public function listTransactions(
+   102	        string $apiUrl,
+   103	        string $contractId,
+   104	        string $accessToken,
+   105	        array $query = [],
+   106	    ): array {
+   107	        $url = sprintf('%s/%s/pos/transactions', rtrim($apiUrl, '/'), $contractId);
+   108	
+   109	        return $this->requestGet(
+   110	            SmaregiPlatformApiCallLog::OPERATION_TRANSACTION_LIST,
+   111	            $url,
+   112	            $accessToken,
+   113	            $query,
+   114	            [
+   115	                'queryKeys' => array_keys($query),
+   116	            ],
+   117	        );
+   118	    }
+   119	
+   120	    /**
+   121	     * @param array<string,string> $query
+   122	     * @param array<string,mixed>  $logContext
+   123	     *
+   124	     * @return array{statusCode:int,headers:array<string,array<string>>,body:string,json:array<string,mixed>|array<int,array<string,mixed>>|null}
+   125	     */
+   126	    private function requestGet(
+   127	        string $operation,
+   128	        string $url,
+   129	        string $accessToken,
+   130	        array $query,
+.env.dist:101:SMAREGI_API_ID_URL=https://id.smaregi.dev
+.env.dist:102:SMAREGI_API_URL=https://api.smaregi.dev
+.env.dist:103:SMAREGI_API_CLIENT_ID=
+.env.dist:104:SMAREGI_API_CLIENT_SECRET=
+.env.dist:105:SMAREGI_API_CONTRACT_ID=
+.env:96:SMAREGI_API_ID_URL=https://id.smaregi.dev
+.env:97:SMAREGI_API_URL=https://api.smaregi.dev
+.env:98:SMAREGI_API_CLIENT_ID=
+.env:99:SMAREGI_API_CLIENT_SECRET=
+.env:100:SMAREGI_API_CONTRACT_ID=
+src/Eccube/Kernel.php:326:        // SMAREGI_API_CLIENT_ID の有無で eccube.smaregi.http_client_factory の alias を切替える
+src/Eccube/MessageHandler/SmaregiTransactionProcessMessageHandler.php:33:use Eccube\Service\Smaregi\Api\SmaregiTransactionApiClient;
+src/Eccube/MessageHandler/SmaregiTransactionProcessMessageHandler.php:101:        private SmaregiTransactionApiClient $transactionApiClient,
+src/Eccube/DependencyInjection/Compiler/SmaregiHttpClientPass.php:24: * eccube.smaregi.http_client が利用するファクトリを SMAREGI_API_CLIENT_ID の有無で切替える.
+src/Eccube/Form/Type/Admin/AdditionalSystemFormType.php:95:            ->add(Option::SMAREGI_ACCESS_TOKEN, TextType::class, [
+src/Eccube/Service/Smaregi/Webhook/Transaction/SmaregiTransactionBackfillAction.php:24:use Eccube\Service\Smaregi\Api\SmaregiTransactionApiClient;
+src/Eccube/Service/Smaregi/Webhook/Transaction/SmaregiTransactionBackfillAction.php:89:        private SmaregiTransactionApiClient $transactionApiClient,
+src/Eccube/Service/Smaregi/Api/SmaregiTransactionApiClient.php:27:class SmaregiTransactionApiClient
+src/Eccube/Service/Smaregi/Api/Mock/SmaregiMockHttpClientFactory.php:27: * SMAREGI_API_CLIENT_ID が空のローカル開発環境向け. レートリミットやリトライは積まない.
+src/Eccube/Entity/Master/MtbOption.php:42:    public const SMAREGI_CONTRACT_ID = 'smaregi_contract_id';
+src/Eccube/Entity/Master/MtbOption.php:68:    public const SMAREGI_ACCESS_TOKEN = 'smaregi_access_token';
+
+exec
+/bin/bash -lc "nl -ba src/Eccube/Service/Smaregi/Webhook/Transaction/SmaregiTransactionBackfillAction.php | sed -n '60,165p'; rg -n 'class SmaregiApiConfig|function.*get.*Config|apiUrl|contractId|accessToken' src/Eccube/Service/Smaregi/Webhook/Transaction/SmaregiTransactionBackfillAction.php | head -60; rg -n 'smaregi_api_url|smaregi.*contract|smaregi.*access_token|SmaregiApiConfig' app/config config src/Eccube/Service/Smaregi -g '*.yaml' -g '*.php' 2>/dev/null | head -100" in /home/y-saito/Developments/ec-cube-enterprise
+ succeeded in 0ms:
+    60	 */
+    61	final readonly class SmaregiTransactionBackfillAction
+    62	{
+    63	    /** 期間未指定時に遡る時間数 (バッチ駆動時間 X から X-Y 時間の Y)。 */
+    64	    public const LOOKBACK_HOURS = 5;
+    65	
+    66	    /** 期間指定 (コマンド引数・ログ出力) のフォーマット。 */
+    67	    public const DATE_TIME_FORMAT = 'Y-m-d H:i:s';
+    68	
+    69	    /**
+    70	     * 取引一覧API へ渡す日時のフォーマット。
+    71	     *
+    72	     * スマレジ側はタイムゾーンオフセット付きの ISO 8601 (YYYY-MM-DDTHH:mm:ss+XX:XX) のみ受け付け、
+    73	     * "Y-m-d H:i:s" 形式では 400 (日付形式が正しくありません) となる。
+    74	     */
+    75	    private const API_DATE_TIME_FORMAT = \DateTimeInterface::ATOM;
+    76	
+    77	    /** API 取得 1 ページあたりの件数。 */
+    78	    private const PAGE_LIMIT = 1000;
+    79	
+    80	    /** ページング暴走防止のための最大ページ数。 */
+    81	    private const MAX_PAGES = 1000;
+    82	
+    83	    /** ログに出力するエラーレスポンス本文の最大長。 */
+    84	    private const ERROR_BODY_MAX_LENGTH = 1000;
+    85	
+    86	    public function __construct(
+    87	        private LoggerInterface $logger,
+    88	        private SmaregiAccessTokenService $accessTokenService,
+    89	        private SmaregiTransactionApiClient $transactionApiClient,
+    90	        private TransactionResponseParser $responseParser,
+    91	        private OrderRepository $orderRepository,
+    92	        private SmaregiTransactionJobRepository $smaregiTransactionJobRepository,
+    93	        private DtbPointHistoryRepository $pointHistoryRepository,
+    94	        private SmaregiTransactionProcessDispatcher $processDispatcher,
+    95	        private string $smaregiApiIdUrl,
+    96	        private string $smaregiApiUrl,
+    97	        private string $smaregiApiClientId,
+    98	        private string $smaregiApiClientSecret,
+    99	        private string $smaregiApiContractId,
+   100	    ) {
+   101	    }
+   102	
+   103	    /**
+   104	     * @param string|null $from 取引更新日時の開始 (未指定時は $to の LOOKBACK_HOURS 時間前)
+   105	     * @param string|null $to   取引更新日時の終了 (未指定時はバッチ駆動時間)
+   106	     *
+   107	     * @return array{from:string,to:string,fetched:int,enqueued:int,skipped:int,failed:int,notLinked:int,updated:int,pointMismatch:int,unsupportedDivision:int}
+   108	     *
+   109	     * @throws \InvalidArgumentException 期間指定のフォーマットが不正な場合
+   110	     */
+   111	    public function handle(?string $from = null, ?string $to = null): array
+   112	    {
+   113	        $toDateTime = $to === null || $to === ''
+   114	            ? new \DateTimeImmutable()
+   115	            : $this->parseDateTime($to, 'to');
+   116	        $fromDateTime = $from === null || $from === ''
+   117	            ? $toDateTime->modify(sprintf('-%d hours', self::LOOKBACK_HOURS))
+   118	            : $this->parseDateTime($from, 'from');
+   119	
+   120	        if ($fromDateTime > $toDateTime) {
+   121	            throw new \InvalidArgumentException(sprintf('再連携期間の指定が不正です (from=%s > to=%s)', $fromDateTime->format(self::DATE_TIME_FORMAT), $toDateTime->format(self::DATE_TIME_FORMAT)));
+   122	        }
+   123	
+   124	        $summary = [
+   125	            'from' => $fromDateTime->format(self::DATE_TIME_FORMAT),
+   126	            'to' => $toDateTime->format(self::DATE_TIME_FORMAT),
+   127	            'fetched' => 0,
+   128	            'enqueued' => 0,
+   129	            'skipped' => 0,
+   130	            'failed' => 0,
+   131	            'notLinked' => 0,
+   132	            'updated' => 0,
+   133	            'pointMismatch' => 0,
+   134	            'unsupportedDivision' => 0,
+   135	        ];
+   136	
+   137	        $accessToken = $this->accessTokenService->getAccessToken(
+   138	            $this->smaregiApiIdUrl,
+   139	            $this->smaregiApiContractId,
+   140	            $this->smaregiApiClientId,
+   141	            $this->smaregiApiClientSecret,
+   142	        );
+   143	
+   144	        $reachedEnd = false;
+   145	        for ($page = 1; $page <= self::MAX_PAGES; $page++) {
+   146	            $response = $this->transactionApiClient->listTransactions(
+   147	                $this->smaregiApiUrl,
+   148	                $this->smaregiApiContractId,
+   149	                $accessToken,
+   150	                [
+   151	                    // 取引更新日時での絞り込み。取消・返品・編集はいずれも更新日時が更新されるため、
+   152	                    // 取引日時ではなく更新日時を検索キーとする。
+   153	                    'upd_date_time-from' => $fromDateTime->format(self::API_DATE_TIME_FORMAT),
+   154	                    'upd_date_time-to' => $toDateTime->format(self::API_DATE_TIME_FORMAT),
+   155	                    'page' => (string) $page,
+   156	                    'limit' => (string) self::PAGE_LIMIT,
+   157	                ],
+   158	            );
+   159	
+   160	            $statusCode = $response['statusCode'];
+   161	            if ($statusCode < 200 || $statusCode >= 300) {
+   162	                // スマレジから返ってきたエラー内容をログに残し、以降のページは追わずに終了する
+   163	                // (ページの欠落を無視して後続ページだけ処理すると、取りこぼしが検知できなくなるため)。
+   164	                $summary['failed']++;
+   165	                $this->logger->error('Failed to list Smaregi transactions', [
+88:        private SmaregiAccessTokenService $accessTokenService,
+137:        $accessToken = $this->accessTokenService->getAccessToken(
+149:                $accessToken,
+src/Eccube/Service/Smaregi/Api/SmaregiAccessTokenService.php:29:    private const CACHE_KEY_PREFIX = 'smaregi_access_token_';
+app/config/eccube/services.yaml:29:    smaregi_api_url: '%env(SMAREGI_API_URL)%'
+app/config/eccube/services.yaml:32:    smaregi_api_contract_id: '%env(SMAREGI_API_CONTRACT_ID)%'
+app/config/eccube/services.yaml:86:          $smaregiApiUrl: '%smaregi_api_url%'
+app/config/eccube/services.yaml:89:          $smaregiApiContractId: '%smaregi_api_contract_id%'
+
+exec
+/bin/bash -lc "rg -n 'class .*Product.*Backfill|SmaregiProductBackfill|商品再連携|stock.*register|register.*stock' src/Eccube/Command src/Eccube/Service/Smaregi | head -80; rg -n 'B05-04|商品再連携' integration_test/casegen/coverage_audit/units.tsv | head -5; rg -n '商品.*在庫|在庫.*商品' integration_test/casegen/coverage_audit/units/0405_sheet-6/sheet.txt | head -30" in /home/y-saito/Developments/ec-cube-enterprise
+ succeeded in 0ms:
+rg: integration_test/casegen/coverage_audit/units.tsv: IO error for operation on integration_test/casegen/coverage_audit/units.tsv: No such file or directory (os error 2)
+rg: integration_test/casegen/coverage_audit/units/0405_sheet-6/sheet.txt: IO error for operation on integration_test/casegen/coverage_audit/units/0405_sheet-6/sheet.txt: No such file or directory (os error 2)
+
+exec
+/bin/bash -lc "rg -n 'smaregi.*product|Smaregi.*Product|Smaregi.*Stock' src/Eccube/Command | head -80; rg -n 'Product.*Smaregi|Smaregi.*Product' src/Eccube/Service | head -80" in /home/y-saito/Developments/ec-cube-enterprise
+ succeeded in 0ms:
+src/Eccube/Command/SmaregiOtcDeleteCommand.php:77:            $orders = $this->orderRepository->getDeleteSmaregiProduct($limit);
+src/Eccube/Command/SmaregiStockBackfillCommand.php:18:use Eccube\Service\Smaregi\Stock\SmaregiStockBackfillAction;
+src/Eccube/Command/SmaregiStockBackfillCommand.php:32: * {@see SmaregiStockBackfillAction::LOOKBACK_HOURS} 時間前までの在庫変動日時を対象とする。
+src/Eccube/Command/SmaregiStockBackfillCommand.php:35:class SmaregiStockBackfillCommand extends Command
+src/Eccube/Command/SmaregiStockBackfillCommand.php:38:        private readonly SmaregiStockBackfillAction $stockBackfillAction,
+src/Eccube/Command/SmaregiStockBackfillCommand.php:46:        $format = SmaregiStockBackfillAction::DATE_TIME_FORMAT;
+src/Eccube/Command/SmaregiStockBackfillCommand.php:49:            ->addArgument('from', InputArgument::OPTIONAL, sprintf('在庫変動日時の開始 (%s 形式、未指定時は to の %d 時間前)', $format, SmaregiStockBackfillAction::LOOKBACK_HOURS), '')
+src/Eccube/Service/Smaregi/SmaregiProductClassCsvImportUpsertCoordinatorFactory.php:22: * CSV 1回の取込ごとに {@see SmaregiProductClassCsvImportUpsertCoordinator} を生成する。
+src/Eccube/Service/Smaregi/SmaregiProductClassCsvImportUpsertCoordinatorFactory.php:24:final class SmaregiProductClassCsvImportUpsertCoordinatorFactory
+src/Eccube/Service/Smaregi/SmaregiProductClassCsvImportUpsertCoordinatorFactory.php:27:        private readonly SmaregiProductClassEventService $smaregiProductClassEventService,
+src/Eccube/Service/Smaregi/SmaregiProductClassCsvImportUpsertCoordinatorFactory.php:36:    public function create(string $logContextLabel): SmaregiProductClassCsvImportUpsertCoordinator
+src/Eccube/Service/Smaregi/SmaregiProductClassCsvImportUpsertCoordinatorFactory.php:38:        return new SmaregiProductClassCsvImportUpsertCoordinator(
+src/Eccube/Service/Smaregi/SmaregiProductClassCsvImportUpsertCoordinator.php:29: * {@see SmaregiProductClassEventService::dispatchUpsert} を呼ぶ。
+src/Eccube/Service/Smaregi/SmaregiProductClassCsvImportUpsertCoordinator.php:37:final class SmaregiProductClassCsvImportUpsertCoordinator
+src/Eccube/Service/Smaregi/SmaregiProductClassCsvImportUpsertCoordinator.php:43:        private readonly SmaregiProductClassEventService $smaregiProductClassEventService,
+src/Eccube/Service/Smaregi/SmaregiProductClassCsvImportUpsertCoordinator.php:145:                if (!$ProductClass->getSmaregiAlignmentFlg()) {
+src/Eccube/Service/Smaregi/SmaregiProductClassCsvImportUpsertCoordinator.php:148:                $code = $ProductClass->getSmaregiProductCode();
+src/Eccube/Service/Smaregi/SmaregiProductClassCsvImportUpsertCoordinator.php:210:        $smaregiProductId = $ProductClass->getSmaregiProductId();
+src/Eccube/Service/Smaregi/SmaregiProductClassUpsertAction.php:21:use Eccube\Service\Smaregi\Api\SmaregiProductApiClient;
+src/Eccube/Service/Smaregi/SmaregiProductClassUpsertAction.php:33:class SmaregiProductClassUpsertAction
+src/Eccube/Service/Smaregi/SmaregiProductClassUpsertAction.php:45:        private readonly SmaregiProductApiClient $productApiClient,
+src/Eccube/Service/Smaregi/SmaregiProductClassUpsertAction.php:68:        if (!$ProductClass->getSmaregiAlignmentFlg()) {
+src/Eccube/Service/Smaregi/SmaregiProductClassUpsertAction.php:76:        $productCode = $this->resolveSmaregiProductCode($ProductClass);
+src/Eccube/Service/Smaregi/SmaregiProductClassUpsertAction.php:86:            throw new SmaregiProductClassSyncException('部門が未設定のため商品を登録できません。');
+src/Eccube/Service/Smaregi/SmaregiProductClassUpsertAction.php:97:        $storedSmaregiProductId = $this->resolveSmaregiProductId($ProductClass);
+src/Eccube/Service/Smaregi/SmaregiProductClassUpsertAction.php:100:        if ('' !== $storedSmaregiProductId) {
+src/Eccube/Service/Smaregi/SmaregiProductClassUpsertAction.php:101:            $updateStatusCode = $this->updateProduct($accessToken, $storedSmaregiProductId, $body);
+src/Eccube/Service/Smaregi/SmaregiProductClassUpsertAction.php:113:                'smaregiProductId' => $storedSmaregiProductId,
+src/Eccube/Service/Smaregi/SmaregiProductClassUpsertAction.php:116:            $ProductClass->setSmaregiProductId(null);
+src/Eccube/Service/Smaregi/SmaregiProductClassUpsertAction.php:124:            $ProductClass->setSmaregiProductId($resolvedId);
+src/Eccube/Service/Smaregi/SmaregiProductClassUpsertAction.php:134:            throw new SmaregiProductClassSyncException('部門にスマレジ部門IDが未設定のため、商品新規登録できません。');
+src/Eccube/Service/Smaregi/SmaregiProductClassUpsertAction.php:147:                throw new SmaregiProductClassSyncException('スマレジ商品登録APIが失敗しました (status='.$result['statusCode'].').');
+src/Eccube/Service/Smaregi/SmaregiProductClassUpsertAction.php:151:            $ProductClass->setSmaregiProductId($resolvedAfterCreateFail);
+src/Eccube/Service/Smaregi/SmaregiProductClassUpsertAction.php:160:            throw new SmaregiProductClassSyncException('スマレジ商品登録APIの応答に productId が含まれていません。');
+src/Eccube/Service/Smaregi/SmaregiProductClassUpsertAction.php:163:        $ProductClass->setSmaregiProductId($newId);
+src/Eccube/Service/Smaregi/SmaregiProductClassUpsertAction.php:184:    private function resolveSmaregiProductCode(ProductClass $ProductClass): string
+src/Eccube/Service/Smaregi/SmaregiProductClassUpsertAction.php:186:        $code = $ProductClass->getSmaregiProductCode();
+src/Eccube/Service/Smaregi/SmaregiProductClassUpsertAction.php:191:    private function resolveSmaregiProductId(ProductClass $ProductClass): string
+src/Eccube/Service/Smaregi/SmaregiProductClassUpsertAction.php:193:        $id = $ProductClass->getSmaregiProductId();
+src/Eccube/Service/Smaregi/SmaregiProductClassUpsertAction.php:230:        $name = SmaregiFieldFormatter::truncateProductName($ProductClass->getFullProductName());
+src/Eccube/Service/Smaregi/SmaregiProductClassUpsertAction.php:307:     * @throws SmaregiProductClassSyncException HTTPステータスが成功（2xx）でない場合
+src/Eccube/Service/Smaregi/SmaregiProductClassUpsertAction.php:312:            throw new SmaregiProductClassSyncException($message.' (status='.$statusCode.').');
+src/Eccube/Service/Smaregi/SmaregiProductClassUpsertAction.php:332:            throw new SmaregiProductClassSyncException('スマレジ商品更新APIが失敗しました (status='.$result['statusCode'].').');
+src/Eccube/Service/Smaregi/SmaregiProductClassUpsertAction.php:354:            throw new SmaregiProductClassSyncException('スマレジ商品一覧APIが失敗しました (status='.$statusCode.').');
+src/Eccube/Service/Smaregi/SmaregiProductClassUpsertAction.php:384:            throw new SmaregiProductClassSyncException(sprintf('スマレジ商品コード %s に対して productId が複数件存在するため、一意に更新先を決定できません。', $productCode));
+src/Eccube/Service/Smaregi/SmaregiProductResolveException.php:25:final class SmaregiProductResolveException extends SmaregiException
+src/Eccube/Service/Smaregi/SmaregiProductUnlinkService.php:34:class SmaregiProductUnlinkService
+src/Eccube/Service/Smaregi/SmaregiProductUnlinkService.php:38:        private readonly SmaregiProductClassDeleteAction $smaregiProductClassDeleteAction,
+src/Eccube/Service/Smaregi/SmaregiProductUnlinkService.php:74:            if (!$ProductClass->getSmaregiAlignmentFlg()) {
+src/Eccube/Service/Smaregi/SmaregiProductUnlinkService.php:78:            $ProductClass->setSmaregiAlignmentFlg(false);
+src/Eccube/Service/Smaregi/SmaregiProductUnlinkService.php:80:            $smaregiProductId = $ProductClass->getSmaregiProductId();
+src/Eccube/Service/Smaregi/SmaregiProductUnlinkService.php:89:        $deletedSmaregiProductIds = [];
+src/Eccube/Service/Smaregi/SmaregiProductUnlinkService.php:93:                $deletedSmaregiProductIds[] = $smaregiProductId;
+src/Eccube/Service/Smaregi/SmaregiProductUnlinkService.php:98:                'deleted_smaregi_product_ids' => $deletedSmaregiProductIds,
+src/Eccube/Service/Smaregi/SmaregiProductUnlinkService.php:99:                'pending_smaregi_product_ids' => array_values(array_diff($smaregiProductIds, $deletedSmaregiProductIds)),
+src/Eccube/Service/Smaregi/SmaregiProductClassSyncException.php:24:final class SmaregiProductClassSyncException extends SmaregiException
+src/Eccube/Service/Smaregi/Webhook/Stock/SmaregiStockChangeApplier.php:102:        $ProductStock = $this->productStockRepository->findOneBySmaregiProductIdAndBaseInfoAndStockLocation(
+src/Eccube/Service/Smaregi/Otc/SmaregiOtcProductCodeGenerator.php:29:final readonly class SmaregiOtcProductCodeGenerator
+src/Eccube/Service/Smaregi/Otc/SmaregiOtcOrderAdminSyncAction.php:77:            if ($Order->isSmaregiProductFlg() && $Order->isSmaregiStockFlg()) {
+src/Eccube/Service/Smaregi/Otc/SmaregiOtcDeleteService.php:21:use Eccube\Service\Smaregi\Api\SmaregiProductApiClient;
+src/Eccube/Service/Smaregi/Otc/SmaregiOtcDeleteService.php:30: *      ({@see SmaregiOtcOrderSyncService::resolveProductIdByCode()} と同方針)
+src/Eccube/Service/Smaregi/Otc/SmaregiOtcDeleteService.php:42:        private SmaregiProductApiClient $productApiClient,
+src/Eccube/Service/Smaregi/Otc/SmaregiOtcDeleteService.php:164:     * ({@see SmaregiOtcOrderSyncService::resolveProductIdByCode()} と同等の突合ロジック)。
+src/Eccube/Service/Csv/ProductGoodsCsv.php:167:                $row['スマレジ連携フラグ'] = $ProductClass->getSmaregiAlignmentFlg() ? '1' : '0';
+src/Eccube/Service/Csv/ProductGoodsCsv.php:168:                $row['スマレジ商品コード'] = $ProductClass->getSmaregiProductCode() ?? '';
+src/Eccube/Service/Smaregi/Otc/SmaregiOtcSyncDispatcher.php:31: * (既存 SmaregiProductClassEventService::dispatchUpsert と同方針)。
+src/Eccube/Service/Smaregi/Otc/SmaregiOtcOrderSyncService.php:21:use Eccube\Service\Smaregi\Api\SmaregiProductApiClient;
+src/Eccube/Service/Smaregi/Otc/SmaregiOtcOrderSyncService.php:30: *   2. productCode を採番 ({@see SmaregiOtcProductCodeGenerator})
+src/Eccube/Service/Smaregi/Otc/SmaregiOtcOrderSyncService.php:46:        private SmaregiOtcProductBodyBuilder $productBodyBuilder,
+src/Eccube/Service/Smaregi/Otc/SmaregiOtcOrderSyncService.php:47:        private SmaregiOtcProductCodeGenerator $productCodeGenerator,
+src/Eccube/Service/Smaregi/Otc/SmaregiOtcOrderSyncService.php:48:        private SmaregiProductApiClient $productApiClient,
+src/Eccube/Service/Smaregi/Otc/SmaregiOtcOrderSyncService.php:65:        if ($Order->isSmaregiProductFlg() && $Order->isSmaregiStockFlg()) {
+src/Eccube/Service/Smaregi/Otc/SmaregiOtcOrderSyncService.php:101:        if (!$Order->isSmaregiProductFlg()) {
+src/Eccube/Service/Smaregi/Otc/SmaregiOtcOrderSyncService.php:163:            $Order->setSmaregiProductFlg(true);
+src/Eccube/Service/Smaregi/Otc/SmaregiOtcOrderSyncService.php:183:                $Order->setSmaregiProductFlg(true);
+src/Eccube/Service/Smaregi/Otc/SmaregiOtcOrderSyncService.php:202:        $Order->setSmaregiProductFlg(true);
+src/Eccube/Service/Smaregi/Otc/SmaregiOtcProductBodyBuilder.php:29:final readonly class SmaregiOtcProductBodyBuilder
+src/Eccube/Service/Smaregi/Otc/SmaregiOtcProductBodyBuilder.php:88:        return SmaregiFieldFormatter::truncateProductName($name);
+src/Eccube/Service/Smaregi/Webhook/Transaction/SmaregiOrderFactory.php:52:use Eccube\Service\Smaregi\SmaregiProductResolveException;
+src/Eccube/Service/Smaregi/Webhook/Transaction/SmaregiOrderFactory.php:572:        $this->logger->warning('Smaregi product not found in ECCUBE ProductClass; diverting to error queue', [
+src/Eccube/Service/Smaregi/Webhook/Transaction/SmaregiOrderFactory.php:576:        throw new SmaregiProductResolveException(sprintf('Smaregi product not found in ECCUBE ProductClass (smaregiProductId=%s).', $smaregiProductId));
+src/Eccube/Service/Smaregi/Otc/SmaregiOtcOrderUpdateService.php:20:use Eccube\Service\Smaregi\Api\SmaregiProductApiClient;
+src/Eccube/Service/Smaregi/Otc/SmaregiOtcOrderUpdateService.php:42:        private SmaregiOtcProductBodyBuilder $productBodyBuilder,
+src/Eccube/Service/Smaregi/Otc/SmaregiOtcOrderUpdateService.php:43:        private SmaregiProductApiClient $productApiClient,
+src/Eccube/Service/Smaregi/Otc/SmaregiOtcOrderUpdateService.php:56:        if (!$Order->isSmaregiProductFlg()) {
+src/Eccube/Service/Csv/Exporter/BarcodeReplacementListCsvRowFormatter.php:56:            'smaregiBarcode' => $this->formatSmaregiBarcode($smaregiProductCode, $standardPrice),
+src/Eccube/Service/Csv/Exporter/BarcodeReplacementListCsvRowFormatter.php:122:    private function formatSmaregiBarcode(string $smaregiProductCode, ?int $standardPrice): string
+
+exec
+/bin/bash -lc "nl -ba src/Eccube/Command/OtcBuyOrderAggregateSummaryCommand.php | sed -n '20,125p'; nl -ba src/Eccube/Command/BuyOrderAutoStockCommand.php | sed -n '20,95p'; nl -ba src/Eccube/Command/LostPointsCommand.php | sed -n '20,95p'" in /home/y-saito/Developments/ec-cube-enterprise
+ succeeded in 0ms:
+    20	use Symfony\Component\Console\Command\Command;
+    21	use Symfony\Component\Console\Input\InputArgument;
+    22	use Symfony\Component\Console\Input\InputInterface;
+    23	use Symfony\Component\Console\Output\OutputInterface;
+    24	use Symfony\Component\Console\Style\SymfonyStyle;
+    25	
+    26	/**
+    27	 * 店頭買取 日次集計バッチ
+    28	 *
+    29	 * 店舗・買取成立日・部門ごとに店頭買取情報を集計し、dtb_otc_buy_order_summary に登録する。
+    30	 * 対象日のデータが既に存在する場合は削除して再登録する（べき等）。
+    31	 *
+    32	 * 【使い方】
+    33	 *
+    34	 *   # 前日分を集計（引数省略時）
+    35	 *   bin/console eccube:otc-buy-order:aggregate-summary
+    36	 *
+    37	 *   # 日付を指定して集計
+    38	 *   bin/console eccube:otc-buy-order:aggregate-summary 2026-03-01
+    39	 *
+    40	 * 【メール通知】
+    41	 *   - 部門未設定の商品が存在する場合: 部門未設定商品通知メールを送信（集計は続行）
+    42	 *   - 集計処理でエラーが発生した場合: 集計エラー通知メールを送信
+    43	 *   送信先: MtbOption の otc_summary_mail_address（カンマ区切りで複数指定可）
+    44	 */
+    45	#[AsCommand(name: 'eccube:otc-buy-order:aggregate-summary', description: '店頭買取集計バッチ')]
+    46	class OtcBuyOrderAggregateSummaryCommand extends Command
+    47	{
+    48	    public function __construct(private readonly BatchAggregateSummaryAction $batchAggregateSummaryAction)
+    49	    {
+    50	        parent::__construct();
+    51	    }
+    52	
+    53	    #[\Override]
+    54	    protected function configure(): void
+    55	    {
+    56	        $this->addArgument('date', InputArgument::OPTIONAL, '集計対象日 (Y-m-d形式)。省略時は前日');
+    57	    }
+    58	
+    59	    #[\Override]
+    60	    protected function execute(InputInterface $input, OutputInterface $output): int
+    61	    {
+    62	        $io = new SymfonyStyle($input, $output);
+    63	
+    64	        $dateArg = $input->getArgument('date');
+    65	        if ($dateArg !== null) {
+    66	            $summaryDate = \DateTime::createFromFormat('Y-m-d', $dateArg);
+    67	            if ($summaryDate === false) {
+    68	                $io->error('日付の形式が正しくありません。Y-m-d形式で指定してください。例: 2026-03-01');
+    69	
+    70	                return Command::FAILURE;
+    71	            }
+    72	        } else {
+    73	            $summaryDate = new \DateTime('yesterday');
+    74	        }
+    75	
+    76	        $summaryDate->setTime(0, 0, 0);
+    77	
+    78	        $io->info('集計対象日: '.$summaryDate->format('Y-m-d'));
+    79	
+    80	        try {
+    81	            $this->batchAggregateSummaryAction->handle($summaryDate);
+    82	        } catch (\Exception $e) {
+    83	            $io->error('集計処理でエラーが発生しました: '.$e->getMessage());
+    84	
+    85	            return Command::FAILURE;
+    86	        }
+    87	
+    88	        $io->success('店頭買取集計が完了しました。');
+    89	
+    90	        return Command::SUCCESS;
+    91	    }
+    92	}
+    20	use Symfony\Component\Console\Attribute\AsCommand;
+    21	use Symfony\Component\Console\Command\Command;
+    22	use Symfony\Component\Console\Input\InputInterface;
+    23	use Symfony\Component\Console\Output\OutputInterface;
+    24	use Symfony\Component\Console\Style\SymfonyStyle;
+    25	
+    26	/**
+    27	 * 買取自動入庫バッチ
+    28	 *
+    29	 * 「入庫待ち」ステータスの買取案件を対象に、商品在庫を更新し在庫履歴を登録したうえで
+    30	 * ステータスを「入庫済み」に変更する。
+    31	 *
+    32	 * 【使い方】
+    33	 *
+    34	 *   bin/console eccube:buy-order:auto-stock
+    35	 */
+    36	#[AsCommand(name: 'eccube:buy-order:auto-stock', description: '買取自動入庫バッチ')]
+    37	class BuyOrderAutoStockCommand extends Command
+    38	{
+    39	    public function __construct(
+    40	        private readonly OtcBatchAutoStockAction $otcBatchAutoStockAction,
+    41	        private readonly NetBatchAutoStockAction $netBatchAutoStockAction,
+    42	    ) {
+    43	        parent::__construct();
+    44	    }
+    45	
+    46	    #[\Override]
+    47	    protected function execute(InputInterface $input, OutputInterface $output): int
+    48	    {
+    49	        $io = new SymfonyStyle($input, $output);
+    50	
+    51	        try {
+    52	            $this->otcBatchAutoStockAction->handle();
+    53	            $this->netBatchAutoStockAction->handle();
+    54	        } catch (\Exception $e) {
+    55	            $io->error('入庫処理でエラーが発生しました: '.$e->getMessage());
+    56	
+    57	            return Command::FAILURE;
+    58	        }
+    59	
+    60	        $io->success('買取自動入庫が完了しました。');
+    61	
+    62	        return Command::SUCCESS;
+    63	    }
+    64	}
+    20	use Symfony\Component\Console\Command\Command;
+    21	use Symfony\Component\Console\Input\InputInterface;
+    22	use Symfony\Component\Console\Output\OutputInterface;
+    23	use Symfony\Component\Console\Style\SymfonyStyle;
+    24	
+    25	#[AsCommand(name: 'eccube:customer:lost-points', description: 'ポイント失効バッチ')]
+    26	class LostPointsCommand extends Command
+    27	{
+    28	    public function __construct(
+    29	        private readonly LostPointsAction $lostPointsAction,
+    30	    ) {
+    31	        parent::__construct();
+    32	    }
+    33	
+    34	    #[\Override]
+    35	    protected function execute(InputInterface $input, OutputInterface $output): int
+    36	    {
+    37	        $io = new SymfonyStyle($input, $output);
+    38	        $io->text('ポイント失効バッチ開始');
+    39	
+    40	        try {
+    41	            $this->lostPointsAction->handle();
+    42	        } catch (\Throwable $e) {
+    43	            $io->error([
+    44	                'ポイント失効処理でエラーが発生しました',
+    45	                $e->getMessage(),
+    46	            ]);
+    47	
+    48	            return Command::FAILURE;
+    49	        }
+    50	
+    51	        $io->success('ポイント失効処理が完了しました。');
+    52	
+    53	        return Command::SUCCESS;
+    54	    }
+    55	}
+
+exec
+/bin/bash -lc "rg -n 'getOrderSmaregi|SmaregiProductPost|smaregiProductFlg|SmaregiStockFlg' src/Eccube/Command src/Eccube/Service/Order src/Eccube/Service/Smaregi/Otc | head -80; nl -ba integration_test/casegen/runnable/env/out/B05-09.tsv | sed -n '1,17p'; nl -ba integration_test/casegen/runnable/env/out/B02-05.tsv | sed -n '1,5p'" in /home/y-saito/Developments/ec-cube-enterprise
+ succeeded in 0ms:
+src/Eccube/Service/Smaregi/Otc/SmaregiOtcOrderAdminSyncAction.php:77:            if ($Order->isSmaregiProductFlg() && $Order->isSmaregiStockFlg()) {
+src/Eccube/Service/Smaregi/Otc/SmaregiOtcOrderSyncService.php:65:        if ($Order->isSmaregiProductFlg() && $Order->isSmaregiStockFlg()) {
+src/Eccube/Service/Smaregi/Otc/SmaregiOtcOrderSyncService.php:117:        if (!$Order->isSmaregiStockFlg()) {
+src/Eccube/Service/Smaregi/Otc/SmaregiOtcOrderSyncService.php:141:            $Order->setSmaregiStockFlg(true);
+nl: integration_test/casegen/runnable/env/out/B05-09.tsv: No such file or directory
+nl: integration_test/casegen/runnable/env/out/B02-05.tsv: No such file or directory
+
+exec
+/bin/bash -lc "rg -n 'IT-B05-09-025|IT-B05-04-(019|020|021)' integration_test/casegen/runnable/env/restored.tsv; nl -ba integration_test/casegen/runnable/env/out/B05-09.tsv | sed -n '1,15p'; rg -n 'S-B05-04-PRODUCTLINKED-019|S-B05-04-STOCKLINKED-020' integration_test/casegen/excluded_open_seeds.tsv" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+27:IT-B05-09-025	前提-54665801cf
+     1	種別	対象ID	判定	区分	新しい投入方法	新しい状態・属性	根拠	理由
+     2	シード	S-B05-09-API	解消しない	中継・模擬				取引一覧・取引詳細・ポイント連携の応答をケースごとに切り替え、受信した要求を記録して0件へ戻す手段が要る（中継・模擬は用意しない）
+     3	前提	前提-a6569eaaa1	解消しない	中継・模擬				応答の切替と受信履歴の初期化・確認をする試験サーバーが要る（中継・模擬は用意しない）
+     4	前提	前提-54665801cf	環境で解消	バッチ	試験環境のバッチ設定、実行コンソール設定およびアプリケーション設定でバッチB05-09「スマレジ取引Webhook連携エラー再連携」を手動起動できるようにし、試験実行者に起動と実行結果参照の権限を与えれば、起動と、起動した実行が終わって非同期処理のジョブが0件になるまで待つことによる完了確認が、試験環境の操作で決まる。基線の手順で名指しされる起動コマンドの有無にかかわらず、バッチの起動は試験環境のバッチ設定で決まる。		設計書0405 sheet-11（coverage_audit/units/0405_sheet-11）／ee実装 SmaregiTransactionBackfillCommand.php（引数 from・to は任意）・SmaregiTransactionBackfillAction.php（対象取引ごとに子処理を投入）	
+     5	前提	前提-64e1672c9d	環境で解消	バッチ	試験環境のバッチ設定、実行コンソール設定およびアプリケーション設定でバッチB05-09「スマレジ取引Webhook連携エラー再連携」を手動起動できるようにし、試験実行者に起動と実行結果参照の権限を与えれば、起動と、起動した実行が終わって非同期処理のジョブが0件になるまで待つことによる完了確認が、試験環境の操作で決まる。受注・ポイントの反映は対象取引ごとの子処理が行うので、バッチの実行完了ではなく非同期処理のジョブが0件になるのを待つ。		設計書0405 sheet-11（coverage_audit/units/0405_sheet-11）／ee実装 SmaregiTransactionBackfillCommand.php（引数 from・to は任意）・SmaregiTransactionBackfillAction.php（対象取引ごとに子処理を投入）	
+     6	前提	前提-df7a714fdd	環境で解消	外部の試験環境	試験環境の配備設定でスマレジ試験環境の接続先、契約情報および認証情報を設定し、再連携処理がその外部の試験環境へ接続するようにすれば、基線が使う接続先・契約・認証の設定値が実際の要求に使われる。		設計書0405 sheet-11（coverage_audit/units/0405_sheet-11）／ee実装 SmaregiTransactionBackfillCommand.php（引数 from・to は任意）・SmaregiTransactionBackfillAction.php（対象取引ごとに子処理を投入）／ee実装は接続先・契約ID・認証情報を配備設定から読む（SmaregiTransactionBackfillAction.php の getAccessToken・listTransactions 呼び出し）／確定済みの書き方「試験環境の配備設定でスマレジ試験環境の接続先、契約情報および認証情報を設定する」	
+     7	シード	S-B05-09-CLOCK	解消しない	時刻				業務日時を指定した日本時間へ固定する手段が要る（時刻の固定は用意しない）
+     8	前提	前提-51640e5969	解消しない	時刻				業務日時を指定日時へ固定して戻す手段が要る（時刻の固定は用意しない）
+     9	前提	前提-06d854014c	解消しない	時刻・設計				基線の確定日・出荷日の期待（バッチ起動前後の日時）とee実装（スマレジ取引日時を設定）が食い違い、業務日時の固定も要る（時刻の固定は用意しない）
+    10	前提	前提-7ac3f22ceb	解消しない	設計				設計書は通常取引だけを取得すると定める一方、ee実装は一覧取得で取引区分を絞らず取得後に対象外を除外する。要求条件に関する設計と実装の食い違いが残り、環境では解消しない
+    11	前提	前提-daa5f3a239	解消しない	中継・模擬・設計				取引情報の取得異常を起こすにはスマレジにエラー応答を返させる手段が要り（中継・模擬は用意しない）、基線の終了コード0とee実装の異常終了コードの食い違いも残る
+    12	前提	前提-1fa6cad623	解消しない	中継・模擬				S-B05-09-APIと同じ。応答の切替と受信履歴の初期化・確認が要る（中継・模擬は用意しない）
+    13	前提	前提-a8b286ad64	解消しない	時刻				S-B05-09-CLOCKと同じ。業務日時の固定が要る（時刻の固定は用意しない）
+    14	前提	前提-5acd5fc9ea	環境で解消	外部の試験環境	試験環境の配備設定でスマレジ試験環境の接続先、契約情報および認証情報を設定し、再連携処理がその外部の試験環境へ接続するようにすれば、基線が使う接続先・契約・認証の設定値が実際の要求に使われる。前提-df7a714fdd（S-B05-09-CONFIG）と同じ書き方。		設計書0405 sheet-11（coverage_audit/units/0405_sheet-11）／ee実装 SmaregiTransactionBackfillCommand.php（引数 from・to は任意）・SmaregiTransactionBackfillAction.php（対象取引ごとに子処理を投入）／ee実装は接続先・契約ID・認証情報を配備設定から読む／確定済みの書き方「試験環境の配備設定でスマレジ試験環境の接続先、契約情報および認証情報を設定する」	
+    15	シード	S-B05-09-DP-MIX-035	解消しない	作り方・中継・模擬・設計				会員ID・受注・ポイント履歴を指定してDBへ直接設定する手順が残り、スマレジAPI試験サーバーの応答設定（中継・模擬は用意しない）が要り、返品(キャンセル)の更新の表し方も設計書から決まらない
+322:B05-04	IT-B05-04-019	S-B05-04-PRODUCTLINKED-019	受注・外部商品・在庫	商品だけ連携済み受注(019)	受注ID=504019001／注文番号=B0504-019-ORDER-001／商品コード=2504019-001／削除フラグ=false／商品連携=true／在庫連携=false／S-B05-04-CONTEXTの店舗・会員・配送方法／注文ステータス=注文受領／注文合計金額=1000／外部商品1件／対象在庫0件／試験環境全体で本ケースの受注以外にB05-04の抽出条件を満たす受注=0件	IT-B05-04-019専用。連携済み側の商品登録要求が出ないことを確認する	DBへの直接投入で受注・配送・受注明細を作る（画面で作れない理由: 受注IDと注文番号は自動採番で指定できず、スマレジ商品コード・削除フラグ・商品連携・在庫連携は管理画面にもフロント画面にも入力欄が無い）。受注ID=504019001、注文番号=B0504-019-ORDER-001、スマレジ商品コード=2504019-001、削除フラグ=false、商品連携=true、在庫連携=false。店舗・会員・配送方法はS-B05-04-CONTEXTの店舗レコードID 950504001・会員ID 650504001・店頭受取を参照させ、注文ステータス=注文受領、注文合計金額=1000、スマレジ連携エラーなしにする。同じ受注IDの行が残っているときは削除してから入れ直す。続けてDBへの直接投入で、本シード以外の受注のうち「スマレジ商品コードが登録済み・スマレジ削除フラグが立っていない・商品連携か在庫連携のどちらかが未連携」に当たる受注を検索し、当たった受注すべての商品連携と在庫連携を連携済みに更新して、再検索で本シードの受注だけが残ることを確かめる（画面で作れない理由: 連携区分を変える画面項目が無い）。未確定: 外部商品1件・対象在庫0件の作り方。試験環境の接続先（スマレジ開発環境の試験用契約か、模擬サーバか）を試験環境の構築担当が決めれば、商品コード2504019-001の商品をスマレジ店舗ID 1に1件登録し在庫を0にする手順が確定する	ケース専用
+323:B05-04	IT-B05-04-020	S-B05-04-STOCKLINKED-020	受注・外部商品・在庫	在庫だけ連携済み受注(020)	受注ID=504020001／注文番号=B0504-020-ORDER-001／商品コード=2504020-001／削除フラグ=false／商品連携=false／在庫連携=true／S-B05-04-CONTEXTの店舗・会員・配送方法／注文ステータス=注文受領／注文合計金額=1000／外部商品0件／対象在庫0件／試験環境全体で本ケースの受注以外にB05-04の抽出条件を満たす受注=0件	IT-B05-04-020専用。連携済み側の在庫登録要求が出ないことを確認する	DBへの直接投入で受注・配送・受注明細を作る（画面で作れない理由: 受注IDと注文番号は自動採番で指定できず、スマレジ商品コード・削除フラグ・商品連携・在庫連携は管理画面にもフロント画面にも入力欄が無い）。受注ID=504020001、注文番号=B0504-020-ORDER-001、スマレジ商品コード=2504020-001、削除フラグ=false、商品連携=false、在庫連携=true。店舗・会員・配送方法はS-B05-04-CONTEXTの店舗レコードID 950504001・会員ID 650504001・店頭受取を参照させ、注文ステータス=注文受領、注文合計金額=1000、スマレジ連携エラーなしにする。同じ受注IDの行が残っているときは削除してから入れ直す。続けてDBへの直接投入で、本シード以外の受注のうち「スマレジ商品コードが登録済み・スマレジ削除フラグが立っていない・商品連携か在庫連携のどちらかが未連携」に当たる受注を検索し、当たった受注すべての商品連携と在庫連携を連携済みに更新して、再検索で本シードの受注だけが残ることを確かめる（画面で作れない理由: 連携区分を変える画面項目が無い）。未確定: 外部商品0件・対象在庫0件の作り方。試験環境の接続先（スマレジ開発環境の試験用契約か、模擬サーバか）を試験環境の構築担当が決めれば、商品コード2504020-001の商品と在庫を外部から消す手順が確定する	ケース専用
+
+exec
+/bin/bash -lc "nl -ba src/Eccube/Command/OtcOrderSmaregiPostCommand.php | sed -n '20,115p'; nl -ba src/Eccube/Service/Smaregi/SmaregiAccessTokenService.php | sed -n '35,85p'; rg -n 'SmaregiTransactionBackfillAction:|smaregi_api_client_id|smaregi_api_client_secret' app/config/eccube/services.yaml" in /home/y-saito/Developments/ec-cube-enterprise
+ succeeded in 0ms:
+    20	use Symfony\Component\Console\Command\Command;
+    21	use Symfony\Component\Console\Input\InputInterface;
+    22	use Symfony\Component\Console\Output\OutputInterface;
+    23	use Symfony\Component\Console\Style\SymfonyStyle;
+    24	
+    25	#[AsCommand(name: 'eccube:order:otc-smaregi-post', description: '店頭受取注文のスマレジ連携バッチ')]
+    26	class OtcOrderSmaregiPostCommand extends Command
+    27	{
+    28	    public function __construct(
+    29	        private readonly SmaregiOtcOrderPostAction $smaregiOtcOrderPostAction,
+    30	    ) {
+    31	        parent::__construct();
+    32	    }
+    33	
+    34	    #[\Override]
+    35	    protected function configure(): void
+    36	    {
+    37	    }
+    38	
+    39	    #[\Override]
+    40	    protected function execute(InputInterface $input, OutputInterface $output): int
+    41	    {
+    42	        $io = new SymfonyStyle($input, $output);
+    43	
+    44	        $io->text('店頭受取注文スマレジ連携バッチ開始');
+    45	
+    46	        try {
+    47	            // 現在時刻から30分前の時刻を取得
+    48	            $now = new \DateTime();
+    49	            $thirtyMinutesAgo = $now->modify('-30 minutes');
+    50	
+    51	            $this->smaregiOtcOrderPostAction->handle($thirtyMinutesAgo);
+    52	        } catch (\Throwable $e) {
+    53	            $io->error([
+    54	                '店頭受取注文スマレジ連携処理でエラーが発生しました',
+    55	                $e->getMessage(),
+    56	            ]);
+    57	
+    58	            return Command::FAILURE;
+    59	        }
+    60	
+    61	        $io->success('店頭受取注文スマレジ連携処理が完了しました。');
+    62	
+    63	        return Command::SUCCESS;
+    64	    }
+    65	}
+nl: src/Eccube/Service/Smaregi/SmaregiAccessTokenService.php: No such file or directory
+30:    smaregi_api_client_id: '%env(SMAREGI_API_CLIENT_ID)%'
+31:    smaregi_api_client_secret: '%env(SMAREGI_API_CLIENT_SECRET)%'
+87:          $smaregiApiClientId: '%smaregi_api_client_id%'
+88:          $smaregiApiClientSecret: '%smaregi_api_client_secret%'
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+import csv,pathlib,re
+p=pathlib.Path('integration_test/casegen/runnable/env/out')
+for n in 'A01-02 B02-02 B02-05 B05-01 B05-04 B05-09 B06-01 B06-02 B08-02 B08-03'.split():
+ for i,r in enumerate(csv.DictReader(open(p/f'{n}.tsv'),delimiter='\\t'),2):
+  if r['判定']=='環境で解消':
+   m=re.findall(r'\\b(?:dtb|mtb|plg|trn|[a-z]+_[a-z_]+)\\b',r['新しい投入方法']+' '+r['新しい状態・属性'])
+   if m:print(n,i,r['対象ID'],m)
+PY" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+exec
+/bin/bash -lc "rg --files src/Eccube | rg 'SmaregiAccessTokenService.php'; nl -ba src/Eccube/Service/Smaregi/Api/SmaregiAccessTokenService.php | sed -n '35,115p'; nl -ba app/config/eccube/services.yaml | sed -n '24,34p;80,92p'" in /home/y-saito/Developments/ec-cube-enterprise
+ succeeded in 0ms:
+src/Eccube/Service/Smaregi/Api/SmaregiAccessTokenService.php
+    35	    private const SCOPES = [
+    36	        'pos.customers:read',
+    37	        'pos.customers:write',
+    38	        'pos.products:read',
+    39	        'pos.products:write',
+    40	        'pos.stock:read',
+    41	        'pos.stock:write',
+    42	        'pos.stock-changes:read',
+    43	        'pos.transactions:read',
+    44	        'pos.transactions:write',
+    45	        'order-shipment.orders:read',
+    46	        'order-shipment.orders:write',
+    47	    ];
+    48	
+    49	    public function __construct(
+    50	        private readonly ClientInterface $httpClient,
+    51	        private readonly CacheItemPoolInterface $cache,
+    52	        private readonly LoggerInterface $logger,
+    53	        private readonly SmaregiPlatformApiCallRecorder $platformApiCallRecorder,
+    54	    ) {
+    55	    }
+    56	
+    57	    public function getAccessToken(
+    58	        string $idUrl,
+    59	        string $contractId,
+    60	        string $clientId,
+    61	        string $clientSecret,
+    62	    ): string {
+    63	        $cacheKey = self::CACHE_KEY_PREFIX.$contractId;
+    64	        $cacheItem = $this->cache->getItem($cacheKey);
+    65	        if ($cacheItem->isHit()) {
+    66	            $cached = $cacheItem->get();
+    67	            if (is_array($cached) && isset($cached['token']) && is_string($cached['token'])) {
+    68	                return $cached['token'];
+    69	            }
+    70	        }
+    71	
+    72	        $url = sprintf('%s/app/%s/token', rtrim($idUrl, '/'), $contractId);
+    73	        $bodyParams = [
+    74	            'grant_type' => 'client_credentials',
+    75	            'scope' => implode(' ', self::SCOPES),
+    76	        ];
+    77	
+    78	        $headersForLog = [
+    79	            'Content-Type' => 'application/x-www-form-urlencoded',
+    80	            'Authorization' => 'Basic '.base64_encode($clientId.':'.$clientSecret),
+    81	        ];
+    82	        $requestBodyStr = http_build_query($bodyParams);
+    83	
+    84	        $started = hrtime(true);
+    85	        $statusCode = null;
+    86	        $raw = '';
+    87	        /** @var array<string, array<string>> $responseHeaders */
+    88	        $responseHeaders = [];
+    89	
+    90	        try {
+    91	            $response = $this->httpClient->request('POST', $url, [
+    92	                'auth' => [$clientId, $clientSecret],
+    93	                'headers' => [
+    94	                    'Content-Type' => 'application/x-www-form-urlencoded',
+    95	                ],
+    96	                'form_params' => $bodyParams,
+    97	                'http_errors' => false,
+    98	            ]);
+    99	            $statusCode = $response->getStatusCode();
+   100	            $raw = (string) $response->getBody();
+   101	            $responseHeaders = $response->getHeaders();
+   102	        } catch (\Throwable $e) {
+   103	            $durationMs = (int) ((hrtime(true) - $started) / 1_000_000);
+   104	            $this->platformApiCallRecorder->record(
+   105	                SmaregiPlatformApiCallLog::OPERATION_ACCESS_TOKEN,
+   106	                'POST',
+   107	                $url,
+   108	                $headersForLog,
+   109	                $requestBodyStr,
+   110	                null,
+   111	                [],
+   112	                '',
+   113	                $durationMs,
+   114	                $e->getMessage(),
+   115	            );
+    24	    aws_s3_bucket: '%env(AWS_S3_BUCKET)%'
+    25	    aws_s3_content_bucket: '%env(AWS_S3_CONTENT_BUCKET)%'
+    26	    smaregi_webhook_secret: '%env(SMAREGI_WEBHOOK_SECRET)%'
+    27	    smaregi_webhook_secret_header: '%env(SMAREGI_WEBHOOK_SECRET_HEADER)%'
+    28	    smaregi_api_id_url: '%env(SMAREGI_API_ID_URL)%'
+    29	    smaregi_api_url: '%env(SMAREGI_API_URL)%'
+    30	    smaregi_api_client_id: '%env(SMAREGI_API_CLIENT_ID)%'
+    31	    smaregi_api_client_secret: '%env(SMAREGI_API_CLIENT_SECRET)%'
+    32	    smaregi_api_contract_id: '%env(SMAREGI_API_CONTRACT_ID)%'
+    33	    env(SMAREGI_RATE_LIMIT_REFERENCE_PER_SECOND): '10'
+    34	    env(SMAREGI_RATE_LIMIT_MUTATION_PER_SECOND): '4'
+    80	          $__readOnlyProductListOrderByRepository: '@eccube.readonly.repository.product_list_order_by'
+    81	          $__readOnlyTaxRuleRepository: '@eccube.readonly.repository.tax_rule_repository'
+    82	          $__readOnlyCartRepository: '@eccube.readonly.repository.cart_repository'
+    83	          $__readonlyOrderRepository: '@eccube.readonly.repository.order_repository'
+    84	          $__readOnlyCustomerRepository: '@eccube.readonly.repository.customer_repository'
+    85	          $smaregiApiIdUrl: '%smaregi_api_id_url%'
+    86	          $smaregiApiUrl: '%smaregi_api_url%'
+    87	          $smaregiApiClientId: '%smaregi_api_client_id%'
+    88	          $smaregiApiClientSecret: '%smaregi_api_client_secret%'
+    89	          $smaregiApiContractId: '%smaregi_api_contract_id%'
+    90	          $pointGranterRequestCapture: '%point_granter_request_capture%'
+    91	          $branchApiUrl: '%branch_api_url%'
+    92	          $branchApiEndpoint: '%branch_api_endpoint%'
+
+codex
+### 指摘1（重大度: Major）対象: B05-09 前提-54665801cf
+主張: 試験環境のバッチ設定で起動方法が決まるため「環境で解消」。
+実際: 復帰した [IT-B05-09-025](/home/y-saito/Developments/hareruya-design-docs/integration_test/casegen/excluded_open_cases.tsv:328) は「smaregi:batch B05-09以外」を起動し、「該当なし」の表示と終了コード1を期待する。実装のコマンドは [eccube:smaregi:transaction:backfill](/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/SmaregiTransactionBackfillCommand.php:34) で、受け取る引数は期間指定だけである。
+判定: 前提不成立
+修正案: この前提は「解消しない」にする。IT-B05-09-025も復帰一覧から外す。
+
+### 指摘2（重大度: Major）対象: B05-09 前提-df7a714fdd、前提-5acd5fc9ea
+主張: 配備設定を変えれば、基線で指定した接続先・契約・認証の値が実際の要求に使われる。
+実際: [元シード S-B05-09-CONFIG](/home/y-saito/Developments/hareruya-design-docs/integration_test/casegen/excluded_open_seeds.tsv:382) は固定のURL・契約ID・アクセストークンを指定している。一方、実装は[配備設定から接続先と契約IDを受け取り、認証情報からアクセストークンを取得する](/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/Webhook/Transaction/SmaregiTransactionBackfillAction.php:137)。配備設定を試験環境へ向けるだけでは、元シードの固定値が要求に使われることにはならない。
+判定: 前提不成立
+修正案: 元シードの固定値も実際のスマレジ試験環境の接続先・契約・認証方法に合わせて書き直せるか確認する。できない間は、この2行を「解消しない」にする。
+
+### 指摘3（重大度: Minor）対象: B02-02 前提-718971a356、前提-3fd3328b64／B02-05 S-B02-05-BATCH-ENV、前提-ba7311f2f8、前提-67bf0c65c8
+主張: コマンドの開始・完了出力から、実行日時やバッチ名 `saleNotification` を確認できる。
+実際: B02-02の実装は[件数を含む完了メッセージだけを出力する](/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/CancelProductRequestCommand.php:43)。B02-05も[対象なし又は送信人数の完了メッセージだけを出力する](/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/FavoriteSaleNotificationCommand.php:43)。書き直しにある日時付きの開始・完了出力とバッチ名は、これらのコマンドからは得られない。
+判定: 事実の誤り
+修正案: 実行コンソール側で開始・終了日時と起動コマンドを記録・参照できるよう設定し、その記録で実行を識別する書き方に直す。
+tokens used
+81,171
+### 指摘1（重大度: Major）対象: B05-09 前提-54665801cf
+主張: 試験環境のバッチ設定で起動方法が決まるため「環境で解消」。
+実際: 復帰した [IT-B05-09-025](/home/y-saito/Developments/hareruya-design-docs/integration_test/casegen/excluded_open_cases.tsv:328) は「smaregi:batch B05-09以外」を起動し、「該当なし」の表示と終了コード1を期待する。実装のコマンドは [eccube:smaregi:transaction:backfill](/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/SmaregiTransactionBackfillCommand.php:34) で、受け取る引数は期間指定だけである。
+判定: 前提不成立
+修正案: この前提は「解消しない」にする。IT-B05-09-025も復帰一覧から外す。
+
+### 指摘2（重大度: Major）対象: B05-09 前提-df7a714fdd、前提-5acd5fc9ea
+主張: 配備設定を変えれば、基線で指定した接続先・契約・認証の値が実際の要求に使われる。
+実際: [元シード S-B05-09-CONFIG](/home/y-saito/Developments/hareruya-design-docs/integration_test/casegen/excluded_open_seeds.tsv:382) は固定のURL・契約ID・アクセストークンを指定している。一方、実装は[配備設定から接続先と契約IDを受け取り、認証情報からアクセストークンを取得する](/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/Webhook/Transaction/SmaregiTransactionBackfillAction.php:137)。配備設定を試験環境へ向けるだけでは、元シードの固定値が要求に使われることにはならない。
+判定: 前提不成立
+修正案: 元シードの固定値も実際のスマレジ試験環境の接続先・契約・認証方法に合わせて書き直せるか確認する。できない間は、この2行を「解消しない」にする。
+
+### 指摘3（重大度: Minor）対象: B02-02 前提-718971a356、前提-3fd3328b64／B02-05 S-B02-05-BATCH-ENV、前提-ba7311f2f8、前提-67bf0c65c8
+主張: コマンドの開始・完了出力から、実行日時やバッチ名 `saleNotification` を確認できる。
+実際: B02-02の実装は[件数を含む完了メッセージだけを出力する](/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/CancelProductRequestCommand.php:43)。B02-05も[対象なし又は送信人数の完了メッセージだけを出力する](/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/FavoriteSaleNotificationCommand.php:43)。書き直しにある日時付きの開始・完了出力とバッチ名は、これらのコマンドからは得られない。
+判定: 事実の誤り
+修正案: 実行コンソール側で開始・終了日時と起動コマンドを記録・参照できるよう設定し、その記録で実行を識別する書き方に直す。

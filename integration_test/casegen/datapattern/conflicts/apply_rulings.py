@@ -19,7 +19,7 @@
   既に行があれば（類型T4 など）新しい値に差し替え、理由と承認に裁定を書き足す。
 
 何度流しても同じ（置き換えは旧が無く新があれば済みとみなす）。
-最後に product_csv/apply.py（商品登録画面で商品を作るシードの書き直し）も呼ぶ。
+最後に product_csv/apply.py（商品登録画面で商品を作るシードの書き直し）と runnable/apply.py（書かれたとおりに実行できるようにする直し）も呼ぶ。
 流す順は merge（sheetmap・nosheet・ga・gapfill・datapattern/merge_dp.py）→ seed_screen/apply.py → これ → exclude_open.py
 → exclude_scope.py → build_all_test_cases.py → precond/gate_precond.py --all。seed_screen/apply.py が cases/ と oracle_changes/ を書き直すので、必ずその後に流す。
 """
@@ -56,6 +56,15 @@ def replace(text, spec, where, err):
     return text
 
 
+def later_applied():
+    """後段の直し（../../runnable/apply.py）が当てた文のハッシュ。流し直しでは、裁定を当てた後にその直しが重なっているので、
+    今の文がこれと同じなら裁定は済みとみなす（2026-10-19）"""
+    import hashlib
+    p = CG / "runnable/work/applied.tsv"
+    led = {(r[0], r[1], r[2]): r[3] for r in rows(p)[1]} if p.exists() else {}
+    return led, (lambda t: hashlib.sha1(t.encode("utf-8")).hexdigest())
+
+
 def append_once(s, add):
     return s if add in s else (s + "／" + add if s.strip() else add)
 
@@ -81,6 +90,8 @@ def upsert(path, hdr, tid, fill, err):
 
 
 def main():
+    global LATER, SHA
+    LATER, SHA = later_applied()
     rh, R = rows(G / "rulings.tsv")
     R = [dict(zip(rh, r)) for r in R]
     eh, E = rows(CG / "excluded_open_cases.tsv")
@@ -141,9 +152,9 @@ def main():
             before = state()
             if rl.get("新出典"):
                 put("出典", rl["新出典"])
-            if rl["事前準備の置換"]:
+            if rl["事前準備の置換"] and LATER.get(("ケース", tid, "事前準備")) != SHA(get("事前準備")):
                 put("事前準備", replace(get("事前準備"), rl["事前準備の置換"], f"{tid} 事前準備", err))
-            if rl["手順の置換"]:
+            if rl["手順の置換"] and LATER.get(("ケース", tid, "手順")) != SHA(get("手順")):
                 put("手順", replace(get("手順"), rl["手順の置換"], f"{tid} 手順", err))
             if rl["新期待結果"]:
                 put("期待結果", rl["新期待結果"])
@@ -152,6 +163,8 @@ def main():
                 srow = next((x for x in S if x[0] == sid), None)
                 if srow is None:
                     err.append(f"{tid}: シード {sid} が cases/ に無い")
+                    continue
+                if LATER.get(("シード", sid, col)) == SHA(srow[si[col]]):
                     continue
                 srow[si[col]] = replace(srow[si[col]], rep, f"{sid} {col}", err)
             for a in [a for a in A if a["テストID"] == tid and a["項目"] == item]:
@@ -202,7 +215,13 @@ def main():
     pc = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(pc)
     rc = pc.main()
-    return 1 if err or rc else 0
+    # 書かれたとおりに実行できるようにする直し（2026-10-19 依頼者決定。../../runnable/）も続けて当てる。
+    # 商品のシードの書き直しの後の文に対する直しなので、その後に当てる
+    spec = importlib.util.spec_from_file_location("runnable_apply", CG / "runnable/apply.py")
+    ra = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ra)
+    rr = ra.main()
+    return 1 if err or rc or rr else 0
 
 
 if __name__ == "__main__":
