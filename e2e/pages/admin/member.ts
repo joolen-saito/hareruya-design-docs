@@ -10,7 +10,9 @@ export type MemberInput = {
 
 /** メンバー管理の一覧で、名前の行から管理者IDを読む。無ければ null */
 export async function findMemberId(page: Page, 名前: string): Promise<string | null> {
-  await page.goto(adminUrl("/setting/system/member"));
+  // 一覧が開けなかったとき（環境が遅く、時間切れの500になるなど）を「いない」と取り違えて二重に登録しない
+  const res = await page.goto(adminUrl("/setting/system/member"));
+  if (!res || !res.ok()) throw new Error(`メンバー一覧を開けない（応答 ${res?.status() ?? "なし"}）。名前「${名前}」のメンバーがいるかを確かめられない`);
   const rows = page.locator('tr[id^="ex-member-"]').filter({ has: page.locator("td").first().getByText(名前, { exact: true }) });
   const n = await rows.count();
   if (n === 0) return null;
