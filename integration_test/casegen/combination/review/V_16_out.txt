@@ -1,0 +1,2732 @@
+Reading additional input from stdin...
+OpenAI Codex v0.162.1
+--------
+workdir: /home/y-saito/Developments/hareruya-design-docs
+model: gpt-6-sol
+provider: openai
+approval: never
+sandbox: read-only
+reasoning effort: high
+reasoning summaries: none
+session id: 01a15781-65ae-7ca1-880e-d8dcc98116f3
+--------
+user
+# 反証の依頼: 機能 F09-02・F09-03・F09-04・F09-05・F09-06・F09-07・F09-08・F10-01・F10-02・F10-03・M03-01 の要因表
+
+あなたは独立したレビュアーである。別の担当が作った**要因表**に、設計書と食い違う所が無いかを確かめる。直さない。読むだけ。
+リポジトリは `/home/y-saito/Developments/hareruya-design-docs/`。出力は日本語。
+
+## 要因表とは（依頼者決定 2026-10-20）
+
+結合テストで、1回の処理の結果を左右する要因（区分・状態・設定・関連データの値）が2つ以上あるとき、
+**効き合う要因は値の組合せを全部、関係しない要因はどの2つの要因の値の組もどこかで1回**試すケースを足す。
+要因表はその元で、表から機械が組を並べる（`integration_test/casegen/combination/gen_combos.py`）。表の誤りはそのままケースの誤りになる。
+作り方の決まりは `integration_test/casegen/combination/FACTOR_PROMPT.md`（担当への依頼文）にある。まずこれを読む。
+
+## 読むもの
+
+| 何 | パス |
+| --- | --- |
+| 要因表（機能ごとに5つ） | `integration_test/casegen/combination/factors/<機能ID>_processes.tsv`・`_factors.tsv`・`_interactions.tsv`・`_constraints.tsv`・`_existing.tsv` |
+| 機械が並べた組（参考） | `integration_test/casegen/combination/combos/<機能ID>.tsv` |
+| 設計書（行頭の `L0001` は行番号） | `integration_test/casegen/combination/units/<機能ID>/design.txt`、他の機能は `units/<機能ID>/design.txt`、共通シートは `units/_common/` |
+| ケース | `integration_test/casegen/cases/<機能ID>_test_cases.tsv`、全機能は `integration_test/casegen/all_test_cases.tsv` |
+| 結合テストの範囲 | `integration_test/SCOPE.md` |
+| 不機能仕様・フェーズ2見送り（載っているものは意図して外している。指摘しない） | `functions/dead-spec-register.tsv`・`functions/phase2_candidates.tsv` |
+
+設計書の中で記述が食い違うときは、Excel 由来の本文 ＞ 埋め込みの「表示メッセージ」節 ＞ 埋め込みの「現行仕様」節の順に採る。
+
+## 確かめること（事実だけ）
+
+| 種類 | 何を見るか |
+| --- | --- |
+| A 要因・値の誤り | 要因・値・値ごとの結果が、根拠の行に書かれていない。根拠の行が別のことを言っている。結果が同じになる値を別の値として分けている |
+| B 要因・値の抜け | 設計書の行が「この値でこの処理の結果が変わる」と定めているのに、要因・値が無い（他の機能の設定値でこの処理が読むものを含む） |
+| C 判定の誤り | 効き合う／関係しない／設計書が決めていない の判定が、設計書の行と食い違う。特に、足し算で合計に入るだけの組を効き合うにしている、一方の結果がもう一方の判定の入力になるのに関係しないにしている。**3つ以上の要因をまとめた効き合う**は、その全部が同時に互いの結果を変えるかを確かめる（2つずつで効き合うだけなら2要因の行に分けるべき。まとめると値の組合せが全部ケースになる）。1件の対象を出す・出さないを複数の条件の「すべて満たす／どれか1つで外れる」で決める所を効き合うにしていないか（条件どうしは関係しないでよい）。優先順位で順に比べて決める所を、比べる項目ごとの要因の全組合せにしていないか（「どの段で決まるか」の1要因でよい） |
+| D 制約の誤り・抜け | 作れない としている組が設計上作れる。作れない組が載っていない。正解未定 としている組の結果が設計書から決まる |
+| E 既存ケースの読み違い | existing.tsv の値が、そのケースの事前準備・手順に書かれていない。そのケースが処理を動かしていない、確かめる所で結果を見ていない |
+| F 範囲外 | 処理・要因が結合テストの範囲でない（同じ画面の中で閉じる表示の計算、入力値の検証、検索条件の組合せ、権限、二重送信、排他） |
+
+次は指摘しない: 書き方・言い回し、要因IDの振り方、値の並び順、設計書に無い仕様の追加の要求、境界値・数量1/複数（別に済んでいる）。
+
+## 出力
+
+指摘が無ければ `NONE` の1語だけ。あれば1件ずつ、次の形で。
+
+```
+### <番号>
+- 機能: <機能ID>
+- 種類: <A〜F>
+- 対象: <ファイル名> <要因ID・処理ID・組・テストID>
+- 主張: <表に書かれていること>
+- 実際: <設計書・ケースの記述（ファイル:行 を必ず添える）>
+- 修正案: <どう直すか。1文>
+```
+warning: Codex could not find bubblewrap on PATH. Install bubblewrap with your OS package manager. See the sandbox prerequisites: https://developers.openai.com/codex/concepts/sandboxing#prerequisites. Codex will use the bundled bubblewrap in the meantime.
+2026-10-20T04:11:01.658612Z ERROR rmcp::transport::worker: worker quit with fatal: Transport channel closed, when AuthRequired(AuthRequiredError { www_authenticate_header: "Bearer resource_metadata=\"https://mcp.firecrawl.dev/.well-known/oauth-protected-resource/v2/mcp-oauth\", error=\"invalid_token\", error_description=\"Firecrawl credentials required: OAuth access token (Authorization: Bearer fco_...) or API key (x-firecrawl-api-key)\"" })
+codex
+まず作成ルールとテスト範囲を確認し、その後、各要因表の根拠行を設計書・既存ケースと照合します。ファイルは変更しません。
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/FACTOR_PROMPT.md' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+# 依頼: 機能 {FID}（{FNAME}）の要因表づくり
+
+これは分析である。ケースも設計書も直さない。事実は自分でファイルを読んで確かめ、推測で書かない。
+リポジトリは `/home/y-saito/Developments/hareruya-design-docs/`。パスはここからの相対。出力はすべて日本語で書く。
+git の変更操作（add・commit など）をしない。
+
+## 背景（依頼者決定 2026-10-20）
+
+結合テストケースは設計書の定め1件ごとに作られ、10/15 には定めごとに「数量1と複数」「有無」「状態・区分ごと」などのデータを足した。
+それでも、**1回の処理の結果を左右する要因が2つ以上あるとき、その値を同時に変えて通すケースが無い**。
+例: 公開側で注文を確定するケース33件は、支払方法がほぼ郵便振替か銀行振込で、配送方法もゆうパック・EMS が大半。クレジットカード・代金引換・店頭支払、店頭受取・同梱で注文を通すケースは無い。
+
+依頼者の決定:
+- **効き合う要因**（一方の値で、もう一方の値の結果が変わると設計書が定める）は、値の組合せを全部試す。
+- **関係しない要因**は、どの2つの要因の値の組も、どこかのケースで1回は出るように並べる（2要因の組）。
+- **他の機能の設定値**（送料・手数料・支払方法の利用条件・送料無料の条件・配送方法に紐づく支払方法など）も、それを読む処理の要因に入れる。
+
+あなたの仕事は、機能 {FID} について、組合せの元になる**要因表**を作ること。組合せの行（どの値の組を何件試すか）は、この表から別の道具が機械で作る。
+だから、表の要因・値・判定の誤りは、そのままケースの誤りになる。
+
+## 読むもの
+
+| 何 | パス |
+| --- | --- |
+| 設計書（この機能のシートを文字に起こしたもの。行頭の `L0001` とタブは行番号。`#####` の行はシートの境目） | `integration_test/casegen/combination/units/{FID}/design.txt` |
+| 他の機能の設計書（設定値を読む処理のとき、設定する機能の定めを引く） | `integration_test/casegen/combination/units/<機能ID>/design.txt`（機能名は `combination/units.tsv`） |
+| 同じ冊子の共通シート（必要なときだけ） | {COMMON} |
+| この機能のケースとシード | `integration_test/casegen/cases/{FID}_test_cases.tsv`・`{FID}_seed_data.tsv` |
+| この機能の、テストから外したケース | `integration_test/casegen/combination/units/{FID}/excluded.tsv` |
+| 全機能のケース（他の機能のケースがこの機能の処理を通しているかの検索用） | `integration_test/casegen/all_test_cases.tsv`（列: テストID・観点ID・基本設計書・検証方法・テストデータ・事前準備・手順・期待結果。セル内改行があるので csv として読む） |
+| 結合テストの範囲 | `integration_test/SCOPE.md` |
+| 不機能仕様・フェーズ2見送り（ここに載るものは要因にしない） | `functions/dead-spec-register.tsv`・`functions/phase2_candidates.tsv` |
+| 設計書の中で記述が食い違うときの優先順位 | Excel 由来の本文 ＞ 埋め込みの「表示メッセージ」節（リニューアル後の仕様）＞ 埋め込みの「現行仕様」節。同じ出所では改訂後が優先。**Excel が触れていない条件を埋め込みが足しているだけのときは食い違いではなく、両方を当てる**（例: Excel が選択肢を並べ、埋め込みが「ポイントで全額払うときは全額ポイント支払いだけ」と条件を足す → 両方）。既存ケースは正解の根拠にしない（既存ケースと設計書の食い違いは返答に書く） |
+
+検索は `grep` を使う（`rg` は同じ入力で0件を返すことがあるので使わない）。
+
+## やること
+
+### 1. 処理を決める
+
+design.txt を**全部**読み、この機能の中で「操作やデータを受けて結果を出す処理」のうち、**結果を左右する要因が2つ以上ある処理**を挙げる。
+
+- 処理の単位は「1回の操作で動き、結果を1つの所で確かめられるまとまり」。例: 注文を確定して受注を作る／お支払い方法の選択肢を出す／受注の対応状況をキャンセルへ変えて保存する。
+- 結果は、データを作った所とは**別のコンポーネントで確かめる**もの（DB、別の画面、別の機能の画面、CSV・帳票、メール、連携先）。DBにあるデータで画面の表示・選択肢が変わるものも入る（例: 既存の受注の有無で配送方法の選択肢が変わる）。同じ画面の中だけで閉じる表示の計算（保存しない）と、計算式そのものの正しさは単体テストなので挙げない。
+- 要因が1つだけの処理は挙げない（10/15 の監査で済んでいる）。
+- **要因が2つ以上の処理が1つも無い機能**（一覧を出すだけ、1つの設定を保存するだけ、など）は、5つのファイルをヘッダだけで書き、返答の1行目に「対象の処理なし」と理由を書く。無理に処理を作らない。
+- 入力値の検証（必須・桁数・形式）、検索条件・削除条件の組合せ、権限、二重送信、排他は、ほかの観点の持ち分なので処理にも要因にもしない。
+
+### 2. 要因と値を挙げる
+
+処理ごとに、**その処理の結果を変えると設計書が定める要因**を挙げる。
+
+- 要因は「区分・状態・設定・関連データ」の値。例: 閲覧店舗、配送方法、支払方法、ポイントの使い方、受注の種類（通常・店頭受取・ついで買い）、会員か非会員か、変更前の対応状況、既存の受注の状態。
+- 他の機能で設定する値で、この処理が読むものも要因にする（出所に機能IDを書く）。例: 支払方法の利用条件（M10-04）に対する注文金額、都道府県別の送料（M10-06）。その機能の design.txt で定めを確かめ、根拠に `M10-04:L0123` の形で書く。**この処理の結果への効き方が設計書のどこにも書かれていない設定値は要因にしない**（値ごとの結果が書けないため）。そういう設定値は返答の「判断に迷った点」に挙げる（依頼元が論点として控える）。
+- **値は、結果の分かれ目ごとに代表を1つ**。結果が同じになる値は1つにまとめる（例: ゆうパックとゆうパケットで結果が変わらないならどちらか1つ）。結果が値ごとに違うなら全部挙げる（例: 支払方法ごとに手数料・ボタンの文言・ポイントを使う時点が違うなら、支払方法は全部）。
+- 境界値（ちょうどの値・上限）と数量1/複数は、10/15 に済んでいるので値にしない。値は「範囲内」「範囲外」「あり」「なし」のような分かれ目で書く。
+- 不正な入力、作れない値（画面の選択肢に無い値）は値にしない。
+- 値ごとの結果を、設計書の語で短く書く（「支店: 支払方法は店頭支払だけ」）。
+
+### 3. 要因どうしを判定する
+
+処理ごとに、その処理の要因の**すべての2つの組**を判定する（要因が5つなら10組）。判定は次のどれか。
+
+| 判定 | いつ | 根拠 |
+| --- | --- | --- |
+| 効き合う | 一方の値で、もう一方の値の結果（可否、選択肢、金額、更新先、更新内容）が変わると設計書が定める。または、一方の結果がもう一方の判定の入力になる（例: 使用ポイントで支払う金額が変わり、支払方法の選択肢が変わる） | 両方を結ぶ設計書の行が必須 |
+| 関係しない | それぞれの要因の結果が、もう一方の値によって変わらない（例: 送料は配送方法で、手数料は支払方法で決まり、合計は足し算） | 理由を書く |
+| 設計書が決めていない | 同時に効いたときの結果が設計書から決まらない（例: 送料無料の判定に使う金額が、ポイントを引く前か後か書かれていない） | 決まらない理由。下の「組の制約」に、決まらない値の組を「正解未定」で必ず書く |
+
+3つ以上の要因がまとめて効き合うとき（例: 配送方法・既存の受注の状態・既存の受注の支払方法で同梱を出すか決まる）は、1行に `F01+F03+F05` と書いて「効き合う」にしてよい。その中の2つの組は、別の行に書かない。**まとめるのは、その全部が同時に互いの結果を変えるときだけ**。2つずつで効き合うだけなら2要因の行に分ける（まとめると値の組合せが全部ケースになり、件数が膨らむ）。
+**選べるものの集まりを2つの定めが別々に絞り、結果がその共通部分になるとき**（例: 支店は支払方法が店頭支払だけ、同梱は郵便振替・銀行振込だけ → 選択肢の中身が組ごとに変わる）は「効き合う」にする。「設計書が決めていない」にするのは、両方を当てると選択肢が1つも残らないなど、結果が設計書から決まらない組だけ。
+**1件の対象を出す・出さない（対象にする・しない）を、複数の条件の「すべて満たす」または「どれか1つで外れる」で決めるとき**（例: 公開・在庫あり・セール期間内・表示フラグ のすべてを満たす商品だけ出す）は、条件どうしは「関係しない」にする。結果は出る・出ないの2つだけで、条件ごとの外れ方は1つずつ確かめれば足り、全組合せは要らない（7条件を効き合うにすると128行になる）。
+**優先順位で順に比べて決めるとき**（例: 複数一致したら、言語→特殊版→発売日→フォイル→プロモの順に比べて先に差が付いたもので選ぶ）は、比べる項目を別々の要因にして全組合せにしない。「どの段で決まるか」を1つの要因にまとめる（値: 1段目で決まる｜2段目で決まる｜…｜全段が同じ）。上の段の差が下の段を隠すので、各段で決まる組を1つずつ試せば足りる（6段を効き合うにすると64行になる）。
+「一方の値で、もう一方の処理そのものが行われない」型（例: キャンセル日が既に入っていると、在庫・ポイントの戻しを行わない）も「効き合う」にする。
+**推測で値の組を「作れない」にしない**。設計書の語がどの値を指すか決まらないとき（例: 支店の「店舗受取」が店頭受取とスムーズ店頭受取のどちらか）は「正解未定」にする。
+**効き合う組の値の組合せは全部ケースになる**。値が多い要因どうし（7×7 など）を効き合うにするときは、設計書の行で本当に互いの結果を変えるかを確かめる。足し算で合計に入るだけなら「関係しない」。
+
+### 4. 組の制約を書く
+
+- **作れない**: 設計上その値の組が成り立たない（例: 支店では支払方法が店頭支払だけなので、支店×代金引換は作れない）。根拠の行が必須。
+- **正解未定**: その値の組で結果が設計書から決まらない。決まらない理由を書く。これはケースにせず、報告書に論点として残す。
+
+### 5. 既存のケースが通している組を書く
+
+この機能のケース（と、`all_test_cases.tsv` を語で検索して見つかった他の機能のケース）のうち、**その処理を動かして、確かめる所で結果を確かめている**ケースを1件ずつ書き、そのケースで値が決まっている要因の値を書く。
+
+- 値は、事前準備・手順に**書かれている**ものだけ。書かれていない要因は書かない（流れの中でたまたまそうなるだけのものは数えない）。
+- 1つのケースが同じ処理を別の値で2回以上通しているときは、通した値ごとに1行ずつ書く（同じテストIDの行が2つになる）。1回の処理で2つのデータを別の値で扱う（混在）ケースは書かない。
+- 期待結果が設計書と食い違う既存ケースは、値が合っていても書かない（返答に食い違いとして書く）。
+- 処理を動かしていない（画面を開いて別のことを見るだけ）ケース、結果を確かめていないケースは書かない。
+- テストから外したケース（excluded.tsv）は書かない。
+
+## 出力（この5つだけを書く。ほかのファイルは変更しない）
+
+すべて `integration_test/casegen/combination/factors/` に、タブ区切り・ヘッダつきで書く。セル内に改行・タブ・ダブルクォートを入れない。
+
+### `{FID}_processes.tsv`（5列）
+
+```
+処理ID	処理	契機	確かめる所	根拠
+P1	注文を確定して受注を作る	ご注文方法指定画面で確定チェックボックスを選び、注文するボタンを押す	受注情報編集画面（M05-11）	L0322-L0330
+```
+
+- 処理IDは P1 からの連番。根拠は design.txt の行（`L0037`、`L0037-L0040`、カンマ区切り）。他の機能は `M10-04:L0012`、共通シートは `_common/<ファイル名>:L0012`。
+
+### `{FID}_factors.tsv`（7列）
+
+```
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1,P2	閲覧店舗	本店｜支店	本店: 支払方法はEC用の6種／支店: 支払方法は店頭支払だけ	L0236,L0249-L0252	この機能
+F05	P2	支払方法の利用条件に対する注文金額	範囲内｜上限を超える	範囲内: 選択肢に出る／上限を超える: 選択肢に出ない	M10-04:L0101	M10-04（設定）
+```
+
+- 要因IDは F01 からの連番（処理をまたいで通し番号）。処理IDはその要因が効く処理（カンマ区切り）。
+- 値は全角の縦棒 `｜` で区切る。2つ以上。1つの値は30字まで。`=` `&` `｜` `＋` `×` を値の中に使わない。
+- 値ごとの結果は `値: 結果` を `／` でつなぐ。全部の値について書く。
+- 出所は `この機能`、`<機能ID>（設定）`、`<機能ID>（データ）` のどれか。
+
+### `{FID}_interactions.tsv`（5列）
+
+```
+処理ID	要因	判定	根拠	理由
+P1	F03+F04	効き合う	L0204	配送方法が同梱のときは支払方法が郵便振替・銀行振込だけになる
+P1	F04+F06	関係しない		手数料は支払方法で決まり、ポイントは値引きとして合計から引くだけ
+P1	F06+F07	設計書が決めていない	M10-05:L0040	送料無料の判定に使う金額がポイント値引きの前か後か書かれていない
+```
+
+- 処理ごとに、その処理の要因の2つの組を全部判定する（3つ以上の効き合うにまとめた組は除く）。
+- 効き合う・設計書が決めていない は根拠が必須。関係しない・設計書が決めていない は理由が必須。
+
+### `{FID}_constraints.tsv`（5列）
+
+```
+処理ID	組	種別	根拠	理由
+P1	F01=支店&F04=代金引換	作れない	L0251-L0252	支店の支払方法は店頭支払だけ
+P1	F06=ポイントを使う&F07=送料無料の条件に届く	正解未定	M10-05:L0040	送料無料の判定に使う金額が決まらない
+```
+
+- 組は `要因ID=値` を `&` でつなぐ。値は factors.tsv の値と一字一句同じ。値1つだけの組（`F16=店頭受取のみのスマレジ決済`）も書ける: その値でこの処理を動かすこと自体が作れない・結果が決まらないとき（設計書の記述どうしが食い違い、共通する部分が無いときなど）。
+- 種別は `作れない` か `正解未定`。根拠が必須。制約が無ければヘッダだけ書く。
+
+### `{FID}_existing.tsv`（4列）
+
+```
+テストID	処理ID	値	理由
+IT-F04-02-081	P1	F01=本店&F03=ゆうパック&F04=郵便振替	事前準備で本店・ゆうパック・郵便振替を選び、受注情報編集画面で支払方法と配送方法を確かめる
+```
+
+- 値は `要因ID=値` を `&` でつなぐ。ケースに書かれている要因だけ。1つ以上。
+- 1つのケースが2つの処理を通しているときは2行に書く。該当するケースが無ければヘッダだけ書く。
+
+書いたら次を実行し、エラーが無くなるまで直す。組の数（全組と2要因の組で、既存ケースが通していない組を埋めるのに要る行の数）も出る。
+
+```
+python3 integration_test/casegen/combination/gate_factors.py {FID}
+```
+
+作業用の一時ファイルを作るときは、名前に {FID} を入れてスクラッチパッドに作る。他の機能の factors/ のファイルは読まない・書かない。
+ファイルの書き込みを拒否されたときは、回避せず、書くはずだった本文を返答に載せる（依頼元が保存する）。
+
+## 返答
+
+3行以内: 処理の数・要因の数・効き合う組の数・設計書が決めていない組の数、gate の結果と出た行の数、判断に迷った点（あれば1つ）。
+
+exec
+/bin/bash -lc 'cat integration_test/SCOPE.md' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+# 結合テスト観点表の適用範囲
+
+`ipa-integration-test-viewpoints.tsv` が対象とする範囲を定める。
+判定基準は旧観点資産（`archive/integration-test-viewpoints.md`）の層判定をそのまま踏襲する。
+
+## 対象とするもの
+
+**独立したコンポーネント間の契約と相互作用。**
+呼出側と受取側の間で、受け渡される値、状態、副作用、異常時の振る舞いが
+双方の設計どおりに噛み合っていることを確認する。
+
+**媒体をいくつ跨いだかでは判定しない。** 単一のロジックの結果をDBや画面で観測するだけの確認は、
+観測先が別コンポーネントであっても単体テストの範囲とする。
+旧正本もこの基準を採り、DBへ登録される変換・計算結果をUT判定している
+（`archive/integration-test-viewpoints.md` No.60-66）。
+
+## 単項目の検証は、DBへ保存するかで分ける（2026-09-01 依頼者決裁）
+
+単項目の桁数・文字種・必須・コード値・日付・メールアドレス書式の検証は、
+**その項目をDBへ保存するかどうか**で担当を分ける。
+
+| 項目の性質 | 担当 | 理由 |
+| --- | --- | --- |
+| DBへ保存する項目（登録・編集の入力欄） | **結合テスト** | Form層で受理された値がDB層に収まるかは跨コンポーネントでしか観測できない。pf(MySQL)はバイト、ee(PostgreSQL)は文字で数えるため、Form層の単体テストでは意味論差が出ない |
+| 画面上だけの入力制限（検索条件、絞り込み、表示件数） | 単体テスト | DBへ保存しないので意味論差が起きない。判定ロジックの正しさだけを見ればよい |
+
+同じ種類の判定であれば、複数項目をまとめて1件のテストケースにしてよい。
+例: 「商品名と商品名(英)の最大文字数が設計書どおりであること」は1件でよい。
+判定の種類が違えば分ける（最大文字数と必須は別のケース）。
+
+単体テストが担うのは、検証を行う処理そのもの（計算式、文字数の数え方、分岐網羅）である。
+
+画面項目定義のうち次は、桁数・必須の指定が無くても結合テストの対象とする。
+跨コンポーネントでしか確認できないからである。
+
+- 初期値の指定（画面を開いてDBから値を取り、初期表示する）
+- 画面部品のふるまい（「押下すると検索を行う」「表示/非表示を切り替える」）
+- 表示内容（「チェックを付けると一覧すべてを対象に設定」）
+
+## 現行仕様と刷新の指示が食い違うときは刷新を採る（2026-09-01）
+
+HTML設計書には次の2つが載る。両方が同じ項目に触れて食い違うことがある。
+
+| 出所 | 中身 |
+| --- | --- |
+| Excel基本設計の本文 | 刷新後にどうするかの指示。「※カスタマイズ対応」「〜とする」 |
+| 埋め込まれた機能設計書の「現行仕様」 | 現行の実装がどう動いているか |
+
+**期待結果は刷新の指示を採る。** 現行仕様は、刷新の指示が無い箇所にだけ使う。
+両方に記述があって内容が違うときは、刷新の指示を期待結果にし、
+現行仕様との差を `出典` に併記する。
+
+実例: M03-01の並び順は、機能設計書の現行仕様が「商品IDの降順」、
+Excel基本設計が「表示順は、棚番号昇順とする」で食い違う。棚番号昇順を採る。
+現行仕様だけを見てケースを書き、誤った期待結果を作った（codex R1）。
+
+## 対象としないもの
+
+| 除外区分 | 内容 | 担当 |
+| --- | --- | --- |
+| 単体テスト粒度 | 単一コンポーネント内で完結する変換・計算ロジック | 単体テスト |
+| 単体テスト粒度 | 単一メソッド内の分岐網羅 | 単体テスト |
+| 単体テスト粒度 | 変換、編集分岐、ループ編集、計算、連結、暗号化、マスキング、パディング、小数桁の結果そのもの | 単体テスト |
+| e2e粒度 | 見た目、画面レイアウト、ブラウザ固有挙動、確認ダイアログの表示 | e2e・手動 |
+| e2e粒度 | 画面表示文言の照合 | e2e・手動 |
+| 性能 | 応答時間、スループット、同時接続数の上限、リトライ間隔の適切さ | 性能テスト（別工程） |
+
+## 境界が紛らわしいもの
+
+同じ語で呼ばれるが、担当が分かれるもの。
+
+| 事象 | 結合テストが見るもの | 他が見るもの |
+| --- | --- | --- |
+| 境界値 | 設計書が定めた桁数・範囲どおりに受理／拒否されること。DB層のカラム制約、件数上限、ファイルサイズ、表示上限を含む | 計算式そのものの正しさは単体テスト |
+| 文字列長 | 設計書が定めた最大文字数どおりに受理／拒否されること。pf(MySQL)とee(PostgreSQL)の意味論差を含み、Form層とDB層の双方を見る | 文字数を数える処理そのものは単体テスト |
+| 最大件数・最大ファイルサイズ | 規定量を機能として正しく扱えるか（ITB-11） | 規定時間内に終わるかは性能テスト |
+| タイムアウト | タイムアウト時の跨コンポーネントの挙動（ITB-14） | 応答時間そのものは性能テスト |
+| リトライ | 再送回数、間隔、打切り条件が仕様どおりか（ITB-15） | 間隔の適切さは性能テスト |
+| バリデーション | 設計書が定めた検証（必須、桁数、文字種、コード値、日付、メールアドレス書式）の結果が画面・DB・ファイル・連携先へ反映されること | 検証関数そのものの分岐網羅は単体テスト |
+| メッセージ | DB、ファイル、ログ、連携先の期待結果（COM-04） | 画面表示文言の照合はe2e |
+
+## 除外の記録
+
+除外した観点は捨てない。旧資産の層判定は `archive/integration-test-viewpoints.md` の
+`テスト層` 列に、新観点への対応は `MIGRATION_MAP.tsv` に残る。
+
+exec
+/bin/bash -lc "rg -n 'F09-0[2-8]|F10-0[1-3]|M03-01' functions/dead-spec-register.tsv functions/phase2_candidates.tsv" in /home/y-saito/Developments/hareruya-design-docs
+ exited 1 in 0ms:
+exec
+/bin/bash -lc "rg --files integration_test/casegen/combination/factors integration_test/casegen/combination/units integration_test/casegen/cases | rg '(F09-0[2-8]|F10-0[1-3]|M03-01)'" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+integration_test/casegen/cases/F10-03_test_cases.tsv
+integration_test/casegen/cases/F09-06_seed_data.tsv
+integration_test/casegen/cases/F09-04_test_cases.tsv
+integration_test/casegen/cases/F10-02_test_cases.tsv
+integration_test/casegen/cases/F09-07_test_cases.tsv
+integration_test/casegen/cases/F09-02_test_cases.tsv
+integration_test/casegen/cases/F09-05_seed_data.tsv
+integration_test/casegen/cases/F10-01_test_cases.tsv
+integration_test/casegen/cases/F10-02_seed_data.tsv
+integration_test/casegen/cases/F10-03_seed_data.tsv
+integration_test/casegen/cases/F09-08_seed_data.tsv
+integration_test/casegen/cases/M03-01_seed_data.tsv
+integration_test/casegen/cases/F10-01_seed_data.tsv
+integration_test/casegen/cases/F09-03_seed_data.tsv
+integration_test/casegen/cases/F09-02_seed_data.tsv
+integration_test/casegen/cases/F09-07_seed_data.tsv
+integration_test/casegen/cases/F09-06_test_cases.tsv
+integration_test/casegen/cases/M03-01_test_cases.tsv
+integration_test/casegen/cases/F09-08_test_cases.tsv
+integration_test/casegen/cases/F09-03_test_cases.tsv
+integration_test/casegen/cases/F09-04_seed_data.tsv
+integration_test/casegen/cases/F09-05_test_cases.tsv
+integration_test/casegen/combination/units/F09-02/excluded.tsv
+integration_test/casegen/combination/units/F09-02/design.txt
+integration_test/casegen/combination/units/F10-01/excluded.tsv
+integration_test/casegen/combination/units/F10-01/design.txt
+integration_test/casegen/combination/units/M03-01/excluded.tsv
+integration_test/casegen/combination/units/M03-01/design.txt
+integration_test/casegen/combination/units/F09-05/excluded.tsv
+integration_test/casegen/combination/units/F09-05/design.txt
+integration_test/casegen/combination/units/F09-08/excluded.tsv
+integration_test/casegen/combination/units/F09-08/design.txt
+integration_test/casegen/combination/units/F10-03/excluded.tsv
+integration_test/casegen/combination/units/F10-03/design.txt
+integration_test/casegen/combination/units/F09-03/excluded.tsv
+integration_test/casegen/combination/units/F09-03/design.txt
+integration_test/casegen/combination/units/F10-02/excluded.tsv
+integration_test/casegen/combination/units/F10-02/design.txt
+integration_test/casegen/combination/units/F09-06/excluded.tsv
+integration_test/casegen/combination/units/F09-06/design.txt
+integration_test/casegen/combination/units/F09-04/excluded.tsv
+integration_test/casegen/combination/units/F09-04/design.txt
+integration_test/casegen/combination/units/F09-07/design.txt
+integration_test/casegen/combination/units/F09-07/excluded.tsv
+integration_test/casegen/combination/factors/F09-06_interactions.tsv
+integration_test/casegen/combination/factors/F09-08_interactions.tsv
+integration_test/casegen/combination/factors/F09-04_factors.tsv
+integration_test/casegen/combination/factors/F09-06_constraints.tsv
+integration_test/casegen/combination/factors/F09-02_factors.tsv
+integration_test/casegen/combination/factors/F09-02_existing.tsv
+integration_test/casegen/combination/factors/F10-03_existing.tsv
+integration_test/casegen/combination/factors/F09-08_processes.tsv
+integration_test/casegen/combination/factors/F10-01_interactions.tsv
+integration_test/casegen/combination/factors/M03-01_interactions.tsv
+integration_test/casegen/combination/factors/F09-03_constraints.tsv
+integration_test/casegen/combination/factors/F09-08_constraints.tsv
+integration_test/casegen/combination/factors/M03-01_processes.tsv
+integration_test/casegen/combination/factors/F09-08_existing.tsv
+integration_test/casegen/combination/factors/F10-03_interactions.tsv
+integration_test/casegen/combination/factors/F10-03_processes.tsv
+integration_test/casegen/combination/factors/F09-06_processes.tsv
+integration_test/casegen/combination/factors/F09-04_processes.tsv
+integration_test/casegen/combination/factors/F09-03_factors.tsv
+integration_test/casegen/combination/factors/F10-02_factors.tsv
+integration_test/casegen/combination/factors/F10-01_processes.tsv
+integration_test/casegen/combination/factors/F10-02_existing.tsv
+integration_test/casegen/combination/factors/F09-03_interactions.tsv
+integration_test/casegen/combination/factors/M03-01_constraints.tsv
+integration_test/casegen/combination/factors/F09-08_factors.tsv
+integration_test/casegen/combination/factors/F09-06_existing.tsv
+integration_test/casegen/combination/factors/F09-02_constraints.tsv
+integration_test/casegen/combination/factors/F09-02_interactions.tsv
+integration_test/casegen/combination/factors/F09-04_constraints.tsv
+integration_test/casegen/combination/factors/F09-04_interactions.tsv
+integration_test/casegen/combination/factors/M03-01_existing.tsv
+integration_test/casegen/combination/factors/F09-05_existing.tsv
+integration_test/casegen/combination/factors/F10-01_constraints.tsv
+integration_test/casegen/combination/factors/F09-02_processes.tsv
+integration_test/casegen/combination/factors/F09-03_processes.tsv
+integration_test/casegen/combination/factors/F09-06_factors.tsv
+integration_test/casegen/combination/factors/F10-03_factors.tsv
+integration_test/casegen/combination/factors/F10-02_constraints.tsv
+integration_test/casegen/combination/factors/F10-02_processes.tsv
+integration_test/casegen/combination/factors/F10-02_interactions.tsv
+integration_test/casegen/combination/factors/F09-05_processes.tsv
+integration_test/casegen/combination/factors/F09-05_factors.tsv
+integration_test/casegen/combination/factors/F09-03_existing.tsv
+integration_test/casegen/combination/factors/M03-01_factors.tsv
+integration_test/casegen/combination/factors/F10-01_existing.tsv
+integration_test/casegen/combination/factors/F09-07_constraints.tsv
+integration_test/casegen/combination/factors/F09-07_processes.tsv
+integration_test/casegen/combination/factors/F09-04_existing.tsv
+integration_test/casegen/combination/factors/F09-07_interactions.tsv
+integration_test/casegen/combination/factors/F09-05_interactions.tsv
+integration_test/casegen/combination/factors/F10-01_factors.tsv
+integration_test/casegen/combination/factors/F09-05_constraints.tsv
+integration_test/casegen/combination/factors/F09-07_factors.tsv
+integration_test/casegen/combination/factors/F10-03_constraints.tsv
+integration_test/casegen/combination/factors/F09-07_existing.tsv
+
+exec
+/bin/bash -lc 'wc -l integration_test/casegen/combination/factors/{F09-02,F09-03,F09-04,F09-05,F09-06,F09-07,F09-08,F10-01,F10-02,F10-03,M03-01}_*.tsv integration_test/casegen/combination/units/{F09-02,F09-03,F09-04,F09-05,F09-06,F09-07,F09-08,F10-01,F10-02,F10-03,M03-01}/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+     2 integration_test/casegen/combination/factors/F09-02_constraints.tsv
+     7 integration_test/casegen/combination/factors/F09-02_existing.tsv
+     8 integration_test/casegen/combination/factors/F09-02_factors.tsv
+    10 integration_test/casegen/combination/factors/F09-02_interactions.tsv
+     3 integration_test/casegen/combination/factors/F09-02_processes.tsv
+     3 integration_test/casegen/combination/factors/F09-03_constraints.tsv
+     7 integration_test/casegen/combination/factors/F09-03_existing.tsv
+     8 integration_test/casegen/combination/factors/F09-03_factors.tsv
+    12 integration_test/casegen/combination/factors/F09-03_interactions.tsv
+     3 integration_test/casegen/combination/factors/F09-03_processes.tsv
+     1 integration_test/casegen/combination/factors/F09-04_constraints.tsv
+    15 integration_test/casegen/combination/factors/F09-04_existing.tsv
+    10 integration_test/casegen/combination/factors/F09-04_factors.tsv
+    19 integration_test/casegen/combination/factors/F09-04_interactions.tsv
+     3 integration_test/casegen/combination/factors/F09-04_processes.tsv
+     1 integration_test/casegen/combination/factors/F09-05_constraints.tsv
+     1 integration_test/casegen/combination/factors/F09-05_existing.tsv
+     8 integration_test/casegen/combination/factors/F09-05_factors.tsv
+    19 integration_test/casegen/combination/factors/F09-05_interactions.tsv
+     3 integration_test/casegen/combination/factors/F09-05_processes.tsv
+     3 integration_test/casegen/combination/factors/F09-06_constraints.tsv
+    30 integration_test/casegen/combination/factors/F09-06_existing.tsv
+     8 integration_test/casegen/combination/factors/F09-06_factors.tsv
+     9 integration_test/casegen/combination/factors/F09-06_interactions.tsv
+     4 integration_test/casegen/combination/factors/F09-06_processes.tsv
+     2 integration_test/casegen/combination/factors/F09-07_constraints.tsv
+    26 integration_test/casegen/combination/factors/F09-07_existing.tsv
+    11 integration_test/casegen/combination/factors/F09-07_factors.tsv
+    28 integration_test/casegen/combination/factors/F09-07_interactions.tsv
+     5 integration_test/casegen/combination/factors/F09-07_processes.tsv
+    12 integration_test/casegen/combination/factors/F09-08_constraints.tsv
+    43 integration_test/casegen/combination/factors/F09-08_existing.tsv
+    10 integration_test/casegen/combination/factors/F09-08_factors.tsv
+    23 integration_test/casegen/combination/factors/F09-08_interactions.tsv
+     3 integration_test/casegen/combination/factors/F09-08_processes.tsv
+     1 integration_test/casegen/combination/factors/F10-01_constraints.tsv
+    13 integration_test/casegen/combination/factors/F10-01_existing.tsv
+     5 integration_test/casegen/combination/factors/F10-01_factors.tsv
+     5 integration_test/casegen/combination/factors/F10-01_interactions.tsv
+     2 integration_test/casegen/combination/factors/F10-01_processes.tsv
+     2 integration_test/casegen/combination/factors/F10-02_constraints.tsv
+     5 integration_test/casegen/combination/factors/F10-02_existing.tsv
+     4 integration_test/casegen/combination/factors/F10-02_factors.tsv
+     4 integration_test/casegen/combination/factors/F10-02_interactions.tsv
+     2 integration_test/casegen/combination/factors/F10-02_processes.tsv
+     3 integration_test/casegen/combination/factors/F10-03_constraints.tsv
+    15 integration_test/casegen/combination/factors/F10-03_existing.tsv
+     7 integration_test/casegen/combination/factors/F10-03_factors.tsv
+     8 integration_test/casegen/combination/factors/F10-03_interactions.tsv
+     3 integration_test/casegen/combination/factors/F10-03_processes.tsv
+     1 integration_test/casegen/combination/factors/M03-01_constraints.tsv
+     1 integration_test/casegen/combination/factors/M03-01_existing.tsv
+     1 integration_test/casegen/combination/factors/M03-01_factors.tsv
+     1 integration_test/casegen/combination/factors/M03-01_interactions.tsv
+     1 integration_test/casegen/combination/factors/M03-01_processes.tsv
+    71 integration_test/casegen/combination/units/F09-02/design.txt
+    76 integration_test/casegen/combination/units/F09-03/design.txt
+    83 integration_test/casegen/combination/units/F09-04/design.txt
+    43 integration_test/casegen/combination/units/F09-05/design.txt
+    95 integration_test/casegen/combination/units/F09-06/design.txt
+    77 integration_test/casegen/combination/units/F09-07/design.txt
+    96 integration_test/casegen/combination/units/F09-08/design.txt
+    44 integration_test/casegen/combination/units/F10-01/design.txt
+    56 integration_test/casegen/combination/units/F10-02/design.txt
+    70 integration_test/casegen/combination/units/F10-03/design.txt
+   293 integration_test/casegen/combination/units/M03-01/design.txt
+  1448 total
+
+codex
+表の規模を確認しました。F09 系を先に読み、続いて F10 系と M03-01 を見ます。判定や制約は、表に挙げられた根拠行まで戻って確認します。
+exec
+/bin/bash -lc 'for f in F09-06 F09-07 F09-08; do for s in processes factors interactions constraints; do echo "$f $s"; cat "integration_test/casegen/combination/factors/${f}_${s}.tsv"; done; done' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+F09-06 processes
+処理ID	処理	契機	確かめる所	根拠
+P1	デッキリスト詳細を表示する（表示可否と書き出しの入口）	デッキIDを指定してデッキリスト詳細画面を開く	デッキリスト詳細画面（HTTPステータス・書き出しの入口）	L0005-L0012,L0036-L0041
+P2	採用カードを分類してカードリストを出す	デッキIDを指定してデッキリスト詳細画面を開く	デッキリスト詳細画面のカードリスト	L0012-L0022,L0067
+P3	カード画像を選ぶ	デッキリスト詳細画面を開く	デッキリスト詳細画面のカード画像	L0023-L0024,L0065-L0066,L0076
+F09-06 factors
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	デッキの表示区分	公開｜限定公開｜非公開	公開: 詳細を表示する／限定公開: 値の一致を求めず詳細を表示する／非公開: HTTP 404	L0009,L0011	この機能
+F02	P1	デッキ種別	大会デッキ｜ユーザーデッキ	大会デッキ: 詳細を表示する／ユーザーデッキ: HTTP 404	L0010	この機能
+F03	P1,P2	デッキリストの公開状態	公開｜非公開	公開: 書き出しの入口とカードリストを出す／非公開: 情報欄だけでカードリストは空・枚数は全て0・書き出しの入口なし	L0012,L0037,L0067	この機能
+F04	P1	フォーマットのアリーナ対応	対応｜非対応	対応: Magic Online・アリーナ・日本語の3入口／非対応: Magic Online用だけ	L0039-L0041	この機能
+F05	P2	採用カードの分類が決まる段	サイドボード配置｜統率者配置｜土地｜クリーチャー｜識別子あり｜どれにも当たらない	サイドボード配置: サイドボードへ／統率者配置: 統率者へ（0枚なら区画なし）／土地: 土地へ／クリーチャー: クリーチャーへ／識別子あり: 呪文へ／どれにも当たらない: Unknownへ（1枚以上で区画を出す）	L0014-L0022	この機能
+F06	P3	画像が決まる段	特殊セットでない｜プロモでない｜発売日が新しい｜Foilでない｜表示言語に一致｜識別子が小さい｜選べない	特殊セットでない: 特殊セットでない候補を選ぶ／プロモでない: 上の段が同じならプロモでない候補／発売日が新しい: 上の段が同じなら発売日が新しい候補／Foilでない: 上の段が同じならFoilでない候補／表示言語に一致: 上の段が同じなら表示言語の候補／識別子が小さい: 全段が同じなら詳細の識別子が小さい候補／選べない: 画像なし用の画像で商品への入口なし	L0024,L0065	この機能
+F07	P3	画像選択のキャッシュ	なし｜同じ言語のキャッシュあり｜別の言語のキャッシュあり	なし: 選び直す／同じ言語のキャッシュあり: キャッシュの内容を使う（600秒）／別の言語のキャッシュあり: 言語を判定し直さずキャッシュの内容を使う	L0066,L0076	この機能
+F09-06 interactions
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	関係しない		表示区分が非公開またはデッキ種別がユーザーデッキのどれか1つで404になる。外れ方は1つずつ確かめれば足りる
+P1	F01+F03	効き合う	L0009,L0011,L0012	404のときは書き出しの入口も出ず、表示するときだけリストの公開状態で入口が決まる
+P1	F01+F04	効き合う	L0009,L0040	404のときはアリーナ対応でも入口が出ない
+P1	F02+F03	効き合う	L0010,L0037	ユーザーデッキは404で入口も出ない
+P1	F02+F04	効き合う	L0010,L0040	ユーザーデッキは404で入口も出ない
+P1	F03+F04	効き合う	L0040,L0041	アリーナ用・日本語の入口はリストが公開で、かつアリーナ対応のときだけ出る
+P2	F03+F05	効き合う	L0012,L0067	リストが非公開のときは分類にかかわらず枚数が全て0になる
+P3	F06+F07	効き合う	L0066	キャッシュがあると選び直さず、どの段で決まるかが結果に出ない
+F09-06 constraints
+処理ID	組	種別	根拠	理由
+P3	F06=選べない&F07=同じ言語のキャッシュあり	正解未定	L0065,L0066	キャッシュが画像なしの結果を保存するか書かれておらず、画像の有無が決まらない
+P3	F06=選べない&F07=別の言語のキャッシュあり	正解未定	L0065,L0066	キャッシュが画像なしの結果を保存するか書かれておらず、画像の有無が決まらない
+F09-07 processes
+処理ID	処理	契機	確かめる所	根拠
+P1	Magic Online用テキストをファイルとして書き出せるか決める	ファイル経路の要求を送る	応答のHTTPステータスと添付ファイル	L0010-L0020
+P2	ファイル経路で書き出すファイルの名称と内容を作る	ファイル経路の要求を送る	添付ファイルの名称と内容	L0021-L0022,L0035-L0043
+P3	アリーナ形式のテキストを返せるか決める	テキスト経路の要求を送る	応答のHTTPステータスとJSON	L0010-L0011,L0023-L0029
+P4	テキスト経路で返すデッキリストのテキストを作る	テキスト経路の要求を送る	応答JSONのデッキリストのテキスト	L0030-L0043,L0057,L0063
+F09-07 factors
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1,P3	デッキの表示区分	公開｜限定公開｜非公開	公開: 書き出せる／限定公開: 値の一致を求めず書き出せる／非公開: ファイル経路はHTTP 404・テキスト経路は書き出せる	L0016,L0020,L0029	この機能
+F02	P1,P3	デッキリストの公開状態	公開｜非公開	公開: 書き出せる／非公開: ファイル経路はHTTP 404・テキスト経路は書き出せる	L0017,L0029,L0058	この機能
+F03	P1,P3	デッキ種別	イベントデッキ｜ユーザーデッキ	イベントデッキ: 書き出せる／ユーザーデッキ: どちらの経路もHTTP 404	L0011,L0018,L0027	この機能
+F04	P2,P4	サイドボードの採用カード	あり｜なし	あり: 空行とSideboard行（jpならサイドボード行）を挟む／なし: 見出し行を入れない	L0039,L0055	この機能
+F05	P2,P4	アリーナ用名称の対応表	対応表にあるカード｜対応表に無いカード	対応表にあるカード: アリーナ用名称で書き出す（enまたはファイル経路）／対応表に無いカード: 元の名称のまま	L0022,L0054,L0063	この機能
+F06	P2	アーキタイプ英語名の空白	空白を含む｜空白を含まない	空白を含む: 空白を_に置き換えた.txtのファイル名／空白を含まない: そのまま.txtを付ける	L0022,L0053	この機能
+F07	P2,P4	デッキリストのキャッシュ	あり｜なし	あり: キャッシュの内容から組み立てる／なし: 採用カードから組み立てる	L0042,L0043	この機能
+F08	P4	言語の指定	en｜jp	en: 英語名をアリーナ名称へ置き換え・見出しは英語／jp: 日本語名・見出しは日本語・置き換えなし	L0032-L0034,L0063	この機能
+F09	P4	統率者の採用カード	あり｜なし	あり: 統率者の見出し行（Commander・Deck、jpなら統率者・デッキ）を入れる／なし: 統率者の見出し行を入れない	L0032,L0033,L0056	この機能
+F10	P4	カード名の斜線	斜線を含む｜斜線を含まない	斜線を含む: / を // へ置き換える／斜線を含まない: そのまま	L0034,L0057	この機能
+F09-07 interactions
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	関係しない		表示区分とリストの公開状態のどれか1つで404になる。外れ方は1つずつ確かめれば足りる
+P1	F01+F03	関係しない		表示区分と種別のどれか1つで404になる
+P1	F02+F03	関係しない		リストの公開状態と種別のどれか1つで404になる
+P2	F04+F05	関係しない		見出し行の有無と名称の置き換えは別々に決まる
+P2	F04+F06	関係しない		ファイル名は内容と別に決まる
+P2	F04+F07	関係しない		キャッシュは内容の取り出し元で、サイドボードの見出しは配置で決まる
+P2	F05+F06	関係しない		ファイル名と名称の置き換えは別々に決まる
+P2	F05+F07	関係しない		キャッシュの内容に対しても同じ対応表で置き換える
+P2	F06+F07	関係しない		ファイル名はキャッシュと関係なくアーキタイプの英語名で決まる
+P3	F01+F02	関係しない		テキスト経路は表示区分もリストの公開状態も判定しない
+P3	F01+F03	関係しない		表示区分は見ず、種別だけで404が決まる
+P3	F02+F03	関係しない		リストの公開状態は見ず、種別だけで404が決まる
+P4	F04+F08	効き合う	L0032,L0033	サイドボードの見出し行がenならSideboard、jpならサイドボードになる
+P4	F08+F09	効き合う	L0032,L0033	統率者の見出し行がenならCommander・Deck、jpなら統率者・デッキになる
+P4	F05+F08	効き合う	L0032,L0063	対応表による置き換えはenのときだけ行い、jpでは行わない
+P4	F04+F05	関係しない		見出し行と名称の置き換えは別々に決まる
+P4	F04+F07	関係しない		キャッシュは取り出し元で、見出しは配置で決まる
+P4	F04+F09	関係しない		サイドボードの見出しと統率者の見出しは別々に決まる
+P4	F04+F10	関係しない		見出し行と斜線の置き換えは別々に決まる
+P4	F05+F07	関係しない		キャッシュの内容にも同じ置き換えを行う
+P4	F05+F09	関係しない		名称の置き換えと統率者の見出しは別々に決まる
+P4	F07+F08	関係しない		キャッシュの内容から指定の言語で組み立てる
+P4	F07+F09	関係しない		キャッシュは取り出し元で、統率者の見出しは配置で決まる
+P4	F07+F10	関係しない		斜線の置き換えは取り出し元に関係しない
+P4	F08+F10	関係しない		どちらの言語でも斜線を置き換える
+P4	F09+F10	関係しない		見出し行と斜線の置き換えは別々に決まる
+P4	F05+F10	設計書が決めていない	L0034,L0063	対応表への当てはめと斜線の置き換えのどちらを先に行うか書かれていない
+F09-07 constraints
+処理ID	組	種別	根拠	理由
+P4	F05=対応表にあるカード&F10=斜線を含む&F08=en	正解未定	L0034,L0063	斜線の置き換えと対応表の当てはめの順序が書かれておらず、出力名が決まらない
+F09-08 processes
+処理ID	処理	契機	確かめる所	根拠
+P1	デッキ一括購入画面の初期表示に載せるカードリストを決める	デッキIDを付けてデッキ一括購入画面を開く	デッキ一括購入画面のカードリスト欄	L0005-L0011
+P2	購入条件に沿って在庫を引き、商品規格と数量の組を割り当てる	カードリストと購入条件を送ってカートに追加を押す	応答の商品規格の識別子と数量の組	L0012-L0033,L0060
+F09-08 factors
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	指定したデッキの状態	識別子なし｜該当デッキなし｜表示区分またはリストが非公開｜限定公開で値が不一致｜上のいずれにも当たらない	識別子なし: カードリスト欄は空／該当デッキなし: 未ログインとプレイヤーを持たない会員は空・プレイヤーを持つ会員は応答を返せない／表示区分またはリストが非公開: 持ち主のプレイヤーの会員だけ載る／限定公開で値が不一致: 空／上のいずれにも当たらない: 英語カード名で載る	L0007-L0011	この機能
+F02	P1	閲覧者	未ログイン｜プレイヤーを持たない会員｜デッキの持ち主の会員｜他のプレイヤーの会員	未ログイン: 非公開のデッキは空／プレイヤーを持たない会員: 非公開のデッキは空／デッキの持ち主の会員: 非公開のデッキも載る／他のプレイヤーの会員: 非公開のデッキは空	L0008,L0009	この機能
+F03	P2	言語の指定	日本語のみ｜英語のみ｜日・英のみ｜指定しない	日本語のみ: 日本語の規格だけ（日本語優先と英語優先は選べない）／英語のみ: 英語の規格だけ（日本語優先と英語優先は選べない）／日・英のみ: 日本語か英語の規格だけ（日本語優先と英語優先が選べる）／指定しない: 言語で絞らない（日本語優先と英語優先が選べる）	L0014,L0018	この機能
+F04	P2	状態の指定	NM｜NM・SP｜NM・SP・MP｜NM・SP・MP・HP	NM: NMだけ／NM・SP: この2つ／NM・SP・MP: この3つ／NM・SP・MP・HP: 状態で絞らない	L0015,L0024	この機能
+F05	P2	通常とFoilの指定	通常カードのみ｜Foilカードのみ｜指定しない	通常カードのみ: 通常だけ／Foilカードのみ: 箔押しだけ／指定しない: 絞らない（通常カード優先とFoilカード優先が選べる）	L0016,L0018	この機能
+F06	P2	優先条件	安いカード優先｜高いカード優先｜日本語優先｜英語優先｜通常カード優先｜Foilカード優先	安いカード優先: 販売価格の昇順／高いカード優先: 販売価格の降順／日本語優先: 日本語の規格を先に／英語優先: 英語の規格を先に／通常カード優先: 通常の規格を先に／Foilカード優先: Foilの規格を先に	L0017,L0018,L0026	この機能
+F07	P2	在庫と希望枚数	全て在庫0｜在庫が希望枚数以上｜在庫が希望枚数に満たない	全て在庫0: 並び順の先頭の規格に希望枚数をそのまま割り当てる／在庫が希望枚数以上: 在庫0を除き並び順に在庫数の範囲で割り当てる／在庫が希望枚数に満たない: 最後の規格に不足分を含めた枚数を割り当てる	L0029-L0032,L0060	この機能
+F08	P2	同一言語のNMの販売価格	100円を超える｜100円以下	100円を超える: 状態がNM以外の規格も対象になる／100円以下: 状態がNM以外の規格は対象外	L0024,L0025	この機能
+F09	P2	同じカード名の行	重複なし｜同名が複数行｜分割カードが複数行	重複なし: 枚数をそのまま希望とする／同名が複数行: 枚数を合計して1件の希望とする／分割カードが複数行: 合算せず後の行の枚数で置き換わる	L0033,L0055,L0056	この機能
+F09-08 interactions
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	効き合う	L0008,L0009	該当デッキなしと非公開のときは、閲覧者がプレイヤーを持つか・持ち主かでカードリストが載るかが変わる
+P2	F03+F04	関係しない		言語と状態は別々の絞り込み
+P2	F03+F05	関係しない		言語と通常Foilは別々の絞り込み
+P2	F03+F06	効き合う	L0018	言語が日本語のみ・英語のみのときは日本語優先と英語優先が選べない
+P2	F03+F07	関係しない		絞り込みの後に在庫と希望枚数で割り当てる。絞り込みの結果は対象の規格が変わるだけ
+P2	F03+F08	関係しない		NMの価格は規格ごとの判定で、言語の指定は対象の規格を選ぶだけ
+P2	F03+F09	関係しない		カード名の行の合算は言語の指定と関係しない
+P2	F04+F05	関係しない		状態と通常Foilは別々の絞り込み
+P2	F04+F06	関係しない		優先条件は絞り込み後の並び順を決めるだけ
+P2	F04+F07	関係しない		絞り込みの後に在庫と希望枚数で割り当てる
+P2	F04+F08	効き合う	L0015,L0024	状態がNM以外の規格は同一言語のNMの販売価格が100円を超えるときだけ対象になる
+P2	F04+F09	関係しない		カード名の行の合算は状態の指定と関係しない
+P2	F05+F06	効き合う	L0018	通常Foilが指定しないのときだけ通常カード優先とFoilカード優先が選べる
+P2	F05+F07	関係しない		絞り込みの後に在庫と希望枚数で割り当てる
+P2	F05+F08	関係しない		NMの価格は規格ごとの判定で、通常Foilの指定は対象を選ぶだけ
+P2	F05+F09	関係しない		カード名の行の合算は通常Foilの指定と関係しない
+P2	F06+F07	効き合う	L0026,L0030	在庫のある規格を並び順に割り当てるので、優先条件で割り当て先が変わる
+P2	F06+F08	関係しない		NMの価格は対象になるかの判定で、並び順とは別に決まる
+P2	F06+F09	関係しない		カード名の行の合算は並び順と関係しない
+P2	F07+F08	関係しない		NMの価格は状態の絞り込みを通して対象を選ぶだけで、割り当ての規則は在庫と希望枚数で決まる
+P2	F07+F09	効き合う	L0033,L0055,L0056	同じカード名の行を合算した希望枚数で、在庫が足りるか・割り当てが変わる
+P2	F08+F09	関係しない		NMの価格の判定とカード名の行の合算は別々に決まる
+F09-08 constraints
+処理ID	組	種別	根拠	理由
+P1	F01=識別子なし&F02=デッキの持ち主の会員	作れない	L0007	デッキを指定しないので持ち主のデッキが無い
+P1	F01=該当デッキなし&F02=デッキの持ち主の会員	作れない	L0008	デッキが無いので持ち主の会員は成り立たない
+P1	F01=該当デッキなし&F02=他のプレイヤーの会員	正解未定	L0008	プレイヤーを持つ会員では応答を返せないとあるが、返せないときに画面で何が起きるか書かれていない
+P2	F03=日本語のみ&F06=日本語優先	作れない	L0018	言語を日本語のみ・英語のみにすると日本語優先と英語優先は優先条件から除かれる
+P2	F03=日本語のみ&F06=英語優先	作れない	L0018	言語を日本語のみ・英語のみにすると日本語優先と英語優先は優先条件から除かれる
+P2	F03=英語のみ&F06=日本語優先	作れない	L0018	言語を日本語のみ・英語のみにすると日本語優先と英語優先は優先条件から除かれる
+P2	F03=英語のみ&F06=英語優先	作れない	L0018	言語を日本語のみ・英語のみにすると日本語優先と英語優先は優先条件から除かれる
+P2	F05=通常カードのみ&F06=通常カード優先	作れない	L0018	通常Foilを指定しないを選んだときだけ通常カード優先とFoilカード優先が加わる
+P2	F05=通常カードのみ&F06=Foilカード優先	作れない	L0018	通常Foilを指定しないを選んだときだけ通常カード優先とFoilカード優先が加わる
+P2	F05=Foilカードのみ&F06=通常カード優先	作れない	L0018	通常Foilを指定しないを選んだときだけ通常カード優先とFoilカード優先が加わる
+P2	F05=Foilカードのみ&F06=Foilカード優先	作れない	L0018	通常Foilを指定しないを選んだときだけ通常カード優先とFoilカード優先が加わる
+
+exec
+/bin/bash -lc 'for f in F09-02 F09-03 F09-04 F09-05; do for s in processes factors interactions constraints existing; do echo "$f $s"; cat "integration_test/casegen/combination/factors/${f}_${s}.tsv"; done; done' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+F09-02 processes
+処理ID	処理	契機	確かめる所	根拠
+P1	検索結果の一覧に載せるデッキを決める	デッキ検索結果の画面を開く（検索条件を指定して検索する）	デッキ検索結果画面の一覧	L0005-L0013
+P2	ページ番号と件数から一覧の表示とHTTP応答を決める	検索結果の画面をページ番号と1ページあたりの件数を伴って開く	デッキ検索結果画面の一覧・HTTPステータス	L0017-L0025,L0028-L0029
+F09-02 factors
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	デッキの表示区分	公開｜非公開	公開: 一覧に載る／非公開: 一覧に載らない	L0006-L0008	この機能
+F02	P1	デッキ種別	大会デッキ｜ユーザーデッキ	大会デッキ: 一覧に載る／ユーザーデッキ: 一覧に載らない	L0006,L0009	この機能
+F03	P1	デッキのアーキタイプ	設定あり｜未設定	設定あり: 一覧に載る／未設定: 一覧に載らない	L0006,L0010	この機能
+F04	P1	大会の開催日	当日以前｜翌日以降	当日以前: 一覧に載る／翌日以降: 一覧に載らない	L0006,L0011	この機能
+F05	P2	該当デッキの件数	0件｜1件以上	0件: HTTP 404で該当なしの案内のみ／1件以上: HTTP 200で一覧とページ送り（範囲外ページのときは一覧が空）	L0025,L0028-L0029,L0054-L0055	この機能
+F06	P2	指定ページ番号	総ページ数の範囲内｜総ページ数を超える	総ページ数の範囲内: そのページのデッキが載る／総ページ数を超える: ページ番号を丸めず該当なしの案内で一覧が空（総件数1件以上ならHTTP 200）	L0025	この機能
+F07	P2	1ページあたりの件数	既定の20件｜20件以外を指定	既定の20件: 総ページ数は件数÷20の切り上げ／20件以外を指定: 総ページ数は指定件数で割った切り上げ	L0021,L0023	この機能
+F09-02 interactions
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	関係しない		一覧に載る条件はすべて満たすことが必要で、どれか1つで外れる。外れ方は条件ごとに1つずつ確かめれば足りる
+P1	F01+F03	関係しない		同上
+P1	F01+F04	関係しない		同上
+P1	F02+F03	関係しない		同上
+P1	F02+F04	関係しない		同上
+P1	F03+F04	関係しない		同上
+P2	F05+F06	効き合う	L0025,L0029	0件ならページ番号によらずHTTP 404、1件以上で範囲外ならHTTP 200で一覧が空になる
+P2	F05+F07	関係しない		0件なら件数の指定によらず404、1件以上なら404にならない。件数の指定が変えるのは総ページ数だけで、これはF06との組で扱う
+P2	F06+F07	効き合う	L0021,L0023,L0025	1ページあたりの件数で総ページ数が変わり、同じページ番号が範囲内か範囲外かが変わる
+F09-02 constraints
+処理ID	組	種別	根拠	理由
+P2	F05=0件&F06=総ページ数の範囲内	作れない	L0023	0件のとき総ページ数は0で、範囲内のページ番号が存在しない
+F09-02 existing
+テストID	処理ID	値	理由
+IT-F09-02-035	P2	F05=0件	事前準備で該当しないプレイヤー名を検索すると0件になると書き、HTTPステータス404を確かめる
+IT-F09-02-036	P2	F05=0件	同上の0件の条件で、一覧の領域に出る該当なしの案内を確かめる
+IT-F09-02-058	P2	F05=1件以上&F06=総ページ数を超える&F07=既定の20件	21件で既定20件のため総ページ数2と書き、ページ番号3で開いてHTTP 200を確かめる
+IT-F09-02-059	P2	F05=1件以上&F06=総ページ数を超える&F07=既定の20件	同上の条件でページ番号3を開き、一覧が空で該当なしの案内が出ることを確かめる
+IT-F09-02-032	P2	F05=1件以上&F07=20件以外を指定	45件を用意し、表示件数を40件に変えて1ページ目の内容を確かめる
+IT-F09-02-060	P2	F05=1件以上&F07=20件以外を指定	表示件数を40件に変えて、一覧に載るデッキを確かめる
+F09-03 processes
+処理ID	処理	契機	確かめる所	根拠
+P1	アーキタイプ別の集計に数えるデッキを決める	フォーマットの識別子を指定してメタゲーム一覧画面を開く	メタゲーム一覧画面のアーキタイプ別のデッキ数	L0008-L0014,L0025,L0053-L0054
+P2	識別子とメタゲームの集計結果から画面の応答を決める	フォーマットの識別子を指定してメタゲーム一覧画面を開く	メタゲーム一覧画面・HTTPステータス	L0006,L0026,L0042,L0055,L0059-L0060
+F09-03 factors
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	デッキ種別	大会デッキ｜ユーザーデッキ	大会デッキ: 集計に数える／ユーザーデッキ: 集計に含めない	L0009,L0053	この機能
+F02	P1	デッキの表示区分	公開｜非公開	公開: 集計に数える／非公開: 集計に含めない	L0009	この機能
+F03	P1	デッキのアーキタイプ	設定あり｜未設定	設定あり: 集計に数える／未設定: 集計にも総デッキ数にも含めない	L0025,L0054	この機能
+F04	P1	大会の開催日	集計期間内｜集計期間外	集計期間内: 集計に数える／集計期間外: 集計に含めない	L0011-L0013	この機能
+F05	P1	デッキのフォーマット	指定フォーマットに一致｜別のフォーマット	指定フォーマットに一致: 集計に数える／別のフォーマット: 集計に含めない	L0010	この機能
+F06	P2	フォーマットの識別子	一致するフォーマットなし｜検索対象のフォーマット｜検索対象外のフォーマット	一致するフォーマットなし: HTTP 404で一覧を出さない／検索対象のフォーマット: 集計して一覧か該当なしの案内を出す／検索対象外のフォーマット: 集計はできるが見出しと遷移先のフォーマットを画面が解決できない	L0006,L0049,L0055,L0060	この機能
+F07	P2	集計結果の件数	0件｜1件以上	0件: 使用率を算出せず該当なしの案内だけを出す／1件以上: アーキタイプ別のデッキ数と使用率を並べる	L0026,L0042,L0046	この機能
+F09-03 interactions
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	関係しない		集計に数えるのは全条件を満たすデッキだけで、どれか1つで外れる。外れ方は条件ごとに1つずつ確かめれば足りる
+P1	F01+F03	関係しない		集計に数えるのは全条件を満たすデッキだけで、どれか1つで外れる。外れ方は条件ごとに1つずつ確かめれば足りる
+P1	F01+F04	関係しない		集計に数えるのは全条件を満たすデッキだけで、どれか1つで外れる。外れ方は条件ごとに1つずつ確かめれば足りる
+P1	F01+F05	関係しない		集計に数えるのは全条件を満たすデッキだけで、どれか1つで外れる。外れ方は条件ごとに1つずつ確かめれば足りる
+P1	F02+F03	関係しない		集計に数えるのは全条件を満たすデッキだけで、どれか1つで外れる。外れ方は条件ごとに1つずつ確かめれば足りる
+P1	F02+F04	関係しない		集計に数えるのは全条件を満たすデッキだけで、どれか1つで外れる。外れ方は条件ごとに1つずつ確かめれば足りる
+P1	F02+F05	関係しない		集計に数えるのは全条件を満たすデッキだけで、どれか1つで外れる。外れ方は条件ごとに1つずつ確かめれば足りる
+P1	F03+F04	関係しない		集計に数えるのは全条件を満たすデッキだけで、どれか1つで外れる。外れ方は条件ごとに1つずつ確かめれば足りる
+P1	F03+F05	関係しない		集計に数えるのは全条件を満たすデッキだけで、どれか1つで外れる。外れ方は条件ごとに1つずつ確かめれば足りる
+P1	F04+F05	関係しない		集計に数えるのは全条件を満たすデッキだけで、どれか1つで外れる。外れ方は条件ごとに1つずつ確かめれば足りる
+P2	F06+F07	効き合う	L0006,L0042,L0060	一致するフォーマットが無いときは集計結果によらず404、あるときは集計結果の件数で一覧か該当なしの案内に分かれる
+F09-03 constraints
+処理ID	組	種別	根拠	理由
+P2	F06=一致するフォーマットなし&F07=1件以上	作れない	L0006,L0060	フォーマットが無いと集計の対象が無く、404で一覧を出さない
+P2	F06=検索対象外のフォーマット	正解未定	L0055	見出しと遷移先に使うフォーマットを画面が解決できないとだけあり、そのときの画面の結果（エラー・空欄など）が決まらない
+F09-03 existing
+テストID	処理ID	値	理由
+IT-F09-03-001	P2	F06=一致するフォーマットなし	事前準備で識別子903001のフォーマットが存在しないと書き、HTTP 404を確かめる
+IT-F09-03-033	P2	F06=一致するフォーマットなし	事前準備で識別子903033のフォーマットが存在しないと書き、一覧が出ないことを確かめる
+IT-F09-03-003	P1	F01=大会デッキ&F02=公開&F03=設定あり&F04=集計期間内	事前準備で大会デッキ・公開・開催日が実行日の1日前（メタ集計日数14日）のデッキを置き、デッキ数を確かめる
+IT-F09-03-004	P1	F01=大会デッキ&F02=公開&F03=設定あり&F04=集計期間内	事前準備で大会デッキ・公開・開催日が1日前と2日前（メタ集計日数14日）のデッキを置き、アーキタイプ別のデッキ数を確かめる
+IT-F09-03-014	P1	F01=大会デッキ&F02=公開&F03=設定あり&F04=集計期間外	事前準備で大会デッキ・公開・開催日が15日前（メタ集計日数14日）のデッキだけを置き、集計に出ないことを確かめる
+IT-F09-03-015	P1	F01=大会デッキ&F02=公開&F03=未設定&F04=集計期間内	事前準備で大会デッキ・公開・アーキタイプ未設定・開催日が実行日のデッキだけを置き、集計に出ないことを確かめる
+F09-04 processes
+処理ID	処理	契機	確かめる所	根拠
+P1	採用枚数ランキングに数えるカードを決める	フォーマットの識別子を指定して採用枚数ランキングの画面を開く	採用枚数ランキング画面のスペル・土地それぞれの一覧	L0008-L0014,L0024-L0027,L0045,L0051
+P2	ランキングの各件に載せるカード画像を選ぶ	採用枚数ランキングの画面を開く	採用枚数ランキング画面の各件の画像	L0028-L0029,L0040,L0052-L0053,L0064
+F09-04 factors
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	デッキ種別	大会デッキ｜ユーザーデッキ	大会デッキ: 採用枚数に数える／ユーザーデッキ: 数えない	L0009,L0049	この機能
+F02	P1	デッキの表示区分	公開｜非公開	公開: 採用枚数に数える／非公開: 数えない	L0009	この機能
+F03	P1	大会の開催日	集計期間内｜集計期間外	集計期間内: 採用枚数に数える／集計期間外: 数えない	L0009-L0012	この機能
+F04	P1	フォーマットの基本土地を含める設定	含める｜含めない	含める: 基本土地も集計に含める／含めない: 特殊種別が基本土地のカードを集計から除く	L0027,L0045,L0051,M14-10:L0088-L0089	M14-10（設定）
+F05	P1	カードの特殊種別	基本土地｜基本土地以外の特殊種別｜特殊種別なし	基本土地: 設定が含めないなら除く／基本土地以外の特殊種別: 除外の対象にしない／特殊種別なし: 除外の対象にしない	L0027,L0043-L0044	この機能
+F06	P1	カード種別に土地を含むか	土地を含む｜土地を含まない	土地を含む: 土地のランキングに載る／土地を含まない: スペルのランキングに載る	L0025	この機能
+F07	P2	画像を決める段	特殊セットの別で決まる｜プロモーションの別で決まる｜発売日で決まる｜Foilの別で決まる｜表示言語の一致で決まる｜詳細の識別子で決まる	特殊セットの別で決まる: 特殊セットでない画像／プロモーションの別で決まる: プロモーションでない画像／発売日で決まる: カードセットの発売日が新しい画像／Foilの別で決まる: Foilでない画像／表示言語の一致で決まる: 表示中の言語に一致する画像／詳細の識別子で決まる: 識別子が小さい画像	L0029,L0052	この機能
+F08	P2	表示言語	日本語｜英語	日本語: 日本語の画像を選ぶ／英語: 英語の画像を選ぶ	L0029,L0052	この機能
+F09	P2	画像選択結果のキャッシュ	なし｜あり	なし: 優先順で選び直す／あり: 言語を判定し直さずキャッシュの画像を使う	L0053,L0064	この機能
+F09-04 interactions
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	関係しない		集計に数えるのは全条件を満たすものだけで、どれか1つで外れる。外れ方は条件ごとに1つずつ確かめれば足りる
+P1	F01+F03	関係しない		集計に数えるのは全条件を満たすものだけで、どれか1つで外れる。外れ方は条件ごとに1つずつ確かめれば足りる
+P1	F01+F04	関係しない		除外の判定とは別の条件で、結果はそれぞれ独立に決まる
+P1	F01+F05	関係しない		除外の判定とは別の条件で、結果はそれぞれ独立に決まる
+P1	F01+F06	関係しない		除外の判定とは別の条件で、結果はそれぞれ独立に決まる
+P1	F02+F03	関係しない		集計に数えるのは全条件を満たすものだけで、どれか1つで外れる。外れ方は条件ごとに1つずつ確かめれば足りる
+P1	F02+F04	関係しない		除外の判定とは別の条件で、結果はそれぞれ独立に決まる
+P1	F02+F05	関係しない		除外の判定とは別の条件で、結果はそれぞれ独立に決まる
+P1	F02+F06	関係しない		除外の判定とは別の条件で、結果はそれぞれ独立に決まる
+P1	F03+F04	関係しない		除外の判定とは別の条件で、結果はそれぞれ独立に決まる
+P1	F03+F05	関係しない		除外の判定とは別の条件で、結果はそれぞれ独立に決まる
+P1	F03+F06	関係しない		除外の判定とは別の条件で、結果はそれぞれ独立に決まる
+P1	F04+F05	効き合う	L0027,L0044	基本土地を含める設定が無いときだけ特殊種別が基本土地のカードを除き、特殊種別を持たないカードは除外の対象にしない
+P1	F04+F06	関係しない		土地かスペルかの振り分けは種別だけで決まり、もう一方の値で変わらない
+P1	F05+F06	関係しない		土地かスペルかの振り分けは種別だけで決まり、もう一方の値で変わらない
+P2	F07+F08	効き合う	L0029,L0052	言語の一致で決まる段のときだけ、表示言語で選ばれる画像が変わる
+P2	F07+F09	効き合う	L0053	キャッシュがあると決め手の段を判定し直さずキャッシュの画像を使う
+P2	F08+F09	効き合う	L0053	キャッシュの鍵はカード識別子だけで、キャッシュがあると表示言語が違っても言語を判定し直さない
+F09-04 constraints
+処理ID	組	種別	根拠	理由
+F09-04 existing
+テストID	処理ID	値	理由
+IT-F09-04-001	P1	F01=大会デッキ&F02=公開&F03=集計期間内&F04=含めない&F06=土地を含まない	事前準備で大会デッキ・公開・当日の5日前・基本土地を含める設定は無し・クリーチャーのカードと書き、スペルのランキングを確かめる
+IT-F09-04-017	P1	F01=大会デッキ&F02=公開&F03=集計期間内&F04=含めない&F05=特殊種別なし&F06=土地を含まない	事前準備で大会デッキ・公開・5日前・設定なし・特殊種別なしで複数のカード種別を持つカードと書き、スペルのランキングを確かめる
+IT-F09-04-018	P1	F01=大会デッキ&F02=公開&F03=集計期間内&F04=含めない&F05=基本土地以外の特殊種別&F06=土地を含まない	事前準備で伝説・雪の特殊種別を持つクリーチャーと書き、スペルのランキングを確かめる
+IT-F09-04-019	P1	F01=大会デッキ&F02=公開&F03=集計期間内&F04=含めない&F05=基本土地以外の特殊種別&F06=土地を含まない	事前準備で複数のカード種別と伝説・雪の特殊種別を持つカードと書き、スペルのランキングを確かめる
+IT-F09-04-026	P2	F07=特殊セットの別で決まる&F08=日本語&F09=なし	事前準備で2件のカード詳細の特殊セットの有無だけで差を付けキャッシュは空と書き、画像のファイル名を確かめる
+IT-F09-04-027	P2	F07=プロモーションの別で決まる&F08=日本語&F09=なし	プロモーションの有無だけで差を付けた2件のカード詳細で、画像のファイル名を確かめる
+IT-F09-04-028	P2	F07=発売日で決まる&F08=日本語&F09=なし	カードセットの発売日だけで差を付けた2件のカード詳細で、画像のファイル名を確かめる
+IT-F09-04-029	P2	F07=Foilの別で決まる&F08=日本語&F09=なし	Foilの有無だけで差を付けた2件のカード詳細で、画像のファイル名を確かめる
+IT-F09-04-030	P2	F07=表示言語の一致で決まる&F08=日本語&F09=なし	言語だけで差を付けた英語と日本語のカード詳細を日本語表示で開き、画像のファイル名を確かめる
+IT-F09-04-031	P2	F07=詳細の識別子で決まる&F08=日本語&F09=なし	差が識別子だけの2件のカード詳細で、画像のファイル名を確かめる
+IT-F09-04-043	P2	F08=日本語&F09=あり	カード詳細を足した後に5分以内で開き直し、キャッシュの画像のままであることを確かめる
+IT-F09-04-044	P2	F07=発売日で決まる&F08=日本語&F09=なし	キャッシュの保持時間を過ぎてから開き直し、新しい発売日の画像に変わることを確かめる
+IT-F09-04-048	P2	F07=表示言語の一致で決まる&F08=日本語&F09=なし	日本語表示で開いて日本語の画像を控える
+IT-F09-04-048	P2	F08=英語&F09=あり	英語に切り替えて5分以内に開き直し、日本語の画像のままで英語の画像にならないことを確かめる
+F09-05 processes
+処理ID	処理	契機	確かめる所	根拠
+P1	その他デッキ一覧に載せるデッキを決める	デッキ検索TOPの「その他」を押してその他デッキ一覧を開く	その他デッキ一覧画面の一覧	L0006-L0013
+P2	画面下部の入力欄にフォーマットを選択済みで載せる	その他デッキ一覧を開く	その他デッキ一覧画面下部の検索条件の入力欄	L0029
+F09-05 factors
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1,P2	フォーマットのランキング表示設定	オン｜オフ	オン: そのフォーマットのデッキは載らない／オフ: 他の設定もオフなら対象フォーマットになる	L0006,M14-10:L0078-L0081	M14-10（設定）
+F02	P1,P2	フォーマットのメタ分布簡易化設定	オン｜オフ	オン: そのフォーマットのデッキは載らない／オフ: 他の設定もオフなら対象フォーマットになる	L0006,M14-10:L0082-L0083	M14-10（設定）
+F03	P1	デッキの表示区分	公開｜非公開	公開: 載る（デッキリストが非公開なら非公開の印を付ける）／非公開: 載らない	L0010,L0024	この機能
+F04	P1	デッキ種別	大会デッキ｜ユーザーデッキ	大会デッキ: 載る／ユーザーデッキ: 載らない	L0011,L0026	この機能
+F05	P1	デッキのアーキタイプ	設定あり｜未設定	設定あり: 載る／未設定: 載らない	L0012	この機能
+F06	P1	大会の開催日	当日以前｜翌日以降	当日以前: 載る／翌日以降: 載らない	L0013,L0023	この機能
+F07	P2	フォーマットの検索対象設定	設定あり｜設定なし	設定あり: 選択済みで入力欄に載る／設定なし: 選択肢に現れず引き継がれない	L0029	この機能
+F09-05 interactions
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	関係しない		載せるのは全条件を満たすデッキだけで、どれか1つで外れる。外れ方は条件ごとに1つずつ確かめれば足りる
+P1	F01+F03	関係しない		載せるのは全条件を満たすデッキだけで、どれか1つで外れる。外れ方は条件ごとに1つずつ確かめれば足りる
+P1	F01+F04	関係しない		載せるのは全条件を満たすデッキだけで、どれか1つで外れる。外れ方は条件ごとに1つずつ確かめれば足りる
+P1	F01+F05	関係しない		載せるのは全条件を満たすデッキだけで、どれか1つで外れる。外れ方は条件ごとに1つずつ確かめれば足りる
+P1	F01+F06	関係しない		載せるのは全条件を満たすデッキだけで、どれか1つで外れる。外れ方は条件ごとに1つずつ確かめれば足りる
+P1	F02+F03	関係しない		載せるのは全条件を満たすデッキだけで、どれか1つで外れる。外れ方は条件ごとに1つずつ確かめれば足りる
+P1	F02+F04	関係しない		載せるのは全条件を満たすデッキだけで、どれか1つで外れる。外れ方は条件ごとに1つずつ確かめれば足りる
+P1	F02+F05	関係しない		載せるのは全条件を満たすデッキだけで、どれか1つで外れる。外れ方は条件ごとに1つずつ確かめれば足りる
+P1	F02+F06	関係しない		載せるのは全条件を満たすデッキだけで、どれか1つで外れる。外れ方は条件ごとに1つずつ確かめれば足りる
+P1	F03+F04	関係しない		載せるのは全条件を満たすデッキだけで、どれか1つで外れる。外れ方は条件ごとに1つずつ確かめれば足りる
+P1	F03+F05	関係しない		載せるのは全条件を満たすデッキだけで、どれか1つで外れる。外れ方は条件ごとに1つずつ確かめれば足りる
+P1	F03+F06	関係しない		載せるのは全条件を満たすデッキだけで、どれか1つで外れる。外れ方は条件ごとに1つずつ確かめれば足りる
+P1	F04+F05	関係しない		載せるのは全条件を満たすデッキだけで、どれか1つで外れる。外れ方は条件ごとに1つずつ確かめれば足りる
+P1	F04+F06	関係しない		載せるのは全条件を満たすデッキだけで、どれか1つで外れる。外れ方は条件ごとに1つずつ確かめれば足りる
+P1	F05+F06	関係しない		載せるのは全条件を満たすデッキだけで、どれか1つで外れる。外れ方は条件ごとに1つずつ確かめれば足りる
+P2	F01+F02	関係しない		選択済みで載るのは全条件を満たすフォーマットだけで、どれか1つで外れる。外れ方は条件ごとに1つずつ確かめれば足りる
+P2	F01+F07	関係しない		選択済みで載るのは全条件を満たすフォーマットだけで、どれか1つで外れる。外れ方は条件ごとに1つずつ確かめれば足りる
+P2	F02+F07	関係しない		選択済みで載るのは全条件を満たすフォーマットだけで、どれか1つで外れる。外れ方は条件ごとに1つずつ確かめれば足りる
+F09-05 constraints
+処理ID	組	種別	根拠	理由
+F09-05 existing
+テストID	処理ID	値	理由
+
+exec
+/bin/bash -lc 'for f in F10-01 F10-02 F10-03 M03-01; do for s in processes factors interactions constraints existing; do echo "$f $s"; cat "integration_test/casegen/combination/factors/${f}_${s}.tsv"; done; done' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+F10-01 processes
+処理ID	処理	契機	確かめる所	根拠
+P1	ページを開いたとき会員IDを受け渡し領域へ積む	ページを開く	ページ内の受け渡し領域（dataLayer）	L0005-L0014,L0019,L0028-L0031
+F10-01 factors
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	会員のログイン状態	会員としてログイン｜ログインしていない	会員としてログイン: 会員IDを1件積む／ログインしていない: 何も積まず領域も用意しない（仮会員・退会済みもこちら）	L0013,L0014,L0030	この機能
+F02	P1	ページ先頭部のブロック	置かれている｜外れている	置かれている: 積む処理が動く／外れている: ログインしていても会員IDを積まない	L0019,L0023,L0028	この機能
+F03	P1	受け渡し領域の状態	まだ無い｜他の箇所が先に積んでいる	まだ無い: 空の領域を用意してから積む／他の箇所が先に積んでいる: 既存の内容を残し末尾へ足す	L0009,L0010,L0029	この機能
+F04	P1	サイトの言語	日本語｜英語	日本語: 会員IDを積む／英語: 日本語と同じ条件・同じ値で積む	L0031	この機能
+F10-01 interactions
+処理ID	要因	判定	根拠	理由
+P1	F01+F02+F03	効き合う	L0009,L0010,L0013,L0014,L0028	ログインしていないか、ブロックが外れているときは積まず、領域の用意も行わない。積むときだけ領域の状態で用意か末尾追加かが決まる
+P1	F01+F04	関係しない		日本語サイトと英語サイトで同じ条件・同じ値で積む
+P1	F02+F04	関係しない		ブロックの配置は言語に関係しない
+P1	F03+F04	関係しない		領域の扱いは言語に関係しない
+F10-01 constraints
+処理ID	組	種別	根拠	理由
+F10-01 existing
+テストID	処理ID	値	理由
+IT-F10-01-001	P1	F01=会員としてログイン&F02=置かれている&F04=日本語	ログインして本店ECTOPの受け渡し領域を確かめる
+IT-F10-01-005	P1	F01=会員としてログイン&F02=置かれている&F03=他の箇所が先に積んでいる&F04=日本語	先に積まれた値の後ろに会員IDが足されることを確かめる
+IT-F10-01-006	P1	F01=会員としてログイン&F02=置かれている&F03=まだ無い&F04=日本語	領域が用意されて会員IDが積まれることを確かめる
+IT-F10-01-007	P1	F01=ログインしていない&F02=置かれている&F04=日本語	未ログインで会員IDが積まれないことを確かめる
+IT-F10-01-012	P1	F01=会員としてログイン&F02=外れている&F04=日本語	ブロックを外したページで積まれないことを確かめる
+IT-F10-01-013	P1	F01=会員としてログイン&F02=外れている&F04=日本語	追加ページで積まれないことを確かめる
+IT-F10-01-014	P1	F01=会員としてログイン&F02=置かれている&F04=日本語	先頭部へ置いた追加ページで積まれることを確かめる
+IT-F10-01-015	P1	F01=ログインしていない&F04=日本語	仮会員はログインできず積まれないことを確かめる
+IT-F10-01-016	P1	F01=ログインしていない&F04=日本語	退会済みはログインできず積まれないことを確かめる
+IT-F10-01-017	P1	F01=会員としてログイン&F04=英語	英語サイトで積まれることを確かめる
+IT-F10-01-018	P1	F01=ログインしていない&F04=英語	英語サイトの未ログインで積まれないことを確かめる
+IT-F10-01-024	P1	F01=ログインしていない&F02=置かれている&F03=まだ無い	未ログインでは領域も用意されないことを確かめる
+F10-02 processes
+処理ID	処理	契機	確かめる所	根拠
+P1	購入完了画面で売上の値を受け渡し領域へ積む	注文完了画面を表示する	注文完了画面の受け渡し領域（dataLayer）の内容	L0007-L0010,L0013,L0020,L0024,L0041,L0045
+F10-02 factors
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	注文完了画面を表示した時点のログイン状態	会員｜非会員	会員: transactionMailaddress にその会員のメールアドレスを積む／非会員: transactionMailaddress は空文字（注文時入力のメールは積まない）	L0024,L0045	この機能
+F02	P1	表示前の受け渡し領域	無し｜既存あり	無し: 空の領域を用意してから積む／既存あり: 既存の内容を残して末尾へ足す	L0009-L0010	この機能
+F03	P1	お届け先の数	1件｜複数	1件: そのお届け先の配送方法の名称を transactionAffiliation に積む／複数: 1件目のお届け先の配送方法の名称だけを積む	L0020,L0041	この機能
+F10-02 interactions
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	関係しない		メールアドレスの値は表示時のログイン状態だけで決まり、受け渡し領域の有無は積む位置（新規作成か末尾追加か）しか変えない
+P1	F01+F03	関係しない		メールアドレスはログイン状態、配送方法の名称はお届け先で決まり、互いの値を使わない
+P1	F02+F03	関係しない		領域の有無は積む位置だけを決め、積む値（配送方法の名称）はお届け先だけで決まる
+F10-02 constraints
+処理ID	組	種別	根拠	理由
+P1	F01=非会員	正解未定	L0045	設計書は非会員のとき transactionMailaddress を空文字と定めるが、既存ケースIT-F10-02-038（excluded.tsv）は刷新後に非会員が購入完了画面へ到達する経路が無いとして未確定で外している。到達できるか決まらない
+F10-02 existing
+テストID	処理ID	値	理由
+IT-F10-02-004	P1	F01=会員&F03=1件	会員でログインし、お届け先1件の注文で配送方法の名称を確かめる
+IT-F10-02-005	P1	F01=会員&F03=複数	会員でログインし、お届け先2件の注文で1件目の配送方法の名称だけを確かめる
+IT-F10-02-011	P1	F01=会員	会員でログインして transactionMailaddress を確かめる
+IT-F10-02-035	P1	F01=会員&F02=既存あり&F03=1件	領域に既存の要素を入れた状態で、既存を残して末尾に足されることを確かめる
+F10-03 processes
+処理ID	処理	契機	確かめる所	根拠
+P1	商品詳細画面で商品IDと販売価格を受け渡し領域へ積む	商品詳細画面を表示する	商品詳細画面の受け渡し領域（dataLayer）の内容	L0032-L0042,L0057
+P2	商品の並びを画面の表示後に差し込んで商品IDの並びを積む	商品一覧・TOP画面・商品詳細画面を表示する	各画面の受け渡し領域（dataLayer）の gtm_search_ids	L0044-L0053,L0058
+F10-03 factors
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	サイトの言語	日本語サイト｜英語サイト	日本語サイト: 言語の指定が無ければ日本語版の販売価格を積む／英語サイト: 言語の指定が無ければ英語版の販売価格を積む	L0024,L0039	この機能
+F02	P1	初期表示する言語の決まり方	指定言語｜サイト言語｜商品の先頭言語	指定言語: 指定された言語の販売価格／サイト言語: サイトの言語の版の販売価格／商品の先頭言語: 商品が持つ先頭の言語の販売価格	L0038-L0040	この機能
+F03	P1	初期表示する商品規格の決まり方	指定規格｜先頭規格	指定規格: 決まった言語にある指定の商品規格の販売価格／先頭規格: 決まった言語の先頭の商品規格の販売価格（指定が無い、または決まった言語に無い場合）	L0041-L0042	この機能
+F04	P1	商品の公開状態	公開｜非公開	公開: 商品詳細画面を表示し値を積む／非公開: 商品詳細画面を表示せず値を積まない	L0057	この機能
+F05	P2	値を差し込む画面	商品一覧｜TOP画面｜商品詳細（カードで基本土地でない）｜商品詳細（対象外の商品）	商品一覧: 一覧の商品の並び1件／TOP画面: 配置した商品リストごとに1件／商品詳細（カードで基本土地でない）: 同名の商品の並び1件／商品詳細（対象外の商品）: 基本土地またはカード以外なので積まない	L0045-L0048	この機能
+F06	P2	差し込む商品の並びの中身	商品あり｜0件	商品あり: gtm_search_ids を積む／0件: 商品一覧では並びを差し込まず積まない（空の並びも積まない）	L0053,L0058	この機能
+F10-03 interactions
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	効き合う	L0039	言語の指定が無いときの言語はサイトの言語で決まるため、決まり方がサイト言語のときだけサイトの言語が結果を変える
+P1	F01+F03	関係しない		商品規格の決まり方は、決まった言語の中で指定の有無だけで決まり、サイトの言語を直接は使わない
+P1	F01+F04	効き合う	L0057	非公開のときは画面を表示せず、サイトの言語にかかわらず値を積まない
+P1	F02+F03	効き合う	L0041-L0042	指定された商品規格は、決まった言語にあるときだけ使われ、無ければ先頭の商品規格になる
+P1	F02+F04	効き合う	L0057	非公開のときは言語の決まり方にかかわらず値を積まない
+P1	F03+F04	効き合う	L0057	非公開のときは商品規格の決まり方にかかわらず値を積まない
+P2	F05+F06	効き合う	L0053,L0058	商品一覧では並びが0件だと積まない。商品あり・0件で積む・積まないが画面ごとに決まる
+F10-03 constraints
+処理ID	組	種別	根拠	理由
+P2	F05=TOP画面&F06=0件	正解未定	L0047,L0053	0件のとき積まないと定めるのは商品一覧だけで、TOP画面の商品リストが0件のときの扱いは設計書に無い
+P2	F05=商品詳細（カードで基本土地でない）&F06=0件	正解未定	L0048,L0053	同名の商品の並びが0件のときの扱いは設計書に無い
+F10-03 existing
+テストID	処理ID	値	理由
+IT-F10-03-012	P1	F02=サイト言語&F03=先頭規格&F04=公開	言語・商品規格の指定なしで公開商品の詳細を開き、初期表示の販売価格を確かめる
+IT-F10-03-013	P1	F02=サイト言語&F03=指定規格&F04=公開	言語の指定なし・商品規格を指定して開き、販売価格を確かめる
+IT-F10-03-014	P1	F01=日本語サイト&F02=指定言語&F03=先頭規格&F04=公開	日本語サイトで言語に英語を指定して開き、英語版の販売価格を確かめる
+IT-F10-03-015	P1	F01=日本語サイト&F02=商品の先頭言語&F03=先頭規格&F04=公開	日本語サイトで日本語版が無い商品を指定なしで開き、先頭の言語の販売価格を確かめる
+IT-F10-03-017	P1	F01=日本語サイト&F02=サイト言語&F03=先頭規格&F04=公開	日本語サイトで言語の指定なし・日本語版に無い商品規格を指定して開き、先頭の商品規格の販売価格を確かめる
+IT-F10-03-018	P1	F01=英語サイト&F02=サイト言語&F03=先頭規格&F04=公開	英語サイトで指定なしに開き、英語版の販売価格を確かめる
+IT-F10-03-023	P1	F04=非公開	非公開の商品の詳細画面を開こうとして、値が積まれないことを確かめる
+IT-F10-03-057	P1	F01=日本語サイト&F02=指定言語&F03=指定規格&F04=公開	日本語サイトで言語と商品規格を指定して開き、販売価格を確かめる
+IT-F10-03-025	P2	F05=商品一覧&F06=商品あり	商品一覧で検索し、gtm_search_ids の並びを確かめる
+IT-F10-03-027	P2	F05=商品一覧&F06=0件	検索結果が0件の商品一覧で、gtm_search_ids が積まれないことを確かめる
+IT-F10-03-040	P2	F05=TOP画面&F06=商品あり	TOP画面の新着リストの商品の並びを確かめる
+IT-F10-03-042	P2	F05=商品詳細（カードで基本土地でない）&F06=商品あり	カードの商品で基本土地でない商品の詳細で、同名の商品の並びを確かめる
+IT-F10-03-043	P2	F05=商品詳細（対象外の商品）	基本土地の商品の詳細で、gtm_search_ids が積まれないことを確かめる
+IT-F10-03-044	P2	F05=商品詳細（対象外の商品）	カード以外の商品の詳細で、gtm_search_ids が積まれないことを確かめる
+M03-01 processes
+処理ID	処理	契機	確かめる所	根拠
+M03-01 factors
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+M03-01 interactions
+処理ID	要因	判定	根拠	理由
+M03-01 constraints
+処理ID	組	種別	根拠	理由
+M03-01 existing
+テストID	処理ID	値	理由
+
+exec
+/bin/bash -lc 'for f in F09-06 F09-07 F09-08; do echo "$f DESIGN"; cat "integration_test/casegen/combination/units/$f/design.txt"; done' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+F09-06 DESIGN
+##### 0309 f09-06 F09-06 デッキリスト詳細 ／ フロント デッキ検索 — デッキリスト詳細
+L0001	Source:
+L0002	functions/pf-eccube3/f09-06_front_deck_deck_show.md
+L0003	F09-06 デッキリスト詳細 ／ フロント デッキ検索 — デッキリスト詳細
+L0004	業務ロジック
+L0005	表示できるデッキの条件
+L0006	条件	結果
+L0007	デッキの識別子が空のとき	HTTP 404
+L0008	識別子に一致するデッキが無いとき	HTTP 404
+L0009	表示区分が非公開のとき	HTTP 404
+L0010	デッキ種別がユーザーデッキのとき	HTTP 404
+L0011	表示区分が限定公開のとき	詳細を表示する。限定公開用の値の一致は求めない
+L0012	デッキリストが非公開のとき	詳細の情報欄だけを表示し、カードリストは空とする
+L0013	カードリストの分類
+L0014	採用カードを次の順序で判定し、最初に一致した分類へ入れる。分類ごとの枚数は、その分類に入ったカードの採用枚数の合計とする。
+L0015	順序	判定	分類
+L0016	1	配置がサイドボード	サイドボード
+L0017	2	配置が統率者	統率者
+L0018	3	カードが土地	土地
+L0019	4	カードがクリーチャー	クリーチャー
+L0020	5	カードの識別子を持つ	呪文
+L0021	6	上のいずれにも当たらない	Unknown
+L0022	メインボードの枚数は、統率者・呪文・クリーチャー・土地・Unknownの枚数を合計した値とする。統率者は枚数が0のとき区画ごと表示せず、Unknownは枚数が1以上のときだけ区画を表示する。
+L0023	カード画像
+L0024	分類ごとに、その分類のカードの識別子を集めて表側の画像を1枚ずつ選ぶ。選ぶ優先順は、特殊セットでないもの、プロモーションでないもの、カードセットの発売日が新しいもの、Foilでないもの、表示中の言語に一致するもの、カード詳細の識別子が小さいものとする。
+L0025	情報欄に載せる内容
+L0026	表示項目	表示項目（英語）	値
+L0027	デッキ名	Deck name	デッキ名
+L0028	大会名	Tournament	大会の日本語名。大会名を条件にしたデッキ検索結果への入口を兼ねる
+L0029	フォーマット	Format	フォーマットの日本語名。フォーマットが未設定のときは空
+L0030	アーキタイプ	Archetype	アーキタイプの日本語名。アーキタイプを条件にしたデッキ検索結果への入口を兼ねる
+L0031	プレイヤー	Player	プレイヤー名。プレイヤー名を条件にしたデッキ検索結果への入口を兼ねる
+L0032	タグ	Tag	デッキタグの名称を, で連ねる。各タグを条件にしたデッキ検索結果への入口を兼ねる
+L0033	成績	Score	勝数と敗数がそろうときは勝-敗。引分が0でないときは-引分を、勝敗の表記の有無と関わりなく成績の文字列の前に置く
+L0034	開催日	Date	大会の開催日をY/m/dの形式で表す
+L0035	引用元URL	Source URL	引用元のURL
+L0036	デッキリストの書き出し
+L0037	デッキリストが公開のときだけ書き出しの入口を出す。
+L0038	入口	条件	引き渡す値
+L0039	Magic Online用テキスト	デッキリストが公開のとき	デッキID
+L0040	アリーナ用インポートテキスト	デッキリストが公開で、フォーマットがアリーナ対応のとき	デッキIDと言語en
+L0041	日本語テキスト	デッキリストが公開で、フォーマットがアリーナ対応のとき	デッキIDと言語jp。取得先の経路は表示言語を英語にする
+L0042	書き出しの内容はデッキリスト書き出し（F09-07）を正とする。
+L0043	画面から引き継ぐ検索条件
+L0044	起点	遷移先	引き継ぐ条件
+L0045	同じ大会のデッキを見る	デッキ検索結果	大会名＝大会の英語名と、開催日
+L0046	同じアーキタイプのデッキを見る	デッキ検索結果	アーキタイプID
+L0047	このデッキを一括購入する	デッキ一括購入	デッキID
+L0048	戻る	デッキ検索TOP	引き継がない
+L0049	同じ大会のデッキを見るが引き渡す開催日は、検索条件として解釈されない。開催日時の絞り込みに使う条件名と一致しないため、大会名だけで絞り込んだ結果になる。
+L0050	旧URLからの引き継ぎ
+L0051	旧デッキIDを伴う入口は、次の順序で遷移先を決める。
+L0052	順序	判定	結果
+L0053	1	旧デッキIDに一致するデッキがある	そのデッキの詳細へHTTP 301で転送する
+L0054	2	現デッキIDに一致するデッキがある	そのデッキの詳細へHTTP 301で転送する
+L0055	3	どちらにも一致しないとき	デッキ検索TOPへHTTP 302で転送する
+L0056	旧デッキIDは英数字だけを受け付ける。転送先の判定では表示区分もデッキ種別も見ないため、転送先で404になることがある。
+L0057	エッジケース
+L0058	ケース	扱い
+L0059	統率者の枚数が0のとき	統率者の区画を出さない
+L0060	Unknownの枚数が0のとき	Unknownの区画を出さない
+L0061	デッキタグが0件のとき	タグの欄を空にする
+L0062	引用元URLが未設定のとき	引用元URLの欄を空にする
+L0063	勝数と敗数のいずれかが未設定のとき	勝敗の表記を出さない。引分が0でなければ-引分は出す
+L0064	引分が0のとき	引分の表記を出さない
+L0065	カードの画像を選べなかったとき	画像なし用の画像を出し、商品への入口を付けない
+L0066	同じカードの組で別の言語のキャッシュがあるとき	キャッシュの鍵はカードの識別子だけなので、言語を判定し直さずキャッシュの内容を使う
+L0067	デッキリストが非公開のとき	カードリストの枚数はすべて0になる
+L0068	入出力
+L0069	種類	内容
+L0070	入力	デッキの識別子。旧URLからの入口では旧デッキID
+L0071	成功時出力	カードリストと情報欄を載せた詳細画面
+L0072	失敗時出力	表示できる条件を満たさないときはHTTP 404。旧URLで該当が無いときはデッキ検索TOPへの転送
+L0073	入出力: 永続化
+L0074	デッキ情報を登録・更新・削除しない。
+L0075	操作	契機
+L0076	キャッシュへの保存	カード画像の選択結果をカード識別子の組ごとに保存する。保持時間は600秒
+L0077	リニューアル後の仕様
+L0078	表示メッセージ
+L0079	メッセージID	表示位置	画面上の文言	画面上の文言(英語)	表示条件	後続処理
+L0080	—	カードリストの領域	デッキリスト非公開	Deck list is private	デッキリストが非公開のとき	カードリストを表示しない
+L0081	—	カードリストの区画	統率者（枚数）	Commander（枚数）	統率者の枚数が1以上のとき	—
+L0082	—	カードリストの区画	メインボード（枚数）	Mainboard（枚数）	デッキリストが公開のとき	—
+L0083	—	カードリストの区画	土地（枚数）	Land（枚数）	デッキリストが公開のとき	—
+L0084	—	カードリストの区画	クリーチャー（枚数）	Creature（枚数）	デッキリストが公開のとき	—
+L0085	—	カードリストの区画	呪文（枚数）	Spell（枚数）	デッキリストが公開のとき	—
+L0086	—	カードリストの区画	サイドボード（枚数）	Sideboard（枚数）	デッキリストが公開のとき	—
+L0087	—	カードリストの行	不明なカード	Unknown card	カードの識別子を持たない採用カードがあるとき	—
+L0088	—	書き出しの入口	Magic Online用テキスト	Text in Magic Online format	デッキリストが公開のとき	デッキリストのテキストを取得する
+L0089	—	書き出しの入口	アリーナ用インポートテキスト	Text In MTG Arena format	デッキリストが公開で、フォーマットがアリーナ対応のとき	デッキリストのテキストを写し取る
+L0090	—	書き出しの入口	日本語テキスト	Japanese text	デッキリストが公開で、フォーマットがアリーナ対応のとき	デッキリストのテキストを写し取る
+L0091	—	書き出し完了の通知	クリップボードにコピーしました。※相棒はアリーナで別途指定していただく必要がございます。	Copy to clipboard.*When using Companion cards, please directly edit your Arena deck.	アリーナ形式のテキストを写し取ったとき	—
+L0092	—	購入の入口	このデッキを一括購入する	Buy this deck	常時	デッキ一括購入へ遷移する
+L0093	—	画面下部の導線	同じ大会のデッキを見る	View other decks from the same tournament	常時	デッキ検索結果へ遷移する
+L0094	—	画面下部の導線	同じアーキタイプのデッキを見る	View other decks of the same archetype	常時	デッキ検索結果へ遷移する
+F09-07 DESIGN
+##### 0309 f09-07 F09-07 デッキリスト書き出し ／ フロント デッキ検索 — デッキリスト書き出し
+L0001	Source:
+L0002	functions/pf-eccube3/f09-07_front_deck_deck_export.md
+L0003	F09-07 デッキリスト書き出し ／ フロント デッキ検索 — デッキリスト書き出し
+L0004	業務ロジック
+L0005	書き出しの2経路
+L0006	デッキリストの書き出しには、ファイルとして受け取る経路と、画面が写し取るためのテキストを受け取る経路がある。
+L0007	経路	受け取り方	応答の形式
+L0008	Magic Online用テキスト	ファイルとして受け取る	添付ファイルのtext/plain
+L0009	アリーナ形式のテキスト	画面が受け取り、クリップボードへ写す	JSON
+L0010	公開状態の判定	ファイル経路だけが表示区分とデッキリストの公開状態を見る	—
+L0011	デッキ種別の判定	どちらの経路も、ユーザーデッキのときは応じない	—
+L0012	ファイルとして受け取る経路の条件
+L0013	順序	判定	結果
+L0014	1	デッキの識別子が空のとき	HTTP 404
+L0015	2	識別子に一致するデッキが無いとき	HTTP 404
+L0016	3	表示区分が非公開のとき	HTTP 404
+L0017	4	デッキリストが非公開のとき	HTTP 404
+L0018	5	デッキ種別がユーザーデッキのとき	HTTP 404
+L0019	6	上のいずれにも当たらないとき	デッキリストのファイルを返す
+L0020	限定公開のデッキは、限定公開用の値の一致を求めずに書き出せる。
+L0021	ファイルの名称と内容
+L0022	ファイル名はアーキタイプの英語名の空白文字を_へ置き換え、.txtを付けた文字列とする。内容は英語カード名の枚数 カード名を1行ずつ並べたもので、サイドボードの前にSideboardの行を挟む。統率者とメインボードの見出し行は入れない。カード名はアリーナで通る名称への対応表で置き換え、対応表に無い名称はそのまま残す。
+L0023	テキストとして受け取る経路の条件
+L0024	順序	判定	結果
+L0025	1	デッキの識別子が空のとき	HTTP 404。本文はJSONで、処理結果は失敗、内容はNot Found
+L0026	2	識別子に一致するデッキが無いとき	HTTP 404。本文は同上
+L0027	3	デッキ種別がユーザーデッキのとき	HTTP 404。本文は同上
+L0028	4	上のいずれにも当たらないとき	HTTP 200。処理結果は成功、デッキリストのテキストを返す
+L0029	この経路は表示区分とデッキリストの公開状態を判定しないため、非公開のデッキでも識別子を指定すればテキストを受け取れる。
+L0030	言語の指定による内容の違い
+L0031	言語の指定	カード名	見出し行
+L0032	en	英語名をアリーナで通る名称へ置き換えた値	統率者があるときはCommander、続けてDeck、サイドボードの前にSideboard
+L0033	en以外	日本語名	統率者があるときは統率者、続けてデッキ、サイドボードの前にサイドボード
+L0034	どちらの言語でも、カード名に含まれる/は // へ置き換える。デッキリスト詳細からの入口は、アリーナ用インポートテキストがen、日本語テキストがjpを言語として渡す。言語の指定が無いときのふるまいは正本コードからは確認できない。
+L0035	デッキリストの組み立て
+L0036	観点	扱い
+L0037	行の形	枚数 カード名を1行とする
+L0038	区画の順序	統率者、メインボード、サイドボードの順に並べる。この3つ以外の配置は書き出さない
+L0039	区画の区切り	サイドボードがあるときだけ、その前に空行と見出し行を挟む
+L0040	改行	復帰と改行の2文字を用いる
+L0041	末尾	末尾の空白と改行を落とす
+L0042	デッキリストがキャッシュにあるとき	キャッシュの内容から指定の言語で組み立てる
+L0043	デッキリストがキャッシュに無いとき	採用カードから組み立てる
+L0044	応答の形式
+L0045	観点	ファイルとして受け取る経路	テキストとして受け取る経路
+L0046	内容の種別	text/plain	application/json
+L0047	添付の指定	ファイル名を指定した添付として返す	添付にしない
+L0048	本文の作り	デッキリストのテキストだけを流し込む	処理結果とデッキリストのテキストを組にする
+L0049	会員の状態	ログインの有無を問わない	ログインの有無を問わない
+L0050	失敗したとき	HTTP 404。共通のエラー画面を返す	処理結果が失敗であることを示すJSONとHTTP 404
+L0051	エッジケース
+L0052	ケース	扱い
+L0053	アーキタイプの英語名に空白を含むとき	空白を_へ置き換えたファイル名にする
+L0054	対応表に無いカード名のとき	置き換えずに元の名称のまま書き出す
+L0055	サイドボードが0枚のとき	サイドボードの見出し行を入れない
+L0056	統率者が0枚のとき	統率者の見出し行を入れない
+L0057	分割カードのとき	名称の/を // へ置き換える
+L0058	デッキリストが非公開のとき	ファイル経路はHTTP 404、テキスト経路は書き出しに応じる
+L0059	表示区分が限定公開のとき	限定公開用の値の一致を求めずに書き出す
+L0060	採用カードが0件のとき	中身のないテキストを返す
+L0061	メインボード・サイドボード・統率者以外の配置にカードがあるとき	書き出しに含めない
+L0062	アーキタイプが未設定のとき	ファイル名の組み立てに使う値が無く、ふるまいは正本コードからは確認できない
+L0063	言語の指定がen以外のとき	対応表による置き換えを行わない
+L0064	会員でないとき	どちらの経路も同じ結果を返す
+L0065	入出力
+L0066	種類	内容
+L0067	入力	デッキの識別子。テキストとして受け取る経路では言語の指定も伴う
+L0068	成功時出力	ファイル経路は添付ファイルとしてのデッキリスト。テキスト経路はJSONで、処理結果が成功であることとデッキリストのテキスト
+L0069	失敗時出力	ファイル経路はHTTP 404の共通のエラー画面。テキスト経路はHTTP 404で、処理結果が失敗であることとNot Found
+L0070	入出力: 永続化
+L0071	デッキ情報を登録・更新・削除しない。
+L0072	操作	契機
+L0073	キャッシュへの保存	行わない。デッキリストのテキストは、デッキIDを鍵にしたキャッシュに保存済みのときだけそこから組み立てる
+L0074	リニューアル後の仕様
+L0075	表示メッセージ
+L0076	本機能は画面へ文言を表示しない。書き出しの入口と完了の通知はデッキリスト詳細（F09-06）を正とする。
+F09-08 DESIGN
+##### 0309 f09-08 F09-08 デッキ一括購入 ／ フロント デッキ検索 — デッキ一括購入
+L0001	Source:
+L0002	functions/pf-eccube3/f09-08_front_deck_deck_bulk.md
+L0003	F09-08 デッキ一括購入 ／ フロント デッキ検索 — デッキ一括購入
+L0004	業務ロジック
+L0005	初期表示に載せるカードリスト
+L0006	順序	判定	結果
+L0007	1	デッキの識別子が無いとき	カードリスト欄を空にして表示する
+L0008	2	識別子に一致するデッキが無いとき	未ログイン、またはプレイヤーを持たない会員では、カードリスト欄を空にして表示する。プレイヤーを持つ会員では応答を返せない
+L0009	3	表示区分が非公開、またはデッキリストが非公開のとき	会員のプレイヤーがそのデッキのプレイヤーと一致するときだけカードリストを載せる。一致しないときと未ログインのときは空にする
+L0010	4	表示区分が限定公開で、限定公開用の値が一致しないとき	カードリスト欄を空にして表示する
+L0011	5	上のいずれにも当たらないとき	英語カード名のデッキリストをカードリスト欄に載せる
+L0012	購入条件の指定
+L0013	画面上の項目	画面上の項目（英語）	初期値	選択肢と絞り込み
+L0014	言語	Language	日本語のみ	日本語のみ（Japanese）・英語のみ（English）・日・英のみ（Japanese or English）は該当言語の商品規格だけを対象とする。指定しない（他言語を含む）（Not specified (including other languages)）は言語で絞り込まない
+L0015	状態	Condition	NM	NMはNMだけ、NM・SPはこの2つ、NM・SP・MPはこの3つだけを対象とする。NM・SP・MP・HPは状態で絞り込まない
+L0016	通常/Foil	Normal / Foil	通常カードのみ	通常カードのみ（Normal）は通常、Foilカードのみ（Foil）は箔押しだけを対象とする。指定しない（Not specified）は絞り込まない
+L0017	優先条件	Preferences	安いカード優先	安いカード優先（Prior to Cheapest Card）は販売価格の昇順、高いカード優先（Prior to Expensive Card）は販売価格の降順
+L0018	言語で日・英のみ、または指定しない（他言語を含む）を選んだときに日本語優先と英語優先が優先条件に加わり、日本語のみ・英語のみに戻すと除かれる。通常/Foilで指定しないを選んだときに通常カード優先とFoilカード優先が加わる。
+L0019	在庫を引く条件
+L0020	条件	扱い
+L0021	商品	削除されておらず、公開中の商品だけを対象とする
+L0022	商品規格	削除されておらず、販売価格が0より大きいものだけを対象とする
+L0023	カード名	入力されたカード名が、カードの日本語名または英語名に一致するものだけを対象とする
+L0024	状態がNM以外	同一言語のNMの販売価格が100円を超えるものだけを対象とする
+L0025	販売価格	100円以上、または状態がNMのものだけを対象とする
+L0026	並び順	在庫が0のものを後ろへ回し、次に優先条件、最後にカードセットの発売日の降順
+L0027	数量の割り当て
+L0028	ケース	扱い
+L0029	該当する商品規格がすべて在庫0のとき	並び順の先頭の商品規格に希望枚数をそのまま割り当てる
+L0030	在庫のある商品規格があるとき	在庫0のものを除き、並び順に沿って在庫数の範囲で割り当てる
+L0031	割り当て済みの枚数が希望枚数に達したとき	それ以降の商品規格には割り当てない
+L0032	最後の商品規格まで達したとき	希望枚数との差分を割り当てる
+L0033	同じカード名が複数行に現れるときは、枚数を合計して1件の希望として扱う。カード名に // を含む分割カードだけは合算されず、後の行の枚数で置き換わる。
+L0034	カードリストの書式
+L0035	行の内容	扱い
+L0036	枚数 カード名	枚数と名称に切り分ける
+L0037	枚数 カード名 (セット略号) 収録番号	枚数と名称に切り分ける
+L0038	Sideboard・サイドボード・Deck・デッキ	区切りとして読み飛ばす
+L0039	空行	読み飛ばす
+L0040	相棒・Companion	その行と次の1行を読み飛ばす
+L0041	読み飛ばす行だけを入力したとき	解析結果が0件になる。未記載の判定へは戻らず、空の条件のまま商品と在庫の判定へ進む。この経路のふるまいは正本コードからは確認できない
+L0042	上のいずれにも当たらない行	書式の誤りとして行番号と入力内容を示す
+L0043	カード名の // 	/へ置き換えて突き合わせる
+L0044	空行も1行として数え、行番号にも行数にも含める。行数は500行までとし、これを超えるときは書式の判定を行わない。
+L0045	判定の順序
+L0046	順序	判定	結果
+L0047	1	カードリストが空のとき	未記載として通知し、以降を判定しない
+L0048	2	書式に合わない行がある	書式の誤りとして通知し、以降を判定しない
+L0049	3	商品が見つからないカードがある	商品なしとして通知し、以降を判定しない
+L0050	4	指定した条件で在庫を引けないカードがある	在庫不足として通知し、割り当て結果を返さない
+L0051	5	上のいずれにも当たらない	商品規格と数量の組を返す
+L0052	判定はいずれもHTTP 200で応答し、処理結果が成功か失敗かで区別する。本機能が返すのは商品規格と数量の組までとする。カートへの追加は買い物かご（F04-01）が受け持ち、画面は組を引き渡したのち買い物かごへ移る。
+L0053	エッジケース
+L0054	ケース	扱い
+L0055	同じカード名が複数行にあるとき	枚数を合計して1件の希望とする
+L0056	同じ分割カードが複数行にあるとき	合算されず、後の行の枚数で置き換わる
+L0057	空行を含めた行数が500行を超えるとき	行ごとの判定を行わず、行数の誤りだけを示す
+L0058	相棒の行があるとき	その行と直後の1行を読み飛ばす
+L0059	カード名に///を含むとき	送信の直前に//へ置き換える
+L0060	希望枚数が在庫の合計を超えるとき	最後の商品規格に不足分を含めた枚数を割り当てる
+L0061	商品が見つからない行があるとき	在庫の判定へ進まない
+L0062	購入条件を変えずに再送したとき	送信せず、内容が変わっていないことを画面で知らせる
+L0063	言語・状態・通常/Foilが未指定または選択肢に無い値のとき	その条件では絞り込まない
+L0064	優先条件が未指定または選択肢に無い値のとき	安いカード優先として扱う
+L0065	誤りの示し方
+L0066	観点	扱い
+L0067	並び	先頭に総括の文言を置き、続けて誤りのある行を並べる
+L0068	書式の誤りの行番号	入力の1行目を1として、空行も数えた位置を示す
+L0069	商品なしの行番号	カード名を重複排除した並びの位置を示すため、読み飛ばした行や重複した行があるときは入力の行番号とずれる
+L0070	在庫不足の行番号	商品なしと同じ数え方をする
+L0071	誤りが複数の種類にまたがるとき	先に判定した種類の誤りだけを示す
+L0072	入出力
+L0073	種類	内容
+L0074	入力	カードリストのテキスト、言語・状態・通常/Foil・優先条件の指定
+L0075	成功時出力	HTTP 200。処理結果が成功であることと、商品規格の識別子と数量の組の一覧
+L0076	失敗時出力	HTTP 200。処理結果が失敗であることと、先頭に総括の文言を置いた誤りの一覧
+L0077	入出力: 永続化
+L0078	デッキ情報を登録・更新・削除しない。商品と在庫も更新しない。カートへの追加は買い物かご（F04-01）が受け持つ。
+L0079	リニューアル後の仕様
+L0080	表示メッセージ
+L0081	メッセージID	表示位置	画面上の文言	画面上の文言(英語)	表示条件	後続処理
+L0082	—	画面上部の見出し	カードリストで購入	Cardlist	常時	—
+L0083	—	書式の説明	以下の形式がご利用いただけます。言語は日または英が使用可能です。	The following formats can be used.	常時	—
+L0084	—	書式の説明	形式1	Format 1	常時	—
+L0085	—	書式の説明	形式2	Format 2	常時	—
+L0086	—	カードリストの入力欄	4 Tarmogoyf	4 Tarmogoyf	入力欄が空のとき	—
+L0087	—	購入条件の見出し	購入条件を指定	Narrow Details	常時	—
+L0088	—	誤りの一覧	デッキリストが記載されていません。デッキリスト内に数量とカード名の入力をお願いいたします。	Decklist is Not Listed.	カードリストが空のとき	判定を打ち切る
+L0089	—	誤りの一覧	デッキリストの書式が正しくありません。	The deck list format is invalid.	書式に合わない行があるとき	続けて行ごとの誤りを並べる
+L0090	—	誤りの一覧	最大行数は500行までとなっております。現在: （行数）行	The maximum number of rows is 500. You have used （行数） rows.	空行を含めた行数が500行を超えるとき	判定を打ち切る
+L0091	—	誤りの一覧	商品が存在しないカードが含まれています。	The deck list contains cards that are not available as products.	商品が見つからないカードがあるとき	続けて行ごとの誤りを並べる
+L0092	—	誤りの一覧	指定された条件で在庫が不足しているカードがあります。	Some cards do not have enough stock under the specified conditions.	指定した条件で在庫を引けないカードがあるとき	続けて行ごとの誤りを並べる
+L0093	—	誤りの一覧	（行番号）行目: （カード名）	line （行番号）: （カード名）	行ごとの誤りを示すとき	—
+L0094	—	購入の入口	カートに追加	Add to Cart	常時	割り当て結果を買い物かごへ引き渡す
+L0095	このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。
+
+exec
+/bin/bash -lc 'for f in F09-02 F09-03 F09-04 F09-05; do echo "$f DESIGN"; cat "integration_test/casegen/combination/units/$f/design.txt"; done' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'for f in F10-01 F10-02 F10-03; do echo "$f DESIGN"; cat "integration_test/casegen/combination/units/$f/design.txt"; done' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+F09-02 DESIGN
+##### 0309 f09-02 F09-02 デッキ検索結果 ／ フロント デッキ検索 — デッキ検索結果
+L0001	Source:
+L0002	functions/pf-eccube3/f09-02_front_deck_deck_result.md
+L0003	F09-02 デッキ検索結果 ／ フロント デッキ検索 — デッキ検索結果
+L0004	業務ロジック
+L0005	一覧に載せるデッキ
+L0006	検索条件の指定によらず、次の条件を常に満たすデッキだけを一覧に載せる。
+L0007	条件	扱い
+L0008	表示区分	公開のものだけを対象とする
+L0009	デッキ種別	大会デッキだけを対象とする。ユーザーデッキは載せない
+L0010	アーキタイプ	設定されているデッキだけを対象とする。未設定のデッキは載せない
+L0011	大会の開催日	当日の23:59:59以下だけを対象とする。開催日が先の大会のデッキは載せない
+L0012	デッキタグの指定があるとき	指定したデッキタグのいずれかを持つデッキだけを対象とする
+L0013	カード名の指定があるとき	指定した名称のカードを採用しているデッキだけを対象とする
+L0014	利用者が指定する検索条件の突き合わせ方はデッキ検索TOP（F09-01）を正とする。
+L0015	並び順
+L0016	大会の開催日の降順、大会名（日本語）の昇順、順位の昇順の順に並べる。同じ大会のデッキは順位の高いものが先になる。
+L0017	件数とページの決定
+L0018	観点	扱い
+L0019	ページ番号の既定	1
+L0020	1ページあたりの件数の既定	20件
+L0021	1ページあたりの件数の指定	検索条件として受け取った値を検証せずに抽出へ使う。未指定・空文字・0のときは20件とする。画面が用意する選択肢は20件・40件・60件・80件・100件
+L0022	総件数	条件に一致するデッキを重複排除して数えた件数
+L0023	総ページ数	総件数を1ページあたりの件数で割って切り上げた数。件数の指定が無いときは20件で割る
+L0024	ページ送りの範囲	現在ページの前後4ページ分までを並べ、それを超える範囲は省略の印にまとめる
+L0025	範囲外のページ番号	ページ番号を丸めない。総件数が1件以上でもHTTP 200のまま一覧が空になり、該当なしの案内を出す
+L0026	表示件数を変えたときのふるまい
+L0027	表示件数を変えると、入力欄に載っている検索条件すべてに指定した件数を添えて検索し直す。開催日時の開始が未指定のときは、入力欄の既定値である6か月前が条件に加わる。ページ番号は引き継がず、1ページ目から表示する。
+L0028	該当0件のときの応答
+L0029	該当が0件のときは、検索条件の入力欄を載せた同じ画面をHTTP 404で返す。一覧の領域には該当なしの案内だけを出す。
+L0030	一覧の各件に載せる内容
+L0031	表示項目	値
+L0032	画像	デッキに代表カード画像があるときはその画像、無いときは画像なし用の既定画像
+L0033	デッキリストの状態	デッキリストが非公開のときだけ非公開の印を付ける
+L0034	デッキタグ	そのデッキに紐づくタグの名称をすべて並べる
+L0035	フォーマット	フォーマットに対応する記号
+L0036	アーキタイプ	日本語名と英語名を/で連結した文字列
+L0037	プレイヤー	プレイヤー名
+L0038	大会名	大会の日本語名
+L0039	成績	デッキの成績
+L0040	参加人数	大会の参加人数
+L0041	開催日	大会の開催日をY/m/dの形式で表す
+L0042	見出しと説明文の組み立て
+L0043	指定された検索条件から見出しの語を組み立て、/で連結した文字列に「のデッキ検索一覧」を付けて画面の題名とする。語に採るのはフォーマット名・アーキタイプ名・カード名・プレイヤー名・大会名・タグ名・開催日時の期間・参加人数の範囲・成績の選択・公開状態の選択で、指定の無い条件は語に加えない。条件を1件も指定していないときは題名も説明文も組み立てない。
+L0044	条件の指定	見出しの語
+L0045	開催日時の開始と終了の両方	開始と終了を～でつないだ日付
+L0046	開催日時の開始だけ	開始の日付に～を付けた文字列
+L0047	開催日時の終了だけ	～に終了の日付を付けた文字列
+L0048	参加人数の下限と上限の両方	下限と上限を人数で示した範囲
+L0049	参加人数の下限だけ	下限以上を示す文字列
+L0050	参加人数の上限だけ	上限以下を示す文字列
+L0051	入出力
+L0052	種類	内容
+L0053	入力	検索条件・ページ番号・1ページあたりの件数。いずれも未指定を許す
+L0054	成功時出力	該当が1件以上のとき、HTTP 200でデッキの一覧とページ送りを載せた画面
+L0055	失敗時出力	該当が0件のとき、HTTP 404で該当なしの案内を載せた同じ画面
+L0056	入出力: 永続化
+L0057	デッキ情報を登録・更新・削除しない。キャッシュへの保存も行わない。
+L0058	リニューアル後の仕様
+L0059	表示メッセージ
+L0060	メッセージID	表示位置	画面上の文言	画面上の文言(英語)	表示条件	後続処理
+L0061	—	画面上部の見出し	デッキ検索結果	Deck search results	常時	—
+L0062	—	件数の表示領域	検索結果	Search results	該当が1件以上のとき	—
+L0063	—	一覧の領域	ご指定の条件に一致するデッキが見つかりませんでした。	We could not find a deck that matched your criteria.	該当が0件のとき	一覧を表示せず、HTTP 404を返す
+L0064	—	表示件数の指定欄	表示件数	Results per page	常時	—
+L0065	—	一覧の各件	プレイヤー	Player	該当が1件以上のとき	—
+L0066	—	一覧の各件	大会名	Tournament	該当が1件以上のとき	—
+L0067	—	一覧の各件	成績	Standing	該当が1件以上のとき	—
+L0068	—	一覧の各件	参加人数	Players	該当が1件以上のとき	—
+L0069	—	一覧の各件	開催日	Date	該当が1件以上のとき	—
+L0070	—	画面の題名	（条件の語）のデッキ検索一覧	（条件の語） Deck Search Results	検索条件を1件以上指定したとき	—
+F09-03 DESIGN
+##### 0309 f09-03 F09-03 メタゲーム一覧 ／ フロント デッキ検索 — メタゲーム一覧
+L0001	Source:
+L0002	functions/pf-eccube3/f09-03_front_deck_deck_metagame.md
+L0003	F09-03 メタゲーム一覧 ／ フロント デッキ検索 — メタゲーム一覧
+L0004	業務ロジック
+L0005	対象フォーマットの特定
+L0006	画面はフォーマットの識別子を伴って開く。識別子に一致するフォーマットが無いときはHTTP 404を返し、一覧を表示しない。フォーマットがランキング表示の対象であるかどうかは問わない。
+L0007	集計の対象と単位
+L0008	観点	扱い
+L0009	対象デッキ	デッキ種別が大会デッキ、かつ表示区分が公開のものだけを対象とする
+L0010	対象フォーマット	画面が受け取ったフォーマットに一致するものだけを対象とする
+L0011	集計期間の開始	当日からフォーマットごとのメタ集計日数を引いた日の00:00:00
+L0012	集計期間の終了	当日の23:59:59
+L0013	期間判定に使う日付	大会の開催日
+L0014	集計単位	アーキタイプ
+L0015	並び順	デッキ数の降順
+L0016	上限	1000件
+L0017	集計に用いるデータ
+L0018	データ	用途
+L0019	デッキ	大会デッキで表示区分が公開のものだけを数える
+L0020	アーキタイプ	集計の単位とし、一覧に出す名称と画像にも用いる
+L0021	フォーマット	メタ集計日数を持ち、集計期間の開始日を決める
+L0022	大会の開催日	集計期間に入るかどうかの判定だけに用いる
+L0023	デッキリストの公開状態	集計の条件にしない。デッキリストが非公開でも数える
+L0024	使用率の算出
+L0025	使用率は、そのアーキタイプのデッキ数を集計期間内の総デッキ数で割り、100を掛けて小数点以下2桁に丸めた値とする。総デッキ数の算出条件はアーキタイプ別の集計と同一で、アーキタイプによる分類だけを行わない。分母もアーキタイプが設定されたデッキだけを数えるため、未設定のデッキはどちらにも入らない。
+L0026	該当が0件のときは使用率を算出せず、該当なしの案内だけを出す。
+L0027	一覧の各件に載せる内容
+L0028	表示項目	値
+L0029	画像	アーキタイプの代表カード画像
+L0030	アーキタイプ名	日本語名
+L0031	デッキ数	集計期間内の該当デッキ数
+L0032	使用率	小数点以下2桁の百分率
+L0033	画面から引き継ぐ検索条件
+L0034	起点	遷移先	引き継ぐ条件
+L0035	一覧のアーキタイプ	デッキ検索結果	アーキタイプIDと、開催日時の開始＝集計期間の開始日
+L0036	採用枚数ランキング	採用枚数ランキング	フォーマットID
+L0037	戻る	デッキ検索TOP	引き継がない
+L0038	検索条件の入力欄を画面下部に備え、その突き合わせ方はデッキ検索TOP（F09-01）を正とする。
+L0039	エッジケース
+L0040	ケース	扱い
+L0041	フォーマットの識別子が数字以外のとき	入口の条件に合わないため画面へ到達しない
+L0042	集計結果が0件のとき	使用率を算出せず、該当なしの案内だけを出す
+L0043	アーキタイプが1000件を超えるとき	デッキ数の多い上位1000件までを載せる
+L0044	デッキ数が同数のアーキタイプがあるとき	並び順は指定しない
+L0045	集計期間の開始日	一覧の見出しにもY/m/dの形式で示す
+L0046	集計期間に入る大会が1つも無いとき	総デッキ数が0になり、該当なしの案内だけを出す
+L0047	同じアーキタイプのデッキが期間内に複数あるとき	1件のアーキタイプにまとめて数える
+L0048	アーキタイプに代表カード画像が無いとき	画像なし用の既定画像を出す
+L0049	フォーマットが検索対象に設定されていないとき	画面下部の入力欄にそのフォーマットの選択肢が出ない
+L0050	デッキリストが非公開のデッキがあるとき	集計には含め、一覧の件数にも数える
+L0051	ランキング表示の対象でないフォーマットの識別子を指定したとき	一覧を開ける。対象かどうかを判定しない
+L0052	使用率を足し合わせたとき	小数点以下2桁への丸めにより、合計が100%にならないことがある
+L0053	デッキ種別がユーザーデッキのデッキがあるとき	集計に含めない
+L0054	アーキタイプが未設定のデッキがあるとき	集計にも総デッキ数にも含めない
+L0055	検索対象に設定されていないフォーマットの識別子を指定したとき	集計はできるが、見出しと遷移先に使うフォーマットを画面が解決できない
+L0056	入出力
+L0057	種類	内容
+L0058	入力	フォーマットの識別子
+L0059	成功時出力	アーキタイプ別のデッキ数と使用率を並べた画面
+L0060	失敗時出力	識別子に一致するフォーマットが無いときはHTTP 404
+L0061	入出力: 永続化
+L0062	デッキ情報を登録・更新・削除しない。
+L0063	操作	契機
+L0064	キャッシュへの保存	アーキタイプ別の集計結果をフォーマットと集計期間の組ごとに保存する。保持時間は3600秒
+L0065	キャッシュへの保存	集計期間内の総デッキ数をフォーマットと集計期間の組ごとに保存する。保持時間は3600秒
+L0066	キャッシュへの保存	アーキタイプ別の集計結果を、鍵をフォーマットと上限件数の組とする結果キャッシュにも保存する。保持時間は60秒
+L0067	リニューアル後の仕様
+L0068	表示メッセージ
+L0069	メッセージID	表示位置	画面上の文言	画面上の文言(英語)	表示条件	後続処理
+L0070	—	画面上部の見出し	（フォーマット名）メタゲーム	（フォーマット名） Metagame	常時	—
+L0071	—	一覧の各件	デッキ数：	Decks:	該当が1件以上のとき	—
+L0072	—	一覧の各件	使用率：	Usage:	該当が1件以上のとき	—
+L0073	—	一覧の領域	ご指定の条件に一致するデッキが見つかりませんでした。	No decks matched the specified conditions.	該当が0件のとき	一覧を表示しない
+L0074	—	画面上部の導線	採用枚数ランキング	Top Cards Ranking	常時	採用枚数ランキングへ遷移する
+L0075	—	画面下部の導線	戻る	Back	常時	デッキ検索TOPへ遷移する
+F09-04 DESIGN
+##### 0309 f09-04 F09-04 採用枚数ランキング ／ フロント デッキ検索 — 採用枚数ランキング
+L0001	Source:
+L0002	functions/pf-eccube3/f09-04_front_deck_deck_usage_ranking.md
+L0003	F09-04 採用枚数ランキング ／ フロント デッキ検索 — 採用枚数ランキング
+L0004	業務ロジック
+L0005	対象フォーマットの特定
+L0006	画面はフォーマットの識別子を伴って開く。識別子に一致するフォーマットが無いときはHTTP 404を返し、ランキングを表示しない。
+L0007	採用枚数の集計
+L0008	観点	扱い
+L0009	対象デッキ	デッキ種別が大会デッキ、かつ表示区分が公開で、画面が受け取ったフォーマットに一致するものだけを対象とする
+L0010	集計期間の開始	当日からフォーマットごとのメタ集計日数を引いた日の00:00:00
+L0011	集計期間の終了	当日の23:59:59
+L0012	期間判定に使う日付	大会の開催日
+L0013	集計単位	カード
+L0014	集計値	対象デッキでの採用枚数の合計。カード種別と特殊種別を結び付けると行が重複するため、その数の積で割って重複を相殺する。特殊種別が0件のときは1で割る
+L0015	表示件数	スペル・土地のそれぞれ上位18件
+L0016	並び順	採用枚数の降順、色の並び順の昇順、英語カード名の昇順
+L0017	集計に用いるデータ
+L0018	データ	用途
+L0019	採用カード	採用枚数の合計を求める元にする
+L0020	カード種別	土地かどうかの判定と、集計値を割る数に用いる
+L0021	特殊種別	基本土地かどうかの判定と、集計値を割る数に用いる
+L0022	フォーマット	メタ集計日数と、基本土地を含めるかどうかの設定を持つ
+L0023	デッキリストの公開状態	集計の条件にしない。デッキリストが非公開でも数える
+L0024	スペルと土地の振り分け
+L0025	カード種別に土地を含むかどうかで振り分ける。土地のランキングは土地を含むカードだけ、スペルのランキングは土地を含まないカードだけを対象とする。1枚のカードが両方に載ることはない。
+L0026	基本土地の扱い
+L0027	フォーマットに基本土地を含める設定が無いときは、特殊種別が基本土地のカードを集計から除く。特殊種別を持たないカードは、この除外の対象にしない。
+L0028	カード画像と商品への導線
+L0029	各件にはカードの表側の画像を1枚載せる。選ぶ優先順は、特殊セットでないもの、プロモーションでないもの、カードセットの発売日が新しいもの、Foilでないもの、表示中の言語に一致するもの、カード詳細の識別子が小さいものとする。ランキングの各件は、そのカードの商品検索へ引き渡す入口を兼ねる。
+L0030	画面から引き継ぐ条件
+L0031	起点	遷移先	引き継ぐ条件
+L0032	デッキ検索ページ	デッキ検索TOP	引き継がない
+L0033	戻る	メタゲーム一覧	フォーマットID
+L0034	ランキングの各件	商品検索	カードID
+L0035	エッジケース
+L0036	ケース	扱い
+L0037	フォーマットの識別子が数字以外のとき	入口の条件に合わないため画面へ到達しない
+L0038	集計結果が0件のとき	そのランキングの区画には1件も並べない
+L0039	集計値に小数が出るとき	画面には小数点以下を丸めた整数の枚数で示す
+L0040	カードの画像を選べなかったとき	画像の代わりに読み込み中の画像のまま残す
+L0041	上位18件目と同数のカードがあるとき	並び順で先に来る18件までを載せる
+L0042	カードが複数のカード種別を持つとき	その数で集計値を割る
+L0043	カードが複数の特殊種別を持つとき	その数でも集計値を割る
+L0044	カードが特殊種別を持たないとき	特殊種別による割り算を行わない
+L0045	基本土地を含める設定が有効のとき	基本土地も集計に含める
+L0046	集計期間に入る大会が1つも無いとき	どちらのランキングも0件になる
+L0047	デッキリストが非公開のデッキがあるとき	採用枚数に含めて数える
+L0048	同じカードが複数のデッキにあるとき	採用枚数を合計して1件として数える
+L0049	デッキ種別がユーザーデッキのデッキがあるとき	採用枚数に含めない
+L0050	集計値が同じカードが並ぶとき	色の並び順、次に英語カード名の昇順で先後を決める
+L0051	基本土地を含める設定が無効のとき	特殊種別が基本土地のカードを除く
+L0052	カードの画像が言語ごとにあるとき	言語の一致は5番目の優先順で、先に発売日とFoilの別で絞り込む
+L0053	同じカードの組で別の言語のキャッシュがあるとき	キャッシュの鍵はカードの識別子だけなので、言語を判定し直さずキャッシュの内容を使う
+L0054	入出力
+L0055	種類	内容
+L0056	入力	フォーマットの識別子
+L0057	成功時出力	スペルと土地それぞれ上位18件の採用枚数ランキングを載せた画面
+L0058	失敗時出力	識別子に一致するフォーマットが無いときはHTTP 404
+L0059	入出力: 永続化
+L0060	デッキ情報とカード情報を登録・更新・削除しない。
+L0061	操作	契機
+L0062	キャッシュへの保存	採用枚数の集計結果を、フォーマットと土地の別と基本土地を含める設定の組ごとに保存する。保持時間は3600秒
+L0063	キャッシュへの保存	同じ組を鍵とする結果キャッシュにも保存する。保持時間は3600秒
+L0064	キャッシュへの保存	カード画像の選択結果をカード識別子の組ごとに保存する。保持時間は600秒
+L0065	リニューアル後の仕様
+L0066	表示メッセージ
+L0067	メッセージID	表示位置	画面上の文言	画面上の文言(英語)	表示条件	後続処理
+L0068	—	画面上部の見出し	（フォーマット名）採用枚数ランキング	Top Cards in （フォーマット名） Ranking	常時	英語では接頭辞を付け、フォーマット名も英語名にする
+L0069	—	集計期間の表示	（集計期間の開始日）～	（集計期間の開始日）～	常時	—
+L0070	—	切替の見出し	スペル採用枚数ランキング	Spell Top Cards Ranking	常時	スペルのランキングに切り替える
+L0071	—	切替の見出し	土地採用枚数ランキング	Land Top Cards Ranking	常時	土地のランキングに切り替える
+L0072	—	ランキングの各件	（順位）位	（順位）	該当が1件以上のとき	—
+L0073	—	ランキングの各件	（枚数）枚	×（枚数）	該当が1件以上のとき	—
+L0074	—	商品ポップアップ	在庫:	Stock:	ランキングの1件から商品ポップアップを開いたとき	—
+L0075	—	商品ポップアップ	カートに追加	Add to cart	ランキングの1件から商品ポップアップを開いたとき	商品をカートへ入れる
+L0076	—	商品ポップアップ	週間販売数	Weekly sold	ランキングの1件から商品ポップアップを開いたとき	—
+L0077	—	商品ポップアップ	点	units	週間販売数を出すとき	—
+L0078	—	商品ポップアップ	商品をカートに入れました	Added to cart	カートへ入れたとき	—
+L0079	—	商品ポップアップ	買い物かごを見る	View cart	カートへ入れたとき	買い物かごへ遷移する
+L0080	—	商品ポップアップ	同名商品検索	Same-name search	ランキングの1件から商品ポップアップを開いたとき	同名商品の検索結果へ遷移する
+L0081	—	画面上部の導線	デッキ検索ページ	Deck Search Top	常時	デッキ検索TOPへ遷移する
+L0082	—	画面下部の導線	戻る	Back	常時	メタゲーム一覧へ遷移する
+F09-05 DESIGN
+##### 0309 f09-05 F09-05 その他デッキ一覧 ／ フロント デッキ検索 — その他デッキ一覧
+L0001	Source:
+L0002	functions/pf-eccube3/f09-05_front_deck_deck_others.md
+L0003	F09-05 その他デッキ一覧 ／ フロント デッキ検索 — その他デッキ一覧
+L0004	業務ロジック
+L0005	対象フォーマットの決定
+L0006	対象は、ランキング表示の対象でもその他メタゲームの対象でもないフォーマットだけを対象とする。どちらか一方でも対象に設定されているフォーマットのデッキは載せない。該当するフォーマットが1件も無いときは、どのフォーマットにも一致しない条件で抽出する。
+L0007	一覧に載せるデッキ
+L0008	条件	扱い
+L0009	フォーマット	対象フォーマットのいずれかに一致するものだけを対象とする
+L0010	表示区分	公開のものだけを対象とする
+L0011	デッキ種別	大会デッキだけを対象とする。ユーザーデッキは載せない
+L0012	アーキタイプ	設定されているデッキだけを対象とする。未設定のデッキは載せない
+L0013	大会の開催日	当日の23:59:59以下だけを対象とする
+L0014	利用者が指定した検索条件	受け取らない。フォーマット以外の絞り込みは行わない
+L0015	並び順と件数
+L0016	大会の開催日の降順、大会名（日本語）の昇順、順位の昇順の順に並べる。表示するのは1ページ目の20件だけで、ページ番号は1に固定する。総件数は条件に一致するデッキを重複排除して数えた件数とする。2ページ目以降への入口は、対象フォーマットを検索条件として引き継いだデッキ検索結果（F09-02）へ向ける。
+L0017	表示に使う画面
+L0018	デッキ検索結果（F09-02）と同一の画面で表示し、各件に載せる内容も同一とする。該当が0件のときも同じ画面を返し、一覧の領域に該当なしの案内を出す。デッキ検索結果と違い、該当が0件でもHTTP 200を返す。
+L0019	エッジケース
+L0020	ケース	扱い
+L0021	対象フォーマットが0件のとき	どのフォーマットにも一致しないため該当は0件になる
+L0022	総件数が20件を超えるとき	2ページ目以降はデッキ検索結果として開く
+L0023	開催日が先の大会のデッキがあるとき	当日までのものだけを載せる
+L0024	デッキリストが非公開のデッキがあるとき	表示区分が公開であれば載せ、非公開の印を付ける
+L0025	入口にクエリを付けて開いたとき	その内容を条件にせず、対象フォーマットだけで抽出する
+L0026	デッキ種別がユーザーデッキのデッキがあるとき	一覧に載せない
+L0027	対象フォーマットが1件だけのとき	そのフォーマットのデッキだけを載せる
+L0028	検索条件の入力欄
+L0029	画面下部の入力欄には、その他デッキの対象フォーマットのうち検索対象に設定されているものが選択済みで載る。ここから検索するとその選択もあわせて再送し、デッキ検索結果を開く。対象フォーマットのうち検索対象に設定されていないものは選択肢に現れず、引き継がれない。
+L0030	入出力
+L0031	種類	内容
+L0032	入力	なし。検索条件を伴わずに開く
+L0033	成功時出力	対象フォーマットのデッキを20件まで並べた画面。HTTP 200
+L0034	失敗時出力	なし。該当が0件でもHTTP 200で該当なしの案内を返す
+L0035	入出力: 永続化
+L0036	デッキ情報を登録・更新・削除しない。キャッシュへの保存も行わない。
+L0037	リニューアル後の仕様
+L0038	表示メッセージ
+L0039	メッセージID	表示位置	画面上の文言	画面上の文言(英語)	表示条件	後続処理
+L0040	—	画面上部の見出し	デッキ検索結果	Deck search results	常時	—
+L0041	—	件数の表示領域	検索結果	Search results	該当が1件以上のとき	—
+L0042	—	一覧の領域	ご指定の条件に一致するデッキが見つかりませんでした。	We could not find a deck that matched your criteria.	該当が0件のとき	一覧を表示しない
+
+ succeeded in 0ms:
+F10-01 DESIGN
+##### 0310 f10-01 F10-01 会員IDの連携 ／ フロント アクセス解析 — 会員IDの連携
+L0001	Source:
+L0002	functions/pf-eccube3/f10-01_front_analytics_customer_id.md
+L0003	F10-01 会員IDの連携 ／ フロント アクセス解析 — 会員IDの連携
+L0004	業務ロジック
+L0005	連携の仕組み
+L0006	担い手	範囲
+L0007	当機能	会員IDを、ページ内の受け渡し領域（dataLayer）へ積むところまでを担う
+L0008	タグの管理サービス（Googleタグマネージャ）	受け渡し領域を読み、アクセス解析（Googleアナリティクス）へ送る。送る内容はタグの管理サービス側の設定だけで決まる
+L0009	受け渡し領域がまだ無いとき	空の領域を用意してから積む
+L0010	受け渡し領域がすでにあるとき	既存の内容を残し、末尾へ足す
+L0011	会員IDを積む条件
+L0012	順序	判定	結果
+L0013	1	会員としてログインしているとき	会員IDを1件積む
+L0014	2	ログインしていないとき	何も積まない。受け渡し領域の用意も行わない
+L0015	積む値
+L0016	項目名	値
+L0017	uid	ログインしている会員の会員ID。数値のまま積む。積むのはこの1項目だけで、氏名・メールアドレスなどは積まない
+L0018	積む位置と対象ページ
+L0019	当機能は、ページの先頭部（head）へ置くブロック「GoogleAnalytics用会員ID連携スクリプト」として提供する。ページごとのレイアウト設定で、このブロックを先頭部へ置いているページだけが会員IDを積む。
+L0020	観点	扱い
+L0021	導入時の配置	導入時点で存在したPC向けの全ページについて、先頭部の1番目へ置く
+L0022	導入時に先頭部の1番目に他のブロックがあるとき	そのブロックを2番目へ下げる。下げる対象はPC向けのページに限らず、先頭部の1番目にあるブロックすべてである
+L0023	導入後にページを追加したとき	自動では置かれない。ページごとに先頭部へ置く設定をした場合だけ積む
+L0024	本人確認の3ページ	オンライン本人確認の入力・撮影・完了の各ページに限り、ページの追加と同時に先頭部の1番目へ置く
+L0025	ブロックを削除しようとしたとき	管理画面から削除できないブロックとして登録してあるため、削除できない
+L0026	エッジケース
+L0027	ケース	扱い
+L0028	レイアウト設定で先頭部からブロックを外したページを開いたとき	ログインしている場合でも会員IDを積まない
+L0029	同じページの他の箇所が先に受け渡し領域へ値を積んでいるとき	既存の値を残し、会員IDを末尾へ足す
+L0030	仮会員・退会済みの会員のとき	ログインできないため、会員IDを積まない
+L0031	英語サイトのとき	日本語サイトと同じ条件・同じ値で積む
+L0032	入出力
+L0033	種類	内容
+L0034	入力	ログイン中の会員の情報
+L0035	出力	ページの先頭部に埋め込むスクリプト。会員としてログインしているときだけ出力し、ログインしていない場合は何も出力しない
+L0036	入出力: 永続化
+L0037	会員・受注などの業務データを登録・更新・削除しない。
+L0038	操作	契機
+L0039	ブロックの登録	機能の導入時に、ブロックの一覧へ1件登録する
+L0040	ブロックの配置	機能の導入時、および本人確認の3ページの追加時に、ページのレイアウト設定へ配置を登録する
+L0041	リニューアル後の仕様
+L0042	表示メッセージ
+L0043	本機能は画面へ文言を表示しない。
+F10-02 DESIGN
+##### 0310 f10-02 F10-02 購入完了の売上連携 ／ フロント アクセス解析 — 購入完了の売上連携
+L0001	Source:
+L0002	functions/pf-eccube3/f10-02_front_analytics_purchase.md
+L0003	F10-02 購入完了の売上連携 ／ フロント アクセス解析 — 購入完了の売上連携
+L0004	業務ロジック
+L0005	連携の仕組み
+L0006	担い手	範囲
+L0007	当機能	注文完了画面で売上の値を、ページ内の受け渡し領域（dataLayer）へ積むところまでを担う
+L0008	タグの管理サービス（Googleタグマネージャ）	受け渡し領域を読み、アクセス解析（Googleアナリティクス）へ送る。送る内容はタグの管理サービス側の設定だけで決まる
+L0009	受け渡し領域がまだ無いとき	空の領域を用意してから積む
+L0010	受け渡し領域がすでにあるとき	既存の内容を残し、末尾へ足す
+L0011	積む契機
+L0012	観点	扱い
+L0013	契機	購入処理が完了し、注文完了画面を表示するときだけ積む。購入処理が途中で止まった場合は積まない
+L0014	回数	注文完了画面の表示1回につき1件
+L0015	言語	日本語サイトのときも英語サイトのときも、同じ項目名で積む
+L0016	積む位置	ページの先頭部（head）。ページごとのレイアウト設定で先頭部へ置くブロックより前に積む
+L0017	積む値
+L0018	項目名	値	形式
+L0019	transactionId	受注ID。8桁に満たないときは、8桁になるまで左を0で埋める。8桁を超えるときはそのまま	文字列
+L0020	transactionAffiliation	受注の1件目のお届け先に設定された配送方法の名称。お届け先が複数ある場合も1件目だけを使う	文字列
+L0021	transactionTotal	受注の商品小計。税込単価に数量を掛けた金額を、受注明細の全行について合計した金額	文字列
+L0022	transactionTax	常に0。消費税がかかる注文のときも0のまま	数値
+L0023	transactionShipping	受注の送料合計	文字列
+L0024	transactionMailaddress	注文完了画面を表示した時点でログインしている会員のメールアドレス。受注に保存されたメールアドレスは使わない	文字列
+L0025	transactionProducts	受注明細ごとの商品の値の並び。下表のとおり	配列
+L0026	上の7項目は、1つの要素にまとめて積む。項目ごとに別の要素へ分けない。入れ子になるのは transactionProducts だけである。
+L0027	transactionTotal は税込の商品小計だけを積む。送料・手数料・値引き・ポイント利用があるときも、それらを反映した支払合計にはしない。
+L0028	商品の値
+L0029	transactionProducts は、受注明細1行につき1件を、受注明細の並び順で並べる。1件は下表の5項目を持つ要素である。
+L0030	項目名	値	形式
+L0031	sku	受注明細の商品コード	文字列
+L0032	name	受注明細の商品名	文字列
+L0033	category	常に空文字。商品にカテゴリが設定されている場合も空のまま	文字列
+L0034	price	受注明細の税抜の単価	文字列
+L0035	quantity	受注明細の数量。同じ商品が別の行にあるときも、行ごとの数量のまま積む	文字列
+L0036	price は税抜、transactionTotal は税込である。消費税がかかる注文のときは、price に quantity を掛けた金額の合計と transactionTotal は一致しない。
+L0037	商品名などに日本語を含むときは、文字コードの置き換え表記（\uXXXX）にせず、そのままの文字で出力する。
+L0038	エッジケース
+L0039	ケース	扱い
+L0040	受注明細が複数行のとき	明細の行数ぶん、商品の値を並べる。同じ商品が別の行にあるときもまとめない
+L0041	お届け先が複数あるとき	1件目のお届け先の配送方法の名称だけを積む
+L0042	送料が0円のとき	transactionShipping は0を積む
+L0043	ポイントを利用した注文	transactionTotal は商品小計のままで、利用ポイントを差し引かない
+L0044	注文完了画面を再読み込みしたとき	注文完了画面を1回表示した時点で購入処理中の受注の控えを消すため、再読み込みするとTOP画面へ移動し、値を積まない
+L0045	会員としてログインしていない状態で注文完了画面を表示したとき	transactionMailaddress は空文字を積む。注文時に入力したメールアドレスは積まない
+L0046	消費税	税額にかかわらず transactionTax は0を積む
+L0047	入出力
+L0048	種類	内容
+L0049	入力	購入処理が完了した受注（受注ID、商品小計、送料合計、1件目のお届け先の配送方法、受注明細）と、ログインしている会員のメールアドレス。購入処理が完了した受注が無いときは受け取らない
+L0050	出力	注文完了画面の先頭部に埋め込むスクリプト。注文完了画面を表示するときだけ出力する
+L0051	入出力: 永続化
+L0052	受注・会員などの業務データを、当機能としては登録・更新・削除しない。受注の確定は注文の機能（F04-04）が行う。
+L0053	リニューアル後の仕様
+L0054	表示メッセージ
+L0055	本機能は画面へ文言を表示しない。
+F10-03 DESIGN
+##### 0310 f10-03 F10-03 閲覧商品の連携 ／ フロント アクセス解析 — 閲覧商品の連携
+L0001	Source:
+L0002	functions/pf-eccube3/f10-03_front_analytics_retargeting.md
+L0003	F10-03 閲覧商品の連携 ／ フロント アクセス解析 — 閲覧商品の連携
+L0004	業務ロジック
+L0005	連携の仕組み
+L0006	担い手	範囲
+L0007	当機能	買い物かご・商品詳細・商品一覧・TOP画面で、利用者が見ている商品の値を、ページ内の受け渡し領域（dataLayer）へ積むところまでを担う
+L0008	タグの管理サービス（Googleタグマネージャ）	受け渡し領域を読み、アクセス解析（Googleアナリティクス）へ送る。送る内容はタグの管理サービス側の設定だけで決まる
+L0009	受け渡し領域がまだ無いとき	空の領域を用意してから積む
+L0010	受け渡し領域がすでにあるとき	既存の内容を残し、末尾へ足す
+L0011	画面ごとの値
+L0012	画面	項目名	値	形式
+L0013	買い物かご	gtm_cart_ids	かごに入っている商品の商品IDの並び	数値の配列
+L0014	買い物かご	gtm_cart_value	かごの合計金額（税込）。かごが空のときは0	数値
+L0015	商品詳細	gtm_product_id	表示している商品の商品ID	数値
+L0016	商品詳細	gtm_product_value	初期表示する言語・商品規格の税抜の販売価格	数値
+L0017	商品の並びを差し込む画面（商品一覧・TOP画面・商品詳細）	gtm_search_ids	差し込む商品の商品IDの並び	数値の配列
+L0018	画面	1件の要素が持つ項目
+L0019	買い物かご	gtm_cart_ids と gtm_cart_value の2項目を、同じ1つの要素にまとめて積む
+L0020	商品詳細	gtm_product_id と gtm_product_value の2項目を、同じ1つの要素にまとめて積む
+L0021	商品の並びを差し込む画面	gtm_search_ids の1項目だけを持つ要素を積む
+L0022	条件	扱い
+L0023	会員としてログインしていないとき	ログインしているときと同じ値を積む
+L0024	英語サイトのとき	日本語サイトと同じ項目名で積む。商品詳細の販売価格だけは、英語サイトで初期表示する言語・商品規格の値になるため、日本語サイトと違う値になりうる
+L0025	買い物かご
+L0026	買い物かご画面を表示するたびに1件だけ積む。かごの中身を画面上で変えたときは、画面を表示し直した時点で積み直す。
+L0027	観点	扱い
+L0028	商品IDの並び順	かごの明細の並び順。同じ商品IDが2回目以降に出たときは飛ばす
+L0029	同じ商品が複数の明細にあるとき	同じ商品IDは1回だけ並べる。商品規格（言語・状態）が違っても、商品が同じなら1つにまとめる
+L0030	かごの合計金額	税込の販売価格に数量を掛けた金額を、かごの明細の全行について合計した金額。送料・手数料がかかる場合もそれらは含めない
+L0031	商品詳細
+L0032	商品詳細画面を表示するたびに、gtm_product_id と gtm_product_value を持つ値を1件だけ積む。同名の商品の並びを差し込む商品では、これとは別に gtm_search_ids も積む（下の「商品一覧」）。
+L0033	観点	扱い
+L0034	商品ID	表示している商品の商品ID。商品規格を切り替えたときも同じ値のまま
+L0035	販売価格	画面を開いた時点で選択された状態になる言語・商品規格の税抜の販売価格。利用者が画面上で言語や状態を切り替えても、積み直さない
+L0036	初期表示する言語・商品規格は次の順で決まる。
+L0037	順序	条件	初期表示
+L0038	1	画面を開くときに言語の指定があり、その言語の商品があるとき	指定された言語
+L0039	2	言語の指定が無いとき	日本語サイトでは日本語版、英語サイトでは英語版
+L0040	3	上で決まった言語の商品が無いとき	商品が持つ言語のうち先頭の言語
+L0041	4	画面を開くときに商品規格の指定があり、決まった言語にその商品規格があるとき	指定された商品規格
+L0042	5	商品規格の指定が無い、または決まった言語にその商品規格が無いとき	決まった言語の先頭の商品規格
+L0043	商品一覧
+L0044	商品の並びを画面の表示後に取得して差し込む箇所では、差し込む商品の並び1つにつき1件積む。1つの画面に商品の並びが複数あるときは、その数だけ積む。
+L0045	画面	差し込む商品の並び
+L0046	商品一覧	一覧の商品の並び。検索結果の場合も同じ
+L0047	TOP画面	画面に配置した商品リスト（新着・値下げ・おすすめ）ごとの商品の並び
+L0048	商品詳細	同名の商品の並び。カードの商品で、かつ基本土地でない場合だけ差し込む
+L0049	お気に入り一覧・入荷通知一覧	商品の並びを後から差し込まないため、積まない
+L0050	観点	扱い
+L0051	商品IDの並び順	差し込む商品の並び順。同じ商品IDが2回目以降に出たときは飛ばす
+L0052	同じ商品が複数あるとき	同じ商品IDは1回だけ並べる
+L0053	検索結果が0件のとき	商品の並びを差し込まないため、gtm_search_ids を積まない
+L0054	エッジケース
+L0055	ケース	扱い
+L0056	かごが空のとき	買い物かご画面の扱いに従う。商品IDの並びは空、合計金額は0になる
+L0057	商品詳細で、商品が非公開などで表示できないとき	商品詳細画面を表示しないため、値を積まない
+L0058	商品一覧で、検索結果が0件のとき	商品の並びを差し込まず、値を積まない。空の並びも積まない
+L0059	商品一覧で、同じ商品が言語の違いで複数の行に出るとき	同じ商品IDは1回だけ並べる
+L0060	入出力
+L0061	種類	内容
+L0062	入力	買い物かごの明細と合計金額／表示する商品の商品IDと初期表示の商品規格の販売価格／一覧に差し込む商品の並び
+L0063	出力	各画面に埋め込むスクリプト。各画面を表示するときだけ出力する
+L0064	入出力: 永続化
+L0065	商品・買い物かごなどの業務データを登録・更新・削除しない。
+L0066	リニューアル後の仕様
+L0067	表示メッセージ
+L0068	本機能は画面へ文言を表示しない。
+L0069	このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。
+
+exec
+/bin/bash -lc 'for f in F09-05 F09-06; do for s in processes factors interactions constraints; do echo "$f $s"; cat "integration_test/casegen/combination/factors/${f}_${s}.tsv"; done; done' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 9ms:
+F09-05 processes
+処理ID	処理	契機	確かめる所	根拠
+P1	その他デッキ一覧に載せるデッキを決める	デッキ検索TOPの「その他」を押してその他デッキ一覧を開く	その他デッキ一覧画面の一覧	L0006-L0013
+P2	画面下部の入力欄にフォーマットを選択済みで載せる	その他デッキ一覧を開く	その他デッキ一覧画面下部の検索条件の入力欄	L0029
+F09-05 factors
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1,P2	フォーマットのランキング表示設定	オン｜オフ	オン: そのフォーマットのデッキは載らない／オフ: 他の設定もオフなら対象フォーマットになる	L0006,M14-10:L0078-L0081	M14-10（設定）
+F02	P1,P2	フォーマットのメタ分布簡易化設定	オン｜オフ	オン: そのフォーマットのデッキは載らない／オフ: 他の設定もオフなら対象フォーマットになる	L0006,M14-10:L0082-L0083	M14-10（設定）
+F03	P1	デッキの表示区分	公開｜非公開	公開: 載る（デッキリストが非公開なら非公開の印を付ける）／非公開: 載らない	L0010,L0024	この機能
+F04	P1	デッキ種別	大会デッキ｜ユーザーデッキ	大会デッキ: 載る／ユーザーデッキ: 載らない	L0011,L0026	この機能
+F05	P1	デッキのアーキタイプ	設定あり｜未設定	設定あり: 載る／未設定: 載らない	L0012	この機能
+F06	P1	大会の開催日	当日以前｜翌日以降	当日以前: 載る／翌日以降: 載らない	L0013,L0023	この機能
+F07	P2	フォーマットの検索対象設定	設定あり｜設定なし	設定あり: 選択済みで入力欄に載る／設定なし: 選択肢に現れず引き継がれない	L0029	この機能
+F09-05 interactions
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	関係しない		載せるのは全条件を満たすデッキだけで、どれか1つで外れる。外れ方は条件ごとに1つずつ確かめれば足りる
+P1	F01+F03	関係しない		載せるのは全条件を満たすデッキだけで、どれか1つで外れる。外れ方は条件ごとに1つずつ確かめれば足りる
+P1	F01+F04	関係しない		載せるのは全条件を満たすデッキだけで、どれか1つで外れる。外れ方は条件ごとに1つずつ確かめれば足りる
+P1	F01+F05	関係しない		載せるのは全条件を満たすデッキだけで、どれか1つで外れる。外れ方は条件ごとに1つずつ確かめれば足りる
+P1	F01+F06	関係しない		載せるのは全条件を満たすデッキだけで、どれか1つで外れる。外れ方は条件ごとに1つずつ確かめれば足りる
+P1	F02+F03	関係しない		載せるのは全条件を満たすデッキだけで、どれか1つで外れる。外れ方は条件ごとに1つずつ確かめれば足りる
+P1	F02+F04	関係しない		載せるのは全条件を満たすデッキだけで、どれか1つで外れる。外れ方は条件ごとに1つずつ確かめれば足りる
+P1	F02+F05	関係しない		載せるのは全条件を満たすデッキだけで、どれか1つで外れる。外れ方は条件ごとに1つずつ確かめれば足りる
+P1	F02+F06	関係しない		載せるのは全条件を満たすデッキだけで、どれか1つで外れる。外れ方は条件ごとに1つずつ確かめれば足りる
+P1	F03+F04	関係しない		載せるのは全条件を満たすデッキだけで、どれか1つで外れる。外れ方は条件ごとに1つずつ確かめれば足りる
+P1	F03+F05	関係しない		載せるのは全条件を満たすデッキだけで、どれか1つで外れる。外れ方は条件ごとに1つずつ確かめれば足りる
+P1	F03+F06	関係しない		載せるのは全条件を満たすデッキだけで、どれか1つで外れる。外れ方は条件ごとに1つずつ確かめれば足りる
+P1	F04+F05	関係しない		載せるのは全条件を満たすデッキだけで、どれか1つで外れる。外れ方は条件ごとに1つずつ確かめれば足りる
+P1	F04+F06	関係しない		載せるのは全条件を満たすデッキだけで、どれか1つで外れる。外れ方は条件ごとに1つずつ確かめれば足りる
+P1	F05+F06	関係しない		載せるのは全条件を満たすデッキだけで、どれか1つで外れる。外れ方は条件ごとに1つずつ確かめれば足りる
+P2	F01+F02	関係しない		選択済みで載るのは全条件を満たすフォーマットだけで、どれか1つで外れる。外れ方は条件ごとに1つずつ確かめれば足りる
+P2	F01+F07	関係しない		選択済みで載るのは全条件を満たすフォーマットだけで、どれか1つで外れる。外れ方は条件ごとに1つずつ確かめれば足りる
+P2	F02+F07	関係しない		選択済みで載るのは全条件を満たすフォーマットだけで、どれか1つで外れる。外れ方は条件ごとに1つずつ確かめれば足りる
+F09-05 constraints
+処理ID	組	種別	根拠	理由
+F09-06 processes
+処理ID	処理	契機	確かめる所	根拠
+P1	デッキリスト詳細を表示する（表示可否と書き出しの入口）	デッキIDを指定してデッキリスト詳細画面を開く	デッキリスト詳細画面（HTTPステータス・書き出しの入口）	L0005-L0012,L0036-L0041
+P2	採用カードを分類してカードリストを出す	デッキIDを指定してデッキリスト詳細画面を開く	デッキリスト詳細画面のカードリスト	L0012-L0022,L0067
+P3	カード画像を選ぶ	デッキリスト詳細画面を開く	デッキリスト詳細画面のカード画像	L0023-L0024,L0065-L0066,L0076
+F09-06 factors
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	デッキの表示区分	公開｜限定公開｜非公開	公開: 詳細を表示する／限定公開: 値の一致を求めず詳細を表示する／非公開: HTTP 404	L0009,L0011	この機能
+F02	P1	デッキ種別	大会デッキ｜ユーザーデッキ	大会デッキ: 詳細を表示する／ユーザーデッキ: HTTP 404	L0010	この機能
+F03	P1,P2	デッキリストの公開状態	公開｜非公開	公開: 書き出しの入口とカードリストを出す／非公開: 情報欄だけでカードリストは空・枚数は全て0・書き出しの入口なし	L0012,L0037,L0067	この機能
+F04	P1	フォーマットのアリーナ対応	対応｜非対応	対応: Magic Online・アリーナ・日本語の3入口／非対応: Magic Online用だけ	L0039-L0041	この機能
+F05	P2	採用カードの分類が決まる段	サイドボード配置｜統率者配置｜土地｜クリーチャー｜識別子あり｜どれにも当たらない	サイドボード配置: サイドボードへ／統率者配置: 統率者へ（0枚なら区画なし）／土地: 土地へ／クリーチャー: クリーチャーへ／識別子あり: 呪文へ／どれにも当たらない: Unknownへ（1枚以上で区画を出す）	L0014-L0022	この機能
+F06	P3	画像が決まる段	特殊セットでない｜プロモでない｜発売日が新しい｜Foilでない｜表示言語に一致｜識別子が小さい｜選べない	特殊セットでない: 特殊セットでない候補を選ぶ／プロモでない: 上の段が同じならプロモでない候補／発売日が新しい: 上の段が同じなら発売日が新しい候補／Foilでない: 上の段が同じならFoilでない候補／表示言語に一致: 上の段が同じなら表示言語の候補／識別子が小さい: 全段が同じなら詳細の識別子が小さい候補／選べない: 画像なし用の画像で商品への入口なし	L0024,L0065	この機能
+F07	P3	画像選択のキャッシュ	なし｜同じ言語のキャッシュあり｜別の言語のキャッシュあり	なし: 選び直す／同じ言語のキャッシュあり: キャッシュの内容を使う（600秒）／別の言語のキャッシュあり: 言語を判定し直さずキャッシュの内容を使う	L0066,L0076	この機能
+F09-06 interactions
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	関係しない		表示区分が非公開またはデッキ種別がユーザーデッキのどれか1つで404になる。外れ方は1つずつ確かめれば足りる
+P1	F01+F03	効き合う	L0009,L0011,L0012	404のときは書き出しの入口も出ず、表示するときだけリストの公開状態で入口が決まる
+P1	F01+F04	効き合う	L0009,L0040	404のときはアリーナ対応でも入口が出ない
+P1	F02+F03	効き合う	L0010,L0037	ユーザーデッキは404で入口も出ない
+P1	F02+F04	効き合う	L0010,L0040	ユーザーデッキは404で入口も出ない
+P1	F03+F04	効き合う	L0040,L0041	アリーナ用・日本語の入口はリストが公開で、かつアリーナ対応のときだけ出る
+P2	F03+F05	効き合う	L0012,L0067	リストが非公開のときは分類にかかわらず枚数が全て0になる
+P3	F06+F07	効き合う	L0066	キャッシュがあると選び直さず、どの段で決まるかが結果に出ない
+F09-06 constraints
+処理ID	組	種別	根拠	理由
+P3	F06=選べない&F07=同じ言語のキャッシュあり	正解未定	L0065,L0066	キャッシュが画像なしの結果を保存するか書かれておらず、画像の有無が決まらない
+P3	F06=選べない&F07=別の言語のキャッシュあり	正解未定	L0065,L0066	キャッシュが画像なしの結果を保存するか書かれておらず、画像の有無が決まらない
+
+exec
+/bin/bash -lc 'for f in F09-07 F09-08; do for s in processes factors interactions constraints; do echo "$f $s"; cat "integration_test/casegen/combination/factors/${f}_${s}.tsv"; done; done' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+F09-07 processes
+処理ID	処理	契機	確かめる所	根拠
+P1	Magic Online用テキストをファイルとして書き出せるか決める	ファイル経路の要求を送る	応答のHTTPステータスと添付ファイル	L0010-L0020
+P2	ファイル経路で書き出すファイルの名称と内容を作る	ファイル経路の要求を送る	添付ファイルの名称と内容	L0021-L0022,L0035-L0043
+P3	アリーナ形式のテキストを返せるか決める	テキスト経路の要求を送る	応答のHTTPステータスとJSON	L0010-L0011,L0023-L0029
+P4	テキスト経路で返すデッキリストのテキストを作る	テキスト経路の要求を送る	応答JSONのデッキリストのテキスト	L0030-L0043,L0057,L0063
+F09-07 factors
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1,P3	デッキの表示区分	公開｜限定公開｜非公開	公開: 書き出せる／限定公開: 値の一致を求めず書き出せる／非公開: ファイル経路はHTTP 404・テキスト経路は書き出せる	L0016,L0020,L0029	この機能
+F02	P1,P3	デッキリストの公開状態	公開｜非公開	公開: 書き出せる／非公開: ファイル経路はHTTP 404・テキスト経路は書き出せる	L0017,L0029,L0058	この機能
+F03	P1,P3	デッキ種別	イベントデッキ｜ユーザーデッキ	イベントデッキ: 書き出せる／ユーザーデッキ: どちらの経路もHTTP 404	L0011,L0018,L0027	この機能
+F04	P2,P4	サイドボードの採用カード	あり｜なし	あり: 空行とSideboard行（jpならサイドボード行）を挟む／なし: 見出し行を入れない	L0039,L0055	この機能
+F05	P2,P4	アリーナ用名称の対応表	対応表にあるカード｜対応表に無いカード	対応表にあるカード: アリーナ用名称で書き出す（enまたはファイル経路）／対応表に無いカード: 元の名称のまま	L0022,L0054,L0063	この機能
+F06	P2	アーキタイプ英語名の空白	空白を含む｜空白を含まない	空白を含む: 空白を_に置き換えた.txtのファイル名／空白を含まない: そのまま.txtを付ける	L0022,L0053	この機能
+F07	P2,P4	デッキリストのキャッシュ	あり｜なし	あり: キャッシュの内容から組み立てる／なし: 採用カードから組み立てる	L0042,L0043	この機能
+F08	P4	言語の指定	en｜jp	en: 英語名をアリーナ名称へ置き換え・見出しは英語／jp: 日本語名・見出しは日本語・置き換えなし	L0032-L0034,L0063	この機能
+F09	P4	統率者の採用カード	あり｜なし	あり: 統率者の見出し行（Commander・Deck、jpなら統率者・デッキ）を入れる／なし: 統率者の見出し行を入れない	L0032,L0033,L0056	この機能
+F10	P4	カード名の斜線	斜線を含む｜斜線を含まない	斜線を含む: / を // へ置き換える／斜線を含まない: そのまま	L0034,L0057	この機能
+F09-07 interactions
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	関係しない		表示区分とリストの公開状態のどれか1つで404になる。外れ方は1つずつ確かめれば足りる
+P1	F01+F03	関係しない		表示区分と種別のどれか1つで404になる
+P1	F02+F03	関係しない		リストの公開状態と種別のどれか1つで404になる
+P2	F04+F05	関係しない		見出し行の有無と名称の置き換えは別々に決まる
+P2	F04+F06	関係しない		ファイル名は内容と別に決まる
+P2	F04+F07	関係しない		キャッシュは内容の取り出し元で、サイドボードの見出しは配置で決まる
+P2	F05+F06	関係しない		ファイル名と名称の置き換えは別々に決まる
+P2	F05+F07	関係しない		キャッシュの内容に対しても同じ対応表で置き換える
+P2	F06+F07	関係しない		ファイル名はキャッシュと関係なくアーキタイプの英語名で決まる
+P3	F01+F02	関係しない		テキスト経路は表示区分もリストの公開状態も判定しない
+P3	F01+F03	関係しない		表示区分は見ず、種別だけで404が決まる
+P3	F02+F03	関係しない		リストの公開状態は見ず、種別だけで404が決まる
+P4	F04+F08	効き合う	L0032,L0033	サイドボードの見出し行がenならSideboard、jpならサイドボードになる
+P4	F08+F09	効き合う	L0032,L0033	統率者の見出し行がenならCommander・Deck、jpなら統率者・デッキになる
+P4	F05+F08	効き合う	L0032,L0063	対応表による置き換えはenのときだけ行い、jpでは行わない
+P4	F04+F05	関係しない		見出し行と名称の置き換えは別々に決まる
+P4	F04+F07	関係しない		キャッシュは取り出し元で、見出しは配置で決まる
+P4	F04+F09	関係しない		サイドボードの見出しと統率者の見出しは別々に決まる
+P4	F04+F10	関係しない		見出し行と斜線の置き換えは別々に決まる
+P4	F05+F07	関係しない		キャッシュの内容にも同じ置き換えを行う
+P4	F05+F09	関係しない		名称の置き換えと統率者の見出しは別々に決まる
+P4	F07+F08	関係しない		キャッシュの内容から指定の言語で組み立てる
+P4	F07+F09	関係しない		キャッシュは取り出し元で、統率者の見出しは配置で決まる
+P4	F07+F10	関係しない		斜線の置き換えは取り出し元に関係しない
+P4	F08+F10	関係しない		どちらの言語でも斜線を置き換える
+P4	F09+F10	関係しない		見出し行と斜線の置き換えは別々に決まる
+P4	F05+F10	設計書が決めていない	L0034,L0063	対応表への当てはめと斜線の置き換えのどちらを先に行うか書かれていない
+F09-07 constraints
+処理ID	組	種別	根拠	理由
+P4	F05=対応表にあるカード&F10=斜線を含む&F08=en	正解未定	L0034,L0063	斜線の置き換えと対応表の当てはめの順序が書かれておらず、出力名が決まらない
+F09-08 processes
+処理ID	処理	契機	確かめる所	根拠
+P1	デッキ一括購入画面の初期表示に載せるカードリストを決める	デッキIDを付けてデッキ一括購入画面を開く	デッキ一括購入画面のカードリスト欄	L0005-L0011
+P2	購入条件に沿って在庫を引き、商品規格と数量の組を割り当てる	カードリストと購入条件を送ってカートに追加を押す	応答の商品規格の識別子と数量の組	L0012-L0033,L0060
+F09-08 factors
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	指定したデッキの状態	識別子なし｜該当デッキなし｜表示区分またはリストが非公開｜限定公開で値が不一致｜上のいずれにも当たらない	識別子なし: カードリスト欄は空／該当デッキなし: 未ログインとプレイヤーを持たない会員は空・プレイヤーを持つ会員は応答を返せない／表示区分またはリストが非公開: 持ち主のプレイヤーの会員だけ載る／限定公開で値が不一致: 空／上のいずれにも当たらない: 英語カード名で載る	L0007-L0011	この機能
+F02	P1	閲覧者	未ログイン｜プレイヤーを持たない会員｜デッキの持ち主の会員｜他のプレイヤーの会員	未ログイン: 非公開のデッキは空／プレイヤーを持たない会員: 非公開のデッキは空／デッキの持ち主の会員: 非公開のデッキも載る／他のプレイヤーの会員: 非公開のデッキは空	L0008,L0009	この機能
+F03	P2	言語の指定	日本語のみ｜英語のみ｜日・英のみ｜指定しない	日本語のみ: 日本語の規格だけ（日本語優先と英語優先は選べない）／英語のみ: 英語の規格だけ（日本語優先と英語優先は選べない）／日・英のみ: 日本語か英語の規格だけ（日本語優先と英語優先が選べる）／指定しない: 言語で絞らない（日本語優先と英語優先が選べる）	L0014,L0018	この機能
+F04	P2	状態の指定	NM｜NM・SP｜NM・SP・MP｜NM・SP・MP・HP	NM: NMだけ／NM・SP: この2つ／NM・SP・MP: この3つ／NM・SP・MP・HP: 状態で絞らない	L0015,L0024	この機能
+F05	P2	通常とFoilの指定	通常カードのみ｜Foilカードのみ｜指定しない	通常カードのみ: 通常だけ／Foilカードのみ: 箔押しだけ／指定しない: 絞らない（通常カード優先とFoilカード優先が選べる）	L0016,L0018	この機能
+F06	P2	優先条件	安いカード優先｜高いカード優先｜日本語優先｜英語優先｜通常カード優先｜Foilカード優先	安いカード優先: 販売価格の昇順／高いカード優先: 販売価格の降順／日本語優先: 日本語の規格を先に／英語優先: 英語の規格を先に／通常カード優先: 通常の規格を先に／Foilカード優先: Foilの規格を先に	L0017,L0018,L0026	この機能
+F07	P2	在庫と希望枚数	全て在庫0｜在庫が希望枚数以上｜在庫が希望枚数に満たない	全て在庫0: 並び順の先頭の規格に希望枚数をそのまま割り当てる／在庫が希望枚数以上: 在庫0を除き並び順に在庫数の範囲で割り当てる／在庫が希望枚数に満たない: 最後の規格に不足分を含めた枚数を割り当てる	L0029-L0032,L0060	この機能
+F08	P2	同一言語のNMの販売価格	100円を超える｜100円以下	100円を超える: 状態がNM以外の規格も対象になる／100円以下: 状態がNM以外の規格は対象外	L0024,L0025	この機能
+F09	P2	同じカード名の行	重複なし｜同名が複数行｜分割カードが複数行	重複なし: 枚数をそのまま希望とする／同名が複数行: 枚数を合計して1件の希望とする／分割カードが複数行: 合算せず後の行の枚数で置き換わる	L0033,L0055,L0056	この機能
+F09-08 interactions
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	効き合う	L0008,L0009	該当デッキなしと非公開のときは、閲覧者がプレイヤーを持つか・持ち主かでカードリストが載るかが変わる
+P2	F03+F04	関係しない		言語と状態は別々の絞り込み
+P2	F03+F05	関係しない		言語と通常Foilは別々の絞り込み
+P2	F03+F06	効き合う	L0018	言語が日本語のみ・英語のみのときは日本語優先と英語優先が選べない
+P2	F03+F07	関係しない		絞り込みの後に在庫と希望枚数で割り当てる。絞り込みの結果は対象の規格が変わるだけ
+P2	F03+F08	関係しない		NMの価格は規格ごとの判定で、言語の指定は対象の規格を選ぶだけ
+P2	F03+F09	関係しない		カード名の行の合算は言語の指定と関係しない
+P2	F04+F05	関係しない		状態と通常Foilは別々の絞り込み
+P2	F04+F06	関係しない		優先条件は絞り込み後の並び順を決めるだけ
+P2	F04+F07	関係しない		絞り込みの後に在庫と希望枚数で割り当てる
+P2	F04+F08	効き合う	L0015,L0024	状態がNM以外の規格は同一言語のNMの販売価格が100円を超えるときだけ対象になる
+P2	F04+F09	関係しない		カード名の行の合算は状態の指定と関係しない
+P2	F05+F06	効き合う	L0018	通常Foilが指定しないのときだけ通常カード優先とFoilカード優先が選べる
+P2	F05+F07	関係しない		絞り込みの後に在庫と希望枚数で割り当てる
+P2	F05+F08	関係しない		NMの価格は規格ごとの判定で、通常Foilの指定は対象を選ぶだけ
+P2	F05+F09	関係しない		カード名の行の合算は通常Foilの指定と関係しない
+P2	F06+F07	効き合う	L0026,L0030	在庫のある規格を並び順に割り当てるので、優先条件で割り当て先が変わる
+P2	F06+F08	関係しない		NMの価格は対象になるかの判定で、並び順とは別に決まる
+P2	F06+F09	関係しない		カード名の行の合算は並び順と関係しない
+P2	F07+F08	関係しない		NMの価格は状態の絞り込みを通して対象を選ぶだけで、割り当ての規則は在庫と希望枚数で決まる
+P2	F07+F09	効き合う	L0033,L0055,L0056	同じカード名の行を合算した希望枚数で、在庫が足りるか・割り当てが変わる
+P2	F08+F09	関係しない		NMの価格の判定とカード名の行の合算は別々に決まる
+F09-08 constraints
+処理ID	組	種別	根拠	理由
+P1	F01=識別子なし&F02=デッキの持ち主の会員	作れない	L0007	デッキを指定しないので持ち主のデッキが無い
+P1	F01=該当デッキなし&F02=デッキの持ち主の会員	作れない	L0008	デッキが無いので持ち主の会員は成り立たない
+P1	F01=該当デッキなし&F02=他のプレイヤーの会員	正解未定	L0008	プレイヤーを持つ会員では応答を返せないとあるが、返せないときに画面で何が起きるか書かれていない
+P2	F03=日本語のみ&F06=日本語優先	作れない	L0018	言語を日本語のみ・英語のみにすると日本語優先と英語優先は優先条件から除かれる
+P2	F03=日本語のみ&F06=英語優先	作れない	L0018	言語を日本語のみ・英語のみにすると日本語優先と英語優先は優先条件から除かれる
+P2	F03=英語のみ&F06=日本語優先	作れない	L0018	言語を日本語のみ・英語のみにすると日本語優先と英語優先は優先条件から除かれる
+P2	F03=英語のみ&F06=英語優先	作れない	L0018	言語を日本語のみ・英語のみにすると日本語優先と英語優先は優先条件から除かれる
+P2	F05=通常カードのみ&F06=通常カード優先	作れない	L0018	通常Foilを指定しないを選んだときだけ通常カード優先とFoilカード優先が加わる
+P2	F05=通常カードのみ&F06=Foilカード優先	作れない	L0018	通常Foilを指定しないを選んだときだけ通常カード優先とFoilカード優先が加わる
+P2	F05=Foilカードのみ&F06=通常カード優先	作れない	L0018	通常Foilを指定しないを選んだときだけ通常カード優先とFoilカード優先が加わる
+P2	F05=Foilカードのみ&F06=Foilカード優先	作れない	L0018	通常Foilを指定しないを選んだときだけ通常カード優先とFoilカード優先が加わる
+
+codex
+現時点で、設計書が決めている結果を「正解未定」とした行と、複数要因をまとめ過ぎた可能性のある行が見つかりました。該当箇所を原文で再確認し、根拠が明確なものだけ挙げます。
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/F09-06/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+##### 0309 f09-06 F09-06 デッキリスト詳細 ／ フロント デッキ検索 — デッキリスト詳細
+L0001	Source:
+L0002	functions/pf-eccube3/f09-06_front_deck_deck_show.md
+L0003	F09-06 デッキリスト詳細 ／ フロント デッキ検索 — デッキリスト詳細
+L0004	業務ロジック
+L0005	表示できるデッキの条件
+L0006	条件	結果
+L0007	デッキの識別子が空のとき	HTTP 404
+L0008	識別子に一致するデッキが無いとき	HTTP 404
+L0009	表示区分が非公開のとき	HTTP 404
+L0010	デッキ種別がユーザーデッキのとき	HTTP 404
+L0011	表示区分が限定公開のとき	詳細を表示する。限定公開用の値の一致は求めない
+L0012	デッキリストが非公開のとき	詳細の情報欄だけを表示し、カードリストは空とする
+L0013	カードリストの分類
+L0014	採用カードを次の順序で判定し、最初に一致した分類へ入れる。分類ごとの枚数は、その分類に入ったカードの採用枚数の合計とする。
+L0015	順序	判定	分類
+L0016	1	配置がサイドボード	サイドボード
+L0017	2	配置が統率者	統率者
+L0018	3	カードが土地	土地
+L0019	4	カードがクリーチャー	クリーチャー
+L0020	5	カードの識別子を持つ	呪文
+L0021	6	上のいずれにも当たらない	Unknown
+L0022	メインボードの枚数は、統率者・呪文・クリーチャー・土地・Unknownの枚数を合計した値とする。統率者は枚数が0のとき区画ごと表示せず、Unknownは枚数が1以上のときだけ区画を表示する。
+L0023	カード画像
+L0024	分類ごとに、その分類のカードの識別子を集めて表側の画像を1枚ずつ選ぶ。選ぶ優先順は、特殊セットでないもの、プロモーションでないもの、カードセットの発売日が新しいもの、Foilでないもの、表示中の言語に一致するもの、カード詳細の識別子が小さいものとする。
+L0025	情報欄に載せる内容
+L0026	表示項目	表示項目（英語）	値
+L0027	デッキ名	Deck name	デッキ名
+L0028	大会名	Tournament	大会の日本語名。大会名を条件にしたデッキ検索結果への入口を兼ねる
+L0029	フォーマット	Format	フォーマットの日本語名。フォーマットが未設定のときは空
+L0030	アーキタイプ	Archetype	アーキタイプの日本語名。アーキタイプを条件にしたデッキ検索結果への入口を兼ねる
+L0031	プレイヤー	Player	プレイヤー名。プレイヤー名を条件にしたデッキ検索結果への入口を兼ねる
+L0032	タグ	Tag	デッキタグの名称を, で連ねる。各タグを条件にしたデッキ検索結果への入口を兼ねる
+L0033	成績	Score	勝数と敗数がそろうときは勝-敗。引分が0でないときは-引分を、勝敗の表記の有無と関わりなく成績の文字列の前に置く
+L0034	開催日	Date	大会の開催日をY/m/dの形式で表す
+L0035	引用元URL	Source URL	引用元のURL
+L0036	デッキリストの書き出し
+L0037	デッキリストが公開のときだけ書き出しの入口を出す。
+L0038	入口	条件	引き渡す値
+L0039	Magic Online用テキスト	デッキリストが公開のとき	デッキID
+L0040	アリーナ用インポートテキスト	デッキリストが公開で、フォーマットがアリーナ対応のとき	デッキIDと言語en
+L0041	日本語テキスト	デッキリストが公開で、フォーマットがアリーナ対応のとき	デッキIDと言語jp。取得先の経路は表示言語を英語にする
+L0042	書き出しの内容はデッキリスト書き出し（F09-07）を正とする。
+L0043	画面から引き継ぐ検索条件
+L0044	起点	遷移先	引き継ぐ条件
+L0045	同じ大会のデッキを見る	デッキ検索結果	大会名＝大会の英語名と、開催日
+L0046	同じアーキタイプのデッキを見る	デッキ検索結果	アーキタイプID
+L0047	このデッキを一括購入する	デッキ一括購入	デッキID
+L0048	戻る	デッキ検索TOP	引き継がない
+L0049	同じ大会のデッキを見るが引き渡す開催日は、検索条件として解釈されない。開催日時の絞り込みに使う条件名と一致しないため、大会名だけで絞り込んだ結果になる。
+L0050	旧URLからの引き継ぎ
+L0051	旧デッキIDを伴う入口は、次の順序で遷移先を決める。
+L0052	順序	判定	結果
+L0053	1	旧デッキIDに一致するデッキがある	そのデッキの詳細へHTTP 301で転送する
+L0054	2	現デッキIDに一致するデッキがある	そのデッキの詳細へHTTP 301で転送する
+L0055	3	どちらにも一致しないとき	デッキ検索TOPへHTTP 302で転送する
+L0056	旧デッキIDは英数字だけを受け付ける。転送先の判定では表示区分もデッキ種別も見ないため、転送先で404になることがある。
+L0057	エッジケース
+L0058	ケース	扱い
+L0059	統率者の枚数が0のとき	統率者の区画を出さない
+L0060	Unknownの枚数が0のとき	Unknownの区画を出さない
+L0061	デッキタグが0件のとき	タグの欄を空にする
+L0062	引用元URLが未設定のとき	引用元URLの欄を空にする
+L0063	勝数と敗数のいずれかが未設定のとき	勝敗の表記を出さない。引分が0でなければ-引分は出す
+L0064	引分が0のとき	引分の表記を出さない
+L0065	カードの画像を選べなかったとき	画像なし用の画像を出し、商品への入口を付けない
+L0066	同じカードの組で別の言語のキャッシュがあるとき	キャッシュの鍵はカードの識別子だけなので、言語を判定し直さずキャッシュの内容を使う
+L0067	デッキリストが非公開のとき	カードリストの枚数はすべて0になる
+L0068	入出力
+L0069	種類	内容
+L0070	入力	デッキの識別子。旧URLからの入口では旧デッキID
+L0071	成功時出力	カードリストと情報欄を載せた詳細画面
+L0072	失敗時出力	表示できる条件を満たさないときはHTTP 404。旧URLで該当が無いときはデッキ検索TOPへの転送
+L0073	入出力: 永続化
+L0074	デッキ情報を登録・更新・削除しない。
+L0075	操作	契機
+L0076	キャッシュへの保存	カード画像の選択結果をカード識別子の組ごとに保存する。保持時間は600秒
+L0077	リニューアル後の仕様
+L0078	表示メッセージ
+L0079	メッセージID	表示位置	画面上の文言	画面上の文言(英語)	表示条件	後続処理
+L0080	—	カードリストの領域	デッキリスト非公開	Deck list is private	デッキリストが非公開のとき	カードリストを表示しない
+L0081	—	カードリストの区画	統率者（枚数）	Commander（枚数）	統率者の枚数が1以上のとき	—
+L0082	—	カードリストの区画	メインボード（枚数）	Mainboard（枚数）	デッキリストが公開のとき	—
+L0083	—	カードリストの区画	土地（枚数）	Land（枚数）	デッキリストが公開のとき	—
+L0084	—	カードリストの区画	クリーチャー（枚数）	Creature（枚数）	デッキリストが公開のとき	—
+L0085	—	カードリストの区画	呪文（枚数）	Spell（枚数）	デッキリストが公開のとき	—
+L0086	—	カードリストの区画	サイドボード（枚数）	Sideboard（枚数）	デッキリストが公開のとき	—
+L0087	—	カードリストの行	不明なカード	Unknown card	カードの識別子を持たない採用カードがあるとき	—
+L0088	—	書き出しの入口	Magic Online用テキスト	Text in Magic Online format	デッキリストが公開のとき	デッキリストのテキストを取得する
+L0089	—	書き出しの入口	アリーナ用インポートテキスト	Text In MTG Arena format	デッキリストが公開で、フォーマットがアリーナ対応のとき	デッキリストのテキストを写し取る
+L0090	—	書き出しの入口	日本語テキスト	Japanese text	デッキリストが公開で、フォーマットがアリーナ対応のとき	デッキリストのテキストを写し取る
+L0091	—	書き出し完了の通知	クリップボードにコピーしました。※相棒はアリーナで別途指定していただく必要がございます。	Copy to clipboard.*When using Companion cards, please directly edit your Arena deck.	アリーナ形式のテキストを写し取ったとき	—
+L0092	—	購入の入口	このデッキを一括購入する	Buy this deck	常時	デッキ一括購入へ遷移する
+L0093	—	画面下部の導線	同じ大会のデッキを見る	View other decks from the same tournament	常時	デッキ検索結果へ遷移する
+L0094	—	画面下部の導線	同じアーキタイプのデッキを見る	View other decks of the same archetype	常時	デッキ検索結果へ遷移する
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/F09-05/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+##### 0309 f09-05 F09-05 その他デッキ一覧 ／ フロント デッキ検索 — その他デッキ一覧
+L0001	Source:
+L0002	functions/pf-eccube3/f09-05_front_deck_deck_others.md
+L0003	F09-05 その他デッキ一覧 ／ フロント デッキ検索 — その他デッキ一覧
+L0004	業務ロジック
+L0005	対象フォーマットの決定
+L0006	対象は、ランキング表示の対象でもその他メタゲームの対象でもないフォーマットだけを対象とする。どちらか一方でも対象に設定されているフォーマットのデッキは載せない。該当するフォーマットが1件も無いときは、どのフォーマットにも一致しない条件で抽出する。
+L0007	一覧に載せるデッキ
+L0008	条件	扱い
+L0009	フォーマット	対象フォーマットのいずれかに一致するものだけを対象とする
+L0010	表示区分	公開のものだけを対象とする
+L0011	デッキ種別	大会デッキだけを対象とする。ユーザーデッキは載せない
+L0012	アーキタイプ	設定されているデッキだけを対象とする。未設定のデッキは載せない
+L0013	大会の開催日	当日の23:59:59以下だけを対象とする
+L0014	利用者が指定した検索条件	受け取らない。フォーマット以外の絞り込みは行わない
+L0015	並び順と件数
+L0016	大会の開催日の降順、大会名（日本語）の昇順、順位の昇順の順に並べる。表示するのは1ページ目の20件だけで、ページ番号は1に固定する。総件数は条件に一致するデッキを重複排除して数えた件数とする。2ページ目以降への入口は、対象フォーマットを検索条件として引き継いだデッキ検索結果（F09-02）へ向ける。
+L0017	表示に使う画面
+L0018	デッキ検索結果（F09-02）と同一の画面で表示し、各件に載せる内容も同一とする。該当が0件のときも同じ画面を返し、一覧の領域に該当なしの案内を出す。デッキ検索結果と違い、該当が0件でもHTTP 200を返す。
+L0019	エッジケース
+L0020	ケース	扱い
+L0021	対象フォーマットが0件のとき	どのフォーマットにも一致しないため該当は0件になる
+L0022	総件数が20件を超えるとき	2ページ目以降はデッキ検索結果として開く
+L0023	開催日が先の大会のデッキがあるとき	当日までのものだけを載せる
+L0024	デッキリストが非公開のデッキがあるとき	表示区分が公開であれば載せ、非公開の印を付ける
+L0025	入口にクエリを付けて開いたとき	その内容を条件にせず、対象フォーマットだけで抽出する
+L0026	デッキ種別がユーザーデッキのデッキがあるとき	一覧に載せない
+L0027	対象フォーマットが1件だけのとき	そのフォーマットのデッキだけを載せる
+L0028	検索条件の入力欄
+L0029	画面下部の入力欄には、その他デッキの対象フォーマットのうち検索対象に設定されているものが選択済みで載る。ここから検索するとその選択もあわせて再送し、デッキ検索結果を開く。対象フォーマットのうち検索対象に設定されていないものは選択肢に現れず、引き継がれない。
+L0030	入出力
+L0031	種類	内容
+L0032	入力	なし。検索条件を伴わずに開く
+L0033	成功時出力	対象フォーマットのデッキを20件まで並べた画面。HTTP 200
+L0034	失敗時出力	なし。該当が0件でもHTTP 200で該当なしの案内を返す
+L0035	入出力: 永続化
+L0036	デッキ情報を登録・更新・削除しない。キャッシュへの保存も行わない。
+L0037	リニューアル後の仕様
+L0038	表示メッセージ
+L0039	メッセージID	表示位置	画面上の文言	画面上の文言(英語)	表示条件	後続処理
+L0040	—	画面上部の見出し	デッキ検索結果	Deck search results	常時	—
+L0041	—	件数の表示領域	検索結果	Search results	該当が1件以上のとき	—
+L0042	—	一覧の領域	ご指定の条件に一致するデッキが見つかりませんでした。	We could not find a deck that matched your criteria.	該当が0件のとき	一覧を表示しない
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/F09-07/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+##### 0309 f09-07 F09-07 デッキリスト書き出し ／ フロント デッキ検索 — デッキリスト書き出し
+L0001	Source:
+L0002	functions/pf-eccube3/f09-07_front_deck_deck_export.md
+L0003	F09-07 デッキリスト書き出し ／ フロント デッキ検索 — デッキリスト書き出し
+L0004	業務ロジック
+L0005	書き出しの2経路
+L0006	デッキリストの書き出しには、ファイルとして受け取る経路と、画面が写し取るためのテキストを受け取る経路がある。
+L0007	経路	受け取り方	応答の形式
+L0008	Magic Online用テキスト	ファイルとして受け取る	添付ファイルのtext/plain
+L0009	アリーナ形式のテキスト	画面が受け取り、クリップボードへ写す	JSON
+L0010	公開状態の判定	ファイル経路だけが表示区分とデッキリストの公開状態を見る	—
+L0011	デッキ種別の判定	どちらの経路も、ユーザーデッキのときは応じない	—
+L0012	ファイルとして受け取る経路の条件
+L0013	順序	判定	結果
+L0014	1	デッキの識別子が空のとき	HTTP 404
+L0015	2	識別子に一致するデッキが無いとき	HTTP 404
+L0016	3	表示区分が非公開のとき	HTTP 404
+L0017	4	デッキリストが非公開のとき	HTTP 404
+L0018	5	デッキ種別がユーザーデッキのとき	HTTP 404
+L0019	6	上のいずれにも当たらないとき	デッキリストのファイルを返す
+L0020	限定公開のデッキは、限定公開用の値の一致を求めずに書き出せる。
+L0021	ファイルの名称と内容
+L0022	ファイル名はアーキタイプの英語名の空白文字を_へ置き換え、.txtを付けた文字列とする。内容は英語カード名の枚数 カード名を1行ずつ並べたもので、サイドボードの前にSideboardの行を挟む。統率者とメインボードの見出し行は入れない。カード名はアリーナで通る名称への対応表で置き換え、対応表に無い名称はそのまま残す。
+L0023	テキストとして受け取る経路の条件
+L0024	順序	判定	結果
+L0025	1	デッキの識別子が空のとき	HTTP 404。本文はJSONで、処理結果は失敗、内容はNot Found
+L0026	2	識別子に一致するデッキが無いとき	HTTP 404。本文は同上
+L0027	3	デッキ種別がユーザーデッキのとき	HTTP 404。本文は同上
+L0028	4	上のいずれにも当たらないとき	HTTP 200。処理結果は成功、デッキリストのテキストを返す
+L0029	この経路は表示区分とデッキリストの公開状態を判定しないため、非公開のデッキでも識別子を指定すればテキストを受け取れる。
+L0030	言語の指定による内容の違い
+L0031	言語の指定	カード名	見出し行
+L0032	en	英語名をアリーナで通る名称へ置き換えた値	統率者があるときはCommander、続けてDeck、サイドボードの前にSideboard
+L0033	en以外	日本語名	統率者があるときは統率者、続けてデッキ、サイドボードの前にサイドボード
+L0034	どちらの言語でも、カード名に含まれる/は // へ置き換える。デッキリスト詳細からの入口は、アリーナ用インポートテキストがen、日本語テキストがjpを言語として渡す。言語の指定が無いときのふるまいは正本コードからは確認できない。
+L0035	デッキリストの組み立て
+L0036	観点	扱い
+L0037	行の形	枚数 カード名を1行とする
+L0038	区画の順序	統率者、メインボード、サイドボードの順に並べる。この3つ以外の配置は書き出さない
+L0039	区画の区切り	サイドボードがあるときだけ、その前に空行と見出し行を挟む
+L0040	改行	復帰と改行の2文字を用いる
+L0041	末尾	末尾の空白と改行を落とす
+L0042	デッキリストがキャッシュにあるとき	キャッシュの内容から指定の言語で組み立てる
+L0043	デッキリストがキャッシュに無いとき	採用カードから組み立てる
+L0044	応答の形式
+L0045	観点	ファイルとして受け取る経路	テキストとして受け取る経路
+L0046	内容の種別	text/plain	application/json
+L0047	添付の指定	ファイル名を指定した添付として返す	添付にしない
+L0048	本文の作り	デッキリストのテキストだけを流し込む	処理結果とデッキリストのテキストを組にする
+L0049	会員の状態	ログインの有無を問わない	ログインの有無を問わない
+L0050	失敗したとき	HTTP 404。共通のエラー画面を返す	処理結果が失敗であることを示すJSONとHTTP 404
+L0051	エッジケース
+L0052	ケース	扱い
+L0053	アーキタイプの英語名に空白を含むとき	空白を_へ置き換えたファイル名にする
+L0054	対応表に無いカード名のとき	置き換えずに元の名称のまま書き出す
+L0055	サイドボードが0枚のとき	サイドボードの見出し行を入れない
+L0056	統率者が0枚のとき	統率者の見出し行を入れない
+L0057	分割カードのとき	名称の/を // へ置き換える
+L0058	デッキリストが非公開のとき	ファイル経路はHTTP 404、テキスト経路は書き出しに応じる
+L0059	表示区分が限定公開のとき	限定公開用の値の一致を求めずに書き出す
+L0060	採用カードが0件のとき	中身のないテキストを返す
+L0061	メインボード・サイドボード・統率者以外の配置にカードがあるとき	書き出しに含めない
+L0062	アーキタイプが未設定のとき	ファイル名の組み立てに使う値が無く、ふるまいは正本コードからは確認できない
+L0063	言語の指定がen以外のとき	対応表による置き換えを行わない
+L0064	会員でないとき	どちらの経路も同じ結果を返す
+L0065	入出力
+L0066	種類	内容
+L0067	入力	デッキの識別子。テキストとして受け取る経路では言語の指定も伴う
+L0068	成功時出力	ファイル経路は添付ファイルとしてのデッキリスト。テキスト経路はJSONで、処理結果が成功であることとデッキリストのテキスト
+L0069	失敗時出力	ファイル経路はHTTP 404の共通のエラー画面。テキスト経路はHTTP 404で、処理結果が失敗であることとNot Found
+L0070	入出力: 永続化
+L0071	デッキ情報を登録・更新・削除しない。
+L0072	操作	契機
+L0073	キャッシュへの保存	行わない。デッキリストのテキストは、デッキIDを鍵にしたキャッシュに保存済みのときだけそこから組み立てる
+L0074	リニューアル後の仕様
+L0075	表示メッセージ
+L0076	本機能は画面へ文言を表示しない。書き出しの入口と完了の通知はデッキリスト詳細（F09-06）を正とする。
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/F09-08/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+##### 0309 f09-08 F09-08 デッキ一括購入 ／ フロント デッキ検索 — デッキ一括購入
+L0001	Source:
+L0002	functions/pf-eccube3/f09-08_front_deck_deck_bulk.md
+L0003	F09-08 デッキ一括購入 ／ フロント デッキ検索 — デッキ一括購入
+L0004	業務ロジック
+L0005	初期表示に載せるカードリスト
+L0006	順序	判定	結果
+L0007	1	デッキの識別子が無いとき	カードリスト欄を空にして表示する
+L0008	2	識別子に一致するデッキが無いとき	未ログイン、またはプレイヤーを持たない会員では、カードリスト欄を空にして表示する。プレイヤーを持つ会員では応答を返せない
+L0009	3	表示区分が非公開、またはデッキリストが非公開のとき	会員のプレイヤーがそのデッキのプレイヤーと一致するときだけカードリストを載せる。一致しないときと未ログインのときは空にする
+L0010	4	表示区分が限定公開で、限定公開用の値が一致しないとき	カードリスト欄を空にして表示する
+L0011	5	上のいずれにも当たらないとき	英語カード名のデッキリストをカードリスト欄に載せる
+L0012	購入条件の指定
+L0013	画面上の項目	画面上の項目（英語）	初期値	選択肢と絞り込み
+L0014	言語	Language	日本語のみ	日本語のみ（Japanese）・英語のみ（English）・日・英のみ（Japanese or English）は該当言語の商品規格だけを対象とする。指定しない（他言語を含む）（Not specified (including other languages)）は言語で絞り込まない
+L0015	状態	Condition	NM	NMはNMだけ、NM・SPはこの2つ、NM・SP・MPはこの3つだけを対象とする。NM・SP・MP・HPは状態で絞り込まない
+L0016	通常/Foil	Normal / Foil	通常カードのみ	通常カードのみ（Normal）は通常、Foilカードのみ（Foil）は箔押しだけを対象とする。指定しない（Not specified）は絞り込まない
+L0017	優先条件	Preferences	安いカード優先	安いカード優先（Prior to Cheapest Card）は販売価格の昇順、高いカード優先（Prior to Expensive Card）は販売価格の降順
+L0018	言語で日・英のみ、または指定しない（他言語を含む）を選んだときに日本語優先と英語優先が優先条件に加わり、日本語のみ・英語のみに戻すと除かれる。通常/Foilで指定しないを選んだときに通常カード優先とFoilカード優先が加わる。
+L0019	在庫を引く条件
+L0020	条件	扱い
+L0021	商品	削除されておらず、公開中の商品だけを対象とする
+L0022	商品規格	削除されておらず、販売価格が0より大きいものだけを対象とする
+L0023	カード名	入力されたカード名が、カードの日本語名または英語名に一致するものだけを対象とする
+L0024	状態がNM以外	同一言語のNMの販売価格が100円を超えるものだけを対象とする
+L0025	販売価格	100円以上、または状態がNMのものだけを対象とする
+L0026	並び順	在庫が0のものを後ろへ回し、次に優先条件、最後にカードセットの発売日の降順
+L0027	数量の割り当て
+L0028	ケース	扱い
+L0029	該当する商品規格がすべて在庫0のとき	並び順の先頭の商品規格に希望枚数をそのまま割り当てる
+L0030	在庫のある商品規格があるとき	在庫0のものを除き、並び順に沿って在庫数の範囲で割り当てる
+L0031	割り当て済みの枚数が希望枚数に達したとき	それ以降の商品規格には割り当てない
+L0032	最後の商品規格まで達したとき	希望枚数との差分を割り当てる
+L0033	同じカード名が複数行に現れるときは、枚数を合計して1件の希望として扱う。カード名に // を含む分割カードだけは合算されず、後の行の枚数で置き換わる。
+L0034	カードリストの書式
+L0035	行の内容	扱い
+L0036	枚数 カード名	枚数と名称に切り分ける
+L0037	枚数 カード名 (セット略号) 収録番号	枚数と名称に切り分ける
+L0038	Sideboard・サイドボード・Deck・デッキ	区切りとして読み飛ばす
+L0039	空行	読み飛ばす
+L0040	相棒・Companion	その行と次の1行を読み飛ばす
+L0041	読み飛ばす行だけを入力したとき	解析結果が0件になる。未記載の判定へは戻らず、空の条件のまま商品と在庫の判定へ進む。この経路のふるまいは正本コードからは確認できない
+L0042	上のいずれにも当たらない行	書式の誤りとして行番号と入力内容を示す
+L0043	カード名の // 	/へ置き換えて突き合わせる
+L0044	空行も1行として数え、行番号にも行数にも含める。行数は500行までとし、これを超えるときは書式の判定を行わない。
+L0045	判定の順序
+L0046	順序	判定	結果
+L0047	1	カードリストが空のとき	未記載として通知し、以降を判定しない
+L0048	2	書式に合わない行がある	書式の誤りとして通知し、以降を判定しない
+L0049	3	商品が見つからないカードがある	商品なしとして通知し、以降を判定しない
+L0050	4	指定した条件で在庫を引けないカードがある	在庫不足として通知し、割り当て結果を返さない
+L0051	5	上のいずれにも当たらない	商品規格と数量の組を返す
+L0052	判定はいずれもHTTP 200で応答し、処理結果が成功か失敗かで区別する。本機能が返すのは商品規格と数量の組までとする。カートへの追加は買い物かご（F04-01）が受け持ち、画面は組を引き渡したのち買い物かごへ移る。
+L0053	エッジケース
+L0054	ケース	扱い
+L0055	同じカード名が複数行にあるとき	枚数を合計して1件の希望とする
+L0056	同じ分割カードが複数行にあるとき	合算されず、後の行の枚数で置き換わる
+L0057	空行を含めた行数が500行を超えるとき	行ごとの判定を行わず、行数の誤りだけを示す
+L0058	相棒の行があるとき	その行と直後の1行を読み飛ばす
+L0059	カード名に///を含むとき	送信の直前に//へ置き換える
+L0060	希望枚数が在庫の合計を超えるとき	最後の商品規格に不足分を含めた枚数を割り当てる
+L0061	商品が見つからない行があるとき	在庫の判定へ進まない
+L0062	購入条件を変えずに再送したとき	送信せず、内容が変わっていないことを画面で知らせる
+L0063	言語・状態・通常/Foilが未指定または選択肢に無い値のとき	その条件では絞り込まない
+L0064	優先条件が未指定または選択肢に無い値のとき	安いカード優先として扱う
+L0065	誤りの示し方
+L0066	観点	扱い
+L0067	並び	先頭に総括の文言を置き、続けて誤りのある行を並べる
+L0068	書式の誤りの行番号	入力の1行目を1として、空行も数えた位置を示す
+L0069	商品なしの行番号	カード名を重複排除した並びの位置を示すため、読み飛ばした行や重複した行があるときは入力の行番号とずれる
+L0070	在庫不足の行番号	商品なしと同じ数え方をする
+L0071	誤りが複数の種類にまたがるとき	先に判定した種類の誤りだけを示す
+L0072	入出力
+L0073	種類	内容
+L0074	入力	カードリストのテキスト、言語・状態・通常/Foil・優先条件の指定
+L0075	成功時出力	HTTP 200。処理結果が成功であることと、商品規格の識別子と数量の組の一覧
+L0076	失敗時出力	HTTP 200。処理結果が失敗であることと、先頭に総括の文言を置いた誤りの一覧
+L0077	入出力: 永続化
+L0078	デッキ情報を登録・更新・削除しない。商品と在庫も更新しない。カートへの追加は買い物かご（F04-01）が受け持つ。
+L0079	リニューアル後の仕様
+L0080	表示メッセージ
+L0081	メッセージID	表示位置	画面上の文言	画面上の文言(英語)	表示条件	後続処理
+L0082	—	画面上部の見出し	カードリストで購入	Cardlist	常時	—
+L0083	—	書式の説明	以下の形式がご利用いただけます。言語は日または英が使用可能です。	The following formats can be used.	常時	—
+L0084	—	書式の説明	形式1	Format 1	常時	—
+L0085	—	書式の説明	形式2	Format 2	常時	—
+L0086	—	カードリストの入力欄	4 Tarmogoyf	4 Tarmogoyf	入力欄が空のとき	—
+L0087	—	購入条件の見出し	購入条件を指定	Narrow Details	常時	—
+L0088	—	誤りの一覧	デッキリストが記載されていません。デッキリスト内に数量とカード名の入力をお願いいたします。	Decklist is Not Listed.	カードリストが空のとき	判定を打ち切る
+L0089	—	誤りの一覧	デッキリストの書式が正しくありません。	The deck list format is invalid.	書式に合わない行があるとき	続けて行ごとの誤りを並べる
+L0090	—	誤りの一覧	最大行数は500行までとなっております。現在: （行数）行	The maximum number of rows is 500. You have used （行数） rows.	空行を含めた行数が500行を超えるとき	判定を打ち切る
+L0091	—	誤りの一覧	商品が存在しないカードが含まれています。	The deck list contains cards that are not available as products.	商品が見つからないカードがあるとき	続けて行ごとの誤りを並べる
+L0092	—	誤りの一覧	指定された条件で在庫が不足しているカードがあります。	Some cards do not have enough stock under the specified conditions.	指定した条件で在庫を引けないカードがあるとき	続けて行ごとの誤りを並べる
+L0093	—	誤りの一覧	（行番号）行目: （カード名）	line （行番号）: （カード名）	行ごとの誤りを示すとき	—
+L0094	—	購入の入口	カートに追加	Add to Cart	常時	割り当て結果を買い物かごへ引き渡す
+L0095	このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。
+
+exec
+/bin/bash -lc "rg -n '"'^L[0-9]+'"\\s+.*(表示順|並び|登録|更新|削除|対象|絞|条件|設定|処理|ステータス|初期値)' integration_test/casegen/combination/units/M03-01/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+8:L0007	更新者大澤
+9:L0008	更新日2025-08-02
+13:L0012	削除機能について
+14:L0013	処理概要（★はカスタマイズ項目）
+56:L0055	・初期検索条件として 状態：NMにチェックを入れる
+62:L0061	表示順は棚番順とした場合、棚番は規格（日英など）毎に紐づくため、だいぶ見え方が変わってしまう認識であり、
+72:L0071	機能仕様削除機能について
+73:L0072	・在庫関連機能は在庫管理に移動するため、在庫変更CSV出力ボタン、在庫一括編集ボタンは削除する
+77:L0076	機能仕様処理概要（★はカスタマイズ項目）
+82:L0081	★初期選択状態の設定
+86:L0085	または最大値	初期値	画面部品の説明
+89:L0088	2	検索条件の開閉ボタン	ボタン	-	-	-	押下すると、(3)～(31)の検索条件の表示/非表示を切り替える
+113:L0112	19	在庫(From)	数値	-	0 -999999999	-	フィルタは本店在庫に対するものとする（支店へのフィルタは行わない） 2026/8/21木村：フィルタ対象を明記ECCUBE_HARERUYA-1760
+114:L0113	20	在庫(To)	数値	-	0 -999999999	-	フィルタは本店在庫に対するものとする（支店へのフィルタは行わない） 2026/8/21木村：フィルタ対象を明記ECCUBE_HARERUYA-1760
+116:L0115	22	期間別販売数 販売数(From)	数値	-	0 -999999999	-	フィルタはEC+TC東京の合算販売数に対するものとする。（支店販売数へのフィルタは行わない） 2026/8/21木村：フィルタ対象を明記ECCUBE_HARERUYA-1760
+117:L0116	23	期間別販売数 販売数(To)	数値	-	0 -999999999	-	フィルタはEC+TC東京の合算販売数に対するものとする。（支店販売数へのフィルタは行わない） 2026/8/21木村：フィルタ対象を明記ECCUBE_HARERUYA-1760
+118:L0117	24	規格更新日(From)	日付(yyyy/mm/dd)	-	-	-	カレンダー選択機能あり
+119:L0118	25	規格更新日(To)	日付(yyyy/mm/dd)	-	-	-	カレンダー選択機能あり
+125:L0124	31	検索条件をクリア	テキストリンク	-	-	-	リンク押下で(1)～(30)に入力/選択された内容を初期化する
+132:L0131	検索条件
+133:L0132	一覧は、設定した検索条件をすべて満たす商品に絞り込む。
+134:L0133	商品名(日/英)・カード名・コードは、空白（半角・全角）またはカンマで区切って複数の語を指定できる。指定した語をすべて含むものに絞り込み、語ごとの照合は部分一致とする。IDは完全一致で照合する。
+135:L0134	言語は3種すべてを選んだ場合は絞り込まない。それ以外は選んだ組み合わせで絞り込む。
+136:L0135	プロモとFoilは、選んだ区分に一致するカード情報を持つ商品だけに絞り込む。どちらの区分も選ばない場合は絞り込まない。
+137:L0136	「高額商品のみ表示」と「高額商品を除外する」を同時に選ぶと、条件が両立せず該当する商品が無くなる。
+138:L0137	期間別販売数は、販売期間を選んだ場合にだけ、その期間の販売数を下限と上限で絞り込む。販売期間を選ばない場合は、下限と上限を指定しても絞り込まない。
+139:L0138	規格更新日の終了は、指定日当日を含めるため翌日の0時未満までを対象とする。
+140:L0139	部門は「未設定」を選べる。選んだ場合は、部門が設定されていない規格も対象とする。
+141:L0140	並び順
+143:L0142	表示件数と検索条件の保持
+144:L0143	検索条件・ページ番号・表示件数は画面をまたいで保持し、ページ送りと表示件数の変更で再利用する。
+146:L0145	検索画面を開き直したときは、保持していた検索条件・ページ番号・表示件数を破棄し、初期状態の検索画面を表示する。
+150:L0149	入力	検索条件、ページ番号、表示件数
+154:L0153	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+156:L0155	M03-01-MSG-003	画面中央(モーダル)	削除中...	選択した商品の一括削除を開始したとき	モーダルは開いたまま
+157:L0156	M03-01-MSG-004	画面中央(モーダル)	商品の削除処理が完了しました	選択した商品の一括削除処理が完了したとき	モーダルを閉じて商品検索・一覧画面を再読み込みする
+158:L0157	M03-01-MSG-005	未表示（XHR JSON応答）	削除しました	商品を削除したとき	商品一覧画面に留まり、完了操作で一覧を再読込する
+159:L0158	M03-01-MSG-006	モーダル内	関連するデータがあるため「%name%」を削除できませんでした ／ 削除に失敗しました	商品を完全に削除したとき、関連するデータがある場合、または削除できない場合	エラーを削除確認モーダル内に表示し、完了操作後に商品一覧画面へ遷移する
+161:L0160	M03-01-MSG-008	モーダル内	既に削除されています	削除しようとした商品がすでに削除されていたとき	エラーを削除確認モーダル内に表示し、完了操作後に商品一覧を再読込する
+162:L0161	M03-01-MSG-009	画面中央(モーダル)	商品を削除してよろしいですか？	商品一覧で商品を選択し、「完全に削除」を選択したとき	モーダル内の「完全に削除」で、選択済み商品の完全削除処理を開始する。キャンセル時は処理しない
+170:L0168	更新者堀部
+171:L0169	更新日2025-09-16
+175:L0173	削除機能について
+176:L0174	処理概要（★はカスタマイズ項目）
+221:L0219	・初期検索条件として 状態：NMにチェックを入れる
+225:L0223	・表示順は現行踏襲とする
+234:L0232	機能仕様削除機能について
+235:L0233	・在庫関連機能は在庫管理に移動するため、在庫変更CSV出力ボタン、在庫一括編集ボタンは削除する
+239:L0237	機能仕様処理概要（★はカスタマイズ項目）
+243:L0241	・表示順は、現行踏襲とする
+249:L0247	・現状踏襲とし、処理によって予め保存されている買取数、販売数のデータを表示する
+250:L0248	識別ID	ラベル	書式・制限	必須	最大値	初期値	画面部品の説明
+264:L0262	表示切替え対象はID:24 〜 ID:29
+265:L0263	13	CSVダウンロード、一括編集対象(一括チェック)	チェックボックス	-	-	-	チェックを付けると、商品一覧すべてをCSVダウンロードおよび一括編集の対象/対象外に設定
+266:L0264	14	CSVダウンロード、一括編集対象(個別チェック)	チェックボックス	-	-	-	チェックを付けた買取情報がCSVダウンロードおよび一括編集の対象となる
+
+exec
+/bin/bash -lc "sed -n '1,166p' integration_test/casegen/combination/units/M03-01/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+##### 0204 sheet-3 商品マスター(検索入力)
+L0001	商品マスター(検索入力)
+L0002	ドキュメント名商品管理機能
+L0003	セクション—
+L0004	プロジェクト名サイトリニューアル
+L0005	作成者城下
+L0006	作成日2025-05-27
+L0007	更新者大澤
+L0008	更新日2025-08-02
+L0009	機能NoM03-01
+L0010	機能名商品マスター(検索入力)
+L0011	概要商品情報の検索および一覧の参照が可能
+L0012	削除機能について
+L0013	処理概要（★はカスタマイズ項目）
+L0014	レイアウト図
+L0015	1
+L0016	2
+L0017	3
+L0018	4
+L0019	5
+L0020	8
+L0021	9
+L0022	10
+L0023	7
+L0024	6
+L0025	11
+L0026	12
+L0027	13
+L0028	15
+L0029	16
+L0030	17
+L0031	18
+L0032	19
+L0033	20
+L0034	21
+L0035	22
+L0036	23
+L0037	24
+L0038	25
+L0039	26
+L0040	27
+L0041	28
+L0042	29
+L0043	30
+L0044	31
+L0045	32
+L0046	14
+L0047	商品マスター(検索入力) / C8 / image 1
+L0048	カスタマイズ説明
+L0049	概要
+L0050	商品情報の検索および一覧の参照が可能
+L0051	機能
+L0052	現行機能をベースに下記のカスタマイズを行う
+L0053	検索について
+L0054	・デフォルトで廃止となっている規格は表示されない
+L0055	・初期検索条件として 状態：NMにチェックを入れる
+L0056	一覧表示について
+L0057	・状態別に表示し、通常のNM〜HP以外の状態(高額商品等)は分けて表示する
+L0058	・言語は分けて表示する
+L0059	合算は行わず、現行通りの仕様とする
+L0060	・
+L0061	表示順は棚番順とした場合、棚番は規格（日英など）毎に紐づくため、だいぶ見え方が変わってしまう認識であり、
+L0062	課題の棚卸時にPh2で対応とする整理となっていたため、Ph1では現行仕様のままとする
+L0063	販売数の表示について
+L0064	・通販＋TC東京と支店に分けて表示を行う
+L0065	※通販＋TC東京と支店の合算した値は不要
+L0066	買取数または入庫数の表示について
+L0067	・現状踏襲とし、商品規格サブ情報に保存されている買取数、販売数のデータを表示する
+L0068	運用想定
+L0069	・販売数はトレードチームにて、一括価格変更を行うために参考情報として参照している
+L0070	・商品の情報や価格を変更する業務を想定
+L0071	機能仕様削除機能について
+L0072	・在庫関連機能は在庫管理に移動するため、在庫変更CSV出力ボタン、在庫一括編集ボタンは削除する
+L0073	備考
+L0074	以下の機能はPh2以降に検討とする
+L0075	・一覧にて、週間の在庫回転数を表示する
+L0076	機能仕様処理概要（★はカスタマイズ項目）
+L0077	★検索項目の追加
+L0078	・識別ID:11「状態」の項目「その他」を追加
+L0079	・識別ID:12「Foil」を追加
+L0080	・識別ID:13「フレーム」の項目「特殊」を追加
+L0081	★初期選択状態の設定
+L0082	・識別ID:11「状態」の項目「NM」を初期チェック状態にする
+L0083	・検索ボタン押下時、フォーム内容の入力チェックをサーバ側で行う
+L0084	識別ID	ラベル	書式・制限	必須	最大文字数
+L0085	または最大値	初期値	画面部品の説明
+L0086	1	商品名(日/英)	半角・全角	-	-	-	識別ID:32「検索」を押下するを押下すると、下記の項目で商品検索を行う
+L0087	・商品名(日) ・商品名(英) 
+L0088	2	検索条件の開閉ボタン	ボタン	-	-	-	押下すると、(3)～(31)の検索条件の表示/非表示を切り替える
+L0089	3	カード名	半角・全角	-	-	-	識別ID:32「検索」を押下するを押下すると、下記の項目で商品検索を行う
+L0090	・カード名(日) ・カード名(英) 
+L0091	4	ID	半角数字	-	-	-
+L0092	5	コード	半角英数	-	-	-
+L0093	6	カテゴリ	数値	-	-	-	セレクトボックス、複数選択可能、名称入力のサジェスト機能あり
+L0094	リストの内容はカテゴリマスタより取得
+L0095	7	公開状態	数値	-	-	公開	チェック項目: 公開、非公開、
+L0096	※カスタマイズ対応、選択肢「限定公開」を除去する
+L0097	8	エキスパンション	数値	-	-	-	セレクトボックス、複数選択可能、名称入力のサジェスト機能あり
+L0098	リストの内容はカードセットマスタより取得
+L0099	9	レアリティ	数値	-	-	-	チェック項目: コモン、アンコモン、レア、神話レア、基本土地、スペシャル、トークン
+L0100	10	言語	半角英字	-	-	-	チェック項目: 日本語、英語、その他言語
+L0101	11	状態	数値	-	-	NM	チェック項目: NM、SP、MP、HP、その他
+L0102	※カスタマイズ対応、項目「その他」を追加、NMに初期チェックを入れる
+L0103	12	Foil	半角英字	-	-	-	※カスタマイズ対応、選択肢追加
+L0104	チェック項目: Foil、ノーマル、特殊
+L0105	13	フレーム	半角英字				※カスタマイズ対応、検索項目追加
+L0106	チェック項目: 通常、特殊
+L0107	14	プロモ	半角英字	-	-	-	チェック項目: プロモ、ノーマル
+L0108	15	タグ	数値	-	-	-	セレクトボックス、複数選択可能、名称入力のサジェスト機能あり
+L0109	16	略称タグ	数値	-	-	-	セレクトボックス、複数選択可能、名称入力のサジェスト機能あり
+L0110	17	販売価格(From)	数値	-	0 -999999999	-
+L0111	18	販売価格(To)	数値	-	0 -999999999	-
+L0112	19	在庫(From)	数値	-	0 -999999999	-	フィルタは本店在庫に対するものとする（支店へのフィルタは行わない） 2026/8/21木村：フィルタ対象を明記ECCUBE_HARERUYA-1760
+L0113	20	在庫(To)	数値	-	0 -999999999	-	フィルタは本店在庫に対するものとする（支店へのフィルタは行わない） 2026/8/21木村：フィルタ対象を明記ECCUBE_HARERUYA-1760
+L0114	21	期間別販売数 販売期間	半角英数字	-	-	-	選択肢: 昨日、3日間、1週間、1ヶ月、90日間、180日間、365日間
+L0115	22	期間別販売数 販売数(From)	数値	-	0 -999999999	-	フィルタはEC+TC東京の合算販売数に対するものとする。（支店販売数へのフィルタは行わない） 2026/8/21木村：フィルタ対象を明記ECCUBE_HARERUYA-1760
+L0116	23	期間別販売数 販売数(To)	数値	-	0 -999999999	-	フィルタはEC+TC東京の合算販売数に対するものとする。（支店販売数へのフィルタは行わない） 2026/8/21木村：フィルタ対象を明記ECCUBE_HARERUYA-1760
+L0117	24	規格更新日(From)	日付(yyyy/mm/dd)	-	-	-	カレンダー選択機能あり
+L0118	25	規格更新日(To)	日付(yyyy/mm/dd)	-	-	-	カレンダー選択機能あり
+L0119	26	売上分析タグ	数値	-	-	-	セレクトボックス、複数選択可能、名称入力のサジェスト機能あり
+L0120	27	高額商品のみ表示	チェックボックス	-	-	-
+L0121	28	高額商品を除外する	チェックボックス	-	-	初期状態でチェックされている
+L0122	29	部門	数値	-	-	-	セレクトボックス、複数選択可能、名称入力のサジェスト機能あり
+L0123	30	棚番号	数値	-	-	-	セレクトボックス、複数選択可能、名称入力のサジェスト機能あり
+L0124	31	検索条件をクリア	テキストリンク	-	-	-	リンク押下で(1)～(30)に入力/選択された内容を初期化する
+L0125	32	検索する >	ボタン	-		-	ボタン押下で検索を実行、商品マスター(検索結果)の内容を表示する
+L0126	Source:
+L0127	functions/pf-eccube3/m03-01_admin_product_product_search_list.md
+L0128	現行仕様
+L0129	M03-01 商品検索/一覧 / 商品管理 — 商品検索・一覧
+L0130	業務ロジック
+L0131	検索条件
+L0132	一覧は、設定した検索条件をすべて満たす商品に絞り込む。
+L0133	商品名(日/英)・カード名・コードは、空白（半角・全角）またはカンマで区切って複数の語を指定できる。指定した語をすべて含むものに絞り込み、語ごとの照合は部分一致とする。IDは完全一致で照合する。
+L0134	言語は3種すべてを選んだ場合は絞り込まない。それ以外は選んだ組み合わせで絞り込む。
+L0135	プロモとFoilは、選んだ区分に一致するカード情報を持つ商品だけに絞り込む。どちらの区分も選ばない場合は絞り込まない。
+L0136	「高額商品のみ表示」と「高額商品を除外する」を同時に選ぶと、条件が両立せず該当する商品が無くなる。
+L0137	期間別販売数は、販売期間を選んだ場合にだけ、その期間の販売数を下限と上限で絞り込む。販売期間を選ばない場合は、下限と上限を指定しても絞り込まない。
+L0138	規格更新日の終了は、指定日当日を含めるため翌日の0時未満までを対象とする。
+L0139	部門は「未設定」を選べる。選んだ場合は、部門が設定されていない規格も対象とする。
+L0140	並び順
+L0141	一覧は商品IDの降順で並べる。
+L0142	表示件数と検索条件の保持
+L0143	検索条件・ページ番号・表示件数は画面をまたいで保持し、ページ送りと表示件数の変更で再利用する。
+L0144	表示件数は指定した値が表示件数マスタに存在する場合に保持する。存在しない場合は保持済みの値、または既定の件数を用いる。
+L0145	検索画面を開き直したときは、保持していた検索条件・ページ番号・表示件数を破棄し、初期状態の検索画面を表示する。
+L0146	2ページ目以降を表示するとき、該当件数が前のページまでで表示し尽くされる件数と一致する場合は、1つ前のページを表示する。
+L0147	入出力
+L0148	種類	内容
+L0149	入力	検索条件、ページ番号、表示件数
+L0150	成功時出力	商品の一覧、該当件数
+L0151	リニューアル後の仕様
+L0152	表示メッセージ
+L0153	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0154	M03-01-MSG-002	画面中央(ダイアログ)	Failed	商品の規格情報の取得に失敗したとき	エラーを表示し、商品検索・一覧画面に留まる
+L0155	M03-01-MSG-003	画面中央(モーダル)	削除中...	選択した商品の一括削除を開始したとき	モーダルは開いたまま
+L0156	M03-01-MSG-004	画面中央(モーダル)	商品の削除処理が完了しました	選択した商品の一括削除処理が完了したとき	モーダルを閉じて商品検索・一覧画面を再読み込みする
+L0157	M03-01-MSG-005	未表示（XHR JSON応答）	削除しました	商品を削除したとき	商品一覧画面に留まり、完了操作で一覧を再読込する
+L0158	M03-01-MSG-006	モーダル内	関連するデータがあるため「%name%」を削除できませんでした ／ 削除に失敗しました	商品を完全に削除したとき、関連するデータがある場合、または削除できない場合	エラーを削除確認モーダル内に表示し、完了操作後に商品一覧画面へ遷移する
+L0159	M03-01-MSG-007	管理画面上部	%status%: %count%件が正常に適用されました	選択した商品の状態変更が1件以上完了したとき	商品検索・一覧画面に遷移する
+L0160	M03-01-MSG-008	モーダル内	既に削除されています	削除しようとした商品がすでに削除されていたとき	エラーを削除確認モーダル内に表示し、完了操作後に商品一覧を再読込する
+L0161	M03-01-MSG-009	画面中央(モーダル)	商品を削除してよろしいですか？	商品一覧で商品を選択し、「完全に削除」を選択したとき	モーダル内の「完全に削除」で、選択済み商品の完全削除処理を開始する。キャンセル時は処理しない
+##### 0204 sheet-4 商品マスター(検索結果)
+L0162	商品マスター(検索結果)
+L0163	ドキュメント名商品管理機能
+L0164	セクション—
+
+exec
+/bin/bash -lc "rg -n 'メタ集計日数|集計日数' integration_test/casegen/combination/units/M14-10/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+ exited 1 in 0ms:
+exec
+/bin/bash -lc "rg -n '価格|販売価格|削除|公開' integration_test/casegen/combination/units/F09-08/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+10:L0009	3	表示区分が非公開、またはデッキリストが非公開のとき	会員のプレイヤーがそのデッキのプレイヤーと一致するときだけカードリストを載せる。一致しないときと未ログインのときは空にする
+11:L0010	4	表示区分が限定公開で、限定公開用の値が一致しないとき	カードリスト欄を空にして表示する
+18:L0017	優先条件	Preferences	安いカード優先	安いカード優先（Prior to Cheapest Card）は販売価格の昇順、高いカード優先（Prior to Expensive Card）は販売価格の降順
+22:L0021	商品	削除されておらず、公開中の商品だけを対象とする
+23:L0022	商品規格	削除されておらず、販売価格が0より大きいものだけを対象とする
+25:L0024	状態がNM以外	同一言語のNMの販売価格が100円を超えるものだけを対象とする
+26:L0025	販売価格	100円以上、または状態がNMのものだけを対象とする
+79:L0078	デッキ情報を登録・更新・削除しない。商品と在庫も更新しない。カートへの追加は買い物かご（F04-01）が受け持つ。
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/F10-02/excluded.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+テストID	除外	理由	事前準備	手順	期待結果
+IT-F10-02-038	未確定	作れない：S-F10-02-ORDER-038: 未確定: 刷新後の実装では、会員としてログインしていない利用者が購入手続きを進めて購入完了画面へ到達する経路が無いため、この状態は作れない	① 日本語サイトでオンラインショップ・購入処理中の受注ステータス・銀行振込が利用できる（S-F10-02-REF）／② 専用ブラウザで会員としてログインしておらず（ログアウトした状態）、非会員として購入手続きを進めた状態で、受注ID 910020038は購入処理中・銀行振込・商品小計（税込）1620・送料合計600・使用ポイント0・注文時に入力されたメールアドレス f1002-038-guest@example.test・当日作成、お届け先は1件で配送方法の名称は「配送便F1002-038」、明細は1行で商品コードF1002-038-A・商品名「商品F1002-038-A」・税抜単価500・税込単価540・数量3。主カートと受注明細の数量は商品ごとに同じで、購入完了画面への引継ぎはない（S-F10-02-ORDER-038）	1. ご注文方法指定画面を開く／2. 「注文する」ボタンを押す／3. 購入完了画面が表示されたら、ブラウザの開発者ツールのコンソールで受け渡し領域（`dataLayer`）の内容を表示する	受け渡し領域に、項目名 `transactionMailaddress` が空文字の要素が1件あり、その要素の `transactionMailaddress` が 「f1002-038-guest@example.test」 でないこと
+
+exec
+/bin/bash -lc "rg -n 'F0[1-9]|F10' integration_test/casegen/combination/factors/F09-08_existing.tsv" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+2:IT-F09-08-001	P1	F01=識別子なし&F02=未ログイン	デッキIDを付けず未ログインで開く。カードリスト欄を確かめる
+3:IT-F09-08-002	P1	F01=該当デッキなし&F02=未ログイン	存在しないデッキIDを未ログインで開く。カードリスト欄を確かめる
+4:IT-F09-08-003	P1	F01=表示区分またはリストが非公開&F02=デッキの持ち主の会員	持ち主でログインして開く。カードリスト欄を確かめる
+5:IT-F09-08-004	P1	F01=表示区分またはリストが非公開&F02=デッキの持ち主の会員	持ち主でログインして開く。カードリスト欄を確かめる
+6:IT-F09-08-005	P1	F01=表示区分またはリストが非公開&F02=他のプレイヤーの会員	他のプレイヤーでログインして開く。カードリスト欄を確かめる
+7:IT-F09-08-006	P1	F01=表示区分またはリストが非公開&F02=未ログイン	未ログインで開く。カードリスト欄を確かめる
+8:IT-F09-08-007	P1	F01=表示区分またはリストが非公開&F02=他のプレイヤーの会員	他のプレイヤーでログインして開く。カードリスト欄を確かめる
+9:IT-F09-08-008	P1	F01=限定公開で値が不一致&F02=未ログイン	値が合わないまま未ログインで開く。カードリスト欄を確かめる
+10:IT-F09-08-009	P1	F01=上のいずれにも当たらない&F02=未ログイン	限定公開の値が合う未ログインで開く。カードリスト欄を確かめる
+11:IT-F09-08-010	P1	F01=上のいずれにも当たらない&F02=未ログイン	未ログインで詳細から遷移して開く。カードリスト欄を確かめる
+12:IT-F09-08-068	P1	F01=該当デッキなし&F02=プレイヤーを持たない会員	プレイヤーを持たない会員で存在しないデッキIDを開く。カードリスト欄を確かめる
+13:IT-F09-08-069	P1	F01=表示区分またはリストが非公開&F02=未ログイン	リスト非公開を未ログインで開く。カードリスト欄を確かめる
+14:IT-F09-08-070	P1	F01=表示区分またはリストが非公開&F02=プレイヤーを持たない会員	プレイヤーを持たない会員で開く。カードリスト欄を確かめる
+15:IT-F09-08-071	P1	F01=上のいずれにも当たらない&F02=未ログイン	公開デッキを未ログインで開く。カードリスト欄を確かめる
+16:IT-F09-08-012	P2	F03=日本語のみ&F04=NM&F05=通常カードのみ&F06=安いカード優先	手順で購入条件を選び、応答の商品規格と数量の組を確かめる
+17:IT-F09-08-013	P2	F03=英語のみ&F04=NM&F05=通常カードのみ&F06=安いカード優先	手順で購入条件を選び、応答の商品規格と数量の組を確かめる
+18:IT-F09-08-014	P2	F03=日・英のみ&F04=NM&F05=通常カードのみ&F06=安いカード優先	手順で購入条件を選び、応答の商品規格と数量の組を確かめる
+19:IT-F09-08-015	P2	F03=指定しない&F04=NM&F05=通常カードのみ&F06=安いカード優先	手順で購入条件を選び、応答の商品規格と数量の組を確かめる
+20:IT-F09-08-016	P2	F03=日本語のみ&F04=NM&F05=通常カードのみ&F06=安いカード優先	手順で購入条件を選び、応答の商品規格と数量の組を確かめる
+21:IT-F09-08-017	P2	F03=日本語のみ&F04=NM・SP&F05=通常カードのみ&F06=安いカード優先	手順で購入条件を選び、応答の商品規格と数量の組を確かめる
+22:IT-F09-08-018	P2	F03=日本語のみ&F04=NM・SP・MP&F05=通常カードのみ&F06=安いカード優先	手順で購入条件を選び、応答の商品規格と数量の組を確かめる
+23:IT-F09-08-019	P2	F03=日本語のみ&F04=NM・SP・MP・HP&F05=通常カードのみ&F06=安いカード優先	手順で購入条件を選び、応答の商品規格と数量の組を確かめる
+24:IT-F09-08-020	P2	F03=日本語のみ&F04=NM&F05=通常カードのみ&F06=安いカード優先	手順で購入条件を選び、応答の商品規格と数量の組を確かめる
+25:IT-F09-08-021	P2	F03=日本語のみ&F04=NM&F05=Foilカードのみ&F06=安いカード優先	手順で購入条件を選び、応答の商品規格と数量の組を確かめる
+26:IT-F09-08-022	P2	F03=日本語のみ&F04=NM&F05=指定しない&F06=安いカード優先	手順で購入条件を選び、応答の商品規格と数量の組を確かめる
+27:IT-F09-08-023	P2	F03=日本語のみ&F04=NM・SP&F05=通常カードのみ&F06=安いカード優先&F07=在庫が希望枚数以上&F08=100円を超える	手順で購入条件を選び、応答の商品規格と数量の組を確かめる
+28:IT-F09-08-024	P2	F03=日本語のみ&F04=NM・SP&F05=通常カードのみ&F06=高いカード優先	手順で購入条件を選び、応答の商品規格と数量の組を確かめる
+29:IT-F09-08-028	P2	F03=日本語のみ&F04=NM&F05=通常カードのみ&F06=安いカード優先	手順で購入条件を選び、応答の商品規格と数量の組を確かめる
+30:IT-F09-08-029	P2	F03=日本語のみ&F04=NM・SP・MP&F05=通常カードのみ&F06=安いカード優先	手順で購入条件を選び、応答の商品規格と数量の組を確かめる
+31:IT-F09-08-030	P2	F03=日本語のみ&F04=NM&F05=通常カードのみ&F06=安いカード優先	手順で購入条件を選び、応答の商品規格と数量の組を確かめる
+32:IT-F09-08-031	P2	F03=日本語のみ&F04=NM&F05=通常カードのみ&F06=安いカード優先	手順で購入条件を選び、応答の商品規格と数量の組を確かめる
+33:IT-F09-08-032	P2	F03=指定しない&F04=NM・SP&F05=通常カードのみ&F06=安いカード優先	手順で購入条件を選び、応答の商品規格と数量の組を確かめる
+34:IT-F09-08-033	P2	F03=指定しない&F04=NM・SP・MP&F05=通常カードのみ&F06=安いカード優先	手順で購入条件を選び、応答の商品規格と数量の組を確かめる
+35:IT-F09-08-034	P2	F03=日本語のみ&F04=NM・SP&F05=通常カードのみ&F06=安いカード優先&F07=在庫が希望枚数以上&F08=100円を超える	手順で購入条件を選び、応答の商品規格と数量の組を確かめる
+36:IT-F09-08-035	P2	F03=日本語のみ&F04=NM&F05=通常カードのみ&F06=安いカード優先	手順で購入条件を選び、応答の商品規格と数量の組を確かめる
+37:IT-F09-08-036	P2	F03=日本語のみ&F04=NM・SP&F05=通常カードのみ&F06=安いカード優先&F07=全て在庫0&F08=100円を超える	手順で購入条件を選び、応答の商品規格と数量の組を確かめる
+38:IT-F09-08-037	P2	F03=日本語のみ&F04=NM・SP・MP&F05=通常カードのみ&F06=安いカード優先&F07=在庫が希望枚数以上&F08=100円を超える	手順で購入条件を選び、応答の商品規格と数量の組を確かめる
+39:IT-F09-08-038	P2	F03=日本語のみ&F04=NM・SP&F05=通常カードのみ&F06=安いカード優先&F07=在庫が希望枚数以上&F08=100円を超える	手順で購入条件を選び、応答の商品規格と数量の組を確かめる
+40:IT-F09-08-039	P2	F03=日本語のみ&F04=NM・SP&F05=通常カードのみ&F06=安いカード優先&F07=在庫が希望枚数に満たない&F08=100円を超える	手順で購入条件を選び、応答の商品規格と数量の組を確かめる
+41:IT-F09-08-040	P2	F03=日本語のみ&F04=NM&F05=通常カードのみ&F06=安いカード優先&F09=同名が複数行	手順で購入条件を選び、応答の商品規格と数量の組を確かめる
+42:IT-F09-08-058	P2	F03=日本語のみ&F04=NM・SP&F05=通常カードのみ	手順で購入条件を選び、応答の商品規格と数量の組を確かめる
+43:IT-F09-08-064	P2	F03=日本語のみ&F04=NM・SP&F05=通常カードのみ	手順で購入条件を選び、応答の商品規格と数量の組を確かめる
+
+exec
+/bin/bash -lc "rg --files integration_test/casegen/combination/units | rg 'M14-10|M10-'" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+integration_test/casegen/combination/units/M10-09/excluded.tsv
+integration_test/casegen/combination/units/M10-09/design.txt
+integration_test/casegen/combination/units/M10-15/excluded.tsv
+integration_test/casegen/combination/units/M10-15/design.txt
+integration_test/casegen/combination/units/M10-02/excluded.tsv
+integration_test/casegen/combination/units/M10-10/excluded.tsv
+integration_test/casegen/combination/units/M10-02/design.txt
+integration_test/casegen/combination/units/M10-04/excluded.tsv
+integration_test/casegen/combination/units/M10-10/design.txt
+integration_test/casegen/combination/units/M10-04/design.txt
+integration_test/casegen/combination/units/M10-13/excluded.tsv
+integration_test/casegen/combination/units/M10-13/design.txt
+integration_test/casegen/combination/units/M10-05/excluded.tsv
+integration_test/casegen/combination/units/M10-05/design.txt
+integration_test/casegen/combination/units/M10-01/excluded.tsv
+integration_test/casegen/combination/units/M10-03/excluded.tsv
+integration_test/casegen/combination/units/M10-03/design.txt
+integration_test/casegen/combination/units/M10-16/design.txt
+integration_test/casegen/combination/units/M10-16/excluded.tsv
+integration_test/casegen/combination/units/M10-07/excluded.tsv
+integration_test/casegen/combination/units/M10-07/design.txt
+integration_test/casegen/combination/units/M10-01/design.txt
+integration_test/casegen/combination/units/M10-06/excluded.tsv
+integration_test/casegen/combination/units/M10-06/design.txt
+integration_test/casegen/combination/units/M14-10/excluded.tsv
+integration_test/casegen/combination/units/M14-10/design.txt
+integration_test/casegen/combination/units/M10-08/design.txt
+integration_test/casegen/combination/units/M10-08/excluded.tsv
+
+exec
+/bin/bash -lc "grep -n '集計\\|ランキング\\|メタ' integration_test/casegen/combination/units/M14-10/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+79:L0078	・(13)ランキング表示について
+81:L0080	1 採用デッキ数ランキング
+82:L0081	2 メタ分布のリンク
+83:L0082	・(14)メタ分布簡易化について
+84:L0083	・選択して登録すると、フロント＞デッキ検索画面に、登録したフォーマットのメタ分布へのリンクを表示する
+89:L0088	・(16)採用枚数ランキングに基本土地を含めるについて
+90:L0089	・選択して登録すると、フロント＞採用枚数ランキング画面で、登録したフォーマットのランキングに基本土地を含める
+98:L0097	・(19)メタゲーム分析日数について
+100:L0099	1 フロント＞デッキ検索画面で表示する「カードの採用枚数ランキング」
+101:L0100	2 フロント＞採用枚数ランキング画面で表示する「採用枚数」
+102:L0101	3 フロント＞メタゲーム画面で表示する「デッキ数」
+103:L0102	4 フロント＞メタゲーム画面で表示する「使用率」
+106:L0105	採用枚数ランキング画面: https://www.hareruyamtg.com/ja/deck/1/usage_ranking/
+107:L0106	メタゲーム画面: https://www.hareruyamtg.com/ja/deck/
+133:L0132	13	ランキング表示	単一選択	-	-	-	-
+134:L0133	14	メタ分布簡易化	単一選択	-	-	-	-
+136:L0135	16	採用枚数ランキングに基本土地を含める	単一選択	-	-	-	-
+139:L0138	19	メタゲーム分析日数	数値(整数)	〇	1~10000	14	-
+
+exec
+/bin/bash -lc "sed -n '94,104p' integration_test/casegen/combination/units/M14-10/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+L0093	★(18)イベントに表示について
+L0094	・選択して登録すると、フロント＞イベント一覧画面で以下1~2を行う
+L0095	1 選択したフォーマットのイベントのみを表示
+L0096	2 選択したフォーマットのみを検索可能とする
+L0097	・(19)メタゲーム分析日数について
+L0098	・選択して登録すると、以下1~4の分析日数として利用する
+L0099	1 フロント＞デッキ検索画面で表示する「カードの採用枚数ランキング」
+L0100	2 フロント＞採用枚数ランキング画面で表示する「採用枚数」
+L0101	3 フロント＞メタゲーム画面で表示する「デッキ数」
+L0102	4 フロント＞メタゲーム画面で表示する「使用率」
+L0103	※各フロントのURLは以下を参照
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+import csv
+p='integration_test/casegen/cases/F09-08_test_cases.tsv'
+with open(p) as f:
+ for row in csv.DictReader(f,delimiter='\\t'):
+  if row['テストID'] in ['IT-F09-08-023','IT-F09-08-034','IT-F09-08-036','IT-F09-08-038']:
+   print(row['テストID']);print('事前準備',row.get('事前準備'));print('手順',row.get('手順'));print('期待結果',row.get('期待結果'))
+PY" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+IT-F09-08-023
+事前準備 ① 本店が公開・営業中で、言語は日本語・英語・その他言語（日本語・英語以外）、状態はNM・SP・MP・HPを使える（S-F09-08-ENV）／② カード『F0908-023-A』（カードID 〔カードID-F0908-023〕（登録時に振られたカードIDを控えてある）・英語名『F0908-023-A』・日本語名『F0908-023-A』）の商品は、商品ID 〔商品ID-F0908-023〕（登録時に振られた商品IDを控えてある）（商品名『F0908-023-P1』・カードセット『F0908-023-S1』（セットID 〔セットID-F0908-023〕（登録時に振られたセットIDを控えてある）・発売日2026-03-01）・通常・公開中）の商品規格は規格ID 〔規格ID-F0908-023A〕（登録時に振られた規格IDを控えてある）（日本語・NM・販売価格500円・在庫5）、規格ID 〔規格ID-F0908-023B〕（登録時に振られた規格IDを控えてある）（日本語・SP・販売価格300円・在庫5）。このカードの商品は上記だけで、他に無い（S-F09-08-STOCK-023）／③ 新しいブラウザセッションを日本語表示で開き、ログアウト状態・買い物かごが空の状態にする
+手順 1. デッキ一括購入画面を、デッキIDを付けずに開く／2. カードリスト欄に「2 F0908-023-A」を入力する／3. 言語で「日本語のみ」、状態で「NM・SP」、通常/Foilで「通常カードのみ」、優先条件で「安いカード優先」を選ぶ／4. ブラウザの開発者ツールのネットワーク表示を開いた状態で「カートに追加」を押す／5. ネットワーク表示に出たカードリストの確認の応答の内容を開き、処理結果と、商品規格の識別子と数量の組の一覧を見る
+期待結果 応答の処理結果が成功で、商品規格の識別子と数量の組が「商品規格の識別子〔規格ID-F0908-023B〕・数量2」のこれだけであること
+IT-F09-08-034
+事前準備 ① 本店が公開・営業中で、言語は日本語・英語・その他言語（日本語・英語以外）、状態はNM・SP・MP・HPを使える（S-F09-08-ENV）／② カード『F0908-034-A』（カードID 〔カードID-F0908-034〕（登録時に振られたカードIDを控えてある）・英語名『F0908-034-A』・日本語名『F0908-034-A』）の商品は、商品ID 〔商品ID-F0908-034〕（登録時に振られた商品IDを控えてある）（商品名『F0908-034-P1』・カードセット『F0908-034-S1』（セットID 〔セットID-F0908-034〕（登録時に振られたセットIDを控えてある）・発売日2026-03-01）・通常・公開中）の商品規格は規格ID 〔規格ID-F0908-034A〕（登録時に振られた規格IDを控えてある）（日本語・NM・販売価格300円・在庫0）、規格ID 〔規格ID-F0908-034B〕（登録時に振られた規格IDを控えてある）（日本語・SP・販売価格400円・在庫2）。このカードの商品は上記だけで、他に無い（S-F09-08-STOCK-034）／③ 新しいブラウザセッションを日本語表示で開き、ログアウト状態・買い物かごが空の状態にする
+手順 1. デッキ一括購入画面を、デッキIDを付けずに開く／2. カードリスト欄に「2 F0908-034-A」を入力する／3. 言語で「日本語のみ」、状態で「NM・SP」、通常/Foilで「通常カードのみ」、優先条件で「安いカード優先」を選ぶ／4. ブラウザの開発者ツールのネットワーク表示を開いた状態で「カートに追加」を押す／5. ネットワーク表示に出たカードリストの確認の応答の内容を開き、処理結果と、商品規格の識別子と数量の組の一覧を見る
+期待結果 応答の処理結果が成功で、商品規格の識別子と数量の組が「商品規格の識別子〔規格ID-F0908-034B〕・数量2」のこれだけであること
+IT-F09-08-036
+事前準備 ① 本店が公開・営業中で、言語は日本語・英語・その他言語（日本語・英語以外）、状態はNM・SP・MP・HPを使える（S-F09-08-ENV）／② カード『F0908-036-A』（カードID 〔カードID-F0908-036〕（登録時に振られたカードIDを控えてある）・英語名『F0908-036-A』・日本語名『F0908-036-A』）の商品は、商品ID 〔商品ID-F0908-036〕（登録時に振られた商品IDを控えてある）（商品名『F0908-036-P1』・カードセット『F0908-036-S1』（セットID 〔セットID-F0908-036〕（登録時に振られたセットIDを控えてある）・発売日2026-03-01）・通常・公開中）の商品規格は規格ID 〔規格ID-F0908-036A〕（登録時に振られた規格IDを控えてある）（日本語・NM・販売価格500円・在庫0）、規格ID 〔規格ID-F0908-036B〕（登録時に振られた規格IDを控えてある）（日本語・SP・販売価格300円・在庫0）。このカードの商品は上記だけで、他に無い（S-F09-08-STOCK-036）／③ 新しいブラウザセッションを日本語表示で開き、ログアウト状態・買い物かごが空の状態にする
+手順 1. デッキ一括購入画面を、デッキIDを付けずに開く／2. カードリスト欄に「4 F0908-036-A」を入力する／3. 言語で「日本語のみ」、状態で「NM・SP」、通常/Foilで「通常カードのみ」、優先条件で「安いカード優先」を選ぶ／4. ブラウザの開発者ツールのネットワーク表示を開いた状態で「カートに追加」を押す／5. ネットワーク表示に出たカードリストの確認の応答の内容を開き、処理結果と、商品規格の識別子と数量の組の一覧を見る
+期待結果 応答の処理結果が成功で、商品規格の識別子と数量の組が「商品規格の識別子〔規格ID-F0908-036B〕・数量4」のこれだけであること
+IT-F09-08-038
+事前準備 ① 本店が公開・営業中で、言語は日本語・英語・その他言語（日本語・英語以外）、状態はNM・SP・MP・HPを使える（S-F09-08-ENV）／② カード『F0908-038-A』（カードID 〔カードID-F0908-038〕（登録時に振られたカードIDを控えてある）・英語名『F0908-038-A』・日本語名『F0908-038-A』）の商品は、商品ID 〔商品ID-F0908-038〕（登録時に振られた商品IDを控えてある）（商品名『F0908-038-P1』・カードセット『F0908-038-S1』（セットID 〔セットID-F0908-038〕（登録時に振られたセットIDを控えてある）・発売日2026-03-01）・通常・公開中）の商品規格は規格ID 〔規格ID-F0908-038A〕（登録時に振られた規格IDを控えてある）（日本語・NM・販売価格300円・在庫5）、規格ID 〔規格ID-F0908-038B〕（登録時に振られた規格IDを控えてある）（日本語・SP・販売価格400円・在庫5）。このカードの商品は上記だけで、他に無い（S-F09-08-STOCK-038）／③ 新しいブラウザセッションを日本語表示で開き、ログアウト状態・買い物かごが空の状態にする
+手順 1. デッキ一括購入画面を、デッキIDを付けずに開く／2. カードリスト欄に「3 F0908-038-A」を入力する／3. 言語で「日本語のみ」、状態で「NM・SP」、通常/Foilで「通常カードのみ」、優先条件で「安いカード優先」を選ぶ／4. ブラウザの開発者ツールのネットワーク表示を開いた状態で「カートに追加」を押す／5. ネットワーク表示に出たカードリストの確認の応答の内容を開き、処理結果と、商品規格の識別子と数量の組の一覧を見る
+期待結果 応答の処理結果が成功で、商品規格の識別子と数量の組が「商品規格の識別子〔規格ID-F0908-038A〕・数量3」のこれだけで、規格〔規格ID-F0908-038B〕の組を含まないこと
+
+codex
+### 1
+- 機能: F09-03
+- 種類: B
+- 対象: `F09-03_factors.tsv` P1
+- 主張: 開催日が集計期間内かどうかを要因にしているが、期間を決めるメタ集計日数は要因にない。
+- 実際: 集計期間の開始日はフォーマットごとのメタ集計日数で決まり、その設定値をメタゲームのデッキ数・使用率に使う（`units/F09-03/design.txt:L0011-L0013`、`units/M14-10/design.txt:L0097-L0102`）。
+- 修正案: メタ集計日数をP1の要因に加え、開催日との関係を判定する。
+
+### 2
+- 機能: F09-04
+- 種類: B
+- 対象: `F09-04_factors.tsv` P1
+- 主張: 開催日の集計期間内外を要因にしているが、期間を決めるメタ集計日数は要因にない。
+- 実際: 採用枚数の集計期間はフォーマットごとのメタ集計日数で決まる（`units/F09-04/design.txt:L0009-L0012`、`units/M14-10/design.txt:L0097-L0102`）。
+- 修正案: メタ集計日数をP1の要因に加え、開催日との関係を判定する。
+
+### 3
+- 機能: F09-06
+- 種類: B
+- 対象: `F09-06_factors.tsv` P3
+- 主張: 画像の決定段とキャッシュはあるが、表示言語の要因がない。
+- 実際: 画像選択の優先順には表示中の言語との一致があり、別言語のキャッシュがある場合はその判定をし直さない（`units/F09-06/design.txt:L0023-L0024`、`units/F09-06/design.txt:L0065-L0066`）。
+- 修正案: 表示言語をP3の要因に加える。
+
+### 4
+- 機能: F09-06
+- 種類: A
+- 対象: `F09-06_factors.tsv` F01
+- 主張: 表示区分の「公開」と「限定公開」を別の値としている。
+- 実際: 公開では詳細を表示し、限定公開でも値の一致を求めず詳細を表示する（`units/F09-06/design.txt:L0009-L0011`）。P1の結果の分かれ目は非公開かどうかである。
+- 修正案: P1では公開と限定公開を同じ値にまとめる。
+
+### 5
+- 機能: F09-07
+- 種類: A
+- 対象: `F09-07_factors.tsv` F01・F02 のP3指定
+- 主張: テキスト経路の応答を決めるP3に、表示区分とデッキリストの公開状態を要因としている。
+- 実際: テキスト経路は両方の公開状態を判定せず、非公開でも識別子を指定すれば受け取れる（`units/F09-07/design.txt:L0023-L0029`）。
+- 修正案: F01・F02の処理IDからP3を外し、P3が2要因以上の処理に当たるか見直す。
+
+### 6
+- 機能: F09-08
+- 種類: B
+- 対象: `F09-08_factors.tsv` P2
+- 主張: 購入条件や在庫の要因はあるが、商品・商品規格の公開状態と削除状態はない。
+- 実際: 削除されておらず公開中の商品、かつ削除されていない商品規格だけが在庫を引く対象になる（`units/F09-08/design.txt:L0019-L0022`）。
+- 修正案: 商品の公開・削除状態と商品規格の削除状態をP2の要因に加える。
+
+### 7
+- 機能: F09-08
+- 種類: A
+- 対象: `F09-08_factors.tsv` F08
+- 主張: 同一言語のNMの販売価格が100円を超えれば、NM以外の規格も対象になるとしている。
+- 実際: NM以外にはその条件に加え、対象規格自身の販売価格が100円以上という条件もある（`units/F09-08/design.txt:L0024-L0025`）。
+- 修正案: F08の結果を条件付きに直し、対象規格自身の販売価格も要因に加える。
+
+### 8
+- 機能: F09-08
+- 種類: C
+- 対象: `F09-08_interactions.tsv` P2 F03+F07・F04+F07・F05+F07・F07+F08
+- 主張: 言語・状態・通常/Foil・NM価格の各条件と、在庫・希望枚数は関係しないとしている。
+- 実際: 前者は割り当て対象の商品規格を絞り、後者はその対象規格の在庫を使って割り当て先と数量を決める（`units/F09-08/design.txt:L0014-L0016`、`units/F09-08/design.txt:L0024-L0032`）。絞り込み結果が割り当ての入力になる。
+- 修正案: 挙げた組を「効き合う」に直す。
+
+### 9
+- 機能: F10-01
+- 種類: A
+- 対象: `F10-01_factors.tsv` F04
+- 主張: サイトの言語を日本語・英語の2値の要因としている。
+- 実際: 英語サイトでも日本語サイトと同じ条件・同じ値で積む（`units/F10-01/design.txt:L0031`）。
+- 修正案: 結果が分かれないF04を要因から外す。
+
+### 10
+- 機能: F10-01
+- 種類: C
+- 対象: `F10-01_interactions.tsv` P1 F01+F02+F03
+- 主張: ログイン状態・ブロック配置・受け渡し領域の状態の3要因をまとめて「効き合う」としている。
+- 実際: 未ログインなら積まず領域も用意せず、ブロックを外したページでも積まない。領域の状態を使うのは積む処理が動く場合だけで、3要因すべてが同時に互いの結果を変える定めではない（`units/F10-01/design.txt:L0009-L0014`、`units/F10-01/design.txt:L0019`、`units/F10-01/design.txt:L0028-L0029`）。
+- 修正案: 3要因の行を解き、必要な2要因の組ごとに判定する。
+
+### 11
+- 機能: F10-02
+- 種類: D
+- 対象: `F10-02_constraints.tsv` P1 F01=非会員
+- 主張: 非会員の組を「正解未定」としている。
+- 実際: 会員としてログインせず注文完了画面を表示した場合、`transactionMailaddress` は空文字と明記されている（`units/F10-02/design.txt:L0045`）。画面への到達経路が未確定という理由は、この値の結果を未定にはしない。
+- 修正案: この「正解未定」制約を外す。
+
+### 12
+- 機能: F10-03
+- 種類: D
+- 対象: `F10-03_constraints.tsv` P2 F05=商品詳細（対象外の商品）とF06の組
+- 主張: 対象外の商品でも、差し込む商品の並びが「商品あり」または「0件」の組を作れる状態になっている。
+- 実際: 商品詳細で商品の並びを差し込むのは、カードの商品で基本土地でない場合だけである（`units/F10-03/design.txt:L0044-L0048`）。対象外の商品にはF06が表す並び自体がない。
+- 修正案: 対象外の商品とF06の組を生成しないよう制約を加える。
+tokens used
+85,279
+### 1
+- 機能: F09-03
+- 種類: B
+- 対象: `F09-03_factors.tsv` P1
+- 主張: 開催日が集計期間内かどうかを要因にしているが、期間を決めるメタ集計日数は要因にない。
+- 実際: 集計期間の開始日はフォーマットごとのメタ集計日数で決まり、その設定値をメタゲームのデッキ数・使用率に使う（`units/F09-03/design.txt:L0011-L0013`、`units/M14-10/design.txt:L0097-L0102`）。
+- 修正案: メタ集計日数をP1の要因に加え、開催日との関係を判定する。
+
+### 2
+- 機能: F09-04
+- 種類: B
+- 対象: `F09-04_factors.tsv` P1
+- 主張: 開催日の集計期間内外を要因にしているが、期間を決めるメタ集計日数は要因にない。
+- 実際: 採用枚数の集計期間はフォーマットごとのメタ集計日数で決まる（`units/F09-04/design.txt:L0009-L0012`、`units/M14-10/design.txt:L0097-L0102`）。
+- 修正案: メタ集計日数をP1の要因に加え、開催日との関係を判定する。
+
+### 3
+- 機能: F09-06
+- 種類: B
+- 対象: `F09-06_factors.tsv` P3
+- 主張: 画像の決定段とキャッシュはあるが、表示言語の要因がない。
+- 実際: 画像選択の優先順には表示中の言語との一致があり、別言語のキャッシュがある場合はその判定をし直さない（`units/F09-06/design.txt:L0023-L0024`、`units/F09-06/design.txt:L0065-L0066`）。
+- 修正案: 表示言語をP3の要因に加える。
+
+### 4
+- 機能: F09-06
+- 種類: A
+- 対象: `F09-06_factors.tsv` F01
+- 主張: 表示区分の「公開」と「限定公開」を別の値としている。
+- 実際: 公開では詳細を表示し、限定公開でも値の一致を求めず詳細を表示する（`units/F09-06/design.txt:L0009-L0011`）。P1の結果の分かれ目は非公開かどうかである。
+- 修正案: P1では公開と限定公開を同じ値にまとめる。
+
+### 5
+- 機能: F09-07
+- 種類: A
+- 対象: `F09-07_factors.tsv` F01・F02 のP3指定
+- 主張: テキスト経路の応答を決めるP3に、表示区分とデッキリストの公開状態を要因としている。
+- 実際: テキスト経路は両方の公開状態を判定せず、非公開でも識別子を指定すれば受け取れる（`units/F09-07/design.txt:L0023-L0029`）。
+- 修正案: F01・F02の処理IDからP3を外し、P3が2要因以上の処理に当たるか見直す。
+
+### 6
+- 機能: F09-08
+- 種類: B
+- 対象: `F09-08_factors.tsv` P2
+- 主張: 購入条件や在庫の要因はあるが、商品・商品規格の公開状態と削除状態はない。
+- 実際: 削除されておらず公開中の商品、かつ削除されていない商品規格だけが在庫を引く対象になる（`units/F09-08/design.txt:L0019-L0022`）。
+- 修正案: 商品の公開・削除状態と商品規格の削除状態をP2の要因に加える。
+
+### 7
+- 機能: F09-08
+- 種類: A
+- 対象: `F09-08_factors.tsv` F08
+- 主張: 同一言語のNMの販売価格が100円を超えれば、NM以外の規格も対象になるとしている。
+- 実際: NM以外にはその条件に加え、対象規格自身の販売価格が100円以上という条件もある（`units/F09-08/design.txt:L0024-L0025`）。
+- 修正案: F08の結果を条件付きに直し、対象規格自身の販売価格も要因に加える。
+
+### 8
+- 機能: F09-08
+- 種類: C
+- 対象: `F09-08_interactions.tsv` P2 F03+F07・F04+F07・F05+F07・F07+F08
+- 主張: 言語・状態・通常/Foil・NM価格の各条件と、在庫・希望枚数は関係しないとしている。
+- 実際: 前者は割り当て対象の商品規格を絞り、後者はその対象規格の在庫を使って割り当て先と数量を決める（`units/F09-08/design.txt:L0014-L0016`、`units/F09-08/design.txt:L0024-L0032`）。絞り込み結果が割り当ての入力になる。
+- 修正案: 挙げた組を「効き合う」に直す。
+
+### 9
+- 機能: F10-01
+- 種類: A
+- 対象: `F10-01_factors.tsv` F04
+- 主張: サイトの言語を日本語・英語の2値の要因としている。
+- 実際: 英語サイトでも日本語サイトと同じ条件・同じ値で積む（`units/F10-01/design.txt:L0031`）。
+- 修正案: 結果が分かれないF04を要因から外す。
+
+### 10
+- 機能: F10-01
+- 種類: C
+- 対象: `F10-01_interactions.tsv` P1 F01+F02+F03
+- 主張: ログイン状態・ブロック配置・受け渡し領域の状態の3要因をまとめて「効き合う」としている。
+- 実際: 未ログインなら積まず領域も用意せず、ブロックを外したページでも積まない。領域の状態を使うのは積む処理が動く場合だけで、3要因すべてが同時に互いの結果を変える定めではない（`units/F10-01/design.txt:L0009-L0014`、`units/F10-01/design.txt:L0019`、`units/F10-01/design.txt:L0028-L0029`）。
+- 修正案: 3要因の行を解き、必要な2要因の組ごとに判定する。
+
+### 11
+- 機能: F10-02
+- 種類: D
+- 対象: `F10-02_constraints.tsv` P1 F01=非会員
+- 主張: 非会員の組を「正解未定」としている。
+- 実際: 会員としてログインせず注文完了画面を表示した場合、`transactionMailaddress` は空文字と明記されている（`units/F10-02/design.txt:L0045`）。画面への到達経路が未確定という理由は、この値の結果を未定にはしない。
+- 修正案: この「正解未定」制約を外す。
+
+### 12
+- 機能: F10-03
+- 種類: D
+- 対象: `F10-03_constraints.tsv` P2 F05=商品詳細（対象外の商品）とF06の組
+- 主張: 対象外の商品でも、差し込む商品の並びが「商品あり」または「0件」の組を作れる状態になっている。
+- 実際: 商品詳細で商品の並びを差し込むのは、カードの商品で基本土地でない場合だけである（`units/F10-03/design.txt:L0044-L0048`）。対象外の商品にはF06が表す並び自体がない。
+- 修正案: 対象外の商品とF06の組を生成しないよう制約を加える。

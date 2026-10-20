@@ -1,0 +1,3804 @@
+Reading additional input from stdin...
+OpenAI Codex v0.162.1
+--------
+workdir: /home/y-saito/Developments/hareruya-design-docs
+model: gpt-6-sol
+provider: openai
+approval: never
+sandbox: read-only
+reasoning effort: high
+reasoning summaries: none
+session id: 01a15784-03d1-7bb3-9794-a7c946960126
+--------
+user
+# 反証の依頼: 機能 M04-24・M04-25・M04-28・M04-29・M04-30・M04-31・M04-32・M04-33 の要因表
+
+あなたは独立したレビュアーである。別の担当が作った**要因表**に、設計書と食い違う所が無いかを確かめる。直さない。読むだけ。
+リポジトリは `/home/y-saito/Developments/hareruya-design-docs/`。出力は日本語。
+
+## 要因表とは（依頼者決定 2026-10-20）
+
+結合テストで、1回の処理の結果を左右する要因（区分・状態・設定・関連データの値）が2つ以上あるとき、
+**効き合う要因は値の組合せを全部、関係しない要因はどの2つの要因の値の組もどこかで1回**試すケースを足す。
+要因表はその元で、表から機械が組を並べる（`integration_test/casegen/combination/gen_combos.py`）。表の誤りはそのままケースの誤りになる。
+作り方の決まりは `integration_test/casegen/combination/FACTOR_PROMPT.md`（担当への依頼文）にある。まずこれを読む。
+
+## 読むもの
+
+| 何 | パス |
+| --- | --- |
+| 要因表（機能ごとに5つ） | `integration_test/casegen/combination/factors/<機能ID>_processes.tsv`・`_factors.tsv`・`_interactions.tsv`・`_constraints.tsv`・`_existing.tsv` |
+| 機械が並べた組（参考） | `integration_test/casegen/combination/combos/<機能ID>.tsv` |
+| 設計書（行頭の `L0001` は行番号） | `integration_test/casegen/combination/units/<機能ID>/design.txt`、他の機能は `units/<機能ID>/design.txt`、共通シートは `units/_common/` |
+| ケース | `integration_test/casegen/cases/<機能ID>_test_cases.tsv`、全機能は `integration_test/casegen/all_test_cases.tsv` |
+| 結合テストの範囲 | `integration_test/SCOPE.md` |
+| 不機能仕様・フェーズ2見送り（載っているものは意図して外している。指摘しない） | `functions/dead-spec-register.tsv`・`functions/phase2_candidates.tsv` |
+
+設計書の中で記述が食い違うときは、Excel 由来の本文 ＞ 埋め込みの「表示メッセージ」節 ＞ 埋め込みの「現行仕様」節の順に採る。
+
+## 確かめること（事実だけ）
+
+| 種類 | 何を見るか |
+| --- | --- |
+| A 要因・値の誤り | 要因・値・値ごとの結果が、根拠の行に書かれていない。根拠の行が別のことを言っている。結果が同じになる値を別の値として分けている |
+| B 要因・値の抜け | 設計書の行が「この値でこの処理の結果が変わる」と定めているのに、要因・値が無い（他の機能の設定値でこの処理が読むものを含む） |
+| C 判定の誤り | 効き合う／関係しない／設計書が決めていない の判定が、設計書の行と食い違う。特に、足し算で合計に入るだけの組を効き合うにしている、一方の結果がもう一方の判定の入力になるのに関係しないにしている。**3つ以上の要因をまとめた効き合う**は、その全部が同時に互いの結果を変えるかを確かめる（2つずつで効き合うだけなら2要因の行に分けるべき。まとめると値の組合せが全部ケースになる）。1件の対象を出す・出さないを複数の条件の「すべて満たす／どれか1つで外れる」で決める所を効き合うにしていないか（条件どうしは関係しないでよい）。優先順位で順に比べて決める所を、比べる項目ごとの要因の全組合せにしていないか（「どの段で決まるか」の1要因でよい） |
+| D 制約の誤り・抜け | 作れない としている組が設計上作れる。作れない組が載っていない。正解未定 としている組の結果が設計書から決まる |
+| E 既存ケースの読み違い | existing.tsv の値が、そのケースの事前準備・手順に書かれていない。そのケースが処理を動かしていない、確かめる所で結果を見ていない |
+| F 範囲外 | 処理・要因が結合テストの範囲でない（同じ画面の中で閉じる表示の計算、入力値の検証、検索条件の組合せ、権限、二重送信、排他） |
+
+次は指摘しない: 書き方・言い回し、要因IDの振り方、値の並び順、設計書に無い仕様の追加の要求、境界値・数量1/複数（別に済んでいる）。
+
+## 出力
+
+指摘が無ければ `NONE` の1語だけ。あれば1件ずつ、次の形で。
+
+```
+### <番号>
+- 機能: <機能ID>
+- 種類: <A〜F>
+- 対象: <ファイル名> <要因ID・処理ID・組・テストID>
+- 主張: <表に書かれていること>
+- 実際: <設計書・ケースの記述（ファイル:行 を必ず添える）>
+- 修正案: <どう直すか。1文>
+```
+warning: Codex could not find bubblewrap on PATH. Install bubblewrap with your OS package manager. See the sandbox prerequisites: https://developers.openai.com/codex/concepts/sandboxing#prerequisites. Codex will use the bundled bubblewrap in the meantime.
+2026-10-20T04:13:53.869710Z ERROR rmcp::transport::worker: worker quit with fatal: Transport channel closed, when AuthRequired(AuthRequiredError { www_authenticate_header: "Bearer resource_metadata=\"https://mcp.firecrawl.dev/.well-known/oauth-protected-resource/v2/mcp-oauth\", error=\"invalid_token\", error_description=\"Firecrawl credentials required: OAuth access token (Authorization: Bearer fco_...) or API key (x-firecrawl-api-key)\"" })
+codex
+まず作成ルールと結合テストの範囲を読み、その後、8機能の要因表を設計書・既存ケースと照合します。ファイルは変更しません。
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/FACTOR_PROMPT.md' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/SCOPE.md' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "rg -n 'M04-(24|25|28|29|30|31|32|33)' functions/dead-spec-register.tsv functions/phase2_candidates.tsv" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "rg --files integration_test/casegen/combination/{factors,units,combos} integration_test/casegen/cases | rg '(M04-(24|25|28|29|30|31|32|33)|_common)' | sort" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 16ms:
+# 結合テスト観点表の適用範囲
+
+`ipa-integration-test-viewpoints.tsv` が対象とする範囲を定める。
+判定基準は旧観点資産（`archive/integration-test-viewpoints.md`）の層判定をそのまま踏襲する。
+
+## 対象とするもの
+
+**独立したコンポーネント間の契約と相互作用。**
+呼出側と受取側の間で、受け渡される値、状態、副作用、異常時の振る舞いが
+双方の設計どおりに噛み合っていることを確認する。
+
+**媒体をいくつ跨いだかでは判定しない。** 単一のロジックの結果をDBや画面で観測するだけの確認は、
+観測先が別コンポーネントであっても単体テストの範囲とする。
+旧正本もこの基準を採り、DBへ登録される変換・計算結果をUT判定している
+（`archive/integration-test-viewpoints.md` No.60-66）。
+
+## 単項目の検証は、DBへ保存するかで分ける（2026-09-01 依頼者決裁）
+
+単項目の桁数・文字種・必須・コード値・日付・メールアドレス書式の検証は、
+**その項目をDBへ保存するかどうか**で担当を分ける。
+
+| 項目の性質 | 担当 | 理由 |
+| --- | --- | --- |
+| DBへ保存する項目（登録・編集の入力欄） | **結合テスト** | Form層で受理された値がDB層に収まるかは跨コンポーネントでしか観測できない。pf(MySQL)はバイト、ee(PostgreSQL)は文字で数えるため、Form層の単体テストでは意味論差が出ない |
+| 画面上だけの入力制限（検索条件、絞り込み、表示件数） | 単体テスト | DBへ保存しないので意味論差が起きない。判定ロジックの正しさだけを見ればよい |
+
+同じ種類の判定であれば、複数項目をまとめて1件のテストケースにしてよい。
+例: 「商品名と商品名(英)の最大文字数が設計書どおりであること」は1件でよい。
+判定の種類が違えば分ける（最大文字数と必須は別のケース）。
+
+単体テストが担うのは、検証を行う処理そのもの（計算式、文字数の数え方、分岐網羅）である。
+
+画面項目定義のうち次は、桁数・必須の指定が無くても結合テストの対象とする。
+跨コンポーネントでしか確認できないからである。
+
+- 初期値の指定（画面を開いてDBから値を取り、初期表示する）
+- 画面部品のふるまい（「押下すると検索を行う」「表示/非表示を切り替える」）
+- 表示内容（「チェックを付けると一覧すべてを対象に設定」）
+
+## 現行仕様と刷新の指示が食い違うときは刷新を採る（2026-09-01）
+
+HTML設計書には次の2つが載る。両方が同じ項目に触れて食い違うことがある。
+
+| 出所 | 中身 |
+| --- | --- |
+| Excel基本設計の本文 | 刷新後にどうするかの指示。「※カスタマイズ対応」「〜とする」 |
+| 埋め込まれた機能設計書の「現行仕様」 | 現行の実装がどう動いているか |
+
+**期待結果は刷新の指示を採る。** 現行仕様は、刷新の指示が無い箇所にだけ使う。
+両方に記述があって内容が違うときは、刷新の指示を期待結果にし、
+現行仕様との差を `出典` に併記する。
+
+実例: M03-01の並び順は、機能設計書の現行仕様が「商品IDの降順」、
+Excel基本設計が「表示順は、棚番号昇順とする」で食い違う。棚番号昇順を採る。
+現行仕様だけを見てケースを書き、誤った期待結果を作った（codex R1）。
+
+## 対象としないもの
+
+| 除外区分 | 内容 | 担当 |
+| --- | --- | --- |
+| 単体テスト粒度 | 単一コンポーネント内で完結する変換・計算ロジック | 単体テスト |
+| 単体テスト粒度 | 単一メソッド内の分岐網羅 | 単体テスト |
+| 単体テスト粒度 | 変換、編集分岐、ループ編集、計算、連結、暗号化、マスキング、パディング、小数桁の結果そのもの | 単体テスト |
+| e2e粒度 | 見た目、画面レイアウト、ブラウザ固有挙動、確認ダイアログの表示 | e2e・手動 |
+| e2e粒度 | 画面表示文言の照合 | e2e・手動 |
+| 性能 | 応答時間、スループット、同時接続数の上限、リトライ間隔の適切さ | 性能テスト（別工程） |
+
+## 境界が紛らわしいもの
+
+同じ語で呼ばれるが、担当が分かれるもの。
+
+| 事象 | 結合テストが見るもの | 他が見るもの |
+| --- | --- | --- |
+| 境界値 | 設計書が定めた桁数・範囲どおりに受理／拒否されること。DB層のカラム制約、件数上限、ファイルサイズ、表示上限を含む | 計算式そのものの正しさは単体テスト |
+| 文字列長 | 設計書が定めた最大文字数どおりに受理／拒否されること。pf(MySQL)とee(PostgreSQL)の意味論差を含み、Form層とDB層の双方を見る | 文字数を数える処理そのものは単体テスト |
+| 最大件数・最大ファイルサイズ | 規定量を機能として正しく扱えるか（ITB-11） | 規定時間内に終わるかは性能テスト |
+| タイムアウト | タイムアウト時の跨コンポーネントの挙動（ITB-14） | 応答時間そのものは性能テスト |
+| リトライ | 再送回数、間隔、打切り条件が仕様どおりか（ITB-15） | 間隔の適切さは性能テスト |
+| バリデーション | 設計書が定めた検証（必須、桁数、文字種、コード値、日付、メールアドレス書式）の結果が画面・DB・ファイル・連携先へ反映されること | 検証関数そのものの分岐網羅は単体テスト |
+| メッセージ | DB、ファイル、ログ、連携先の期待結果（COM-04） | 画面表示文言の照合はe2e |
+
+## 除外の記録
+
+除外した観点は捨てない。旧資産の層判定は `archive/integration-test-viewpoints.md` の
+`テスト層` 列に、新観点への対応は `MIGRATION_MAP.tsv` に残る。
+
+ exited 1 in 29ms:
+ succeeded in 74ms:
+# 依頼: 機能 {FID}（{FNAME}）の要因表づくり
+
+これは分析である。ケースも設計書も直さない。事実は自分でファイルを読んで確かめ、推測で書かない。
+リポジトリは `/home/y-saito/Developments/hareruya-design-docs/`。パスはここからの相対。出力はすべて日本語で書く。
+git の変更操作（add・commit など）をしない。
+
+## 背景（依頼者決定 2026-10-20）
+
+結合テストケースは設計書の定め1件ごとに作られ、10/15 には定めごとに「数量1と複数」「有無」「状態・区分ごと」などのデータを足した。
+それでも、**1回の処理の結果を左右する要因が2つ以上あるとき、その値を同時に変えて通すケースが無い**。
+例: 公開側で注文を確定するケース33件は、支払方法がほぼ郵便振替か銀行振込で、配送方法もゆうパック・EMS が大半。クレジットカード・代金引換・店頭支払、店頭受取・同梱で注文を通すケースは無い。
+
+依頼者の決定:
+- **効き合う要因**（一方の値で、もう一方の値の結果が変わると設計書が定める）は、値の組合せを全部試す。
+- **関係しない要因**は、どの2つの要因の値の組も、どこかのケースで1回は出るように並べる（2要因の組）。
+- **他の機能の設定値**（送料・手数料・支払方法の利用条件・送料無料の条件・配送方法に紐づく支払方法など）も、それを読む処理の要因に入れる。
+
+あなたの仕事は、機能 {FID} について、組合せの元になる**要因表**を作ること。組合せの行（どの値の組を何件試すか）は、この表から別の道具が機械で作る。
+だから、表の要因・値・判定の誤りは、そのままケースの誤りになる。
+
+## 読むもの
+
+| 何 | パス |
+| --- | --- |
+| 設計書（この機能のシートを文字に起こしたもの。行頭の `L0001` とタブは行番号。`#####` の行はシートの境目） | `integration_test/casegen/combination/units/{FID}/design.txt` |
+| 他の機能の設計書（設定値を読む処理のとき、設定する機能の定めを引く） | `integration_test/casegen/combination/units/<機能ID>/design.txt`（機能名は `combination/units.tsv`） |
+| 同じ冊子の共通シート（必要なときだけ） | {COMMON} |
+| この機能のケースとシード | `integration_test/casegen/cases/{FID}_test_cases.tsv`・`{FID}_seed_data.tsv` |
+| この機能の、テストから外したケース | `integration_test/casegen/combination/units/{FID}/excluded.tsv` |
+| 全機能のケース（他の機能のケースがこの機能の処理を通しているかの検索用） | `integration_test/casegen/all_test_cases.tsv`（列: テストID・観点ID・基本設計書・検証方法・テストデータ・事前準備・手順・期待結果。セル内改行があるので csv として読む） |
+| 結合テストの範囲 | `integration_test/SCOPE.md` |
+| 不機能仕様・フェーズ2見送り（ここに載るものは要因にしない） | `functions/dead-spec-register.tsv`・`functions/phase2_candidates.tsv` |
+| 設計書の中で記述が食い違うときの優先順位 | Excel 由来の本文 ＞ 埋め込みの「表示メッセージ」節（リニューアル後の仕様）＞ 埋め込みの「現行仕様」節。同じ出所では改訂後が優先。**Excel が触れていない条件を埋め込みが足しているだけのときは食い違いではなく、両方を当てる**（例: Excel が選択肢を並べ、埋め込みが「ポイントで全額払うときは全額ポイント支払いだけ」と条件を足す → 両方）。既存ケースは正解の根拠にしない（既存ケースと設計書の食い違いは返答に書く） |
+
+検索は `grep` を使う（`rg` は同じ入力で0件を返すことがあるので使わない）。
+
+## やること
+
+### 1. 処理を決める
+
+design.txt を**全部**読み、この機能の中で「操作やデータを受けて結果を出す処理」のうち、**結果を左右する要因が2つ以上ある処理**を挙げる。
+
+- 処理の単位は「1回の操作で動き、結果を1つの所で確かめられるまとまり」。例: 注文を確定して受注を作る／お支払い方法の選択肢を出す／受注の対応状況をキャンセルへ変えて保存する。
+- 結果は、データを作った所とは**別のコンポーネントで確かめる**もの（DB、別の画面、別の機能の画面、CSV・帳票、メール、連携先）。DBにあるデータで画面の表示・選択肢が変わるものも入る（例: 既存の受注の有無で配送方法の選択肢が変わる）。同じ画面の中だけで閉じる表示の計算（保存しない）と、計算式そのものの正しさは単体テストなので挙げない。
+- 要因が1つだけの処理は挙げない（10/15 の監査で済んでいる）。
+- **要因が2つ以上の処理が1つも無い機能**（一覧を出すだけ、1つの設定を保存するだけ、など）は、5つのファイルをヘッダだけで書き、返答の1行目に「対象の処理なし」と理由を書く。無理に処理を作らない。
+- 入力値の検証（必須・桁数・形式）、検索条件・削除条件の組合せ、権限、二重送信、排他は、ほかの観点の持ち分なので処理にも要因にもしない。
+
+### 2. 要因と値を挙げる
+
+処理ごとに、**その処理の結果を変えると設計書が定める要因**を挙げる。
+
+- 要因は「区分・状態・設定・関連データ」の値。例: 閲覧店舗、配送方法、支払方法、ポイントの使い方、受注の種類（通常・店頭受取・ついで買い）、会員か非会員か、変更前の対応状況、既存の受注の状態。
+- 他の機能で設定する値で、この処理が読むものも要因にする（出所に機能IDを書く）。例: 支払方法の利用条件（M10-04）に対する注文金額、都道府県別の送料（M10-06）。その機能の design.txt で定めを確かめ、根拠に `M10-04:L0123` の形で書く。**この処理の結果への効き方が設計書のどこにも書かれていない設定値は要因にしない**（値ごとの結果が書けないため）。そういう設定値は返答の「判断に迷った点」に挙げる（依頼元が論点として控える）。
+- **値は、結果の分かれ目ごとに代表を1つ**。結果が同じになる値は1つにまとめる（例: ゆうパックとゆうパケットで結果が変わらないならどちらか1つ）。結果が値ごとに違うなら全部挙げる（例: 支払方法ごとに手数料・ボタンの文言・ポイントを使う時点が違うなら、支払方法は全部）。
+- 境界値（ちょうどの値・上限）と数量1/複数は、10/15 に済んでいるので値にしない。値は「範囲内」「範囲外」「あり」「なし」のような分かれ目で書く。
+- 不正な入力、作れない値（画面の選択肢に無い値）は値にしない。
+- 値ごとの結果を、設計書の語で短く書く（「支店: 支払方法は店頭支払だけ」）。
+
+### 3. 要因どうしを判定する
+
+処理ごとに、その処理の要因の**すべての2つの組**を判定する（要因が5つなら10組）。判定は次のどれか。
+
+| 判定 | いつ | 根拠 |
+| --- | --- | --- |
+| 効き合う | 一方の値で、もう一方の値の結果（可否、選択肢、金額、更新先、更新内容）が変わると設計書が定める。または、一方の結果がもう一方の判定の入力になる（例: 使用ポイントで支払う金額が変わり、支払方法の選択肢が変わる） | 両方を結ぶ設計書の行が必須 |
+| 関係しない | それぞれの要因の結果が、もう一方の値によって変わらない（例: 送料は配送方法で、手数料は支払方法で決まり、合計は足し算） | 理由を書く |
+| 設計書が決めていない | 同時に効いたときの結果が設計書から決まらない（例: 送料無料の判定に使う金額が、ポイントを引く前か後か書かれていない） | 決まらない理由。下の「組の制約」に、決まらない値の組を「正解未定」で必ず書く |
+
+3つ以上の要因がまとめて効き合うとき（例: 配送方法・既存の受注の状態・既存の受注の支払方法で同梱を出すか決まる）は、1行に `F01+F03+F05` と書いて「効き合う」にしてよい。その中の2つの組は、別の行に書かない。**まとめるのは、その全部が同時に互いの結果を変えるときだけ**。2つずつで効き合うだけなら2要因の行に分ける（まとめると値の組合せが全部ケースになり、件数が膨らむ）。
+**選べるものの集まりを2つの定めが別々に絞り、結果がその共通部分になるとき**（例: 支店は支払方法が店頭支払だけ、同梱は郵便振替・銀行振込だけ → 選択肢の中身が組ごとに変わる）は「効き合う」にする。「設計書が決めていない」にするのは、両方を当てると選択肢が1つも残らないなど、結果が設計書から決まらない組だけ。
+**1件の対象を出す・出さない（対象にする・しない）を、複数の条件の「すべて満たす」または「どれか1つで外れる」で決めるとき**（例: 公開・在庫あり・セール期間内・表示フラグ のすべてを満たす商品だけ出す）は、条件どうしは「関係しない」にする。結果は出る・出ないの2つだけで、条件ごとの外れ方は1つずつ確かめれば足り、全組合せは要らない（7条件を効き合うにすると128行になる）。
+**優先順位で順に比べて決めるとき**（例: 複数一致したら、言語→特殊版→発売日→フォイル→プロモの順に比べて先に差が付いたもので選ぶ）は、比べる項目を別々の要因にして全組合せにしない。「どの段で決まるか」を1つの要因にまとめる（値: 1段目で決まる｜2段目で決まる｜…｜全段が同じ）。上の段の差が下の段を隠すので、各段で決まる組を1つずつ試せば足りる（6段を効き合うにすると64行になる）。
+「一方の値で、もう一方の処理そのものが行われない」型（例: キャンセル日が既に入っていると、在庫・ポイントの戻しを行わない）も「効き合う」にする。
+**推測で値の組を「作れない」にしない**。設計書の語がどの値を指すか決まらないとき（例: 支店の「店舗受取」が店頭受取とスムーズ店頭受取のどちらか）は「正解未定」にする。
+**効き合う組の値の組合せは全部ケースになる**。値が多い要因どうし（7×7 など）を効き合うにするときは、設計書の行で本当に互いの結果を変えるかを確かめる。足し算で合計に入るだけなら「関係しない」。
+
+### 4. 組の制約を書く
+
+- **作れない**: 設計上その値の組が成り立たない（例: 支店では支払方法が店頭支払だけなので、支店×代金引換は作れない）。根拠の行が必須。
+- **正解未定**: その値の組で結果が設計書から決まらない。決まらない理由を書く。これはケースにせず、報告書に論点として残す。
+
+### 5. 既存のケースが通している組を書く
+
+この機能のケース（と、`all_test_cases.tsv` を語で検索して見つかった他の機能のケース）のうち、**その処理を動かして、確かめる所で結果を確かめている**ケースを1件ずつ書き、そのケースで値が決まっている要因の値を書く。
+
+- 値は、事前準備・手順に**書かれている**ものだけ。書かれていない要因は書かない（流れの中でたまたまそうなるだけのものは数えない）。
+- 1つのケースが同じ処理を別の値で2回以上通しているときは、通した値ごとに1行ずつ書く（同じテストIDの行が2つになる）。1回の処理で2つのデータを別の値で扱う（混在）ケースは書かない。
+- 期待結果が設計書と食い違う既存ケースは、値が合っていても書かない（返答に食い違いとして書く）。
+- 処理を動かしていない（画面を開いて別のことを見るだけ）ケース、結果を確かめていないケースは書かない。
+- テストから外したケース（excluded.tsv）は書かない。
+
+## 出力（この5つだけを書く。ほかのファイルは変更しない）
+
+すべて `integration_test/casegen/combination/factors/` に、タブ区切り・ヘッダつきで書く。セル内に改行・タブ・ダブルクォートを入れない。
+
+### `{FID}_processes.tsv`（5列）
+
+```
+処理ID	処理	契機	確かめる所	根拠
+P1	注文を確定して受注を作る	ご注文方法指定画面で確定チェックボックスを選び、注文するボタンを押す	受注情報編集画面（M05-11）	L0322-L0330
+```
+
+- 処理IDは P1 からの連番。根拠は design.txt の行（`L0037`、`L0037-L0040`、カンマ区切り）。他の機能は `M10-04:L0012`、共通シートは `_common/<ファイル名>:L0012`。
+
+### `{FID}_factors.tsv`（7列）
+
+```
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1,P2	閲覧店舗	本店｜支店	本店: 支払方法はEC用の6種／支店: 支払方法は店頭支払だけ	L0236,L0249-L0252	この機能
+F05	P2	支払方法の利用条件に対する注文金額	範囲内｜上限を超える	範囲内: 選択肢に出る／上限を超える: 選択肢に出ない	M10-04:L0101	M10-04（設定）
+```
+
+- 要因IDは F01 からの連番（処理をまたいで通し番号）。処理IDはその要因が効く処理（カンマ区切り）。
+- 値は全角の縦棒 `｜` で区切る。2つ以上。1つの値は30字まで。`=` `&` `｜` `＋` `×` を値の中に使わない。
+- 値ごとの結果は `値: 結果` を `／` でつなぐ。全部の値について書く。
+- 出所は `この機能`、`<機能ID>（設定）`、`<機能ID>（データ）` のどれか。
+
+### `{FID}_interactions.tsv`（5列）
+
+```
+処理ID	要因	判定	根拠	理由
+P1	F03+F04	効き合う	L0204	配送方法が同梱のときは支払方法が郵便振替・銀行振込だけになる
+P1	F04+F06	関係しない		手数料は支払方法で決まり、ポイントは値引きとして合計から引くだけ
+P1	F06+F07	設計書が決めていない	M10-05:L0040	送料無料の判定に使う金額がポイント値引きの前か後か書かれていない
+```
+
+- 処理ごとに、その処理の要因の2つの組を全部判定する（3つ以上の効き合うにまとめた組は除く）。
+- 効き合う・設計書が決めていない は根拠が必須。関係しない・設計書が決めていない は理由が必須。
+
+### `{FID}_constraints.tsv`（5列）
+
+```
+処理ID	組	種別	根拠	理由
+P1	F01=支店&F04=代金引換	作れない	L0251-L0252	支店の支払方法は店頭支払だけ
+P1	F06=ポイントを使う&F07=送料無料の条件に届く	正解未定	M10-05:L0040	送料無料の判定に使う金額が決まらない
+```
+
+- 組は `要因ID=値` を `&` でつなぐ。値は factors.tsv の値と一字一句同じ。値1つだけの組（`F16=店頭受取のみのスマレジ決済`）も書ける: その値でこの処理を動かすこと自体が作れない・結果が決まらないとき（設計書の記述どうしが食い違い、共通する部分が無いときなど）。
+- 種別は `作れない` か `正解未定`。根拠が必須。制約が無ければヘッダだけ書く。
+
+### `{FID}_existing.tsv`（4列）
+
+```
+テストID	処理ID	値	理由
+IT-F04-02-081	P1	F01=本店&F03=ゆうパック&F04=郵便振替	事前準備で本店・ゆうパック・郵便振替を選び、受注情報編集画面で支払方法と配送方法を確かめる
+```
+
+- 値は `要因ID=値` を `&` でつなぐ。ケースに書かれている要因だけ。1つ以上。
+- 1つのケースが2つの処理を通しているときは2行に書く。該当するケースが無ければヘッダだけ書く。
+
+書いたら次を実行し、エラーが無くなるまで直す。組の数（全組と2要因の組で、既存ケースが通していない組を埋めるのに要る行の数）も出る。
+
+```
+python3 integration_test/casegen/combination/gate_factors.py {FID}
+```
+
+作業用の一時ファイルを作るときは、名前に {FID} を入れてスクラッチパッドに作る。他の機能の factors/ のファイルは読まない・書かない。
+ファイルの書き込みを拒否されたときは、回避せず、書くはずだった本文を返答に載せる（依頼元が保存する）。
+
+## 返答
+
+3行以内: 処理の数・要因の数・効き合う組の数・設計書が決めていない組の数、gate の結果と出た行の数、判断に迷った点（あれば1つ）。
+
+ succeeded in 60ms:
+integration_test/casegen/cases/M04-24_seed_data.tsv
+integration_test/casegen/cases/M04-24_test_cases.tsv
+integration_test/casegen/cases/M04-25_seed_data.tsv
+integration_test/casegen/cases/M04-25_test_cases.tsv
+integration_test/casegen/cases/M04-28_seed_data.tsv
+integration_test/casegen/cases/M04-28_test_cases.tsv
+integration_test/casegen/cases/M04-29_seed_data.tsv
+integration_test/casegen/cases/M04-29_test_cases.tsv
+integration_test/casegen/cases/M04-30_seed_data.tsv
+integration_test/casegen/cases/M04-30_test_cases.tsv
+integration_test/casegen/cases/M04-31_seed_data.tsv
+integration_test/casegen/cases/M04-31_test_cases.tsv
+integration_test/casegen/cases/M04-32_seed_data.tsv
+integration_test/casegen/cases/M04-32_test_cases.tsv
+integration_test/casegen/cases/M04-33_seed_data.tsv
+integration_test/casegen/cases/M04-33_test_cases.tsv
+integration_test/casegen/combination/combos/M04-24.tsv
+integration_test/casegen/combination/combos/M04-24_undetermined.tsv
+integration_test/casegen/combination/combos/M04-25.tsv
+integration_test/casegen/combination/combos/M04-25_undetermined.tsv
+integration_test/casegen/combination/combos/M04-28.tsv
+integration_test/casegen/combination/combos/M04-28_undetermined.tsv
+integration_test/casegen/combination/combos/M04-29.tsv
+integration_test/casegen/combination/combos/M04-29_undetermined.tsv
+integration_test/casegen/combination/combos/M04-30.tsv
+integration_test/casegen/combination/combos/M04-30_undetermined.tsv
+integration_test/casegen/combination/combos/M04-31.tsv
+integration_test/casegen/combination/combos/M04-31_undetermined.tsv
+integration_test/casegen/combination/combos/M04-32.tsv
+integration_test/casegen/combination/combos/M04-32_undetermined.tsv
+integration_test/casegen/combination/combos/M04-33.tsv
+integration_test/casegen/combination/combos/M04-33_undetermined.tsv
+integration_test/casegen/combination/factors/M04-24_constraints.tsv
+integration_test/casegen/combination/factors/M04-24_existing.tsv
+integration_test/casegen/combination/factors/M04-24_factors.tsv
+integration_test/casegen/combination/factors/M04-24_interactions.tsv
+integration_test/casegen/combination/factors/M04-24_processes.tsv
+integration_test/casegen/combination/factors/M04-25_constraints.tsv
+integration_test/casegen/combination/factors/M04-25_existing.tsv
+integration_test/casegen/combination/factors/M04-25_factors.tsv
+integration_test/casegen/combination/factors/M04-25_interactions.tsv
+integration_test/casegen/combination/factors/M04-25_processes.tsv
+integration_test/casegen/combination/factors/M04-28_constraints.tsv
+integration_test/casegen/combination/factors/M04-28_existing.tsv
+integration_test/casegen/combination/factors/M04-28_factors.tsv
+integration_test/casegen/combination/factors/M04-28_interactions.tsv
+integration_test/casegen/combination/factors/M04-28_processes.tsv
+integration_test/casegen/combination/factors/M04-29_constraints.tsv
+integration_test/casegen/combination/factors/M04-29_existing.tsv
+integration_test/casegen/combination/factors/M04-29_factors.tsv
+integration_test/casegen/combination/factors/M04-29_interactions.tsv
+integration_test/casegen/combination/factors/M04-29_processes.tsv
+integration_test/casegen/combination/factors/M04-30_constraints.tsv
+integration_test/casegen/combination/factors/M04-30_existing.tsv
+integration_test/casegen/combination/factors/M04-30_factors.tsv
+integration_test/casegen/combination/factors/M04-30_interactions.tsv
+integration_test/casegen/combination/factors/M04-30_processes.tsv
+integration_test/casegen/combination/factors/M04-31_constraints.tsv
+integration_test/casegen/combination/factors/M04-31_existing.tsv
+integration_test/casegen/combination/factors/M04-31_factors.tsv
+integration_test/casegen/combination/factors/M04-31_interactions.tsv
+integration_test/casegen/combination/factors/M04-31_processes.tsv
+integration_test/casegen/combination/factors/M04-32_constraints.tsv
+integration_test/casegen/combination/factors/M04-32_existing.tsv
+integration_test/casegen/combination/factors/M04-32_factors.tsv
+integration_test/casegen/combination/factors/M04-32_interactions.tsv
+integration_test/casegen/combination/factors/M04-32_processes.tsv
+integration_test/casegen/combination/factors/M04-33_constraints.tsv
+integration_test/casegen/combination/factors/M04-33_existing.tsv
+integration_test/casegen/combination/factors/M04-33_factors.tsv
+integration_test/casegen/combination/factors/M04-33_interactions.tsv
+integration_test/casegen/combination/factors/M04-33_processes.tsv
+integration_test/casegen/combination/units/M04-24/design.txt
+integration_test/casegen/combination/units/M04-24/excluded.tsv
+integration_test/casegen/combination/units/M04-25/design.txt
+integration_test/casegen/combination/units/M04-25/excluded.tsv
+integration_test/casegen/combination/units/M04-28/design.txt
+integration_test/casegen/combination/units/M04-28/excluded.tsv
+integration_test/casegen/combination/units/M04-29/design.txt
+integration_test/casegen/combination/units/M04-29/excluded.tsv
+integration_test/casegen/combination/units/M04-30/design.txt
+integration_test/casegen/combination/units/M04-30/excluded.tsv
+integration_test/casegen/combination/units/M04-31/design.txt
+integration_test/casegen/combination/units/M04-31/excluded.tsv
+integration_test/casegen/combination/units/M04-32/design.txt
+integration_test/casegen/combination/units/M04-32/excluded.tsv
+integration_test/casegen/combination/units/M04-33/design.txt
+integration_test/casegen/combination/units/M04-33/excluded.tsv
+integration_test/casegen/combination/units/_common/0202_sheet-3.txt
+integration_test/casegen/combination/units/_common/0202_sheet-34.txt
+integration_test/casegen/combination/units/_common/0202_sheet-50.txt
+integration_test/casegen/combination/units/_common/0202_sheet-51.txt
+integration_test/casegen/combination/units/_common/0202_sheet-53.txt
+integration_test/casegen/combination/units/_common/0203_sheet-10.txt
+integration_test/casegen/combination/units/_common/0203_sheet-16.txt
+integration_test/casegen/combination/units/_common/0203_sheet-27.txt
+integration_test/casegen/combination/units/_common/0204_sheet-60.txt
+integration_test/casegen/combination/units/_common/0204_sheet-61.txt
+integration_test/casegen/combination/units/_common/0204_sheet-62.txt
+integration_test/casegen/combination/units/_common/0204_sheet-63.txt
+integration_test/casegen/combination/units/_common/0204_sheet-64.txt
+integration_test/casegen/combination/units/_common/0204_sheet-65.txt
+integration_test/casegen/combination/units/_common/0204_sheet-66.txt
+integration_test/casegen/combination/units/_common/0204_sheet-67.txt
+integration_test/casegen/combination/units/_common/0204_sheet-68.txt
+integration_test/casegen/combination/units/_common/0205_sheet-18.txt
+integration_test/casegen/combination/units/_common/0206_sheet-13.txt
+integration_test/casegen/combination/units/_common/0206_sheet-17.txt
+integration_test/casegen/combination/units/_common/0207_sheet-16.txt
+integration_test/casegen/combination/units/_common/0207_sheet-25.txt
+integration_test/casegen/combination/units/_common/0207_sheet-26.txt
+integration_test/casegen/combination/units/_common/0302_sheet-8.txt
+integration_test/casegen/combination/units/_common/0304_sheet-10.txt
+integration_test/casegen/combination/units/_common/0305_sheet-13.txt
+integration_test/casegen/combination/units/_common/0404_sheet-11.txt
+integration_test/casegen/combination/units/_common/0404_sheet-9.txt
+integration_test/casegen/combination/units/_common/0416_sheet-10.txt
+integration_test/casegen/combination/units/_common/0416_sheet-14.txt
+integration_test/casegen/combination/units/_common/0416_sheet-3.txt
+integration_test/casegen/combination/units/_common/0416_sheet-4.txt
+integration_test/casegen/combination/units/_common/0416_sheet-5.txt
+integration_test/casegen/combination/units/_common/0416_sheet-6.txt
+integration_test/casegen/combination/units/_common/0416_sheet-7.txt
+integration_test/casegen/combination/units/_common/0416_sheet-9.txt
+
+exec
+/bin/bash -lc 'wc -l integration_test/casegen/combination/units/M04-{24,25,28,29,30,31,32,33}/design.txt integration_test/casegen/combination/factors/M04-{24,25,28,29,30,31,32,33}_*.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+   257 integration_test/casegen/combination/units/M04-24/design.txt
+   109 integration_test/casegen/combination/units/M04-25/design.txt
+    45 integration_test/casegen/combination/units/M04-28/design.txt
+   257 integration_test/casegen/combination/units/M04-29/design.txt
+    71 integration_test/casegen/combination/units/M04-30/design.txt
+   479 integration_test/casegen/combination/units/M04-31/design.txt
+   382 integration_test/casegen/combination/units/M04-32/design.txt
+    57 integration_test/casegen/combination/units/M04-33/design.txt
+     1 integration_test/casegen/combination/factors/M04-24_constraints.tsv
+     1 integration_test/casegen/combination/factors/M04-24_existing.tsv
+     1 integration_test/casegen/combination/factors/M04-24_factors.tsv
+     1 integration_test/casegen/combination/factors/M04-24_interactions.tsv
+     1 integration_test/casegen/combination/factors/M04-24_processes.tsv
+     9 integration_test/casegen/combination/factors/M04-25_constraints.tsv
+     6 integration_test/casegen/combination/factors/M04-25_existing.tsv
+     6 integration_test/casegen/combination/factors/M04-25_factors.tsv
+     5 integration_test/casegen/combination/factors/M04-25_interactions.tsv
+     3 integration_test/casegen/combination/factors/M04-25_processes.tsv
+     1 integration_test/casegen/combination/factors/M04-28_constraints.tsv
+     1 integration_test/casegen/combination/factors/M04-28_existing.tsv
+     1 integration_test/casegen/combination/factors/M04-28_factors.tsv
+     1 integration_test/casegen/combination/factors/M04-28_interactions.tsv
+     1 integration_test/casegen/combination/factors/M04-28_processes.tsv
+     1 integration_test/casegen/combination/factors/M04-29_constraints.tsv
+     1 integration_test/casegen/combination/factors/M04-29_existing.tsv
+     1 integration_test/casegen/combination/factors/M04-29_factors.tsv
+     1 integration_test/casegen/combination/factors/M04-29_interactions.tsv
+     1 integration_test/casegen/combination/factors/M04-29_processes.tsv
+     1 integration_test/casegen/combination/factors/M04-30_constraints.tsv
+     1 integration_test/casegen/combination/factors/M04-30_existing.tsv
+     9 integration_test/casegen/combination/factors/M04-30_factors.tsv
+    29 integration_test/casegen/combination/factors/M04-30_interactions.tsv
+     2 integration_test/casegen/combination/factors/M04-30_processes.tsv
+     6 integration_test/casegen/combination/factors/M04-31_constraints.tsv
+    41 integration_test/casegen/combination/factors/M04-31_existing.tsv
+    19 integration_test/casegen/combination/factors/M04-31_factors.tsv
+    25 integration_test/casegen/combination/factors/M04-31_interactions.tsv
+     9 integration_test/casegen/combination/factors/M04-31_processes.tsv
+     7 integration_test/casegen/combination/factors/M04-32_constraints.tsv
+    35 integration_test/casegen/combination/factors/M04-32_existing.tsv
+     6 integration_test/casegen/combination/factors/M04-32_factors.tsv
+    12 integration_test/casegen/combination/factors/M04-32_interactions.tsv
+     6 integration_test/casegen/combination/factors/M04-32_processes.tsv
+     3 integration_test/casegen/combination/factors/M04-33_constraints.tsv
+    32 integration_test/casegen/combination/factors/M04-33_existing.tsv
+     7 integration_test/casegen/combination/factors/M04-33_factors.tsv
+    12 integration_test/casegen/combination/factors/M04-33_interactions.tsv
+     3 integration_test/casegen/combination/factors/M04-33_processes.tsv
+  1966 total
+
+exec
+/bin/bash -lc 'for id in 24 25 28 29 30 31 32 33; do for kind in processes factors interactions constraints; do f=integration_test/casegen/combination/factors/M04-${id}_${kind}.tsv; echo "$f"; cat "$f"; done; done' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'for id in 24 25 28 29 30 31 32 33; do f=integration_test/casegen/combination/factors/M04-${id}_existing.tsv; echo "$f"; wc -l "$f"; done' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+integration_test/casegen/combination/factors/M04-24_existing.tsv
+1 integration_test/casegen/combination/factors/M04-24_existing.tsv
+integration_test/casegen/combination/factors/M04-25_existing.tsv
+6 integration_test/casegen/combination/factors/M04-25_existing.tsv
+integration_test/casegen/combination/factors/M04-28_existing.tsv
+1 integration_test/casegen/combination/factors/M04-28_existing.tsv
+integration_test/casegen/combination/factors/M04-29_existing.tsv
+1 integration_test/casegen/combination/factors/M04-29_existing.tsv
+integration_test/casegen/combination/factors/M04-30_existing.tsv
+1 integration_test/casegen/combination/factors/M04-30_existing.tsv
+integration_test/casegen/combination/factors/M04-31_existing.tsv
+41 integration_test/casegen/combination/factors/M04-31_existing.tsv
+integration_test/casegen/combination/factors/M04-32_existing.tsv
+35 integration_test/casegen/combination/factors/M04-32_existing.tsv
+integration_test/casegen/combination/factors/M04-33_existing.tsv
+32 integration_test/casegen/combination/factors/M04-33_existing.tsv
+
+ succeeded in 97ms:
+integration_test/casegen/combination/factors/M04-24_processes.tsv
+処理ID	処理	契機	確かめる所	根拠
+integration_test/casegen/combination/factors/M04-24_factors.tsv
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+integration_test/casegen/combination/factors/M04-24_interactions.tsv
+処理ID	要因	判定	根拠	理由
+integration_test/casegen/combination/factors/M04-24_constraints.tsv
+処理ID	組	種別	根拠	理由
+integration_test/casegen/combination/factors/M04-25_processes.tsv
+処理ID	処理	契機	確かめる所	根拠
+P1	詳細画面で送状No.と備考を変更して登録し、指示に保存する	在庫移動指示詳細画面で送状No.または備考を変更して登録ボタンを押す	DB（在庫移動指示）・在庫移動指示詳細画面	L0049-L0058,L0089
+P2	在庫移動指示を削除する	在庫移動指示詳細画面で削除ボタンを押し、確認モーダルで削除を押す	DB（在庫移動指示）・在庫移動指示検索画面	L0062-L0065,L0092
+integration_test/casegen/combination/factors/M04-25_factors.tsv
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	送状No.の変更	あり｜なし	あり: 送状No.が保存される（空白のみは保存しない）／なし: 送状No.は変わらない	L0049-L0052,L0057-L0061	この機能
+F02	P1	備考の変更	あり｜なし	あり: 備考が保存される（ステータスが条件を満たすときだけ）／なし: 備考は変わらない	L0053-L0055,L0057,L0089	この機能
+F03	P1	まとめられている移動のステータス	出庫承認済み｜移動中｜着荷後入庫完了前｜入庫完了	出庫承認済み: 備考を登録できる／移動中: 備考を登録できる／着荷後入庫完了前: 備考の可否が記述間で食い違う／入庫完了: 備考は入力できない	L0054,L0089	この機能
+F04	P2	発送状況	未｜済	未: 送状No.なしで削除できる条件の1つを満たす／済: 削除ボタンは使えない	L0063,L0092	この機能
+F05	P2	指示にまとめられた移動のステータス	出庫待ち｜出庫承認済み｜移動中	出庫待ち: 削除できる／出庫承認済み: 削除できるか記述間で食い違う／移動中: 削除できない	L0063,L0092,M04-24:L0177	この機能
+integration_test/casegen/combination/factors/M04-25_interactions.tsv
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	関係しない		送状No.と備考は別々の項目として保存される。登録ボタンはどちらかが変わると活性になるだけで、一方の値で他方の保存結果は変わらない
+P1	F02+F03	効き合う	L0054,L0089	備考はステータスが出庫承認済みまたは移動中のときだけ登録でき、入庫完了では入力できない
+P1	F01+F03	設計書が決めていない	L0050,M04-24:L0177	出庫承認済み（送状No.未登録）の指示で送状No.を詳細画面から登録したとき、発送状況と移動ステータスが変わるかが書かれていない
+P2	F04+F05	関係しない		削除はすべての条件を満たすときだけ可能で、条件ごとの外れ方を1つずつ確かめれば足りる
+integration_test/casegen/combination/factors/M04-25_constraints.tsv
+処理ID	組	種別	根拠	理由
+P1	F01=なし&F02=なし	作れない	L0057	登録ボタンは送状No.か備考が変更されたときだけ活性になる
+P1	F02=あり&F03=入庫完了	作れない	L0089	備考は入庫完了では入力できない
+P1	F02=あり&F03=着荷後入庫完了前	正解未定	L0054,L0089	備考の登録は出庫承認済みまたは移動中だけとする記述と、入庫完了以外で入力可能とする記述が食い違う
+P1	F01=あり&F03=出庫承認済み	正解未定	L0050,M04-24:L0177	送状No.未登録の指示で詳細画面から送状No.を登録したときの発送状況と移動ステータスが書かれていない
+P2	F04=済&F05=出庫待ち	作れない	M04-24:L0177	送状No.を登録して済になると移動ステータスは移動中になる
+P2	F04=済&F05=出庫承認済み	作れない	M04-24:L0177	送状No.を登録して済になると移動ステータスは移動中になる
+P2	F04=未&F05=移動中	作れない	L0052,M04-24:L0177	移動中になるのは送状No.登録後で、未に戻すことはできない
+P2	F04=未&F05=出庫承認済み	正解未定	L0063,L0092	発送済みでなく送状No.が未登録なら削除可とする記述と、出庫待ちのときだけ削除可とする記述が食い違う
+integration_test/casegen/combination/factors/M04-28_processes.tsv
+処理ID	処理	契機	確かめる所	根拠
+integration_test/casegen/combination/factors/M04-28_factors.tsv
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+integration_test/casegen/combination/factors/M04-28_interactions.tsv
+処理ID	要因	判定	根拠	理由
+integration_test/casegen/combination/factors/M04-28_constraints.tsv
+処理ID	組	種別	根拠	理由
+integration_test/casegen/combination/factors/M04-29_processes.tsv
+処理ID	処理	契機	確かめる所	根拠
+integration_test/casegen/combination/factors/M04-29_factors.tsv
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+integration_test/casegen/combination/factors/M04-29_interactions.tsv
+処理ID	要因	判定	根拠	理由
+integration_test/casegen/combination/factors/M04-29_constraints.tsv
+処理ID	組	種別	根拠	理由
+integration_test/casegen/combination/factors/M04-30_processes.tsv
+処理ID	処理	契機	確かめる所	根拠
+P1	バーコード貼替リストCSVを出力する	出力対象店舗と価格調整発生期間を指定し、バーコード貼替リストCSV出力ボタンを押す	ダウンロードしたCSV	L0021,L0031-L0052
+integration_test/casegen/combination/factors/M04-30_factors.tsv
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	対象店舗のスマレジ在庫数	0以上｜マイナス｜対象店舗に在庫なし	0以上: 出力対象／マイナス: 出力しない／対象店舗に在庫なし: 出力しない（他店舗だけの在庫）	L0032	この機能
+F02	P1	スマレジ商品ID	登録済み｜未登録	登録済み: 出力対象／未登録: 出力しない	L0033	この機能
+F03	P1	スマレジ連携フラグ	有効｜無効	有効: 出力対象／無効: 出力しない	L0034	この機能
+F04	P1	商品のステータス	公開｜非公開｜廃止	公開: 出力対象／非公開: 出力対象（検索結果に含む）／廃止: 出力しない	L0035	この機能
+F05	P1	商品規格のステータス	廃止でない｜廃止	廃止でない: 出力対象／廃止: 出力しない	L0035	この機能
+F06	P1	価格変更履歴の日時	指定期間内｜指定期間外	指定期間内: 出力対象／指定期間外: 出力しない	L0029,L0036	この機能
+F07	P1	出力順を決める段	色で決まる｜カードタイプで決まる｜マナコストで決まる｜基準価格で決まる	色で決まる: 色の昇順／カードタイプで決まる: カードタイプの昇順／マナコストで決まる: 点数で見たマナコストの昇順／基準価格で決まる: 基準価格の降順	L0049-L0052	この機能
+F08	P1	商品名の角括弧	あり｜なし	あり: 後ろの角括弧の略称以降を出さない／なし: 商品名をすべて出す	L0038-L0045	この機能
+integration_test/casegen/combination/factors/M04-30_interactions.tsv
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	関係しない		出す・出さないを条件のすべてを満たすかで決め、条件ごとの外れ方は1つずつ確かめれば足りる
+P1	F01+F03	関係しない		出す・出さないを条件のすべてを満たすかで決め、条件ごとの外れ方は1つずつ確かめれば足りる
+P1	F01+F04	関係しない		出す・出さないを条件のすべてを満たすかで決め、条件ごとの外れ方は1つずつ確かめれば足りる
+P1	F01+F05	関係しない		出す・出さないを条件のすべてを満たすかで決め、条件ごとの外れ方は1つずつ確かめれば足りる
+P1	F01+F06	関係しない		出す・出さないを条件のすべてを満たすかで決め、条件ごとの外れ方は1つずつ確かめれば足りる
+P1	F01+F07	関係しない		絞り込みの結果と、出力順・商品名の表記は、互いの値で変わらない
+P1	F01+F08	関係しない		絞り込みの結果と、出力順・商品名の表記は、互いの値で変わらない
+P1	F02+F03	関係しない		出す・出さないを条件のすべてを満たすかで決め、条件ごとの外れ方は1つずつ確かめれば足りる
+P1	F02+F04	関係しない		出す・出さないを条件のすべてを満たすかで決め、条件ごとの外れ方は1つずつ確かめれば足りる
+P1	F02+F05	関係しない		出す・出さないを条件のすべてを満たすかで決め、条件ごとの外れ方は1つずつ確かめれば足りる
+P1	F02+F06	関係しない		出す・出さないを条件のすべてを満たすかで決め、条件ごとの外れ方は1つずつ確かめれば足りる
+P1	F02+F07	関係しない		絞り込みの結果と、出力順・商品名の表記は、互いの値で変わらない
+P1	F02+F08	関係しない		絞り込みの結果と、出力順・商品名の表記は、互いの値で変わらない
+P1	F03+F04	関係しない		出す・出さないを条件のすべてを満たすかで決め、条件ごとの外れ方は1つずつ確かめれば足りる
+P1	F03+F05	関係しない		出す・出さないを条件のすべてを満たすかで決め、条件ごとの外れ方は1つずつ確かめれば足りる
+P1	F03+F06	関係しない		出す・出さないを条件のすべてを満たすかで決め、条件ごとの外れ方は1つずつ確かめれば足りる
+P1	F03+F07	関係しない		絞り込みの結果と、出力順・商品名の表記は、互いの値で変わらない
+P1	F03+F08	関係しない		絞り込みの結果と、出力順・商品名の表記は、互いの値で変わらない
+P1	F04+F05	関係しない		出す・出さないを条件のすべてを満たすかで決め、条件ごとの外れ方は1つずつ確かめれば足りる
+P1	F04+F06	関係しない		出す・出さないを条件のすべてを満たすかで決め、条件ごとの外れ方は1つずつ確かめれば足りる
+P1	F04+F07	関係しない		絞り込みの結果と、出力順・商品名の表記は、互いの値で変わらない
+P1	F04+F08	関係しない		絞り込みの結果と、出力順・商品名の表記は、互いの値で変わらない
+P1	F05+F06	関係しない		出す・出さないを条件のすべてを満たすかで決め、条件ごとの外れ方は1つずつ確かめれば足りる
+P1	F05+F07	関係しない		絞り込みの結果と、出力順・商品名の表記は、互いの値で変わらない
+P1	F05+F08	関係しない		絞り込みの結果と、出力順・商品名の表記は、互いの値で変わらない
+P1	F06+F07	関係しない		絞り込みの結果と、出力順・商品名の表記は、互いの値で変わらない
+P1	F06+F08	関係しない		絞り込みの結果と、出力順・商品名の表記は、互いの値で変わらない
+P1	F07+F08	関係しない		絞り込みの結果と、出力順・商品名の表記は、互いの値で変わらない
+integration_test/casegen/combination/factors/M04-30_constraints.tsv
+処理ID	組	種別	根拠	理由
+integration_test/casegen/combination/factors/M04-31_processes.tsv
+処理ID	処理	契機	確かめる所	根拠
+P1	棚卸計画を新規登録する	棚卸計画新規作成画面で棚卸名・店舗・在庫区分を入力し、登録ボタンを押す	棚卸計画一覧画面（M04-31）と棚卸計画テーブル	L0141-L0152,L0079
+P2	棚卸結果を在庫へ反映する	棚卸在庫反映画面で実行ボタンを押す	在庫・在庫変動履歴（DB、在庫履歴検索一覧 M04-17）と入荷通知メール	L0449-L0463
+P3	棚卸結果の在庫反映に進めるか／実行できるかを判定する	棚卸計画編集画面で棚卸結果の在庫反映ボタンを押す（実行時にも判定）	棚卸計画編集画面（ボタンの押下可否・エラー表示）と棚卸在庫反映画面	L0226-L0230,L0443-L0448,L0463
+P4	棚卸商品をCSVで登録して棚卸明細を作る	棚卸計画編集画面の商品登録ボタンからCSVファイルを選んで登録する	棚卸計画編集画面（商品数）と棚卸明細テーブル	L0212-L0217,L0387-L0388,L0203
+P5	棚卸在庫確認画面で棚卸数量・在庫数量を保存する	棚卸在庫確認画面で登録または更新ボタンを押す	棚卸計画編集画面と次の棚卸在庫確認画面、棚卸明細・在庫確認登録履歴	L0361-L0366
+P6	棚卸在庫確認画面にアラートと差異確認ボタンを出す	棚卸計画の商品の棚卸在庫確認画面を開く	棚卸在庫確認画面（在庫変動履歴データと棚卸明細データから表示が決まる）	L0365,L0367-L0369,L0398,L0412
+P7	棚卸計画一覧に在庫反映エラーの注記を出す	棚卸計画一覧画面を開く	棚卸計画一覧画面	L0119,L0053-L0054
+P8	棚卸計画の商品をCSV出力する	棚卸計画編集画面でCSV出力ボタンを押す	ダウンロードしたCSVファイル	L0205-L0208,L0293-L0309
+integration_test/casegen/combination/factors/M04-31_factors.tsv
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1,P4	棚卸計画の店舗	店舗A｜店舗B	店舗A: 計画は店舗Aの計画として保存され、CSV登録では店舗Aの在庫を処理対象にする／店舗B: 店舗Bの計画になり、店舗Bの在庫を処理対象にする	L0043,L0149,L0203,L0440	この機能
+F02	P1,P2,P4	棚卸計画の在庫区分	EC-CUBE｜スマレジ	EC-CUBE: 計画はEC-CUBE在庫の計画で、在庫変動履歴にEC-CUBEの在庫区分を記録する／スマレジ: スマレジ在庫の計画で、履歴にスマレジの在庫区分を記録する	L0044,L0150,L0456	この機能
+F03	P2	棚卸数量と在庫数量の差異	差異プラス｜差異マイナス｜差異なし	差異プラス: 現在庫に差異分を足し、履歴に増減数・仕入総価格0を登録する／差異マイナス: 現在庫から差異分を引き、履歴に増減数を登録する（仕入総価格の指定なし）／差異なし: 在庫も履歴も変えない	L0453-L0458	この機能
+F04	P2	反映直前のEC在庫の現在庫	0｜1以上	0: 差異プラスで0から1以上になると入荷通知を行う／1以上: 入荷通知を行わない	L0459-L0460	この機能
+F05	P2,P6	棚卸計画の作成後の在庫変動	なし｜あり	なし: 反映の基準の現在庫は計画作成時の在庫数量と同じ／あり: 現在庫が作成時と異なり、反映は現在庫に差異分を増減した値になる（棚卸数量そのものにはならない）。確認画面には計画後に変動履歴の更新がありましたのアラートを出す	L0454,L0367-L0369,L0109,L0412	この機能
+F06	P3,P4,P5	棚卸計画の在庫反映の状態	未反映｜反映済み	未反映: 反映・CSV登録・保存ができる／反映済み: 在庫反映済みのため更新できませんのエラーで、反映・CSV登録・保存はいずれも行われない	L0210,L0214,L0360,L0362,L0444,L0463,L0090,L0103,L0106	この機能
+F07	P3	商品数と計上済み商品数の状況	一致して1以上｜商品数が0｜計上済み商品数が0｜不一致	一致して1以上: 反映に進める／商品数が0: 反映ボタンが押せない／計上済み商品数が0: 反映ボタンが押せない／不一致: 反映ボタンが押せず、実行時は商品数と計上済み商品数が一致しませんのエラー	L0227-L0229,L0445-L0447,L0107	この機能
+F08	P3	在庫差異と差異確認の状況	差異なしまたは全て確認済み｜未確認の差異あり	差異なしまたは全て確認済み: 反映に進める／未確認の差異あり: 反映ボタンが押せず、実行時は差異未確認の商品があるため在庫反映できませんのエラー	L0230,L0448,L0104	この機能
+F09	P5	商品の差異確認の状態	未確認｜確認済み	未確認: 棚卸数量・在庫数量を変更できる／確認済み: 棚卸数量と在庫数量を変更できない	L0366,L0101	この機能
+F10	P5	保存の種類	初回登録｜更新	初回登録: 保存後、棚卸計画の次の商品の確認画面へ遷移し、次が無ければ棚卸計画編集画面へ遷移する／更新: 保存後、棚卸計画編集画面へ（ページ位置を保持して）遷移する	L0361,L0363,L0364,L0397	この機能
+F11	P5	棚卸計画の次の棚卸対象商品	あり｜なし	あり: 初回登録後は次の商品の棚卸在庫確認画面へ遷移／なし: 棚卸計画編集画面へ遷移	L0363,L0115	この機能
+F12	P6	商品の在庫差異の有無	差異なし｜差異あり	差異なし: 差異確認＆完了ボタンを表示しない／差異あり: 差異確認＆完了ボタンを表示する	L0365,L0398	この機能
+F13	P7	棚卸計画の在庫反映日	未設定｜設定済み	未設定: 反映日欄は空で、エラー注記の対象になりうる／設定済み: 反映日・更新者名を表示し、エラー注記は出さない	L0053-L0054,L0119	この機能
+F14	P7	反映済みの棚卸明細	あり｜なし	あり: 反映日が未設定ならエラー注記を出す／なし: エラー注記を出さない	L0119	この機能
+F15	P7	在庫反映の処理	実行中｜実行中でない	実行中: エラー注記を出さない／実行中でない: 反映日未設定かつ反映済み明細ありのとき注記を出す	L0119	この機能
+F16	P8	差異ありのみ表示	オン｜オフ	オン: 棚卸数量と在庫数量の差が0でない商品だけを出力／オフ: 登録されている棚卸商品を全て出力	L0206,L0307	この機能
+F17	P8	棚卸商品の言語	JP｜EN	JP: 言語列にJPと出力／EN: 言語列にENと出力	L0296	この機能
+F18	P8	棚卸商品の状態	NM｜SP	NM: 状態コード列にNMと出力／SP: 状態コード列にSPと出力	L0297	この機能
+integration_test/casegen/combination/factors/M04-31_interactions.tsv
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	関係しない		店舗と在庫区分はそれぞれ別の列に保存されるだけで、一方の値でもう一方の保存結果は変わらない
+P2	F02+F03	関係しない		在庫区分は履歴にそのまま記録され、差異の方向で記録内容は変わらない
+P2	F02+F04	設計書が決めていない	L0460	在庫が0から1以上になったら入荷通知を行うとあるだけで、スマレジ区分の在庫でも通知するのか書かれていない
+P2	F02+F05	関係しない		在庫区分は対象の在庫を決めるだけで、計画後の変動の有無で反映の仕方は変わらない
+P2	F03+F04	効き合う	L0455,L0459-L0460	入荷通知は差異プラスで現在庫が0から1以上になるときだけ行い、差異マイナスや差異なしでは行わない
+P2	F03+F05	関係しない	L0454	どの現在庫からでも差異分を足し引きするだけで、計画後の変動の有無で増減の仕方は変わらない
+P2	F04+F05	関係しない		現在庫が0か否かと、それが計画後の変動によるかどうかは別で、入荷通知の判定は現在庫だけで決まる
+P3	F06+F07	関係しない	L0226-L0230,L0443-L0448	反映できない条件のどれか1つでも当てはまれば外れ、結果は反映できる・できないの2つだけ
+P3	F06+F08	関係しない	L0226-L0230,L0443-L0448	反映できない条件のどれか1つでも当てはまれば外れ、結果は反映できる・できないの2つだけ
+P3	F07+F08	関係しない	L0226-L0230,L0443-L0448	反映できない条件のどれか1つでも当てはまれば外れ、結果は反映できる・できないの2つだけ
+P4	F01+F02+F06	効き合う	L0203,L0214,L0387,L0440	登録される棚卸明細の作成時在庫数は計画の店舗とEC-CUBE・スマレジの在庫区分で決まる在庫のものになり、反映済みなら店舗・在庫区分に関わらず登録されない
+P5	F06+F09	関係しない	L0360,L0362,L0366	保存できない条件のどれか1つでも当てはまれば保存されず、結果は保存される・されないの2つだけ
+P5	F06+F10	効き合う	L0360,L0362,L0363,L0364	反映済みなら登録・更新のどちらでも保存されず遷移先も変わらない
+P5	F06+F11	効き合う	L0360,L0362,L0363	反映済みなら保存されず、次の商品の有無による遷移も行われない
+P5	F09+F10	効き合う	L0361,L0366,L0397	差異確認済みの商品は保存しても棚卸数量・在庫数量が変わらず、保存の種類による遷移も行われない
+P5	F09+F11	効き合う	L0363,L0366	差異確認済みなら保存されず、次の商品の有無による遷移も行われない
+P5	F10+F11	効き合う	L0363,L0364	初回登録のときだけ次の商品の有無で遷移先が変わり、更新は次の商品の有無に関わらず棚卸計画編集画面へ遷移する
+P6	F05+F12	関係しない	L0365,L0367-L0369	アラートは計画作成後の在庫変動履歴の有無だけで、差異確認ボタンは在庫差異の有無だけで決まり、互いの値で変わらない
+P7	F13+F14	関係しない	L0119	注記は反映日未設定・反映済み明細あり・処理中でない、のすべてを満たすときだけ出し、結果は出る・出ないの2つだけ
+P7	F13+F15	関係しない	L0119	注記は反映日未設定・反映済み明細あり・処理中でない、のすべてを満たすときだけ出し、結果は出る・出ないの2つだけ
+P7	F14+F15	関係しない	L0119	注記は反映日未設定・反映済み明細あり・処理中でない、のすべてを満たすときだけ出し、結果は出る・出ないの2つだけ
+P8	F16+F17	関係しない	L0307	差異ありのみは数量の差で絞るだけで、言語の表記は絞り込みの結果で変わらない
+P8	F16+F18	関係しない	L0307	差異ありのみは数量の差で絞るだけで、状態コードの表記は絞り込みの結果で変わらない
+P8	F17+F18	関係しない	L0296-L0297	言語列と状態コード列はそれぞれの商品の値を別々に変換して出力するだけ
+integration_test/casegen/combination/factors/M04-31_constraints.tsv
+処理ID	組	種別	根拠	理由
+P2	F02=スマレジ&F03=差異プラス&F04=0	正解未定	L0460	スマレジ在庫が0から1以上になったときに入荷通知を行うのか書かれていない
+P2	F03=差異マイナス&F04=0	正解未定	L0454	現在庫が0のときに差異分を引いた結果（在庫がマイナスになるのか、0のままか、エラーか）が書かれていない
+P3	F07=商品数が0&F08=未確認の差異あり	作れない	L0234,L0254	商品数が0の計画には差異のある商品が存在しない
+P3	F07=計上済み商品数が0&F08=未確認の差異あり	作れない	L0235,L0389	棚卸数量が入力済みの商品が無いと在庫差異は算出されず、差異確認の対象が無い
+P5	F09=確認済み&F10=初回登録	作れない	L0365,L0389,L0397	差異確認は在庫差異があるときだけで、差異は棚卸数量の入力後に出るため、確認済みの商品は既に登録済みで保存は更新になる
+integration_test/casegen/combination/factors/M04-32_processes.tsv
+処理ID	処理	契機	確かめる所	根拠
+P1	在庫編集の申請を承認する	承認一覧で承認する（個別または一括）を押し確認でOKを押す	在庫（DB・商品規格一覧・在庫検索）・在庫変動履歴・登録者へのメール	L0108-L0122,L0134-L0137,L0297-L0301
+P2	在庫編集の申請を却下する	承認一覧で却下理由を入れて却下する（個別または一括）を押し確認でOKを押す	在庫（DB・商品規格一覧・在庫検索）・在庫変動履歴・入庫承認待ち在庫情報・登録者へのメール	L0108-L0110,L0123-L0137,L0289-L0296
+P3	承認一覧の行に承認操作を出す	承認一覧の検索結果を表示する	承認一覧の検索結果（チェックボックス）・確認モーダルの承認する・却下するボタン	L0147-L0153,L0292-L0300
+P4	承認対象の確認モーダルを開く	承認対象のリンクを押す	確認モーダル	L0155-L0157,L0204-L0214,L0231-L0287
+P5	確認モーダルの内容をCSVでダウンロードする	確認モーダルのCSVダウンロードを押す	ダウンロードしたCSV	L0213,L0226-L0229,L0374-L0378
+integration_test/casegen/combination/factors/M04-32_factors.tsv
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1,P2,P4,P5	在庫変更理由の親区分	入庫｜廃棄	入庫: 承認で在庫情報の在庫数と総原価を更新し履歴も更新・却下では在庫情報を更新せず入庫承認待ち在庫情報を却下にする・モーダルは未承認では入庫承認待ち在庫情報を出し承認済では在庫変動履歴を出す／廃棄: 承認で在庫変動履歴に承認日と承認者を入れ・却下で在庫数と総原価を廃棄前へ戻す・モーダルは常に在庫変動履歴を出す	L0112-L0122,L0124-L0133,L0205-L0207,L0239-L0246	この機能
+F02	P1,P2,P3	登録者とログインメンバーの関係	別のメンバー｜同じメンバー	別のメンバー: 承認・却下を実行でき操作が出る／同じメンバー: 実行前にエラーになり操作が出ない	L0110,L0151,L0295,L0300	この機能
+F03	P3,P4,P5	承認状態	未承認｜スマレジ連携失敗｜スマレジ連携中｜承認済｜却下済	未承認: チェックあり・承認する却下するの両方が出る・入庫のモーダルは入庫承認待ち在庫情報を出し変更前は一覧参照時の値／スマレジ連携失敗: チェックあり・承認するだけが出る・入庫のモーダルは未承認と同じ／スマレジ連携中: チェックなし・操作なし・入庫のモーダルは入庫承認待ち在庫情報を出し変更前は承認時に変わる前の値／承認済: チェックなし・操作なし・入庫のモーダルは在庫変動履歴を出す／却下済: チェックなし・操作なし・入庫のモーダルは入庫承認待ち在庫情報を出し変更後は「-」	L0149,L0154,L0205-L0206,L0239-L0258,L0294,L0299	この機能
+F04	P3	承認対象	在庫編集系の機能｜その他の機能	在庫編集系の機能: チェックが出て合計在庫増減数・在庫変動区分を表示／その他の機能: チェックが出ず合計在庫増減数・在庫変動区分は「-」	L0150,L0163-L0173	この機能
+F05	P4,P5	モーダルの対象に在庫変更CSV登録を含むか	含まない｜含む	含まない: モーダルの一覧とCSVの両方に出る／含む: モーダルの一覧には出ずCSVにだけ出る	L0213,L0229	この機能
+integration_test/casegen/combination/factors/M04-32_interactions.tsv
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	効き合う	L0110,L0112,L0120	登録者と同じメンバーだと承認の更新（入庫なら在庫情報と履歴、廃棄なら履歴）が実行前のエラーで行われない
+P2	F01+F02	効き合う	L0110,L0124,L0127	登録者と同じメンバーだと却下の更新（入庫なら承認待ち情報を却下に、廃棄なら在庫を戻す）が実行前のエラーで行われない
+P3	F02+F03	関係しない		表示条件はすべて満たすことが条件で、どれか1つで外れれば出ない。外れ方は1つずつ確かめれば足りる
+P3	F02+F04	関係しない		表示条件はすべて満たすことが条件で、どれか1つで外れれば出ない
+P3	F03+F04	関係しない		表示条件はすべて満たすことが条件で、どれか1つで外れれば出ない
+P4	F01+F03	効き合う	L0205-L0207,L0239-L0258	親区分と承認状態の組で、モーダルに出す元の情報（履歴か入庫承認待ち情報か）と変更前後の在庫・総原価の出し方が変わる
+P4	F01+F05	関係しない		CSV登録分はモーダルの一覧に出さない決まりで、親区分によって変わらない
+P4	F03+F05	関係しない		CSV登録分はモーダルの一覧に出さない決まりで、承認状態によって変わらない
+P5	F01+F03	効き合う	L0205-L0207,L0239-L0258,L0374-L0377	CSVはモーダルで参照している内容を出すので、モーダルと同じく親区分と承認状態の組で元の情報と変更前後の値が変わる
+P5	F01+F05	関係しない		CSV登録分はCSVに必ず含める決まりで、親区分によって変わらない
+P5	F03+F05	関係しない		CSV登録分はCSVに必ず含める決まりで、承認状態によって変わらない
+integration_test/casegen/combination/factors/M04-32_constraints.tsv
+処理ID	組	種別	根拠	理由
+P4	F01=廃棄&F03=スマレジ連携失敗	正解未定	L0244-L0246,L0253-L0255	廃棄の変更前後の表示は承認状態が未承認と承認の場合しか書かれておらず、スマレジ連携失敗の廃棄をどう出すか決まらない（廃棄は晴れる屋様検討中と注記あり）
+P4	F01=廃棄&F03=スマレジ連携中	正解未定	L0244-L0246,L0253-L0255	廃棄の変更前後の表示は未承認と承認の場合しか書かれておらず、スマレジ連携中の廃棄をどう出すか決まらない
+P4	F01=廃棄&F03=却下済	正解未定	L0244-L0246,L0257-L0258,L0283-L0284	廃棄の変更前の在庫・総原価を却下済でどう出すか書かれていない（変更後は共通で「-」）
+P5	F01=廃棄&F03=スマレジ連携失敗	正解未定	L0244-L0246,L0253-L0255,L0377	CSVはモーダルの参照内容を出すが、廃棄でスマレジ連携失敗のときの変更前後の値が書かれていない
+P5	F01=廃棄&F03=スマレジ連携中	正解未定	L0244-L0246,L0253-L0255,L0377	CSVはモーダルの参照内容を出すが、廃棄でスマレジ連携中のときの変更前後の値が書かれていない
+P5	F01=廃棄&F03=却下済	正解未定	L0244-L0246,L0283-L0284,L0377	CSVはモーダルの参照内容を出すが、廃棄で却下済のときの変更前の値が書かれていない
+integration_test/casegen/combination/factors/M04-33_processes.tsv
+処理ID	処理	契機	確かめる所	根拠
+P1	選んだ在庫移動の商品をCSVの行に出す	在庫移動・振替検索一覧で在庫移動を選び戻しリストCSV出力ボタンを押す	ダウンロードしたCSV	L0015-L0026,L0029,L0043-L0045
+P2	CSVの行の並び順を決める	同上	ダウンロードしたCSV	L0046-L0056
+integration_test/casegen/combination/factors/M04-33_factors.tsv
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1,P2	入庫先店舗の区分	本店3F｜本店2F｜本店B2F｜支店	本店3F: 棚番号の列を出す・棚番で並べる／本店2F: 棚番号の列を出す・棚番で並べる／本店B2F: 棚番号の列を出す・棚番で並べる／支店: 棚番号の列は空・棚番では並べない	L0018-L0019,L0030,L0048	この機能
+F02	P1	入庫先店舗に設定された閾値に対する基準価格	最低の閾値未満｜閾値の間｜最高の閾値以上	最低の閾値未満: 「●●円未満」の区分／閾値の間: 「●●円以上▲▲円未満」の区分／最高の閾値以上: 「■■円以上」の区分（セール価格ではなく基準価格で判定）	L0015-L0017,L0030,M10-15:L0092	M10-15（設定）
+F03	P1	商品の種別	シングルカード｜シングルカード以外｜サプライ品	シングルカード: 色とレアリティを出す／シングルカード以外: 色は出さずレアリティだけ出す／サプライ品: 区分は「サプライ」・言語/状態は「サプライ品」・略称は出さない・商品名は加工しない	L0020-L0025,L0044	この機能
+F04	P1	Foilかどうか	非Foil｜Foil	非Foil: 言語/状態は「JP/NM」の形式／Foil: 言語/状態の先頭にFoilが付く（FoilJP/NM）	L0020	この機能
+F05	P1	商品名に略称タグの[ ]を含むか	含む｜含まない	含む: 略称・言語・状態・色・レアリティを取り除いた商品名を出す／含まない: [～]（[ ]ごと）を削除した商品名を出す	L0044-L0045	この機能
+F06	P2	並びが決まる段	金額閾値の帯で決まる｜棚番で決まる｜言語で決まる｜状態で決まる｜Foilフラグで決まる｜略称タグで決まる｜レアリティで決まる｜色で決まる｜コレクター番号で決まる｜英語カード名で決まる	金額閾値の帯で決まる: 基準価格の帯の昇順（最後にサプライ）で先後が付く／棚番で決まる: 同じ帯の中で棚番の昇順で先後が付く／言語で決まる: 棚番が同じなら日→英→他言語の順で先後が付く／状態で決まる: 言語が同じならNM→HPの順で先後が付く／Foilフラグで決まる: 状態が同じなら非Foil→Foilの順で先後が付く／略称タグで決まる: Foilフラグが同じなら略称タグの昇順で先後が付く／レアリティで決まる: 略称タグが同じならM→Cの順で先後が付く／色で決まる: レアリティが同じならマスターデータの色順で先後が付く／コレクター番号で決まる: 色が同じで略称タグの設定がコレクター番号なら番号の昇順で先後が付く／英語カード名で決まる: 色が同じで略称タグの設定がアルファベットなら英語カード名の昇順で先後が付く	L0046-L0056	この機能
+integration_test/casegen/combination/factors/M04-33_interactions.tsv
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	効き合う	L0015-L0017,L0030,M10-15:L0092	閾値は店舗ごとに異なるので、同じ基準価格でも入庫先店舗によって区分が変わる
+P1	F01+F03	関係しない		棚番号の出し方は店舗で決まり、商品の種別によって変わらない
+P1	F01+F04	関係しない		棚番号の出し方は店舗で決まり、Foilかどうかで変わらない
+P1	F01+F05	関係しない		棚番号の出し方は店舗で決まり、商品名の加工と関係しない
+P1	F02+F03	効き合う	L0015-L0016	サプライ品は基準価格に関係なく区分が「サプライ」になる
+P1	F02+F04	関係しない		区分は基準価格で、言語/状態の表示はFoilかどうかで決まり互いに影響しない
+P1	F02+F05	関係しない		区分は基準価格で、商品名の加工は略称タグの有無で決まり互いに影響しない
+P1	F03+F04	効き合う	L0020	サプライ品は言語/状態が「サプライ品」になり、Foilの有無が表示に出ない
+P1	F03+F05	効き合う	L0044-L0045	サプライ品でない場合だけ商品名から略称などを取り除く
+P1	F04+F05	関係しない		言語/状態の表示と商品名の加工は別の列で互いに影響しない
+P2	F01+F06	効き合う	L0048	支店では棚番のソートを行わないので、棚番の段で決まる並びは本店だけ
+integration_test/casegen/combination/factors/M04-33_constraints.tsv
+処理ID	組	種別	根拠	理由
+P1	F03=サプライ品&F05=含まない	正解未定	L0044-L0045	[略称タグ]が無いときの[～]削除がサプライ品にも掛かるのか、サプライ品は商品名を加工しないのか書かれていない
+P2	F01=支店&F06=棚番で決まる	作れない	L0048	支店では棚番のソートを行わない
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/M04-{24,25,28,29,30,33}/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+##### 0202 sheet-32 在庫移動指示検索
+L0001	在庫移動指示検索
+L0002	ドキュメント名在庫管理 基本設計
+L0003	セクション—
+L0004	プロジェクト名サイトリニューアル
+L0005	作成者堀部
+L0006	作成日2025-08-25
+L0007	更新者本田
+L0008	更新日2025-12-08
+L0009	機能NoM04-24
+L0010	機能名在庫移動指示検索
+L0011	概要在庫移動指示を検索、送り状No.の登録およびダウンロードが可能
+L0012	処理概要 移動指示検索画面
+L0013	※在庫移動指示の作成については、在庫移動振替一覧の処理概要を参照
+L0014	レイアウト図 在庫移動指示検索画面
+L0015	1-1
+L0016	2-1
+L0017	2-2
+L0018	2-3
+L0019	2-4
+L0020	2-5
+L0021	2-9
+L0022	2-10
+L0023	2-6
+L0024	2-7
+L0025	2-8
+L0026	3-16
+L0027	3-4
+L0028	3-2
+L0029	3-3
+L0030	3-5
+L0031	3-6
+L0032	3-7
+L0033	3-8
+L0034	3-9
+L0035	3-10
+L0036	3-11
+L0037	3-12
+L0038	3-13
+L0039	3-14
+L0040	3-1
+L0041	3-15
+L0042	画像レイヤー（2枚）: 在庫移動指示検索 / B7 / image 2 + 在庫移動指示検索 / B7 / image 3
+L0043	機能仕様処理概要 移動指示検索画面
+L0044	移動指示検索画面概要
+L0045	・サイドバーの在庫管理 / 在庫移動指示を押下してこの画面（移動指示検索画面）へ遷移する
+L0046	・在庫移動振替一覧から作成した在庫移動指示に対して、送状No.を登録することで在庫移動のステータスは移動中となる
+L0047	機能仕様※在庫移動指示の作成については、在庫移動振替一覧の処理概要を参照
+L0048	移動登録ステータス遷移（在庫移動のものを転用）
+L0049	・店舗間移動フロー
+L0050	アクション
+L0051	ステータス
+L0052	入庫先
+L0053	NG
+L0054	新規
+L0055	登録
+L0056	ピック
+L0057	欠品
+L0058	登録
+L0059	出庫
+L0060	承認
+L0061	発送
+L0062	手続き
+L0063	着荷
+L0064	入庫
+L0065	承認
+L0066	差分
+L0067	通知
+L0068	新規
+L0069	登録
+L0070	出庫
+L0071	承認待ち
+L0072	却下
+L0073	出庫
+L0074	承認済み
+L0075	移動中
+L0076	入庫
+L0077	済み
+L0078	入庫
+L0079	承認待ち
+L0080	NG
+L0081	差分
+L0082	登録
+L0083	在庫移動指示リスト
+L0084	画面遷移図をExcel図形座標で再構成（画面 15件 / 遷移 18件 / 元コネクタ 20件）
+L0085	遷移一覧（18件）
+L0086	遷移元	遷移先	connector
+L0087	発送
+L0088	手続き	移動中	18（0202:在庫移動指示検索!F67）
+L0089	欠品
+L0090	登録	出庫
+L0091	承認待ち	27（0202:在庫移動指示検索!F67）
+L0092	新規
+L0093	登録	ピック	29（0202:在庫移動指示検索!F67）
+L0094	ピック	欠品
+L0095	登録	30（0202:在庫移動指示検索!F67）
+L0096	ピック	出庫
+L0097	承認待ち	31（0202:在庫移動指示検索!F67）
+L0098	出庫
+L0099	承認待ち	出庫
+L0100	承認	32（0202:在庫移動指示検索!F67）
+L0101	出庫
+L0102	承認	却下	62（0202:在庫移動指示検索!F67）
+L0103	出庫
+L0104	承認	出庫
+L0105	承認済み	63（0202:在庫移動指示検索!F67）
+L0106	出庫
+L0107	承認済み	発送
+L0108	手続き	36（0202:在庫移動指示検索!F67）
+L0109	移動中	着荷	38（0202:在庫移動指示検索!F67）
+L0110	着荷	差分
+L0111	登録	40（0202:在庫移動指示検索!F67）
+L0112	差分
+L0113	登録	入庫
+L0114	承認待ち	44（0202:在庫移動指示検索!F67）
+L0115	着荷	入庫
+L0116	承認待ち	45（0202:在庫移動指示検索!F67）
+L0117	入庫
+L0118	承認待ち	入庫
+L0119	承認	46（0202:在庫移動指示検索!F67）
+L0120	入庫
+L0121	承認	着荷	47（0202:在庫移動指示検索!F67）
+L0122	入庫
+L0123	承認	入庫
+L0124	済み	49（0202:在庫移動指示検索!F67）
+L0125	差分
+L0126	通知	入庫
+L0127	済み	50（0202:在庫移動指示検索!F67）
+L0128	入庫
+L0129	承認	差分
+L0130	通知	51（0202:在庫移動指示検索!F67）
+L0131	接続関係整理図
+L0132	発送
+L0133	手続き
+L0134	欠品
+L0135	登録
+L0136	ピック
+L0137	出庫
+L0138	承認
+L0139	着荷
+L0140	新規
+L0141	登録
+L0142	入庫
+L0143	承認
+L0144	差分
+L0145	登録
+L0146	差分
+L0147	通知
+L0148	出庫
+L0149	承認済み
+L0150	入庫
+L0151	承認待ち
+L0152	出庫
+L0153	承認待ち
+L0154	入庫
+L0155	済み
+L0156	移動中
+L0157	却下
+L0158	在庫移動指示発送手続き部分想定運用フロー
+L0159	①在庫移動振替一覧画面から、出庫元と入庫先の店舗が同一の出庫承認済みの移動をまとめて在庫移動指示を作成する
+L0160	②在庫移動指示検索（この設計書の対象画面）から、送り状CSVダウンロードボタンを押下し、ゆうプリRに入力するCSVを出力する
+L0161	③ゆうプリRに②で出力したCSVを登録し、送り状No.を得る
+L0162	④在庫移動指示に対して在庫移動指示検索画面または在庫移動実績CSVから送り状番号を登録し、移動ステータスを「移動中」とする
+L0163	権限制御
+L0164	・0201_基本設計仕様書(システム設定).xlsxの権限制御シート（機能ID: M11-03）の「2.編集可能店舗処理」に応じた権限制御が行われる
+L0165	在庫移動実績CSV登録
+L0166	・在庫実績CSV登録ボタンを押下すると在庫実績CSV登録モーダルが表示される
+L0167	・CSVは2,000件を登録上限とする
+L0168	・入力チェックとして以下を行う
+L0169	・移動指示ID、送り状No.どちらも入力されていること
+L0170	・指定された移動指示IDが存在すること
+L0171	・移動指示IDに重複がないこと
+L0172	・入力チェックはエラーが20件に到達するまでチェックを行う
+L0173	・エラーがある場合、登録処理を終了し行番号と移動指示IDをセットにしたエラーメッセージを最大20件まで画面上に表示する
+L0174	・エラーメッセージには固定で、「エラーは20件まで表示されます」、とエラーメッセージの上に表示する
+L0175	・エラーがなければ登録処理を行う
+L0176	・該当の移動指示IDに送り状No.を登録する
+L0177	・在庫移動指示の発送状況は「済」となり在庫移動のステータスが「移動中」となる
+L0178	在庫移動指示検索
+L0179	・在庫移動指示について発送状況で絞り込める
+L0180	・在庫移動指示登録時は送状No.がない状態であり、これを発送状況を「未」（未発送）とする
+L0181	・送状No.を登録した場合、発送状況を「済」（発送済み）とする
+L0182	在庫移動指示一覧
+L0183	・送状No.
+L0184	・値がない場合は登録ボタンを表示する
+L0185	在庫移動指示検索 / AI105 / image 4
+L0186	・登録ボタンを押下すると送り状ナンバー登録モーダルを表示する
+L0187	・送状No.登録することで、在庫移動指示の発送状況は「済」となり在庫移動のステータスが「移動中」となる
+L0188	・移動指示ID
+L0189	・指示IDをクリックすると対象の在庫移動指示の詳細画面へ遷移する
+L0190	・各行の先頭のチェックボックスで移動指示を選択すると、以下の２つのボタンが活性化する
+L0191	・在庫移動実績入力CSVダウンロードボタン
+L0192	・選択している移動指示リストについて、在庫移動実績入力用CSVを出力する
+L0193	・在庫移動実績入力用CSV（機能No.: M04-27）
+L0194	・送り状CSVダウンロードボタン
+L0195	・選択している在庫移動について、送り状CSVを出力する
+L0196	・送り状CSV（機能No.: M04-28）
+L0197	送状No.
+L0198	・送状No.の変更は指示リストの詳細画面からのみ可能
+L0199	識別ID	ラベル	書式・制限	必須	最大値	初期値	画面部品の説明
+L0200	CSVファイルアップロード
+L0201	1-1	在庫移動実績CSV登録	ボタン	-	-	-
+L0202	移動指示リスト検索
+L0203	2-1	出庫元店舗	プルダウン	○	-	ユーザーのデフォルト検索店舗	移動指示リストの出庫元店舗名
+L0204	2-2	入庫先店舗	プルダウン	○	-	未選択	移動指示リストの入庫先店舗名
+L0205	2-3	在庫移動指示ID	数値	-	-	-	在庫移動指示リストID
+L0206	2-4	在庫移動ID	数値	-	-	-	在庫移動ID
+L0207	2-5	登録日(From)	日付（yyyy/mm/dd）	-	-	-	在庫移動指示リストの登録日の検索に利用する期間の開始日
+L0208	カレンダー選択機能あり
+L0209	2-5	登録日(To)	日付（yyyy/mm/dd）	-	-	-	在庫移動指示リストの登録日の検索に利用する期間の終了にち
+L0210	カレンダー選択機能あり
+L0211	2-6	更新日(From)	日付（yyyy/mm/dd）	-	-	-	在庫移動指示リストの更新日の検索に利用する期間の開始日
+L0212	カレンダー選択機能あり
+L0213	2-6	更新日(To)	日付（yyyy/mm/dd）	-	-	-	在庫移動指示リストの更新日の検索に利用する期間の終了にち
+L0214	カレンダー選択機能あり
+L0215	2-7	発送状況	複数選択(セレクトボックス)	-	-	-	在庫移動指示のステータスでの絞り込みに利用
+L0216	選択肢：未、済
+L0217	2-8	検索する	ボタン	-	-	-	ボタン押下で検索を実行、識別ID: 2-1 ~ 2-7の値を利用
+L0218	在庫移動・振替内容
+L0219	3-1	検索結果件数	ラベル	-	-	-	検索条件に応じたデータの件数
+L0220	3-2	在庫移動実績入力用CSVダウンロード	ボタン	-	-	-	在庫移動選択時のみ活性状態
+L0221	機能No.M04-27を出力
+L0222	3-3	送り状CSVダウンロードボタン	ボタン	-	-	-	機能No.M04-28を出力
+L0223	3-4	表示件数		○	-	50	１ページあたりの表示件数
+L0224	3-5	移動指示ID	ラベル	-	-	-	移動指示リスト作成後に自動採番された値を表示
+L0225	3-6	出庫元店舗	ラベル	-	-	-	移動指示リストにまとめられている在庫移動の出庫元店舗
+L0226	3-7	入庫先店舗	ラベル	-	-	-	移動指示リストにまとめられている在庫移動の入庫先店舗
+L0227	3-8	在庫移動数	ラベル	-	-	-	移動指示リスト含まれる在庫移動の件数
+L0228	3-9	移動点数	ラベル	-	-	-	移動指示リストに含まれる移動する商品の枚数
+L0229	3-10	基準価格合計	ラベル	-	-	-	各在庫移動の持つ基準価格の合計
+L0230	3-11	移動原価合計	ラベル	-	-	-	各在庫移動の持つ移動原価の合計
+L0231	3-12	登録日	ラベル	-	-	-	移動指示リストの登録日
+L0232	3-13	更新日	ラベル	-	-	-	移動指示リストの更新日
+L0233	3-14	送状No.	ラベル or ボタン	-	16383文字	-	送状No.の登録ボタンまたは登録されている送状No.の値表示
+L0234	全角・半角を許容する
+L0235	3-15	発送状況	ラベル	-	-	-	移動指示リストの発送状況
+L0236	3-16	ページネーション	ラベル	-	-	-	ページネーション
+L0237	レイアウト図 在庫移動実績CSV登録モーダル
+L0238	1-1
+L0239	1-2
+L0240	在庫移動指示検索 / D155 / image 1
+L0241	新規に表示された部品のみ記載
+L0242	識別ID	ラベル	書式・制限	必須	最大値	初期値	画面部品の説明
+L0243	CSV登録部
+L0244	1-1	ファイルを選択	ボタン	-	-	-	ボタンを押下すると、アップロードするためのディレクトリフォームが開き、
+L0245	csvファイルをアップロードすることが出来る
+L0246	1-2	登録	ボタン	-	-	-	押下時に、分割商品CSV登録を実行
+L0247	商品登録を押下時に下記の場合エラーとなる
+L0248	・アップロードされたファイルがcsv以外のファイルの場合
+L0249	・CSVファイルが下記のカラム名以外の場合（フォーマット不一致エラー）
+L0250	移動指示ID、送り状No.
+L0251	※CSV1行目のカラム名の一致チェックを行う
+L0252	登録CSV
+L0253	識別ID	項目名	主キー	書式・制限	必須	最大文字数
+L0254	または最大値	入力例	説明
+L0255	2-1	移動指示ID	○	数値	○	1～99999999	1234	送り状No.を登録したい移動指示IDを指定
+L0256	2-2	送り状No.		文字列	○	65535byte	1234-5678,1234-1234	形式のチェックは行わない、カンマ区切りで複数登録可能
+##### 0202 sheet-33 在庫移動指示詳細
+L0001	在庫移動指示詳細
+L0002	ドキュメント名在庫管理 基本設計
+L0003	セクション—
+L0004	プロジェクト名サイトリニューアル
+L0005	作成者堀部
+L0006	作成日2025/8/25
+L0007	更新者石川
+L0008	更新日2026-01-28
+L0009	機能NoM04-25
+L0010	機能名在庫移動指示詳細
+L0011	概要—
+L0012	処理概要 在庫移動指示詳細画面
+L0013	レイアウト図 在庫移動指示詳細画面
+L0014	1-1
+L0015	1-2
+L0016	1-3
+L0017	1-4
+L0018	1-5
+L0019	1-6
+L0020	1-7
+L0021	1-14
+L0022	1-8
+L0023	1-11
+L0024	1-10
+L0025	1-12
+L0026	1-13
+L0027	1-15
+L0028	1-16
+L0029	1-9
+L0030	2-1
+L0031	2-2
+L0032	2-3
+L0033	2-4
+L0034	2-5
+L0035	2-6
+L0036	2-7
+L0037	2-8
+L0038	2-9
+L0039	2-10
+L0040	画像レイヤー（2枚）: 在庫移動指示詳細 / D7 / image 1 + 在庫移動指示詳細 / D7 / image 2
+L0041	機能仕様処理概要 在庫移動指示詳細画面
+L0042	在庫移動指示詳細画面概要
+L0043	・在庫移動指示の一覧から任意の移動指示IDを押下することでこの画面（在庫移動指示詳細画面）へ遷移する
+L0044	権限制御
+L0045	・0201_基本設計仕様書(システム設定).xlsxの権限制御シート（機能ID: M11-03）の「2.編集可能店舗処理」に応じた権限制御が行われる
+L0046	送状No.
+L0047	・在庫移動指示検索画面で送状No.を登録することで、この画面で送状No.を表示できる
+L0048	・送状No.の変更はこの画面からのみ可能
+L0049	・送状No.が登録されている場合、送り状No.の値がフォームに表示される
+L0050	・フォーム内の値を変更し、登録ボタンを押下すると値が保存される
+L0051	・変更時の未入力（空白のみ）での更新は許可しない
+L0052	（送り状番号を空に戻してステータス変更発送状況を「未」に戻す、移動ステータスを「出庫承認済み」に戻す）ことはできないため）
+L0053	備考情報
+L0054	・備考情報の内容の登録は、まとめられている移動のステータスが出庫承認済みまたは移動中の時のみ可能
+L0055	・備考情報のフォームの値を変更後、登録ボタンを押下すると値が保存される
+L0056	登録
+L0057	・送り状No.および備考の内容が変更された場合にのみ活性化する
+L0058	・登録ボタンを押下すると値が保存される
+L0059	・入力チェック
+L0060	在庫移動指示詳細 / AG69 / image 3
+L0061	・送り状No.が空文字のみの場合フォームにその旨のエラーを表示
+L0062	削除
+L0063	・発送済みでないかつ送り状No.が登録されていない在庫移動指示のみ削除可能
+L0064	・削除ボタンを押下すると削除確認モーダルが表示される
+L0065	・削除確認モーダル内の削除ボタンを押下すると移動指示リストが削除され、移動指示リスト作成検索画面へ遷移する
+L0066	識別ID	ラベル	書式・制限	必須	最大値	初期値	画面部品の説明
+L0067	在庫移動指示情報
+L0068	1-1	在庫移動指示ID	ラベル	-	-	-	在庫移動指示リスト作成検索 "識別ID3-5" と同様
+L0069	登録後自動採番された値を表示
+L0070	1-2	出庫元店舗	ラベル	-	-	-	在庫移動指示リスト作成検索 "識別ID3-6" と同様
+L0071	移動指示リストにまとめられている在庫移動の出庫元店舗
+L0072	1-3	入庫先店舗	ラベル	-	-	-	在庫移動指示リスト作成検索 "識別ID3-6" と同様
+L0073	移動指示リストにまとめられている在庫移動の入庫先店舗
+L0074	1-4	在庫移動数	ラベル	-	-	-	移動指示リスト含まれる在庫移動の件数
+L0075	1-5	移動点数	ラベル	-	-	-	移動指示リストに含まれる移動する商品の点数
+L0076	1-6	登録日	ラベル	-	-	-	移動指示リストの登録日
+L0077	1-7	更新日	ラベル	-	-	-	移動指示リストの更新日
+L0078	1-8	最終更新者	ラベル	-	-	-	移動指示リストの最終更新者
+L0079	1-9	送状No.	全角・半角	-	16383文字	-	送状No.がある場合に値を表示
+L0080	数値だけでなく全角・半角を許容する
+L0081	1-10	総販売価格の合計	ラベル	-	-	-	各在庫移動の持つ全ての商品の販売価格の合計金額
+L0082	1-11	総移動原価の合計	ラベル	-	-	-	各在庫移動の持つ総移動原価の合計金額
+L0083	1-12	●●円以上の商品の合計	ラベル	-	-	-	出庫元店舗の高額商品閾値の最も高い価格を取得し閾値とする
+L0084	項目名も閾値の値を使って、●●円以上の商品と表記する
+L0085	商品の基準価格が●●円以上の商品の合計金額
+L0086	1-13	●●円未満の商品の合計	ラベル	-	-	-	出庫元店舗の高額商品閾値の最も高い価格を取得し閾値とする
+L0087	項目名も閾値の値を使って、●●円未満の商品と表記する
+L0088	商品の基準価格が●●円未満の商品の合計金額
+L0089	1-14	備考	全角・半角	-	16383文字	-	メモの入力は入庫完了以外で入力可能
+L0090	1-15	登録	ボタン	-	-	-	備考の変更内容を登録する処理を実行
+L0091	1-16	削除	ボタン	-	-	-	表示中の指示書リストを削除する処理を実行
+L0092	出庫待ち状態の場合のみ削除可能
+L0093	在庫移動情報
+L0094	2-1	在庫移動振替ID	リンク	-	-	-	機能No.: M04-09 在庫移動・振替登録 編集（移動）の "識別ID2-3" の値を利用する
+L0095	押下することで対象の在庫移動情報へ遷移
+L0096	2-2	出庫元店舗	ラベル	-	-	-	機能No.: M04-09 在庫移動・振替登録 編集（移動）の "識別ID2-1" の値を利用する
+L0097	2-3	入庫先店舗	ラベル	-	-	-	機能No.: M04-09 在庫移動・振替登録 編集（移動）の "識別ID2-2" の値を利用する
+L0098	2-4	在庫区分	ラベル	-	-	-	機能No.: M04-09 在庫移動・振替登録 編集（移動）の "識別ID2-3" の値を利用する
+L0099	2-5	基準価格合計	ラベル	-	-	-	対象の在庫移動が持つ全ての商品の基準価格の合計金額
+L0100	2-6	移動原価合計	ラベル	-	-	-	対象の在庫移動が持つ移動原価の合計金額
+L0101	2-7	●●円以上の商品の合計	ラベル	-	-	-	出庫元店舗の高額商品閾値の最も高い価格を取得し閾値とする
+L0102	項目名も閾値の値を使って、●●円以上の商品と表記する
+L0103	商品の基準価格が●●円以上の商品の合計金額
+L0104	2-8	●●円未満の商品の合計	ラベル	-	-	-	出庫元店舗の高額商品閾値の最も高い価格を取得し閾値とする
+L0105	項目名も閾値の値を使って、●●円未満の商品と表記する
+L0106	商品の基準価格が●●円未満の商品の合計金額
+L0107	2-9	移動点数	ラベル	-	-	-	対象の在庫移動に含まれる商品点数の合計
+L0108	2-10	登録日	ラベル	-	-	-	機能No.: M04-09 在庫移動・振替登録 編集（移動）の "識別ID1-4" の値を利用する
+##### 0202 sheet-35 送り状CSV出力
+L0001	送り状CSV出力
+L0002	ドキュメント名在庫管理 基本設計
+L0003	セクション—
+L0004	プロジェクト名サイトリニューアル
+L0005	作成者堀部
+L0006	作成日2025-08-25
+L0007	更新者石川
+L0008	更新日2026-02-12
+L0009	機能NoM04-28
+L0010	機能名送り状CSV出力
+L0011	概要—
+L0012	処理概要
+L0013	CSV出力項目
+L0014	識別ID	項目名	備考
+L0015	1	オーダーID	移動指示ID
+L0016	2	注文金額合計	移動する商品の基準価格合計
+L0017	3	注文者氏名	店舗管理の移動元の会社名 + 半角空白 +移動元の店名（例: 株式会社 晴れる屋 大宮）
+L0018	4	注文者カナ	店舗管理の移動元の会社名(カナ) + 半角空白 +移動元の店名(カナ)（例: カブシキガイシャ ハレルヤ オオミヤ）
+L0019	5	注文者郵便番号	店舗管理の移動元の郵便番号
+L0020	6	注文者都道府県	店舗管理の移動元の都道府県
+L0021	7	注文者住所	店舗管理の移動元の住所1
+L0022	8	注文者住所2	店舗管理の移動元の住所2
+L0023	9	注文者電話番号	店舗管理の移動元の電話番号
+L0024	10	商品金額合計	移動する商品の基準価格合計
+L0025	11	送料	0固定
+L0026	12	送料(税抜)	0固定
+L0027	13	手数料	0固定
+L0028	14	手数料(税抜)	0固定
+L0029	15	配送先氏名	店舗管理の移動先の会社名 + 半角空白 +移動先の店名（例: 株式会社 晴れる屋 大宮）
+L0030	16	配送先カナ	店舗管理の移動先の会社名(カナ) + 半角空白 +移動先の店名(カナ)（例: カブシキガイシャ ハレルヤ オオミヤ）
+L0031	17	配送先郵便番号	店舗管理の移動先の郵便番号
+L0032	18	配送先都道府県	店舗管理の移動先の都道府県
+L0033	19	配送先住所	店舗管理の移動先の住所1
+L0034	20	配送先住所2	店舗管理の移動先の住所2
+L0035	21	配送先電話番号	店舗管理の移動先の電話番号
+L0036	22	郵便種別	0固定（0：ゆうパック）
+L0037	23	発送方法	ゆうパック
+L0038	カスタマイズ説明
+L0039	・カスタマイズ要件
+L0040	・送り元、送り先の店舗情報をCSVにて出力する
+L0041	・ゆうプリRが取り込めるフォーマットで出力する
+L0042	機能仕様処理概要
+L0043	・項目名は受注管理で出力する送り状の項目名と合わせてあるため注文者名、配送先となっているが
+L0044	注文者を移動元店舗、配送先を移動先店舗として出力する
+##### 0202 sheet-32 在庫移動指示検索
+L0001	在庫移動指示検索
+L0002	ドキュメント名在庫管理 基本設計
+L0003	セクション—
+L0004	プロジェクト名サイトリニューアル
+L0005	作成者堀部
+L0006	作成日2025-08-25
+L0007	更新者本田
+L0008	更新日2025-12-08
+L0009	機能NoM04-24
+L0010	機能名在庫移動指示検索
+L0011	概要在庫移動指示を検索、送り状No.の登録およびダウンロードが可能
+L0012	処理概要 移動指示検索画面
+L0013	※在庫移動指示の作成については、在庫移動振替一覧の処理概要を参照
+L0014	レイアウト図 在庫移動指示検索画面
+L0015	1-1
+L0016	2-1
+L0017	2-2
+L0018	2-3
+L0019	2-4
+L0020	2-5
+L0021	2-9
+L0022	2-10
+L0023	2-6
+L0024	2-7
+L0025	2-8
+L0026	3-16
+L0027	3-4
+L0028	3-2
+L0029	3-3
+L0030	3-5
+L0031	3-6
+L0032	3-7
+L0033	3-8
+L0034	3-9
+L0035	3-10
+L0036	3-11
+L0037	3-12
+L0038	3-13
+L0039	3-14
+L0040	3-1
+L0041	3-15
+L0042	画像レイヤー（2枚）: 在庫移動指示検索 / B7 / image 2 + 在庫移動指示検索 / B7 / image 3
+L0043	機能仕様処理概要 移動指示検索画面
+L0044	移動指示検索画面概要
+L0045	・サイドバーの在庫管理 / 在庫移動指示を押下してこの画面（移動指示検索画面）へ遷移する
+L0046	・在庫移動振替一覧から作成した在庫移動指示に対して、送状No.を登録することで在庫移動のステータスは移動中となる
+L0047	機能仕様※在庫移動指示の作成については、在庫移動振替一覧の処理概要を参照
+L0048	移動登録ステータス遷移（在庫移動のものを転用）
+L0049	・店舗間移動フロー
+L0050	アクション
+L0051	ステータス
+L0052	入庫先
+L0053	NG
+L0054	新規
+L0055	登録
+L0056	ピック
+L0057	欠品
+L0058	登録
+L0059	出庫
+L0060	承認
+L0061	発送
+L0062	手続き
+L0063	着荷
+L0064	入庫
+L0065	承認
+L0066	差分
+L0067	通知
+L0068	新規
+L0069	登録
+L0070	出庫
+L0071	承認待ち
+L0072	却下
+L0073	出庫
+L0074	承認済み
+L0075	移動中
+L0076	入庫
+L0077	済み
+L0078	入庫
+L0079	承認待ち
+L0080	NG
+L0081	差分
+L0082	登録
+L0083	在庫移動指示リスト
+L0084	画面遷移図をExcel図形座標で再構成（画面 15件 / 遷移 18件 / 元コネクタ 20件）
+L0085	遷移一覧（18件）
+L0086	遷移元	遷移先	connector
+L0087	発送
+L0088	手続き	移動中	18（0202:在庫移動指示検索!F67）
+L0089	欠品
+L0090	登録	出庫
+L0091	承認待ち	27（0202:在庫移動指示検索!F67）
+L0092	新規
+L0093	登録	ピック	29（0202:在庫移動指示検索!F67）
+L0094	ピック	欠品
+L0095	登録	30（0202:在庫移動指示検索!F67）
+L0096	ピック	出庫
+L0097	承認待ち	31（0202:在庫移動指示検索!F67）
+L0098	出庫
+L0099	承認待ち	出庫
+L0100	承認	32（0202:在庫移動指示検索!F67）
+L0101	出庫
+L0102	承認	却下	62（0202:在庫移動指示検索!F67）
+L0103	出庫
+L0104	承認	出庫
+L0105	承認済み	63（0202:在庫移動指示検索!F67）
+L0106	出庫
+L0107	承認済み	発送
+L0108	手続き	36（0202:在庫移動指示検索!F67）
+L0109	移動中	着荷	38（0202:在庫移動指示検索!F67）
+L0110	着荷	差分
+L0111	登録	40（0202:在庫移動指示検索!F67）
+L0112	差分
+L0113	登録	入庫
+L0114	承認待ち	44（0202:在庫移動指示検索!F67）
+L0115	着荷	入庫
+L0116	承認待ち	45（0202:在庫移動指示検索!F67）
+L0117	入庫
+L0118	承認待ち	入庫
+L0119	承認	46（0202:在庫移動指示検索!F67）
+L0120	入庫
+L0121	承認	着荷	47（0202:在庫移動指示検索!F67）
+L0122	入庫
+L0123	承認	入庫
+L0124	済み	49（0202:在庫移動指示検索!F67）
+L0125	差分
+L0126	通知	入庫
+L0127	済み	50（0202:在庫移動指示検索!F67）
+L0128	入庫
+L0129	承認	差分
+L0130	通知	51（0202:在庫移動指示検索!F67）
+L0131	接続関係整理図
+L0132	発送
+L0133	手続き
+L0134	欠品
+L0135	登録
+L0136	ピック
+L0137	出庫
+L0138	承認
+L0139	着荷
+L0140	新規
+L0141	登録
+L0142	入庫
+L0143	承認
+L0144	差分
+L0145	登録
+L0146	差分
+L0147	通知
+L0148	出庫
+L0149	承認済み
+L0150	入庫
+L0151	承認待ち
+L0152	出庫
+L0153	承認待ち
+L0154	入庫
+L0155	済み
+L0156	移動中
+L0157	却下
+L0158	在庫移動指示発送手続き部分想定運用フロー
+L0159	①在庫移動振替一覧画面から、出庫元と入庫先の店舗が同一の出庫承認済みの移動をまとめて在庫移動指示を作成する
+L0160	②在庫移動指示検索（この設計書の対象画面）から、送り状CSVダウンロードボタンを押下し、ゆうプリRに入力するCSVを出力する
+L0161	③ゆうプリRに②で出力したCSVを登録し、送り状No.を得る
+L0162	④在庫移動指示に対して在庫移動指示検索画面または在庫移動実績CSVから送り状番号を登録し、移動ステータスを「移動中」とする
+L0163	権限制御
+L0164	・0201_基本設計仕様書(システム設定).xlsxの権限制御シート（機能ID: M11-03）の「2.編集可能店舗処理」に応じた権限制御が行われる
+L0165	在庫移動実績CSV登録
+L0166	・在庫実績CSV登録ボタンを押下すると在庫実績CSV登録モーダルが表示される
+L0167	・CSVは2,000件を登録上限とする
+L0168	・入力チェックとして以下を行う
+L0169	・移動指示ID、送り状No.どちらも入力されていること
+L0170	・指定された移動指示IDが存在すること
+L0171	・移動指示IDに重複がないこと
+L0172	・入力チェックはエラーが20件に到達するまでチェックを行う
+L0173	・エラーがある場合、登録処理を終了し行番号と移動指示IDをセットにしたエラーメッセージを最大20件まで画面上に表示する
+L0174	・エラーメッセージには固定で、「エラーは20件まで表示されます」、とエラーメッセージの上に表示する
+L0175	・エラーがなければ登録処理を行う
+L0176	・該当の移動指示IDに送り状No.を登録する
+L0177	・在庫移動指示の発送状況は「済」となり在庫移動のステータスが「移動中」となる
+L0178	在庫移動指示検索
+L0179	・在庫移動指示について発送状況で絞り込める
+L0180	・在庫移動指示登録時は送状No.がない状態であり、これを発送状況を「未」（未発送）とする
+L0181	・送状No.を登録した場合、発送状況を「済」（発送済み）とする
+L0182	在庫移動指示一覧
+L0183	・送状No.
+L0184	・値がない場合は登録ボタンを表示する
+L0185	在庫移動指示検索 / AI105 / image 4
+L0186	・登録ボタンを押下すると送り状ナンバー登録モーダルを表示する
+L0187	・送状No.登録することで、在庫移動指示の発送状況は「済」となり在庫移動のステータスが「移動中」となる
+L0188	・移動指示ID
+L0189	・指示IDをクリックすると対象の在庫移動指示の詳細画面へ遷移する
+L0190	・各行の先頭のチェックボックスで移動指示を選択すると、以下の２つのボタンが活性化する
+L0191	・在庫移動実績入力CSVダウンロードボタン
+L0192	・選択している移動指示リストについて、在庫移動実績入力用CSVを出力する
+L0193	・在庫移動実績入力用CSV（機能No.: M04-27）
+L0194	・送り状CSVダウンロードボタン
+L0195	・選択している在庫移動について、送り状CSVを出力する
+L0196	・送り状CSV（機能No.: M04-28）
+L0197	送状No.
+L0198	・送状No.の変更は指示リストの詳細画面からのみ可能
+L0199	識別ID	ラベル	書式・制限	必須	最大値	初期値	画面部品の説明
+L0200	CSVファイルアップロード
+L0201	1-1	在庫移動実績CSV登録	ボタン	-	-	-
+L0202	移動指示リスト検索
+L0203	2-1	出庫元店舗	プルダウン	○	-	ユーザーのデフォルト検索店舗	移動指示リストの出庫元店舗名
+L0204	2-2	入庫先店舗	プルダウン	○	-	未選択	移動指示リストの入庫先店舗名
+L0205	2-3	在庫移動指示ID	数値	-	-	-	在庫移動指示リストID
+L0206	2-4	在庫移動ID	数値	-	-	-	在庫移動ID
+L0207	2-5	登録日(From)	日付（yyyy/mm/dd）	-	-	-	在庫移動指示リストの登録日の検索に利用する期間の開始日
+L0208	カレンダー選択機能あり
+L0209	2-5	登録日(To)	日付（yyyy/mm/dd）	-	-	-	在庫移動指示リストの登録日の検索に利用する期間の終了にち
+L0210	カレンダー選択機能あり
+L0211	2-6	更新日(From)	日付（yyyy/mm/dd）	-	-	-	在庫移動指示リストの更新日の検索に利用する期間の開始日
+L0212	カレンダー選択機能あり
+L0213	2-6	更新日(To)	日付（yyyy/mm/dd）	-	-	-	在庫移動指示リストの更新日の検索に利用する期間の終了にち
+L0214	カレンダー選択機能あり
+L0215	2-7	発送状況	複数選択(セレクトボックス)	-	-	-	在庫移動指示のステータスでの絞り込みに利用
+L0216	選択肢：未、済
+L0217	2-8	検索する	ボタン	-	-	-	ボタン押下で検索を実行、識別ID: 2-1 ~ 2-7の値を利用
+L0218	在庫移動・振替内容
+L0219	3-1	検索結果件数	ラベル	-	-	-	検索条件に応じたデータの件数
+L0220	3-2	在庫移動実績入力用CSVダウンロード	ボタン	-	-	-	在庫移動選択時のみ活性状態
+L0221	機能No.M04-27を出力
+L0222	3-3	送り状CSVダウンロードボタン	ボタン	-	-	-	機能No.M04-28を出力
+L0223	3-4	表示件数		○	-	50	１ページあたりの表示件数
+L0224	3-5	移動指示ID	ラベル	-	-	-	移動指示リスト作成後に自動採番された値を表示
+L0225	3-6	出庫元店舗	ラベル	-	-	-	移動指示リストにまとめられている在庫移動の出庫元店舗
+L0226	3-7	入庫先店舗	ラベル	-	-	-	移動指示リストにまとめられている在庫移動の入庫先店舗
+L0227	3-8	在庫移動数	ラベル	-	-	-	移動指示リスト含まれる在庫移動の件数
+L0228	3-9	移動点数	ラベル	-	-	-	移動指示リストに含まれる移動する商品の枚数
+L0229	3-10	基準価格合計	ラベル	-	-	-	各在庫移動の持つ基準価格の合計
+L0230	3-11	移動原価合計	ラベル	-	-	-	各在庫移動の持つ移動原価の合計
+L0231	3-12	登録日	ラベル	-	-	-	移動指示リストの登録日
+L0232	3-13	更新日	ラベル	-	-	-	移動指示リストの更新日
+L0233	3-14	送状No.	ラベル or ボタン	-	16383文字	-	送状No.の登録ボタンまたは登録されている送状No.の値表示
+L0234	全角・半角を許容する
+L0235	3-15	発送状況	ラベル	-	-	-	移動指示リストの発送状況
+L0236	3-16	ページネーション	ラベル	-	-	-	ページネーション
+L0237	レイアウト図 在庫移動実績CSV登録モーダル
+L0238	1-1
+L0239	1-2
+L0240	在庫移動指示検索 / D155 / image 1
+L0241	新規に表示された部品のみ記載
+L0242	識別ID	ラベル	書式・制限	必須	最大値	初期値	画面部品の説明
+L0243	CSV登録部
+L0244	1-1	ファイルを選択	ボタン	-	-	-	ボタンを押下すると、アップロードするためのディレクトリフォームが開き、
+L0245	csvファイルをアップロードすることが出来る
+L0246	1-2	登録	ボタン	-	-	-	押下時に、分割商品CSV登録を実行
+L0247	商品登録を押下時に下記の場合エラーとなる
+L0248	・アップロードされたファイルがcsv以外のファイルの場合
+L0249	・CSVファイルが下記のカラム名以外の場合（フォーマット不一致エラー）
+L0250	移動指示ID、送り状No.
+L0251	※CSV1行目のカラム名の一致チェックを行う
+L0252	登録CSV
+L0253	識別ID	項目名	主キー	書式・制限	必須	最大文字数
+L0254	または最大値	入力例	説明
+L0255	2-1	移動指示ID	○	数値	○	1～99999999	1234	送り状No.を登録したい移動指示IDを指定
+L0256	2-2	送り状No.		文字列	○	65535byte	1234-5678,1234-1234	形式のチェックは行わない、カンマ区切りで複数登録可能
+##### 0202 sheet-36 バーコード貼替リストCSV出力
+L0001	バーコード貼替リストCSV出力
+L0002	ドキュメント名在庫管理 基本設計
+L0003	セクション—
+L0004	プロジェクト名サイトリニューアル
+L0005	作成者佐藤
+L0006	作成日2025-08-25
+L0007	更新者石川
+L0008	更新日2025-12-11
+L0009	機能NoM04-30
+L0010	機能名バーコード貼替リストCSV出力
+L0011	概要対象店舗のスマレジ在庫にある商品の
+L0012	商品コードリストを出力
+L0013	処理概要
+L0014	レイアウト図
+L0015	1
+L0016	2
+L0017	3
+L0018	バーコード貼替リストCSV出力 / C7 / image 1
+L0019	カスタマイズ説明
+L0020	・カスタマイズ要件
+L0021	・指定期間で価格調整が発生した商品、かつ、対象店舗のスマレジ在庫にある商品の商品コードリストを出力する
+L0022	機能仕様処理概要
+L0023	・初期表示
+L0024	・出力対象店舗はログイン者のデフォルト検索店舗をデフォルト表示とする
+L0025	・価格変更発生期間はFromに前日、Toに当日を設定し、前日の00:00:00から当日の23:59:59までを対象とする
+L0026	・検索
+L0027	・出力対象店舗は1店舗のみ選択可能で、必須とする
+L0028	・価格変更発生期間はFromとToどちらも必須とする
+L0029	・価格変更発生期間のFromの時間は00:00:00、Toの時間は23:59:59で検索を行う
+L0030	・価格変更発生期間は最大で1か月間を選択可能
+L0031	・以下の条件で検索を行う
+L0032	・対象店舗のスマレジ在庫の在庫数が0以上のもの
+L0033	・スマレジ商品IDが登録済み
+L0034	・スマレジ連携フラグが有効
+L0035	・商品および商品規格のステータスが廃止でない（非公開は検索結果に含む）
+L0036	・価格変更発生期間で指定された期間内に価格変更履歴が存在する
+L0037	・出力項目について
+L0038	・商品名
+L0039	・[]で囲まれた略称の後だけ出さないようにする
+L0040	例: 【ネオンインク・Foil】(361)■ボーダーレス■《恐れを知らぬ者、カタラ/Katara, the Fearless》[TLA] 金R
+L0041	↓
+L0042	【ネオンインク・Foil】(361)■ボーダーレス■《恐れを知らぬ者、カタラ/Katara, the Fearless》[TLA]
+L0043	※金Rだけ不要なので出さない
+L0044	・[]がなければすべて出す
+L0045	・略称は後ろの方についているので、[]を後ろから検索し、略称以前を取り出す
+L0046	・状態記号
+L0047	・既存のバーコードに出力されている状態記号は出力不要
+L0048	・出力順について
+L0049	・色の並び順昇順
+L0050	・カードタイプの並び順昇順
+L0051	・点数で見たマナコストの昇順
+L0052	・基準価格降順（価格が高い順）
+L0053	識別ID	ラベル	書式・制限	必須	最大値	初期値	画面部品の説明
+L0054	1	出力対象店舗	単一選択	-	-	デフォルト検索店舗	-
+L0055	2	価格調整発生期間	日付	-	-	Frrom:前日
+L0056	To:当日	-
+L0057	3	バーコード貼替リストCSV出力	ボタン	-	-	-	バーコード貼替リストをダウンロード
+L0058	CSV出力項目
+L0059	識別ID	項目名	備考
+L0060	1	商品名	商品名の出力方法については処理概要に記載
+L0061	2	言語・状態	言語の日本語名・状態のコードの形式で出力（例: 英語・NM）
+L0062	3	販売価格	基準価格を出力
+L0063	#,###円の形で整形して出力
+L0064	4	スマレジ商品ID	スマレジ商品ID
+L0065	5	スマレジ商品コード	スマレジ商品コード
+L0066	6	スマレジバーコード	22 + スマレジ商品コード(6桁0埋め) + 販売価格(7桁0埋め)
+L0067	参考ファイル: 晴れる屋様_共有フォルダ\03_基本設計フェーズ\基本設計書\資料\バーコード関連資料\09161332プレイド品.xlsx
+L0068	画像レイヤー（2枚）: バーコード貼替リストCSV出力 / A81 / image 2 + バーコード貼替リストCSV出力 / A88 / image 3
+L0069	参考ファイル: 晴れる屋様_共有フォルダ\03_基本設計フェーズ\基本設計書\資料\バーコード関連資料\バーコードシール仕様.pptx
+L0070	画像レイヤー（2枚）: バーコード貼替リストCSV出力 / B116 / image 4 + バーコード貼替リストCSV出力 / A137 / image 5
+##### 0202 sheet-48 在庫移動戻しリストCSV出力
+L0001	在庫移動戻しリストCSV出力
+L0002	ドキュメント名在庫管理 基本設計
+L0003	セクション—
+L0004	プロジェクト名サイトリニューアル
+L0005	作成者堀部
+L0006	作成日2025-08-25
+L0007	更新者堀部
+L0008	更新日2025-09-12
+L0009	機能NoM04-33
+L0010	機能名在庫移動戻しリストCSV出力
+L0011	概要—
+L0012	処理概要（★はカスタマイズ項目）
+L0013	CSV出力項目
+L0014	識別ID	項目名	備考
+L0015	1	ピッキング区分	店舗ごとの閾値（ネット買取管理の場合は本店しかないため本店の閾値）とサプライを出力
+L0016	●●円未満、●●円以上▲▲円未満、■■円以上、サプライ
+L0017	閾値の表示も基準販売価格を参照して行う（セール中で金額が変わっても棚を移動することはないため）
+L0018	2	棚番号	商品がしまってある場所番号(本店のみ)
+L0019	支店では非表示
+L0020	3	言語/状態	Foilの場合はFoilをつけて、言語/状態の形式で出力する（例: FoilJP/NM）、サプライ品の場合は「サプライ品」と表示
+L0021	4	略称	商品の略称
+L0022	サプライ品の場合は表示しない
+L0023	5	色/R	商品名から取り出した色とレアリティを出力（例: 金R）。シングルカード以外は色に該当するデータがないため、色情報は非表示
+L0024	6	数	商品点数
+L0025	7	商品名	サプライ品でない場合は商品名から略称・言語・状態・色・レアリティを取り除く
+L0026	8	基準価格	基準価格
+L0027	カスタマイズ説明
+L0028	・カスタマイズ要件
+L0029	・在庫移動一覧画面で選択された在庫移動データを元に棚戻しするための戻しリストをダウンロードする
+L0030	・本店3F,2F,B2Fや支店で閾値が異なるため、マスターデータ管理にて、店舗ごとに金額の閾値を分けられるようにする
+L0031	→フォーマットがそれぞれ3F,2F,B2Fで異なるものとなる
+L0032	備考
+L0033	３F在庫 現行運用での金額の閾値について
+L0034	シングルカード
+L0035	低額：4800円未満
+L0036	高額：4800円以上
+L0037	金庫：基本的にEC在庫で500万以上のものを保管。あとは備品などを入れている
+L0038	シングルカード以外
+L0039	倉庫：2Fに置ききれない（商品化していない）サプライパックボックス等を保管
+L0040	・その他、基本的な仕様は「在庫移動指示リスト ピッキングリスト印刷」に準じる
+L0041	機能仕様処理概要（★はカスタマイズ項目）
+L0042	印刷対象取得
+L0043	★一覧画面で選択された買取情報に紐づく実在庫情報を、対象店舗ごとに指定された閾値情報+サプライで分けて取得する
+L0044	・サプライ品でない場合は商品名から略称・言語・状態・色・レアリティを取り除く
+L0045	・商品名内に[略称タグ]が含まれない場合は[～]（[]内にある文字を[]ごと）を削除
+L0046	・並び順は金額閾値の昇順(最後にサプライ)が最優先となる
+L0047	・金額閾値内の並び順は以下の通りとなる
+L0048	・棚番（昇順、支店の場合は棚番のソートは行わない）
+L0049	・言語（日→英→他言語）
+L0050	・状態（NM→HP）
+L0051	・Foilフラグ（非Foil→Foil）
+L0052	・略称タグ（昇順）
+L0053	・レアリティ（M→C）
+L0054	・色（マスターデータ色順参照）
+L0055	・設定されている略称タグについてコレクター番号でのソートだった場合、コレクター番号（昇順）
+L0056	・設定されている略称タグについてアルファベットでのソートだった場合、英語のカード名（昇順）
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/M04-31_factors.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/M04-31/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1,P4	棚卸計画の店舗	店舗A｜店舗B	店舗A: 計画は店舗Aの計画として保存され、CSV登録では店舗Aの在庫を処理対象にする／店舗B: 店舗Bの計画になり、店舗Bの在庫を処理対象にする	L0043,L0149,L0203,L0440	この機能
+F02	P1,P2,P4	棚卸計画の在庫区分	EC-CUBE｜スマレジ	EC-CUBE: 計画はEC-CUBE在庫の計画で、在庫変動履歴にEC-CUBEの在庫区分を記録する／スマレジ: スマレジ在庫の計画で、履歴にスマレジの在庫区分を記録する	L0044,L0150,L0456	この機能
+F03	P2	棚卸数量と在庫数量の差異	差異プラス｜差異マイナス｜差異なし	差異プラス: 現在庫に差異分を足し、履歴に増減数・仕入総価格0を登録する／差異マイナス: 現在庫から差異分を引き、履歴に増減数を登録する（仕入総価格の指定なし）／差異なし: 在庫も履歴も変えない	L0453-L0458	この機能
+F04	P2	反映直前のEC在庫の現在庫	0｜1以上	0: 差異プラスで0から1以上になると入荷通知を行う／1以上: 入荷通知を行わない	L0459-L0460	この機能
+F05	P2,P6	棚卸計画の作成後の在庫変動	なし｜あり	なし: 反映の基準の現在庫は計画作成時の在庫数量と同じ／あり: 現在庫が作成時と異なり、反映は現在庫に差異分を増減した値になる（棚卸数量そのものにはならない）。確認画面には計画後に変動履歴の更新がありましたのアラートを出す	L0454,L0367-L0369,L0109,L0412	この機能
+F06	P3,P4,P5	棚卸計画の在庫反映の状態	未反映｜反映済み	未反映: 反映・CSV登録・保存ができる／反映済み: 在庫反映済みのため更新できませんのエラーで、反映・CSV登録・保存はいずれも行われない	L0210,L0214,L0360,L0362,L0444,L0463,L0090,L0103,L0106	この機能
+F07	P3	商品数と計上済み商品数の状況	一致して1以上｜商品数が0｜計上済み商品数が0｜不一致	一致して1以上: 反映に進める／商品数が0: 反映ボタンが押せない／計上済み商品数が0: 反映ボタンが押せない／不一致: 反映ボタンが押せず、実行時は商品数と計上済み商品数が一致しませんのエラー	L0227-L0229,L0445-L0447,L0107	この機能
+F08	P3	在庫差異と差異確認の状況	差異なしまたは全て確認済み｜未確認の差異あり	差異なしまたは全て確認済み: 反映に進める／未確認の差異あり: 反映ボタンが押せず、実行時は差異未確認の商品があるため在庫反映できませんのエラー	L0230,L0448,L0104	この機能
+F09	P5	商品の差異確認の状態	未確認｜確認済み	未確認: 棚卸数量・在庫数量を変更できる／確認済み: 棚卸数量と在庫数量を変更できない	L0366,L0101	この機能
+F10	P5	保存の種類	初回登録｜更新	初回登録: 保存後、棚卸計画の次の商品の確認画面へ遷移し、次が無ければ棚卸計画編集画面へ遷移する／更新: 保存後、棚卸計画編集画面へ（ページ位置を保持して）遷移する	L0361,L0363,L0364,L0397	この機能
+F11	P5	棚卸計画の次の棚卸対象商品	あり｜なし	あり: 初回登録後は次の商品の棚卸在庫確認画面へ遷移／なし: 棚卸計画編集画面へ遷移	L0363,L0115	この機能
+F12	P6	商品の在庫差異の有無	差異なし｜差異あり	差異なし: 差異確認＆完了ボタンを表示しない／差異あり: 差異確認＆完了ボタンを表示する	L0365,L0398	この機能
+F13	P7	棚卸計画の在庫反映日	未設定｜設定済み	未設定: 反映日欄は空で、エラー注記の対象になりうる／設定済み: 反映日・更新者名を表示し、エラー注記は出さない	L0053-L0054,L0119	この機能
+F14	P7	反映済みの棚卸明細	あり｜なし	あり: 反映日が未設定ならエラー注記を出す／なし: エラー注記を出さない	L0119	この機能
+F15	P7	在庫反映の処理	実行中｜実行中でない	実行中: エラー注記を出さない／実行中でない: 反映日未設定かつ反映済み明細ありのとき注記を出す	L0119	この機能
+F16	P8	差異ありのみ表示	オン｜オフ	オン: 棚卸数量と在庫数量の差が0でない商品だけを出力／オフ: 登録されている棚卸商品を全て出力	L0206,L0307	この機能
+F17	P8	棚卸商品の言語	JP｜EN	JP: 言語列にJPと出力／EN: 言語列にENと出力	L0296	この機能
+F18	P8	棚卸商品の状態	NM｜SP	NM: 状態コード列にNMと出力／SP: 状態コード列にSPと出力	L0297	この機能
+
+ succeeded in 0ms:
+##### 0202 sheet-37 棚卸計画一覧
+L0001	棚卸計画一覧
+L0002	ドキュメント名在庫管理 基本設計
+L0003	セクション—
+L0004	プロジェクト名サイトリニューアル
+L0005	作成者佐藤
+L0006	作成日2025/8/25
+L0007	更新者佐藤
+L0008	更新日20205/9/25
+L0009	機能NoM04-35（正しくは M04-31。Excel基本設計の機能No欄の誤記）
+L0010	機能名棚卸計画一覧
+L0011	概要棚卸計画一覧を参照する
+L0012	処理概要
+L0013	レイアウト図
+L0014	1-2
+L0015	1-3
+L0016	1-7
+L0017	2-1
+L0018	2-2
+L0019	2-3
+L0020	2-4
+L0021	2-5
+L0022	2-6
+L0023	2-7
+L0024	2-8
+L0025	2-9
+L0026	2-10
+L0027	2-11
+L0028	2-12
+L0029	1-1
+L0030	1-6
+L0031	1-5
+L0032	1-4
+L0033	画像レイヤー（7枚）: 棚卸計画一覧 / F7 / image 1 + 棚卸計画一覧 / AC51 / image 2 + 棚卸計画一覧 / U13 / image 3 + 棚卸計画一覧 / J13 / image 4 + 棚卸計画一覧 / F16 / image 5 + 棚卸計画一覧 / F16 / image 6 + 棚卸計画一覧 / M16 / image 7
+L0034	カスタマイズ説明
+L0035	機能仕様処理概要
+L0036	棚卸計画の一覧を作成日の降順で表示する
+L0037	★表示項目について
+L0038	・識別ID:1-2「店舗選択」、識別ID:1-3「在庫区分」、識別ID:2-2「店舗」を追加する
+L0039	★検索について
+L0040	・検索ボタンを押下時、識別ID:1-2「店舗選択」、識別ID:1-3「在庫区分」の入力値で棚卸計画を検索する
+L0041	識別ID	ラベル	書式・制限	必須	最大値	初期値	画面部品の説明
+L0042	1-1	新規作成	ボタン	-	-	-	棚卸計画新規作成画面へ遷移
+L0043	1-2	店舗選択	セレクトボックス	-	-	デフォルト店舗	選択肢:店舗管理に登録されており、閉店となっていない店舗
+L0044	1-3	在庫区分	チェックボックス	-	-	-	選択肢:EC-CUBE スマレジ
+L0045	1-4	計画作成日	日付（yyyy/mm/dd）			１ヶ月	2/19 の表示の場合は from: 1/19 とする
+L0046	1-5	検索	ボタン	-	-	-	1-2、1-3の値で棚卸し計画を検索する
+L0047	1-6	該当件数	-	-	-	-
+L0048	1-7	表示件数	-	-	-	100	選択肢: 10件 50件 100件 300件 500件 1000件 2000件 10000件 12000件
+L0049	2-1	棚卸名	テキストリンク	-	-	-	棚卸計画編集画面へ遷移
+L0050	2-2	店舗	-	-	-	-	店舗名 在庫区分名
+L0051	2-3	作成日	-	-	-	-
+L0052	2-4	最終更新日	-	-	-	-
+L0053	2-5	在庫反映日	-	-	-	-	在庫反映を実行した場合のみ表示
+L0054	2-6	在庫反映実行時の更新者名	-	-	-	-	在庫反映を実行した場合のみ表示
+L0055	2-7	登録されている商品数	-	-	-	-
+L0056	2-8	在庫確認済みの商品数	-	-	-	-
+L0057	2-9	理論在庫数と棚卸数に差異がある商品数	-	-	-	-
+L0058	2-10	備考		-	-	-
+L0059	2-11	ページング	リンク	-	-	-	検索結果件数と表示件数(1-6)により算出するページ数分のリンクを表示
+L0060	Source:
+L0061	functions/pf-eccube3/m04-31_admin_stock_stock_inventory_plan.md
+L0062	現行仕様
+L0063	M04-31 棚卸計画 / 在庫管理 — 棚卸計画
+L0064	業務ロジック
+L0065	棚卸計画の特定
+L0066	対象の棚卸計画が存在しない場合はページが見つからない扱いとする。
+L0067	一覧の表示
+L0068	登録された棚卸計画が1件も無い場合は、一覧・該当件数・ページングを表示せず、その旨の見出しだけを表示する。
+L0069	表示件数は選択した値を保持し、次に一覧を表示したときも前回選んだ件数で表示する。
+L0070	指定したページの対象が無くなり、直前のページまでで全件が収まる場合は、1つ前のページを表示する。
+L0071	入出力
+L0072	種類	内容
+L0073	入力	棚卸名、備考
+L0074	失敗時出力	入力項目ごとのエラー内容
+L0075	入出力: 入力値の制限
+L0076	棚卸名は255文字以内とする。既に同じ棚卸名の棚卸計画が存在する場合は登録・更新できない。
+L0077	備考は1024文字以内とする。
+L0078	入出力: 永続化
+L0079	棚卸計画は棚卸計画テーブルに棚卸名・備考・作業者・在庫反映日を保持する。作業者には、その保存を行った管理者を記録する。
+L0080	操作	契機
+L0081	追加	棚卸計画の新規登録
+L0082	更新	棚卸計画の更新
+L0083	リニューアル後の仕様
+L0084	表示メッセージ
+L0085	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0086	—	—	棚卸計画データがありません。	一覧に計画が無いとき。	—
+L0087	—	—	検索結果 N 件 が該当しました	一覧に計画があるとき。	—
+L0088	—	棚卸名のフォーム直下	この棚卸名は既に使用されています。	同名の計画が存在	—
+L0089	M04-31-MSG-003	管理画面上部	棚卸計画を登録できませんでした。	棚卸計画の登録または更新時に、フォームが未送信または入力内容が不備のとき	エラーを表示し、新規は棚卸計画新規登録画面に留まり、更新は棚卸計画編集画面に遷移する
+L0090	M04-31-MSG-001	管理画面上部	在庫反映済みのため、更新できません。	在庫反映済みの棚卸計画を編集しようとしたとき	棚卸計画編集画面に遷移する
+L0091	M04-31-MSG-002	管理画面上部	この店舗の棚卸を編集する権限がありません。	編集権限のない店舗の棚卸計画を編集しようとしたとき	棚卸計画編集画面に遷移する
+L0092	M04-31-MSG-005	管理画面上部	この店舗の棚卸を編集する権限がありません。	編集権限のない店舗の棚卸計画に商品をCSV登録しようとしたとき	棚卸計画編集画面に遷移する
+L0093	M04-31-MSG-006	管理画面上部	CSVのフォーマットが一致しません。 ／ CSVデータが存在しません。 ／ 在庫反映済みのため、更新できません。 ／ 棚卸計画に店舗または在庫区分が設定されていないため、CSV登録できません。 ／ %maxRecord% 行を超えるCSVファイルは登録できません。 ／ CSVのフォーマットが一致しません。 %d 行目のデータを確認してください。 ／ %s は必須項目です。 %d 行目のデータを確認してください。 ／ %d 行目の商品コード %s は、棚卸計画で指定された店舗・在庫区分の在庫が存在しません。 ／ %d 行目の商品コード %s が複数の商品規格に設定されているため特定できません。 ／ %d 行目の商品コード %s は重複して登録されようとしているため登録できません。	棚卸商品CSVを登録したとき、CSVの形式・内容に不備がある、または棚卸計画が在庫反映済みの場合	登録を取り消し、棚卸計画編集画面に遷移する
+L0094	M04-31-MSG-008	管理画面上部	この店舗の棚卸を編集する権限がありません。	編集権限のない店舗の棚卸計画に数量をCSV登録しようとしたとき	棚卸計画編集画面に遷移する
+L0095	M04-31-MSG-009	管理画面上部	CSVのフォーマットが一致しません。 ／ CSVデータが存在しません。 ／ 在庫反映済みのため、更新できません。 ／ %maxRecord% 行を超えるCSVファイルは登録できません。 ／ CSVのフォーマットが一致しません。 %d 行目のデータを確認してください。 ／ %s は必須項目です。 %d 行目のデータを確認してください。 ／ %d 行目の商品コード %s は棚卸計画に登録されていません。 ／ %d 行目の商品コード %s は重複して登録されようとしているため登録できません。 ／ %d 行目: 棚卸数量は0以上の整数で入力してください。	棚卸数量CSVを登録したとき、CSVの形式・内容に不備がある、または棚卸計画が在庫反映済みの場合	登録を取り消し、棚卸計画編集画面に遷移する
+L0096	M04-31-MSG-011	管理画面上部	在庫反映済みのため、更新できません。	在庫反映済みの棚卸明細を編集しようとしたとき	棚卸在庫確認画面に遷移する
+L0097	M04-31-MSG-012	管理画面上部	この店舗の棚卸を編集する権限がありません。	編集権限のない店舗の棚卸明細を編集しようとしたとき	棚卸在庫確認画面に遷移する
+L0098	M04-31-MSG-013	管理画面上部	棚卸計画詳細を登録できませんでした。	棚卸計画詳細の登録時に、フォームが未送信または入力内容が不備のとき	エラーを表示して棚卸在庫確認画面に留まる
+L0099	M04-31-MSG-015	管理画面上部	在庫反映済みのため、更新できません。	在庫反映済みの棚卸明細を編集しようとしたとき	棚卸在庫確認画面に遷移する
+L0100	M04-31-MSG-016	管理画面上部	この店舗の棚卸を編集する権限がありません。	編集権限のない店舗の棚卸明細を編集しようとしたとき	棚卸在庫確認画面に遷移する
+L0101	M04-31-MSG-017	管理画面上部	差異確認済みのため、在庫数量を同期できません。	差異確認済みの商品で在庫数量を同期しようとしたとき	棚卸在庫確認画面に遷移する
+L0102	M04-31-MSG-019	管理画面上部	この店舗の棚卸を編集する権限がありません。	編集権限のない店舗の棚卸計画で在庫反映を実行しようとしたとき	棚卸計画編集画面に遷移する
+L0103	M04-31-MSG-020	管理画面上部	在庫反映済みのため、更新できません。	在庫反映済みの棚卸計画で在庫反映を実行しようとしたとき	棚卸計画編集画面に遷移する
+L0104	M04-31-MSG-021	管理画面上部	差異未確認の商品があるため在庫反映できません。	差異確認が済んでいない商品を含む棚卸計画で在庫反映を実行しようとしたとき	棚卸計画編集画面に遷移する
+L0105	M04-31-MSG-022	管理画面上部	この店舗の棚卸を編集する権限がありません。	編集権限のない店舗の棚卸計画で登録済み商品を確定しようとしたとき	棚卸計画編集画面に遷移する
+L0106	M04-31-MSG-023	管理画面上部	在庫反映済みのため、更新できません。	在庫反映済みの棚卸計画で登録済み商品を確定しようとしたとき	棚卸計画編集画面に遷移する
+L0107	M04-31-MSG-024	管理画面上部	商品数と計上済み商品数が一致しません。	登録済みの商品数と計上済みの商品数が一致しない状態で確定しようとしたとき	棚卸計画編集画面に遷移する
+L0108	M04-31-MSG-025	管理画面上部	棚卸計画データのロックに失敗しました。	棚卸計画の在庫反映を開始しようとしたとき	棚卸計画編集画面に遷移する
+L0109	M04-31-MSG-027	管理画面上部	計画後に変動履歴の更新がありました。	棚卸計画の作成後に、対象商品の在庫変動履歴が更新されているとき	棚卸在庫確認画面に留まる
+L0110	M04-31-MSG-028	入力項目直下/フォーム上部	ユーザーの編集可能店舗を選択してください。	編集できない店舗を選択して登録しようとしたとき	棚卸計画新規登録画面に留まる
+L0111	M04-31-MSG-029	入力項目直下（新規）／管理画面上部（更新）	ユーザーの編集可能店舗を選択してください。	棚卸計画を登録または更新したとき、編集可能でない店舗を選択した場合	入力内容を保存せず、登録画面に留まる（新規）または棚卸計画編集画面に遷移する（更新）
+L0112	M04-31-MSG-004	—	棚卸計画を登録しました。	入力内容に問題なく棚卸計画を保存したとき	棚卸計画編集画面に遷移する
+L0113	M04-31-MSG-007	—	登録が完了しました。	CSVによる商品の登録が完了したとき	棚卸計画編集画面に遷移する
+L0114	M04-31-MSG-010	—	棚卸数量を登録しました。	CSVによる棚卸数量の登録が完了したとき	棚卸計画編集画面に遷移する
+L0115	M04-31-MSG-014	—	棚卸計画詳細を登録しました。	入力内容に問題なく棚卸計画詳細を保存したとき	次の対象がある場合は棚卸在庫確認画面に遷移し、それ以外は棚卸計画編集画面に遷移する
+L0116	M04-31-MSG-018	—	最新の在庫数量を反映しました。	最新の在庫数量を棚卸明細へ反映したとき	棚卸在庫確認画面に遷移する
+L0117	M04-31-MSG-026	—	棚卸結果の在庫反映を完了しました。	棚卸結果を在庫へ反映したとき	棚卸計画編集画面に遷移する
+L0118	M04-31-MSG-030	—	form.type.numeric.invalid	在庫確認実行画面で在庫数量または棚卸数量に数字以外を入力して登録した場合	入力内容を保存せず、在庫確認実行画面に留まる
+L0119	M04-31-MSG-031	一覧行内（棚卸計画名リンク直後）	エラーのため在庫反映が未完了です。再実行してください。	在庫反映処理中ではなく、反映日未設定かつ反映済み明細がある棚卸計画を一覧表示したとき。	エラー注記を表示したまま棚卸計画一覧画面に留まる。
+##### 0202 sheet-38 棚卸計画新規作成
+L0120	棚卸計画新規作成
+L0121	ドキュメント名在庫管理 基本設計
+L0122	セクション—
+L0123	プロジェクト名サイトリニューアル
+L0124	作成者佐藤
+L0125	作成日2025/8/25
+L0126	更新者佐藤
+L0127	更新日20205/9/25
+L0128	機能NoM04-35（正しくは M04-31。Excel基本設計の機能No欄の誤記）
+L0129	機能名棚卸計画新規作成
+L0130	概要棚卸計画を登録する
+L0131	処理概要
+L0132	レイアウト図
+L0133	1
+L0134	2
+L0135	4
+L0136	3
+L0137	5
+L0138	棚卸計画新規作成 / I7 / image 1
+L0139	カスタマイズ説明
+L0140	機能仕様処理概要
+L0141	新規の棚卸計画を登録する
+L0142	★入力項目について
+L0143	・識別ID:2「店舗」を追加する
+L0144	・識別ID:3「在庫区分」を追加する
+L0145	★権限について
+L0146	・登録時、識別ID:2「店舗」で編集権限のない店舗が選ばれた場合エラー
+L0147	識別ID	ラベル	書式・制限	必須	最大値	初期値	画面部品の説明
+L0148	1	棚卸名	-	◯	-	-
+L0149	2	店舗	セレクトボックス	◯	-	デフォルト表示の店舗	選択肢:店舗管理に登録されており、閉店となっていない店舗
+L0150	3	在庫区分	ラジオボタン	◯	-	EC-CUBE	選択肢:EC-CUBE スマレジ
+L0151	4	備考	テキストエリア	-	-	-
+L0152	5	登録	ボタン	-	-	-	棚卸計画編集画面へ遷移
+##### 0202 sheet-39 棚卸計画編集
+L0153	棚卸計画編集
+L0154	ドキュメント名在庫管理 基本設計
+L0155	セクション—
+L0156	プロジェクト名サイトリニューアル
+L0157	作成者佐藤
+L0158	作成日2025/8/25
+L0159	更新者佐藤
+L0160	更新日2025-10-07
+L0161	機能NoM04-35（正しくは M04-31。Excel基本設計の機能No欄の誤記）
+L0162	機能名棚卸計画編集
+L0163	概要棚卸計画を編集する。対象商品を登録する。
+L0164	処理概要（★はカスタマイズ項目）
+L0165	レイアウト図
+L0166	1
+L0167	2
+L0168	3
+L0169	4
+L0170	5
+L0171	9
+L0172	7
+L0173	8
+L0174	10
+L0175	6
+L0176	12
+L0177	14
+L0178	11
+L0179	15
+L0180	16
+L0181	17
+L0182	18
+L0183	19
+L0184	20
+L0185	22
+L0186	23
+L0187	25
+L0188	24
+L0189	12
+L0190	13
+L0191	画像レイヤー（4枚）: 棚卸計画編集 / B7 / image 3 + 棚卸計画編集 / B7 / image 4 + 棚卸計画編集 / B7 / image 5 + 棚卸計画編集 / B7 / image 6
+L0192	棚卸計画編集 / AC38 / image 9
+L0193	レイアウト図 モーダル
+L0194	26
+L0195	27
+L0196	28
+L0197	29
+L0198	画像レイヤー（4枚）: 棚卸計画編集 / C41 / image 1 + 棚卸計画編集 / C41 / image 2 + 棚卸計画編集 / C54 / image 7 + 棚卸計画編集 / C54 / image 8
+L0199	機能仕様処理概要（★はカスタマイズ項目）
+L0200	★表示項目について
+L0201	・識別ID:2「店舗」を追加する
+L0202	★権限について
+L0203	・棚卸計画で指定された店舗の在庫のみ処理対象にする
+L0204	・権限のない店舗の編集は不可能にする
+L0205	CSV出力について
+L0206	CSV出力ボタン押下時、棚卸計画に登録されている棚卸商品全てをCSV出力する
+L0207	ファイル名は 【棚卸名】.csvとする
+L0208	フォーマットは 棚卸詳細CSV出力シート参照
+L0209	「登録」ボタンでフォームの内容を保存する。
+L0210	※在庫反映済みの場合はエラーメッセージを表示し、保存不可。
+L0211	CSV登録について
+L0212	商品登録ボタンを押下し、棚卸商品CSV登録モーダルを表示
+L0213	棚卸計画に対し、棚卸詳細（商品）データをCSVで登録する。
+L0214	在庫反映済みの場合はエラーメッセージを表示し、登録不可。
+L0215	一度に登録できるのは2万件まで。それ以上の場合は複数ファイルに分けて登録する。
+L0216	CSVファイル内に同一の商品または既存データがある場合はエラーとする。
+L0217	フォーマットは 棚卸詳細CSV出力シート参照
+L0218	数量登録ボタンを押下し、棚卸商品数量CSV登録モーダルを表示
+L0219	棚卸計画に対し、棚卸詳細（商品）データの棚卸数量をCSVで登録する。
+L0220	在庫反映済みの場合はエラーメッセージを表示し、登録不可。
+L0221	一度に登録できるのは2万件まで。それ以上の場合は複数ファイルに分けて登録する。
+L0222	CSVファイル内に同一の商品がある場合はエラーとする。
+L0223	フォーマットは 棚卸詳細CSV出力シート参照
+L0224	登録されている棚卸対象商品の一覧を表示する
+L0225	「差異ありのみ表示」がチェックされているときは、在庫差異があるデータのみ表示する
+L0226	「棚卸結果の在庫反映」ボタンで棚卸結果在庫反映画面へ遷移する。ただし以下の場合は押下不可能。
+L0227	・商品数が0
+L0228	・計上済み商品数が0
+L0229	・商品数と計上済み商品数が一致しない
+L0230	・「在庫差異」が存在し、かつ「差異確認」が行われていない商品が存在する
+L0231	識別ID	ラベル	書式・制限	必須	最大値	初期値	画面部品の説明
+L0232	1	棚卸名	半角・全角	◯	-	-
+L0233	2	店舗	-	-	-	-	店舗名 在庫区分名
+L0234	3	商品数	-	-	-	-	当該棚卸計画に登録されている商品数
+L0235	4	計上済み商品数	-	-	-	-	棚卸数量を入力済みの商品数
+L0236	5	差異あり商品数	-	-	-	-	棚卸数量（実在庫）とEC在庫数（理論在庫）に差異のある商品数
+L0237	6	備考	半角・全角	-	-	-
+L0238	7	更新	ボタン	-	-	-	棚卸名と備考の編集内容を保存
+L0239	8	棚卸結果の在庫反映	ボタン	-	-	-	棚卸在庫反映画面へ遷移
+L0240	9	一覧に戻る	ボタン	-	-	-	棚卸計画一覧画面へ遷移
+L0241	10	商品数	-	-	-	-	当該棚卸計画に登録されている商品数
+L0242	11	差異ありのみ表示	チェックボックス	-	-	-	在庫差異のある商品のみに絞り込むためのチェックボックス
+L0243	12	商品登録	ボタン	-	-	-	選択したファイルをアップロードして商品一括登録
+L0244	13	数量登録	ボタン	-	-	-	選択したファイルをアップロードして商品の棚卸数量を一括登録
+L0245	14	CSV出力	ボタン	-	-	-	商品一覧をCSVでダウンロード
+L0246	15	1ページあたり表示件数	単一選択	-	-	100件	選択肢: 10件 50件 100件 300件 500件 1000件 2000件 10000件 12000件
+L0247	16	商品名	リンク	-	-	-	棚卸在庫確認画面へ遷移
+L0248	17	商品コード	-	-	-	-
+L0249	18	言語	-	-	-	-
+L0250	19	状態	-	-	-	-
+L0251	20	最終更新日	-	-	-	-
+L0252	21	在庫数量	-	-	-	-	棚卸時のEC在庫数
+L0253	22	棚卸数量	-	-	-	-	棚卸時の実在個数
+L0254	23	在庫差異	-	-	-	-	棚卸数量 - 在庫数量
+L0255	24	差異確認	-	-	-	-	差異確認完了フラグの状態が確認済みなら「済」を表示
+L0256	25	ページングUI	リンク	-	-	-
+L0257	26	CSVファイル選択	ボタン	-	-	-	アップロードするCSVファイルを選択
+L0258	27	CSVフォーマット表示	-	-	-	-	アップロードするCSVファイルのフォーマットを表示
+L0259	28	棚卸数量登録CSVファイル選択	ボタン	-	-	-	アップロードするCSVファイルを選択
+L0260	29	棚卸数量登録CSVフォーマット表示	-	-	-	-	アップロードするCSVファイルのフォーマットを表示
+##### 0202 sheet-40 棚卸詳細登録CSV
+L0261	棚卸詳細登録CSV
+L0262	ドキュメント名在庫管理 基本設計
+L0263	セクション—
+L0264	プロジェクト名サイトリニューアル
+L0265	作成者佐藤
+L0266	作成日2025/8/25
+L0267	更新者佐藤
+L0268	更新日2025-10-07
+L0269	棚卸詳細登録CSV
+L0270	識別ID	項目名	主キー	書式・制限	必須	最大文字数
+L0271	または最大値	入力例	備考
+L0272	1	商品コード		半角英数	〇
+L0273	カスタマイズ説明
+L0274	処理概要
+L0275	CSVファイルの商品コードの商品を棚卸計画の棚卸商品として登録する
+L0276	棚卸商品数量登録CSV
+L0277	識別ID	項目名	主キー	書式・制限	必須	最大文字数
+L0278	または最大値	入力例	備考
+L0279	1	商品コード		半角英数	〇
+L0280	2	棚卸数量		数字のみ(整数)	〇
+L0281	カスタマイズ説明
+L0282	処理概要
+L0283	CSVファイルの商品コードの棚卸商品を、CSVファイルの棚卸数量で棚卸数量を登録する
+##### 0202 sheet-41 棚卸詳細CSV出力
+L0284	棚卸詳細CSV出力
+L0285	ドキュメント名在庫管理 基本設計
+L0286	セクション—
+L0287	プロジェクト名サイトリニューアル
+L0288	作成者佐藤
+L0289	作成日2025/8/25
+L0290	更新者石川
+L0291	更新日2026-03-12
+L0292	棚卸詳細CSV出力項目
+L0293	識別ID	項目名	備考
+L0294	1	商品名
+L0295	2	商品コード
+L0296	3	言語	JP,ENの形式で出力
+L0297	4	状態コード	NM,SPの形式で出力
+L0298	5	販売価格
+L0299	6	在庫数量	棚卸登録時の在庫数量
+L0300	7	棚卸数量
+L0301	8	在庫差異	棚卸数量 - 在庫数量
+L0302	9	最終更新日	YYYY-MM-DD HH:mm:ss
+L0303	10	作業者	作業者名
+L0304	カスタマイズ説明
+L0305	処理概要
+L0306	・棚卸計画に登録されている棚卸商品をCSV出力する
+L0307	・画面で差異あり商品のみ出力にチェックが入っていた場合は棚卸数量 - 在庫数量が0でない商品のみ出す 
+L0308	・並び順は明細IDの昇順とする
+L0309	・ファイル名は棚卸計画の棚卸名.csvとする
+##### 0202 sheet-42 棚卸在庫確認
+L0310	棚卸在庫確認
+L0311	ドキュメント名在庫管理 基本設計
+L0312	セクション—
+L0313	プロジェクト名サイトリニューアル
+L0314	作成者佐藤
+L0315	作成日2025/8/25
+L0316	更新者石川
+L0317	更新日20206/3/24
+L0318	機能NoM04-35（正しくは M04-31。Excel基本設計の機能No欄の誤記）
+L0319	機能名棚卸在庫確認
+L0320	概要棚卸商品の在庫数量を登録する
+L0321	処理概要
+L0322	レイアウト図
+L0323	12
+L0324	18
+L0325	19
+L0326	20
+L0327	21
+L0328	22
+L0329	23
+L0330	13
+L0331	24
+L0332	1
+L0333	2
+L0334	3
+L0335	4
+L0336	5
+L0337	6
+L0338	7
+L0339	8
+L0340	9
+L0341	10
+L0342	11
+L0343	30
+L0344	14
+L0345	16
+L0346	25
+L0347	26
+L0348	27
+L0349	28
+L0350	30
+L0351	29
+L0352	17
+L0353	1
+L0354	15
+L0355	画像レイヤー（3枚）: 棚卸在庫確認 / B7 / image 1 + 棚卸在庫確認 / B7 / image 2 + 棚卸在庫確認 / H56 / image 3
+L0356	カスタマイズ説明
+L0357	機能仕様処理概要
+L0358	画面表示時は「棚卸数量」入力欄にフォーカスが当たり、カーソル位置が数値の末尾に設定される。
+L0359	「在庫数量へ最新数量を反映」ボタンを押すと、その時点の理論在庫数が「在庫数量」入力欄に反映される。棚卸数量は登録されない。
+L0360	※在庫反映済みの場合はエラーメッセージを表示し、保存不可。
+L0361	「登録/更新」（初回登録後は「登録」から「更新」に文言が変わる）を行ったら、入力フォームの内容を保存し、「在庫確認登録履歴」を追加する。
+L0362	※在庫反映済みの場合はエラーメッセージを表示し、保存不可。
+L0363	「登録」後は、棚卸計画に登録されている次の商品の在庫確認画面へ遷移する。次の商品がない場合は棚卸計画編集画面へ遷移する。
+L0364	「更新」後は、棚卸計画編集画面へ遷移する。当該商品を選択した時のページ位置を保持すること。
+L0365	「差異確認＆完了」ボタンは在庫差異があるときのみ表示される。押下すると差異確認完了フラグが入り、次の差異未確認商品へ遷移する。
+L0366	「差異確認＆完了」を確認後、棚卸数量および在庫数量を変更できないようにする
+L0367	棚卸計画作成後の在庫履歴の変動が行われた場合
+L0368	画面上部にアラートを表示
+L0369	直近１週間の在庫変動履歴の一覧において、作成日より新しい在庫変動についてはハイライトをする
+L0370	★表示項目について
+L0371	・識別ID:4「店舗」を追加する
+L0372	★権限について
+L0373	・棚卸計画で指定された店舗の在庫のみ処理対象にする
+L0374	・権限のない店舗の登録は不可能にする
+L0375	「詳細へ戻る」リンクについて
+L0376	・詳細画面へ戻る際、元いたページ数を保持したまま戻る
+L0377	・在庫数量を複数商品更新しても、元いたページに戻る
+L0378	「1つ前の商品に戻る」リンクについて
+L0379	・入力ミスに気付いた際に、即座に修正を行いたいため、今更新したばかりの商品に戻れるようにする
+L0380	・商品更新時、更新した商品のコードを保持しておき、保持されたコードがある場合にリンクを出す
+L0381	識別ID	ラベル	書式・制限	必須	最大値	初期値	画面部品の説明
+L0382	1	商品名	-	-
+L0383	2	商品コード	-	-
+L0384	3	言語	-	-
+L0385	4	店舗	-	-			店舗名 在庫区分名
+L0386	5	状態	-	-
+L0387	6	作成時在庫数	-	-			棚卸詳細データ作成時の論理在庫数。
+L0388	7	作成時間	-	-			棚卸詳細データ作成時間。
+L0389	8	在庫差異	-	-			棚卸数量入力前は非表示。棚卸数量 - 在庫数量 の値。
+L0390	9	在庫数量	数値	〇		作成時在庫数	論理在庫数を入力する。
+L0391	10	棚卸数量	数値	〇		0	実在個数を入力する。
+L0392	11	メモ	半角・全角	-
+L0393	12	在庫数量へ最新在庫を反映	ボタン	-
+L0394	13	商品画像
+L0395	14	詳細へ戻る	リンク	-			棚卸計画編集画面へ遷移する
+L0396	15	一つ前の商品に戻る	リンク	-			登録または更新して遷移してきた場合、前の登録または更新した商品に戻る
+L0397	16	登録/更新	ボタン	-			初期文言は「登録」棚卸数量入力後は「更新」
+L0398	17	差異確認＆完了	ボタン				在庫差異があるときのみ表示
+L0399	18	直近1週間の在庫変動履歴	-	-
+L0400	19	変更前在庫数	-	-
+L0401	20	変更後在庫数	-	-
+L0402	21	在庫変動理由	-	-
+L0403	22	在庫変動理由区分	-	-
+L0404	23	登録日	-	-
+L0405	24	登録者	-	-
+L0406	25	在庫確認登録履歴	-	-
+L0407	26	登録日時	-	-
+L0408	27	登録者	-	-
+L0409	28	理論在庫数	-	-
+L0410	29	実在庫数	-	-
+L0411	30	差分	-	-
+L0412	31	在庫履歴変動の更新アラート	アラート	-			棚卸計画作成後に在庫履歴の変動が行われた場合に表示
+##### 0202 sheet-43 棚卸在庫反映
+L0413	棚卸在庫反映
+L0414	ドキュメント名在庫管理 基本設計
+L0415	セクション—
+L0416	プロジェクト名サイトリニューアル
+L0417	作成者佐藤
+L0418	作成日2025/8/25
+L0419	更新者佐藤
+L0420	更新日20205/9/25
+L0421	機能NoM04-35（正しくは M04-31。Excel基本設計の機能No欄の誤記）
+L0422	機能名棚卸結果の在庫反映
+L0423	概要棚卸結果をEC在庫に反映する
+L0424	処理概要（★はカスタマイズ項目）
+L0425	レイアウト図
+L0426	1
+L0427	2
+L0428	3
+L0429	4
+L0430	5
+L0431	6
+L0432	7
+L0433	8
+L0434	画像レイヤー（2枚）: 棚卸在庫反映 / E7 / image 1 + 棚卸在庫反映 / AC31 / image 2
+L0435	カスタマイズ説明
+L0436	機能仕様処理概要（★はカスタマイズ項目）
+L0437	★表示項目について
+L0438	・識別ID:2「店舗」を追加する
+L0439	★権限について
+L0440	・棚卸計画で指定された店舗の在庫のみ処理対象にする
+L0441	・権限のない店舗の実行は不可能にする
+L0442	登録処理について
+L0443	○エラー条件
+L0444	・在庫反映済み
+L0445	・商品数が0
+L0446	・計上済み商品数が0
+L0447	・商品数と計上済み商品数が一致しない
+L0448	・「在庫差異」が存在し、かつ「差異確認」が行われていない商品が存在する
+L0449	○登録処理
+L0450	・在庫変動履歴を登録時に総原価、原価単価を計算する
+L0451	・在庫変動履歴の登録については、「在庫変動時の履歴作成について」シートを参照
+L0452	・当該棚卸計画に在庫反映日時、更新日、更新者を登録する
+L0453	・差異あり商品の場合
+L0454	現在の在庫数から差異分の増減を現在EC在庫へ反映する
+L0455	・在庫差異でプラスがある場合
+L0456	在庫変動履歴へ増減数と共に、在庫区分、在庫変動区分「棚卸結果の反映」、仕入総価格に0、在庫変動理由に棚卸計画のIDと名前を登録する
+L0457	・欠在庫差異でマイナスがある場合
+L0458	在庫変動履歴へ増減数と共に、在庫区分、在庫変動区分「棚卸結果の反映」、在庫変動理由に棚卸計画のIDと名前を登録する
+L0459	○入荷通知
+L0460	・在庫０から1以上になったものは入荷通知を行う
+L0461	○登録処理完了後
+L0462	・処理完了後は、棚卸計画編集画面へ遷移する
+L0463	在庫反映は１度切りのみ実行可能で、実行後は当該在庫計画にかかわる編集は不可能とする
+L0464	識別ID	ラベル	書式・制限	必須	最大値	初期値	画面部品の説明
+L0465	1	棚卸名	-	-	-	-
+L0466	2	店舗	-	-	-	-	店舗名 在庫区分名
+L0467	3	商品数	-	-	-	-	当該棚卸計画に登録されている商品数
+L0468	4	計上済み商品数	-	-	-	-	棚卸数量を入力済みの商品数
+L0469	5	差異あり商品数	-	-	-	-	棚卸数量（実在庫）とEC在庫数（理論在庫）に差異のある商品数
+L0470	6	備考	-	-	-	-
+L0471	7	実行	ボタン	-	-	-	在庫反映処理を実行する
+L0472	8	詳細へ戻る	ボタン	-	-	-	棚卸計画編集画面へ遷移する
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/M04-32/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+##### 0202 sheet-44 在庫編集承認一覧(検索入力)
+L0001	在庫編集承認一覧(検索入力)
+L0002	ドキュメント名在庫管理 基本設計
+L0003	セクション—
+L0004	プロジェクト名サイトリニューアル
+L0005	作成者佐藤
+L0006	作成日2025/8/25
+L0007	更新者加藤
+L0008	更新日2025-11-04
+L0009	機能NoM04-38（正しくは M04-32。Excel基本設計の機能No欄の誤記）
+L0010	機能名在庫編集承認一覧(検索入力)
+L0011	概要在庫編集の承認一覧の検索フォーム
+L0012	処理概要
+L0013	レイアウト図
+L0014	1-1
+L0015	1-2
+L0016	1-4
+L0017	1-6
+L0018	1-10
+L0019	1-7
+L0020	1-12
+L0021	1-14
+L0022	2-1
+L0023	2-2
+L0024	1-5
+L0025	1-3
+L0026	1-9
+L0027	1-13
+L0028	1-8
+L0029	1-11
+L0030	在庫編集承認一覧(検索入力) / B7 / image 1
+L0031	機能仕様処理概要
+L0032	1.初期処理
+L0033	1-1.アクセス時に、初期値を用いて検索が行われた状態を表示する
+L0034	2.検索処理
+L0035	2-1.在庫承認一覧データに対して、検索条件フォームに入力された内容を用いて検索を行う
+L0036	2-2.在庫項目同士の条件はAND条件とする
+L0037	例）店舗(入力値:A店舗)と在庫区分(入力値:EC-CUBE)にそれぞれ値が入力されて場合、A店舗かつEC-CUBEの情報のみに絞り込む
+L0038	2-3.それぞれの項目の検索チェックについては画面部品一覧表の必須・最大値・画面部品の説明に記載されている条件に従い処理を行う
+L0039	2-4.検索が完了したらページを再描画し、検索結果の件数表示と、検索した結果の一覧を表示する
+L0040	識別ID	ラベル	書式・制限	必須	最大値	初期値	画面部品の説明
+L0041	検索条件フォーム
+L0042	1-1	店舗	複数選択(セレクトボックス)	-	-	ログインしているメンバーのデフォルト検索表示店舗	共通処理識別ID1-3参照
+L0043	1-2	在庫区分	チェックボックス	-	-	-	共通処理識別ID1-4参照
+L0044	1-3	承認対象の絞り込み	チェックボックス	-	-	承認可能な在庫のみ表示	選択肢:承認可能な在庫のみ表示
+L0045	チェックがついている場合下記の処理を行う
+L0046	・検索時に識別ID:1-1で選択された中で、
+L0047	ログインしているメンバーの承認権限を持っている承認対象かつ、承認状態が未承認のみを絞り込む
+L0048	・識別ID:1-4承認ステータスは選択できないようにし、検索条件から除外する
+L0049	1-4	承認ステータス	チェックボックス	-	-	-	選択肢:未承認,承認済,却下済
+L0050	複数チェックが入力されている場合はOR条件とする
+L0051	※全てチェックが入っている際は、全てチェックが無いのと同じ条件となる
+L0052	1-5	在庫変動区分	単一選択(セレクトボックス)	-	-	-	「在庫編集」シート識別ID:3-1在庫変動区分を参照
+L0053	1-6	登録者（所属選択）	単一選択(セレクトボックス)	-	-	-	共通処理識別ID1-1参照
+L0054	1-7	登録者（メンバー選択）	複数選択(セレクトボックス)	-	-	-	共通処理識別ID1-2参照
+L0055	1-8	登録日(from）	日付（yyyy/mm/dd）	-	~9999/12/31	-	登録日(From)>登録日(To)の場合エラーとし検索を行わない
+L0056	入力された日時以降を検索対象に含めます（入力した日時も含む）
+L0057	1-9	登録日(to)	日付（yyyy/mm/dd）	-	~9999/12/31	-	入力した日時以前を検索対象に含めます（入力した日時も含む）
+L0058	1-10	承認者（所属選択）	単一選択(セレクトボックス)	-	-	-	共通処理識別ID1-1参照
+L0059	1-11	承認者（メンバー選択）	複数選択(セレクトボックス)	-	-	-	共通処理識別ID1-2参照
+L0060	1-12	承認日(from）	日付（yyyy/mm/dd）	-	~9999/12/31	-	承認日(From)>承認日(To)の場合エラーとし検索を行わない
+L0061	入力されている場合、承認日が空のものは検索結果として出力されない
+L0062	1-13	承認日(to)	日付（yyyy/mm/dd）	-	~9999/12/31	-	入力した日時以前を検索対象に含めます（入力した日時も含む）
+L0063	入力されている場合、承認日が空のものは検索結果として出力されない
+L0064	1-14	検索条件をクリア	リンク	-	-	-	押下すると1-1~1-13の内容を空にする
+L0065	検索条件フォーム外
+L0066	2-1	検索	ボタン	-	-	-	押下すると検索処理を実行する
+L0067	2-2	検索結果件数	文字列	-	-	-	検索処理実行後の件数を表示する
+##### 0202 sheet-45 在庫編集承認一覧(検索結果)
+L0068	在庫編集承認一覧(検索結果)
+L0069	ドキュメント名在庫管理 基本設計
+L0070	セクション—
+L0071	プロジェクト名サイトリニューアル
+L0072	作成者佐藤
+L0073	作成日2025/8/25
+L0074	更新者加藤
+L0075	更新日2025-11-07
+L0076	機能NoM04-38（正しくは M04-32。Excel基本設計の機能No欄の誤記）
+L0077	概要在庫編集の承認一覧
+L0078	処理概要
+L0079	処理概要
+L0080	在庫編集承認一覧(検索結果)
+L0081	レイアウト図 検索結果一覧
+L0082	2-1
+L0083	1-1
+L0084	1-2
+L0085	1-3
+L0086	2-2
+L0087	2-3
+L0088	2-4
+L0089	2-5
+L0090	2-6
+L0091	2-7
+L0092	2-8
+L0093	2-9
+L0094	2-10
+L0095	2-11
+L0096	2-12
+L0097	3-1
+L0098	1-4
+L0099	在庫編集承認一覧(検索結果) / B8 / image 2
+L0100	機能仕様処理概要
+L0101	1.一覧表示
+L0102	1-1.検索した結果の承認一覧を表示 ※画面部品一覧にて詳細記載
+L0103	1-2.承認状態が「未承認」の状態が長くなっているものを優先的に上に表示し、履歴として参照したい「承認済」/「却下済」は新しい順で表示できるよう下記のソート順とする
+L0104	1-2-1.承認状態が「未承認」「スマレジ連携中」「スマレジ連携失敗」のレコードを最上位に表示（承認日が空のもの）また、承認日が空のもの同士では「登録日が古い順」に並べる
+L0105	1-2-2.承認状態が「承認済」/「却下済」レコードについては、「承認日が新しい順」で表示（履歴として直近の操作を上に表示）
+L0106	1-2-3.登録日または承認日が同一のレコードが存在する場合、表示順が不定にならないよう、在庫編集承認ID（レコード登録順）をサブソート条件として追加し、昇順にて制御を行う
+L0107	2.承認権限制限
+L0108	2-1.ログインしているメンバーが承認権限を所持している店舗の在庫のみ、3.承認処理、4.却下処理を実行できる
+L0109	2-2.権限がなく承認/却下ができない場合はエラーとする
+L0110	2-3.ログインしているメンバーが登録者の場合、3.承認処理・4.却下処理を実行しようとした場合、実行前にエラーとする
+L0111	3.承認処理
+L0112	3-1.在庫変更理由の親区分が「入庫」の場合、承認となった承認対象の在庫情報を更新する
+L0113	3-1-1.承認対象の入庫承認待ち在庫情報に登録された在庫増減数から現在庫数を計算し、登録する
+L0114	※計算式は、「登録時点での在庫数+在庫増減数」とする
+L0115	3-1-2.承認対象の在庫の総原価を計算し登録する
+L0116	※計算式は「別添資料_在庫変動時の履歴作成について」シートの「⑤在庫変更のタイミングで必ず対象在庫の総原価の更新を行う」【入庫時】【出庫時】を参照
+L0117	※「在庫変動時の履歴作成について」シートの「2. 在庫変更のタイミング別の機能と履歴登録例について」【入庫時】【在庫調整による減少（廃棄）】を参照
+L0118	3-3.3-1または3-2の処理完了後に、在庫変動履歴の更新を行う
+L0119	3-3-1.更新時に、3-1,3-2にて更新された情報に加え、更新された更新日と、ログインしているメンバーを更新者として更新する
+L0120	3-5.在庫変更理由の親区分が「廃棄」の場合、承認となった承認対象の在庫情報履歴を更新する
+L0121	3-5-1.更新対象として承認押下時の承認日とログインユーザーを承認者として更新する
+L0122	3-5-2.更新時に、更新された更新日と、ログインしているメンバーを更新者として更新する
+L0123	4.却下処理
+L0124	4-1.在庫変更理由の親区分が「入庫」の場合、却下となった承認対象の在庫情報の更新を行わない
+L0125	4-2.承認待ちから却下となった在庫の入庫承認待ち在庫情報の承認状態を却下に更新する（この画面以外での在庫変動履歴を参照する画面で表示しないようにするため）
+L0126	4-3.在庫編集承認一覧の情報は操作ステータスを却下の状態に変更して情報を残す
+L0127	4-4.在庫変更理由の親区分が「廃棄」の場合、却下となった承認対象の在庫情報の更新処理を行う
+L0128	4-4-1.承認対象の在庫変動履歴に登録された在庫増減数から現在庫数を計算し、登録する
+L0129	※計算式は、「却下時点での在庫数+(在庫増減数*-1)」とする
+L0130	4-4-2.承認対象の在庫の総原価を計算し登録する
+L0131	※計算式は、「却下時点での在庫の総原価+(総原価増減数*-1)」とする
+L0132	4-4-3.4-4-2の処理完了後に、在庫変動履歴の更新を行う
+L0133	更新対象としては、4-4-1、4-4-2で更新した情報に加え、更新された更新日と、ログインしているメンバーを更新者として更新する
+L0134	5.ステータス変更時の通知
+L0135	5-1.識別ID2-9登録者に紐づいているメールアドレスを用いてステータス変更のメールにて通知を行う
+L0136	5-2.メールを送付する際は、承認ステータス変更時用のメールテンプレートを用いて送付を行う
+L0137	5-2-1.却下の場合、識別ID6-1 却下理由をメール本文に加える。※メールテンプレート内にて表示位置をタグ指定する
+L0138	識別ID	ラベル	書式・制限	必須	最大値	初期値	画面部品の説明
+L0139	一覧上部表示項目
+L0140	1-1	一括却下	ボタン	-	-	-	2-1のチェックボックスで選択したデータを一括で却下対象とし確認モーダルを表示する
+L0141	1-2	一括承認	ボタン	-	-	-	2-1のチェックボックスで選択したデータを一括で承認対象とし確認モーダルを表示する
+L0142	1-3	表示件数	単一選択（セレクトボックス）	-	-	100件	EC-CUBE標準のマスタデータ管理の最大ページ表示にて、設定されている表示件数の選択肢を表示する
+L0143	1-4	CSVダウンロード	ボタン	-	-	-	CSVダウンロードを押下すると、識別ID2-2~2-12の項目でCSVが出力される
+L0144	出力される情報は検索した結果を出力
+L0145	※「承認一覧CSV出力」シートにて項目定義
+L0146	一覧表示項目
+L0147	2-1	チェックボックス	チェックボックス	-	-	-	チェックがついている場合、一括承認、一括却下の操作対象となる
+L0148	チェックボックスが表示される条件は下記とする
+L0149	・承認状態が「未承認」、「スマレジ連携失敗」
+L0150	・承認対象が「在庫編集」、「在庫一括編集」、「在庫変更CSV登録」
+L0151	・登録者がログインしているユーザー以外の場合のみチェックボックスが表示される
+L0152	ヘッダ行のチェックボックスを押下すると、表示されているページ内のすべての行のチェックボックスに全てチェックを入れ、チェックを外すとすべてのチェックが外れる。
+L0153	※全てチェックがある場合でも、ヘッダ行にチェックがついていない場合はチェックを入れる動作となり、チェックがついている場合はチェックを外す動作となる。
+L0154	2-2	承認状態	文字列	-	-	-	未承認,承認済,スマレジ連携中,スマレジ連携失敗,却下済
+L0155	2-3	承認対象	文字列 リンク	-	-	-	承認対象なっている在庫変更手続きが作成された機能名が表示される
+L0156	承認対象が「在庫編集」、「在庫一括編集」、「在庫変更CSV登録」の場合
+L0157	・押下すると、押下した承認対象に紐づく在庫変動履歴を確認できる確認モーダルが表示される
+L0158	それ以外の場合
+L0159	・当該機能の承認画面を別タブで開く
+L0160	例）在庫移動であれば押下した在庫移動情報を別タブで開く
+L0161	2-4	店舗/在庫区分	文字列	-	-	-	承認対象の在庫の店舗/在庫区分を表示
+L0162	2-5	対象商品規格数	数値	-	-	-	承認対象の対象商品規格数を表示
+L0163	2-6	合計在庫増減数	数値	-	-	-	承認対象が「在庫編集」、「在庫一括編集」、「在庫変更CSV登録」の場合
+L0164	承認対象の合計在庫増減数を表示
+L0165	それ以外の場合
+L0166	"-"を表示
+L0167	2-7	合計総原価増減数	数値	-	-	-	承認対象が「在庫編集」、「在庫一括編集」、「在庫変更CSV登録」の場合
+L0168	承認対象の合計総原価増減数を表示
+L0169	それ以外の場合
+L0170	"-"を表示
+L0171	2-8	在庫変動区分	文字列	-	-	-	「在庫編集」シート識別ID:3-1在庫変動区分を参照
+L0172	承認対象が「在庫編集」、「在庫一括編集」、「在庫変更CSV登録」では無い場合、
+L0173	移動・振替など2種類以上の在庫変動が承認時に発生し表では表現できないので、"-"を表示
+L0174	2-9	登録日	日時(YYYY/MM/DD HH:mm)	-	-	-	承認対象の在庫編集・在庫一括編集・在庫CSV登録にて登録ボタンを押下した際の日時が表示される
+L0175	2-10	登録者	文字列	-	-	-	承認対象の在庫編集・在庫一括編集・在庫CSV登録にて登録ボタンを押下したログイン時のユーザ名が表示される
+L0176	2-11	承認日	日時(YYYY/MM/DD HH:mm)	-	-	-	「在庫編集」シート識別ID:4-8承認日を参照
+L0177	2-12	承認者	文字列	-	-	-	「在庫編集」シート識別ID:4-9承認者を参照
+L0178	一覧下部表示項目
+L0179	3-1	ページング	リンク	-	-	-	再検索実行し、移動先内容の範囲の内容を表示する画面に遷移する
+L0180	※在庫編集承認一覧(検索入力)の内容を表示する
+L0181	レイアウト図 確認モーダル
+L0182	5-1
+L0183	5-2
+L0184	5-3
+L0185	5-4
+L0186	5-5
+L0187	5-6
+L0188	5-7
+L0189	5-8
+L0190	5-9
+L0191	5-11
+L0192	5-12
+L0193	5-13
+L0194	5-14
+L0195	7-2
+L0196	7-1
+L0197	5-10
+L0198	4-2
+L0199	5-15
+L0200	6-1
+L0201	画像レイヤー（4枚）: 在庫編集承認一覧(検索結果) / C105 / image 1 + 在庫編集承認一覧(検索結果) / C153 / image 3 + 在庫編集承認一覧(検索結果) / C168 / image 4 + 在庫編集承認一覧(検索結果) / D183 / image 5
+L0202	機能仕様処理概要
+L0203	6.モーダル表示
+L0204	6-1.承認対象に紐づく下記の情報を確認できる確認モーダルが表示される
+L0205	6-1-1.在庫変動区分の親区分が「入庫」かつ承認状態が「承認済」の場合、在庫変動履歴の情報を表示する
+L0206	6-1-2.在庫変動区分の親区分が「入庫」かつ承認状態が「承認済」以外の場合、入庫承認待ち在庫情報の情報を表示する
+L0207	6-1-3.在庫変動区分の親区分が「廃棄」の場合、在庫変動履歴の情報を表示する
+L0208	6-2.複数行ある場合、EC-CUBE標準のスタイル制御によりスクロール表示することができる
+L0209	6-3.表示順は、第一ソートとして承認情報単位で1-2の内容に従って表示され、第二ソートして下記の条件に従って表示する
+L0210	6-3-1.在庫変動履歴の情報の場合は在庫変動履歴ID降順
+L0211	6-3-1.入庫承認待ち在庫の情報の場合は入庫承認待ち在庫ID降順
+L0212	6-4.1ページ50件で表示され、上位1000件（20ページ分）まで表示とする。
+L0213	6-5.承認対象が「在庫変更CSV登録」の情報が含まれる場合、モーダルの識別ID5-1～5-14には表示されず、「識別ID:4-2 CSVダウンロード」でのみ情報を参照できる
+L0214	6-6.承認対象が「在庫変更CSV登録」の情報だけの場合下記の画面イメージとなる
+L0215	■画面イメージ
+L0216	6-7.モーダルの表示上限数（1000件）を超過している場合、赤文字で、下記の画面イメージの通り、赤文字でCSVダウンロードを促すメッセージを表示する
+L0217	■画面イメージ
+L0218	6-8.却下するまたは、承認するを押下後に確認画面を表示し、OKを押下すると処理を実行する
+L0219	6-8-1.承認の際は、”本当に承認してもよろしいですか”という文言を表示
+L0220	6-8-2.却下の際は、”本当に却下してもよろしいですか”という文言を表示
+L0221	6-8-3.表示の際に目が飛ばないようにモーダルサイズは維持し、ボタン配置も前ページと同じ場所とする
+L0222	■画面イメージ
+L0223	識別ID	ラベル	書式・制限	必須	最大値	初期値	画面部品の説明
+L0224	表等の表示
+L0225	4-1	閉じるボタン	ボタン	-	-	-	バツ印を押下するとモーダルを閉じる
+L0226	4-2	CSVダウンロード	ボタン	-	-	-	CSVダウンロードを押下すると、識別ID5-1~5-14の項目でCSVが出力される
+L0227	出力される情報はモーダル表示時に参照している情報が対象
+L0228	ページ上限以上のデータを参照している場合は、1000件目以降のデータも含め、参照中の承認対象すべてを出力する
+L0229	※一覧として表示しない、在庫変更CSV登録や、1001件目以降のデータなどもダウンロード時に出力対象とする
+L0230	リスト表示項目
+L0231	5-1	商品名/商品コード	文字列	-	-	-	「在庫編集」シート識別ID:1-3商品名を参照
+L0232	「在庫編集」シート識別ID:1-5商品コードを参照
+L0233	5-2	言語	文字列	-	-	-	「在庫編集」シート識別ID:1-6言語を参照
+L0234	5-3	状態	文字列	-	-	-	「在庫編集」シート識別ID:1-7状態を参照
+L0235	5-4	Foil	文字列	-	-	-	「在庫編集」シート識別ID:1-8Foilを参照
+L0236	5-5	店舗/在庫区分	文字列	-	-	-	「在庫編集」シート識別ID:2-2店舗を参照
+L0237	「在庫編集」シート識別ID:2-3在庫区分を参照
+L0238	5-6	変更前在庫	数値	-	-	-	在庫編集にて登録された情報については下記の制御を行う
+L0239	在庫変動区分の親区分が「入庫」の場合
+L0240	・承認状態が「未承認」、「スマレジ連携失敗」の場合
+L0241	一覧画面参照時の在庫数を表示
+L0242	・承認状態が「スマレジ連携中」、「承認」、「却下」の場合
+L0243	承認ステータス変更時に変更される前の在庫数を表示
+L0244	在庫変動区分の親区分が「廃棄」の場合★晴れる屋様検討中
+L0245	・承認状態が「未承認」、「承認」の場合
+L0246	在庫変動履歴に登録された変更前在庫の値を表示
+L0247	5-7	変更後在庫	数値	-	-	-	在庫編集にて登録された情報については下記の制御を行う
+L0248	在庫変動区分の親区分が「入庫」の場合
+L0249	・承認状態が「未承認」、「スマレジ連携失敗」の場合
+L0250	「現在の在庫数+識別ID:2-8在庫増減数」の値を表示
+L0251	・承認状態が「スマレジ連携中」、「承認」の場合
+L0252	「承認ステータス変更時の変更前在庫数+識別ID:2-8在庫増減数」の値を表示
+L0253	在庫変動区分の親区分が「廃棄」の場合★晴れる屋様検討中
+L0254	・承認状態が「未承認」、「承認」の場合
+L0255	在庫変動履歴に登録された変更後在庫の値を表示
+L0256	共通
+L0257	・承認状態が「却下」の場合
+L0258	"-"を表示
+L0259	5-8	在庫増減数	数値	-	-	-	参照している在庫変動履歴の在庫増減数を表示
+L0260	5-9	仕入単価	数値	-	-	-	参照している在庫変動履歴の仕入単価を表示
+L0261	在庫変動区分の親区分が「廃棄」の場合、"-"を表示
+L0262	5-10	総原価増減数	数値	-	-	-	参照している在庫変動履歴の総原価増減数を表示
+L0263	5-11	変更前総原価	数値	-	-	-	在庫編集にて登録された情報については下記の制御を行う
+L0264	在庫変動区分の親区分が「入庫」の場合
+L0265	・承認状態が「未承認」、「スマレジ連携失敗」の場合
+L0266	一覧画面参照時の総原価を表示
+L0267	・承認状態が「スマレジ連携中」、「承認」、「却下」の場合
+L0268	承認ステータス変更時に変更される前の総原価を表示
+L0269	在庫変動区分の親区分が「廃棄」の場合★晴れる屋様検討中
+L0270	・承認状態が「未承認」、「承認」の場合
+L0271	在庫変動履歴に登録された変更前総原価の値を表示
+L0272	5-12	変更後総原価	数値	-	-	-	在庫編集にて登録された情報については下記の制御を行う
+L0273	在庫変動区分の親区分が「入庫」の場合
+L0274	・承認状態が「未承認」、「スマレジ連携失敗」の場合
+L0275	識別ID:2-10変更前在庫と識別ID:2-12在庫増減数と識別ID2-15変更前総原価を使って計算する
+L0276	※計算式は「別添資料_在庫変動時の履歴作成について」シートの「⑤在庫変更のタイミングで必ず対象在庫の総原価の更新を行う」【入庫時】【出庫時】を参照
+L0277	・承認状態が「スマレジ連携中」、「承認」の場合
+L0278	承認ステータス変更時の総原価を表示
+L0279	在庫変動区分の親区分が「廃棄」の場合★晴れる屋様検討中
+L0280	・承認状態が「未承認」、「承認」の場合
+L0281	在庫変動履歴に登録された変更後総原価の値を表示
+L0282	共通
+L0283	承認状態が「却下」の場合
+L0284	"-"を表示
+L0285	5-13	在庫変動理由区分	文字列	-	-	-	「在庫編集」シート識別ID:4-4在庫変動理由区分を参照
+L0286	5-14	在庫変動理由	文字列	-	-	-	「在庫編集」シート識別ID:4-5在庫変動理由を参照
+L0287	5-15	ページング	文字列	-	-	-	参照している内容を用いてページを遷移すると参照ページ数に応じて、テーブルの中身を再描画する
+L0288	却下理由
+L0289	6-1	却下理由	文字列	-	-	-	却下するを押下する場合は、必須入力とする
+L0290	メールで通知する際に却下理由をメールテンプレートの内容に従い、メール本文に含める※メールテンプレート内にて表示位置をタグ指定する
+L0291	操作項目
+L0292	7-1	却下する	ボタン	-	-	-	下記表示条件とする
+L0293	・一括却下押下しモーダル表示した場合
+L0294	・承認対象押下時に承認状態が「未承認」の場合
+L0295	・登録者がログインしているユーザー以外の場合
+L0296	押下すると、確認画面が表示されOKを押下すると、4.却下処理を実行する
+L0297	7-2	承認する	ボタン	-	-	-	下記表示条件とする
+L0298	・一括承認押下しモーダル表示した場合
+L0299	・承認対象押下時に承認状態が「未承認」「スマレジ連携失敗」の場合
+L0300	・登録者がログインしているユーザー以外の場合
+L0301	押下すると、確認画面が表示されOKを押下すると、3.承認処理を実行する
+##### 0202 sheet-46 承認一覧CSV出力
+L0302	承認一覧CSV出力
+L0303	ドキュメント名在庫管理 基本設計
+L0304	セクション—
+L0305	プロジェクト名サイトリニューアル
+L0306	作成者加藤
+L0307	作成日2025-11-04
+L0308	更新者—
+L0309	更新日—
+L0310	機能No—
+L0311	機能名承認一覧CSV出力
+L0312	概要—
+L0313	CSV出力項目
+L0314	識別ID	項目名	備考
+L0315	1	承認状態
+L0316	2	承認対象
+L0317	3	店舗
+L0318	4	在庫区分
+L0319	5	対象商品規格数
+L0320	6	合計在庫増減数
+L0321	7	合計総原価増減数
+L0322	8	在庫変動区分（親区分）
+L0323	9	在庫変動区分（子区分）
+L0324	10	登録日
+L0325	11	登録者
+L0326	12	承認日
+L0327	13	承認者
+L0328	14	最終更新日
+L0329	15	最終更新者
+L0330	要件説明
+L0331	・在庫編集承認一覧の検索結果をCSVとして出力
+L0332	処理
+L0333	・在庫編集承認一覧(検索入力)の検索条件でデータを取得しCSV出力する
+L0334	・一覧表示されている順番と同じ順でCSV出力する
+L0335	※参照情報は「在庫編集承認一覧(検索結果)」シート1-1を参照
+##### 0202 sheet-47 承認対象在庫一覧CSV出力
+L0336	承認対象在庫一覧CSV出力
+L0337	ドキュメント名在庫管理 基本設計
+L0338	セクション—
+L0339	プロジェクト名サイトリニューアル
+L0340	作成者加藤
+L0341	作成日2025-11-04
+L0342	更新者—
+L0343	更新日—
+L0344	機能No—
+L0345	機能名承認対象在庫一覧CSV出力
+L0346	概要—
+L0347	処理概要
+L0348	CSV出力項目
+L0349	識別ID	項目名	備考
+L0350	1	商品名
+L0351	2	商品コード
+L0352	3	言語
+L0353	4	状態
+L0354	5	Foil
+L0355	6	店舗
+L0356	7	在庫区分
+L0357	8	変更前在庫
+L0358	9	変更後在庫
+L0359	10	在庫増減数
+L0360	11	仕入単価
+L0361	12	総原価増減数
+L0362	13	変更前総原価
+L0363	14	変更後総原価
+L0364	15	在庫変動区分（親区分）
+L0365	16	在庫変動区分（子区分）
+L0366	17	在庫変動理由
+L0367	18	登録日
+L0368	19	登録者
+L0369	20	承認日
+L0370	21	承認者
+L0371	22	最終更新日
+L0372	23	最終更新者
+L0373	要件説明
+L0374	・在庫編集承認一覧の確認モーダルで参照している内容をCSVとして出力
+L0375	機能仕様処理概要
+L0376	・出力される情報はモーダル表示時に参照している承認対象の在庫情報が対象
+L0377	※参照情報は「在庫編集承認一覧(検索結果)」シート6-1を参照
+L0378	・ページ上限以上のデータを参照している場合は、900件目以降のデータも含め、参照中の承認対象すべてを出力する
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/M04-30/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/M04-33/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/M04-28/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "sed -n '1,115p' integration_test/casegen/combination/units/M04-29/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/M04-31_factors.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 84ms:
+##### 0202 sheet-48 在庫移動戻しリストCSV出力
+L0001	在庫移動戻しリストCSV出力
+L0002	ドキュメント名在庫管理 基本設計
+L0003	セクション—
+L0004	プロジェクト名サイトリニューアル
+L0005	作成者堀部
+L0006	作成日2025-08-25
+L0007	更新者堀部
+L0008	更新日2025-09-12
+L0009	機能NoM04-33
+L0010	機能名在庫移動戻しリストCSV出力
+L0011	概要—
+L0012	処理概要（★はカスタマイズ項目）
+L0013	CSV出力項目
+L0014	識別ID	項目名	備考
+L0015	1	ピッキング区分	店舗ごとの閾値（ネット買取管理の場合は本店しかないため本店の閾値）とサプライを出力
+L0016	●●円未満、●●円以上▲▲円未満、■■円以上、サプライ
+L0017	閾値の表示も基準販売価格を参照して行う（セール中で金額が変わっても棚を移動することはないため）
+L0018	2	棚番号	商品がしまってある場所番号(本店のみ)
+L0019	支店では非表示
+L0020	3	言語/状態	Foilの場合はFoilをつけて、言語/状態の形式で出力する（例: FoilJP/NM）、サプライ品の場合は「サプライ品」と表示
+L0021	4	略称	商品の略称
+L0022	サプライ品の場合は表示しない
+L0023	5	色/R	商品名から取り出した色とレアリティを出力（例: 金R）。シングルカード以外は色に該当するデータがないため、色情報は非表示
+L0024	6	数	商品点数
+L0025	7	商品名	サプライ品でない場合は商品名から略称・言語・状態・色・レアリティを取り除く
+L0026	8	基準価格	基準価格
+L0027	カスタマイズ説明
+L0028	・カスタマイズ要件
+L0029	・在庫移動一覧画面で選択された在庫移動データを元に棚戻しするための戻しリストをダウンロードする
+L0030	・本店3F,2F,B2Fや支店で閾値が異なるため、マスターデータ管理にて、店舗ごとに金額の閾値を分けられるようにする
+L0031	→フォーマットがそれぞれ3F,2F,B2Fで異なるものとなる
+L0032	備考
+L0033	３F在庫 現行運用での金額の閾値について
+L0034	シングルカード
+L0035	低額：4800円未満
+L0036	高額：4800円以上
+L0037	金庫：基本的にEC在庫で500万以上のものを保管。あとは備品などを入れている
+L0038	シングルカード以外
+L0039	倉庫：2Fに置ききれない（商品化していない）サプライパックボックス等を保管
+L0040	・その他、基本的な仕様は「在庫移動指示リスト ピッキングリスト印刷」に準じる
+L0041	機能仕様処理概要（★はカスタマイズ項目）
+L0042	印刷対象取得
+L0043	★一覧画面で選択された買取情報に紐づく実在庫情報を、対象店舗ごとに指定された閾値情報+サプライで分けて取得する
+L0044	・サプライ品でない場合は商品名から略称・言語・状態・色・レアリティを取り除く
+L0045	・商品名内に[略称タグ]が含まれない場合は[～]（[]内にある文字を[]ごと）を削除
+L0046	・並び順は金額閾値の昇順(最後にサプライ)が最優先となる
+L0047	・金額閾値内の並び順は以下の通りとなる
+L0048	・棚番（昇順、支店の場合は棚番のソートは行わない）
+L0049	・言語（日→英→他言語）
+L0050	・状態（NM→HP）
+L0051	・Foilフラグ（非Foil→Foil）
+L0052	・略称タグ（昇順）
+L0053	・レアリティ（M→C）
+L0054	・色（マスターデータ色順参照）
+L0055	・設定されている略称タグについてコレクター番号でのソートだった場合、コレクター番号（昇順）
+L0056	・設定されている略称タグについてアルファベットでのソートだった場合、英語のカード名（昇順）
+
+ succeeded in 77ms:
+##### 0202 sheet-35 送り状CSV出力
+L0001	送り状CSV出力
+L0002	ドキュメント名在庫管理 基本設計
+L0003	セクション—
+L0004	プロジェクト名サイトリニューアル
+L0005	作成者堀部
+L0006	作成日2025-08-25
+L0007	更新者石川
+L0008	更新日2026-02-12
+L0009	機能NoM04-28
+L0010	機能名送り状CSV出力
+L0011	概要—
+L0012	処理概要
+L0013	CSV出力項目
+L0014	識別ID	項目名	備考
+L0015	1	オーダーID	移動指示ID
+L0016	2	注文金額合計	移動する商品の基準価格合計
+L0017	3	注文者氏名	店舗管理の移動元の会社名 + 半角空白 +移動元の店名（例: 株式会社 晴れる屋 大宮）
+L0018	4	注文者カナ	店舗管理の移動元の会社名(カナ) + 半角空白 +移動元の店名(カナ)（例: カブシキガイシャ ハレルヤ オオミヤ）
+L0019	5	注文者郵便番号	店舗管理の移動元の郵便番号
+L0020	6	注文者都道府県	店舗管理の移動元の都道府県
+L0021	7	注文者住所	店舗管理の移動元の住所1
+L0022	8	注文者住所2	店舗管理の移動元の住所2
+L0023	9	注文者電話番号	店舗管理の移動元の電話番号
+L0024	10	商品金額合計	移動する商品の基準価格合計
+L0025	11	送料	0固定
+L0026	12	送料(税抜)	0固定
+L0027	13	手数料	0固定
+L0028	14	手数料(税抜)	0固定
+L0029	15	配送先氏名	店舗管理の移動先の会社名 + 半角空白 +移動先の店名（例: 株式会社 晴れる屋 大宮）
+L0030	16	配送先カナ	店舗管理の移動先の会社名(カナ) + 半角空白 +移動先の店名(カナ)（例: カブシキガイシャ ハレルヤ オオミヤ）
+L0031	17	配送先郵便番号	店舗管理の移動先の郵便番号
+L0032	18	配送先都道府県	店舗管理の移動先の都道府県
+L0033	19	配送先住所	店舗管理の移動先の住所1
+L0034	20	配送先住所2	店舗管理の移動先の住所2
+L0035	21	配送先電話番号	店舗管理の移動先の電話番号
+L0036	22	郵便種別	0固定（0：ゆうパック）
+L0037	23	発送方法	ゆうパック
+L0038	カスタマイズ説明
+L0039	・カスタマイズ要件
+L0040	・送り元、送り先の店舗情報をCSVにて出力する
+L0041	・ゆうプリRが取り込めるフォーマットで出力する
+L0042	機能仕様処理概要
+L0043	・項目名は受注管理で出力する送り状の項目名と合わせてあるため注文者名、配送先となっているが
+L0044	注文者を移動元店舗、配送先を移動先店舗として出力する
+
+ succeeded in 149ms:
+##### 0202 sheet-36 バーコード貼替リストCSV出力
+L0001	バーコード貼替リストCSV出力
+L0002	ドキュメント名在庫管理 基本設計
+L0003	セクション—
+L0004	プロジェクト名サイトリニューアル
+L0005	作成者佐藤
+L0006	作成日2025-08-25
+L0007	更新者石川
+L0008	更新日2025-12-11
+L0009	機能NoM04-30
+L0010	機能名バーコード貼替リストCSV出力
+L0011	概要対象店舗のスマレジ在庫にある商品の
+L0012	商品コードリストを出力
+L0013	処理概要
+L0014	レイアウト図
+L0015	1
+L0016	2
+L0017	3
+L0018	バーコード貼替リストCSV出力 / C7 / image 1
+L0019	カスタマイズ説明
+L0020	・カスタマイズ要件
+L0021	・指定期間で価格調整が発生した商品、かつ、対象店舗のスマレジ在庫にある商品の商品コードリストを出力する
+L0022	機能仕様処理概要
+L0023	・初期表示
+L0024	・出力対象店舗はログイン者のデフォルト検索店舗をデフォルト表示とする
+L0025	・価格変更発生期間はFromに前日、Toに当日を設定し、前日の00:00:00から当日の23:59:59までを対象とする
+L0026	・検索
+L0027	・出力対象店舗は1店舗のみ選択可能で、必須とする
+L0028	・価格変更発生期間はFromとToどちらも必須とする
+L0029	・価格変更発生期間のFromの時間は00:00:00、Toの時間は23:59:59で検索を行う
+L0030	・価格変更発生期間は最大で1か月間を選択可能
+L0031	・以下の条件で検索を行う
+L0032	・対象店舗のスマレジ在庫の在庫数が0以上のもの
+L0033	・スマレジ商品IDが登録済み
+L0034	・スマレジ連携フラグが有効
+L0035	・商品および商品規格のステータスが廃止でない（非公開は検索結果に含む）
+L0036	・価格変更発生期間で指定された期間内に価格変更履歴が存在する
+L0037	・出力項目について
+L0038	・商品名
+L0039	・[]で囲まれた略称の後だけ出さないようにする
+L0040	例: 【ネオンインク・Foil】(361)■ボーダーレス■《恐れを知らぬ者、カタラ/Katara, the Fearless》[TLA] 金R
+L0041	↓
+L0042	【ネオンインク・Foil】(361)■ボーダーレス■《恐れを知らぬ者、カタラ/Katara, the Fearless》[TLA]
+L0043	※金Rだけ不要なので出さない
+L0044	・[]がなければすべて出す
+L0045	・略称は後ろの方についているので、[]を後ろから検索し、略称以前を取り出す
+L0046	・状態記号
+L0047	・既存のバーコードに出力されている状態記号は出力不要
+L0048	・出力順について
+L0049	・色の並び順昇順
+L0050	・カードタイプの並び順昇順
+L0051	・点数で見たマナコストの昇順
+L0052	・基準価格降順（価格が高い順）
+L0053	識別ID	ラベル	書式・制限	必須	最大値	初期値	画面部品の説明
+L0054	1	出力対象店舗	単一選択	-	-	デフォルト検索店舗	-
+L0055	2	価格調整発生期間	日付	-	-	Frrom:前日
+L0056	To:当日	-
+L0057	3	バーコード貼替リストCSV出力	ボタン	-	-	-	バーコード貼替リストをダウンロード
+L0058	CSV出力項目
+L0059	識別ID	項目名	備考
+L0060	1	商品名	商品名の出力方法については処理概要に記載
+L0061	2	言語・状態	言語の日本語名・状態のコードの形式で出力（例: 英語・NM）
+L0062	3	販売価格	基準価格を出力
+L0063	#,###円の形で整形して出力
+L0064	4	スマレジ商品ID	スマレジ商品ID
+L0065	5	スマレジ商品コード	スマレジ商品コード
+L0066	6	スマレジバーコード	22 + スマレジ商品コード(6桁0埋め) + 販売価格(7桁0埋め)
+L0067	参考ファイル: 晴れる屋様_共有フォルダ\03_基本設計フェーズ\基本設計書\資料\バーコード関連資料\09161332プレイド品.xlsx
+L0068	画像レイヤー（2枚）: バーコード貼替リストCSV出力 / A81 / image 2 + バーコード貼替リストCSV出力 / A88 / image 3
+L0069	参考ファイル: 晴れる屋様_共有フォルダ\03_基本設計フェーズ\基本設計書\資料\バーコード関連資料\バーコードシール仕様.pptx
+L0070	画像レイヤー（2枚）: バーコード貼替リストCSV出力 / B116 / image 4 + バーコード貼替リストCSV出力 / A137 / image 5
+
+ succeeded in 114ms:
+##### 0202 sheet-32 在庫移動指示検索
+L0001	在庫移動指示検索
+L0002	ドキュメント名在庫管理 基本設計
+L0003	セクション—
+L0004	プロジェクト名サイトリニューアル
+L0005	作成者堀部
+L0006	作成日2025-08-25
+L0007	更新者本田
+L0008	更新日2025-12-08
+L0009	機能NoM04-24
+L0010	機能名在庫移動指示検索
+L0011	概要在庫移動指示を検索、送り状No.の登録およびダウンロードが可能
+L0012	処理概要 移動指示検索画面
+L0013	※在庫移動指示の作成については、在庫移動振替一覧の処理概要を参照
+L0014	レイアウト図 在庫移動指示検索画面
+L0015	1-1
+L0016	2-1
+L0017	2-2
+L0018	2-3
+L0019	2-4
+L0020	2-5
+L0021	2-9
+L0022	2-10
+L0023	2-6
+L0024	2-7
+L0025	2-8
+L0026	3-16
+L0027	3-4
+L0028	3-2
+L0029	3-3
+L0030	3-5
+L0031	3-6
+L0032	3-7
+L0033	3-8
+L0034	3-9
+L0035	3-10
+L0036	3-11
+L0037	3-12
+L0038	3-13
+L0039	3-14
+L0040	3-1
+L0041	3-15
+L0042	画像レイヤー（2枚）: 在庫移動指示検索 / B7 / image 2 + 在庫移動指示検索 / B7 / image 3
+L0043	機能仕様処理概要 移動指示検索画面
+L0044	移動指示検索画面概要
+L0045	・サイドバーの在庫管理 / 在庫移動指示を押下してこの画面（移動指示検索画面）へ遷移する
+L0046	・在庫移動振替一覧から作成した在庫移動指示に対して、送状No.を登録することで在庫移動のステータスは移動中となる
+L0047	機能仕様※在庫移動指示の作成については、在庫移動振替一覧の処理概要を参照
+L0048	移動登録ステータス遷移（在庫移動のものを転用）
+L0049	・店舗間移動フロー
+L0050	アクション
+L0051	ステータス
+L0052	入庫先
+L0053	NG
+L0054	新規
+L0055	登録
+L0056	ピック
+L0057	欠品
+L0058	登録
+L0059	出庫
+L0060	承認
+L0061	発送
+L0062	手続き
+L0063	着荷
+L0064	入庫
+L0065	承認
+L0066	差分
+L0067	通知
+L0068	新規
+L0069	登録
+L0070	出庫
+L0071	承認待ち
+L0072	却下
+L0073	出庫
+L0074	承認済み
+L0075	移動中
+L0076	入庫
+L0077	済み
+L0078	入庫
+L0079	承認待ち
+L0080	NG
+L0081	差分
+L0082	登録
+L0083	在庫移動指示リスト
+L0084	画面遷移図をExcel図形座標で再構成（画面 15件 / 遷移 18件 / 元コネクタ 20件）
+L0085	遷移一覧（18件）
+L0086	遷移元	遷移先	connector
+L0087	発送
+L0088	手続き	移動中	18（0202:在庫移動指示検索!F67）
+L0089	欠品
+L0090	登録	出庫
+L0091	承認待ち	27（0202:在庫移動指示検索!F67）
+L0092	新規
+L0093	登録	ピック	29（0202:在庫移動指示検索!F67）
+L0094	ピック	欠品
+L0095	登録	30（0202:在庫移動指示検索!F67）
+L0096	ピック	出庫
+L0097	承認待ち	31（0202:在庫移動指示検索!F67）
+L0098	出庫
+L0099	承認待ち	出庫
+L0100	承認	32（0202:在庫移動指示検索!F67）
+L0101	出庫
+L0102	承認	却下	62（0202:在庫移動指示検索!F67）
+L0103	出庫
+L0104	承認	出庫
+L0105	承認済み	63（0202:在庫移動指示検索!F67）
+L0106	出庫
+L0107	承認済み	発送
+L0108	手続き	36（0202:在庫移動指示検索!F67）
+L0109	移動中	着荷	38（0202:在庫移動指示検索!F67）
+L0110	着荷	差分
+L0111	登録	40（0202:在庫移動指示検索!F67）
+L0112	差分
+L0113	登録	入庫
+L0114	承認待ち	44（0202:在庫移動指示検索!F67）
+
+ succeeded in 98ms:
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1,P4	棚卸計画の店舗	店舗A｜店舗B	店舗A: 計画は店舗Aの計画として保存され、CSV登録では店舗Aの在庫を処理対象にする／店舗B: 店舗Bの計画になり、店舗Bの在庫を処理対象にする	L0043,L0149,L0203,L0440	この機能
+F02	P1,P2,P4	棚卸計画の在庫区分	EC-CUBE｜スマレジ	EC-CUBE: 計画はEC-CUBE在庫の計画で、在庫変動履歴にEC-CUBEの在庫区分を記録する／スマレジ: スマレジ在庫の計画で、履歴にスマレジの在庫区分を記録する	L0044,L0150,L0456	この機能
+F03	P2	棚卸数量と在庫数量の差異	差異プラス｜差異マイナス｜差異なし	差異プラス: 現在庫に差異分を足し、履歴に増減数・仕入総価格0を登録する／差異マイナス: 現在庫から差異分を引き、履歴に増減数を登録する（仕入総価格の指定なし）／差異なし: 在庫も履歴も変えない	L0453-L0458	この機能
+F04	P2	反映直前のEC在庫の現在庫	0｜1以上	0: 差異プラスで0から1以上になると入荷通知を行う／1以上: 入荷通知を行わない	L0459-L0460	この機能
+F05	P2,P6	棚卸計画の作成後の在庫変動	なし｜あり	なし: 反映の基準の現在庫は計画作成時の在庫数量と同じ／あり: 現在庫が作成時と異なり、反映は現在庫に差異分を増減した値になる（棚卸数量そのものにはならない）。確認画面には計画後に変動履歴の更新がありましたのアラートを出す	L0454,L0367-L0369,L0109,L0412	この機能
+F06	P3,P4,P5	棚卸計画の在庫反映の状態	未反映｜反映済み	未反映: 反映・CSV登録・保存ができる／反映済み: 在庫反映済みのため更新できませんのエラーで、反映・CSV登録・保存はいずれも行われない	L0210,L0214,L0360,L0362,L0444,L0463,L0090,L0103,L0106	この機能
+F07	P3	商品数と計上済み商品数の状況	一致して1以上｜商品数が0｜計上済み商品数が0｜不一致	一致して1以上: 反映に進める／商品数が0: 反映ボタンが押せない／計上済み商品数が0: 反映ボタンが押せない／不一致: 反映ボタンが押せず、実行時は商品数と計上済み商品数が一致しませんのエラー	L0227-L0229,L0445-L0447,L0107	この機能
+F08	P3	在庫差異と差異確認の状況	差異なしまたは全て確認済み｜未確認の差異あり	差異なしまたは全て確認済み: 反映に進める／未確認の差異あり: 反映ボタンが押せず、実行時は差異未確認の商品があるため在庫反映できませんのエラー	L0230,L0448,L0104	この機能
+F09	P5	商品の差異確認の状態	未確認｜確認済み	未確認: 棚卸数量・在庫数量を変更できる／確認済み: 棚卸数量と在庫数量を変更できない	L0366,L0101	この機能
+F10	P5	保存の種類	初回登録｜更新	初回登録: 保存後、棚卸計画の次の商品の確認画面へ遷移し、次が無ければ棚卸計画編集画面へ遷移する／更新: 保存後、棚卸計画編集画面へ（ページ位置を保持して）遷移する	L0361,L0363,L0364,L0397	この機能
+F11	P5	棚卸計画の次の棚卸対象商品	あり｜なし	あり: 初回登録後は次の商品の棚卸在庫確認画面へ遷移／なし: 棚卸計画編集画面へ遷移	L0363,L0115	この機能
+F12	P6	商品の在庫差異の有無	差異なし｜差異あり	差異なし: 差異確認＆完了ボタンを表示しない／差異あり: 差異確認＆完了ボタンを表示する	L0365,L0398	この機能
+F13	P7	棚卸計画の在庫反映日	未設定｜設定済み	未設定: 反映日欄は空で、エラー注記の対象になりうる／設定済み: 反映日・更新者名を表示し、エラー注記は出さない	L0053-L0054,L0119	この機能
+F14	P7	反映済みの棚卸明細	あり｜なし	あり: 反映日が未設定ならエラー注記を出す／なし: エラー注記を出さない	L0119	この機能
+F15	P7	在庫反映の処理	実行中｜実行中でない	実行中: エラー注記を出さない／実行中でない: 反映日未設定かつ反映済み明細ありのとき注記を出す	L0119	この機能
+F16	P8	差異ありのみ表示	オン｜オフ	オン: 棚卸数量と在庫数量の差が0でない商品だけを出力／オフ: 登録されている棚卸商品を全て出力	L0206,L0307	この機能
+F17	P8	棚卸商品の言語	JP｜EN	JP: 言語列にJPと出力／EN: 言語列にENと出力	L0296	この機能
+F18	P8	棚卸商品の状態	NM｜SP	NM: 状態コード列にNMと出力／SP: 状態コード列にSPと出力	L0297	この機能
+
+codex
+要因表と設計書の対応を確認しています。特に、結果が同じ値の分割、3要因をまとめた「効き合う」、設計書から結果が決まる「正解未定」の指定を重点的に見ています。
+exec
+/bin/bash -lc "sed -n '200,240p;285,315p;350,380p;435,465p' integration_test/casegen/combination/units/M04-31/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+L0197	29
+L0198	画像レイヤー（4枚）: 棚卸計画編集 / C41 / image 1 + 棚卸計画編集 / C41 / image 2 + 棚卸計画編集 / C54 / image 7 + 棚卸計画編集 / C54 / image 8
+L0199	機能仕様処理概要（★はカスタマイズ項目）
+L0200	★表示項目について
+L0201	・識別ID:2「店舗」を追加する
+L0202	★権限について
+L0203	・棚卸計画で指定された店舗の在庫のみ処理対象にする
+L0204	・権限のない店舗の編集は不可能にする
+L0205	CSV出力について
+L0206	CSV出力ボタン押下時、棚卸計画に登録されている棚卸商品全てをCSV出力する
+L0207	ファイル名は 【棚卸名】.csvとする
+L0208	フォーマットは 棚卸詳細CSV出力シート参照
+L0209	「登録」ボタンでフォームの内容を保存する。
+L0210	※在庫反映済みの場合はエラーメッセージを表示し、保存不可。
+L0211	CSV登録について
+L0212	商品登録ボタンを押下し、棚卸商品CSV登録モーダルを表示
+L0213	棚卸計画に対し、棚卸詳細（商品）データをCSVで登録する。
+L0214	在庫反映済みの場合はエラーメッセージを表示し、登録不可。
+L0215	一度に登録できるのは2万件まで。それ以上の場合は複数ファイルに分けて登録する。
+L0216	CSVファイル内に同一の商品または既存データがある場合はエラーとする。
+L0217	フォーマットは 棚卸詳細CSV出力シート参照
+L0218	数量登録ボタンを押下し、棚卸商品数量CSV登録モーダルを表示
+L0219	棚卸計画に対し、棚卸詳細（商品）データの棚卸数量をCSVで登録する。
+L0220	在庫反映済みの場合はエラーメッセージを表示し、登録不可。
+L0221	一度に登録できるのは2万件まで。それ以上の場合は複数ファイルに分けて登録する。
+L0222	CSVファイル内に同一の商品がある場合はエラーとする。
+L0223	フォーマットは 棚卸詳細CSV出力シート参照
+L0224	登録されている棚卸対象商品の一覧を表示する
+L0225	「差異ありのみ表示」がチェックされているときは、在庫差異があるデータのみ表示する
+L0226	「棚卸結果の在庫反映」ボタンで棚卸結果在庫反映画面へ遷移する。ただし以下の場合は押下不可能。
+L0227	・商品数が0
+L0228	・計上済み商品数が0
+L0229	・商品数と計上済み商品数が一致しない
+L0230	・「在庫差異」が存在し、かつ「差異確認」が行われていない商品が存在する
+L0231	識別ID	ラベル	書式・制限	必須	最大値	初期値	画面部品の説明
+L0232	1	棚卸名	半角・全角	◯	-	-
+L0233	2	店舗	-	-	-	-	店舗名 在庫区分名
+L0234	3	商品数	-	-	-	-	当該棚卸計画に登録されている商品数
+L0235	4	計上済み商品数	-	-	-	-	棚卸数量を入力済みの商品数
+L0236	5	差異あり商品数	-	-	-	-	棚卸数量（実在庫）とEC在庫数（理論在庫）に差異のある商品数
+L0237	6	備考	半角・全角	-	-	-
+L0281	カスタマイズ説明
+L0282	処理概要
+L0283	CSVファイルの商品コードの棚卸商品を、CSVファイルの棚卸数量で棚卸数量を登録する
+##### 0202 sheet-41 棚卸詳細CSV出力
+L0284	棚卸詳細CSV出力
+L0285	ドキュメント名在庫管理 基本設計
+L0286	セクション—
+L0287	プロジェクト名サイトリニューアル
+L0288	作成者佐藤
+L0289	作成日2025/8/25
+L0290	更新者石川
+L0291	更新日2026-03-12
+L0292	棚卸詳細CSV出力項目
+L0293	識別ID	項目名	備考
+L0294	1	商品名
+L0295	2	商品コード
+L0296	3	言語	JP,ENの形式で出力
+L0297	4	状態コード	NM,SPの形式で出力
+L0298	5	販売価格
+L0299	6	在庫数量	棚卸登録時の在庫数量
+L0300	7	棚卸数量
+L0301	8	在庫差異	棚卸数量 - 在庫数量
+L0302	9	最終更新日	YYYY-MM-DD HH:mm:ss
+L0303	10	作業者	作業者名
+L0304	カスタマイズ説明
+L0305	処理概要
+L0306	・棚卸計画に登録されている棚卸商品をCSV出力する
+L0307	・画面で差異あり商品のみ出力にチェックが入っていた場合は棚卸数量 - 在庫数量が0でない商品のみ出す 
+L0308	・並び順は明細IDの昇順とする
+L0309	・ファイル名は棚卸計画の棚卸名.csvとする
+##### 0202 sheet-42 棚卸在庫確認
+L0344	14
+L0345	16
+L0346	25
+L0347	26
+L0348	27
+L0349	28
+L0350	30
+L0351	29
+L0352	17
+L0353	1
+L0354	15
+L0355	画像レイヤー（3枚）: 棚卸在庫確認 / B7 / image 1 + 棚卸在庫確認 / B7 / image 2 + 棚卸在庫確認 / H56 / image 3
+L0356	カスタマイズ説明
+L0357	機能仕様処理概要
+L0358	画面表示時は「棚卸数量」入力欄にフォーカスが当たり、カーソル位置が数値の末尾に設定される。
+L0359	「在庫数量へ最新数量を反映」ボタンを押すと、その時点の理論在庫数が「在庫数量」入力欄に反映される。棚卸数量は登録されない。
+L0360	※在庫反映済みの場合はエラーメッセージを表示し、保存不可。
+L0361	「登録/更新」（初回登録後は「登録」から「更新」に文言が変わる）を行ったら、入力フォームの内容を保存し、「在庫確認登録履歴」を追加する。
+L0362	※在庫反映済みの場合はエラーメッセージを表示し、保存不可。
+L0363	「登録」後は、棚卸計画に登録されている次の商品の在庫確認画面へ遷移する。次の商品がない場合は棚卸計画編集画面へ遷移する。
+L0364	「更新」後は、棚卸計画編集画面へ遷移する。当該商品を選択した時のページ位置を保持すること。
+L0365	「差異確認＆完了」ボタンは在庫差異があるときのみ表示される。押下すると差異確認完了フラグが入り、次の差異未確認商品へ遷移する。
+L0366	「差異確認＆完了」を確認後、棚卸数量および在庫数量を変更できないようにする
+L0367	棚卸計画作成後の在庫履歴の変動が行われた場合
+L0368	画面上部にアラートを表示
+L0369	直近１週間の在庫変動履歴の一覧において、作成日より新しい在庫変動についてはハイライトをする
+L0370	★表示項目について
+L0371	・識別ID:4「店舗」を追加する
+L0372	★権限について
+L0373	・棚卸計画で指定された店舗の在庫のみ処理対象にする
+L0374	・権限のない店舗の登録は不可能にする
+L0428	3
+L0429	4
+L0430	5
+L0431	6
+L0432	7
+L0433	8
+L0434	画像レイヤー（2枚）: 棚卸在庫反映 / E7 / image 1 + 棚卸在庫反映 / AC31 / image 2
+L0435	カスタマイズ説明
+L0436	機能仕様処理概要（★はカスタマイズ項目）
+L0437	★表示項目について
+L0438	・識別ID:2「店舗」を追加する
+L0439	★権限について
+L0440	・棚卸計画で指定された店舗の在庫のみ処理対象にする
+L0441	・権限のない店舗の実行は不可能にする
+L0442	登録処理について
+L0443	○エラー条件
+L0444	・在庫反映済み
+L0445	・商品数が0
+L0446	・計上済み商品数が0
+L0447	・商品数と計上済み商品数が一致しない
+L0448	・「在庫差異」が存在し、かつ「差異確認」が行われていない商品が存在する
+L0449	○登録処理
+L0450	・在庫変動履歴を登録時に総原価、原価単価を計算する
+L0451	・在庫変動履歴の登録については、「在庫変動時の履歴作成について」シートを参照
+L0452	・当該棚卸計画に在庫反映日時、更新日、更新者を登録する
+L0453	・差異あり商品の場合
+L0454	現在の在庫数から差異分の増減を現在EC在庫へ反映する
+L0455	・在庫差異でプラスがある場合
+L0456	在庫変動履歴へ増減数と共に、在庫区分、在庫変動区分「棚卸結果の反映」、仕入総価格に0、在庫変動理由に棚卸計画のIDと名前を登録する
+L0457	・欠在庫差異でマイナスがある場合
+L0458	在庫変動履歴へ増減数と共に、在庫区分、在庫変動区分「棚卸結果の反映」、在庫変動理由に棚卸計画のIDと名前を登録する
+
+exec
+/bin/bash -lc "sed -n '1,115p' integration_test/casegen/combination/units/M04-32/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+##### 0202 sheet-44 在庫編集承認一覧(検索入力)
+L0001	在庫編集承認一覧(検索入力)
+L0002	ドキュメント名在庫管理 基本設計
+L0003	セクション—
+L0004	プロジェクト名サイトリニューアル
+L0005	作成者佐藤
+L0006	作成日2025/8/25
+L0007	更新者加藤
+L0008	更新日2025-11-04
+L0009	機能NoM04-38（正しくは M04-32。Excel基本設計の機能No欄の誤記）
+L0010	機能名在庫編集承認一覧(検索入力)
+L0011	概要在庫編集の承認一覧の検索フォーム
+L0012	処理概要
+L0013	レイアウト図
+L0014	1-1
+L0015	1-2
+L0016	1-4
+L0017	1-6
+L0018	1-10
+L0019	1-7
+L0020	1-12
+L0021	1-14
+L0022	2-1
+L0023	2-2
+L0024	1-5
+L0025	1-3
+L0026	1-9
+L0027	1-13
+L0028	1-8
+L0029	1-11
+L0030	在庫編集承認一覧(検索入力) / B7 / image 1
+L0031	機能仕様処理概要
+L0032	1.初期処理
+L0033	1-1.アクセス時に、初期値を用いて検索が行われた状態を表示する
+L0034	2.検索処理
+L0035	2-1.在庫承認一覧データに対して、検索条件フォームに入力された内容を用いて検索を行う
+L0036	2-2.在庫項目同士の条件はAND条件とする
+L0037	例）店舗(入力値:A店舗)と在庫区分(入力値:EC-CUBE)にそれぞれ値が入力されて場合、A店舗かつEC-CUBEの情報のみに絞り込む
+L0038	2-3.それぞれの項目の検索チェックについては画面部品一覧表の必須・最大値・画面部品の説明に記載されている条件に従い処理を行う
+L0039	2-4.検索が完了したらページを再描画し、検索結果の件数表示と、検索した結果の一覧を表示する
+L0040	識別ID	ラベル	書式・制限	必須	最大値	初期値	画面部品の説明
+L0041	検索条件フォーム
+L0042	1-1	店舗	複数選択(セレクトボックス)	-	-	ログインしているメンバーのデフォルト検索表示店舗	共通処理識別ID1-3参照
+L0043	1-2	在庫区分	チェックボックス	-	-	-	共通処理識別ID1-4参照
+L0044	1-3	承認対象の絞り込み	チェックボックス	-	-	承認可能な在庫のみ表示	選択肢:承認可能な在庫のみ表示
+L0045	チェックがついている場合下記の処理を行う
+L0046	・検索時に識別ID:1-1で選択された中で、
+L0047	ログインしているメンバーの承認権限を持っている承認対象かつ、承認状態が未承認のみを絞り込む
+L0048	・識別ID:1-4承認ステータスは選択できないようにし、検索条件から除外する
+L0049	1-4	承認ステータス	チェックボックス	-	-	-	選択肢:未承認,承認済,却下済
+L0050	複数チェックが入力されている場合はOR条件とする
+L0051	※全てチェックが入っている際は、全てチェックが無いのと同じ条件となる
+L0052	1-5	在庫変動区分	単一選択(セレクトボックス)	-	-	-	「在庫編集」シート識別ID:3-1在庫変動区分を参照
+L0053	1-6	登録者（所属選択）	単一選択(セレクトボックス)	-	-	-	共通処理識別ID1-1参照
+L0054	1-7	登録者（メンバー選択）	複数選択(セレクトボックス)	-	-	-	共通処理識別ID1-2参照
+L0055	1-8	登録日(from）	日付（yyyy/mm/dd）	-	~9999/12/31	-	登録日(From)>登録日(To)の場合エラーとし検索を行わない
+L0056	入力された日時以降を検索対象に含めます（入力した日時も含む）
+L0057	1-9	登録日(to)	日付（yyyy/mm/dd）	-	~9999/12/31	-	入力した日時以前を検索対象に含めます（入力した日時も含む）
+L0058	1-10	承認者（所属選択）	単一選択(セレクトボックス)	-	-	-	共通処理識別ID1-1参照
+L0059	1-11	承認者（メンバー選択）	複数選択(セレクトボックス)	-	-	-	共通処理識別ID1-2参照
+L0060	1-12	承認日(from）	日付（yyyy/mm/dd）	-	~9999/12/31	-	承認日(From)>承認日(To)の場合エラーとし検索を行わない
+L0061	入力されている場合、承認日が空のものは検索結果として出力されない
+L0062	1-13	承認日(to)	日付（yyyy/mm/dd）	-	~9999/12/31	-	入力した日時以前を検索対象に含めます（入力した日時も含む）
+L0063	入力されている場合、承認日が空のものは検索結果として出力されない
+L0064	1-14	検索条件をクリア	リンク	-	-	-	押下すると1-1~1-13の内容を空にする
+L0065	検索条件フォーム外
+L0066	2-1	検索	ボタン	-	-	-	押下すると検索処理を実行する
+L0067	2-2	検索結果件数	文字列	-	-	-	検索処理実行後の件数を表示する
+##### 0202 sheet-45 在庫編集承認一覧(検索結果)
+L0068	在庫編集承認一覧(検索結果)
+L0069	ドキュメント名在庫管理 基本設計
+L0070	セクション—
+L0071	プロジェクト名サイトリニューアル
+L0072	作成者佐藤
+L0073	作成日2025/8/25
+L0074	更新者加藤
+L0075	更新日2025-11-07
+L0076	機能NoM04-38（正しくは M04-32。Excel基本設計の機能No欄の誤記）
+L0077	概要在庫編集の承認一覧
+L0078	処理概要
+L0079	処理概要
+L0080	在庫編集承認一覧(検索結果)
+L0081	レイアウト図 検索結果一覧
+L0082	2-1
+L0083	1-1
+L0084	1-2
+L0085	1-3
+L0086	2-2
+L0087	2-3
+L0088	2-4
+L0089	2-5
+L0090	2-6
+L0091	2-7
+L0092	2-8
+L0093	2-9
+L0094	2-10
+L0095	2-11
+L0096	2-12
+L0097	3-1
+L0098	1-4
+L0099	在庫編集承認一覧(検索結果) / B8 / image 2
+L0100	機能仕様処理概要
+L0101	1.一覧表示
+L0102	1-1.検索した結果の承認一覧を表示 ※画面部品一覧にて詳細記載
+L0103	1-2.承認状態が「未承認」の状態が長くなっているものを優先的に上に表示し、履歴として参照したい「承認済」/「却下済」は新しい順で表示できるよう下記のソート順とする
+L0104	1-2-1.承認状態が「未承認」「スマレジ連携中」「スマレジ連携失敗」のレコードを最上位に表示（承認日が空のもの）また、承認日が空のもの同士では「登録日が古い順」に並べる
+L0105	1-2-2.承認状態が「承認済」/「却下済」レコードについては、「承認日が新しい順」で表示（履歴として直近の操作を上に表示）
+L0106	1-2-3.登録日または承認日が同一のレコードが存在する場合、表示順が不定にならないよう、在庫編集承認ID（レコード登録順）をサブソート条件として追加し、昇順にて制御を行う
+L0107	2.承認権限制限
+L0108	2-1.ログインしているメンバーが承認権限を所持している店舗の在庫のみ、3.承認処理、4.却下処理を実行できる
+L0109	2-2.権限がなく承認/却下ができない場合はエラーとする
+L0110	2-3.ログインしているメンバーが登録者の場合、3.承認処理・4.却下処理を実行しようとした場合、実行前にエラーとする
+L0111	3.承認処理
+L0112	3-1.在庫変更理由の親区分が「入庫」の場合、承認となった承認対象の在庫情報を更新する
+L0113	3-1-1.承認対象の入庫承認待ち在庫情報に登録された在庫増減数から現在庫数を計算し、登録する
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/M04-25_existing.tsv; cat integration_test/casegen/combination/factors/M04-32_existing.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "sed -n '115,260p' integration_test/casegen/combination/units/M04-29/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/M04-33_existing.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+テストID	処理ID	値	理由
+IT-M04-25-010	P1	F01=あり&F02=あり&F03=移動中	送状No.と備考を変更して登録し、DBで更新を確かめる。事前準備の移動のステータスは移動中
+IT-M04-25-015	P1	F01=なし&F02=あり&F03=出庫承認済み	備考だけを変更して登録し、DBで備考の更新を確かめる。移動は出庫承認済み
+IT-M04-25-016	P1	F01=なし&F02=あり&F03=移動中	備考だけを変更して登録し、DBで備考の更新を確かめる。移動は移動中
+IT-M04-25-026	P1	F01=あり&F02=あり&F03=移動中	送状No.と備考を入力して登録し、DBで更新を確かめる。移動は移動中
+IT-M04-25-018	P2	F04=未&F05=出庫待ち	送状No.なし・発送状況未・移動が出庫待ちの指示を削除し、DBで削除を確かめる
+テストID	処理ID	値	理由
+IT-M04-32-104	P1	F01=入庫&F02=別のメンバー	入庫の申請を申請者と別の承認者が承認し、在庫またはメールを確かめる
+IT-M04-32-105	P1	F01=入庫&F02=別のメンバー	入庫の申請を申請者と別の承認者が承認し、在庫またはメールを確かめる
+IT-M04-32-110	P1	F01=入庫&F02=別のメンバー	入庫の申請を申請者と別の承認者が承認し、在庫またはメールを確かめる
+IT-M04-32-111	P1	F01=入庫&F02=別のメンバー	入庫の申請を申請者と別の承認者が承認し、在庫またはメールを確かめる
+IT-M04-32-113	P1	F01=入庫&F02=別のメンバー	入庫の申請を申請者と別の承認者が承認し、在庫またはメールを確かめる
+IT-M04-32-114	P1	F01=廃棄&F02=別のメンバー	廃棄の申請を申請者と別の承認者が承認し、在庫履歴の承認日と承認者を確かめる
+IT-M04-32-103	P2	F01=廃棄&F02=別のメンバー	廃棄の申請を申請者と別の承認者が却下し、却下後の在庫を確かめる
+IT-M04-32-109	P2	F01=廃棄&F02=別のメンバー	廃棄の申請を申請者と別の承認者が却下し、却下後の在庫・総原価・最終更新者を確かめる
+IT-M04-32-112	P2	F01=廃棄&F02=別のメンバー	廃棄の申請を申請者と別の承認者が却下し、却下後の在庫・総原価・最終更新者を確かめる
+IT-M04-32-115	P2	F01=廃棄&F02=別のメンバー	廃棄の申請を申請者と別の承認者が却下し、却下後の在庫・総原価・最終更新者を確かめる
+IT-M04-32-116	P2	F01=廃棄&F02=別のメンバー	廃棄の申請を申請者と別の承認者が却下し、却下後の在庫・総原価・最終更新者を確かめる
+IT-M04-32-106	P4	F01=廃棄&F03=未承認	未承認の廃棄の申請のモーダルを開き、行と数値を確かめる
+IT-M04-32-107	P4	F01=廃棄&F03=未承認	未承認の廃棄の申請のモーダルを開き、行と数値を確かめる
+IT-M04-32-108	P4	F01=廃棄&F03=未承認	未承認の廃棄の申請のモーダルを開き、行と数値を確かめる
+IT-M04-32-109	P4	F01=廃棄&F03=未承認	未承認の廃棄の申請のモーダルを開き、行と数値を確かめる
+IT-M04-32-108	P5	F01=廃棄&F03=未承認	未承認の廃棄の申請のモーダルのCSVを保存し、総原価増減数を確かめる
+IT-M04-02-062	P1	F01=入庫&F02=別のメンバー	入庫の申請を申請者と別の承認者が承認し、承認後の在庫または在庫履歴を確かめる
+IT-M04-02-064	P1	F01=入庫&F02=別のメンバー	入庫の申請を申請者と別の承認者が承認し、承認後の在庫または在庫履歴を確かめる
+IT-M04-02-065	P1	F01=入庫&F02=別のメンバー	入庫の申請を申請者と別の承認者が承認し、承認後の在庫または在庫履歴を確かめる
+IT-M04-02-066	P1	F01=入庫&F02=別のメンバー	入庫の申請を申請者と別の承認者が承認し、承認後の在庫または在庫履歴を確かめる
+IT-M04-02-067	P1	F01=入庫&F02=別のメンバー	入庫の申請を申請者と別の承認者が承認し、承認後の在庫または在庫履歴を確かめる
+IT-M04-02-068	P1	F01=入庫&F02=別のメンバー	入庫の申請を申請者と別の承認者が承認し、承認後の在庫または在庫履歴を確かめる
+IT-M04-02-074	P1	F01=入庫&F02=別のメンバー	入庫の申請を申請者と別の承認者が承認し、承認後の在庫または在庫履歴を確かめる
+IT-M04-03-054	P1	F01=入庫&F02=別のメンバー	入庫の申請を申請者と別の承認者が承認し、承認後の在庫または在庫履歴を確かめる
+IT-M04-03-055	P1	F01=入庫&F02=別のメンバー	入庫の申請を申請者と別の承認者が承認し、承認後の在庫または在庫履歴を確かめる
+IT-M04-03-056	P1	F01=入庫&F02=別のメンバー	入庫の申請を申請者と別の承認者が承認し、承認後の在庫または在庫履歴を確かめる
+IT-M04-03-058	P1	F01=入庫&F02=別のメンバー	入庫の申請を申請者と別の承認者が承認し、承認後の在庫または在庫履歴を確かめる
+IT-M04-03-059	P1	F01=入庫&F02=別のメンバー	入庫の申請を申請者と別の承認者が承認し、承認後の在庫または在庫履歴を確かめる
+IT-M04-03-060	P1	F01=入庫&F02=別のメンバー	入庫の申請を申請者と別の承認者が承認し、承認後の在庫または在庫履歴を確かめる
+IT-M04-03-061	P1	F01=入庫&F02=別のメンバー	入庫の申請を申請者と別の承認者が承認し、承認後の在庫または在庫履歴を確かめる
+IT-M04-03-063	P1	F01=入庫&F02=別のメンバー	入庫の申請を申請者と別の承認者が承認し、承認後の在庫または在庫履歴を確かめる
+IT-M04-21-051	P1	F01=入庫&F02=別のメンバー	入庫の申請を申請者と別の承認者が承認し、承認後の在庫または在庫履歴を確かめる
+IT-M04-21-058	P1	F01=入庫&F02=別のメンバー	入庫の申請を申請者と別の承認者が承認し、承認後の在庫または在庫履歴を確かめる
+IT-M04-03-062	P1	F01=廃棄&F02=別のメンバー	廃棄の申請を申請者と別の承認者が承認し、承認後の入荷集計を確かめる
+
+ succeeded in 0ms:
+L0114	承認待ち	44（0202:在庫移動指示検索!F67）
+L0115	着荷	入庫
+L0116	承認待ち	45（0202:在庫移動指示検索!F67）
+L0117	入庫
+L0118	承認待ち	入庫
+L0119	承認	46（0202:在庫移動指示検索!F67）
+L0120	入庫
+L0121	承認	着荷	47（0202:在庫移動指示検索!F67）
+L0122	入庫
+L0123	承認	入庫
+L0124	済み	49（0202:在庫移動指示検索!F67）
+L0125	差分
+L0126	通知	入庫
+L0127	済み	50（0202:在庫移動指示検索!F67）
+L0128	入庫
+L0129	承認	差分
+L0130	通知	51（0202:在庫移動指示検索!F67）
+L0131	接続関係整理図
+L0132	発送
+L0133	手続き
+L0134	欠品
+L0135	登録
+L0136	ピック
+L0137	出庫
+L0138	承認
+L0139	着荷
+L0140	新規
+L0141	登録
+L0142	入庫
+L0143	承認
+L0144	差分
+L0145	登録
+L0146	差分
+L0147	通知
+L0148	出庫
+L0149	承認済み
+L0150	入庫
+L0151	承認待ち
+L0152	出庫
+L0153	承認待ち
+L0154	入庫
+L0155	済み
+L0156	移動中
+L0157	却下
+L0158	在庫移動指示発送手続き部分想定運用フロー
+L0159	①在庫移動振替一覧画面から、出庫元と入庫先の店舗が同一の出庫承認済みの移動をまとめて在庫移動指示を作成する
+L0160	②在庫移動指示検索（この設計書の対象画面）から、送り状CSVダウンロードボタンを押下し、ゆうプリRに入力するCSVを出力する
+L0161	③ゆうプリRに②で出力したCSVを登録し、送り状No.を得る
+L0162	④在庫移動指示に対して在庫移動指示検索画面または在庫移動実績CSVから送り状番号を登録し、移動ステータスを「移動中」とする
+L0163	権限制御
+L0164	・0201_基本設計仕様書(システム設定).xlsxの権限制御シート（機能ID: M11-03）の「2.編集可能店舗処理」に応じた権限制御が行われる
+L0165	在庫移動実績CSV登録
+L0166	・在庫実績CSV登録ボタンを押下すると在庫実績CSV登録モーダルが表示される
+L0167	・CSVは2,000件を登録上限とする
+L0168	・入力チェックとして以下を行う
+L0169	・移動指示ID、送り状No.どちらも入力されていること
+L0170	・指定された移動指示IDが存在すること
+L0171	・移動指示IDに重複がないこと
+L0172	・入力チェックはエラーが20件に到達するまでチェックを行う
+L0173	・エラーがある場合、登録処理を終了し行番号と移動指示IDをセットにしたエラーメッセージを最大20件まで画面上に表示する
+L0174	・エラーメッセージには固定で、「エラーは20件まで表示されます」、とエラーメッセージの上に表示する
+L0175	・エラーがなければ登録処理を行う
+L0176	・該当の移動指示IDに送り状No.を登録する
+L0177	・在庫移動指示の発送状況は「済」となり在庫移動のステータスが「移動中」となる
+L0178	在庫移動指示検索
+L0179	・在庫移動指示について発送状況で絞り込める
+L0180	・在庫移動指示登録時は送状No.がない状態であり、これを発送状況を「未」（未発送）とする
+L0181	・送状No.を登録した場合、発送状況を「済」（発送済み）とする
+L0182	在庫移動指示一覧
+L0183	・送状No.
+L0184	・値がない場合は登録ボタンを表示する
+L0185	在庫移動指示検索 / AI105 / image 4
+L0186	・登録ボタンを押下すると送り状ナンバー登録モーダルを表示する
+L0187	・送状No.登録することで、在庫移動指示の発送状況は「済」となり在庫移動のステータスが「移動中」となる
+L0188	・移動指示ID
+L0189	・指示IDをクリックすると対象の在庫移動指示の詳細画面へ遷移する
+L0190	・各行の先頭のチェックボックスで移動指示を選択すると、以下の２つのボタンが活性化する
+L0191	・在庫移動実績入力CSVダウンロードボタン
+L0192	・選択している移動指示リストについて、在庫移動実績入力用CSVを出力する
+L0193	・在庫移動実績入力用CSV（機能No.: M04-27）
+L0194	・送り状CSVダウンロードボタン
+L0195	・選択している在庫移動について、送り状CSVを出力する
+L0196	・送り状CSV（機能No.: M04-28）
+L0197	送状No.
+L0198	・送状No.の変更は指示リストの詳細画面からのみ可能
+L0199	識別ID	ラベル	書式・制限	必須	最大値	初期値	画面部品の説明
+L0200	CSVファイルアップロード
+L0201	1-1	在庫移動実績CSV登録	ボタン	-	-	-
+L0202	移動指示リスト検索
+L0203	2-1	出庫元店舗	プルダウン	○	-	ユーザーのデフォルト検索店舗	移動指示リストの出庫元店舗名
+L0204	2-2	入庫先店舗	プルダウン	○	-	未選択	移動指示リストの入庫先店舗名
+L0205	2-3	在庫移動指示ID	数値	-	-	-	在庫移動指示リストID
+L0206	2-4	在庫移動ID	数値	-	-	-	在庫移動ID
+L0207	2-5	登録日(From)	日付（yyyy/mm/dd）	-	-	-	在庫移動指示リストの登録日の検索に利用する期間の開始日
+L0208	カレンダー選択機能あり
+L0209	2-5	登録日(To)	日付（yyyy/mm/dd）	-	-	-	在庫移動指示リストの登録日の検索に利用する期間の終了にち
+L0210	カレンダー選択機能あり
+L0211	2-6	更新日(From)	日付（yyyy/mm/dd）	-	-	-	在庫移動指示リストの更新日の検索に利用する期間の開始日
+L0212	カレンダー選択機能あり
+L0213	2-6	更新日(To)	日付（yyyy/mm/dd）	-	-	-	在庫移動指示リストの更新日の検索に利用する期間の終了にち
+L0214	カレンダー選択機能あり
+L0215	2-7	発送状況	複数選択(セレクトボックス)	-	-	-	在庫移動指示のステータスでの絞り込みに利用
+L0216	選択肢：未、済
+L0217	2-8	検索する	ボタン	-	-	-	ボタン押下で検索を実行、識別ID: 2-1 ~ 2-7の値を利用
+L0218	在庫移動・振替内容
+L0219	3-1	検索結果件数	ラベル	-	-	-	検索条件に応じたデータの件数
+L0220	3-2	在庫移動実績入力用CSVダウンロード	ボタン	-	-	-	在庫移動選択時のみ活性状態
+L0221	機能No.M04-27を出力
+L0222	3-3	送り状CSVダウンロードボタン	ボタン	-	-	-	機能No.M04-28を出力
+L0223	3-4	表示件数		○	-	50	１ページあたりの表示件数
+L0224	3-5	移動指示ID	ラベル	-	-	-	移動指示リスト作成後に自動採番された値を表示
+L0225	3-6	出庫元店舗	ラベル	-	-	-	移動指示リストにまとめられている在庫移動の出庫元店舗
+L0226	3-7	入庫先店舗	ラベル	-	-	-	移動指示リストにまとめられている在庫移動の入庫先店舗
+L0227	3-8	在庫移動数	ラベル	-	-	-	移動指示リスト含まれる在庫移動の件数
+L0228	3-9	移動点数	ラベル	-	-	-	移動指示リストに含まれる移動する商品の枚数
+L0229	3-10	基準価格合計	ラベル	-	-	-	各在庫移動の持つ基準価格の合計
+L0230	3-11	移動原価合計	ラベル	-	-	-	各在庫移動の持つ移動原価の合計
+L0231	3-12	登録日	ラベル	-	-	-	移動指示リストの登録日
+L0232	3-13	更新日	ラベル	-	-	-	移動指示リストの更新日
+L0233	3-14	送状No.	ラベル or ボタン	-	16383文字	-	送状No.の登録ボタンまたは登録されている送状No.の値表示
+L0234	全角・半角を許容する
+L0235	3-15	発送状況	ラベル	-	-	-	移動指示リストの発送状況
+L0236	3-16	ページネーション	ラベル	-	-	-	ページネーション
+L0237	レイアウト図 在庫移動実績CSV登録モーダル
+L0238	1-1
+L0239	1-2
+L0240	在庫移動指示検索 / D155 / image 1
+L0241	新規に表示された部品のみ記載
+L0242	識別ID	ラベル	書式・制限	必須	最大値	初期値	画面部品の説明
+L0243	CSV登録部
+L0244	1-1	ファイルを選択	ボタン	-	-	-	ボタンを押下すると、アップロードするためのディレクトリフォームが開き、
+L0245	csvファイルをアップロードすることが出来る
+L0246	1-2	登録	ボタン	-	-	-	押下時に、分割商品CSV登録を実行
+L0247	商品登録を押下時に下記の場合エラーとなる
+L0248	・アップロードされたファイルがcsv以外のファイルの場合
+L0249	・CSVファイルが下記のカラム名以外の場合（フォーマット不一致エラー）
+L0250	移動指示ID、送り状No.
+L0251	※CSV1行目のカラム名の一致チェックを行う
+L0252	登録CSV
+L0253	識別ID	項目名	主キー	書式・制限	必須	最大文字数
+L0254	または最大値	入力例	説明
+L0255	2-1	移動指示ID	○	数値	○	1～99999999	1234	送り状No.を登録したい移動指示IDを指定
+L0256	2-2	送り状No.		文字列	○	65535byte	1234-5678,1234-1234	形式のチェックは行わない、カンマ区切りで複数登録可能
+
+ succeeded in 0ms:
+テストID	処理ID	値	理由
+IT-M04-33-002	P1	F01=本店3F&F02=最低の閾値未満&F04=非Foil&F05=含む	本店3F・閾値4800円・基準価格3000円・非Foil・商品名に[ABC-002]を含む商品のCSV行を確かめる
+IT-M04-33-004	P1	F01=本店3F&F02=最高の閾値以上	本店3F・閾値4800円・基準価格4800円（セール価格3000円）の区分を確かめる
+IT-M04-33-005	P1	F01=本店3F&F02=最低の閾値未満	入庫先を本店3F（閾値4800円）にして基準価格2500円の区分を確かめる
+IT-M04-33-005	P1	F01=本店2F&F02=最低の閾値未満	入庫先を本店2F（閾値3000円）にして基準価格2500円の区分を確かめる
+IT-M04-33-005	P1	F01=本店B2F&F02=最高の閾値以上	入庫先を本店B2F（閾値2000円）にして基準価格2500円の区分を確かめる
+IT-M04-33-005	P1	F01=支店&F02=最高の閾値以上	入庫先を支店（閾値1000円）にして基準価格2500円の区分を確かめる
+IT-M04-33-007	P1	F01=支店&F02=最低の閾値未満	支店・閾値4800円・基準価格3000円の商品の棚番号の列が空であることを確かめる
+IT-M04-33-008	P1	F01=本店3F&F02=最低の閾値未満&F04=Foil	本店3F・閾値4800円・基準価格3000円・Foilの言語/状態を確かめる
+IT-M04-33-009	P1	F01=本店3F&F02=最低の閾値未満&F03=サプライ品	本店3F・閾値4800円・基準価格1000円のサプライ品の区分・言語/状態・略称を確かめる
+IT-M04-33-010	P1	F01=本店3F&F02=最低の閾値未満&F03=シングルカード以外	本店3F・閾値4800円・基準価格3000円のシングルカード以外の色/Rを確かめる
+IT-M04-33-011	P1	F01=本店3F&F05=含まない	本店3Fで商品名に略称タグ[BRK]を含まない商品の商品名列を確かめる
+IT-M04-33-012	P2	F01=本店3F&F06=金額閾値の帯で決まる	本店3Fのデータ行の並びが金額閾値の帯で決まることを確かめる
+IT-M04-33-013	P2	F01=本店3F&F06=棚番で決まる	本店3Fのデータ行の並びが棚番で決まることを確かめる
+IT-M04-33-015	P2	F01=本店3F&F06=言語で決まる	本店3Fのデータ行の並びが言語で決まることを確かめる
+IT-M04-33-016	P2	F01=本店3F&F06=状態で決まる	本店3Fのデータ行の並びが状態で決まることを確かめる
+IT-M04-33-017	P2	F01=本店3F&F06=Foilフラグで決まる	本店3Fのデータ行の並びがFoilフラグで決まることを確かめる
+IT-M04-33-018	P2	F01=本店3F&F06=略称タグで決まる	本店3Fのデータ行の並びが略称タグで決まることを確かめる
+IT-M04-33-019	P2	F01=本店3F&F06=レアリティで決まる	本店3Fのデータ行の並びがレアリティで決まることを確かめる
+IT-M04-33-020	P2	F01=本店3F&F06=色で決まる	本店3Fのデータ行の並びが色で決まることを確かめる
+IT-M04-33-021	P2	F01=本店3F&F06=コレクター番号で決まる	本店3Fのデータ行の並びがコレクター番号で決まることを確かめる
+IT-M04-33-022	P2	F01=本店3F&F06=英語カード名で決まる	本店3Fのデータ行の並びが英語カード名で決まることを確かめる
+IT-M04-33-028	P2	F01=本店3F&F06=金額閾値の帯で決まる	本店3Fのデータ行の並びが金額閾値の帯で決まることを確かめる
+IT-M04-33-029	P2	F01=本店3F&F06=棚番で決まる	本店3Fのデータ行の並びが棚番で決まることを確かめる
+IT-M04-33-030	P2	F01=本店3F&F06=Foilフラグで決まる	本店3Fのデータ行の並びがFoilフラグで決まることを確かめる
+IT-M04-33-031	P2	F01=本店3F&F06=レアリティで決まる	本店3Fのデータ行の並びがレアリティで決まることを確かめる
+IT-M04-33-032	P2	F01=本店3F&F06=言語で決まる	本店3Fのデータ行の並びが言語で決まることを確かめる
+IT-M04-33-033	P2	F01=本店3F&F06=状態で決まる	本店3Fのデータ行の並びが状態で決まることを確かめる
+IT-M04-33-034	P2	F01=本店3F&F06=略称タグで決まる	本店3Fのデータ行の並びが略称タグで決まることを確かめる
+IT-M04-33-035	P2	F01=本店3F&F06=色で決まる	本店3Fのデータ行の並びが色で決まることを確かめる
+IT-M04-33-036	P2	F01=本店3F&F06=色で決まる	本店3Fのデータ行の並びが色で決まることを確かめる
+IT-M04-33-014	P2	F01=支店&F06=言語で決まる	支店で棚番号が逆順でも棚番では並べず言語の順になることを確かめる
+
+exec
+/bin/bash -lc "sed -n '455,475p;135,155p;35,55p' integration_test/casegen/combination/units/M04-31/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+L0034	カスタマイズ説明
+L0035	機能仕様処理概要
+L0036	棚卸計画の一覧を作成日の降順で表示する
+L0037	★表示項目について
+L0038	・識別ID:1-2「店舗選択」、識別ID:1-3「在庫区分」、識別ID:2-2「店舗」を追加する
+L0039	★検索について
+L0040	・検索ボタンを押下時、識別ID:1-2「店舗選択」、識別ID:1-3「在庫区分」の入力値で棚卸計画を検索する
+L0041	識別ID	ラベル	書式・制限	必須	最大値	初期値	画面部品の説明
+L0042	1-1	新規作成	ボタン	-	-	-	棚卸計画新規作成画面へ遷移
+L0043	1-2	店舗選択	セレクトボックス	-	-	デフォルト店舗	選択肢:店舗管理に登録されており、閉店となっていない店舗
+L0044	1-3	在庫区分	チェックボックス	-	-	-	選択肢:EC-CUBE スマレジ
+L0045	1-4	計画作成日	日付（yyyy/mm/dd）			１ヶ月	2/19 の表示の場合は from: 1/19 とする
+L0046	1-5	検索	ボタン	-	-	-	1-2、1-3の値で棚卸し計画を検索する
+L0047	1-6	該当件数	-	-	-	-
+L0048	1-7	表示件数	-	-	-	100	選択肢: 10件 50件 100件 300件 500件 1000件 2000件 10000件 12000件
+L0049	2-1	棚卸名	テキストリンク	-	-	-	棚卸計画編集画面へ遷移
+L0050	2-2	店舗	-	-	-	-	店舗名 在庫区分名
+L0051	2-3	作成日	-	-	-	-
+L0052	2-4	最終更新日	-	-	-	-
+L0053	2-5	在庫反映日	-	-	-	-	在庫反映を実行した場合のみ表示
+L0054	2-6	在庫反映実行時の更新者名	-	-	-	-	在庫反映を実行した場合のみ表示
+L0133	1
+L0134	2
+L0135	4
+L0136	3
+L0137	5
+L0138	棚卸計画新規作成 / I7 / image 1
+L0139	カスタマイズ説明
+L0140	機能仕様処理概要
+L0141	新規の棚卸計画を登録する
+L0142	★入力項目について
+L0143	・識別ID:2「店舗」を追加する
+L0144	・識別ID:3「在庫区分」を追加する
+L0145	★権限について
+L0146	・登録時、識別ID:2「店舗」で編集権限のない店舗が選ばれた場合エラー
+L0147	識別ID	ラベル	書式・制限	必須	最大値	初期値	画面部品の説明
+L0148	1	棚卸名	-	◯	-	-
+L0149	2	店舗	セレクトボックス	◯	-	デフォルト表示の店舗	選択肢:店舗管理に登録されており、閉店となっていない店舗
+L0150	3	在庫区分	ラジオボタン	◯	-	EC-CUBE	選択肢:EC-CUBE スマレジ
+L0151	4	備考	テキストエリア	-	-	-
+L0152	5	登録	ボタン	-	-	-	棚卸計画編集画面へ遷移
+##### 0202 sheet-39 棚卸計画編集
+L0448	・「在庫差異」が存在し、かつ「差異確認」が行われていない商品が存在する
+L0449	○登録処理
+L0450	・在庫変動履歴を登録時に総原価、原価単価を計算する
+L0451	・在庫変動履歴の登録については、「在庫変動時の履歴作成について」シートを参照
+L0452	・当該棚卸計画に在庫反映日時、更新日、更新者を登録する
+L0453	・差異あり商品の場合
+L0454	現在の在庫数から差異分の増減を現在EC在庫へ反映する
+L0455	・在庫差異でプラスがある場合
+L0456	在庫変動履歴へ増減数と共に、在庫区分、在庫変動区分「棚卸結果の反映」、仕入総価格に0、在庫変動理由に棚卸計画のIDと名前を登録する
+L0457	・欠在庫差異でマイナスがある場合
+L0458	在庫変動履歴へ増減数と共に、在庫区分、在庫変動区分「棚卸結果の反映」、在庫変動理由に棚卸計画のIDと名前を登録する
+L0459	○入荷通知
+L0460	・在庫０から1以上になったものは入荷通知を行う
+L0461	○登録処理完了後
+L0462	・処理完了後は、棚卸計画編集画面へ遷移する
+L0463	在庫反映は１度切りのみ実行可能で、実行後は当該在庫計画にかかわる編集は不可能とする
+L0464	識別ID	ラベル	書式・制限	必須	最大値	初期値	画面部品の説明
+L0465	1	棚卸名	-	-	-	-
+L0466	2	店舗	-	-	-	-	店舗名 在庫区分名
+L0467	3	商品数	-	-	-	-	当該棚卸計画に登録されている商品数
+L0468	4	計上済み商品数	-	-	-	-	棚卸数量を入力済みの商品数
+
+exec
+/bin/bash -lc "rg -n 'IT-M04-25-(010|015|016|018|026)|IT-M04-33-(002|005|007|009|010|011|014)' integration_test/casegen/cases/M04-{25,33}_test_cases.tsv" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+integration_test/casegen/cases/M04-33_test_cases.tsv:3:IT-M04-33-002	REQ-0202-sheet-48-R002,REQ-0202-sheet-48-R005,REQ-0202-sheet-48-R007,REQ-0202-sheet-48-R008,REQ-0202-sheet-48-R010,REQ-0202-sheet-48-R011,REQ-0202-sheet-48-R012,REQ-0202-sheet-48-R013,REQ-0202-sheet-48-R028		ITA-04,ITA-05	P1	ブラウザのみ	S-M04-33-ADM,S-M04-33-CONFIG,S-M04-33-BASE-002	① M04-33試験管理者でログインし、作成日を2033/04/02から2033/04/02、表示件数を100件に設定する（S-M04-33-ADM）／② 開始時に店舗ID 1を本店3F・本店、金額閾値を4800円に設定する（S-M04-33-CONFIG）／③ 在庫移動ID 〔在庫移動ID-M0433-002〕が移動中・出庫元店舗ID 5・入庫先店舗ID 1で、商品名《基準カード-002/Base Card-002》[ABC-002]【JP/NM】金R、棚番号M0433-SH-A-002、略称ABC-002、言語JP、状態NM、非Foil、色金、レアリティR、数量2、基準価格3000円として用意され、商品ID 〔商品ID-M0433-002〕、商品規格ID 〔商品規格ID-M0433-002〕、入庫先実在庫ID 〔入庫先実在庫ID-M0433-002〕・在庫10、明細ID 〔明細ID-M0433-002〕、略称タグID 〔略称タグID-M0433-002〕、棚番号ID 433002601、カードID 〔カードID-M0433-002〕、カード詳細ID 〔カード詳細ID-M0433-002〕を使用する。呼び名で示した番号は、登録時に振られた番号を控えてある（S-M04-33-BASE-002）	1. 在庫移動・振替検索一覧(検索・結果)画面を開く／2. 在庫移動ID 〔在庫移動ID-M0433-002〕を選択する／3. 「戻しリストCSV出力」ボタンを押す／4. ダウンロードしたCSVを開く	「基準カード-002」のデータ行が、ピッキング区分「4800円未満」、棚番号「M0433-SH-A-002」、言語/状態「JP/NM」、略称「ABC-002」、色/R「金R」、数「2」、商品名「《基準カード-002/Base Card-002》」、基準価格「3000」の順で出力されること	0202 在庫移動戻しリストCSV出力 / CSV出力項目 識別ID 1〜8、機能仕様 印刷対象取得
+integration_test/casegen/cases/M04-33_test_cases.tsv:6:IT-M04-33-005	REQ-0202-sheet-48-R002,REQ-0202-sheet-48-R015		ITA-05,ITA-11	P1	ブラウザのみ	S-M04-33-ADM,S-M04-33-CONFIG,S-M04-33-STORES-005	① M04-33試験管理者でログインし、作成日を2033/04/05から2033/04/05、表示件数を100件に設定する（S-M04-33-ADM）／② 開始時に店舗ID 1を本店3F・金額閾値4800円、店舗ID 〔店舗ID-M0433-共有A〕を本店2F・金額閾値3000円、店舗ID 〔店舗ID-M0433-共有B〕を本店B2F・金額閾値2000円、店舗ID 13を支店・金額閾値1000円に設定する。呼び名で示した番号は、登録時に振られた番号を控えてある（S-M04-33-CONFIG）／③ 在庫移動ID 〔在庫移動ID-M0433-005A〕〜〔在庫移動ID-M0433-005D〕が移動中・出庫元店舗ID 5で、それぞれ入庫先店舗ID 1・〔店舗ID-M0433-共有A〕・〔店舗ID-M0433-共有B〕・13、基準価格2500円・非サプライ・数量1として用意され、商品ID 〔商品ID-M0433-005A〕〜〔商品ID-M0433-005D〕、商品規格ID 〔商品規格ID-M0433-005A〕〜〔商品規格ID-M0433-005D〕、入庫先実在庫ID 〔入庫先実在庫ID-M0433-005A〕〜〔入庫先実在庫ID-M0433-005D〕・各在庫10、明細ID 〔明細ID-M0433-005A〕〜〔明細ID-M0433-005D〕を使用する。呼び名で示した番号は、登録時に振られた番号を控えてある（S-M04-33-STORES-005）	1. 在庫移動・振替検索一覧(検索・結果)画面を開く／2. 在庫移動ID 〔在庫移動ID-M0433-005A〕だけを選択してCSVをダウンロードする／3. 画面を再表示し、在庫移動ID 〔在庫移動ID-M0433-005B〕だけを選択してCSVをダウンロードする／4. 同じ手順で在庫移動ID 〔在庫移動ID-M0433-005C〕と〔在庫移動ID-M0433-005D〕のCSVを個別にダウンロードする／5. 4ファイルを開く	基準価格2500の商品について、3F向けCSVが「4800円未満」、2F向けCSVが「3000円未満」、B2F向けCSVが「2000円以上」、支店向けCSVが「1000円以上」のピッキング区分となること	0202 在庫移動戻しリストCSV出力 / CSV出力項目 識別ID 1、カスタマイズ説明 カスタマイズ要件
+integration_test/casegen/cases/M04-33_test_cases.tsv:8:IT-M04-33-007	REQ-0202-sheet-48-R005,REQ-0202-sheet-48-R006		ITA-05,ITA-11	P1	ブラウザのみ	S-M04-33-ADM,S-M04-33-CONFIG,S-M04-33-BRANCH-SHELF-007	① M04-33試験管理者でログインし、作成日を2033/04/07から2033/04/07、表示件数を100件に設定する（S-M04-33-ADM）／② 開始時に店舗ID 13を支店、金額閾値を4800円に設定する（S-M04-33-CONFIG）／③ 在庫移動ID 〔在庫移動ID-M0433-007〕が移動中・出庫元店舗ID 5・入庫先店舗ID 13で、支店棚確認カードに棚番号Z99、言語JP、状態NM、非Foil、数量1、基準価格3000円が設定され、商品ID 〔商品ID-M0433-007〕、商品規格ID 〔商品規格ID-M0433-007〕、入庫先実在庫ID 〔入庫先実在庫ID-M0433-007〕・在庫10、明細ID 〔明細ID-M0433-007〕、棚番号ID 433007601を使用する。呼び名で示した番号は、登録時に振られた番号を控えてある（S-M04-33-BRANCH-SHELF-007）	1. 在庫移動・振替検索一覧(検索・結果)画面を開く／2. 在庫移動ID 〔在庫移動ID-M0433-007〕を選択する／3. 「戻しリストCSV出力」ボタンを押す／4. ダウンロードしたCSVを開く	支店向け「支店棚確認カード」の棚番号列が空であること	0202 在庫移動戻しリストCSV出力 / CSV出力項目 識別ID 2
+integration_test/casegen/cases/M04-33_test_cases.tsv:10:IT-M04-33-009	REQ-0202-sheet-48-R002,REQ-0202-sheet-48-R003,REQ-0202-sheet-48-R007,REQ-0202-sheet-48-R009		ITA-05,ITA-11	P1	ブラウザのみ	S-M04-33-ADM,S-M04-33-CONFIG,S-M04-33-SUPPLY-009	① M04-33試験管理者でログインし、作成日を2033/04/09から2033/04/09、表示件数を100件に設定する（S-M04-33-ADM）／② 開始時に店舗ID 1を本店3F・本店、金額閾値を4800円に設定する（S-M04-33-CONFIG）／③ 在庫移動ID 〔在庫移動ID-M0433-009〕が移動中・出庫元店舗ID 5・入庫先店舗ID 1で、カードスリーブがサプライ品・略称SUP・言語JP・状態NM・数量3・基準価格1000円として用意され、商品ID 〔商品ID-M0433-009〕、商品規格ID 〔商品規格ID-M0433-009〕、入庫先実在庫ID 〔入庫先実在庫ID-M0433-009〕・在庫10、明細ID 〔明細ID-M0433-009〕、略称タグID 〔略称タグID-M0433-009〕を使用する。呼び名で示した番号は、登録時に振られた番号を控えてある（S-M04-33-SUPPLY-009）	1. 在庫移動・振替検索一覧(検索・結果)画面を開く／2. 在庫移動ID 〔在庫移動ID-M0433-009〕を選択する／3. 「戻しリストCSV出力」ボタンを押す／4. ダウンロードしたCSVを開く	「カードスリーブ」のピッキング区分が「サプライ」、言語/状態列が「サプライ品」、略称列が空であること	0202 在庫移動戻しリストCSV出力 / CSV出力項目 識別ID 1・3・4
+integration_test/casegen/cases/M04-33_test_cases.tsv:11:IT-M04-33-010	REQ-0202-sheet-48-R010		ITA-05,ITA-11	P2	ブラウザのみ	S-M04-33-ADM,S-M04-33-CONFIG,S-M04-33-NONSINGLE-010	① M04-33試験管理者でログインし、作成日を2033/04/10から2033/04/10、表示件数を100件に設定する（S-M04-33-ADM）／② 開始時に店舗ID 1を本店3F・本店、金額閾値を4800円に設定する（S-M04-33-CONFIG）／③ 在庫移動ID 〔在庫移動ID-M0433-010〕が移動中・出庫元店舗ID 5・入庫先店舗ID 1で、商品名「非シングル商品 赤R」がシングルカード以外・色赤・レアリティR・非サプライ・数量1・基準価格3000円として用意され、商品ID 〔商品ID-M0433-010〕、商品規格ID 〔商品規格ID-M0433-010〕、入庫先実在庫ID 〔入庫先実在庫ID-M0433-010〕・在庫10、明細ID 〔明細ID-M0433-010〕、カード詳細ID 〔カード詳細ID-M0433-010〕を使用する。呼び名で示した番号は、登録時に振られた番号を控えてある（S-M04-33-NONSINGLE-010）	1. 在庫移動・振替検索一覧(検索・結果)画面を開く／2. 在庫移動ID 〔在庫移動ID-M0433-010〕を選択する／3. 「戻しリストCSV出力」ボタンを押す／4. ダウンロードしたCSVを開く	シングルカード以外の「非シングル商品」の色/R列が、色情報「赤」を含まない「R」となること	0202 在庫移動戻しリストCSV出力 / CSV出力項目 識別ID 5
+integration_test/casegen/cases/M04-33_test_cases.tsv:12:IT-M04-33-011	REQ-0202-sheet-48-R029		ITA-05,ITA-06	P2	ブラウザのみ	S-M04-33-ADM,S-M04-33-CONFIG,S-M04-33-BRACKET-011	① M04-33試験管理者でログインし、作成日を2033/04/11から2033/04/11、表示件数を100件に設定する（S-M04-33-ADM）／② 開始時に店舗ID 1を本店3F・本店、金額閾値を4800円に設定する（S-M04-33-CONFIG）／③ 在庫移動ID 〔在庫移動ID-M0433-011〕が移動中・出庫元店舗ID 5・入庫先店舗ID 1で、商品名が[注記]括弧除去カード、略称タグがBRK、商品名には[BRK]を含まない状態で用意され、商品ID 〔商品ID-M0433-011〕、商品規格ID 〔商品規格ID-M0433-011〕、入庫先実在庫ID 〔入庫先実在庫ID-M0433-011〕・在庫10、明細ID 〔明細ID-M0433-011〕、略称タグID 〔略称タグID-M0433-011〕を使用する。呼び名で示した番号は、登録時に振られた番号を控えてある（S-M04-33-BRACKET-011）	1. 在庫移動・振替検索一覧(検索・結果)画面を開く／2. 在庫移動ID 〔在庫移動ID-M0433-011〕を選択する／3. 「戻しリストCSV出力」ボタンを押す／4. ダウンロードしたCSVを開く	商品名に略称タグ「[BRK]」が含まれないため、「[注記]括弧除去カード」の商品名列が「括弧除去カード」となること	0202 在庫移動戻しリストCSV出力 / 機能仕様 印刷対象取得
+integration_test/casegen/cases/M04-33_test_cases.tsv:15:IT-M04-33-014	REQ-0202-sheet-48-R031,REQ-0202-sheet-48-R032,REQ-0202-sheet-48-R033		ITA-05,ITA-11	P2	ブラウザのみ	S-M04-33-ADM,S-M04-33-CONFIG,S-M04-33-BRANCH-SORT-014	① M04-33試験管理者でログインし、作成日を2033/04/14から2033/04/14、表示件数を100件に設定する（S-M04-33-ADM）／② 開始時に店舗ID 13を支店、金額閾値を100円・200円、言語表示順をJP・EN・FRに設定する（S-M04-33-CONFIG）／③ 在庫移動ID 〔在庫移動ID-M0433-014A〕と〔在庫移動ID-M0433-014B〕が移動中・出庫元店舗ID 5・入庫先店舗ID 13で、支店JPカードは棚番号B02・棚番号表示順2・言語JP、支店ENカードは棚番号A01・棚番号表示順1・言語EN、その他の先行ソート属性は基準価格150円・状態NM・非Foil・略称M0433-COM-014・レアリティM・色青で一致し、商品ID 〔商品ID-M0433-014A〕・〔商品ID-M0433-014B〕、商品規格ID 〔商品規格ID-M0433-014A〕・〔商品規格ID-M0433-014B〕、入庫先実在庫ID 〔入庫先実在庫ID-M0433-014A〕・〔入庫先実在庫ID-M0433-014B〕・各在庫10、明細ID 〔明細ID-M0433-014A〕・〔明細ID-M0433-014B〕、略称タグID 〔略称タグID-M0433-014〕、棚番号ID 433014601・433014602、カードID 〔カードID-M0433-014A〕・〔カードID-M0433-014B〕、カード詳細ID 〔カード詳細ID-M0433-014A〕・〔カード詳細ID-M0433-014B〕を使用する。呼び名で示した番号は、登録時に振られた番号を控えてある（S-M04-33-BRANCH-SORT-014）	1. 在庫移動・振替検索一覧(検索・結果)画面を開く／2. 在庫移動ID 〔在庫移動ID-M0433-014A〕と〔在庫移動ID-M0433-014B〕を選択する／3. 「戻しリストCSV出力」ボタンを押す／4. ダウンロードしたCSVを開く	支店向けCSVでは棚番号「B02」と「A01」による並べ替えが行われず、「支店JPカード」、「支店ENカード」の順となること	0202 在庫移動戻しリストCSV出力 / 機能仕様 印刷対象取得「棚番」「言語」
+integration_test/casegen/cases/M04-25_test_cases.tsv:11:IT-M04-25-010	REQ-0202-sheet-33-R012,REQ-0202-sheet-33-R017,REQ-0202-sheet-33-R020,REQ-0202-sheet-33-R040,REQ-0202-sheet-33-R049,REQ-0202-sheet-33-R050		ITA-05,ITA-07	P1	ブラウザ+DB確認	S-M04-25-ADM,S-M04-25-STORES,S-M04-25-EDIT-010	①管理者ID 42590003を稼働中・ロックなし・東京店と大阪店を編集可能・在庫管理操作可能にしてログインする（S-M04-25-ADM） ／②店舗ID 〔店舗ID-M0425-共有A〕の東京店と〔店舗ID-M0425-共有B〕の大阪店を有効にする（登録時に振られた店舗IDを控えてある）（S-M04-25-STORES） ／③在庫移動指示ID 〔在庫移動指示ID-M0425-010〕を送状No.TRACK-BEFORE-010・発送状況=済・備考=変更前備考とし、在庫移動ID 〔在庫移動ID-M0425-010〕を移動中にする（登録時に振られた在庫移動指示IDと在庫移動IDを控えてある）（S-M04-25-EDIT-010）	1. 在庫移動指示ID 〔在庫移動指示ID-M0425-010〕の在庫移動指示詳細画面を開く／2. 送状No.に「追跡ＡＢＣ-123」、備考に「備考ＡＢＣ-123」を入力する／3. 登録ボタンを押す／4. DBで在庫移動指示ID 〔在庫移動指示ID-M0425-010〕を確認する	ID 〔在庫移動指示ID-M0425-010〕の送状No.が「追跡ＡＢＣ-123」、備考が「備考ＡＢＣ-123」に更新されること	0202 在庫移動指示詳細 / 機能仕様 送状No.・備考情報・登録、画面項目定義 識別ID 1-9・1-14・1-15
+integration_test/casegen/cases/M04-25_test_cases.tsv:14:IT-M04-25-015	REQ-0202-sheet-33-R016,REQ-0202-sheet-33-R017,REQ-0202-sheet-33-R020,REQ-0202-sheet-33-R049,REQ-0202-sheet-33-R050		ITA-07,ITA-11	P1	ブラウザ+DB確認	S-M04-25-ADM,S-M04-25-STORES,S-M04-25-UNSHIPPED-015	①管理者ID 42590003を稼働中・ロックなし・東京店と大阪店を編集可能・在庫管理操作可能にしてログインする（S-M04-25-ADM） ／②店舗ID 〔店舗ID-M0425-共有A〕の東京店と〔店舗ID-M0425-共有B〕の大阪店を有効にする（登録時に振られた店舗IDを控えてある）（S-M04-25-STORES） ／③在庫移動指示ID 〔在庫移動指示ID-M0425-015〕を送状No.なし・発送状況=未・備考=変更前備考とし、在庫移動ID 〔在庫移動ID-M0425-015〕を出庫承認済みにする（登録時に振られた在庫移動指示IDと在庫移動IDを控えてある）（S-M04-25-UNSHIPPED-015）	1. 紐づく在庫移動のステータスが出庫承認済みである在庫移動指示ID 〔在庫移動指示ID-M0425-015〕の詳細画面を開く／2. 備考に「出庫承認済み備考」を入力する／3. 登録ボタンを押す／4. DBで在庫移動指示ID 〔在庫移動指示ID-M0425-015〕を確認する	ID 〔在庫移動指示ID-M0425-015〕の備考が「出庫承認済み備考」に更新されること	0202 在庫移動指示詳細 / 機能仕様 備考情報・登録、画面項目定義 識別ID 1-14・1-15
+integration_test/casegen/cases/M04-25_test_cases.tsv:15:IT-M04-25-016	REQ-0202-sheet-33-R016,REQ-0202-sheet-33-R017,REQ-0202-sheet-33-R020,REQ-0202-sheet-33-R049,REQ-0202-sheet-33-R050		ITA-07,ITA-11	P1	ブラウザ+DB確認	S-M04-25-ADM,S-M04-25-STORES,S-M04-25-EDIT-016	①管理者ID 42590003を稼働中・ロックなし・東京店と大阪店を編集可能・在庫管理操作可能にしてログインする（S-M04-25-ADM） ／②店舗ID 〔店舗ID-M0425-共有A〕の東京店と〔店舗ID-M0425-共有B〕の大阪店を有効にする（登録時に振られた店舗IDを控えてある）（S-M04-25-STORES） ／③在庫移動指示ID 〔在庫移動指示ID-M0425-016〕を送状No.TRACK-BEFORE-016・発送状況=済・備考=変更前備考とし、在庫移動ID 〔在庫移動ID-M0425-016〕を移動中にする（登録時に振られた在庫移動指示IDと在庫移動IDを控えてある）（S-M04-25-EDIT-016）	1. 紐づく在庫移動のステータスが移動中である在庫移動指示ID 〔在庫移動指示ID-M0425-016〕の詳細画面を開く／2. 備考に「移動中備考」を入力する／3. 登録ボタンを押す／4. DBで在庫移動指示ID 〔在庫移動指示ID-M0425-016〕を確認する	ID 〔在庫移動指示ID-M0425-016〕の備考が「移動中備考」に更新されること	0202 在庫移動指示詳細 / 機能仕様 備考情報・登録、画面項目定義 識別ID 1-14・1-15
+integration_test/casegen/cases/M04-25_test_cases.tsv:17:IT-M04-25-018	REQ-0202-sheet-33-R024,REQ-0202-sheet-33-R026,REQ-0202-sheet-33-R051,REQ-0202-sheet-33-R052		ITA-07,ITA-11	P1	ブラウザ+DB確認	S-M04-25-ADM,S-M04-25-STORES,S-M04-25-DELETE-A-018	①管理者ID 42590003を稼働中・ロックなし・東京店と大阪店を編集可能・在庫管理操作可能にしてログインする（S-M04-25-ADM） ／②店舗ID 〔店舗ID-M0425-共有A〕の東京店と〔店舗ID-M0425-共有B〕の大阪店を有効にする（登録時に振られた店舗IDを控えてある）（S-M04-25-STORES） ／③在庫移動指示ID 42501805を送状No.なし・発送状況=未とし、在庫移動ID 42511801を出庫待ちで紐づける（S-M04-25-DELETE-A-018）	1. 在庫移動指示ID 42501805の在庫移動指示詳細画面を開く／2. 削除ボタンを押す／3. 削除確認モーダル内の削除ボタンを押す／4. DBで在庫移動指示ID 42501805を確認する	在庫移動指示ID 42501805が削除されること	0202 在庫移動指示詳細 / 機能仕様 削除、画面項目定義 識別ID 1-16
+integration_test/casegen/cases/M04-25_test_cases.tsv:20:IT-M04-25-026			ITA-09	P1	ブラウザ+DB確認	S-M04-25-ADM,S-M04-25-STORES,S-M04-25-GFEDIT-026	①管理者ID 42590003を稼働中・ロックなし・東京店と大阪店を編集可能・在庫管理操作可能にしてログインする（S-M04-25-ADM） ／②店舗ID 〔店舗ID-M0425-共有A〕の東京店と〔店舗ID-M0425-共有B〕の大阪店を有効にする（登録時に振られた店舗IDを控えてある）（S-M04-25-STORES） ／③在庫移動指示ID 〔在庫移動指示ID-M0425-026〕を送状No.M0425-026-BEFORE-TRACK・発送状況=済・備考=M0425-026-BEFORE-MEMOとし、在庫移動ID 〔在庫移動ID-M0425-026〕を移動中にする（登録時に振られた在庫移動指示IDと在庫移動IDを控えてある）（S-M04-25-GFEDIT-026）	1. 在庫移動指示ID 〔在庫移動指示ID-M0425-026〕の在庫移動指示詳細画面を開く／2. 送状No.と備考のそれぞれに半角英字「A」を16383文字入力する／3. 登録ボタンを押す／4. DBで在庫移動指示ID 〔在庫移動指示ID-M0425-026〕を確認する	ID 〔在庫移動指示ID-M0425-026〕の送状No.と備考がそれぞれ半角英字「A」16383文字の値に更新されること	0202 在庫移動指示詳細 / 画面項目定義 識別ID 1-9・1-14（最大値16383文字）
+
+exec
+/bin/bash -lc "rg -n 'IT-M04-32-(103|104|105|108|109|110|114)|IT-M04-02-062|IT-M04-03-062' integration_test/casegen/all_test_cases.tsv" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+57967:IT-M04-02-062	ITA-05	"上流: 0202 在庫編集
+58969:IT-M04-03-062	ITA-11	"0202 在庫一括編集
+67144:IT-M04-32-103	ITA-05	"上流: 0202 在庫編集承認一覧(検索結果)
+67158:IT-M04-32-104	ITA-07	"0202 在庫編集承認一覧(検索結果)
+67165:IT-M04-32-105	ITA-07	"0202 在庫編集承認一覧(検索結果)
+67185:IT-M04-32-108	ITA-06	"0202 承認対象在庫一覧CSV出力
+67193:IT-M04-32-109	ITA-06	"0202 在庫編集承認一覧(検索結果)
+67202:IT-M04-32-110	ITA-05	"上流: 0202 在庫編集承認一覧(検索結果)
+67252:IT-M04-32-114	ITA-05	"上流: 0202 在庫編集承認一覧(検索結果)
+
+exec
+/bin/bash -lc "rg -n 'M04-30|M04-31|M04-32|M04-33' functions/dead-spec-register.tsv functions/phase2_candidates.tsv" in /home/y-saito/Developments/hareruya-design-docs
+ exited 1 in 0ms:
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/M04-31_existing.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+テストID	処理ID	値	理由
+IT-M04-31-021	P1	F01=店舗A&F02=EC-CUBE	店舗AとEC-CUBEで登録し、一覧で店舗名と在庫区分名を確かめる
+IT-M04-31-023	P1	F01=店舗B&F02=スマレジ	店舗Bとスマレジで登録し、一覧で店舗名と在庫区分名を確かめる
+IT-M04-31-121	P2	F02=EC-CUBE&F03=差異プラス&F04=1以上&F05=なし	EC-CUBE計画で5から8へ増・現在庫5
+IT-M04-31-152	P2	F02=EC-CUBE&F03=差異プラス&F04=1以上&F05=なし	EC-CUBE計画で5から8へ増・現在庫5・商品詳細の在庫で確かめる
+IT-M04-31-122	P2	F02=EC-CUBE&F03=差異マイナス&F04=1以上&F05=なし	EC-CUBE計画で10から8へ減・現在庫10
+IT-M04-31-123	P2	F02=EC-CUBE&F03=差異マイナス&F04=1以上&F05=なし	EC-CUBE計画で10から8へ減・現在庫10・一覧の反映日で確かめる
+IT-M04-31-124	P2	F02=EC-CUBE&F03=差異マイナス&F04=1以上&F05=なし	EC-CUBE計画で10から8へ減・現在庫10・完了メッセージと遷移で確かめる
+IT-M04-31-159	P2	F02=EC-CUBE&F03=差異マイナス&F04=1以上&F05=なし	EC-CUBE計画で棚卸数量0・現在庫10
+IT-M04-31-160	P2	F02=EC-CUBE&F03=差異マイナス&F04=1以上&F05=なし	EC-CUBE計画で10から8へ減・現在庫10・在庫履歴で確かめる
+IT-M04-31-161	P2	F02=EC-CUBE&F03=差異プラス&F04=1以上&F05=なし	EC-CUBE計画で10から13へ増・現在庫10・在庫と原価で確かめる
+IT-M04-31-162	P2	F02=EC-CUBE&F03=差異プラス&F04=1以上&F05=なし	EC-CUBE計画で10から13へ増・現在庫10・商品規格の在庫で確かめる
+IT-M04-31-156	P2	F02=EC-CUBE&F03=差異プラス&F04=0	EC-CUBE計画で在庫0に棚卸数量2を反映し、入荷通知メールを確かめる
+IT-F03-07-030	P2	F02=EC-CUBE&F03=差異プラス&F04=0	本店EC-CUBE在庫0を1にする反映を実行し、入荷通知メールを確かめる
+IT-F03-07-053	P2	F02=EC-CUBE&F03=差異プラス&F04=0	本店EC-CUBE在庫0を1にする反映を実行し、入荷通知メールを確かめる
+IT-M04-31-049	P3	F06=未反映&F07=商品数が0	詳細0件の計画で反映ボタンが押せないことを確かめる
+IT-M04-31-050	P3	F06=未反映&F07=計上済み商品数が0	棚卸数量が全て未入力で反映ボタンが押せないことを確かめる
+IT-M04-31-051	P3	F06=未反映&F07=不一致	3件中1件が棚卸数量未入力で反映ボタンが押せないことを確かめる
+IT-M04-31-052	P3	F06=未反映&F07=一致して1以上&F08=未確認の差異あり	差異ありで差異確認が未実施のとき反映ボタンが押せないことを確かめる
+IT-M04-31-118	P3	F06=未反映&F07=一致して1以上&F08=差異なしまたは全て確認済み	全件計上済みで差異は確認済みのとき反映画面へ進めることを確かめる
+IT-M04-31-127	P3	F06=未反映&F07=一致して1以上&F08=未確認の差異あり	反映画面を開いた後に差異が未確認になり、実行がエラーになることを確かめる
+IT-M04-31-128	P3	F06=未反映&F07=不一致	反映画面を開いた後に商品が追加され、実行がエラーになることを確かめる
+IT-M04-31-126	P3	F06=反映済み	別の管理者が先に反映し、実行がエラーになることを確かめる
+IT-M04-31-129	P3	F06=反映済み	別の管理者が先に反映し、反映ボタンがエラーになることを確かめる
+IT-M04-31-142	P4	F01=店舗A&F02=EC-CUBE&F06=未反映	店舗A・EC-CUBEの在庫のある商品をCSV登録し、完了メッセージと遷移を確かめる
+IT-M04-31-069	P4	F01=店舗A&F02=EC-CUBE&F06=反映済み	反映済みの計画へのCSV登録が取り消され、商品数が変わらないことを確かめる
+IT-M04-31-090	P5	F06=未反映&F09=未確認&F10=初回登録&F11=なし	商品1件の計画で初回登録し、結果を確かめる
+IT-M04-31-093	P5	F06=未反映&F09=未確認&F10=初回登録&F11=なし	商品1件の計画で初回登録し、結果を確かめる
+IT-M04-31-094	P5	F06=未反映&F09=未確認&F10=初回登録&F11=なし	商品1件の計画で初回登録し、結果を確かめる
+IT-M04-31-092	P5	F06=未反映&F09=未確認&F10=初回登録&F11=なし	商品1件の計画で初回登録し、編集画面の値を確かめる
+IT-M04-31-091	P5	F06=未反映&F09=未確認&F10=初回登録&F11=あり	3件の計画で1行目を初回登録し、次の商品の確認画面へ遷移することを確かめる
+IT-M04-31-095	P5	F06=未反映&F10=更新	登録済みの商品を更新し、結果を確かめる
+IT-M04-31-101	P5	F06=未反映&F10=更新	登録済みの商品を更新し、結果を確かめる
+IT-M04-31-106	P5	F06=未反映&F09=確認済み&F10=更新	差異確認済みの商品を更新しようとして値が変わらないことを確かめる
+IT-M04-31-107	P5	F06=未反映&F09=確認済み&F10=更新	差異確認済みの商品を更新しようとして値が変わらないことを確かめる
+IT-M04-31-113	P5	F06=反映済み&F09=確認済み&F10=更新	反映済みの計画の商品を更新しようとして値が変わらないことを確かめる
+IT-M04-31-108	P6	F05=あり	計画作成後に在庫変動履歴がある商品の確認画面でアラートが出ることを確かめる
+IT-M04-31-109	P6	F05=なし	計画作成後の在庫変動履歴が無い商品の確認画面でアラートが出ないことを確かめる
+IT-M04-31-102	P6	F12=差異あり	差異のある商品の確認画面で差異確認＆完了ボタンが出ることを確かめる
+IT-M04-31-103	P6	F12=差異なし	差異のない商品の確認画面で差異確認＆完了ボタンが出ないことを確かめる
+IT-M04-31-058	P8	F16=オン	差異ありのみ表示にチェックしてCSV出力し、差異のある商品だけが出ることを確かめる
+
+exec
+/bin/bash -lc "sed -n '1,95p' integration_test/casegen/combination/units/M04-31/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+##### 0202 sheet-37 棚卸計画一覧
+L0001	棚卸計画一覧
+L0002	ドキュメント名在庫管理 基本設計
+L0003	セクション—
+L0004	プロジェクト名サイトリニューアル
+L0005	作成者佐藤
+L0006	作成日2025/8/25
+L0007	更新者佐藤
+L0008	更新日20205/9/25
+L0009	機能NoM04-35（正しくは M04-31。Excel基本設計の機能No欄の誤記）
+L0010	機能名棚卸計画一覧
+L0011	概要棚卸計画一覧を参照する
+L0012	処理概要
+L0013	レイアウト図
+L0014	1-2
+L0015	1-3
+L0016	1-7
+L0017	2-1
+L0018	2-2
+L0019	2-3
+L0020	2-4
+L0021	2-5
+L0022	2-6
+L0023	2-7
+L0024	2-8
+L0025	2-9
+L0026	2-10
+L0027	2-11
+L0028	2-12
+L0029	1-1
+L0030	1-6
+L0031	1-5
+L0032	1-4
+L0033	画像レイヤー（7枚）: 棚卸計画一覧 / F7 / image 1 + 棚卸計画一覧 / AC51 / image 2 + 棚卸計画一覧 / U13 / image 3 + 棚卸計画一覧 / J13 / image 4 + 棚卸計画一覧 / F16 / image 5 + 棚卸計画一覧 / F16 / image 6 + 棚卸計画一覧 / M16 / image 7
+L0034	カスタマイズ説明
+L0035	機能仕様処理概要
+L0036	棚卸計画の一覧を作成日の降順で表示する
+L0037	★表示項目について
+L0038	・識別ID:1-2「店舗選択」、識別ID:1-3「在庫区分」、識別ID:2-2「店舗」を追加する
+L0039	★検索について
+L0040	・検索ボタンを押下時、識別ID:1-2「店舗選択」、識別ID:1-3「在庫区分」の入力値で棚卸計画を検索する
+L0041	識別ID	ラベル	書式・制限	必須	最大値	初期値	画面部品の説明
+L0042	1-1	新規作成	ボタン	-	-	-	棚卸計画新規作成画面へ遷移
+L0043	1-2	店舗選択	セレクトボックス	-	-	デフォルト店舗	選択肢:店舗管理に登録されており、閉店となっていない店舗
+L0044	1-3	在庫区分	チェックボックス	-	-	-	選択肢:EC-CUBE スマレジ
+L0045	1-4	計画作成日	日付（yyyy/mm/dd）			１ヶ月	2/19 の表示の場合は from: 1/19 とする
+L0046	1-5	検索	ボタン	-	-	-	1-2、1-3の値で棚卸し計画を検索する
+L0047	1-6	該当件数	-	-	-	-
+L0048	1-7	表示件数	-	-	-	100	選択肢: 10件 50件 100件 300件 500件 1000件 2000件 10000件 12000件
+L0049	2-1	棚卸名	テキストリンク	-	-	-	棚卸計画編集画面へ遷移
+L0050	2-2	店舗	-	-	-	-	店舗名 在庫区分名
+L0051	2-3	作成日	-	-	-	-
+L0052	2-4	最終更新日	-	-	-	-
+L0053	2-5	在庫反映日	-	-	-	-	在庫反映を実行した場合のみ表示
+L0054	2-6	在庫反映実行時の更新者名	-	-	-	-	在庫反映を実行した場合のみ表示
+L0055	2-7	登録されている商品数	-	-	-	-
+L0056	2-8	在庫確認済みの商品数	-	-	-	-
+L0057	2-9	理論在庫数と棚卸数に差異がある商品数	-	-	-	-
+L0058	2-10	備考		-	-	-
+L0059	2-11	ページング	リンク	-	-	-	検索結果件数と表示件数(1-6)により算出するページ数分のリンクを表示
+L0060	Source:
+L0061	functions/pf-eccube3/m04-31_admin_stock_stock_inventory_plan.md
+L0062	現行仕様
+L0063	M04-31 棚卸計画 / 在庫管理 — 棚卸計画
+L0064	業務ロジック
+L0065	棚卸計画の特定
+L0066	対象の棚卸計画が存在しない場合はページが見つからない扱いとする。
+L0067	一覧の表示
+L0068	登録された棚卸計画が1件も無い場合は、一覧・該当件数・ページングを表示せず、その旨の見出しだけを表示する。
+L0069	表示件数は選択した値を保持し、次に一覧を表示したときも前回選んだ件数で表示する。
+L0070	指定したページの対象が無くなり、直前のページまでで全件が収まる場合は、1つ前のページを表示する。
+L0071	入出力
+L0072	種類	内容
+L0073	入力	棚卸名、備考
+L0074	失敗時出力	入力項目ごとのエラー内容
+L0075	入出力: 入力値の制限
+L0076	棚卸名は255文字以内とする。既に同じ棚卸名の棚卸計画が存在する場合は登録・更新できない。
+L0077	備考は1024文字以内とする。
+L0078	入出力: 永続化
+L0079	棚卸計画は棚卸計画テーブルに棚卸名・備考・作業者・在庫反映日を保持する。作業者には、その保存を行った管理者を記録する。
+L0080	操作	契機
+L0081	追加	棚卸計画の新規登録
+L0082	更新	棚卸計画の更新
+L0083	リニューアル後の仕様
+L0084	表示メッセージ
+L0085	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0086	—	—	棚卸計画データがありません。	一覧に計画が無いとき。	—
+L0087	—	—	検索結果 N 件 が該当しました	一覧に計画があるとき。	—
+L0088	—	棚卸名のフォーム直下	この棚卸名は既に使用されています。	同名の計画が存在	—
+L0089	M04-31-MSG-003	管理画面上部	棚卸計画を登録できませんでした。	棚卸計画の登録または更新時に、フォームが未送信または入力内容が不備のとき	エラーを表示し、新規は棚卸計画新規登録画面に留まり、更新は棚卸計画編集画面に遷移する
+L0090	M04-31-MSG-001	管理画面上部	在庫反映済みのため、更新できません。	在庫反映済みの棚卸計画を編集しようとしたとき	棚卸計画編集画面に遷移する
+L0091	M04-31-MSG-002	管理画面上部	この店舗の棚卸を編集する権限がありません。	編集権限のない店舗の棚卸計画を編集しようとしたとき	棚卸計画編集画面に遷移する
+L0092	M04-31-MSG-005	管理画面上部	この店舗の棚卸を編集する権限がありません。	編集権限のない店舗の棚卸計画に商品をCSV登録しようとしたとき	棚卸計画編集画面に遷移する
+L0093	M04-31-MSG-006	管理画面上部	CSVのフォーマットが一致しません。 ／ CSVデータが存在しません。 ／ 在庫反映済みのため、更新できません。 ／ 棚卸計画に店舗または在庫区分が設定されていないため、CSV登録できません。 ／ %maxRecord% 行を超えるCSVファイルは登録できません。 ／ CSVのフォーマットが一致しません。 %d 行目のデータを確認してください。 ／ %s は必須項目です。 %d 行目のデータを確認してください。 ／ %d 行目の商品コード %s は、棚卸計画で指定された店舗・在庫区分の在庫が存在しません。 ／ %d 行目の商品コード %s が複数の商品規格に設定されているため特定できません。 ／ %d 行目の商品コード %s は重複して登録されようとしているため登録できません。	棚卸商品CSVを登録したとき、CSVの形式・内容に不備がある、または棚卸計画が在庫反映済みの場合	登録を取り消し、棚卸計画編集画面に遷移する
+L0094	M04-31-MSG-008	管理画面上部	この店舗の棚卸を編集する権限がありません。	編集権限のない店舗の棚卸計画に数量をCSV登録しようとしたとき	棚卸計画編集画面に遷移する
+
+exec
+/bin/bash -lc "rg -n 'M04-25|M04-33' functions/dead-spec-register.tsv functions/phase2_candidates.tsv" in /home/y-saito/Developments/hareruya-design-docs
+ exited 1 in 0ms:
+exec
+/bin/bash -lc "rg -n 'M04-31' functions/dead-spec-register.tsv functions/phase2_candidates.tsv; cat integration_test/casegen/combination/units/M04-31/excluded.tsv" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+テストID	除外	理由	事前準備	手順	期待結果
+IT-M04-31-065	未確定	作り方が未確定：S-M04-31-IMPNOSTORE-065: 未確定: 在庫区分が未設定の棚卸計画をee実装の制約で作成できるか、店舗選択だけの検索で一覧に表示されるか	① 管理者m0431_adminで管理画面にログインしている。店舗Aと店舗Bを編集できる（S-M04-31-ADM）／② 店舗Aと店舗Bが営業中、店舗Cが閉店で登録済みであり、営業中の店舗は店舗Aと店舗Bの2件だけである。在庫区分はEC-CUBEとスマレジがある。試験日は2026/10/19に固定されている（S-M04-31-BASES）／③ 棚卸計画「M0431-065-A」（店舗A・在庫区分は未設定・作成日2026/10/10・在庫反映日なし）の棚卸詳細は0件。商品コードM0431065P1（商品名「商品M0431065P1」・店舗A・EC-CUBEの在庫10）。CSVファイル「m0431-065-add.csv」は見出し行「商品コード」に続けてM0431065P1の1行（S-M04-31-IMPNOSTORE-065）	1. 棚卸計画一覧画面を開く／2. 店舗選択に「店舗A」を選択し、在庫区分のチェックを付けずに検索ボタンを押す／3. 棚卸名「M0431-065-A」のリンクを押して棚卸計画編集画面を開く／4. 商品登録ボタンを押して棚卸商品CSV登録モーダルを表示する／5. モーダルのCSVファイル選択でCSVファイル「m0431-065-add.csv」を選び、モーダルの登録ボタンを押す	「棚卸計画に店舗または在庫区分が設定されていないため、CSV登録できません。」が表示されて登録が取り消され、棚卸計画編集画面へ遷移して商品数が0であること
+IT-M04-31-125	未確定	作り方が未確定：S-M04-31-ARRIVAL-125: 未確定: 入荷通知の対象（通知を受ける会員の登録方法）と、通知が行われたことの確認手段（通知の記録の所在）	① 管理者m0431_adminで管理画面にログインしている。店舗Aと店舗Bを編集できる（S-M04-31-ADM）／② 店舗Aと店舗Bが営業中、店舗Cが閉店で登録済みであり、営業中の店舗は店舗Aと店舗Bの2件だけである。在庫区分はEC-CUBEとスマレジがある。試験日は2026/10/19に固定されている（S-M04-31-BASES）／③ 棚卸計画「M0431-125-A」（店舗A・EC-CUBE・作成日2026/10/10・在庫反映日なし）の棚卸詳細は1件で、商品コードM0431125P1（商品名「商品M0431125P1」・在庫数量0・棚卸数量3・差異確認済み）。商品M0431125P1の店舗A・EC-CUBEの現在庫は0（S-M04-31-ARRIVAL-125）	1. 棚卸計画一覧画面を開く／2. 店舗選択に「店舗A」を選択し、在庫区分の「EC-CUBE」にチェックを付けて検索ボタンを押す／3. 棚卸名「M0431-125-A」のリンクを押して棚卸計画編集画面を開く／4. 棚卸結果の在庫反映ボタンを押す／5. 実行ボタンを押す／6. 入荷通知の記録を確認する（確認手段は試験環境の用意）	商品M0431125P1（在庫0から3へ反映）について入荷通知が行われること
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+import csv
+p='integration_test/casegen/cases/M04-31_test_cases.tsv'
+ids={'IT-M04-31-121','IT-M04-31-122','IT-M04-31-123','IT-M04-31-124','IT-M04-31-142','IT-M04-31-069','IT-M04-31-058','IT-M04-31-106','IT-M04-31-107','IT-M04-31-113'}
+with open(p) as f:
+ r=csv.reader(f,delimiter='\\t'); h=next(r); print('columns',list(enumerate(h)))
+ for n,row in enumerate(r,2):
+  if row[0] in ids:
+   print('\\n',n,row[0]); print('PRE',row[7] if len(row)>7 else '');print('STEP',row[8] if len(row)>8 else '');print('EXP',row[9] if len(row)>9 else '')
+PY" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+columns [(0, 'テストID'), (1, '要求ID'), (2, '連鎖ID'), (3, '観点ID'), (4, '優先度'), (5, '実行区分'), (6, '使用シード'), (7, '事前準備'), (8, '手順'), (9, '期待結果'), (10, '出典')]
+
+ 59 IT-M04-31-058
+PRE ① 管理者m0431_adminで管理画面にログインしている。店舗Aと店舗Bを編集できる（S-M04-31-ADM）／② 店舗Aと店舗Bが営業中、店舗Cが閉店で登録済みであり、営業中の店舗は店舗Aと店舗Bの2件だけである。在庫区分はEC-CUBEとスマレジがある。試験日は2026/10/19に固定されている（S-M04-31-BASES）／③ 棚卸計画「M0431-058-A」（店舗A・EC-CUBE・作成日2026/10/10・在庫反映日なし）の棚卸詳細は3件で、商品コードM0431058P1（商品名「商品M0431058P1」・在庫数量10・棚卸数量8）・商品コードM0431058P2（商品名「商品M0431058P2」・在庫数量5・棚卸数量5）・商品コードM0431058P3（商品名「商品M0431058P3」・在庫数量3・棚卸数量6）（S-M04-31-CSVDIFF-058）
+STEP 1. 棚卸計画一覧画面を開く／2. 店舗選択に「店舗A」を選択し、在庫区分の「EC-CUBE」にチェックを付けて検索ボタンを押す／3. 棚卸名「M0431-058-A」のリンクを押して棚卸計画編集画面を開く／4. 「差異ありのみ表示」にチェックを付ける／5. CSV出力ボタンを押し、ダウンロードしたCSVを開く
+EXP データ行が商品コードM0431058P1とM0431058P3の2行だけで、M0431058P2が出力されないこと
+
+ 69 IT-M04-31-069
+PRE ① 管理者m0431_adminで管理画面にログインしている。店舗Aと店舗Bを編集できる（S-M04-31-ADM）／② 店舗Aと店舗Bが営業中、店舗Cが閉店で登録済みであり、営業中の店舗は店舗Aと店舗Bの2件だけである。在庫区分はEC-CUBEとスマレジがある。試験日は2026/10/19に固定されている（S-M04-31-BASES）／③ 棚卸計画「M0431-069-A」（店舗A・EC-CUBE・作成日2026/10/10・在庫反映日が2026/10/12 15:30:00）の棚卸詳細は1件で、商品コードM0431069P1（商品名「商品M0431069P1」・在庫数量10・棚卸数量8・差異確認済み）は在庫反映済み。商品コードM0431069P2（商品名「商品M0431069P2」・店舗A・EC-CUBEの在庫10）。CSVファイル「m0431-069-add.csv」は見出し行「商品コード」に続けてM0431069P2の1行（S-M04-31-IMPREFL-069）
+STEP 1. 棚卸計画一覧画面を開く／2. 店舗選択に「店舗A」を選択し、在庫区分の「EC-CUBE」にチェックを付けて検索ボタンを押す／3. 棚卸名「M0431-069-A」のリンクを押して棚卸計画編集画面を開く／4. 商品登録ボタンを押して棚卸商品CSV登録モーダルを表示する／5. モーダルのCSVファイル選択でCSVファイル「m0431-069-add.csv」を選び、モーダルの登録ボタンを押す
+EXP 「在庫反映済みのため、更新できません。」が表示されて登録が取り消され、棚卸計画編集画面の商品数が1のままであること
+
+ 106 IT-M04-31-106
+PRE ① 管理者m0431_adminで管理画面にログインしている。店舗Aと店舗Bを編集できる（S-M04-31-ADM）／② 店舗Aと店舗Bが営業中、店舗Cが閉店で登録済みであり、営業中の店舗は店舗Aと店舗Bの2件だけである。在庫区分はEC-CUBEとスマレジがある。試験日は2026/10/19に固定されている（S-M04-31-BASES）／③ 棚卸計画「M0431-106-A」（店舗A・EC-CUBE・作成日2026/10/10・在庫反映日なし）の棚卸詳細は1件で、商品コードM0431106P1（商品名「商品M0431106P1」・在庫数量10・棚卸数量8・差異確認済み）（S-M04-31-CONFLOCK-106）
+STEP 1. 棚卸計画一覧画面を開く／2. 店舗選択に「店舗A」を選択し、在庫区分の「EC-CUBE」にチェックを付けて検索ボタンを押す／3. 棚卸名「M0431-106-A」のリンクを押して棚卸計画編集画面を開く／4. 商品名「商品M0431106P1」のリンクを押して棚卸在庫確認画面を開く／5. 棚卸数量の入力欄に5を入力しようとし、登録/更新ボタンを押す／6. 棚卸在庫確認画面を開き直す
+EXP 棚卸数量が8のままであること
+
+ 107 IT-M04-31-107
+PRE ① 管理者m0431_adminで管理画面にログインしている。店舗Aと店舗Bを編集できる（S-M04-31-ADM）／② 店舗Aと店舗Bが営業中、店舗Cが閉店で登録済みであり、営業中の店舗は店舗Aと店舗Bの2件だけである。在庫区分はEC-CUBEとスマレジがある。試験日は2026/10/19に固定されている（S-M04-31-BASES）／③ 棚卸計画「M0431-107-A」（店舗A・EC-CUBE・作成日2026/10/10・在庫反映日なし）の棚卸詳細は1件で、商品コードM0431107P1（商品名「商品M0431107P1」・在庫数量10・棚卸数量8・差異確認済み）（S-M04-31-CONFLOCKSTOCK-107）
+STEP 1. 棚卸計画一覧画面を開く／2. 店舗選択に「店舗A」を選択し、在庫区分の「EC-CUBE」にチェックを付けて検索ボタンを押す／3. 棚卸名「M0431-107-A」のリンクを押して棚卸計画編集画面を開く／4. 商品名「商品M0431107P1」のリンクを押して棚卸在庫確認画面を開く／5. 在庫数量の入力欄に20を入力しようとし、登録/更新ボタンを押す／6. 棚卸在庫確認画面を開き直す
+EXP 在庫数量が10のままであること
+
+ 113 IT-M04-31-113
+PRE ① 管理者m0431_adminで管理画面にログインしている。店舗Aと店舗Bを編集できる（S-M04-31-ADM）／② 店舗Aと店舗Bが営業中、店舗Cが閉店で登録済みであり、営業中の店舗は店舗Aと店舗Bの2件だけである。在庫区分はEC-CUBEとスマレジがある。試験日は2026/10/19に固定されている（S-M04-31-BASES）／③ 棚卸計画「M0431-113-A」（店舗A・EC-CUBE・作成日2026/10/10・在庫反映日が2026/10/12 15:30:00）の棚卸詳細は1件で、商品コードM0431113P1（商品名「商品M0431113P1」・在庫数量10・棚卸数量8・差異確認済み）（S-M04-31-DETREFL-113）
+STEP 1. 棚卸計画一覧画面を開く／2. 店舗選択に「店舗A」を選択し、在庫区分の「EC-CUBE」にチェックを付けて検索ボタンを押す／3. 棚卸名「M0431-113-A」のリンクを押して棚卸計画編集画面を開く／4. 商品名「商品M0431113P1」のリンクを押して棚卸在庫確認画面を開く／5. 棚卸数量に5を入力して更新ボタンを押す／6. 棚卸在庫確認画面を開き直す
+EXP 「在庫反映済みのため、更新できません。」が表示されて棚卸在庫確認画面に遷移し、棚卸数量が8のままであること
+
+ 121 IT-M04-31-121
+PRE ① 管理者m0431_adminで管理画面にログインしている。店舗Aと店舗Bを編集できる（S-M04-31-ADM）／② 店舗Aと店舗Bが営業中、店舗Cが閉店で登録済みであり、営業中の店舗は店舗Aと店舗Bの2件だけである。在庫区分はEC-CUBEとスマレジがある。試験日は2026/10/19に固定されている（S-M04-31-BASES）／③ 棚卸計画「M0431-121-A」（店舗A・EC-CUBE・作成日2026/10/10・在庫反映日なし）の棚卸詳細は1件で、商品コードM0431121P1（商品名「商品M0431121P1」・在庫数量5・棚卸数量8・差異確認済み）。商品M0431121P1の店舗A・EC-CUBEの現在庫は5。棚卸計画IDは登録時に振られた番号を控えてある。〔棚卸計画ID-M0431-121〕（S-M04-31-RFHISTP-121）
+STEP 1. 棚卸計画一覧画面を開く／2. 店舗選択に「店舗A」を選択し、在庫区分の「EC-CUBE」にチェックを付けて検索ボタンを押す／3. 棚卸名「M0431-121-A」のリンクを押して棚卸計画編集画面を開く／4. 棚卸結果の在庫反映ボタンを押す／5. 実行ボタンを押す／6. DBで商品M0431121P1の在庫変動履歴を確認する
+EXP 在庫変動履歴が1件登録され、増減数が3、在庫区分がEC-CUBE、在庫変動区分が「棚卸結果の反映」、仕入総価格が0、在庫変動理由に棚卸計画ID 〔棚卸計画ID-M0431-121〕と棚卸名「M0431-121-A」が含まれること
+
+ 122 IT-M04-31-122
+PRE ① 管理者m0431_adminで管理画面にログインしている。店舗Aと店舗Bを編集できる（S-M04-31-ADM）／② 店舗Aと店舗Bが営業中、店舗Cが閉店で登録済みであり、営業中の店舗は店舗Aと店舗Bの2件だけである。在庫区分はEC-CUBEとスマレジがある。試験日は2026/10/19に固定されている（S-M04-31-BASES）／③ 棚卸計画「M0431-122-A」（店舗A・EC-CUBE・作成日2026/10/10・在庫反映日なし）の棚卸詳細は1件で、商品コードM0431122P1（商品名「商品M0431122P1」・在庫数量10・棚卸数量8・差異確認済み）。商品M0431122P1の店舗A・EC-CUBEの現在庫は10。棚卸計画IDは登録時に振られた番号を控えてある。〔棚卸計画ID-M0431-122〕（S-M04-31-RFHISTM-122）
+STEP 1. 棚卸計画一覧画面を開く／2. 店舗選択に「店舗A」を選択し、在庫区分の「EC-CUBE」にチェックを付けて検索ボタンを押す／3. 棚卸名「M0431-122-A」のリンクを押して棚卸計画編集画面を開く／4. 棚卸結果の在庫反映ボタンを押す／5. 実行ボタンを押す／6. DBで商品M0431122P1の在庫変動履歴を確認する
+EXP 在庫変動履歴が1件登録され、増減数が-2、在庫区分がEC-CUBE、在庫変動区分が「棚卸結果の反映」、在庫変動理由に棚卸計画ID 〔棚卸計画ID-M0431-122〕と棚卸名「M0431-122-A」が含まれること
+
+ 123 IT-M04-31-123
+PRE ① 管理者m0431_adminで管理画面にログインしている。店舗Aと店舗Bを編集できる（S-M04-31-ADM）／② 店舗Aと店舗Bが営業中、店舗Cが閉店で登録済みであり、営業中の店舗は店舗Aと店舗Bの2件だけである。在庫区分はEC-CUBEとスマレジがある。試験日は2026/10/19に固定されている（S-M04-31-BASES）／③ 棚卸計画「M0431-123-A」（店舗A・EC-CUBE・作成日2026/10/10・在庫反映日なし）の棚卸詳細は1件で、商品コードM0431123P1（商品名「商品M0431123P1」・在庫数量10・棚卸数量8・差異確認済み）。棚卸計画の最終更新日は2026/10/11。商品M0431123P1の店舗A・EC-CUBEの現在庫は10（S-M04-31-RFPLAN-123）
+STEP 1. 棚卸計画一覧画面を開く／2. 店舗選択に「店舗A」を選択し、在庫区分の「EC-CUBE」にチェックを付けて検索ボタンを押す／3. 棚卸名「M0431-123-A」のリンクを押して棚卸計画編集画面を開く／4. 棚卸結果の在庫反映ボタンを押す／5. 実行ボタンを押す／6. 棚卸計画一覧画面を開く／7. 店舗選択に「店舗A」を選択し、在庫区分の「EC-CUBE」にチェックを付けて検索ボタンを押す
+EXP 棚卸名「M0431-123-A」の行の在庫反映日と最終更新日が2026年10月19日を表す値（書式は問わない）、在庫反映実行時の更新者名が「試験管理者A」で表示されること
+
+ 124 IT-M04-31-124
+PRE ① 管理者m0431_adminで管理画面にログインしている。店舗Aと店舗Bを編集できる（S-M04-31-ADM）／② 店舗Aと店舗Bが営業中、店舗Cが閉店で登録済みであり、営業中の店舗は店舗Aと店舗Bの2件だけである。在庫区分はEC-CUBEとスマレジがある。試験日は2026/10/19に固定されている（S-M04-31-BASES）／③ 棚卸計画「M0431-124-A」（店舗A・EC-CUBE・作成日2026/10/10・在庫反映日なし）の棚卸詳細は1件で、商品コードM0431124P1（商品名「商品M0431124P1」・在庫数量10・棚卸数量8・差異確認済み）。商品M0431124P1の店舗A・EC-CUBEの現在庫は10（S-M04-31-RFDONE-124）
+STEP 1. 棚卸計画一覧画面を開く／2. 店舗選択に「店舗A」を選択し、在庫区分の「EC-CUBE」にチェックを付けて検索ボタンを押す／3. 棚卸名「M0431-124-A」のリンクを押して棚卸計画編集画面を開く／4. 棚卸結果の在庫反映ボタンを押す／5. 実行ボタンを押す
+EXP 「棚卸結果の在庫反映を完了しました。」が表示され、棚卸名「M0431-124-A」の棚卸計画編集画面へ遷移すること
+
+ 141 IT-M04-31-142
+PRE ① 管理者m0431_adminで管理画面にログインしている。店舗Aと店舗Bを編集できる（S-M04-31-ADM）／② 店舗Aと店舗Bが営業中、店舗Cが閉店で登録済みであり、営業中の店舗は店舗Aと店舗Bの2件だけである。在庫区分はEC-CUBEとスマレジがある。試験日は2026/10/19に固定されている（S-M04-31-BASES）／③ 棚卸計画「M0431-142-A」（店舗A・EC-CUBE・作成日2026/10/10・在庫反映日なし）の棚卸詳細は0件。商品コードM0431142P1（商品名「商品M0431142P1」・店舗A・EC-CUBEの在庫10）・商品コードM0431142P2（商品名「商品M0431142P2」・店舗A・EC-CUBEの在庫10）。CSVファイル「m0431-142-ok.csv」は見出し行「商品コード」に続けてM0431142P1・M0431142P2の2行（S-M04-31-IMPOKMSG-142）
+STEP 1. 棚卸計画一覧画面を開く／2. 店舗選択に「店舗A」を選択し、在庫区分の「EC-CUBE」にチェックを付けて検索ボタンを押す／3. 棚卸名「M0431-142-A」のリンクを押して棚卸計画編集画面を開く／4. 商品登録ボタンを押して棚卸商品CSV登録モーダルを表示する／5. モーダルのCSVファイル選択でCSVファイル「m0431-142-ok.csv」を選び、モーダルの登録ボタンを押す
+EXP 「登録が完了しました。」が表示されて棚卸計画編集画面に遷移すること
+
+exec
+/bin/bash -lc "sed -n '95,122p;385,415p' integration_test/casegen/combination/units/M04-31/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+L0094	M04-31-MSG-008	管理画面上部	この店舗の棚卸を編集する権限がありません。	編集権限のない店舗の棚卸計画に数量をCSV登録しようとしたとき	棚卸計画編集画面に遷移する
+L0095	M04-31-MSG-009	管理画面上部	CSVのフォーマットが一致しません。 ／ CSVデータが存在しません。 ／ 在庫反映済みのため、更新できません。 ／ %maxRecord% 行を超えるCSVファイルは登録できません。 ／ CSVのフォーマットが一致しません。 %d 行目のデータを確認してください。 ／ %s は必須項目です。 %d 行目のデータを確認してください。 ／ %d 行目の商品コード %s は棚卸計画に登録されていません。 ／ %d 行目の商品コード %s は重複して登録されようとしているため登録できません。 ／ %d 行目: 棚卸数量は0以上の整数で入力してください。	棚卸数量CSVを登録したとき、CSVの形式・内容に不備がある、または棚卸計画が在庫反映済みの場合	登録を取り消し、棚卸計画編集画面に遷移する
+L0096	M04-31-MSG-011	管理画面上部	在庫反映済みのため、更新できません。	在庫反映済みの棚卸明細を編集しようとしたとき	棚卸在庫確認画面に遷移する
+L0097	M04-31-MSG-012	管理画面上部	この店舗の棚卸を編集する権限がありません。	編集権限のない店舗の棚卸明細を編集しようとしたとき	棚卸在庫確認画面に遷移する
+L0098	M04-31-MSG-013	管理画面上部	棚卸計画詳細を登録できませんでした。	棚卸計画詳細の登録時に、フォームが未送信または入力内容が不備のとき	エラーを表示して棚卸在庫確認画面に留まる
+L0099	M04-31-MSG-015	管理画面上部	在庫反映済みのため、更新できません。	在庫反映済みの棚卸明細を編集しようとしたとき	棚卸在庫確認画面に遷移する
+L0100	M04-31-MSG-016	管理画面上部	この店舗の棚卸を編集する権限がありません。	編集権限のない店舗の棚卸明細を編集しようとしたとき	棚卸在庫確認画面に遷移する
+L0101	M04-31-MSG-017	管理画面上部	差異確認済みのため、在庫数量を同期できません。	差異確認済みの商品で在庫数量を同期しようとしたとき	棚卸在庫確認画面に遷移する
+L0102	M04-31-MSG-019	管理画面上部	この店舗の棚卸を編集する権限がありません。	編集権限のない店舗の棚卸計画で在庫反映を実行しようとしたとき	棚卸計画編集画面に遷移する
+L0103	M04-31-MSG-020	管理画面上部	在庫反映済みのため、更新できません。	在庫反映済みの棚卸計画で在庫反映を実行しようとしたとき	棚卸計画編集画面に遷移する
+L0104	M04-31-MSG-021	管理画面上部	差異未確認の商品があるため在庫反映できません。	差異確認が済んでいない商品を含む棚卸計画で在庫反映を実行しようとしたとき	棚卸計画編集画面に遷移する
+L0105	M04-31-MSG-022	管理画面上部	この店舗の棚卸を編集する権限がありません。	編集権限のない店舗の棚卸計画で登録済み商品を確定しようとしたとき	棚卸計画編集画面に遷移する
+L0106	M04-31-MSG-023	管理画面上部	在庫反映済みのため、更新できません。	在庫反映済みの棚卸計画で登録済み商品を確定しようとしたとき	棚卸計画編集画面に遷移する
+L0107	M04-31-MSG-024	管理画面上部	商品数と計上済み商品数が一致しません。	登録済みの商品数と計上済みの商品数が一致しない状態で確定しようとしたとき	棚卸計画編集画面に遷移する
+L0108	M04-31-MSG-025	管理画面上部	棚卸計画データのロックに失敗しました。	棚卸計画の在庫反映を開始しようとしたとき	棚卸計画編集画面に遷移する
+L0109	M04-31-MSG-027	管理画面上部	計画後に変動履歴の更新がありました。	棚卸計画の作成後に、対象商品の在庫変動履歴が更新されているとき	棚卸在庫確認画面に留まる
+L0110	M04-31-MSG-028	入力項目直下/フォーム上部	ユーザーの編集可能店舗を選択してください。	編集できない店舗を選択して登録しようとしたとき	棚卸計画新規登録画面に留まる
+L0111	M04-31-MSG-029	入力項目直下（新規）／管理画面上部（更新）	ユーザーの編集可能店舗を選択してください。	棚卸計画を登録または更新したとき、編集可能でない店舗を選択した場合	入力内容を保存せず、登録画面に留まる（新規）または棚卸計画編集画面に遷移する（更新）
+L0112	M04-31-MSG-004	—	棚卸計画を登録しました。	入力内容に問題なく棚卸計画を保存したとき	棚卸計画編集画面に遷移する
+L0113	M04-31-MSG-007	—	登録が完了しました。	CSVによる商品の登録が完了したとき	棚卸計画編集画面に遷移する
+L0114	M04-31-MSG-010	—	棚卸数量を登録しました。	CSVによる棚卸数量の登録が完了したとき	棚卸計画編集画面に遷移する
+L0115	M04-31-MSG-014	—	棚卸計画詳細を登録しました。	入力内容に問題なく棚卸計画詳細を保存したとき	次の対象がある場合は棚卸在庫確認画面に遷移し、それ以外は棚卸計画編集画面に遷移する
+L0116	M04-31-MSG-018	—	最新の在庫数量を反映しました。	最新の在庫数量を棚卸明細へ反映したとき	棚卸在庫確認画面に遷移する
+L0117	M04-31-MSG-026	—	棚卸結果の在庫反映を完了しました。	棚卸結果を在庫へ反映したとき	棚卸計画編集画面に遷移する
+L0118	M04-31-MSG-030	—	form.type.numeric.invalid	在庫確認実行画面で在庫数量または棚卸数量に数字以外を入力して登録した場合	入力内容を保存せず、在庫確認実行画面に留まる
+L0119	M04-31-MSG-031	一覧行内（棚卸計画名リンク直後）	エラーのため在庫反映が未完了です。再実行してください。	在庫反映処理中ではなく、反映日未設定かつ反映済み明細がある棚卸計画を一覧表示したとき。	エラー注記を表示したまま棚卸計画一覧画面に留まる。
+##### 0202 sheet-38 棚卸計画新規作成
+L0120	棚卸計画新規作成
+L0379	・入力ミスに気付いた際に、即座に修正を行いたいため、今更新したばかりの商品に戻れるようにする
+L0380	・商品更新時、更新した商品のコードを保持しておき、保持されたコードがある場合にリンクを出す
+L0381	識別ID	ラベル	書式・制限	必須	最大値	初期値	画面部品の説明
+L0382	1	商品名	-	-
+L0383	2	商品コード	-	-
+L0384	3	言語	-	-
+L0385	4	店舗	-	-			店舗名 在庫区分名
+L0386	5	状態	-	-
+L0387	6	作成時在庫数	-	-			棚卸詳細データ作成時の論理在庫数。
+L0388	7	作成時間	-	-			棚卸詳細データ作成時間。
+L0389	8	在庫差異	-	-			棚卸数量入力前は非表示。棚卸数量 - 在庫数量 の値。
+L0390	9	在庫数量	数値	〇		作成時在庫数	論理在庫数を入力する。
+L0391	10	棚卸数量	数値	〇		0	実在個数を入力する。
+L0392	11	メモ	半角・全角	-
+L0393	12	在庫数量へ最新在庫を反映	ボタン	-
+L0394	13	商品画像
+L0395	14	詳細へ戻る	リンク	-			棚卸計画編集画面へ遷移する
+L0396	15	一つ前の商品に戻る	リンク	-			登録または更新して遷移してきた場合、前の登録または更新した商品に戻る
+L0397	16	登録/更新	ボタン	-			初期文言は「登録」棚卸数量入力後は「更新」
+L0398	17	差異確認＆完了	ボタン				在庫差異があるときのみ表示
+L0399	18	直近1週間の在庫変動履歴	-	-
+L0400	19	変更前在庫数	-	-
+L0401	20	変更後在庫数	-	-
+L0402	21	在庫変動理由	-	-
+L0403	22	在庫変動理由区分	-	-
+L0404	23	登録日	-	-
+L0405	24	登録者	-	-
+L0406	25	在庫確認登録履歴	-	-
+L0407	26	登録日時	-	-
+L0408	27	登録者	-	-
+L0409	28	理論在庫数	-	-
+
+codex
+設計書の根拠行と既存ケースの手順・期待結果まで照合しました。指摘は、組合せケースの生成結果に影響するものに絞ってまとめます。
+codex
+### 1
+- 機能: M04-28
+- 種類: B
+- 対象: M04-28_processes.tsv・M04-28_factors.tsv（処理・要因なし）
+- 主張: 組合せ対象の処理と要因はない。
+- 実際: 送り状CSVには移動元店舗の会社名・住所等と、移動先店舗の会社名・住所等を別々の列群に出す。移動元と移動先という2つの関連データで出力が変わる（`integration_test/casegen/combination/units/M04-28/design.txt:L0017-L0023,L0029-L0035`）。
+- 修正案: CSV出力処理に移動元店舗と移動先店舗の要因を設ける。
+
+### 2
+- 機能: M04-30
+- 種類: A
+- 対象: M04-30_factors.tsv F01
+- 主張: スマレジ在庫数の「マイナス」と「対象店舗に在庫なし」を別の値にする。
+- 実際: 出力条件は「対象店舗のスマレジ在庫の在庫数が0以上」であり、両者とも対象外になる（`integration_test/casegen/combination/units/M04-30/design.txt:L0031-L0032`）。
+- 修正案: 出力結果が同じ2値を1値にまとめる。
+
+### 3
+- 機能: M04-30
+- 種類: A
+- 対象: M04-30_factors.tsv F04
+- 主張: 商品ステータスの「公開」と「非公開」を別の値にする。
+- 実際: 設計書は「廃止でない」を条件とし、非公開も検索結果に含めるため、公開・非公開の出力結果は同じである（`integration_test/casegen/combination/units/M04-30/design.txt:L0035`）。
+- 修正案: 公開と非公開を「廃止でない」にまとめる。
+
+### 4
+- 機能: M04-31
+- 種類: C
+- 対象: M04-31_interactions.tsv P4・F01+F02+F06
+- 主張: 店舗・在庫区分・在庫反映状態の3要因がまとめて効き合う。
+- 実際: 店舗と在庫区分は対象在庫を指定し、反映済みならCSV登録を禁止する。反映済みの禁止条件は店舗・在庫区分を問わず適用され、3要因が同時に結果を変える定めではない（`integration_test/casegen/combination/units/M04-31/design.txt:L0203,L0211-L0214`）。
+- 修正案: 3要因をまとめた行をやめ、必要な2要因の組に分けて判定する。
+
+### 5
+- 機能: M04-31
+- 種類: D
+- 対象: M04-31_constraints.tsv P2・F02=スマレジ&F03=差異プラス&F04=0
+- 主張: この組の入荷通知は「正解未定」。
+- 実際: 登録処理の入荷通知条件は、在庫が0から1以上になったものと定められ、在庫区分による例外は書かれていない（`integration_test/casegen/combination/units/M04-31/design.txt:L0453-L0460`）。
+- 修正案: この組を「正解未定」から外す。
+
+### 6
+- 機能: M04-31
+- 種類: C
+- 対象: M04-31_interactions.tsv P5・F09+F10、F09+F11
+- 主張: 差異確認済みなら保存と次商品への遷移は行われない。
+- 実際: 設計書は登録・更新後の保存と遷移を定め、差異確認後については棚卸数量・在庫数量を「変更できない」とだけ定める。保存操作や遷移を止めるとは書いていない（`integration_test/casegen/combination/units/M04-31/design.txt:L0361-L0366`）。
+- 修正案: 差異確認済みを理由に保存・遷移が止まるという判定を撤回し、記載された数量変更の可否で判定する。
+
+### 7
+- 機能: M04-31
+- 種類: E
+- 対象: M04-31_existing.tsv IT-M04-31-123、IT-M04-31-124・P2
+- 主張: 両ケースは「棚卸結果を在庫へ反映する」処理の既存ケースである。
+- 実際: IT-M04-31-123の期待結果は棚卸計画一覧の反映日・更新者名だけ、IT-M04-31-124の期待結果は完了メッセージと画面遷移だけである。在庫・在庫変動履歴・入荷通知の結果は確かめていない（`integration_test/casegen/cases/M04-31_test_cases.tsv:123`、`integration_test/casegen/cases/M04-31_test_cases.tsv:124`）。
+- 修正案: P2の既存ケースから両ケースを外す。
+
+### 8
+- 機能: M04-31
+- 種類: E
+- 対象: M04-31_existing.tsv IT-M04-31-142・P4
+- 主張: CSV登録で作られた棚卸明細を確かめる既存ケースである。
+- 実際: 期待結果は「登録が完了しました。」というメッセージと編集画面への遷移だけで、商品数や棚卸明細を確かめていない（`integration_test/casegen/cases/M04-31_test_cases.tsv:141`）。
+- 修正案: このケースをP4の既存ケースから外す。
+
+### 9
+- 機能: M04-33
+- 種類: A
+- 対象: M04-33_factors.tsv F03
+- 主張: 「シングルカード以外」はレアリティだけを出し、「サプライ品」は別の値である。
+- 実際: 設計書の「シングルカード以外」にはサプライ品も含まれ得る一方、サプライ品にはピッキング区分・言語／状態・略称に固有の出力がある（`integration_test/casegen/combination/units/M04-33/design.txt:L0015-L0025`）。
+- 修正案: 値を重ならない「シングルカード」「非シングル・非サプライ」「サプライ品」にする。
+
+### 10
+- 機能: M04-33
+- 種類: D
+- 対象: M04-33_constraints.tsv P1・F03=サプライ品&F05=含まない
+- 主張: 略称タグを含まないサプライ品の商品名加工は「正解未定」。
+- 実際: 「商品名内に[略称タグ]が含まれない場合は[～]を削除」と定めており、この条件にサプライ品の例外はない（`integration_test/casegen/combination/units/M04-33/design.txt:L0044-L0045`）。
+- 修正案: この組を「正解未定」から外す。
+tokens used
+96,299
+### 1
+- 機能: M04-28
+- 種類: B
+- 対象: M04-28_processes.tsv・M04-28_factors.tsv（処理・要因なし）
+- 主張: 組合せ対象の処理と要因はない。
+- 実際: 送り状CSVには移動元店舗の会社名・住所等と、移動先店舗の会社名・住所等を別々の列群に出す。移動元と移動先という2つの関連データで出力が変わる（`integration_test/casegen/combination/units/M04-28/design.txt:L0017-L0023,L0029-L0035`）。
+- 修正案: CSV出力処理に移動元店舗と移動先店舗の要因を設ける。
+
+### 2
+- 機能: M04-30
+- 種類: A
+- 対象: M04-30_factors.tsv F01
+- 主張: スマレジ在庫数の「マイナス」と「対象店舗に在庫なし」を別の値にする。
+- 実際: 出力条件は「対象店舗のスマレジ在庫の在庫数が0以上」であり、両者とも対象外になる（`integration_test/casegen/combination/units/M04-30/design.txt:L0031-L0032`）。
+- 修正案: 出力結果が同じ2値を1値にまとめる。
+
+### 3
+- 機能: M04-30
+- 種類: A
+- 対象: M04-30_factors.tsv F04
+- 主張: 商品ステータスの「公開」と「非公開」を別の値にする。
+- 実際: 設計書は「廃止でない」を条件とし、非公開も検索結果に含めるため、公開・非公開の出力結果は同じである（`integration_test/casegen/combination/units/M04-30/design.txt:L0035`）。
+- 修正案: 公開と非公開を「廃止でない」にまとめる。
+
+### 4
+- 機能: M04-31
+- 種類: C
+- 対象: M04-31_interactions.tsv P4・F01+F02+F06
+- 主張: 店舗・在庫区分・在庫反映状態の3要因がまとめて効き合う。
+- 実際: 店舗と在庫区分は対象在庫を指定し、反映済みならCSV登録を禁止する。反映済みの禁止条件は店舗・在庫区分を問わず適用され、3要因が同時に結果を変える定めではない（`integration_test/casegen/combination/units/M04-31/design.txt:L0203,L0211-L0214`）。
+- 修正案: 3要因をまとめた行をやめ、必要な2要因の組に分けて判定する。
+
+### 5
+- 機能: M04-31
+- 種類: D
+- 対象: M04-31_constraints.tsv P2・F02=スマレジ&F03=差異プラス&F04=0
+- 主張: この組の入荷通知は「正解未定」。
+- 実際: 登録処理の入荷通知条件は、在庫が0から1以上になったものと定められ、在庫区分による例外は書かれていない（`integration_test/casegen/combination/units/M04-31/design.txt:L0453-L0460`）。
+- 修正案: この組を「正解未定」から外す。
+
+### 6
+- 機能: M04-31
+- 種類: C
+- 対象: M04-31_interactions.tsv P5・F09+F10、F09+F11
+- 主張: 差異確認済みなら保存と次商品への遷移は行われない。
+- 実際: 設計書は登録・更新後の保存と遷移を定め、差異確認後については棚卸数量・在庫数量を「変更できない」とだけ定める。保存操作や遷移を止めるとは書いていない（`integration_test/casegen/combination/units/M04-31/design.txt:L0361-L0366`）。
+- 修正案: 差異確認済みを理由に保存・遷移が止まるという判定を撤回し、記載された数量変更の可否で判定する。
+
+### 7
+- 機能: M04-31
+- 種類: E
+- 対象: M04-31_existing.tsv IT-M04-31-123、IT-M04-31-124・P2
+- 主張: 両ケースは「棚卸結果を在庫へ反映する」処理の既存ケースである。
+- 実際: IT-M04-31-123の期待結果は棚卸計画一覧の反映日・更新者名だけ、IT-M04-31-124の期待結果は完了メッセージと画面遷移だけである。在庫・在庫変動履歴・入荷通知の結果は確かめていない（`integration_test/casegen/cases/M04-31_test_cases.tsv:123`、`integration_test/casegen/cases/M04-31_test_cases.tsv:124`）。
+- 修正案: P2の既存ケースから両ケースを外す。
+
+### 8
+- 機能: M04-31
+- 種類: E
+- 対象: M04-31_existing.tsv IT-M04-31-142・P4
+- 主張: CSV登録で作られた棚卸明細を確かめる既存ケースである。
+- 実際: 期待結果は「登録が完了しました。」というメッセージと編集画面への遷移だけで、商品数や棚卸明細を確かめていない（`integration_test/casegen/cases/M04-31_test_cases.tsv:141`）。
+- 修正案: このケースをP4の既存ケースから外す。
+
+### 9
+- 機能: M04-33
+- 種類: A
+- 対象: M04-33_factors.tsv F03
+- 主張: 「シングルカード以外」はレアリティだけを出し、「サプライ品」は別の値である。
+- 実際: 設計書の「シングルカード以外」にはサプライ品も含まれ得る一方、サプライ品にはピッキング区分・言語／状態・略称に固有の出力がある（`integration_test/casegen/combination/units/M04-33/design.txt:L0015-L0025`）。
+- 修正案: 値を重ならない「シングルカード」「非シングル・非サプライ」「サプライ品」にする。
+
+### 10
+- 機能: M04-33
+- 種類: D
+- 対象: M04-33_constraints.tsv P1・F03=サプライ品&F05=含まない
+- 主張: 略称タグを含まないサプライ品の商品名加工は「正解未定」。
+- 実際: 「商品名内に[略称タグ]が含まれない場合は[～]を削除」と定めており、この条件にサプライ品の例外はない（`integration_test/casegen/combination/units/M04-33/design.txt:L0044-L0045`）。
+- 修正案: この組を「正解未定」から外す。

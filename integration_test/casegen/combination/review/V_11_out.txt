@@ -1,0 +1,2822 @@
+Reading additional input from stdin...
+OpenAI Codex v0.162.1
+--------
+workdir: /home/y-saito/Developments/hareruya-design-docs
+model: gpt-6-sol
+provider: openai
+approval: never
+sandbox: read-only
+reasoning effort: high
+reasoning summaries: none
+session id: 01a1577e-301e-76e0-b781-e778e14d5549
+--------
+user
+# 反証の依頼: 機能 F04-04・F05-01・F05-02・F05-03・F05-04・F05-05・F05-06・F06-01 の要因表
+
+あなたは独立したレビュアーである。別の担当が作った**要因表**に、設計書と食い違う所が無いかを確かめる。直さない。読むだけ。
+リポジトリは `/home/y-saito/Developments/hareruya-design-docs/`。出力は日本語。
+
+## 要因表とは（依頼者決定 2026-10-20）
+
+結合テストで、1回の処理の結果を左右する要因（区分・状態・設定・関連データの値）が2つ以上あるとき、
+**効き合う要因は値の組合せを全部、関係しない要因はどの2つの要因の値の組もどこかで1回**試すケースを足す。
+要因表はその元で、表から機械が組を並べる（`integration_test/casegen/combination/gen_combos.py`）。表の誤りはそのままケースの誤りになる。
+作り方の決まりは `integration_test/casegen/combination/FACTOR_PROMPT.md`（担当への依頼文）にある。まずこれを読む。
+
+## 読むもの
+
+| 何 | パス |
+| --- | --- |
+| 要因表（機能ごとに5つ） | `integration_test/casegen/combination/factors/<機能ID>_processes.tsv`・`_factors.tsv`・`_interactions.tsv`・`_constraints.tsv`・`_existing.tsv` |
+| 機械が並べた組（参考） | `integration_test/casegen/combination/combos/<機能ID>.tsv` |
+| 設計書（行頭の `L0001` は行番号） | `integration_test/casegen/combination/units/<機能ID>/design.txt`、他の機能は `units/<機能ID>/design.txt`、共通シートは `units/_common/` |
+| ケース | `integration_test/casegen/cases/<機能ID>_test_cases.tsv`、全機能は `integration_test/casegen/all_test_cases.tsv` |
+| 結合テストの範囲 | `integration_test/SCOPE.md` |
+| 不機能仕様・フェーズ2見送り（載っているものは意図して外している。指摘しない） | `functions/dead-spec-register.tsv`・`functions/phase2_candidates.tsv` |
+
+設計書の中で記述が食い違うときは、Excel 由来の本文 ＞ 埋め込みの「表示メッセージ」節 ＞ 埋め込みの「現行仕様」節の順に採る。
+
+## 確かめること（事実だけ）
+
+| 種類 | 何を見るか |
+| --- | --- |
+| A 要因・値の誤り | 要因・値・値ごとの結果が、根拠の行に書かれていない。根拠の行が別のことを言っている。結果が同じになる値を別の値として分けている |
+| B 要因・値の抜け | 設計書の行が「この値でこの処理の結果が変わる」と定めているのに、要因・値が無い（他の機能の設定値でこの処理が読むものを含む） |
+| C 判定の誤り | 効き合う／関係しない／設計書が決めていない の判定が、設計書の行と食い違う。特に、足し算で合計に入るだけの組を効き合うにしている、一方の結果がもう一方の判定の入力になるのに関係しないにしている。**3つ以上の要因をまとめた効き合う**は、その全部が同時に互いの結果を変えるかを確かめる（2つずつで効き合うだけなら2要因の行に分けるべき。まとめると値の組合せが全部ケースになる）。1件の対象を出す・出さないを複数の条件の「すべて満たす／どれか1つで外れる」で決める所を効き合うにしていないか（条件どうしは関係しないでよい）。優先順位で順に比べて決める所を、比べる項目ごとの要因の全組合せにしていないか（「どの段で決まるか」の1要因でよい） |
+| D 制約の誤り・抜け | 作れない としている組が設計上作れる。作れない組が載っていない。正解未定 としている組の結果が設計書から決まる |
+| E 既存ケースの読み違い | existing.tsv の値が、そのケースの事前準備・手順に書かれていない。そのケースが処理を動かしていない、確かめる所で結果を見ていない |
+| F 範囲外 | 処理・要因が結合テストの範囲でない（同じ画面の中で閉じる表示の計算、入力値の検証、検索条件の組合せ、権限、二重送信、排他） |
+
+次は指摘しない: 書き方・言い回し、要因IDの振り方、値の並び順、設計書に無い仕様の追加の要求、境界値・数量1/複数（別に済んでいる）。
+
+## 出力
+
+指摘が無ければ `NONE` の1語だけ。あれば1件ずつ、次の形で。
+
+```
+### <番号>
+- 機能: <機能ID>
+- 種類: <A〜F>
+- 対象: <ファイル名> <要因ID・処理ID・組・テストID>
+- 主張: <表に書かれていること>
+- 実際: <設計書・ケースの記述（ファイル:行 を必ず添える）>
+- 修正案: <どう直すか。1文>
+```
+warning: Codex could not find bubblewrap on PATH. Install bubblewrap with your OS package manager. See the sandbox prerequisites: https://developers.openai.com/codex/concepts/sandboxing#prerequisites. Codex will use the bundled bubblewrap in the meantime.
+2026-10-20T04:07:31.298615Z ERROR rmcp::transport::worker: worker quit with fatal: Transport channel closed, when AuthRequired(AuthRequiredError { www_authenticate_header: "Bearer resource_metadata=\"https://mcp.firecrawl.dev/.well-known/oauth-protected-resource/v2/mcp-oauth\", error=\"invalid_token\", error_description=\"Firecrawl credentials required: OAuth access token (Authorization: Bearer fco_...) or API key (x-firecrawl-api-key)\"" })
+codex
+まず作成ルールと結合テストの範囲を読み、その後、8機能の要因表を設計書・既存ケースと照合します。指摘は根拠行を確認できたものに絞ります。
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/FACTOR_PROMPT.md' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+# 依頼: 機能 {FID}（{FNAME}）の要因表づくり
+
+これは分析である。ケースも設計書も直さない。事実は自分でファイルを読んで確かめ、推測で書かない。
+リポジトリは `/home/y-saito/Developments/hareruya-design-docs/`。パスはここからの相対。出力はすべて日本語で書く。
+git の変更操作（add・commit など）をしない。
+
+## 背景（依頼者決定 2026-10-20）
+
+結合テストケースは設計書の定め1件ごとに作られ、10/15 には定めごとに「数量1と複数」「有無」「状態・区分ごと」などのデータを足した。
+それでも、**1回の処理の結果を左右する要因が2つ以上あるとき、その値を同時に変えて通すケースが無い**。
+例: 公開側で注文を確定するケース33件は、支払方法がほぼ郵便振替か銀行振込で、配送方法もゆうパック・EMS が大半。クレジットカード・代金引換・店頭支払、店頭受取・同梱で注文を通すケースは無い。
+
+依頼者の決定:
+- **効き合う要因**（一方の値で、もう一方の値の結果が変わると設計書が定める）は、値の組合せを全部試す。
+- **関係しない要因**は、どの2つの要因の値の組も、どこかのケースで1回は出るように並べる（2要因の組）。
+- **他の機能の設定値**（送料・手数料・支払方法の利用条件・送料無料の条件・配送方法に紐づく支払方法など）も、それを読む処理の要因に入れる。
+
+あなたの仕事は、機能 {FID} について、組合せの元になる**要因表**を作ること。組合せの行（どの値の組を何件試すか）は、この表から別の道具が機械で作る。
+だから、表の要因・値・判定の誤りは、そのままケースの誤りになる。
+
+## 読むもの
+
+| 何 | パス |
+| --- | --- |
+| 設計書（この機能のシートを文字に起こしたもの。行頭の `L0001` とタブは行番号。`#####` の行はシートの境目） | `integration_test/casegen/combination/units/{FID}/design.txt` |
+| 他の機能の設計書（設定値を読む処理のとき、設定する機能の定めを引く） | `integration_test/casegen/combination/units/<機能ID>/design.txt`（機能名は `combination/units.tsv`） |
+| 同じ冊子の共通シート（必要なときだけ） | {COMMON} |
+| この機能のケースとシード | `integration_test/casegen/cases/{FID}_test_cases.tsv`・`{FID}_seed_data.tsv` |
+| この機能の、テストから外したケース | `integration_test/casegen/combination/units/{FID}/excluded.tsv` |
+| 全機能のケース（他の機能のケースがこの機能の処理を通しているかの検索用） | `integration_test/casegen/all_test_cases.tsv`（列: テストID・観点ID・基本設計書・検証方法・テストデータ・事前準備・手順・期待結果。セル内改行があるので csv として読む） |
+| 結合テストの範囲 | `integration_test/SCOPE.md` |
+| 不機能仕様・フェーズ2見送り（ここに載るものは要因にしない） | `functions/dead-spec-register.tsv`・`functions/phase2_candidates.tsv` |
+| 設計書の中で記述が食い違うときの優先順位 | Excel 由来の本文 ＞ 埋め込みの「表示メッセージ」節（リニューアル後の仕様）＞ 埋め込みの「現行仕様」節。同じ出所では改訂後が優先。**Excel が触れていない条件を埋め込みが足しているだけのときは食い違いではなく、両方を当てる**（例: Excel が選択肢を並べ、埋め込みが「ポイントで全額払うときは全額ポイント支払いだけ」と条件を足す → 両方）。既存ケースは正解の根拠にしない（既存ケースと設計書の食い違いは返答に書く） |
+
+検索は `grep` を使う（`rg` は同じ入力で0件を返すことがあるので使わない）。
+
+## やること
+
+### 1. 処理を決める
+
+design.txt を**全部**読み、この機能の中で「操作やデータを受けて結果を出す処理」のうち、**結果を左右する要因が2つ以上ある処理**を挙げる。
+
+- 処理の単位は「1回の操作で動き、結果を1つの所で確かめられるまとまり」。例: 注文を確定して受注を作る／お支払い方法の選択肢を出す／受注の対応状況をキャンセルへ変えて保存する。
+- 結果は、データを作った所とは**別のコンポーネントで確かめる**もの（DB、別の画面、別の機能の画面、CSV・帳票、メール、連携先）。DBにあるデータで画面の表示・選択肢が変わるものも入る（例: 既存の受注の有無で配送方法の選択肢が変わる）。同じ画面の中だけで閉じる表示の計算（保存しない）と、計算式そのものの正しさは単体テストなので挙げない。
+- 要因が1つだけの処理は挙げない（10/15 の監査で済んでいる）。
+- **要因が2つ以上の処理が1つも無い機能**（一覧を出すだけ、1つの設定を保存するだけ、など）は、5つのファイルをヘッダだけで書き、返答の1行目に「対象の処理なし」と理由を書く。無理に処理を作らない。
+- 入力値の検証（必須・桁数・形式）、検索条件・削除条件の組合せ、権限、二重送信、排他は、ほかの観点の持ち分なので処理にも要因にもしない。
+
+### 2. 要因と値を挙げる
+
+処理ごとに、**その処理の結果を変えると設計書が定める要因**を挙げる。
+
+- 要因は「区分・状態・設定・関連データ」の値。例: 閲覧店舗、配送方法、支払方法、ポイントの使い方、受注の種類（通常・店頭受取・ついで買い）、会員か非会員か、変更前の対応状況、既存の受注の状態。
+- 他の機能で設定する値で、この処理が読むものも要因にする（出所に機能IDを書く）。例: 支払方法の利用条件（M10-04）に対する注文金額、都道府県別の送料（M10-06）。その機能の design.txt で定めを確かめ、根拠に `M10-04:L0123` の形で書く。**この処理の結果への効き方が設計書のどこにも書かれていない設定値は要因にしない**（値ごとの結果が書けないため）。そういう設定値は返答の「判断に迷った点」に挙げる（依頼元が論点として控える）。
+- **値は、結果の分かれ目ごとに代表を1つ**。結果が同じになる値は1つにまとめる（例: ゆうパックとゆうパケットで結果が変わらないならどちらか1つ）。結果が値ごとに違うなら全部挙げる（例: 支払方法ごとに手数料・ボタンの文言・ポイントを使う時点が違うなら、支払方法は全部）。
+- 境界値（ちょうどの値・上限）と数量1/複数は、10/15 に済んでいるので値にしない。値は「範囲内」「範囲外」「あり」「なし」のような分かれ目で書く。
+- 不正な入力、作れない値（画面の選択肢に無い値）は値にしない。
+- 値ごとの結果を、設計書の語で短く書く（「支店: 支払方法は店頭支払だけ」）。
+
+### 3. 要因どうしを判定する
+
+処理ごとに、その処理の要因の**すべての2つの組**を判定する（要因が5つなら10組）。判定は次のどれか。
+
+| 判定 | いつ | 根拠 |
+| --- | --- | --- |
+| 効き合う | 一方の値で、もう一方の値の結果（可否、選択肢、金額、更新先、更新内容）が変わると設計書が定める。または、一方の結果がもう一方の判定の入力になる（例: 使用ポイントで支払う金額が変わり、支払方法の選択肢が変わる） | 両方を結ぶ設計書の行が必須 |
+| 関係しない | それぞれの要因の結果が、もう一方の値によって変わらない（例: 送料は配送方法で、手数料は支払方法で決まり、合計は足し算） | 理由を書く |
+| 設計書が決めていない | 同時に効いたときの結果が設計書から決まらない（例: 送料無料の判定に使う金額が、ポイントを引く前か後か書かれていない） | 決まらない理由。下の「組の制約」に、決まらない値の組を「正解未定」で必ず書く |
+
+3つ以上の要因がまとめて効き合うとき（例: 配送方法・既存の受注の状態・既存の受注の支払方法で同梱を出すか決まる）は、1行に `F01+F03+F05` と書いて「効き合う」にしてよい。その中の2つの組は、別の行に書かない。**まとめるのは、その全部が同時に互いの結果を変えるときだけ**。2つずつで効き合うだけなら2要因の行に分ける（まとめると値の組合せが全部ケースになり、件数が膨らむ）。
+**選べるものの集まりを2つの定めが別々に絞り、結果がその共通部分になるとき**（例: 支店は支払方法が店頭支払だけ、同梱は郵便振替・銀行振込だけ → 選択肢の中身が組ごとに変わる）は「効き合う」にする。「設計書が決めていない」にするのは、両方を当てると選択肢が1つも残らないなど、結果が設計書から決まらない組だけ。
+**1件の対象を出す・出さない（対象にする・しない）を、複数の条件の「すべて満たす」または「どれか1つで外れる」で決めるとき**（例: 公開・在庫あり・セール期間内・表示フラグ のすべてを満たす商品だけ出す）は、条件どうしは「関係しない」にする。結果は出る・出ないの2つだけで、条件ごとの外れ方は1つずつ確かめれば足り、全組合せは要らない（7条件を効き合うにすると128行になる）。
+**優先順位で順に比べて決めるとき**（例: 複数一致したら、言語→特殊版→発売日→フォイル→プロモの順に比べて先に差が付いたもので選ぶ）は、比べる項目を別々の要因にして全組合せにしない。「どの段で決まるか」を1つの要因にまとめる（値: 1段目で決まる｜2段目で決まる｜…｜全段が同じ）。上の段の差が下の段を隠すので、各段で決まる組を1つずつ試せば足りる（6段を効き合うにすると64行になる）。
+「一方の値で、もう一方の処理そのものが行われない」型（例: キャンセル日が既に入っていると、在庫・ポイントの戻しを行わない）も「効き合う」にする。
+**推測で値の組を「作れない」にしない**。設計書の語がどの値を指すか決まらないとき（例: 支店の「店舗受取」が店頭受取とスムーズ店頭受取のどちらか）は「正解未定」にする。
+**効き合う組の値の組合せは全部ケースになる**。値が多い要因どうし（7×7 など）を効き合うにするときは、設計書の行で本当に互いの結果を変えるかを確かめる。足し算で合計に入るだけなら「関係しない」。
+
+### 4. 組の制約を書く
+
+- **作れない**: 設計上その値の組が成り立たない（例: 支店では支払方法が店頭支払だけなので、支店×代金引換は作れない）。根拠の行が必須。
+- **正解未定**: その値の組で結果が設計書から決まらない。決まらない理由を書く。これはケースにせず、報告書に論点として残す。
+
+### 5. 既存のケースが通している組を書く
+
+この機能のケース（と、`all_test_cases.tsv` を語で検索して見つかった他の機能のケース）のうち、**その処理を動かして、確かめる所で結果を確かめている**ケースを1件ずつ書き、そのケースで値が決まっている要因の値を書く。
+
+- 値は、事前準備・手順に**書かれている**ものだけ。書かれていない要因は書かない（流れの中でたまたまそうなるだけのものは数えない）。
+- 1つのケースが同じ処理を別の値で2回以上通しているときは、通した値ごとに1行ずつ書く（同じテストIDの行が2つになる）。1回の処理で2つのデータを別の値で扱う（混在）ケースは書かない。
+- 期待結果が設計書と食い違う既存ケースは、値が合っていても書かない（返答に食い違いとして書く）。
+- 処理を動かしていない（画面を開いて別のことを見るだけ）ケース、結果を確かめていないケースは書かない。
+- テストから外したケース（excluded.tsv）は書かない。
+
+## 出力（この5つだけを書く。ほかのファイルは変更しない）
+
+すべて `integration_test/casegen/combination/factors/` に、タブ区切り・ヘッダつきで書く。セル内に改行・タブ・ダブルクォートを入れない。
+
+### `{FID}_processes.tsv`（5列）
+
+```
+処理ID	処理	契機	確かめる所	根拠
+P1	注文を確定して受注を作る	ご注文方法指定画面で確定チェックボックスを選び、注文するボタンを押す	受注情報編集画面（M05-11）	L0322-L0330
+```
+
+- 処理IDは P1 からの連番。根拠は design.txt の行（`L0037`、`L0037-L0040`、カンマ区切り）。他の機能は `M10-04:L0012`、共通シートは `_common/<ファイル名>:L0012`。
+
+### `{FID}_factors.tsv`（7列）
+
+```
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1,P2	閲覧店舗	本店｜支店	本店: 支払方法はEC用の6種／支店: 支払方法は店頭支払だけ	L0236,L0249-L0252	この機能
+F05	P2	支払方法の利用条件に対する注文金額	範囲内｜上限を超える	範囲内: 選択肢に出る／上限を超える: 選択肢に出ない	M10-04:L0101	M10-04（設定）
+```
+
+- 要因IDは F01 からの連番（処理をまたいで通し番号）。処理IDはその要因が効く処理（カンマ区切り）。
+- 値は全角の縦棒 `｜` で区切る。2つ以上。1つの値は30字まで。`=` `&` `｜` `＋` `×` を値の中に使わない。
+- 値ごとの結果は `値: 結果` を `／` でつなぐ。全部の値について書く。
+- 出所は `この機能`、`<機能ID>（設定）`、`<機能ID>（データ）` のどれか。
+
+### `{FID}_interactions.tsv`（5列）
+
+```
+処理ID	要因	判定	根拠	理由
+P1	F03+F04	効き合う	L0204	配送方法が同梱のときは支払方法が郵便振替・銀行振込だけになる
+P1	F04+F06	関係しない		手数料は支払方法で決まり、ポイントは値引きとして合計から引くだけ
+P1	F06+F07	設計書が決めていない	M10-05:L0040	送料無料の判定に使う金額がポイント値引きの前か後か書かれていない
+```
+
+- 処理ごとに、その処理の要因の2つの組を全部判定する（3つ以上の効き合うにまとめた組は除く）。
+- 効き合う・設計書が決めていない は根拠が必須。関係しない・設計書が決めていない は理由が必須。
+
+### `{FID}_constraints.tsv`（5列）
+
+```
+処理ID	組	種別	根拠	理由
+P1	F01=支店&F04=代金引換	作れない	L0251-L0252	支店の支払方法は店頭支払だけ
+P1	F06=ポイントを使う&F07=送料無料の条件に届く	正解未定	M10-05:L0040	送料無料の判定に使う金額が決まらない
+```
+
+- 組は `要因ID=値` を `&` でつなぐ。値は factors.tsv の値と一字一句同じ。値1つだけの組（`F16=店頭受取のみのスマレジ決済`）も書ける: その値でこの処理を動かすこと自体が作れない・結果が決まらないとき（設計書の記述どうしが食い違い、共通する部分が無いときなど）。
+- 種別は `作れない` か `正解未定`。根拠が必須。制約が無ければヘッダだけ書く。
+
+### `{FID}_existing.tsv`（4列）
+
+```
+テストID	処理ID	値	理由
+IT-F04-02-081	P1	F01=本店&F03=ゆうパック&F04=郵便振替	事前準備で本店・ゆうパック・郵便振替を選び、受注情報編集画面で支払方法と配送方法を確かめる
+```
+
+- 値は `要因ID=値` を `&` でつなぐ。ケースに書かれている要因だけ。1つ以上。
+- 1つのケースが2つの処理を通しているときは2行に書く。該当するケースが無ければヘッダだけ書く。
+
+書いたら次を実行し、エラーが無くなるまで直す。組の数（全組と2要因の組で、既存ケースが通していない組を埋めるのに要る行の数）も出る。
+
+```
+python3 integration_test/casegen/combination/gate_factors.py {FID}
+```
+
+作業用の一時ファイルを作るときは、名前に {FID} を入れてスクラッチパッドに作る。他の機能の factors/ のファイルは読まない・書かない。
+ファイルの書き込みを拒否されたときは、回避せず、書くはずだった本文を返答に載せる（依頼元が保存する）。
+
+## 返答
+
+3行以内: 処理の数・要因の数・効き合う組の数・設計書が決めていない組の数、gate の結果と出た行の数、判断に迷った点（あれば1つ）。
+
+exec
+/bin/bash -lc 'cat integration_test/SCOPE.md' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+# 結合テスト観点表の適用範囲
+
+`ipa-integration-test-viewpoints.tsv` が対象とする範囲を定める。
+判定基準は旧観点資産（`archive/integration-test-viewpoints.md`）の層判定をそのまま踏襲する。
+
+## 対象とするもの
+
+**独立したコンポーネント間の契約と相互作用。**
+呼出側と受取側の間で、受け渡される値、状態、副作用、異常時の振る舞いが
+双方の設計どおりに噛み合っていることを確認する。
+
+**媒体をいくつ跨いだかでは判定しない。** 単一のロジックの結果をDBや画面で観測するだけの確認は、
+観測先が別コンポーネントであっても単体テストの範囲とする。
+旧正本もこの基準を採り、DBへ登録される変換・計算結果をUT判定している
+（`archive/integration-test-viewpoints.md` No.60-66）。
+
+## 単項目の検証は、DBへ保存するかで分ける（2026-09-01 依頼者決裁）
+
+単項目の桁数・文字種・必須・コード値・日付・メールアドレス書式の検証は、
+**その項目をDBへ保存するかどうか**で担当を分ける。
+
+| 項目の性質 | 担当 | 理由 |
+| --- | --- | --- |
+| DBへ保存する項目（登録・編集の入力欄） | **結合テスト** | Form層で受理された値がDB層に収まるかは跨コンポーネントでしか観測できない。pf(MySQL)はバイト、ee(PostgreSQL)は文字で数えるため、Form層の単体テストでは意味論差が出ない |
+| 画面上だけの入力制限（検索条件、絞り込み、表示件数） | 単体テスト | DBへ保存しないので意味論差が起きない。判定ロジックの正しさだけを見ればよい |
+
+同じ種類の判定であれば、複数項目をまとめて1件のテストケースにしてよい。
+例: 「商品名と商品名(英)の最大文字数が設計書どおりであること」は1件でよい。
+判定の種類が違えば分ける（最大文字数と必須は別のケース）。
+
+単体テストが担うのは、検証を行う処理そのもの（計算式、文字数の数え方、分岐網羅）である。
+
+画面項目定義のうち次は、桁数・必須の指定が無くても結合テストの対象とする。
+跨コンポーネントでしか確認できないからである。
+
+- 初期値の指定（画面を開いてDBから値を取り、初期表示する）
+- 画面部品のふるまい（「押下すると検索を行う」「表示/非表示を切り替える」）
+- 表示内容（「チェックを付けると一覧すべてを対象に設定」）
+
+## 現行仕様と刷新の指示が食い違うときは刷新を採る（2026-09-01）
+
+HTML設計書には次の2つが載る。両方が同じ項目に触れて食い違うことがある。
+
+| 出所 | 中身 |
+| --- | --- |
+| Excel基本設計の本文 | 刷新後にどうするかの指示。「※カスタマイズ対応」「〜とする」 |
+| 埋め込まれた機能設計書の「現行仕様」 | 現行の実装がどう動いているか |
+
+**期待結果は刷新の指示を採る。** 現行仕様は、刷新の指示が無い箇所にだけ使う。
+両方に記述があって内容が違うときは、刷新の指示を期待結果にし、
+現行仕様との差を `出典` に併記する。
+
+実例: M03-01の並び順は、機能設計書の現行仕様が「商品IDの降順」、
+Excel基本設計が「表示順は、棚番号昇順とする」で食い違う。棚番号昇順を採る。
+現行仕様だけを見てケースを書き、誤った期待結果を作った（codex R1）。
+
+## 対象としないもの
+
+| 除外区分 | 内容 | 担当 |
+| --- | --- | --- |
+| 単体テスト粒度 | 単一コンポーネント内で完結する変換・計算ロジック | 単体テスト |
+| 単体テスト粒度 | 単一メソッド内の分岐網羅 | 単体テスト |
+| 単体テスト粒度 | 変換、編集分岐、ループ編集、計算、連結、暗号化、マスキング、パディング、小数桁の結果そのもの | 単体テスト |
+| e2e粒度 | 見た目、画面レイアウト、ブラウザ固有挙動、確認ダイアログの表示 | e2e・手動 |
+| e2e粒度 | 画面表示文言の照合 | e2e・手動 |
+| 性能 | 応答時間、スループット、同時接続数の上限、リトライ間隔の適切さ | 性能テスト（別工程） |
+
+## 境界が紛らわしいもの
+
+同じ語で呼ばれるが、担当が分かれるもの。
+
+| 事象 | 結合テストが見るもの | 他が見るもの |
+| --- | --- | --- |
+| 境界値 | 設計書が定めた桁数・範囲どおりに受理／拒否されること。DB層のカラム制約、件数上限、ファイルサイズ、表示上限を含む | 計算式そのものの正しさは単体テスト |
+| 文字列長 | 設計書が定めた最大文字数どおりに受理／拒否されること。pf(MySQL)とee(PostgreSQL)の意味論差を含み、Form層とDB層の双方を見る | 文字数を数える処理そのものは単体テスト |
+| 最大件数・最大ファイルサイズ | 規定量を機能として正しく扱えるか（ITB-11） | 規定時間内に終わるかは性能テスト |
+| タイムアウト | タイムアウト時の跨コンポーネントの挙動（ITB-14） | 応答時間そのものは性能テスト |
+| リトライ | 再送回数、間隔、打切り条件が仕様どおりか（ITB-15） | 間隔の適切さは性能テスト |
+| バリデーション | 設計書が定めた検証（必須、桁数、文字種、コード値、日付、メールアドレス書式）の結果が画面・DB・ファイル・連携先へ反映されること | 検証関数そのものの分岐網羅は単体テスト |
+| メッセージ | DB、ファイル、ログ、連携先の期待結果（COM-04） | 画面表示文言の照合はe2e |
+
+## 除外の記録
+
+除外した観点は捨てない。旧資産の層判定は `archive/integration-test-viewpoints.md` の
+`テスト層` 列に、新観点への対応は `MIGRATION_MAP.tsv` に残る。
+
+exec
+/bin/bash -lc "rg --files integration_test/casegen/combination/{factors,units,combos} integration_test/casegen/cases | rg '(F04-04|F05-0[1-6]|F06-01|_common)'" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+integration_test/casegen/combination/units/F05-03/excluded.tsv
+integration_test/casegen/combination/units/F05-03/design.txt
+integration_test/casegen/combination/units/F04-04/excluded.tsv
+integration_test/casegen/combination/units/F04-04/design.txt
+integration_test/casegen/combination/units/F05-05/excluded.tsv
+integration_test/casegen/combination/units/F05-05/design.txt
+integration_test/casegen/combination/units/_common/0202_sheet-51.txt
+integration_test/casegen/cases/F05-02_seed_data.tsv
+integration_test/casegen/cases/F05-06_test_cases.tsv
+integration_test/casegen/cases/F05-05_test_cases.tsv
+integration_test/casegen/cases/F06-01_test_cases.tsv
+integration_test/casegen/combination/units/_common/0416_sheet-6.txt
+integration_test/casegen/combination/units/_common/0204_sheet-63.txt
+integration_test/casegen/combination/units/_common/0206_sheet-13.txt
+integration_test/casegen/combination/units/_common/0203_sheet-27.txt
+integration_test/casegen/combination/units/_common/0404_sheet-9.txt
+integration_test/casegen/combination/units/_common/0206_sheet-17.txt
+integration_test/casegen/combination/units/_common/0416_sheet-3.txt
+integration_test/casegen/combination/units/_common/0416_sheet-10.txt
+integration_test/casegen/combination/units/_common/0202_sheet-3.txt
+integration_test/casegen/combination/units/_common/0302_sheet-8.txt
+integration_test/casegen/combination/units/_common/0202_sheet-53.txt
+integration_test/casegen/combination/units/_common/0304_sheet-10.txt
+integration_test/casegen/combination/units/_common/0204_sheet-60.txt
+integration_test/casegen/combination/units/_common/0204_sheet-65.txt
+integration_test/casegen/combination/units/_common/0204_sheet-68.txt
+integration_test/casegen/combination/units/_common/0204_sheet-62.txt
+integration_test/casegen/combination/units/_common/0204_sheet-66.txt
+integration_test/casegen/combination/units/_common/0202_sheet-50.txt
+integration_test/casegen/combination/units/_common/0404_sheet-11.txt
+integration_test/casegen/combination/units/_common/0204_sheet-61.txt
+integration_test/casegen/combination/units/_common/0416_sheet-5.txt
+integration_test/casegen/combination/units/_common/0416_sheet-7.txt
+integration_test/casegen/combination/units/_common/0207_sheet-26.txt
+integration_test/casegen/combination/units/_common/0207_sheet-16.txt
+integration_test/casegen/combination/units/_common/0204_sheet-67.txt
+integration_test/casegen/combination/units/_common/0416_sheet-14.txt
+integration_test/casegen/combination/units/_common/0416_sheet-4.txt
+integration_test/casegen/combination/units/_common/0204_sheet-64.txt
+integration_test/casegen/combination/units/_common/0203_sheet-16.txt
+integration_test/casegen/combination/units/_common/0207_sheet-25.txt
+integration_test/casegen/combination/units/_common/0203_sheet-10.txt
+integration_test/casegen/combination/units/_common/0416_sheet-9.txt
+integration_test/casegen/combination/units/_common/0205_sheet-18.txt
+integration_test/casegen/combination/units/_common/0202_sheet-34.txt
+integration_test/casegen/combination/units/_common/0305_sheet-13.txt
+integration_test/casegen/combination/combos/F05-01.tsv
+integration_test/casegen/combination/combos/F05-04_undetermined.tsv
+integration_test/casegen/combination/combos/F06-01_undetermined.tsv
+integration_test/casegen/combination/combos/F04-04.tsv
+integration_test/casegen/combination/combos/F05-01_undetermined.tsv
+integration_test/casegen/cases/F05-03_seed_data.tsv
+integration_test/casegen/combination/combos/F05-06_undetermined.tsv
+integration_test/casegen/combination/combos/F05-06.tsv
+integration_test/casegen/combination/combos/F05-03.tsv
+integration_test/casegen/combination/combos/F05-05.tsv
+integration_test/casegen/combination/combos/F05-02.tsv
+integration_test/casegen/combination/combos/F06-01.tsv
+integration_test/casegen/combination/combos/F04-04_undetermined.tsv
+integration_test/casegen/combination/combos/F05-02_undetermined.tsv
+integration_test/casegen/combination/combos/F05-04.tsv
+integration_test/casegen/combination/combos/F05-05_undetermined.tsv
+integration_test/casegen/combination/combos/F05-03_undetermined.tsv
+integration_test/casegen/cases/F06-01_seed_data.tsv
+integration_test/casegen/cases/F04-04_seed_data.tsv
+integration_test/casegen/cases/F05-03_test_cases.tsv
+integration_test/casegen/cases/F05-05_seed_data.tsv
+integration_test/casegen/cases/F05-04_seed_data.tsv
+integration_test/casegen/cases/F05-01_seed_data.tsv
+integration_test/casegen/cases/F05-06_seed_data.tsv
+integration_test/casegen/cases/F05-01_test_cases.tsv
+integration_test/casegen/cases/F05-04_test_cases.tsv
+integration_test/casegen/cases/F05-02_test_cases.tsv
+integration_test/casegen/combination/units/F05-01/excluded.tsv
+integration_test/casegen/combination/units/F05-01/design.txt
+integration_test/casegen/combination/units/F05-04/excluded.tsv
+integration_test/casegen/combination/units/F05-04/design.txt
+integration_test/casegen/cases/F04-04_test_cases.tsv
+integration_test/casegen/combination/units/F05-02/design.txt
+integration_test/casegen/combination/units/F05-02/excluded.tsv
+integration_test/casegen/combination/units/F05-06/excluded.tsv
+integration_test/casegen/combination/units/F05-06/design.txt
+integration_test/casegen/combination/factors/F06-01_factors.tsv
+integration_test/casegen/combination/factors/F05-06_existing.tsv
+integration_test/casegen/combination/factors/F05-02_constraints.tsv
+integration_test/casegen/combination/factors/F04-04_interactions.tsv
+integration_test/casegen/combination/units/F06-01/excluded.tsv
+integration_test/casegen/combination/units/F06-01/design.txt
+integration_test/casegen/combination/factors/F05-05_existing.tsv
+integration_test/casegen/combination/factors/F05-01_processes.tsv
+integration_test/casegen/combination/factors/F05-04_constraints.tsv
+integration_test/casegen/combination/factors/F05-05_interactions.tsv
+integration_test/casegen/combination/factors/F05-03_interactions.tsv
+integration_test/casegen/combination/factors/F05-01_constraints.tsv
+integration_test/casegen/combination/factors/F05-02_factors.tsv
+integration_test/casegen/combination/factors/F05-03_processes.tsv
+integration_test/casegen/combination/factors/F04-04_factors.tsv
+integration_test/casegen/combination/factors/F06-01_constraints.tsv
+integration_test/casegen/combination/factors/F05-01_factors.tsv
+integration_test/casegen/combination/factors/F05-01_interactions.tsv
+integration_test/casegen/combination/factors/F04-04_existing.tsv
+integration_test/casegen/combination/factors/F05-02_existing.tsv
+integration_test/casegen/combination/factors/F05-05_constraints.tsv
+integration_test/casegen/combination/factors/F05-03_existing.tsv
+integration_test/casegen/combination/factors/F05-02_interactions.tsv
+integration_test/casegen/combination/factors/F05-05_factors.tsv
+integration_test/casegen/combination/factors/F05-06_factors.tsv
+integration_test/casegen/combination/factors/F05-04_existing.tsv
+integration_test/casegen/combination/factors/F05-01_existing.tsv
+integration_test/casegen/combination/factors/F05-02_processes.tsv
+integration_test/casegen/combination/factors/F05-04_processes.tsv
+integration_test/casegen/combination/factors/F04-04_constraints.tsv
+integration_test/casegen/combination/factors/F05-05_processes.tsv
+integration_test/casegen/combination/factors/F05-04_interactions.tsv
+integration_test/casegen/combination/factors/F04-04_processes.tsv
+integration_test/casegen/combination/factors/F05-03_constraints.tsv
+integration_test/casegen/combination/factors/F06-01_interactions.tsv
+integration_test/casegen/combination/factors/F05-04_factors.tsv
+integration_test/casegen/combination/factors/F05-06_interactions.tsv
+integration_test/casegen/combination/factors/F06-01_processes.tsv
+integration_test/casegen/combination/factors/F05-06_processes.tsv
+integration_test/casegen/combination/factors/F06-01_existing.tsv
+integration_test/casegen/combination/factors/F05-06_constraints.tsv
+integration_test/casegen/combination/factors/F05-03_factors.tsv
+
+exec
+/bin/bash -lc "rg 'F04-04|F05-01|F05-02|F05-03|F05-04|F05-05|F05-06|F06-01' functions/dead-spec-register.tsv functions/phase2_candidates.tsv" in /home/y-saito/Developments/hareruya-design-docs
+ exited 1 in 0ms:
+exec
+/bin/bash -lc 'wc -l integration_test/casegen/combination/units/{F04-04,F05-01,F05-02,F05-03,F05-04,F05-05,F05-06,F06-01}/design.txt integration_test/casegen/combination/factors/{F04-04,F05-01,F05-02,F05-03,F05-04,F05-05,F05-06,F06-01}_*.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+   112 integration_test/casegen/combination/units/F04-04/design.txt
+   232 integration_test/casegen/combination/units/F05-01/design.txt
+   119 integration_test/casegen/combination/units/F05-02/design.txt
+   212 integration_test/casegen/combination/units/F05-03/design.txt
+   184 integration_test/casegen/combination/units/F05-04/design.txt
+    99 integration_test/casegen/combination/units/F05-05/design.txt
+   192 integration_test/casegen/combination/units/F05-06/design.txt
+   327 integration_test/casegen/combination/units/F06-01/design.txt
+     3 integration_test/casegen/combination/factors/F04-04_constraints.tsv
+    32 integration_test/casegen/combination/factors/F04-04_existing.tsv
+    11 integration_test/casegen/combination/factors/F04-04_factors.tsv
+    18 integration_test/casegen/combination/factors/F04-04_interactions.tsv
+     4 integration_test/casegen/combination/factors/F04-04_processes.tsv
+     1 integration_test/casegen/combination/factors/F05-01_constraints.tsv
+    14 integration_test/casegen/combination/factors/F05-01_existing.tsv
+     7 integration_test/casegen/combination/factors/F05-01_factors.tsv
+    22 integration_test/casegen/combination/factors/F05-01_interactions.tsv
+     4 integration_test/casegen/combination/factors/F05-01_processes.tsv
+     1 integration_test/casegen/combination/factors/F05-02_constraints.tsv
+     1 integration_test/casegen/combination/factors/F05-02_existing.tsv
+     1 integration_test/casegen/combination/factors/F05-02_factors.tsv
+     1 integration_test/casegen/combination/factors/F05-02_interactions.tsv
+     1 integration_test/casegen/combination/factors/F05-02_processes.tsv
+    15 integration_test/casegen/combination/factors/F05-03_constraints.tsv
+     7 integration_test/casegen/combination/factors/F05-03_existing.tsv
+     5 integration_test/casegen/combination/factors/F05-03_factors.tsv
+     7 integration_test/casegen/combination/factors/F05-03_interactions.tsv
+     2 integration_test/casegen/combination/factors/F05-03_processes.tsv
+     3 integration_test/casegen/combination/factors/F05-04_constraints.tsv
+    16 integration_test/casegen/combination/factors/F05-04_existing.tsv
+     7 integration_test/casegen/combination/factors/F05-04_factors.tsv
+    16 integration_test/casegen/combination/factors/F05-04_interactions.tsv
+     2 integration_test/casegen/combination/factors/F05-04_processes.tsv
+    14 integration_test/casegen/combination/factors/F05-05_constraints.tsv
+    29 integration_test/casegen/combination/factors/F05-05_existing.tsv
+    14 integration_test/casegen/combination/factors/F05-05_factors.tsv
+    17 integration_test/casegen/combination/factors/F05-05_interactions.tsv
+     5 integration_test/casegen/combination/factors/F05-05_processes.tsv
+     1 integration_test/casegen/combination/factors/F05-06_constraints.tsv
+     9 integration_test/casegen/combination/factors/F05-06_existing.tsv
+     7 integration_test/casegen/combination/factors/F05-06_factors.tsv
+     4 integration_test/casegen/combination/factors/F05-06_interactions.tsv
+     4 integration_test/casegen/combination/factors/F05-06_processes.tsv
+     1 integration_test/casegen/combination/factors/F06-01_constraints.tsv
+    16 integration_test/casegen/combination/factors/F06-01_existing.tsv
+     4 integration_test/casegen/combination/factors/F06-01_factors.tsv
+     4 integration_test/casegen/combination/factors/F06-01_interactions.tsv
+     2 integration_test/casegen/combination/factors/F06-01_processes.tsv
+  1809 total
+
+exec
+/bin/bash -lc 'for f in F04-04 F05-01 F05-02 F05-03 F05-04 F05-05 F05-06 F06-01; do echo "$f"; cat integration_test/casegen/combination/factors/${f}_{processes,factors,interactions,constraints}.tsv; done' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+F04-04
+処理ID	処理	契機	確かめる所	根拠
+P1	購入完了画面を表示して完了処理を行う	引き継いだ受注を持って購入完了画面を開く（注文確定後の遷移）	購入完了画面・受注明細（売上分析タグ）・スマレジのポイント連携・トップページ・エラー画面	L0076-L0092,L0097-L0101
+P2	使用ポイントを消費する	注文確定、またはSPLINKS決済では購入完了画面の表示	会員の保有ポイント（DB）	L0089-L0090
+P3	購入処理前のチェックをして購入処理へ進むかを決める	ご注文方法指定画面で注文するボタンを押す	システムエラー画面とカート画面（カートの中身）	L0032-L0038,L0110-L0111
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	購入完了画面を開いたときの判定	受注なし｜ステータス異常｜SPLINKS決済記録なし｜通過	受注なし: トップページへ戻す／ステータス異常: アラートメール送信・受注情報を初期化して購入処理エラー画面／SPLINKS決済記録なし: 受注ステータスを処理中へ戻し決済記録不整合のエラー画面／通過: 完了処理を行い購入完了画面を表示	L0078-L0082	この機能
+F02	P1	購入者の顧客グループ	店内アカウント｜通常	店内アカウント: 注文確定時に呼び出し番号を登録しTC注文番号と店内注文モニター案内を表示／通常: ご注文番号と注文完了メール・ヘルプページ案内を表示	L0086-L0088	この機能
+F03	P1,P2	使用ポイント	使用する｜使用しない	使用する: ポイントを消費しスマレジのポイント連携を別プロセスで実行／使用しない: ポイントの消費も連携も行わない	L0089-L0092	この機能
+F04	P2	支払方法	SPLINKS決済｜SPLINKS以外	SPLINKS決済: 購入完了画面の表示時にポイントを消費／SPLINKS以外: 注文確定時にポイントを消費	L0090	この機能
+F05	P1	商品の売上分析タグ	設定あり｜設定なし	設定あり: 受注明細へそのタグを登録／設定なし: 受注明細へ登録しない	L0092,L0100	この機能
+F06	P1	表示言語の切り替え保留	保留あり｜保留なし	保留あり: その言語のURLへ遷移し直して完了画面を表示／保留なし: そのまま完了画面を表示	L0092	この機能
+F07	P3	画面の支払方法と受注情報の支払方法	一致｜不一致	一致: 次のチェックへ進む／不一致: エラーとしシステムエラー画面へ遷移（カートはそのまま）	L0033,L0038	この機能
+F08	P3	商品公開ステータス	公開｜非公開	公開: 次のチェックへ進む／非公開: エラーとしシステムエラー画面へ遷移（カートはそのまま）	L0035,L0038	この機能
+F09	P3	購入制限数に対する注文数	範囲内｜超過	範囲内: 次のチェックへ進む／超過: エラーとしシステムエラー画面へ遷移（カートはそのまま）	L0036,L0038	この機能
+F10	P3	在庫	在庫管理で足りる｜在庫管理で不足｜在庫無制限	在庫管理で足りる: 購入処理へ進む／在庫管理で不足: 更新を取り消しエラーメッセージを表示してエラー画面へ遷移（カートはそのまま）／在庫無制限: 在庫チェックの対象外	L0037,L0038,L0110-L0111	この機能
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	効き合う	L0078-L0081,L0086-L0088	判定が通過のときだけ完了画面の表示（ご注文番号かTC注文番号）が決まる。受注なし・異常ではこの表示が行われない
+P1	F01+F03	効き合う	L0081,L0092	判定が通過のときだけポイント連携を行う。ステータス異常などでは行わない
+P1	F01+F05	効き合う	L0081,L0092,L0100	判定が通過のときだけ完了処理で売上分析タグを受注明細へ登録する
+P1	F01+F06	効き合う	L0081,L0092	判定が通過のときだけ完了処理として表示言語の遷移し直しを行う
+P1	F02+F03	関係しない		顧客グループは表示するご注文番号の種類を決め、使用ポイントはポイント連携の有無を決める。互いの結果を変える定めは無い
+P1	F02+F05	関係しない		顧客グループは番号表示、売上分析タグは受注明細への登録を決める。互いに影響しない
+P1	F02+F06	関係しない		顧客グループは番号表示、言語の切り替え保留は遷移先URLを決める。互いに影響しない
+P1	F03+F05	関係しない		ポイント連携と売上分析タグの登録はそれぞれ独立した完了処理
+P1	F03+F06	関係しない		ポイント連携の有無は言語の切り替え保留で変わらない
+P1	F05+F06	関係しない		売上分析タグの登録と言語の遷移し直しは独立
+P2	F03+F04	効き合う	L0090	ポイントを使う場合に限り、SPLINKS決済かどうかで消費する時点（注文確定時か購入完了画面の表示時）が変わる
+P3	F07+F08	関係しない		すべてのチェックを満たすときだけ購入処理へ進み、どれか1つで外れればエラー。結果は進む・エラーの2つだけで条件ごとの外れ方は1つずつ確かめれば足りる
+P3	F07+F09	関係しない		同上（すべて満たす・どれか1つで外れる型）
+P3	F07+F10	関係しない		同上（すべて満たす・どれか1つで外れる型）
+P3	F08+F09	関係しない		同上（すべて満たす・どれか1つで外れる型）
+P3	F08+F10	関係しない		同上（すべて満たす・どれか1つで外れる型）
+P3	F09+F10	関係しない		同上（すべて満たす・どれか1つで外れる型）
+処理ID	組	種別	根拠	理由
+P1	F01=受注なし&F03=使用する	作れない	L0078	引き継いだ受注が無いので、その受注に使用ポイントは存在しない
+P1	F01=受注なし&F05=設定あり	作れない	L0078	引き継いだ受注が無いので、受注明細へ登録する売上分析タグの対象商品が存在しない
+F05-01
+処理ID	処理	契機	確かめる所	根拠
+P1	強化買取商品コーナーに商品を出す	ネット買取トップページを開く	ネット買取トップページの強化買取商品コーナー	L0087-L0097
+P2	買取特集コーナーに商品を出す	ネット買取トップページを開く	ネット買取トップページの買取特集コーナー（カテゴリごと）	L0121-L0136
+P3	目玉買取商品枠に商品を出す	ネット買取トップページを開く	ネット買取トップページの目玉買取商品枠	L0178-L0188,L0213
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1,P2,P3	本店の商品公開ステータス	本店で公開｜本店で非公開	本店で公開: 表示対象になる／本店で非公開: 表示されない	L0092,L0131,L0183	この機能
+F02	P1,P2,P3	商品の状態	NM｜NM以外	NM: 表示対象になる／NM以外: 表示されない	L0093,L0132,L0184	この機能
+F03	P1,P2,P3	買取価格	1円以上｜0円	1円以上: 表示対象になる／0円: 表示されない	L0094,L0133,L0185	この機能
+F04	P3	高額商品コード	高額商品コードなし｜高額商品コードあり	高額商品コードなし: 表示対象になる／高額商品コードあり: 対象から外れる	L0213	この機能
+F05	P3	商品の言語	日本語か英語｜それ以外の言語	日本語か英語: 表示対象になる／それ以外の言語: 表示されない	L0213	この機能
+F06	P3	販売価格	販売価格が0円超｜販売価格が0円	販売価格が0円超: 表示対象になる／販売価格が0円: 対象から外れる	L0213	この機能
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	関係しない		表示条件はすべて満たす商品だけを出す型で、結果は表示する・しないの2つだけ。条件ごとの外れ方は1つずつ確かめれば足りる（L0090-L0094）
+P1	F01+F03	関係しない		表示条件はすべて満たす商品だけを出す型で、結果は表示する・しないの2つだけ。条件ごとの外れ方は1つずつ確かめれば足りる（L0090-L0094）
+P1	F02+F03	関係しない		表示条件はすべて満たす商品だけを出す型で、結果は表示する・しないの2つだけ。条件ごとの外れ方は1つずつ確かめれば足りる（L0090-L0094）
+P2	F01+F02	関係しない		表示条件はすべて満たす商品だけを出す型で、結果は表示する・しないの2つだけ。条件ごとの外れ方は1つずつ確かめれば足りる（L0129-L0133）
+P2	F01+F03	関係しない		表示条件はすべて満たす商品だけを出す型で、結果は表示する・しないの2つだけ。条件ごとの外れ方は1つずつ確かめれば足りる（L0129-L0133）
+P2	F02+F03	関係しない		表示条件はすべて満たす商品だけを出す型で、結果は表示する・しないの2つだけ。条件ごとの外れ方は1つずつ確かめれば足りる（L0129-L0133）
+P3	F01+F02	関係しない		表示条件はすべて満たす商品だけを出す型で、結果は表示する・しないの2つだけ。条件ごとの外れ方は1つずつ確かめれば足りる（L0181-L0185,L0213）
+P3	F01+F03	関係しない		表示条件はすべて満たす商品だけを出す型で、結果は表示する・しないの2つだけ。条件ごとの外れ方は1つずつ確かめれば足りる（L0181-L0185,L0213）
+P3	F01+F04	関係しない		表示条件はすべて満たす商品だけを出す型で、結果は表示する・しないの2つだけ。条件ごとの外れ方は1つずつ確かめれば足りる（L0181-L0185,L0213）
+P3	F01+F05	関係しない		表示条件はすべて満たす商品だけを出す型で、結果は表示する・しないの2つだけ。条件ごとの外れ方は1つずつ確かめれば足りる（L0181-L0185,L0213）
+P3	F01+F06	関係しない		表示条件はすべて満たす商品だけを出す型で、結果は表示する・しないの2つだけ。条件ごとの外れ方は1つずつ確かめれば足りる（L0181-L0185,L0213）
+P3	F02+F03	関係しない		表示条件はすべて満たす商品だけを出す型で、結果は表示する・しないの2つだけ。条件ごとの外れ方は1つずつ確かめれば足りる（L0181-L0185,L0213）
+P3	F02+F04	関係しない		表示条件はすべて満たす商品だけを出す型で、結果は表示する・しないの2つだけ。条件ごとの外れ方は1つずつ確かめれば足りる（L0181-L0185,L0213）
+P3	F02+F05	関係しない		表示条件はすべて満たす商品だけを出す型で、結果は表示する・しないの2つだけ。条件ごとの外れ方は1つずつ確かめれば足りる（L0181-L0185,L0213）
+P3	F02+F06	関係しない		表示条件はすべて満たす商品だけを出す型で、結果は表示する・しないの2つだけ。条件ごとの外れ方は1つずつ確かめれば足りる（L0181-L0185,L0213）
+P3	F03+F04	関係しない		表示条件はすべて満たす商品だけを出す型で、結果は表示する・しないの2つだけ。条件ごとの外れ方は1つずつ確かめれば足りる（L0181-L0185,L0213）
+P3	F03+F05	関係しない		表示条件はすべて満たす商品だけを出す型で、結果は表示する・しないの2つだけ。条件ごとの外れ方は1つずつ確かめれば足りる（L0181-L0185,L0213）
+P3	F03+F06	関係しない		表示条件はすべて満たす商品だけを出す型で、結果は表示する・しないの2つだけ。条件ごとの外れ方は1つずつ確かめれば足りる（L0181-L0185,L0213）
+P3	F04+F05	関係しない		表示条件はすべて満たす商品だけを出す型で、結果は表示する・しないの2つだけ。条件ごとの外れ方は1つずつ確かめれば足りる（L0181-L0185,L0213）
+P3	F04+F06	関係しない		表示条件はすべて満たす商品だけを出す型で、結果は表示する・しないの2つだけ。条件ごとの外れ方は1つずつ確かめれば足りる（L0181-L0185,L0213）
+P3	F05+F06	関係しない		表示条件はすべて満たす商品だけを出す型で、結果は表示する・しないの2つだけ。条件ごとの外れ方は1つずつ確かめれば足りる（L0181-L0185,L0213）
+処理ID	組	種別	根拠	理由
+F05-02
+処理ID	処理	契機	確かめる所	根拠
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+処理ID	要因	判定	根拠	理由
+処理ID	組	種別	根拠	理由
+F05-03
+処理ID	処理	契機	確かめる所	根拠
+P1	買取商品一覧を表示する	ネット買取商品一覧画面を検索条件つきで開く	ネット買取商品一覧画面（商品ごとの表示・上部の説明・案内）	L0183-L0200
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	検索結果の状態	検索条件が空｜0件｜1件以上9999件以下｜9999件を超える	検索条件が空: 検索フォームだけを表示／0件: 見つからない扱いで0件案内／1件以上9999件以下: 商品一覧を表示／9999件を超える: 商品を取得せず上限超過の案内を表示	L0185-L0188,L0209-L0211	この機能
+F02	P1	商品の種別	カード｜サプライ・グッズ	カード: 言語と同名商品検索を表示／サプライ・グッズ: 言語と同名商品検索を表示しない	L0093-L0095,L0116-L0117,L0126	この機能
+F03	P1	買取価格	500円未満｜500円以上	500円未満: 商品数とカートボタンを表示しない／500円以上: 商品数とカートボタンを表示する	L0092,L0125	この機能
+F04	P1	指定されたタグ	タグ1件指定｜タグ1件以外	タグ1件指定: そのタグの説明文を一覧上部に表示／タグ1件以外: 説明文を表示しない	L0190	この機能
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	効き合う	L0186-L0188	0件・条件が空・上限超過のときは商品を取得・表示しないので、商品の種別による表示の差が出ない
+P1	F01+F03	効き合う	L0186-L0188	0件・条件が空・上限超過のときは商品を表示しないので、買取価格によるカートボタンの出し分けが行われない
+P1	F01+F04	効き合う	L0185-L0190,L0211	件数の状態で一覧の出し方が変わり、タグの説明文を出すのは一覧が出る場合の上部。0件のときはページ全体が見つからない扱いになる
+P1	F02+F03	関係しない		言語・同名商品検索の出し分けは種別で、カートボタンの出し分けは買取価格で決まり、互いの値で変わらない
+P1	F02+F04	関係しない		タグの説明文の表示は指定タグの数だけで決まり、商品の種別で変わらない
+P1	F03+F04	関係しない		タグの説明文の表示は指定タグの数だけで決まり、買取価格で変わらない
+処理ID	組	種別	根拠	理由
+P1	F01=検索条件が空&F02=カード	作れない	L0185	検索条件が空のときは検索フォームだけで商品は出ない
+P1	F01=検索条件が空&F02=サプライ・グッズ	作れない	L0185	検索条件が空のときは検索フォームだけで商品は出ない
+P1	F01=検索条件が空&F03=500円未満	作れない	L0185	検索条件が空のときは検索フォームだけで商品は出ない
+P1	F01=検索条件が空&F03=500円以上	作れない	L0185	検索条件が空のときは検索フォームだけで商品は出ない
+P1	F01=検索条件が空&F04=タグ1件指定	作れない	L0185,L0190	タグの指定は検索条件なので、タグ1件を指定した時点で検索条件は空でない
+P1	F01=0件&F02=カード	作れない	L0186	0件のときは表示される商品が無い
+P1	F01=0件&F02=サプライ・グッズ	作れない	L0186	0件のときは表示される商品が無い
+P1	F01=0件&F03=500円未満	作れない	L0186	0件のときは表示される商品が無い
+P1	F01=0件&F03=500円以上	作れない	L0186	0件のときは表示される商品が無い
+P1	F01=9999件を超える&F02=カード	作れない	L0187	上限超過のときは商品を取得せず表示しない
+P1	F01=9999件を超える&F02=サプライ・グッズ	作れない	L0187	上限超過のときは商品を取得せず表示しない
+P1	F01=9999件を超える&F03=500円未満	作れない	L0187	上限超過のときは商品を取得せず表示しない
+P1	F01=9999件を超える&F03=500円以上	作れない	L0187	上限超過のときは商品を取得せず表示しない
+P1	F01=9999件を超える&F04=タグ1件指定	正解未定	L0187,L0190,L0210	上限超過の案内を出すとき、タグの説明文を一覧上部に出すかが書かれていない
+F05-04
+処理ID	処理	契機	確かめる所	根拠
+P1	買取商品詳細を表示する	商品ID（と言語・商品クラスの指定）でネット買取商品詳細画面を開く	ネット買取商品詳細画面（初期表示の言語・商品クラス、カード説明、カートボタン、同名カード一覧）	L0035-L0042,L0065-L0072,L0104-L0107,L0156-L0164
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	指定された言語	有効｜無効・未指定	有効: その言語を初期表示／無効・未指定: 先頭の言語を初期表示	L0159	この機能
+F02	P1	指定された商品クラス	有効｜無効・未指定	有効: そのクラスを初期表示／無効・未指定: 表示する言語の先頭クラスを初期表示	L0160	この機能
+F03	P1	商品の種別	カード｜基本土地｜サプライ・グッズ	カード: 言語切替・状態・他のバージョン・カード説明・同名カードを表示／基本土地: カードと同じだが同名カードの一覧を取得しない／サプライ・グッズ: 言語切替・状態・他のバージョン・カード説明を表示しない	L0065-L0070,L0107,L0130,L0164	この機能
+F04	P1	表示する規格の買取価格	500円未満｜500円以上	500円未満: 商品数とカートボタンを表示しない／500円以上: 商品数とカートボタンを表示する	L0071-L0072,L0182	この機能
+F05	P1	パワー・タフネスの登録	登録あり｜未登録	登録あり: カード説明に表示／未登録: 表示しない	L0118	この機能
+F06	P1	忠誠度の登録	登録あり｜未登録	登録あり: カード説明に表示／未登録: 表示しない	L0119	この機能
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	効き合う	L0159-L0160	クラスが有効かは表示する言語のクラスの中で決まり、言語が変わると先頭クラスも変わる
+P1	F01+F03	設計書が決めていない	L0065-L0068,L0159	サプライ・グッズに言語があるか、言語の指定が効くかが書かれていない
+P1	F01+F04	関係しない		カートボタンの出し分けは表示する規格の買取価格だけで決まり、言語の指定の仕方で変わらない
+P1	F01+F05	関係しない		パワー・タフネスの表示は登録の有無だけで決まり、言語の指定で変わらない
+P1	F01+F06	関係しない		忠誠度の表示は登録の有無だけで決まり、言語の指定で変わらない
+P1	F02+F03	設計書が決めていない	L0065-L0068,L0160	サプライ・グッズに商品クラスの指定が効くかが書かれていない
+P1	F02+F04	関係しない		カートボタンの出し分けは表示する規格の買取価格だけで決まる
+P1	F02+F05	関係しない		パワー・タフネスの表示は登録の有無だけで決まり、商品クラスの指定で変わらない
+P1	F02+F06	関係しない		忠誠度の表示は登録の有無だけで決まり、商品クラスの指定で変わらない
+P1	F03+F04	関係しない		カートボタンの出し分けは買取価格だけで決まり、カードかサプライかで変わらない
+P1	F03+F05	効き合う	L0107,L0118	カード説明の欄はカードの場合だけ表示され、サプライ・グッズではパワー・タフネスを表示しない
+P1	F03+F06	効き合う	L0107,L0119	カード説明の欄はカードの場合だけ表示され、サプライ・グッズでは忠誠度を表示しない
+P1	F04+F05	関係しない		別々の表示項目で、一方の値がもう一方の表示を変えない
+P1	F04+F06	関係しない		別々の表示項目で、一方の値がもう一方の表示を変えない
+P1	F05+F06	関係しない		別々の表示項目で、一方の値がもう一方の表示を変えない
+処理ID	組	種別	根拠	理由
+P1	F03=サプライ・グッズ&F01=有効	正解未定	L0065-L0068,L0159	サプライ・グッズで言語の指定が有効かどうか、初期表示がどうなるかが決まらない
+P1	F03=サプライ・グッズ&F02=有効	正解未定	L0065-L0068,L0160	サプライ・グッズで商品クラスの指定が有効かどうか、初期表示がどうなるかが決まらない
+F05-05
+処理ID	処理	契機	確かめる所	根拠
+P1	買取カート画面を開く（モーダルか空の案内か）	商品を買取カートへ追加して、またはそのままネット買取カート画面を開く	ネット買取カート画面（モーダル・空の案内）	L0034-L0037
+P2	買取カートへ商品を追加する	商品詳細または商品一覧で、数量を決めてカートに追加を押す	ネット買取カート画面（明細の数量）と追加結果のダイアログ	L0066-L0068,L0075-L0076,L0087-L0098
+P3	買取カートの数量を更新する	カート画面で数量を変更する（数量の一覧を送る）	ネット買取カート画面（明細・小計）	L0069-L0071,L0077
+P4	買取カートの明細を表示する	ネット買取カート画面を開く	ネット買取カート画面（商品名・画像・小計）	L0061-L0065
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	まとめて買取の商品がカートにあるか	ある｜ない	ある: モーダルを出さない／ない: 選んで買取がある場合にモーダルを出す	L0034	この機能
+F02	P1	選んで買取の商品がカートにあるか	ある｜ない	ある: まとめて買取が無ければモーダルを出す／ない: カートが空なら空の案内を出す	L0034-L0037	この機能
+F03	P2	追加する規格の指定	指定あり｜空	指定あり: 追加の処理を行う／空: エラー応答にしてカートを変更しない	L0067,L0075	この機能
+F04	P2	追加する数量の指定	指定あり｜指定なし	指定あり: その数量を追加／指定なし: 1を追加	L0067	この機能
+F05	P2	同じ規格が既にカートにあるか	ある｜ない	ある: 数量を加算／ない: 新しい明細として追加	L0068	この機能
+F06	P2	加算後の同じ規格の数量	20点以内｜20点を超える	20点以内: 数量を保存／20点を超える: 保存せず上限超過（HTTP400 overlimit）	L0068,L0076,L0095	この機能
+F07	P3	数量の一覧が渡されるか	渡される｜渡されない	渡される: 各商品の数量を書き換える／渡されない: 何も変更しない	L0071	この機能
+F08	P3	買取カートがあるか	ある｜ない	ある: 更新する／ない: 何も変更しない	L0071	この機能
+F09	P3	更新対象の数量	1〜20｜1未満｜数字でない	1〜20: その数量に書き換える／1未満: 明細をカートから外す／数字でない: 明細をカートから外す	L0070	この機能
+F10	P3	送った数量の一覧に20超があるか	20超を含まない｜20超を含む	20超を含まない: 更新を行う／20超を含む: 更新を中断し数量はそのまま	L0070,L0077,L0096	この機能
+F11	P4	カートの商品データが現在もあるか	現在もある｜削除済み	現在もある: 現在の価格・名前・画像で表示／削除済み: 合計から除き、カートからも取り除く	L0062-L0063	この機能
+F12	P4	商品の種別	カード｜サプライ・グッズ	カード: 商品名の先頭に言語コードを【】で付ける／サプライ・グッズ: 言語コードを付けない	L0065	この機能
+F13	P4	商品画像の登録	登録あり｜未登録	登録あり: 商品画像を表示／未登録: 代替画像を表示	L0065	この機能
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	効き合う	L0034-L0037	まとめて買取が無く選んで買取だけがあるときモーダル、両方無いときは空の案内、まとめて買取があるときはモーダルを出さない
+P2	F03+F04	効き合う	L0067	規格が空のときはエラー応答になり、数量の指定の有無による1の補完は行われない
+P2	F03+F05	効き合う	L0067-L0068	規格が空のときは同じ規格の加算が行われない
+P2	F03+F06	設計書が決めていない	L0067,L0075-L0076	規格が空で数量が20超のとき、エラー応答（HTTP500相当）と上限超過（HTTP400）のどちらを返すか書かれていない
+P2	F04+F05	関係しない		数量の指定の有無は追加する数を決めるだけで、既存の有無で変わらない
+P2	F04+F06	効き合う	L0067-L0068	数量の指定が無いときは1を加算するので、加算後の数量が20を超えるかの判定の入力が変わる
+P2	F05+F06	効き合う	L0068	既にあるときは既存の数量に加算した数量で上限を判定し、無いときは追加する数量だけで判定する
+P3	F07+F08	効き合う	L0071	数量の一覧が渡されない、またはカートが無いときは何も変更しない
+P3	F07+F09	効き合う	L0070-L0071	数量の一覧が渡されないときは更新対象の数量が無く、書き換え・取り外しの処理が行われない
+P3	F07+F10	効き合う	L0070-L0071	数量の一覧が渡されないときは20超の判定が行われない
+P3	F08+F09	効き合う	L0071	カートが無いときは書き換え・取り外しの対象が無い
+P3	F08+F10	効き合う	L0070-L0071	カートが無いときは何も変更せず、20超による中断の判定が行われるかが変わる
+P3	F09+F10	効き合う	L0070	20超を含むと更新を中断するので、1未満・数字でない数量の取り外しも行われるかが変わる
+P4	F11+F12	効き合う	L0063,L0065	商品データが削除済みの明細は除かれるので、言語コードの付与が行われない
+P4	F11+F13	効き合う	L0063,L0065	商品データが削除済みの明細は除かれるので、画像・代替画像の表示が行われない
+P4	F12+F13	関係しない		言語コードの付与は種別で、代替画像は画像の登録で決まり、互いの値で変わらない
+処理ID	組	種別	根拠	理由
+P2	F03=空&F05=ある	作れない	L0062,L0068	カートが保持するのは規格と数量で、空の規格が既にカートにあることは無い
+P2	F03=空&F06=20点を超える	正解未定	L0067,L0075-L0076	規格が空で数量が20超のときの応答が決まらない
+P2	F04=指定なし&F05=ない&F06=20点を超える	作れない	L0067,L0068	数量の指定が無いと1を加算するので、既存が無ければ加算後は1で20を超えない
+P3	F07=渡されない&F09=1〜20	作れない	L0071	数量の一覧が渡されないので更新対象の数量が無い
+P3	F07=渡されない&F09=1未満	作れない	L0071	数量の一覧が渡されないので更新対象の数量が無い
+P3	F07=渡されない&F09=数字でない	作れない	L0071	数量の一覧が渡されないので更新対象の数量が無い
+P3	F07=渡されない&F10=20超を含む	作れない	L0071	数量の一覧が渡されないので20超の数量も無い
+P3	F08=ない&F09=1〜20	作れない	L0071	カートが無いので更新対象の明細が無い
+P3	F08=ない&F09=1未満	作れない	L0071	カートが無いので更新対象の明細が無い
+P3	F08=ない&F09=数字でない	作れない	L0071	カートが無いので更新対象の明細が無い
+P3	F08=ない&F10=20超を含む	正解未定	L0070-L0071	カートが無いときに、20超の数量について上限超過の要求エラーを積むかが決まらない
+P3	F09=1未満&F10=20超を含む	正解未定	L0070	更新を中断するとき、同時に送った1未満の数量による取り外しを先に行うかが決まらない
+P3	F09=数字でない&F10=20超を含む	正解未定	L0070	更新を中断するとき、同時に送った数字でない数量による取り外しを先に行うかが決まらない
+F05-06
+処理ID	処理	契機	確かめる所	根拠
+P1	買取依頼を確定して買取受注を作る	記入画面で申込みボタンを押し、モーダルの申込みボタンを押す	ネット買取管理の買取情報編集画面（承諾方法・適格請求書発行事業者情報）	L0061-L0068,L0125
+P2	職業・生年月日を会員情報へ反映し支店システムへ通知する	記入画面で申込みボタンを押し、モーダルの申込みボタンを押す	会員登録編集画面（職業・生年月日）、支店システムへの会員更新通知	L0055,L0069,L0128
+P3	買取商品をメモへ保存する	記入画面で申込みボタンを押し、モーダルの申込みボタンを押す	買取受注のメモ（DB）	L0070-L0071,L0130
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	買取の承諾方法	査定結果を確認してから承諾する｜自動承諾を利用する	査定結果を確認してから承諾する: 買取受注の自動承諾は無効／自動承諾を利用する: 買取受注の自動承諾を有効にする	L0063-L0064,L0125	この機能
+F02	P1	適格請求発行事業者の確認	はい｜いいえ	はい: 登録番号を適格請求書発行事業者情報として登録する／いいえ: 適格請求書発行事業者情報は登録しない	L0056,L0068	この機能
+F03	P2	会員の職業	登録済み｜未登録で入力する	登録済み: 入力フォームを出さず会員情報は変えない／未登録で入力する: 入力した職業を会員情報にも反映する	L0055,L0069,L0088-L0090	この機能
+F04	P2	会員の生年月日	登録済み｜未登録で入力する	登録済み: 入力フォームを出さず会員情報は変えない／未登録で入力する: 入力した生年月日を会員情報にも反映する	L0055,L0069,L0091-L0093	この機能
+F05	P3	買取商品のカード詳細ID	カード詳細IDあり｜カード詳細IDなし	カード詳細IDあり: メモに保存しない／カード詳細IDなし: パックやサプライとして名称と数量をメモに保存する	L0070	この機能
+F06	P3	買取の区分	選んで買取｜まとめて買取	選んで買取: メモ保存の対象になりうる／まとめて買取: メモへの保存の対象から外す	L0071,L0130	この機能
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	関係しない		自動承諾の有無は承諾方法だけで決まり、適格請求書発行事業者情報の登録は確認の回答だけで決まる
+P2	F03+F04	効き合う	L0128	会員情報が変わったときだけ支店システムへ通知するため、通知の有無は職業と生年月日のどちらかが変わるかで決まる
+P3	F05+F06	効き合う	L0070,L0130	メモに保存されるのはカード詳細IDが無く、かつまとめて買取でない商品だけ
+処理ID	組	種別	根拠	理由
+F06-01
+処理ID	処理	契機	確かめる所	根拠
+P1	会員情報を登録する（仮会員または本会員の登録と登録完了メール）	会員登録確認画面で登録するボタンを押す	DB（会員情報・会員住所）・メールボックス・登録エラー画面	L0216-L0230,L0254-L0257,L0273-L0274,L0296-L0300,L0311
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	仮会員機能	有効｜無効	有効: 仮会員で登録し仮会員登録完了メールを送る／無効: 本会員登録完了メールを送り本会員登録画面へ移って本会員登録を完了する	L0222-L0230,L0273-L0274,M10-01:L0077	M10-01（設定）
+F02	P1	ブラックリストとの照合	該当なし｜該当あり	該当なし: 登録する／該当あり: 登録せず会員情報登録エラー画面へ移る	L0216-L0220,L0254-L0257,L0311,M08-13:L0036-L0039,M08-13:L0059-L0060	M08-13（データ）
+F03	P1	国	Japan｜Japan以外	Japan: 会員住所に入力した郵便番号の追加の控えは作らない／Japan以外: 会員住所にも入力した郵便番号を控える	L0296,L0300	この機能
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	効き合う	L0216,L0224-L0229,L0311	ブラックリストに該当すると仮会員登録も本会員登録も行わず、登録完了メールも送らない
+P1	F02+F03	効き合う	L0300,L0311	ブラックリストに該当すると登録しないので、日本以外の郵便番号の控えも作られない
+P1	F01+F03	関係しない		仮会員機能は会員の状態とメールの種類を決め、国は郵便番号の控えを決める。相手の値で変わると設計書は定めない
+処理ID	組	種別	根拠	理由
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/F05-01/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/F05-02/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+##### 0305 sheet-4 ネット買取商品検索
+L0001	ネット買取商品検索
+L0002	ドキュメント名フロント_ネット買取 基本設計書
+L0003	セクション—
+L0004	プロジェクト名フロント_ネット買取機能
+L0005	作成者緑川
+L0006	作成日2025-06-12
+L0007	更新者緑川
+L0008	更新日2025-09-22
+L0009	機能NoF05-02
+L0010	機能名ネット買取商品検索
+L0011	概要ネット買取商品の詳細検索ができる
+L0012	処理概要（★はカスタマイズ項目）
+L0013	レイアウト図
+L0014	SP
+L0015	1
+L0016	3
+L0017	4
+L0018	5
+L0019	6
+L0020	7
+L0021	8
+L0022	9
+L0023	10
+L0024	11
+L0025	12
+L0026	13
+L0027	15
+L0028	14
+L0029	16
+L0030	2
+L0031	17
+L0032	18
+L0033	19
+L0034	20
+L0035	1
+L0036	ネット買取商品検索 / E9 / image 1
+L0037	PC
+L0038	カスタマイズ説明
+L0039	・カスタマイズ要件
+L0040	現行機能をベースに下記カスタマイズを行う
+L0041	固有色について
+L0042	・検索条件に固有色を追加する
+L0043	検索条件のURL形式について
+L0044	・SEO対策として、タグやカテゴリの検索条件は「/tag/category」のようにURLのパスに含め、
+L0045	それ以外の検索条件は「?key=value」のようにGETパラメータとして扱う
+L0046	ユニサーチでの検索機能を追加
+L0047	・ネット買取商品のみを検索対象に含める
+L0048	・カスタマイズ要件に記載の内容以外は現行踏襲とする。
+L0049	機能仕様処理概要（★はカスタマイズ項目）
+L0050	★現行では商品詳細検索画面で表示していたのを、モーダル表示とする
+L0051	★画面上でモーダル外を押下すると、モーダルを閉じる
+L0052	★SEO対策として、タグやカテゴリの検索条件は「/tag/category」のようにURLのパスに含め、
+L0053	それ以外の検索条件はURL「?」のあとに「条件名＝値」という形で指定します。
+L0054	(例) タグが「最新入荷アイテム(New Items)」、カテゴリが「シングルカード(Single Cards)」である商品の場合、下記のようなURLとする
+L0055	https://~/purchase/search/New%20Items/Single%20Cards
+L0056	※「シングルカード(Single Cards)」のスペースはURLではそのまま使用できないため、
+L0057	スペースを入れたいときは「%20」という記号を使用する
+L0058	★固有色、フレームでの検索を追加する
+L0059	★Foilの検索に特殊を追加する
+L0060	★検索はユニサーチで行う
+L0061	検索の仕様についてはネット買取商品一覧シートを参照
+L0062	識別ID	ラベル	書式・制限	必須	最大文字数
+L0063	または最大値	初期値	画面部品の説明
+L0064	1	商品名	半角・全角	-	-	-	-
+L0065	2	カテゴリ	単一選択(セレクトボックス)	-	-	-	-
+L0066	3	カードセット	単一選択(セレクトボックス)	-	-	-	- 2026/6/10木村：カテゴリと同じ項目のため削除
+L0067	4	色	複数選択(チェックボックス)	-	-	-	・下記の選択肢を画像で表示する
+L0068	白 青 黒 赤 緑 無色
+L0069	5	色の論理演算子	単一選択(ラジオボタン)	-	-	-	-
+L0070	6	固有色	複数選択(チェックボックス)	-	-	-	・下記の選択肢を画像で表示する
+L0071	白 青 黒 赤 緑 無色
+L0072	・選択していない色をNOT検索とする
+L0073	7	マナ・コスト	複数選択(チェックボックス)	-	-	-	-
+L0074	8	カードタイプ	複数選択(チェックボックス)	-	-	-	-
+L0075	9	カードタイプの論理演算子	単一選択(ラジオボタン)	-	-	-	-
+L0076	10	サブタイプ	単一選択(セレクトボックス)	-	-	-	-
+L0077	11	フォーマット	単一選択(セレクトボックス)	-	-	-	・管理画面で「商品検索に表示」にチェックをつけて登録しているもののみを表示
+L0078	※管理画面で「商品検索に表示」を設定する画面は、別紙「基本設計仕様書(カード管理)」のフォーマット詳細(登録・編集・削除)シートを参照
+L0079	12	禁止カードも表示する	単一選択(チェックボックス)	-	-	-	-
+L0080	13	言語	複数選択(チェックボックス)	-	-	-	-
+L0081	14	レアリティ	複数選択(チェックボックス)	-	-	-	-
+L0082	15	Foil	複数選択(チェックボックス)	-	-	-	※カスタマイズ対応、検索条件にFoil「特殊」を追加する
+L0083	16	フレーム	複数選択(チェックボックス)	-	-	-	※カスタマイズ対応、項目を新規追加
+L0084	・選択肢: 通常 特殊
+L0085	17	イラストレーター	単一選択(セレクトボックス)	-	-	-	-
+L0086	18	閉じる	モーダルを閉じるボタン	-	-	-	・押下すると、表示しているモーダルを閉じる
+L0087	19	クリア	フォームクリアボタン	-	-	-	・入力された各項目の値を空白にする
+L0088	20	検索	ボタン	-	-	-	・入力項目一覧で設定された値をもとに検索を実行する
+L0089	Source:
+L0090	functions/pf-eccube3/f05-02_front_online_purchase_buy_product_search.md
+L0091	現行仕様
+L0092	F05-02 ネット買取商品検索 / F05-02（ネット買取商品検索）
+L0093	業務ロジック
+L0094	検索条件
+L0095	カード名の入力には、カード名の一覧とサプライ名の一覧を用いた入力候補の表示を行う。
+L0096	買取特集タグは、検索フォームに入力欄を出さずに、直前の検索条件から引き継いで再検索に持ち回す。
+L0097	表示順、並び順、カードIDも入力欄を出さないが、検索ボタンからの再検索では引き継がない。一覧の絞り込み操作で検索し直すときにだけ引き継ぐ。
+L0098	検索の成立条件
+L0099	検索条件が空のときは、検索フォームだけを表示する。全件検索に相当する条件のときは検索を実行せず、空の結果として扱う。
+L0100	全件検索に相当するのは、商品名・カテゴリ・カードセット・フォーマット・価格の下限・価格の上限・イラストレーター・サブタイプがいずれも空で、色・固有色・マナコスト・レアリティ・カードタイプ・Foil・言語・タグ・カードIDがいずれも指定されず、在庫の指定が無いか在庫あり・なしのすべてを表示する指定のときである。
+L0101	検索結果が0件のときは、全件検索に相当する条件で空の結果としたときも含めて、該当なしの案内を付けた一覧を表示し、HTTPステータス404で応答する。
+L0102	付随して取得するもの
+L0103	買取特集タグが指定されているときは、対応する説明文（イベント・セールの説明）を取得する。カードIDが指定されているときは、対象のカード情報を取得する。
+L0104	取得したカード情報の日本語名は、ページタイトルとパンくずの検索条件に表示する。カードIDは検索条件にも加わり、一覧はそのカードIDの商品だけに絞り込まれる。
+L0105	色とカードタイプの論理演算子
+L0106	色とカードタイプは、それぞれ論理演算子「or」「and」の単一選択を持ち、初期値は「or」とする。「and」のときは、選んだ色（カードタイプ）をすべて持つ商品だけを抽出する。「or」のときは、選んだ色（カードタイプ）を1つでも持つ商品を抽出する。色（カードタイプ）を1つも選ばないときは、論理演算子にかかわらずその条件では絞り込まない。
+L0107	表示件数
+L0108	1ページの表示件数は、指定がないときは60件とする。表示するページは、指定がないときは1ページ目とする。
+L0109	入出力
+L0110	種類	内容
+L0111	入力	検索フォームの各条件。
+L0112	成功時出力	検索フォーム、または絞り込み結果の一覧。
+L0113	失敗時出力	検索結果が0件のときは、該当なしの案内を付けた一覧をHTTPステータス404で返す。
+L0114	リニューアル後の仕様
+L0115	表示メッセージ
+L0116	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0117	—	検索ボタン	検索	検索フォームの表示時	指定した条件で検索する
+L0118	—	カード名の入力欄	カード名の入力欄に表示する案内文言	検索フォームの表示時	検索フォームに留まる
+
+ succeeded in 0ms:
+##### 0305 sheet-3 ネット買取トップページ
+L0001	ネット買取トップページ
+L0002	ドキュメント名フロント_ネット買取 基本設計書
+L0003	セクション—
+L0004	プロジェクト名フロント_ネット買取機能
+L0005	作成者緑川
+L0006	作成日2025-06-12
+L0007	更新者盛田
+L0008	更新日2025-11-12
+L0009	機能NoF05-01
+L0010	機能名ネット買取トップページ
+L0011	概要ネット買取トップページ
+L0012	処理概要（★はカスタマイズ項目）
+L0013	処理概要（★はカスタマイズ項目）
+L0014	処理概要（★はカスタマイズ項目）
+L0015	処理概要（★はカスタマイズ項目）
+L0016	処理概要（★はカスタマイズ項目）
+L0017	ネット買取トップページ / L459 / image 1
+L0018	ネット買取トップページ / O369 / image 2
+L0019	ネット買取トップページ / J185 / image 3
+L0020	ネット買取トップページ / D114 / image 4
+L0021	ネット買取トップページ / C137 / image 5
+L0022	ネット買取トップページ / B412 / image 6
+L0023	ネット買取トップページ / D491 / image 7
+L0024	ネット買取トップページ / D9 / image 8
+L0025	ネット買取トップページ / Y8 / image 9
+L0026	ネット買取トップページ / D265 / image 10
+L0027	ネット買取トップページ / AB459 / image 11
+L0028	ネット買取トップページ / O486 / image 12
+L0029	ネット買取トップページ / H516 / image 13
+L0030	レイアウト図（TOP)
+L0031	SPPC
+L0032	カスタマイズ説明
+L0033	・カスタマイズ要件
+L0034	現行機能をベースに下記カスタマイズを行う
+L0035	強化買取商品
+L0036	・強化買取のタグが付いた商品を表示する
+L0037	買取特集コーナー
+L0038	・下記のタグが付いた商品を表示する
+L0039	・モダン
+L0040	・昔MTGをプレイしていた方
+L0041	・統率者
+L0042	・プロモ
+L0043	・高額Foil
+L0044	・パック・BOX
+L0045	最新セットカテゴリの表示
+L0046	・商品カテゴリの第一階層が「最新セット」であるカテゴリをツリー表示する
+L0047	最新セット以外のカテゴリ表示
+L0048	・商品カテゴリの第一階層が「最新セット」以外のカテゴリを最新セット表示と分けてツリー表示する
+L0049	※0204_管理画面_商品管理.xlsxの「別添資料_カテゴリ子検索条件について」にて表示条件を整理
+L0050	目玉買取商品
+L0051	・目玉買取商品のページングを追加する
+L0052	・1ページあたり商品60件を表示する
+L0053	備考
+L0054	デザインに関する仕様については、設計フェーズにて確定とする
+L0055	※バナーの追加削除や要素の配置換え等
+L0056	・カスタマイズ要件に記載の内容以外は現行踏襲とする。
+L0057	機能仕様処理概要（★はカスタマイズ項目）
+L0058	・買取方法・流れ、選べる2つの買取スタイルのリンクについて
+L0059	・ネット買取リンクはURL（user_data/purchase_net）とする
+L0060	・店頭買取リンクはURL（user_data/purchase_store）とする
+L0061	・買取新着商品
+L0062	・買取新着商品詳細に記載
+L0063	・買取特集コーナー
+L0064	・買取特集コーナー詳細に記載
+L0065	・カテゴリ
+L0066	・カテゴリ詳細に記載
+L0067	・目玉買取商品
+L0068	・目玉買取商品詳細に記載
+L0069	識別ID	ラベル	書式・制限	必須	最大文字数
+L0070	または最大値	初期値	画面部品の説明
+L0071	1	買取方法・流れ	リンク	-	-
+L0072	2	買取新着商品	-	-	-
+L0073	3	買取特集コーナー	-	-	-
+L0074	4	まとめて買取	リンク	-	-		まとめて買取の商品詳細画面へ遷移する
+L0075	5	カテゴリ	-	-	-
+L0076	6	選べる2つの買取スタイル	-	-	-
+L0077	7	目玉買取商品	-	-	-
+L0078	レイアウト図（買取新着商品)
+L0079	SP
+L0080	PC
+L0081	カスタマイズ説明
+L0082	・カスタマイズ要件
+L0083	現行機能をベースに下記カスタマイズを行う
+L0084	強化買取商品
+L0085	・強化買取のタグが付いた商品を表示する
+L0086	機能仕様処理概要（★はカスタマイズ項目）
+L0087	★強化買取商品コーナーの表示
+L0088	・下記のタグが付いた商品をカテゴリごとに表示する
+L0089	・強化買取
+L0090	・下記1~6の条件で商品を表示する
+L0091	1 各タグの商品
+L0092	2 本店の商品公開ステータスが公開となっている
+L0093	3 NMの商品
+L0094	4 買取価格1円以上の商品
+L0095	5
+L0096	ユニサーチの検索となるためソート順はシート「ネット買取商品一覧」を参照。 2026/7/16木村：ユニサーチ適用時の修正漏れ。ECCUBE_HARERUYA-1835ソート順はユニサーチ検索と同じ。
+L0097	6 最大60件
+L0098	識別ID	ラベル	書式・制限	必須	最大文字数
+L0099	または最大値	初期値	画面部品の説明
+L0100	1	商品画像	画像	-	-	-
+L0101	2	カード言語	ラベル	-	-	-	・カード商品のみ表示する
+L0102	・商品に登録している言語コードを表示する
+L0103	3	商品名	ラベル	-	-	-
+L0104	4	買取価格	ラベル	-	-	-	2026/7/16木村：書式をリンクからラベルに変更。（デザイン上ラベル）
+L0105	5	もっと見るボタン	ボタン	-	-	-
+L0106	レイアウト図（買取特集コーナー)
+L0107	SP
+L0108	PC
+L0109	カスタマイズ説明
+L0110	・カスタマイズ要件
+L0111	現行機能をベースに下記カスタマイズを行う
+L0112	買取特集コーナー
+L0113	・下記のタグが付いた商品を表示する
+L0114	・モダン
+L0115	・昔MTGをプレイしていた方
+L0116	・統率者
+L0117	・プロモ
+L0118	・高額Foil
+L0119	・パック・BOX
+L0120	機能仕様処理概要（★はカスタマイズ項目）
+L0121	★買取特集コーナーの表示
+L0122	・下記のタグが付いた商品をカテゴリごとに表示する
+L0123	・買取モダン(ID:633)
+L0124	・昔マジックをプレイしていた方へ(ID:634)
+L0125	・買取統率者(ID:635)
+L0126	・プロモカード(ID:637)
+L0127	・日本語高額Foil(ID:636)
+L0128	・パック＆ボックス(ID:638)
+L0129	・下記1~6の条件で商品を表示する
+L0130	1 各タグの商品
+L0131	2 本店の商品公開ステータスが公開となっている
+L0132	3 NMの商品
+L0133	4 買取価格1円以上の商品
+L0134	5
+L0135	ユニサーチの検索となるためソート順はシート「ネット買取商品一覧」を参照。 2026/7/16木村：ユニサーチ適用時の修正漏れ。ECCUBE_HARERUYA-1835ソート順はユニサーチ検索と同じ。
+L0136	6 3件表示する
+L0137	・もっと見るボタン
+L0138	・ボタン押下で該当のカテゴリを条件にネット買取商品一覧画面へ遷移する
+L0139	識別ID	ラベル	書式・制限	必須	最大文字数
+L0140	または最大値	初期値	画面部品の説明
+L0141	1	カテゴリ名	ラベル	-	-	-
+L0142	2	商品画像	画像	-	-	-
+L0143	3	カード言語	ラベル	-	-	-	・カード商品のみ表示する
+L0144	・商品に登録している言語コードを表示する
+L0145	4	商品名	ラベル	-	-	-
+L0146	5	買取価格	ラベル	-	-	-
+L0147	6	週間販売数	ラベル	-	-	-	・PCのみ表示 2026/6/15木村：買取ではのちに不要な項目になったため削除
+L0148	7	もっと見るボタン	ボタン	-	-	-
+L0149	レイアウト図（検索)
+L0150	SP
+L0151	PC
+L0152	カスタマイズ説明
+L0153	・カスタマイズ要件
+L0154	現行機能をベースに下記カスタマイズを行う
+L0155	最新セットカテゴリの表示
+L0156	・商品カテゴリの第一階層が「最新セット」であるカテゴリをツリー表示する
+L0157	最新セット以外のカテゴリ表示
+L0158	・商品カテゴリの第一階層が「最新セット」以外のカテゴリを最新セット表示と分けてツリー表示する
+L0159	※0204_管理画面_商品管理.xlsxの「別添資料_カテゴリ子検索条件について」にて表示条件を整理
+L0160	機能仕様処理概要（★はカスタマイズ項目）
+L0161	★ECTOPと同様の表示とする
+L0162	識別ID	ラベル	書式・制限	必須	最大文字数
+L0163	または最大値	初期値	画面部品の説明
+L0164	1	最新セットボタン	ボタン	-	-	-
+L0165	2	フォーマット別ボタン	ボタン	-	-	-
+L0166	3	フォーマット別とは？	リンク	-	-	-
+L0167	4	その他アイテムボタン	ボタン	-	-	-
+L0168	レイアウト図（目玉買取商品)
+L0169	SP
+L0170	PC
+L0171	カスタマイズ説明
+L0172	・カスタマイズ要件
+L0173	現行機能をベースに下記カスタマイズを行う
+L0174	目玉買取商品
+L0175	・60件表示する
+L0176	・もっと見るボタン押下で目玉商品一覧画面へ遷移する
+L0177	機能仕様処理概要（★はカスタマイズ項目）
+L0178	★目玉買取商品枠を追加する
+L0179	・60件表示する
+L0180	・もっと見るボタン押下で目玉商品一覧画面へ遷移する
+L0181	・下記1~6の条件で商品を表示する
+L0182	1 「目玉買取商品(ID:5)」タグの商品
+L0183	2 本店の商品公開ステータスが公開となっている
+L0184	3 NMの商品
+L0185	4 買取価格1円以上の商品
+L0186	5
+L0187	ユニサーチの検索となるためソート順はシート「ネット買取商品一覧」を参照。 2026/7/16木村：ユニサーチ適用時の修正漏れ。ECCUBE_HARERUYA-1835ソート順はユニサーチ検索と同じ。
+L0188	6 最大60件
+L0189	識別ID	ラベル	書式・制限	必須	最大文字数
+L0190	または最大値	初期値	画面部品の説明
+L0191	1	商品画像	画像	-	-	-	・押下すると、拡大画像を表示する
+L0192	2	カード言語	ラベル	-	-	-	・カード商品のみ表示する
+L0193	・商品に登録している言語コードを表示する
+L0194	3	商品名	ラベル	-	-	-	-
+L0195	4	買取価格	ラベル	-	-	-	-
+L0196	5	マイナス	ボタン	-	-	-	・押下すると、(3-13)商品数を1つ減らす
+L0197	・商品の買取価格が500円未満の場合はボタンを表示しない
+L0198	6	商品数	数値（整数）	-	-	-	・商品の買取価格が500円未満の場合は商品数、入力項目を表示しない
+L0199	7	プラス	ボタン	-	-	-	・押下すると、商品数を1つ増やす
+L0200	・商品の買取価格が500円未満の場合はボタンを表示しない
+L0201	8	カートに入れる	ボタン	-	-	-	・押下すると、対象の商品を商品数で選択している数量分カートに追加する
+L0202	・商品がカードの場合、カードの状態ごとに商品数を入力し、カートに一括追加できる
+L0203	・商品の買取価格が500円未満の場合は商品数、ボタンを表示しない
+L0204	9	同名商品検索	リンク	-	-	-	・カード商品のみ表示する
+L0205	・押下すると、同じカードIDで検索したネット買取商品一覧画面に遷移する
+L0206	10	もっと見る	ボタン	-	-	-	・押下すると、目玉商品一覧画面に遷移する
+L0207	Source:
+L0208	functions/pf-eccube3/f05-01_front_online_purchase_buy_top.md
+L0209	現行仕様
+L0210	F05-01 ネット買取トップページ / F05-01（ネット買取トップページ）
+L0211	業務ロジック
+L0212	目玉買取商品の抽出
+L0213	抽出条件は固定で、画面から指定できない。高額商品コードを持つ商品サブクラスは対象から外す。取り扱う言語は日本語と英語に限り、それ以外の言語で登録された商品サブクラスは表示しない。販売価格が0円の規格は対象から外す。該当が0件のときは一覧を空で表示し、エラーとしない。抽出結果は30秒間保持され、その間に商品データを更新しても表示には反映されない。
+L0214	一覧の表示
+L0215	商品画像は先に読み込み中の画像を表示し、読み進めて表示位置に入った時点で実画像へ差し替える。商品画像が登録されていないときは、画像なしを表す代替画像を同じ手順で表示する。買取価格は商品データの登録値をそのまま表示するだけで、本機能では計算しない。本ページではショップ名の見出しを表示しない。
+L0216	カート追加の応答
+L0217	「カートに追加」の押下は画面遷移を伴わず非同期で行い、処理中は押下したボタンの位置に読み込み中の表示を出す。処理が終わると読み込み中の表示を消してボタンを元に戻し、成否いずれの結果も押下した商品の位置にダイアログで知らせる。ダイアログの文言と、閉じるまでのふるまい（自動的に閉じるか、利用者が閉じるまで残るか）はF05-05を正とする。買取カートへ追加するふるまいもF05-05を正とする。
+L0218	カテゴリ一覧
+L0219	カテゴリ一覧は、販売側の商品カテゴリ一覧と同じデータ（カードセット、レアリティ、カテゴリ）から、同じツリー構造と表示項目で表示する。各カテゴリの遷移先は、販売側の商品検索に代えて買取商品検索とする。販売側と異なり、遷移先に並び順の指定を付けない。販売側だけが表示する決済・受取・発送・ポイントの販促バナーは表示しない。
+L0220	商品数の入力範囲
+L0221	商品数の初期値は1とする。増減ボタンで設定できる値は1から20までとする。
+L0222	入出力
+L0223	種類	内容
+L0224	入力	なし（検索条件・絞り込み条件を受け取らない）
+L0225	成功時出力	目玉買取商品の一覧を含むトップページのHTML
+L0226	失敗時出力	本機能固有のエラー応答は持たない
+L0227	リニューアル後の仕様
+L0228	表示メッセージ
+L0229	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0230	—	ページ見出し	目玉買取商品	トップページの表示時	見出しの下に目玉買取商品の一覧を表示する
+L0231	本機能は固有のエラー文言を生成しない。
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/F04-04/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+##### 0304 sheet-7 決済~購入完了
+L0001	決済~購入完了
+L0002	ドキュメント名フロント_注文 基本設計仕様書
+L0003	セクション—
+L0004	プロジェクト名フロント_注文機能
+L0005	作成者緑川
+L0006	作成日2025-06-12
+L0007	更新者盛田
+L0008	更新日2025-11-10
+L0009	機能NoF04-04
+L0010	機能名決済~購入完了
+L0011	概要管理画面に注文データを登録し、注文完了メールを送信します。
+L0012	処理概要（★はカスタマイズ項目）
+L0013	レイアウト図
+L0014	1
+L0015	2
+L0016	3
+L0017	4
+L0018	5
+L0019	決済~購入完了 / D8 / image 1
+L0020	顧客グループ：店内アカウント レイアウト図
+L0021	1
+L0022	2
+L0023	4
+L0024	5
+L0025	決済~購入完了 / F35 / image 2
+L0026	カスタマイズ説明
+L0027	・カスタマイズ要件
+L0028	現行機能をベースに下記カスタマイズを行う
+L0029	・ECCUBE側で保持している原価情報を使用して総原価・総在庫を増減する処理を行い、在庫履歴を登録する
+L0030	機能仕様処理概要（★はカスタマイズ項目）
+L0031	・画面遷移時の処理
+L0032	・購入処理前の下記のチェックをする
+L0033	・支払方法が受注情報に保持している支払方法と一致していない場合エラーとする
+L0034	・カートに入っている商品のチェック
+L0035	・商品公開ステータスチェックし非公開商品の場合はエラーとする
+L0036	・商品制限数チェックし購入制限数より商品数が多い場合はエラーとする
+L0037	・購入数量と在庫数をチェックして在庫がなければエラーとする
+L0038	・エラーの場合、カート内の商品そのままの状態でシステムエラーの画面へ遷移する
+L0039	・・ 購入処理を行う
+L0040	・購入したユーザの情報を更新する
+L0041	・累計合計回数のカウントを１増やす
+L0042	・累計合計金額に今回の購入金額を加算する
+L0043	・在庫調整
+L0044	★ECCUBE側で保持している原価情報を使用して総原価・総在庫を増減する処理を行い、在庫履歴を登録する
+L0045	・在庫履歴登録
+L0046	・商品情報
+L0047	・総在庫
+L0048	・総原価
+L0049	・受注情報
+L0050	・注文数
+L0051	・総原価
+L0052	【注文に伴う原価と在庫の変動の例】
+L0053	処理
+L0054	順序	操作内容	入庫情報	商品情報		受注情報
+L0055			入庫数 仕入単価	在庫数	総原価	注文数 欠品数	総原価
+L0056	1	注文前		10	5000
+L0057	2	商品を３つ注文		7	3500	3	1500
+L0058	・購入グループで表示内容を変更する
+L0059	・購入グループが店内アカウントの場合はご注文番号ではなく、TC注文番号を表示する
+L0060	・ご注文番号表示下にある文言も変更
+L0061	★フリースペースの追加
+L0062	・管理画面>コンテンツ管理>ブロック管理から文章の設定ができるようにする
+L0063	★店内アカウントの場合、画面を表示してから1分後に注文した店舗のTOP画面へ自動的に遷移する
+L0064	識別ID	ラベル	書式・制限	必須	最大文字数
+L0065	または最大値	初期値	画面部品の説明
+L0066	1	STEP表示	画像	-	-	-
+L0067	2	ご注文番号	ラベル	-	-	-	・購入グループが店内アカウントの場合はTC注文番号を表示する
+L0068	3	ヘルプページ	リンク	-	-	-	・ヘルプ画面へ遷移する
+L0069	4	フリースペース	-	-	-	-	・管理者側で文章を設定できるように追加
+L0070	5	TOPページへ戻るボタン	ボタン	-	-	-	・注文した店舗のTOP画面へ遷移する
+L0071	Source:
+L0072	functions/pf-eccube3/f04-04_front_cart_shopping_complete.md
+L0073	現行仕様
+L0074	F04-04 決済~購入完了 / カート — 決済〜購入完了
+L0075	業務ロジック
+L0076	購入完了時の判定順序
+L0077	順序	判定	結果
+L0078	1	引き継いだ受注があるか	無ければトップページへ戻す
+L0079	2	受注ステータスが注文受領または入金待ちか	いずれでもなければ購入処理異常のアラートメールを送信し、引き継いだ受注情報を初期化して購入処理エラー画面を表示する
+L0080	3	SPLINKS決済で対応する決済記録があるか	SPLINKS支払いだが記録が無ければ受注ステータスを処理中へ戻し、決済記録不整合のエラー画面を表示する
+L0081	4	上記を通過	完了処理を行い購入完了画面を表示する
+L0082	受注ステータス異常のときは、更新による再通知を避けるため引き継いだ受注情報を初期化する。決済記録不整合のときは初期化しないため、再表示しても同じエラー画面になる。
+L0083	注文番号の書式
+L0084	ご注文番号は8桁のゼロ埋めで表示する。TC注文番号は呼び出し番号の下4桁を4桁のゼロ埋めで表示する。
+L0085	購入グループ別の完了画面の表示
+L0086	購入者の顧客グループが店内アカウントのときは、注文確定時に受注の呼び出し番号を登録する。
+L0087	受注に呼び出し番号があるときは、ご注文番号に代えてTC注文番号を表示し、その下に「※店内のパソコンからご注文のお客様は、商品の用意が完了すると、店内注文モニターにTC注文番号が表示されます。TC注文番号が表示されましたら、レジカウンターまでお越しください。」を表示する。
+L0088	受注に呼び出し番号が無いときは、ご注文番号を表示し、その下に「注文完了メールをお送りしました。届かない場合はお手数ですが当店のヘルプページを御覧ください。」を表示する。文中の「ヘルプページ」の遷移先は、オンラインショップのヘルプページ（/ja/user_data/help_onlineshop#block20）とする。
+L0089	ポイントの消費時期
+L0090	注文を確定した時点で使用ポイントを消費する。ただしSPLINKS決済（コンビニ・クレジットカード）のときは、注文確定時ではなく購入完了画面の表示時に消費する。
+L0091	完了処理で行う連携
+L0092	受注明細ごとに、その商品へ設定された売上分析タグを受注明細へ登録する。表示言語の切り替えが保留されているときは、その言語のURLへ遷移し直したうえで完了画面を表示する。消費ポイントがあるときは、スマレジのポイント連携を別プロセスで実行する。購入完了タグログ（購入商品の商品ID・単価・数量）と、eコマース計測用の取引情報（受注ID・配送方法名・商品小計・送料・会員のメールアドレス・購入商品の明細）を送信する。取引情報の税額は常に0とする。
+L0093	入出力
+L0094	種類	内容
+L0095	入力	引き継いだ受注
+L0096	成功時出力	購入完了画面、ポイントの消費とスマレジポイント連携、購入完了タグログとeコマース計測用取引情報の送信
+L0097	失敗時出力	受注ステータス異常・決済記録不整合のエラー画面、受注を引き継いでいないときはトップページへの遷移
+L0098	入出力: 永続化
+L0099	操作	契機
+L0100	追加	完了処理で受注明細へ商品の売上分析タグを登録する
+L0101	更新	決済記録不整合のときは受注ステータスを処理中へ戻す
+L0102	リニューアル後の仕様
+L0103	表示メッセージ
+L0104	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0105	—	購入完了画面の見出し	ご注文完了	購入完了画面の表示時	静的表示
+L0106	—	購入完了画面本文	ご注文ありがとうございました。	購入完了画面の表示時	静的表示
+L0107	—	購入完了画面本文	ご注文番号／TC注文番号（呼び出し番号がある場合）	購入完了画面の表示時	静的表示
+L0108	—	共通エラー画面	購入処理エラーの文言（ロケールメッセージを正とする）	受注ステータスが注文受領・入金待ち以外のとき	アラートメールを送信し、受注情報を初期化する
+L0109	—	共通エラー画面	決済記録不整合エラーの文言（ロケールメッセージを正とする）	SPLINKS支払いだが決済記録が無いとき	受注ステータスを処理中へ戻す
+L0110	F04-04-MSG-001	購入処理エラー画面	「%name%」の在庫が足りません。	購入手続きで、在庫管理対象（在庫無制限でない）商品の注文数が在庫を超えたとき	更新を取り消し、エラーメッセージを表示して購入エラー画面へ遷移する
+L0111	F04-04-MSG-002	購入エラー画面	「%name%」の在庫が足りません。	購入手続きで、在庫管理対象（在庫無制限でない）商品の注文数が在庫を超えたとき	更新を取り消し、エラーメッセージを表示して購入エラー画面へ遷移する
+
+codex
+F05-01では、各コーナーの表示対象を決めるタグ条件が要因表に入っていない可能性があります。ほかの機能も含め、本文の条件と表の値を引き続き突き合わせます。
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/F05-05/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+##### 0305 sheet-7 ネット買取カート
+L0001	ネット買取カート
+L0002	ドキュメント名フロント_ネット買取 基本設計書
+L0003	セクション—
+L0004	プロジェクト名フロント_ネット買取機能
+L0005	作成者緑川
+L0006	作成日2025-06-12
+L0007	更新者盛田
+L0008	更新日2025-11-08
+L0009	機能NoF05-05
+L0010	機能名ネット買取カート
+L0011	概要カートに追加しているネット買取商品情報を一覧表示する
+L0012	処理概要（★はカスタマイズ項目）
+L0013	ネット買取カート / C8 / image 1
+L0014	ネット買取カート / D55 / image 2
+L0015	レイアウト図
+L0016	カスタマイズ説明
+L0017	・カスタマイズ要件
+L0018	現行機能をベースに下記カスタマイズを行う
+L0019	カート内商品の数量変更に伴う処理について
+L0020	カート内の商品数を変更する際、以下の処理を画面再読み込みせずに行われるようにする
+L0021	・カート内商品の合計金額を自動で再計算する
+L0022	・カスタマイズ要件に記載の内容以外は現行踏襲とする。
+L0023	機能仕様処理概要（★はカスタマイズ項目）
+L0024	★カート内商品の数量を変更
+L0025	・下記のフォームを変更、操作した場合、画面の読み込みをせずに合計金額を動的に再計算する
+L0026	・数量
+L0027	・数量＋ボタン
+L0028	・数量 - ボタン
+L0029	・削除
+L0030	・操作した場合に下記の金額を反映する
+L0031	・商品ごとの合計金額
+L0032	・小計
+L0033	・表示について
+L0034	・まとめて買取がカートにない状態かつ選んで買取がカートにある状態で遷移してきた場合、下記のモーダルを表示する
+L0035	・カートに商品が入っていない場合は下記を表示する
+L0036	現在、カートには商品が入っておりません。
+L0037	お買取りを続けるには下の 「TOPへ戻る」 をクリックしてください。 2026/7/16木村：商品一覧ではなくTOPに修正。下の項目一覧もTOPへ戻ると書かれており矛盾。
+L0038	識別ID	ラベル	書式・制限	必須	最大文字数
+L0039	または最大値	初期値	画面部品の説明
+L0040	1	STEP表示	画像	-	-	-
+L0041	2	商品画像	画像	-	-	-
+L0042	3	商品名	リンク	-	-	-	・押下時に別ウィンドウ画面を開き商品詳細画面へ遷移する
+L0043	4	買取価格	ラベル	-	-	-
+L0044	5	数量	数値（整数）	-	-	-
+L0045	6	マイナスボタン	ボタン	-	-	-	・押下することにより数量に-1をする
+L0046	・金額の再計算をし商品ごとの合計金額、小計に反映する
+L0047	7	プラスボタン	ボタン	-	-	-	・押下することにより数量に+1をする
+L0048	・金額の再計算をし商品ごとの合計金額、小計に反映する
+L0049	8	商品ごとの合計金額	ラベル	-	-	-
+L0050	9	削除ボタン	ボタン	-	-	-	・押下することにより明細ごと削除する
+L0051	・金額の再計算をし商品ごとの合計金額、小計に反映する
+L0052	10	小計	ラベル	-	-	-
+L0053	11	再計算ボタン	ボタン	-	-	-	ボタンは不要なので削除する
+L0054	12	TOPへ戻るボタン	ボタン	-	-	-
+L0055	13	買取手続きへボタン	ボタン	-	-	-	・商品数量が0の状態で押下するとカート画面へ遷移する
+L0056	Source:
+L0057	functions/pf-eccube3/f05-05_front_online_purchase_buy_cart.md
+L0058	現行仕様
+L0059	F05-05 ネット買取カート / F05-05（ネット買取カート）
+L0060	業務ロジック
+L0061	カートの表示
+L0062	買取希望品カートは、保持している買取カートの商品と税込小計を表示する。買取カートが保持するのは商品の規格と数量だけで、買取価格・商品名・画像は表示のたびに現在の商品データを参照する（カートへ入れた時点の買取価格は保持しない）。
+L0063	合計は買取価格に数量を掛けた総和を税込小計とし、対象データが無い商品は合計から除くとともに、買取カートからも取り除く（次の表示以降は現れない）。
+L0064	数量の入力欄は商品の規格ごとに持ち、入力できるのは 3 桁までとする。
+L0065	カード商品は商品名の先頭に言語コードを 【 】 で囲って付けて表示する。商品画像が登録されていないときは代替画像を表示する。
+L0066	カートへの追加
+L0067	追加では規格と数量を受け取り、数量の指定が無いときは 1 とする。規格の指定が空のときはエラー応答とする。
+L0068	同じ規格が既に買取カートにあるときは数量を加算する。加算後の数量が同一商品の上限である 20 点を超えるときは、上限超過として扱い数量を保存しない。上限以内のときだけ規格ごとの数量を保持する。
+L0069	数量の更新と削除
+L0070	更新では入力された数量の一覧で各商品の数量を書き換える。数量が数字でないとき、または 1 未満のときは当該商品を買取カートから外す。いずれかの数量が 20 点を超えるときは更新を中断する。
+L0071	数量の一覧が渡されないとき、または買取カートが無いときは何も変更しない。
+L0072	削除はなりすまし対策トークンを検証したうえで行う。買取カートに当該商品が無いときは買取カートを変更しない。
+L0073	エラー時の扱い
+L0074	エラー内容	処理
+L0075	規格の指定が空のまま追加した	エラー応答（HTTP500 相当）を返す
+L0076	追加で数量が 20 点を超える	上限超過を示す応答（HTTP400、状態 overlimit）を返し、数量を保存しない
+L0077	更新で数量が 20 点を超える	上限超過を要求エラーとして積み、更新を中断する
+L0078	削除対象が買取カートに無い	買取カートを変更しない
+L0079	入出力
+L0080	種類	内容
+L0081	入力	追加は規格と数量、削除は規格、更新は数量の一覧
+L0082	成功時出力	買取希望品カートの表示、または追加成功を示す応答
+L0083	失敗時出力	追加の上限超過は HTTP400、規格の指定が空のときは HTTP500 相当
+L0084	リニューアル後の仕様
+L0085	表示メッセージ
+L0086	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0087	F05-05-MSG-001	ブラウザダイアログまたはモーダル内	同一商品をカートに追加できるのは%max%点までです。	同じ商品を数量上限より多く買取カートに追加または変更したとき	上限エラーを表示し、元の数量・画面に留まる
+L0088	F05-05-MSG-002	画面中央（モーダル）	カートへの追加に失敗しました。しばらくしてから再度お試しください。	買取カートへの追加に失敗したとき	失敗メッセージを表示し、一定時間後に閉じて元の画面に留まる
+L0089	F05-05-MSG-003	画面中央（モーダル）	追加できませんでした	買取カートへの追加に失敗したとき	失敗メッセージを表示し、一定時間後に閉じて元の画面に留まる
+L0090	F05-05-MSG-004	画面中央（モーダル）	買取カートページへ進みますか？	商品を買取カートに追加できたとき	カートへ進む場合は買取カート画面へ遷移し、閉じるか一定時間経過時は元の画面に留まる
+L0091	F05-05-MSG-005	画面中央（モーダル）	買取カートに追加しました。	商品を買取カートに追加できたとき	追加結果を表示し、カートへ進むか選択できる
+L0092	F05-05-MSG-006	ブラウザダイアログ	買取情報の更新に失敗しました。	買取カート内商品の数量変更または削除の更新に失敗したとき	更新失敗を表示し、買取カート画面に留まる
+L0093	—	カート画面の見出し	買取希望品カート	カートを表示したとき	買取希望品カートの内容を表示する
+L0094	—	カート画面の合計欄	小計(税込)	買取カートに商品があるとき	税込小計を表示する
+L0095	—	カート追加ダイアログ	同一商品をカートに追加できるのは20点までです。	追加で同一商品の数量が上限を超えたとき	数量を保存せず、状態 overlimit の HTTP400 を返す
+L0096	—	再計算時の要求エラー	同一商品をカートに追加できるのは20点までです。	数量更新でいずれかが上限を超えたとき	更新を中断する
+L0097	—	カート追加ダイアログ	商品をカートに入れました。／カートへ移動しますか？	カート追加に成功したとき	一定時間で自動的に閉じる
+L0098	—	カート追加ダイアログ	商品の追加に失敗しました。	カート追加が上限以外の理由で失敗したとき	元の画面に留まる
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/F05-03/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+##### 0305 sheet-5 ネット買取商品一覧
+L0001	ネット買取商品一覧
+L0002	ドキュメント名フロント_ネット買取 基本設計書
+L0003	セクション—
+L0004	プロジェクト名フロント_ネット買取機能
+L0005	作成者緑川
+L0006	作成日2025-06-12
+L0007	更新者盛田
+L0008	更新日2025-11-15
+L0009	機能NoF05-03
+L0010	機能名ネット買取商品一覧
+L0011	概要ネット買取の検索条件に従った商品を出し分けて一覧で表示する
+L0012	処理概要（★はカスタマイズ項目）
+L0013	処理概要（★はカスタマイズ項目）
+L0014	処理概要（★はカスタマイズ項目）
+L0015	処理概要（★はカスタマイズ項目）
+L0016	レイアウト図
+L0017	SP版
+L0018	PC版
+L0019	カスタマイズ説明
+L0020	・カスタマイズ要件
+L0021	現行機能をベースに下記カスタマイズを行う
+L0022	・商品一覧では商品詳細検索は表示していないため、ネット買取商品一覧でもUIを揃える
+L0023	・カスタマイズ要件に記載の内容以外は現行踏襲とする。
+L0024	機能仕様処理概要（★はカスタマイズ項目）
+L0025	・買取検索
+L0026	・買取検索に記載
+L0027	・買取商品一覧
+L0028	・買取商品一覧に記載
+L0029	・まとめて買取
+L0030	・まとめて買取商品の詳細画面へ遷移する
+L0031	・買取方法・流れ、選べる2つの買取スタイルのリンクについて
+L0032	・ネット買取リンクはURL（user_data/purchase_net）とする
+L0033	・店頭買取リンクはURL（user_data/purchase_store）とする
+L0034	★詳細検索
+L0035	・ボタン押下時に「ネット買取商品検索」画面をモーダル表示する
+L0036	★(1)パンくずリスト
+L0037	・カテゴリは階層を表示する
+L0038	・商品検索時は「詳細検索」リンクを表示する（商品検索かどうかの判定はgetパラメーターの商品名パラメーターの有無で行う）
+L0039	・🏠マーク押下で買取TOP画面に遷移する
+L0040	現行
+L0041	例: 買取TOP > 詳細検索 > 【マジック：ザ・ギャザリング | マーベル スパイダーマン】 【神話レア, レア】 【Normal】
+L0042	リニューアル後（商品検索時）
+L0043	🏠 > 詳細検索 > カテゴリ階層 > レアリティ・言語等
+L0044	例: 🏠 > 詳細検索 > スタンダード > タルキール：龍嵐録 > タルキール：龍嵐録 > レア・神話レア
+L0045	リニューアル後（商品検索以外）
+L0046	🏠 > カテゴリ階層またはタグ
+L0047	例: 🏠 > デッキセット
+L0048	・(6)カテゴリ一覧
+L0049	・表示する画面部品については、フロント商品の設計書内の「カテゴリ一覧」シートを参照
+L0050	★検索実行はユニサーチで行う
+L0051	・ユニサーチでの検索実行の仕様はこちら
+L0052	識別ID	ラベル	書式・制限	必須	最大文字数
+L0053	または最大値	初期値	画面部品の説明
+L0054	1	パンくずリスト	リンク	-	-	-	・カテゴリは階層を表示する
+L0055	・商品検索時は「詳細検索」リンクを表示する（商品検索かどうかの判定はgetパラメーターの商品名パラメーターの有無で行う）
+L0056	・🏠マーク押下で買取TOP画面に遷移する 
+L0057	2	買取検索	-	-	-	-
+L0058	3	買取商品一覧	-	-	-	-
+L0059	4	まとめて買取	-	-	-	-
+L0060	5	買取詳細検索	ボタン	-	-	-	ボタン押下時に「ネット買取商品検索」画面をモーダル表示する
+L0061	6	カテゴリ一覧	-	-	-	-	表示する画面部品については、フロント商品の設計書内の「カテゴリ一覧」シートを参照
+L0062	買取検索 レイアウト図
+L0063	SP
+L0064	カスタマイズ説明
+L0065	・Foil検索に特殊を追加する
+L0066	機能仕様処理概要（★はカスタマイズ項目）
+L0067	★Foil検索に特殊を追加する
+L0068	・現在選択中の項目は、選択されていることがわかるよう表示を行う（新デザインに合わせる）
+L0069	・詳細検索への銅線を追加する
+L0070	★検索項目のボタン押下時、検索結果表示部分のみ読込直しを行い、全画面再描画は行わない（ユニサーチ対応を参照）
+L0071	★並べ替えに「発売日順」を追加する（ユニサーチ対応を参照）
+L0072	識別ID	ラベル	書式・制限	必須	最大文字数
+L0073	または最大値	初期値	画面部品の説明
+L0074	1	カード言語	ボタン	-	-	-	検索を実行する
+L0075	2	Foil	ボタン	-	-	-	検索を実行する
+L0076	特殊を追加する
+L0077	3	レアリティ	ボタン	-	-	-	検索を実行する
+L0078	4	カラー	ボタン	-	-	-	検索を実行する
+L0079	5	詳細検索	ボタン	-	-	-	ボタン押下時に「ネット買取商品検索」画面をモーダル表示する
+L0080	6	商品数	ラベル	-	-	-
+L0081	7	並べ替え	リンク	-	-	-	選択肢: 発売日順、色順、価格（高い順）、価格（安い順）
+L0082	8	ページング	リンク	-	-	-	選択したページへ遷移する
+L0083	9	カードタイプ	ボタン	-	-	-	検索を実行する
+L0084	買取商品一覧 レイアウト図
+L0085	SP
+L0086	画像レイヤー（2枚）: ネット買取商品一覧 / N236 / image 3 + ネット買取商品一覧 / N236 / image 4
+L0087	カスタマイズ説明
+L0088	・ページングを画面上部にも表示する（エンハンス対応）
+L0089	・並べ替えに発売日順を追加する（エンハンス対応）
+L0090	機能仕様処理概要（★はカスタマイズ項目）
+L0091	・カートに入れるボタンについて
+L0092	・該当の商品の買取価格が500円未満の場合は商品数、カートボタンを表示しない
+L0093	・下記の項目は商品詳細がカードの場合のみ表示し、サプライ・グッズでは表示しない
+L0094	・言語
+L0095	・同名商品検索
+L0096	例）
+L0097	★ページングを画面上部にも表示する（エンハンス対応）
+L0098	★並べ替えに発売日順を追加する（エンハンス対応）
+L0099	識別ID	ラベル	書式・制限	必須	最大文字数
+L0100	または最大値	初期値	画面部品の説明
+L0101	1	商品数	ラベル	-	-	-	・検索結果の商品数を表示
+L0102	2	並べ替え	単一選択	-	-	-	・選択肢:発売日順 色順 価格(高い順) 価格(低い順)
+L0103	・選択すると、画面を読み込み、選択した並べ替えで商品一覧を表示する
+L0104	・選択肢に発売日順を追加する（エンハンス対応）
+L0105	3	ページング	リンク	-	-	-	・商品一覧上部にページングを配置する（エンハンス対応）
+L0106	・表記されている番号のカード一覧ページに遷移する
+L0107	※現在表示中のページ番号はハイライト、押下できないようにする
+L0108	・「<」を押下すると、一つ前のページ番号に遷移する
+L0109	・「>」を押下すると、一つ前のページ番号に遷移する
+L0110	・ページ番号が多い場合は、一部を「...（省略）」で表記する
+L0111	- 例1：現在のページが1〜3付近 →「1 2 3 4 5 ... 17」
+L0112	- 例2：現在のページが中間 →「1 ... 2 3 4 5 6 7 8 9 10 ... 17」
+L0113	- 例3：現在のページが終盤 →「1 ... 13 14 15 16 17」
+L0114	※「...」はページ遷移のリンクではない
+L0115	4	商品画像	画像	-	-	-	・押下すると、拡大画像を表示する
+L0116	5	カード言語	ラベル	-	-	-	・カード商品のみ表示する
+L0117	・商品に登録している言語コードを表示する
+L0118	6	商品名	ラベル	-	-	-	-
+L0119	7	買取価格	ラベル	-	-	-	-
+L0120	8	マイナス	商品数減ボタン	-	-	-	・押下すると、商品数を1つ減らす
+L0121	・商品数が1の場合に押下すると、商品数を20にする
+L0122	9	商品数	ラベル	-	-	-	-
+L0123	10	プラス	商品数増ボタン	-	-	-	・押下すると、商品数を1つ増やす
+L0124	11	カートに追加	ボタン	-	-	-	・押下すると、対象の商品を商品数で選択している数量分カートに追加する
+L0125	・商品の買取価格が500円未満の場合は商品数、カートボタンを表示しない
+L0126	12	同名商品検索	リンク	-	-	-	・カード商品のみ表示する
+L0127	・押下すると、同じカードIDで検索したネット買取商品一覧画面に遷移する
+L0128	13	ページング	リンク	-	-	-	・商品一覧下部にページングを配置する
+L0129	・中央寄せとする
+L0130	・リンクの内容は画面上部のページングと同様
+L0131	ユニサーチ対応 カスタマイズ説明
+L0132	・買取側もユニサーチでの商品検索を可能とする
+L0133	機能仕様処理概要（★はカスタマイズ項目）
+L0134	・ユニサーチを利用した商品検索の対象範囲
+L0135	① ヘッダのキーワード検索
+L0136	② 詳細検索
+L0137	③ 検索結果からの絞り込み
+L0138	④ 左メニューのカテゴリツリーからの検索
+L0139	⑤ 検索結果からの同名検索
+L0140	⑥ 関連ワードからの検索
+L0141	・
+L0142	・TOPページのタグによる商品検索、商品詳細ページの同名商品検索もユニサーチで検索することになりました。（2026/5/26 石川）
+L0143	・
+L0144	ネット買取商品一覧 / C361 / image 1
+L0145	ネット買取商品一覧 / C395 / image 2
+L0146	・ユニサーチ検索処理手順
+L0147	・販売側を踏襲する 0303_基本設計仕様書(フロント_商品).xlsx 商品一覧シート内、「ユニサーチ対応 カスタマイズ説明」部分参照
+L0148	・検索結果からの絞り込みについて
+L0149	・販売側を踏襲する 0303_基本設計仕様書(フロント_商品).xlsx 商品一覧シート内、「ユニサーチ対応 カスタマイズ説明」部分参照
+L0150	・関連ワードの取得
+L0151	・販売側を踏襲する 0303_基本設計仕様書(フロント_商品).xlsx 商品一覧シート内、「ユニサーチ対応 カスタマイズ説明」部分参照
+L0152	・買取側で使用する検索パラメータについて 事前にユニサーチにフィード送信している情報は以下設計書を参照
+L0153	・買取側では販売側で使用している以下の検索条件を使用しない 社内設計書 0404_基本設計仕様書(バッチ_商品管理).xlsx ユニサーチフィード作成シート
+L0154	・販売価格 ユニサーチ設計書 G:\共有ドライブ\Lv1.MDS第一\202501_晴れる屋\J_11_設計フェーズ\ユニサーチ\リニューアル後ユニサーチ設計書\フィード仕様書_hareruyamtgecc_20260316.xlsx
+L0155	・在庫
+L0156	・買取側では以下のパラメータを必ず指定する（以下パラメータを指定することで買取で表示する商品に絞り込み可能） フィード送信については以下の手順で可能
+L0157	・買取価格：1円以上 ①eccube.yamlのeccube_unisearch_sftp_ssh_key_pathに指定されたファイルで鍵ファイルを置く
+L0158	・カード状態： NM （鍵ファイルはG:\共有ドライブ\Lv1.MDS第一\202501_晴れる屋\J_21_製造フェーズ\10_ユニサーチ\フィード送信STG鍵情報 にあります。）
+L0159	・高額商品コード：なし ②管理画面の設定＞基本情報設定＞追加システム設定にてユニサーチSFTPホストを確認し、ユニサーチのフィード仕様書に記載があるSTG用のIPと同一であることを確認する。
+L0160	・予約商品：予約商品でない ③管理画面の商品管理＞ユニサーチフィード作成ボタンを押す
+L0161	・ECCUBEからの商品情報の取得について APIの実行については以下の設計書を参照
+L0162	・ユニサーチから返却された商品IDをもとに、ユニサーチでは取得できない情報や、フィードでは古くなっている情報などをECCUBEで取得する ユニサーチ設計書 G:\共有ドライブ\Lv1.MDS第一\202501_晴れる屋\J_11_設計フェーズ\ユニサーチ\リニューアル後ユニサーチ設計書\ユニサーチAPI仕様書_hareruyamtgecc_20260316.xlsx
+L0163	・リアルタイム性が求められる情報 買取特有の以下の検索条件を満たすパラメータ設定方法
+L0164	・買取価格 買取価格：1円以上 fq.buy_price=1~*
+L0165	カード状態： NM fq.card_condition=1
+L0166	・並び順について 高額商品コード：なし fq.high_price_code=現在仕様確認中
+L0167	・買取ではおすすめ順を使用しない（ユニサーチの購買をもとにした順なので買取では使用しない） 予約商品：予約商品でない fq.reservation_flg=0
+L0168	必ず何かの並び順を指定する必要がある（何も指定しないとおすすめ順になってしまうため） その他のパラメータは販売側と同様
+L0169	→発売日順
+L0170	・左メニューのカテゴリリンクからのデフォルトの並び順は色順とする 並び順は発売日順をデフォルトとするため、以下のソート順となる
+L0171	・価格の並び順は買取価格の順となるため、ユニサーチ側に設定を依頼する sort=release_date desc,product desc,language asc,foil_flg asc
+L0172	・発売日順（降順のみ）の並び順を追加する（サプライは後ろ） 色順
+L0173	カードセットのリリース日の降順、商品IDの降順、言語（JP→EN） sort=color_sequence asc,card_name asc,language asc,foil_flg asc,product asc
+L0174	価格高い順（買取価格）
+L0175	・URLとパンくずの対応 buy_price desc,color_sequence asc,card_name asc,language asc,foil_flg asc
+L0176	・販売側を踏襲する 価格安い順（買取価格）
+L0177	buy_price asc,color_sequence asc,card_name asc,language asc,foil_flg asc
+L0178	Source:
+L0179	functions/pf-eccube3/f05-03_front_online_purchase_buy_product_list.md
+L0180	現行仕様
+L0181	F05-03 ネット買取商品一覧 / F05-03（ネット買取商品一覧）
+L0182	業務ロジック
+L0183	表示の判定順序
+L0184	順序	判定	結果
+L0185	1	検索条件が空か	空なら検索フォームだけを表示する
+L0186	2	総件数が0件か	0件なら一覧を見つからない扱いとし、0件案内を表示する
+L0187	3	総件数が上限（9999）を超えるか	超えるときは商品を取得せず、上限超過の案内を表示し、外部へ検索時のURLと件数を通知する。通知に失敗しても案内の表示は続ける
+L0188	4	上記を通過	件数・表示順・ページ送りとともに商品一覧を表示する
+L0189	タグの説明文
+L0190	タグが1件だけ指定されているときは、そのタグに登録された説明文を一覧の上部に表示する。
+L0191	表示件数
+L0192	1ページの件数は既定60件で、指定によって変更できる。
+L0193	件数はURLのクエリパラメータ pageSize で指定する。pageSize が空または0のときは60件とする。それ以外の値は上限を設けずにそのまま1ページの件数とする。
+L0194	画面の内容
+L0195	絞り込みにはマナコストがあり、色の選択をすべて解除する操作を持つ。 商品画像は遅延読み込みし、読み込みが済むまで読み込み中の画像を表示する。 絞り込みの行と表示順の行は、PCとスマートフォンで表示する内容を出し分ける。 一覧の下部には検索フォームを表示する。
+L0196	カテゴリ一覧
+L0197	カテゴリ一覧は、販売側の商品カテゴリ一覧と同じデータ（カードセット、レアリティ、カテゴリ）から、同じツリー構造と表示項目で表示する。各カテゴリの遷移先は、販売側の商品検索に代えて買取商品検索とする。販売側と異なり、遷移先に並び順の指定を付けない。販売側だけが表示する決済・受取・発送・ポイントの販促バナーは表示しない。
+L0198	買取価格とカート追加
+L0199	各商品規格に登録済みの買取価格を表示する。本機能では価格を計算しない。
+L0200	数量欄の初期値は1点とする。数量上限の判定と、追加完了・追加失敗・上限超過のダイアログは、ネット買取カート（F05-05）を正とする。
+L0201	入出力
+L0202	種類	内容
+L0203	入力	検索条件、表示順、ページ番号、1ページの表示件数。
+L0204	成功時出力	件数・表示順・ページ送りを伴う買取商品一覧。
+L0205	失敗時出力	0件のときは見つからない扱いの応答、上限超過のときは超過案内と外部への件数通知。
+L0206	リニューアル後の仕様
+L0207	表示メッセージ
+L0208	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0209	—	一覧上部	商品数: （件数）点	一覧表示時。上限超過時は「9999+」を表示する	一覧に留まる
+L0210	—	一覧本文	ご指定の条件に一致する商品が多すぎます。さらに絞り込むための条件を追加してください。	総件数が上限（9999）を超えるとき	商品を取得せず一覧に留まる
+L0211	—	一覧本文	お探しのカードは見つかりませんでした。（買取最低保証・ヘルプへの案内を含む）	検索結果が0件のとき	ページ全体を見つからない扱いとする
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/F05-04/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+##### 0305 sheet-6 ネット買取商品詳細
+L0001	ネット買取商品詳細
+L0002	ドキュメント名フロント_ネット買取 基本設計書
+L0003	セクション—
+L0004	プロジェクト名フロント_ネット買取機能
+L0005	作成者緑川
+L0006	作成日2025-06-12
+L0007	更新者緑川
+L0008	更新日2025-09-22
+L0009	機能NoF05-04
+L0010	機能名ネット買取商品詳細
+L0011	概要ネット買取商品の詳細情報を表示する
+L0012	処理概要（★はカスタマイズ項目）
+L0013	処理概要（★はカスタマイズ項目）
+L0014	処理概要（★はカスタマイズ項目）
+L0015	処理概要（★はカスタマイズ項目）
+L0016	ネット買取商品詳細 / F27 / image 1
+L0017	ネット買取商品詳細 / N8 / image 2
+L0018	ネット買取商品詳細 / I89 / image 3
+L0019	ネット買取商品詳細 / B318 / image 4
+L0020	ネット買取商品詳細 / E120 / image 5
+L0021	ネット買取商品詳細 / O10 / image 6
+L0022	ネット買取商品詳細 / D233 / image 7
+L0023	ネット買取商品詳細 / N179 / image 8
+L0024	ネット買取商品詳細 / D293 / image 9
+L0025	ネット買取商品詳細 / Y297 / image 10
+L0026	レイアウト図
+L0027	SP
+L0028	PC
+L0029	カスタマイズ説明
+L0030	・カスタマイズ要件
+L0031	現行機能をベースに下記カスタマイズを行う
+L0032	・「このカードはこんなデッキで使われています」を削除する
+L0033	・カスタマイズ要件に記載の内容以外は現行踏襲とする。
+L0034	機能仕様処理概要（★はカスタマイズ項目）
+L0035	★表示について
+L0036	・「このカードはこんなデッキで使われています」を削除する
+L0037	・カード詳細
+L0038	・カード詳細欄に記載
+L0039	・カード説明
+L0040	・カード説明欄に記載
+L0041	・他のバージョンも見る
+L0042	・他のバージョンも見る欄に記載
+L0043	・2026/6/11木村：デザイン上はPCも表示しているため削除
+L0044	★パンくずリストについて
+L0045	★下記のような表示形式とする
+L0046	{ホームアイコン} > {カテゴリ}
+L0047	(例) カード商品の場合: 🏠 > タルキール：龍嵐録
+L0048	サプライ商品の場合: 🏠 > サプライ・グッズ > スリーブ > KMC
+L0049	★パンくずリスト内のカテゴリを押下すると、押下したカテゴリで検索したネット買取商品一覧を表示する
+L0050	・カテゴリ一覧は、PC版サイトのみ表示する
+L0051	識別ID	ラベル	書式・制限	必須	最大文字数
+L0052	または最大値	初期値	画面部品の説明
+L0053	1	パンくずリスト	リンク	-	-	-	・パンくずリストの表示形式及びリンク押下後の処理は処理概要を参照
+L0054	2	カード詳細	-	-	-	-
+L0055	3	カード説明	-	-	-	-
+L0056	4	他のバージョンも見る	-	-	-	-
+L0057	5	このカートはこんなデッキで使われています	-	-	-	-	・カスタマイズ対応により削除
+L0058	6	カテゴリ一覧	-	-	-	-	・フロント_商品機能のシート「カテゴリ一覧」と同様の表示とする
+L0059	カード詳細 レイアウト図
+L0060	SP
+L0061	PC
+L0062	カスタマイズ説明
+L0063	・SNSでシェアするボタンを追加する
+L0064	機能仕様処理概要（★はカスタマイズ項目）
+L0065	・下記の項目は商品詳細がカードの場合のみ表示し、サプライ・グッズでは表示しない
+L0066	・言語切替
+L0067	・状態
+L0068	・他のバージョン
+L0069	・査定例はこちら
+L0070	・他のバージョン
+L0071	・カートに入れるボタンについて
+L0072	・該当の商品の買取価格が500円未満の場合は商品数、カートボタンを表示しない
+L0073	★SNSでシェアするボタンを追加する
+L0074	・XとLINEのアイコンを表示する
+L0075	・SNSでシェアするを押下すると、押下したSNSアイコンに応じてページURLを共有できる
+L0076	識別ID	ラベル	書式・制限	必須	最大文字数
+L0077	または最大値	初期値	画面部品の説明
+L0078	1	言語切替	リンク	-	-	-	・カード商品のみ表示する
+L0079	・押下すると、押下したカード言語の詳細画面に遷移する
+L0080	・表示しているカード言語に対応するボタンは非活性とする
+L0081	2	商品画像	画像	-	-	-
+L0082	3	商品画像拡大	商品画像拡大ボタン	-	-	-	・押下すると、商品画像の拡大画像を表示する
+L0083	4	カード言語	ラベル	-	-	-	・カード商品のみ表示する
+L0084	・商品に登録している言語コードを表示する
+L0085	5	商品名	ラベル	-	-	-	・先頭に商品に登録している言語コードを表示する
+L0086	6	週間販売数	ラベル	-	-	-	・過去1週間のうちに注文された商品数を表示する
+L0087	・過去1週間のうちに注文されていない場合、非表示にする					 2026/6/15木村：買取ではのちに不要な項目になったため削除
+L0088	7	状態	ラベル	-	-	-
+L0089	8	価格	ラベル	-	-	-
+L0090	9	マイナスボタン	ボタン	-	-	-	・押下すると商品数を1つ減らす
+L0091	10	商品数	数値（整数）	-	-	1
+L0092	11	プラスボタン	ボタン	-	-	-	・押下すると商品数を1つ増やす
+L0093	12	カートに入れる	ボタン	-	-	-
+L0094	13	査定例はこちらボタン	リンク	-	-	-	・査定例ページのリンク 2026/7/17木村：デザイン上はリンクかつ現行もリンクでカスタマイズ要件にないためモーダルという記載を削除
+L0095	14	他のバージョンボタン	ボタン	-	-	-	・該当商品の他のバージョン商品の一覧を表示する
+L0096	15	SNSでシェアする	リンク	-	-	-	※カスタマイズ対応、SNSシェアボタンの追加
+L0097	・押下したSNSアイコンに応じてページURLを共有できる
+L0098	カード説明 レイアウト図
+L0099	SP
+L0100	PC
+L0101	カスタマイズ説明
+L0102	・カード名を表示する
+L0103	機能仕様処理概要（★はカスタマイズ項目）
+L0104	★表示項目について
+L0105	・下記項目を追加する
+L0106	・カード名
+L0107	・商品詳細がカードの場合のみ表示する
+L0108	識別ID	ラベル	書式・制限	必須	最大文字数
+L0109	または最大値	初期値	画面部品の説明
+L0110	1	カード名	ラベル	-	-	-	・カスタマイズにより項目追加
+L0111	2	色	ラベル	-	-	-
+L0112	3	コスト	ラベル	-	-	-
+L0113	4	カードタイプ	ラベル	-	-	-
+L0114	5	サブタイプ	ラベル	-	-	-
+L0115	6	レアリティ	ラベル	-	-	-
+L0116	7	カードテキスト	ラベル	-	-	-
+L0117	8	フレーバーテキスト	ラベル	-	-	-
+L0118	9	パワー・タフネス	ラベル	-	-	-	・パワー・タフネスを登録していないカード商品の場合、非表示にする
+L0119	10	忠誠度	ラベル	-	-	-	・忠誠度を登録していないカード商品の場合、非表示にする
+L0120	11	セット名	リンク	-	-	-	・押下すると、押下したカードセットで検索したの商品一覧を表示する
+L0121	12	ブロック	ラベル	-	-	-	2026/7/17木村：カスタマイズ要件にないため現行通りリンクからラベルに修正。
+L0122	13	イラストレーター	リンク	-	-	-
+L0123	14	使用可能フォーマット	ラベル	-	-	-	2026/7/17木村：カスタマイズ要件にないため現行通りリンクからラベルに修正。
+L0124	他のバージョンも見る レイアウト図
+L0125	SP
+L0126	PC
+L0127	カスタマイズ説明
+L0128	・Foil検索に特殊を追加する
+L0129	機能仕様処理概要（★はカスタマイズ項目）
+L0130	・商品詳細がカードの場合のみ表示する
+L0131	・商品詳細に表示している商品と同じカードIDの商品を表示する
+L0132	★1ページあたりの商品の表示数は8件とする
+L0133	・商品情報に表示する内容はネット買取商品一覧と同様の内容とする
+L0134	識別ID	ラベル	書式・制限	必須	最大文字数
+L0135	または最大値	初期値	画面部品の説明
+L0136	1	検索-言語	ボタン	-	-	-	選択肢：JP、EN、Other
+L0137	2	検索-Foil	ボタン	-	-	-	選択肢：通所、Foil、特殊
+L0138	3	検索-在庫状況	ボタン	-	-	-	選択肢：在庫ありのみ 2026/6/8木村：フィルタ項目を削除
+L0139	4	商品数	ラベル	-	-	-
+L0140	5	ページング	リンク	-	-	-	選択したページへ遷移する
+L0141	6	ソート	リンク	-	-	-	選択肢：価格（低い順）（デフォルト）、価格（高い順） 2026/6/8木村：色順のソートを削除。デフォルトソートを明確化。
+L0142	7	商品情報	-	-	-	-
+L0143	Source:
+L0144	functions/pf-eccube3/f05-04_front_online_purchase_buy_product_detail.md
+L0145	現行仕様
+L0146	F05-04 ネット買取商品詳細 / F05-04（ネット買取商品詳細）
+L0147	業務ロジック
+L0148	画面のふるまい
+L0149	対象	ふるまい
+L0150	カートへの追加	非同期で買取カートへ登録し、完了・失敗・上限超過のダイアログを表示する（F05-05を正とする）
+L0151	買取数量	詳細画面で選べる買取数量は1〜20とする
+L0152	カート追加の上限超過	同じ規格について、買取カート内の数量と追加する数量の合計が20点を超えるときは、数量を保存せず、上限超過のダイアログを表示する
+L0153	カート追加の失敗	規格の指定が空の追加はエラー応答とし、押した「カートに追加」の付近に追加失敗を通知する。買取カートは変更しない
+L0154	商品クラスの切り替え	選んだ商品クラスを選択状態にし、対応する商品画像へ切り替える。選択した言語・商品クラスは画面のURLの指定へ反映する
+L0155	同名カード一覧の商品画像	読み込み中の画像を先に出し、一覧に表示された時点で実画像へ差し替える
+L0156	初期表示の決め方
+L0157	商品IDから商品詳細を取得する。取得できないときはページなし（HTTP404）とする。
+L0158	項目	決め方
+L0159	初期表示言語	指定された言語が有効ならその言語、無効・未指定なら先頭の言語とする
+L0160	初期表示の商品クラス	指定されたクラスが有効ならそのクラス、無効・未指定なら当該言語の先頭クラスとする
+L0161	買取価格と同名カード
+L0162	項目	内容
+L0163	買取価格表示	状態ごとに登録済みの買取価格をそのまま表示する。本機能では価格を計算しない
+L0164	同名カードの抽出	基本土地のときは同名カードの一覧を取得しない
+L0165	カテゴリ一覧
+L0166	カテゴリ一覧は、販売側の商品カテゴリ一覧と同じデータ（カードセット、レアリティ、カテゴリ）から、同じツリー構造と表示項目で表示する。各カテゴリの遷移先は、販売側の商品検索に代えて買取商品検索とする。販売側と異なり、遷移先に並び順の指定を付けない。販売側だけが表示する決済・受取・発送・ポイントの販促バナーは表示しない。
+L0167	旧商品コードからの転送
+L0168	旧商品コードから新商品コードへの対応を取得する。対応が無いときはトップページへ戻す。新商品コードで商品を取得できないときもトップページへ戻す。取得できたときは、その商品の買取商品詳細（商品ID・言語付き）へ遷移する。
+L0169	エラー時の扱い
+L0170	エラー内容	処理
+L0171	商品IDの商品が無いとき	ページなし（HTTP404）とする
+L0172	旧コードに対応が無いとき、または商品を取得できないとき	トップページへ戻す
+L0173	入出力
+L0174	種類	内容
+L0175	入力	商品ID、言語・商品クラスの指定、転送時は旧商品コード
+L0176	成功時出力	買取商品詳細の画面、または転送先詳細への遷移
+L0177	失敗時出力	商品が無いときはHTTP404、旧コードの対応が無いときはトップページへの遷移
+L0178	リニューアル後の仕様
+L0179	表示メッセージ
+L0180	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0181	—	詳細の価格表の見出し	状態／数量／買取価格 等	価格表を表示したとき	画面に留まる
+L0182	—	買取操作	カートに追加	買取価格が買取最低価格以上の言語・状態のとき	買取カートへ追加する
+L0183	カート追加結果の文言（追加完了・追加失敗・上限超過）はF05-05を正とする。
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/F05-06/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+##### 0305 sheet-8 ネット買取買取手続き～完了
+L0001	ネット買取買取手続き～完了
+L0002	ドキュメント名フロント_ネット買取 基本設計書
+L0003	セクション—
+L0004	プロジェクト名フロント_ネット買取機能
+L0005	作成者緑川
+L0006	作成日2025-06-12
+L0007	更新者盛田
+L0008	更新日2025-12-12
+L0009	機能NoF05-06
+L0010	機能名ネット買取買取手続き～完了
+L0011	概要ネット買取の買取手続きを行う
+L0012	処理概要（★はカスタマイズ項目）
+L0013	レイアウト図
+L0014	1
+L0015	2
+L0016	3
+L0017	4
+L0018	5
+L0019	6
+L0020	7
+L0021	8
+L0022	9
+L0023	10
+L0024	11
+L0025	12
+L0026	22
+L0027	3
+L0028	13
+L0029	14
+L0030	15
+L0031	16
+L0032	18
+L0033	19
+L0034	20
+L0035	21
+L0036	17
+L0037	24
+L0038	25
+L0039	26
+L0040	23
+L0041	画像レイヤー（3枚）: ネット買取買取手続き～完了 / B7 / image 1 + ネット買取買取手続き～完了 / B7 / image 2 + ネット買取買取手続き～完了 / B7 / image 3
+L0042	カスタマイズ説明
+L0043	・カスタマイズ要件
+L0044	現行機能をベースに下記カスタマイズを行う
+L0045	共通の利用規約の表示
+L0046	・現行は買取依頼内容の確認画面で買取利用規約を表示しているが、
+L0047	リニューアル後はサイト全体で共通の利用規約にまとめるため、共通の利用規約を表示する
+L0048	冒頭からではなく買取に該当する箇所を表示する
+L0049	・カスタマイズ要件に記載の内容以外は現行踏襲とする。
+L0050	機能仕様処理概要（★はカスタマイズ項目）
+L0051	・表示について
+L0052	★ご注文主-住所に住所３を追加する
+L0053	★サイト全体で共通の利用規約にまとめるため、共通の利用規約を表示
+L0054	冒頭からではなく買取に該当する箇所を表示
+L0055	・会員情報の職業と生年月日が未登録の場合は、お振込口座情報の上に入力フォームを表示する
+L0056	・適格請求書発行事業者選択で「はい」を選択した場合は、登録番号の入力フォームを表示する
+L0057	・適格請求発行業者について
+L0058	・「適格請求発行業者について」リンクを押下した場合下記画像をモーダル表示する
+L0059	・申込ボタン押下
+L0060	・「ネット買取規約同意」チェックボックスにチェックがない場合は画面遷移せずにエラーメッセージを表示する
+L0061	・「ネット買取規約同意」チェックボックスにチェックがある場合は申込処理をする
+L0062	・下記のモーダルを表示する
+L0063	買取の承諾方法：査定結果を確認してから承諾する
+L0064	買取の承諾方法：自動承諾を利用する
+L0065	・「入力に戻る」ボタン押下時はモーダルを閉じる
+L0066	・「申込み」ボタン押下時に申込処理をする
+L0067	・振込口座情報を登録する
+L0068	・適格請求書発行事業者である場合は適格請求書発行事業者情報を登録する（登録番号の登録）
+L0069	・職業、生年月日が入力された場合は、アカウントに紐づく会員情報にも職業、生年月日を反映する
+L0070	・カード詳細IDが設定されていない(パックやサプライである)商品の場合、名称と数量をメモに保存する
+L0071	・まとめて買取情報と選んで買取情報を明細情報として登録する
+L0072	・選択した買取商品に紐づく買取価格を言語、商品コードが一致するものについて取得し申込時買取価格として登録する
+L0073	・NMでかごに入れるが、査定結果がSPやMPになることもあるので、SPやMPの買取申込時の買取価格も保持する
+L0074	・買取ステータス変更履歴を作成する
+L0075	・買取受注完了時のメールを送信する
+L0076	識別ID	ラベル	書式・制限	必須	最大文字数
+L0077	または最大値	初期値	画面部品の説明
+L0078	1	STEP表示	画像	-	-	-
+L0079	2	ご注文主-名前	ラベル	-	-	-
+L0080	3	ご注文主-郵便番号	ラベル	-	-	-
+L0081	4	ご注文主-住所	ラベル	-	-	-	・住所３を追加
+L0082	5	ご注文主-電話番号	ラベル	-	-	-
+L0083	6	ご注文の商品-商品コード	ラベル	-	-	-
+L0084	7	ご注文の商品-商品名	ラベル	-	-	-
+L0085	8	ご注文の商品-数量	ラベル	-	-	-
+L0086	9	ご注文の商品-合計	ラベル	-	-	-
+L0087	10	ご注文の商品-申込時買取金額合計	ラベル	-	-	-
+L0088	11	職業	単一選択（セレクトボックス）	-	-	-	アカウントに紐づく会員情報の職業が未登録の場合に表示する
+L0089	（表示された場合は入力必須）
+L0090	入力された場合はアカウントに紐づく会員情報にも反映する（現行通り）
+L0091	12	生年月日	単一選択（セレクトボックス）	-	-	-	アカウントに紐づく会員情報の生年月日が未登録の場合に表示する
+L0092	（表示された場合は入力必須）
+L0093	入力された場合はアカウントに紐づく会員情報にも反映する（現行通り）
+L0094	13	銀行名	半角・全角	◯	-	-
+L0095	14	支店名	半角・全角	◯	-	-
+L0096	15	口座種別	ラジオボタン	◯	-	-	選択肢：普通、当座、貯蓄
+L0097	16	口座番号	数値（整数）	◯	7	-
+L0098	17	口座名義	半角・全角	◯	128	-
+L0099	18	箱数	プルダウン	◯	-	-	選択肢：１〜２０
+L0100	19	買取の承諾方法	ラジオボタン	◯	-	-	選択肢：査定結果を確認してから承諾する、自動承諾を利用する
+L0101	20	適格請求発行事業者の確認	ラジオボタン	◯	-	-	選択肢：はい、いいえ
+L0102	21	登録番号	半角英数	-	14	-	・適格請求発行事業者の場合は必須
+L0103	・14文字かどうかをチェックする
+L0104	22	適格請求発行業者について	リンク	-	-	-
+L0105	23	ネット買取利用規約	リンク	-	-	-	・共通の利用規約を表示
+L0106	・買取に該当する箇所を表示
+L0107	・リンク押下でモーダルを表示 2026/8/18木村：デザインによりテキスト表示からモーダルに変わっている
+L0108	24	ネット買取規約同意	チェックボックス	◯	-	-
+L0109	25	戻るボタン	ボタン	-	-	-
+L0110	26	申込みボタン	ボタン	-	-	-
+L0111	Source:
+L0112	functions/pf-eccube3/f05-06_front_online_purchase_buy_shopping_complete.md
+L0113	現行仕様
+L0114	F05-06 ネット買取買取手続き～完了 / ネット買取 — 買取手続き〜完了
+L0115	業務ロジック
+L0116	手続きの前提
+L0117	買取カートに商品があり、会員としてログイン済みであることを、記入・確認・確定の前提とする。買取カートが無いときはカート画面へ戻す。ログイン済みでないときは買取ログイン画面へ戻す。買取ログイン画面では、自動ログイン記憶状態のとき、ログインメール欄に会員のメールアドレスを初期表示する。ログイン済みの状態で買取ログイン画面を開いたときは記入画面へ移す。
+L0118	記入画面の表示と初期値
+L0119	記入画面は、カート画面から渡された数量で買取カートを更新したうえで表示する。渡された数量が数値でないか1未満のものは、その商品を買取カートから取り除く。1商品あたりの購入上限を超える数量が渡されたときは買取カートを更新せず、上限を超えた旨を知らせる。合計買取価格は買取カートの各商品の買取価格と数量から求め、買取価格を取得できない商品は買取カートから取り除いたうえで算出する。進捗はSTEP2として示す。
+L0120	振込口座情報は会員に登録済みのものがあれば最新のものを初期値とし、無ければ新規入力とする。適格請求書発行事業者口座も同様に、会員に登録済みのものがあればそれを初期値とする。生年月日を入力させるときに選べる年は当年から110年前までで、未来の日付は選べない。口座名義の入力欄には、全角カタカナで入力する旨を画面上で案内する。
+L0121	個口数の警告
+L0122	送付する箱数を3以上にしたときは、査定期間が延長されうる旨の警告を画面上に出す。警告は申込みを妨げない。選択した箱数は買取受注へ記録する。
+L0123	依頼の確定
+L0124	確定時の登録は1つのまとまりとして行い、途中で例外が起きたときは登録内容をすべて取り消す。
+L0125	買取受注は状態「注文」で登録し、会員の氏名・フリガナ・メールアドレス・郵便番号・住所・電話番号・都道府県・職業・生年月日を確定時点の値として写し取る。送金方法には買取用の送金方法を設定する。自動承諾を利用する側が選ばれたときは、買取受注の自動承諾を有効とする。
+L0126	登録が済んだらオーダーIDを組み立てて保持し、完了画面へ移す。買取受注完了メールに載せる買取明細は、商品ID順に並べる。
+L0127	支店システムへの連携
+L0128	会員の職業または生年月日を確定時に登録して会員情報が変わったときだけ、支店システムへ会員更新を通知する。通知は買取受注の登録が確定したあとに行う。
+L0129	メモへの保存
+L0130	メモに保存する文字列は「名称x数量」を改行で連ねたものとする。まとめて買取の商品はメモへの保存の対象から外す。
+L0131	オーダーID
+L0132	「PU」、年月日6桁、ハイフン、受注IDの10桁ゼロ詰めを、この順に連結した文字列とする。
+L0133	確定時の判定順序
+L0134	順序	判定	結果
+L0135	1	買取カートがあるか	無ければカート画面へ戻す
+L0136	2	ログイン済みか	未ログインなら買取ログイン画面へ戻す
+L0137	3	入力（確認内容、該当時は登録番号）が妥当か	不備があれば記入画面を再表示する
+L0138	4	上記を通過	登録処理を行い、完了画面へ移す
+L0139	5	登録の途中で例外が起きたか	登録内容をすべて取り消し、例外として扱う
+L0140	完了画面
+L0141	進捗はSTEP3として示す。
+L0142	完了画面を表示するときは、保持していたオーダーIDを取り出してから、買取カートの内容とオーダーIDの保持をどちらも削除する。削除後は買取カートが空になる。
+L0143	入出力
+L0144	種類	内容
+L0145	入力	買取カートの内容、会員情報、記入画面での入力内容
+L0146	成功時出力	完了画面（保持したオーダーIDを表示する）
+L0147	失敗時出力	入力不備時は記入画面の再表示、買取カートが無いときや未ログイン時は各画面への移動
+L0148	入出力: 永続化
+L0149	操作	契機
+L0150	追加	買取依頼の確定時。登録は1つのまとまりとして行い、途中で例外が起きたときは登録内容をすべて取り消す
+L0151	リニューアル後の仕様
+L0152	表示メッセージ
+L0153	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0154	F05-06-MSG-001	入力項目直下	この項目は必ず入力してください。	買取依頼内容の確認・確定で、銀行名を入力せずに送信したとき	買取依頼内容の記入画面に留まる
+L0155	F05-06-MSG-002	入力項目付近	箱数が多い場合、査定期間が延長されることがあります。	送付する箱数を警告基準以上に入力したとき	警告を表示し、買取依頼内容の入力画面に留まる
+L0156	—	各入力欄付近	この項目は必ず入力してください。	必須項目が未入力のとき	記入画面に留まる
+L0157	—	登録番号欄	登録番号を入力してください	適格請求書発行事業者が「はい」で登録番号が未入力のとき	記入画面に留まる
+L0158	—	登録番号欄	登録番号に全角を含むことは出来ません	登録番号に全角を含むとき	記入画面に留まる
+L0159	—	記入・確認画面の見出し	買取依頼内容の確認	記入・確認画面の表示時	—
+L0160	—	記入・確認画面	査定結果を確認してから承諾する／自動承諾を利用する	記入・確認画面の表示時	選択した内容を自動承諾の設定に反映する
+L0161	—	完了画面の見出し	買取依頼完了	完了画面の表示時	—
+L0162	—	完了画面	ご依頼いただきありがとうございます。ご登録いただいたメールアドレスに発送案内のメールをお送りしております。…	完了画面の表示時	—
+L0163	—	完了画面	オーダーＩＤ	完了画面の表示時	組み立てたオーダーIDを併せて表示する
+##### 0305 sheet-9 買取依頼完了
+L0164	買取依頼完了
+L0165	ドキュメント名フロント_ネット買取 基本設計書
+L0166	セクション—
+L0167	プロジェクト名フロント_ネット買取機能
+L0168	作成者緑川
+L0169	作成日2025-06-12
+L0170	更新者緑川
+L0171	更新日2025-09-22
+L0172	機能NoF05-06
+L0173	機能名買取依頼完了
+L0174	概要買取依頼完了画面を表示します。
+L0175	処理概要（★はカスタマイズ項目）
+L0176	買取依頼完了 / D8 / image 1
+L0177	レイアウト図
+L0178	カスタマイズ説明
+L0179	・「オーダーID」ではなく、「買取番号」に名称を変更する
+L0180	機能仕様処理概要（★はカスタマイズ項目）
+L0181	★表示について
+L0182	・「オーダーID」ではなく、「買取番号」に名称を変更する
+L0183	・買取に紐づくセッションは削除する
+L0184	識別ID	ラベル	書式・制限	必須	最大文字数
+L0185	または最大値	初期値	画面部品の説明
+L0186	1	STEP表示	画像	-	-	-
+L0187	2	買取番号	ラベル	-	-	-	・オーダーIDから買取番号に変更
+L0188	3	オンライン本人確認について	画像	-	-	-	・別ウィンドウでオンライン本人確認について画面に遷移する
+L0189	4	買取TOPへ	ボタン	-	-	-	・押下時に買取TOP画面へ遷移する
+L0190	5	マイページ	ボタン	-	-	-	・押下時にマイページ画面へ遷移する
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/F06-01/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+##### 0306 sheet-3 新規会員登録
+L0001	新規会員登録
+L0002	ドキュメント名フロント_会員
+L0003	セクション—
+L0004	プロジェクト名サイトリニューアル
+L0005	作成者加島
+L0006	作成日2025-08-27
+L0007	更新者高久
+L0008	更新日2025-10-06
+L0009	機能NoF06-01
+L0010	機能名新規会員登録
+L0011	概要会員情報を仮会員で登録できる
+L0012	処理概要（★はカスタマイズ項目）
+L0013	処理概要（★はカスタマイズ項目）
+L0014	処理概要（★はカスタマイズ項目）
+L0015	会員登録 レイアウト図
+L0016	SP版
+L0017	⌂ > ログイン > 会員情報登録
+L0018	1-1
+L0019	1-2
+L0020	1-3
+L0021	1-9
+L0022	1-5
+L0023	1-10
+L0024	1-11
+L0025	1-12
+L0026	1-13
+L0027	1-4
+L0028	1-6
+L0029	1-7
+L0030	1-8
+L0031	1-14
+L0032	1-15
+L0033	1-16
+L0034	1-17
+L0035	1-18
+L0036	1-20
+L0037	1-21
+L0038	1-22
+L0039	1-23
+L0040	1-24
+L0041	1-25
+L0042	1-26
+L0043	1-27
+L0044	1-19
+L0045	1-1
+L0046	新規会員登録 / G11 / image 2
+L0047	新規会員登録 / BE53 / image 6
+L0048	PC版
+L0049	⌂ > ログイン > 会員情報登録
+L0050	1-2
+L0051	1-3
+L0052	1-4
+L0053	1-5
+L0054	1-6
+L0055	1-7
+L0056	1-8
+L0057	1-9
+L0058	1-10
+L0059	1-11
+L0060	1-12
+L0061	1-14
+L0062	1-15
+L0063	1-16
+L0064	1-17
+L0065	1-18
+L0066	1-19
+L0067	1-20
+L0068	1-21
+L0069	1-22
+L0070	1-23
+L0071	1-25
+L0072	1-26
+L0073	1-27
+L0074	1-24
+L0075	1-13
+L0076	1250
+L0077	新規会員登録 / F104 / image 1
+L0078	カスタマイズ説明
+L0079	・カスタマイズ要件
+L0080	海外住所対応について
+L0081	・海外住所表示時に海外住所用に3カラム目を表示する
+L0082	・会員情報に海外住所用の3カラム目を登録する
+L0083	・カスタマイズ要件に記載の内容以外は現行踏襲とする
+L0084	機能仕様処理概要（★はカスタマイズ項目）
+L0085	・(1-14)国について
+L0086	1. 「Japan」を指定している場合、下記の項目を変更する
+L0087	・(1-15)郵便番号の入力欄を日本の郵便番号(〒[3桁]-[4桁])の形式に変更する
+L0088	・(1-16)住所(都道府県)の表示
+L0089	・(1-19)住所3(都道府県)の非表示
+L0090	1-15
+L0091	1-15
+L0092	1-17
+L0093	1-18
+L0094	1-19
+L0095	1-15
+L0096	1-16
+L0097	1-17
+L0098	1-18
+L0099	画像レイヤー（3枚）: 新規会員登録 / F225 / image 5 + 新規会員登録 / G208 / image 9 + 新規会員登録 / G196 / image 10
+L0100	2. 「Japan」から国を変更すると読み込みが発生し、下記の項目を変更する
+L0101	・(1-15)郵便番号の入力欄を汎用の郵便番号入力形式に変更する
+L0102	・(1-16)住所(都道府県)の非表示
+L0103	・(1-19)住所3(都道府県)の表示
+L0104	3. 「Japan」以外の国から「Japan」に変更すると読み込みが発生し、上記 1 と同等の処理を行う
+L0105	★(1-15)郵便番号について
+L0106	・ECCUBE4標準機能により、(1-14)国が「Japan」の場合のみ入力値に基づいて以下1~2を自動補完する
+L0107	1 (1-16)住所(都道府県)
+L0108	2 (1-17)住所1
+L0109	・現行に表示していた「郵便番号から自動入力」のボタンを除去する
+L0110	・(1-10)メールアドレスについて
+L0111	・(1-26)同意するを押下すると、RFC準拠の形式チェックを行い、不正な形式の場合は「有効なメールアドレスではありません。」と
+L0112	エラーメッセージを表示する
+L0113	識別ID	ラベル	書式・制限	必須	最大文字数
+L0114	または最大値	初期値	画面部品の説明
+L0115	1-1	パンくずリスト	リンク	-	-	-	※カスタマイズ対応、新規追加
+L0116	・現在表示中のページは押下できないようにする
+L0117	・ホームアイコンを押下すると、本店ECTOP画面へ遷移する
+L0118	1-2	お名前(姓)	半角・全角	◯	16	-	・未入力で(1-26)同意するを押下すると、動的に必須入力のエラーメッセージを表示する
+L0119	1-3	お名前(名)	半角・全角	◯	16	-	・未入力で(1-26)同意するを押下すると、動的に必須入力のエラーメッセージを表示する
+L0120	1-4	フリガナ(姓)	半角・全角	◯	25	-	・未入力で(1-26)同意するを押下すると、動的に必須入力のエラーメッセージを表示する
+L0121	1-5	フリガナ(名)	半角・全角	◯	25	-	・未入力で(1-26)同意するを押下すると、動的に必須入力のエラーメッセージを表示する
+L0122	1-6	生年月日(年)	単一選択(セレクトボックス)	◯	-	-	・未入力で(1-26)同意するを押下すると、動的に必須入力のエラーメッセージを表示する
+L0123	1-7	生年月日(月)	単一選択(セレクトボックス)	◯	-	-	・未入力で(1-26)同意するを押下すると、動的に必須入力のエラーメッセージを表示する
+L0124	1-8	生年月日(日)	単一選択(セレクトボックス)	◯	-	-	・未入力で(1-26)同意するを押下すると、動的に必須入力のエラーメッセージを表示する
+L0125	1-9	性別	単一選択(セレクトボックス)	-	-	-	選択肢: 男性 女性
+L0126	1-10	メールアドレス	半角	◯	255	-	・未入力、またはメールアドレス形式として不正な場合、(1-26)同意するを押下すると、動的に必須入力のエラーメッセージを表示する
+L0127	・(1-26)同意するを押下すると、RFC準拠の形式チェックを行い、不正な形式の場合は「有効なメールアドレスではありません。」とエラーメッセージを表示する
+L0128	1-11	メールアドレス(確認)	半角	◯	255	-	・未入力、またはメールアドレス形式として不正な場合、(1-26)同意するを押下すると、動的に必須入力のエラーメッセージを表示する
+L0129	・(1-26)同意するを押下すると、(1-10)メールアドレスと同じかチェックを行い、不一致の場合は「同じメールアドレスを入力してください。」とエラーメッセージを表示する
+L0130	・(1-26)同意するを押下すると、RFC準拠の形式チェックを行い、不正な形式の場合は「有効なメールアドレスではありません。」とエラーメッセージを表示する
+L0131	1-12	パスワード	半角	◯	50	-	・未入力で(1-26)同意するを押下すると、動的に必須入力のエラーメッセージを表示する
+L0132	・最低文字数: 12
+L0133	1-13	パスワード(確認)	半角	◯	50	-	・未入力で(1-26)同意するを押下すると、動的に必須入力のエラーメッセージを表示する
+L0134	・(1-26)同意するを押下すると、(1-12)パスワードと同じ入力かチェックを行う
+L0135	・最低文字数: 12
+L0136	1-14	国	単一選択(セレクトボックス)	◯	-	Japan	・「Japan」から国を変更すると読み込みが発生し、(1-17)住所(都道府県)を非表示にする
+L0137	・「Japan」以外の国から「Japan」に変更すると読み込みが発生し、(1-20)住所3を非表示にする
+L0138	1-15	郵便番号	数値(整数)	◯	10	-	・未入力で(1-26)同意するを押下すると、動的に必須入力のエラーメッセージを表示する
+L0139	1-16	住所(都道府県)	単一選択(セレクトボックス)	◯	-	-	・未入力で(1-26)同意するを押下すると、動的に必須入力のエラーメッセージを表示する
+L0140	・(1-14)国が「Japan」の場合のみに表示する
+L0141	・(1-14)国が「Japan」の場合は、「日本国外」で非表示にする
+L0142	1-17	住所1	半角・全角	◯	90	-	・未入力で(1-26)同意するを押下すると、動的に必須入力のエラーメッセージを表示する
+L0143	1-18	住所2	半角・全角	◯	90	-	・未入力で(1-26)同意するを押下すると、動的に必須入力のエラーメッセージを表示する
+L0144	1-19	住所3	半角・全角	-	90	-	※カスタマイズ対応、海外住所表示時に海外住所用に3カラム目を表示する
+L0145	1-20	電話番号	数値(整数)	◯		-	・未入力で(1-26)同意するを押下すると、動的に必須入力のエラーメッセージを表示する
+L0146	1-21	会社名	半角・全角	-	100	-	-
+L0147	1-22	職業	単一選択(セレクトボックス)	-	-	-	・選択肢は、管理画面＞システム設定＞マスターデータ管理にて設定している値を参照
+L0148	1-23	MTG Campaign 登録名(姓)	半角・全角	-	128	-	-
+L0149	1-24	MTG Campaign 登録名(名)	半角・全角	-	128	-	-
+L0150	1-25	ご利用規約	リンク	-	-	-	・押下すると、ご利用規約画面へ遷移する
+L0151	1-26	同意する	ボタン	-	-	-	・押下すると、フォームに入力した情報で入力チェックを実施し、入力チェックが正常に完了した場合は登録/更新を行い、エラーが発生した場合はエラーメッセージを画面に表示する
+L0152	1-27	戻る	ボタン	-	-	-	・押下すると、ECTOP画面へ遷移する
+L0153	会員登録確認 レイアウト図
+L0154	SP版
+L0155	⌂ > ログイン > 会員情報登録確認
+L0156	2-1
+L0157	2-2
+L0158	2-4
+L0159	2-5
+L0160	2-6
+L0161	2-7
+L0162	2-8
+L0163	2-9
+L0164	2-10
+L0165	2-11
+L0166	2-12
+L0167	2-13
+L0168	2-14
+L0169	2-15
+L0170	2-16
+L0171	2-17
+L0172	2-18
+L0173	2-19
+L0174	2-20
+L0175	2-1
+L0176	2-3
+L0177	画像レイヤー（2枚）: 新規会員登録 / F268 / image 3 + 新規会員登録 / C437 / image 7
+L0178	PC版
+L0179	⌂ > ログイン > 会員情報登録確認
+L0180	2-2
+L0181	2-3
+L0182	2-4
+L0183	2-5
+L0184	2-6
+L0185	2-7
+L0186	2-8
+L0187	2-9
+L0188	2-10
+L0189	2-11
+L0190	2-12
+L0191	2-13
+L0192	2-14
+L0193	2-15
+L0194	2-16
+L0195	2-17
+L0196	2-18
+L0197	2-19
+L0198	2-20
+L0199	新規会員登録 / E348 / image 8
+L0200	カスタマイズ説明
+L0201	・カスタマイズ要件
+L0202	海外住所対応について
+L0203	・海外住所表示時に海外住所用に3カラム目を表示する
+L0204	・会員情報に海外住所用の3カラム目を登録する
+L0205	・カスタマイズ要件に記載の内容以外は現行踏襲とする
+L0206	機能仕様処理概要（★はカスタマイズ項目）
+L0207	★(2-8)国について
+L0208	・「Japan」の場合の表示は下記の通りになる
+L0209	・(2-9)郵便番号の入力欄を日本の郵便番号(〒[3桁]-[4桁])の形式で表示
+L0210	・(2-10)住所(都道府県)の表示
+L0211	・(2-13)住所3(都道府県)の非表示
+L0212	・「Japan」以外の場合の表示は下記の通りになる
+L0213	・(2-9)郵便番号の入力欄を汎用の郵便番号形式で表示
+L0214	・(2-10)住所(都道府県)の非表示
+L0215	・(2-13)住所3(都道府県)の表示
+L0216	・ブラックリストに以下1~3が登録されている場合に(2-19)登録を押下すると、会員情報登録エラー画面に遷移する
+L0217	1 (2-2)お名前
+L0218	2 (2-10)~(2-13)の住所
+L0219	3 (2-14)電話番号
+L0220	※ブラックリストについては、別紙「0207_基本設計仕様書(会員管理機能)」のシート「ブラックリスト管理」を参照
+L0221	※会員情報登録エラー画面は、以下を参照
+L0222	・管理画面＞店舗設定＞基本設定で登録されている「仮会員機能」による制御について
+L0223	・仮会員機能が有効の場合
+L0224	・(2-19)登録を押下し入力チェックが正常に完了した場合、以下1~2を行う
+L0225	1 仮会員会員登録完了
+L0226	2 (2-6)メールアドレス宛に仮会員登録完了メールを送信する
+L0227	※仮会員登録完了メール内のURLを押下すると、ブラウザで本会員登録画面を開き、本会員登録が完了する
+L0228	・仮会員機能が無効の場合
+L0229	・(2-19)登録を押下し入力チェックが正常に完了した場合、(2-6)メールアドレス宛に本会員登録完了メールを送信する
+L0230	※仮会員機能の登録については、別紙「0310_基本設計仕様書(店舗設定機能)」のシート「基本設定」を参照
+L0231	識別ID	ラベル	書式・制限	必須	最大文字数
+L0232	または最大値	初期値	画面部品の説明
+L0233	2-1	パンくずリスト	リンク	-	-	-	※カスタマイズ対応、新規追加
+L0234	・現在表示中のページは押下できないようにする
+L0235	・ホームアイコンを押下すると、本店ECTOP画面へ遷移する
+L0236	2-2	お名前	ラベル	◯	-	-	-
+L0237	2-3	フリガナ	ラベル	◯	-	-	-
+L0238	2-4	生年月日	ラベル	◯	-	-	-
+L0239	2-5	性別	ラベル	-	-	-	-
+L0240	2-6	メールアドレス	ラベル	◯	-	-	-
+L0241	2-7	パスワード	ラベル	◯	-	-	-
+L0242	2-8	国	ラベル	◯	-	-	-
+L0243	2-9	郵便番号	ラベル	◯	-	-	-
+L0244	2-10	住所(都道府県)	ラベル	◯	-	-	・(2-8)国が日本の場合のみに表示する
+L0245	2-11	住所1	ラベル	◯	-	-	-
+L0246	2-12	住所2	ラベル	◯	-	-	-
+L0247	2-13 	住所3	ラベル	◯	-	-	※カスタマイズ対応、海外住所表示時に海外住所用に3カラム目を表示する
+L0248	2-14	電話番号	ラベル	◯	-	-	-
+L0249	2-15	会社名	ラベル	-	-	-	-
+L0250	2-16	職業	ラベル	-	-	-	-
+L0251	2-17	MTG Campaign 登録名(姓)	ラベル	-	-	-	-
+L0252	2-18	MTG Campaign 登録名(名)	ラベル	-	-	-	-
+L0253	2-19	登録する	ボタン	-	-	-	・押下すると、(2-2)~(2-18)の内容で入力チェックを実施し、入力チェックが正常に完了した場合は登録/更新を行い、エラーが発生した場合は会員登録画面へ遷移し、エラーメッセージを画面に表示する
+L0254	・ブラックリストに以下1~3が登録されている場合に押下すると、会員情報登録エラー画面に遷移する
+L0255	1 (2-2)お名前
+L0256	2 (2-8)~(2-11)の住所
+L0257	3 (2-14)電話番号
+L0258	2-20	戻る	ボタン	-	-	-	・押下すると、入力内容を維持した上で会員登録画面へ遷移する
+L0259	仮会員登録完了 レイアウト図
+L0260	共通(PC/SP)
+L0261	⌂ > ログイン > 仮会員登録完了
+L0262	3-2
+L0263	3-1
+L0264	新規会員登録 / F483 / image 4
+L0265	カスタマイズ説明
+L0266	・会員登録完了時、支店に会員データ連携を行っていたが不要となる
+L0267	機能仕様処理概要（★はカスタマイズ項目）
+L0268	・以下の情報を登録する
+L0269	・会員情報
+L0270	・住所情報
+L0271	・デッキ登録用ユーザーID（英数字の8文字のランダム文字列で一意）
+L0272	★会員登録完了時、支店に会員データ連携を行っていたが不要となる
+L0273	・仮会員機能が有効の場合、本会員登録メールを送信する
+L0274	・仮会員機能が無効の場合、本会員登録画面へリダイレクトし、本会員登録を完了する
+L0275	識別ID	ラベル	書式・制限	必須	最大文字数
+L0276	または最大値	初期値	画面部品の説明
+L0277	3-1	パンくずリスト	リンク	-	-	-	※カスタマイズ対応、新規追加
+L0278	・現在表示中のページは押下できないようにする
+L0279	・ホームアイコンを押下すると、本店ECTOP画面へ遷移する
+L0280	3-2	ホームへ戻る	リンク	-	-	-	・押下すると、ECTOP画面へ遷移する
+L0281	Source:
+L0282	functions/pf-eccube3/f06-01_front_member_customer_entry.md
+L0283	現行仕様
+L0284	F06-01 新規会員登録 / F06-01（仮会員登録）
+L0285	業務ロジック
+L0286	登録できない入力の扱い
+L0287	条件	結果
+L0288	メールアドレスとパスワードに同じ文字列を入力した	確認画面へ進めず、登録も行わない。会員登録画面を再表示し、パスワード欄の下に異なる文字列を使うよう促す注意を表示する
+L0289	国が日本なのに住所(都道府県)が「日本国外」、または国が日本以外なのに住所(都道府県)が「日本国外」以外	国欄に整合エラーを表示し、登録しない
+L0290	画面から発行したなりすまし対策の照合値を伴わない送信	確認・登録のいずれも行わず、アクセスを拒否する
+L0291	国の選択肢の並び
+L0292	国の選択肢は国名の昇順で並ぶ。未選択のときは選択を促す文言を先頭に置く。
+L0293	入出力
+L0294	入出力: 永続化
+L0295	操作	契機	内容
+L0296	追加	登録の実行時	会員情報と会員住所に加えて、住所の付帯情報と選手情報を同時に作る
+L0297	追加	同上	住所の付帯情報は既定の住所名を持ち、既定のお届け先として作る
+L0298	追加	同上	既定の住所名は「会員情報住所 / Membership Information Address」とする
+L0299	追加	同上	選手情報には、お名前(姓・名)、MTG Campaign 登録名(姓・名)、メールアドレス、デッキ登録用ユーザーIDを持たせる
+L0300	追加	同上	国が日本以外のときは、会員住所にも入力した郵便番号を控える
+L0301	リニューアル後の仕様
+L0302	表示メッセージ
+L0303	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0304	—	会員登録画面見出し	会員情報登録	会員登録画面の表示時	静的表示
+L0305	—	確認画面見出し	会員情報登録確認	確認画面の表示時	静的表示
+L0306	—	確認画面本文	下記の内容で送信してもよろしいでしょうか？<br>よろしければ、一番下の「会員登録をする」ボタンをクリックしてください。	確認画面の表示時	静的表示
+L0307	—	完了画面見出し	仮会員登録完了	仮会員登録完了画面の表示時	静的表示
+L0308	—	完了画面本文	現在、仮登録の状態となっております。	仮会員登録完了画面の表示時	静的表示
+L0309	—	国欄の直下	国と都道府県の組み合わせが正しくありません。	国と都道府県の組み合わせが整合しないとき	登録せず会員登録画面に留まる
+L0310	—	各入力欄の直下	各入力項目の必須・形式エラー	必須未入力・形式不正・最大長超過のとき	文言は共通フォーム部品の検証メッセージを正とする
+L0311	F06-01-MSG-001	エラー画面本文	ご入力いただいた内容は使用できません。<br>もう一度、登録ページへアクセスして登録情報の変更をお願いいたします。	会員登録時にブラックリスト照合へ該当したとき	会員登録を行わず、登録エラー画面に遷移する
+L0312	F06-01-MSG-002	完了画面本文	ご入力いただいたメールアドレス宛に、確認メールをお送りさせていただきました。<br>メールに記載のURLをクリックしてページにアクセスいただきますと、会員登録が完了いたします。<br>お手数おかけしますが、ご確認のほどよろしくお願いいたします。<br>※携帯電話のメールアドレスをご使用いただいている場合、フィルタリング機能でブロックされていまっている可能性がございます。<br>※メールが届かない場合、迷惑メールやフィルタ設定を見直していただき、メールが届かない旨をお問い合わせよりご連絡ください。	会員登録を完了したとき	仮会員として登録し、仮会員登録完了画面を表示する
+L0313	F06-01-MSG-003	入力項目付近	生年月日(月)を選択してください	会員登録または会員情報変更で生年月日の月を選択せずに入力を進めたとき	生年月日の月を選択するまで入力画面に留まる
+L0314	F06-01-MSG-004	入力項目付近	生年月日(年)を選択してください	生年月日の年を選択せずに入力欄を離れる、または送信したとき	入力エラーを表示し、会員登録画面または会員情報変更画面に留まる
+L0315	F06-01-MSG-005	入力項目付近	有効なメールアドレスを入力してください	メールアドレスまたは確認用メールアドレスを有効な形式で入力しないとき	入力エラーを表示し、会員登録画面または会員情報変更画面に留まる
+L0316	F06-01-MSG-006	入力項目付近	メールアドレスが一致しません	確認用メールアドレスがメールアドレスと一致しないとき	入力エラーを表示し、会員登録画面または会員情報変更画面に留まる
+L0317	F06-01-MSG-007	入力項目付近	メールアドレスを入力してください	メールアドレスを入力せずに入力欄を離れる、または送信したとき	入力エラーを表示し、会員登録画面または会員情報変更画面に留まる
+L0318	F06-01-MSG-008	入力項目付近	メールアドレス(確認)を入力してください	確認用メールアドレスを入力せずに入力欄を離れる、または送信したとき	入力エラーを表示し、会員登録画面または会員情報変更画面に留まる
+L0319	F06-01-MSG-009	入力項目付近	セイを入力してください	姓のフリガナを入力せずに入力欄を離れる、または送信したとき	入力エラーを表示し、会員登録画面または会員情報変更画面に留まる
+L0320	F06-01-MSG-010	入力項目付近	メイを入力してください	名のフリガナを入力せずに入力欄を離れる、または送信したとき	入力エラーを表示し、会員登録画面または会員情報変更画面に留まる
+L0321	F06-01-MSG-011	入力項目付近	カタカナで入力してください	姓または名のフリガナをカタカナ以外で入力したとき	入力エラーを表示し、会員登録画面または会員情報変更画面に留まる
+L0322	F06-01-MSG-012	入力項目付近	姓を入力してください	姓を入力せずに入力欄を離れる、または送信したとき	入力エラーを表示し、会員登録画面、会員情報変更画面、またはお届け先登録・編集画面に留まる
+L0323	F06-01-MSG-013	入力項目付近	名を入力してください	名を入力せずに入力欄を離れる、または送信したとき	入力エラーを表示し、会員登録画面、会員情報変更画面、またはお届け先登録・編集画面に留まる
+L0324	F06-01-MSG-014	入力項目付近	パスワードは%min%文字以上で入力してください	パスワードまたは確認用パスワードが設定された最小文字数に満たないとき	入力エラーを表示し、会員登録画面または会員情報変更画面に留まる
+L0325	F06-01-MSG-015	入力項目付近	郵便番号は数字のみ入力してください	郵便番号欄に数字以外を入力して入力を確定しようとしたとき	会員登録入力画面に留まる
+L0326	確認画面と仮会員登録完了画面の文言は静的表示である。本機能はフラッシュ・トーストを生成しない。
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/F05-03/excluded.tsv integration_test/casegen/combination/units/F05-04/excluded.tsv integration_test/casegen/combination/units/F05-05/excluded.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+テストID	除外	理由	事前準備	手順	期待結果
+IT-F05-03-005	保留	設計書にも現行ソースにも期待結果（正解）が無く、テストできない。期待結果欄に何が未定義かを記載	—	—	上限超過時の通知先、通知形式および検索時のURLと件数を画面またはDBで確認する方法が定義されていないためケースを確定できない
+IT-F05-03-006	保留	設計書にも現行ソースにも期待結果（正解）が無く、テストできない。期待結果欄に何が未定義かを記載	—	—	外部通知の異常を作る方法、異常を判定する方法および案内表示を確認するタイミングが定義されていないためケースを確定できない
+IT-F05-03-021	保留	設計書にも現行ソースにも期待結果（正解）が無く、テストできない。期待結果欄に何が未定義かを記載	—	—	詳細検索について「販売側を踏襲する」とだけ記載され、検索項目、具体的な入力値、ユニサーチへ渡す条件および合格となる検索結果が定義されていないためケースを確定できない
+IT-F05-03-022	保留	設計書にも現行ソースにも期待結果（正解）が無く、テストできない。期待結果欄に何が未定義かを記載	—	—	関連ワードの取得と検索について「販売側を踏襲する」とだけ記載され、取得条件、表示対象、押下操作および検索結果の合格条件が定義されていないためケースを確定できない
+IT-F05-03-023	保留	設計書にも現行ソースにも期待結果（正解）が無く、テストできない。期待結果欄に何が未定義かを記載	—	—	TOPページのタグ検索と商品詳細ページの同名商品検索でユニサーチを使用していないことを画面またはDBで識別する方法が定義されていないためケースを確定できない
+IT-F05-03-027	保留	設計書にも現行ソースにも期待結果（正解）が無く、テストできない。期待結果欄に何が未定義かを記載	—	—	買取検索の選択肢は「価格（安い順）」、買取商品一覧の選択肢は「価格（低い順）」と記載され、実行者が選択する名称が一意に定義されていないためケースを確定できない
+IT-F05-03-030	保留	設計書にも現行ソースにも期待結果（正解）が無く、テストできない。期待結果欄に何が未定義かを記載	—	—	「>」の遷移先が一つ前のページと記載されており、記号が示す方向との関係および1ページ目で押した場合の遷移先が定義されていないためケースを確定できない
+IT-F05-03-039	保留	設計書にも現行ソースにも期待結果（正解）が無く、テストできない。期待結果欄に何が未定義かを記載	—	—	検索結果表示部分だけが読み直され全画面が再描画されないことを、画面またはDBで判定する観測方法と合格条件が定義されていないためケースを確定できない
+IT-F05-03-049	未確定	環境の決定待ち：S-F05-03-IMGZOOM-049: 未確定: 画像ファイルF0503-049-IMG.pngを試験環境の商品画像ストレージへ置く手段	① 開始時に本店を日本語・本店フラグ有効・公開中、ユニサーチ接続先と商品フィード送信先を試験環境に設定する（S-F05-03-ENV）／② 画像確認カテゴリ-F0503-049の索引商品は1件（商品ID F0503-049-001）だけで、商品画像のファイル名はF0503-049-IMG.png、公開・買取価格600円・NM・高額商品コードなし・予約商品でない（S-F05-03-IMGZOOM-049）	1. 画像確認カテゴリ-F0503-049のネット買取商品一覧画面を開く／2. F0503-049-001の商品画像を押す	押した商品F0503-049-001の画像F0503-049-IMG.pngの拡大画像が表示されること
+テストID	除外	理由	事前準備	手順	期待結果
+IT-F05-04-031	保留	設計書にも現行ソースにも期待結果（正解）が無く、テストできない。期待結果欄に何が未定義かを記載	—	—	色順で使用する色の優先順位と同色商品の並び順が定義されていないためケースを確定できない
+IT-F05-04-032	保留	設計書にも現行ソースにも期待結果（正解）が無く、テストできない。期待結果欄に何が未定義かを記載	—	—	「在庫ありのみ」が判定する在庫の種類、在庫ありとする条件および絞り込み結果が定義されていないためケースを確定できない
+テストID	除外	理由	事前準備	手順	期待結果
+IT-F05-05-017	保留	設計書にも現行ソースにも期待結果（正解）が無く、テストできない。期待結果欄に何が未定義かを記載	—	—	数量一覧を渡さない更新要求と、買取カートがない状態で更新要求を発行するブラウザ上の操作および要求先が定義されていないためケースを確定できないこと
+IT-F05-05-018	保留	設計書にも現行ソースにも期待結果（正解）が無く、テストできない。期待結果欄に何が未定義かを記載	—	—	商品数量が0の状態を作る手順と遷移先機能が定義されておらず、現行仕様では1未満の数量の商品を買取カートから外すためケースを確定できないこと
+IT-F05-05-019	保留	設計書にも現行ソースにも期待結果（正解）が無く、テストできない。期待結果欄に何が未定義かを記載	—	—	カート追加要求を発行する画面・ボタン・要求先、数量省略および規格空をブラウザで作る手順、上限以外の追加失敗条件、追加成功後に買取カートへ進む選択操作が定義されていないためケースを確定できないこと
+IT-F05-05-020	保留	設計書にも現行ソースにも期待結果（正解）が無く、テストできない。期待結果欄に何が未定義かを記載	—	—	数量変更または削除の更新失敗を発生させる条件とブラウザでの再現手順が定義されていないためケースを確定できないこと
+IT-F05-05-002	未確定	作り方が未確定：S-F05-05-MISSING-002: 未確定	① 会員レコードID 〔会員ID-F0505-002〕（登録時に振られた会員IDを控えてある）・ログインID f0505_user-002が利用可能で、ブラウザF0505-BR-002は記載会員でログイン済みである（S-F05-05-CUS-002）／② 規格F0505-B-001-002は買取価格200円・数量3であり、買取カートには数量4の規格F0505-GONE-001-002の明細が残っている一方、その表示対象の商品・規格データは存在しない（S-F05-05-MISSING-002）	1. ネット買取カート画面を開く／2. 表示されている明細と小計を記録する／3. ネット買取カート画面を再読み込みする	対象データがない規格F0505-GONE-001-002が明細と小計から除かれ、再読み込み後も表示されず、規格F0505-B-001-002だけの小計600円が表示されること
+
+exec
+/bin/bash -lc 'for f in F04-04 F05-01 F05-03 F05-04 F05-05 F05-06 F06-01; do echo "$f"; cat integration_test/casegen/combination/factors/${f}_existing.tsv; done' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+F04-04
+テストID	処理ID	値	理由
+IT-F04-04-001	P1	F01=通過&F02=通常&F03=使用しない	事前準備で通常購入グループ・使用ポイント0を設定し、購入完了画面の表示を確かめる
+IT-F04-04-002	P1	F01=通過&F02=通常&F03=使用する	事前準備で通常購入グループ・使用ポイント100・決済記録ありを設定し、購入完了画面の表示を確かめる
+IT-F04-04-003	P1	F01=受注なし	引き継ぐ受注を空にして購入完了画面URLを開き、トップページ遷移を確かめる
+IT-F04-04-004	P1	F01=ステータス異常	キャンセルの受注で購入処理エラー画面を確かめる
+IT-F04-04-005	P1	F01=ステータス異常	1回目にキャンセルの受注で購入処理エラー画面を表示する
+IT-F04-04-005	P1	F01=受注なし	2回目は受注情報が初期化されているためトップページ遷移を確かめる
+IT-F04-04-007	P1	F01=SPLINKS決済記録なし	決済記録0件のSPLINKSコンビニ注文で決済記録不整合のエラー画面を確かめる
+IT-F04-04-008	P1	F01=SPLINKS決済記録なし	決済記録0件のSPLINKS注文で受注ステータスが処理中へ戻ることをDBで確かめる
+IT-F04-04-009	P1	F01=SPLINKS決済記録なし	決済記録不整合のエラー画面を2回表示し初期化されないことを確かめる
+IT-F04-04-051	P1	F01=SPLINKS決済記録なし	決済記録0件のSPLINKSクレジットカード注文でエラー画面を確かめる
+IT-F04-04-052	P1	F01=SPLINKS決済記録なし	決済記録0件のSPLINKSクレジットカード注文で受注ステータスが処理中へ戻ることをDBで確かめる
+IT-F04-04-022	P1	F01=通過&F02=通常	通常購入グループで購入完了画面の注文番号欄にご注文番号が表示されることを確かめる
+IT-F04-04-023	P1	F01=通過&F02=店内アカウント	店内アカウントで購入完了画面にTC注文番号が表示されることを確かめる
+IT-F04-04-024	P1	F01=通過&F02=店内アカウント	1回目は店内アカウントの注文でTC注文番号の下の案内を確かめる
+IT-F04-04-024	P1	F01=通過&F02=通常	2回目は通常の注文でご注文番号の下の案内を確かめる
+IT-F04-04-034	P1	F01=通過&F05=設定あり	売上分析タグを設定した商品を注文し、受注明細に登録されたタグをDBで確かめる
+IT-F04-04-029	P2	F03=使用する&F04=SPLINKS以外	銀行振込で注文確定後に保有ポイントが1000から900になることをDBで確かめる
+IT-F04-04-030	P2	F03=使用する&F04=SPLINKS決済	SPLINKSコンビニ決済で購入完了画面の表示前にポイントが消費されないことをDBで確かめる
+IT-F04-04-031	P2	F03=使用する&F04=SPLINKS決済	SPLINKSコンビニ決済の購入完了画面表示後にポイントが消費されることをDBで確かめる
+IT-F04-04-032	P2	F03=使用する&F04=SPLINKS決済	SPLINKSクレジットカード決済で購入完了画面の表示前にポイントが消費されないことをDBで確かめる
+IT-F04-04-033	P2	F03=使用する&F04=SPLINKS決済	SPLINKSクレジットカード決済の購入完了画面表示後にポイントが消費されることをDBで確かめる
+IT-F04-04-010	P3	F07=不一致&F08=公開&F10=在庫無制限	受注の支払方法を変えて注文し、公開・在庫無制限の商品でシステムエラー画面を確かめる
+IT-F04-04-011	P3	F07=不一致&F08=公開&F10=在庫無制限	同上でカートに商品が残ることを確かめる
+IT-F04-04-012	P3	F08=非公開&F09=範囲内	公開から非公開へ変えて注文しシステムエラー画面を確かめる（購入制限数1・数量1）
+IT-F04-04-013	P3	F08=非公開&F09=範囲内	同上でカートに商品が残ることを確かめる
+IT-F04-04-014	P3	F08=公開&F09=超過	購入制限数を注文数未満に変えて注文しシステムエラー画面を確かめる
+IT-F04-04-015	P3	F08=公開&F09=超過	同上でカートに商品が残ることを確かめる
+IT-F04-04-016	P3	F08=公開&F09=範囲内&F10=在庫管理で不足	在庫数を注文数未満に変えて注文しシステムエラー画面を確かめる
+IT-F04-04-017	P3	F08=公開&F09=範囲内&F10=在庫管理で不足	同上でカートに商品が残ることを確かめる
+IT-F04-04-047	P3	F08=公開&F09=範囲内&F10=在庫管理で足りる	在庫数と注文数が同数でエラーにならず購入完了となり総在庫が0になることを確かめる
+IT-F04-04-050	P3	F08=公開&F10=在庫無制限	在庫数1を超える注文数3でも在庫エラーにならず購入完了画面が表示されることを確かめる
+F05-01
+テストID	処理ID	値	理由
+IT-F05-01-005	P1	F01=本店で公開&F02=NM&F03=1円以上	事前準備でタグ対象3件を公開・NM・買取価格100円以上にし、強化買取商品コーナーの表示を確かめる
+IT-F05-01-008	P1	F01=本店で公開&F02=NM&F03=1円以上	61件を公開・NM・買取価格100円にし、コーナーの表示件数を確かめる
+IT-F05-01-047	P1	F01=本店で公開&F02=NM&F03=1円以上	公開・NM・買取価格1円の商品が強化買取商品コーナーに表示されることを確かめる
+IT-F05-01-050	P1	F01=本店で非公開&F02=NM&F03=1円以上	本店非公開・NM・買取価格100円の商品が表示されないことを確かめる
+IT-F05-01-051	P1	F01=本店で公開&F02=NM&F03=1円以上	本店公開・支店非公開・NM・買取価格100円の商品が表示されることを確かめる
+IT-F05-01-009	P2	F01=本店で公開&F02=NM&F03=1円以上	24件を公開・NM・買取価格100円以上にし、各カテゴリへの表示を確かめる
+IT-F05-01-012	P2	F01=本店で公開&F02=NM&F03=1円以上	24件を公開・NM・買取価格100円以上にし、各カテゴリの表示件数を確かめる
+IT-F05-01-048	P2	F01=本店で公開&F02=NM&F03=1円以上	公開・NM・買取価格1円の商品が買取モダンのカテゴリに表示されることを確かめる
+IT-F05-01-022	P3	F01=本店で公開&F02=NM&F03=1円以上&F04=高額商品コードなし&F06=販売価格が0円超	公開・NM・買取価格1円以上・販売価格1000円・高額商品コードなしの商品が目玉買取商品枠に表示されることを確かめる
+IT-F05-01-026	P3	F01=本店で公開&F02=NM&F03=1円以上&F04=高額商品コードなし&F06=販売価格が0円超	61件を公開・NM・買取価格100円・販売価格100円・高額商品コードなしにし、ページングの表示を確かめる
+IT-F05-01-027	P3	F01=本店で非公開&F02=NM&F03=1円以上&F06=販売価格が0円超	非公開・NM・買取価格100円・販売価格100円にし、目玉買取商品の一覧が0件で表示されることを確かめる
+IT-F05-01-049	P3	F01=本店で公開&F02=NM&F03=1円以上&F04=高額商品コードなし&F06=販売価格が0円超	公開・NM・買取価格1円・販売価格1000円の商品が目玉買取商品枠に表示されることを確かめる
+IT-F05-01-052	P3	F01=本店で公開&F02=NM&F03=1円以上&F04=高額商品コードなし&F05=日本語か英語&F06=販売価格が0円超	言語EN・公開・NM・買取価格500円・販売価格1000円の商品が目玉買取商品枠に表示されることを確かめる
+F05-03
+テストID	処理ID	値	理由
+IT-F05-03-002	P1	F01=0件	ヘッダのキーワード検索で0件になる語を検索し、0件の案内が出ることを確かめる
+IT-F05-03-003	P1	F01=1件以上9999件以下	9999件ちょうどの検索で総件数と1ページ目の60点を確かめる
+IT-F05-03-004	P1	F01=9999件を超える	10000件になる検索で上限超過の案内を確かめる
+IT-F05-03-052	P1	F01=9999件を超える	10000件になる検索で商品数欄の表示を確かめる
+IT-F05-03-009	P1	F01=1件以上9999件以下&F04=タグ1件指定	タグ1件だけを指定し、説明文が一覧上部に出ることを確かめる
+IT-F05-03-055	P1	F01=1件以上9999件以下&F04=タグ1件以外	タグ2件を指定し、説明文が一覧上部に出ないことを確かめる
+F05-04
+テストID	処理ID	値	理由
+IT-F05-04-038	P1	F01=無効・未指定&F02=無効・未指定	無効な言語ZZを指定してクラスは指定せず、先頭言語と先頭クラスが初期表示されることを確かめる
+IT-F05-04-039	P1	F01=無効・未指定&F02=無効・未指定	言語もクラスも指定せず、先頭言語と先頭クラスが初期表示されることを確かめる
+IT-F05-04-040	P1	F01=有効&F02=無効・未指定	有効な言語ENと存在しないクラスを指定し、ENの先頭クラスが初期表示されることを確かめる
+IT-F05-04-013	P1	F01=有効&F02=有効	言語ENとクラスEN-EXを指定し、その選択状態と画像が表示されることを確かめる
+IT-F05-04-047	P1	F01=有効&F02=有効&F03=カード	カード商品に言語ENとクラスEN-NMを指定し、カード言語ラベルを確かめる
+IT-F05-04-008	P1	F03=カード&F04=500円未満	カード商品の買取価格499円で、商品数・カートボタンが表示されないことを確かめる
+IT-F05-04-009	P1	F03=カード&F04=500円以上	カード商品の買取価格500円で、商品数・カートボタンが表示されることを確かめる
+IT-F05-04-059	P1	F01=有効&F02=有効&F03=カード&F04=500円以上	言語JPとクラスJP-NM（600円）を指定して、商品数・カートボタンの表示を確かめる
+IT-F05-04-059	P1	F01=有効&F02=有効&F03=カード&F04=500円未満	言語JPとクラスJP-EX（400円）を指定して、商品数・カートボタンの表示を確かめる
+IT-F05-04-007	P1	F03=カード	カード商品で言語切替・状態・他のバージョン・査定例・カード説明が表示されることを確かめる
+IT-F05-04-007	P1	F03=サプライ・グッズ	サプライ商品でこれらが表示されないことを確かめる
+IT-F05-04-048	P1	F03=サプライ・グッズ	サプライ商品でカード言語ラベルが表示されないことを確かめる
+IT-F05-04-019	P1	F03=カード&F05=登録あり&F06=登録あり	パワー・タフネス3/4と忠誠度5を登録したカードで、カード説明の表示を確かめる
+IT-F05-04-020	P1	F03=カード&F05=未登録&F06=未登録	パワー・タフネスと忠誠度が未登録のカードで、表示されないことを確かめる
+IT-F05-04-023	P1	F03=基本土地	基本土地の商品で同名カードの一覧が表示されないことを確かめる
+F05-05
+テストID	処理ID	値	理由
+IT-F05-05-021	P1	F01=ない&F02=ある	まとめて買取が無く選んで買取だけがあるカートでモーダルが出ることを確かめる
+IT-F05-05-022	P1	F01=ある&F02=ある	まとめて買取と選んで買取の両方があるカートでモーダルが出ないことを確かめる
+IT-F05-05-029	P1	F01=ある&F02=ない	まとめて買取だけがあるカートでモーダルが出ないことを確かめる
+IT-F05-05-015	P1	F01=ない&F02=ない	明細0件のカートで空の案内が出ることを確かめる
+IT-F05-05-027	P2	F03=指定あり&F04=指定あり&F05=ない&F06=20点以内	空のカートへ数量2で追加し、明細の数量を確かめる
+IT-F05-05-027	P2	F03=指定あり&F04=指定あり&F05=ある&F06=20点以内	同じ規格を数量3で追加し、合算の5になることを確かめる
+IT-F05-05-028	P2	F03=指定あり&F04=指定あり&F05=ない&F06=20点以内	空のカートへ数量19で追加する
+IT-F05-05-028	P2	F03=指定あり&F04=指定あり&F05=ある&F06=20点以内	同じ規格を数量1で追加し、ちょうど20になり上限超過の通知が出ないことを確かめる
+IT-F05-04-035	P2	F03=指定あり&F04=指定あり&F05=ない&F06=20点以内	空のカートへ数量2で追加し、カート画面で確かめる
+IT-F05-04-036	P2	F03=指定あり&F04=指定あり&F05=ない&F06=20点以内	空のカートへ数量20で追加し、カート画面で確かめる
+IT-F05-04-037	P2	F03=指定あり&F04=指定あり&F05=ない&F06=20点以内	空のカートへ数量20で追加する
+IT-F05-04-037	P2	F03=指定あり&F04=指定あり&F05=ある&F06=20点を超える	既に20点ある同じ規格へ数量1を追加し、上限超過の表示を確かめる
+IT-F05-04-037	P2	F03=空	規格の指定を空にして追加し、追加失敗の表示を確かめる
+IT-F05-04-057	P2	F03=指定あり&F04=指定あり&F05=ある&F06=20点以内	既に19点ある同じ規格へ数量1を追加し、合計20で登録されることを確かめる
+IT-F05-04-058	P2	F03=指定あり&F04=指定あり&F05=ない&F06=20点以内	空のカートへ数量2で追加する
+IT-F05-04-058	P2	F03=指定あり&F04=指定あり&F05=ある&F06=20点以内	同じ規格へ数量3を追加し、1行のまま5になることを確かめる
+IT-F05-03-037	P2	F03=指定あり&F04=指定あり&F05=ない&F06=20点以内	空のカートへ一覧から数量2で追加し、カート画面で確かめる
+IT-F05-03-054	P2	F03=指定あり&F04=指定あり&F05=ない&F06=20点以内	空のカートへ一覧から数量1のまま追加し、カート画面で確かめる
+IT-F05-05-004	P3	F08=ある&F09=1〜20&F10=20超を含まない	数量を2から4へ変更し、保存後も同じ数量と小計になることを確かめる
+IT-F05-05-005	P3	F08=ある&F09=1〜20&F10=20超を含まない	プラスで数量を3にし、保存後も同じになることを確かめる
+IT-F05-05-006	P3	F08=ある&F09=1〜20&F10=20超を含まない	マイナスで数量を1にし、保存後も同じになることを確かめる
+IT-F05-05-008	P3	F08=ある&F09=1未満&F10=20超を含まない	数量に0を入れ、明細が外れ他の明細は残ることを確かめる
+IT-F05-05-009	P3	F08=ある&F09=数字でない&F10=20超を含まない	数量にabcを入れ、明細が外れ他の明細は残ることを確かめる
+IT-F05-05-010	P3	F08=ある&F09=1〜20&F10=20超を含まない	数量に20を入れ、20で保持されることを確かめる
+IT-F05-05-011	P3	F08=ある&F09=1〜20&F10=20超を含む	一方の数量を21にして更新し、中断されて全ての数量が元のままになることを確かめる
+IT-F05-05-003	P4	F11=現在もある&F12=カード&F13=未登録	商品画像未登録のカード規格で代替画像が表示されることを確かめる
+IT-F05-05-026	P4	F11=現在もある&F12=カード&F13=未登録	言語コードENのカード規格で商品名の先頭に【EN】が付くことを確かめる
+IT-F05-05-001	P4	F11=現在もある	商品データを更新し、カート画面に現在の名前・価格・画像が出ることを確かめる
+F05-06
+テストID	処理ID	値	理由
+IT-F05-06-042	P1	F01=自動承諾を利用する	手順で自動承諾を選び、DBで買取受注の自動承諾を確かめる
+IT-F05-06-023	P1	F02=はい	登録番号つきで申込み、DBで適格請求書発行事業者情報を確かめる
+IT-F05-06-056	P1	F01=査定結果を確認してから承諾する&F02=はい	手順で査定後承諾と適格事業者はいを選び、買取情報編集画面で適格請求書発行事業者情報を確かめる
+IT-F05-06-057	P1	F01=自動承諾を利用する&F02=いいえ	手順で自動承諾と適格事業者いいえを選び、買取情報編集画面で承諾方法を確かめる
+IT-F05-06-078	P1	F01=査定結果を確認してから承諾する	手順で査定後承諾を選び、DBで自動承諾が無効なことを確かめる
+IT-F05-06-079	P1	F02=いいえ	手順で適格事業者いいえを選び、DBで適格請求書発行事業者情報が0件なことを確かめる
+IT-F05-06-015	P2	F03=未登録で入力する&F04=未登録で入力する	職業と生年月日が未登録の会員で入力し、DBで会員情報の更新を確かめる
+IT-F05-06-072	P2	F03=未登録で入力する&F04=未登録で入力する	職業と生年月日が未登録の会員で入力し、会員登録編集画面で反映を確かめる
+F06-01
+テストID	処理ID	値	理由
+IT-F06-01-013	P1	F01=有効&F03=Japan以外	事前準備で仮会員機能の有効とUnited Statesの入力を用意し、DBで会員情報・会員住所・選手情報を確かめる
+IT-F06-01-037	P1	F01=有効&F03=Japan以外	仮会員機能の有効とUnited Statesで登録し、DBで会員情報・会員住所・選手情報の同時作成を確かめる
+IT-F06-01-038	P1	F01=有効&F03=Japan	仮会員機能の有効とJapanで登録し、DBで住所の付帯情報を確かめる
+IT-F06-01-039	P1	F01=有効&F03=Japan	仮会員機能の有効とJapanで登録し、DBで住所の付帯情報の住所名を確かめる
+IT-F06-01-040	P1	F01=有効&F03=Japan以外	仮会員機能の有効とUnited Statesで登録し、DBで選手情報を確かめる
+IT-F06-01-041	P1	F01=有効&F03=Japan以外	仮会員機能の有効とUnited Statesで登録し、DBで会員住所の郵便番号を確かめる
+IT-F06-01-042	P1	F01=有効&F03=Japan	仮会員機能の有効とJapanで登録し、DBでデッキ登録用ユーザーIDを確かめる
+IT-F06-01-043	P1	F01=有効&F03=Japan	仮会員機能の有効とJapanで2件登録し、DBでデッキ登録用ユーザーIDを確かめる
+IT-F06-01-044	P1	F01=有効&F03=Japan	仮会員機能の有効とJapanで登録し、メールボックスで宛先を確かめる
+IT-F06-01-045	P1	F01=有効&F03=Japan	仮会員機能の有効とJapanで登録し、メールのURLから本会員登録画面が開くことを確かめる
+IT-F06-01-049	P1	F01=有効&F03=Japan	仮会員機能の有効とJapanで任意項目を空にして登録し、DBで会員情報と選手情報を確かめる
+IT-F06-01-050	P1	F01=無効&F03=Japan	仮会員機能の無効とJapanで登録し、メールボックスで本会員登録完了メールを確かめる
+IT-F06-01-051	P1	F01=無効&F03=Japan	仮会員機能の無効とJapanで登録し、本会員登録画面へのリダイレクトを確かめる
+IT-F06-01-053	P1	F01=有効&F03=Japan	仮会員機能の有効とJapanで登録し、管理画面の会員検索一覧で会員の行を確かめる
+IT-F06-01-067	P1	F01=有効&F03=Japan	仮会員機能の有効とJapanで登録し、別画面のお届け先住所欄を確かめる
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+import csv
+ids={'IT-F05-04-037','IT-F05-05-011','IT-F05-05-027','IT-F05-06-057','IT-F06-01-044','IT-F06-01-045','IT-F05-01-027','IT-F04-04-034'}
+with open('integration_test/casegen/all_test_cases.tsv') as f:
+ for row in csv.DictReader(f,delimiter='\\t'):
+  if row.get('テストID') in ids:
+   print('\\n',row['テストID'])
+   for k in ('事前準備','手順','期待結果'): print(k,':',row.get(k,''))
+PY" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 62ms:
+
+ IT-F04-04-034
+事前準備 : ① オンラインショップ、通常購入グループ、銀行振込、売上分析タグID 31・32・33が利用できる（S-F04-04-REF）
+② 会員ID 〔会員ID-F0404-034〕で完全ログインし、受注ID 〔受注ID-F0404-034〕は購入処理中、商品ID 〔商品ID-F0404-034A〕にはタグID 31、商品ID 〔商品ID-F0404-034B〕にはタグID 32・33が設定され、各商品を数量1で注文し、受注明細の売上分析タグは0件である（登録時に振られた会員ID・受注ID・商品IDを控えてある。〔会員ID-F0404-034〕〔受注ID-F0404-034〕〔商品ID-F0404-034A〕〔商品ID-F0404-034B〕）（S-F04-04-TAGS-034）
+手順 : 1. ご注文方法指定画面を開く
+2. 「注文する」ボタンを押す
+3. DBで受注ID 〔受注ID-F0404-034〕の受注明細に登録された売上分析タグを確認する
+期待結果 : 商品ID 〔商品ID-F0404-034A〕の受注明細に売上分析タグID 31、商品ID 〔商品ID-F0404-034B〕の受注明細に売上分析タグID 32・33が登録されること
+
+ IT-F05-01-027
+事前準備 : ① タグID 5の対象を商品ID 〔商品ID-F0501-027〕（登録時に振られた商品IDを控えてある）だけに設定する（S-F05-01-TAGS） 
+② 商品ID 〔商品ID-F0501-027〕を非公開・NM・買取価格100円・販売価格100円にし、タグID 5で表示条件を満たす商品を0件にする（S-F05-01-FEAT-EMPTY-027） 
+③ 商品検索インデックスを更新し、目玉買取商品の30秒保持期間が終了した状態にする
+手順 : 1. ネット買取トップページを開く
+2. 目玉買取商品枠を確認する
+期待結果 : ネット買取トップページが表示され、目玉買取商品の一覧が0件であること
+
+ IT-F05-04-037
+事前準備 : ① 商品ID 〔商品ID-F0504-037〕（登録時に振られた商品IDを控えてある）は公開中のカード商品で、買取価格600円、選択可能数量1〜20であり、開始時の試験ブラウザのネット買取カートは空である（S-F05-04-CART-037）
+手順 : 1. 商品ID 〔商品ID-F0504-037〕のネット買取商品詳細画面を開き、買取数量を20にして「カートに追加」を押す
+2. 画面を再読み込みし、買取数量1のまま「カートに追加」を押して表示を確認する
+3. 画面を再読み込みし、ブラウザの開発者ツールで「カートに追加」の規格の指定（data-productclass属性）を空にしてから「カートに追加」を押して表示を確認する
+4. ネット買取カート画面を開く
+期待結果 : 手順2では上限超過のダイアログ、手順3では「カートに追加」付近の追加失敗の通知が表示され、ネット買取カートの商品ID 〔商品ID-F0504-037〕の数量が20のままであること
+
+ IT-F05-05-011
+事前準備 : ① 会員レコードID 〔会員ID-F0505-011〕（登録時に振られた会員IDを控えてある）・ログインID f0505_user-011が利用可能で、ブラウザF0505-BR-011は記載会員でログイン済みである（S-F05-05-CUS-011）
+② 規格F0505-A-001-011は買取価格100円・数量2、規格F0505-B-001-011は買取価格200円・数量3で、小計は800円である。この買取カートは、ブラウザF0505-BR-011でネット買取商品詳細画面から記載数量でカートに入れて作り、ネット買取カート画面で明細と数量を確認しておく（S-F05-05-CART-011）
+手順 : 1. ネット買取カート画面を開く
+2. 開発者ツールで規格F0505-A-001-011の数量を4、規格F0505-B-001-011の数量を21へ設定する
+3. 規格F0505-B-001-011の数量入力欄からフォーカスを外す
+4. ネット買取カート画面を再読み込みする
+期待結果 : 数量一覧の更新が中断され、規格F0505-A-001-011の数量2と規格F0505-B-001-011の数量3が保持され、小計800円のネット買取カート画面に留まること
+
+ IT-F05-05-027
+事前準備 : ① 会員レコードID 〔会員ID-F0505-027〕（登録時に振られた会員IDを控えてある）・ログインID f0505_user-027が利用可能で、ブラウザF0505-BR-027は記載会員でログイン済みである（S-F05-05-CUS-027）
+② 規格F0505-A-027（商品名「同一規格加算確認カードF0505-027-A」）は公開中のカード商品で、買取価格600円であり、記載会員の買取カートは空で、同じ規格はまだカートにない。1回目は数量2、2回目は数量3で追加する（S-F05-05-CART-027）
+手順 : 1. ネット買取商品詳細画面で規格F0505-A-027を数量2にして買取カートに入れる
+2. 表示された「買取カートページへ進みますか？」のダイアログを閉じ、元のネット買取商品詳細画面に留まっていることを確認する
+3. 同じネット買取商品詳細画面で規格F0505-A-027を数量3にして、もう一度買取カートに入れる
+4. 「買取カートページへ進みますか？」のダイアログでカートへ進む
+5. 遷移してきたネット買取カート画面の明細欄を確認する
+期待結果 : 同じ規格F0505-A-027の明細が1行だけ表示され、数量が2と3の合算で5、商品ごとの合計金額が3,000円、小計が3,000円であること
+
+ IT-F05-06-057
+事前準備 : ① 職業「会社員」、買取受注状態「注文」、買取用の送金方法、東京都が有効で、買取受注完了メールを送信できる（S-F05-06-L-ENV）
+② ログインID=f0506ladmin／パスワード=Passw0rd!L0506 の管理者が稼働中・ロックなしで、ネット買取管理を操作できる（S-F05-06-L-ADM）
+③ 商品コードF0506L-A・商品名「結合連携カードA」が申込可能で、日本語の買取価格がNM=100・SP=70・MP=40である（S-F05-06-L-PRODUCT）
+④ 会員it-f0506-l-006@example.testは氏名=姓「連携己」名「買取」、フリガナ=姓「レンケイキ」名「カイトリ」、都道府県=東京都、住所1=新宿区、住所2=西新宿1-1-1、住所3=連携ビル006、職業=会社員、生年月日=1990-01-02が登録済みで、振込口座・適格請求書発行事業者情報・買取受注が0件（注文者名に「連携己」を含む買取受注も0件）、ブラウザAはログイン済みで買取カートに商品コードF0506L-Aが数量2（カード状態NM）で入っている（S-F05-06-L-MEMBER-057）
+手順 : 1. ブラウザAでネット買取のカート画面を開き、買取カートの商品「結合連携カードA」が数量2であることを確認して、買取依頼内容の記入画面へ進む
+2. 銀行名に「晴銀行」、支店名に「本店」、口座名義に「ハレヤタロウ」、口座番号に「1234567」を入力し、口座種別で「普通」、箱数で「1」、買取の承諾方法で「自動承諾を利用する」を選択し、適格請求書発行事業者で「いいえ」を選択し、「ネット買取規約同意」にチェックを入れて「申込み」ボタンを押す
+3. 表示されたモーダルの「申込み」ボタンを押し、買取依頼完了の画面が表示されることを確認する
+4. ブラウザBで管理画面にログインID「f0506ladmin」・パスワード「Passw0rd!L0506」でログインし、ネット買取管理の買取検索一覧を開く
+5. 買取一覧(検索入力)の注文者名に「連携己」を入力して検索する
+6. 検索結果の一覧で、姓「連携己」名「買取」の行の買取番号のリンクを押して買取情報編集画面を開く
+7. 買取の承諾方法を確認する
+期待結果 : 買取情報編集画面の買取の承諾方法に「自動承諾を利用する」が表示されること
+
+ IT-F06-01-044
+事前準備 : ① 本店が公開・営業中で、Japan・東京都・郵便番号100-0001を参照でき、仮会員登録メールをテストメールボックスへ配送できる（S-F06-01-ENV）
+② 新規ブラウザセッションを開始し、ログアウト済み・表示言語=日本語・対象店舗=本店にする（S-F06-01-ENV）
+③ 開始時に仮会員機能を有効に設定する（S-F06-01-TEMP-ON）
+④ お名前=晴 太郎、フリガナ=ハレ タロウ、生年月日=1990年1月2日、性別=男性、メールアドレス・メールアドレス(確認)・パスワード(確認)=it-f0601-jp-044@example.test、パスワード=Passw0rd!01、国=Japan、郵便番号=100-0001、住所(都道府県)=東京都、住所1=千代田区千代田、住所2=1-1、住所3=空、電話番号=0312345678、会社名=晴屋テスト、職業=会社員、MTG Campaign 登録名=HARE TAROを用意する（S-F06-01-JP-INPUT-044）
+⑤ 職業「会社員」と「学生」が有効である（S-F06-01-OCCUPATIONS）
+⑥ it-f0601-jp-044@example.testの会員情報・会員住所・住所の付帯情報・選手情報を各0件とし、会員ID・住所ID・選手IDは未発番である（S-F06-01-TARGET-044）
+⑦ 開始時に試験環境のメール受信サービスを起動してメールボックス画面が開けることを確認し、it-f0601-jp-044@example.test宛の受信メールを削除し、0件にする（S-F06-01-MAILBOX）
+手順 : 1. 会員登録画面を開く
+2. S-F06-01-JP-INPUT-044の値を入力する
+3. 同意するを押す
+4. 会員登録確認画面で登録するを押す
+5. テストメールボックスで宛先を確認する
+期待結果 : 入力したメールアドレス「it-f0601-jp-044@example.test」宛に会員登録に関するメールが1通送信されること
+
+ IT-F06-01-045
+事前準備 : ① 本店が公開・営業中で、Japan・東京都・郵便番号100-0001を参照でき、登録メールをテストメールボックスへ配送できる（S-F06-01-ENV）
+② 新規ブラウザセッションを開始し、ログアウト済み・表示言語=日本語・対象店舗=本店にする（S-F06-01-ENV）
+③ 開始時に仮会員機能を有効に設定する（S-F06-01-TEMP-ON）
+④ お名前=晴 太郎、フリガナ=ハレ タロウ、生年月日=1990年1月2日、性別=男性、メールアドレス・メールアドレス(確認)・パスワード(確認)=it-f0601-jp-045@example.test、パスワード=Passw0rd!01、国=Japan、郵便番号=100-0001、住所(都道府県)=東京都、住所1=千代田区千代田、住所2=1-1、住所3=空、電話番号=0312345678、会社名=晴屋テスト、職業=会社員、MTG Campaign 登録名=HARE TAROを用意する（S-F06-01-JP-INPUT-045）
+⑤ 職業「会社員」と「学生」が有効である（S-F06-01-OCCUPATIONS）
+⑥ it-f0601-jp-045@example.testの会員情報・会員住所・住所の付帯情報・選手情報を各0件とし、会員ID・住所ID・選手IDは未発番である（S-F06-01-TARGET-045）
+⑦ 開始時に試験環境のメール受信サービスを起動してメールボックス画面が開けることを確認し、it-f0601-jp-045@example.test宛の受信メールを削除し、0件にする（S-F06-01-MAILBOX）
+⑧ 開始時にスマレジ接続を組み込みモックへ切り替え、アクセストークン取得=成功、会員番号候補の存在確認=未登録、新規会員登録=成功に設定する（S-F06-01-SMAREGI-SUCCESS）
+手順 : 1. S-F06-01-JP-INPUT-045の値で仮会員登録を完了する
+2. テストメールボックスで受信したメールを開く
+3. メール内のURLを押す
+期待結果 : ブラウザで本会員登録画面が開き、本会員登録が完了した状態が表示されること
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+import csv
+ids={'IT-F05-06-056','IT-F05-06-078','IT-F05-06-079','IT-F05-01-052','IT-F05-04-059','IT-F05-05-003','IT-F05-05-026'}
+with open('integration_test/casegen/all_test_cases.tsv') as f:
+ for row in csv.DictReader(f,delimiter='\\t'):
+  if row.get('テストID') in ids:
+   print('\\n'+row['テストID'])
+   for k in ('事前準備','手順','期待結果'): print(k+': '+row.get(k,''))
+PY" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 61ms:
+
+IT-F05-01-052
+事前準備: ① タグID 5の対象を商品ID 〔商品ID-F0501-052〕（登録時に振られた商品IDを控えてある）だけに設定する（S-F05-01-TAGS） 
+② 〔商品ID-F0501-052〕の「目玉英語商品-052」をカード商品・言語EN・公開・NM・買取価格500円・販売価格1000円・高額商品コードなしにする（S-F05-01-DP-FEATEN-052） 
+③ 商品検索インデックスを更新し、目玉買取商品の30秒保持期間が終了した状態にする
+手順: 1. ネット買取トップページを開く
+2. 目玉買取商品枠を確認する
+期待結果: 目玉買取商品枠に「目玉英語商品-052」が表示され、その商品のカード言語に「EN」が表示されること
+
+IT-F05-04-059
+事前準備: ① 商品ID 〔商品ID-F0504-059〕（登録時に振られた商品IDを控えてある）は公開中のカード商品で、言語JPの商品クラスJP-NMの買取価格は600円、JP-EXの買取価格は400円である（S-F05-04-MIXPRICE-059）
+手順: 1. 商品ID 〔商品ID-F0504-059〕、言語JP、商品クラスJP-NMを指定してネット買取商品詳細画面を開き、商品数、マイナスボタン、プラスボタンおよびカートに入れるボタンの表示を確認する
+2. 商品ID 〔商品ID-F0504-059〕、言語JP、商品クラスJP-EXを指定してネット買取商品詳細画面を開き、同じ表示を確認する
+期待結果: 買取価格600円のJP-NMでは商品数、マイナスボタン、プラスボタンおよびカートに入れるボタンが表示され、買取価格400円のJP-EXでは表示されないこと
+
+IT-F05-05-003
+事前準備: ① 会員レコードID 〔会員ID-F0505-003〕（登録時に振られた会員IDを控えてある）・ログインID f0505_user-003が利用可能で、ブラウザF0505-BR-003は記載会員でログイン済みである（S-F05-05-CUS-003）
+② 規格F0505-NOIMG-001-003は公開中のカード商品で、言語コードEN・状態NM・買取価格500円・商品画像未登録・数量1である。この買取カートは、ブラウザF0505-BR-003でネット買取商品詳細画面から記載数量でカートに入れて作り、ネット買取カート画面で明細と数量を確認しておく（S-F05-05-NOIMAGE-003）
+手順: 1. ネット買取カート画面を開く
+2. 規格F0505-NOIMG-001-003の商品画像欄を確認する
+期待結果: 商品画像が登録されていない規格F0505-NOIMG-001-003に代替画像が表示されること
+
+IT-F05-05-026
+事前準備: ① 会員レコードID 〔会員ID-F0505-026〕（登録時に振られた会員IDを控えてある）・ログインID f0505_user-026が利用可能で、ブラウザF0505-BR-026は記載会員でログイン済みである（S-F05-05-CUS-026）
+② 規格F0505-A-026は公開中のカード商品で、商品名「言語コード表示確認カードF0505-026-A」・言語コードEN・状態NM・買取価格600円・商品画像未登録・数量1である。この買取カートは、ブラウザF0505-BR-026でネット買取商品詳細画面から記載数量でカートに入れて作り、ネット買取カート画面で明細と数量を確認しておく（S-F05-05-CART-026）
+手順: 1. ネット買取カート画面を開く
+2. 規格F0505-A-026の商品名欄を確認する
+期待結果: 規格F0505-A-026の商品名が「【EN】言語コード表示確認カードF0505-026-A」と、先頭に言語コードENを【 】で囲って付けて表示されること
+
+IT-F05-06-056
+事前準備: ① 職業「会社員」、買取受注状態「注文」、買取用の送金方法、東京都が有効で、買取受注完了メールを送信できる（S-F05-06-L-ENV）
+② ログインID=f0506ladmin／パスワード=Passw0rd!L0506 の管理者が稼働中・ロックなしで、ネット買取管理を操作できる（S-F05-06-L-ADM）
+③ 商品コードF0506L-A・商品名「結合連携カードA」が申込可能で、日本語の買取価格がNM=100・SP=70・MP=40である（S-F05-06-L-PRODUCT）
+④ 会員it-f0506-l-005@example.testは氏名=姓「連携戊」名「買取」、フリガナ=姓「レンケイボ」名「カイトリ」、都道府県=東京都、住所1=新宿区、住所2=西新宿1-1-1、住所3=連携ビル005、職業=会社員、生年月日=1990-01-02が登録済みで、振込口座・適格請求書発行事業者情報・買取受注が0件（注文者名に「連携戊」を含む買取受注も0件）、ブラウザAはログイン済みで買取カートに商品コードF0506L-Aが数量2（カード状態NM）で入っている（S-F05-06-L-MEMBER-056）
+手順: 1. ブラウザAでネット買取のカート画面を開き、買取カートの商品「結合連携カードA」が数量2であることを確認して、買取依頼内容の記入画面へ進む
+2. 銀行名に「晴銀行」、支店名に「本店」、口座名義に「ハレヤタロウ」、口座番号に「1234567」を入力し、口座種別で「普通」、箱数で「1」、買取の承諾方法で「査定結果を確認してから承諾する」を選択し、適格請求書発行事業者で「はい」を選択して登録番号に「T1234567890123」を入力し、「ネット買取規約同意」にチェックを入れて「申込み」ボタンを押す
+3. 表示されたモーダルの「申込み」ボタンを押し、買取依頼完了の画面が表示されることを確認する
+4. ブラウザBで管理画面にログインID「f0506ladmin」・パスワード「Passw0rd!L0506」でログインし、ネット買取管理の買取検索一覧を開く
+5. 買取一覧(検索入力)の注文者名に「連携戊」を入力して検索する
+6. 検索結果の一覧で、姓「連携戊」名「買取」の行の買取番号のリンクを押して買取情報編集画面を開く
+7. 口座情報と適格請求書発行事業者情報を確認する
+期待結果: 買取情報編集画面の口座情報に、銀行名「晴銀行」、支店名「本店」、口座種別「普通」、口座番号「1234567」、口座名義「ハレヤタロウ」が表示され、適格請求書発行事業者情報が事業者で事業者番号が「T1234567890123」であること
+
+IT-F05-06-078
+事前準備: ① 受注状態「注文」と買取用送金方法が有効である（S-F05-06-MASTER）
+② 正常申込商品が申込可能である（S-F05-06-CART-BASE）
+③ 開始時にまとめて買取対象商品を商品ID 〔商品ID-F0506-共有C〕（登録時に振られた商品IDを控えてある）に設定する（S-F05-06-SETTINGS）
+④ 会員ID 〔会員ID-F0506-078〕（登録時に振られた会員IDを控えてある）の既存買取受注は0件で、ブラウザF0506-BR-078はログイン済み、正常申込カートがある（S-F05-06-DP-MEMBER-078）
+⑤ 通常申込入力値が用意されている（S-F05-06-INPUT-BASE）
+手順: 1. 会員ID 〔会員ID-F0506-078〕の会員で買取依頼内容の記入画面へ進む
+2. S-F05-06-INPUT-BASEの値（買取の承諾方法は「査定結果を確認してから承諾する」）を入力して「申込み」ボタンを押す
+3. モーダルの「申込み」ボタンを押す
+4. DBで登録された買取受注を確認する
+期待結果: 新規買取受注の自動承諾が無効であること
+
+IT-F05-06-079
+事前準備: ① 受注状態「注文」と買取用送金方法が有効である（S-F05-06-MASTER）
+② 正常申込商品が申込可能である（S-F05-06-CART-BASE）
+③ 開始時にまとめて買取対象商品を商品ID 〔商品ID-F0506-共有C〕（登録時に振られた商品IDを控えてある）に設定する（S-F05-06-SETTINGS）
+④ 会員ID 〔会員ID-F0506-079〕（登録時に振られた会員IDを控えてある）の適格情報・口座・既存買取受注は0件で、ブラウザF0506-BR-079はログイン済み、正常申込カートがある（S-F05-06-DP-MEMBER-079）
+⑤ 通常申込入力値が用意されている（S-F05-06-INPUT-BASE）
+手順: 1. 会員ID 〔会員ID-F0506-079〕の会員で買取依頼内容の記入画面へ進む
+2. S-F05-06-INPUT-BASEの値（適格請求発行事業者の確認は「いいえ」）を入力して「申込み」ボタンを押す
+3. モーダルの「申込み」ボタンを押す
+4. DBで新規買取受注に紐づく適格請求書発行事業者情報を確認する
+期待結果: 新規買取受注に紐づく適格請求書発行事業者情報が0件であること
+
+codex
+既存ケースの照合で、F05-06 の existing.tsv にある承諾方法・適格事業者の値が、実際のケース手順と逆になっている行を確認しました。残りは、設計上の条件が要因に漏れていないかと、制約の根拠を確認します。
+exec
+/bin/bash -lc "rg -n 'IT-F05-06-057|IT-F05-06-056' integration_test/casegen/cases/F05-06_test_cases.tsv integration_test/casegen/all_test_cases.tsv" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "rg -n 'F05-06-057|F05-06-056' integration_test/casegen/combination/factors/F05-06_existing.tsv" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "rg -n '予約商品|高額商品コード|買取価格：1円以上|カード状態： NM' integration_test/casegen/combination/units/F05-03/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 32ms:
+integration_test/casegen/cases/F05-06_test_cases.tsv:54:IT-F05-06-056	REQ-0305-sheet-8-R023,REQ-0305-sheet-8-R024		ITA-05	P1	ブラウザのみ	S-F05-06-L-ENV,S-F05-06-L-ADM,S-F05-06-L-PRODUCT,S-F05-06-L-MEMBER-056	① 職業「会社員」、買取受注状態「注文」、買取用の送金方法、東京都が有効で、買取受注完了メールを送信できる（S-F05-06-L-ENV）／② ログインID=f0506ladmin／パスワード=Passw0rd!L0506 の管理者が稼働中・ロックなしで、ネット買取管理を操作できる（S-F05-06-L-ADM）／③ 商品コードF0506L-A・商品名「結合連携カードA」が申込可能で、日本語の買取価格がNM=100・SP=70・MP=40である（S-F05-06-L-PRODUCT）／④ 会員it-f0506-l-005@example.testは氏名=姓「連携戊」名「買取」、フリガナ=姓「レンケイボ」名「カイトリ」、都道府県=東京都、住所1=新宿区、住所2=西新宿1-1-1、住所3=連携ビル005、職業=会社員、生年月日=1990-01-02が登録済みで、振込口座・適格請求書発行事業者情報・買取受注が0件（注文者名に「連携戊」を含む買取受注も0件）、ブラウザAはログイン済みで買取カートに商品コードF0506L-Aが数量2（カード状態NM）で入っている（S-F05-06-L-MEMBER-056）	1. ブラウザAでネット買取のカート画面を開き、買取カートの商品「結合連携カードA」が数量2であることを確認して、買取依頼内容の記入画面へ進む／2. 銀行名に「晴銀行」、支店名に「本店」、口座名義に「ハレヤタロウ」、口座番号に「1234567」を入力し、口座種別で「普通」、箱数で「1」、買取の承諾方法で「査定結果を確認してから承諾する」を選択し、適格請求書発行事業者で「はい」を選択して登録番号に「T1234567890123」を入力し、「ネット買取規約同意」にチェックを入れて「申込み」ボタンを押す／3. 表示されたモーダルの「申込み」ボタンを押し、買取依頼完了の画面が表示されることを確認する／4. ブラウザBで管理画面にログインID「f0506ladmin」・パスワード「Passw0rd!L0506」でログインし、ネット買取管理の買取検索一覧を開く／5. 買取一覧(検索入力)の注文者名に「連携戊」を入力して検索する／6. 検索結果の一覧で、姓「連携戊」名「買取」の行の買取番号のリンクを押して買取情報編集画面を開く／7. 口座情報と適格請求書発行事業者情報を確認する	買取情報編集画面の口座情報に、銀行名「晴銀行」、支店名「本店」、口座種別「普通」、口座番号「1234567」、口座名義「ハレヤタロウ」が表示され、適格請求書発行事業者情報が事業者で事業者番号が「T1234567890123」であること	上流: 0305 ネット買取買取手続き～完了 / 機能仕様 申込ボタン押下（振込口座情報の登録・適格請求書発行事業者情報の登録）｜下流: 0206 買取情報編集 / 画面項目定義 口座情報 2-1〜2-5、適格請求書事業者情報 3-1・3-2
+integration_test/casegen/cases/F05-06_test_cases.tsv:55:IT-F05-06-057	REQ-0305-sheet-8-R020		ITA-05	P1	ブラウザのみ	S-F05-06-L-ENV,S-F05-06-L-ADM,S-F05-06-L-PRODUCT,S-F05-06-L-MEMBER-057	① 職業「会社員」、買取受注状態「注文」、買取用の送金方法、東京都が有効で、買取受注完了メールを送信できる（S-F05-06-L-ENV）／② ログインID=f0506ladmin／パスワード=Passw0rd!L0506 の管理者が稼働中・ロックなしで、ネット買取管理を操作できる（S-F05-06-L-ADM）／③ 商品コードF0506L-A・商品名「結合連携カードA」が申込可能で、日本語の買取価格がNM=100・SP=70・MP=40である（S-F05-06-L-PRODUCT）／④ 会員it-f0506-l-006@example.testは氏名=姓「連携己」名「買取」、フリガナ=姓「レンケイキ」名「カイトリ」、都道府県=東京都、住所1=新宿区、住所2=西新宿1-1-1、住所3=連携ビル006、職業=会社員、生年月日=1990-01-02が登録済みで、振込口座・適格請求書発行事業者情報・買取受注が0件（注文者名に「連携己」を含む買取受注も0件）、ブラウザAはログイン済みで買取カートに商品コードF0506L-Aが数量2（カード状態NM）で入っている（S-F05-06-L-MEMBER-057）	1. ブラウザAでネット買取のカート画面を開き、買取カートの商品「結合連携カードA」が数量2であることを確認して、買取依頼内容の記入画面へ進む／2. 銀行名に「晴銀行」、支店名に「本店」、口座名義に「ハレヤタロウ」、口座番号に「1234567」を入力し、口座種別で「普通」、箱数で「1」、買取の承諾方法で「自動承諾を利用する」を選択し、適格請求書発行事業者で「いいえ」を選択し、「ネット買取規約同意」にチェックを入れて「申込み」ボタンを押す／3. 表示されたモーダルの「申込み」ボタンを押し、買取依頼完了の画面が表示されることを確認する／4. ブラウザBで管理画面にログインID「f0506ladmin」・パスワード「Passw0rd!L0506」でログインし、ネット買取管理の買取検索一覧を開く／5. 買取一覧(検索入力)の注文者名に「連携己」を入力して検索する／6. 検索結果の一覧で、姓「連携己」名「買取」の行の買取番号のリンクを押して買取情報編集画面を開く／7. 買取の承諾方法を確認する	買取情報編集画面の買取の承諾方法に「自動承諾を利用する」が表示されること	上流: 0305 ネット買取買取手続き～完了 / 現行仕様 業務ロジック 依頼の確定（自動承諾）、機能仕様 買取の承諾方法｜下流: 0206 買取情報編集 / 画面項目定義 識別ID 9
+integration_test/casegen/all_test_cases.tsv:24545:IT-F05-06-056	ITA-05	"上流: 0305 ネット買取買取手続き～完了
+integration_test/casegen/all_test_cases.tsv:24561:IT-F05-06-057	ITA-05	"上流: 0305 ネット買取買取手続き～完了
+
+exec
+/bin/bash -lc "rg -n 'IT-F05-01-0(05|09|22)' integration_test/casegen/cases/F05-01_test_cases.tsv" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 61ms:
+4:IT-F05-06-056	P1	F01=査定結果を確認してから承諾する&F02=はい	手順で査定後承諾と適格事業者はいを選び、買取情報編集画面で適格請求書発行事業者情報を確かめる
+5:IT-F05-06-057	P1	F01=自動承諾を利用する&F02=いいえ	手順で自動承諾と適格事業者いいえを選び、買取情報編集画面で承諾方法を確かめる
+
+ succeeded in 46ms:
+6:IT-F05-01-005	REQ-0305-sheet-3-R005,REQ-0305-sheet-3-R050,REQ-0305-sheet-3-R051,REQ-0305-sheet-3-R052,REQ-0305-sheet-3-R054,REQ-0305-sheet-3-R055,REQ-0305-sheet-3-R056,REQ-0305-sheet-3-R057,REQ-0305-sheet-3-R058		ITA-07,ITA-11	P1	ブラウザのみ	S-F05-01-TAGS,S-F05-01-STR-POS-005	① タグID 1000の対象をSTR-001-005、STR-002-005、STR-003-005だけに設定する（S-F05-01-TAGS） ／② 3件を公開・NM・買取価格100円以上とし、強化対象A・強化対象Cはカード商品で言語JA、強化対象Bはカード以外にする（S-F05-01-STR-POS-005） ／③ 商品検索インデックスを更新する	1. ネット買取トップページを開く／2. 強化買取商品コーナーを確認する	タグID 1000が付いた、公開・NM・買取価格1円以上の「強化対象A」「強化対象B」「強化対象C」が強化買取商品コーナーに表示されること	0305 ネット買取トップページ / 機能仕様 強化買取商品コーナーの表示
+9:IT-F05-01-009	REQ-0305-sheet-3-R073,REQ-0305-sheet-3-R081,REQ-0305-sheet-3-R082,REQ-0305-sheet-3-R083,REQ-0305-sheet-3-R084,REQ-0305-sheet-3-R085,REQ-0305-sheet-3-R086,REQ-0305-sheet-3-R087,REQ-0305-sheet-3-R088,REQ-0305-sheet-3-R089,REQ-0305-sheet-3-R090,REQ-0305-sheet-3-R091,REQ-0305-sheet-3-R092		ITA-07,ITA-11	P1	ブラウザのみ	S-F05-01-TAGS,S-F05-01-SPC-GROUP-009	① タグID 633、634、635、637、636、638の対象を、それぞれ本ケースの4商品だけに設定する（S-F05-01-TAGS） ／② 24件を公開・NM・買取価格100円以上とし、各タグにカード商品と言語JAとカード以外を含める（S-F05-01-SPC-GROUP-009） ／③ 商品検索インデックスを更新する	1. ネット買取トップページを開く／2. 買取特集コーナーを確認する	タグID 633・634・635・637・636・638の対象商品が、それぞれ買取モダン・昔マジックをプレイしていた方へ・買取統率者・プロモカード・日本語高額Foil・パック＆ボックスのカテゴリに表示されること	0305 ネット買取トップページ / 機能仕様 買取特集コーナーの表示
+22:IT-F05-01-022	REQ-0305-sheet-3-R128,REQ-0305-sheet-3-R131,REQ-0305-sheet-3-R132,REQ-0305-sheet-3-R133,REQ-0305-sheet-3-R134,REQ-0305-sheet-3-R135,REQ-0305-sheet-3-R165,REQ-0305-sheet-3-R167		ITA-07,ITA-11	P1	ブラウザのみ	S-F05-01-TAGS,S-F05-01-FEAT-POS-022	① タグID 5の対象をFTR-001-022、FTR-002-022、FTR-003-022だけに設定する（S-F05-01-TAGS） ／② 3件を公開・NM・買取価格1円以上・販売価格1000円・高額商品コードなしにする（S-F05-01-FEAT-POS-022） ／③ 商品検索インデックスを更新し、目玉買取商品の30秒保持期間が終了した状態にする	1. ネット買取トップページを開く／2. 目玉買取商品枠を確認する	目玉買取商品タグID 5が付いた、公開・NM・買取価格1円以上の「目玉基準商品-022」「目玉499円商品-022」「目玉500円商品-022」が目玉買取商品枠に表示されること	0305 ネット買取トップページ / 機能仕様 目玉買取商品枠を追加する
+
+ succeeded in 88ms:
+158:L0157	・買取価格：1円以上 ①eccube.yamlのeccube_unisearch_sftp_ssh_key_pathに指定されたファイルで鍵ファイルを置く
+159:L0158	・カード状態： NM （鍵ファイルはG:\共有ドライブ\Lv1.MDS第一\202501_晴れる屋\J_21_製造フェーズ\10_ユニサーチ\フィード送信STG鍵情報 にあります。）
+160:L0159	・高額商品コード：なし ②管理画面の設定＞基本情報設定＞追加システム設定にてユニサーチSFTPホストを確認し、ユニサーチのフィード仕様書に記載があるSTG用のIPと同一であることを確認する。
+161:L0160	・予約商品：予約商品でない ③管理画面の商品管理＞ユニサーチフィード作成ボタンを押す
+165:L0164	・買取価格 買取価格：1円以上 fq.buy_price=1~*
+166:L0165	カード状態： NM fq.card_condition=1
+167:L0166	・並び順について 高額商品コード：なし fq.high_price_code=現在仕様確認中
+168:L0167	・買取ではおすすめ順を使用しない（ユニサーチの購買をもとにした順なので買取では使用しない） 予約商品：予約商品でない fq.reservation_flg=0
+
+codex
+先ほどの F05-06 の既存ケースに関する見立てを訂正します。ケース本文を確認し直したところ、IT-F05-06-056 と 057 の選択値は existing.tsv と一致していました。この点は指摘から外します。
+exec
+/bin/bash -lc "sed -n '30,58p' integration_test/casegen/combination/units/F05-04/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "sed -n '1,6p' integration_test/casegen/combination/factors/F05-03_constraints.tsv" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "sed -n '1,18p' integration_test/casegen/combination/factors/F05-05_constraints.tsv" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "sed -n '181,212p' integration_test/casegen/combination/units/F05-03/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+L0029	カスタマイズ説明
+L0030	・カスタマイズ要件
+L0031	現行機能をベースに下記カスタマイズを行う
+L0032	・「このカードはこんなデッキで使われています」を削除する
+L0033	・カスタマイズ要件に記載の内容以外は現行踏襲とする。
+L0034	機能仕様処理概要（★はカスタマイズ項目）
+L0035	★表示について
+L0036	・「このカードはこんなデッキで使われています」を削除する
+L0037	・カード詳細
+L0038	・カード詳細欄に記載
+L0039	・カード説明
+L0040	・カード説明欄に記載
+L0041	・他のバージョンも見る
+L0042	・他のバージョンも見る欄に記載
+L0043	・2026/6/11木村：デザイン上はPCも表示しているため削除
+L0044	★パンくずリストについて
+L0045	★下記のような表示形式とする
+L0046	{ホームアイコン} > {カテゴリ}
+L0047	(例) カード商品の場合: 🏠 > タルキール：龍嵐録
+L0048	サプライ商品の場合: 🏠 > サプライ・グッズ > スリーブ > KMC
+L0049	★パンくずリスト内のカテゴリを押下すると、押下したカテゴリで検索したネット買取商品一覧を表示する
+L0050	・カテゴリ一覧は、PC版サイトのみ表示する
+L0051	識別ID	ラベル	書式・制限	必須	最大文字数
+L0052	または最大値	初期値	画面部品の説明
+L0053	1	パンくずリスト	リンク	-	-	-	・パンくずリストの表示形式及びリンク押下後の処理は処理概要を参照
+L0054	2	カード詳細	-	-	-	-
+L0055	3	カード説明	-	-	-	-
+L0056	4	他のバージョンも見る	-	-	-	-
+L0057	5	このカートはこんなデッキで使われています	-	-	-	-	・カスタマイズ対応により削除
+
+ succeeded in 0ms:
+処理ID	組	種別	根拠	理由
+P1	F01=検索条件が空&F02=カード	作れない	L0185	検索条件が空のときは検索フォームだけで商品は出ない
+P1	F01=検索条件が空&F02=サプライ・グッズ	作れない	L0185	検索条件が空のときは検索フォームだけで商品は出ない
+P1	F01=検索条件が空&F03=500円未満	作れない	L0185	検索条件が空のときは検索フォームだけで商品は出ない
+P1	F01=検索条件が空&F03=500円以上	作れない	L0185	検索条件が空のときは検索フォームだけで商品は出ない
+P1	F01=検索条件が空&F04=タグ1件指定	作れない	L0185,L0190	タグの指定は検索条件なので、タグ1件を指定した時点で検索条件は空でない
+
+ succeeded in 0ms:
+L0180	現行仕様
+L0181	F05-03 ネット買取商品一覧 / F05-03（ネット買取商品一覧）
+L0182	業務ロジック
+L0183	表示の判定順序
+L0184	順序	判定	結果
+L0185	1	検索条件が空か	空なら検索フォームだけを表示する
+L0186	2	総件数が0件か	0件なら一覧を見つからない扱いとし、0件案内を表示する
+L0187	3	総件数が上限（9999）を超えるか	超えるときは商品を取得せず、上限超過の案内を表示し、外部へ検索時のURLと件数を通知する。通知に失敗しても案内の表示は続ける
+L0188	4	上記を通過	件数・表示順・ページ送りとともに商品一覧を表示する
+L0189	タグの説明文
+L0190	タグが1件だけ指定されているときは、そのタグに登録された説明文を一覧の上部に表示する。
+L0191	表示件数
+L0192	1ページの件数は既定60件で、指定によって変更できる。
+L0193	件数はURLのクエリパラメータ pageSize で指定する。pageSize が空または0のときは60件とする。それ以外の値は上限を設けずにそのまま1ページの件数とする。
+L0194	画面の内容
+L0195	絞り込みにはマナコストがあり、色の選択をすべて解除する操作を持つ。 商品画像は遅延読み込みし、読み込みが済むまで読み込み中の画像を表示する。 絞り込みの行と表示順の行は、PCとスマートフォンで表示する内容を出し分ける。 一覧の下部には検索フォームを表示する。
+L0196	カテゴリ一覧
+L0197	カテゴリ一覧は、販売側の商品カテゴリ一覧と同じデータ（カードセット、レアリティ、カテゴリ）から、同じツリー構造と表示項目で表示する。各カテゴリの遷移先は、販売側の商品検索に代えて買取商品検索とする。販売側と異なり、遷移先に並び順の指定を付けない。販売側だけが表示する決済・受取・発送・ポイントの販促バナーは表示しない。
+L0198	買取価格とカート追加
+L0199	各商品規格に登録済みの買取価格を表示する。本機能では価格を計算しない。
+L0200	数量欄の初期値は1点とする。数量上限の判定と、追加完了・追加失敗・上限超過のダイアログは、ネット買取カート（F05-05）を正とする。
+L0201	入出力
+L0202	種類	内容
+L0203	入力	検索条件、表示順、ページ番号、1ページの表示件数。
+L0204	成功時出力	件数・表示順・ページ送りを伴う買取商品一覧。
+L0205	失敗時出力	0件のときは見つからない扱いの応答、上限超過のときは超過案内と外部への件数通知。
+L0206	リニューアル後の仕様
+L0207	表示メッセージ
+L0208	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0209	—	一覧上部	商品数: （件数）点	一覧表示時。上限超過時は「9999+」を表示する	一覧に留まる
+L0210	—	一覧本文	ご指定の条件に一致する商品が多すぎます。さらに絞り込むための条件を追加してください。	総件数が上限（9999）を超えるとき	商品を取得せず一覧に留まる
+L0211	—	一覧本文	お探しのカードは見つかりませんでした。（買取最低保証・ヘルプへの案内を含む）	検索結果が0件のとき	ページ全体を見つからない扱いとする
+
+ succeeded in 0ms:
+処理ID	組	種別	根拠	理由
+P2	F03=空&F05=ある	作れない	L0062,L0068	カートが保持するのは規格と数量で、空の規格が既にカートにあることは無い
+P2	F03=空&F06=20点を超える	正解未定	L0067,L0075-L0076	規格が空で数量が20超のときの応答が決まらない
+P2	F04=指定なし&F05=ない&F06=20点を超える	作れない	L0067,L0068	数量の指定が無いと1を加算するので、既存が無ければ加算後は1で20を超えない
+P3	F07=渡されない&F09=1〜20	作れない	L0071	数量の一覧が渡されないので更新対象の数量が無い
+P3	F07=渡されない&F09=1未満	作れない	L0071	数量の一覧が渡されないので更新対象の数量が無い
+P3	F07=渡されない&F09=数字でない	作れない	L0071	数量の一覧が渡されないので更新対象の数量が無い
+P3	F07=渡されない&F10=20超を含む	作れない	L0071	数量の一覧が渡されないので20超の数量も無い
+P3	F08=ない&F09=1〜20	作れない	L0071	カートが無いので更新対象の明細が無い
+P3	F08=ない&F09=1未満	作れない	L0071	カートが無いので更新対象の明細が無い
+P3	F08=ない&F09=数字でない	作れない	L0071	カートが無いので更新対象の明細が無い
+P3	F08=ない&F10=20超を含む	正解未定	L0070-L0071	カートが無いときに、20超の数量について上限超過の要求エラーを積むかが決まらない
+P3	F09=1未満&F10=20超を含む	正解未定	L0070	更新を中断するとき、同時に送った1未満の数量による取り外しを先に行うかが決まらない
+P3	F09=数字でない&F10=20超を含む	正解未定	L0070	更新を中断するとき、同時に送った数字でない数量による取り外しを先に行うかが決まらない
+
+exec
+/bin/bash -lc "rg -n '仮会員機能|本会員登録メール|仮会員登録完了メール' integration_test/casegen/combination/units/M10-01/design.txt | head -30" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+codex
+### 1
+- 機能: F05-01
+- 種類: B
+- 対象: F05-01_factors.tsv P1・P2・P3
+- 主張: 各コーナーの商品表示を左右する要因に、公開状態・NM・買取価格などを挙げている。
+- 実際: 強化買取には「強化買取」タグ、買取特集には指定の各タグ、目玉買取には「目玉買取商品」タグも必要と定めている（integration_test/casegen/combination/units/F05-01/design.txt:L0087-L0094、L0121-L0133、L0181-L0185）。
+- 修正案: 各処理に、対象タグの有無を表示条件の要因として追加する。
+
+### 2
+- 機能: F05-03
+- 種類: B
+- 対象: F05-03_factors.tsv P1
+- 主張: 商品一覧の要因に、買取対象を絞る商品状態を挙げていない。
+- 実際: 買取側の検索には、買取価格1円以上・状態NM・高額商品コードなし・予約商品でない、という条件を必ず指定すると定めている（integration_test/casegen/combination/units/F05-03/design.txt:L0156-L0160）。
+- 修正案: この4条件による表示対象の分岐を要因に追加する。
+
+### 3
+- 機能: F05-03
+- 種類: D
+- 対象: F05-03_constraints.tsv P1、F01=9999件を超える&F04=タグ1件指定
+- 主張: 上限超過時にタグの説明文を表示するかは「正解未定」としている。
+- 実際: タグを1件指定したときは説明文を一覧上部に表示すると定め、上限超過時も一覧に留まるとしている（integration_test/casegen/combination/units/F05-03/design.txt:L0190、L0209-L0210）。
+- 修正案: この組を正解未定から外し、説明文を表示する組として扱う。
+
+### 4
+- 機能: F05-04
+- 種類: B
+- 対象: F05-04_processes.tsv、F05-04_factors.tsv 旧商品コードからの転送
+- 主張: 要因が2つ以上ある処理として、商品詳細の初期表示だけを挙げている。
+- 実際: 旧コードの対応の有無を調べ、対応があっても転送先の商品を取得できなければトップページへ戻し、取得できれば商品詳細へ遷移すると定めている（integration_test/casegen/combination/units/F05-04/design.txt:L0167-L0168）。
+- 修正案: 旧コードからの転送を処理に加え、コード対応と転送先商品の有無を要因にする。
+
+### 5
+- 機能: F05-05
+- 種類: A
+- 対象: F05-05_factors.tsv F09
+- 主張: 更新数量の「1未満」と「数字でない」を別々の値にしている。
+- 実際: どちらの場合も当該商品を買取カートから外すと定めている（integration_test/casegen/combination/units/F05-05/design.txt:L0070）。
+- 修正案: 同じ結果になる2値を1値にまとめる。
+
+### 6
+- 機能: F05-05
+- 種類: F
+- 対象: F05-05_factors.tsv F03、P2
+- 主張: 「追加する規格の指定が空」を組合せ対象の値にしている。
+- 実際: 規格の指定が空の場合はエラー応答とする入力の検証である（integration_test/casegen/combination/units/F05-05/design.txt:L0067、L0075）。
+- 修正案: 規格が空の値と、それを使う組・制約を要因表から外す。
+
+### 7
+- 機能: F06-01
+- 種類: A
+- 対象: F06-01_factors.tsv F01
+- 主張: 仮会員機能が有効なら「仮会員登録完了メール」を送ると、値ごとの結果を確定している。
+- 実際: 同じExcel由来の本文に、有効時は仮会員登録完了メールを送るという記述と、本会員登録メールを送るという記述が併存する（integration_test/casegen/combination/units/F06-01/design.txt:L0223-L0227、L0273）。
+- 修正案: 有効時のメール種別を一方だけの確定結果として扱わず、設計書の記述が整合してから値ごとの結果を定める。
+tokens used
+104,249
+### 1
+- 機能: F05-01
+- 種類: B
+- 対象: F05-01_factors.tsv P1・P2・P3
+- 主張: 各コーナーの商品表示を左右する要因に、公開状態・NM・買取価格などを挙げている。
+- 実際: 強化買取には「強化買取」タグ、買取特集には指定の各タグ、目玉買取には「目玉買取商品」タグも必要と定めている（integration_test/casegen/combination/units/F05-01/design.txt:L0087-L0094、L0121-L0133、L0181-L0185）。
+- 修正案: 各処理に、対象タグの有無を表示条件の要因として追加する。
+
+### 2
+- 機能: F05-03
+- 種類: B
+- 対象: F05-03_factors.tsv P1
+- 主張: 商品一覧の要因に、買取対象を絞る商品状態を挙げていない。
+- 実際: 買取側の検索には、買取価格1円以上・状態NM・高額商品コードなし・予約商品でない、という条件を必ず指定すると定めている（integration_test/casegen/combination/units/F05-03/design.txt:L0156-L0160）。
+- 修正案: この4条件による表示対象の分岐を要因に追加する。
+
+### 3
+- 機能: F05-03
+- 種類: D
+- 対象: F05-03_constraints.tsv P1、F01=9999件を超える&F04=タグ1件指定
+- 主張: 上限超過時にタグの説明文を表示するかは「正解未定」としている。
+- 実際: タグを1件指定したときは説明文を一覧上部に表示すると定め、上限超過時も一覧に留まるとしている（integration_test/casegen/combination/units/F05-03/design.txt:L0190、L0209-L0210）。
+- 修正案: この組を正解未定から外し、説明文を表示する組として扱う。
+
+### 4
+- 機能: F05-04
+- 種類: B
+- 対象: F05-04_processes.tsv、F05-04_factors.tsv 旧商品コードからの転送
+- 主張: 要因が2つ以上ある処理として、商品詳細の初期表示だけを挙げている。
+- 実際: 旧コードの対応の有無を調べ、対応があっても転送先の商品を取得できなければトップページへ戻し、取得できれば商品詳細へ遷移すると定めている（integration_test/casegen/combination/units/F05-04/design.txt:L0167-L0168）。
+- 修正案: 旧コードからの転送を処理に加え、コード対応と転送先商品の有無を要因にする。
+
+### 5
+- 機能: F05-05
+- 種類: A
+- 対象: F05-05_factors.tsv F09
+- 主張: 更新数量の「1未満」と「数字でない」を別々の値にしている。
+- 実際: どちらの場合も当該商品を買取カートから外すと定めている（integration_test/casegen/combination/units/F05-05/design.txt:L0070）。
+- 修正案: 同じ結果になる2値を1値にまとめる。
+
+### 6
+- 機能: F05-05
+- 種類: F
+- 対象: F05-05_factors.tsv F03、P2
+- 主張: 「追加する規格の指定が空」を組合せ対象の値にしている。
+- 実際: 規格の指定が空の場合はエラー応答とする入力の検証である（integration_test/casegen/combination/units/F05-05/design.txt:L0067、L0075）。
+- 修正案: 規格が空の値と、それを使う組・制約を要因表から外す。
+
+### 7
+- 機能: F06-01
+- 種類: A
+- 対象: F06-01_factors.tsv F01
+- 主張: 仮会員機能が有効なら「仮会員登録完了メール」を送ると、値ごとの結果を確定している。
+- 実際: 同じExcel由来の本文に、有効時は仮会員登録完了メールを送るという記述と、本会員登録メールを送るという記述が併存する（integration_test/casegen/combination/units/F06-01/design.txt:L0223-L0227、L0273）。
+- 修正案: 有効時のメール種別を一方だけの確定結果として扱わず、設計書の記述が整合してから値ごとの結果を定める。

@@ -28,6 +28,24 @@ def rd(p):
     return list(csv.DictReader(open(p, encoding="utf-8"), delimiter="\t"))
 
 
+def _norm(s):
+    return re.sub(r"[\s|｜*`#>\-]", "", s)
+
+
+def embedded(md, have):
+    """機能設計書がシートの文字に埋め込まれているか。埋め込まれた節は題名の行が残り、本文の行も5〜7割が一致する。
+    埋め込まれていないものは題名が無く、一致はほぼ0割（2026-10-20 に全331本で分かれ方を見た）。"""
+    text = open(md, encoding="utf-8").read().split("\n")
+    title = text[0].lstrip("# ").strip()
+    h = _norm(have)
+    if title and _norm(title) in h:
+        return True
+    ls = [_norm(l) for l in text if len(_norm(l)) >= 25 and not l.startswith("#")]
+    if not ls:   # 題名だけの機能設計書は足すものが無い
+        return True
+    return sum(1 for l in ls if l[:25] in h) / len(ls) >= 0.3
+
+
 def to_text(sec):
     sec = re.sub(r"<(script|style)\b.*?</\1>", "", sec, flags=re.S)
     sec = re.sub(r'src="data:[^"]+"', "", sec)
@@ -98,16 +116,20 @@ def main():
             for l in lines:
                 n += 1
                 buf.append(f"L{n:04d}\t{l}\n")
-        if not n:
-            # HTML設計書にシートが無い機能（M01-01・M05-14・M11-05）は機能設計書を使う
-            for md in sorted(glob.glob(str(ROOT / f"functions/*/{f.lower()}_*.md"))):
-                if "_archive" in md:
-                    continue
-                buf.append(f"##### 機能設計書 {pathlib.Path(md).relative_to(ROOT)}\n")
-                for l in open(md, encoding="utf-8").read().split("\n"):
-                    if l.strip():
-                        n += 1
-                        buf.append(f"L{n:04d}\t{l.rstrip()}\n")
+        # HTML設計書にシートが無い機能（M01-01・M05-14・M11-05）は機能設計書を使う。
+        # シートはあっても機能設計書がHTMLに埋め込まれていない機能（一覧画面のシートを共にする一括削除・CSV出力など）は、
+        # 機能設計書を写しの末尾に足す。末尾なので、シートの行番号は変わらない（2026-10-20）
+        have = "".join(l for _, _, _, lines in sheets.get(f, []) for l in lines)
+        for md in sorted(glob.glob(str(ROOT / f"functions/*/{f.lower()}_*.md"))):
+            if "_archive" in md:
+                continue
+            if have and embedded(md, have):
+                continue
+            buf.append(f"##### 機能設計書 {pathlib.Path(md).relative_to(ROOT)}\n")
+            for l in open(md, encoding="utf-8").read().split("\n"):
+                if l.strip():
+                    n += 1
+                    buf.append(f"L{n:04d}\t{l.rstrip()}\n")
         (d / "design.txt").write_text("".join(buf), encoding="utf-8")
         (d / "excluded.tsv").write_text(
             "テストID\t除外\t理由\t事前準備\t手順\t期待結果\n" +

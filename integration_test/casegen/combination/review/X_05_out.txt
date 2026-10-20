@@ -1,0 +1,2638 @@
+Reading additional input from stdin...
+OpenAI Codex v0.162.1
+--------
+workdir: /home/y-saito/Developments/hareruya-design-docs
+model: gpt-6-sol
+provider: openai
+approval: never
+sandbox: read-only
+reasoning effort: high
+reasoning summaries: none
+session id: 01a15795-d25f-7ea2-90c6-d14a7873093a
+--------
+user
+# 反証の依頼: 機能 M07-09・M08-03・M10-05・M10-06・M12-10・M13-09・M13-13・M15-03・M15-04・M15-06・M16-08 の要因表
+
+あなたは独立したレビュアーである。別の担当が作った**要因表**に、設計書と食い違う所が無いかを確かめる。直さない。読むだけ。
+リポジトリは `/home/y-saito/Developments/hareruya-design-docs/`。出力は日本語。
+
+## 要因表とは（依頼者決定 2026-10-20）
+
+結合テストで、1回の処理の結果を左右する要因（区分・状態・設定・関連データの値）が2つ以上あるとき、
+**効き合う要因は値の組合せを全部、関係しない要因はどの2つの要因の値の組もどこかで1回**試すケースを足す。
+要因表はその元で、表から機械が組を並べる（`integration_test/casegen/combination/gen_combos.py`）。表の誤りはそのままケースの誤りになる。
+作り方の決まりは `integration_test/casegen/combination/FACTOR_PROMPT.md`（担当への依頼文）にある。まずこれを読む。
+
+## 今回確かめる範囲（2026-10-20）
+
+これらの機能の要因表は、すでに1巡反証を受けて直した。そのあと、設計書の写しに**機能設計書が入っていなかった**ことが分かり、
+写しの末尾に機能設計書を足した（`units/<機能ID>/design.txt` の `##### 機能設計書 <パス>` の行より後ろ）。担当がその部分を読んで要因表を見直した
+（処置は `review/<機能ID>_factors_md_dispositions.tsv`）。
+今回は、**足した機能設計書の部分に関わる所だけ**を確かめる。機能設計書が「この値でこの処理の結果が変わる」と定めているのに要因表に無い（B）、
+足した・直した要因・判定・制約・既存ケースの誤り（A・C・D・E）、範囲外（F）。写しの前の部分だけに関わる指摘はしない（1巡済み）。
+機能設計書は埋め込みの「現行仕様」節と同じ扱いで、Excel 由来の本文・表示メッセージ節と食い違うときはそちらが優先する。
+
+## 読むもの
+
+| 何 | パス |
+| --- | --- |
+| 要因表（機能ごとに5つ） | `integration_test/casegen/combination/factors/<機能ID>_processes.tsv`・`_factors.tsv`・`_interactions.tsv`・`_constraints.tsv`・`_existing.tsv` |
+| 機械が並べた組（参考） | `integration_test/casegen/combination/combos/<機能ID>.tsv` |
+| 設計書（行頭の `L0001` は行番号） | `integration_test/casegen/combination/units/<機能ID>/design.txt`、他の機能は `units/<機能ID>/design.txt`、共通シートは `units/_common/` |
+| ケース | `integration_test/casegen/cases/<機能ID>_test_cases.tsv`、全機能は `integration_test/casegen/all_test_cases.tsv` |
+| 結合テストの範囲 | `integration_test/SCOPE.md` |
+| 不機能仕様・フェーズ2見送り（載っているものは意図して外している。指摘しない） | `functions/dead-spec-register.tsv`・`functions/phase2_candidates.tsv` |
+
+設計書の中で記述が食い違うときは、Excel 由来の本文 ＞ 埋め込みの「表示メッセージ」節 ＞ 埋め込みの「現行仕様」節の順に採る。
+
+## 確かめること（事実だけ）
+
+| 種類 | 何を見るか |
+| --- | --- |
+| A 要因・値の誤り | 要因・値・値ごとの結果が、根拠の行に書かれていない。根拠の行が別のことを言っている。結果が同じになる値を別の値として分けている |
+| B 要因・値の抜け | 設計書の行が「この値でこの処理の結果が変わる」と定めているのに、要因・値が無い（他の機能の設定値でこの処理が読むものを含む） |
+| C 判定の誤り | 効き合う／関係しない／設計書が決めていない の判定が、設計書の行と食い違う。特に、足し算で合計に入るだけの組を効き合うにしている、一方の結果がもう一方の判定の入力になるのに関係しないにしている。**3つ以上の要因をまとめた効き合う**は、その全部が同時に互いの結果を変えるかを確かめる（2つずつで効き合うだけなら2要因の行に分けるべき。まとめると値の組合せが全部ケースになる）。1件の対象を出す・出さないを複数の条件の「すべて満たす／どれか1つで外れる」で決める所を効き合うにしていないか（条件どうしは関係しないでよい）。優先順位で順に比べて決める所を、比べる項目ごとの要因の全組合せにしていないか（「どの段で決まるか」の1要因でよい） |
+| D 制約の誤り・抜け | 作れない としている組が設計上作れる。作れない組が載っていない。正解未定 としている組の結果が設計書から決まる |
+| E 既存ケースの読み違い | existing.tsv の値が、そのケースの事前準備・手順に書かれていない。そのケースが処理を動かしていない、確かめる所で結果を見ていない |
+| F 範囲外 | 処理・要因が結合テストの範囲でない（同じ画面の中で閉じる表示の計算、入力値の検証、検索条件の組合せ、権限、二重送信、排他） |
+
+次は指摘しない: 書き方・言い回し、要因IDの振り方、値の並び順、設計書に無い仕様の追加の要求、境界値・数量1/複数（別に済んでいる）。
+
+## 出力
+
+指摘が無ければ `NONE` の1語だけ。あれば1件ずつ、次の形で。
+
+```
+### <番号>
+- 機能: <機能ID>
+- 種類: <A〜F>
+- 対象: <ファイル名> <要因ID・処理ID・組・テストID>
+- 主張: <表に書かれていること>
+- 実際: <設計書・ケースの記述（ファイル:行 を必ず添える）>
+- 修正案: <どう直すか。1文>
+```
+warning: Codex could not find bubblewrap on PATH. Install bubblewrap with your OS package manager. See the sandbox prerequisites: https://developers.openai.com/codex/concepts/sandboxing#prerequisites. Codex will use the bundled bubblewrap in the meantime.
+2026-10-20T04:33:21.547505Z ERROR rmcp::transport::worker: worker quit with fatal: Transport channel closed, when AuthRequired(AuthRequiredError { www_authenticate_header: "Bearer resource_metadata=\"https://mcp.firecrawl.dev/.well-known/oauth-protected-resource/v2/mcp-oauth\", error=\"invalid_token\", error_description=\"Firecrawl credentials required: OAuth access token (Authorization: Bearer fco_...) or API key (x-firecrawl-api-key)\"" })
+codex
+まず作成ルールと対象ファイルの構成を確認し、追加された機能設計書に関係する記述だけを照合します。ファイルは変更しません。
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/FACTOR_PROMPT.md' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+# 依頼: 機能 {FID}（{FNAME}）の要因表づくり
+
+これは分析である。ケースも設計書も直さない。事実は自分でファイルを読んで確かめ、推測で書かない。
+リポジトリは `/home/y-saito/Developments/hareruya-design-docs/`。パスはここからの相対。出力はすべて日本語で書く。
+git の変更操作（add・commit など）をしない。
+
+## 背景（依頼者決定 2026-10-20）
+
+結合テストケースは設計書の定め1件ごとに作られ、10/15 には定めごとに「数量1と複数」「有無」「状態・区分ごと」などのデータを足した。
+それでも、**1回の処理の結果を左右する要因が2つ以上あるとき、その値を同時に変えて通すケースが無い**。
+例: 公開側で注文を確定するケース33件は、支払方法がほぼ郵便振替か銀行振込で、配送方法もゆうパック・EMS が大半。クレジットカード・代金引換・店頭支払、店頭受取・同梱で注文を通すケースは無い。
+
+依頼者の決定:
+- **効き合う要因**（一方の値で、もう一方の値の結果が変わると設計書が定める）は、値の組合せを全部試す。
+- **関係しない要因**は、どの2つの要因の値の組も、どこかのケースで1回は出るように並べる（2要因の組）。
+- **他の機能の設定値**（送料・手数料・支払方法の利用条件・送料無料の条件・配送方法に紐づく支払方法など）も、それを読む処理の要因に入れる。
+
+あなたの仕事は、機能 {FID} について、組合せの元になる**要因表**を作ること。組合せの行（どの値の組を何件試すか）は、この表から別の道具が機械で作る。
+だから、表の要因・値・判定の誤りは、そのままケースの誤りになる。
+
+## 読むもの
+
+| 何 | パス |
+| --- | --- |
+| 設計書（この機能のシートを文字に起こしたもの。行頭の `L0001` とタブは行番号。`#####` の行はシートの境目） | `integration_test/casegen/combination/units/{FID}/design.txt` |
+| 他の機能の設計書（設定値を読む処理のとき、設定する機能の定めを引く） | `integration_test/casegen/combination/units/<機能ID>/design.txt`（機能名は `combination/units.tsv`） |
+| 同じ冊子の共通シート（必要なときだけ） | {COMMON} |
+| この機能のケースとシード | `integration_test/casegen/cases/{FID}_test_cases.tsv`・`{FID}_seed_data.tsv` |
+| この機能の、テストから外したケース | `integration_test/casegen/combination/units/{FID}/excluded.tsv` |
+| 全機能のケース（他の機能のケースがこの機能の処理を通しているかの検索用） | `integration_test/casegen/all_test_cases.tsv`（列: テストID・観点ID・基本設計書・検証方法・テストデータ・事前準備・手順・期待結果。セル内改行があるので csv として読む） |
+| 結合テストの範囲 | `integration_test/SCOPE.md` |
+| 不機能仕様・フェーズ2見送り（ここに載るものは要因にしない） | `functions/dead-spec-register.tsv`・`functions/phase2_candidates.tsv` |
+| 設計書の中で記述が食い違うときの優先順位 | Excel 由来の本文 ＞ 埋め込みの「表示メッセージ」節（リニューアル後の仕様）＞ 埋め込みの「現行仕様」節。同じ出所では改訂後が優先。**Excel が触れていない条件を埋め込みが足しているだけのときは食い違いではなく、両方を当てる**（例: Excel が選択肢を並べ、埋め込みが「ポイントで全額払うときは全額ポイント支払いだけ」と条件を足す → 両方）。既存ケースは正解の根拠にしない（既存ケースと設計書の食い違いは返答に書く） |
+
+検索は `grep` を使う（`rg` は同じ入力で0件を返すことがあるので使わない）。
+
+## やること
+
+### 1. 処理を決める
+
+design.txt を**全部**読み、この機能の中で「操作やデータを受けて結果を出す処理」のうち、**結果を左右する要因が2つ以上ある処理**を挙げる。
+
+- 処理の単位は「1回の操作で動き、結果を1つの所で確かめられるまとまり」。例: 注文を確定して受注を作る／お支払い方法の選択肢を出す／受注の対応状況をキャンセルへ変えて保存する。
+- 結果は、データを作った所とは**別のコンポーネントで確かめる**もの（DB、別の画面、別の機能の画面、CSV・帳票、メール、連携先）。DBにあるデータで画面の表示・選択肢が変わるものも入る（例: 既存の受注の有無で配送方法の選択肢が変わる）。同じ画面の中だけで閉じる表示の計算（保存しない）と、計算式そのものの正しさは単体テストなので挙げない。
+- 要因が1つだけの処理は挙げない（10/15 の監査で済んでいる）。
+- **要因が2つ以上の処理が1つも無い機能**（一覧を出すだけ、1つの設定を保存するだけ、など）は、5つのファイルをヘッダだけで書き、返答の1行目に「対象の処理なし」と理由を書く。無理に処理を作らない。
+- 入力値の検証（必須・桁数・形式）、検索条件・削除条件の組合せ、権限、二重送信、排他は、ほかの観点の持ち分なので処理にも要因にもしない。
+
+### 2. 要因と値を挙げる
+
+処理ごとに、**その処理の結果を変えると設計書が定める要因**を挙げる。
+
+- 要因は「区分・状態・設定・関連データ」の値。例: 閲覧店舗、配送方法、支払方法、ポイントの使い方、受注の種類（通常・店頭受取・ついで買い）、会員か非会員か、変更前の対応状況、既存の受注の状態。
+- 他の機能で設定する値で、この処理が読むものも要因にする（出所に機能IDを書く）。例: 支払方法の利用条件（M10-04）に対する注文金額、都道府県別の送料（M10-06）。その機能の design.txt で定めを確かめ、根拠に `M10-04:L0123` の形で書く。**この処理の結果への効き方が設計書のどこにも書かれていない設定値は要因にしない**（値ごとの結果が書けないため）。そういう設定値は返答の「判断に迷った点」に挙げる（依頼元が論点として控える）。
+- **値は、結果の分かれ目ごとに代表を1つ**。結果が同じになる値は1つにまとめる（例: ゆうパックとゆうパケットで結果が変わらないならどちらか1つ）。結果が値ごとに違うなら全部挙げる（例: 支払方法ごとに手数料・ボタンの文言・ポイントを使う時点が違うなら、支払方法は全部）。
+- 境界値（ちょうどの値・上限）と数量1/複数は、10/15 に済んでいるので値にしない。値は「範囲内」「範囲外」「あり」「なし」のような分かれ目で書く。
+- 不正な入力、作れない値（画面の選択肢に無い値）は値にしない。
+- 値ごとの結果を、設計書の語で短く書く（「支店: 支払方法は店頭支払だけ」）。
+
+### 3. 要因どうしを判定する
+
+処理ごとに、その処理の要因の**すべての2つの組**を判定する（要因が5つなら10組）。判定は次のどれか。
+
+| 判定 | いつ | 根拠 |
+| --- | --- | --- |
+| 効き合う | 一方の値で、もう一方の値の結果（可否、選択肢、金額、更新先、更新内容）が変わると設計書が定める。または、一方の結果がもう一方の判定の入力になる（例: 使用ポイントで支払う金額が変わり、支払方法の選択肢が変わる） | 両方を結ぶ設計書の行が必須 |
+| 関係しない | それぞれの要因の結果が、もう一方の値によって変わらない（例: 送料は配送方法で、手数料は支払方法で決まり、合計は足し算） | 理由を書く |
+| 設計書が決めていない | 同時に効いたときの結果が設計書から決まらない（例: 送料無料の判定に使う金額が、ポイントを引く前か後か書かれていない） | 決まらない理由。下の「組の制約」に、決まらない値の組を「正解未定」で必ず書く |
+
+3つ以上の要因がまとめて効き合うとき（例: 配送方法・既存の受注の状態・既存の受注の支払方法で同梱を出すか決まる）は、1行に `F01+F03+F05` と書いて「効き合う」にしてよい。その中の2つの組は、別の行に書かない。**まとめるのは、その全部が同時に互いの結果を変えるときだけ**。2つずつで効き合うだけなら2要因の行に分ける（まとめると値の組合せが全部ケースになり、件数が膨らむ）。
+**選べるものの集まりを2つの定めが別々に絞り、結果がその共通部分になるとき**（例: 支店は支払方法が店頭支払だけ、同梱は郵便振替・銀行振込だけ → 選択肢の中身が組ごとに変わる）は「効き合う」にする。「設計書が決めていない」にするのは、両方を当てると選択肢が1つも残らないなど、結果が設計書から決まらない組だけ。
+**1件の対象を出す・出さない（対象にする・しない）を、複数の条件の「すべて満たす」または「どれか1つで外れる」で決めるとき**（例: 公開・在庫あり・セール期間内・表示フラグ のすべてを満たす商品だけ出す）は、条件どうしは「関係しない」にする。結果は出る・出ないの2つだけで、条件ごとの外れ方は1つずつ確かめれば足り、全組合せは要らない（7条件を効き合うにすると128行になる）。
+**優先順位で順に比べて決めるとき**（例: 複数一致したら、言語→特殊版→発売日→フォイル→プロモの順に比べて先に差が付いたもので選ぶ）は、比べる項目を別々の要因にして全組合せにしない。「どの段で決まるか」を1つの要因にまとめる（値: 1段目で決まる｜2段目で決まる｜…｜全段が同じ）。上の段の差が下の段を隠すので、各段で決まる組を1つずつ試せば足りる（6段を効き合うにすると64行になる）。
+「一方の値で、もう一方の処理そのものが行われない」型（例: キャンセル日が既に入っていると、在庫・ポイントの戻しを行わない）も「効き合う」にする。
+**推測で値の組を「作れない」にしない**。設計書の語がどの値を指すか決まらないとき（例: 支店の「店舗受取」が店頭受取とスムーズ店頭受取のどちらか）は「正解未定」にする。
+**効き合う組の値の組合せは全部ケースになる**。値が多い要因どうし（7×7 など）を効き合うにするときは、設計書の行で本当に互いの結果を変えるかを確かめる。足し算で合計に入るだけなら「関係しない」。
+
+### 4. 組の制約を書く
+
+- **作れない**: 設計上その値の組が成り立たない（例: 支店では支払方法が店頭支払だけなので、支店×代金引換は作れない）。根拠の行が必須。
+- **正解未定**: その値の組で結果が設計書から決まらない。決まらない理由を書く。これはケースにせず、報告書に論点として残す。
+
+### 5. 既存のケースが通している組を書く
+
+この機能のケース（と、`all_test_cases.tsv` を語で検索して見つかった他の機能のケース）のうち、**その処理を動かして、確かめる所で結果を確かめている**ケースを1件ずつ書き、そのケースで値が決まっている要因の値を書く。
+
+- 値は、事前準備・手順に**書かれている**ものだけ。書かれていない要因は書かない（流れの中でたまたまそうなるだけのものは数えない）。
+- 1つのケースが同じ処理を別の値で2回以上通しているときは、通した値ごとに1行ずつ書く（同じテストIDの行が2つになる）。1回の処理で2つのデータを別の値で扱う（混在）ケースは書かない。
+- 期待結果が設計書と食い違う既存ケースは、値が合っていても書かない（返答に食い違いとして書く）。
+- 処理を動かしていない（画面を開いて別のことを見るだけ）ケース、結果を確かめていないケースは書かない。
+- テストから外したケース（excluded.tsv）は書かない。
+
+## 出力（この5つだけを書く。ほかのファイルは変更しない）
+
+すべて `integration_test/casegen/combination/factors/` に、タブ区切り・ヘッダつきで書く。セル内に改行・タブ・ダブルクォートを入れない。
+
+### `{FID}_processes.tsv`（5列）
+
+```
+処理ID	処理	契機	確かめる所	根拠
+P1	注文を確定して受注を作る	ご注文方法指定画面で確定チェックボックスを選び、注文するボタンを押す	受注情報編集画面（M05-11）	L0322-L0330
+```
+
+- 処理IDは P1 からの連番。根拠は design.txt の行（`L0037`、`L0037-L0040`、カンマ区切り）。他の機能は `M10-04:L0012`、共通シートは `_common/<ファイル名>:L0012`。
+
+### `{FID}_factors.tsv`（7列）
+
+```
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1,P2	閲覧店舗	本店｜支店	本店: 支払方法はEC用の6種／支店: 支払方法は店頭支払だけ	L0236,L0249-L0252	この機能
+F05	P2	支払方法の利用条件に対する注文金額	範囲内｜上限を超える	範囲内: 選択肢に出る／上限を超える: 選択肢に出ない	M10-04:L0101	M10-04（設定）
+```
+
+- 要因IDは F01 からの連番（処理をまたいで通し番号）。処理IDはその要因が効く処理（カンマ区切り）。
+- 値は全角の縦棒 `｜` で区切る。2つ以上。1つの値は30字まで。`=` `&` `｜` `＋` `×` を値の中に使わない。
+- 値ごとの結果は `値: 結果` を `／` でつなぐ。全部の値について書く。
+- 出所は `この機能`、`<機能ID>（設定）`、`<機能ID>（データ）` のどれか。
+
+### `{FID}_interactions.tsv`（5列）
+
+```
+処理ID	要因	判定	根拠	理由
+P1	F03+F04	効き合う	L0204	配送方法が同梱のときは支払方法が郵便振替・銀行振込だけになる
+P1	F04+F06	関係しない		手数料は支払方法で決まり、ポイントは値引きとして合計から引くだけ
+P1	F06+F07	設計書が決めていない	M10-05:L0040	送料無料の判定に使う金額がポイント値引きの前か後か書かれていない
+```
+
+- 処理ごとに、その処理の要因の2つの組を全部判定する（3つ以上の効き合うにまとめた組は除く）。
+- 効き合う・設計書が決めていない は根拠が必須。関係しない・設計書が決めていない は理由が必須。
+
+### `{FID}_constraints.tsv`（5列）
+
+```
+処理ID	組	種別	根拠	理由
+P1	F01=支店&F04=代金引換	作れない	L0251-L0252	支店の支払方法は店頭支払だけ
+P1	F06=ポイントを使う&F07=送料無料の条件に届く	正解未定	M10-05:L0040	送料無料の判定に使う金額が決まらない
+```
+
+- 組は `要因ID=値` を `&` でつなぐ。値は factors.tsv の値と一字一句同じ。値1つだけの組（`F16=店頭受取のみのスマレジ決済`）も書ける: その値でこの処理を動かすこと自体が作れない・結果が決まらないとき（設計書の記述どうしが食い違い、共通する部分が無いときなど）。
+- 種別は `作れない` か `正解未定`。根拠が必須。制約が無ければヘッダだけ書く。
+
+### `{FID}_existing.tsv`（4列）
+
+```
+テストID	処理ID	値	理由
+IT-F04-02-081	P1	F01=本店&F03=ゆうパック&F04=郵便振替	事前準備で本店・ゆうパック・郵便振替を選び、受注情報編集画面で支払方法と配送方法を確かめる
+```
+
+- 値は `要因ID=値` を `&` でつなぐ。ケースに書かれている要因だけ。1つ以上。
+- 1つのケースが2つの処理を通しているときは2行に書く。該当するケースが無ければヘッダだけ書く。
+
+書いたら次を実行し、エラーが無くなるまで直す。組の数（全組と2要因の組で、既存ケースが通していない組を埋めるのに要る行の数）も出る。
+
+```
+python3 integration_test/casegen/combination/gate_factors.py {FID}
+```
+
+作業用の一時ファイルを作るときは、名前に {FID} を入れてスクラッチパッドに作る。他の機能の factors/ のファイルは読まない・書かない。
+ファイルの書き込みを拒否されたときは、回避せず、書くはずだった本文を返答に載せる（依頼元が保存する）。
+
+## 返答
+
+3行以内: 処理の数・要因の数・効き合う組の数・設計書が決めていない組の数、gate の結果と出た行の数、判断に迷った点（あれば1つ）。
+
+exec
+/bin/bash -lc 'cat integration_test/SCOPE.md' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+# 結合テスト観点表の適用範囲
+
+`ipa-integration-test-viewpoints.tsv` が対象とする範囲を定める。
+判定基準は旧観点資産（`archive/integration-test-viewpoints.md`）の層判定をそのまま踏襲する。
+
+## 対象とするもの
+
+**独立したコンポーネント間の契約と相互作用。**
+呼出側と受取側の間で、受け渡される値、状態、副作用、異常時の振る舞いが
+双方の設計どおりに噛み合っていることを確認する。
+
+**媒体をいくつ跨いだかでは判定しない。** 単一のロジックの結果をDBや画面で観測するだけの確認は、
+観測先が別コンポーネントであっても単体テストの範囲とする。
+旧正本もこの基準を採り、DBへ登録される変換・計算結果をUT判定している
+（`archive/integration-test-viewpoints.md` No.60-66）。
+
+## 単項目の検証は、DBへ保存するかで分ける（2026-09-01 依頼者決裁）
+
+単項目の桁数・文字種・必須・コード値・日付・メールアドレス書式の検証は、
+**その項目をDBへ保存するかどうか**で担当を分ける。
+
+| 項目の性質 | 担当 | 理由 |
+| --- | --- | --- |
+| DBへ保存する項目（登録・編集の入力欄） | **結合テスト** | Form層で受理された値がDB層に収まるかは跨コンポーネントでしか観測できない。pf(MySQL)はバイト、ee(PostgreSQL)は文字で数えるため、Form層の単体テストでは意味論差が出ない |
+| 画面上だけの入力制限（検索条件、絞り込み、表示件数） | 単体テスト | DBへ保存しないので意味論差が起きない。判定ロジックの正しさだけを見ればよい |
+
+同じ種類の判定であれば、複数項目をまとめて1件のテストケースにしてよい。
+例: 「商品名と商品名(英)の最大文字数が設計書どおりであること」は1件でよい。
+判定の種類が違えば分ける（最大文字数と必須は別のケース）。
+
+単体テストが担うのは、検証を行う処理そのもの（計算式、文字数の数え方、分岐網羅）である。
+
+画面項目定義のうち次は、桁数・必須の指定が無くても結合テストの対象とする。
+跨コンポーネントでしか確認できないからである。
+
+- 初期値の指定（画面を開いてDBから値を取り、初期表示する）
+- 画面部品のふるまい（「押下すると検索を行う」「表示/非表示を切り替える」）
+- 表示内容（「チェックを付けると一覧すべてを対象に設定」）
+
+## 現行仕様と刷新の指示が食い違うときは刷新を採る（2026-09-01）
+
+HTML設計書には次の2つが載る。両方が同じ項目に触れて食い違うことがある。
+
+| 出所 | 中身 |
+| --- | --- |
+| Excel基本設計の本文 | 刷新後にどうするかの指示。「※カスタマイズ対応」「〜とする」 |
+| 埋め込まれた機能設計書の「現行仕様」 | 現行の実装がどう動いているか |
+
+**期待結果は刷新の指示を採る。** 現行仕様は、刷新の指示が無い箇所にだけ使う。
+両方に記述があって内容が違うときは、刷新の指示を期待結果にし、
+現行仕様との差を `出典` に併記する。
+
+実例: M03-01の並び順は、機能設計書の現行仕様が「商品IDの降順」、
+Excel基本設計が「表示順は、棚番号昇順とする」で食い違う。棚番号昇順を採る。
+現行仕様だけを見てケースを書き、誤った期待結果を作った（codex R1）。
+
+## 対象としないもの
+
+| 除外区分 | 内容 | 担当 |
+| --- | --- | --- |
+| 単体テスト粒度 | 単一コンポーネント内で完結する変換・計算ロジック | 単体テスト |
+| 単体テスト粒度 | 単一メソッド内の分岐網羅 | 単体テスト |
+| 単体テスト粒度 | 変換、編集分岐、ループ編集、計算、連結、暗号化、マスキング、パディング、小数桁の結果そのもの | 単体テスト |
+| e2e粒度 | 見た目、画面レイアウト、ブラウザ固有挙動、確認ダイアログの表示 | e2e・手動 |
+| e2e粒度 | 画面表示文言の照合 | e2e・手動 |
+| 性能 | 応答時間、スループット、同時接続数の上限、リトライ間隔の適切さ | 性能テスト（別工程） |
+
+## 境界が紛らわしいもの
+
+同じ語で呼ばれるが、担当が分かれるもの。
+
+| 事象 | 結合テストが見るもの | 他が見るもの |
+| --- | --- | --- |
+| 境界値 | 設計書が定めた桁数・範囲どおりに受理／拒否されること。DB層のカラム制約、件数上限、ファイルサイズ、表示上限を含む | 計算式そのものの正しさは単体テスト |
+| 文字列長 | 設計書が定めた最大文字数どおりに受理／拒否されること。pf(MySQL)とee(PostgreSQL)の意味論差を含み、Form層とDB層の双方を見る | 文字数を数える処理そのものは単体テスト |
+| 最大件数・最大ファイルサイズ | 規定量を機能として正しく扱えるか（ITB-11） | 規定時間内に終わるかは性能テスト |
+| タイムアウト | タイムアウト時の跨コンポーネントの挙動（ITB-14） | 応答時間そのものは性能テスト |
+| リトライ | 再送回数、間隔、打切り条件が仕様どおりか（ITB-15） | 間隔の適切さは性能テスト |
+| バリデーション | 設計書が定めた検証（必須、桁数、文字種、コード値、日付、メールアドレス書式）の結果が画面・DB・ファイル・連携先へ反映されること | 検証関数そのものの分岐網羅は単体テスト |
+| メッセージ | DB、ファイル、ログ、連携先の期待結果（COM-04） | 画面表示文言の照合はe2e |
+
+## 除外の記録
+
+除外した観点は捨てない。旧資産の層判定は `archive/integration-test-viewpoints.md` の
+`テスト層` 列に、新観点への対応は `MIGRATION_MAP.tsv` に残る。
+
+exec
+/bin/bash -lc "rg --files integration_test/casegen/combination/{factors,units,review,combos} | rg '(M07-09|M08-03|M10-05|M10-06|M12-10|M13-09|M13-13|M15-03|M15-04|M15-06|M16-08)'" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+integration_test/casegen/combination/combos/M13-13_undetermined.tsv
+integration_test/casegen/combination/combos/M16-08.tsv
+integration_test/casegen/combination/combos/M15-03.tsv
+integration_test/casegen/combination/combos/M08-03_undetermined.tsv
+integration_test/casegen/combination/combos/M12-10.tsv
+integration_test/casegen/combination/combos/M13-13.tsv
+integration_test/casegen/combination/combos/M15-04.tsv
+integration_test/casegen/combination/review/M10-05_factors_md_dispositions.tsv
+integration_test/casegen/combination/review/M16-08_factors_md_dispositions.tsv
+integration_test/casegen/combination/combos/M07-09.tsv
+integration_test/casegen/combination/review/M15-06_factors_md_dispositions.tsv
+integration_test/casegen/combination/review/M10-05_factors_v_dispositions.tsv
+integration_test/casegen/combination/combos/M13-09.tsv
+integration_test/casegen/combination/combos/M10-06_undetermined.tsv
+integration_test/casegen/combination/combos/M15-03_undetermined.tsv
+integration_test/casegen/combination/combos/M07-09_undetermined.tsv
+integration_test/casegen/combination/combos/M08-03.tsv
+integration_test/casegen/combination/combos/M10-05.tsv
+integration_test/casegen/combination/combos/M10-06.tsv
+integration_test/casegen/combination/review/M15-03_factors_v_dispositions.tsv
+integration_test/casegen/combination/review/M12-10_factors_v_dispositions.tsv
+integration_test/casegen/combination/review/M15-04_factors_md_dispositions.tsv
+integration_test/casegen/combination/review/M15-03_factors_md_dispositions.tsv
+integration_test/casegen/combination/review/M15-06_factors_v_dispositions.tsv
+integration_test/casegen/combination/review/M08-03_factors_v_dispositions.tsv
+integration_test/casegen/combination/review/M07-09_factors_md_dispositions.tsv
+integration_test/casegen/combination/review/M13-13_factors_md_dispositions.tsv
+integration_test/casegen/combination/review/M07-09_factors_v_dispositions.tsv
+integration_test/casegen/combination/review/M13-09_factors_md_dispositions.tsv
+integration_test/casegen/combination/review/M13-13_factors_v_dispositions.tsv
+integration_test/casegen/combination/combos/M15-06_undetermined.tsv
+integration_test/casegen/combination/combos/M10-05_undetermined.tsv
+integration_test/casegen/combination/combos/M16-08_undetermined.tsv
+integration_test/casegen/combination/combos/M15-04_undetermined.tsv
+integration_test/casegen/combination/review/M12-10_factors_md_dispositions.tsv
+integration_test/casegen/combination/review/M10-06_factors_v_dispositions.tsv
+integration_test/casegen/combination/review/M15-04_factors_v_dispositions.tsv
+integration_test/casegen/combination/review/M16-08_factors_v_dispositions.tsv
+integration_test/casegen/combination/review/M08-03_factors_md_dispositions.tsv
+integration_test/casegen/combination/review/M10-06_factors_md_dispositions.tsv
+integration_test/casegen/combination/review/M13-09_factors_v_dispositions.tsv
+integration_test/casegen/combination/combos/M13-09_undetermined.tsv
+integration_test/casegen/combination/combos/M15-06.tsv
+integration_test/casegen/combination/combos/M12-10_undetermined.tsv
+integration_test/casegen/combination/units/M10-05/excluded.tsv
+integration_test/casegen/combination/units/M10-05/design.txt
+integration_test/casegen/combination/units/M15-06/excluded.tsv
+integration_test/casegen/combination/units/M15-06/design.txt
+integration_test/casegen/combination/units/M07-09/excluded.tsv
+integration_test/casegen/combination/units/M07-09/design.txt
+integration_test/casegen/combination/units/M13-13/excluded.tsv
+integration_test/casegen/combination/units/M13-13/design.txt
+integration_test/casegen/combination/units/M08-03/excluded.tsv
+integration_test/casegen/combination/units/M08-03/design.txt
+integration_test/casegen/combination/units/M10-06/excluded.tsv
+integration_test/casegen/combination/units/M10-06/design.txt
+integration_test/casegen/combination/units/M16-08/excluded.tsv
+integration_test/casegen/combination/units/M16-08/design.txt
+integration_test/casegen/combination/units/M15-03/excluded.tsv
+integration_test/casegen/combination/units/M15-03/design.txt
+integration_test/casegen/combination/units/M13-09/excluded.tsv
+integration_test/casegen/combination/units/M13-09/design.txt
+integration_test/casegen/combination/factors/M12-10_interactions.tsv
+integration_test/casegen/combination/factors/M15-03_processes.tsv
+integration_test/casegen/combination/factors/M15-04_interactions.tsv
+integration_test/casegen/combination/factors/M10-06_interactions.tsv
+integration_test/casegen/combination/factors/M07-09_existing.tsv
+integration_test/casegen/combination/factors/M13-13_factors.tsv
+integration_test/casegen/combination/factors/M12-10_existing.tsv
+integration_test/casegen/combination/factors/M07-09_processes.tsv
+integration_test/casegen/combination/factors/M10-05_constraints.tsv
+integration_test/casegen/combination/factors/M15-06_factors.tsv
+integration_test/casegen/combination/factors/M15-03_interactions.tsv
+integration_test/casegen/combination/factors/M10-06_existing.tsv
+integration_test/casegen/combination/factors/M10-05_interactions.tsv
+integration_test/casegen/combination/factors/M16-08_processes.tsv
+integration_test/casegen/combination/factors/M10-05_processes.tsv
+integration_test/casegen/combination/factors/M10-05_existing.tsv
+integration_test/casegen/combination/factors/M07-09_factors.tsv
+integration_test/casegen/combination/factors/M13-13_interactions.tsv
+integration_test/casegen/combination/factors/M15-06_processes.tsv
+integration_test/casegen/combination/factors/M13-09_existing.tsv
+integration_test/casegen/combination/factors/M08-03_processes.tsv
+integration_test/casegen/combination/factors/M08-03_constraints.tsv
+integration_test/casegen/combination/factors/M08-03_factors.tsv
+integration_test/casegen/combination/factors/M10-06_processes.tsv
+integration_test/casegen/combination/factors/M08-03_existing.tsv
+integration_test/casegen/combination/factors/M15-03_existing.tsv
+integration_test/casegen/combination/factors/M15-06_existing.tsv
+integration_test/casegen/combination/factors/M13-09_factors.tsv
+integration_test/casegen/combination/factors/M15-06_interactions.tsv
+integration_test/casegen/combination/factors/M13-09_constraints.tsv
+integration_test/casegen/combination/factors/M15-04_constraints.tsv
+integration_test/casegen/combination/factors/M12-10_factors.tsv
+integration_test/casegen/combination/factors/M12-10_processes.tsv
+integration_test/casegen/combination/factors/M10-06_constraints.tsv
+integration_test/casegen/combination/factors/M10-05_factors.tsv
+integration_test/casegen/combination/factors/M15-04_factors.tsv
+integration_test/casegen/combination/factors/M15-04_processes.tsv
+integration_test/casegen/combination/factors/M13-13_processes.tsv
+integration_test/casegen/combination/factors/M16-08_existing.tsv
+integration_test/casegen/combination/factors/M15-06_constraints.tsv
+integration_test/casegen/combination/factors/M13-13_existing.tsv
+integration_test/casegen/combination/factors/M13-13_constraints.tsv
+integration_test/casegen/combination/factors/M15-03_factors.tsv
+integration_test/casegen/combination/factors/M16-08_interactions.tsv
+integration_test/casegen/combination/factors/M13-09_processes.tsv
+integration_test/casegen/combination/factors/M15-03_constraints.tsv
+integration_test/casegen/combination/factors/M16-08_factors.tsv
+integration_test/casegen/combination/factors/M16-08_constraints.tsv
+integration_test/casegen/combination/factors/M15-04_existing.tsv
+integration_test/casegen/combination/factors/M12-10_constraints.tsv
+integration_test/casegen/combination/factors/M08-03_interactions.tsv
+integration_test/casegen/combination/factors/M07-09_constraints.tsv
+integration_test/casegen/combination/factors/M13-09_interactions.tsv
+integration_test/casegen/combination/factors/M10-06_factors.tsv
+integration_test/casegen/combination/factors/M07-09_interactions.tsv
+integration_test/casegen/combination/units/M12-10/excluded.tsv
+integration_test/casegen/combination/units/M12-10/design.txt
+integration_test/casegen/combination/units/M15-04/excluded.tsv
+integration_test/casegen/combination/units/M15-04/design.txt
+
+exec
+/bin/bash -lc 'for f in M07-09 M08-03 M10-05 M10-06 M12-10 M13-09 M13-13 M15-03 M15-04 M15-06 M16-08; do echo "$f"; wc -l integration_test/casegen/combination/units/$f/design.txt integration_test/casegen/combination/factors/${f}_*.tsv integration_test/casegen/combination/review/${f}_factors_md_dispositions.tsv | tail -n 1; grep -n '"'"'^##### 機能設計書'"' integration_test/casegen/combination/units/"'$f/design.txt; done' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+M07-09
+  132 total
+84:##### 機能設計書 functions/ec-cube-enterprise/m07-09_admin_online_purchase_purchase_online_return_list_pdf_export.md
+M08-03
+ 105 total
+73:##### 機能設計書 functions/pf-eccube3/m08-03_admin_customer_customer_csv_export.md
+M10-05
+  133 total
+71:##### 機能設計書 functions/pf-eccube3/m10-05_admin_base_setting_setting_shop_delivery_free_conditions.md
+M10-06
+  141 total
+71:##### 機能設計書 functions/pf-eccube3/m10-06_admin_base_setting_setting_shop_delivery.md
+M12-10
+ 107 total
+40:##### 機能設計書 functions/pf-eccube3/m12-10_admin_analysis_used_card.md
+M13-09
+  96 total
+69:##### 機能設計書 functions/pf-eccube3/m13-09_admin_event_event_csv_export.md
+M13-13
+  213 total
+105:##### 機能設計書 functions/pf-eccube3/m13-13_admin_event_event_entry_csv_import.md
+M15-03
+  202 total
+145:##### 機能設計書 functions/pf-eccube3/m15-03_admin_deck_deck_bulk_delete.md
+M15-04
+  297 total
+145:##### 機能設計書 functions/pf-eccube3/m15-04_admin_deck_deck_bulk_update.md
+M15-06
+  255 total
+103:##### 機能設計書 functions/pf-eccube3/m15-06_admin_deck_deck_csv_import.md
+M16-08
+  80 total
+34:##### 機能設計書 functions/pf-eccube3/m16-08_admin_data_data_buy_discount_list.md
+
+codex
+追加部分の位置と表の規模を確認しました。各機能について、追加された記述、担当の処置、現在の5表を突き合わせ、根拠を行番号で追います。
+exec
+/bin/bash -lc "python3 - 'M07-09' <<'PY'
+import sys,pathlib
+f=sys.argv[1]; b=pathlib.Path('integration_test/casegen/combination'); d=(b/'units'/f/'design.txt').read_text().splitlines(); n=next(i for i,x in enumerate(d) if x.startswith('##### 機能設計書'))
+print('DESIGN',f); print('\\n'.join(f'{i+1}: {x}' for i,x in enumerate(d[n:],n)))
+for p in sorted((b/'factors').glob(f+'_*.tsv')): print('\\n',p.name); print(p.read_text())
+p=b/'review'/f'{f}_factors_md_dispositions.tsv';print('\\nDISPOSITIONS');print(p.read_text())
+PY" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "python3 - 'M10-05' <<'PY'
+import sys,pathlib
+f=sys.argv[1]; b=pathlib.Path('integration_test/casegen/combination'); d=(b/'units'/f/'design.txt').read_text().splitlines(); n=next(i for i,x in enumerate(d) if x.startswith('##### 機能設計書'))
+print('DESIGN',f); print('\\n'.join(f'{i+1}: {x}' for i,x in enumerate(d[n:],n)))
+for p in sorted((b/'factors').glob(f+'_*.tsv')): print('\\n',p.name); print(p.read_text())
+p=b/'review'/f'{f}_factors_md_dispositions.tsv';print('\\nDISPOSITIONS');print(p.read_text())
+PY" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "python3 - 'M10-06' <<'PY'
+import sys,pathlib
+f=sys.argv[1]; b=pathlib.Path('integration_test/casegen/combination'); d=(b/'units'/f/'design.txt').read_text().splitlines(); n=next(i for i,x in enumerate(d) if x.startswith('##### 機能設計書'))
+print('DESIGN',f); print('\\n'.join(f'{i+1}: {x}' for i,x in enumerate(d[n:],n)))
+for p in sorted((b/'factors').glob(f+'_*.tsv')): print('\\n',p.name); print(p.read_text())
+p=b/'review'/f'{f}_factors_md_dispositions.tsv';print('\\nDISPOSITIONS');print(p.read_text())
+PY" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "python3 - 'M08-03' <<'PY'
+import sys,pathlib
+f=sys.argv[1]; b=pathlib.Path('integration_test/casegen/combination'); d=(b/'units'/f/'design.txt').read_text().splitlines(); n=next(i for i,x in enumerate(d) if x.startswith('##### 機能設計書'))
+print('DESIGN',f); print('\\n'.join(f'{i+1}: {x}' for i,x in enumerate(d[n:],n)))
+for p in sorted((b/'factors').glob(f+'_*.tsv')): print('\\n',p.name); print(p.read_text())
+p=b/'review'/f'{f}_factors_md_dispositions.tsv';print('\\nDISPOSITIONS');print(p.read_text())
+PY" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 81ms:
+DESIGN M08-03
+73: ##### 機能設計書 functions/pf-eccube3/m08-03_admin_customer_customer_csv_export.md
+74: L0072	# 会員管理 — 顧客情報CSV出力
+75: L0073	## 業務ロジック
+76: L0074	### 出力の対象
+77: L0075	出力の対象は、保持している会員検索の条件で絞り込んだ会員だけとする。この機能は入力の欄を持たず、検索条件を画面から受け取らない。
+78: L0076	出力する列は会員のCSV出力項目の設定に従う。設定に無い項目は、値を持つときも出力しない。
+79: L0077	### 出力する内容
+80: L0078	会員ごとに、CSV出力項目の設定に合う標準の項目だけと、次の拡張項目を並べる。拡張項目は会員IDが一致するものを各行に付ける。
+81: L0079	| 拡張項目 | 内容 |
+82: L0080	| --- | --- |
+83: L0081	| ポイント | 当該会員の保有ポイント |
+84: L0082	| 本人確認ステータス | 当該会員の本人確認ステータスの識別子と名称 |
+85: L0083	| スマレジID | 当該会員のスマレジID |
+86: L0084	件数が多いときに備え、タイムアウトを無効にして順に書き出す。ヘッダ行を先に出力し、続けて検索結果の会員ごとに 1 行を出力する。
+87: L0085	### エラー時の扱い
+88: L0086	| エラー内容 | 処理 |
+89: L0087	| --- | --- |
+90: L0088	| 認証と権限を満たさない | 出力しない |
+91: L0089	## 入出力
+92: L0090	| 種類 | 内容 |
+93: L0091	| --- | --- |
+94: L0092	| 入力 | 保持している会員検索の条件と、会員のCSV出力項目の設定 |
+95: L0093	| 成功時出力 | 会員情報のCSV。先頭行はヘッダ、以降は会員ごとのデータ行 |
+96: L0094	| 失敗時出力 | 認証と権限を満たさないときは出力しない |
+97: L0095	## 表示メッセージ
+98: L0096	この機能はエラーメッセージを表示しない。
+
+ M08-03_constraints.tsv
+処理ID	組	種別	根拠	理由
+
+
+ M08-03_existing.tsv
+テストID	処理ID	値	理由
+
+
+ M08-03_factors.tsv
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+
+
+ M08-03_interactions.tsv
+処理ID	要因	判定	根拠	理由
+
+
+ M08-03_processes.tsv
+処理ID	処理	契機	確かめる所	根拠
+
+
+DISPOSITIONS
+根拠の行	処置	理由	直した所
+-	直しなし	L0072-L0096を読んだ。出力列はCSV出力項目の設定1要因だけで決まり(L0076)、検索条件は範囲外、拡張項目の付与は会員IDの一致のみで、結果を左右する要因が2つ以上ある処理は無い	
+
+
+ succeeded in 100ms:
+DESIGN M07-09
+84: ##### 機能設計書 functions/ec-cube-enterprise/m07-09_admin_online_purchase_purchase_online_return_list_pdf_export.md
+85: L0083	# ネット買取管理 — 戻しリストPDF
+86: L0084	## 表示メッセージ
+87: L0085	| メッセージID | 表示位置 | 画面上の文言 | 表示条件 | 後続処理 |
+88: L0086	| --- | --- | --- | --- | --- |
+89: L0087	| M07-09-MSG-001 | 管理画面上部 | 1つ以上の買取注文情報を選択してください。 | 戻しリストPDF出力で、買取注文を選択せずに出力したとき | 買取一覧画面に遷移する |
+90: L0088	| M07-09-MSG-002 | 管理画面上部 | 対象のデータが見つかりません。 ／ 買取番号: %07d は存在しません。 ／ 買取番号: %07d 出力対象に入庫待ち、入庫済み以外のステータスが設定されています。 | 買取一覧で選択した買取注文の戻しリストをCSVまたはPDFで出力するとき、対象が存在しない、または対象に入庫待ち・入庫済み以外のステータスの買取注文が含まれる場合 | 買取一覧画面に遷移する |
+91: L0089	| M07-09-MSG-003 | ブラウザダイアログ | PDF出力する買取注文情報をひとつ以上選択してください。 | 戻しリストPDF出力で、買取注文を選択せずに出力を実行したとき | 送信せず買取一覧画面に留まる |
+92: L0090	| M07-09-MSG-004 | ブラウザダイアログ | ポップアップがブロックされているため、PDFを開けませんでした。ブラウザの設定を確認してください。 | 戻しリストPDFを開こうとしたとき、ブラウザでポップアップがブロックされたとき | 買取一覧画面に留まる |
+93: L0091	| M07-09-MSG-005 | ブラウザダイアログ | PDF用データの取得に失敗しました。 | 戻しリストPDFの出力中に、データの取得でエラーが起きたとき | 買取一覧画面に留まる |
+
+ M07-09_constraints.tsv
+処理ID	組	種別	根拠	理由
+
+
+ M07-09_existing.tsv
+テストID	処理ID	値	理由
+IT-M07-09-010	P1	F01=シングルカード&F02=閾値1以上閾値2未満&F03=非Foil&F04=略称タグを含む	事前準備で基準価格2900円・セール価格1800円・非Foil・商品名に[AAA]を含むカードを用意し、行の価格を確かめる
+IT-M07-09-011	P1	F01=シングルカード&F02=閾値1以上閾値2未満&F03=非Foil&F04=略称タグを含む	事前準備で基準価格1000円・非Foil・商品名に[AAA]を含むカードを用意し、行の各列を確かめる
+IT-M07-09-037	P1	F01=シングルカード&F02=閾値1以上閾値2未満&F03=非Foil&F04=略称タグを含む	事前準備で基準価格1000円・非Foil・商品名に[AAA]を含むカードを用意し、列の並びを確かめる
+IT-M07-09-040	P1	F01=シングルカード&F02=閾値1以上閾値2未満&F03=Foil&F04=略称タグを含む	事前準備で基準価格1000円のFoilカードを用意し、言語/状態を確かめる
+IT-M07-09-001	P1	F01=サプライ品	事前準備でサプライ品を用意し、PDFが表示されることを確かめる
+IT-M07-09-012	P1	F01=サプライ品	事前準備でサプライ品を用意し、言語/状態を確かめる
+IT-M07-09-013	P1	F01=サプライ品	事前準備でサプライ品を用意し、略称が出ないことを確かめる
+IT-M07-09-039	P1	F01=サプライ品&F04=略称タグを含む	事前準備でサプライ品の商品名に[AAA]などを含め、商品名がそのまま出ることを確かめる
+IT-M07-09-003	P1	F01=サプライ品&F06=入庫待ちか入庫済みだけ	事前準備で入庫済みの買取のサプライ品を用意し、PDFに行が表示されることを確かめる
+
+
+ M07-09_factors.tsv
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	商品区分	シングルカード｜サプライ品	シングルカード: 閾値の区分・言語/状態・略称・色/Rを出し商品名から略称などを取り除く／サプライ品: 区分はサプライ・言語/状態は「サプライ品」・略称は出さず商品名はそのまま	L0051-L0052,L0067,L0075-L0079	この機能
+F02	P1	基準価格の閾値帯	閾値1未満｜閾値1以上閾値2未満｜閾値2以上	閾値1未満: ●●円未満の区分／閾値1以上閾値2未満: ●●円以上▲▲円未満の区分／閾値2以上: ■■円以上の区分	L0033,L0051,L0054,L0067-L0069	この機能
+F03	P1	Foilか	非Foil｜Foil	非Foil: 言語/状態を「JP/NM」形式で出す／Foil: 「FoilJP/NM」と出す（サプライ品は「サプライ品」のみ）	L0075	この機能
+F04	P1	商品名の略称タグ表記	略称タグを含む｜略称タグを含まない	略称タグを含む: 略称・言語・状態・色・レアリティを取り除く／略称タグを含まない: [～]（[]内の文字を[]ごと）も削除する	L0052-L0053,L0079	この機能
+F05	P1	商品の並び順がどの段で決まるか	金額閾値で決まる｜棚番で決まる｜言語で決まる｜状態で決まる｜Foilで決まる｜略称タグで決まる｜レアリティで決まる｜色で決まる｜コレクター番号か英語名で決まる｜全段が同じ	金額閾値で決まる: 閾値の小さい区分から最後にサプライの順／棚番で決まる: 棚番の昇順／言語で決まる: 日→英→他言語／状態で決まる: NM→HP／Foilで決まる: 非Foil→Foil／略称タグで決まる: 略称タグの昇順／レアリティで決まる: M→C／色で決まる: マスターデータの色順／コレクター番号か英語名で決まる: 略称タグの設定に応じコレクター番号の昇順か英語のカード名の昇順／全段が同じ: 並びを変える要素が無い	L0054-L0064	この機能
+F06	P1	選んだ買取のステータス	入庫待ちか入庫済みだけ｜それ以外を含む	入庫待ちか入庫済みだけ: 戻しリストPDFを開く／それ以外を含む: 出力対象外のステータスの買取番号を示すエラーを出し、買取一覧へ戻りPDFを開かない	L0088	この機能
+
+
+ M07-09_interactions.tsv
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	効き合う	L0051,L0067	サプライ品は閾値帯でなく「サプライ」の区分になる
+P1	F01+F03	効き合う	L0075	サプライ品は Foil でも「サプライ品」と出し、シングルカードだけ Foil を付ける
+P1	F01+F04	効き合う	L0052-L0053	サプライ品は商品名から取り除かない。取り除く処理はシングルカードだけ
+P1	F02+F03	関係しない		閾値帯は価格で決まり、Foil は言語/状態の表記にだけ効く
+P1	F02+F04	関係しない		閾値帯は価格で決まり、略称タグ表記は商品名の加工にだけ効く
+P1	F03+F04	関係しない		Foil は言語/状態の表記、略称タグ表記は商品名の加工で、別の列に効く
+P1	F01+F05	関係しない		サプライ品は最後の区分にまとまり、並び順の段の判定は商品区分に左右されない（段の比べ方は同じ）
+P1	F02+F05	関係しない		閾値帯は商品の区分を決め、並び順がどの段で決まるかは比べる2商品の属性の違いで決まる
+P1	F03+F05	関係しない		Foil は言語/状態の表記にも並び順のFoil段にも現れるが、どの段で決まるかの選び方は表記に左右されない
+P1	F04+F05	関係しない		略称タグ表記は商品名の加工で、並び順の段の判定には使わない
+P1	F01+F06	関係しない		出力するかどうかを決める条件で、出す場合の区分・表記・商品名の加工は商品の属性で決まる。外れる（出さない）のは1通りだけ
+P1	F02+F06	関係しない		出力するかどうかを決める条件で、閾値帯は出す場合の区分の計算にだけ効く
+P1	F03+F06	関係しない		出力するかどうかを決める条件で、Foilは出す場合の言語/状態の表記にだけ効く
+P1	F04+F06	関係しない		出力するかどうかを決める条件で、略称タグ表記は出す場合の商品名の加工にだけ効く
+P1	F05+F06	関係しない		出力するかどうかを決める条件で、並び順はPDFを開いた場合だけ現れる
+
+
+ M07-09_processes.tsv
+処理ID	処理	契機	確かめる所	根拠
+P1	戻しリストPDFを出す	買取検索一覧画面で買取を選び、ダウンロードから戻しリストPDFを押す	表示された戻しリストPDFのポップアップ	L0011,L0044-L0082
+
+
+DISPOSITIONS
+根拠の行	処置	理由	直した所
+L0088	追加	選んだ買取に入庫待ち・入庫済み以外のステータスがあるとエラーで戻りPDFを開かない。出す・出さないを決める条件なので、ほかの要因とは関係しないにした	factors F06(選んだ買取のステータス)を追加し、F01〜F05との組を関係しないで追加
+L0087,L0089-L0091	直しなし	未選択・ポップアップブロック・データ取得失敗は入力の検証またはブラウザ・障害の事象で、結果の分かれ目となる要因にしない	
+
+
+ succeeded in 87ms:
+DESIGN M10-05
+71: ##### 機能設計書 functions/pf-eccube3/m10-05_admin_base_setting_setting_shop_delivery_free_conditions.md
+72: L0070	# 店舗基本設定 — 配送料無料条件（閾値）
+73: L0071	## 業務ロジック
+74: L0072	### 設定項目
+75: L0073	店舗基本設定の「送料設定」ブロックに、配送料無料の金額閾値と数量閾値の2項目を出力する。初期表示では店舗基本情報の現在値を表示する。
+76: L0074	### 保存
+77: L0075	登録時、2項目を含む全項目を店舗基本情報へ反映して保存し、成功メッセージを表示して同じ店舗基本設定画面へ戻る。当2項目または他項目に検証エラーがあるときは保存せず、同じ画面を再描画する。画面全体で参照する店舗基本情報は編集開始時点の複製である。検証失敗中は、フォームの入力値・エラーと、ヘッダなど画面全体の閾値表示が一致しないことがある。
+78: L0076	### 購入時の無料化の判定順序
+79: L0077	以下はコード上の順序であり、利用者への文言で優先順位を約束しているわけではない。
+80: L0078	| 順序 | 判定 | 結果 |
+81: L0079	|------|------|------|
+82: L0080	| 1 | 通常送料の算出 | お届け先ごとの地域・配送業者別送料（商品単位配送料オプションが有効ならその加算分を含む）から合計を求め、受注の配送料合計に設定する |
+83: L0081	| 2 | 金額閾値が未設定でなく、受注明細ごとの税込単価×数量の合計が閾値以上か | 満たすなら受注の配送料合計と全お届け先の配送料を0にする。満たさないときはこの判定では配送料を変えない |
+84: L0082	| 3 | 数量閾値が未設定でなく、明細点数の合計が閾値以上か | 満たすなら受注の配送料合計と全お届け先の配送料を0にする |
+85: L0083	金額条件と数量条件の両方が設定されているときは、どちらか一方でも閾値を満たせば送料無料になる。両方とも満たさないときは順序1で求めた送料が残る。
+86: L0084	金額閾値が0でも未設定でなければ小計は常に閾値以上となり、ほぼ常に無料化し得る。数量閾値が0のときも合計点数は常に閾値以上となり、同様に無料化し得る。この運用上の意味は本書では業務規定しない。
+87: L0085	### カート画面の無料可否表示
+88: L0086	カートの合計金額は明細ごとのカート単価×数量とする。金額閾値・数量閾値は値の有無で判定し、値があるときだけ未到達のメッセージや「現在送料無料」の表示を出す。両方に値があるときは金額と数量を併記し、片方だけのときは単独のメッセージを表示する。
+89: L0087	### フロントのテキストブロック（確認値）
+90: L0088	サイドなどに差し込まれる文言ブロックでは、金額閾値に値があるときだけ「〇〇円以上の購入で配送料無料」と表示する。値が無いときは「0円以上の購入で配送料無料」の固定文となる実装がある。閾値未設定運用での利用者への意味は、テンプレート実装とブロック設置を正とする。
+91: L0089	### エラー時の扱い
+92: L0090	| エラー種別 | 処理 |
+93: L0091	|------------|------|
+94: L0092	| 入力検証エラー | 該当項目にエラーを表示する。保存は行わない |
+95: L0093	| なりすまし対策トークン不正 | 共通のセキュリティ処理の扱いとする。詳細はフレームワーク設定を正とする |
+96: L0094	## 入出力
+97: L0095	| 種類 | 内容 |
+98: L0096	|------|------|
+99: L0097	| 入力 | 配送料無料の金額閾値・数量閾値を含む、店舗基本設定の入力内容 |
+100: L0098	| 成功時出力 | 店舗基本情報の更新、成功メッセージ、同じ店舗基本設定画面への遷移 |
+101: L0099	| 失敗時出力 | 保存せず同じ画面を再描画し、該当項目にエラーを表示する |
+102: L0100	### 入出力: 永続化
+103: L0101	| 操作 | 契機 |
+104: L0102	| --- | --- |
+105: L0103	| 更新 | 登録時の店舗基本情報の配送料無料の金額閾値・数量閾値 |
+106: L0104	## 表示メッセージ
+107: L0105	| メッセージID | 表示位置 | 画面上の文言 | 表示条件 | 後続処理 |
+108: L0106	| --- | --- | --- | --- | --- |
+109: L0107	| — | カート画面 | あと〇円またはあと△個 | 金額閾値と数量閾値の両方に値があり、送料無料に到達していないとき | カート画面に留まる |
+110: L0108	| — | カート画面 | 金額または数量の未到達メッセージ | 金額閾値・数量閾値の片方だけに値があり、送料無料に到達していないとき | カート画面に留まる |
+111: L0109	| — | カート画面 | 現在送料無料 | 設定された閾値を満たしているとき | カート画面に留まる |
+112: L0110	| — | フロントのテキストブロック | 〇〇円以上の購入で配送料無料 | 金額閾値に値があるとき | — |
+113: L0111	| — | フロントのテキストブロック | 0円以上の購入で配送料無料 | 金額閾値に値が無いとき | — |
+
+ M10-05_constraints.tsv
+処理ID	組	種別	根拠	理由
+
+
+ M10-05_existing.tsv
+テストID	処理ID	値	理由
+IT-M10-05-001	P2	F01=設定あり到達&F02=未設定	金額閾値3000を設定し数量閾値を空にして、カート合計4,000円の買い物かご画面で現在送料無料を確かめる
+IT-M10-05-002	P2	F01=設定あり未到達&F02=未設定	金額閾値10000を設定し数量閾値を空にして、カート合計4,000円の買い物かご画面で不足額の案内を確かめる
+IT-M10-05-003	P2	F01=設定あり未到達&F02=設定あり到達	金額閾値100000と数量閾値3を設定し、カート3点の買い物かご画面で現在送料無料を確かめる
+IT-M10-05-004	P2	F01=未設定&F02=未設定	金額閾値と数量閾値をどちらも空にして、買い物かご画面に送料無料の表示が出ないことを確かめる
+
+
+ M10-05_factors.tsv
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1,P2	送料無料の金額閾値と購入金額	未設定｜設定あり未到達｜設定あり到達	未設定: 金額での判定を行わない／設定あり未到達: 金額では無料にならず、カートは金額の未到達を案内する／設定あり到達: 配送料を0にし、カートは現在送料無料と表示する	L0081,L0083,L0086,L0107-L0109	この機能
+F02	P1,P2	送料無料の数量閾値と購入点数	未設定｜設定あり未到達｜設定あり到達	未設定: 数量での判定を行わない／設定あり未到達: 数量では無料にならず、カートは数量の未到達を案内する／設定あり到達: 配送料を0にし、カートは現在送料無料と表示する	L0082-L0083,L0086,L0107-L0109	この機能
+
+
+ M10-05_interactions.tsv
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	効き合う	L0083	金額と数量のどちらか一方でも閾値を満たせば無料になり、一方が未設定のときはもう一方だけで決まる
+P2	F01+F02	効き合う	L0086,L0107-L0108	両方に値があり未到達なら金額と数量を併記し、片方だけなら単独のメッセージ、どちらか到達なら現在送料無料と表示する
+
+
+ M10-05_processes.tsv
+処理ID	処理	契機	確かめる所	根拠
+P1	購入時に送料無料の判定を行い配送料を決める	注文を確定して受注を作る	受注の配送料合計とお届け先ごとの配送料（受注情報編集画面M05-11）	L0076-L0083
+P2	カート画面に送料無料の可否表示を出す	買い物かご画面を開く	公開側の買い物かご画面	L0085-L0086,L0107-L0109
+
+
+DISPOSITIONS
+根拠の行	処置	理由	直した所
+L0076-L0083	追加	購入時の送料無料判定は金額閾値と数量閾値のどちらかを満たせば配送料が0になる2要因の処理で、要因表に無かった	M10-05_processes.tsv P1,M10-05_factors.tsv F01-F02,M10-05_interactions.tsv
+L0085-L0086,L0107-L0109	追加	カートの無料可否表示は両方に値があれば併記・片方なら単独・到達なら現在送料無料と閾値の設定状態で表示が変わる2要因の処理で、要因表に無かった	M10-05_processes.tsv P2,M10-05_existing.tsv(001-004)
+L0110-L0111	直しなし	テキストブロックは金額閾値の有無だけで決まる1要因なので挙げない	
+L0084	直しなし	閾値0の運用は本書が業務規定しないと明記しており、要因の値にしない	
+
+
+ succeeded in 95ms:
+DESIGN M10-06
+71: ##### 機能設計書 functions/pf-eccube3/m10-06_admin_base_setting_setting_shop_delivery.md
+72: L0070	# 店舗設定 — 配送業者・配送料・お届け時間（配送方法管理）
+73: L0071	## 業務ロジック
+74: L0072	### 一覧の表示
+75: L0073	削除フラグが未削除の配送方法だけを表示順の降順で取得して表示する。表示順の数値が大きいほど一覧の先頭側に来る。管理画面の認証・権限・IP制限の各ルールを通過した場合に表示する。
+76: L0074	### 一覧での並び順変更
+77: L0075	非同期の要求としてのみ処理する。それ以外の要求では処理しない。受け取った「配送方法と新しい表示順」の対応を順に反映する。応答は成否のみで、一覧画面の再読込は行わない。
+78: L0076	### 編集画面の初期表示
+79: L0077	新規登録のときは、現存する配送方法の最大の表示順へ 1 を加えた値を表示順とする。現存が無いときは 1 とする。削除フラグは未削除、商品種別は表示順の昇順で最初の1件を設定する。既存の編集のときは指定された配送方法を読み込む。読み込めないときは新規相当の扱いにはならず、実装の分岐に従う。
+80: L0078	すべての都道府県について配送料を検索し、無ければ作成する。配送料金額が空に相当するものだけを配送方法へ関連付ける。関連付けた配送料は都道府県の昇順に並べ直す。お届け時間は、件数が16件になるまで空の行を追加して埋める。編集画面には常に16件分のお届け時間の入力行が並ぶ。
+81: L0079	### 登録の判定順序
+82: L0080	| 順序 | 判定 | 結果 |
+83: L0081	|------|------|------|
+84: L0082	| 1 | 項目ごとの入力検証（必須・URL形式・金額の下限・桁など） | 違反のときは該当項目にエラーを表示し、保存しない |
+85: L0083	| 2 | 支払方法が1件も選択されていないか | 支払方法の欄にエラーを表示し、保存しない |
+86: L0084	### 登録
+87: L0085	検証に通ったとき、お届け時間のうち文言が未設定の行を配送方法から外して削除する。文言が設定されている行は残す。空文字だけの行はこの判定では削除されない。
+88: L0086	当該配送方法に紐づく配送方法と支払方法の対応をすべて削除したうえで、配送方法を保存する（新規のときはこの時点で識別子が採番される）。その後、選択された支払方法ごとに対応を作り直し、配送方法と支払方法の双方へ関連付ける。保存後は一覧へ戻る。検証に通らないときは同じ編集画面を再表示し、完了メッセージは表示しない。
+89: L0087	### 削除
+90: L0088	なりすまし対策トークンを検証し、失敗したときはアクセスを拒否する。対象の配送方法が無いときは、それまでの通知を消してから警告を表示し、一覧へ戻る。対象があるときは削除フラグを削除済みにして表示順を 0 にする。その後、削除フラグが未削除の配送方法を表示順の昇順で取得し、削除対象以外へ 1 から順に表示順を振り直す。削除した配送方法は表示順 0・削除済みのままとする。
+91: L0089	## 入出力
+92: L0090	| 種類 | 内容 |
+93: L0091	|------|------|
+94: L0092	| 入力 | 配送方法の入力項目（送料・お届け時間・支払方法の選択など）、一覧での並び順変更の対応、削除対象の配送方法、なりすまし対策トークン |
+95: L0093	| 成功時出力 | 配送方法の登録・更新・論理削除・表示順の更新、完了メッセージ、一覧への戻り |
+96: L0094	| 失敗時出力 | 検証失敗時は項目のエラーを付けた編集画面の再表示。削除対象が存在しないときは警告メッセージ。トークン不正はアクセス拒否 |
+97: L0095	### 入出力: 永続化
+98: L0096	| 操作 | 契機 |
+99: L0097	| --- | --- |
+100: L0098	| 追加・更新 | 配送方法の登録が検証に通ったとき。配送料・お届け時間もあわせて保存する |
+101: L0099	| 削除・追加 | 登録時に、配送方法と支払方法の対応をすべて削除したうえで、選択された支払方法の分を作り直す |
+102: L0100	| 削除 | 登録時に、文言が未設定のお届け時間の行を削除する |
+103: L0101	| 更新 | 一覧での並び順変更で、対象の配送方法の表示順を更新する |
+104: L0102	| 論理削除・更新 | 配送方法の削除時に、対象を削除済みにして表示順を 0 にし、残る配送方法の表示順を 1 から振り直す |
+105: L0103	## 表示メッセージ
+106: L0104	| メッセージID | 表示位置 | 画面上の文言 | 表示条件 | 後続処理 |
+107: L0105	| --- | --- | --- | --- | --- |
+108: L0106	| M10-06-MSG-001 | 画面中央(ダイアログ/モーダル) | この操作はあとから取り消すことができません。「%name%」を削除してよろしいですか？ | 配送方法の削除を選択したとき（削除前の確認） | 削除でモーダルを閉じて配送方法一覧画面に遷移、キャンセルでモーダルを閉じる |
+109: L0107	| M10-06-MSG-002 | 管理画面上部 | 保存しました | 配送方法の設定を保存したとき | 配送方法一覧画面に遷移する |
+110: L0108	| M10-06-MSG-003 | 管理画面上部 | 税込%min% ~ %max%の購入で選択できる支払い方法がありません。支払方法の利用条件をご確認ください。 | 配送方法の設定を保存した後、購入金額によって利用できる支払方法がないとき | 配送方法編集画面に遷移する |
+111: L0109	| M10-06-MSG-004 | 管理画面上部 | 関連するデータがあるため「%name%」を削除できませんでした | 利用中の配送方法を削除しようとしたとき | 配送方法一覧画面に遷移する |
+112: L0110	| M10-06-MSG-005 | 管理画面上部 | 削除しました | 配送方法を削除したとき | 配送方法一覧画面に遷移する |
+113: L0111	| M10-06-MSG-006 | 管理画面上部 | 「%name%」を非表示にしました。 ／ 「%name%」を表示にしました。 | 配送方法を表示または非表示に切り替えたとき | 配送方法一覧画面に遷移する |
+114: L0112	| M10-06-MSG-007 | 管理画面上部 | 地域別最短到着日設定を保存しました。 | 地域別最短到着日の設定を保存したとき | 地域別最短到着日設定画面に遷移する |
+115: L0113	| M10-06-MSG-008 | 画面中央(モーダル) | この操作はあとから取り消すことができません。<br>以下を削除してよろしいですか？<br>地域：%pref%<br>重量：%weight%<br>サイズ：%size%<br>送料：%fee% | 配送方法編集画面で、配送料設定の削除を選択したとき | モーダル内の「削除」で対象の配送料設定行を画面上のフォームから取り除き、配送方法編集画面に留まる。キャンセル時は変更しない |
+116: L0114	| M10-06-MSG-009 | 画面中央(モーダル) | 並び順を変更しますか？ | 配送方法一覧で、行のドラッグ&ドロップにより位置を変更したとき、または有効な上下ボタンで並び順変更を選んだとき | 確定すると表示順を非同期で更新して一覧画面に留まり、キャンセルすると変更前の並び順に戻す |
+117: L0115	画面上のメッセージの文言はメッセージカタログに依存する。
+
+ M10-06_constraints.tsv
+処理ID	組	種別	根拠	理由
+P1	F01=1件も選ばない&F02=利用できない購入金額帯がある	作れない	L0083,L0108	支払方法を選ばなければ保存されず、保存後の利用条件の判定が行われないので、選んだ支払方法の利用条件を作れない
+
+
+ M10-06_existing.tsv
+テストID	処理ID	値	理由
+IT-M10-06-001	P1	F01=1件以上選ぶ&F02=どの購入金額でも利用できる&F03=新規	新規登録で利用条件の下限上限なしの支払方法を1件選んで設定し、保存しましたと保存内容を確かめる
+IT-M10-06-008	P1	F01=1件以上選ぶ&F02=どの購入金額でも利用できる&F03=新規	新規登録で利用条件の下限上限なしの支払方法を1件選んで設定し、保存しましたと保存内容を確かめる
+IT-M10-06-017	P1	F01=1件以上選ぶ&F02=どの購入金額でも利用できる&F03=新規	新規登録で利用条件の下限上限なしの支払方法を1件選んで設定し、保存しましたと保存内容を確かめる
+IT-M10-06-009	P1	F01=1件以上選ぶ&F02=どの購入金額でも利用できる&F03=既存で支払方法が紐づく	支払方法が紐づく既存の配送方法を、利用条件の下限上限なしの支払方法を選んだまま設定し、保存しましたと再度開いた編集画面を確かめる
+IT-M10-06-010	P1	F01=1件以上選ぶ&F02=どの購入金額でも利用できる&F03=既存で支払方法が紐づく	支払方法が紐づく既存の配送方法を、利用条件の下限上限なしの支払方法を選んだまま設定し、保存しましたと再度開いた編集画面を確かめる
+IT-M10-06-011	P1	F01=1件以上選ぶ&F02=どの購入金額でも利用できる&F03=既存で支払方法が紐づく	支払方法が紐づく既存の配送方法を、利用条件の下限上限なしの支払方法を選んだまま設定し、保存しましたと再度開いた編集画面を確かめる
+
+
+ M10-06_factors.tsv
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	選択する支払方法	1件も選ばない｜1件以上選ぶ	1件も選ばない: 支払方法の欄にエラーを表示し保存しない（お届け時間の削除と対応の作り直しも行わない）／1件以上選ぶ: 検証に通れば保存し、選ばれた支払方法ごとに対応を作る	L0083,L0085-L0086	この機能
+F02	P1	選んだ支払方法の購入金額の利用条件	どの購入金額でも利用できる｜利用できない購入金額帯がある	どの購入金額でも利用できる: 保存しましたを表示して一覧へ戻る／利用できない購入金額帯がある: 保存後に税込の購入金額の範囲と利用できる支払方法が無い旨の警告を表示し配送方法編集画面に留まる	L0108,L0107,M10-04:L0070	M10-04（設定）
+F03	P1	登録する配送方法	新規｜既存で支払方法が紐づく	新規: 保存時に識別子を採番し選んだ支払方法の対応を作る／既存で支払方法が紐づく: 紐づく対応をすべて削除してから選んだ支払方法の対応を作り直す	L0086	この機能
+
+
+ M10-06_interactions.tsv
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	効き合う	L0083,L0086,L0108	支払方法を1件も選ばないと保存されず、保存後に行う購入金額による利用可否の判定に進まない
+P1	F01+F03	効き合う	L0083,L0086	支払方法を1件も選ばないと保存されないので、既存の配送方法の紐づく対応も削除されず残り、選ぶと作り直される
+P1	F02+F03	関係しない		購入金額による利用可否の判定は選んだ支払方法の利用条件で決まり、新規か既存かで変わらない
+
+
+ M10-06_processes.tsv
+処理ID	処理	契機	確かめる所	根拠
+P1	配送方法を登録して保存する	配送方法の編集画面で支払方法を選び、設定ボタンを押す	配送方法一覧画面と再度開いた編集画面、商品管理の購入グループ管理画面の配送方法の選択肢	L0079-L0086,L0099,L0108
+
+
+DISPOSITIONS
+根拠の行	処置	理由	直した所
+L0083,L0085-L0086,L0108	追加	登録は支払方法の選択数・選んだ支払方法の購入金額の利用条件・新規か既存かで保存可否と警告と対応の作り直しが変わる処理で、要因表に無かった	M10-06_processes.tsv P1,M10-06_factors.tsv F01-F03,M10-06_interactions.tsv,M10-06_constraints.tsv,M10-06_existing.tsv
+L0085	直しなし	お届け時間の文言未設定行の削除は編集画面が常に16行を出すため未設定行がほぼ必ず在り、空文字だけの行は画面入力で作り分けられないので要因にしない	
+L0088	直しなし	削除は対象の状態(無し・利用中)という1要因で、なりすまし対策トークンは範囲外	
+L0072-L0078	直しなし	一覧の絞り込みと並び順・並び順変更・編集画面の初期表示は同じ画面内で閉じるか要因が1つ	
+
+
+exec
+/bin/bash -lc "python3 - 'M13-13' <<'PY'
+import sys,pathlib
+f=sys.argv[1]; b=pathlib.Path('integration_test/casegen/combination'); d=(b/'units'/f/'design.txt').read_text().splitlines(); n=next(i for i,x in enumerate(d) if x.startswith('##### 機能設計書'))
+print('DESIGN',f); print('\\n'.join(f'{i+1}: {x}' for i,x in enumerate(d[n:],n)))
+for p in sorted((b/'factors').glob(f+'_*.tsv')): print('\\n',p.name); print(p.read_text())
+p=b/'review'/f'{f}_factors_md_dispositions.tsv';print('\\nDISPOSITIONS');print(p.read_text())
+PY" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "python3 - 'M13-09' <<'PY'
+import sys,pathlib
+f=sys.argv[1]; b=pathlib.Path('integration_test/casegen/combination'); d=(b/'units'/f/'design.txt').read_text().splitlines(); n=next(i for i,x in enumerate(d) if x.startswith('##### 機能設計書'))
+print('DESIGN',f); print('\\n'.join(f'{i+1}: {x}' for i,x in enumerate(d[n:],n)))
+for p in sorted((b/'factors').glob(f+'_*.tsv')): print('\\n',p.name); print(p.read_text())
+p=b/'review'/f'{f}_factors_md_dispositions.tsv';print('\\nDISPOSITIONS');print(p.read_text())
+PY" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "python3 - 'M12-10' <<'PY'
+import sys,pathlib
+f=sys.argv[1]; b=pathlib.Path('integration_test/casegen/combination'); d=(b/'units'/f/'design.txt').read_text().splitlines(); n=next(i for i,x in enumerate(d) if x.startswith('##### 機能設計書'))
+print('DESIGN',f); print('\\n'.join(f'{i+1}: {x}' for i,x in enumerate(d[n:],n)))
+for p in sorted((b/'factors').glob(f+'_*.tsv')): print('\\n',p.name); print(p.read_text())
+p=b/'review'/f'{f}_factors_md_dispositions.tsv';print('\\nDISPOSITIONS');print(p.read_text())
+PY" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 31ms:
+DESIGN M13-13
+105: ##### 機能設計書 functions/pf-eccube3/m13-13_admin_event_event_entry_csv_import.md
+106: L0103	# イベント管理 — イベント申込一括CSV登録
+107: L0104	## 業務ロジック
+108: L0105	### 取込の判定順序
+109: L0106	| 順序 | 判定 | 結果 |
+110: L0107	| --- | --- | --- |
+111: L0108	| 1 | 入力の検証に失敗したとき（ファイル未選択、サイズ上限超過） | 各エラーを表示し、同じ画面を再表示する |
+112: L0109	| 2 | ファイル中の改行の数が上限（確認値5000）以上のとき | 上限超過のエラーを表示し、同じ画面を再表示する |
+113: L0110	| 3 | 1行目にヘッダが無いとき | ヘッダ形式のエラーを返し、取込を行わない |
+114: L0111	| 4 | 2行目にデータが無いとき | データ無しのエラーを返し、取込を行わない |
+115: L0112	| 5 | 行の検証で全体中断の指示が出たとき | その時点で打ち切る |
+116: L0113	| 6 | 行の検証でスキップの指示が出たとき | その行を飛ばす |
+117: L0114	| 7 | 上記以外のとき | 1行をイベントとして登録する |
+118: L0115	ファイル中の改行の数が5000以上のときに上限超過とする。
+119: L0116	本機能の行の検証は、行を飛ばす指示を出さない。列数の不一致、列の欠落、列の値の検証エラー、受付あり・オンライン受付ありのときの時間の未入力は、いずれもその行で取込全体を打ち切る。
+120: L0117	打ち切ったときは、打ち切る前に登録した行も含めて登録内容をすべて取り消す。
+121: L0118	### 取込ファイルの読み方
+122: L0119	アップロードされたファイルを一時領域へ退避し、文字コードをUTF-8へそろえ、改行とゼロ幅スペースを正規化する。拡張子が tsv のときは区切り文字をタブとし、それ以外のときは設定の区切り文字で読む。取込の終了後に一時ファイルを削除する。
+123: L0120	改行はCRLF・CRのいずれもLFにそろえる。ゼロ幅スペース（U+200B）とゼロ幅ノーブレークスペース（U+FEFF）は、値の中にあるものも含めて取り除く。
+124: L0121	取込処理には処理時間の上限を設けない。
+125: L0122	### 行ごとの登録
+126: L0123	行の検証では、受付ありのときに受付時間を必須とするなどの条件を確認する。検証を通った行を1件のイベントとして登録し、開始時間があるときはイベント日程も作る。一定件数ごとに登録内容を反映する。
+127: L0124	店舗・会場・ルール適用度・公開状態・フォーマットは、名称で対応するマスタを引いて設定する。支払方法の列が「あり」のときだけクレジット支払を有効にする。開始時間がある行だけイベント日程を作り、受付・デッキ登録・オンライン受付の各時刻を設定する。
+128: L0125	取込件数は登録に成功した行数とする。本機能では金額の丸めと合計の計算を行わない。
+129: L0126	同じイベント名の行が複数あっても、行ごとに別のイベントとして新しく登録する。既存のイベントや他の行で登録したイベントに日程を追加することはない。
+130: L0127	### エラー時の扱い
+131: L0128	| 事象 | 扱い |
+132: L0129	| --- | --- |
+133: L0130	| ファイル未選択、またはサイズ上限を超過したとき | エラーを表示し、同じ画面を再表示する |
+134: L0131	| ファイル中の改行の数が上限以上のとき | 上限超過のエラーを表示し、同じ画面を再表示する |
+135: L0132	| ヘッダが一致しないとき、またはデータ行が無いとき | 前提の検証エラーを表示し、取込を行わない |
+136: L0133	| 行ごとの取込でエラーが出たとき | エラーの一覧を表示し、登録内容を全件取り消す |
+137: L0134	| 取込中に例外が発生したとき | 登録内容を取り消し、例外を呼び出し元へ伝える |
+138: L0135	エラーが1件も無く中断もないときだけ登録を確定する。
+139: L0136	## 入出力
+140: L0137	| 種類 | 内容 |
+141: L0138	| --- | --- |
+142: L0139	| 入力 | アップロードファイル、なりすまし対策トークン |
+143: L0140	| 成功時出力 | イベントとイベント日程の一括登録、完了の表示、取込画面への遷移 |
+144: L0141	| 失敗時出力 | エラー一覧の表示、登録内容の取り消し |
+145: L0142	取込画面には、取込フォーマットのヘッダ定義を渡して表示する。
+146: L0143	### 入出力: 永続化
+147: L0144	| 操作 | 契機 |
+148: L0145	| --- | --- |
+149: L0146	| 追加 | 取込ファイルの検証を通った1行ごとの登録 |
+150: L0147	| 追加 | 開始時間がある行の、日程の登録 |
+151: L0148	エラーがあるとき、または中断したときは、登録内容をすべて取り消す。
+152: L0149	## 表示メッセージ
+153: L0150	| メッセージID | 表示位置 | 画面上の文言 | 表示条件 | 後続処理 |
+154: L0151	| --- | --- | --- | --- | --- |
+155: L0152	| M13-13-MSG-001 | 管理画面上部 | CSVファイルをアップロードしました | CSVファイルの取込が正常に完了したとき | CSV取込完了後、イベント申込一括CSV登録画面に遷移する |
+156: L0153	| — | 管理画面上部 | イベント情報を登録しました。 | 取込が成功したとき | 取込画面へ遷移する |
+157: L0154	| — | アップロード欄付近 | ファイルを選択してください。 | ファイルを選択せずに送信したとき | 取込を行わず同じ画面を再表示する |
+158: L0155	| — | アップロード欄付近 | CSVファイルは（上限）M以下でアップロードしてください。 | ファイルサイズが上限を超えたとき。上限は設定値 | 取込を行わず同じ画面を再表示する |
+159: L0156	| — | アップロード欄付近 | （上限）行を超えるCSVファイルは登録できません。 | ファイル中の改行の数が上限以上のとき。上限は5000（確認値） | 取込を行わず同じ画面を再表示する |
+160: L0157	| — | アップロード欄付近 | CSVのフォーマットが一致しません。 | ヘッダ行が雛形と一致しないとき | 取込を行わない |
+161: L0158	| — | アップロード欄付近 | CSVデータが存在しません。 | データ行が無いとき | 取込を行わない |
+162: L0159	| — | アップロード欄付近 | （行・列に応じた取込エラー） | 必須の未入力、マスタに存在しない値、形式の不正などがあるとき | 行番号と列名を含むメッセージを行ごとに列挙し、登録内容を全件取り消す |
+163: L0160	## 出典
+164: L0161	| 小見出し | 重要度 | 出典 |
+165: L0162	| --- | --- | --- |
+166: L0163	| 取込の判定順序 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/EntryController.php:32 |
+167: L0164	| 取込の判定順序 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/EntryController.php:669-674 |
+168: L0165	| 取込の判定順序 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Service/Csv/Importer/Event/BaseCsvImportHandler.php:52-98 |
+169: L0166	| 取込の判定順序 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Service/Csv/Importer/CsvImporter.php:239-278 |
+170: L0167	| 取込ファイルの読み方 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Service/Csv/Importer/CsvImporter.php:152-153 |
+171: L0168	| 取込ファイルの読み方 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Service/Csv/Importer/CsvImporter.php:173-184 |
+172: L0169	| 取込ファイルの読み方 | P2 | pf-eccube3:src/Eccube/Util/Str.php:121-127 |
+173: L0170	| 行ごとの登録 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Service/Csv/Importer/Event/BulkEntryImportHandler.php:170-177 |
+174: L0171	| 行ごとの登録 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Service/Csv/Importer/Event/BulkEntryImportHandler.php:321-329 |
+175: L0172	| エラー時の扱い | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/EntryController.php:669-674 |
+176: L0173	| 表示メッセージ | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/EntryController.php:669-674 |
+
+ M13-13_constraints.tsv
+処理ID	組	種別	根拠	理由
+P1	F02=あり&F04=開始時間なし	正解未定	L0089,L0095	開始時間が空のときにオンライン受付「あり」の日程項目をどう扱うか書かれていない
+P1	F03=日程で無料指定&F04=開始時間なし	正解未定	L0089,L0099	開始時間が空のときに日程の参加費の指定をどう扱うか書かれていない
+P1	F03=日程で有料指定&F04=開始時間なし	正解未定	L0089,L0099	開始時間が空のときに日程の参加費の指定をどう扱うか書かれていない
+
+
+ M13-13_existing.tsv
+テストID	処理ID	値	理由
+IT-M13-13-007	P1	F04=開始時間なし	編集可能な東京店で開始時間と日程項目が空のCSVを取り込み、日程が登録されないことをDBで確かめる
+IT-M13-13-008	P1	F03=省略して親が有料&F04=開始時間あり	親の参加費1200、開始時間あり、日程の参加費は空のCSVを取り込み、日程の参加費が親の値になることをDBで確かめる
+IT-M13-13-012	P1	F01=なし&F02=あり&F03=省略して親が有料&F04=開始時間あり	カードなし、オンライン受付あり、参加費1000、日程の参加費は空のCSVが登録されないことをDBで確かめる
+IT-M13-13-036	P1	F01=なし&F02=あり&F03=省略して親が無料&F04=開始時間あり	カードなし、参加費0、オンライン受付ありのCSVがエラーにならず日程も登録されることをDBで確かめる
+IT-M13-13-037	P1	F01=なし&F02=なし&F03=省略して親が有料&F04=開始時間あり	カードなし、参加費1000、オンライン受付なしのCSVがエラーにならず日程も登録されることをDBで確かめる
+IT-M13-13-041	P1	F01=なし&F02=あり&F03=日程で有料指定&F04=開始時間あり	親の参加費0、日程の参加費1000のCSVが登録されないことをDBで確かめる
+IT-M13-13-042	P1	F01=なし&F02=あり&F03=日程で無料指定&F04=開始時間あり	親の参加費1000、日程の参加費0のCSVがエラーにならず日程も登録されることをDBで確かめる
+IT-M13-13-021	P1	F05=あり	1行目が正常で2行目の店舗が空のCSVを取り込み、正常な行も登録されないことをDBで確かめる
+IT-M13-13-032	P1	F05=あり	1行目と3行目が正常で2行目の店舗が空のCSVを取り込み、正常な行も登録されないことをDBで確かめる
+
+
+ M13-13_factors.tsv
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	親イベントのクレジットカード支払い	あり｜なし	あり: クレジットカード決済の設定を付けて登録する／なし: 日程がオンライン受付ありで有料のときは登録されない	L0024,L0055	この機能
+F02	P1	日程のオンライン受付	あり｜なし	あり: カード支払いなしで有料の日程はエラー／なし: カード支払いの有無にかかわらずエラーにならない	L0024,L0095	この機能
+F03	P1	日程に適用される参加費の決まり方	省略して親が無料｜省略して親が有料｜日程で無料指定｜日程で有料指定	省略して親が無料: 親の参加費で無料／省略して親が有料: 親の参加費で有料／日程で無料指定: 日程の参加費で無料／日程で有料指定: 日程の参加費で有料	L0024,L0056,L0099	この機能
+F04	P1	日程情報（開始時間）の有無	開始時間あり｜開始時間なし	開始時間あり: 日程を登録する／開始時間なし: 日程を登録しない	L0089	この機能
+F05	P1	同じファイルの他の行のエラー	なし｜あり	なし: その行は自分の判定どおりに登録される／あり: 登録内容を全件取り消し、その行も登録されない	L0116-L0117,L0133,L0135	この機能
+
+
+ M13-13_interactions.tsv
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	関係しない		カード支払いなし・オンライン受付あり・有料のすべてがそろったときだけエラーになる。条件ごとの外れ方は1つずつ確かめれば足りる
+P1	F01+F03	関係しない		カード支払いなし・オンライン受付あり・有料のすべてがそろったときだけエラーになる。条件ごとの外れ方は1つずつ確かめれば足りる
+P1	F02+F03	関係しない		カード支払いなし・オンライン受付あり・有料のすべてがそろったときだけエラーになる。条件ごとの外れ方は1つずつ確かめれば足りる
+P1	F01+F04	関係しない		カード支払いは親イベントの設定で、日程を作るかどうかとは独立している
+P1	F02+F04	設計書が決めていない	L0089,L0095	開始時間が空でオンライン受付が「あり」のとき、日程を作らないのにカード支払いなしの有料エラーを判定するか書かれていない
+P1	F03+F04	設計書が決めていない	L0089,L0099	開始時間が空で日程の参加費だけ指定されたとき、その指定が無視されるかエラーかが書かれていない
+P1	F01+F05	関係しない		他の行にエラーがあれば登録内容を全件取り消す。行の判定とは別に、どれか1つで外れれば登録されない（行う・行わないの2つ）
+P1	F02+F05	関係しない		他の行にエラーがあれば登録内容を全件取り消す。行の判定とは別に、どれか1つで外れれば登録されない（行う・行わないの2つ）
+P1	F03+F05	関係しない		他の行にエラーがあれば登録内容を全件取り消す。行の判定とは別に、どれか1つで外れれば登録されない（行う・行わないの2つ）
+P1	F04+F05	関係しない		他の行にエラーがあれば登録内容を全件取り消す。行の判定とは別に、どれか1つで外れれば登録されない（行う・行わないの2つ）
+
+
+ M13-13_processes.tsv
+処理ID	処理	契機	確かめる所	根拠
+P1	イベントと日程をCSVで一括登録する	イベント申込一括CSV登録画面でCSVを選びアップロードのボタンを押す	DB（イベント・イベント日程）	L0021-L0024,L0046,L0055-L0056,L0089,L0095,L0098-L0099
+
+
+DISPOSITIONS
+根拠の行	処置	理由	直した所
+L0116-L0117,L0133,L0135	追加	どの行でもエラーが出ると、その前に登録した正常な行も含めて全件取り消すと機能設計書が定める。正常な行の登録の可否が他の行のエラー有無で変わるので要因にした。行の判定のどれかで外れれば登録されない型なので、ほかの要因とはすべて関係しないにした	factors F05／interactions(F01〜F04との4組)／existing(IT-M13-13-021・032)
+L0123-L0124	直しなし	受付・デッキ登録・オンライン受付の各時刻を日程に設定するのは、列の値をそのまま写すだけで、設定が欠けるときの検証は入力値の検証の持ち分なので、要因にしなかった。開始時間がないと日程を作らないのは既存のF04と同じ	
+L0126	直しなし	同名イベントの行は常に別のイベントとして新規登録し、結果が分かれないので要因にしなかった	
+
+
+ succeeded in 48ms:
+DESIGN M13-09
+69: ##### 機能設計書 functions/pf-eccube3/m13-09_admin_event_event_csv_export.md
+70: L0068	# M13-09（CSVダウンロード）
+71: L0069	## 業務ロジック
+72: L0070	### 出力対象の抽出
+73: L0071	申込一覧で保持している検索条件をそのまま出力条件に用いる。並び順は既定キーの昇順に固定する。検索条件を保持していないときは既定の検索条件で全件を対象とする。イベント詳細を指定して呼び出したときは、そのイベント詳細の申込を対象とする。
+74: L0072	検索モードがデッキ登録済みのときはデッキ起点で、それ以外のときは申込プレイヤー起点で対象データを取得する。会員は論理削除済みでも対象に含める。プレイヤーは論理削除の除外を無効化して対象に含める。
+75: L0073	### 出力する列と値
+76: L0074	出力項目と並びは申込CSV種別の定義に従う。各出力項目の値は、申込プレイヤー・イベント申込・プレイヤー・イベント詳細・デッキ・イベントのいずれかから最初に得られた非NULLの値を採用する。本機能では金額計算・件数の丸めを行わない。
+77: L0075	### ファイルの形式
+78: L0076	先頭にBOMを付与し、区切り文字はカンマ（確認値）とする。ヘッダ行に続けて対象行を1行ずつストリーミング出力する。ファイル名は一覧・イベント詳細指定とも event_entry_<出力日時YmdHis>.csv とし、出力したファイル名を記録する。
+79: L0077	### 雛形CSV
+80: L0078	一括登録用ヘッダ定義の見出し行だけをBOM付きで1行出力する。ファイル名は event_entry.csv、区切り文字はカンマ（確認値）とする。
+81: L0079	### エラー時の扱い
+82: L0080	管理画面の認証・権限を通過しないときは出力しない。
+83: L0081	## 入出力
+84: L0082	| 種類 | 内容 |
+85: L0083	|------|------|
+86: L0084	| 入力 | 申込一覧で保持している検索条件。イベント詳細指定時はイベント詳細ID |
+87: L0085	| 成功時出力 | イベント申込情報のCSVファイル（申込CSV種別の項目）、または一括登録用の雛形CSVファイル |
+88: L0086	| 失敗時出力 | 認証・権限不足のときは出力しない |
+89: L0087	本機能は画面上の入力フォームを持たない。
+
+ M13-09_constraints.tsv
+処理ID	組	種別	根拠	理由
+
+
+ M13-09_existing.tsv
+テストID	処理ID	値	理由
+
+
+ M13-09_factors.tsv
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+
+
+ M13-09_interactions.tsv
+処理ID	要因	判定	根拠	理由
+
+
+ M13-09_processes.tsv
+処理ID	処理	契機	確かめる所	根拠
+
+
+DISPOSITIONS
+根拠の行	処置	理由	直した所
+-	直しなし	L0068-L0087を読んだ。結果を左右するのは申込一覧の検索条件・検索モード・イベント詳細の指定という対象を絞る条件で、検索条件の組合せは持ち分外。値の採用元は各項目の優先順位の1つの要因で、雛形CSVは入力が無く、要因が2つ以上ある処理にならない	
+
+
+ succeeded in 63ms:
+DESIGN M12-10
+40: ##### 機能設計書 functions/pf-eccube3/m12-10_admin_analysis_used_card.md
+41: L0039	# 分析集計 — デッキ採用枚数集計（出力条件変更・特集タグ編集用CSVダウンロード）
+42: L0040	## 業務ロジック
+43: L0041	### 出力条件の指定
+44: L0042	| 場面 | 扱い |
+45: L0043	|------|------|
+46: L0044	| 初期表示 | 保持していた出力条件を消去し、検索フォームだけを表示する |
+47: L0045	| 検索 | 受け取った出力条件を保持し、集計結果を表示する |
+48: L0046	| CSV出力 | 保持した出力条件を取り出し、検索したときと同じ条件で集計する |
+49: L0047	### CSVの出力
+50: L0048	指定された出力形式に応じて、集計方法と出力する列を切り替える。特集タグ編集用などの形式ごとに、その形式のヘッダと各行を出力する。出力したときのファイル名には出力形式と日時を含める。
+51: L0049	集計の対象は、指定したフォーマットの公開中のデッキのうち、イベント日付が集計日(From)の0時0分0秒から集計日(To)の23時59分59秒までのものとする。集計日(To)が空のときは出力した日を集計日(To)とする。
+52: L0050	採用枚数は、対象のデッキに入っているそのカードの枚数の合計とする。
+53: L0051	特集タグ編集用の形式は、イベントのデッキだけを対象にする。カードごとに代表の商品を1件選んで商品の情報を結び付け、商品ごとに1行を出力する。代表の商品が無いカードは出力しない。
+54: L0052	採用枚数略式の形式は、デッキの種類で絞り込まず、カード名と採用枚数の2列をカードごとに1行出力する。
+55: L0053	基本土地を含めない指定のときは、特殊タイプとして基本だけが紐付くカードを集計から除く。
+56: L0054	行は採用枚数の多い順に並べる。
+57: L0055	集計結果が0件のときも、ヘッダ行だけのCSVファイルを出力する。
+58: L0056	ファイル名は「used_card_」、出力形式、「_」、出力日時を区切りなしで並べた年月日時分秒の14桁、「.csv」をつないだものとする。出力形式は、特集タグ編集用がproduct、採用枚数略式がsimpleである。
+59: L0057	### エラー時の扱い
+60: L0058	| エラー内容 | 処理 |
+61: L0059	|------------|------|
+62: L0060	| 認証・権限が不足しているとき | アクセスできない |
+63: L0061	出力条件の指定とCSVの出力では、なりすまし対策トークンを検証しない。トークンが無いときや値が異なるときも、エラーにせず通常どおり集計する。
+64: L0062	## 入出力
+65: L0063	| 種類 | 内容 |
+66: L0064	|------|------|
+67: L0065	| 入力 | 出力条件、CSVの出力形式 |
+68: L0066	| 成功時出力 | 集計結果の表示、または指定形式のCSVファイル |
+69: L0067	| 失敗時出力 | 認証・権限が不足しているときはアクセス不可 |
+70: L0068	## 表示メッセージ
+71: L0069	本機能は利用者向けの通知メッセージを表示しない。
+72: L0070	## 出典
+73: L0071	| 小見出し | 重要度 | 出典 |
+74: L0072	| --- | --- | --- |
+75: L0073	| CSVの出力 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Analysis/UsedCardController.php:16-69 |
+76: L0074	| CSVの出力 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Analysis/UsedCardController.php:123-126 |
+77: L0075	| CSVの出力 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Repository/MtbCardRepository.php:356-396 |
+78: L0076	| CSVの出力 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Repository/MtbCardRepository.php:402-481 |
+79: L0077	| CSVの出力 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Analysis/UsedCardController.php:129-139 |
+80: L0078	| CSVの出力 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Analysis/UsedCardController.php:144 |
+81: L0079	| エラー時の扱い | P2 | pf-eccube3:app/Plugin/HareruyaEc/Form/Type/Admin/Analysis/UsedCardType.php:17-23 |
+82: L0080	| エラー時の扱い | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Analysis/UsedCardController.php:122-125 |
+83: L0081	| エラー時の扱い | P2 | pf-eccube3:app/Plugin/HareruyaEc/ServiceProvider/Admin/AnalysisServiceProvider.php:67-71 |
+
+ M12-10_constraints.tsv
+処理ID	組	種別	根拠	理由
+
+
+ M12-10_existing.tsv
+テストID	処理ID	値	理由
+IT-M12-10-008	P1	F04=含める	手順で基本土地項目追加をチェックONにしてCSVを出力し、基本だけが紐付くカードの行が出ることを確かめる
+
+
+ M12-10_factors.tsv
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	デッキの公開状態	公開中｜非公開	公開中: 集計の対象になる／非公開: 集計の対象にならない	L0049	この機能
+F02	P1	デッキの種類	イベントのデッキ｜利用者作成デッキ	イベントのデッキ: 特集タグ編集用の集計の対象になる／利用者作成デッキ: 特集タグ編集用の集計の対象にならない	L0051	この機能
+F03	P1	カードの特殊タイプ	基本だけが紐付く｜基本だけではない	基本だけが紐付く: 基本土地を含めない指定のとき集計から除かれる／基本だけではない: 指定にかかわらず集計の対象になる	L0053	この機能
+F04	P1	基本土地項目追加の指定	含める｜含めない	含める: 基本だけが紐付くカードも集計に入る／含めない: 基本だけが紐付くカードを集計から除く	L0053	この機能
+F05	P1	カードの代表の商品	ある｜無い	ある: 商品ごとに1行出力する／無い: そのカードの行を出力しない	L0051	この機能
+
+
+ M12-10_interactions.tsv
+処理ID	要因	判定	根拠	理由
+P1	F03+F04	効き合う	L0053	基本土地を含めない指定のときだけ、基本だけが紐付くカードが集計から除かれる
+P1	F01+F02	関係しない		デッキを対象にするかは、公開中かつイベントのデッキのすべてを満たすかどうかで、行う・行わないの2つだけ
+P1	F01+F03	関係しない		デッキを対象にするかと、カードを除くかは別々に決まり、どちらかで外れれば行は出ない
+P1	F01+F04	関係しない		デッキを対象にするかは、基本土地の指定によって変わらない
+P1	F01+F05	関係しない		デッキを対象にするかと、代表の商品の有無は別々に決まり、どちらかで外れれば行は出ない
+P1	F02+F03	関係しない		デッキの種類による絞り込みと、カードを除くかは別々に決まる
+P1	F02+F04	関係しない		デッキの種類による絞り込みは、基本土地の指定によって変わらない
+P1	F02+F05	関係しない		デッキの種類による絞り込みと、代表の商品の有無は別々に決まる
+P1	F03+F05	関係しない		カードを除くかと、代表の商品の有無は別々に決まり、どちらかで外れれば行は出ない
+P1	F04+F05	関係しない		基本土地の指定は、代表の商品の有無によって変わらない
+
+
+ M12-10_processes.tsv
+処理ID	処理	契機	確かめる所	根拠
+P1	集計対象のデッキとカードを決めて特集タグ編集用CSVに行を出す	特集タグ編集CSVダウンロード画面で出力条件を指定し、表示されたボタンでCSVを出力する	ダウンロードしたCSVの行	L0049,L0051,L0053
+
+
+DISPOSITIONS
+根拠の行	処置	理由	直した所
+L0049,L0051,L0053	追加	機能設計書が、特集タグ編集用CSVの集計対象（公開中・イベントのデッキ・代表の商品あり・基本土地の指定）を定めており、結果を左右する要因が2つ以上ある処理になった。条件は「すべて満たす」型なので、基本土地の指定と特殊タイプだけ効き合う、ほかは関係しないにした	processes P1／factors F01〜F05／interactions／existing(IT-M12-10-008)
+
+
+exec
+/bin/bash -lc "python3 - 'M15-04' <<'PY'
+import sys,pathlib
+f=sys.argv[1]; b=pathlib.Path('integration_test/casegen/combination'); d=(b/'units'/f/'design.txt').read_text().splitlines(); n=next(i for i,x in enumerate(d) if x.startswith('##### 機能設計書'))
+print('DESIGN',f); print('\\n'.join(f'{i+1}: {x}' for i,x in enumerate(d[n:],n)))
+for p in sorted((b/'factors').glob(f+'_*.tsv')): print('\\n',p.name); print(p.read_text())
+p=b/'review'/f'{f}_factors_md_dispositions.tsv';print('\\nDISPOSITIONS');print(p.read_text())
+PY" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "python3 - 'M15-03' <<'PY'
+import sys,pathlib
+f=sys.argv[1]; b=pathlib.Path('integration_test/casegen/combination'); d=(b/'units'/f/'design.txt').read_text().splitlines(); n=next(i for i,x in enumerate(d) if x.startswith('##### 機能設計書'))
+print('DESIGN',f); print('\\n'.join(f'{i+1}: {x}' for i,x in enumerate(d[n:],n)))
+for p in sorted((b/'factors').glob(f+'_*.tsv')): print('\\n',p.name); print(p.read_text())
+p=b/'review'/f'{f}_factors_md_dispositions.tsv';print('\\nDISPOSITIONS');print(p.read_text())
+PY" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 36ms:
+DESIGN M15-04
+145: ##### 機能設計書 functions/pf-eccube3/m15-04_admin_deck_deck_bulk_update.md
+146: L0144	# デッキ管理 — 検索一覧からの一括編集
+147: L0145	## 業務ロジック
+148: L0146	### 一括更新の判定順序
+149: L0147	| 順序 | 判定 | 結果 |
+150: L0148	|------|------|------|
+151: L0149	| 1 | なりすまし対策トークンが有効か | 無効なときはアクセス拒否（HTTP 403）とする |
+152: L0150	| 2 | 送信フォームの検証に通るか（全項目。変更フラグは検証対象の絞り込みに使わない） | 失敗したときはエラーメッセージを表示し、直前の画面へ戻す |
+153: L0151	| 3 | 各デッキIDが空でなく半角数字のみか | 1件でも不正なときはHTTP 404で打ち切る |
+154: L0152	| 4 | 上記を通過したとき | 変更フラグが付いた項目だけをフォームの値で上書きし、まとめて保存する |
+155: L0153	保存に成功したときは登録完了のメッセージを表示し、直前の画面へ戻す。
+156: L0154	デッキ検索一覧の表示時には、入力が未送信の状態の一括編集フォームを一覧へ載せる。
+157: L0155	### 更新する項目
+158: L0156	変更フラグが送信された項目だけを、対象のすべてのデッキへ同じ値で適用する。変更フラグが無い項目は既存の値を保持する。
+159: L0157	| 対象項目 |
+160: L0158	|------|
+161: L0159	| フォーマット、アーキタイプ、表示区分、非公開フラグ、大会名（日本語）、大会名（英語）、大会日、順位、成績、勝ち数、負け数、引き分け数、DCI番号、プレイヤー名、デッキタグ、参照元URL |
+162: L0160	| 項目 | 扱い |
+163: L0161	|------|------|
+164: L0162	| フォーマット | 未選択の状態で上書きしたときは、保存側では参照なしとして解釈されうる |
+165: L0163	| アーキタイプ | アーキタイプと代表カード画像を同時に設定する経路で更新する。アーキタイプに代表カード画像が無いときは画像の参照を更新しない |
+166: L0164	| デッキタグ | 多値選択とし、変更フラグが付いたときはその値で既存のタグ紐付けを置き換える。空選択のときは空として解釈されうる |
+167: L0165	| 最終更新者 | 対象の各デッキに、操作した管理者アカウントのIDを記録する |
+168: L0166	本機能では売上・順位計算などの業務計算は行わない。
+169: L0167	### エラー時の扱い
+170: L0168	| エラー内容 | 処理 |
+171: L0169	|------------|------|
+172: L0170	| なりすまし対策トークンが無効なとき | アクセス拒否（HTTP 403）とする |
+173: L0171	| フォーム検証に失敗したとき | 各エラーを表示し、直前の画面へ戻す |
+174: L0172	| デッキIDが半角数字でないとき | HTTP 404とする |
+175: L0173	## 入出力
+176: L0174	| 種類 | 内容 |
+177: L0175	|------|------|
+178: L0176	| 入力 | 一括編集の各項目、なりすまし対策トークン、変更フラグ、対象のデッキID群 |
+179: L0177	| 成功時出力 | 直前の画面への遷移と登録完了のメッセージ |
+180: L0178	| 失敗時出力 | 検証失敗のときはエラーメッセージと直前の画面への遷移。ID形式不正のときはHTTP 404。なりすまし対策トークン失敗のときは共通の拒否応答 |
+181: L0179	### 入出力: 永続化
+182: L0180	| 操作 | 契機 |
+183: L0181	| --- | --- |
+184: L0182	| 更新 | 一括編集の実行（変更フラグが付いた項目と最終更新者） |
+185: L0183	## 表示メッセージ
+186: L0184	本機能は一括編集の登録完了メッセージと、フォーム検証のエラーメッセージだけを表示する。
+
+ M15-04_constraints.tsv
+処理ID	組	種別	根拠	理由
+
+
+ M15-04_existing.tsv
+テストID	処理ID	値	理由
+IT-M15-04-001	P1	F01=オフ&F02=オン&F03=オフ&F04=オフ&F05=オン&F06=オフ&F07=オフ&F08=オフ&F09=オフ&F10=オフ&F11=オフ&F12=オフ	手順で2項目の変更チェック「だけ」をオンにし、一覧で結果を確かめる
+IT-M15-04-002	P1	F01=オフ&F02=オフ&F03=オン&F04=オフ&F05=オフ&F06=オフ&F07=オフ&F08=オフ&F09=オフ&F10=オフ&F11=オフ&F12=オフ	公開状態の変更チェック「だけ」をオンにし、検索結果で確かめる
+IT-M15-04-003	P1	F01=オフ&F02=オン&F03=オフ&F04=オフ&F05=オン&F06=オフ&F07=オフ&F08=オフ&F09=オフ&F10=オフ&F11=オフ&F12=オフ	2項目の変更チェック「だけ」をオンにし、デッキリスト詳細画面で確かめる
+IT-M15-04-004	P1	F01=オフ&F02=オン&F03=オフ&F04=オフ&F05=オフ&F06=オフ&F07=オフ&F08=オフ&F09=オフ&F10=オフ&F11=オフ&F12=オフ	アーキタイプの変更チェック「だけ」をオンにし、メタゲーム集計で確かめる
+IT-M15-04-005	P1	F02=オン&F05=オン&F10=オフ	アーキタイプ・イベント名(日)をオン、プレイヤー名をオフにして一覧で確かめる
+IT-M15-04-006	P1	F01=オフ&F02=オン&F03=オフ&F04=オフ&F05=オフ&F06=オフ&F07=オフ&F08=オフ&F09=オフ&F10=オフ&F11=オフ&F12=オフ	アーキタイプの変更チェック「だけ」をオンにし、アーキタイプ管理の登録デッキ数で確かめる
+IT-M15-01-055	P1	F01=オン&F02=オン&F03=オン&F04=オン&F05=オン&F06=オン&F07=オン&F08=オン&F09=オン&F10=オン&F11=オン&F12=オン	12項目すべての変更チェックをオンにし、DBで更新を確かめる
+IT-M15-01-056	P1	F09=オン	成績の変更チェックをオンにして実行し、DBで最終更新者を確かめる
+IT-M15-01-058	P1	F05=オン&F06=オン&F09=オン&F10=オン&F12=オン	5項目の変更チェックをオンにして実行し、DBで更新を確かめる
+IT-M15-01-098	P1	F09=オン&F10=オン&F05=オフ&F08=オフ&F12=オフ	成績・プレイヤー名をオン、イベント名(日)・順位・引用元URLをオフにしてDBで確かめる
+
+
+ M15-04_factors.tsv
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	フォーマットの変更チェック	オン｜オフ	オン: フォーマットを入力値で更新する／オフ: フォーマットは更新前の値のまま	L0085,L0101	この機能
+F02	P1	アーキタイプの変更チェック	オン｜オフ	オン: アーキタイプを入力値で更新する／オフ: アーキタイプは更新前の値のまま	L0086,L0101	この機能
+F03	P1	公開状態の変更チェック	オン｜オフ	オン: 公開状態を入力値で更新する／オフ: 公開状態は更新前の値のまま	L0087,L0101	この機能
+F04	P1	デッキリスト公開状態の変更チェック	オン｜オフ	オン: デッキリスト公開状態を入力値で更新する／オフ: デッキリスト公開状態は更新前の値のまま	L0088,L0101	この機能
+F05	P1	イベント名(日)の変更チェック	オン｜オフ	オン: イベント名(日)を入力値で更新する／オフ: イベント名(日)は更新前の値のまま	L0089,L0101	この機能
+F06	P1	イベント名(英)の変更チェック	オン｜オフ	オン: イベント名(英)を入力値で更新する／オフ: イベント名(英)は更新前の値のまま	L0090,L0101	この機能
+F07	P1	イベント開催日の変更チェック	オン｜オフ	オン: イベント開催日を入力値で更新する／オフ: イベント開催日は更新前の値のまま	L0091,L0101	この機能
+F08	P1	順位の変更チェック	オン｜オフ	オン: 順位を入力値で更新する／オフ: 順位は更新前の値のまま	L0092,L0101	この機能
+F09	P1	成績の変更チェック	オン｜オフ	オン: 成績を入力値で更新する／オフ: 成績は更新前の値のまま	L0093,L0101	この機能
+F10	P1	プレイヤー名の変更チェック	オン｜オフ	オン: プレイヤー名を入力値で更新する／オフ: プレイヤー名は更新前の値のまま	L0098,L0101	この機能
+F11	P1	タグの変更チェック	オン｜オフ	オン: タグを入力値で更新する／オフ: タグは更新前の値のまま	L0099,L0101	この機能
+F12	P1	引用元URLの変更チェック	オン｜オフ	オン: 引用元URLを入力値で更新する／オフ: 引用元URLは更新前の値のまま	L0100,L0101	この機能
+F13	P1	選んだアーキタイプの代表カード画像	あり｜なし	あり: アーキタイプと代表カード画像を同時に更新する／なし: アーキタイプだけ更新し、代表カード画像の参照は更新前のまま	L0163	この機能
+
+
+ M15-04_interactions.tsv
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	関係しない		項目ごとに変更チェックで更新するか決まり、一方の更新は他方の更新の可否・値に影響しない
+P1	F01+F03	関係しない		項目ごとに変更チェックで更新するか決まり、一方の更新は他方の更新の可否・値に影響しない
+P1	F01+F04	関係しない		項目ごとに変更チェックで更新するか決まり、一方の更新は他方の更新の可否・値に影響しない
+P1	F01+F05	関係しない		項目ごとに変更チェックで更新するか決まり、一方の更新は他方の更新の可否・値に影響しない
+P1	F01+F06	関係しない		項目ごとに変更チェックで更新するか決まり、一方の更新は他方の更新の可否・値に影響しない
+P1	F01+F07	関係しない		項目ごとに変更チェックで更新するか決まり、一方の更新は他方の更新の可否・値に影響しない
+P1	F01+F08	関係しない		項目ごとに変更チェックで更新するか決まり、一方の更新は他方の更新の可否・値に影響しない
+P1	F01+F09	関係しない		項目ごとに変更チェックで更新するか決まり、一方の更新は他方の更新の可否・値に影響しない
+P1	F01+F10	関係しない		項目ごとに変更チェックで更新するか決まり、一方の更新は他方の更新の可否・値に影響しない
+P1	F01+F11	関係しない		項目ごとに変更チェックで更新するか決まり、一方の更新は他方の更新の可否・値に影響しない
+P1	F01+F12	関係しない		項目ごとに変更チェックで更新するか決まり、一方の更新は他方の更新の可否・値に影響しない
+P1	F02+F03	関係しない		項目ごとに変更チェックで更新するか決まり、一方の更新は他方の更新の可否・値に影響しない
+P1	F02+F04	関係しない		項目ごとに変更チェックで更新するか決まり、一方の更新は他方の更新の可否・値に影響しない
+P1	F02+F05	関係しない		項目ごとに変更チェックで更新するか決まり、一方の更新は他方の更新の可否・値に影響しない
+P1	F02+F06	関係しない		項目ごとに変更チェックで更新するか決まり、一方の更新は他方の更新の可否・値に影響しない
+P1	F02+F07	関係しない		項目ごとに変更チェックで更新するか決まり、一方の更新は他方の更新の可否・値に影響しない
+P1	F02+F08	関係しない		項目ごとに変更チェックで更新するか決まり、一方の更新は他方の更新の可否・値に影響しない
+P1	F02+F09	関係しない		項目ごとに変更チェックで更新するか決まり、一方の更新は他方の更新の可否・値に影響しない
+P1	F02+F10	関係しない		項目ごとに変更チェックで更新するか決まり、一方の更新は他方の更新の可否・値に影響しない
+P1	F02+F11	関係しない		項目ごとに変更チェックで更新するか決まり、一方の更新は他方の更新の可否・値に影響しない
+P1	F02+F12	関係しない		項目ごとに変更チェックで更新するか決まり、一方の更新は他方の更新の可否・値に影響しない
+P1	F03+F04	関係しない		項目ごとに変更チェックで更新するか決まり、一方の更新は他方の更新の可否・値に影響しない
+P1	F03+F05	関係しない		項目ごとに変更チェックで更新するか決まり、一方の更新は他方の更新の可否・値に影響しない
+P1	F03+F06	関係しない		項目ごとに変更チェックで更新するか決まり、一方の更新は他方の更新の可否・値に影響しない
+P1	F03+F07	関係しない		項目ごとに変更チェックで更新するか決まり、一方の更新は他方の更新の可否・値に影響しない
+P1	F03+F08	関係しない		項目ごとに変更チェックで更新するか決まり、一方の更新は他方の更新の可否・値に影響しない
+P1	F03+F09	関係しない		項目ごとに変更チェックで更新するか決まり、一方の更新は他方の更新の可否・値に影響しない
+P1	F03+F10	関係しない		項目ごとに変更チェックで更新するか決まり、一方の更新は他方の更新の可否・値に影響しない
+P1	F03+F11	関係しない		項目ごとに変更チェックで更新するか決まり、一方の更新は他方の更新の可否・値に影響しない
+P1	F03+F12	関係しない		項目ごとに変更チェックで更新するか決まり、一方の更新は他方の更新の可否・値に影響しない
+P1	F04+F05	関係しない		項目ごとに変更チェックで更新するか決まり、一方の更新は他方の更新の可否・値に影響しない
+P1	F04+F06	関係しない		項目ごとに変更チェックで更新するか決まり、一方の更新は他方の更新の可否・値に影響しない
+P1	F04+F07	関係しない		項目ごとに変更チェックで更新するか決まり、一方の更新は他方の更新の可否・値に影響しない
+P1	F04+F08	関係しない		項目ごとに変更チェックで更新するか決まり、一方の更新は他方の更新の可否・値に影響しない
+P1	F04+F09	関係しない		項目ごとに変更チェックで更新するか決まり、一方の更新は他方の更新の可否・値に影響しない
+P1	F04+F10	関係しない		項目ごとに変更チェックで更新するか決まり、一方の更新は他方の更新の可否・値に影響しない
+P1	F04+F11	関係しない		項目ごとに変更チェックで更新するか決まり、一方の更新は他方の更新の可否・値に影響しない
+P1	F04+F12	関係しない		項目ごとに変更チェックで更新するか決まり、一方の更新は他方の更新の可否・値に影響しない
+P1	F05+F06	関係しない		項目ごとに変更チェックで更新するか決まり、一方の更新は他方の更新の可否・値に影響しない
+P1	F05+F07	関係しない		項目ごとに変更チェックで更新するか決まり、一方の更新は他方の更新の可否・値に影響しない
+P1	F05+F08	関係しない		項目ごとに変更チェックで更新するか決まり、一方の更新は他方の更新の可否・値に影響しない
+P1	F05+F09	関係しない		項目ごとに変更チェックで更新するか決まり、一方の更新は他方の更新の可否・値に影響しない
+P1	F05+F10	関係しない		項目ごとに変更チェックで更新するか決まり、一方の更新は他方の更新の可否・値に影響しない
+P1	F05+F11	関係しない		項目ごとに変更チェックで更新するか決まり、一方の更新は他方の更新の可否・値に影響しない
+P1	F05+F12	関係しない		項目ごとに変更チェックで更新するか決まり、一方の更新は他方の更新の可否・値に影響しない
+P1	F06+F07	関係しない		項目ごとに変更チェックで更新するか決まり、一方の更新は他方の更新の可否・値に影響しない
+P1	F06+F08	関係しない		項目ごとに変更チェックで更新するか決まり、一方の更新は他方の更新の可否・値に影響しない
+P1	F06+F09	関係しない		項目ごとに変更チェックで更新するか決まり、一方の更新は他方の更新の可否・値に影響しない
+P1	F06+F10	関係しない		項目ごとに変更チェックで更新するか決まり、一方の更新は他方の更新の可否・値に影響しない
+P1	F06+F11	関係しない		項目ごとに変更チェックで更新するか決まり、一方の更新は他方の更新の可否・値に影響しない
+P1	F06+F12	関係しない		項目ごとに変更チェックで更新するか決まり、一方の更新は他方の更新の可否・値に影響しない
+P1	F07+F08	関係しない		項目ごとに変更チェックで更新するか決まり、一方の更新は他方の更新の可否・値に影響しない
+P1	F07+F09	関係しない		項目ごとに変更チェックで更新するか決まり、一方の更新は他方の更新の可否・値に影響しない
+P1	F07+F10	関係しない		項目ごとに変更チェックで更新するか決まり、一方の更新は他方の更新の可否・値に影響しない
+P1	F07+F11	関係しない		項目ごとに変更チェックで更新するか決まり、一方の更新は他方の更新の可否・値に影響しない
+P1	F07+F12	関係しない		項目ごとに変更チェックで更新するか決まり、一方の更新は他方の更新の可否・値に影響しない
+P1	F08+F09	関係しない		項目ごとに変更チェックで更新するか決まり、一方の更新は他方の更新の可否・値に影響しない
+P1	F08+F10	関係しない		項目ごとに変更チェックで更新するか決まり、一方の更新は他方の更新の可否・値に影響しない
+P1	F08+F11	関係しない		項目ごとに変更チェックで更新するか決まり、一方の更新は他方の更新の可否・値に影響しない
+P1	F08+F12	関係しない		項目ごとに変更チェックで更新するか決まり、一方の更新は他方の更新の可否・値に影響しない
+P1	F09+F10	関係しない		項目ごとに変更チェックで更新するか決まり、一方の更新は他方の更新の可否・値に影響しない
+P1	F09+F11	関係しない		項目ごとに変更チェックで更新するか決まり、一方の更新は他方の更新の可否・値に影響しない
+P1	F09+F12	関係しない		項目ごとに変更チェックで更新するか決まり、一方の更新は他方の更新の可否・値に影響しない
+P1	F10+F11	関係しない		項目ごとに変更チェックで更新するか決まり、一方の更新は他方の更新の可否・値に影響しない
+P1	F10+F12	関係しない		項目ごとに変更チェックで更新するか決まり、一方の更新は他方の更新の可否・値に影響しない
+P1	F11+F12	関係しない		項目ごとに変更チェックで更新するか決まり、一方の更新は他方の更新の可否・値に影響しない
+P1	F02+F13	効き合う	L0163	アーキタイプを更新するときだけ、アーキタイプに代表カード画像があるかで画像の参照を更新するかが変わる
+P1	F01+F13	関係しない		代表カード画像の有無はアーキタイプの更新にだけ効き、この項目の更新の可否・値に影響しない
+P1	F03+F13	関係しない		代表カード画像の有無はアーキタイプの更新にだけ効き、この項目の更新の可否・値に影響しない
+P1	F04+F13	関係しない		代表カード画像の有無はアーキタイプの更新にだけ効き、この項目の更新の可否・値に影響しない
+P1	F05+F13	関係しない		代表カード画像の有無はアーキタイプの更新にだけ効き、この項目の更新の可否・値に影響しない
+P1	F06+F13	関係しない		代表カード画像の有無はアーキタイプの更新にだけ効き、この項目の更新の可否・値に影響しない
+P1	F07+F13	関係しない		代表カード画像の有無はアーキタイプの更新にだけ効き、この項目の更新の可否・値に影響しない
+P1	F08+F13	関係しない		代表カード画像の有無はアーキタイプの更新にだけ効き、この項目の更新の可否・値に影響しない
+P1	F09+F13	関係しない		代表カード画像の有無はアーキタイプの更新にだけ効き、この項目の更新の可否・値に影響しない
+P1	F10+F13	関係しない		代表カード画像の有無はアーキタイプの更新にだけ効き、この項目の更新の可否・値に影響しない
+P1	F11+F13	関係しない		代表カード画像の有無はアーキタイプの更新にだけ効き、この項目の更新の可否・値に影響しない
+P1	F12+F13	関係しない		代表カード画像の有無はアーキタイプの更新にだけ効き、この項目の更新の可否・値に影響しない
+
+
+ M15-04_processes.tsv
+処理ID	処理	契機	確かめる所	根拠
+P1	選んだデッキに変更チェックを付けた項目だけを一括で上書きする	一括編集(アコーディオン)で項目を入力して変更チェックを付け、一括編集実行を押す	デッキ検索・一覧、デッキリスト詳細画面、アーキタイプ管理(検索結果)の登録デッキ数、メタゲーム集計	L0072-L0101,L0059-L0066,L0152-L0159,L0163
+
+
+DISPOSITIONS
+根拠の行	処置	理由	直した所
+L0163	追加	機能設計書にアーキタイプ更新時は代表カード画像も同時に更新し、画像が無いときは参照を更新しないとあり、結果が分かれるため要因F13を新設し、F02との組を効き合う、他は関係しないとした	M15-04_factors.tsv・interactions.tsv・processes.tsv(根拠の行)
+L0150-L0151,L0162,L0164	直しなし	全項目の検証・ID形式の404・未選択やタグ空選択の解釈は入力値の検証にあたり範囲外（Excel由来の本文は変更チェックオン時の必須としており、未選択のまま上書きは作れない）	
+L0156,L0165	直しなし	変更フラグの有無で保持・上書きは既存のF01-F12のとおり。最終更新者は常に記録され結果が分かれない	
+
+
+ succeeded in 40ms:
+DESIGN M15-03
+145: ##### 機能設計書 functions/pf-eccube3/m15-03_admin_deck_deck_bulk_delete.md
+146: L0144	# デッキ管理 — 一括削除
+147: L0145	## 業務ロジック
+148: L0146	### 削除の判定順序
+149: L0147	| 順序 | 判定 | 結果 |
+150: L0148	| --- | --- | --- |
+151: L0149	| 1 | なりすまし対策トークンが有効か | 無効のときはアクセス拒否（HTTP 403）とする |
+152: L0150	| 2 | 削除対象のデッキが送られているか | 送られていないときはメッセージを出さず、デッキ検索・一覧へ戻して終える |
+153: L0151	| 3 | 各デッキを取り出せるか | 取り出せないときは 404 として打ち切る。後続のデッキは処理しない |
+154: L0152	| 4 | 当該デッキを使う記事が 1 件でもあるか | あるときは削除せず、エラーを表示して元の画面へ戻して終える |
+155: L0153	| 5 | いずれの記事にも使われていないとき | デッキに含まれるカードを削除し、更新者をログイン中の管理者にしてから、デッキを削除する |
+156: L0154	送られたデッキは配列の先頭から順に処理する。すべてのデッキを打ち切りなく処理できたときだけ、削除完了のメッセージを出す。
+157: L0155	同じ識別子が重複して送られたときは、先に削除したデッキを後の要素で再びたどるため、手順 3 で 404 となることがある。
+158: L0156	### 記事に使われているかの判定
+159: L0157	デッキに紐づく記事の件数を見る。件数が 0 より大きいときは削除しない。
+160: L0158	打ち切りより前に削除できたデッキは、その時点で削除済みとなる。
+161: L0159	### 戻り先
+162: L0160	保持していた一覧のページ番号があるときはデッキ検索・一覧の当該ページへ、無いときはデッキ一覧の先頭へ戻す。
+163: L0161	数量の計算と料金の計算はこの機能では行わない。
+164: L0162	### エラー時の扱い
+165: L0163	| エラー内容 | 処理 |
+166: L0164	| --- | --- |
+167: L0165	| なりすまし対策トークンが不一致 | アクセス拒否（HTTP 403）とする |
+168: L0166	| 対象のデッキが無い | 404 として打ち切る |
+169: L0167	| 記事で使われているデッキが含まれる | 当該デッキを削除せず、エラーを表示して元の画面へ戻す |
+170: L0168	## 入出力
+171: L0169	| 種類 | 内容 |
+172: L0170	| --- | --- |
+173: L0171	| 入力 | 削除対象のデッキの配列となりすまし対策トークン。同じ送信に含まれる検索条件と一括編集の入力は参照しない |
+174: L0172	| 成功時出力 | デッキ検索・一覧またはデッキ一覧の先頭へ戻し、削除完了のメッセージを出す |
+175: L0173	| 失敗時出力 | トークンが不一致のときは HTTP 403、対象のデッキが無いときは 404。記事で使われているときはエラーメッセージを伴って元の画面へ戻す |
+176: L0174	### 入出力: 永続化
+177: L0175	| 操作 | 契機 |
+178: L0176	| --- | --- |
+179: L0177	| 削除 | デッキに含まれるカードを、当該デッキを削除できる条件を満たしたとき |
+180: L0178	| 更新 | デッキの更新者を、削除の直前にログイン中の管理者へ書き換えたとき |
+181: L0179	| 削除 | デッキ本体を、更新者の書き換えの後 |
+182: L0180	## 表示メッセージ
+183: L0181	| メッセージID | 表示位置 | 画面上の文言 | 表示条件 | 後続処理 |
+184: L0182	| --- | --- | --- | --- | --- |
+185: L0183	| — | 管理画面上部 | 記事に紐付いているデッキがあるため削除できません。 | 記事で使われているデッキを一括削除しようとしたとき | 削除せず、元の画面へ戻す |
+186: L0184	| — | 管理画面上部 | 削除しました | 選択したデッキをすべて削除できたとき | デッキ検索・一覧またはデッキ一覧の先頭へ戻す |
+
+ M15-03_constraints.tsv
+処理ID	組	種別	根拠	理由
+
+
+ M15-03_existing.tsv
+テストID	処理ID	値	理由
+IT-M15-03-001	P1	F01=すべて未使用	事前準備で記事に紐づかないデッキ2件を選んで一括削除し、検索で消えたことを確かめる
+IT-M15-03-002	P1	F01=すべて未使用	事前準備で記事に紐づかないデッキ2件を一括削除し、メタゲーム集計で確かめる
+IT-M15-03-003	P1	F01=すべて未使用	事前準備で記事に紐づかないデッキ1件を一括削除し、検索・一覧で消えたことを確かめる
+IT-M15-01-048	P1	F01=先頭が使用中	記事に関連するデッキ1件だけを選んで一括削除し、検索結果に残ることを確かめる
+
+
+ M15-03_factors.tsv
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	選んだデッキの記事での使用状況と並び順	すべて未使用｜先頭が使用中｜未使用の後に使用中	すべて未使用: 全デッキを削除し削除完了のメッセージを出す／先頭が使用中: 1件も削除せず、記事に紐付いている旨のエラーを出して元の画面へ戻す／未使用の後に使用中: 使用中のデッキの手前までは削除済みになり、使用中のデッキ以降は削除せず、エラーを出して元の画面へ戻す	L0152-L0154,L0157-L0158,L0167,L0183-L0184	この機能
+F02	P1	保持していた一覧のページ番号	あり｜なし	あり: 全件削除できたときデッキ検索・一覧の当該ページへ戻す／なし: 全件削除できたときデッキ一覧の先頭へ戻す	L0160,L0172	この機能
+
+
+ M15-03_interactions.tsv
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	効き合う	L0152,L0160,L0167,L0172	戻り先のページ番号の定めは全件削除できたときの戻りに当てはまり、記事で使われているデッキがあるときは削除せず元の画面へ戻す
+
+
+ M15-03_processes.tsv
+処理ID	処理	契機	確かめる所	根拠
+P1	選んだデッキを一括で削除する	一覧で選んだデッキに対して一括削除を押し、確認画面でOKを押す	デッキ検索・一覧画面、デッキ検索TOP、記事	L0147-L0160
+
+
+DISPOSITIONS
+根拠の行	処置	理由	直した所
+L0147-L0160,L0167,L0172,L0183-L0184	追加	機能設計書に一括削除の判定順序があり、記事で使われているデッキの有無と送信順（手前は削除済み・以降は処理しない）で削除結果が変わり、成功時の戻り先は保持した一覧ページ番号の有無で変わるため、処理P1と要因F01・F02を新設	M15-03_processes.tsv・factors.tsv・interactions.tsv・existing.tsv
+L0149-L0151,L0155,L0171	直しなし	トークン検証・デッキ未送信・取り出し失敗(404)・重複送信は不正入力と二重送信にあたり範囲外	
+
+
+codex
+一括更新・一括削除とCSV取込の表まで確認しました。追加部分が既存の「正解未定」や既存ケースの値付けを変える可能性がある箇所を、元の本文とケースに戻って確認します。
+exec
+/bin/bash -lc "python3 - 'M15-06' <<'PY'
+import sys,pathlib
+f=sys.argv[1]; b=pathlib.Path('integration_test/casegen/combination'); d=(b/'units'/f/'design.txt').read_text().splitlines(); n=next(i for i,x in enumerate(d) if x.startswith('##### 機能設計書'))
+print('DESIGN',f); print('\\n'.join(f'{i+1}: {x}' for i,x in enumerate(d[n:],n)))
+for p in sorted((b/'factors').glob(f+'_*.tsv')): print('\\n',p.name); print(p.read_text())
+p=b/'review'/f'{f}_factors_md_dispositions.tsv';print('\\nDISPOSITIONS');print(p.read_text())
+PY" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "python3 - 'M16-08' <<'PY'
+import sys,pathlib
+f=sys.argv[1]; b=pathlib.Path('integration_test/casegen/combination'); d=(b/'units'/f/'design.txt').read_text().splitlines(); n=next(i for i,x in enumerate(d) if x.startswith('##### 機能設計書'))
+print('DESIGN',f); print('\\n'.join(f'{i+1}: {x}' for i,x in enumerate(d[n:],n)))
+for p in sorted((b/'factors').glob(f+'_*.tsv')): print('\\n',p.name); print(p.read_text())
+p=b/'review'/f'{f}_factors_md_dispositions.tsv';print('\\nDISPOSITIONS');print(p.read_text())
+PY" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+DESIGN M16-08
+34: ##### 機能設計書 functions/pf-eccube3/m16-08_admin_data_data_buy_discount_list.md
+35: L0033	# データ管理 — 買取減額率一覧
+36: L0034	## 業務ロジック
+37: L0035	### 一覧の組み立て
+38: L0036	| 順序 | 処理 | 内容 |
+39: L0037	| --- | --- | --- |
+40: L0038	| 1 | カード状態の取得 | カード状態のマスタを、件数によらず全件読み込む |
+41: L0039	| 2 | 買取減額率の取得 | 買取減額率のマスタを、件数によらず全件読み込む |
+42: L0040	| 3 | 減額率の取得 | カード状態と買取減額率の組ごとの減額率を、件数によらず全件読み込む |
+43: L0041	| 4 | 対応表の作成 | カード状態IDと買取減額率IDの2段のキーで減額率を保持する。同じキーが重複するときは、後から読み込んだ値で上書きする |
+44: L0042	| 5 | 表の出力 | 買取減額率とカード状態の二重の繰り返しで、組の数だけ表のセルを出力する |
+45: L0043	減額率はカード状態と買取減額率の組ごとに1件しか登録できない。順序4の上書きが起きる重複は、登録済みのデータでは生じない。
+46: L0044	### セルの値
+47: L0045	| セルの状態 | 表示 |
+48: L0046	| --- | --- |
+49: L0047	| 当該のカード状態と買取減額率の組に減額率があるとき | 保持している減額率の値を表示する |
+50: L0048	| 当該の組に減額率が無いとき | 「未定義」を表示する |
+51: L0049	セルの値は入力による変換計算ではなく、組ごとに記録された減額率の値だけを表示する。並べ替え・丸め・百分率への換算は、いずれの場合も行わない。
+52: L0050	本機能はフォームによる入力と保存を行わない。この表示の間は、いずれの場合も検索状態を保持しない。
+53: L0051	### エラー時の扱い
+54: L0052	| 事象 | 扱い |
+55: L0053	|------------|------|
+56: L0054	| データの読み込みで例外が起きたとき | 共通のエラー処理に委ねる。この一覧専用のメッセージは表示しない |
+57: L0055	| 表の出力で例外が起きたとき | 共通のエラー処理に委ねる |
+58: L0056	## 入出力
+59: L0057	| 種類 | 内容 |
+60: L0058	|------|------|
+61: L0059	| 入力 | 表示の要求だけを受け取る。クエリと本文の入力は、いずれの場合も不要である。 |
+62: L0060	| 成功時出力 | 買取減額率の一覧表を含む管理画面。 |
+63: L0061	| 失敗時出力 | 利用者向けの専用の文言は用意しない。共通のエラー処理に委ねる。 |
+64: L0062	## 表示メッセージ
+65: L0063	| メッセージID | 表示位置 | 画面上の文言 | 表示条件 | 後続処理 |
+66: L0064	| --- | --- | --- | --- | --- |
+67: L0065	| — | 一覧表のセル | 未定義 | 当該のカード状態と買取減額率の組に減額率が無いとき | 一覧画面に留まる |
+68: L0066	## 出典
+69: L0067	| 小見出し | 重要度 | 出典 |
+70: L0068	| --- | --- | --- |
+71: L0069	| 一覧の組み立て | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/BuyDiscountController.php:24 |
+72: L0070	| 一覧の組み立て | P2 | pf-eccube3:app/Plugin/HareruyaEc/Resource/doctrine/Plugin.HareruyaEc.Entity.DtbBuyDiscountCardCondition.dcm.yml:6 |
+73: L0071	| 一覧の組み立て | P2 | pf-eccube3:app/Plugin/HareruyaEc/Resource/doctrine/Plugin.HareruyaEc.Entity.DtbBuyDiscountCardCondition.dcm.yml:14 |
+
+ M16-08_constraints.tsv
+処理ID	組	種別	根拠	理由
+
+
+ M16-08_existing.tsv
+テストID	処理ID	値	理由
+
+
+ M16-08_factors.tsv
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+
+
+ M16-08_interactions.tsv
+処理ID	要因	判定	根拠	理由
+
+
+ M16-08_processes.tsv
+処理ID	処理	契機	確かめる所	根拠
+
+
+DISPOSITIONS
+根拠の行	処置	理由	直した所
+-	直しなし	L0033-L0071を読み、セルの値は減額率の有無の1要因だけで決まり表示の計算も無い一覧表示なので、要因が2つ以上の処理は無く足さなかった	
+
+
+ succeeded in 15ms:
+DESIGN M15-06
+103: ##### 機能設計書 functions/pf-eccube3/m15-06_admin_deck_deck_csv_import.md
+104: L0101	# デッキ管理 — デッキ登録CSV（取込）
+105: L0102	## 業務ロジック
+106: L0103	### 取込ファイルの形式
+107: L0104	1行目をヘッダ行として扱う。拡張子が `tsv` のときはタブ区切り、それ以外のときは既定の区切り文字と囲み文字を用いる。読み込み時に文字コードを環境ごとの方針で変換し、改行を統一し、ゼロ幅文字とBOMを除去する。取り込んだファイルは一時領域へ乱数由来の名前で移して読み込み、処理の成否によらず、残っていれば削除する。
+108: L0105	### ヘッダ行の項目
+109: L0106	画面には、ヘッダ行の並びと各項目の説明を表示する。並びは次のとおりで、本文1行目と一致させる。
+110: L0107	| 並び順 | 項目 | 内容 |
+111: L0108	|--------|------|------|
+112: L0109	| 1 | `player_name` | プレイヤー名 |
+113: L0110	| 2 | `format` | フォーマット |
+114: L0111	| 3 | `archetype` | アーキタイプ |
+115: L0112	| 4 | `event_detail_id` | イベント詳細ID |
+116: L0113	| 5 | `deck_name` | デッキ名 |
+117: L0114	| 6 | `win_count` | 勝利数 |
+118: L0115	| 7 | `loss_count` | 敗北数 |
+119: L0116	| 8 | `draw_count` | 引分数 |
+120: L0117	| 9 | `ranking` | 順位 |
+121: L0118	| 10 | `result` | 成績 |
+122: L0119	| 11 | `dci_no` | DCI番号 |
+123: L0120	| 12 | `event_name_en` | イベント名(英) |
+124: L0121	| 13 | `event_name_jp` | イベント名(日) |
+125: L0122	| 14 | `event_date` | イベント開催日 |
+126: L0123	| 15 | `source_url` | 参照元 |
+127: L0124	| 16 | `participants` | イベント参加人数 |
+128: L0125	| 17 | `disp_flg` | 表示フラグ |
+129: L0126	| 18 | `private_flg` | デッキリスト非公開フラグ |
+130: L0127	| 19 | `main_list` | メインリスト |
+131: L0128	| 20 | `side_list` | サイドリスト |
+132: L0129	| 21 | `commander` | 統率者 |
+133: L0130	| 22 | `deck_id` | デッキID。空欄のときは自動採番の新規、既存値と一致するときは上書き |
+134: L0131	| 23 | `image_card_name` | 代表カード名 |
+135: L0132	| 24 | `old_deck_id` | 旧デッキID |
+136: L0133	必須は `player_name`・`format`・`archetype`・`event_name_en`・`event_name_jp`・`event_date`・`disp_flg`・`private_flg`・`main_list` の9項目である。ただし `main_list` は、`private_flg` がデッキリスト非公開のときだけ空欄を許す。
+137: L0134	### 行ごとの判定順序
+138: L0135	| 順序 | 判定 |
+139: L0136	|------|------|
+140: L0137	| 1 | 当行の値の個数がヘッダの個数と等しいこと |
+141: L0138	| 2 | 必須項目が空欄でないこと（`main_list` の特例を除く） |
+142: L0139	| 3 | `format` の英名に一致するレギュレーションが存在すること |
+143: L0140	| 4 | `archetype` の日本語名または英名が、当該フォーマットのアーキタイプに一致すること |
+144: L0141	| 5 | `event_detail_id` が空でないときは、該当のイベント詳細が存在すること |
+145: L0142	| 6 | `event_date` が日時として解釈できること |
+146: L0143	| 7 | `disp_flg` がデッキの公開・非公開いずれかの値と完全に一致すること |
+147: L0144	| 8 | `private_flg` が二値のいずれかと完全に一致すること |
+148: L0145	| 9 | 統率者を使うフォーマットのときだけ `commander` を必須とし、空でないときはカード名として解けること、解けた名前が有効なカードであること |
+149: L0146	| 10 | `old_deck_id` が空でないときは、半角英数とアンダースコアで最大16文字であり、既存のデッキと重複しないこと |
+150: L0147	| 11 | リスト検証の経路に入るときは、リスト形式の異常と不明なカード名が無いこと |
+151: L0148	いずれかが成立しないときは、その行で取込を中止し、それまでの登録を取り消す。
+152: L0149	統率者の判定では、行頭に枚数として 1 と空白を前置した形でカード名を解く。リスト検証では、` // ` をスラッシュ1つへ正規化してからリストを解釈する。統率者があるときは、メインボードから統率者カードの重複を除いてテキストを再生成する。
+153: L0150	### 厳密チェック
+154: L0151	「厳密」を指定したときだけ、次の検査結果をエラーへ昇格する。指定しないときは、リスト内に複数種のエラー状態があっても取込を続ける。
+155: L0152	| 検査 |
+156: L0153	| --- |
+157: L0154	| アーキタイプ横断チェック |
+158: L0155	| 禁止制限チェック |
+159: L0156	| リスト形式の異常・不明なカード名 |
+160: L0157	| メイン・サイドそれぞれの枚数総和が、フォーマットの許容下限・上限に収まること |
+161: L0158	枚数総和は、メインボードとサイドボードそれぞれで、リスト解釈後の各カードの所持枚数を合計した数である。統率者の枚数規定は総和の評価に含めない。
+162: L0159	### 登録の判定
+163: L0160	| `deck_id` の値 | 登録 |
+164: L0161	| --- | --- |
+165: L0162	| 空欄のとき | 新規に採番して登録する |
+166: L0163	| 既存のデッキと一致するとき | そのデッキを上書きする |
+167: L0164	デッキ名・イベント情報・勝敗数・順位・成績・各フラグ・リスト原文・調整済みの統率者テキスト・旧サイト向け連番・代表画像を、行の値で設定する。表示フラグは、取込値の公開・非公開から表示区分の値へ読み替える。登録者には操作した管理者アカウントを必ず設定する。デッキ種別が未設定のときは、イベント種別を既定として補う。
+168: L0165	### デッキ明細の作成
+169: L0166	リスト検証の経路に入る行だけ、ボード単位でデッキ明細を作成する。統率者は、統率者を使う形式で入力が済んでいるときは、常に統率者ボードへ別に書き込む。
+170: L0167	### 表示状態とリスト本文
+171: L0168	表示フラグが公開へ読み替えられ、かつデッキリスト非公開フラグが公開状態のときだけ、本文テキストとデッキ明細が一致する状態を検証して書き換える。それ以外の組み合わせのときは、リスト本文の検証と明細の出力を広く省略し、入力した原文をメインリスト・サイドリストのテキストにだけ反映する。
+172: L0169	### 代表カード
+173: L0170	| `image_card_name` の値 | 代表画像 |
+174: L0171	| --- | --- |
+175: L0172	| 空でなく、有効なカードへ解けるとき | その名前から最適と判定される画像を設定する |
+176: L0173	| 空のとき | 当該フォーマットに紐づくアーキタイプの既定の代表画像で上書きする |
+177: L0174	### エラー時の扱い
+178: L0175	| 事象 | 扱い |
+179: L0176	|------|------|
+180: L0177	| 入力内容の検証に外れたとき | エラーを順に表示する |
+181: L0178	| 取込ファイルを受け取れないとき | 登録せず、取込画面へ戻る |
+182: L0179	| ファイルの読み込みに失敗したとき | 登録せず、取込画面へ戻る |
+183: L0180	| ヘッダの並びが期待の並びと一致しないとき | 登録せず、取込画面へ戻る |
+184: L0181	| データ行が0件のとき | 登録せず、取込画面へ戻る |
+185: L0182	| 行の判定に外れたとき | それまでの登録を取り消し、エラーを表示して取込画面へ戻る |
+186: L0183	## 入出力
+187: L0184	| 種類 | 内容 |
+188: L0185	|------|------|
+189: L0186	| 入力 | 取込ファイル（必須）と「厳密」の指定（任意）。 |
+190: L0187	| 成功時出力 | 全行の登録を確定し、完了メッセージとともに取込画面へ戻る。 |
+191: L0188	| 失敗時出力 | エラーメッセージとともに取込画面へ戻る。行の判定で外れたときは、それまでの登録を取り消す。 |
+192: L0189	### 入出力: 永続化
+193: L0190	| 操作 | 契機 |
+194: L0191	| --- | --- |
+195: L0192	| 追加 | デッキIDが空欄の行を取り込んだとき。リスト検証の経路に入る行はデッキ明細も追加する |
+196: L0193	| 更新 | デッキIDが既存のデッキと一致する行を取り込んだとき |
+197: L0194	## 表示メッセージ
+198: L0195	| メッセージID | 表示位置 | 画面上の文言 | 表示条件 | 後続処理 |
+199: L0196	| --- | --- | --- | --- | --- |
+200: L0197	| M15-06-MSG-001 | 管理画面上部 | CSVファイルをアップロードしました | デッキ登録用CSVファイルを正常にアップロードしたとき | デッキ登録 CSV（取込）画面に遷移する |
+
+ M15-06_constraints.tsv
+処理ID	組	種別	根拠	理由
+P1	F01=一致するデッキあり&F02=非公開	正解未定	L0029,L0039	更新で非公開にしたとき既存のデッキ明細を消すか残すか書かれていない
+P1	F04=設定なし&F05=登録なし	正解未定	L0038	代表カード名もアーキタイプの代表カードも無いときの画像が書かれていない
+P1	F01=一致するデッキあり&F06=非表示	正解未定	L0029,L0168	更新で非表示にしたとき既存のデッキ明細を消すか残すか書かれていない
+
+
+ M15-06_existing.tsv
+テストID	処理ID	値	理由
+IT-M15-06-003	P1	F01=一致するデッキなし	デッキIDを空欄にして取り込み、新しいデッキIDが採番されることを確かめる
+IT-M15-06-004	P1	F01=一致するデッキあり	既存デッキのデッキIDを指定して取り込み、更新されることをDBで確かめる
+IT-M15-06-005	P1	F01=一致するデッキなし	存在しないデッキIDを指定して取り込み、新規登録されることを確かめる
+IT-M15-06-006	P1	F02=非公開	非公開フラグ1のCSVを取り込み、デッキが追加されることを確かめる
+IT-M15-06-016	P1	F02=公開	非公開フラグ0と1の行を取り込み、公開・非公開として登録されることを確かめる
+IT-M15-06-016	P1	F02=非公開	非公開フラグ0と1の行を取り込み、公開・非公開として登録されることを確かめる
+IT-M15-06-025	P1	F04=設定あり	代表カード名を指定して取り込み、代表画像が設定されることを確かめる
+IT-M15-06-026	P1	F04=設定なし&F05=登録あり	代表カード名を空欄にして取り込み、アーキタイプの既定の代表画像が設定されることを確かめる
+IT-M15-06-028	P1	F02=公開&F06=表示	非公開フラグ0で取り込み、デッキ明細が登録されることをDBで確かめる
+IT-M15-06-029	P1	F02=公開	非公開フラグ0と1の行を取り込み、デッキ明細の作成有無をDBで確かめる
+IT-M15-06-029	P1	F02=非公開	非公開フラグ0と1の行を取り込み、デッキ明細の作成有無をDBで確かめる
+IT-M15-06-038	P1	F01=一致するデッキあり	既存デッキのデッキIDを指定して取り込み、更新されることをDBで確かめる
+IT-M15-06-049	P1	F01=一致するデッキなし&F02=非公開&F06=表示	デッキIDと非公開フラグを事前準備に書いたCSVを取り込み、検索・詳細・集計画面で結果を確かめる
+IT-M15-06-050	P1	F01=一致するデッキあり&F02=非公開&F06=表示	デッキIDと非公開フラグを事前準備に書いたCSVを取り込み、検索・詳細・集計画面で結果を確かめる
+IT-M15-06-051	P1	F01=一致するデッキあり&F02=非公開&F06=表示	デッキIDと非公開フラグを事前準備に書いたCSVを取り込み、検索・詳細・集計画面で結果を確かめる
+IT-M15-06-052	P1	F01=一致するデッキなし&F02=非公開&F06=表示	デッキIDと非公開フラグを事前準備に書いたCSVを取り込み、検索・詳細・集計画面で結果を確かめる
+IT-M15-06-054	P1	F01=一致するデッキあり	既存デッキのデッキIDを指定して取り込み、プレイヤー名が更新され件数が増えないことを確かめる
+IT-M15-06-058	P1	F01=一致するデッキなし&F02=非公開&F06=表示	デッキIDと非公開フラグを事前準備に書いたCSVを取り込み、検索・詳細・集計画面で結果を確かめる
+IT-M15-06-014	P1	F06=表示	表示フラグ1の行を取り込み、DBで表示区分を確かめる
+IT-M15-06-014	P1	F06=非表示	表示フラグ0の行を取り込み、DBで表示区分を確かめる
+
+
+ M15-06_factors.tsv
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	デッキIDに一致するデッキ	一致するデッキあり｜一致するデッキなし	一致するデッキあり: 更新／一致するデッキなし: 新規登録	L0029,L0098,L0160-L0163	この機能
+F02	P1	デッキリスト非公開フラグ	公開｜非公開	公開: メインリストは必須でデッキ明細へ登録／非公開: メインリストは任意でデッキ明細へ登録しない	L0034,L0039,L0093	この機能
+F03	P1	フォーマット種別	統率者戦｜統率者戦以外	統率者戦: 統率者は必須でメインリスト内の統率者は除外／統率者戦以外: 統率者の定めなし	L0035,L0037	この機能
+F04	P1	代表カード名	設定あり｜設定なし	設定あり: 代表カード名のカードイメージ／設定なし: アーキタイプの代表カードのイメージ	L0038,L0099,L0172-L0173	この機能
+F05	P1	アーキタイプの代表カード	登録あり｜登録なし	登録あり: そのイメージを代表画像に使える／登録なし: 代表カード名も無いときの画像が書かれていない	L0038,M15-09:L0053	M15-09（データ）
+F06	P1	表示フラグ	表示｜非表示	表示: 公開へ読み替えて登録し、リスト公開のときだけ本文とデッキ明細の検証・書き換えを行う／非表示: 非表示として登録し、リスト本文の検証と明細の出力を省略して原文だけ反映	L0092,L0164,L0168	この機能
+
+
+ M15-06_interactions.tsv
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	設計書が決めていない	L0029,L0039	更新で非公開にしたとき、既存のデッキ明細を消すか残すかが書かれていない
+P1	F01+F03	関係しない		統率者の必須判定と除外は新規と更新で区別なく同じ（L0035,L0037）
+P1	F01+F04	関係しない		代表画像の決め方は新規と更新で区別なく同じ（L0038）
+P1	F01+F05	関係しない		アーキタイプの代表カードは更新か新規かで使い方が変わらない（L0038）
+P1	F02+F03	効き合う	L0034,L0037,L0039	公開のときだけデッキ明細へ登録され、統率者戦では登録内容からメインの統率者が除かれる
+P1	F02+F04	関係しない		代表画像の決め方は公開か非公開かで変わらない（L0038）
+P1	F02+F05	関係しない		アーキタイプの代表カードの使い方は公開か非公開かで変わらない（L0038）
+P1	F03+F04	関係しない		代表画像の決め方はフォーマットで変わらない（L0038）
+P1	F03+F05	関係しない		アーキタイプの代表カードの使い方はフォーマットで変わらない（L0038）
+P1	F04+F05	効き合う	L0038,L0172-L0173	代表カード名が無いときだけアーキタイプの代表カードが使われる
+P1	F01+F06	設計書が決めていない	L0029,L0168	更新で表示フラグを非表示にしたとき、既存のデッキ明細を消すか残すかが書かれていない
+P1	F02+F06	関係しない		明細の検証・書き換えは表示フラグが表示かつリスト公開のすべてを満たすときだけで、結果は行う・行わないの2つ（L0168）
+P1	F03+F06	効き合う	L0166,L0168	統率者ボードへの明細の書き込みは、リスト検証の経路に入る行だけ（表示かつリスト公開）
+P1	F04+F06	関係しない		代表画像の決め方は表示フラグで変わらない（L0038,L0173）
+P1	F05+F06	関係しない		アーキタイプの代表カードの使い方は表示フラグで変わらない（L0173）
+
+
+ M15-06_processes.tsv
+処理ID	処理	契機	確かめる所	根拠
+P1	CSVをアップロードしてデッキを新規登録または更新する	デッキ登録CSVアップロード画面でCSVを選び、CSVファイルのアップロードボタンを押す	DB（デッキ・デッキ明細）、デッキ検索・詳細画面（M15-01）	L0028-L0039
+
+
+DISPOSITIONS
+根拠の行	処置	理由	直した所
+L0168	追加	表示フラグが表示かつリスト公開のときだけ明細の検証・書き換えを行い、それ以外は原文だけ反映する。Excel由来の本文が表示フラグの効きに触れておらず食い違わない	factors F06、interactions F01+F06/F02+F06/F03+F06/F04+F06/F05+F06、constraints、existing（014・028・049-052・058）
+L0160-L0163,L0172-L0173	直し	デッキIDと代表カード名の結果は既存の要因と同じ。根拠の行だけ足した	factors F01・F04の根拠、interactions F04+F05の根拠
+L0150-L0158	直しなし	厳密チェックはExcel由来の本文（L0024,L0042）が画面から除去とするので要因にしない	
+L0104-L0149,L0164-L0166,L0174-L0197	直しなし	取込形式・ヘッダ・行判定・エラー時の扱いは入力値の検証であり範囲外。デッキ種別の既定補いは入力で変わる値がない	
+
+
+exec
+/bin/bash -lc "python3 - 'M10-06' <<'PY'
+import sys,pathlib
+f=sys.argv[1]; p=pathlib.Path('integration_test/casegen/combination/units')/f/'design.txt'; l=p.read_text().splitlines(); n=next(i for i,x in enumerate(l) if x.startswith('##### 機能設計書'));print('\\n'.join(f'{i+1}: {x}' for i,x in enumerate(l[:n])))
+PY" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "python3 - 'M13-13' <<'PY'
+import sys,pathlib
+f=sys.argv[1]; p=pathlib.Path('integration_test/casegen/combination/units')/f/'design.txt'; l=p.read_text().splitlines(); n=next(i for i,x in enumerate(l) if x.startswith('##### 機能設計書'));print('\\n'.join(f'{i+1}: {x}' for i,x in enumerate(l[:n])))
+PY" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "python3 - 'M15-03' <<'PY'
+import sys,pathlib
+f=sys.argv[1]; p=pathlib.Path('integration_test/casegen/combination/units')/f/'design.txt'; l=p.read_text().splitlines(); n=next(i for i,x in enumerate(l) if x.startswith('##### 機能設計書'));print('\\n'.join(f'{i+1}: {x}' for i,x in enumerate(l[:n])))
+PY" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "python3 - 'M15-04' <<'PY'
+import sys,pathlib
+f=sys.argv[1]; p=pathlib.Path('integration_test/casegen/combination/units')/f/'design.txt'; l=p.read_text().splitlines(); n=next(i for i,x in enumerate(l) if x.startswith('##### 機能設計書'));print('\\n'.join(f'{i+1}: {x}' for i,x in enumerate(l[:n])))
+PY" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "python3 - 'M15-06' <<'PY'
+import sys,pathlib
+f=sys.argv[1]; p=pathlib.Path('integration_test/casegen/combination/units')/f/'design.txt'; l=p.read_text().splitlines(); n=next(i for i,x in enumerate(l) if x.startswith('##### 機能設計書'));print('\\n'.join(f'{i+1}: {x}' for i,x in enumerate(l[:n])))
+PY" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "python3 - 'M12-10' <<'PY'
+import sys,pathlib
+f=sys.argv[1]; p=pathlib.Path('integration_test/casegen/combination/units')/f/'design.txt'; l=p.read_text().splitlines(); n=next(i for i,x in enumerate(l) if x.startswith('##### 機能設計書'));print('\\n'.join(f'{i+1}: {x}' for i,x in enumerate(l[:n])))
+PY" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 380ms:
+1: ##### 0209 sheet-7 配送方法設定
+2: L0001	配送方法設定
+3: L0002	ドキュメント名基本情報設定 基本設計
+4: L0003	セクション—
+5: L0004	プロジェクト名サイトリニューアル
+6: L0005	作成者佐藤
+7: L0006	作成日2025-09-29
+8: L0007	更新者堀部
+9: L0008	更新日2025-10-27
+10: L0009	機能NoM10-05
+11: L0010	M10-06
+12: L0011	機能名配送方法設定
+13: L0012	概要送料条件の一覧と編集
+14: L0013	処理概要
+15: L0014	レイアウト図
+16: L0015	一覧表示
+17: L0016	2-1
+18: L0017	2-2
+19: L0018	2-3
+20: L0019	2-4
+21: L0020	2-5
+22: L0021	2-6
+23: L0022	2-7
+24: L0023	3-1
+25: L0024	4-1
+26: L0025	5-1
+27: L0026	5-2
+28: L0027	5-3
+29: L0028	5-4
+30: L0029	1-3
+31: L0030	1-4
+32: L0031	1-2
+33: L0032	1-1
+34: L0033	画像レイヤー（2枚）: 配送方法設定 / D21 / image 2 + 配送方法設定 / B7 / image 3
+35: L0034	編集画面
+36: L0035	6-1
+37: L0036	配送方法設定 / D102 / image 1
+38: L0037	カスタマイズ説明
+39: L0038	・カスタマイズ要件
+40: L0039	送料の設定は、標準通り登録編集できるようにする
+41: L0040	・カスタマイズ要件に記載の内容以外は現行踏襲とする。
+42: L0041	機能仕様処理概要
+43: L0042	・支払方法、手数料設定を登録する
+44: L0043	・識別ID:5-1 全国一律送料に値を入力し、識別ID:5-2各都道府県に適用ボタンを押すと、
+45: L0044	識別ID:5-3 各都道府県毎の送料に識別ID:5-1 全国一律送料を反映する
+46: L0045	識別ID	ラベル	書式・制限	必須	最大値	初期値	画面部品の説明
+47: L0046	一覧表示
+48: L0047	1-1	新規登録	ボタン	-	-	-	押下時、編集画面へ遷移
+49: L0048	1-2	ID	-	-	-	-	-
+50: L0049	1-3	配送業者名	リンク	-	-	-	押下時、編集画面へ遷移
+51: L0050	1-4	操作リンク	リンク	-	-	-	押下時、各種操作をおこなう
+52: L0051	編集画面
+53: L0052	2-1	配送業者名	全角・半角	-	-	-	-
+54: L0053	2-2	名称	全角・半角	-	-	-	-
+55: L0054	2-3	英語名称	全角・半角	-	-	-	-
+56: L0055	2-4	国外配送	単一選択(チェックボックス)	-	-	-	-
+57: L0056	2-5	出荷指示リストから除外	単一選択(チェックボックス)	-	-	-	-
+58: L0057	2-6	伝票No.URL	全角・半角	-	-	-	-
+59: L0058	2-7	上限サイズ	全角・半角	-	-	-	-
+60: L0059	支払方法設定
+61: L0060	3-1	支払方法設定	単一選択(チェックボックス)	-	-	-	-
+62: L0061	お届け時間設定
+63: L0062	4-1	お届け時間設定	全角・半角	-	-	-	-
+64: L0063	都道府県別送料設定
+65: L0064	5-1	地域	単一選択(セレクトボックス)	〇	-	-
+66: L0065	5-2	サイズ	半角数字	-	-	-
+67: L0066	5-3	送料	半角数字	〇	-	-
+68: L0067	5-4	新規登録	ボタン		-	-	識別ID:5-4 都道府県別送料設定を新規追加するボタン
+69: L0068	ボタン リンク
+70: L0069	6-1	設定	ボタン	-	-	-	入力されたフォームの値で登録
+
+ succeeded in 376ms:
+1: ##### 0214 sheet-19 イベント一括登録
+2: L0001	イベント一括登録
+3: L0002	ドキュメント名イベント管理 基本設計仕様書
+4: L0003	セクション—
+5: L0004	プロジェクト名イベント管理機能
+6: L0005	作成者畠山
+7: L0006	作成日2025-09-19
+8: L0007	更新者畠山
+9: L0008	更新日2025-09-19
+10: L0009	機能NoM13-13
+11: L0010	機能名イベント一括登録
+12: L0011	概要—
+13: L0012	処理概要（★はカスタマイズ項目）
+14: L0013	レイアウト図
+15: L0014	1
+16: L0015	2
+17: L0016	3
+18: L0017	4
+19: L0018	イベント一括登録 / C8 / image 1
+20: L0019	カスタマイズ説明
+21: L0020	機能仕様処理概要（★はカスタマイズ項目）
+22: L0021	・イベントと、それに紐づく日程情報をCSVで一括登録できる。
+23: L0022	・新規登録のみ行える。
+24: L0023	・1つの1ベントに複数の日程は登録できない。
+25: L0024	・親イベント情報に支払方法（クレジットカード決済）の設定がないのに日程情報のオンライン受付が「あり」かつ参加費が有料とされている場合はエラーとする。
+26: L0025	識別ID	ラベル	書式・制限	必須	最大値	初期値	画面部品の説明
+27: L0026	1	CSVファイル選択	ボタン
+28: L0027	2	CSVファイルのアップロード	ボタン
+29: L0028	3	CSVファイルフォーマット	ラベル
+30: L0029	4	雛形ファイルダウンロード	ボタン
+31: ##### 0214 sheet-20 イベント一括登録CSV
+32: L0030	イベント一括登録CSV
+33: L0031	ドキュメント名イベント管理 基本設計仕様書
+34: L0032	セクション—
+35: L0033	プロジェクト名イベント管理機能
+36: L0034	作成者佐藤
+37: L0035	作成日2025/5/29
+38: L0036	更新者畠山
+39: L0037	更新日2025-09-19
+40: L0038	機能NoM13-13
+41: L0039	機能名イベント一括登録CSV登録
+42: L0040	概要—
+43: L0041	デッキ登録CSV
+44: L0042	識別ID	項目名	主キー	書式・制限	必須	最大文字数
+45: L0043	または最大値	入力例	備考
+46: L0044	イベント親情報 1	イベント名(日)	-	文字型	〇	-	平日パウパー
+47: L0045	2	イベント名(英)	-	文字型	〇	-	Weekday Pauper
+48: L0046	3	店舗	-	文字型	〇	-	トーナメントセンター 東京	編集可能店舗のみイベント登録が可能
+49: L0047	4	会場	-	文字型	〇	-	TC 東京	2026/6/11 会場は不要のため削除
+50: L0048	5	フォーマット	-	文字型	〇	-	パウパー	複数指定の場合は,(カンマ)区切り
+51: L0049	6	ルール適用度	-	文字型	〇	-	カジュアル
+52: L0050	7	公開状態	-	文字型	〇	-	公開	公開 or 非公開
+53: L0051	8	バナーURL(日)	-	文字型	-	-	https://files.hareruyamtg.com/banner/example.jpeg
+54: L0052	9	バナーURL(英)	-	文字型	-	-	https://files.hareruyamtg.com/banner/example.jpeg
+55: L0053	10	定員	-	数値(整数)	〇	-	100	チーム戦=1 の時は組数
+56: L0054	11	チーム戦	-	数値(整数)	〇	-	1
+57: L0055	12	クレジットカード支払い	-	文字型	-	-	なし	あり or なし
+58: L0056	13	参加費	-	数値(整数)	〇	-	0
+59: L0057	14	賞品（日）	-	文字型	-	-	参加賞：シングルカード100円割引券
+60: L0058	15	賞品（英）	-	文字型	-	-	Entry: 100 JPY coupon for single cards
+61: L0059	16	フリー入力エリア1
+62: L0060	項目名(日)	-	文字型	-	-	備考
+63: L0061	17	フリー入力エリア1
+64: L0062	項目名(英)	-	文字型	-	-	Information
+65: L0063	18	フリー入力エリア1
+66: L0064	内容(日)	-	文字型	-	-	参加者4人から開催となります。
+67: L0065	19	フリー入力エリア1
+68: L0066	内容(英)	-	文字型	-	-	Fires from 4 players.
+69: L0067	20	フリー入力エリア1
+70: L0068	アコーディオン表示	-	数値(整数)	-	-	1
+71: L0069	21	フリー入力エリア2
+72: L0070	項目名(日)	-	文字型	-	-	備考
+73: L0071	22	フリー入力エリア2
+74: L0072	項目名(英)	-	文字型	-	-	Information
+75: L0073	23	フリー入力エリア2
+76: L0074	内容(日)	-	文字型	-	-	参加者4人から開催となります。
+77: L0075	24	フリー入力エリア2
+78: L0076	内容(英)	-	文字型	-	-	Fires from 4 players.
+79: L0077	25	フリー入力エリア2
+80: L0078	アコーディオン表示	-	数値(整数)	-	-	1
+81: L0079	26	フリー入力エリア3
+82: L0080	項目名(日)	-	文字型	-	-	備考
+83: L0081	27	フリー入力エリア3
+84: L0082	項目名(英)	-	文字型	-	-	Information
+85: L0083	28	フリー入力エリア3
+86: L0084	内容(日)	-	文字型	-	-	参加者4人から開催となります。
+87: L0085	29	フリー入力エリア3
+88: L0086	内容(英)	-	文字型	-	-	Fires from 4 players.
+89: L0087	30	フリー入力エリア3
+90: L0088	アコーディオン表示	-	数値(整数)	-	-	1
+91: L0089	イベント詳細情報 31	開始時間	-	文字型	-	-	2025-09-06 15:00	開始時間を入力した場合、以下の情報でイベント詳細情報（日程）を登録する。
+92: L0090	32	受付	-	文字型	-	-	あり	あり or なし
+93: L0091	33	受付時間From	-	文字型	△	-	13:00	受付ありの時必須
+94: L0092	34	受付時間To	-	文字型	△	-	15:00	受付ありの時必須
+95: L0093	35	デッキ登録	-	文字型	-	-	あり	あり or なし
+96: L0094	36	デッキ登録締切	-	文字型	-	-	2025-09-06 15:00
+97: L0095	37	オンライン受付	-	文字型	-	-	あり	あり or なし
+98: L0096	38	オンライン受付時間From	-	文字型	△	-	2025-09-01 15:00	オンライン受付ありの時必須
+99: L0097	39	オンライン受付時間To	-	文字型	△	-	2025-09-06 15:00	オンライン受付ありの時必須
+100: L0098	40	定員_日程	-	数値(整数)	-	-	100	省略した場合は親イベントの定員が登録される
+101: L0099	41	参加費_日程	-	数値(整数)	-	-	1	省略した場合は親イベントの参加費が登録される
+102: L0100	42	公開状態_日程	-	文字型	〇	-	公開	公開 or 非公開
+103: L0101	43	賞品_日程（日）	-	文字型	-	-	参加賞：シングルカード100円割引券
+104: L0102	44	賞品_日程（英）	-	文字型	-	-	Entry: 100 JPY coupon for single cards
+
+ succeeded in 455ms:
+1: ##### 0212 sheet-4 デッキ一覧(検索結果)
+2: L0001	デッキ一覧(検索結果)
+3: L0002	ドキュメント名デッキ管理機能
+4: L0003	セクション—
+5: L0004	プロジェクト名サイトリニューアル
+6: L0005	作成者城下
+7: L0006	作成日2025-05-01
+8: L0007	更新者—
+9: L0008	更新日—
+10: L0009	機能NoM15-01
+11: L0010	機能名デッキを一覧(検索結果)
+12: L0011	概要デッキ一覧(入力)で検索した結果を一覧表示。
+13: L0012	処理概要（★はカスタマイズ項目）
+14: L0013	レイアウト図
+15: L0014	2
+16: L0015	4
+17: L0016	3
+18: L0017	1
+19: L0018	9
+20: L0019	10
+21: L0020	5
+22: L0021	6
+23: L0022	7
+24: L0023	8
+25: L0024	11
+26: L0025	11
+27: L0026	画像レイヤー（2枚）: デッキ一覧(検索結果) / C7 / image 2 + デッキ一覧(検索結果) / AC24 / image 3
+28: L0027	カスタマイズ説明
+29: L0028	・カスタマイズ要件
+30: L0029	・旧デッキID、DCIナンバーは不要のため削除
+31: L0030	・カスタマイズ要件に記載の内容以外は現行踏襲とする。
+32: L0031	機能仕様処理概要（★はカスタマイズ項目）
+33: L0032	デッキ検索結果を一覧表示する。表示後、以下の操作ができる。
+34: L0033	検索結果一覧表示から個別にデッキの編集画面へ遷移できる。
+35: L0034	検索結果一覧表示から個別にデッキの削除ができる。
+36: L0035	検索結果一覧表示のうちチェックを入れたものに対し、以下の操作ができる。
+37: L0036	CSV出力する。
+38: L0037	一括削除する。
+39: L0038	一括編集する。
+40: L0039	★1ページあたりの表示件数のデフォルト値を「100件」とする
+41: L0040	★画面上の項目を除去する
+42: L0041	・識別ID:2「並べ替え項目」の選択肢「勝利数」「敗北数」「引き分け数」「DCIナンバー」を除去する
+43: L0042	・識別ID:6「CSV出力(旧サイト仕様)」を除去する
+44: L0043	・識別ID:10 デッキ詳細情報の成績部分から、「勝利数-敗北数-引き分け数」 の表示を除去する
+45: L0044	★画面上の一括編集(アコーディオン)項目を除去する
+46: L0045	・識別ID:13「DCIナンバー」を除去する
+47: L0046	★画面の変更にあわせて、検索実行ロジック内に記載されている
+48: L0047	・「DCIナンバー」の並べ替えを除去する
+49: L0048	★画面の変更にあわせて、一括編集実行ロジック内に記載されている
+50: L0049	・「DCIナンバー」の更新を除去する
+51: L0050	識別ID	ラベル	書式・制限	必須	最大値	初期値	画面部品の説明
+52: L0051	1	該当件数	文字列	-			デッキ一覧(入力)で設定された条件に合致するデッキの件数
+53: L0052	2	件数	単一選択	-			選択肢: 10件 50件 100件 300件 500件 1000件 2000件 10000件 12000件
+54: L0053	※カスタマイズ対応 デフォルト値を100件とする
+55: L0054	3	並べかえ: 項目	単一選択	-			選択肢:
+56: L0055	デッキID 順位 イベント開催日
+57: L0056	イベント名(日) イベント名(英) デッキ名 プレイヤー名
+58: L0057	※カスタマイズ対応、選択肢「DCIナンバー」「勝利数」「敗北数」「引き分け数」を除去する
+59: L0058	4	並べ替え: ソート順	単一選択	-			選択肢: 昇順 降順
+60: L0059	5	CSV出力	ボタン	-			一覧左側のチェックボックスを選択したデッキ情報のCSVがダウンロードされる
+61: L0060	6	CSV出力(旧サイト仕様)	ボタン	-			※カスタマイズ対応、項目を除去する
+62: L0061	7	一括削除	ボタン	-			一覧左側のチェックボックスを選択したデッキを一括で削除する
+63: L0062	8	一括編集	ボタン	-			一括編集(アコーディオン)を開く
+64: L0063	9	デッキ詳細	チェックボックス	-			チェックすると、デッキ情報(後述)に配置されているチェックボックスをすべてオン/オフにする
+65: L0064	10	デッキ情報	リンク	-			・デッキの情報を設定されている件数ぶん出力する
+66: L0065	・クリックすると当該デッキの編集画面へ遷移する
+67: L0066	・情報の左上にチェックボックスを配置、チェックされたデッキを「一括削除」「一括編集」の対象にする
+68: L0067	11	ポップアップメニュー
+69: L0068	（…）	ボタン	-			当該デッキに対するポップアップメニューを表示する
+70: L0069	・編集 編集画面へ遷移する
+71: L0070	・削除 確認ダイアログを表示し、OKを選択したらデッキを削除する
+72: L0071	12	ページングUI	リンク	-
+73: L0072	一括編集(アコーディオン)
+74: L0073	8
+75: L0074	9
+76: L0075	10
+77: L0076	11
+78: L0077	12
+79: L0078	13
+80: L0079	14
+81: L0080	15
+82: L0081	16
+83: L0082	17
+84: L0083	デッキ一覧(検索結果) / C109 / image 1
+85: L0084	識別ID	ラベル	書式・制限	入力チェック	画面部品の説明
+86: L0085	1	フォーマット	単一選択	チェックを入れた場合のみ必須	サジェスト機能
+87: L0086	2	アーキタイプ	単一選択	チェックを入れた場合のみ必須	サジェスト機能
+88: L0087	3	公開状態	ラジオボタン	チェックを入れた場合のみ必須
+89: L0088	4	デッキリスト公開状態	ラジオボタン	チェックを入れた場合のみ必須
+90: L0089	5	イベント名(日)	文字列	チェックを入れた場合のみ必須、255文字まで
+91: L0090	6	イベント名(英)	文字列	チェックを入れた場合のみ必須、255文字まで
+92: L0091	7	イベント開催日	文字列	チェックを入れた場合のみ必須、日付形式チェック	YYYY-M-DD HH:ii
+93: L0092	8	順位	数値	チェックを入れた場合のみ必須、数値チェック
+94: L0093	9	成績	文字列	チェックを入れた場合のみ必須、32文字まで
+95: L0094	10	勝利数	数値	チェックを入れた場合のみ必須、数値チェック	※カスタマイズ対応、項目を除去する
+96: L0095	11	敗北数	数値	チェックを入れた場合のみ必須、数値チェック	※カスタマイズ対応、項目を除去する
+97: L0096	12	引き分け数	数値	チェックを入れた場合のみ必須、数値チェック	※カスタマイズ対応、項目を除去する
+98: L0097	13	DCIナンバー	文字列	チェックを入れた場合のみ必須	※カスタマイズ対応、項目を除去する
+99: L0098	14	プレイヤー名	文字列	チェックを入れた場合のみ必須、64文字まで
+100: L0099	15	タグ	複数選択	チェックを入れた場合のみ必須	サジェスト機能
+101: L0100	16	引用元URL	文字列	チェックを入れた場合のみ必須、255文字まで
+102: L0101	17	一括編集実行	ボタン	-	入力された項目に該当するデータを更新する
+103: L0102	Source:
+104: L0103	functions/pf-eccube3/m15-02_admin_deck_deck_csv_export.md
+105: L0104	現行仕様
+106: L0105	M15-02 デッキCSV出力 / デッキ管理 — デッキ CSV 出力
+107: L0106	業務ロジック
+108: L0107	出力対象の決め方
+109: L0108	選択の状態	扱い
+110: L0109	デッキIDを1件も選択せずに実行したとき	出力せず、必須のエラーを表示して直前の画面へ戻す。ダウンロードは始めない。画面側でも未選択の送信を既定で止める
+111: L0110	該当するデッキが1件も無いとき	出力せず、未登録のエラーを表示して直前の画面へ戻す。ダウンロードは始めない
+112: L0111	指定したIDの一部だけが存在しないとき	該当が1件以上あれば処理を続ける。該当しないIDは出力に現れない
+113: L0112	並び順は、利用者が一覧で選択したときの表示順と一致するとは限らない。
+114: L0113	一覧の一括編集フォームの他の項目もあわせて送信されるが、この出力では読まない。
+115: L0114	出力の構成
+116: L0115	見出し行に論理キーを出力し、続けてデータ行を出力する。デッキ1件につき1行とする。
+117: L0116	順序	出力
+118: L0117	1	UTF-8のBOM。文字コードの設定がどの値のときも先頭に出力する
+119: L0118	2	論理キーの見出し行。1行だけ出力する
+120: L0119	3	データ行。該当するデッキが複数あるときは、件数分を出力する
+121: L0120	区切り文字は設定に従う。本文の文字コードは設定によらずUTF-8とし、先頭のBOMと合わせる。 応答が示す文字集合は設定から決まるため（「応答とファイル名」）、設定がUTF-8以外のときは 応答の表記と本文の文字コードが一致しない。
+122: L0121	列の値の作り方
+123: L0122	列	値の作り方
+124: L0123	フォーマット	紐づくフォーマットがあるときはその英語名、無いときは空文字とする
+125: L0124	アーキタイプ	紐づくアーキタイプがあるときはその日本語名、無いときは空文字とする
+126: L0125	統率者名	統率者ボードに紐づくカードがあるときはその英語名、無いときは空文字とする
+127: L0126	代表カード名	代表カード画像に紐づくカードがあるときはその英語名、無いときは空文字とする
+128: L0127	メインリスト・サイドリスト	登録されているデッキリストのテキストをそのまま出力する
+129: L0128	イベント開催日	日時が無いときは空文字、あるときは Y-m-d H:i:s の書式とする
+130: L0129	表示フラグ	公開のときは 1、非公開のときは 0 を出力する。限定公開には対応する値が無く、空欄になる
+131: L0130	応答とファイル名
+132: L0131	接頭辞 deck_、出力時点の日時（YmdHis）、拡張子 .csv を連結した名前とし、添付ファイルとして返す。
+133: L0132	文字コードの設定が SJIS-win のときは、応答の文字集合の表記だけを windows-31j に読み替える。
+134: L0133	応答ヘッダ	値
+135: L0134	内容の種別	設定の文字コードに基づく text/csv;charset=… とする
+136: L0135	内容の配置	添付ファイルとし、ファイル名を付ける
+137: L0136	入出力
+138: L0137	種類	内容
+139: L0138	入力	一覧で選択したデッキIDの配列。
+140: L0139	成功時出力	CSVファイル。ファイル名は接頭辞と日時から作る。
+141: L0140	失敗時出力	エラーメッセージと直前の画面への戻り。ダウンロードは始まらない。
+142: L0141	リニューアル後の仕様
+143: L0142	表示メッセージ
+144: L0143	出力に成功したときは画面にメッセージを出さず、ファイルの応答だけを返す。未選択のときと、選択したデッキが 1件も見つからないときのエラー文言は、デッキ検索・一覧（M15-01）の表示メッセージ一覧に含める。
+
+ succeeded in 418ms:
+1: ##### 0211 sheet-20 特集タグ編集CSVダウンロード CSV出力
+2: L0001	特集タグ編集CSVダウンロード CSV出力
+3: L0002	ドキュメント名分析・集計管理機能
+4: L0003	セクション—
+5: L0004	プロジェクト名サイトリニューアル
+6: L0005	作成者高久
+7: L0006	作成日2025-07-09
+8: L0007	更新者—
+9: L0008	更新日—
+10: L0009	機能NoM12-10
+11: L0010	機能名特集タグ編集CSVダウンロード
+12: L0011	概要特集タグ編集CSVをダウンロードすることができる
+13: L0012	処理概要（★はカスタマイズ項目）
+14: L0013	M12-10 特集タグ編集 CSVダウンロード
+15: L0014	識別ID	項目名	備考
+16: L0015	1	商品ID
+17: L0016	2	商品コード
+18: L0017	3	商品名(日)
+19: L0018	4	在庫数	本店ECの在庫数
+20: L0019	5	販売価格
+21: L0020	6	買取価格
+22: L0021	7	言語(ID)
+23: L0022	8	カード名(英)
+24: L0023	9	カードセット略称
+25: L0024	10	レアリティ
+26: L0025	11	Foilフラグ
+27: L0026	12	状態コード
+28: L0027	13	当日販売数	本店ECの販売数
+29: L0028	14	1週間販売数	本店ECの販売数
+30: L0029	15	1ヵ月間販売数	本店ECの販売数
+31: L0030	16	採用枚数
+32: L0031	17	タグ
+33: L0032	カスタマイズ説明
+34: L0033	カスタマイズ要件がなく、現行踏襲とする
+35: L0034	機能仕様処理概要（★はカスタマイズ項目）
+36: L0035	概要
+37: L0036	特集タグ編集CSVをダウンロードすることができる
+38: L0037	機能
+39: L0038	現行機能から変更なし
+
+ succeeded in 486ms:
+1: ##### 0212 sheet-4 デッキ一覧(検索結果)
+2: L0001	デッキ一覧(検索結果)
+3: L0002	ドキュメント名デッキ管理機能
+4: L0003	セクション—
+5: L0004	プロジェクト名サイトリニューアル
+6: L0005	作成者城下
+7: L0006	作成日2025-05-01
+8: L0007	更新者—
+9: L0008	更新日—
+10: L0009	機能NoM15-01
+11: L0010	機能名デッキを一覧(検索結果)
+12: L0011	概要デッキ一覧(入力)で検索した結果を一覧表示。
+13: L0012	処理概要（★はカスタマイズ項目）
+14: L0013	レイアウト図
+15: L0014	2
+16: L0015	4
+17: L0016	3
+18: L0017	1
+19: L0018	9
+20: L0019	10
+21: L0020	5
+22: L0021	6
+23: L0022	7
+24: L0023	8
+25: L0024	11
+26: L0025	11
+27: L0026	画像レイヤー（2枚）: デッキ一覧(検索結果) / C7 / image 2 + デッキ一覧(検索結果) / AC24 / image 3
+28: L0027	カスタマイズ説明
+29: L0028	・カスタマイズ要件
+30: L0029	・旧デッキID、DCIナンバーは不要のため削除
+31: L0030	・カスタマイズ要件に記載の内容以外は現行踏襲とする。
+32: L0031	機能仕様処理概要（★はカスタマイズ項目）
+33: L0032	デッキ検索結果を一覧表示する。表示後、以下の操作ができる。
+34: L0033	検索結果一覧表示から個別にデッキの編集画面へ遷移できる。
+35: L0034	検索結果一覧表示から個別にデッキの削除ができる。
+36: L0035	検索結果一覧表示のうちチェックを入れたものに対し、以下の操作ができる。
+37: L0036	CSV出力する。
+38: L0037	一括削除する。
+39: L0038	一括編集する。
+40: L0039	★1ページあたりの表示件数のデフォルト値を「100件」とする
+41: L0040	★画面上の項目を除去する
+42: L0041	・識別ID:2「並べ替え項目」の選択肢「勝利数」「敗北数」「引き分け数」「DCIナンバー」を除去する
+43: L0042	・識別ID:6「CSV出力(旧サイト仕様)」を除去する
+44: L0043	・識別ID:10 デッキ詳細情報の成績部分から、「勝利数-敗北数-引き分け数」 の表示を除去する
+45: L0044	★画面上の一括編集(アコーディオン)項目を除去する
+46: L0045	・識別ID:13「DCIナンバー」を除去する
+47: L0046	★画面の変更にあわせて、検索実行ロジック内に記載されている
+48: L0047	・「DCIナンバー」の並べ替えを除去する
+49: L0048	★画面の変更にあわせて、一括編集実行ロジック内に記載されている
+50: L0049	・「DCIナンバー」の更新を除去する
+51: L0050	識別ID	ラベル	書式・制限	必須	最大値	初期値	画面部品の説明
+52: L0051	1	該当件数	文字列	-			デッキ一覧(入力)で設定された条件に合致するデッキの件数
+53: L0052	2	件数	単一選択	-			選択肢: 10件 50件 100件 300件 500件 1000件 2000件 10000件 12000件
+54: L0053	※カスタマイズ対応 デフォルト値を100件とする
+55: L0054	3	並べかえ: 項目	単一選択	-			選択肢:
+56: L0055	デッキID 順位 イベント開催日
+57: L0056	イベント名(日) イベント名(英) デッキ名 プレイヤー名
+58: L0057	※カスタマイズ対応、選択肢「DCIナンバー」「勝利数」「敗北数」「引き分け数」を除去する
+59: L0058	4	並べ替え: ソート順	単一選択	-			選択肢: 昇順 降順
+60: L0059	5	CSV出力	ボタン	-			一覧左側のチェックボックスを選択したデッキ情報のCSVがダウンロードされる
+61: L0060	6	CSV出力(旧サイト仕様)	ボタン	-			※カスタマイズ対応、項目を除去する
+62: L0061	7	一括削除	ボタン	-			一覧左側のチェックボックスを選択したデッキを一括で削除する
+63: L0062	8	一括編集	ボタン	-			一括編集(アコーディオン)を開く
+64: L0063	9	デッキ詳細	チェックボックス	-			チェックすると、デッキ情報(後述)に配置されているチェックボックスをすべてオン/オフにする
+65: L0064	10	デッキ情報	リンク	-			・デッキの情報を設定されている件数ぶん出力する
+66: L0065	・クリックすると当該デッキの編集画面へ遷移する
+67: L0066	・情報の左上にチェックボックスを配置、チェックされたデッキを「一括削除」「一括編集」の対象にする
+68: L0067	11	ポップアップメニュー
+69: L0068	（…）	ボタン	-			当該デッキに対するポップアップメニューを表示する
+70: L0069	・編集 編集画面へ遷移する
+71: L0070	・削除 確認ダイアログを表示し、OKを選択したらデッキを削除する
+72: L0071	12	ページングUI	リンク	-
+73: L0072	一括編集(アコーディオン)
+74: L0073	8
+75: L0074	9
+76: L0075	10
+77: L0076	11
+78: L0077	12
+79: L0078	13
+80: L0079	14
+81: L0080	15
+82: L0081	16
+83: L0082	17
+84: L0083	デッキ一覧(検索結果) / C109 / image 1
+85: L0084	識別ID	ラベル	書式・制限	入力チェック	画面部品の説明
+86: L0085	1	フォーマット	単一選択	チェックを入れた場合のみ必須	サジェスト機能
+87: L0086	2	アーキタイプ	単一選択	チェックを入れた場合のみ必須	サジェスト機能
+88: L0087	3	公開状態	ラジオボタン	チェックを入れた場合のみ必須
+89: L0088	4	デッキリスト公開状態	ラジオボタン	チェックを入れた場合のみ必須
+90: L0089	5	イベント名(日)	文字列	チェックを入れた場合のみ必須、255文字まで
+91: L0090	6	イベント名(英)	文字列	チェックを入れた場合のみ必須、255文字まで
+92: L0091	7	イベント開催日	文字列	チェックを入れた場合のみ必須、日付形式チェック	YYYY-M-DD HH:ii
+93: L0092	8	順位	数値	チェックを入れた場合のみ必須、数値チェック
+94: L0093	9	成績	文字列	チェックを入れた場合のみ必須、32文字まで
+95: L0094	10	勝利数	数値	チェックを入れた場合のみ必須、数値チェック	※カスタマイズ対応、項目を除去する
+96: L0095	11	敗北数	数値	チェックを入れた場合のみ必須、数値チェック	※カスタマイズ対応、項目を除去する
+97: L0096	12	引き分け数	数値	チェックを入れた場合のみ必須、数値チェック	※カスタマイズ対応、項目を除去する
+98: L0097	13	DCIナンバー	文字列	チェックを入れた場合のみ必須	※カスタマイズ対応、項目を除去する
+99: L0098	14	プレイヤー名	文字列	チェックを入れた場合のみ必須、64文字まで
+100: L0099	15	タグ	複数選択	チェックを入れた場合のみ必須	サジェスト機能
+101: L0100	16	引用元URL	文字列	チェックを入れた場合のみ必須、255文字まで
+102: L0101	17	一括編集実行	ボタン	-	入力された項目に該当するデータを更新する
+103: L0102	Source:
+104: L0103	functions/pf-eccube3/m15-02_admin_deck_deck_csv_export.md
+105: L0104	現行仕様
+106: L0105	M15-02 デッキCSV出力 / デッキ管理 — デッキ CSV 出力
+107: L0106	業務ロジック
+108: L0107	出力対象の決め方
+109: L0108	選択の状態	扱い
+110: L0109	デッキIDを1件も選択せずに実行したとき	出力せず、必須のエラーを表示して直前の画面へ戻す。ダウンロードは始めない。画面側でも未選択の送信を既定で止める
+111: L0110	該当するデッキが1件も無いとき	出力せず、未登録のエラーを表示して直前の画面へ戻す。ダウンロードは始めない
+112: L0111	指定したIDの一部だけが存在しないとき	該当が1件以上あれば処理を続ける。該当しないIDは出力に現れない
+113: L0112	並び順は、利用者が一覧で選択したときの表示順と一致するとは限らない。
+114: L0113	一覧の一括編集フォームの他の項目もあわせて送信されるが、この出力では読まない。
+115: L0114	出力の構成
+116: L0115	見出し行に論理キーを出力し、続けてデータ行を出力する。デッキ1件につき1行とする。
+117: L0116	順序	出力
+118: L0117	1	UTF-8のBOM。文字コードの設定がどの値のときも先頭に出力する
+119: L0118	2	論理キーの見出し行。1行だけ出力する
+120: L0119	3	データ行。該当するデッキが複数あるときは、件数分を出力する
+121: L0120	区切り文字は設定に従う。本文の文字コードは設定によらずUTF-8とし、先頭のBOMと合わせる。 応答が示す文字集合は設定から決まるため（「応答とファイル名」）、設定がUTF-8以外のときは 応答の表記と本文の文字コードが一致しない。
+122: L0121	列の値の作り方
+123: L0122	列	値の作り方
+124: L0123	フォーマット	紐づくフォーマットがあるときはその英語名、無いときは空文字とする
+125: L0124	アーキタイプ	紐づくアーキタイプがあるときはその日本語名、無いときは空文字とする
+126: L0125	統率者名	統率者ボードに紐づくカードがあるときはその英語名、無いときは空文字とする
+127: L0126	代表カード名	代表カード画像に紐づくカードがあるときはその英語名、無いときは空文字とする
+128: L0127	メインリスト・サイドリスト	登録されているデッキリストのテキストをそのまま出力する
+129: L0128	イベント開催日	日時が無いときは空文字、あるときは Y-m-d H:i:s の書式とする
+130: L0129	表示フラグ	公開のときは 1、非公開のときは 0 を出力する。限定公開には対応する値が無く、空欄になる
+131: L0130	応答とファイル名
+132: L0131	接頭辞 deck_、出力時点の日時（YmdHis）、拡張子 .csv を連結した名前とし、添付ファイルとして返す。
+133: L0132	文字コードの設定が SJIS-win のときは、応答の文字集合の表記だけを windows-31j に読み替える。
+134: L0133	応答ヘッダ	値
+135: L0134	内容の種別	設定の文字コードに基づく text/csv;charset=… とする
+136: L0135	内容の配置	添付ファイルとし、ファイル名を付ける
+137: L0136	入出力
+138: L0137	種類	内容
+139: L0138	入力	一覧で選択したデッキIDの配列。
+140: L0139	成功時出力	CSVファイル。ファイル名は接頭辞と日時から作る。
+141: L0140	失敗時出力	エラーメッセージと直前の画面への戻り。ダウンロードは始まらない。
+142: L0141	リニューアル後の仕様
+143: L0142	表示メッセージ
+144: L0143	出力に成功したときは画面にメッセージを出さず、ファイルの応答だけを返す。未選択のときと、選択したデッキが 1件も見つからないときのエラー文言は、デッキ検索・一覧（M15-01）の表示メッセージ一覧に含める。
+
+ succeeded in 506ms:
+1: ##### 0212 sheet-6 デッキ登録CSVアップロード
+2: L0001	デッキ登録CSVアップロード
+3: L0002	ドキュメント名デッキ管理機能
+4: L0003	セクション—
+5: L0004	プロジェクト名サイトリニューアル
+6: L0005	作成者城下
+7: L0006	作成日2025-05-07
+8: L0007	更新者—
+9: L0008	更新日—
+10: L0009	機能NoM15-06
+11: L0010	機能名デッキ登録CSVアップロード
+12: L0011	概要デッキ情報をCSVにて登録する
+13: L0012	処理概要（★はカスタマイズ項目）
+14: L0013	レイアウト図
+15: L0014	1
+16: L0015	2
+17: L0016	3
+18: L0017	4
+19: L0018	5
+20: L0019	デッキ登録CSVアップロード / B8 / image 1
+21: L0020	カスタマイズ説明
+22: L0021	・カスタマイズ要件
+23: L0022	現行システムをベースに下記カスタマイズを行う
+24: L0023	・TSVアップロードを廃止
+25: L0024	・厳密にチェックするチェックボックスは不要のため削除
+26: L0025	・旧デッキID、DCIナンバーは不要のため削除
+27: L0026	・カスタマイズ要件に記載の内容以外は現行踏襲とする。
+28: L0027	機能仕様処理概要（★はカスタマイズ項目）
+29: L0028	CSVファイルをアップロードして一括でデッキの新規登録・更新ができる。
+30: L0029	デッキIDが一致するデッキがあれば更新。なければ新規登録。
+31: L0030	各項目の入力チェックを行い、エラーがあれば登録を中止してメッセージを表示する。
+32: L0031	フォーマット名（英）が一致するフォーマットが存在すること。
+33: L0032	アーキタイプ名（日/英）とフォーマットが一致するアーキタイプが存在すること。
+34: L0033	イベント詳細IDを指定した場合は、IDが一致するイベント詳細が存在すること。
+35: L0034	デッキ非公開フラグ=0 の場合、メインリストは必須。
+36: L0035	統率者戦フォーマットの場合、統率者は必須。カード名（日英）が一致するカードが存在すること。
+37: L0036	メインリスト、サイドリストのカード枚数がフォーマットで規定されている最大数を超えるか最小数に満たない場合はエラー。
+38: L0037	統率者が登録される場合で、メインリストに統率者が含まれている場合はメインリストから除外する。
+39: L0038	代表カード名が設定されていたらカードイメージをセットする。設定がなければアーキタイプから代表カードのイメージをセットする。
+40: L0039	デッキリスト公開の場合はデッキリストをDtbDeckCardに登録する。
+41: L0040	★画面の項目を一部除去する
+42: L0041	・表記されている「TSV」の文言を除去する
+43: L0042	・識別ID:3「厳密にチェックする」を除去する
+44: L0043	・ファイルフォーマットから「win_count（勝利数）」「loss_count（敗北数）」「draw_count（引分数）」を除去する
+45: L0044	★画面の変更にあわせて、CSVアップロード実行ロジック内に記載されている
+46: L0045	・ファイル拡張子「TSV」をエラー扱いにする処理を追加
+47: L0046	・「厳密にチェックする」が有効な場合に実行されている処理を除去する
+48: L0047	・項目「旧デッキID」「DCIナンバー」に関するエラーチェック、登録/更新処理を除去する
+49: L0048	※CSVの項目はシート「デッキ登録CSV」を参照
+50: L0049	識別ID	ラベル	書式・制限	必須	最大値	初期値	画面部品の説明
+51: L0050	1	CSVファイル選択	ファイル	-			※カスタマイズ対応、現行の表記から「TSV」を除去
+52: L0051	2	ファイルを選択	ボタン	-			ボタン押下で、OS標準のファイル選択ウィンドウを表示
+53: L0052	3	厳密にチェックする	チェックボックス	-			※カスタマイズ対応、項目を除去する
+54: L0053	4	CSVファイルの
+55: L0054	アップロード	ボタン	-			CSVファイルのアップロードと入力チェックを実施。
+56: L0055	「処理概要」を参照。
+57: L0056	5	デッキ登録CSV
+58: L0057	フォーマット	テーブル	-			登録/更新に使用するCSVのファイルをーマットをテーブルで表現
+59: L0058	画面に入りきれない場合はスクロールできるようにする
+60: L0059	※CSVの項目はシート「デッキ登録CSV」を参照
+61: ##### 0212 sheet-7 デッキ登録CSV
+62: L0060	デッキ登録CSV
+63: L0061	ドキュメント名デッキ管理機能
+64: L0062	セクション—
+65: L0063	プロジェクト名サイトリニューアル
+66: L0064	作成者城下
+67: L0065	作成日2025-05-07
+68: L0066	更新者堀部
+69: L0067	更新日2025-10-24
+70: L0068	機能NoM15-06
+71: L0069	機能名デッキ登録CSV
+72: L0070	概要デッキ情報をCSVにて登録する
+73: L0071	デッキ登録CSV
+74: L0072	識別ID	項目名	主キー	書式・制限	必須	最大文字数
+75: L0073	または最大値	入力例	備考
+76: L0074	1	プレイヤー名			〇		ハレルヤクン
+77: L0075	2	フォーマット			〇		Pioneer	フォーマット名
+78: L0076	3	アーキタイプ			〇		白青ビートダウン	アーキタイプ名
+79: L0077	4	イベント詳細ID					127282	イベント詳細ID
+80: L0078	5	デッキ名					新白青	デッキ名
+81: L0079	6	勝利数					3	勝利数 ※カスタマイズ対応、項目除去する
+82: L0080	7	敗北数					0	敗北数 ※カスタマイズ対応、項目除去する
+83: L0081	8	引分数					1	引分数 ※カスタマイズ対応、項目除去する
+84: L0082	9	順位					1	順位
+85: L0083	10	成績					優勝	成績
+86: L0084	11	DCI番号						DCI番号 ※カスタマイズ対応、項目除去する
+87: L0085	12	タグ					グランプリ,プロツアー	タグ カンマ区切りで複数指定可能
+88: L0086	※カスタマイズ対応、項目追加
+89: L0087	12	イベント名(英)			〇		PanPacaPioneer	イベント名(英)
+90: L0088	13	イベント名(日)			〇		パンパカパイオニア	イベント名(日)
+91: L0089	14	イベント開催日		日付	〇		2020-07-11 13:00:00	イベント開催日
+92: L0090	15	参照元					http://example.com/	参照元
+93: L0091	16	イベント参加人数					10	イベント参加人数
+94: L0092	17	表示フラグ		0(非表示) または 1(表示)	〇		1	表示フラグ
+95: L0093	18	デッキリスト非公開フラグ		0(公開) または 1(非公開)	〇		0	デッキリスト非公開フラグ
+96: L0094	19	メインリスト		デッキリスト形式	△		2 Castle Ardenvale
+97: L0095	（略）	メインリスト
+98: L0096	20	サイドリスト		デッキリスト形式			同上	サイドリスト
+99: L0097	21	統率者		デッキリスト形式	△		同上	統率者
+100: L0098	22	デッキID	〇				290036	デッキID
+101: L0099	23	代表カード名					Hallowed Fountain	代表カード名
+102: L0100	24	旧デッキID						旧デッキID ※カスタマイズ対応、項目除去する
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+import csv,pathlib
+b=pathlib.Path('integration_test/casegen'); ids=[\"M10-05\",\"M10-06\",\"M12-10\",\"M13-13\",\"M15-03\",\"M15-04\",\"M15-06\"]
+for f in ids:
+ p=b/'cases'/f'{f}_test_cases.tsv'
+ with p.open() as h:
+  rows=list(csv.DictReader(h,delimiter='\\t'))
+ print('\\n',f,'HEADERS',list(rows[0]) if rows else [])
+ existing=(b/'combination'/'factors'/f'{f}_existing.tsv').read_text().splitlines()[1:]
+ tids={x.split('\\t')[0] for x in existing}
+ for row in rows:
+  if row.get('テストID') not in tids:continue
+  print(row.get('テストID'), '\\n  PREP:',row.get('事前準備','')[:500].replace('\\n',' / '),'\\n  STEPS:',row.get('手順','')[:500].replace('\\n',' / '),'\\n  EXPECT:',row.get('期待結果','')[:500].replace('\\n',' / '))
+PY" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 33ms:
+
+ M10-05 HEADERS ['テストID', '要求ID', '連鎖ID', '観点ID', '優先度', '実行区分', '使用シード', '事前準備', '手順', '期待結果', '出典']
+IT-M10-05-001 
+  PREP: ① ログインID=m1005ladmin、店舗基本設定の表示・保存権限を持つ稼働中の管理者で、新しいブラウザセッションの管理画面にログイン済み（S-M10-05-L-ADM）／② 店舗ID 1の本店の店舗基本情報が、店名=保存済み店舗001、送料無料条件(金額)=5000、送料無料条件(数量)=設定なし、スマレジ店舗コード=SHOP105001、その他の必須項目は有効な保存値で保存済み（S-M10-05-L-SHOP-001）／③ 会員ID 〔会員ID-M1005-001〕の会員A（登録時に振られた会員IDを控えてある。〔会員ID-M1005-001〕）が本店で公開中の商品A（税込単価1,000円・在庫10・購入上限10）を数量4でカートに保持している（S-M10-05-L-CASE-001） 
+  STEPS: 1. 店舗基本設定画面を開く／2. 送料設定の「送料無料条件(金額)」を3000に書き換える（「送料無料条件(数量)」は空のまま）／3. 登録ボタンを押す／4. 店舗基本設定画面が表示され、送料設定の値が手順2で入力した内容であることを確かめる／5. 別ブラウザセッションで会員ID 〔会員ID-M1005-001〕の会員Aとして本店にログインする／6. 本店の買い物かご画面を開く 
+  EXPECT: 買い物かご画面に「現在送料無料です。」が表示され、送料無料までの不足額の案内は表示されないこと
+IT-M10-05-002 
+  PREP: ① ログインID=m1005ladmin、店舗基本設定の表示・保存権限を持つ稼働中の管理者で、新しいブラウザセッションの管理画面にログイン済み（S-M10-05-L-ADM）／② 店舗ID 1の本店の店舗基本情報が、店名=保存済み店舗002、送料無料条件(金額)=3000、送料無料条件(数量)=設定なし、スマレジ店舗コード=SHOP105002、その他の必須項目は有効な保存値で保存済み（S-M10-05-L-SHOP-002）／③ 会員ID 〔会員ID-M1005-002〕の会員A（登録時に振られた会員IDを控えてある。〔会員ID-M1005-002〕）が本店で公開中の商品A（税込単価1,000円・在庫10・購入上限10）を数量4でカートに保持している（S-M10-05-L-CASE-002） 
+  STEPS: 1. 店舗基本設定画面を開く／2. 送料設定の「送料無料条件(金額)」を10000に書き換える（「送料無料条件(数量)」は空のまま）／3. 登録ボタンを押す／4. 店舗基本設定画面が表示され、送料設定の値が手順2で入力した内容であることを確かめる／5. 別ブラウザセッションで会員ID 〔会員ID-M1005-002〕の会員Aとして本店にログインする／6. 本店の買い物かご画面を開く 
+  EXPECT: 買い物かご画面に、送料無料金額10,000円と合計4,000円の差額6,000円が不足額として案内され、「現在送料無料です。」は表示されないこと
+IT-M10-05-003 
+  PREP: ① ログインID=m1005ladmin、店舗基本設定の表示・保存権限を持つ稼働中の管理者で、新しいブラウザセッションの管理画面にログイン済み（S-M10-05-L-ADM）／② 店舗ID 1の本店の店舗基本情報が、店名=保存済み店舗003、送料無料条件(金額)=100000、送料無料条件(数量)=10、スマレジ店舗コード=SHOP105003、その他の必須項目は有効な保存値で保存済み（S-M10-05-L-SHOP-003）／③ 会員ID 〔会員ID-M1005-003〕の会員A（登録時に振られた会員IDを控えてある。〔会員ID-M1005-003〕）が本店で公開中の商品A（税込単価1,000円・在庫10・購入上限10）を数量3でカートに保持している（S-M10-05-L-CASE-003） 
+  STEPS: 1. 店舗基本設定画面を開く／2. 送料設定の「送料無料条件(数量)」を3に書き換える（「送料無料条件(金額)」は100000のまま）／3. 登録ボタンを押す／4. 店舗基本設定画面が表示され、送料設定の値が手順2で入力した内容であることを確かめる／5. 別ブラウザセッションで会員ID 〔会員ID-M1005-003〕の会員Aとして本店にログインする／6. 本店の買い物かご画面を開く 
+  EXPECT: 合計個数3が送料無料個数3以上であるため、合計3,000円が送料無料金額100,000円に達していなくても、買い物かご画面に「現在送料無料です。」が表示されること
+IT-M10-05-004 
+  PREP: ① ログインID=m1005ladmin、店舗基本設定の表示・保存権限を持つ稼働中の管理者で、新しいブラウザセッションの管理画面にログイン済み（S-M10-05-L-ADM）／② 店舗ID 1の本店の店舗基本情報が、店名=保存済み店舗004、送料無料条件(金額)=5000、送料無料条件(数量)=10、スマレジ店舗コード=SHOP105004、その他の必須項目は有効な保存値で保存済み（S-M10-05-L-SHOP-004）／③ 会員ID 〔会員ID-M1005-004〕の会員A（登録時に振られた会員IDを控えてある。〔会員ID-M1005-004〕）が本店で公開中の商品A（税込単価1,000円・在庫10・購入上限10）を数量4でカートに保持している（S-M10-05-L-CASE-004） 
+  STEPS: 1. 店舗基本設定画面を開く／2. 送料設定の「送料無料条件(金額)」と「送料無料条件(数量)」をどちらも空にする／3. 登録ボタンを押す／4. 店舗基本設定画面が表示され、送料設定の値が手順2で入力した内容であることを確かめる／5. 別ブラウザセッションで会員ID 〔会員ID-M1005-004〕の会員Aとして本店にログインする／6. 本店の買い物かご画面を開く 
+  EXPECT: 買い物かご画面に「現在送料無料です。」も送料無料までの不足額の案内も表示されないこと
+
+ M10-06 HEADERS ['テストID', '要求ID', '連鎖ID', '観点ID', '優先度', '実行区分', '使用シード', '事前準備', '手順', '期待結果', '出典']
+IT-M10-06-001 
+  PREP: ① 新しいブラウザセッションで、ログインID=m1006l_admin、パスワード=Passw0rd!M1006Lの稼働中で、店舗設定・商品管理・受注管理を操作できる管理者で管理画面にログインしている（S-M10-06-L-ADM）／② 支払方法「連携支払L」が未削除・表示有効・利用条件の下限と上限なしで登録されている（S-M10-06-L-PAY）／③ 配送方法「連携配送L001M1006n001」が登録されていない状態である（S-M10-06-L-CLEAN-001） 
+  STEPS: 1. 配送方法設定の一覧画面で「新規登録」ボタンを押す／2. 配送業者名に「連携配送L001M1006n001」、名称に「連携配送L001M1006n001」、英語名称に「LinkDelivery-L001」を入力する／3. 支払方法設定の「連携支払L」のチェックボックスを選択する／4. 全国一律送料に「800」を入力し、各都道府県に適用ボタンを押す／5. 「設定」ボタンを押し、配送方法設定の一覧画面に「保存しました」が表示され、配送業者名「連携配送L001M1006n001」が一覧に表示されたことを確認する／6. 商品管理の購入グループ管理画面を新規登録状態で開く／7. 配送方法の選択肢を確認する 
+  EXPECT: 購入グループ管理画面の配送方法の選択肢に、「連携配送L001M1006n001」のチェックボックスが表示されること
+IT-M10-06-008 
+  PREP: ① 新しいブラウザセッションで、ログインID=m1006l_admin、パスワード=Passw0rd!M1006Lの稼働中で、店舗設定・商品管理・受注管理を操作できる管理者で管理画面にログインしている（S-M10-06-L-ADM）／② 支払方法「連携支払L」が未削除・表示有効・利用条件の下限と上限なしで登録されている（S-M10-06-L-PAY）／③ 配送方法「検証配送M1006-008-A」が登録されていない状態である（S-M10-06-REG-008） 
+  STEPS: 1. 配送方法設定の一覧画面で「新規登録」ボタンを押す／2. 配送業者名に「検証配送M1006-008-A」、名称に「検証名称M1006-008-B」、英語名称に「VerifyName-M1006-008-C」、伝票No.URLに「https://m1006-008-d.example.com/」、上限サイズに「120」を入力する／3. 支払方法設定の「連携支払L」のチェックボックスを選択する／4. 全国一律送料に「900」を入力し、各都道府県に適用ボタンを押す／5. 「設定」ボタンを押す／6. 配送方法設定の一覧画面に「保存しました」が表示されたことを確認する／7. 配送方法設定の一覧画面を開き、配送業者名「検証配送M1006-008-A」のリンクを押して編集画面を開く／8. 名称、英語名称、伝票No.URL、上限サイズを確認する 
+  EXPECT: 再度開いた編集画面で、名称が「検証名称M1006-008-B」、英語名称が「VerifyName-M1006-008-C」、伝票No.URLが「https://m1006-008-d.example.com/」、上限サイズが「120」であること
+IT-M10-06-009 
+  PREP: ① 新しいブラウザセッションで、ログインID=m1006l_admin、パスワード=Passw0rd!M1006Lの稼働中で、店舗設定・商品管理・受注管理を操作できる管理者で管理画面にログインしている（S-M10-06-L-ADM）／② 支払方法「連携支払L」が未削除・表示有効・利用条件の下限と上限なしで登録されている（S-M10-06-L-PAY）／③ 配送方法ID 〔配送方法ID-M1006-009〕（登録時に振られた配送方法IDを控えてある）=「除外確認M1006-009-A」（配送業者名・名称とも「除外確認M1006-009-A」、英語名称「ExcludeCheck-M1006-009-B」、未削除、表示有効、国内配送、出荷指示リストから除外のチェックなし、支払方法「連携支払L」を1件、北海道から沖縄県まで47都道府県の送料がすべて800でサイズ指定なし）／商品・受注・購入グループのいずれにも使われていない（S-M10-06-EXCL-009） 
+  STEPS: 1. 配送方法設定の一覧画面を開き、配送業者名「除外確認M1006-009-A」のリンクを押して編集画面を開く／2. 出荷指示リストから除外のチェックボックスを選択する／3. 「設定」ボタンを押す／4. 配送方法設定の一覧画面に「保存しました」が表示されたことを確認する／5. 配送方法設定の一覧画面を開き、配送業者名「除外確認M1006-009-A」のリンクを押して編集画面を開く／6. 出荷指示リストから除外のチェックボックスを確認する 
+  EXPECT: 再度開いた編集画面で、出荷指示リストから除外のチェックボックスが選択済みであること
+IT-M10-06-010 
+  PREP: ① 新しいブラウザセッションで、ログインID=m1006l_admin、パスワード=Passw0rd!M1006Lの稼働中で、店舗設定・商品管理・受注管理を操作できる管理者で管理画面にログインしている（S-M10-06-L-ADM）／② 配送方法ID 〔配送方法ID-M1006-010〕（登録時に振られた配送方法IDを控えてある）=「支払選択M1006-010-D」（配送業者名・名称とも「支払選択M1006-010-D」、英語名称「PaySelect-M1006-010-E」、未削除、表示有効、国内配送、支払方法「支払M1006-010-A」と「支払M1006-010-B」の2件を選択済み、北海道から沖縄県まで47都道府県の送料がすべて800でサイズ指定なし）／支払方法「支払M1006-010-A」「支払M1006-010-B」「支払M1006-010-C」の3件が未削除・表示有効・利用条件の下限と上限なしで登録されている／商品・受注・購入グループのいずれにも使われていない（S-M10-06-PAYSEL-010） 
+  STEPS: 1. 配送方法設定の一覧画面を開き、配送業者名「支払選択M1006-010-D」のリンクを押して編集画面を開く／2. 支払方法設定の「支払M1006-010-B」のチェックボックスを外し、「支払M1006-010-C」のチェックボックスを選択する／3. 「設定」ボタンを押す／4. 配送方法設定の一覧画面に「保存しました」が表示されたことを確認する／5. 配送方法設定の一覧画面を開き、配送業者名「支払選択M1006-010-D」のリンクを押して編集画面を開く／6. 支払方法設定の3件のチェックボックスを確認する 
+  EXPECT: 再度開いた編集画面で、支払方法設定の「支払M1006-010-A」と「支払M1006-010-C」が選択され、「支払M1006-010-B」が選択されていないこと
+IT-M10-06-011 
+  PREP: ① 新しいブラウザセッションで、ログインID=m1006l_admin、パスワード=Passw0rd!M1006Lの稼働中で、店舗設定・商品管理・受注管理を操作できる管理者で管理画面にログインしている（S-M10-06-L-ADM）／② 支払方法「連携支払L」が未削除・表示有効・利用条件の下限と上限なしで登録されている（S-M10-06-L-PAY）／③ 配送方法ID 〔配送方法ID-M1006-011〕（登録時に振られた配送方法IDを控えてある）=「時間設定M1006-011-D」（配送業者名・名称とも「時間設定M1006-011-D」、英語名称「TimeSet-M1006-011-E」、未削除、表示有効、国内配送、支払方法「連携支払L」を1件、北海道から沖縄県まで47都道府県の送料がすべて800でサイズ指定なし、お届け時間は未設定）／商品・受注・購入グループのいずれにも使われていない（S-M10-06-TIME-011） 
+  STEPS: 1. 配送方法設定の一覧画面を開き、配送業者名「時間設定M1006-011-D」のリンクを押して編集画面を開く／2. お届け時間設定の1行目に「午前M1006-011-A」、2行目に「午後M1006-011-B」を入力する／3. 「設定」ボタンを押す／4. 配送方法設定の一覧画面に「保存しました」が表示されたことを確認する／5. 配送方法設定の一覧画面を開き、配送業者名「時間設定M1006-011-D」のリンクを押して編集画面を開く／6. お届け時間設定の入力欄を確認する 
+  EXPECT: 再度開いた編集画面のお届け時間設定に、「午前M1006-011-A」と「午後M1006-011-B」が入力されていること
+IT-M10-06-017 
+  PREP: ① 新しいブラウザセッションで、ログインID=m1006l_admin、パスワード=Passw0rd!M1006Lの稼働中で、店舗設定・商品管理・受注管理を操作できる管理者で管理画面にログインしている（S-M10-06-L-ADM）／② 支払方法「連携支払L」が未削除・表示有効・利用条件の下限と上限なしで登録されている（S-M10-06-L-PAY）／③ 配送方法「新規送料M1006-017-A」が登録されていない状態である（S-M10-06-NEWFEE-017） 
+  STEPS: 1. 配送方法設定の一覧画面で「新規登録」ボタンを押す／2. 配送業者名に「新規送料M1006-017-A」を入力する／3. 支払方法設定の「連携支払L」のチェックボックスを選択する／4. 全国一律送料に「1300」を入力し、各都道府県に適用ボタンを押す／5. 「設定」ボタンを押す／6. 配送方法設定の一覧画面に「保存しました」が表示されたことを確認する／7. 配送方法設定の一覧画面を開き、配送業者名「新規送料M1006-017-A」のリンクを押して編集画面を開く／8. 都道府県別送料設定の47都道府県の送料を確認する 
+  EXPECT: 再度開いた編集画面で、北海道から沖縄県までの47都道府県すべての送料が1300であること
+
+ M12-10 HEADERS ['テストID', '要求ID', '連鎖ID', '観点ID', '優先度', '実行区分', '使用シード', '事前準備', '手順', '期待結果', '出典']
+IT-M12-10-008 
+  PREP: ① 管理画面に、管理者ID 121090000の分析・集計管理機能を操作できる管理者でログインしている（S-M12-10-ADM）／② フォーマットID 〔フォーマットID-M1210-008〕の試験フォーマットB-008には、公開中のイベントのデッキID 〔デッキID-M1210-008A〕・〔デッキID-M1210-008B〕、公開中の利用者作成デッキID 〔デッキID-M1210-008C〕、非公開のイベントのデッキID 〔デッキID-M1210-008D〕だけがある。公開中のイベントのデッキでは商品ID 〔商品ID-M1210-008A〕のカードPが合計6枚、基本だけが紐付く商品ID 〔商品ID-M1210-008B〕のカードQが合計10枚採用され、両商品の状態NMの商品規格が表示対象かつ削除されていない（登録時に振られたフォーマットID・デッキID・商品IDを控えてある）（S-M12-10-USED-008） 
+  STEPS: 1. 特集タグ編集CSVダウンロード(検索項目)画面を開く／2. 集計日(From)に「2026/06/01」、集計日(To)に「2026/06/30」を入力し、フォーマットで「試験フォーマットB-008」を選択し、基本土地項目追加をチェックONにする／3. 出力条件を指定するための「特集タグ編集CSVダウンロード」ボタンを押す／4. 表示された「特集タグ編集CSVダウンロード」ボタンを押す／5. ダウンロードしたCSVのデータ行を確認する 
+  EXPECT: データ行が商品ID 〔商品ID-M1210-008B〕（採用枚数が数値として10）、商品ID 〔商品ID-M1210-008A〕（採用枚数が数値として6）の順の2行であること
+
+ M13-13 HEADERS ['テストID', '要求ID', '連鎖ID', '観点ID', '優先度', '実行区分', '使用シード', '事前準備', '手順', '期待結果', '出典']
+IT-M13-13-007 
+  PREP: ① CSV取込区切り文字をカンマに設定する（S-M13-13-CSV-SETTING）／② トーナメントセンター 東京を編集可能なM13-13試験管理者でログインしている（S-M13-13-ADM）／③ トーナメントセンター 東京、TC 東京、パウパー、カジュアル、公開が利用可能である（S-M13-13-MASTER）／④ M13-13-PARENT-ONLY-007.csvは日程なしイベント-007の開始時間と日程項目が空であり、同名イベントが存在しない状態にする。存在する場合は削除する（S-M13-13-PARENT-ONLY-007） 
+  STEPS: 1. イベント申込一括CSV登録画面を開く／2. S-M13-13-PARENT-ONLY-007のCSVファイルを選択する／3. CSVファイルのアップロードボタンを押す／4. DBで「日程なしイベント-007」を確認する 
+  EXPECT: 「日程なしイベント-007」が1件登録され、開始時間が空であるためイベント日程は登録されないこと
+IT-M13-13-008 
+  PREP: ① CSV取込区切り文字をカンマに設定する（S-M13-13-CSV-SETTING）／② トーナメントセンター 東京を編集可能なM13-13試験管理者でログインしている（S-M13-13-ADM）／③ トーナメントセンター 東京、TC 東京、パウパー、カジュアル、公開が利用可能である（S-M13-13-MASTER）／④ M13-13-DEFAULTS-008.csvは親イベントの定員=80・参加費=1200、開始時間=2026-11-01 15:00、定員_日程と参加費_日程は空であり、日程既定値イベント-008が存在しない状態にする。存在する場合はイベント日程とともに削除する（S-M13-13-DEFAULTS-008） 
+  STEPS: 1. イベント申込一括CSV登録画面を開く／2. S-M13-13-DEFAULTS-008のCSVファイルを選択する／3. CSVファイルのアップロードボタンを押す／4. DBで「日程既定値イベント-008」のイベント日程を確認する 
+  EXPECT: 定員_日程が親イベントの定員80、参加費_日程が親イベントの参加費1200で登録されること
+IT-M13-13-012 
+  PREP: ① CSV取込区切り文字をカンマに設定する（S-M13-13-CSV-SETTING）／② トーナメントセンター 東京を編集可能なM13-13試験管理者でログインしている（S-M13-13-ADM）／③ 取込用マスタとクレジットカード支払が利用可能である（S-M13-13-MASTER）／④ M13-13-CREDIT-ERROR-012.csvはクレジットカード支払い=なし、オンライン受付=あり、参加費=1000であり、カード設定不足イベント-012が存在しない状態にする。存在する場合はイベント日程とともに削除する（S-M13-13-CREDIT-ERROR-012） 
+  STEPS: 1. イベント申込一括CSV登録画面を開く／2. S-M13-13-CREDIT-ERROR-012のCSVファイルを選択する／3. CSVファイルのアップロードボタンを押す／4. DBでイベント名(日)が「カード設定不足イベント-012」のイベントを確認する 
+  EXPECT: クレジットカード支払いが「なし」、オンライン受付が「あり」、有効な参加費が1000であるため、「カード設定不足イベント-012」が登録されないこと
+IT-M13-13-021 
+  PREP: ① CSV取込区切り文字をカンマに設定する（S-M13-13-CSV-SETTING）／② トーナメントセンター 東京を編集可能なM13-13試験管理者でログインしている（S-M13-13-ADM）／③ トーナメントセンター 東京、TC 東京、パウパー、カジュアル、公開が利用可能である（S-M13-13-MASTER）／④ M13-13-ROLLBACK-021.csvは1行目が正常、2行目の店舗が空であり、取消確認正常行-021と取消確認不正行-021が存在しない状態にする。存在する場合はイベント日程とともに削除する（S-M13-13-ROLLBACK-021） 
+  STEPS: 1. イベント申込一括CSV登録画面を開く／2. S-M13-13-ROLLBACK-021のCSVファイルを選択する／3. CSVファイルのアップロードボタンを押す／4. DBで「取消確認正常行-021」と「取消確認不正行-021」を確認する 
+  EXPECT: 2行目の検証エラーによって登録内容が全件取り消され、「取消確認正常行-021」と「取消確認不正行-021」がいずれも登録されないこと
+IT-M13-13-032 
+  PREP: ① CSV取込区切り文字をカンマに設定する（S-M13-13-CSV-SETTING）／② トーナメントセンター 東京を編集可能なM13-13試験管理者でログインしている（S-M13-13-ADM）／③ トーナメントセンター 東京、TC 東京、パウパー、カジュアル、公開が利用可能である（S-M13-13-MASTER）／④ 中断確認-032で始まるイベントをイベント日程とともに削除し、0件である状態にする。M13-13-BREAK-032.csvは1行目と3行目が正常、2行目の店舗が空である（S-M13-13-BREAK-032） 
+  STEPS: 1. イベント申込一括CSV登録画面を開く／2. S-M13-13-BREAK-032のCSVファイルを選択する／3. CSVファイルのアップロードボタンを押す／4. DBでイベント名(日)が「中断確認-032」で始まるイベントを確認する 
+  EXPECT: 中断確認-032前行・中断確認-032不正行・中断確認-032後行のいずれのイベントも登録されないこと
+IT-M13-13-036 
+  PREP: ① CSV取込区切り文字をカンマに設定する（S-M13-13-CSV-SETTING）／② トーナメントセンター 東京を編集可能なM13-13試験管理者でログインしている（S-M13-13-ADM）／③ 取込用マスタとクレジットカード支払が利用可能である（S-M13-13-MASTER）／④ M13-13-FREE-ONLINE-036.csvはクレジットカード支払い=なし、参加費=0、オンライン受付=あり、オンライン受付時間From=2026-12-01 10:00、オンライン受付時間To=2026-12-10 15:00、開始時間=2026-12-15 15:00、参加費_日程は空であり、カード無し無料オンライン受付イベント-M1313-036が存在しない状態にする。存在する場合はイベント日程とともに削除する（S-M13-13-FREE-ONLINE-036） 
+  STEPS: 1. イベント申込一括CSV登録画面を開く／2. S-M13-13-FREE-ONLINE-036のCSVファイルを選択する／3. CSVファイルのアップロードボタンを押す／4. DBでイベント名(日)が「カード無し無料オンライン受付イベント-M1313-036」のイベントとそのイベント日程を確認する 
+  EXPECT: クレジットカード支払いが「なし」、オンライン受付が「あり」でも有効な参加費が0（無料）であるため、エラーにならず「カード無し無料オンライン受付イベント-M1313-036」が1件、そのイベント日程が1件登録されること
+IT-M13-13-037 
+  PREP: ① CSV取込区切り文字をカンマに設定する（S-M13-13-CSV-SETTING）／② トーナメントセンター 東京を編集可能なM13-13試験管理者でログインしている（S-M13-13-ADM）／③ 取込用マスタとクレジットカード支払が利用可能である（S-M13-13-MASTER）／④ M13-13-NOONLINE-PAID-037.csvはクレジットカード支払い=なし、参加費=1000、オンライン受付=なし、受付=なし、開始時間=2026-12-16 15:00、参加費_日程は空であり、カード無し有料受付なしイベント-M1313-037が存在しない状態にする。存在する場合はイベント日程とともに削除する（S-M13-13-NOONLINE-PAID-037） 
+  STEPS: 1. イベント申込一括CSV登録画面を開く／2. S-M13-13-NOONLINE-PAID-037のCSVファイルを選択する／3. CSVファイルのアップロードボタンを押す／4. DBでイベント名(日)が「カード無し有料受付なしイベント-M1313-037」のイベントとそのイベント日程を確認する 
+  EXPECT: クレジットカード支払いが「なし」で参加費が1000の有料でも、オンライン受付が「なし」であるため、エラーにならず「カード無し有料受付なしイベント-M1313-037」が1件、そのイベント日程が1件登録されること
+IT-M13-13-041 
+  PREP: ① CSV取込区切り文字をカンマに設定する（S-M13-13-CSV-SETTING）／② トーナメントセンター 東京を編集可能なM13-13試験管理者でログインしている（S-M13-13-ADM）／③ 取込用マスタとクレジットカード支払が利用可能である（S-M13-13-MASTER）／④ M13-13-FEE-PAID-041.csvはクレジットカード支払い=なし、参加費=0、オンライン受付=あり、参加費_日程=1000であり、日程有料カード設定不足イベント-M1313-041が存在しない状態にする。存在する場合はイベント日程とともに削除する（S-M13-13-FEE-PAID-041） 
+  STEPS: 1. イベント申込一括CSV登録画面を開く／2. S-M13-13-FEE-PAID-041のCSVファイルを選択する／3. CSVファイルのアップロードボタンを押す／4. DBでイベント名(日)が「日程有料カード設定不足イベント-M1313-041」のイベントを確認する 
+  EXPECT: クレジットカード支払いが「なし」、オンライン受付が「あり」、参加費_日程が1000（有料）であるため、「日程有料カード設定不足イベント-M1313-041」とそのイベント日程が登録されないこと
+IT-M13-13-042 
+  PREP: ① CSV取込区切り文字をカンマに設定する（S-M13-13-CSV-SETTING）／② トーナメントセンター 東京を編集可能なM13-13試験管理者でログインしている（S-M13-13-ADM）／③ 取込用マスタとクレジットカード支払が利用可能である（S-M13-13-MASTER）／④ M13-13-FEE-ZERO-042.csvはクレジットカード支払い=なし、参加費=1000、オンライン受付=あり、参加費_日程=0であり、日程無料カード無しイベント-M1313-042が存在しない状態にする。存在する場合はイベント日程とともに削除する（S-M13-13-FEE-ZERO-042） 
+  STEPS: 1. イベント申込一括CSV登録画面を開く／2. S-M13-13-FEE-ZERO-042のCSVファイルを選択する／3. CSVファイルのアップロードボタンを押す／4. DBでイベント名(日)が「日程無料カード無しイベント-M1313-042」のイベントとそのイベント日程を確認する 
+  EXPECT: クレジットカード支払いが「なし」、オンライン受付が「あり」でも参加費_日程が0（無料）であるため、エラーにならず「日程無料カード無しイベント-M1313-042」が1件、そのイベント日程が1件登録されること
+
+ M15-03 HEADERS ['テストID', '要求ID', '連鎖ID', '観点ID', '優先度', '実行区分', '使用シード', '事前準備', '手順', '期待結果', '出典']
+IT-M15-03-001 
+  PREP: 管理画面にログインできる管理者 m1503qm-adm（S-M15-03-QM-ADM）／デッキ2件（デッキID 〔デッキID-M1503-001A〕 はプレイヤー名 QM1503-001-選手甲、デッキID 〔デッキID-M1503-001B〕 はプレイヤー名 QM1503-001-選手乙。どちらも大会デッキ・公開状態=公開で、記事には紐づいていない。登録時に振られたデッキIDを控えてある）が登録済み（S-M15-03-QM-DECK-001） 
+  STEPS: 1. デッキ検索TOPを開き、「クリア」を押して入力済みの検索条件を空に戻し、プレイヤー名に QM1503-001-選手 を入力して「検索」を押す／2. 一覧にプレイヤー「QM1503-001-選手甲」「QM1503-001-選手乙」の2行が表示されていることを見る／3. 管理画面のログイン画面でログインIDに m1503qm-adm、パスワードに Passw0rd-M1503QM を入力してログインする／4. デッキ管理＞デッキ一覧のデッキ検索・一覧画面で「日付クリア」を押し、デッキIDに 〔デッキID-M1503-001A〕,〔デッキID-M1503-001B〕 を入力して「検索する」を押す／5. デッキID 〔デッキID-M1503-001A〕 と 〔デッキID-M1503-001B〕 の2件を選択する／6. 「一括削除」を押し、確認画面で「OK」を押す／7. デッキ検索TOPを開き、「クリア」を押して入力済みの検索条件を空に戻し、プレイヤー名に QM1503-001-選手 を入力して「検索」を押す 
+  EXPECT: 一括削除後の検索で、一覧の領域に「ご指定の条件に一致するデッキが見つかりませんでした。」が表示され、プレイヤー「QM1503-001-選手甲」「QM1503-001-選手乙」のどちらの行も表示されないこと
+IT-M15-03-002 
+  PREP: ① 管理画面にログインできる管理者 m1503qm-adm（S-M15-03-QM-ADM）／② フォーマット「QM1503-002-フォーマット」（ランキング表示=ON・メタ集計日数30日）の状態: アーキタイプ「QM1503-002-型甲」のデッキ3件（QM1503-002-選手甲1＝デッキID 〔デッキID-M1503-002A〕、QM1503-002-選手甲2＝デッキID 〔デッキID-M1503-002B〕、QM1503-002-選手甲3）とアーキタイプ「QM1503-002-型乙」のデッキ1件（QM1503-002-選手乙1）。記事には紐づいておらず、登録時に振られたデッキIDを控えてある。いずれも大会デッキ・公開状態=公開・開催日は実行日の5日前で、このフォーマットのデッキはこれだけ。メタゲーム上位の集計結果のキャッシュは無い（S-M15-03-QM-META-002）／③ 試験は実行当日内に終える 
+  STEPS: 1. デッキ検索TOPを開き、「QM1503-002-フォーマット」のメタゲームの区画で、アーキタイプ「QM1503-002-型甲」のデッキ数が3、「QM1503-002-型乙」のデッキ数が1であることを見る／2. 管理画面のログイン画面でログインIDに m1503qm-adm、パスワードに Passw0rd-M1503QM を入力してログインする／3. デッキ管理＞デッキ一覧のデッキ検索・一覧画面で「日付クリア」を押し、デッキIDに 〔デッキID-M1503-002A〕,〔デッキID-M1503-002B〕 を入力して「検索する」を押す／4. デッキID 〔デッキID-M1503-002A〕 と 〔デッキID-M1503-002B〕 の2件を選択し、「一括削除」を押して確認画面で「OK」を押す／5. 手順1でデッキ検索TOPを表示した時刻から3601秒以上待つ／6. デッキ検索TOPを開き直す 
+  EXPECT: 一括削除後（キャッシュの保持時間が過ぎた後）に開いたデッキ検索TOPの「QM1503-002-フォーマット」のメタゲームの区画で、アーキタイプ「QM1503-002-型甲」のデッキ数が1、「QM1503-002-型乙」のデッキ数が1と表示されること
+IT-M15-03-003 
+  PREP: 管理画面にログインできる管理者 m1503qm-adm（S-M15-03-QM-ADM）／デッキ1件（デッキID 〔デッキID-M1503-003〕 はプレイヤー名 QM1503-003-選手甲。大会デッキ・公開状態=公開で、記事には紐づいていない。このフォーマットのデッキはこれだけ。登録時に振られたデッキIDを控えてある）が登録済み（S-M15-03-QM-DECK-003） 
+  STEPS: 1. デッキ検索TOPを開き、「クリア」を押して入力済みの検索条件を空に戻し、プレイヤー名に QM1503-003-選手 を入力して「検索」を押す／2. 一覧にプレイヤー「QM1503-003-選手甲」の1行が表示されていることを見る／3. 管理画面のログイン画面でログインIDに m1503qm-adm、パスワードに Passw0rd-M1503QM を入力してログインする／4. デッキ管理＞デッキ一覧のデッキ検索・一覧画面で「日付クリア」を押し、デッキIDに 〔デッキID-M1503-003〕 を入力して「検索する」を押す／5. デッキID 〔デッキID-M1503-003〕 の1件だけを選択する／6. 「一括削除」を押し、確認画面で「OK」を押す／7. デッキ検索・一覧画面で「日付クリア」を押し、デッキIDに 〔デッキID-M1503-003〕 を入力して「検索する」を押す／8. デッキ検索TOPを開き、「クリア」を押して入力済みの検索条件を空に戻し、プレイヤー名に QM1503-003-選手 を入力して「検索」を押す 
+  EXPECT: 手順6のあとのデッキ検索・一覧画面にデッキID 〔デッキID-M1503-003〕 が表示されなくなり、手順8の検索で一覧の領域に「ご指定の条件に一致するデッキが見つかりませんでした。」が表示され、プレイヤー「QM1503-003-選手甲」の行が表示されないこと
+
+ M15-04 HEADERS ['テストID', '要求ID', '連鎖ID', '観点ID', '優先度', '実行区分', '使用シード', '事前準備', '手順', '期待結果', '出典']
+IT-M15-04-001 
+  PREP: ① 管理画面にログインできる管理者 m1504qm-adm（S-M15-04-QM-ADM）／② デッキID 〔デッキID-M1504-001〕 のデッキ（プレイヤー名 QM1504-001-選手・大会デッキ・公開状態=公開・アーキタイプ QM1504-001-型甲（英名 QM1504-001-TypeA）・イベント名(日) QM1504-001-大会旧）と、同じフォーマットのアーキタイプ QM1504-001-型乙（英名 QM1504-001-TypeB）が登録済み（登録時に振られたデッキIDを控えてある）（S-M15-04-QM-DECK-001） 
+  STEPS: 1. デッキ検索TOPを開き、「クリア」を押して入力済みの検索条件を空に戻し、プレイヤー名に QM1504-001-選手 を入力して「検索」を押す／2. 一覧の行のアーキタイプが「QM1504-001-型甲/QM1504-001-TypeA」、大会名が「QM1504-001-大会旧」であることを見る／3. 管理画面のログイン画面でログインIDに m1504qm-adm、パスワードに Passw0rd-M1504QM を入力してログインする／4. デッキ管理＞デッキ一覧のデッキ検索・一覧画面で「日付クリア」を押し、デッキIDに 〔デッキID-M1504-001〕 を入力して「検索する」を押す／5. デッキID 〔デッキID-M1504-001〕 を選択し、一括編集を開く／6. アーキタイプに「QM1504-001-型乙」、イベント名(日)に「QM1504-001-大会新」を入力し、この2項目の変更チェックだけをオンにする／7. 「一括編集実行」を押す／8. デッキ検索TOPを開き、「クリア」を押して入力済みの検索条件を空に戻し、プレイヤー名に QM1504-001-選手 を入力して「検索 
+  EXPECT: 一括編集後の検索で、一覧のプレイヤー「QM1504-001-選手」の行のアーキタイプが「QM1504-001-型乙/QM1504-001-TypeB」、大会名が「QM1504-001-大会新」と表示されること
+IT-M15-04-002 
+  PREP: ① 管理画面にログインできる管理者 m1504qm-adm（S-M15-04-QM-ADM）／② デッキID 〔デッキID-M1504-002〕 のデッキ（プレイヤー名 QM1504-002-選手・大会デッキ・公開状態=公開）が登録済み（登録時に振られたデッキIDを控えてある）（S-M15-04-QM-DECK-002） 
+  STEPS: 1. デッキ検索TOPを開き、「クリア」を押して入力済みの検索条件を空に戻し、プレイヤー名に QM1504-002-選手 を入力して「検索」を押す／2. 一覧にプレイヤー「QM1504-002-選手」の行が表示されていることを見る／3. 管理画面のログイン画面でログインIDに m1504qm-adm、パスワードに Passw0rd-M1504QM を入力してログインする／4. デッキ管理＞デッキ一覧のデッキ検索・一覧画面で「日付クリア」を押し、デッキIDに 〔デッキID-M1504-002〕 を入力して「検索する」を押す／5. デッキID 〔デッキID-M1504-002〕 を選択し、一括編集を開く／6. 公開状態で「非公開」を選び、公開状態の変更チェックだけをオンにする／7. 「一括編集実行」を押す／8. デッキ検索TOPを開き、「クリア」を押して入力済みの検索条件を空に戻し、プレイヤー名に QM1504-002-選手 を入力して「検索」を押す 
+  EXPECT: 一括編集で公開状態を「非公開」にした後の検索で、一覧の領域に「ご指定の条件に一致するデッキが見つかりませんでした。」が表示され、プレイヤー「QM1504-002-選手」の行が表示されないこと
+IT-M15-04-003 
+  PREP: ① 管理画面にログインできる管理者 m1504qm-adm（S-M15-04-QM-ADM）／② デッキID 〔デッキID-M1504-003〕 のデッキ（大会デッキ・公開状態=公開・アーキタイプ QM1504-003-型甲・イベント名(日) QM1504-003-大会旧）と、同じフォーマットのアーキタイプ QM1504-003-型乙 が登録済み（登録時に振られたデッキIDを控えてある）（S-M15-04-QM-DECK-003） 
+  STEPS: 1. デッキリスト詳細画面を、デッキID 〔デッキID-M1504-003〕 を指定して開き、情報欄のアーキタイプが「QM1504-003-型甲」、大会名が「QM1504-003-大会旧」であることを見る／2. 管理画面のログイン画面でログインIDに m1504qm-adm、パスワードに Passw0rd-M1504QM を入力してログインする／3. デッキ管理＞デッキ一覧のデッキ検索・一覧画面で「日付クリア」を押し、デッキIDに 〔デッキID-M1504-003〕 を入力して「検索する」を押す／4. デッキID 〔デッキID-M1504-003〕 を選択し、一括編集を開く／5. アーキタイプに「QM1504-003-型乙」、イベント名(日)に「QM1504-003-大会新」を入力し、この2項目の変更チェックだけをオンにする／6. 「一括編集実行」を押す／7. デッキリスト詳細画面を、デッキID 〔デッキID-M1504-003〕 を指定して開き直す 
+  EXPECT: 一括編集後に開き直したデッキリスト詳細画面の情報欄で、アーキタイプが「QM1504-003-型乙」、大会名が「QM1504-003-大会新」と表示されること
+IT-M15-04-004 
+  PREP: ① 管理画面にログインできる管理者 m1504qm-adm（S-M15-04-QM-ADM）／② フォーマット「QM1504-004-フォーマット」（ランキング表示=ON・メタ集計日数30日）の状態: アーキタイプ「QM1504-004-型甲」のデッキ2件（QM1504-004-選手甲1、QM1504-004-選手甲2＝デッキID 〔デッキID-M1504-004〕）とアーキタイプ「QM1504-004-型乙」のデッキ1件（QM1504-004-選手乙1）。記事には紐づいておらず、登録時に振られたデッキIDを控えてある。いずれも大会デッキ・公開状態=公開・開催日は実行日の5日前で、このフォーマットのデッキはこれだけ。メタゲーム上位の集計結果のキャッシュは無い（S-M15-04-QM-META-004）／③ 試験は実行当日内に終える 
+  STEPS: 1. デッキ検索TOPを開き、「QM1504-004-フォーマット」のメタゲームの区画で、アーキタイプ「QM1504-004-型甲」のデッキ数が2、「QM1504-004-型乙」のデッキ数が1であることを見る／2. 管理画面のログイン画面でログインIDに m1504qm-adm、パスワードに Passw0rd-M1504QM を入力してログインする／3. デッキ管理＞デッキ一覧のデッキ検索・一覧画面で「日付クリア」を押し、デッキIDに 〔デッキID-M1504-004〕 を入力して「検索する」を押す／4. デッキID 〔デッキID-M1504-004〕 を選択し、一括編集を開く／5. アーキタイプに「QM1504-004-型乙」を選び、アーキタイプの変更チェックだけをオンにする／6. 「一括編集実行」を押す／7. 手順1でデッキ検索TOPを表示した時刻から3601秒以上待つ／8. デッキ検索TOPを開き直す 
+  EXPECT: 一括編集後（キャッシュの保持時間が過ぎた後）に開いたデッキ検索TOPの「QM1504-004-フォーマット」のメタゲームの区画で、アーキタイプ「QM1504-004-型甲」のデッキ数が1、「QM1504-004-型乙」のデッキ数が2と表示されること
+IT-M15-04-005 
+  PREP: ① 管理画面にログインできる管理者 m1504qm-adm（S-M15-04-QM-ADM）／② デッキID 〔デッキID-M1504-005〕 のデッキ（プレイヤー名 QM1504-005-選手・大会デッキ・公開状態=公開・アーキタイプ QM1504-005-型甲（英名 QM1504-005-TypeA）・イベント名(日) QM1504-005-大会旧）と、同じフォーマットのアーキタイプ QM1504-005-型乙（英名 QM1504-005-TypeB）が登録済み（登録時に振られたデッキIDを控えてある）（S-M15-04-QM-DECK-005） 
+  STEPS: 1. デッキ検索TOPを開き、「クリア」を押して入力済みの検索条件を空に戻し、プレイヤー名に QM1504-005-選手 を入力して「検索」を押す／2. 一覧の行のアーキタイプが「QM1504-005-型甲/QM1504-005-TypeA」、大会名が「QM1504-005-大会旧」であることを見る／3. 管理画面のログイン画面でログインIDに m1504qm-adm、パスワードに Passw0rd-M1504QM を入力してログインする／4. デッキ管理＞デッキ一覧のデッキ検索・一覧画面で「日付クリア」を押し、デッキIDに 〔デッキID-M1504-005〕 を入力して「検索する」を押す／5. デッキID 〔デッキID-M1504-005〕 を選択し、一括編集を開く／6. アーキタイプに「QM1504-005-型乙」、イベント名(日)に「QM1504-005-大会新」、プレイヤー名に「QM1504-005-選手改」を入力し、アーキタイプとイベント名(日)の変更チェックだけをオンにして、プレイヤー名の変更チェックはオフのままにする／7. 「一括編集実行」を押す／8. デッキ検索TOPを 
+  EXPECT: 変更チェックを付けたアーキタイプとイベント名(日)だけが更新され、一括編集後の検索で、プレイヤー「QM1504-005-選手」の行がそのまま表示され、その行のアーキタイプが「QM1504-005-型乙/QM1504-005-TypeB」、大会名が「QM1504-005-大会新」と表示されること
+IT-M15-04-006 
+  PREP: ① 管理画面にログインできる管理者 m1504rj-adm（システム管理者の権限）（S-M15-04-RJ-ADM）／② フォーマット「RJ1504-001-フォーマット」のアーキタイプ「RJ1504-001-型甲」「RJ1504-001-型乙」（どちらも公開）があり、デッキID 〔デッキID-M1504-RJ001〕 のデッキ（デッキ名「RJ1504-001-デッキ」・デッキ種別 event・非公開・イベント詳細なし）が「RJ1504-001-型甲」に1件だけ紐づき、「RJ1504-001-型乙」に紐づくデッキは0件（登録時に振られたデッキIDを控えてある）（S-M15-04-RJ-DECK-006） 
+  STEPS: 1. 管理画面のログイン画面でログインIDに m1504rj-adm、パスワードに Passw0rd-M1504RJ を入力してログインする／2. デッキ管理＞アーキタイプ一覧のアーキタイプ管理(検索入力)画面で、アーキタイプ名に「RJ1504-001-型」を入力して「検索する >」を押す／3. アーキタイプ管理(検索結果)画面で、アーキタイプ「RJ1504-001-型甲」の登録デッキ数が1、「RJ1504-001-型乙」の登録デッキ数が0であることを見る／4. デッキ管理＞デッキ一覧のデッキ検索・一覧画面で「日付クリア」を押し、デッキIDに 〔デッキID-M1504-RJ001〕 を入力して「検索する」を押す／5. デッキID 〔デッキID-M1504-RJ001〕 を選択し、一括編集を開く／6. アーキタイプに「RJ1504-001-型乙」を選び、アーキタイプの変更チェックだけをオンにする／7. 「一括編集実行」を押す／8. デッキ管理＞アーキタイプ一覧のアーキタイプ管理(検索入力)画面で、アーキタイプ名に「RJ1504-001-型」を入力して「検索する >」を押す（検索入力画面を 
+  EXPECT: 一括編集でアーキタイプを変更した後、アーキタイプ管理(検索結果)画面のアーキタイプ「RJ1504-001-型甲」の登録デッキ数が0、「RJ1504-001-型乙」の登録デッキ数が1と表示されること
+
+ M15-06 HEADERS ['テストID', '要求ID', '連鎖ID', '観点ID', '優先度', '実行区分', '使用シード', '事前準備', '手順', '期待結果', '出典']
+IT-M15-06-003 
+  PREP: ① 試験管理者で管理画面にログインしている（S-M15-06-ADM）／② TestStandard、Test Archetype、イベント詳細ID 150601、取込で使用するカードと画像が登録されている（S-M15-06-MASTER）／③ 刷新後20項目のCSVヘッダと有効基準値が確定している（S-M15-06-CSV-BASE）／④ deck_idが空欄のfull_new-003.csvが手元にあり、プレイヤー名IT完全新規-003のデッキは存在しない（S-M15-06-CSV-CORE-003） 
+  STEPS: 1. デッキ登録CSVアップロード画面を開く／2. deck_idを空欄としたfull_new-003.csvを選択する／3. 「CSVファイルのアップロード」を押す／4. DBでプレイヤー名「IT完全新規-003」のデッキIDを確認する 
+  EXPECT: 追加された「IT完全新規-003」のデッキに新しいデッキIDが採番されること
+IT-M15-06-004 
+  PREP: ① 試験管理者で管理画面にログインしている（S-M15-06-ADM）／② TestStandard、Test Archetype、イベント詳細ID 150601、取込で使用するカードと画像が登録されている（S-M15-06-MASTER）／③ 刷新後20項目のCSVヘッダと有効基準値が確定している（S-M15-06-CSV-BASE）／④ デッキID 1506001004のイベントデッキと明細が登録され、deck_idに1506001004を指定したupdate_existing-004.csvが手元にあり、プレイヤー名IT更新後-004の別デッキは存在しない。開始時にデッキID 1506001004以外でこのプレイヤー名のデッキがあれば削除して0件にする（S-M15-06-CSV-CORE-004） 
+  STEPS: 1. デッキ登録CSVアップロード画面を開く／2. deck_idに1506001004を指定したupdate_existing-004.csvを選択する／3. 「CSVファイルのアップロード」を押す／4. DBでデッキID 1506001004を確認する 
+  EXPECT: デッキID 1506001004のデッキがupdate_existing-004.csvの値へ更新され、新しいデッキが追加されないこと
+IT-M15-06-005 
+  PREP: ① 試験管理者で管理画面にログインしている（S-M15-06-ADM）／② TestStandard、Test Archetype、イベント詳細ID 150601、取込で使用するカードと画像が登録されている（S-M15-06-MASTER）／③ 刷新後20項目のCSVヘッダと有効基準値が確定している（S-M15-06-CSV-BASE）／④ デッキID 999999とプレイヤー名IT未一致ID-005のデッキが存在せず、deck_idに999999を指定したnonexistent_id-005.csvが手元にある（S-M15-06-CSV-CORE-005） 
+  STEPS: 1. デッキ登録CSVアップロード画面を開く／2. 未登録のdeck_id 999999を指定したnonexistent_id-005.csvを選択する／3. 「CSVファイルのアップロード」を押す／4. DBでプレイヤー名「IT未一致ID-005」のデッキを確認する 
+  EXPECT: deck_idと一致するデッキがないため、「IT未一致ID-005」のデッキが新規登録されること
+IT-M15-06-006 
+  PREP: ① 試験管理者で管理画面にログインしている（S-M15-06-ADM）／② TestStandardとTest Archetypeが登録されている（S-M15-06-MASTER）／③ 刷新後20項目のCSVヘッダと必須・任意項目が確定している（S-M15-06-CSV-BASE）／④ 必須項目だけに値を設定し非公開フラグを1としたminimal_new-006.csvが手元にあり、プレイヤー名IT任意空欄-006のデッキは存在しない（S-M15-06-CSV-CORE-006） 
+  STEPS: 1. デッキ登録CSVアップロード画面を開く／2. 必須項目だけに値を設定し、デッキリスト非公開フラグを1としたminimal_new-006.csvを選択する／3. 「CSVファイルのアップロード」を押す／4. DBでプレイヤー名「IT任意空欄-006」のデッキを確認する 
+  EXPECT: 任意項目が空欄の「IT任意空欄-006」のデッキが1件追加されること
+IT-M15-06-014 
+  PREP: ① 試験管理者で管理画面にログインしている（S-M15-06-ADM）／② TestStandard、Test Archetype、イベント詳細ID 150601、取込で使用するカードが登録されている（S-M15-06-MASTER）／③ 刷新後20項目のCSVヘッダと有効基準値が確定している（S-M15-06-CSV-BASE）／④ 表示フラグ0のIT表示0-014と表示フラグ1のIT表示1-014を持つdisplay_values-014.csvが手元にあり、両プレイヤー名のデッキは存在しない（S-M15-06-CSV-FLAG-014） 
+  STEPS: 1. デッキ登録CSVアップロード画面を開く／2. 表示フラグ0の行と1の行を持つdisplay_values-014.csvを選択する／3. 「CSVファイルのアップロード」を押す／4. DBで2行の表示区分を確認する 
+  EXPECT: 表示フラグ0のデッキが非表示、表示フラグ1のデッキが表示の区分で登録されること
+IT-M15-06-016 
+  PREP: ① 試験管理者で管理画面にログインしている（S-M15-06-ADM）／② TestStandard、Test Archetype、イベント詳細ID 150601、取込で使用するカードが登録されている（S-M15-06-MASTER）／③ 刷新後20項目のCSVヘッダと有効基準値が確定している（S-M15-06-CSV-BASE）／④ 非公開フラグ0のIT非公開0-016と非公開フラグ1のIT非公開1-016を持つprivate_values-016.csvが手元にあり、両プレイヤー名のデッキは存在しない（S-M15-06-CSV-FLAG-016） 
+  STEPS: 1. デッキ登録CSVアップロード画面を開く／2. デッキリスト非公開フラグ0の行と1の行を持つprivate_values-016.csvを選択する／3. 「CSVファイルのアップロード」を押す／4. DBで2行のデッキリスト非公開フラグを確認する 
+  EXPECT: 入力値0が公開、入力値1が非公開として登録されること
+IT-M15-06-025 
+  PREP: ① 試験管理者で管理画面にログインしている（S-M15-06-ADM）／② 代表画像を持つFeature Card、TestStandard、Test Archetypeが登録されている（S-M15-06-MASTER）／③ 刷新後20項目のCSVヘッダと有効基準値が確定している（S-M15-06-CSV-BASE）／④ 代表カード名Feature Cardのimage_explicit-025.csvが手元にあり、プレイヤー名IT代表カード指定-025のデッキは存在しない（S-M15-06-CSV-EFFECT-025） 
+  STEPS: 1. デッキ登録CSVアップロード画面を開く／2. 代表カード名に「Feature Card」を設定したimage_explicit-025.csvを選択する／3. 「CSVファイルのアップロード」を押す／4. DBで登録されたデッキの代表画像を確認する 
+  EXPECT: 「Feature Card」から選ばれた代表画像がデッキに設定されること
+IT-M15-06-026 
+  PREP: ① 試験管理者で管理画面にログインしている（S-M15-06-ADM）／② TestStandardのTest Archetypeに既定代表画像が設定されている（S-M15-06-MASTER）／③ 刷新後20項目のCSVヘッダと有効基準値が確定している（S-M15-06-CSV-BASE）／④ 代表カード名空欄のimage_default-026.csvが手元にあり、プレイヤー名IT代表画像既定-026のデッキは存在しない（S-M15-06-CSV-EFFECT-026） 
+  STEPS: 1. デッキ登録CSVアップロード画面を開く／2. 代表カード名を空欄としたimage_default-026.csvを選択する／3. 「CSVファイルのアップロード」を押す／4. DBで登録されたデッキの代表画像を確認する 
+  EXPECT: 試験アーキタイプの既定の代表画像がデッキに設定されること
+IT-M15-06-028 
+  PREP: ① 試験管理者で管理画面にログインしている（S-M15-06-ADM）／② TestStandard、Test Archetype、Main Card A、Side Cardが登録されている（S-M15-06-MASTER）／③ 刷新後20項目のCSVヘッダと有効基準値が確定している（S-M15-06-CSV-BASE）／④ 表示1・非公開0・メイン2 Main Card A・サイド1 Side Cardのpublic_details-028.csvが手元にあり、プレイヤー名IT公開明細-028のデッキは存在しない（S-M15-06-CSV-EFFECT-028） 
+  STEPS: 1. デッキ登録CSVアップロード画面を開く／2. 表示フラグ1、デッキリスト非公開フラグ0のpublic_details-028.csvを選択する／3. 「CSVファイルのアップロード」を押す／4. DBで登録されたデッキのDtbDeckCardを確認する 
+  EXPECT: メインリストとサイドリストのカードおよび枚数がDtbDeckCardへ登録されること
+IT-M15-06-029 
+  PREP: ① 試験管理者で管理画面にログインしている（S-M15-06-ADM）／② TestStandard、Test Archetype、メイン・サイドで使用するカードが登録されている（S-M15-06-MASTER）／③ 刷新後20項目のCSVヘッダと有効基準値が確定している（S-M15-06-CSV-BASE）／④ 表示・非公開が0・0、1・1、0・1で原文を識別できるnonpublic_combinations-029.csvが手元にあり、ITフラグ00-029、ITフラグ11-029、ITフラグ01-029のデッキは存在しない（S-M15-06-CSV-EFFECT-029） 
+  STEPS: 1. デッキ登録CSVアップロード画面を開く／2. フラグの組み合わせを0・0、1・1、0・1とした3行のnonpublic_combinations-029.csvを選択する／3. 「CSVファイルのアップロード」を押す／4. DBで3デッキのDtbDeckCardを確認する 
+  EXPECT: 非公開フラグが0のITフラグ00-029のデッキはDtbDeckCardが作成され、非公開フラグが1のITフラグ11-029とITフラグ01-029のデッキはDtbDeckCardが作成されないこと
+IT-M15-06-038 
+  PREP: ① 試験管理者で管理画面にログインしている（S-M15-06-ADM）／② TestStandard、Test Archetype、イベント詳細ID 150601、取込で使用するカードが登録されている（S-M15-06-MASTER）／③ 刷新後20項目に旧デッキID列が含まれない（S-M15-06-CSV-BASE）／④ デッキID 1506001038のイベントデッキが旧デッキID LEGACY_KEEP-038と既存明細を持つ状態で登録され、deck_idに1506001038を指定したupdate_existing-038.csvが手元にある（S-M15-06-CSV-CORE-038） 
+  STEPS: 1. デッキ登録CSVアップロード画面を開く／2. deck_idに1506001038を指定したupdate_existing-038.csvを選択する／3. 「CSVファイルのアップロード」を押す／4. DBでデッキID 1506001038の旧デッキIDを確認する 
+  EXPECT: デッキID 1506001038の旧デッキIDが「LEGACY_KEEP-038」から更新されないこと
+IT-M15-06-049 
+  PREP: ① 管理画面にログインできる管理者 m1506qm-adm（S-M15-06-QM-ADM）／② フォーマット「QM1506-001-フォーマット」（英名 QM1506-001-Format）とアーキタイプ「QM1506-001-型」（英名 QM1506-001-Type）が登録済みで、プレイヤー名 QM1506-001-選手のデッキは存在しない。手元にデッキ登録用ファイル new-qm001.csv（プレイヤー名 QM1506-001-選手・順位2・成績 QM1506-001-成績・イベント名(日) QM1506-001-大会・開催日 2025-03-10 10:00:00・参加人数16・表示フラグ1・デッキリスト非公開フラグ1・メインリスト空欄・デッキID空欄）がある（S-M15-06-QM-CSV-049） 
+  STEPS: 1. デッキ検索TOPを開き、「クリア」を押して入力済みの検索条件を空に戻し、プレイヤー名に QM1506-001-選手 を入力して「検索」を押す／2. 一覧の領域に「ご指定の条件に一致するデッキが見つかりませんでした。」が表示されることを見る／3. 管理画面のログイン画面でログインIDに m1506qm-adm、パスワードに Passw0rd-M1506QM を入力してログインする／4. デッキ管理＞デッキ一覧のデッキ検索・一覧画面で「CSV,TSV取り込み」ボタンを押してデッキ登録CSVアップロード画面を開く／5. 「ファイルを選択」を押して new-qm001.csv を選択し、「CSVファイルのアップロード」を押す／6. デッキ検索TOPを開き、「クリア」を押して入力済みの検索条件を空に戻し、プレイヤー名に QM1506-001-選手 を入力して「検索」を押す 
+  EXPECT: ファイルでの登録後の検索で、一覧にプレイヤー「QM1506-001-選手」の行が表示され、アーキタイプが「QM1506-001-型/QM1506-001-Type」、大会名が「QM1506-001-大会」、成績が「QM1506-001-成績」、参加人数が16、開催日が2025/03/10と表示され、デッキリストが非公開であることを示す印が付いていること
+IT-M15-06-050 
+  PREP: ① 管理画面にログインできる管理者 m1506qm-adm（S-M15-06-QM-ADM）／② デッキID 〔デッキID-M1506-002〕 のデッキ（プレイヤー名 QM1506-002-選手・大会デッキ・公開状態=公開・成績 QM1506-002-成績旧・イベント名(日) QM1506-002-大会旧）が登録済み（登録時に振られたデッキIDを控えてある）。手元にデッキ登録用ファイル update-qm002.csv（デッキIDに 〔デッキID-M1506-002〕・成績 QM1506-002-成績新・イベント名(日) QM1506-002-大会新・表示フラグ1・デッキリスト非公開フラグ1）がある（S-M15-06-QM-CSV-050） 
+  STEPS: 1. デッキ検索TOPを開き、「クリア」を押して入力済みの検索条件を空に戻し、プレイヤー名に QM1506-002-選手 を入力して「検索」を押す／2. 一覧の行の成績が「QM1506-002-成績旧」、大会名が「QM1506-002-大会旧」であることを見る／3. 管理画面のログイン画面でログインIDに m1506qm-adm、パスワードに Passw0rd-M1506QM を入力してログインする／4. デッキ管理＞デッキ一覧のデッキ検索・一覧画面で「CSV,TSV取り込み」ボタンを押してデッキ登録CSVアップロード画面を開く／5. 「ファイルを選択」を押して update-qm002.csv を選択し、「CSVファイルのアップロード」を押す／6. デッキ検索TOPを開き、「クリア」を押して入力済みの検索条件を空に戻し、プレイヤー名に QM1506-002-選手 を入力して「検索」を押す 
+  EXPECT: ファイルでの上書き後の検索で、一覧のプレイヤー「QM1506-002-選手」の行の成績が「QM1506-002-成績新」、大会名が「QM1506-002-大会新」と表示されること
+IT-M15-06-051 
+  PREP: ① 管理画面にログインできる管理者 m1506qm-adm（S-M15-06-QM-ADM）／② デッキID 〔デッキID-M1506-003〕 のデッキ（デッキ名 QM1506-003-デッキ旧・大会デッキ・公開状態=公開・イベント名(日) QM1506-003-大会旧）が登録済み（登録時に振られたデッキIDを控えてある）。手元にデッキ登録用ファイル update-qm003.csv（デッキIDに 〔デッキID-M1506-003〕・デッキ名 QM1506-003-デッキ新・イベント名(日) QM1506-003-大会新・表示フラグ1・デッキリスト非公開フラグ1・メインリスト空欄）がある（S-M15-06-QM-CSV-051） 
+  STEPS: 1. デッキリスト詳細画面を、デッキID 〔デッキID-M1506-003〕 を指定して開き、情報欄のデッキ名が「QM1506-003-デッキ旧」、大会名が「QM1506-003-大会旧」であることを見る／2. 管理画面のログイン画面でログインIDに m1506qm-adm、パスワードに Passw0rd-M1506QM を入力してログインする／3. デッキ管理＞デッキ一覧のデッキ検索・一覧画面で「CSV,TSV取り込み」ボタンを押してデッキ登録CSVアップロード画面を開く／4. 「ファイルを選択」を押して update-qm003.csv を選択し、「CSVファイルのアップロード」を押す／5. デッキリスト詳細画面を、デッキID 〔デッキID-M1506-003〕 を指定して開き直す 
+  EXPECT: ファイルでの上書き後に開き直したデッキリスト詳細画面の情報欄で、デッキ名が「QM1506-003-デッキ新」、大会名が「QM1506-003-大会新」と表示されること
+IT-M15-06-052 
+  PREP: ① 管理画面にログインできる管理者 m1506qm-adm（S-M15-06-QM-ADM）／② フォーマット「QM1506-004-フォーマット」（ランキング表示=ON・メタ集計日数30日）の状態: アーキタイプ「QM1506-004-型甲」のデッキ1件（QM1506-004-選手甲1）とアーキタイプ「QM1506-004-型乙」のデッキ1件（QM1506-004-選手乙1）。いずれも大会デッキ・公開状態=公開・開催日は実行日の5日前で、このフォーマットのデッキはこれだけ。メタゲーム上位の集計結果のキャッシュは無い（S-M15-06-QM-META-052）／③ 試験は実行当日内に終える。手元にデッキ登録用ファイル new-qm004.csv（プレイヤー名 QM1506-004-選手甲2・アーキタイプ QM1506-004-型甲・開催日は実行日の5日前・表示フラグ1・デッキリスト非公開フラグ1・メインリスト空欄・デッキID空欄）がある 
+  STEPS: 1. デッキ検索TOPを開き、「QM1506-004-フォーマット」のメタゲームの区画で、アーキタイプ「QM1506-004-型甲」のデッキ数が1、「QM1506-004-型乙」のデッキ数が1であることを見る／2. 管理画面のログイン画面でログインIDに m1506qm-adm、パスワードに Passw0rd-M1506QM を入力してログインする／3. デッキ管理＞デッキ一覧のデッキ検索・一覧画面で「CSV,TSV取り込み」ボタンを押してデッキ登録CSVアップロード画面を開く／4. 「ファイルを選択」を押して new-qm004.csv を選択し、「CSVファイルのアップロード」を押す／5. 手順1でデッキ検索TOPを表示した時刻から3601秒以上待つ／6. デッキ検索TOPを開き直す 
+  EXPECT: デッキ取込の実行後（キャッシュの保持時間が過ぎた後）に開いたデッキ検索TOPの「QM1506-004-フォーマット」のメタゲームの区画で、アーキタイプ「QM1506-004-型甲」のデッキ数が2、「QM1506-004-型乙」のデッキ数が1と表示されること
+IT-M15-06-054 
+  PREP: ① 試験管理者で管理画面にログインしている（S-M15-06-ADM）／② TestStandard、Test Archetype、イベント詳細ID 150601、取込で使用するカードと画像が登録されている（S-M15-06-MASTER）／③ 刷新後20項目のCSVヘッダと有効基準値が確定している（S-M15-06-CSV-BASE）／④ デッキID 1506054001のイベントデッキ（プレイヤー名M1506-054-前）が登録され、デッキIDに1506054001・プレイヤー名にM1506-054-Pを指定したupdate-M1506-054.csvが手元にあり、デッキID 1506054001のデッキは1件で、プレイヤー名M1506-054-Pのデッキは存在しない（S-M15-06-REIMPORT-054） 
+  STEPS: 1. デッキ登録CSVアップロード画面を開く／2. 「ファイルを選択」を押してupdate-M1506-054.csvを選択する／3. 「CSVファイルのアップロード」を押す／4. DBでデッキID 1506054001のデッキのプレイヤー名を確認する／5. 同じ画面でもう一度「ファイルを選択」を押し、同じupdate-M1506-054.csvを選択する／6. 「CSVファイルのアップロード」を押す／7. DBでデッキID 1506054001のデッキと、プレイヤー名「M1506-054-P」のデッキの件数を確認する 
+  EXPECT: 1回目の取込後にデッキID 1506054001のデッキのプレイヤー名が「M1506-054-P」に更新され、2回目の取込後もデッキID 1506054001のデッキが1件のままでプレイヤー名「M1506-054-P」のデッキが1件から増えていないこと
+IT-M15-06-058 
+  PREP: ① 管理画面にログインできる管理者 m1506rj-adm（システム管理者の権限）（S-M15-06-RJ-ADM）／② フォーマット「RJ1506-001-フォーマット」のアーキタイプ「RJ1506-001-型」（公開）が登録済みで、このアーキタイプに紐づくデッキは0件。手元にデッキ登録用ファイル new-rj1506-001.csv（プレイヤー名 RJ1506-001-選手・アーキタイプ RJ1506-001-型・開催日 2025-03-10 10:00:00・表示フラグ1・デッキリスト非公開フラグ1・メインリスト空欄・デッキID空欄）がある（S-M15-06-RJ-CSV-058） 
+  STEPS: 1. 管理画面のログイン画面でログインIDに m1506rj-adm、パスワードに Passw0rd-M1506RJ を入力してログインする／2. デッキ管理＞アーキタイプ一覧のアーキタイプ管理(検索入力)画面で、アーキタイプ名に「RJ1506-001-型」を入力して「検索する >」を押す／3. アーキタイプ管理(検索結果)画面で、アーキタイプ「RJ1506-001-型」の登録デッキ数が0であることを見る／4. デッキ管理＞デッキ一覧のデッキ検索・一覧画面で「CSV,TSV取り込み」ボタンを押してデッキ登録CSVアップロード画面を開く／5. 「ファイルを選択」を押して new-rj1506-001.csv を選択し、「CSVファイルのアップロード」を押す／6. デッキ管理＞アーキタイプ一覧のアーキタイプ管理(検索入力)画面で、アーキタイプ名に「RJ1506-001-型」を入力して「検索する >」を押す（検索入力画面を開き直して行う） 
+  EXPECT: デッキ登録CSVの取込後、アーキタイプ管理(検索結果)画面のアーキタイプ「RJ1506-001-型」の登録デッキ数が1と表示されること
+
+exec
+/bin/bash -lc "rg -n 'M15-06|M15-04|M10-05|M12-10' functions/{dead-spec-register.tsv,phase2_candidates.tsv} | head -80" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+exec
+/bin/bash -lc "rg -n 'IT-M15-06-014|IT-M15-06-029' integration_test/casegen/cases/M15-06_test_cases.tsv; rg -n 'F06|IT-M15-06-014' integration_test/casegen/combination/factors/M15-06_{factors,existing,interactions}.tsv" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+15:IT-M15-06-014	REQ-0212-sheet-7-R021		ITA-06,ITA-07	P1	ブラウザ+DB確認	S-M15-06-ADM,S-M15-06-MASTER,S-M15-06-CSV-BASE,S-M15-06-CSV-FLAG-014	① 試験管理者で管理画面にログインしている（S-M15-06-ADM）／② TestStandard、Test Archetype、イベント詳細ID 150601、取込で使用するカードが登録されている（S-M15-06-MASTER）／③ 刷新後20項目のCSVヘッダと有効基準値が確定している（S-M15-06-CSV-BASE）／④ 表示フラグ0のIT表示0-014と表示フラグ1のIT表示1-014を持つdisplay_values-014.csvが手元にあり、両プレイヤー名のデッキは存在しない（S-M15-06-CSV-FLAG-014）	1. デッキ登録CSVアップロード画面を開く／2. 表示フラグ0の行と1の行を持つdisplay_values-014.csvを選択する／3. 「CSVファイルのアップロード」を押す／4. DBで2行の表示区分を確認する	表示フラグ0のデッキが非表示、表示フラグ1のデッキが表示の区分で登録されること	0212 デッキ登録CSV / 項目定義 識別ID 17、デッキ登録CSVアップロード / 業務ロジック 登録の判定
+30:IT-M15-06-029	REQ-0212-sheet-6-R017,REQ-0212-sheet-7-R021,REQ-0212-sheet-7-R022,REQ-0212-sheet-7-R023,REQ-0212-sheet-7-R025		ITA-03,ITA-05	P1	ブラウザ+DB確認	S-M15-06-ADM,S-M15-06-MASTER,S-M15-06-CSV-BASE,S-M15-06-CSV-EFFECT-029	① 試験管理者で管理画面にログインしている（S-M15-06-ADM）／② TestStandard、Test Archetype、メイン・サイドで使用するカードが登録されている（S-M15-06-MASTER）／③ 刷新後20項目のCSVヘッダと有効基準値が確定している（S-M15-06-CSV-BASE）／④ 表示・非公開が0・0、1・1、0・1で原文を識別できるnonpublic_combinations-029.csvが手元にあり、ITフラグ00-029、ITフラグ11-029、ITフラグ01-029のデッキは存在しない（S-M15-06-CSV-EFFECT-029）	1. デッキ登録CSVアップロード画面を開く／2. フラグの組み合わせを0・0、1・1、0・1とした3行のnonpublic_combinations-029.csvを選択する／3. 「CSVファイルのアップロード」を押す／4. DBで3デッキのDtbDeckCardを確認する	非公開フラグが0のITフラグ00-029のデッキはDtbDeckCardが作成され、非公開フラグが1のITフラグ11-029とITフラグ01-029のデッキはDtbDeckCardが作成されないこと	0212 デッキ登録CSVアップロード / 機能仕様 処理概要（デッキリスト公開の場合はDtbDeckCardに登録）、項目定義 非公開フラグ
+integration_test/casegen/combination/factors/M15-06_interactions.tsv:12:P1	F01+F06	設計書が決めていない	L0029,L0168	更新で表示フラグを非表示にしたとき、既存のデッキ明細を消すか残すかが書かれていない
+integration_test/casegen/combination/factors/M15-06_interactions.tsv:13:P1	F02+F06	関係しない		明細の検証・書き換えは表示フラグが表示かつリスト公開のすべてを満たすときだけで、結果は行う・行わないの2つ（L0168）
+integration_test/casegen/combination/factors/M15-06_interactions.tsv:14:P1	F03+F06	効き合う	L0166,L0168	統率者ボードへの明細の書き込みは、リスト検証の経路に入る行だけ（表示かつリスト公開）
+integration_test/casegen/combination/factors/M15-06_interactions.tsv:15:P1	F04+F06	関係しない		代表画像の決め方は表示フラグで変わらない（L0038,L0173）
+integration_test/casegen/combination/factors/M15-06_interactions.tsv:16:P1	F05+F06	関係しない		アーキタイプの代表カードの使い方は表示フラグで変わらない（L0173）
+integration_test/casegen/combination/factors/M15-06_existing.tsv:10:IT-M15-06-028	P1	F02=公開&F06=表示	非公開フラグ0で取り込み、デッキ明細が登録されることをDBで確かめる
+integration_test/casegen/combination/factors/M15-06_existing.tsv:14:IT-M15-06-049	P1	F01=一致するデッキなし&F02=非公開&F06=表示	デッキIDと非公開フラグを事前準備に書いたCSVを取り込み、検索・詳細・集計画面で結果を確かめる
+integration_test/casegen/combination/factors/M15-06_existing.tsv:15:IT-M15-06-050	P1	F01=一致するデッキあり&F02=非公開&F06=表示	デッキIDと非公開フラグを事前準備に書いたCSVを取り込み、検索・詳細・集計画面で結果を確かめる
+integration_test/casegen/combination/factors/M15-06_existing.tsv:16:IT-M15-06-051	P1	F01=一致するデッキあり&F02=非公開&F06=表示	デッキIDと非公開フラグを事前準備に書いたCSVを取り込み、検索・詳細・集計画面で結果を確かめる
+integration_test/casegen/combination/factors/M15-06_existing.tsv:17:IT-M15-06-052	P1	F01=一致するデッキなし&F02=非公開&F06=表示	デッキIDと非公開フラグを事前準備に書いたCSVを取り込み、検索・詳細・集計画面で結果を確かめる
+integration_test/casegen/combination/factors/M15-06_existing.tsv:19:IT-M15-06-058	P1	F01=一致するデッキなし&F02=非公開&F06=表示	デッキIDと非公開フラグを事前準備に書いたCSVを取り込み、検索・詳細・集計画面で結果を確かめる
+integration_test/casegen/combination/factors/M15-06_existing.tsv:20:IT-M15-06-014	P1	F06=表示	表示フラグ1の行を取り込み、DBで表示区分を確かめる
+integration_test/casegen/combination/factors/M15-06_existing.tsv:21:IT-M15-06-014	P1	F06=非表示	表示フラグ0の行を取り込み、DBで表示区分を確かめる
+integration_test/casegen/combination/factors/M15-06_factors.tsv:7:F06	P1	表示フラグ	表示｜非表示	表示: 公開へ読み替えて登録し、リスト公開のときだけ本文とデッキ明細の検証・書き換えを行う／非表示: 非表示として登録し、リスト本文の検証と明細の出力を省略して原文だけ反映	L0092,L0164,L0168	この機能
+
+codex
+現時点で、設計本文と追加記述の優先関係、および1回のCSV取込を既存ケースへどう数えたかについて、根拠のある不一致が見つかっています。残りは、指摘対象が今回の追加部分に本当に由来するかを絞っています。
+exec
+/bin/bash -lc "rg -n '入力値の検証|1回の処理で2つのデータ|設計書の中で記述が食い違う' integration_test/casegen/combination/FACTOR_PROMPT.md" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+33:| 設計書の中で記述が食い違うときの優先順位 | Excel 由来の本文 ＞ 埋め込みの「表示メッセージ」節（リニューアル後の仕様）＞ 埋め込みの「現行仕様」節。同じ出所では改訂後が優先。**Excel が触れていない条件を埋め込みが足しているだけのときは食い違いではなく、両方を当てる**（例: Excel が選択肢を並べ、埋め込みが「ポイントで全額払うときは全額ポイント支払いだけ」と条件を足す → 両方）。既存ケースは正解の根拠にしない（既存ケースと設計書の食い違いは返答に書く） |
+47:- 入力値の検証（必須・桁数・形式）、検索条件・削除条件の組合せ、権限、二重送信、排他は、ほかの観点の持ち分なので処理にも要因にもしない。
+88:- 1つのケースが同じ処理を別の値で2回以上通しているときは、通した値ごとに1行ずつ書く（同じテストIDの行が2つになる）。1回の処理で2つのデータを別の値で扱う（混在）ケースは書かない。
+
+exec
+/bin/bash -lc "rg -n 'L0039|L0168|L0166|L0083|L0160|L0167|L0152' integration_test/casegen/combination/units/{M15-06,M10-06,M15-03}/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+integration_test/casegen/combination/units/M15-03/design.txt:40:L0039	★1ページあたりの表示件数のデフォルト値を「100件」とする
+integration_test/casegen/combination/units/M15-03/design.txt:84:L0083	デッキ一覧(検索結果) / C109 / image 1
+integration_test/casegen/combination/units/M15-03/design.txt:154:L0152	| 4 | 当該デッキを使う記事が 1 件でもあるか | あるときは削除せず、エラーを表示して元の画面へ戻して終える |
+integration_test/casegen/combination/units/M15-03/design.txt:162:L0160	保持していた一覧のページ番号があるときはデッキ検索・一覧の当該ページへ、無いときはデッキ一覧の先頭へ戻す。
+integration_test/casegen/combination/units/M15-03/design.txt:168:L0166	| 対象のデッキが無い | 404 として打ち切る |
+integration_test/casegen/combination/units/M15-03/design.txt:169:L0167	| 記事で使われているデッキが含まれる | 当該デッキを削除せず、エラーを表示して元の画面へ戻す |
+integration_test/casegen/combination/units/M15-03/design.txt:170:L0168	## 入出力
+integration_test/casegen/combination/units/M10-06/design.txt:40:L0039	送料の設定は、標準通り登録編集できるようにする
+integration_test/casegen/combination/units/M10-06/design.txt:85:L0083	| 2 | 支払方法が1件も選択されていないか | 支払方法の欄にエラーを表示し、保存しない |
+integration_test/casegen/combination/units/M15-06/design.txt:40:L0039	デッキリスト公開の場合はデッキリストをDtbDeckCardに登録する。
+integration_test/casegen/combination/units/M15-06/design.txt:85:L0083	10	成績					優勝	成績
+integration_test/casegen/combination/units/M15-06/design.txt:155:L0152	| 検査 |
+integration_test/casegen/combination/units/M15-06/design.txt:163:L0160	| `deck_id` の値 | 登録 |
+integration_test/casegen/combination/units/M15-06/design.txt:169:L0166	リスト検証の経路に入る行だけ、ボード単位でデッキ明細を作成する。統率者は、統率者を使う形式で入力が済んでいるときは、常に統率者ボードへ別に書き込む。
+integration_test/casegen/combination/units/M15-06/design.txt:170:L0167	### 表示状態とリスト本文
+integration_test/casegen/combination/units/M15-06/design.txt:171:L0168	表示フラグが公開へ読み替えられ、かつデッキリスト非公開フラグが公開状態のときだけ、本文テキストとデッキ明細が一致する状態を検証して書き換える。それ以外の組み合わせのときは、リスト本文の検証と明細の出力を広く省略し、入力した原文をメインリスト・サイドリストのテキストにだけ反映する。
+
+exec
+/bin/bash -lc "rg -n 'F01\\+F02|F01\\+F03|F01\\+F06|F02\\+F06|F01\\+F02|F01\\+F02|F01\\+F02' integration_test/casegen/combination/factors/{M10-06,M15-03,M15-06}_interactions.tsv" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+integration_test/casegen/combination/factors/M15-06_interactions.tsv:2:P1	F01+F02	設計書が決めていない	L0029,L0039	更新で非公開にしたとき、既存のデッキ明細を消すか残すかが書かれていない
+integration_test/casegen/combination/factors/M15-06_interactions.tsv:3:P1	F01+F03	関係しない		統率者の必須判定と除外は新規と更新で区別なく同じ（L0035,L0037）
+integration_test/casegen/combination/factors/M15-06_interactions.tsv:12:P1	F01+F06	設計書が決めていない	L0029,L0168	更新で表示フラグを非表示にしたとき、既存のデッキ明細を消すか残すかが書かれていない
+integration_test/casegen/combination/factors/M15-06_interactions.tsv:13:P1	F02+F06	関係しない		明細の検証・書き換えは表示フラグが表示かつリスト公開のすべてを満たすときだけで、結果は行う・行わないの2つ（L0168）
+integration_test/casegen/combination/factors/M15-03_interactions.tsv:2:P1	F01+F02	効き合う	L0152,L0160,L0167,L0172	戻り先のページ番号の定めは全件削除できたときの戻りに当てはまり、記事で使われているデッキがあるときは削除せず元の画面へ戻す
+integration_test/casegen/combination/factors/M10-06_interactions.tsv:2:P1	F01+F02	効き合う	L0083,L0086,L0108	支払方法を1件も選ばないと保存されず、保存後に行う購入金額による利用可否の判定に進まない
+integration_test/casegen/combination/factors/M10-06_interactions.tsv:3:P1	F01+F03	効き合う	L0083,L0086	支払方法を1件も選ばないと保存されないので、既存の配送方法の紐づく対応も削除されず残り、選ぶと作り直される
+
+codex
+### 1
+- 機能: M10-06
+- 種類: F
+- 対象: `M10-06_factors.tsv` F01
+- 主張: 支払方法を1件も選ばない場合を、保存処理の要因としている。
+- 実際: [設計書](/home/y-saito/Developments/hareruya-design-docs/integration_test/casegen/combination/units/M10-06/design.txt:85) の L0083 は、未選択なら欄にエラーを表示して保存しないという入力の必須検証である。[作成ルール](/home/y-saito/Developments/hareruya-design-docs/integration_test/casegen/combination/FACTOR_PROMPT.md:47) は必須などの入力値検証を要因から除く。
+- 修正案: F01と、それを使う判定・制約を要因表から外す。
+
+### 2
+- 機能: M15-03
+- 種類: C
+- 対象: `M15-03_interactions.tsv` P1 F01+F02
+- 主張: 記事で使用中のデッキがあるとページ番号による戻り先の定めは適用されないため、両要因は効き合う。
+- 実際: [設計書](/home/y-saito/Developments/hareruya-design-docs/integration_test/casegen/combination/units/M15-03/design.txt:162) の L0160 は、ページ番号の有無による戻り先を成功時に限定していない。L0152・L0167は使用中の場合に元の画面へ戻すと定める。
+- 修正案: ページ番号による戻り先の判定を失敗時にも当て、F01+F02を「関係しない」に直す。
+
+### 3
+- 機能: M15-06
+- 種類: A
+- 対象: `M15-06_factors.tsv` F06
+- 主張: 表示フラグが「非表示」なら、デッキ明細の出力を省略する。
+- 実際: [設計書](/home/y-saito/Developments/hareruya-design-docs/integration_test/casegen/combination/units/M15-06/design.txt:40) の Excel 由来本文 L0039 は、デッキリストが公開なら DtbDeckCard に登録すると定め、表示フラグによる例外を設けていない。追加部分の L0168 は「非表示かつリスト公開」でも明細を省略するため、この点では優先順位が上の本文と食い違う。
+- 修正案: F06の「非表示なら明細を省略」を外し、本文のリスト公開条件を優先する。
+
+### 4
+- 機能: M15-06
+- 種類: E
+- 対象: `M15-06_existing.tsv` IT-M15-06-014、F06=表示／非表示
+- 主張: 同じテストIDを2行に分け、表示と非表示をそれぞれ既存の組として数えている。
+- 実際: [ケース](/home/y-saito/Developments/hareruya-design-docs/integration_test/casegen/cases/M15-06_test_cases.tsv:15) の事前準備と手順では、表示フラグ0と1の**2行を含む1ファイルを1回**取り込む。[作成ルール](/home/y-saito/Developments/hareruya-design-docs/integration_test/casegen/combination/FACTOR_PROMPT.md:88) は、1回の処理で異なる値のデータを扱う混在ケースを existing.tsv に書かないと定める。
+- 修正案: IT-M15-06-014のF06に関する2行を existing.tsv から外す。
+tokens used
+94,932
+### 1
+- 機能: M10-06
+- 種類: F
+- 対象: `M10-06_factors.tsv` F01
+- 主張: 支払方法を1件も選ばない場合を、保存処理の要因としている。
+- 実際: [設計書](/home/y-saito/Developments/hareruya-design-docs/integration_test/casegen/combination/units/M10-06/design.txt:85) の L0083 は、未選択なら欄にエラーを表示して保存しないという入力の必須検証である。[作成ルール](/home/y-saito/Developments/hareruya-design-docs/integration_test/casegen/combination/FACTOR_PROMPT.md:47) は必須などの入力値検証を要因から除く。
+- 修正案: F01と、それを使う判定・制約を要因表から外す。
+
+### 2
+- 機能: M15-03
+- 種類: C
+- 対象: `M15-03_interactions.tsv` P1 F01+F02
+- 主張: 記事で使用中のデッキがあるとページ番号による戻り先の定めは適用されないため、両要因は効き合う。
+- 実際: [設計書](/home/y-saito/Developments/hareruya-design-docs/integration_test/casegen/combination/units/M15-03/design.txt:162) の L0160 は、ページ番号の有無による戻り先を成功時に限定していない。L0152・L0167は使用中の場合に元の画面へ戻すと定める。
+- 修正案: ページ番号による戻り先の判定を失敗時にも当て、F01+F02を「関係しない」に直す。
+
+### 3
+- 機能: M15-06
+- 種類: A
+- 対象: `M15-06_factors.tsv` F06
+- 主張: 表示フラグが「非表示」なら、デッキ明細の出力を省略する。
+- 実際: [設計書](/home/y-saito/Developments/hareruya-design-docs/integration_test/casegen/combination/units/M15-06/design.txt:40) の Excel 由来本文 L0039 は、デッキリストが公開なら DtbDeckCard に登録すると定め、表示フラグによる例外を設けていない。追加部分の L0168 は「非表示かつリスト公開」でも明細を省略するため、この点では優先順位が上の本文と食い違う。
+- 修正案: F06の「非表示なら明細を省略」を外し、本文のリスト公開条件を優先する。
+
+### 4
+- 機能: M15-06
+- 種類: E
+- 対象: `M15-06_existing.tsv` IT-M15-06-014、F06=表示／非表示
+- 主張: 同じテストIDを2行に分け、表示と非表示をそれぞれ既存の組として数えている。
+- 実際: [ケース](/home/y-saito/Developments/hareruya-design-docs/integration_test/casegen/cases/M15-06_test_cases.tsv:15) の事前準備と手順では、表示フラグ0と1の**2行を含む1ファイルを1回**取り込む。[作成ルール](/home/y-saito/Developments/hareruya-design-docs/integration_test/casegen/combination/FACTOR_PROMPT.md:88) は、1回の処理で異なる値のデータを扱う混在ケースを existing.tsv に書かないと定める。
+- 修正案: IT-M15-06-014のF06に関する2行を existing.tsv から外す。

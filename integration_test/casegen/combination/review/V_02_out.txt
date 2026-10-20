@@ -1,0 +1,2524 @@
+Reading additional input from stdin...
+OpenAI Codex v0.162.1
+--------
+workdir: /home/y-saito/Developments/hareruya-design-docs
+model: gpt-6-sol
+provider: openai
+approval: never
+sandbox: read-only
+reasoning effort: high
+reasoning summaries: none
+session id: 01a1577a-3c0b-78d1-95cb-2de8d137897c
+--------
+user
+# 反証の依頼: 機能 A06-01・A06-02・A06-03・A06-04・A06-05・A06-06・A06-07・A06-08・A06-11・A06-12・A06-13・A07-01 の要因表
+
+あなたは独立したレビュアーである。別の担当が作った**要因表**に、設計書と食い違う所が無いかを確かめる。直さない。読むだけ。
+リポジトリは `/home/y-saito/Developments/hareruya-design-docs/`。出力は日本語。
+
+## 要因表とは（依頼者決定 2026-10-20）
+
+結合テストで、1回の処理の結果を左右する要因（区分・状態・設定・関連データの値）が2つ以上あるとき、
+**効き合う要因は値の組合せを全部、関係しない要因はどの2つの要因の値の組もどこかで1回**試すケースを足す。
+要因表はその元で、表から機械が組を並べる（`integration_test/casegen/combination/gen_combos.py`）。表の誤りはそのままケースの誤りになる。
+作り方の決まりは `integration_test/casegen/combination/FACTOR_PROMPT.md`（担当への依頼文）にある。まずこれを読む。
+
+## 読むもの
+
+| 何 | パス |
+| --- | --- |
+| 要因表（機能ごとに5つ） | `integration_test/casegen/combination/factors/<機能ID>_processes.tsv`・`_factors.tsv`・`_interactions.tsv`・`_constraints.tsv`・`_existing.tsv` |
+| 機械が並べた組（参考） | `integration_test/casegen/combination/combos/<機能ID>.tsv` |
+| 設計書（行頭の `L0001` は行番号） | `integration_test/casegen/combination/units/<機能ID>/design.txt`、他の機能は `units/<機能ID>/design.txt`、共通シートは `units/_common/` |
+| ケース | `integration_test/casegen/cases/<機能ID>_test_cases.tsv`、全機能は `integration_test/casegen/all_test_cases.tsv` |
+| 結合テストの範囲 | `integration_test/SCOPE.md` |
+| 不機能仕様・フェーズ2見送り（載っているものは意図して外している。指摘しない） | `functions/dead-spec-register.tsv`・`functions/phase2_candidates.tsv` |
+
+設計書の中で記述が食い違うときは、Excel 由来の本文 ＞ 埋め込みの「表示メッセージ」節 ＞ 埋め込みの「現行仕様」節の順に採る。
+
+## 確かめること（事実だけ）
+
+| 種類 | 何を見るか |
+| --- | --- |
+| A 要因・値の誤り | 要因・値・値ごとの結果が、根拠の行に書かれていない。根拠の行が別のことを言っている。結果が同じになる値を別の値として分けている |
+| B 要因・値の抜け | 設計書の行が「この値でこの処理の結果が変わる」と定めているのに、要因・値が無い（他の機能の設定値でこの処理が読むものを含む） |
+| C 判定の誤り | 効き合う／関係しない／設計書が決めていない の判定が、設計書の行と食い違う。特に、足し算で合計に入るだけの組を効き合うにしている、一方の結果がもう一方の判定の入力になるのに関係しないにしている。**3つ以上の要因をまとめた効き合う**は、その全部が同時に互いの結果を変えるかを確かめる（2つずつで効き合うだけなら2要因の行に分けるべき。まとめると値の組合せが全部ケースになる）。1件の対象を出す・出さないを複数の条件の「すべて満たす／どれか1つで外れる」で決める所を効き合うにしていないか（条件どうしは関係しないでよい）。優先順位で順に比べて決める所を、比べる項目ごとの要因の全組合せにしていないか（「どの段で決まるか」の1要因でよい） |
+| D 制約の誤り・抜け | 作れない としている組が設計上作れる。作れない組が載っていない。正解未定 としている組の結果が設計書から決まる |
+| E 既存ケースの読み違い | existing.tsv の値が、そのケースの事前準備・手順に書かれていない。そのケースが処理を動かしていない、確かめる所で結果を見ていない |
+| F 範囲外 | 処理・要因が結合テストの範囲でない（同じ画面の中で閉じる表示の計算、入力値の検証、検索条件の組合せ、権限、二重送信、排他） |
+
+次は指摘しない: 書き方・言い回し、要因IDの振り方、値の並び順、設計書に無い仕様の追加の要求、境界値・数量1/複数（別に済んでいる）。
+
+## 出力
+
+指摘が無ければ `NONE` の1語だけ。あれば1件ずつ、次の形で。
+
+```
+### <番号>
+- 機能: <機能ID>
+- 種類: <A〜F>
+- 対象: <ファイル名> <要因ID・処理ID・組・テストID>
+- 主張: <表に書かれていること>
+- 実際: <設計書・ケースの記述（ファイル:行 を必ず添える）>
+- 修正案: <どう直すか。1文>
+```
+warning: Codex could not find bubblewrap on PATH. Install bubblewrap with your OS package manager. See the sandbox prerequisites: https://developers.openai.com/codex/concepts/sandboxing#prerequisites. Codex will use the bundled bubblewrap in the meantime.
+2026-10-20T04:03:13.074670Z ERROR rmcp::transport::worker: worker quit with fatal: Transport channel closed, when AuthRequired(AuthRequiredError { www_authenticate_header: "Bearer resource_metadata=\"https://mcp.firecrawl.dev/.well-known/oauth-protected-resource/v2/mcp-oauth\", error=\"invalid_token\", error_description=\"Firecrawl credentials required: OAuth access token (Authorization: Bearer fco_...) or API key (x-firecrawl-api-key)\"" })
+codex
+まず作成ルールと結合テストの範囲を確認し、各要因表の主張を設計書と既存ケースの該当行に照らします。ファイルは変更しません。
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/FACTOR_PROMPT.md' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+# 依頼: 機能 {FID}（{FNAME}）の要因表づくり
+
+これは分析である。ケースも設計書も直さない。事実は自分でファイルを読んで確かめ、推測で書かない。
+リポジトリは `/home/y-saito/Developments/hareruya-design-docs/`。パスはここからの相対。出力はすべて日本語で書く。
+git の変更操作（add・commit など）をしない。
+
+## 背景（依頼者決定 2026-10-20）
+
+結合テストケースは設計書の定め1件ごとに作られ、10/15 には定めごとに「数量1と複数」「有無」「状態・区分ごと」などのデータを足した。
+それでも、**1回の処理の結果を左右する要因が2つ以上あるとき、その値を同時に変えて通すケースが無い**。
+例: 公開側で注文を確定するケース33件は、支払方法がほぼ郵便振替か銀行振込で、配送方法もゆうパック・EMS が大半。クレジットカード・代金引換・店頭支払、店頭受取・同梱で注文を通すケースは無い。
+
+依頼者の決定:
+- **効き合う要因**（一方の値で、もう一方の値の結果が変わると設計書が定める）は、値の組合せを全部試す。
+- **関係しない要因**は、どの2つの要因の値の組も、どこかのケースで1回は出るように並べる（2要因の組）。
+- **他の機能の設定値**（送料・手数料・支払方法の利用条件・送料無料の条件・配送方法に紐づく支払方法など）も、それを読む処理の要因に入れる。
+
+あなたの仕事は、機能 {FID} について、組合せの元になる**要因表**を作ること。組合せの行（どの値の組を何件試すか）は、この表から別の道具が機械で作る。
+だから、表の要因・値・判定の誤りは、そのままケースの誤りになる。
+
+## 読むもの
+
+| 何 | パス |
+| --- | --- |
+| 設計書（この機能のシートを文字に起こしたもの。行頭の `L0001` とタブは行番号。`#####` の行はシートの境目） | `integration_test/casegen/combination/units/{FID}/design.txt` |
+| 他の機能の設計書（設定値を読む処理のとき、設定する機能の定めを引く） | `integration_test/casegen/combination/units/<機能ID>/design.txt`（機能名は `combination/units.tsv`） |
+| 同じ冊子の共通シート（必要なときだけ） | {COMMON} |
+| この機能のケースとシード | `integration_test/casegen/cases/{FID}_test_cases.tsv`・`{FID}_seed_data.tsv` |
+| この機能の、テストから外したケース | `integration_test/casegen/combination/units/{FID}/excluded.tsv` |
+| 全機能のケース（他の機能のケースがこの機能の処理を通しているかの検索用） | `integration_test/casegen/all_test_cases.tsv`（列: テストID・観点ID・基本設計書・検証方法・テストデータ・事前準備・手順・期待結果。セル内改行があるので csv として読む） |
+| 結合テストの範囲 | `integration_test/SCOPE.md` |
+| 不機能仕様・フェーズ2見送り（ここに載るものは要因にしない） | `functions/dead-spec-register.tsv`・`functions/phase2_candidates.tsv` |
+| 設計書の中で記述が食い違うときの優先順位 | Excel 由来の本文 ＞ 埋め込みの「表示メッセージ」節（リニューアル後の仕様）＞ 埋め込みの「現行仕様」節。同じ出所では改訂後が優先。**Excel が触れていない条件を埋め込みが足しているだけのときは食い違いではなく、両方を当てる**（例: Excel が選択肢を並べ、埋め込みが「ポイントで全額払うときは全額ポイント支払いだけ」と条件を足す → 両方）。既存ケースは正解の根拠にしない（既存ケースと設計書の食い違いは返答に書く） |
+
+検索は `grep` を使う（`rg` は同じ入力で0件を返すことがあるので使わない）。
+
+## やること
+
+### 1. 処理を決める
+
+design.txt を**全部**読み、この機能の中で「操作やデータを受けて結果を出す処理」のうち、**結果を左右する要因が2つ以上ある処理**を挙げる。
+
+- 処理の単位は「1回の操作で動き、結果を1つの所で確かめられるまとまり」。例: 注文を確定して受注を作る／お支払い方法の選択肢を出す／受注の対応状況をキャンセルへ変えて保存する。
+- 結果は、データを作った所とは**別のコンポーネントで確かめる**もの（DB、別の画面、別の機能の画面、CSV・帳票、メール、連携先）。DBにあるデータで画面の表示・選択肢が変わるものも入る（例: 既存の受注の有無で配送方法の選択肢が変わる）。同じ画面の中だけで閉じる表示の計算（保存しない）と、計算式そのものの正しさは単体テストなので挙げない。
+- 要因が1つだけの処理は挙げない（10/15 の監査で済んでいる）。
+- **要因が2つ以上の処理が1つも無い機能**（一覧を出すだけ、1つの設定を保存するだけ、など）は、5つのファイルをヘッダだけで書き、返答の1行目に「対象の処理なし」と理由を書く。無理に処理を作らない。
+- 入力値の検証（必須・桁数・形式）、検索条件・削除条件の組合せ、権限、二重送信、排他は、ほかの観点の持ち分なので処理にも要因にもしない。
+
+### 2. 要因と値を挙げる
+
+処理ごとに、**その処理の結果を変えると設計書が定める要因**を挙げる。
+
+- 要因は「区分・状態・設定・関連データ」の値。例: 閲覧店舗、配送方法、支払方法、ポイントの使い方、受注の種類（通常・店頭受取・ついで買い）、会員か非会員か、変更前の対応状況、既存の受注の状態。
+- 他の機能で設定する値で、この処理が読むものも要因にする（出所に機能IDを書く）。例: 支払方法の利用条件（M10-04）に対する注文金額、都道府県別の送料（M10-06）。その機能の design.txt で定めを確かめ、根拠に `M10-04:L0123` の形で書く。**この処理の結果への効き方が設計書のどこにも書かれていない設定値は要因にしない**（値ごとの結果が書けないため）。そういう設定値は返答の「判断に迷った点」に挙げる（依頼元が論点として控える）。
+- **値は、結果の分かれ目ごとに代表を1つ**。結果が同じになる値は1つにまとめる（例: ゆうパックとゆうパケットで結果が変わらないならどちらか1つ）。結果が値ごとに違うなら全部挙げる（例: 支払方法ごとに手数料・ボタンの文言・ポイントを使う時点が違うなら、支払方法は全部）。
+- 境界値（ちょうどの値・上限）と数量1/複数は、10/15 に済んでいるので値にしない。値は「範囲内」「範囲外」「あり」「なし」のような分かれ目で書く。
+- 不正な入力、作れない値（画面の選択肢に無い値）は値にしない。
+- 値ごとの結果を、設計書の語で短く書く（「支店: 支払方法は店頭支払だけ」）。
+
+### 3. 要因どうしを判定する
+
+処理ごとに、その処理の要因の**すべての2つの組**を判定する（要因が5つなら10組）。判定は次のどれか。
+
+| 判定 | いつ | 根拠 |
+| --- | --- | --- |
+| 効き合う | 一方の値で、もう一方の値の結果（可否、選択肢、金額、更新先、更新内容）が変わると設計書が定める。または、一方の結果がもう一方の判定の入力になる（例: 使用ポイントで支払う金額が変わり、支払方法の選択肢が変わる） | 両方を結ぶ設計書の行が必須 |
+| 関係しない | それぞれの要因の結果が、もう一方の値によって変わらない（例: 送料は配送方法で、手数料は支払方法で決まり、合計は足し算） | 理由を書く |
+| 設計書が決めていない | 同時に効いたときの結果が設計書から決まらない（例: 送料無料の判定に使う金額が、ポイントを引く前か後か書かれていない） | 決まらない理由。下の「組の制約」に、決まらない値の組を「正解未定」で必ず書く |
+
+3つ以上の要因がまとめて効き合うとき（例: 配送方法・既存の受注の状態・既存の受注の支払方法で同梱を出すか決まる）は、1行に `F01+F03+F05` と書いて「効き合う」にしてよい。その中の2つの組は、別の行に書かない。**まとめるのは、その全部が同時に互いの結果を変えるときだけ**。2つずつで効き合うだけなら2要因の行に分ける（まとめると値の組合せが全部ケースになり、件数が膨らむ）。
+**選べるものの集まりを2つの定めが別々に絞り、結果がその共通部分になるとき**（例: 支店は支払方法が店頭支払だけ、同梱は郵便振替・銀行振込だけ → 選択肢の中身が組ごとに変わる）は「効き合う」にする。「設計書が決めていない」にするのは、両方を当てると選択肢が1つも残らないなど、結果が設計書から決まらない組だけ。
+**1件の対象を出す・出さない（対象にする・しない）を、複数の条件の「すべて満たす」または「どれか1つで外れる」で決めるとき**（例: 公開・在庫あり・セール期間内・表示フラグ のすべてを満たす商品だけ出す）は、条件どうしは「関係しない」にする。結果は出る・出ないの2つだけで、条件ごとの外れ方は1つずつ確かめれば足り、全組合せは要らない（7条件を効き合うにすると128行になる）。
+**優先順位で順に比べて決めるとき**（例: 複数一致したら、言語→特殊版→発売日→フォイル→プロモの順に比べて先に差が付いたもので選ぶ）は、比べる項目を別々の要因にして全組合せにしない。「どの段で決まるか」を1つの要因にまとめる（値: 1段目で決まる｜2段目で決まる｜…｜全段が同じ）。上の段の差が下の段を隠すので、各段で決まる組を1つずつ試せば足りる（6段を効き合うにすると64行になる）。
+「一方の値で、もう一方の処理そのものが行われない」型（例: キャンセル日が既に入っていると、在庫・ポイントの戻しを行わない）も「効き合う」にする。
+**推測で値の組を「作れない」にしない**。設計書の語がどの値を指すか決まらないとき（例: 支店の「店舗受取」が店頭受取とスムーズ店頭受取のどちらか）は「正解未定」にする。
+**効き合う組の値の組合せは全部ケースになる**。値が多い要因どうし（7×7 など）を効き合うにするときは、設計書の行で本当に互いの結果を変えるかを確かめる。足し算で合計に入るだけなら「関係しない」。
+
+### 4. 組の制約を書く
+
+- **作れない**: 設計上その値の組が成り立たない（例: 支店では支払方法が店頭支払だけなので、支店×代金引換は作れない）。根拠の行が必須。
+- **正解未定**: その値の組で結果が設計書から決まらない。決まらない理由を書く。これはケースにせず、報告書に論点として残す。
+
+### 5. 既存のケースが通している組を書く
+
+この機能のケース（と、`all_test_cases.tsv` を語で検索して見つかった他の機能のケース）のうち、**その処理を動かして、確かめる所で結果を確かめている**ケースを1件ずつ書き、そのケースで値が決まっている要因の値を書く。
+
+- 値は、事前準備・手順に**書かれている**ものだけ。書かれていない要因は書かない（流れの中でたまたまそうなるだけのものは数えない）。
+- 1つのケースが同じ処理を別の値で2回以上通しているときは、通した値ごとに1行ずつ書く（同じテストIDの行が2つになる）。1回の処理で2つのデータを別の値で扱う（混在）ケースは書かない。
+- 期待結果が設計書と食い違う既存ケースは、値が合っていても書かない（返答に食い違いとして書く）。
+- 処理を動かしていない（画面を開いて別のことを見るだけ）ケース、結果を確かめていないケースは書かない。
+- テストから外したケース（excluded.tsv）は書かない。
+
+## 出力（この5つだけを書く。ほかのファイルは変更しない）
+
+すべて `integration_test/casegen/combination/factors/` に、タブ区切り・ヘッダつきで書く。セル内に改行・タブ・ダブルクォートを入れない。
+
+### `{FID}_processes.tsv`（5列）
+
+```
+処理ID	処理	契機	確かめる所	根拠
+P1	注文を確定して受注を作る	ご注文方法指定画面で確定チェックボックスを選び、注文するボタンを押す	受注情報編集画面（M05-11）	L0322-L0330
+```
+
+- 処理IDは P1 からの連番。根拠は design.txt の行（`L0037`、`L0037-L0040`、カンマ区切り）。他の機能は `M10-04:L0012`、共通シートは `_common/<ファイル名>:L0012`。
+
+### `{FID}_factors.tsv`（7列）
+
+```
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1,P2	閲覧店舗	本店｜支店	本店: 支払方法はEC用の6種／支店: 支払方法は店頭支払だけ	L0236,L0249-L0252	この機能
+F05	P2	支払方法の利用条件に対する注文金額	範囲内｜上限を超える	範囲内: 選択肢に出る／上限を超える: 選択肢に出ない	M10-04:L0101	M10-04（設定）
+```
+
+- 要因IDは F01 からの連番（処理をまたいで通し番号）。処理IDはその要因が効く処理（カンマ区切り）。
+- 値は全角の縦棒 `｜` で区切る。2つ以上。1つの値は30字まで。`=` `&` `｜` `＋` `×` を値の中に使わない。
+- 値ごとの結果は `値: 結果` を `／` でつなぐ。全部の値について書く。
+- 出所は `この機能`、`<機能ID>（設定）`、`<機能ID>（データ）` のどれか。
+
+### `{FID}_interactions.tsv`（5列）
+
+```
+処理ID	要因	判定	根拠	理由
+P1	F03+F04	効き合う	L0204	配送方法が同梱のときは支払方法が郵便振替・銀行振込だけになる
+P1	F04+F06	関係しない		手数料は支払方法で決まり、ポイントは値引きとして合計から引くだけ
+P1	F06+F07	設計書が決めていない	M10-05:L0040	送料無料の判定に使う金額がポイント値引きの前か後か書かれていない
+```
+
+- 処理ごとに、その処理の要因の2つの組を全部判定する（3つ以上の効き合うにまとめた組は除く）。
+- 効き合う・設計書が決めていない は根拠が必須。関係しない・設計書が決めていない は理由が必須。
+
+### `{FID}_constraints.tsv`（5列）
+
+```
+処理ID	組	種別	根拠	理由
+P1	F01=支店&F04=代金引換	作れない	L0251-L0252	支店の支払方法は店頭支払だけ
+P1	F06=ポイントを使う&F07=送料無料の条件に届く	正解未定	M10-05:L0040	送料無料の判定に使う金額が決まらない
+```
+
+- 組は `要因ID=値` を `&` でつなぐ。値は factors.tsv の値と一字一句同じ。値1つだけの組（`F16=店頭受取のみのスマレジ決済`）も書ける: その値でこの処理を動かすこと自体が作れない・結果が決まらないとき（設計書の記述どうしが食い違い、共通する部分が無いときなど）。
+- 種別は `作れない` か `正解未定`。根拠が必須。制約が無ければヘッダだけ書く。
+
+### `{FID}_existing.tsv`（4列）
+
+```
+テストID	処理ID	値	理由
+IT-F04-02-081	P1	F01=本店&F03=ゆうパック&F04=郵便振替	事前準備で本店・ゆうパック・郵便振替を選び、受注情報編集画面で支払方法と配送方法を確かめる
+```
+
+- 値は `要因ID=値` を `&` でつなぐ。ケースに書かれている要因だけ。1つ以上。
+- 1つのケースが2つの処理を通しているときは2行に書く。該当するケースが無ければヘッダだけ書く。
+
+書いたら次を実行し、エラーが無くなるまで直す。組の数（全組と2要因の組で、既存ケースが通していない組を埋めるのに要る行の数）も出る。
+
+```
+python3 integration_test/casegen/combination/gate_factors.py {FID}
+```
+
+作業用の一時ファイルを作るときは、名前に {FID} を入れてスクラッチパッドに作る。他の機能の factors/ のファイルは読まない・書かない。
+ファイルの書き込みを拒否されたときは、回避せず、書くはずだった本文を返答に載せる（依頼元が保存する）。
+
+## 返答
+
+3行以内: 処理の数・要因の数・効き合う組の数・設計書が決めていない組の数、gate の結果と出た行の数、判断に迷った点（あれば1つ）。
+
+exec
+/bin/bash -lc 'head -n 20 functions/dead-spec-register.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'wc -l integration_test/casegen/combination/{factors,combos}/*A06* integration_test/casegen/combination/{factors,combos}/*A07-01* integration_test/casegen/combination/units/{A06-01,A06-02,A06-03,A06-04,A06-05,A06-06,A06-07,A06-08,A06-11,A06-12,A06-13,A07-01}/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'head -n 20 functions/phase2_candidates.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 45ms:
+# 現行ソースに実装が残っているが、経路が成立せず利用者に効果が出ない仕様の台帳。
+# 規約の正本は .cursor/skills/output-exclusion-policy/SKILL.md の 2.7。
+# 詳細設計書から落とす前に、必ずここへ根拠付きで登録する（黙って消さない）。
+# 根拠は pf-eccube3 からの相対パス + 行。実装が変わって機能したときに再判定するため。
+機能No	対象	類型	到達できない理由	根拠(file:line)	判定日
+M05-01	購入グループ	画面に入力欄が無い条件	検索フォームに定義があるが、テンプレートに入力欄の描画が無い。該当領域が描画しているのは注文備考の有無	app/Plugin/HareruyaEc/Form/Extension/Admin/Order/SearchOrderTypeExtension.php:79-85 / app/Plugin/HareruyaEc/Resource/template/admin/Order/index.twig:123-127	2026-08-17
+M05-01	購入商品名（EC-CUBE本体側の1項目）	画面に入力欄が無い条件	本体フォームに定義が残るが、テンプレートが描画するのは拡張の3欄だけ。残余項目の描画処理も条件式が一致せず出力されない	src/Eccube/Form/Type/Admin/SearchOrderType.php:162-165 / app/Plugin/HareruyaEc/Resource/template/admin/Order/index.twig:315-323,330-340	2026-08-17
+M05-01	受注IDの範囲指定	フォーム項目が無い分岐	検索処理に分岐があるが、本体フォームにも拡張フォームにも対応する入力項目が無い	src/Eccube/Repository/OrderRepository.php:267-287	2026-08-17
+M05-01	対応状況の単一指定	フォーム項目が無い分岐	検索処理に分岐があるが、画面から指定できるのは複数選択のみ	src/Eccube/Repository/OrderRepository.php:291-296	2026-08-17
+M05-01	本体側のフリーワード条件	呼び出し前に無効化される条件	拡張がフリーワード2欄の値を退避してから本体を呼ぶため、本体側の条件は成立しない	app/Plugin/HareruyaEc/Repository/OrderRepository.php:306-309 / src/Eccube/Repository/OrderRepository.php:273-280	2026-08-17
+M05-01	画面から指定するソートキーと並び順	受け取るが使わない値	検索条件へ格納されるが検索処理が参照せず、一覧テンプレートにも参照が無い	app/Plugin/HareruyaEc/Controller/Admin/SearchControllerTrait.php:175-176	2026-08-17
+M05-08	スタック用紙の高額判定記号	結果が同一になる分岐	しきい値以上のときと未満のときで同じ記号を返すため、判定結果が区別できない	app/Plugin/HareruyaEc/Repository/OrderRepository.php:1779-1782	2026-08-17
+M05-21	ピッキングリストの数量計算のカテゴリ数フォールバック	結果が同一になる分岐	カテゴリはINNER JOINで結合するため、カテゴリを持たない明細はそもそも取得されない。カテゴリ数を1に置き換える分岐には入らず、常に実カテゴリ数で割る	app/Plugin/HareruyaEc/Repository/DtbShippingStandbyRepository.php:158,179	2026-08-21
+M05-27	削除時のIDの指定が無いときの分岐	呼び出し前に無効化される条件	削除のルートはパスに {id} を必須で持ち、assert("id", "\\d+") で数字のみに限定されるため、コントローラへ到達する時点で $id が null になることがない。is_null($id) の分岐は成立しない	app/Plugin/HareruyaEc/ServiceProvider/Admin/OrderServiceProvider.php:145-147 / app/Plugin/HareruyaEc/Controller/Admin/Order/WaitingTagController.php:51	2026-08-21
+M06-04	ステータス更新中の例外を捕捉して取り消し・エラー表示する処理	呼び出し前に無効化される条件	catch が名前空間を付けない Exception を指し、プラグインの名前空間に同名クラスが無いため、どの例外にも一致しない。取り消しとエラー表示、ステータス変更画面への差し戻しは実行されない	app/Plugin/HareruyaEc/Controller/Admin/OtcBuyOrder/OtcBuyOrderStatusController.php:78-83	2026-08-21
+M08-04	本人確認フラグ	画面に入力欄が無い条件	会員登録編集画面のフォーム拡張に定義があるが、画面テンプレートに描画が無い。画面から入力・変更できるのは本人確認ステータスだけで、この項目は登録・更新のどちらにも効果が出ない	app/Plugin/HareruyaEc/Form/Extension/Admin/CustomerEditTypeExtension.php:106-116 / app/Plugin/HareruyaEc/Resource/template/admin/Customer/edit.twig:321-324	2026-08-21
+M10-08	対象のメールテンプレートが無いまま登録したときのエラー表示と一覧への差し戻し	呼び出し前に無効化される条件	登録先のルートはパスに {id} を持ち assert("id","\\d+") で数字に限定され、識別子なしのルートは GET のみで登録を受け付けない。識別子付きで登録したときは該当テンプレートが無ければ先に 404 になるため、is_null($mail) の分岐には入らない。エラーメッセージの表示と識別子なし表示への差し戻し、および「新規作成を行わない」判定は実行されない	app/Plugin/HareruyaEc/ServiceProvider/Admin/SettingServiceProvider.php:73-77 / app/Plugin/HareruyaEc/Controller/Admin/Setting/Shop/MailController.php:141-143,160-164	2026-08-22
+M09-04	存在しないページIDで編集画面を開いたときの見つからない扱い（404）	呼び出し前に無効化される条件	該当なしのときリポジトリの取得処理が getSingleResult() で NoResultException を投げるため、戻り値が偽かどうかを見る NotFoundHttpException の分岐に到達しない。実際にはシステムエラーの画面になる	src/Eccube/Repository/PageLayoutRepository.php:86 / app/Plugin/HareruyaEc/Controller/Admin/Content/ContentController.php:78-87	2026-08-22
+M16-05	同じカード状態と割引の組み合わせが複数あるときに後から読んだ値で上書きする扱い	呼び出し前に無効化される条件	割引率の保持元は割引の識別子とカード状態の識別子の2つを主キーとするため、同じ組み合わせが2件以上存在しえない。組み合わせごとに値を割り当てる繰り返しで後の値が前の値を置き換える経路には到達しない	app/Plugin/HareruyaEc/Resource/doctrine/Plugin.HareruyaEc.Entity.DtbDiscountCardCondition.dcm.yml:5-17 / app/Plugin/HareruyaEc/Controller/Admin/DiscountController.php:22-25	2026-08-22
+M16-04	参照専用の指定による「登録」ボタンの無効化	結果が同一になる分岐	参照専用の指定はどのマスタ種別にも定義されていないため判定は常に偽になり、「登録」ボタンは常に有効のまま。無効化される経路に入らない	app/Plugin/HareruyaEc/Controller/Admin/HareruyaMasterdataController.php:74 / app/Plugin/HareruyaEc/Resource/template/admin/HareruyaMasterdata/index.twig:93	2026-08-22
+
+ succeeded in 78ms:
+     1 integration_test/casegen/combination/factors/A06-01_constraints.tsv
+     6 integration_test/casegen/combination/factors/A06-01_existing.tsv
+     3 integration_test/casegen/combination/factors/A06-01_factors.tsv
+     2 integration_test/casegen/combination/factors/A06-01_interactions.tsv
+     2 integration_test/casegen/combination/factors/A06-01_processes.tsv
+     1 integration_test/casegen/combination/factors/A06-02_constraints.tsv
+     1 integration_test/casegen/combination/factors/A06-02_existing.tsv
+     5 integration_test/casegen/combination/factors/A06-02_factors.tsv
+     2 integration_test/casegen/combination/factors/A06-02_interactions.tsv
+     2 integration_test/casegen/combination/factors/A06-02_processes.tsv
+     3 integration_test/casegen/combination/factors/A06-03_constraints.tsv
+    16 integration_test/casegen/combination/factors/A06-03_existing.tsv
+     8 integration_test/casegen/combination/factors/A06-03_factors.tsv
+    22 integration_test/casegen/combination/factors/A06-03_interactions.tsv
+     2 integration_test/casegen/combination/factors/A06-03_processes.tsv
+     1 integration_test/casegen/combination/factors/A06-04_constraints.tsv
+     1 integration_test/casegen/combination/factors/A06-04_existing.tsv
+     1 integration_test/casegen/combination/factors/A06-04_factors.tsv
+     1 integration_test/casegen/combination/factors/A06-04_interactions.tsv
+     1 integration_test/casegen/combination/factors/A06-04_processes.tsv
+     5 integration_test/casegen/combination/factors/A06-05_constraints.tsv
+    19 integration_test/casegen/combination/factors/A06-05_existing.tsv
+     4 integration_test/casegen/combination/factors/A06-05_factors.tsv
+     2 integration_test/casegen/combination/factors/A06-05_interactions.tsv
+     2 integration_test/casegen/combination/factors/A06-05_processes.tsv
+     2 integration_test/casegen/combination/factors/A06-06_constraints.tsv
+     9 integration_test/casegen/combination/factors/A06-06_existing.tsv
+    10 integration_test/casegen/combination/factors/A06-06_factors.tsv
+    37 integration_test/casegen/combination/factors/A06-06_interactions.tsv
+     2 integration_test/casegen/combination/factors/A06-06_processes.tsv
+     1 integration_test/casegen/combination/factors/A06-07_constraints.tsv
+     9 integration_test/casegen/combination/factors/A06-07_existing.tsv
+    12 integration_test/casegen/combination/factors/A06-07_factors.tsv
+    56 integration_test/casegen/combination/factors/A06-07_interactions.tsv
+     2 integration_test/casegen/combination/factors/A06-07_processes.tsv
+     2 integration_test/casegen/combination/factors/A06-08_constraints.tsv
+    10 integration_test/casegen/combination/factors/A06-08_existing.tsv
+    11 integration_test/casegen/combination/factors/A06-08_factors.tsv
+    46 integration_test/casegen/combination/factors/A06-08_interactions.tsv
+     2 integration_test/casegen/combination/factors/A06-08_processes.tsv
+     1 integration_test/casegen/combination/factors/A06-11_constraints.tsv
+     1 integration_test/casegen/combination/factors/A06-11_existing.tsv
+     1 integration_test/casegen/combination/factors/A06-11_factors.tsv
+     1 integration_test/casegen/combination/factors/A06-11_interactions.tsv
+     1 integration_test/casegen/combination/factors/A06-11_processes.tsv
+     1 integration_test/casegen/combination/factors/A06-12_constraints.tsv
+     1 integration_test/casegen/combination/factors/A06-12_existing.tsv
+     1 integration_test/casegen/combination/factors/A06-12_factors.tsv
+     1 integration_test/casegen/combination/factors/A06-12_interactions.tsv
+     1 integration_test/casegen/combination/factors/A06-12_processes.tsv
+     1 integration_test/casegen/combination/factors/A06-13_constraints.tsv
+     5 integration_test/casegen/combination/factors/A06-13_existing.tsv
+     3 integration_test/casegen/combination/factors/A06-13_factors.tsv
+     2 integration_test/casegen/combination/factors/A06-13_interactions.tsv
+     2 integration_test/casegen/combination/factors/A06-13_processes.tsv
+     5 integration_test/casegen/combination/combos/A06-01.tsv
+     1 integration_test/casegen/combination/combos/A06-01_undetermined.tsv
+    17 integration_test/casegen/combination/combos/A06-02.tsv
+     1 integration_test/casegen/combination/combos/A06-02_undetermined.tsv
+    10 integration_test/casegen/combination/combos/A06-03.tsv
+     3 integration_test/casegen/combination/combos/A06-03_undetermined.tsv
+     1 integration_test/casegen/combination/combos/A06-04.tsv
+     1 integration_test/casegen/combination/combos/A06-04_undetermined.tsv
+    27 integration_test/casegen/combination/combos/A06-05.tsv
+     5 integration_test/casegen/combination/combos/A06-05_undetermined.tsv
+    10 integration_test/casegen/combination/combos/A06-06.tsv
+     1 integration_test/casegen/combination/combos/A06-06_undetermined.tsv
+     9 integration_test/casegen/combination/combos/A06-07.tsv
+     1 integration_test/casegen/combination/combos/A06-07_undetermined.tsv
+    12 integration_test/casegen/combination/combos/A06-08.tsv
+     1 integration_test/casegen/combination/combos/A06-08_undetermined.tsv
+     1 integration_test/casegen/combination/combos/A06-11.tsv
+     1 integration_test/casegen/combination/combos/A06-11_undetermined.tsv
+     1 integration_test/casegen/combination/combos/A06-12.tsv
+     1 integration_test/casegen/combination/combos/A06-12_undetermined.tsv
+     1 integration_test/casegen/combination/combos/A06-13.tsv
+     1 integration_test/casegen/combination/combos/A06-13_undetermined.tsv
+     1 integration_test/casegen/combination/factors/A07-01_constraints.tsv
+     1 integration_test/casegen/combination/factors/A07-01_existing.tsv
+     1 integration_test/casegen/combination/factors/A07-01_factors.tsv
+     1 integration_test/casegen/combination/factors/A07-01_interactions.tsv
+     1 integration_test/casegen/combination/factors/A07-01_processes.tsv
+     1 integration_test/casegen/combination/combos/A07-01.tsv
+     1 integration_test/casegen/combination/combos/A07-01_undetermined.tsv
+    71 integration_test/casegen/combination/units/A06-01/design.txt
+    88 integration_test/casegen/combination/units/A06-02/design.txt
+   131 integration_test/casegen/combination/units/A06-03/design.txt
+    64 integration_test/casegen/combination/units/A06-04/design.txt
+    94 integration_test/casegen/combination/units/A06-05/design.txt
+   108 integration_test/casegen/combination/units/A06-06/design.txt
+    71 integration_test/casegen/combination/units/A06-07/design.txt
+    98 integration_test/casegen/combination/units/A06-08/design.txt
+    55 integration_test/casegen/combination/units/A06-11/design.txt
+    51 integration_test/casegen/combination/units/A06-12/design.txt
+    76 integration_test/casegen/combination/units/A06-13/design.txt
+    58 integration_test/casegen/combination/units/A07-01/design.txt
+  1430 total
+
+ succeeded in 123ms:
+status	book	sheetId	sheetName	featureNo	primaryDoc	ph2InDoc	line
+known	0202	sheet-10	在庫切れ、在庫警戒リストCSV出力	M04-06	functions/ec-cube-enterprise/m04-06_admin_stock_stock_shortage_csv_export.md	yes	在庫切れ、在庫警戒リストCSV出力はPh2で対応するため、Ph1では実装しない
+known	0202	sheet-11	在庫切れリストCSV出力	M04-06	functions/ec-cube-enterprise/m04-06_admin_stock_stock_shortage_csv_export.md	yes	在庫切れリストCSV出力はPh2で対応するため、Ph1では実装しない
+known	0202	sheet-12	在庫警戒リストCSV出力	M04-07	functions/ec-cube-enterprise/m04-07_admin_stock_stock_warning_csv_export.md	yes	在庫警戒リストCSV出力はPh2で対応するため、Ph1では実装しない
+known	0203	sheet-15	受注情報編集	M05-11	functions/pf-eccube3/m05-11_admin_order_order_edit.md		・Ph2へ見送り
+known	0203	sheet-15	受注情報編集	M05-11	functions/pf-eccube3/m05-11_admin_order_order_edit.md		・Ph2へ見送り期限通知情報を参照
+known	0203	sheet-15	受注情報編集	M05-11	functions/pf-eccube3/m05-11_admin_order_order_edit.md		Ph2にて対応
+known	0203	sheet-16	【新規】受注情報履歴	M05-11	functions/pf-eccube3/m05-11_admin_order_order_edit.md		Ph2にて対応
+known	0204	sheet-46	低価格帯カード価格変更CSV出力	M03-44	functions/ec-cube-enterprise/m03-44_admin_product_product_simple_low_price_csv_import.md	yes	Ph2で対応
+known	0204	sheet-47	低価格帯カード価格変更CSVフォーマット	M03-44	functions/ec-cube-enterprise/m03-44_admin_product_product_simple_low_price_csv_import.md	yes	Ph2で対応
+known	0205	sheet-4	買取一覧(検索結果)	M06-01	functions/pf-eccube3/m06-01_admin_store_purchase_purchase_store_search_list.md	yes	買取商品（キャンセル）CSVはPh2の要件となるためPh1では実装しない
+known	0205	sheet-7	【新規】買取商品一覧（キャンセル）CSV出力項目	M06-13	functions/ec-cube-enterprise/m06-13_admin_store_purchase_purchase_store_product_cancel_csv_export.md	yes	買取商品一覧（キャンセル）CSVはPh2で対応するため、Ph1では実装しない
+known	0205	sheet-10	買取詳細	M06-03	functions/pf-eccube3/m06-03_admin_store_purchase_purchase_store_otc_buy_info_edit.md	yes	一部キャンセルはPh2の要件となるためPh1では実装しない
+known	0207	sheet-3	会員検索一覧(検索入力)	M08-01	functions/pf-eccube3/m08-01_admin_customer_customer_search_list.md	yes	※顧客分析タグ登録はPh2で対応するため、Ph1では実装しない
+known	0207	sheet-4	会員検索一覧(検索結果)	M08-01	functions/pf-eccube3/m08-01_admin_customer_customer_search_list.md	yes	・下記機能はPh2で対応するためPh1ではスコープ外とする
+known	0207	sheet-9	会員登録編集	M08-04	functions/pf-eccube3/m08-04_admin_customer_customer_edit.md	yes	・フロントで会員がオプトイン・オプトアウトできるようにする要件はPh2とする
+known	0207	sheet-9	会員登録編集	M08-04	functions/pf-eccube3/m08-04_admin_customer_customer_edit.md	yes	※下記項目はPh2で対応するため、Ph1では実装しない
+known	0207	sheet-19	【新規】顧客分析タグ	M08-11	functions/ec-cube-enterprise/m08-11_admin_customer_customer_analysis_tag_master.md	yes	・会員顧客分析タグCSVアップロードはPh2で対応のためPh1ではスコープ外とする
+known	0207	sheet-3	会員検索一覧(検索入力)	M08-01	functions/pf-eccube3/m08-01_admin_customer_customer_search_list.md	yes	※カスタマイズ対応、項目を追加する・検索はor条件とすること・顧客分析タグへ登録予定である下記を表示RFMセグメンテーション（アクティブ上位、中位、下位、コレクター、休眠予備軍、新規）※顧客分析タグ登録はPh2で対応するため、Ph1では実装しない
+known	0207	sheet-3	会員検索一覧(検索入力)	M08-01	functions/pf-eccube3/m08-01_admin_customer_customer_search_list.md	yes	顧客分析タグ登録はPh2で対応するため、Ph1では実装しない
+
+exec
+/bin/bash -lc 'cat integration_test/SCOPE.md' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+# 結合テスト観点表の適用範囲
+
+`ipa-integration-test-viewpoints.tsv` が対象とする範囲を定める。
+判定基準は旧観点資産（`archive/integration-test-viewpoints.md`）の層判定をそのまま踏襲する。
+
+## 対象とするもの
+
+**独立したコンポーネント間の契約と相互作用。**
+呼出側と受取側の間で、受け渡される値、状態、副作用、異常時の振る舞いが
+双方の設計どおりに噛み合っていることを確認する。
+
+**媒体をいくつ跨いだかでは判定しない。** 単一のロジックの結果をDBや画面で観測するだけの確認は、
+観測先が別コンポーネントであっても単体テストの範囲とする。
+旧正本もこの基準を採り、DBへ登録される変換・計算結果をUT判定している
+（`archive/integration-test-viewpoints.md` No.60-66）。
+
+## 単項目の検証は、DBへ保存するかで分ける（2026-09-01 依頼者決裁）
+
+単項目の桁数・文字種・必須・コード値・日付・メールアドレス書式の検証は、
+**その項目をDBへ保存するかどうか**で担当を分ける。
+
+| 項目の性質 | 担当 | 理由 |
+| --- | --- | --- |
+| DBへ保存する項目（登録・編集の入力欄） | **結合テスト** | Form層で受理された値がDB層に収まるかは跨コンポーネントでしか観測できない。pf(MySQL)はバイト、ee(PostgreSQL)は文字で数えるため、Form層の単体テストでは意味論差が出ない |
+| 画面上だけの入力制限（検索条件、絞り込み、表示件数） | 単体テスト | DBへ保存しないので意味論差が起きない。判定ロジックの正しさだけを見ればよい |
+
+同じ種類の判定であれば、複数項目をまとめて1件のテストケースにしてよい。
+例: 「商品名と商品名(英)の最大文字数が設計書どおりであること」は1件でよい。
+判定の種類が違えば分ける（最大文字数と必須は別のケース）。
+
+単体テストが担うのは、検証を行う処理そのもの（計算式、文字数の数え方、分岐網羅）である。
+
+画面項目定義のうち次は、桁数・必須の指定が無くても結合テストの対象とする。
+跨コンポーネントでしか確認できないからである。
+
+- 初期値の指定（画面を開いてDBから値を取り、初期表示する）
+- 画面部品のふるまい（「押下すると検索を行う」「表示/非表示を切り替える」）
+- 表示内容（「チェックを付けると一覧すべてを対象に設定」）
+
+## 現行仕様と刷新の指示が食い違うときは刷新を採る（2026-09-01）
+
+HTML設計書には次の2つが載る。両方が同じ項目に触れて食い違うことがある。
+
+| 出所 | 中身 |
+| --- | --- |
+| Excel基本設計の本文 | 刷新後にどうするかの指示。「※カスタマイズ対応」「〜とする」 |
+| 埋め込まれた機能設計書の「現行仕様」 | 現行の実装がどう動いているか |
+
+**期待結果は刷新の指示を採る。** 現行仕様は、刷新の指示が無い箇所にだけ使う。
+両方に記述があって内容が違うときは、刷新の指示を期待結果にし、
+現行仕様との差を `出典` に併記する。
+
+実例: M03-01の並び順は、機能設計書の現行仕様が「商品IDの降順」、
+Excel基本設計が「表示順は、棚番号昇順とする」で食い違う。棚番号昇順を採る。
+現行仕様だけを見てケースを書き、誤った期待結果を作った（codex R1）。
+
+## 対象としないもの
+
+| 除外区分 | 内容 | 担当 |
+| --- | --- | --- |
+| 単体テスト粒度 | 単一コンポーネント内で完結する変換・計算ロジック | 単体テスト |
+| 単体テスト粒度 | 単一メソッド内の分岐網羅 | 単体テスト |
+| 単体テスト粒度 | 変換、編集分岐、ループ編集、計算、連結、暗号化、マスキング、パディング、小数桁の結果そのもの | 単体テスト |
+| e2e粒度 | 見た目、画面レイアウト、ブラウザ固有挙動、確認ダイアログの表示 | e2e・手動 |
+| e2e粒度 | 画面表示文言の照合 | e2e・手動 |
+| 性能 | 応答時間、スループット、同時接続数の上限、リトライ間隔の適切さ | 性能テスト（別工程） |
+
+## 境界が紛らわしいもの
+
+同じ語で呼ばれるが、担当が分かれるもの。
+
+| 事象 | 結合テストが見るもの | 他が見るもの |
+| --- | --- | --- |
+| 境界値 | 設計書が定めた桁数・範囲どおりに受理／拒否されること。DB層のカラム制約、件数上限、ファイルサイズ、表示上限を含む | 計算式そのものの正しさは単体テスト |
+| 文字列長 | 設計書が定めた最大文字数どおりに受理／拒否されること。pf(MySQL)とee(PostgreSQL)の意味論差を含み、Form層とDB層の双方を見る | 文字数を数える処理そのものは単体テスト |
+| 最大件数・最大ファイルサイズ | 規定量を機能として正しく扱えるか（ITB-11） | 規定時間内に終わるかは性能テスト |
+| タイムアウト | タイムアウト時の跨コンポーネントの挙動（ITB-14） | 応答時間そのものは性能テスト |
+| リトライ | 再送回数、間隔、打切り条件が仕様どおりか（ITB-15） | 間隔の適切さは性能テスト |
+| バリデーション | 設計書が定めた検証（必須、桁数、文字種、コード値、日付、メールアドレス書式）の結果が画面・DB・ファイル・連携先へ反映されること | 検証関数そのものの分岐網羅は単体テスト |
+| メッセージ | DB、ファイル、ログ、連携先の期待結果（COM-04） | 画面表示文言の照合はe2e |
+
+## 除外の記録
+
+除外した観点は捨てない。旧資産の層判定は `archive/integration-test-viewpoints.md` の
+`テスト層` 列に、新観点への対応は `MIGRATION_MAP.tsv` に残る。
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/A06-03/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/A06-02/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 3ms:
+##### 0506 sheet-5 店頭買取情報更新
+L0001	店頭買取情報更新
+L0002	ドキュメント名店頭買取管理 基本設計
+L0003	セクション—
+L0004	プロジェクト名店頭買取管理機能
+L0005	作成者石川
+L0006	作成日2025-07-17
+L0007	更新者石川
+L0008	更新日2025-09-06
+L0009	機能NoA06-03
+L0010	機能名店頭買取情報更新
+L0011	概要MTGバイヤーで査定した買取情報を更新する
+L0012	処理概要（★はカスタマイズ項目）
+L0013	店頭買取情報更新 / D28 / image 1
+L0014	GET POST PUT DELETE PATCH OPTIONS HEAD 有 無 〇
+L0015	エンドポイントURL
+L0016	/api/admin/otcBuyOrder/{_otcBuyOrderId}.json
+L0017	プロトコル HTTP メソッド PUT 認証の有無 有 認証方式 IP制限
+L0018	トークン リクエスト書式 クエリ レスポンス書式 JSON
+L0019	カスタマイズ説明
+L0020	・買取成立、買取キャンセル以外に経理払い出し待ちにする際に呼ばれるようになる
+L0021	・経理払い出し待ちステータスで更新できるようにする
+L0022	・経理払い出し待ちステータスにした際、経理宛てにメールを送信する
+L0023	・買取成立ステータスに変更された場合は、個別入力商品がある場合は未登録在庫ありと判断してステータスを未登録在庫ありに変更する
+L0024	・個別入力商品がない場合は未登録在庫なしと判断して入庫待ちにする
+L0025	・端末取引IDをECCUBEに連携する
+L0026	・店頭買取実在庫登録時、買取価格、買取小計を新たに登録する
+L0027	機能仕様処理概要（★はカスタマイズ項目）
+L0028	★MTGBuyerの書類確認画面で買取成立または買取キャンセルまたは新たに追加する経理払い出し待ちにするボタンをクリックした際に呼ばれるAPI
+L0029	・登録済みの以下の情報を削除する（ボタンを複数回押下しても最新の情報しか持たない）
+L0030	①店頭買取注文詳細（買取を行う商品情報）
+L0031	②店頭買取注文個別入力商品（買取を行う商品のうち、個別入力を行った商品）
+L0032	③店頭買取実在庫
+L0033	④店頭買取実在庫履歴
+L0034	・送信されてきた以下の情報を登録する
+L0035	①店頭買取注文詳細（商品規格IDが登録されている場合はこちらを登録）
+L0036	②店頭買取注文個別入力商品（商品規格IDが未登録の場合はこちらを登録）
+L0037	③店頭買取実在庫（店頭買取注文詳細のうち、指定された商品規格IDに紐づく商品規格が存在する場合は実在庫情報として登録する）
+L0038	④店頭買取実在庫履歴（店頭買取実在庫に対応する履歴）
+L0039	⑤店頭買取情報
+L0040	⑤-1ステータス
+L0041	⑤-2合計金額
+L0042	⑤-3更新者
+L0043	⑤-4更新日
+L0044	⑤-5買取成立の場合は買取成立日
+L0045	⑤-6買取キャンセルの場合は買取キャンセル日
+L0046	⑤-7適格請求書発行事業者確認フラグ
+L0047	⑤-8出金コード
+L0048	⑥店頭買取情報ステータス履歴
+L0049	★経理払い出し待ちの場合は経理にメールを送信する
+L0050	・送られてきたステータスが「経理払い出し待ち」の場合、あらかじめ設定済みの経理チームのメールアドレスに
+L0051	振込を行ってほしい旨のメールを送信する
+L0052	メール件名 店頭買取振込依頼 【査定ID: XXXXX】
+L0053	宛先 経理チーム
+L0054	本文
+L0055	★送られてきたステータスが「買取成立」の場合
+L0056	・個別入力商品がある場合は未登録在庫ありと判断してステータスを未登録在庫ありに変更する
+L0057	・個別入力商品がない場合は未登録在庫なし判断して入庫待ちにする
+L0058	・端末取引IDをECCUBEに連携する
+L0059	★店頭買取実在庫登録時、実際に買い取った買取価格、買取小計（買取価格×買取個数）を登録する
+L0060	・買取商品を入庫する際の原価として使用する
+L0061	リクエストパラメータ
+L0062	項目名	型	必須	最大文字数
+L0063	または最大値	入力例	備考
+L0064	order_status	数値(整数)	〇		1	店頭買取注文ステータス、マスターにあるステータス以外はエラー
+L0065	qualified_invoice_issuer
+L0066	_confirmation_flg	文字列			True	適格請求書発行事業者確認フラグ、trueまたはfalse
+L0067	smaregi_transaction_id	数値(整数)				端末取引ID
+L0068	order_details	配列				査定を行った商品情報
+L0069	product_class_id	数値(整数)			123456	商品規格ID
+L0070	name	文字列	〇	65535	【EN】セラの天使	商品名
+L0071	quantity	数値(整数)			1	数量
+L0072	price	数値(整数)			1000	買取金額
+L0073	sell_price	数値(整数)			1000	販売価格
+L0074	section_id	数値(整数)			1	部門ID
+L0075	リクエストパラメータサンプル
+L0076	ステータスコード
+L0077	コード 説明
+L0078	200
+L0079	レスポンスデータ
+L0080	名前 型 説明
+L0081	なし
+L0082	レスポンスデータサンプル
+L0083	Source:
+L0084	functions/pf-api/a06-03_api_store_purchase_otc_buy_order_update.md
+L0085	現行仕様
+L0086	A06-03 店頭買取受注詳細更新 / API 店頭買取管理 — 店頭買取受注詳細更新
+L0087	業務ロジック
+L0088	更新対象の特定
+L0089	指定された受注IDの店頭買取受注1件を更新対象とする。該当が無いときは該当なし（HTTP 404）とする。受注の現在のステータスや担当者による更新制限は本APIでは課さない。
+L0090	部門の設定と実在庫の集約
+L0091	明細・個別入力商品には、部門IDが指定され、かつ該当する部門が存在するときだけ部門を設定する。該当する部門が無い部門IDは無視し、部門なしで登録する。
+L0092	実在庫は商品規格ごとに数量を合算して1件にまとめる。同じ商品規格の明細が複数送られたときも、実在庫は商品規格につき1件になる。実在庫履歴には合算後の数量・査定担当者・現在日時を記録する。
+L0093	買取合計金額
+L0094	送られた査定明細すべて（個別入力商品を含む）について単価×数量を合算し、10円単位へ切り上げた額を買取合計金額とする。
+L0095	受注への反映
+L0096	査定担当者には認証した管理者会員を、更新日時には現在日時を設定する。適格請求書発行事業者に該当する受注のときだけ、確認済みフラグを指定値で更新する（該当しない受注では、指定されても更新しない）。
+L0097	更新前と指定ステータスが異なるときだけ、ステータス変更履歴を1件登録する。同じステータスが指定されたときは履歴を残さない。
+L0098	エラー時の扱い
+L0099	エラー内容	処理
+L0100	認証不可	認証拒否（HTTP 401）とする
+L0101	受注が存在しない	該当なし（HTTP 404）とする
+L0102	入力検証エラー	入力不正（HTTP 400）とし、全メッセージをerrors配列で返す。削除・登録・保存は行わない
+L0103	削除・登録・保存処理中の例外	共通例外処理に委ねる（HTTP 500相当）
+L0104	検証エラーは複数件をまとめる。受注全体の検証と明細各件の検証を合算した全メッセージを返す。
+L0105	入出力
+L0106	入力: リクエスト
+L0107	パラメータ	位置	型	必須／任意	説明
+L0108	jwt-token	ヘッダ	string	必須	認証用のトークン
+L0109	出力: レスポンス（失敗）
+L0110	HTTPステータス	条件	本文の形
+L0111	401	トークン欠落・署名不正・該当する管理者会員なし	認証拒否（本文を持たない）
+L0112	404	受注IDに該当する店頭買取受注が無い	該当なし（本文を持たない）
+L0113	400	ステータス未指定	errorsに「ステータスを選択してください。」を含む
+L0114	400	ステータスIDが店頭買取ステータスマスタに存在しない	errorsに「MtbOtcBuyOrderStatusに{指定ID}が見つかりません。」を含む
+L0115	400	明細が未指定または空	errorsに「1つ以上の商品を選んでください。」を含む
+L0116	400	明細の商品名が未入力	errorsに商品名必須の検証メッセージを含む
+L0117	400	明細の商品名が最大長超過	errorsに「商品名は、 65535 以下で入力してください。」を含む
+L0118	400	明細の商品規格ID・数量・単価・販売価格・部門IDが整数でない	errorsに該当項目の整数形式メッセージを含む
+L0119	500	削除・登録・保存処理中の例外	共通例外処理に委ねる
+L0120	{
+L0121	"code": 400,
+L0122	"errors": [
+L0123	"1つ以上の商品を選んでください。"
+L0124	]
+L0125	}
+L0126	リニューアル後の仕様
+L0127	表示メッセージ
+L0128	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0129	A06-03-MSG-001	API応答JSON（errors配列）	商品規格IDが指定されていません	店頭買取受注詳細更新APIで、明細の商品規格IDがnullの場合。	HTTP 400のJSON errorsで処理中止。
+L0130	A06-03-MSG-002	API応答JSON（errors配列）	商品規格IDが存在しません	店頭買取受注詳細更新APIで、指定された商品規格IDに該当する商品規格が存在しない場合。	HTTP 400のJSON errorsで処理中止。
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/A06-01/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/A06-04/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+##### 0506 sheet-4 店頭買取情報取得
+L0001	店頭買取情報取得
+L0002	ドキュメント名店頭買取管理 基本設計
+L0003	セクション—
+L0004	プロジェクト名店頭買取管理機能
+L0005	作成者石川
+L0006	作成日2025-07-17
+L0007	更新者石川
+L0008	更新日2025-09-06
+L0009	機能NoA06-02
+L0010	機能名店頭買取情報取得
+L0011	概要MTGバイヤーで査定する対象の買取情報を取得する
+L0012	処理概要（★はカスタマイズ項目）
+L0013	店頭買取情報取得 / D24 / image 1
+L0014	GET POST PUT DELETE PATCH OPTIONS HEAD 有 無 〇
+L0015	エンドポイントURL
+L0016	/api/admin/otcBuyOrders.json
+L0017	プロトコル HTTP メソッド GET 認証の有無 有 認証方式 IP制限
+L0018	トークン リクエスト書式 クエリ レスポンス書式 JSON
+L0019	カスタマイズ説明
+L0020	現行踏襲
+L0021	機能仕様処理概要（★はカスタマイズ項目）
+L0022	・MTGBuyerで以下の画面を出すための情報を取得するためのAPI
+L0023	・ログイン者の所属店舗に紐づく特定のステータスの査定情報を取得する
+L0024	・取得対象ステータスは「査定前」「査定中」「査定中断」「査定再開」
+L0025	リクエストパラメータ
+L0026	項目名 型 必須 最大文字数
+L0027	または最大値 入力例 備考
+L0028	なし
+L0029	リクエストパラメータサンプル
+L0030	ステータスコード
+L0031	コード 説明
+L0032	200
+L0033	レスポンスデータ
+L0034	名前	型	説明
+L0035	買取情報のJSON配列	配列	ログイン者の所属店舗に紐づく「査定前」「査定中」「査定中断」「査定再開」ステータスの買取情報のJSON配列
+L0036	otcBuyOrderId	文字列	店頭買取ID
+L0037	assessmentId	文字列	査定ID
+L0038	applyDate	文字列	査定申込日
+L0039	freeComment	文字列	フリーコメント
+L0040	memberName	文字列	査定担当者
+L0041	otcOrderStatusId	文字列	買取ステータスID
+L0042	returnSupply	文字列	返却サプライ
+L0043	callFlg	文字列	電話通知フラグ
+L0044	adultFlg	文字列	成人フラグ
+L0045	playingFlg	文字列	大会参加中フラグ
+L0046	orderStatusName	文字列	買取ステータス名
+L0047	identificationId	文字列	身分証明書ID
+L0048	qualifiedInvoiceIssuerFlg	文字列	適格請求書発行事業者フラグ
+L0049	qualifiedInvoiceIssuerConfirmationFlg	文字列	適格請求書発行事業者確認フラグ
+L0050	qualifiedInvoiceIssuerCode	文字列	適格請求書発行事業者ID
+L0051	customerInfo	オブジェクト	買取を申し込んだ顧客の情報が入ったオブジェクト
+L0052	firstName	文字列	名
+L0053	lastName 	文字列	姓
+L0054	birth	文字列	生年月日
+L0055	telNo	文字列	電話番号
+L0056	zipcode	文字列	郵便番号
+L0057	jobName	文字列	職業名
+L0058	address	文字列	住所
+L0059	レスポンスデータサンプル
+L0060	Source:
+L0061	functions/pf-api/a06-02_api_store_purchase_otc_buy_order_list.md
+L0062	現行仕様
+L0063	A06-02 店頭買取受注一覧取得 / API 店頭買取管理 — 店頭買取受注一覧取得
+L0064	業務ロジック
+L0065	取得対象
+L0066	取得対象の買取情報は店頭買取受注IDの昇順で返す。該当が無い場合は空配列を返す。職業または国が紐づいていない受注は、対象ステータスであっても結果に含まれない。
+L0067	店舗による絞り込み
+L0068	認証した管理者会員に会員サブ情報が無く所属店舗が定まらない場合は、店舗による絞り込みを行わず、取得対象の買取情報を一律に返す。
+L0069	認証
+L0070	認証用トークンのヘッダを検証し、その利用者IDから管理者会員を特定する。署名方式はHS256である。ヘッダ欠落・署名不正・該当する管理者会員なしのいずれも認証拒否（HTTP 401）とする。トークン原値・署名シークレットは本書に記載しない。
+L0071	エラー時の扱い
+L0072	エラー内容	処理
+L0073	認証不可	認証拒否（HTTP 401）とする
+L0074	受注取得・整形処理中の例外	共通例外処理に委ねる（HTTP 500相当）
+L0075	入出力
+L0076	出力: 値の表し方と未設定時のふるまい
+L0077	フィールド	ふるまい
+L0078	applyDate	ISO8601形式の日時文字列で返す。
+L0079	freeComment	未設定の場合はnull。
+L0080	memberName	査定担当者が紐づいていない場合はnull。
+L0081	identificationId	本人確認が未登録の場合は0。
+L0082	qualifiedInvoiceIssuerCode	適格請求書発行事業者の口座が紐づいていない場合はnull。
+L0083	customerInfo.birth	ISO8601形式の日時文字列で返す。
+L0084	customerInfo.address	国が日本のときは都道府県名・住所1・住所2、それ以外の国のときは国名・住所2・住所1 の順に、半角空白区切りで連結した1つの文字列で返す。
+L0085	リニューアル後の仕様
+L0086	表示メッセージ
+L0087	本APIは画面メッセージを扱わない。
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/A06-05/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/A06-13/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/A07-01/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+##### 0506 sheet-3 買取アプリ用ログイン
+L0001	買取アプリ用ログイン
+L0002	ドキュメント名店頭買取管理 基本設計
+L0003	セクション—
+L0004	プロジェクト名店頭買取管理機能
+L0005	作成者石川
+L0006	作成日2025-07-17
+L0007	更新者石川
+L0008	更新日2025-09-06
+L0009	機能NoA06-01
+L0010	機能名買取アプリ用ログイン
+L0011	概要買取アプリ用にログインを行う
+L0012	処理概要（★はカスタマイズ項目）
+L0013	買取アプリ用ログイン / D22 / image 1
+L0014	買取アプリ用ログイン / E38 / image 2
+L0015	GET POST PUT DELETE PATCH OPTIONS HEAD 有 無 〇
+L0016	エンドポイントURL
+L0017	/api/admin/login.json
+L0018	プロトコル HTTP メソッド POST 認証の有無 有 認証方式 IP制限
+L0019	トークン リクエスト書式 クエリ レスポンス書式 JSON
+L0020	カスタマイズ説明
+L0021	現行踏襲
+L0022	機能仕様処理概要（★はカスタマイズ項目）
+L0023	・MTGBuyerでログインを行うためのAPI、ログインボタン押下時に呼ばれる
+L0024	・本店管理画面側に実装されているのログインAPI機能を使ってログインを行う
+L0025	・本店管理画面の/admin/loginを呼び出しCookieを取得する
+L0026	・取得したCookieはAPIサーバの/tmp/login{$loginId}.cookieファイルに保存する
+L0027	・本店管理画面の/admin_api/login_checkを呼び出しログインを実行する、取得済みのCookieを送信する
+L0028	・ログインに成功した場合はMTGBuyerにログインする
+L0029	・ログインに失敗した場合は以下のようにエラーを表示する
+L0030	リクエストパラメータ
+L0031	項目名	型	必須	最大文字数
+L0032	または最大値	入力例	備考
+L0033	login_id	文字列	〇		test_id	ログインID
+L0034	password	文字列	〇		password123	パスワード
+L0035	リクエストパラメータサンプル
+L0036	ステータスコード
+L0037	コード 説明
+L0038	200 認証成功
+L0039	401 認証失敗
+L0040	レスポンスデータ
+L0041	名前	型	説明
+L0042	memberName	文字列	ログイン者の名前
+L0043	memberId	文字列	ログイン者のID
+L0044	shopName	文字列	ログイン者の所属店舗
+L0045	shopAddr	文字列	ログイン者の所属店舗の住所
+L0046	jwtToken	文字列	初回ログイン以降、APIを呼び出す際に一緒にヘッダ情報として送るトークン、トークンが正しければAPIにアクセス可能
+L0047	レスポンスデータサンプル
+L0048	Source:
+L0049	functions/pf-api/a06-01_api_store_purchase_admin_login.md
+L0050	現行仕様
+L0051	A06-01 買取アプリ用ログイン / API 店頭買取管理 — 買取アプリ用ログイン
+L0052	業務ロジック
+L0053	失敗したときの応答本文
+L0054	事象	応答
+L0055	中継先が認証情報を返さない（認証失敗）	処理結果コードとメッセージの2項目を返す。メッセージは中継先のログイン画面に出る理由文言をそのまま用い、改行表記を取り除いたもの。本API独自の文言は設けない
+L0056	中継先へ到達できない	到達の成否を判定しない。中継先の応答が得られないときも、認証情報が返らないときと同じ扱いになる
+L0057	トークンの発行と以降の利用
+L0058	発行されるトークンは、発行者と利用者ID（認証した管理者会員のID）を持つ。以降の各APIは受け取ったトークンの利用者IDから管理者会員を引いて認可し、会員を引けないときは認可しない。
+L0059	トークン原値・署名シークレット・パスワードは本書に記載しない。
+L0060	ログイン成功後の買取アプリ
+L0061	買取アプリは、本APIが認証情報を返したとき、応答の利用者情報を保持してモード選択画面へ移る。モード選択画面は店頭買取・ネット買取・入庫モードを選ぶ画面である。
+L0062	入出力
+L0063	店舗が紐づかない会員のとき
+L0064	認証した会員に店舗が紐づかない場合、店舗名・店舗住所は空文字を返す。
+L0065	リニューアル後の仕様
+L0066	表示メッセージ
+L0067	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0068	A06-01-MSG-001	API応答JSON（errors配列）	ログインIDまたはパスワードが入力されていません	ログインAPIでログインIDまたはパスワードが空のとき	HTTP 401を返し、トークンを発行しない
+L0069	A06-01-MSG-002	API応答JSON（errors配列）	ログインIDまたはパスワードが正しくありません	ログインAPIで有効なログインIDに対応する会員が見つからないとき	HTTP 401を返し、トークンを発行しない
+L0070	A06-01-MSG-003	API応答JSON（errors配列）	ログインIDまたはパスワードが正しくありません	ログインAPIで会員は見つかったが、パスワード検証に失敗したとき	HTTP 401を返し、トークンを発行しない
+
+ succeeded in 14ms:
+##### 0506 sheet-7 店頭買取情報ステータス更新
+L0001	店頭買取情報ステータス更新
+L0002	ドキュメント名店頭買取管理 基本設計
+L0003	セクション—
+L0004	プロジェクト名店頭買取管理機能
+L0005	作成者石川
+L0006	作成日2025-07-17
+L0007	更新者—
+L0008	更新日—
+L0009	機能NoA06-05
+L0010	機能名店頭買取受注ステータス更新
+L0011	概要MTGバイヤーでのステータス更新を反映する
+L0012	処理概要（★はカスタマイズ項目）
+L0013	GET POST PUT DELETE PATCH OPTIONS HEAD 有 無 〇
+L0014	エンドポイントURL
+L0015	/api/admin/otcBuyOrder/{id}/status.json
+L0016	プロトコル HTTP メソッド PUT 認証の有無 有 認証方式 IP制限
+L0017	トークン リクエスト書式 クエリ レスポンス書式 JSON
+L0018	カスタマイズ説明
+L0019	・新しく増えた買取受注ステータスについては更新できないようにする
+L0020	このAPIで更新できるのは今まで通り査定中、査定中断、査定再開であり、経理払い出し待ちや入庫済みには更新できないよう制御を入れる
+L0021	機能仕様処理概要（★はカスタマイズ項目）
+L0022	・MTGBuyerで査定を開始したり、中断した際にステータス変更を行うAPI
+L0023	★買取情報の現在のステータスが以下の場合に更新可能
+L0024	5: 査定前
+L0025	6: 査定中
+L0026	8: 査定中断
+L0027	9: 査定再開
+L0028	・以下のステータスに更新可能
+L0029	6: 査定中
+L0030	8: 査定中断
+L0031	9: 査定再開
+L0032	★以下のステータスには更新不可
+L0033	1: 買取成立
+L0034	2: 買取キャンセル
+L0035	5: 査定前
+L0036	10: 経理払い出し待ち
+L0037	11: 入庫済み
+L0038	12: 未登録在庫あり
+L0039	13: 入庫待ち
+L0040	14: 管理者取消
+L0041	・査定者本人を除き、査定中または査定再開のものは査定開始できない
+L0042	・買取情報のステータスを更新する
+L0043	・買取情報のステータス更新履歴を登録する
+L0044	リクエストパラメータ
+L0045	項目名	型	必須	最大文字数
+L0046	または最大値	入力例	備考
+L0047	店頭買取注文ステータス	数値	〇		1	マスターにあるステータス以外はエラー
+L0048	リクエストパラメータサンプル
+L0049	ステータスコード
+L0050	コード 説明
+L0051	200
+L0052	レスポンスデータ
+L0053	名前 型 説明
+L0054	なし
+L0055	レスポンスデータサンプル
+L0056	Source:
+L0057	functions/pf-api/a06-05_api_store_purchase_otc_buy_order_status.md
+L0058	現行仕様
+L0059	A06-05 店頭買取受注ステータス更新 / API 店頭買取管理 — 店頭買取受注ステータス更新
+L0060	業務ロジック
+L0061	認証と担当者
+L0062	トークンはリクエストヘッダで受け取る。トークンの欠落・署名不正・該当する管理者会員なしのいずれのときも認証拒否（HTTP 401）とし、受注も履歴も書き換えない。認証で特定した管理者会員を、更新時に記録する査定担当者として扱う。トークンの原値と署名の秘密値は本書に記載しない。
+L0063	更新の判定順序
+L0064	順序	判定	結果
+L0065	1	認証できるか	できないなら認証拒否（HTTP 401）
+L0066	2	受注IDに該当する店頭買取受注があるか	無ければ該当なし（HTTP 404）
+L0067	3	指定ステータスIDが店頭買取ステータスに存在するか	存在しなければ入力不正（HTTP 400）
+L0068	4	更新前ステータスと指定ステータスが異なるか	異なるときだけ書き込む。同じときは受注も履歴も書き換えず成功として応答する
+L0069	ステータスIDを省略したときも、店頭買取ステータスに存在しないときと同じく入力不正（HTTP 400）とし、受注も履歴も書き換えない。
+L0070	更新の内容
+L0071	更新前後のステータスが異なるときだけ書き込みを行う。このとき店頭買取受注には、査定担当者と更新日時も記録する。金額・税・ポイント・在庫数量の再計算や丸めは行わない。
+L0072	エラー時の扱い
+L0073	事象	扱い
+L0074	認証不可	認証拒否（HTTP 401）とする。errors配列を持つ応答本文は返さない
+L0075	受注が存在しない	該当なし（HTTP 404）とする。errors配列を持つ応答本文は返さない
+L0076	ステータスIDが不正	入力不正（HTTP 400）とし、エラー内容を含むJSONを返す
+L0077	入出力
+L0078	種類	内容
+L0079	成功時出力	更新前後が同じステータスでも成功（HTTP 200）を返す
+L0080	失敗時出力	HTTP 401（認証不可）、HTTP 404（受注なし）、HTTP 400（入力不正）
+L0081	入出力: 永続化
+L0082	操作	契機
+L0083	更新	更新前後のステータスが異なるとき、店頭買取受注に査定担当者と更新日時を記録する
+L0084	追加	同じ契機で、ステータス変更履歴を1件残す。履歴は対象の受注、設定したステータス、登録した管理者会員、登録日時を持つ
+L0085	リニューアル後の仕様
+L0086	表示メッセージ
+L0087	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0088	A06-05-MSG-001	API応答JSON（errors配列）	買取情報が見つかりません	ステータス更新時、指定した店頭買取受注IDが存在しない	HTTP 404のJSONを返し、更新処理を中止する
+L0089	A06-05-MSG-002	API応答JSON（errors配列）	不正なステータス遷移です	店頭買取受注ステータス更新APIで、受注の現在ステータスが取得できない場合。	HTTP 400のJSON errorsで更新中止。
+L0090	—	API応答JSON（errors配列）	正しい店頭買取ステータスIDを入力してください	指定したステータスIDが店頭買取ステータスに存在しないとき	HTTP 400のJSONを返し、更新しない
+L0091	—	API応答JSON（errors配列）	この査定はすでに終了しているため開くことができません。	更新前ステータスが査定終了で、指定ステータスが査定中・査定再開のとき	HTTP 400のJSONを返し、更新しない
+L0092	—	API応答JSON（errors配列）	この査定はすでに終了しているためステータスの更新に失敗しました。	更新前ステータスが査定終了で、指定ステータスがそれ以外のとき	HTTP 400のJSONを返し、更新しない
+L0093	—	API応答JSON（errors配列）	この受注は「（査定担当者名）」が査定中です。	査定中・査定再開の受注を、査定担当者本人以外が査定中・査定再開へ更新しようとしたとき	HTTP 400のJSONを返し、更新しない
+
+ succeeded in 15ms:
+##### 0506 sheet-6 店頭買取情報コメント更新
+L0001	店頭買取情報コメント更新
+L0002	ドキュメント名店頭買取管理 基本設計
+L0003	セクション—
+L0004	プロジェクト名店頭買取管理機能
+L0005	作成者石川
+L0006	作成日2025-07-17
+L0007	更新者石川
+L0008	更新日2025-09-06
+L0009	機能NoA06-04
+L0010	機能名店頭買取情報コメント更新
+L0011	概要店頭買取情報コメント更新を行う
+L0012	処理概要（★はカスタマイズ項目）
+L0013	店頭買取情報コメント更新 / D22 / image 1
+L0014	GET POST PUT DELETE PATCH OPTIONS HEAD 有 無 〇
+L0015	エンドポイントURL
+L0016	/api/admin/otcBuyOrder/{id}/freeComment.json
+L0017	プロトコル HTTP メソッド PUT 認証の有無 有 認証方式 IP制限
+L0018	トークン リクエスト書式 クエリ レスポンス書式 JSON
+L0019	カスタマイズ説明
+L0020	現行踏襲
+L0021	機能仕様処理概要（★はカスタマイズ項目）
+L0022	・MTGBuyerでコメント更新ボタン押下時に呼ばれる
+L0023	・入力されたコメントをECCUBE側のフリーコメントに登録する
+L0024	リクエストパラメータ
+L0025	項目名	型	必須	最大文字数
+L0026	または最大値	入力例	備考
+L0027	free_comment	文字列	〇		身分証明書なし	フリーコメント
+L0028	リクエストパラメータサンプル
+L0029	ステータスコード
+L0030	コード 説明
+L0031	200 成功
+L0032	500 サーバエラー
+L0033	レスポンスデータ
+L0034	名前 型 説明
+L0035	なし
+L0036	レスポンスデータサンプル
+L0037	Source:
+L0038	functions/pf-api/a06-04_api_store_purchase_otc_buy_order_free_comment.md
+L0039	現行仕様
+L0040	A06-04 店頭買取受注コメント更新 / API 店頭買取管理 — 店頭買取受注コメント更新
+L0041	業務ロジック
+L0042	更新の判定順序
+L0043	順序	判定	結果
+L0044	1	認証用トークンを検証できないとき	認証拒否（HTTP 401）とする
+L0045	2	指定した受注IDに該当する店頭買取受注が無いとき	該当なし（HTTP 404）とする
+L0046	3	コメントの項目自体が送られていないとき	入力不正（HTTP 400）とし、「コメントを入力してください」を返す
+L0047	4	上記のいずれにも該当しないとき	コメントを更新し、あわせて更新担当者に認証した管理者会員を設定する
+L0048	コメントの項目が空文字で送られたときは未指定として扱わず、コメントを空にして更新する。
+L0049	認証の判定
+L0050	認証用トークンの署名方式はHS256とする。トークンに含まれる利用者IDから管理者会員を引き、トークンが無いとき・署名が不正なとき・該当する管理者会員が無いときは、いずれも認証拒否（HTTP 401）とする。
+L0051	入出力
+L0052	種類	内容
+L0053	入力	更新対象の店頭買取受注のID（エンドポイントのパス・必須）、認証用トークン（リクエストヘッダ・必須）
+L0054	失敗時出力	認証できないときはHTTP 401、受注が無いときはHTTP 404、コメントが送られていないときはHTTP 400
+L0055	入出力: 受け付けるパス
+L0056	エンドポイントは拡張子 .json の付いたパスと、付かないパスの双方を同じ処理として受け付ける。
+L0057	入出力: 永続化
+L0058	操作	契機
+L0059	更新	認証と対象の確認を通過し、コメントが送られているとき。店頭買取受注のフリーコメントと更新担当者
+L0060	リニューアル後の仕様
+L0061	表示メッセージ
+L0062	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0063	—	応答本文のエラー内容	コメントを入力してください	コメントを指定せずに更新したとき	更新せず、入力不正（HTTP 400）を返す
+
+ succeeded in 16ms:
+##### 0506 sheet-13 本人確認更新
+L0001	本人確認更新
+L0002	ドキュメント名店頭買取管理 基本設計
+L0003	セクション—
+L0004	プロジェクト名店頭買取管理機能
+L0005	作成者石川
+L0006	作成日2025-07-17
+L0007	更新者石川
+L0008	更新日2025-09-06
+L0009	機能NoA06-13
+L0010	機能名本人確認更新
+L0011	概要店頭買取情報の身分証明書の種類を更新する
+L0012	処理概要（★はカスタマイズ項目）
+L0013	本人確認更新 / D22 / image 1
+L0014	GET POST PUT DELETE PATCH OPTIONS HEAD 有 無 〇
+L0015	エンドポイントURL
+L0016	/api/admin/otcBuyOrder/{id}/identification.json
+L0017	プロトコル HTTP メソッド PUT 認証の有無 有 認証方式 IP制限
+L0018	トークン リクエスト書式 クエリ レスポンス書式 JSON
+L0019	カスタマイズ説明
+L0020	現行踏襲
+L0021	機能仕様処理概要（★はカスタマイズ項目）
+L0022	・MTGBuyerで身分証明書スキャン画面で身分証明書種別を指定し、査定開始した際に呼ばれるAPI
+L0023	・URLで指定された買取情報に対してリクエストで指定された証明書IDを反映する
+L0024	・URLで指定された店頭買取IDの買取情報が存在しない場合はエラーとする
+L0025	・リクエストで指定された証明書IDがマスタに存在しない場合はエラーとする
+L0026	リクエストパラメータ
+L0027	項目名	型	必須	最大文字数
+L0028	または最大値	入力例	備考
+L0029	店頭買取ID	数値(整数)	〇		7326	URLに含む
+L0030	identification	数値(整数)	〇		1	証明書ID（1: 自動車運転免許証、2: パスポート・・・など）
+L0031	リクエストパラメータサンプル
+L0032	https://stg-api.hareruyamtg.com/api/admin/otcBuyOrder/7326/identification.json
+L0033	↑店頭買取ID
+L0034	ステータスコード
+L0035	コード 説明
+L0036	200 成功
+L0037	400 証明書IDがマスタに登録されていないものだった場合
+L0038	404 指定された店頭買取IDが存在しない場合
+L0039	レスポンスデータ
+L0040	名前 型 説明
+L0041	なし
+L0042	レスポンスデータサンプル
+L0043	Source:
+L0044	functions/pf-api/a06-13_api_store_purchase_otc_buy_order_identification.md
+L0045	現行仕様
+L0046	A06-13 本人確認更新 / API 店頭買取管理 — 本人確認更新
+L0047	業務ロジック
+L0048	認証
+L0049	認証用トークンをヘッダ jwt-token で受け取り、署名方式 HS256 で検証したうえで、トークンが指す管理者会員を特定する。ヘッダが無いとき、署名が不正なとき、トークンが指す管理者会員が存在しないときは、いずれも認証拒否（HTTP 401）とし、更新しない。
+L0050	判定の順序
+L0051	認証、店頭買取受注の取得、証明書IDの妥当性の順に判定し、成立しないものが出た時点で処理を打ち切り、以降の判定は行わない。認証できないときは受注IDと証明書IDの誤りは判定されず、受注が存在しないときは証明書IDの誤りは判定されない。
+L0052	証明書IDを送っていないときは、マスタに存在しない値を送ったときと同じ扱いになる。
+L0053	更新する項目
+L0054	証明書のほかに、更新担当者へ認証で特定した管理者会員を、更新日時へ更新時点の日時を設定する。
+L0055	入出力
+L0056	入力: 認証情報
+L0057	パラメータ	位置	型	必須／任意	説明
+L0058	jwt-token	ヘッダ	string	必須	認証用のトークン
+L0059	出力: 更新できたとき
+L0060	更新できたときは HTTP 200 とし、処理結果コード200だけを持つJSON（{"code":200}）を応答本文として返す。空の本文や空のオブジェクトは返さない。
+L0061	出力: 認証できないとき
+L0062	HTTPステータス	条件
+L0063	401	認証用トークンの欠落・署名不正・トークンが指す管理者会員なしのとき
+L0064	入出力: エンドポイントの別名
+L0065	拡張子 .json を付けないパス（/api/admin/otcBuyOrder/{id}/identification）でも、同じメソッドで同じ更新を受け付ける。
+L0066	入出力: 永続化
+L0067	操作	契機
+L0068	更新	本人確認更新（本人確認証明書・更新担当者・更新日時）
+L0069	リニューアル後の仕様
+L0070	表示メッセージ
+L0071	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0072	A06-13-MSG-001	API応答JSON（errors配列）	買取情報が見つかりません	本人確認更新で、パスの受注IDに対応する店頭買取受注が存在しないとき	HTTP 404・{code, errors}を返し、更新しない
+L0073	A06-13-MSG-002	API応答JSON（errors配列）	正しい証明書IDを入力してください	本人確認更新で本人確認証明書のIDが未指定のとき	HTTP 400・{code, errors}を返し、更新しない
+L0074	A06-13-MSG-003	API応答JSON（errors配列）	正しい証明書IDを入力してください	本人確認更新で指定した本人確認証明書のIDがマスタに存在しないとき	HTTP 404・{code, errors}を返し、更新しない
+L0075	A06-13-MSG-004	API応答JSON（errors配列）	認証エラー	本人確認更新で認証済み利用者を管理者会員として取得できないとき	HTTP 401・{code, errors}を返し、更新しない
+
+ succeeded in 27ms:
+##### 0507 sheet-3 まとめて買取商品IDの取得
+L0001	まとめて買取商品IDの取得
+L0002	ドキュメント名ネット買取管理 基本設計
+L0003	セクション—
+L0004	プロジェクト名ネット買取管理機能
+L0005	作成者石川
+L0006	作成日2025-09-18
+L0007	更新者石川
+L0008	更新日2025-09-18
+L0009	機能NoA07-01
+L0010	機能名まとめて買取商品IDの取得
+L0011	概要まとめて買取商品IDを取得する
+L0012	処理概要（★はカスタマイズ項目）
+L0013	GET POST PUT DELETE PATCH OPTIONS HEAD 有 無 〇
+L0014	エンドポイントURL
+L0015	/api/admin/optionBulkPurchaseId.json
+L0016	プロトコル HTTP メソッド GET 認証の有無 有 認証方式 IP制限
+L0017	トークン リクエスト書式 クエリ レスポンス書式 JSON
+L0018	カスタマイズ説明
+L0019	・現行踏襲
+L0020	機能仕様処理概要（★はカスタマイズ項目）
+L0021	・MTGBuyerからまとめて買取商品の商品IDを取得する
+L0022	（まとめて買取商品は査定時には削除を行うため、まとめて買取商品を特定する必要があるため）
+L0023	・追加システム設定のまとめて買取商品IDを取得する
+L0024	まとめて買取商品IDの取得 / D25 / image 1
+L0025	リクエストパラメータ
+L0026	項目名 型 必須 最大文字数
+L0027	または最大値 入力例 備考
+L0028	なし
+L0029	リクエストパラメータサンプル
+L0030	なし
+L0031	ステータスコード
+L0032	コード 説明
+L0033	200 成功
+L0034	レスポンスデータ
+L0035	名前	型	説明
+L0036	キー項目なし	数値（整数）	まとめて買取商品ID
+L0037	レスポンスデータサンプル
+L0038	Source:
+L0039	functions/pf-api/a07-01_api_online_purchase_bulk_purchase_id.md
+L0040	現行仕様
+L0041	A07-01 まとめて買取商品IDの取得 / API ネット買取管理 — まとめて買取商品IDの取得
+L0042	業務ロジック
+L0043	認証と呼び出し元
+L0044	認証用トークンはリクエストヘッダで受け取る。トークンの署名を検証し（署名方式はHS256）、トークンが持つ利用者IDから管理者会員を特定する。トークン欠落・署名不正・該当する管理者会員なしのいずれの場合も認証拒否とする。
+L0045	買取アプリでの商品IDの扱い
+L0046	買取アプリは、ネット買取受注の買取代表カードに本APIが返す商品IDのものが含まれるとき、その受注を顧客一覧の買取カテゴリで「まとめて買取」と表示する。本APIが返す商品IDの買取代表カードは、その受注の買取代表カードの一覧から除く。
+L0047	エラー時の扱い
+L0048	エラー内容	処理
+L0049	認証できない	認証拒否（HTTP 401）とする
+L0050	まとめて買取商品IDの設定が無い	設定値の参照で例外となり、共通の例外処理に委ねる（HTTP 500 相当）
+L0051	入出力
+L0052	種類	内容
+L0053	入力	認証用トークンをリクエストヘッダで受け取る
+L0054	失敗時出力	認証できないときは HTTP 401。まとめて買取商品IDの設定が無いときは HTTP 500 相当
+L0055	リニューアル後の仕様
+L0056	表示メッセージ
+L0057	本APIは画面へ文言を表示しない。
+
+codex
+前半の設計書を確認しました。特に API の更新処理では、本文の追加条件と埋め込み節の条件を併せて読む必要があるため、表の値と制約を処理ごとに確認しています。
+exec
+/bin/bash -lc 'for x in processes factors constraints; do cat integration_test/casegen/combination/factors/A06-02_$x.tsv; done' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'for x in processes factors constraints; do cat integration_test/casegen/combination/factors/A06-01_$x.tsv; done' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'for x in processes factors constraints; do cat integration_test/casegen/combination/factors/A06-03_$x.tsv; done' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'for x in processes factors constraints; do cat integration_test/casegen/combination/factors/A06-04_$x.tsv; done' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'for x in processes factors constraints; do cat integration_test/casegen/combination/factors/A06-05_$x.tsv; done' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'for x in processes factors constraints; do cat integration_test/casegen/combination/factors/A06-06_$x.tsv; done' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 20ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	査定結果を買取情報に反映してステータスを更新する	書類確認画面のボタンで/api/admin/otcBuyOrder/{id}.jsonへPUTする	店頭買取の受注・注文詳細・実在庫・ステータス履歴（DB）、経理チームのメール、受注管理画面	L0028-L0060,L0090-L0097
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	送信されたステータス	経理払い出し待ち｜買取成立｜買取キャンセル｜その他のステータス	経理払い出し待ち: 経理チームへ件名「店頭買取振込依頼 【査定ID】」のメールを送る／買取成立: 買取成立日を登録し端末取引IDを連携し在庫の状態を決める／買取キャンセル: 買取キャンセル日を登録する／その他のステータス: ステータスと合計金額などの共通項目だけを更新する	L0040-L0045,L0049-L0059	この機能
+F02	P1	個別入力商品	個別入力商品がない｜個別入力商品がある	個別入力商品がない: 買取成立のときは入庫待ちにする／個別入力商品がある: 買取成立のときは未登録在庫ありにする	L0023-L0024,L0031,L0036,L0056-L0057	この機能
+F03	P1	同じ商品規格の明細	同じ商品規格の明細は1件｜同じ商品規格の明細が複数	同じ商品規格の明細は1件: 実在庫と履歴は明細の数量どおり1件／同じ商品規格の明細が複数: 実在庫は商品規格につき1件に合算し履歴に合算後の数量を記録する	L0092	この機能
+F04	P1	更新前と送信ステータスの比較	更新前と異なるステータス｜更新前と同じステータス	更新前と異なるステータス: ステータス変更履歴を1件登録する／更新前と同じステータス: ステータス変更履歴を残さない	L0048,L0097	この機能
+F05	P1	受注が適格請求書発行事業者に該当するか	適格請求書発行事業者に該当する｜適格請求書発行事業者に該当しない	適格請求書発行事業者に該当する: 確認済みフラグを指定値で更新する／適格請求書発行事業者に該当しない: 指定されても確認済みフラグを更新しない	L0046,L0096	この機能
+F06	P1	明細の部門ID	部門が存在する｜部門が存在しない	部門が存在する: 明細に部門を設定して登録する／部門が存在しない: 部門IDを無視し部門なしで登録する	L0091	この機能
+F07	P1	端末取引ID	端末取引IDあり｜端末取引IDなし	端末取引IDあり: 買取成立のときECCUBEに端末取引IDを連携する／端末取引IDなし: 連携する値が無い	L0025,L0058,L0067	この機能
+処理ID	組	種別	根拠	理由
+P1	F02=個別入力商品がある	正解未定	L0036,L0056,L0129	商品規格IDが未登録の明細を個別入力商品として登録するという定めと、商品規格IDがnullならHTTP 400で中止するという表示メッセージの定めが食い違い、共通する部分が無い（既存ケース IT-A06-03-006・045 も保留）
+P1	F01=買取成立&F07=端末取引IDなし	正解未定	L0025,L0058,L0067	買取成立で端末取引IDを連携するとあるが、端末取引IDが任意項目で、指定が無いときに何を連携するか書かれていない
+
+exec
+/bin/bash -lc 'for x in processes factors constraints; do cat integration_test/casegen/combination/factors/A06-07_$x.tsv; done' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'for x in processes factors constraints; do cat integration_test/casegen/combination/factors/A06-08_$x.tsv; done' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'for x in processes factors constraints; do cat integration_test/casegen/combination/factors/A06-11_$x.tsv; done' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'for x in processes factors constraints; do cat integration_test/casegen/combination/factors/A06-12_$x.tsv; done' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 65ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	ログイン者に見せる店頭買取の一覧を取得する	有効なトークンのヘッダを付けて/api/admin/otcBuyOrders.jsonへGETする	API応答のJSON配列（含まれる店頭買取の範囲）	L0022-L0024,L0035,L0065-L0068
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	店頭買取のステータス	取得対象ステータス｜取得対象外ステータス	取得対象ステータス: 査定前・査定中・査定中断・査定再開なので一覧の対象になる／取得対象外ステータス: 払い出し待ちなどなので一覧に含まれない	L0023-L0024,L0035	この機能
+F02	P1	店頭買取の職業と国の紐づき	職業と国の両方が紐づく｜職業または国が紐づかない	職業と国の両方が紐づく: 一覧に含まれる／職業または国が紐づかない: 対象ステータスでも一覧に含まれない	L0066	この機能
+F03	P1	ログイン者の所属店舗	所属店舗が定まる｜会員サブ情報が無く所属店舗が定まらない	所属店舗が定まる: 所属店舗の店頭買取だけに絞る／会員サブ情報が無く所属店舗が定まらない: 店舗で絞らず対象を一律に返す	L0023,L0068	この機能
+F04	P1	店頭買取の店舗	ログイン者の所属店舗｜別の店舗	ログイン者の所属店舗: 所属店舗が定まるときは一覧に含まれる／別の店舗: 所属店舗が定まるときは含まれず、定まらないときは含まれる	L0023,L0068	この機能
+処理ID	組	種別	根拠	理由
+
+exec
+/bin/bash -lc 'for x in processes factors constraints; do cat integration_test/casegen/combination/factors/A06-13_$x.tsv; done' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'for x in processes factors constraints; do cat integration_test/casegen/combination/factors/A07-01_$x.tsv; done' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 82ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	ログインして認証結果と所属店舗を返す	買取アプリのログインボタンで/api/admin/login.jsonへlogin_idとpasswordをPOSTする	API応答（HTTPステータス・errors・memberName・shopName・shopAddr・jwtToken）と買取アプリの次の画面	L0023-L0029,L0036-L0046,L0061-L0064,L0068-L0070
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	認証の結果	認証成功｜会員が見つからない｜パスワード不一致	認証成功: 200でトークンと利用者情報を返しモード選択画面へ移る／会員が見つからない: 401でログインIDまたはパスワードが正しくありませんを返しトークンを発行しない／パスワード不一致: 401でログインIDまたはパスワードが正しくありませんを返しトークンを発行しない	L0028-L0029,L0038-L0039,L0061,L0069-L0070	この機能
+F02	P1	認証した会員の所属店舗	店舗が紐づく｜店舗が紐づかない	店舗が紐づく: 店舗名と店舗住所を返す／店舗が紐づかない: 店舗名と店舗住所は空文字を返す	L0044-L0045,L0063-L0064	この機能
+処理ID	組	種別	根拠	理由
+
+ succeeded in 76ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	商品IDリストから買取用商品情報を取得する	MTGBuyerがPOSTで商品IDリストを指定してAPIを呼ぶ	API応答JSON	L0024-L0031,L0049-L0054,L0059
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	商品・商品規格の削除	未削除｜削除済み	未削除: 応答に含まれる／削除済み: 応答に含めない	L0027	この機能
+F02	P1	高額商品コード	なし｜あり	なし: 応答に含まれる／あり: 応答に含めない	L0028	この機能
+F03	P1	商品画像	登録あり｜登録なし	登録あり: 応答に含まれる／登録なし: 応答に含めない	L0049	この機能
+F04	P1	カードとカード詳細の紐付き	結び付く｜結び付かない	結び付く: 応答に含まれる／結び付かない: カード商品以外として応答に含めない	L0049,L0056	この機能
+F05	P1	レアリティ	登録あり｜登録なし	登録あり: 応答に含まれる／登録なし: 応答に含めない	L0049	この機能
+F06	P1	言語	登録あり｜登録なし	登録あり: 応答に含まれる／登録なし: 応答に含めない	L0049	この機能
+F07	P1	カード状態	登録あり｜登録なし	登録あり: 応答に含まれる／登録なし: 応答に含めない	L0049	この機能
+F08	P1	カードセット・プロモーション・保管コード	設定あり｜未設定	設定あり: 値を返す／未設定: 結果に含めたまま値なしで返す	L0049,L0064	この機能
+F09	P1	買取価格と部門ID	設定あり｜未設定	設定あり: 保持している値をそのまま返す／未設定: 値なしで返す	L0054,L0066	この機能
+F10	P1	同じ組に該当する商品規格の数	1件｜複数	1件: そのまま応答に残る／複数: 同じカードID・カード詳細ID・言語・状態の組で1件だけ残る	L0052	この機能
+F11	P1	ログイン者の所属店舗	店舗A｜店舗B	店舗A: 在庫数に店舗AのEC在庫を返す／店舗B: 在庫数に店舗BのEC在庫を返す	L0022,L0031	この機能
+処理ID	組	種別	根拠	理由
+
+ succeeded in 112ms:
+処理ID	処理	契機	確かめる所	根拠
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+処理ID	組	種別	根拠	理由
+
+ succeeded in 125ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	店頭買取受注のステータスを更新する	MTGBuyerからPUTで店頭買取受注ステータス更新APIを呼ぶ	DB（店頭買取受注とステータス変更履歴）・API応答	L0022-L0043,L0062-L0093
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	更新前のステータス	査定前｜査定中｜査定中断｜査定再開｜終了系ステータス	査定前: 更新の対象になる／査定中: 更新の対象になる／査定中断: 更新の対象になる／査定再開: 更新の対象になる／終了系ステータス: 買取成立・買取キャンセル・経理払い出し待ち・入庫済み・未登録在庫あり・入庫待ち・管理者取消は更新できず終了済みのエラーになる	L0023-L0027,L0032-L0040,L0091-L0092	この機能
+F02	P1	指定するステータス	査定中｜査定中断｜査定再開｜査定前｜終了系ステータス	査定中: 更新先にできる／査定中断: 更新先にできる／査定再開: 更新先にできる／査定前: 更新先にできない／終了系ステータス: 更新先にできない	L0028-L0040	この機能
+F03	P1	更新する管理者と査定担当者	査定担当者本人｜本人以外	査定担当者本人: 制限なし／本人以外: 査定中または査定再開の受注を査定中または査定再開へ更新できない	L0041,L0093	この機能
+処理ID	組	種別	根拠	理由
+P1	F01=査定中&F02=査定中&F03=本人以外	正解未定	L0068,L0093	同じステータスなら成功とする定めと、本人以外は査定中へ更新できない定めのどちらが先か書かれていない
+P1	F01=査定再開&F02=査定再開&F03=本人以外	正解未定	L0068,L0093	同じステータスなら成功とする定めと、本人以外は査定再開へ更新できない定めのどちらが先か書かれていない
+P1	F01=査定前&F02=査定前	正解未定	L0032-L0035,L0068	査定前は更新不可とする定めと、同じステータスなら成功とする定めのどちらが先か書かれていない
+P1	F01=終了系ステータス&F02=終了系ステータス	正解未定	L0068,L0092	終了済みのエラーか、同じステータスの成功かが書かれていない（終了系の中で同じ値かも決まらない）
+
+ succeeded in 104ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	カード名から買取用商品情報を検索して取得する	MTGBuyerの虫眼鏡でPOSTによりカード名を指定してAPIを呼ぶ	API応答JSON	L0026-L0032,L0051-L0062
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	商品・商品規格の削除	未削除｜削除済み	未削除: 応答に含まれる／削除済み: 応答に含めない	L0028	この機能
+F02	P1	高額商品コード	なし｜あり	なし: 応答に含まれる／あり: 応答に含めない	L0029	この機能
+F03	P1	商品画像	登録あり｜登録なし	登録あり: 応答に含まれる／登録なし: 応答に含めない	L0054	この機能
+F04	P1	商品付随情報とカード詳細・カード・レアリティ	結び付く｜結び付かない	結び付く: 応答に含まれる／結び付かない: 応答に含めない	L0055	この機能
+F05	P1	商品規格の付随情報	言語と状態が結び付く｜付随情報が無い｜言語が結び付かない｜状態が結び付かない	言語と状態が結び付く: 応答に含まれる／付随情報が無い: 応答に含めない／言語が結び付かない: 応答に含めない／状態が結び付かない: 応答に含めない	L0056	この機能
+F06	P1	買取価格と部門ID	設定あり｜未設定	設定あり: 保持している値をそのまま返す／未設定: 項目は省略せずnullで返す	L0062,L0089,L0092	この機能
+F07	P1	カードセット・プロモーション・保管コード	設定あり｜未設定	設定あり: 値を返す／未設定: 応答から除かずnullで返す	L0075-L0076,L0079,L0084	この機能
+F08	P1	同じ組に該当する商品規格の数	1件｜複数	1件: そのまま応答に残る／複数: カード・カード詳細・言語・状態の組で最後に取得した1件だけ残る	L0058	この機能
+F09	P1	ログイン者の所属店舗	店舗A｜店舗B	店舗A: stockに店舗AのEC在庫を返す／店舗B: stockに店舗BのEC在庫を返す	L0023,L0032,L0091	この機能
+F10	P1	カード名の記号	%と_を含まない｜%または_を含む	%と_を含まない: 商品名の前方一致で検索する／%または_を含む: ワイルドカードにせず文字そのものとして前方一致で検索する	L0027,L0051	この機能
+処理ID	組	種別	根拠	理由
+P1	F05=付随情報が無い&F06=設定あり	作れない	L0056	買取価格・部門IDは商品規格の付随情報が保持する
+
+ succeeded in 100ms:
+処理ID	処理	契機	確かめる所	根拠
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+処理ID	組	種別	根拠	理由
+
+ succeeded in 134ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	カード詳細IDから買取用商品情報を取得する	MTGBuyerがGETでカード詳細IDを指定してAPIを呼ぶ	API応答JSON	L0024-L0032,L0079-L0101
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	商品・商品規格の削除	未削除｜削除済み	未削除: 応答に含まれる／削除済み: 応答に含めない	L0028	この機能
+F02	P1	高額商品コード	なし｜あり	なし: 応答に含まれる／あり: 応答に含めない	L0029	この機能
+F03	P1	商品画像	1件以上｜1件も無い	1件以上: 応答に含まれる／1件も無い: 応答に含めない	L0081	この機能
+F04	P1	カード詳細のレアリティ	結び付く｜結び付かない	結び付く: 応答に含まれる／結び付かない: 応答に含めない	L0082	この機能
+F05	P1	買取価格・部門IDを持つ付随情報	言語と状態が結び付く｜付随情報が無い｜言語が結び付かない｜状態が結び付かない	言語と状態が結び付く: 応答に含まれる／付随情報が無い: 応答に含めない／言語が結び付かない: 応答に含めない／状態が結び付かない: 応答に含めない	L0083-L0085	この機能
+F06	P1	買取価格と部門IDの設定	設定あり｜設定なし	設定あり: 保持している値をそのまま返す／設定なし: 項目は省略せずJSONのnullで返す	L0090,L0099-L0101	この機能
+F07	P1	カードセット・プロモーション・略称タグ	結び付く｜結び付かない	結び付く: 該当項目に値を返す／結び付かない: 応答から除かず該当項目をJSONのnullで返す	L0086,L0095-L0098,L0101	この機能
+F08	P1	同じ組に該当する商品規格の数	1件｜複数	1件: そのまま応答に残る／複数: 同じカードID・カード詳細ID・言語・状態の組で1件だけ残る	L0088	この機能
+F09	P1	ログイン者の所属店舗	店舗A｜店舗B	店舗A: stockに店舗AのEC在庫を返す／店舗B: stockに店舗BのEC在庫を返す	L0022,L0032,L0071	この機能
+処理ID	組	種別	根拠	理由
+P1	F05=付随情報が無い&F06=設定あり	作れない	L0083	買取価格・部門IDは付随情報が保持する
+
+ succeeded in 842ms:
+処理ID	処理	契機	確かめる所	根拠
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+処理ID	組	種別	根拠	理由
+
+ succeeded in 792ms:
+処理ID	処理	契機	確かめる所	根拠
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+処理ID	組	種別	根拠	理由
+
+ succeeded in 793ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	本人確認の証明書IDを買取情報へ反映する	管理者の認証済みで店頭買取IDと証明書IDを指定して本人確認更新のPUT要求を送る	応答のHTTPステータスとJSON、および店頭買取受注の本人確認証明書ID・更新担当者・更新日時（DB）	L0022-L0025,L0051,L0054
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	指定した店頭買取IDの買取情報	ある｜ない	ある: 証明書IDの判定へ進む／ない: 404で更新しない（証明書IDの判定はしない）	L0024,L0038,L0051,L0072	この機能
+F02	P1	指定した証明書IDのマスタ登録	登録あり｜登録なし	登録あり: 買取情報へ反映して200／登録なし: 400で更新しない（買取情報があるとき）	L0025,L0037,L0051,L0074	この機能
+処理ID	組	種別	根拠	理由
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/A06-08/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+##### 0506 sheet-10 カード名から買取用商品情報を取得
+L0001	カード名から買取用商品情報を取得
+L0002	ドキュメント名店頭買取管理 基本設計
+L0003	セクション—
+L0004	プロジェクト名店頭買取管理機能
+L0005	作成者石川
+L0006	作成日2025-07-17
+L0007	更新者石川
+L0008	更新日2026-04-15
+L0009	機能NoA06-08
+L0010	機能名カード名から買取用商品情報を取得
+L0011	概要カード名から買取用商品情報を取得
+L0012	処理概要（★はカスタマイズ項目）
+L0013	カード名から買取用商品情報を取得 / D24 / image 1
+L0014	カード名から買取用商品情報を取得 / P26 / image 2
+L0015	GET POST PUT DELETE PATCH OPTIONS HEAD 有 無 〇
+L0016	エンドポイントURL
+L0017	/api/search.json
+L0018	プロトコル HTTP メソッド POST 認証の有無 有 認証方式 IP制限
+L0019	トークン リクエスト書式 クエリ レスポンス書式 JSON
+L0020	カスタマイズ説明
+L0021	・商品の販売価格を取得していたところを基準価格を取得するようにする
+L0022	・商品の在庫を取得していたところを明示的に
+L0023	追加開発でログイン者の所属店舗のEC在庫を取得するようにする
+L0024	機能仕様処理概要（★はカスタマイズ項目）
+L0025	・MTGBuyerで以下の虫眼鏡マークを押したときに行うカード名検索で呼ばれる
+L0026	・リクエストパラメータで指定されたカード名からカード情報を取得する
+L0027	・商品情報の商品名の前方一致で検索を行う
+L0028	・商品および商品規格情報が削除済みのものは取得しない
+L0029	・高額商品コードがはいっていないものを取得する
+L0030	★商品の販売価格を取得していたところを基準価格を取得するようにする
+L0031	★商品の在庫を取得していたところを
+L0032	追加開発でログイン者の所属店舗のEC在庫を取得するようにする
+L0033	リクエストパラメータ
+L0034	項目名	型	必須	最大文字数
+L0035	または最大値	入力例	備考
+L0036	name	文字列	〇		【Foil】《王冠泥棒	商品名
+L0037	リクエストパラメータサンプル
+L0038	ステータスコード
+L0039	コード 説明
+L0040	200 成功
+L0041	404 指定された名称に紐づく商品が見つからなかった場合
+L0042	レスポンスデータ
+L0043	名前 型 説明
+L0044	レスポンスデータサンプル
+L0045	Source:
+L0046	functions/pf-api/a06-08_api_store_purchase_buying_products_search.md
+L0047	現行仕様
+L0048	A06-08 カード名から買取用商品情報を取得 / API 店頭買取管理 — カード名から買取用商品情報を取得
+L0049	業務ロジック
+L0050	検索条件
+L0051	カード名に含まれる % と _ はエスケープし、ワイルドカードではなく文字そのものとして扱う。
+L0052	応答に含めない商品規格
+L0053	商品または商品規格に次のいずれかが結び付いていない場合、その商品規格は応答に含めない。
+L0054	商品に結び付く商品画像
+L0055	商品に結び付く付随情報と、そこにぶら下がるカード詳細・カード・レアリティ
+L0056	買取価格・部門IDを保持する商品規格の付随情報と、そこにぶら下がる言語・状態
+L0057	同じ区分に複数の商品規格が該当したときの扱い
+L0058	応答はカード・カード詳細・言語・状態の組でひとつの商品規格を保持する。同じ組に複数の商品規格が該当した場合、応答に残るのは最後に取得した1件だけで、それ以外は応答から失われる。
+L0059	取得結果の並べ方
+L0060	検索で得たカードだけを1始まりの連番でキー付けし直して返す。各カードの配下は、カード詳細ID・言語コード・状態コードの順で入れ子にする。ページングの件数（総件数・1ページあたり件数など）は返さない。
+L0061	値の取り方
+L0062	買取価格・販売価格・在庫数は、永続化済みの値をそのまま返す。応答を組み立てるときの丸め・補正・再計算は行わない。
+L0063	買取アプリでの検索結果の扱い
+L0064	買取アプリは、本APIの応答のカード詳細のうち、査定画面で選択中の言語・状態・フォイル有無に合うものだけを候補カードとし、それまでの候補カードと置き換える。先頭の候補カードを識別結果として表示する。合う候補カードが1件も無いときは「指定されたカードが見つかりませんでした。」と表示する。
+L0065	入出力
+L0066	種類	内容
+L0067	成功時出力	最上位に cards を置き、その配下にカードごとの情報を入れて返す。
+L0068	出力: 応答フィールド
+L0069	フィールド	型	内容
+L0070	cards	object	1始まりの連番をキーとするオブジェクト。値は各カードの情報
+L0071	cards.<n>.cardNameJp	string	カードの日本語名
+L0072	cards.<n>.cardNameEn	string	カードの英語名
+L0073	cards.<n>.imageFileName	string	カード画像のファイル名
+L0074	cards.<n>.details	object	カード詳細IDをキーとするオブジェクト。値は各カード詳細の情報
+L0075	cardsetCode	string	カードセットのコード。カードセット未設定のときはnull
+L0076	cardsetName	string	カードセットの日本語名。カードセット未設定のときはnull
+L0077	foilFlg	boolean	フォイルか否か
+L0078	cardNo	string	カード番号
+L0079	promotionName	string	プロモーションの日本語名。プロモーション未設定のときはnull
+L0080	productId	integer	商品ID
+L0081	productNameJp	string	商品の日本語名
+L0082	productNameEn	string	商品の英語名
+L0083	rarityCode	string	レアリティのコード
+L0084	storageCodeName	string	保管コードの名称。未設定のときはnull
+L0085	languageClasses	object	言語コードをキーとするオブジェクト
+L0086	conditionClasses	object	状態コードをキーとするオブジェクト。値は商品規格単位の情報
+L0087	productClassId	integer	商品規格ID
+L0088	productCode	string	商品コード
+L0089	buyPrice	integer	買取価格。未設定のときはnull
+L0090	price	string	販売価格
+L0091	stock	string	在庫数
+L0092	sectionId	integer	部門ID。未設定のときはnull
+L0093	cardsetCode 以降はカード詳細の配下だけに、productClassId 以降は言語コードと状態コードの配下だけに置く。
+L0094	リニューアル後の仕様
+L0095	表示メッセージ
+L0096	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0097	A06-08-MSG-001	API応答JSON（errors配列）	認証エラー	カード名検索時にログインユーザーが管理者アカウントでないとき	買取端末側で認証を行い再試行する
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/A06-11/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/A06-06/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+##### 0506 sheet-11 部門一覧を取得
+L0001	部門一覧を取得
+L0002	ドキュメント名店頭買取管理 基本設計
+L0003	セクション—
+L0004	プロジェクト名店頭買取管理機能
+L0005	作成者石川
+L0006	作成日2025-07-17
+L0007	更新者石川
+L0008	更新日2025-09-06
+L0009	機能NoA06-11
+L0010	機能名部門一覧を取得
+L0011	概要部門一覧を取得
+L0012	処理概要（★はカスタマイズ項目）
+L0013	部門一覧を取得 / D24 / image 1
+L0014	GET POST PUT DELETE PATCH OPTIONS HEAD 有 無 〇
+L0015	エンドポイントURL
+L0016	/api/section.json
+L0017	プロトコル HTTP メソッド GET 認証の有無 有 認証方式 IP制限
+L0018	トークン リクエスト書式 クエリ レスポンス書式 JSON
+L0019	カスタマイズ説明
+L0020	現行踏襲
+L0021	機能仕様処理概要（★はカスタマイズ項目）
+L0022	・MTGBuyerで個別入力商品を登録する際に選択肢となる部門の一覧を取得する
+L0023	・部門の表示フラグが表示のもののみ取得する
+L0024	・部門コードの昇順に並ぶ
+L0025	リクエストパラメータ
+L0026	項目名 型 必須 最大文字数
+L0027	または最大値 入力例 備考
+L0028	なし
+L0029	リクエストパラメータサンプル
+L0030	ステータスコード
+L0031	コード 説明
+L0032	200
+L0033	レスポンスデータ
+L0034	名前	型	説明
+L0035	code	文字列	レスポンスコード、必ず200が入る
+L0036	message	文字列	API実行結果、必ずget sections successが入る
+L0037	sections	配列	部門の配列
+L0038	section_id	文字列	部門ID
+L0039	name	文字列	部門名
+L0040	code	文字列	部門コード
+L0041	レスポンスデータサンプル
+L0042	Source:
+L0043	functions/pf-api/a06-11_api_store_purchase_section_list.md
+L0044	現行仕様
+L0045	A06-11 部門一覧を取得 / API 店頭買取管理 — 部門一覧を取得
+L0046	業務ロジック
+L0047	取得できる部門が無いときの扱い
+L0048	取得できる部門が1件も無いときも、成功として応答する。部門の配列を空にして返し、取得できないことを表す応答や失敗のステータスには置き換えない。
+L0049	入出力
+L0050	値を付けて呼び出したときの扱い
+L0051	呼び出しに値を付けても応答は変わらず、値が付いていることを理由に呼び出しを拒否することもない。
+L0052	リニューアル後の仕様
+L0053	表示メッセージ
+L0054	この機能は、いずれの場合もメッセージを扱わない。
+
+ succeeded in 0ms:
+##### 0506 sheet-8 カード詳細IDから買取用商品情報を取得
+L0001	カード詳細IDから買取用商品情報を取得
+L0002	ドキュメント名店頭買取管理 基本設計
+L0003	セクション—
+L0004	プロジェクト名店頭買取管理機能
+L0005	作成者石川
+L0006	作成日2025-07-17
+L0007	更新者石川
+L0008	更新日2026-04-15
+L0009	機能NoA06-06
+L0010	機能名カード詳細IDから買取用商品情報を取得
+L0011	概要カード詳細IDから買取用商品情報を取得
+L0012	処理概要（★はカスタマイズ項目）
+L0013	カード詳細IDから買取用商品情報を取得 / D24 / image 1
+L0014	GET POST PUT DELETE PATCH OPTIONS HEAD 有 無 〇
+L0015	エンドポイントURL
+L0016	/api/buying/{detailId}.json
+L0017	プロトコル HTTP メソッド GET 認証の有無 有 認証方式 IP制限
+L0018	トークン リクエスト書式 クエリ レスポンス書式 JSON
+L0019	カスタマイズ説明
+L0020	・商品の販売価格を取得していたところを基準価格を取得するようにする
+L0021	・商品の在庫を取得していたところを明示的に
+L0022	追加開発でログイン者の所属店舗のEC在庫を取得するようにする
+L0023	機能仕様処理概要（★はカスタマイズ項目）
+L0024	・MTGBuyerで読み取ったカードの情報を取得するために呼ばれる
+L0025	・URLで指定されたカード詳細IDからカード情報を取得する
+L0026	・カード詳細IDに紐づく商品および商品規格情報を取得する
+L0027	・カード詳細IDに紐づくカードに属する他の詳細情報も取得する
+L0028	・商品および商品規格情報が削除済みのものは取得しない
+L0029	・高額商品コードがはいっていないものを取得する
+L0030	★商品の販売価格を取得していたところを基準価格を取得するようにする
+L0031	★商品の在庫を取得していたところを
+L0032	追加開発でログイン者の所属店舗のEC在庫を取得するようにする
+L0033	リクエストパラメータ
+L0034	項目名	型	必須	最大文字数
+L0035	または最大値	入力例	備考
+L0036	カード詳細ID	文字列	〇		173634	URLに含む
+L0037	リクエストパラメータサンプル
+L0038	https://stg-api.hareruyamtg.com/api/buying/173634.json
+L0039	↑カード詳細ID
+L0040	ステータスコード
+L0041	コード 説明
+L0042	200 成功
+L0043	404 指定されたカード詳細IDに紐づくカードが見つからなかった場合
+L0044	レスポンスデータ
+L0045	名前	型	説明
+L0046	cards	オブジェクト	カード情報のオブジェクト、指定されたカード詳細が紐づくカード情報
+L0047	カードID	オブジェクト	カードIDをキーにしてカード情報オブジェクトを持つ
+L0048	cardNameJp	文字列	カード名日本語
+L0049	cardNameEn	文字列	カード名英語
+L0050	imageFileName	文字列	画像ファイル名
+L0051	details	オブジェクト	カード情報に紐づくカード詳細情報をすべて保持するオブジェクト
+L0052	カード詳細ID	オブジェクト	カード詳細IDをキーにしてカード詳細情報オブジェクトを持つ
+L0053	cardsetCode	文字列	カードセットコード
+L0054	cardsetName	文字列	カードセット名
+L0055	foilFlg	文字列	フォイルフラグ
+L0056	cardNo	文字列	カードNo
+L0057	promotionName	文字列	プロモーション名
+L0058	productId	文字列	商品ID
+L0059	productNameJp	文字列	商品名日本語
+L0060	productNameEn	文字列	商品名英語
+L0061	rarityCode	文字列	レアリティーコード
+L0062	storageCodeName	文字列	略称タグ名
+L0063	languageClasses	オブジェクト	言語に紐づく商品情報をすべて保持するオブジェクト
+L0064	言語	オブジェクト	言語（EN、JP等）をキーにして言語情報オブジェクトを持つ
+L0065	conditionClasses	オブジェクト	状態に紐づく商品情報をすべて保持するオブジェクト
+L0066	状態	オブジェクト	状態（NM、SP等）をキーにして状態情報オブジェクトを持つ
+L0067	productClassId	文字列	商品規格ID
+L0068	productCode	文字列	商品コード
+L0069	buyPrice	文字列	買取価格
+L0070	price	文字列	基準価格（販売価格を取得していたが基準価格を取得する）
+L0071	stock	文字列	在庫（ログイン者の所属店舗のEC在庫を取得する）
+L0072	sectionId	文字列	部門ID
+L0073	レスポンスデータサンプル
+L0074	Source:
+L0075	functions/pf-api/a06-06_api_buying_products_by_detail.md
+L0076	現行仕様
+L0077	A06-06 カード詳細IDから買取用商品情報を取得 / API 店頭買取管理 — カード詳細IDから買取用商品情報を取得
+L0078	業務ロジック
+L0079	応答に含めない商品規格
+L0080	次のいずれかに当てはまる商品規格は、応答に含めない。
+L0081	商品に商品画像が1件も結び付いていない
+L0082	カード詳細にレアリティが結び付いていない
+L0083	商品規格に、買取価格・部門IDを保持する付随情報が結び付いていない
+L0084	その付随情報に言語が結び付いていない
+L0085	その付随情報に状態が結び付いていない
+L0086	カードセット・プロモーション・略称タグは結び付いていなくても応答から除かず、該当項目を値なしで返す。
+L0087	同じ組に複数の商品規格が該当したときの扱い
+L0088	同じカードID・カード詳細ID・言語・状態の組に複数の商品規格が該当した場合、応答に残るのは1件だけで、後から取得したものが先のものを上書きする。取得順は指定していないため、どれが残るかは定まらない。
+L0089	応答値の加工
+L0090	金額・在庫数量の再計算、丸め、桁区切りなどの整形は行わない。保持している値をそのまま応答へ入れる。
+L0091	入出力
+L0092	出力: 値が無いときの扱い
+L0093	次の項目は、値が設定されていないとき項目自体は省略せず、値なしで返す。
+L0094	項目	値が無いときの応答
+L0095	カードセットコード	値なし
+L0096	カードセット名	値なし
+L0097	プロモーション名	値なし
+L0098	略称タグ名	値なし
+L0099	買取価格	値なし
+L0100	部門ID	値なし
+L0101	値なしはJSONの null で返す。空文字にはしない。
+L0102	リニューアル後の仕様
+L0103	表示メッセージ
+L0104	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0105	A06-06-MSG-001	API応答JSON（errors配列）	認証エラー	カード詳細ID取得時に、ログイン中の利用者が管理者でない	MTGバイヤー側で認証を行い再試行する
+L0106	A06-06-MSG-002	API応答JSON（errors配列）	カードが見つかりません	指定カード詳細IDに対応する買取用カードが0件	対象カード詳細IDを確認して再検索する
+L0107	いずれのメッセージも英訳を持たない。
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/A06-07/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+##### 0506 sheet-9 商品IDリストから買取用商品情報を取得
+L0001	商品IDリストから買取用商品情報を取得
+L0002	ドキュメント名店頭買取管理 基本設計
+L0003	セクション—
+L0004	プロジェクト名店頭買取管理機能
+L0005	作成者石川
+L0006	作成日2025-07-17
+L0007	更新者石川
+L0008	更新日2026-04-15
+L0009	機能NoA06-07
+L0010	機能名商品IDリストから買取用商品情報を取得
+L0011	概要商品IDリストから買取用商品情報を取得
+L0012	処理概要（★はカスタマイズ項目）
+L0013	商品IDリストから買取用商品情報を取得 / D24 / image 1
+L0014	GET POST PUT DELETE PATCH OPTIONS HEAD 有 無 〇
+L0015	エンドポイントURL
+L0016	/api/buying/products
+L0017	プロトコル HTTP メソッド POST 認証の有無 有 認証方式 IP制限
+L0018	トークン リクエスト書式 クエリ レスポンス書式 JSON
+L0019	カスタマイズ説明
+L0020	・商品の販売価格を取得していたところを基準価格を取得するようにする
+L0021	・商品の在庫を取得していたところを明示的に
+L0022	追加開発でログイン者の所属店舗のEC在庫を取得するようにする
+L0023	機能仕様処理概要（★はカスタマイズ項目）
+L0024	・MTGBuyerで査定表印刷時に表示する商品情報を取得するために呼ばれる、商品IDから商品を取得する
+L0025	・リクエストで指定された商品IDから商品情報を取得する
+L0026	・商品IDに紐づく商品および商品規格情報を取得する
+L0027	・商品および商品規格情報が削除済みのものは取得しない
+L0028	・高額商品コードがはいっていないものを取得する
+L0029	★商品の販売価格を取得していたところを基準価格を取得するようにする
+L0030	★商品の在庫を取得していたところを
+L0031	追加開発でログイン者の所属店舗のEC在庫を取得するようにする
+L0032	リクエストパラメータ
+L0033	項目名	型	必須	最大文字数
+L0034	または最大値	入力例	備考
+L0035	ids	文字列	〇		76136,76137,76138	商品IDをカンマ区切りで指定
+L0036	リクエストパラメータサンプル
+L0037	ステータスコード
+L0038	コード 説明
+L0039	200 成功
+L0040	レスポンスデータ
+L0041	名前 型 説明
+L0042	レスポンスデータサンプル
+L0043	Source:
+L0044	functions/pf-api/a06-07_api_buying_products_by_ids.md
+L0045	現行仕様
+L0046	A06-07 商品IDリストから買取用商品情報を取得 / API 店頭買取管理 — 商品IDリストから買取用商品情報を取得
+L0047	業務ロジック
+L0048	取得対象の決め方
+L0049	商品画像・カード・カード詳細・レアリティ・言語・カード状態のいずれかが登録されていない商品は、削除済みでなくても結果に含まれない。カードセット・プロモーション・保管コードは未設定でも結果に含まれる。
+L0050	商品IDリストが未指定・空文字のときも入力エラーとはせず、該当する商品が無いものとして扱う。
+L0051	同じ組に複数の商品規格が該当したときの扱い
+L0052	同じカードID・カード詳細ID・言語コード・状態コードの組に複数の商品規格が該当した場合、応答に残るのは1件だけで、後から取得したものが先のものを上書きする。取得順は指定していないため、どれが残るかは定まらない。
+L0053	値の取り方
+L0054	取得した値をそのまま応答へ整形して返す。表示用の丸め・税計算・ポイント計算・在庫数量の再計算は行わない。
+L0055	エラー時の扱い
+L0056	カード商品以外のIDだけで0件になった場合もエラーとせず、0件の結果を返す。該当0件に対する専用の失敗ステータスは持たない。
+L0057	入出力
+L0058	種類	内容
+L0059	成功時出力	最上位のカード一覧の配下をカードIDでキー付けした階層構造。該当が0件のときは空配列を返す。
+L0060	入出力: 応答の構造
+L0061	応答は最上位にカード一覧を1つ持ち、その配下がカードIDをキーとするオブジェクトになる。以下カード詳細ID、言語コード、状態コードの順で入れ子になる。
+L0062	階層	内容
+L0063	カード	カードの日本語名、カードの英語名、カード画像のファイル名。
+L0064	カード詳細	カードセットのコード、カードセットの日本語名、フォイルか否か、カード番号、プロモーションの日本語名、商品ID、商品の日本語名、商品の英語名、レアリティのコード、保管コードの名称。カードセット・プロモーション・保管コードが未設定のときは値なしとする。
+L0065	言語	言語コードをキーとし、配下に状態コードごとの商品規格情報を持つ。
+L0066	状態	商品規格ID、商品コード、買取価格（未設定のときは値なし）、販売価格、在庫数、部門ID（未設定のときは値なし）。
+L0067	リニューアル後の仕様
+L0068	表示メッセージ
+L0069	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0070	A06-07-MSG-001	API応答JSON（errors配列）	認証エラー	商品IDリスト取得時にログインユーザーがMemberでない	MTGバイヤー側で認証を行い再試行する
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/A06-12/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+##### 0506 sheet-12 固定価格部門の部門情報を取得
+L0001	固定価格部門の部門情報を取得
+L0002	ドキュメント名店頭買取管理 基本設計
+L0003	セクション—
+L0004	プロジェクト名店頭買取管理機能
+L0005	作成者石川
+L0006	作成日2025-07-17
+L0007	更新者石川
+L0008	更新日2025-09-06
+L0009	機能NoA06-12
+L0010	機能名固定価格部門の部門情報を取得
+L0011	概要固定価格部門の部門情報を取得
+L0012	処理概要（★はカスタマイズ項目）
+L0013	固定価格部門の部門情報を取得 / D23 / image 1
+L0014	固定価格部門の部門情報を取得 / D40 / image 2
+L0015	GET POST PUT DELETE PATCH OPTIONS HEAD 有 無 〇
+L0016	エンドポイントURL
+L0017	/api/fixedPriceSection.json
+L0018	プロトコル HTTP メソッド GET 認証の有無 有 認証方式 IP制限
+L0019	トークン リクエスト書式 クエリ レスポンス書式 JSON
+L0020	カスタマイズ説明
+L0021	現行踏襲
+L0022	機能仕様処理概要（★はカスタマイズ項目）
+L0023	・MTGBuyerで固定価格商品（10円商品）を登録する際の部門として、部門IDを取得する
+L0024	・本店管理画面の追加システム設定画面から設定できる固定価格商品部門IDを取得する
+L0025	リクエストパラメータ
+L0026	項目名 型 必須 最大文字数
+L0027	または最大値 入力例 備考
+L0028	なし
+L0029	リクエストパラメータサンプル
+L0030	ステータスコード
+L0031	コード 説明
+L0032	200
+L0033	レスポンスデータ
+L0034	名前	型	説明
+L0035	code	文字列	レスポンスコード、必ず200が入る
+L0036	section_id	文字列	固定価格商品部門ID
+L0037	レスポンスデータサンプル
+L0038	Source:
+L0039	functions/pf-api/a06-12_api_store_purchase_fixed_price_section.md
+L0040	現行仕様
+L0041	A06-12 固定価格部門を部門情報を取得 / API 店頭買取管理 — 固定価格部門を取得
+L0042	業務ロジック
+L0043	設定値の扱い
+L0044	追加システム設定に登録された固定価格商品部門IDを、加工せずそのまま返す。実在する部門かどうかの照合、桁揃え・前後空白の除去は行わない。
+L0045	入出力
+L0046	出力: 設定が無いときの応答
+L0047	追加システム設定に固定価格商品部門IDが登録されていないときは、部門IDを取得できずエラーとなり、HTTP 500 のエラー応答になる。このときレスポンスデータは返らない。
+L0048	リニューアル後の仕様
+L0049	表示メッセージ
+L0050	本APIは画面メッセージを扱わない。
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/A06-01_interactions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/A06-03_interactions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/A06-05_interactions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 1ms:
+処理ID	要因	判定	根拠	理由
+P1	F01+F02+F03	効き合う	L0023-L0041,L0068,L0091-L0093	更新前と指定のステータスの組で可否・終了済みエラー・同じなら書き込まない扱いが決まり、査定中または査定再開どうしでは更新者が本人以外だと拒否される
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/A06-06_interactions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/A06-02_interactions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/A06-07_interactions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+処理ID	要因	判定	根拠	理由
+P1	F01+F02+F03+F04	効き合う	L0023-L0024,L0066,L0068	ステータス・職業と国の紐づき・店舗の三つの定めが同じ一覧を絞り、すべてを満たす店頭買取だけが含まれる。所属店舗が定まらないときは店舗による絞り込み自体が行われない
+
+ succeeded in 31ms:
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	効き合う	L0023-L0024,L0056-L0057	買取成立のときだけ、個別入力商品の有無で未登録在庫ありか入庫待ちかが決まる
+P1	F01+F03	関係しない		実在庫の集約は商品規格ごとに行われ、送信ステータスによって変わらない
+P1	F01+F04	関係しない		履歴は更新前との比較だけで決まり、メールや成立日・キャンセル日は送信ステータスで決まる
+P1	F01+F05	関係しない		確認済みフラグは受注の該当有無だけで決まり、ステータスに依らない
+P1	F01+F06	関係しない		部門の設定は明細ごとに決まり、ステータスに依らない
+P1	F01+F07	効き合う	L0025,L0058	端末取引IDの連携は送信ステータスが買取成立のときだけ行われる
+P1	F02+F03	関係しない		同じ商品規格の合算は商品規格を持つ明細の実在庫の話で、個別入力商品の有無に左右されない
+P1	F02+F04	関係しない		履歴は更新前との比較だけで決まる
+P1	F02+F05	関係しない		確認済みフラグは受注の該当有無だけで決まる
+P1	F02+F06	関係しない		部門の設定は明細ごとに決まり、個別入力商品かどうかで変わらない
+P1	F02+F07	関係しない		端末取引IDの連携と未登録在庫の判定は別の項目
+P1	F03+F04	関係しない		実在庫の集約とステータス履歴は別の更新先
+P1	F03+F05	関係しない		実在庫の集約と確認済みフラグは別の更新先
+P1	F03+F06	関係しない		部門の設定は明細ごと、集約は商品規格ごとで互いに影響しない
+P1	F03+F07	関係しない		実在庫の集約と端末取引IDの連携は別の項目
+P1	F04+F05	関係しない		履歴は更新前との比較、確認済みフラグは受注の該当有無で別々に決まる
+P1	F04+F06	関係しない		履歴と明細の部門は別の更新先
+P1	F04+F07	関係しない		履歴と端末取引IDは別の更新先
+P1	F05+F06	関係しない		確認済みフラグと明細の部門は別の更新先
+P1	F05+F07	関係しない		確認済みフラグと端末取引IDは別の更新先
+P1	F06+F07	関係しない		明細の部門と端末取引IDは別の更新先
+
+ succeeded in 7ms:
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	関係しない		それぞれの要因は独立した判定で、一方の値でもう一方の結果の内容は変わらない（応答に含める可否は各条件のいずれかで決まる）
+P1	F01+F03	関係しない		それぞれの要因は独立した判定で、一方の値でもう一方の結果の内容は変わらない（応答に含める可否は各条件のいずれかで決まる）
+P1	F01+F04	関係しない		それぞれの要因は独立した判定で、一方の値でもう一方の結果の内容は変わらない（応答に含める可否は各条件のいずれかで決まる）
+P1	F01+F05	関係しない		それぞれの要因は独立した判定で、一方の値でもう一方の結果の内容は変わらない（応答に含める可否は各条件のいずれかで決まる）
+P1	F01+F06	関係しない		それぞれの要因は独立した判定で、一方の値でもう一方の結果の内容は変わらない（応答に含める可否は各条件のいずれかで決まる）
+P1	F01+F07	関係しない		それぞれの要因は独立した判定で、一方の値でもう一方の結果の内容は変わらない（応答に含める可否は各条件のいずれかで決まる）
+P1	F01+F08	関係しない		それぞれの要因は独立した判定で、一方の値でもう一方の結果の内容は変わらない（応答に含める可否は各条件のいずれかで決まる）
+P1	F01+F09	関係しない		それぞれの要因は独立した判定で、一方の値でもう一方の結果の内容は変わらない（応答に含める可否は各条件のいずれかで決まる）
+P1	F02+F03	関係しない		それぞれの要因は独立した判定で、一方の値でもう一方の結果の内容は変わらない（応答に含める可否は各条件のいずれかで決まる）
+P1	F02+F04	関係しない		それぞれの要因は独立した判定で、一方の値でもう一方の結果の内容は変わらない（応答に含める可否は各条件のいずれかで決まる）
+P1	F02+F05	関係しない		それぞれの要因は独立した判定で、一方の値でもう一方の結果の内容は変わらない（応答に含める可否は各条件のいずれかで決まる）
+P1	F02+F06	関係しない		それぞれの要因は独立した判定で、一方の値でもう一方の結果の内容は変わらない（応答に含める可否は各条件のいずれかで決まる）
+P1	F02+F07	関係しない		それぞれの要因は独立した判定で、一方の値でもう一方の結果の内容は変わらない（応答に含める可否は各条件のいずれかで決まる）
+P1	F02+F08	関係しない		それぞれの要因は独立した判定で、一方の値でもう一方の結果の内容は変わらない（応答に含める可否は各条件のいずれかで決まる）
+P1	F02+F09	関係しない		それぞれの要因は独立した判定で、一方の値でもう一方の結果の内容は変わらない（応答に含める可否は各条件のいずれかで決まる）
+P1	F03+F04	関係しない		それぞれの要因は独立した判定で、一方の値でもう一方の結果の内容は変わらない（応答に含める可否は各条件のいずれかで決まる）
+P1	F03+F05	関係しない		それぞれの要因は独立した判定で、一方の値でもう一方の結果の内容は変わらない（応答に含める可否は各条件のいずれかで決まる）
+P1	F03+F06	関係しない		それぞれの要因は独立した判定で、一方の値でもう一方の結果の内容は変わらない（応答に含める可否は各条件のいずれかで決まる）
+P1	F03+F07	関係しない		それぞれの要因は独立した判定で、一方の値でもう一方の結果の内容は変わらない（応答に含める可否は各条件のいずれかで決まる）
+P1	F03+F08	関係しない		それぞれの要因は独立した判定で、一方の値でもう一方の結果の内容は変わらない（応答に含める可否は各条件のいずれかで決まる）
+P1	F03+F09	関係しない		それぞれの要因は独立した判定で、一方の値でもう一方の結果の内容は変わらない（応答に含める可否は各条件のいずれかで決まる）
+P1	F04+F05	関係しない		それぞれの要因は独立した判定で、一方の値でもう一方の結果の内容は変わらない（応答に含める可否は各条件のいずれかで決まる）
+P1	F04+F06	関係しない		それぞれの要因は独立した判定で、一方の値でもう一方の結果の内容は変わらない（応答に含める可否は各条件のいずれかで決まる）
+P1	F04+F07	関係しない		それぞれの要因は独立した判定で、一方の値でもう一方の結果の内容は変わらない（応答に含める可否は各条件のいずれかで決まる）
+P1	F04+F08	関係しない		それぞれの要因は独立した判定で、一方の値でもう一方の結果の内容は変わらない（応答に含める可否は各条件のいずれかで決まる）
+P1	F04+F09	関係しない		それぞれの要因は独立した判定で、一方の値でもう一方の結果の内容は変わらない（応答に含める可否は各条件のいずれかで決まる）
+P1	F05+F06	効き合う	L0083	買取価格・部門IDは付随情報が保持するため、付随情報が無いと設定の有無は成り立たず、付随情報が欠けると商品規格ごと応答に出ない
+P1	F05+F07	関係しない		それぞれの要因は独立した判定で、一方の値でもう一方の結果の内容は変わらない（応答に含める可否は各条件のいずれかで決まる）
+P1	F05+F08	関係しない		それぞれの要因は独立した判定で、一方の値でもう一方の結果の内容は変わらない（応答に含める可否は各条件のいずれかで決まる）
+P1	F05+F09	関係しない		それぞれの要因は独立した判定で、一方の値でもう一方の結果の内容は変わらない（応答に含める可否は各条件のいずれかで決まる）
+P1	F06+F07	関係しない		それぞれの要因は独立した判定で、一方の値でもう一方の結果の内容は変わらない（応答に含める可否は各条件のいずれかで決まる）
+P1	F06+F08	関係しない		それぞれの要因は独立した判定で、一方の値でもう一方の結果の内容は変わらない（応答に含める可否は各条件のいずれかで決まる）
+P1	F06+F09	関係しない		それぞれの要因は独立した判定で、一方の値でもう一方の結果の内容は変わらない（応答に含める可否は各条件のいずれかで決まる）
+P1	F07+F08	関係しない		それぞれの要因は独立した判定で、一方の値でもう一方の結果の内容は変わらない（応答に含める可否は各条件のいずれかで決まる）
+P1	F07+F09	関係しない		それぞれの要因は独立した判定で、一方の値でもう一方の結果の内容は変わらない（応答に含める可否は各条件のいずれかで決まる）
+P1	F08+F09	関係しない		それぞれの要因は独立した判定で、一方の値でもう一方の結果の内容は変わらない（応答に含める可否は各条件のいずれかで決まる）
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/A06-13_interactions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 34ms:
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F01+F03	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F01+F04	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F01+F05	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F01+F06	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F01+F07	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F01+F08	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F01+F09	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F01+F10	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F01+F11	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F02+F03	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F02+F04	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F02+F05	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F02+F06	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F02+F07	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F02+F08	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F02+F09	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F02+F10	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F02+F11	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F03+F04	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F03+F05	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F03+F06	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F03+F07	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F03+F08	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F03+F09	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F03+F10	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F03+F11	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F04+F05	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F04+F06	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F04+F07	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F04+F08	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F04+F09	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F04+F10	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F04+F11	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F05+F06	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F05+F07	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F05+F08	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F05+F09	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F05+F10	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F05+F11	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F06+F07	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F06+F08	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F06+F09	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F06+F10	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F06+F11	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F07+F08	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F07+F09	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F07+F10	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F07+F11	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F08+F09	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F08+F10	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F08+F11	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F09+F10	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F09+F11	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F10+F11	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+
+ succeeded in 9ms:
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	効き合う	L0051,L0072	買取情報が無いと証明書IDの判定はされず404になる。買取情報があるときだけ証明書IDの登録有無で200か400かが決まる
+
+ succeeded in 73ms:
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	効き合う	L0038-L0045,L0064,L0069-L0070	認証成功のときだけ所属店舗の有無で店舗名・店舗住所が決まり、認証失敗のときは利用者情報を返さない
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/A06-08_interactions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F01+F03	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F01+F04	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F01+F05	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F01+F06	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F01+F07	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F01+F08	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F01+F09	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F01+F10	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F02+F03	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F02+F04	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F02+F05	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F02+F06	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F02+F07	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F02+F08	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F02+F09	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F02+F10	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F03+F04	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F03+F05	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F03+F06	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F03+F07	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F03+F08	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F03+F09	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F03+F10	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F04+F05	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F04+F06	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F04+F07	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F04+F08	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F04+F09	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F04+F10	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F05+F06	効き合う	L0056	買取価格・部門IDは商品規格の付随情報が保持するため、付随情報が無いと設定の有無は成り立たない
+P1	F05+F07	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F05+F08	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F05+F09	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F05+F10	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F06+F07	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F06+F08	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F06+F09	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F06+F10	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F07+F08	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F07+F09	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F07+F10	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F08+F09	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F08+F10	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+P1	F09+F10	関係しない		それぞれの要因は独立した判定または独立した出力値で、一方の値でもう一方の結果の内容は変わらない
+
+codex
+要因間の判定では、複数条件で一覧から除外する処理を「効き合う」とした行と、同じ結果の認証失敗を別値にした行が候補です。既存ケースの値が手順に明記されているかも確認します。
+exec
+/bin/bash -lc 'nl -ba integration_test/casegen/combination/factors/A06-01_existing.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+     1	テストID	処理ID	値	理由
+     2	IT-A06-01-002	P1	F01=認証成功&F02=店舗が紐づく	事前準備で店舗が紐づく管理者を登録し、正しいパスワードで送信して応答の店舗名・店舗住所を確かめる
+     3	IT-A06-01-006	P1	F01=会員が見つからない	事前準備で対応する会員が0件のログインIDを指定し、401とメッセージを確かめる
+     4	IT-A06-01-007	P1	F01=パスワード不一致&F02=店舗が紐づく	事前準備で店舗が紐づく管理者を登録し、誤ったパスワードで送信して401とメッセージを確かめる
+     5	IT-A06-01-010	P1	F01=認証成功&F02=店舗が紐づく	事前準備で店舗が紐づく管理者を登録し、買取アプリでログインしてモード選択画面へ移ることを確かめる
+     6	IT-A06-01-015	P1	F01=パスワード不一致&F02=店舗が紐づく	事前準備で店舗が紐づく管理者を登録し、買取アプリで誤ったパスワードを入れてエラー表示を確かめる
+
+exec
+/bin/bash -lc 'nl -ba integration_test/casegen/combination/factors/A06-05_existing.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+     1	テストID	処理ID	値	理由
+     2	IT-A06-05-002	P1	F01=査定前&F02=査定中&F03=査定担当者本人	査定前の受注を担当者本人で査定中へ更新しDBで確かめる
+     3	IT-A06-05-002	P1	F01=査定前&F02=査定中断&F03=査定担当者本人	査定前の受注を担当者本人で査定中断へ更新しDBで確かめる
+     4	IT-A06-05-002	P1	F01=査定前&F02=査定再開&F03=査定担当者本人	査定前の受注を担当者本人で査定再開へ更新しDBで確かめる
+     5	IT-A06-05-002	P1	F01=査定中&F02=査定中断&F03=査定担当者本人	査定中の受注を担当者本人で査定中断へ更新しDBで確かめる
+     6	IT-A06-05-002	P1	F01=査定中&F02=査定再開&F03=査定担当者本人	査定中の受注を担当者本人で査定再開へ更新しDBで確かめる
+     7	IT-A06-05-002	P1	F01=査定中断&F02=査定中&F03=査定担当者本人	査定中断の受注を担当者本人で査定中へ更新しDBで確かめる
+     8	IT-A06-05-002	P1	F01=査定中断&F02=査定再開&F03=査定担当者本人	査定中断の受注を担当者本人で査定再開へ更新しDBで確かめる
+     9	IT-A06-05-002	P1	F01=査定再開&F02=査定中&F03=査定担当者本人	査定再開の受注を担当者本人で査定中へ更新しDBで確かめる
+    10	IT-A06-05-002	P1	F01=査定再開&F02=査定中断&F03=査定担当者本人	査定再開の受注を担当者本人で査定中断へ更新しDBで確かめる
+    11	IT-A06-05-005	P1	F01=査定前&F02=査定中&F03=本人以外	査定担当者と別の管理者で査定前を査定中へ更新しDBで金額等を確かめる
+    12	IT-A06-05-007	P1	F01=査定中&F02=査定中&F03=査定担当者本人	同じステータスへの更新でDBが書き換わらないことを確かめる
+    13	IT-A06-05-007	P1	F01=査定中断&F02=査定中断&F03=査定担当者本人	同じステータスへの更新でDBが書き換わらないことを確かめる
+    14	IT-A06-05-007	P1	F01=査定再開&F02=査定再開&F03=査定担当者本人	同じステータスへの更新でDBが書き換わらないことを確かめる
+    15	IT-A06-05-008	P1	F01=査定中&F02=終了系ステータス&F03=査定担当者本人	査定中の受注を買取成立等へ更新しようとしDBが変わらないことを確かめる
+    16	IT-A06-05-008	P1	F01=査定中&F02=査定前&F03=査定担当者本人	査定中の受注を査定前へ更新しようとしDBが変わらないことを確かめる
+    17	IT-A06-05-009	P1	F01=終了系ステータス&F02=査定中断&F03=査定担当者本人	終了系の受注を査定中断へ更新しようとしDBが変わらないことを確かめる
+    18	IT-A06-05-011	P1	F01=査定再開&F02=査定中&F03=本人以外	査定再開の受注を担当者以外が査定中へ更新しようとしDBが変わらないことを確かめる
+    19	IT-A06-05-011	P1	F01=査定中&F02=査定再開&F03=本人以外	査定中の受注を担当者以外が査定再開へ更新しようとしDBが変わらないことを確かめる
+
+exec
+/bin/bash -lc 'nl -ba integration_test/casegen/combination/factors/A06-06_existing.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+     1	テストID	処理ID	値	理由
+     2	IT-A06-06-002	P1	F01=未削除&F02=なし&F03=1件以上&F04=結び付く&F05=言語と状態が結び付く&F06=設定あり&F07=結び付く&F08=1件&F09=店舗A	全項目を設定した基本データで応答JSONを確かめる
+     3	IT-A06-06-006	P1	F01=未削除&F02=なし&F03=1件以上&F04=結び付く&F05=言語と状態が結び付く&F06=設定なし&F07=結び付かない&F08=1件&F09=店舗A	付随項目が未設定のデータで応答がnullになることを確かめる
+     4	IT-A06-06-012	P1	F01=未削除&F02=なし&F03=1件以上&F04=結び付く&F05=言語と状態が結び付く&F06=設定なし&F07=結び付かない&F08=1件&F09=店舗A	付随項目が未設定のデータで各項目がnullになることを確かめる
+     5	IT-A06-06-007	P1	F01=未削除&F02=なし&F03=1件以上&F04=結び付く&F05=言語と状態が結び付く&F08=複数&F09=店舗A	同じ組の複数規格が1件だけ残ることを確かめる
+     6	IT-A06-06-008	P1	F01=未削除&F02=なし&F03=1件以上&F04=結び付く&F05=言語と状態が結び付く&F08=1件&F09=店舗A	基準価格がpriceに返ることを確かめる
+     7	IT-A06-06-009	P1	F01=未削除&F02=なし&F03=1件以上&F04=結び付く&F05=言語と状態が結び付く&F08=1件&F09=店舗A	店舗AのEC在庫がstockに返ることを確かめる
+     8	IT-A06-06-009	P1	F01=未削除&F02=なし&F03=1件以上&F04=結び付く&F05=言語と状態が結び付く&F08=1件&F09=店舗B	店舗BのEC在庫がstockに返ることを確かめる
+     9	IT-A06-06-010	P1	F01=未削除&F02=なし&F03=1件以上&F04=結び付く&F05=言語と状態が結び付く&F06=設定あり&F08=1件&F09=店舗A	値が加工されずに返ることを確かめる
+
+exec
+/bin/bash -lc 'nl -ba integration_test/casegen/combination/factors/A06-03_existing.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+     1	テストID	処理ID	値	理由
+     2	IT-A06-03-003	P1	F01=経理払い出し待ち	手順で経理払い出し待ちを送信し、DBで受注のステータスを確かめる
+     3	IT-A06-03-004	P1	F01=経理払い出し待ち	手順で経理払い出し待ちを送信し、経理チームのメール受信を確かめる
+     4	IT-A06-03-005	P1	F01=買取成立&F02=個別入力商品がない&F07=端末取引IDあり	手順で商品規格IDを指定した明細だけを買取成立で送信し、DBで入庫待ちになることを確かめる
+     5	IT-A06-03-007	P1	F01=買取成立&F02=個別入力商品がない&F07=端末取引IDあり	手順で端末取引IDを付けて買取成立で送信し、DBで端末取引IDの保存を確かめる
+     6	IT-A06-03-008	P1	F01=買取キャンセル	手順で買取キャンセルを送信し、DBでステータスを確かめる
+     7	IT-A06-03-014	P1	F06=部門が存在する	手順で有効な部門IDを指定した明細を送信し、DBで注文詳細の部門を確かめる
+     8	IT-A06-03-015	P1	F06=部門が存在しない	手順で存在しない部門IDを指定した明細を送信し、DBで部門なしで登録されることを確かめる
+     9	IT-A06-03-016	P1	F03=同じ商品規格の明細が複数	手順で同じ商品規格の明細を複数送信し、DBで実在庫と履歴の集約を確かめる
+    10	IT-A06-03-020	P1	F05=適格請求書発行事業者に該当する	事前準備で該当する受注を用意し、DBで確認済みフラグの更新を確かめる
+    11	IT-A06-03-021	P1	F05=適格請求書発行事業者に該当する	事前準備で該当する受注を用意し、falseを送ってDBで確認済みフラグの更新を確かめる
+    12	IT-A06-03-022	P1	F05=適格請求書発行事業者に該当しない	事前準備で該当しない受注を用意し、DBで確認済みフラグが更新されないことを確かめる
+    13	IT-A06-03-023	P1	F04=更新前と異なるステータス	事前準備で更新前と異なるステータスにし、DBでステータス変更履歴の追加を確かめる
+    14	IT-A06-03-024	P1	F04=更新前と同じステータス	事前準備で更新前と同じステータスにし、DBでステータス変更履歴が増えないことを確かめる
+    15	IT-A06-03-050	P1	F01=買取成立	手順で買取成立を送信し、経理チームのメールが届かないことを確かめる
+    16	IT-A06-03-051	P1	F01=買取キャンセル	手順で買取キャンセルを送信し、経理チームのメールが届かないことを確かめる
+
+exec
+/bin/bash -lc 'nl -ba integration_test/casegen/combination/factors/A06-08_existing.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'nl -ba integration_test/casegen/combination/factors/A06-07_existing.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'nl -ba integration_test/casegen/combination/factors/A06-13_existing.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+     1	テストID	処理ID	値	理由
+     2	IT-A06-08-006	P1	F01=未削除&F02=なし&F08=複数&F09=店舗A&F10=%と_を含まない	同じ組の複数規格が1件だけ残ることを確かめる
+     3	IT-A06-08-007	P1	F06=設定あり&F07=設定あり&F09=店舗A&F10=%と_を含まない	全項目を設定した基本データで応答の階層と値を確かめる
+     4	IT-A06-08-008	P1	F03=登録あり&F04=結び付く&F05=言語と状態が結び付く&F06=未設定&F07=未設定&F09=店舗A&F10=%と_を含まない	任意項目が未設定のデータでnullが返ることを確かめる
+     5	IT-A06-08-009	P1	F01=未削除&F02=なし&F09=店舗A&F10=%と_を含まない	基準価格がpriceに返ることを確かめる
+     6	IT-A06-08-010	P1	F09=店舗A&F10=%と_を含まない	店舗AのEC在庫がstockに返ることを確かめる
+     7	IT-A06-08-010	P1	F09=店舗B&F10=%と_を含まない	店舗BのEC在庫がstockに返ることを確かめる
+     8	IT-A06-08-011	P1	F01=未削除&F02=なし&F06=設定あり&F09=店舗A&F10=%と_を含まない	値が加工されずに返ることを確かめる
+     9	IT-A06-08-003	P1	F09=店舗A&F10=%または_を含む	%を含むカード名で文字そのものとして検索されることを確かめる
+    10	IT-A06-08-003	P1	F09=店舗A&F10=%または_を含む	_を含むカード名で文字そのものとして検索されることを確かめる
+
+ succeeded in 0ms:
+     1	テストID	処理ID	値	理由
+     2	IT-A06-07-003	P1	F01=未削除&F02=なし&F03=登録あり&F04=結び付く&F05=登録あり&F06=登録あり&F07=登録あり&F08=設定あり&F09=設定あり&F11=店舗A	全項目を設定した商品で応答の階層と値を確かめる
+     3	IT-A06-07-006	P1	F01=未削除&F02=なし&F03=登録あり&F04=結び付く&F05=登録あり&F06=登録あり&F07=登録あり&F08=未設定&F09=未設定&F11=店舗A	付随項目が未設定の商品が含まれ値なしで返ることを確かめる
+     4	IT-A06-07-007	P1	F01=未削除&F02=なし&F03=登録あり&F04=結び付く&F05=登録あり&F06=登録あり&F07=登録あり&F10=複数&F11=店舗A	同じ組の複数規格が1件だけ残ることを確かめる
+     5	IT-A06-07-008	P1	F01=未削除&F02=なし&F03=登録あり&F04=結び付く&F05=登録あり&F06=登録あり&F07=登録あり&F11=店舗A	基準価格が返ることを確かめる
+     6	IT-A06-07-009	P1	F01=未削除&F02=なし&F03=登録あり&F04=結び付く&F05=登録あり&F06=登録あり&F07=登録あり&F11=店舗A	店舗AのEC在庫が返ることを確かめる
+     7	IT-A06-07-009	P1	F01=未削除&F02=なし&F03=登録あり&F04=結び付く&F05=登録あり&F06=登録あり&F07=登録あり&F11=店舗B	店舗BのEC在庫が返ることを確かめる
+     8	IT-A06-07-010	P1	F01=未削除&F02=なし&F03=登録あり&F04=結び付く&F05=登録あり&F06=登録あり&F07=登録あり&F09=設定あり&F11=店舗A	値が加工されずに返ることを確かめる
+     9	IT-A06-07-011	P1	F01=未削除&F04=結び付かない&F05=登録なし&F06=登録なし&F07=登録なし&F11=店舗A	カード商品以外だけを指定し空配列になることを確かめる
+
+ succeeded in 0ms:
+     1	テストID	処理ID	値	理由
+     2	IT-A06-13-002	P1	F01=ある&F02=登録あり	買取情報を登録し証明書ID2を指定して送り、HTTPステータス200を確かめる
+     3	IT-A06-13-005	P1	F01=ない&F02=登録あり	買取情報が無いIDに登録ありの証明書ID2を送り、404を確かめる
+     4	IT-A06-13-006	P1	F01=ある&F02=登録なし	買取情報を登録し登録の無い証明書IDを送り、400を確かめる
+     5	IT-A06-13-013	P1	F01=ない&F02=登録なし	買取情報も証明書IDも無い値で送り、404を確かめる
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+import csv
+for fid, ids in {'A06-01':['002','006','007','010','015'],'A06-03':['005','007','014','015','016','020','021','022','023','024','050','051'],'A06-05':['002','005','007','008','009','011'],'A06-06':['002','006','007','008','009','010','012'],'A06-07':['003','006','007','008','009','010','011'],'A06-08':['003','006','007','008','009','010','011'],'A06-13':['002','005','006','013']}.items():
+ p=f'integration_test/casegen/cases/{fid}_test_cases.tsv'
+ print('\\n###',fid)
+ with open(p) as f:
+  reader=csv.DictReader(f,delimiter='\\t')
+  for row in reader:
+   if row['テストID'].split('-')[-1] in ids:
+    print(row['テストID'],'line',reader.line_num)
+    for k in ['テストデータ','事前準備','手順','期待結果']:
+     print(k,':',row.get(k,''))
+PY" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+
+### A06-01
+IT-A06-01-002 line 3
+テストデータ : 
+事前準備 : ① 標準認証値をPassw0rd!A0601とする（S-A06-01-CREDENTIALS）／② 管理者ID 〔管理者ID-A0601-002〕（登録時に振られた管理者IDを控えてある）、名前A06-01管理者-002、ログインID a0601_admin-002、パスワードPassw0rd!A0601、稼働中、システム管理者権限、所属店舗ID 〔店舗ID-A0601-002〕（登録時に振られた店舗IDを控えてある）で登録され、店舗ID 〔店舗ID-A0601-002〕は店舗名A06-01店舗-002、店舗住所東京都千代田区晴海1-1である（S-A06-01-ADM-002）
+手順 : 1. ブラウザの開発者ツールからlogin_id「a0601_admin-002」とpassword「Passw0rd!A0601」を指定し、POSTで「/api/admin/login.json」へ送信する／2. NetworkでHTTPステータスと応答JSONを確認する／3. DBで管理者ID 〔管理者ID-A0601-002〕と所属店舗ID 〔店舗ID-A0601-002〕を確認する
+期待結果 : HTTP 200となり、JSON応答のmemberNameが「A06-01管理者-002」、memberIdが文字列「〔管理者ID-A0601-002〕」、shopNameが「A06-01店舗-002」、shopAddrが「東京都千代田区晴海1-1」とDBの対応する値に一致し、jwtTokenが空でない文字列であること
+IT-A06-01-006 line 6
+テストデータ : 
+事前準備 : ① ログインID a0601_missing-006に対応する管理者会員が0件である（S-A06-01-NOUSER-006）
+手順 : 1. login_idを「a0601_missing-006」、passwordを「Passw0rd!A0601M」として、ブラウザの開発者ツールからPOSTで「/api/admin/login.json」へ送信する／2. NetworkでHTTPステータスと応答JSONを確認する
+期待結果 : HTTP 401となり、JSONのerrors配列に「ログインIDまたはパスワードが正しくありません」が含まれ、jwtTokenとして使用できる値が返らないこと
+IT-A06-01-007 line 7
+テストデータ : 
+事前準備 : ① 標準認証値をPassw0rd!A0601とする（S-A06-01-CREDENTIALS）／② 管理者ID 〔管理者ID-A0601-007〕（登録時に振られた管理者IDを控えてある）、名前A06-01管理者-007、ログインID a0601_admin-007、正しいパスワードPassw0rd!A0601、稼働中、システム管理者権限、所属店舗ID 〔店舗ID-A0601-007〕（登録時に振られた店舗IDを控えてある）、店舗名A06-01店舗-007、店舗住所東京都千代田区晴海1-1で登録され、入力値WrongPass!A0601は正しいパスワードと異なる（S-A06-01-ADM-007）
+手順 : 1. login_idを「a0601_admin-007」、passwordを「WrongPass!A0601」として、ブラウザの開発者ツールからPOSTで「/api/admin/login.json」へ送信する／2. NetworkでHTTPステータスと応答JSONを確認する
+期待結果 : HTTP 401となり、JSONのerrors配列に「ログインIDまたはパスワードが正しくありません」が含まれ、jwtTokenとして使用できる値が返らないこと
+IT-A06-01-010 line 9
+テストデータ : 
+事前準備 : ① 標準認証値をPassw0rd!A0601とする（S-A06-01-CREDENTIALS）／② 開始時にMTGBuyerの接続先をA06-01試験APIに設定し、ログイン画面を表示できる状態にする（S-A06-01-MTGBUYER）／③ 管理者ID 〔管理者ID-A0601-010〕（登録時に振られた管理者IDを控えてある）、名前A06-01管理者-010、ログインID a0601_admin-010、パスワードPassw0rd!A0601、稼働中、システム管理者権限、所属店舗ID 〔店舗ID-A0601-010〕（登録時に振られた店舗IDを控えてある）、店舗名A06-01店舗-010、店舗住所東京都千代田区晴海1-1で登録されている（S-A06-01-ADM-010）
+手順 : 1. MTGBuyerログイン画面を開く／2. ログインIDに「a0601_admin-010」、パスワードに「Passw0rd!A0601」を入力する／3. ログインボタンを押す／4. 表示された画面を確認する
+期待結果 : ログインが成功し、MTGBuyerが店頭買取・ネット買取・入庫モードを選ぶモード選択画面へ移ること
+IT-A06-01-015 line 11
+テストデータ : 
+事前準備 : ① 標準認証値をPassw0rd!A0601とする（S-A06-01-CREDENTIALS）／② 開始時にMTGBuyerの接続先をA06-01試験APIに設定し、ログイン画面を表示できる状態にする（S-A06-01-MTGBUYER）／③ 管理者ID 〔管理者ID-A0601-015〕（登録時に振られた管理者IDを控えてある）、名前A06-01管理者-015、ログインID a0601_admin-015、正しいパスワードPassw0rd!A0601、稼働中、システム管理者権限、所属店舗ID 〔店舗ID-A0601-015〕（登録時に振られた店舗IDを控えてある）、店舗名A06-01店舗-015、店舗住所東京都千代田区晴海1-1で登録され、入力値WrongPass!A0601は正しいパスワードと異なる（S-A06-01-ADM-015）
+手順 : 1. MTGBuyerログイン画面を開く／2. ログインIDに「a0601_admin-015」、パスワードに「WrongPass!A0601」を入力する／3. ログインボタンを押す／4. 表示された画面を確認する
+期待結果 : MTGBuyerのログイン画面にエラーが表示され、店頭買取・ネット買取・入庫モードを選ぶモード選択画面へ移らないこと
+
+### A06-03
+IT-A06-03-005 line 6
+テストデータ : 
+事前準備 : ① 管理者ID 〔管理者ID-A0603-共有A〕（登録時に振られた管理者IDを控えてある）の有効なjwt-tokenを発行する（S-A06-03-ADM）／② 査定ID 〔査定ID-A0603-005〕（登録時に振られた査定IDを控えてある）は査定中、端末取引ID=null、注文詳細0件、個別入力商品0件で、商品規格ID 〔商品規格ID-A0603-005〕（登録時に振られた商品規格IDを控えてある）が存在する（S-A06-03-CASE-005）／③ 部門ID 〔部門ID-A0603-共有〕（登録時に振られた部門IDを控えてある）が有効である（S-A06-03-SECTIONS）／④ ステータスID 1が買取成立、ID 13が入庫待ちとして登録済みである（S-A06-03-STATUSES）
+手順 : 1. 有効なjwt-tokenとJSON「{"order_status":1,"qualified_invoice_issuer_confirmation_flg":"true","smaregi_transaction_id":6039001,"order_details":[{"product_class_id":〔商品規格ID-A0603-005〕,"name":"登録済商品","quantity":2,"price":500,"sell_price":700,"section_id":〔部門ID-A0603-共有〕}]}」をPUTで査定ID 〔査定ID-A0603-005〕へ送信する／2. DBで査定ID 〔査定ID-A0603-005〕を確認する
+期待結果 : 個別入力商品が0件の査定ID 〔査定ID-A0603-005〕のステータスが入庫待ちになること
+IT-A06-03-007 line 7
+テストデータ : 
+事前準備 : ① 管理者ID 〔管理者ID-A0603-共有A〕（登録時に振られた管理者IDを控えてある）の有効なjwt-tokenを発行する（S-A06-03-ADM）／② 査定ID 〔査定ID-A0603-007〕（登録時に振られた査定IDを控えてある）は査定中、端末取引ID=nullで、商品規格ID 〔商品規格ID-A0603-007〕（登録時に振られた商品規格IDを控えてある）が存在する（S-A06-03-CASE-007）／③ 部門ID 〔部門ID-A0603-共有〕（登録時に振られた部門IDを控えてある）が有効である（S-A06-03-SECTIONS）／④ ステータスID 1が買取成立、ID 13が入庫待ちとして登録済みである（S-A06-03-STATUSES）
+手順 : 1. 有効なjwt-tokenとJSON「{"order_status":1,"qualified_invoice_issuer_confirmation_flg":"true","smaregi_transaction_id":6039001,"order_details":[{"product_class_id":〔商品規格ID-A0603-007〕,"name":"端末取引商品","quantity":1,"price":1000,"sell_price":1200,"section_id":〔部門ID-A0603-共有〕}]}」をPUTで査定ID 〔査定ID-A0603-007〕へ送信する／2. DBで査定ID 〔査定ID-A0603-007〕を確認する
+期待結果 : 査定ID 〔査定ID-A0603-007〕の端末取引IDに6039001が保存されること
+IT-A06-03-014 line 11
+テストデータ : 
+事前準備 : ① 管理者ID 〔管理者ID-A0603-共有A〕（登録時に振られた管理者IDを控えてある）の有効なjwt-tokenを発行する（S-A06-03-ADM）／② 査定ID 〔査定ID-A0603-014〕（登録時に振られた査定IDを控えてある）は査定中、注文詳細0件で、商品規格ID 〔商品規格ID-A0603-014〕（登録時に振られた商品規格IDを控えてある）が存在する（S-A06-03-CASE-014）／③ 部門ID 〔部門ID-A0603-共有〕（登録時に振られた部門IDを控えてある）が有効である（S-A06-03-SECTIONS）／④ ステータスID 10が経理払い出し待ちとして登録済みである（S-A06-03-STATUSES）／⑤ 開始時に経理チームメールアドレスをaccounting-a0603-014@example.testに設定し、その受信箱を0件にする（S-A06-03-MAIL）
+手順 : 1. 有効なjwt-tokenとJSON「{"order_status":10,"qualified_invoice_issuer_confirmation_flg":"true","smaregi_transaction_id":null,"order_details":[{"product_class_id":〔商品規格ID-A0603-014〕,"name":"部門商品A","quantity":1,"price":100,"sell_price":200,"section_id":〔部門ID-A0603-共有〕}]}」をPUTで査定ID 〔査定ID-A0603-014〕へ送信する／2. DBで登録された店頭買取注文詳細を確認する
+期待結果 : 登録された店頭買取注文詳細の部門IDが〔部門ID-A0603-共有〕になること
+IT-A06-03-015 line 12
+テストデータ : 
+事前準備 : ① 管理者ID 〔管理者ID-A0603-共有A〕（登録時に振られた管理者IDを控えてある）の有効なjwt-tokenを発行する（S-A06-03-ADM）／② 査定ID 〔査定ID-A0603-015〕（登録時に振られた査定IDを控えてある）は査定中、注文詳細0件で、商品規格ID 〔商品規格ID-A0603-015〕（登録時に振られた商品規格IDを控えてある）が存在し、部門ID 699997015は存在しない（S-A06-03-CASE-015）／③ ステータスID 10が経理払い出し待ちとして登録済みである（S-A06-03-STATUSES）／④ 開始時に経理チームメールアドレスをaccounting-a0603-015@example.testに設定し、その受信箱を0件にする（S-A06-03-MAIL）
+手順 : 1. 有効なjwt-tokenとJSON「{"order_status":10,"qualified_invoice_issuer_confirmation_flg":"true","smaregi_transaction_id":null,"order_details":[{"product_class_id":〔商品規格ID-A0603-015〕,"name":"部門なし商品","quantity":1,"price":100,"sell_price":200,"section_id":699997015}]}」をPUTで査定ID 〔査定ID-A0603-015〕へ送信する／2. DBで登録された店頭買取注文詳細を確認する
+期待結果 : 存在しない部門ID 699997015が無視され、店頭買取注文詳細が部門なしで登録されること
+IT-A06-03-016 line 13
+テストデータ : 
+事前準備 : ① 管理者ID 〔管理者ID-A0603-共有A〕（登録時に振られた管理者IDを控えてある）の有効なjwt-tokenを発行する（S-A06-03-ADM）／② 査定ID 〔査定ID-A0603-016〕（登録時に振られた査定IDを控えてある）は査定中、実在庫0件、実在庫履歴0件で、商品規格ID 〔商品規格ID-A0603-016〕（登録時に振られた商品規格IDを控えてある）が存在する（S-A06-03-CASE-016）／③ 部門ID 〔部門ID-A0603-共有〕（登録時に振られた部門IDを控えてある）が有効である（S-A06-03-SECTIONS）／④ ステータスID 10が経理払い出し待ちとして登録済みである（S-A06-03-STATUSES）／⑤ 開始時に経理チームメールアドレスをaccounting-a0603-016@example.testに設定し、その受信箱を0件にする（S-A06-03-MAIL）
+手順 : 1. 有効なjwt-tokenとJSON「{""order_status"":10,""qualified_invoice_issuer_confirmation_flg"":""true"",""smaregi_transaction_id"":null,""order_details"":[{""product_class_id"":〔商品規格ID-A0603-016〕,""name"":""集約商品A-1"",""quantity"":2,""price"":123,""sell_price"":300,""section_id"":〔部門ID-A0603-共有〕},{""product_class_id"":〔商品規格ID-A0603-016〕,""name"":""集約商品A-2"",""quantity"":3,""price"":123,""sell_price"":300,""section_id"":〔部門ID-A0603-共有〕}]}」をPUTで査定ID 〔査定ID-A0603-016〕へ送信する／2. DBで査定ID 〔査定ID-A0603-016〕の実在庫と実在庫履歴を確認する
+期待結果 : 商品規格ID 〔商品規格ID-A0603-016〕の実在庫が数量5の1件に集約され、対応する履歴も合算後数量5の1件になること
+IT-A06-03-020 line 16
+テストデータ : 
+事前準備 : ① 管理者ID 〔管理者ID-A0603-共有A〕（登録時に振られた管理者IDを控えてある）の有効なjwt-tokenを発行する（S-A06-03-ADM）／② 査定ID 〔査定ID-A0603-020〕（登録時に振られた査定IDを控えてある）は査定中、適格請求書発行事業者=true、確認済みフラグ=falseで、商品規格ID 〔商品規格ID-A0603-020〕（登録時に振られた商品規格IDを控えてある）が存在する（S-A06-03-CASE-020）／③ 部門ID 〔部門ID-A0603-共有〕（登録時に振られた部門IDを控えてある）が有効である（S-A06-03-SECTIONS）／④ ステータスID 10が経理払い出し待ちとして登録済みである（S-A06-03-STATUSES）／⑤ 開始時に経理チームメールアドレスをaccounting-a0603-020@example.testに設定し、その受信箱を0件にする（S-A06-03-MAIL）
+手順 : 1. 有効なjwt-tokenとJSON「{"order_status":10,"qualified_invoice_issuer_confirmation_flg":"true","smaregi_transaction_id":null,"order_details":[{"product_class_id":〔商品規格ID-A0603-020〕,"name":"適格商品A","quantity":1,"price":100,"sell_price":200,"section_id":〔部門ID-A0603-共有〕}]}」をPUTで査定ID 〔査定ID-A0603-020〕へ送信する／2. DBで査定ID 〔査定ID-A0603-020〕を確認する
+期待結果 : 適格請求書発行事業者に該当する査定ID 〔査定ID-A0603-020〕の確認済みフラグがtrueになること
+IT-A06-03-021 line 17
+テストデータ : 
+事前準備 : ① 管理者ID 〔管理者ID-A0603-共有A〕（登録時に振られた管理者IDを控えてある）の有効なjwt-tokenを発行する（S-A06-03-ADM）／② 査定ID 〔査定ID-A0603-021〕（登録時に振られた査定IDを控えてある）は査定中、適格請求書発行事業者=true、確認済みフラグ=trueで、商品規格ID 〔商品規格ID-A0603-021〕（登録時に振られた商品規格IDを控えてある）の注文詳細1件を持つ（S-A06-03-CASE-021）／③ 部門ID 〔部門ID-A0603-共有〕（登録時に振られた部門IDを控えてある）が有効である（S-A06-03-SECTIONS）／④ ステータスID 10が経理払い出し待ちとして登録済みである（S-A06-03-STATUSES）／⑤ 開始時に経理チームメールアドレスをaccounting-a0603-021@example.testに設定し、その受信箱を0件にする（S-A06-03-MAIL）
+手順 : 1. 有効なjwt-tokenとJSON「{"order_status":10,"qualified_invoice_issuer_confirmation_flg":"false","smaregi_transaction_id":null,"order_details":[{"product_class_id":〔商品規格ID-A0603-021〕,"name":"適格商品B","quantity":1,"price":100,"sell_price":200,"section_id":〔部門ID-A0603-共有〕}]}」をPUTで査定ID 〔査定ID-A0603-021〕へ送信する／2. DBで査定ID 〔査定ID-A0603-021〕を確認する
+期待結果 : 適格請求書発行事業者に該当する査定ID 〔査定ID-A0603-021〕の確認済みフラグがfalseになること
+IT-A06-03-022 line 18
+テストデータ : 
+事前準備 : ① 管理者ID 〔管理者ID-A0603-共有A〕（登録時に振られた管理者IDを控えてある）の有効なjwt-tokenを発行する（S-A06-03-ADM）／② 査定ID 〔査定ID-A0603-022〕（登録時に振られた査定IDを控えてある）は査定中、適格請求書発行事業者=false、確認済みフラグ=falseで、商品規格ID 〔商品規格ID-A0603-022〕（登録時に振られた商品規格IDを控えてある）の注文詳細1件を持つ（S-A06-03-CASE-022）／③ 部門ID 〔部門ID-A0603-共有〕（登録時に振られた部門IDを控えてある）が有効である（S-A06-03-SECTIONS）／④ ステータスID 10が経理払い出し待ちとして登録済みである（S-A06-03-STATUSES）／⑤ 開始時に経理チームメールアドレスをaccounting-a0603-022@example.testに設定し、その受信箱を0件にする（S-A06-03-MAIL）
+手順 : 1. 有効なjwt-tokenとJSON「{"order_status":10,"qualified_invoice_issuer_confirmation_flg":"true","smaregi_transaction_id":null,"order_details":[{"product_class_id":〔商品規格ID-A0603-022〕,"name":"非適格商品","quantity":1,"price":100,"sell_price":200,"section_id":〔部門ID-A0603-共有〕}]}」をPUTで査定ID 〔査定ID-A0603-022〕へ送信する／2. DBで査定ID 〔査定ID-A0603-022〕を確認する
+期待結果 : 適格請求書発行事業者に該当しない査定ID 〔査定ID-A0603-022〕の確認済みフラグがfalseのまま更新されないこと
+IT-A06-03-023 line 19
+テストデータ : 
+事前準備 : ① 管理者ID 〔管理者ID-A0603-共有A〕（登録時に振られた管理者IDを控えてある）の有効なjwt-tokenを発行する（S-A06-03-ADM）／② 査定ID 〔査定ID-A0603-023〕（登録時に振られた査定IDを控えてある）は査定中で、開始時のステータス履歴はID 604401023の1件、商品規格ID 〔商品規格ID-A0603-023〕（登録時に振られた商品規格IDを控えてある）が存在する（S-A06-03-CASE-023）／③ 部門ID 〔部門ID-A0603-共有〕（登録時に振られた部門IDを控えてある）が有効である（S-A06-03-SECTIONS）／④ ステータスID 10が経理払い出し待ちとして登録済みである（S-A06-03-STATUSES）／⑤ 開始時に経理チームメールアドレスをaccounting-a0603-023@example.testに設定し、その受信箱を0件にする（S-A06-03-MAIL）
+手順 : 1. 有効なjwt-tokenとJSON「{"order_status":10,"qualified_invoice_issuer_confirmation_flg":"true","smaregi_transaction_id":null,"order_details":[{"product_class_id":〔商品規格ID-A0603-023〕,"name":"履歴商品A","quantity":1,"price":100,"sell_price":200,"section_id":〔部門ID-A0603-共有〕}]}」をPUTで査定ID 〔査定ID-A0603-023〕へ送信する／2. DBで査定ID 〔査定ID-A0603-023〕のステータス変更履歴を確認する
+期待結果 : 更新前と異なる経理払い出し待ちのステータス変更履歴が1件追加されること
+IT-A06-03-024 line 20
+テストデータ : 
+事前準備 : ① 管理者ID 〔管理者ID-A0603-共有A〕（登録時に振られた管理者IDを控えてある）の有効なjwt-tokenを発行する（S-A06-03-ADM）／② 査定ID 〔査定ID-A0603-024〕（登録時に振られた査定IDを控えてある）は経理払い出し待ちで、開始時のステータス履歴はID 604401024の1件、商品規格ID 〔商品規格ID-A0603-024〕（登録時に振られた商品規格IDを控えてある）が存在する（S-A06-03-CASE-024）／③ 部門ID 〔部門ID-A0603-共有〕（登録時に振られた部門IDを控えてある）が有効である（S-A06-03-SECTIONS）／④ ステータスID 10が経理払い出し待ちとして登録済みである（S-A06-03-STATUSES）／⑤ 開始時に経理チームメールアドレスをaccounting-a0603-024@example.testに設定し、その受信箱を0件にする（S-A06-03-MAIL）
+手順 : 1. 有効なjwt-tokenとJSON「{"order_status":10,"qualified_invoice_issuer_confirmation_flg":"true","smaregi_transaction_id":null,"order_details":[{"product_class_id":〔商品規格ID-A0603-024〕,"name":"履歴商品B","quantity":1,"price":100,"sell_price":200,"section_id":〔部門ID-A0603-共有〕}]}」をPUTで査定ID 〔査定ID-A0603-024〕へ送信する／2. DBで査定ID 〔査定ID-A0603-024〕のステータス変更履歴件数を確認する
+期待結果 : 更新前と同じ経理払い出し待ちを指定したため、ステータス変更履歴が追加されないこと
+IT-A06-03-050 line 43
+テストデータ : 
+事前準備 : ① 管理者ID 〔管理者ID-A0603-共有A〕（登録時に振られた管理者IDを控えてある）の有効なjwt-tokenを発行する（S-A06-03-ADM）／② 査定ID 〔査定ID-A0603-050〕（登録時に振られた査定IDを控えてある）が査定中で、商品規格ID 〔商品規格ID-A0603-050〕（登録時に振られた商品規格IDを控えてある）が存在する（S-A06-03-CASE-050）／③ 部門ID 〔部門ID-A0603-共有〕（登録時に振られた部門IDを控えてある）が有効である（S-A06-03-SECTIONS）／④ ステータスID 1が買取成立として登録済みである（S-A06-03-STATUSES）／⑤ 開始時に経理チームメールアドレスをaccounting-a0603-050@example.testに設定し、その受信箱を0件にする（S-A06-03-MAIL）
+手順 : 1. 有効なjwt-tokenを付け、order_status=1、qualified_invoice_issuer_confirmation_flg=false、smaregi_transaction_id=null、order_detailsに1件（product_class_id=〔商品規格ID-A0603-050〕、name=振込依頼不要の成立商品、quantity=1、price=1000、sell_price=1500、section_id=〔部門ID-A0603-共有〕）を指定し、PUTで査定ID 〔査定ID-A0603-050〕へ送信する／2. accounting-a0603-050@example.testのメール受信確認画面を開く
+期待結果 : 経理チームのメールアドレスaccounting-a0603-050@example.testの受信箱に、件名「店頭買取振込依頼 【査定ID: 〔査定ID-A0603-050〕】」のメールが0通であること
+IT-A06-03-051 line 44
+テストデータ : 
+事前準備 : ① 管理者ID 〔管理者ID-A0603-共有A〕（登録時に振られた管理者IDを控えてある）の有効なjwt-tokenを発行する（S-A06-03-ADM）／② 査定ID 〔査定ID-A0603-051〕（登録時に振られた査定IDを控えてある）が査定中で、商品規格ID 〔商品規格ID-A0603-051〕（登録時に振られた商品規格IDを控えてある）が存在する（S-A06-03-CASE-051）／③ 部門ID 〔部門ID-A0603-共有〕（登録時に振られた部門IDを控えてある）が有効である（S-A06-03-SECTIONS）／④ ステータスID 2が買取キャンセルとして登録済みである（S-A06-03-STATUSES）／⑤ 開始時に経理チームメールアドレスをaccounting-a0603-051@example.testに設定し、その受信箱を0件にする（S-A06-03-MAIL）
+手順 : 1. 有効なjwt-tokenを付け、order_status=2、qualified_invoice_issuer_confirmation_flg=false、smaregi_transaction_id=null、order_detailsに1件（product_class_id=〔商品規格ID-A0603-051〕、name=振込依頼不要のキャンセル商品、quantity=1、price=1000、sell_price=1500、section_id=〔部門ID-A0603-共有〕）を指定し、PUTで査定ID 〔査定ID-A0603-051〕へ送信する／2. accounting-a0603-051@example.testのメール受信確認画面を開く
+期待結果 : 経理チームのメールアドレスaccounting-a0603-051@example.testの受信箱に、件名「店頭買取振込依頼 【査定ID: 〔査定ID-A0603-051〕】」のメールが0通であること
+
+### A06-05
+IT-A06-05-002 line 3
+テストデータ : 
+事前準備 : ① 接続元IPが許可され、APIとDB確認手段が利用できる（S-A06-05-ENV）／② 管理者ID 〔管理者ID-A0605-共有ADM〕が店舗ID 1所属・稼働中で、有効なjwt-tokenが発行されている（登録時に振られた管理者IDを控えてある）（S-A06-05-ADM）／③ 開始時にステータスをID 1=買取成立、ID 2=買取キャンセル、ID 5=査定前、ID 6=査定中、ID 8=査定中断、ID 9=査定再開、ID 10=経理払い出し待ち、ID 11=入庫済み、ID 12=未登録在庫あり、ID 13=入庫待ち、ID 14=管理者取消に設定する（S-A06-05-STATUSES）／④ 店舗ID 1の受注ID 〔受注ID-A0605-002A〕〜〔受注ID-A0605-002C〕が査定前、〔受注ID-A0605-002D〕〜〔受注ID-A0605-002E〕が査定中、〔受注ID-A0605-002F〕〜〔受注ID-A0605-002G〕が査定中断、〔受注ID-A0605-002H〕〜〔受注ID-A0605-002I〕が査定再開で、全件の査定担当者IDが〔管理者ID-A0605-共有ADM〕、更新日時がT0（2026-09-03 10:00:00）、履歴0件、未削除である（登録時に振られた受注IDを控えてある）（S-A06-05-ALLOWED-002）
+手順 : 1. 有効なjwt-tokenで受注ID 〔受注ID-A0605-002A〕へstatus=6、〔受注ID-A0605-002B〕へstatus=8、〔受注ID-A0605-002C〕へstatus=9、〔受注ID-A0605-002D〕へstatus=8、〔受注ID-A0605-002E〕へstatus=9、〔受注ID-A0605-002F〕へstatus=6、〔受注ID-A0605-002G〕へstatus=9、〔受注ID-A0605-002H〕へstatus=6、〔受注ID-A0605-002I〕へstatus=8をPUT送信する／2. DBで受注ID 〔受注ID-A0605-002A〕〜〔受注ID-A0605-002I〕のステータスを確認する
+期待結果 : 受注ID 〔受注ID-A0605-002A〕〜〔受注ID-A0605-002I〕のステータスが順に査定中、査定中断、査定再開、査定中断、査定再開、査定中、査定再開、査定中、査定中断になること
+IT-A06-05-005 line 4
+テストデータ : 
+事前準備 : ① 接続元IPが許可され、APIとDB確認手段が利用できる（S-A06-05-ENV）／② 管理者ID 〔管理者ID-A0605-共有ADM〕が店舗ID 1所属・稼働中で、有効なjwt-tokenが発行されている（登録時に振られた管理者IDを控えてある）（S-A06-05-ADM）／③ 管理者ID 〔管理者ID-A0605-共有OTHER-ADM〕が店舗ID 1所属・稼働中である（登録時に振られた管理者IDを控えてある）（S-A06-05-OTHER-ADM）／④ 開始時にステータスをID 1=買取成立、ID 2=買取キャンセル、ID 5=査定前、ID 6=査定中、ID 8=査定中断、ID 9=査定再開、ID 10=経理払い出し待ち、ID 11=入庫済み、ID 12=未登録在庫あり、ID 13=入庫待ち、ID 14=管理者取消に設定する（S-A06-05-STATUSES）／⑤ 受注ID 〔受注ID-A0605-005〕が店舗ID 1の店頭買取受注で、査定前、査定担当者ID 〔管理者ID-A0605-共有OTHER-ADM〕、更新日時T0（2026-09-03 10:00:00）、金額900円、税90円、ポイント90、在庫数量9、履歴0件、未削除である（登録時に振られた受注IDを控えてある）（S-A06-05-ORDER-005）
+手順 : 1. S-A06-05-ADMの有効なjwt-tokenでstatus=6を受注ID 〔受注ID-A0605-005〕へPUT送信する／2. DBで受注ID 〔受注ID-A0605-005〕の金額、税、ポイントおよび在庫数量を確認する
+期待結果 : 受注ID 〔受注ID-A0605-005〕の金額900円、税90円、ポイント90および在庫数量9が更新前のまま保持されること
+IT-A06-05-007 line 6
+テストデータ : 
+事前準備 : ① 接続元IPが許可され、APIとDB確認手段が利用できる（S-A06-05-ENV）／② 管理者ID 〔管理者ID-A0605-共有ADM〕が店舗ID 1所属・稼働中で、有効なjwt-tokenが発行されている（登録時に振られた管理者IDを控えてある）（S-A06-05-ADM）／③ 開始時にステータスをID 1=買取成立、ID 2=買取キャンセル、ID 5=査定前、ID 6=査定中、ID 8=査定中断、ID 9=査定再開、ID 10=経理払い出し待ち、ID 11=入庫済み、ID 12=未登録在庫あり、ID 13=入庫待ち、ID 14=管理者取消に設定する（S-A06-05-STATUSES）／④ 店舗ID 1の受注ID 〔受注ID-A0605-共有SAME-A〕が査定中、〔受注ID-A0605-共有SAME-B〕が査定中断、〔受注ID-A0605-共有SAME-C〕が査定再開で、査定担当者ID 〔管理者ID-A0605-共有ADM〕、更新日時T0（2026-09-03 10:00:00）、各受注に現在ステータス・管理者ID 〔管理者ID-A0605-共有ADM〕・登録日時T0の履歴1件があり、未削除である（登録時に振られた受注IDを控えてある）（S-A06-05-SAME）
+手順 : 1. 有効なjwt-tokenで受注ID 〔受注ID-A0605-共有SAME-A〕へstatus=6、〔受注ID-A0605-共有SAME-B〕へstatus=8、〔受注ID-A0605-共有SAME-C〕へstatus=9をPUT送信する／2. DBで3件の受注とステータス変更履歴を確認する
+期待結果 : 受注ID 〔受注ID-A0605-共有SAME-A〕〜〔受注ID-A0605-共有SAME-C〕の受注レコードおよびステータス変更履歴がシード投入時から書き換わらないこと
+IT-A06-05-008 line 7
+テストデータ : 
+事前準備 : ① 接続元IPが許可され、APIとDB確認手段が利用できる（S-A06-05-ENV）／② 管理者ID 〔管理者ID-A0605-共有ADM〕が店舗ID 1所属・稼働中で、有効なjwt-tokenが発行されている（登録時に振られた管理者IDを控えてある）（S-A06-05-ADM）／③ 開始時にステータスをID 1=買取成立、ID 2=買取キャンセル、ID 5=査定前、ID 6=査定中、ID 8=査定中断、ID 9=査定再開、ID 10=経理払い出し待ち、ID 11=入庫済み、ID 12=未登録在庫あり、ID 13=入庫待ち、ID 14=管理者取消に設定する（S-A06-05-STATUSES）／④ 店舗ID 1の受注ID 〔受注ID-A0605-共有TARGETS-A〕〜〔受注ID-A0605-共有TARGETS-H〕がすべて査定中、査定担当者ID 〔管理者ID-A0605-共有ADM〕、更新日時T0（2026-09-03 10:00:00）、履歴0件、未削除である（登録時に振られた受注IDを控えてある）（S-A06-05-DISALLOWED-TARGETS）
+手順 : 1. 有効なjwt-tokenで受注ID 〔受注ID-A0605-共有TARGETS-A〕へstatus=1、〔受注ID-A0605-共有TARGETS-B〕へstatus=2、〔受注ID-A0605-共有TARGETS-C〕へstatus=5、〔受注ID-A0605-共有TARGETS-D〕へstatus=10、〔受注ID-A0605-共有TARGETS-E〕へstatus=11、〔受注ID-A0605-共有TARGETS-F〕へstatus=12、〔受注ID-A0605-共有TARGETS-G〕へstatus=13、〔受注ID-A0605-共有TARGETS-H〕へstatus=14をPUT送信する／2. DBで受注ID 〔受注ID-A0605-共有TARGETS-A〕〜〔受注ID-A0605-共有TARGETS-H〕のステータスを確認する
+期待結果 : 受注ID 〔受注ID-A0605-共有TARGETS-A〕〜〔受注ID-A0605-共有TARGETS-H〕のステータスがすべて査定中のまま更新されないこと
+IT-A06-05-009 line 8
+テストデータ : 
+事前準備 : ① 接続元IPが許可され、APIとDB確認手段が利用できる（S-A06-05-ENV）／② 管理者ID 〔管理者ID-A0605-共有ADM〕が店舗ID 1所属・稼働中で、有効なjwt-tokenが発行されている（登録時に振られた管理者IDを控えてある）（S-A06-05-ADM）／③ 開始時にステータスをID 1=買取成立、ID 2=買取キャンセル、ID 5=査定前、ID 6=査定中、ID 8=査定中断、ID 9=査定再開、ID 10=経理払い出し待ち、ID 11=入庫済み、ID 12=未登録在庫あり、ID 13=入庫待ち、ID 14=管理者取消に設定する（S-A06-05-STATUSES）／④ 店舗ID 1の受注ID 〔受注ID-A0605-共有SOURCES-A〕が買取成立、〔受注ID-A0605-共有SOURCES-B〕が買取キャンセル、〔受注ID-A0605-共有SOURCES-C〕が経理払い出し待ち、〔受注ID-A0605-共有SOURCES-D〕が入庫済み、〔受注ID-A0605-共有SOURCES-E〕が未登録在庫あり、〔受注ID-A0605-共有SOURCES-F〕が入庫待ち、〔受注ID-A0605-共有SOURCES-G〕が管理者取消で、査定担当者ID 〔管理者ID-A0605-共有ADM〕、更新日時T0（2026-09-03 10:00:00）、履歴0件、未削除である（登録時に振られた受注IDを控えてある）（S-A06-05-DISALLOWED-SOURCES）
+手順 : 1. 有効なjwt-tokenで受注ID 〔受注ID-A0605-共有SOURCES-A〕〜〔受注ID-A0605-共有SOURCES-G〕の各受注へstatus=8をPUT送信する／2. DBで受注ID 〔受注ID-A0605-共有SOURCES-A〕〜〔受注ID-A0605-共有SOURCES-G〕のステータスを確認する
+期待結果 : 受注ID 〔受注ID-A0605-共有SOURCES-A〕〜〔受注ID-A0605-共有SOURCES-G〕のステータスが順に買取成立、買取キャンセル、経理払い出し待ち、入庫済み、未登録在庫あり、入庫待ち、管理者取消のまま更新されないこと
+IT-A06-05-011 line 10
+テストデータ : 
+事前準備 : ① 接続元IPが許可され、APIとDB確認手段が利用できる（S-A06-05-ENV）／② 管理者ID 〔管理者ID-A0605-共有ADM〕が店舗ID 1所属・稼働中で、有効なjwt-tokenが発行されている（登録時に振られた管理者IDを控えてある）（S-A06-05-ADM）／③ 管理者ID 〔管理者ID-A0605-共有OTHER-ADM〕が店舗ID 1所属・稼働中である（登録時に振られた管理者IDを控えてある）（S-A06-05-OTHER-ADM）／④ 開始時にステータスをID 1=買取成立、ID 2=買取キャンセル、ID 5=査定前、ID 6=査定中、ID 8=査定中断、ID 9=査定再開、ID 10=経理払い出し待ち、ID 11=入庫済み、ID 12=未登録在庫あり、ID 13=入庫待ち、ID 14=管理者取消に設定する（S-A06-05-STATUSES）／⑤ 店舗ID 1の受注ID 〔受注ID-A0605-共有ASSESSOR-A〕と〔受注ID-A0605-共有ASSESSOR-C〕が査定再開、〔受注ID-A0605-共有ASSESSOR-B〕と〔受注ID-A0605-共有ASSESSOR-D〕が査定中で、全件の査定担当者IDが〔管理者ID-A0605-共有OTHER-ADM〕、更新日時がT0（2026-09-03 10:00:00）、履歴0件、未削除である（登録時に振られた受注IDを控えてある）（S-A06-05-OTHER-ASSESSOR）
+手順 : 1. S-A06-05-ADMの有効なjwt-tokenで受注ID 〔受注ID-A0605-共有ASSESSOR-A〕へstatus=6、〔受注ID-A0605-共有ASSESSOR-B〕へstatus=9、〔受注ID-A0605-共有ASSESSOR-C〕へstatus=6、〔受注ID-A0605-共有ASSESSOR-D〕へstatus=9をPUT送信する／2. DBで4件の受注とステータス変更履歴を確認する
+期待結果 : 受注ID 〔受注ID-A0605-共有ASSESSOR-A〕〜〔受注ID-A0605-共有ASSESSOR-D〕のステータス、査定担当者、更新日時およびステータス変更履歴がシード投入時から書き換わらないこと
+
+### A06-06
+IT-A06-06-002 line 3
+テストデータ : 
+事前準備 : ① ログインID a0606_admin_aの管理者が有効で、所属店舗IDが〔店舗ID-A0606-共有A〕（登録時に振られた店舗IDを控えてある）であり、この管理者としてログインしている（S-A06-06-ADM-A）／② カードID 〔カードID-A0606-002〕（登録時に振られたカードIDを控えてある）・カード詳細ID 〔カード詳細ID-A0606-002〕（登録時に振られたカード詳細IDを控えてある）・カード名日本語「A06-06カード」・カード名英語「A06-06 Card」・画像a0606-002.jpg・カードセットコードA06・カードセット名「A06セット」・フォイルフラグ0・カードNo 001・プロモーション名「A06プロモ」・商品ID 〔商品ID-A0606-002〕（登録時に振られた商品IDを控えてある）・商品名日本語「A06-06商品」・商品名英語「A06-06 Product」・レアリティーコードR・略称タグ名「A06棚」・言語JP・状態NM・商品規格ID 〔商品規格ID-A0606-002〕（登録時に振られた商品規格IDを控えてある）・商品コードA0606-BASE-002・買取価格1234・基準価格2345・店舗ID 〔店舗ID-A0606-共有A〕のEC在庫7・部門ID 〔部門ID-A0606-002〕（登録時に振られた部門IDを控えてある）が紐付き、商品と商品規格は削除されておらず、高額商品コードがない（S-A06-06-BASE-002）
+手順 : 1. ブラウザの開発者ツールからGETで「/api/buying/〔カード詳細ID-A0606-002〕.json」へ要求を送信する／2. Networkで応答JSONを確認する
+期待結果 : cardsがオブジェクトで、カードID「〔カードID-A0606-002〕」→details→カード詳細ID「〔カード詳細ID-A0606-002〕」→languageClasses→JP→conditionClasses→NMの階層となり、cardNameJp「A06-06カード」、cardNameEn「A06-06 Card」、imageFileName「a0606-002.jpg」、cardsetCode「A06」、cardsetName「A06セット」、foilFlg「0」、cardNo「001」、promotionName「A06プロモ」、productId「〔商品ID-A0606-002〕」、productNameJp「A06-06商品」、productNameEn「A06-06 Product」、rarityCode「R」、storageCodeName「A06棚」、productClassId「〔商品規格ID-A0606-002〕」、productCode「A0606-BASE-002」、buyPrice「1234」、price「2345」、stock「7」、sectionId「〔部門ID-A0606-002〕」が文字列で返ること
+IT-A06-06-006 line 7
+テストデータ : 
+事前準備 : ① ログインID a0606_admin_aの管理者が有効で、所属店舗IDが〔店舗ID-A0606-共有A〕（登録時に振られた店舗IDを控えてある）であり、この管理者としてログインしている（S-A06-06-ADM-A）／② カードID 〔カードID-A0606-006〕（登録時に振られたカードIDを控えてある）・カード詳細ID 〔カード詳細ID-A0606-006〕（登録時に振られたカード詳細IDを控えてある）・商品ID 〔商品ID-A0606-006〕（登録時に振られた商品IDを控えてある）・商品規格ID 〔商品規格ID-A0606-006〕（登録時に振られた商品規格IDを控えてある）が紐付き、カードセット、プロモーション、略称タグ、買取価格、部門IDは未設定、基準価格2345、商品画像1件、レアリティーR、言語JP、状態NM、店舗ID 〔店舗ID-A0606-共有A〕のEC在庫7であり、商品と商品規格は削除されておらず、高額商品コードがない（S-A06-06-OPTIONAL-006）
+手順 : 1. ブラウザの開発者ツールからGETで「/api/buying/〔カード詳細ID-A0606-006〕.json」へ要求を送信する／2. Networkで応答JSONを確認する
+期待結果 : カードセット、プロモーション、略称タグ、買取価格および部門IDが設定されていない商品規格も応答から除外されず、cardsetCode、cardsetName、promotionName、storageCodeName、buyPrice、sectionIdの各項目が省略されないこと
+IT-A06-06-007 line 8
+テストデータ : 
+事前準備 : ① ログインID a0606_admin_aの管理者が有効で、所属店舗IDが〔店舗ID-A0606-共有A〕（登録時に振られた店舗IDを控えてある）であり、この管理者としてログインしている（S-A06-06-ADM-A）／② カードID 〔カードID-A0606-007〕（登録時に振られたカードIDを控えてある）・カード詳細ID 〔カード詳細ID-A0606-007〕（登録時に振られたカード詳細IDを控えてある）・言語JP・状態NMの同じ組に、商品規格ID 〔商品規格ID-A0606-007A〕（登録時に振られた商品規格IDを控えてある）と〔商品規格ID-A0606-007B〕（登録時に振られた商品規格IDを控えてある）が属する。両商品規格は商品ID 〔商品ID-A0606-007〕（登録時に振られた商品IDを控えてある）、商品画像1件、レアリティーR、店舗ID 〔店舗ID-A0606-共有A〕のEC在庫1に紐付き、商品と両商品規格は削除されておらず、高額商品コードがない（S-A06-06-DUPLICATE-007）
+手順 : 1. ブラウザの開発者ツールからGETで「/api/buying/〔カード詳細ID-A0606-007〕.json」へ要求を送信する／2. Networkで応答JSONのJP→conditionClasses→NMを確認する
+期待結果 : 同じカードID・カード詳細ID・言語・状態に属する商品規格は1件だけ残り、productClassIdが「〔商品規格ID-A0606-007A〕」または「〔商品規格ID-A0606-007B〕」となること
+IT-A06-06-008 line 9
+テストデータ : 
+事前準備 : ① ログインID a0606_admin_aの管理者が有効で、所属店舗IDが〔店舗ID-A0606-共有A〕（登録時に振られた店舗IDを控えてある）であり、この管理者としてログインしている（S-A06-06-ADM-A）／② カードID 〔カードID-A0606-008〕（登録時に振られたカードIDを控えてある）・カード詳細ID 〔カード詳細ID-A0606-008〕（登録時に振られたカード詳細IDを控えてある）・商品ID 〔商品ID-A0606-008〕（登録時に振られた商品IDを控えてある）・商品規格ID 〔商品規格ID-A0606-008〕（登録時に振られた商品規格IDを控えてある）が紐付き、販売価格3456、基準価格2345、商品画像1件、レアリティーR、言語JP、状態NM、店舗ID 〔店舗ID-A0606-共有A〕のEC在庫1であり、商品と商品規格は削除されておらず、高額商品コードがない（S-A06-06-PRICE-008）
+手順 : 1. ブラウザの開発者ツールからGETで「/api/buying/〔カード詳細ID-A0606-008〕.json」へ要求を送信する／2. Networkで応答JSONのpriceを確認する
+期待結果 : 販売価格が3456、基準価格が2345の商品規格について、priceに基準価格「2345」が返ること
+IT-A06-06-009 line 10
+テストデータ : 
+事前準備 : ① ログインID a0606_admin_aの管理者が有効で所属店舗IDは〔店舗ID-A0606-共有A〕（登録時に振られた店舗IDを控えてある）、ログインID a0606_admin_bの管理者が有効で所属店舗IDは〔店舗ID-A0606-共有B〕（登録時に振られた店舗IDを控えてある）である（S-A06-06-ADM-A、S-A06-06-ADM-B）／② カードID 〔カードID-A0606-009〕（登録時に振られたカードIDを控えてある）・カード詳細ID 〔カード詳細ID-A0606-009〕（登録時に振られたカード詳細IDを控えてある）・商品ID 〔商品ID-A0606-009〕（登録時に振られた商品IDを控えてある）・商品規格ID 〔商品規格ID-A0606-009〕（登録時に振られた商品規格IDを控えてある）が紐付き、店舗ID 〔店舗ID-A0606-共有A〕のEC在庫7、同店舗のEC以外の在庫70、店舗ID 〔店舗ID-A0606-共有B〕のEC在庫9である。商品画像1件、レアリティーR、言語JP、状態NMが設定され、商品と商品規格は削除されておらず、高額商品コードがない（S-A06-06-STOCK-009）
+手順 : 1. ブラウザAでS-A06-06-ADM-Aとしてログインし、GETで「/api/buying/〔カード詳細ID-A0606-009〕.json」へ要求を送信する／2. Networkでstockを確認する／3. ブラウザBでS-A06-06-ADM-Bとしてログインし、同じURLへGET要求を送信する／4. Networkでstockを確認する
+期待結果 : stockにはブラウザAで所属店舗AのEC在庫「7」、ブラウザBで所属店舗BのEC在庫「9」が返ること
+IT-A06-06-010 line 11
+テストデータ : 
+事前準備 : ① ログインID a0606_admin_aの管理者が有効で、所属店舗IDが〔店舗ID-A0606-共有A〕（登録時に振られた店舗IDを控えてある）であり、この管理者としてログインしている（S-A06-06-ADM-A）／② カードID 〔カードID-A0606-010〕（登録時に振られたカードIDを控えてある）・カード詳細ID 〔カード詳細ID-A0606-010〕（登録時に振られたカード詳細IDを控えてある）・商品ID 〔商品ID-A0606-010〕（登録時に振られた商品IDを控えてある）・商品規格ID 〔商品規格ID-A0606-010〕（登録時に振られた商品規格IDを控えてある）が紐付き、買取価格1234.56、基準価格2345.67、店舗ID 〔店舗ID-A0606-共有A〕のEC在庫1234、商品画像1件、レアリティーR、言語JP、状態NMであり、商品と商品規格は削除されておらず、高額商品コードがない（S-A06-06-RAW-VALUES-010）
+手順 : 1. ブラウザの開発者ツールからGETで「/api/buying/〔カード詳細ID-A0606-010〕.json」へ要求を送信する／2. Networkで応答JSONのbuyPrice、priceおよびstockを確認する
+期待結果 : DBで保持している値と同じbuyPrice「1234.56」、price「2345.67」、stock「1234」が、再計算、丸めおよび桁区切りをされずに返ること
+IT-A06-06-012 line 13
+テストデータ : 
+事前準備 : ① ログインID a0606_admin_aの管理者が有効で、所属店舗IDが〔店舗ID-A0606-共有A〕（登録時に振られた店舗IDを控えてある）であり、この管理者としてログインしている（S-A06-06-ADM-A）／② カードID 〔カードID-A0606-012〕（登録時に振られたカードIDを控えてある）・カード詳細ID 〔カード詳細ID-A0606-012〕（登録時に振られたカード詳細IDを控えてある）・商品ID 〔商品ID-A0606-012〕（登録時に振られた商品IDを控えてある）・商品規格ID 〔商品規格ID-A0606-012〕（登録時に振られた商品規格IDを控えてある）が紐付き、カードセット、プロモーション、略称タグ、買取価格、部門IDは未設定、基準価格2345、商品画像1件、レアリティーR、言語JP、状態NM、店舗ID 〔店舗ID-A0606-共有A〕のEC在庫7であり、商品と商品規格は削除されておらず、高額商品コードがない（S-A06-06-OPTIONAL-012）
+手順 : 1. ブラウザの開発者ツールからGETで「/api/buying/〔カード詳細ID-A0606-012〕.json」へ要求を送信する／2. Networkで応答JSONのカード詳細ID 〔カード詳細ID-A0606-012〕配下のcardsetCode、cardsetName、promotionName、storageCodeName、buyPriceおよびsectionIdを確認する
+期待結果 : cardsetCode、cardsetName、promotionName、storageCodeName、buyPriceおよびsectionIdの各項目が省略されずに含まれ、値がいずれも空文字ではなくJSONのnullとなること
+
+### A06-07
+IT-A06-07-003 line 4
+テストデータ : 
+事前準備 : ① 店舗AのID 〔店舗ID-A0607-共有A〕に所属する管理者a0607_admin_aがロックされておらず、ブラウザでログイン済みでAPI認証が成立する（〔〕で示した番号は、登録時に振られた番号を控えてある）（S-A06-07-ADM-A）／② 商品ID 〔商品ID-A0607-003〕に、カードID 〔カードID-A0607-003〕、カード詳細ID 〔カード詳細ID-A0607-003〕、言語JP、状態NM、商品規格ID 〔商品規格ID-A0607-003〕、商品コードA0607-BASE-003、画像a0607-003.jpg、カードセットコードA607-003、部門ID 〔部門ID-A0607-003〕およびシード表記載の全応答値が紐付き、店舗AのEC在庫は7である（〔〕で示した番号は、登録時に振られた番号を控えてある）（S-A06-07-BASE-003）
+手順 : 1. ブラウザの開発者ツールからHTTP POSTで「/api/buying/products?ids=〔商品ID-A0607-003〕」へ要求を送信する／2. Networkで応答JSONの階層と値を確認する
+期待結果 : 応答が最上位のカード一覧からカードID「〔カードID-A0607-003〕」→カード詳細ID「〔カード詳細ID-A0607-003〕」→言語コード「JP」→状態コード「NM」の順に入れ子となり、カードの日本語名「A06-07カード」、英語名「A06-07 Card」、画像ファイル名「a0607-003.jpg」、カードセットコード「A607-003」、カードセット日本語名「A06-07セット」、フォイルではないこと、カード番号「007」、プロモーション日本語名「A06-07プロモ」、商品ID「〔商品ID-A0607-003〕」、商品日本語名「A06-07商品」、商品英語名「A06-07 Product」、レアリティコード「R」、保管コード名「A06-07棚」、商品規格ID「〔商品規格ID-A0607-003〕」、商品コード「A0607-BASE-003」、買取価格「1234」、基準価格「2345」、所属店舗AのEC在庫数「7」、部門ID「〔部門ID-A0607-003〕」が返ること
+IT-A06-07-006 line 7
+テストデータ : 
+事前準備 : ① 店舗AのID 〔店舗ID-A0607-共有A〕に所属する管理者a0607_admin_aがロックされておらず、ブラウザでログイン済みでAPI認証が成立する（〔〕で示した番号は、登録時に振られた番号を控えてある）（S-A06-07-ADM-A）／② 商品ID 〔商品ID-A0607-006〕は商品画像、カードID 〔カードID-A0607-006〕、カード詳細ID 〔カード詳細ID-A0607-006〕、レアリティR、言語JP、状態NMを持ち、カードセット、プロモーション、保管コード、買取価格、部門は未設定で、商品・商品規格は削除されておらず高額商品コードなしである（〔〕で示した番号は、登録時に振られた番号を控えてある）（S-A06-07-OPTIONAL-006）
+手順 : 1. ブラウザの開発者ツールからHTTP POSTで「/api/buying/products?ids=〔商品ID-A0607-006〕」へ要求を送信する／2. Networkで応答JSONを確認する
+期待結果 : カードセット、プロモーション、保管コード、買取価格および部門IDが未設定の商品ID「〔商品ID-A0607-006〕」も結果に含まれ、対応する各項目が値なしとなること
+IT-A06-07-007 line 8
+テストデータ : 
+事前準備 : ① 店舗AのID 〔店舗ID-A0607-共有A〕に所属する管理者a0607_admin_aがロックされておらず、ブラウザでログイン済みでAPI認証が成立する（〔〕で示した番号は、登録時に振られた番号を控えてある）（S-A06-07-ADM-A）／② 商品ID 〔商品ID-A0607-007〕のカードID 〔カードID-A0607-007〕・カード詳細ID 〔カード詳細ID-A0607-007〕・言語JP・状態NMの組に、取得条件を満たす商品規格ID 〔商品規格ID-A0607-007A〕と〔商品規格ID-A0607-007B〕の2件が属する（〔〕で示した番号は、登録時に振られた番号を控えてある）（S-A06-07-DUPLICATE-007）
+手順 : 1. ブラウザの開発者ツールからHTTP POSTで「/api/buying/products?ids=〔商品ID-A0607-007〕」へ要求を送信する／2. NetworkでカードID「〔カードID-A0607-007〕」→カード詳細ID「〔カード詳細ID-A0607-007〕」→言語コード「JP」→状態コード「NM」の商品規格を確認する
+期待結果 : 同じカードID・カード詳細ID・言語コード・状態コードの組に属する商品規格は1件だけ残り、商品規格IDが「〔商品規格ID-A0607-007A〕」または「〔商品規格ID-A0607-007B〕」となること
+IT-A06-07-008 line 9
+テストデータ : 
+事前準備 : ① 店舗AのID 〔店舗ID-A0607-共有A〕に所属する管理者a0607_admin_aがロックされておらず、ブラウザでログイン済みでAPI認証が成立する（〔〕で示した番号は、登録時に振られた番号を控えてある）（S-A06-07-ADM-A）／② 商品ID 〔商品ID-A0607-008〕・カードID 〔カードID-A0607-008〕・カード詳細ID 〔カード詳細ID-A0607-008〕・商品規格ID 〔商品規格ID-A0607-008〕が取得条件を満たし、販売価格は3456、基準価格は2345である（〔〕で示した番号は、登録時に振られた番号を控えてある）（S-A06-07-PRICE-008）
+手順 : 1. ブラウザの開発者ツールからHTTP POSTで「/api/buying/products?ids=〔商品ID-A0607-008〕」へ要求を送信する／2. Networkで状態階層の価格を確認する
+期待結果 : 販売価格が「3456」、基準価格が「2345」の商品規格について、状態階層の価格として基準価格「2345」が返ること
+IT-A06-07-009 line 10
+テストデータ : 
+事前準備 : ① 店舗AのID 〔店舗ID-A0607-共有A〕に所属する管理者a0607_admin_aがロックされておらず、ブラウザAでログイン済みでAPI認証が成立する（〔〕で示した番号は、登録時に振られた番号を控えてある）（S-A06-07-ADM-A）／② 店舗BのID 〔店舗ID-A0607-共有B〕に所属する管理者a0607_admin_bがロックされておらず、ブラウザBでログイン済みでAPI認証が成立する（〔〕で示した番号は、登録時に振られた番号を控えてある）（S-A06-07-ADM-B）／③ 商品ID 〔商品ID-A0607-009〕・商品規格ID 〔商品規格ID-A0607-009〕が取得条件を満たし、店舗AのEC在庫は7、店舗AのEC以外の在庫は70、店舗BのEC在庫は9である（〔〕で示した番号は、登録時に振られた番号を控えてある）（S-A06-07-STOCK-009）
+手順 : 1. ブラウザAでS-A06-07-ADM-Aとしてログインし、HTTP POSTで「/api/buying/products?ids=〔商品ID-A0607-009〕」へ要求を送信する／2. Networkで状態階層の在庫数を確認する／3. ブラウザBでS-A06-07-ADM-Bとしてログインし、同じURLへHTTP POST要求を送信する／4. Networkで状態階層の在庫数を確認する
+期待結果 : 状態階層の在庫数として、ブラウザAでは所属店舗AのEC在庫「7」、ブラウザBでは所属店舗BのEC在庫「9」が返ること
+IT-A06-07-010 line 11
+テストデータ : 
+事前準備 : ① 店舗AのID 〔店舗ID-A0607-共有A〕に所属する管理者a0607_admin_aがロックされておらず、ブラウザでログイン済みでAPI認証が成立する（〔〕で示した番号は、登録時に振られた番号を控えてある）（S-A06-07-ADM-A）／② 商品ID 〔商品ID-A0607-010〕・商品規格ID 〔商品規格ID-A0607-010〕が取得条件を満たし、買取価格は1234.56、基準価格は2345.67、店舗AのEC在庫は1234である（〔〕で示した番号は、登録時に振られた番号を控えてある）（S-A06-07-RAW-VALUES-010）
+手順 : 1. ブラウザの開発者ツールからHTTP POSTで「/api/buying/products?ids=〔商品ID-A0607-010〕」へ要求を送信する／2. Networkで状態階層の買取価格、基準価格および在庫数を確認する
+期待結果 : DBで保持している買取価格「1234.56」、基準価格「2345.67」および所属店舗AのEC在庫数「1234」が、再計算、丸めおよび桁区切りをされずに返ること
+IT-A06-07-011 line 12
+テストデータ : 
+事前準備 : ① 店舗AのID 〔店舗ID-A0607-共有A〕に所属する管理者a0607_admin_aがロックされておらず、ブラウザでログイン済みでAPI認証が成立する（〔〕で示した番号は、登録時に振られた番号を控えてある）（S-A06-07-ADM-A）／② 商品ID 〔商品ID-A0607-011〕の商品と商品規格ID 〔商品規格ID-A0607-011〕は削除されていないが、カード、カード詳細、レアリティ、言語、カード状態との紐付けを持たない（〔〕で示した番号は、登録時に振られた番号を控えてある）（S-A06-07-NONCARD-011）
+手順 : 1. ブラウザの開発者ツールからHTTP POSTで「/api/buying/products?ids=〔商品ID-A0607-011〕」へ要求を送信する／2. NetworkでHTTPステータスと応答JSONを確認する
+期待結果 : カード商品ではない商品IDだけを指定した場合もHTTPステータスが200となり、応答JSONが空配列となること
+
+### A06-08
+IT-A06-08-003 line 4
+テストデータ : 
+事前準備 : ① 開始時に認証用署名シークレットをdGVzdF9qd3Rfc2VjcmV0X2tleV8zMmJ5dGVzX2xvbmc=、署名方式をHS256に設定してAPIを起動し、試験端末の送信元IPをAPIアクセス制御で許可する。a0608_admin_aとPassw0rd!A0608Aを買取アプリ用の管理者ログインAPIへPOSTし、応答の認証トークンをブラウザのAPI要求の要求ヘッダ「jwt-token」に設定する（S-A06-08-AUTH）／② 店舗ID 〔店舗ID-A0608-共有A〕が有効で在庫区分ECを利用できる（登録時に振られた番号を控えてある）（S-A06-08-SHOPS）／③ 言語JP、状態NM、レアリティRが有効である（S-A06-08-MASTERS）／④ ログイン失敗回数0かつ未ロックの店舗A試験管理者でログインしている（S-A06-08-ADM-A）／⑤ 商品ID 〔商品ID-A0608-003A〕=A06-08%記号商品、〔商品ID-A0608-003B〕=A06-08X記号商品、〔商品ID-A0608-003C〕=A06-08_下線商品、〔商品ID-A0608-003D〕=A06-08Y下線商品として登録され、4商品とも有効で取得に必要な関連情報と店舗ID 〔店舗ID-A0608-共有A〕のEC在庫1を持つ（登録時に振られた番号を控えてある）（S-A06-08-LITERAL-003）
+手順 : 1. ブラウザの開発者ツールからHTTP POSTで「/api/search.json」のクエリパラメータnameに「A06-08%記号」を設定して要求を送信し、応答JSONを確認する／2. クエリパラメータnameに「A06-08_下線」を設定して要求を送信し、応答JSONを確認する
+期待結果 : 「%」を指定した応答には商品ID 〔商品ID-A0608-003A〕だけが返って〔商品ID-A0608-003B〕は返らず、「_」を指定した応答には商品ID 〔商品ID-A0608-003C〕だけが返って〔商品ID-A0608-003D〕は返らないこと
+IT-A06-08-006 line 7
+テストデータ : 
+事前準備 : ① 開始時に認証用署名シークレットをdGVzdF9qd3Rfc2VjcmV0X2tleV8zMmJ5dGVzX2xvbmc=、署名方式をHS256に設定してAPIを起動し、試験端末の送信元IPをAPIアクセス制御で許可する。a0608_admin_aとPassw0rd!A0608Aを買取アプリ用の管理者ログインAPIへPOSTし、応答の認証トークンをブラウザのAPI要求の要求ヘッダ「jwt-token」に設定する（S-A06-08-AUTH）／② 店舗ID 〔店舗ID-A0608-共有A〕が有効で在庫区分ECを利用できる（登録時に振られた番号を控えてある）（S-A06-08-SHOPS）／③ 言語JP、状態NM、レアリティRが有効である（S-A06-08-MASTERS）／④ ログイン失敗回数0かつ未ロックの店舗A試験管理者でログインしている（S-A06-08-ADM-A）／⑤ 商品ID 〔商品ID-A0608-006〕、商品名A06-08重複商品、カード詳細ID 〔カード詳細ID-A0608-006〕が登録され、商品規格ID 〔商品規格ID-A0608-006A〕と〔商品規格ID-A0608-006B〕が同じカード・カード詳細・言語JP・状態NM・フォイルなしの組に属し、両規格とも削除されておらず高額商品コードがなく店舗ID 〔店舗ID-A0608-共有A〕のEC在庫1を持つ（登録時に振られた番号を控えてある）（S-A06-08-DUPLICATE-006）
+手順 : 1. ブラウザの開発者ツールからHTTP POSTで「/api/search.json」のクエリパラメータnameに「A06-08重複商品」を設定して要求を送信する／2. Networkでカード詳細ID 〔カード詳細ID-A0608-006〕→言語コードJP→状態コードNMの階層を確認する
+期待結果 : 同じカード・カード詳細・言語・状態の組に属する商品規格ID 〔商品規格ID-A0608-006A〕と〔商品規格ID-A0608-006B〕のうち、応答に含まれる商品規格が1件だけとなること
+IT-A06-08-007 line 8
+テストデータ : 
+事前準備 : ① 開始時に認証用署名シークレットをdGVzdF9qd3Rfc2VjcmV0X2tleV8zMmJ5dGVzX2xvbmc=、署名方式をHS256に設定してAPIを起動し、試験端末の送信元IPをAPIアクセス制御で許可する。a0608_admin_aとPassw0rd!A0608Aを買取アプリ用の管理者ログインAPIへPOSTし、応答の認証トークンをブラウザのAPI要求の要求ヘッダ「jwt-token」に設定する（S-A06-08-AUTH）／② 店舗ID 〔店舗ID-A0608-共有A〕が有効で在庫区分ECを利用できる（登録時に振られた番号を控えてある）（S-A06-08-SHOPS）／③ 言語JP、状態NM、レアリティRが有効である（S-A06-08-MASTERS）／④ ログイン失敗回数0かつ未ロックの店舗A試験管理者でログインしている（S-A06-08-ADM-A）／⑤ カードID 〔カードID-A0608-共有〕、カード詳細ID 〔カード詳細ID-A0608-共有〕、商品ID 〔商品ID-A0608-共有〕、商品規格ID 〔商品規格ID-A0608-共有〕、商品コードA0608-BASE、買取価格1234、基準価格2345、店舗ID 〔店舗ID-A0608-共有A〕のEC在庫7、部門ID 〔部門ID-A0608-共有〕を含む基本取得データが登録済みである（登録時に振られた番号を控えてある）（S-A06-08-BASE）
+手順 : 1. ブラウザの開発者ツールからHTTP POSTで「/api/search.json」のクエリパラメータnameに「A06-08基本商品」を設定して要求を送信する／2. Networkで応答JSONの階層、項目名、値型および値を確認する
+期待結果 : 最上位がcardsオブジェクトでキーが「1」となり、cards.1にcardNameJp「A06-08カード」、cardNameEn「A06-08 Card」、imageFileName「a0608.jpg」、detailsオブジェクトが置かれ、details.〔カード詳細ID-A0608-共有〕にcardsetCode「A608」、cardsetName「A06-08セット」、foilFlg false、cardNo「008」、promotionName「A06-08プロモ」、productId 〔商品ID-A0608-共有〕、productNameJp「A06-08基本商品」、productNameEn「A06-08 Product」、rarityCode「R」、storageCodeName「A06-08棚」、languageClassesオブジェクトが置かれ、languageClasses.JP.conditionClasses.NMにproductClassId 〔商品規格ID-A0608-共有〕、productCode「A0608-BASE」、buyPrice 1234、price「2345」、stock「7」、sectionId 〔部門ID-A0608-共有〕が返り、ページング件数が返らないこと
+IT-A06-08-008 line 9
+テストデータ : 
+事前準備 : ① 開始時に認証用署名シークレットをdGVzdF9qd3Rfc2VjcmV0X2tleV8zMmJ5dGVzX2xvbmc=、署名方式をHS256に設定してAPIを起動し、試験端末の送信元IPをAPIアクセス制御で許可する。a0608_admin_aとPassw0rd!A0608Aを買取アプリ用の管理者ログインAPIへPOSTし、応答の認証トークンをブラウザのAPI要求の要求ヘッダ「jwt-token」に設定する（S-A06-08-AUTH）／② 店舗ID 〔店舗ID-A0608-共有A〕が有効で在庫区分ECを利用できる（登録時に振られた番号を控えてある）（S-A06-08-SHOPS）／③ 言語JP、状態NM、レアリティRが有効である（S-A06-08-MASTERS）／④ ログイン失敗回数0かつ未ロックの店舗A試験管理者でログインしている（S-A06-08-ADM-A）／⑤ 商品ID 〔商品ID-A0608-008〕、商品規格ID 〔商品規格ID-A0608-008〕、商品名A06-08任意値なしが登録され、カードセット、プロモーション、保管コード、買取価格および部門は未設定で、画像、商品付随情報、カード詳細ID 〔カード詳細ID-A0608-008〕、カードID 〔カードID-A0608-008〕、レアリティR、商品規格付随情報、言語JP、状態NM、基準価格2508、店舗ID 〔店舗ID-A0608-共有A〕のEC在庫8を持つ（登録時に振られた番号を控えてある）（S-A06-08-OPTIONAL-008）
+手順 : 1. ブラウザの開発者ツールからHTTP POSTで「/api/search.json」のクエリパラメータnameに「A06-08任意値なし」を設定して要求を送信する／2. Networkで応答JSONを確認する
+期待結果 : 商品ID 〔商品ID-A0608-008〕が応答から除外されず、cardsetCode、cardsetName、promotionName、storageCodeName、buyPriceおよびsectionIdがnullで返ること
+IT-A06-08-009 line 10
+テストデータ : 
+事前準備 : ① 開始時に認証用署名シークレットをdGVzdF9qd3Rfc2VjcmV0X2tleV8zMmJ5dGVzX2xvbmc=、署名方式をHS256に設定してAPIを起動し、試験端末の送信元IPをAPIアクセス制御で許可する。a0608_admin_aとPassw0rd!A0608Aを買取アプリ用の管理者ログインAPIへPOSTし、応答の認証トークンをブラウザのAPI要求の要求ヘッダ「jwt-token」に設定する（S-A06-08-AUTH）／② 店舗ID 〔店舗ID-A0608-共有A〕が有効で在庫区分ECを利用できる（登録時に振られた番号を控えてある）（S-A06-08-SHOPS）／③ 言語JP、状態NM、レアリティRが有効である（S-A06-08-MASTERS）／④ ログイン失敗回数0かつ未ロックの店舗A試験管理者でログインしている（S-A06-08-ADM-A）／⑤ 商品ID 〔商品ID-A0608-009〕、商品規格ID 〔商品規格ID-A0608-009〕、商品名A06-08価格商品が販売価格3456、基準価格2345、買取価格1200、店舗ID 〔店舗ID-A0608-共有A〕のEC在庫9で登録され、商品と商品規格は削除されておらず高額商品コードがない（登録時に振られた番号を控えてある）（S-A06-08-PRICE-009）
+手順 : 1. ブラウザの開発者ツールからHTTP POSTで「/api/search.json」のクエリパラメータnameに「A06-08価格商品」を設定して要求を送信する／2. Networkで状態コードNM配下のpriceを確認する
+期待結果 : 販売価格が3456、基準価格が2345の商品規格について、priceに基準価格「2345」が返ること
+IT-A06-08-010 line 11
+テストデータ : 
+事前準備 : ① 開始時に認証用署名シークレットをdGVzdF9qd3Rfc2VjcmV0X2tleV8zMmJ5dGVzX2xvbmc=、署名方式をHS256に設定してAPIを起動し、試験端末の送信元IPをAPIアクセス制御で許可する。ブラウザAではa0608_admin_aとPassw0rd!A0608A、ブラウザBではa0608_admin_bとPassw0rd!A0608Bを買取アプリ用の管理者ログインAPIへPOSTし、それぞれの応答の認証トークンを各ブラウザのAPI要求の要求ヘッダ「jwt-token」に設定する（S-A06-08-AUTH）／② 店舗ID 〔店舗ID-A0608-共有A〕と〔店舗ID-A0608-共有B〕が有効で在庫区分ECを利用できる（登録時に振られた番号を控えてある）（S-A06-08-SHOPS）／③ 言語JP、状態NM、レアリティRが有効である（S-A06-08-MASTERS）／④ ブラウザAでログイン失敗回数0かつ未ロックの店舗A試験管理者にログインし、所属店舗IDが〔店舗ID-A0608-共有A〕である（登録時に振られた番号を控えてある）（S-A06-08-ADM-A）／⑤ ブラウザBでログイン失敗回数0かつ未ロックの店舗B試験管理者にログインし、所属店舗IDが〔店舗ID-A0608-共有B〕である（登録時に振られた番号を控えてある）（S-A06-08-ADM-B）／⑥ 商品ID 〔商品ID-A0608-010〕、商品規格ID 〔商品規格ID-A0608-010〕、商品名A06-08在庫商品が、店舗ID 〔店舗ID-A0608-共有A〕のEC在庫7、同店舗のEC以外の在庫70、店舗ID 〔店舗ID-A0608-共有B〕のEC在庫9で登録されている（登録時に振られた番号を控えてある）（S-A06-08-STOCK-010）
+手順 : 1. ブラウザAでS-A06-08-ADM-Aとしてログインし、HTTP POSTで「/api/search.json」のクエリパラメータnameに「A06-08在庫商品」を設定して要求を送信する／2. Networkで状態コードNM配下のstockを確認する／3. ブラウザBでS-A06-08-ADM-Bとしてログインし、同じ要求を送信する／4. Networkで状態コードNM配下のstockを確認する
+期待結果 : stockにはブラウザAで所属店舗AのEC在庫「7」、ブラウザBで所属店舗BのEC在庫「9」が返ること
+IT-A06-08-011 line 12
+テストデータ : 
+事前準備 : ① 開始時に認証用署名シークレットをdGVzdF9qd3Rfc2VjcmV0X2tleV8zMmJ5dGVzX2xvbmc=、署名方式をHS256に設定してAPIを起動し、試験端末の送信元IPをAPIアクセス制御で許可する。a0608_admin_aとPassw0rd!A0608Aを買取アプリ用の管理者ログインAPIへPOSTし、応答の認証トークンをブラウザのAPI要求の要求ヘッダ「jwt-token」に設定する（S-A06-08-AUTH）／② 店舗ID 〔店舗ID-A0608-共有A〕が有効で在庫区分ECを利用できる（登録時に振られた番号を控えてある）（S-A06-08-SHOPS）／③ 言語JP、状態NM、レアリティRが有効である（S-A06-08-MASTERS）／④ ログイン失敗回数0かつ未ロックの店舗A試験管理者でログインしている（S-A06-08-ADM-A）／⑤ 商品ID 〔商品ID-A0608-011〕、商品規格ID 〔商品規格ID-A0608-011〕、商品名A06-08無加工商品が、買取価格1203、販売価格3405、基準価格2304、店舗ID 〔店舗ID-A0608-共有A〕のEC在庫17で登録され、商品と商品規格は削除されておらず高額商品コードがない（登録時に振られた番号を控えてある）（S-A06-08-RAW-VALUES-011）
+手順 : 1. ブラウザの開発者ツールからHTTP POSTで「/api/search.json」のクエリパラメータnameに「A06-08無加工商品」を設定して要求を送信する／2. Networkで状態コードNM配下のbuyPrice、priceおよびstockを確認する
+期待結果 : DBに保持した買取価格1203、基準価格2304および所属店舗AのEC在庫17が、補正または再計算されずにbuyPrice 1203、price「2304」、stock「17」として返ること
+
+### A06-13
+IT-A06-13-002 line 3
+テストデータ : 
+事前準備 : ① 開始時に認証用署名シークレットをdGVzdF9qd3Rfc2VjcmV0X2tleV8zMmJ5dGVzX2xvbmc=、署名方式をHS256に設定して試験端末の送信元IPを許可し、管理者ID 〔管理者ID-A0613-共有〕（登録時に振られた管理者IDを控えてある）を稼働中・システム管理者権限・所属店舗ID 〔店舗ID-A0613-共有〕（登録時に振られた店舗IDを控えてある）で登録する。a0613_adminとZxA0613c001で有効なjwt-tokenを取得する（S-A06-13-AUTH）／② 店舗ID 〔店舗ID-A0613-共有〕、更新前担当者ID 〔更新前担当者ID-A0613-共有〕（登録時に振られた管理者IDを控えてある）、査定前ステータス、本人確認証明書ID 1の自動車運転免許証とID 2のパスポート、会社員、日本および東京都を記載値で登録する（S-A06-13-REFERENCES）／③ 店頭買取ID 〔店頭買取ID-A0613-002〕（登録時に振られた店頭買取IDを控えてある）を店舗ID 〔店舗ID-A0613-共有〕、査定前、本人確認証明書ID=1、更新担当者ID=〔更新前担当者ID-A0613-共有〕、更新日時=2026-09-03 09:00:00で登録する（S-A06-13-ORDER-002）
+手順 : 1. ブラウザの開発者ツールからS-A06-13-AUTHの有効なjwt-tokenヘッダを指定し、クエリ「identification=2」を付けたHTTP PUT要求を「/api/admin/otcBuyOrder/〔店頭買取ID-A0613-002〕/identification.json」へ送信する／2. Networkで要求メソッドとHTTPステータスを確認する
+期待結果 : 「/api/admin/otcBuyOrder/〔店頭買取ID-A0613-002〕/identification.json」へPUT要求が送信され、HTTPステータスが200となること
+IT-A06-13-005 line 4
+テストデータ : 
+事前準備 : ① 開始時に認証用署名シークレットをdGVzdF9qd3Rfc2VjcmV0X2tleV8zMmJ5dGVzX2xvbmc=、署名方式をHS256に設定して試験端末の送信元IPを許可し、管理者ID 〔管理者ID-A0613-共有〕（登録時に振られた管理者IDを控えてある）を稼働中・システム管理者権限・所属店舗ID 〔店舗ID-A0613-共有〕（登録時に振られた店舗IDを控えてある）で登録する。a0613_adminとZxA0613c001で有効なjwt-tokenを取得する（S-A06-13-AUTH）／② 本人確認証明書ID 2をパスポート・表示状態で登録する（S-A06-13-REFERENCES）／③ 店頭買取ID 699999005の店頭買取受注と関連データを削除し、0件であることを確認する（S-A06-13-NOORDER-005）
+手順 : 1. S-A06-13-AUTHの有効なjwt-tokenヘッダを指定し、クエリ「identification=2」を付けたHTTP PUT要求を「/api/admin/otcBuyOrder/699999005/identification.json」へ送信する／2. NetworkでHTTPステータスと応答JSONの構造を確認する
+期待結果 : HTTPステータスが404となり、応答JSONがcodeとerrors配列を持つこと
+IT-A06-13-006 line 5
+テストデータ : 
+事前準備 : ① 開始時に認証用署名シークレットをdGVzdF9qd3Rfc2VjcmV0X2tleV8zMmJ5dGVzX2xvbmc=、署名方式をHS256に設定して試験端末の送信元IPを許可し、管理者ID 〔管理者ID-A0613-共有〕（登録時に振られた管理者IDを控えてある）を稼働中・システム管理者権限・所属店舗ID 〔店舗ID-A0613-共有〕（登録時に振られた店舗IDを控えてある）で登録する。a0613_adminとZxA0613c001で有効なjwt-tokenを取得する（S-A06-13-AUTH）／② 店舗ID 〔店舗ID-A0613-共有〕、更新前担当者ID 〔更新前担当者ID-A0613-共有〕（登録時に振られた管理者IDを控えてある）、ステータスID 5の査定前および本人確認証明書ID 1の自動車運転免許証を登録する（S-A06-13-REFERENCES）／③ 店頭買取ID 〔店頭買取ID-A0613-006〕（登録時に振られた店頭買取IDを控えてある）の既存データを削除し、店舗ID 〔店舗ID-A0613-共有〕、査定前、本人確認証明書ID=1、更新担当者ID=〔更新前担当者ID-A0613-共有〕、更新日時=2026-09-03 09:00:00で再登録する（S-A06-13-ORDER-006）／④ 本人確認証明書ID 699999006の試験データを削除し、0件であることを確認する（S-A06-13-NOIDENTIFICATION-006）
+手順 : 1. S-A06-13-AUTHの有効なjwt-tokenヘッダを指定し、クエリ「identification=699999006」を付けたHTTP PUT要求を「/api/admin/otcBuyOrder/〔店頭買取ID-A0613-006〕/identification.json」へ送信する／2. NetworkでHTTPステータスと応答JSONの構造を確認する
+期待結果 : 刷新側のステータスコード定義に従い、HTTPステータスが400となり、応答JSONがcodeとerrors配列を持つこと
+IT-A06-13-013 line 12
+テストデータ : 
+事前準備 : ① 開始時に認証用署名シークレットをdGVzdF9qd3Rfc2VjcmV0X2tleV8zMmJ5dGVzX2xvbmc=、署名方式をHS256に設定して試験端末の送信元IPを許可し、管理者ID 〔管理者ID-A0613-共有〕（登録時に振られた管理者IDを控えてある）を稼働中・システム管理者権限・所属店舗ID 〔店舗ID-A0613-共有〕（登録時に振られた店舗IDを控えてある）で登録する。a0613_adminとZxA0613c001で有効なjwt-tokenを取得する（S-A06-13-AUTH）／② 店頭買取ID 699999013の店頭買取受注と関連データ、および本人確認証明書ID 699999013の試験データを削除し、双方が0件であることを確認する（S-A06-13-INVALID-013）
+手順 : 1. S-A06-13-AUTHの有効なjwt-tokenヘッダを指定し、クエリ「identification=699999013」を付けたHTTP PUT要求を「/api/admin/otcBuyOrder/699999013/identification.json」へ送信する／2. NetworkでHTTPステータスを確認する
+期待結果 : 証明書IDの妥当性より先に店頭買取受注の存在が判定され、HTTPステータスが404となること
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+import csv
+p='integration_test/casegen/cases/A06-05_test_cases.tsv'
+with open(p) as f:
+ r=csv.DictReader(f,delimiter='\\t')
+ for row in r:
+  if row['テストID'].split('-')[-1] in {'002','005','007','008','009','011'}:
+   print('\\n',row['テストID'],'line',r.line_num)
+   for k in ['事前準備','手順','期待結果']: print(k,row[k][:3500])
+PY" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+
+ IT-A06-05-002 line 3
+事前準備 ① 接続元IPが許可され、APIとDB確認手段が利用できる（S-A06-05-ENV）／② 管理者ID 〔管理者ID-A0605-共有ADM〕が店舗ID 1所属・稼働中で、有効なjwt-tokenが発行されている（登録時に振られた管理者IDを控えてある）（S-A06-05-ADM）／③ 開始時にステータスをID 1=買取成立、ID 2=買取キャンセル、ID 5=査定前、ID 6=査定中、ID 8=査定中断、ID 9=査定再開、ID 10=経理払い出し待ち、ID 11=入庫済み、ID 12=未登録在庫あり、ID 13=入庫待ち、ID 14=管理者取消に設定する（S-A06-05-STATUSES）／④ 店舗ID 1の受注ID 〔受注ID-A0605-002A〕〜〔受注ID-A0605-002C〕が査定前、〔受注ID-A0605-002D〕〜〔受注ID-A0605-002E〕が査定中、〔受注ID-A0605-002F〕〜〔受注ID-A0605-002G〕が査定中断、〔受注ID-A0605-002H〕〜〔受注ID-A0605-002I〕が査定再開で、全件の査定担当者IDが〔管理者ID-A0605-共有ADM〕、更新日時がT0（2026-09-03 10:00:00）、履歴0件、未削除である（登録時に振られた受注IDを控えてある）（S-A06-05-ALLOWED-002）
+手順 1. 有効なjwt-tokenで受注ID 〔受注ID-A0605-002A〕へstatus=6、〔受注ID-A0605-002B〕へstatus=8、〔受注ID-A0605-002C〕へstatus=9、〔受注ID-A0605-002D〕へstatus=8、〔受注ID-A0605-002E〕へstatus=9、〔受注ID-A0605-002F〕へstatus=6、〔受注ID-A0605-002G〕へstatus=9、〔受注ID-A0605-002H〕へstatus=6、〔受注ID-A0605-002I〕へstatus=8をPUT送信する／2. DBで受注ID 〔受注ID-A0605-002A〕〜〔受注ID-A0605-002I〕のステータスを確認する
+期待結果 受注ID 〔受注ID-A0605-002A〕〜〔受注ID-A0605-002I〕のステータスが順に査定中、査定中断、査定再開、査定中断、査定再開、査定中、査定再開、査定中、査定中断になること
+
+ IT-A06-05-005 line 4
+事前準備 ① 接続元IPが許可され、APIとDB確認手段が利用できる（S-A06-05-ENV）／② 管理者ID 〔管理者ID-A0605-共有ADM〕が店舗ID 1所属・稼働中で、有効なjwt-tokenが発行されている（登録時に振られた管理者IDを控えてある）（S-A06-05-ADM）／③ 管理者ID 〔管理者ID-A0605-共有OTHER-ADM〕が店舗ID 1所属・稼働中である（登録時に振られた管理者IDを控えてある）（S-A06-05-OTHER-ADM）／④ 開始時にステータスをID 1=買取成立、ID 2=買取キャンセル、ID 5=査定前、ID 6=査定中、ID 8=査定中断、ID 9=査定再開、ID 10=経理払い出し待ち、ID 11=入庫済み、ID 12=未登録在庫あり、ID 13=入庫待ち、ID 14=管理者取消に設定する（S-A06-05-STATUSES）／⑤ 受注ID 〔受注ID-A0605-005〕が店舗ID 1の店頭買取受注で、査定前、査定担当者ID 〔管理者ID-A0605-共有OTHER-ADM〕、更新日時T0（2026-09-03 10:00:00）、金額900円、税90円、ポイント90、在庫数量9、履歴0件、未削除である（登録時に振られた受注IDを控えてある）（S-A06-05-ORDER-005）
+手順 1. S-A06-05-ADMの有効なjwt-tokenでstatus=6を受注ID 〔受注ID-A0605-005〕へPUT送信する／2. DBで受注ID 〔受注ID-A0605-005〕の金額、税、ポイントおよび在庫数量を確認する
+期待結果 受注ID 〔受注ID-A0605-005〕の金額900円、税90円、ポイント90および在庫数量9が更新前のまま保持されること
+
+ IT-A06-05-007 line 6
+事前準備 ① 接続元IPが許可され、APIとDB確認手段が利用できる（S-A06-05-ENV）／② 管理者ID 〔管理者ID-A0605-共有ADM〕が店舗ID 1所属・稼働中で、有効なjwt-tokenが発行されている（登録時に振られた管理者IDを控えてある）（S-A06-05-ADM）／③ 開始時にステータスをID 1=買取成立、ID 2=買取キャンセル、ID 5=査定前、ID 6=査定中、ID 8=査定中断、ID 9=査定再開、ID 10=経理払い出し待ち、ID 11=入庫済み、ID 12=未登録在庫あり、ID 13=入庫待ち、ID 14=管理者取消に設定する（S-A06-05-STATUSES）／④ 店舗ID 1の受注ID 〔受注ID-A0605-共有SAME-A〕が査定中、〔受注ID-A0605-共有SAME-B〕が査定中断、〔受注ID-A0605-共有SAME-C〕が査定再開で、査定担当者ID 〔管理者ID-A0605-共有ADM〕、更新日時T0（2026-09-03 10:00:00）、各受注に現在ステータス・管理者ID 〔管理者ID-A0605-共有ADM〕・登録日時T0の履歴1件があり、未削除である（登録時に振られた受注IDを控えてある）（S-A06-05-SAME）
+手順 1. 有効なjwt-tokenで受注ID 〔受注ID-A0605-共有SAME-A〕へstatus=6、〔受注ID-A0605-共有SAME-B〕へstatus=8、〔受注ID-A0605-共有SAME-C〕へstatus=9をPUT送信する／2. DBで3件の受注とステータス変更履歴を確認する
+期待結果 受注ID 〔受注ID-A0605-共有SAME-A〕〜〔受注ID-A0605-共有SAME-C〕の受注レコードおよびステータス変更履歴がシード投入時から書き換わらないこと
+
+ IT-A06-05-008 line 7
+事前準備 ① 接続元IPが許可され、APIとDB確認手段が利用できる（S-A06-05-ENV）／② 管理者ID 〔管理者ID-A0605-共有ADM〕が店舗ID 1所属・稼働中で、有効なjwt-tokenが発行されている（登録時に振られた管理者IDを控えてある）（S-A06-05-ADM）／③ 開始時にステータスをID 1=買取成立、ID 2=買取キャンセル、ID 5=査定前、ID 6=査定中、ID 8=査定中断、ID 9=査定再開、ID 10=経理払い出し待ち、ID 11=入庫済み、ID 12=未登録在庫あり、ID 13=入庫待ち、ID 14=管理者取消に設定する（S-A06-05-STATUSES）／④ 店舗ID 1の受注ID 〔受注ID-A0605-共有TARGETS-A〕〜〔受注ID-A0605-共有TARGETS-H〕がすべて査定中、査定担当者ID 〔管理者ID-A0605-共有ADM〕、更新日時T0（2026-09-03 10:00:00）、履歴0件、未削除である（登録時に振られた受注IDを控えてある）（S-A06-05-DISALLOWED-TARGETS）
+手順 1. 有効なjwt-tokenで受注ID 〔受注ID-A0605-共有TARGETS-A〕へstatus=1、〔受注ID-A0605-共有TARGETS-B〕へstatus=2、〔受注ID-A0605-共有TARGETS-C〕へstatus=5、〔受注ID-A0605-共有TARGETS-D〕へstatus=10、〔受注ID-A0605-共有TARGETS-E〕へstatus=11、〔受注ID-A0605-共有TARGETS-F〕へstatus=12、〔受注ID-A0605-共有TARGETS-G〕へstatus=13、〔受注ID-A0605-共有TARGETS-H〕へstatus=14をPUT送信する／2. DBで受注ID 〔受注ID-A0605-共有TARGETS-A〕〜〔受注ID-A0605-共有TARGETS-H〕のステータスを確認する
+期待結果 受注ID 〔受注ID-A0605-共有TARGETS-A〕〜〔受注ID-A0605-共有TARGETS-H〕のステータスがすべて査定中のまま更新されないこと
+
+ IT-A06-05-009 line 8
+事前準備 ① 接続元IPが許可され、APIとDB確認手段が利用できる（S-A06-05-ENV）／② 管理者ID 〔管理者ID-A0605-共有ADM〕が店舗ID 1所属・稼働中で、有効なjwt-tokenが発行されている（登録時に振られた管理者IDを控えてある）（S-A06-05-ADM）／③ 開始時にステータスをID 1=買取成立、ID 2=買取キャンセル、ID 5=査定前、ID 6=査定中、ID 8=査定中断、ID 9=査定再開、ID 10=経理払い出し待ち、ID 11=入庫済み、ID 12=未登録在庫あり、ID 13=入庫待ち、ID 14=管理者取消に設定する（S-A06-05-STATUSES）／④ 店舗ID 1の受注ID 〔受注ID-A0605-共有SOURCES-A〕が買取成立、〔受注ID-A0605-共有SOURCES-B〕が買取キャンセル、〔受注ID-A0605-共有SOURCES-C〕が経理払い出し待ち、〔受注ID-A0605-共有SOURCES-D〕が入庫済み、〔受注ID-A0605-共有SOURCES-E〕が未登録在庫あり、〔受注ID-A0605-共有SOURCES-F〕が入庫待ち、〔受注ID-A0605-共有SOURCES-G〕が管理者取消で、査定担当者ID 〔管理者ID-A0605-共有ADM〕、更新日時T0（2026-09-03 10:00:00）、履歴0件、未削除である（登録時に振られた受注IDを控えてある）（S-A06-05-DISALLOWED-SOURCES）
+手順 1. 有効なjwt-tokenで受注ID 〔受注ID-A0605-共有SOURCES-A〕〜〔受注ID-A0605-共有SOURCES-G〕の各受注へstatus=8をPUT送信する／2. DBで受注ID 〔受注ID-A0605-共有SOURCES-A〕〜〔受注ID-A0605-共有SOURCES-G〕のステータスを確認する
+期待結果 受注ID 〔受注ID-A0605-共有SOURCES-A〕〜〔受注ID-A0605-共有SOURCES-G〕のステータスが順に買取成立、買取キャンセル、経理払い出し待ち、入庫済み、未登録在庫あり、入庫待ち、管理者取消のまま更新されないこと
+
+ IT-A06-05-011 line 10
+事前準備 ① 接続元IPが許可され、APIとDB確認手段が利用できる（S-A06-05-ENV）／② 管理者ID 〔管理者ID-A0605-共有ADM〕が店舗ID 1所属・稼働中で、有効なjwt-tokenが発行されている（登録時に振られた管理者IDを控えてある）（S-A06-05-ADM）／③ 管理者ID 〔管理者ID-A0605-共有OTHER-ADM〕が店舗ID 1所属・稼働中である（登録時に振られた管理者IDを控えてある）（S-A06-05-OTHER-ADM）／④ 開始時にステータスをID 1=買取成立、ID 2=買取キャンセル、ID 5=査定前、ID 6=査定中、ID 8=査定中断、ID 9=査定再開、ID 10=経理払い出し待ち、ID 11=入庫済み、ID 12=未登録在庫あり、ID 13=入庫待ち、ID 14=管理者取消に設定する（S-A06-05-STATUSES）／⑤ 店舗ID 1の受注ID 〔受注ID-A0605-共有ASSESSOR-A〕と〔受注ID-A0605-共有ASSESSOR-C〕が査定再開、〔受注ID-A0605-共有ASSESSOR-B〕と〔受注ID-A0605-共有ASSESSOR-D〕が査定中で、全件の査定担当者IDが〔管理者ID-A0605-共有OTHER-ADM〕、更新日時がT0（2026-09-03 10:00:00）、履歴0件、未削除である（登録時に振られた受注IDを控えてある）（S-A06-05-OTHER-ASSESSOR）
+手順 1. S-A06-05-ADMの有効なjwt-tokenで受注ID 〔受注ID-A0605-共有ASSESSOR-A〕へstatus=6、〔受注ID-A0605-共有ASSESSOR-B〕へstatus=9、〔受注ID-A0605-共有ASSESSOR-C〕へstatus=6、〔受注ID-A0605-共有ASSESSOR-D〕へstatus=9をPUT送信する／2. DBで4件の受注とステータス変更履歴を確認する
+期待結果 受注ID 〔受注ID-A0605-共有ASSESSOR-A〕〜〔受注ID-A0605-共有ASSESSOR-D〕のステータス、査定担当者、更新日時およびステータス変更履歴がシード投入時から書き換わらないこと
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+import csv
+for fid, nums in [('A06-06',{'002','006','007','008','009','010','012'}),('A06-07',{'003','006','007','008','009','010','011'})]:
+ print('\\n###',fid)
+ with open(f'integration_test/casegen/cases/{fid}_test_cases.tsv') as f:
+  r=csv.DictReader(f,delimiter='\\t')
+  for x in r:
+   if x['テストID'].split('-')[-1] not in nums: continue
+   print('\\n',x['テストID'],'line',r.line_num)
+   for k in ['事前準備','手順','期待結果']: print(k,':',x[k][-1400:])
+PY" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+
+### A06-06
+
+ IT-A06-06-002 line 3
+事前準備 : ① ログインID a0606_admin_aの管理者が有効で、所属店舗IDが〔店舗ID-A0606-共有A〕（登録時に振られた店舗IDを控えてある）であり、この管理者としてログインしている（S-A06-06-ADM-A）／② カードID 〔カードID-A0606-002〕（登録時に振られたカードIDを控えてある）・カード詳細ID 〔カード詳細ID-A0606-002〕（登録時に振られたカード詳細IDを控えてある）・カード名日本語「A06-06カード」・カード名英語「A06-06 Card」・画像a0606-002.jpg・カードセットコードA06・カードセット名「A06セット」・フォイルフラグ0・カードNo 001・プロモーション名「A06プロモ」・商品ID 〔商品ID-A0606-002〕（登録時に振られた商品IDを控えてある）・商品名日本語「A06-06商品」・商品名英語「A06-06 Product」・レアリティーコードR・略称タグ名「A06棚」・言語JP・状態NM・商品規格ID 〔商品規格ID-A0606-002〕（登録時に振られた商品規格IDを控えてある）・商品コードA0606-BASE-002・買取価格1234・基準価格2345・店舗ID 〔店舗ID-A0606-共有A〕のEC在庫7・部門ID 〔部門ID-A0606-002〕（登録時に振られた部門IDを控えてある）が紐付き、商品と商品規格は削除されておらず、高額商品コードがない（S-A06-06-BASE-002）
+手順 : 1. ブラウザの開発者ツールからGETで「/api/buying/〔カード詳細ID-A0606-002〕.json」へ要求を送信する／2. Networkで応答JSONを確認する
+期待結果 : cardsがオブジェクトで、カードID「〔カードID-A0606-002〕」→details→カード詳細ID「〔カード詳細ID-A0606-002〕」→languageClasses→JP→conditionClasses→NMの階層となり、cardNameJp「A06-06カード」、cardNameEn「A06-06 Card」、imageFileName「a0606-002.jpg」、cardsetCode「A06」、cardsetName「A06セット」、foilFlg「0」、cardNo「001」、promotionName「A06プロモ」、productId「〔商品ID-A0606-002〕」、productNameJp「A06-06商品」、productNameEn「A06-06 Product」、rarityCode「R」、storageCodeName「A06棚」、productClassId「〔商品規格ID-A0606-002〕」、productCode「A0606-BASE-002」、buyPrice「1234」、price「2345」、stock「7」、sectionId「〔部門ID-A0606-002〕」が文字列で返ること
+
+ IT-A06-06-006 line 7
+事前準備 : ① ログインID a0606_admin_aの管理者が有効で、所属店舗IDが〔店舗ID-A0606-共有A〕（登録時に振られた店舗IDを控えてある）であり、この管理者としてログインしている（S-A06-06-ADM-A）／② カードID 〔カードID-A0606-006〕（登録時に振られたカードIDを控えてある）・カード詳細ID 〔カード詳細ID-A0606-006〕（登録時に振られたカード詳細IDを控えてある）・商品ID 〔商品ID-A0606-006〕（登録時に振られた商品IDを控えてある）・商品規格ID 〔商品規格ID-A0606-006〕（登録時に振られた商品規格IDを控えてある）が紐付き、カードセット、プロモーション、略称タグ、買取価格、部門IDは未設定、基準価格2345、商品画像1件、レアリティーR、言語JP、状態NM、店舗ID 〔店舗ID-A0606-共有A〕のEC在庫7であり、商品と商品規格は削除されておらず、高額商品コードがない（S-A06-06-OPTIONAL-006）
+手順 : 1. ブラウザの開発者ツールからGETで「/api/buying/〔カード詳細ID-A0606-006〕.json」へ要求を送信する／2. Networkで応答JSONを確認する
+期待結果 : カードセット、プロモーション、略称タグ、買取価格および部門IDが設定されていない商品規格も応答から除外されず、cardsetCode、cardsetName、promotionName、storageCodeName、buyPrice、sectionIdの各項目が省略されないこと
+
+ IT-A06-06-007 line 8
+事前準備 : ① ログインID a0606_admin_aの管理者が有効で、所属店舗IDが〔店舗ID-A0606-共有A〕（登録時に振られた店舗IDを控えてある）であり、この管理者としてログインしている（S-A06-06-ADM-A）／② カードID 〔カードID-A0606-007〕（登録時に振られたカードIDを控えてある）・カード詳細ID 〔カード詳細ID-A0606-007〕（登録時に振られたカード詳細IDを控えてある）・言語JP・状態NMの同じ組に、商品規格ID 〔商品規格ID-A0606-007A〕（登録時に振られた商品規格IDを控えてある）と〔商品規格ID-A0606-007B〕（登録時に振られた商品規格IDを控えてある）が属する。両商品規格は商品ID 〔商品ID-A0606-007〕（登録時に振られた商品IDを控えてある）、商品画像1件、レアリティーR、店舗ID 〔店舗ID-A0606-共有A〕のEC在庫1に紐付き、商品と両商品規格は削除されておらず、高額商品コードがない（S-A06-06-DUPLICATE-007）
+手順 : 1. ブラウザの開発者ツールからGETで「/api/buying/〔カード詳細ID-A0606-007〕.json」へ要求を送信する／2. Networkで応答JSONのJP→conditionClasses→NMを確認する
+期待結果 : 同じカードID・カード詳細ID・言語・状態に属する商品規格は1件だけ残り、productClassIdが「〔商品規格ID-A0606-007A〕」または「〔商品規格ID-A0606-007B〕」となること
+
+ IT-A06-06-008 line 9
+事前準備 : ① ログインID a0606_admin_aの管理者が有効で、所属店舗IDが〔店舗ID-A0606-共有A〕（登録時に振られた店舗IDを控えてある）であり、この管理者としてログインしている（S-A06-06-ADM-A）／② カードID 〔カードID-A0606-008〕（登録時に振られたカードIDを控えてある）・カード詳細ID 〔カード詳細ID-A0606-008〕（登録時に振られたカード詳細IDを控えてある）・商品ID 〔商品ID-A0606-008〕（登録時に振られた商品IDを控えてある）・商品規格ID 〔商品規格ID-A0606-008〕（登録時に振られた商品規格IDを控えてある）が紐付き、販売価格3456、基準価格2345、商品画像1件、レアリティーR、言語JP、状態NM、店舗ID 〔店舗ID-A0606-共有A〕のEC在庫1であり、商品と商品規格は削除されておらず、高額商品コードがない（S-A06-06-PRICE-008）
+手順 : 1. ブラウザの開発者ツールからGETで「/api/buying/〔カード詳細ID-A0606-008〕.json」へ要求を送信する／2. Networkで応答JSONのpriceを確認する
+期待結果 : 販売価格が3456、基準価格が2345の商品規格について、priceに基準価格「2345」が返ること
+
+ IT-A06-06-009 line 10
+事前準備 : ① ログインID a0606_admin_aの管理者が有効で所属店舗IDは〔店舗ID-A0606-共有A〕（登録時に振られた店舗IDを控えてある）、ログインID a0606_admin_bの管理者が有効で所属店舗IDは〔店舗ID-A0606-共有B〕（登録時に振られた店舗IDを控えてある）である（S-A06-06-ADM-A、S-A06-06-ADM-B）／② カードID 〔カードID-A0606-009〕（登録時に振られたカードIDを控えてある）・カード詳細ID 〔カード詳細ID-A0606-009〕（登録時に振られたカード詳細IDを控えてある）・商品ID 〔商品ID-A0606-009〕（登録時に振られた商品IDを控えてある）・商品規格ID 〔商品規格ID-A0606-009〕（登録時に振られた商品規格IDを控えてある）が紐付き、店舗ID 〔店舗ID-A0606-共有A〕のEC在庫7、同店舗のEC以外の在庫70、店舗ID 〔店舗ID-A0606-共有B〕のEC在庫9である。商品画像1件、レアリティーR、言語JP、状態NMが設定され、商品と商品規格は削除されておらず、高額商品コードがない（S-A06-06-STOCK-009）
+手順 : 1. ブラウザAでS-A06-06-ADM-Aとしてログインし、GETで「/api/buying/〔カード詳細ID-A0606-009〕.json」へ要求を送信する／2. Networkでstockを確認する／3. ブラウザBでS-A06-06-ADM-Bとしてログインし、同じURLへGET要求を送信する／4. Networkでstockを確認する
+期待結果 : stockにはブラウザAで所属店舗AのEC在庫「7」、ブラウザBで所属店舗BのEC在庫「9」が返ること
+
+ IT-A06-06-010 line 11
+事前準備 : ① ログインID a0606_admin_aの管理者が有効で、所属店舗IDが〔店舗ID-A0606-共有A〕（登録時に振られた店舗IDを控えてある）であり、この管理者としてログインしている（S-A06-06-ADM-A）／② カードID 〔カードID-A0606-010〕（登録時に振られたカードIDを控えてある）・カード詳細ID 〔カード詳細ID-A0606-010〕（登録時に振られたカード詳細IDを控えてある）・商品ID 〔商品ID-A0606-010〕（登録時に振られた商品IDを控えてある）・商品規格ID 〔商品規格ID-A0606-010〕（登録時に振られた商品規格IDを控えてある）が紐付き、買取価格1234.56、基準価格2345.67、店舗ID 〔店舗ID-A0606-共有A〕のEC在庫1234、商品画像1件、レアリティーR、言語JP、状態NMであり、商品と商品規格は削除されておらず、高額商品コードがない（S-A06-06-RAW-VALUES-010）
+手順 : 1. ブラウザの開発者ツールからGETで「/api/buying/〔カード詳細ID-A0606-010〕.json」へ要求を送信する／2. Networkで応答JSONのbuyPrice、priceおよびstockを確認する
+期待結果 : DBで保持している値と同じbuyPrice「1234.56」、price「2345.67」、stock「1234」が、再計算、丸めおよび桁区切りをされずに返ること
+
+ IT-A06-06-012 line 13
+事前準備 : ① ログインID a0606_admin_aの管理者が有効で、所属店舗IDが〔店舗ID-A0606-共有A〕（登録時に振られた店舗IDを控えてある）であり、この管理者としてログインしている（S-A06-06-ADM-A）／② カードID 〔カードID-A0606-012〕（登録時に振られたカードIDを控えてある）・カード詳細ID 〔カード詳細ID-A0606-012〕（登録時に振られたカード詳細IDを控えてある）・商品ID 〔商品ID-A0606-012〕（登録時に振られた商品IDを控えてある）・商品規格ID 〔商品規格ID-A0606-012〕（登録時に振られた商品規格IDを控えてある）が紐付き、カードセット、プロモーション、略称タグ、買取価格、部門IDは未設定、基準価格2345、商品画像1件、レアリティーR、言語JP、状態NM、店舗ID 〔店舗ID-A0606-共有A〕のEC在庫7であり、商品と商品規格は削除されておらず、高額商品コードがない（S-A06-06-OPTIONAL-012）
+手順 : 1. ブラウザの開発者ツールからGETで「/api/buying/〔カード詳細ID-A0606-012〕.json」へ要求を送信する／2. Networkで応答JSONのカード詳細ID 〔カード詳細ID-A0606-012〕配下のcardsetCode、cardsetName、promotionName、storageCodeName、buyPriceおよびsectionIdを確認する
+期待結果 : cardsetCode、cardsetName、promotionName、storageCodeName、buyPriceおよびsectionIdの各項目が省略されずに含まれ、値がいずれも空文字ではなくJSONのnullとなること
+
+### A06-07
+
+ IT-A06-07-003 line 4
+事前準備 : ① 店舗AのID 〔店舗ID-A0607-共有A〕に所属する管理者a0607_admin_aがロックされておらず、ブラウザでログイン済みでAPI認証が成立する（〔〕で示した番号は、登録時に振られた番号を控えてある）（S-A06-07-ADM-A）／② 商品ID 〔商品ID-A0607-003〕に、カードID 〔カードID-A0607-003〕、カード詳細ID 〔カード詳細ID-A0607-003〕、言語JP、状態NM、商品規格ID 〔商品規格ID-A0607-003〕、商品コードA0607-BASE-003、画像a0607-003.jpg、カードセットコードA607-003、部門ID 〔部門ID-A0607-003〕およびシード表記載の全応答値が紐付き、店舗AのEC在庫は7である（〔〕で示した番号は、登録時に振られた番号を控えてある）（S-A06-07-BASE-003）
+手順 : 1. ブラウザの開発者ツールからHTTP POSTで「/api/buying/products?ids=〔商品ID-A0607-003〕」へ要求を送信する／2. Networkで応答JSONの階層と値を確認する
+期待結果 : 応答が最上位のカード一覧からカードID「〔カードID-A0607-003〕」→カード詳細ID「〔カード詳細ID-A0607-003〕」→言語コード「JP」→状態コード「NM」の順に入れ子となり、カードの日本語名「A06-07カード」、英語名「A06-07 Card」、画像ファイル名「a0607-003.jpg」、カードセットコード「A607-003」、カードセット日本語名「A06-07セット」、フォイルではないこと、カード番号「007」、プロモーション日本語名「A06-07プロモ」、商品ID「〔商品ID-A0607-003〕」、商品日本語名「A06-07商品」、商品英語名「A06-07 Product」、レアリティコード「R」、保管コード名「A06-07棚」、商品規格ID「〔商品規格ID-A0607-003〕」、商品コード「A0607-BASE-003」、買取価格「1234」、基準価格「2345」、所属店舗AのEC在庫数「7」、部門ID「〔部門ID-A0607-003〕」が返ること
+
+ IT-A06-07-006 line 7
+事前準備 : ① 店舗AのID 〔店舗ID-A0607-共有A〕に所属する管理者a0607_admin_aがロックされておらず、ブラウザでログイン済みでAPI認証が成立する（〔〕で示した番号は、登録時に振られた番号を控えてある）（S-A06-07-ADM-A）／② 商品ID 〔商品ID-A0607-006〕は商品画像、カードID 〔カードID-A0607-006〕、カード詳細ID 〔カード詳細ID-A0607-006〕、レアリティR、言語JP、状態NMを持ち、カードセット、プロモーション、保管コード、買取価格、部門は未設定で、商品・商品規格は削除されておらず高額商品コードなしである（〔〕で示した番号は、登録時に振られた番号を控えてある）（S-A06-07-OPTIONAL-006）
+手順 : 1. ブラウザの開発者ツールからHTTP POSTで「/api/buying/products?ids=〔商品ID-A0607-006〕」へ要求を送信する／2. Networkで応答JSONを確認する
+期待結果 : カードセット、プロモーション、保管コード、買取価格および部門IDが未設定の商品ID「〔商品ID-A0607-006〕」も結果に含まれ、対応する各項目が値なしとなること
+
+ IT-A06-07-007 line 8
+事前準備 : ① 店舗AのID 〔店舗ID-A0607-共有A〕に所属する管理者a0607_admin_aがロックされておらず、ブラウザでログイン済みでAPI認証が成立する（〔〕で示した番号は、登録時に振られた番号を控えてある）（S-A06-07-ADM-A）／② 商品ID 〔商品ID-A0607-007〕のカードID 〔カードID-A0607-007〕・カード詳細ID 〔カード詳細ID-A0607-007〕・言語JP・状態NMの組に、取得条件を満たす商品規格ID 〔商品規格ID-A0607-007A〕と〔商品規格ID-A0607-007B〕の2件が属する（〔〕で示した番号は、登録時に振られた番号を控えてある）（S-A06-07-DUPLICATE-007）
+手順 : 1. ブラウザの開発者ツールからHTTP POSTで「/api/buying/products?ids=〔商品ID-A0607-007〕」へ要求を送信する／2. NetworkでカードID「〔カードID-A0607-007〕」→カード詳細ID「〔カード詳細ID-A0607-007〕」→言語コード「JP」→状態コード「NM」の商品規格を確認する
+期待結果 : 同じカードID・カード詳細ID・言語コード・状態コードの組に属する商品規格は1件だけ残り、商品規格IDが「〔商品規格ID-A0607-007A〕」または「〔商品規格ID-A0607-007B〕」となること
+
+ IT-A06-07-008 line 9
+事前準備 : ① 店舗AのID 〔店舗ID-A0607-共有A〕に所属する管理者a0607_admin_aがロックされておらず、ブラウザでログイン済みでAPI認証が成立する（〔〕で示した番号は、登録時に振られた番号を控えてある）（S-A06-07-ADM-A）／② 商品ID 〔商品ID-A0607-008〕・カードID 〔カードID-A0607-008〕・カード詳細ID 〔カード詳細ID-A0607-008〕・商品規格ID 〔商品規格ID-A0607-008〕が取得条件を満たし、販売価格は3456、基準価格は2345である（〔〕で示した番号は、登録時に振られた番号を控えてある）（S-A06-07-PRICE-008）
+手順 : 1. ブラウザの開発者ツールからHTTP POSTで「/api/buying/products?ids=〔商品ID-A0607-008〕」へ要求を送信する／2. Networkで状態階層の価格を確認する
+期待結果 : 販売価格が「3456」、基準価格が「2345」の商品規格について、状態階層の価格として基準価格「2345」が返ること
+
+ IT-A06-07-009 line 10
+事前準備 : ① 店舗AのID 〔店舗ID-A0607-共有A〕に所属する管理者a0607_admin_aがロックされておらず、ブラウザAでログイン済みでAPI認証が成立する（〔〕で示した番号は、登録時に振られた番号を控えてある）（S-A06-07-ADM-A）／② 店舗BのID 〔店舗ID-A0607-共有B〕に所属する管理者a0607_admin_bがロックされておらず、ブラウザBでログイン済みでAPI認証が成立する（〔〕で示した番号は、登録時に振られた番号を控えてある）（S-A06-07-ADM-B）／③ 商品ID 〔商品ID-A0607-009〕・商品規格ID 〔商品規格ID-A0607-009〕が取得条件を満たし、店舗AのEC在庫は7、店舗AのEC以外の在庫は70、店舗BのEC在庫は9である（〔〕で示した番号は、登録時に振られた番号を控えてある）（S-A06-07-STOCK-009）
+手順 : 1. ブラウザAでS-A06-07-ADM-Aとしてログインし、HTTP POSTで「/api/buying/products?ids=〔商品ID-A0607-009〕」へ要求を送信する／2. Networkで状態階層の在庫数を確認する／3. ブラウザBでS-A06-07-ADM-Bとしてログインし、同じURLへHTTP POST要求を送信する／4. Networkで状態階層の在庫数を確認する
+期待結果 : 状態階層の在庫数として、ブラウザAでは所属店舗AのEC在庫「7」、ブラウザBでは所属店舗BのEC在庫「9」が返ること
+
+ IT-A06-07-010 line 11
+事前準備 : ① 店舗AのID 〔店舗ID-A0607-共有A〕に所属する管理者a0607_admin_aがロックされておらず、ブラウザでログイン済みでAPI認証が成立する（〔〕で示した番号は、登録時に振られた番号を控えてある）（S-A06-07-ADM-A）／② 商品ID 〔商品ID-A0607-010〕・商品規格ID 〔商品規格ID-A0607-010〕が取得条件を満たし、買取価格は1234.56、基準価格は2345.67、店舗AのEC在庫は1234である（〔〕で示した番号は、登録時に振られた番号を控えてある）（S-A06-07-RAW-VALUES-010）
+手順 : 1. ブラウザの開発者ツールからHTTP POSTで「/api/buying/products?ids=〔商品ID-A0607-010〕」へ要求を送信する／2. Networkで状態階層の買取価格、基準価格および在庫数を確認する
+期待結果 : DBで保持している買取価格「1234.56」、基準価格「2345.67」および所属店舗AのEC在庫数「1234」が、再計算、丸めおよび桁区切りをされずに返ること
+
+ IT-A06-07-011 line 12
+事前準備 : ① 店舗AのID 〔店舗ID-A0607-共有A〕に所属する管理者a0607_admin_aがロックされておらず、ブラウザでログイン済みでAPI認証が成立する（〔〕で示した番号は、登録時に振られた番号を控えてある）（S-A06-07-ADM-A）／② 商品ID 〔商品ID-A0607-011〕の商品と商品規格ID 〔商品規格ID-A0607-011〕は削除されていないが、カード、カード詳細、レアリティ、言語、カード状態との紐付けを持たない（〔〕で示した番号は、登録時に振られた番号を控えてある）（S-A06-07-NONCARD-011）
+手順 : 1. ブラウザの開発者ツールからHTTP POSTで「/api/buying/products?ids=〔商品ID-A0607-011〕」へ要求を送信する／2. NetworkでHTTPステータスと応答JSONを確認する
+期待結果 : カード商品ではない商品IDだけを指定した場合もHTTPステータスが200となり、応答JSONが空配列となること
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/combos/A06-02.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/combos/A06-05_undetermined.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+処理ID	組	組（読める形）	根拠	理由
+P1	F01=査定中&F02=査定中&F03=本人以外	更新前のステータス=査定中／指定するステータス=査定中／更新する管理者と査定担当者=本人以外	L0068,L0093	同じステータスなら成功とする定めと、本人以外は査定中へ更新できない定めのどちらが先か書かれていない
+P1	F01=査定再開&F02=査定再開&F03=本人以外	更新前のステータス=査定再開／指定するステータス=査定再開／更新する管理者と査定担当者=本人以外	L0068,L0093	同じステータスなら成功とする定めと、本人以外は査定再開へ更新できない定めのどちらが先か書かれていない
+P1	F01=査定前&F02=査定前	更新前のステータス=査定前／指定するステータス=査定前	L0032-L0035,L0068	査定前は更新不可とする定めと、同じステータスなら成功とする定めのどちらが先か書かれていない
+P1	F01=終了系ステータス&F02=終了系ステータス	更新前のステータス=終了系ステータス／指定するステータス=終了系ステータス	L0068,L0092	終了済みのエラーか、同じステータスの成功かが書かれていない（終了系の中で同じ値かも決まらない）
+
+ succeeded in 0ms:
+組ID	処理ID	組	組（読める形）	埋める組
+CB-A06-02-001	P1	F01=取得対象ステータス&F02=職業と国の両方が紐づく&F03=所属店舗が定まる&F04=ログイン者の所属店舗	店頭買取のステータス=取得対象ステータス／店頭買取の職業と国の紐づき=職業と国の両方が紐づく／ログイン者の所属店舗=所属店舗が定まる／店頭買取の店舗=ログイン者の所属店舗	店頭買取のステータス×店頭買取の職業と国の紐づき×ログイン者の所属店舗×店頭買取の店舗: 取得対象ステータス×職業と国の両方が紐づく×所属店舗が定まる×ログイン者の所属店舗
+CB-A06-02-002	P1	F01=取得対象ステータス&F02=職業と国の両方が紐づく&F03=所属店舗が定まる&F04=別の店舗	店頭買取のステータス=取得対象ステータス／店頭買取の職業と国の紐づき=職業と国の両方が紐づく／ログイン者の所属店舗=所属店舗が定まる／店頭買取の店舗=別の店舗	店頭買取のステータス×店頭買取の職業と国の紐づき×ログイン者の所属店舗×店頭買取の店舗: 取得対象ステータス×職業と国の両方が紐づく×所属店舗が定まる×別の店舗
+CB-A06-02-003	P1	F01=取得対象ステータス&F02=職業と国の両方が紐づく&F03=会員サブ情報が無く所属店舗が定まらない&F04=ログイン者の所属店舗	店頭買取のステータス=取得対象ステータス／店頭買取の職業と国の紐づき=職業と国の両方が紐づく／ログイン者の所属店舗=会員サブ情報が無く所属店舗が定まらない／店頭買取の店舗=ログイン者の所属店舗	店頭買取のステータス×店頭買取の職業と国の紐づき×ログイン者の所属店舗×店頭買取の店舗: 取得対象ステータス×職業と国の両方が紐づく×会員サブ情報が無く所属店舗が定まらない×ログイン者の所属店舗
+CB-A06-02-004	P1	F01=取得対象ステータス&F02=職業と国の両方が紐づく&F03=会員サブ情報が無く所属店舗が定まらない&F04=別の店舗	店頭買取のステータス=取得対象ステータス／店頭買取の職業と国の紐づき=職業と国の両方が紐づく／ログイン者の所属店舗=会員サブ情報が無く所属店舗が定まらない／店頭買取の店舗=別の店舗	店頭買取のステータス×店頭買取の職業と国の紐づき×ログイン者の所属店舗×店頭買取の店舗: 取得対象ステータス×職業と国の両方が紐づく×会員サブ情報が無く所属店舗が定まらない×別の店舗
+CB-A06-02-005	P1	F01=取得対象ステータス&F02=職業または国が紐づかない&F03=所属店舗が定まる&F04=ログイン者の所属店舗	店頭買取のステータス=取得対象ステータス／店頭買取の職業と国の紐づき=職業または国が紐づかない／ログイン者の所属店舗=所属店舗が定まる／店頭買取の店舗=ログイン者の所属店舗	店頭買取のステータス×店頭買取の職業と国の紐づき×ログイン者の所属店舗×店頭買取の店舗: 取得対象ステータス×職業または国が紐づかない×所属店舗が定まる×ログイン者の所属店舗
+CB-A06-02-006	P1	F01=取得対象ステータス&F02=職業または国が紐づかない&F03=所属店舗が定まる&F04=別の店舗	店頭買取のステータス=取得対象ステータス／店頭買取の職業と国の紐づき=職業または国が紐づかない／ログイン者の所属店舗=所属店舗が定まる／店頭買取の店舗=別の店舗	店頭買取のステータス×店頭買取の職業と国の紐づき×ログイン者の所属店舗×店頭買取の店舗: 取得対象ステータス×職業または国が紐づかない×所属店舗が定まる×別の店舗
+CB-A06-02-007	P1	F01=取得対象ステータス&F02=職業または国が紐づかない&F03=会員サブ情報が無く所属店舗が定まらない&F04=ログイン者の所属店舗	店頭買取のステータス=取得対象ステータス／店頭買取の職業と国の紐づき=職業または国が紐づかない／ログイン者の所属店舗=会員サブ情報が無く所属店舗が定まらない／店頭買取の店舗=ログイン者の所属店舗	店頭買取のステータス×店頭買取の職業と国の紐づき×ログイン者の所属店舗×店頭買取の店舗: 取得対象ステータス×職業または国が紐づかない×会員サブ情報が無く所属店舗が定まらない×ログイン者の所属店舗
+CB-A06-02-008	P1	F01=取得対象ステータス&F02=職業または国が紐づかない&F03=会員サブ情報が無く所属店舗が定まらない&F04=別の店舗	店頭買取のステータス=取得対象ステータス／店頭買取の職業と国の紐づき=職業または国が紐づかない／ログイン者の所属店舗=会員サブ情報が無く所属店舗が定まらない／店頭買取の店舗=別の店舗	店頭買取のステータス×店頭買取の職業と国の紐づき×ログイン者の所属店舗×店頭買取の店舗: 取得対象ステータス×職業または国が紐づかない×会員サブ情報が無く所属店舗が定まらない×別の店舗
+CB-A06-02-009	P1	F01=取得対象外ステータス&F02=職業と国の両方が紐づく&F03=所属店舗が定まる&F04=ログイン者の所属店舗	店頭買取のステータス=取得対象外ステータス／店頭買取の職業と国の紐づき=職業と国の両方が紐づく／ログイン者の所属店舗=所属店舗が定まる／店頭買取の店舗=ログイン者の所属店舗	店頭買取のステータス×店頭買取の職業と国の紐づき×ログイン者の所属店舗×店頭買取の店舗: 取得対象外ステータス×職業と国の両方が紐づく×所属店舗が定まる×ログイン者の所属店舗
+CB-A06-02-010	P1	F01=取得対象外ステータス&F02=職業と国の両方が紐づく&F03=所属店舗が定まる&F04=別の店舗	店頭買取のステータス=取得対象外ステータス／店頭買取の職業と国の紐づき=職業と国の両方が紐づく／ログイン者の所属店舗=所属店舗が定まる／店頭買取の店舗=別の店舗	店頭買取のステータス×店頭買取の職業と国の紐づき×ログイン者の所属店舗×店頭買取の店舗: 取得対象外ステータス×職業と国の両方が紐づく×所属店舗が定まる×別の店舗
+CB-A06-02-011	P1	F01=取得対象外ステータス&F02=職業と国の両方が紐づく&F03=会員サブ情報が無く所属店舗が定まらない&F04=ログイン者の所属店舗	店頭買取のステータス=取得対象外ステータス／店頭買取の職業と国の紐づき=職業と国の両方が紐づく／ログイン者の所属店舗=会員サブ情報が無く所属店舗が定まらない／店頭買取の店舗=ログイン者の所属店舗	店頭買取のステータス×店頭買取の職業と国の紐づき×ログイン者の所属店舗×店頭買取の店舗: 取得対象外ステータス×職業と国の両方が紐づく×会員サブ情報が無く所属店舗が定まらない×ログイン者の所属店舗
+CB-A06-02-012	P1	F01=取得対象外ステータス&F02=職業と国の両方が紐づく&F03=会員サブ情報が無く所属店舗が定まらない&F04=別の店舗	店頭買取のステータス=取得対象外ステータス／店頭買取の職業と国の紐づき=職業と国の両方が紐づく／ログイン者の所属店舗=会員サブ情報が無く所属店舗が定まらない／店頭買取の店舗=別の店舗	店頭買取のステータス×店頭買取の職業と国の紐づき×ログイン者の所属店舗×店頭買取の店舗: 取得対象外ステータス×職業と国の両方が紐づく×会員サブ情報が無く所属店舗が定まらない×別の店舗
+CB-A06-02-013	P1	F01=取得対象外ステータス&F02=職業または国が紐づかない&F03=所属店舗が定まる&F04=ログイン者の所属店舗	店頭買取のステータス=取得対象外ステータス／店頭買取の職業と国の紐づき=職業または国が紐づかない／ログイン者の所属店舗=所属店舗が定まる／店頭買取の店舗=ログイン者の所属店舗	店頭買取のステータス×店頭買取の職業と国の紐づき×ログイン者の所属店舗×店頭買取の店舗: 取得対象外ステータス×職業または国が紐づかない×所属店舗が定まる×ログイン者の所属店舗
+CB-A06-02-014	P1	F01=取得対象外ステータス&F02=職業または国が紐づかない&F03=所属店舗が定まる&F04=別の店舗	店頭買取のステータス=取得対象外ステータス／店頭買取の職業と国の紐づき=職業または国が紐づかない／ログイン者の所属店舗=所属店舗が定まる／店頭買取の店舗=別の店舗	店頭買取のステータス×店頭買取の職業と国の紐づき×ログイン者の所属店舗×店頭買取の店舗: 取得対象外ステータス×職業または国が紐づかない×所属店舗が定まる×別の店舗
+CB-A06-02-015	P1	F01=取得対象外ステータス&F02=職業または国が紐づかない&F03=会員サブ情報が無く所属店舗が定まらない&F04=ログイン者の所属店舗	店頭買取のステータス=取得対象外ステータス／店頭買取の職業と国の紐づき=職業または国が紐づかない／ログイン者の所属店舗=会員サブ情報が無く所属店舗が定まらない／店頭買取の店舗=ログイン者の所属店舗	店頭買取のステータス×店頭買取の職業と国の紐づき×ログイン者の所属店舗×店頭買取の店舗: 取得対象外ステータス×職業または国が紐づかない×会員サブ情報が無く所属店舗が定まらない×ログイン者の所属店舗
+CB-A06-02-016	P1	F01=取得対象外ステータス&F02=職業または国が紐づかない&F03=会員サブ情報が無く所属店舗が定まらない&F04=別の店舗	店頭買取のステータス=取得対象外ステータス／店頭買取の職業と国の紐づき=職業または国が紐づかない／ログイン者の所属店舗=会員サブ情報が無く所属店舗が定まらない／店頭買取の店舗=別の店舗	店頭買取のステータス×店頭買取の職業と国の紐づき×ログイン者の所属店舗×店頭買取の店舗: 取得対象外ステータス×職業または国が紐づかない×会員サブ情報が無く所属店舗が定まらない×別の店舗
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/combos/A06-03_undetermined.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "rg -n '"'^A06-|'"\\tA06-' functions/dead-spec-register.tsv functions/phase2_candidates.tsv" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+処理ID	組	組（読める形）	根拠	理由
+P1	F02=個別入力商品がある	個別入力商品=個別入力商品がある	L0036,L0056,L0129	商品規格IDが未登録の明細を個別入力商品として登録するという定めと、商品規格IDがnullならHTTP 400で中止するという表示メッセージの定めが食い違い、共通する部分が無い（既存ケース IT-A06-03-006・045 も保留）
+P1	F01=買取成立&F07=端末取引IDなし	送信されたステータス=買取成立／端末取引ID=端末取引IDなし	L0025,L0058,L0067	買取成立で端末取引IDを連携するとあるが、端末取引IDが任意項目で、指定が無いときに何を連携するか書かれていない
+
+ succeeded in 0ms:
+functions/phase2_candidates.tsv:48:known	0506	sheet-14	【新規】店頭買取情報一部キャンセル情報連携	A06-14	functions/ec-cube-enterprise/a06-14_api_store_purchase_otc_buy_order_partial_cancel_sync.md	yes	このAPIはPh2で対応するため、Ph1では実装しない
+
+codex
+設計書の優先順位を適用すると、A06-03 と A06-05 の「正解未定」には結果を決められる組があります。生成済みの組にも、所属店舗が無い利用者に「ログイン者の所属店舗」を割り当てた行があるため、制約の根拠を確認しています。
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/combos/A06-01.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+組ID	処理ID	組	組（読める形）	埋める組
+CB-A06-01-001	P1	F01=認証成功&F02=店舗が紐づかない	認証の結果=認証成功／認証した会員の所属店舗=店舗が紐づかない	認証の結果×認証した会員の所属店舗: 認証成功×店舗が紐づかない
+CB-A06-01-002	P1	F01=会員が見つからない&F02=店舗が紐づく	認証の結果=会員が見つからない／認証した会員の所属店舗=店舗が紐づく	認証の結果×認証した会員の所属店舗: 会員が見つからない×店舗が紐づく
+CB-A06-01-003	P1	F01=会員が見つからない&F02=店舗が紐づかない	認証の結果=会員が見つからない／認証した会員の所属店舗=店舗が紐づかない	認証の結果×認証した会員の所属店舗: 会員が見つからない×店舗が紐づかない
+CB-A06-01-004	P1	F01=パスワード不一致&F02=店舗が紐づかない	認証の結果=パスワード不一致／認証した会員の所属店舗=店舗が紐づかない	認証の結果×認証した会員の所属店舗: パスワード不一致×店舗が紐づかない
+
+codex
+### 1
+- 機能: A06-01
+- 種類: A
+- 対象: `A06-01_factors.tsv` F01
+- 主張: 「会員が見つからない」と「パスワード不一致」を別の値にしている。
+- 実際: どちらも同じ文言のHTTP 401を返し、トークンを発行しない（`integration_test/casegen/combination/units/A06-01/design.txt:L0069-L0070`）。
+- 修正案: 結果が同じ認証失敗として1つの値にまとめる。
+
+### 2
+- 機能: A06-01
+- 種類: D
+- 対象: `A06-01_constraints.tsv` P1、F01=会員が見つからない&F02=店舗が紐づく／店舗が紐づかない
+- 主張: 両方の組を作れるものとしている。
+- 実際: 「会員が見つからない」ときは、F02が対象とする認証済み会員自体が存在しない（`integration_test/casegen/combination/units/A06-01/design.txt:L0063-L0064,L0069`）。
+- 修正案: F01の値の統合に合わせてF02との組を見直し、会員が存在しない組を生成しない。
+
+### 3
+- 機能: A06-02
+- 種類: C
+- 対象: `A06-02_interactions.tsv` P1 F01+F02+F03+F04
+- 主張: 4要因すべてをまとめて「効き合う」としている。
+- 実際: ステータスと職業・国の紐づきは、それぞれ対象から除外する条件である。所属店舗が定まらない場合に変わるのは店舗による絞り込みである（`integration_test/casegen/combination/units/A06-02/design.txt:L0023-L0024,L0066-L0068`）。
+- 修正案: F01・F02を独立した除外条件として判定し、店舗に関するF03・F04の関係を別に判定する。
+
+### 4
+- 機能: A06-02
+- 種類: D
+- 対象: `A06-02_constraints.tsv` P1、F03=会員サブ情報が無く所属店舗が定まらない&F04=ログイン者の所属店舗
+- 主張: この組を作れない組として載せていない。
+- 実際: 会員サブ情報が無い場合、ログイン者の所属店舗は定まらず、店舗による絞り込みも行わない（`integration_test/casegen/combination/units/A06-02/design.txt:L0068`）。
+- 修正案: この組を除外し、所属店舗が定まらない場合を表せるようF04の値も見直す。
+
+### 5
+- 機能: A06-03
+- 種類: D
+- 対象: `A06-03_constraints.tsv` P1 F02=個別入力商品がある
+- 主張: 個別入力商品がある場合を一律に「正解未定」としている。
+- 実際: Excel由来の本文は、商品規格IDが未登録の明細を個別入力商品として登録し、買取成立時は「未登録在庫あり」にすると定める（`integration_test/casegen/combination/units/A06-03/design.txt:L0034-L0037,L0055-L0057`）。食い違う埋め込みの表示メッセージは下位の記述である（同ファイル`L0129-L0130`）。
+- 修正案: 指定された優先順位に従い、この「正解未定」を外す。
+
+### 6
+- 機能: A06-05
+- 種類: D
+- 対象: `A06-05_constraints.tsv` P1、F01=査定中&F02=査定中&F03=本人以外、およびF01=査定再開&F02=査定再開&F03=本人以外
+- 主張: 同じステータスへの要求が成功するか拒否されるか「正解未定」としている。
+- 実際: 埋め込みの表示メッセージは、査定中・査定再開の受注を担当者本人以外が査定中・査定再開へ更新しようとしたとき、HTTP 400で更新を中止すると定める（`integration_test/casegen/combination/units/A06-05/design.txt:L0093`）。
+- 修正案: 両組の「正解未定」を外し、HTTP 400の更新拒否として扱う。
+
+### 7
+- 機能: A06-05
+- 種類: D
+- 対象: `A06-05_constraints.tsv` P1 F01=査定前&F02=査定前
+- 主張: 同じステータスなので成功するか、更新不可なので拒否されるか「正解未定」としている。
+- 実際: Excel由来の本文は、更新先として査定前を明示的に「更新不可」とする（`integration_test/casegen/combination/units/A06-05/design.txt:L0028-L0035`）。同じステータスなら成功という記述は下位の「現行仕様」にある（同ファイル`L0068`）。
+- 修正案: 「正解未定」を外し、査定前への更新不可として扱う。
+
+### 8
+- 機能: A06-05
+- 種類: D
+- 対象: `A06-05_constraints.tsv` P1 F01=終了系ステータス&F02=終了系ステータス
+- 主張: 終了済みエラーか同じステータスの成功か「正解未定」としている。
+- 実際: Excel由来の本文は更新可能な現在ステータスと更新先を限定している（`integration_test/casegen/combination/units/A06-05/design.txt:L0023-L0040`）。埋め込みの表示メッセージも、終了済み受注を査定中・査定再開以外へ更新するとHTTP 400で中止すると定める（同ファイル`L0091-L0092`）。
+- 修正案: 「正解未定」を外し、終了済み受注の更新拒否として扱う。
+tokens used
+104,410
+### 1
+- 機能: A06-01
+- 種類: A
+- 対象: `A06-01_factors.tsv` F01
+- 主張: 「会員が見つからない」と「パスワード不一致」を別の値にしている。
+- 実際: どちらも同じ文言のHTTP 401を返し、トークンを発行しない（`integration_test/casegen/combination/units/A06-01/design.txt:L0069-L0070`）。
+- 修正案: 結果が同じ認証失敗として1つの値にまとめる。
+
+### 2
+- 機能: A06-01
+- 種類: D
+- 対象: `A06-01_constraints.tsv` P1、F01=会員が見つからない&F02=店舗が紐づく／店舗が紐づかない
+- 主張: 両方の組を作れるものとしている。
+- 実際: 「会員が見つからない」ときは、F02が対象とする認証済み会員自体が存在しない（`integration_test/casegen/combination/units/A06-01/design.txt:L0063-L0064,L0069`）。
+- 修正案: F01の値の統合に合わせてF02との組を見直し、会員が存在しない組を生成しない。
+
+### 3
+- 機能: A06-02
+- 種類: C
+- 対象: `A06-02_interactions.tsv` P1 F01+F02+F03+F04
+- 主張: 4要因すべてをまとめて「効き合う」としている。
+- 実際: ステータスと職業・国の紐づきは、それぞれ対象から除外する条件である。所属店舗が定まらない場合に変わるのは店舗による絞り込みである（`integration_test/casegen/combination/units/A06-02/design.txt:L0023-L0024,L0066-L0068`）。
+- 修正案: F01・F02を独立した除外条件として判定し、店舗に関するF03・F04の関係を別に判定する。
+
+### 4
+- 機能: A06-02
+- 種類: D
+- 対象: `A06-02_constraints.tsv` P1、F03=会員サブ情報が無く所属店舗が定まらない&F04=ログイン者の所属店舗
+- 主張: この組を作れない組として載せていない。
+- 実際: 会員サブ情報が無い場合、ログイン者の所属店舗は定まらず、店舗による絞り込みも行わない（`integration_test/casegen/combination/units/A06-02/design.txt:L0068`）。
+- 修正案: この組を除外し、所属店舗が定まらない場合を表せるようF04の値も見直す。
+
+### 5
+- 機能: A06-03
+- 種類: D
+- 対象: `A06-03_constraints.tsv` P1 F02=個別入力商品がある
+- 主張: 個別入力商品がある場合を一律に「正解未定」としている。
+- 実際: Excel由来の本文は、商品規格IDが未登録の明細を個別入力商品として登録し、買取成立時は「未登録在庫あり」にすると定める（`integration_test/casegen/combination/units/A06-03/design.txt:L0034-L0037,L0055-L0057`）。食い違う埋め込みの表示メッセージは下位の記述である（同ファイル`L0129-L0130`）。
+- 修正案: 指定された優先順位に従い、この「正解未定」を外す。
+
+### 6
+- 機能: A06-05
+- 種類: D
+- 対象: `A06-05_constraints.tsv` P1、F01=査定中&F02=査定中&F03=本人以外、およびF01=査定再開&F02=査定再開&F03=本人以外
+- 主張: 同じステータスへの要求が成功するか拒否されるか「正解未定」としている。
+- 実際: 埋め込みの表示メッセージは、査定中・査定再開の受注を担当者本人以外が査定中・査定再開へ更新しようとしたとき、HTTP 400で更新を中止すると定める（`integration_test/casegen/combination/units/A06-05/design.txt:L0093`）。
+- 修正案: 両組の「正解未定」を外し、HTTP 400の更新拒否として扱う。
+
+### 7
+- 機能: A06-05
+- 種類: D
+- 対象: `A06-05_constraints.tsv` P1 F01=査定前&F02=査定前
+- 主張: 同じステータスなので成功するか、更新不可なので拒否されるか「正解未定」としている。
+- 実際: Excel由来の本文は、更新先として査定前を明示的に「更新不可」とする（`integration_test/casegen/combination/units/A06-05/design.txt:L0028-L0035`）。同じステータスなら成功という記述は下位の「現行仕様」にある（同ファイル`L0068`）。
+- 修正案: 「正解未定」を外し、査定前への更新不可として扱う。
+
+### 8
+- 機能: A06-05
+- 種類: D
+- 対象: `A06-05_constraints.tsv` P1 F01=終了系ステータス&F02=終了系ステータス
+- 主張: 終了済みエラーか同じステータスの成功か「正解未定」としている。
+- 実際: Excel由来の本文は更新可能な現在ステータスと更新先を限定している（`integration_test/casegen/combination/units/A06-05/design.txt:L0023-L0040`）。埋め込みの表示メッセージも、終了済み受注を査定中・査定再開以外へ更新するとHTTP 400で中止すると定める（同ファイル`L0091-L0092`）。
+- 修正案: 「正解未定」を外し、終了済み受注の更新拒否として扱う。

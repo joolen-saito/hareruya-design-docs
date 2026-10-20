@@ -1,0 +1,2683 @@
+Reading additional input from stdin...
+OpenAI Codex v0.162.1
+--------
+workdir: /home/y-saito/Developments/hareruya-design-docs
+model: gpt-6-sol
+provider: openai
+approval: never
+sandbox: read-only
+reasoning effort: high
+reasoning summaries: none
+session id: 01a1577a-3c0e-7362-a1a5-d4aecc3dc1d9
+--------
+user
+# 反証の依頼: 機能 A17-05・B02-01・B02-02・B02-03・B02-04・B02-05・B02-06・B02-07・B05-01・B05-03・B05-05・B05-06 の要因表
+
+あなたは独立したレビュアーである。別の担当が作った**要因表**に、設計書と食い違う所が無いかを確かめる。直さない。読むだけ。
+リポジトリは `/home/y-saito/Developments/hareruya-design-docs/`。出力は日本語。
+
+## 要因表とは（依頼者決定 2026-10-20）
+
+結合テストで、1回の処理の結果を左右する要因（区分・状態・設定・関連データの値）が2つ以上あるとき、
+**効き合う要因は値の組合せを全部、関係しない要因はどの2つの要因の値の組もどこかで1回**試すケースを足す。
+要因表はその元で、表から機械が組を並べる（`integration_test/casegen/combination/gen_combos.py`）。表の誤りはそのままケースの誤りになる。
+作り方の決まりは `integration_test/casegen/combination/FACTOR_PROMPT.md`（担当への依頼文）にある。まずこれを読む。
+
+## 読むもの
+
+| 何 | パス |
+| --- | --- |
+| 要因表（機能ごとに5つ） | `integration_test/casegen/combination/factors/<機能ID>_processes.tsv`・`_factors.tsv`・`_interactions.tsv`・`_constraints.tsv`・`_existing.tsv` |
+| 機械が並べた組（参考） | `integration_test/casegen/combination/combos/<機能ID>.tsv` |
+| 設計書（行頭の `L0001` は行番号） | `integration_test/casegen/combination/units/<機能ID>/design.txt`、他の機能は `units/<機能ID>/design.txt`、共通シートは `units/_common/` |
+| ケース | `integration_test/casegen/cases/<機能ID>_test_cases.tsv`、全機能は `integration_test/casegen/all_test_cases.tsv` |
+| 結合テストの範囲 | `integration_test/SCOPE.md` |
+| 不機能仕様・フェーズ2見送り（載っているものは意図して外している。指摘しない） | `functions/dead-spec-register.tsv`・`functions/phase2_candidates.tsv` |
+
+設計書の中で記述が食い違うときは、Excel 由来の本文 ＞ 埋め込みの「表示メッセージ」節 ＞ 埋め込みの「現行仕様」節の順に採る。
+
+## 確かめること（事実だけ）
+
+| 種類 | 何を見るか |
+| --- | --- |
+| A 要因・値の誤り | 要因・値・値ごとの結果が、根拠の行に書かれていない。根拠の行が別のことを言っている。結果が同じになる値を別の値として分けている |
+| B 要因・値の抜け | 設計書の行が「この値でこの処理の結果が変わる」と定めているのに、要因・値が無い（他の機能の設定値でこの処理が読むものを含む） |
+| C 判定の誤り | 効き合う／関係しない／設計書が決めていない の判定が、設計書の行と食い違う。特に、足し算で合計に入るだけの組を効き合うにしている、一方の結果がもう一方の判定の入力になるのに関係しないにしている。**3つ以上の要因をまとめた効き合う**は、その全部が同時に互いの結果を変えるかを確かめる（2つずつで効き合うだけなら2要因の行に分けるべき。まとめると値の組合せが全部ケースになる）。1件の対象を出す・出さないを複数の条件の「すべて満たす／どれか1つで外れる」で決める所を効き合うにしていないか（条件どうしは関係しないでよい）。優先順位で順に比べて決める所を、比べる項目ごとの要因の全組合せにしていないか（「どの段で決まるか」の1要因でよい） |
+| D 制約の誤り・抜け | 作れない としている組が設計上作れる。作れない組が載っていない。正解未定 としている組の結果が設計書から決まる |
+| E 既存ケースの読み違い | existing.tsv の値が、そのケースの事前準備・手順に書かれていない。そのケースが処理を動かしていない、確かめる所で結果を見ていない |
+| F 範囲外 | 処理・要因が結合テストの範囲でない（同じ画面の中で閉じる表示の計算、入力値の検証、検索条件の組合せ、権限、二重送信、排他） |
+
+次は指摘しない: 書き方・言い回し、要因IDの振り方、値の並び順、設計書に無い仕様の追加の要求、境界値・数量1/複数（別に済んでいる）。
+
+## 出力
+
+指摘が無ければ `NONE` の1語だけ。あれば1件ずつ、次の形で。
+
+```
+### <番号>
+- 機能: <機能ID>
+- 種類: <A〜F>
+- 対象: <ファイル名> <要因ID・処理ID・組・テストID>
+- 主張: <表に書かれていること>
+- 実際: <設計書・ケースの記述（ファイル:行 を必ず添える）>
+- 修正案: <どう直すか。1文>
+```
+warning: Codex could not find bubblewrap on PATH. Install bubblewrap with your OS package manager. See the sandbox prerequisites: https://developers.openai.com/codex/concepts/sandboxing#prerequisites. Codex will use the bundled bubblewrap in the meantime.
+2026-10-20T04:03:14.224610Z ERROR rmcp::transport::worker: worker quit with fatal: Transport channel closed, when AuthRequired(AuthRequiredError { www_authenticate_header: "Bearer resource_metadata=\"https://mcp.firecrawl.dev/.well-known/oauth-protected-resource/v2/mcp-oauth\", error=\"invalid_token\", error_description=\"Firecrawl credentials required: OAuth access token (Authorization: Bearer fco_...) or API key (x-firecrawl-api-key)\"" })
+codex
+まず要因表の作成ルールと対象ファイルを確認します。その後、各機能の設計書・既存ケースに照らして、根拠を示せる食い違いだけを報告します。
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/FACTOR_PROMPT.md' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+# 依頼: 機能 {FID}（{FNAME}）の要因表づくり
+
+これは分析である。ケースも設計書も直さない。事実は自分でファイルを読んで確かめ、推測で書かない。
+リポジトリは `/home/y-saito/Developments/hareruya-design-docs/`。パスはここからの相対。出力はすべて日本語で書く。
+git の変更操作（add・commit など）をしない。
+
+## 背景（依頼者決定 2026-10-20）
+
+結合テストケースは設計書の定め1件ごとに作られ、10/15 には定めごとに「数量1と複数」「有無」「状態・区分ごと」などのデータを足した。
+それでも、**1回の処理の結果を左右する要因が2つ以上あるとき、その値を同時に変えて通すケースが無い**。
+例: 公開側で注文を確定するケース33件は、支払方法がほぼ郵便振替か銀行振込で、配送方法もゆうパック・EMS が大半。クレジットカード・代金引換・店頭支払、店頭受取・同梱で注文を通すケースは無い。
+
+依頼者の決定:
+- **効き合う要因**（一方の値で、もう一方の値の結果が変わると設計書が定める）は、値の組合せを全部試す。
+- **関係しない要因**は、どの2つの要因の値の組も、どこかのケースで1回は出るように並べる（2要因の組）。
+- **他の機能の設定値**（送料・手数料・支払方法の利用条件・送料無料の条件・配送方法に紐づく支払方法など）も、それを読む処理の要因に入れる。
+
+あなたの仕事は、機能 {FID} について、組合せの元になる**要因表**を作ること。組合せの行（どの値の組を何件試すか）は、この表から別の道具が機械で作る。
+だから、表の要因・値・判定の誤りは、そのままケースの誤りになる。
+
+## 読むもの
+
+| 何 | パス |
+| --- | --- |
+| 設計書（この機能のシートを文字に起こしたもの。行頭の `L0001` とタブは行番号。`#####` の行はシートの境目） | `integration_test/casegen/combination/units/{FID}/design.txt` |
+| 他の機能の設計書（設定値を読む処理のとき、設定する機能の定めを引く） | `integration_test/casegen/combination/units/<機能ID>/design.txt`（機能名は `combination/units.tsv`） |
+| 同じ冊子の共通シート（必要なときだけ） | {COMMON} |
+| この機能のケースとシード | `integration_test/casegen/cases/{FID}_test_cases.tsv`・`{FID}_seed_data.tsv` |
+| この機能の、テストから外したケース | `integration_test/casegen/combination/units/{FID}/excluded.tsv` |
+| 全機能のケース（他の機能のケースがこの機能の処理を通しているかの検索用） | `integration_test/casegen/all_test_cases.tsv`（列: テストID・観点ID・基本設計書・検証方法・テストデータ・事前準備・手順・期待結果。セル内改行があるので csv として読む） |
+| 結合テストの範囲 | `integration_test/SCOPE.md` |
+| 不機能仕様・フェーズ2見送り（ここに載るものは要因にしない） | `functions/dead-spec-register.tsv`・`functions/phase2_candidates.tsv` |
+| 設計書の中で記述が食い違うときの優先順位 | Excel 由来の本文 ＞ 埋め込みの「表示メッセージ」節（リニューアル後の仕様）＞ 埋め込みの「現行仕様」節。同じ出所では改訂後が優先。**Excel が触れていない条件を埋め込みが足しているだけのときは食い違いではなく、両方を当てる**（例: Excel が選択肢を並べ、埋め込みが「ポイントで全額払うときは全額ポイント支払いだけ」と条件を足す → 両方）。既存ケースは正解の根拠にしない（既存ケースと設計書の食い違いは返答に書く） |
+
+検索は `grep` を使う（`rg` は同じ入力で0件を返すことがあるので使わない）。
+
+## やること
+
+### 1. 処理を決める
+
+design.txt を**全部**読み、この機能の中で「操作やデータを受けて結果を出す処理」のうち、**結果を左右する要因が2つ以上ある処理**を挙げる。
+
+- 処理の単位は「1回の操作で動き、結果を1つの所で確かめられるまとまり」。例: 注文を確定して受注を作る／お支払い方法の選択肢を出す／受注の対応状況をキャンセルへ変えて保存する。
+- 結果は、データを作った所とは**別のコンポーネントで確かめる**もの（DB、別の画面、別の機能の画面、CSV・帳票、メール、連携先）。DBにあるデータで画面の表示・選択肢が変わるものも入る（例: 既存の受注の有無で配送方法の選択肢が変わる）。同じ画面の中だけで閉じる表示の計算（保存しない）と、計算式そのものの正しさは単体テストなので挙げない。
+- 要因が1つだけの処理は挙げない（10/15 の監査で済んでいる）。
+- **要因が2つ以上の処理が1つも無い機能**（一覧を出すだけ、1つの設定を保存するだけ、など）は、5つのファイルをヘッダだけで書き、返答の1行目に「対象の処理なし」と理由を書く。無理に処理を作らない。
+- 入力値の検証（必須・桁数・形式）、検索条件・削除条件の組合せ、権限、二重送信、排他は、ほかの観点の持ち分なので処理にも要因にもしない。
+
+### 2. 要因と値を挙げる
+
+処理ごとに、**その処理の結果を変えると設計書が定める要因**を挙げる。
+
+- 要因は「区分・状態・設定・関連データ」の値。例: 閲覧店舗、配送方法、支払方法、ポイントの使い方、受注の種類（通常・店頭受取・ついで買い）、会員か非会員か、変更前の対応状況、既存の受注の状態。
+- 他の機能で設定する値で、この処理が読むものも要因にする（出所に機能IDを書く）。例: 支払方法の利用条件（M10-04）に対する注文金額、都道府県別の送料（M10-06）。その機能の design.txt で定めを確かめ、根拠に `M10-04:L0123` の形で書く。**この処理の結果への効き方が設計書のどこにも書かれていない設定値は要因にしない**（値ごとの結果が書けないため）。そういう設定値は返答の「判断に迷った点」に挙げる（依頼元が論点として控える）。
+- **値は、結果の分かれ目ごとに代表を1つ**。結果が同じになる値は1つにまとめる（例: ゆうパックとゆうパケットで結果が変わらないならどちらか1つ）。結果が値ごとに違うなら全部挙げる（例: 支払方法ごとに手数料・ボタンの文言・ポイントを使う時点が違うなら、支払方法は全部）。
+- 境界値（ちょうどの値・上限）と数量1/複数は、10/15 に済んでいるので値にしない。値は「範囲内」「範囲外」「あり」「なし」のような分かれ目で書く。
+- 不正な入力、作れない値（画面の選択肢に無い値）は値にしない。
+- 値ごとの結果を、設計書の語で短く書く（「支店: 支払方法は店頭支払だけ」）。
+
+### 3. 要因どうしを判定する
+
+処理ごとに、その処理の要因の**すべての2つの組**を判定する（要因が5つなら10組）。判定は次のどれか。
+
+| 判定 | いつ | 根拠 |
+| --- | --- | --- |
+| 効き合う | 一方の値で、もう一方の値の結果（可否、選択肢、金額、更新先、更新内容）が変わると設計書が定める。または、一方の結果がもう一方の判定の入力になる（例: 使用ポイントで支払う金額が変わり、支払方法の選択肢が変わる） | 両方を結ぶ設計書の行が必須 |
+| 関係しない | それぞれの要因の結果が、もう一方の値によって変わらない（例: 送料は配送方法で、手数料は支払方法で決まり、合計は足し算） | 理由を書く |
+| 設計書が決めていない | 同時に効いたときの結果が設計書から決まらない（例: 送料無料の判定に使う金額が、ポイントを引く前か後か書かれていない） | 決まらない理由。下の「組の制約」に、決まらない値の組を「正解未定」で必ず書く |
+
+3つ以上の要因がまとめて効き合うとき（例: 配送方法・既存の受注の状態・既存の受注の支払方法で同梱を出すか決まる）は、1行に `F01+F03+F05` と書いて「効き合う」にしてよい。その中の2つの組は、別の行に書かない。**まとめるのは、その全部が同時に互いの結果を変えるときだけ**。2つずつで効き合うだけなら2要因の行に分ける（まとめると値の組合せが全部ケースになり、件数が膨らむ）。
+**選べるものの集まりを2つの定めが別々に絞り、結果がその共通部分になるとき**（例: 支店は支払方法が店頭支払だけ、同梱は郵便振替・銀行振込だけ → 選択肢の中身が組ごとに変わる）は「効き合う」にする。「設計書が決めていない」にするのは、両方を当てると選択肢が1つも残らないなど、結果が設計書から決まらない組だけ。
+**1件の対象を出す・出さない（対象にする・しない）を、複数の条件の「すべて満たす」または「どれか1つで外れる」で決めるとき**（例: 公開・在庫あり・セール期間内・表示フラグ のすべてを満たす商品だけ出す）は、条件どうしは「関係しない」にする。結果は出る・出ないの2つだけで、条件ごとの外れ方は1つずつ確かめれば足り、全組合せは要らない（7条件を効き合うにすると128行になる）。
+**優先順位で順に比べて決めるとき**（例: 複数一致したら、言語→特殊版→発売日→フォイル→プロモの順に比べて先に差が付いたもので選ぶ）は、比べる項目を別々の要因にして全組合せにしない。「どの段で決まるか」を1つの要因にまとめる（値: 1段目で決まる｜2段目で決まる｜…｜全段が同じ）。上の段の差が下の段を隠すので、各段で決まる組を1つずつ試せば足りる（6段を効き合うにすると64行になる）。
+「一方の値で、もう一方の処理そのものが行われない」型（例: キャンセル日が既に入っていると、在庫・ポイントの戻しを行わない）も「効き合う」にする。
+**推測で値の組を「作れない」にしない**。設計書の語がどの値を指すか決まらないとき（例: 支店の「店舗受取」が店頭受取とスムーズ店頭受取のどちらか）は「正解未定」にする。
+**効き合う組の値の組合せは全部ケースになる**。値が多い要因どうし（7×7 など）を効き合うにするときは、設計書の行で本当に互いの結果を変えるかを確かめる。足し算で合計に入るだけなら「関係しない」。
+
+### 4. 組の制約を書く
+
+- **作れない**: 設計上その値の組が成り立たない（例: 支店では支払方法が店頭支払だけなので、支店×代金引換は作れない）。根拠の行が必須。
+- **正解未定**: その値の組で結果が設計書から決まらない。決まらない理由を書く。これはケースにせず、報告書に論点として残す。
+
+### 5. 既存のケースが通している組を書く
+
+この機能のケース（と、`all_test_cases.tsv` を語で検索して見つかった他の機能のケース）のうち、**その処理を動かして、確かめる所で結果を確かめている**ケースを1件ずつ書き、そのケースで値が決まっている要因の値を書く。
+
+- 値は、事前準備・手順に**書かれている**ものだけ。書かれていない要因は書かない（流れの中でたまたまそうなるだけのものは数えない）。
+- 1つのケースが同じ処理を別の値で2回以上通しているときは、通した値ごとに1行ずつ書く（同じテストIDの行が2つになる）。1回の処理で2つのデータを別の値で扱う（混在）ケースは書かない。
+- 期待結果が設計書と食い違う既存ケースは、値が合っていても書かない（返答に食い違いとして書く）。
+- 処理を動かしていない（画面を開いて別のことを見るだけ）ケース、結果を確かめていないケースは書かない。
+- テストから外したケース（excluded.tsv）は書かない。
+
+## 出力（この5つだけを書く。ほかのファイルは変更しない）
+
+すべて `integration_test/casegen/combination/factors/` に、タブ区切り・ヘッダつきで書く。セル内に改行・タブ・ダブルクォートを入れない。
+
+### `{FID}_processes.tsv`（5列）
+
+```
+処理ID	処理	契機	確かめる所	根拠
+P1	注文を確定して受注を作る	ご注文方法指定画面で確定チェックボックスを選び、注文するボタンを押す	受注情報編集画面（M05-11）	L0322-L0330
+```
+
+- 処理IDは P1 からの連番。根拠は design.txt の行（`L0037`、`L0037-L0040`、カンマ区切り）。他の機能は `M10-04:L0012`、共通シートは `_common/<ファイル名>:L0012`。
+
+### `{FID}_factors.tsv`（7列）
+
+```
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1,P2	閲覧店舗	本店｜支店	本店: 支払方法はEC用の6種／支店: 支払方法は店頭支払だけ	L0236,L0249-L0252	この機能
+F05	P2	支払方法の利用条件に対する注文金額	範囲内｜上限を超える	範囲内: 選択肢に出る／上限を超える: 選択肢に出ない	M10-04:L0101	M10-04（設定）
+```
+
+- 要因IDは F01 からの連番（処理をまたいで通し番号）。処理IDはその要因が効く処理（カンマ区切り）。
+- 値は全角の縦棒 `｜` で区切る。2つ以上。1つの値は30字まで。`=` `&` `｜` `＋` `×` を値の中に使わない。
+- 値ごとの結果は `値: 結果` を `／` でつなぐ。全部の値について書く。
+- 出所は `この機能`、`<機能ID>（設定）`、`<機能ID>（データ）` のどれか。
+
+### `{FID}_interactions.tsv`（5列）
+
+```
+処理ID	要因	判定	根拠	理由
+P1	F03+F04	効き合う	L0204	配送方法が同梱のときは支払方法が郵便振替・銀行振込だけになる
+P1	F04+F06	関係しない		手数料は支払方法で決まり、ポイントは値引きとして合計から引くだけ
+P1	F06+F07	設計書が決めていない	M10-05:L0040	送料無料の判定に使う金額がポイント値引きの前か後か書かれていない
+```
+
+- 処理ごとに、その処理の要因の2つの組を全部判定する（3つ以上の効き合うにまとめた組は除く）。
+- 効き合う・設計書が決めていない は根拠が必須。関係しない・設計書が決めていない は理由が必須。
+
+### `{FID}_constraints.tsv`（5列）
+
+```
+処理ID	組	種別	根拠	理由
+P1	F01=支店&F04=代金引換	作れない	L0251-L0252	支店の支払方法は店頭支払だけ
+P1	F06=ポイントを使う&F07=送料無料の条件に届く	正解未定	M10-05:L0040	送料無料の判定に使う金額が決まらない
+```
+
+- 組は `要因ID=値` を `&` でつなぐ。値は factors.tsv の値と一字一句同じ。値1つだけの組（`F16=店頭受取のみのスマレジ決済`）も書ける: その値でこの処理を動かすこと自体が作れない・結果が決まらないとき（設計書の記述どうしが食い違い、共通する部分が無いときなど）。
+- 種別は `作れない` か `正解未定`。根拠が必須。制約が無ければヘッダだけ書く。
+
+### `{FID}_existing.tsv`（4列）
+
+```
+テストID	処理ID	値	理由
+IT-F04-02-081	P1	F01=本店&F03=ゆうパック&F04=郵便振替	事前準備で本店・ゆうパック・郵便振替を選び、受注情報編集画面で支払方法と配送方法を確かめる
+```
+
+- 値は `要因ID=値` を `&` でつなぐ。ケースに書かれている要因だけ。1つ以上。
+- 1つのケースが2つの処理を通しているときは2行に書く。該当するケースが無ければヘッダだけ書く。
+
+書いたら次を実行し、エラーが無くなるまで直す。組の数（全組と2要因の組で、既存ケースが通していない組を埋めるのに要る行の数）も出る。
+
+```
+python3 integration_test/casegen/combination/gate_factors.py {FID}
+```
+
+作業用の一時ファイルを作るときは、名前に {FID} を入れてスクラッチパッドに作る。他の機能の factors/ のファイルは読まない・書かない。
+ファイルの書き込みを拒否されたときは、回避せず、書くはずだった本文を返答に載せる（依頼元が保存する）。
+
+## 返答
+
+3行以内: 処理の数・要因の数・効き合う組の数・設計書が決めていない組の数、gate の結果と出た行の数、判断に迷った点（あれば1つ）。
+
+exec
+/bin/bash -lc 'cat integration_test/SCOPE.md' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+# 結合テスト観点表の適用範囲
+
+`ipa-integration-test-viewpoints.tsv` が対象とする範囲を定める。
+判定基準は旧観点資産（`archive/integration-test-viewpoints.md`）の層判定をそのまま踏襲する。
+
+## 対象とするもの
+
+**独立したコンポーネント間の契約と相互作用。**
+呼出側と受取側の間で、受け渡される値、状態、副作用、異常時の振る舞いが
+双方の設計どおりに噛み合っていることを確認する。
+
+**媒体をいくつ跨いだかでは判定しない。** 単一のロジックの結果をDBや画面で観測するだけの確認は、
+観測先が別コンポーネントであっても単体テストの範囲とする。
+旧正本もこの基準を採り、DBへ登録される変換・計算結果をUT判定している
+（`archive/integration-test-viewpoints.md` No.60-66）。
+
+## 単項目の検証は、DBへ保存するかで分ける（2026-09-01 依頼者決裁）
+
+単項目の桁数・文字種・必須・コード値・日付・メールアドレス書式の検証は、
+**その項目をDBへ保存するかどうか**で担当を分ける。
+
+| 項目の性質 | 担当 | 理由 |
+| --- | --- | --- |
+| DBへ保存する項目（登録・編集の入力欄） | **結合テスト** | Form層で受理された値がDB層に収まるかは跨コンポーネントでしか観測できない。pf(MySQL)はバイト、ee(PostgreSQL)は文字で数えるため、Form層の単体テストでは意味論差が出ない |
+| 画面上だけの入力制限（検索条件、絞り込み、表示件数） | 単体テスト | DBへ保存しないので意味論差が起きない。判定ロジックの正しさだけを見ればよい |
+
+同じ種類の判定であれば、複数項目をまとめて1件のテストケースにしてよい。
+例: 「商品名と商品名(英)の最大文字数が設計書どおりであること」は1件でよい。
+判定の種類が違えば分ける（最大文字数と必須は別のケース）。
+
+単体テストが担うのは、検証を行う処理そのもの（計算式、文字数の数え方、分岐網羅）である。
+
+画面項目定義のうち次は、桁数・必須の指定が無くても結合テストの対象とする。
+跨コンポーネントでしか確認できないからである。
+
+- 初期値の指定（画面を開いてDBから値を取り、初期表示する）
+- 画面部品のふるまい（「押下すると検索を行う」「表示/非表示を切り替える」）
+- 表示内容（「チェックを付けると一覧すべてを対象に設定」）
+
+## 現行仕様と刷新の指示が食い違うときは刷新を採る（2026-09-01）
+
+HTML設計書には次の2つが載る。両方が同じ項目に触れて食い違うことがある。
+
+| 出所 | 中身 |
+| --- | --- |
+| Excel基本設計の本文 | 刷新後にどうするかの指示。「※カスタマイズ対応」「〜とする」 |
+| 埋め込まれた機能設計書の「現行仕様」 | 現行の実装がどう動いているか |
+
+**期待結果は刷新の指示を採る。** 現行仕様は、刷新の指示が無い箇所にだけ使う。
+両方に記述があって内容が違うときは、刷新の指示を期待結果にし、
+現行仕様との差を `出典` に併記する。
+
+実例: M03-01の並び順は、機能設計書の現行仕様が「商品IDの降順」、
+Excel基本設計が「表示順は、棚番号昇順とする」で食い違う。棚番号昇順を採る。
+現行仕様だけを見てケースを書き、誤った期待結果を作った（codex R1）。
+
+## 対象としないもの
+
+| 除外区分 | 内容 | 担当 |
+| --- | --- | --- |
+| 単体テスト粒度 | 単一コンポーネント内で完結する変換・計算ロジック | 単体テスト |
+| 単体テスト粒度 | 単一メソッド内の分岐網羅 | 単体テスト |
+| 単体テスト粒度 | 変換、編集分岐、ループ編集、計算、連結、暗号化、マスキング、パディング、小数桁の結果そのもの | 単体テスト |
+| e2e粒度 | 見た目、画面レイアウト、ブラウザ固有挙動、確認ダイアログの表示 | e2e・手動 |
+| e2e粒度 | 画面表示文言の照合 | e2e・手動 |
+| 性能 | 応答時間、スループット、同時接続数の上限、リトライ間隔の適切さ | 性能テスト（別工程） |
+
+## 境界が紛らわしいもの
+
+同じ語で呼ばれるが、担当が分かれるもの。
+
+| 事象 | 結合テストが見るもの | 他が見るもの |
+| --- | --- | --- |
+| 境界値 | 設計書が定めた桁数・範囲どおりに受理／拒否されること。DB層のカラム制約、件数上限、ファイルサイズ、表示上限を含む | 計算式そのものの正しさは単体テスト |
+| 文字列長 | 設計書が定めた最大文字数どおりに受理／拒否されること。pf(MySQL)とee(PostgreSQL)の意味論差を含み、Form層とDB層の双方を見る | 文字数を数える処理そのものは単体テスト |
+| 最大件数・最大ファイルサイズ | 規定量を機能として正しく扱えるか（ITB-11） | 規定時間内に終わるかは性能テスト |
+| タイムアウト | タイムアウト時の跨コンポーネントの挙動（ITB-14） | 応答時間そのものは性能テスト |
+| リトライ | 再送回数、間隔、打切り条件が仕様どおりか（ITB-15） | 間隔の適切さは性能テスト |
+| バリデーション | 設計書が定めた検証（必須、桁数、文字種、コード値、日付、メールアドレス書式）の結果が画面・DB・ファイル・連携先へ反映されること | 検証関数そのものの分岐網羅は単体テスト |
+| メッセージ | DB、ファイル、ログ、連携先の期待結果（COM-04） | 画面表示文言の照合はe2e |
+
+## 除外の記録
+
+除外した観点は捨てない。旧資産の層判定は `archive/integration-test-viewpoints.md` の
+`テスト層` 列に、新観点への対応は `MIGRATION_MAP.tsv` に残る。
+
+exec
+/bin/bash -lc 'head -30 functions/dead-spec-register.tsv; head -30 functions/phase2_candidates.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+# 現行ソースに実装が残っているが、経路が成立せず利用者に効果が出ない仕様の台帳。
+# 規約の正本は .cursor/skills/output-exclusion-policy/SKILL.md の 2.7。
+# 詳細設計書から落とす前に、必ずここへ根拠付きで登録する（黙って消さない）。
+# 根拠は pf-eccube3 からの相対パス + 行。実装が変わって機能したときに再判定するため。
+機能No	対象	類型	到達できない理由	根拠(file:line)	判定日
+M05-01	購入グループ	画面に入力欄が無い条件	検索フォームに定義があるが、テンプレートに入力欄の描画が無い。該当領域が描画しているのは注文備考の有無	app/Plugin/HareruyaEc/Form/Extension/Admin/Order/SearchOrderTypeExtension.php:79-85 / app/Plugin/HareruyaEc/Resource/template/admin/Order/index.twig:123-127	2026-08-17
+M05-01	購入商品名（EC-CUBE本体側の1項目）	画面に入力欄が無い条件	本体フォームに定義が残るが、テンプレートが描画するのは拡張の3欄だけ。残余項目の描画処理も条件式が一致せず出力されない	src/Eccube/Form/Type/Admin/SearchOrderType.php:162-165 / app/Plugin/HareruyaEc/Resource/template/admin/Order/index.twig:315-323,330-340	2026-08-17
+M05-01	受注IDの範囲指定	フォーム項目が無い分岐	検索処理に分岐があるが、本体フォームにも拡張フォームにも対応する入力項目が無い	src/Eccube/Repository/OrderRepository.php:267-287	2026-08-17
+M05-01	対応状況の単一指定	フォーム項目が無い分岐	検索処理に分岐があるが、画面から指定できるのは複数選択のみ	src/Eccube/Repository/OrderRepository.php:291-296	2026-08-17
+M05-01	本体側のフリーワード条件	呼び出し前に無効化される条件	拡張がフリーワード2欄の値を退避してから本体を呼ぶため、本体側の条件は成立しない	app/Plugin/HareruyaEc/Repository/OrderRepository.php:306-309 / src/Eccube/Repository/OrderRepository.php:273-280	2026-08-17
+M05-01	画面から指定するソートキーと並び順	受け取るが使わない値	検索条件へ格納されるが検索処理が参照せず、一覧テンプレートにも参照が無い	app/Plugin/HareruyaEc/Controller/Admin/SearchControllerTrait.php:175-176	2026-08-17
+M05-08	スタック用紙の高額判定記号	結果が同一になる分岐	しきい値以上のときと未満のときで同じ記号を返すため、判定結果が区別できない	app/Plugin/HareruyaEc/Repository/OrderRepository.php:1779-1782	2026-08-17
+M05-21	ピッキングリストの数量計算のカテゴリ数フォールバック	結果が同一になる分岐	カテゴリはINNER JOINで結合するため、カテゴリを持たない明細はそもそも取得されない。カテゴリ数を1に置き換える分岐には入らず、常に実カテゴリ数で割る	app/Plugin/HareruyaEc/Repository/DtbShippingStandbyRepository.php:158,179	2026-08-21
+M05-27	削除時のIDの指定が無いときの分岐	呼び出し前に無効化される条件	削除のルートはパスに {id} を必須で持ち、assert("id", "\\d+") で数字のみに限定されるため、コントローラへ到達する時点で $id が null になることがない。is_null($id) の分岐は成立しない	app/Plugin/HareruyaEc/ServiceProvider/Admin/OrderServiceProvider.php:145-147 / app/Plugin/HareruyaEc/Controller/Admin/Order/WaitingTagController.php:51	2026-08-21
+M06-04	ステータス更新中の例外を捕捉して取り消し・エラー表示する処理	呼び出し前に無効化される条件	catch が名前空間を付けない Exception を指し、プラグインの名前空間に同名クラスが無いため、どの例外にも一致しない。取り消しとエラー表示、ステータス変更画面への差し戻しは実行されない	app/Plugin/HareruyaEc/Controller/Admin/OtcBuyOrder/OtcBuyOrderStatusController.php:78-83	2026-08-21
+M08-04	本人確認フラグ	画面に入力欄が無い条件	会員登録編集画面のフォーム拡張に定義があるが、画面テンプレートに描画が無い。画面から入力・変更できるのは本人確認ステータスだけで、この項目は登録・更新のどちらにも効果が出ない	app/Plugin/HareruyaEc/Form/Extension/Admin/CustomerEditTypeExtension.php:106-116 / app/Plugin/HareruyaEc/Resource/template/admin/Customer/edit.twig:321-324	2026-08-21
+M10-08	対象のメールテンプレートが無いまま登録したときのエラー表示と一覧への差し戻し	呼び出し前に無効化される条件	登録先のルートはパスに {id} を持ち assert("id","\\d+") で数字に限定され、識別子なしのルートは GET のみで登録を受け付けない。識別子付きで登録したときは該当テンプレートが無ければ先に 404 になるため、is_null($mail) の分岐には入らない。エラーメッセージの表示と識別子なし表示への差し戻し、および「新規作成を行わない」判定は実行されない	app/Plugin/HareruyaEc/ServiceProvider/Admin/SettingServiceProvider.php:73-77 / app/Plugin/HareruyaEc/Controller/Admin/Setting/Shop/MailController.php:141-143,160-164	2026-08-22
+M09-04	存在しないページIDで編集画面を開いたときの見つからない扱い（404）	呼び出し前に無効化される条件	該当なしのときリポジトリの取得処理が getSingleResult() で NoResultException を投げるため、戻り値が偽かどうかを見る NotFoundHttpException の分岐に到達しない。実際にはシステムエラーの画面になる	src/Eccube/Repository/PageLayoutRepository.php:86 / app/Plugin/HareruyaEc/Controller/Admin/Content/ContentController.php:78-87	2026-08-22
+M16-05	同じカード状態と割引の組み合わせが複数あるときに後から読んだ値で上書きする扱い	呼び出し前に無効化される条件	割引率の保持元は割引の識別子とカード状態の識別子の2つを主キーとするため、同じ組み合わせが2件以上存在しえない。組み合わせごとに値を割り当てる繰り返しで後の値が前の値を置き換える経路には到達しない	app/Plugin/HareruyaEc/Resource/doctrine/Plugin.HareruyaEc.Entity.DtbDiscountCardCondition.dcm.yml:5-17 / app/Plugin/HareruyaEc/Controller/Admin/DiscountController.php:22-25	2026-08-22
+M16-04	参照専用の指定による「登録」ボタンの無効化	結果が同一になる分岐	参照専用の指定はどのマスタ種別にも定義されていないため判定は常に偽になり、「登録」ボタンは常に有効のまま。無効化される経路に入らない	app/Plugin/HareruyaEc/Controller/Admin/HareruyaMasterdataController.php:74 / app/Plugin/HareruyaEc/Resource/template/admin/HareruyaMasterdata/index.twig:93	2026-08-22
+M16-04	保存時にデータの取得先が得られないときの見つからない扱い（404）	呼び出し前に無効化される条件	取得先の解決は該当が無くても空を返さず、未知の種別名なら直前の項目定義の取得が例外を投げてシステムエラーになる。空かどうかを見る404の分岐には到達しない	app/Plugin/HareruyaEc/Controller/Admin/HareruyaMasterdataController.php:103,106-108	2026-08-22
+M13-01	検索フォームの店舗欄	画面に入力欄が無い条件	検索フォームに定義があるが、画面テンプレートに描画が無い。残余項目をまとめて描画する繰り返しは名前が pl で始まる項目だけを通す条件のため店舗欄は出力されず、検索処理も店舗の値を参照しない	app/Plugin/HareruyaEc/Form/Type/Admin/Event/EventListType.php:62 / app/Plugin/HareruyaEc/Resource/template/admin/Event/eventlist.twig:74 / app/Plugin/HareruyaEc/Repository/DtbEventRepository.php:39-113	2026-08-22
+M13-01	検索条件の組み立て結果が想定外のときの見つからない扱い（404）	呼び出し前に無効化される条件	組み立てはイベントの取得元へ委譲され、そこは常に検索の問い合わせを返すため、戻り値が問い合わせでも配列でもないことを見る404の分岐に到達しない	app/Plugin/HareruyaEc/Controller/Admin/SearchControllerTrait.php:180-182,332-335 / app/Plugin/HareruyaEc/Repository/DtbEventRepository.php:113	2026-08-22
+M13-08	デッキ表示の並び順指定（リクエストの sort / order）	画面に入力欄が無い条件	イベント申込一覧の「デッキ表示」ボタンがパラメータ無しの URL を window.open するだけで、デッキ表示画面にも並び替えの操作要素が無い。sort / order が渡らないため常に既定の並びになる	app/Plugin/HareruyaEc/Controller/Admin/EntryController.php:763-766 / app/Plugin/HareruyaEc/Resource/template/admin/Entry/entrylist.twig:201	2026-08-22
+M13-11	ページ番号が渡らないときに直前のページを再表示する分岐	呼び出し前に無効化される条件	イベント検索の入口は「検索実行」がPOST・「ページ移動」がページ番号必須のGETの2経路しかなく、POSTでは常に1ページ目に固定される。ページ番号が渡らないままGET側の分岐へ入る経路が無いため、保持したページ番号を読み直す分岐に到達しない	app/Plugin/HareruyaEc/ServiceProvider/Admin/EntryServiceProvider.php:35-39 / app/Plugin/HareruyaEc/Controller/Admin/EntryController.php:194-216	2026-08-22
+F01-02	空タイルを補うときのタグ候補（スタンダード・レガシー・統率者）	受け取るが使わない値	候補の3件から1件を選ぶ処理が値ではなく添字を返すため、タグの識別子ではなく0〜2が検索条件に渡る。候補として並べた3つのタグはいずれも使われず、補うタイルの中身は候補と無関係になる	ec-cube:app/Customize/Controller/TopController.php:103,135-142	2026-08-22
+F03-01	検索結果が0件のときの見つからない扱い（404）	ルートが割り当てられていない処理	商品一覧のURLはユニサーチ版の処理に割り当てられており、404を返すもう一方の商品検索処理はどのルートからも呼ばれない。ユニサーチ版は0件でも通常の応答を返し、案内文言を画面内に出す	app/Plugin/HareruyaEc/ControllerProvider/FrontControllerProvider.php:48 / app/Plugin/HareruyaEc/Controller/ProductController.php:112 / app/Plugin/HareruyaEc/Resource/template/default/Block/js/product_unisearch_js.twig:676-683	2026-08-22
+F03-01	検索件数が上限（9999件）を超えたときの件数のみ取得と、検索エラーの通知先への送信	ルートが割り当てられていない処理	上限判定を行う共通処理を呼ぶのはルート未割当の商品検索処理だけで、商品一覧からは呼ばれない（商品詳細の同名商品検索と買取一覧では呼ばれる）。ユニサーチ版の上限は4000件で、通知の送信も行わない	app/Plugin/HareruyaEc/Controller/ProductSearchTrait.php:55-79 / app/Plugin/HareruyaEc/Controller/ProductController.php:85 / app/Plugin/HareruyaEc/ControllerProvider/FrontControllerProvider.php:48	2026-08-22
+F03-01	商品数を上限値に「+」を付けて表す表記（9999+）	ルートが割り当てられていない処理	この表記を持つのはルート未割当の処理が描画するテンプレートで、実際に描画されるユニサーチ版は上限を超えても実件数を表示する	app/Plugin/HareruyaEc/Resource/template/default/Product/product_list.twig:214 / app/Plugin/HareruyaEc/Resource/template/default/Block/js/product_unisearch_js.twig:641	2026-08-22
+F03-01	絞り込み条件が1つも無い検索を全件検索とみなし、検索を実行せず0件として扱う判定	ルートが割り当てられていない処理	判定を行う共通処理を呼ぶのはルート未割当の商品検索処理だけで、商品一覧が使うユニサーチ版は同じ判定を持たない	app/Plugin/HareruyaEc/Controller/ProductSearchTrait.php:33,95-116 / app/Plugin/HareruyaEc/Controller/ProductController.php:122-136	2026-08-22
+status	book	sheetId	sheetName	featureNo	primaryDoc	ph2InDoc	line
+known	0202	sheet-10	在庫切れ、在庫警戒リストCSV出力	M04-06	functions/ec-cube-enterprise/m04-06_admin_stock_stock_shortage_csv_export.md	yes	在庫切れ、在庫警戒リストCSV出力はPh2で対応するため、Ph1では実装しない
+known	0202	sheet-11	在庫切れリストCSV出力	M04-06	functions/ec-cube-enterprise/m04-06_admin_stock_stock_shortage_csv_export.md	yes	在庫切れリストCSV出力はPh2で対応するため、Ph1では実装しない
+known	0202	sheet-12	在庫警戒リストCSV出力	M04-07	functions/ec-cube-enterprise/m04-07_admin_stock_stock_warning_csv_export.md	yes	在庫警戒リストCSV出力はPh2で対応するため、Ph1では実装しない
+known	0203	sheet-15	受注情報編集	M05-11	functions/pf-eccube3/m05-11_admin_order_order_edit.md		・Ph2へ見送り
+known	0203	sheet-15	受注情報編集	M05-11	functions/pf-eccube3/m05-11_admin_order_order_edit.md		・Ph2へ見送り期限通知情報を参照
+known	0203	sheet-15	受注情報編集	M05-11	functions/pf-eccube3/m05-11_admin_order_order_edit.md		Ph2にて対応
+known	0203	sheet-16	【新規】受注情報履歴	M05-11	functions/pf-eccube3/m05-11_admin_order_order_edit.md		Ph2にて対応
+known	0204	sheet-46	低価格帯カード価格変更CSV出力	M03-44	functions/ec-cube-enterprise/m03-44_admin_product_product_simple_low_price_csv_import.md	yes	Ph2で対応
+known	0204	sheet-47	低価格帯カード価格変更CSVフォーマット	M03-44	functions/ec-cube-enterprise/m03-44_admin_product_product_simple_low_price_csv_import.md	yes	Ph2で対応
+known	0205	sheet-4	買取一覧(検索結果)	M06-01	functions/pf-eccube3/m06-01_admin_store_purchase_purchase_store_search_list.md	yes	買取商品（キャンセル）CSVはPh2の要件となるためPh1では実装しない
+known	0205	sheet-7	【新規】買取商品一覧（キャンセル）CSV出力項目	M06-13	functions/ec-cube-enterprise/m06-13_admin_store_purchase_purchase_store_product_cancel_csv_export.md	yes	買取商品一覧（キャンセル）CSVはPh2で対応するため、Ph1では実装しない
+known	0205	sheet-10	買取詳細	M06-03	functions/pf-eccube3/m06-03_admin_store_purchase_purchase_store_otc_buy_info_edit.md	yes	一部キャンセルはPh2の要件となるためPh1では実装しない
+known	0207	sheet-3	会員検索一覧(検索入力)	M08-01	functions/pf-eccube3/m08-01_admin_customer_customer_search_list.md	yes	※顧客分析タグ登録はPh2で対応するため、Ph1では実装しない
+known	0207	sheet-4	会員検索一覧(検索結果)	M08-01	functions/pf-eccube3/m08-01_admin_customer_customer_search_list.md	yes	・下記機能はPh2で対応するためPh1ではスコープ外とする
+known	0207	sheet-9	会員登録編集	M08-04	functions/pf-eccube3/m08-04_admin_customer_customer_edit.md	yes	・フロントで会員がオプトイン・オプトアウトできるようにする要件はPh2とする
+known	0207	sheet-9	会員登録編集	M08-04	functions/pf-eccube3/m08-04_admin_customer_customer_edit.md	yes	※下記項目はPh2で対応するため、Ph1では実装しない
+known	0207	sheet-19	【新規】顧客分析タグ	M08-11	functions/ec-cube-enterprise/m08-11_admin_customer_customer_analysis_tag_master.md	yes	・会員顧客分析タグCSVアップロードはPh2で対応のためPh1ではスコープ外とする
+known	0207	sheet-3	会員検索一覧(検索入力)	M08-01	functions/pf-eccube3/m08-01_admin_customer_customer_search_list.md	yes	※カスタマイズ対応、項目を追加する・検索はor条件とすること・顧客分析タグへ登録予定である下記を表示RFMセグメンテーション（アクティブ上位、中位、下位、コレクター、休眠予備軍、新規）※顧客分析タグ登録はPh2で対応するため、Ph1では実装しない
+known	0207	sheet-3	会員検索一覧(検索入力)	M08-01	functions/pf-eccube3/m08-01_admin_customer_customer_search_list.md	yes	顧客分析タグ登録はPh2で対応するため、Ph1では実装しない
+known	0207	sheet-4	会員検索一覧(検索結果)	M08-01	functions/pf-eccube3/m08-01_admin_customer_customer_search_list.md	yes	※カスタマイズ対応、項目を追加する選択肢：顧客分析マスターに登録されているデータを表示※顧客分析タグ登録はPh2で対応するため、Ph1では実装しない
+known	0207	sheet-4	会員検索一覧(検索結果)	M08-01	functions/pf-eccube3/m08-01_admin_customer_customer_search_list.md	yes	※カスタマイズ対応、ボタンを追加するCSV出力にチェックを入れない状態でボタンをリンクを押下するとエラーとなる※顧客分析タグ登録はPh2で対応するため、Ph1では実装しない
+known	0207	sheet-4	会員検索一覧(検索結果)	M08-01	functions/pf-eccube3/m08-01_admin_customer_customer_search_list.md	yes	※カスタマイズ対応、項目を追加する選択肢:CSVダウンロード、会員顧客分析タグダウンロード、出力項目設定CSV出力にチェックを入れない状態でボタンをリンクを押下するとエラーとなる※顧客分析タグ登録はPh2で対応するため、Ph1では実装しない
+known	0207	sheet-4	会員検索一覧(検索結果)	M08-01	functions/pf-eccube3/m08-01_admin_customer_customer_search_list.md	yes	顧客分析タグ登録はPh2で対応するため、Ph1では実装しない
+known	0207	sheet-8	顧客情報CSV出力項目設定				顧客分析タグ登録はPh2で対応するため、Ph1では実装しない
+known	0207	sheet-9	会員登録編集	M08-04	functions/pf-eccube3/m08-04_admin_customer_customer_edit.md	yes	※カスタマイズ対応、項目を追加する顧客分析タグは複数登録できるようにする※顧客分析タグ登録はPh2で対応するため、Ph1では実装しない
+known	0207	sheet-19	【新規】顧客分析タグ	M08-11	functions/ec-cube-enterprise/m08-11_admin_customer_customer_analysis_tag_master.md	yes	顧客分析タグマスターはPh2で対応するため、Ph1では実装しない
+known	0207	sheet-22	会員登録仮登録完了メール再送	M08-14	functions/pf-eccube3/m08-14_admin_customer_customer_resend_provisional_mail.md	yes	顧客分析タグ登録はPh2で対応するため、Ph1では実装しない
+known	0207	sheet-23	【新規】顧客分析タグ登録CSV入力項目設定				会員顧客分析タグCSVはPh2で対応するため、Ph1では実装しない
+known	0207	sheet-24	【新規】会員顧客分析タグ情報CSV出力項目設定				会員顧客分析タグCSVはPh2で対応するため、Ph1では実装しない
+
+exec
+/bin/bash -lc "rg --files integration_test/casegen/combination/factors integration_test/casegen/combination/units integration_test/casegen/cases | rg '(A17-05|B02-0[1-7]|B05-0[1356])|_common' | sort" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+integration_test/casegen/cases/A17-05_seed_data.tsv
+integration_test/casegen/cases/A17-05_test_cases.tsv
+integration_test/casegen/cases/B02-01_seed_data.tsv
+integration_test/casegen/cases/B02-01_test_cases.tsv
+integration_test/casegen/cases/B02-02_seed_data.tsv
+integration_test/casegen/cases/B02-02_test_cases.tsv
+integration_test/casegen/cases/B02-03_seed_data.tsv
+integration_test/casegen/cases/B02-03_test_cases.tsv
+integration_test/casegen/cases/B02-04_seed_data.tsv
+integration_test/casegen/cases/B02-04_test_cases.tsv
+integration_test/casegen/cases/B02-05_seed_data.tsv
+integration_test/casegen/cases/B02-05_test_cases.tsv
+integration_test/casegen/cases/B02-06_seed_data.tsv
+integration_test/casegen/cases/B02-06_test_cases.tsv
+integration_test/casegen/cases/B02-07_seed_data.tsv
+integration_test/casegen/cases/B02-07_test_cases.tsv
+integration_test/casegen/cases/B05-01_seed_data.tsv
+integration_test/casegen/cases/B05-01_test_cases.tsv
+integration_test/casegen/cases/B05-03_seed_data.tsv
+integration_test/casegen/cases/B05-03_test_cases.tsv
+integration_test/casegen/cases/B05-05_seed_data.tsv
+integration_test/casegen/cases/B05-05_test_cases.tsv
+integration_test/casegen/cases/B05-06_seed_data.tsv
+integration_test/casegen/cases/B05-06_test_cases.tsv
+integration_test/casegen/combination/factors/A17-05_constraints.tsv
+integration_test/casegen/combination/factors/A17-05_existing.tsv
+integration_test/casegen/combination/factors/A17-05_factors.tsv
+integration_test/casegen/combination/factors/A17-05_interactions.tsv
+integration_test/casegen/combination/factors/A17-05_processes.tsv
+integration_test/casegen/combination/factors/B02-01_constraints.tsv
+integration_test/casegen/combination/factors/B02-01_existing.tsv
+integration_test/casegen/combination/factors/B02-01_factors.tsv
+integration_test/casegen/combination/factors/B02-01_interactions.tsv
+integration_test/casegen/combination/factors/B02-01_processes.tsv
+integration_test/casegen/combination/factors/B02-02_constraints.tsv
+integration_test/casegen/combination/factors/B02-02_existing.tsv
+integration_test/casegen/combination/factors/B02-02_factors.tsv
+integration_test/casegen/combination/factors/B02-02_interactions.tsv
+integration_test/casegen/combination/factors/B02-02_processes.tsv
+integration_test/casegen/combination/factors/B02-03_constraints.tsv
+integration_test/casegen/combination/factors/B02-03_existing.tsv
+integration_test/casegen/combination/factors/B02-03_factors.tsv
+integration_test/casegen/combination/factors/B02-03_interactions.tsv
+integration_test/casegen/combination/factors/B02-03_processes.tsv
+integration_test/casegen/combination/factors/B02-04_constraints.tsv
+integration_test/casegen/combination/factors/B02-04_existing.tsv
+integration_test/casegen/combination/factors/B02-04_factors.tsv
+integration_test/casegen/combination/factors/B02-04_interactions.tsv
+integration_test/casegen/combination/factors/B02-04_processes.tsv
+integration_test/casegen/combination/factors/B02-05_constraints.tsv
+integration_test/casegen/combination/factors/B02-05_existing.tsv
+integration_test/casegen/combination/factors/B02-05_factors.tsv
+integration_test/casegen/combination/factors/B02-05_interactions.tsv
+integration_test/casegen/combination/factors/B02-05_processes.tsv
+integration_test/casegen/combination/factors/B02-06_constraints.tsv
+integration_test/casegen/combination/factors/B02-06_existing.tsv
+integration_test/casegen/combination/factors/B02-06_factors.tsv
+integration_test/casegen/combination/factors/B02-06_interactions.tsv
+integration_test/casegen/combination/factors/B02-06_processes.tsv
+integration_test/casegen/combination/factors/B02-07_constraints.tsv
+integration_test/casegen/combination/factors/B02-07_existing.tsv
+integration_test/casegen/combination/factors/B02-07_factors.tsv
+integration_test/casegen/combination/factors/B02-07_interactions.tsv
+integration_test/casegen/combination/factors/B02-07_processes.tsv
+integration_test/casegen/combination/factors/B05-01_constraints.tsv
+integration_test/casegen/combination/factors/B05-01_existing.tsv
+integration_test/casegen/combination/factors/B05-01_factors.tsv
+integration_test/casegen/combination/factors/B05-01_interactions.tsv
+integration_test/casegen/combination/factors/B05-01_processes.tsv
+integration_test/casegen/combination/factors/B05-03_constraints.tsv
+integration_test/casegen/combination/factors/B05-03_existing.tsv
+integration_test/casegen/combination/factors/B05-03_factors.tsv
+integration_test/casegen/combination/factors/B05-03_interactions.tsv
+integration_test/casegen/combination/factors/B05-03_processes.tsv
+integration_test/casegen/combination/factors/B05-05_constraints.tsv
+integration_test/casegen/combination/factors/B05-05_existing.tsv
+integration_test/casegen/combination/factors/B05-05_factors.tsv
+integration_test/casegen/combination/factors/B05-05_interactions.tsv
+integration_test/casegen/combination/factors/B05-05_processes.tsv
+integration_test/casegen/combination/factors/B05-06_constraints.tsv
+integration_test/casegen/combination/factors/B05-06_existing.tsv
+integration_test/casegen/combination/factors/B05-06_factors.tsv
+integration_test/casegen/combination/factors/B05-06_interactions.tsv
+integration_test/casegen/combination/factors/B05-06_processes.tsv
+integration_test/casegen/combination/units/A17-05/design.txt
+integration_test/casegen/combination/units/A17-05/excluded.tsv
+integration_test/casegen/combination/units/B02-01/design.txt
+integration_test/casegen/combination/units/B02-01/excluded.tsv
+integration_test/casegen/combination/units/B02-02/design.txt
+integration_test/casegen/combination/units/B02-02/excluded.tsv
+integration_test/casegen/combination/units/B02-03/design.txt
+integration_test/casegen/combination/units/B02-03/excluded.tsv
+integration_test/casegen/combination/units/B02-04/design.txt
+integration_test/casegen/combination/units/B02-04/excluded.tsv
+integration_test/casegen/combination/units/B02-05/design.txt
+integration_test/casegen/combination/units/B02-05/excluded.tsv
+integration_test/casegen/combination/units/B02-06/design.txt
+integration_test/casegen/combination/units/B02-06/excluded.tsv
+integration_test/casegen/combination/units/B02-07/design.txt
+integration_test/casegen/combination/units/B02-07/excluded.tsv
+integration_test/casegen/combination/units/B05-01/design.txt
+integration_test/casegen/combination/units/B05-01/excluded.tsv
+integration_test/casegen/combination/units/B05-03/design.txt
+integration_test/casegen/combination/units/B05-03/excluded.tsv
+integration_test/casegen/combination/units/B05-05/design.txt
+integration_test/casegen/combination/units/B05-05/excluded.tsv
+integration_test/casegen/combination/units/B05-06/design.txt
+integration_test/casegen/combination/units/B05-06/excluded.tsv
+integration_test/casegen/combination/units/_common/0202_sheet-3.txt
+integration_test/casegen/combination/units/_common/0202_sheet-34.txt
+integration_test/casegen/combination/units/_common/0202_sheet-50.txt
+integration_test/casegen/combination/units/_common/0202_sheet-51.txt
+integration_test/casegen/combination/units/_common/0202_sheet-53.txt
+integration_test/casegen/combination/units/_common/0203_sheet-10.txt
+integration_test/casegen/combination/units/_common/0203_sheet-16.txt
+integration_test/casegen/combination/units/_common/0203_sheet-27.txt
+integration_test/casegen/combination/units/_common/0204_sheet-60.txt
+integration_test/casegen/combination/units/_common/0204_sheet-61.txt
+integration_test/casegen/combination/units/_common/0204_sheet-62.txt
+integration_test/casegen/combination/units/_common/0204_sheet-63.txt
+integration_test/casegen/combination/units/_common/0204_sheet-64.txt
+integration_test/casegen/combination/units/_common/0204_sheet-65.txt
+integration_test/casegen/combination/units/_common/0204_sheet-66.txt
+integration_test/casegen/combination/units/_common/0204_sheet-67.txt
+integration_test/casegen/combination/units/_common/0204_sheet-68.txt
+integration_test/casegen/combination/units/_common/0205_sheet-18.txt
+integration_test/casegen/combination/units/_common/0206_sheet-13.txt
+integration_test/casegen/combination/units/_common/0206_sheet-17.txt
+integration_test/casegen/combination/units/_common/0207_sheet-16.txt
+integration_test/casegen/combination/units/_common/0207_sheet-25.txt
+integration_test/casegen/combination/units/_common/0207_sheet-26.txt
+integration_test/casegen/combination/units/_common/0302_sheet-8.txt
+integration_test/casegen/combination/units/_common/0304_sheet-10.txt
+integration_test/casegen/combination/units/_common/0305_sheet-13.txt
+integration_test/casegen/combination/units/_common/0404_sheet-11.txt
+integration_test/casegen/combination/units/_common/0404_sheet-9.txt
+integration_test/casegen/combination/units/_common/0416_sheet-10.txt
+integration_test/casegen/combination/units/_common/0416_sheet-14.txt
+integration_test/casegen/combination/units/_common/0416_sheet-3.txt
+integration_test/casegen/combination/units/_common/0416_sheet-4.txt
+integration_test/casegen/combination/units/_common/0416_sheet-5.txt
+integration_test/casegen/combination/units/_common/0416_sheet-6.txt
+integration_test/casegen/combination/units/_common/0416_sheet-7.txt
+integration_test/casegen/combination/units/_common/0416_sheet-9.txt
+
+exec
+/bin/bash -lc 'for id in A17-05 B02-01 B02-02 B02-03 B02-04 B02-05 B02-06 B02-07 B05-01 B05-03 B05-05 B05-06; do wc -l integration_test/casegen/combination/factors/${id}_*.tsv integration_test/casegen/combination/units/${id}/design.txt; done' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+    2 integration_test/casegen/combination/factors/A17-05_constraints.tsv
+    9 integration_test/casegen/combination/factors/A17-05_existing.tsv
+   11 integration_test/casegen/combination/factors/A17-05_factors.tsv
+   21 integration_test/casegen/combination/factors/A17-05_interactions.tsv
+    3 integration_test/casegen/combination/factors/A17-05_processes.tsv
+  176 integration_test/casegen/combination/units/A17-05/design.txt
+  222 total
+    7 integration_test/casegen/combination/factors/B02-01_constraints.tsv
+    7 integration_test/casegen/combination/factors/B02-01_existing.tsv
+    9 integration_test/casegen/combination/factors/B02-01_factors.tsv
+   15 integration_test/casegen/combination/factors/B02-01_interactions.tsv
+    3 integration_test/casegen/combination/factors/B02-01_processes.tsv
+   72 integration_test/casegen/combination/units/B02-01/design.txt
+  113 total
+   1 integration_test/casegen/combination/factors/B02-02_constraints.tsv
+  11 integration_test/casegen/combination/factors/B02-02_existing.tsv
+   5 integration_test/casegen/combination/factors/B02-02_factors.tsv
+   7 integration_test/casegen/combination/factors/B02-02_interactions.tsv
+   2 integration_test/casegen/combination/factors/B02-02_processes.tsv
+  64 integration_test/casegen/combination/units/B02-02/design.txt
+  90 total
+    2 integration_test/casegen/combination/factors/B02-03_constraints.tsv
+    8 integration_test/casegen/combination/factors/B02-03_existing.tsv
+    6 integration_test/casegen/combination/factors/B02-03_factors.tsv
+   11 integration_test/casegen/combination/factors/B02-03_interactions.tsv
+    2 integration_test/casegen/combination/factors/B02-03_processes.tsv
+  143 integration_test/casegen/combination/units/B02-03/design.txt
+  172 total
+   1 integration_test/casegen/combination/factors/B02-04_constraints.tsv
+  11 integration_test/casegen/combination/factors/B02-04_existing.tsv
+   6 integration_test/casegen/combination/factors/B02-04_factors.tsv
+  11 integration_test/casegen/combination/factors/B02-04_interactions.tsv
+   2 integration_test/casegen/combination/factors/B02-04_processes.tsv
+  54 integration_test/casegen/combination/units/B02-04/design.txt
+  85 total
+   1 integration_test/casegen/combination/factors/B02-05_constraints.tsv
+  10 integration_test/casegen/combination/factors/B02-05_existing.tsv
+   6 integration_test/casegen/combination/factors/B02-05_factors.tsv
+   9 integration_test/casegen/combination/factors/B02-05_interactions.tsv
+   2 integration_test/casegen/combination/factors/B02-05_processes.tsv
+  64 integration_test/casegen/combination/units/B02-05/design.txt
+  92 total
+   1 integration_test/casegen/combination/factors/B02-06_constraints.tsv
+   1 integration_test/casegen/combination/factors/B02-06_existing.tsv
+   1 integration_test/casegen/combination/factors/B02-06_factors.tsv
+   1 integration_test/casegen/combination/factors/B02-06_interactions.tsv
+   1 integration_test/casegen/combination/factors/B02-06_processes.tsv
+  59 integration_test/casegen/combination/units/B02-06/design.txt
+  64 total
+   1 integration_test/casegen/combination/factors/B02-07_constraints.tsv
+   1 integration_test/casegen/combination/factors/B02-07_existing.tsv
+   1 integration_test/casegen/combination/factors/B02-07_factors.tsv
+   1 integration_test/casegen/combination/factors/B02-07_interactions.tsv
+   1 integration_test/casegen/combination/factors/B02-07_processes.tsv
+ 114 integration_test/casegen/combination/units/B02-07/design.txt
+ 119 total
+    2 integration_test/casegen/combination/factors/B05-01_constraints.tsv
+    8 integration_test/casegen/combination/factors/B05-01_existing.tsv
+   12 integration_test/casegen/combination/factors/B05-01_factors.tsv
+   24 integration_test/casegen/combination/factors/B05-01_interactions.tsv
+    3 integration_test/casegen/combination/factors/B05-01_processes.tsv
+  152 integration_test/casegen/combination/units/B05-01/design.txt
+  201 total
+   1 integration_test/casegen/combination/factors/B05-03_constraints.tsv
+   1 integration_test/casegen/combination/factors/B05-03_existing.tsv
+   1 integration_test/casegen/combination/factors/B05-03_factors.tsv
+   1 integration_test/casegen/combination/factors/B05-03_interactions.tsv
+   1 integration_test/casegen/combination/factors/B05-03_processes.tsv
+  54 integration_test/casegen/combination/units/B05-03/design.txt
+  59 total
+   2 integration_test/casegen/combination/factors/B05-05_constraints.tsv
+   1 integration_test/casegen/combination/factors/B05-05_existing.tsv
+   7 integration_test/casegen/combination/factors/B05-05_factors.tsv
+   6 integration_test/casegen/combination/factors/B05-05_interactions.tsv
+   3 integration_test/casegen/combination/factors/B05-05_processes.tsv
+  75 integration_test/casegen/combination/units/B05-05/design.txt
+  94 total
+   1 integration_test/casegen/combination/factors/B05-06_constraints.tsv
+  10 integration_test/casegen/combination/factors/B05-06_existing.tsv
+   4 integration_test/casegen/combination/factors/B05-06_factors.tsv
+   4 integration_test/casegen/combination/factors/B05-06_interactions.tsv
+   2 integration_test/casegen/combination/factors/B05-06_processes.tsv
+  55 integration_test/casegen/combination/units/B05-06/design.txt
+  76 total
+
+exec
+/bin/bash -lc 'for kind in processes factors interactions constraints existing; do cat integration_test/casegen/combination/factors/A17-05_${kind}.tsv; done' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'for kind in processes factors interactions constraints existing; do cat integration_test/casegen/combination/factors/B02-01_${kind}.tsv; done' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'for kind in processes factors interactions constraints existing; do cat integration_test/casegen/combination/factors/B02-02_${kind}.tsv; done' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'for kind in processes factors interactions constraints existing; do cat integration_test/casegen/combination/factors/B02-03_${kind}.tsv; done' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'for kind in processes factors interactions constraints existing; do cat integration_test/casegen/combination/factors/B02-04_${kind}.tsv; done' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'for kind in processes factors interactions constraints existing; do cat integration_test/casegen/combination/factors/B02-05_${kind}.tsv; done' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'for kind in processes factors interactions constraints existing; do cat integration_test/casegen/combination/factors/B02-06_${kind}.tsv; done' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'for kind in processes factors interactions constraints existing; do cat integration_test/casegen/combination/factors/B02-07_${kind}.tsv; done' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 49ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	受注明細を期間別に集計して販売数集計データを更新する	バッチ product:batch updateProductSummary を起動する	DBの販売数集計データ	L0022-L0029,L0037-L0042,L0049-L0057
+P2	起動引数を判定して集計を行うか決める	バッチ product:batch を引数つきで起動する	コンソール出力・終了コード・DBの販売数集計データ	L0060,L0065-L0068
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	受注明細の区分	通常のEC受注｜引き渡し済みの元EC受注｜スマレジ由来受注の複製明細｜スマレジ由来受注の店頭追加明細	通常のEC受注: ECCUBEの販売数に計上しEC受注日で期間分け／引き渡し済みの元EC受注: 集計対象から外す／スマレジ由来受注の複製明細: ECCUBEの販売数に計上しEC受注日で期間分け／スマレジ由来受注の店頭追加明細: スマレジの販売数に計上しレジ取引日時で期間分け	L0026-L0029	この機能
+F02	P1	受注のステータス	集計対象｜キャンセルまたは決済処理中	集計対象: 集計に入る／キャンセルまたは決済処理中: 集計から除外	L0038	この機能
+F03	P1	配送先の店舗	営業中の店舗｜閉店した店舗	営業中の店舗: 店舗ごとの行に集計／閉店した店舗: 集計対象外で行が追加されない	L0020,L0024,L0039	この機能
+F04	P1	EC受注日	集計期間内｜集計期間外	集計期間内: ECCUBE計上分の期間区分に使う／集計期間外: ECCUBE計上分は集計に入らない	L0029,L0037	この機能
+F05	P1	レジ取引日時	集計期間内｜集計期間外｜なし	集計期間内: スマレジ計上分の期間区分に使う／集計期間外: スマレジ計上分は集計に入らない／なし: スマレジ由来でない受注	L0029	この機能
+F06	P1	既存の販売数集計データ	あり｜なし	あり: 当日分は0にし、集計対象があれば上書き、対象が無いと前回の販売数が残る／なし: 集計対象があれば新しい行ができ、無ければ行はできない	L0054,L0056	この機能
+F07	P2	コマンド名	updateProductSummary｜未指定または不一致	updateProductSummary: 集計を行う／未指定または不一致: 集計を行わずエラーメッセージを出力して異常終了	L0060,L0067-L0068	この機能
+F08	P2	第2引数	なし｜あり	なし: 集計を行う／あり: 集計の対象は変わらない	L0065,L0068	この機能
+処理ID	要因	判定	根拠	理由
+P1	F01+F04+F05	効き合う	L0027-L0029	ECCUBE計上分はEC受注日、スマレジ計上分はレジ取引日時で期間分けし、引き渡し済みの元EC受注は集計対象から外れる
+P1	F01+F02	関係しない		除外条件（ステータス・閉店）はどの区分の明細にも同じに働き、区分の扱いは変わらない
+P1	F01+F03	関係しない		除外条件（ステータス・閉店）はどの区分の明細にも同じに働き、区分の扱いは変わらない
+P1	F02+F03	関係しない		ステータスの除外と閉店の除外は別々の絞り込み条件で互いの結果を変えない
+P1	F02+F04	関係しない		ステータス・閉店の除外と日付の期間判定は別々の絞り込み条件で互いの結果を変えない
+P1	F03+F04	関係しない		ステータス・閉店の除外と日付の期間判定は別々の絞り込み条件で互いの結果を変えない
+P1	F02+F05	関係しない		ステータス・閉店の除外と日付の期間判定は別々の絞り込み条件で互いの結果を変えない
+P1	F03+F05	関係しない		ステータス・閉店の除外と日付の期間判定は別々の絞り込み条件で互いの結果を変えない
+P1	F06+F01	効き合う	L0054,L0056	集計対象の明細が残るかで、既存の販売数が上書きされるか前回のまま残るか、新しい行ができるかが変わる
+P1	F06+F02	効き合う	L0054,L0056	集計対象の明細が残るかで、既存の販売数が上書きされるか前回のまま残るか、新しい行ができるかが変わる
+P1	F06+F03	効き合う	L0054,L0056	集計対象の明細が残るかで、既存の販売数が上書きされるか前回のまま残るか、新しい行ができるかが変わる
+P1	F06+F04	効き合う	L0054,L0056	集計対象の明細が残るかで、既存の販売数が上書きされるか前回のまま残るか、新しい行ができるかが変わる
+P1	F06+F05	効き合う	L0054,L0056	集計対象の明細が残るかで、既存の販売数が上書きされるか前回のまま残るか、新しい行ができるかが変わる
+P2	F07+F08	効き合う	L0060,L0068	コマンド名が不一致なら第2引数の有無にかかわらず集計を行わない。コマンド名が正しいときの第2引数は集計対象を変えない
+処理ID	組	種別	根拠	理由
+P1	F01=通常のEC受注&F05=集計期間内	作れない	L0027-L0029	スマレジ由来でない受注にレジ取引日時は無い
+P1	F01=通常のEC受注&F05=集計期間外	作れない	L0027-L0029	スマレジ由来でない受注にレジ取引日時は無い
+P1	F01=引き渡し済みの元EC受注&F05=集計期間内	作れない	L0027-L0029	スマレジ由来でない受注にレジ取引日時は無い
+P1	F01=引き渡し済みの元EC受注&F05=集計期間外	作れない	L0027-L0029	スマレジ由来でない受注にレジ取引日時は無い
+P1	F01=スマレジ由来受注の複製明細&F05=なし	作れない	L0027-L0029	スマレジ由来受注にはレジ取引日時がある
+P1	F01=スマレジ由来受注の店頭追加明細&F05=なし	作れない	L0027-L0029	スマレジ由来受注にはレジ取引日時がある
+テストID	処理ID	値	理由
+IT-B02-01-008	P1	F01=通常のEC受注&F02=集計対象&F03=営業中の店舗&F04=集計期間内&F05=なし&F06=あり	前日の対応中の明細と既存の販売数集計データ（各販売数9）を用意して起動し、DBの行を確かめる
+IT-B02-01-009	P1	F01=通常のEC受注&F02=集計対象&F03=営業中の店舗&F04=集計期間内&F05=なし&F06=なし	1回目の起動は集計データ0件の状態から行い、DBの各販売数を確かめる
+IT-B02-01-009	P1	F01=通常のEC受注&F02=集計対象&F03=営業中の店舗&F04=集計期間内&F05=なし&F06=あり	2回目の起動は1回目の集計データがある状態から行い、DBの各販売数を確かめる
+IT-B02-01-019	P1	F01=スマレジ由来受注の店頭追加明細&F03=営業中の店舗&F04=集計期間内&F05=集計期間内&F06=なし	店頭だけの購入のスマレジ計上受注を用意して起動し、DBの各販売数を確かめる
+IT-B02-01-014	P2	F07=未指定または不一致&F08=なし	バッチ名なしと大文字小文字違いの名前で起動し、コンソール出力と終了コードを確かめる
+IT-B02-01-017	P2	F07=updateProductSummary&F08=あり	第2引数に商品規格IDを付けて起動し、DBの行を確かめる
+
+exec
+/bin/bash -lc 'for kind in processes factors interactions constraints existing; do cat integration_test/casegen/combination/factors/B05-01_${kind}.tsv; done' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'for kind in processes factors interactions constraints existing; do cat integration_test/casegen/combination/factors/B05-05_${kind}.tsv; done' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 112ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	検索に一致した商品の商品規格を絞り込んで返す	商品名を指定して商品名検索APIにGETで要求する	APIの応答JSON（product_classes）	L0156,L0161,L0166-L0168
+P2	商品名で商品を絞り込んで商品配列を作る	商品名を指定して商品名検索APIにGETで要求する	APIの応答JSON（products・HTTPステータス）	L0155-L0156,L0159-L0164,L0171
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P2	商品の公開状態	公開｜非公開または削除済み	公開: 検索の対象になる／非公開または削除済み: 対象にならず一致する商品が無ければ該当なし（HTTP 404）	L0156,L0160	この機能
+F02	P1	商品規格の削除	未削除｜削除済み	未削除: 対象になる／削除済み: 対象から外れる	L0156	この機能
+F03	P1	商品規格の販売価格	下限以上｜正で下限未満｜0以下	下限以上: 商品規格として返る／正で下限未満: 状態がNMのときだけ返る／0以下: 対象から外れる	L0156,L0166	この機能
+F04	P1	商品規格の状態	NM｜NM以外	NM: 価格が下限未満でも返る／NM以外: 価格が下限以上で、かつ絞り込みで残るときだけ返る	L0166-L0167	この機能
+F05	P1	NM以外で在庫があり下限以上の規格	あり｜なし	あり: NM以外の規格もそのまま返る／なし: NMの商品規格だけに絞る（高額商品コードが無いとき）	L0167	この機能
+F06	P1	高額商品コード	あり｜なし	あり: NMだけへの絞り込みを行わずNM以外も返る／なし: 絞り込みを行う	L0167	この機能
+F07	P2	商品の種別	カード商品｜カード商品でない	カード商品: 商品名の先頭に言語コードが付く／カード商品でない: 商品名のまま	L0164	この機能
+F08	P2	検索語と商品名の一致	全語が一致｜一致しない語がある	全語が一致: 商品配列に出る／一致しない語がある: 出ず一致する商品が無ければ404	L0155,L0160	この機能
+F09	P2	検索語が一致する名	日本語名のみ｜英語名のみ｜日英にまたがる	日本語名のみ: 日本語の商品名で一致／英語名のみ: 英語の商品名で一致／日英にまたがる: 語ごとにどちらかの名で一致すれば商品配列に出る	L0155	この機能
+F10	P2	検索語の区切り文字	空白｜カンマ	空白: 語に分ける／カンマ: 語に分ける	L0155	この機能
+処理ID	要因	判定	根拠	理由
+P1	F02+F03	関係しない		規格を返す・返さないの絞り込み条件で、どれか1つで外れれば返らず、条件どうしで結果は変わらない
+P1	F02+F04	関係しない		規格を返す・返さないの絞り込み条件で、どれか1つで外れれば返らず、条件どうしで結果は変わらない
+P1	F02+F05	関係しない		規格を返す・返さないの絞り込み条件で、どれか1つで外れれば返らず、条件どうしで結果は変わらない
+P1	F02+F06	関係しない		規格を返す・返さないの絞り込み条件で、どれか1つで外れれば返らず、条件どうしで結果は変わらない
+P1	F03+F04	関係しない		規格を返す・返さないの絞り込み条件で、どれか1つで外れれば返らず、条件どうしで結果は変わらない
+P1	F03+F05	関係しない		規格を返す・返さないの絞り込み条件で、どれか1つで外れれば返らず、条件どうしで結果は変わらない
+P1	F03+F06	関係しない		規格を返す・返さないの絞り込み条件で、どれか1つで外れれば返らず、条件どうしで結果は変わらない
+P1	F04+F05	関係しない		規格を返す・返さないの絞り込み条件で、どれか1つで外れれば返らず、条件どうしで結果は変わらない
+P1	F04+F06	関係しない		規格を返す・返さないの絞り込み条件で、どれか1つで外れれば返らず、条件どうしで結果は変わらない
+P1	F05+F06	関係しない		規格を返す・返さないの絞り込み条件で、どれか1つで外れれば返らず、条件どうしで結果は変わらない
+P2	F01+F08	関係しない		商品を返す・返さないの絞り込み条件で、どれか1つで外れれば出ず、条件どうしで結果は変わらない
+P2	F01+F09	関係しない		商品を返す・返さないの絞り込み条件で、どれか1つで外れれば出ず、条件どうしで結果は変わらない
+P2	F08+F09	関係しない		商品を返す・返さないの絞り込み条件で、どれか1つで外れれば出ず、条件どうしで結果は変わらない
+P2	F07+F01	関係しない		商品名の言語コード付与は商品の種別だけで決まり、絞り込みの結果で変わらない
+P2	F07+F08	関係しない		商品名の言語コード付与は商品の種別だけで決まり、絞り込みの結果で変わらない
+P2	F07+F09	関係しない		商品名の言語コード付与は商品の種別だけで決まり、絞り込みの結果で変わらない
+P2	F10+F01	関係しない		区切りは検索語に分けるだけで、分けた後の語の一致と商品の絞り込みの結果は区切り文字で変わらない
+P2	F10+F07	関係しない		区切りは検索語に分けるだけで、分けた後の語の一致と商品の絞り込みの結果は区切り文字で変わらない
+P2	F10+F08	関係しない		区切りは検索語に分けるだけで、分けた後の語の一致と商品の絞り込みの結果は区切り文字で変わらない
+P2	F10+F09	関係しない		区切りは検索語に分けるだけで、分けた後の語の一致と商品の絞り込みの結果は区切り文字で変わらない
+処理ID	組	種別	根拠	理由
+P2	F08=一致しない語がある&F09=日英にまたがる	正解未定	L0155	一致しない語がある検索では日英にまたがる一致が成立せず、この値の組で何を確かめるかが設計書から決まらない
+テストID	処理ID	値	理由
+IT-A17-05-002	P2	F01=公開&F08=全語が一致	公開済みかつ未削除の101商品を作り、商品名で検索してproductsを確かめる
+IT-A17-05-014	P2	F01=公開&F07=カード商品でない	公開済みでカード詳細なしの商品を検索し、product_nameを確かめる
+IT-A17-05-014	P1	F02=未削除&F04=NM	NM規格が未削除で、検索結果のproduct_classesを確かめる
+IT-A17-05-013	P2	F07=カード商品	カード詳細を持つ商品を検索し、product_nameの言語コードを確かめる
+IT-A17-05-020	P2	F01=公開	公開済みかつ未削除の商品を検索する
+IT-A17-05-025	P2	F01=公開	公開済みかつ未削除の商品を検索する
+IT-A17-05-025	P1	F02=未削除&F04=NM	NM・未削除の規格の画像を確かめる
+IT-A17-05-001	P2	F01=公開	公開済みかつ未削除の商品を検索する
+
+exec
+/bin/bash -lc 'for kind in processes factors interactions constraints existing; do cat integration_test/casegen/combination/factors/B05-06_${kind}.tsv; done' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'for kind in processes factors interactions constraints existing; do cat integration_test/casegen/combination/factors/B05-03_${kind}.tsv; done' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 135ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	在庫変動履歴を期間別に集計して入庫数集計データへ反映する	期間別入庫数集計バッチを起動する	DBの入庫数集計データ（専用の集計テーブル）	L0020-L0027,L0038,L0047-L0054,L0063,L0091-L0096,L0109
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	在庫変動の親区分	入庫｜買取｜移動または分割｜マスター更新	入庫: 集計に入る／買取: 集計に入る／移動または分割: 集計に含めない／マスター更新: 0404は集計対象と書くが0402の対象区分に無く決まらない	L0022-L0023,L0100,L0105	この機能
+F02	P1	在庫の増減	増加｜減少または変化なし	増加: 増加分を合計する／減少または変化なし: 0として数え集計に現れる単位の値は0になる	L0047	この機能
+F03	P1	履歴の店舗	営業中の本店以外の店舗｜本店｜閉店した店舗	営業中の本店以外の店舗: 店舗ごとに集計／本店: 支店IDを0として集計／閉店した店舗: 集計対象外で行は更新も登録もされない	L0090-L0096	この機能
+F04	P1	履歴の登録日	集計期間内｜366日より前	集計期間内: 取得され期間別に集計／366日より前: 取得されない	L0021,L0035,L0052	この機能
+F05	P1	既存の入庫数集計データ	あり｜なし	あり: 集計に現れれば更新し現れなければ前回値のまま残る／なし: 集計に現れれば新規登録する	L0026-L0027,L0054,L0063	この機能
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	効き合う	L0022-L0023,L0047	集計に入る区分（入庫・買取）の増加分だけが値になり、集計に入らない区分では増加しても値に入らない
+P1	F01+F03	関係しない		区分の絞り込みと店舗の閉店除外は別々の絞り込み条件で互いの結果を変えない
+P1	F01+F04	関係しない		区分の絞り込みと期間の取得条件は別々の絞り込み条件で互いの結果を変えない
+P1	F02+F03	関係しない		増減の数え方と店舗の閉店除外は別々で互いの結果を変えない
+P1	F02+F04	関係しない		増減の数え方と期間の取得条件は別々で互いの結果を変えない
+P1	F03+F04	関係しない		店舗の閉店除外と期間の取得条件は別々の絞り込み条件で互いの結果を変えない
+P1	F01+F05	効き合う	L0026-L0027,L0054	対象の履歴が集計に現れるかで、既存の集計データが更新されるか前回値のまま残るか、新規登録されるかが変わる
+P1	F02+F05	効き合う	L0026-L0027,L0054	対象の履歴が集計に現れるかで、既存の集計データが更新されるか前回値のまま残るか、新規登録されるかが変わる
+P1	F03+F05	効き合う	L0026-L0027,L0054	対象の履歴が集計に現れるかで、既存の集計データが更新されるか前回値のまま残るか、新規登録されるかが変わる
+P1	F04+F05	効き合う	L0026-L0027,L0054	対象の履歴が集計に現れるかで、既存の集計データが更新されるか前回値のまま残るか、新規登録されるかが変わる
+処理ID	組	種別	根拠	理由
+P1	F01=マスター更新	正解未定	L0100,L0105,L0022	0404は入庫またはマスター更新を集計と書き、0402は親区分を入庫と買取だけとし、マスター更新を集計に入れるか決まらない
+テストID	処理ID	値	理由
+IT-B02-03-001	P1	F01=入庫&F02=増加&F03=営業中の本店以外の店舗&F04=集計期間内&F05=なし	開店中の店舗に入庫の増加履歴を登録し、集計データがない状態で起動して新規登録を確かめる
+IT-B02-03-002	P1	F01=入庫&F02=増加&F03=営業中の本店以外の店舗&F04=集計期間内&F05=あり	当日の入庫の増加履歴と既存の集計データを用意して起動し、更新されるのを確かめる
+IT-B02-03-003	P1	F01=入庫&F02=増加&F03=営業中の本店以外の店舗&F04=集計期間内&F05=なし	商品と店舗の組ごとに入庫の増加履歴を登録し、集計データがない状態で起動して3件に分かれるのを確かめる
+IT-B02-03-005	P1	F05=あり	対象の履歴が無い商品コードの既存の集計データが前回値のまま残るのを確かめる
+IT-B02-03-010	P1	F01=入庫&F02=増加&F03=営業中の本店以外の店舗&F05=なし	366日前と365日前の入庫の増加履歴を登録し、集計データがない状態で起動して365日間の値を確かめる
+IT-B02-03-015	P1	F01=入庫&F02=増加&F03=本店&F04=集計期間内&F05=なし	本店の当日の入庫の増加履歴を登録し、集計データがない状態で起動して支店IDを確かめる
+IT-B02-03-016	P1	F01=入庫&F02=減少または変化なし&F03=営業中の本店以外の店舗&F04=集計期間内&F05=あり	在庫が減っただけの入庫の履歴と既存の集計データを用意して起動し、0に更新されるのを確かめる
+
+ succeeded in 146ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	商品・商品規格が非公開・廃止・削除された入荷通知リクエストを論理削除する	バッチ入荷通知キャンセルを起動する	DBの入荷通知リクエストの削除日時	L0024,L0028-L0036,L0043-L0050
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	商品の公開状態	公開｜非公開または廃止	公開: 公開状態の条件では対象にならない／非公開または廃止: 入荷通知キャンセル扱いで削除日時に実行日時が入る	L0021,L0024,L0029,L0034	この機能
+F02	P1	紐づく商品規格	規格の指定なし｜公開で未削除｜非公開または廃止｜削除済み｜レコードなし	規格の指定なし: 商品単位の依頼で商品の状態だけで決まる／公開で未削除: 規格の条件では対象にならない／非公開または廃止: 対象になり論理削除／削除済み: 対象になり論理削除／レコードなし: 対象にならない	L0019,L0024,L0030,L0033,L0045,L0048	この機能
+F03	P1	紐づく商品	存在し未削除｜削除済み｜レコードなし	存在し未削除: 削除の条件では対象にならない／削除済み: 対象になり論理削除／レコードなし: 対象になり論理削除	L0046-L0047	この機能
+F04	P1	入荷通知リクエストの削除日時	未設定｜設定済み	未設定: 対象の判定を受ける／設定済み: 対象にならず日時は変わらない	L0044,L0050	この機能
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	関係しない		論理削除の対象にする・しないの条件で、どれか1つに当たれば対象になるまたは外れ、条件どうしで結果は変わらない
+P1	F01+F03	関係しない		論理削除の対象にする・しないの条件で、どれか1つに当たれば対象になるまたは外れ、条件どうしで結果は変わらない
+P1	F01+F04	関係しない		論理削除の対象にする・しないの条件で、どれか1つに当たれば対象になるまたは外れ、条件どうしで結果は変わらない
+P1	F02+F03	関係しない		論理削除の対象にする・しないの条件で、どれか1つに当たれば対象になるまたは外れ、条件どうしで結果は変わらない
+P1	F02+F04	関係しない		論理削除の対象にする・しないの条件で、どれか1つに当たれば対象になるまたは外れ、条件どうしで結果は変わらない
+P1	F03+F04	関係しない		論理削除の対象にする・しないの条件で、どれか1つに当たれば対象になるまたは外れ、条件どうしで結果は変わらない
+処理ID	組	種別	根拠	理由
+テストID	処理ID	値	理由
+IT-B02-02-001	P1	F01=非公開または廃止&F02=規格の指定なし&F03=存在し未削除&F04=未設定	非公開と廃止の商品に紐づく商品単位の依頼を用意して起動し、削除日時を確かめる
+IT-B02-02-002	P1	F01=公開&F02=非公開または廃止&F03=存在し未削除&F04=未設定	商品が公開で規格が非公開と廃止の依頼を用意して起動し、削除日時を確かめる
+IT-B02-02-002	P1	F01=非公開または廃止&F02=公開で未削除&F03=存在し未削除&F04=未設定	商品が非公開と廃止で規格が公開の依頼を用意して起動し、削除日時を確かめる
+IT-B02-02-003	P1	F01=公開&F02=規格の指定なし&F03=存在し未削除&F04=未設定	公開中の商品の商品単位の依頼を起動し、削除日時が未設定のままなのを確かめる
+IT-B02-02-003	P1	F01=公開&F02=公開で未削除&F03=存在し未削除&F04=未設定	公開中の商品と規格の規格単位の依頼を起動し、削除日時が未設定のままなのを確かめる
+IT-B02-02-004	P1	F01=非公開または廃止&F02=規格の指定なし&F03=存在し未削除&F04=未設定	1回目の起動で非公開商品の商品単位の依頼を論理削除し、削除日時を記録する
+IT-B02-02-004	P1	F01=非公開または廃止&F02=規格の指定なし&F03=存在し未削除&F04=設定済み	2回目の起動で削除日時が変わらないのを確かめる
+IT-B02-02-010	P1	F01=公開&F02=削除済み&F03=存在し未削除&F04=未設定	商品が公開で未削除、規格が削除済みの依頼を起動し、削除日時を確かめる
+IT-B02-02-011	P1	F02=公開で未削除&F03=レコードなし&F04=未設定	商品のレコードが無い規格単位の依頼を起動し、削除日時を確かめる
+IT-B02-02-012	P1	F01=公開&F02=レコードなし&F03=存在し未削除&F04=未設定	規格のレコードが無い依頼を起動し、削除日時が未設定のままなのを確かめる
+
+ succeeded in 120ms:
+処理ID	処理	契機	確かめる所	根拠
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+処理ID	要因	判定	根拠	理由
+処理ID	組	種別	根拠	理由
+テストID	処理ID	値	理由
+
+ succeeded in 128ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	受注の注文ステータス変更で注文番号を採番する	管理画面の受注情報編集画面で注文ステータスを変更して保存する	受注の注文番号（DB）	L0055-L0061,L0045-L0048
+P2	店頭受取注文をスマレジへ商品・在庫連携する	バッチ B05-01（店頭受取注文商品スマレジ連携バッチ）を10分おきに起動する	受注のスマレジ連携済みフラグ・スマレジ在庫連携済みフラグ・スマレジ用商品コード（DB）・スマレジへの商品・在庫登録・エラーメール	L0068-L0107,L0111-L0132
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	変更前の注文ステータス	決済処理中または購入処理中｜入金済み	決済処理中または購入処理中: 採番の変更前の条件を満たす／入金済み: 条件を満たさず採番しない	L0058,L0046	この機能
+F02	P1	変更後の注文ステータス	注文受領または入金待ち｜入金済み	注文受領または入金待ち: 採番の変更後の条件を満たす／入金済み: 条件を満たさず採番しない	L0058,L0046	この機能
+F03	P2	注文日時	バッチ起動の30分前以降｜30分より前	バッチ起動の30分前以降: 連携の対象／30分より前: 対象外	L0073,L0112,L0119	この機能
+F04	P2	注文店舗のスマレジ店舗ID	登録済み｜未登録	登録済み: 連携の対象／未登録: 対象外	L0074,L0113,L0120	この機能
+F05	P2	注文店舗のスマレジ店舗コード	登録済み｜未登録	登録済み: 連携の対象／未登録: 対象外	L0074,L0113,L0121	この機能
+F06	P2	スマレジ連携済みフラグ	立っていない｜立っている	立っていない: 連携の対象／立っている: 対象外	L0075,L0114,L0122	この機能
+F07	P2	スマレジ在庫連携済みフラグ	立っていない｜立っている	立っていない: 連携の対象／立っている: 対象外	L0076,L0115,L0123	この機能
+F08	P2	注文ステータス	連携対象のステータス｜対象外のステータス	連携対象のステータス: 連携の対象（注文受領・入金待ち・入金済み・ピック中・ピック済み）／対象外のステータス: 対象外	L0077,L0116,L0124	この機能
+F09	P2	受取の種類	店頭受取｜スムーズ店頭受取	店頭受取: スマレジに送る金額は注文合計金額／スムーズ店頭受取: スマレジに送る金額は0円	L0098-L0099	この機能
+F10	P2	注文者の区分	店頭PCアカウント｜通常会員	店頭PCアカウント: 商品名は「店頭注文: 店頭注文番号 のご注文」／通常会員: 商品名は「注文者姓カナ 注文者名カナ 様のご注文」	L0095-L0096	この機能
+F11	P2	スマレジAPIの結果	商品・在庫ともに成功｜商品登録が失敗｜商品は成功し在庫登録が失敗	商品・在庫ともに成功: 両方の連携済みフラグを立てる／商品登録が失敗: エラーメールを送り在庫登録は行わない／商品は成功し在庫登録が失敗: エラーメールを送り在庫連携済みフラグは立てない	L0100-L0107,L0131	この機能
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	効き合う	L0058,L0046	変更前が決済処理中か購入処理中で、かつ変更後が注文受領か入金待ちのときだけ注文番号を採番する
+P2	F03+F04+F05+F06+F07+F08	効き合う	L0073-L0077,L0112-L0116	6つの条件をすべて満たす注文だけが連携の対象になり、1つでも外れるとその注文は連携されない
+P2	F03+F09	関係しない		対象になるかどうかは絞り込みの条件だけで決まり、送る金額・商品名は対象になった注文にだけ付く
+P2	F03+F10	関係しない		対象になるかどうかは絞り込みの条件だけで決まり、送る金額・商品名は対象になった注文にだけ付く
+P2	F03+F11	関係しない		対象になるかどうかは絞り込みの条件だけで決まり、APIの結果は対象になった注文にだけ現れる
+P2	F04+F09	関係しない		対象になるかどうかは絞り込みの条件だけで決まり、送る金額・商品名は対象になった注文にだけ付く
+P2	F04+F10	関係しない		対象になるかどうかは絞り込みの条件だけで決まり、送る金額・商品名は対象になった注文にだけ付く
+P2	F04+F11	関係しない		対象になるかどうかは絞り込みの条件だけで決まり、APIの結果は対象になった注文にだけ現れる
+P2	F05+F09	関係しない		対象になるかどうかは絞り込みの条件だけで決まり、送る金額・商品名は対象になった注文にだけ付く
+P2	F05+F10	関係しない		対象になるかどうかは絞り込みの条件だけで決まり、送る金額・商品名は対象になった注文にだけ付く
+P2	F05+F11	関係しない		対象になるかどうかは絞り込みの条件だけで決まり、APIの結果は対象になった注文にだけ現れる
+P2	F06+F09	関係しない		対象になるかどうかは絞り込みの条件だけで決まり、送る金額・商品名は対象になった注文にだけ付く
+P2	F06+F10	関係しない		対象になるかどうかは絞り込みの条件だけで決まり、送る金額・商品名は対象になった注文にだけ付く
+P2	F06+F11	関係しない		対象になるかどうかは絞り込みの条件だけで決まり、APIの結果は対象になった注文にだけ現れる
+P2	F07+F09	関係しない		対象になるかどうかは絞り込みの条件だけで決まり、送る金額・商品名は対象になった注文にだけ付く
+P2	F07+F10	関係しない		対象になるかどうかは絞り込みの条件だけで決まり、送る金額・商品名は対象になった注文にだけ付く
+P2	F07+F11	関係しない		対象になるかどうかは絞り込みの条件だけで決まり、APIの結果は対象になった注文にだけ現れる
+P2	F08+F09	関係しない		対象になるかどうかは絞り込みの条件だけで決まり、送る金額・商品名は対象になった注文にだけ付く
+P2	F08+F10	関係しない		対象になるかどうかは絞り込みの条件だけで決まり、送る金額・商品名は対象になった注文にだけ付く
+P2	F08+F11	関係しない		対象になるかどうかは絞り込みの条件だけで決まり、APIの結果は対象になった注文にだけ現れる
+P2	F09+F10	関係しない		金額は受取の種類で、商品名は注文者の区分で、それぞれ別々に決まる
+P2	F09+F11	関係しない		送るデータ（金額・商品名）はAPIの成否で変わらず、APIの成否は送るデータの値で変わらない
+P2	F10+F11	関係しない		送るデータ（金額・商品名）はAPIの成否で変わらず、APIの成否は送るデータの値で変わらない
+処理ID	組	種別	根拠	理由
+P2	F06=立っている&F07=立っていない	正解未定	L0075-L0076,L0132	両方のフラグが立っていないことが対象の条件だが、商品連携だけ成功して在庫連携が失敗した注文は再連携されると書かれており（L0132）条件と合わない
+テストID	処理ID	値	理由
+IT-B05-01-001	P1	F01=決済処理中または購入処理中&F02=注文受領または入金待ち	決済処理中から注文受領へ変えて保存し、DBで注文番号を確かめる
+IT-B05-01-002	P1	F01=決済処理中または購入処理中&F02=注文受領または入金待ち	決済処理中から注文受領へ変えて保存し、DBで注文番号を確かめる
+IT-B05-01-002	P1	F01=決済処理中または購入処理中&F02=注文受領または入金待ち	購入処理中から入金待ちへ変えて保存し、DBで注文番号を確かめる
+IT-B05-01-002	P1	F01=決済処理中または購入処理中&F02=注文受領または入金待ち	決済処理中から入金待ちへ変えて保存し、DBで注文番号を確かめる
+IT-B05-01-002	P1	F01=決済処理中または購入処理中&F02=注文受領または入金待ち	購入処理中から注文受領へ変えて保存し、DBで注文番号を確かめる
+IT-B05-01-003	P1	F01=決済処理中または購入処理中&F02=入金済み	決済処理中から入金済みへ変えて注文番号が付かないことをDBで確かめる
+IT-B05-01-003	P1	F01=入金済み&F02=注文受領または入金待ち	入金済みから注文受領へ変えて注文番号が付かないことをDBで確かめる
+
+ succeeded in 188ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	部門未設定の公開商品規格を抽出して管理者へメールで通知する	バッチ product:batch checkNoSectionProduct を起動する	管理者宛ての受信メール（件名・本文の一覧）	L0019-L0021,L0035-L0039,L0043
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	商品の公開ステータス	公開｜公開以外	公開: 抽出の対象になる／公開以外: 一覧に載らない	L0019,L0037	この機能
+F02	P1	商品規格の部門	未設定｜設定済み	未設定: 抽出の対象になる／設定済み: 一覧に載らない	L0019,L0037	この機能
+F03	P1	商品と商品規格の削除	未削除｜商品または商品規格が削除済み	未削除: 抽出の対象になる／商品または商品規格が削除済み: 対象から除く	L0037	この機能
+F04	P1	買取部門集計送信メールアドレス	1件のアドレス｜カンマ区切りで複数｜空	1件のアドレス: そのアドレスへ送る／カンマ区切りで複数: 全アドレスへ送る／空: 該当する商品規格があってもメールを送らない	L0039	この機能
+F05	P1	コマンド名	checkNoSectionProduct｜未指定または不一致	checkNoSectionProduct: 抽出と通知を行う／未指定または不一致: 処理を行わず終了する	L0035	この機能
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	関係しない		通知する・しないの条件で、どれか1つで外れれば通知されず、条件どうしで結果は変わらない
+P1	F01+F03	関係しない		通知する・しないの条件で、どれか1つで外れれば通知されず、条件どうしで結果は変わらない
+P1	F01+F04	関係しない		通知する・しないの条件で、どれか1つで外れれば通知されず、条件どうしで結果は変わらない
+P1	F01+F05	関係しない		通知する・しないの条件で、どれか1つで外れれば通知されず、条件どうしで結果は変わらない
+P1	F02+F03	関係しない		通知する・しないの条件で、どれか1つで外れれば通知されず、条件どうしで結果は変わらない
+P1	F02+F04	関係しない		通知する・しないの条件で、どれか1つで外れれば通知されず、条件どうしで結果は変わらない
+P1	F02+F05	関係しない		通知する・しないの条件で、どれか1つで外れれば通知されず、条件どうしで結果は変わらない
+P1	F03+F04	関係しない		通知する・しないの条件で、どれか1つで外れれば通知されず、条件どうしで結果は変わらない
+P1	F03+F05	関係しない		通知する・しないの条件で、どれか1つで外れれば通知されず、条件どうしで結果は変わらない
+P1	F04+F05	関係しない		通知する・しないの条件で、どれか1つで外れれば通知されず、条件どうしで結果は変わらない
+処理ID	組	種別	根拠	理由
+テストID	処理ID	値	理由
+IT-B02-04-001	P1	F01=公開&F02=未設定&F03=未削除&F04=1件のアドレス&F05=checkNoSectionProduct	公開・部門未設定・未削除の商品規格を用意して起動し、管理者宛てのメールを確かめる
+IT-B02-04-003	P1	F01=公開&F02=設定済み&F03=未削除&F04=1件のアドレス&F05=checkNoSectionProduct	部門設定済みの商品規格だけで起動し、メールが届かないのを確かめる
+IT-B02-04-004	P1	F01=公開&F02=未設定&F03=未削除&F04=空&F05=checkNoSectionProduct	送信先を空にして起動し、メールが届かないのを確かめる
+IT-B02-04-005	P1	F01=公開&F02=未設定&F03=未削除&F04=カンマ区切りで複数&F05=checkNoSectionProduct	送信先を2つ設定して起動し、双方のメールを確かめる
+IT-B02-04-006	P1	F01=公開&F02=未設定&F03=未削除&F04=1件のアドレス&F05=checkNoSectionProduct	公開・部門未設定の商品規格を用意して起動し、メールの差出人と返信先を確かめる
+IT-B02-04-007	P1	F01=公開&F02=未設定&F03=未削除&F04=1件のアドレス&F05=checkNoSectionProduct	公開・部門未設定・未削除の商品規格を10,000件用意して起動し、メール本文の一覧を確かめる
+IT-B02-04-008	P1	F01=公開&F02=未設定&F03=未削除&F04=1件のアドレス&F05=checkNoSectionProduct	公開・部門未設定・未削除の商品規格を10,001件用意して起動し、メール本文の一覧を確かめる
+IT-B02-04-015	P1	F01=公開&F02=未設定&F03=未削除&F04=1件のアドレス&F05=checkNoSectionProduct	同じコマンドを2回起動し、同じ内容のメールが2通届くのを確かめる
+IT-B02-04-016	P1	F01=公開&F02=未設定&F03=未削除&F04=1件のアドレス&F05=未指定または不一致	存在しないコマンド名で起動し、メールが届かないのを確かめる
+IT-B02-04-017	P1	F01=公開&F02=未設定&F03=未削除&F04=1件のアドレス&F05=未指定または不一致	コマンド名なしで起動し、メールが届かないのを確かめる
+
+ succeeded in 198ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	お気に入り商品セール通知メールを会員へ送る	バッチ B02-05（saleNotification）を起動する	会員宛てのメール受信・メール送信履歴	L0019-L0024,L0028-L0036,L0044-L0049,L0060
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	会員ステータス	本会員｜仮会員｜退会済み会員	本会員: 通知の対象になる／仮会員: 対象外でメールを送らない／退会済み会員: 対象外でメールを送らない	L0021,L0029,L0033	この機能
+F02	P1	会員グループ	通常｜店内注文専用アカウント	通常: 通知の対象になる／店内注文専用アカウント: 対象にしない（支店店内注文専用アカウントも同じ）	L0044	この機能
+F03	P1	お気に入り登録した言語の側のセール	セール有効｜セール無効	セール有効: その商品が通知の商品一覧に載る／セール無効: 載らず、載せる商品が無い会員にはメールを送らない	L0019,L0028,L0032,L0044	この機能
+F04	P1	会員の住所	日本｜国外	日本: 日本語テンプレートで送り、本文は姓名の順で商品名は日本語名／国外: 英語テンプレートで送り、本文は名・姓の順で商品名は英語名	L0023-L0024,L0035,L0046	この機能
+F05	P1	お気に入りを登録した言語	JP｜EN	JP: 商品の行の先頭に【JP】を付ける／EN: 商品の行の先頭に【EN】を付ける	L0044,L0046	この機能
+処理ID	要因	判定	根拠	理由
+P1	F01+F02+F03	効き合う	L0021,L0029,L0033,L0044,L0028	3つのどれか1つでも対象外の値だと、その会員にはメールを送らない（会員ステータスが本会員で、店内注文専用でなく、登録言語側がセール中のときだけ通知する）
+P1	F01+F04	関係しない		メールの言語選択は通知の対象になった会員にだけ働き、ステータスは対象かどうかだけを決める
+P1	F01+F05	関係しない		行頭の言語コードは対象になった商品にだけ付き、ステータスは対象かどうかだけを決める
+P1	F02+F04	関係しない		会員グループは対象かどうかだけを決め、メールの言語は住所だけで決まる
+P1	F02+F05	関係しない		会員グループは対象かどうかだけを決め、行頭の言語コードは登録言語だけで決まる
+P1	F03+F04	関係しない		セールの有無は商品が載るかどうかだけを決め、メールの言語は住所だけで決まる
+P1	F03+F05	関係しない		F03は登録言語の側のセールと定義しており、登録言語がJPでもENでもセール有効なら載りセール無効なら載らない
+P1	F04+F05	関係しない		商品名の言語は住所で、行頭の言語コードは登録言語で、それぞれ別々に決まる
+処理ID	組	種別	根拠	理由
+テストID	処理ID	値	理由
+IT-B02-05-004	P1	F01=本会員&F02=通常&F03=セール有効&F04=日本&F05=JP	本会員・通常グループ・東京都の会員が、JP登録・JP側セール有効の商品を持ち、受信メールで商品がまとまることを確かめる
+IT-B02-05-006	P1	F01=本会員&F02=通常&F03=セール有効&F04=国外	国外の本会員が英語テンプレートのメールを受け取ることをメール件名で確かめる
+IT-B02-05-008	P1	F01=本会員&F02=通常&F03=セール無効&F04=日本	東京都の本会員でJP側セール無効の商品だけのとき、メールが届かないことを確かめる
+IT-B02-05-011	P1	F01=本会員&F02=通常&F03=セール有効&F04=国外	国外の本会員のメール本文が名・姓の順で英語の商品名になることを確かめる
+IT-B02-05-012	P1	F01=本会員&F02=通常&F03=セール有効&F04=日本	東京都の本会員へのメールの差出人・返信先をヘッダで確かめる
+IT-B02-05-014	P1	F01=本会員&F02=通常&F03=セール有効&F04=日本	東京都の本会員への送信後にメール送信履歴が1件増えることをDBで確かめる
+IT-B02-05-020	P1	F01=本会員&F02=通常&F03=セール有効&F04=日本	送信後のメール送信履歴に会員が紐づかないことをDBで確かめる
+IT-B02-05-021	P1	F01=本会員&F02=通常&F03=セール有効&F04=日本	同じ起動を2回行うと送信履歴が2件増えることをDBで確かめる
+IT-B02-05-023	P1	F01=本会員&F02=通常&F03=セール有効&F04=日本	東京都の本会員2人へ送信し送信履歴が2件増えることをDBで確かめる
+
+ succeeded in 180ms:
+処理ID	処理	契機	確かめる所	根拠
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+処理ID	要因	判定	根拠	理由
+処理ID	組	種別	根拠	理由
+テストID	処理ID	値	理由
+
+ succeeded in 119ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	手続きが完了した店頭注文の商品をスマレジから論理削除する	バッチ B05-05（スマレジ商品削除）を毎日4時に起動する	スマレジの商品確認画面・受注のスマレジ削除フラグ（DB）	L0016-L0021,L0026-L0037,L0052-L0054
+P2	連携失敗をエラーメールで管理者へ通知する	スマレジ連携が失敗した受注が出る	管理者宛てのエラーメール	L0022,L0039,L0061-L0071
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	スマレジ商品コード	登録されている｜未登録	登録されている: 対象になる／未登録: 対象外	L0017,L0027,L0032	この機能
+F02	P1	スマレジ削除フラグ	立っていない｜立っている	立っていない: 対象になる／立っている: 対象外	L0018,L0028,L0033	この機能
+F03	P1	注文ステータス	キャンセル｜引き渡し済み｜出荷完了｜対象外のステータス	キャンセル: 対象になる／引き渡し済み: 対象になる／出荷完了: 検索条件の表は出荷完了とし本文は引き渡し済みとして食い違う／対象外のステータス: 対象外	L0019,L0029,L0034	この機能
+F04	P1	スマレジ連携の結果	成功｜失敗	成功: スマレジで論理削除しスマレジ削除フラグを立てる／失敗: 削除フラグを立てず次回も対象のまま、残りの受注の連携は続ける	L0020-L0021,L0037,L0053-L0054	この機能
+F05	P2	通知先のメールアドレス	設定されている｜設定されていない	設定されている: 通知メールを送る／設定されていない: 通知を行わない	L0063	この機能
+F06	P2	エラーコードの先頭1桁	1｜2｜3または4｜それ以外	1: 本文の先頭は認証の失敗／2: 設定の失敗／3または4: データエラー／それ以外: 例外エラー	L0065-L0071	この機能
+処理ID	要因	判定	根拠	理由
+P1	F01+F02+F03	効き合う	L0017-L0019,L0027-L0029,L0032-L0034	3つの条件をすべて満たす注文だけが対象になり、1つでも外れるとその注文は削除されない
+P1	F01+F04	関係しない		連携の成否は対象になった注文にだけ現れ、商品コードの有無は対象かどうかだけを決める
+P1	F02+F04	関係しない		連携の成否は対象になった注文にだけ現れ、削除フラグは対象かどうかだけを決める
+P1	F03+F04	関係しない		連携の成否は対象になった注文にだけ現れ、注文ステータスは対象かどうかだけを決める
+P2	F05+F06	効き合う	L0063,L0065-L0071	通知先が設定されていないと通知自体を行わず、設定されているときだけエラーコードの先頭1桁で本文の先頭の文が決まる
+処理ID	組	種別	根拠	理由
+P1	F03=出荷完了	正解未定	L0019,L0029,L0034	対象の注文ステータスが機能仕様と入力データ詳細では「キャンセル」「引き渡し済み」、入力データ検索条件の表では「キャンセル」「出荷完了」と食い違い、出荷完了の注文が対象か決まらない
+テストID	処理ID	値	理由
+
+ succeeded in 81ms:
+処理ID	処理	契機	確かめる所	根拠
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+処理ID	要因	判定	根拠	理由
+処理ID	組	種別	根拠	理由
+テストID	処理ID	値	理由
+
+ succeeded in 86ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	ポイント二重登録を検出して管理者に通知メールを送る	実行コンソールでバッチ「eccube:check-duplicate-point」を起動する	通知先のメール受信箱・コンソールの終了コードと標準エラー出力	L0016-L0031,L0040,L0044
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	直近1日のポイント付与履歴の重複	あり｜なし	あり: 注文番号を通知対象にする／なし: 通知対象が無く通知メールを送らない	L0016-L0017,L0031	この機能
+F02	P1	スマレジ通信エラー送信メールアドレスの設定	登録あり｜空	登録あり: そのアドレスへ通知メールを送る／空: 重複を検出していても通知メールを送らず終了する	L0040	この機能
+F03	P1	ポイント履歴取得時の異常	なし｜例外が起きる	なし: 通常どおり処理する／例外が起きる: 処理を打ち切り標準エラー出力へ内容を出し終了コードが0以外になる	L0044	この機能
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	効き合う	L0031,L0040	重複があっても通知先が空なら通知メールを送らない
+P1	F01+F03	効き合う	L0044	履歴の取得で例外が起きると重複の有無を判定できず処理を打ち切る
+P1	F02+F03	効き合う	L0040,L0044	例外が起きると通知先の設定にかかわらず通知メールの手前で処理が打ち切られる
+処理ID	組	種別	根拠	理由
+テストID	処理ID	値	理由
+IT-B05-06-001	P1	F01=あり&F02=登録あり&F03=なし	事前準備で重複履歴2件と通知先アドレスを設定し、バッチ起動後に受信箱で通知メールを確かめる
+IT-B05-06-003	P1	F01=あり&F02=登録あり&F03=なし	事前準備で重複履歴と通知先アドレスを設定し、受信メールの注文番号欄を確かめる
+IT-B05-06-005	P1	F01=あり&F02=登録あり&F03=なし	事前準備で重複履歴と通知先アドレスを設定し、受信メールのヘッダを確かめる
+IT-B05-06-006	P1	F01=あり&F02=空&F03=なし	事前準備で重複履歴を作り通知先アドレスを空にし、受信メールが0件であることを確かめる
+IT-B05-06-008	P1	F01=あり&F02=登録あり&F03=なし	事前準備で重複履歴と通知先アドレスを設定し、受注・ポイント残高・履歴が変わらないことをDBで確かめる
+IT-B05-06-012	P1	F03=例外が起きる	データベースを停止してバッチを起動し、終了コードを確かめる
+IT-B05-06-013	P1	F03=例外が起きる	データベースを停止してバッチを起動し、標準エラー出力を確かめる
+IT-B05-06-014	P1	F01=あり&F02=登録あり&F03=例外が起きる	重複履歴と通知先アドレスを設定したうえでデータベースを停止し、通知メールが0件であることを確かめる
+IT-B05-06-015	P1	F01=あり&F02=登録あり&F03=なし	事前準備で重複履歴と通知先アドレスを設定し、2回起動して毎回通知メールが届くことを確かめる
+
+codex
+要因表を通読したところ、複数の絞り込み条件をまとめて「効き合う」とした行が見つかりました。設計書で条件ごとの働き方を確認し、反証できる行だけ残します。
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/B02-01/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+##### 0404 sheet-3 期間別販売数集計
+L0001	期間別販売数集計
+L0002	ドキュメント名商品管理バッチ機能
+L0003	セクション—
+L0004	プロジェクト名サイトリニューアル
+L0005	作成者高久
+L0006	作成日2025-06-27
+L0007	更新者堀部
+L0008	更新日2025-10-15
+L0009	機能NoB02-01
+L0010	機能名期間別販売数集計
+L0011	概要商品マスターの一覧画面に表示する販売数(前日〜90日間)を集計する
+L0012	処理概要（★はカスタマイズ項目）
+L0013	カスタマイズ説明
+L0014	概要
+L0015	商品マスターの一覧画面に表示する販売数(前日〜365日間)を集計する
+L0016	機能
+L0017	現行システムをベースに下記カスタマイズを行う
+L0018	集計対象について
+L0019	本店のほか、支店やスマレジの販売情報も集計対象として取り扱う
+L0020	閉店した店舗は集計の対象外とする
+L0021	機能仕様処理概要（★はカスタマイズ項目）
+L0022	★定時処理で実行されて日付から下記期間範囲ごとの商品販売数を本店を含む店舗ごとに行う
+L0023	昨日の販売数,3日間の販売数,1週間の販売数,1か月の販売数,90日間の販売数,180日間の販売数,365日間の販売数
+L0024	★閉店した店舗は集計の対象外とする
+L0025	2026/8/28木村：支店システムの名残であり、本店はid=1のため記載削除。ECCUBE_HARERUYA-2458
+L0026	★スマレジの取引データも集計対象とし、それぞれ店舗ごとにECCUBEとスマレジで分けて販売数を集計する
+L0027	スマレジの受注は、引き渡し済みの元EC受注を集計対象から外し、スマレジ由来受注1件を計上元とする（二重計上の防止） 2026/8/21木村：詳細記載ECCUBE_HARERUYA-1760
+L0028	スマレジ由来受注は、元EC受注から複製された明細をECCUBE、店頭で追加された「ついで買い」分をスマレジに振り分ける。つまりEC起点の購入はEC、ついで買い・純粋な店頭購入はスマレジ扱い 2026/8/21木村：詳細記載ECCUBE_HARERUYA-1760
+L0029	期間区分の基準となる計上日は、ECCUBE計上分はEC受注日、スマレジ計上分はレジ取引日時とする 2026/8/21木村：詳細記載ECCUBE_HARERUYA-1760
+L0030	実行トリガー スケジュール起動(Step Functions) 実行タイミング 毎日0:00
+L0031	入力データ元 DB 出力先(フォーマット) DB
+L0032	入力データ詳細
+L0033	・集計について、支店の注文データとスマレジ注文データも集計対象とする。
+L0034	閉店した店舗の注文データは集計対象外とする
+L0035	入力データ検索条件
+L0036	項目名 条件 備考
+L0037	受注データ.受注日時 366日間の期間内
+L0038	受注データ.ステータス キャンセル、決済処理中を除外 2026/8/21木村：現行で除外している「決済処理中」を追加
+L0039	店舗情報.店舗閉店管理 店舗閉店管理が閉店でない
+L0040	実行結果詳細 ※主にDBの登録・更新結果について記載
+L0041	商品規格ID,支店ID,昨日の販売数,3日間の販売数,1週間の販売数,1か月の販売数,90日間の販売数,180日間の販売数,365日間の販売数
+L0042	以上の情報を販売数集計データへ更新を行う
+L0043	エラーハンドリング
+L0044	Source:
+L0045	functions/pf-eccube3/b02-01_batch_product_product_sales_period_summary.md
+L0046	現行仕様
+L0047	B02-01 期間別販売数集計 / バッチ 商品管理 — 期間別販売数集計
+L0048	業務ロジック
+L0049	販売数の数え方
+L0050	販売数は、対象期間内の受注明細の数量を合計した値である。受注の件数ではない。
+L0051	集計期間の取り方
+L0052	各期間は実行日を基準に遡って数える。前日は実行日の前日1日分だけを数える。それ以外の期間は実行日から所定の日数を遡った日以降の受注日時を対象とするため、実行日当日の受注も含む。遡る日数は、週が7日、月が28日である。期間の判定は受注日時の日付部分だけで行い、時刻は見ない。
+L0053	反映先
+L0054	当日分の販売数の列は毎回0で初期化する。集計対象期間に受注明細が1件も無かった集計単位は更新の対象にならず、前回までの販売数がそのまま残る（0にはならない）。集計結果が1件も無いときは何も更新しない。
+L0055	再実行
+L0056	再実行すると実行時点のデータで集計し直し、対象の販売数を上書きする。重複して加算されることはない。途中で失敗したときは、それまでに反映した分の更新だけが残る。
+L0057	販売数の更新は商品規格ごとに1件ずつ確定する。処理中に例外が起きたときは、それまでに更新した商品規格の販売数は反映済みのまま残り、未処理の商品規格は更新されない。
+L0058	エラー時の扱い
+L0059	エラー内容	処理
+L0060	コマンド名が未指定・不一致	集計を行わず、実行時刻を伴うエラーメッセージをコンソールへ出力して終了する
+L0061	集計対象なし	更新を行わず完了する
+L0062	処理中の例外	そこで処理を打ち切り、完了メッセージを出力しない。反映済みの分の更新は残る
+L0063	入出力
+L0064	種類	内容
+L0065	入力	コマンド名とバッチ名。第2引数以降は集計に使用しない
+L0066	実行時出力	実行時刻を伴う開始と完了のメッセージをコンソールへ出力する
+L0067	終了状態	コマンド名が未指定・不一致のときは異常終了、それ以外は正常終了として返す
+L0068	起動するコマンドは product:batch で、第1引数のバッチ名に updateProductSummary を指定する。第2引数以降を指定したときも、集計の対象は変わらない。
+L0069	リニューアル後の仕様
+L0070	表示メッセージ
+L0071	本バッチは画面メッセージを扱わない。
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/B02-03/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+##### 0402 sheet-5 期間別入庫数集計バッチ
+L0001	期間別入庫数集計バッチ
+L0002	ドキュメント名在庫 バッチ機能
+L0003	セクション—
+L0004	プロジェクト名サイトリニューアル
+L0005	作成者石川
+L0006	作成日2025-12-15
+L0007	更新者石川
+L0008	更新日2025-12-15
+L0009	機能NoB02-03
+L0010	機能名期間別入庫数集計バッチ
+L0011	概要各店舗・商品規格の入庫数の集計の処理
+L0012	処理概要（★はカスタマイズ項目）
+L0013	在庫変動履歴.在庫変動区分 処理概要で定義した在庫変動区分
+L0014	カスタマイズ説明
+L0015	・本店、支店それぞれで行っていた期間別入庫数集計（特定期間に在庫が増えた履歴）について、システム統合に伴い本店、支店の集計を1つのバッチで行う
+L0016	・商品コードごと、店舗ごと、在庫区分ごとに集計を行う
+L0017	・本店は商品規格サブテーブルに集計結果を保存しているが、支店の仕様を踏襲し、専用の集計テーブルに結果を保存する
+L0018	機能仕様処理概要（★はカスタマイズ項目）
+L0019	・バッチ概要
+L0020	・指定の期間に入庫した在庫数を商品コード、店舗、在庫区分ごとに集計するバッチ
+L0021	・起動日から366日の在庫変動履歴を取得する
+L0022	★取得対象（＝集計対象）の在庫変動区分は親区分が「入庫」「買取」のもののみとする
+L0023	※移動や分割などで入庫した在庫は集計に含まない
+L0024	★取得した在庫変動履歴を商品コードごと、店舗ごと、在庫区分ごと、期間ごと（当日、前日、3日間、1週間、1ヶ月間、90日間、180日間、365日間）に集計する
+L0025	★集計した在庫変動履歴を支店の仕様を踏襲し、専用の集計テーブルに保存する
+L0026	・商品コード、店舗、在庫場所が一致する集計データがすでに集計テーブルにある場合は更新を行う
+L0027	・ない場合は新規登録を行う
+L0028	実行トリガー スケジュール起動(Step Functions) 実行タイミング 手動実行
+L0029	入力データ元 DB 出力先(フォーマット) DB
+L0030	入力データ詳細
+L0031	・起動日から366日の在庫変動履歴を取得する
+L0032	・在庫変動履歴区分が入庫のものを取得する
+L0033	入力データ検索条件
+L0034	項目名 条件 備考
+L0035	在庫変動履歴.登録日 >= 起動日の366日前
+L0036	機能仕様在庫変動履歴.在庫変動区分 処理概要で定義した在庫変動区分
+L0037	実行結果詳細 ※主にDBの登録・更新結果について記載
+L0038	・商品入庫数集計テーブルを更新または新規登録する
+L0039	エラーハンドリング
+L0040	・エラーが発生した場合集計できなかった旨をメールで送信する
+L0041	Source:
+L0042	functions/pf-eccube3/b02-03_batch_product_product_storage_period_summary.md
+L0043	現行仕様
+L0044	B02-03 期間別入庫数集計 / バッチ 商品管理 — 期間別入庫数集計
+L0045	業務ロジック
+L0046	集計値の求め方
+L0047	集計値は、在庫が直前の在庫を上回った履歴だけを取り出し、その増加分（在庫と直前の在庫の差）を合計したものである。在庫が減った履歴・変わらない履歴は0として数え、減少分を差し引かない。
+L0048	期間の数え方
+L0049	期間に入るかどうかの判定は登録日時の日付部分だけで行い、時刻は見ない。
+L0050	前日以外の各期間は、起動日からその期間の日数だけさかのぼった日を始点とし、その日を含めて起動日当日までの履歴を数える。
+L0051	「1ヶ月」は暦の月ではなく28日として数える。
+L0052	起動日の366日前の履歴は取得の対象に含むが、どの期間の集計値にも加えない。最も長い365日間の期間は、起動日の365日前を始点とする。
+L0053	集計に現れない単位の扱い
+L0054	対象の在庫変動履歴が1件も無い単位は集計結果に現れず、更新の対象にならない。前回の集計値がそのまま残る。
+L0055	起動と異常時の扱い
+L0056	状況	ふるまい
+L0057	起動時に処理の名前が指定されていない、または対応する処理が無い名前である	何も集計せず、その旨を実行結果として返して終了する
+L0058	集計結果が1件も無い	何も更新せずに完了する
+L0059	処理の途中で異常が起きた	それまでに反映した分は残る。全体をまとめて取り消さない
+L0060	入出力
+L0061	種類	内容
+L0062	入力	起動時に受け取る処理の名前。集計のための引数は取らない。
+L0063	成功時出力	集計結果に現れた単位の入庫数だけが、求め直した値で置き換わる。現れなかった単位は前回の値のまま残る。
+L0064	失敗時出力	途中で異常が起きた場合、それまでに反映した分だけが残る。
+L0065	入出力: 永続化
+L0066	操作	契機
+L0067	入庫数の集計値の反映	集計結果の1行ごと（行単位で確定する）
+L0068	リニューアル後の仕様
+L0069	表示メッセージ
+L0070	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0071	画面を持たないため利用者向けのメッセージを表示しない。
+##### 0404 sheet-5 期間別入庫数集計
+L0072	期間別入庫数集計
+L0073	ドキュメント名商品管理バッチ機能
+L0074	セクション—
+L0075	プロジェクト名サイトリニューアル
+L0076	作成者高久
+L0077	作成日2025-06-27
+L0078	更新者堀部
+L0079	更新日2025-10-15
+L0080	機能NoB02-03
+L0081	機能名期間別入庫数集計
+L0082	概要入庫数（前日〜365日間）を集計する
+L0083	処理概要（★はカスタマイズ項目）
+L0084	カスタマイズ説明
+L0085	概要
+L0086	入庫数（前日〜365日間）を集計する
+L0087	機能
+L0088	現行システムをベースに下記カスタマイズを行う
+L0089	集計対象について
+L0090	・支店と統合するため、支店ごとの入庫数も集計する
+L0091	・閉店した店舗は集計の対象外とする
+L0092	機能仕様処理概要（★はカスタマイズ項目）
+L0093	・定時処理で実行されて日付から下記期間範囲ごとの商品入庫数を本店を含む店舗ごとに行う
+L0094	昨日の入庫数,3日間の入庫数,1週間の入庫数,1か月の入庫数,90日間の入庫数,180日間の入庫数,365日間の入庫数
+L0095	★閉店した店舗は集計の対象外とする
+L0096	★本店の支店IDは0として処理する
+L0097	実行トリガー スケジュール起動(Step Functions) 実行タイミング 毎日 0:00
+L0098	入力データ元 DB 出力先(フォーマット) DB
+L0099	入力データ詳細
+L0100	・商品の入庫ステータスが入庫もしくマスタ更新の状況で366日の入庫数を集計
+L0101	閉店した店舗は集計の対象外とする
+L0102	入力データ検索条件
+L0103	項目名 条件 備考
+L0104	在庫履歴データ.入庫日時 366日間の期間内
+L0105	在庫履歴データ.入庫ステータス 入庫もしくはマスター更新
+L0106	店舗情報.店舗閉店管理 店舗閉店管理が閉店でない
+L0107	実行結果詳細 ※主にDBの登録・更新結果について記載
+L0108	商品規格ID,支店ID,昨日の入庫数,3日間の入庫数,1週間の入庫数,1か月の入庫数,90日間の入庫数,180日間の入庫数,365日間の入庫数
+L0109	以上の情報を入庫数集計データへ更新を行う
+L0110	エラーハンドリング
+L0111	Source:
+L0112	functions/pf-eccube3/b02-03_batch_product_product_storage_period_summary.md
+L0113	現行仕様
+L0114	B02-03 期間別入庫数集計 / バッチ 商品管理 — 期間別入庫数集計
+L0115	業務ロジック
+L0116	集計値の求め方
+L0117	集計値は、在庫が直前の在庫を上回った履歴だけを取り出し、その増加分（在庫と直前の在庫の差）を合計したものである。在庫が減った履歴・変わらない履歴は0として数え、減少分を差し引かない。
+L0118	期間の数え方
+L0119	期間に入るかどうかの判定は登録日時の日付部分だけで行い、時刻は見ない。
+L0120	前日以外の各期間は、起動日からその期間の日数だけさかのぼった日を始点とし、その日を含めて起動日当日までの履歴を数える。
+L0121	「1ヶ月」は暦の月ではなく28日として数える。
+L0122	起動日の366日前の履歴は取得の対象に含むが、どの期間の集計値にも加えない。最も長い365日間の期間は、起動日の365日前を始点とする。
+L0123	集計に現れない単位の扱い
+L0124	対象の在庫変動履歴が1件も無い単位は集計結果に現れず、更新の対象にならない。前回の集計値がそのまま残る。
+L0125	起動と異常時の扱い
+L0126	状況	ふるまい
+L0127	起動時に処理の名前が指定されていない、または対応する処理が無い名前である	何も集計せず、その旨を実行結果として返して終了する
+L0128	集計結果が1件も無い	何も更新せずに完了する
+L0129	処理の途中で異常が起きた	それまでに反映した分は残る。全体をまとめて取り消さない
+L0130	入出力
+L0131	種類	内容
+L0132	入力	起動時に受け取る処理の名前。集計のための引数は取らない。
+L0133	成功時出力	集計結果に現れた単位の入庫数だけが、求め直した値で置き換わる。現れなかった単位は前回の値のまま残る。
+L0134	失敗時出力	途中で異常が起きた場合、それまでに反映した分だけが残る。
+L0135	入出力: 永続化
+L0136	操作	契機
+L0137	入庫数の集計値の反映	集計結果の1行ごと（行単位で確定する）
+L0138	リニューアル後の仕様
+L0139	表示メッセージ
+L0140	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0141	画面を持たないため利用者向けのメッセージを表示しない。
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/B02-06/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/B02-02/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/B02-07/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+##### 0404 sheet-8 在庫初期化
+L0001	在庫初期化
+L0002	ドキュメント名商品管理バッチ機能
+L0003	セクション—
+L0004	プロジェクト名サイトリニューアル
+L0005	作成者高久
+L0006	作成日2025-06-27
+L0007	更新者高久
+L0008	更新日2025-09-19
+L0009	機能NoB02-06
+L0010	機能名在庫初期化
+L0011	概要店舗登録時、初期在庫データ作成を行う
+L0012	処理概要（★はカスタマイズ項目）
+L0013	カスタマイズ説明
+L0014	概要
+L0015	店舗登録時、初期在庫データ作成を行う
+L0016	機能
+L0017	現行システムから変更なし(現行踏襲)
+L0018	機能仕様処理概要（★はカスタマイズ項目）
+L0019	・店舗登録時、TC大阪(支店ID:1)の商品規格在庫全データを新規店舗用にカスタマイズした上で登録(複製)するバッチ
+L0020	・複製範囲は「商品規格コード」および「拡張タイプ」のみ。それ以外は初期値(在庫数0など)が設定される。
+L0021	実行トリガー - 実行タイミング -
+L0022	入力データ元 DB 出力先(フォーマット) DB
+L0023	入力データ詳細
+L0024	入力データ検索条件
+L0025	項目名 条件 備考
+L0026	実行結果詳細 ※主にDBの登録・更新結果について記載
+L0027	エラーハンドリング
+L0028	Source:
+L0029	functions/pf-eccube3/b02-06_batch_product_product_stock_initialize.md
+L0030	現行仕様
+L0031	B02-06 在庫初期化 / バッチ 商品管理 — 在庫初期化
+L0032	業務ロジック
+L0033	実行できる条件
+L0034	バッチ名と、複製先となる新規店舗の支店IDを引数に指定して実行する。支店IDを指定しないときは、支店IDの指定を促すメッセージを出力し、複製を行わずに終了する。バッチ名が未指定のとき、またはこのバッチで実行できる名称と一致しないときは、その旨を出力し、複製を行わずに終了する。
+L0035	起動するコマンドは productStock:batch で、第1引数にバッチ名 initialStockRegistration、第2引数に複製先の支店IDを指定する。このコマンドで実行できるバッチ名は initialStockRegistration の1件だけである。
+L0036	複製先に設定する値
+L0037	作成日時と更新日時には実行時刻を設定する。登録者には固定の管理者（ID 1）を設定する。複製先はピックアップ商品にしない。
+L0038	再実行したとき
+L0039	すでに同じ支店IDで複製済みかどうかは判定しない。同じ支店IDで繰り返し実行すると、そのたびに基準店舗の在庫と同じ件数が追加される。
+L0040	エラー時の扱い
+L0041	事象	扱い
+L0042	バッチ名が未指定のとき、または一致しないとき	複製を行わずに終了する。開始と完了の出力も行わない
+L0043	支店IDの引数が無いとき	指定を促すメッセージを出力して終了する。完了の出力は行わない
+L0044	複製の登録に失敗したとき	完了のメッセージを出力しない
+L0045	入出力
+L0046	種類	内容
+L0047	入力	バッチ名、複製先となる新規店舗の支店ID
+L0048	実行条件	複製先の支店IDが引数で指定されていること
+L0049	成功時出力	実行時刻を伴う開始と完了の処理経過の出力
+L0050	失敗時出力	支店IDの指定を促すメッセージ、またはバッチ名が未指定・不一致である旨の出力
+L0051	出力はいずれもコンソールの標準出力へ出す。
+L0052	状況	出力
+L0053	バッチ名が未指定・不一致のとき	実行時刻に続けて「nothing args or command.」を1行出力し、終了コード1で終了する。開始と完了の行は出力しない
+L0054	支店IDの引数が無いとき	開始の行に続けて「Failed to Initial Stock Registration. Need Input Argument Shop ID.」を出力して終了する。完了の行は出力しない
+L0055	複製を終えたとき	実行時刻とバッチ名を付けた開始の行（initialStockRegistration : start.）と完了の行（initialStockRegistration : complete.）を出力する。どちらの行にも複製先の支店IDは含まない
+L0056	リニューアル後の仕様
+L0057	表示メッセージ
+L0058	本バッチは画面に表示する文言を持たない。
+
+ succeeded in 0ms:
+##### 0404 sheet-4 入荷通知キャンセル
+L0001	入荷通知キャンセル
+L0002	ドキュメント名商品管理バッチ機能
+L0003	セクション—
+L0004	プロジェクト名サイトリニューアル
+L0005	作成者高久
+L0006	作成日2025-06-27
+L0007	更新者高久
+L0008	更新日2025-09-19
+L0009	機能NoB02-02
+L0010	機能名入荷通知キャンセル
+L0011	概要商品・商品規格が削除された入荷通知リクエストの削除
+L0012	処理概要（★はカスタマイズ項目）
+L0013	カスタマイズ説明
+L0014	概要
+L0015	商品・商品規格が削除された入荷通知リクエストの削除
+L0016	機能
+L0017	現行システムをベースに下記カスタマイズを行う
+L0018	商品単位の通知キャンセルについて
+L0019	商品規格単位および商品単位の入荷通知キャンセル処理が行えるようにする
+L0020	商品公開ステータス変更に伴う通知キャンセル削除条件について
+L0021	商品データに設定されている「商品公開ステータス」が非公開・廃止に変更された場合、入荷通知キャンセル扱いとする
+L0022	機能仕様処理概要（★はカスタマイズ項目）
+L0023	★入荷通知リクエストデータに「商品ID」を追加
+L0024	★商品データもしくは商品規格データの商品公開ステータスが非公開・廃止の場合、入荷通知キャンセル処理を行う
+L0025	実行トリガー スケジュール起動(Step Functions) 実行タイミング 毎日3:00
+L0026	入力データ元 DB 出力先(フォーマット) DB
+L0027	入力データ詳細
+L0028	起動時に以下の条件に当てはまった場合、入荷通知キャンセル扱いとする
+L0029	・「商品データ」の商品公開フラグが非公開もしくは廃止に設定
+L0030	・「商品規格データ」の商品公開フラグが非公開もしくは廃止に設定
+L0031	入力データ検索条件
+L0032	項目名 条件 備考
+L0033	商品規格データ.公開フラグ 非公開 または 廃止
+L0034	商品データ.公開フラグ 非公開 または 廃止
+L0035	実行結果詳細 ※主にDBの登録・更新結果について記載
+L0036	対象する入荷通知リクエストデータの削除日時に実行日時を追加し、削除済み扱いとする(論理削除)
+L0037	エラーハンドリング
+L0038	Source:
+L0039	functions/pf-eccube3/b02-02_batch_product_product_arrival_notification_cancel.md
+L0040	現行仕様
+L0041	B02-02 入荷通知キャンセル / バッチ 商品管理 — 入荷通知キャンセル
+L0042	業務ロジック
+L0043	対象の入荷通知リクエスト
+L0044	削除日時が未設定の入荷通知リクエストのうち、次のいずれかに当てはまるものを対象とする。対象が無いときは何も更新せずに完了する。
+L0045	紐づく商品規格が削除済みである
+L0046	紐づく商品が存在しない
+L0047	紐づく商品が削除済みである
+L0048	紐づく商品規格のデータそのものが存在しない入荷通知リクエストは、対象にならない。
+L0049	再実行の扱い
+L0050	削除日時が未設定の行だけを対象とするため、既に論理削除済みの行が再び対象になることはなく、重複して削除することもない。
+L0051	エラー時の扱い
+L0052	事象	扱い
+L0053	起動時の指定が不正	該当するバッチが無い旨を出力し、処理を行わずに終了する
+L0054	一括更新の失敗	更新は反映されず、完了の出力を行わずに終了する
+L0055	入出力
+L0056	起動と実行結果
+L0057	種類	内容
+L0058	入力	起動時の指定のみで、引数は取らない
+L0059	実行結果	実行の開始時と完了時に、実行日時を添えて出力する
+L0060	失敗時	完了の出力を行わない
+L0061	リニューアル後の仕様
+L0062	表示メッセージ
+L0063	この機能は画面を持たないためメッセージを扱わない。
+
+ succeeded in 0ms:
+##### 0402 sheet-6 週間在庫履歴更新バッチ
+L0001	週間在庫履歴更新バッチ
+L0002	ドキュメント名在庫 バッチ機能
+L0003	セクション—
+L0004	プロジェクト名サイトリニューアル
+L0005	作成者石川
+L0006	作成日2025-12-15
+L0007	更新者石川
+L0008	更新日2025-12-15
+L0009	機能NoB02-07
+L0010	機能名週間在庫履歴更新バッチ
+L0011	概要リコメンドで使用する週間在庫履歴の取得
+L0012	処理概要（★はカスタマイズ項目）
+L0013	カスタマイズ説明
+L0014	・本店、支店それぞれで行っていた週間在庫履歴更新（特定時点の在庫数の取得）について、システム統合に伴い本店、支店の取得を1つのバッチで行う
+L0015	・本店では在庫履歴取得結果をCSVに出力し、支店側でCSVを取り込んでいたが、本店も支店も同様に取得を行い、週間在庫履歴テーブルに結果を保存する
+L0016	・商品コードごと、店舗ごとに集計を行う
+L0017	機能仕様処理概要（★はカスタマイズ項目）
+L0018	・バッチ概要
+L0019	・在庫リコメンドCSV出力機能で使用するデータを取得するバッチ
+L0020	・1週間前、2週間前・・・11週間前までのそれぞれの時点の在庫数を取得し週間在庫履歴テーブルに保存する
+L0021	① 週間在庫履歴一時テーブル初期化処理
+L0022	・週間在庫履歴一時テーブルのデータを全件削除する（前回取得結果のクリア）
+L0023	② 週間在庫履歴取得処理
+L0024	★現行では本店から出力された在庫履歴集計結果のCSVを読み込む処理があるが、本店と支店の統合に伴い、本店も直接データベースを集計できるためCSV読込は不要
+L0025	・在庫ごと（商品コードごと、店舗ごと、在庫区分ごと）に1週間前、2週間前・・・11週間前時点で最新の在庫変動履歴を取得し、その履歴の在庫数を取得する
+L0026	取得イメージ例: WWK00031ENNM TC東京 EC-CUBE在庫
+L0027	在庫ごと（商品コードごと、店舗ごと、在庫区分ごと） 1週間前時点での最新の履歴の在庫数 1週間前時点の在庫数: 1
+L0028	2週間前時点での最新の履歴の在庫数 2週間前時点の在庫数: 30
+L0029	3週間前時点での最新の履歴の在庫数 3週間前時点の在庫数: 50
+L0030	・・・ ・・・
+L0031	11週間前時点での最新の履歴の在庫数 11週間前時点での最新の履歴の在庫数: 100
+L0032	上記のような減り方をしていたら、売れ筋商品であることと
+L0033	補充が必要なことがわかる
+L0034	・取得した在庫数について週間在庫履歴一時テーブルに保存する
+L0035	・一度に全件行うと処理が重くなるため、20,000在庫ごとに処理を行う
+L0036	③ 週間在庫履歴テーブル初期化処理
+L0037	・週間在庫履歴テーブルのデータを全件削除する（前回取得結果のクリア）
+L0038	・週間在庫履歴取得データ登録処理
+L0039	・②で一時テーブルに登録されたデータを週間在庫履歴テーブルにコピーする
+L0040	・在庫リコメンドCSV出力機能（0202_基本設計仕様書(在庫管理機能).xlsxの在庫リコメンドCSV出力シート）では、
+L0041	商品コードごと、店舗ごとに在庫履歴の出力を行うため、ECCUBE、スマレジの在庫を合算して週間在庫履歴テーブルに登録する
+L0042	実行トリガー スケジュール起動(Step Functions) 実行タイミング 毎日3時
+L0043	入力データ元 DB 出力先(フォーマット) DB
+L0044	入力データ詳細
+L0045	・在庫の全データ
+L0046	入力データ検索条件
+L0047	項目名 条件 備考
+L0048	なし
+L0049	実行結果詳細 ※主にDBの登録・更新結果について記載
+L0050	・週間在庫履歴テーブルのデータを洗い替え（前回結果を全削除して登録）する
+L0051	エラーハンドリング
+L0052	・エラーが発生した場合集計できなかった旨をメールで送信する
+##### 0404 sheet-10 ユニサーチフィードTSV
+L0053	ユニサーチフィードTSV
+L0054	ドキュメント名商品管理バッチ機能
+L0055	セクション—
+L0056	プロジェクト名サイトリニューアル
+L0057	作成者石川
+L0058	作成日2025-09-11
+L0059	更新者栗野
+L0060	更新日2026-09-08
+L0061	機能NoB02-07
+L0062	機能名ユニサーチフィードTSV
+L0063	概要ユニサーチフィードTSVの内容
+L0064	ユニサーチフィードTSV			検索について
+L0065	識別ID	項目名	備考	検索対象(販売)	検索対象(買取)	検索備考
+L0066	1	product	商品ID
+L0067	2	product_name	商品名	〇	〇	キーワード検索の対象
+L0068	3	product_name_en	商品名（英）
+L0069	4	color_sequence	色順ID（色でソートを行う際に使用）
+L0070	5	card_name	カード名(英)	〇	〇
+L0071	6	language	言語ID	〇	〇
+L0072	7	price	販売価格	〇	〇
+L0073	8	image_url	画像URL、複数ある場合は1枚目を取得する、S3のパスを指定する
+L0074	9	tag	タグ、複数ある場合はユニサーチの指定通り^A(\x01)で区切る	〇	〇	キーワード検索の対象
+L0075	10	cardset	カードセットID	〇	〇
+L0076	11	cardset_name	カードセット名	〇	〇	キーワード検索の対象
+L0077	12	cardset_name_en	カードセット名（英）	〇	〇	キーワード検索の対象
+L0078	12	release_date	カードセットリリース日			ソートの対象
+L0079	13	color	色ID、複数ある場合はユニサーチの指定通り^A(\x01)で区切る	〇	〇
+L0080	14	mana_cost	マナ・コスト	〇	〇
+L0081	15	rarity	レアリティID	〇	〇
+L0082	16	card_type	カードタイプID、複数ある場合はユニサーチの指定通り^A(\x01)で区切る	〇	〇
+L0083	17	subtype	サブタイプID、複数ある場合はユニサーチの指定通り^A(\x01)で区切る	〇	〇
+L0084	18	format	フォーマットIDとLEGALかBANかの組み合わせ（例1LEGAL,2BANなど）、複数ある場合はユニサーチの指定通り^A(\x01)で区切る	〇	〇
+L0085	19	illustrator	イラストレーターID	〇	〇
+L0086	20	foil_flg	フォイルフラグ→フォイルはフラグではなく通常、フォイル、特殊の3パターンで送るようにする
+L0087	項目名を変更するかは要相談	〇	〇
+L0088	21	text_jp	ルールテキスト（日）	〇	〇	キーワード検索の対象
+L0089	22	text_en	ルールテキスト（英）リニューアルで追加する	〇	〇	キーワード検索の対象
+L0090	23	stock	本店ECの在庫数、リニューアル後は本店ECだけでなく店舗のEC在庫を反映する	〇	〇	在庫の有無を検索する
+L0091	24	weekly_sales	本店ECの週間販売数
+L0092	25	category_id	カテゴリID、カテゴリは階層を作成する、複数カテゴリの場合は階層が深い方を1番目に送る
+L0093	リニューアルではカテゴリにカードセット等持つようになるが、フィードの送信自体は現行踏襲とする
+L0094	現行
+L0095	未開封商品 > ブースターパック > プレイ・ブースターパック
+L0096	リニューアル後
+L0097	スタンダード > カルロフ邸殺人事件 > パック・ボックス
+L0098	※パック・ボックスの部分はリニューアル後は商品には直接紐づかないため送ることができない
+L0099		〇	〇	キーワード検索の対象
+L0100	26	category_name	カテゴリ名、カテゴリ名は階層を作成する
+L0101	27	product_class	商品規格ID
+L0102	28	card_condition	カード状態ID、現状はカード状態での絞り込みはユニサーチ側では設定されていないが、買取の場合はNMのみなので、カード状態でも絞り込みを可能とする（ユニサーチ側の設定が必要）		〇
+L0103	29	sale_flg	セールフラグ	〇
+L0104	30	high_price_code	高額商品コード		〇
+L0105	31	belt_url	帯URL
+L0106	32	color_identity	固有色ID、複数ある場合はユニサーチの指定通り^A(\x01)で区切る	〇	〇
+L0107	33	product_code	商品コード	〇	〇	キーワード検索の対象
+L0108	34	is_branch_published	支店表示フラグ	〇
+L0109	35	frame_flg	フレーム、通常、特殊を選択可能	〇	〇
+L0110	36	buy_price	買取金額、リニューアルで買取検索対応時追加する、買取価格のソートがあるためユニサーチでの設定はソート対象とする必要がある		〇
+L0111	37	reservation_flg	予約商品フラグ
+L0112	商品に紐づく購入グループの予約商品フラグの値を連携する		〇
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/B02-04/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/B02-05/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+##### 0404 sheet-7 お気に入り商品セール通知
+L0001	お気に入り商品セール通知
+L0002	ドキュメント名商品管理バッチ機能
+L0003	セクション—
+L0004	プロジェクト名サイトリニューアル
+L0005	作成者高久
+L0006	作成日2025-06-27
+L0007	更新者盛田
+L0008	更新日2026-02-04
+L0009	機能NoB02-05
+L0010	機能名お気に入り商品セール通知
+L0011	概要お気に入り登録商品がセール中になった場合に会員にメールを送信する
+L0012	処理概要（★はカスタマイズ項目）
+L0013	カスタマイズ説明
+L0014	概要
+L0015	会員がお気に入りに登録した商品がセール中の場合、お知らせメールを送信する。
+L0016	機能
+L0017	現行システムから変更なし(現行踏襲)
+L0018	機能仕様処理概要（★はカスタマイズ項目）
+L0019	・会員がお気に入りに登録した商品のうち、セールフラグが立っている商品の一覧を取得する。
+L0020	(セール開始日に送信ではなく、セール商品がある場合は毎日送信する)
+L0021	★仮会員と退会済み会員は対象外とする
+L0022	・会員ごとに送り先、セール商品をまとめる
+L0023	・会員住所が日本の会員には【お気に入り/日】お気に入り商品セール通知メールを送る。
+L0024	・会員住所が国外の会員には【お気に入り/英】お気に入り商品セール通知メールを送る。
+L0025	実行トリガー スケジュール起動(Step Functions) 実行タイミング 毎週水曜17:30
+L0026	入力データ元 DB 出力先(フォーマット) メール(該当ユーザー宛)
+L0027	入力データ詳細
+L0028	お気に入り登録商品の中で、セールフラグの立っているものを取得
+L0029	お気に入り登録している会員の会員ステータスが仮会員・退会済み会員のいずれでもない
+L0030	入力データ検索条件
+L0031	項目名 条件 備考
+L0032	お気に入り登録商品.セールフラグ セールフラグが立っている
+L0033	会員情報.会員ステータス 仮会員ではない かつ 退会会員ではない
+L0034	実行結果詳細 ※主にDBの登録・更新結果について記載
+L0035	取得したセール中のお気に入り登録商品を会員ごとに纏め、会員の住所が日本か海外かを見て、送信する言語を選択
+L0036	セール中のお気に入り商品の一覧を会員にメール送信
+L0037	エラーハンドリング
+L0038	Source:
+L0039	functions/pf-eccube3/b02-05_batch_product_product_favorite_sale_notification.md
+L0040	現行仕様
+L0041	B02-05 お気に入り商品セール通知 / バッチ 商品管理 — お気に入り商品セール通知
+L0042	業務ロジック
+L0043	通知の対象
+L0044	お気に入りは商品と言語の組で保持し、セール中かどうかもその組で判定する。お気に入りに登録した言語の側がセール中である商品だけが通知の対象になる。会員グループに「店内注文専用アカウント」または「支店店内注文専用アカウント」が設定されている会員は対象にしない。対象が無いときはメールを送らずに完了する。
+L0045	通知メールの体裁
+L0046	本文は会員の氏名で始まり（英語のメールは名・姓の順）、続けて対象商品を1商品1行で並べる。各行の先頭にはお気に入りを登録した言語のコードを付け、商品名は日本語のメールでは日本語名、英語のメールでは英語名を出す。差出人は基本情報設定のショップ名と代表メールアドレス、返信先とエラー戻し先も基本情報設定に従い、件名・ヘッダー・フッターはメールテンプレートに登録された内容を用いる。
+L0047	再実行
+L0048	同じ起動を繰り返すと、同じ対象へ再び通知することがある。
+L0049	送信済みかどうかは判定しない。起動のたびに、その時点でセール中のお気に入り商品を持つ会員を抽出し直し、該当する会員へ通知メールを送る。通知回数の上限や重複の抑止は無い。メール送信履歴は送信のたびに残るが、会員には紐づけず、送信済みの判定には使わない。
+L0050	エラー時の扱い
+L0051	事象	扱い
+L0052	起動時の指定が不正	処理を行わずに終了し、指定が不正である旨を出力する
+L0053	抽出・送信の途中で異常が起きた	その時点で処理が止まり、以降の会員には通知されない。完了の出力も行わない
+L0054	入出力
+L0055	種類	内容
+L0056	成功時出力	開始と完了の出力
+L0057	開始と完了は、コンソールの標準出力へ1行ずつ出す。どちらの行も実行時刻とバッチ名（saleNotification）を含み、処理件数は含まない。
+L0058	入出力: 永続化
+L0059	操作	契機
+L0060	登録	通知メールを送信するたびに、件名・本文・送信日時と用いたメールテンプレートをメール送信履歴として残す
+L0061	リニューアル後の仕様
+L0062	表示メッセージ
+L0063	この機能は画面を持たないためメッセージを扱わない。
+
+ succeeded in 0ms:
+##### 0404 sheet-6 商品部門未設定チェック
+L0001	商品部門未設定チェック
+L0002	ドキュメント名商品管理バッチ機能
+L0003	セクション—
+L0004	プロジェクト名サイトリニューアル
+L0005	作成者高久
+L0006	作成日2025-06-27
+L0007	更新者堀部
+L0008	更新日2025-10-22
+L0009	機能NoB02-04
+L0010	機能名商品部門未設定チェック
+L0011	概要商品の公開ステータスが公開なのに、部門が未設定の商品があった場合、管理者にメールで通知する
+L0012	処理概要（★はカスタマイズ項目）
+L0013	カスタマイズ説明
+L0014	概要
+L0015	商品の公開ステータスが公開なのに、部門が未設定の商品があった場合、管理者にメールで通知する
+L0016	機能
+L0017	現行システムから変更なし(現行踏襲)
+L0018	機能仕様処理概要（★はカスタマイズ項目）
+L0019	・商品の公開ステータスが公開であり部門が未設定の商品データの有無を確認し、該当する商品データがある場合は
+L0020	「部門未設定商品通知メール」という件名で管理者にメールで通知され、本文には検索に該当した「商品名,商品コード」の一覧が記載される。
+L0021	（一覧は最大10,000件まで取得し、それ以降は省略)
+L0022	実行トリガー スケジュール起動(Step Functions) 実行タイミング 毎日 4:00
+L0023	入力データ元 DB 出力先(フォーマット) メール(管理者宛)
+L0024	入力データ詳細
+L0025	入力データ検索条件
+L0026	項目名 条件 備考
+L0027	実行結果詳細 ※主にDBの登録・更新結果について記載
+L0028	エラーハンドリング
+L0029	Source:
+L0030	functions/pf-eccube3/b02-04_batch_product_product_no_section_check.md
+L0031	現行仕様
+L0032	B02-04 商品部門未設定チェック / バッチ 商品管理 — 商品部門未設定チェック
+L0033	業務ロジック
+L0034	起動の受け付け
+L0035	起動時はコマンド名の指定を必要とする。コマンド名が未指定、または対象のコマンドと一致しないときは、処理を行わずに終了する。
+L0036	抽出の対象
+L0037	部門は商品規格ごとに持つため、判定は商品規格の単位で行う。削除済みの商品・商品規格は対象から除く。一覧は商品規格の識別子の昇順で並ぶ。
+L0038	通知先
+L0039	通知先は、システム設定の「買取部門集計送信メールアドレス」に設定したアドレスとする。カンマ区切りで複数のアドレスを指定できる。この設定が空のときは、該当する商品規格があってもメールを送らずに終了する。
+L0040	差出人は店舗基本情報の店名とメールアドレスとし、返信先とエラー返送先も店舗基本情報の設定値を使う。
+L0041	再実行
+L0042	失敗したときの再実行は、同じコマンドを起動し直して行う。抽出は何度実行しても同じ結果になるため、再実行したときは同じ内容を再度通知しうる。
+L0043	通知済みかどうかは記録せず、判定もしない。起動のたびに、その時点で部門未設定の商品規格を抽出し直し、1件以上あれば通知メールを送る。同じ内容の通知を重ねて送ることは抑止しない。
+L0044	入出力
+L0045	入力と出力
+L0046	種類	内容
+L0047	入力	起動時のコマンド名
+L0048	成功時出力	開始と完了をコンソールへ出力し、終了コード0を返す
+L0049	失敗時出力	コマンド名が不正なときは、その旨をコンソールへ出力し、終了コード1を返す
+L0050	本バッチはデータを更新しない。外部のAPIも呼び出さない。
+L0051	リニューアル後の仕様
+L0052	表示メッセージ
+L0053	本バッチは画面を持たず、利用者向けの文言を持たない。
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/B05-06/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/A17-05/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 16ms:
+##### 0405 sheet-8 ポイント二重登録チェック
+L0001	ポイント二重登録チェック
+L0002	ドキュメント名受注管理 基本設計
+L0003	セクション—
+L0004	プロジェクト名受注管理機能
+L0005	作成者緑川
+L0006	作成日2025-05-13
+L0007	更新者堀部
+L0008	更新日2025-10-03
+L0009	機能NoB05-06
+L0010	機能名ポイント二重登録チェック
+L0011	概要ポイント二重登録を検知して管理者にメール通知する
+L0012	処理概要（★はカスタマイズ項目）
+L0013	カスタマイズ説明
+L0014	なし
+L0015	機能仕様処理概要（★はカスタマイズ項目）
+L0016	ポイント履歴から注文データIDとポイント増減量で検索し、重複している履歴を検索する
+L0017	重複している履歴があれば、注文IDから注文番号を取得し、管理者にメールを送信する
+L0018	実行トリガー スケジュール起動(Step Functions) 実行タイミング 毎日4時
+L0019	入力データ元 DB 出力先(フォーマット) メール
+L0020	入力データ詳細
+L0021	以下の条件のもと、ポイント履歴を取得する
+L0022	・バッチが動作している現在日時から1日分遡った期間のポイント履歴
+L0023	・ポイントが付与された履歴(ポイント増減量がマイナスの履歴)
+L0024	・注文データIDとポイント増減量の組み合わせで検索し、複数個重複している
+L0025	入力データ検索条件
+L0026	項目名 条件 備考
+L0027	ポイント履歴.ポイント発行日 バッチが動作している現在日時から1日前までの期間
+L0028	ポイント履歴.ポイント増減量 0より小さい
+L0029	ポイント履歴.注文ID, ポイント履歴.ポイント増減量 注文IDとポイント増減量の組合せで同じ組合せがあるかどうか検索し、複数個存在している
+L0030	実行結果詳細 ※主にDBの登録・更新結果について記載
+L0031	検索結果があれば、ポイント履歴にある注文IDから注文番号を取得し、管理者にメールで通知する
+L0032	エラーハンドリング
+L0033	外部システムとの連携もなく、外部から引数等も受け取っていないため、特になし
+L0034	Source:
+L0035	functions/pf-eccube3/b05-06_batch_order_order_check_duplicate_point.md
+L0036	現行仕様
+L0037	B05-06 ポイント二重登録チェック / バッチ 受注管理 — ポイント二重登録チェック
+L0038	業務ロジック
+L0039	通知メールの送信可否
+L0040	通知先は、システム設定の「スマレジ通信エラー送信メールアドレス」に登録されたメールアドレスとする。この設定が空のときは、二重登録を検出していても通知メールを送らずに終了する。
+L0041	通知後の扱い
+L0042	ポイント残高の補正は、通知を受けた管理者の手作業に委ねる。本バッチは検出結果を通知するだけで、受注・会員のポイント残高・ポイント履歴のいずれも更新しない。
+L0043	異常が起きたとき
+L0044	ポイント履歴の取得や通知メールの送信で例外が起きたときは、その時点で処理を打ち切る。例外の内容はコンソールの標準エラー出力へ出し、終了コードは0以外になる。異常を記録する専用の画面やログは無く、確認できるのはコンソールの出力だけである。
+L0045	入出力
+L0046	出力: メール
+L0047	項目	内容
+L0048	件名	ポイント重複登録通知メール
+L0049	差出人	店舗基本情報に登録された店名とメールアドレス。返信先・返送先も店舗基本情報の登録値を使う
+L0050	本文	「ポイントの重複登録を検知しました。」「注文番号を確認してポイント残高を修正してください。」の2行に続けて、「注文番号:」の見出し行を置き、その後へ検出した注文番号を1行1件で並べる
+L0051	同じ受注が複数の組合せで検出されても、その注文番号は本文に1件だけ並ぶ。
+L0052	リニューアル後の仕様
+L0053	表示メッセージ
+L0054	この機能は、いずれの場合も画面のメッセージを扱わない。
+
+ succeeded in 13ms:
+##### 0517 sheet-7 商品名から商品詳細の情報を取得
+L0001	商品名から商品詳細の情報を取得
+L0002	ドキュメント名その他API機能
+L0003	セクション—
+L0004	プロジェクト名サイトリニューアル
+L0005	作成者緑川
+L0006	作成日2025-08-28
+L0007	更新者緑川
+L0008	更新日2025-09-06
+L0009	機能NoA17-05
+L0010	機能名商品名から商品詳細の情報を取得
+L0011	概要商品名による商品詳細取得API
+L0012	処理概要（★はカスタマイズ項目）
+L0013	GET POST PUT DELETE PATCH OPTIONS HEAD 有 無 〇
+L0014	エンドポイントURL
+L0015	/product/search.json
+L0016	プロトコル HTTP メソッド GET 認証の有無 無 認証方式 無 リクエスト書式 クエリ レスポンス書式 JSON
+L0017	カスタマイズ説明
+L0018	機能仕様処理概要（★はカスタマイズ項目）
+L0019	・外部ツールの任意門連携ために呼び出されるAPI
+L0020	・商品名に該当する商品情報検索しJSON出力する
+L0021	・該当した商品全てを出力する
+L0022	リクエストパラメータ
+L0023	項目名	型	必須	最大文字数
+L0024	または最大値	入力例	備考
+L0025	商品名	文字列	〇		(204)《漁る軟泥/Scavenging Ooze》[M21] 緑R
+L0026	リクエストパラメータサンプル
+L0027	https://stg-api.hareruyamtg.com/api/product/search?product=(204)《漁る軟泥/Scavenging Ooze》[M21] 緑R
+L0028	または
+L0029	https://stg-api.hareruyamtg.com/api/product/search.json?product=(204)《漁る軟泥/Scavenging Ooze》[M21] 緑R
+L0030	ステータスコード
+L0031	HTTPコード 説明
+L0032	200 正常
+L0033	404 or 500 異常
+L0034	レスポンスデータ
+L0035	名前	型	説明
+L0036	count	数値（整数）	商品数
+L0037	products	配列	商品ID
+L0038	products.product_id	数値（整数）	商品ID
+L0039	products.product_name	文字列	商品名
+L0040	products.language_code	文字列	商品コード
+L0041	products.high_price_code	文字列	高額商品コード
+L0042	products.categories	配列	カテゴリ
+L0043	products.region_restriction	文字列	言語別販売分けフラグ
+L0044	products.product_classes	配列	商品クラス
+L0045	products.product_classes.product_class_id	数値（整数）	商品クラスID
+L0046	products.product_classes.product_code	文字列	商品クラスコード
+L0047	products.product_classes.card_condition_code	文字列	カードコード
+L0048	products.product_classes.price	数値（整数）	販売価格
+L0049	products.product_classes.stock	数値（整数）	在庫数
+L0050	products.product_classes.product_class_images.image	文字列	画像
+L0051	レスポンスデータサンプル
+L0052	{
+L0053	"code": 200,
+L0054	"products": [
+L0055	{
+L0056	"product_id": 86426,
+L0057	"product_name": "【JP】(204)《漁る軟泥/Scavenging Ooze》[M21] 緑R",
+L0058	"language_code": "JP",
+L0059	"high_price_code": null,
+L0060	"categories": [
+L0061	"シングルカード",
+L0062	"商品カテゴリ"
+L0063	],
+L0064	"region_restriction": "制限なし",
+L0065	"product_classes": [
+L0066	{
+L0067	"product_class_id": 558924,
+L0068	"product_code": "M2100204JPNM",
+L0069	"card_condition_code": "NM",
+L0070	"price": 100,
+L0071	"stock": 33,
+L0072	"product_class_images": [
+L0073	"https://stg-files.hareruyamtg.com/img/goods/L/M21/JP/0204.jpg"
+L0074	]
+L0075	}
+L0076	]
+L0077	},
+L0078	{
+L0079	"product_id": 86426,
+L0080	"product_name": "【EN】(204)《漁る軟泥/Scavenging Ooze》[M21] 緑R",
+L0081	"language_code": "EN",
+L0082	"high_price_code": null,
+L0083	"categories": [
+L0084	"シングルカード",
+L0085	"商品カテゴリ"
+L0086	],
+L0087	"region_restriction": "制限なし",
+L0088	"product_classes": [
+L0089	{
+L0090	"product_class_id": 560020,
+L0091	"product_code": "M2100204ENNM",
+L0092	"card_condition_code": "NM",
+L0093	"price": 50,
+L0094	"stock": 14,
+L0095	"product_class_images": [
+L0096	"https://stg-files.hareruyamtg.com/img/goods/L/M21/EN/0204.jpg"
+L0097	]
+L0098	}
+L0099	]
+L0100	},
+L0101	{
+L0102	"product_id": 86823,
+L0103	"product_name": "【EN】【Foil】(204)《漁る軟泥/Scavenging Ooze》[M21] 緑R",
+L0104	"language_code": "EN",
+L0105	"high_price_code": null,
+L0106	"categories": [
+L0107	"シングルカード",
+L0108	"商品カテゴリ"
+L0109	],
+L0110	"region_restriction": "制限なし",
+L0111	"product_classes": [
+L0112	{
+L0113	"product_class_id": 562100,
+L0114	"product_code": "M21F00204ENNM",
+L0115	"card_condition_code": "NM",
+L0116	"price": 100,
+L0117	"stock": 0,
+L0118	"product_class_images": [
+L0119	"https://stg-files.hareruyamtg.com/img/goods/L/M21/EN/0204.jpg"
+L0120	]
+L0121	}
+L0122	]
+L0123	},
+L0124	{
+L0125	"product_id": 86823,
+L0126	"product_name": "【JP】【Foil】(204)《漁る軟泥/Scavenging Ooze》[M21] 緑R",
+L0127	"language_code": "JP",
+L0128	"high_price_code": null,
+L0129	"categories": [
+L0130	"シングルカード",
+L0131	"商品カテゴリ"
+L0132	],
+L0133	"region_restriction": "制限なし",
+L0134	"product_classes": [
+L0135	{
+L0136	"product_class_id": 563624,
+L0137	"product_code": "M21F00204JPNM",
+L0138	"card_condition_code": "NM",
+L0139	"price": 50,
+L0140	"stock": 0,
+L0141	"product_class_images": [
+L0142	"https://stg-files.hareruyamtg.com/img/goods/L/M21/JP/0204.jpg"
+L0143	]
+L0144	}
+L0145	]
+L0146	}
+L0147	]
+L0148	}
+L0149	Source:
+L0150	functions/pf-api/a17-05_api_product_search_by_name.md
+L0151	現行仕様
+L0152	A17-05 [任意門]商品名から商品詳細の情報を取得 / API 店頭買取管理 — 商品名から商品詳細の情報を取得
+L0153	業務ロジック
+L0154	商品の絞り込み
+L0155	検索する商品名は、空白またはカンマで区切って語に分ける。分けたすべての語を含む商品だけを対象とし、語は部分一致で判定する。各語は商品名（日本語）と商品名（英語）のどちらかに含まれていればよい。
+L0156	対象になるのは、公開されているときで、かつ削除されていない商品に限る。商品規格も、削除されていないものだけを対象とする。販売価格が0以下のときは、その商品規格を対象から外す。
+L0157	取得できる条件
+L0158	順序	判定	結果
+L0159	1	商品名が未指定のとき	該当なし（HTTP 404）
+L0160	2	商品名に一致する商品がないとき	該当なし（HTTP 404）
+L0161	3	対象の商品サブクラス情報がないとき	該当なし（HTTP 404）
+L0162	4	上記以外のとき	商品配列を返す
+L0163	商品のまとめ方
+L0164	商品ID・言語・高額商品コードの組み合わせを単位として商品をまとめ、商品ごとにカテゴリ・地域制限・商品名を設定する。カード詳細を持つ商品のときは、商品名の先頭に言語コードを付す。
+L0165	商品規格の絞り込み
+L0166	各商品規格のうち、良品（NM）であるもの、または販売価格が表示下限以上のものだけを商品規格として加える。画像はファイル名からURLへ変換して並べる。各商品の商品規格は、カードコンディションの昇順に並ぶ。
+L0167	商品ごとに、良品（NM）以外の商品規格で在庫があり販売価格が表示下限以上のものが1件もないときは、良品（NM）の商品規格だけに絞る。高額商品コードを持つ商品のときは、この絞り込みを行わず、良品（NM）以外の商品規格もそのまま返す。
+L0168	カードコンディションコードは、商品サブクラスにメモがあるときはメモの値を返し、無いときはカードコンディションのコードを返す。
+L0169	入出力
+L0170	出力: 失敗時の応答
+L0171	該当なし（HTTP 404）のときは、処理結果コードとメッセージの2項目だけを返し、商品の配列は含めない。
+L0172	リニューアル後の仕様
+L0173	表示メッセージ
+L0174	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0175	—	API応答の処理結果メッセージ	Not Found	商品名が未指定のとき、または該当する商品・商品サブクラスがないとき	該当なし（HTTP 404）で終了する
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/B02-04/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/B05-03/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+##### 0404 sheet-6 商品部門未設定チェック
+L0001	商品部門未設定チェック
+L0002	ドキュメント名商品管理バッチ機能
+L0003	セクション—
+L0004	プロジェクト名サイトリニューアル
+L0005	作成者高久
+L0006	作成日2025-06-27
+L0007	更新者堀部
+L0008	更新日2025-10-22
+L0009	機能NoB02-04
+L0010	機能名商品部門未設定チェック
+L0011	概要商品の公開ステータスが公開なのに、部門が未設定の商品があった場合、管理者にメールで通知する
+L0012	処理概要（★はカスタマイズ項目）
+L0013	カスタマイズ説明
+L0014	概要
+L0015	商品の公開ステータスが公開なのに、部門が未設定の商品があった場合、管理者にメールで通知する
+L0016	機能
+L0017	現行システムから変更なし(現行踏襲)
+L0018	機能仕様処理概要（★はカスタマイズ項目）
+L0019	・商品の公開ステータスが公開であり部門が未設定の商品データの有無を確認し、該当する商品データがある場合は
+L0020	「部門未設定商品通知メール」という件名で管理者にメールで通知され、本文には検索に該当した「商品名,商品コード」の一覧が記載される。
+L0021	（一覧は最大10,000件まで取得し、それ以降は省略)
+L0022	実行トリガー スケジュール起動(Step Functions) 実行タイミング 毎日 4:00
+L0023	入力データ元 DB 出力先(フォーマット) メール(管理者宛)
+L0024	入力データ詳細
+L0025	入力データ検索条件
+L0026	項目名 条件 備考
+L0027	実行結果詳細 ※主にDBの登録・更新結果について記載
+L0028	エラーハンドリング
+L0029	Source:
+L0030	functions/pf-eccube3/b02-04_batch_product_product_no_section_check.md
+L0031	現行仕様
+L0032	B02-04 商品部門未設定チェック / バッチ 商品管理 — 商品部門未設定チェック
+L0033	業務ロジック
+L0034	起動の受け付け
+L0035	起動時はコマンド名の指定を必要とする。コマンド名が未指定、または対象のコマンドと一致しないときは、処理を行わずに終了する。
+L0036	抽出の対象
+L0037	部門は商品規格ごとに持つため、判定は商品規格の単位で行う。削除済みの商品・商品規格は対象から除く。一覧は商品規格の識別子の昇順で並ぶ。
+L0038	通知先
+L0039	通知先は、システム設定の「買取部門集計送信メールアドレス」に設定したアドレスとする。カンマ区切りで複数のアドレスを指定できる。この設定が空のときは、該当する商品規格があってもメールを送らずに終了する。
+L0040	差出人は店舗基本情報の店名とメールアドレスとし、返信先とエラー返送先も店舗基本情報の設定値を使う。
+L0041	再実行
+L0042	失敗したときの再実行は、同じコマンドを起動し直して行う。抽出は何度実行しても同じ結果になるため、再実行したときは同じ内容を再度通知しうる。
+L0043	通知済みかどうかは記録せず、判定もしない。起動のたびに、その時点で部門未設定の商品規格を抽出し直し、1件以上あれば通知メールを送る。同じ内容の通知を重ねて送ることは抑止しない。
+L0044	入出力
+L0045	入力と出力
+L0046	種類	内容
+L0047	入力	起動時のコマンド名
+L0048	成功時出力	開始と完了をコンソールへ出力し、終了コード0を返す
+L0049	失敗時出力	コマンド名が不正なときは、その旨をコンソールへ出力し、終了コード1を返す
+L0050	本バッチはデータを更新しない。外部のAPIも呼び出さない。
+L0051	リニューアル後の仕様
+L0052	表示メッセージ
+L0053	本バッチは画面を持たず、利用者向けの文言を持たない。
+
+ succeeded in 0ms:
+##### 0405 sheet-5 店頭注文番号初期化
+L0001	店頭注文番号初期化
+L0002	ドキュメント名受注管理 基本設計
+L0003	セクション—
+L0004	プロジェクト名受注管理機能
+L0005	作成者緑川
+L0006	作成日2025-05-13
+L0007	更新者堀部
+L0008	更新日2025-10-02
+L0009	機能NoB05-03
+L0010	機能名店頭注文番号初期化
+L0011	概要店頭注文番号テーブルを初期化する
+L0012	処理概要（★はカスタマイズ項目）
+L0013	カスタマイズ説明
+L0014	・カスタマイズ要件
+L0015	注文番号初期化処理について
+L0016	・本店だけではなく支店の店頭注文番号も初期化する
+L0017	機能仕様処理概要（★はカスタマイズ項目）
+L0018	★店頭受取番号を初期化
+L0019	・本店＋支店の店頭受取番号を削除する
+L0020	・店頭注文番号テーブルで店頭注文場号が発番される時に自動生成されるID (本店・支店共用)をリセットして、1からスタートし直すようにする
+L0021	実行トリガー スケジュール起動(Step Functions) 実行タイミング 毎日0時
+L0022	入力データ元 DB 出力先(フォーマット) DB
+L0023	入力データ詳細
+L0024	DBに保存されている店頭注文番号に登録されている全件データ
+L0025	入力データ検索条件
+L0026	項目名	条件	備考
+L0027	-	-	-
+L0028	実行結果詳細 ※主にDBの登録・更新結果について記載
+L0029	・DBに保存されている店頭注文番号の全件を物理削除
+L0030	・店頭注文番号を発番した際に自動採番される店頭注文番号のID (本店・支店共用)をリセットして、1からスタートするようにする
+L0031	エラーハンドリング
+L0032	・エラー内容をコンソールへ出力する
+L0033	Source:
+L0034	functions/pf-eccube3/b05-03_batch_order_order_store_call_number_initialize.md
+L0035	現行仕様
+L0036	B05-03 店頭注文番号初期化 / バッチ 受注管理 — 店頭注文番号初期化
+L0037	業務ロジック
+L0038	対象が0件のときと再実行
+L0039	対象が0件のときも、削除と採番カウンタの初期化を実行する。結果は、店頭注文番号が無い状態と、初期化済みの採番カウンタだけになる。
+L0040	何度実行したときも結果は同じになる。冪等である。
+L0041	実行の影響
+L0042	このバッチは破壊的である。店頭注文番号と紐づく受注の対応は、いずれの場合もすべて失われる。実行した後は、過去に提示済みの整理番号から受注を引けなくなる。
+L0043	失われるのは店頭注文番号だけである。受注そのものは残り、金額の再計算や集計は、いずれの場合も行わない。
+L0044	起動できなかったときの扱い
+L0045	コマンド名が未指定のとき、および対応するバッチが無い名前を指定したときは、初期化を行わずに終了する。店頭注文番号と採番カウンタは、いずれも変わらない。
+L0046	起動するコマンドは order:batch で、第1引数にバッチ名 truncateWaitingNumber を指定する。バッチ名が未指定・不一致のときは、実行日時に続けて「Nothing args or command.」をコンソールへ出力し、終了コード1で終了する。
+L0047	入出力
+L0048	種類	内容
+L0049	入力	コマンド名。引数は使わない。実行条件は特に無く、対象が0件でも実行できる。
+L0050	成功時出力	正常に終わったときは、実行結果の通知を出さない。
+L0051	リニューアル後の仕様
+L0052	表示メッセージ
+L0053	この機能は、いずれの場合も画面のメッセージを扱わない。
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/B05-01/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+##### 0405 sheet-3 注文番号登録
+L0001	注文番号登録
+L0002	ドキュメント名受注管理 基本設計
+L0003	セクション—
+L0004	プロジェクト名受注管理機能
+L0005	作成者緑川
+L0006	作成日2025-05-13
+L0007	更新者石川
+L0008	更新日2025-09-29
+L0009	機能NoB05-01
+L0010	機能名注文番号登録
+L0011	→店頭受取注文商品スマレジ連携（名称変更）
+L0012	概要スマレジ用商品コードの登録と連携を行う
+L0013	処理概要（★はカスタマイズ項目）
+L0014	カスタマイズ説明
+L0015	・注文番号のコピー処理をバッチから除外する
+L0016	・注文番号の採番処理を新たなデータベースに合わせて変更する（MySQL→PostgreSQL）
+L0017	・スマレジ連携APIについて、呼び出しを廃止予定のスマレジAPIからプラットフォームAPIに変更
+L0018	機能仕様処理概要（★はカスタマイズ項目）
+L0019	・現行でこのバッチは以下の2つの処理を行っている
+L0020	・採番された注文番号を注文情報へコピーする処理
+L0021	（注文ステータスが変更されたときに実行されるMySQLのトリガーで注文番号が注文番号採番専用テーブルにて採番されるため、コピーを行う）
+L0022	・店頭受取注文の場合、スマレジ側に注文した商品の情報を連携する
+L0023	現行
+L0024	DB Mysql
+L0025	注文完了
+L0026	注文番号登録バッチ
+L0027	トリガー: 注文番号採番
+L0028	注文完了
+L0029	注文番号採番
+L0030	受注データが更新されるとトリガーの処理が実行される
+L0031	[条件]
+L0032	ステータスが
+L0033	    決済処理中 または 購入処理中
+L0034	から
+L0035	    注文受領 または 入金待ち
+L0036	に変更された場合に注文番号を採番する
+L0037	つまり注文が確定したタイミングで採番を行う
+L0038	＝注文が完了した順の採番となる
+L0039	画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）
+L0040	遷移一覧（3件）
+L0041	遷移元	遷移先	connector
+L0042	トリガー: 注文番号採番	注文番号登録バッチ	6（0405:注文番号登録!AC24）
+L0043	注文完了	トリガー: 注文番号採番	12（0405:注文番号登録!K24）
+L0044	注文完了	注文番号採番	35（0405:注文番号登録!K55）
+L0045	【開発申し送り】現在のトリガーSQL（MySQLに設定されている）
+L0046	IF OLD.status IN (7, 8) AND NEW.status IN (1, 2) THEN
+L0047	INSERT IGNORE INTO dtb_order_number(order_id) VALUES(OLD.order_id);
+L0048	END IF;
+L0049	上記の処理の理由とカスタマイズ理由
+L0050	・注文が完了した順番で注文番号を付けたいため、注文IDとは別に注文番号を採番している
+L0051	・注文番号を連番で採番する際、MySQLのPKを連番で採番する機能を使っているため、
+L0052	新たなテーブル(dtb_order_number)を作成し採番を行っている
+L0053	・採番用のテーブル(dtb_order_number)にデータ登録をする処理でデッドロックが起こる可能性はあるため、
+L0054	データ登録の処理をなくした形にしたい
+L0055	リニューアル後
+L0056	DB PostgreSQL
+L0057	【開発申し送り】リニューアル後のトリガーSQL
+L0058	IF OLD.status IN (7, 8) AND NEW.status IN (1, 2) THEN
+L0059	NEW.order_number := nextval('order_number_seq');
+L0060	END IF;
+L0061	以上のカスタマイズにより、注文番号登録バッチから注文番号登録の処理を削除する
+L0062	元々、注文番号登録バッチという名称であるがリニューアル後は注文番号登録を行わないため、
+L0063	バッチ名称は「店頭受取注文商品スマレジ連携バッチ」に変更する。
+L0064	支店側の「スマレジ商品登録バッチ」が同じ役割を持っており、今回本店で実装されるため不要になるので、実装を引き継ぐ形とする。
+L0065	【開発申し送り】支店と本店のバッチを見比べながら作成する
+L0066	★注文番号のコピー処理をバッチから除外する
+L0067	★注文番号の採番処理（トリガー）を新たなデータベースに合わせて変更する（MySQL→PostgreSQL）
+L0068	★以下の注文を対象にスマレジ商品コードの採番とスマレジ連携を行う
+L0069	※現行の支店のスマレジ商品連携バッチと同仕様にする
+L0070	※本店側のバッチは注文番号採番を行った注文に対してスマレジ連携を行っていたが、
+L0071	注文番号採番の処理を除外するため、以下の条件でスマレジ商品を連携することにより、スマレジ商品再連携バッチが不要となる
+L0072	（連携が成功しないとスマレジ連携済みフラグが立たないため。支店側はもともとスマレジ商品再連携バッチはない）
+L0073	・バッチ起動から30分前以降の注文
+L0074	・スマレジ店舗IDとスマレジ店舗コードが指定済みの店舗の注文
+L0075	・スマレジ連携済みフラグが立っていない
+L0076	・スマレジ在庫連携済みフラグが立っていない
+L0077	・注文ステータスが「注文受領」「入金待ち」「入金済み」「ピック中」「ピック済み」
+L0078	・スマレジ用商品コード（バーコード）の採番を行う
+L0079	・採番ルールは以下の通り（インストアコードの採番ルールに従う）
+L0080	20(固定) + 1(固定) + スマレジ店舗ID(3桁0埋め、スマレジ店舗IDの指定がない場合は000となる) + 注文番号(8桁0埋め後、末尾から6桁取得）
+L0081	+ チェックディジット
+L0082	※チェックディジット = 「奇数桁をそのまま足したもの」と「偶数桁を3倍して足したもの」を合計し、
+L0083	その結果の一の位を求め、10から引いた数（ただし、結果が10の場合は0）
+L0084	例: 本店で店頭受取注文を行い、注文番号が12345だった場合
+L0085	2010010123451 これがスマレジ商品コードとなる
+L0086	・注文データに採番したスマレジ用商品コードを保存する
+L0087	★スマレジ連携APIについて、呼び出しを廃止予定のスマレジAPIからプラットフォームAPIに変更
+L0088	・呼び出しの詳細についてはスマレジプラットフォームAPIのドキュメントを参照
+L0089	・スマレジ商品登録APIを使用し、スマレジに注文商品を登録する
+L0090	・以下のデータを送信する
+L0091	・スマレジ用商品コード
+L0092	・部門ID
+L0093	6: 店頭受取（固定）
+L0094	・商品名
+L0095	店頭PCアカウントの場合: 「店頭注文: 店頭注文番号 のご注文」
+L0096	通常会員の場合: 「注文者姓カナ 注文者名カナ 様のご注文」
+L0097	・金額
+L0098	スムーズ店頭受取の場合: 0円（固定）
+L0099	店頭受取の場合: 注文合計金額（注文内の明細を1つにまとめて1商品とするため、合計金額を指定する）
+L0100	・スマレジ連携が成功した場合スマレジ連携済みフラグを立てる、失敗した場合エラーメールを送信する
+L0101	・メールの送信先は追加設定のスマレジ通信エラー送信メールアドレス
+L0102	・商品連携が成功した場合、スマレジ在庫登録APIを使用し、連携した商品に在庫を登録する
+L0103	・以下のデータを送信する
+L0104	・スマレジ用商品コード
+L0105	・在庫数（1固定）
+L0106	・スマレジ連携が成功した場合スマレジ在庫連携済みフラグを立てる、失敗した場合エラーメールを送信する
+L0107	・メールの送信先は追加設定のスマレジ通信エラー送信メールアドレス
+L0108	実行トリガー スケジュール起動(Step Functions) 実行タイミング 10分おき
+L0109	入力データ元 DB 出力先(フォーマット) DB、スマレジ
+L0110	入力データ詳細
+L0111	DBから以下のデータを取得
+L0112	・バッチ起動から30分前以降の注文
+L0113	・スマレジ店舗IDとスマレジ店舗コードが指定済みの店舗の注文
+L0114	・スマレジ連携済みフラグが立っていない
+L0115	・スマレジ在庫連携済みフラグが立っていない
+L0116	★注文ステータスが「注文受領」「入金待ち」「入金済み」「ピック中」「ピック済み」
+L0117	入力データ検索条件
+L0118	項目名 条件 備考
+L0119	注文データ.注文日時 バッチ駆動時間からバッチ駆動時間より30分前
+L0120	注文データ.注文店舗.スマレジ店舗ID スマレジ店舗IDが登録済み
+L0121	注文データ.注文店舗.スマレジ店舗コード スマレジ店舗コードが登録済み
+L0122	注文データ.スマレジ連携済みフラグ スマレジ連携済みフラグが立っていない
+L0123	注文データ.スマレジ在庫連携済みフラグ スマレジ在庫連携済みフラグが立っていない
+L0124	注文データ.注文ステータス 「注文受領」「入金待ち」「入金済み」「ピック中」「ピック済み」
+L0125	実行結果詳細 ※主にDBの登録・更新結果について記載
+L0126	ECCUBE
+L0127	スマレジ連携済みフラグ、スマレジ在庫連携済みフラグ、スマレジ商品コードを登録
+L0128	スマレジ
+L0129	注文商品をスマレジに登録（在庫含む）
+L0130	エラーハンドリング
+L0131	APIの実行に失敗した場合は、エラーメールを送信する
+L0132	処理に失敗した注文は、スマレジ商品再連携バッチで再度連携の対象となる
+L0133	Source:
+L0134	functions/pf-eccube3/b05-01_batch_order_order_copy_order_number.md
+L0135	現行仕様
+L0136	B05-01 注文番号登録 / バッチ 受注管理 — 注文番号登録
+L0137	業務ロジック
+L0138	処理対象と処理順序
+L0139	採番済みの注文番号が受注サブへ未反映の受注を対象とし、注文番号の昇順に処理する。1回の実行で処理する件数は最大30件で、対象がそれを超えるときは残りを次回以降の実行へ持ち越す。対象が無いときは何も行わずに終了する。
+L0140	起動引数の扱い
+L0141	起動時のバッチ名が指定されていない、または受け付けるバッチ名のいずれにも一致しないときは、実行日時を添えたメッセージをコンソールへ出力し、処理を行わずに異常終了する。
+L0142	入出力
+L0143	種類	内容
+L0144	入力	起動時のバッチ名
+L0145	出力	バッチ名が不正なときの、実行日時を添えたコンソールメッセージ
+L0146	入出力: 永続化
+L0147	操作	契機
+L0148	更新	採番済み注文番号の受注サブへの反映
+L0149	リニューアル後の仕様
+L0150	表示メッセージ
+L0151	本バッチは画面メッセージを扱わない。
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/B05-05/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+##### 0405 sheet-7 スマレジ商品削除
+L0001	スマレジ商品削除
+L0002	ドキュメント名受注管理 基本設計
+L0003	セクション—
+L0004	プロジェクト名受注管理機能
+L0005	作成者緑川
+L0006	作成日2025-05-13
+L0007	更新者堀部
+L0008	更新日2025-10-03
+L0009	機能NoB05-05
+L0010	機能名スマレジ商品削除
+L0011	概要手続きが完了した店頭注文をスマレジ商品から削除する
+L0012	処理概要（★はカスタマイズ項目）
+L0013	カスタマイズ説明
+L0014	・スマレジ連携APIについて、呼び出しを廃止予定のスマレジAPIからプラットフォームAPIに変更
+L0015	機能仕様処理概要（★はカスタマイズ項目）
+L0016	・DBから下記に当てはまる注文データを取得する
+L0017	・スマレジ商品コードが存在する
+L0018	・スマレジ削除フラグが立っていない
+L0019	★注文ステータスが「キャンセル」もしくは「引き渡し済み」
+L0020	・取得した注文データをスマレジ連携をし、注文データの商品をスマレジから論理削除する
+L0021	・当該の注文データの商品をスマレジ上で論理削除
+L0022	・連携に失敗した場合はスマレジ通信エラーメール送信
+L0023	実行トリガー スケジュール起動(Step Functions) 実行タイミング 毎日4時
+L0024	入力データ元 DB 出力先(フォーマット) DB, スマレジ
+L0025	入力データ詳細
+L0026	DBから手続きが完了した店舗注文データを取得
+L0027	・スマレジ商品コードが登録されている
+L0028	・スマレジ削除フラグが立っていない
+L0029	・注文ステータスが「キャンセル」もしくは「引き渡し済み」
+L0030	入力データ検索条件
+L0031	項目名 条件 備考
+L0032	スマレジ商品コード スマレジ商品コードが登録されている
+L0033	スマレジ削除フラグ スマレジ削除フラグが立っていない
+L0034	注文ステータス 「キャンセル」もしくは「出荷完了」
+L0035	実行結果詳細 ※主にDBの登録・更新結果について記載
+L0036	スマレジプラットフォームAPIでスマレジから取得した注文データの商品情報を論理削除する
+L0037	スマレジ登録が成功したら、当該注文データのスマレジ削除フラグを立てる
+L0038	エラーハンドリング
+L0039	・エラーが発生した場合、発生したスマレジ連携ごとにメールで管理者に通知
+L0040	Source:
+L0041	functions/pf-eccube3/b05-05_batch_order_order_delete_smaregi_product.md
+L0042	現行仕様
+L0043	B05-05 スマレジ商品削除 / バッチ 受注管理 — スマレジ商品削除
+L0044	業務ロジック
+L0045	起動時の指定
+L0046	判定	結果
+L0047	コマンド名が未指定、または本バッチのコマンド名と一致しないとき	連携を行わずに終了する。実行日時を添えて、引数またはコマンドが無い旨をコンソールへ出力し、異常終了として扱う
+L0048	起動するコマンドは order:batch で、第1引数にバッチ名 deleteSmaregiProduct を指定する。バッチ名が未指定・不一致のときにコンソールへ出す文言は「Nothing args or command.」で、このときの終了コードは1である。
+L0049	対象が無いとき・連携が失敗したときの続き
+L0050	状況	ふるまい
+L0051	対象が1件も無いとき	連携を行わずに完了する
+L0052	スマレジから応答が返らない、または応答に結果が含まれないとき	その受注の連携を失敗として扱う
+L0053	ある受注の連携が失敗したとき	その受注は連携済みとして扱わないまま次の受注へ進み、残りの受注の連携は続ける
+L0054	連携に失敗した受注	対象の条件に当てはまる限り、次回以降の実行でも再び対象になる
+L0055	入出力
+L0056	種類	内容
+L0057	入力	コマンド名
+L0058	入出力: 永続化
+L0059	対象	内容
+L0060	連携が失敗したとき	何も更新しない。失敗した事実を残す更新も行わないため、後から失敗した受注を抽出することはできない
+L0061	連携失敗の通知
+L0062	状況	内容
+L0063	通知先のメールアドレスが設定されていないとき	通知を行わない（連携の失敗は誰にも伝わらない）
+L0064	通知するとき	注文番号・処理名・エラーコード・スマレジから返ったエラーの内容を載せる
+L0065	通知するとき	エラーコードの先頭の数字で、認証の失敗・設定の失敗・データの誤り・それ以外の例外を区別して知らせる
+L0066	通知するときの本文の先頭の文は、エラーコードの先頭1桁が次の値のとき、それぞれ次の文になる。
+L0067	エラーコードの先頭1桁	本文の先頭の文
+L0068	1	スマレジとの認証に失敗しました。
+L0069	2	スマレジの設定に失敗しました。
+L0070	3・4	データエラーが発生しました。
+L0071	上記以外	例外エラーが発生しました。
+L0072	リニューアル後の仕様
+L0073	表示メッセージ
+L0074	本バッチは画面を持たず、利用者向けの文言を持たない。
+
+exec
+/bin/bash -lc 'for kind in processes factors interactions constraints existing; do cat integration_test/casegen/combination/factors/B02-04_${kind}.tsv; done' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'for kind in processes factors interactions constraints existing; do cat integration_test/casegen/combination/factors/B02-03_${kind}.tsv; done' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'for kind in processes factors interactions constraints existing; do cat integration_test/casegen/combination/factors/B02-05_${kind}.tsv; done' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 27ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	部門未設定の公開商品規格を抽出して管理者へメールで通知する	バッチ product:batch checkNoSectionProduct を起動する	管理者宛ての受信メール（件名・本文の一覧）	L0019-L0021,L0035-L0039,L0043
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	商品の公開ステータス	公開｜公開以外	公開: 抽出の対象になる／公開以外: 一覧に載らない	L0019,L0037	この機能
+F02	P1	商品規格の部門	未設定｜設定済み	未設定: 抽出の対象になる／設定済み: 一覧に載らない	L0019,L0037	この機能
+F03	P1	商品と商品規格の削除	未削除｜商品または商品規格が削除済み	未削除: 抽出の対象になる／商品または商品規格が削除済み: 対象から除く	L0037	この機能
+F04	P1	買取部門集計送信メールアドレス	1件のアドレス｜カンマ区切りで複数｜空	1件のアドレス: そのアドレスへ送る／カンマ区切りで複数: 全アドレスへ送る／空: 該当する商品規格があってもメールを送らない	L0039	この機能
+F05	P1	コマンド名	checkNoSectionProduct｜未指定または不一致	checkNoSectionProduct: 抽出と通知を行う／未指定または不一致: 処理を行わず終了する	L0035	この機能
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	関係しない		通知する・しないの条件で、どれか1つで外れれば通知されず、条件どうしで結果は変わらない
+P1	F01+F03	関係しない		通知する・しないの条件で、どれか1つで外れれば通知されず、条件どうしで結果は変わらない
+P1	F01+F04	関係しない		通知する・しないの条件で、どれか1つで外れれば通知されず、条件どうしで結果は変わらない
+P1	F01+F05	関係しない		通知する・しないの条件で、どれか1つで外れれば通知されず、条件どうしで結果は変わらない
+P1	F02+F03	関係しない		通知する・しないの条件で、どれか1つで外れれば通知されず、条件どうしで結果は変わらない
+P1	F02+F04	関係しない		通知する・しないの条件で、どれか1つで外れれば通知されず、条件どうしで結果は変わらない
+P1	F02+F05	関係しない		通知する・しないの条件で、どれか1つで外れれば通知されず、条件どうしで結果は変わらない
+P1	F03+F04	関係しない		通知する・しないの条件で、どれか1つで外れれば通知されず、条件どうしで結果は変わらない
+P1	F03+F05	関係しない		通知する・しないの条件で、どれか1つで外れれば通知されず、条件どうしで結果は変わらない
+P1	F04+F05	関係しない		通知する・しないの条件で、どれか1つで外れれば通知されず、条件どうしで結果は変わらない
+処理ID	組	種別	根拠	理由
+テストID	処理ID	値	理由
+IT-B02-04-001	P1	F01=公開&F02=未設定&F03=未削除&F04=1件のアドレス&F05=checkNoSectionProduct	公開・部門未設定・未削除の商品規格を用意して起動し、管理者宛てのメールを確かめる
+IT-B02-04-003	P1	F01=公開&F02=設定済み&F03=未削除&F04=1件のアドレス&F05=checkNoSectionProduct	部門設定済みの商品規格だけで起動し、メールが届かないのを確かめる
+IT-B02-04-004	P1	F01=公開&F02=未設定&F03=未削除&F04=空&F05=checkNoSectionProduct	送信先を空にして起動し、メールが届かないのを確かめる
+IT-B02-04-005	P1	F01=公開&F02=未設定&F03=未削除&F04=カンマ区切りで複数&F05=checkNoSectionProduct	送信先を2つ設定して起動し、双方のメールを確かめる
+IT-B02-04-006	P1	F01=公開&F02=未設定&F03=未削除&F04=1件のアドレス&F05=checkNoSectionProduct	公開・部門未設定の商品規格を用意して起動し、メールの差出人と返信先を確かめる
+IT-B02-04-007	P1	F01=公開&F02=未設定&F03=未削除&F04=1件のアドレス&F05=checkNoSectionProduct	公開・部門未設定・未削除の商品規格を10,000件用意して起動し、メール本文の一覧を確かめる
+IT-B02-04-008	P1	F01=公開&F02=未設定&F03=未削除&F04=1件のアドレス&F05=checkNoSectionProduct	公開・部門未設定・未削除の商品規格を10,001件用意して起動し、メール本文の一覧を確かめる
+IT-B02-04-015	P1	F01=公開&F02=未設定&F03=未削除&F04=1件のアドレス&F05=checkNoSectionProduct	同じコマンドを2回起動し、同じ内容のメールが2通届くのを確かめる
+IT-B02-04-016	P1	F01=公開&F02=未設定&F03=未削除&F04=1件のアドレス&F05=未指定または不一致	存在しないコマンド名で起動し、メールが届かないのを確かめる
+IT-B02-04-017	P1	F01=公開&F02=未設定&F03=未削除&F04=1件のアドレス&F05=未指定または不一致	コマンド名なしで起動し、メールが届かないのを確かめる
+
+ succeeded in 13ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	お気に入り商品セール通知メールを会員へ送る	バッチ B02-05（saleNotification）を起動する	会員宛てのメール受信・メール送信履歴	L0019-L0024,L0028-L0036,L0044-L0049,L0060
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	会員ステータス	本会員｜仮会員｜退会済み会員	本会員: 通知の対象になる／仮会員: 対象外でメールを送らない／退会済み会員: 対象外でメールを送らない	L0021,L0029,L0033	この機能
+F02	P1	会員グループ	通常｜店内注文専用アカウント	通常: 通知の対象になる／店内注文専用アカウント: 対象にしない（支店店内注文専用アカウントも同じ）	L0044	この機能
+F03	P1	お気に入り登録した言語の側のセール	セール有効｜セール無効	セール有効: その商品が通知の商品一覧に載る／セール無効: 載らず、載せる商品が無い会員にはメールを送らない	L0019,L0028,L0032,L0044	この機能
+F04	P1	会員の住所	日本｜国外	日本: 日本語テンプレートで送り、本文は姓名の順で商品名は日本語名／国外: 英語テンプレートで送り、本文は名・姓の順で商品名は英語名	L0023-L0024,L0035,L0046	この機能
+F05	P1	お気に入りを登録した言語	JP｜EN	JP: 商品の行の先頭に【JP】を付ける／EN: 商品の行の先頭に【EN】を付ける	L0044,L0046	この機能
+処理ID	要因	判定	根拠	理由
+P1	F01+F02+F03	効き合う	L0021,L0029,L0033,L0044,L0028	3つのどれか1つでも対象外の値だと、その会員にはメールを送らない（会員ステータスが本会員で、店内注文専用でなく、登録言語側がセール中のときだけ通知する）
+P1	F01+F04	関係しない		メールの言語選択は通知の対象になった会員にだけ働き、ステータスは対象かどうかだけを決める
+P1	F01+F05	関係しない		行頭の言語コードは対象になった商品にだけ付き、ステータスは対象かどうかだけを決める
+P1	F02+F04	関係しない		会員グループは対象かどうかだけを決め、メールの言語は住所だけで決まる
+P1	F02+F05	関係しない		会員グループは対象かどうかだけを決め、行頭の言語コードは登録言語だけで決まる
+P1	F03+F04	関係しない		セールの有無は商品が載るかどうかだけを決め、メールの言語は住所だけで決まる
+P1	F03+F05	関係しない		F03は登録言語の側のセールと定義しており、登録言語がJPでもENでもセール有効なら載りセール無効なら載らない
+P1	F04+F05	関係しない		商品名の言語は住所で、行頭の言語コードは登録言語で、それぞれ別々に決まる
+処理ID	組	種別	根拠	理由
+テストID	処理ID	値	理由
+IT-B02-05-004	P1	F01=本会員&F02=通常&F03=セール有効&F04=日本&F05=JP	本会員・通常グループ・東京都の会員が、JP登録・JP側セール有効の商品を持ち、受信メールで商品がまとまることを確かめる
+IT-B02-05-006	P1	F01=本会員&F02=通常&F03=セール有効&F04=国外	国外の本会員が英語テンプレートのメールを受け取ることをメール件名で確かめる
+IT-B02-05-008	P1	F01=本会員&F02=通常&F03=セール無効&F04=日本	東京都の本会員でJP側セール無効の商品だけのとき、メールが届かないことを確かめる
+IT-B02-05-011	P1	F01=本会員&F02=通常&F03=セール有効&F04=国外	国外の本会員のメール本文が名・姓の順で英語の商品名になることを確かめる
+IT-B02-05-012	P1	F01=本会員&F02=通常&F03=セール有効&F04=日本	東京都の本会員へのメールの差出人・返信先をヘッダで確かめる
+IT-B02-05-014	P1	F01=本会員&F02=通常&F03=セール有効&F04=日本	東京都の本会員への送信後にメール送信履歴が1件増えることをDBで確かめる
+IT-B02-05-020	P1	F01=本会員&F02=通常&F03=セール有効&F04=日本	送信後のメール送信履歴に会員が紐づかないことをDBで確かめる
+IT-B02-05-021	P1	F01=本会員&F02=通常&F03=セール有効&F04=日本	同じ起動を2回行うと送信履歴が2件増えることをDBで確かめる
+IT-B02-05-023	P1	F01=本会員&F02=通常&F03=セール有効&F04=日本	東京都の本会員2人へ送信し送信履歴が2件増えることをDBで確かめる
+
+ succeeded in 28ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	在庫変動履歴を期間別に集計して入庫数集計データへ反映する	期間別入庫数集計バッチを起動する	DBの入庫数集計データ（専用の集計テーブル）	L0020-L0027,L0038,L0047-L0054,L0063,L0091-L0096,L0109
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	在庫変動の親区分	入庫｜買取｜移動または分割｜マスター更新	入庫: 集計に入る／買取: 集計に入る／移動または分割: 集計に含めない／マスター更新: 0404は集計対象と書くが0402の対象区分に無く決まらない	L0022-L0023,L0100,L0105	この機能
+F02	P1	在庫の増減	増加｜減少または変化なし	増加: 増加分を合計する／減少または変化なし: 0として数え集計に現れる単位の値は0になる	L0047	この機能
+F03	P1	履歴の店舗	営業中の本店以外の店舗｜本店｜閉店した店舗	営業中の本店以外の店舗: 店舗ごとに集計／本店: 支店IDを0として集計／閉店した店舗: 集計対象外で行は更新も登録もされない	L0090-L0096	この機能
+F04	P1	履歴の登録日	集計期間内｜366日より前	集計期間内: 取得され期間別に集計／366日より前: 取得されない	L0021,L0035,L0052	この機能
+F05	P1	既存の入庫数集計データ	あり｜なし	あり: 集計に現れれば更新し現れなければ前回値のまま残る／なし: 集計に現れれば新規登録する	L0026-L0027,L0054,L0063	この機能
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	効き合う	L0022-L0023,L0047	集計に入る区分（入庫・買取）の増加分だけが値になり、集計に入らない区分では増加しても値に入らない
+P1	F01+F03	関係しない		区分の絞り込みと店舗の閉店除外は別々の絞り込み条件で互いの結果を変えない
+P1	F01+F04	関係しない		区分の絞り込みと期間の取得条件は別々の絞り込み条件で互いの結果を変えない
+P1	F02+F03	関係しない		増減の数え方と店舗の閉店除外は別々で互いの結果を変えない
+P1	F02+F04	関係しない		増減の数え方と期間の取得条件は別々で互いの結果を変えない
+P1	F03+F04	関係しない		店舗の閉店除外と期間の取得条件は別々の絞り込み条件で互いの結果を変えない
+P1	F01+F05	効き合う	L0026-L0027,L0054	対象の履歴が集計に現れるかで、既存の集計データが更新されるか前回値のまま残るか、新規登録されるかが変わる
+P1	F02+F05	効き合う	L0026-L0027,L0054	対象の履歴が集計に現れるかで、既存の集計データが更新されるか前回値のまま残るか、新規登録されるかが変わる
+P1	F03+F05	効き合う	L0026-L0027,L0054	対象の履歴が集計に現れるかで、既存の集計データが更新されるか前回値のまま残るか、新規登録されるかが変わる
+P1	F04+F05	効き合う	L0026-L0027,L0054	対象の履歴が集計に現れるかで、既存の集計データが更新されるか前回値のまま残るか、新規登録されるかが変わる
+処理ID	組	種別	根拠	理由
+P1	F01=マスター更新	正解未定	L0100,L0105,L0022	0404は入庫またはマスター更新を集計と書き、0402は親区分を入庫と買取だけとし、マスター更新を集計に入れるか決まらない
+テストID	処理ID	値	理由
+IT-B02-03-001	P1	F01=入庫&F02=増加&F03=営業中の本店以外の店舗&F04=集計期間内&F05=なし	開店中の店舗に入庫の増加履歴を登録し、集計データがない状態で起動して新規登録を確かめる
+IT-B02-03-002	P1	F01=入庫&F02=増加&F03=営業中の本店以外の店舗&F04=集計期間内&F05=あり	当日の入庫の増加履歴と既存の集計データを用意して起動し、更新されるのを確かめる
+IT-B02-03-003	P1	F01=入庫&F02=増加&F03=営業中の本店以外の店舗&F04=集計期間内&F05=なし	商品と店舗の組ごとに入庫の増加履歴を登録し、集計データがない状態で起動して3件に分かれるのを確かめる
+IT-B02-03-005	P1	F05=あり	対象の履歴が無い商品コードの既存の集計データが前回値のまま残るのを確かめる
+IT-B02-03-010	P1	F01=入庫&F02=増加&F03=営業中の本店以外の店舗&F05=なし	366日前と365日前の入庫の増加履歴を登録し、集計データがない状態で起動して365日間の値を確かめる
+IT-B02-03-015	P1	F01=入庫&F02=増加&F03=本店&F04=集計期間内&F05=なし	本店の当日の入庫の増加履歴を登録し、集計データがない状態で起動して支店IDを確かめる
+IT-B02-03-016	P1	F01=入庫&F02=減少または変化なし&F03=営業中の本店以外の店舗&F04=集計期間内&F05=あり	在庫が減っただけの入庫の履歴と既存の集計データを用意して起動し、0に更新されるのを確かめる
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+import csv
+for fid,ids in {'A17-05':['IT-A17-05-014','IT-A17-05-025'],'B02-01':['IT-B02-01-019','IT-B02-01-017'],'B02-03':['IT-B02-03-016','IT-B02-03-010'],'B02-05':['IT-B02-05-012','IT-B02-05-020'],'B05-06':['IT-B05-06-008']}.items():
+ print('===',fid)
+ with open(f'integration_test/casegen/cases/{fid}_test_cases.tsv') as f:
+  rr=csv.DictReader(f,delimiter='\\t')
+  for row in rr:
+   if row.get('テストID') in ids:
+    print('\\n',row.get('テストID'))
+    for key in ['テストデータ','事前準備','手順','期待結果']:
+     print(key, row.get(key,''))
+PY" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+=== A17-05
+
+ IT-A17-05-014
+テストデータ 
+事前準備 ① APIベースURLが確定し、商品名検索APIへブラウザから接続できる（S-A17-05-ENV）／② 商品ID 〔商品ID-A1705-014〕の商品「非カード商品-014」が公開済みかつ未削除、カード詳細なしで、未削除・販売価格100のNM規格を持つ（登録時に振られた商品IDを控えてある。〔商品ID-A1705-014〕）（S-A17-05-NONCARD-014）
+手順 1. APIベースURLの「/product/search.json?product=非カード商品-014」をブラウザで開く／2. product_nameを確認する
+期待結果 カード詳細を持たない商品のproduct_nameが「非カード商品-014」として出力されること
+
+ IT-A17-05-025
+テストデータ 
+事前準備 ① APIベースURLが確定し、商品名検索APIへブラウザから接続できる（S-A17-05-ENV）／② ケース開始時に商品画像の配信基点をhttps://stg-files.hareruyamtg.com/img/goods/L/に設定する（S-A17-05-IMAGE-BASE）／③ 商品ID 〔商品ID-A1705-025〕の商品「画像2件商品-025」が公開済みかつ未削除で、規格ID 〔規格ID-A1705-025〕はNM・販売価格100・未削除であり、この規格に画像ファイル名M21/JP/0204-025-front.jpgとM21/JP/0204-025-back.jpgの異なるファイル名の2件が設定されている。同名商品は本商品だけである（登録時に振られた商品IDと規格IDを控えてある。〔商品ID-A1705-025〕〔規格ID-A1705-025〕）（S-A17-05-IMAGETWO-025）
+手順 1. APIベースURLの「/product/search.json?product=画像2件商品-025」をブラウザで開く／2. 規格ID 〔規格ID-A1705-025〕のproduct_class_imagesを確認する
+期待結果 画像ファイル名「M21/JP/0204-025-front.jpg」と「M21/JP/0204-025-back.jpg」がそれぞれURLへ変換され、「https://stg-files.hareruyamtg.com/img/goods/L/M21/JP/0204-025-front.jpg」と「https://stg-files.hareruyamtg.com/img/goods/L/M21/JP/0204-025-back.jpg」の2件がproduct_class_imagesの配列に入ること
+=== B02-01
+
+ IT-B02-01-017
+テストデータ 
+事前準備 ① 開始時に参照先を専用試験DB、業務時刻帯をJST、B02-01実行中件数を0に設定し、実行コンソールからproduct:batchを起動できることを確認する（S-B02-01-BATCH-ENV）／② 商品ID 〔商品ID-B0201-017A〕・商品規格ID 〔商品規格ID-B0201-017A〕（商品規格A）、商品ID 〔商品ID-B0201-017B〕・商品規格ID 〔商品規格ID-B0201-017B〕（商品規格B）と、閉店でない支店ID 〔支店ID-B0201-017〕を用意する。実行日前日に配送先店舗が支店ID 〔支店ID-B0201-017〕で、商品規格Aのステータス対応中・数量3のECCUBE商品明細（受注ID 〔受注ID-B0201-017A〕・受注明細ID 〔受注明細ID-B0201-017A〕）と、商品規格Bのステータス対応中・数量6のECCUBE商品明細（受注ID 〔受注ID-B0201-017B〕・受注明細ID 〔受注明細ID-B0201-017B〕）があり、商品規格ID 〔商品規格ID-B0201-017A〕・〔商品規格ID-B0201-017B〕の支店ID 〔支店ID-B0201-017〕の販売数集計データは0件である（登録時に振られた2件の商品ID・2件の商品規格ID・支店ID・2件の受注ID・2件の受注明細IDを控えてある）（S-B02-01-EXTRAARG-017）
+手順 1. 実行コンソールで「product:batch updateProductSummary 〔商品規格ID-B0201-017A〕」を、第2引数に商品規格ID 〔商品規格ID-B0201-017A〕を付けて起動し、コンソール出力と終了コードを確認する／2. 実行完了後、DBの販売数集計データで商品規格ID 〔商品規格ID-B0201-017A〕・支店ID 〔支店ID-B0201-017〕の行と、商品規格ID 〔商品規格ID-B0201-017B〕・支店ID 〔支店ID-B0201-017〕の行を確認する
+期待結果 第2引数を付けても商品規格ID 〔商品規格ID-B0201-017A〕の行は昨日から365日間までの各販売数が3、商品規格ID 〔商品規格ID-B0201-017B〕の行は同じく各販売数が6に更新され、集計の対象が第2引数の指定で絞られないこと
+
+ IT-B02-01-019
+テストデータ 
+事前準備 ① 開始時に参照先を専用試験DB、業務時刻帯をJST、B02-01実行中件数を0に設定し、バッチB02-01を手動起動できることを確認する（S-B02-01-BATCH-ENV）／② 商品ID 〔商品ID-B0201-019〕・商品規格ID 〔商品規格ID-B0201-019〕と、閉店でない支店ID 〔支店ID-B0201-019〕を用意する。店頭だけの購入によるスマレジ計上の受注（受注ID 301129001・受注明細ID 301139001・数量3）があり、そのEC受注日は実行日の40日前、レジ取引日時は実行日前日である。商品規格ID 〔商品規格ID-B0201-019〕・支店ID 〔支店ID-B0201-019〕の販売数集計データは0件で、同じ商品規格・支店の集計対象は他に無い（登録時に振られた商品ID・商品規格ID・支店IDを控えてある）（S-B02-01-REGIDATE-019）
+手順 1. バッチB02-01「期間別販売数集計」を入力引数を指定せず起動する／2. 実行完了後、DBの販売数集計データで商品規格ID 〔商品規格ID-B0201-019〕・支店ID 〔支店ID-B0201-019〕の行を確認する
+期待結果 スマレジ計上分の期間区分がレジ取引日時（実行日前日）で決まり、昨日、3日間、1週間、1か月、90日間、180日間、365日間の各販売数がすべて3になること
+=== B02-03
+
+ IT-B02-03-010
+テストデータ 
+事前準備 ① 業務タイムゾーンをAsia/Tokyoに設定し、親区分「入庫」「買取」「移動」「分割」と在庫区分NM・SPが登録済みであること、期間別入庫数集計バッチを手動実行できること、DB確認権限があること、およびB02-03の実行中処理がないことを確認して実行予定日をDとする（S-B02-03-ENV）／② 商品ID 〔商品ID-B0203-010〕・商品規格ID 〔商品規格ID-B0203-010〕・商品コードB0203-010-010、開店状態の店舗ID 〔店舗ID-B0203-010〕・店舗名TOKYO-010、在庫区分NM、在庫場所ID 203301001・在庫場所名A-05-010、商品在庫ID 203401001を登録する（登録時に振られた番号を控えてある）（S-B02-03-D366-010）／③ 親区分「入庫」の在庫履歴ID 203501001を実行日の366日前00:00・在庫0から5、在庫履歴ID 203501002を実行日の365日前00:00・在庫5から8として登録する（S-B02-03-D366-010）／④ 対象の専用集計データがないことを確認する（S-B02-03-D366-010）
+手順 1. 期間別入庫数集計バッチを手動実行する／2. 実行完了後、DBで商品コードB0203-010-010・店舗TOKYO-010・在庫区分NM・在庫場所A-05-010の集計データを確認する
+期待結果 365日間の入庫数がD-365日の増加数3となり、D-366日の増加数5が当日から365日間までのどの期間の入庫数にも含まれないこと
+
+ IT-B02-03-016
+テストデータ 
+事前準備 ① 業務タイムゾーンをAsia/Tokyoに設定し、親区分「入庫」「買取」「移動」「分割」と在庫区分NM・SPが登録済みであること、期間別入庫数集計バッチを手動実行できること、DB確認権限があること、およびB02-03の実行中処理がないことを確認して実行予定日をDとする（S-B02-03-ENV）／② 商品ID 〔商品ID-B0203-016〕・商品規格ID 〔商品規格ID-B0203-016〕・商品コードB0203-017-016・商品在庫ID 203401601を登録する（登録時に振られた番号を控えてある）（S-B02-03-DECONLY-016）／③ 開店状態の店舗ID 〔店舗ID-B0203-016〕・店舗名TOKYO-016、在庫区分NM、在庫場所ID 203301601・在庫場所名A-04-016を登録し、商品在庫を関連付ける（登録時に振られた番号を控えてある）（S-B02-03-DECONLY-016）／④ 商品コードB0203-017-016の在庫履歴は、ID 203501601の実行日当日00:00・親区分「入庫」・5から2の1件だけである。専用集計データID 203601601の当日から365日間までの値は全項目77である（S-B02-03-DECONLY-016）
+手順 1. 期間別入庫数集計バッチを手動実行する／2. 実行完了後、DBで商品コードB0203-017-016・店舗TOKYO-016・在庫区分NM・在庫場所A-04-016の集計データを確認する
+期待結果 在庫が減っただけの履歴しかない商品コードB0203-017-016の当日から365日間までの集計値が、実行前の77のままでも負の値でもなく、すべて0に更新されること
+=== B02-05
+
+ IT-B02-05-012
+テストデータ 
+事前準備 ① B02-05を起動して履歴を確認でき、開始時の実行中件数を0件にする（S-B02-05-BATCH-ENV）／② 通常会員グループは通知対象となる区分である（S-B02-05-GROUPS）／③ 会員ID 〔会員ID-B0205-012〕（登録時に振られた会員IDを控えてある）・jp-target-b0205-012@example.testは東京都の本会員で、登録言語側セール有効の商品2件をお気に入り登録し、通知対象はこの会員だけである（S-B02-05-JP-MATRIX-012）／④ 開始時にショップ名=B02-05試験店、代表メールアドレス=sender-b0205@example.test、返信先=reply-b0205@example.test、エラー戻し先=error-b0205@example.testに設定する（S-B02-05-SHOP）／⑤ 開始時に日本語テンプレートを件名=B02-05日本語セール通知、ヘッダー=日本語通知ヘッダー、フッター=日本語通知フッターに設定する（S-B02-05-TEMPLATE-JP）／⑥ 開始時にMailCatcherの受信メールを0件にする（S-B02-05-MAILBOX）
+手順 1. バッチB02-05「お気に入り商品セール通知」を起動する／2. jp-target-b0205-012@example.testで受信したメールのヘッダを開く
+期待結果 差出人が基本情報設定のショップ名「B02-05試験店」と代表メールアドレスsender-b0205@example.test、返信先がreply-b0205@example.test、エラー戻し先がerror-b0205@example.testであること
+
+ IT-B02-05-020
+テストデータ 
+事前準備 ① B02-05を起動して履歴を確認でき、開始時の実行中件数を0件にする（S-B02-05-BATCH-ENV）／② 通常会員グループは通知対象となる区分である（S-B02-05-GROUPS）／③ 会員ID 〔会員ID-B0205-020〕（登録時に振られた会員IDを控えてある）・b0205-020-target@example.testは東京都の本会員で、JP側セール有効の商品ID 〔商品ID-B0205-020A〕（登録時に振られた商品IDを控えてある）・〔商品ID-B0205-020B〕をお気に入り登録しており、通知対象はこの会員だけ、開始時のメール送信履歴は0件である（S-B02-05-HIST-NOMEMBER-020）／④ 開始時にショップ名=B02-05試験店、代表メールアドレス=sender-b0205@example.test、返信先=reply-b0205@example.test、エラー戻し先=error-b0205@example.testに設定する（S-B02-05-SHOP）／⑤ 開始時に日本語テンプレートを件名=B02-05日本語セール通知、ヘッダー=日本語通知ヘッダー、フッター=日本語通知フッターに設定する（S-B02-05-TEMPLATE-JP）／⑥ 開始時にMailCatcherの受信メールを0件にする（S-B02-05-MAILBOX）
+手順 1. DBでメール送信履歴の件数を記録する／2. バッチB02-05「お気に入り商品セール通知」を起動する／3. DBで追加されたメール送信履歴の会員の指定を確認する
+期待結果 追加されたメール送信履歴は1件で、その履歴には会員ID 〔会員ID-B0205-020〕を含むどの会員も紐づいていない（会員の指定が空である）こと
+=== B05-06
+
+ IT-B05-06-008
+テストデータ 
+事前準備 ① バッチ実行時刻の12時間前に、注文ID 〔注文ID-B0506-008〕の受注1件が注文番号〔注文番号-B0506-008〕・受注ステータス新規受付で、会員ID 〔会員ID-B0506-008〕の会員1件が有効・ポイント残高900で（いずれも登録時に振られた番号を控えてある）、両者に紐づくポイント増減量-100のポイント履歴が2件登録されている（S-B05-06-DUP-008）／② 開始時にスマレジ通信エラー送信メールアドレスをadmin-b0506-008@example.testに設定する（S-B05-06-CONFIG）／③ 開始時に店舗基本情報を店名B05-06試験店、メールアドレスfrom-b0506@example.test、返信先reply-b0506@example.test、返送先return-b0506@example.testに設定する（S-B05-06-SHOP）／④ 開始時にメール配送サービスを起動し、正常配送できることを確認する（S-B05-06-MAIL-ENV）／⑤ admin-b0506-008@example.test宛ての受信メールを削除し、0件であることを確認する（S-B05-06-MAILBOX-008）
+手順 1. DBで注文ID 〔注文ID-B0506-008〕の受注、会員ID 〔会員ID-B0506-008〕のポイント残高およびポイント履歴のレコード件数と内容を記録する／2. 実行コンソールで「eccube:check-duplicate-point」を起動する／3. DBの受注、会員のポイント残高およびポイント履歴を手順1の記録と比較する
+期待結果 B05-06の実行前後で、注文ID 〔注文ID-B0506-008〕の受注、会員ID 〔会員ID-B0506-008〕のポイント残高およびポイント履歴のレコード件数と内容が変化していないこと
+
+exec
+/bin/bash -lc 'head -6 integration_test/casegen/cases/B02-07_test_cases.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+テストID	要求ID	連鎖ID	観点ID	優先度	実行区分	使用シード	事前準備	手順	期待結果	出典
+IT-B02-07-002	REQ-0402-sheet-6-R006,REQ-0402-sheet-6-R011,REQ-0402-sheet-6-R012,REQ-0402-sheet-6-R013,REQ-0402-sheet-6-R014,REQ-0402-sheet-6-R015,REQ-0402-sheet-6-R016,REQ-0402-sheet-6-R017		ITA-05,ITA-07,ITA-11	P1	ブラウザ+DB確認	S-B02-07-BATCH-ENV,S-B02-07-LATEST-002	① 開始時に参照先を専用試験DB、業務時刻帯をJST、B02-07の実行中件数を0に設定する（S-B02-07-BATCH-ENV）／② 店舗ID 20700201のB02-07東京店-002に、商品ID 20700211・商品規格ID 20700221・商品在庫ID 2070201の商品コードWWK00031ENNM-002をECCUBE現在庫999で用意する。在庫変動履歴ID 20700241〜20700252はバッチ起動日の1日前から78日前まで7日間隔の各0時にあり、在庫数は順に999、1、30、50、60、70、80、85、90、95、98、100である（S-B02-07-LATEST-002）	1. バッチB02-07「週間在庫履歴更新バッチ」を起動する／2. 実行完了後、DBの週間在庫履歴テーブルで商品コードWWK00031ENNM-002、店舗B02-07東京店-002の行を確認する	商品コードWWK00031ENNM-002、店舗B02-07東京店-002の1〜11週間前在庫が順に1、30、50、60、70、80、85、90、95、98、100で登録されること	0402 週間在庫履歴更新バッチ / 機能仕様 処理概要 ②週間在庫履歴取得処理
+IT-B02-07-003	REQ-0402-sheet-6-R026,REQ-0402-sheet-6-R027		ITA-05,ITA-06,ITA-07	P1	ブラウザ+DB確認	S-B02-07-BATCH-ENV,S-B02-07-COMBINED-003	① 開始時に参照先を専用試験DB、業務時刻帯をJST、B02-07の実行中件数を0に設定する（S-B02-07-BATCH-ENV）／② 店舗ID 20700301のB02-07東京店-003に、商品ID 20700311・商品規格ID 20700321の商品コードB0207-C-003を用意する。商品在庫ID 2070301はECCUBE在庫40、商品在庫ID 2070302はスマレジ在庫60で、在庫変動履歴ID 20700341・20700342の日時はバッチ起動日の12週間前0時、在庫数は40・60である（S-B02-07-COMBINED-003）	1. バッチB02-07「週間在庫履歴更新バッチ」を起動する／2. 実行完了後、DBの週間在庫履歴テーブルで商品コードB0207-C-003、店舗B02-07東京店-003の行を確認する	商品コードB0207-C-003、店舗B02-07東京店-003について、ECCUBE在庫40とスマレジ在庫60を合算した1〜11週間前在庫が各100の行が1行だけ登録されること	0402 週間在庫履歴更新バッチ / 機能仕様 処理概要 ②週間在庫履歴取得処理・週間在庫履歴取得データ登録処理
+IT-B02-07-008	REQ-0402-sheet-6-R005		ITA-03,ITA-05	P1	ブラウザのみ	S-B02-07-BATCH-ENV,S-B02-07-ADM,S-B02-07-LATEST-008	① 開始時に参照先を専用試験DB、業務時刻帯をJST、B02-07の実行中件数を0に設定する（S-B02-07-BATCH-ENV）／② 管理者ID 20700001・ログインID b0207_adminの稼働中管理者でログインし、在庫管理とCSV出力を操作でき、ログイン失敗回数0・ロックなしである（S-B02-07-ADM）／③ 店舗ID 20700801の営業中店舗B02-07東京店-008に、表示中・未削除の商品ID 20700811、商品規格ID 20700821、商品在庫ID 2070801の商品コードWWK00031ENNM-008をECCUBE現在庫999で用意する。在庫変動履歴ID 20700841〜20700852はバッチ起動日の1日前から78日前まで7日間隔の各0時にあり、在庫数は順に999、1、30、50、60、70、80、85、90、95、98、100である（S-B02-07-LATEST-008）	1. バッチB02-07「週間在庫履歴更新バッチ」を起動し、完了を待つ／2. 管理画面の在庫リコメンド画面を開く／3. 支店選択で「B02-07東京店-008」を選び、在庫リコメンドにチェックを付け、移動平均集計期間を空欄のまま「CSVダウンロード」を押す／4. ダウンロードしたCSVの商品コードWWK00031ENNM-008の行を確認する	CSVの商品コードWWK00031ENNM-008の行に、B02-07が週間在庫履歴として保存した1〜11週間前在庫1、30、50、60、70、80、85、90、95、98、100が出力されること	0402 週間在庫履歴更新バッチ / 機能仕様 処理概要 バッチ概要
+IT-B02-07-011			ITA-11	P1	ブラウザのみ	S-B02-07-SEARCH-ENV,S-B02-07-KW-011	① 開始時に本店を日本語の/ja/で公開し、ユニサーチ検索接続先を試験環境に設定する（S-B02-07-SEARCH-ENV）／② 商品ID=〔商品ID-B0207-011A〕・商品規格ID=〔商品規格ID-B0207-011A〕（登録時に振られた商品IDと商品規格IDを控えてある）・商品コード=B0207-011-Aは商品名=B0207-011-NAME-A・タグ=B0207-011-TAGKW、商品ID=〔商品ID-B0207-011B〕・商品規格ID=〔商品規格ID-B0207-011B〕（登録時に振られた商品IDと商品規格IDを控えてある）・商品コード=B0207-011-Bは商品名=B0207-011-NAME-B・タグ=B0207-011-OTHER／両商品とも本店公開・販売価格100円・在庫1・削除なし／キーワードB0207-011-TAGKWを上記以外の項目に持つ商品=0件（S-B02-07-KW-011）	1. ヘッダの商品検索の入力欄に「B0207-011-TAGKW」を入力して検索を押す／2. 表示された商品一覧を確認する	商品一覧に商品名B0207-011-NAME-Aの商品だけが表示され、商品名B0207-011-NAME-Bの商品は表示されないこと	0404 ユニサーチフィードTSV / 検索について 検索備考（タグ キーワード検索の対象）
+IT-B02-07-012			ITA-11	P1	ブラウザのみ	S-B02-07-SEARCH-ENV,S-B02-07-KW-012	① 開始時に本店を日本語の/ja/で公開し、ユニサーチ検索接続先を試験環境に設定する（S-B02-07-SEARCH-ENV）／② 商品ID=〔商品ID-B0207-012A〕・商品規格ID=〔商品規格ID-B0207-012A〕（登録時に振られた商品IDと商品規格IDを控えてある）・商品コード=B0207-012-Aは商品名=B0207-012-NAME-A・カードセット名=B0207-012-SETJPKW、商品ID=〔商品ID-B0207-012B〕・商品規格ID=〔商品規格ID-B0207-012B〕（登録時に振られた商品IDと商品規格IDを控えてある）・商品コード=B0207-012-Bは商品名=B0207-012-NAME-B・カードセット名=B0207-012-OTHER／両商品とも本店公開・販売価格100円・在庫1・削除なし／キーワードB0207-012-SETJPKWを上記以外の項目に持つ商品=0件（S-B02-07-KW-012）	1. ヘッダの商品検索の入力欄に「B0207-012-SETJPKW」を入力して検索を押す／2. 表示された商品一覧を確認する	商品一覧に商品名B0207-012-NAME-Aの商品だけが表示され、商品名B0207-012-NAME-Bの商品は表示されないこと	0404 ユニサーチフィードTSV / 検索について 検索備考（カードセット名 キーワード検索の対象）
+
+codex
+設計上の食い違いとして、対象判定を一つの多要因の「効き合う」にした行、同じ結果になる値の分割、期間境界の値の抜けを確認しました。既存ケースの計上も、手順と期待結果まで突き合わせています。
+exec
+/bin/bash -lc "rg -n '"'^IT-B05-06-008'"\\b' integration_test/casegen/cases/B05-06_test_cases.tsv" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+6:IT-B05-06-008	REQ-0405-sheet-8-R024		ITA-24	P2	ブラウザ+DB確認	S-B05-06-DUP-008,S-B05-06-CONFIG,S-B05-06-SHOP,S-B05-06-MAIL-ENV,S-B05-06-MAILBOX-008	① バッチ実行時刻の12時間前に、注文ID 〔注文ID-B0506-008〕の受注1件が注文番号〔注文番号-B0506-008〕・受注ステータス新規受付で、会員ID 〔会員ID-B0506-008〕の会員1件が有効・ポイント残高900で（いずれも登録時に振られた番号を控えてある）、両者に紐づくポイント増減量-100のポイント履歴が2件登録されている（S-B05-06-DUP-008）／② 開始時にスマレジ通信エラー送信メールアドレスをadmin-b0506-008@example.testに設定する（S-B05-06-CONFIG）／③ 開始時に店舗基本情報を店名B05-06試験店、メールアドレスfrom-b0506@example.test、返信先reply-b0506@example.test、返送先return-b0506@example.testに設定する（S-B05-06-SHOP）／④ 開始時にメール配送サービスを起動し、正常配送できることを確認する（S-B05-06-MAIL-ENV）／⑤ admin-b0506-008@example.test宛ての受信メールを削除し、0件であることを確認する（S-B05-06-MAILBOX-008）	1. DBで注文ID 〔注文ID-B0506-008〕の受注、会員ID 〔会員ID-B0506-008〕のポイント残高およびポイント履歴のレコード件数と内容を記録する／2. 実行コンソールで「eccube:check-duplicate-point」を起動する／3. DBの受注、会員のポイント残高およびポイント履歴を手順1の記録と比較する	B05-06の実行前後で、注文ID 〔注文ID-B0506-008〕の受注、会員ID 〔会員ID-B0506-008〕のポイント残高およびポイント履歴のレコード件数と内容が変化していないこと	0405 ポイント二重登録チェック / 業務ロジック 通知後の扱い
+
+exec
+/bin/bash -lc "rg -n '"'^(B02-06|B02-07|A17-05|B02-0[1-5]|B05-0[1356])'"\\b' functions/dead-spec-register.tsv functions/phase2_candidates.tsv" in /home/y-saito/Developments/hareruya-design-docs
+ exited 1 in 0ms:
+exec
+/bin/bash -lc "rg -n 'F08=一致しない語がある|F01\\+F04\\+F05|F01\\+F02\\+F03|F03\\+F04\\+F05\\+F06\\+F07\\+F08|F01\\+F02\\b|F03\\+F04\\b|F05\\+F06\\b' integration_test/casegen/combination/factors/{A17-05,B02-01,B02-05,B05-01,B05-05}_*.tsv" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+integration_test/casegen/combination/factors/A17-05_constraints.tsv:2:P2	F08=一致しない語がある&F09=日英にまたがる	正解未定	L0155	一致しない語がある検索では日英にまたがる一致が成立せず、この値の組で何を確かめるかが設計書から決まらない
+integration_test/casegen/combination/factors/B05-05_interactions.tsv:2:P1	F01+F02+F03	効き合う	L0017-L0019,L0027-L0029,L0032-L0034	3つの条件をすべて満たす注文だけが対象になり、1つでも外れるとその注文は削除されない
+integration_test/casegen/combination/factors/B05-05_interactions.tsv:5:P1	F03+F04	関係しない		連携の成否は対象になった注文にだけ現れ、注文ステータスは対象かどうかだけを決める
+integration_test/casegen/combination/factors/B05-05_interactions.tsv:6:P2	F05+F06	効き合う	L0063,L0065-L0071	通知先が設定されていないと通知自体を行わず、設定されているときだけエラーコードの先頭1桁で本文の先頭の文が決まる
+integration_test/casegen/combination/factors/B05-01_interactions.tsv:2:P1	F01+F02	効き合う	L0058,L0046	変更前が決済処理中か購入処理中で、かつ変更後が注文受領か入金待ちのときだけ注文番号を採番する
+integration_test/casegen/combination/factors/B05-01_interactions.tsv:3:P2	F03+F04+F05+F06+F07+F08	効き合う	L0073-L0077,L0112-L0116	6つの条件をすべて満たす注文だけが連携の対象になり、1つでも外れるとその注文は連携されない
+integration_test/casegen/combination/factors/A17-05_interactions.tsv:6:P1	F03+F04	関係しない		規格を返す・返さないの絞り込み条件で、どれか1つで外れれば返らず、条件どうしで結果は変わらない
+integration_test/casegen/combination/factors/A17-05_interactions.tsv:11:P1	F05+F06	関係しない		規格を返す・返さないの絞り込み条件で、どれか1つで外れれば返らず、条件どうしで結果は変わらない
+integration_test/casegen/combination/factors/B02-05_interactions.tsv:2:P1	F01+F02+F03	効き合う	L0021,L0029,L0033,L0044,L0028	3つのどれか1つでも対象外の値だと、その会員にはメールを送らない（会員ステータスが本会員で、店内注文専用でなく、登録言語側がセール中のときだけ通知する）
+integration_test/casegen/combination/factors/B02-05_interactions.tsv:7:P1	F03+F04	関係しない		セールの有無は商品が載るかどうかだけを決め、メールの言語は住所だけで決まる
+integration_test/casegen/combination/factors/B02-01_interactions.tsv:2:P1	F01+F04+F05	効き合う	L0027-L0029	ECCUBE計上分はEC受注日、スマレジ計上分はレジ取引日時で期間分けし、引き渡し済みの元EC受注は集計対象から外れる
+integration_test/casegen/combination/factors/B02-01_interactions.tsv:3:P1	F01+F02	関係しない		除外条件（ステータス・閉店）はどの区分の明細にも同じに働き、区分の扱いは変わらない
+integration_test/casegen/combination/factors/B02-01_interactions.tsv:7:P1	F03+F04	関係しない		ステータス・閉店の除外と日付の期間判定は別々の絞り込み条件で互いの結果を変えない
+
+codex
+### 1
+- 機能: A17-05
+- 種類: A
+- 対象: A17-05_factors.tsv F09
+- 主張: 日本語名のみ・英語名のみ・日英にまたがる一致を別の値にしている。
+- 実際: いずれも各検索語が日本語名か英語名に含まれれば対象となり、結果は同じ（integration_test/casegen/combination/units/A17-05/design.txt:L0155）。
+- 修正案: 一致する名による値の分割をなくす。
+
+### 2
+- 機能: A17-05
+- 種類: A
+- 対象: A17-05_factors.tsv F10
+- 主張: 区切り文字の空白とカンマを別の値にしている。
+- 実際: どちらも検索語に分けるための区切りとして定められ、結果の違いは書かれていない（integration_test/casegen/combination/units/A17-05/design.txt:L0155）。
+- 修正案: 空白とカンマを一つの値にまとめる。
+
+### 3
+- 機能: A17-05
+- 種類: C
+- 対象: A17-05_interactions.tsv P1 F03+F04
+- 主張: 販売価格と商品規格の状態は関係しない。
+- 実際: 価格が正で表示下限未満の規格は、NMなら加え、NM以外なら加えない（integration_test/casegen/combination/units/A17-05/design.txt:L0156、L0166）。
+- 修正案: F03+F04を「効き合う」にする。
+
+### 4
+- 機能: A17-05
+- 種類: C
+- 対象: A17-05_interactions.tsv P1 F05+F06
+- 主張: 在庫のある下限以上のNM以外の規格の有無と、高額商品コードは関係しない。
+- 実際: 該当規格が無いときのNMだけへの絞り込みは、高額商品コードがある商品では行わない（integration_test/casegen/combination/units/A17-05/design.txt:L0167）。
+- 修正案: F05+F06を「効き合う」にする。
+
+### 5
+- 機能: A17-05
+- 種類: D
+- 対象: A17-05_constraints.tsv P2 F08=一致しない語がある&F09=日英にまたがる
+- 主張: この組は「正解未定」。
+- 実際: 分けたすべての語が日本語名か英語名のどちらかに含まれることが対象条件であり、一致しない語があれば対象外と決まる（integration_test/casegen/combination/units/A17-05/design.txt:L0155）。
+- 修正案: F09を残すなら、この制約を「正解未定」として扱わない。
+
+### 6
+- 機能: B02-01
+- 種類: A
+- 対象: B02-01_factors.tsv F01
+- 主張: 通常のEC受注とスマレジ由来受注の複製明細を別の値にしている。
+- 実際: どちらもECCUBEの販売数へ計上し、EC受注日で期間を分ける（integration_test/casegen/combination/units/B02-01/design.txt:L0028-L0029）。
+- 修正案: この二つを同じ結果の値としてまとめる。
+
+### 7
+- 機能: B02-01
+- 種類: A
+- 対象: B02-01_factors.tsv F08
+- 主張: 第2引数の「なし」と「あり」を結果が異なる値としている。
+- 実際: 第2引数以降は集計に使用せず、指定しても集計対象は変わらない（integration_test/casegen/combination/units/B02-01/design.txt:L0065、L0068）。
+- 修正案: F08を結果を分ける要因から外す。
+
+### 8
+- 機能: B02-01
+- 種類: C
+- 対象: B02-01_interactions.tsv P1 F01+F04+F05
+- 主張: 明細区分・EC受注日・レジ取引日時の三つがまとめて効き合う。
+- 実際: ECCUBE計上分にはEC受注日、スマレジ計上分にはレジ取引日時を使うという、区分ごとの二つの定めである（integration_test/casegen/combination/units/B02-01/design.txt:L0028-L0029）。二つの日付が互いの結果を変える定めはない。
+- 修正案: 三要因の行を、区分と各計上日の二要因の行に分ける。
+
+### 9
+- 機能: B02-03
+- 種類: A
+- 対象: B02-03_factors.tsv F01
+- 主張: 親区分の「入庫」と「買取」を別の値にしている。
+- 実際: 両方とも取得・集計対象で、区分ごとに異なる集計結果は定められていない（integration_test/casegen/combination/units/B02-03/design.txt:L0020-L0024）。
+- 修正案: 入庫と買取を一つの値にまとめる。
+
+### 10
+- 機能: B02-04
+- 種類: A
+- 対象: B02-04_factors.tsv F05
+- 主張: 有効なコマンド名を `checkNoSectionProduct` としている。
+- 実際: 設計書は「対象のコマンド」とだけ記し、その文字列を定めていない（integration_test/casegen/combination/units/B02-04/design.txt:L0034-L0035、L0047）。
+- 修正案: 設計書を根拠とする値は「対象のコマンド名」に改める。
+
+### 11
+- 機能: B02-05
+- 種類: A
+- 対象: B02-05_factors.tsv F01
+- 主張: 仮会員と退会済み会員を別の値にしている。
+- 実際: どちらも通知対象外と定められている（integration_test/casegen/combination/units/B02-05/design.txt:L0021、L0029-L0033）。
+- 修正案: 二つを「仮会員または退会済み会員」にまとめる。
+
+### 12
+- 機能: B02-05
+- 種類: C
+- 対象: B02-05_interactions.tsv P1 F01+F02+F03
+- 主張: 会員ステータス・会員グループ・セール状態の三つがまとめて効き合う。
+- 実際: 本会員であること、店内注文専用アカウントでないこと、登録言語側がセール中であることは、それぞれ対象から外す条件として書かれている（integration_test/casegen/combination/units/B02-05/design.txt:L0021、L0028-L0033、L0044）。
+- 修正案: 三要因の全組合せを要求する行をなくし、各条件間を「関係しない」と判定する。
+
+### 13
+- 機能: B02-06
+- 種類: B
+- 対象: B02-06_processes.tsv・B02-06_factors.tsv 処理なし
+- 主張: 要因が二つ以上ある処理を載せていない。
+- 実際: バッチ名が不正なら複製せず終了し、正しいバッチ名でも複製先の支店IDが無ければ指定を促して複製しない。両方を指定したときに複製する（integration_test/casegen/combination/units/B02-06/design.txt:L0034-L0035、L0042-L0049）。
+- 修正案: 在庫複製処理にバッチ名と複製先支店IDの有無を要因として載せる。
+
+### 14
+- 機能: B05-01
+- 種類: C
+- 対象: B05-01_interactions.tsv P1 F01+F02
+- 主張: 変更前と変更後の注文ステータスが効き合う。
+- 実際: 採番は変更前が指定の状態であり、かつ変更後も指定の状態である場合だけ行うという対象判定である（integration_test/casegen/combination/units/B05-01/design.txt:L0057-L0060）。
+- 修正案: 一件の受注を採番対象にする二つの条件として「関係しない」にする。
+
+### 15
+- 機能: B05-01
+- 種類: C
+- 対象: B05-01_interactions.tsv P2 F03+F04+F05+F06+F07+F08
+- 主張: 連携対象を決める六つの条件がまとめて効き合う。
+- 実際: 注文日時・店舗ID・店舗コード・二つのフラグ・注文ステータスは、対象注文を絞る条件として列挙されている（integration_test/casegen/combination/units/B05-01/design.txt:L0073-L0077、L0111-L0124）。
+- 修正案: 六要因の全組合せを要求する行をなくし、対象判定の条件間を「関係しない」と判定する。
+
+### 16
+- 機能: B05-01
+- 種類: D
+- 対象: B05-01_constraints.tsv P2 F06=立っている&F07=立っていない
+- 主張: この組は「正解未定」。
+- 実際: B05-01の連携対象は両方のフラグが立っていない注文であり、F06が立っていれば対象外と決まる（integration_test/casegen/combination/units/B05-01/design.txt:L0075-L0076、L0122-L0123）。失敗注文の再連携は別のバッチとして記されている（同:L0132）。
+- 修正案: この「正解未定」制約を削除する。
+
+### 17
+- 機能: B05-05
+- 種類: A
+- 対象: B05-05_factors.tsv F03
+- 主張: 注文ステータスの「キャンセル」と「引き渡し済み」を別の値にしている。
+- 実際: どちらもスマレジ商品削除の対象として同じ扱いで列挙されている（integration_test/casegen/combination/units/B05-05/design.txt:L0016-L0021、L0026-L0029）。
+- 修正案: この二つを一つの対象ステータスの値にまとめる。
+
+### 18
+- 機能: B05-05
+- 種類: C
+- 対象: B05-05_interactions.tsv P1 F01+F02+F03
+- 主張: 商品コード・削除フラグ・注文ステータスの三つがまとめて効き合う。
+- 実際: 三つは削除する注文を取得するための対象条件として列挙されている（integration_test/casegen/combination/units/B05-05/design.txt:L0016-L0020、L0026-L0029）。
+- 修正案: 三要因の全組合せを要求する行をなくし、対象判定の条件間を「関係しない」と判定する。
+
+### 19
+- 機能: B05-06
+- 種類: E
+- 対象: B05-06_existing.tsv IT-B05-06-008 P1
+- 主張: 重複あり・通知先登録あり・異常なしの組を、通知処理を確かめた既存ケースとして数えている。
+- 実際: ケースはバッチ起動後に受注・ポイント残高・履歴が変わらないことだけを確認し、通知メールも終了状態も確認しない（integration_test/casegen/cases/B05-06_test_cases.tsv:6）。
+- 修正案: IT-B05-06-008をP1の既存組から外す。
+tokens used
+88,355
+### 1
+- 機能: A17-05
+- 種類: A
+- 対象: A17-05_factors.tsv F09
+- 主張: 日本語名のみ・英語名のみ・日英にまたがる一致を別の値にしている。
+- 実際: いずれも各検索語が日本語名か英語名に含まれれば対象となり、結果は同じ（integration_test/casegen/combination/units/A17-05/design.txt:L0155）。
+- 修正案: 一致する名による値の分割をなくす。
+
+### 2
+- 機能: A17-05
+- 種類: A
+- 対象: A17-05_factors.tsv F10
+- 主張: 区切り文字の空白とカンマを別の値にしている。
+- 実際: どちらも検索語に分けるための区切りとして定められ、結果の違いは書かれていない（integration_test/casegen/combination/units/A17-05/design.txt:L0155）。
+- 修正案: 空白とカンマを一つの値にまとめる。
+
+### 3
+- 機能: A17-05
+- 種類: C
+- 対象: A17-05_interactions.tsv P1 F03+F04
+- 主張: 販売価格と商品規格の状態は関係しない。
+- 実際: 価格が正で表示下限未満の規格は、NMなら加え、NM以外なら加えない（integration_test/casegen/combination/units/A17-05/design.txt:L0156、L0166）。
+- 修正案: F03+F04を「効き合う」にする。
+
+### 4
+- 機能: A17-05
+- 種類: C
+- 対象: A17-05_interactions.tsv P1 F05+F06
+- 主張: 在庫のある下限以上のNM以外の規格の有無と、高額商品コードは関係しない。
+- 実際: 該当規格が無いときのNMだけへの絞り込みは、高額商品コードがある商品では行わない（integration_test/casegen/combination/units/A17-05/design.txt:L0167）。
+- 修正案: F05+F06を「効き合う」にする。
+
+### 5
+- 機能: A17-05
+- 種類: D
+- 対象: A17-05_constraints.tsv P2 F08=一致しない語がある&F09=日英にまたがる
+- 主張: この組は「正解未定」。
+- 実際: 分けたすべての語が日本語名か英語名のどちらかに含まれることが対象条件であり、一致しない語があれば対象外と決まる（integration_test/casegen/combination/units/A17-05/design.txt:L0155）。
+- 修正案: F09を残すなら、この制約を「正解未定」として扱わない。
+
+### 6
+- 機能: B02-01
+- 種類: A
+- 対象: B02-01_factors.tsv F01
+- 主張: 通常のEC受注とスマレジ由来受注の複製明細を別の値にしている。
+- 実際: どちらもECCUBEの販売数へ計上し、EC受注日で期間を分ける（integration_test/casegen/combination/units/B02-01/design.txt:L0028-L0029）。
+- 修正案: この二つを同じ結果の値としてまとめる。
+
+### 7
+- 機能: B02-01
+- 種類: A
+- 対象: B02-01_factors.tsv F08
+- 主張: 第2引数の「なし」と「あり」を結果が異なる値としている。
+- 実際: 第2引数以降は集計に使用せず、指定しても集計対象は変わらない（integration_test/casegen/combination/units/B02-01/design.txt:L0065、L0068）。
+- 修正案: F08を結果を分ける要因から外す。
+
+### 8
+- 機能: B02-01
+- 種類: C
+- 対象: B02-01_interactions.tsv P1 F01+F04+F05
+- 主張: 明細区分・EC受注日・レジ取引日時の三つがまとめて効き合う。
+- 実際: ECCUBE計上分にはEC受注日、スマレジ計上分にはレジ取引日時を使うという、区分ごとの二つの定めである（integration_test/casegen/combination/units/B02-01/design.txt:L0028-L0029）。二つの日付が互いの結果を変える定めはない。
+- 修正案: 三要因の行を、区分と各計上日の二要因の行に分ける。
+
+### 9
+- 機能: B02-03
+- 種類: A
+- 対象: B02-03_factors.tsv F01
+- 主張: 親区分の「入庫」と「買取」を別の値にしている。
+- 実際: 両方とも取得・集計対象で、区分ごとに異なる集計結果は定められていない（integration_test/casegen/combination/units/B02-03/design.txt:L0020-L0024）。
+- 修正案: 入庫と買取を一つの値にまとめる。
+
+### 10
+- 機能: B02-04
+- 種類: A
+- 対象: B02-04_factors.tsv F05
+- 主張: 有効なコマンド名を `checkNoSectionProduct` としている。
+- 実際: 設計書は「対象のコマンド」とだけ記し、その文字列を定めていない（integration_test/casegen/combination/units/B02-04/design.txt:L0034-L0035、L0047）。
+- 修正案: 設計書を根拠とする値は「対象のコマンド名」に改める。
+
+### 11
+- 機能: B02-05
+- 種類: A
+- 対象: B02-05_factors.tsv F01
+- 主張: 仮会員と退会済み会員を別の値にしている。
+- 実際: どちらも通知対象外と定められている（integration_test/casegen/combination/units/B02-05/design.txt:L0021、L0029-L0033）。
+- 修正案: 二つを「仮会員または退会済み会員」にまとめる。
+
+### 12
+- 機能: B02-05
+- 種類: C
+- 対象: B02-05_interactions.tsv P1 F01+F02+F03
+- 主張: 会員ステータス・会員グループ・セール状態の三つがまとめて効き合う。
+- 実際: 本会員であること、店内注文専用アカウントでないこと、登録言語側がセール中であることは、それぞれ対象から外す条件として書かれている（integration_test/casegen/combination/units/B02-05/design.txt:L0021、L0028-L0033、L0044）。
+- 修正案: 三要因の全組合せを要求する行をなくし、各条件間を「関係しない」と判定する。
+
+### 13
+- 機能: B02-06
+- 種類: B
+- 対象: B02-06_processes.tsv・B02-06_factors.tsv 処理なし
+- 主張: 要因が二つ以上ある処理を載せていない。
+- 実際: バッチ名が不正なら複製せず終了し、正しいバッチ名でも複製先の支店IDが無ければ指定を促して複製しない。両方を指定したときに複製する（integration_test/casegen/combination/units/B02-06/design.txt:L0034-L0035、L0042-L0049）。
+- 修正案: 在庫複製処理にバッチ名と複製先支店IDの有無を要因として載せる。
+
+### 14
+- 機能: B05-01
+- 種類: C
+- 対象: B05-01_interactions.tsv P1 F01+F02
+- 主張: 変更前と変更後の注文ステータスが効き合う。
+- 実際: 採番は変更前が指定の状態であり、かつ変更後も指定の状態である場合だけ行うという対象判定である（integration_test/casegen/combination/units/B05-01/design.txt:L0057-L0060）。
+- 修正案: 一件の受注を採番対象にする二つの条件として「関係しない」にする。
+
+### 15
+- 機能: B05-01
+- 種類: C
+- 対象: B05-01_interactions.tsv P2 F03+F04+F05+F06+F07+F08
+- 主張: 連携対象を決める六つの条件がまとめて効き合う。
+- 実際: 注文日時・店舗ID・店舗コード・二つのフラグ・注文ステータスは、対象注文を絞る条件として列挙されている（integration_test/casegen/combination/units/B05-01/design.txt:L0073-L0077、L0111-L0124）。
+- 修正案: 六要因の全組合せを要求する行をなくし、対象判定の条件間を「関係しない」と判定する。
+
+### 16
+- 機能: B05-01
+- 種類: D
+- 対象: B05-01_constraints.tsv P2 F06=立っている&F07=立っていない
+- 主張: この組は「正解未定」。
+- 実際: B05-01の連携対象は両方のフラグが立っていない注文であり、F06が立っていれば対象外と決まる（integration_test/casegen/combination/units/B05-01/design.txt:L0075-L0076、L0122-L0123）。失敗注文の再連携は別のバッチとして記されている（同:L0132）。
+- 修正案: この「正解未定」制約を削除する。
+
+### 17
+- 機能: B05-05
+- 種類: A
+- 対象: B05-05_factors.tsv F03
+- 主張: 注文ステータスの「キャンセル」と「引き渡し済み」を別の値にしている。
+- 実際: どちらもスマレジ商品削除の対象として同じ扱いで列挙されている（integration_test/casegen/combination/units/B05-05/design.txt:L0016-L0021、L0026-L0029）。
+- 修正案: この二つを一つの対象ステータスの値にまとめる。
+
+### 18
+- 機能: B05-05
+- 種類: C
+- 対象: B05-05_interactions.tsv P1 F01+F02+F03
+- 主張: 商品コード・削除フラグ・注文ステータスの三つがまとめて効き合う。
+- 実際: 三つは削除する注文を取得するための対象条件として列挙されている（integration_test/casegen/combination/units/B05-05/design.txt:L0016-L0020、L0026-L0029）。
+- 修正案: 三要因の全組合せを要求する行をなくし、対象判定の条件間を「関係しない」と判定する。
+
+### 19
+- 機能: B05-06
+- 種類: E
+- 対象: B05-06_existing.tsv IT-B05-06-008 P1
+- 主張: 重複あり・通知先登録あり・異常なしの組を、通知処理を確かめた既存ケースとして数えている。
+- 実際: ケースはバッチ起動後に受注・ポイント残高・履歴が変わらないことだけを確認し、通知メールも終了状態も確認しない（integration_test/casegen/cases/B05-06_test_cases.tsv:6）。
+- 修正案: IT-B05-06-008をP1の既存組から外す。
