@@ -3,6 +3,9 @@
 
 依頼者決定 2026-10-20: 効き合う要因は値の組合せを全部、関係しない要因はどの2つの要因の値の組もどこかで1回は出るように並べる。
 既存のケースが通している組は埋めなくてよい。作れない組・正解未定の組は行に入れない。
+打ち切り（constraints の種別「打ち切り」）: その条件に当たると処理がそこで打ち切られ、ほかの要因の値は結果に効かない。
+依頼者決定 2026-10-20「打ち切り側は1回でよい」により、打ち切りの条件にほかの要因の値を足した組は埋めず、条件そのものを1行で通す。
+その行のほかの要因は「（効かない）」と書き、組の列には書かない。ふつうの行では、打ち切りの条件ができあがる値を選ばない。
 
 埋める組（必要な組）:
   - 効き合う行（2つ以上の要因）: その要因の値の組合せすべて
@@ -75,10 +78,16 @@ def plan(fid):
                 groups.append(g)
             for a, b in itertools.combinations(g, 2):
                 judged.setdefault((a, b), []).append(r["判定"])
-        cons = [(parse_set(r["組"]), r["種別"]) for r in C if r["処理ID"] == pid]
+        cons_all = [(parse_set(r["組"]), r["種別"]) for r in C if r["処理ID"] == pid]
+        cons = [(c, k) for c, k in cons_all if k != "打ち切り"]
+        cuts = [c for c, k in cons_all if k == "打ち切り"]
 
         def bad(assign, cons=cons):   # 処理ごとの制約を束縛する（後から res の bad を呼ぶときに最後の処理の制約を見ないように）
             return any(all(assign.get(k) == v for k, v in c.items()) for c, _ in cons)
+
+        def cut_of(assign, cuts=cuts):   # 打ち切りの条件に当たるなら、その条件（入れ子のときはいちばん細かい条件）
+            hit = [c for c in cuts if all(assign.get(k) == v for k, v in c.items())]
+            return max(hit, key=len) if hit else None
 
         def tup(items):
             return tuple(sorted(items, key=lambda kv: (order[kv[0]], vals[kv[0]].index(kv[1]))))
@@ -94,20 +103,27 @@ def plan(fid):
             for va in vals[a]:
                 for vb in vals[b]:
                     need.add(tup([(a, va), (b, vb)]))
+        # 打ち切りの条件にほかの要因の値を足した組は埋めない。条件そのものを1回通す
+        need = {t for t in need if not ((c := cut_of(dict(t))) and len(t) > len(c))}
+        need |= {tup(c.items()) for c in cuts}
         need_all = {t for t in need if not bad(dict(t))}
         excluded = sorted(need - need_all, key=lambda t: [(order[k], vals[k].index(v)) for k, v in t])
         ex = [parse_set(r["値"]) for r in E if r["処理ID"] == pid]
         by_existing = {t for t in need_all if any(all(e.get(k) == v for k, v in t) for e in ex)}
         kept = [(cid, a) for cid, p, a in KEPT if p == pid]
-        live_kept = [a for cid, a in kept if not bad(a) and all(k in a for k in fs)]
+        live_kept = [a for cid, a in kept if not bad(a) and (all(k in a for k in fs) or cut_of(a))]
         by_kept = {t for t in need_all - by_existing if any(all(a.get(k) == v for k, v in t) for a in live_kept)}
         todo = need_all - by_existing - by_kept
 
-        def completable(assign):
+        def completable(assign, allow_cut=False):
+            """制約を破らずに行を埋められるか。ふつうの行（allow_cut=False）は打ち切りの条件をつくらない。
+            打ち切りの条件そのものの組（allow_cut=True）は、ほかの要因が効かないので埋めなくてよい。"""
+            if allow_cut and cut_of(assign) and not bad(assign):
+                return True
             free = [k for k in fs if k not in assign]
 
             def rec(i, a):
-                if bad(a):
+                if bad(a) or cut_of(a):
                     return False
                 if i == len(free):
                     return True
@@ -120,13 +136,39 @@ def plan(fid):
                 return False
             return rec(0, dict(assign))
 
-        infeasible = {t for t in todo if not completable(dict(t))}
+        def reachable(assign):   # 制約を破らずに、ふつうの行か打ち切りの行のどちらかにできるか
+            free = [k for k in fs if k not in assign]
+
+            def rec(i, a):
+                if bad(a):
+                    return False
+                if cut_of(a) or i == len(free):
+                    return True
+                for v in vals[free[i]]:
+                    a[free[i]] = v
+                    ok = rec(i + 1, a)
+                    del a[free[i]]
+                    if ok:
+                        return True
+                return False
+            return rec(0, dict(assign))
+
+        infeasible = {t for t in todo if not reachable(dict(t))}
         todo -= infeasible
+        # ふつうの行にはできず、打ち切りの行にしかならない組（その値の組では処理が打ち切られる）。打ち切りの行が通すので埋めない
+        cut_only = {t for t in todo if not cut_of(dict(t)) and not completable(dict(t))}
+        todo -= cut_only
         key = lambda t: (-len(t), [(order[k], vals[k].index(v)) for k, v in t])
         rows = []
         while todo:
             seed = min(todo, key=key)
             row = dict(seed)
+            if (c := cut_of(row)):   # 打ち切りの行: 条件の値だけ。ほかの要因は効かない
+                row = dict(c)
+                got = sorted((t for t in todo if dict(t) == row), key=key)
+                todo -= set(got)
+                rows.append((row, got))
+                continue
             for k in fs:
                 if k in row:
                     continue
@@ -142,9 +184,9 @@ def plan(fid):
             got = sorted((t for t in todo if all(row.get(k) == v for k, v in t)), key=key)
             todo -= set(got)
             rows.append((row, got))
-        res.append(dict(pid=pid, factors=fs, need=len(need), need_all=len(need_all), existing=len(by_existing),
-                        kept=kept, kept_live=len(live_kept), by_kept=len(by_kept), bad=bad,
-                        excluded=excluded, infeasible=sorted(infeasible, key=key), rows=rows,
+        res.append(dict(pid=pid, factors=fs, vals=vals, need=len(need), need_all=len(need_all), existing=len(by_existing),
+                        kept=kept, kept_live=len(live_kept), by_kept=len(by_kept), bad=bad, cut_of=cut_of,
+                        excluded=excluded, infeasible=sorted(infeasible, key=key), cut_only=len(cut_only), rows=rows,
                         undetermined=[(c, k) for c, k in cons if k == "正解未定"],
                         judged=judged))
     return fac, vals, res
@@ -153,6 +195,12 @@ def plan(fid):
 def fmt(fac, t, sep="×"):
     names = "×".join(fac[k]["要因"] for k, _ in t)
     return f"{names}: " + sep.join(v for _, v in t)
+
+
+def free_note(r, row, k):
+    """打ち切りの行で効かない要因。作れない・正解未定の組に当たる値があれば、それを避けて選ぶ値を書く。"""
+    ok = [v for v in r["vals"][k] if not r["bad"]({**row, k: v}) and r["cut_of"]({**row, k: v}) == row]
+    return "（効かない）" if len(ok) == len(r["vals"][k]) else f"（効かない。{'・'.join(ok) or '選べる値なし'}から選ぶ）"
 
 
 def write(fid):
@@ -173,8 +221,8 @@ def write(fid):
         for row, got in r["rows"]:
             n += 1
             fs = r["factors"]
-            lines.append([f"CB-{fid}-{n:03d}", r["pid"], "&".join(f"{k}={row[k]}" for k in fs),
-                          "／".join(f"{fac[k]['要因']}={row[k]}" for k in fs),
+            lines.append([f"CB-{fid}-{n:03d}", r["pid"], "&".join(f"{k}={row[k]}" for k in fs if k in row),
+                          "／".join(f"{fac[k]['要因']}={row[k] if k in row else free_note(r, row, k)}" for k in fs),
                           "；".join(fmt(fac, t) for t in got)])
     with (out / f"{fid}.tsv").open("w", encoding="utf-8", newline="") as f:
         csv.writer(f, delimiter="\t", lineterminator="\n", quoting=csv.QUOTE_NONE, escapechar="\\").writerows(lines)

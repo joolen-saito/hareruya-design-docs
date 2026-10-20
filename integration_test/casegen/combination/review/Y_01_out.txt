@@ -1,0 +1,2265 @@
+Reading additional input from stdin...
+OpenAI Codex v0.162.1
+--------
+workdir: /home/y-saito/Developments/hareruya-design-docs
+model: gpt-6-sol
+provider: openai
+approval: never
+sandbox: read-only
+reasoning effort: high
+reasoning summaries: none
+session id: 01a15835-ae9c-7943-88b4-4eb0bdfd410a
+--------
+user
+# 反証の依頼: 機能 A01-01・A02-01・A02-02・A02-03・A02-04・A02-05・A05-01・A05-03・A05-04 の要因表の見直し（3つの決定の当て方）
+
+あなたは独立したレビュアーである。別の担当が、依頼者の3つの決定に合わせて**要因表を直した**。その直しが設計書と食い違っていないかを確かめる。直さない。読むだけ。
+リポジトリは `/home/y-saito/Developments/hareruya-design-docs/`。出力は日本語。
+
+## 背景
+
+結合テストで、1回の処理の結果を左右する要因が2つ以上あるとき、効き合う要因は値の組合せを全部、関係しない要因はどの2つの要因の値の組もどこかで1回試すケースを足す。
+要因表（`integration_test/casegen/combination/factors/<機能ID>_*.tsv`）から機械が組を並べる。要因表はすでに codex の反証を1巡受けて直してある。
+そのあと依頼者が次の3つを決め（2026-10-20）、担当が要因表を直した。今回確かめるのは**この直しだけ**。
+
+| 決定 | 中身 |
+| --- | --- |
+| 1 打ち切り側は1回でよい | その値（または値の組）になると処理がそこで打ち切られ、ほかの要因の値が結果に効かないとき、constraints.tsv に種別 `打ち切り` で書く。機械はその条件を1回だけ通し、ほかの要因との組は埋めない。打ち切られても一部の要因の値がまだ結果に効くときは、その要因の値も組に入れて書く |
+| 2 列ごとに独立して決まる値は組にしない | 出力の列・表示項目ごとに独立して決まる値（CSV の空欄・書式・文言の変換 など）は要因にしない。ほかの要因と効き合う（その値で、ほかの要因の結果や、行を出す・出さないが変わる）ときだけ残す。外して要因が1つになった処理は処理ごと外す |
+| 3 結果が同じ値はまとめる | 設計書が別々の条件として書いていても、結果が同じ値は1つにまとめる |
+
+## 読むもの
+
+- 直した所: 機能ごとに `git -C /home/y-saito/Developments/hareruya-design-docs diff eddb12cb -- integration_test/casegen/combination/factors/<機能ID>_processes.tsv integration_test/casegen/combination/factors/<機能ID>_factors.tsv integration_test/casegen/combination/factors/<機能ID>_interactions.tsv integration_test/casegen/combination/factors/<機能ID>_constraints.tsv integration_test/casegen/combination/factors/<機能ID>_existing.tsv`（eddb12cb が直す前）
+- 担当の処置: `integration_test/casegen/combination/review/<機能ID>_factors_s_dispositions.tsv`
+- 設計書: `integration_test/casegen/combination/units/<機能ID>/design.txt`（行頭の `L0001` は行番号）、他の機能は `units/<機能ID>/design.txt`
+- 作り方の決まり: `integration_test/casegen/combination/FACTOR_PROMPT.md`
+
+設計書の中で記述が食い違うときは、Excel 由来の本文 ＞ 埋め込みの「表示メッセージ」節 ＞ 埋め込みの「現行仕様」節・機能設計書 の順に採る。
+
+## 確かめること（事実だけ。差分に出ている所だけ）
+
+| 種類 | 何を見るか |
+| --- | --- |
+| G 打ち切りの誤り | 打ち切りとした値で、設計書は処理を打ち切っていない。または打ち切ったあとも「効かない」とされた要因の値で結果が変わると設計書が定める（その要因の値も組に入れるべき） |
+| H 外しすぎ | 決定2で外した要因・処理が、列・表示項目ごとに独立して決まるだけではない（ほかの要因の結果、行や対象を出す・出さない、更新先・更新内容を変えると設計書が定める） |
+| I まとめすぎ | 決定3でまとめた値どうしで、結果が違うと設計書が定める |
+| J 付け替えの誤り | 要因ID・値の振り直しで、interactions・constraints・existing の値が合っていない、既存ケースの値を取り違えた |
+
+次は指摘しない: 書き方・言い回し、差分に出ていない所（1巡目で済み）、決定そのものへの異論、境界値・数量1/複数。
+
+## 出力
+
+指摘が無ければ `NONE` の1語だけ。あれば1件ずつ、次の形で。
+
+```
+### <番号>
+- 機能: <機能ID>
+- 種類: <G〜J>
+- 対象: <ファイル名> <要因ID・処理ID・組>
+- 主張: <直した後の表に書かれていること>
+- 実際: <設計書の記述（ファイル:行 を必ず添える）>
+- 修正案: <どう直すか。1文>
+```
+warning: Codex could not find bubblewrap on PATH. Install bubblewrap with your OS package manager. See the sandbox prerequisites: https://developers.openai.com/codex/concepts/sandboxing#prerequisites. Codex will use the bundled bubblewrap in the meantime.
+2026-10-20T07:27:58.818789Z ERROR rmcp::transport::worker: worker quit with fatal: Transport channel closed, when AuthRequired(AuthRequiredError { www_authenticate_header: "Bearer resource_metadata=\"https://mcp.firecrawl.dev/.well-known/oauth-protected-resource/v2/mcp-oauth\", error=\"invalid_token\", error_description=\"Firecrawl credentials required: OAuth access token (Authorization: Bearer fco_...) or API key (x-firecrawl-api-key)\"" })
+codex
+指定された9機能について、eddb12cb からの差分と担当の処置を先に確認し、変更箇所だけを設計書と照合します。
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/FACTOR_PROMPT.md' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+# 依頼: 機能 {FID}（{FNAME}）の要因表づくり
+
+これは分析である。ケースも設計書も直さない。事実は自分でファイルを読んで確かめ、推測で書かない。
+リポジトリは `/home/y-saito/Developments/hareruya-design-docs/`。パスはここからの相対。出力はすべて日本語で書く。
+git の変更操作（add・commit など）をしない。
+
+## 背景（依頼者決定 2026-10-20）
+
+結合テストケースは設計書の定め1件ごとに作られ、10/15 には定めごとに「数量1と複数」「有無」「状態・区分ごと」などのデータを足した。
+それでも、**1回の処理の結果を左右する要因が2つ以上あるとき、その値を同時に変えて通すケースが無い**。
+例: 公開側で注文を確定するケース33件は、支払方法がほぼ郵便振替か銀行振込で、配送方法もゆうパック・EMS が大半。クレジットカード・代金引換・店頭支払、店頭受取・同梱で注文を通すケースは無い。
+
+依頼者の決定:
+- **効き合う要因**（一方の値で、もう一方の値の結果が変わると設計書が定める）は、値の組合せを全部試す。
+- **関係しない要因**は、どの2つの要因の値の組も、どこかのケースで1回は出るように並べる（2要因の組）。
+- **他の機能の設定値**（送料・手数料・支払方法の利用条件・送料無料の条件・配送方法に紐づく支払方法など）も、それを読む処理の要因に入れる。
+
+あなたの仕事は、機能 {FID} について、組合せの元になる**要因表**を作ること。組合せの行（どの値の組を何件試すか）は、この表から別の道具が機械で作る。
+だから、表の要因・値・判定の誤りは、そのままケースの誤りになる。
+
+## 読むもの
+
+| 何 | パス |
+| --- | --- |
+| 設計書（この機能のシートを文字に起こしたもの。行頭の `L0001` とタブは行番号。`#####` の行はシートの境目） | `integration_test/casegen/combination/units/{FID}/design.txt` |
+| 他の機能の設計書（設定値を読む処理のとき、設定する機能の定めを引く） | `integration_test/casegen/combination/units/<機能ID>/design.txt`（機能名は `combination/units.tsv`） |
+| 同じ冊子の共通シート（必要なときだけ） | {COMMON} |
+| この機能のケースとシード | `integration_test/casegen/cases/{FID}_test_cases.tsv`・`{FID}_seed_data.tsv` |
+| この機能の、テストから外したケース | `integration_test/casegen/combination/units/{FID}/excluded.tsv` |
+| 全機能のケース（他の機能のケースがこの機能の処理を通しているかの検索用） | `integration_test/casegen/all_test_cases.tsv`（列: テストID・観点ID・基本設計書・検証方法・テストデータ・事前準備・手順・期待結果。セル内改行があるので csv として読む） |
+| 結合テストの範囲 | `integration_test/SCOPE.md` |
+| 不機能仕様・フェーズ2見送り（ここに載るものは要因にしない） | `functions/dead-spec-register.tsv`・`functions/phase2_candidates.tsv` |
+| 設計書の中で記述が食い違うときの優先順位 | Excel 由来の本文 ＞ 埋め込みの「表示メッセージ」節（リニューアル後の仕様）＞ 埋め込みの「現行仕様」節。同じ出所では改訂後が優先。**Excel が触れていない条件を埋め込みが足しているだけのときは食い違いではなく、両方を当てる**（例: Excel が選択肢を並べ、埋め込みが「ポイントで全額払うときは全額ポイント支払いだけ」と条件を足す → 両方）。既存ケースは正解の根拠にしない（既存ケースと設計書の食い違いは返答に書く） |
+
+検索は `grep` を使う（`rg` は同じ入力で0件を返すことがあるので使わない）。
+
+## やること
+
+### 1. 処理を決める
+
+design.txt を**全部**読み、この機能の中で「操作やデータを受けて結果を出す処理」のうち、**結果を左右する要因が2つ以上ある処理**を挙げる。
+
+- 処理の単位は「1回の操作で動き、結果を1つの所で確かめられるまとまり」。例: 注文を確定して受注を作る／お支払い方法の選択肢を出す／受注の対応状況をキャンセルへ変えて保存する。
+- 結果は、データを作った所とは**別のコンポーネントで確かめる**もの（DB、別の画面、別の機能の画面、CSV・帳票、メール、連携先）。DBにあるデータで画面の表示・選択肢が変わるものも入る（例: 既存の受注の有無で配送方法の選択肢が変わる）。同じ画面の中だけで閉じる表示の計算（保存しない）と、計算式そのものの正しさは単体テストなので挙げない。
+- 要因が1つだけの処理は挙げない（10/15 の監査で済んでいる）。
+- **要因が2つ以上の処理が1つも無い機能**（一覧を出すだけ、1つの設定を保存するだけ、など）は、5つのファイルをヘッダだけで書き、返答の1行目に「対象の処理なし」と理由を書く。無理に処理を作らない。
+- 入力値の検証（必須・桁数・形式）、検索条件・削除条件の組合せ、権限、二重送信、排他は、ほかの観点の持ち分なので処理にも要因にもしない。
+
+### 2. 要因と値を挙げる
+
+処理ごとに、**その処理の結果を変えると設計書が定める要因**を挙げる。
+
+- 要因は「区分・状態・設定・関連データ」の値。例: 閲覧店舗、配送方法、支払方法、ポイントの使い方、受注の種類（通常・店頭受取・ついで買い）、会員か非会員か、変更前の対応状況、既存の受注の状態。
+- 他の機能で設定する値で、この処理が読むものも要因にする（出所に機能IDを書く）。例: 支払方法の利用条件（M10-04）に対する注文金額、都道府県別の送料（M10-06）。その機能の design.txt で定めを確かめ、根拠に `M10-04:L0123` の形で書く。**この処理の結果への効き方が設計書のどこにも書かれていない設定値は要因にしない**（値ごとの結果が書けないため）。そういう設定値は返答の「判断に迷った点」に挙げる（依頼元が論点として控える）。
+- **値は、結果の分かれ目ごとに代表を1つ**。結果が同じになる値は1つにまとめる（例: ゆうパックとゆうパケットで結果が変わらないならどちらか1つ）。設計書が別々の条件として書いていても、結果が同じならまとめる（例: 仮会員と退会済み会員がどちらも対象外なら「仮会員または退会済み」の1値。条件を1つずつ通すのは 10/15 のデータパターンのケースの持ち分。依頼者決定 2026-10-20）。結果が値ごとに違うなら全部挙げる（例: 支払方法ごとに手数料・ボタンの文言・ポイントを使う時点が違うなら、支払方法は全部）。
+- 境界値（ちょうどの値・上限）と数量1/複数は、10/15 に済んでいるので値にしない。値は「範囲内」「範囲外」「あり」「なし」のような分かれ目で書く。
+- 不正な入力、作れない値（画面の選択肢に無い値）は値にしない。
+- **出力の列・表示項目ごとに独立して決まる値は要因にしない**（例: CSV の列が「値が無ければ空欄」、日付の書式、区分の文言への変換）。列どうしは互いの結果を変えないので組にしない（依頼者決定 2026-10-20）。ほかの要因と効き合う（その値で、ほかの要因の結果や、行を出す・出さないが変わる）ときだけ要因にする。
+- 値ごとの結果を、設計書の語で短く書く（「支店: 支払方法は店頭支払だけ」）。
+
+### 3. 要因どうしを判定する
+
+処理ごとに、その処理の要因の**すべての2つの組**を判定する（要因が5つなら10組）。判定は次のどれか。
+
+| 判定 | いつ | 根拠 |
+| --- | --- | --- |
+| 効き合う | 一方の値で、もう一方の値の結果（可否、選択肢、金額、更新先、更新内容）が変わると設計書が定める。または、一方の結果がもう一方の判定の入力になる（例: 使用ポイントで支払う金額が変わり、支払方法の選択肢が変わる） | 両方を結ぶ設計書の行が必須 |
+| 関係しない | それぞれの要因の結果が、もう一方の値によって変わらない（例: 送料は配送方法で、手数料は支払方法で決まり、合計は足し算） | 理由を書く |
+| 設計書が決めていない | 同時に効いたときの結果が設計書から決まらない（例: 送料無料の判定に使う金額が、ポイントを引く前か後か書かれていない） | 決まらない理由。下の「組の制約」に、決まらない値の組を「正解未定」で必ず書く |
+
+3つ以上の要因がまとめて効き合うとき（例: 配送方法・既存の受注の状態・既存の受注の支払方法で同梱を出すか決まる）は、1行に `F01+F03+F05` と書いて「効き合う」にしてよい。その中の2つの組は、別の行に書かない。**まとめるのは、その全部が同時に互いの結果を変えるときだけ**。2つずつで効き合うだけなら2要因の行に分ける（まとめると値の組合せが全部ケースになり、件数が膨らむ）。
+**選べるものの集まりを2つの定めが別々に絞り、結果がその共通部分になるとき**（例: 支店は支払方法が店頭支払だけ、同梱は郵便振替・銀行振込だけ → 選択肢の中身が組ごとに変わる）は「効き合う」にする。「設計書が決めていない」にするのは、両方を当てると選択肢が1つも残らないなど、結果が設計書から決まらない組だけ。
+**1件の対象を出す・出さない（対象にする・しない）を、複数の条件の「すべて満たす」または「どれか1つで外れる」で決めるとき**（例: 公開・在庫あり・セール期間内・表示フラグ のすべてを満たす商品だけ出す）は、条件どうしは「関係しない」にする。結果は出る・出ないの2つだけで、条件ごとの外れ方は1つずつ確かめれば足り、全組合せは要らない（7条件を効き合うにすると128行になる）。
+**優先順位で順に比べて決めるとき**（例: 複数一致したら、言語→特殊版→発売日→フォイル→プロモの順に比べて先に差が付いたもので選ぶ）は、比べる項目を別々の要因にして全組合せにしない。「どの段で決まるか」を1つの要因にまとめる（値: 1段目で決まる｜2段目で決まる｜…｜全段が同じ）。上の段の差が下の段を隠すので、各段で決まる組を1つずつ試せば足りる（6段を効き合うにすると64行になる）。
+「一方の値で、もう一方の処理そのものが行われない」型（例: キャンセル日が既に入っていると、在庫・ポイントの戻しを行わない）は、その値を下の「打ち切り」に書く（依頼者決定 2026-10-20「打ち切り側は1回でよい」）。打ち切られない側の値どうしの判定は、ほかの組と同じに決める。
+**推測で値の組を「作れない」にしない**。設計書の語がどの値を指すか決まらないとき（例: 支店の「店舗受取」が店頭受取とスムーズ店頭受取のどちらか）は「正解未定」にする。
+**効き合う組の値の組合せは全部ケースになる**。値が多い要因どうし（7×7 など）を効き合うにするときは、設計書の行で本当に互いの結果を変えるかを確かめる。足し算で合計に入るだけなら「関係しない」。
+
+### 4. 組の制約を書く
+
+- **作れない**: 設計上その値の組が成り立たない（例: 支店では支払方法が店頭支払だけなので、支店×代金引換は作れない）。根拠の行が必須。
+- **正解未定**: その値の組で結果が設計書から決まらない。決まらない理由を書く。これはケースにせず、報告書に論点として残す。
+- **打ち切り**: その値（または値の組）になると処理がそこで打ち切られ、ほかの要因の値は結果に効かない（例: 非公開なら出さない、エラーで元の画面へ戻る、廃止済みなら何も変えない、トークンが無効なら拒否）。機械はこの条件を1回だけ通し、ほかの要因との組は埋めない。打ち切られても一部の要因の値がまだ結果に効く（例: エラーの文言が支払方法で変わる）ときは、その要因の値も組に入れて書く（`F01=非公開&F03=英語` のように値ごとに1行）。根拠の行が必須。
+
+### 5. 既存のケースが通している組を書く
+
+この機能のケース（と、`all_test_cases.tsv` を語で検索して見つかった他の機能のケース）のうち、**その処理を動かして、確かめる所で結果を確かめている**ケースを1件ずつ書き、そのケースで値が決まっている要因の値を書く。
+
+- 値は、事前準備・手順に**書かれている**ものだけ。書かれていない要因は書かない（流れの中でたまたまそうなるだけのものは数えない）。
+- 1つのケースが同じ処理を別の値で2回以上通しているときは、通した値ごとに1行ずつ書く（同じテストIDの行が2つになる）。1回の処理で2つのデータを別の値で扱う（混在）ケースは書かない。
+- 期待結果が設計書と食い違う既存ケースは、値が合っていても書かない（返答に食い違いとして書く）。
+- 処理を動かしていない（画面を開いて別のことを見るだけ）ケース、結果を確かめていないケースは書かない。
+- テストから外したケース（excluded.tsv）は書かない。
+
+## 出力（この5つだけを書く。ほかのファイルは変更しない）
+
+すべて `integration_test/casegen/combination/factors/` に、タブ区切り・ヘッダつきで書く。セル内に改行・タブ・ダブルクォートを入れない。
+
+### `{FID}_processes.tsv`（5列）
+
+```
+処理ID	処理	契機	確かめる所	根拠
+P1	注文を確定して受注を作る	ご注文方法指定画面で確定チェックボックスを選び、注文するボタンを押す	受注情報編集画面（M05-11）	L0322-L0330
+```
+
+- 処理IDは P1 からの連番。根拠は design.txt の行（`L0037`、`L0037-L0040`、カンマ区切り）。他の機能は `M10-04:L0012`、共通シートは `_common/<ファイル名>:L0012`。
+
+### `{FID}_factors.tsv`（7列）
+
+```
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1,P2	閲覧店舗	本店｜支店	本店: 支払方法はEC用の6種／支店: 支払方法は店頭支払だけ	L0236,L0249-L0252	この機能
+F05	P2	支払方法の利用条件に対する注文金額	範囲内｜上限を超える	範囲内: 選択肢に出る／上限を超える: 選択肢に出ない	M10-04:L0101	M10-04（設定）
+```
+
+- 要因IDは F01 からの連番（処理をまたいで通し番号）。処理IDはその要因が効く処理（カンマ区切り）。
+- 値は全角の縦棒 `｜` で区切る。2つ以上。1つの値は30字まで。`=` `&` `｜` `＋` `×` を値の中に使わない。
+- 値ごとの結果は `値: 結果` を `／` でつなぐ。全部の値について書く。
+- 出所は `この機能`、`<機能ID>（設定）`、`<機能ID>（データ）` のどれか。
+
+### `{FID}_interactions.tsv`（5列）
+
+```
+処理ID	要因	判定	根拠	理由
+P1	F03+F04	効き合う	L0204	配送方法が同梱のときは支払方法が郵便振替・銀行振込だけになる
+P1	F04+F06	関係しない		手数料は支払方法で決まり、ポイントは値引きとして合計から引くだけ
+P1	F06+F07	設計書が決めていない	M10-05:L0040	送料無料の判定に使う金額がポイント値引きの前か後か書かれていない
+```
+
+- 処理ごとに、その処理の要因の2つの組を全部判定する（3つ以上の効き合うにまとめた組は除く）。
+- 効き合う・設計書が決めていない は根拠が必須。関係しない・設計書が決めていない は理由が必須。
+
+### `{FID}_constraints.tsv`（5列）
+
+```
+処理ID	組	種別	根拠	理由
+P1	F01=支店&F04=代金引換	作れない	L0251-L0252	支店の支払方法は店頭支払だけ
+P1	F06=ポイントを使う&F07=送料無料の条件に届く	正解未定	M10-05:L0040	送料無料の判定に使う金額が決まらない
+P2	F02=キャンセル日あり	打ち切り	L0412	キャンセル日が既に入っていると、在庫・ポイントの戻しを行わない
+```
+
+- 組は `要因ID=値` を `&` でつなぐ。値は factors.tsv の値と一字一句同じ。値1つだけの組（`F16=店頭受取のみのスマレジ決済`）も書ける: その値でこの処理を動かすこと自体が作れない・結果が決まらないとき（設計書の記述どうしが食い違い、共通する部分が無いときなど）。
+- 種別は `作れない`・`正解未定`・`打ち切り` のどれか。根拠が必須。制約が無ければヘッダだけ書く。
+
+### `{FID}_existing.tsv`（4列）
+
+```
+テストID	処理ID	値	理由
+IT-F04-02-081	P1	F01=本店&F03=ゆうパック&F04=郵便振替	事前準備で本店・ゆうパック・郵便振替を選び、受注情報編集画面で支払方法と配送方法を確かめる
+```
+
+- 値は `要因ID=値` を `&` でつなぐ。ケースに書かれている要因だけ。1つ以上。
+- 1つのケースが2つの処理を通しているときは2行に書く。該当するケースが無ければヘッダだけ書く。
+
+書いたら次を実行し、エラーが無くなるまで直す。組の数（全組と2要因の組で、既存ケースが通していない組を埋めるのに要る行の数）も出る。
+
+```
+python3 integration_test/casegen/combination/gate_factors.py {FID}
+```
+
+作業用の一時ファイルを作るときは、名前に {FID} を入れてスクラッチパッドに作る。他の機能の factors/ のファイルは読まない・書かない。
+ファイルの書き込みを拒否されたときは、回避せず、書くはずだった本文を返答に載せる（依頼元が保存する）。
+
+## 返答
+
+3行以内: 処理の数・要因の数・効き合う組の数・設計書が決めていない組の数、gate の結果と出た行の数、判断に迷った点（あれば1つ）。
+
+exec
+/bin/bash -lc "rg --files integration_test/casegen/combination/review | rg 'A(01-01|02-0[1-5]|05-0[134])_factors_s_dispositions.tsv"'$'"'" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+integration_test/casegen/combination/review/A01-01_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A05-03_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A02-03_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A02-02_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A05-01_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A02-01_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A02-05_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A02-04_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A05-04_factors_s_dispositions.tsv
+
+exec
+/bin/bash -lc 'git diff --stat eddb12cb -- integration_test/casegen/combination/factors' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 10ms:
+ .../combination/factors/A01-01_constraints.tsv     |   3 +
+ .../combination/factors/A02-01_constraints.tsv     |   5 +-
+ .../combination/factors/A02-01_existing.tsv        |  28 ++---
+ .../casegen/combination/factors/A02-01_factors.tsv |   9 +-
+ .../combination/factors/A02-01_interactions.tsv    |  11 +-
+ .../combination/factors/A02-02_constraints.tsv     |   2 +
+ .../combination/factors/A02-02_existing.tsv        |   4 +-
+ .../casegen/combination/factors/A02-02_factors.tsv |   5 +-
+ .../combination/factors/A02-02_interactions.tsv    |   6 +-
+ .../combination/factors/A02-03_constraints.tsv     |   4 +
+ .../combination/factors/A02-03_existing.tsv        |  18 +--
+ .../casegen/combination/factors/A02-03_factors.tsv |   9 +-
+ .../combination/factors/A02-03_interactions.tsv    |   8 +-
+ .../combination/factors/A02-04_constraints.tsv     |   5 +
+ .../combination/factors/A02-05_constraints.tsv     |   3 +
+ .../combination/factors/A05-01_constraints.tsv     |   7 ++
+ .../combination/factors/A05-01_existing.tsv        |  11 +-
+ .../casegen/combination/factors/A05-01_factors.tsv |  10 +-
+ .../combination/factors/A05-01_interactions.tsv    |  30 ++---
+ .../combination/factors/A05-01_processes.tsv       |   3 +-
+ .../combination/factors/A05-03_constraints.tsv     |   3 +
+ .../combination/factors/A05-04_constraints.tsv     |   3 +
+ .../casegen/combination/factors/A05-04_factors.tsv |   9 +-
+ .../combination/factors/A05-04_interactions.tsv    |  11 +-
+ .../combination/factors/A05-04_processes.tsv       |   3 +-
+ .../combination/factors/A06-01_existing.tsv        |   5 -
+ .../casegen/combination/factors/A06-01_factors.tsv |   2 -
+ .../combination/factors/A06-01_interactions.tsv    |   1 -
+ .../combination/factors/A06-01_processes.tsv       |   1 -
+ .../combination/factors/A06-02_constraints.tsv     |   3 +
+ .../combination/factors/A06-03_constraints.tsv     |   2 +-
+ .../combination/factors/A06-03_existing.tsv        |   9 +-
+ .../casegen/combination/factors/A06-03_factors.tsv |   4 +-
+ .../combination/factors/A06-03_interactions.tsv    |  19 +--
+ .../combination/factors/A06-05_constraints.tsv     |   3 +
+ .../combination/factors/A06-05_existing.tsv        |   3 +-
+ .../casegen/combination/factors/A06-05_factors.tsv |   2 +-
+ .../combination/factors/A06-06_constraints.tsv     |   6 +-
+ .../combination/factors/A06-06_existing.tsv        |  15 ++-
+ .../casegen/combination/factors/A06-06_factors.tsv |   7 +-
+ .../combination/factors/A06-06_interactions.tsv    |  23 +---
+ .../combination/factors/A06-07_constraints.tsv     |   7 ++
+ .../combination/factors/A06-07_existing.tsv        |  15 ++-
+ .../casegen/combination/factors/A06-07_factors.tsv |   5 +-
+ .../combination/factors/A06-07_interactions.tsv    |  27 -----
+ .../combination/factors/A06-08_constraints.tsv     |   6 +-
+ .../combination/factors/A06-08_existing.tsv        |  16 ++-
+ .../casegen/combination/factors/A06-08_factors.tsv |   9 +-
+ .../combination/factors/A06-08_interactions.tsv    |  66 ++++-------
+ .../combination/factors/A07-02_constraints.tsv     |   1 -
+ .../combination/factors/A07-02_existing.tsv        |   4 -
+ .../casegen/combination/factors/A07-02_factors.tsv |   3 -
+ .../combination/factors/A07-02_interactions.tsv    |   3 -
+ .../combination/factors/A07-02_processes.tsv       |   1 -
+ .../combination/factors/A07-04_constraints.tsv     |   5 +
+ .../casegen/combination/factors/A07-06_factors.tsv |   2 -
+ .../combination/factors/A07-06_interactions.tsv    |   1 -
+ .../combination/factors/A07-06_processes.tsv       |   1 -
+ .../combination/factors/A07-07_existing.tsv        |   3 -
+ .../casegen/combination/factors/A07-07_factors.tsv |   3 -
+ .../combination/factors/A07-07_interactions.tsv    |   3 -
+ .../combination/factors/A07-07_processes.tsv       |   1 -
+ .../combination/factors/A14-01_existing.tsv        |   8 --
+ .../casegen/combination/factors/A14-01_factors.tsv |   9 --
+ .../combination/factors/A14-01_interactions.tsv    |  36 ------
+ .../combination/factors/A14-01_processes.tsv       |   1 -
+ .../combination/factors/A14-02_constraints.tsv     |   5 +
+ .../combination/factors/A14-02_existing.tsv        |   5 +-
+ .../casegen/combination/factors/A14-02_factors.tsv |   1 -
+ .../combination/factors/A14-02_interactions.tsv    |   5 -
+ .../combination/factors/A14-03_constraints.tsv     |   2 +
+ .../combination/factors/A15-01_constraints.tsv     |   4 +
+ .../combination/factors/A15-02_constraints.tsv     |   1 +
+ .../combination/factors/A15-03_constraints.tsv     |   1 +
+ .../combination/factors/A15-03_existing.tsv        |   5 -
+ .../casegen/combination/factors/A15-03_factors.tsv |   3 -
+ .../combination/factors/A15-03_interactions.tsv    |   3 -
+ .../combination/factors/A15-03_processes.tsv       |   1 -
+ .../combination/factors/A15-05_constraints.tsv     |   2 +
+ .../combination/factors/A15-06_constraints.tsv     |   1 +
+ .../combination/factors/A15-07_constraints.tsv     |   1 +
+ .../combination/factors/A15-09_existing.tsv        |  46 ++++----
+ .../casegen/combination/factors/A15-09_factors.tsv |   2 +-
+ .../casegen/combination/factors/A15-10_factors.tsv |   1 -
+ .../combination/factors/A15-10_interactions.tsv    |   3 -
+ .../combination/factors/A15-10_processes.tsv       |   2 +-
+ .../combination/factors/A15-11_constraints.tsv     |   2 +
+ .../combination/factors/A15-11_existing.tsv        |  18 +--
+ .../casegen/combination/factors/A15-11_factors.tsv |   2 +-
+ .../combination/factors/A15-12_constraints.tsv     |   6 +-
+ .../combination/factors/A15-13_constraints.tsv     |   3 +
+ .../casegen/combination/factors/A15-13_factors.tsv |   2 +-
+ .../combination/factors/A15-14_constraints.tsv     |   2 +
+ .../casegen/combination/factors/A15-14_factors.tsv |   2 +-
+ .../combination/factors/A15-15_constraints.tsv     |   2 +
+ .../combination/factors/A15-16_constraints.tsv     |   3 +
+ .../combination/factors/A15-17_constraints.tsv     |   1 +
+ .../combination/factors/A15-17_existing.tsv        |  30 ++---
+ .../casegen/combination/factors/A15-17_factors.tsv |   1 -
+ .../combination/factors/A15-17_interactions.tsv    |   4 -
+ .../combination/factors/A15-18_constraints.tsv     |   2 +
+ .../combination/factors/A15-18_existing.tsv        |  44 +++----
+ .../casegen/combination/factors/A15-18_factors.tsv |   5 +-
+ .../combination/factors/A15-18_interactions.tsv    |  22 +---
+ .../combination/factors/A16-02_constraints.tsv     |   3 +
+ .../combination/factors/A17-02_constraints.tsv     |   3 +
+ .../casegen/combination/factors/A17-02_factors.tsv |   2 +-
+ .../combination/factors/A17-03_constraints.tsv     |   5 +
+ .../combination/factors/A17-04_constraints.tsv     |   6 +-
+ .../combination/factors/A17-04_existing.tsv        |  16 +--
+ .../casegen/combination/factors/A17-04_factors.tsv |   5 -
+ .../combination/factors/A17-04_interactions.tsv    |  30 -----
+ .../combination/factors/A17-05_constraints.tsv     |   5 +
+ .../combination/factors/A17-05_existing.tsv        |   3 +-
+ .../casegen/combination/factors/A17-05_factors.tsv |   1 -
+ .../combination/factors/A17-05_interactions.tsv    |   2 -
+ .../combination/factors/B02-01_constraints.tsv     |  12 +-
+ .../combination/factors/B02-02_constraints.tsv     |   1 +
+ .../combination/factors/B02-02_existing.tsv        |   6 +-
+ .../casegen/combination/factors/B02-02_factors.tsv |   4 +-
+ .../combination/factors/B02-03_constraints.tsv     |   6 +
+ .../combination/factors/B02-04_constraints.tsv     |   5 +
+ .../combination/factors/B02-05_constraints.tsv     |   3 +
+ .../combination/factors/B02-05_existing.tsv        |   2 +-
+ .../casegen/combination/factors/B02-05_factors.tsv |   1 -
+ .../combination/factors/B02-05_interactions.tsv    |   4 -
+ .../combination/factors/B05-01_constraints.tsv     |   8 ++
+ .../casegen/combination/factors/B05-01_factors.tsv |   4 +-
+ .../combination/factors/B05-01_interactions.tsv    |  27 +----
+ .../combination/factors/B05-05_constraints.tsv     |   3 +
+ .../casegen/combination/factors/B05-05_factors.tsv |   2 -
+ .../combination/factors/B05-05_interactions.tsv    |   1 -
+ .../combination/factors/B05-05_processes.tsv       |   1 -
+ .../combination/factors/B05-06_constraints.tsv     |   3 +
+ .../combination/factors/B05-07_constraints.tsv     |   3 +
+ .../combination/factors/B05-08_constraints.tsv     |   3 +-
+ .../combination/factors/B06-01_constraints.tsv     |   5 +
+ .../combination/factors/B06-02_constraints.tsv     |   7 +-
+ .../combination/factors/B08-01_constraints.tsv     |   1 +
+ .../combination/factors/B08-02_constraints.tsv     |   7 +-
+ .../casegen/combination/factors/B08-02_factors.tsv |   2 +-
+ .../combination/factors/B08-03_constraints.tsv     |   5 +
+ .../combination/factors/B08-04_constraints.tsv     |   2 +
+ .../combination/factors/B08-05_constraints.tsv     |   2 +
+ .../combination/factors/B08-06_constraints.tsv     |   3 +-
+ .../combination/factors/B08-07_constraints.tsv     |   1 +
+ .../combination/factors/B16-11_constraints.tsv     |   2 +
+ .../combination/factors/F01-01_constraints.tsv     |  31 ++++-
+ .../combination/factors/F01-01_existing.tsv        |  18 +--
+ .../casegen/combination/factors/F01-01_factors.tsv |  27 ++---
+ .../combination/factors/F01-01_interactions.tsv    | 127 +++++----------------
+ .../combination/factors/F01-01_processes.tsv       |   1 -
+ .../combination/factors/F01-02_constraints.tsv     |  18 ++-
+ .../combination/factors/F01-02_existing.tsv        |   4 +-
+ .../casegen/combination/factors/F01-02_factors.tsv |   4 +-
+ .../combination/factors/F01-02_interactions.tsv    |  11 --
+ .../combination/factors/F02-01_constraints.tsv     |  14 ++-
+ .../combination/factors/F02-01_existing.tsv        |  31 ++---
+ .../casegen/combination/factors/F02-01_factors.tsv |  18 ++-
+ .../combination/factors/F02-01_interactions.tsv    |  16 +--
+ .../combination/factors/F02-01_processes.tsv       |   7 +-
+ .../combination/factors/F02-02_constraints.tsv     |   2 +-
+ .../combination/factors/F02-02_existing.tsv        |  14 +--
+ .../casegen/combination/factors/F02-02_factors.tsv |   6 +-
+ .../combination/factors/F02-02_interactions.tsv    |   7 +-
+ .../combination/factors/F02-02_processes.tsv       |   2 +-
+ .../combination/factors/F02-03_existing.tsv        |  16 +--
+ .../casegen/combination/factors/F02-03_factors.tsv |   8 +-
+ .../combination/factors/F02-03_interactions.tsv    |   8 +-
+ .../combination/factors/F02-03_processes.tsv       |   3 +-
+ .../combination/factors/F03-01_constraints.tsv     |  18 ++-
+ .../combination/factors/F03-01_existing.tsv        |  20 ++--
+ .../casegen/combination/factors/F03-01_factors.tsv |  15 +--
+ .../combination/factors/F03-01_interactions.tsv    |  35 +-----
+ .../combination/factors/F03-01_processes.tsv       |   6 +-
+ .../combination/factors/F03-02_constraints.tsv     |  17 ++-
+ .../combination/factors/F03-02_existing.tsv        |  77 ++++++-------
+ .../casegen/combination/factors/F03-02_factors.tsv |  38 +++---
+ .../combination/factors/F03-02_interactions.tsv    |  58 +++-------
+ .../combination/factors/F03-04_constraints.tsv     |   2 +
+ .../combination/factors/F03-04_existing.tsv        |   4 +-
+ .../casegen/combination/factors/F03-04_factors.tsv |   1 -
+ .../combination/factors/F03-04_interactions.tsv    |   3 -
+ .../combination/factors/F03-05_constraints.tsv     |   9 ++
+ .../combination/factors/F03-06_constraints.tsv     |   4 +
+ .../combination/factors/F03-07_constraints.tsv     |   5 +
+ .../combination/factors/F03-08_constraints.tsv     |   3 +
+ .../combination/factors/F04-01_constraints.tsv     |   4 +-
+ .../combination/factors/F04-03_constraints.tsv     |   3 +-
+ .../combination/factors/F04-03_existing.tsv        |  14 +--
+ .../casegen/combination/factors/F04-03_factors.tsv |   5 +-
+ .../combination/factors/F04-03_interactions.tsv    |  14 +--
+ .../combination/factors/F04-04_constraints.tsv     |   9 +-
+ .../combination/factors/F04-04_existing.tsv        |  44 +++----
+ .../casegen/combination/factors/F04-04_factors.tsv |  15 +--
+ .../combination/factors/F04-04_interactions.tsv    |  25 ++--
+ .../combination/factors/F05-01_constraints.tsv     |  15 +++
+ .../combination/factors/F05-03_constraints.tsv     |  57 +++------
+ .../combination/factors/F05-03_existing.tsv        |   4 +-
+ .../casegen/combination/factors/F05-03_factors.tsv |  11 +-
+ .../combination/factors/F05-03_interactions.tsv    |  30 ++---
+ .../combination/factors/F05-04_constraints.tsv     |   2 +-
+ .../combination/factors/F05-04_existing.tsv        |   8 +-
+ .../casegen/combination/factors/F05-04_factors.tsv |   6 +-
+ .../combination/factors/F05-04_interactions.tsv    |  11 +-
+ .../combination/factors/F05-05_constraints.tsv     |   8 +-
+ .../combination/factors/F05-05_existing.tsv        |   3 -
+ .../casegen/combination/factors/F05-05_factors.tsv |   3 -
+ .../combination/factors/F05-05_interactions.tsv    |   3 -
+ .../combination/factors/F05-05_processes.tsv       |   1 -
+ .../combination/factors/F05-06_constraints.tsv     |   2 +
+ .../combination/factors/F05-06_existing.tsv        |  10 +-
+ .../casegen/combination/factors/F05-06_factors.tsv |  10 +-
+ .../combination/factors/F05-06_interactions.tsv    |   5 +-
+ .../combination/factors/F05-06_processes.tsv       |   5 +-
+ .../combination/factors/F06-01_constraints.tsv     |   1 +
+ .../combination/factors/F06-01_existing.tsv        |  30 ++---
+ .../casegen/combination/factors/F06-01_factors.tsv |   1 -
+ .../combination/factors/F06-01_interactions.tsv    |   2 -
+ .../combination/factors/F06-02_constraints.tsv     |   3 +
+ .../combination/factors/F06-03_constraints.tsv     |   2 +
+ .../combination/factors/F06-04_constraints.tsv     |   4 +-
+ .../combination/factors/F06-04_existing.tsv        |  16 +--
+ .../casegen/combination/factors/F06-04_factors.tsv |   5 +-
+ .../combination/factors/F06-04_interactions.tsv    |   3 +-
+ .../combination/factors/F06-04_processes.tsv       |   3 +-
+ .../combination/factors/F06-05_constraints.tsv     |   1 +
+ .../combination/factors/F06-06_constraints.tsv     |   1 +
+ .../combination/factors/F06-07_constraints.tsv     |   6 +
+ .../combination/factors/F06-07_existing.tsv        |  12 +-
+ .../casegen/combination/factors/F06-07_factors.tsv |   2 +-
+ .../combination/factors/F06-08_constraints.tsv     |   1 +
+ .../combination/factors/F06-09_constraints.tsv     |   4 +
+ .../combination/factors/F06-10_existing.tsv        |   6 +-
+ .../casegen/combination/factors/F06-10_factors.tsv |   5 +-
+ .../combination/factors/F06-10_interactions.tsv    |   4 +-
+ .../combination/factors/F06-11_constraints.tsv     |   2 +
+ .../combination/factors/F06-11_existing.tsv        |   4 +-
+ .../casegen/combination/factors/F06-11_factors.tsv |  10 +-
+ .../combination/factors/F06-11_interactions.tsv    |  23 ++--
+ .../combination/factors/F06-13_constraints.tsv     |   3 +
+ .../combination/factors/F06-14_constraints.tsv     |   7 +-
+ .../combination/factors/F06-14_existing.tsv        |  21 ++--
+ .../casegen/combination/factors/F06-14_factors.tsv |  10 +-
+ .../combination/factors/F06-14_interactions.tsv    |  12 +-
+ .../combination/factors/F06-15_constraints.tsv     |   5 +-
+ .../combination/factors/F06-15_existing.tsv        |  26 ++---
+ .../casegen/combination/factors/F06-15_factors.tsv |   9 +-
+ .../combination/factors/F06-15_interactions.tsv    |  14 +--
+ .../combination/factors/F06-15_processes.tsv       |   1 -
+ .../combination/factors/F06-16_constraints.tsv     |   4 +
+ .../combination/factors/F06-16_existing.tsv        |  14 +--
+ .../casegen/combination/factors/F06-16_factors.tsv |   9 +-
+ .../combination/factors/F06-16_interactions.tsv    |  10 +-
+ .../combination/factors/F06-16_processes.tsv       |   3 +-
+ .../combination/factors/F06-17_constraints.tsv     |   5 +-
+ .../combination/factors/F06-17_existing.tsv        |   3 -
+ .../casegen/combination/factors/F06-17_factors.tsv |   6 -
+ .../combination/factors/F06-17_interactions.tsv    |  15 ---
+ .../combination/factors/F06-17_processes.tsv       |   1 -
+ .../combination/factors/F06-18_constraints.tsv     |   2 +
+ .../combination/factors/F06-20_constraints.tsv     |   2 +
+ .../combination/factors/F06-21_constraints.tsv     |   3 +
+ .../combination/factors/F06-22_existing.tsv        |  14 +--
+ .../casegen/combination/factors/F06-22_factors.tsv |   6 +-
+ .../combination/factors/F06-22_interactions.tsv    |   3 +-
+ .../combination/factors/F06-22_processes.tsv       |   3 +-
+ .../combination/factors/F06-24_existing.tsv        |   3 -
+ .../casegen/combination/factors/F06-24_factors.tsv |   2 -
+ .../combination/factors/F06-24_interactions.tsv    |   1 -
+ .../combination/factors/F06-24_processes.tsv       |   1 -
+ .../combination/factors/F06-26_constraints.tsv     |   3 +
+ .../casegen/combination/factors/F06-26_factors.tsv |   2 +-
+ .../combination/factors/F07-01_constraints.tsv     |   8 ++
+ .../combination/factors/F07-01_existing.tsv        |   4 +-
+ .../casegen/combination/factors/F07-01_factors.tsv |  10 +-
+ .../combination/factors/F07-01_interactions.tsv    |  13 +--
+ .../combination/factors/F07-01_processes.tsv       |   2 +-
+ .../combination/factors/F07-03_constraints.tsv     |   7 ++
+ .../combination/factors/F07-04_constraints.tsv     |   6 +
+ .../combination/factors/F07-04_existing.tsv        |   6 +-
+ .../casegen/combination/factors/F07-04_factors.tsv |   4 +-
+ .../combination/factors/F08-02_constraints.tsv     |  10 +-
+ .../combination/factors/F08-02_existing.tsv        |  30 ++---
+ .../casegen/combination/factors/F08-02_factors.tsv |  15 ++-
+ .../combination/factors/F08-02_interactions.tsv    |  13 +--
+ .../combination/factors/F08-03_constraints.tsv     |   6 +-
+ .../combination/factors/F08-03_existing.tsv        |  23 +---
+ .../casegen/combination/factors/F08-03_factors.tsv |  11 +-
+ .../combination/factors/F08-03_interactions.tsv    |  12 +-
+ .../combination/factors/F08-03_processes.tsv       |   5 +-
+ .../combination/factors/F08-04_constraints.tsv     |   3 +-
+ .../combination/factors/F08-05_constraints.tsv     |   7 +-
+ .../combination/factors/F08-05_existing.tsv        | 122 ++++++++++----------
+ .../casegen/combination/factors/F08-05_factors.tsv |  11 +-
+ .../combination/factors/F08-05_interactions.tsv    |  34 +-----
+ .../combination/factors/F09-01_constraints.tsv     |   7 ++
+ .../combination/factors/F09-01_existing.tsv        |  12 +-
+ .../casegen/combination/factors/F09-01_factors.tsv |   7 +-
+ .../combination/factors/F09-01_interactions.tsv    |  25 +---
+ .../combination/factors/F09-01_processes.tsv       |   3 +-
+ .../combination/factors/F09-02_constraints.tsv     |   6 +-
+ .../combination/factors/F09-03_constraints.tsv     |   8 +-
+ .../combination/factors/F09-04_constraints.tsv     |   6 +
+ .../combination/factors/F09-04_existing.tsv        |   8 +-
+ .../casegen/combination/factors/F09-04_factors.tsv |   3 +-
+ .../combination/factors/F09-04_interactions.tsv    |  16 +--
+ .../combination/factors/F09-05_constraints.tsv     |   9 ++
+ .../combination/factors/F09-06_constraints.tsv     |   5 +
+ .../combination/factors/F09-07_constraints.tsv     |   5 +-
+ .../combination/factors/F09-07_existing.tsv        |  28 ++---
+ .../casegen/combination/factors/F09-07_factors.tsv |  11 +-
+ .../combination/factors/F09-07_interactions.tsv    |  28 ++---
+ .../combination/factors/F09-08_constraints.tsv     |   5 +-
+ .../combination/factors/F09-08_existing.tsv        |  20 ++--
+ .../casegen/combination/factors/F09-08_factors.tsv |   6 +-
+ .../combination/factors/F10-01_constraints.tsv     |   2 +
+ .../combination/factors/F10-02_existing.tsv        |   4 -
+ .../casegen/combination/factors/F10-02_factors.tsv |   3 -
+ .../combination/factors/F10-02_interactions.tsv    |   3 -
+ .../combination/factors/F10-02_processes.tsv       |   1 -
+ .../combination/factors/F10-03_constraints.tsv     |   4 +-
+ .../combination/factors/M03-02_constraints.tsv     |   4 +
+ .../combination/factors/M03-02_existing.tsv        |   9 +-
+ .../casegen/combination/factors/M03-02_factors.tsv |   5 +-
+ .../combination/factors/M03-02_interactions.tsv    |  12 --
+ .../casegen/combination/factors/M03-05_factors.tsv |   1 -
+ .../combination/factors/M03-05_interactions.tsv    |   2 -
+ .../combination/factors/M03-06_constraints.tsv     |   1 -
+ .../combination/factors/M03-06_existing.tsv        |  14 +--
+ .../casegen/combination/factors/M03-06_factors.tsv |   1 -
+ .../combination/factors/M03-06_interactions.tsv    |   2 -
+ .../combination/factors/M03-08_constraints.tsv     |   4 +
+ .../combination/factors/M03-09_constraints.tsv     |  11 +-
+ .../casegen/combination/factors/M03-09_factors.tsv |   2 +-
+ .../combination/factors/M03-09_interactions.tsv    |   4 +-
+ .../combination/factors/M03-10_constraints.tsv     |   9 +-
+ .../combination/factors/M03-10_existing.tsv        |  16 ++-
+ .../casegen/combination/factors/M03-10_factors.tsv |  13 +--
+ .../combination/factors/M03-10_interactions.tsv    |  27 ++---
+ .../combination/factors/M03-11_constraints.tsv     |   2 +
+ .../casegen/combination/factors/M03-11_factors.tsv |   2 -
+ .../combination/factors/M03-11_interactions.tsv    |   1 -
+ .../combination/factors/M03-11_processes.tsv       |   1 -
+ .../combination/factors/M03-12_existing.tsv        |  14 ---
+ .../casegen/combination/factors/M03-12_factors.tsv |   2 -
+ .../combination/factors/M03-12_interactions.tsv    |   1 -
+ .../combination/factors/M03-12_processes.tsv       |   1 -
+ .../combination/factors/M03-13_constraints.tsv     |   1 +
+ .../combination/factors/M03-14_constraints.tsv     |   1 +
+ .../combination/factors/M03-14_existing.tsv        |   6 +-
+ .../casegen/combination/factors/M03-14_factors.tsv |   1 -
+ .../combination/factors/M03-14_interactions.tsv    |   2 -
+ .../combination/factors/M03-16_constraints.tsv     |   2 +
+ .../combination/factors/M03-17_constraints.tsv     |   3 +
+ .../combination/factors/M03-18_constraints.tsv     |   6 +
+ .../combination/factors/M03-18_existing.tsv        |  16 +--
+ .../casegen/combination/factors/M03-18_factors.tsv |   2 -
+ .../combination/factors/M03-18_interactions.tsv    |   7 --
+ .../combination/factors/M03-20_constraints.tsv     |   6 +-
+ .../combination/factors/M03-20_existing.tsv        |  18 +--
+ .../casegen/combination/factors/M03-20_factors.tsv |   4 +-
+ .../combination/factors/M03-20_interactions.tsv    |  13 ---
+ .../combination/factors/M03-21_constraints.tsv     |   2 +
+ .../combination/factors/M03-22_constraints.tsv     |   3 +-
+ .../combination/factors/M03-22_existing.tsv        |   5 -
+ .../casegen/combination/factors/M03-22_factors.tsv |   4 -
+ .../combination/factors/M03-22_interactions.tsv    |   6 -
+ .../combination/factors/M03-22_processes.tsv       |   1 -
+ .../combination/factors/M03-26_constraints.tsv     |   5 +
+ .../combination/factors/M03-27_constraints.tsv     |   5 +-
+ .../combination/factors/M03-27_existing.tsv        |   2 -
+ .../casegen/combination/factors/M03-27_factors.tsv |   6 +-
+ .../combination/factors/M03-27_interactions.tsv    |  33 ++----
+ .../combination/factors/M03-29_existing.tsv        |  14 +--
+ .../casegen/combination/factors/M03-29_factors.tsv |   2 +-
+ .../combination/factors/M03-31_constraints.tsv     |   1 +
+ .../combination/factors/M03-33_existing.tsv        |   1 -
+ .../casegen/combination/factors/M03-33_factors.tsv |   2 -
+ .../combination/factors/M03-33_interactions.tsv    |   9 --
+ .../combination/factors/M03-35_constraints.tsv     |   1 +
+ .../combination/factors/M03-38_existing.tsv        |   9 --
+ .../casegen/combination/factors/M03-38_factors.tsv |   3 -
+ .../combination/factors/M03-38_interactions.tsv    |   3 -
+ .../combination/factors/M03-38_processes.tsv       |   1 -
+ .../combination/factors/M03-40_constraints.tsv     |   3 +
+ .../combination/factors/M03-41_constraints.tsv     |   2 +
+ .../combination/factors/M03-45_constraints.tsv     |   6 +
+ .../combination/factors/M04-01_constraints.tsv     |  11 +-
+ .../combination/factors/M04-02_existing.tsv        |   4 -
+ .../casegen/combination/factors/M04-02_factors.tsv |   2 -
+ .../combination/factors/M04-02_interactions.tsv    |   1 -
+ .../combination/factors/M04-02_processes.tsv       |   1 -
+ .../combination/factors/M04-08_constraints.tsv     |  10 +-
+ .../combination/factors/M04-09_constraints.tsv     |   8 ++
+ .../combination/factors/M04-10_constraints.tsv     |   3 +-
+ .../combination/factors/M04-10_existing.tsv        |   8 +-
+ .../casegen/combination/factors/M04-10_factors.tsv |   6 +-
+ .../combination/factors/M04-10_interactions.tsv    |   7 +-
+ .../combination/factors/M04-19_constraints.tsv     |   2 +
+ .../combination/factors/M04-19_existing.tsv        |   3 +-
+ .../casegen/combination/factors/M04-19_factors.tsv |   4 +-
+ .../combination/factors/M04-19_interactions.tsv    |   7 +-
+ .../combination/factors/M04-20_existing.tsv        |   1 -
+ .../casegen/combination/factors/M04-20_factors.tsv |   3 -
+ .../combination/factors/M04-20_interactions.tsv    |   3 -
+ .../combination/factors/M04-20_processes.tsv       |   1 -
+ .../combination/factors/M04-21_constraints.tsv     |   5 +-
+ .../combination/factors/M04-21_existing.tsv        |   6 +-
+ .../casegen/combination/factors/M04-21_factors.tsv |   2 +-
+ .../combination/factors/M04-30_constraints.tsv     |   8 +-
+ .../casegen/combination/factors/M04-30_factors.tsv |   6 -
+ .../combination/factors/M04-30_interactions.tsv    |   9 --
+ .../combination/factors/M04-30_processes.tsv       |   2 -
+ .../combination/factors/M04-31_constraints.tsv     |  13 ++-
+ .../combination/factors/M04-31_existing.tsv        |   9 +-
+ .../casegen/combination/factors/M04-31_factors.tsv |   8 +-
+ .../combination/factors/M04-31_interactions.tsv    |   4 -
+ .../combination/factors/M04-31_processes.tsv       |   2 -
+ .../combination/factors/M04-32_constraints.tsv     |   7 ++
+ .../combination/factors/M04-33_constraints.tsv     |   3 +-
+ .../combination/factors/M04-33_existing.tsv        |  47 ++++----
+ .../casegen/combination/factors/M04-33_factors.tsv |   9 +-
+ .../combination/factors/M04-33_interactions.tsv    |   9 +-
+ .../combination/factors/M04-34_constraints.tsv     |   4 +-
+ .../combination/factors/M04-34_existing.tsv        |  26 ++---
+ .../casegen/combination/factors/M04-34_factors.tsv |   9 +-
+ .../combination/factors/M04-34_interactions.tsv    |   9 +-
+ .../combination/factors/M05-01_constraints.tsv     |   9 +-
+ .../combination/factors/M05-01_interactions.tsv    |   4 +-
+ .../combination/factors/M05-02_constraints.tsv     |   3 +-
+ .../combination/factors/M05-02_existing.tsv        |   8 +-
+ .../casegen/combination/factors/M05-02_factors.tsv |   8 +-
+ .../combination/factors/M05-02_interactions.tsv    |   7 +-
+ .../combination/factors/M05-02_processes.tsv       |   3 +-
+ .../combination/factors/M05-03_constraints.tsv     |   1 +
+ .../combination/factors/M05-03_existing.tsv        |   8 +-
+ .../casegen/combination/factors/M05-03_factors.tsv |  13 +--
+ .../combination/factors/M05-03_interactions.tsv    |  56 +--------
+ .../combination/factors/M05-04_constraints.tsv     |   1 -
+ .../combination/factors/M05-04_existing.tsv        |   6 -
+ .../casegen/combination/factors/M05-04_factors.tsv |   8 --
+ .../combination/factors/M05-04_interactions.tsv    |  28 -----
+ .../combination/factors/M05-04_processes.tsv       |   1 -
+ .../combination/factors/M05-05_constraints.tsv     |   1 +
+ .../combination/factors/M05-05_existing.tsv        |   7 +-
+ .../casegen/combination/factors/M05-05_factors.tsv |  11 +-
+ .../combination/factors/M05-05_interactions.tsv    |  37 +-----
+ .../casegen/combination/factors/M05-07_factors.tsv |   4 -
+ .../combination/factors/M05-07_interactions.tsv    |   6 -
+ .../combination/factors/M05-07_processes.tsv       |   1 -
+ .../combination/factors/M05-08_constraints.tsv     |   1 +
+ .../combination/factors/M05-09_constraints.tsv     |   5 +-
+ .../combination/factors/M05-09_existing.tsv        |  30 ++---
+ .../casegen/combination/factors/M05-09_factors.tsv |  13 +--
+ .../combination/factors/M05-09_interactions.tsv    |   8 +-
+ .../combination/factors/M05-09_processes.tsv       |   6 +-
+ .../combination/factors/M05-10_constraints.tsv     |   6 +-
+ .../combination/factors/M05-10_existing.tsv        |  23 ++--
+ .../casegen/combination/factors/M05-10_factors.tsv |   6 +-
+ .../combination/factors/M05-10_interactions.tsv    |   3 +-
+ .../combination/factors/M05-10_processes.tsv       |   3 +-
+ .../combination/factors/M05-18_constraints.tsv     |   4 +
+ .../combination/factors/M05-20_existing.tsv        |   5 -
+ .../casegen/combination/factors/M05-20_factors.tsv |   4 -
+ .../combination/factors/M05-20_interactions.tsv    |   6 -
+ .../combination/factors/M05-20_processes.tsv       |   1 -
+ .../combination/factors/M05-21_constraints.tsv     |   2 +
+ .../combination/factors/M05-22_constraints.tsv     |  25 +---
+ .../combination/factors/M05-22_existing.tsv        |  14 +--
+ .../casegen/combination/factors/M05-22_factors.tsv |   8 +-
+ .../combination/factors/M05-22_interactions.tsv    |  22 ----
+ .../combination/factors/M05-23_constraints.tsv     |   3 +
+ .../combination/factors/M05-23_existing.tsv        |  16 +--
+ .../casegen/combination/factors/M05-23_factors.tsv |   5 +-
+ .../combination/factors/M05-23_interactions.tsv    |  12 --
+ .../combination/factors/M05-24_existing.tsv        |   1 -
+ .../casegen/combination/factors/M05-24_factors.tsv |   3 -
+ .../combination/factors/M05-24_interactions.tsv    |   3 -
+ .../combination/factors/M05-24_processes.tsv       |   1 -
+ .../combination/factors/M05-26_constraints.tsv     |   4 +
+ .../combination/factors/M05-26_existing.tsv        |   4 +-
+ .../casegen/combination/factors/M05-26_factors.tsv |   1 -
+ .../combination/factors/M05-26_interactions.tsv    |   5 -
+ .../combination/factors/M06-01_constraints.tsv     |   2 +
+ .../combination/factors/M06-02_constraints.tsv     |   2 +
+ .../combination/factors/M06-02_existing.tsv        |   2 -
+ .../casegen/combination/factors/M06-02_factors.tsv |   2 -
+ .../combination/factors/M06-02_interactions.tsv    |   1 -
+ .../combination/factors/M06-02_processes.tsv       |   1 -
+ .../combination/factors/M06-03_constraints.tsv     |   3 +-
+ .../combination/factors/M06-03_existing.tsv        |   2 +-
+ .../casegen/combination/factors/M06-03_factors.tsv |   2 +-
+ .../combination/factors/M06-04_constraints.tsv     |   7 ++
+ .../combination/factors/M06-05_constraints.tsv     |   2 +
+ .../casegen/combination/factors/M06-06_factors.tsv |   2 -
+ .../combination/factors/M06-06_interactions.tsv    |   1 -
+ .../combination/factors/M06-06_processes.tsv       |   1 -
+ .../combination/factors/M06-08_constraints.tsv     |   1 +
+ .../combination/factors/M06-09_constraints.tsv     |   2 +
+ .../combination/factors/M06-09_existing.tsv        |  20 ++--
+ .../casegen/combination/factors/M06-09_factors.tsv |   1 -
+ .../combination/factors/M06-09_interactions.tsv    |   2 -
+ .../combination/factors/M06-10_constraints.tsv     |   4 +-
+ .../casegen/combination/factors/M06-10_factors.tsv |   2 +-
+ .../combination/factors/M06-11_constraints.tsv     |   3 +-
+ .../combination/factors/M06-11_existing.tsv        |   2 +-
+ .../casegen/combination/factors/M06-11_factors.tsv |   2 +-
+ .../combination/factors/M06-12_constraints.tsv     |   1 +
+ .../combination/factors/M07-01_constraints.tsv     |   6 +-
+ .../combination/factors/M07-01_existing.tsv        |  19 +--
+ .../casegen/combination/factors/M07-01_factors.tsv |  16 +--
+ .../combination/factors/M07-01_interactions.tsv    |  15 +--
+ .../combination/factors/M07-01_processes.tsv       |   3 +-
+ .../combination/factors/M07-02_existing.tsv        |   4 -
+ .../casegen/combination/factors/M07-02_factors.tsv |   8 --
+ .../combination/factors/M07-02_interactions.tsv    |  28 -----
+ .../combination/factors/M07-02_processes.tsv       |   1 -
+ .../combination/factors/M07-03_constraints.tsv     |   6 +
+ .../combination/factors/M07-05_existing.tsv        |   1 -
+ .../casegen/combination/factors/M07-05_factors.tsv |   2 -
+ .../combination/factors/M07-05_interactions.tsv    |   1 -
+ .../combination/factors/M07-05_processes.tsv       |   1 -
+ .../combination/factors/M07-06_constraints.tsv     |   3 +
+ .../combination/factors/M07-06_existing.tsv        |  22 ++--
+ .../casegen/combination/factors/M07-06_factors.tsv |   1 -
+ .../combination/factors/M07-06_interactions.tsv    |   3 -
+ .../combination/factors/M07-08_constraints.tsv     |   1 +
+ .../combination/factors/M07-09_constraints.tsv     |   1 +
+ .../combination/factors/M08-04_constraints.tsv     |  14 +--
+ .../combination/factors/M08-04_existing.tsv        |  30 ++---
+ .../casegen/combination/factors/M08-04_factors.tsv |   6 +-
+ .../combination/factors/M08-05_constraints.tsv     |   4 +
+ .../casegen/combination/factors/M08-07_factors.tsv |   2 +-
+ .../combination/factors/M08-08_constraints.tsv     |   1 +
+ .../combination/factors/M08-09_existing.tsv        |   5 -
+ .../casegen/combination/factors/M08-09_factors.tsv |   3 -
+ .../combination/factors/M08-09_interactions.tsv    |   3 -
+ .../combination/factors/M08-09_processes.tsv       |   1 -
+ .../combination/factors/M08-10_constraints.tsv     |   3 +-
+ .../combination/factors/M08-10_existing.tsv        |  13 +--
+ .../casegen/combination/factors/M08-10_factors.tsv |   9 +-
+ .../combination/factors/M08-10_interactions.tsv    |  13 +--
+ .../combination/factors/M08-10_processes.tsv       |   3 +-
+ .../combination/factors/M08-12_constraints.tsv     |   2 +
+ .../combination/factors/M08-13_constraints.tsv     |   5 +-
+ .../combination/factors/M08-13_interactions.tsv    |   4 +-
+ .../combination/factors/M08-14_constraints.tsv     |   2 +
+ .../combination/factors/M08-14_existing.tsv        |  26 ++---
+ .../casegen/combination/factors/M08-14_factors.tsv |   2 +-
+ .../combination/factors/M09-04_constraints.tsv     |   9 +-
+ .../combination/factors/M09-07_constraints.tsv     |   6 +-
+ .../combination/factors/M09-10_constraints.tsv     |   2 +
+ .../combination/factors/M10-04_constraints.tsv     |   2 +
+ .../combination/factors/M10-04_existing.tsv        |   9 --
+ .../casegen/combination/factors/M10-04_factors.tsv |   8 +-
+ .../combination/factors/M10-04_interactions.tsv    |   4 +-
+ .../combination/factors/M10-04_processes.tsv       |   4 +-
+ .../combination/factors/M10-08_existing.tsv        |   5 -
+ .../casegen/combination/factors/M10-08_factors.tsv |   2 -
+ .../combination/factors/M10-08_interactions.tsv    |   1 -
+ .../combination/factors/M10-08_processes.tsv       |   1 -
+ .../combination/factors/M10-15_constraints.tsv     |   4 +-
+ .../combination/factors/M10-15_existing.tsv        |  36 +++---
+ .../casegen/combination/factors/M10-15_factors.tsv |  14 +--
+ .../combination/factors/M10-15_interactions.tsv    |  10 +-
+ .../combination/factors/M11-01_constraints.tsv     |   2 +
+ .../combination/factors/M11-02_constraints.tsv     |   1 +
+ .../combination/factors/M11-03_existing.tsv        |   8 --
+ .../casegen/combination/factors/M11-03_factors.tsv |   2 -
+ .../combination/factors/M11-03_interactions.tsv    |   1 -
+ .../combination/factors/M11-03_processes.tsv       |   1 -
+ .../combination/factors/M12-01_constraints.tsv     |   2 +
+ .../casegen/combination/factors/M12-01_factors.tsv |   2 +-
+ .../combination/factors/M12-02_constraints.tsv     |   3 +-
+ .../combination/factors/M12-02_existing.tsv        |  27 +++--
+ .../casegen/combination/factors/M12-02_factors.tsv |   5 +-
+ .../combination/factors/M12-02_interactions.tsv    |   9 +-
+ .../combination/factors/M12-03_constraints.tsv     |   3 +
+ .../combination/factors/M12-07_constraints.tsv     |   2 +
+ .../combination/factors/M12-08_constraints.tsv     |   2 +
+ .../combination/factors/M12-09_constraints.tsv     |   4 +
+ .../combination/factors/M12-10_constraints.tsv     |   3 +
+ .../combination/factors/M13-02_constraints.tsv     |   2 +
+ .../combination/factors/M13-03_constraints.tsv     |   8 ++
+ .../combination/factors/M13-04_constraints.tsv     |  10 ++
+ .../combination/factors/M13-08_existing.tsv        |   7 +-
+ .../casegen/combination/factors/M13-08_factors.tsv |   5 +-
+ .../combination/factors/M13-08_interactions.tsv    |   4 +-
+ .../combination/factors/M13-10_constraints.tsv     |   1 +
+ .../combination/factors/M13-13_constraints.tsv     |   3 +
+ .../combination/factors/M13-15_constraints.tsv     |   1 +
+ .../combination/factors/M13-15_existing.tsv        |   5 -
+ .../casegen/combination/factors/M13-15_factors.tsv |   2 -
+ .../combination/factors/M13-15_interactions.tsv    |   1 -
+ .../combination/factors/M13-15_processes.tsv       |   1 -
+ .../combination/factors/M14-01_constraints.tsv     |   5 +-
+ .../combination/factors/M14-01_existing.tsv        |   4 +-
+ .../casegen/combination/factors/M14-01_factors.tsv |   1 -
+ .../combination/factors/M14-01_interactions.tsv    |   3 -
+ .../combination/factors/M14-04_constraints.tsv     |   2 +
+ .../combination/factors/M14-05_existing.tsv        |   5 -
+ .../casegen/combination/factors/M14-05_factors.tsv |   5 -
+ .../combination/factors/M14-05_interactions.tsv    |  75 ------------
+ .../combination/factors/M14-07_constraints.tsv     |   3 +
+ .../combination/factors/M14-07_existing.tsv        |  12 +-
+ .../casegen/combination/factors/M14-07_factors.tsv |   1 -
+ .../combination/factors/M14-07_interactions.tsv    |   8 --
+ .../combination/factors/M14-09_constraints.tsv     |   3 +
+ .../combination/factors/M14-10_constraints.tsv     |   3 +
+ .../combination/factors/M14-10_existing.tsv        |   4 +-
+ .../casegen/combination/factors/M14-10_factors.tsv |   2 +-
+ .../combination/factors/M15-01_constraints.tsv     |   2 +
+ .../combination/factors/M15-01_existing.tsv        |   5 +-
+ .../casegen/combination/factors/M15-01_factors.tsv |  14 +--
+ .../combination/factors/M15-01_interactions.tsv    |  66 -----------
+ .../combination/factors/M15-01_processes.tsv       |   1 -
+ .../combination/factors/M15-02_constraints.tsv     |   1 +
+ .../combination/factors/M15-02_existing.tsv        |   9 +-
+ .../casegen/combination/factors/M15-02_factors.tsv |  10 +-
+ .../combination/factors/M15-02_interactions.tsv    |  29 +----
+ .../combination/factors/M15-04_existing.tsv        |  16 +--
+ .../casegen/combination/factors/M15-04_factors.tsv |  15 +--
+ .../combination/factors/M15-04_interactions.tsv    |  79 +------------
+ .../combination/factors/M15-05_constraints.tsv     |   5 +-
+ .../combination/factors/M15-05_existing.tsv        |  72 ++++++------
+ .../casegen/combination/factors/M15-05_factors.tsv |  11 +-
+ .../combination/factors/M15-05_interactions.tsv    |  32 +++---
+ .../combination/factors/M15-07_constraints.tsv     |   2 +
+ .../combination/factors/M15-08_existing.tsv        |   3 +-
+ .../casegen/combination/factors/M15-08_factors.tsv |   1 -
+ .../combination/factors/M15-08_interactions.tsv    |   4 -
+ .../combination/factors/M15-10_constraints.tsv     |   5 +-
+ .../combination/factors/M16-01_constraints.tsv     |   5 +
+ .../combination/factors/M16-02_constraints.tsv     |   1 +
+ .../combination/factors/M16-03_constraints.tsv     |   3 +
+ 636 files changed, 2052 insertions(+), 3245 deletions(-)
+
+exec
+/bin/bash -lc 'git diff eddb12cb -- integration_test/casegen/combination/factors/A01-01_processes.tsv integration_test/casegen/combination/factors/A01-01_factors.tsv integration_test/casegen/combination/factors/A01-01_interactions.tsv integration_test/casegen/combination/factors/A01-01_constraints.tsv integration_test/casegen/combination/factors/A01-01_existing.tsv integration_test/casegen/combination/factors/A02-01_processes.tsv integration_test/casegen/combination/factors/A02-01_factors.tsv integration_test/casegen/combination/factors/A02-01_interactions.tsv integration_test/casegen/combination/factors/A02-01_constraints.tsv integration_test/casegen/combination/factors/A02-01_existing.tsv integration_test/casegen/combination/factors/A02-02_processes.tsv integration_test/casegen/combination/factors/A02-02_factors.tsv integration_test/casegen/combination/factors/A02-02_interactions.tsv integration_test/casegen/combination/factors/A02-02_constraints.tsv integration_test/casegen/combination/factors/A02-02_existing.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'git diff eddb12cb -- integration_test/casegen/combination/factors/A02-03_processes.tsv integration_test/casegen/combination/factors/A02-03_factors.tsv integration_test/casegen/combination/factors/A02-03_interactions.tsv integration_test/casegen/combination/factors/A02-03_constraints.tsv integration_test/casegen/combination/factors/A02-03_existing.tsv integration_test/casegen/combination/factors/A02-04_processes.tsv integration_test/casegen/combination/factors/A02-04_factors.tsv integration_test/casegen/combination/factors/A02-04_interactions.tsv integration_test/casegen/combination/factors/A02-04_constraints.tsv integration_test/casegen/combination/factors/A02-04_existing.tsv integration_test/casegen/combination/factors/A02-05_processes.tsv integration_test/casegen/combination/factors/A02-05_factors.tsv integration_test/casegen/combination/factors/A02-05_interactions.tsv integration_test/casegen/combination/factors/A02-05_constraints.tsv integration_test/casegen/combination/factors/A02-05_existing.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+diff --git a/integration_test/casegen/combination/factors/A02-03_constraints.tsv b/integration_test/casegen/combination/factors/A02-03_constraints.tsv
+index ed8685a6..1dc22a82 100644
+--- a/integration_test/casegen/combination/factors/A02-03_constraints.tsv
++++ b/integration_test/casegen/combination/factors/A02-03_constraints.tsv
+@@ -1,2 +1,6 @@
+ 処理ID	組	種別	根拠	理由
+ P1	F01=全段が同じ	正解未定	L0091	6条件がすべて等しい商品が複数あるときは、どれを返すかを定めない
++P2	F03=どちらにも一致しない	打ち切り	L0082,L0099	旧商品IDがどちらにも一致しなければ該当なし(404)で終了し、ほかの条件は効かない
++P2	F04=非公開・廃止・削除済み	打ち切り	L0083,L0099	非公開・廃止・削除済みの商品は対象にならず該当なし(404)で終了する
++P2	F05=未削除の規格が1件も無い	打ち切り	L0083,L0099	未削除の規格が1件も無ければ該当なし(404)で終了する
++P2	F06=カード詳細が紐づかない	打ち切り	L0092,L0099	カード詳細が紐づかなければ該当なし(404)で終了する
+diff --git a/integration_test/casegen/combination/factors/A02-03_existing.tsv b/integration_test/casegen/combination/factors/A02-03_existing.tsv
+index b0576e0c..7daa8e5f 100644
+--- a/integration_test/casegen/combination/factors/A02-03_existing.tsv
++++ b/integration_test/casegen/combination/factors/A02-03_existing.tsv
+@@ -6,12 +6,12 @@ IT-A02-03-009	P1	F01=Foilの段で決まる&F02=ja	jaで要求し、Foilの段
+ IT-A02-03-011	P1	F01=画像優先度の段で決まる&F02=ja	jaで要求し、画像優先度の段で決まる側が返ることを確かめる
+ IT-A02-03-010	P1	F01=言語の段で決まる&F02=ja	jaで要求し、日本語の商品が返ることを確かめる
+ IT-A02-03-010	P1	F01=言語の段で決まる&F02=en	enで要求し、英語の商品が返ることを確かめる
+-IT-A02-03-012	P1	F02=ja&F03=パスの言語に紐づく規格が複数	jaで要求し、日本語2規格の販売数が合計されることを確かめる
+-IT-A02-03-024	P1	F02=ja&F03=パスの言語に紐づく規格は1件だけ	jaで要求し、日本語1規格の販売数が返ることを確かめる
+-IT-A02-03-001	P2	F04=どちらかに一致&F05=公開中で未削除&F06=未削除の規格がある	旧商品IDで要求し200を確かめる
+-IT-A02-03-004	P2	F04=どちらかに一致&F05=公開中で未削除&F06=未削除の規格がある	旧英語商品IDで要求しproductIdを確かめる
+-IT-A02-03-005	P2	F05=非公開・廃止・削除済み	削除済み商品と非公開商品を要求し404を確かめる
+-IT-A02-03-005	P2	F05=公開中で未削除&F06=未削除の規格が1件も無い	規格だけ削除済みの商品を要求し404を確かめる
+-IT-A02-03-014	P2	F04=どちらにも一致しない	一致するカードが無い旧商品IDで404を確かめる
+-IT-A02-03-015	P2	F05=公開中で未削除&F06=未削除の規格がある&F07=カード詳細が紐づかない	カード詳細が紐づかないグッズで404を確かめる
+-IT-A02-03-023	P2	F05=非公開・廃止・削除済み	廃止の商品を要求し404を確かめる
++IT-A02-03-012	P1	F02=ja	jaで要求し、日本語2規格の販売数が合計されることを確かめる
++IT-A02-03-024	P1	F02=ja	jaで要求し、日本語1規格の販売数が返ることを確かめる
++IT-A02-03-001	P2	F03=どちらかに一致&F04=公開中で未削除&F05=未削除の規格がある	旧商品IDで要求し200を確かめる
++IT-A02-03-004	P2	F03=どちらかに一致&F04=公開中で未削除&F05=未削除の規格がある	旧英語商品IDで要求しproductIdを確かめる
++IT-A02-03-005	P2	F04=非公開・廃止・削除済み	削除済み商品と非公開商品を要求し404を確かめる
++IT-A02-03-005	P2	F04=公開中で未削除&F05=未削除の規格が1件も無い	規格だけ削除済みの商品を要求し404を確かめる
++IT-A02-03-014	P2	F03=どちらにも一致しない	一致するカードが無い旧商品IDで404を確かめる
++IT-A02-03-015	P2	F04=公開中で未削除&F05=未削除の規格がある&F06=カード詳細が紐づかない	カード詳細が紐づかないグッズで404を確かめる
++IT-A02-03-023	P2	F04=非公開・廃止・削除済み	廃止の商品を要求し404を確かめる
+diff --git a/integration_test/casegen/combination/factors/A02-03_factors.tsv b/integration_test/casegen/combination/factors/A02-03_factors.tsv
+index b4e52e12..681d34ae 100644
+--- a/integration_test/casegen/combination/factors/A02-03_factors.tsv
++++ b/integration_test/casegen/combination/factors/A02-03_factors.tsv
+@@ -1,8 +1,7 @@
+ 要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+ F01	P1	並び順のどの段で返す1件が決まるか	特殊カードセットの段で決まる｜プロモーションの段で決まる｜発売日の段で決まる｜Foilの段で決まる｜言語の段で決まる｜画像優先度の段で決まる｜全段が同じ	特殊カードセットの段で決まる: 特殊でないものを返す／プロモーションの段で決まる: プロモーションでないものを返す／発売日の段で決まる: リリース日が新しいものを返す／Foilの段で決まる: Foilでないものを返す／言語の段で決まる: パスの言語コードと一致するものを返す／画像優先度の段で決まる: パスの言語コードに対応する画像優先度のものを返す／全段が同じ: どれを返すか定めない	L0085-L0091	この機能
+ F02	P1	パスの言語コード	ja｜en	ja: 言語と画像優先度の段でjaに対応するものを先にする／en: 言語と画像優先度の段でenに対応するものを先にする	L0033,L0089-L0090	この機能
+-F03	P1	返す商品とパスの言語に紐づく規格数	パスの言語に紐づく規格が複数｜パスの言語に紐づく規格は1件だけ	パスの言語に紐づく規格が複数: weeklySoldはそれらの販売数の合計／パスの言語に紐づく規格は1件だけ: weeklySoldはその1件の値	L0094	この機能
+-F04	P2	パスの旧商品IDの一致	どちらかに一致｜どちらにも一致しない	どちらかに一致: 対象になる（カードの旧商品IDと旧英語商品IDのどちらか一方に一致すればよい）／どちらにも一致しない: 該当なし(404)	L0082,L0099	この機能
+-F05	P2	商品の公開状態と削除	公開中で未削除｜非公開・廃止・削除済み	公開中で未削除: 対象になる／非公開・廃止・削除済み: 該当なし(404)	L0083	この機能
+-F06	P2	商品規格の削除	未削除の規格がある｜未削除の規格が1件も無い	未削除の規格がある: 対象になる／未削除の規格が1件も無い: 該当なし(404)	L0083	この機能
+-F07	P2	カード詳細の紐づき	カード詳細が紐づく｜カード詳細が紐づかない	カード詳細が紐づく: 対象になる／カード詳細が紐づかない: 該当なし(404)	L0028-L0029,L0092	この機能
++F03	P2	パスの旧商品IDの一致	どちらかに一致｜どちらにも一致しない	どちらかに一致: 対象になる（カードの旧商品IDと旧英語商品IDのどちらか一方に一致すればよい）／どちらにも一致しない: 該当なし(404)	L0082,L0099	この機能
++F04	P2	商品の公開状態と削除	公開中で未削除｜非公開・廃止・削除済み	公開中で未削除: 対象になる／非公開・廃止・削除済み: 該当なし(404)	L0083	この機能
++F05	P2	商品規格の削除	未削除の規格がある｜未削除の規格が1件も無い	未削除の規格がある: 対象になる／未削除の規格が1件も無い: 該当なし(404)	L0083	この機能
++F06	P2	カード詳細の紐づき	カード詳細が紐づく｜カード詳細が紐づかない	カード詳細が紐づく: 対象になる／カード詳細が紐づかない: 該当なし(404)	L0028-L0029,L0092	この機能
+diff --git a/integration_test/casegen/combination/factors/A02-03_interactions.tsv b/integration_test/casegen/combination/factors/A02-03_interactions.tsv
+index ecb7e50d..8630053a 100644
+--- a/integration_test/casegen/combination/factors/A02-03_interactions.tsv
++++ b/integration_test/casegen/combination/factors/A02-03_interactions.tsv
+@@ -1,10 +1,8 @@
+ 処理ID	要因	判定	根拠	理由
+ P1	F01+F02	効き合う	L0089-L0090	言語の段と画像優先度の段は、パスの言語コードがjaかenかで先になる商品が変わる
+-P1	F01+F03	関係しない		週間販売数はパスの言語コードに紐づく規格の合計で、どの段で決まったかでは変わらない
+-P1	F02+F03	関係しない		週間販売数の合計は言語コードの値では変わらない（対象は指定した言語の規格）
++P2	F03+F04	関係しない		すべて満たすものだけ対象になる条件で、結果は返す・該当なしの2つだけ
++P2	F03+F05	関係しない		すべて満たすものだけ対象になる条件で、結果は返す・該当なしの2つだけ
++P2	F03+F06	関係しない		すべて満たすものだけ対象になる条件で、結果は返す・該当なしの2つだけ
+ P2	F04+F05	関係しない		すべて満たすものだけ対象になる条件で、結果は返す・該当なしの2つだけ
+ P2	F04+F06	関係しない		すべて満たすものだけ対象になる条件で、結果は返す・該当なしの2つだけ
+-P2	F04+F07	関係しない		すべて満たすものだけ対象になる条件で、結果は返す・該当なしの2つだけ
+ P2	F05+F06	関係しない		すべて満たすものだけ対象になる条件で、結果は返す・該当なしの2つだけ
+-P2	F05+F07	関係しない		すべて満たすものだけ対象になる条件で、結果は返す・該当なしの2つだけ
+-P2	F06+F07	関係しない		すべて満たすものだけ対象になる条件で、結果は返す・該当なしの2つだけ
+diff --git a/integration_test/casegen/combination/factors/A02-04_constraints.tsv b/integration_test/casegen/combination/factors/A02-04_constraints.tsv
+index d21fecee..2765c06b 100644
+--- a/integration_test/casegen/combination/factors/A02-04_constraints.tsv
++++ b/integration_test/casegen/combination/factors/A02-04_constraints.tsv
+@@ -1 +1,6 @@
+ 処理ID	組	種別	根拠	理由
++P1	F01=どちらにも一致しない	打ち切り	L0079,L0091	旧商品IDがどちらにも一致しなければ該当なし(404)で終了し、ほかの条件は効かない
++P1	F02=削除済み	打ち切り	L0079,L0091	商品が削除済みなら該当なし(404)で終了する
++P1	F03=削除済み	打ち切り	L0079,L0091	商品規格が削除済みなら該当なし(404)で終了する
++P1	F04=なし	打ち切り	L0080,L0091	商品とカードの対応が無ければ該当なし(404)で終了する
++P1	F05=0件	打ち切り	L0080,L0091	商品画像が0件なら該当なし(404)で終了する
+diff --git a/integration_test/casegen/combination/factors/A02-05_constraints.tsv b/integration_test/casegen/combination/factors/A02-05_constraints.tsv
+index d21fecee..ac09e805 100644
+--- a/integration_test/casegen/combination/factors/A02-05_constraints.tsv
++++ b/integration_test/casegen/combination/factors/A02-05_constraints.tsv
+@@ -1 +1,4 @@
+ 処理ID	組	種別	根拠	理由
++P1	F01=どちらも期間外	打ち切り	L0025-L0028,L0122	更新日時がどちらも期間外なら取得されず、削除状態は効かない(0件でも200)
++P1	F02=削除済み	打ち切り	L0118	商品が削除済みなら取得対象から外れ、ほかの条件は効かない
++P1	F03=削除済み	打ち切り	L0118	商品規格が削除済みなら取得対象から外れ、ほかの条件は効かない
+
+ succeeded in 6ms:
+diff --git a/integration_test/casegen/combination/factors/A01-01_constraints.tsv b/integration_test/casegen/combination/factors/A01-01_constraints.tsv
+index 204cf00b..5956e0fe 100644
+--- a/integration_test/casegen/combination/factors/A01-01_constraints.tsv
++++ b/integration_test/casegen/combination/factors/A01-01_constraints.tsv
+@@ -1,2 +1,5 @@
+ 処理ID	組	種別	根拠	理由
+ P2	F03=在庫編集または一括編集&F04=スマレジ以外&F05=上限を超える	正解未定	L0035,L0037	上限超過のエラーがスマレジ以外の在庫にも掛かるのか、スマレジの商品だけを数えるのか書かれていない
++P1	F01=02と12以外	打ち切り	L0082-L0083	在庫区分が02・12以外なら無視して更新しない。ほかの要因は効かない
++P1	F02=店頭受取分	打ち切り	L0084	店頭受取分はスマレジ側の在庫が変動しないので無視する。在庫区分は効かない
++P2	F04=スマレジ以外	打ち切り	L0034,L0036,L0038,L0045	在庫場所区分がスマレジ以外ならスマレジ側へ反映しない
+diff --git a/integration_test/casegen/combination/factors/A02-01_constraints.tsv b/integration_test/casegen/combination/factors/A02-01_constraints.tsv
+index 42f16a7f..c1efe439 100644
+--- a/integration_test/casegen/combination/factors/A02-01_constraints.tsv
++++ b/integration_test/casegen/combination/factors/A02-01_constraints.tsv
+@@ -1,3 +1,6 @@
+ 処理ID	組	種別	根拠	理由
+-P1	F01=言語の段で決まる&F04=指定言語の規格が無い	作れない	L0083	指定言語の規格が無ければ全規格が他言語で、言語の段で差が付かない
++P1	F01=言語の段で決まる&F03=指定言語の規格が無い	作れない	L0083	指定言語の規格が無ければ全規格が他言語で、言語の段で差が付かない
+ P1	F01=全段が同じ	正解未定	L0085	並び順の4条件がすべて等しい規格が複数あるときは、どれを返すかを定めない（返す規格と同じ言語の規格数に関わらず起こる）
++P2	F04=非公開または削除済み	打ち切り	L0081,L0097	商品が非公開または削除済みなら該当なし(404)で終了し、ほかの条件は効かない
++P2	F05=カード詳細が紐づかない	打ち切り	L0086,L0097	カード詳細が紐づかない商品は対象にならず該当なし(404)で終了する
++P2	F06=そのような規格が1件も無い	打ち切り	L0081,L0097	条件を満たす規格が1件も無ければ該当なし(404)で終了する
+diff --git a/integration_test/casegen/combination/factors/A02-01_existing.tsv b/integration_test/casegen/combination/factors/A02-01_existing.tsv
+index 499e9ae3..10b1f09f 100644
+--- a/integration_test/casegen/combination/factors/A02-01_existing.tsv
++++ b/integration_test/casegen/combination/factors/A02-01_existing.tsv
+@@ -1,15 +1,15 @@
+ テストID	処理ID	値	理由
+-IT-A02-01-007	P1	F01=在庫の段で決まる&F02=ja&F04=指定言語の規格がある	在庫0の日本語NMと在庫1の英語HPをjaで要求し、返る規格を確かめる
+-IT-A02-01-008	P1	F01=言語の段で決まる&F02=ja&F04=指定言語の規格がある	在庫が同じ日本語HPと英語NMをjaで要求し、返る規格を確かめる
+-IT-A02-01-009	P1	F01=状態の段で決まる&F02=ja&F04=指定言語の規格がある	在庫・言語が同じでNM〜HPの規格をjaで要求し、返る規格を確かめる
+-IT-A02-01-010	P1	F02=ja&F04=指定言語の規格が無い	英語の規格だけの商品をjaで要求し、英語の規格が返ることを確かめる
+-IT-A02-01-011	P1	F01=言語の段で決まる&F02=en&F03=返す規格と同じ言語が複数&F04=指定言語の規格がある	英語3規格と日本語1規格をenで要求し、weeklySoldを確かめる
+-IT-A02-01-014	P1	F01=画像順位の段で決まる&F02=en&F04=指定言語の規格が無い	日本語2規格に画像順位2と1を付けenで要求し、順位1の規格が返ることを確かめる
+-IT-A02-01-021	P1	F01=画像順位の段で決まる&F02=ja&F04=指定言語の規格がある	日本語2規格に画像順位1と2を付けjaで要求し、順位2の規格が返ることを確かめる
+-IT-A02-01-023	P1	F01=状態の段で決まる&F02=ja&F04=指定言語の規格がある	NMで画像なしとHPで順位2の画像ありをjaで要求し、NMが返ることを確かめる
+-IT-A02-01-024	P1	F02=ja&F03=返す規格と同じ言語は1件だけ&F04=指定言語の規格がある	日本語の規格が1件だけの商品をjaで要求し、weeklySoldを確かめる
+-IT-A02-01-001	P2	F05=公開中で未削除&F07=販売価格0超で未削除の規格がある	公開中・未削除で販売価格500の規格がある商品を要求し、200が返ることを確かめる
+-IT-A02-01-005	P2	F05=公開中で未削除&F07=販売価格0超で未削除の規格がある	削除済みと価格0の規格が混ざる商品で、価格100の規格が返ることを確かめる
+-IT-A02-01-006	P2	F05=非公開または削除済み	削除済み商品と非公開商品を要求し、404と本文を確かめる
+-IT-A02-01-006	P2	F05=公開中で未削除&F07=そのような規格が1件も無い	規格が全て削除済みの商品と価格0の規格だけの商品を要求し、404と本文を確かめる
+-IT-A02-01-018	P2	F05=公開中で未削除&F06=カード詳細が紐づかない&F07=販売価格0超で未削除の規格がある	カード詳細を紐付けない商品を要求し、404と本文を確かめる
++IT-A02-01-007	P1	F01=在庫の段で決まる&F02=ja&F03=指定言語の規格がある	在庫0の日本語NMと在庫1の英語HPをjaで要求し、返る規格を確かめる
++IT-A02-01-008	P1	F01=言語の段で決まる&F02=ja&F03=指定言語の規格がある	在庫が同じ日本語HPと英語NMをjaで要求し、返る規格を確かめる
++IT-A02-01-009	P1	F01=状態の段で決まる&F02=ja&F03=指定言語の規格がある	在庫・言語が同じでNM〜HPの規格をjaで要求し、返る規格を確かめる
++IT-A02-01-010	P1	F02=ja&F03=指定言語の規格が無い	英語の規格だけの商品をjaで要求し、英語の規格が返ることを確かめる
++IT-A02-01-011	P1	F01=言語の段で決まる&F02=en&F03=指定言語の規格がある	英語3規格と日本語1規格をenで要求し、weeklySoldを確かめる
++IT-A02-01-014	P1	F01=画像順位の段で決まる&F02=en&F03=指定言語の規格が無い	日本語2規格に画像順位2と1を付けenで要求し、順位1の規格が返ることを確かめる
++IT-A02-01-021	P1	F01=画像順位の段で決まる&F02=ja&F03=指定言語の規格がある	日本語2規格に画像順位1と2を付けjaで要求し、順位2の規格が返ることを確かめる
++IT-A02-01-023	P1	F01=状態の段で決まる&F02=ja&F03=指定言語の規格がある	NMで画像なしとHPで順位2の画像ありをjaで要求し、NMが返ることを確かめる
++IT-A02-01-024	P1	F02=ja&F03=指定言語の規格がある	日本語の規格が1件だけの商品をjaで要求し、weeklySoldを確かめる
++IT-A02-01-001	P2	F04=公開中で未削除&F06=販売価格0超で未削除の規格がある	公開中・未削除で販売価格500の規格がある商品を要求し、200が返ることを確かめる
++IT-A02-01-005	P2	F04=公開中で未削除&F06=販売価格0超で未削除の規格がある	削除済みと価格0の規格が混ざる商品で、価格100の規格が返ることを確かめる
++IT-A02-01-006	P2	F04=非公開または削除済み	削除済み商品と非公開商品を要求し、404と本文を確かめる
++IT-A02-01-006	P2	F04=公開中で未削除&F06=そのような規格が1件も無い	規格が全て削除済みの商品と価格0の規格だけの商品を要求し、404と本文を確かめる
++IT-A02-01-018	P2	F04=公開中で未削除&F05=カード詳細が紐づかない&F06=販売価格0超で未削除の規格がある	カード詳細を紐付けない商品を要求し、404と本文を確かめる
+diff --git a/integration_test/casegen/combination/factors/A02-01_factors.tsv b/integration_test/casegen/combination/factors/A02-01_factors.tsv
+index 0d82a26a..5abc2872 100644
+--- a/integration_test/casegen/combination/factors/A02-01_factors.tsv
++++ b/integration_test/casegen/combination/factors/A02-01_factors.tsv
+@@ -1,8 +1,7 @@
+ 要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+ F01	P1	並び順のどの段で返す1件が決まるか	在庫の段で決まる｜言語の段で決まる｜状態の段で決まる｜画像順位の段で決まる｜全段が同じ	在庫の段で決まる: 在庫が0より大きい規格を返す／言語の段で決まる: 在庫が同じなら指定言語の規格を返す／状態の段で決まる: 在庫と言語が同じならNM・SP・MP・HPの順に良い規格を返す／画像順位の段で決まる: 在庫・言語・状態が同じなら指定言語に対応する順位の画像を持つ規格を返す／全段が同じ: どれを返すか定めない	L0082,L0084-L0085	この機能
+ F02	P1	リクエストの言語コード	ja｜en	ja: 画像順位2の規格を先にする／en: 画像順位1の規格を先にする	L0032,L0084	この機能
+-F03	P1	返す規格と同じ言語の規格数	返す規格と同じ言語が複数｜返す規格と同じ言語は1件だけ	返す規格と同じ言語が複数: weeklySoldはそれらの週間販売数量の合計／返す規格と同じ言語は1件だけ: weeklySoldはその1件の値	L0088	この機能
+-F04	P1	商品に指定言語の規格があるか	指定言語の規格がある｜指定言語の規格が無い	指定言語の規格がある: 言語の段で指定言語が先になる／指定言語の規格が無い: 絞り込まず他言語の規格を1件返す	L0083	この機能
+-F05	P2	商品の公開と削除の状態	公開中で未削除｜非公開または削除済み	公開中で未削除: 対象になる／非公開または削除済み: 該当なし(404)	L0081,L0097	この機能
+-F06	P2	カード詳細の紐づき	カード詳細が紐づく｜カード詳細が紐づかない	カード詳細が紐づく: 対象になる／カード詳細が紐づかない: 該当なし(404)	L0027-L0028,L0086	この機能
+-F07	P2	販売価格0超で未削除の規格	販売価格0超で未削除の規格がある｜そのような規格が1件も無い	販売価格0超で未削除の規格がある: 対象になる／そのような規格が1件も無い: 該当なし(404)	L0081,L0097	この機能
++F03	P1	商品に指定言語の規格があるか	指定言語の規格がある｜指定言語の規格が無い	指定言語の規格がある: 言語の段で指定言語が先になる／指定言語の規格が無い: 絞り込まず他言語の規格を1件返す	L0083	この機能
++F04	P2	商品の公開と削除の状態	公開中で未削除｜非公開または削除済み	公開中で未削除: 対象になる／非公開または削除済み: 該当なし(404)	L0081,L0097	この機能
++F05	P2	カード詳細の紐づき	カード詳細が紐づく｜カード詳細が紐づかない	カード詳細が紐づく: 対象になる／カード詳細が紐づかない: 該当なし(404)	L0027-L0028,L0086	この機能
++F06	P2	販売価格0超で未削除の規格	販売価格0超で未削除の規格がある｜そのような規格が1件も無い	販売価格0超で未削除の規格がある: 対象になる／そのような規格が1件も無い: 該当なし(404)	L0081,L0097	この機能
+diff --git a/integration_test/casegen/combination/factors/A02-01_interactions.tsv b/integration_test/casegen/combination/factors/A02-01_interactions.tsv
+index eba4747e..a1d16a9a 100644
+--- a/integration_test/casegen/combination/factors/A02-01_interactions.tsv
++++ b/integration_test/casegen/combination/factors/A02-01_interactions.tsv
+@@ -1,10 +1,7 @@
+ 処理ID	要因	判定	根拠	理由
+ P1	F01+F02	効き合う	L0082,L0084	画像順位の段ではjaなら順位2、enなら順位1の規格が先になる
+-P1	F01+F04	効き合う	L0082-L0083	指定言語の規格が無いときは言語の段で差が付かない
+-P1	F01+F03	関係しない		週間販売数は返した規格と同じ言語の合計で、どの段で決まったかでは変わらない
+-P1	F02+F03	関係しない		週間販売数の合計は言語コードの値では変わらない
+-P1	F02+F04	関係しない		指定言語の規格の有無は、言語コードがjaでもenでも同じ扱い
+-P1	F03+F04	関係しない		週間販売数は返した規格と同じ言語の合計で、指定言語の規格の有無では変わらない
++P1	F01+F03	効き合う	L0082-L0083	指定言語の規格が無いときは言語の段で差が付かない
++P1	F02+F03	関係しない		指定言語の規格の有無は、言語コードがjaでもenでも同じ扱い
++P2	F04+F05	関係しない		すべて満たすものだけ対象になる条件で、結果は返す・該当なしの2つだけ
++P2	F04+F06	関係しない		すべて満たすものだけ対象になる条件で、結果は返す・該当なしの2つだけ
+ P2	F05+F06	関係しない		すべて満たすものだけ対象になる条件で、結果は返す・該当なしの2つだけ
+-P2	F05+F07	関係しない		すべて満たすものだけ対象になる条件で、結果は返す・該当なしの2つだけ
+-P2	F06+F07	関係しない		すべて満たすものだけ対象になる条件で、結果は返す・該当なしの2つだけ
+diff --git a/integration_test/casegen/combination/factors/A02-02_constraints.tsv b/integration_test/casegen/combination/factors/A02-02_constraints.tsv
+index c8402574..ac44dd79 100644
+--- a/integration_test/casegen/combination/factors/A02-02_constraints.tsv
++++ b/integration_test/casegen/combination/factors/A02-02_constraints.tsv
+@@ -4,3 +4,5 @@ P1	F01=販売価格の段で決まる&F03=price指定なし	作れない	L0082	
+ P1	F01=非フォイル優先の段で決まる&F02=foil_flgが真値	作れない	L0086,L0092	指定があるときは非フォイル優先の段は効かない
+ P1	F01=非フォイル優先の段で決まる&F02=foil_flgが偽値	作れない	L0086,L0092	指定があるときは非フォイル優先の段は効かない
+ P1	F01=全段が同じ	正解未定	L0079-L0091	11段すべてが等しい規格が複数あるときにどれを返すか定めた行が無い（同じ商品かつ同じ言語かに関わらず、別の商品の規格どうしでも起こる）
++P2	F05=非公開または削除済み	打ち切り	L0077,L0098	商品が非公開または削除済みなら該当なし(404)で終了し、ほかの条件は効かない
++P2	F06=未削除の規格が1件も無い	打ち切り	L0077,L0098	未削除の規格が1件も無ければ該当なし(404)で終了する
+diff --git a/integration_test/casegen/combination/factors/A02-02_existing.tsv b/integration_test/casegen/combination/factors/A02-02_existing.tsv
+index 91572fea..9ece9658 100644
+--- a/integration_test/casegen/combination/factors/A02-02_existing.tsv
++++ b/integration_test/casegen/combination/factors/A02-02_existing.tsv
+@@ -26,5 +26,5 @@ IT-A02-02-007	P1	F01=販売価格の段で決まる&F02=foil_flg指定なし&F03
+ IT-A02-02-008	P1	F01=販売価格の段で決まる&F02=foil_flg指定なし&F03=priceがhigh以外&F04=ja	price=lowで、安い方が返ることを確かめる
+ IT-A02-02-038	P1	F01=フォイル区分の段で決まる&F02=foil_flgが偽値&F03=price指定なし&F04=ja	foil_flg=0で、非フォイルが特殊セット・プロモーションより先になることを確かめる
+ IT-A02-02-039	P1	F01=フォイル区分の段で決まる&F02=foil_flgが偽値&F03=priceがhigh&F04=ja	foil_flg=0かつprice=highで、フォイル区分が先に効くことを確かめる
+-IT-A02-02-021	P1	F01=在庫の段で決まる&F04=ja&F05=同じ商品かつ同じ言語が複数	日本語2規格の週間販売数が合計されることを確かめる
+-IT-A02-02-001	P2	F06=公開中で未削除&F07=未削除の規格がある	公開・未削除の商品と表示・未削除の規格を要求し200を確かめる
++IT-A02-02-021	P1	F01=在庫の段で決まる&F04=ja	日本語2規格の週間販売数が合計されることを確かめる
++IT-A02-02-001	P2	F05=公開中で未削除&F06=未削除の規格がある	公開・未削除の商品と表示・未削除の規格を要求し200を確かめる
+diff --git a/integration_test/casegen/combination/factors/A02-02_factors.tsv b/integration_test/casegen/combination/factors/A02-02_factors.tsv
+index d17dd762..db9df3eb 100644
+--- a/integration_test/casegen/combination/factors/A02-02_factors.tsv
++++ b/integration_test/casegen/combination/factors/A02-02_factors.tsv
+@@ -3,6 +3,5 @@ F01	P1	並び順のどの段で返す1件が決まるか	フォイル区分の
+ F02	P1	foil_flgの指定	foil_flg指定なし｜foil_flgが真値｜foil_flgが偽値	foil_flg指定なし: フォイル区分の段は使わず非フォイル優先の段が効く／foil_flgが真値: フォイル降順で最優先／foil_flgが偽値: 空文字か0でフォイル昇順で最優先	L0081,L0086,L0092,L0102,L0104	この機能
+ F03	P1	priceの指定	price指定なし｜priceがhigh｜priceがhigh以外	price指定なし: 販売価格の段は使わない／priceがhigh: 販売価格の降順／priceがhigh以外: 販売価格の昇順	L0082,L0103	この機能
+ F04	P1	リクエストの言語コード	ja｜en	ja: 言語の段でjaのものを先にする／en: 言語の段でenのものを先にする	L0030,L0088	この機能
+-F05	P1	返す規格と同じ商品かつ同じ言語の規格数	同じ商品かつ同じ言語が複数｜同じ商品かつ同じ言語は1件だけ	同じ商品かつ同じ言語が複数: weeklySoldはそれらの週間販売数の合計／同じ商品かつ同じ言語は1件だけ: weeklySoldはその1件の値	L0094	この機能
+-F06	P2	商品の公開と削除の状態	公開中で未削除｜非公開または削除済み	公開中で未削除: 対象になる／非公開または削除済み: 該当なし(404)	L0077,L0098	この機能
+-F07	P2	商品規格の削除の状態	未削除の規格がある｜未削除の規格が1件も無い	未削除の規格がある: 対象になる／未削除の規格が1件も無い: 該当なし(404)	L0077,L0098	この機能
++F05	P2	商品の公開と削除の状態	公開中で未削除｜非公開または削除済み	公開中で未削除: 対象になる／非公開または削除済み: 該当なし(404)	L0077,L0098	この機能
++F06	P2	商品規格の削除の状態	未削除の規格がある｜未削除の規格が1件も無い	未削除の規格がある: 対象になる／未削除の規格が1件も無い: 該当なし(404)	L0077,L0098	この機能
+diff --git a/integration_test/casegen/combination/factors/A02-02_interactions.tsv b/integration_test/casegen/combination/factors/A02-02_interactions.tsv
+index 3c1fcf42..1c24f9c4 100644
+--- a/integration_test/casegen/combination/factors/A02-02_interactions.tsv
++++ b/integration_test/casegen/combination/factors/A02-02_interactions.tsv
+@@ -2,11 +2,7 @@
+ P1	F01+F02	効き合う	L0081,L0086,L0092	フォイル区分の段はfoil_flgの指定があるときだけ、非フォイル優先の段は指定が無いときだけ効く
+ P1	F01+F03	効き合う	L0082	販売価格の段はpriceの指定があるときだけ効く
+ P1	F01+F04	効き合う	L0088	言語の段で、jaなら日本語、enなら英語の規格が先になる
+-P1	F01+F05	関係しない		週間販売数は返した規格と同じ商品・同じ言語の合計で、どの段で決まったかでは変わらない
+ P1	F02+F03	関係しない		foil_flgとpriceはそれぞれ自分の段を有効にするだけで、どの段で決まるかはF01で表す
+ P1	F02+F04	関係しない		foil_flgの扱いは言語コードで変わらない
+-P1	F02+F05	関係しない		週間販売数の合計はfoil_flgの指定で変わらない
+ P1	F03+F04	関係しない		priceの扱いは言語コードで変わらない
+-P1	F03+F05	関係しない		週間販売数の合計はpriceの指定で変わらない
+-P1	F04+F05	関係しない		週間販売数は返した規格と同じ言語の合計で、言語コードの値では変わらない
+-P2	F06+F07	関係しない		すべて満たすものだけ対象になる条件で、結果は返す・該当なしの2つだけ
++P2	F05+F06	関係しない		すべて満たすものだけ対象になる条件で、結果は返す・該当なしの2つだけ
+
+exec
+/bin/bash -lc 'git diff eddb12cb -- integration_test/casegen/combination/factors/A05-01_processes.tsv integration_test/casegen/combination/factors/A05-01_factors.tsv integration_test/casegen/combination/factors/A05-01_interactions.tsv integration_test/casegen/combination/factors/A05-01_constraints.tsv integration_test/casegen/combination/factors/A05-01_existing.tsv integration_test/casegen/combination/factors/A05-03_processes.tsv integration_test/casegen/combination/factors/A05-03_factors.tsv integration_test/casegen/combination/factors/A05-03_interactions.tsv integration_test/casegen/combination/factors/A05-03_constraints.tsv integration_test/casegen/combination/factors/A05-03_existing.tsv integration_test/casegen/combination/factors/A05-04_processes.tsv integration_test/casegen/combination/factors/A05-04_factors.tsv integration_test/casegen/combination/factors/A05-04_interactions.tsv integration_test/casegen/combination/factors/A05-04_constraints.tsv integration_test/casegen/combination/factors/A05-04_existing.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+diff --git a/integration_test/casegen/combination/factors/A05-01_constraints.tsv b/integration_test/casegen/combination/factors/A05-01_constraints.tsv
+index d21fecee..2fc26003 100644
+--- a/integration_test/casegen/combination/factors/A05-01_constraints.tsv
++++ b/integration_test/casegen/combination/factors/A05-01_constraints.tsv
+@@ -1 +1,8 @@
+ 処理ID	組	種別	根拠	理由
++P1	F03=未採番	打ち切り	L0028-L0029	スマレジコードが採番されていないと何もしないので、ほかの要因の値は結果に効かない
++P2	F03=未採番	打ち切り	L0028-L0029	スマレジコードが採番されていないと何もしないので、ほかの要因の値は結果に効かない
++P3	F03=未採番	打ち切り	L0028-L0029	スマレジコードが採番されていないと何もしないので、ほかの要因の値は結果に効かない
++P1	F09=別の店舗	打ち切り	L0030,L0037	別の店舗の受注は印刷情報に含まれず、ほかの要因の値は結果に効かない
++P2	F09=別の店舗	打ち切り	L0030,L0037	別の店舗の受注は印刷情報に含まれず、ほかの要因の値は結果に効かない
++P3	F09=別の店舗	打ち切り	L0030,L0037	別の店舗の受注は印刷情報に含まれず、ほかの要因の値は結果に効かない
++P4	F07=空	打ち切り	L0151	印刷データXMLが空のときは保存しないので、保存先ディレクトリの有無は結果に効かない
+diff --git a/integration_test/casegen/combination/factors/A05-01_existing.tsv b/integration_test/casegen/combination/factors/A05-01_existing.tsv
+index 615b5ec1..602a4e5c 100644
+--- a/integration_test/casegen/combination/factors/A05-01_existing.tsv
++++ b/integration_test/casegen/combination/factors/A05-01_existing.tsv
+@@ -11,9 +11,8 @@ IT-A05-01-031	P1	F01=採番済&F02=その他の状態&F03=採番済&F04=なし	
+ IT-A05-01-010	P3	F03=採番済&F04=あり	通常配送・スマレジコードあり・ブラウザ印刷フラグありで受注が含まれることを確かめる
+ IT-A05-01-032	P3	F03=採番済&F04=なし	通常配送でフラグ無しの受注が出ないことを確かめる
+ IT-A05-01-033	P3	F03=未採番&F04=あり	ブラウザ印刷フラグありでもスマレジコード未採番だと出ないことを確かめる
+-IT-A05-01-013	P4	F08=採番済	店頭注文番号が印刷データに出ることを確かめる
+-IT-A05-01-025	P5	F11=空でない&F12=ない	ディレクトリが無い状態で保存され作成されることを確かめる
+-IT-A05-01-026	P5	F11=空&F12=ある	印刷データが空のときファイルが増えないことを確かめる
+-IT-A05-01-034	P5	F11=空でない&F12=ある	ディレクトリがあるとき保存され既存ファイルが残ることを確かめる
+-IT-A05-01-028	P5	F11=空でない&F12=ある	2回要求して各回に別のファイルが保存されることを確かめる
+-IT-A05-01-027	P5	F11=空でない&F12=ある	1回の要求で1ファイルが保存されることを確かめる
++IT-A05-01-025	P4	F07=空でない&F08=ない	ディレクトリが無い状態で保存され作成されることを確かめる
++IT-A05-01-026	P4	F07=空&F08=ある	印刷データが空のときファイルが増えないことを確かめる
++IT-A05-01-034	P4	F07=空でない&F08=ある	ディレクトリがあるとき保存され既存ファイルが残ることを確かめる
++IT-A05-01-028	P4	F07=空でない&F08=ある	2回要求して各回に別のファイルが保存されることを確かめる
++IT-A05-01-027	P4	F07=空でない&F08=ある	1回の要求で1ファイルが保存されることを確かめる
+diff --git a/integration_test/casegen/combination/factors/A05-01_factors.tsv b/integration_test/casegen/combination/factors/A05-01_factors.tsv
+index 69a616be..8fff0ee7 100644
+--- a/integration_test/casegen/combination/factors/A05-01_factors.tsv
++++ b/integration_test/casegen/combination/factors/A05-01_factors.tsv
+@@ -5,10 +5,6 @@ F03	P1,P2,P3	スマレジコード	採番済｜未採番	採番済: 印刷情報
+ F04	P1,P2,P3	補助情報のブラウザ印刷フラグ	あり｜なし	あり: ブラウザ印刷を指定した受注として対象になる／なし: ほかの対象条件で決まる	L0144	この機能
+ F05	P2	支払方法	クレジット決済・支払いなし｜銀行振込・代金引換など	クレジット決済・支払いなし: スムーズ店頭受取の所定の支払方法／銀行振込・代金引換など: 所定の支払方法でなく条件を満たさない	L0143	この機能
+ F06	P2	確定日時などの日付項目	すべて未設定｜いずれかが設定済み	すべて未設定: スムーズ店頭受取の条件を満たす／いずれかが設定済み: 条件を満たさない	L0143	この機能
+-F07	P4	カナ氏名	あり｜なし	あり: お客様名にカナ氏名を印刷／なし: お客様名に氏名を印刷	L0148	この機能
+-F08	P4	店頭注文番号	採番済｜未採番	採番済: 店頭注文番号を印刷／未採番: 空欄	L0149	この機能
+-F09	P4	受注情報の問合せ	値あり｜値なし	値あり: 備考に「問い合わせ有」／値なし: 備考は空欄	L0054	この機能
+-F10	P4	受取の種類	店頭受取｜スムーズ店頭受取	店頭受取: 合計金額欄に注文の合計金額／スムーズ店頭受取: 合計金額欄に「スムーズ店頭受取」	L0058	この機能
+-F11	P5	送信する印刷データXML	空｜空でない	空: 保存しない／空でない: 同じ内容をファイルに保存する	L0031,L0151	この機能
+-F12	P5	保存先ディレクトリ	ある｜ない	ある: そのまま保存する／ない: 作成して保存する	L0151	この機能
+-F13	P1,P2,P3	受注の受取店舗	指定した店舗｜別の店舗	指定した店舗: 対象の条件を満たせば印刷情報に含まれる／別の店舗: 印刷情報に含まれない	L0030,L0037	この機能
++F07	P4	送信する印刷データXML	空｜空でない	空: 保存しない／空でない: 同じ内容をファイルに保存する	L0031,L0151	この機能
++F08	P4	保存先ディレクトリ	ある｜ない	ある: そのまま保存する／ない: 作成して保存する	L0151	この機能
++F09	P1,P2,P3	受注の受取店舗	指定した店舗｜別の店舗	指定した店舗: 対象の条件を満たせば印刷情報に含まれる／別の店舗: 印刷情報に含まれない	L0030,L0037	この機能
+diff --git a/integration_test/casegen/combination/factors/A05-01_interactions.tsv b/integration_test/casegen/combination/factors/A05-01_interactions.tsv
+index 9f9706d0..d6916667 100644
+--- a/integration_test/casegen/combination/factors/A05-01_interactions.tsv
++++ b/integration_test/casegen/combination/factors/A05-01_interactions.tsv
+@@ -2,35 +2,29 @@
+ P1	F01+F02	関係しない		対象になる・ならないを決める条件どうしで、結果は印刷情報に含まれる・含まれないの2つだけ（条件ごとの外れ方は1つずつ確かめれば足りる）
+ P1	F01+F03	関係しない		対象になる・ならないを決める条件どうしで、結果は印刷情報に含まれる・含まれないの2つだけ（条件ごとの外れ方は1つずつ確かめれば足りる）
+ P1	F01+F04	関係しない		対象になる・ならないを決める条件どうしで、結果は印刷情報に含まれる・含まれないの2つだけ（条件ごとの外れ方は1つずつ確かめれば足りる）
+-P1	F01+F13	関係しない		対象になる・ならないを決める条件どうしで、結果は印刷情報に含まれる・含まれないの2つだけ（条件ごとの外れ方は1つずつ確かめれば足りる）
++P1	F01+F09	関係しない		対象になる・ならないを決める条件どうしで、結果は印刷情報に含まれる・含まれないの2つだけ（条件ごとの外れ方は1つずつ確かめれば足りる）
+ P1	F02+F03	関係しない		対象になる・ならないを決める条件どうしで、結果は印刷情報に含まれる・含まれないの2つだけ（条件ごとの外れ方は1つずつ確かめれば足りる）
+ P1	F02+F04	関係しない		対象になる・ならないを決める条件どうしで、結果は印刷情報に含まれる・含まれないの2つだけ（条件ごとの外れ方は1つずつ確かめれば足りる）
+-P1	F02+F13	関係しない		対象になる・ならないを決める条件どうしで、結果は印刷情報に含まれる・含まれないの2つだけ（条件ごとの外れ方は1つずつ確かめれば足りる）
++P1	F02+F09	関係しない		対象になる・ならないを決める条件どうしで、結果は印刷情報に含まれる・含まれないの2つだけ（条件ごとの外れ方は1つずつ確かめれば足りる）
+ P1	F03+F04	関係しない		対象になる・ならないを決める条件どうしで、結果は印刷情報に含まれる・含まれないの2つだけ（条件ごとの外れ方は1つずつ確かめれば足りる）
+-P1	F03+F13	関係しない		対象になる・ならないを決める条件どうしで、結果は印刷情報に含まれる・含まれないの2つだけ（条件ごとの外れ方は1つずつ確かめれば足りる）
+-P1	F04+F13	関係しない		対象になる・ならないを決める条件どうしで、結果は印刷情報に含まれる・含まれないの2つだけ（条件ごとの外れ方は1つずつ確かめれば足りる）
++P1	F03+F09	関係しない		対象になる・ならないを決める条件どうしで、結果は印刷情報に含まれる・含まれないの2つだけ（条件ごとの外れ方は1つずつ確かめれば足りる）
++P1	F04+F09	関係しない		対象になる・ならないを決める条件どうしで、結果は印刷情報に含まれる・含まれないの2つだけ（条件ごとの外れ方は1つずつ確かめれば足りる）
+ P2	F02+F03	関係しない		対象になる・ならないを決める条件どうしで、結果は印刷情報に含まれる・含まれないの2つだけ（条件ごとの外れ方は1つずつ確かめれば足りる）
+ P2	F02+F04	関係しない		対象になる・ならないを決める条件どうしで、結果は印刷情報に含まれる・含まれないの2つだけ（条件ごとの外れ方は1つずつ確かめれば足りる）
+ P2	F02+F05	関係しない		対象になる・ならないを決める条件どうしで、結果は印刷情報に含まれる・含まれないの2つだけ（条件ごとの外れ方は1つずつ確かめれば足りる）
+ P2	F02+F06	関係しない		対象になる・ならないを決める条件どうしで、結果は印刷情報に含まれる・含まれないの2つだけ（条件ごとの外れ方は1つずつ確かめれば足りる）
+-P2	F02+F13	関係しない		対象になる・ならないを決める条件どうしで、結果は印刷情報に含まれる・含まれないの2つだけ（条件ごとの外れ方は1つずつ確かめれば足りる）
++P2	F02+F09	関係しない		対象になる・ならないを決める条件どうしで、結果は印刷情報に含まれる・含まれないの2つだけ（条件ごとの外れ方は1つずつ確かめれば足りる）
+ P2	F03+F04	関係しない		対象になる・ならないを決める条件どうしで、結果は印刷情報に含まれる・含まれないの2つだけ（条件ごとの外れ方は1つずつ確かめれば足りる）
+ P2	F03+F05	関係しない		対象になる・ならないを決める条件どうしで、結果は印刷情報に含まれる・含まれないの2つだけ（条件ごとの外れ方は1つずつ確かめれば足りる）
+ P2	F03+F06	関係しない		対象になる・ならないを決める条件どうしで、結果は印刷情報に含まれる・含まれないの2つだけ（条件ごとの外れ方は1つずつ確かめれば足りる）
+-P2	F03+F13	関係しない		対象になる・ならないを決める条件どうしで、結果は印刷情報に含まれる・含まれないの2つだけ（条件ごとの外れ方は1つずつ確かめれば足りる）
++P2	F03+F09	関係しない		対象になる・ならないを決める条件どうしで、結果は印刷情報に含まれる・含まれないの2つだけ（条件ごとの外れ方は1つずつ確かめれば足りる）
+ P2	F04+F05	関係しない		対象になる・ならないを決める条件どうしで、結果は印刷情報に含まれる・含まれないの2つだけ（条件ごとの外れ方は1つずつ確かめれば足りる）
+ P2	F04+F06	関係しない		対象になる・ならないを決める条件どうしで、結果は印刷情報に含まれる・含まれないの2つだけ（条件ごとの外れ方は1つずつ確かめれば足りる）
+-P2	F04+F13	関係しない		対象になる・ならないを決める条件どうしで、結果は印刷情報に含まれる・含まれないの2つだけ（条件ごとの外れ方は1つずつ確かめれば足りる）
++P2	F04+F09	関係しない		対象になる・ならないを決める条件どうしで、結果は印刷情報に含まれる・含まれないの2つだけ（条件ごとの外れ方は1つずつ確かめれば足りる）
+ P2	F05+F06	関係しない		対象になる・ならないを決める条件どうしで、結果は印刷情報に含まれる・含まれないの2つだけ（条件ごとの外れ方は1つずつ確かめれば足りる）
+-P2	F05+F13	関係しない		対象になる・ならないを決める条件どうしで、結果は印刷情報に含まれる・含まれないの2つだけ（条件ごとの外れ方は1つずつ確かめれば足りる）
+-P2	F06+F13	関係しない		対象になる・ならないを決める条件どうしで、結果は印刷情報に含まれる・含まれないの2つだけ（条件ごとの外れ方は1つずつ確かめれば足りる）
++P2	F05+F09	関係しない		対象になる・ならないを決める条件どうしで、結果は印刷情報に含まれる・含まれないの2つだけ（条件ごとの外れ方は1つずつ確かめれば足りる）
++P2	F06+F09	関係しない		対象になる・ならないを決める条件どうしで、結果は印刷情報に含まれる・含まれないの2つだけ（条件ごとの外れ方は1つずつ確かめれば足りる）
+ P3	F03+F04	関係しない		対象になる・ならないを決める条件どうしで、結果は印刷情報に含まれる・含まれないの2つだけ（条件ごとの外れ方は1つずつ確かめれば足りる）
+-P3	F03+F13	関係しない		対象になる・ならないを決める条件どうしで、結果は印刷情報に含まれる・含まれないの2つだけ（条件ごとの外れ方は1つずつ確かめれば足りる）
+-P3	F04+F13	関係しない		対象になる・ならないを決める条件どうしで、結果は印刷情報に含まれる・含まれないの2つだけ（条件ごとの外れ方は1つずつ確かめれば足りる）
+-P4	F07+F08	関係しない		各欄はそれぞれ別の受注項目から決まり、一方の値で他方の欄は変わらない
+-P4	F07+F09	関係しない		各欄はそれぞれ別の受注項目から決まり、一方の値で他方の欄は変わらない
+-P4	F07+F10	関係しない		各欄はそれぞれ別の受注項目から決まり、一方の値で他方の欄は変わらない
+-P4	F08+F09	関係しない		各欄はそれぞれ別の受注項目から決まり、一方の値で他方の欄は変わらない
+-P4	F08+F10	関係しない		各欄はそれぞれ別の受注項目から決まり、一方の値で他方の欄は変わらない
+-P4	F09+F10	関係しない		各欄はそれぞれ別の受注項目から決まり、一方の値で他方の欄は変わらない
+-P5	F11+F12	効き合う	L0151	印刷データXMLが空のときは保存しないので、保存先ディレクトリの作成も行われない
++P3	F03+F09	関係しない		対象になる・ならないを決める条件どうしで、結果は印刷情報に含まれる・含まれないの2つだけ（条件ごとの外れ方は1つずつ確かめれば足りる）
++P3	F04+F09	関係しない		対象になる・ならないを決める条件どうしで、結果は印刷情報に含まれる・含まれないの2つだけ（条件ごとの外れ方は1つずつ確かめれば足りる）
++P4	F07+F08	効き合う	L0151	印刷データXMLが空のときは保存しないので、保存先ディレクトリの作成も行われない
+diff --git a/integration_test/casegen/combination/factors/A05-01_processes.tsv b/integration_test/casegen/combination/factors/A05-01_processes.tsv
+index 87772714..5756bf8e 100644
+--- a/integration_test/casegen/combination/factors/A05-01_processes.tsv
++++ b/integration_test/casegen/combination/factors/A05-01_processes.tsv
+@@ -2,5 +2,4 @@
+ P1	店頭受取の受注が印刷情報として返るか決まる	プリンタが店舗IDを付けて印刷情報APIをGETする	API応答のXML（印刷対象の受注の有無）	L0028-L0031,L0142,L0144
+ P2	スムーズ店頭受取の受注が印刷情報として返るか決まる	プリンタが店舗IDを付けて印刷情報APIをGETする	API応答のXML（印刷対象の受注の有無）	L0028-L0031,L0143,L0144
+ P3	店頭受取でもスムーズ店頭受取でもない受注が印刷情報として返るか決まる	プリンタが店舗IDを付けて印刷情報APIをGETする	API応答のXML（印刷対象の受注の有無）	L0028-L0031,L0144
+-P4	印刷欄の内容を決めて印刷情報を作る	プリンタが店舗IDを付けて印刷情報APIをGETする	API応答のXML（お客様名・店頭注文番号・備考・合計金額の欄）	L0054,L0058,L0148-L0149
+-P5	印刷データXMLを保存する	プリンタが店舗IDを付けて印刷情報APIをGETする	APIサーバの var/log/print_logs/ のファイル	L0151
++P4	印刷データXMLを保存する	プリンタが店舗IDを付けて印刷情報APIをGETする	APIサーバの var/log/print_logs/ のファイル	L0151
+diff --git a/integration_test/casegen/combination/factors/A05-03_constraints.tsv b/integration_test/casegen/combination/factors/A05-03_constraints.tsv
+index e7c2b3bc..dd8787f3 100644
+--- a/integration_test/casegen/combination/factors/A05-03_constraints.tsv
++++ b/integration_test/casegen/combination/factors/A05-03_constraints.tsv
+@@ -1,3 +1,6 @@
+ 処理ID	組	種別	根拠	理由
+ P2	F04=なし&F05=登録なし&F06=最大件数を超える	作れない	L0047	ピック済みの受注も番号札も無いのに、合計件数が最大件数を超えることはない
+ P2	F04=なし&F06=最大件数を超える	正解未定	L0047	ピック済みの注文番号が無いと「直前に加えた番号」が決まらず、欠番の補完の起点が設計書から決まらない
++P1	F01=別の店舗	打ち切り	L0022	指定した店舗の受注でないと取得対象にならず、ほかの要因の値は結果に効かない
++P1	F02=店頭PC購入以外	打ち切り	L0022	店頭PC購入の受注でないと取得対象にならず、ほかの要因の値は結果に効かない
++P1	F03=ピック済み以外	打ち切り	L0022,L0047	ピック済みの受注でないと取得対象にならず（販売完了は欠番補完のときだけP2で別に取得）、ほかの要因の値は結果に効かない
+diff --git a/integration_test/casegen/combination/factors/A05-04_constraints.tsv b/integration_test/casegen/combination/factors/A05-04_constraints.tsv
+index 15afad31..eb78afe5 100644
+--- a/integration_test/casegen/combination/factors/A05-04_constraints.tsv
++++ b/integration_test/casegen/combination/factors/A05-04_constraints.tsv
+@@ -3,3 +3,6 @@ P1	F01=スムーズ店頭受取&F02=あり	正解未定	L0066	表のついで買
+ P1	F01=店頭購入&F02=あり	正解未定	L0082-L0084	店頭購入のついで買い欄が「-」で、店頭購入とついで買いが重なる場合の連携方法が決まらない
+ P1	F01=スムーズ店頭受取&F03=非会員	正解未定	L0066	ECCUBE購入の行は会員が〇だけで、非会員の場合の連携方法が表に無い
+ P1	F01=店頭受取&F03=非会員	正解未定	L0068-L0071	ECCUBE購入の行は会員が〇だけで、非会員の場合の連携方法が表に無い
++P2	F05=見つからない	打ち切り	L0206	会員がECCUBEに見つからないときは補正も履歴の削除も行わずエラーとせず処理を続けるので、ほかの要因の値は結果に効かない
++P2	F06=なし	打ち切り	L0194-L0195,L0207,L0213	取引に一致するポイント履歴が無いときは補正も履歴の削除も行わずエラーとせず処理を続けるので、ほかの要因の値は結果に効かない
++P3	F07=0または未設定	打ち切り	L0202	付与ポイントが0または未設定のときは加算も履歴の登録もスマレジへの送信も行わず、ほかの要因の値は結果に効かない
+diff --git a/integration_test/casegen/combination/factors/A05-04_factors.tsv b/integration_test/casegen/combination/factors/A05-04_factors.tsv
+index a8deb58d..e36fe20f 100644
+--- a/integration_test/casegen/combination/factors/A05-04_factors.tsv
++++ b/integration_test/casegen/combination/factors/A05-04_factors.tsv
+@@ -3,10 +3,7 @@ F01	P1	購入パターン	店頭購入｜スムーズ店頭受取｜店頭受取
+ F02	P1	ついで買い	なし｜あり	なし: 既存受注の状態更新と新規受注（該当時）／あり: 既存受注または店頭PC購入分についで買い分を足した新規受注を作る	L0056,L0070-L0075,L0079-L0081,L0091	この機能
+ F03	P1	会員状態	会員｜非会員	会員: 会員として登録／非会員: 非会員として登録・更新する	L0059,L0076-L0084,L0092	この機能
+ F04	P2	返品の区分	取消｜打消	取消: 取引IDから対象の受注を探してキャンセルにする／打消: 打消元取引IDから対象の受注を探してキャンセルにする	L0101-L0103,L0194-L0195	この機能
+-F05	P2,P3	会員がECCUBEに見つかるか	見つかる｜見つからない	見つかる: ポイントの補正と履歴の登録・削除を行う／見つからない: ポイントの補正も履歴の登録・削除も行わずエラーとせず処理を続ける	L0206	この機能
++F05	P2	会員がECCUBEに見つかるか	見つかる｜見つからない	見つかる: ポイントの補正と履歴の登録・削除を行う／見つからない: ポイントの補正も履歴の登録・削除も行わずエラーとせず処理を続ける	L0206	この機能
+ F06	P2	取引に一致する既存のポイント履歴	あり｜なし	あり: 保有ポイントを補正し履歴を削除する／なし: ポイントの補正も履歴の削除も行わずエラーとせず処理を続ける	L0194-L0195,L0207,L0213	この機能
+-F07	P3	付与ポイント	0より大きい｜0	0より大きい: 保有ポイントに加え購入によるポイントの付与履歴（備考は店舗付与）を登録する／0: 付与の履歴を登録しない	L0196-L0197,L0212	この機能
+-F08	P3	利用ポイント	0より大きい｜0	0より大きい: 保有ポイントから差し引き購入によるポイントの利用履歴（備考は店舗使用）を登録する／0: 利用の履歴を登録しない	L0196-L0197,L0212	この機能
+-F09	P4	付与ポイントとスマレジの応答	0または未設定｜0超で応答に正常な結果あり｜0超で応答に正常な結果なし	0または未設定: 加算も履歴の登録もスマレジへの送信も行わない（応答は発生しない）／0超で応答に正常な結果あり: 保有ポイントに加算し履歴を登録しスマレジへ付与ポイントを送り、エラー内容と連携エラーの印を記録しない／0超で応答に正常な結果なし: 加算・履歴の登録・送信を行い、注文にスマレジ連携のエラー内容と連携エラーの印を記録し処理は中断しない	L0201-L0203,L0214-L0215,L0218	この機能
+-F10	P4	スマレジ用の担当者	登録あり｜登録なし	登録あり: 注文の担当者として記録する／登録なし: 担当者を記録しない	L0200,L0217	この機能
+-F11	P4	商品コードに対応する注文	1件｜複数件	1件: その注文を反映対象にする／複数件: いちばん新しい注文を反映対象にする	L0199	この機能
++F07	P3	付与ポイントとスマレジの応答	0または未設定｜0超で応答に正常な結果あり｜0超で応答に正常な結果なし	0または未設定: 加算も履歴の登録もスマレジへの送信も行わない（応答は発生しない）／0超で応答に正常な結果あり: 保有ポイントに加算し履歴を登録しスマレジへ付与ポイントを送り、エラー内容と連携エラーの印を記録しない／0超で応答に正常な結果なし: 加算・履歴の登録・送信を行い、注文にスマレジ連携のエラー内容と連携エラーの印を記録し処理は中断しない	L0201-L0203,L0214-L0215,L0218	この機能
++F08	P3	商品コードに対応する注文	1件｜複数件	1件: その注文を反映対象にする／複数件: いちばん新しい注文を反映対象にする	L0199	この機能
+diff --git a/integration_test/casegen/combination/factors/A05-04_interactions.tsv b/integration_test/casegen/combination/factors/A05-04_interactions.tsv
+index 1ea54cbb..d06e167e 100644
+--- a/integration_test/casegen/combination/factors/A05-04_interactions.tsv
++++ b/integration_test/casegen/combination/factors/A05-04_interactions.tsv
+@@ -2,10 +2,7 @@
+ P1	F01+F02	効き合う	L0061-L0084,L0056,L0091	購入パターンとついで買いの組ごとに、既存受注の更新先と新規受注の作り方（ついで買い分を足すか）が表で定められている
+ P1	F01+F03	関係しない		会員状態は非会員のとき「非会員」として登録・更新する項目で、購入パターンごとの受注の更新先・新規受注の作り方は会員状態で変わらない（表に非会員の行が無い組は組の制約に書く）
+ P1	F02+F03	関係しない		会員状態は非会員のとき「非会員」として登録・更新する項目で、ついで買い分を足すかどうかは会員状態で変わらない
+-P2	F04+F05+F06	効き合う	L0194-L0195,L0206-L0207	補正の向きは取消と打消で異なるが、会員が見つからないとき、または対象の履歴が無いときは補正も履歴削除も行わない。区分・会員・履歴の3つが同時に互いの結果を変える
+-P3	F05+F07	効き合う	L0196,L0206	会員が見つからないときは付与ポイントが0より大きくても履歴を登録しない
+-P3	F05+F08	効き合う	L0196,L0206	会員が見つからないときは利用ポイントが0より大きくても履歴を登録しない
+-P3	F07+F08	関係しない		付与と利用は別々の履歴として0より大きいかで個別に登録され、保有ポイントは足し引きされるだけ
+-P4	F09+F10	関係しない		担当者の記録は付与ポイントの有無やスマレジの応答と関係なく、スマレジ用の担当者の登録の有無で決まる
+-P4	F09+F11	関係しない		複数件のときは最も新しい注文が対象になり、付与ポイントと応答はその注文の値で決まる
+-P4	F10+F11	関係しない		担当者は反映した注文に記録するだけで、どの注文が対象になるかとは別
++P2	F04+F05	効き合う	L0194-L0195,L0206-L0207	打ち切りの値（会員が見つからない・対応するポイント履歴が無い）のときは補正も履歴削除も行わず、区分の違いが結果に出るのは両方が満たされるときだけ
++P2	F04+F06	効き合う	L0194-L0195,L0206-L0207	打ち切りの値（会員が見つからない・対応するポイント履歴が無い）のときは補正も履歴削除も行わず、区分の違いが結果に出るのは両方が満たされるときだけ
++P2	F05+F06	効き合う	L0194-L0195,L0206-L0207	打ち切りの値（会員が見つからない・対応するポイント履歴が無い）のときは補正も履歴削除も行わず、区分の違いが結果に出るのは両方が満たされるときだけ
++P3	F07+F08	関係しない		複数件のときは最も新しい注文が対象になり、付与ポイントと応答はその注文の値で決まる
+diff --git a/integration_test/casegen/combination/factors/A05-04_processes.tsv b/integration_test/casegen/combination/factors/A05-04_processes.tsv
+index 9edb5416..c6963712 100644
+--- a/integration_test/casegen/combination/factors/A05-04_processes.tsv
++++ b/integration_test/casegen/combination/factors/A05-04_processes.tsv
+@@ -1,5 +1,4 @@
+ 処理ID	処理	契機	確かめる所	根拠
+ P1	取引完了を受けてスマレジ取引を受注として登録・更新する	スマレジの取引完了Webhook（action=created）を受信し、取引詳細を取得する	受注管理（受注の状態・会員状態・移行先受注データID・新規受注）	L0025-L0026,L0047-L0095,L0104-L0105
+ P2	返品の取引を受けて受注をキャンセルしポイントを戻す	取消区分または打消区分が1の取引を受信する	受注管理（受注状態）・会員のポイント履歴	L0096-L0103,L0191-L0195,L0206-L0207,L0211-L0213
+-P3	通常取引のポイントを会員に反映する	通常取引の取引ヘッダと取引明細を受信する	会員の保有ポイント・ポイント履歴	L0191,L0196-L0197,L0206,L0211-L0212
+-P4	注文へ反映するときにポイントをスマレジへ連携する	取引明細の商品コードに対応する注文へ取引を反映する	注文の付与ポイント・ポイント履歴・スマレジ連携エラー・スマレジ（会員ポイント）	L0198-L0203,L0214-L0218
++P3	注文へ反映するときにポイントをスマレジへ連携する	取引明細の商品コードに対応する注文へ取引を反映する	注文の付与ポイント・ポイント履歴・スマレジ連携エラー・スマレジ（会員ポイント）	L0198-L0203,L0214-L0218
+
+exec
+/bin/bash -lc 'for id in A01-01 A02-01 A02-02 A02-03 A02-04 A02-05 A05-01 A05-03 A05-04; do cat integration_test/casegen/combination/review/${id}_factors_s_dispositions.tsv; done' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+決定	処置	理由	直した所
+1	直し	在庫区分が02・12以外、店頭受取分、在庫場所区分がスマレジ以外は処理が打ち切られ、ほかの要因は効かない	constraints に打ち切り3行(P1 F01=02と12以外・P1 F02=店頭受取分・P2 F04=スマレジ以外)。既存の正解未定1行は在庫編集の上限超過エラーの論点として残した
+2	直しなし	当たる所なし	
+3	直しなし	当たる所なし(在庫編集・CSV・棚卸し・入庫済み・出庫承認済み・分割結合は反映方法/時点が違う)	
+決定	処置	理由	直した所
+1	直し	非公開または削除済み・カード詳細が紐づかない・条件を満たす規格が無いは、どれか1つで該当なし(404)で打ち切られる	constraints に打ち切り3行(P2のF04・F05・F06の各1値)
+2	直し	返す規格と同じ言語の規格数は応答の週間販売数の列だけを決め、返す規格の選び方にも他の要因にも効かない	旧F03を外し要因IDを振り直した(F04→F03など)。interactions・constraints・existingの参照も合わせた
+3	直しなし	当たる所なし	
+決定	処置	理由	直した所
+1	直し	非公開または削除済み・未削除の規格が1件も無いは、どちらも該当なし(404)で打ち切られる	constraints に打ち切り2行(P2のF05・F06の各1値)
+2	直し	同じ商品かつ同じ言語の規格数は応答の週間販売数の列だけを決め、返す規格の選び方にも他の要因にも効かない	旧F05を外し要因IDを振り直した(F06→F05など)。interactions・existingの参照も合わせた
+3	直しなし	当たる所なし	
+決定	処置	理由	直した所
+1	直し	旧商品IDが一致しない・非公開廃止削除済み・未削除の規格が無い・カード詳細が紐づかないは、どれか1つで該当なし(404)で打ち切られる	constraints に打ち切り4行(P2のF03〜F06の各1値)
+2	直し	返す商品とパスの言語に紐づく規格数は応答の週間販売数の列だけを決め、他の要因に効かない	旧F03を外し要因IDを振り直した(F04→F03など)。interactions・existingの参照も合わせた
+3	直しなし	当たる所なし(旧商品IDの2値は処置済み)	
+決定	処置	理由	直した所
+1	直し	旧商品IDが一致しない・商品削除済み・規格削除済み・カード対応なし・画像0件は、どれか1つで該当なし(404)で打ち切られる	constraints に打ち切り5行(F01〜F05の各1値)
+2	直しなし	当たる所なし	
+3	直しなし	当たる所なし(旧商品IDの2値は処置済み)	
+決定	処置	理由	直した所
+1	直し	更新日時がどちらも期間外・商品削除済み・規格削除済みは、どれか1つで取得対象から外れ、ほかの条件は効かない	constraints に打ち切り3行(F01〜F03の各1値)
+2	直しなし	当たる所なし	
+3	直しなし	当たる所なし(更新日時の2値は処置済み)	
+決定	処置	理由	直した所
+1	直し	スマレジコード未採番は何もしない（L0028-L0029）、別の店舗の受注は含まれない（L0030）、印刷データXMLが空なら保存しない（L0151）。いずれもほかの要因の値が結果に効かない	constraintsに打ち切り7行（P1〜P3のスマレジコード未採番と別の店舗、P4の印刷データXMLが空）を足した。注文番号・対応状況など、ブラウザ印刷フラグとのOR条件で決まる値は打ち切りにしていない
+2	直し	印刷欄ごとに独立して決まる値（お客様名のカナ氏名、店頭注文番号の空欄、備考の問合せ、合計金額欄の受取の種類）で、互いにもほかの要因とも効き合わない	P4（印刷内容を決める処理）と要因4つ（旧F07〜F10）を外し、旧P5・F11〜F13を P4・F07〜F09 に振り直した
+3	直しなし	同じ結果の値は既にまとまっている（支払方法など）	
+決定	処置	理由	直した所
+1	直し	P1の店舗・購入方法・対応状況は、外れる値だと取得対象にならず、ほかの要因の値が結果に効かない（L0022）	constraintsに打ち切り3行（別の店舗・店頭PC購入以外・ピック済み以外）を足した
+2	直しなし	当たる所なし	
+3	直しなし	当たる所なし	
+決定	処置	理由	直した所
+1	直し	会員がECCUBEに見つからない・対応するポイント履歴が無いときは補正も履歴削除も行わない（L0206-L0207）、付与ポイントが0または未設定ならスマレジ連携も行わない（L0202）。3要因の効き合う行は打ち切りを理由にまとめたものだった	constraintsに打ち切り3行（P2のF05=見つからない・F06=なし、P3のF07=0または未設定）を足し、P2のF04+F05+F06を F04+F05・F04+F06・F05+F06 の2要因3行に分けた
+2	直し	付与・利用のポイント履歴はそれぞれ別の履歴として0かどうかで独立に決まり（L0196-L0197）、スマレジ用の担当者の記録は付与ポイントや応答に関わらず担当者の登録の有無だけで決まる。ほかの要因と効き合うのは会員が見つからない打ち切りだけ	旧P3（通常取引のポイント反映）と要因F07・F08、旧F10（スマレジ用の担当者）を外した。会員が見つかるかの要因はP2に残した。旧P4・F09・F11を P3・F07・F08 に振り直した
+3	直しなし	店頭受取と店頭PC購入はL0068-L0075の表で会員・非会員の定めの有無が違い結果が同じでないため、まとめない	
+
+codex
+変更の中心は「取得対象外として打ち切る条件」と、週間販売数・印刷欄・ポイント履歴などの要因除外です。まず打ち切り後にも結果が変わる要因がないかを、各処理の定義と設計本文で確認します。
+exec
+/bin/bash -lc 'git diff eddb12cb -- integration_test/casegen/combination/factors/A02-04_constraints.tsv integration_test/casegen/combination/factors/A02-04_factors.tsv integration_test/casegen/combination/factors/A02-04_processes.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 2ms:
+diff --git a/integration_test/casegen/combination/factors/A02-04_constraints.tsv b/integration_test/casegen/combination/factors/A02-04_constraints.tsv
+index d21fecee..2765c06b 100644
+--- a/integration_test/casegen/combination/factors/A02-04_constraints.tsv
++++ b/integration_test/casegen/combination/factors/A02-04_constraints.tsv
+@@ -1 +1,6 @@
+ 処理ID	組	種別	根拠	理由
++P1	F01=どちらにも一致しない	打ち切り	L0079,L0091	旧商品IDがどちらにも一致しなければ該当なし(404)で終了し、ほかの条件は効かない
++P1	F02=削除済み	打ち切り	L0079,L0091	商品が削除済みなら該当なし(404)で終了する
++P1	F03=削除済み	打ち切り	L0079,L0091	商品規格が削除済みなら該当なし(404)で終了する
++P1	F04=なし	打ち切り	L0080,L0091	商品とカードの対応が無ければ該当なし(404)で終了する
++P1	F05=0件	打ち切り	L0080,L0091	商品画像が0件なら該当なし(404)で終了する
+
+exec
+/bin/bash -lc 'git diff eddb12cb -- integration_test/casegen/combination/factors/A02-05_constraints.tsv integration_test/casegen/combination/factors/A02-05_factors.tsv integration_test/casegen/combination/factors/A02-05_processes.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'git diff eddb12cb -- integration_test/casegen/combination/factors/A02-03_constraints.tsv integration_test/casegen/combination/factors/A02-03_factors.tsv integration_test/casegen/combination/factors/A02-03_processes.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+diff --git a/integration_test/casegen/combination/factors/A02-05_constraints.tsv b/integration_test/casegen/combination/factors/A02-05_constraints.tsv
+index d21fecee..ac09e805 100644
+--- a/integration_test/casegen/combination/factors/A02-05_constraints.tsv
++++ b/integration_test/casegen/combination/factors/A02-05_constraints.tsv
+@@ -1 +1,4 @@
+ 処理ID	組	種別	根拠	理由
++P1	F01=どちらも期間外	打ち切り	L0025-L0028,L0122	更新日時がどちらも期間外なら取得されず、削除状態は効かない(0件でも200)
++P1	F02=削除済み	打ち切り	L0118	商品が削除済みなら取得対象から外れ、ほかの条件は効かない
++P1	F03=削除済み	打ち切り	L0118	商品規格が削除済みなら取得対象から外れ、ほかの条件は効かない
+
+ succeeded in 0ms:
+diff --git a/integration_test/casegen/combination/factors/A02-03_constraints.tsv b/integration_test/casegen/combination/factors/A02-03_constraints.tsv
+index ed8685a6..1dc22a82 100644
+--- a/integration_test/casegen/combination/factors/A02-03_constraints.tsv
++++ b/integration_test/casegen/combination/factors/A02-03_constraints.tsv
+@@ -1,2 +1,6 @@
+ 処理ID	組	種別	根拠	理由
+ P1	F01=全段が同じ	正解未定	L0091	6条件がすべて等しい商品が複数あるときは、どれを返すかを定めない
++P2	F03=どちらにも一致しない	打ち切り	L0082,L0099	旧商品IDがどちらにも一致しなければ該当なし(404)で終了し、ほかの条件は効かない
++P2	F04=非公開・廃止・削除済み	打ち切り	L0083,L0099	非公開・廃止・削除済みの商品は対象にならず該当なし(404)で終了する
++P2	F05=未削除の規格が1件も無い	打ち切り	L0083,L0099	未削除の規格が1件も無ければ該当なし(404)で終了する
++P2	F06=カード詳細が紐づかない	打ち切り	L0092,L0099	カード詳細が紐づかなければ該当なし(404)で終了する
+diff --git a/integration_test/casegen/combination/factors/A02-03_factors.tsv b/integration_test/casegen/combination/factors/A02-03_factors.tsv
+index b4e52e12..681d34ae 100644
+--- a/integration_test/casegen/combination/factors/A02-03_factors.tsv
++++ b/integration_test/casegen/combination/factors/A02-03_factors.tsv
+@@ -1,8 +1,7 @@
+ 要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+ F01	P1	並び順のどの段で返す1件が決まるか	特殊カードセットの段で決まる｜プロモーションの段で決まる｜発売日の段で決まる｜Foilの段で決まる｜言語の段で決まる｜画像優先度の段で決まる｜全段が同じ	特殊カードセットの段で決まる: 特殊でないものを返す／プロモーションの段で決まる: プロモーションでないものを返す／発売日の段で決まる: リリース日が新しいものを返す／Foilの段で決まる: Foilでないものを返す／言語の段で決まる: パスの言語コードと一致するものを返す／画像優先度の段で決まる: パスの言語コードに対応する画像優先度のものを返す／全段が同じ: どれを返すか定めない	L0085-L0091	この機能
+ F02	P1	パスの言語コード	ja｜en	ja: 言語と画像優先度の段でjaに対応するものを先にする／en: 言語と画像優先度の段でenに対応するものを先にする	L0033,L0089-L0090	この機能
+-F03	P1	返す商品とパスの言語に紐づく規格数	パスの言語に紐づく規格が複数｜パスの言語に紐づく規格は1件だけ	パスの言語に紐づく規格が複数: weeklySoldはそれらの販売数の合計／パスの言語に紐づく規格は1件だけ: weeklySoldはその1件の値	L0094	この機能
+-F04	P2	パスの旧商品IDの一致	どちらかに一致｜どちらにも一致しない	どちらかに一致: 対象になる（カードの旧商品IDと旧英語商品IDのどちらか一方に一致すればよい）／どちらにも一致しない: 該当なし(404)	L0082,L0099	この機能
+-F05	P2	商品の公開状態と削除	公開中で未削除｜非公開・廃止・削除済み	公開中で未削除: 対象になる／非公開・廃止・削除済み: 該当なし(404)	L0083	この機能
+-F06	P2	商品規格の削除	未削除の規格がある｜未削除の規格が1件も無い	未削除の規格がある: 対象になる／未削除の規格が1件も無い: 該当なし(404)	L0083	この機能
+-F07	P2	カード詳細の紐づき	カード詳細が紐づく｜カード詳細が紐づかない	カード詳細が紐づく: 対象になる／カード詳細が紐づかない: 該当なし(404)	L0028-L0029,L0092	この機能
++F03	P2	パスの旧商品IDの一致	どちらかに一致｜どちらにも一致しない	どちらかに一致: 対象になる（カードの旧商品IDと旧英語商品IDのどちらか一方に一致すればよい）／どちらにも一致しない: 該当なし(404)	L0082,L0099	この機能
++F04	P2	商品の公開状態と削除	公開中で未削除｜非公開・廃止・削除済み	公開中で未削除: 対象になる／非公開・廃止・削除済み: 該当なし(404)	L0083	この機能
++F05	P2	商品規格の削除	未削除の規格がある｜未削除の規格が1件も無い	未削除の規格がある: 対象になる／未削除の規格が1件も無い: 該当なし(404)	L0083	この機能
++F06	P2	カード詳細の紐づき	カード詳細が紐づく｜カード詳細が紐づかない	カード詳細が紐づく: 対象になる／カード詳細が紐づかない: 該当なし(404)	L0028-L0029,L0092	この機能
+
+exec
+/bin/bash -lc 'git diff eddb12cb -- integration_test/casegen/combination/factors/A01-01_constraints.tsv integration_test/casegen/combination/factors/A01-01_factors.tsv integration_test/casegen/combination/factors/A01-01_processes.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'git diff eddb12cb -- integration_test/casegen/combination/factors/A05-03_constraints.tsv integration_test/casegen/combination/factors/A05-03_factors.tsv integration_test/casegen/combination/factors/A05-03_processes.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+diff --git a/integration_test/casegen/combination/factors/A01-01_constraints.tsv b/integration_test/casegen/combination/factors/A01-01_constraints.tsv
+index 204cf00b..5956e0fe 100644
+--- a/integration_test/casegen/combination/factors/A01-01_constraints.tsv
++++ b/integration_test/casegen/combination/factors/A01-01_constraints.tsv
+@@ -1,2 +1,5 @@
+ 処理ID	組	種別	根拠	理由
+ P2	F03=在庫編集または一括編集&F04=スマレジ以外&F05=上限を超える	正解未定	L0035,L0037	上限超過のエラーがスマレジ以外の在庫にも掛かるのか、スマレジの商品だけを数えるのか書かれていない
++P1	F01=02と12以外	打ち切り	L0082-L0083	在庫区分が02・12以外なら無視して更新しない。ほかの要因は効かない
++P1	F02=店頭受取分	打ち切り	L0084	店頭受取分はスマレジ側の在庫が変動しないので無視する。在庫区分は効かない
++P2	F04=スマレジ以外	打ち切り	L0034,L0036,L0038,L0045	在庫場所区分がスマレジ以外ならスマレジ側へ反映しない
+
+exec
+/bin/bash -lc 'git diff eddb12cb -- integration_test/casegen/combination/factors/A05-01_constraints.tsv integration_test/casegen/combination/factors/A05-01_factors.tsv integration_test/casegen/combination/factors/A05-01_processes.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+diff --git a/integration_test/casegen/combination/factors/A05-03_constraints.tsv b/integration_test/casegen/combination/factors/A05-03_constraints.tsv
+index e7c2b3bc..dd8787f3 100644
+--- a/integration_test/casegen/combination/factors/A05-03_constraints.tsv
++++ b/integration_test/casegen/combination/factors/A05-03_constraints.tsv
+@@ -1,3 +1,6 @@
+ 処理ID	組	種別	根拠	理由
+ P2	F04=なし&F05=登録なし&F06=最大件数を超える	作れない	L0047	ピック済みの受注も番号札も無いのに、合計件数が最大件数を超えることはない
+ P2	F04=なし&F06=最大件数を超える	正解未定	L0047	ピック済みの注文番号が無いと「直前に加えた番号」が決まらず、欠番の補完の起点が設計書から決まらない
++P1	F01=別の店舗	打ち切り	L0022	指定した店舗の受注でないと取得対象にならず、ほかの要因の値は結果に効かない
++P1	F02=店頭PC購入以外	打ち切り	L0022	店頭PC購入の受注でないと取得対象にならず、ほかの要因の値は結果に効かない
++P1	F03=ピック済み以外	打ち切り	L0022,L0047	ピック済みの受注でないと取得対象にならず（販売完了は欠番補完のときだけP2で別に取得）、ほかの要因の値は結果に効かない
+
+ succeeded in 0ms:
+diff --git a/integration_test/casegen/combination/factors/A05-01_constraints.tsv b/integration_test/casegen/combination/factors/A05-01_constraints.tsv
+index d21fecee..2fc26003 100644
+--- a/integration_test/casegen/combination/factors/A05-01_constraints.tsv
++++ b/integration_test/casegen/combination/factors/A05-01_constraints.tsv
+@@ -1 +1,8 @@
+ 処理ID	組	種別	根拠	理由
++P1	F03=未採番	打ち切り	L0028-L0029	スマレジコードが採番されていないと何もしないので、ほかの要因の値は結果に効かない
++P2	F03=未採番	打ち切り	L0028-L0029	スマレジコードが採番されていないと何もしないので、ほかの要因の値は結果に効かない
++P3	F03=未採番	打ち切り	L0028-L0029	スマレジコードが採番されていないと何もしないので、ほかの要因の値は結果に効かない
++P1	F09=別の店舗	打ち切り	L0030,L0037	別の店舗の受注は印刷情報に含まれず、ほかの要因の値は結果に効かない
++P2	F09=別の店舗	打ち切り	L0030,L0037	別の店舗の受注は印刷情報に含まれず、ほかの要因の値は結果に効かない
++P3	F09=別の店舗	打ち切り	L0030,L0037	別の店舗の受注は印刷情報に含まれず、ほかの要因の値は結果に効かない
++P4	F07=空	打ち切り	L0151	印刷データXMLが空のときは保存しないので、保存先ディレクトリの有無は結果に効かない
+diff --git a/integration_test/casegen/combination/factors/A05-01_factors.tsv b/integration_test/casegen/combination/factors/A05-01_factors.tsv
+index 69a616be..8fff0ee7 100644
+--- a/integration_test/casegen/combination/factors/A05-01_factors.tsv
++++ b/integration_test/casegen/combination/factors/A05-01_factors.tsv
+@@ -5,10 +5,6 @@ F03	P1,P2,P3	スマレジコード	採番済｜未採番	採番済: 印刷情報
+ F04	P1,P2,P3	補助情報のブラウザ印刷フラグ	あり｜なし	あり: ブラウザ印刷を指定した受注として対象になる／なし: ほかの対象条件で決まる	L0144	この機能
+ F05	P2	支払方法	クレジット決済・支払いなし｜銀行振込・代金引換など	クレジット決済・支払いなし: スムーズ店頭受取の所定の支払方法／銀行振込・代金引換など: 所定の支払方法でなく条件を満たさない	L0143	この機能
+ F06	P2	確定日時などの日付項目	すべて未設定｜いずれかが設定済み	すべて未設定: スムーズ店頭受取の条件を満たす／いずれかが設定済み: 条件を満たさない	L0143	この機能
+-F07	P4	カナ氏名	あり｜なし	あり: お客様名にカナ氏名を印刷／なし: お客様名に氏名を印刷	L0148	この機能
+-F08	P4	店頭注文番号	採番済｜未採番	採番済: 店頭注文番号を印刷／未採番: 空欄	L0149	この機能
+-F09	P4	受注情報の問合せ	値あり｜値なし	値あり: 備考に「問い合わせ有」／値なし: 備考は空欄	L0054	この機能
+-F10	P4	受取の種類	店頭受取｜スムーズ店頭受取	店頭受取: 合計金額欄に注文の合計金額／スムーズ店頭受取: 合計金額欄に「スムーズ店頭受取」	L0058	この機能
+-F11	P5	送信する印刷データXML	空｜空でない	空: 保存しない／空でない: 同じ内容をファイルに保存する	L0031,L0151	この機能
+-F12	P5	保存先ディレクトリ	ある｜ない	ある: そのまま保存する／ない: 作成して保存する	L0151	この機能
+-F13	P1,P2,P3	受注の受取店舗	指定した店舗｜別の店舗	指定した店舗: 対象の条件を満たせば印刷情報に含まれる／別の店舗: 印刷情報に含まれない	L0030,L0037	この機能
++F07	P4	送信する印刷データXML	空｜空でない	空: 保存しない／空でない: 同じ内容をファイルに保存する	L0031,L0151	この機能
++F08	P4	保存先ディレクトリ	ある｜ない	ある: そのまま保存する／ない: 作成して保存する	L0151	この機能
++F09	P1,P2,P3	受注の受取店舗	指定した店舗｜別の店舗	指定した店舗: 対象の条件を満たせば印刷情報に含まれる／別の店舗: 印刷情報に含まれない	L0030,L0037	この機能
+diff --git a/integration_test/casegen/combination/factors/A05-01_processes.tsv b/integration_test/casegen/combination/factors/A05-01_processes.tsv
+index 87772714..5756bf8e 100644
+--- a/integration_test/casegen/combination/factors/A05-01_processes.tsv
++++ b/integration_test/casegen/combination/factors/A05-01_processes.tsv
+@@ -2,5 +2,4 @@
+ P1	店頭受取の受注が印刷情報として返るか決まる	プリンタが店舗IDを付けて印刷情報APIをGETする	API応答のXML（印刷対象の受注の有無）	L0028-L0031,L0142,L0144
+ P2	スムーズ店頭受取の受注が印刷情報として返るか決まる	プリンタが店舗IDを付けて印刷情報APIをGETする	API応答のXML（印刷対象の受注の有無）	L0028-L0031,L0143,L0144
+ P3	店頭受取でもスムーズ店頭受取でもない受注が印刷情報として返るか決まる	プリンタが店舗IDを付けて印刷情報APIをGETする	API応答のXML（印刷対象の受注の有無）	L0028-L0031,L0144
+-P4	印刷欄の内容を決めて印刷情報を作る	プリンタが店舗IDを付けて印刷情報APIをGETする	API応答のXML（お客様名・店頭注文番号・備考・合計金額の欄）	L0054,L0058,L0148-L0149
+-P5	印刷データXMLを保存する	プリンタが店舗IDを付けて印刷情報APIをGETする	APIサーバの var/log/print_logs/ のファイル	L0151
++P4	印刷データXMLを保存する	プリンタが店舗IDを付けて印刷情報APIをGETする	APIサーバの var/log/print_logs/ のファイル	L0151
+
+exec
+/bin/bash -lc "sed -n '70,105p' integration_test/casegen/combination/units/A02-01/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "sed -n '1,100p' integration_test/casegen/combination/units/A01-01/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "sed -n '70,110p' integration_test/casegen/combination/units/A02-02/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "sed -n '75,105p' integration_test/casegen/combination/units/A02-03/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "sed -n '70,100p' integration_test/casegen/combination/units/A02-04/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "sed -n '108,128p' integration_test/casegen/combination/units/A02-05/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "sed -n '20,65;135,155p' integration_test/casegen/combination/units/A05-01/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "sed -n '16,55p' integration_test/casegen/combination/units/A05-03/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "sed -n '185,225p' integration_test/casegen/combination/units/A05-04/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 196ms:
+##### 0501 sheet-3 スマレジ連携処理
+L0001	スマレジ連携処理
+L0002	ドキュメント名在庫管理API機能
+L0003	セクション—
+L0004	プロジェクト名サイトリニューアル
+L0005	作成者堀部
+L0006	作成日2025-07-28
+L0007	更新者—
+L0008	更新日—
+L0009	機能NoA01-01
+L0010	機能名スマレジ連携処理
+L0011	概要スマレジとの連携処理
+L0012	処理概要（★はカスタマイズ項目）
+L0013	GET POST PUT DELETE PATCH OPTIONS HEAD 有 無 〇
+L0014	エンドポイントURL
+L0015	/smaregi/stocks
+L0016	プロトコル HTTP メソッド POST 認証の有無 有 認証方式 IP制限 リクエスト書式 JSON レスポンス書式 なし(ステータスコードのみ)
+L0017	カスタマイズ説明
+L0018	スマレジの在庫が変動するタイミングで、ECCUBEとスマレジをスマレジプラットフォームAPIを介して連携させる
+L0019	トリガーとなるポイントに合わせて、APIやWebhookを活用して連携させる
+L0020	実装時の注意点
+L0021	API利用時の注意事項一般 https://developers.smaregi.dev/apidoc/common/#section/Webhook
+L0022	APIのレート制限(スロットリング) https://developers.smaregi.dev/apidoc/common/#section/%E3%83%AC%E3%83%BC%E3%83%88%E5%88%B6%E9%99%90
+L0023	※秒間50回が上限になりますが、理論上1秒間にレジ25台(在庫・受注処理で2回として仮定)が同時決済まで対応可能
+L0024	※レート制限を超えた場合もエラーレスポンスで待機時間が返ってくるのでリトライ処理が可能
+L0025	機能仕様処理概要（★はカスタマイズ項目）
+L0026	在庫におけるスマレジとの連携は大きく分けて3つの方式
+L0027	1	スマレジ -> ECCUBE (Webhook方式)	スマレジ側で在庫変動があった場合、取引完了や取引キャンセル(全キャンセル)
+L0028	2	ECCUBE -> スマレジ(API個別)	CSV登録等の一括処理ではない管理画面でスマレジ側の在庫変動が発生した場合
+L0029	3	ECCUBE -> スマレジ連携(Patch一括)	CSV登録等の一括処理でスマレジ側の在庫変動が発生した場合
+L0030	スマレジ連携方式一覧
+L0031	操作場所	機能名	方式	概要
+L0032	スマレジ	スマレジで取引完了時	1:webhook	スマレジで受注した結果による在庫変動結果をwebhookで受信し、スマレジ在庫数を減らす
+L0033	スマレジ	スマレジで取引全キャンセル	1:webhook	スマレジでの受注が全キャンセルされた結果をwebhookで受信し、スマレジ在庫数を戻す
+L0034	管理画面	在庫編集	2:API個別	在庫場所区分がスマレジの場合に編集結果をスマレジ側に反映する
+L0035	実行できる件数上限を設定し、上限を越えたらエラーを表示し、CSV登録を促す
+L0036	管理画面	在庫一括編集	2:API個別	在庫場所区分がスマレジの場合に編集結果をスマレジ側に反映する
+L0037	実行できる件数上限を設定し、上限を越えたらエラーを表示し、CSV登録を促す
+L0038	管理画面	在庫変更CSV登録	3:Patch一括	在庫区分がスマレジの場合に編集結果をスマレジ側に反映する
+L0039	管理画面	在庫移動指示	2 or 3 ※1	スマレジ在庫に入庫する場合、その移動指示結果を入庫済みになったタイミングで反映
+L0040	管理画面	在庫移動指示	2 or 3 ※1	スマレジ在庫から出庫する場合、その移動指示結果を出庫承認済みになったタイミングで反映
+L0041	管理画面	分割結合(分割)	2 or 3 ※1	スマレジ在庫から分割するために、福袋やオリパを出庫にする
+L0042	管理画面	分割結合(分割)	2 or 3 ※1	スマレジ在庫に福袋やオリパを分割した結果を入庫する
+L0043	管理画面	分割結合(結合)	2 or 3 ※1	スマレジの在庫から福袋やオリパを作るための商品を出庫する
+L0044	管理画面	分割結合(結合)	2 or 3 ※1	スマレジの在庫に結合した福袋やオリパを入庫する
+L0045	管理画面	棚卸し	3:Patch一括	スマレジの在庫を棚卸した場合、結果をスマレジ側に反映する
+L0046	※1 上限件数を閾値にして、閾値を越えたらPatch一括処理。越えなかったらAPI個別
+L0047	1.スマレジ -> ECCUBE (Webhook方式) 処理概要（★はカスタマイズ項目）
+L0048	スマレジ -> ECCUBE (Webhook方式)
+L0049	★1-1. スマレジで取引完了もしくは取引全キャンセルをhookにwebhook発動
+L0050	スマレジ
+L0051	ECCUBE
+L0052	A. ★スマレジ在庫変動履歴IDを送信
+L0053	B. ★在庫変動履歴IDで取引詳細を要求
+L0054	C. ★在庫変動履歴情報を返す
+L0055	取引完了 or
+L0056	取引全キャンセル
+L0057	スマレジ在庫変更履歴情報取得
+L0058	ECCUBE
+L0059	スマレジ
+L0060	D. ★在庫相対値更新で在庫更新
+L0061	E. ★APIのレスポンスを返す
+L0062	管理画面操作による在庫変更
+L0063	スマレジ在庫更新
+L0064	ECCUBE
+L0065	スマレジ
+L0066	F. ★在庫一括相対値更新でデータ登録
+L0067	G. ★処理結果をURLに返す
+L0068	管理画面操作による在庫変更CSV登録
+L0069	非同期による処理
+L0070	ECCUBE側の処理を実行
+L0071	画面遷移図をExcel図形座標で再構成（画面 10件 / 遷移 5件 / 元コネクタ 15件）
+L0072	遷移一覧（5件）（うち推定 5件：明示接続でなく最近傍幾何で補完）
+L0073	遷移元	遷移先	connector
+L0074	取引完了 or
+L0075	取引全キャンセル	推定A. ★スマレジ在庫変動履歴IDを送信	16（0501:スマレジ連携処理!I59）
+L0076	C. ★在庫変動履歴情報を返す	推定スマレジ在庫変更履歴情報取得	12（0501:スマレジ連携処理!I59）
+L0077	管理画面操作による在庫変更	推定スマレジ在庫更新	29（0501:スマレジ連携処理!H173）
+L0078	管理画面操作による在庫変更CSV登録	推定F. ★在庫一括相対値更新でデータ登録	49（0501:スマレジ連携処理!G229）
+L0079	ECCUBE側の処理を実行	推定G. ★処理結果をURLに返す	47（0501:スマレジ連携処理!G229）
+L0080	※ 在庫変動履歴情報のIDは商品と店舗の組合せでしかまとめて取得できないので、取引商品種類数分CのAPIを叩く必要がある
+L0081	★1-2. 取得したスマレジ在庫変更履歴情報をもとにECCUBE上のスマレジ在庫情報を更新
+L0082	在庫区分が02:売上の時は出庫処理, 12:の時は入庫処理を実施
+L0083	取得したスマレジ在庫変更履歴情報の在庫区分が02:売上と12:返品のみ、情報更新処理を実施。それ以外は無視する
+L0084	店頭受取分の商品IDの場合、スマレジ側の在庫は変動しないので無視する
+L0085	スマレジの在庫変動履歴IDはECCUBE側の在庫変動履歴に紐づけて保存しておく
+L0086	在庫変動履歴の登録については、「在庫変動時の履歴作成について」シートを参照
+L0087	1-1 A. Webhook受信データ
+L0088	項目名	型	必須	最大文字数
+L0089	または最大値	入力例	備考
+L0090	契約ID	String	〇			スマレジの契約ID
+L0091	イベント名	String	〇		pos:stock	取引のイベント名固定 [pos:transactions]
+L0092	アクション	String	〇		edited	edited: 更新, bulk-update: 一括更新
+L0093	在庫変動履歴IDリスト	int[]	〇			スマレジの以下の3つの情報のセットを1配列データとした配列リスト
+L0094	在庫変更履歴ID, 商品ID, 店舗ID
+L0095	1-1 A. レスポンスデータサンプル
+L0096	{
+L0097	"contractId": "string",
+L0098	"event": "string",
+L0099	"action": "edited",
+
+ succeeded in 266ms:
+L0069	"foilFlg": false,
+L0070	"weeklySold": "1",
+L0071	"productUrl": "https://www.hareruyamtg.com/ja/products/detail/14357"
+L0072	}
+L0073	Source:
+L0074	functions/pf-api/a02-01_api_product_popup_product.md
+L0075	現行仕様
+L0076	A02-01 ポップアップ用商品情報取得 / API 商品管理 — ポップアップ用商品情報取得
+L0077	業務ロジック
+L0078	返す1件の選び方
+L0079	同じ商品に商品規格が複数あるとき、次の条件を満たすものだけを対象とし、並び順の先頭1件を返す。対象が1件も無いときは該当なしとする。
+L0080	区分	内容
+L0081	対象の条件	商品が削除されておらず公開中であること／商品規格が削除されていないこと／商品規格の販売価格が0より大きいこと
+L0082	並び順	1. 在庫数が0より大きいものを先にする 2. 商品規格の言語コードが指定言語と一致するものを先にする 3. カードの状態が良い順（NM・SP・MP・HP の順） 4. 指定言語に対応する順位の商品規格画像を持つものを先にする
+L0083	指定言語は絞り込みには使わず、並び順の優先にだけ使う。そのため指定言語の商品規格を持たない商品でも、他の言語の商品規格を1件返す。
+L0084	並び順4の指定言語に対応する順位は、指定言語が jp のとき2、en のとき1である。商品規格画像の順位がこの値と一致する商品規格を先にする。
+L0085	並び順の4条件がすべて等しい商品規格が複数あるときは、どれを返すかを定めない。4条件より後の並び順は無い。
+L0086	カード詳細が紐づかない商品は対象にならず、該当なしとする。
+L0087	週間販売数の数え方
+L0088	週間販売数は、返した商品規格1件の値ではなく、その商品が持つ商品規格のうち、返した商品規格と同じ言語コードのものの週間販売数量を合計した値とする。
+L0089	値の取り方
+L0090	取得した値は再計算・丸めを行わず、取得時点の値をそのまま返す。表示用の加工と表示制御は呼び出し元の設計による。商品規格画像のファイル名と商品画像のファイル名は、該当が無いときはnullとする。
+L0091	入出力
+L0092	該当が無いときの応答本文
+L0093	該当する商品規格が無いときは商品情報を返さず、処理結果コードとメッセージの2項目だけを応答本文とする。
+L0094	リニューアル後の仕様
+L0095	表示メッセージ
+L0096	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0097	—	API応答の処理結果メッセージ	Not Found	指定した商品IDに対して条件を満たす商品規格が1件も無いとき	該当なし（HTTP 404）で終了する
+
+ succeeded in 244ms:
+L0074	"productUrl": "https://www.hareruyamtg.com/ja/products/detail/14357"
+L0075	}
+L0076	Source:
+L0077	functions/pf-api/a02-03_api_product_popup_product_old.md
+L0078	現行仕様
+L0079	A02-03 ポップアップ用商品情報取得（旧商品ID） / API 商品管理 — ポップアップ用商品情報取得（旧商品ID）
+L0080	業務ロジック
+L0081	取得対象の絞り込みと優先順位
+L0082	パスの旧商品IDは、カードの旧商品IDと旧英語商品IDのどちらか一方に一致すれば対象とする。
+L0083	対象にするのは、削除済みでない商品・削除済みでない商品規格で、かつ公開状態の商品だけである。
+L0084	条件に合う商品が複数あるときは、次の優先順に並べて先頭の1件だけを返す。
+L0085	特殊カードセットでないもの
+L0086	プロモーションでないもの
+L0087	カードセットのリリース日が新しいもの
+L0088	Foilでないもの
+L0089	パスの言語コードと一致する言語のもの
+L0090	パスの言語コードに対応する画像優先度を持つ画像のもの
+L0091	6条件がすべて等しい商品が複数あるときは、どれを返すかを定めない。6条件より後の並び順は無い。
+L0092	旧商品IDを持つのはカードだけである。カード詳細とカードが紐づかない商品は、どの旧商品IDを指定しても対象にならない。
+L0093	販売数の集計
+L0094	週間販売数は、返す商品とパスの言語コードに紐づく商品規格の販売数を合計した値である。商品規格が複数あるときは合算する。
+L0095	金額・在庫数の加工
+L0096	金額・在庫数の再計算や丸めは行わず、保持している値をそのまま返す。
+L0097	入出力
+L0098	出力: 該当データが無いときの応答本文
+L0099	該当する商品が無いときの応答本文は、コードとメッセージ「Not Found」の2項目を持つ。
+L0100	リニューアル後の仕様
+L0101	表示メッセージ
+L0102	本APIは画面メッセージを扱わない。
+
+ succeeded in 278ms:
+L0069	"productUrl": "https://www.hareruyamtg.com/ja/products/detail/14357"
+L0070	}
+L0071	Source:
+L0072	functions/pf-api/a02-02_api_product_popup_card.md
+L0073	現行仕様
+L0074	A02-02 ポップアップ用カード情報取得 / API 商品管理 — ポップアップ用カード情報取得
+L0075	業務ロジック
+L0076	取得の対象
+L0077	指定されたカードIDに紐づく商品規格のうち、商品と商品規格がいずれも削除されておらず、かつ商品の公開状態が公開であるものだけを対象とする。対象を後述の優先順で並べ、先頭の1件だけを返す。
+L0078	並び順の優先順位
+L0079	対象が複数あるときにどの1件を返すかは、次の順で決める。上の条件で並びが決まらないときに、次の条件へ移る。
+L0080	順位	適用する場面	並び
+L0081	1	フォイル有無の指定があるとき	フォイル区分。指定が真値なら降順、偽値なら昇順
+L0082	2	価格の並び指定があるとき	販売価格。high なら降順、それ以外の値なら昇順
+L0083	3	常に	特殊なカードセットでないものを優先
+L0084	4	常に	プロモーションでないものを優先
+L0085	5	常に	カードセットの発売日が新しいものを優先
+L0086	6	フォイル有無の指定が無いとき	非フォイルを優先
+L0087	7	常に	在庫数が1以上のものを優先
+L0088	8	常に	指定された言語コードと一致する言語のものを優先
+L0089	9	常に	カードの状態の昇順
+L0090	10	常に	商品規格に結び付いた画像に定められた順序の昇順
+L0091	11	常に	サブ画像のファイル名を持つものを優先
+L0092	フォイル有無の指定があるときは、その指定が特殊セット・プロモーション・発売日より優先される。指定が無いときの非フォイル優先はそれらより後に効く。
+L0093	週間販売数の求め方
+L0094	週間販売数は、取得した商品規格と同じ商品かつ同じ言語コードを持つ商品規格すべての1週間販売数を合計した値を返す。取得した1件分だけの値ではない。
+L0095	応答の値の扱い
+L0096	取得時点の値をそのまま返し、金額・在庫数の再計算や丸めは行わない。
+L0097	該当が無いときの応答本文
+L0098	該当する商品規格が1件も無いとき、応答本文はコードとメッセージだけを持つJSONになり、メッセージは Not Found を返す。商品情報のフィールドは含まない。
+L0099	入出力
+L0100	入出力: クエリパラメータ
+L0101	パラメータ	位置	型	必須／任意	説明
+L0102	foil_flg	クエリ	string	任意	フォイル有無の指定。指定があるときだけ並び順の第1優先に使う
+L0103	price	クエリ	string	任意	価格の並び指定。指定があるときだけ販売価格を並び順に使う
+L0104	foil_flg が空文字か 0 のときは偽値として扱う。それ以外の値のときは、false を含めて真値として扱う。
+L0105	入出力: 値を持たないことがあるフィールド
+L0106	フィールド	値が無いときの応答
+L0107	subFileName	null
+L0108	fileName	null
+L0109	beltUrl	null。帯リンクのURLで、応答には常に含める
+
+ succeeded in 252ms:
+L0015	/waiting_api/get_waiting/{店舗ID}
+L0016	プロトコル HTTP メソッド GET 認証の有無 有 認証方式 IP制限 リクエスト書式 クエリ レスポンス書式 JSON
+L0017	カスタマイズ説明
+L0018	本店・支店のシステムを統合するので、本店の店舗IDを渡すように修正
+L0019	支店側のエンドポイントURLが変更
+L0020	機能仕様処理概要（★はカスタマイズ項目）
+L0021	★店頭注文番号一覧ページから非同期に定期的に(10秒間隔)アクセス ※ 支店側の実装を移植
+L0022	店舗IDに紐づく受注データで、かつ店頭PC購入の「ピック済み」になっている店頭注文番号と店頭注文番号札管理(M05-27)で登録されている番号のリストを取得し、
+L0023	JSON配列で返す
+L0024	データが存在しない場合は、空のJSON配列を返す
+L0025	リクエストパラメータ
+L0026	項目名	型	必須	最大文字数
+L0027	または最大値	入力例	備考
+L0028	店舗ID	数値(整数)	〇		123
+L0029	リクエストパラメータサンプル
+L0030	/waiting_api/get_waiting/123
+L0031	ステータスコード
+L0032	コード 説明
+L0033	200 正常終了
+L0034	レスポンスデータ
+L0035	名前	型	説明
+L0036	注文番号のJSON配列	文字型	ピックアップ済みの受注データの注文番号、もしくは管理画面で登録された店頭注文番号のJSON配列
+L0037	レスポンスデータサンプル
+L0038	["AA","BB","ABB"]
+L0039	Source:
+L0040	functions/pf-eccube3/a05-03_api_order_order_store_call_number.md
+L0041	現行仕様
+L0042	A05-03 店頭注文番号取得 / API 受注管理 — 店頭注文番号取得
+L0043	業務ロジック
+L0044	配列内の並び順
+L0045	ピック済みの受注に紐づく注文番号を先頭側に、店頭注文番号札管理で登録した番号札を末尾側に並べた1つの配列にする。どちらも登録の識別子の昇順で並べる。
+L0046	欠番の補完
+L0047	ピック済みの件数と登録済みの番号札の件数の合計が画面表示の最大件数（25件）を超えるときだけ、販売完了の受注の注文番号も取得して欠番を補う。直前に加えた番号の次から対象の注文番号の手前までの連番がすべて販売完了であれば、その間の番号も配列に加える。最大件数を超えないときは補完しない。
+L0048	入出力
+L0049	失敗時の応答
+L0050	種類	内容
+L0051	失敗時出力	店舗IDを指定せずに呼び出したときは、注文番号の配列を返さない
+L0052	リニューアル後の仕様
+L0053	表示メッセージ
+L0054	本APIは画面メッセージを扱わない。
+
+ succeeded in 298ms:
+L0069	"beltUrl": null,
+L0070	"weeklySold": "1",
+L0071	"productUrl": "https://www.hareruyamtg.com/ja/products/detail/14357"
+L0072	}
+L0073	Source:
+L0074	functions/pf-api/a02-04_api_product_popup_card_old.md
+L0075	現行仕様
+L0076	A02-04 ポップアップ用カード情報取得（旧商品ID） / API 商品管理 — ポップアップ用カード情報取得（旧商品ID）
+L0077	業務ロジック
+L0078	対象カードの引き当て
+L0079	旧商品IDは、カードに登録された旧商品IDと旧英語商品IDの両方と突き合わせ、どちらか一方に一致すれば対象とする。対象になるのは、削除済みでない商品と削除済みでない商品規格に限る。
+L0080	カードとの対応を持たない商品、および商品画像を1件も持たない商品は、旧商品IDが一致しても該当なしとして扱う。
+L0081	複数一致したときの扱い
+L0082	旧商品IDが複数の商品規格に一致した場合でも、返すのは1件だけである。どの1件を返すかを決める優先順は定めておらず、一致したもののうち1件が返る。
+L0083	応答値の加工
+L0084	金額と在庫数の再計算や丸めは行わず、保持している値をそのまま返す。
+L0085	入出力
+L0086	出力: 該当データが無いときの応答本文
+L0087	該当する商品が無いときの応答本文は、処理結果コードとメッセージ「Not Found」の2項目を持つ。
+L0088	リニューアル後の仕様
+L0089	表示メッセージ
+L0090	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0091	—	API応答JSON	Not Found	該当する商品規格が無いとき	HTTP 404を返して終了する
+
+ exited 1 in 355ms:
+sed: -e expression #1, char 6: unknown command: `;'
+
+ succeeded in 371ms:
+L0107	"productUpdateDate": "2025-03-06T18:34:41+09:00"
+L0108	},
+L0109	}
+L0110	]
+L0111	}
+L0112	Source:
+L0113	functions/pf-api/a02-05_api_product_updated_product_class.md
+L0114	現行仕様
+L0115	A02-05 更新商品規格取得 / 商品管理 — 更新商品規格取得（API）
+L0116	業務ロジック
+L0117	取得対象の絞り込み
+L0118	削除済みの商品、および削除済みの商品規格は取得対象に含めない。公開・非公開といった商品ステータスによる絞り込みは行わず、期間の条件に合致するものはステータスによらず取得する。
+L0119	応答の組み立て
+L0120	商品画像ファイル名は、同一の値を重ねずにカンマ区切りで連結する。カテゴリIDとカテゴリ名は、同一の値を重ねずカテゴリIDの昇順でカンマ区切りに連結する。取得した値は丸め・補正をせずそのまま返す。行の並び順は定めない。
+L0121	該当が無いとき
+L0122	指定期間に該当する商品規格が1件も無いときも取得の失敗として扱わず、件数0・空の結果を返す。
+L0123	入出力
+L0124	入出力: 値が無い項目の扱い
+L0125	保管コード、言語コード、カードセットコード、カード状態コード、商品画像、カテゴリは、商品または商品規格に設定されていなくてもその商品規格を取得対象から外さない。設定が無い項目は値なしとして返す。
+L0126	リニューアル後の仕様
+L0127	表示メッセージ
+
+ succeeded in 351ms:
+L0184	レスポンスデータサンプル
+L0185	※ 右記URLを参照 https://www1.smaregi.dev/apidoc/#operation/getTransactionsTransactionId
+L0186	Source:
+L0187	functions/pf-eccube3/a05-04_api_order_order_smaregi_receive.md
+L0188	現行仕様
+L0189	A05-04 スマレジ受信処理 / API 受注管理 — スマレジ受信処理（ポイント履歴取得）
+L0190	業務ロジック
+L0191	取引区分ごとのポイント処理
+L0192	受信した内容から取引ヘッダと取引明細を取り出し、取引区分で処理を分ける。
+L0193	取引区分	処理
+L0194	取消	会員の保有ポイントから付与ポイントを差し引き、利用ポイントを戻す。取引に一致するポイント履歴を削除する
+L0195	打消	付与ポイントと利用ポイントの正負を反転したうえで取消と同じ補正を行い、対象のポイント履歴を削除する
+L0196	通常取引	会員の保有ポイントに付与ポイントを加え、利用ポイントを差し引く。付与ポイントが 0 より大きいときは付与の履歴を、利用ポイントが 0 より大きいときは利用の履歴を、購入によるポイントとして登録する。0 のときはその履歴を登録しない
+L0197	登録する履歴の備考には、付与のときは「店舗付与」、利用のときは「店舗使用」と記録する。
+L0198	注文への反映にともなうスマレジへのポイント連携
+L0199	取引明細の商品コードに対応する注文が複数あるときは、いちばん新しい注文を対象とする。
+L0200	注文へ反映するとき、その時点の日時を、注文の確定日と出荷日、および注文に紐づく各配送の出荷日として記録する。スマレジ用として登録されている担当者があるときは、その担当者を注文の担当者として記録する。
+L0201	反映した注文に付与ポイントが記録されているときは、その付与ポイントを会員の保有ポイントに加え、購入によるポイントの履歴としてその注文とともに登録する。付与ポイントが未設定または 0 のときは加算も履歴の登録も行わない。
+L0202	付与ポイントが 0 のとき（スマレジ側で決済とポイント付与が済んでいるとき）はスマレジへ送らない。0 でないときは、会員のスマレジ会員IDあてに付与ポイントをスマレジへ送る。使用ポイントは EC からの注文時に連携済みのため送らない。
+L0203	スマレジからの応答に正常な結果が含まれないときは、その注文にスマレジ連携のエラー内容と、連携エラーである印を記録する。処理は中断しない。
+L0204	エラー時の扱い
+L0205	エラー内容	処理
+L0206	会員が見つからない	ポイントの補正も履歴の登録・削除も行わず、エラーとせずに処理を続ける
+L0207	取消・打消で対象のポイント履歴が無い	ポイントの補正も履歴の削除も行わず、エラーとせずに処理を続ける
+L0208	入出力
+L0209	入出力: 永続化
+L0210	操作	契機
+L0211	更新	会員の保有ポイントを、取消・打消・通常取引のいずれかで補正したとき
+L0212	追加	購入によるポイントの履歴を、通常取引で付与ポイントまたは利用ポイントが 0 より大きいとき
+L0213	削除	取引に一致するポイント履歴を、取消または打消のとき
+L0214	更新	会員の保有ポイントを、注文へ反映するときにその注文の付与ポイントが 0 でないとき
+L0215	追加	購入によるポイントの履歴を、注文へ反映するときにその注文の付与ポイントが 0 でないとき
+L0216	更新	注文に、確定日と出荷日、各配送の出荷日を、注文へ反映したとき
+L0217	更新	注文の担当者を、スマレジ用の担当者が登録されているとき
+L0218	更新	注文に、スマレジへのポイント連携が正常に終わらなかったときのエラー内容と連携エラーの印
+L0219	リニューアル後の仕様
+L0220	表示メッセージ
+L0221	本APIは画面へ文言を表示しない。
+
+exec
+/bin/bash -lc "sed -n '138,154p' integration_test/casegen/combination/units/A05-01/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "sed -n '1,115p' integration_test/casegen/combination/units/A05-04/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+L0137	A05-01 注文印刷_印刷情報をプリンタへ送信 / API 受注管理 — 注文印刷（印刷情報の送信）
+L0138	業務ロジック
+L0139	印刷対象の受注
+L0140	次のいずれかに当たる受注を、1回の要求につき最大10件まで取り出す。
+L0141	対象	条件
+L0142	店頭受取の受注	注文番号が採番済みで、対応状況が注文受領のとき
+L0143	スムーズ店頭受取の受注	所定の支払方法（クレジット決済・支払いなし）で、対応状況が購入処理中でなく、確定日時・注文確定日・出荷日・取消日・受領日・店頭予約日がいずれも未設定で、スマレジコードが採番済みのとき
+L0144	ブラウザ印刷を指定した受注	補助情報のブラウザ印刷フラグが立つとき
+L0145	1件の受注に配送が複数あっても、印刷情報は受注1件につき1枚にまとめる。
+L0146	印刷内容の決定
+L0147	印刷欄	決め方
+L0148	お客様名	カナ氏名（姓と名を空白でつなぐ）を印刷する。カナ氏名が無いときは氏名を印刷する
+L0149	店頭注文番号	受注に店頭注文番号が採番されていないときは空欄にする
+L0150	印刷データの保存
+L0151	送信する印刷データXMLが空でないとき、同じ内容をAPIサーバのアプリケーション配下の var/log/print_logs/ にファイルとして保存する。ファイル名は print_YYYYMMDD_HHMMSS_<一意ID>.xml とし、要求1回につき1ファイルを作る。保存先のディレクトリが無いときは作成する。印刷データXMLが空のときは保存しない。
+L0152	入出力
+L0153	応答の形式
+
+ succeeded in 0ms:
+##### 0505 sheet-6 スマレジ受信処理
+L0001	スマレジ受信処理
+L0002	ドキュメント名受注管理 基本設計
+L0003	セクション—
+L0004	プロジェクト名受注管理機能
+L0005	作成者堀部
+L0006	作成日2025-05-30
+L0007	更新者—
+L0008	更新日—
+L0009	機能NoA05-04
+L0010	機能名スマレジ受信処理
+L0011	概要スマレジで取引完了時(決済完了時)のwebhookの受信処理
+L0012	処理概要（★はカスタマイズ項目）
+L0013	GET POST PUT DELETE PATCH OPTIONS HEAD 有 無 〇
+L0014	エンドポイントURL
+L0015	/smaregi/transaction
+L0016	プロトコル HTTP メソッド POST 認証の有無 有 認証方式 IP制限 リクエスト書式 JSON レスポンス書式 なし
+L0017	(ステータスコードのみ)
+L0018	カスタマイズ説明
+L0019	Webhookの仕様が廃止予定のスマレジAPIからプラットフォームAPIに変更
+L0020	Webhookでの返値が取引IDのみになるので,別途APIを叩いて取引詳細を取得する
+L0021	本店・支店の処理を統合
+L0022	本店側でスマレジのwebhookを受けて、その後さらに支店側にデータをAPIで送っている処理を廃止し、webhookからの受信のみで本店・支店のデータ連携を実行する
+L0023	ポイントの更新情報以外の取引情報もECCUBEと連携するように改修する
+L0024	新規連携項目はリクエストパラメータに記載(★が追加項目)
+L0025	取引状態によって連携方法が分岐
+L0026	・スムーズ店頭受取 or 店頭受取 ・会員状態 ・ついで買いの有無 ・店頭PC購入かどうか
+L0027	実装時の注意点
+L0028	API利用時の注意事項一般 https://developers.smaregi.dev/apidoc/common/#section/Webhook
+L0029	APIレート制限(スロットリング) https://developers.smaregi.dev/apidoc/common/#section/%E3%83%AC%E3%83%BC%E3%83%88%E5%88%B6%E9%99%90
+L0030	※秒間50回が上限になりますが、理論上1秒間にレジ25台(在庫・受注処理で2回として仮定)が同時決済まで対応可能
+L0031	※レート制限を超えた場合もエラーレスポンスで待機時間が返ってくるのでリトライ処理が可能
+L0032	機能仕様処理概要（★はカスタマイズ項目）
+L0033	★1. スマレジで取引完了をhookにwebhook発動
+L0034	スマレジ
+L0035	ECCUBE
+L0036	A. ★スマレジ取引IDを送信
+L0037	B. ★スマレジ取引IDで取引詳細を要求
+L0038	C. ★スマレジ取引情報を返す
+L0039	取引完了
+L0040	スマレジ取引情報取得
+L0041	画面遷移図をExcel図形座標で再構成（画面 2件 / 遷移 1件 / 元コネクタ 5件）
+L0042	遷移一覧（1件）（うち推定 1件：明示接続でなく最近傍幾何で補完）
+L0043	遷移元	遷移先	connector
+L0044	C. ★スマレジ取引情報を返す	推定スマレジ取引情報取得	12（0505:スマレジ受信処理!D37）
+L0045	2. 通常処理かキャンセル処理か返品処理かの場合を判定し、ポイント関連を増減処理※既存踏襲
+L0046	購入・キャンセル・返品で処理を分岐し、それぞれポイントの増減処理を実行
+L0047	★3. スマレジの取引詳細をECCUBEに登録
+L0048	主要購入パターン
+L0049	店舗で通常発生しやすい購入パターン
+L0050	基本ルール
+L0051	・ECCUBEにすでに存在している受注データがあれば、スマレジの商品IDからECCUBE上の受注データを検索する
+L0052	※スマレジに「購入商品が纏まっている１点もの(ユニークな)商品」として登録されているので、そのスマレジの商品IDで検索可能
+L0053	・スムーズ店頭受取以外のスマレジにある取引データはECCUBEに新規受注データとして新規作成する。この新規データは出荷完了で登録し、
+L0054	配送情報は使用用途がないので未登録とする
+L0055	・ECCUBEの既存受注データはそのデータのステータスを、スムーズ店頭受取であれば「出荷完了」それ以外の店頭受取は「引き渡し済み」にする
+L0056	・ついで買いが発生した場合は、「既存の受注データ + ついで購入」の受注データを新規作成する。既存の受注データには移行先の新規受注データIDを登録する。
+L0057	※既存の受注データはスマレジ上では「複数の商品(カードA,カードB,カードC等)の入った一つの商品(部門カラムに6:店頭受取)」として登録されているので、
+L0058	複数のカード情報を解いた上で一つずつ明細(子データ)として紐づけて新規受注データとする
+L0059	・会員状態も登録する。非会員であれば、「非会員」として登録・更新する
+L0060	・カスタマイズ対象の追加連携項目をECCUBEの受注データに登録する
+L0061		購入パターン	ECCUBE
+L0062	購入	店頭PC
+L0063	購入	ついで買い	受取方法	会員
+L0064	状態	連携方法
+L0065	1	ECCUBE購入
+L0066	(スムーズ店頭受取)	〇	-	-	スムーズ店頭受取	〇	取引に対応する受注データのステータスを出荷完了にする
+L0067	2	ECCUBE購入
+L0068	(店頭受取)	〇	-	×	店頭受取	〇	取引に対応する受注データのステータスを引き渡し済みにする
+L0069	スマレジの受注レコードをECCUBEに新規作成する。既存の受注データには移行先の新規受注データIDを登録する。
+L0070	3	ECCUBE購入(店頭受取)
+L0071	ついで買い有	〇	-	〇	店頭受取	〇	店頭受取分の取引に対応する受注データのステータスを引き渡し済みにし、ついで買い分 + 店頭受取分の受注レコードを新規作成。既存の受注データには移行先の新規受注データIDを登録する。
+L0072	4	店頭PC購入(会員)	×	〇	×	-	〇	店頭PC購入分の取引に対応する受注データのステータスを引き渡し済みにする
+L0073	スマレジの受注レコードをECCUBEに新規作成する。既存の受注データには移行先の新規受注データIDを登録する。
+L0074	5	店頭PC購入(会員)
+L0075	ついで買い有	×	〇	〇	-	〇	店頭PC購入分の取引に対応する受注データのステータスを引き渡し済みにし、ついで買い分 + 店頭PC購入分の受注レコードを新規作成。既存の受注データには移行先の新規受注データIDを登録する
+L0076	6	店頭PC購入(非会員)	×	〇	×	-	×	店頭PC購入分の取引に対応する受注データのステータスを引き渡し済みにする
+L0077	スマレジの受注レコードをECCUBEに新規作成する。既存の受注データには移行先の新規受注データIDを登録する。
+L0078	会員状態は非会員で登録
+L0079	7	店頭PC購入(非会員)
+L0080	ついで買い有	×	〇	〇	-	×	店頭PC購入分の取引に対応する受注データのステータスを引き渡し済みにし、ついで買い分 + 店頭PC購入分の受注レコードを新規作成。既存の受注データには移行先の新規受注データIDを登録する
+L0081	会員状態は非会員で登録
+L0082	8	店頭購入(会員)	×	×	-	-	〇	取引に対応する受注データをECCUBEに新規登録する
+L0083	9	店頭購入(非会員)	×	×	-	-	×	取引に対応する受注データをECCUBEに新規登録する
+L0084	会員状態は非会員で登録
+L0085	複数受注購入パターン
+L0086	ECCUBEにすでに存在する受注を複数同時に店頭に持ってきた時
+L0087	ex) 店頭PC購入を複数回行い、レジに来る 店頭受取の会員が店頭PC購入でついで買いをする
+L0088	基本ルール
+L0089	・ECCUBE上の受注レコードを全て、ステータスを「引き渡し済み」にする
+L0090	・全ての受注データを統合した新規受注データを新規作成する。既存の受注データには移行先の新規受注データIDを登録する。
+L0091	・この組合せに加え、店舗内でのついで買いも同時に発生している場合は、そのデータも統合する。
+L0092	・会員状態も登録する。非会員であれば、「非会員」として登録・更新する
+L0093	・カスタマイズ対象の追加連携項目をECCUBEの受注データに登録する
+L0094	・配送方法は店頭受取とする
+L0095	・注文日に店頭受取注文の注文日を設定する。複数の店頭受取受注データが存在する場合は一番若いものを注文日とする。
+L0096	返品
+L0097	購入後、返品される
+L0098	基本ルール
+L0099	・一部返金の想定は不要。
+L0100	・対象の受注データのステータスを「キャンセル」にする
+L0101	ただし、取消(cancelDivision)が1の場合と、打消し(disposeDivision)が1の場合で処理が分岐する
+L0102	disposeDivisionが1の場合、打消元取引IDから検索
+L0103	cancelDivisionが1の場合、取引IDから検索
+L0104	★支払方法について
+L0105	スマレジの詳細な支払方法を取得することはできないため、スマレジで取り込んだ取引情報の支払方法はすべて「店頭支払」とする
+L0106	A. Webhook受信データ
+L0107	項目名	型	必須	最大文字数
+L0108	または最大値	入力例	備考
+L0109	契約ID	文字型	〇			スマレジの契約ID
+L0110	イベント名	文字型	〇		pos:transactions	取引のイベント名固定 [pos:transactions]
+L0111	アクション	文字型	〇		created	取引種別 created: 登録 edited: 更新 canceled: 取消 disposed: 打消取消
+L0112	bulk-update: 一括更新 bulk-deleted: 一括削除
+L0113	取引IDリスト	文字型	〇			スマレジの取引IDの配列
+L0114	A. レスポンスデータサンプル
+
+exec
+/bin/bash -lc "sed -n '20,65p' integration_test/casegen/combination/units/A05-01/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/A01-01_factors.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "sed -n '18,40p' integration_test/casegen/combination/units/A02-05/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	スマレジの在庫区分	02売上｜12返品｜02と12以外	02売上: 出庫処理でECCUBEのスマレジ在庫を減らす／12返品: 入庫処理で在庫を戻す／02と12以外: 無視して更新しない	L0082-L0083	この機能
+F02	P1	商品が店頭受取分か	店頭受取分｜店頭受取分以外	店頭受取分: スマレジ側の在庫は変動しないので無視する／店頭受取分以外: 在庫区分に従って更新する	L0084	この機能
+F03	P2	管理画面の操作	在庫編集または一括編集｜在庫変更CSV登録｜棚卸し｜移動指示の入庫済み更新｜移動指示の出庫承認済み更新｜分割結合	在庫編集または一括編集: API個別で反映する／在庫変更CSV登録: Patch一括で反映する／棚卸し: Patch一括で反映する／移動指示の入庫済み更新: 入庫済みになった時点でAPI個別またはPatch一括で反映する／移動指示の出庫承認済み更新: 出庫承認済みになった時点でAPI個別またはPatch一括で反映する／分割結合: 出庫と入庫をAPI個別またはPatch一括で反映する	L0034-L0045	この機能
+F04	P2	在庫場所区分	スマレジ｜スマレジ以外	スマレジ: 編集結果をスマレジ側に反映する／スマレジ以外: スマレジ側に反映しない	L0034,L0036,L0038,L0045	この機能
+F05	P2	1回の操作の商品数と上限	上限内｜上限を超える	上限内: 在庫編集は反映する・移動指示と分割結合はAPI個別で反映する／上限を超える: 在庫編集はエラーを表示しCSV登録を促す・移動指示と分割結合はPatch一括で反映する	L0035,L0037,L0046	この機能
+
+ succeeded in 0ms:
+L0019	本店のプリンタはエンドポイントURLに店舗IDを追加する必要があるので、設定変更が必要
+L0020	本店・支店のシステムを統合するので、支店側のプリンタに設定されているエンドポイントURLはドメインが変更となるので全て設定変更が必要
+L0021	現状は印刷完了ステータスに更新するAPI (A05-02)と処理を受けるメソッドが共通で、クエリ「ConnectionType」で処理が分岐しているので、
+L0022	A05-02とエンドポイントを分ける
+L0023	現状	/order/print/direct?ConnectionType=GetRequest	GETで受信
+L0024		/order/print/direct?ConnectionType=SetResponse	POSTで受信	※ RoutingでGetとPostで登録を行なっているが、同じメソッドを登録している
+L0025	機能仕様処理概要（★はカスタマイズ項目）
+L0026	★ 各店舗に設置されているプリンタから定期的(間隔:30秒)にこのAPIにアクセス(エンドポイントURL変更)
+L0027	URLに店舗ID(shop_id)を引数として持つ
+L0028	・バーコードが印刷されていない問題が発生しないようにするため、注文データをXML形式にする前に受注データにスマレジの商品コードが存在するかどうか確認する
+L0029	スマレジの商品コードが存在しない場合はスマレジコードが採番されていない可能性があるため何もしない
+L0030	・店舗IDからその店舗の未印刷の注文データを抽出し、各注文データごとに印刷できるようにプリンタ仕様に合わせてXMLの書式にして返す。
+L0031	未印刷データがなければ空文字''を返す
+L0032	※ プリンタのxmlの仕様 https://www2.epson.jp/support/manual/SDP_UM_JA_REVW.ZIP
+L0033	・印刷データXMLをログに出力する
+L0034	リクエストパラメータ
+L0035	項目名	型	必須	最大文字数
+L0036	または最大値	入力例	備考
+L0037	店舗ID	数値(整数)	〇		123	受取店舗の店舗ID(shop_id)
+L0038	リクエストパラメータサンプル
+L0039	/api/order/print/direct/123
+L0040	ステータスコード
+L0041	コード 説明
+L0042	200 正常終了
+L0043	404 店舗ID(shop_id)が無い、整数以外の型、存在しない店舗ID(shop_id) ※支店での処理を踏襲
+L0044	レスポンスデータ
+L0045	名前	型	説明
+L0046	印刷データ(XML)	文字型	専用の言語(フォーマット)で記述された印刷レイアウトデータを注文データ数分出力
+L0047	印刷データの動的変更部分については、別表「印刷レイアウトデータの動的変更箇所」参照のこと
+L0048	印刷位置や罫線情報については、サンプルデータを参照のこと
+L0049	印刷レイアウトデータの動的変更箇所
+L0050	名前	型	説明
+L0051	受注情報ID	数値(整数)	注文詳細URLと生成と、印刷情報データを一意に定めるXML向けの情報として使用
+L0052	店頭注文番号	文字型	店頭注文番号
+L0053	注文詳細URL	文字型	管理画面の受注詳細情報ページのURL。QRコードにして印刷する
+L0054	備考	文字型	受注情報の問合せに値があれば、「問い合わせ有」と表示。それ以外は空欄
+L0055	注文日	日付（YYYY/MM/DD）	注文日
+L0056	注文番号	数値(整数)	注文番号
+L0057	お客様名	文字型	お客様名
+L0058	合計金額	数値(整数)	注文の合計金額。ただしスムーズ店頭受取の場合、「スムーズ店頭受取」と表示
+L0059	変更後金額	数値(整数)	スマレジコード。バーコードにして印刷
+L0060	高額	文字型	固定値で「□」を出力
+L0061	※内部処理としてはデータを差し込んでいるが、差し込むデータが現状固定値で「□」になっている
+L0062	レスポンスデータサンプル
+L0063	<?xml version="1.0" encoding="utf-8"?>
+L0064	<PrintRequestInfo Version="3.00">
+
+ succeeded in 0ms:
+L0017	プロトコル HTTP メソッド GET 認証の有無 無 認証方式 無 リクエスト書式 クエリ レスポンス書式 JSON
+L0018	カスタマイズ説明
+L0019	SEOやアフィリエイト広告会社に取り扱い商品一覧を提供するため、指定期間内に更新があった商品をJSON形式で出力する
+L0020	機能仕様処理概要（★はカスタマイズ項目）
+L0021	・SEOやアフィリエイト広告会社に取り扱い商品一覧を提供するため、指定期間内に更新があった商品をJSON形式で出力します。
+L0022	リクエストパラメータ
+L0023	項目名	型	必須	最大文字数
+L0024	または最大値	入力例	備考
+L0025	取得開始日	文字型	〇	8	2025-08-01	商品データもしくは商品規格データの情報登録・更新が行われた日の取得開始日
+L0026	取得開始日時 : 取得開始日+"00:00:00"
+L0027	取得終了日	文字型	〇	8	2025-08-01	商品データもしくは商品規格データの情報登録・更新が行われた日の取得終了日
+L0028	取得終了日時 : 取得終了日+"23:59:59"
+L0029	リクエストパラメータサンプル
+L0030	/api/updateProducts/2025-08-01/2025-08-01
+L0031	または
+L0032	/api/updateProducts/2025-08-01/2025-08-01.json
+L0033	ステータスコード
+L0034	HTTPコード 説明
+L0035	200 正常
+L0036	404 異常
+L0037	500 異常
+L0038	レスポンスデータ
+L0039	名前	型	説明
+
+codex
+A05-04 では、ポイント処理の打ち切り条件を付けた後も、受注の検索先や更新先が変わる記述があります。処理単位と出力先に照らして、確実に指摘できる範囲を絞っています。
+exec
+/bin/bash -lc 'git diff eddb12cb -- integration_test/casegen/combination/factors/A05-01_existing.tsv integration_test/casegen/combination/factors/A05-01_interactions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+diff --git a/integration_test/casegen/combination/factors/A05-01_existing.tsv b/integration_test/casegen/combination/factors/A05-01_existing.tsv
+index 615b5ec1..602a4e5c 100644
+--- a/integration_test/casegen/combination/factors/A05-01_existing.tsv
++++ b/integration_test/casegen/combination/factors/A05-01_existing.tsv
+@@ -11,9 +11,8 @@ IT-A05-01-031	P1	F01=採番済&F02=その他の状態&F03=採番済&F04=なし	
+ IT-A05-01-010	P3	F03=採番済&F04=あり	通常配送・スマレジコードあり・ブラウザ印刷フラグありで受注が含まれることを確かめる
+ IT-A05-01-032	P3	F03=採番済&F04=なし	通常配送でフラグ無しの受注が出ないことを確かめる
+ IT-A05-01-033	P3	F03=未採番&F04=あり	ブラウザ印刷フラグありでもスマレジコード未採番だと出ないことを確かめる
+-IT-A05-01-013	P4	F08=採番済	店頭注文番号が印刷データに出ることを確かめる
+-IT-A05-01-025	P5	F11=空でない&F12=ない	ディレクトリが無い状態で保存され作成されることを確かめる
+-IT-A05-01-026	P5	F11=空&F12=ある	印刷データが空のときファイルが増えないことを確かめる
+-IT-A05-01-034	P5	F11=空でない&F12=ある	ディレクトリがあるとき保存され既存ファイルが残ることを確かめる
+-IT-A05-01-028	P5	F11=空でない&F12=ある	2回要求して各回に別のファイルが保存されることを確かめる
+-IT-A05-01-027	P5	F11=空でない&F12=ある	1回の要求で1ファイルが保存されることを確かめる
++IT-A05-01-025	P4	F07=空でない&F08=ない	ディレクトリが無い状態で保存され作成されることを確かめる
++IT-A05-01-026	P4	F07=空&F08=ある	印刷データが空のときファイルが増えないことを確かめる
++IT-A05-01-034	P4	F07=空でない&F08=ある	ディレクトリがあるとき保存され既存ファイルが残ることを確かめる
++IT-A05-01-028	P4	F07=空でない&F08=ある	2回要求して各回に別のファイルが保存されることを確かめる
++IT-A05-01-027	P4	F07=空でない&F08=ある	1回の要求で1ファイルが保存されることを確かめる
+diff --git a/integration_test/casegen/combination/factors/A05-01_interactions.tsv b/integration_test/casegen/combination/factors/A05-01_interactions.tsv
+index 9f9706d0..d6916667 100644
+--- a/integration_test/casegen/combination/factors/A05-01_interactions.tsv
++++ b/integration_test/casegen/combination/factors/A05-01_interactions.tsv
+@@ -2,35 +2,29 @@
+ P1	F01+F02	関係しない		対象になる・ならないを決める条件どうしで、結果は印刷情報に含まれる・含まれないの2つだけ（条件ごとの外れ方は1つずつ確かめれば足りる）
+ P1	F01+F03	関係しない		対象になる・ならないを決める条件どうしで、結果は印刷情報に含まれる・含まれないの2つだけ（条件ごとの外れ方は1つずつ確かめれば足りる）
+ P1	F01+F04	関係しない		対象になる・ならないを決める条件どうしで、結果は印刷情報に含まれる・含まれないの2つだけ（条件ごとの外れ方は1つずつ確かめれば足りる）
+-P1	F01+F13	関係しない		対象になる・ならないを決める条件どうしで、結果は印刷情報に含まれる・含まれないの2つだけ（条件ごとの外れ方は1つずつ確かめれば足りる）
++P1	F01+F09	関係しない		対象になる・ならないを決める条件どうしで、結果は印刷情報に含まれる・含まれないの2つだけ（条件ごとの外れ方は1つずつ確かめれば足りる）
+ P1	F02+F03	関係しない		対象になる・ならないを決める条件どうしで、結果は印刷情報に含まれる・含まれないの2つだけ（条件ごとの外れ方は1つずつ確かめれば足りる）
+ P1	F02+F04	関係しない		対象になる・ならないを決める条件どうしで、結果は印刷情報に含まれる・含まれないの2つだけ（条件ごとの外れ方は1つずつ確かめれば足りる）
+-P1	F02+F13	関係しない		対象になる・ならないを決める条件どうしで、結果は印刷情報に含まれる・含まれないの2つだけ（条件ごとの外れ方は1つずつ確かめれば足りる）
++P1	F02+F09	関係しない		対象になる・ならないを決める条件どうしで、結果は印刷情報に含まれる・含まれないの2つだけ（条件ごとの外れ方は1つずつ確かめれば足りる）
+ P1	F03+F04	関係しない		対象になる・ならないを決める条件どうしで、結果は印刷情報に含まれる・含まれないの2つだけ（条件ごとの外れ方は1つずつ確かめれば足りる）
+-P1	F03+F13	関係しない		対象になる・ならないを決める条件どうしで、結果は印刷情報に含まれる・含まれないの2つだけ（条件ごとの外れ方は1つずつ確かめれば足りる）
+-P1	F04+F13	関係しない		対象になる・ならないを決める条件どうしで、結果は印刷情報に含まれる・含まれないの2つだけ（条件ごとの外れ方は1つずつ確かめれば足りる）
++P1	F03+F09	関係しない		対象になる・ならないを決める条件どうしで、結果は印刷情報に含まれる・含まれないの2つだけ（条件ごとの外れ方は1つずつ確かめれば足りる）
++P1	F04+F09	関係しない		対象になる・ならないを決める条件どうしで、結果は印刷情報に含まれる・含まれないの2つだけ（条件ごとの外れ方は1つずつ確かめれば足りる）
+ P2	F02+F03	関係しない		対象になる・ならないを決める条件どうしで、結果は印刷情報に含まれる・含まれないの2つだけ（条件ごとの外れ方は1つずつ確かめれば足りる）
+ P2	F02+F04	関係しない		対象になる・ならないを決める条件どうしで、結果は印刷情報に含まれる・含まれないの2つだけ（条件ごとの外れ方は1つずつ確かめれば足りる）
+ P2	F02+F05	関係しない		対象になる・ならないを決める条件どうしで、結果は印刷情報に含まれる・含まれないの2つだけ（条件ごとの外れ方は1つずつ確かめれば足りる）
+ P2	F02+F06	関係しない		対象になる・ならないを決める条件どうしで、結果は印刷情報に含まれる・含まれないの2つだけ（条件ごとの外れ方は1つずつ確かめれば足りる）
+-P2	F02+F13	関係しない		対象になる・ならないを決める条件どうしで、結果は印刷情報に含まれる・含まれないの2つだけ（条件ごとの外れ方は1つずつ確かめれば足りる）
++P2	F02+F09	関係しない		対象になる・ならないを決める条件どうしで、結果は印刷情報に含まれる・含まれないの2つだけ（条件ごとの外れ方は1つずつ確かめれば足りる）
+ P2	F03+F04	関係しない		対象になる・ならないを決める条件どうしで、結果は印刷情報に含まれる・含まれないの2つだけ（条件ごとの外れ方は1つずつ確かめれば足りる）
+ P2	F03+F05	関係しない		対象になる・ならないを決める条件どうしで、結果は印刷情報に含まれる・含まれないの2つだけ（条件ごとの外れ方は1つずつ確かめれば足りる）
+ P2	F03+F06	関係しない		対象になる・ならないを決める条件どうしで、結果は印刷情報に含まれる・含まれないの2つだけ（条件ごとの外れ方は1つずつ確かめれば足りる）
+-P2	F03+F13	関係しない		対象になる・ならないを決める条件どうしで、結果は印刷情報に含まれる・含まれないの2つだけ（条件ごとの外れ方は1つずつ確かめれば足りる）
++P2	F03+F09	関係しない		対象になる・ならないを決める条件どうしで、結果は印刷情報に含まれる・含まれないの2つだけ（条件ごとの外れ方は1つずつ確かめれば足りる）
+ P2	F04+F05	関係しない		対象になる・ならないを決める条件どうしで、結果は印刷情報に含まれる・含まれないの2つだけ（条件ごとの外れ方は1つずつ確かめれば足りる）
+ P2	F04+F06	関係しない		対象になる・ならないを決める条件どうしで、結果は印刷情報に含まれる・含まれないの2つだけ（条件ごとの外れ方は1つずつ確かめれば足りる）
+-P2	F04+F13	関係しない		対象になる・ならないを決める条件どうしで、結果は印刷情報に含まれる・含まれないの2つだけ（条件ごとの外れ方は1つずつ確かめれば足りる）
++P2	F04+F09	関係しない		対象になる・ならないを決める条件どうしで、結果は印刷情報に含まれる・含まれないの2つだけ（条件ごとの外れ方は1つずつ確かめれば足りる）
+ P2	F05+F06	関係しない		対象になる・ならないを決める条件どうしで、結果は印刷情報に含まれる・含まれないの2つだけ（条件ごとの外れ方は1つずつ確かめれば足りる）
+-P2	F05+F13	関係しない		対象になる・ならないを決める条件どうしで、結果は印刷情報に含まれる・含まれないの2つだけ（条件ごとの外れ方は1つずつ確かめれば足りる）
+-P2	F06+F13	関係しない		対象になる・ならないを決める条件どうしで、結果は印刷情報に含まれる・含まれないの2つだけ（条件ごとの外れ方は1つずつ確かめれば足りる）
++P2	F05+F09	関係しない		対象になる・ならないを決める条件どうしで、結果は印刷情報に含まれる・含まれないの2つだけ（条件ごとの外れ方は1つずつ確かめれば足りる）
++P2	F06+F09	関係しない		対象になる・ならないを決める条件どうしで、結果は印刷情報に含まれる・含まれないの2つだけ（条件ごとの外れ方は1つずつ確かめれば足りる）
+ P3	F03+F04	関係しない		対象になる・ならないを決める条件どうしで、結果は印刷情報に含まれる・含まれないの2つだけ（条件ごとの外れ方は1つずつ確かめれば足りる）
+-P3	F03+F13	関係しない		対象になる・ならないを決める条件どうしで、結果は印刷情報に含まれる・含まれないの2つだけ（条件ごとの外れ方は1つずつ確かめれば足りる）
+-P3	F04+F13	関係しない		対象になる・ならないを決める条件どうしで、結果は印刷情報に含まれる・含まれないの2つだけ（条件ごとの外れ方は1つずつ確かめれば足りる）
+-P4	F07+F08	関係しない		各欄はそれぞれ別の受注項目から決まり、一方の値で他方の欄は変わらない
+-P4	F07+F09	関係しない		各欄はそれぞれ別の受注項目から決まり、一方の値で他方の欄は変わらない
+-P4	F07+F10	関係しない		各欄はそれぞれ別の受注項目から決まり、一方の値で他方の欄は変わらない
+-P4	F08+F09	関係しない		各欄はそれぞれ別の受注項目から決まり、一方の値で他方の欄は変わらない
+-P4	F08+F10	関係しない		各欄はそれぞれ別の受注項目から決まり、一方の値で他方の欄は変わらない
+-P4	F09+F10	関係しない		各欄はそれぞれ別の受注項目から決まり、一方の値で他方の欄は変わらない
+-P5	F11+F12	効き合う	L0151	印刷データXMLが空のときは保存しないので、保存先ディレクトリの作成も行われない
++P3	F03+F09	関係しない		対象になる・ならないを決める条件どうしで、結果は印刷情報に含まれる・含まれないの2つだけ（条件ごとの外れ方は1つずつ確かめれば足りる）
++P3	F04+F09	関係しない		対象になる・ならないを決める条件どうしで、結果は印刷情報に含まれる・含まれないの2つだけ（条件ごとの外れ方は1つずつ確かめれば足りる）
++P4	F07+F08	効き合う	L0151	印刷データXMLが空のときは保存しないので、保存先ディレクトリの作成も行われない
+
+exec
+/bin/bash -lc 'git diff eddb12cb -- integration_test/casegen/combination/factors/A05-04_existing.tsv integration_test/casegen/combination/factors/A05-04_interactions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'git diff eddb12cb -- integration_test/casegen/combination/factors/A02-03_existing.tsv integration_test/casegen/combination/factors/A02-03_interactions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+diff --git a/integration_test/casegen/combination/factors/A05-04_interactions.tsv b/integration_test/casegen/combination/factors/A05-04_interactions.tsv
+index 1ea54cbb..d06e167e 100644
+--- a/integration_test/casegen/combination/factors/A05-04_interactions.tsv
++++ b/integration_test/casegen/combination/factors/A05-04_interactions.tsv
+@@ -2,10 +2,7 @@
+ P1	F01+F02	効き合う	L0061-L0084,L0056,L0091	購入パターンとついで買いの組ごとに、既存受注の更新先と新規受注の作り方（ついで買い分を足すか）が表で定められている
+ P1	F01+F03	関係しない		会員状態は非会員のとき「非会員」として登録・更新する項目で、購入パターンごとの受注の更新先・新規受注の作り方は会員状態で変わらない（表に非会員の行が無い組は組の制約に書く）
+ P1	F02+F03	関係しない		会員状態は非会員のとき「非会員」として登録・更新する項目で、ついで買い分を足すかどうかは会員状態で変わらない
+-P2	F04+F05+F06	効き合う	L0194-L0195,L0206-L0207	補正の向きは取消と打消で異なるが、会員が見つからないとき、または対象の履歴が無いときは補正も履歴削除も行わない。区分・会員・履歴の3つが同時に互いの結果を変える
+-P3	F05+F07	効き合う	L0196,L0206	会員が見つからないときは付与ポイントが0より大きくても履歴を登録しない
+-P3	F05+F08	効き合う	L0196,L0206	会員が見つからないときは利用ポイントが0より大きくても履歴を登録しない
+-P3	F07+F08	関係しない		付与と利用は別々の履歴として0より大きいかで個別に登録され、保有ポイントは足し引きされるだけ
+-P4	F09+F10	関係しない		担当者の記録は付与ポイントの有無やスマレジの応答と関係なく、スマレジ用の担当者の登録の有無で決まる
+-P4	F09+F11	関係しない		複数件のときは最も新しい注文が対象になり、付与ポイントと応答はその注文の値で決まる
+-P4	F10+F11	関係しない		担当者は反映した注文に記録するだけで、どの注文が対象になるかとは別
++P2	F04+F05	効き合う	L0194-L0195,L0206-L0207	打ち切りの値（会員が見つからない・対応するポイント履歴が無い）のときは補正も履歴削除も行わず、区分の違いが結果に出るのは両方が満たされるときだけ
++P2	F04+F06	効き合う	L0194-L0195,L0206-L0207	打ち切りの値（会員が見つからない・対応するポイント履歴が無い）のときは補正も履歴削除も行わず、区分の違いが結果に出るのは両方が満たされるときだけ
++P2	F05+F06	効き合う	L0194-L0195,L0206-L0207	打ち切りの値（会員が見つからない・対応するポイント履歴が無い）のときは補正も履歴削除も行わず、区分の違いが結果に出るのは両方が満たされるときだけ
++P3	F07+F08	関係しない		複数件のときは最も新しい注文が対象になり、付与ポイントと応答はその注文の値で決まる
+
+ succeeded in 0ms:
+diff --git a/integration_test/casegen/combination/factors/A02-03_existing.tsv b/integration_test/casegen/combination/factors/A02-03_existing.tsv
+index b0576e0c..7daa8e5f 100644
+--- a/integration_test/casegen/combination/factors/A02-03_existing.tsv
++++ b/integration_test/casegen/combination/factors/A02-03_existing.tsv
+@@ -6,12 +6,12 @@ IT-A02-03-009	P1	F01=Foilの段で決まる&F02=ja	jaで要求し、Foilの段
+ IT-A02-03-011	P1	F01=画像優先度の段で決まる&F02=ja	jaで要求し、画像優先度の段で決まる側が返ることを確かめる
+ IT-A02-03-010	P1	F01=言語の段で決まる&F02=ja	jaで要求し、日本語の商品が返ることを確かめる
+ IT-A02-03-010	P1	F01=言語の段で決まる&F02=en	enで要求し、英語の商品が返ることを確かめる
+-IT-A02-03-012	P1	F02=ja&F03=パスの言語に紐づく規格が複数	jaで要求し、日本語2規格の販売数が合計されることを確かめる
+-IT-A02-03-024	P1	F02=ja&F03=パスの言語に紐づく規格は1件だけ	jaで要求し、日本語1規格の販売数が返ることを確かめる
+-IT-A02-03-001	P2	F04=どちらかに一致&F05=公開中で未削除&F06=未削除の規格がある	旧商品IDで要求し200を確かめる
+-IT-A02-03-004	P2	F04=どちらかに一致&F05=公開中で未削除&F06=未削除の規格がある	旧英語商品IDで要求しproductIdを確かめる
+-IT-A02-03-005	P2	F05=非公開・廃止・削除済み	削除済み商品と非公開商品を要求し404を確かめる
+-IT-A02-03-005	P2	F05=公開中で未削除&F06=未削除の規格が1件も無い	規格だけ削除済みの商品を要求し404を確かめる
+-IT-A02-03-014	P2	F04=どちらにも一致しない	一致するカードが無い旧商品IDで404を確かめる
+-IT-A02-03-015	P2	F05=公開中で未削除&F06=未削除の規格がある&F07=カード詳細が紐づかない	カード詳細が紐づかないグッズで404を確かめる
+-IT-A02-03-023	P2	F05=非公開・廃止・削除済み	廃止の商品を要求し404を確かめる
++IT-A02-03-012	P1	F02=ja	jaで要求し、日本語2規格の販売数が合計されることを確かめる
++IT-A02-03-024	P1	F02=ja	jaで要求し、日本語1規格の販売数が返ることを確かめる
++IT-A02-03-001	P2	F03=どちらかに一致&F04=公開中で未削除&F05=未削除の規格がある	旧商品IDで要求し200を確かめる
++IT-A02-03-004	P2	F03=どちらかに一致&F04=公開中で未削除&F05=未削除の規格がある	旧英語商品IDで要求しproductIdを確かめる
++IT-A02-03-005	P2	F04=非公開・廃止・削除済み	削除済み商品と非公開商品を要求し404を確かめる
++IT-A02-03-005	P2	F04=公開中で未削除&F05=未削除の規格が1件も無い	規格だけ削除済みの商品を要求し404を確かめる
++IT-A02-03-014	P2	F03=どちらにも一致しない	一致するカードが無い旧商品IDで404を確かめる
++IT-A02-03-015	P2	F04=公開中で未削除&F05=未削除の規格がある&F06=カード詳細が紐づかない	カード詳細が紐づかないグッズで404を確かめる
++IT-A02-03-023	P2	F04=非公開・廃止・削除済み	廃止の商品を要求し404を確かめる
+diff --git a/integration_test/casegen/combination/factors/A02-03_interactions.tsv b/integration_test/casegen/combination/factors/A02-03_interactions.tsv
+index ecb7e50d..8630053a 100644
+--- a/integration_test/casegen/combination/factors/A02-03_interactions.tsv
++++ b/integration_test/casegen/combination/factors/A02-03_interactions.tsv
+@@ -1,10 +1,8 @@
+ 処理ID	要因	判定	根拠	理由
+ P1	F01+F02	効き合う	L0089-L0090	言語の段と画像優先度の段は、パスの言語コードがjaかenかで先になる商品が変わる
+-P1	F01+F03	関係しない		週間販売数はパスの言語コードに紐づく規格の合計で、どの段で決まったかでは変わらない
+-P1	F02+F03	関係しない		週間販売数の合計は言語コードの値では変わらない（対象は指定した言語の規格）
++P2	F03+F04	関係しない		すべて満たすものだけ対象になる条件で、結果は返す・該当なしの2つだけ
++P2	F03+F05	関係しない		すべて満たすものだけ対象になる条件で、結果は返す・該当なしの2つだけ
++P2	F03+F06	関係しない		すべて満たすものだけ対象になる条件で、結果は返す・該当なしの2つだけ
+ P2	F04+F05	関係しない		すべて満たすものだけ対象になる条件で、結果は返す・該当なしの2つだけ
+ P2	F04+F06	関係しない		すべて満たすものだけ対象になる条件で、結果は返す・該当なしの2つだけ
+-P2	F04+F07	関係しない		すべて満たすものだけ対象になる条件で、結果は返す・該当なしの2つだけ
+ P2	F05+F06	関係しない		すべて満たすものだけ対象になる条件で、結果は返す・該当なしの2つだけ
+-P2	F05+F07	関係しない		すべて満たすものだけ対象になる条件で、結果は返す・該当なしの2つだけ
+-P2	F06+F07	関係しない		すべて満たすものだけ対象になる条件で、結果は返す・該当なしの2つだけ
+
+codex
+### 1
+- 機能: A05-04
+- 種類: G
+- 対象: A05-04_constraints.tsv P2 F05=見つからない、F06=なし
+- 主張: どちらかの値で処理が打ち切られ、返品の区分 F04 は結果に効かない。
+- 実際: 会員が見つからない場合やポイント履歴が無い場合に行わないのはポイントの補正・履歴操作であり、処理は続く。受注をキャンセルする際は、取消なら取引ID、打消なら打消元取引IDから対象を探す（`units/A05-04/design.txt:L0100-L0103,L0206-L0207`）。
+- 修正案: ポイント処理の打ち切りを表す場合は、取消・打消それぞれの F04 の値を組に含める。
+
+### 2
+- 機能: A05-04
+- 種類: H
+- 対象: A05-04_processes.tsv 旧P3、A05-04_factors.tsv 旧F05・旧F07・旧F08
+- 主張: 通常取引の付与・利用ポイントは独立して決まるため、旧P3とその要因を外し、会員が見つかるかの要因を P2 だけに残した。
+- 実際: 通常取引では付与・利用ポイントに応じて保有ポイントと履歴を更新するが、会員が見つからないと、その補正も履歴登録も行わない。会員の有無がポイントの値による更新結果を変える（`units/A05-04/design.txt:L0196-L0197,L0206,L0211-L0212`）。
+- 修正案: 通常取引のポイント処理と会員の有無・付与ポイント・利用ポイントの要因を戻し、会員の有無との効き合いを記載する。
+tokens used
+71,161
+### 1
+- 機能: A05-04
+- 種類: G
+- 対象: A05-04_constraints.tsv P2 F05=見つからない、F06=なし
+- 主張: どちらかの値で処理が打ち切られ、返品の区分 F04 は結果に効かない。
+- 実際: 会員が見つからない場合やポイント履歴が無い場合に行わないのはポイントの補正・履歴操作であり、処理は続く。受注をキャンセルする際は、取消なら取引ID、打消なら打消元取引IDから対象を探す（`units/A05-04/design.txt:L0100-L0103,L0206-L0207`）。
+- 修正案: ポイント処理の打ち切りを表す場合は、取消・打消それぞれの F04 の値を組に含める。
+
+### 2
+- 機能: A05-04
+- 種類: H
+- 対象: A05-04_processes.tsv 旧P3、A05-04_factors.tsv 旧F05・旧F07・旧F08
+- 主張: 通常取引の付与・利用ポイントは独立して決まるため、旧P3とその要因を外し、会員が見つかるかの要因を P2 だけに残した。
+- 実際: 通常取引では付与・利用ポイントに応じて保有ポイントと履歴を更新するが、会員が見つからないと、その補正も履歴登録も行わない。会員の有無がポイントの値による更新結果を変える（`units/A05-04/design.txt:L0196-L0197,L0206,L0211-L0212`）。
+- 修正案: 通常取引のポイント処理と会員の有無・付与ポイント・利用ポイントの要因を戻し、会員の有無との効き合いを記載する。

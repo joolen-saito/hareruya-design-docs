@@ -1,0 +1,3035 @@
+Reading additional input from stdin...
+OpenAI Codex v0.162.1
+--------
+workdir: /home/y-saito/Developments/hareruya-design-docs
+model: gpt-6-sol
+provider: openai
+approval: never
+sandbox: read-only
+reasoning effort: high
+reasoning summaries: none
+session id: 01a1583e-d2f6-7ac0-8a48-0de6de1a5b22
+--------
+user
+# 反証の依頼: 機能 M08-13・M08-14・M09-04・M09-07・M09-10・M10-04・M10-08・M10-15・M11-01・M11-02・M11-03 の要因表の見直し（3つの決定の当て方）
+
+あなたは独立したレビュアーである。別の担当が、依頼者の3つの決定に合わせて**要因表を直した**。その直しが設計書と食い違っていないかを確かめる。直さない。読むだけ。
+リポジトリは `/home/y-saito/Developments/hareruya-design-docs/`。出力は日本語。
+
+## 背景
+
+結合テストで、1回の処理の結果を左右する要因が2つ以上あるとき、効き合う要因は値の組合せを全部、関係しない要因はどの2つの要因の値の組もどこかで1回試すケースを足す。
+要因表（`integration_test/casegen/combination/factors/<機能ID>_*.tsv`）から機械が組を並べる。要因表はすでに codex の反証を1巡受けて直してある。
+そのあと依頼者が次の3つを決め（2026-10-20）、担当が要因表を直した。今回確かめるのは**この直しだけ**。
+
+| 決定 | 中身 |
+| --- | --- |
+| 1 打ち切り側は1回でよい | その値（または値の組）になると処理がそこで打ち切られ、ほかの要因の値が結果に効かないとき、constraints.tsv に種別 `打ち切り` で書く。機械はその条件を1回だけ通し、ほかの要因との組は埋めない。打ち切られても一部の要因の値がまだ結果に効くときは、その要因の値も組に入れて書く |
+| 2 列ごとに独立して決まる値は組にしない | 出力の列・表示項目ごとに独立して決まる値（CSV の空欄・書式・文言の変換 など）は要因にしない。ほかの要因と効き合う（その値で、ほかの要因の結果や、行を出す・出さないが変わる）ときだけ残す。外して要因が1つになった処理は処理ごと外す |
+| 3 結果が同じ値はまとめる | 設計書が別々の条件として書いていても、結果が同じ値は1つにまとめる |
+
+## 読むもの
+
+- 直した所: 機能ごとに `git -C /home/y-saito/Developments/hareruya-design-docs diff eddb12cb -- integration_test/casegen/combination/factors/<機能ID>_processes.tsv integration_test/casegen/combination/factors/<機能ID>_factors.tsv integration_test/casegen/combination/factors/<機能ID>_interactions.tsv integration_test/casegen/combination/factors/<機能ID>_constraints.tsv integration_test/casegen/combination/factors/<機能ID>_existing.tsv`（eddb12cb が直す前）
+- 担当の処置: `integration_test/casegen/combination/review/<機能ID>_factors_s_dispositions.tsv`
+- 設計書: `integration_test/casegen/combination/units/<機能ID>/design.txt`（行頭の `L0001` は行番号）、他の機能は `units/<機能ID>/design.txt`
+- 作り方の決まり: `integration_test/casegen/combination/FACTOR_PROMPT.md`
+
+設計書の中で記述が食い違うときは、Excel 由来の本文 ＞ 埋め込みの「表示メッセージ」節 ＞ 埋め込みの「現行仕様」節・機能設計書 の順に採る。
+
+## 確かめること（事実だけ。差分に出ている所だけ）
+
+| 種類 | 何を見るか |
+| --- | --- |
+| G 打ち切りの誤り | 打ち切りとした値で、設計書は処理を打ち切っていない。または打ち切ったあとも「効かない」とされた要因の値で結果が変わると設計書が定める（その要因の値も組に入れるべき） |
+| H 外しすぎ | 決定2で外した要因・処理が、列・表示項目ごとに独立して決まるだけではない（ほかの要因の結果、行や対象を出す・出さない、更新先・更新内容を変えると設計書が定める） |
+| I まとめすぎ | 決定3でまとめた値どうしで、結果が違うと設計書が定める |
+| J 付け替えの誤り | 要因ID・値の振り直しで、interactions・constraints・existing の値が合っていない、既存ケースの値を取り違えた |
+
+次は指摘しない: 書き方・言い回し、差分に出ていない所（1巡目で済み）、決定そのものへの異論、境界値・数量1/複数。
+
+## 出力
+
+指摘が無ければ `NONE` の1語だけ。あれば1件ずつ、次の形で。
+
+```
+### <番号>
+- 機能: <機能ID>
+- 種類: <G〜J>
+- 対象: <ファイル名> <要因ID・処理ID・組>
+- 主張: <直した後の表に書かれていること>
+- 実際: <設計書の記述（ファイル:行 を必ず添える）>
+- 修正案: <どう直すか。1文>
+```
+warning: Codex could not find bubblewrap on PATH. Install bubblewrap with your OS package manager. See the sandbox prerequisites: https://developers.openai.com/codex/concepts/sandboxing#prerequisites. Codex will use the bundled bubblewrap in the meantime.
+2026-10-20T07:37:55.833438Z ERROR rmcp::transport::worker: worker quit with fatal: Transport channel closed, when AuthRequired(AuthRequiredError { www_authenticate_header: "Bearer resource_metadata=\"https://mcp.firecrawl.dev/.well-known/oauth-protected-resource/v2/mcp-oauth\", error=\"invalid_token\", error_description=\"Firecrawl credentials required: OAuth access token (Authorization: Bearer fco_...) or API key (x-firecrawl-api-key)\"" })
+codex
+指定された11機能について、eddb12cb からの差分と担当の処置を起点に、設計書の該当箇所だけを照合します。読み取りのみで進めます。
+exec
+/bin/bash -lc "rg --files integration_test/casegen/combination | rg '(FACTOR_PROMPT|_factors_s_dispositions\\.tsv"'$|/(M08-13|M08-14|M09-04|M09-07|M09-10|M10-04|M10-08|M10-15|M11-01|M11-02|M11-03)/design'"\\.txt"'$)'"'" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+integration_test/casegen/combination/FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-16_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F03-04_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F06-02_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A07-03_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M06-03_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M15-10_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M04-19_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F06-04_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-26_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M04-32_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M13-01_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M13-15_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F08-03_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F06-26_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M08-13_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A06-02_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/B08-02_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F03-05_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M05-19_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M04-16_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M07-01_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F09-05_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F08-01_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A17-03_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/B08-05_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F04-03_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M12-03_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-08_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M10-05_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M05-20_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A15-18_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M05-01_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M16-03_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M04-20_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M06-11_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A15-05_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/B06-01_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M05-22_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M05-27_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M16-07_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F07-01_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F06-10_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/B02-04_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A07-04_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M13-12_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-31_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A07-05_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-32_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M04-14_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A15-06_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M13-04_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M05-11_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F06-22_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A02-05_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A15-14_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M05-05_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A15-09_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F06-24_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F09-03_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M10-03_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M13-09_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F06-06_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M16-02_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F02-02_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F06-27_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F05-05_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/B05-05_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A06-13_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M05-06_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M13-02_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A01-01_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F05-06_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F03-07_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-03_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M05-08_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/B05-07_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-18_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A15-11_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-37_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M08-05_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A15-13_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M04-25_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M16-01_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A15-12_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A02-01_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A16-01_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F01-01_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M11-01_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A14-03_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A17-04_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-05_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A02-04_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M13-13_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A05-03_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/B05-03_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/B02-01_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F10-02_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A06-11_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A14-01_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M06-08_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M10-10_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F03-02_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M10-13_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-27_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M04-08_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M05-02_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A07-01_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F06-05_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F06-17_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A15-01_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M04-05_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M10-06_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M05-09_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F04-02_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F06-08_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M12-08_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F09-02_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M08-08_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M13-11_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A07-07_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F03-03_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-04_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F04-04_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M04-34_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M06-06_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M10-01_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M04-17_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A06-05_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M09-04_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M05-23_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A15-10_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F09-08_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M15-02_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-45_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M10-09_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M09-10_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M06-09_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-23_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F03-08_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M05-04_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A05-02_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M08-06_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M14-07_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A06-08_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M06-12_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-29_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M04-30_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M04-28_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-35_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F02-01_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F06-21_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F09-01_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A07-02_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M12-09_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M15-04_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-38_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M13-03_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M07-02_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M05-24_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/B02-07_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M11-03_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A15-02_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M15-06_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M16-08_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M05-18_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-15_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M14-08_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/B08-04_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/B05-01_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M08-03_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F05-03_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-11_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M04-01_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F06-09_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F06-03_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F06-23_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A14-02_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M15-08_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A15-03_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A06-01_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-30_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-22_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M12-10_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M14-06_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A16-02_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M08-14_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M05-21_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A06-06_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M06-10_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/B05-08_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F09-07_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F06-16_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M06-02_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-28_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F07-04_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M16-06_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M10-07_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-33_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F01-02_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F06-18_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F09-06_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M13-08_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F06-11_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M04-24_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M14-01_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/B06-02_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M05-10_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M15-03_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M07-05_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M07-11_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M13-10_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F10-01_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F07-03_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A06-12_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M13-14_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M13-07_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M05-26_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M04-09_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A15-08_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F03-06_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F06-12_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M08-10_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M08-09_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-17_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M16-05_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M08-04_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M07-07_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M10-16_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M04-21_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F06-13_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M14-04_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M07-03_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M11-02_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M06-01_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M08-12_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A06-03_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/B08-03_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A08-02_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M10-02_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F06-07_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M04-02_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F05-04_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F08-02_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M12-07_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F06-25_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F06-20_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-21_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-10_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F02-04_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M07-08_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F03-01_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/B08-06_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M15-01_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A08-01_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-19_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-40_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M04-33_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M10-15_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M15-11_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/B08-07_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F08-04_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-09_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/B02-06_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A02-02_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F06-14_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M04-23_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M07-09_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M15-09_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M04-31_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F05-02_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A06-04_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M09-07_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M10-08_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M08-01_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M10-04_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M04-12_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/B05-06_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M04-03_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-06_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M12-06_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A15-15_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M12-05_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M05-07_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M13-06_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A15-07_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/B08-01_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/B16-11_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-02_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/B02-05_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A17-05_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M06-05_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M04-10_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F07-02_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M04-18_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M07-04_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-25_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F04-01_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M07-10_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A17-02_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A15-17_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F06-01_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-14_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M14-09_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M14-10_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-12_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M15-05_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M08-02_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M07-06_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F06-15_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A07-06_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-20_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-41_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A06-07_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M05-03_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A17-01_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F02-03_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M04-04_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M08-07_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-01_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A15-16_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F09-04_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M16-04_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A05-01_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M13-05_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F05-01_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A15-04_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M15-07_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M12-04_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M12-02_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M04-13_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M12-01_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/B02-03_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M04-22_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-13_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F10-03_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A02-03_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F08-05_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A05-04_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/B02-02_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-24_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M04-29_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M14-05_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M06-04_FACTOR_PROMPT.md
+integration_test/casegen/combination/units/M10-15/design.txt
+integration_test/casegen/combination/units/M10-04/design.txt
+integration_test/casegen/combination/units/M08-13/design.txt
+integration_test/casegen/combination/units/M08-14/design.txt
+integration_test/casegen/combination/units/M11-02/design.txt
+integration_test/casegen/combination/units/M11-01/design.txt
+integration_test/casegen/combination/review/M07-08_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M14-04_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A07-02_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F02-03_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F06-09_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M04-25_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M05-01_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M04-21_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A07-05_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M05-07_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M04-10_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A01-01_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M03-18_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M04-34_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M13-13_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M07-02_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M05-18_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M16-01_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M04-02_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A07-04_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A05-03_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A15-11_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F07-04_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A06-02_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M08-10_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M08-01_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M04-22_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A14-01_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M04-31_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M15-01_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M04-32_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F07-03_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M06-11_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F09-07_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F09-03_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A06-06_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F08-05_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F05-04_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/B08-04_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/B02-05_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F06-15_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/B08-01_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M03-25_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M07-03_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M03-29_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M03-27_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/B06-01_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M04-09_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M11-03_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M03-26_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A17-04_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M07-01_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M14-08_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M05-08_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M05-22_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M13-15_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M06-03_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M05-23_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M08-07_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M16-02_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M06-06_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A06-05_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F07-01_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M12-09_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F06-11_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M03-31_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M06-02_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M03-22_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M09-04_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M10-06_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M15-07_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M03-09_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F09-02_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M08-12_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F03-02_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M06-01_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F10-03_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F02-02_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A16-02_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M12-10_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F06-26_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M05-24_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M12-01_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M15-06_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A15-16_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/B08-03_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M12-03_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M03-35_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F04-03_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M03-38_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/B05-08_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M14-07_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A15-09_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/B08-02_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/B02-04_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M06-09_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M05-03_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M03-11_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M03-19_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F09-01_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F03-07_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M04-33_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/B02-01_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/B05-07_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A15-18_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A15-15_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M04-30_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F06-16_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F06-03_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M05-09_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A08-02_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M10-05_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A02-03_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F01-01_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A02-02_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A06-01_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A05-01_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F09-08_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F06-01_factors_s_dispositions.tsv
+integration_test/casegen/combination/units/M11-03/design.txt
+integration_test/casegen/combination/review/F08-03_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F10-01_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M04-23_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F06-08_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F03-04_factors_s_dispositions.tsv
+integration_test/casegen/combination/units/M10-08/design.txt
+integration_test/casegen/combination/units/M09-10/design.txt
+integration_test/casegen/combination/units/M09-07/design.txt
+integration_test/casegen/combination/review/M11-01_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F06-20_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M14-10_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A15-07_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F04-01_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A06-07_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A14-03_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F06-18_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M12-07_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M03-10_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A15-12_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F03-08_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F06-02_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/B05-01_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M13-04_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F06-10_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M06-12_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A17-02_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F06-07_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M03-03_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M15-10_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A17-05_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M08-13_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M11-02_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/B02-02_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A15-05_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A15-10_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M08-05_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M03-17_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F01-02_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F06-17_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M03-30_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M13-10_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M14-09_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M06-08_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F08-02_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M05-20_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F06-14_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M10-04_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M03-45_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/B02-03_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M15-08_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F05-03_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M03-14_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F09-04_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F06-05_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M05-21_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M04-13_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A02-01_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M12-04_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M15-05_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M09-07_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M16-03_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M06-05_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F05-06_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M15-03_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M03-05_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M07-09_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M06-10_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A15-02_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M03-41_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M05-02_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M08-09_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F03-01_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M10-15_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A17-03_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M13-03_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M04-20_factors_s_dispositions.tsv
+integration_test/casegen/combination/units/M09-04/design.txt
+integration_test/casegen/combination/review/M03-32_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M09-10_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/B16-11_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M03-28_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F10-02_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/B06-02_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A06-08_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M08-14_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M14-06_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A15-17_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F06-13_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F02-01_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M12-06_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/B08-06_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M15-02_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M10-08_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A06-03_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M03-20_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F06-06_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A15-13_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M12-02_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M13-02_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M16-04_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F06-21_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M03-40_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A05-04_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F05-01_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M03-12_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M03-06_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M12-08_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A15-14_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M03-02_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M15-04_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F09-06_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A15-06_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M03-16_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A02-04_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M07-05_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F06-04_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M05-10_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M13-08_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M04-08_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M14-01_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M14-05_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F05-05_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/B05-06_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M05-04_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F08-04_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M08-02_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F03-06_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M03-21_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/B08-07_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M04-19_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M03-33_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M05-26_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M03-13_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M07-06_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F09-05_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M05-05_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M08-04_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A15-03_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/B08-05_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A15-01_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M06-04_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M04-01_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F03-05_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M08-08_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M03-08_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F06-24_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A07-06_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A14-02_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A02-05_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A05-02_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M12-05_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F04-04_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/B05-05_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A07-07_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M03-04_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F06-22_factors_s_dispositions.tsv
+
+exec
+/bin/bash -lc "sed -n '1,220p' integration_test/casegen/combination/FACTOR_PROMPT.md" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+# 依頼: 機能 {FID}（{FNAME}）の要因表づくり
+
+これは分析である。ケースも設計書も直さない。事実は自分でファイルを読んで確かめ、推測で書かない。
+リポジトリは `/home/y-saito/Developments/hareruya-design-docs/`。パスはここからの相対。出力はすべて日本語で書く。
+git の変更操作（add・commit など）をしない。
+
+## 背景（依頼者決定 2026-10-20）
+
+結合テストケースは設計書の定め1件ごとに作られ、10/15 には定めごとに「数量1と複数」「有無」「状態・区分ごと」などのデータを足した。
+それでも、**1回の処理の結果を左右する要因が2つ以上あるとき、その値を同時に変えて通すケースが無い**。
+例: 公開側で注文を確定するケース33件は、支払方法がほぼ郵便振替か銀行振込で、配送方法もゆうパック・EMS が大半。クレジットカード・代金引換・店頭支払、店頭受取・同梱で注文を通すケースは無い。
+
+依頼者の決定:
+- **効き合う要因**（一方の値で、もう一方の値の結果が変わると設計書が定める）は、値の組合せを全部試す。
+- **関係しない要因**は、どの2つの要因の値の組も、どこかのケースで1回は出るように並べる（2要因の組）。
+- **他の機能の設定値**（送料・手数料・支払方法の利用条件・送料無料の条件・配送方法に紐づく支払方法など）も、それを読む処理の要因に入れる。
+
+あなたの仕事は、機能 {FID} について、組合せの元になる**要因表**を作ること。組合せの行（どの値の組を何件試すか）は、この表から別の道具が機械で作る。
+だから、表の要因・値・判定の誤りは、そのままケースの誤りになる。
+
+## 読むもの
+
+| 何 | パス |
+| --- | --- |
+| 設計書（この機能のシートを文字に起こしたもの。行頭の `L0001` とタブは行番号。`#####` の行はシートの境目） | `integration_test/casegen/combination/units/{FID}/design.txt` |
+| 他の機能の設計書（設定値を読む処理のとき、設定する機能の定めを引く） | `integration_test/casegen/combination/units/<機能ID>/design.txt`（機能名は `combination/units.tsv`） |
+| 同じ冊子の共通シート（必要なときだけ） | {COMMON} |
+| この機能のケースとシード | `integration_test/casegen/cases/{FID}_test_cases.tsv`・`{FID}_seed_data.tsv` |
+| この機能の、テストから外したケース | `integration_test/casegen/combination/units/{FID}/excluded.tsv` |
+| 全機能のケース（他の機能のケースがこの機能の処理を通しているかの検索用） | `integration_test/casegen/all_test_cases.tsv`（列: テストID・観点ID・基本設計書・検証方法・テストデータ・事前準備・手順・期待結果。セル内改行があるので csv として読む） |
+| 結合テストの範囲 | `integration_test/SCOPE.md` |
+| 不機能仕様・フェーズ2見送り（ここに載るものは要因にしない） | `functions/dead-spec-register.tsv`・`functions/phase2_candidates.tsv` |
+| 設計書の中で記述が食い違うときの優先順位 | Excel 由来の本文 ＞ 埋め込みの「表示メッセージ」節（リニューアル後の仕様）＞ 埋め込みの「現行仕様」節。同じ出所では改訂後が優先。**Excel が触れていない条件を埋め込みが足しているだけのときは食い違いではなく、両方を当てる**（例: Excel が選択肢を並べ、埋め込みが「ポイントで全額払うときは全額ポイント支払いだけ」と条件を足す → 両方）。既存ケースは正解の根拠にしない（既存ケースと設計書の食い違いは返答に書く） |
+
+検索は `grep` を使う（`rg` は同じ入力で0件を返すことがあるので使わない）。
+
+## やること
+
+### 1. 処理を決める
+
+design.txt を**全部**読み、この機能の中で「操作やデータを受けて結果を出す処理」のうち、**結果を左右する要因が2つ以上ある処理**を挙げる。
+
+- 処理の単位は「1回の操作で動き、結果を1つの所で確かめられるまとまり」。例: 注文を確定して受注を作る／お支払い方法の選択肢を出す／受注の対応状況をキャンセルへ変えて保存する。
+- 結果は、データを作った所とは**別のコンポーネントで確かめる**もの（DB、別の画面、別の機能の画面、CSV・帳票、メール、連携先）。DBにあるデータで画面の表示・選択肢が変わるものも入る（例: 既存の受注の有無で配送方法の選択肢が変わる）。同じ画面の中だけで閉じる表示の計算（保存しない）と、計算式そのものの正しさは単体テストなので挙げない。
+- 要因が1つだけの処理は挙げない（10/15 の監査で済んでいる）。
+- **要因が2つ以上の処理が1つも無い機能**（一覧を出すだけ、1つの設定を保存するだけ、など）は、5つのファイルをヘッダだけで書き、返答の1行目に「対象の処理なし」と理由を書く。無理に処理を作らない。
+- 入力値の検証（必須・桁数・形式）、検索条件・削除条件の組合せ、権限、二重送信、排他は、ほかの観点の持ち分なので処理にも要因にもしない。
+
+### 2. 要因と値を挙げる
+
+処理ごとに、**その処理の結果を変えると設計書が定める要因**を挙げる。
+
+- 要因は「区分・状態・設定・関連データ」の値。例: 閲覧店舗、配送方法、支払方法、ポイントの使い方、受注の種類（通常・店頭受取・ついで買い）、会員か非会員か、変更前の対応状況、既存の受注の状態。
+- 他の機能で設定する値で、この処理が読むものも要因にする（出所に機能IDを書く）。例: 支払方法の利用条件（M10-04）に対する注文金額、都道府県別の送料（M10-06）。その機能の design.txt で定めを確かめ、根拠に `M10-04:L0123` の形で書く。**この処理の結果への効き方が設計書のどこにも書かれていない設定値は要因にしない**（値ごとの結果が書けないため）。そういう設定値は返答の「判断に迷った点」に挙げる（依頼元が論点として控える）。
+- **値は、結果の分かれ目ごとに代表を1つ**。結果が同じになる値は1つにまとめる（例: ゆうパックとゆうパケットで結果が変わらないならどちらか1つ）。設計書が別々の条件として書いていても、結果が同じならまとめる（例: 仮会員と退会済み会員がどちらも対象外なら「仮会員または退会済み」の1値。条件を1つずつ通すのは 10/15 のデータパターンのケースの持ち分。依頼者決定 2026-10-20）。結果が値ごとに違うなら全部挙げる（例: 支払方法ごとに手数料・ボタンの文言・ポイントを使う時点が違うなら、支払方法は全部）。
+- 境界値（ちょうどの値・上限）と数量1/複数は、10/15 に済んでいるので値にしない。値は「範囲内」「範囲外」「あり」「なし」のような分かれ目で書く。
+- 不正な入力、作れない値（画面の選択肢に無い値）は値にしない。
+- **出力の列・表示項目ごとに独立して決まる値は要因にしない**（例: CSV の列が「値が無ければ空欄」、日付の書式、区分の文言への変換）。列どうしは互いの結果を変えないので組にしない（依頼者決定 2026-10-20）。ほかの要因と効き合う（その値で、ほかの要因の結果や、行を出す・出さないが変わる）ときだけ要因にする。
+- 値ごとの結果を、設計書の語で短く書く（「支店: 支払方法は店頭支払だけ」）。
+
+### 3. 要因どうしを判定する
+
+処理ごとに、その処理の要因の**すべての2つの組**を判定する（要因が5つなら10組）。判定は次のどれか。
+
+| 判定 | いつ | 根拠 |
+| --- | --- | --- |
+| 効き合う | 一方の値で、もう一方の値の結果（可否、選択肢、金額、更新先、更新内容）が変わると設計書が定める。または、一方の結果がもう一方の判定の入力になる（例: 使用ポイントで支払う金額が変わり、支払方法の選択肢が変わる） | 両方を結ぶ設計書の行が必須 |
+| 関係しない | それぞれの要因の結果が、もう一方の値によって変わらない（例: 送料は配送方法で、手数料は支払方法で決まり、合計は足し算） | 理由を書く |
+| 設計書が決めていない | 同時に効いたときの結果が設計書から決まらない（例: 送料無料の判定に使う金額が、ポイントを引く前か後か書かれていない） | 決まらない理由。下の「組の制約」に、決まらない値の組を「正解未定」で必ず書く |
+
+3つ以上の要因がまとめて効き合うとき（例: 配送方法・既存の受注の状態・既存の受注の支払方法で同梱を出すか決まる）は、1行に `F01+F03+F05` と書いて「効き合う」にしてよい。その中の2つの組は、別の行に書かない。**まとめるのは、その全部が同時に互いの結果を変えるときだけ**。2つずつで効き合うだけなら2要因の行に分ける（まとめると値の組合せが全部ケースになり、件数が膨らむ）。
+**選べるものの集まりを2つの定めが別々に絞り、結果がその共通部分になるとき**（例: 支店は支払方法が店頭支払だけ、同梱は郵便振替・銀行振込だけ → 選択肢の中身が組ごとに変わる）は「効き合う」にする。「設計書が決めていない」にするのは、両方を当てると選択肢が1つも残らないなど、結果が設計書から決まらない組だけ。
+**1件の対象を出す・出さない（対象にする・しない）を、複数の条件の「すべて満たす」または「どれか1つで外れる」で決めるとき**（例: 公開・在庫あり・セール期間内・表示フラグ のすべてを満たす商品だけ出す）は、条件どうしは「関係しない」にする。結果は出る・出ないの2つだけで、条件ごとの外れ方は1つずつ確かめれば足り、全組合せは要らない（7条件を効き合うにすると128行になる）。外れる側の値（非公開・在庫なし・期間外など）は下の「打ち切り」に書く（2026-10-20 の見直しで全機能をこの書き方にそろえた）。機械は外れる値を1回ずつ通し、全部を満たす1行を必ず作る。
+**優先順位で順に比べて決めるとき**（例: 複数一致したら、言語→特殊版→発売日→フォイル→プロモの順に比べて先に差が付いたもので選ぶ）は、比べる項目を別々の要因にして全組合せにしない。「どの段で決まるか」を1つの要因にまとめる（値: 1段目で決まる｜2段目で決まる｜…｜全段が同じ）。上の段の差が下の段を隠すので、各段で決まる組を1つずつ試せば足りる（6段を効き合うにすると64行になる）。
+「一方の値で、もう一方の処理そのものが行われない」型（例: キャンセル日が既に入っていると、在庫・ポイントの戻しを行わない）は、その値を下の「打ち切り」に書く（依頼者決定 2026-10-20「打ち切り側は1回でよい」）。打ち切られない側の値どうしの判定は、ほかの組と同じに決める。
+**推測で値の組を「作れない」にしない**。設計書の語がどの値を指すか決まらないとき（例: 支店の「店舗受取」が店頭受取とスムーズ店頭受取のどちらか）は「正解未定」にする。
+**効き合う組の値の組合せは全部ケースになる**。値が多い要因どうし（7×7 など）を効き合うにするときは、設計書の行で本当に互いの結果を変えるかを確かめる。足し算で合計に入るだけなら「関係しない」。
+
+### 4. 組の制約を書く
+
+- **作れない**: 設計上その値の組が成り立たない（例: 支店では支払方法が店頭支払だけなので、支店×代金引換は作れない）。根拠の行が必須。
+- **正解未定**: その値の組で結果が設計書から決まらない。決まらない理由を書く。これはケースにせず、報告書に論点として残す。
+- **打ち切り**: その値（または値の組）になると処理がそこで打ち切られ、ほかの要因の値は結果に効かない（例: 非公開なら出さない、エラーで元の画面へ戻る、廃止済みなら何も変えない、トークンが無効なら拒否）。機械はこの条件を1回だけ通し、ほかの要因との組は埋めない。打ち切られても一部の要因の値がまだ結果に効く（例: エラーの文言が支払方法で変わる）ときは、その要因の値も組に入れて書く（`F01=非公開&F03=英語` のように値ごとに1行）。根拠の行が必須。
+
+### 5. 既存のケースが通している組を書く
+
+この機能のケース（と、`all_test_cases.tsv` を語で検索して見つかった他の機能のケース）のうち、**その処理を動かして、確かめる所で結果を確かめている**ケースを1件ずつ書き、そのケースで値が決まっている要因の値を書く。
+
+- 値は、事前準備・手順に**書かれている**ものだけ。書かれていない要因は書かない（流れの中でたまたまそうなるだけのものは数えない）。
+- 1つのケースが同じ処理を別の値で2回以上通しているときは、通した値ごとに1行ずつ書く（同じテストIDの行が2つになる）。1回の処理で2つのデータを別の値で扱う（混在）ケースは書かない。
+- 期待結果が設計書と食い違う既存ケースは、値が合っていても書かない（返答に食い違いとして書く）。
+- 処理を動かしていない（画面を開いて別のことを見るだけ）ケース、結果を確かめていないケースは書かない。
+- テストから外したケース（excluded.tsv）は書かない。
+
+## 出力（この5つだけを書く。ほかのファイルは変更しない）
+
+すべて `integration_test/casegen/combination/factors/` に、タブ区切り・ヘッダつきで書く。セル内に改行・タブ・ダブルクォートを入れない。
+
+### `{FID}_processes.tsv`（5列）
+
+```
+処理ID	処理	契機	確かめる所	根拠
+P1	注文を確定して受注を作る	ご注文方法指定画面で確定チェックボックスを選び、注文するボタンを押す	受注情報編集画面（M05-11）	L0322-L0330
+```
+
+- 処理IDは P1 からの連番。根拠は design.txt の行（`L0037`、`L0037-L0040`、カンマ区切り）。他の機能は `M10-04:L0012`、共通シートは `_common/<ファイル名>:L0012`。
+
+### `{FID}_factors.tsv`（7列）
+
+```
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1,P2	閲覧店舗	本店｜支店	本店: 支払方法はEC用の6種／支店: 支払方法は店頭支払だけ	L0236,L0249-L0252	この機能
+F05	P2	支払方法の利用条件に対する注文金額	範囲内｜上限を超える	範囲内: 選択肢に出る／上限を超える: 選択肢に出ない	M10-04:L0101	M10-04（設定）
+```
+
+- 要因IDは F01 からの連番（処理をまたいで通し番号）。処理IDはその要因が効く処理（カンマ区切り）。
+- 値は全角の縦棒 `｜` で区切る。2つ以上。1つの値は30字まで。`=` `&` `｜` `＋` `×` を値の中に使わない。
+- 値ごとの結果は `値: 結果` を `／` でつなぐ。全部の値について書く。
+- 出所は `この機能`、`<機能ID>（設定）`、`<機能ID>（データ）` のどれか。
+
+### `{FID}_interactions.tsv`（5列）
+
+```
+処理ID	要因	判定	根拠	理由
+P1	F03+F04	効き合う	L0204	配送方法が同梱のときは支払方法が郵便振替・銀行振込だけになる
+P1	F04+F06	関係しない		手数料は支払方法で決まり、ポイントは値引きとして合計から引くだけ
+P1	F06+F07	設計書が決めていない	M10-05:L0040	送料無料の判定に使う金額がポイント値引きの前か後か書かれていない
+```
+
+- 処理ごとに、その処理の要因の2つの組を全部判定する（3つ以上の効き合うにまとめた組は除く）。
+- 効き合う・設計書が決めていない は根拠が必須。関係しない・設計書が決めていない は理由が必須。
+
+### `{FID}_constraints.tsv`（5列）
+
+```
+処理ID	組	種別	根拠	理由
+P1	F01=支店&F04=代金引換	作れない	L0251-L0252	支店の支払方法は店頭支払だけ
+P1	F06=ポイントを使う&F07=送料無料の条件に届く	正解未定	M10-05:L0040	送料無料の判定に使う金額が決まらない
+P2	F02=キャンセル日あり	打ち切り	L0412	キャンセル日が既に入っていると、在庫・ポイントの戻しを行わない
+```
+
+- 組は `要因ID=値` を `&` でつなぐ。値は factors.tsv の値と一字一句同じ。値1つだけの組（`F16=店頭受取のみのスマレジ決済`）も書ける: その値でこの処理を動かすこと自体が作れない・結果が決まらないとき（設計書の記述どうしが食い違い、共通する部分が無いときなど）。
+- 種別は `作れない`・`正解未定`・`打ち切り` のどれか。根拠が必須。制約が無ければヘッダだけ書く。
+
+### `{FID}_existing.tsv`（4列）
+
+```
+テストID	処理ID	値	理由
+IT-F04-02-081	P1	F01=本店&F03=ゆうパック&F04=郵便振替	事前準備で本店・ゆうパック・郵便振替を選び、受注情報編集画面で支払方法と配送方法を確かめる
+```
+
+- 値は `要因ID=値` を `&` でつなぐ。ケースに書かれている要因だけ。1つ以上。
+- 1つのケースが2つの処理を通しているときは2行に書く。該当するケースが無ければヘッダだけ書く。
+
+書いたら次を実行し、エラーが無くなるまで直す。組の数（全組と2要因の組で、既存ケースが通していない組を埋めるのに要る行の数）も出る。
+
+```
+python3 integration_test/casegen/combination/gate_factors.py {FID}
+```
+
+作業用の一時ファイルを作るときは、名前に {FID} を入れてスクラッチパッドに作る。他の機能の factors/ のファイルは読まない・書かない。
+ファイルの書き込みを拒否されたときは、回避せず、書くはずだった本文を返答に載せる（依頼元が保存する）。
+
+## 返答
+
+3行以内: 処理の数・要因の数・効き合う組の数・設計書が決めていない組の数、gate の結果と出た行の数、判断に迷った点（あれば1つ）。
+
+exec
+/bin/bash -lc 'git diff --stat eddb12cb -- integration_test/casegen/combination/factors/M08-13_processes.tsv integration_test/casegen/combination/factors/M08-13_factors.tsv integration_test/casegen/combination/factors/M08-13_interactions.tsv integration_test/casegen/combination/factors/M08-13_constraints.tsv integration_test/casegen/combination/factors/M08-13_existing.tsv integration_test/casegen/combination/factors/M08-14_processes.tsv integration_test/casegen/combination/factors/M08-14_factors.tsv integration_test/casegen/combination/factors/M08-14_interactions.tsv integration_test/casegen/combination/factors/M08-14_constraints.tsv integration_test/casegen/combination/factors/M08-14_existing.tsv integration_test/casegen/combination/factors/M09-04_processes.tsv integration_test/casegen/combination/factors/M09-04_factors.tsv integration_test/casegen/combination/factors/M09-04_interactions.tsv integration_test/casegen/combination/factors/M09-04_constraints.tsv integration_test/casegen/combination/factors/M09-04_existing.tsv integration_test/casegen/combination/factors/M09-07_processes.tsv integration_test/casegen/combination/factors/M09-07_factors.tsv integration_test/casegen/combination/factors/M09-07_interactions.tsv integration_test/casegen/combination/factors/M09-07_constraints.tsv integration_test/casegen/combination/factors/M09-07_existing.tsv integration_test/casegen/combination/factors/M09-10_processes.tsv integration_test/casegen/combination/factors/M09-10_factors.tsv integration_test/casegen/combination/factors/M09-10_interactions.tsv integration_test/casegen/combination/factors/M09-10_constraints.tsv integration_test/casegen/combination/factors/M09-10_existing.tsv integration_test/casegen/combination/factors/M10-04_processes.tsv integration_test/casegen/combination/factors/M10-04_factors.tsv integration_test/casegen/combination/factors/M10-04_interactions.tsv integration_test/casegen/combination/factors/M10-04_constraints.tsv integration_test/casegen/combination/factors/M10-04_existing.tsv integration_test/casegen/combination/factors/M10-08_processes.tsv integration_test/casegen/combination/factors/M10-08_factors.tsv integration_test/casegen/combination/factors/M10-08_interactions.tsv integration_test/casegen/combination/factors/M10-08_constraints.tsv integration_test/casegen/combination/factors/M10-08_existing.tsv integration_test/casegen/combination/factors/M10-15_processes.tsv integration_test/casegen/combination/factors/M10-15_factors.tsv integration_test/casegen/combination/factors/M10-15_interactions.tsv integration_test/casegen/combination/factors/M10-15_constraints.tsv integration_test/casegen/combination/factors/M10-15_existing.tsv integration_test/casegen/combination/factors/M11-01_processes.tsv integration_test/casegen/combination/factors/M11-01_factors.tsv integration_test/casegen/combination/factors/M11-01_interactions.tsv integration_test/casegen/combination/factors/M11-01_constraints.tsv integration_test/casegen/combination/factors/M11-01_existing.tsv integration_test/casegen/combination/factors/M11-02_processes.tsv integration_test/casegen/combination/factors/M11-02_factors.tsv integration_test/casegen/combination/factors/M11-02_interactions.tsv integration_test/casegen/combination/factors/M11-02_constraints.tsv integration_test/casegen/combination/factors/M11-02_existing.tsv integration_test/casegen/combination/factors/M11-03_processes.tsv integration_test/casegen/combination/factors/M11-03_factors.tsv integration_test/casegen/combination/factors/M11-03_interactions.tsv integration_test/casegen/combination/factors/M11-03_constraints.tsv integration_test/casegen/combination/factors/M11-03_existing.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+ .../combination/factors/M08-13_constraints.tsv     |  5 ++-
+ .../combination/factors/M08-13_interactions.tsv    |  4 ++-
+ .../combination/factors/M08-14_constraints.tsv     |  2 ++
+ .../combination/factors/M08-14_existing.tsv        | 26 ++++++++--------
+ .../casegen/combination/factors/M08-14_factors.tsv |  2 +-
+ .../combination/factors/M09-04_constraints.tsv     |  9 ++++--
+ .../combination/factors/M09-07_constraints.tsv     |  6 ++--
+ .../combination/factors/M09-10_constraints.tsv     |  2 ++
+ .../combination/factors/M10-04_constraints.tsv     |  2 ++
+ .../combination/factors/M10-04_existing.tsv        |  9 ------
+ .../casegen/combination/factors/M10-04_factors.tsv |  8 ++---
+ .../combination/factors/M10-04_interactions.tsv    |  4 +--
+ .../combination/factors/M10-04_processes.tsv       |  4 +--
+ .../combination/factors/M10-08_existing.tsv        |  5 ---
+ .../casegen/combination/factors/M10-08_factors.tsv |  2 --
+ .../combination/factors/M10-08_interactions.tsv    |  1 -
+ .../combination/factors/M10-08_processes.tsv       |  1 -
+ .../combination/factors/M10-15_constraints.tsv     |  4 ++-
+ .../combination/factors/M10-15_existing.tsv        | 36 ++++++++++------------
+ .../casegen/combination/factors/M10-15_factors.tsv | 14 ++++-----
+ .../combination/factors/M10-15_interactions.tsv    | 10 ++----
+ .../combination/factors/M11-01_constraints.tsv     |  2 ++
+ .../combination/factors/M11-02_constraints.tsv     |  1 +
+ .../combination/factors/M11-03_existing.tsv        |  8 -----
+ .../casegen/combination/factors/M11-03_factors.tsv |  2 --
+ .../combination/factors/M11-03_interactions.tsv    |  1 -
+ .../combination/factors/M11-03_processes.tsv       |  1 -
+ 27 files changed, 73 insertions(+), 98 deletions(-)
+
+exec
+/bin/bash -lc 'for id in M08-13 M08-14 M09-04 M09-07 M09-10 M10-04 M10-08 M10-15 M11-01 M11-02 M11-03; do echo "$id"; cat integration_test/casegen/combination/review/${id}_factors_s_dispositions.tsv; done' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+M08-13
+決定	処置	理由	直した所
+1	直し	重複を見つけた時点で以降を行わず1件も保存しない（L0054,L0058）。会員登録の照合は氏名・電話番号・住所のどれか1つが完全一致すれば登録不可（L0038-L0039,L0060）	constraints に打ち切り4行（P1: F03=重複する／P2: F05・F06・F07=登録と完全一致）。旧「変更なし・追加しない・重複する」の作れないを外し、F01+F02+F03のまとめをF01+F02（関係しない）・F01+F03・F02+F03（効き合う）の2要因に分けた
+2	直しなし	当たる所なし	
+3	直しなし	当たる所なし	
+M08-14
+決定	処置	理由	直した所
+1	直し	存在しない・退会済みは再送せず404（L0040-L0041）、トークン不一致は状態に関わらず403（L0039）	constraints に打ち切り2行（F01=存在しないか退会済みの会員／F02=一致しない）。両方のときの先後は正解未定のまま残した
+2	直しなし	当たる所なし	
+3	直し	仮会員と仮会員でない会員はどちらも登録状態を判定せず再送する（L0050）で結果が同じ	F01の値を「存在する会員（仮会員か本会員）」に統合し、existingの値を合わせた
+M09-04
+決定	処置	理由	直した所
+1	直し	URL・ファイル名の重複は検証エラーで保存せず画面に留まる（L0072,L0097,L0103-L0104）。削除済み・キャンセルは削除しない（L0042,L0074）。モバイル・ID0は一覧に行も削除ボタンも出ない（L0062）	constraints に打ち切り6行（P1: F04の2値／P2: F05=既に削除済み・F07=キャンセルを押す／P3: F08=モバイル・F09=0）。打ち切りの値とF02/F01の組を並べた作れない3行（F02=既定&F04の2値、F01=編集でファイル名は変えない&F04=ファイル名重複）を外した
+2	直しなし	当たる所なし	
+3	直しなし	当たる所なし（URL重複とファイル名重複はメッセージ・欄が違い、v処置2で整理済み）	
+M09-07
+決定	処置	理由	直した所
+1	直し	ファイル名の重複は保存しない（L0062）、削除済みは削除に失敗しました（L0085）、キャンセルは削除しない（L0086）、SPは一覧に出ない（L0058）	constraints に打ち切り4行（P1: F03=重複／P2: F05=既に削除済み・F06=キャンセルを押す／P3: F07=SP）。打ち切りの値とほかの要因の組の作れない2行（F01=変更なし&F03=重複、F04=削除不可&F05=既に削除済み）を外した
+2	直しなし	当たる所なし	
+3	直しなし	当たる所なし	
+M09-10
+決定	処置	理由	直した所
+1	直し	支店共通設定を適用すると区分だけを保存し支店固有設定は処理しない（L0053,L0161）。バナー画像を指定せず登録済みも無いときは保存しない（L0165-L0166）	constraints に打ち切り2行（F02=選択する／F02=選択しない&F03=未指定で登録なし）。作れない F01=支店共通&F02=選択する は本当に選べない組なので残した（打ち切りの行がその組を避けるため）
+2	直しなし	当たる所なし	
+3	直しなし	当たる所なし	
+M10-04
+決定	処置	理由	直した所
+1	直し	L0060で削除済み・旧・大会専用はどちらでも一覧に出ず他方の値が効かない	P2の制約に打ち切り2行（F03=削除済み・F04=旧・大会専用）
+2	直し	利用条件の下限と上限の表示、編集削除と上へ下への操作リンクは列・項目ごとに独立して決まる	旧P2・旧P3を処理ごと外し、旧P4をP2へ、F07・F08をF03・F04へ振り直し、既存の該当行を外した
+3	直しなし	結果が同じ値を別に挙げている所なし	
+M10-08
+決定	処置	理由	直した所
+1	直しなし	当たる所なし	
+2	直し	最終更新者と最終更新日は表示項目ごとに独立して決まり互いの結果を変えない	P1を処理ごと外し5つのファイルをヘッダだけにした
+3	直しなし	結果が同じ値は既に統合済み	
+M10-15
+決定	処置	理由	直した所
+1	直し	初期在庫は指定しない・在庫があるとき、閉店は集計の設定にかかわらず、他の値が効かず打ち切られる（L0191,L0209,L0144）	constraintsに打ち切り3行（P1 指定しない・P1 在庫がある・P3 閉店）
+2	直し	登録の種別は採番値だけ、公開はフロント表示だけに効き、初期在庫・在庫検索・集計の結果を変えない独立した項目	旧F01(登録の種別)・旧F06(店舗の公開)を外し、F01〜F06に振り直し、関連のinteractions・constraints(作れない1行)・existingの値を外した
+3	直しなし	結果が同じ値は既に統合済み	
+M11-01
+決定	処置	理由	直した所
+1	直し	関連データありは削除せず繰り下げもしない・交換相手が居ないときは方向によらず同じ失敗になる	constraintsに打ち切り2行（P1 F01=あり・P2 F04=居ない）
+2	直しなし	当たる所なし	
+3	直しなし	当たる所なし	
+M11-02
+決定	処置	理由	直した所
+1	直し	非稼働に変更しないときは稼働が変わらず、最後の稼働中システム権限メンバーかどうかが効かない	constraintsに打ち切り1行（P2 F05=非稼働に変更しない）
+2	直しなし	当たる所なし	
+3	直しなし	当たる所なし	
+M11-03
+決定	処置	理由	直した所
+1	直しなし	当たる所なし	
+2	直し	機能グループの権限レベルと承認権限列は列ごとに独立して決まり互いの結果を変えない	P1を処理ごと外し5つのファイルをヘッダだけにした
+3	直しなし	当たる所なし	
+
+exec
+/bin/bash -lc 'git diff --unified=3 eddb12cb -- integration_test/casegen/combination/factors/M08-14_{processes,factors,interactions,constraints,existing}.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+diff --git a/integration_test/casegen/combination/factors/M08-14_constraints.tsv b/integration_test/casegen/combination/factors/M08-14_constraints.tsv
+index c94f59f1..b1455f98 100644
+--- a/integration_test/casegen/combination/factors/M08-14_constraints.tsv
++++ b/integration_test/casegen/combination/factors/M08-14_constraints.tsv
+@@ -1,2 +1,4 @@
+ 処理ID	組	種別	根拠	理由
++P1	F01=存在しないか退会済みの会員	打ち切り	L0040-L0041	存在しない・退会済みの会員は再送せず404を返す（メールテンプレートの件名は結果に効かない）
++P1	F02=一致しない	打ち切り	L0039	なりすまし対策トークンが一致しないと会員の状態に関わらず再送せず403を返す
+ P1	F01=存在しないか退会済みの会員&F02=一致しない	正解未定	L0039,L0040,L0041	トークン不一致の403と、存在しない・退会済みの404のどちらが先か書かれていない
+diff --git a/integration_test/casegen/combination/factors/M08-14_existing.tsv b/integration_test/casegen/combination/factors/M08-14_existing.tsv
+index ce3d9615..40c60ee0 100644
+--- a/integration_test/casegen/combination/factors/M08-14_existing.tsv
++++ b/integration_test/casegen/combination/factors/M08-14_existing.tsv
+@@ -1,18 +1,18 @@
+ テストID	処理ID	値	理由
+-IT-M08-14-003	P1	F01=仮会員	宛先が対象の会員だけであることを確かめる
+-IT-M08-14-004	P1	F01=仮会員	Bccが店舗基本情報の送信元になることを確かめる
+-IT-M08-14-005	P1	F01=仮会員	差出人・返信先・返送先を確かめる
+-IT-M08-14-008	P1	F01=仮会員	再送で送信履歴が1件増えることを確かめる
+-IT-M08-14-009	P1	F01=仮会員	再送で会員データが更新されないことを確かめる
+-IT-M08-14-010	P1	F01=仮会員	再送後に会員一覧へ遷移することを確かめる
+-IT-M08-14-021	P1	F01=仮会員	続けて2回再送して送信履歴が2件になることを確かめる
+-IT-M08-14-006	P1	F01=仮会員&F03=編集した件名	テンプレートに設定した件名と本文の氏名・URLを受信メールで確かめる
+-IT-M08-14-007	P1	F01=仮会員&F03=編集した件名	編集後の件名で送られることを確かめる
+-IT-M08-14-011	P1	F01=仮会員&F02=一致しない	トークンを不正にして再送要求が403になることを確かめる
+-IT-M08-14-012	P1	F01=仮会員&F02=一致しない	トークンを不正にして再送メールも送信履歴も増えないことを確かめる
++IT-M08-14-003	P1	F01=存在する会員（仮会員か本会員）	宛先が対象の会員だけであることを確かめる
++IT-M08-14-004	P1	F01=存在する会員（仮会員か本会員）	Bccが店舗基本情報の送信元になることを確かめる
++IT-M08-14-005	P1	F01=存在する会員（仮会員か本会員）	差出人・返信先・返送先を確かめる
++IT-M08-14-008	P1	F01=存在する会員（仮会員か本会員）	再送で送信履歴が1件増えることを確かめる
++IT-M08-14-009	P1	F01=存在する会員（仮会員か本会員）	再送で会員データが更新されないことを確かめる
++IT-M08-14-010	P1	F01=存在する会員（仮会員か本会員）	再送後に会員一覧へ遷移することを確かめる
++IT-M08-14-021	P1	F01=存在する会員（仮会員か本会員）	続けて2回再送して送信履歴が2件になることを確かめる
++IT-M08-14-006	P1	F01=存在する会員（仮会員か本会員）&F03=編集した件名	テンプレートに設定した件名と本文の氏名・URLを受信メールで確かめる
++IT-M08-14-007	P1	F01=存在する会員（仮会員か本会員）&F03=編集した件名	編集後の件名で送られることを確かめる
++IT-M08-14-011	P1	F01=存在する会員（仮会員か本会員）&F02=一致しない	トークンを不正にして再送要求が403になることを確かめる
++IT-M08-14-012	P1	F01=存在する会員（仮会員か本会員）&F02=一致しない	トークンを不正にして再送メールも送信履歴も増えないことを確かめる
+ IT-M08-14-013	P1	F01=存在しないか退会済みの会員	存在しない会員IDで404になることを確かめる
+ IT-M08-14-014	P1	F01=存在しないか退会済みの会員	存在しない会員IDでメールも送信履歴も増えないことを確かめる
+ IT-M08-14-015	P1	F01=存在しないか退会済みの会員	退会済みの会員IDで404になることを確かめる
+ IT-M08-14-016	P1	F01=存在しないか退会済みの会員	退会済みの会員IDでメールも送信履歴も増えないことを確かめる
+-IT-M08-14-017	P1	F01=仮会員でない会員	仮会員でない会員IDにも再送メールが送られることを確かめる
+-IT-M08-14-022	P1	F01=仮会員&F03=編集した件名	テンプレートの件名がメール配信履歴に出ることを確かめる
++IT-M08-14-017	P1	F01=存在する会員（仮会員か本会員）	存在する会員（仮会員か本会員）IDにも再送メールが送られることを確かめる
++IT-M08-14-022	P1	F01=存在する会員（仮会員か本会員）&F03=編集した件名	テンプレートの件名がメール配信履歴に出ることを確かめる
+diff --git a/integration_test/casegen/combination/factors/M08-14_factors.tsv b/integration_test/casegen/combination/factors/M08-14_factors.tsv
+index db83d858..4a290031 100644
+--- a/integration_test/casegen/combination/factors/M08-14_factors.tsv
++++ b/integration_test/casegen/combination/factors/M08-14_factors.tsv
+@@ -1,4 +1,4 @@
+ 要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+-F01	P1	指定した会員の状態	仮会員｜仮会員でない会員｜存在しないか退会済みの会員	仮会員: 再送する／仮会員でない会員: 登録状態を判定せずそのまま再送する／存在しないか退会済みの会員: 再送せず404	L0040-L0042,L0050	この機能
++F01	P1	指定した会員の状態	存在する会員（仮会員か本会員）｜存在しないか退会済みの会員	存在する会員（仮会員か本会員）: 仮会員でも本会員でも登録状態を判定せずそのまま再送する／存在しないか退会済みの会員: 再送せず404	L0040-L0042,L0050	この機能
+ F02	P1	なりすまし対策トークン	一致する｜一致しない	一致する: 再送の可否は会員の状態で決まる／一致しない: 再送せず403	L0039	この機能
+ F03	P1	メールテンプレートの件名	標準の件名のまま｜編集した件名	標準の件名のまま: 登録されている標準の件名で送る／編集した件名: 編集後の件名で送る	L0057	この機能
+
+exec
+/bin/bash -lc 'git diff --unified=3 eddb12cb -- integration_test/casegen/combination/factors/M09-07_{processes,factors,interactions,constraints,existing}.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'git diff --unified=3 eddb12cb -- integration_test/casegen/combination/factors/M08-13_{processes,factors,interactions,constraints,existing}.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'git diff --unified=3 eddb12cb -- integration_test/casegen/combination/factors/M09-04_{processes,factors,interactions,constraints,existing}.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+diff --git a/integration_test/casegen/combination/factors/M08-13_constraints.tsv b/integration_test/casegen/combination/factors/M08-13_constraints.tsv
+index 0710c132..bf6c39f1 100644
+--- a/integration_test/casegen/combination/factors/M08-13_constraints.tsv
++++ b/integration_test/casegen/combination/factors/M08-13_constraints.tsv
+@@ -1,2 +1,5 @@
+ 処理ID	組	種別	根拠	理由
+-P1	F01=変更なし&F02=追加しない&F03=重複する	作れない	L0054,L0058	書換えも追加も無いときは重複する相手が無い
++P1	F03=重複する	打ち切り	L0054,L0058,L0075,L0077	重複を見つけた時点で以降を行わず、その回の変更は1件も保存されない（編集・追加・空白の有無は結果に効かない）
++P2	F05=登録と完全一致	打ち切り	L0038-L0039,L0060	氏名が登録と完全一致すれば登録不可で登録エラー画面を表示する（電話番号・住所の照合は結果に効かない）
++P2	F06=登録と完全一致	打ち切り	L0038-L0039,L0060	電話番号が登録と完全一致すれば登録不可で登録エラー画面を表示する
++P2	F07=登録と完全一致	打ち切り	L0038-L0039,L0060	住所が登録と完全一致すれば登録不可で登録エラー画面を表示する
+diff --git a/integration_test/casegen/combination/factors/M08-13_interactions.tsv b/integration_test/casegen/combination/factors/M08-13_interactions.tsv
+index 163f8f61..6780377a 100644
+--- a/integration_test/casegen/combination/factors/M08-13_interactions.tsv
++++ b/integration_test/casegen/combination/factors/M08-13_interactions.tsv
+@@ -1,5 +1,7 @@
+ 処理ID	要因	判定	根拠	理由
+-P1	F01+F02+F03	効き合う	L0054,L0058	重複は書換え後の一覧全体で判定するので、既存行の書換え・新規行の追加の有無で重複になる相手が変わる（新規行が書換え後の値と同じなら重複、書換えも追加も無ければ重複は起きない）
++P1	F01+F02	関係しない		既存行の書換えと新規行の追加は、それぞれ別に保存される。重複になる組は打ち切り（F03=重複する）で扱う
++P1	F01+F03	効き合う	L0054,L0058	重複は書換え後の一覧全体で判定するので、既存行を書き換えたかで重複になるかが変わる
++P1	F02+F03	効き合う	L0054,L0058	新規行の重複も更新後の一覧に対して判定するので、新規行を追加するかで重複になるかが変わる
+ P1	F01+F04	関係しない		空白除去は更新するキーワードにも新規のキーワードにも同じに働き、他の行の有無で変わらない
+ P1	F02+F04	関係しない		空白除去は更新と新規のどちらにも同じに働く
+ P1	F03+F04	効き合う	L0056,L0058	空白を除いた後のキーワードで重複を判定するので、空白ありの値で重複になる
+
+ succeeded in 0ms:
+diff --git a/integration_test/casegen/combination/factors/M09-04_constraints.tsv b/integration_test/casegen/combination/factors/M09-04_constraints.tsv
+index 2a472728..9fb3be85 100644
+--- a/integration_test/casegen/combination/factors/M09-04_constraints.tsv
++++ b/integration_test/casegen/combination/factors/M09-04_constraints.tsv
+@@ -1,6 +1,9 @@
+ 処理ID	組	種別	根拠	理由
+ P1	F01=新規登録&F02=既定	作れない	L0064	新規のページは編集可否区分を利用者作成として生成する
+ P1	F01=編集でファイル名を変える&F02=既定	作れない	L0067,L0201	編集可否区分が既定のページはファイル名の入力欄が無く変えられない
+-P1	F02=既定&F04=URLが他ページと重複	作れない	L0067,L0189	編集可否区分が既定のページはURL欄が無く入力できない
+-P1	F02=既定&F04=ファイル名が他ページと重複	作れない	L0067,L0201	編集可否区分が既定のページはファイル名欄が無く入力できない
+-P1	F01=編集でファイル名は変えない&F04=ファイル名が他ページと重複	作れない	L0069	ファイル名を変えない編集ではファイル名を新たに入力しない
++P1	F04=URLが他ページと重複	打ち切り	L0072,L0095-L0096,L0102	同一端末種別でURLが重複すると検証エラーで保存せず登録・編集画面に留まる（保存の種類・言語は結果に効かない）
++P1	F04=ファイル名が他ページと重複	打ち切り	L0097,L0103-L0104	ファイル名が他ページと重複すると検証エラーで保存せず登録・編集画面に留まる（保存の種類・言語は結果に効かない）
++P2	F05=既に削除済み	打ち切り	L0074,L0093	削除しようとしたページが既に無いときは削除対象なしのメッセージを出して一覧へ戻る。テンプレートファイルの削除は行わない
++P2	F07=キャンセルを押す	打ち切り	L0042,L0094	キャンセルを押すとモーダルを閉じて何も削除しない
++P3	F08=モバイル	打ち切り	L0062	PC端末種別のページだけを一覧に出す。モバイルは行が出ず削除ボタンも出ない
++P3	F09=0	打ち切り	L0062	IDが0のページは一覧から除く。行が出ず削除ボタンも出ない
+
+ succeeded in 0ms:
+diff --git a/integration_test/casegen/combination/factors/M09-07_constraints.tsv b/integration_test/casegen/combination/factors/M09-07_constraints.tsv
+index a52eb0ad..cac9f19a 100644
+--- a/integration_test/casegen/combination/factors/M09-07_constraints.tsv
++++ b/integration_test/casegen/combination/factors/M09-07_constraints.tsv
+@@ -1,4 +1,6 @@
+ 処理ID	組	種別	根拠	理由
+ P1	F01=編集でファイル名を変える	正解未定	L0129,L0139,L0148,L0066	Excelはファイル名変更時に日英2種類を作成すると書く一方、ファイル名は後から変更できないとも書く。現行仕様は変更前の同言語ファイルを削除する。両立する結果が決まらない
+-P1	F01=編集でファイル名は変えない&F03=同一端末種別の別ブロックと重複	作れない	L0062	ファイル名を変えない編集では別ブロックと重複する名前を入力しない
+-P2	F04=削除不可&F05=既に削除済み	作れない	L0027,L0073	削除可否は存在するブロックの属性で、既に削除済みのブロックには無い
++P1	F03=同一端末種別の別ブロックと重複	打ち切り	L0062,L0084	同じ端末種別に同じファイル名のブロックがあると登録・更新できず、ファイル名欄にエラーを表示する（保存の種類・言語は結果に効かない）
++P2	F05=既に削除済み	打ち切り	L0073,L0085	削除対象のブロックが無いときは削除に失敗しましたと表示して一覧へ戻る（削除可否・ダイアログの操作は結果に効かない）
++P2	F06=キャンセルを押す	打ち切り	L0086	承諾したときだけ削除へ進む。キャンセルでは何も削除しない
++P3	F07=SP	打ち切り	L0058	PC向けのブロックだけを一覧の対象とする。SPは行が出ず編集・削除の操作も出ない
+
+exec
+/bin/bash -lc 'git diff --unified=3 eddb12cb -- integration_test/casegen/combination/factors/M09-10_{processes,factors,interactions,constraints,existing}.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'git diff --unified=3 eddb12cb -- integration_test/casegen/combination/factors/M10-04_{processes,factors,interactions,constraints,existing}.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'git diff --unified=3 eddb12cb -- integration_test/casegen/combination/factors/M10-08_{processes,factors,interactions,constraints,existing}.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'git diff --unified=3 eddb12cb -- integration_test/casegen/combination/factors/M10-15_{processes,factors,interactions,constraints,existing}.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'git diff --unified=3 eddb12cb -- integration_test/casegen/combination/factors/M11-01_{processes,factors,interactions,constraints,existing}.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'git diff --unified=3 eddb12cb -- integration_test/casegen/combination/factors/M11-03_{processes,factors,interactions,constraints,existing}.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'git diff --unified=3 eddb12cb -- integration_test/casegen/combination/factors/M11-02_{processes,factors,interactions,constraints,existing}.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 15ms:
+diff --git a/integration_test/casegen/combination/factors/M10-08_existing.tsv b/integration_test/casegen/combination/factors/M10-08_existing.tsv
+index 03a45a0a..f18b32e9 100644
+--- a/integration_test/casegen/combination/factors/M10-08_existing.tsv
++++ b/integration_test/casegen/combination/factors/M10-08_existing.tsv
+@@ -1,6 +1 @@
+ テストID	処理ID	値	理由
+-IT-M10-08-008	P1	F01=記録あり&F02=2018年より後	事前準備で最終更新者は在籍の「試験 太郎」・最終更新日は2026年と書き、最終更新者の表示を確かめる
+-IT-M10-08-009	P1	F01=記録あり&F02=2018年より後	事前準備で最終更新者は削除済みの「退任 花子」・最終更新日は2026年と書き、名称が表示されることを確かめる
+-IT-M10-08-010	P1	F01=未記録&F02=2018年以前	事前準備で最終更新者は未設定・最終更新日は2018-12-31と書き、名称が表示されないことを確かめる
+-IT-M10-08-011	P1	F02=2018年より後	事前準備で最終更新日は2026年と書き、年月日と時分秒の表示を確かめる
+-IT-M10-08-012	P1	F02=2018年以前	事前準備で最終更新日は2018-12-31と書き、値が表示されないことを確かめる
+diff --git a/integration_test/casegen/combination/factors/M10-08_factors.tsv b/integration_test/casegen/combination/factors/M10-08_factors.tsv
+index 939e958b..6ac50ee3 100644
+--- a/integration_test/casegen/combination/factors/M10-08_factors.tsv
++++ b/integration_test/casegen/combination/factors/M10-08_factors.tsv
+@@ -1,3 +1 @@
+ 要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+-F01	P1	最終更新者の記録	未記録｜記録あり	未記録: 最終更新者の名称を表示しない／記録あり: 名称を表示する（記録された管理者が削除済みでも表示する）	L0054	この機能
+-F02	P1	最終更新日	2018年より後｜2018年以前	2018年より後: 年月日と時分秒まで表示する／2018年以前: 表示しない	L0055	この機能
+diff --git a/integration_test/casegen/combination/factors/M10-08_interactions.tsv b/integration_test/casegen/combination/factors/M10-08_interactions.tsv
+index 62e28223..904c5d06 100644
+--- a/integration_test/casegen/combination/factors/M10-08_interactions.tsv
++++ b/integration_test/casegen/combination/factors/M10-08_interactions.tsv
+@@ -1,2 +1 @@
+ 処理ID	要因	判定	根拠	理由
+-P1	F01+F02	関係しない		最終更新者は更新者の記録だけで、最終更新日は日時だけで、それぞれ別々に表示を決める
+diff --git a/integration_test/casegen/combination/factors/M10-08_processes.tsv b/integration_test/casegen/combination/factors/M10-08_processes.tsv
+index b48fc210..3473a260 100644
+--- a/integration_test/casegen/combination/factors/M10-08_processes.tsv
++++ b/integration_test/casegen/combination/factors/M10-08_processes.tsv
+@@ -1,2 +1 @@
+ 処理ID	処理	契機	確かめる所	根拠
+-P1	選んだテンプレートの最終更新者・最終更新日を表示する	自動送信メールテンプレート編集画面でテンプレ選択を選ぶ	自動送信メールテンプレート編集画面	L0054,L0055
+
+ succeeded in 40ms:
+diff --git a/integration_test/casegen/combination/factors/M09-10_constraints.tsv b/integration_test/casegen/combination/factors/M09-10_constraints.tsv
+index 8d48047b..11f0aad1 100644
+--- a/integration_test/casegen/combination/factors/M09-10_constraints.tsv
++++ b/integration_test/casegen/combination/factors/M09-10_constraints.tsv
+@@ -2,3 +2,5 @@
+ P1	F01=支店共通&F02=選択する	作れない	L0054	支店共通を選んでいるときは支店共通設定を適用を選択できない
+ P2	F04=ピックアップ商品&F05=登録あり	作れない	L0105,L0131	ピックアップ商品ではタイルタグを入力できない
+ P2	F04=タイル登録なし&F05=登録あり	作れない	L0147	タイルが登録されていない位置にはタイルタグが存在しない
++P1	F02=選択する	打ち切り	L0053,L0155-L0156,L0161	支店共通設定を適用して登録すると共通設定の区分だけを保存し、支店固有設定（バナー画像・タグ・タイル）は処理しない（バナー画像の指定は結果に効かない）
++P1	F02=選択しない&F03=未指定で登録なし	打ち切り	L0165-L0166	バナー画像を指定せず登録済みのバナー画像もないときは、バナー画像の登録に失敗しましたと表示して保存しない（編集対象は結果に効かない）
+
+ succeeded in 13ms:
+diff --git a/integration_test/casegen/combination/factors/M11-01_constraints.tsv b/integration_test/casegen/combination/factors/M11-01_constraints.tsv
+index d21fecee..d564e719 100644
+--- a/integration_test/casegen/combination/factors/M11-01_constraints.tsv
++++ b/integration_test/casegen/combination/factors/M11-01_constraints.tsv
+@@ -1 +1,3 @@
+ 処理ID	組	種別	根拠	理由
++P1	F01=あり	打ち切り	L0072,L0100-L0101	関連データがあると削除せずエラーを表示し、削除対象の表示順にかかわらず繰り下げも行わない
++P2	F04=居ない	打ち切り	L0069-L0070,L0096-L0099	交換相手が居ないと、方向にかかわらず失敗として更新エラーを表示し、表示順は変わらない
+
+ succeeded in 13ms:
+diff --git a/integration_test/casegen/combination/factors/M11-03_existing.tsv b/integration_test/casegen/combination/factors/M11-03_existing.tsv
+index 3f98c8f4..f18b32e9 100644
+--- a/integration_test/casegen/combination/factors/M11-03_existing.tsv
++++ b/integration_test/casegen/combination/factors/M11-03_existing.tsv
+@@ -1,9 +1 @@
+ テストID	処理ID	値	理由
+-IT-M11-03-004	P1	F01=全権	機能グループの全権をチェックして登録し、DBで拒否URLリストを確かめる
+-IT-M11-03-005	P1	F01=閲覧	閲覧だけをチェックして登録し、DBで拒否URLリストを確かめる
+-IT-M11-03-006	P1	F01=チェックなし	閲覧のチェックを外して登録し、DBで拒否URLリストを確かめる
+-IT-M11-03-007	P1	F01=閲覧	閲覧をチェックして登録し、そのメンバーで画面を開いて確かめる
+-IT-M11-03-008	P1	F01=チェックなし	閲覧のチェックを外して登録し、そのメンバーで画面を開いて確かめる
+-IT-M11-03-038	P1	F01=編集	編集だけをチェックして登録し、DBで拒否URLリストを確かめる
+-IT-M11-03-039	P1	F01=チェックなし&F02=チェックする	承認権限列をチェックし商品管理閲覧を外して登録し、DBで拒否URLリストを確かめる
+-IT-M11-03-040	P1	F01=閲覧	閲覧をチェックして登録し、DBで3権限の拒否URLリストを確かめる
+diff --git a/integration_test/casegen/combination/factors/M11-03_factors.tsv b/integration_test/casegen/combination/factors/M11-03_factors.tsv
+index 245bbc80..6ac50ee3 100644
+--- a/integration_test/casegen/combination/factors/M11-03_factors.tsv
++++ b/integration_test/casegen/combination/factors/M11-03_factors.tsv
+@@ -1,3 +1 @@
+ 要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+-F01	P1	機能グループでチェックした最上位の権限レベル	全権｜編集｜閲覧｜チェックなし	全権: 3段階すべてをチェック済みにして拒否URLから削除する／編集: 編集と閲覧を拒否URLから削除し全権のURLは拒否に残す／閲覧: 閲覧のURLだけを拒否URLから削除する／チェックなし: 3段階すべてを拒否URLとして登録する	L0059-L0060,L0065,L0085	この機能
+-F02	P1	同じ権限の別の権限単位列(承認権限)	チェックする｜チェックしない	チェックする: 承認権限のURLを拒否URLから削除する／チェックしない: 承認権限のURLを拒否URLとして登録する	L0084-L0085,L0088-L0089	この機能
+diff --git a/integration_test/casegen/combination/factors/M11-03_interactions.tsv b/integration_test/casegen/combination/factors/M11-03_interactions.tsv
+index 87fcc0c9..904c5d06 100644
+--- a/integration_test/casegen/combination/factors/M11-03_interactions.tsv
++++ b/integration_test/casegen/combination/factors/M11-03_interactions.tsv
+@@ -1,2 +1 @@
+ 処理ID	要因	判定	根拠	理由
+-P1	F01+F02	関係しない		機能グループごと・権限単位列ごとに自分のチェックからURLを突合して登録するだけで、一方のチェックが他方の結果を変えない
+diff --git a/integration_test/casegen/combination/factors/M11-03_processes.tsv b/integration_test/casegen/combination/factors/M11-03_processes.tsv
+index 415abd49..3473a260 100644
+--- a/integration_test/casegen/combination/factors/M11-03_processes.tsv
++++ b/integration_test/casegen/combination/factors/M11-03_processes.tsv
+@@ -1,2 +1 @@
+ 処理ID	処理	契機	確かめる所	根拠
+-P1	権限管理のチェックを登録して拒否URLリストを作る	権限管理画面でチェックボックスを変更し、登録ボタンを押す	DB（権限ごとの拒否URLリスト）	L0059-L0060,L0064-L0068,L0082-L0085
+
+ succeeded in 13ms:
+diff --git a/integration_test/casegen/combination/factors/M10-15_constraints.tsv b/integration_test/casegen/combination/factors/M10-15_constraints.tsv
+index c04f4827..21984808 100644
+--- a/integration_test/casegen/combination/factors/M10-15_constraints.tsv
++++ b/integration_test/casegen/combination/factors/M10-15_constraints.tsv
+@@ -1,2 +1,4 @@
+ 処理ID	組	種別	根拠	理由
+-P1	F01=新規登録&F03=ある	作れない	L0190	新規登録の店舗は登録前に店舗IDが無く、在庫を持てない
++P1	F01=指定しない	打ち切り	L0191,L0209	初期在庫作成を指定しないと、その店舗の在庫の有無にかかわらず初期在庫を作らない
++P1	F02=ある	打ち切り	L0191,L0209	在庫が既にあると、作成の指定にかかわらず初期在庫は作り直さない
++P3	F05=閉店	打ち切り	L0072,L0123-L0124,L0144	閉店は論理削除の扱いで、売上集計の検索項目の設定にかかわらず表示・集計の対象外
+diff --git a/integration_test/casegen/combination/factors/M10-15_existing.tsv b/integration_test/casegen/combination/factors/M10-15_existing.tsv
+index 3da686ee..371fafda 100644
+--- a/integration_test/casegen/combination/factors/M10-15_existing.tsv
++++ b/integration_test/casegen/combination/factors/M10-15_existing.tsv
+@@ -1,20 +1,18 @@
+ テストID	処理ID	値	理由
+-IT-M10-15-063	P1	F01=新規登録	新規登録で採番値が0で作られることをDBで確かめる
+-IT-M10-15-064	P1	F01=新規登録&F03=1件も無い	新規登録で在庫が0件の店舗に初期在庫が作られることをDBで確かめる
+-IT-M10-15-065	P1	F01=登録済みの店舗の編集&F03=ある	在庫のある店舗を編集しても在庫が作り直されないことをDBで確かめる
+-IT-M10-15-096	P1	F01=登録済みの店舗の編集	編集で採番値が新たに作られないことをDBで確かめる
+-IT-B02-06-001	P1	F01=新規登録&F02=指定する&F03=1件も無い	新規登録で初期在庫作成を指定し在庫を確かめる
+-IT-B02-06-002	P1	F01=新規登録&F02=指定する&F03=1件も無い	新規登録で初期在庫作成を指定し作成された在庫の内容を確かめる
+-IT-M10-15-053	P2	F04=選ぶ&F05=ある	設定済みの画像がある店舗でJPEGを選び設定をDBで確かめる
+-IT-M10-15-054	P2	F04=選ぶ&F05=ある	設定済みの画像がある店舗でGIFを選び設定をDBで確かめる
+-IT-M10-15-055	P2	F04=選ぶ&F05=ある	設定済みの画像がある店舗でPNGを選び設定をDBで確かめる
+-IT-M10-15-058	P2	F04=選ぶ&F05=ある	設定済みの画像がある店舗で差し替え、古い画像が残らないことをDBで確かめる
+-IT-M10-15-059	P2	F04=選ばない&F05=ある	画像を選ばず保存し設定済みの画像が残ることをDBで確かめる
+-IT-M10-15-095	P2	F04=選ぶ&F05=ない	画像が未設定の店舗で画像を選び設定をDBで確かめる
+-IT-M10-15-075	P3	F06=公開&F07=開店	公開の店舗を開店にして在庫検索一覧の店舗の選択肢に出ることを確かめる
+-IT-M10-15-076	P3	F06=公開&F07=閉店	公開の店舗を閉店にして在庫検索一覧の店舗の選択肢に出ないことを確かめる
+-IT-M10-15-079	P3	F06=公開&F07=開店&F08=表示する	開店の店舗を表示するにして日別集計の集計対象に出ることを確かめる
+-IT-M10-15-080	P3	F06=公開&F07=開店&F08=表示しない	開店の店舗を表示しないにして日別集計の集計対象に出ないことを確かめる
+-IT-M10-15-089	P3	F06=公開&F07=開店&F08=表示する	開店の店舗を表示するにして月別集計の集計対象に出ることを確かめる
+-IT-M10-15-090	P3	F06=公開&F07=開店&F08=表示しない	開店の店舗を表示しないにして月別集計の集計対象に出ないことを確かめる
+-IT-M10-15-097	P3	F06=公開&F07=閉店&F08=表示する	表示するのまま閉店にして集計対象に出ないことを確かめる
++IT-M10-15-064	P1	F02=1件も無い	新規登録で在庫が0件の店舗に初期在庫が作られることをDBで確かめる
++IT-M10-15-065	P1	F02=ある	在庫のある店舗を編集しても在庫が作り直されないことをDBで確かめる
++IT-B02-06-001	P1	F01=指定する&F02=1件も無い	新規登録で初期在庫作成を指定し在庫を確かめる
++IT-B02-06-002	P1	F01=指定する&F02=1件も無い	新規登録で初期在庫作成を指定し作成された在庫の内容を確かめる
++IT-M10-15-053	P2	F03=選ぶ&F04=ある	設定済みの画像がある店舗でJPEGを選び設定をDBで確かめる
++IT-M10-15-054	P2	F03=選ぶ&F04=ある	設定済みの画像がある店舗でGIFを選び設定をDBで確かめる
++IT-M10-15-055	P2	F03=選ぶ&F04=ある	設定済みの画像がある店舗でPNGを選び設定をDBで確かめる
++IT-M10-15-058	P2	F03=選ぶ&F04=ある	設定済みの画像がある店舗で差し替え、古い画像が残らないことをDBで確かめる
++IT-M10-15-059	P2	F03=選ばない&F04=ある	画像を選ばず保存し設定済みの画像が残ることをDBで確かめる
++IT-M10-15-095	P2	F03=選ぶ&F04=ない	画像が未設定の店舗で画像を選び設定をDBで確かめる
++IT-M10-15-075	P3	F05=開店	公開の店舗を開店にして在庫検索一覧の店舗の選択肢に出ることを確かめる
++IT-M10-15-076	P3	F05=閉店	公開の店舗を閉店にして在庫検索一覧の店舗の選択肢に出ないことを確かめる
++IT-M10-15-079	P3	F05=開店&F06=表示する	開店の店舗を表示するにして日別集計の集計対象に出ることを確かめる
++IT-M10-15-080	P3	F05=開店&F06=表示しない	開店の店舗を表示しないにして日別集計の集計対象に出ないことを確かめる
++IT-M10-15-089	P3	F05=開店&F06=表示する	開店の店舗を表示するにして月別集計の集計対象に出ることを確かめる
++IT-M10-15-090	P3	F05=開店&F06=表示しない	開店の店舗を表示しないにして月別集計の集計対象に出ないことを確かめる
++IT-M10-15-097	P3	F05=閉店&F06=表示する	表示するのまま閉店にして集計対象に出ないことを確かめる
+diff --git a/integration_test/casegen/combination/factors/M10-15_factors.tsv b/integration_test/casegen/combination/factors/M10-15_factors.tsv
+index abe3a0b0..5afa6957 100644
+--- a/integration_test/casegen/combination/factors/M10-15_factors.tsv
++++ b/integration_test/casegen/combination/factors/M10-15_factors.tsv
+@@ -1,9 +1,7 @@
+ 要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+-F01	P1	登録の種別	新規登録｜登録済みの店舗の編集	新規登録: 注文番号・店頭注文番号の採番値を0で作る（初期在庫の作成可否には効かない）／登録済みの店舗の編集: 採番値は作らない（初期在庫は在庫が1件も無ければ作る）	L0190,L0193	この機能
+-F02	P1	初期在庫作成の指定	指定する｜指定しない	指定する: 在庫が1件も無ければ初期在庫を作る／指定しない: 初期在庫を作らない	L0081,L0209	この機能
+-F03	P1	その店舗の在庫	1件も無い｜ある	1件も無い: 初期在庫を作れる／ある: 初期在庫は作り直さない	L0191,L0209	この機能
+-F04	P2	ショップアイコンの画像選択	選ぶ｜選ばない	選ぶ: 新しい画像を設定する／選ばない: 設定済みの画像をそのまま残す	L0188	この機能
+-F05	P2	設定済みのショップアイコン	ある｜ない	ある: 画像を選ぶと設定済みの画像は消され差し替わる／ない: 画像を選ぶと新しく設定される／選ばないと未設定のまま	L0137,L0188	この機能
+-F06	P3	店舗の公開	公開｜非公開	公開: フロントに出せる／非公開: フロントに出さない（開店前・在庫管理用）	L0070-L0071,L0121-L0122	この機能
+-F07	P3	店舗の開店	開店｜閉店	開店: 表示・集計の対象／閉店: 論理削除の扱いで表示・集計の対象外	L0072,L0123-L0124,L0144	この機能
+-F08	P3	売上集計の検索項目	表示する｜表示しない	表示する: 日別・月別集計の店舗検索項目に出る／表示しない: 出ない	L0125-L0126	この機能
++F01	P1	初期在庫作成の指定	指定する｜指定しない	指定する: 在庫が1件も無ければ初期在庫を作る／指定しない: 初期在庫を作らない	L0081,L0209	この機能
++F02	P1	その店舗の在庫	1件も無い｜ある	1件も無い: 初期在庫を作れる／ある: 初期在庫は作り直さない	L0191,L0209	この機能
++F03	P2	ショップアイコンの画像選択	選ぶ｜選ばない	選ぶ: 新しい画像を設定する／選ばない: 設定済みの画像をそのまま残す	L0188	この機能
++F04	P2	設定済みのショップアイコン	ある｜ない	ある: 画像を選ぶと設定済みの画像は消され差し替わる／ない: 画像を選ぶと新しく設定される／選ばないと未設定のまま	L0137,L0188	この機能
++F05	P3	店舗の開店	開店｜閉店	開店: 表示・集計の対象／閉店: 論理削除の扱いで表示・集計の対象外	L0072,L0123-L0124,L0144	この機能
++F06	P3	売上集計の検索項目	表示する｜表示しない	表示する: 日別・月別集計の店舗検索項目に出る／表示しない: 出ない	L0125-L0126	この機能
+diff --git a/integration_test/casegen/combination/factors/M10-15_interactions.tsv b/integration_test/casegen/combination/factors/M10-15_interactions.tsv
+index 15dcf039..fad1eabd 100644
+--- a/integration_test/casegen/combination/factors/M10-15_interactions.tsv
++++ b/integration_test/casegen/combination/factors/M10-15_interactions.tsv
+@@ -1,8 +1,4 @@
+ 処理ID	要因	判定	根拠	理由
+-P1	F01+F02	関係しない		採番値は新規登録のときだけ作るが、初期在庫は作成の指定と在庫が1件も無いことだけで決まり、登録の種別によらない（L0190-L0191,L0209）
+-P1	F01+F03	関係しない		登録の種別は採番値の作成にだけ効き、在庫の有無による初期在庫の作成可否は変わらない（L0191,L0209）。新規登録で在庫があるはずがない組は制約で扱う
+-P1	F02+F03	関係しない		初期在庫は作成を指定しかつ在庫が1件も無いのすべてを満たすときだけ作る。結果は作る・作らないの2つだけで、外れ方は1つずつ確かめれば足りる（L0191,L0209）
+-P2	F04+F05	効き合う	L0188	画像を選ぶかどうかで、設定済みの画像が消えて差し替わるか残るかが変わる
+-P3	F06+F07	関係しない		公開はフロントへの表示、開店は表示・集計の対象かどうかを決めるそれぞれ別の判定で、一方の値で他方の結果は変わらない
+-P3	F06+F08	関係しない		公開はフロントの表示、売上集計の検索項目は管理画面の日別・月別集計の店舗検索項目の表示で、互いの値で結果が変わらない
+-P3	F07+F08	関係しない		集計の店舗検索項目に出すのは開店かつ表示するのすべてを満たす店舗だけで、閉店は表示するの値によらず対象外（L0144）。出る・出ないの2つだけの結果
++P1	F01+F02	関係しない		初期在庫は作成を指定しかつ在庫が1件も無いのすべてを満たすときだけ作る。結果は作る・作らないの2つだけで、外れ方は1つずつ確かめれば足りる（L0191,L0209）
++P2	F03+F04	効き合う	L0188	画像を選ぶかどうかで、設定済みの画像が消えて差し替わるか残るかが変わる
++P3	F05+F06	関係しない		集計の店舗検索項目に出すのは開店かつ表示するのすべてを満たす店舗だけで、閉店は表示するの値によらず対象外（L0144）。出る・出ないの2つだけの結果
+
+ succeeded in 35ms:
+diff --git a/integration_test/casegen/combination/factors/M10-04_constraints.tsv b/integration_test/casegen/combination/factors/M10-04_constraints.tsv
+index d21fecee..08422740 100644
+--- a/integration_test/casegen/combination/factors/M10-04_constraints.tsv
++++ b/integration_test/casegen/combination/factors/M10-04_constraints.tsv
+@@ -1 +1,3 @@
+ 処理ID	組	種別	根拠	理由
++P2	F03=削除済み	打ち切り	L0060	削除済みの支払方法は、旧・大会専用かどうかにかかわらず一覧に出ない
++P2	F04=旧・大会専用	打ち切り	L0060	旧・大会専用の支払方法は、削除済みかどうかにかかわらず一覧に出ない
+diff --git a/integration_test/casegen/combination/factors/M10-04_existing.tsv b/integration_test/casegen/combination/factors/M10-04_existing.tsv
+index cfab5793..7dc9bc6b 100644
+--- a/integration_test/casegen/combination/factors/M10-04_existing.tsv
++++ b/integration_test/casegen/combination/factors/M10-04_existing.tsv
+@@ -1,11 +1,2 @@
+ テストID	処理ID	値	理由
+ IT-M10-04-011	P1	F01=不可&F02=1以上	事前準備で手数料設定可否は不可・手数料300と書き、登録後に手数料が0になることをデータで確かめる
+-IT-M10-04-006	P2	F03=未設定または0&F04=設定あり	事前準備で下限未設定・上限500と書き、一覧の利用条件「0円〜500円」を確かめる
+-IT-M10-04-007	P2	F03=未設定または0&F04=未設定	事前準備で下限0・上限未設定と下限未設定・上限未設定を書き、一覧の「0円〜無制限」を確かめる
+-IT-M10-04-064	P2	F03=1以上&F04=設定あり	事前準備で下限100・上限900と書き、一覧の「100円〜900円」を確かめる
+-IT-M10-04-065	P2	F03=1以上&F04=未設定	事前準備で下限100・上限未設定と書き、一覧の「100円〜無制限」を確かめる
+-IT-M10-04-051	P3	F05=固定	事前準備で固定扱いと書き、操作リンクに編集と削除が出ないことを確かめる
+-IT-M10-04-046	P3	F05=固定でない&F06=先頭	事前準備で固定扱いでない3件と書き、先頭行に上へが出ないことを確かめる
+-IT-M10-04-046	P3	F05=固定でない&F06=末尾	事前準備で固定扱いでない3件と書き、末尾行に下へが出ないことを確かめる
+-IT-M10-04-052	P3	F05=固定でない&F06=中間	事前準備で固定扱いでない3件と書き、中間行に編集・削除・上へ・下へがすべて出ることを確かめる
+-IT-M10-04-063	P3	F05=固定でない&F06=1件のみ	事前準備で固定扱いでない1件だけと書き、編集と削除が出て上へと下へが出ないことを確かめる
+diff --git a/integration_test/casegen/combination/factors/M10-04_factors.tsv b/integration_test/casegen/combination/factors/M10-04_factors.tsv
+index c59d96ed..bee4a44f 100644
+--- a/integration_test/casegen/combination/factors/M10-04_factors.tsv
++++ b/integration_test/casegen/combination/factors/M10-04_factors.tsv
+@@ -1,9 +1,5 @@
+ 要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+ F01	P1	手数料設定可否	可｜不可	可: 入力した手数料を保存する／不可: 入力欄を出さず保存の直前に手数料を0へ置き換える	L0066,L0069,L0076	この機能
+ F02	P1	保存時の手数料の値	0｜1以上	0: 0で保存する／1以上: 可なら入力値のまま、不可なら0へ置き換わる	L0069,L0076	この機能
+-F03	P2	利用条件の下限	未設定または0｜1以上	未設定または0: 「0円」と表示する／1以上: 下限の金額を表示する	L0064	この機能
+-F04	P2	利用条件の上限	未設定｜設定あり	未設定: 「〜無制限」を続けて表示する／設定あり: 「〜上限円」を続けて表示する	L0064	この機能
+-F05	P3	固定扱いの支払方法か	固定｜固定でない	固定: 編集と削除を選べない／固定でない: 編集と削除を選べる	L0062	この機能
+-F06	P3	一覧での行の位置	先頭｜中間｜末尾｜1件のみ	先頭: 上へを出さない／中間: 上へと下へを出す／末尾: 下へを出さない／1件のみ: 上へと下へを出さない	L0062	この機能
+-F07	P4	支払方法が削除済みか	削除済み｜削除されていない	削除済み: 一覧に出ない／削除されていない: 一覧に出る	L0060	この機能
+-F08	P4	旧・大会専用の支払方法か	旧・大会専用｜それ以外	旧・大会専用: 一覧に出ない（編集も削除もできない）／それ以外: 一覧に出る	L0060	この機能
++F03	P2	支払方法が削除済みか	削除済み｜削除されていない	削除済み: 一覧に出ない／削除されていない: 一覧に出る	L0060	この機能
++F04	P2	旧・大会専用の支払方法か	旧・大会専用｜それ以外	旧・大会専用: 一覧に出ない（編集も削除もできない）／それ以外: 一覧に出る	L0060	この機能
+diff --git a/integration_test/casegen/combination/factors/M10-04_interactions.tsv b/integration_test/casegen/combination/factors/M10-04_interactions.tsv
+index 64e059ad..f0cd4520 100644
+--- a/integration_test/casegen/combination/factors/M10-04_interactions.tsv
++++ b/integration_test/casegen/combination/factors/M10-04_interactions.tsv
+@@ -1,5 +1,3 @@
+ 処理ID	要因	判定	根拠	理由
+ P1	F01+F02	効き合う	L0069,L0076	手数料設定可否が不可のときは入力値にかかわらず保存の直前に0へ置き換わり、可のときは入力値のまま保存される
+-P2	F03+F04	関係しない		下限は先頭の金額部分、上限は後ろの「〜」以降をそれぞれの値だけで決めて表示する
+-P3	F05+F06	関係しない		編集と削除は固定扱いで、上へと下へは行の位置で、それぞれ別々に出し分ける
+-P4	F07+F08	関係しない		一覧に出るのは「削除されておらず、かつ旧・大会専用でない」ものだけで、結果は出る・出ないの2つ。どちらか1つでも外れれば出ず、外れ方は1つずつ確かめれば足りる
++P2	F03+F04	関係しない		一覧に出るのは「削除されておらず、かつ旧・大会専用でない」ものだけで、結果は出る・出ないの2つ。どちらか1つでも外れれば出ず、外れ方は1つずつ確かめれば足りる
+diff --git a/integration_test/casegen/combination/factors/M10-04_processes.tsv b/integration_test/casegen/combination/factors/M10-04_processes.tsv
+index 54c9640b..01684b44 100644
+--- a/integration_test/casegen/combination/factors/M10-04_processes.tsv
++++ b/integration_test/casegen/combination/factors/M10-04_processes.tsv
+@@ -1,5 +1,3 @@
+ 処理ID	処理	契機	確かめる所	根拠
+ P1	支払方法の登録で手数料を保存する	支払方法編集画面で登録ボタンを押す	支払方法のデータ（DBの手数料）	L0069,L0076
+-P2	支払方法一覧の利用条件を表示する	支払方法一覧を開く	支払方法一覧画面	L0064
+-P3	支払方法一覧の操作リンクを出し分ける	支払方法一覧を開く	支払方法一覧画面	L0062
+-P4	支払方法一覧に行を出すか決める	支払方法一覧を開く	支払方法一覧画面	L0060
++P2	支払方法一覧に行を出すか決める	支払方法一覧を開く	支払方法一覧画面	L0060
+
+ succeeded in 43ms:
+diff --git a/integration_test/casegen/combination/factors/M11-02_constraints.tsv b/integration_test/casegen/combination/factors/M11-02_constraints.tsv
+index 176b3165..93ae0aa0 100644
+--- a/integration_test/casegen/combination/factors/M11-02_constraints.tsv
++++ b/integration_test/casegen/combination/factors/M11-02_constraints.tsv
+@@ -1,2 +1,3 @@
+ 処理ID	組	種別	根拠	理由
+ P1	F01=新規登録&F02=既定文字列のまま	作れない	L0102	既定文字列が入るのは編集画面を開いたときだけで、新規登録画面のパスワード欄は空
++P2	F05=非稼働に変更しない	打ち切り	M11-01:L0113	非稼働に変更しないときは稼働が変わらず、最後の稼働中システム権限メンバーかどうかは結果に効かない
+
+exec
+/bin/bash -lc 'wc -l integration_test/casegen/combination/units/M08-13/design.txt integration_test/casegen/combination/units/M08-14/design.txt integration_test/casegen/combination/units/M09-04/design.txt integration_test/casegen/combination/units/M09-07/design.txt integration_test/casegen/combination/units/M09-10/design.txt integration_test/casegen/combination/units/M10-04/design.txt integration_test/casegen/combination/units/M10-08/design.txt integration_test/casegen/combination/units/M10-15/design.txt integration_test/casegen/combination/units/M11-01/design.txt integration_test/casegen/combination/units/M11-02/design.txt integration_test/casegen/combination/units/M11-03/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+    81 integration_test/casegen/combination/units/M08-13/design.txt
+    68 integration_test/casegen/combination/units/M08-14/design.txt
+   233 integration_test/casegen/combination/units/M09-04/design.txt
+   155 integration_test/casegen/combination/units/M09-07/design.txt
+   169 integration_test/casegen/combination/units/M09-10/design.txt
+   119 integration_test/casegen/combination/units/M10-04/design.txt
+    82 integration_test/casegen/combination/units/M10-08/design.txt
+   216 integration_test/casegen/combination/units/M10-15/design.txt
+   117 integration_test/casegen/combination/units/M11-01/design.txt
+   133 integration_test/casegen/combination/units/M11-02/design.txt
+   163 integration_test/casegen/combination/units/M11-03/design.txt
+  1536 total
+
+codex
+差分では、打ち切り条件の追加に加え、M10-04・M10-08・M10-15・M11-03 で処理や要因が外されています。特に、打ち切り後に残る結果と、外した要因が行・更新内容に効くかを設計書で確認します。
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/M08-14/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+##### 0207 sheet-22 会員登録仮登録完了メール再送
+L0001	会員登録仮登録完了メール再送
+L0002	ドキュメント名会員管理 基本設計
+L0003	セクション—
+L0004	プロジェクト名会員管理機能
+L0005	作成者緑川
+L0006	作成日2025-05-13
+L0007	更新者酒見
+L0008	更新日2025-09-26
+L0009	機能NoM08-14
+L0010	機能名会員登録仮登録完了メール再送
+L0011	概要仮登録ステータスの会員に対して完了メールの再送
+L0012	処理概要（★はカスタマイズ項目）
+L0013	会員登録仮登録完了メール再送 / C8 / image 1
+L0014	レイアウト図
+L0015	カスタマイズ説明
+L0016	・カスタマイズ要件
+L0017	なし
+L0018	・カスタマイズ要件に記載の内容以外は現行踏襲とする。
+L0019	機能仕様処理概要（★はカスタマイズ項目）
+L0020	・会員検索一覧画面にて、仮会員のみサブメニューに仮会員メール再送のリンクを表示
+L0021	リンク押下時、確認ダイアログを表示する
+L0022	・表示メッセージは「仮登録メールを再送してもよろしいですか？」
+L0023	・「OK」押下時に該当会員へ仮登録メールを再送する。
+L0024	識別ID	ラベル	書式・制限	必須	最大文字数
+L0025	または最大値	初期値	画面部品の説明
+L0026	1	仮会員メール再送	リンク	-	-	-	押下時に仮会員メールを再送する
+L0027	Source:
+L0028	functions/pf-eccube3/m08-14_admin_customer_customer_resend_provisional_mail.md
+L0029	現行仕様
+L0030	M08-14 会員登録仮登録完了メール再送 / 会員管理 — 会員登録仮登録完了メール再送
+L0031	本機能はフェーズ1対象本節は実装（pf-eccube3）からのリバースです。本機能全体はフェーズ1の実装・テスト対象です。次の項目だけがExcel基本設計によりフェーズ2対応とされており、フェーズ1では実装・テストの対象外です。
+L0032	顧客分析タグ登録 はフェーズ2対応（0207 会員登録仮登録完了メール再送）
+L0033	Excel原文: 顧客分析タグ登録はPh2で対応するため、Ph1では実装しない
+L0034	業務ロジック
+L0035	フェーズ2対応（フェーズ1では実装しない）
+L0036	Excel基本設計 0207「顧客分析タグ登録」はフェーズ2対応。フェーズ1では実装しない。
+L0037	再送の可否
+L0038	事象	扱い
+L0039	なりすまし対策トークンが一致しないとき	再送せず、アクセスを拒否する扱い（403）とする
+L0040	指定した会員が存在しないとき	再送せず、ページが見つからない扱い（404）とする
+L0041	指定した会員が退会済みのとき	退会済みの会員は取得できないため、ページが見つからない扱い（404）とする
+L0042	指定した会員が仮会員でないとき	会員の登録状態は判定しないため、そのまま再送する
+L0043	本機能は画面上の入力フォームを持たない。入力の検証は、いずれの場合も行わない。
+L0044	再送後の遷移
+L0045	再送が完了したときは、成功メッセージを表示して会員一覧へ戻る。
+L0046	入出力
+L0047	種類	内容
+L0048	入力	会員IDだけを受け取る。
+L0049	成功時出力	成功メッセージと、会員一覧への遷移。
+L0050	失敗時出力	会員が存在しない、または退会済みのときはページが見つからない扱い（404）。
+L0051	出力: メール
+L0052	項目	内容
+L0053	宛先	対象の会員のメールアドレスだけとし、他の会員を宛先から除く
+L0054	控え（Bcc）	店舗基本情報の送信元メールアドレス。受信者に見える宛先からは除く
+L0055	差出人	店舗基本情報の返信受付メールアドレス。表示名は店舗基本情報の店名
+L0056	返信先・返送先	返信先は店舗基本情報の返信受付メールアドレス、返送先は店舗基本情報の送信エラー受付メールアドレス
+L0057	件名	メールテンプレート「【販売/日】仮会員登録」に登録されている件名。テンプレートを編集したときは編集後の件名で送る
+L0058	本文	会員の氏名と、当該会員の本登録用URL（アクティベートURL）を含む
+L0059	言語	画面の表示言語が英語のときも、日本語のテンプレートで送る。英語のテンプレートを用いる場合は無い
+L0060	入出力: 永続化
+L0061	対象	内容
+L0062	会員の送信履歴	再送を行ったときに1件追加する。記録するのは、対象会員・用いたテンプレート・送信した件名・本文・送信日時だけとする。操作した管理者は記録しない
+L0063	会員データ自体は、いずれの場合も更新しない。
+L0064	リニューアル後の仕様
+L0065	表示メッセージ
+L0066	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0067	—	管理画面上部	再送完了メッセージ	メール再送が完了したとき	会員一覧へ戻る
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/M08-13/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+##### 0207 sheet-21 ブラックリスト管理
+L0001	ブラックリスト管理
+L0002	ドキュメント名会員管理 基本設計
+L0003	セクション—
+L0004	プロジェクト名会員管理機能
+L0005	作成者緑川
+L0006	作成日2025-05-13
+L0007	更新者酒見
+L0008	更新日2025-09-26
+L0009	機能NoM08-13
+L0010	機能名ブラックリスト登録/編集/削除
+L0011	概要登録されているブラックリストの一覧が表示されて編集・削除ができる
+L0012	処理概要（★はカスタマイズ項目）
+L0013	ブラックリスト管理 / C8 / image 1
+L0014	レイアウト図
+L0015	カスタマイズ説明
+L0016	・カスタマイズ要件
+L0017	なし
+L0018	・カスタマイズ要件に記載の内容以外は現行踏襲とする。
+L0019	機能仕様処理概要（★はカスタマイズ項目）
+L0020	・ブラックリストを登録、編集、削除できる機能
+L0021	新規登録処理
+L0022	・登録ボタン押下時、フォーム内容の入力チェックをサーバ側で行う
+L0023	・電話番号の場合、チェックの前にハイフンを除去する
+L0024	・電話番号のみ追加で半角数字のみかのチェックを行う
+L0025	・既存の登録と重複する項目・キーワードの場合はエラーとする
+L0026	・チェック後、新規項目の登録を行う
+L0027	更新処理
+L0028	・登録ボタン押下時、フォーム内容の入力チェックをサーバ側で行う
+L0029	・電話番号の場合、チェックの前にハイフンを除去する
+L0030	・電話番号のみ追加で半角数字のみかのチェックを行う
+L0031	・既存の登録と重複する項目・キーワードの場合はエラーとする
+L0032	・チェック後、既存項目の更新を行う
+L0033	削除処理
+L0034	・削除ボタン押下時、該当レコードを削除する
+L0035	・確認ダイアログは表示しない
+L0036	フロント側でのブラックリスト判定処理について
+L0037	・会員登録、買取時の会員登録時に使用する
+L0038	・会員情報の氏名・電話番号・住所からブラックリストデータを検索しブラックリスト登録がある場合は会員登録不可とする
+L0039	・登録不可の場合は登録エラー(ブラックリスト)画面を表示する
+L0040	識別ID	ラベル	書式・制限	必須	最大文字数
+L0041	または最大値	初期値	画面部品の説明
+L0042	1	項目(新規登録用)	単一選択(チェックボックス)	○	-	未選択(選択してください)	選択肢:住所、電話番号、氏名
+L0043	2	キーワード(新規登録用)	全角・半角	-	255	-	識別ID:4 項目にて電話番号を選択時は半角数字のみ登録可能
+L0044	3	項目(更新用)	単一選択(チェックボックス)	○	-	-	選択肢:住所、電話番号、氏名
+L0045	4	キーワード(更新用)	全角・半角	○	255	-	識別ID:6 項目にて電話番号を選択時は半角数字のみ更新可能
+L0046	5	削除ボタン	ボタン		-	-
+L0047	6	登録ボタン	ボタン	-	-	-
+L0048	Source:
+L0049	functions/pf-eccube3/m08-13_admin_customer_customer_blacklist.md
+L0050	現行仕様
+L0051	M08-13 ブラックリスト登録/編集/削除 / 会員管理 — ブラックリスト登録/編集/削除
+L0052	業務ロジック
+L0053	一括保存と中断
+L0054	一覧に表示されている全行と新規登録行は、登録操作1回でまとめて保存する。 処理は「既存行の保存 → 重複の確認 → 新規行の追加」の順に進み、途中で入力不備または重複を 見つけた時点で以降を行わず、その回の変更（編集・追加）は1件も保存されない。 中断したときは一覧画面を開き直し、保存済みの内容を読み直して表示するため、 入力途中の内容は画面に残らない。 新規登録行は、項目とキーワードの両方が入力されているときだけ追加する。 項目だけを選んでキーワードを空のままにしたときは何も追加せず、保存は成功として扱う。
+L0055	キーワードの空白除去
+L0056	キーワードは、保存する前に半角スペースと全角スペースをすべて取り除く。 前後だけでなく文字列の途中にある空白も取り除く。新規登録・更新のどちらも同じ扱いとする。
+L0057	重複の判定範囲
+L0058	重複は、その回の保存を反映したあとの一覧全体に対して判定する。 既存行を書き換えた結果、別の既存行と項目・キーワードが一致した場合も重複とする。 新規登録行の重複も、更新後の一覧に対して判定する。
+L0059	会員登録時の照合方法
+L0060	ブラックリスト判定は完全一致で行う。会員情報から、氏名は姓と名を続けた文字列、 電話番号は3分割された番号を続けた文字列、住所は都道府県・住所1・住所2を続けた文字列を作り、 いずれも空白を取り除いたうえで、同じ項目に登録されたキーワードと突き合わせる。 登録キーワードを一部に含むだけでは該当しない。
+L0061	入出力
+L0062	入力と出力
+L0063	種類	内容
+L0064	入力	一覧に表示されている全行の項目・キーワード、新規登録行の項目・キーワード、なりすまし対策トークン
+L0065	出力	保存後の一覧画面。保存済みの内容を読み直して表示する
+L0066	なりすまし対策トークンが伴わない、または一致しない要求では保存を行わない。
+L0067	リニューアル後の仕様
+L0068	表示メッセージ
+L0069	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0070	M08-13-MSG-001	管理画面上部	保存に失敗しました	ブラックリストの登録内容に入力不備があるまま保存したとき	ブラックリスト登録/編集/削除画面に留まる
+L0071	M08-13-MSG-002	管理画面上部	保存に失敗しました	ブラックリストの登録内容を保存中にエラーが起きたとき	ブラックリスト登録/編集/削除画面に留まる
+L0072	M08-13-MSG-003	管理画面上部	保存しました	ブラックリストの登録内容を保存したとき	ブラックリスト登録/編集/削除画面に遷移する
+L0073	M08-13-MSG-004	入力項目直下/フォーム上部	入力が正しくありません	登録済みのキーワードを空欄にして保存したとき	ブラックリスト登録/編集/削除画面に留まる
+L0074	M08-13-MSG-005	入力項目直下/フォーム上部	入力が正しくありません	登録済みの電話番号に数字以外を入力して保存したとき	ブラックリスト登録/編集/削除画面に留まる
+L0075	M08-13-MSG-006	入力項目直下/フォーム上部	既に登録されています	同じ項目・キーワードを重複して登録しようとしたとき	ブラックリスト登録/編集/削除画面に留まる
+L0076	M08-13-MSG-007	入力項目直下/フォーム上部	新規登録の項目が選択されていません	新規登録のキーワードを入力し、項目を選択せずに保存したとき	ブラックリスト登録/編集/削除画面に留まる
+L0077	M08-13-MSG-008	入力項目直下/フォーム上部	既に登録されています	新しく追加する項目・キーワードが、登録済みの内容と重複するとき	ブラックリスト登録/編集/削除画面に留まる
+L0078	M08-13-MSG-009	入力項目直下/フォーム上部	入力が正しくありません	新規登録の電話番号に数字以外を入力して保存したとき	ブラックリスト登録/編集/削除画面に留まる
+L0079	—	管理画面上部	登録完了メッセージ	登録・編集・削除が完了したとき	一覧へ戻る
+L0080	重複・不正キーワードのときの画面文言は実装を確認値とする。
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/M09-07/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+##### 0210 sheet-5 ブロック管理(一覧)
+L0001	ブロック管理(一覧)
+L0002	ドキュメント名コンテンツ管理機能
+L0003	セクション—
+L0004	プロジェクト名サイトリニューアル
+L0005	作成者加島
+L0006	作成日2025-09-11
+L0007	更新者加島
+L0008	更新日2025-09-18
+L0009	機能NoM09-07
+L0010	機能名ブロック管理
+L0011	概要画面に表示するブロックを一覧表示する
+L0012	処理概要（★はカスタマイズ項目）
+L0013	レイアウト図
+L0014	3
+L0015	4
+L0016	5
+L0017	6
+L0018	1
+L0019	2
+L0020	画像レイヤー（3枚）: ブロック管理(一覧) / C7 / image 1 + ブロック管理(一覧) / C7 / image 2 + ブロック管理(一覧) / C7 / image 3
+L0021	カスタマイズ説明
+L0022	・カスタマイズ要件
+L0023	・
+L0024	→ 編集できないブロックを残すため、ECCUBE4系に寄せた形で現行仕様を踏襲する
+L0025	機能仕様処理概要（★はカスタマイズ項目）
+L0026	・ブロックの編集、削除の可否について
+L0027	・編集、削除の可否はデータベースで設定できる
+L0028	※データベースで削除不可に設定しているブロックは全て編集できないように現行仕様を踏襲する
+L0029	・開発者、管理画面ログインユーザーが追加したブロックは編集、削除できる
+L0030	・編集、削除ができないブロックは、以下1～3の条件を満たして表示する
+L0031	1 (3)ブロック名の書式をリンクからラベルに変更し、押下してもブロック管理(編集)に遷移しないようにする
+L0032	2 (5)編集を非表示にする
+L0033	3 (6)削除を非表示にする
+L0034	・(2)検索ボックスに入力すると、ブロックを(3)と(4)で部分一致検索し、対象ページのみを画面に表示する
+L0035	・(6)削除を押下すると、以下1~3のフローでページを削除する
+L0036	1 以下のように削除確認のモーダルが表示する
+L0037	画像レイヤー（2枚）: ブロック管理(一覧) / D46 / image 4 + ブロック管理(一覧) / C57 / image 5
+L0038	2 「削除」を押下すると、ブロックを削除する
+L0039	3 以下のように削除完了メッセージを表示する
+L0040	識別ID	ラベル	書式・制限	必須	最大文字数
+L0041	または最大値	初期値	画面部品の説明
+L0042	1	新規作成	リンク	-	-	-	・押下すると、ブロック管理 (登録)画面へ遷移する
+L0043	2	検索ボックス	半角・全角	-	-	-	・入力すると、ブロックを(3)~(4)で部分一致検索し、対象ブロックのみを画面に表示する
+L0044	3	ブロック名	リンク	-	-	-	・押下すると、ブロック管理（編集）画面へ遷移する
+L0045	・編集できないブロックの場合、「3ブロック名の書式」をリンクからラベルに変更し、押下してもブロック管理(編集)に遷移しないようにする
+L0046	4	ファイル名	ラベル	-	-	-	-
+L0047	5	編集	リンク	-	-	-	・押下すると、ブロック管理 (編集)画面へ遷移する
+L0048	・編集できないブロックの場合、非表示にする
+L0049	6	削除	削除確認モーダル表示ボタン	-	-	-	・押下すると削除確認モーダルを表示し、「削除」を押下するとブロックを削除して、削除完了メッセージを表示する
+L0050	※処理概要を参照
+L0051	・削除できないブロックの場合、非表示とする
+L0052	Source:
+L0053	functions/pf-eccube3/m09-07_admin_content_content_block.md
+L0054	現行仕様
+L0055	M09-07 ブロック管理 / コンテンツ管理 — ブロック管理
+L0056	業務ロジック
+L0057	一覧に並べるブロック
+L0058	PC向けに登録されたブロックだけを一覧の対象とし、ブロックIDの降順で並べる。
+L0059	編集画面のブロックデータ初期表示
+L0060	既存ブロックの編集画面では、そのブロックのテンプレートファイルの内容をブロックデータ欄に初期表示する。指定されたブロックが存在しないときは、見つからない扱い（HTTP 404）とする。
+L0061	ファイル名の一意性
+L0062	同じ端末種別にすでに同じファイル名のブロックがあるときは登録・更新できず、ファイル名欄にエラーを表示する。編集では自分自身を除いて重複を判定するため、ファイル名を変えないまま保存できる。
+L0063	ファイル名の編集可否
+L0064	ファイル名を編集できるかは、ブロックの削除可否だけで決まる。削除できるブロックではファイル名の入力欄を表示する。削除できないブロックではファイル名を表示するだけで入力欄を出さず、編集できない。ファイル名の文字列を /user_data と照合する判定は行わない。
+L0065	ファイル名変更時の旧ファイル
+L0066	ファイル名を変更して更新したときは、変更前のファイル名で保存されていた同じ言語のテンプレートファイルが残っていれば、そのファイルを削除する。
+L0067	削除できないブロックへの削除要求
+L0068	削除できないブロックに対して削除要求が届いても、ブロック情報は削除せず、削除完了のメッセージも出さずに一覧画面へ戻る。
+L0069	入出力
+L0070	種類	内容
+L0071	入力	一覧・登録・編集画面の表示要求。登録・編集の保存はフォームの入力内容、削除は対象ブロックの指定
+L0072	成功時出力	登録・編集は編集画面へ戻る。削除は一覧画面へ戻る
+L0073	失敗時出力	対象のブロックが存在しないとき、編集は見つからない扱い（HTTP 404）、削除は一覧画面へ戻る
+L0074	入出力: 永続化
+L0075	操作	契機
+L0076	登録・更新	ブロックの新規登録・編集の保存
+L0077	削除	削除できるブロックの削除
+L0078	リニューアル後の仕様
+L0079	表示メッセージ
+L0080	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0081	M09-07-MSG-001	管理画面上部	この機能の利用頻度が低い場合、使用しない間は無効化することでセキュリティを更に向上させることができます。環境変数 ECCUBE_RESTRICT_FILE_UPLOAD を 1 に設定することで機能を無効化することが可能です。	ブロックの新規入力画面または編集画面を開いたとき	ブロック管理（登録・編集）画面に留まる
+L0082	M09-07-MSG-002	管理画面上部	保存しました	ブロックの新規登録または編集を保存したとき	ブロック管理（登録・編集）画面に遷移する
+L0083	M09-07-MSG-003	管理画面上部	削除しました	ブロックを削除したとき	ブロック管理（一覧）画面に遷移する
+L0084	M09-07-MSG-004	入力項目直下/フォーム上部	同じファイル名のデータが存在しています。別のファイル名を入力してください。	同じ端末種別で、別のブロックと同じファイル名を入力して保存したとき	ブロック管理（登録・編集）画面に留まる
+L0085	—	管理画面上部	削除に失敗しました	削除対象のブロックが存在しないとき	ブロック管理（一覧）画面へ戻る
+L0086	—	確認ダイアログ	このブロックを削除してもよろしいですか？	削除可能ブロックの削除を選んだとき	承諾したときだけ削除へ進む
+L0087	—	一覧の操作欄	編集	ブロック行の表示時	ブロックの編集画面へ遷移する
+L0088	—	一覧の操作欄	削除	削除可能ブロックの行の表示時	確認ダイアログを表示する
+L0089	—	一覧下部	新規入力	ブロック一覧の表示時	ブロックの新規入力画面へ遷移する
+##### 0210 sheet-6 ブロック管理(登録・編集)
+L0090	ブロック管理(登録・編集)
+L0091	ドキュメント名コンテンツ管理機能
+L0092	セクション—
+L0093	プロジェクト名サイトリニューアル
+L0094	作成者加島
+L0095	作成日2025-09-11
+L0096	更新者加島
+L0097	更新日2025-09-18
+L0098	機能NoM09-07
+L0099	機能名ブロック管理
+L0100	概要画面に表示するブロックを登録/編集できる
+L0101	処理概要（★はカスタマイズ項目）
+L0102	レイアウト図
+L0103	1
+L0104	2
+L0105	3
+L0106	5
+L0107	6
+L0108	7
+L0109	8
+L0110	4
+L0111	9
+L0112	10
+L0113	画像レイヤー（2枚）: ブロック管理(登録・編集) / E8 / image 1 + ブロック管理(登録・編集) / E8 / image 2
+L0114	カスタマイズ説明
+L0115	・カスタマイズ要件
+L0116	・日本語と英語それぞれのページを切り替えて編集可能とする
+L0117	・カスタマイズ要件に記載の内容以外は現行踏襲とする
+L0118	機能仕様処理概要（★はカスタマイズ項目）
+L0119	・(1)言語について
+L0120	・選択すると、選択した言語に応じたページの編集画面に遷移する
+L0121	・選択されている言語に応じた画面表示について
+L0122	・(6)ファイル名のテキストボックス右横のファイル拡張子に、言語に応じた識別子を追加する
+L0123	日本語の場合: .ja.twig
+L0124	英語の場合: .en.twig
+L0125	・ブロック登録について
+L0126	・ブロックを新規登録する場合、日英2種類のファイルを作成する
+L0127	・ページ更新について
+L0128	・(1)言語で選択している言語の(6)ファイル名に該当するtwigファイルのみを更新する
+L0129	・(6)ファイル名を変更して更新する場合、日英2種類のtwigファイルを作成する
+L0130	・編集、削除できないブロックの場合、この画面にアクセスできないようにする
+L0131	識別ID	ラベル	書式・制限	必須	最大文字数
+L0132	または最大値	初期値	画面部品の説明
+L0133	1	言語	単一選択	-	-	-	・選択すると読み込みが発生し、選択した言語に応じたブロック管理(登録・編集)画面を表示する
+L0134	2	ブロック設定の開閉ボタン	開閉ボタン	-	-	-	・押下すると、(3)~(8)の表示/非表示を切り替える
+L0135	3	ブロック名のヘルプ	ラベル	-	-	-	・マウスオーバーすると、以下の文言を表示する
+L0136	「ブロックの管理用名称です。」
+L0137	4	ブロック名	半角・全角	〇	255	-	・未入力で(10)登録を押下すると、動的に必須入力のエラーメッセージを表示する
+L0138	5	ファイル名のヘルプ	ラベル	-	-	-	・マウスオーバーすると、以下の文言を表示する
+L0139	「このブロックの内容を記述したtwigテンプレートファイルの名前です。管理画面ではあとから変更できません。」
+L0140	6	ファイル名	半角・全角	〇	255	-	・テキストボックス右横のファイル拡張子に、言語に応じた識別子を追加する
+L0141	例
+L0142	日本語： 〜.ja.twig
+L0143	英語： 〜.en.twig
+L0144	・(10)登録を押下すると、以下2つのの正規表現にマッチしない場合、値が有効でないとエラーメッセージを表示する
+L0145	/^[0-9a-zA-Z\/_]+$/
+L0146	/^(?!.*\/\/).+$/
+L0147	・未入力で(10)登録を押下すると、動的に必須入力のエラーメッセージを表示する
+L0148	・ファイル名最後のパスセグメントが/user_dataではない場合、テキストボックスを非表示にし、編集できない
+L0149	7	コードのヘルプ	ラベル	-	-	-	・マウスオーバーすると、以下の文言を表示する
+L0150	「テンプレートファイルを記述します。Twigで記述します。」
+L0151	8	コード	半角・全角	〇	-	-	・(10)登録を押下すると、twig構文のエラーチェックを行う
+L0152	9	ブロック管理	リンク	-	-	-	・押下すると、ブロック管理 (一覧)画面へ遷移する
+L0153	10	登録	ボタン	-	-	-	・押下すると、フォームに入力した情報で入力チェックを実施し、入力チェックが正常に完了した場合は登録/更新を行い、エラーが発生した場合はエラーメッセージを画面に表示する
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/M09-04/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+##### 0210 sheet-3 ページ管理(一覧)
+L0001	ページ管理(一覧)
+L0002	ドキュメント名コンテンツ管理機能
+L0003	セクション—
+L0004	プロジェクト名サイトリニューアル
+L0005	作成者加島
+L0006	作成日2025-09-11
+L0007	更新者加島
+L0008	更新日2025-09-19
+L0009	機能NoM09-04
+L0010	機能名ページ管理
+L0011	概要フロントページを一覧表示する
+L0012	処理概要（★はカスタマイズ項目）
+L0013	レイアウト図
+L0014	1
+L0015	2
+L0016	3
+L0017	4
+L0018	5
+L0019	6
+L0020	7
+L0021	8
+L0022	画像レイヤー（2枚）: ページ管理(一覧) / B8 / image 1 + ページ管理(一覧) / B8 / image 2
+L0023	カスタマイズ説明
+L0024	・カスタマイズ要件
+L0025	・
+L0026	→ 編集できないページを残すため、ECCUBE4系に寄せた形で現行踏襲とする
+L0027	機能仕様処理概要（★はカスタマイズ項目）
+L0028	・ページの編集、削除の可否について
+L0029	・編集、削除の可否はデータベースで設定できる
+L0030	・ページ編集
+L0031	・開発者が追加したページの(5)URL、(6)ファイル名、コードは編集できない
+L0032	※コードはシート「ページ管理(登録・編集)」の画面部品(1-8)を参照
+L0033	※すべてのページで(3)ページ名を押下すると、内容を閲覧できるが、ページ管理(登録・編集)画面では編集できない
+L0034	・管理画面ログインユーザーが追加したページは編集できる
+L0035	・ページ削除
+L0036	・開発者が追加したページは削除できない
+L0037	・管理画面ログインユーザーが追加したページは削除できる
+L0038	・(2)検索ボックスに入力すると、ページを(3)~(6)で部分一致検索し、対象ページのみを画面に表示する
+L0039	・(8)削除を押下すると、以下1~3のフローでページを削除する
+L0040	1 以下のように削除確認のモーダルが表示する
+L0041	画像レイヤー（2枚）: ページ管理(一覧) / C53 / image 3 + ページ管理(一覧) / D65 / image 4
+L0042	2 「削除」を押下すると、ページを削除する
+L0043	3 以下のように削除完了メッセージを表示する
+L0044	識別ID	ラベル	書式・制限	必須	最大文字数
+L0045	または最大値	初期値	画面部品の説明
+L0046	1	新規作成	リンク	-	-	-	・押下すると、ページ管理 (登録)画面へ遷移する
+L0047	2	検索ボックス	半角・全角	-	-	-	・入力すると、ページを(3)~(6)で部分一致検索し、対象ページのみを画面に表示する
+L0048	3	ページ名	リンク	-	-	-	・押下すると、ページ管理（編集）画面へ遷移する
+L0049	4	ルーティング名	ラベル	-	-	-	-
+L0050	5	URL	ラベル	-	-	-	-
+L0051	6	ファイル名	ラベル	-	-	-	-
+L0052	7	レイアウト名	ラベル	-	-	-	-
+L0053	8	削除	削除確認モーダル表示ボタン	-	-	-	・押下すると削除確認モーダルを表示し、「削除」を押下するとページを削除して、削除完了メッセージを表示する
+L0054	※処理概要を参照
+L0055	・削除できないページの場合、非表示とする
+L0056	Source:
+L0057	functions/pf-eccube3/m09-04_admin_content_content_page.md
+L0058	現行仕様
+L0059	M09-04 ページ管理 / コンテンツ管理 — ページ管理
+L0060	業務ロジック
+L0061	一覧の対象
+L0062	PC端末種別のページをID昇順で表示する。IDが 0 のページは一覧から除く。
+L0063	新規作成の初期表示
+L0064	新規のページは、端末種別をPC、編集可否区分を利用者作成として生成する。
+L0065	編集の初期表示
+L0066	ページIDに該当するページが無いときは、編集画面を表示せず、システムエラーの画面を表示する。テンプレート本文欄には、該当ページのテンプレートファイルの内容を初期表示する。
+L0067	URLとファイル名を編集できるかは、ページの編集可否区分だけで決まる。編集可否区分が既定（初期投入）のページでは、URLとファイル名を表示するだけで入力欄を出さず、編集できない。それ以外のページでは、URLとファイル名の入力欄を表示する。URL・ファイル名の文字列を /user_data と照合する判定は行わない。
+L0068	保存時のふるまい
+L0069	編集でファイル名を変えて保存したときは、変更前の名前のテンプレートファイルが残っていればそれを削除する。
+L0070	保存を終えたときは、登録したページの編集画面へ戻る。
+L0071	URLの一意性
+L0072	同一端末種別でURLが重複するときは検証エラーとする。重複の判定では、新規はIDを除外せず、編集は自身のIDだけを除外する。
+L0073	削除
+L0074	削除しようとしたページが既に存在しないときは、削除対象なしのメッセージを表示して一覧へ戻る。削除するときは、ページ情報に加えて、テンプレートファイルが存在すればそれも削除する。
+L0075	入出力
+L0076	種類	内容
+L0077	入力	一覧・フォームの表示要求。新規・編集はページ属性とテンプレート本文。削除はページID。
+L0078	成功時出力	新規・編集のときは編集画面への遷移（302）と登録完了メッセージ。削除のときは一覧への遷移（302）と削除完了メッセージ。
+L0079	失敗時出力	検証に外れたときは同一フォームの再描画。編集で対象ページが無いときはシステムエラーの画面。削除で対象ページが無いときは削除対象なしのメッセージ。
+L0080	入出力: 永続化
+L0081	操作	契機
+L0082	追加	ページを新規登録したとき
+L0083	更新	ページを編集して保存したとき
+L0084	削除	利用者作成ページを削除したとき
+L0085	リニューアル後の仕様
+L0086	表示メッセージ
+L0087	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0088	—	一覧	削除（確認ダイアログ「このページを削除してもよろしいですか？」）	削除リンク押下時	—
+L0089	—	一覧下部	新規入力	一覧下部の登録ボタン	—
+L0090	M09-04-MSG-001	フラッシュメッセージ	この機能の利用頻度が低い場合、使用しない間は無効化することでセキュリティを更に向上させることができます。環境変数 ECCUBE_RESTRICT_FILE_UPLOAD を 1 に設定することで機能を無効化することが可能です。	ページ登録・編集画面を開いたとき（未表示の場合）	ページ登録・編集画面に留まる
+L0091	M09-04-MSG-002	フラッシュメッセージ	保存しました	ページの登録・編集内容を保存したとき	ページ編集画面に遷移する
+L0092	M09-04-MSG-003	フラッシュメッセージ	削除しました	ユーザー作成ページを削除したとき	ページ一覧画面に遷移する
+L0093	M09-04-MSG-004	フラッシュメッセージ	既に削除されています	削除しようとしたページがすでに存在しないとき	ページ一覧画面に遷移する
+L0094	M09-04-MSG-005	確認モーダル	この操作はあとから取り消すことができません。「%name%」を削除してよろしいですか？	削除ボタンを押したとき（削除前の確認）	削除でモーダルを閉じてページ一覧画面に遷移、キャンセルでモーダルを閉じる
+L0095	—	URL欄直下	※ 同じURLのデータが存在しています。別のURLを入力してください。	同一端末種別で既存ページと URL が重複したとき	送信後の検証で付与する
+L0096	M09-04-MSG-006	入力項目直下（URL欄）	既にURLが存在しています。	ユーザー作成ページで、他のページと同じURLを入力して送信したとき	エラーを表示してページ登録・編集画面に留まる
+L0097	M09-04-MSG-007	入力項目直下（ファイル名欄）	同じファイル名のデータが存在しています。別のファイル名を入力してください。	ユーザー作成ページで、他のページと重複するファイル名を入力して送信したとき	エラーを表示してページ登録・編集画面に留まる
+L0098	M09-04-MSG-008	入力項目直下	入力されていません。	必須項目が未入力のまま送信したとき	エラーを表示してページ登録・編集画面に留まる
+L0099	M09-04-MSG-009	入力項目直下	長すぎます。この値は{{ limit }}文字以下で入力してください。	入力内容が項目ごとの文字数上限を超えたまま送信したとき	エラーを表示してページ登録・編集画面に留まる
+L0100	M09-04-MSG-010	入力項目直下	有効な値ではありません。	ユーザー作成ページで、URLまたはファイル名に使用できない形式を入力して送信したとき	エラーを表示してページ登録・編集画面に留まる
+L0101	M09-04-MSG-011	入力項目直下（ページ内容欄）	Twigのフォーマットが正しくありません。{{ error }}	テンプレート内容の書式に誤りがあるとき	エラーを表示してページ登録・編集画面に留まる
+L0102	M09-04-MSG-012	入力項目直下/フォーム上部	既にURLが存在しています。	ページを登録・編集するときに、別のページと同じURLを入力したとき	エラーを表示してページ登録・編集画面に留まる
+L0103	M09-04-MSG-013	入力項目直下/フォーム上部	同じファイル名のデータが存在しています。別のファイル名を入力してください。	ページを登録・編集するときに、別のユーザー作成ページと同じファイル名を入力したとき	エラーを表示してページ登録・編集画面に留まる
+L0104	M09-04-MSG-014	入力項目直下/フォーム上部	同じファイル名のデータが存在しています。別のファイル名を入力してください。	ユーザー作成ページを登録・編集するときに、標準ページと同じファイル名を入力したとき	エラーを表示してページ登録・編集画面に留まる
+##### 0210 sheet-4 ページ管理(登録・編集)
+L0105	ページ管理(登録・編集)
+L0106	ドキュメント名コンテンツ管理機能
+L0107	セクション—
+L0108	プロジェクト名サイトリニューアル
+L0109	作成者加島
+L0110	作成日2025-09-11
+L0111	更新者堀部
+L0112	更新日2025-10-21
+L0113	機能NoM09-04
+L0114	機能名ページ管理
+L0115	概要フロントページの登録/編集できる
+L0116	処理概要（★はカスタマイズ項目）
+L0117	レイアウト図
+L0118	1-1
+L0119	1-3
+L0120	1-6
+L0121	1-8
+L0122	1-9
+L0123	1-4
+L0124	1-7
+L0125	1-2
+L0126	202510251030
+L0127	1-10
+L0128	1-5
+L0129	2-3
+L0130	2-4
+L0131	3-1
+L0132	3-3
+L0133	3-4
+L0134	3-5
+L0135	2-1
+L0136	2-2
+L0137	3-2
+L0138	3-6
+L0139	3-7
+L0140	3-8
+L0141	5
+L0142	4
+L0143	画像レイヤー（4枚）: ページ管理(登録・編集) / C8 / image 1 + ページ管理(登録・編集) / C8 / image 2 + ページ管理(登録・編集) / C8 / image 3 + ページ管理(登録・編集) / C8 / image 4
+L0144	カスタマイズ説明
+L0145	・カスタマイズ要件
+L0146	・
+L0147	→ 現行に存在する機能のため、ECCUBE4系に寄せた形で現行仕様を踏襲する
+L0148	・{% set noShopName = true %}を設定することで、titleタグのサフィックス(末尾)に固定文言が追加されないようにする
+L0149	(販売系以外のLPで使用するため)
+L0150	・ページ確認ボタンを設置し、URLの内容を別タブで開くようにする
+L0151	・最終更新日時を表示するようにする
+L0152	・カスタマイズ要件に記載の内容以外は現行踏襲とする
+L0153	機能仕様処理概要（★はカスタマイズ項目）
+L0154	・(1-1)言語について
+L0155	・選択すると、選択した言語に応じたページの編集画面に遷移する
+L0156	・選択されている言語に応じた画面表示について
+L0157	・(1-4)URLのテキストボックス左横のパスに、言語に応じたパスセグメントを追加する
+L0158	日本語の場合: https://www.hareruyamtg.com/ja/~
+L0159	英語の場合: https://www.hareruyamtg.com/en/~
+L0160	・(1-7)twigファイルのテキストボックス右横のファイル拡張子に、言語に応じた識別子を追加する
+L0161	日本語の場合: .ja.twig
+L0162	英語の場合: .en.twig
+L0163	・ページ登録について
+L0164	・ページを新規登録する場合、日英2種類のファイルを作成する
+L0165	★ページ確認
+L0166	・(1-5)ページ確認ボタンを追加し、登録されたURLを別タブで表示する
+L0167	★最終更新日時を表示するようにする
+L0168	・ページ更新について
+L0169	・(1-1)言語で選択している言語の(1-7)twigファイルのみを更新する
+L0170	・
+L0171	(1-7)twigファイルを変更して更新する場合、選択されている言語のtwigファイルのみ更新する
+L0172	★タイトルタグの固定文言を非表示
+L0173	・(1-9)コード内に{% set noShopName = true %}を設定すると、titleタグのサフィックス（末尾）に以下の固定文言が追加されない
+L0174	固定文言: | 日本最大級 MTG通販サイト『晴れる屋』
+L0175	※noShopNameの設定はページ管理で行うが、固定文言をつけるかどうかの判定はフロントで行う
+L0176	識別ID	ラベル	書式・制限	必須	最大文字数
+L0177	または最大値	初期値	画面部品の説明
+L0178	ページ設定
+L0179	1-1	言語	単一選択	-	-	-	・選択すると読み込みが発生し、選択した言語に応じたページ管理(登録・編集)画面を表示する
+L0180	1-2	ページ設定の開閉ボタン	開閉ボタン	-	-	-	・押下すると、(1-3)~(1-9)の表示/非表示を切り替える
+L0181	1-3	ページ名	半角・全角	〇	255	-	・未入力で(5)登録を押下すると、動的に必須入力のエラーメッセージを表示する
+L0182	1-4	URL	半角・全角	〇	255	-	・テキストボックス左横のパスに、言語に応じたパスセグメントを追加する
+L0183	例
+L0184	日本語： https://www.hareruyamtg.com/ja/〜
+L0185	英語： https://www.hareruyamtg.com/en/〜
+L0186	・(5)登録を押下すると、以下の正規表現にマッチしない場合、値が有効でないとエラーメッセージを表示する
+L0187	/^([0-9a-zA-Z_\-]+\/?)+(?<!\/)$/
+L0188	・入力なしで(5)登録を押下すると、動的に必須入力のエラーメッセージを表示する
+L0189	・URL最後のパスセグメントが/user_dataではない場合、テキストボックスを非表示にし、編集できない
+L0190	1-5	ページ確認ボタン	ボタン	-	-	-	・URLに登録されているURLを別タブで開く
+L0191	※ URLに変数が含まれる場合、正しく表示されない
+L0192	1-6	ファイル名のヘルプ	ラベル	-	-	-	・マウスオーバーすると、以下の文言を表示する
+L0193	「ページの内容を記述したtwigテンプレートファイルの名前です。」
+L0194	1-7	twigファイル	半角・全角	〇	255	-	・テキストボックス右横のファイル拡張子に、言語に応じた識別子を追加する
+L0195	例
+L0196	日本語： .ja.twig
+L0197	英語： .en.twig
+L0198	・(5)登録を押下すると、以下の正規表現にマッチしない場合、値が有効でないとエラーメッセージを表示する
+L0199	/^([0-9a-zA-Z_\-]+\/?)+$/
+L0200	・未入力で(5)登録を押下すると、動的に必須入力のエラーメッセージを表示する
+L0201	・ファイル名最後のパスセグメントが/user_dataではない場合、テキストボックスを非表示にし、編集できない
+L0202	1-8	コードのヘルプ	ラベル	-	-	-	・マウスオーバーすると、以下の文言を表示する
+L0203	「テンプレートファイルを記述します。Twigで記述します。」
+L0204	1-9	コード	半角・全角	〇		{% extends 'default_frame.twig' %}
+L0205	{% block main %}
+L0206	{% endblock %}	・未入力で(5)登録を押下すると、動的に必須入力のエラーメッセージを表示する
+L0207	・(5)登録を押下すると、twig構文のエラーチェックを行う
+L0208	・コードが編集できないページの場合、readonlyにして入力不可とする
+L0209	・コード内に{% set noShopName = true %}を設定すると、titleタグのサフィックス（末尾）に以下の固定文言が追加されない
+L0210	固定文言: | 日本最大級 MTG通販サイト『晴れる屋』
+L0211	1-10	最終更新日時	ラベル	-	-	-	編集しているページの最終更新日時の表示を追加
+L0212	レイアウト設定
+L0213	2-1	レイアウト設定のヘルプ	ラベル	-	-	-	・マウスオーバーすると、以下の文言を表示する
+L0214	「このページに適用するレイアウトを選択します。」
+L0215	2-2	レイアウト設定の開閉ボタン	開閉ボタン	-	-	-	・押下すると、(2-3)~(2-4)の表示/非表示を切り替える
+L0216	2-3	PC	単一選択	-	-	-	・プレースホルダ: ---
+L0217	2-4	モバイル	単一選択	-	-	-	・プレースホルダ: ---
+L0218	メタ設定
+L0219	3-1	メタ設定のヘルプ	ラベル	-	-	-	・マウスオーバーすると、以下の文言を表示する
+L0220	「こページのMETAタグの内容を指定できます。」
+L0221	3-2	メタ設定の開閉ボタン	開閉ボタン	-	-	-	・押下すると、(3-3)~(3-8)の表示/非表示を切り替える
+L0222	3-3	author	半角・全角	-	255	-	-
+L0223	3-4	description	半角・全角	-	255	-	-
+L0224	3-5	keyword	半角・全角	-	255	-	-
+L0225	3-6	robot	半角・全角	-	255	-	-
+L0226	3-7	metatagの開閉ボタン	開閉ボタン	-	-	-	・マウスオーバーすると、以下の文言を表示する
+L0227	「METAタグの出力をカスタマイズできます。twig内で利用されている変数も利用可能です。空欄の場合は、テンプレートフォルダの meta.twig ファイルが読み込まれます。」
+L0228	3-8	metatag	半角・全角	-	-	-	-
+L0229	その他
+L0230	4	ページ管理	リンク	-	-	-	・押下すると、ページ管理 (一覧)画面へ遷移する
+L0231	5	登録	ボタン	-	-	-	・押下すると、フォームに入力した情報で入力チェックを実施し、入力チェックが正常に完了した場合は登録/更新を行い、エラーが発生した場合はエラーメッセージを画面に表示する
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/M09-10/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+##### 0210 sheet-7 支店トップページ管理
+L0001	支店トップページ管理
+L0002	ドキュメント名コンテンツ管理機能
+L0003	セクション—
+L0004	プロジェクト名サイトリニューアル
+L0005	作成者加島
+L0006	作成日2025-09-11
+L0007	更新者加島
+L0008	更新日2025-09-18
+L0009	機能NoM09-10
+L0010	機能名支店トップページ管理
+L0011	概要支店共通でトップページに表示しているバナー、限定品タグ、タイルを編集できる
+L0012	処理概要（★はカスタマイズ項目）
+L0013	レイアウト図
+L0014	1
+L0015	2
+L0016	3
+L0017	4
+L0018	5
+L0019	6
+L0020	7
+L0021	8
+L0022	9
+L0023	11
+L0024	10
+L0025	7
+L0026	12
+L0027	4
+L0028	12
+L0029	13
+L0030	画像レイヤー（3枚）: 支店トップページ管理 / B7 / image 1 + 支店トップページ管理 / B7 / image 2 + 支店トップページ管理 / B7 / image 3
+L0031	カスタマイズ説明
+L0032	・カスタマイズ要件
+L0033	・支店TOPのデザイン変更に伴い、変更後のデザインでも各タイルの表示位置を設定可能とする
+L0034	・カスタマイズ要件に記載の内容以外は現行踏襲とする
+L0035	機能仕様処理概要（★はカスタマイズ項目）
+L0036	★以下1~3の画面部品を除去する
+L0037	1 (3)タイル配置のランダム化
+L0038	※リニューアル後の支店ECTOPでは、タイル位置をランダム化にしないため
+L0039	2 (6)限定品①タグ
+L0040	※現行の以下の挙動は、リニューアル後の支店ナビゲーションで削除となるため
+L0041	・支店ナビゲーションに「セール商品」を表示する
+L0042	・支店ナビゲーションの「セール商品」を押下すると、登録された商品タグとセール商品でAND検索された商品一覧を表示する
+L0043	3 (7)限定品②タグ
+L0044	※現行の以下の挙動は、リニューアル後の支店ナビゲーションで削除となるため
+L0045	・支店ナビゲーションに「最新セット」を表示する
+L0046	・支店ナビゲーションの「最新セット」を押下すると、登録された商品タグでAND検索された商品一覧を表示する
+L0047	・(1)支店について
+L0048	・選択すると、選択した支店、または支店共通設定に応じた編集画面に遷移する
+L0049	・支店を選択すると、その支店の編集画面を表示する
+L0050	・「支店共通」を選択すると、(2)支店共通設定を適用を選択されている全ての支店に共通の設定を表示する
+L0051	・(2)支店共通設定を適用について
+L0052	・選択すると、(4)～(10)で表示される画面部品は入力できなくなり、選択を外すと入力できるようになる
+L0053	・選択して登録すると、(4)～(10)で登録される内容は、(1)支店で「支店共通」として登録されているものと同じになる
+L0054	※(1)支店で「支店共通」を選択されている場合、(2)支店共通設定を適用は選択できない
+L0055	・選択して登録すると、以下1~3のフローでエラーチェックを行う
+L0056	1 (4)バナー画像選択を選択されているかを確認し、未選択なら画面上部に以下のエラーを表示して更新せず処理を終了する
+L0057	画像レイヤー（3枚）: 支店トップページ管理 / E115 / image 4 + 支店トップページ管理 / E122 / image 5 + 支店トップページ管理 / E129 / image 6
+L0058	2 (8)タイル位置が重複していないかを確認し、重複していれば画面上部に以下のエラーを表示して更新せず処理を終了する
+L0059	3 (10)タイルタグが選択されているか((9)タイル属性が「ピックアップ商品」の場合を除く)確認し、
+L0060	未選択なら画面上部に以下のエラーを表示して更新せず処理を終了する
+L0061	・(4)バナー画像選択について
+L0062	・画像が選択されている場合、(14)バナー画像を表示する
+L0063	・選択して登録すると、支店TOPにバナー画像を表示する
+L0064	★(4)バナー画像選択で登録された画像のアップロード先について
+L0065	★バナー画像のアップロード先を、S3の支店別トップバナー用フォルダに変更する
+L0066	※現行のアップロード先はS3の全支店共通フォルダのため、カスタマイズとする
+L0067	★S3の支店別トップバナー用フォルダは、以下のURLフォーマットとする
+L0068	https://files.hareruyamtg.com/banner/top/{各支店の省略名}
+L0069	※{各支店の省略名}には、トーナメントセンター 東京なら「tc」のように入る
+L0070	※S3のURLは、ステージング環境、本番環境に応じて変更する
+L0071	・(5)バナーリンクタグについて
+L0072	・選択して登録すると、支店TOPのバナー画像を押下すると、登録した商品タグで検索された商品一覧を表示する
+L0073	★支店TOPのデザイン変更に伴う変更について
+L0074	★(8)タイル位置、(9)タイル属性、(10)タイルタグの各セレクトボックスを5個から4個に変更
+L0075	※支店TOPのタイルを、5個から4個に変更するため
+L0076	※タイルのレイアウト図は、別紙「0301_基本設計仕様書(フロント_トップ)」のシート「支店TOP」を参照
+L0077	★(8)タイル位置について
+L0078	★選択肢と画面部品の初期値を上から以下のように変更
+L0079	現行 リニューアル後
+L0080	上段左 上段右
+L0081	上段中央 中段左
+L0082	下段左 中段右
+L0083	下段左中央 下段左
+L0084	下段右
+L0085	・(9)タイル属性について
+L0086	・登録された値の用途
+L0087	・登録しているタイル属性に応じて、支店TOPで表示している各タイルのタイトルを以下のように表示する
+L0088	タイル属性 タイルのタイトル
+L0089	フォーマット別特集 {タイルタグ}のカード
+L0090	※{タイルタグ}は(10)タイルタグで選択しているものとする
+L0091	※タイトルに「特集」という文字列があれば削除して表示
+L0092	最新エキスパンション 最新エキスパンション
+L0093	ピックアップ商品 ピックアップ商品
+L0094	その他 {タイルタグ}のカード
+L0095	※{タイルタグ}は(10)タイルタグの選択しているものとする
+L0096	・登録しているタイル属性に応じて、支店TOPで対応するタイルの「もっと見る」を押下すると以下の検索条件で検索された商品一覧を表示する
+L0097	※検索条件が複数の場合はAND検索とする
+L0098	タイル属性 検索条件
+L0099	フォーマット別特集 (10)タイルタグに登録されている商品タグ
+L0100	最新エキスパンション (10)タイルタグに登録されている商品タグ
+L0101	ピックアップ商品 ピックアップ商品(ピックアップフラグが1の商品)
+L0102	その他 (10)タイルタグに登録されている商品タグ
+L0103	・(10)タイルタグについて
+L0104	・選択して登録すると、支店TOPで表示しているタイルの「もっと見る」を押下すると、登録した商品タグで検索された商品一覧を表示する
+L0105	・(9)タイル属性で「ピックアップ商品」を選択している場合、入力できない
+L0106	識別ID	ラベル	書式・制限	必須	最大文字数
+L0107	または最大値	初期値	画面部品の説明
+L0108	1	支店	単一選択	-	-	支店共通	・選択すると読み込みが発生し、選択した支店、または支店共通設定に応じた支店トップページ管理画面を表示する
+L0109	・支店を選択すると、その支店の編集画面を表示する
+L0110	・「支店共通」を選択すると、(2)支店共通設定を選択されている全ての支店に共通の設定を表示する
+L0111	2	支店共通設定を適用	単一選択	-	-	-	・選択すると、(4)～(10)で表示される画面部品は入力できなくなり、選択を外すと入力できるようになる
+L0112	3	タイル配置のランダム化を適用	単一選択	-	-	-	※カスタマイズ対応、項目を除去
+L0113	4	バナー画像選択	単一選択	-	-	-	・画像が選択されている場合、(14)バナー画像を表示する
+L0114	・(2)支店共通設定を適用で「支店共通」を選択されている場合、入力できない
+L0115	5	バナーリンクタグ	単一選択	-	-	-	・(2)支店共通設定を適用で「支店共通」を選択されている場合、入力できない
+L0116	6	限定品①タグ	単一選択	-	-	-	※カスタマイズ対応、項目を除去
+L0117	7	限定品②タグ	単一選択	-	-	-	※カスタマイズ対応、項目を除去
+L0118	8	タイル位置	単一選択	-	-	-	※カスタマイズ対応、支店TOPのデザイン変更に伴い、以下の変更を追加
+L0119	・セレクトボックスを5個から4個に変更
+L0120	・選択肢と画面部品の初期値を上から以下のように変更
+L0121	現行 リニューアル後
+L0122	上段左 上段左
+L0123	上段中央 上段右
+L0124	下段左 下段左
+L0125	下段中央 下段右
+L0126	下段右
+L0127	・(2)支店共通設定を適用で「支店共通」を選択されている場合、入力できない
+L0128	9	タイル属性	単一選択	-	-	フォーマット別特集	※カスタマイズ対応、支店TOPのデザイン変更に伴い、セレクトボックスを5個から4個に変更
+L0129	・(2)支店共通設定を適用で「支店共通」を選択されている場合、入力できない
+L0130	10	タイルタグ	単一選択	-	-	-	※カスタマイズ対応、支店TOPのデザイン変更に伴い、セレクトボックスを5個から4個に変更
+L0131	・(9)タイル属性で「ピックアップ商品」を選択している場合、入力できない
+L0132	11	登録	ボタン	-	-	-	・押下すると、フォームに入力した情報で入力チェックを実施し、入力チェックが正常に完了した場合は登録/更新を行い、エラーが発生した場合はエラーメッセージを画面に表示する
+L0133	12	バナー画像	画像	-	-	-	・(4)バナー画像選択で選択している画像を表示する
+L0134	13	バナー画像削除ボタン	バナー画像削除ボタン	-	-	-	・押下すると、(4)バナー画像選択で選択されている画像と、(12)バナー画像を削除する
+L0135	Source:
+L0136	functions/pf-eccube3/m09-10_admin_content_content_branch_top_page.md
+L0137	現行仕様
+L0138	M09-10 支店トップページ管理 / コンテンツ管理 — 支店トップページ管理
+L0139	業務ロジック
+L0140	バナー画像の差し替え
+L0141	新しいバナー画像を指定して保存したときは、登録済みのバナー画像を保管領域から削除したうえで新しい画像を保管領域へ保存する。差し替え前の画像は残らない。
+L0142	画像を指定せずに保存したときは、登録済みのバナー画像をそのまま引き継ぐ。
+L0143	タイル入力欄の補完
+L0144	登録済みのタイルがタイル位置の数に満たないときは、不足分のタイル入力欄を画面側で追加する。追加した入力欄に入力して保存すると、編集中の支店のタイルとして新規に登録する。
+L0145	支店トップページへの反映
+L0146	支店トップページの各タイルには商品を最大3件表示する。タイル属性がピックアップ商品のタイルはピックアップ商品から、それ以外のタイルはタイルタグに紐づく商品から、いずれも表示のたびに無作為に選ぶ。タイルタグが登録されていないタイルは商品を表示しない。
+L0147	タイルが1件も登録されていないタイル位置には、フォーマットのタグ（スタンダード・レガシー・統率者）から1つを無作為に選び、そのタグに紐づく商品を表示する。
+L0148	入出力
+L0149	種類	内容
+L0150	入力	編集対象の支店の識別子、画面の入力値、なりすまし対策トークン
+L0151	成功時出力	編集していた支店の支店トップページ管理画面へ戻り、完了メッセージを表示する
+L0152	失敗時出力	編集していた支店の支店トップページ管理画面へ戻り、エラーメッセージを表示する
+L0153	入出力: 永続化
+L0154	操作	契機
+L0155	更新	支店共通設定の区分の保存
+L0156	登録・更新	支店固有設定（バナー画像・バナータグ・タイル）の保存
+L0157	リニューアル後の仕様
+L0158	表示メッセージ
+L0159	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0160	M09-10-MSG-001	管理画面上部	セッションがタイムアウトしました。もう一度やり直してください。	共通設定を使用していて、操作期限が切れた状態で保存しようとしたとき	保存せず支店トップページ管理画面に留まる
+L0161	M09-10-MSG-002	管理画面上部	保存しました	共通設定を使用して、設定を保存したとき	共通設定の区分だけを保存し、支店トップページ管理画面に留まる
+L0162	M09-10-MSG-003	管理画面上部	保存に失敗しました	共通設定を使用せず、入力内容に不備があるまま保存しようとしたとき	保存せず支店トップページ管理画面に留まる
+L0163	M09-10-MSG-004	管理画面上部	保存しました	共通設定を使用せず、入力内容に問題がない状態で設定を保存したとき	トップページ設定を保存し、支店トップページ管理画面に留まる
+L0164	M09-10-MSG-005	管理画面上部	バナー画像の登録に失敗しました。	バナー画像を指定して保存しようとしたが、画像を登録できなかったとき	保存せず支店トップページ管理画面に留まる
+L0165	M09-10-MSG-006	管理画面上部	バナー画像の登録に失敗しました。	バナー画像を指定せずに保存しようとし、登録済みのバナー画像もないとき	保存せず支店トップページ管理画面に留まる
+L0166	M09-10-MSG-007	管理画面上部	バナー画像の登録に失敗しました。	バナー画像を指定せずに変更しようとし、バナー画像が未設定のとき	保存せず支店トップページ管理画面に留まる
+L0167	M09-10-MSG-008	管理画面上部	タイル位置に重複があります。すべてのタイルは異なる位置を選択してください。	複数のタイルに同じ表示位置を設定したとき	保存せず支店トップページ管理画面に留まる
+L0168	M09-10-MSG-009	管理画面上部	タイルタグを設定してください。（※タイル属性がピックアップ商品の場合を除く）	ピックアップ商品以外のタイルで、タイルタグを設定せずに保存しようとしたとき	保存せず支店トップページ管理画面に留まる
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/M09-04_{processes,factors,interactions,constraints}.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/M10-04_{processes,factors,interactions,constraints}.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	ページを登録・編集して保存する	ページ管理(登録・編集)画面で登録ボタンを押す	DB・テンプレートファイル・公開側のページ表示	L0030-L0034,L0067-L0072,L0153-L0175,L0201,L0207-L0208
+P2	ページを削除する	ページ管理(一覧)画面で削除ボタンを押し、確認モーダルで操作する	DB・テンプレートファイル・ページ管理(一覧)画面	L0035-L0043,L0073-L0074,L0092-L0094
+P3	ページ一覧に行と削除ボタンを出す	ページ管理(一覧)画面を開く	ページ管理(一覧)画面の行と削除ボタン	L0055,L0061-L0062
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	保存の種類	新規登録｜編集でファイル名は変えない｜編集でファイル名を変える	新規登録: 日英2種類のtwigファイルを作る／編集でファイル名は変えない: 選択中の言語のtwigファイルだけ更新する／編集でファイル名を変える: 選択中の言語のtwigファイルだけ更新し、変更前の名前のファイルが残っていれば削除する	L0164,L0169-L0171,L0069,L0072	この機能
+F02	P1,P3	ページの編集可否区分	利用者作成｜既定	利用者作成: URL・ファイル名・コードを編集できる／既定: URL・ファイル名・コードを編集できない(入力欄が出ない・読み取り専用)。一覧では削除ボタンが出ない	L0031,L0034,L0055,L0067,L0208	この機能
+F03	P1	編集画面で選んだ言語	日本語｜英語	日本語: 日本語のtwigファイルを更新・URLは/ja/／英語: 英語のtwigファイルを更新・URLは/en/	L0154-L0162,L0169-L0171	この機能
+F04	P1	入力したURL・ファイル名と既存ページとの重複	重複なし｜URLが他ページと重複｜ファイル名が他ページと重複	重複なし: 保存できる／URLが他ページと重複: 同一端末種別で重複すると検証エラーで保存しない／ファイル名が他ページと重複: 利用者作成ページ・標準ページのどちらと重複しても同じファイル名重複の検証エラーで保存せず登録・編集画面に留まる	L0072,L0095-L0097,L0102-L0104	この機能
+F05	P2	削除対象ページの存在	存在する｜既に削除済み	存在する: 削除する／既に削除済み: 削除対象なしのメッセージを出して一覧へ戻る	L0074,L0093	この機能
+F06	P2	テンプレートファイル	日英とも有る｜日英の片方だけ有る｜日英とも無い	日英とも有る: ページ情報に加えてファイルも削除する／日英の片方だけ有る: ページ情報に加えて存在する方のファイルを削除する／日英とも無い: ページ情報だけ削除する	L0074	この機能
+F07	P2	確認モーダルでの操作	削除を押す｜キャンセルを押す	削除を押す: ページを削除し完了メッセージを出す／キャンセルを押す: モーダルを閉じて何も削除しない	L0040-L0043,L0094	この機能
+F08	P3	ページの端末種別	PC｜モバイル	PC: 一覧に出る／モバイル: 一覧に出ない	L0062	この機能
+F09	P3	ページID	0｜1以上	0: 一覧から除く／1以上: 一覧に出る	L0062	この機能
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	効き合う	L0064,L0067,L0201	新規登録のページは利用者作成で生成される。URL・ファイル名を変えられるかは編集可否区分で決まる
+P1	F01+F03	効き合う	L0164,L0169,L0171	新規登録は日英2種類を作り、編集は選択中の言語のtwigファイルだけを更新する
+P1	F01+F04	効き合う	L0072,L0097	URLの重複判定は新規はIDを除外せず編集は自身のIDだけ除外する。ファイル名の重複はファイル名を入力する新規・変更時だけ起きる
+P1	F02+F03	効き合う	L0169,L0208	編集可否区分が既定ならコードは読み取り専用で、言語ごとのtwigファイルは更新されない
+P1	F02+F04	効き合う	L0067,L0189,L0201	編集可否区分が既定のページではURLとファイル名の入力欄が無く、重複するURL・ファイル名を入力できない
+P1	F03+F04	関係しない		URL・ファイル名の重複判定は同一端末種別の既存ページとの比較で、画面の言語では結果が変わらない
+P2	F05+F06	効き合う	L0074	ページが既に無いときは削除対象なしのメッセージだけで、テンプレートファイルの削除は行われない
+P2	F05+F07	効き合う	L0042,L0074	キャンセルを押すと削除処理自体が行われない。削除を押したときだけページの有無で結果が分かれる
+P2	F06+F07	効き合う	L0042,L0074	キャンセルを押すとテンプレートファイルも削除されない。削除を押したときだけファイルの有無で結果が分かれる
+P3	F02+F08	関係しない		行を出すかは端末種別とIDで決まり、削除ボタンは区分で決まる。外れ方は条件ごとに独立
+P3	F02+F09	関係しない		行を出すかは端末種別とIDで決まり、削除ボタンは区分で決まる。外れ方は条件ごとに独立
+P3	F08+F09	関係しない		PC・ID0以外を満たす行だけ出す。どちらかで外れれば出ない
+処理ID	組	種別	根拠	理由
+P1	F01=新規登録&F02=既定	作れない	L0064	新規のページは編集可否区分を利用者作成として生成する
+P1	F01=編集でファイル名を変える&F02=既定	作れない	L0067,L0201	編集可否区分が既定のページはファイル名の入力欄が無く変えられない
+P1	F04=URLが他ページと重複	打ち切り	L0072,L0095-L0096,L0102	同一端末種別でURLが重複すると検証エラーで保存せず登録・編集画面に留まる（保存の種類・言語は結果に効かない）
+P1	F04=ファイル名が他ページと重複	打ち切り	L0097,L0103-L0104	ファイル名が他ページと重複すると検証エラーで保存せず登録・編集画面に留まる（保存の種類・言語は結果に効かない）
+P2	F05=既に削除済み	打ち切り	L0074,L0093	削除しようとしたページが既に無いときは削除対象なしのメッセージを出して一覧へ戻る。テンプレートファイルの削除は行わない
+P2	F07=キャンセルを押す	打ち切り	L0042,L0094	キャンセルを押すとモーダルを閉じて何も削除しない
+P3	F08=モバイル	打ち切り	L0062	PC端末種別のページだけを一覧に出す。モバイルは行が出ず削除ボタンも出ない
+P3	F09=0	打ち切り	L0062	IDが0のページは一覧から除く。行が出ず削除ボタンも出ない
+
+ succeeded in 0ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	支払方法の登録で手数料を保存する	支払方法編集画面で登録ボタンを押す	支払方法のデータ（DBの手数料）	L0069,L0076
+P2	支払方法一覧に行を出すか決める	支払方法一覧を開く	支払方法一覧画面	L0060
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	手数料設定可否	可｜不可	可: 入力した手数料を保存する／不可: 入力欄を出さず保存の直前に手数料を0へ置き換える	L0066,L0069,L0076	この機能
+F02	P1	保存時の手数料の値	0｜1以上	0: 0で保存する／1以上: 可なら入力値のまま、不可なら0へ置き換わる	L0069,L0076	この機能
+F03	P2	支払方法が削除済みか	削除済み｜削除されていない	削除済み: 一覧に出ない／削除されていない: 一覧に出る	L0060	この機能
+F04	P2	旧・大会専用の支払方法か	旧・大会専用｜それ以外	旧・大会専用: 一覧に出ない（編集も削除もできない）／それ以外: 一覧に出る	L0060	この機能
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	効き合う	L0069,L0076	手数料設定可否が不可のときは入力値にかかわらず保存の直前に0へ置き換わり、可のときは入力値のまま保存される
+P2	F03+F04	関係しない		一覧に出るのは「削除されておらず、かつ旧・大会専用でない」ものだけで、結果は出る・出ないの2つ。どちらか1つでも外れれば出ず、外れ方は1つずつ確かめれば足りる
+処理ID	組	種別	根拠	理由
+P2	F03=削除済み	打ち切り	L0060	削除済みの支払方法は、旧・大会専用かどうかにかかわらず一覧に出ない
+P2	F04=旧・大会専用	打ち切り	L0060	旧・大会専用の支払方法は、削除済みかどうかにかかわらず一覧に出ない
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/M10-15_{processes,factors,interactions,constraints}.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/M09-07_{processes,factors,interactions,constraints}.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/M11-02_{processes,factors,interactions,constraints}.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	店舗を保存して採番値と初期在庫を作る	店舗登録画面で入力を済ませ登録ボタンを押す	DB（採番値・在庫）	L0102,L0190-L0191,L0209
+P2	ショップアイコンを保存して画像を設定・差し替える	店舗登録画面でショップアイコンの選択の有無を決め登録ボタンを押す	DB（ショップアイコン設定）	L0186-L0188
+P3	公開・開店・売上集計の設定を保存して他画面の対象にする	店舗登録画面で公開・開店・売上集計の検索項目を決め登録ボタンを押す	在庫検索一覧画面の店舗の選択肢・日別月別集計画面の集計対象	L0066-L0072,L0121-L0126,L0144
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	初期在庫作成の指定	指定する｜指定しない	指定する: 在庫が1件も無ければ初期在庫を作る／指定しない: 初期在庫を作らない	L0081,L0209	この機能
+F02	P1	その店舗の在庫	1件も無い｜ある	1件も無い: 初期在庫を作れる／ある: 初期在庫は作り直さない	L0191,L0209	この機能
+F03	P2	ショップアイコンの画像選択	選ぶ｜選ばない	選ぶ: 新しい画像を設定する／選ばない: 設定済みの画像をそのまま残す	L0188	この機能
+F04	P2	設定済みのショップアイコン	ある｜ない	ある: 画像を選ぶと設定済みの画像は消され差し替わる／ない: 画像を選ぶと新しく設定される／選ばないと未設定のまま	L0137,L0188	この機能
+F05	P3	店舗の開店	開店｜閉店	開店: 表示・集計の対象／閉店: 論理削除の扱いで表示・集計の対象外	L0072,L0123-L0124,L0144	この機能
+F06	P3	売上集計の検索項目	表示する｜表示しない	表示する: 日別・月別集計の店舗検索項目に出る／表示しない: 出ない	L0125-L0126	この機能
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	関係しない		初期在庫は作成を指定しかつ在庫が1件も無いのすべてを満たすときだけ作る。結果は作る・作らないの2つだけで、外れ方は1つずつ確かめれば足りる（L0191,L0209）
+P2	F03+F04	効き合う	L0188	画像を選ぶかどうかで、設定済みの画像が消えて差し替わるか残るかが変わる
+P3	F05+F06	関係しない		集計の店舗検索項目に出すのは開店かつ表示するのすべてを満たす店舗だけで、閉店は表示するの値によらず対象外（L0144）。出る・出ないの2つだけの結果
+処理ID	組	種別	根拠	理由
+P1	F01=指定しない	打ち切り	L0191,L0209	初期在庫作成を指定しないと、その店舗の在庫の有無にかかわらず初期在庫を作らない
+P1	F02=ある	打ち切り	L0191,L0209	在庫が既にあると、作成の指定にかかわらず初期在庫は作り直さない
+P3	F05=閉店	打ち切り	L0072,L0123-L0124,L0144	閉店は論理削除の扱いで、売上集計の検索項目の設定にかかわらず表示・集計の対象外
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/M11-01_{processes,factors,interactions,constraints}.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	ブロックを登録・編集して保存する	ブロック管理(登録・編集)画面で登録ボタンを押す	DB・テンプレートファイル	L0061-L0066,L0076,L0116-L0129
+P2	ブロックを削除する	ブロック管理(一覧)画面で削除ボタンを押し、確認ダイアログで操作する	DB・ブロック管理(一覧)画面	L0035-L0039,L0067-L0068,L0077,L0083,L0085-L0086
+P3	ブロック一覧に行と編集・削除の操作を出す	ブロック管理(一覧)画面を開く	ブロック管理(一覧)画面の行と操作	L0030-L0033,L0045,L0048,L0051,L0058
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	保存の種類	新規登録｜編集でファイル名は変えない｜編集でファイル名を変える	新規登録: 日英2種類のtwigファイルを作る／編集でファイル名は変えない: 選択中の言語のtwigファイルだけ更新する／編集でファイル名を変える: Excelは日英2種類を作成・現行仕様は変更前の同言語ファイルを削除。可否自体が設計書内で食い違う	L0126,L0128-L0129,L0066,L0139	この機能
+F02	P1	編集画面で選んだ言語	日本語｜英語	日本語: 日本語のtwigファイル(.ja.twig)を対象にする／英語: 英語のtwigファイル(.en.twig)を対象にする	L0119-L0124,L0128	この機能
+F03	P1	入力したファイル名と既存ブロックとの重複	重複なし｜同一端末種別の別ブロックと重複	重複なし: 保存できる／同一端末種別の別ブロックと重複: ファイル名欄にエラーを出して保存しない	L0062,L0084	この機能
+F04	P2,P3	ブロックの削除可否	削除可｜削除不可	削除可: 編集・削除ができ一覧に編集リンクと削除ボタンが出る／削除不可: 編集もできず、一覧ではブロック名がラベルで編集・削除が出ない。削除要求が届いても削除せず一覧へ戻る	L0026-L0033,L0067-L0068	この機能
+F05	P2	削除対象ブロックの存在	存在する｜既に削除済み	存在する: 削除可否に従う／既に削除済み: 削除に失敗しましたと表示して一覧へ戻る	L0073,L0085	この機能
+F06	P2	確認ダイアログでの操作	削除を押す｜キャンセルを押す	削除を押す: 削除へ進む／キャンセルを押す: 削除へ進まない	L0036-L0038,L0086	この機能
+F07	P3	ブロックの端末種別	PC｜SP	PC: 一覧に出る／SP: 一覧に出ない	L0058	この機能
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	効き合う	L0126,L0128	新規登録は日英2種類を作り、編集は選択中の言語のtwigファイルだけを更新する
+P1	F01+F03	効き合う	L0062	ファイル名の重複判定は編集では自分自身を除外し、新規では除外しない
+P1	F02+F03	関係しない		ファイル名の重複判定は同一端末種別の既存ブロックとの比較で、画面の言語では結果が変わらない
+P2	F04+F05	効き合う	L0068,L0085	ブロックが既に無いときは削除可否に関わらず削除に失敗しましたと表示し、有るときは削除可否で削除するかが決まる
+P2	F04+F06	効き合う	L0036-L0038,L0068	キャンセルでは削除へ進まない。削除を押したときだけ、削除可否で削除するかしないかが分かれる
+P2	F05+F06	効き合う	L0036-L0038,L0085	キャンセルでは削除へ進まない。削除を押したときだけ、ブロックの有無で結果が分かれる
+P3	F04+F07	関係しない		行を出すかは端末種別で決まり、編集・削除の操作を出すかは削除可否で決まる。外れ方は条件ごとに独立
+処理ID	組	種別	根拠	理由
+P1	F01=編集でファイル名を変える	正解未定	L0129,L0139,L0148,L0066	Excelはファイル名変更時に日英2種類を作成すると書く一方、ファイル名は後から変更できないとも書く。現行仕様は変更前の同言語ファイルを削除する。両立する結果が決まらない
+P1	F03=同一端末種別の別ブロックと重複	打ち切り	L0062,L0084	同じ端末種別に同じファイル名のブロックがあると登録・更新できず、ファイル名欄にエラーを表示する（保存の種類・言語は結果に効かない）
+P2	F05=既に削除済み	打ち切り	L0073,L0085	削除対象のブロックが無いときは削除に失敗しましたと表示して一覧へ戻る（削除可否・ダイアログの操作は結果に効かない）
+P2	F06=キャンセルを押す	打ち切り	L0086	承諾したときだけ削除へ進む。キャンセルでは何も削除しない
+P3	F07=SP	打ち切り	L0058	PC向けのブロックだけを一覧の対象とする。SPは行が出ず編集・削除の操作も出ない
+
+ succeeded in 0ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	メンバーを登録・編集して保存する	メンバー管理画面で入力して登録ボタンを押す	DB（メンバーのパスワード保存値・表示順・スマレジ用アカウント）とメンバー管理画面	L0101-L0102,L0107-L0114,L0117-L0118,L0123-L0125
+P2	メンバーの稼働を非稼働へ変更して保存する	編集中のメンバー管理画面で稼働を非稼働にして登録ボタンを押す	DB（メンバーの稼働）	M11-01:L0113
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	登録区分	新規登録｜編集	新規登録: 表示順を最大値に1を足した値にして保存し、パスワードは必ずハッシュ化する／編集: 既存の表示順を変えない	L0101,L0117-L0118	この機能
+F02	P1	パスワード欄の入力	既定文字列のまま｜新しい値	既定文字列のまま: 既存のパスワードを維持する／新しい値: ハッシュ化して保持する	L0102,L0111	この機能
+F03	P1	スマレジ用アカウントの指定	有効にする｜有効にしない	有効にする: 他に有効なメンバーが居なければ保存する／有効にしない: 重複の判定は行わない	L0107,L0113-L0114	この機能
+F04	P1	自分以外のスマレジ用アカウント有効メンバー	居る｜居ない	居る: 有効にしようとすると重複エラーで所属店舗とスマレジ用アカウントを保存しない／居ない: 重複エラーにならない	L0107,L0113-L0114,L0131	この機能
+F05	P2	稼働の変更	非稼働に変更する｜非稼働に変更しない	非稼働に変更する: 変更対象が最後の稼働中システム権限メンバーなら変更しない／非稼働に変更しない: 稼働は変わらない	M11-01:L0113	この機能
+F06	P2	変更対象が最後の稼働中システム権限メンバーか	はい｜いいえ	はい: 非稼働への変更を拒否し「非稼働に変更することはできません。」を表示する／いいえ: 非稼働へ変更できる	M11-01:L0113	この機能
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	効き合う	L0101-L0102,L0111,L0117	既定文字列のまま送信されて維持する扱いは編集のときだけで、新規登録は入力値を必ずハッシュ化する
+P1	F01+F03	関係しない		スマレジ用アカウントの判定は新規登録と編集で同じ保存処理
+P1	F01+F04	関係しない		重複の判定は新規登録と編集で同じ保存処理
+P1	F02+F03	関係しない		パスワードの扱いとスマレジ用アカウントの保存は別々に決まる
+P1	F02+F04	関係しない		パスワードの扱いは他のメンバーのスマレジ用アカウントに左右されない
+P1	F03+F04	効き合う	L0107,L0113	他に有効なメンバーが居るときに有効にすると重複エラーになる
+P2	F05+F06	効き合う	M11-01:L0113	非稼働へ変更しようとしても、最後の稼働中システム権限メンバーなら変更されない
+処理ID	組	種別	根拠	理由
+P1	F01=新規登録&F02=既定文字列のまま	作れない	L0102	既定文字列が入るのは編集画面を開いたときだけで、新規登録画面のパスワード欄は空
+P2	F05=非稼働に変更しない	打ち切り	M11-01:L0113	非稼働に変更しないときは稼働が変わらず、最後の稼働中システム権限メンバーかどうかは結果に効かない
+
+ succeeded in 0ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	メンバーを削除する	メンバー管理一覧画面で削除アイコンを押し、確認画面で削除を実行する	DB（メンバーの削除済み・表示順）とメンバー管理一覧画面	L0071-L0073,L0088-L0091,L0100-L0102
+P2	メンバーの表示順を入れ替える	メンバー管理一覧画面で上へ・下へアイコンを押し、確認画面で実行する	DB（メンバーの表示順）とメンバー管理一覧画面	L0068-L0070,L0091,L0096-L0099
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	削除対象の関連データ	なし｜あり	なし: 削除済みにして完了を表示する／あり: 削除せず「関連するデータがあるため削除できませんでした」を表示する	L0072,L0100-L0101	この機能
+F02	P1	削除対象の表示順	最大｜最大でない	最大: 繰り下げる行は無い／最大でない: 削除対象より大きい表示順の全行を1つ繰り下げる	L0072	この機能
+F03	P2	入れ替えの方向	上へ｜下へ	上へ: 表示順が1大きいメンバーと交換する／下へ: 表示順が1小さいメンバーと交換する	L0069	この機能
+F04	P2	交換相手のメンバー	居る｜居ない	居る: 表示順を交換して「並び順を更新しました」を表示する／居ない: 失敗とし「並び順の更新に失敗しました」を表示する	L0069-L0070,L0096-L0099	この機能
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	効き合う	L0072,L0100-L0101	関連データがあると削除自体を行わないので、後ろの行の繰り下げも行われない
+P2	F03+F04	効き合う	L0069-L0070,L0096-L0099	方向で交換相手が表示順の大きい側か小さい側かが決まり、その相手が居るかで成功か失敗かが決まる
+処理ID	組	種別	根拠	理由
+P1	F01=あり	打ち切り	L0072,L0100-L0101	関連データがあると削除せずエラーを表示し、削除対象の表示順にかかわらず繰り下げも行わない
+P2	F04=居ない	打ち切り	L0069-L0070,L0096-L0099	交換相手が居ないと、方向にかかわらず失敗として更新エラーを表示し、表示順は変わらない
+
+exec
+/bin/bash -lc "sed -n '20,90p' integration_test/casegen/combination/units/M09-07/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+L0019	2
+L0020	画像レイヤー（3枚）: ブロック管理(一覧) / C7 / image 1 + ブロック管理(一覧) / C7 / image 2 + ブロック管理(一覧) / C7 / image 3
+L0021	カスタマイズ説明
+L0022	・カスタマイズ要件
+L0023	・
+L0024	→ 編集できないブロックを残すため、ECCUBE4系に寄せた形で現行仕様を踏襲する
+L0025	機能仕様処理概要（★はカスタマイズ項目）
+L0026	・ブロックの編集、削除の可否について
+L0027	・編集、削除の可否はデータベースで設定できる
+L0028	※データベースで削除不可に設定しているブロックは全て編集できないように現行仕様を踏襲する
+L0029	・開発者、管理画面ログインユーザーが追加したブロックは編集、削除できる
+L0030	・編集、削除ができないブロックは、以下1～3の条件を満たして表示する
+L0031	1 (3)ブロック名の書式をリンクからラベルに変更し、押下してもブロック管理(編集)に遷移しないようにする
+L0032	2 (5)編集を非表示にする
+L0033	3 (6)削除を非表示にする
+L0034	・(2)検索ボックスに入力すると、ブロックを(3)と(4)で部分一致検索し、対象ページのみを画面に表示する
+L0035	・(6)削除を押下すると、以下1~3のフローでページを削除する
+L0036	1 以下のように削除確認のモーダルが表示する
+L0037	画像レイヤー（2枚）: ブロック管理(一覧) / D46 / image 4 + ブロック管理(一覧) / C57 / image 5
+L0038	2 「削除」を押下すると、ブロックを削除する
+L0039	3 以下のように削除完了メッセージを表示する
+L0040	識別ID	ラベル	書式・制限	必須	最大文字数
+L0041	または最大値	初期値	画面部品の説明
+L0042	1	新規作成	リンク	-	-	-	・押下すると、ブロック管理 (登録)画面へ遷移する
+L0043	2	検索ボックス	半角・全角	-	-	-	・入力すると、ブロックを(3)~(4)で部分一致検索し、対象ブロックのみを画面に表示する
+L0044	3	ブロック名	リンク	-	-	-	・押下すると、ブロック管理（編集）画面へ遷移する
+L0045	・編集できないブロックの場合、「3ブロック名の書式」をリンクからラベルに変更し、押下してもブロック管理(編集)に遷移しないようにする
+L0046	4	ファイル名	ラベル	-	-	-	-
+L0047	5	編集	リンク	-	-	-	・押下すると、ブロック管理 (編集)画面へ遷移する
+L0048	・編集できないブロックの場合、非表示にする
+L0049	6	削除	削除確認モーダル表示ボタン	-	-	-	・押下すると削除確認モーダルを表示し、「削除」を押下するとブロックを削除して、削除完了メッセージを表示する
+L0050	※処理概要を参照
+L0051	・削除できないブロックの場合、非表示とする
+L0052	Source:
+L0053	functions/pf-eccube3/m09-07_admin_content_content_block.md
+L0054	現行仕様
+L0055	M09-07 ブロック管理 / コンテンツ管理 — ブロック管理
+L0056	業務ロジック
+L0057	一覧に並べるブロック
+L0058	PC向けに登録されたブロックだけを一覧の対象とし、ブロックIDの降順で並べる。
+L0059	編集画面のブロックデータ初期表示
+L0060	既存ブロックの編集画面では、そのブロックのテンプレートファイルの内容をブロックデータ欄に初期表示する。指定されたブロックが存在しないときは、見つからない扱い（HTTP 404）とする。
+L0061	ファイル名の一意性
+L0062	同じ端末種別にすでに同じファイル名のブロックがあるときは登録・更新できず、ファイル名欄にエラーを表示する。編集では自分自身を除いて重複を判定するため、ファイル名を変えないまま保存できる。
+L0063	ファイル名の編集可否
+L0064	ファイル名を編集できるかは、ブロックの削除可否だけで決まる。削除できるブロックではファイル名の入力欄を表示する。削除できないブロックではファイル名を表示するだけで入力欄を出さず、編集できない。ファイル名の文字列を /user_data と照合する判定は行わない。
+L0065	ファイル名変更時の旧ファイル
+L0066	ファイル名を変更して更新したときは、変更前のファイル名で保存されていた同じ言語のテンプレートファイルが残っていれば、そのファイルを削除する。
+L0067	削除できないブロックへの削除要求
+L0068	削除できないブロックに対して削除要求が届いても、ブロック情報は削除せず、削除完了のメッセージも出さずに一覧画面へ戻る。
+L0069	入出力
+L0070	種類	内容
+L0071	入力	一覧・登録・編集画面の表示要求。登録・編集の保存はフォームの入力内容、削除は対象ブロックの指定
+L0072	成功時出力	登録・編集は編集画面へ戻る。削除は一覧画面へ戻る
+L0073	失敗時出力	対象のブロックが存在しないとき、編集は見つからない扱い（HTTP 404）、削除は一覧画面へ戻る
+L0074	入出力: 永続化
+L0075	操作	契機
+L0076	登録・更新	ブロックの新規登録・編集の保存
+L0077	削除	削除できるブロックの削除
+L0078	リニューアル後の仕様
+L0079	表示メッセージ
+L0080	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0081	M09-07-MSG-001	管理画面上部	この機能の利用頻度が低い場合、使用しない間は無効化することでセキュリティを更に向上させることができます。環境変数 ECCUBE_RESTRICT_FILE_UPLOAD を 1 に設定することで機能を無効化することが可能です。	ブロックの新規入力画面または編集画面を開いたとき	ブロック管理（登録・編集）画面に留まる
+L0082	M09-07-MSG-002	管理画面上部	保存しました	ブロックの新規登録または編集を保存したとき	ブロック管理（登録・編集）画面に遷移する
+L0083	M09-07-MSG-003	管理画面上部	削除しました	ブロックを削除したとき	ブロック管理（一覧）画面に遷移する
+L0084	M09-07-MSG-004	入力項目直下/フォーム上部	同じファイル名のデータが存在しています。別のファイル名を入力してください。	同じ端末種別で、別のブロックと同じファイル名を入力して保存したとき	ブロック管理（登録・編集）画面に留まる
+L0085	—	管理画面上部	削除に失敗しました	削除対象のブロックが存在しないとき	ブロック管理（一覧）画面へ戻る
+L0086	—	確認ダイアログ	このブロックを削除してもよろしいですか？	削除可能ブロックの削除を選んだとき	承諾したときだけ削除へ進む
+L0087	—	一覧の操作欄	編集	ブロック行の表示時	ブロックの編集画面へ遷移する
+L0088	—	一覧の操作欄	削除	削除可能ブロックの行の表示時	確認ダイアログを表示する
+L0089	—	一覧下部	新規入力	ブロック一覧の表示時	ブロックの新規入力画面へ遷移する
+
+exec
+/bin/bash -lc "sed -n '88,105p;160,176p;185,210p' integration_test/casegen/combination/units/M09-04/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+L0087	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0088	—	一覧	削除（確認ダイアログ「このページを削除してもよろしいですか？」）	削除リンク押下時	—
+L0089	—	一覧下部	新規入力	一覧下部の登録ボタン	—
+L0090	M09-04-MSG-001	フラッシュメッセージ	この機能の利用頻度が低い場合、使用しない間は無効化することでセキュリティを更に向上させることができます。環境変数 ECCUBE_RESTRICT_FILE_UPLOAD を 1 に設定することで機能を無効化することが可能です。	ページ登録・編集画面を開いたとき（未表示の場合）	ページ登録・編集画面に留まる
+L0091	M09-04-MSG-002	フラッシュメッセージ	保存しました	ページの登録・編集内容を保存したとき	ページ編集画面に遷移する
+L0092	M09-04-MSG-003	フラッシュメッセージ	削除しました	ユーザー作成ページを削除したとき	ページ一覧画面に遷移する
+L0093	M09-04-MSG-004	フラッシュメッセージ	既に削除されています	削除しようとしたページがすでに存在しないとき	ページ一覧画面に遷移する
+L0094	M09-04-MSG-005	確認モーダル	この操作はあとから取り消すことができません。「%name%」を削除してよろしいですか？	削除ボタンを押したとき（削除前の確認）	削除でモーダルを閉じてページ一覧画面に遷移、キャンセルでモーダルを閉じる
+L0095	—	URL欄直下	※ 同じURLのデータが存在しています。別のURLを入力してください。	同一端末種別で既存ページと URL が重複したとき	送信後の検証で付与する
+L0096	M09-04-MSG-006	入力項目直下（URL欄）	既にURLが存在しています。	ユーザー作成ページで、他のページと同じURLを入力して送信したとき	エラーを表示してページ登録・編集画面に留まる
+L0097	M09-04-MSG-007	入力項目直下（ファイル名欄）	同じファイル名のデータが存在しています。別のファイル名を入力してください。	ユーザー作成ページで、他のページと重複するファイル名を入力して送信したとき	エラーを表示してページ登録・編集画面に留まる
+L0098	M09-04-MSG-008	入力項目直下	入力されていません。	必須項目が未入力のまま送信したとき	エラーを表示してページ登録・編集画面に留まる
+L0099	M09-04-MSG-009	入力項目直下	長すぎます。この値は{{ limit }}文字以下で入力してください。	入力内容が項目ごとの文字数上限を超えたまま送信したとき	エラーを表示してページ登録・編集画面に留まる
+L0100	M09-04-MSG-010	入力項目直下	有効な値ではありません。	ユーザー作成ページで、URLまたはファイル名に使用できない形式を入力して送信したとき	エラーを表示してページ登録・編集画面に留まる
+L0101	M09-04-MSG-011	入力項目直下（ページ内容欄）	Twigのフォーマットが正しくありません。{{ error }}	テンプレート内容の書式に誤りがあるとき	エラーを表示してページ登録・編集画面に留まる
+L0102	M09-04-MSG-012	入力項目直下/フォーム上部	既にURLが存在しています。	ページを登録・編集するときに、別のページと同じURLを入力したとき	エラーを表示してページ登録・編集画面に留まる
+L0103	M09-04-MSG-013	入力項目直下/フォーム上部	同じファイル名のデータが存在しています。別のファイル名を入力してください。	ページを登録・編集するときに、別のユーザー作成ページと同じファイル名を入力したとき	エラーを表示してページ登録・編集画面に留まる
+L0104	M09-04-MSG-014	入力項目直下/フォーム上部	同じファイル名のデータが存在しています。別のファイル名を入力してください。	ユーザー作成ページを登録・編集するときに、標準ページと同じファイル名を入力したとき	エラーを表示してページ登録・編集画面に留まる
+L0158	日本語の場合: https://www.hareruyamtg.com/ja/~
+L0159	英語の場合: https://www.hareruyamtg.com/en/~
+L0160	・(1-7)twigファイルのテキストボックス右横のファイル拡張子に、言語に応じた識別子を追加する
+L0161	日本語の場合: .ja.twig
+L0162	英語の場合: .en.twig
+L0163	・ページ登録について
+L0164	・ページを新規登録する場合、日英2種類のファイルを作成する
+L0165	★ページ確認
+L0166	・(1-5)ページ確認ボタンを追加し、登録されたURLを別タブで表示する
+L0167	★最終更新日時を表示するようにする
+L0168	・ページ更新について
+L0169	・(1-1)言語で選択している言語の(1-7)twigファイルのみを更新する
+L0170	・
+L0171	(1-7)twigファイルを変更して更新する場合、選択されている言語のtwigファイルのみ更新する
+L0172	★タイトルタグの固定文言を非表示
+L0173	・(1-9)コード内に{% set noShopName = true %}を設定すると、titleタグのサフィックス（末尾）に以下の固定文言が追加されない
+L0174	固定文言: | 日本最大級 MTG通販サイト『晴れる屋』
+L0183	例
+L0184	日本語： https://www.hareruyamtg.com/ja/〜
+L0185	英語： https://www.hareruyamtg.com/en/〜
+L0186	・(5)登録を押下すると、以下の正規表現にマッチしない場合、値が有効でないとエラーメッセージを表示する
+L0187	/^([0-9a-zA-Z_\-]+\/?)+(?<!\/)$/
+L0188	・入力なしで(5)登録を押下すると、動的に必須入力のエラーメッセージを表示する
+L0189	・URL最後のパスセグメントが/user_dataではない場合、テキストボックスを非表示にし、編集できない
+L0190	1-5	ページ確認ボタン	ボタン	-	-	-	・URLに登録されているURLを別タブで開く
+L0191	※ URLに変数が含まれる場合、正しく表示されない
+L0192	1-6	ファイル名のヘルプ	ラベル	-	-	-	・マウスオーバーすると、以下の文言を表示する
+L0193	「ページの内容を記述したtwigテンプレートファイルの名前です。」
+L0194	1-7	twigファイル	半角・全角	〇	255	-	・テキストボックス右横のファイル拡張子に、言語に応じた識別子を追加する
+L0195	例
+L0196	日本語： .ja.twig
+L0197	英語： .en.twig
+L0198	・(5)登録を押下すると、以下の正規表現にマッチしない場合、値が有効でないとエラーメッセージを表示する
+L0199	/^([0-9a-zA-Z_\-]+\/?)+$/
+L0200	・未入力で(5)登録を押下すると、動的に必須入力のエラーメッセージを表示する
+L0201	・ファイル名最後のパスセグメントが/user_dataではない場合、テキストボックスを非表示にし、編集できない
+L0202	1-8	コードのヘルプ	ラベル	-	-	-	・マウスオーバーすると、以下の文言を表示する
+L0203	「テンプレートファイルを記述します。Twigで記述します。」
+L0204	1-9	コード	半角・全角	〇		{% extends 'default_frame.twig' %}
+L0205	{% block main %}
+L0206	{% endblock %}	・未入力で(5)登録を押下すると、動的に必須入力のエラーメッセージを表示する
+L0207	・(5)登録を押下すると、twig構文のエラーチェックを行う
+L0208	・コードが編集できないページの場合、readonlyにして入力不可とする
+
+exec
+/bin/bash -lc "sed -n '48,80p' integration_test/casegen/combination/units/M10-04/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "sed -n '60,82p;116,146p;182,212p' integration_test/casegen/combination/units/M10-15/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+L0047	2-2	支払方法(英)	全角・半角	〇	-	-	-	2025/12/11 田所
+L0048	2-3	手数料	数値（整数）	〇	-	-	-	2025/12/11 田所
+L0049	2-4	メールテンプレート(日)	単一選択(セレクトボックス)	〇	-	-	選択肢:メール管理で作成されているテンプレート一覧	2025/12/11 田所
+L0050	2-5	メールテンプレート(英)	単一選択(セレクトボックス)	〇	-	-	選択肢:メール管理で作成されているテンプレート一覧	2025/12/11 田所
+L0051	2-6	利用条件	数値（整数）	-	-	-	-	2025/12/11 田所
+L0052	2-7	ロゴ画像	画像 リンク	-	-	-	ファイルアップロードを押下時、画像を選択しアップロード
+L0053	2-8	登録	ボタン	-	-	-	入力されたフォームの値で登録
+L0054	Source:
+L0055	functions/pf-eccube3/m10-04_admin_base_setting_setting_shop_payment.md
+L0056	現行仕様
+L0057	M10-04 支払い方法/手数料設定 / 店舗設定 — 支払方法管理（支払方法・手数料・利用条件）
+L0058	業務ロジック
+L0059	一覧に出す支払方法
+L0060	削除されていない支払方法を、表示順の降順で並べる。旧・大会専用の支払方法（クレジットカード決済・コンビニ決済）は一覧に出さないため、この画面からは編集も削除もできない。
+L0061	一覧の操作リンク
+L0062	操作リンクからは編集・削除・上へ・下へを選べる。固定扱いの支払方法では編集と削除を選べない。先頭行には「上へ」を、末尾行には「下へ」を出さない。
+L0063	一覧の利用条件の表示
+L0064	下限が未設定または 0 のときは「0円」と表示する。上限があるときは続けて「〜上限円」を、上限が未設定のときは「〜無制限」を表示する。
+L0065	編集画面の初期表示
+L0066	新規登録のときは、すでに登録されている支払方法の最大表示順へ 1 を加えた値を設定する。1件も登録が無いときは表示順を 1 とする。一覧は表示順の降順なので、新規登録した支払方法は一覧の先頭に出る。新規登録した支払方法は編集・削除ができる状態で作り、手数料も入力できる状態にする。手数料を設定できない支払方法では手数料の入力欄を出さない。登録済みのロゴ画像があるときは、その画像をプレビューとして表示する。
+L0067	入力の制限
+L0068	項目	内容
+L0069	手数料	9桁以内で、負の値は受け付けない。手数料を設定できない支払方法では入力欄を出さず、登録時に 0 として保存する
+L0070	利用条件	下限と上限の2つの欄で入力する。それぞれ9桁以内で、負の値は受け付けない。両方に入力があり、上限が下限より小さいときはエラーとする
+L0071	ロゴ画像	画面で選べるのは gif・jpeg・png の1件までで、10MB を超えるファイルは送信前にエラーとする。サーバ側でも種別が画像であることを確認する。登録時にファイルの内容を検証し直すことはない。欄には「620px以上推奨」を併記する
+L0072	登録の判定順序
+L0073	順序	判定	結果
+L0074	1	項目ごとの入力検証	違反のときは項目にエラーを表示し、同じ編集画面を再表示する。完了メッセージは表示しない
+L0075	2	利用条件の下限・上限がいずれも空でなく、上限が下限より小さい	下限の欄にメッセージを付ける
+L0076	3	手数料設定可否が不可	保存の直前に手数料を 0 へ置き換える
+L0077	保存できたときは支払方法一覧へ戻る。
+L0078	削除
+L0079	なりすまし対策トークンを検証し、無効なときは拒否する。対象の支払方法が無いときはメッセージを表示して一覧へ戻る。対象があるときは一覧から消し、残った支払方法の表示順を、並び順を保ったまま 1 から連番に振り直す。
+
+ succeeded in 0ms:
+L0059	1-38
+L0060	画像レイヤー（2枚）: 店舗登録 / I8 / image 1 + 店舗登録 / U92 / image 2
+L0061	カスタマイズ説明
+L0062	EC-CUBEエンタプライズの標準機能をベースに下記のカスタマイズを行う
+L0063	・店舗属性
+L0064	・本店(2F、3F、B2F)と支店の区別がつくようにする
+L0065	・店舗公開管理について
+L0066	・店舗管理に公開・非公開フラグを設定できるようにする（フロント用）
+L0067	・店舗閉店管理について
+L0068	・店舗管理に開店・閉店フラグを設定できるようにする
+L0069	公開・非公開フラグと開店・閉店フラグの運用
+L0070	・新店舗オープン時に、店舗データ等準備しておくが、フロントには表示しないように制御できるように、
+L0071	公開、非公開の制御を行う
+L0072	・店舗が閉店したことも管理するように、閉店フラグ管理も行う
+L0073	・はれ２、はれ３について
+L0074	・はれ２、はれ３の管理についてはこの機能では対象外とする
+L0075	・登録項目について
+L0076	現行の支店サイトの支店管理にある下記項目を追加する
+L0077	・支店URL（現行での項目名はHTMLのclass属性名）
+L0078	・ショップカラー、ショップアイコン
+L0079	・高額商品閾値1、2、3
+L0080	・スマレジ店舗ID、スマレジ店舗コード
+L0081	・初期在庫作成
+L0115	1-2	会社名(カナ)	カタカナ	○	255文字	-	現行支店システムに準拠
+L0116	1-3	店名	全角・半角	○	255文字	-	現行支店システムに準拠
+L0117	1-4	店名(カナ)	カタカナ	○	255文字	-	現行支店システムに準拠
+L0118	1-5	店名(英語表記)	半角英字、スペース	○	255文字	-	現行支店システムに準拠
+L0119	1-6	支店URL	半角英数、スペース	○	255文字	-	現行支店システムのHTMLのclass属性名に準拠
+L0120	1-7	店舗種別	ラジオボタン	-	-	支店	選択肢:支店 本店
+L0121	1-8	公開	ラジオボタン	-	-	非公開	選択肢:非公開 公開
+L0122	非公開は、開店前の店舗や在庫管理用の店舗として使用
+L0123	1-9	開店	ラジオボタン	-	-	閉店	選択肢:閉店 開店
+L0124	閉店フラグは論理削除の扱い
+L0125	1-39	売上集計の検索項目	ラジオボタン	-	-	表示しない	選択肢:表示する、表示しない
+L0126	日別・月別集計画面の店舗検索項目に出すかどうかに関わる 2026/9/11木村：追加ECCUBE_HARERUYA-2812
+L0127	1-10	住所	全角・半角	○	32文字	-	現行支店システムに準拠
+L0128	1-11	住所(英語表記)	半角英数、スペース	-	512文字	-	現行支店システムに準拠
+L0129	1-12	Google map埋め込みURL	全角・半角	-	255文字	-	-
+L0130	1-13	電話番号	半角数字	○	14文字	-	現行支店システムに準拠
+L0131	1-14	店舗営業時間	全角・半角	-	255文字	-	現行支店システムに準拠
+L0132	1-15	店舗営業時間(英語表記)	全角・半角	-	255文字	-	EC-CUBEエンタプライズの標準に準拠
+L0133	1-16	送信元メールアドレス	Eメール形式で許容された文字	○	92文字	-	現行支店システムに準拠
+L0134	1-17	返信先メールアドレス	Eメール形式で許容された文字	○	92文字	-	現行支店システムに準拠
+L0135	1-18	送信エラー通知メールアドレス	Eメール形式で許容された文字	○	92文字	-	現行支店システムに準拠
+L0136	1-19	問い合わせ専用メールアドレス	Eメール形式で許容された文字	○	92文字	-	現行支店システムに準拠
+L0137	1-20	ショップアイコン	ボタン	-	-	-	ボタンを押して画像を選択
+L0138	1-21	ご当地晴れる屋くん	ボタン	-	-	-	ボタンを押して画像を選択
+L0139	1-22	高額商品閾値1	数値（整数）	-	2147483647	-	現行支店システムに準拠
+L0140	1-23	高額商品閾値2	数値（整数）	-	2147483647	-	現行支店システムに準拠
+L0141	1-24	高額商品閾値3	数値（整数）	-	2147483647	-	現行支店システムに準拠
+L0142	1-25	スマレジ店舗ID	半角数字	-	10文字	-	現行支店システムに準拠
+L0143	1-26	スマレジ店舗コード	半角英数	-	10文字	-	現行支店システムに準拠
+L0144	1-27	テスト用店舗	単一選択(チェックボックス)	-	-	-	店舗閉店管理を閉店にすることで表示や集計の対象外とするため不要となる
+L0145	1-28	取り扱い商品説明文	全角・半角	-	4000文字	-	EC-CUBEエンタプライズの標準に準拠
+L0181	画面の先頭にある店舗の選択で登録済みの店舗を選ぶと、その店舗の内容を読み込んだ状態で開き直す。選ばないときは新しい店舗の登録として扱う。選択肢は表示順の昇順に並ぶ。選び直すと画面を開き直すため、入力途中の内容は残らない。
+L0182	存在しない店舗を指定して画面を開いたときは、画面を表示せず見つからない旨の応答を返す。
+L0183	店名略称の重複禁止
+L0184	店名略称(3文字)には、ほかの店舗で登録済みの値を使えない。重複したときは保存せず、その値を使っている店舗のショップ名略称を示すエラーを表示する。編集中の店舗自身が持つ値は重複として扱わない。
+L0185	保存できないときの扱い
+L0186	入力の検証に通らないときは保存せず、同じ画面を再表示して項目ごとのエラーを表示する。ショップアイコンの画像を確定できないときも保存せず、画面上部にエラーを表示して同じ画面へ戻す。
+L0187	ショップアイコンの差し替え
+L0188	画像を選んで保存すると、その店舗に設定されていた画像は消され、新しい画像へ差し替わる。画像を選ばずに保存したときは、設定済みの画像をそのまま残す。受け付ける画像は5メガバイトまでで、JPEG・GIF・PNGに限る。
+L0189	登録完了時に作られるもの
+L0190	新しい店舗を登録したときは、その店舗の注文番号と店頭注文番号の採番値を0で作る。
+L0191	初期在庫は、その店舗の在庫がまだ1件も無いときに限って作る。すでに在庫がある店舗では作り直さない。
+L0192	保存後の戻り先
+L0193	保存できたときは、登録・更新した店舗を選んだ状態の画面へ戻す。新しく登録した店舗も、そのまま続けて編集できる状態になる。
+L0194	カナ項目の変換
+L0195	会社名(カナ)・店名(カナ)は、ひらがなで入力しても全角カタカナへ直して保存する。濁点・半濁点は1文字にまとめる。
+L0196	ショップカラーの入力
+L0197	ショップカラーは必須で、「#」に続けて半角英数字を並べた7文字以内の値だけを受け付ける。
+L0198	「#」で始まらない値や記号を含む値は保存せず、「半角英数字で入力してください。」と表示する。
+L0199	受け付けたショップカラーは店舗情報に保存する。
+L0200	入出力
+L0201	種類	内容
+L0202	入力	店舗の入力項目、ショップアイコンの画像ファイル
+L0203	成功時出力	保存の完了メッセージと、保存した店舗を選んだ状態の画面
+L0204	失敗時出力	同じ画面での項目エラー、またはショップアイコンのエラー
+L0205	入出力: 永続化
+L0206	操作	契機
+L0207	更新	入力の検証を通った店舗情報の保存
+L0208	追加	新しい店舗の登録時の、注文番号・店頭注文番号の採番値
+L0209	追加	初期在庫（作成を指定し、その店舗の在庫が1件も無いとき）
+L0210	リニューアル後の仕様
+L0211	表示メッセージ
+
+exec
+/bin/bash -lc "sed -n '95,125p' integration_test/casegen/combination/units/M11-02/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "sed -n '62,114p' integration_test/casegen/combination/units/M11-01/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "sed -n '50,95p' integration_test/casegen/combination/units/M11-03/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+L0094	2-2	登録	ボタン	-	-	-	入力されたフォームの値で編集
+L0095	Source:
+L0096	functions/pf-eccube3/m11-02_admin_system_setting_setting_system_member_edit.md
+L0097	現行仕様
+L0098	M11-02 メンバー管理 / メンバー管理（システム情報設定／設定）
+L0099	業務ロジック
+L0100	パスワードの扱い
+L0101	パスワードは平文で保持しない。新規登録のときも編集のときも、保存する値はハッシュ化して保持する。
+L0102	編集画面を開いたときは、パスワード欄と確認欄に、既存のパスワードではなく、あらかじめ決められた同じ既定文字列を入れた状態で表示する。この既定文字列のまま送信した場合はパスワードを変更しなかったものとして扱い、既存のパスワードを維持する。既定文字列と異なる値が送信されたときだけ、その値をハッシュ化して保持する。
+L0103	入力の検証
+L0104	パスワードは、パスワード欄と確認欄の入力が一致しないと保存しない。
+L0105	ログインIDとパスワードは、4文字未満だと保存しない。
+L0106	スマレジ用アカウントの排他
+L0107	スマレジ用アカウントを有効にできるメンバーは、同時に1人だけとする。自分以外に有効なメンバーが居るときに有効にすると、重複エラーを表示して編集画面へ戻す。
+L0108	保存の判定順序
+L0109	順序	判定	結果
+L0110	1	入力検証に成功したか	失敗のときは同一画面を再表示し、以降を実行しない。
+L0111	2	編集で、パスワード欄が既定文字列のまま送信されたか	そのままのときは既存のパスワードを維持する。異なる値のときはハッシュ化して保持する。
+L0112	3	メンバーの保存に成功したか	失敗のときはエラーを表示し、同一画面を再表示する。
+L0113	4	自分以外にスマレジ用アカウントが有効なメンバーが居るか	居るときは重複エラーを表示して編集画面へ戻す。この場合もメンバー本体の変更は保存済みで、所属店舗とスマレジ用アカウントだけが保存されない。
+L0114	5	上記を満たすか	所属店舗とスマレジ用アカウントを保存し、完了を表示して編集画面へ遷移する。
+L0115	入出力
+L0116	新規登録と編集の関係
+L0117	新規登録のときも編集のときも、同じ画面と同じ保存処理で行う。新規登録の保存が完了した場合も一覧へは戻らず、登録したメンバーの編集画面へ遷移する。
+L0118	新規登録したメンバーには、そのとき登録されているメンバーの表示順の最大値に1を足した値を表示順として付与する。既存メンバーの表示順は変えない。
+L0119	対象が存在しないとき
+L0120	存在しないメンバーを指定して編集画面を開いたときは、画面を表示せず、対象が見つからないことを示す応答（404）を返す。
+L0121	入出力: 永続化
+L0122	操作	契機	保存する内容
+L0123	追加	新規登録	メンバー本体と、所属店舗・スマレジ用アカウント
+L0124	更新	編集	メンバー本体と、所属店舗・スマレジ用アカウント
+
+ succeeded in 0ms:
+L0061	業務ロジック
+L0062	一覧の対象と並び
+L0063	一覧は管理者アカウントを表示順の降順で並べる。値が大きい行が先頭に来る。
+L0064	削除済みのメンバーは一覧に含まれない。
+L0065	稼働状態による絞り込みは行わない。非稼働のメンバーも一覧に表示される。ログイン可否の判定は管理画面ログインを正とする。
+L0066	一覧はページングを持たない。該当件数の集計も行わない。
+L0067	各行の操作は編集・削除・上へ・下への 4 つで、編集はメンバー管理へ遷移する。
+L0068	表示順の入れ替え
+L0069	上へは、自身の表示順より 1 大きいメンバーと表示順を交換する。下へは、1 小さいメンバーと交換する。
+L0070	隣接するメンバーが無い場合は失敗とする。先頭行に上へ、末尾行に下への操作は一覧に置かない。
+L0071	削除
+L0072	削除は対象メンバーを削除済みにし、削除対象より大きい表示順の全行を 1 つ繰り下げる。削除したメンバーの表示順は保持しない。
+L0073	ログイン中のメンバー自身の行では、削除の項目を文言だけで表示し、削除を実行できない。ただし同一メンバーの削除をサーバ側で拒否する判定は持たない。
+L0074	操作の判定順序
+L0075	順序	判定	結果
+L0076	1	削除・上へ・下への要求が正当か	正当でなければアクセス拒否とし、以降を実行しない。
+L0077	2	対象メンバーが存在するか（上へ・下へ）	存在しなければ 404 とする。
+L0078	3	対象メンバーが存在するか（削除）	存在しなければ削除警告を表示し、一覧へ戻る。404 にはしない。
+L0079	4	削除・入れ替えの保存が成功したか	成功なら完了、失敗ならエラーを表示し、一覧へ戻る。
+L0080	他機能との境界
+L0081	新規登録・編集の入力項目、入力検証、編集権限は「メンバー管理」（M11-02）を正とする。当画面パスの拒否設定は「権限管理」（M11-03）を正とする。
+L0082	入出力
+L0083	種類	内容
+L0084	入力	一覧の表示、削除・上へ・下への操作
+L0085	成功時出力	一覧の再表示、削除・上へ・下への完了メッセージ
+L0086	失敗時出力	削除・上へ・下への失敗メッセージ、削除対象不在時の警告メッセージ、正当でない要求へのアクセス拒否、上へ・下へでの 404
+L0087	入出力: 永続化
+L0088	削除は管理者アカウントの対象行を削除済みにする。表示順の入れ替えと削除後の繰り下げは、管理者アカウントの表示順を更新する。
+L0089	操作	契機
+L0090	更新（削除済み・表示順）	削除
+L0091	更新（表示順）	上へ・下へ・削除後の繰り下げ
+L0092	所属マスタ・権限マスタ・稼働マスタは更新しない。
+L0093	リニューアル後の仕様
+L0094	表示メッセージ
+L0095	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0096	M11-01-MSG-006	管理画面上部	並び順を更新しました	メンバーの表示順を上げる操作が完了したとき	メンバー管理一覧画面に遷移する
+L0097	M11-01-MSG-007	管理画面上部	並び順の更新に失敗しました	メンバーの表示順を上げる操作中にエラーが起きたとき	メンバー管理一覧画面に遷移する
+L0098	M11-01-MSG-008	管理画面上部	並び順を更新しました	メンバーの表示順を下げる操作が完了したとき	メンバー管理一覧画面に遷移する
+L0099	M11-01-MSG-009	管理画面上部	並び順の更新に失敗しました	メンバーの表示順を下げる操作中にエラーが起きたとき	メンバー管理一覧画面に遷移する
+L0100	M11-01-MSG-010	管理画面上部	削除しました	メンバーの削除が完了したとき	メンバー管理一覧画面に遷移する
+L0101	M11-01-MSG-011	管理画面上部	関連するデータがあるため「%name%」を削除できませんでした	削除しようとしたメンバーが関連データで使用されているとき（%name% はメンバー名）	メンバー管理一覧画面に遷移する
+L0102	M11-01-MSG-012	管理画面上部	削除に失敗しました	メンバーの削除中にエラーが起きたとき	メンバー管理一覧画面に遷移する
+L0103	M11-01-MSG-020	画面中央のモーダル	メンバーを削除してよろしいですか？	システム権限を持つ管理者が、自分以外のメンバーの削除アイコンを押したとき	削除を実行すると成功または失敗のメッセージを表示してメンバー管理一覧へ遷移する。キャンセル時は削除せずモーダルを閉じる
+L0104	M11-01-MSG-021	画面中央のモーダル	メンバーを削除します。	システム権限を持つ管理者が、自分以外のメンバーの削除アイコンを押したとき	削除を実行すると成功または失敗のメッセージを表示してメンバー管理一覧へ遷移する。キャンセル時は削除せずモーダルを閉じる
+L0105	M11-01-MSG-001	管理画面上部	保存しました	新しいメンバーの登録が完了したとき。文言はメンバー管理画面で表示する	メンバー管理画面に遷移する
+L0106	M11-01-MSG-002	管理画面上部	保存に失敗しました	新しいメンバーの登録中にエラーが起きたとき	メンバー管理画面に遷移する
+L0107	M11-01-MSG-003	管理画面上部	保存しました	メンバー情報の編集が完了したとき	メンバー管理画面に遷移する
+L0108	M11-01-MSG-004	管理画面上部	保存に失敗しました	メンバー情報の編集中にエラーが起きたとき	メンバー管理画面に遷移する
+L0109	M11-01-MSG-005	管理画面上部	保存に失敗しました	メンバー情報の編集で入力内容に不備があるとき	メンバー管理画面に遷移する
+L0110	M11-01-MSG-013	入力項目直下	英数字をそれぞれ1種類使用してください。	パスワードに英字と数字の両方が含まれていないとき	新規登録時はメンバー管理画面に留まり、編集時はメンバー管理画面に遷移する
+L0111	M11-01-MSG-016	入力項目直下（店舗）	店舗が選択されていません。	店舗権限のメンバーで、店舗が設定されていないとき	新規登録時はメンバー管理画面に留まり、編集時はメンバー管理画面に遷移する
+L0112	M11-01-MSG-017	入力項目直下	半角英数字で入力してください。	新規登録時に、ログインIDに印字不能な文字を入力したとき	メンバー管理画面に留まる
+L0113	M11-01-MSG-018	入力項目付近	非稼働に変更することはできません。	最後の稼働中システム権限メンバーを非稼働に変更しようとしたとき（編集時のみ）	メンバー管理画面に遷移する
+
+ succeeded in 0ms:
+L0049	運用想定
+L0050	・参照と、CSVデータ出力は同一権限で管理する想定
+L0051	例）一覧参照画面にCSV出力がある場合同じ権限でCSV出力が行える
+L0052	・社員については全メニュー見れて、メニューを絞ることは無い想定
+L0053	・アルバイトについては閲覧できるメニューを絞りたい想定
+L0054	機能仕様処理概要
+L0055	EC-CUBEエンタプライズの標準機能をベースに下記のカスタマイズを行う
+L0056	UIについて
+L0057	・権限の表示をマトリックスにする
+L0058	・セル内のチェックボックスのチェックで権限を登録、解除する
+L0059	・編集など上位権限が登録された場合、閲覧などの下位権限もチェックボックスをチェック済みに変更し
+L0060	グレーアウトさせ編集不可にする
+L0061	優先度について
+L0062	・優先度は数字が少ない方が優先権限とする
+L0063	登録処理について
+L0064	・チェックボックスがONの場合アクセス可能とする
+L0065	・編集など上位権限が登録された場合、閲覧などの下位権限も登録する
+L0066	・上位権限などはマスターデータで設定が可能とする
+L0067	・権限のURLは、該当するセルのマスターデータから取得し権限の登録、削除をする
+L0068	※権限テーブルにURLが存在するとアクセス不可になるためチェック時はURLを消す
+L0069	複製について
+L0070	・複製を選択した行と同権限の行を作成する
+L0071	・権限名を入力し画面下部の登録ボタンを押して登録する
+L0072	・権限名は必須かつ重複は不可とする
+L0073	・権限を新規作成し登録する
+L0074	アクセス制御について
+L0075	・EC-CUBEエンタプライズの標準のアクセス制御を使用する
+L0076	列の追加について
+L0077	・マスターデータの権限URLを追加する
+L0078	上記の作業が完了後に権限管理の画面を読み込むと、操作列の左に追加される
+L0079	権限の新規登録について
+L0080	・権限のマスターデータ画面で作成し、当画面で権限設定をする
+L0081	登録処理
+L0082	・現行機能を使って権限制御を実現しているため、権限判定データの生成および登録を行う
+L0083	※権限判定データは標準機能の権限設定で登録する「権限」と「拒否URLリスト」を指す
+L0084	・画面上でチェックされた機能と、権限URLマスターデータに定義された「機能名－URL」対応情報を突合し、各ロールごとに「権限」と「拒否URLリスト」を生成する。
+L0085	・マトリックス上のチェックONは権限から拒否URL削除（許可）、チェックOFFは拒否URL登録（不許可）として権限判定データとして登録する
+L0086	承認権限
+L0087	・URL承認を行う人を絞り込むために、権限URLマスターデータにて下記データを登録し、承認者を参照するときに使用する
+L0088	大カテゴリ：承認権限、権限名：承認権限、URL：/approval_authority、優先度：１
+L0089	・権限管理画面上で、承認権限を紐づけたユーザーが承認を行えるユーザーとなる
+L0090	識別ID	ラベル	書式・制限	必須	最大値	初期値	画面部品の説明
+L0091	権限管理一覧
+L0092	1-1	機能名行	-	-	-	-	-
+L0093	1-2	各種管理機能名	-	-	-	-	-
+L0094	1-3	操作列	-	-	-	-	-
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/M09-10_{processes,factors,interactions}.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	支店トップページ設定を保存する	支店トップページ管理画面で登録ボタンを押す	DB（支店共通設定の区分・バナー画像・タイル）と公開側の支店トップページ	L0051-L0060,L0141-L0142,L0155-L0156,L0160-L0167
+P2	支店トップページにタイルを表示する	公開側で支店トップページを開く	公開側の支店トップページ（タイルのタイトル・商品・もっと見るの検索結果）	L0086-L0102,L0146-L0147
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	編集対象	支店共通｜個別支店	支店共通: 支店共通設定を適用は選択できない／個別支店: 支店共通設定を適用を選べる	L0048-L0054	この機能
+F02	P1	支店共通設定を適用	選択する｜選択しない	選択する: 支店共通設定の区分だけを保存し支店固有設定は更新しない／選択しない: バナー画像・バナーリンクタグ・タイルを保存する	L0052-L0053,L0155-L0156,L0161,L0163	この機能
+F03	P1	バナー画像の指定	新規指定｜未指定で登録済みあり｜未指定で登録なし	新規指定: 旧画像を削除して新画像に差し替える／未指定で登録済みあり: 登録済み画像を引き継ぐ／未指定で登録なし: バナー画像の登録に失敗しましたで保存しない	L0141-L0142,L0164-L0166	この機能
+F04	P2	タイルの属性	フォーマット別特集｜最新エキスパンション｜ピックアップ商品｜その他｜タイル登録なし	フォーマット別特集: タイトルは{タイルタグ}のカード（特集を除く）で検索条件はタイルタグ／最新エキスパンション: タイトル最新エキスパンション・条件はタイルタグ／ピックアップ商品: タイトルピックアップ商品・条件はピックアップフラグ1／その他: タイトルは{タイルタグ}のカード・条件はタイルタグ／タイル登録なし: スタンダード・レガシー・統率者のタグから無作為に1つの商品を表示	L0087-L0102,L0146-L0147	この機能
+F05	P2	タイルタグの登録	登録あり｜未登録	登録あり: タグに紐づく商品を最大3件表示／未登録: 商品を表示しない	L0146	この機能
+F06	P2	表示する支店の支店共通設定の適用	適用している｜適用していない	適用している: 支店共通と同じバナー・タイルの内容が表示される／適用していない: その支店自身のタイルが表示される	L0050,L0053,L0087-L0102	この機能
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	効き合う	L0054	支店共通を編集対象にすると支店共通設定を適用は選択できない
+P1	F01+F03	関係しない		バナー画像の差し替え・引き継ぎ・失敗は編集対象が支店共通でも個別支店でも同じ規則（設計書に編集対象で分ける定めが無い）
+P1	F02+F03	効き合う	L0053,L0155-L0156,L0161	支店共通設定を適用を選ぶと区分だけを保存しバナー画像は処理されず、選ばないときだけバナー画像の差し替え・引き継ぎ・失敗が決まる
+P2	F04+F05	効き合う	L0087-L0102,L0146-L0147	タイルの属性ごとに商品の出し方（タグ・ピックアップフラグ・無作為）が違い、タグ未登録では商品を表示しない
+P2	F04+F06	関係しない		タイル属性ごとのタイトル・検索条件・商品の出し方は同じ規則で、適用していると表示するタイルの元が支店共通になるだけ
+P2	F05+F06	関係しない		タイルタグ未登録なら商品を出さない規則は、適用の有無で変わらない
+
+codex
+削除確認の「キャンセル」と「対象が既にない」について、判定が進む順序を確認中です。M09-10 では Excel 本文に、共通設定を選んだ後もバナー未選択を検査する記述があり、追加された打ち切り行と食い違う可能性があります。
+exec
+/bin/bash -lc "sed -n '34,44p;51,61p;158,168p' integration_test/casegen/combination/units/M09-10/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+L0033	・支店TOPのデザイン変更に伴い、変更後のデザインでも各タイルの表示位置を設定可能とする
+L0034	・カスタマイズ要件に記載の内容以外は現行踏襲とする
+L0035	機能仕様処理概要（★はカスタマイズ項目）
+L0036	★以下1~3の画面部品を除去する
+L0037	1 (3)タイル配置のランダム化
+L0038	※リニューアル後の支店ECTOPでは、タイル位置をランダム化にしないため
+L0039	2 (6)限定品①タグ
+L0040	※現行の以下の挙動は、リニューアル後の支店ナビゲーションで削除となるため
+L0041	・支店ナビゲーションに「セール商品」を表示する
+L0042	・支店ナビゲーションの「セール商品」を押下すると、登録された商品タグとセール商品でAND検索された商品一覧を表示する
+L0043	3 (7)限定品②タグ
+L0050	・「支店共通」を選択すると、(2)支店共通設定を適用を選択されている全ての支店に共通の設定を表示する
+L0051	・(2)支店共通設定を適用について
+L0052	・選択すると、(4)～(10)で表示される画面部品は入力できなくなり、選択を外すと入力できるようになる
+L0053	・選択して登録すると、(4)～(10)で登録される内容は、(1)支店で「支店共通」として登録されているものと同じになる
+L0054	※(1)支店で「支店共通」を選択されている場合、(2)支店共通設定を適用は選択できない
+L0055	・選択して登録すると、以下1~3のフローでエラーチェックを行う
+L0056	1 (4)バナー画像選択を選択されているかを確認し、未選択なら画面上部に以下のエラーを表示して更新せず処理を終了する
+L0057	画像レイヤー（3枚）: 支店トップページ管理 / E115 / image 4 + 支店トップページ管理 / E122 / image 5 + 支店トップページ管理 / E129 / image 6
+L0058	2 (8)タイル位置が重複していないかを確認し、重複していれば画面上部に以下のエラーを表示して更新せず処理を終了する
+L0059	3 (10)タイルタグが選択されているか((9)タイル属性が「ピックアップ商品」の場合を除く)確認し、
+L0060	未選択なら画面上部に以下のエラーを表示して更新せず処理を終了する
+L0157	リニューアル後の仕様
+L0158	表示メッセージ
+L0159	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0160	M09-10-MSG-001	管理画面上部	セッションがタイムアウトしました。もう一度やり直してください。	共通設定を使用していて、操作期限が切れた状態で保存しようとしたとき	保存せず支店トップページ管理画面に留まる
+L0161	M09-10-MSG-002	管理画面上部	保存しました	共通設定を使用して、設定を保存したとき	共通設定の区分だけを保存し、支店トップページ管理画面に留まる
+L0162	M09-10-MSG-003	管理画面上部	保存に失敗しました	共通設定を使用せず、入力内容に不備があるまま保存しようとしたとき	保存せず支店トップページ管理画面に留まる
+L0163	M09-10-MSG-004	管理画面上部	保存しました	共通設定を使用せず、入力内容に問題がない状態で設定を保存したとき	トップページ設定を保存し、支店トップページ管理画面に留まる
+L0164	M09-10-MSG-005	管理画面上部	バナー画像の登録に失敗しました。	バナー画像を指定して保存しようとしたが、画像を登録できなかったとき	保存せず支店トップページ管理画面に留まる
+L0165	M09-10-MSG-006	管理画面上部	バナー画像の登録に失敗しました。	バナー画像を指定せずに保存しようとし、登録済みのバナー画像もないとき	保存せず支店トップページ管理画面に留まる
+L0166	M09-10-MSG-007	管理画面上部	バナー画像の登録に失敗しました。	バナー画像を指定せずに変更しようとし、バナー画像が未設定のとき	保存せず支店トップページ管理画面に留まる
+L0167	M09-10-MSG-008	管理画面上部	タイル位置に重複があります。すべてのタイルは異なる位置を選択してください。	複数のタイルに同じ表示位置を設定したとき	保存せず支店トップページ管理画面に留まる
+
+exec
+/bin/bash -lc "sed -n '65,76p;116,126p' integration_test/casegen/combination/units/M10-15/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+L0064	・本店(2F、3F、B2F)と支店の区別がつくようにする
+L0065	・店舗公開管理について
+L0066	・店舗管理に公開・非公開フラグを設定できるようにする（フロント用）
+L0067	・店舗閉店管理について
+L0068	・店舗管理に開店・閉店フラグを設定できるようにする
+L0069	公開・非公開フラグと開店・閉店フラグの運用
+L0070	・新店舗オープン時に、店舗データ等準備しておくが、フロントには表示しないように制御できるように、
+L0071	公開、非公開の制御を行う
+L0072	・店舗が閉店したことも管理するように、閉店フラグ管理も行う
+L0073	・はれ２、はれ３について
+L0074	・はれ２、はれ３の管理についてはこの機能では対象外とする
+L0075	・登録項目について
+L0115	1-2	会社名(カナ)	カタカナ	○	255文字	-	現行支店システムに準拠
+L0116	1-3	店名	全角・半角	○	255文字	-	現行支店システムに準拠
+L0117	1-4	店名(カナ)	カタカナ	○	255文字	-	現行支店システムに準拠
+L0118	1-5	店名(英語表記)	半角英字、スペース	○	255文字	-	現行支店システムに準拠
+L0119	1-6	支店URL	半角英数、スペース	○	255文字	-	現行支店システムのHTMLのclass属性名に準拠
+L0120	1-7	店舗種別	ラジオボタン	-	-	支店	選択肢:支店 本店
+L0121	1-8	公開	ラジオボタン	-	-	非公開	選択肢:非公開 公開
+L0122	非公開は、開店前の店舗や在庫管理用の店舗として使用
+L0123	1-9	開店	ラジオボタン	-	-	閉店	選択肢:閉店 開店
+L0124	閉店フラグは論理削除の扱い
+L0125	1-39	売上集計の検索項目	ラジオボタン	-	-	表示しない	選択肢:表示する、表示しない
+
+exec
+/bin/bash -lc "sed -n '33,40p;63,77p;82,87p' integration_test/casegen/combination/units/M09-07/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+L0032	2 (5)編集を非表示にする
+L0033	3 (6)削除を非表示にする
+L0034	・(2)検索ボックスに入力すると、ブロックを(3)と(4)で部分一致検索し、対象ページのみを画面に表示する
+L0035	・(6)削除を押下すると、以下1~3のフローでページを削除する
+L0036	1 以下のように削除確認のモーダルが表示する
+L0037	画像レイヤー（2枚）: ブロック管理(一覧) / D46 / image 4 + ブロック管理(一覧) / C57 / image 5
+L0038	2 「削除」を押下すると、ブロックを削除する
+L0039	3 以下のように削除完了メッセージを表示する
+L0062	同じ端末種別にすでに同じファイル名のブロックがあるときは登録・更新できず、ファイル名欄にエラーを表示する。編集では自分自身を除いて重複を判定するため、ファイル名を変えないまま保存できる。
+L0063	ファイル名の編集可否
+L0064	ファイル名を編集できるかは、ブロックの削除可否だけで決まる。削除できるブロックではファイル名の入力欄を表示する。削除できないブロックではファイル名を表示するだけで入力欄を出さず、編集できない。ファイル名の文字列を /user_data と照合する判定は行わない。
+L0065	ファイル名変更時の旧ファイル
+L0066	ファイル名を変更して更新したときは、変更前のファイル名で保存されていた同じ言語のテンプレートファイルが残っていれば、そのファイルを削除する。
+L0067	削除できないブロックへの削除要求
+L0068	削除できないブロックに対して削除要求が届いても、ブロック情報は削除せず、削除完了のメッセージも出さずに一覧画面へ戻る。
+L0069	入出力
+L0070	種類	内容
+L0071	入力	一覧・登録・編集画面の表示要求。登録・編集の保存はフォームの入力内容、削除は対象ブロックの指定
+L0072	成功時出力	登録・編集は編集画面へ戻る。削除は一覧画面へ戻る
+L0073	失敗時出力	対象のブロックが存在しないとき、編集は見つからない扱い（HTTP 404）、削除は一覧画面へ戻る
+L0074	入出力: 永続化
+L0075	操作	契機
+L0076	登録・更新	ブロックの新規登録・編集の保存
+L0081	M09-07-MSG-001	管理画面上部	この機能の利用頻度が低い場合、使用しない間は無効化することでセキュリティを更に向上させることができます。環境変数 ECCUBE_RESTRICT_FILE_UPLOAD を 1 に設定することで機能を無効化することが可能です。	ブロックの新規入力画面または編集画面を開いたとき	ブロック管理（登録・編集）画面に留まる
+L0082	M09-07-MSG-002	管理画面上部	保存しました	ブロックの新規登録または編集を保存したとき	ブロック管理（登録・編集）画面に遷移する
+L0083	M09-07-MSG-003	管理画面上部	削除しました	ブロックを削除したとき	ブロック管理（一覧）画面に遷移する
+L0084	M09-07-MSG-004	入力項目直下/フォーム上部	同じファイル名のデータが存在しています。別のファイル名を入力してください。	同じ端末種別で、別のブロックと同じファイル名を入力して保存したとき	ブロック管理（登録・編集）画面に留まる
+L0085	—	管理画面上部	削除に失敗しました	削除対象のブロックが存在しないとき	ブロック管理（一覧）画面へ戻る
+L0086	—	確認ダイアログ	このブロックを削除してもよろしいですか？	削除可能ブロックの削除を選んだとき	承諾したときだけ削除へ進む
+
+exec
+/bin/bash -lc "sed -n '30,43p;72,80p;88,96p' integration_test/casegen/combination/units/M09-04/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+L0029	・編集、削除の可否はデータベースで設定できる
+L0030	・ページ編集
+L0031	・開発者が追加したページの(5)URL、(6)ファイル名、コードは編集できない
+L0032	※コードはシート「ページ管理(登録・編集)」の画面部品(1-8)を参照
+L0033	※すべてのページで(3)ページ名を押下すると、内容を閲覧できるが、ページ管理(登録・編集)画面では編集できない
+L0034	・管理画面ログインユーザーが追加したページは編集できる
+L0035	・ページ削除
+L0036	・開発者が追加したページは削除できない
+L0037	・管理画面ログインユーザーが追加したページは削除できる
+L0038	・(2)検索ボックスに入力すると、ページを(3)~(6)で部分一致検索し、対象ページのみを画面に表示する
+L0039	・(8)削除を押下すると、以下1~3のフローでページを削除する
+L0040	1 以下のように削除確認のモーダルが表示する
+L0041	画像レイヤー（2枚）: ページ管理(一覧) / C53 / image 3 + ページ管理(一覧) / D65 / image 4
+L0042	2 「削除」を押下すると、ページを削除する
+L0071	URLの一意性
+L0072	同一端末種別でURLが重複するときは検証エラーとする。重複の判定では、新規はIDを除外せず、編集は自身のIDだけを除外する。
+L0073	削除
+L0074	削除しようとしたページが既に存在しないときは、削除対象なしのメッセージを表示して一覧へ戻る。削除するときは、ページ情報に加えて、テンプレートファイルが存在すればそれも削除する。
+L0075	入出力
+L0076	種類	内容
+L0077	入力	一覧・フォームの表示要求。新規・編集はページ属性とテンプレート本文。削除はページID。
+L0078	成功時出力	新規・編集のときは編集画面への遷移（302）と登録完了メッセージ。削除のときは一覧への遷移（302）と削除完了メッセージ。
+L0079	失敗時出力	検証に外れたときは同一フォームの再描画。編集で対象ページが無いときはシステムエラーの画面。削除で対象ページが無いときは削除対象なしのメッセージ。
+L0087	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0088	—	一覧	削除（確認ダイアログ「このページを削除してもよろしいですか？」）	削除リンク押下時	—
+L0089	—	一覧下部	新規入力	一覧下部の登録ボタン	—
+L0090	M09-04-MSG-001	フラッシュメッセージ	この機能の利用頻度が低い場合、使用しない間は無効化することでセキュリティを更に向上させることができます。環境変数 ECCUBE_RESTRICT_FILE_UPLOAD を 1 に設定することで機能を無効化することが可能です。	ページ登録・編集画面を開いたとき（未表示の場合）	ページ登録・編集画面に留まる
+L0091	M09-04-MSG-002	フラッシュメッセージ	保存しました	ページの登録・編集内容を保存したとき	ページ編集画面に遷移する
+L0092	M09-04-MSG-003	フラッシュメッセージ	削除しました	ユーザー作成ページを削除したとき	ページ一覧画面に遷移する
+L0093	M09-04-MSG-004	フラッシュメッセージ	既に削除されています	削除しようとしたページがすでに存在しないとき	ページ一覧画面に遷移する
+L0094	M09-04-MSG-005	確認モーダル	この操作はあとから取り消すことができません。「%name%」を削除してよろしいですか？	削除ボタンを押したとき（削除前の確認）	削除でモーダルを閉じてページ一覧画面に遷移、キャンセルでモーダルを閉じる
+L0095	—	URL欄直下	※ 同じURLのデータが存在しています。別のURLを入力してください。	同一端末種別で既存ページと URL が重複したとき	送信後の検証で付与する
+
+exec
+/bin/bash -lc 'git diff --unified=3 eddb12cb -- integration_test/casegen/combination/factors/M10-04_{processes,factors,interactions,constraints,existing}.tsv integration_test/casegen/combination/factors/M10-08_{processes,factors,interactions,constraints,existing}.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+diff --git a/integration_test/casegen/combination/factors/M10-04_constraints.tsv b/integration_test/casegen/combination/factors/M10-04_constraints.tsv
+index d21fecee..08422740 100644
+--- a/integration_test/casegen/combination/factors/M10-04_constraints.tsv
++++ b/integration_test/casegen/combination/factors/M10-04_constraints.tsv
+@@ -1 +1,3 @@
+ 処理ID	組	種別	根拠	理由
++P2	F03=削除済み	打ち切り	L0060	削除済みの支払方法は、旧・大会専用かどうかにかかわらず一覧に出ない
++P2	F04=旧・大会専用	打ち切り	L0060	旧・大会専用の支払方法は、削除済みかどうかにかかわらず一覧に出ない
+diff --git a/integration_test/casegen/combination/factors/M10-04_existing.tsv b/integration_test/casegen/combination/factors/M10-04_existing.tsv
+index cfab5793..7dc9bc6b 100644
+--- a/integration_test/casegen/combination/factors/M10-04_existing.tsv
++++ b/integration_test/casegen/combination/factors/M10-04_existing.tsv
+@@ -1,11 +1,2 @@
+ テストID	処理ID	値	理由
+ IT-M10-04-011	P1	F01=不可&F02=1以上	事前準備で手数料設定可否は不可・手数料300と書き、登録後に手数料が0になることをデータで確かめる
+-IT-M10-04-006	P2	F03=未設定または0&F04=設定あり	事前準備で下限未設定・上限500と書き、一覧の利用条件「0円〜500円」を確かめる
+-IT-M10-04-007	P2	F03=未設定または0&F04=未設定	事前準備で下限0・上限未設定と下限未設定・上限未設定を書き、一覧の「0円〜無制限」を確かめる
+-IT-M10-04-064	P2	F03=1以上&F04=設定あり	事前準備で下限100・上限900と書き、一覧の「100円〜900円」を確かめる
+-IT-M10-04-065	P2	F03=1以上&F04=未設定	事前準備で下限100・上限未設定と書き、一覧の「100円〜無制限」を確かめる
+-IT-M10-04-051	P3	F05=固定	事前準備で固定扱いと書き、操作リンクに編集と削除が出ないことを確かめる
+-IT-M10-04-046	P3	F05=固定でない&F06=先頭	事前準備で固定扱いでない3件と書き、先頭行に上へが出ないことを確かめる
+-IT-M10-04-046	P3	F05=固定でない&F06=末尾	事前準備で固定扱いでない3件と書き、末尾行に下へが出ないことを確かめる
+-IT-M10-04-052	P3	F05=固定でない&F06=中間	事前準備で固定扱いでない3件と書き、中間行に編集・削除・上へ・下へがすべて出ることを確かめる
+-IT-M10-04-063	P3	F05=固定でない&F06=1件のみ	事前準備で固定扱いでない1件だけと書き、編集と削除が出て上へと下へが出ないことを確かめる
+diff --git a/integration_test/casegen/combination/factors/M10-04_factors.tsv b/integration_test/casegen/combination/factors/M10-04_factors.tsv
+index c59d96ed..bee4a44f 100644
+--- a/integration_test/casegen/combination/factors/M10-04_factors.tsv
++++ b/integration_test/casegen/combination/factors/M10-04_factors.tsv
+@@ -1,9 +1,5 @@
+ 要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+ F01	P1	手数料設定可否	可｜不可	可: 入力した手数料を保存する／不可: 入力欄を出さず保存の直前に手数料を0へ置き換える	L0066,L0069,L0076	この機能
+ F02	P1	保存時の手数料の値	0｜1以上	0: 0で保存する／1以上: 可なら入力値のまま、不可なら0へ置き換わる	L0069,L0076	この機能
+-F03	P2	利用条件の下限	未設定または0｜1以上	未設定または0: 「0円」と表示する／1以上: 下限の金額を表示する	L0064	この機能
+-F04	P2	利用条件の上限	未設定｜設定あり	未設定: 「〜無制限」を続けて表示する／設定あり: 「〜上限円」を続けて表示する	L0064	この機能
+-F05	P3	固定扱いの支払方法か	固定｜固定でない	固定: 編集と削除を選べない／固定でない: 編集と削除を選べる	L0062	この機能
+-F06	P3	一覧での行の位置	先頭｜中間｜末尾｜1件のみ	先頭: 上へを出さない／中間: 上へと下へを出す／末尾: 下へを出さない／1件のみ: 上へと下へを出さない	L0062	この機能
+-F07	P4	支払方法が削除済みか	削除済み｜削除されていない	削除済み: 一覧に出ない／削除されていない: 一覧に出る	L0060	この機能
+-F08	P4	旧・大会専用の支払方法か	旧・大会専用｜それ以外	旧・大会専用: 一覧に出ない（編集も削除もできない）／それ以外: 一覧に出る	L0060	この機能
++F03	P2	支払方法が削除済みか	削除済み｜削除されていない	削除済み: 一覧に出ない／削除されていない: 一覧に出る	L0060	この機能
++F04	P2	旧・大会専用の支払方法か	旧・大会専用｜それ以外	旧・大会専用: 一覧に出ない（編集も削除もできない）／それ以外: 一覧に出る	L0060	この機能
+diff --git a/integration_test/casegen/combination/factors/M10-04_interactions.tsv b/integration_test/casegen/combination/factors/M10-04_interactions.tsv
+index 64e059ad..f0cd4520 100644
+--- a/integration_test/casegen/combination/factors/M10-04_interactions.tsv
++++ b/integration_test/casegen/combination/factors/M10-04_interactions.tsv
+@@ -1,5 +1,3 @@
+ 処理ID	要因	判定	根拠	理由
+ P1	F01+F02	効き合う	L0069,L0076	手数料設定可否が不可のときは入力値にかかわらず保存の直前に0へ置き換わり、可のときは入力値のまま保存される
+-P2	F03+F04	関係しない		下限は先頭の金額部分、上限は後ろの「〜」以降をそれぞれの値だけで決めて表示する
+-P3	F05+F06	関係しない		編集と削除は固定扱いで、上へと下へは行の位置で、それぞれ別々に出し分ける
+-P4	F07+F08	関係しない		一覧に出るのは「削除されておらず、かつ旧・大会専用でない」ものだけで、結果は出る・出ないの2つ。どちらか1つでも外れれば出ず、外れ方は1つずつ確かめれば足りる
++P2	F03+F04	関係しない		一覧に出るのは「削除されておらず、かつ旧・大会専用でない」ものだけで、結果は出る・出ないの2つ。どちらか1つでも外れれば出ず、外れ方は1つずつ確かめれば足りる
+diff --git a/integration_test/casegen/combination/factors/M10-04_processes.tsv b/integration_test/casegen/combination/factors/M10-04_processes.tsv
+index 54c9640b..01684b44 100644
+--- a/integration_test/casegen/combination/factors/M10-04_processes.tsv
++++ b/integration_test/casegen/combination/factors/M10-04_processes.tsv
+@@ -1,5 +1,3 @@
+ 処理ID	処理	契機	確かめる所	根拠
+ P1	支払方法の登録で手数料を保存する	支払方法編集画面で登録ボタンを押す	支払方法のデータ（DBの手数料）	L0069,L0076
+-P2	支払方法一覧の利用条件を表示する	支払方法一覧を開く	支払方法一覧画面	L0064
+-P3	支払方法一覧の操作リンクを出し分ける	支払方法一覧を開く	支払方法一覧画面	L0062
+-P4	支払方法一覧に行を出すか決める	支払方法一覧を開く	支払方法一覧画面	L0060
++P2	支払方法一覧に行を出すか決める	支払方法一覧を開く	支払方法一覧画面	L0060
+diff --git a/integration_test/casegen/combination/factors/M10-08_existing.tsv b/integration_test/casegen/combination/factors/M10-08_existing.tsv
+index 03a45a0a..f18b32e9 100644
+--- a/integration_test/casegen/combination/factors/M10-08_existing.tsv
++++ b/integration_test/casegen/combination/factors/M10-08_existing.tsv
+@@ -1,6 +1 @@
+ テストID	処理ID	値	理由
+-IT-M10-08-008	P1	F01=記録あり&F02=2018年より後	事前準備で最終更新者は在籍の「試験 太郎」・最終更新日は2026年と書き、最終更新者の表示を確かめる
+-IT-M10-08-009	P1	F01=記録あり&F02=2018年より後	事前準備で最終更新者は削除済みの「退任 花子」・最終更新日は2026年と書き、名称が表示されることを確かめる
+-IT-M10-08-010	P1	F01=未記録&F02=2018年以前	事前準備で最終更新者は未設定・最終更新日は2018-12-31と書き、名称が表示されないことを確かめる
+-IT-M10-08-011	P1	F02=2018年より後	事前準備で最終更新日は2026年と書き、年月日と時分秒の表示を確かめる
+-IT-M10-08-012	P1	F02=2018年以前	事前準備で最終更新日は2018-12-31と書き、値が表示されないことを確かめる
+diff --git a/integration_test/casegen/combination/factors/M10-08_factors.tsv b/integration_test/casegen/combination/factors/M10-08_factors.tsv
+index 939e958b..6ac50ee3 100644
+--- a/integration_test/casegen/combination/factors/M10-08_factors.tsv
++++ b/integration_test/casegen/combination/factors/M10-08_factors.tsv
+@@ -1,3 +1 @@
+ 要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+-F01	P1	最終更新者の記録	未記録｜記録あり	未記録: 最終更新者の名称を表示しない／記録あり: 名称を表示する（記録された管理者が削除済みでも表示する）	L0054	この機能
+-F02	P1	最終更新日	2018年より後｜2018年以前	2018年より後: 年月日と時分秒まで表示する／2018年以前: 表示しない	L0055	この機能
+diff --git a/integration_test/casegen/combination/factors/M10-08_interactions.tsv b/integration_test/casegen/combination/factors/M10-08_interactions.tsv
+index 62e28223..904c5d06 100644
+--- a/integration_test/casegen/combination/factors/M10-08_interactions.tsv
++++ b/integration_test/casegen/combination/factors/M10-08_interactions.tsv
+@@ -1,2 +1 @@
+ 処理ID	要因	判定	根拠	理由
+-P1	F01+F02	関係しない		最終更新者は更新者の記録だけで、最終更新日は日時だけで、それぞれ別々に表示を決める
+diff --git a/integration_test/casegen/combination/factors/M10-08_processes.tsv b/integration_test/casegen/combination/factors/M10-08_processes.tsv
+index b48fc210..3473a260 100644
+--- a/integration_test/casegen/combination/factors/M10-08_processes.tsv
++++ b/integration_test/casegen/combination/factors/M10-08_processes.tsv
+@@ -1,2 +1 @@
+ 処理ID	処理	契機	確かめる所	根拠
+-P1	選んだテンプレートの最終更新者・最終更新日を表示する	自動送信メールテンプレート編集画面でテンプレ選択を選ぶ	自動送信メールテンプレート編集画面	L0054,L0055
+
+exec
+/bin/bash -lc "cat integration_test/casegen/combination/factors/M08-14_processes.tsv; sed -n '210,216p' integration_test/casegen/combination/units/M10-15/design.txt; sed -n '40,59p' integration_test/casegen/combination/units/M10-08/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	仮登録メールを再送する	会員検索一覧画面のサブメニューで仮会員メール再送リンクを押し、確認ダイアログでOKを押す	受信メール・会員の送信履歴（DB）・HTTP応答	L0020-L0023,L0037-L0042,L0045,L0051-L0063
+L0209	追加	初期在庫（作成を指定し、その店舗の在庫が1件も無いとき）
+L0210	リニューアル後の仕様
+L0211	表示メッセージ
+L0212	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0213	—	管理画面上部	保存しました	入力の検証を通って保存できたとき	保存した店舗を選んだ状態の画面へ戻る
+L0214	—	管理画面上部	ショップアイコンファイルを指定してください。	ショップアイコンの画像を確定できないとき	同じ画面に留まる
+L0215	—	入力項目付近	(登録済みの店舗のショップ名略称)にて登録済の略称です。	店名略称(3文字)がほかの店舗で登録済みのとき	同じ画面に留まる
+L0039	1-6	本文上部	全角・半角	-	32768文字	-	-
+L0040	1-7	本文下部	全角・半角	-	32768文字	-	-
+L0041	1-8	設定	ボタン	-	-	-	入力されたフォームの値で編集
+L0042	Source:
+L0043	functions/pf-eccube3/m10-08_admin_base_setting_setting_shop_auto_mail.md
+L0044	現行仕様
+L0045	M10-08 自動メール送信テンプレ / 店舗設定 — 自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）
+L0046	業務ロジック
+L0047	対象のテンプレート
+L0048	場面	対象
+L0049	識別子を指定して開いたとき	識別子が一致し、かつ自動送信メールに該当するテンプレートを対象とする
+L0050	識別子が自動送信メールに該当しないとき、該当するテンプレートが無いとき	見つからない扱い（404）とする
+L0051	テンプレ選択の選択肢は、テンプレ名称の昇順で並べる。
+L0052	最終更新者・最終更新日の表示
+L0053	項目	表示のふるまい
+L0054	最終更新者	対象のテンプレートに更新者が記録されているときだけ表示する。記録された管理者が削除済みでも名称を表示する
+L0055	最終更新日	記録された日時が2018年より後のときだけ、年月日と時分秒まで表示する
+L0056	本文の表示
+L0057	選択したテンプレートの本文を表示し、本文中の定められた位置に本文上部・本文下部の入力欄を埋め込む。本文のうち入力欄以外は編集できない。本文中の差込み項目は、値に置き換えずに記述のまま表示する。
+L0058	入力内容の検証に外れて同じ画面を再表示するときは、本文上部・本文下部の入力欄に保存済みの内容を表示する（登録しようとした入力内容は残らない）。テンプレ名称・件名には登録しようとした入力内容を表示する。
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+import csv,pathlib
+root=pathlib.Path('integration_test/casegen/combination/factors')
+ids='M08-13 M08-14 M09-04 M09-07 M09-10 M10-04 M10-08 M10-15 M11-01 M11-02 M11-03'.split()
+for fid in ids:
+ def rows(kind):
+  with (root/f'{fid}_{kind}.tsv').open() as f:return list(csv.DictReader(f,delimiter='\\t'))
+ p={r['処理ID'] for r in rows('processes')};fs={r['要因ID']:(set(r['処理ID'].split(',')),set(r['値'].split('｜'))) for r in rows('factors')}
+ problems=[]
+ for kind,field in [('constraints','組'),('existing','値')]:
+  for r in rows(kind):
+   pid=r['処理ID']
+   if pid not in p:problems.append((kind,pid,'unknown process'))
+   for pair in r[field].split('&'):
+    k,v=pair.split('=',1)
+    if k not in fs or v not in fs[k][1] or pid not in fs[k][0]:problems.append((kind,pid,pair))
+ for r in rows('interactions'):
+  pid=r['処理ID']
+  for k in r['要因'].split('+'):
+   if k not in fs or pid not in fs[k][0]:problems.append(('interactions',pid,k))
+ print(fid, 'OK' if not problems else problems)
+PY" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+M08-13 OK
+M08-14 OK
+M09-04 OK
+M09-07 OK
+M09-10 OK
+M10-04 OK
+M10-08 OK
+M10-15 OK
+M11-01 OK
+M11-02 OK
+M11-03 OK
+
+codex
+### 1
+- 機能: M09-04
+- 種類: G
+- 対象: M09-04_constraints.tsv P2 `F05=既に削除済み`
+- 主張: 対象が既に削除済みなら、確認モーダルでの操作に関係なく「削除対象なし」を表示して一覧へ戻る。
+- 実際: キャンセル時はモーダルを閉じるだけで、削除処理へ進まない。対象不在のメッセージは削除を試みたときの結果である（`integration_test/casegen/combination/units/M09-04/design.txt:L0074,L0093-L0094`）。
+- 修正案: 対象不在の打ち切り条件に `F07=削除を押す` を加える。
+
+### 2
+- 機能: M09-07
+- 種類: G
+- 対象: M09-07_constraints.tsv P2 `F05=既に削除済み`
+- 主張: 対象が既に削除済みなら、ダイアログの操作に関係なく削除失敗を表示して一覧へ戻る。
+- 実際: 承諾したときだけ削除へ進むため、キャンセル時は対象不在の削除失敗にならない（`integration_test/casegen/combination/units/M09-07/design.txt:L0085-L0086`）。
+- 修正案: 対象不在の打ち切り条件に `F06=削除を押す` を加える。
+
+### 3
+- 機能: M09-10
+- 種類: G
+- 対象: M09-10_constraints.tsv P1 `F02=選択する`
+- 主張: 支店共通設定を適用すると区分だけを保存し、バナー画像などの値は結果に効かない。
+- 実際: 優先される Excel 由来の本文は、選択して登録した場合もバナー画像の選択を検査し、未選択なら更新せず終了すると定める（`integration_test/casegen/combination/units/M09-10/design.txt:L0051-L0056`）。
+- 修正案: `F02=選択する` 単独の打ち切りを外し、本文にある検査結果を反映する。
+tokens used
+114,391
+### 1
+- 機能: M09-04
+- 種類: G
+- 対象: M09-04_constraints.tsv P2 `F05=既に削除済み`
+- 主張: 対象が既に削除済みなら、確認モーダルでの操作に関係なく「削除対象なし」を表示して一覧へ戻る。
+- 実際: キャンセル時はモーダルを閉じるだけで、削除処理へ進まない。対象不在のメッセージは削除を試みたときの結果である（`integration_test/casegen/combination/units/M09-04/design.txt:L0074,L0093-L0094`）。
+- 修正案: 対象不在の打ち切り条件に `F07=削除を押す` を加える。
+
+### 2
+- 機能: M09-07
+- 種類: G
+- 対象: M09-07_constraints.tsv P2 `F05=既に削除済み`
+- 主張: 対象が既に削除済みなら、ダイアログの操作に関係なく削除失敗を表示して一覧へ戻る。
+- 実際: 承諾したときだけ削除へ進むため、キャンセル時は対象不在の削除失敗にならない（`integration_test/casegen/combination/units/M09-07/design.txt:L0085-L0086`）。
+- 修正案: 対象不在の打ち切り条件に `F06=削除を押す` を加える。
+
+### 3
+- 機能: M09-10
+- 種類: G
+- 対象: M09-10_constraints.tsv P1 `F02=選択する`
+- 主張: 支店共通設定を適用すると区分だけを保存し、バナー画像などの値は結果に効かない。
+- 実際: 優先される Excel 由来の本文は、選択して登録した場合もバナー画像の選択を検査し、未選択なら更新せず終了すると定める（`integration_test/casegen/combination/units/M09-10/design.txt:L0051-L0056`）。
+- 修正案: `F02=選択する` 単独の打ち切りを外し、本文にある検査結果を反映する。

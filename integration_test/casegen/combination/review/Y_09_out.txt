@@ -1,0 +1,2613 @@
+Reading additional input from stdin...
+OpenAI Codex v0.162.1
+--------
+workdir: /home/y-saito/Developments/hareruya-design-docs
+model: gpt-6-sol
+provider: openai
+approval: never
+sandbox: read-only
+reasoning effort: high
+reasoning summaries: none
+session id: 01a15837-cb66-7230-9b43-fb883c6167e2
+--------
+user
+# 反証の依頼: 機能 F03-02・F03-04・F03-05・F03-06・F03-07・F03-08・F04-01 の要因表の見直し（3つの決定の当て方）
+
+あなたは独立したレビュアーである。別の担当が、依頼者の3つの決定に合わせて**要因表を直した**。その直しが設計書と食い違っていないかを確かめる。直さない。読むだけ。
+リポジトリは `/home/y-saito/Developments/hareruya-design-docs/`。出力は日本語。
+
+## 背景
+
+結合テストで、1回の処理の結果を左右する要因が2つ以上あるとき、効き合う要因は値の組合せを全部、関係しない要因はどの2つの要因の値の組もどこかで1回試すケースを足す。
+要因表（`integration_test/casegen/combination/factors/<機能ID>_*.tsv`）から機械が組を並べる。要因表はすでに codex の反証を1巡受けて直してある。
+そのあと依頼者が次の3つを決め（2026-10-20）、担当が要因表を直した。今回確かめるのは**この直しだけ**。
+
+| 決定 | 中身 |
+| --- | --- |
+| 1 打ち切り側は1回でよい | その値（または値の組）になると処理がそこで打ち切られ、ほかの要因の値が結果に効かないとき、constraints.tsv に種別 `打ち切り` で書く。機械はその条件を1回だけ通し、ほかの要因との組は埋めない。打ち切られても一部の要因の値がまだ結果に効くときは、その要因の値も組に入れて書く |
+| 2 列ごとに独立して決まる値は組にしない | 出力の列・表示項目ごとに独立して決まる値（CSV の空欄・書式・文言の変換 など）は要因にしない。ほかの要因と効き合う（その値で、ほかの要因の結果や、行を出す・出さないが変わる）ときだけ残す。外して要因が1つになった処理は処理ごと外す |
+| 3 結果が同じ値はまとめる | 設計書が別々の条件として書いていても、結果が同じ値は1つにまとめる |
+
+## 読むもの
+
+- 直した所: 機能ごとに `git -C /home/y-saito/Developments/hareruya-design-docs diff eddb12cb -- integration_test/casegen/combination/factors/<機能ID>_processes.tsv integration_test/casegen/combination/factors/<機能ID>_factors.tsv integration_test/casegen/combination/factors/<機能ID>_interactions.tsv integration_test/casegen/combination/factors/<機能ID>_constraints.tsv integration_test/casegen/combination/factors/<機能ID>_existing.tsv`（eddb12cb が直す前）
+- 担当の処置: `integration_test/casegen/combination/review/<機能ID>_factors_s_dispositions.tsv`
+- 設計書: `integration_test/casegen/combination/units/<機能ID>/design.txt`（行頭の `L0001` は行番号）、他の機能は `units/<機能ID>/design.txt`
+- 作り方の決まり: `integration_test/casegen/combination/FACTOR_PROMPT.md`
+
+設計書の中で記述が食い違うときは、Excel 由来の本文 ＞ 埋め込みの「表示メッセージ」節 ＞ 埋め込みの「現行仕様」節・機能設計書 の順に採る。
+
+## 確かめること（事実だけ。差分に出ている所だけ）
+
+| 種類 | 何を見るか |
+| --- | --- |
+| G 打ち切りの誤り | 打ち切りとした値で、設計書は処理を打ち切っていない。または打ち切ったあとも「効かない」とされた要因の値で結果が変わると設計書が定める（その要因の値も組に入れるべき） |
+| H 外しすぎ | 決定2で外した要因・処理が、列・表示項目ごとに独立して決まるだけではない（ほかの要因の結果、行や対象を出す・出さない、更新先・更新内容を変えると設計書が定める） |
+| I まとめすぎ | 決定3でまとめた値どうしで、結果が違うと設計書が定める |
+| J 付け替えの誤り | 要因ID・値の振り直しで、interactions・constraints・existing の値が合っていない、既存ケースの値を取り違えた |
+
+次は指摘しない: 書き方・言い回し、差分に出ていない所（1巡目で済み）、決定そのものへの異論、境界値・数量1/複数。
+
+## 出力
+
+指摘が無ければ `NONE` の1語だけ。あれば1件ずつ、次の形で。
+
+```
+### <番号>
+- 機能: <機能ID>
+- 種類: <G〜J>
+- 対象: <ファイル名> <要因ID・処理ID・組>
+- 主張: <直した後の表に書かれていること>
+- 実際: <設計書の記述（ファイル:行 を必ず添える）>
+- 修正案: <どう直すか。1文>
+```
+warning: Codex could not find bubblewrap on PATH. Install bubblewrap with your OS package manager. See the sandbox prerequisites: https://developers.openai.com/codex/concepts/sandboxing#prerequisites. Codex will use the bundled bubblewrap in the meantime.
+2026-10-20T07:30:15.516762Z ERROR rmcp::transport::worker: worker quit with fatal: Transport channel closed, when AuthRequired(AuthRequiredError { www_authenticate_header: "Bearer resource_metadata=\"https://mcp.firecrawl.dev/.well-known/oauth-protected-resource/v2/mcp-oauth\", error=\"invalid_token\", error_description=\"Firecrawl credentials required: OAuth access token (Authorization: Bearer fco_...) or API key (x-firecrawl-api-key)\"" })
+codex
+7機能の差分と担当の処置を起点に、変更された箇所だけを設計書と照合します。読み取りのみで進めます。
+exec
+/bin/bash -lc "rg --files -g 'AGENTS.md' -g 'FACTOR_PROMPT.md' -g '*_factors_s_dispositions.tsv' integration_test/casegen/combination ." in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 212ms:
+integration_test/casegen/combination/FACTOR_PROMPT.md
+integration_test/casegen/combination/review/M04-25_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M05-01_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M04-21_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A07-05_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M05-07_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M04-10_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A01-01_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M03-18_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M07-02_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M05-18_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M16-01_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M04-02_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M08-10_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M07-08_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M14-04_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A07-02_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F02-03_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F06-09_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A06-02_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M04-31_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A07-04_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A05-03_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A15-11_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M04-34_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M13-13_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M04-22_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A14-01_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F07-04_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F05-04_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M08-01_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F08-05_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M06-02_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M03-22_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M05-22_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M13-15_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M06-03_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M05-23_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M08-07_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M16-02_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M05-08_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M14-08_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M07-01_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A17-04_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M03-26_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/B06-01_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M04-09_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M11-03_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M03-27_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/B08-04_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/B02-05_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F06-15_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/B08-01_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M03-25_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M07-03_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M03-29_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M15-01_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M04-32_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F07-03_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M06-11_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F09-07_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F09-03_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A06-06_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M12-01_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M15-06_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A15-16_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/B08-03_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M12-03_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F10-03_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F02-02_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A16-02_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M12-10_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F06-26_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M09-04_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M10-06_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M15-07_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M03-09_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F09-02_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M08-12_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F03-02_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M06-01_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M06-06_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A06-05_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F07-01_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M12-09_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F06-11_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M03-31_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F09-01_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F03-07_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M04-33_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/B02-01_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/B05-07_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A15-18_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/B08-02_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A15-09_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M03-35_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F04-03_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M03-38_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/B05-08_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M14-07_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M05-24_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A08-02_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M10-05_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A02-03_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/B02-04_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M06-09_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M05-03_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M03-11_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M03-19_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M04-30_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F06-16_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F06-03_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M05-09_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A06-01_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A05-01_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A15-15_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A02-02_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F01-01_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M13-10_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M06-12_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A17-02_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F06-07_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M03-03_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M15-10_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A17-05_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M08-13_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M11-02_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A06-07_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F06-18_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M12-07_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M03-10_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A15-12_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F03-08_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/B05-01_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M13-04_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F06-10_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M11-01_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F06-20_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M14-10_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A15-07_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F04-01_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A14-03_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F06-02_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F03-04_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F06-08_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M04-23_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F10-01_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F08-03_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F06-01_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F09-08_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M15-03_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M16-03_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M06-05_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F05-06_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M09-07_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M15-05_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F06-05_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M05-21_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M04-13_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A02-01_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M12-04_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M14-09_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M06-08_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F08-02_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M05-20_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F06-14_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M10-04_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M03-45_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/B02-03_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M15-08_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F05-03_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M03-14_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F09-04_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/B02-02_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A15-05_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A15-10_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M08-05_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M03-17_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F01-02_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F06-17_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M03-30_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/B16-11_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M09-10_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M03-32_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M04-20_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M13-03_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A17-03_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M10-15_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F03-01_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M08-09_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M05-02_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M03-41_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A15-02_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M06-10_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M07-09_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M03-05_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F06-13_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A15-17_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M14-06_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M08-14_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A06-08_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/B06-02_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F10-02_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M03-28_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M12-02_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/B08-06_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F02-01_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M12-06_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F06-06_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A15-13_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M03-20_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F06-22_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M03-04_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F08-04_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M08-02_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F03-06_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A07-07_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F04-04_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/B05-05_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A14-02_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A02-05_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A05-02_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M12-05_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A15-03_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/B08-05_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A15-01_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M06-04_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M04-01_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F03-05_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M08-08_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M03-33_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M03-08_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M05-26_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M03-13_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F06-24_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M07-06_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A07-06_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F09-05_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M04-19_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M05-05_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M08-04_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M14-05_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F05-05_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/B05-06_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M05-04_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M03-21_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/B08-07_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F09-06_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A15-06_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M03-16_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A02-04_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M07-05_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F06-04_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M05-10_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M13-08_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M04-08_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M14-01_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M13-02_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M16-04_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F06-21_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M03-40_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A05-04_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F05-01_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M03-12_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M03-06_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M12-08_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A15-14_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M03-02_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M15-04_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M15-02_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M10-08_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A06-03_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/F06-22_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M07-02_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M03-04_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/A07-07_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/F04-04_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/B05-05_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/A14-02_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/A02-05_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/A05-02_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M12-05_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/A15-03_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/B08-05_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/A15-01_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M06-04_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M04-01_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/F03-05_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M08-08_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M03-08_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/F06-24_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/A07-06_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M04-19_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M03-33_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M05-26_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M03-13_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M07-06_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/F09-05_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M05-05_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M08-04_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M14-05_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/F05-05_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/B05-06_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M05-04_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/F08-04_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M08-02_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/F03-06_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M03-21_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/B08-07_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/F09-06_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/A15-06_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M03-16_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/A02-04_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M07-05_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/F06-04_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M05-10_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M13-08_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M04-08_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M14-01_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M13-02_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M16-04_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/F06-21_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M03-40_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/A05-04_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/F05-01_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M03-12_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M03-06_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M12-08_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/A15-14_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M03-02_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M15-04_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M15-02_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M10-08_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/A06-03_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M03-20_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/F06-06_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/A15-13_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M12-02_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/B08-06_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/F02-01_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M12-06_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/F06-13_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/A15-17_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M14-06_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M08-14_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/A06-08_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/B06-02_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/F10-02_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M03-28_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/B16-11_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M09-10_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M03-32_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M04-20_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M13-03_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/A17-03_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M10-15_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/F03-01_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M08-09_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M05-02_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M03-41_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/A15-02_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M06-10_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M07-09_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M03-05_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M15-03_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M16-03_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M06-05_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/F05-06_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M09-07_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M15-05_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/F06-05_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M05-21_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M04-13_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/A02-01_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M12-04_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M14-09_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M06-08_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/F08-02_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M05-20_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/F06-14_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M10-04_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M03-45_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/B02-03_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M15-08_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/F05-03_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M03-14_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/F09-04_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/B02-02_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/A15-05_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/A15-10_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M08-05_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M03-17_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/F01-02_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/F06-17_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M03-30_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M13-10_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M06-12_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/A17-02_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/F06-07_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M03-03_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M15-10_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/A17-05_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M08-13_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M11-02_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/A06-07_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/F06-18_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M12-07_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M03-10_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/A15-12_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/F03-08_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/B05-01_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M13-04_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/F06-10_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M11-01_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/F06-20_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M14-10_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/A15-07_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/F04-01_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/A14-03_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/F06-02_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/F03-04_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/F06-08_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M04-23_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/F10-01_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/F08-03_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/F06-01_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/F09-08_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/F01-01_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/A02-02_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/A06-01_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/A05-01_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/A15-15_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M04-30_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/F06-16_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/F06-03_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M05-09_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/A08-02_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M10-05_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/A02-03_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/B02-04_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M06-09_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M05-03_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M03-11_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M03-19_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/F09-01_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/F03-07_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M04-33_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/B02-01_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/B05-07_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/A15-18_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/B08-02_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/A15-09_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M03-35_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/F04-03_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M03-38_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/B05-08_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M14-07_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M05-24_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M12-01_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M15-06_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/A15-16_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/B08-03_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M12-03_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/F10-03_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/F02-02_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/A16-02_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M12-10_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/F06-26_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M09-04_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M10-06_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M15-07_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M03-09_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/F09-02_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M08-12_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/F03-02_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M06-01_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M06-06_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/A06-05_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/F07-01_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M12-09_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/F06-11_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M03-31_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M06-02_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M03-22_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M05-22_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M13-15_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M06-03_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M05-23_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M08-07_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M16-02_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M05-08_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M14-08_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M07-01_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/A17-04_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M03-26_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/B06-01_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M04-09_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M11-03_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M03-27_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/B08-04_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/B02-05_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/F06-15_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/B08-01_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M03-25_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M07-03_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M03-29_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M15-01_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M04-32_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/F07-03_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M06-11_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/F09-07_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/F09-03_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/A06-06_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/F08-05_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/F05-04_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M08-01_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M04-22_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/A14-01_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/F07-04_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/A06-02_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M04-31_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/A07-04_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/A05-03_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/A15-11_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M04-34_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M13-13_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/A01-01_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M03-18_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M05-18_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M16-01_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M04-02_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M08-10_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M07-08_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M14-04_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/A07-02_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/F02-03_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/F06-09_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M04-25_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M05-01_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M04-21_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/A07-05_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M05-07_factors_s_dispositions.tsv
+./integration_test/casegen/combination/review/M04-10_factors_s_dispositions.tsv
+./integration_test/casegen/combination/FACTOR_PROMPT.md
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/FACTOR_PROMPT.md' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'find .. -name AGENTS.md -print' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'git diff --stat eddb12cb -- integration_test/casegen/combination/factors/F03-02_processes.tsv integration_test/casegen/combination/factors/F03-02_factors.tsv integration_test/casegen/combination/factors/F03-02_interactions.tsv integration_test/casegen/combination/factors/F03-02_constraints.tsv integration_test/casegen/combination/factors/F03-02_existing.tsv integration_test/casegen/combination/factors/F03-04_processes.tsv integration_test/casegen/combination/factors/F03-04_factors.tsv integration_test/casegen/combination/factors/F03-04_interactions.tsv integration_test/casegen/combination/factors/F03-04_constraints.tsv integration_test/casegen/combination/factors/F03-04_existing.tsv integration_test/casegen/combination/factors/F03-05_processes.tsv integration_test/casegen/combination/factors/F03-05_factors.tsv integration_test/casegen/combination/factors/F03-05_interactions.tsv integration_test/casegen/combination/factors/F03-05_constraints.tsv integration_test/casegen/combination/factors/F03-05_existing.tsv integration_test/casegen/combination/factors/F03-06_processes.tsv integration_test/casegen/combination/factors/F03-06_factors.tsv integration_test/casegen/combination/factors/F03-06_interactions.tsv integration_test/casegen/combination/factors/F03-06_constraints.tsv integration_test/casegen/combination/factors/F03-06_existing.tsv integration_test/casegen/combination/factors/F03-07_processes.tsv integration_test/casegen/combination/factors/F03-07_factors.tsv integration_test/casegen/combination/factors/F03-07_interactions.tsv integration_test/casegen/combination/factors/F03-07_constraints.tsv integration_test/casegen/combination/factors/F03-07_existing.tsv integration_test/casegen/combination/factors/F03-08_processes.tsv integration_test/casegen/combination/factors/F03-08_factors.tsv integration_test/casegen/combination/factors/F03-08_interactions.tsv integration_test/casegen/combination/factors/F03-08_constraints.tsv integration_test/casegen/combination/factors/F03-08_existing.tsv integration_test/casegen/combination/factors/F04-01_processes.tsv integration_test/casegen/combination/factors/F04-01_factors.tsv integration_test/casegen/combination/factors/F04-01_interactions.tsv integration_test/casegen/combination/factors/F04-01_constraints.tsv integration_test/casegen/combination/factors/F04-01_existing.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 264ms:
+# 依頼: 機能 {FID}（{FNAME}）の要因表づくり
+
+これは分析である。ケースも設計書も直さない。事実は自分でファイルを読んで確かめ、推測で書かない。
+リポジトリは `/home/y-saito/Developments/hareruya-design-docs/`。パスはここからの相対。出力はすべて日本語で書く。
+git の変更操作（add・commit など）をしない。
+
+## 背景（依頼者決定 2026-10-20）
+
+結合テストケースは設計書の定め1件ごとに作られ、10/15 には定めごとに「数量1と複数」「有無」「状態・区分ごと」などのデータを足した。
+それでも、**1回の処理の結果を左右する要因が2つ以上あるとき、その値を同時に変えて通すケースが無い**。
+例: 公開側で注文を確定するケース33件は、支払方法がほぼ郵便振替か銀行振込で、配送方法もゆうパック・EMS が大半。クレジットカード・代金引換・店頭支払、店頭受取・同梱で注文を通すケースは無い。
+
+依頼者の決定:
+- **効き合う要因**（一方の値で、もう一方の値の結果が変わると設計書が定める）は、値の組合せを全部試す。
+- **関係しない要因**は、どの2つの要因の値の組も、どこかのケースで1回は出るように並べる（2要因の組）。
+- **他の機能の設定値**（送料・手数料・支払方法の利用条件・送料無料の条件・配送方法に紐づく支払方法など）も、それを読む処理の要因に入れる。
+
+あなたの仕事は、機能 {FID} について、組合せの元になる**要因表**を作ること。組合せの行（どの値の組を何件試すか）は、この表から別の道具が機械で作る。
+だから、表の要因・値・判定の誤りは、そのままケースの誤りになる。
+
+## 読むもの
+
+| 何 | パス |
+| --- | --- |
+| 設計書（この機能のシートを文字に起こしたもの。行頭の `L0001` とタブは行番号。`#####` の行はシートの境目） | `integration_test/casegen/combination/units/{FID}/design.txt` |
+| 他の機能の設計書（設定値を読む処理のとき、設定する機能の定めを引く） | `integration_test/casegen/combination/units/<機能ID>/design.txt`（機能名は `combination/units.tsv`） |
+| 同じ冊子の共通シート（必要なときだけ） | {COMMON} |
+| この機能のケースとシード | `integration_test/casegen/cases/{FID}_test_cases.tsv`・`{FID}_seed_data.tsv` |
+| この機能の、テストから外したケース | `integration_test/casegen/combination/units/{FID}/excluded.tsv` |
+| 全機能のケース（他の機能のケースがこの機能の処理を通しているかの検索用） | `integration_test/casegen/all_test_cases.tsv`（列: テストID・観点ID・基本設計書・検証方法・テストデータ・事前準備・手順・期待結果。セル内改行があるので csv として読む） |
+| 結合テストの範囲 | `integration_test/SCOPE.md` |
+| 不機能仕様・フェーズ2見送り（ここに載るものは要因にしない） | `functions/dead-spec-register.tsv`・`functions/phase2_candidates.tsv` |
+| 設計書の中で記述が食い違うときの優先順位 | Excel 由来の本文 ＞ 埋め込みの「表示メッセージ」節（リニューアル後の仕様）＞ 埋め込みの「現行仕様」節。同じ出所では改訂後が優先。**Excel が触れていない条件を埋め込みが足しているだけのときは食い違いではなく、両方を当てる**（例: Excel が選択肢を並べ、埋め込みが「ポイントで全額払うときは全額ポイント支払いだけ」と条件を足す → 両方）。既存ケースは正解の根拠にしない（既存ケースと設計書の食い違いは返答に書く） |
+
+検索は `grep` を使う（`rg` は同じ入力で0件を返すことがあるので使わない）。
+
+## やること
+
+### 1. 処理を決める
+
+design.txt を**全部**読み、この機能の中で「操作やデータを受けて結果を出す処理」のうち、**結果を左右する要因が2つ以上ある処理**を挙げる。
+
+- 処理の単位は「1回の操作で動き、結果を1つの所で確かめられるまとまり」。例: 注文を確定して受注を作る／お支払い方法の選択肢を出す／受注の対応状況をキャンセルへ変えて保存する。
+- 結果は、データを作った所とは**別のコンポーネントで確かめる**もの（DB、別の画面、別の機能の画面、CSV・帳票、メール、連携先）。DBにあるデータで画面の表示・選択肢が変わるものも入る（例: 既存の受注の有無で配送方法の選択肢が変わる）。同じ画面の中だけで閉じる表示の計算（保存しない）と、計算式そのものの正しさは単体テストなので挙げない。
+- 要因が1つだけの処理は挙げない（10/15 の監査で済んでいる）。
+- **要因が2つ以上の処理が1つも無い機能**（一覧を出すだけ、1つの設定を保存するだけ、など）は、5つのファイルをヘッダだけで書き、返答の1行目に「対象の処理なし」と理由を書く。無理に処理を作らない。
+- 入力値の検証（必須・桁数・形式）、検索条件・削除条件の組合せ、権限、二重送信、排他は、ほかの観点の持ち分なので処理にも要因にもしない。
+
+### 2. 要因と値を挙げる
+
+処理ごとに、**その処理の結果を変えると設計書が定める要因**を挙げる。
+
+- 要因は「区分・状態・設定・関連データ」の値。例: 閲覧店舗、配送方法、支払方法、ポイントの使い方、受注の種類（通常・店頭受取・ついで買い）、会員か非会員か、変更前の対応状況、既存の受注の状態。
+- 他の機能で設定する値で、この処理が読むものも要因にする（出所に機能IDを書く）。例: 支払方法の利用条件（M10-04）に対する注文金額、都道府県別の送料（M10-06）。その機能の design.txt で定めを確かめ、根拠に `M10-04:L0123` の形で書く。**この処理の結果への効き方が設計書のどこにも書かれていない設定値は要因にしない**（値ごとの結果が書けないため）。そういう設定値は返答の「判断に迷った点」に挙げる（依頼元が論点として控える）。
+- **値は、結果の分かれ目ごとに代表を1つ**。結果が同じになる値は1つにまとめる（例: ゆうパックとゆうパケットで結果が変わらないならどちらか1つ）。設計書が別々の条件として書いていても、結果が同じならまとめる（例: 仮会員と退会済み会員がどちらも対象外なら「仮会員または退会済み」の1値。条件を1つずつ通すのは 10/15 のデータパターンのケースの持ち分。依頼者決定 2026-10-20）。結果が値ごとに違うなら全部挙げる（例: 支払方法ごとに手数料・ボタンの文言・ポイントを使う時点が違うなら、支払方法は全部）。
+- 境界値（ちょうどの値・上限）と数量1/複数は、10/15 に済んでいるので値にしない。値は「範囲内」「範囲外」「あり」「なし」のような分かれ目で書く。
+- 不正な入力、作れない値（画面の選択肢に無い値）は値にしない。
+- **出力の列・表示項目ごとに独立して決まる値は要因にしない**（例: CSV の列が「値が無ければ空欄」、日付の書式、区分の文言への変換）。列どうしは互いの結果を変えないので組にしない（依頼者決定 2026-10-20）。ほかの要因と効き合う（その値で、ほかの要因の結果や、行を出す・出さないが変わる）ときだけ要因にする。
+- 値ごとの結果を、設計書の語で短く書く（「支店: 支払方法は店頭支払だけ」）。
+
+### 3. 要因どうしを判定する
+
+処理ごとに、その処理の要因の**すべての2つの組**を判定する（要因が5つなら10組）。判定は次のどれか。
+
+| 判定 | いつ | 根拠 |
+| --- | --- | --- |
+| 効き合う | 一方の値で、もう一方の値の結果（可否、選択肢、金額、更新先、更新内容）が変わると設計書が定める。または、一方の結果がもう一方の判定の入力になる（例: 使用ポイントで支払う金額が変わり、支払方法の選択肢が変わる） | 両方を結ぶ設計書の行が必須 |
+| 関係しない | それぞれの要因の結果が、もう一方の値によって変わらない（例: 送料は配送方法で、手数料は支払方法で決まり、合計は足し算） | 理由を書く |
+| 設計書が決めていない | 同時に効いたときの結果が設計書から決まらない（例: 送料無料の判定に使う金額が、ポイントを引く前か後か書かれていない） | 決まらない理由。下の「組の制約」に、決まらない値の組を「正解未定」で必ず書く |
+
+3つ以上の要因がまとめて効き合うとき（例: 配送方法・既存の受注の状態・既存の受注の支払方法で同梱を出すか決まる）は、1行に `F01+F03+F05` と書いて「効き合う」にしてよい。その中の2つの組は、別の行に書かない。**まとめるのは、その全部が同時に互いの結果を変えるときだけ**。2つずつで効き合うだけなら2要因の行に分ける（まとめると値の組合せが全部ケースになり、件数が膨らむ）。
+**選べるものの集まりを2つの定めが別々に絞り、結果がその共通部分になるとき**（例: 支店は支払方法が店頭支払だけ、同梱は郵便振替・銀行振込だけ → 選択肢の中身が組ごとに変わる）は「効き合う」にする。「設計書が決めていない」にするのは、両方を当てると選択肢が1つも残らないなど、結果が設計書から決まらない組だけ。
+**1件の対象を出す・出さない（対象にする・しない）を、複数の条件の「すべて満たす」または「どれか1つで外れる」で決めるとき**（例: 公開・在庫あり・セール期間内・表示フラグ のすべてを満たす商品だけ出す）は、条件どうしは「関係しない」にする。結果は出る・出ないの2つだけで、条件ごとの外れ方は1つずつ確かめれば足り、全組合せは要らない（7条件を効き合うにすると128行になる）。外れる側の値（非公開・在庫なし・期間外など）は下の「打ち切り」に書く（2026-10-20 の見直しで全機能をこの書き方にそろえた）。機械は外れる値を1回ずつ通し、全部を満たす1行を必ず作る。
+**優先順位で順に比べて決めるとき**（例: 複数一致したら、言語→特殊版→発売日→フォイル→プロモの順に比べて先に差が付いたもので選ぶ）は、比べる項目を別々の要因にして全組合せにしない。「どの段で決まるか」を1つの要因にまとめる（値: 1段目で決まる｜2段目で決まる｜…｜全段が同じ）。上の段の差が下の段を隠すので、各段で決まる組を1つずつ試せば足りる（6段を効き合うにすると64行になる）。
+「一方の値で、もう一方の処理そのものが行われない」型（例: キャンセル日が既に入っていると、在庫・ポイントの戻しを行わない）は、その値を下の「打ち切り」に書く（依頼者決定 2026-10-20「打ち切り側は1回でよい」）。打ち切られない側の値どうしの判定は、ほかの組と同じに決める。
+**推測で値の組を「作れない」にしない**。設計書の語がどの値を指すか決まらないとき（例: 支店の「店舗受取」が店頭受取とスムーズ店頭受取のどちらか）は「正解未定」にする。
+**効き合う組の値の組合せは全部ケースになる**。値が多い要因どうし（7×7 など）を効き合うにするときは、設計書の行で本当に互いの結果を変えるかを確かめる。足し算で合計に入るだけなら「関係しない」。
+
+### 4. 組の制約を書く
+
+- **作れない**: 設計上その値の組が成り立たない（例: 支店では支払方法が店頭支払だけなので、支店×代金引換は作れない）。根拠の行が必須。
+- **正解未定**: その値の組で結果が設計書から決まらない。決まらない理由を書く。これはケースにせず、報告書に論点として残す。
+- **打ち切り**: その値（または値の組）になると処理がそこで打ち切られ、ほかの要因の値は結果に効かない（例: 非公開なら出さない、エラーで元の画面へ戻る、廃止済みなら何も変えない、トークンが無効なら拒否）。機械はこの条件を1回だけ通し、ほかの要因との組は埋めない。打ち切られても一部の要因の値がまだ結果に効く（例: エラーの文言が支払方法で変わる）ときは、その要因の値も組に入れて書く（`F01=非公開&F03=英語` のように値ごとに1行）。根拠の行が必須。
+
+### 5. 既存のケースが通している組を書く
+
+この機能のケース（と、`all_test_cases.tsv` を語で検索して見つかった他の機能のケース）のうち、**その処理を動かして、確かめる所で結果を確かめている**ケースを1件ずつ書き、そのケースで値が決まっている要因の値を書く。
+
+- 値は、事前準備・手順に**書かれている**ものだけ。書かれていない要因は書かない（流れの中でたまたまそうなるだけのものは数えない）。
+- 1つのケースが同じ処理を別の値で2回以上通しているときは、通した値ごとに1行ずつ書く（同じテストIDの行が2つになる）。1回の処理で2つのデータを別の値で扱う（混在）ケースは書かない。
+- 期待結果が設計書と食い違う既存ケースは、値が合っていても書かない（返答に食い違いとして書く）。
+- 処理を動かしていない（画面を開いて別のことを見るだけ）ケース、結果を確かめていないケースは書かない。
+- テストから外したケース（excluded.tsv）は書かない。
+
+## 出力（この5つだけを書く。ほかのファイルは変更しない）
+
+すべて `integration_test/casegen/combination/factors/` に、タブ区切り・ヘッダつきで書く。セル内に改行・タブ・ダブルクォートを入れない。
+
+### `{FID}_processes.tsv`（5列）
+
+```
+処理ID	処理	契機	確かめる所	根拠
+P1	注文を確定して受注を作る	ご注文方法指定画面で確定チェックボックスを選び、注文するボタンを押す	受注情報編集画面（M05-11）	L0322-L0330
+```
+
+- 処理IDは P1 からの連番。根拠は design.txt の行（`L0037`、`L0037-L0040`、カンマ区切り）。他の機能は `M10-04:L0012`、共通シートは `_common/<ファイル名>:L0012`。
+
+### `{FID}_factors.tsv`（7列）
+
+```
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1,P2	閲覧店舗	本店｜支店	本店: 支払方法はEC用の6種／支店: 支払方法は店頭支払だけ	L0236,L0249-L0252	この機能
+F05	P2	支払方法の利用条件に対する注文金額	範囲内｜上限を超える	範囲内: 選択肢に出る／上限を超える: 選択肢に出ない	M10-04:L0101	M10-04（設定）
+```
+
+- 要因IDは F01 からの連番（処理をまたいで通し番号）。処理IDはその要因が効く処理（カンマ区切り）。
+- 値は全角の縦棒 `｜` で区切る。2つ以上。1つの値は30字まで。`=` `&` `｜` `＋` `×` を値の中に使わない。
+- 値ごとの結果は `値: 結果` を `／` でつなぐ。全部の値について書く。
+- 出所は `この機能`、`<機能ID>（設定）`、`<機能ID>（データ）` のどれか。
+
+### `{FID}_interactions.tsv`（5列）
+
+```
+処理ID	要因	判定	根拠	理由
+P1	F03+F04	効き合う	L0204	配送方法が同梱のときは支払方法が郵便振替・銀行振込だけになる
+P1	F04+F06	関係しない		手数料は支払方法で決まり、ポイントは値引きとして合計から引くだけ
+P1	F06+F07	設計書が決めていない	M10-05:L0040	送料無料の判定に使う金額がポイント値引きの前か後か書かれていない
+```
+
+- 処理ごとに、その処理の要因の2つの組を全部判定する（3つ以上の効き合うにまとめた組は除く）。
+- 効き合う・設計書が決めていない は根拠が必須。関係しない・設計書が決めていない は理由が必須。
+
+### `{FID}_constraints.tsv`（5列）
+
+```
+処理ID	組	種別	根拠	理由
+P1	F01=支店&F04=代金引換	作れない	L0251-L0252	支店の支払方法は店頭支払だけ
+P1	F06=ポイントを使う&F07=送料無料の条件に届く	正解未定	M10-05:L0040	送料無料の判定に使う金額が決まらない
+P2	F02=キャンセル日あり	打ち切り	L0412	キャンセル日が既に入っていると、在庫・ポイントの戻しを行わない
+```
+
+- 組は `要因ID=値` を `&` でつなぐ。値は factors.tsv の値と一字一句同じ。値1つだけの組（`F16=店頭受取のみのスマレジ決済`）も書ける: その値でこの処理を動かすこと自体が作れない・結果が決まらないとき（設計書の記述どうしが食い違い、共通する部分が無いときなど）。
+- 種別は `作れない`・`正解未定`・`打ち切り` のどれか。根拠が必須。制約が無ければヘッダだけ書く。
+
+### `{FID}_existing.tsv`（4列）
+
+```
+テストID	処理ID	値	理由
+IT-F04-02-081	P1	F01=本店&F03=ゆうパック&F04=郵便振替	事前準備で本店・ゆうパック・郵便振替を選び、受注情報編集画面で支払方法と配送方法を確かめる
+```
+
+- 値は `要因ID=値` を `&` でつなぐ。ケースに書かれている要因だけ。1つ以上。
+- 1つのケースが2つの処理を通しているときは2行に書く。該当するケースが無ければヘッダだけ書く。
+
+書いたら次を実行し、エラーが無くなるまで直す。組の数（全組と2要因の組で、既存ケースが通していない組を埋めるのに要る行の数）も出る。
+
+```
+python3 integration_test/casegen/combination/gate_factors.py {FID}
+```
+
+作業用の一時ファイルを作るときは、名前に {FID} を入れてスクラッチパッドに作る。他の機能の factors/ のファイルは読まない・書かない。
+ファイルの書き込みを拒否されたときは、回避せず、書くはずだった本文を返答に載せる（依頼元が保存する）。
+
+## 返答
+
+3行以内: 処理の数・要因の数・効き合う組の数・設計書が決めていない組の数、gate の結果と出た行の数、判断に迷った点（あれば1つ）。
+
+ succeeded in 571ms:
+ .../combination/factors/F03-02_constraints.tsv     | 17 ++++-
+ .../combination/factors/F03-02_existing.tsv        | 77 +++++++++++-----------
+ .../casegen/combination/factors/F03-02_factors.tsv | 38 +++++------
+ .../combination/factors/F03-02_interactions.tsv    | 58 ++++++----------
+ .../combination/factors/F03-04_constraints.tsv     |  2 +
+ .../combination/factors/F03-04_existing.tsv        |  4 +-
+ .../casegen/combination/factors/F03-04_factors.tsv |  1 -
+ .../combination/factors/F03-04_interactions.tsv    |  3 -
+ .../combination/factors/F03-05_constraints.tsv     |  9 +++
+ .../combination/factors/F03-06_constraints.tsv     |  4 ++
+ .../combination/factors/F03-07_constraints.tsv     |  5 ++
+ .../combination/factors/F03-08_constraints.tsv     |  3 +
+ .../combination/factors/F04-01_constraints.tsv     |  4 +-
+ 13 files changed, 115 insertions(+), 110 deletions(-)
+
+ succeeded in 4840ms:
+../ec-cube-enterprise/AGENTS.md
+../ai-driven-documents/AGENTS.md
+
+exec
+/bin/bash -lc 'git diff eddb12cb -- integration_test/casegen/combination/factors/F03-05_{processes,factors,interactions,constraints,existing}.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'git diff eddb12cb -- integration_test/casegen/combination/factors/F03-04_{processes,factors,interactions,constraints,existing}.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'git diff eddb12cb -- integration_test/casegen/combination/factors/F03-06_{processes,factors,interactions,constraints,existing}.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'git diff eddb12cb -- integration_test/casegen/combination/factors/F03-02_{processes,factors,interactions,constraints,existing}.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'git diff eddb12cb -- integration_test/casegen/combination/factors/F03-07_{processes,factors,interactions,constraints,existing}.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'git diff eddb12cb -- integration_test/casegen/combination/factors/F04-01_{processes,factors,interactions,constraints,existing}.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'git diff eddb12cb -- integration_test/casegen/combination/factors/F03-08_{processes,factors,interactions,constraints,existing}.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 202ms:
+diff --git a/integration_test/casegen/combination/factors/F04-01_constraints.tsv b/integration_test/casegen/combination/factors/F04-01_constraints.tsv
+index b7652a5d..e2958e73 100644
+--- a/integration_test/casegen/combination/factors/F04-01_constraints.tsv
++++ b/integration_test/casegen/combination/factors/F04-01_constraints.tsv
+@@ -4,7 +4,7 @@ P1	F01=支店&F02=設定あり・合計が到達	正解未定	L0045,L0157	支店
+ P1	F01=支店&F02=設定あり・合計が未達	正解未定	L0045,L0157	支店の集計欄に不足額の案内を出すかが書かれていない
+ P1	F01=支店&F03=設定あり・個数が到達	正解未定	L0045,L0157	支店の集計欄に個数による送料無料の状態を出すかが書かれていない
+ P1	F01=支店&F03=設定あり・個数が未達	正解未定	L0045,L0157	支店の集計欄に個数条件の案内を出すかが書かれていない
+-P3	F06=商品なし&F07=制限内	作れない	L0239	カートが空のとき購入手続きへのボタンが出ず、販売個数制限を判定する商品も無い
+-P3	F06=商品なし&F07=制限超過	作れない	L0239	カートが空のとき購入手続きへのボタンが出ず、販売個数制限を判定する商品も無い
+ P4	F08=POST /cart/add_bulk&F09=JSON本文	正解未定	L0225-L0229	表は add_bulk がフォーム値 cart_list を受けるとするだけで、JSON本文を送ったときの結果が書かれていない
+ P4	F08=POST /cart/add_show&F09=JSON本文	正解未定	L0225-L0229	表は add_show がフォーム値だけを受けるとするだけで、JSON本文を送ったときの結果が書かれていない
++P3	F06=商品なし	打ち切り	L0239	カートが空だと空の案内だけを出し、購入手続きへのボタンも販売個数制限の判定も無い
++P3	F06=複数	打ち切り	L0218,L0260	購入グループが複数だとボタンを出さずエラーを表示し、購入手続きへ進めないので販売個数制限は判定されない
+
+ succeeded in 253ms:
+diff --git a/integration_test/casegen/combination/factors/F03-06_constraints.tsv b/integration_test/casegen/combination/factors/F03-06_constraints.tsv
+index d21fecee..539e8b79 100644
+--- a/integration_test/casegen/combination/factors/F03-06_constraints.tsv
++++ b/integration_test/casegen/combination/factors/F03-06_constraints.tsv
+@@ -1 +1,5 @@
+ 処理ID	組	種別	根拠	理由
++P1	F05=保存値なし	打ち切り	L0069,L0076	閲覧履歴の保存値が無いと商品の絞り込みを行わず、履歴無しの表示だけを出す。ほかの要因の値は効かない
++P1	F01=支店&F02=立っていない	打ち切り	L0032	支店で見たとき、支店表示フラグが立っていない商品は出ない。ほかの要因の値は効かない
++P1	F03=表示中の言語を含まない	打ち切り	L0063	表示地域に表示中の言語を含まない商品は一覧から除外される。ほかの要因の値は効かない
++P1	F04=NMの規格がない、または価格が0	打ち切り	L0064	販売可能な規格が無い商品は一覧から除外される。ほかの要因の値は効かない
+
+ succeeded in 288ms:
+diff --git a/integration_test/casegen/combination/factors/F03-05_constraints.tsv b/integration_test/casegen/combination/factors/F03-05_constraints.tsv
+index d21fecee..f2f11380 100644
+--- a/integration_test/casegen/combination/factors/F03-05_constraints.tsv
++++ b/integration_test/casegen/combination/factors/F03-05_constraints.tsv
+@@ -1 +1,10 @@
+ 処理ID	組	種別	根拠	理由
++P1	F11=取得できない	打ち切り	L0024	基準の商品IDが取得できないとおすすめ商品を表示せず、案内文言を出す。ほかの要因の値は結果に効かない
++P1	F02=本店&F05=非公開	打ち切り	L0034	本店の公開フラグが非公開の商品は出ない。ほかの要因の値は効かない
++P1	F02=支店&F05=非公開	打ち切り	L0034	支店公開フラグが非公開の商品は出ない。ほかの要因の値は効かない
++P1	F02=本店&F06=在庫なし	打ち切り	L0036	本店の在庫が無い商品は出ない。ほかの要因の値は効かない
++P1	F02=支店&F06=在庫なし	打ち切り	L0036	支店の在庫が無い商品は出ない。ほかの要因の値は効かない
++P1	F07=参照中の言語でない商品	打ち切り	L0035	参照中の言語でない商品は出ない。ほかの要因の値は効かない
++P1	F10=同一商品または同一カード	打ち切り	L0033	基準商品と同一商品・同一カードの商品は出ない。ほかの要因の値は効かない
++P1	F09=検索期間外	打ち切り	L0032	検索期間外の注文は同時購入の集計に含まれず、おすすめの候補にならない。ほかの要因の値は効かない
++P1	F03=ログイン中&F08=購入したことがある	打ち切り	L0037	ログイン中は購入済みの商品を除外するので出ない。ほかの要因の値は効かない
+
+ succeeded in 282ms:
+diff --git a/integration_test/casegen/combination/factors/F03-04_constraints.tsv b/integration_test/casegen/combination/factors/F03-04_constraints.tsv
+index d21fecee..66f12156 100644
+--- a/integration_test/casegen/combination/factors/F03-04_constraints.tsv
++++ b/integration_test/casegen/combination/factors/F03-04_constraints.tsv
+@@ -1 +1,3 @@
+ 処理ID	組	種別	根拠	理由
++P1	F02=立っている	打ち切り	L0051,M03-11:L0079-L0080	フロント非表示フラグが立っていれば本店・支店とも一覧に表示しない。閲覧店舗・支店非表示フラグは効かない
++P1	F01=支店&F03=立っている	打ち切り	L0052,M03-11:L0076-L0077	支店非表示フラグが立っていれば支店の一覧に表示しない。フロント非表示フラグは効かない
+diff --git a/integration_test/casegen/combination/factors/F03-04_existing.tsv b/integration_test/casegen/combination/factors/F03-04_existing.tsv
+index 20ad4365..b3720c37 100644
+--- a/integration_test/casegen/combination/factors/F03-04_existing.tsv
++++ b/integration_test/casegen/combination/factors/F03-04_existing.tsv
+@@ -1,7 +1,7 @@
+ テストID	処理ID	値	理由
+-IT-F03-04-002	P1	F01=本店&F02=立っていない&F03=立っていない&F04=最新セット	事前準備で本店・最新セットの各カテゴリの両フラグを0とし、ナビゲーションのカテゴリ一覧でツリー表示を確かめる
++IT-F03-04-002	P1	F01=本店&F02=立っていない&F03=立っていない	事前準備で本店・最新セットの各カテゴリの両フラグを0とし、ナビゲーションのカテゴリ一覧でツリー表示を確かめる
+ IT-F03-04-003	P1	F01=本店&F02=立っていない	事前準備で本店・フロント非表示フラグ0を定め、スマホ版ナビゲーションのカテゴリ一覧表示を確かめる
+-IT-F03-04-004	P1	F01=支店&F02=立っていない&F03=立っていない&F04=最新セット	事前準備で支店・最新セットの各カテゴリの両フラグを0とし、支店ナビゲーションでツリー表示を確かめる
++IT-F03-04-004	P1	F01=支店&F02=立っていない&F03=立っていない	事前準備で支店・最新セットの各カテゴリの両フラグを0とし、支店ナビゲーションでツリー表示を確かめる
+ IT-F03-04-005	P1	F01=支店&F02=立っていない&F03=立っていない	事前準備で支店・両フラグ0を定め、支店スマホ版ナビゲーションのカテゴリ一覧表示を確かめる
+ IT-F03-04-006	P1	F01=本店&F02=立っていない	事前準備で本店・フロント非表示フラグ0を定め、ECTOPのカテゴリ一覧表示を確かめる
+ IT-F03-04-007	P1	F01=支店&F02=立っていない&F03=立っていない	事前準備で支店・両フラグ0を定め、支店ECTOPのカテゴリ一覧表示を確かめる
+diff --git a/integration_test/casegen/combination/factors/F03-04_factors.tsv b/integration_test/casegen/combination/factors/F03-04_factors.tsv
+index 147d5682..453dacb5 100644
+--- a/integration_test/casegen/combination/factors/F03-04_factors.tsv
++++ b/integration_test/casegen/combination/factors/F03-04_factors.tsv
+@@ -2,4 +2,3 @@
+ F01	P1	閲覧店舗	本店｜支店	本店: カテゴリのフロント非表示フラグだけで表示可否を決める／支店: フロント非表示フラグに加えて支店の非表示設定も参照して表示可否を決める	L0051-L0052	この機能
+ F02	P1	カテゴリのフロント非表示フラグ	立っていない｜立っている	立っていない: 表示対象になる／立っている: 本店・支店とも一覧に表示しない	L0051,M03-11:L0079-L0080,M03-11:L0099	M03-11（データ）
+ F03	P1	カテゴリの支店非表示フラグ	立っていない｜立っている	立っていない: 支店でも表示対象になる／立っている: 支店の一覧に表示しない（本店では表示に影響しない）	L0052,M03-11:L0076-L0077,M03-11:L0100	M03-11（データ）
+-F04	P1	カテゴリの第一階層の区分	最新セット｜フォーマット別｜その他	最新セット: 最新セットカテゴリとしてツリー表示する／フォーマット別: スタンダード・パイオニア・モダン・レガシー・統率者のツリーとして表示する／その他: 最新セット・フォーマット以外をフォーマット別の下に表示する	L0053-L0055,L0060-L0081	この機能
+diff --git a/integration_test/casegen/combination/factors/F03-04_interactions.tsv b/integration_test/casegen/combination/factors/F03-04_interactions.tsv
+index 6328d9a5..7f6f1da5 100644
+--- a/integration_test/casegen/combination/factors/F03-04_interactions.tsv
++++ b/integration_test/casegen/combination/factors/F03-04_interactions.tsv
+@@ -2,6 +2,3 @@
+ P1	F01+F03	効き合う	L0052,M03-11:L0077	支店非表示フラグは支店サイトでだけ参照され、本店では表示に影響しない
+ P1	F02+F03	関係しない		同じカテゴリを2つのフラグが別々に外す。どちらか一方でも立っていれば表示しない（出る・出ないの2択）で、条件ごとの外れ方は1つずつ確かめれば足りる
+ P1	F01+F02	関係しない		フロント非表示フラグは本店・支店のどちらでも立っていれば表示しないと設計書が定めており、閲覧店舗で結果が変わらない
+-P1	F01+F04	関係しない		第一階層の区分によるグループ分けは本店・支店で同じで、店舗は表示可否のフラグ参照にだけ効く
+-P1	F02+F04	関係しない		フロント非表示フラグによる表示可否は第一階層の区分にかかわらず同じ
+-P1	F03+F04	関係しない		支店非表示フラグによる表示可否は第一階層の区分にかかわらず同じ
+
+ succeeded in 268ms:
+diff --git a/integration_test/casegen/combination/factors/F03-07_constraints.tsv b/integration_test/casegen/combination/factors/F03-07_constraints.tsv
+index 802c8602..96ab8208 100644
+--- a/integration_test/casegen/combination/factors/F03-07_constraints.tsv
++++ b/integration_test/casegen/combination/factors/F03-07_constraints.tsv
+@@ -1,3 +1,8 @@
+ 処理ID	組	種別	根拠	理由
+ P1	F01=規格を特定できない&F02=商品単位	正解未定	L0118,L0060	商品単位の依頼で対象を特定できないときの応答が設計書から決まらない
+ P2	F05=入荷待ち商品一覧&F06=未依頼	正解未定	L0057,L0102	入荷待ち商品一覧で未依頼の商品が出るか、出るときのボタンが何かが設計書から決まらない
++P1	F01=未ログイン	打ち切り	L0119,L0058	未ログインだと戻り先を保持してログインモーダルを出し、依頼の登録・取消は行わない。依頼の単位は結果に効かない
++P1	F01=件数が上限以上	打ち切り	L0121,L0062	上限以上だと登録せず上限超過のエラーを出す。件数は単位によらず1件で数えるので依頼の単位は結果に効かない
++P2	F03=支店	打ち切り	L0051,L0065	支店ではボタン自体を表示しない。ほかの要因の値は効かない
++P2	F04=高額商品	打ち切り	L0050	高額商品ではボタン自体を表示しない。ほかの要因の値は効かない
++P3	F07=送らない	打ち切り	L0129	送らない設定だと状態・単位によらず1件も送信しない
+
+ succeeded in 266ms:
+diff --git a/integration_test/casegen/combination/factors/F03-08_constraints.tsv b/integration_test/casegen/combination/factors/F03-08_constraints.tsv
+index 4c8c9205..3b41cf73 100644
+--- a/integration_test/casegen/combination/factors/F03-08_constraints.tsv
++++ b/integration_test/casegen/combination/factors/F03-08_constraints.tsv
+@@ -1,2 +1,5 @@
+ 処理ID	組	種別	根拠	理由
+ P1	F01=解除&F02=上限以上	作れない	L0103-L0105	上限の判定は登録だけで行い、解除は上限を見ずに削除か何もしないで決まる
++P2	F03=支店	打ち切り	L0052,L0085	支店ではお気に入りのボタン自体を表示しない。ほかの要因の値は効かない
++P3	F05=非公開	打ち切り	L0114	非公開の商品は一覧に出さない。ほかの要因の値は効かない
++P3	F06=あり&F07=なし	打ち切り	L0114	高額商品コードがあって在庫が無い商品は一覧に出さない。公開状態は効かない
+
+ succeeded in 351ms:
+diff --git a/integration_test/casegen/combination/factors/F03-02_constraints.tsv b/integration_test/casegen/combination/factors/F03-02_constraints.tsv
+index d753ba94..dbf77772 100644
+--- a/integration_test/casegen/combination/factors/F03-02_constraints.tsv
++++ b/integration_test/casegen/combination/factors/F03-02_constraints.tsv
+@@ -1,4 +1,15 @@
+ 処理ID	組	種別	根拠	理由
+-P10	F02=サプライ・グッズ&F21=複数の状態	作れない	L0126-L0129	状態の表示と入力はカード商品だけでサプライ・グッズには状態が無い
+-P8	F17=英語&F18=英語向けを含む	正解未定	L0367	英語ページでの対応付けの出力が設計書に定めなし
+-P8	F17=英語&F18=含まない	正解未定	L0367	英語ページでの対応付けの出力が設計書に定めなし
++P2	F01=支店	打ち切り	L0121-L0123,L0200	お気に入りは本店のみ表示する。会員の状態・登録状況は効かない
++P2	F04=未ログインまたは選手情報なし	打ち切り	L0201,L0369	ログイン済みで選手情報があるときだけ登録状況を反映し、他は全言語で未登録として扱う。登録状況は効かない
++P3	F07=了承しない	打ち切り	L0371	確認で了承しなければ送信せず依頼の状態を変えない。依頼状態は効かない
++P4	F02=サプライ・グッズ	打ち切り	L0217,L0159	買取情報へのリンクはカード商品のみ。買取金額・高額商品コードは効かない
++P4	F08=0円	打ち切り	L0159,L0217	NMの買取金額が1円以上でなければリンクを出さない。高額商品コードは効かない
++P4	F09=全ての良品規格に付いている	打ち切り	L0373	買取価格の条件を満たす良品が高額商品コード付きだけならリンクを出さない。買取金額は効かない
++P5	F01=支店	打ち切り	L0334	デッキ欄は本店のみ表示する。ほかの要因は効かない
++P5	F02=サプライ・グッズ	打ち切り	L0335	デッキ欄はカード商品の場合のみ表示する。ほかの要因は効かない
++P5	F11=0件	打ち切り	L0338	紐付くフォーマットにデッキが無ければフォーマットを表示しない。画面幅は効かない
++P7	F01=支店&F14=非公開	打ち切り	M03-02:L0082-L0083	商品公開ステータスが非公開なら支店の画面に表示しない。支店の公開ステータスは効かない
++P7	F01=支店&F15=非公開	打ち切り	M03-02:L0082-L0083	支店の公開ステータスが非公開なら支店の画面に表示しない。商品公開ステータスは効かない
++P8	F16=英語&F17=英語向けを含む	正解未定	L0367	英語ページでの対応付けの出力が設計書に定めなし
++P8	F16=英語&F17=含まない	正解未定	L0367	英語ページでの対応付けの出力が設計書に定めなし
++P10	F02=サプライ・グッズ	打ち切り	L0126-L0129,L0149	状態ごとの数量入力はカード商品だけ。サプライ・グッズは状態を持たず、数量を入れる状態は効かない
+diff --git a/integration_test/casegen/combination/factors/F03-02_existing.tsv b/integration_test/casegen/combination/factors/F03-02_existing.tsv
+index b74f1633..f25a31e1 100644
+--- a/integration_test/casegen/combination/factors/F03-02_existing.tsv
++++ b/integration_test/casegen/combination/factors/F03-02_existing.tsv
+@@ -2,45 +2,42 @@
+ IT-F03-02-007	P1	F01=本店&F02=カード&F03=登録なし	事前準備で本店・高額商品コードなしのカード商品にし、画面の操作部を確かめる
+ IT-F03-02-008	P1	F01=支店&F02=カード	支店公開のカード商品で操作部が出ないことを確かめる
+ IT-F03-02-009	P1	F01=本店&F02=カード	本店のカード商品でカード用の欄を確かめる
+-IT-F03-02-010	P1	F01=本店&F02=サプライ・グッズ&F04=あり	本店のサプライ（在庫5）でカード専用欄が出ないことを確かめる
+-IT-F03-02-019	P1	F01=本店&F04=なし	全規格在庫0で商品数とカート追加が出ないことを確かめる
++IT-F03-02-010	P1	F01=本店&F02=サプライ・グッズ	本店のサプライ（在庫5）でカード専用欄が出ないことを確かめる
+ IT-F03-02-021	P1	F01=本店&F03=登録あり	高額商品コードありで入荷通知が出ないことを確かめる
+-IT-F03-02-080	P1	F01=本店&F05=SP	SP幅でカテゴリ一覧が出ないことを確かめる
+ IT-F03-02-087	P1	F01=本店&F02=カード&F03=登録あり	高額商品コードが状態欄に出ることを確かめる
+-IT-F03-02-111	P1	F01=本店&F02=サプライ・グッズ&F04=あり	本店のサプライ（在庫5）でカード言語欄が出ないことを確かめる
+-IT-F03-02-024	P2	F01=本店&F06=ログイン済み・選手情報あり&F07=登録済み	JPが登録済みの会員でJPのお気に入り表示を確かめる
+-IT-F03-02-024	P2	F01=本店&F06=ログイン済み・選手情報あり&F07=未登録	同じ会員でENが未登録の表示を確かめる
+-IT-F03-02-027	P2	F01=本店&F06=ログイン済み・選手情報なし&F07=登録済み	選手情報なしの会員で旧関係があっても未登録表示になることを確かめる
+-IT-F03-02-119	P2	F01=本店&F06=未ログイン&F07=登録済み	未ログインで登録済みの商品が登録中と表示されないことを確かめる
+-IT-F03-02-096	P2	F01=本店&F06=ログイン済み・選手情報あり&F07=登録済み	本店の他のバージョン欄で登録中の表示を確かめる
+-IT-F03-02-097	P2	F01=支店&F06=ログイン済み・選手情報あり&F07=登録済み	支店の他のバージョン欄で表示が出ないことを確かめる
+-IT-F03-02-022	P3	F08=依頼なし&F09=了承する	確認でOKを押しDBの依頼登録を確かめる
+-IT-F03-02-099	P3	F08=依頼なし&F09=了承する	他のバージョン欄から依頼を了承しDBの依頼登録を確かめる
+-IT-F03-02-109	P3	F08=依頼なし&F09=了承する	依頼を了承して通知待ち表示への切替を確かめる
+-IT-F03-02-110	P3	F08=依頼済み&F09=了承する	取消を了承して入荷時に通知表示への切替を確かめる
+-IT-F03-02-030	P4	F02=カード&F10=1円以上&F11=付いていない良品規格がある	NM買取100円・高額商品コードなしでリンクが出ることを確かめる
+-IT-F03-02-031	P4	F02=カード&F10=0円&F11=付いていない良品規格がある	NM買取0円でリンクが出ないことを確かめる
+-IT-F03-02-032	P4	F02=カード&F10=1円以上&F11=全ての良品規格に付いている	対象の良品が高額商品コード付きだけでリンクが出ないことを確かめる
+-IT-F03-02-117	P4	F02=カード&F10=1円以上&F11=付いていない良品規格がある	NM買取1円でリンクが出ることを確かめる
+-IT-F03-02-064	P5	F01=本店&F12=0件	デッキ0件のフォーマットが出ないことを確かめる
+-IT-F03-02-065	P5	F01=本店&F05=PC&F12=表示件数を超える	PCで5件中4件ともっと見るを確かめる
+-IT-F03-02-066	P5	F01=本店&F05=SP&F12=表示件数を超える	SPで5件中3件を確かめる
+-IT-F03-02-106	P5	F01=支店&F02=カード&F12=表示件数以内	支店でデッキ欄が出ないことを確かめる
+-IT-F03-02-107	P5	F01=本店&F05=PC&F12=表示件数以内	PCで4件にもっと見るが出ないことを確かめる
+-IT-F03-02-108	P5	F01=本店&F05=SP&F12=表示件数以内	SPで3件にもっと見るが出ないことを確かめる
+-IT-F03-02-074	P6	F13=ない&F14=18件未満	履歴0件から追加して先頭になることを確かめる
+-IT-F03-02-075	P6	F13=ある&F14=18件未満	既にある商品を開き直して先頭へ移り重複しないことを確かめる
+-IT-F03-02-076	P6	F13=ない&F14=18件	19件目を開き古い1件が捨てられることを確かめる
+-IT-F03-02-003	P7	F01=支店&F15=公開&F16=非公開	支店非公開で支店に表示されないことを確かめる
+-IT-F03-02-006	P8	F01=支店	支店でnoindexが出力されることを確かめる
+-IT-F03-02-068	P8	F01=本店&F17=日本語&F18=英語向けを含む	日本語ページで対応付けが出力されることを確かめる
+-IT-F03-02-069	P8	F01=本店&F17=日本語&F18=含まない	日本語ページで対応付けが出力されないことを確かめる
+-IT-F03-02-034	P9	F19=指定言語で決まる	ENを指定して初期言語がENになることを確かめる
+-IT-F03-02-035	P9	F19=日本語ロケールで決まる	日本語ロケールで言語指定なしならJPになることを確かめる
+-IT-F03-02-036	P9	F19=英語ロケールで決まる	英語ロケールで言語指定なしならENになることを確かめる
+-IT-F03-02-037	P9	F19=先頭の言語で決まる	未登録言語の指定で先頭の言語になることを確かめる
+-IT-F03-02-039	P9	F19=指定言語で決まる&F20=指定規格で決まる	EN・EX規格の指定で指定規格になることを確かめる
+-IT-F03-02-040	P9	F19=指定言語で決まる&F20=先頭規格で決まる	未登録規格の指定でENの先頭規格になることを確かめる
+-IT-F03-02-018	P10	F02=カード&F21=複数の状態	NM2点・EX1点を入れてカートに入ることを確かめる
+-IT-F03-02-083	P10	F02=カード&F21=1つの状態だけ	NM2点・EX0点でNMだけカートに入ることを確かめる
+-IT-F03-02-098	P10	F02=カード&F21=複数の状態	他のバージョン欄でNM1点・EX2点がカートに入ることを確かめる
++IT-F03-02-111	P1	F01=本店&F02=サプライ・グッズ	本店のサプライ（在庫5）でカード言語欄が出ないことを確かめる
++IT-F03-02-024	P2	F01=本店&F04=ログイン済み・選手情報あり&F05=登録済み	JPが登録済みの会員でJPのお気に入り表示を確かめる
++IT-F03-02-024	P2	F01=本店&F04=ログイン済み・選手情報あり&F05=未登録	同じ会員でENが未登録の表示を確かめる
++IT-F03-02-027	P2	F01=本店&F04=未ログインまたは選手情報なし&F05=登録済み	選手情報なしの会員で旧関係があっても未登録表示になることを確かめる
++IT-F03-02-119	P2	F01=本店&F04=未ログインまたは選手情報なし&F05=登録済み	未ログインで登録済みの商品が登録中と表示されないことを確かめる
++IT-F03-02-096	P2	F01=本店&F04=ログイン済み・選手情報あり&F05=登録済み	本店の他のバージョン欄で登録中の表示を確かめる
++IT-F03-02-097	P2	F01=支店&F04=ログイン済み・選手情報あり&F05=登録済み	支店の他のバージョン欄で表示が出ないことを確かめる
++IT-F03-02-022	P3	F06=依頼なし&F07=了承する	確認でOKを押しDBの依頼登録を確かめる
++IT-F03-02-099	P3	F06=依頼なし&F07=了承する	他のバージョン欄から依頼を了承しDBの依頼登録を確かめる
++IT-F03-02-109	P3	F06=依頼なし&F07=了承する	依頼を了承して通知待ち表示への切替を確かめる
++IT-F03-02-110	P3	F06=依頼済み&F07=了承する	取消を了承して入荷時に通知表示への切替を確かめる
++IT-F03-02-030	P4	F02=カード&F08=1円以上&F09=付いていない良品規格がある	NM買取100円・高額商品コードなしでリンクが出ることを確かめる
++IT-F03-02-031	P4	F02=カード&F08=0円&F09=付いていない良品規格がある	NM買取0円でリンクが出ないことを確かめる
++IT-F03-02-032	P4	F02=カード&F08=1円以上&F09=全ての良品規格に付いている	対象の良品が高額商品コード付きだけでリンクが出ないことを確かめる
++IT-F03-02-117	P4	F02=カード&F08=1円以上&F09=付いていない良品規格がある	NM買取1円でリンクが出ることを確かめる
++IT-F03-02-064	P5	F01=本店&F11=0件	デッキ0件のフォーマットが出ないことを確かめる
++IT-F03-02-065	P5	F01=本店&F10=PC&F11=表示件数を超える	PCで5件中4件ともっと見るを確かめる
++IT-F03-02-066	P5	F01=本店&F10=SP&F11=表示件数を超える	SPで5件中3件を確かめる
++IT-F03-02-106	P5	F01=支店&F02=カード&F11=表示件数以内	支店でデッキ欄が出ないことを確かめる
++IT-F03-02-107	P5	F01=本店&F10=PC&F11=表示件数以内	PCで4件にもっと見るが出ないことを確かめる
++IT-F03-02-108	P5	F01=本店&F10=SP&F11=表示件数以内	SPで3件にもっと見るが出ないことを確かめる
++IT-F03-02-074	P6	F12=ない&F13=18件未満	履歴0件から追加して先頭になることを確かめる
++IT-F03-02-075	P6	F12=ある&F13=18件未満	既にある商品を開き直して先頭へ移り重複しないことを確かめる
++IT-F03-02-076	P6	F12=ない&F13=18件	19件目を開き古い1件が捨てられることを確かめる
++IT-F03-02-003	P7	F01=支店&F14=公開&F15=非公開	支店非公開で支店に表示されないことを確かめる
++IT-F03-02-068	P8	F16=日本語&F17=英語向けを含む	日本語ページで対応付けが出力されることを確かめる
++IT-F03-02-069	P8	F16=日本語&F17=含まない	日本語ページで対応付けが出力されないことを確かめる
++IT-F03-02-034	P9	F18=指定言語で決まる	ENを指定して初期言語がENになることを確かめる
++IT-F03-02-035	P9	F18=日本語ロケールで決まる	日本語ロケールで言語指定なしならJPになることを確かめる
++IT-F03-02-036	P9	F18=英語ロケールで決まる	英語ロケールで言語指定なしならENになることを確かめる
++IT-F03-02-037	P9	F18=先頭の言語で決まる	未登録言語の指定で先頭の言語になることを確かめる
++IT-F03-02-039	P9	F18=指定言語で決まる&F19=指定規格で決まる	EN・EX規格の指定で指定規格になることを確かめる
++IT-F03-02-040	P9	F18=指定言語で決まる&F19=先頭規格で決まる	未登録規格の指定でENの先頭規格になることを確かめる
++IT-F03-02-018	P10	F02=カード&F20=複数の状態	NM2点・EX1点を入れてカートに入ることを確かめる
++IT-F03-02-083	P10	F02=カード&F20=1つの状態だけ	NM2点・EX0点でNMだけカートに入ることを確かめる
++IT-F03-02-098	P10	F02=カード&F20=複数の状態	他のバージョン欄でNM1点・EX2点がカートに入ることを確かめる
+diff --git a/integration_test/casegen/combination/factors/F03-02_factors.tsv b/integration_test/casegen/combination/factors/F03-02_factors.tsv
+index 4b90b797..fa275b1b 100644
+--- a/integration_test/casegen/combination/factors/F03-02_factors.tsv
++++ b/integration_test/casegen/combination/factors/F03-02_factors.tsv
+@@ -1,23 +1,21 @@
+ 要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+-F01	P1,P2,P5,P7,P8	閲覧店舗	本店｜支店	本店: 入荷通知・お気に入り・まとめて入荷通知・SNS・デッキ欄を出す／支店: これらを出さず支店の公開ステータスも見る	L0121-L0125,L0334,L0069	この機能
++F01	P1,P2,P5,P7	閲覧店舗	本店｜支店	本店: 入荷通知・お気に入り・まとめて入荷通知・SNS・デッキ欄を出す／支店: これらを出さず支店の公開ステータスも見る	L0121-L0125,L0334,L0069	この機能
+ F02	P1,P4,P5,P10	商品種別	カード｜サプライ・グッズ	カード: 言語切替・状態・デッキ・他のバージョン・掲載記事等を出す／サプライ・グッズ: これらを出さない	L0126-L0132,L0245	この機能
+ F03	P1	高額商品コード	登録あり｜登録なし	登録あり: 入荷通知ボタンを出さず状態欄に高額商品コードを出す／登録なし: 入荷通知ボタンを出す	L0177,L0191	この機能
+-F04	P1	在庫	あり｜なし	あり: 商品数とカートに追加を出す／なし: 商品数とカートに追加を出さない	L0184,L0197	この機能
+-F05	P1,P5	画面幅	PC｜SP	PC: カテゴリ一覧を出しデッキは4件表示／SP: カテゴリ一覧を出さずデッキは3件表示	L0068,L0339-L0340	この機能
+-F06	P2	会員の状態	未ログイン｜ログイン済み・選手情報あり｜ログイン済み・選手情報なし	未ログイン: 登録状態を反映しない／ログイン済み・選手情報あり: 登録状態を反映する／ログイン済み・選手情報なし: 全言語で未登録として扱う	L0201,L0369	この機能
+-F07	P2	お気に入りの登録状況	登録済み｜未登録	登録済み: お気に入りに登録中と表示する／未登録: お気に入りに追加と表示する	L0203,L0157	この機能
+-F08	P1,P3	入荷通知の依頼状態	依頼なし｜依頼済み	依頼なし: 押下で依頼を登録する／依頼済み: 通知待ちと表示し押下で取消する	L0190,L0371	この機能
+-F09	P3	確認ポップアップの操作	了承する｜了承しない	了承する: 依頼または取消を送信して表示を切り替える／了承しない: 送信せず依頼の状態を変えない	L0371	この機能
+-F10	P4	NMの買取金額	1円以上｜0円	1円以上: 買取の条件を満たす／0円: 条件を満たさずリンクを出さない	L0159,L0217	この機能
+-F11	P4	良品規格の高額商品コード	全ての良品規格に付いている｜付いていない良品規格がある	全ての良品規格に付いている: 対象から外れリンクを出さない／付いていない良品規格がある: その規格が対象になる	L0373	この機能
+-F12	P5	フォーマットのデッキ件数	0件｜表示件数以内｜表示件数を超える	0件: フォーマットを表示しない／表示件数以内: 全件表示しもっと見るを出さない／表示件数を超える: 表示件数だけ出しもっと見るを出す	L0338-L0340	この機能
+-F13	P6	履歴に当該商品	ない｜ある	ない: 先頭へ追加する／ある: 重複させず先頭へ移す	L0387	この機能
+-F14	P6	履歴の件数	18件未満｜18件	18件未満: そのまま保持する／18件: 追加すると古いものから捨てて18件を保つ	L0387	この機能
+-F15	P7	商品公開ステータス	公開｜非公開	公開: 支店の公開ステータスも公開なら支店に表示する／非公開: 支店に表示しない（廃止を含む）	M03-02:L0082-L0083	M03-02（設定）
+-F16	P7	支店の商品公開ステータス	公開｜非公開	公開: 商品公開ステータスも公開なら支店に表示する／非公開: 支店に表示しない	M03-02:L0082-L0083	M03-02（設定）
+-F17	P8	ページ言語	日本語｜英語	日本語: 英語版ページの対応付けを条件により出す／英語: 設計書に定めなし	L0367	この機能
+-F18	P8	販売制限の表示言語	英語向けを含む｜含まない	英語向けを含む: 日本語ページで英語版ページの対応付けを出す／含まない: 出さない	L0367	この機能
+-F19	P9	初期言語の決まり方	指定言語で決まる｜日本語ロケールで決まる｜英語ロケールで決まる｜先頭の言語で決まる	指定言語で決まる: 指定された言語／日本語ロケールで決まる: JP／英語ロケールで決まる: EN／先頭の言語で決まる: 該当する言語の商品が無いとき先頭の言語	L0363	この機能
+-F20	P9	初期規格の決まり方	指定規格で決まる｜先頭規格で決まる	指定規格で決まる: 初期言語にある指定規格／先頭規格で決まる: 無いとき初期言語の先頭規格	L0364	この機能
+-F21	P10	数量を入れる状態	1つの状態だけ｜複数の状態	1つの状態だけ: その状態の数量分をカートに入れる／複数の状態: 数量1以上の状態ごとに全てカートに入れる	L0149	この機能
+-F22	P1	NM以外の状態の価格	100円以上｜100円未満	100円以上: 状態欄にNM以外の状態をリンク表示する／100円未満: NM以外の状態を表示しない（NMは価格に関わらず表示）	L0178	この機能
++F10	P5	画面幅	PC｜SP	PC: デッキは4件表示／SP: デッキは3件表示	L0068,L0339-L0340	この機能
++F04	P2	会員の状態	ログイン済み・選手情報あり｜未ログインまたは選手情報なし	ログイン済み・選手情報あり: 登録状態を反映する／未ログインまたは選手情報なし: 登録状態を反映せず全言語で未登録として扱う	L0201,L0369	この機能
++F05	P2	お気に入りの登録状況	登録済み｜未登録	登録済み: お気に入りに登録中と表示する／未登録: お気に入りに追加と表示する	L0203,L0157	この機能
++F06	P3	入荷通知の依頼状態	依頼なし｜依頼済み	依頼なし: 押下で依頼を登録する／依頼済み: 通知待ちと表示し押下で取消する	L0190,L0371	この機能
++F07	P3	確認ポップアップの操作	了承する｜了承しない	了承する: 依頼または取消を送信して表示を切り替える／了承しない: 送信せず依頼の状態を変えない	L0371	この機能
++F08	P4	NMの買取金額	1円以上｜0円	1円以上: 買取の条件を満たす／0円: 条件を満たさずリンクを出さない	L0159,L0217	この機能
++F09	P4	良品規格の高額商品コード	全ての良品規格に付いている｜付いていない良品規格がある	全ての良品規格に付いている: 対象から外れリンクを出さない／付いていない良品規格がある: その規格が対象になる	L0373	この機能
++F11	P5	フォーマットのデッキ件数	0件｜表示件数以内｜表示件数を超える	0件: フォーマットを表示しない／表示件数以内: 全件表示しもっと見るを出さない／表示件数を超える: 表示件数だけ出しもっと見るを出す	L0338-L0340	この機能
++F12	P6	履歴に当該商品	ない｜ある	ない: 先頭へ追加する／ある: 重複させず先頭へ移す	L0387	この機能
++F13	P6	履歴の件数	18件未満｜18件	18件未満: そのまま保持する／18件: 追加すると古いものから捨てて18件を保つ	L0387	この機能
++F14	P7	商品公開ステータス	公開｜非公開	公開: 支店の公開ステータスも公開なら支店に表示する／非公開: 支店に表示しない（廃止を含む）	M03-02:L0082-L0083	M03-02（設定）
++F15	P7	支店の商品公開ステータス	公開｜非公開	公開: 商品公開ステータスも公開なら支店に表示する／非公開: 支店に表示しない	M03-02:L0082-L0083	M03-02（設定）
++F16	P8	ページ言語	日本語｜英語	日本語: 英語版ページの対応付けを条件により出す／英語: 設計書に定めなし	L0367	この機能
++F17	P8	販売制限の表示言語	英語向けを含む｜含まない	英語向けを含む: 日本語ページで英語版ページの対応付けを出す／含まない: 出さない	L0367	この機能
++F18	P9	初期言語の決まり方	指定言語で決まる｜日本語ロケールで決まる｜英語ロケールで決まる｜先頭の言語で決まる	指定言語で決まる: 指定された言語／日本語ロケールで決まる: JP／英語ロケールで決まる: EN／先頭の言語で決まる: 該当する言語の商品が無いとき先頭の言語	L0363	この機能
++F19	P9	初期規格の決まり方	指定規格で決まる｜先頭規格で決まる	指定規格で決まる: 初期言語にある指定規格／先頭規格で決まる: 無いとき初期言語の先頭規格	L0364	この機能
++F20	P10	数量を入れる状態	1つの状態だけ｜複数の状態	1つの状態だけ: その状態の数量分をカートに入れる／複数の状態: 数量1以上の状態ごとに全てカートに入れる	L0149	この機能
+diff --git a/integration_test/casegen/combination/factors/F03-02_interactions.tsv b/integration_test/casegen/combination/factors/F03-02_interactions.tsv
+index bdc7221d..644aac80 100644
+--- a/integration_test/casegen/combination/factors/F03-02_interactions.tsv
++++ b/integration_test/casegen/combination/factors/F03-02_interactions.tsv
+@@ -1,44 +1,24 @@
+ 処理ID	要因	判定	根拠	理由
+ P1	F01+F02	関係しない		出す・出さないの絞り込み条件どうしで、それぞれ別々に結果へ効く（ANDの絞り込み）
+ P1	F01+F03	関係しない		出す・出さないの絞り込み条件どうしで、それぞれ別々に結果へ効く（ANDの絞り込み）
+-P1	F01+F04	関係しない		出す・出さないの絞り込み条件どうしで、それぞれ別々に結果へ効く（ANDの絞り込み）
+-P1	F01+F05	関係しない		出す・出さないの絞り込み条件どうしで、それぞれ別々に結果へ効く（ANDの絞り込み）
+ P1	F02+F03	関係しない		出す・出さないの絞り込み条件どうしで、それぞれ別々に結果へ効く（ANDの絞り込み）
+-P1	F02+F04	関係しない		出す・出さないの絞り込み条件どうしで、それぞれ別々に結果へ効く（ANDの絞り込み）
+-P1	F02+F05	関係しない		出す・出さないの絞り込み条件どうしで、それぞれ別々に結果へ効く（ANDの絞り込み）
+-P1	F03+F04	関係しない		出す・出さないの絞り込み条件どうしで、それぞれ別々に結果へ効く（ANDの絞り込み）
+-P1	F03+F05	関係しない		出す・出さないの絞り込み条件どうしで、それぞれ別々に結果へ効く（ANDの絞り込み）
+-P1	F04+F05	関係しない		出す・出さないの絞り込み条件どうしで、それぞれ別々に結果へ効く（ANDの絞り込み）
+-P2	F01+F06	関係しない		出す・出さないの絞り込み条件どうしで、それぞれ別々に結果へ効く（ANDの絞り込み）
+-P2	F01+F07	関係しない		出す・出さないの絞り込み条件どうしで、それぞれ別々に結果へ効く（ANDの絞り込み）
+-P2	F06+F07	効き合う	L0201,L0369,L0157	ログイン済みで選手情報ありのときだけ登録状況を反映し、他は未登録として扱う
+-P3	F08+F09	効き合う	L0371	了承した時だけ依頼状態に応じて登録または取消を送信し、了承しなければ状態を変えない
+-P4	F02+F10	関係しない		出す・出さないの絞り込み条件どうしで、それぞれ別々に結果へ効く（ANDの絞り込み）
+-P4	F02+F11	関係しない		出す・出さないの絞り込み条件どうしで、それぞれ別々に結果へ効く（ANDの絞り込み）
+-P4	F10+F11	関係しない		出す・出さないの絞り込み条件どうしで、それぞれ別々に結果へ効く（ANDの絞り込み）
++P2	F01+F04	関係しない		出す・出さないの絞り込み条件どうしで、それぞれ別々に結果へ効く（ANDの絞り込み）
++P2	F01+F05	関係しない		出す・出さないの絞り込み条件どうしで、それぞれ別々に結果へ効く（ANDの絞り込み）
++P2	F04+F05	効き合う	L0201,L0369,L0157	ログイン済みで選手情報ありのときだけ登録状況を反映し、他は未登録として扱う
++P3	F06+F07	効き合う	L0371	了承した時だけ依頼状態に応じて登録または取消を送信し、了承しなければ状態を変えない
++P4	F02+F08	関係しない		出す・出さないの絞り込み条件どうしで、それぞれ別々に結果へ効く（ANDの絞り込み）
++P4	F02+F09	関係しない		出す・出さないの絞り込み条件どうしで、それぞれ別々に結果へ効く（ANDの絞り込み）
++P4	F08+F09	関係しない		出す・出さないの絞り込み条件どうしで、それぞれ別々に結果へ効く（ANDの絞り込み）
+ P5	F01+F02	関係しない		出す・出さないの絞り込み条件どうしで、それぞれ別々に結果へ効く（ANDの絞り込み）
+-P5	F01+F05	関係しない		出す・出さないの絞り込み条件どうしで、それぞれ別々に結果へ効く（ANDの絞り込み）
+-P5	F01+F12	関係しない		出す・出さないの絞り込み条件どうしで、それぞれ別々に結果へ効く（ANDの絞り込み）
+-P5	F02+F05	関係しない		出す・出さないの絞り込み条件どうしで、それぞれ別々に結果へ効く（ANDの絞り込み）
+-P5	F02+F12	関係しない		出す・出さないの絞り込み条件どうしで、それぞれ別々に結果へ効く（ANDの絞り込み）
+-P5	F05+F12	効き合う	L0339-L0340	画面幅で表示件数が3件か4件に変わり、もっと見るを出す件数も変わる
+-P6	F13+F14	効き合う	L0387	履歴にある商品は移すだけで件数が増えず、ない商品は追加で18件を超えると古いものを捨てる
+-P7	F01+F15	関係しない		出す・出さないの絞り込み条件どうしで、それぞれ別々に結果へ効く（ANDの絞り込み）
+-P7	F01+F16	効き合う	L0060,M03-02:L0082-L0083	支店の商品公開ステータスは支店の画面の表示可否だけを変え、本店では見ない
+-P7	F15+F16	関係しない		出す・出さないの絞り込み条件どうしで、それぞれ別々に結果へ効く（ANDの絞り込み）
+-P8	F01+F17	関係しない		noindexは店舗で、英語版の対応付けは言語と販売制限で決まり互いに変わらない
+-P8	F01+F18	関係しない		noindexは店舗で、英語版の対応付けは言語と販売制限で決まり互いに変わらない
+-P8	F17+F18	設計書が決めていない	L0367	英語ページで英語版の対応付けを出すかは設計書に定めがない
+-P9	F19+F20	関係しない		初期言語をどの段で決めたかで初期規格の決め方は変わらず、初期規格は決まった言語の中で指定の有無だけで決まる（優先順位の段ごとに1つずつ確かめれば足りる）
+-P10	F02+F21	効き合う	L0126-L0129,L0149	状態ごとの入力はカードだけの定めで、サプライ・グッズは状態を持たない
+-P1	F01+F22	関係しない		出す・出さないの絞り込み条件どうしで、それぞれ別々に結果へ効く（ANDの絞り込み）
+-P1	F02+F22	関係しない		出す・出さないの絞り込み条件どうしで、それぞれ別々に結果へ効く（ANDの絞り込み）
+-P1	F03+F22	関係しない		出す・出さないの絞り込み条件どうしで、それぞれ別々に結果へ効く（ANDの絞り込み）
+-P1	F04+F22	関係しない		出す・出さないの絞り込み条件どうしで、それぞれ別々に結果へ効く（ANDの絞り込み）
+-P1	F05+F22	関係しない		出す・出さないの絞り込み条件どうしで、それぞれ別々に結果へ効く（ANDの絞り込み）
+-P1	F01+F08	関係しない		出す・出さないの絞り込み条件どうしで、それぞれ別々に結果へ効く（ANDの絞り込み）
+-P1	F02+F08	関係しない		出す・出さないの絞り込み条件どうしで、それぞれ別々に結果へ効く（ANDの絞り込み）
+-P1	F03+F08	関係しない		出す・出さないの絞り込み条件どうしで、それぞれ別々に結果へ効く（ANDの絞り込み）
+-P1	F04+F08	関係しない		出す・出さないの絞り込み条件どうしで、それぞれ別々に結果へ効く（ANDの絞り込み）
+-P1	F05+F08	関係しない		出す・出さないの絞り込み条件どうしで、それぞれ別々に結果へ効く（ANDの絞り込み）
+-P1	F08+F22	関係しない		出す・出さないの絞り込み条件どうしで、それぞれ別々に結果へ効く（ANDの絞り込み）
++P5	F01+F10	関係しない		出す・出さないの絞り込み条件どうしで、それぞれ別々に結果へ効く（ANDの絞り込み）
++P5	F01+F11	関係しない		出す・出さないの絞り込み条件どうしで、それぞれ別々に結果へ効く（ANDの絞り込み）
++P5	F02+F10	関係しない		出す・出さないの絞り込み条件どうしで、それぞれ別々に結果へ効く（ANDの絞り込み）
++P5	F02+F11	関係しない		出す・出さないの絞り込み条件どうしで、それぞれ別々に結果へ効く（ANDの絞り込み）
++P5	F10+F11	効き合う	L0339-L0340	画面幅で表示件数が3件か4件に変わり、もっと見るを出す件数も変わる
++P6	F12+F13	効き合う	L0387	履歴にある商品は移すだけで件数が増えず、ない商品は追加で18件を超えると古いものを捨てる
++P7	F01+F14	関係しない		出す・出さないの絞り込み条件どうしで、それぞれ別々に結果へ効く（ANDの絞り込み）
++P7	F01+F15	効き合う	L0060,M03-02:L0082-L0083	支店の商品公開ステータスは支店の画面の表示可否だけを変え、本店では見ない
++P7	F14+F15	関係しない		出す・出さないの絞り込み条件どうしで、それぞれ別々に結果へ効く（ANDの絞り込み）
++P8	F16+F17	設計書が決めていない	L0367	英語ページで英語版の対応付けを出すかは設計書に定めがない
++P9	F18+F19	関係しない		初期言語をどの段で決めたかで初期規格の決め方は変わらず、初期規格は決まった言語の中で指定の有無だけで決まる（優先順位の段ごとに1つずつ確かめれば足りる）
++P10	F02+F20	効き合う	L0126-L0129,L0149	状態ごとの入力はカードだけの定めで、サプライ・グッズは状態を持たない
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/review/F03-02_factors_s_dispositions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/review/F03-04_factors_s_dispositions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/review/F03-07_factors_s_dispositions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/review/F03-06_factors_s_dispositions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/review/F03-05_factors_s_dispositions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/review/F04-01_factors_s_dispositions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/review/F03-08_factors_s_dispositions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 739ms:
+決定	処置	理由	直した所
+1	直し	サプライ・グッズ／本店限定／0件／了承しない／買取条件を満たさない／非公開は、そこで出さない・送らないとなりほかの要因が効かない	constraints.tsv に打ち切り13行。サプライ・グッズ×複数の状態の作れない1行を外した
+2	直し	商品行の在庫による数量欄（旧F04）、NM以外の価格による状態リンク（旧F22）、カテゴリ一覧のPC表示（P1でのF05）、入荷通知の文言（P1でのF08）、noindex（P8でのF01）は表示項目ごとに独立して決まる値	factors.tsv から旧F04・F22を外し、P1のF05・F08とP8のF01を処理から外した。要因IDを振り直し。interactions・existingの該当行を外した（IT-F03-02-006・019・080はどの処理の要因も決められなくなったので外した）
+3	直し	未ログインとログイン済み・選手情報なしは、どちらも登録状況を反映せず未登録として扱う同じ結果	factors.tsv P2の会員の状態を「ログイン済み・選手情報あり｜未ログインまたは選手情報なし」の2値にし、existingの値も合わせた
+
+ succeeded in 851ms:
+決定	処置	理由	直した所
+1	直し	フロント非表示フラグが立っていれば表示しない、支店では支店非表示フラグが立っていれば表示しない。その時点でほかの要因は効かない	constraints.tsv に打ち切り2行
+2	直し	第一階層の区分（旧F04）はカテゴリをどのツリーの下に置くかを決めるだけで、ほかの要因と効き合わない（判定は全て関係しない）	factors.tsv から旧F04を外し、interactions・existingの該当行・値を外した
+3	直しなし	結果が同じ値のまとめは既に済んでいる	
+
+ succeeded in 918ms:
+決定	処置	理由	直した所
+1	直し	購入グループが複数・カートが空はボタンが出ず購入手続きへ進めないので、販売個数制限の値が結果に効かない。カートが空は販売個数制限との組を全部並べた作れない制約で表していたので、打ち切りに置き換えた。P1の支店と個数到達は、設計書が案内の有無を決めていない（正解未定）／金額設定なしの案内が決まらないため打ち切りにしない	constraints.tsv: P3の作れない2行（F06=商品なし&F07=制限内／制限超過）を外し、打ち切り2行（F06=商品なし、F06=複数）を追加
+2	直しなし	列・表示項目ごとに独立して決まる要因は無い	
+3	直しなし	結果が同じで別々に挙げた値は無い	
+
+ succeeded in 1004ms:
+決定	処置	理由	直した所
+1	直し	候補商品を出さない値（非公開・在庫なし・言語違い・同一商品または同一カード・検索期間外・ログイン中の購入済み）と、基準の商品IDが取得できない値は、そこで打ち切られほかの要因が効かない（支店公開フラグ・支店の在庫は閲覧店舗で変わるので本店・支店ごとに書いた）	constraints.tsvに打ち切り9行を追加（F11、F05非公開×2、F06在庫なし×2、F07、F10、F09、F03ログイン中&F08購入済み）。F04処理中はページで基準商品の決め方が変わり打ち切りでないので書かない
+2	直しなし	列・表示項目ごとに独立して決まる要因は無い	
+3	直しなし	結果が同じで別々に挙げた値は無い	
+
+ succeeded in 1007ms:
+決定	処置	理由	直した所
+1	直し	未ログイン・登録上限以上・支店・高額商品・メールを送らない設定は、そこで処理が止まりほかの要因の値が結果に効かない。規格を特定できない・同一依頼がある、はF02（依頼の単位）で結果が変わる／正解未定のため、F01以外の要因をすべて持つ打ち切りになり書けない（gateの規則）ので書かない	constraints.tsvに打ち切り5行を追加（P1 F01=未ログイン・F01=件数が上限以上、P2 F03=支店・F04=高額商品、P3 F07=送らない）。回避として足した値・作れない制約は元から無い
+2	直しなし	列・表示項目ごとに独立して決まる要因は無い	
+3	直しなし	結果が同じで別々に挙げた値は無い（上限超過と規格不明は文言が違う）	
+
+ succeeded in 1007ms:
+決定	処置	理由	直した所
+1	直し	保存値が無い／支店で表示フラグが立っていない／地域制限に表示中の言語を含まない／販売可能な規格が無い、は出さない・履歴無しの表示だけで、ほかの要因が効かない（表示フラグは支店で見るときだけなのでF01=支店とセット）	constraints.tsvに打ち切り4行を追加（F05保存値なし、F01=支店&F02立っていない、F03含まない、F04規格なし）。F02/F03/F04とF05の効き合う判定は指示によりそのまま
+2	直しなし	列・表示項目ごとに独立して決まる要因は無い	
+3	直しなし	結果が同じで別々に挙げた値は無い	
+
+ succeeded in 1113ms:
+決定	処置	理由	直した所
+1	直し	支店ではボタンを出さない・非公開は一覧に出さない・高額商品コードありで在庫なしは出さない、はそこで止まりほかの要因が効かない。P1の未ログイン・上限以上は操作（登録／解除）で結果が変わり、F01・F02の全要因を持つ条件になるため打ち切りにしない（上限以上×解除の作れないは元から構造上の制約で回避ではない）	constraints.tsvに打ち切り3行を追加（P2 F03=支店、P3 F05=非公開、P3 F06=あり&F07=なし）
+2	直しなし	列・表示項目ごとに独立して決まる要因は無い	
+3	直しなし	結果が同じで別々に挙げた値は無い	
+
+codex
+差分では、F03-02とF03-04に要因の削除・統合があり、残りは主に「打ち切り」の追加です。各条件で止まった後も結果を変える要因がないか、設計書の行を確認します。
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/F03-02_factors.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/F03-05_factors.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/F03-04_factors.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/F03-06_factors.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/F03-07_factors.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/F04-01_factors.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/F03-08_factors.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 530ms:
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	表示するページ	マイページ・注文完了ページ｜商品詳細ページ｜買い物かごページ	マイページ・注文完了ページ: 直近の注文の明細で販売価格が最も高い商品が基準／商品詳細ページ: 表示している商品が基準／買い物かごページ: カート内で販売価格が最も高い商品が基準（基準商品の同時購入商品がおすすめになる）	L0024-L0031,L0050-L0051	この機能
+F02	P1	閲覧店舗	本店｜支店	本店: 本店の公開フラグと在庫を参照／支店: 支店公開フラグと支店の在庫を参照	L0034,L0036	この機能
+F03	P1	会員ログイン	ログイン中｜未ログイン	ログイン中: 購入済み商品の除外を行う／未ログイン: 購入済み商品の除外を行わない	L0037	この機能
+F04	P1	基準商品の決定と同時購入に使う注文のステータス	処理中｜処理中以外	処理中: その注文を同時購入の集計に含めず、マイページ・注文完了ページでは基準商品を決める直近の注文からも除く／処理中以外: 含める	L0032,L0051	この機能
+F05	P1	おすすめ候補商品の公開状態	公開中｜非公開	公開中: おすすめに出る／非公開: 出ない（支店は支店公開フラグで判定）	L0034	この機能
+F06	P1	おすすめ候補商品の在庫	在庫あり｜在庫なし	在庫あり: おすすめに出る／在庫なし: 出ない（支店は支店の在庫で判定）	L0036	この機能
+F07	P1	おすすめ候補商品の言語	参照中の言語の商品｜参照中の言語でない商品	参照中の言語の商品: おすすめに出る／参照中の言語でない商品: 出ない	L0035	この機能
+F08	P1	おすすめ候補商品の会員の購入履歴	購入したことがある｜購入したことがない	購入したことがある: ログイン中なら出ない（未ログインなら除外されない）／購入したことがない: おすすめに出る	L0037	この機能
+F09	P1	同時購入の注文日	検索期間内｜検索期間外	検索期間内: 同時購入の集計に含める／検索期間外: 含めない	L0032,M10-16:L0064	M10-16（設定）
+F10	P1	おすすめ候補商品と基準商品の関係	別の商品かつ別のカード｜同一商品または同一カード	別の商品かつ別のカード: おすすめに出る／同一商品または同一カード: 出ない	L0033	この機能
+F11	P1	基準の商品IDの取得可否	取得できる｜取得できない	取得できる: おすすめ商品を取得して表示する／取得できない: おすすめ商品を表示しない（おすすめ商品がないときの案内文言を表示する）	L0024,L0040-L0041	この機能
+
+ succeeded in 658ms:
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1,P2,P5,P7	閲覧店舗	本店｜支店	本店: 入荷通知・お気に入り・まとめて入荷通知・SNS・デッキ欄を出す／支店: これらを出さず支店の公開ステータスも見る	L0121-L0125,L0334,L0069	この機能
+F02	P1,P4,P5,P10	商品種別	カード｜サプライ・グッズ	カード: 言語切替・状態・デッキ・他のバージョン・掲載記事等を出す／サプライ・グッズ: これらを出さない	L0126-L0132,L0245	この機能
+F03	P1	高額商品コード	登録あり｜登録なし	登録あり: 入荷通知ボタンを出さず状態欄に高額商品コードを出す／登録なし: 入荷通知ボタンを出す	L0177,L0191	この機能
+F10	P5	画面幅	PC｜SP	PC: デッキは4件表示／SP: デッキは3件表示	L0068,L0339-L0340	この機能
+F04	P2	会員の状態	ログイン済み・選手情報あり｜未ログインまたは選手情報なし	ログイン済み・選手情報あり: 登録状態を反映する／未ログインまたは選手情報なし: 登録状態を反映せず全言語で未登録として扱う	L0201,L0369	この機能
+F05	P2	お気に入りの登録状況	登録済み｜未登録	登録済み: お気に入りに登録中と表示する／未登録: お気に入りに追加と表示する	L0203,L0157	この機能
+F06	P3	入荷通知の依頼状態	依頼なし｜依頼済み	依頼なし: 押下で依頼を登録する／依頼済み: 通知待ちと表示し押下で取消する	L0190,L0371	この機能
+F07	P3	確認ポップアップの操作	了承する｜了承しない	了承する: 依頼または取消を送信して表示を切り替える／了承しない: 送信せず依頼の状態を変えない	L0371	この機能
+F08	P4	NMの買取金額	1円以上｜0円	1円以上: 買取の条件を満たす／0円: 条件を満たさずリンクを出さない	L0159,L0217	この機能
+F09	P4	良品規格の高額商品コード	全ての良品規格に付いている｜付いていない良品規格がある	全ての良品規格に付いている: 対象から外れリンクを出さない／付いていない良品規格がある: その規格が対象になる	L0373	この機能
+F11	P5	フォーマットのデッキ件数	0件｜表示件数以内｜表示件数を超える	0件: フォーマットを表示しない／表示件数以内: 全件表示しもっと見るを出さない／表示件数を超える: 表示件数だけ出しもっと見るを出す	L0338-L0340	この機能
+F12	P6	履歴に当該商品	ない｜ある	ない: 先頭へ追加する／ある: 重複させず先頭へ移す	L0387	この機能
+F13	P6	履歴の件数	18件未満｜18件	18件未満: そのまま保持する／18件: 追加すると古いものから捨てて18件を保つ	L0387	この機能
+F14	P7	商品公開ステータス	公開｜非公開	公開: 支店の公開ステータスも公開なら支店に表示する／非公開: 支店に表示しない（廃止を含む）	M03-02:L0082-L0083	M03-02（設定）
+F15	P7	支店の商品公開ステータス	公開｜非公開	公開: 商品公開ステータスも公開なら支店に表示する／非公開: 支店に表示しない	M03-02:L0082-L0083	M03-02（設定）
+F16	P8	ページ言語	日本語｜英語	日本語: 英語版ページの対応付けを条件により出す／英語: 設計書に定めなし	L0367	この機能
+F17	P8	販売制限の表示言語	英語向けを含む｜含まない	英語向けを含む: 日本語ページで英語版ページの対応付けを出す／含まない: 出さない	L0367	この機能
+F18	P9	初期言語の決まり方	指定言語で決まる｜日本語ロケールで決まる｜英語ロケールで決まる｜先頭の言語で決まる	指定言語で決まる: 指定された言語／日本語ロケールで決まる: JP／英語ロケールで決まる: EN／先頭の言語で決まる: 該当する言語の商品が無いとき先頭の言語	L0363	この機能
+F19	P9	初期規格の決まり方	指定規格で決まる｜先頭規格で決まる	指定規格で決まる: 初期言語にある指定規格／先頭規格で決まる: 無いとき初期言語の先頭規格	L0364	この機能
+F20	P10	数量を入れる状態	1つの状態だけ｜複数の状態	1つの状態だけ: その状態の数量分をカートに入れる／複数の状態: 数量1以上の状態ごとに全てカートに入れる	L0149	この機能
+
+ succeeded in 758ms:
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	閲覧店舗	本店｜支店	本店: 履歴の商品を支店表示フラグにかかわらず対象にする／支店: 支店表示フラグが立っている商品だけ対象にする	L0032	この機能
+F02	P1	商品の支店表示フラグ	立っている｜立っていない	立っている: 支店でも表示対象／立っていない: 支店の履歴には出さない（本店には影響しない）	L0032,M03-02:L0081-L0083	M03-02（データ）
+F03	P1	商品の地域制限の表示ロケール	表示中の言語を含む｜表示中の言語を含まない	表示中の言語を含む: 一覧に出る／表示中の言語を含まない: 一覧から除外される	L0063	この機能
+F04	P1	カード状態NMの規格の販売価格	NMの規格があり価格が0より大きい｜NMの規格がない、または価格が0	NMの規格があり価格が0より大きい: 一覧に出る／NMの規格がない、または価格が0: 一覧から除外される	L0064	この機能
+F05	P1	閲覧履歴の保存値と取得できた商品	保存値あり・取得商品あり｜保存値あり・取得商品0件｜保存値なし	保存値あり・取得商品あり: 取得できた商品のサムネイルを新しい順に並べる／保存値あり・取得商品0件: 見出しだけを表示し履歴無しの表示は行わない／保存値なし: 履歴無しの表示を出す	L0034,L0069-L0071	この機能
+
+ succeeded in 1000ms:
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	閲覧店舗	本店｜支店	本店: カテゴリのフロント非表示フラグだけで表示可否を決める／支店: フロント非表示フラグに加えて支店の非表示設定も参照して表示可否を決める	L0051-L0052	この機能
+F02	P1	カテゴリのフロント非表示フラグ	立っていない｜立っている	立っていない: 表示対象になる／立っている: 本店・支店とも一覧に表示しない	L0051,M03-11:L0079-L0080,M03-11:L0099	M03-11（データ）
+F03	P1	カテゴリの支店非表示フラグ	立っていない｜立っている	立っていない: 支店でも表示対象になる／立っている: 支店の一覧に表示しない（本店では表示に影響しない）	L0052,M03-11:L0076-L0077,M03-11:L0100	M03-11（データ）
+
+ succeeded in 821ms:
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	操作	登録｜解除	登録: お気に入りに追加する／解除: お気に入りから外す	L0049-L0050,L0089-L0090	この機能
+F02	P1	どの段で決まるか	未ログイン｜上限以上｜既にある｜無い	未ログイン: 登録はログインを促し、解除は不正要求（HTTP400）で本文なし／上限以上: 登録だけが既登録の判定より先に上限超過で登録しない／既にある: 登録は新たに作らず成功、解除は削除／無い: 登録は作成、解除は何も削除せず成功	L0049,L0053-L0054,L0102-L0107,L0132-L0133	この機能
+F03	P2	閲覧店舗	本店｜支店	本店: お気に入りのボタンを表示する／支店: 表示しない	L0052,L0085	この機能
+F04	P2	会員自身のお気に入り	登録済み｜未登録	登録済み: 「お気に入りに登録中」または「♥」を表示する／未登録: 「お気に入りに追加する」または「♡」を表示する	L0089,L0109	この機能
+F05	P3	商品の公開状態	公開中｜非公開	公開中: 一覧に出す候補になる／非公開: 一覧に出さない	L0114	この機能
+F06	P3	高額商品コード	あり｜なし	あり: 在庫があるときだけ一覧に出す／なし: 在庫によらず公開中なら出す	L0114	この機能
+F07	P3	商品の在庫	あり｜なし	あり: 一覧に出す／なし: 高額商品コードがあるときは一覧に出さない	L0114	この機能
+
+ succeeded in 853ms:
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	どの段で決まるか	規格を特定できない｜未ログイン｜同一依頼がある｜件数が上限以上｜全段を通過	規格を特定できない: 対象商品が削除済みの応答で登録しない（状態fail）／未ログイン: 戻り先を保持しログインモーダルを表示する（状態nologin）／同一依頼がある: その依頼を削除して取り消す（状態cancel）／件数が上限以上: 登録せず上限超過のエラーを出す（状態fail）／全段を通過: 依頼を作成して保存する（状態success）	L0116-L0123,L0061-L0063,M10-16:L0062	この機能
+F02	P1,P3	依頼の単位	商品規格単位｜商品単位	商品規格単位: P1は規格の依頼1件、P3は依頼した規格の入荷で通知／商品単位: P1は商品と言語の依頼1件、P3はNMの入荷だけ通知	L0060,L0062,L0067,L0130	この機能
+F03	P2	閲覧店舗	本店｜支店	本店: 通知ボタンを表示する／支店: 通知ボタンを表示しない	L0051,L0065,L0098	この機能
+F04	P2	商品の高額区分	高額商品｜高額商品でない	高額商品: 通知ボタンを表示しない／高額商品でない: 通知ボタンを表示する	L0050	この機能
+F05	P2	表示画面	商品詳細｜商品一覧｜入荷待ち商品一覧	商品詳細: 商品言語単位と規格単位の通知ボタンを表示する／商品一覧: SOLDOUTの商品に商品単位の通知ボタンを表示する／入荷待ち商品一覧: 通知ボタンを表示する画面に挙がるが、出すボタンの種類は設計書に定めがない	L0046-L0049,L0054-L0057,L0068	この機能
+F06	P2	会員自身の依頼	依頼済み｜未依頼	依頼済み: 「通知待ち」を表示する／未依頼: 「入荷時に通知」を表示する	L0102	この機能
+F07	P3	入荷通知メールの許可	送る｜送らない	送る: 入荷した規格を依頼する会員へ依頼の登録日時の昇順に1件ずつ送信する／送らない: 1件も送信しない	L0129-L0130,M10-16:L0070	M10-16（設定）
+F08	P3	入荷した商品規格の状態	NM｜NM以外	NM: 商品単位の依頼にも通知する／NM以外: 商品単位の依頼には通知しない（規格単位の依頼にはその規格の入荷で通知）	L0067,L0130	この機能
+
+ succeeded in 880ms:
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1,P2	閲覧店舗	本店｜支店	本店: 送料を表示する／支店: 送料を表示しない。カートは閲覧店舗の商品だけ	L0043,L0045,L0157	この機能
+F02	P1	送料無料金額の条件	設定なし｜設定あり・合計が到達｜設定あり・合計が未達	設定なし: 送料無料の案内も不足額の案内も出ない／設定あり・合計が到達: 送料無料の状態を表示／設定あり・合計が未達: 不足額を案内	M10-01:L0072,L0214-L0216	M10-01（設定）
+F03	P1	送料無料個数の条件	設定なし｜設定あり・個数が到達｜設定あり・個数が未達	設定なし: 個数では判定しない／設定あり・個数が到達: 金額に関わらず送料無料／設定あり・個数が未達: 金額の判定に従う	M10-01:L0073,L0215	M10-01（設定）
+F04	P2	他店舗のカートの商品	あり｜なし	あり: 閲覧店舗の操作後も他店舗のカートに残る／なし: 閲覧店舗のカートだけが対象	L0053,L0175,L0183	この機能
+F05	P2	カートへの操作	表示のみ｜個別削除｜一括削除	表示のみ: 閲覧店舗の商品だけ表示／個別削除: 選んだ商品だけ削除／一括削除: 閲覧店舗の商品をすべて削除	L0174-L0175,L0182-L0183	この機能
+F06	P3	カートの購入グループ構成	商品なし｜単一｜複数	商品なし: 空の案内だけでボタンは出ない／単一: ボタンを出す／複数: ボタンを出さずエラーを表示	L0218,L0239,L0260	この機能
+F07	P3	販売個数制限	制限内｜制限超過	制限内: ご注文方法の指定画面へ進む／制限超過: 進まずメッセージ付きで買い物かごへ戻る	L0219	この機能
+F08	P4	送信先	POST /cart/add｜POST /cart/add_bulk｜POST /cart/add_show	POST /cart/add: 追加後のカート内容を返す／POST /cart/add_bulk: 複数件を追加し追加後のカート内容を返す／POST /cart/add_show: 成否にかかわらず買い物かご画面へ遷移	L0222,L0225-L0227	この機能
+F09	P4	要求の渡し方	フォーム値｜JSON本文	フォーム値: フォームの値を読む／JSON本文: フォームに商品規格も数量も無いときJSON本文を読む	L0221,L0225,L0229	この機能
+F10	P4	数量の指定	指定あり｜指定なし	指定あり: 指定した数量で追加／指定なし: 数量1で追加	L0221	この機能
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/F03-06/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/F03-04/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/F03-05/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/F03-07/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/F03-08/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/F04-01/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 269ms:
+##### 0303 sheet-8 最近チェックした商品
+L0001	最近チェックした商品
+L0002	ドキュメント名フロント 商品
+L0003	セクション—
+L0004	プロジェクト名サイトリニューアル
+L0005	作成者加島
+L0006	作成日2025-08-19
+L0007	更新者石川
+L0008	更新日2025-09-22
+L0009	機能NoF03-06
+L0010	機能名最近チェックした商品
+L0011	概要Cookieに登録されている商品IDから、商品の画像を表示する
+L0012	処理概要（★はカスタマイズ項目）
+L0013	レイアウト図
+L0014	1
+L0015	2
+L0016	3
+L0017	4
+L0018	5
+L0019	画像レイヤー（3枚）: 最近チェックした商品 / AH10 / image 1 + 最近チェックした商品 / D32 / image 2 + 最近チェックした商品 / I8 / image 3
+L0020	カスタマイズ説明
+L0021	・カスタマイズ要件
+L0022	・本店フロント＞商品一覧と同じ商品一覧を表示する
+L0023	・現行の支店にはない機能のため、本店と統合する支店の画面では機能を新規追加
+L0024	支店商品の公開と非公開の制御
+L0025	・「M03-02商品登録/編集」機能の商品公開ステータスに応じて、商品を表示、または非表示にする
+L0026	・カスタマイズ要件に記載の内容以外は現行踏襲とする
+L0027	機能仕様処理概要（★はカスタマイズ項目）
+L0028	・下記の画面で表示する
+L0029	1 本店ECTOP
+L0030	2 商品一覧
+L0031	3 商品詳細
+L0032	★本店、各支店でチェックした商品を1つのCookieで管理し、支店側で表示した場合は支店表示フラグが立っているもののみ表示する
+L0033	・最近チェックした商品情報のcookieは2年間有効のものとする
+L0034	・最大15件をスライダーなしで表示する、表示順は最近見た順（新しい順）とする
+L0035	識別ID	ラベル	書式・制限	必須	最大文字数
+L0036	または最大値	初期値	画面部品の説明
+L0037	1	商品画像	画像	-	-	-	・押下すると、拡大画像を表示する
+L0038	・PC版でマウスホバーすると、下記のようにする
+L0039	・商品画像をグレーアウト
+L0040	・「画像を拡大」を表示
+L0041	2	セールアイコン	ラベル	-	-	-	・セールフラグが立っている商品に表示する
+L0042	3	商品画像拡大	ラベル	-	-	-	・押下すると、商品画像の拡大画像を表示する
+L0043	・SP版のみ表示する
+L0044	4	カード言語	ラベル	-	-	-	・カード商品のみ表示する
+L0045	・商品に登録している言語コードを表示する
+L0046	5	商品名	リンク	-	-	-	・押下すると、押下した商品の商品詳細画面に遷移する
+L0047	・表示範囲に収まらない場合は…を表示する
+L0048	Source:
+L0049	functions/pf-eccube3/f03-06_front_product_product_recently_viewed.md
+L0050	現行仕様
+L0051	F03-06 最近見た商品 / F03-06（最近見た商品）
+L0052	業務ロジック
+L0053	表示するもの
+L0054	要素	内容
+L0055	見出し	常に表示する
+L0056	履歴無しの表示	履歴が無いときに、最近見た商品が無い旨を表示する
+L0057	商品画像の装飾	フォイル商品のときはフォイル用の装飾を付す
+L0058	商品画像は遅延読み込みで取得する。取得が終わるまでは読み込み中を示す画像を表示する。
+L0059	本機能は利用者の入力欄を持たない。
+L0060	一覧に並べる商品
+L0061	閲覧履歴の保存値を商品IDの並びとして解釈し、商品IDごとに商品情報とサムネイル画像を取得する。取得できた商品だけをサムネイルとして並べ、取得できなかった商品は一覧から除外する。取得の対象は、次をすべて満たす商品とする。
+L0062	条件	内容
+L0063	表示地域	商品に設定された地域制限の表示ロケールに、表示中の言語が含まれること
+L0064	販売可能な規格	カード状態がNMの規格を持ち、その規格の販売価格が0より大きいこと
+L0065	サムネイルに使う画像は、その商品に登録された商品画像のうち表示順が最も先の1枚とする。
+L0066	閲覧履歴の保存期限は、商品詳細を開くたびに、その時点から730日後へ更新する。
+L0067	エラー時の扱い
+L0068	事象	扱い
+L0069	閲覧履歴の保存値が無いとき	履歴無しの表示を描画する
+L0070	商品情報を取得できない商品があるとき	当該商品だけを一覧から除外する
+L0071	閲覧履歴の保存値はあるが、取得できた商品が1件も無いとき	見出しだけを表示し、履歴無しの表示は行わない
+L0072	入出力
+L0073	種類	内容
+L0074	入力	閲覧履歴の保存値（商品IDの並び）
+L0075	成功時出力	履歴の商品サムネイル一覧、または履歴が無いときの履歴無しの表示
+L0076	失敗時出力	保存値が無いときは履歴無しの表示
+L0077	リニューアル後の仕様
+L0078	表示メッセージ
+L0079	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0080	—	見出し	最近チェックした商品	常に表示する	—
+L0081	—	見出し（英語表示時）	Recently Viewed	常に表示する	—
+L0082	—	一覧領域	最近見た商品はありません。	閲覧履歴の保存値が無いとき	一覧を表示しない
+L0083	—	一覧領域（英語表示時）	No Recently Seen Items	閲覧履歴の保存値が無いとき	一覧を表示しない
+L0084	本ブロックは項目ごとのエラーと一時的な通知メッセージを生成しない。
+
+ succeeded in 249ms:
+##### 0303 sheet-6 カテゴリ一覧
+L0001	カテゴリ一覧
+L0002	ドキュメント名フロント 商品
+L0003	セクション—
+L0004	プロジェクト名サイトリニューアル
+L0005	作成者加島
+L0006	作成日2025-08-19
+L0007	更新者盛田
+L0008	更新日2025-11-06
+L0009	機能NoF03-04
+L0010	機能名カテゴリ一覧
+L0011	概要カテゴリの一覧を表示する
+L0012	処理概要（★はカスタマイズ項目）
+L0013	レイアウト図
+L0014	1
+L0015	2
+L0016	3
+L0017	4
+L0018	カテゴリ一覧 / Q8 / image 1
+L0019	カテゴリ一覧 / B91 / image 2
+L0020	画面遷移図をExcel図形座標で再構成（画面 2件 / 遷移 1件 / 元コネクタ 1件）
+L0021	遷移一覧（1件）（うち推定 1件：明示接続でなく最近傍幾何で補完）
+L0022	遷移元	遷移先	connector
+L0023	PC版ナビゲーション	推定カテゴリ第一階層をマウスオーバーで、第二階層を表示	19（0303:カテゴリ一覧!I99）
+L0024	カスタマイズ説明
+L0025	・カスタマイズ要件
+L0026	モーダル表示
+L0027	・現行のカテゴリ一覧画面を、モーダル表示に変更する
+L0028	最新セットカテゴリの表示
+L0029	・商品カテゴリの第一階層が「最新セット」であるカテゴリをツリー表示する
+L0030	最新セット以外のカテゴリ表示
+L0031	・商品カテゴリの第一階層が「最新セット」以外のカテゴリを最新セット表示と分けてツリー表示する
+L0032	※0204_管理画面_商品管理.xlsxの「別添資料_カテゴリ子検索条件について」にて表示条件を整理
+L0033	カテゴリに表示されるレアリティについて
+L0034	・カテゴリに表示されるレアリティは、カテゴリ登録機能にてカテゴリとして設定することができる
+L0035	・レアリティ押下によってURLに含める検索パラメータもカテゴリ登録機能にて設定することができる
+L0036	・レアリティ押下によって対応する検索パラメータをURLに含めた商品一覧画面に遷移する
+L0037	・レアリティ押下によって遷移する商品一覧画面ではレアリティの変更ができるようにする
+L0038	・カスタマイズ要件に記載の内容以外は現行踏襲とする
+L0039	機能仕様処理概要（★はカスタマイズ項目）
+L0040	★下記の機能で表示する
+L0041	1 PC版ナビゲーション
+L0042	2 SP版ナビゲーション
+L0043	3 PC版支店ナビゲーション
+L0044	4 SP版支店ナビゲーション
+L0045	5 ECTOP
+L0046	6 支店ECTOP
+L0047	7 商品一覧
+L0048	8 商品詳細
+L0049	※1~8のレイアウト図はそれぞれデザインが異なる場合があるため、各機能の設計書ごとにレイアウトを記載する
+L0050	★現行で表示していたカードとカテゴリを組み合わせて表示内容をあらかじめ生成していたカテゴリ一覧は削除する
+L0051	★カテゴリのフロント非表示フラグを参照し、表示/非表示を制御する
+L0052	★支店サイトでは、カテゴリの支店表示フラグを参照し、表示/非表示を制御する
+L0053	★(1)最新セットカテゴリでは、カテゴリの第一階層が「最新セット」の子カテゴリをツリー表示する
+L0054	★(2)フォーマット別カテゴリで表示するフォーマットは、「スタンダード」「パイオニア」「モダン」「レガシー」「統率者」を固定で表示する
+L0055	★(3)最新セット、フォーマット別以外のカテゴリをフォーマット別の下に表示する
+L0056	★(1)最新セットカテゴリと(4)フォーマット別カテゴリでレアリティを押下すると、対応する検索パラメータをURLに含めた商品一覧に遷移する
+L0057	※検索パラメータについては、別紙「0204_基本設計仕様書(商品管理)」のシート「別添資料_カテゴリ子検索条件について」を参照
+L0058	識別ID	ラベル	書式・制限	必須	最大文字数
+L0059	または最大値	初期値	画面部品の説明
+L0060	1	最新セットカテゴリ	リンク	-	-	-	※カスタマイズ対応、商品カテゴリの第一階層が「最新セット」であるカテゴリをツリー表示する
+L0061	・第一階層が「最新セット」のカテゴリをツリー表示する
+L0062	・子カテゴリはその親カテゴリを押下することで展開する
+L0063	※下記の機能では、親カテゴリをマウスホバーで展開する
+L0064	・PC版ナビゲーション
+L0065	・支店PC版ナビゲーション
+L0066	・カテゴリを押下すると、そのカテゴリで検索した一覧へ遷移
+L0067	2	フォーマット別カテゴリ	リンク	-	-	-	・カテゴリの第一階層が「スタンダード」「パイオニア」「モダン」「レガシー」「統率者」のものをツリー表示する
+L0068	・子カテゴリはその親カテゴリを押下することで展開する
+L0069	※下記の機能では、親カテゴリをマウスホバーで展開する
+L0070	・PC版ナビゲーション
+L0071	・支店PC版ナビゲーション
+L0072	・カテゴリを押下すると、そのカテゴリで検索した一覧へ遷移
+L0073	3	フォーマット別ヘルプ	ラベル	-	-	-
+L0074	マウスホバーすると、下記の文章を表示する
+L0075	「フォーマット」とは、デッキ構築や対戦のルールを定めたもので、使用できるカードの種類やデッキの枚数、対戦人数などが規定されています。
+L0076	4	その他カテゴリ	リンク	-	-	-	・カテゴリの第一階層が最新セット、フォーマット以外のものを表示
+L0077	・子カテゴリはその親カテゴリを押下することで展開する
+L0078	※下記の機能では、親カテゴリをマウスホバーで展開する
+L0079	・PC版ナビゲーション
+L0080	・支店PC版ナビゲーション
+L0081	・カテゴリを押下すると、そのカテゴリで検索した一覧へ遷移
+L0082	Source:
+L0083	functions/pf-eccube3/f03-04_front_product_product_category_list.md
+L0084	現行仕様
+L0085	F03-04 カテゴリ一覧 / F03-04（カテゴリ一覧）
+L0086	業務ロジック
+L0087	カテゴリの並び順
+L0088	一覧に出すカテゴリと、その配下の子カテゴリは、いずれも表示順の降順で並べる。
+L0089	遷移先へ引き継ぐ並び順
+L0090	カテゴリ一覧から商品一覧へ遷移する導線には、並び順の既定として色順を付与する。遷移後の抽出・件数・並び替えは商品一覧（F03-01）に従う。
+L0091	本機能は閲覧と導線が主であり、業務計算は行わない。
+L0092	英語ページでの表示
+L0093	英語ページでは、一覧の見出しに「Category」を、各カテゴリの名称にカテゴリの英語名を表示する（日本語ページの見出しは「商品カテゴリ一覧」）。
+L0094	エラー時の扱い
+L0095	エラー内容	処理
+L0096	マスタ取得の障害	共通の例外処理に委ねる。本機能固有の利用者向けメッセージは持たない
+L0097	入出力
+L0098	種類	内容
+L0099	入力	カテゴリ一覧の表示要求
+L0100	失敗時出力	本機能固有のエラー表示は持たない
+L0101	リニューアル後の仕様
+L0102	表示メッセージ
+L0103	本機能は利用者向けの画面メッセージを持たない。
+
+ succeeded in 341ms:
+##### 0303 sheet-7 商品リコメンド
+L0001	商品リコメンド
+L0002	ドキュメント名フロント 商品
+L0003	セクション—
+L0004	プロジェクト名サイトリニューアル
+L0005	作成者加島
+L0006	作成日2025-08-19
+L0007	更新者石川
+L0008	更新日2025-09-22
+L0009	機能NoF03-05
+L0010	機能名商品リコメンド
+L0011	概要マイページ、購入完了ページ、商品詳細ページ、買い物かごページにおすすめ商品を表示する
+L0012	処理概要（★はカスタマイズ項目）
+L0013	レイアウト図
+L0014	画像レイヤー（2枚）: 商品リコメンド / C29 / image 1 + 商品リコメンド / C10 / image 2
+L0015	カスタマイズ説明
+L0016	・現行踏襲
+L0017	機能仕様処理概要（★はカスタマイズ項目）
+L0018	・下記の機能で表示する
+L0019	1 マイページ
+L0020	2 購入完了ページ
+L0021	3 商品詳細ページ
+L0022	4 買い物かごページ
+L0023	・下記の条件を満たす商品を表示する
+L0024	・ページによって異なる商品IDを取得し、商品IDをもとにおすすめ商品を取得する（商品IDが取得できない場合はおすすめ商品を表示しない）
+L0025	・マイページまたは注文完了ページの場合
+L0026	・直近の注文に含まれる明細のうち販売価格が最も高い商品
+L0027	・商品詳細ページの場合
+L0028	・表示している商品ID
+L0029	・カートページの場合
+L0030	・カートに入っている商品のうち販売価格が最も高い商品
+L0031	・上記で取得した商品IDと同時に購入された商品
+L0032	（過去N日間（追加システム設定のレコメンドの検索期間（日数））の注文を対象とする、注文ステータスが「処理中」の注文は含まない）
+L0033	・商品IDで指定された商品と同一商品、同一カードではない
+L0034	・公開中（支店であれば支店公開フラグを参照する）
+L0035	・参照中の言語の商品
+L0036	・在庫あり（支店であれば支店の在庫を参照する）
+L0037	・会員ログインしている場合、会員が購入したことのある商品以外
+L0038	・表示件数は10件とする
+L0039	・商品を表示している画面部品については、商品一覧シートを参照
+L0040	・おすすめ商品がない場合、商品は表示せず下記の文言を表示する。
+L0041	「表示するおすすめ商品はまだありません。」
+L0042	識別ID ラベル 書式・制限 必須 最大文字数
+L0043	または最大値 初期値 画面部品の説明
+L0044	画面項目は商品一覧の商品表示部分と同一とする
+L0045	Source:
+L0046	functions/pf-eccube3/f03-05_front_product_block_recommend.md
+L0047	現行仕様
+L0048	F03-05 商品リコメンド / 商品 — 商品リコメンド（おすすめ商品ブロック）
+L0049	業務ロジック
+L0050	基準商品を決める注文の絞り込み
+L0051	マイページ・注文完了ページで基準商品を決めるとき、対象とする直近の注文から、注文ステータスが「処理中」の注文を除く。
+L0052	おすすめの並び順
+L0053	おすすめ商品は、基準商品と同時に購入された数量の合計が多い順に並べる。
+L0054	入出力
+L0055	取得と描画
+L0056	おすすめ枠が画面内に入った時点で、おすすめ内容を非同期に取得して枠内へ描画する。取得は1回の画面表示につき1度だけで、描画後は再取得しない。本機能は利用者入力のフォームを持たない。
+L0057	表示内容
+L0058	おすすめ商品は横スライダーで表示し、前送り・後送りのボタンを備える。商品画像は遅延読み込みで表示し、フォイル商品は画像にフォイル用の装飾を付す。枠の見出しには「あなたへのおすすめアイテム」（英語表示時は「Recommended items for you」）を表示する。英語表示時は商品名を英語名で表示する。本ブロック専用のモーダルは無い。
+L0059	リニューアル後の仕様
+L0060	表示メッセージ
+L0061	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0062	F03-05-MSG-001	おすすめ商品枠内	表示するおすすめ商品はまだありません。	表示対象のおすすめ商品がないとき	おすすめ商品なしの案内を表示したまま、同じ画面に留まる
+L0063	F03-05-MSG-001	おすすめ商品枠内（英語表示時）	No recommended products to display.	表示対象のおすすめ商品がないとき。英語ロケールへは言語切替で到達する	おすすめ商品なしの案内を表示したまま、同じ画面に留まる
+L0064	—	おすすめ商品枠内（英語表示時）	No recommended items to display yet.	表示対象のおすすめ商品がないとき（英語文言の別の確認値）	おすすめ商品なしの案内を表示したまま、同じ画面に留まる
+L0065	本ブロックはエラーのインライン表示やフラッシュ・トーストを生成しない。
+
+ succeeded in 326ms:
+##### 0303 sheet-10 お気に入り
+L0001	お気に入り
+L0002	ドキュメント名フロント 商品
+L0003	セクション—
+L0004	プロジェクト名サイトリニューアル
+L0005	作成者加島
+L0006	作成日2025-08-19
+L0007	更新者石川
+L0008	更新日2025-09-22
+L0009	機能NoF03-08
+L0010	機能名お気に入り
+L0011	概要会員がログイン済みの場合、商品に対しお気に入り登録ができる
+L0012	処理概要（★はカスタマイズ項目）
+L0013	お気に入り登録 レイアウト図
+L0014	1-1
+L0015	お気に入り / C8 / image 4
+L0016	1-3
+L0017	1-4
+L0018	1-5
+L0019	1-6
+L0020	1-7
+L0021	1-8
+L0022	1-9
+L0023	1-10
+L0024	画像レイヤー（5枚）: お気に入り / U29 / image 1 + お気に入り / C47 / image 2 + お気に入り / AE47 / image 3 + お気に入り / Y10 / image 5 + お気に入り / AN53 / image 6
+L0025	商品詳細
+L0026	商品一覧
+L0027	会員未ログインの場合
+L0028	会員ログイン済みの場合
+L0029	OK押下
+L0030	商品詳細
+L0031	商品一覧
+L0032	画面遷移図をExcel図形座標で再構成（画面 5件 / 遷移 4件 / 元コネクタ 7件）
+L0033	遷移一覧（4件）（うち推定 4件：明示接続でなく最近傍幾何で補完）
+L0034	遷移元	遷移先	connector
+L0035	会員ログイン済みの場合	推定会員未ログインの場合	12（0303:お気に入り!Z37）
+L0036	会員未ログインの場合	推定会員ログイン済みの場合	15（0303:お気に入り!P37）
+L0037	商品詳細	推定現行にあるモーダルは非表示とし、直接ログインモーダルまたはお気に入り登録完了モーダルを表示する	17（0303:お気に入り!Z20）
+L0038	商品詳細	推定商品一覧	42（0303:お気に入り!B112）
+L0039	カスタマイズ説明
+L0040	・カスタマイズ要件
+L0041	・本店のみであること
+L0042	・カスタマイズ要件に記載の内容以外は現行踏襲とする
+L0043	機能仕様処理概要（★はカスタマイズ項目）
+L0044	★下記の画面で表示する
+L0045	1 本店ECTOP（追加）
+L0046	2 商品一覧（追加）
+L0047	3 商品詳細
+L0048	4 お気に入り登録商品一覧
+L0049	・会員未ログインの場合に「お気に入りに追加する」または「♡」ボタンを押下すると、ログインモーダルを表示する
+L0050	・会員ログイン済みの場合に「お気に入りに追加する」または「♡」ボタンをを押下すると、お気に入り登録完了のモーダルを表示する
+L0051	・会員ログイン時にお気に入りに登録した商品は、マイページ＞お気に入り登録商品一覧に表示する
+L0052	★本店のみ表示し、支店で表示しない
+L0053	・最大100件(登録上限数)まで表示
+L0054	登録上限数を超えて登録仕様とした場合、エラーを表示する
+L0055	・ログイン押下後にログインが失敗すると、下記のエラーメッセージを表示したログイン画面に遷移する
+L0056	「ログインできませんでした。入力内容に誤りがないかご確認ください。」
+L0057	・お気に入りは商品ごと、言語ごとに登録可能
+L0058	識別ID	ラベル	書式・制限	必須	最大文字数
+L0059	または最大値	初期値	画面部品の説明
+L0060	お気に入り登録
+L0061	1-1	「お気に入りに追加する」または「♡」	ボタン	-	-	-	・押下時ログイン済みの場合はお気に入りを登録する
+L0062	・押下時未ログインの場合はログインモーダルを表示する
+L0063	1-2	OK(お気に入り登録確認)	ボタン	-	-	-	・会員未ログインの場合に押下すると、会員ログインのモーダルを表示
+L0064	・会員ログイン済みの場合に押下すると、お気に入りに登録する
+L0065	・リニューアルでは非表示とする
+L0066	1-3	キャンセル	ラベル	-	-	-	・表示しているお気に入り登録のモーダルを閉じる
+L0067	・リニューアルでは非表示とする
+L0068	1-4	ログインモーダルを閉じる	モーダルを閉じるボタン	-	-	-	・表示しているログインモーダルを閉じる
+L0069	1-5	Eメールアドレス	半角	○	320	-	・プレースホルダ: Eメールアドレス
+L0070	・入力せずにログインを押下すると入力必須のバリデーションメッセージを表示する
+L0071	1-6	パスワード	半角	○	320	-	・プレースホルダ: パスワード
+L0072	・入力せずにログインを押下すると入力必須のバリデーションメッセージを表示する
+L0073	1-7	ログイン	ボタン	-	-	-	・モーダル内の入力値をもとにログインを実行し、ログインが失敗すれば会員ログイン画面に遷移する
+L0074	1-8	新規会員登録	リンク	-	-	-	・押下すると、会員登録画面に遷移する
+L0075	1-9	お気に入り登録完了モーダルを閉じる	モーダルを閉じるボタン	-	-	-	・表示している入お気に入り登録完了のモーダルを閉じる
+L0076	1-10	OK(お気に入り登録完了)	モーダルを閉じるボタン	-	-	-	・表示しているお気に入り登録完了のモーダルを閉じる
+L0077	お気に入り登録キャンセル レイアウト図
+L0078	2-1
+L0079	2-5
+L0080	2-4
+L0081	2-3
+L0082	2-2
+L0083	画像レイヤー（10枚）: お気に入り / B112 / image 7 + お気に入り / B112 / image 8 + お気に入り / B112 / image 9 + お気に入り / B112 / image 10 + お気に入り / B112 / image 11 + お気に入り / B112 / image 12 + お気に入り / W137 / image 13 + お気に入り / Y155 / image 14 + お気に入り / P149 / image 15 + お気に入り / N130 / image 16
+L0084	処理概要（★はカスタマイズ項目）
+L0085	★本店のみ表示し、支店で表示しない
+L0086	識別ID	ラベル	書式・制限	必須	最大文字数
+L0087	または最大値	初期値	画面部品の説明
+L0088	お気に入り登録キャンセル
+L0089	2-1	「お気に入りに登録中」または「♥」	ボタン	-	-	-	・お気に入りが登録済みの場合に表示
+L0090	・押下時お気に入り登録をキャンセルし、キャンセルモーダルを表示する
+L0091	2-2	OK(お気に入り登録キャンセル確認)	ボタン	-	-	-	・押下すると、お気に入り登録をキャンセルする
+L0092	・リニューアルでは非表示とする
+L0093	2-3	キャンセル	モーダルを閉じるボタン	-	-	-	・表示しているお気に入り登録キャンセル確認のモーダルを閉じる
+L0094	・リニューアルでは非表示とする
+L0095	2-4	お気に入り登録キャンセル完了のモーダルを閉じる	モーダルを閉じるボタン	-	-	-	・表示しているお気に入り登録キャンセル完了のモーダルを閉じる
+L0096	2-5	OK(お気に入り登録キャンセル完了)	モーダルを閉じるボタン	-	-	-	・表示しているお気に入り登録キャンセル完了のモーダルを閉じる
+L0097	Source:
+L0098	functions/pf-eccube3/f03-08_front_product_product_favorite.md
+L0099	現行仕様
+L0100	F03-08 お気に入り / 商品 — お気に入り（登録・解除・一覧）
+L0101	業務ロジック
+L0102	既登録の商品・言語をもう一度登録したとき
+L0103	当該商品・言語がすでにお気に入りにあるときは、新たに作らず成功として応答する。同じ商品・言語がお気に入りに二重に並ぶことはない。ただし登録件数が上限に達している会員では、既登録かどうかを調べる前に上限超過として応答する。
+L0104	登録されていない商品・言語を解除したとき
+L0105	当該商品・言語のお気に入りが無いときは、何も削除せず解除成功として応答する。
+L0106	未ログインでお気に入りを解除しようとしたとき
+L0107	会員（選手情報）を特定できないときは、不正要求（HTTP400）として応答し、画面文言を返さない。
+L0108	商品詳細でのお気に入りの状態表示
+L0109	商品詳細では、お気に入りに登録済みかどうかを言語ごとに判定して表示する。
+L0110	セール通知
+L0111	お気に入りに登録した商品がセール対象になると、その会員の登録メールアドレスへ通知を送る。通知は会員ごとに1通へまとめ、対象となったお気に入り商品を並べて知らせる。
+L0112	1通へまとめる範囲は、1回の実行で見つかったセール対象のお気に入り商品すべてである。まとめるための期間の区切りは設けない。
+L0113	一覧に表示する対象
+L0114	会員ログインを要求し、ログインしていなければ会員ログイン画面へ誘導する。表示するのは、その会員がお気に入りに登録した商品のうち公開中のものに限る。高額商品コードを持つ商品は、在庫があるものだけを表示する。同一商品でも言語が異なれば別の行として並べる。
+L0115	入出力
+L0116	受け取る値と返す応答
+L0117	種類	内容
+L0118	入力	登録・解除は商品IDと言語コード
+L0119	出力	登録・解除は状態（成功／失敗／未ログイン）と文言を持つ応答
+L0120	解除で会員を特定できないとき	応答の本文を返さず不正要求（HTTP400）
+L0121	リニューアル後の仕様
+L0122	表示メッセージ
+L0123	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0124	F03-08-MSG-001	画面右下トースト	お気に入り追加に失敗しました。	お気に入りの登録または解除の通信に失敗したとき	お気に入りボタンの状態を元に戻し、同じ画面に留まる。
+L0125	F03-08-MSG-002	画面中央(ダイアログ)	お気に入り登録解除に失敗しました。	お気に入り商品の解除に失敗したとき	お気に入り一覧を変更せず、同じ画面に留まる
+L0126	F03-08-MSG-003	画面右下トースト	お気に入り登録を解除しました。	お気に入り商品を解除したとき	対象商品を一覧から除去し、同じ画面に留まる
+L0127	F03-08-MSG-004	画面右下トースト	お気に入りに追加しました：	商品をお気に入りに追加したとき	お気に入りを登録し、現在の画面に留まる。お気に入り一覧へのリンクを表示する。
+L0128	F03-08-MSG-005	画面右下トースト	お気に入りから削除しました：	商品をお気に入りから削除したとき	お気に入りを削除し、現在の画面に留まる。お気に入り一覧へのリンクを表示する。
+L0129	F03-08-MSG-006	入力項目付近	1以上で入力してください。	カートへ追加する数量が1未満のとき	カート追加を中止し、入力中の画面に留まる
+L0130	—	お気に入りボタン付近の通知	お気に入りに追加しました。	登録に成功したとき	お気に入りを登録し、画面に留まる
+L0131	—	お気に入りボタン付近の通知	お気に入り登録を解除しました。	解除に成功したとき	お気に入りを削除し、画面に留まる
+L0132	—	お気に入りボタン付近の通知	お気に入り登録は100件までです。	登録件数が上限以上のとき	登録せず、画面に留まる
+L0133	—	お気に入りボタン付近の通知	お気に入りを追加する場合ログインしてください。	未ログインで登録しようとしたとき	登録せず、ログインを促す
+L0134	—	一覧の案内	お気に入り登録した商品がセール対象になった際、ご登録されているメールアドレスにお知らせをお送りいたします。	お気に入り一覧を表示したとき	画面に留まる
+
+ succeeded in 362ms:
+##### 0303 sheet-9 入荷時通知
+L0001	入荷時通知
+L0002	ドキュメント名フロント 商品
+L0003	セクション—
+L0004	プロジェクト名サイトリニューアル
+L0005	作成者加島
+L0006	作成日2025-08-19
+L0007	更新者石川
+L0008	更新日2025-09-22
+L0009	機能NoF03-07
+L0010	機能名入荷時通知
+L0011	概要会員がログイン済みの場合、会員に対し商品の入荷があった際に通知ができる
+L0012	処理概要（★はカスタマイズ項目）
+L0013	入荷通知依頼 レイアウト図
+L0014	1-2
+L0015	1-3
+L0016	1-4
+L0017	1-9
+L0018	1-10
+L0019	1-5
+L0020	1-6
+L0021	1-7
+L0022	1-8
+L0023	1-1
+L0024	画像レイヤー（9枚）: 入荷時通知 / AE58 / image 1 + 入荷時通知 / O40 / image 2 + 入荷時通知 / C8 / image 3 + 入荷時通知 / AO66 / image 5 + 入荷時通知 / X42 / image 6 + 入荷時通知 / E58 / image 7 + 入荷時通知 / E58 / image 8 + 入荷時通知 / C27 / image 9 + 入荷時通知 / N151 / image 16
+L0025	入荷時通知 / Y10 / image 4
+L0026	商品詳細
+L0027	商品一覧
+L0028	ボタン押下後、入荷通知依頼確認モーダルを表示
+L0029	OK押下
+L0030	現行にあるモーダルは非表示とし、直接ログインモーダルまたは入荷通知完了モーダルを表示する
+L0031	現行にあるモーダルは非表示とし、入荷通知キャンセル完了モーダルを表示する
+L0032	商品詳細
+L0033	商品一覧
+L0034	ボタン押下後、入荷通知キャンセル確認モーダルを表示
+L0035	画面遷移図をExcel図形座標で再構成（画面 6件 / 遷移 6件 / 元コネクタ 9件）
+L0036	遷移一覧（6件）（うち推定 6件：明示接続でなく最近傍幾何で補完）
+L0037	遷移元	遷移先	connector
+L0038	商品詳細	推定現行にあるモーダルは非表示とし、直接ログインモーダルまたは入荷通知完了モーダルを表示する	16（0303:入荷時通知!Y17）
+L0039	ボタン押下後、入荷通知依頼確認モーダルを表示	推定現行にあるモーダルは非表示とし、直接ログインモーダルまたは入荷通知完了モーダルを表示する	20（0303:入荷時通知!Z48）
+L0040	商品一覧	推定現行にあるモーダルは非表示とし、直接ログインモーダルまたは入荷通知完了モーダルを表示する	4（0303:入荷時通知!O48）
+L0041	商品一覧	推定ボタン押下後、入荷通知キャンセル確認モーダルを表示	81（0303:入荷時通知!B133）
+L0042	商品詳細	推定ボタン押下後、入荷通知キャンセル確認モーダルを表示	78（0303:入荷時通知!B133）
+L0043	商品一覧	推定入荷通知を解除しました	46（0303:入荷時通知!Z165）
+L0044	カスタマイズ説明
+L0045	・カスタマイズ要件
+L0046	・商品言語単位の通知ボタンを詳細ページに追加する（商品規格単位のボタンは残す）
+L0047	※一覧には表示しない
+L0048	・一覧の場合はSOLDOUTとなっている場合、商品単位の通知とする
+L0049	・商品詳細画面にて、NMとSP以下と全状態の通知ボタンを表示する
+L0050	・高額商品の場合、通知ボタンを表示しない
+L0051	・本店のみであること
+L0052	・カスタマイズ要件に記載の内容以外は現行踏襲とする
+L0053	機能仕様処理概要（★はカスタマイズ項目）
+L0054	・下記の画面で表示する
+L0055	1 商品一覧
+L0056	2 商品詳細
+L0057	3 入荷待ち商品一覧
+L0058	・会員未ログインの場合に「入荷時に通知」ボタンを押下すると、ログインモーダルを表示する
+L0059	・会員ログイン済みの場合に「入荷時に通知」ボタンをを押下すると、入荷通知完了のモーダルを表示する
+L0060	★商品詳細画面の「まとめて入荷通知」より、商品単位の入荷通知を設定できる
+L0061	・登録上限は管理画面で設定されている入荷通知登録上限数(現在は20件)とする
+L0062	※上限件数は「まとめて入荷通知」で登録している場合でも1件、商品規格単位でも1件としてカウントする
+L0063	※登録上限数以上の登録をしようとした場合は、エラーを表示する
+L0064	・会員ログイン時に入荷待ちに登録した商品は、マイページ＞入荷待ち商品に表示する
+L0065	★本店のみ表示し、支店で表示しない
+L0066	★
+L0067	2026/7/13 TAMさんに確認したところ、商品一覧画面でSOLDOUTとなっている場合、NMのみの入荷通知とする、が正しい
+L0068	★商品詳細画面にて、各状態と全状態の通知ボタンを表示する
+L0069	・ログイン押下後にログインが失敗すると、下記のエラーメッセージを表示したログイン画面に遷移する
+L0070	「ログインできませんでした。入力内容に誤りがないかご確認ください。」
+L0071	識別ID	ラベル	書式・制限	必須	最大文字数
+L0072	または最大値	初期値	画面部品の説明
+L0073	入荷通知依頼
+L0074	1-1	入荷時に通知	ボタン	-	-	-	・押下時ログイン済みの場合は入荷通知を登録する
+L0075	・押下時未ログインの場合はログインモーダルを表示する
+L0076	1-2	OK(入荷通知依頼確認)	ボタン	-	-	-	・会員未ログインの場合に押下すると、会員ログインのモーダルを表示
+L0077	・会員ログイン済みの場合に押下すると、入荷通知を登録する
+L0078	・リニューアルでは非表示とする
+L0079	1-3	キャンセル	ラベル	-	-	-	・表示している入荷通知のモーダルを閉じる
+L0080	・リニューアルでは非表示とする
+L0081	1-4	ログインモーダルを閉じる	モーダルを閉じるボタン	-	-	-	・表示しているログインモーダルを閉じる
+L0082	1-5	Eメールアドレス	半角	○	320	-	・プレースホルダ: Eメールアドレス
+L0083	・入力せずに(7)ログインを押下すると入力必須のバリデーションメッセージを表示する
+L0084	1-6	パスワード	半角	○	320	-	・プレースホルダ: パスワード
+L0085	・入力せずに(7)ログインを押下すると入力必須のバリデーションメッセージを表示する
+L0086	1-7	ログイン	ボタン	-	-	-	・モーダル内の入力値をもとにログインを実行し、ログインが失敗すれば会員ログイン画面に遷移する
+L0087	1-8	新規会員登録	リンク	-	-	-	・押下すると、会員登録画面に遷移する
+L0088	1-9	入荷通知依頼完了モーダルを閉じる	モーダルを閉じるボタン	-	-	-	・表示している入荷通知依頼完了のモーダルを閉じる
+L0089	1-10	OK(入荷通知依頼完了)	モーダルを閉じるボタン	-	-	-	・表示している入荷通知依頼のモーダルを閉じる
+L0090	入荷通知キャンセル レイアウト図
+L0091	画像レイヤー（3枚）: 入荷時通知 / B133 / image 10 + 入荷時通知 / B133 / image 12 + 入荷時通知 / B133 / image 13
+L0092	2-1
+L0093	2-4
+L0094	2-5
+L0095	2-3
+L0096	画像レイヤー（5枚）: 入荷時通知 / B133 / image 11 + 入荷時通知 / B133 / image 14 + 入荷時通知 / N170 / image 15 + 入荷時通知 / Z177 / image 17 + 入荷時通知 / W158 / image 18
+L0097	処理概要（★はカスタマイズ項目）
+L0098	★本店のみ表示し、支店で表示しない
+L0099	識別ID	ラベル	書式・制限	必須	最大文字数
+L0100	または最大値	初期値	画面部品の説明
+L0101	入荷通知キャンセル
+L0102	2-1	通知待ち	ボタン	-	-	-	・入荷通知が登録済みの場合に表示
+L0103	・押下時入荷通知をキャンセルし、キャンセルモーダルを表示する
+L0104	2-2	OK(入荷通知キャンセル確認)	ボタン	-	-	-	・押下すると、入荷通知をキャンセルする
+L0105	・リニューアルでは非表示とする
+L0106	2-3	キャンセル	モーダルを閉じるボタン	-	-	-	・表示している入荷通知キャンセル確認のモーダルを閉じる
+L0107	・リニューアルでは非表示とする
+L0108	2-4	入荷通知キャンセル完了のモーダルを閉じる	モーダルを閉じるボタン	-	-	-	・表示している入荷通知キャンセル完了のモーダルを閉じる
+L0109	2-5	OK(入荷通知キャンセル完了)	モーダルを閉じるボタン	-	-	-	・表示している入荷通知キャンセル完了のモーダルを閉じる
+L0110	Source:
+L0111	functions/pf-eccube3/f03-07_front_product_product_arrival_notification.md
+L0112	現行仕様
+L0113	F03-07 入荷時通知 / F03-07（入荷時通知）
+L0114	業務ロジック
+L0115	依頼と取り消しの判定順序
+L0116	同じ「入荷時に通知」の指示に対し、次の順で判定して最初に該当したものだけを返す。
+L0117	順序	判定	結果
+L0118	1	商品規格が特定できるか	できないなら対象商品が削除済みの応答（状態fail）を返す
+L0119	2	ログイン会員か	会員でないなら戻り先を保持し、未ログインの応答（状態nologin）を返す
+L0120	3	同一商品規格の依頼が既にあるか	あるならその依頼を削除し、取り消しの応答（状態cancel）を返す
+L0121	4	依頼件数が上限未満か	上限以上なら上限超過の応答（状態fail）を返す
+L0122	5	上記を通過	依頼を作成して保存し、依頼成功の応答（状態success）を返す
+L0123	上限と比べる件数は、有効な依頼だけを数える。取り消した依頼と、削除日時が設定された依頼は数えない。
+L0124	未ログインで依頼したあとの戻り先
+L0125	未ログインで入荷通知を依頼したときは、依頼を指示した画面を戻り先として保持する。 戻り先を保持した状態でログイン後にマイページを開くと、マイページを表示せずその戻り先へ遷移する。 新規会員登録から本会員登録を完了したときも同じ戻り先へ遷移する。いずれも一度遷移すると戻り先は消え、次回以降は通常どおりマイページ・会員登録完了の画面を表示する。
+L0126	入荷時の通知メール
+L0127	入荷通知の依頼に対するメールは、入荷（在庫の反映・入荷CSVの取込・商品規格の登録更新）を契機に送る。
+L0128	条件	ふるまい
+L0129	入荷通知メールを送らない設定になっている	1件も送信しない
+L0130	送る設定になっている	入荷した商品規格を依頼している会員へ、依頼の登録日時の昇順に1件ずつ送信する
+L0131	メールを送っても入荷通知の依頼は残る。同じ商品規格が再度入荷すれば、依頼している会員へ再び送信する。
+L0132	入出力
+L0133	種類	内容
+L0134	入力	登録・取り消しは商品規格ID。一覧は会員ログイン情報
+L0135	成功時出力	登録・取り消しは状態と文言を含む応答。一覧は対象商品の一覧表示
+L0136	失敗時出力	未ログイン・上限超過・対象商品削除済みの応答
+L0137	リニューアル後の仕様
+L0138	表示メッセージ
+L0139	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0140	F03-07-MSG-001	画面右下	入荷通知処理が失敗しました。	入荷通知の依頼または取消の通信に失敗したとき	処理結果を反映せず、元の画面に留まる。
+L0141	F03-07-MSG-002	画面右下トースト	入荷通知を解除しました	入荷通知の一括解除を実行したとき（各処理の完了を待たず表示）	入荷通知の一括解除を開始し、画面にとどまる
+L0142	F03-07-MSG-003	画面右下トースト	入荷通知を設定しました	入荷通知の一括設定を実行したとき（各処理の完了を待たず表示）	入荷通知の一括設定を開始し、画面にとどまる
+L0143	—	入荷通知ボタン付近の通知	入荷通知依頼しました。	依頼の登録に成功したとき	状態successを返し、依頼済みの表示へ切り替える
+L0144	—	入荷通知ボタン付近の通知	入荷通知依頼をキャンセルしました。	既に依頼済みの商品規格を再度依頼したとき	状態cancelを返し、未依頼の表示へ切り替える
+L0145	—	入荷通知ボタン付近の通知	入荷通知依頼は（上限件数）件までです。	依頼件数が上限以上のとき	状態failを返し、登録しない。上限件数は依頼上限値を埋め込む
+L0146	—	入荷通知ボタン付近の通知	対象の商品は削除済です。	対象の商品規格が特定できないとき	状態failを返し、登録しない
+
+ succeeded in 351ms:
+##### 0304 sheet-3 買い物かご
+L0001	買い物かご
+L0002	ドキュメント名フロント_注文 基本設計仕様書
+L0003	セクション—
+L0004	プロジェクト名フロント_注文機能
+L0005	作成者緑川
+L0006	作成日2025-06-12
+L0007	更新者盛田
+L0008	更新日2025-11-06
+L0009	機能NoF04-01
+L0010	機能名買い物かご
+L0011	概要カートに追加している商品情報を表示します。
+L0012	処理概要（★はカスタマイズ項目）
+L0013	レイアウト図
+L0014	1
+L0015	2
+L0016	5
+L0017	6
+L0018	7
+L0019	8
+L0020	9
+L0021	3
+L0022	4
+L0023	10
+L0024	11
+L0025	12
+L0026	13
+L0027	14
+L0028	15
+L0029	16
+L0030	買い物かご / D8 / image 1
+L0031	カスタマイズ説明
+L0032	・カスタマイズ要件
+L0033	現行機能をベースに下記カスタマイズを入れる
+L0034	カート内商品の数量変更に伴う処理について
+L0035	カート内の商品数を変更する際、以下の処理を画面再読み込みせずに行われるようにする
+L0036	・カート内商品の合計金額を自動で再計算する
+L0037	・在庫数を超える商品数を入力できないようにする
+L0038	・購入上限数を超える商品数を入力できないようにする
+L0039	・商品点数は0以下を入力できないようにする
+L0040	カート内の削除ボタン
+L0041	・削除ボタンを押下時は画面をリロードし、商品を削除する
+L0042	カートの表示
+L0043	・ユーザーの閲覧店舗に応じて店舗別に異なるカート情報が表示されるようにする
+L0044	送料の表示
+L0045	・支店は商品の配送方法が店舗受取のみで送料が存在しないため、支店では送料は表示しない
+L0046	・カスタマイズ要件に記載の内容以外は現行踏襲とする
+L0047	機能仕様処理概要（★はカスタマイズ項目）
+L0048	・表示について
+L0049	・本店の表示内容を踏襲する
+L0050	・購入グループが複数カートにある場合エラーを表示する
+L0051	買い物かご / E62 / image 2
+L0052	★ユーザの閲覧店舗に応じて店舗別に異なるカート情報が表示されるようにする
+L0053	・店舗ごとに商品を保持するため、URLを変更してもカートの中身は引き継がない
+L0054	現行 カスタマイズ
+L0055	会員A
+L0056	①本店カート内
+L0057	・商品A
+L0058	・商品B
+L0059	②支店カート内
+L0060	・商品C
+L0061	・商品D
+L0062	本店サイトカート
+L0063	・商品A
+L0064	・商品B
+L0065	支店Bサイトカート
+L0066	・商品C
+L0067	・商品D
+L0068	支店Aサイトカート
+L0069	・商品C
+L0070	・商品D
+L0071	会員A
+L0072	①本店カート内
+L0073	・商品A
+L0074	・商品B
+L0075	②支店Aカート内
+L0076	・商品C
+L0077	・商品D
+L0078	③支店Bカート内
+L0079	・商品E
+L0080	・商品F
+L0081	本店サイトカート
+L0082	・商品A
+L0083	・商品B
+L0084	支店Bサイトカート
+L0085	・商品E
+L0086	・商品F
+L0087	支店Aサイトカート
+L0088	・商品C
+L0089	・商品D
+L0090	画面遷移図をExcel図形座標で再構成（画面 6件 / 遷移 6件 / 元コネクタ 6件）
+L0091	遷移一覧（6件）
+L0092	遷移元	遷移先	connector
+L0093	会員A
+L0094	①本店カート内
+L0095	・商品A
+L0096	・商品B
+L0097	②支店カート内
+L0098	・商品C
+L0099	・商品D	本店サイトカート
+L0100	・商品A
+L0101	・商品B	22（0304:買い物かご!F81）
+L0102	会員A
+L0103	①本店カート内
+L0104	・商品A
+L0105	・商品B
+L0106	②支店カート内
+L0107	・商品C
+L0108	・商品D	支店Bサイトカート
+L0109	・商品C
+L0110	・商品D	23（0304:買い物かご!N81）
+L0111	会員A
+L0112	①本店カート内
+L0113	・商品A
+L0114	・商品B
+L0115	②支店カート内
+L0116	・商品C
+L0117	・商品D	支店Aサイトカート
+L0118	・商品C
+L0119	・商品D	27（0304:買い物かご!N81）
+L0120	会員A
+L0121	①本店カート内
+L0122	・商品A
+L0123	・商品B
+L0124	②支店Aカート内
+L0125	・商品C
+L0126	・商品D
+L0127	③支店Bカート内
+L0128	・商品E
+L0129	・商品F	本店サイトカート
+L0130	・商品A
+L0131	・商品B	75（0304:買い物かご!AD84）
+L0132	会員A
+L0133	①本店カート内
+L0134	・商品A
+L0135	・商品B
+L0136	②支店Aカート内
+L0137	・商品C
+L0138	・商品D
+L0139	③支店Bカート内
+L0140	・商品E
+L0141	・商品F	支店Bサイトカート
+L0142	・商品E
+L0143	・商品F	76（0304:買い物かご!AL84）
+L0144	会員A
+L0145	①本店カート内
+L0146	・商品A
+L0147	・商品B
+L0148	②支店Aカート内
+L0149	・商品C
+L0150	・商品D
+L0151	③支店Bカート内
+L0152	・商品E
+L0153	・商品F	支店Aサイトカート
+L0154	・商品C
+L0155	・商品D	77（0304:買い物かご!AL84）
+L0156	★送料の表示
+L0157	・支店は商品の配送方法が店舗受取のみで送料が存在しないため、支店では送料は表示しない
+L0158	・カートの商品数量変更処理
+L0159	★カート内の商品数を変更する際、以下の処理を画面再読み込みせずに行われるようにする
+L0160	・カート内商品の合計金額を自動で再計算する
+L0161	・在庫数を超える商品数を入力できないようにする
+L0162	※カートに遷移した時点での在庫数で、+ボタン、数量入力を制御する
+L0163	カート画面中に在庫数が変更してもリアルタイムでカート画面に反映はされない
+L0164	・購入上限数を超える商品数を入力できないようにする
+L0165	※カートに遷移した時点での購入上限数で+ボタン、数量入力を制御
+L0166	カート画面中に購入上限数が変更してもリアルタイムでカート画面に反映はされない
+L0167	・商品点数は0以下を入力できないようにする
+L0168	・計算した内容を下記に反映する
+L0169	・小計
+L0170	・送料無料までの残り金額表示
+L0171	・合計金額
+L0172	・ボタンの挙動
+L0173	★カート内の削除ボタン
+L0174	・削除ボタンを押下時は画面をリロードし、商品を削除する
+L0175	・削除する商品は閲覧店舗に紐づいている商品のみとする
+L0176	・他の商品も見るボタンの処理
+L0177	・TOP画面へ遷移する
+L0178	・遷移するTOP画面は閲覧店舗とする
+L0179	・購入手続きへボタンの処理
+L0180	・ご注文方法の指定画面へ遷移する
+L0181	・カート一括削除ボタンの処理
+L0182	・削除ボタン押下時は画面をリロードし、カート内商品をすべて削除する
+L0183	・削除する商品は閲覧店舗に紐づいている商品のみとする
+L0184	識別ID	ラベル	書式・制限	必須	最大文字数
+L0185	または最大値	初期値	画面部品の説明
+L0186	1	STEP表示	画像	-	-	-
+L0187	2	商品画像	画像	-	-	-
+L0188	3	言語	ラベル	-	-	-
+L0189	4	商品名	ラベル	-	-	-
+L0190	5	状態	ラベル	-	-	-
+L0191	6	販売価格	ラベル	-	-	-
+L0192	11	削除ボタン	ボタン	-	-	-
+L0193	8	数量-減算	ボタン	-	-	-
+L0194	7	数量	数値（整数）	◯	-	-
+L0195	9	数量-加算	ボタン	-	-	-
+L0196	10	小計	ラベル	-	-	-
+L0197	12	送料無料までの価格	ラベル	-	-	-
+L0198	13	合計金額（税込）	ラベル	-	-	-
+L0199	15	購入手続きへボタン	ボタン	-	-	-
+L0200	14	他の商品を見るボタン	ボタン	-	-	-
+L0201	16	カート一括削除	リンク	-	-	-
+L0202	Source:
+L0203	functions/pf-eccube3/f04-01_front_cart_cart_index.md
+L0204	現行仕様
+L0205	F04-01 買い物かご / F04-01（買い物かご）
+L0206	業務ロジック
+L0207	商品行の表示
+L0208	商品画像は登録が無いときノーイメージ画像を出す。商品画像と商品名はどちらも当該商品の商品詳細ページへのリンクで、別のタブで開く。数量の入力欄は3桁までとする。
+L0209	操作の改ざん防止
+L0210	数量の増減、数量の直接指定、商品の個別削除は、なりすまし対策のトークンを検証してから実行する。トークンが一致しない要求は実行せず、アクセス拒否として扱う。
+L0211	金額の算出と送料無料の案内
+L0212	項目	内容
+L0213	商品ごとの金額	単価×数量
+L0214	送料無料の案内を出す条件	送料無料金額の設定があるとき。設定が無いときは送料無料の案内も不足額の案内も出さない
+L0215	送料無料と判定する条件	合計が送料無料金額以上、または合計個数が送料無料個数以上
+L0216	送料無料に達していないとき	送料無料金額と合計の差額を不足額として案内する
+L0217	購入手続きへ進めるかどうか
+L0218	購入手続きへのボタンは、カートに商品が1件以上あり、かつ購入グループが単一のときだけ出す。購入グループが複数のときはボタンを出さず、購入手続きへ進めない。ボタンはスマートフォン用とPC用の2か所に同じものを置く。
+L0219	購入手続きへ進むとき、販売個数制限の超過などでメッセージが出た場合は購入手続きへ進まず、買い物かごへ戻ってそのメッセージを表示する。
+L0220	カートへの追加
+L0221	商品規格と数量を受け取ってカートへ追加する。数量の指定が無いときは1とする。要求はJSON本文でもフォームの値でも受け付ける。複数商品をまとめて追加する要求も受け付け、追加する商品の並びが渡されないときは追加せず失敗として扱う。追加に失敗したときはエラーメッセージを出す。
+L0222	非同期の追加は追加後のカート内容（商品明細と合計）を返し、画面遷移を伴う追加は買い物かご画面を表示する。カート内容の取得だけを求める要求にも同じカート内容を返す。
+L0223	要求の送信先と受け取る値は、方式ごとに次のとおりとする。
+L0224	方式	送信先	受け取る値	応答
+L0225	1件の追加（非同期）	POST /cart/add	JSON本文の product_class_id・quantity、またはフォーム値 product_class_id・quantity	追加後のカート内容
+L0226	複数件の追加（非同期）	POST /cart/add_bulk	フォーム値 cart_list（要素ごとに product_class_id・quantity）	追加後のカート内容
+L0227	1件の追加（画面遷移あり）	POST /cart/add_show	フォーム値 product_class_id・quantity	成否にかかわらず買い物かご画面へ遷移する
+L0228	カート内容の取得	GET /cart/get	なし	カート内容
+L0229	JSON本文を読むのは、フォーム値に product_class_id も quantity も無いときである。複数件の追加で cart_list が無い、または並びでないときは、1件も追加しない。カート内容の応答は、カートの内容（cart）と、カートを識別する値（cookie）を持つJSONとする。
+L0230	入荷通知依頼
+L0231	条件	結果
+L0232	対象の商品規格が存在しない	依頼を受け付けず失敗を返す
+L0233	未ログイン	依頼を受け付けずログインを促す。ログイン後に戻れるよう直前の画面を覚えておく
+L0234	すでに同じ商品規格の依頼がある	その依頼を取り消す
+L0235	依頼件数が上限に達している	依頼を登録せず、上限値を添えて失敗を返す
+L0236	上記以外	依頼を登録する
+L0237	依頼の送信先は POST /cart/pushReceive で、商品規格をフォーム値 product_class_id で渡す。取消では依頼に削除日時を記録し、依頼の行は残す。依頼件数の上限値は、オプションマスタの入荷通知上限件数で決まる。上限と比べる依頼件数は、その会員の依頼のうち削除日時が記録されていないものの件数である。
+L0238	カートが空のとき
+L0239	商品が1件も無いときは、商品行・集計欄・購入手続きへのボタン・カート一括削除を出さず、買い物かごが空である案内だけを出す。他の商品を見るボタンは空のときも出す。
+L0240	入出力
+L0241	種類	内容
+L0242	入力	カートへ追加する商品規格と数量、入荷通知を依頼する商品規格
+L0243	成功時出力	買い物かご画面の表示、カート内容（商品明細と合計）の返却、入荷通知依頼の結果
+L0244	失敗時出力	カート追加のエラーメッセージ、入荷通知依頼のエラーメッセージ
+L0245	入出力: 永続化
+L0246	操作	契機
+L0247	登録	入荷通知依頼の受付
+L0248	削除	入荷通知依頼の取消
+L0249	リニューアル後の仕様
+L0250	表示メッセージ
+L0251	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0252	F04-01-MSG-001	画面中央(ダイアログ)	カート内の商品がすべて削除されます。本当に実行してよろしいですか？	「カート一括削除」を押したとき	確認で実行するとカートを全削除して買い物かご画面へ戻る。キャンセル時は同じ画面に留まる。
+L0253	F04-01-MSG-002	カート集計欄	現在送料無料です。	送料無料の条件（金額または個数）に達したとき	送料無料の状態を買い物かご画面に表示し、画面に留まる。
+L0254	F04-01-MSG-003	画面本文	現在カート内に商品はございません。	カート内の商品が0件のとき	空の買い物かご画面を表示し、画面に留まる。
+L0255	F04-01-MSG-004	画面右下トースト	カートに追加しました：	商品をカートに追加したとき	商品をカートに追加し、現在の画面に留まる。カート画面へのリンクを表示する。
+L0256	—	画面見出し	買い物かご	買い物かご画面の表示時	画面に留まる
+L0257	—	カート集計欄	あと（残り金額）で送料無料になります。	送料無料金額設定があり、未到達のとき	画面に留まる
+L0258	—	カート集計欄	合計(税込)	買い物かご画面の表示時	画面に留まる
+L0259	—	画面本文	現在、買い物かごには商品が入っておりません。	カートアイテムが0件のとき	画面に留まる
+L0260	—	画面上部のエラー領域	「（購入グループ1）」と「（購入グループ2）」の商品は同時に注文することが出来ません。お手数ですがいずれかの商品を買い物かごから削除し、（以下続く）	購入グループが複数あるとき	同時注文できないため、買い物かご画面に留まる
+L0261	—	入荷通知依頼の応答メッセージ	入荷通知を依頼する場合ログインしてください	入荷通知依頼で未ログインのとき	参照元URLを保持し、ログインを促す
+L0262	—	入荷通知依頼の応答メッセージ	入荷通知依頼は（上限）件までです。	入荷通知依頼が上限を超えるとき	依頼を登録せず、画面に留まる
+L0263	—	入荷通知依頼の応答メッセージ	入荷通知依頼しました。／入荷通知依頼をキャンセルしました。	入荷通知依頼の登録・取消成功時	依頼を登録または取消し、画面に留まる
+
+exec
+/bin/bash -lc "sed -n '45,220p' integration_test/casegen/combination/units/F03-02/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 261ms:
+L0044	機能仕様処理概要（★はカスタマイズ項目）
+L0045	・商品詳細
+L0046	・商品詳細欄に記載
+L0047	・カード情報
+L0048	・カード情報欄に記載
+L0049	・他のバージョンも見る
+L0050	・他のバージョンも見る欄に記載
+L0051	・このカードはこんなデッキに使われています
+L0052	・このカードはこんなデッキに使われています欄に記載
+L0053	・あなたへのおすすめ
+L0054	・シート「商品リコメンド」を参照
+L0055	・最近チェックした商品
+L0056	・シート「最近チェックした商品」を参照
+L0057	・カテゴリ一覧
+L0058	・シート「カテゴリ一覧」を参照
+L0059	★本店と各支店の表示制御について
+L0060	★本店、各支店に応じた商品公開ステータスを取得し、公開/非公開を制御する
+L0061	★パンくずリストについて
+L0062	★下記のような表示形式とする
+L0063	{ホームアイコン} > {カテゴリ}
+L0064	(例) カード商品の場合: 🏠 > スタンダード > タルキール：龍嵐録 > タルキール：龍嵐録
+L0065	サプライ商品の場合: 🏠 > サプライ・グッズ > スリーブ > KMC
+L0066	🏠マークを押下した際、それぞれ現在見ている店舗のTOP画面に遷移する
+L0067	★パンくずリスト内のカテゴリを押下すると、押下したカテゴリで検索した商品一覧を表示する
+L0068	・(8)カテゴリ一覧は、PC版サイトのみ表示する
+L0069	★支店の商品詳細はnoindexとする
+L0070	★販売制限が日本国内や海外のみになっている商品でも表示は行う
+L0071	※エンハンス対応 HARESEKA-1300 【ユニサーチリリース後残課題】販売制限あり商品が商品一覧上に表示されている
+L0072	識別ID	ラベル	書式・制限	必須	最大文字数
+L0073	または最大値	初期値	画面部品の説明
+L0074	1	パンくずリスト	リンク	-	-	-	・パンくずリストの表示形式及びリンク押下後の処理は処理概要を参照
+L0075	2	商品詳細	-	-	-	-	・商品詳細欄に記載
+L0076	3	カード情報	-	-	-	-	・カード情報欄に記載
+L0077	4	他のバージョンを見る	-	-	-	-	・他のバージョンも見る欄に記載
+L0078	5	このカードはこんなデッキに使われています	-	-	-	-	・このカードはこんなデッキに使われています欄に記載
+L0079	6	あなたへのおすすめ	-	-	-	-	・画面部品についてはシート「商品リコメンド」を参照
+L0080	7	最近チェックした商品	-	-	-	-	・画面部品についてはシート「最近チェックした商品」を参照
+L0081	8	カテゴリ一覧	-	-	-	-	・画面部品についてはシート「カテゴリ一覧」を参照
+L0082	商品詳細 レイアウト図
+L0083	2-10
+L0084	2-11
+L0085	2-12
+L0086	2-13
+L0087	2-14
+L0088	2-15
+L0089	2-16
+L0090	2-17
+L0091	2-18
+L0092	2-19
+L0093	2-20
+L0094	2-22
+L0095	2-21
+L0096	2-24
+L0097	2-23
+L0098	2-3
+L0099	2-25
+L0100	画像レイヤー（2枚）: 商品詳細 / K140 / image 1 + 商品詳細 / K140 / image 2
+L0101	画像レイヤー（2枚）: 商品詳細 / AN186 / image 12 + 商品詳細 / AK176 / image 13
+L0102	カスタマイズ説明
+L0103	・カスタマイズ要件
+L0104	お気に入り商品の表示
+L0105	・会員がログイン済みの場合、会員のお気に入り商品かどうか分かることを表示
+L0106	・本店のみであること
+L0107	まとめてカートに追加機能を追加
+L0108	・1つの商品に対し、カードの状態ごとに商品数を入力し、カートに一括追加できる
+L0109	ページURLをSNSで共有できる機能を追加
+L0110	・本店のみであること
+L0111	入荷通知機能を追加
+L0112	・シート「入荷時通知」参照
+L0113	本店と支店内での画面遷移における表示内容について
+L0114	・本店や各支店サイト上で本画面に遷移した際、ドメイン及びコンテキストルートを維持し、遷移元の店舗商品が表示または検索対象となるようにする
+L0115	・ドメイン及びコンテキストルートについては商品一覧を参照
+L0116	支店商品の公開と非公開の制御
+L0117	・「M03-02商品登録/編集」機能の商品公開ステータスに応じて、商品を表示、または非表示にする
+L0118	・カスタマイズ要件に記載の内容以外は現行踏襲とする
+L0119	機能仕様処理概要（★はカスタマイズ項目）
+L0120	★本店と各支店の表示制御について
+L0121	★下記の項目は本店のみ表示し、支店で表示しない
+L0122	・(2-14)入荷通知/通知待ち
+L0123	・(2-16)お気に入りへ追加/解除
+L0124	・(2-17)まとめて入荷通知
+L0125	・(2-22)SNSでシェアする
+L0126	・下記の項目は商品詳細がカードの場合のみ表示し、サプライ・グッズでは表示しない
+L0127	・(2-1)言語切替
+L0128	・(2-7)状態(カードの状態表示のリンク)
+L0129	・(2-8)状態
+L0130	・(2-17)まとめて入荷通知
+L0131	・(2-18)使われているデッキ
+L0132	・(2-19)他のバージョン
+L0133	★カード商品の場合の状態別の表のソート順は、価格降順で表示する ※状態によるソートは不要
+L0134	・(2-2)商品画像の読込中は、ローディングを表示する
+L0135	★(2-22)SNSでシェアするを押下すると、押下したSNSアイコンに応じて商品名やページURL等を共有できる
+L0136	「X」ボタン
+L0137	押下でXのポスト画面が開く（未ログインの場合はログイン画面が開く）
+L0138	共有内容は以下とする
+L0139	・言語
+L0140	・商品名（全角89文字を超える場合は三点リーダー「…」で省略）
+L0141	・URL（言語まで、実際には短縮URLを表示する）
+L0142	・「#晴れる屋通販」
+L0143	・「@hareruya_mtg」
+L0144	（ポスト内容例）
+L0145	商品詳細 / D305 / image 15
+L0146	「LINE」ボタン
+L0147	押下でLINEの送信先選択画面が開く（未ログインの場合はログイン画面が開く）
+L0148	送信内容はXと同様とする
+L0149	★商品がカードの場合、カードの状態ごとに商品数を入力し(2-15)カートに追加を押下すると、商品数が1以上の商品が状態ごとに全てカートに入る
+L0150	・(2-12)デフォルトで、在庫がある中で最大価格の状態の数量を1とし、他は0とする
+L0151	★(2-14)入荷通知/通知待ちより、カードの言語ごとに入荷通知の登録/解除ができる(詳細は「入荷通知」シート参照)
+L0152	★(2-17)まとめて入荷通知より、商品単位の入荷通知を設定できる(詳細は「入荷通知」シート参照)
+L0153	・(2-16)お気に入りに追加/お気に入り登録中より、ログイン済みの会員は商品に対しお気に入りの登録/解除ができる(詳細は「お気に入り」シート参照)
+L0154	・
+L0155	・裏面カード情報がある場合は取得し表示する
+L0156	・裏面カードがある場合はカード画像をクリックするとカード説明が裏面カードの内容に切り替わる
+L0157	・言語ごとのお気に入り状態を取得し表示する
+L0158	・お気に入りは商品ごと言語ごとに登録できるため
+L0159	★NMの買取金額が1円以上のカード商品のみ買取詳細画面へのリンクを表示する（エンハンス対応）
+L0160	・ログイン済みの場合は入荷通知リクエストの状態を取得する
+L0161	識別ID	ラベル	書式・制限	必須	最大文字数
+L0162	または最大値	初期値	画面部品の説明
+L0163	2-1	言語切替	リンク	-	-	-	・カード商品のみ表示する
+L0164	・押下すると、押下したカード言語の詳細画面に遷移する
+L0165	・表示しているカード言語に対応するボタンは非活性とする
+L0166	2-2	商品画像	画像	-	-	-	・押下すると、拡大画像を表示する
+L0167	2-3	商品画像拡大	商品画像拡大ボタン	-	-	-	・押下すると、(2-2)商品画像の拡大画像を表示する
+L0168	2-4	カード言語	ラベル	-	-	-	・カード商品のみ表示する
+L0169	・商品に登録している言語コードを表示する
+L0170	2-5	商品名	ラベル	-	-	-	-
+L0171	2-6	週間販売数	ラベル	-	-	-	・過去1週間のうちに注文された商品数を表示する
+L0172	・過去1週間のうちに注文されていない場合、非表示にする
+L0173	2-7	状態(カードの状態表示のリンク)	リンク	-	-	-	・押下すると、カードの状態表記画面に遷移する
+L0174	・カード商品のみ表示する
+L0175	2-8	状態	ラベル	-	-	-	・カード商品のみ表示する
+L0176	・表示している商品詳細の状態以外の状態はリンク表示し、押下するとその状態の商品詳細画面に遷移する
+L0177	・高額商品コードを登録している商品の場合、高額商品コードを表示
+L0178	・NMは価格に関わらず必ず表示し、NM以外は価格が100円以上の場合のみ表示する
+L0179	・選択している言語を保持して画面遷移する
+L0180	2-9	価格	ラベル	-	-	-	-
+L0181	2-10	在庫	ラベル	-	-	-	-
+L0182	2-11	マイナス	商品数減ボタン	-	-	-	・押下すると、(2-12)商品数を1つ減らす
+L0183	・(2-12)商品数が0の場合に押下すると、(2-12)商品数を(2-10)在庫の数となる
+L0184	2-12	商品数	ラベル	-	-	-	・在庫がない商品の場合、表示しない
+L0185	・デフォルトで、在庫がある中で最大価格の状態の数量を1とし、他は0とする
+L0186	2-13	プラス	商品数増ボタン	-	-	-	・押下すると、(2-12)商品数を1つ増やす
+L0187	・(2-12)商品数が(2-10)在庫の数の場合に押下すると、(2-12)商品数を0とする
+L0188	2-14	入荷通知/通知待ち	ボタン	-	-	-	※カスタマイズ対応、高額商品の場合表示しない
+L0189	・本店のみ表示する
+L0190	・入荷通知を既に設定している商品の場合、「通知待ち」と表示する
+L0191	・高額商品コードを登録している商品の場合、非表示にする
+L0192	・押下すると、入荷通知依頼/解除確認のポップアップを表示
+L0193	※入荷通知の機能詳細はシート「入荷通知」を参照
+L0194	2-15	カートに追加	ボタン	-	-	-	※カスタマイズ対応、まとめてカートに追加機能を追加
+L0195	・押下すると、対象の商品を(2-12)商品数で選択している数量分カートに追加する
+L0196	・商品がカードの場合、カードの状態ごとに商品数を入力し、カートに一括追加できる
+L0197	・在庫がない商品の場合、表示しない
+L0198	2-16	お気に入りに追加/
+L0199	お気に入り登録中	ボタン	-	-	-	※カスタマイズ対応、会員がログイン済みの場合、会員のお気に入り商品かどうか分かるようを表示
+L0200	・本店のみ表示する
+L0201	・会員がログイン済みの場合のみお気に入りの状態を反映する
+L0202	・押下するとお気に入りに登録可能
+L0203	・お気に入りに登録済みの場合は「お気に入りに登録中」と表示し、押下するとお気に入りを解除する
+L0204	※お気に入りの機能については、シート「お気に入り」を参照
+L0205	2-17	まとめて入荷通知	ボタン	-	-	-	※カスタマイズ対応、項目を新規追加
+L0206	・本店のみ表示する
+L0207	・カード商品のみ表示する
+L0208	・押下すると、まとめて入荷通知依頼確認のポップアップを表示
+L0209	※入荷通知の機能詳細はシート「入荷通知」を参照
+L0210	2-18	使われているデッキ	リンク	-	-	-	※カスタマイズ対応、項目を新規追加
+L0211	・カード商品のみ表示する
+L0212	・押下すると、「使われているデッキ」までスクロールする
+L0213	2-19	他のバージョン	リンク	-	-	-	※カスタマイズ対応、項目を新規追加
+L0214	・カード商品のみ表示する
+L0215	・押下すると、「他のバージョンも見る」までスクロールする
+L0216	2-20	買取情報を見る	リンク	-	-	-	・押下すると買取商品詳細画面へ遷移する
+L0217	・NMの買取金額が1円以上のカード商品のみリンクを表示する
+L0218	2-21	掲載記事一覧	リンク	-	-	-	・押下するとカード名で記事サイトを検索した結果画面に遷移する
+L0219	・カード商品のみリンクを表示する
+
+exec
+/bin/bash -lc "sed -n '320,400p' integration_test/casegen/combination/units/F03-02/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 287ms:
+L0319	5-3
+L0320	5-4
+L0321	5-5
+L0322	5-6
+L0323	5-7
+L0324	5-8
+L0325	5-9
+L0326	1
+L0327	画像レイヤー（2枚）: 商品詳細 / L550 / image 8 + 商品詳細 / D633 / image 14
+L0328	カスタマイズ説明
+L0329	・カスタマイズ要件
+L0330	・商品詳細のカードが使用されるデッキ一覧に「もっと見る」を追加
+L0331	・押下すると、カードと選択中のフォーマットに応じたデッキ検索結果画面を表示する
+L0332	・カスタマイズ要件に記載の内容以外は現行踏襲とする
+L0333	機能仕様処理概要（★はカスタマイズ項目）
+L0334	・本店のみ表示する
+L0335	・カード商品の場合のみ表示する
+L0336	・デッキ画像の読込中は、ローディングを表示する
+L0337	・カードに紐づくフォーマットを取得し、フォーマットとカードIDでデッキ情報を取得する
+L0338	★紐付くフォーマットで登録されているデッキがない場合、現行は「該当なし」と表示しているが、フォーマットの表示を行わないように変更する
+L0339	・フォーマットに紐付くデッキはPC版で4件、SP版で3件表示し、それ以上ある場合はもっと見るリンクを表示する
+L0340	・PC版SP版に関わらず4件取得し、SP版の場合は取得した中で一番登録の古いものを非表示とする
+L0341	・もっと見るリンクを押下すると、商品詳細のカード名で検索したデッキ検索結果画面に遷移する
+L0342	・デッキ登録の新しい順に取得する
+L0343	識別ID	ラベル	書式・制限	必須	最大文字数
+L0344	または最大値	初期値	画面部品の説明
+L0345	5-1	フォーマット	ラベル	-	-	-	-
+L0346	5-2	デッキ画像	画像	-	-	-	-
+L0347	5-3	デッキ名	ラベル	-	-	-	-
+L0348	5-4	プレイヤー	ラベル	-	-	-	-
+L0349	5-5	大会名	ラベル	-	-	-	-
+L0350	5-6	成績	ラベル	-	-	-	-
+L0351	5-7	参加人数	ラベル	-	-	-	-
+L0352	5-8	開催日	ラベル	-	-	-	-
+L0353	5-9	もっと見る	リンク	-	-	-	※カスタマイズ対応、項目を新規追加
+L0354	・押下すると、商品詳細のカードで検索したデッキ検索結果画面に遷移する
+L0355	Source:
+L0356	functions/pf-eccube3/f03-02_front_product_product_detail.md
+L0357	現行仕様
+L0358	F03-02 商品詳細 / F03-02（商品詳細）
+L0359	業務ロジック
+L0360	初期表示の決定
+L0361	対象	決め方
+L0362	ロケール	取り扱い外のロケールで開かれたときは日本語として扱う
+L0363	初期言語	指定された言語を最優先とする。指定が無ければロケールが日本語のときJP、それ以外はEN。該当する言語の商品が無ければ先頭の言語とする
+L0364	初期規格	指定された規格が該当規格にあればそれ。無ければ初期言語の先頭規格とする
+L0365	代表価格・総在庫	良品の日本語の価格を代表価格とする。日本語の良品が無いとき、および日本語の良品の価格が0円のときは、良品の英語の価格・在庫を用いる。同じ言語に良品が複数あるときは最も高い価格を代表価格とする。総在庫は代表価格に用いた言語の全規格の在庫を合計する。価格は桁区切りで表示する
+L0366	英語版ページの案内
+L0367	日本語ページでは、商品の販売制限に英語向けの表示が含まれるときだけ、検索エンジン向けに英語版ページの対応付けを出力する。含まれないときは出力しない。
+L0368	お気に入りの登録状態の判定
+L0369	ログイン済みの会員であっても、会員に選手情報が紐づいていないときは、すべての言語で未登録として扱う。
+L0370	入荷通知の依頼と取消
+L0371	入荷通知の依頼と取消は、確認で了承したときだけ送信する。了承しなかったときは送信せず、依頼の状態を変えない。依頼に成功すると、その商品規格の入荷通知依頼が登録され、入荷通知の表示を「通知待ち」に切り替える。取消に成功すると、入荷通知の表示を「入荷時に通知」に切り替える。
+L0372	買取の詳細への導線を出さない場合
+L0373	買取の詳細への導線の判定では、高額商品コードが登録されている規格を対象から外す。買取価格の条件を満たす良品の規格が、高額商品コードの付いたものだけのときは導線を表示しない。
+L0374	旧商品コードからの転送
+L0375	旧商品コードで来訪したときは、対応する新しい商品コードを引き当て、その商品の商品詳細へ商品IDと言語を指定して転送する。
+L0376	エラー時の扱い
+L0377	エラー内容	処理
+L0378	商品が存在しない	404とする
+L0379	旧商品コードに対応がない／対応する商品が見つからない	トップへ転送する
+L0380	入出力
+L0381	種類	内容
+L0382	入力	商品ID、任意の言語・規格の指定。旧コード転送では旧商品コード
+L0383	成功時出力	商品詳細の画面
+L0384	失敗時出力	商品が存在しないときは404、旧コードに対応がないときはトップへの転送
+L0385	入出力: 永続化
+L0386	操作	契機
+L0387	更新	商品詳細の表示時に、閲覧履歴の先頭へ当該商品IDを追加する。既に履歴にある商品IDは重複させず先頭へ移す。保持するのは新しい順に18件までとし、超えた分は古いものから捨てる
+L0388	リニューアル後の仕様
+L0389	表示メッセージ
+L0390	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0391	F03-02-MSG-001	商品詳細画面内の同名商品一覧	読み込みに失敗しました。	商品情報の読み込みに失敗したとき	商品情報を追加表示せず、同じ商品詳細画面に留まる
+
+exec
+/bin/bash -lc "sed -n '40,145p' integration_test/casegen/combination/units/F03-07/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 328ms:
+L0039	ボタン押下後、入荷通知依頼確認モーダルを表示	推定現行にあるモーダルは非表示とし、直接ログインモーダルまたは入荷通知完了モーダルを表示する	20（0303:入荷時通知!Z48）
+L0040	商品一覧	推定現行にあるモーダルは非表示とし、直接ログインモーダルまたは入荷通知完了モーダルを表示する	4（0303:入荷時通知!O48）
+L0041	商品一覧	推定ボタン押下後、入荷通知キャンセル確認モーダルを表示	81（0303:入荷時通知!B133）
+L0042	商品詳細	推定ボタン押下後、入荷通知キャンセル確認モーダルを表示	78（0303:入荷時通知!B133）
+L0043	商品一覧	推定入荷通知を解除しました	46（0303:入荷時通知!Z165）
+L0044	カスタマイズ説明
+L0045	・カスタマイズ要件
+L0046	・商品言語単位の通知ボタンを詳細ページに追加する（商品規格単位のボタンは残す）
+L0047	※一覧には表示しない
+L0048	・一覧の場合はSOLDOUTとなっている場合、商品単位の通知とする
+L0049	・商品詳細画面にて、NMとSP以下と全状態の通知ボタンを表示する
+L0050	・高額商品の場合、通知ボタンを表示しない
+L0051	・本店のみであること
+L0052	・カスタマイズ要件に記載の内容以外は現行踏襲とする
+L0053	機能仕様処理概要（★はカスタマイズ項目）
+L0054	・下記の画面で表示する
+L0055	1 商品一覧
+L0056	2 商品詳細
+L0057	3 入荷待ち商品一覧
+L0058	・会員未ログインの場合に「入荷時に通知」ボタンを押下すると、ログインモーダルを表示する
+L0059	・会員ログイン済みの場合に「入荷時に通知」ボタンをを押下すると、入荷通知完了のモーダルを表示する
+L0060	★商品詳細画面の「まとめて入荷通知」より、商品単位の入荷通知を設定できる
+L0061	・登録上限は管理画面で設定されている入荷通知登録上限数(現在は20件)とする
+L0062	※上限件数は「まとめて入荷通知」で登録している場合でも1件、商品規格単位でも1件としてカウントする
+L0063	※登録上限数以上の登録をしようとした場合は、エラーを表示する
+L0064	・会員ログイン時に入荷待ちに登録した商品は、マイページ＞入荷待ち商品に表示する
+L0065	★本店のみ表示し、支店で表示しない
+L0066	★
+L0067	2026/7/13 TAMさんに確認したところ、商品一覧画面でSOLDOUTとなっている場合、NMのみの入荷通知とする、が正しい
+L0068	★商品詳細画面にて、各状態と全状態の通知ボタンを表示する
+L0069	・ログイン押下後にログインが失敗すると、下記のエラーメッセージを表示したログイン画面に遷移する
+L0070	「ログインできませんでした。入力内容に誤りがないかご確認ください。」
+L0071	識別ID	ラベル	書式・制限	必須	最大文字数
+L0072	または最大値	初期値	画面部品の説明
+L0073	入荷通知依頼
+L0074	1-1	入荷時に通知	ボタン	-	-	-	・押下時ログイン済みの場合は入荷通知を登録する
+L0075	・押下時未ログインの場合はログインモーダルを表示する
+L0076	1-2	OK(入荷通知依頼確認)	ボタン	-	-	-	・会員未ログインの場合に押下すると、会員ログインのモーダルを表示
+L0077	・会員ログイン済みの場合に押下すると、入荷通知を登録する
+L0078	・リニューアルでは非表示とする
+L0079	1-3	キャンセル	ラベル	-	-	-	・表示している入荷通知のモーダルを閉じる
+L0080	・リニューアルでは非表示とする
+L0081	1-4	ログインモーダルを閉じる	モーダルを閉じるボタン	-	-	-	・表示しているログインモーダルを閉じる
+L0082	1-5	Eメールアドレス	半角	○	320	-	・プレースホルダ: Eメールアドレス
+L0083	・入力せずに(7)ログインを押下すると入力必須のバリデーションメッセージを表示する
+L0084	1-6	パスワード	半角	○	320	-	・プレースホルダ: パスワード
+L0085	・入力せずに(7)ログインを押下すると入力必須のバリデーションメッセージを表示する
+L0086	1-7	ログイン	ボタン	-	-	-	・モーダル内の入力値をもとにログインを実行し、ログインが失敗すれば会員ログイン画面に遷移する
+L0087	1-8	新規会員登録	リンク	-	-	-	・押下すると、会員登録画面に遷移する
+L0088	1-9	入荷通知依頼完了モーダルを閉じる	モーダルを閉じるボタン	-	-	-	・表示している入荷通知依頼完了のモーダルを閉じる
+L0089	1-10	OK(入荷通知依頼完了)	モーダルを閉じるボタン	-	-	-	・表示している入荷通知依頼のモーダルを閉じる
+L0090	入荷通知キャンセル レイアウト図
+L0091	画像レイヤー（3枚）: 入荷時通知 / B133 / image 10 + 入荷時通知 / B133 / image 12 + 入荷時通知 / B133 / image 13
+L0092	2-1
+L0093	2-4
+L0094	2-5
+L0095	2-3
+L0096	画像レイヤー（5枚）: 入荷時通知 / B133 / image 11 + 入荷時通知 / B133 / image 14 + 入荷時通知 / N170 / image 15 + 入荷時通知 / Z177 / image 17 + 入荷時通知 / W158 / image 18
+L0097	処理概要（★はカスタマイズ項目）
+L0098	★本店のみ表示し、支店で表示しない
+L0099	識別ID	ラベル	書式・制限	必須	最大文字数
+L0100	または最大値	初期値	画面部品の説明
+L0101	入荷通知キャンセル
+L0102	2-1	通知待ち	ボタン	-	-	-	・入荷通知が登録済みの場合に表示
+L0103	・押下時入荷通知をキャンセルし、キャンセルモーダルを表示する
+L0104	2-2	OK(入荷通知キャンセル確認)	ボタン	-	-	-	・押下すると、入荷通知をキャンセルする
+L0105	・リニューアルでは非表示とする
+L0106	2-3	キャンセル	モーダルを閉じるボタン	-	-	-	・表示している入荷通知キャンセル確認のモーダルを閉じる
+L0107	・リニューアルでは非表示とする
+L0108	2-4	入荷通知キャンセル完了のモーダルを閉じる	モーダルを閉じるボタン	-	-	-	・表示している入荷通知キャンセル完了のモーダルを閉じる
+L0109	2-5	OK(入荷通知キャンセル完了)	モーダルを閉じるボタン	-	-	-	・表示している入荷通知キャンセル完了のモーダルを閉じる
+L0110	Source:
+L0111	functions/pf-eccube3/f03-07_front_product_product_arrival_notification.md
+L0112	現行仕様
+L0113	F03-07 入荷時通知 / F03-07（入荷時通知）
+L0114	業務ロジック
+L0115	依頼と取り消しの判定順序
+L0116	同じ「入荷時に通知」の指示に対し、次の順で判定して最初に該当したものだけを返す。
+L0117	順序	判定	結果
+L0118	1	商品規格が特定できるか	できないなら対象商品が削除済みの応答（状態fail）を返す
+L0119	2	ログイン会員か	会員でないなら戻り先を保持し、未ログインの応答（状態nologin）を返す
+L0120	3	同一商品規格の依頼が既にあるか	あるならその依頼を削除し、取り消しの応答（状態cancel）を返す
+L0121	4	依頼件数が上限未満か	上限以上なら上限超過の応答（状態fail）を返す
+L0122	5	上記を通過	依頼を作成して保存し、依頼成功の応答（状態success）を返す
+L0123	上限と比べる件数は、有効な依頼だけを数える。取り消した依頼と、削除日時が設定された依頼は数えない。
+L0124	未ログインで依頼したあとの戻り先
+L0125	未ログインで入荷通知を依頼したときは、依頼を指示した画面を戻り先として保持する。 戻り先を保持した状態でログイン後にマイページを開くと、マイページを表示せずその戻り先へ遷移する。 新規会員登録から本会員登録を完了したときも同じ戻り先へ遷移する。いずれも一度遷移すると戻り先は消え、次回以降は通常どおりマイページ・会員登録完了の画面を表示する。
+L0126	入荷時の通知メール
+L0127	入荷通知の依頼に対するメールは、入荷（在庫の反映・入荷CSVの取込・商品規格の登録更新）を契機に送る。
+L0128	条件	ふるまい
+L0129	入荷通知メールを送らない設定になっている	1件も送信しない
+L0130	送る設定になっている	入荷した商品規格を依頼している会員へ、依頼の登録日時の昇順に1件ずつ送信する
+L0131	メールを送っても入荷通知の依頼は残る。同じ商品規格が再度入荷すれば、依頼している会員へ再び送信する。
+L0132	入出力
+L0133	種類	内容
+L0134	入力	登録・取り消しは商品規格ID。一覧は会員ログイン情報
+L0135	成功時出力	登録・取り消しは状態と文言を含む応答。一覧は対象商品の一覧表示
+L0136	失敗時出力	未ログイン・上限超過・対象商品削除済みの応答
+L0137	リニューアル後の仕様
+L0138	表示メッセージ
+L0139	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0140	F03-07-MSG-001	画面右下	入荷通知処理が失敗しました。	入荷通知の依頼または取消の通信に失敗したとき	処理結果を反映せず、元の画面に留まる。
+L0141	F03-07-MSG-002	画面右下トースト	入荷通知を解除しました	入荷通知の一括解除を実行したとき（各処理の完了を待たず表示）	入荷通知の一括解除を開始し、画面にとどまる
+L0142	F03-07-MSG-003	画面右下トースト	入荷通知を設定しました	入荷通知の一括設定を実行したとき（各処理の完了を待たず表示）	入荷通知の一括設定を開始し、画面にとどまる
+L0143	—	入荷通知ボタン付近の通知	入荷通知依頼しました。	依頼の登録に成功したとき	状態successを返し、依頼済みの表示へ切り替える
+L0144	—	入荷通知ボタン付近の通知	入荷通知依頼をキャンセルしました。	既に依頼済みの商品規格を再度依頼したとき	状態cancelを返し、未依頼の表示へ切り替える
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+import csv,subprocess
+from pathlib import Path
+base=Path('integration_test/casegen/combination/factors')
+id='F03-02'
+def read(kind,old=False):
+ p=base/f'{id}_{kind}.tsv'
+ s=subprocess.check_output(['git','show',f'eddb12cb:{p}'],text=True) if old else p.read_text()
+ return list(csv.DictReader(s.splitlines(),delimiter='\\t'))
+a=read('factors',True); b=read('factors'); amap={x['要因']:x for x in a}; bmap={x['要因']:x for x in b};
+print('ID map')
+for name,v in amap.items():print(v['要因ID'],'=>',bmap[name]['要因ID'] if name in bmap else 'removed',name)
+print('existing divergences')
+old={ (x['テストID'],x['処理ID'],x['理由']):x for x in read('existing',True)}
+new={ (x['テストID'],x['処理ID'],x['理由']):x for x in read('existing')}
+idmap={v['要因ID']:bmap[name]['要因ID'] for name,v in amap.items() if name in bmap}
+for k,x in old.items():
+ if k not in new: print('removed',k[0],x['値']);continue
+ oldparts=[p.split('=',1) for p in x['値'].split('&')]
+ expect=[idmap[f]+'='+v for f,v in oldparts if f in idmap]
+ parts=new[k]['値'].split('&')
+ miss=[v for v in expect if v not in parts]
+ extra=[v for v in parts if v not in expect]
+ if miss or extra: print(k[0], 'old',x['値'],'new',new[k]['値'],'miss',miss,'extra',extra)
+PY" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 18ms:
+ID map
+F01 => F01 閲覧店舗
+F02 => F02 商品種別
+F03 => F03 高額商品コード
+F04 => removed 在庫
+F05 => F10 画面幅
+F06 => F04 会員の状態
+F07 => F05 お気に入りの登録状況
+F08 => F06 入荷通知の依頼状態
+F09 => F07 確認ポップアップの操作
+F10 => F08 NMの買取金額
+F11 => F09 良品規格の高額商品コード
+F12 => F11 フォーマットのデッキ件数
+F13 => F12 履歴に当該商品
+F14 => F13 履歴の件数
+F15 => F14 商品公開ステータス
+F16 => F15 支店の商品公開ステータス
+F17 => F16 ページ言語
+F18 => F17 販売制限の表示言語
+F19 => F18 初期言語の決まり方
+F20 => F19 初期規格の決まり方
+F21 => F20 数量を入れる状態
+F22 => removed NM以外の状態の価格
+existing divergences
+removed IT-F03-02-019 F01=本店&F04=なし
+removed IT-F03-02-080 F01=本店&F05=SP
+IT-F03-02-027 old F01=本店&F06=ログイン済み・選手情報なし&F07=登録済み new F01=本店&F04=未ログインまたは選手情報なし&F05=登録済み miss ['F04=ログイン済み・選手情報なし'] extra ['F04=未ログインまたは選手情報なし']
+IT-F03-02-119 old F01=本店&F06=未ログイン&F07=登録済み new F01=本店&F04=未ログインまたは選手情報なし&F05=登録済み miss ['F04=未ログイン'] extra ['F04=未ログインまたは選手情報なし']
+removed IT-F03-02-006 F01=支店
+IT-F03-02-068 old F01=本店&F17=日本語&F18=英語向けを含む new F16=日本語&F17=英語向けを含む miss ['F01=本店'] extra []
+IT-F03-02-069 old F01=本店&F17=日本語&F18=含まない new F16=日本語&F17=含まない miss ['F01=本店'] extra []
+
+codex
+設計書の該当箇所との照合は一通り終えました。最後に、F03-02の要因IDの振り直しが interactions・constraints・existing に正しく反映されているか確認します。
+exec
+/bin/bash -lc "python3 - <<'PY'
+import csv,re
+from pathlib import Path
+base=Path('integration_test/casegen/combination/factors')
+for fid in ['F03-02','F03-04','F03-05','F03-06','F03-07','F03-08','F04-01']:
+ def rows(kind):
+  with (base/f'{fid}_{kind}.tsv').open() as f:return list(csv.DictReader(f,delimiter='\\t'))
+ factors=rows('factors'); processes={r['処理ID'] for r in rows('processes')}
+ vals={(p,r['要因ID']):set(r['値'].split('｜')) for r in factors for p in r['処理ID'].split(',')}
+ errs=[]
+ for kind in ('interactions','constraints','existing'):
+  for n,r in enumerate(rows(kind),2):
+   p=r['処理ID']
+   if p not in processes:errs.append((kind,n,'unknown process',p))
+   if kind=='interactions':
+    for fac in r['要因'].split('+'):
+     if (p,fac) not in vals:errs.append((kind,n,'unknown factor',fac))
+   else:
+    for part in r['組' if kind=='constraints' else '値'].split('&'):
+     fac,sep,val=part.partition('=')
+     if not sep or (p,fac) not in vals or val not in vals.get((p,fac),[]):errs.append((kind,n,'invalid value',part))
+ print(fid, 'OK' if not errs else errs)
+PY" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 5ms:
+F03-02 OK
+F03-04 OK
+F03-05 OK
+F03-06 OK
+F03-07 OK
+F03-08 OK
+F04-01 OK
+
+codex
+NONE
+tokens used
+66,620
+NONE

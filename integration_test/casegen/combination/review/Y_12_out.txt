@@ -1,0 +1,2661 @@
+Reading additional input from stdin...
+OpenAI Codex v0.162.1
+--------
+workdir: /home/y-saito/Developments/hareruya-design-docs
+model: gpt-6-sol
+provider: openai
+approval: never
+sandbox: read-only
+reasoning effort: high
+reasoning summaries: none
+session id: 01a15838-6974-7882-b275-7204588588eb
+--------
+user
+# 反証の依頼: 機能 F06-10・F06-11・F06-13・F06-14・F06-15・F06-16・F06-17・F06-18 の要因表の見直し（3つの決定の当て方）
+
+あなたは独立したレビュアーである。別の担当が、依頼者の3つの決定に合わせて**要因表を直した**。その直しが設計書と食い違っていないかを確かめる。直さない。読むだけ。
+リポジトリは `/home/y-saito/Developments/hareruya-design-docs/`。出力は日本語。
+
+## 背景
+
+結合テストで、1回の処理の結果を左右する要因が2つ以上あるとき、効き合う要因は値の組合せを全部、関係しない要因はどの2つの要因の値の組もどこかで1回試すケースを足す。
+要因表（`integration_test/casegen/combination/factors/<機能ID>_*.tsv`）から機械が組を並べる。要因表はすでに codex の反証を1巡受けて直してある。
+そのあと依頼者が次の3つを決め（2026-10-20）、担当が要因表を直した。今回確かめるのは**この直しだけ**。
+
+| 決定 | 中身 |
+| --- | --- |
+| 1 打ち切り側は1回でよい | その値（または値の組）になると処理がそこで打ち切られ、ほかの要因の値が結果に効かないとき、constraints.tsv に種別 `打ち切り` で書く。機械はその条件を1回だけ通し、ほかの要因との組は埋めない。打ち切られても一部の要因の値がまだ結果に効くときは、その要因の値も組に入れて書く |
+| 2 列ごとに独立して決まる値は組にしない | 出力の列・表示項目ごとに独立して決まる値（CSV の空欄・書式・文言の変換 など）は要因にしない。ほかの要因と効き合う（その値で、ほかの要因の結果や、行を出す・出さないが変わる）ときだけ残す。外して要因が1つになった処理は処理ごと外す |
+| 3 結果が同じ値はまとめる | 設計書が別々の条件として書いていても、結果が同じ値は1つにまとめる |
+
+## 読むもの
+
+- 直した所: 機能ごとに `git -C /home/y-saito/Developments/hareruya-design-docs diff eddb12cb -- integration_test/casegen/combination/factors/<機能ID>_processes.tsv integration_test/casegen/combination/factors/<機能ID>_factors.tsv integration_test/casegen/combination/factors/<機能ID>_interactions.tsv integration_test/casegen/combination/factors/<機能ID>_constraints.tsv integration_test/casegen/combination/factors/<機能ID>_existing.tsv`（eddb12cb が直す前）
+- 担当の処置: `integration_test/casegen/combination/review/<機能ID>_factors_s_dispositions.tsv`
+- 設計書: `integration_test/casegen/combination/units/<機能ID>/design.txt`（行頭の `L0001` は行番号）、他の機能は `units/<機能ID>/design.txt`
+- 作り方の決まり: `integration_test/casegen/combination/FACTOR_PROMPT.md`
+
+設計書の中で記述が食い違うときは、Excel 由来の本文 ＞ 埋め込みの「表示メッセージ」節 ＞ 埋め込みの「現行仕様」節・機能設計書 の順に採る。
+
+## 確かめること（事実だけ。差分に出ている所だけ）
+
+| 種類 | 何を見るか |
+| --- | --- |
+| G 打ち切りの誤り | 打ち切りとした値で、設計書は処理を打ち切っていない。または打ち切ったあとも「効かない」とされた要因の値で結果が変わると設計書が定める（その要因の値も組に入れるべき） |
+| H 外しすぎ | 決定2で外した要因・処理が、列・表示項目ごとに独立して決まるだけではない（ほかの要因の結果、行や対象を出す・出さない、更新先・更新内容を変えると設計書が定める） |
+| I まとめすぎ | 決定3でまとめた値どうしで、結果が違うと設計書が定める |
+| J 付け替えの誤り | 要因ID・値の振り直しで、interactions・constraints・existing の値が合っていない、既存ケースの値を取り違えた |
+
+次は指摘しない: 書き方・言い回し、差分に出ていない所（1巡目で済み）、決定そのものへの異論、境界値・数量1/複数。
+
+## 出力
+
+指摘が無ければ `NONE` の1語だけ。あれば1件ずつ、次の形で。
+
+```
+### <番号>
+- 機能: <機能ID>
+- 種類: <G〜J>
+- 対象: <ファイル名> <要因ID・処理ID・組>
+- 主張: <直した後の表に書かれていること>
+- 実際: <設計書の記述（ファイル:行 を必ず添える）>
+- 修正案: <どう直すか。1文>
+```
+warning: Codex could not find bubblewrap on PATH. Install bubblewrap with your OS package manager. See the sandbox prerequisites: https://developers.openai.com/codex/concepts/sandboxing#prerequisites. Codex will use the bundled bubblewrap in the meantime.
+2026-10-20T07:30:57.157930Z ERROR rmcp::transport::worker: worker quit with fatal: Transport channel closed, when AuthRequired(AuthRequiredError { www_authenticate_header: "Bearer resource_metadata=\"https://mcp.firecrawl.dev/.well-known/oauth-protected-resource/v2/mcp-oauth\", error=\"invalid_token\", error_description=\"Firecrawl credentials required: OAuth access token (Authorization: Bearer fco_...) or API key (x-firecrawl-api-key)\"" })
+codex
+指定の差分と担当の処置を機能ごとに確認し、変更された箇所だけを設計書の該当行と照合します。ファイルは変更しません。
+exec
+/bin/bash -lc 'git diff --stat eddb12cb -- integration_test/casegen/combination/factors' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "rg --files integration_test/casegen/combination/review | rg 'F06-(10|11|13|14|15|16|17|18)_factors_s_dispositions.tsv"'$'"'" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "sed -n '1,240p' integration_test/casegen/combination/FACTOR_PROMPT.md" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 373ms:
+# 依頼: 機能 {FID}（{FNAME}）の要因表づくり
+
+これは分析である。ケースも設計書も直さない。事実は自分でファイルを読んで確かめ、推測で書かない。
+リポジトリは `/home/y-saito/Developments/hareruya-design-docs/`。パスはここからの相対。出力はすべて日本語で書く。
+git の変更操作（add・commit など）をしない。
+
+## 背景（依頼者決定 2026-10-20）
+
+結合テストケースは設計書の定め1件ごとに作られ、10/15 には定めごとに「数量1と複数」「有無」「状態・区分ごと」などのデータを足した。
+それでも、**1回の処理の結果を左右する要因が2つ以上あるとき、その値を同時に変えて通すケースが無い**。
+例: 公開側で注文を確定するケース33件は、支払方法がほぼ郵便振替か銀行振込で、配送方法もゆうパック・EMS が大半。クレジットカード・代金引換・店頭支払、店頭受取・同梱で注文を通すケースは無い。
+
+依頼者の決定:
+- **効き合う要因**（一方の値で、もう一方の値の結果が変わると設計書が定める）は、値の組合せを全部試す。
+- **関係しない要因**は、どの2つの要因の値の組も、どこかのケースで1回は出るように並べる（2要因の組）。
+- **他の機能の設定値**（送料・手数料・支払方法の利用条件・送料無料の条件・配送方法に紐づく支払方法など）も、それを読む処理の要因に入れる。
+
+あなたの仕事は、機能 {FID} について、組合せの元になる**要因表**を作ること。組合せの行（どの値の組を何件試すか）は、この表から別の道具が機械で作る。
+だから、表の要因・値・判定の誤りは、そのままケースの誤りになる。
+
+## 読むもの
+
+| 何 | パス |
+| --- | --- |
+| 設計書（この機能のシートを文字に起こしたもの。行頭の `L0001` とタブは行番号。`#####` の行はシートの境目） | `integration_test/casegen/combination/units/{FID}/design.txt` |
+| 他の機能の設計書（設定値を読む処理のとき、設定する機能の定めを引く） | `integration_test/casegen/combination/units/<機能ID>/design.txt`（機能名は `combination/units.tsv`） |
+| 同じ冊子の共通シート（必要なときだけ） | {COMMON} |
+| この機能のケースとシード | `integration_test/casegen/cases/{FID}_test_cases.tsv`・`{FID}_seed_data.tsv` |
+| この機能の、テストから外したケース | `integration_test/casegen/combination/units/{FID}/excluded.tsv` |
+| 全機能のケース（他の機能のケースがこの機能の処理を通しているかの検索用） | `integration_test/casegen/all_test_cases.tsv`（列: テストID・観点ID・基本設計書・検証方法・テストデータ・事前準備・手順・期待結果。セル内改行があるので csv として読む） |
+| 結合テストの範囲 | `integration_test/SCOPE.md` |
+| 不機能仕様・フェーズ2見送り（ここに載るものは要因にしない） | `functions/dead-spec-register.tsv`・`functions/phase2_candidates.tsv` |
+| 設計書の中で記述が食い違うときの優先順位 | Excel 由来の本文 ＞ 埋め込みの「表示メッセージ」節（リニューアル後の仕様）＞ 埋め込みの「現行仕様」節。同じ出所では改訂後が優先。**Excel が触れていない条件を埋め込みが足しているだけのときは食い違いではなく、両方を当てる**（例: Excel が選択肢を並べ、埋め込みが「ポイントで全額払うときは全額ポイント支払いだけ」と条件を足す → 両方）。既存ケースは正解の根拠にしない（既存ケースと設計書の食い違いは返答に書く） |
+
+検索は `grep` を使う（`rg` は同じ入力で0件を返すことがあるので使わない）。
+
+## やること
+
+### 1. 処理を決める
+
+design.txt を**全部**読み、この機能の中で「操作やデータを受けて結果を出す処理」のうち、**結果を左右する要因が2つ以上ある処理**を挙げる。
+
+- 処理の単位は「1回の操作で動き、結果を1つの所で確かめられるまとまり」。例: 注文を確定して受注を作る／お支払い方法の選択肢を出す／受注の対応状況をキャンセルへ変えて保存する。
+- 結果は、データを作った所とは**別のコンポーネントで確かめる**もの（DB、別の画面、別の機能の画面、CSV・帳票、メール、連携先）。DBにあるデータで画面の表示・選択肢が変わるものも入る（例: 既存の受注の有無で配送方法の選択肢が変わる）。同じ画面の中だけで閉じる表示の計算（保存しない）と、計算式そのものの正しさは単体テストなので挙げない。
+- 要因が1つだけの処理は挙げない（10/15 の監査で済んでいる）。
+- **要因が2つ以上の処理が1つも無い機能**（一覧を出すだけ、1つの設定を保存するだけ、など）は、5つのファイルをヘッダだけで書き、返答の1行目に「対象の処理なし」と理由を書く。無理に処理を作らない。
+- 入力値の検証（必須・桁数・形式）、検索条件・削除条件の組合せ、権限、二重送信、排他は、ほかの観点の持ち分なので処理にも要因にもしない。
+
+### 2. 要因と値を挙げる
+
+処理ごとに、**その処理の結果を変えると設計書が定める要因**を挙げる。
+
+- 要因は「区分・状態・設定・関連データ」の値。例: 閲覧店舗、配送方法、支払方法、ポイントの使い方、受注の種類（通常・店頭受取・ついで買い）、会員か非会員か、変更前の対応状況、既存の受注の状態。
+- 他の機能で設定する値で、この処理が読むものも要因にする（出所に機能IDを書く）。例: 支払方法の利用条件（M10-04）に対する注文金額、都道府県別の送料（M10-06）。その機能の design.txt で定めを確かめ、根拠に `M10-04:L0123` の形で書く。**この処理の結果への効き方が設計書のどこにも書かれていない設定値は要因にしない**（値ごとの結果が書けないため）。そういう設定値は返答の「判断に迷った点」に挙げる（依頼元が論点として控える）。
+- **値は、結果の分かれ目ごとに代表を1つ**。結果が同じになる値は1つにまとめる（例: ゆうパックとゆうパケットで結果が変わらないならどちらか1つ）。設計書が別々の条件として書いていても、結果が同じならまとめる（例: 仮会員と退会済み会員がどちらも対象外なら「仮会員または退会済み」の1値。条件を1つずつ通すのは 10/15 のデータパターンのケースの持ち分。依頼者決定 2026-10-20）。結果が値ごとに違うなら全部挙げる（例: 支払方法ごとに手数料・ボタンの文言・ポイントを使う時点が違うなら、支払方法は全部）。
+- 境界値（ちょうどの値・上限）と数量1/複数は、10/15 に済んでいるので値にしない。値は「範囲内」「範囲外」「あり」「なし」のような分かれ目で書く。
+- 不正な入力、作れない値（画面の選択肢に無い値）は値にしない。
+- **出力の列・表示項目ごとに独立して決まる値は要因にしない**（例: CSV の列が「値が無ければ空欄」、日付の書式、区分の文言への変換）。列どうしは互いの結果を変えないので組にしない（依頼者決定 2026-10-20）。ほかの要因と効き合う（その値で、ほかの要因の結果や、行を出す・出さないが変わる）ときだけ要因にする。
+- 値ごとの結果を、設計書の語で短く書く（「支店: 支払方法は店頭支払だけ」）。
+
+### 3. 要因どうしを判定する
+
+処理ごとに、その処理の要因の**すべての2つの組**を判定する（要因が5つなら10組）。判定は次のどれか。
+
+| 判定 | いつ | 根拠 |
+| --- | --- | --- |
+| 効き合う | 一方の値で、もう一方の値の結果（可否、選択肢、金額、更新先、更新内容）が変わると設計書が定める。または、一方の結果がもう一方の判定の入力になる（例: 使用ポイントで支払う金額が変わり、支払方法の選択肢が変わる） | 両方を結ぶ設計書の行が必須 |
+| 関係しない | それぞれの要因の結果が、もう一方の値によって変わらない（例: 送料は配送方法で、手数料は支払方法で決まり、合計は足し算） | 理由を書く |
+| 設計書が決めていない | 同時に効いたときの結果が設計書から決まらない（例: 送料無料の判定に使う金額が、ポイントを引く前か後か書かれていない） | 決まらない理由。下の「組の制約」に、決まらない値の組を「正解未定」で必ず書く |
+
+3つ以上の要因がまとめて効き合うとき（例: 配送方法・既存の受注の状態・既存の受注の支払方法で同梱を出すか決まる）は、1行に `F01+F03+F05` と書いて「効き合う」にしてよい。その中の2つの組は、別の行に書かない。**まとめるのは、その全部が同時に互いの結果を変えるときだけ**。2つずつで効き合うだけなら2要因の行に分ける（まとめると値の組合せが全部ケースになり、件数が膨らむ）。
+**選べるものの集まりを2つの定めが別々に絞り、結果がその共通部分になるとき**（例: 支店は支払方法が店頭支払だけ、同梱は郵便振替・銀行振込だけ → 選択肢の中身が組ごとに変わる）は「効き合う」にする。「設計書が決めていない」にするのは、両方を当てると選択肢が1つも残らないなど、結果が設計書から決まらない組だけ。
+**1件の対象を出す・出さない（対象にする・しない）を、複数の条件の「すべて満たす」または「どれか1つで外れる」で決めるとき**（例: 公開・在庫あり・セール期間内・表示フラグ のすべてを満たす商品だけ出す）は、条件どうしは「関係しない」にする。結果は出る・出ないの2つだけで、条件ごとの外れ方は1つずつ確かめれば足り、全組合せは要らない（7条件を効き合うにすると128行になる）。外れる側の値（非公開・在庫なし・期間外など）は下の「打ち切り」に書く（2026-10-20 の見直しで全機能をこの書き方にそろえた）。機械は外れる値を1回ずつ通し、全部を満たす1行を必ず作る。
+**優先順位で順に比べて決めるとき**（例: 複数一致したら、言語→特殊版→発売日→フォイル→プロモの順に比べて先に差が付いたもので選ぶ）は、比べる項目を別々の要因にして全組合せにしない。「どの段で決まるか」を1つの要因にまとめる（値: 1段目で決まる｜2段目で決まる｜…｜全段が同じ）。上の段の差が下の段を隠すので、各段で決まる組を1つずつ試せば足りる（6段を効き合うにすると64行になる）。
+「一方の値で、もう一方の処理そのものが行われない」型（例: キャンセル日が既に入っていると、在庫・ポイントの戻しを行わない）は、その値を下の「打ち切り」に書く（依頼者決定 2026-10-20「打ち切り側は1回でよい」）。打ち切られない側の値どうしの判定は、ほかの組と同じに決める。
+**推測で値の組を「作れない」にしない**。設計書の語がどの値を指すか決まらないとき（例: 支店の「店舗受取」が店頭受取とスムーズ店頭受取のどちらか）は「正解未定」にする。
+**効き合う組の値の組合せは全部ケースになる**。値が多い要因どうし（7×7 など）を効き合うにするときは、設計書の行で本当に互いの結果を変えるかを確かめる。足し算で合計に入るだけなら「関係しない」。
+
+### 4. 組の制約を書く
+
+- **作れない**: 設計上その値の組が成り立たない（例: 支店では支払方法が店頭支払だけなので、支店×代金引換は作れない）。根拠の行が必須。
+- **正解未定**: その値の組で結果が設計書から決まらない。決まらない理由を書く。これはケースにせず、報告書に論点として残す。
+- **打ち切り**: その値（または値の組）になると処理がそこで打ち切られ、ほかの要因の値は結果に効かない（例: 非公開なら出さない、エラーで元の画面へ戻る、廃止済みなら何も変えない、トークンが無効なら拒否）。機械はこの条件を1回だけ通し、ほかの要因との組は埋めない。打ち切られても一部の要因の値がまだ結果に効く（例: エラーの文言が支払方法で変わる）ときは、その要因の値も組に入れて書く（`F01=非公開&F03=英語` のように値ごとに1行）。根拠の行が必須。
+
+### 5. 既存のケースが通している組を書く
+
+この機能のケース（と、`all_test_cases.tsv` を語で検索して見つかった他の機能のケース）のうち、**その処理を動かして、確かめる所で結果を確かめている**ケースを1件ずつ書き、そのケースで値が決まっている要因の値を書く。
+
+- 値は、事前準備・手順に**書かれている**ものだけ。書かれていない要因は書かない（流れの中でたまたまそうなるだけのものは数えない）。
+- 1つのケースが同じ処理を別の値で2回以上通しているときは、通した値ごとに1行ずつ書く（同じテストIDの行が2つになる）。1回の処理で2つのデータを別の値で扱う（混在）ケースは書かない。
+- 期待結果が設計書と食い違う既存ケースは、値が合っていても書かない（返答に食い違いとして書く）。
+- 処理を動かしていない（画面を開いて別のことを見るだけ）ケース、結果を確かめていないケースは書かない。
+- テストから外したケース（excluded.tsv）は書かない。
+
+## 出力（この5つだけを書く。ほかのファイルは変更しない）
+
+すべて `integration_test/casegen/combination/factors/` に、タブ区切り・ヘッダつきで書く。セル内に改行・タブ・ダブルクォートを入れない。
+
+### `{FID}_processes.tsv`（5列）
+
+```
+処理ID	処理	契機	確かめる所	根拠
+P1	注文を確定して受注を作る	ご注文方法指定画面で確定チェックボックスを選び、注文するボタンを押す	受注情報編集画面（M05-11）	L0322-L0330
+```
+
+- 処理IDは P1 からの連番。根拠は design.txt の行（`L0037`、`L0037-L0040`、カンマ区切り）。他の機能は `M10-04:L0012`、共通シートは `_common/<ファイル名>:L0012`。
+
+### `{FID}_factors.tsv`（7列）
+
+```
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1,P2	閲覧店舗	本店｜支店	本店: 支払方法はEC用の6種／支店: 支払方法は店頭支払だけ	L0236,L0249-L0252	この機能
+F05	P2	支払方法の利用条件に対する注文金額	範囲内｜上限を超える	範囲内: 選択肢に出る／上限を超える: 選択肢に出ない	M10-04:L0101	M10-04（設定）
+```
+
+- 要因IDは F01 からの連番（処理をまたいで通し番号）。処理IDはその要因が効く処理（カンマ区切り）。
+- 値は全角の縦棒 `｜` で区切る。2つ以上。1つの値は30字まで。`=` `&` `｜` `＋` `×` を値の中に使わない。
+- 値ごとの結果は `値: 結果` を `／` でつなぐ。全部の値について書く。
+- 出所は `この機能`、`<機能ID>（設定）`、`<機能ID>（データ）` のどれか。
+
+### `{FID}_interactions.tsv`（5列）
+
+```
+処理ID	要因	判定	根拠	理由
+P1	F03+F04	効き合う	L0204	配送方法が同梱のときは支払方法が郵便振替・銀行振込だけになる
+P1	F04+F06	関係しない		手数料は支払方法で決まり、ポイントは値引きとして合計から引くだけ
+P1	F06+F07	設計書が決めていない	M10-05:L0040	送料無料の判定に使う金額がポイント値引きの前か後か書かれていない
+```
+
+- 処理ごとに、その処理の要因の2つの組を全部判定する（3つ以上の効き合うにまとめた組は除く）。
+- 効き合う・設計書が決めていない は根拠が必須。関係しない・設計書が決めていない は理由が必須。
+
+### `{FID}_constraints.tsv`（5列）
+
+```
+処理ID	組	種別	根拠	理由
+P1	F01=支店&F04=代金引換	作れない	L0251-L0252	支店の支払方法は店頭支払だけ
+P1	F06=ポイントを使う&F07=送料無料の条件に届く	正解未定	M10-05:L0040	送料無料の判定に使う金額が決まらない
+P2	F02=キャンセル日あり	打ち切り	L0412	キャンセル日が既に入っていると、在庫・ポイントの戻しを行わない
+```
+
+- 組は `要因ID=値` を `&` でつなぐ。値は factors.tsv の値と一字一句同じ。値1つだけの組（`F16=店頭受取のみのスマレジ決済`）も書ける: その値でこの処理を動かすこと自体が作れない・結果が決まらないとき（設計書の記述どうしが食い違い、共通する部分が無いときなど）。
+- 種別は `作れない`・`正解未定`・`打ち切り` のどれか。根拠が必須。制約が無ければヘッダだけ書く。
+
+### `{FID}_existing.tsv`（4列）
+
+```
+テストID	処理ID	値	理由
+IT-F04-02-081	P1	F01=本店&F03=ゆうパック&F04=郵便振替	事前準備で本店・ゆうパック・郵便振替を選び、受注情報編集画面で支払方法と配送方法を確かめる
+```
+
+- 値は `要因ID=値` を `&` でつなぐ。ケースに書かれている要因だけ。1つ以上。
+- 1つのケースが2つの処理を通しているときは2行に書く。該当するケースが無ければヘッダだけ書く。
+
+書いたら次を実行し、エラーが無くなるまで直す。組の数（全組と2要因の組で、既存ケースが通していない組を埋めるのに要る行の数）も出る。
+
+```
+python3 integration_test/casegen/combination/gate_factors.py {FID}
+```
+
+作業用の一時ファイルを作るときは、名前に {FID} を入れてスクラッチパッドに作る。他の機能の factors/ のファイルは読まない・書かない。
+ファイルの書き込みを拒否されたときは、回避せず、書くはずだった本文を返答に載せる（依頼元が保存する）。
+
+## 返答
+
+3行以内: 処理の数・要因の数・効き合う組の数・設計書が決めていない組の数、gate の結果と出た行の数、判断に迷った点（あれば1つ）。
+
+ succeeded in 463ms:
+integration_test/casegen/combination/review/F06-11_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F06-15_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F06-16_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F06-18_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F06-10_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F06-17_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F06-14_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F06-13_factors_s_dispositions.tsv
+
+ succeeded in 659ms:
+ .../combination/factors/A01-01_constraints.tsv     |   3 +
+ .../combination/factors/A02-01_constraints.tsv     |   5 +-
+ .../combination/factors/A02-01_existing.tsv        |  28 ++---
+ .../casegen/combination/factors/A02-01_factors.tsv |   9 +-
+ .../combination/factors/A02-01_interactions.tsv    |  11 +-
+ .../combination/factors/A02-02_constraints.tsv     |   2 +
+ .../combination/factors/A02-02_existing.tsv        |   4 +-
+ .../casegen/combination/factors/A02-02_factors.tsv |   5 +-
+ .../combination/factors/A02-02_interactions.tsv    |   6 +-
+ .../combination/factors/A02-03_constraints.tsv     |   4 +
+ .../combination/factors/A02-03_existing.tsv        |  18 +--
+ .../casegen/combination/factors/A02-03_factors.tsv |   9 +-
+ .../combination/factors/A02-03_interactions.tsv    |   8 +-
+ .../combination/factors/A02-04_constraints.tsv     |   5 +
+ .../combination/factors/A02-05_constraints.tsv     |   3 +
+ .../combination/factors/A05-01_constraints.tsv     |   7 ++
+ .../combination/factors/A05-01_existing.tsv        |  11 +-
+ .../casegen/combination/factors/A05-01_factors.tsv |  10 +-
+ .../combination/factors/A05-01_interactions.tsv    |  30 ++---
+ .../combination/factors/A05-01_processes.tsv       |   3 +-
+ .../combination/factors/A05-03_constraints.tsv     |   3 +
+ .../combination/factors/A05-04_constraints.tsv     |   3 +
+ .../casegen/combination/factors/A05-04_factors.tsv |   9 +-
+ .../combination/factors/A05-04_interactions.tsv    |  11 +-
+ .../combination/factors/A05-04_processes.tsv       |   3 +-
+ .../combination/factors/A06-01_existing.tsv        |   5 -
+ .../casegen/combination/factors/A06-01_factors.tsv |   2 -
+ .../combination/factors/A06-01_interactions.tsv    |   1 -
+ .../combination/factors/A06-01_processes.tsv       |   1 -
+ .../combination/factors/A06-02_constraints.tsv     |   3 +
+ .../combination/factors/A06-03_constraints.tsv     |   2 +-
+ .../combination/factors/A06-03_existing.tsv        |   9 +-
+ .../casegen/combination/factors/A06-03_factors.tsv |   4 +-
+ .../combination/factors/A06-03_interactions.tsv    |  19 +--
+ .../combination/factors/A06-05_constraints.tsv     |   3 +
+ .../combination/factors/A06-05_existing.tsv        |   3 +-
+ .../casegen/combination/factors/A06-05_factors.tsv |   2 +-
+ .../combination/factors/A06-06_constraints.tsv     |   6 +-
+ .../combination/factors/A06-06_existing.tsv        |  15 ++-
+ .../casegen/combination/factors/A06-06_factors.tsv |   7 +-
+ .../combination/factors/A06-06_interactions.tsv    |  23 +---
+ .../combination/factors/A06-07_constraints.tsv     |   7 ++
+ .../combination/factors/A06-07_existing.tsv        |  15 ++-
+ .../casegen/combination/factors/A06-07_factors.tsv |   5 +-
+ .../combination/factors/A06-07_interactions.tsv    |  27 -----
+ .../combination/factors/A06-08_constraints.tsv     |   6 +-
+ .../combination/factors/A06-08_existing.tsv        |  16 ++-
+ .../casegen/combination/factors/A06-08_factors.tsv |   9 +-
+ .../combination/factors/A06-08_interactions.tsv    |  66 ++++-------
+ .../combination/factors/A07-02_constraints.tsv     |   1 -
+ .../combination/factors/A07-02_existing.tsv        |   4 -
+ .../casegen/combination/factors/A07-02_factors.tsv |   3 -
+ .../combination/factors/A07-02_interactions.tsv    |   3 -
+ .../combination/factors/A07-02_processes.tsv       |   1 -
+ .../combination/factors/A07-04_constraints.tsv     |   5 +
+ .../casegen/combination/factors/A07-06_factors.tsv |   2 -
+ .../combination/factors/A07-06_interactions.tsv    |   1 -
+ .../combination/factors/A07-06_processes.tsv       |   1 -
+ .../combination/factors/A07-07_existing.tsv        |   3 -
+ .../casegen/combination/factors/A07-07_factors.tsv |   3 -
+ .../combination/factors/A07-07_interactions.tsv    |   3 -
+ .../combination/factors/A07-07_processes.tsv       |   1 -
+ .../combination/factors/A14-01_existing.tsv        |   8 --
+ .../casegen/combination/factors/A14-01_factors.tsv |   9 --
+ .../combination/factors/A14-01_interactions.tsv    |  36 ------
+ .../combination/factors/A14-01_processes.tsv       |   1 -
+ .../combination/factors/A14-02_constraints.tsv     |   5 +
+ .../combination/factors/A14-02_existing.tsv        |   5 +-
+ .../casegen/combination/factors/A14-02_factors.tsv |   1 -
+ .../combination/factors/A14-02_interactions.tsv    |   5 -
+ .../combination/factors/A14-03_constraints.tsv     |   2 +
+ .../combination/factors/A15-01_constraints.tsv     |   4 +
+ .../combination/factors/A15-02_constraints.tsv     |   1 +
+ .../combination/factors/A15-03_constraints.tsv     |   1 +
+ .../combination/factors/A15-03_existing.tsv        |   5 -
+ .../casegen/combination/factors/A15-03_factors.tsv |   3 -
+ .../combination/factors/A15-03_interactions.tsv    |   3 -
+ .../combination/factors/A15-03_processes.tsv       |   1 -
+ .../combination/factors/A15-05_constraints.tsv     |   2 +
+ .../combination/factors/A15-06_constraints.tsv     |   1 +
+ .../combination/factors/A15-07_constraints.tsv     |   1 +
+ .../combination/factors/A15-09_existing.tsv        |  46 ++++----
+ .../casegen/combination/factors/A15-09_factors.tsv |   2 +-
+ .../casegen/combination/factors/A15-10_factors.tsv |   1 -
+ .../combination/factors/A15-10_interactions.tsv    |   3 -
+ .../combination/factors/A15-10_processes.tsv       |   2 +-
+ .../combination/factors/A15-11_constraints.tsv     |   2 +
+ .../combination/factors/A15-11_existing.tsv        |  18 +--
+ .../casegen/combination/factors/A15-11_factors.tsv |   2 +-
+ .../combination/factors/A15-12_constraints.tsv     |   6 +-
+ .../combination/factors/A15-13_constraints.tsv     |   3 +
+ .../casegen/combination/factors/A15-13_factors.tsv |   2 +-
+ .../combination/factors/A15-14_constraints.tsv     |   2 +
+ .../casegen/combination/factors/A15-14_factors.tsv |   2 +-
+ .../combination/factors/A15-15_constraints.tsv     |   2 +
+ .../combination/factors/A15-16_constraints.tsv     |   3 +
+ .../combination/factors/A15-17_constraints.tsv     |   1 +
+ .../combination/factors/A15-17_existing.tsv        |  30 ++---
+ .../casegen/combination/factors/A15-17_factors.tsv |   1 -
+ .../combination/factors/A15-17_interactions.tsv    |   4 -
+ .../combination/factors/A15-18_constraints.tsv     |   2 +
+ .../combination/factors/A15-18_existing.tsv        |  44 +++----
+ .../casegen/combination/factors/A15-18_factors.tsv |   5 +-
+ .../combination/factors/A15-18_interactions.tsv    |  22 +---
+ .../combination/factors/A16-02_constraints.tsv     |   3 +
+ .../combination/factors/A17-02_constraints.tsv     |   3 +
+ .../casegen/combination/factors/A17-02_factors.tsv |   2 +-
+ .../combination/factors/A17-03_constraints.tsv     |   5 +
+ .../combination/factors/A17-04_constraints.tsv     |   6 +-
+ .../combination/factors/A17-04_existing.tsv        |  16 +--
+ .../casegen/combination/factors/A17-04_factors.tsv |   5 -
+ .../combination/factors/A17-04_interactions.tsv    |  30 -----
+ .../combination/factors/A17-05_constraints.tsv     |   5 +
+ .../combination/factors/A17-05_existing.tsv        |   3 +-
+ .../casegen/combination/factors/A17-05_factors.tsv |   1 -
+ .../combination/factors/A17-05_interactions.tsv    |   2 -
+ .../combination/factors/B02-01_constraints.tsv     |  12 +-
+ .../combination/factors/B02-02_constraints.tsv     |   1 +
+ .../combination/factors/B02-02_existing.tsv        |   6 +-
+ .../casegen/combination/factors/B02-02_factors.tsv |   4 +-
+ .../combination/factors/B02-03_constraints.tsv     |   6 +
+ .../combination/factors/B02-04_constraints.tsv     |   5 +
+ .../combination/factors/B02-05_constraints.tsv     |   3 +
+ .../combination/factors/B02-05_existing.tsv        |   2 +-
+ .../casegen/combination/factors/B02-05_factors.tsv |   1 -
+ .../combination/factors/B02-05_interactions.tsv    |   4 -
+ .../combination/factors/B05-01_constraints.tsv     |   8 ++
+ .../casegen/combination/factors/B05-01_factors.tsv |   4 +-
+ .../combination/factors/B05-01_interactions.tsv    |  27 +----
+ .../combination/factors/B05-05_constraints.tsv     |   3 +
+ .../casegen/combination/factors/B05-05_factors.tsv |   2 -
+ .../combination/factors/B05-05_interactions.tsv    |   1 -
+ .../combination/factors/B05-05_processes.tsv       |   1 -
+ .../combination/factors/B05-06_constraints.tsv     |   3 +
+ .../combination/factors/B05-07_constraints.tsv     |   3 +
+ .../combination/factors/B05-08_constraints.tsv     |   3 +-
+ .../combination/factors/B06-01_constraints.tsv     |   5 +
+ .../combination/factors/B06-02_constraints.tsv     |   7 +-
+ .../combination/factors/B08-01_constraints.tsv     |   1 +
+ .../combination/factors/B08-02_constraints.tsv     |   7 +-
+ .../casegen/combination/factors/B08-02_factors.tsv |   2 +-
+ .../combination/factors/B08-03_constraints.tsv     |   5 +
+ .../combination/factors/B08-04_constraints.tsv     |   2 +
+ .../combination/factors/B08-05_constraints.tsv     |   2 +
+ .../combination/factors/B08-06_constraints.tsv     |   3 +-
+ .../combination/factors/B08-07_constraints.tsv     |   1 +
+ .../combination/factors/B16-11_constraints.tsv     |   2 +
+ .../combination/factors/F01-01_constraints.tsv     |  31 ++++-
+ .../combination/factors/F01-01_existing.tsv        |  18 +--
+ .../casegen/combination/factors/F01-01_factors.tsv |  27 ++---
+ .../combination/factors/F01-01_interactions.tsv    | 127 +++++----------------
+ .../combination/factors/F01-01_processes.tsv       |   1 -
+ .../combination/factors/F01-02_constraints.tsv     |  18 ++-
+ .../combination/factors/F01-02_existing.tsv        |   4 +-
+ .../casegen/combination/factors/F01-02_factors.tsv |   4 +-
+ .../combination/factors/F01-02_interactions.tsv    |  11 --
+ .../combination/factors/F02-01_constraints.tsv     |  14 ++-
+ .../combination/factors/F02-01_existing.tsv        |  31 ++---
+ .../casegen/combination/factors/F02-01_factors.tsv |  18 ++-
+ .../combination/factors/F02-01_interactions.tsv    |  16 +--
+ .../combination/factors/F02-01_processes.tsv       |   7 +-
+ .../combination/factors/F02-02_constraints.tsv     |   2 +-
+ .../combination/factors/F02-02_existing.tsv        |  14 +--
+ .../casegen/combination/factors/F02-02_factors.tsv |   6 +-
+ .../combination/factors/F02-02_interactions.tsv    |   7 +-
+ .../combination/factors/F02-02_processes.tsv       |   2 +-
+ .../combination/factors/F02-03_existing.tsv        |  16 +--
+ .../casegen/combination/factors/F02-03_factors.tsv |   8 +-
+ .../combination/factors/F02-03_interactions.tsv    |   8 +-
+ .../combination/factors/F02-03_processes.tsv       |   3 +-
+ .../combination/factors/F03-01_constraints.tsv     |  18 ++-
+ .../combination/factors/F03-01_existing.tsv        |  20 ++--
+ .../casegen/combination/factors/F03-01_factors.tsv |  15 +--
+ .../combination/factors/F03-01_interactions.tsv    |  35 +-----
+ .../combination/factors/F03-01_processes.tsv       |   6 +-
+ .../combination/factors/F03-02_constraints.tsv     |  17 ++-
+ .../combination/factors/F03-02_existing.tsv        |  77 ++++++-------
+ .../casegen/combination/factors/F03-02_factors.tsv |  38 +++---
+ .../combination/factors/F03-02_interactions.tsv    |  58 +++-------
+ .../combination/factors/F03-04_constraints.tsv     |   2 +
+ .../combination/factors/F03-04_existing.tsv        |   4 +-
+ .../casegen/combination/factors/F03-04_factors.tsv |   1 -
+ .../combination/factors/F03-04_interactions.tsv    |   3 -
+ .../combination/factors/F03-05_constraints.tsv     |   9 ++
+ .../combination/factors/F03-06_constraints.tsv     |   4 +
+ .../combination/factors/F03-07_constraints.tsv     |   5 +
+ .../combination/factors/F03-08_constraints.tsv     |   3 +
+ .../combination/factors/F04-01_constraints.tsv     |   4 +-
+ .../combination/factors/F04-03_constraints.tsv     |   3 +-
+ .../combination/factors/F04-03_existing.tsv        |  14 +--
+ .../casegen/combination/factors/F04-03_factors.tsv |   5 +-
+ .../combination/factors/F04-03_interactions.tsv    |  14 +--
+ .../combination/factors/F04-04_constraints.tsv     |   9 +-
+ .../combination/factors/F04-04_existing.tsv        |  44 +++----
+ .../casegen/combination/factors/F04-04_factors.tsv |  15 +--
+ .../combination/factors/F04-04_interactions.tsv    |  25 ++--
+ .../combination/factors/F05-01_constraints.tsv     |  15 +++
+ .../combination/factors/F05-03_constraints.tsv     |  57 +++------
+ .../combination/factors/F05-03_existing.tsv        |   4 +-
+ .../casegen/combination/factors/F05-03_factors.tsv |  11 +-
+ .../combination/factors/F05-03_interactions.tsv    |  30 ++---
+ .../combination/factors/F05-04_constraints.tsv     |   2 +-
+ .../combination/factors/F05-04_existing.tsv        |   8 +-
+ .../casegen/combination/factors/F05-04_factors.tsv |   6 +-
+ .../combination/factors/F05-04_interactions.tsv    |  11 +-
+ .../combination/factors/F05-05_constraints.tsv     |   8 +-
+ .../combination/factors/F05-05_existing.tsv        |   3 -
+ .../casegen/combination/factors/F05-05_factors.tsv |   3 -
+ .../combination/factors/F05-05_interactions.tsv    |   3 -
+ .../combination/factors/F05-05_processes.tsv       |   1 -
+ .../combination/factors/F05-06_constraints.tsv     |   2 +
+ .../combination/factors/F05-06_existing.tsv        |  10 +-
+ .../casegen/combination/factors/F05-06_factors.tsv |  10 +-
+ .../combination/factors/F05-06_interactions.tsv    |   5 +-
+ .../combination/factors/F05-06_processes.tsv       |   5 +-
+ .../combination/factors/F06-01_constraints.tsv     |   1 +
+ .../combination/factors/F06-01_existing.tsv        |  30 ++---
+ .../casegen/combination/factors/F06-01_factors.tsv |   1 -
+ .../combination/factors/F06-01_interactions.tsv    |   2 -
+ .../combination/factors/F06-02_constraints.tsv     |   3 +
+ .../combination/factors/F06-03_constraints.tsv     |   2 +
+ .../combination/factors/F06-04_constraints.tsv     |   4 +-
+ .../combination/factors/F06-04_existing.tsv        |  16 +--
+ .../casegen/combination/factors/F06-04_factors.tsv |   5 +-
+ .../combination/factors/F06-04_interactions.tsv    |   3 +-
+ .../combination/factors/F06-04_processes.tsv       |   3 +-
+ .../combination/factors/F06-05_constraints.tsv     |   1 +
+ .../combination/factors/F06-06_constraints.tsv     |   1 +
+ .../combination/factors/F06-07_constraints.tsv     |   6 +
+ .../combination/factors/F06-07_existing.tsv        |  12 +-
+ .../casegen/combination/factors/F06-07_factors.tsv |   2 +-
+ .../combination/factors/F06-08_constraints.tsv     |   1 +
+ .../combination/factors/F06-09_constraints.tsv     |   4 +
+ .../combination/factors/F06-10_existing.tsv        |   6 +-
+ .../casegen/combination/factors/F06-10_factors.tsv |   5 +-
+ .../combination/factors/F06-10_interactions.tsv    |   4 +-
+ .../combination/factors/F06-11_constraints.tsv     |   2 +
+ .../combination/factors/F06-11_existing.tsv        |   4 +-
+ .../casegen/combination/factors/F06-11_factors.tsv |  10 +-
+ .../combination/factors/F06-11_interactions.tsv    |  23 ++--
+ .../combination/factors/F06-13_constraints.tsv     |   3 +
+ .../combination/factors/F06-14_constraints.tsv     |   7 +-
+ .../combination/factors/F06-14_existing.tsv        |  21 ++--
+ .../casegen/combination/factors/F06-14_factors.tsv |  10 +-
+ .../combination/factors/F06-14_interactions.tsv    |  12 +-
+ .../combination/factors/F06-15_constraints.tsv     |   5 +-
+ .../combination/factors/F06-15_existing.tsv        |  26 ++---
+ .../casegen/combination/factors/F06-15_factors.tsv |   9 +-
+ .../combination/factors/F06-15_interactions.tsv    |  14 +--
+ .../combination/factors/F06-15_processes.tsv       |   1 -
+ .../combination/factors/F06-16_constraints.tsv     |   4 +
+ .../combination/factors/F06-16_existing.tsv        |  14 +--
+ .../casegen/combination/factors/F06-16_factors.tsv |   9 +-
+ .../combination/factors/F06-16_interactions.tsv    |  10 +-
+ .../combination/factors/F06-16_processes.tsv       |   3 +-
+ .../combination/factors/F06-17_constraints.tsv     |   5 +-
+ .../combination/factors/F06-17_existing.tsv        |   3 -
+ .../casegen/combination/factors/F06-17_factors.tsv |   6 -
+ .../combination/factors/F06-17_interactions.tsv    |  15 ---
+ .../combination/factors/F06-17_processes.tsv       |   1 -
+ .../combination/factors/F06-18_constraints.tsv     |   2 +
+ .../combination/factors/F06-20_constraints.tsv     |   2 +
+ .../combination/factors/F06-21_constraints.tsv     |   3 +
+ .../combination/factors/F06-22_existing.tsv        |  14 +--
+ .../casegen/combination/factors/F06-22_factors.tsv |   6 +-
+ .../combination/factors/F06-22_interactions.tsv    |   3 +-
+ .../combination/factors/F06-22_processes.tsv       |   3 +-
+ .../combination/factors/F06-24_existing.tsv        |   3 -
+ .../casegen/combination/factors/F06-24_factors.tsv |   2 -
+ .../combination/factors/F06-24_interactions.tsv    |   1 -
+ .../combination/factors/F06-24_processes.tsv       |   1 -
+ .../combination/factors/F06-26_constraints.tsv     |   3 +
+ .../casegen/combination/factors/F06-26_factors.tsv |   2 +-
+ .../combination/factors/F07-01_constraints.tsv     |   8 ++
+ .../combination/factors/F07-01_existing.tsv        |   4 +-
+ .../casegen/combination/factors/F07-01_factors.tsv |  10 +-
+ .../combination/factors/F07-01_interactions.tsv    |  13 +--
+ .../combination/factors/F07-01_processes.tsv       |   2 +-
+ .../combination/factors/F07-03_constraints.tsv     |   7 ++
+ .../combination/factors/F07-04_constraints.tsv     |   6 +
+ .../combination/factors/F07-04_existing.tsv        |   6 +-
+ .../casegen/combination/factors/F07-04_factors.tsv |   4 +-
+ .../combination/factors/F08-02_constraints.tsv     |  10 +-
+ .../combination/factors/F08-02_existing.tsv        |  30 ++---
+ .../casegen/combination/factors/F08-02_factors.tsv |  15 ++-
+ .../combination/factors/F08-02_interactions.tsv    |  13 +--
+ .../combination/factors/F08-03_constraints.tsv     |   6 +-
+ .../combination/factors/F08-03_existing.tsv        |  23 +---
+ .../casegen/combination/factors/F08-03_factors.tsv |  11 +-
+ .../combination/factors/F08-03_interactions.tsv    |  12 +-
+ .../combination/factors/F08-03_processes.tsv       |   5 +-
+ .../combination/factors/F08-04_constraints.tsv     |   3 +-
+ .../combination/factors/F08-05_constraints.tsv     |   7 +-
+ .../combination/factors/F08-05_existing.tsv        | 122 ++++++++++----------
+ .../casegen/combination/factors/F08-05_factors.tsv |  11 +-
+ .../combination/factors/F08-05_interactions.tsv    |  34 +-----
+ .../combination/factors/F09-01_constraints.tsv     |   7 ++
+ .../combination/factors/F09-01_existing.tsv        |  12 +-
+ .../casegen/combination/factors/F09-01_factors.tsv |   7 +-
+ .../combination/factors/F09-01_interactions.tsv    |  25 +---
+ .../combination/factors/F09-01_processes.tsv       |   3 +-
+ .../combination/factors/F09-02_constraints.tsv     |   6 +-
+ .../combination/factors/F09-03_constraints.tsv     |   8 +-
+ .../combination/factors/F09-04_constraints.tsv     |   6 +
+ .../combination/factors/F09-04_existing.tsv        |   8 +-
+ .../casegen/combination/factors/F09-04_factors.tsv |   3 +-
+ .../combination/factors/F09-04_interactions.tsv    |  16 +--
+ .../combination/factors/F09-05_constraints.tsv     |   9 ++
+ .../combination/factors/F09-06_constraints.tsv     |   5 +
+ .../combination/factors/F09-07_constraints.tsv     |   5 +-
+ .../combination/factors/F09-07_existing.tsv        |  28 ++---
+ .../casegen/combination/factors/F09-07_factors.tsv |  11 +-
+ .../combination/factors/F09-07_interactions.tsv    |  28 ++---
+ .../combination/factors/F09-08_constraints.tsv     |   5 +-
+ .../combination/factors/F09-08_existing.tsv        |  20 ++--
+ .../casegen/combination/factors/F09-08_factors.tsv |   6 +-
+ .../combination/factors/F10-01_constraints.tsv     |   2 +
+ .../combination/factors/F10-02_existing.tsv        |   4 -
+ .../casegen/combination/factors/F10-02_factors.tsv |   3 -
+ .../combination/factors/F10-02_interactions.tsv    |   3 -
+ .../combination/factors/F10-02_processes.tsv       |   1 -
+ .../combination/factors/F10-03_constraints.tsv     |   4 +-
+ .../combination/factors/M03-02_constraints.tsv     |   4 +
+ .../combination/factors/M03-02_existing.tsv        |   9 +-
+ .../casegen/combination/factors/M03-02_factors.tsv |   5 +-
+ .../combination/factors/M03-02_interactions.tsv    |  12 --
+ .../casegen/combination/factors/M03-05_factors.tsv |   1 -
+ .../combination/factors/M03-05_interactions.tsv    |   2 -
+ .../combination/factors/M03-06_constraints.tsv     |   1 -
+ .../combination/factors/M03-06_existing.tsv        |  14 +--
+ .../casegen/combination/factors/M03-06_factors.tsv |   1 -
+ .../combination/factors/M03-06_interactions.tsv    |   2 -
+ .../combination/factors/M03-08_constraints.tsv     |   4 +
+ .../combination/factors/M03-09_constraints.tsv     |  11 +-
+ .../casegen/combination/factors/M03-09_factors.tsv |   2 +-
+ .../combination/factors/M03-09_interactions.tsv    |   4 +-
+ .../combination/factors/M03-10_constraints.tsv     |   9 +-
+ .../combination/factors/M03-10_existing.tsv        |  16 ++-
+ .../casegen/combination/factors/M03-10_factors.tsv |  13 +--
+ .../combination/factors/M03-10_interactions.tsv    |  27 ++---
+ .../combination/factors/M03-11_constraints.tsv     |   2 +
+ .../casegen/combination/factors/M03-11_factors.tsv |   2 -
+ .../combination/factors/M03-11_interactions.tsv    |   1 -
+ .../combination/factors/M03-11_processes.tsv       |   1 -
+ .../combination/factors/M03-12_existing.tsv        |  14 ---
+ .../casegen/combination/factors/M03-12_factors.tsv |   2 -
+ .../combination/factors/M03-12_interactions.tsv    |   1 -
+ .../combination/factors/M03-12_processes.tsv       |   1 -
+ .../combination/factors/M03-13_constraints.tsv     |   1 +
+ .../combination/factors/M03-14_constraints.tsv     |   1 +
+ .../combination/factors/M03-14_existing.tsv        |   6 +-
+ .../casegen/combination/factors/M03-14_factors.tsv |   1 -
+ .../combination/factors/M03-14_interactions.tsv    |   2 -
+ .../combination/factors/M03-16_constraints.tsv     |   2 +
+ .../combination/factors/M03-17_constraints.tsv     |   3 +
+ .../combination/factors/M03-18_constraints.tsv     |   6 +
+ .../combination/factors/M03-18_existing.tsv        |  16 +--
+ .../casegen/combination/factors/M03-18_factors.tsv |   2 -
+ .../combination/factors/M03-18_interactions.tsv    |   7 --
+ .../combination/factors/M03-20_constraints.tsv     |   6 +-
+ .../combination/factors/M03-20_existing.tsv        |  18 +--
+ .../casegen/combination/factors/M03-20_factors.tsv |   4 +-
+ .../combination/factors/M03-20_interactions.tsv    |  13 ---
+ .../combination/factors/M03-21_constraints.tsv     |   2 +
+ .../combination/factors/M03-22_constraints.tsv     |   3 +-
+ .../combination/factors/M03-22_existing.tsv        |   5 -
+ .../casegen/combination/factors/M03-22_factors.tsv |   4 -
+ .../combination/factors/M03-22_interactions.tsv    |   6 -
+ .../combination/factors/M03-22_processes.tsv       |   1 -
+ .../combination/factors/M03-26_constraints.tsv     |   5 +
+ .../combination/factors/M03-27_constraints.tsv     |   5 +-
+ .../combination/factors/M03-27_existing.tsv        |   2 -
+ .../casegen/combination/factors/M03-27_factors.tsv |   6 +-
+ .../combination/factors/M03-27_interactions.tsv    |  33 ++----
+ .../combination/factors/M03-29_existing.tsv        |  14 +--
+ .../casegen/combination/factors/M03-29_factors.tsv |   2 +-
+ .../combination/factors/M03-31_constraints.tsv     |   1 +
+ .../combination/factors/M03-33_existing.tsv        |   1 -
+ .../casegen/combination/factors/M03-33_factors.tsv |   2 -
+ .../combination/factors/M03-33_interactions.tsv    |   9 --
+ .../combination/factors/M03-35_constraints.tsv     |   1 +
+ .../combination/factors/M03-38_existing.tsv        |   9 --
+ .../casegen/combination/factors/M03-38_factors.tsv |   3 -
+ .../combination/factors/M03-38_interactions.tsv    |   3 -
+ .../combination/factors/M03-38_processes.tsv       |   1 -
+ .../combination/factors/M03-40_constraints.tsv     |   3 +
+ .../combination/factors/M03-41_constraints.tsv     |   2 +
+ .../combination/factors/M03-45_constraints.tsv     |   6 +
+ .../combination/factors/M04-01_constraints.tsv     |  11 +-
+ .../combination/factors/M04-02_existing.tsv        |   4 -
+ .../casegen/combination/factors/M04-02_factors.tsv |   2 -
+ .../combination/factors/M04-02_interactions.tsv    |   1 -
+ .../combination/factors/M04-02_processes.tsv       |   1 -
+ .../combination/factors/M04-08_constraints.tsv     |  10 +-
+ .../combination/factors/M04-09_constraints.tsv     |   8 ++
+ .../combination/factors/M04-10_constraints.tsv     |   3 +-
+ .../combination/factors/M04-10_existing.tsv        |   8 +-
+ .../casegen/combination/factors/M04-10_factors.tsv |   6 +-
+ .../combination/factors/M04-10_interactions.tsv    |   7 +-
+ .../combination/factors/M04-19_constraints.tsv     |   2 +
+ .../combination/factors/M04-19_existing.tsv        |   3 +-
+ .../casegen/combination/factors/M04-19_factors.tsv |   4 +-
+ .../combination/factors/M04-19_interactions.tsv    |   7 +-
+ .../combination/factors/M04-20_existing.tsv        |   1 -
+ .../casegen/combination/factors/M04-20_factors.tsv |   3 -
+ .../combination/factors/M04-20_interactions.tsv    |   3 -
+ .../combination/factors/M04-20_processes.tsv       |   1 -
+ .../combination/factors/M04-21_constraints.tsv     |   5 +-
+ .../combination/factors/M04-21_existing.tsv        |   6 +-
+ .../casegen/combination/factors/M04-21_factors.tsv |   2 +-
+ .../combination/factors/M04-30_constraints.tsv     |   8 +-
+ .../casegen/combination/factors/M04-30_factors.tsv |   6 -
+ .../combination/factors/M04-30_interactions.tsv    |   9 --
+ .../combination/factors/M04-30_processes.tsv       |   2 -
+ .../combination/factors/M04-31_constraints.tsv     |  13 ++-
+ .../combination/factors/M04-31_existing.tsv        |   9 +-
+ .../casegen/combination/factors/M04-31_factors.tsv |   8 +-
+ .../combination/factors/M04-31_interactions.tsv    |   4 -
+ .../combination/factors/M04-31_processes.tsv       |   2 -
+ .../combination/factors/M04-32_constraints.tsv     |   7 ++
+ .../combination/factors/M04-33_constraints.tsv     |   3 +-
+ .../combination/factors/M04-33_existing.tsv        |  47 ++++----
+ .../casegen/combination/factors/M04-33_factors.tsv |   9 +-
+ .../combination/factors/M04-33_interactions.tsv    |   9 +-
+ .../combination/factors/M04-34_constraints.tsv     |   4 +-
+ .../combination/factors/M04-34_existing.tsv        |  26 ++---
+ .../casegen/combination/factors/M04-34_factors.tsv |   9 +-
+ .../combination/factors/M04-34_interactions.tsv    |   9 +-
+ .../combination/factors/M05-01_constraints.tsv     |   9 +-
+ .../combination/factors/M05-01_interactions.tsv    |   4 +-
+ .../combination/factors/M05-02_constraints.tsv     |   3 +-
+ .../combination/factors/M05-02_existing.tsv        |   8 +-
+ .../casegen/combination/factors/M05-02_factors.tsv |   8 +-
+ .../combination/factors/M05-02_interactions.tsv    |   7 +-
+ .../combination/factors/M05-02_processes.tsv       |   3 +-
+ .../combination/factors/M05-03_constraints.tsv     |   1 +
+ .../combination/factors/M05-03_existing.tsv        |   8 +-
+ .../casegen/combination/factors/M05-03_factors.tsv |  13 +--
+ .../combination/factors/M05-03_interactions.tsv    |  56 +--------
+ .../combination/factors/M05-04_constraints.tsv     |   1 -
+ .../combination/factors/M05-04_existing.tsv        |   6 -
+ .../casegen/combination/factors/M05-04_factors.tsv |   8 --
+ .../combination/factors/M05-04_interactions.tsv    |  28 -----
+ .../combination/factors/M05-04_processes.tsv       |   1 -
+ .../combination/factors/M05-05_constraints.tsv     |   1 +
+ .../combination/factors/M05-05_existing.tsv        |   7 +-
+ .../casegen/combination/factors/M05-05_factors.tsv |  11 +-
+ .../combination/factors/M05-05_interactions.tsv    |  37 +-----
+ .../casegen/combination/factors/M05-07_factors.tsv |   4 -
+ .../combination/factors/M05-07_interactions.tsv    |   6 -
+ .../combination/factors/M05-07_processes.tsv       |   1 -
+ .../combination/factors/M05-08_constraints.tsv     |   1 +
+ .../combination/factors/M05-09_constraints.tsv     |   5 +-
+ .../combination/factors/M05-09_existing.tsv        |  30 ++---
+ .../casegen/combination/factors/M05-09_factors.tsv |  13 +--
+ .../combination/factors/M05-09_interactions.tsv    |   8 +-
+ .../combination/factors/M05-09_processes.tsv       |   6 +-
+ .../combination/factors/M05-10_constraints.tsv     |   6 +-
+ .../combination/factors/M05-10_existing.tsv        |  23 ++--
+ .../casegen/combination/factors/M05-10_factors.tsv |   6 +-
+ .../combination/factors/M05-10_interactions.tsv    |   3 +-
+ .../combination/factors/M05-10_processes.tsv       |   3 +-
+ .../combination/factors/M05-18_constraints.tsv     |   4 +
+ .../combination/factors/M05-20_existing.tsv        |   5 -
+ .../casegen/combination/factors/M05-20_factors.tsv |   4 -
+ .../combination/factors/M05-20_interactions.tsv    |   6 -
+ .../combination/factors/M05-20_processes.tsv       |   1 -
+ .../combination/factors/M05-21_constraints.tsv     |   2 +
+ .../combination/factors/M05-22_constraints.tsv     |  25 +---
+ .../combination/factors/M05-22_existing.tsv        |  14 +--
+ .../casegen/combination/factors/M05-22_factors.tsv |   8 +-
+ .../combination/factors/M05-22_interactions.tsv    |  22 ----
+ .../combination/factors/M05-23_constraints.tsv     |   3 +
+ .../combination/factors/M05-23_existing.tsv        |  16 +--
+ .../casegen/combination/factors/M05-23_factors.tsv |   5 +-
+ .../combination/factors/M05-23_interactions.tsv    |  12 --
+ .../combination/factors/M05-24_existing.tsv        |   1 -
+ .../casegen/combination/factors/M05-24_factors.tsv |   3 -
+ .../combination/factors/M05-24_interactions.tsv    |   3 -
+ .../combination/factors/M05-24_processes.tsv       |   1 -
+ .../combination/factors/M05-26_constraints.tsv     |   4 +
+ .../combination/factors/M05-26_existing.tsv        |   4 +-
+ .../casegen/combination/factors/M05-26_factors.tsv |   1 -
+ .../combination/factors/M05-26_interactions.tsv    |   5 -
+ .../combination/factors/M06-01_constraints.tsv     |   2 +
+ .../combination/factors/M06-02_constraints.tsv     |   2 +
+ .../combination/factors/M06-02_existing.tsv        |   2 -
+ .../casegen/combination/factors/M06-02_factors.tsv |   2 -
+ .../combination/factors/M06-02_interactions.tsv    |   1 -
+ .../combination/factors/M06-02_processes.tsv       |   1 -
+ .../combination/factors/M06-03_constraints.tsv     |   3 +-
+ .../combination/factors/M06-03_existing.tsv        |   2 +-
+ .../casegen/combination/factors/M06-03_factors.tsv |   2 +-
+ .../combination/factors/M06-04_constraints.tsv     |   7 ++
+ .../combination/factors/M06-05_constraints.tsv     |   2 +
+ .../casegen/combination/factors/M06-06_factors.tsv |   2 -
+ .../combination/factors/M06-06_interactions.tsv    |   1 -
+ .../combination/factors/M06-06_processes.tsv       |   1 -
+ .../combination/factors/M06-08_constraints.tsv     |   1 +
+ .../combination/factors/M06-09_constraints.tsv     |   2 +
+ .../combination/factors/M06-09_existing.tsv        |  20 ++--
+ .../casegen/combination/factors/M06-09_factors.tsv |   1 -
+ .../combination/factors/M06-09_interactions.tsv    |   2 -
+ .../combination/factors/M06-10_constraints.tsv     |   4 +-
+ .../casegen/combination/factors/M06-10_factors.tsv |   2 +-
+ .../combination/factors/M06-11_constraints.tsv     |   3 +-
+ .../combination/factors/M06-11_existing.tsv        |   2 +-
+ .../casegen/combination/factors/M06-11_factors.tsv |   2 +-
+ .../combination/factors/M06-12_constraints.tsv     |   1 +
+ .../combination/factors/M07-01_constraints.tsv     |   6 +-
+ .../combination/factors/M07-01_existing.tsv        |  19 +--
+ .../casegen/combination/factors/M07-01_factors.tsv |  16 +--
+ .../combination/factors/M07-01_interactions.tsv    |  15 +--
+ .../combination/factors/M07-01_processes.tsv       |   3 +-
+ .../combination/factors/M07-02_existing.tsv        |   4 -
+ .../casegen/combination/factors/M07-02_factors.tsv |   8 --
+ .../combination/factors/M07-02_interactions.tsv    |  28 -----
+ .../combination/factors/M07-02_processes.tsv       |   1 -
+ .../combination/factors/M07-03_constraints.tsv     |   6 +
+ .../combination/factors/M07-05_existing.tsv        |   1 -
+ .../casegen/combination/factors/M07-05_factors.tsv |   2 -
+ .../combination/factors/M07-05_interactions.tsv    |   1 -
+ .../combination/factors/M07-05_processes.tsv       |   1 -
+ .../combination/factors/M07-06_constraints.tsv     |   3 +
+ .../combination/factors/M07-06_existing.tsv        |  22 ++--
+ .../casegen/combination/factors/M07-06_factors.tsv |   1 -
+ .../combination/factors/M07-06_interactions.tsv    |   3 -
+ .../combination/factors/M07-08_constraints.tsv     |   1 +
+ .../combination/factors/M07-09_constraints.tsv     |   1 +
+ .../combination/factors/M08-04_constraints.tsv     |  14 +--
+ .../combination/factors/M08-04_existing.tsv        |  30 ++---
+ .../casegen/combination/factors/M08-04_factors.tsv |   6 +-
+ .../combination/factors/M08-05_constraints.tsv     |   4 +
+ .../casegen/combination/factors/M08-07_factors.tsv |   2 +-
+ .../combination/factors/M08-08_constraints.tsv     |   1 +
+ .../combination/factors/M08-09_existing.tsv        |   5 -
+ .../casegen/combination/factors/M08-09_factors.tsv |   3 -
+ .../combination/factors/M08-09_interactions.tsv    |   3 -
+ .../combination/factors/M08-09_processes.tsv       |   1 -
+ .../combination/factors/M08-10_constraints.tsv     |   3 +-
+ .../combination/factors/M08-10_existing.tsv        |  13 +--
+ .../casegen/combination/factors/M08-10_factors.tsv |   9 +-
+ .../combination/factors/M08-10_interactions.tsv    |  13 +--
+ .../combination/factors/M08-10_processes.tsv       |   3 +-
+ .../combination/factors/M08-12_constraints.tsv     |   2 +
+ .../combination/factors/M08-13_constraints.tsv     |   5 +-
+ .../combination/factors/M08-13_interactions.tsv    |   4 +-
+ .../combination/factors/M08-14_constraints.tsv     |   2 +
+ .../combination/factors/M08-14_existing.tsv        |  26 ++---
+ .../casegen/combination/factors/M08-14_factors.tsv |   2 +-
+ .../combination/factors/M09-04_constraints.tsv     |   9 +-
+ .../combination/factors/M09-07_constraints.tsv     |   6 +-
+ .../combination/factors/M09-10_constraints.tsv     |   2 +
+ .../combination/factors/M10-04_constraints.tsv     |   2 +
+ .../combination/factors/M10-04_existing.tsv        |   9 --
+ .../casegen/combination/factors/M10-04_factors.tsv |   8 +-
+ .../combination/factors/M10-04_interactions.tsv    |   4 +-
+ .../combination/factors/M10-04_processes.tsv       |   4 +-
+ .../combination/factors/M10-08_existing.tsv        |   5 -
+ .../casegen/combination/factors/M10-08_factors.tsv |   2 -
+ .../combination/factors/M10-08_interactions.tsv    |   1 -
+ .../combination/factors/M10-08_processes.tsv       |   1 -
+ .../combination/factors/M10-15_constraints.tsv     |   4 +-
+ .../combination/factors/M10-15_existing.tsv        |  36 +++---
+ .../casegen/combination/factors/M10-15_factors.tsv |  14 +--
+ .../combination/factors/M10-15_interactions.tsv    |  10 +-
+ .../combination/factors/M11-01_constraints.tsv     |   2 +
+ .../combination/factors/M11-02_constraints.tsv     |   1 +
+ .../combination/factors/M11-03_existing.tsv        |   8 --
+ .../casegen/combination/factors/M11-03_factors.tsv |   2 -
+ .../combination/factors/M11-03_interactions.tsv    |   1 -
+ .../combination/factors/M11-03_processes.tsv       |   1 -
+ .../combination/factors/M12-01_constraints.tsv     |   2 +
+ .../casegen/combination/factors/M12-01_factors.tsv |   2 +-
+ .../combination/factors/M12-02_constraints.tsv     |   3 +-
+ .../combination/factors/M12-02_existing.tsv        |  27 +++--
+ .../casegen/combination/factors/M12-02_factors.tsv |   5 +-
+ .../combination/factors/M12-02_interactions.tsv    |   9 +-
+ .../combination/factors/M12-03_constraints.tsv     |   3 +
+ .../combination/factors/M12-07_constraints.tsv     |   2 +
+ .../combination/factors/M12-08_constraints.tsv     |   2 +
+ .../combination/factors/M12-09_constraints.tsv     |   4 +
+ .../combination/factors/M12-10_constraints.tsv     |   3 +
+ .../combination/factors/M13-02_constraints.tsv     |   2 +
+ .../combination/factors/M13-03_constraints.tsv     |   8 ++
+ .../combination/factors/M13-04_constraints.tsv     |  10 ++
+ .../combination/factors/M13-08_existing.tsv        |   7 +-
+ .../casegen/combination/factors/M13-08_factors.tsv |   5 +-
+ .../combination/factors/M13-08_interactions.tsv    |   4 +-
+ .../combination/factors/M13-10_constraints.tsv     |   1 +
+ .../combination/factors/M13-13_constraints.tsv     |   3 +
+ .../combination/factors/M13-15_constraints.tsv     |   1 +
+ .../combination/factors/M13-15_existing.tsv        |   5 -
+ .../casegen/combination/factors/M13-15_factors.tsv |   2 -
+ .../combination/factors/M13-15_interactions.tsv    |   1 -
+ .../combination/factors/M13-15_processes.tsv       |   1 -
+ .../combination/factors/M14-01_constraints.tsv     |   5 +-
+ .../combination/factors/M14-01_existing.tsv        |   4 +-
+ .../casegen/combination/factors/M14-01_factors.tsv |   1 -
+ .../combination/factors/M14-01_interactions.tsv    |   3 -
+ .../combination/factors/M14-04_constraints.tsv     |   2 +
+ .../combination/factors/M14-05_existing.tsv        |   5 -
+ .../casegen/combination/factors/M14-05_factors.tsv |   5 -
+ .../combination/factors/M14-05_interactions.tsv    |  75 ------------
+ .../combination/factors/M14-07_constraints.tsv     |   3 +
+ .../combination/factors/M14-07_existing.tsv        |  12 +-
+ .../casegen/combination/factors/M14-07_factors.tsv |   1 -
+ .../combination/factors/M14-07_interactions.tsv    |   8 --
+ .../combination/factors/M14-09_constraints.tsv     |   3 +
+ .../combination/factors/M14-10_constraints.tsv     |   3 +
+ .../combination/factors/M14-10_existing.tsv        |   4 +-
+ .../casegen/combination/factors/M14-10_factors.tsv |   2 +-
+ .../combination/factors/M15-01_constraints.tsv     |   2 +
+ .../combination/factors/M15-01_existing.tsv        |   5 +-
+ .../casegen/combination/factors/M15-01_factors.tsv |  14 +--
+ .../combination/factors/M15-01_interactions.tsv    |  66 -----------
+ .../combination/factors/M15-01_processes.tsv       |   1 -
+ .../combination/factors/M15-02_constraints.tsv     |   1 +
+ .../combination/factors/M15-02_existing.tsv        |   9 +-
+ .../casegen/combination/factors/M15-02_factors.tsv |  10 +-
+ .../combination/factors/M15-02_interactions.tsv    |  29 +----
+ .../combination/factors/M15-04_existing.tsv        |  16 +--
+ .../casegen/combination/factors/M15-04_factors.tsv |  15 +--
+ .../combination/factors/M15-04_interactions.tsv    |  79 +------------
+ .../combination/factors/M15-05_constraints.tsv     |   5 +-
+ .../combination/factors/M15-05_existing.tsv        |  72 ++++++------
+ .../casegen/combination/factors/M15-05_factors.tsv |  11 +-
+ .../combination/factors/M15-05_interactions.tsv    |  32 +++---
+ .../combination/factors/M15-07_constraints.tsv     |   2 +
+ .../combination/factors/M15-08_existing.tsv        |   3 +-
+ .../casegen/combination/factors/M15-08_factors.tsv |   1 -
+ .../combination/factors/M15-08_interactions.tsv    |   4 -
+ .../combination/factors/M15-10_constraints.tsv     |   5 +-
+ .../combination/factors/M16-01_constraints.tsv     |   5 +
+ .../combination/factors/M16-02_constraints.tsv     |   1 +
+ .../combination/factors/M16-03_constraints.tsv     |   3 +
+ 636 files changed, 2052 insertions(+), 3245 deletions(-)
+
+exec
+/bin/bash -lc 'git diff --numstat eddb12cb -- integration_test/casegen/combination/factors/F06-13_{processes,factors,interactions,constraints,existing}.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'git diff --numstat eddb12cb -- integration_test/casegen/combination/factors/F06-11_{processes,factors,interactions,constraints,existing}.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'git diff --numstat eddb12cb -- integration_test/casegen/combination/factors/F06-10_{processes,factors,interactions,constraints,existing}.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'git diff --numstat eddb12cb -- integration_test/casegen/combination/factors/F06-14_{processes,factors,interactions,constraints,existing}.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'git diff --numstat eddb12cb -- integration_test/casegen/combination/factors/F06-16_{processes,factors,interactions,constraints,existing}.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'git diff --numstat eddb12cb -- integration_test/casegen/combination/factors/F06-17_{processes,factors,interactions,constraints,existing}.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'git diff --numstat eddb12cb -- integration_test/casegen/combination/factors/F06-15_{processes,factors,interactions,constraints,existing}.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'git diff --numstat eddb12cb -- integration_test/casegen/combination/factors/F06-18_{processes,factors,interactions,constraints,existing}.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 286ms:
+3	0	integration_test/casegen/combination/factors/F06-13_constraints.tsv
+
+ succeeded in 298ms:
+2	0	integration_test/casegen/combination/factors/F06-11_constraints.tsv
+2	2	integration_test/casegen/combination/factors/F06-11_existing.tsv
+4	6	integration_test/casegen/combination/factors/F06-11_factors.tsv
+7	16	integration_test/casegen/combination/factors/F06-11_interactions.tsv
+
+ succeeded in 403ms:
+2	0	integration_test/casegen/combination/factors/F06-18_constraints.tsv
+
+ succeeded in 573ms:
+3	3	integration_test/casegen/combination/factors/F06-10_existing.tsv
+2	3	integration_test/casegen/combination/factors/F06-10_factors.tsv
+1	3	integration_test/casegen/combination/factors/F06-10_interactions.tsv
+
+ succeeded in 501ms:
+3	2	integration_test/casegen/combination/factors/F06-17_constraints.tsv
+0	3	integration_test/casegen/combination/factors/F06-17_existing.tsv
+0	6	integration_test/casegen/combination/factors/F06-17_factors.tsv
+0	15	integration_test/casegen/combination/factors/F06-17_interactions.tsv
+0	1	integration_test/casegen/combination/factors/F06-17_processes.tsv
+
+ succeeded in 561ms:
+5	2	integration_test/casegen/combination/factors/F06-14_constraints.tsv
+10	11	integration_test/casegen/combination/factors/F06-14_existing.tsv
+4	6	integration_test/casegen/combination/factors/F06-14_factors.tsv
+3	9	integration_test/casegen/combination/factors/F06-14_interactions.tsv
+
+ succeeded in 528ms:
+4	0	integration_test/casegen/combination/factors/F06-16_constraints.tsv
+4	10	integration_test/casegen/combination/factors/F06-16_existing.tsv
+3	6	integration_test/casegen/combination/factors/F06-16_factors.tsv
+3	7	integration_test/casegen/combination/factors/F06-16_interactions.tsv
+1	2	integration_test/casegen/combination/factors/F06-16_processes.tsv
+
+ succeeded in 578ms:
+3	2	integration_test/casegen/combination/factors/F06-15_constraints.tsv
+11	15	integration_test/casegen/combination/factors/F06-15_existing.tsv
+3	6	integration_test/casegen/combination/factors/F06-15_factors.tsv
+3	11	integration_test/casegen/combination/factors/F06-15_interactions.tsv
+0	1	integration_test/casegen/combination/factors/F06-15_processes.tsv
+
+exec
+/bin/bash -lc 'git diff eddb12cb -- integration_test/casegen/combination/factors/F06-10_{processes,factors,interactions,constraints,existing}.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'git diff eddb12cb -- integration_test/casegen/combination/factors/F06-11_{processes,factors,interactions,constraints,existing}.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'git diff eddb12cb -- integration_test/casegen/combination/factors/F06-13_{processes,factors,interactions,constraints,existing}.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'git diff eddb12cb -- integration_test/casegen/combination/factors/F06-14_{processes,factors,interactions,constraints,existing}.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'git diff eddb12cb -- integration_test/casegen/combination/factors/F06-16_{processes,factors,interactions,constraints,existing}.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'git diff eddb12cb -- integration_test/casegen/combination/factors/F06-17_{processes,factors,interactions,constraints,existing}.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'git diff eddb12cb -- integration_test/casegen/combination/factors/F06-15_{processes,factors,interactions,constraints,existing}.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'git diff eddb12cb -- integration_test/casegen/combination/factors/F06-18_{processes,factors,interactions,constraints,existing}.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 675ms:
+diff --git a/integration_test/casegen/combination/factors/F06-11_constraints.tsv b/integration_test/casegen/combination/factors/F06-11_constraints.tsv
+index d21fecee..65c3bfb9 100644
+--- a/integration_test/casegen/combination/factors/F06-11_constraints.tsv
++++ b/integration_test/casegen/combination/factors/F06-11_constraints.tsv
+@@ -1 +1,3 @@
+ 処理ID	組	種別	根拠	理由
++P2	F05=売却対象でない	打ち切り	L0072	売却対象でない商品は代表商品の候補から除かれ、ほかの値は結果に効かない
++P2	F06=数量0	打ち切り	L0072	数量0の商品は代表商品の候補から除かれ、ほかの値は結果に効かない
+diff --git a/integration_test/casegen/combination/factors/F06-11_existing.tsv b/integration_test/casegen/combination/factors/F06-11_existing.tsv
+index 92f5347d..7b35f660 100644
+--- a/integration_test/casegen/combination/factors/F06-11_existing.tsv
++++ b/integration_test/casegen/combination/factors/F06-11_existing.tsv
+@@ -1,4 +1,4 @@
+ テストID	処理ID	値	理由
+-IT-F06-11-016	P2	F03=両方&F05=ある	ネット買取の買取依頼内容で、えらんで買取・まとめて買取の両方に代表商品と残り件数が出ることを確かめる
+-IT-F06-11-033	P2	F03=えらんで買取のみ&F05=ない	えらんで買取の対象1件だけの買取で、ほかの表示が無いことを確かめる
++IT-F06-11-016	P2	F03=両方	ネット買取の買取依頼内容で、えらんで買取・まとめて買取の両方に代表商品と残り件数が出ることを確かめる
++IT-F06-11-033	P2	F03=えらんで買取のみ	えらんで買取の対象1件だけの買取で、ほかの表示が無いことを確かめる
+ IT-F06-11-034	P2	F03=えらんで買取のみ	えらんで買取2件・まとめて買取なしで、まとめて買取が出ないことを確かめる
+diff --git a/integration_test/casegen/combination/factors/F06-11_factors.tsv b/integration_test/casegen/combination/factors/F06-11_factors.tsv
+index 19d3dab1..156b0a72 100644
+--- a/integration_test/casegen/combination/factors/F06-11_factors.tsv
++++ b/integration_test/casegen/combination/factors/F06-11_factors.tsv
+@@ -2,9 +2,7 @@
+ F01	P1,P3	買取の種類	ネット買取｜店頭買取	ネット買取: 買取店舗はオンラインショップ・金額は査定承諾金額合計・一覧順は表1のネット買取の順位／店頭買取: 買取店舗は店舗名・金額は査定金額合計・一覧順は表1の店頭買取の順位	L0026-L0044,L0053,L0057-L0058	この機能
+ F02	P1	処理状態	金額を出す状態｜金額を出さない状態	金額を出す状態: 振込待ち・買取完了は買取金額合計を出す／金額を出さない状態: 買取金額合計を出さない	L0056	この機能
+ F03	P2	買取区分の商品構成	えらんで買取のみ｜まとめて買取のみ｜両方	えらんで買取のみ: えらんで買取の代表商品だけ出す／まとめて買取のみ: まとめて買取の代表商品だけ出す／両方: えらんで買取の次にまとめて買取を出す	L0072,L0098	この機能
+-F04	P2	代表商品の言語と状態	言語なし｜言語のみ｜言語と状態	言語なし: 商品名のみ／言語のみ: 商品名の前に言語コードを【】で出す／言語と状態: 同じ括弧に言語コードと状態を/で併記する	L0074	この機能
+-F05	P2	同じ区分の他の対象商品	ある｜ない	ある: ほか○件を出す／ない: ほか○件を出さない	L0072,L0099	この機能
+-F06	P3	並びを決める段	取引未完了の優先順位｜同じ買取ステータスの買取番号降順｜完了とキャンセルの依頼日降順｜同日の買取番号降順	取引未完了の優先順位: 表1の優先順位の小さい方を上に出す／同じ買取ステータスの買取番号降順: 買取番号の大きい方を上に出す／完了とキャンセルの依頼日降順: 依頼日の新しい方を上に出す／同日の買取番号降順: 依頼日が同日なら買取番号の大きい方を上に出す	L0020,L0042-L0044	この機能
+-F07	P2	候補商品の売却対象	売却対象｜売却対象でない	売却対象: 代表商品の候補になる／売却対象でない: 候補から除く	L0072	この機能
+-F08	P2	候補商品の数量	数量あり｜数量0	数量あり: 代表商品の候補になる／数量0: 候補から除く	L0072	この機能
+-F09	P2	代表商品の決まる段	買取価格の差で決まる｜同額で状態の定義順で決まる	買取価格の差で決まる: 買取価格の高い方を代表商品にする／同額で状態の定義順で決まる: 買取価格が同額のとき状態の定義順の先頭を代表商品にする	L0073	この機能
++F04	P3	並びを決める段	取引未完了の優先順位｜同じ買取ステータスの買取番号降順｜完了とキャンセルの依頼日降順｜同日の買取番号降順	取引未完了の優先順位: 表1の優先順位の小さい方を上に出す／同じ買取ステータスの買取番号降順: 買取番号の大きい方を上に出す／完了とキャンセルの依頼日降順: 依頼日の新しい方を上に出す／同日の買取番号降順: 依頼日が同日なら買取番号の大きい方を上に出す	L0020,L0042-L0044	この機能
++F05	P2	候補商品の売却対象	売却対象｜売却対象でない	売却対象: 代表商品の候補になる／売却対象でない: 候補から除く	L0072	この機能
++F06	P2	候補商品の数量	数量あり｜数量0	数量あり: 代表商品の候補になる／数量0: 候補から除く	L0072	この機能
++F07	P2	代表商品の決まる段	買取価格の差で決まる｜同額で状態の定義順で決まる	買取価格の差で決まる: 買取価格の高い方を代表商品にする／同額で状態の定義順で決まる: 買取価格が同額のとき状態の定義順の先頭を代表商品にする	L0073	この機能
+diff --git a/integration_test/casegen/combination/factors/F06-11_interactions.tsv b/integration_test/casegen/combination/factors/F06-11_interactions.tsv
+index 2ae396f6..eab9686f 100644
+--- a/integration_test/casegen/combination/factors/F06-11_interactions.tsv
++++ b/integration_test/casegen/combination/factors/F06-11_interactions.tsv
+@@ -1,18 +1,9 @@
+ 処理ID	要因	判定	根拠	理由
+ P1	F01+F02	効き合う	L0056-L0058	金額を出す状態のときだけ、ネット買取は査定承諾金額合計・店頭買取は査定金額合計を出す
+-P2	F03+F04	関係しない		言語コードと状態の併記は代表商品ごとの規則で、どちらの区分かによらない
+-P2	F03+F05	関係しない		ほか件数は区分ごとに数えるだけで、どの区分があるかで規則は変わらない
+-P2	F04+F05	関係しない		ほか件数は同じ区分の他の商品の数で、代表商品の表記とは別
+-P3	F01+F06	関係しない		買取の種類は表1の優先順位の入力にすぎず、どの段で決まるかの規則は種類によらない
+-P2	F03+F07	関係しない		区分と候補の売却対象の判定は別々の規則で、一方の値で他方の結果は変わらない
+-P2	F03+F08	関係しない		区分と候補の数量の判定は別々の規則で、一方の値で他方の結果は変わらない
+-P2	F03+F09	関係しない		区分と代表商品の順位付けは別々の規則で、一方の値で他方の結果は変わらない
+-P2	F04+F07	関係しない		代表商品の表記と候補の売却対象の判定は別々の規則で、一方の値で他方の結果は変わらない
+-P2	F04+F08	関係しない		代表商品の表記と候補の数量の判定は別々の規則で、一方の値で他方の結果は変わらない
+-P2	F04+F09	関係しない		代表商品の表記と代表商品の順位付けは別々の規則で、一方の値で他方の結果は変わらない
+-P2	F05+F07	関係しない		ほか件数と候補の売却対象の判定は別々の規則で、一方の値で他方の結果は変わらない
+-P2	F05+F08	関係しない		ほか件数と候補の数量の判定は別々の規則で、一方の値で他方の結果は変わらない
+-P2	F05+F09	関係しない		ほか件数と代表商品の順位付けは別々の規則で、一方の値で他方の結果は変わらない
+-P2	F07+F08	関係しない		候補にする条件のうち、売却対象と数量はどれか1つで外れれば候補から除くだけで、一方の値で他方の結果は変わらない
+-P2	F07+F09	関係しない		候補の売却対象の判定と代表商品の順位付けは別々の規則で、一方の値で他方の結果は変わらない
+-P2	F08+F09	関係しない		候補の数量の判定と代表商品の順位付けは別々の規則で、一方の値で他方の結果は変わらない
++P3	F01+F04	関係しない		買取の種類は表1の優先順位の入力にすぎず、どの段で決まるかの規則は種類によらない
++P2	F03+F05	関係しない		区分と候補の売却対象の判定は別々の規則で、一方の値で他方の結果は変わらない
++P2	F03+F06	関係しない		区分と候補の数量の判定は別々の規則で、一方の値で他方の結果は変わらない
++P2	F03+F07	関係しない		区分と代表商品の順位付けは別々の規則で、一方の値で他方の結果は変わらない
++P2	F05+F06	関係しない		候補にする条件のうち、売却対象と数量はどれか1つで外れれば候補から除くだけで、一方の値で他方の結果は変わらない
++P2	F05+F07	関係しない		候補の売却対象の判定と代表商品の順位付けは別々の規則で、一方の値で他方の結果は変わらない
++P2	F06+F07	関係しない		候補の数量の判定と代表商品の順位付けは別々の規則で、一方の値で他方の結果は変わらない
+
+ succeeded in 715ms:
+diff --git a/integration_test/casegen/combination/factors/F06-10_existing.tsv b/integration_test/casegen/combination/factors/F06-10_existing.tsv
+index 3586f48b..f70bbe76 100644
+--- a/integration_test/casegen/combination/factors/F06-10_existing.tsv
++++ b/integration_test/casegen/combination/factors/F06-10_existing.tsv
+@@ -1,4 +1,4 @@
+ テストID	処理ID	値	理由
+-IT-F06-10-006	P1	F01=通常の注文&F02=プラス&F03=日本語	日本語表示で通常の注文のプラス履歴を開き、+300・注文番号・有効期限を確かめる
+-IT-F06-10-007	P1	F01=注文なし&F02=マイナス&F03=日本語	日本語表示で注文なしのマイナス履歴を開き、-50で注文番号・有効期限が出ないことを確かめる
+-IT-F06-10-008	P1	F01=スマレジ連携の受注&F02=プラス&F03=日本語	日本語表示でスマレジ連携の受注の+100の履歴を開き、レシート番号が出ることを確かめる
++IT-F06-10-006	P1	F01=プラス&F02=日本語	日本語表示で通常の注文のプラス履歴を開き、+300・注文番号・有効期限を確かめる
++IT-F06-10-007	P1	F01=マイナス&F02=日本語	日本語表示で注文なしのマイナス履歴を開き、-50で注文番号・有効期限が出ないことを確かめる
++IT-F06-10-008	P1	F01=プラス&F02=日本語	日本語表示でスマレジ連携の受注の+100の履歴を開き、レシート番号が出ることを確かめる
+diff --git a/integration_test/casegen/combination/factors/F06-10_factors.tsv b/integration_test/casegen/combination/factors/F06-10_factors.tsv
+index 562f2751..b9162666 100644
+--- a/integration_test/casegen/combination/factors/F06-10_factors.tsv
++++ b/integration_test/casegen/combination/factors/F06-10_factors.tsv
+@@ -1,4 +1,3 @@
+ 要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+-F01	P1	履歴の由来	通常の注文｜スマレジ連携の受注｜注文なし	通常の注文: 注文番号のリンクを出す／スマレジ連携の受注: 注文番号の代わりにレシート番号を出す／注文なし: 注文番号もレシート番号も出さない	L0046,L0074-L0077	この機能
+-F02	P1	増減値の符号	プラス｜マイナス	プラス: 先頭に+を付けて表示し有効期限も表示する／マイナス: そのまま表示し有効期限は出さない	L0101	この機能
+-F03	P1	表示言語	日本語｜英語	日本語: 日付はY/n/j／英語: 日付はm/d/Yで内容は英語の内容を出す	L0071-L0073,L0079-L0083	この機能
++F01	P1	増減値の符号	プラス｜マイナス	プラス: 先頭に+を付けて表示し有効期限も表示する／マイナス: そのまま表示し有効期限は出さない	L0101	この機能
++F02	P1	表示言語	日本語｜英語	日本語: 日付はY/n/j／英語: 日付はm/d/Yで内容は英語の内容を出す	L0071-L0073,L0079-L0083	この機能
+diff --git a/integration_test/casegen/combination/factors/F06-10_interactions.tsv b/integration_test/casegen/combination/factors/F06-10_interactions.tsv
+index 825074b3..e7e4e589 100644
+--- a/integration_test/casegen/combination/factors/F06-10_interactions.tsv
++++ b/integration_test/casegen/combination/factors/F06-10_interactions.tsv
+@@ -1,4 +1,2 @@
+ 処理ID	要因	判定	根拠	理由
+-P1	F01+F02	関係しない		注文番号・レシート番号の出し分けは履歴の由来で決まり、符号は+表示と有効期限の出し分けだけを決める
+-P1	F01+F03	関係しない		注文番号・レシート番号は言語によらず出す。言語は日付書式と内容の言語だけを決める
+-P1	F02+F03	効き合う	L0079-L0081,L0101	有効期限はプラスの履歴にのみ出るので、日付書式の言語差はプラスの履歴でだけ現れる
++P1	F01+F02	効き合う	L0079-L0081,L0101	有効期限はプラスの履歴にのみ出るので、日付書式の言語差はプラスの履歴でだけ現れる
+
+ succeeded in 732ms:
+diff --git a/integration_test/casegen/combination/factors/F06-13_constraints.tsv b/integration_test/casegen/combination/factors/F06-13_constraints.tsv
+index d21fecee..bb7121ed 100644
+--- a/integration_test/casegen/combination/factors/F06-13_constraints.tsv
++++ b/integration_test/casegen/combination/factors/F06-13_constraints.tsv
+@@ -1 +1,4 @@
+ 処理ID	組	種別	根拠	理由
++P1	F01=PC	打ち切り	L0148	スマートフォン判定に該当しない端末ではマイページへ戻し何も登録しない。身分証の種類は結果に効かない
++P2	F01=PC	打ち切り	L0143	スマートフォン判定に該当しない端末ではスタート画面へ戻す。身分証の種類は結果に効かない
++P2	F03=選択なし	打ち切り	L0144	身分証種別の選択が送られていないときはスタート画面へ戻す。端末は結果に効かない
+
+ succeeded in 576ms:
+diff --git a/integration_test/casegen/combination/factors/F06-18_constraints.tsv b/integration_test/casegen/combination/factors/F06-18_constraints.tsv
+index d21fecee..722be6dd 100644
+--- a/integration_test/casegen/combination/factors/F06-18_constraints.tsv
++++ b/integration_test/casegen/combination/factors/F06-18_constraints.tsv
+@@ -1 +1,3 @@
+ 処理ID	組	種別	根拠	理由
++P1	F04=あり	打ち切り	L0113-L0116,L0212	ブラックリストと一致すると更新せずエラーで戻る。ほかの要因は結果に効かない
++P1	F05=失敗	打ち切り	L0196,L0215	スマレジ連携が失敗すると更新を中止し編集フォームを再表示する。ほかの要因は結果に効かない
+
+ succeeded in 679ms:
+diff --git a/integration_test/casegen/combination/factors/F06-16_constraints.tsv b/integration_test/casegen/combination/factors/F06-16_constraints.tsv
+index d21fecee..378677b4 100644
+--- a/integration_test/casegen/combination/factors/F06-16_constraints.tsv
++++ b/integration_test/casegen/combination/factors/F06-16_constraints.tsv
+@@ -1 +1,5 @@
+ 処理ID	組	種別	根拠	理由
++P2	F05=なし	打ち切り	L0208	選手情報が無いと画面を表示せず、ほかの条件は結果に効かない
++P2	F06=無効	打ち切り	L0209	イベントのデッキ登録フラグが無効だと画面を表示せず、ほかの条件は結果に効かない
++P2	F07=過ぎている	打ち切り	L0209	デッキ登録締切を過ぎていると画面を表示せず、ほかの条件は結果に効かない
++P3	F08=他人	打ち切り	L0216	他人のマイデッキは入力欄を上書きせず、フォーマットも合わせない
+diff --git a/integration_test/casegen/combination/factors/F06-16_existing.tsv b/integration_test/casegen/combination/factors/F06-16_existing.tsv
+index 27f3cdbd..801818ee 100644
+--- a/integration_test/casegen/combination/factors/F06-16_existing.tsv
++++ b/integration_test/casegen/combination/factors/F06-16_existing.tsv
+@@ -14,13 +14,7 @@ IT-F06-16-063	P1	F01=あり&F04=全て一致	2回目の提出で上書きされ
+ IT-F06-16-037	P2	F05=なし	選手情報が無い会員で画面が表示されないことを確かめる
+ IT-F06-16-039	P2	F06=無効	デッキ登録フラグが無効な大会で画面が表示されないことを確かめる
+ IT-F06-16-040	P2	F07=過ぎている	登録締切を過ぎた大会で画面が表示されないことを確かめる
+-IT-F06-16-001	P3	F08=複数&F09=あり	登録済みのStandardのデッキの内容が表示されることを確かめる
+-IT-F06-16-007	P3	F08=1つ	選べるフォーマットが1つの大会でフォーマット選択エリアが出ないことを確かめる
+-IT-F06-16-008	P3	F08=複数	選べるフォーマットが複数の大会でフォーマット選択エリアが出ることを確かめる
+-IT-F06-16-009	P3	F08=複数&F09=あり	両フォーマットに登録済みのデッキがあり、切り替えで入力欄が切り替わることを確かめる
+-IT-F06-16-064	P3	F08=複数&F09=あり	登録済みデッキのあるフォーマットの初期値を確かめる
+-IT-F06-16-064	P3	F08=複数&F09=なし	登録済みデッキのないフォーマットの入力欄が空になることを確かめる
+-IT-F06-16-018	P4	F10=本人&F11=イベントで選べる	本人のマイデッキでフォーマットを合わせ入力欄が上書きされることを確かめる
+-IT-F06-16-019	P4	F10=他人	他人のマイデッキでは入力欄が上書きされないことを確かめる
+-IT-F06-16-020	P4	F10=本人&F13=あり	統率領域のカードがメインボードの先頭に取り込まれることを確かめる
+-IT-F06-16-062	P4	F10=本人&F11=イベントで選べない	イベントで選べないフォーマットのマイデッキで選択フォーマットが変わらないことを確かめる
++IT-F06-16-018	P3	F08=本人&F09=イベントで選べる	本人のマイデッキでフォーマットを合わせ入力欄が上書きされることを確かめる
++IT-F06-16-019	P3	F08=他人	他人のマイデッキでは入力欄が上書きされないことを確かめる
++IT-F06-16-020	P3	F08=本人&F10=あり	統率領域のカードがメインボードの先頭に取り込まれることを確かめる
++IT-F06-16-062	P3	F08=本人&F09=イベントで選べない	イベントで選べないフォーマットのマイデッキで選択フォーマットが変わらないことを確かめる
+diff --git a/integration_test/casegen/combination/factors/F06-16_factors.tsv b/integration_test/casegen/combination/factors/F06-16_factors.tsv
+index 9d936bec..4613e222 100644
+--- a/integration_test/casegen/combination/factors/F06-16_factors.tsv
++++ b/integration_test/casegen/combination/factors/F06-16_factors.tsv
+@@ -6,9 +6,6 @@ F04	P1	入力したカード名と現行のカード情報	全て一致｜一致
+ F05	P2	選手情報	あり｜なし	あり: ほかの条件で決まる／なし: 画面を表示しない	L0208	この機能
+ F06	P2	イベント詳細のデッキ登録フラグ	有効｜無効	有効: ほかの条件で決まる／無効: 画面を表示しない	L0209	この機能
+ F07	P2	デッキ登録締切	締切前｜過ぎている	締切前: ほかの条件で決まる／過ぎている: 画面を表示しない	L0209	この機能
+-F08	P3	イベントで選べるフォーマットの数	複数｜1つ	複数: フォーマット選択エリアを表示する／1つ: フォーマット選択エリアを表示しない	L0074-L0075,L0211	この機能
+-F09	P3	選択中のフォーマットの登録済みデッキ	あり｜なし	あり: その内容をメインボードとサイドボードの初期値にする／なし: 入力欄は空	L0211	この機能
+-F10	P4	マイデッキの所有者	本人｜他人	本人: 選択中のフォーマットの入力欄を上書きする／他人: 上書きしない	L0216	この機能
+-F11	P4	マイデッキのフォーマット	イベントで選べる｜イベントで選べない	イベントで選べる: 選択フォーマットをそのデッキのフォーマットに合わせる／イベントで選べない: 選択フォーマットは変えない	L0215	この機能
+-F12	P4	マイデッキのカードの日本語名	日本語名あり｜日本語名なし	日本語名あり: 日本語名で取り込む／日本語名なし: 英語名で取り込む	L0217	この機能
+-F13	P4	マイデッキの統率領域のカード	あり｜なし	あり: メインボードの先頭に足して取り込む／なし: 通常どおり取り込む	L0217	この機能
++F08	P3	マイデッキの所有者	本人｜他人	本人: 選択中のフォーマットの入力欄を上書きする／他人: 上書きしない	L0216	この機能
++F09	P3	マイデッキのフォーマット	イベントで選べる｜イベントで選べない	イベントで選べる: 選択フォーマットをそのデッキのフォーマットに合わせる／イベントで選べない: 選択フォーマットは変えない	L0215	この機能
++F10	P3	マイデッキの統率領域のカード	あり｜なし	あり: メインボードの先頭に足して取り込む／なし: 通常どおり取り込む	L0217	この機能
+diff --git a/integration_test/casegen/combination/factors/F06-16_interactions.tsv b/integration_test/casegen/combination/factors/F06-16_interactions.tsv
+index b0e0945c..5986065a 100644
+--- a/integration_test/casegen/combination/factors/F06-16_interactions.tsv
++++ b/integration_test/casegen/combination/factors/F06-16_interactions.tsv
+@@ -8,10 +8,6 @@ P1	F03+F04	関係しない		プレイヤー名とカードの保存は別々に
+ P2	F05+F06	関係しない		出さない条件のどれか1つに当たれば出さない。条件ごとの外れ方は1つずつ確かめれば足りる
+ P2	F05+F07	関係しない		出さない条件のどれか1つに当たれば出さない。条件ごとの外れ方は1つずつ確かめれば足りる
+ P2	F06+F07	関係しない		出さない条件のどれか1つに当たれば出さない。条件ごとの外れ方は1つずつ確かめれば足りる
+-P3	F08+F09	関係しない		フォーマット数は選択エリアを出すかを決め、登録済みデッキの有無は選択中フォーマットの入力欄の初期値を決める。初期値にフォーマット数は付いていない
+-P4	F10+F11	効き合う	L0215-L0216	本人のデッキのときだけ上書きし、そのときだけ選択フォーマットを合わせる
+-P4	F10+F12	効き合う	L0216-L0217	他人のデッキは上書きしないので日本語名か英語名かの取り込みが行われない
+-P4	F10+F13	効き合う	L0216-L0217	他人のデッキは上書きしないので統率領域のカードの取り込みが行われない
+-P4	F11+F12	関係しない		選択フォーマットの合わせ方とカード名の言語は別々に決まる
+-P4	F11+F13	関係しない		選択フォーマットの合わせ方と統率領域のカードの取り込みは別々に決まる
+-P4	F12+F13	関係しない		カード名の言語と統率領域のカードを先頭に足すことは別々に決まる
++P3	F08+F09	効き合う	L0215-L0216	本人のデッキのときだけ上書きし、そのときだけ選択フォーマットを合わせる
++P3	F08+F10	効き合う	L0216-L0217	他人のデッキは上書きしないので統率領域のカードの取り込みが行われない
++P3	F09+F10	関係しない		選択フォーマットの合わせ方と統率領域のカードの取り込みは別々に決まる
+diff --git a/integration_test/casegen/combination/factors/F06-16_processes.tsv b/integration_test/casegen/combination/factors/F06-16_processes.tsv
+index 3b27cce5..5aadbfa6 100644
+--- a/integration_test/casegen/combination/factors/F06-16_processes.tsv
++++ b/integration_test/casegen/combination/factors/F06-16_processes.tsv
+@@ -1,5 +1,4 @@
+ 処理ID	処理	契機	確かめる所	根拠
+ P1	デッキリストを提出して大会のデッキを新規登録または上書きする	大会デッキ登録編集画面でデッキリストを提出するボタンを押す	大会デッキ・デッキを構成するカード（DB）	L0088-L0095,L0243-L0249,L0261-L0264
+ P2	大会デッキ登録編集画面を表示するか決める	会員が大会デッキ登録編集画面を開く	大会デッキ登録編集画面（表示される・されない）	L0208-L0209,L0238-L0240
+-P3	フォーマット選択エリアと入力欄の初期値を決める	会員が大会デッキ登録編集画面を開く、またはフォーマットを切り替える	大会デッキ登録編集画面の入力欄	L0074-L0075,L0211
+-P4	マイデッキを選んで入力欄を上書きする	マイデッキを取得ポップアップでデッキを選ぶ	大会デッキ登録編集画面の入力欄とフォーマット選択	L0185-L0186,L0215-L0217
++P3	マイデッキを選んで入力欄を上書きする	マイデッキを取得ポップアップでデッキを選ぶ	大会デッキ登録編集画面の入力欄とフォーマット選択	L0185-L0186,L0215-L0217
+
+ succeeded in 784ms:
+diff --git a/integration_test/casegen/combination/factors/F06-17_constraints.tsv b/integration_test/casegen/combination/factors/F06-17_constraints.tsv
+index 8477d45c..57453ff4 100644
+--- a/integration_test/casegen/combination/factors/F06-17_constraints.tsv
++++ b/integration_test/casegen/combination/factors/F06-17_constraints.tsv
+@@ -1,3 +1,4 @@
+ 処理ID	組	種別	根拠	理由
+-P2	F08=最小未満	正解未定	L0060,L0136	Excel本文は最小枚数より多い場合、表示メッセージ節は下回るときと食い違い、エラーを出す枚数条件が決まらない
+-P2	F09=最小未満	正解未定	L0060,L0136	Excel本文は最小枚数より多い場合、表示メッセージ節は下回るときと食い違い、エラーを出す枚数条件が決まらない
++P1	F04=登録不可	打ち切り	L0099	イベント詳細が登録不可なら登録しない。ほかの条件は結果に効かない
++P1	F05=誤り	打ち切り	L0100,L0103	書式が誤りなら保存せず、内容を保持してデッキ編集画面へ戻す。既存デッキの有無などは結果に効かない
++P1	F06=特定できない	打ち切り	L0097	選手情報が特定できないなら登録しない。ほかの条件は結果に効かない
+diff --git a/integration_test/casegen/combination/factors/F06-17_existing.tsv b/integration_test/casegen/combination/factors/F06-17_existing.tsv
+index 4b08968a..42f10c06 100644
+--- a/integration_test/casegen/combination/factors/F06-17_existing.tsv
++++ b/integration_test/casegen/combination/factors/F06-17_existing.tsv
+@@ -11,6 +11,3 @@ IT-F06-17-030	P1	F05=誤り	メインに書式誤りの行を入れて提出し
+ IT-F06-17-032	P1	F05=誤り	メインだけ書式誤りで提出し、デッキ編集画面で案内を確かめる
+ IT-F06-17-033	P1	F05=誤り	サイドだけ書式誤りで提出し、デッキ編集画面で案内を確かめる
+ IT-F06-17-034	P1	F05=誤り	両方書式誤りで提出し、デッキ編集画面で案内を確かめる
+-IT-F06-17-017	P2	F07=1つ&F11=あり	大会のフォーマットを1つ・画像ありとし、完了画面で確かめる
+-IT-F06-17-018	P2	F07=複数	大会のフォーマットを2件とし、完了画面で確かめる
+-IT-F06-17-019	P2	F11=なし	画像を持たないカードで、完了画面の代替画像を確かめる
+diff --git a/integration_test/casegen/combination/factors/F06-17_factors.tsv b/integration_test/casegen/combination/factors/F06-17_factors.tsv
+index 43af57e3..e9a8462c 100644
+--- a/integration_test/casegen/combination/factors/F06-17_factors.tsv
++++ b/integration_test/casegen/combination/factors/F06-17_factors.tsv
+@@ -5,9 +5,3 @@ F03	P1	会員の住所地	海外｜海外以外	海外: 英字姓名が空なら
+ F04	P1	イベント詳細の登録可否	登録可｜登録不可	登録可: 登録される／登録不可: 登録しない（イベント詳細が無い・フラグオフ・期限切れ）	L0093,L0099	この機能
+ F05	P1	メイン・サイドの書式	正しい｜誤り	正しい: 保存され完了画面へ／誤り: 保存せず内容を保持してデッキ編集画面へ戻る	L0100,L0103	この機能
+ F06	P1	ログイン会員の選手情報	特定できる｜特定できない	特定できる: 登録される／特定できない: 登録しない	L0093,L0097	この機能
+-F07	P2	大会に設定されたフォーマットの数	1つ｜複数	1つ: フォーマットの単独項目は出ない／複数: 登録デッキのフォーマットを単独項目で出す	L0112	この機能
+-F08	P2	メインボードの枚数	範囲内｜最大超過｜最小未満	範囲内: 枚数エラー無し／最大超過: 上回っています表示／最小未満: 下回っています表示（設計書内に食い違い）	L0059-L0060,L0134-L0137	この機能
+-F09	P2	サイドボードの枚数	範囲内｜最大超過｜最小未満	範囲内: 枚数エラー無し／最大超過: 上回っています表示／最小未満: 下回っています表示（設計書内に食い違い）	L0059-L0060,L0134-L0137	この機能
+-F10	P2	メインボードのカード行の状態	正常｜不明カード｜禁止カード｜制限カード超過｜範囲外カード｜同一カード枚数超過	正常: エラー無し／不明カード: 存在しませんと表示／禁止カード: 禁止カードですと表示／制限カード超過: 制限カードですと表示／範囲外カード: フォーマットの範囲から外れていますと表示／同一カード枚数超過: 5枚以上登録されていますと表示	L0061-L0066,L0138-L0147	この機能
+-F11	P2	カードの画像	あり｜なし	あり: カード画像を表示／なし: 代替画像を表示	L0113	この機能
+-F12	P2	表示言語	日本語｜英語	日本語: 日本語の見出し・エラー文／英語: 英語の見出し・エラー文	L0128-L0147	この機能
+diff --git a/integration_test/casegen/combination/factors/F06-17_interactions.tsv b/integration_test/casegen/combination/factors/F06-17_interactions.tsv
+index 9cbf1105..bc539f0f 100644
+--- a/integration_test/casegen/combination/factors/F06-17_interactions.tsv
++++ b/integration_test/casegen/combination/factors/F06-17_interactions.tsv
+@@ -12,18 +12,3 @@ P1	F03+F06	関係しない		登録できない条件は保存前に判定され
+ P1	F04+F05	関係しない		登録できる条件はすべて満たすことが要件で、どれか1つで外れる。外れ方は1つずつ確かめれば足りる
+ P1	F04+F06	関係しない		登録できる条件はすべて満たすことが要件で、どれか1つで外れる。外れ方は1つずつ確かめれば足りる
+ P1	F05+F06	関係しない		登録できる条件はすべて満たすことが要件で、どれか1つで外れる。外れ方は1つずつ確かめれば足りる
+-P2	F07+F08	関係しない		それぞれ別の表示項目で、一方の値が他方の表示を変えない
+-P2	F07+F09	関係しない		それぞれ別の表示項目で、一方の値が他方の表示を変えない
+-P2	F07+F10	関係しない		それぞれ別の表示項目で、一方の値が他方の表示を変えない
+-P2	F07+F11	関係しない		それぞれ別の表示項目で、一方の値が他方の表示を変えない
+-P2	F07+F12	関係しない		それぞれ別の表示項目で、一方の値が他方の表示を変えない
+-P2	F08+F09	関係しない		それぞれ別の表示項目で、一方の値が他方の表示を変えない
+-P2	F08+F10	関係しない		それぞれ別の表示項目で、一方の値が他方の表示を変えない
+-P2	F08+F11	関係しない		それぞれ別の表示項目で、一方の値が他方の表示を変えない
+-P2	F08+F12	効き合う	L0134-L0147	エラーメッセージの文言が表示言語で日本語と英語に分かれる
+-P2	F09+F10	関係しない		それぞれ別の表示項目で、一方の値が他方の表示を変えない
+-P2	F09+F11	関係しない		それぞれ別の表示項目で、一方の値が他方の表示を変えない
+-P2	F09+F12	効き合う	L0134-L0147	エラーメッセージの文言が表示言語で日本語と英語に分かれる
+-P2	F10+F11	関係しない		それぞれ別の表示項目で、一方の値が他方の表示を変えない
+-P2	F10+F12	効き合う	L0134-L0147	エラーメッセージの文言が表示言語で日本語と英語に分かれる
+-P2	F11+F12	関係しない		それぞれ別の表示項目で、一方の値が他方の表示を変えない
+diff --git a/integration_test/casegen/combination/factors/F06-17_processes.tsv b/integration_test/casegen/combination/factors/F06-17_processes.tsv
+index 43d9c08d..a9fa300e 100644
+--- a/integration_test/casegen/combination/factors/F06-17_processes.tsv
++++ b/integration_test/casegen/combination/factors/F06-17_processes.tsv
+@@ -1,3 +1,2 @@
+ 処理ID	処理	契機	確かめる所	根拠
+ P1	デッキを提出して登録（上書きまたは新規作成）する	デッキ編集画面でデッキリストを提出する	DB（大会デッキ・カード行）と選手宛メール／書式誤りのときはデッキ編集画面	L0093-L0108,L0121-L0124
+-P2	デッキ登録完了画面を表示する	登録後または確認時にデッキ登録完了画面を開く	デッキ登録完了画面（DBのデッキ・大会・カード情報を表示）	L0110-L0113,L0128-L0147
+
+ succeeded in 877ms:
+diff --git a/integration_test/casegen/combination/factors/F06-14_constraints.tsv b/integration_test/casegen/combination/factors/F06-14_constraints.tsv
+index 5e657e7e..45557606 100644
+--- a/integration_test/casegen/combination/factors/F06-14_constraints.tsv
++++ b/integration_test/casegen/combination/factors/F06-14_constraints.tsv
+@@ -1,4 +1,7 @@
+ 処理ID	組	種別	根拠	理由
+-P3	F06=決済中で開催日を過ぎた	正解未定	L0046,L0081	決済中が優先されて処理状態が決済中と表示されるとき、ステータスがイベント終了の条件に当たるか書かれていない
+-P2	F03=申込なし&F05=英語	正解未定	L0059,L0099-L0106	未登録の英語の文言が書かれていない
++P3	F05=決済中で開催日を過ぎた	正解未定	L0046,L0081	決済中が優先されて処理状態が決済中と表示されるとき、ステータスがイベント終了の条件に当たるか書かれていない
+ P2	F03=決済中&F04=開催日の終わりを過ぎた	正解未定	L0044,L0081	Excel由来の本文は開催日を過ぎたら「イベント終了」とし、埋め込みの現行仕様は決済中を優先する。決済中・終了済みの両方に当たるときの表示が決まらない
++P3	F05=イベント終了	打ち切り	L0046	処理状態がイベント終了ならデッキ登録状況とボタンを出さず、ほかの条件は結果に効かない
++P3	F06=過ぎている	打ち切り	L0047	デッキ登録締切を過ぎているとデッキ登録状況とボタンを出さず、ほかの条件は結果に効かない
++P3	F07=チェックあり	打ち切り	L0048	管理画面のデッキ登録を終了するにチェックがあると出さず、ほかの条件は結果に効かない
++P3	F08=チェックなし	打ち切り	L0049	デッキ登録ありにチェックが無いと出さず、ほかの条件は結果に効かない
+diff --git a/integration_test/casegen/combination/factors/F06-14_existing.tsv b/integration_test/casegen/combination/factors/F06-14_existing.tsv
+index f8a54081..c973a041 100644
+--- a/integration_test/casegen/combination/factors/F06-14_existing.tsv
++++ b/integration_test/casegen/combination/factors/F06-14_existing.tsv
+@@ -6,15 +6,14 @@ IT-F06-14-006	P2	F03=決済中&F04=過ぎていない	翌日開催の決済中
+ IT-F06-14-007	P2	F03=決済中&F04=過ぎていない	翌日開催の決済中でヘルプを押してヘルプ画面へ遷移することを確かめる
+ IT-F06-14-008	P2	F03=申込完了&F04=過ぎていない	翌日開催の申込完了でヘルプが出ないことを確かめる
+ IT-F06-14-009	P2	F03=申込なし	申込なしでデッキだけのイベントの処理状態が未登録になることを確かめる
+-IT-F06-14-027	P2	F04=過ぎていない&F05=英語	翌日開催で英語表示にし、申込状況マスタの英語名称が出ることを確かめる
++IT-F06-14-027	P2	F04=過ぎていない	翌日開催で英語表示にし、申込状況マスタの英語名称が出ることを確かめる
+ IT-F06-14-033	P2	F03=申込完了&F04=開催日の終わりを過ぎた	前日開催の申込完了で処理状態がイベント終了になることを確かめる
+-IT-F06-14-034	P2	F03=決済中&F04=過ぎていない&F05=英語	英語表示で決済中がProceeding Paymentになることを確かめる
+-IT-F06-14-035	P2	F03=決済中&F04=過ぎていない&F05=英語	英語表示で決済中のツールチップの英語文言を確かめる
+-IT-F06-14-036	P2	F03=申込完了&F04=開催日の終わりを過ぎた&F05=英語	英語表示でイベント終了がEvent Finishedになることを確かめる
+-IT-F06-14-010	P3	F10=登録済み	デッキありのイベントでデッキ登録済みと出ることを確かめる
+-IT-F06-14-011	P3	F07=過ぎていない&F09=チェックあり&F10=未登録	デッキ登録対象で締切前、デッキ0件でデッキ未登録と出ることを確かめる
+-IT-F06-14-012	P3	F07=過ぎていない&F09=チェックあり&F10=登録済み	デッキ登録対象で締切前、デッキありでデッキ編集を押して編集画面へ遷移することを確かめる
+-IT-F06-14-013	P3	F07=過ぎていない&F09=チェックあり&F10=未登録	デッキ登録対象で締切前、デッキ0件でデッキ登録を押して編集画面へ遷移することを確かめる
+-IT-F06-14-015	P3	F06=それ以外&F07=過ぎている&F08=チェックなし&F10=登録済み	翌日開催でデッキ登録締切を過ぎたとき、デッキ登録状況とボタンが出ないことを確かめる
+-IT-F06-14-016	P3	F06=それ以外&F07=過ぎていない&F08=チェックあり&F10=登録済み	翌日開催でデッキ登録を終了するにチェックがあるとき、デッキ登録状況とボタンが出ないことを確かめる
+-IT-F06-14-017	P3	F06=それ以外&F09=チェックなし&F10=未登録	翌日開催でデッキ登録ありにチェックが無いとき、デッキ登録状況とボタンが出ないことを確かめる
++IT-F06-14-034	P2	F03=決済中&F04=過ぎていない	英語表示で決済中がProceeding Paymentになることを確かめる
++IT-F06-14-035	P2	F03=決済中&F04=過ぎていない	英語表示で決済中のツールチップの英語文言を確かめる
++IT-F06-14-036	P2	F03=申込完了&F04=開催日の終わりを過ぎた	英語表示でイベント終了がEvent Finishedになることを確かめる
++IT-F06-14-011	P3	F06=過ぎていない&F08=チェックあり	デッキ登録対象で締切前、デッキ0件でデッキ未登録と出ることを確かめる
++IT-F06-14-012	P3	F06=過ぎていない&F08=チェックあり	デッキ登録対象で締切前、デッキありでデッキ編集を押して編集画面へ遷移することを確かめる
++IT-F06-14-013	P3	F06=過ぎていない&F08=チェックあり	デッキ登録対象で締切前、デッキ0件でデッキ登録を押して編集画面へ遷移することを確かめる
++IT-F06-14-015	P3	F05=それ以外&F06=過ぎている&F07=チェックなし	翌日開催でデッキ登録締切を過ぎたとき、デッキ登録状況とボタンが出ないことを確かめる
++IT-F06-14-016	P3	F05=それ以外&F06=過ぎていない&F07=チェックあり	翌日開催でデッキ登録を終了するにチェックがあるとき、デッキ登録状況とボタンが出ないことを確かめる
++IT-F06-14-017	P3	F05=それ以外&F08=チェックなし	翌日開催でデッキ登録ありにチェックが無いとき、デッキ登録状況とボタンが出ないことを確かめる
+diff --git a/integration_test/casegen/combination/factors/F06-14_factors.tsv b/integration_test/casegen/combination/factors/F06-14_factors.tsv
+index e4461061..b62d3a1f 100644
+--- a/integration_test/casegen/combination/factors/F06-14_factors.tsv
++++ b/integration_test/casegen/combination/factors/F06-14_factors.tsv
+@@ -3,9 +3,7 @@ F01	P1	会員の申込の状態	参加者の有効な申込｜有効な申込な
+ F02	P1	会員のデッキ登録	あり｜なし	あり: デッキの条件で一覧に出る／なし: デッキの条件では出ない	L0040	この機能
+ F03	P2	申込の状態	決済中｜申込完了｜申込なし	決済中: 処理状態は決済中でヘルプを出す／申込完了: 開催日を過ぎていなければ申込状態の名称、過ぎていればイベント終了／申込なし: デッキだけで登録のイベントは開催日を過ぎていなければ未登録、過ぎていればイベント終了	L0044,L0059-L0063,L0081-L0082,L0100-L0104	この機能
+ F04	P2	開催日の経過	開催日の終わりを過ぎた｜過ぎていない	開催日の終わりを過ぎた: 決済中以外は処理状態がイベント終了／過ぎていない: 申込状態の名称（決済中は決済中）	L0044,L0081,L0102-L0104	この機能
+-F05	P2	表示言語	日本語｜英語	日本語: 日本語の文言で処理状態とツールチップを出す／英語: 英語の文言（Proceeding Payment・Event Finished・申込状況マスタの英語名称）で出す	L0100-L0106	この機能
+-F06	P3	処理状態	イベント終了｜決済中で開催日を過ぎた｜それ以外	イベント終了: デッキ登録状況とボタンを出さない／決済中で開催日を過ぎた: 設計書から出す・出さないが決まらない／それ以外: ほかの条件で決まる	L0044,L0046,L0081	この機能
+-F07	P3	デッキ登録締切の日時	過ぎている｜過ぎていない	過ぎている: デッキ登録状況とボタンを出さない／過ぎていない: ほかの条件で決まる	L0047	この機能
+-F08	P3	管理画面のデッキ登録を終了するチェック	チェックあり｜チェックなし	チェックあり: デッキ登録状況とボタンを出さない／チェックなし: ほかの条件で決まる	L0048	この機能
+-F09	P3	管理画面のデッキ登録ありチェック	チェックあり｜チェックなし	チェックあり: ほかの条件で決まる／チェックなし: デッキ登録状況とボタンを出さない	L0049	この機能
+-F10	P3	会員のデッキ登録状況	登録済み｜未登録	登録済み: デッキ登録済みと表示しボタンはデッキ編集／未登録: デッキ未登録と表示しボタンはデッキ登録	L0064-L0066	この機能
++F05	P3	処理状態	イベント終了｜決済中で開催日を過ぎた｜それ以外	イベント終了: デッキ登録状況とボタンを出さない／決済中で開催日を過ぎた: 設計書から出す・出さないが決まらない／それ以外: ほかの条件で決まる	L0044,L0046,L0081	この機能
++F06	P3	デッキ登録締切の日時	過ぎている｜過ぎていない	過ぎている: デッキ登録状況とボタンを出さない／過ぎていない: ほかの条件で決まる	L0047	この機能
++F07	P3	管理画面のデッキ登録を終了するチェック	チェックあり｜チェックなし	チェックあり: デッキ登録状況とボタンを出さない／チェックなし: ほかの条件で決まる	L0048	この機能
++F08	P3	管理画面のデッキ登録ありチェック	チェックあり｜チェックなし	チェックあり: ほかの条件で決まる／チェックなし: デッキ登録状況とボタンを出さない	L0049	この機能
+diff --git a/integration_test/casegen/combination/factors/F06-14_interactions.tsv b/integration_test/casegen/combination/factors/F06-14_interactions.tsv
+index c45d7d85..6822b24e 100644
+--- a/integration_test/casegen/combination/factors/F06-14_interactions.tsv
++++ b/integration_test/casegen/combination/factors/F06-14_interactions.tsv
+@@ -1,15 +1,9 @@
+ 処理ID	要因	判定	根拠	理由
+ P1	F01+F02	関係しない		1件のイベントを出す・出さないを申込の条件かデッキの条件のどちらかを満たすかで決める(L0038-L0040)。結果は出る・出ないの2つだけで、条件ごとの満たし方は1つずつ確かめれば足りる
+ P2	F03+F04	効き合う	L0044,L0081,L0102	決済中は開催日を過ぎても決済中のまま、決済中以外は過ぎるとイベント終了になる。申込なしは過ぎていなければ未登録、過ぎていればイベント終了
+-P2	F03+F05	効き合う	L0100-L0106	言語を替えると、決済中はProceeding Payment、決済中以外で未終了のときは申込状況マスタの英語名称と、状態ごとに別の文言になる
+-P2	F04+F05	効き合う	L0102-L0104	言語を替えると、過ぎたときはEvent Finished、過ぎていないときは申込状況マスタの英語名称と、開催日の経過ごとに別の文言になる
++P3	F05+F06	関係しない		出さない条件のどれか1つに当たれば出さない。条件ごとの外れ方は1つずつ確かめれば足りる
++P3	F05+F07	関係しない		出さない条件のどれか1つに当たれば出さない。条件ごとの外れ方は1つずつ確かめれば足りる
++P3	F05+F08	関係しない		出さない条件のどれか1つに当たれば出さない。条件ごとの外れ方は1つずつ確かめれば足りる
+ P3	F06+F07	関係しない		出さない条件のどれか1つに当たれば出さない。条件ごとの外れ方は1つずつ確かめれば足りる
+ P3	F06+F08	関係しない		出さない条件のどれか1つに当たれば出さない。条件ごとの外れ方は1つずつ確かめれば足りる
+-P3	F06+F09	関係しない		出さない条件のどれか1つに当たれば出さない。条件ごとの外れ方は1つずつ確かめれば足りる
+-P3	F06+F10	関係しない		出す・出さないは4つの条件で決まり、登録済みか未登録かは出すときの文言だけを決める
+ P3	F07+F08	関係しない		出さない条件のどれか1つに当たれば出さない。条件ごとの外れ方は1つずつ確かめれば足りる
+-P3	F07+F09	関係しない		出さない条件のどれか1つに当たれば出さない。条件ごとの外れ方は1つずつ確かめれば足りる
+-P3	F07+F10	関係しない		出す・出さないは4つの条件で決まり、登録済みか未登録かは出すときの文言だけを決める
+-P3	F08+F09	関係しない		出さない条件のどれか1つに当たれば出さない。条件ごとの外れ方は1つずつ確かめれば足りる
+-P3	F08+F10	関係しない		出す・出さないは4つの条件で決まり、登録済みか未登録かは出すときの文言だけを決める
+-P3	F09+F10	関係しない		出す・出さないは4つの条件で決まり、登録済みか未登録かは出すときの文言だけを決める
+
+ succeeded in 761ms:
+diff --git a/integration_test/casegen/combination/factors/F06-15_constraints.tsv b/integration_test/casegen/combination/factors/F06-15_constraints.tsv
+index 79a925be..1ed802fa 100644
+--- a/integration_test/casegen/combination/factors/F06-15_constraints.tsv
++++ b/integration_test/casegen/combination/factors/F06-15_constraints.tsv
+@@ -1,5 +1,6 @@
+ 処理ID	組	種別	根拠	理由
+ P2	F04=店頭買取&F05=まとめて買取	作れない	L0103-L0109	店頭買取にはまとめて買取の項目が無い
+ P2	F05=まとめて買取&F06=査定価格が未確定	正解未定	L0133,L0137	査定価格が未確定の明細は下限と比べる価格が無く、個別表示か下限未満の欄かが決まらない
+-P3	F04=店頭買取&F09=査定内容連絡済み	作れない	_common/0305_sheet-13.txt:L0029-L0038	店頭買取のステータスに査定内容連絡済みが無い
+-P3	F04=店頭買取&F10=あり	作れない	L0103-L0109	店頭買取にはまとめて買取の項目が無い
++P1	F01=売却しない	打ち切り	L0088	売却しない明細は実在庫・実在庫履歴を作らない。商品の種類は結果に効かない
++P1	F02=個別入力商品	打ち切り	L0089	個別入力商品は実在庫・実在庫履歴の作成の対象外。売却可否は結果に効かない
++P3	F04=店頭買取	打ち切り	L0062,L0116-L0117,L0103-L0115	店頭買取には承諾確定ボタンもまとめて買取の項目も無く、処理状態・まとめて買取の明細は結果に効かない
+diff --git a/integration_test/casegen/combination/factors/F06-15_existing.tsv b/integration_test/casegen/combination/factors/F06-15_existing.tsv
+index 07222e73..31c0c8b2 100644
+--- a/integration_test/casegen/combination/factors/F06-15_existing.tsv
++++ b/integration_test/casegen/combination/factors/F06-15_existing.tsv
+@@ -3,18 +3,14 @@ IT-F06-15-045	P1	F01=売却する&F02=個別入力商品	事前準備で個別
+ IT-F06-15-053	P1	F01=売却する	2明細とも売却するにし、承諾確定を押して実在庫・実在庫履歴の作成を確かめる
+ IT-F06-15-021	P2	F04=ネット買取&F05=えらんで買取	ネット買取のえらんで買取の明細の各項目を確かめる
+ IT-F06-15-023	P2	F04=店頭買取	店頭買取の明細の項目を確かめる
+-IT-F06-15-024	P2	F04=店頭買取&F07=個別入力商品	店頭買取の個別入力商品で言語と状態が出ないことを確かめる
+-IT-F06-15-038	P2	F04=ネット買取&F05=えらんで買取&F08=特定できる	商品規格が特定できる明細の商品名から別ウィンドウで商品詳細が開くことを確かめる
+-IT-F06-15-017	P3	F04=ネット買取&F09=査定内容連絡済み	連絡済みで承諾確定ボタンが出ることを確かめる
+-IT-F06-15-018	P3	F04=ネット買取&F09=連絡済み以外	査定中で承諾確定ボタンが出ないことを確かめる
+-IT-F06-15-020	P3	F04=店頭買取&F09=連絡済み以外	店頭買取で承諾確定ボタンが出ないことを確かめる
+-IT-F06-15-025	P3	F04=店頭買取&F10=なし	店頭買取でまとめて買取の項目や承諾確定ボタンが出ないことを確かめる
+-IT-F06-15-031	P3	F04=ネット買取&F09=査定内容連絡済み&F10=なし	連絡済みでまとめて買取の明細が無いとき、まとめて買取の一覧とチェックが出ないことを確かめる
+-IT-F06-15-033	P3	F04=ネット買取&F09=査定内容連絡済み	連絡済みで売却可否が操作できることを確かめる
+-IT-F06-15-034	P3	F04=ネット買取&F09=連絡済み以外	査定内容承諾で売却可否を変更できないことを確かめる
+-IT-F06-15-049	P3	F04=ネット買取&F09=査定内容連絡済み&F10=あり	連絡済みでまとめて買取の売却可否の選択肢を確かめる
+-IT-F06-15-052	P3	F04=ネット買取&F09=査定内容連絡済み&F10=あり	連絡済みでまとめて買取の売却可否を切り替えて件数が変わることを確かめる
+-IT-F06-15-012	P4	F04=ネット買取&F11=未記録	履歴が未記録のネット買取で査定日・承諾日・振込日が空欄になることを確かめる
+-IT-F06-15-016	P4	F04=ネット買取	ネット買取で成立日が表示されないことを確かめる
+-IT-F06-15-019	P4	F04=店頭買取	店頭買取で成立日が表示されることを確かめる
+-IT-F06-15-020	P4	F04=店頭買取	店頭買取で査定日・承諾日・振込日・承諾方法が表示されないことを確かめる
++IT-F06-15-024	P2	F04=店頭買取	店頭買取の個別入力商品で言語と状態が出ないことを確かめる
++IT-F06-15-038	P2	F04=ネット買取&F05=えらんで買取	商品規格が特定できる明細の商品名から別ウィンドウで商品詳細が開くことを確かめる
++IT-F06-15-017	P3	F04=ネット買取&F07=査定内容連絡済み	連絡済みで承諾確定ボタンが出ることを確かめる
++IT-F06-15-018	P3	F04=ネット買取&F07=連絡済み以外	査定中で承諾確定ボタンが出ないことを確かめる
++IT-F06-15-020	P3	F04=店頭買取&F07=連絡済み以外	店頭買取で承諾確定ボタンが出ないことを確かめる
++IT-F06-15-025	P3	F04=店頭買取&F08=なし	店頭買取でまとめて買取の項目や承諾確定ボタンが出ないことを確かめる
++IT-F06-15-031	P3	F04=ネット買取&F07=査定内容連絡済み&F08=なし	連絡済みでまとめて買取の明細が無いとき、まとめて買取の一覧とチェックが出ないことを確かめる
++IT-F06-15-033	P3	F04=ネット買取&F07=査定内容連絡済み	連絡済みで売却可否が操作できることを確かめる
++IT-F06-15-034	P3	F04=ネット買取&F07=連絡済み以外	査定内容承諾で売却可否を変更できないことを確かめる
++IT-F06-15-049	P3	F04=ネット買取&F07=査定内容連絡済み&F08=あり	連絡済みでまとめて買取の売却可否の選択肢を確かめる
++IT-F06-15-052	P3	F04=ネット買取&F07=査定内容連絡済み&F08=あり	連絡済みでまとめて買取の売却可否を切り替えて件数が変わることを確かめる
+diff --git a/integration_test/casegen/combination/factors/F06-15_factors.tsv b/integration_test/casegen/combination/factors/F06-15_factors.tsv
+index cd3cfabb..e813cf11 100644
+--- a/integration_test/casegen/combination/factors/F06-15_factors.tsv
++++ b/integration_test/casegen/combination/factors/F06-15_factors.tsv
+@@ -2,11 +2,8 @@
+ F01	P1	明細の売却可否	売却する｜売却しない	売却する: 実在庫・実在庫履歴を作る／売却しない: 作らない	L0088	この機能
+ F02	P1	商品の種類	通常商品｜個別入力商品	通常商品: 売却する明細は実在庫を作る／個別入力商品: 作成の対象外	L0088-L0089	この機能
+ F03	P1	500円未満のカードをすべて売却するチェック	チェックあり｜チェックなし	チェックあり: 価格下限未満のカードも売却として実在庫を作る／チェックなし: 価格下限未満のカードは売却しない	L0088,L0115	この機能
+-F04	P2,P3,P4	買取の種類	ネット買取｜店頭買取	ネット買取: ネット買取で表示する項目を出す／店頭買取: 店頭買取で表示する項目だけを出す（査定日・承諾日・振込日・承諾方法・承諾確定ボタン・まとめて買取は出さず、成立日を出す）	L0051-L0058,L0093-L0118	この機能
++F04	P2,P3	買取の種類	ネット買取｜店頭買取	ネット買取: ネット買取で表示する項目を出す／店頭買取: 店頭買取で表示する項目だけを出す（査定日・承諾日・振込日・承諾方法・承諾確定ボタン・まとめて買取は出さず、成立日を出す）	L0051-L0058,L0093-L0118	この機能
+ F05	P2	明細の区分	えらんで買取｜まとめて買取	えらんで買取: 明細を個別に並べる／まとめて買取: 価格下限以上だけ個別に並べ、未満は500円未満カードの欄にまとめる	L0095-L0115,L0137	この機能
+ F06	P2	査定価格と個別表示の価格下限	個別表示の価格下限以上｜個別表示の価格下限未満｜査定価格が未確定	個別表示の価格下限以上: 個別に並べ、金額と小計を表示する／個別表示の価格下限未満: 個別に並べず500円未満カードの欄にまとめる／査定価格が未確定: 金額の代わりに査定中と表示する	L0133,L0137	この機能
+-F07	P2	商品の種類	通常商品｜個別入力商品	通常商品: 言語・状態を表示する／個別入力商品: 言語・状態を表示せず商品名を文字のままにする	L0082,L0135	この機能
+-F08	P2	商品規格の特定	特定できる｜特定できない	特定できる: 商品名からネット買取商品詳細を別ウィンドウで開く／特定できない: 商品名を文字のまま表示する	L0135	この機能
+-F09	P3	処理状態	査定内容連絡済み｜連絡済み以外	査定内容連絡済み: 売却可否と500円未満チェックを操作でき承諾確定ボタンを出す／連絡済み以外: 変更できず現在の選択内容を表示し承諾確定ボタンを出さない	L0116,L0131	この機能
+-F10	P3	まとめて買取の明細	あり｜なし	あり: まとめて買取の一覧と500円未満カードの欄を出す／なし: まとめて買取の一覧と500円未満カードの欄とチェックを出さない	L0139	この機能
+-F11	P4	査定日・承諾日・振込日に対応する状態の履歴	記録あり｜未記録	記録あり: 日付を表示する／未記録: 空欄にする	L0129	この機能
++F07	P3	処理状態	査定内容連絡済み｜連絡済み以外	査定内容連絡済み: 売却可否と500円未満チェックを操作でき承諾確定ボタンを出す／連絡済み以外: 変更できず現在の選択内容を表示し承諾確定ボタンを出さない	L0116,L0131	この機能
++F08	P3	まとめて買取の明細	あり｜なし	あり: まとめて買取の一覧と500円未満カードの欄を出す／なし: まとめて買取の一覧と500円未満カードの欄とチェックを出さない	L0139	この機能
+diff --git a/integration_test/casegen/combination/factors/F06-15_interactions.tsv b/integration_test/casegen/combination/factors/F06-15_interactions.tsv
+index b7dcc2bf..5e529318 100644
+--- a/integration_test/casegen/combination/factors/F06-15_interactions.tsv
++++ b/integration_test/casegen/combination/factors/F06-15_interactions.tsv
+@@ -4,15 +4,7 @@ P1	F01+F03	関係しない		F01は個別に並ぶ明細の売却可否、F03は
+ P1	F02+F03	関係しない		F03は価格下限未満のカードの売却を決めるだけで、商品の種類による対象外の扱いは変わらない
+ P2	F04+F05	効き合う	L0103-L0109	店頭買取にはまとめて買取の項目が無い
+ P2	F04+F06	関係しない		査定中の表示は買取の種類で変わらず、価格下限はまとめて買取の振り分けにだけ使う
+-P2	F04+F07	関係しない		個別入力商品の言語・状態を出さない扱いはネット買取も店頭買取も同じ
+-P2	F04+F08	関係しない		商品名からのリンクは商品規格が特定できる明細に限る定めで、買取の種類による区別は書かれていない(L0095,L0135)
+ P2	F05+F06	効き合う	L0133,L0137	価格下限による個別表示の振り分けはまとめて買取だけ。まとめて買取で査定価格が未確定のとき、個別表示か下限未満の欄かは決まらない
+-P2	F05+F07	関係しない		個別入力商品の扱いは区分で変わらない
+-P2	F05+F08	関係しない		リンクにするかは商品規格が特定できるかで決まる
+-P2	F06+F07	関係しない		価格下限の振り分けは商品の種類で変わらない
+-P2	F06+F08	関係しない		価格下限の振り分けは商品規格の特定で変わらない
+-P2	F07+F08	効き合う	L0135	商品規格が特定できる明細だけ商品名をリンクにするが、個別入力商品は商品名を文字のまま表示する
+-P3	F04+F09	効き合う	L0062,L0116	承諾確定ボタンはネット買取で連絡済みのときだけ。店頭買取には連絡済みの状態が無い
+-P3	F04+F10	効き合う	L0103-L0115	まとめて買取の項目は店頭買取に無い
+-P3	F09+F10	効き合う	L0131,L0139	500円未満チェックは連絡済みのときだけ操作でき、まとめて買取の明細が無いときは出ない
+-P4	F04+F11	効き合う	L0054-L0056,L0129	査定日・承諾日・振込日は店頭買取に無く、ネット買取では履歴が未記録なら空欄
++P3	F04+F07	効き合う	L0062,L0116	承諾確定ボタンはネット買取で連絡済みのときだけ。店頭買取には連絡済みの状態が無い
++P3	F04+F08	効き合う	L0103-L0115	まとめて買取の項目は店頭買取に無い
++P3	F07+F08	効き合う	L0131,L0139	500円未満チェックは連絡済みのときだけ操作でき、まとめて買取の明細が無いときは出ない
+diff --git a/integration_test/casegen/combination/factors/F06-15_processes.tsv b/integration_test/casegen/combination/factors/F06-15_processes.tsv
+index e82ae907..2af2d562 100644
+--- a/integration_test/casegen/combination/factors/F06-15_processes.tsv
++++ b/integration_test/casegen/combination/factors/F06-15_processes.tsv
+@@ -2,4 +2,3 @@
+ P1	承諾確定で売却を確定し、実在庫・実在庫履歴を作る	買取履歴詳細画面で承諾確定ボタンを押す	実在庫・実在庫履歴（DB）	L0088-L0089,L0115-L0117
+ P2	買取の明細の項目と金額・商品名のリンクを出す	会員が買取履歴詳細画面を開く	買取履歴詳細画面の商品情報	L0081-L0087,L0093-L0114,L0133-L0137
+ P3	売却可否・500円未満チェック・承諾確定ボタンの操作可否と表示を決める	会員が買取履歴詳細画面を開く	買取履歴詳細画面の商品情報	L0062,L0102,L0110,L0115-L0117,L0131,L0138-L0139
+-P4	基本情報の日付と成立日・承諾方法を出す	会員が買取履歴詳細画面を開く	買取履歴詳細画面の基本情報	L0051-L0058,L0127-L0129
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/review/F06-10_factors_s_dispositions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/review/F06-11_factors_s_dispositions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/review/F06-13_factors_s_dispositions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/review/F06-15_factors_s_dispositions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/review/F06-16_factors_s_dispositions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/review/F06-17_factors_s_dispositions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/review/F06-14_factors_s_dispositions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/review/F06-18_factors_s_dispositions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 1094ms:
+決定	処置	理由	直した所
+1	直し	P1は売却しない明細(L0088)・個別入力商品(L0089)で実在庫を作らず、P3は店頭買取に承諾確定ボタンもまとめて買取の項目も無い(L0062,L0103-L0117)	constraints.tsvに打ち切り3行(P1 F01=売却しない・P1 F02=個別入力商品・P3 F04=店頭買取)。打ち切りを表すために並べていたP3の作れない2行(店頭買取×連絡済み・店頭買取×まとめて買取の明細あり)を外した
+2	直し	言語・状態を出さない扱い(L0082)、商品名のリンク(L0135)、査定日・承諾日・振込日の空欄(L0129)は、いずれも1つの表示項目ごとに決まるだけで、行を出す・出さないやほかの要因の結果を変えない	要因F07(商品の種類)・F08(商品規格の特定)・F11(状態の履歴)を外し、P4を処理ごと外した(要因がF04だけになるため)。F09・F10をF07・F08に振り直し。関連するinteractions・existingの行も外した
+3	直しなし	当たる所なし	
+
+ succeeded in 1570ms:
+決定	処置	理由	直した所
+1	直し	旧P2は選手情報なし・デッキ登録フラグ無効・締切超過のどれか1つで画面を表示せず(L0208-L0209)、旧P4はマイデッキの所有者が他人だと上書きもフォーマット合わせも行わない(L0216)	constraints.tsvに打ち切り4行(P2 F05=なし・F06=無効・F07=過ぎている、P3 F08=他人)
+2	直し	旧P3(フォーマット選択エリアの表示と入力欄の初期値)は2つの要因が別々の表示項目を決めるだけで効き合わない。旧P4のマイデッキのカードの日本語名か英語名かは、カード名の文言の変換で、ほかの要因の結果を変えない	旧F08・F09(旧P3)を外して旧P3を処理ごと外し、旧P4をP3に振り直し。旧F12(日本語名)を外した。要因IDを振り直し(旧F10→F08・F11→F09・F13→F10)。関連するinteractions・existingの行も外した
+3	直しなし	当たる所なし	
+
+ succeeded in 1585ms:
+決定	処置	理由	直した所
+1	直し	イベント詳細が登録不可(L0099)・書式誤り(L0100)・選手情報が特定できない(L0097)のどれか1つで登録されず、ほかの条件は結果に効かない	constraints.tsvに打ち切り3行(P1 F04=登録不可・F05=誤り・F06=特定できない)
+2	直し	P2(完了画面の表示)の要因は、フォーマット数による単独項目の有無・メイン/サイドの枚数エラー・カード行の状態エラー・カード画像・表示言語のいずれも、別々の表示項目を決めるだけで互いの結果を変えない。言語は文言の変換にとどまる	要因F07〜F12を外し、P2を処理ごと外した(要因が残らない)。関連するinteractions・constraints(最小未満の正解未定2行)・existingの行も外した
+3	直しなし	当たる所なし	
+
+ succeeded in 1886ms:
+決定	処置	理由	直した所
+1	直し	P3は処理状態がイベント終了(L0046)・締切超過(L0047)・終了チェックあり(L0048)・ありチェックなし(L0049)のどれか1つで出さず、ほかの要因は効かない	constraints.tsvに打ち切り4行(P3 F05・F06・F07・F08の出さない側の値)
+2	直し	P2の表示言語は処理状態の文言を替えるだけで、ほかの要因の結果や行の出し分けを変えない。P3のデッキ登録状況(登録済み/未登録)は出すときの表示とボタンの文言を決めるだけで、ほかの要因と効き合わない	要因F05(表示言語)とF10(会員のデッキ登録状況)を外し、F06〜F09をF05〜F08へ振り直し。F03+F05・F04+F05・P3のF10との組、P2の申込なし×英語の正解未定、F10だけのexisting 1行を削除。existingの値からF05・F10を外した
+3	直しなし	当たる所なし	
+
+ succeeded in 2081ms:
+決定	処置	理由	直した所
+1	直しなし	打ち切りに当たる値なし	
+2	直し	履歴の由来は注文番号・レシート番号の列だけを決め、他の要因と関係しない	要因F01（履歴の由来）と関係する組・existingの値を外し、要因IDを振り直し（符号がF01、言語がF02）
+3	直しなし	当たる所なし	
+
+ succeeded in 2108ms:
+決定	処置	理由	直した所
+1	直し	端末がPCなら申請(L0148)も撮影画面への入場(L0143)も打ち切られ、身分証の種類が効かない。撮影画面への入場で身分証の選択なしも打ち切り(L0144)	constraints.tsvに打ち切り3行(P1 F01=PC・P2 F01=PC・P2 F03=選択なし)
+2	直しなし	当たる所なし	
+3	直しなし	当たる所なし	
+
+ succeeded in 2632ms:
+決定	処置	理由	直した所
+1	直し	売却対象でない・数量0の商品は代表商品の候補から除かれ他の値は効かない	P2にF07=売却対象でない・F08=数量0を打ち切りで追加（振り直し後はF05・F06）
+2	直し	代表商品の言語・状態の併記は表記の書式、ほか○件は表示項目で、他の要因と関係しない	要因F04・F05と関係する組・existingの値を外し、要因IDを振り直し
+3	直しなし	当たる所なし	
+
+ succeeded in 2435ms:
+決定	処置	理由	直した所
+1	直し	F04=あり（ブラックリスト一致）とF05=失敗（スマレジ連携失敗）は更新を行わず戻る打ち切り	constraintsに打ち切り2行を追加。効き合う判定はそのまま
+2	直しなし	当たる所なし	
+3	直しなし	当たる所なし	
+
+codex
+処置表と差分を確認しました。削除された要因が本当に表示項目ごとに独立するか、打ち切り後にも別の結果が残るかを中心に設計書を読んでいます。
+exec
+/bin/bash -lc "sed -n '125,160p' integration_test/casegen/combination/units/F06-13/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "sed -n '48,110p' integration_test/casegen/combination/units/F06-11/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "sed -n '35,115p' integration_test/casegen/combination/units/F06-10/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "sed -n '35,115p' integration_test/casegen/combination/units/F06-14/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 77ms:
+L0124	・(4-2) 本人確認状況には、本人証明書の進行ステータスが表示される
+L0125	ステータスは「未確認」「現在、確認中です」「オンラインで本人確認済み」「簡易書留で本人確認済み」のいずれかが表示される
+L0126	識別ID	ラベル	書式・制限	必須	最大文字数
+L0127	または最大値	初期値	画面部品の説明
+L0128	4-1	パンくずリスト	リンク	-	-	-	※カスタマイズ対応、新規追加
+L0129	・現在表示中のページは押下できないようにする
+L0130	・ホームアイコンを押下すると、本店ECTOP画面へ遷移する
+L0131	4-2	本人確認状況	-	-	-	-	・身分証明書の進行ステータスを表示
+L0132	4-3	マイページ	ボタン	-	-	-	・押下すると、マイページへ遷移する
+L0133	4-4	買取TOPへ	ボタン	-	-	-	・押下すると、買取TOPへ遷移する
+L0134	Source:
+L0135	functions/pf-eccube3/f06-13_front_member_mypage_online_identification.md
+L0136	現行仕様
+L0137	F06-13 オンライン本人確認 / 会員 — オンライン本人確認
+L0138	業務ロジック
+L0139	会員ログイン
+L0140	オンライン本人確認の各画面は、会員としてログインしていないと開けない。
+L0141	撮影画面へ入るときの判定
+L0142	順序	判定	結果
+L0143	1	スマートフォン判定に該当しない端末のとき	スタート画面へ戻す
+L0144	2	身分証種別の選択が送られていないとき（直接アクセスなど）	スタート画面へ戻す
+L0145	撮影画面へ入るときは、判定の結果にかかわらず何も登録・更新しない。身分証画像と選手情報への記録は、撮影画面からの申請が確定したときに行う。
+L0146	申請の判定順序
+L0147	順序	判定	結果
+L0148	1	スマートフォン判定に該当しない端末のとき	マイページへ戻す
+L0149	2	身分証種別を含む送信内容が無いとき	マイページへ戻す
+L0150	3	撮影項目が送信状態でないとき（直接アクセスなど）	マイページへ戻す
+L0151	4	撮影項目の検証に失敗したとき	エラー状態を付けて撮影画面へ戻す
+L0152	5	画像データの検証に失敗したとき（各画像の拡張子を判別できないとき）	エラー画面を表示して終了する。申請を確定しない
+L0153	申請の確定
+L0154	検証を通った各画像をオブジェクトストレージへ保存し、身分証画像として選手情報に紐づけて記録する。身分証画像の記録は、送信された画像（顔写真・表面・裏面・斜め）ごとに1件ずつ作り、選手・身分証種別・画像種別・保存先・作成日時を持たせる。選手情報の身分証種別を更新し、本人確認ステータスを確認中へ変更して保存する。そのうえで本人確認申請完了メールを送信する。
+L0155	画面の見出し
+L0156	画面	見出し
+L0157	スタート画面	オンライン本人確認について
+L0158	撮影画面	撮影画面
+L0159	申請完了画面	申請完了
+
+ succeeded in 66ms:
+L0034	・メニュー名を「予約済み大会一覧」から「マイイベント・デッキ登録」に変更
+L0035	・予約済み大会に加えてデッキ登録済みの大会の表示を追加し、このページからデッキ編集を可能とする
+L0036	・カスタマイズ要件に記載の内容以外は現行踏襲とする
+L0037	機能仕様処理概要(★はカスタマイズ項目）
+L0038	★以下1~3の条件でイベントの一覧を表示する
+L0039	1 会員が申込したイベント(キャンセルしたものは除く）
+L0040	2 会員がデッキを登録したイベント
+L0041	3 (3)開催日時の降順で表示する
+L0042	・一覧のイベント名をクリックすることで各イベントの詳細画面へ遷移できる
+L0043	・一覧の「デッキ登録/編集」ボタン押下で各イベントへのデッキ登録画面へ遷移できる
+L0044	・開催日の23:59:59を過ぎたイベントは処理状態に「イベント終了」と表示する
+L0045	★(6)デッキステータス、(7)デッキ登録/編集は、以下のいずれかに該当する場合は表示しない
+L0046	・(4)ステータスが「イベント終了」
+L0047	・管理画面の「デッキ登録締切」の日時を過ぎている
+L0048	・管理画面の「デッキ登録を終了する」にチェックがついている
+L0049	・管理画面の「デッキ登録あり」にチェックがついていない
+L0050	★(9)(10)(11)ページネーションを表示する
+L0051	識別ID	ラベル	書式・制限	必須	最大文字数
+L0052	または最大値	初期値	画面部品の説明
+L0053	1	パンくずリスト	リンク	-	-	-	※カスタマイズ対応、新規追加
+L0054	・現在表示中のページは押下できないようにする
+L0055	・ホームアイコンを押下すると、本店ECTOP画面へ遷移する
+L0056	2	イベント名	リンク	-	-	-	・対象のイベント詳細画面に遷移する
+L0057	3	フォーマット	ラベル	-	-	-	・イベントに登録されている各フォーマットの略称をアイコン表示する
+L0058	4	開催日時	ラベル	-	-	-	-
+L0059	5	処理状態	ラベル	-	-	-	※カスタマイズ対応、デッキ登録済みの大会の表示追加のため、「未登録」を追加
+L0060	6	ヘルプ	リンク	-	-	-	・(4)処理状態が「決済中」の場合のみに表示する
+L0061	・マウスカーソルを合わせると、以下の文言でツールチップを表示する
+L0062	「決済が中断されましたお手数ですが、約30分後に再度お申込みいただけますようお願いいたします」
+L0063	・押下すると、ヘルプ画面へ遷移する
+L0064	7	デッキ登録状況	ラベル	-	-	-	・イベントのデッキを登録されている場合は「デッキ登録済み」、未登録の場合は「デッキ未登録」と表示する
+L0065	8	デッキ登録/編集	リンク	-	-	-	・押下すると、大会デッキ登録編集画面へ遷移する
+L0066	・イベントのデッキを登録されている場合は「デッキ編集」、未登録の場合は「デッキ登録」と表示する
+L0067	9	件数	ラベル	-	-	-
+L0068	10	ページネーション	リンク	-	-	-	・ページ番号は現在表示しているページ番号から前後最大3つまで表示できる
+L0069	・レイアウトは新EC のデザインレイアウトに準拠する
+L0070	11	表示件数	プルダウン	-	-	-	選択肢: 10件 50件 100件 300件 500件 1000件 2000件 10000件 12000件
+L0071	12	イベントを探す	リンク	-	-	-	・押下すると、イベントTOP画面へ遷移する
+L0072	13	マイページへ戻る	リンク	-	-	-	・押下すると、マイページに遷移する
+L0073	Source:
+L0074	functions/pf-eccube3/f06-14_front_member_mypage_event_reserved_list.md
+L0075	現行仕様
+L0076	F06-14 予約済み大会一覧 / 会員 — 予約済み大会一覧
+L0077	業務ロジック
+L0078	一覧の対象
+L0079	一覧に出るのは、その会員が参加者として登録されている申込である。申込の代金を負担した会員ではなく参加者で絞り込むため、他の会員が申し込んだ大会でも、参加者に含まれていれば表示する。逆に、代金だけを負担して参加者に含まれていない大会は表示しない。
+L0080	ステータスの判定順序
+L0081	申込状態が決済中のときは、イベントが終了していても「イベント終了」ではなく「決済中」を表示する。決済中の判定が終了済みの判定に優先する。
+L0082	決済中はエラー系の見た目とし、決済中以外で申込状態が申込完了のときは完了系の見た目とする。
+L0083	未ログインのときの扱い
+L0084	未ログインでこの画面を開いたときは表示せず、会員ログインへ誘導する。ログイン後の扱いは会員ログインの機能を正とする。
+L0085	入出力
+L0086	一覧の表示
+L0087	開催日時は年月日と時分まで表示する。月と日は先頭の0を付けず、時と分は2桁で揃える（例: 2026年3月1日09時05分）。
+L0088	フォーマットのアイコンは、PCではイベント名とは別の列に置き、スマートフォンではイベント名と同じ欄に、イベント名の左へ並べて置く。表示するアイコンの内容は同じで、置き場所だけが変わる。
+L0089	一覧の見出し行はPCだけに表示し、スマートフォンでは出さない。
+L0090	申込が1件も無いときは、一覧の見出し行も各行も出さず、0件案内だけを表示する。
+L0091	リニューアル後の仕様
+L0092	表示メッセージ
+L0093	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0094	F06-14-MSG-001	管理画面上部	プレイヤーID %player_id% が見つかりません。 ／ admin.event.entry.paying_member_customer_not_registered	申込登録時、指定したプレイヤーIDのプレイヤーが存在しない、またはそのプレイヤーに紐づく支払い会員Customerが存在しないとき	申込登録画面に留まる
+L0095	F06-14-MSG-002	管理画面上部	保存に失敗しました	大会申込の登録時にエラーが起きたとき	イベント申込新規画面に留まる
+L0096	F06-14-MSG-003	画面上部	予約済みの大会はありません。	大会予約履歴を表示したとき、予約済みの大会がない場合	大会予約履歴画面に留まる
+L0097	—	管理画面上部	Failed to save	大会申込の登録時にエラーが起きたとき（英語表示）	イベント申込新規画面に留まる
+L0098	—	画面上部	You have no reserved tournaments.	大会予約履歴を表示したとき、予約済みの大会がない場合（英語表示）	大会予約履歴画面に留まる
+L0099	—	一覧本文	There are no scheduled events scheduled.	申込が1件も無いとき（英語表示）	一覧に留まる
+L0100	—	ステータス列	決済中	申込状態が決済中（識別子1）のとき	一覧に留まる
+L0101	—	ステータス列	Proceeding Payment	申込状態が決済中（識別子1）のとき（英語表示）	一覧に留まる
+L0102	—	ステータス列	イベント終了	決済中以外でイベントが終了済みのとき	一覧に留まる
+L0103	—	ステータス列	Event Finished	決済中以外でイベントが終了済みのとき（英語表示）	一覧に留まる
+L0104	—	ステータス列	（申込状態の名称）	決済中以外でイベントが未終了のとき。英語表示では申込状況マスタの英語名称を表示する	一覧に留まる
+L0105	—	決済中のヘルプアイコンのツールチップ	決済が中断されました。お手数ですが、約30分後に再度お申込みいただけますようお願いいたします。	決済中のヘルプアイコンを指したとき	一覧に留まる
+L0106	—	決済中のヘルプアイコンのツールチップ	Your payment procedure has been interrupted or suspended. Please try your registration 30 minutes after.	決済中のヘルプアイコンを指したとき（英語表示）	一覧に留まる
+L0107	利用者は言語切替で英語表示へ到達する。本機能はフォーム送信に伴うフラッシュ・インラインエラーを生成しない。
+
+ succeeded in 86ms:
+L0047	または最大値	初期値	画面部品の説明
+L0048	1	会員名	ラベル	-	-	-
+L0049	2	件数	ラベル	-	-	-
+L0050	3	ページング	リンク	-	-	-	選択したページへ遷移する
+L0051	4	表示件数	プルダウン	-	-	10件	選択肢: 10件 50件 100件 300件 500件 1000件 2000件 10000件 12000件
+L0052	5	買取依頼日	ラベル	-	-	-
+L0053	6	買取店舗	ラベル	-	-	-	・店頭買取の場合、買取店舗を表示する。ネット買取の場合はオンラインショップと表示する。
+L0054	7	買取番号	リンク	-	-	-	・買取履歴詳細へ遷移する
+L0055	8	買取依頼内容	ラベル	-	-	-	・ネット買取の場合、えらんで買取・まとめて買取の文言を表示する
+L0056	9	買取金額合計	ラベル	-	-	-	・処理状態が「振込待ち」「買取完了」の場合に表示する
+L0057	・ネット買取の場合、査定承諾金額合計を表示する
+L0058	・店頭買取の場合、査定金額合計を表示する
+L0059	10	処理状態	ラベル	-	-	-	・処理状態の表示については「買取ステータスと処理状態の紐付け」シートを参照 2026/7/16木村：書式を画像からラベルに修正。
+L0060	11	詳細を見る	ボタン	-	-	-	・買取履歴詳細へ遷移する
+L0061	12	マイページへ戻る	ボタン	-	-	-	・マイページへ遷移する
+L0062	Source:
+L0063	functions/pf-eccube3/f06-11_front_member_mypage_buy_history.md
+L0064	現行仕様
+L0065	F06-11 買取一覧 / F06-11（買取一覧）
+L0066	業務ロジック
+L0067	一覧の対象とアクセス制御
+L0068	ログイン会員自身の買取注文だけを対象とする。未ログインのときは会員ログインへ誘導する。
+L0069	マイページからこの画面への入口は日本語版のマイページにだけ置き、英語版のマイページには表示しない。
+L0070	ページ番号と1ページ表示件数はクエリ文字列で受け取る。ページ番号の指定が無いときは先頭ページを表示する。
+L0071	買取依頼内容の表示
+L0072	えらんで買取・まとめて買取の順に、売却対象で数量のある代表商品を1件だけ表示し、同じ区分の残りを「ほか○件」として示す。売却対象でない商品と、数量が0の商品は対象から除く。
+L0073	代表商品は、その区分の商品を買取価格の高い順（同額のときは商品状態の定義順）に並べ、先頭から条件に合う最初の1件を選ぶ。まとめて買取の対象には個別入力商品も含める。
+L0074	商品の言語があるときに限り、商品名の前に言語のコードを【】で囲んで表示する。状態（買取用コード）もあわせて持つ商品では、言語のコードに続けて「/」で区切り、同じ括弧の中に併記する。
+L0075	表示の規則
+L0076	会員名は姓と名を並べ、敬称を付けて表示する。
+L0077	買取依頼日は年月日で表示する。
+L0078	買取番号は7桁のゼロ詰めで表示する。
+L0079	商品と規格が論理削除済みのときも一覧に表示する。
+L0080	件数の表示
+L0081	件数範囲と総件数は、一覧の上と下の2箇所に表示する。買取依頼が1件も無いときは件数範囲の開始を0として表示し、一覧には行を出さない。履歴が無いことを知らせるメッセージは表示しない。
+L0082	ページ送り
+L0083	ページ送りは、件数と同じく一覧の上と下の2箇所に置く。現在のページ番号を挟み、前後それぞれ4ページ分までのページ番号リンクを並べる。前のページがあるときは「最初」、後のページがあるときは「最後」のリンクをあわせて表示する。
+L0084	エラー時の扱い
+L0085	エラー内容	処理
+L0086	未ログインでのアクセス	会員ログインへ誘導する
+L0087	入出力
+L0088	種類	内容
+L0089	入力	ページ番号と1ページ表示件数
+L0090	成功時出力	買取履歴一覧の表示。会員名・件数範囲・総件数・ページ送りをあわせて表示する
+L0091	失敗時出力	未ログインのときは会員ログインへ誘導する
+L0092	本機能は参照だけを行い、データを更新しない。入力フォームを持たないため、送信に伴うメッセージも持たない。
+L0093	リニューアル後の仕様
+L0094	表示メッセージ
+L0095	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0096	F06-11-MSG-001	画面上部	買取履歴はありません。	買取履歴を開き、買取依頼の履歴がないとき	買取履歴一覧画面に留まる
+L0097	—	件数表示	（開始）~（終了）件 ／ （総件数）件あります	一覧表示時に常時	買取履歴一覧画面に留まる
+L0098	—	買取区分ラベル	えらんで買取：／まとめて買取：	各区分に該当する代表商品があるとき	買取履歴一覧画面に留まる
+L0099	—	ほか件数	ほか（件数）件	同区分に他の対象商品があるとき	買取履歴一覧画面に留まる
+L0100	—	画面見出し	買取履歴一覧	一覧表示時に常時	買取履歴一覧画面に留まる
+
+ succeeded in 85ms:
+L0034	画像レイヤー（5枚）: ポイント履歴 / B7 / image 1 + ポイント履歴 / B7 / image 2 + ポイント履歴 / B7 / image 3 + ポイント履歴 / X18 / image 4 + ポイント履歴 / X42 / image 5
+L0035	⌂ > マイページ > ポイント履歴
+L0036	カスタマイズ説明
+L0037	・カスタマイズ要件
+L0038	現行機能をベースに以下カスタマイズを行う
+L0039	・「備考」の項目名を「内容」に変更する
+L0040	スマレジでのポイント履歴表示について
+L0041	・スマレジでのポイント履歴には注文番号の代わりにレシート番号を表示する
+L0042	・カスタマイズ要件に記載の内容以外は現行踏襲とする
+L0043	機能仕様処理概要（★はカスタマイズ項目）
+L0044	★シート「マイページ」のカスタマイズ要件より、(2)名前の表示を削除
+L0045	・ポイント履歴は、ポイント履歴IDの降順で表示する
+L0046	★スマレジ連携によって作成した受注で獲得したポイント履歴には、(13)注文番号の代わりにレシート番号を表示する
+L0047	・(6)ポイント履歴表示件数を選択すると、画面を読み込み、選択したポイント履歴表示件数でページを分けてを表示する
+L0048	・(15)有効期限が切れいているポイントは、ポイント失効のバッチによって無効にする
+L0049	※ポイント失効のバッチについては、「0408_基本設計仕様書(バッチ_会員)」のシート「ポイント失効」を参照
+L0050	識別ID	ラベル	書式・制限	必須	最大文字数
+L0051	または最大値	初期値	画面部品の説明
+L0052	1	パンくずリスト	リンク	-	-	-	※カスタマイズ対応、新規追加
+L0053	・現在表示中のページは押下できないようにする
+L0054	・ホームアイコンを押下すると、本店ECTOP画面へ遷移する
+L0055	2	名前	ラベル	-	-	-	※カスタマイズ対応、項目を除去
+L0056	3	現在のポイント	ラベル	-	-	-	・会員が保持する総ポイントを表示する
+L0057	4	次に消失するポイント	ラベル	-	-	-	・会員がポイントを保持する場合、表示する
+L0058	・会員が保持するポイントの中で、有効期限が最も短いポイントを表示する
+L0059	5	ポイント期限	ラベル	-	-	-	・(14)有効期限が最も近いポイントの有効期限を表示する
+L0060	6	ポイント履歴表示件数	単一選択(セレクトボックス)	-	-	10件	・選択すると、画面を読み込み、選択したポイント履歴表示件数でページを分けてを表示する
+L0061	7	ポイント履歴表示範囲							ラベル	-	-	-	・ポイント履歴の全件数のうち、現在表示している範囲を表示する
+L0062	8	ポイント履歴件数	ラベル	-	-	-	・ポイント履歴の全件数を表示する
+L0063	9	前へ	リンク	-	-	-	・現在ページ + 1へ遷移する
+L0064	※最初のページの場合は表示しない
+L0065	10	ページ番号	リンク	-	-	-	・(5)ポイント履歴表示件数で分けたページの中で、表記されている番号のポイント履歴画面へ遷移する
+L0066	※現在表示中のページ番号はハイライト、押下できないようにする
+L0067	・ページ番号は現在表示しているページ番号から前後最大3つまで表示できる
+L0068	・9 / 10 / 11 のレイアウトは新EC のデザインレイアウトに準拠する
+L0069	11	次へ	リンク	-	-	-	・現在ページ - 1 へ遷移する
+L0070	※最後のページの場合は表示しない
+L0071	12	利用or獲得日	ラベル	-	-	-	書式は、
+L0072	日本語： Y/n/j (例：2025/8/18)
+L0073	英語： m/d/Y (例：08/18/2025)
+L0074	13	注文番号	リンク	-	-	-	※カスタマイズ対応、スマレジでのポイント履歴にはレシート番号を表示する
+L0075	・注文によって作成したポイント履歴の場合のみに表示する
+L0076	・押下すると、注文番号に応じた購入履歴詳細画面へ遷移する
+L0077	・スマレジ連携によって作成した受注で獲得したポイント履歴にはレシート番号を表示する
+L0078	14	ポイント	ラベル	-	-	-	-
+L0079	15	有効期限	ラベル	-	-	-	書式は、
+L0080	日本語： Y/n/j (例：2025/8/18)
+L0081	英語： m/d/Y (例：08/18/2025)
+L0082	16	内容	ラベル	-	-	-	※カスタマイズ対応、「備考」の項目名を「内容」に変更する
+L0083	・英語サイトの場合は英語の内容を表示する
+L0084	17	マイページ	リンク	-	-	-	・押下すると、マイページに遷移する
+L0085	Source:
+L0086	functions/pf-eccube3/f06-10_front_member_mypage_point_history.md
+L0087	現行仕様
+L0088	F06-10 ポイント履歴 / F06-10（ポイント履歴）
+L0089	刷新後は実装不要本節は現行実装（pf-eccube3）からのリバースです。次の記述は Excel基本設計により廃止されており、刷新後に実装する必要はありません。
+L0090	画面上部のログインユーザ名表示（ポイント履歴） は削除（0306 ポイント履歴 識別ID:2）
+L0091	業務ロジック
+L0092	刷新後は実装しない（廃止）
+L0093	Excel基本設計 0306 ポイント履歴 識別ID:2 により廃止。刷新後は実装しない。
+L0094	画面上部の表示
+L0095	画面の見出しは「ポイント履歴一覧」とする。現在のポイントと次に消失するポイントの数値は強調表示する。画面に出すポイント数はいずれも桁区切りで表示する。本画面専用のモーダルは持たない。
+L0096	一覧の対象と受け取るクエリ
+L0097	常にログイン会員自身のポイント履歴のみを対象とする。ページ番号と1ページ表示件数はクエリで受け取る。いずれも数値として解釈し、指定が無いとき・0のとき・数値として解釈できないときは既定に戻す（ページ番号の既定は1ページ目）。ページ送りのリンクは、押下時点の表示件数の指定をそのまま引き継ぐ。
+L0098	表示件数の選択肢
+L0099	表示件数として選べるのは 10件・20件・50件・100件 の4つとする。表示件数を選び直したときはページ番号を引き継がず、1ページ目から表示し直す。
+L0100	ポイント値と有効期限の表示
+L0101	履歴行のポイント値は、増減値がプラスのとき先頭に「+」を付けて表示し、マイナスはそのまま表示する。獲得と利用で表示色を切り替える。有効期限はプラスの履歴にのみ表示し、発行日にポイント失効日数の設定を加えた日とする。注文番号のリンクは別タブで開く。
+L0102	失効見込みの算定
+L0103	選手情報の現在ポイントを起点に、有効期限内の獲得履歴を新しい順に差し引き、残高を使い切る履歴を失効見込みとする。同じ発行日の獲得履歴は合算して1件分として扱う。表示額は、失効見込み額と現在ポイントのうち小さい方とする。
+L0104	エラー時の扱い
+L0105	エラー内容	処理
+L0106	未ログインアクセス	会員ログインへ誘導する（会員ログイン機能を正とする）
+L0107	入出力
+L0108	種類	内容
+L0109	入力	ページ番号・1ページ件数のクエリ
+L0110	成功時出力	ポイント履歴一覧と現在ポイント・失効見込みのHTML表示
+L0111	失敗時出力	未ログイン時は会員ログインへ誘導する
+L0112	リニューアル後の仕様
+L0113	表示メッセージ
+L0114	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/F06-13_{processes,factors,constraints}.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	撮影画面から本人確認の申請を確定する	撮影画面で撮影と同意を済ませ、写真を確定して申請するボタンを押す	DB（身分証画像・選手情報）・オブジェクトストレージ・申請完了メール	L0087-L0092,L0146-L0154,L0166-L0171
+P2	撮影画面へ入る	オンライン本人確認画面で撮影画面へボタンを押す	撮影画面の撮影項目、またはスタート画面	L0091-L0092,L0103,L0141-L0145
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1,P2	端末	スマートフォン｜PC	スマートフォン: 申請・撮影画面の利用が可能／PC: 申請はマイページへ戻し何も登録せず、撮影画面へはスタート画面へ戻す	L0027-L0029,L0143,L0148	この機能
+F02	P1	申請する身分証の種類	マイナンバーカード｜マイナンバー以外	マイナンバーカード: 顔写真・オモテ・斜めの3画像を保存／マイナンバー以外: 顔写真・オモテ・ウラ・斜めの4画像を保存	L0091-L0092,L0103,L0154	この機能
+F03	P2	撮影画面へ送る身分証の種類	マイナンバーカード｜マイナンバー以外｜選択なし	マイナンバーカード: ウラ面の撮影項目を出さない3項目の撮影画面／マイナンバー以外: 4項目の撮影画面／選択なし: スタート画面へ戻す	L0091-L0092,L0103,L0144	この機能
+処理ID	組	種別	根拠	理由
+P1	F01=PC	打ち切り	L0148	スマートフォン判定に該当しない端末ではマイページへ戻し何も登録しない。身分証の種類は結果に効かない
+P2	F01=PC	打ち切り	L0143	スマートフォン判定に該当しない端末ではスタート画面へ戻す。身分証の種類は結果に効かない
+P2	F03=選択なし	打ち切り	L0144	身分証種別の選択が送られていないときはスタート画面へ戻す。端末は結果に効かない
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/F06-15_{processes,factors,constraints}.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	承諾確定で売却を確定し、実在庫・実在庫履歴を作る	買取履歴詳細画面で承諾確定ボタンを押す	実在庫・実在庫履歴（DB）	L0088-L0089,L0115-L0117
+P2	買取の明細の項目と金額・商品名のリンクを出す	会員が買取履歴詳細画面を開く	買取履歴詳細画面の商品情報	L0081-L0087,L0093-L0114,L0133-L0137
+P3	売却可否・500円未満チェック・承諾確定ボタンの操作可否と表示を決める	会員が買取履歴詳細画面を開く	買取履歴詳細画面の商品情報	L0062,L0102,L0110,L0115-L0117,L0131,L0138-L0139
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	明細の売却可否	売却する｜売却しない	売却する: 実在庫・実在庫履歴を作る／売却しない: 作らない	L0088	この機能
+F02	P1	商品の種類	通常商品｜個別入力商品	通常商品: 売却する明細は実在庫を作る／個別入力商品: 作成の対象外	L0088-L0089	この機能
+F03	P1	500円未満のカードをすべて売却するチェック	チェックあり｜チェックなし	チェックあり: 価格下限未満のカードも売却として実在庫を作る／チェックなし: 価格下限未満のカードは売却しない	L0088,L0115	この機能
+F04	P2,P3	買取の種類	ネット買取｜店頭買取	ネット買取: ネット買取で表示する項目を出す／店頭買取: 店頭買取で表示する項目だけを出す（査定日・承諾日・振込日・承諾方法・承諾確定ボタン・まとめて買取は出さず、成立日を出す）	L0051-L0058,L0093-L0118	この機能
+F05	P2	明細の区分	えらんで買取｜まとめて買取	えらんで買取: 明細を個別に並べる／まとめて買取: 価格下限以上だけ個別に並べ、未満は500円未満カードの欄にまとめる	L0095-L0115,L0137	この機能
+F06	P2	査定価格と個別表示の価格下限	個別表示の価格下限以上｜個別表示の価格下限未満｜査定価格が未確定	個別表示の価格下限以上: 個別に並べ、金額と小計を表示する／個別表示の価格下限未満: 個別に並べず500円未満カードの欄にまとめる／査定価格が未確定: 金額の代わりに査定中と表示する	L0133,L0137	この機能
+F07	P3	処理状態	査定内容連絡済み｜連絡済み以外	査定内容連絡済み: 売却可否と500円未満チェックを操作でき承諾確定ボタンを出す／連絡済み以外: 変更できず現在の選択内容を表示し承諾確定ボタンを出さない	L0116,L0131	この機能
+F08	P3	まとめて買取の明細	あり｜なし	あり: まとめて買取の一覧と500円未満カードの欄を出す／なし: まとめて買取の一覧と500円未満カードの欄とチェックを出さない	L0139	この機能
+処理ID	組	種別	根拠	理由
+P2	F04=店頭買取&F05=まとめて買取	作れない	L0103-L0109	店頭買取にはまとめて買取の項目が無い
+P2	F05=まとめて買取&F06=査定価格が未確定	正解未定	L0133,L0137	査定価格が未確定の明細は下限と比べる価格が無く、個別表示か下限未満の欄かが決まらない
+P1	F01=売却しない	打ち切り	L0088	売却しない明細は実在庫・実在庫履歴を作らない。商品の種類は結果に効かない
+P1	F02=個別入力商品	打ち切り	L0089	個別入力商品は実在庫・実在庫履歴の作成の対象外。売却可否は結果に効かない
+P3	F04=店頭買取	打ち切り	L0062,L0116-L0117,L0103-L0115	店頭買取には承諾確定ボタンもまとめて買取の項目も無く、処理状態・まとめて買取の明細は結果に効かない
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/F06-14_{processes,factors,constraints}.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	会員の一覧に出すイベントを決める	会員がマイイベント・デッキ登録画面を開く	マイイベント・デッキ登録画面の一覧（申込・参加者・デッキのDBの内容で出るイベントが変わる）	L0038-L0041,L0079,L0090
+P2	一覧の行の処理状態（決済中・イベント終了・申込状態の名称・未登録）とヘルプを出す	会員がマイイベント・デッキ登録画面を開く	マイイベント・デッキ登録画面の処理状態欄とヘルプ	L0044,L0059-L0063,L0081-L0082,L0100-L0106
+P3	一覧の行のデッキ登録状況とデッキ登録/編集ボタンを出す・出さない	会員がマイイベント・デッキ登録画面を開く	マイイベント・デッキ登録画面のデッキ登録状況欄とデッキ登録/編集ボタン	L0045-L0049,L0064-L0066
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	会員の申込の状態	参加者の有効な申込｜有効な申込なし	参加者の有効な申込: 申込の条件で一覧に出る／有効な申込なし: キャンセル済み・参加者外のみ・申込なしのいずれも申込の条件では出ない	L0039,L0079	この機能
+F02	P1	会員のデッキ登録	あり｜なし	あり: デッキの条件で一覧に出る／なし: デッキの条件では出ない	L0040	この機能
+F03	P2	申込の状態	決済中｜申込完了｜申込なし	決済中: 処理状態は決済中でヘルプを出す／申込完了: 開催日を過ぎていなければ申込状態の名称、過ぎていればイベント終了／申込なし: デッキだけで登録のイベントは開催日を過ぎていなければ未登録、過ぎていればイベント終了	L0044,L0059-L0063,L0081-L0082,L0100-L0104	この機能
+F04	P2	開催日の経過	開催日の終わりを過ぎた｜過ぎていない	開催日の終わりを過ぎた: 決済中以外は処理状態がイベント終了／過ぎていない: 申込状態の名称（決済中は決済中）	L0044,L0081,L0102-L0104	この機能
+F05	P3	処理状態	イベント終了｜決済中で開催日を過ぎた｜それ以外	イベント終了: デッキ登録状況とボタンを出さない／決済中で開催日を過ぎた: 設計書から出す・出さないが決まらない／それ以外: ほかの条件で決まる	L0044,L0046,L0081	この機能
+F06	P3	デッキ登録締切の日時	過ぎている｜過ぎていない	過ぎている: デッキ登録状況とボタンを出さない／過ぎていない: ほかの条件で決まる	L0047	この機能
+F07	P3	管理画面のデッキ登録を終了するチェック	チェックあり｜チェックなし	チェックあり: デッキ登録状況とボタンを出さない／チェックなし: ほかの条件で決まる	L0048	この機能
+F08	P3	管理画面のデッキ登録ありチェック	チェックあり｜チェックなし	チェックあり: ほかの条件で決まる／チェックなし: デッキ登録状況とボタンを出さない	L0049	この機能
+処理ID	組	種別	根拠	理由
+P3	F05=決済中で開催日を過ぎた	正解未定	L0046,L0081	決済中が優先されて処理状態が決済中と表示されるとき、ステータスがイベント終了の条件に当たるか書かれていない
+P2	F03=決済中&F04=開催日の終わりを過ぎた	正解未定	L0044,L0081	Excel由来の本文は開催日を過ぎたら「イベント終了」とし、埋め込みの現行仕様は決済中を優先する。決済中・終了済みの両方に当たるときの表示が決まらない
+P3	F05=イベント終了	打ち切り	L0046	処理状態がイベント終了ならデッキ登録状況とボタンを出さず、ほかの条件は結果に効かない
+P3	F06=過ぎている	打ち切り	L0047	デッキ登録締切を過ぎているとデッキ登録状況とボタンを出さず、ほかの条件は結果に効かない
+P3	F07=チェックあり	打ち切り	L0048	管理画面のデッキ登録を終了するにチェックがあると出さず、ほかの条件は結果に効かない
+P3	F08=チェックなし	打ち切り	L0049	デッキ登録ありにチェックが無いと出さず、ほかの条件は結果に効かない
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/F06-16_{processes,factors,constraints}.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	デッキリストを提出して大会のデッキを新規登録または上書きする	大会デッキ登録編集画面でデッキリストを提出するボタンを押す	大会デッキ・デッキを構成するカード（DB）	L0088-L0095,L0243-L0249,L0261-L0264
+P2	大会デッキ登録編集画面を表示するか決める	会員が大会デッキ登録編集画面を開く	大会デッキ登録編集画面（表示される・されない）	L0208-L0209,L0238-L0240
+P3	マイデッキを選んで入力欄を上書きする	マイデッキを取得ポップアップでデッキを選ぶ	大会デッキ登録編集画面の入力欄とフォーマット選択	L0185-L0186,L0215-L0217
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	イベント詳細・選手情報・フォーマットが一致する登録済みデッキ	あり｜なし	あり: 既存デッキを上書きし登録済みカードを取り除いて登録し直す／なし: 新しくデッキを作る（プレイヤー名も新しく決める）	L0244-L0246,L0263-L0264	この機能
+F02	P1	選手情報の英字の姓名	両方入力あり｜姓だけ空｜名だけ空｜両方空	両方入力あり: 姓名を半角スペースでつないだものがプレイヤー名／姓だけ空: 先頭に半角スペースが残る／名だけ空: 末尾に半角スペースが残る／両方空: 会員の住所地で氏名か氏名カナになる	L0246-L0247	この機能
+F03	P1	会員の住所地	国内｜海外	国内: 英字姓名が両方空のときは氏名カナ／海外: 英字姓名が両方空のときは氏名	L0246	この機能
+F04	P1	入力したカード名と現行のカード情報	全て一致｜一致しない行を含む	全て一致: 全行をデッキを構成するカードとして保存する／一致しない行を含む: その行は入力テキストとしてだけ保存しカードとしては保存しない	L0249	この機能
+F05	P2	選手情報	あり｜なし	あり: ほかの条件で決まる／なし: 画面を表示しない	L0208	この機能
+F06	P2	イベント詳細のデッキ登録フラグ	有効｜無効	有効: ほかの条件で決まる／無効: 画面を表示しない	L0209	この機能
+F07	P2	デッキ登録締切	締切前｜過ぎている	締切前: ほかの条件で決まる／過ぎている: 画面を表示しない	L0209	この機能
+F08	P3	マイデッキの所有者	本人｜他人	本人: 選択中のフォーマットの入力欄を上書きする／他人: 上書きしない	L0216	この機能
+F09	P3	マイデッキのフォーマット	イベントで選べる｜イベントで選べない	イベントで選べる: 選択フォーマットをそのデッキのフォーマットに合わせる／イベントで選べない: 選択フォーマットは変えない	L0215	この機能
+F10	P3	マイデッキの統率領域のカード	あり｜なし	あり: メインボードの先頭に足して取り込む／なし: 通常どおり取り込む	L0217	この機能
+処理ID	組	種別	根拠	理由
+P2	F05=なし	打ち切り	L0208	選手情報が無いと画面を表示せず、ほかの条件は結果に効かない
+P2	F06=無効	打ち切り	L0209	イベントのデッキ登録フラグが無効だと画面を表示せず、ほかの条件は結果に効かない
+P2	F07=過ぎている	打ち切り	L0209	デッキ登録締切を過ぎていると画面を表示せず、ほかの条件は結果に効かない
+P3	F08=他人	打ち切り	L0216	他人のマイデッキは入力欄を上書きせず、フォーマットも合わせない
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/F06-17_{processes,factors,constraints}.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/F06-18_{processes,factors,constraints}.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	デッキを提出して登録（上書きまたは新規作成）する	デッキ編集画面でデッキリストを提出する	DB（大会デッキ・カード行）と選手宛メール／書式誤りのときはデッキ編集画面	L0093-L0108,L0121-L0124
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	同一イベント詳細・選手・フォーマットの登録済みデッキ	なし｜あり	なし: デッキを新規作成し選手名等を設定／あり: 既存デッキを上書きしカード行を削除して再登録	L0106,L0123-L0124	この機能
+F02	P1	選手の英字姓名	あり｜空	あり: 選手名は英字姓名／空: 住所地で会員氏名か会員カナ氏名（新規作成時）	L0107	この機能
+F03	P1	会員の住所地	海外｜海外以外	海外: 英字姓名が空なら会員氏名／海外以外: 英字姓名が空なら会員カナ氏名	L0107	この機能
+F04	P1	イベント詳細の登録可否	登録可｜登録不可	登録可: 登録される／登録不可: 登録しない（イベント詳細が無い・フラグオフ・期限切れ）	L0093,L0099	この機能
+F05	P1	メイン・サイドの書式	正しい｜誤り	正しい: 保存され完了画面へ／誤り: 保存せず内容を保持してデッキ編集画面へ戻る	L0100,L0103	この機能
+F06	P1	ログイン会員の選手情報	特定できる｜特定できない	特定できる: 登録される／特定できない: 登録しない	L0093,L0097	この機能
+処理ID	組	種別	根拠	理由
+P1	F04=登録不可	打ち切り	L0099	イベント詳細が登録不可なら登録しない。ほかの条件は結果に効かない
+P1	F05=誤り	打ち切り	L0100,L0103	書式が誤りなら保存せず、内容を保持してデッキ編集画面へ戻す。既存デッキの有無などは結果に効かない
+P1	F06=特定できない	打ち切り	L0097	選手情報が特定できないなら登録しない。ほかの条件は結果に効かない
+
+ succeeded in 0ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	会員情報を変更して確定する	会員情報変更画面で変更するボタンを押す	DB（会員・選手情報・既定配送先・本人確認ステータス）と管理画面の会員情報／拒否時は会員情報変更画面	L0185-L0196,L0203-L0208
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	変更前の本人確認ステータス	未確認｜確認済み｜簡易書留確認済み	未確認: 変わらない／確認済み: 住所系も氏名系も変更すると未確認へ／簡易書留確認済み: 住所系の変更だけ未確認へ	L0192-L0194,L0208	この機能
+F02	P1	変更した項目	住所系｜氏名・カナ・生年月日｜それ以外のみ	住所系: 国・郵便番号・都道府県・住所／氏名・カナ・生年月日: 氏名・カナ・生年月日／それ以外のみ: ステータスは変えない	L0192-L0194	この機能
+F03	P1	パスワード欄	既定値のまま｜変更	既定値のまま: 従前のパスワードを維持／変更: 暗号化して再設定	L0189,L0205	この機能
+F04	P1	ブラックリストとの一致	なし｜あり	なし: 更新される／あり: 更新せずエラー（Excel本文は会員情報更新エラー画面）	L0113-L0116,L0212	この機能
+F05	P1	スマレジへの会員情報更新	成功｜失敗	成功: 変更を確定し支店システムへ通知／失敗: 更新を中止し編集フォームを再表示	L0196,L0215	この機能
+処理ID	組	種別	根拠	理由
+P1	F04=あり	打ち切り	L0113-L0116,L0212	ブラックリストと一致すると更新せずエラーで戻る。ほかの要因は結果に効かない
+P1	F05=失敗	打ち切り	L0196,L0215	スマレジ連携が失敗すると更新を中止し編集フォームを再表示する。ほかの要因は結果に効かない
+
+exec
+/bin/bash -lc "sed -n '85,150p' integration_test/casegen/combination/units/F06-17/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+L0084	14	サイドボードカード画像	画像	-	-	-	画像とともに枚数を表示
+L0085	15	大会一覧に戻る	ボタン	-	-	-	イベント・大会のトップページに遷移する
+L0086	16	デッキ編集に戻る	ボタン	-	-	-	デッキ編集画面へ遷移する
+L0087	Source:
+L0088	functions/pf-eccube3/f06-17_front_member_mypage_event_deck_complete.md
+L0089	現行仕様
+L0090	F06-17 大会デッキ登録確認～完了 / F06-17（大会に登録するデッキの確認・登録）
+L0091	業務ロジック
+L0092	登録できる条件
+L0093	ログイン会員に紐づく選手情報を特定できないときは登録しない。妥当なフォーマットを特定できないときも登録しない。イベント詳細が無い、デッキ登録フラグがオフ、登録期限を過ぎているときも登録しない。
+L0094	登録の判定順序
+L0095	順序	判定	結果
+L0096	1	なりすまし対策トークンが正当か	不正なら受け付けない
+L0097	2	選手情報が特定できるか	できないなら登録しない
+L0098	3	妥当なフォーマットが特定できるか	できないなら登録しない
+L0099	4	イベント詳細が登録可（存在・登録フラグ有効・期限内）か	不可なら登録しない
+L0100	5	メイン・サイドの書式が正しいか	誤りなら保存せず、アリーナ表記を実カード名へ置き換えた後の内容とエラー内容を保持してデッキ編集画面へ戻す
+L0101	6	上記を通過	デッキを上書きまたは新規作成し、デッキ登録完了画面へ遷移する
+L0102	書式の誤り（順序5）
+L0103	メイン・サイドの各行は「枚数 カード名 (セット略号) コレクター番号」または「枚数 カード名」の書式でなければ誤りとする。空行は読み飛ばす。誤りがあったときは、アリーナ表記のカード名を実カード名に置き換えた後の内容を保持してデッキ編集画面へ戻す。メインボード・サイドボード別の書式誤りの案内は、誤りのあったボードの入力欄の上にだけ表示し、誤った行は示さない。
+L0104	登録内容
+L0105	メイン・サイドのカードリストをアリーナ表記から実カード名へ変換したうえで解析する。
+L0106	同一イベント詳細・選手・フォーマットの登録済みデッキがあれば上書きする。上書きのときは既存のカード行をいったん削除してから登録し直す。無いときは新規にデッキを作り、選手名・DCIナンバー・大会名・大会日・非公開区分・フォーマット・デッキ種別（大会）を設定する。
+L0107	新規作成時の選手名は選手の英字姓名とする。英字姓名が空のときは、海外会員は会員氏名、それ以外は会員カナ氏名とする。
+L0108	デッキの編集者情報を消去して保存する。保存後に選手宛のデッキ登録完了メールを送信する。
+L0109	登録完了画面
+L0110	登録完了画面はログイン会員の選手情報を起点に表示する。選手情報を特定できないとき、デッキを取得できないとき、当該選手のデッキでないとき、デッキに紐づくイベント詳細が無いときは表示しない。
+L0111	プレイヤー名として表示するのは選手情報の英字姓名とする。
+L0112	大会名に添えるフォーマットは、その大会に設定されたフォーマットをすべて並べる。登録したデッキのフォーマットを単独の項目として出すのは、大会に複数のフォーマットが設定されているときだけとする。
+L0113	カード画像を持たないカードは代替画像を表示する。
+L0114	他機能との境界
+L0115	デッキ編集画面の入力フォーム項目は本書では扱わない。書式エラーはデッキ編集画面で扱う。本機能はフラッシュ・トーストを生成せず、本画面専用のモーダルも持たない。
+L0116	入出力
+L0117	種類	内容
+L0118	入力	対象のイベント詳細、フォーマット指定、メイン・サイドのカードリスト、なりすまし対策トークン。確認時は対象のデッキ。
+L0119	成功時出力	デッキの保存、デッキ登録完了画面への遷移、デッキ登録完了メールの送信。
+L0120	失敗時出力	書式エラー時はアリーナ表記を実カード名へ置き換えた後の内容を保持したデッキ編集画面。条件を満たさないときは画面を表示しない。
+L0121	入出力: 永続化
+L0122	操作	契機
+L0123	デッキの登録	登録済みデッキが無い状態での提出
+L0124	デッキの更新（既存カード行の削除と再登録）	登録済みデッキがある状態での提出
+L0125	リニューアル後の仕様
+L0126	表示メッセージ
+L0127	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0128	—	完了見出し	デッキ登録完了	デッキ登録完了画面の表示時	画面に留まる
+L0129	—	完了見出し	Registration Complete	デッキ登録完了画面の表示時（英語表示）	画面に留まる
+L0130	—	完了案内	以下の内容でデッキ登録を行いました。<br>内容に間違いがないことをご確認ください。	デッキ登録完了画面の表示時	画面に留まる
+L0131	—	完了案内	The following deck below has been registered.<br>Please check if your registration is correct.	デッキ登録完了画面の表示時（英語表示）	画面に留まる
+L0132	—	変換注意	※「領界路の彼方」のカードは「マジック：ザ・ギャザリング \	マーベル スパイダーマン」のカードに変換されます。	デッキ登録完了画面の表示時
+L0133	—	変換注意	“Through the Omenpaths” card will be converted to a card from “Magic: The Gathering \	Marvel Spider-Man.”	デッキ登録完了画面の表示時（英語表示）
+L0134	—	各ボード見出しの下	ボード内のカード枚数が%d枚を上回っています	完了画面で当該ボードの枚数がフォーマット最大枚数を超えるとき。%dはフォーマットの最大枚数	登録は取り消さず画面に留まる
+L0135	—	各ボード見出しの下	Your main / side board has %d card(s) over limit of registration.	完了画面で当該ボードの枚数がフォーマット最大枚数を超えるとき（英語表示）	登録は取り消さず画面に留まる
+L0136	—	各ボード見出しの下	ボード内のカード枚数が%d枚を下回っています	完了画面で当該ボードの枚数がフォーマット最小枚数を下回るとき。%dはフォーマットの最小枚数	登録は取り消さず画面に留まる
+L0137	—	各ボード見出しの下	Your main / side board will need %d card(s) to complete registration.	完了画面で当該ボードの枚数がフォーマット最小枚数を下回るとき（英語表示）	登録は取り消さず画面に留まる
+L0138	—	該当ボードのカードリスト上	%d行目の%sは存在しません	行のカード名が辞書に無いとき	登録は取り消さず画面に留まる
+L0139	—	該当ボードのカードリスト上	Column no.%d, %s does not exist.	行のカード名が辞書に無いとき（英語表示）	登録は取り消さず画面に留まる
+L0140	—	該当ボードのカードリスト上	%d行目の%sは禁止カードです	行のカードがフォーマットの禁止カードのとき	登録は取り消さず画面に留まる
+L0141	—	該当ボードのカードリスト上	Column no.%d, %s is on the banned list.	行のカードがフォーマットの禁止カードのとき（英語表示）	登録は取り消さず画面に留まる
+L0142	—	該当ボードのカードリスト上	%d行目の%sは制限カードです	行のカードが制限カードで、投入枚数の制限を超えるとき	登録は取り消さず画面に留まる
+L0143	—	該当ボードのカードリスト上	Column no.%d, %s is on the restricted list.	行のカードが制限カードで、投入枚数の制限を超えるとき（英語表示）	登録は取り消さず画面に留まる
+L0144	—	該当ボードのカードリスト上	%d行目の%sはフォーマットの範囲から外れています	行のカードがフォーマット対象外のとき	登録は取り消さず画面に留まる
+L0145	—	該当ボードのカードリスト上	Column no.%d, %s is not legal in this format.	行のカードがフォーマット対象外のとき（英語表示）	登録は取り消さず画面に留まる
+L0146	—	該当ボードのカードリスト上	%d行目の%sが5枚以上登録されています	同一カードが規定枚数を超えるとき	登録は取り消さず画面に留まる
+L0147	—	該当ボードのカードリスト上	Column no.%d, %s is registered over limit.	同一カードが規定枚数を超えるとき（英語表示）	登録は取り消さず画面に留まる
+L0148	利用者は言語切替で英語表示へ到達する。
+
+exec
+/bin/bash -lc "sed -n '185,270p' integration_test/casegen/combination/units/F06-16/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+L0184	機能仕様処理概要(★はカスタマイズ項目)
+L0185	・マイデッキに登録済みのデッキを選択できるデッキをクリックすると、ポップアップを閉じ、
+L0186	メインボード、サイドボードの入力欄に、デッキリスト形式のテキストが自動入力される
+L0187	・ポップアップ画面外の領域をクリックすると閉じる
+L0188	識別ID	ラベル	書式・制限	必須	最大文字数
+L0189	または最大値	初期値	画面部品の説明
+L0190	1	フォーマット選択	単一選択(セレクトボックス)	-	-	-	-
+L0191	2	検索結果総数	ラベル	-	-	-	-
+L0192	3	表示件数	ラベル	-	-	-	-
+L0193	4	ページング	リンク	-	-	-	1ページあたりの最大表示数は20件ページ切り替えは動的に処理する
+L0194	5	デッキ表示	ラベル	-	-	-	デッキ分繰り返し
+L0195	6	フォーマット	ラベル	-	-	-	-
+L0196	7	デッキ名	ラベル	-	-	-	-
+L0197	8	ユーザー名	ラベル	-	-	-	-
+L0198	9	作成日	ラベル	-	-	-	-
+L0199	10	最終更新日	ラベル	-	-	-	-
+L0200	11	代表カード画像	ラベル	-	-	-	PCのみ表示する
+L0201	大会デッキ登録編集 / AT822 / image 5
+L0202	Source:
+L0203	functions/pf-eccube3/f06-16_front_member_mypage_event_deck_edit.md
+L0204	現行仕様
+L0205	F06-16 大会デッキ登録編集 / F06-16（大会デッキ登録編集）
+L0206	業務ロジック
+L0207	登録できる条件
+L0208	会員ログインを要求し、ログイン会員に紐づく選手情報を特定する。選手情報が無いときは画面を表示しない。未ログインのときは会員ログインへ誘導する。
+L0209	イベント詳細が存在し、デッキ登録フラグが有効で、登録締切を過ぎていないときだけ登録できる。いずれかを満たさないときは画面を表示しない。
+L0210	登録済みデッキの初期表示
+L0211	選択中のフォーマットに登録済みのデッキがあれば、その内容をメインボードとサイドボードの初期値にする。登録済みの内容はフォーマットごとに別々に保持し、フォーマットを切り替えると入力欄の内容も切り替わる。
+L0212	カード名のサジェスト
+L0213	サジェストの候補は、フォーマットごとに用意されたカード名一覧を参照する。イベントで選べるフォーマットの数だけ候補一覧を切り替える。
+L0214	マイデッキの取り込み
+L0215	マイデッキを指定したときは、そのデッキの内容で入力を上書きする。上書きするのは選択中のフォーマットの入力欄だけとする。マイデッキのフォーマットがそのイベントで選べるものなら、選択フォーマットをそのデッキのフォーマットに合わせる。
+L0216	デッキの取得が成功し、かつそのデッキの所有者がログイン中の選手本人であるときだけ上書きする。本人のデッキでないときは上書きしない。
+L0217	取り込むカード名は、日本語名があれば日本語名を、無ければ英語名を用いる。統率領域のボードに置かれたカードは、メインボードの先頭に足して取り込む。
+L0218	マイデッキ一覧は、本人が作成したデッキを作成日の降順で並べる。
+L0219	インポートの取り込み
+L0220	インポートは、貼り付けたテキストを改行で行に分け、「枚数 カード名 (セット略号) コレクター番号」または「枚数 カード名」の書式に行頭が一致する行を読み取る（例:「4 Lightning Bolt (LEA) 161」「4 Lightning Bolt」）。読み取った行は「枚数 カード名」の形にして、メインボードとサイドボードの入力欄をその内容で置き換える。
+L0221	先頭行が「Deck」または「デッキ」のときは、その行を読み飛ばす。
+L0222	「Sideboard」または「サイドボード」の行より後の行は、サイドボードへ入れる。
+L0223	「Companion」または「相棒」の行と、その次の行は読み飛ばす。
+L0224	行頭がどちらの書式にも一致しない行は取り込まず、エラーも表示しない。
+L0225	大会デッキ登録ご利用ガイドの遷移先
+L0226	大会デッキ登録ご利用ガイドの遷移先は、イベントのヘルプページ（/ja/user_data/help_event）の #block5 の位置とする。遷移先へ引き継ぐ情報は無い。
+L0227	入力の解釈
+L0228	メインボードとサイドボードの入力は、アリーナ表記のカード名を実カード名に置き換えたうえで解釈し、置き換えた後のテキストを保存する。
+L0229	解釈では次のように扱う。
+L0230	空行は読み飛ばす。
+L0231	同じカードが複数行にあるときは、枚数を合算して1件にまとめる。
+L0232	カード名を囲む二重山括弧は取り除く。分割カードの区切りは、二重スラッシュ・全角プラス・前後に半角スペースを置いたスラッシュのいずれで書かれていても同じ区切りとして扱う。
+L0233	書式の誤りの扱い
+L0234	書式の判定はメインボードとサイドボードで別々に行い、それぞれ最初に誤りが見つかった行で打ち切る。誤りがあったときは、入力した内容と、どちらのボードで誤ったかが保持される。
+L0235	提出の判定順序
+L0236	順序	判定	結果
+L0237	1	なりすまし対策トークンが正当か	不正なら受け付けない
+L0238	2	選手情報が特定できるか	できないなら画面を表示しない
+L0239	3	選択フォーマットが確定できるか	できないなら画面を表示しない
+L0240	4	イベント詳細が登録可（存在・登録フラグ有効・締切前）か	不可なら画面を表示しない
+L0241	5	メイン・サイドの書式が正しいか	誤りなら登録せず、入力を保持する
+L0242	フォーマットが送られてこないときは、そのイベントで選べるフォーマットの先頭を選択フォーマットとする。送られてきた値がそのイベントで選べるフォーマットに無いときは確定できないものとして扱う。
+L0243	上書きするデッキの同定
+L0244	イベント詳細・選手情報・フォーマットの3つが一致する登録済みデッキを上書きする。一致するものが無いときは新しく作る。上書きのときは、そのデッキに登録済みのカードをいったん取り除いてから登録し直す。
+L0245	新規に作るときのプレイヤー名
+L0246	選手情報の英字の姓名を半角スペースでつないだものをプレイヤー名とする。英字の姓名がいずれも空のときは、会員の住所地が海外なら会員の氏名を、そうでなければ会員の氏名カナを用いる。
+L0247	英字の姓・名の一方だけが空のときは、空の側を空文字として半角スペースでつなぐ。姓だけが空なら先頭に、名だけが空なら末尾に半角スペースが残る（例: 「 TARO」「YAMADA 」）。
+L0248	デッキを構成するカードとして保存しないもの
+L0249	カード名が現行のカード情報と一致しない行は、入力テキストとしては保存するが、デッキを構成するカードとしては保存しない。
+L0250	完了メールの扱い
+L0251	デッキ登録完了メールの送信結果は画面表示に反映しない。送信できなくても登録は成立する。
+L0252	編集を取りやめたとき
+L0253	キャンセルを選んだときは、入力中の内容を登録せずにイベント一覧へ戻る。
+L0254	他機能との境界
+L0255	枚数の下限・上限、禁止カード、制限カードの判定はデッキ確認画面で行う。本機能が登録の可否を決めるのは行の書式だけである。
+L0256	入出力
+L0257	種類	内容
+L0258	入力	選択フォーマット、メインボード、サイドボード、なりすまし対策トークン、マイデッキ取り込み時の対象デッキ。
+L0259	成功時出力	登録済みデッキの上書き、または新規登録。
+L0260	失敗時出力	書式エラー時は入力とエラー箇所を保持した編集画面。選手情報なし・登録不可・フォーマット未確定のときは画面を表示しない。
+L0261	入出力: 永続化
+L0262	操作	契機
+L0263	デッキの登録	イベント詳細・選手情報・フォーマットが一致する登録済みデッキが無い状態での提出
+L0264	デッキの更新（登録済みカードの削除と再登録）	イベント詳細・選手情報・フォーマットが一致する登録済みデッキがある状態での提出
+L0265	リニューアル後の仕様
+L0266	表示メッセージ
+L0267	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0268	F06-16-MSG-001	マイデッキ取得モーダル本文	マイデッキがありません。	マイデッキ取得モーダルを開いた時、ログイン会員のユーザー作成デッキ一覧MyDecksが空	画面にとどまる（取得対象のデッキなし）
+L0269	—	入力形式の注意事項	半角数字 + 半角スペース + カード名 の形式でご入力いただく仕様となっております。	編集画面の表示時に常時	画面に留まる
+
+exec
+/bin/bash -lc "sed -n '70,145p' integration_test/casegen/combination/units/F06-15/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+L0069	・PLD表記を廃止し、SP、MPをそれぞれ状態表示する
+L0070	店頭買取の履歴詳細を表示する
+L0071	・カスタマイズ要件に記載の内容以外は現行踏襲とする。
+L0072	機能仕様処理概要（★はカスタマイズ項目）
+L0073	・表示について
+L0074	★商品状態の表示を変更する
+L0075	・PLD表記を廃止し、SP、MPをそれぞれ状態表示する
+L0076	NM	→	NM
+L0077	PLD	→	SP
+L0078	PLD	→	MP
+L0079	HP	→	HP
+L0080	★店頭買取の履歴詳細を表示する
+L0081	・商品名、言語、状態、査定価格、数量、小計を表示する
+L0082	・個別入力商品の場合は言語、状態を表示しない
+L0083	・「売却する」プルダウンを切り替えた場合下記の項目を変更する
+L0084	・表示件数
+L0085	・売却しない件数
+L0086	・変更した行の背景色
+L0087	・まとめて買取で個別表示する価格下限よりまとめて買取金額が低い場合は個別のキャンセルはできないようにする
+L0088	★ネット買取の承諾確定処理で「売却する」になっている商品について、実在庫・実在庫履歴を洗い替えで作成する。500円未満の売却についても同様。 2026/4/30木村：実在庫の作成処理を追加。
+L0089	個別入力商品については、実在庫・実在庫履歴の作成の対象外とする。（管理画面側の業務で行う）
+L0090	買取の種類による項目表示有無
+L0091	識別ID	ラベル	書式・制限	必須	最大文字数
+L0092	または最大値	初期値	画面部品の説明	ネット買取	店頭買取
+L0093	1	表示件数	ラベル	-	-	-		◯	◯
+L0094	2	売却しない件数	ラベル	-	-	-		◯	×
+L0095	3	えらんで買取-商品名	ラベル	-	-	-		◯	◯
+L0096	4	えらんで買取-言語	ラベル	-	-	-		◯	◯
+L0097	5	えらんで買取-状態	ラベル	-	-	-	・PLD表記を廃止し、SP、MPをそれぞれ状態表示する	◯	◯
+L0098	6	えらんで買取-申込時買取価格	ラベル	-	-	-		◯	×
+L0099	7	えらんで買取-査定価格	ラベル	-	-	-		◯	◯
+L0100	8	えらんで買取-数量	ラベル	-	-	-		◯	◯
+L0101	9	えらんで買取-小計	ラベル	-	-	-		◯	◯
+L0102	10	えらんで買取-売却する/しない	プルダウン	-	-	-		◯	×
+L0103	11	まとめて買取-商品名	ラベル	-	-	-		◯	×
+L0104	12	まとめて買取-言語	ラベル	-	-	-		◯	×
+L0105	13	まとめて買取-状態	ラベル	-	-	-	・PLD表記を廃止し、SP、MPをそれぞれ状態表示する	◯	×
+L0106	14	まとめて買取-申込時買取価格	ラベル	-	-	-		◯	×
+L0107	15	まとめて買取-査定価格	ラベル	-	-	-		◯	×
+L0108	16	まとめて買取-数量	ラベル	-	-	-		◯	×
+L0109	17	まとめて買取-小計	ラベル	-	-	-		◯	×
+L0110	18	まとめて買取-売却する/しない	プルダウン	-	-	-	・選択肢：売却する、売却しない	◯	×
+L0111	19	こちらへボタン	リンク	-	-	-	・別ウィンドウを開き、まとめて買取査定結果画面へ遷移する	◯	×
+L0112	20	500円未満カード査定別価格	ラベル	-	-	-		◯	×
+L0113	21	500円未満カード数量	ラベル	-	-	-		◯	×
+L0114	22	500円未満カード小計	ラベル	-	-	-		◯	×
+L0115	23	500円未満のカードをすべて売却する	チェックボタン	-	-	-		◯	×
+L0116	24	承諾確定ボタン	ボタン	-	-	-	・査定内容連絡済みの場合のみ表示する
+L0117	・押下時に売却確定をする	◯	×
+L0118	25	マイページボタン	ボタン	-	-	-	・押下でマイページに遷移する	◯	◯
+L0119	Source:
+L0120	functions/pf-eccube3/f06-15_front_member_mypage_buy_history_detail.md
+L0121	現行仕様
+L0122	F06-15 買取履歴詳細 / 会員 — 買取履歴詳細
+L0123	業務ロジック
+L0124	対象の限定
+L0125	買取番号（買取注文の識別子）と会員の両方が一致する買取注文だけを表示する。買取番号の指定が無いとき、他人の注文のとき、存在しない注文のときは、存在しない（HTTP404）として扱う。未ログインでのアクセスは会員ログインへ誘導する（会員ログイン機能を正とする）。削除済みの商品・商品規格を含む明細も表示する。
+L0126	承諾方法の表示
+L0127	買取の承諾方法は、自動承諾・手動承諾のいずれかを表示する。
+L0128	日付の表示
+L0129	買取依頼日・査定日・承諾日・振込日は「YYYY年MM月DD日」の形式で表示する。査定日・承諾日・振込日は、対応する状態の履歴がまだ記録されていないときは空欄にする。
+L0130	売却可否の操作可否
+L0131	売却可否は、処理状態が査定内容連絡済みのときだけ操作できる。それ以外の処理状態では選択を変更できない状態にして、現在の選択内容を表示する。価格下限未満のカードをすべて売却するかどうかの選択も同様に、査定内容連絡済みのときだけ操作できる。
+L0132	金額の表示
+L0133	査定価格が未確定の明細は、金額の代わりに「査定中」と表示する。小計は査定価格×数量で表示する。
+L0134	商品名からの遷移
+L0135	えらんで買取・まとめて買取の明細は、商品規格が特定できる明細に限り、商品名からネット買取商品詳細を別ウィンドウで開く。商品規格が特定できない明細と個別入力商品は、商品名を文字のまま表示する。
+L0136	まとめて買取の個別表示
+L0137	まとめて買取の一覧に個別に並べるのは、査定価格が個別表示の価格下限以上の明細だけである。
+L0138	まとめて買取の表示有無
+L0139	まとめて買取に該当する明細が1件も無いときは、まとめて買取の一覧、価格下限未満のカードの一覧、および価格下限未満のカードをすべて売却するかどうかの選択を表示しない。
+L0140	入出力
+L0141	種類	内容
+L0142	入力	買取番号（買取注文の識別子）
+L0143	成功時出力	買取履歴詳細の画面表示
+L0144	失敗時出力	買取番号なし・他人の注文・存在しない注文は存在しない（HTTP404）。未ログインは会員ログインへ誘導する
+
+exec
+/bin/bash -lc "sed -n '105,125p' integration_test/casegen/combination/units/F06-18/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+L0104	3. 「Japan」以外の国から「Japan」に変更すると読み込みが発生し、上記 1 と同等の処理を行う
+L0105	★(1-15)郵便番号について
+L0106	・ECCUBE4標準機能により、(1-14)国が「Japan」の場合のみ入力値に基づいて以下1~2を自動補完する
+L0107	1 (1-16)住所(都道府県)
+L0108	2 (1-17)住所1
+L0109	・現行に表示していた「郵便番号から自動入力」のボタンを除去する
+L0110	・(1-10)メールアドレスについて
+L0111	・(1-26)変更するを押下すると、RFC準拠の形式チェックを行い、不正な形式の場合は「有効なメールアドレスではありません。」と
+L0112	エラーメッセージを表示する
+L0113	・ブラックリストに以下1~3に変更されている場合に(1-26)変更するを押下すると、会員情報更新エラー画面に遷移する
+L0114	1 (1-2)～(1-3)お名前
+L0115	2 (1-17)~(1-19)の住所
+L0116	3 (1-20)電話番号
+L0117	※ブラックリストについては、別紙「0207_基本設計仕様書(会員管理機能)」のシート「ブラックリスト管理」を参照
+L0118	※会員情報更新エラー画面は、以下を参照
+L0119	会員情報変更 / C267 / image 7
+L0120	識別ID	ラベル	書式・制限	必須	最大文字数
+L0121	または最大値	初期値	画面部品の説明
+L0122	1-1	パンくずリスト	リンク	-	-	-	※カスタマイズ対応、新規追加
+L0123	・現在表示中のページは押下できないようにする
+L0124	・ホームアイコンを押下すると、本店ECTOP画面へ遷移する
+
+exec
+/bin/bash -lc "sed -n '180,225p' integration_test/casegen/combination/units/F06-18/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+L0179	業務ロジック
+L0180	画面に入れる条件
+L0181	自動ログイン（次回から自動でログインする指定）で復帰しただけの状態では会員情報変更画面を開けない。会員ログインで改めて認証したときだけ開ける。未ログインでのアクセスも会員ログインへ誘導する。
+L0182	初期表示
+L0183	ログイン会員の現在の登録内容を初期表示する。パスワード欄にはマスク用の既定値を載せる。MTG Campaign 登録名（姓・名）には、選手情報として保持している英字姓・名を初期表示する。クエリで支店の指定があるときは、支店指定を保持する。
+L0184	検証エラーや国の切り替えで編集フォームを再表示するときは、入力済みの英字姓・名を保持する。
+L0185	更新の条件
+L0186	会員IDとパスワードが同一のときは、入力の検証に通っていても更新せず、編集フォームを再表示する。
+L0187	国が日本で都道府県が海外のとき、国が海外で都道府県が国内のときは、送信後の検証で拒否し、国の項目にエラーを付して再表示する。
+L0188	更新内容
+L0189	パスワード欄がマスク用の既定値のままのときは、従前のパスワードを維持する。変更されているときは暗号化して再設定する。
+L0190	選手情報のメールアドレス・英字氏名・和文氏名・更新日時を更新する。既定とする配送先へ、会員の氏名・カナ・郵便番号・住所・国・都道府県・会社名・電話番号を反映する。
+L0191	本人確認ステータスの扱い
+L0192	変更した項目	変更前のステータス	結果
+L0193	国・郵便番号・都道府県・住所	確認済みまたは簡易書留確認済みのとき	未確認へ戻す
+L0194	氏名・カナ・生年月日	確認済みのとき	未確認へ戻す
+L0195	他機能との境界
+L0196	スマレジへの会員情報更新が成功したときだけ、変更を確定する。失敗したときは更新を中止し、編集フォームを再表示する。確定したあとに、支店システムへ当該会員の更新を通知する。
+L0197	入出力
+L0198	入出力: 受け渡し
+L0199	種類	内容
+L0200	入力	会員情報の編集値、なりすまし対策トークン、再描画時の国の選択、クエリの支店指定
+L0201	成功時出力	会員情報を更新し、会員情報変更完了画面へ遷移する
+L0202	失敗時出力	編集フォームを再表示する。検証エラー、または連携失敗のメッセージを添える
+L0203	入出力: 永続化
+L0204	操作	契機
+L0205	更新	変更が確定したとき。会員情報（パスワードは変更されたときだけ）、国
+L0206	更新	変更が確定したとき。選手情報の連絡先アドレス・英字氏名・和文氏名・更新日時
+L0207	更新	変更が確定したとき。既定とする配送先の氏名・カナ・郵便番号・住所・国・都道府県・会社名・電話番号
+L0208	更新	住所系または氏名・カナ・生年月日を変更し、変更前のステータスが該当するとき。本人確認ステータスを未確認へ戻す
+L0209	リニューアル後の仕様
+L0210	表示メッセージ
+L0211	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0212	F06-18-MSG-001	画面上部	ブラックリスト登録があるため会員情報を変更できません。	会員情報の変更を保存したとき、入力した氏名・電話番号・住所がブラックリストと一致するとき	会員情報変更画面に留まる
+L0213	F06-18-MSG-002	完了画面本文	会員登録内容の変更が完了いたしました。	会員情報の変更を完了したとき	会員情報を更新済みで、会員情報変更完了画面を表示する
+L0214	—	画面見出し	会員情報変更	会員情報変更画面の表示時	画面に留まる
+L0215	—	画面上部のエラー枠	会員情報の更新時にエラーが発生しました。	入力は妥当だがスマレジ連携が失敗したとき	更新を確定せず編集フォームを再描画する
+L0216	—	国の項目直下	国と都道府県の組み合わせが不正である旨のエラー	国が日本かつ都道府県が海外、または国が海外かつ都道府県が国内のとき	更新せず、国にエラーを付して再描画する
+L0217	入力項目ごとの必須・形式エラーは、各項目の直下に表示する。
+
+exec
+/bin/bash -lc 'git diff eddb12cb -- integration_test/casegen/combination/factors/F06-15_{processes,factors,interactions,constraints,existing}.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'git diff eddb12cb -- integration_test/casegen/combination/factors/F06-14_{factors,interactions,existing}.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "sed -n '1,125p' integration_test/casegen/combination/units/F06-15/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+##### 0305 sheet-11 買取履歴詳細
+L0001	買取履歴詳細
+L0002	ドキュメント名フロント_ネット買取 基本設計書
+L0003	セクション—
+L0004	プロジェクト名フロント_ネット買取機能
+L0005	作成者緑川
+L0006	作成日2025-06-12
+L0007	更新者盛田
+L0008	更新日2025-11-25
+L0009	機能NoF06-12（正しくは F06-15。Excel基本設計の機能No欄の誤記）
+L0010	機能名買取履歴詳細
+L0011	概要買取依頼1件の詳細情報を表示します。
+L0012	処理概要（★はカスタマイズ項目）
+L0013	処理概要（★はカスタマイズ項目）
+L0014	処理概要（★はカスタマイズ項目）
+L0015	レイアウト図
+L0016	カスタマイズ説明
+L0017	・基本情報
+L0018	・基本情報欄に記載
+L0019	・商品情報
+L0020	・商品情報欄に記載
+L0021	機能仕様処理概要（★はカスタマイズ項目）
+L0022	・基本情報
+L0023	・基本情報欄に記載
+L0024	・商品情報
+L0025	・商品情報欄に記載
+L0026	識別ID	ラベル	書式・制限	必須	最大文字数
+L0027	または最大値	初期値	画面部品の説明
+L0028	1	会員名	ラベル	-	-	-
+L0029	2	基本情報	-	-	-	-
+L0030	3	商品情報	-	-	-	-
+L0031	基本情報 レイアウト図
+L0032	ネット買取店頭買取
+L0033	買取履歴詳細 / BE59 / image 2
+L0034	買取履歴詳細 / M62 / image 1
+L0035	カスタマイズ説明
+L0036	・カスタマイズ要件
+L0037	現行機能をベースに下記カスタマイズを行う
+L0038	「オーダーID」は「買取番号」に文言を変更する
+L0039	処理状態の画像を変更する
+L0040	店頭買取の履歴詳細を表示する
+L0041	・カスタマイズ要件に記載の内容以外は現行踏襲とする。
+L0042	機能仕様処理概要（★はカスタマイズ項目）
+L0043	★表示について
+L0044	・「オーダーID」は「買取番号」に文言を変更する
+L0045	・処理状態の画像を変更する
+L0046	買取ステータスと処理状態の紐付けを参照
+L0047	・店頭買取の履歴詳細を表示する
+L0048	買取の種類による項目表示有無
+L0049	識別ID	ラベル	書式・制限	必須	最大文字数
+L0050	または最大値	初期値	画面部品の説明	ネット買取	店頭買取
+L0051	1	買取番号	ラベル	-	-	-		◯	◯
+L0052	2	買取店舗	ラベル	-	-	-		◯	◯
+L0053	3	買取依頼日	ラベル	-	-	-		◯	◯
+L0054	4	査定日	ラベル	-	-	-		◯	×
+L0055	5	承諾日	ラベル	-	-	-		◯	×
+L0056	6	振込日	ラベル	-	-	-		◯	×
+L0057	7	買取の承諾方法	ラベル	-	-	-		◯	×
+L0058	8	成立日	ラベル	-	-	-	・買取成立日を表示	×	◯
+L0059	9	処理状態	ラベル	-	-	-		◯	◯ 2026/7/16木村：画像からラベルに修正。
+L0060	10	査定金額合計	ラベル	-	-	-		◯	◯
+L0061	11	査定承諾金額合計	ラベル	-	-	-		◯	×
+L0062	12	承諾確定ボタン	ボタン	-	-	-		◯	×
+L0063	商品情報 レイアウト図
+L0064	ネット買取店頭買取
+L0065	カスタマイズ説明
+L0066	・カスタマイズ要件
+L0067	現行機能をベースに下記カスタマイズを行う
+L0068	商品状態の表示
+L0069	・PLD表記を廃止し、SP、MPをそれぞれ状態表示する
+L0070	店頭買取の履歴詳細を表示する
+L0071	・カスタマイズ要件に記載の内容以外は現行踏襲とする。
+L0072	機能仕様処理概要（★はカスタマイズ項目）
+L0073	・表示について
+L0074	★商品状態の表示を変更する
+L0075	・PLD表記を廃止し、SP、MPをそれぞれ状態表示する
+L0076	NM	→	NM
+L0077	PLD	→	SP
+L0078	PLD	→	MP
+L0079	HP	→	HP
+L0080	★店頭買取の履歴詳細を表示する
+L0081	・商品名、言語、状態、査定価格、数量、小計を表示する
+L0082	・個別入力商品の場合は言語、状態を表示しない
+L0083	・「売却する」プルダウンを切り替えた場合下記の項目を変更する
+L0084	・表示件数
+L0085	・売却しない件数
+L0086	・変更した行の背景色
+L0087	・まとめて買取で個別表示する価格下限よりまとめて買取金額が低い場合は個別のキャンセルはできないようにする
+L0088	★ネット買取の承諾確定処理で「売却する」になっている商品について、実在庫・実在庫履歴を洗い替えで作成する。500円未満の売却についても同様。 2026/4/30木村：実在庫の作成処理を追加。
+L0089	個別入力商品については、実在庫・実在庫履歴の作成の対象外とする。（管理画面側の業務で行う）
+L0090	買取の種類による項目表示有無
+L0091	識別ID	ラベル	書式・制限	必須	最大文字数
+L0092	または最大値	初期値	画面部品の説明	ネット買取	店頭買取
+L0093	1	表示件数	ラベル	-	-	-		◯	◯
+L0094	2	売却しない件数	ラベル	-	-	-		◯	×
+L0095	3	えらんで買取-商品名	ラベル	-	-	-		◯	◯
+L0096	4	えらんで買取-言語	ラベル	-	-	-		◯	◯
+L0097	5	えらんで買取-状態	ラベル	-	-	-	・PLD表記を廃止し、SP、MPをそれぞれ状態表示する	◯	◯
+L0098	6	えらんで買取-申込時買取価格	ラベル	-	-	-		◯	×
+L0099	7	えらんで買取-査定価格	ラベル	-	-	-		◯	◯
+L0100	8	えらんで買取-数量	ラベル	-	-	-		◯	◯
+L0101	9	えらんで買取-小計	ラベル	-	-	-		◯	◯
+L0102	10	えらんで買取-売却する/しない	プルダウン	-	-	-		◯	×
+L0103	11	まとめて買取-商品名	ラベル	-	-	-		◯	×
+L0104	12	まとめて買取-言語	ラベル	-	-	-		◯	×
+L0105	13	まとめて買取-状態	ラベル	-	-	-	・PLD表記を廃止し、SP、MPをそれぞれ状態表示する	◯	×
+L0106	14	まとめて買取-申込時買取価格	ラベル	-	-	-		◯	×
+L0107	15	まとめて買取-査定価格	ラベル	-	-	-		◯	×
+L0108	16	まとめて買取-数量	ラベル	-	-	-		◯	×
+L0109	17	まとめて買取-小計	ラベル	-	-	-		◯	×
+L0110	18	まとめて買取-売却する/しない	プルダウン	-	-	-	・選択肢：売却する、売却しない	◯	×
+L0111	19	こちらへボタン	リンク	-	-	-	・別ウィンドウを開き、まとめて買取査定結果画面へ遷移する	◯	×
+L0112	20	500円未満カード査定別価格	ラベル	-	-	-		◯	×
+L0113	21	500円未満カード数量	ラベル	-	-	-		◯	×
+L0114	22	500円未満カード小計	ラベル	-	-	-		◯	×
+L0115	23	500円未満のカードをすべて売却する	チェックボタン	-	-	-		◯	×
+L0116	24	承諾確定ボタン	ボタン	-	-	-	・査定内容連絡済みの場合のみ表示する
+L0117	・押下時に売却確定をする	◯	×
+L0118	25	マイページボタン	ボタン	-	-	-	・押下でマイページに遷移する	◯	◯
+L0119	Source:
+L0120	functions/pf-eccube3/f06-15_front_member_mypage_buy_history_detail.md
+L0121	現行仕様
+L0122	F06-15 買取履歴詳細 / 会員 — 買取履歴詳細
+L0123	業務ロジック
+L0124	対象の限定
+
+ succeeded in 47ms:
+diff --git a/integration_test/casegen/combination/factors/F06-15_constraints.tsv b/integration_test/casegen/combination/factors/F06-15_constraints.tsv
+index 79a925be..1ed802fa 100644
+--- a/integration_test/casegen/combination/factors/F06-15_constraints.tsv
++++ b/integration_test/casegen/combination/factors/F06-15_constraints.tsv
+@@ -1,5 +1,6 @@
+ 処理ID	組	種別	根拠	理由
+ P2	F04=店頭買取&F05=まとめて買取	作れない	L0103-L0109	店頭買取にはまとめて買取の項目が無い
+ P2	F05=まとめて買取&F06=査定価格が未確定	正解未定	L0133,L0137	査定価格が未確定の明細は下限と比べる価格が無く、個別表示か下限未満の欄かが決まらない
+-P3	F04=店頭買取&F09=査定内容連絡済み	作れない	_common/0305_sheet-13.txt:L0029-L0038	店頭買取のステータスに査定内容連絡済みが無い
+-P3	F04=店頭買取&F10=あり	作れない	L0103-L0109	店頭買取にはまとめて買取の項目が無い
++P1	F01=売却しない	打ち切り	L0088	売却しない明細は実在庫・実在庫履歴を作らない。商品の種類は結果に効かない
++P1	F02=個別入力商品	打ち切り	L0089	個別入力商品は実在庫・実在庫履歴の作成の対象外。売却可否は結果に効かない
++P3	F04=店頭買取	打ち切り	L0062,L0116-L0117,L0103-L0115	店頭買取には承諾確定ボタンもまとめて買取の項目も無く、処理状態・まとめて買取の明細は結果に効かない
+diff --git a/integration_test/casegen/combination/factors/F06-15_existing.tsv b/integration_test/casegen/combination/factors/F06-15_existing.tsv
+index 07222e73..31c0c8b2 100644
+--- a/integration_test/casegen/combination/factors/F06-15_existing.tsv
++++ b/integration_test/casegen/combination/factors/F06-15_existing.tsv
+@@ -3,18 +3,14 @@ IT-F06-15-045	P1	F01=売却する&F02=個別入力商品	事前準備で個別
+ IT-F06-15-053	P1	F01=売却する	2明細とも売却するにし、承諾確定を押して実在庫・実在庫履歴の作成を確かめる
+ IT-F06-15-021	P2	F04=ネット買取&F05=えらんで買取	ネット買取のえらんで買取の明細の各項目を確かめる
+ IT-F06-15-023	P2	F04=店頭買取	店頭買取の明細の項目を確かめる
+-IT-F06-15-024	P2	F04=店頭買取&F07=個別入力商品	店頭買取の個別入力商品で言語と状態が出ないことを確かめる
+-IT-F06-15-038	P2	F04=ネット買取&F05=えらんで買取&F08=特定できる	商品規格が特定できる明細の商品名から別ウィンドウで商品詳細が開くことを確かめる
+-IT-F06-15-017	P3	F04=ネット買取&F09=査定内容連絡済み	連絡済みで承諾確定ボタンが出ることを確かめる
+-IT-F06-15-018	P3	F04=ネット買取&F09=連絡済み以外	査定中で承諾確定ボタンが出ないことを確かめる
+-IT-F06-15-020	P3	F04=店頭買取&F09=連絡済み以外	店頭買取で承諾確定ボタンが出ないことを確かめる
+-IT-F06-15-025	P3	F04=店頭買取&F10=なし	店頭買取でまとめて買取の項目や承諾確定ボタンが出ないことを確かめる
+-IT-F06-15-031	P3	F04=ネット買取&F09=査定内容連絡済み&F10=なし	連絡済みでまとめて買取の明細が無いとき、まとめて買取の一覧とチェックが出ないことを確かめる
+-IT-F06-15-033	P3	F04=ネット買取&F09=査定内容連絡済み	連絡済みで売却可否が操作できることを確かめる
+-IT-F06-15-034	P3	F04=ネット買取&F09=連絡済み以外	査定内容承諾で売却可否を変更できないことを確かめる
+-IT-F06-15-049	P3	F04=ネット買取&F09=査定内容連絡済み&F10=あり	連絡済みでまとめて買取の売却可否の選択肢を確かめる
+-IT-F06-15-052	P3	F04=ネット買取&F09=査定内容連絡済み&F10=あり	連絡済みでまとめて買取の売却可否を切り替えて件数が変わることを確かめる
+-IT-F06-15-012	P4	F04=ネット買取&F11=未記録	履歴が未記録のネット買取で査定日・承諾日・振込日が空欄になることを確かめる
+-IT-F06-15-016	P4	F04=ネット買取	ネット買取で成立日が表示されないことを確かめる
+-IT-F06-15-019	P4	F04=店頭買取	店頭買取で成立日が表示されることを確かめる
+-IT-F06-15-020	P4	F04=店頭買取	店頭買取で査定日・承諾日・振込日・承諾方法が表示されないことを確かめる
++IT-F06-15-024	P2	F04=店頭買取	店頭買取の個別入力商品で言語と状態が出ないことを確かめる
++IT-F06-15-038	P2	F04=ネット買取&F05=えらんで買取	商品規格が特定できる明細の商品名から別ウィンドウで商品詳細が開くことを確かめる
++IT-F06-15-017	P3	F04=ネット買取&F07=査定内容連絡済み	連絡済みで承諾確定ボタンが出ることを確かめる
++IT-F06-15-018	P3	F04=ネット買取&F07=連絡済み以外	査定中で承諾確定ボタンが出ないことを確かめる
++IT-F06-15-020	P3	F04=店頭買取&F07=連絡済み以外	店頭買取で承諾確定ボタンが出ないことを確かめる
++IT-F06-15-025	P3	F04=店頭買取&F08=なし	店頭買取でまとめて買取の項目や承諾確定ボタンが出ないことを確かめる
++IT-F06-15-031	P3	F04=ネット買取&F07=査定内容連絡済み&F08=なし	連絡済みでまとめて買取の明細が無いとき、まとめて買取の一覧とチェックが出ないことを確かめる
++IT-F06-15-033	P3	F04=ネット買取&F07=査定内容連絡済み	連絡済みで売却可否が操作できることを確かめる
++IT-F06-15-034	P3	F04=ネット買取&F07=連絡済み以外	査定内容承諾で売却可否を変更できないことを確かめる
++IT-F06-15-049	P3	F04=ネット買取&F07=査定内容連絡済み&F08=あり	連絡済みでまとめて買取の売却可否の選択肢を確かめる
++IT-F06-15-052	P3	F04=ネット買取&F07=査定内容連絡済み&F08=あり	連絡済みでまとめて買取の売却可否を切り替えて件数が変わることを確かめる
+diff --git a/integration_test/casegen/combination/factors/F06-15_factors.tsv b/integration_test/casegen/combination/factors/F06-15_factors.tsv
+index cd3cfabb..e813cf11 100644
+--- a/integration_test/casegen/combination/factors/F06-15_factors.tsv
++++ b/integration_test/casegen/combination/factors/F06-15_factors.tsv
+@@ -2,11 +2,8 @@
+ F01	P1	明細の売却可否	売却する｜売却しない	売却する: 実在庫・実在庫履歴を作る／売却しない: 作らない	L0088	この機能
+ F02	P1	商品の種類	通常商品｜個別入力商品	通常商品: 売却する明細は実在庫を作る／個別入力商品: 作成の対象外	L0088-L0089	この機能
+ F03	P1	500円未満のカードをすべて売却するチェック	チェックあり｜チェックなし	チェックあり: 価格下限未満のカードも売却として実在庫を作る／チェックなし: 価格下限未満のカードは売却しない	L0088,L0115	この機能
+-F04	P2,P3,P4	買取の種類	ネット買取｜店頭買取	ネット買取: ネット買取で表示する項目を出す／店頭買取: 店頭買取で表示する項目だけを出す（査定日・承諾日・振込日・承諾方法・承諾確定ボタン・まとめて買取は出さず、成立日を出す）	L0051-L0058,L0093-L0118	この機能
++F04	P2,P3	買取の種類	ネット買取｜店頭買取	ネット買取: ネット買取で表示する項目を出す／店頭買取: 店頭買取で表示する項目だけを出す（査定日・承諾日・振込日・承諾方法・承諾確定ボタン・まとめて買取は出さず、成立日を出す）	L0051-L0058,L0093-L0118	この機能
+ F05	P2	明細の区分	えらんで買取｜まとめて買取	えらんで買取: 明細を個別に並べる／まとめて買取: 価格下限以上だけ個別に並べ、未満は500円未満カードの欄にまとめる	L0095-L0115,L0137	この機能
+ F06	P2	査定価格と個別表示の価格下限	個別表示の価格下限以上｜個別表示の価格下限未満｜査定価格が未確定	個別表示の価格下限以上: 個別に並べ、金額と小計を表示する／個別表示の価格下限未満: 個別に並べず500円未満カードの欄にまとめる／査定価格が未確定: 金額の代わりに査定中と表示する	L0133,L0137	この機能
+-F07	P2	商品の種類	通常商品｜個別入力商品	通常商品: 言語・状態を表示する／個別入力商品: 言語・状態を表示せず商品名を文字のままにする	L0082,L0135	この機能
+-F08	P2	商品規格の特定	特定できる｜特定できない	特定できる: 商品名からネット買取商品詳細を別ウィンドウで開く／特定できない: 商品名を文字のまま表示する	L0135	この機能
+-F09	P3	処理状態	査定内容連絡済み｜連絡済み以外	査定内容連絡済み: 売却可否と500円未満チェックを操作でき承諾確定ボタンを出す／連絡済み以外: 変更できず現在の選択内容を表示し承諾確定ボタンを出さない	L0116,L0131	この機能
+-F10	P3	まとめて買取の明細	あり｜なし	あり: まとめて買取の一覧と500円未満カードの欄を出す／なし: まとめて買取の一覧と500円未満カードの欄とチェックを出さない	L0139	この機能
+-F11	P4	査定日・承諾日・振込日に対応する状態の履歴	記録あり｜未記録	記録あり: 日付を表示する／未記録: 空欄にする	L0129	この機能
++F07	P3	処理状態	査定内容連絡済み｜連絡済み以外	査定内容連絡済み: 売却可否と500円未満チェックを操作でき承諾確定ボタンを出す／連絡済み以外: 変更できず現在の選択内容を表示し承諾確定ボタンを出さない	L0116,L0131	この機能
++F08	P3	まとめて買取の明細	あり｜なし	あり: まとめて買取の一覧と500円未満カードの欄を出す／なし: まとめて買取の一覧と500円未満カードの欄とチェックを出さない	L0139	この機能
+diff --git a/integration_test/casegen/combination/factors/F06-15_interactions.tsv b/integration_test/casegen/combination/factors/F06-15_interactions.tsv
+index b7dcc2bf..5e529318 100644
+--- a/integration_test/casegen/combination/factors/F06-15_interactions.tsv
++++ b/integration_test/casegen/combination/factors/F06-15_interactions.tsv
+@@ -4,15 +4,7 @@ P1	F01+F03	関係しない		F01は個別に並ぶ明細の売却可否、F03は
+ P1	F02+F03	関係しない		F03は価格下限未満のカードの売却を決めるだけで、商品の種類による対象外の扱いは変わらない
+ P2	F04+F05	効き合う	L0103-L0109	店頭買取にはまとめて買取の項目が無い
+ P2	F04+F06	関係しない		査定中の表示は買取の種類で変わらず、価格下限はまとめて買取の振り分けにだけ使う
+-P2	F04+F07	関係しない		個別入力商品の言語・状態を出さない扱いはネット買取も店頭買取も同じ
+-P2	F04+F08	関係しない		商品名からのリンクは商品規格が特定できる明細に限る定めで、買取の種類による区別は書かれていない(L0095,L0135)
+ P2	F05+F06	効き合う	L0133,L0137	価格下限による個別表示の振り分けはまとめて買取だけ。まとめて買取で査定価格が未確定のとき、個別表示か下限未満の欄かは決まらない
+-P2	F05+F07	関係しない		個別入力商品の扱いは区分で変わらない
+-P2	F05+F08	関係しない		リンクにするかは商品規格が特定できるかで決まる
+-P2	F06+F07	関係しない		価格下限の振り分けは商品の種類で変わらない
+-P2	F06+F08	関係しない		価格下限の振り分けは商品規格の特定で変わらない
+-P2	F07+F08	効き合う	L0135	商品規格が特定できる明細だけ商品名をリンクにするが、個別入力商品は商品名を文字のまま表示する
+-P3	F04+F09	効き合う	L0062,L0116	承諾確定ボタンはネット買取で連絡済みのときだけ。店頭買取には連絡済みの状態が無い
+-P3	F04+F10	効き合う	L0103-L0115	まとめて買取の項目は店頭買取に無い
+-P3	F09+F10	効き合う	L0131,L0139	500円未満チェックは連絡済みのときだけ操作でき、まとめて買取の明細が無いときは出ない
+-P4	F04+F11	効き合う	L0054-L0056,L0129	査定日・承諾日・振込日は店頭買取に無く、ネット買取では履歴が未記録なら空欄
++P3	F04+F07	効き合う	L0062,L0116	承諾確定ボタンはネット買取で連絡済みのときだけ。店頭買取には連絡済みの状態が無い
++P3	F04+F08	効き合う	L0103-L0115	まとめて買取の項目は店頭買取に無い
++P3	F07+F08	効き合う	L0131,L0139	500円未満チェックは連絡済みのときだけ操作でき、まとめて買取の明細が無いときは出ない
+diff --git a/integration_test/casegen/combination/factors/F06-15_processes.tsv b/integration_test/casegen/combination/factors/F06-15_processes.tsv
+index e82ae907..2af2d562 100644
+--- a/integration_test/casegen/combination/factors/F06-15_processes.tsv
++++ b/integration_test/casegen/combination/factors/F06-15_processes.tsv
+@@ -2,4 +2,3 @@
+ P1	承諾確定で売却を確定し、実在庫・実在庫履歴を作る	買取履歴詳細画面で承諾確定ボタンを押す	実在庫・実在庫履歴（DB）	L0088-L0089,L0115-L0117
+ P2	買取の明細の項目と金額・商品名のリンクを出す	会員が買取履歴詳細画面を開く	買取履歴詳細画面の商品情報	L0081-L0087,L0093-L0114,L0133-L0137
+ P3	売却可否・500円未満チェック・承諾確定ボタンの操作可否と表示を決める	会員が買取履歴詳細画面を開く	買取履歴詳細画面の商品情報	L0062,L0102,L0110,L0115-L0117,L0131,L0138-L0139
+-P4	基本情報の日付と成立日・承諾方法を出す	会員が買取履歴詳細画面を開く	買取履歴詳細画面の基本情報	L0051-L0058,L0127-L0129
+
+ succeeded in 51ms:
+diff --git a/integration_test/casegen/combination/factors/F06-14_existing.tsv b/integration_test/casegen/combination/factors/F06-14_existing.tsv
+index f8a54081..c973a041 100644
+--- a/integration_test/casegen/combination/factors/F06-14_existing.tsv
++++ b/integration_test/casegen/combination/factors/F06-14_existing.tsv
+@@ -6,15 +6,14 @@ IT-F06-14-006	P2	F03=決済中&F04=過ぎていない	翌日開催の決済中
+ IT-F06-14-007	P2	F03=決済中&F04=過ぎていない	翌日開催の決済中でヘルプを押してヘルプ画面へ遷移することを確かめる
+ IT-F06-14-008	P2	F03=申込完了&F04=過ぎていない	翌日開催の申込完了でヘルプが出ないことを確かめる
+ IT-F06-14-009	P2	F03=申込なし	申込なしでデッキだけのイベントの処理状態が未登録になることを確かめる
+-IT-F06-14-027	P2	F04=過ぎていない&F05=英語	翌日開催で英語表示にし、申込状況マスタの英語名称が出ることを確かめる
++IT-F06-14-027	P2	F04=過ぎていない	翌日開催で英語表示にし、申込状況マスタの英語名称が出ることを確かめる
+ IT-F06-14-033	P2	F03=申込完了&F04=開催日の終わりを過ぎた	前日開催の申込完了で処理状態がイベント終了になることを確かめる
+-IT-F06-14-034	P2	F03=決済中&F04=過ぎていない&F05=英語	英語表示で決済中がProceeding Paymentになることを確かめる
+-IT-F06-14-035	P2	F03=決済中&F04=過ぎていない&F05=英語	英語表示で決済中のツールチップの英語文言を確かめる
+-IT-F06-14-036	P2	F03=申込完了&F04=開催日の終わりを過ぎた&F05=英語	英語表示でイベント終了がEvent Finishedになることを確かめる
+-IT-F06-14-010	P3	F10=登録済み	デッキありのイベントでデッキ登録済みと出ることを確かめる
+-IT-F06-14-011	P3	F07=過ぎていない&F09=チェックあり&F10=未登録	デッキ登録対象で締切前、デッキ0件でデッキ未登録と出ることを確かめる
+-IT-F06-14-012	P3	F07=過ぎていない&F09=チェックあり&F10=登録済み	デッキ登録対象で締切前、デッキありでデッキ編集を押して編集画面へ遷移することを確かめる
+-IT-F06-14-013	P3	F07=過ぎていない&F09=チェックあり&F10=未登録	デッキ登録対象で締切前、デッキ0件でデッキ登録を押して編集画面へ遷移することを確かめる
+-IT-F06-14-015	P3	F06=それ以外&F07=過ぎている&F08=チェックなし&F10=登録済み	翌日開催でデッキ登録締切を過ぎたとき、デッキ登録状況とボタンが出ないことを確かめる
+-IT-F06-14-016	P3	F06=それ以外&F07=過ぎていない&F08=チェックあり&F10=登録済み	翌日開催でデッキ登録を終了するにチェックがあるとき、デッキ登録状況とボタンが出ないことを確かめる
+-IT-F06-14-017	P3	F06=それ以外&F09=チェックなし&F10=未登録	翌日開催でデッキ登録ありにチェックが無いとき、デッキ登録状況とボタンが出ないことを確かめる
++IT-F06-14-034	P2	F03=決済中&F04=過ぎていない	英語表示で決済中がProceeding Paymentになることを確かめる
++IT-F06-14-035	P2	F03=決済中&F04=過ぎていない	英語表示で決済中のツールチップの英語文言を確かめる
++IT-F06-14-036	P2	F03=申込完了&F04=開催日の終わりを過ぎた	英語表示でイベント終了がEvent Finishedになることを確かめる
++IT-F06-14-011	P3	F06=過ぎていない&F08=チェックあり	デッキ登録対象で締切前、デッキ0件でデッキ未登録と出ることを確かめる
++IT-F06-14-012	P3	F06=過ぎていない&F08=チェックあり	デッキ登録対象で締切前、デッキありでデッキ編集を押して編集画面へ遷移することを確かめる
++IT-F06-14-013	P3	F06=過ぎていない&F08=チェックあり	デッキ登録対象で締切前、デッキ0件でデッキ登録を押して編集画面へ遷移することを確かめる
++IT-F06-14-015	P3	F05=それ以外&F06=過ぎている&F07=チェックなし	翌日開催でデッキ登録締切を過ぎたとき、デッキ登録状況とボタンが出ないことを確かめる
++IT-F06-14-016	P3	F05=それ以外&F06=過ぎていない&F07=チェックあり	翌日開催でデッキ登録を終了するにチェックがあるとき、デッキ登録状況とボタンが出ないことを確かめる
++IT-F06-14-017	P3	F05=それ以外&F08=チェックなし	翌日開催でデッキ登録ありにチェックが無いとき、デッキ登録状況とボタンが出ないことを確かめる
+diff --git a/integration_test/casegen/combination/factors/F06-14_factors.tsv b/integration_test/casegen/combination/factors/F06-14_factors.tsv
+index e4461061..b62d3a1f 100644
+--- a/integration_test/casegen/combination/factors/F06-14_factors.tsv
++++ b/integration_test/casegen/combination/factors/F06-14_factors.tsv
+@@ -3,9 +3,7 @@ F01	P1	会員の申込の状態	参加者の有効な申込｜有効な申込な
+ F02	P1	会員のデッキ登録	あり｜なし	あり: デッキの条件で一覧に出る／なし: デッキの条件では出ない	L0040	この機能
+ F03	P2	申込の状態	決済中｜申込完了｜申込なし	決済中: 処理状態は決済中でヘルプを出す／申込完了: 開催日を過ぎていなければ申込状態の名称、過ぎていればイベント終了／申込なし: デッキだけで登録のイベントは開催日を過ぎていなければ未登録、過ぎていればイベント終了	L0044,L0059-L0063,L0081-L0082,L0100-L0104	この機能
+ F04	P2	開催日の経過	開催日の終わりを過ぎた｜過ぎていない	開催日の終わりを過ぎた: 決済中以外は処理状態がイベント終了／過ぎていない: 申込状態の名称（決済中は決済中）	L0044,L0081,L0102-L0104	この機能
+-F05	P2	表示言語	日本語｜英語	日本語: 日本語の文言で処理状態とツールチップを出す／英語: 英語の文言（Proceeding Payment・Event Finished・申込状況マスタの英語名称）で出す	L0100-L0106	この機能
+-F06	P3	処理状態	イベント終了｜決済中で開催日を過ぎた｜それ以外	イベント終了: デッキ登録状況とボタンを出さない／決済中で開催日を過ぎた: 設計書から出す・出さないが決まらない／それ以外: ほかの条件で決まる	L0044,L0046,L0081	この機能
+-F07	P3	デッキ登録締切の日時	過ぎている｜過ぎていない	過ぎている: デッキ登録状況とボタンを出さない／過ぎていない: ほかの条件で決まる	L0047	この機能
+-F08	P3	管理画面のデッキ登録を終了するチェック	チェックあり｜チェックなし	チェックあり: デッキ登録状況とボタンを出さない／チェックなし: ほかの条件で決まる	L0048	この機能
+-F09	P3	管理画面のデッキ登録ありチェック	チェックあり｜チェックなし	チェックあり: ほかの条件で決まる／チェックなし: デッキ登録状況とボタンを出さない	L0049	この機能
+-F10	P3	会員のデッキ登録状況	登録済み｜未登録	登録済み: デッキ登録済みと表示しボタンはデッキ編集／未登録: デッキ未登録と表示しボタンはデッキ登録	L0064-L0066	この機能
++F05	P3	処理状態	イベント終了｜決済中で開催日を過ぎた｜それ以外	イベント終了: デッキ登録状況とボタンを出さない／決済中で開催日を過ぎた: 設計書から出す・出さないが決まらない／それ以外: ほかの条件で決まる	L0044,L0046,L0081	この機能
++F06	P3	デッキ登録締切の日時	過ぎている｜過ぎていない	過ぎている: デッキ登録状況とボタンを出さない／過ぎていない: ほかの条件で決まる	L0047	この機能
++F07	P3	管理画面のデッキ登録を終了するチェック	チェックあり｜チェックなし	チェックあり: デッキ登録状況とボタンを出さない／チェックなし: ほかの条件で決まる	L0048	この機能
++F08	P3	管理画面のデッキ登録ありチェック	チェックあり｜チェックなし	チェックあり: ほかの条件で決まる／チェックなし: デッキ登録状況とボタンを出さない	L0049	この機能
+diff --git a/integration_test/casegen/combination/factors/F06-14_interactions.tsv b/integration_test/casegen/combination/factors/F06-14_interactions.tsv
+index c45d7d85..6822b24e 100644
+--- a/integration_test/casegen/combination/factors/F06-14_interactions.tsv
++++ b/integration_test/casegen/combination/factors/F06-14_interactions.tsv
+@@ -1,15 +1,9 @@
+ 処理ID	要因	判定	根拠	理由
+ P1	F01+F02	関係しない		1件のイベントを出す・出さないを申込の条件かデッキの条件のどちらかを満たすかで決める(L0038-L0040)。結果は出る・出ないの2つだけで、条件ごとの満たし方は1つずつ確かめれば足りる
+ P2	F03+F04	効き合う	L0044,L0081,L0102	決済中は開催日を過ぎても決済中のまま、決済中以外は過ぎるとイベント終了になる。申込なしは過ぎていなければ未登録、過ぎていればイベント終了
+-P2	F03+F05	効き合う	L0100-L0106	言語を替えると、決済中はProceeding Payment、決済中以外で未終了のときは申込状況マスタの英語名称と、状態ごとに別の文言になる
+-P2	F04+F05	効き合う	L0102-L0104	言語を替えると、過ぎたときはEvent Finished、過ぎていないときは申込状況マスタの英語名称と、開催日の経過ごとに別の文言になる
++P3	F05+F06	関係しない		出さない条件のどれか1つに当たれば出さない。条件ごとの外れ方は1つずつ確かめれば足りる
++P3	F05+F07	関係しない		出さない条件のどれか1つに当たれば出さない。条件ごとの外れ方は1つずつ確かめれば足りる
++P3	F05+F08	関係しない		出さない条件のどれか1つに当たれば出さない。条件ごとの外れ方は1つずつ確かめれば足りる
+ P3	F06+F07	関係しない		出さない条件のどれか1つに当たれば出さない。条件ごとの外れ方は1つずつ確かめれば足りる
+ P3	F06+F08	関係しない		出さない条件のどれか1つに当たれば出さない。条件ごとの外れ方は1つずつ確かめれば足りる
+-P3	F06+F09	関係しない		出さない条件のどれか1つに当たれば出さない。条件ごとの外れ方は1つずつ確かめれば足りる
+-P3	F06+F10	関係しない		出す・出さないは4つの条件で決まり、登録済みか未登録かは出すときの文言だけを決める
+ P3	F07+F08	関係しない		出さない条件のどれか1つに当たれば出さない。条件ごとの外れ方は1つずつ確かめれば足りる
+-P3	F07+F09	関係しない		出さない条件のどれか1つに当たれば出さない。条件ごとの外れ方は1つずつ確かめれば足りる
+-P3	F07+F10	関係しない		出す・出さないは4つの条件で決まり、登録済みか未登録かは出すときの文言だけを決める
+-P3	F08+F09	関係しない		出さない条件のどれか1つに当たれば出さない。条件ごとの外れ方は1つずつ確かめれば足りる
+-P3	F08+F10	関係しない		出す・出さないは4つの条件で決まり、登録済みか未登録かは出すときの文言だけを決める
+-P3	F09+F10	関係しない		出す・出さないは4つの条件で決まり、登録済みか未登録かは出すときの文言だけを決める
+
+codex
+設計書では、F06-15 の「商品名からのリンク」は商品の種類と商品規格の特定状況の両方で決まるように読めます。ほかの削除・打ち切りにも同じ種類の食い違いがないか、既存ケースの値の付け替えまで確認します。
+exec
+/bin/bash -lc "python3 - <<'PY'
+import csv,pathlib
+b=pathlib.Path('integration_test/casegen/combination/factors')
+for fid in ('F06-10','F06-11','F06-13','F06-14','F06-15','F06-16','F06-17','F06-18'):
+ def rows(s):
+  with (b/f'{fid}_{s}.tsv').open() as f:return list(csv.DictReader(f,delimiter='\\t'))
+ factors={r['要因ID']:r for r in rows('factors')}
+ procs={r['処理ID'] for r in rows('processes')}
+ bad=[]
+ for name,col in [('constraints','組'),('existing','値')]:
+  for i,r in enumerate(rows(name),2):
+   p=r['処理ID']
+   if p not in procs:bad.append((name,i,'bad process',p))
+   for term in r[col].split('&'):
+    if '=' not in term:bad.append((name,i,'bad term',term));continue
+    f,v=term.split('=',1)
+    if f not in factors:bad.append((name,i,'bad factor',term));continue
+    if p not in factors[f]['処理ID'].split(','):bad.append((name,i,'wrong process',term))
+    if v not in factors[f]['値'].split('｜'):bad.append((name,i,'bad value',term))
+ for i,r in enumerate(rows('interactions'),2):
+  p=r['処理ID']
+  if p not in procs:bad.append(('interactions',i,'bad process',p))
+  for f in r['要因'].split('+'):
+   if f not in factors:bad.append(('interactions',i,'bad factor',f));continue
+   if p not in factors[f]['処理ID'].split(','):bad.append(('interactions',i,'wrong process',f))
+ print(fid,'OK' if not bad else bad)
+PY" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+F06-10 OK
+F06-11 OK
+F06-13 OK
+F06-14 OK
+F06-15 OK
+F06-16 OK
+F06-17 OK
+F06-18 OK
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/F06-15_interactions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	効き合う	L0088-L0089	売却する明細でも個別入力商品は実在庫・実在庫履歴の作成の対象外
+P1	F01+F03	関係しない		F01は個別に並ぶ明細の売却可否、F03は価格下限未満のカード全体の選択で、それぞれ別の明細の実在庫を決める
+P1	F02+F03	関係しない		F03は価格下限未満のカードの売却を決めるだけで、商品の種類による対象外の扱いは変わらない
+P2	F04+F05	効き合う	L0103-L0109	店頭買取にはまとめて買取の項目が無い
+P2	F04+F06	関係しない		査定中の表示は買取の種類で変わらず、価格下限はまとめて買取の振り分けにだけ使う
+P2	F05+F06	効き合う	L0133,L0137	価格下限による個別表示の振り分けはまとめて買取だけ。まとめて買取で査定価格が未確定のとき、個別表示か下限未満の欄かは決まらない
+P3	F04+F07	効き合う	L0062,L0116	承諾確定ボタンはネット買取で連絡済みのときだけ。店頭買取には連絡済みの状態が無い
+P3	F04+F08	効き合う	L0103-L0115	まとめて買取の項目は店頭買取に無い
+P3	F07+F08	効き合う	L0131,L0139	500円未満チェックは連絡済みのときだけ操作でき、まとめて買取の明細が無いときは出ない
+
+exec
+/bin/bash -lc "rg 'IT-F06-15-038|IT-F06-14-011|IT-F06-16-018' integration_test/casegen/cases/*_test_cases.tsv" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+integration_test/casegen/cases/F06-16_test_cases.tsv:IT-F06-16-018	REQ-0306-sheet-13-R085,REQ-0306-sheet-13-R086,REQ-0306-sheet-13-R109		ITA-05,ITA-11	P1	ブラウザのみ	S-F06-16-CASE-018,S-F06-16-REF	① 会員ID 〔会員ID-F0616-018〕（控えた番号）・選手ID 〔選手ID-F0616-018〕（控えた番号）でログインし、イベントID 〔イベントID-F0616-018〕（控えた番号）・イベント詳細ID 〔イベント詳細ID-F0616-018〕（控えた番号）の「F06-16結合大会-018」を登録有効、締切2099-12-19 23:59にする。Standard大会デッキID 〔大会デッキID-F0616-018A〕（控えた番号）をメイン「1 Old Standard Main」・サイド「1 Old Standard Side」、Modern大会デッキID 〔大会デッキID-F0616-018B〕（控えた番号）をメイン「2 Old Modern Main」・サイド「1 Old Modern Side」に戻し、本人所有のOwn Modern（ID 〔マイデッキID-F0616-018〕（控えた番号））をメイン「3 Alpha Strike」・サイド「2 Negate」にする（S-F06-16-CASE-018）／② Alpha Strike=〔カードID-F0616-共有D〕（控えた番号）、Negate=〔カードID-F0616-共有B〕（控えた番号）がModern候補として参照可能である（S-F06-16-REF）	1. F06-16結合大会-018の大会デッキ登録編集画面でStandardを選択する／2. 「マイデッキを取得」ボタンを押す／3. Modernの「Own Modern」を選択する／4. Modernの入力欄を確認する／5. Standardへ切り替えて入力欄を確認する	選択フォーマットがModernとなってそのメインボードとサイドボードが「Own Modern」の内容に上書きされ、Standardの入力内容は登録済みの値のままになること	0306 大会デッキ登録編集 / マイデッキ取得ポップアップ画面 機能仕様 処理概要、業務ロジック マイデッキの取り込み
+integration_test/casegen/cases/F06-15_test_cases.tsv:IT-F06-15-038	REQ-0305-sheet-11-R067,REQ-0305-sheet-11-R102,REQ-0305-sheet-11-R103		ITA-03	P2	ブラウザのみ	S-F06-15-COMMON,S-F06-15-NAMELINK-038	①全会員の共通パスワードはPassw0rd!F0615（S-F06-15-COMMON）／②F0615-038-会員（会員ID 〔会員ID-F0615-038〕（登録時に振られた会員IDを控えてある）・ログインID f0615-038@example.test・パスワードPassw0rd!F0615）の利用可能な一般会員。ネット買取（買取ID/買取番号 〔買取番号-F0615-038〕（登録時に振られた買取番号を控えてある））査定中・買取依頼日2026-06-10。えらんで買取の明細1件（商品名F0615-038-商品A・商品規格が特定できる）。この会員の買取履歴はこの1件だけ（S-F06-15-NAMELINK-038）／③ケース専用の新しいブラウザセッションを日本語表示で開き、ログインしていない状態にする	1. F0615-038-会員でログインする（ログイン画面でログインIDにf0615-038@example.test、パスワードにPassw0rd!F0615を入力してログインする）／2. 買取履歴一覧画面を開き、買取番号〔買取番号-F0615-038〕の買取番号リンクを押して買取履歴詳細画面を開く／3. 明細の商品名F0615-038-商品Aを押す	別ウィンドウが開いてネット買取商品詳細画面が表示され、買取履歴詳細画面は元のウィンドウに残ること	0305 買取履歴詳細 / 現行仕様 業務ロジック「商品名からの遷移」
+integration_test/casegen/cases/F06-14_test_cases.tsv:IT-F06-14-011	REQ-0306-sheet-12-R032		ITA-11	P2	ブラウザのみ	S-F06-14-REF,S-F06-14-FUTURE-NODECK-011	① 本店と申込完了の参照値が登録されている（S-F06-14-REF）／② イベントID 〔イベントID-F0614-011〕の翌日申込完了大会-011はデッキ登録対象で締切前、申込ID 〔申込ID-F0614-011〕は申込完了、プレイヤーID 〔プレイヤーID-F0614-011〕のデッキは0件である（〔イベントID-F0614-011〕・〔申込ID-F0614-011〕・〔プレイヤーID-F0614-011〕は登録時に振られた番号を控えてある）（S-F06-14-FUTURE-NODECK-011）／③ ブラウザでf0614_member-011@example.test（パスワードF0614Pw011!）としてログインしている	1. マイイベント・デッキ登録画面を開く／2. 「翌日申込完了大会-011」のデッキ登録状況を確認する	デッキが登録されていない「翌日申込完了大会-011」のデッキ登録状況に「デッキ未登録」が表示されること	0306 マイイベント・デッキ登録 / 画面項目定義 識別ID 7
+
+exec
+/bin/bash -lc 'git diff eddb12cb -- integration_test/casegen/combination/factors/F06-16_existing.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+diff --git a/integration_test/casegen/combination/factors/F06-16_existing.tsv b/integration_test/casegen/combination/factors/F06-16_existing.tsv
+index 27f3cdbd..801818ee 100644
+--- a/integration_test/casegen/combination/factors/F06-16_existing.tsv
++++ b/integration_test/casegen/combination/factors/F06-16_existing.tsv
+@@ -14,13 +14,7 @@ IT-F06-16-063	P1	F01=あり&F04=全て一致	2回目の提出で上書きされ
+ IT-F06-16-037	P2	F05=なし	選手情報が無い会員で画面が表示されないことを確かめる
+ IT-F06-16-039	P2	F06=無効	デッキ登録フラグが無効な大会で画面が表示されないことを確かめる
+ IT-F06-16-040	P2	F07=過ぎている	登録締切を過ぎた大会で画面が表示されないことを確かめる
+-IT-F06-16-001	P3	F08=複数&F09=あり	登録済みのStandardのデッキの内容が表示されることを確かめる
+-IT-F06-16-007	P3	F08=1つ	選べるフォーマットが1つの大会でフォーマット選択エリアが出ないことを確かめる
+-IT-F06-16-008	P3	F08=複数	選べるフォーマットが複数の大会でフォーマット選択エリアが出ることを確かめる
+-IT-F06-16-009	P3	F08=複数&F09=あり	両フォーマットに登録済みのデッキがあり、切り替えで入力欄が切り替わることを確かめる
+-IT-F06-16-064	P3	F08=複数&F09=あり	登録済みデッキのあるフォーマットの初期値を確かめる
+-IT-F06-16-064	P3	F08=複数&F09=なし	登録済みデッキのないフォーマットの入力欄が空になることを確かめる
+-IT-F06-16-018	P4	F10=本人&F11=イベントで選べる	本人のマイデッキでフォーマットを合わせ入力欄が上書きされることを確かめる
+-IT-F06-16-019	P4	F10=他人	他人のマイデッキでは入力欄が上書きされないことを確かめる
+-IT-F06-16-020	P4	F10=本人&F13=あり	統率領域のカードがメインボードの先頭に取り込まれることを確かめる
+-IT-F06-16-062	P4	F10=本人&F11=イベントで選べない	イベントで選べないフォーマットのマイデッキで選択フォーマットが変わらないことを確かめる
++IT-F06-16-018	P3	F08=本人&F09=イベントで選べる	本人のマイデッキでフォーマットを合わせ入力欄が上書きされることを確かめる
++IT-F06-16-019	P3	F08=他人	他人のマイデッキでは入力欄が上書きされないことを確かめる
++IT-F06-16-020	P3	F08=本人&F10=あり	統率領域のカードがメインボードの先頭に取り込まれることを確かめる
++IT-F06-16-062	P3	F08=本人&F09=イベントで選べない	イベントで選べないフォーマットのマイデッキで選択フォーマットが変わらないことを確かめる
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/F06-11_processes.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	買取履歴の行の買取店舗・買取金額合計を表示する	マイページから買取履歴一覧画面を開く	買取履歴一覧画面（買取店舗欄・買取金額合計欄）	L0041-L0045,L0053,L0056-L0058
+P2	ネット買取の買取依頼内容（代表商品とほか件数）を表示する	買取履歴一覧画面を開く	買取履歴一覧画面（買取依頼内容欄）	L0055,L0072-L0074,L0098-L0099
+P3	買取履歴の一覧表示順を決める	買取履歴一覧画面を開く	買取履歴一覧画面（買取番号の並び）	L0019-L0020,L0024-L0044
+
+codex
+### 1
+- 機能: F06-11
+- 種類: G
+- 対象: F06-11_constraints.tsv P2 F05=売却対象でない
+- 主張: 売却対象でない商品があれば、代表商品の表示処理を打ち切り、ほかの要因は効かない。
+- 実際: その商品を候補から除いた後も、同じ区分の商品を価格・状態の順に調べて代表商品を選ぶ。`integration_test/casegen/combination/units/F06-11/design.txt:L0072-L0073`
+- 修正案: この打ち切り制約を外し、候補からの除外として扱う。
+
+### 2
+- 機能: F06-11
+- 種類: G
+- 対象: F06-11_constraints.tsv P2 F06=数量0
+- 主張: 数量0の商品があれば、代表商品の表示処理を打ち切り、ほかの要因は効かない。
+- 実際: 数量0の商品を候補から除いた後も、同じ区分の商品から代表商品を選ぶ。`integration_test/casegen/combination/units/F06-11/design.txt:L0072-L0073`
+- 修正案: この打ち切り制約を外し、候補からの除外として扱う。
+
+### 3
+- 機能: F06-15
+- 種類: G
+- 対象: F06-15_constraints.tsv P1 F01=売却しない
+- 主張: 売却しない明細があれば、実在庫・実在庫履歴の作成を打ち切り、ほかの要因は効かない。
+- 実際: 売却しない明細は作成対象外だが、500円未満のカードをすべて売却する選択があり、その売却についても実在庫・実在庫履歴を作成する。`integration_test/casegen/combination/units/F06-15/design.txt:L0088,L0115`
+- 修正案: F01だけで処理全体を打ち切らず、500円未満カードの売却選択を判定に残す。
+
+### 4
+- 機能: F06-15
+- 種類: G
+- 対象: F06-15_constraints.tsv P1 F02=個別入力商品
+- 主張: 個別入力商品があれば、実在庫・実在庫履歴の作成を打ち切り、ほかの要因は効かない。
+- 実際: 個別入力商品だけが作成対象外であり、「売却する」通常商品および500円未満カードの売却は作成対象とされる。`integration_test/casegen/combination/units/F06-15/design.txt:L0088-L0089`
+- 修正案: F02だけで処理全体を打ち切らず、商品の種類ごとに作成対象を判定する。
+
+### 5
+- 機能: F06-15
+- 種類: H
+- 対象: F06-15_factors.tsv 旧F07・旧F08（P2）
+- 主張: 商品の種類と商品規格の特定は独立した表示項目の値として、両要因を外した。
+- 実際: 同じ商品名をリンクにするか文字のままにするかは両方で決まる。商品規格を特定できる明細だけがリンク対象だが、個別入力商品は文字のまま表示する。`integration_test/casegen/combination/units/F06-15/design.txt:L0135`
+- 修正案: 両要因と、商品名のリンク判定に関する組を戻す。
+tokens used
+87,122
+### 1
+- 機能: F06-11
+- 種類: G
+- 対象: F06-11_constraints.tsv P2 F05=売却対象でない
+- 主張: 売却対象でない商品があれば、代表商品の表示処理を打ち切り、ほかの要因は効かない。
+- 実際: その商品を候補から除いた後も、同じ区分の商品を価格・状態の順に調べて代表商品を選ぶ。`integration_test/casegen/combination/units/F06-11/design.txt:L0072-L0073`
+- 修正案: この打ち切り制約を外し、候補からの除外として扱う。
+
+### 2
+- 機能: F06-11
+- 種類: G
+- 対象: F06-11_constraints.tsv P2 F06=数量0
+- 主張: 数量0の商品があれば、代表商品の表示処理を打ち切り、ほかの要因は効かない。
+- 実際: 数量0の商品を候補から除いた後も、同じ区分の商品から代表商品を選ぶ。`integration_test/casegen/combination/units/F06-11/design.txt:L0072-L0073`
+- 修正案: この打ち切り制約を外し、候補からの除外として扱う。
+
+### 3
+- 機能: F06-15
+- 種類: G
+- 対象: F06-15_constraints.tsv P1 F01=売却しない
+- 主張: 売却しない明細があれば、実在庫・実在庫履歴の作成を打ち切り、ほかの要因は効かない。
+- 実際: 売却しない明細は作成対象外だが、500円未満のカードをすべて売却する選択があり、その売却についても実在庫・実在庫履歴を作成する。`integration_test/casegen/combination/units/F06-15/design.txt:L0088,L0115`
+- 修正案: F01だけで処理全体を打ち切らず、500円未満カードの売却選択を判定に残す。
+
+### 4
+- 機能: F06-15
+- 種類: G
+- 対象: F06-15_constraints.tsv P1 F02=個別入力商品
+- 主張: 個別入力商品があれば、実在庫・実在庫履歴の作成を打ち切り、ほかの要因は効かない。
+- 実際: 個別入力商品だけが作成対象外であり、「売却する」通常商品および500円未満カードの売却は作成対象とされる。`integration_test/casegen/combination/units/F06-15/design.txt:L0088-L0089`
+- 修正案: F02だけで処理全体を打ち切らず、商品の種類ごとに作成対象を判定する。
+
+### 5
+- 機能: F06-15
+- 種類: H
+- 対象: F06-15_factors.tsv 旧F07・旧F08（P2）
+- 主張: 商品の種類と商品規格の特定は独立した表示項目の値として、両要因を外した。
+- 実際: 同じ商品名をリンクにするか文字のままにするかは両方で決まる。商品規格を特定できる明細だけがリンク対象だが、個別入力商品は文字のまま表示する。`integration_test/casegen/combination/units/F06-15/design.txt:L0135`
+- 修正案: 両要因と、商品名のリンク判定に関する組を戻す。

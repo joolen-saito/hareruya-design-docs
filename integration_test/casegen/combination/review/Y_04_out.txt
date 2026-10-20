@@ -1,0 +1,2168 @@
+Reading additional input from stdin...
+OpenAI Codex v0.162.1
+--------
+workdir: /home/y-saito/Developments/hareruya-design-docs
+model: gpt-6-sol
+provider: openai
+approval: never
+sandbox: read-only
+reasoning effort: high
+reasoning summaries: none
+session id: 01a15842-f7b5-7c22-bc89-a50b4f942806
+--------
+user
+# 反証の依頼: 機能 A15-07・A15-09・A15-10・A15-11・A15-12・A15-13・A15-14・A15-15・A15-16・A15-17 の要因表の見直し（3つの決定の当て方）
+
+あなたは独立したレビュアーである。別の担当が、依頼者の3つの決定に合わせて**要因表を直した**。その直しが設計書と食い違っていないかを確かめる。直さない。読むだけ。
+リポジトリは `/home/y-saito/Developments/hareruya-design-docs/`。出力は日本語。
+
+## 背景
+
+結合テストで、1回の処理の結果を左右する要因が2つ以上あるとき、効き合う要因は値の組合せを全部、関係しない要因はどの2つの要因の値の組もどこかで1回試すケースを足す。
+要因表（`integration_test/casegen/combination/factors/<機能ID>_*.tsv`）から機械が組を並べる。要因表はすでに codex の反証を1巡受けて直してある。
+そのあと依頼者が次の3つを決め（2026-10-20）、担当が要因表を直した。今回確かめるのは**この直しだけ**。
+
+| 決定 | 中身 |
+| --- | --- |
+| 1 打ち切り側は1回でよい | その値（または値の組）になると処理がそこで打ち切られ、ほかの要因の値が結果に効かないとき、constraints.tsv に種別 `打ち切り` で書く。機械はその条件を1回だけ通し、ほかの要因との組は埋めない。打ち切られても一部の要因の値がまだ結果に効くときは、その要因の値も組に入れて書く |
+| 2 列ごとに独立して決まる値は組にしない | 出力の列・表示項目ごとに独立して決まる値（CSV の空欄・書式・文言の変換 など）は要因にしない。ほかの要因と効き合う（その値で、ほかの要因の結果や、行を出す・出さないが変わる）ときだけ残す。外して要因が1つになった処理は処理ごと外す |
+| 3 結果が同じ値はまとめる | 設計書が別々の条件として書いていても、結果が同じ値は1つにまとめる |
+
+## 読むもの
+
+- 直した所: 機能ごとに `git -C /home/y-saito/Developments/hareruya-design-docs diff eddb12cb -- integration_test/casegen/combination/factors/<機能ID>_processes.tsv integration_test/casegen/combination/factors/<機能ID>_factors.tsv integration_test/casegen/combination/factors/<機能ID>_interactions.tsv integration_test/casegen/combination/factors/<機能ID>_constraints.tsv integration_test/casegen/combination/factors/<機能ID>_existing.tsv`（eddb12cb が直す前）
+- 担当の処置: `integration_test/casegen/combination/review/<機能ID>_factors_s_dispositions.tsv`
+- 設計書: `integration_test/casegen/combination/units/<機能ID>/design.txt`（行頭の `L0001` は行番号）、他の機能は `units/<機能ID>/design.txt`
+- 作り方の決まり: `integration_test/casegen/combination/FACTOR_PROMPT.md`
+
+設計書の中で記述が食い違うときは、Excel 由来の本文 ＞ 埋め込みの「表示メッセージ」節 ＞ 埋め込みの「現行仕様」節・機能設計書 の順に採る。
+
+## 確かめること（事実だけ。差分に出ている所だけ）
+
+| 種類 | 何を見るか |
+| --- | --- |
+| G 打ち切りの誤り | 打ち切りとした値で、設計書は処理を打ち切っていない。または打ち切ったあとも「効かない」とされた要因の値で結果が変わると設計書が定める（その要因の値も組に入れるべき） |
+| H 外しすぎ | 決定2で外した要因・処理が、列・表示項目ごとに独立して決まるだけではない（ほかの要因の結果、行や対象を出す・出さない、更新先・更新内容を変えると設計書が定める） |
+| I まとめすぎ | 決定3でまとめた値どうしで、結果が違うと設計書が定める |
+| J 付け替えの誤り | 要因ID・値の振り直しで、interactions・constraints・existing の値が合っていない、既存ケースの値を取り違えた |
+
+次は指摘しない: 書き方・言い回し、差分に出ていない所（1巡目で済み）、決定そのものへの異論、境界値・数量1/複数。
+
+## 出力
+
+指摘が無ければ `NONE` の1語だけ。あれば1件ずつ、次の形で。
+
+```
+### <番号>
+- 機能: <機能ID>
+- 種類: <G〜J>
+- 対象: <ファイル名> <要因ID・処理ID・組>
+- 主張: <直した後の表に書かれていること>
+- 実際: <設計書の記述（ファイル:行 を必ず添える）>
+- 修正案: <どう直すか。1文>
+```
+warning: Codex could not find bubblewrap on PATH. Install bubblewrap with your OS package manager. See the sandbox prerequisites: https://developers.openai.com/codex/concepts/sandboxing#prerequisites. Codex will use the bundled bubblewrap in the meantime.
+2026-10-20T07:42:27.679674Z ERROR rmcp::transport::worker: worker quit with fatal: Transport channel closed, when AuthRequired(AuthRequiredError { www_authenticate_header: "Bearer resource_metadata=\"https://mcp.firecrawl.dev/.well-known/oauth-protected-resource/v2/mcp-oauth\", error=\"invalid_token\", error_description=\"Firecrawl credentials required: OAuth access token (Authorization: Bearer fco_...) or API key (x-firecrawl-api-key)\"" })
+codex
+指定された10機能について、eddb12cb からの差分と担当の処置を先に確認し、変更箇所だけを設計書の該当行と照合します。ファイルは変更しません。
+exec
+/bin/bash -lc "pwd && rg --files integration_test/casegen/combination | rg '(FACTOR_PROMPT.md|/(A15-(07|09|10|11|12|13|14|15|16|17))/design.txt|/factors/A15-(07|09|10|11|12|13|14|15|16|17)_|/review/A15-(07|09|10|11|12|13|14|15|16|17)_factors_s_dispositions.tsv)'" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+/home/y-saito/Developments/hareruya-design-docs
+integration_test/casegen/combination/FACTOR_PROMPT.md
+integration_test/casegen/combination/units/A15-10/design.txt
+integration_test/casegen/combination/units/A15-16/design.txt
+integration_test/casegen/combination/units/A15-14/design.txt
+integration_test/casegen/combination/units/A15-17/design.txt
+integration_test/casegen/combination/factors/A15-09_interactions.tsv
+integration_test/casegen/combination/factors/A15-15_existing.tsv
+integration_test/casegen/combination/units/A15-12/design.txt
+integration_test/casegen/combination/factors/A15-17_constraints.tsv
+integration_test/casegen/combination/factors/A15-16_existing.tsv
+integration_test/casegen/combination/factors/A15-10_constraints.tsv
+integration_test/casegen/combination/factors/A15-07_interactions.tsv
+integration_test/casegen/combination/factors/A15-13_processes.tsv
+integration_test/casegen/combination/factors/A15-14_processes.tsv
+integration_test/casegen/combination/factors/A15-10_interactions.tsv
+integration_test/casegen/combination/factors/A15-11_factors.tsv
+integration_test/casegen/combination/factors/A15-09_processes.tsv
+integration_test/casegen/combination/review/A15-11_factors_s_dispositions.tsv
+integration_test/casegen/combination/factors/A15-09_existing.tsv
+integration_test/casegen/combination/factors/A15-14_factors.tsv
+integration_test/casegen/combination/review/A15-09_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A15-16_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A15-15_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A15-07_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A15-12_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A15-10_factors_s_dispositions.tsv
+integration_test/casegen/combination/factors/A15-12_processes.tsv
+integration_test/casegen/combination/factors/A15-15_factors.tsv
+integration_test/casegen/combination/factors/A15-16_processes.tsv
+integration_test/casegen/combination/factors/A15-17_factors.tsv
+integration_test/casegen/combination/factors/A15-10_existing.tsv
+integration_test/casegen/combination/factors/A15-14_constraints.tsv
+integration_test/casegen/combination/factors/A15-13_existing.tsv
+integration_test/casegen/combination/prompts/F06-11_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M04-24_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M14-01_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/B06-02_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M05-10_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M15-03_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M07-05_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M07-11_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M13-10_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F10-01_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F07-03_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A06-12_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M13-14_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M13-07_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M05-26_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M04-09_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A15-08_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F03-06_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F06-12_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M08-10_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M08-09_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-17_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M16-05_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M08-04_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M07-07_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M10-16_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M04-21_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F06-13_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M14-04_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M07-03_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M11-02_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M06-01_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M08-12_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A06-03_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/B08-03_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A08-02_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M10-02_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F06-07_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M04-02_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F05-04_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F08-02_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M12-07_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F06-25_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F06-20_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-21_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-10_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F02-04_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M07-08_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F03-01_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/B08-06_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M15-01_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A08-01_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-19_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-40_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M04-33_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M10-15_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M15-11_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/B08-07_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F08-04_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-09_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/B02-06_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A02-02_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F06-14_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M04-23_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M07-09_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M15-09_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M04-31_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F05-02_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A06-04_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M09-07_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M10-08_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M08-01_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M10-04_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M04-12_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/B05-06_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M04-03_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-06_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M12-06_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A15-15_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M12-05_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M05-07_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M13-06_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A15-07_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/B08-01_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/B16-11_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-02_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/B02-05_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A17-05_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M06-05_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M04-10_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F07-02_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M04-18_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M07-04_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-25_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F04-01_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M07-10_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A17-02_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A15-17_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F06-01_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-14_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M14-09_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M14-10_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-12_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M15-05_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M08-02_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M07-06_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F06-15_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A07-06_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-20_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-41_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A06-07_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M05-03_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A17-01_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F02-03_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M04-04_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M08-07_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-01_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A15-16_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F09-04_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M16-04_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A05-01_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M13-05_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F05-01_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A15-04_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M15-07_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M12-04_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M12-02_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M04-13_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M12-01_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/B02-03_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M04-22_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-13_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F10-03_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A02-03_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F08-05_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A05-04_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/B02-02_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-24_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M04-29_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M14-05_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M06-04_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M13-08_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F09-06_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M10-07_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F06-16_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/B05-08_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F09-07_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M06-10_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A16-02_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M08-14_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M05-21_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A06-06_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F06-18_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-33_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F01-02_FACTOR_PROMPT.md
+integration_test/casegen/combination/units/A15-13/design.txt
+integration_test/casegen/combination/prompts/M06-02_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-28_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F07-04_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M16-06_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-22_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M12-10_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M14-06_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M16-08_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-15_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/B05-01_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F05-03_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M04-01_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F06-03_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F06-23_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A15-03_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A06-01_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-30_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M05-18_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M14-08_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/B08-04_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M08-03_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-11_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F06-09_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A14-02_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M15-08_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M14-07_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A06-08_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M06-12_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-29_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M04-30_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M04-28_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-35_FACTOR_PROMPT.md
+integration_test/casegen/combination/factors/A15-13_constraints.tsv
+integration_test/casegen/combination/prompts/F02-01_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F06-21_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F09-01_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A07-02_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M12-09_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M15-04_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-38_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M13-03_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M07-02_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M05-24_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A15-02_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M15-06_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/B02-07_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M11-03_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M08-06_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A05-02_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M05-04_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-23_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F03-08_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M15-02_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-45_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M10-09_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M09-10_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M06-09_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M10-01_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M04-17_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A06-05_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M09-04_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M05-23_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A15-10_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F09-08_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M12-08_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F09-02_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M08-08_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M13-11_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A07-07_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F03-03_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-04_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F04-04_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M04-34_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M06-06_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M10-06_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F06-05_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F06-17_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A07-01_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-27_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M04-08_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M05-02_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A06-11_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A14-01_FACTOR_PROMPT.md
+integration_test/casegen/combination/factors/A15-11_processes.tsv
+integration_test/casegen/combination/prompts/M06-08_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M10-10_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F03-02_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M10-13_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A15-12_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A16-01_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M11-01_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A14-03_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A17-04_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-05_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M13-13_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/B05-03_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/B02-01_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F10-02_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F06-08_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F04-02_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M05-09_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A15-01_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M04-05_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F05-05_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/B05-05_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A06-13_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M05-06_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M13-02_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A01-01_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F05-06_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F03-07_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-03_FACTOR_PROMPT.md
+integration_test/casegen/combination/factors/A15-12_factors.tsv
+integration_test/casegen/combination/review/A15-17_factors_s_dispositions.tsv
+integration_test/casegen/combination/units/A15-07/design.txt
+integration_test/casegen/combination/prompts/M05-08_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/B05-07_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-18_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A15-11_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-37_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M08-05_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A15-13_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M04-25_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M16-01_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A02-01_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F01-01_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A02-04_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A05-03_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F06-27_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A07-04_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M13-12_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-31_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A07-05_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-32_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M04-14_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A15-06_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M13-04_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M05-11_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F06-22_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A02-05_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A15-14_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M05-05_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A15-09_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F06-24_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F09-03_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M10-03_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F02-02_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M16-02_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M13-09_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F06-06_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A17-03_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/B08-05_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F04-03_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M12-03_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-08_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M10-05_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M05-20_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A15-18_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M05-01_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M16-03_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M04-20_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M06-11_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A15-05_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/B06-01_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M05-22_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M05-27_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M16-07_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F07-01_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F06-10_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/B02-04_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-16_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F03-04_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F06-02_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A07-03_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M06-03_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M15-10_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M04-19_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F06-04_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-26_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M04-32_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M13-01_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M13-15_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F08-03_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F06-26_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M08-13_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A06-02_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/B08-02_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F03-05_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M05-19_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M04-16_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M07-01_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F09-05_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F08-01_FACTOR_PROMPT.md
+integration_test/casegen/combination/factors/A15-07_existing.tsv
+integration_test/casegen/combination/factors/A15-12_existing.tsv
+integration_test/casegen/combination/review/A15-13_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A15-14_factors_s_dispositions.tsv
+integration_test/casegen/combination/factors/A15-09_factors.tsv
+integration_test/casegen/combination/units/A15-09/design.txt
+integration_test/casegen/combination/units/A15-15/design.txt
+integration_test/casegen/combination/units/A15-11/design.txt
+integration_test/casegen/combination/factors/A15-15_interactions.tsv
+integration_test/casegen/combination/factors/A15-15_processes.tsv
+integration_test/casegen/combination/factors/A15-10_processes.tsv
+integration_test/casegen/combination/factors/A15-11_constraints.tsv
+integration_test/casegen/combination/factors/A15-16_factors.tsv
+integration_test/casegen/combination/factors/A15-16_constraints.tsv
+integration_test/casegen/combination/factors/A15-17_interactions.tsv
+integration_test/casegen/combination/factors/A15-12_constraints.tsv
+integration_test/casegen/combination/factors/A15-07_factors.tsv
+integration_test/casegen/combination/factors/A15-16_interactions.tsv
+integration_test/casegen/combination/factors/A15-10_factors.tsv
+integration_test/casegen/combination/factors/A15-11_interactions.tsv
+integration_test/casegen/combination/factors/A15-13_factors.tsv
+integration_test/casegen/combination/factors/A15-11_existing.tsv
+integration_test/casegen/combination/factors/A15-07_processes.tsv
+integration_test/casegen/combination/factors/A15-12_interactions.tsv
+integration_test/casegen/combination/factors/A15-14_existing.tsv
+integration_test/casegen/combination/factors/A15-09_constraints.tsv
+integration_test/casegen/combination/factors/A15-17_processes.tsv
+integration_test/casegen/combination/factors/A15-17_existing.tsv
+integration_test/casegen/combination/factors/A15-07_constraints.tsv
+integration_test/casegen/combination/factors/A15-14_interactions.tsv
+integration_test/casegen/combination/factors/A15-15_constraints.tsv
+integration_test/casegen/combination/factors/A15-13_interactions.tsv
+
+exec
+/bin/bash -lc 'git diff eddb12cb -- integration_test/casegen/combination/factors/A15-07_{processes,factors,interactions,constraints,existing}.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'git diff eddb12cb -- integration_test/casegen/combination/factors/A15-09_{processes,factors,interactions,constraints,existing}.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'git diff eddb12cb -- integration_test/casegen/combination/factors/A15-10_{processes,factors,interactions,constraints,existing}.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'git diff eddb12cb -- integration_test/casegen/combination/factors/A15-11_{processes,factors,interactions,constraints,existing}.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'git diff eddb12cb -- integration_test/casegen/combination/factors/A15-12_{processes,factors,interactions,constraints,existing}.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 48ms:
+diff --git a/integration_test/casegen/combination/factors/A15-09_existing.tsv b/integration_test/casegen/combination/factors/A15-09_existing.tsv
+index 2edda8b4..65784056 100644
+--- a/integration_test/casegen/combination/factors/A15-09_existing.tsv
++++ b/integration_test/casegen/combination/factors/A15-09_existing.tsv
+@@ -1,29 +1,29 @@
+ テストID	処理ID	値	理由
+-IT-A15-09-020	P1	F01=それ以外&F02=未指定&F03=0枚&F04=範囲内&F05=範囲内&F06=使用可のカードのみ&F07=禁止制限なし	事前準備でフォーマット・カードの条件を決め、DBでレギュレーション違反フラグを確かめる
+-IT-A15-09-020	P1	F01=それ以外&F02=未指定&F03=0枚&F04=範囲内&F05=範囲内&F06=使用可のカードのみ&F07=禁止カードあり	事前準備でフォーマット・カードの条件を決め、DBでレギュレーション違反フラグを確かめる
++IT-A15-09-020	P1	F01=それ以外&F02=未指定&F03=0枚&F04=範囲内&F05=範囲内&F06=使用可のカードのみ&F07=禁止なし、制限は1枚以下	事前準備でフォーマット・カードの条件を決め、DBでレギュレーション違反フラグを確かめる
++IT-A15-09-020	P1	F01=それ以外&F02=未指定&F03=0枚&F04=範囲内&F05=範囲内&F06=使用可のカードのみ&F07=禁止カードあり、または制限2枚以上	事前準備でフォーマット・カードの条件を決め、DBでレギュレーション違反フラグを確かめる
+ IT-A15-09-024	P1	F01=それ以外&F02=フォーマットと一致&F03=0枚&F04=範囲内&F05=範囲内	事前準備でフォーマット・カードの条件を決め、DBでレギュレーション違反フラグを確かめる
+ IT-A15-09-024	P1	F01=それ以外&F02=フォーマットと異なる&F03=0枚&F04=範囲内&F05=範囲内	事前準備でフォーマット・カードの条件を決め、DBでレギュレーション違反フラグを確かめる
+ IT-A15-09-025	P1	F01=統率者を使う&F02=未指定&F03=0枚&F04=範囲内&F05=範囲内	事前準備でフォーマット・カードの条件を決め、DBでレギュレーション違反フラグを確かめる
+-IT-A15-09-025	P1	F01=統率者を使う&F02=未指定&F03=1から2枚&F04=範囲内&F05=範囲内&F06=使用可のカードのみ&F07=禁止制限なし&F10=すべて伝説	事前準備でフォーマット・カードの条件を決め、DBでレギュレーション違反フラグを確かめる
+-IT-A15-09-025	P1	F01=統率者を使う&F02=未指定&F03=3枚以上&F04=範囲内&F05=範囲内&F06=使用可のカードのみ&F07=禁止制限なし&F10=すべて伝説	事前準備でフォーマット・カードの条件を決め、DBでレギュレーション違反フラグを確かめる
+-IT-A15-09-026	P1	F01=それ以外&F02=未指定&F03=0枚&F04=範囲外&F05=範囲内&F06=使用可のカードのみ&F07=禁止制限なし	事前準備でフォーマット・カードの条件を決め、DBでレギュレーション違反フラグを確かめる
+-IT-A15-09-026	P1	F01=それ以外&F02=未指定&F03=0枚&F04=範囲内&F05=範囲内&F06=使用可のカードのみ&F07=禁止制限なし	事前準備でフォーマット・カードの条件を決め、DBでレギュレーション違反フラグを確かめる
+-IT-A15-09-027	P1	F01=それ以外&F02=未指定&F03=0枚&F04=範囲内&F05=範囲外&F06=使用可のカードのみ&F07=禁止制限なし	事前準備でフォーマット・カードの条件を決め、DBでレギュレーション違反フラグを確かめる
+-IT-A15-09-027	P1	F01=それ以外&F02=未指定&F03=0枚&F04=範囲内&F05=範囲内&F06=使用可のカードのみ&F07=禁止制限なし	事前準備でフォーマット・カードの条件を決め、DBでレギュレーション違反フラグを確かめる
+-IT-A15-09-028	P1	F01=統率者を使う&F02=未指定&F03=1から2枚&F04=範囲内&F05=範囲内&F06=使用可のカードのみ&F07=禁止制限なし&F10=すべて伝説	事前準備でフォーマット・カードの条件を決め、DBでレギュレーション違反フラグを確かめる
++IT-A15-09-025	P1	F01=統率者を使う&F02=未指定&F03=1から2枚&F04=範囲内&F05=範囲内&F06=使用可のカードのみ&F07=禁止なし、制限は1枚以下&F10=すべて伝説	事前準備でフォーマット・カードの条件を決め、DBでレギュレーション違反フラグを確かめる
++IT-A15-09-025	P1	F01=統率者を使う&F02=未指定&F03=3枚以上&F04=範囲内&F05=範囲内&F06=使用可のカードのみ&F07=禁止なし、制限は1枚以下&F10=すべて伝説	事前準備でフォーマット・カードの条件を決め、DBでレギュレーション違反フラグを確かめる
++IT-A15-09-026	P1	F01=それ以外&F02=未指定&F03=0枚&F04=範囲外&F05=範囲内&F06=使用可のカードのみ&F07=禁止なし、制限は1枚以下	事前準備でフォーマット・カードの条件を決め、DBでレギュレーション違反フラグを確かめる
++IT-A15-09-026	P1	F01=それ以外&F02=未指定&F03=0枚&F04=範囲内&F05=範囲内&F06=使用可のカードのみ&F07=禁止なし、制限は1枚以下	事前準備でフォーマット・カードの条件を決め、DBでレギュレーション違反フラグを確かめる
++IT-A15-09-027	P1	F01=それ以外&F02=未指定&F03=0枚&F04=範囲内&F05=範囲外&F06=使用可のカードのみ&F07=禁止なし、制限は1枚以下	事前準備でフォーマット・カードの条件を決め、DBでレギュレーション違反フラグを確かめる
++IT-A15-09-027	P1	F01=それ以外&F02=未指定&F03=0枚&F04=範囲内&F05=範囲内&F06=使用可のカードのみ&F07=禁止なし、制限は1枚以下	事前準備でフォーマット・カードの条件を決め、DBでレギュレーション違反フラグを確かめる
++IT-A15-09-028	P1	F01=統率者を使う&F02=未指定&F03=1から2枚&F04=範囲内&F05=範囲内&F06=使用可のカードのみ&F07=禁止なし、制限は1枚以下&F10=すべて伝説	事前準備でフォーマット・カードの条件を決め、DBでレギュレーション違反フラグを確かめる
+ IT-A15-09-028	P1	F01=統率者を使う&F02=未指定&F03=1から2枚&F04=範囲内&F05=範囲内&F06=使用不可のカードあり&F10=すべて伝説	事前準備でフォーマット・カードの条件を決め、DBでレギュレーション違反フラグを確かめる
+-IT-A15-09-029	P1	F01=それ以外&F02=未指定&F03=0枚&F04=範囲内&F05=範囲内&F06=使用可のカードのみ&F07=制限カード1枚	事前準備でフォーマット・カードの条件を決め、DBでレギュレーション違反フラグを確かめる
+-IT-A15-09-029	P1	F01=それ以外&F02=未指定&F03=0枚&F04=範囲内&F05=範囲内&F06=使用可のカードのみ&F07=制限カード2枚以上	事前準備でフォーマット・カードの条件を決め、DBでレギュレーション違反フラグを確かめる
+-IT-A15-09-030	P1	F01=それ以外&F02=未指定&F03=0枚&F04=範囲内&F05=範囲内&F06=使用可のカードのみ&F07=禁止制限なし&F08=通常カード&F09=上限以内の枚数	事前準備でフォーマット・カードの条件を決め、DBでレギュレーション違反フラグを確かめる
+-IT-A15-09-030	P1	F01=それ以外&F02=未指定&F03=0枚&F04=範囲内&F05=範囲内&F06=使用可のカードのみ&F07=禁止制限なし&F08=通常カード&F09=上限を超える枚数	事前準備でフォーマット・カードの条件を決め、DBでレギュレーション違反フラグを確かめる
+-IT-A15-09-031	P1	F01=ハイランダー&F02=未指定&F03=0枚&F04=範囲内&F05=範囲内&F06=使用可のカードのみ&F07=禁止制限なし&F08=通常カード&F09=上限以内の枚数	事前準備でフォーマット・カードの条件を決め、DBでレギュレーション違反フラグを確かめる
+-IT-A15-09-031	P1	F01=ハイランダー&F02=未指定&F03=0枚&F04=範囲内&F05=範囲内&F06=使用可のカードのみ&F07=禁止制限なし&F08=通常カード&F09=上限を超える枚数	事前準備でフォーマット・カードの条件を決め、DBでレギュレーション違反フラグを確かめる
+-IT-A15-09-032	P1	F01=ハイランダー&F02=未指定&F03=0枚&F04=範囲内&F05=範囲内&F06=使用可のカードのみ&F07=禁止制限なし&F08=特殊制限つきカード&F09=上限以内の枚数	事前準備でフォーマット・カードの条件を決め、DBでレギュレーション違反フラグを確かめる
+-IT-A15-09-032	P1	F01=ハイランダー&F02=未指定&F03=0枚&F04=範囲内&F05=範囲内&F06=使用可のカードのみ&F07=禁止制限なし&F08=特殊制限つきカード&F09=上限を超える枚数	事前準備でフォーマット・カードの条件を決め、DBでレギュレーション違反フラグを確かめる
+-IT-A15-09-033	P1	F01=それ以外&F02=未指定&F03=0枚&F04=範囲内&F05=範囲内&F06=使用可のカードのみ&F07=禁止制限なし&F08=枚数制限を受けないカード&F09=上限を超える枚数	事前準備でフォーマット・カードの条件を決め、DBでレギュレーション違反フラグを確かめる
+-IT-A15-09-033	P1	F01=それ以外&F02=未指定&F03=0枚&F04=範囲内&F05=範囲内&F06=使用可のカードのみ&F07=禁止制限なし&F08=通常カード&F09=上限を超える枚数	事前準備でフォーマット・カードの条件を決め、DBでレギュレーション違反フラグを確かめる
+-IT-A15-09-034	P1	F01=統率者を使う&F02=未指定&F03=1から2枚&F04=範囲内&F05=範囲内&F06=使用可のカードのみ&F07=禁止制限なし&F10=すべて伝説	事前準備でフォーマット・カードの条件を決め、DBでレギュレーション違反フラグを確かめる
+-IT-A15-09-034	P1	F01=統率者を使う&F02=未指定&F03=1から2枚&F04=範囲内&F05=範囲内&F06=使用可のカードのみ&F07=禁止制限なし&F10=伝説でないカードあり	事前準備でフォーマット・カードの条件を決め、DBでレギュレーション違反フラグを確かめる
+-IT-A15-09-038	P1	F01=統率者を使う&F02=未指定&F03=1から2枚&F04=範囲内&F05=範囲内&F06=使用可のカードのみ&F07=禁止制限なし&F10=すべて伝説	事前準備でフォーマット・カードの条件を決め、DBでレギュレーション違反フラグを確かめる
+-IT-A15-09-038	P1	F01=統率者を使う&F02=未指定&F03=1から2枚&F04=範囲外&F05=範囲内&F06=使用可のカードのみ&F07=禁止制限なし&F10=すべて伝説	事前準備でフォーマット・カードの条件を決め、DBでレギュレーション違反フラグを確かめる
++IT-A15-09-029	P1	F01=それ以外&F02=未指定&F03=0枚&F04=範囲内&F05=範囲内&F06=使用可のカードのみ&F07=禁止なし、制限は1枚以下	事前準備でフォーマット・カードの条件を決め、DBでレギュレーション違反フラグを確かめる
++IT-A15-09-029	P1	F01=それ以外&F02=未指定&F03=0枚&F04=範囲内&F05=範囲内&F06=使用可のカードのみ&F07=禁止カードあり、または制限2枚以上	事前準備でフォーマット・カードの条件を決め、DBでレギュレーション違反フラグを確かめる
++IT-A15-09-030	P1	F01=それ以外&F02=未指定&F03=0枚&F04=範囲内&F05=範囲内&F06=使用可のカードのみ&F07=禁止なし、制限は1枚以下&F08=通常カード&F09=上限以内の枚数	事前準備でフォーマット・カードの条件を決め、DBでレギュレーション違反フラグを確かめる
++IT-A15-09-030	P1	F01=それ以外&F02=未指定&F03=0枚&F04=範囲内&F05=範囲内&F06=使用可のカードのみ&F07=禁止なし、制限は1枚以下&F08=通常カード&F09=上限を超える枚数	事前準備でフォーマット・カードの条件を決め、DBでレギュレーション違反フラグを確かめる
++IT-A15-09-031	P1	F01=ハイランダー&F02=未指定&F03=0枚&F04=範囲内&F05=範囲内&F06=使用可のカードのみ&F07=禁止なし、制限は1枚以下&F08=通常カード&F09=上限以内の枚数	事前準備でフォーマット・カードの条件を決め、DBでレギュレーション違反フラグを確かめる
++IT-A15-09-031	P1	F01=ハイランダー&F02=未指定&F03=0枚&F04=範囲内&F05=範囲内&F06=使用可のカードのみ&F07=禁止なし、制限は1枚以下&F08=通常カード&F09=上限を超える枚数	事前準備でフォーマット・カードの条件を決め、DBでレギュレーション違反フラグを確かめる
++IT-A15-09-032	P1	F01=ハイランダー&F02=未指定&F03=0枚&F04=範囲内&F05=範囲内&F06=使用可のカードのみ&F07=禁止なし、制限は1枚以下&F08=特殊制限つきカード&F09=上限以内の枚数	事前準備でフォーマット・カードの条件を決め、DBでレギュレーション違反フラグを確かめる
++IT-A15-09-032	P1	F01=ハイランダー&F02=未指定&F03=0枚&F04=範囲内&F05=範囲内&F06=使用可のカードのみ&F07=禁止なし、制限は1枚以下&F08=特殊制限つきカード&F09=上限を超える枚数	事前準備でフォーマット・カードの条件を決め、DBでレギュレーション違反フラグを確かめる
++IT-A15-09-033	P1	F01=それ以外&F02=未指定&F03=0枚&F04=範囲内&F05=範囲内&F06=使用可のカードのみ&F07=禁止なし、制限は1枚以下&F08=枚数制限を受けないカード&F09=上限を超える枚数	事前準備でフォーマット・カードの条件を決め、DBでレギュレーション違反フラグを確かめる
++IT-A15-09-033	P1	F01=それ以外&F02=未指定&F03=0枚&F04=範囲内&F05=範囲内&F06=使用可のカードのみ&F07=禁止なし、制限は1枚以下&F08=通常カード&F09=上限を超える枚数	事前準備でフォーマット・カードの条件を決め、DBでレギュレーション違反フラグを確かめる
++IT-A15-09-034	P1	F01=統率者を使う&F02=未指定&F03=1から2枚&F04=範囲内&F05=範囲内&F06=使用可のカードのみ&F07=禁止なし、制限は1枚以下&F10=すべて伝説	事前準備でフォーマット・カードの条件を決め、DBでレギュレーション違反フラグを確かめる
++IT-A15-09-034	P1	F01=統率者を使う&F02=未指定&F03=1から2枚&F04=範囲内&F05=範囲内&F06=使用可のカードのみ&F07=禁止なし、制限は1枚以下&F10=伝説でないカードあり	事前準備でフォーマット・カードの条件を決め、DBでレギュレーション違反フラグを確かめる
++IT-A15-09-038	P1	F01=統率者を使う&F02=未指定&F03=1から2枚&F04=範囲内&F05=範囲内&F06=使用可のカードのみ&F07=禁止なし、制限は1枚以下&F10=すべて伝説	事前準備でフォーマット・カードの条件を決め、DBでレギュレーション違反フラグを確かめる
++IT-A15-09-038	P1	F01=統率者を使う&F02=未指定&F03=1から2枚&F04=範囲外&F05=範囲内&F06=使用可のカードのみ&F07=禁止なし、制限は1枚以下&F10=すべて伝説	事前準備でフォーマット・カードの条件を決め、DBでレギュレーション違反フラグを確かめる
+ IT-A15-09-040	P1	F08=通常カード&F09=上限を超える枚数	事前準備でフォーマット・カードの条件を決め、DBでレギュレーション違反フラグを確かめる
+diff --git a/integration_test/casegen/combination/factors/A15-09_factors.tsv b/integration_test/casegen/combination/factors/A15-09_factors.tsv
+index 4051390c..cb3ff8c6 100644
+--- a/integration_test/casegen/combination/factors/A15-09_factors.tsv
++++ b/integration_test/casegen/combination/factors/A15-09_factors.tsv
+@@ -5,7 +5,7 @@ F03	P1	統率領域の採用カード枚数	0枚｜1から2枚｜3枚以上	0枚
+ F04	P1	メインボードの枚数	範囲内｜範囲外	範囲内: 違反にならない／範囲外: フォーマットの下限未満または上限超過でレギュレーション違反（統率者を使うフォーマットは統率領域の枚数を含む）	L0020	この機能
+ F05	P1	サイドボードの枚数	範囲内｜範囲外	範囲内: 違反にならない／範囲外: フォーマットの下限未満または上限超過でレギュレーション違反	L0021	この機能
+ F06	P1	フォーマットでの使用可否	使用可のカードのみ｜使用不可のカードあり	使用可のカードのみ: 違反にならない／使用不可のカードあり: メイン・サイド・統率領域のどこにあってもレギュレーション違反	L0022	この機能
+-F07	P1	禁止・制限のカード	禁止制限なし｜禁止カードあり｜制限カード1枚｜制限カード2枚以上	禁止制限なし: 違反にならない／禁止カードあり: レギュレーション違反／制限カード1枚: 違反にならない／制限カード2枚以上: レギュレーション違反	L0023	この機能
++F07	P1	禁止・制限のカード	禁止なし、制限は1枚以下｜禁止カードあり、または制限2枚以上	禁止なし、制限は1枚以下: 違反にならない／禁止カードあり、または制限2枚以上: レギュレーション違反	L0023	この機能
+ F08	P1	カードの枚数制限の種別	通常カード｜特殊制限つきカード｜枚数制限を受けないカード	通常カード: 上限は4枚（ハイランダーは1枚）／特殊制限つきカード: 上限は特殊制限の枚数／枚数制限を受けないカード: 枚数の上限判定の対象外	L0024	この機能
+ F09	P1	同じカードの採用枚数	上限以内の枚数｜上限を超える枚数	上限以内の枚数: 違反にならない／上限を超える枚数: そのカードの上限を超える枚数（枚数制限を受けないカードは通常の上限を超える枚数）で、枚数制限を受けるカードならレギュレーション違反	L0024	この機能
+ F10	P1	統率領域のカードの特殊タイプ	すべて伝説｜伝説でないカードあり	すべて伝説: 違反にならない／伝説でないカードあり: レギュレーション違反	L0025	この機能
+
+exec
+/bin/bash -lc 'git diff eddb12cb -- integration_test/casegen/combination/factors/A15-13_{processes,factors,interactions,constraints,existing}.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'git diff eddb12cb -- integration_test/casegen/combination/factors/A15-15_{processes,factors,interactions,constraints,existing}.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'git diff eddb12cb -- integration_test/casegen/combination/factors/A15-16_{processes,factors,interactions,constraints,existing}.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'git diff eddb12cb -- integration_test/casegen/combination/factors/A15-14_{processes,factors,interactions,constraints,existing}.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'git diff eddb12cb -- integration_test/casegen/combination/factors/A15-17_{processes,factors,interactions,constraints,existing}.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 111ms:
+diff --git a/integration_test/casegen/combination/factors/A15-10_factors.tsv b/integration_test/casegen/combination/factors/A15-10_factors.tsv
+index 3247f99e..b2af464e 100644
+--- a/integration_test/casegen/combination/factors/A15-10_factors.tsv
++++ b/integration_test/casegen/combination/factors/A15-10_factors.tsv
+@@ -2,4 +2,3 @@
+ F01	P1	即時保存の指定	真｜偽または指定なし	真: 整合性を検証して確定保存し、当該デッキの一時保存を削除する／偽または指定なし: 整合性を検証して内容を一時保存（Redis）へ書き、確定保存はしない	L0011,L0033-L0035	この機能
+ F02	P1	当該デッキの一時保存	あり｜なし	あり: 確定保存すると削除される／なし: 確定保存しても削除するものが無い	L0013,L0034	この機能
+ F03	P1	採用カードの指定	指定あり｜指定なし	指定あり: 更新内容に含まれ確定保存の対象になる／指定なし: 扱わず更新前の採用カードは変わらない	L0027,L0030	この機能
+-F04	P1	公開範囲	限定公開｜公開または非公開	限定公開: 成功応答に閲覧用トークンを含める／公開または非公開: 閲覧用トークンを含めない	L0015,L0028	この機能
+diff --git a/integration_test/casegen/combination/factors/A15-10_interactions.tsv b/integration_test/casegen/combination/factors/A15-10_interactions.tsv
+index f310e5e7..83973583 100644
+--- a/integration_test/casegen/combination/factors/A15-10_interactions.tsv
++++ b/integration_test/casegen/combination/factors/A15-10_interactions.tsv
+@@ -2,6 +2,3 @@
+ P1	F01+F02	効き合う	L0013,L0034-L0035	確定保存のときだけ一時保存を削除し、一時保存のときは一時保存を書く（あれば上書き、なければ追加）
+ P1	F01+F03	効き合う	L0011,L0027,L0033	採用カードの指定は確定保存のときデッキ本体と採用カードへ反映され、一時保存のときは下書きにしか入らない
+ P1	F02+F03	関係しない		一時保存の有無は削除と上書きの対象を決めるだけで、採用カードの扱いはその有無で変わらない
+-P1	F01+F04	関係しない		閲覧用トークンを応答に含めるかは公開範囲だけで決まり、確定保存か一時保存かで変わらない
+-P1	F02+F04	関係しない		閲覧用トークンを応答に含めるかは公開範囲だけで決まり、一時保存の有無で変わらない
+-P1	F03+F04	関係しない		閲覧用トークンを応答に含めるかは公開範囲だけで決まり、採用カードの指定で変わらない
+diff --git a/integration_test/casegen/combination/factors/A15-10_processes.tsv b/integration_test/casegen/combination/factors/A15-10_processes.tsv
+index a7e5b2c5..b489dbe4 100644
+--- a/integration_test/casegen/combination/factors/A15-10_processes.tsv
++++ b/integration_test/casegen/combination/factors/A15-10_processes.tsv
+@@ -1,2 +1,2 @@
+ 処理ID	処理	契機	確かめる所	根拠
+-P1	デッキ情報を更新し確定保存か一時保存かへ振り分ける	所有者が有効なjwt-tokenでデッキ情報更新APIへ公開範囲と更新内容を送る	DB（デッキ本体と採用カード）・Redis（deck_デッキIDの一時保存）・成功応答の閲覧用トークン	L0010-L0015,L0033-L0035
++P1	デッキ情報を更新し確定保存か一時保存かへ振り分ける	所有者が有効なjwt-tokenでデッキ情報更新APIへ公開範囲と更新内容を送る	DB（デッキ本体と採用カード）・Redis（deck_デッキIDの一時保存）	L0010-L0015,L0033-L0035
+
+ succeeded in 163ms:
+diff --git a/integration_test/casegen/combination/factors/A15-07_constraints.tsv b/integration_test/casegen/combination/factors/A15-07_constraints.tsv
+index d21fecee..9fc792b6 100644
+--- a/integration_test/casegen/combination/factors/A15-07_constraints.tsv
++++ b/integration_test/casegen/combination/factors/A15-07_constraints.tsv
+@@ -1 +1,2 @@
+ 処理ID	組	種別	根拠	理由
++P1	F01=フォーマットが存在しない	打ち切り	L0012	存在しないフォーマットは404を返して終わり、アーキタイプの有無は結果に効かない
+
+ succeeded in 101ms:
+diff --git a/integration_test/casegen/combination/factors/A15-16_constraints.tsv b/integration_test/casegen/combination/factors/A15-16_constraints.tsv
+index d21fecee..08b40f31 100644
+--- a/integration_test/casegen/combination/factors/A15-16_constraints.tsv
++++ b/integration_test/casegen/combination/factors/A15-16_constraints.tsv
+@@ -1 +1,4 @@
+ 処理ID	組	種別	根拠	理由
++P1	F01=未設定	打ち切り	L0006	大会日が未設定の行は抽出されず、ほかの要因の値は結果に効かない
++P1	F02=空	打ち切り	L0006	大会名（日本語）が空の行は抽出されず、ほかの要因の値は結果に効かない
++P1	F03=空	打ち切り	L0006	大会名（英語）が空の行は抽出されず、ほかの要因の値は結果に効かない
+
+ succeeded in 102ms:
+diff --git a/integration_test/casegen/combination/factors/A15-14_constraints.tsv b/integration_test/casegen/combination/factors/A15-14_constraints.tsv
+index d21fecee..76bb785c 100644
+--- a/integration_test/casegen/combination/factors/A15-14_constraints.tsv
++++ b/integration_test/casegen/combination/factors/A15-14_constraints.tsv
+@@ -1 +1,3 @@
+ 処理ID	組	種別	根拠	理由
++P1	F01=非公開	打ち切り	L0007,L0011	非公開のデッキは集計対象に入らず、ほかの要因の値は結果に効かない
++P1	F02=日付が範囲外またはユーザーデッキ	打ち切り	L0007	大会日付が集計範囲外のデッキと大会デッキでないデッキは集計対象に入らず、ほかの要因の値は結果に効かない
+diff --git a/integration_test/casegen/combination/factors/A15-14_factors.tsv b/integration_test/casegen/combination/factors/A15-14_factors.tsv
+index 84962fa7..79fe1305 100644
+--- a/integration_test/casegen/combination/factors/A15-14_factors.tsv
++++ b/integration_test/casegen/combination/factors/A15-14_factors.tsv
+@@ -1,4 +1,4 @@
+ 要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+ F01	P1	デッキの公開範囲	公開｜非公開	公開: 集計対象になりうる／非公開: 集計対象外	L0007,L0011	この機能
+-F02	P1	デッキの種別と大会日付	大会デッキで日付が範囲内｜大会デッキで日付が範囲外｜ユーザーデッキ	大会デッキで日付が範囲内: 集計対象になりうる／大会デッキで日付が範囲外: 集計対象外／ユーザーデッキ: 大会デッキではないので集計対象外	L0007	この機能
++F02	P1	デッキの種別と大会日付	大会デッキで日付が範囲内｜日付が範囲外またはユーザーデッキ	大会デッキで日付が範囲内: 集計対象になりうる／日付が範囲外またはユーザーデッキ: 集計対象外（範囲外の大会デッキも大会デッキではないユーザーデッキも同じ）	L0007	この機能
+ F03	P1	countの指定	指定なし｜上位件数を指定	指定なし: 全アーキタイプを件数降順で返す／上位件数を指定: 件数上位から最大count件のアーキタイプに絞る	L0006,L0022	この機能
+
+ succeeded in 117ms:
+diff --git a/integration_test/casegen/combination/factors/A15-15_constraints.tsv b/integration_test/casegen/combination/factors/A15-15_constraints.tsv
+index d21fecee..4c68b632 100644
+--- a/integration_test/casegen/combination/factors/A15-15_constraints.tsv
++++ b/integration_test/casegen/combination/factors/A15-15_constraints.tsv
+@@ -1 +1,3 @@
+ 処理ID	組	種別	根拠	理由
++P1	F01=非公開	打ち切り	L0006,L0012	非公開のデッキは集計対象に入らず、ほかの要因の値は結果に効かない
++P1	F02=ユーザーデッキ	打ち切り	L0006	ユーザーデッキは集計対象に入らず、ほかの要因の値は結果に効かない
+
+ succeeded in 188ms:
+diff --git a/integration_test/casegen/combination/factors/A15-11_constraints.tsv b/integration_test/casegen/combination/factors/A15-11_constraints.tsv
+index d21fecee..d2df80a5 100644
+--- a/integration_test/casegen/combination/factors/A15-11_constraints.tsv
++++ b/integration_test/casegen/combination/factors/A15-11_constraints.tsv
+@@ -1 +1,3 @@
+ 処理ID	組	種別	根拠	理由
++P1	F01=認証または所有者違いで外れる	打ち切り	L0007,L0009	認証拒否(401)で終わり、一時保存の有無は結果に効かない
++P1	F01=存在しないまたは論理削除済みで外れる	打ち切り	L0008,L0011	該当なし(404)で終わり、一時保存の有無は結果に効かない
+diff --git a/integration_test/casegen/combination/factors/A15-11_existing.tsv b/integration_test/casegen/combination/factors/A15-11_existing.tsv
+index 10141b12..722ab6d0 100644
+--- a/integration_test/casegen/combination/factors/A15-11_existing.tsv
++++ b/integration_test/casegen/combination/factors/A15-11_existing.tsv
+@@ -1,15 +1,15 @@
+ テストID	処理ID	値	理由
+ IT-A15-11-001	P1	F01=すべて通過&F02=なし	所有者本人の有効トークンで一時保存なしのデッキを削除し応答200を確かめる
+ IT-A15-11-002	P1	F01=すべて通過&F02=なし	同条件で削除しDBの削除日時を確かめる
+-IT-A15-11-003	P1	F01=認証で外れる&F02=なし	トークンヘッダ無しで401を確かめる
+-IT-A15-11-004	P1	F01=認証で外れる&F02=なし	署名不正トークンで401を確かめる
+-IT-A15-11-005	P1	F01=認証で外れる&F02=なし	該当プレイヤーなしのトークンで401を確かめる
+-IT-A15-11-006	P1	F01=認証で外れる&F02=なし	無効トークン3種でDBの削除日時が値なしのままを確かめる
+-IT-A15-11-007	P1	F01=存在しないデッキで外れる	存在しないデッキIDで404を確かめる
+-IT-A15-11-008	P1	F01=所有者違いで外れる&F02=なし	他人のデッキで401を確かめる
+-IT-A15-11-009	P1	F01=所有者違いで外れる&F02=なし	他人のデッキの削除日時が値なしのままをDBで確かめる
+-IT-A15-11-010	P1	F01=認証で外れる	署名不正かつ存在しないデッキで認証判定が先に行われ401を確かめる
++IT-A15-11-003	P1	F01=認証または所有者違いで外れる&F02=なし	トークンヘッダ無しで401を確かめる
++IT-A15-11-004	P1	F01=認証または所有者違いで外れる&F02=なし	署名不正トークンで401を確かめる
++IT-A15-11-005	P1	F01=認証または所有者違いで外れる&F02=なし	該当プレイヤーなしのトークンで401を確かめる
++IT-A15-11-006	P1	F01=認証または所有者違いで外れる&F02=なし	無効トークン3種でDBの削除日時が値なしのままを確かめる
++IT-A15-11-007	P1	F01=存在しないまたは論理削除済みで外れる	存在しないデッキIDで404を確かめる
++IT-A15-11-008	P1	F01=認証または所有者違いで外れる&F02=なし	他人のデッキで401を確かめる
++IT-A15-11-009	P1	F01=認証または所有者違いで外れる&F02=なし	他人のデッキの削除日時が値なしのままをDBで確かめる
++IT-A15-11-010	P1	F01=認証または所有者違いで外れる	署名不正かつ存在しないデッキで認証判定が先に行われ401を確かめる
+ IT-A15-11-011	P1	F01=すべて通過&F02=なし	削除の前後で金額・税・ポイント・在庫が変わらないことをDBで確かめる
+ IT-A15-11-012	P1	F01=すべて通過&F02=あり	一時保存ありのデッキを削除しRedisのキーが無くなることを確かめる
+-IT-A15-11-017	P1	F01=論理削除済みデッキで外れる	削除済みデッキの再指定で404と削除日時不変を確かめる
++IT-A15-11-017	P1	F01=存在しないまたは論理削除済みで外れる	削除済みデッキの再指定で404と削除日時不変を確かめる
+ IT-A15-11-018	P1	F01=すべて通過&F02=あり	一時保存ありの対象デッキだけが削除されることを確かめる
+diff --git a/integration_test/casegen/combination/factors/A15-11_factors.tsv b/integration_test/casegen/combination/factors/A15-11_factors.tsv
+index c241b657..b10d0102 100644
+--- a/integration_test/casegen/combination/factors/A15-11_factors.tsv
++++ b/integration_test/casegen/combination/factors/A15-11_factors.tsv
+@@ -1,3 +1,3 @@
+ 要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+-F01	P1	判定のどの段で決まるか	認証で外れる｜存在しないデッキで外れる｜論理削除済みデッキで外れる｜所有者違いで外れる｜すべて通過	認証で外れる: トークン欠落・署名不正・該当プレイヤーなしはいずれも認証拒否HTTP 401で削除しない／存在しないデッキで外れる: 該当なしHTTP 404で削除しない／論理削除済みデッキで外れる: 該当なしHTTP 404で削除日時を設定し直さない／所有者違いで外れる: 認証拒否HTTP 401で削除しない／すべて通過: 削除日時を設定して論理削除しHTTP 200	L0006-L0011,L0019-L0021,L0043-L0046	この機能
++F01	P1	判定のどの段で決まるか	認証または所有者違いで外れる｜存在しないまたは論理削除済みで外れる｜すべて通過	認証または所有者違いで外れる: トークン欠落・署名不正・該当プレイヤーなし・所有者違いはいずれも認証拒否HTTP 401で削除しない／存在しないまたは論理削除済みで外れる: 該当なしHTTP 404で削除しない（論理削除済みは削除日時を設定し直さない）／すべて通過: 削除日時を設定して論理削除しHTTP 200	L0006-L0011,L0019-L0021,L0043-L0046	この機能
+ F02	P1	デッキの一時保存	あり｜なし	あり: 論理削除と併せて一時保存も削除する／なし: 論理削除のみ	L0015,L0039	この機能
+
+ succeeded in 150ms:
+diff --git a/integration_test/casegen/combination/factors/A15-13_constraints.tsv b/integration_test/casegen/combination/factors/A15-13_constraints.tsv
+index 27ba7fd1..ad381ddd 100644
+--- a/integration_test/casegen/combination/factors/A15-13_constraints.tsv
++++ b/integration_test/casegen/combination/factors/A15-13_constraints.tsv
+@@ -1,3 +1,6 @@
+ 処理ID	組	種別	根拠	理由
+ P2	F05=指定なし&F06=有効期間内にある	作れない	L0065,L0098	キャッシュキーを指定しないので同じキーの保存済み結果は存在しない
+ P2	F01=自分のデッキ検索&F02=無効&F06=有効期間内にある	正解未定	L0010,L0098	認証拒否とキャッシュ返却のどちらが先か書かれていない
++P1	F01=自分のデッキ検索&F02=無効	打ち切り	L0009,L0010	自分のデッキ検索でトークンが無効だと認証拒否(401)で終わり、公開範囲・所有者は結果に効かない
++P1	F01=公開検索&F03=非公開または限定公開	打ち切り	L0008	公開検索は公開デッキだけが対象で、公開デッキでなければ一覧に出さず、所有者は結果に効かない
++P1	F01=自分のデッキ検索&F04=他人	打ち切り	L0009	自分のデッキ検索は認証したプレイヤーが所有するデッキだけが対象で、他人のデッキは一覧に出さず、公開範囲は結果に効かない
+diff --git a/integration_test/casegen/combination/factors/A15-13_factors.tsv b/integration_test/casegen/combination/factors/A15-13_factors.tsv
+index 395bcd07..08e8a557 100644
+--- a/integration_test/casegen/combination/factors/A15-13_factors.tsv
++++ b/integration_test/casegen/combination/factors/A15-13_factors.tsv
+@@ -1,7 +1,7 @@
+ 要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+ F01	P1,P2	検索モード	公開検索｜自分のデッキ検索	公開検索: 認証不要で公開デッキが対象／自分のデッキ検索: 認証必須で認証したプレイヤー所有のデッキだけが対象で限定公開トークンも応答に含む	L0006-L0010,L0030	この機能
+ F02	P1,P2	認証用トークン	有効｜無効	有効: プレイヤーを特定できる／無効: 欠落・署名不正・該当プレイヤーなしは自分のデッキ検索のとき認証拒否HTTP 401（公開検索では検証しない）	L0008-L0010,L0036	この機能
+-F03	P1	デッキの公開範囲	公開｜非公開｜限定公開	公開: 公開検索の対象／非公開: 公開検索の対象外で所有者の自分のデッキ検索では対象／限定公開: 公開デッキではないので公開検索の対象外で所有者の自分のデッキ検索では対象	L0008-L0009,L0088	この機能
++F03	P1	デッキの公開範囲	公開｜非公開または限定公開	公開: 公開検索の対象／非公開または限定公開: 公開デッキではないので公開検索の対象外で、所有者の自分のデッキ検索では対象	L0008-L0009,L0088	この機能
+ F04	P1	デッキの所有者	認証プレイヤー本人｜他人	認証プレイヤー本人: 自分のデッキ検索の対象／他人: 自分のデッキ検索の対象外（公開デッキなら公開検索の対象）	L0008-L0009	この機能
+ F05	P2	キャッシュキー	指定あり｜指定なし	指定あり: 一覧と総件数をRedisに保存する／指定なし: 保存しない	L0065,L0097	この機能
+ F06	P2	同じキャッシュキーの保存済み結果	有効期間内にある｜無い	有効期間内にある: 保存した一覧と総件数を返す／無い: 検索し直す	L0098	この機能
+
+ succeeded in 181ms:
+diff --git a/integration_test/casegen/combination/factors/A15-12_constraints.tsv b/integration_test/casegen/combination/factors/A15-12_constraints.tsv
+index a7696f2b..52ba4a10 100644
+--- a/integration_test/casegen/combination/factors/A15-12_constraints.tsv
++++ b/integration_test/casegen/combination/factors/A15-12_constraints.tsv
+@@ -1,4 +1,4 @@
+ 処理ID	組	種別	根拠	理由
+-P1	F01=なし&F02=公開&F05=存在しない	作れない	L0007-L0008,L0024	下書きも保存済みのデッキも無いので参照元の公開範囲が存在しない
+-P1	F01=なし&F02=非公開&F05=存在しない	作れない	L0007-L0008,L0024	下書きも保存済みのデッキも無いので参照元の公開範囲が存在しない
+-P1	F01=なし&F02=限定公開&F05=存在しない	作れない	L0007-L0008,L0024	下書きも保存済みのデッキも無いので参照元の公開範囲が存在しない
++P1	F01=なし&F05=存在しない	打ち切り	L0007-L0008,L0024	下書きも保存済みのデッキも無いと該当なし(404)で終わり、公開範囲などは結果に効かない
++P1	F02=非公開&F03=確認できない	打ち切り	L0014,L0025	非公開は所有者本人と確認できないと参照不可の404で終わり、閲覧用トークンなどは結果に効かない
++P1	F02=限定公開&F03=確認できない&F04=一致しない又は指定なし	打ち切り	L0015,L0025	限定公開はトークン不一致かつ本人と確認できないと参照不可の404で終わる
+
+ succeeded in 159ms:
+diff --git a/integration_test/casegen/combination/factors/A15-17_constraints.tsv b/integration_test/casegen/combination/factors/A15-17_constraints.tsv
+index 6cdd6097..303fa6ce 100644
+--- a/integration_test/casegen/combination/factors/A15-17_constraints.tsv
++++ b/integration_test/casegen/combination/factors/A15-17_constraints.tsv
+@@ -3,3 +3,4 @@ P1	F02=Deck見出し&F04=解読できない行あり	正解未定	L0011	行番
+ P1	F02=Sideboard見出し&F04=解読できない行あり	正解未定	L0011	行番号に見出しの行を数えるか決まらない
+ P1	F02=Commander見出し&F04=解読できない行あり	正解未定	L0011	行番号に見出しの行を数えるか決まらない
+ P1	F03=空行あり&F04=解読できない行あり	正解未定	L0011	行番号に空行を数えるか決まらない
++P1	F01=統率者使用設定が無効&F02=Commander見出し	打ち切り	L0010	統率者使用設定が無効で統率領域に保存する行があると入力不正（HTTP 400）で登録されず、F03・F04の値は結果に効かない
+diff --git a/integration_test/casegen/combination/factors/A15-17_existing.tsv b/integration_test/casegen/combination/factors/A15-17_existing.tsv
+index 7b0b6d1a..599df4c4 100644
+--- a/integration_test/casegen/combination/factors/A15-17_existing.tsv
++++ b/integration_test/casegen/combination/factors/A15-17_existing.tsv
+@@ -1,16 +1,16 @@
+ テストID	処理ID	値	理由
+-IT-A15-17-001	P1	F01=統率者使用設定が無効&F02=見出しなし&F03=空行なし&F04=解読できない行なし&F05=限定公開以外	統率者使用設定無効・見出しも空行も無い2行・公開で登録し応答を確かめる
+-IT-A15-17-002	P1	F01=統率者使用設定が無効&F02=見出しなし&F03=空行なし&F04=解読できない行なし&F05=限定公開以外	同上でDBの新規デッキと採用カードを確かめる
+-IT-A15-17-003	P1	F01=統率者使用設定が無効&F02=見出しなし&F03=空行なし&F04=解読できない行なし&F05=限定公開以外	1行のカードリストを公開で登録しDBを確かめる
+-IT-A15-17-008	P1	F01=統率者使用設定が無効&F02=見出しなし&F03=空行なし&F04=解読できない行あり&F05=限定公開以外	1行目と3行目が解読不能な3行を公開で登録し206と行番号を確かめる
+-IT-A15-17-009	P1	F01=統率者使用設定が無効&F02=見出しなし&F03=空行なし&F04=解読できない行あり&F05=限定公開以外	同じ入力でDBの保存内容を確かめる
+-IT-A15-17-010	P1	F01=統率者使用設定が無効&F02=見出しなし&F03=空行なし&F04=解読できない行なし&F05=限定公開	限定公開で登録し表示用トークンを確かめる
+-IT-A15-17-011	P1	F01=統率者使用設定が無効&F02=見出しなし&F03=空行なし&F04=解読できない行なし&F05=限定公開以外	公開と非公開で登録し表示用トークンが無いことを確かめる
+-IT-A15-17-017	P1	F01=統率者使用設定が有効&F02=見出しなし&F03=空行あり&F04=解読できない行なし&F05=限定公開以外	統率者試験フォーマットで空行入り5行を登録し保存先を確かめる
+-IT-A15-17-017	P1	F01=統率者使用設定が無効&F02=見出しなし&F03=空行あり&F04=解読できない行なし&F05=限定公開以外	結合試験フォーマットで空行入り3行を登録し保存先を確かめる
+-IT-A15-17-024	P1	F01=統率者使用設定が有効&F02=Deck見出し&F03=空行なし&F04=解読できない行なし&F05=限定公開以外	Deck見出しの後のカードがメインボードに保存されることを確かめる
+-IT-A15-17-025	P1	F01=統率者使用設定が無効&F02=Sideboard見出し&F03=空行なし&F04=解読できない行なし&F05=限定公開以外	サイドボード見出しの後のカードがサイドボードに保存されることを確かめる
+-IT-A15-17-026	P1	F01=統率者使用設定が有効&F03=空行なし&F04=解読できない行なし&F05=限定公開以外	Deck見出しとCommander見出しの両方を含むリストの保存先を確かめる
+-IT-A15-17-027	P1	F01=統率者使用設定が無効&F02=Commander見出し&F03=空行なし&F04=解読できない行なし&F05=限定公開以外	無効なフォーマットでCommander見出しを使い400を確かめる
+-IT-A15-17-029	P1	F01=統率者使用設定が無効&F02=見出しなし&F03=空行なし&F04=解読できない行なし&F05=限定公開以外	同内容を2回登録し別デッキになることを確かめる
+-IT-A15-17-030	P1	F01=統率者使用設定が無効&F02=見出しなし&F03=空行なし&F04=解読できない行あり&F05=限定公開以外	2行目だけ解読不能な3行を登録し206と行番号を確かめる
++IT-A15-17-001	P1	F01=統率者使用設定が無効&F02=見出しなし&F03=空行なし&F04=解読できない行なし	統率者使用設定無効・見出しも空行も無い2行・公開で登録し応答を確かめる
++IT-A15-17-002	P1	F01=統率者使用設定が無効&F02=見出しなし&F03=空行なし&F04=解読できない行なし	同上でDBの新規デッキと採用カードを確かめる
++IT-A15-17-003	P1	F01=統率者使用設定が無効&F02=見出しなし&F03=空行なし&F04=解読できない行なし	1行のカードリストを公開で登録しDBを確かめる
++IT-A15-17-008	P1	F01=統率者使用設定が無効&F02=見出しなし&F03=空行なし&F04=解読できない行あり	1行目と3行目が解読不能な3行を公開で登録し206と行番号を確かめる
++IT-A15-17-009	P1	F01=統率者使用設定が無効&F02=見出しなし&F03=空行なし&F04=解読できない行あり	同じ入力でDBの保存内容を確かめる
++IT-A15-17-010	P1	F01=統率者使用設定が無効&F02=見出しなし&F03=空行なし&F04=解読できない行なし	限定公開で登録し表示用トークンを確かめる
++IT-A15-17-011	P1	F01=統率者使用設定が無効&F02=見出しなし&F03=空行なし&F04=解読できない行なし	公開と非公開で登録し表示用トークンが無いことを確かめる
++IT-A15-17-017	P1	F01=統率者使用設定が有効&F02=見出しなし&F03=空行あり&F04=解読できない行なし	統率者試験フォーマットで空行入り5行を登録し保存先を確かめる
++IT-A15-17-017	P1	F01=統率者使用設定が無効&F02=見出しなし&F03=空行あり&F04=解読できない行なし	結合試験フォーマットで空行入り3行を登録し保存先を確かめる
++IT-A15-17-024	P1	F01=統率者使用設定が有効&F02=Deck見出し&F03=空行なし&F04=解読できない行なし	Deck見出しの後のカードがメインボードに保存されることを確かめる
++IT-A15-17-025	P1	F01=統率者使用設定が無効&F02=Sideboard見出し&F03=空行なし&F04=解読できない行なし	サイドボード見出しの後のカードがサイドボードに保存されることを確かめる
++IT-A15-17-026	P1	F01=統率者使用設定が有効&F03=空行なし&F04=解読できない行なし	Deck見出しとCommander見出しの両方を含むリストの保存先を確かめる
++IT-A15-17-027	P1	F01=統率者使用設定が無効&F02=Commander見出し&F03=空行なし&F04=解読できない行なし	無効なフォーマットでCommander見出しを使い400を確かめる
++IT-A15-17-029	P1	F01=統率者使用設定が無効&F02=見出しなし&F03=空行なし&F04=解読できない行なし	同内容を2回登録し別デッキになることを確かめる
++IT-A15-17-030	P1	F01=統率者使用設定が無効&F02=見出しなし&F03=空行なし&F04=解読できない行あり	2行目だけ解読不能な3行を登録し206と行番号を確かめる
+diff --git a/integration_test/casegen/combination/factors/A15-17_factors.tsv b/integration_test/casegen/combination/factors/A15-17_factors.tsv
+index 76037f9b..5d63a8fd 100644
+--- a/integration_test/casegen/combination/factors/A15-17_factors.tsv
++++ b/integration_test/casegen/combination/factors/A15-17_factors.tsv
+@@ -3,4 +3,3 @@ F01	P1	フォーマットの統率者使用設定	統率者使用設定が有効
+ F02	P1	カードリストの見出しの行	見出しなし｜Deck見出し｜Sideboard見出し｜Commander見出し	見出しなし: 開始の保存先のまま空行で切り替わる／Deck見出し: 以降はメインボード／Sideboard見出し: 以降はサイドボード／Commander見出し: 以降は統率領域	L0010	この機能
+ F03	P1	カードリスト中の空行	空行あり｜空行なし	空行あり: Deck見出しが無いとき統率領域から以降はメインボード・サイドボード見出しが無いときメインボードから以降はサイドボード／空行なし: 切り替わらない	L0010	この機能
+ F04	P1	カード名が一致せず解読できない行	解読できない行あり｜解読できない行なし	解読できない行あり: 登録は完了しHTTP 206で該当行の行番号を返す／解読できない行なし: HTTP 200	L0011,L0030	この機能
+-F05	P1	デッキの公開区分	限定公開｜限定公開以外	限定公開: 応答に表示用トークンを返す／限定公開以外: 表示用トークンを返さない	L0017	この機能
+diff --git a/integration_test/casegen/combination/factors/A15-17_interactions.tsv b/integration_test/casegen/combination/factors/A15-17_interactions.tsv
+index c6c506cb..69e8f190 100644
+--- a/integration_test/casegen/combination/factors/A15-17_interactions.tsv
++++ b/integration_test/casegen/combination/factors/A15-17_interactions.tsv
+@@ -3,7 +3,3 @@ P1	F01+F02+F03	効き合う	L0010	保存先の開始（統率領域かメイン
+ P1	F01+F04	効き合う	L0010,L0011	無効で統率領域に保存する行があると400で登録されず、解読できない行があっても206にならない
+ P1	F02+F04	設計書が決めていない	L0011	行番号を数えるとき見出しの行を含むか書かれていない
+ P1	F03+F04	設計書が決めていない	L0011	行番号を数えるとき空行を含むか書かれていない
+-P1	F01+F05	関係しない		表示用トークンは公開区分だけで決まり保存先の振り分けとは無関係
+-P1	F02+F05	関係しない		表示用トークンは公開区分だけで決まる
+-P1	F03+F05	関係しない		表示用トークンは公開区分だけで決まる
+-P1	F04+F05	関係しない		表示用トークンの有無と206・200は別々の判定で、互いの値で変わる定めがない
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/FACTOR_PROMPT.md' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+# 依頼: 機能 {FID}（{FNAME}）の要因表づくり
+
+これは分析である。ケースも設計書も直さない。事実は自分でファイルを読んで確かめ、推測で書かない。
+リポジトリは `/home/y-saito/Developments/hareruya-design-docs/`。パスはここからの相対。出力はすべて日本語で書く。
+git の変更操作（add・commit など）をしない。
+
+## 背景（依頼者決定 2026-10-20）
+
+結合テストケースは設計書の定め1件ごとに作られ、10/15 には定めごとに「数量1と複数」「有無」「状態・区分ごと」などのデータを足した。
+それでも、**1回の処理の結果を左右する要因が2つ以上あるとき、その値を同時に変えて通すケースが無い**。
+例: 公開側で注文を確定するケース33件は、支払方法がほぼ郵便振替か銀行振込で、配送方法もゆうパック・EMS が大半。クレジットカード・代金引換・店頭支払、店頭受取・同梱で注文を通すケースは無い。
+
+依頼者の決定:
+- **効き合う要因**（一方の値で、もう一方の値の結果が変わると設計書が定める）は、値の組合せを全部試す。
+- **関係しない要因**は、どの2つの要因の値の組も、どこかのケースで1回は出るように並べる（2要因の組）。
+- **他の機能の設定値**（送料・手数料・支払方法の利用条件・送料無料の条件・配送方法に紐づく支払方法など）も、それを読む処理の要因に入れる。
+
+あなたの仕事は、機能 {FID} について、組合せの元になる**要因表**を作ること。組合せの行（どの値の組を何件試すか）は、この表から別の道具が機械で作る。
+だから、表の要因・値・判定の誤りは、そのままケースの誤りになる。
+
+## 読むもの
+
+| 何 | パス |
+| --- | --- |
+| 設計書（この機能のシートを文字に起こしたもの。行頭の `L0001` とタブは行番号。`#####` の行はシートの境目） | `integration_test/casegen/combination/units/{FID}/design.txt` |
+| 他の機能の設計書（設定値を読む処理のとき、設定する機能の定めを引く） | `integration_test/casegen/combination/units/<機能ID>/design.txt`（機能名は `combination/units.tsv`） |
+| 同じ冊子の共通シート（必要なときだけ） | {COMMON} |
+| この機能のケースとシード | `integration_test/casegen/cases/{FID}_test_cases.tsv`・`{FID}_seed_data.tsv` |
+| この機能の、テストから外したケース | `integration_test/casegen/combination/units/{FID}/excluded.tsv` |
+| 全機能のケース（他の機能のケースがこの機能の処理を通しているかの検索用） | `integration_test/casegen/all_test_cases.tsv`（列: テストID・観点ID・基本設計書・検証方法・テストデータ・事前準備・手順・期待結果。セル内改行があるので csv として読む） |
+| 結合テストの範囲 | `integration_test/SCOPE.md` |
+| 不機能仕様・フェーズ2見送り（ここに載るものは要因にしない） | `functions/dead-spec-register.tsv`・`functions/phase2_candidates.tsv` |
+| 設計書の中で記述が食い違うときの優先順位 | Excel 由来の本文 ＞ 埋め込みの「表示メッセージ」節（リニューアル後の仕様）＞ 埋め込みの「現行仕様」節。同じ出所では改訂後が優先。**Excel が触れていない条件を埋め込みが足しているだけのときは食い違いではなく、両方を当てる**（例: Excel が選択肢を並べ、埋め込みが「ポイントで全額払うときは全額ポイント支払いだけ」と条件を足す → 両方）。既存ケースは正解の根拠にしない（既存ケースと設計書の食い違いは返答に書く） |
+
+検索は `grep` を使う（`rg` は同じ入力で0件を返すことがあるので使わない）。
+
+## やること
+
+### 1. 処理を決める
+
+design.txt を**全部**読み、この機能の中で「操作やデータを受けて結果を出す処理」のうち、**結果を左右する要因が2つ以上ある処理**を挙げる。
+
+- 処理の単位は「1回の操作で動き、結果を1つの所で確かめられるまとまり」。例: 注文を確定して受注を作る／お支払い方法の選択肢を出す／受注の対応状況をキャンセルへ変えて保存する。
+- 結果は、データを作った所とは**別のコンポーネントで確かめる**もの（DB、別の画面、別の機能の画面、CSV・帳票、メール、連携先）。DBにあるデータで画面の表示・選択肢が変わるものも入る（例: 既存の受注の有無で配送方法の選択肢が変わる）。同じ画面の中だけで閉じる表示の計算（保存しない）と、計算式そのものの正しさは単体テストなので挙げない。
+- 要因が1つだけの処理は挙げない（10/15 の監査で済んでいる）。
+- **要因が2つ以上の処理が1つも無い機能**（一覧を出すだけ、1つの設定を保存するだけ、など）は、5つのファイルをヘッダだけで書き、返答の1行目に「対象の処理なし」と理由を書く。無理に処理を作らない。
+- 入力値の検証（必須・桁数・形式）、検索条件・削除条件の組合せ、権限、二重送信、排他は、ほかの観点の持ち分なので処理にも要因にもしない。
+
+### 2. 要因と値を挙げる
+
+処理ごとに、**その処理の結果を変えると設計書が定める要因**を挙げる。
+
+- 要因は「区分・状態・設定・関連データ」の値。例: 閲覧店舗、配送方法、支払方法、ポイントの使い方、受注の種類（通常・店頭受取・ついで買い）、会員か非会員か、変更前の対応状況、既存の受注の状態。
+- 他の機能で設定する値で、この処理が読むものも要因にする（出所に機能IDを書く）。例: 支払方法の利用条件（M10-04）に対する注文金額、都道府県別の送料（M10-06）。その機能の design.txt で定めを確かめ、根拠に `M10-04:L0123` の形で書く。**この処理の結果への効き方が設計書のどこにも書かれていない設定値は要因にしない**（値ごとの結果が書けないため）。そういう設定値は返答の「判断に迷った点」に挙げる（依頼元が論点として控える）。
+- **値は、結果の分かれ目ごとに代表を1つ**。結果が同じになる値は1つにまとめる（例: ゆうパックとゆうパケットで結果が変わらないならどちらか1つ）。設計書が別々の条件として書いていても、結果が同じならまとめる（例: 仮会員と退会済み会員がどちらも対象外なら「仮会員または退会済み」の1値。条件を1つずつ通すのは 10/15 のデータパターンのケースの持ち分。依頼者決定 2026-10-20）。結果が値ごとに違うなら全部挙げる（例: 支払方法ごとに手数料・ボタンの文言・ポイントを使う時点が違うなら、支払方法は全部）。
+- 境界値（ちょうどの値・上限）と数量1/複数は、10/15 に済んでいるので値にしない。値は「範囲内」「範囲外」「あり」「なし」のような分かれ目で書く。
+- 不正な入力、作れない値（画面の選択肢に無い値）は値にしない。
+- **出力の列・表示項目ごとに独立して決まる値は要因にしない**（例: CSV の列が「値が無ければ空欄」、日付の書式、区分の文言への変換）。列どうしは互いの結果を変えないので組にしない（依頼者決定 2026-10-20）。ほかの要因と効き合う（その値で、ほかの要因の結果や、行を出す・出さないが変わる）ときだけ要因にする。
+- 値ごとの結果を、設計書の語で短く書く（「支店: 支払方法は店頭支払だけ」）。
+
+### 3. 要因どうしを判定する
+
+処理ごとに、その処理の要因の**すべての2つの組**を判定する（要因が5つなら10組）。判定は次のどれか。
+
+| 判定 | いつ | 根拠 |
+| --- | --- | --- |
+| 効き合う | 一方の値で、もう一方の値の結果（可否、選択肢、金額、更新先、更新内容）が変わると設計書が定める。または、一方の結果がもう一方の判定の入力になる（例: 使用ポイントで支払う金額が変わり、支払方法の選択肢が変わる） | 両方を結ぶ設計書の行が必須 |
+| 関係しない | それぞれの要因の結果が、もう一方の値によって変わらない（例: 送料は配送方法で、手数料は支払方法で決まり、合計は足し算） | 理由を書く |
+| 設計書が決めていない | 同時に効いたときの結果が設計書から決まらない（例: 送料無料の判定に使う金額が、ポイントを引く前か後か書かれていない） | 決まらない理由。下の「組の制約」に、決まらない値の組を「正解未定」で必ず書く |
+
+3つ以上の要因がまとめて効き合うとき（例: 配送方法・既存の受注の状態・既存の受注の支払方法で同梱を出すか決まる）は、1行に `F01+F03+F05` と書いて「効き合う」にしてよい。その中の2つの組は、別の行に書かない。**まとめるのは、その全部が同時に互いの結果を変えるときだけ**。2つずつで効き合うだけなら2要因の行に分ける（まとめると値の組合せが全部ケースになり、件数が膨らむ）。
+**選べるものの集まりを2つの定めが別々に絞り、結果がその共通部分になるとき**（例: 支店は支払方法が店頭支払だけ、同梱は郵便振替・銀行振込だけ → 選択肢の中身が組ごとに変わる）は「効き合う」にする。「設計書が決めていない」にするのは、両方を当てると選択肢が1つも残らないなど、結果が設計書から決まらない組だけ。
+**1件の対象を出す・出さない（対象にする・しない）を、複数の条件の「すべて満たす」または「どれか1つで外れる」で決めるとき**（例: 公開・在庫あり・セール期間内・表示フラグ のすべてを満たす商品だけ出す）は、条件どうしは「関係しない」にする。結果は出る・出ないの2つだけで、条件ごとの外れ方は1つずつ確かめれば足り、全組合せは要らない（7条件を効き合うにすると128行になる）。外れる側の値（非公開・在庫なし・期間外など）は下の「打ち切り」に書く（2026-10-20 の見直しで全機能をこの書き方にそろえた）。機械は外れる値を1回ずつ通し、全部を満たす1行を必ず作る。
+**優先順位で順に比べて決めるとき**（例: 複数一致したら、言語→特殊版→発売日→フォイル→プロモの順に比べて先に差が付いたもので選ぶ）は、比べる項目を別々の要因にして全組合せにしない。「どの段で決まるか」を1つの要因にまとめる（値: 1段目で決まる｜2段目で決まる｜…｜全段が同じ）。上の段の差が下の段を隠すので、各段で決まる組を1つずつ試せば足りる（6段を効き合うにすると64行になる）。
+「一方の値で、もう一方の処理そのものが行われない」型（例: キャンセル日が既に入っていると、在庫・ポイントの戻しを行わない）は、その値を下の「打ち切り」に書く（依頼者決定 2026-10-20「打ち切り側は1回でよい」）。打ち切られない側の値どうしの判定は、ほかの組と同じに決める。
+**推測で値の組を「作れない」にしない**。設計書の語がどの値を指すか決まらないとき（例: 支店の「店舗受取」が店頭受取とスムーズ店頭受取のどちらか）は「正解未定」にする。
+**効き合う組の値の組合せは全部ケースになる**。値が多い要因どうし（7×7 など）を効き合うにするときは、設計書の行で本当に互いの結果を変えるかを確かめる。足し算で合計に入るだけなら「関係しない」。
+
+### 4. 組の制約を書く
+
+- **作れない**: 設計上その値の組が成り立たない（例: 支店では支払方法が店頭支払だけなので、支店×代金引換は作れない）。根拠の行が必須。
+- **正解未定**: その値の組で結果が設計書から決まらない。決まらない理由を書く。これはケースにせず、報告書に論点として残す。
+- **打ち切り**: その値（または値の組）になると処理がそこで打ち切られ、ほかの要因の値は結果に効かない（例: 非公開なら出さない、エラーで元の画面へ戻る、廃止済みなら何も変えない、トークンが無効なら拒否）。機械はこの条件を1回だけ通し、ほかの要因との組は埋めない。打ち切られても一部の要因の値がまだ結果に効く（例: エラーの文言が支払方法で変わる）ときは、その要因の値も組に入れて書く（`F01=非公開&F03=英語` のように値ごとに1行）。根拠の行が必須。
+
+### 5. 既存のケースが通している組を書く
+
+この機能のケース（と、`all_test_cases.tsv` を語で検索して見つかった他の機能のケース）のうち、**その処理を動かして、確かめる所で結果を確かめている**ケースを1件ずつ書き、そのケースで値が決まっている要因の値を書く。
+
+- 値は、事前準備・手順に**書かれている**ものだけ。書かれていない要因は書かない（流れの中でたまたまそうなるだけのものは数えない）。
+- 1つのケースが同じ処理を別の値で2回以上通しているときは、通した値ごとに1行ずつ書く（同じテストIDの行が2つになる）。1回の処理で2つのデータを別の値で扱う（混在）ケースは書かない。
+- 期待結果が設計書と食い違う既存ケースは、値が合っていても書かない（返答に食い違いとして書く）。
+- 処理を動かしていない（画面を開いて別のことを見るだけ）ケース、結果を確かめていないケースは書かない。
+- テストから外したケース（excluded.tsv）は書かない。
+
+## 出力（この5つだけを書く。ほかのファイルは変更しない）
+
+すべて `integration_test/casegen/combination/factors/` に、タブ区切り・ヘッダつきで書く。セル内に改行・タブ・ダブルクォートを入れない。
+
+### `{FID}_processes.tsv`（5列）
+
+```
+処理ID	処理	契機	確かめる所	根拠
+P1	注文を確定して受注を作る	ご注文方法指定画面で確定チェックボックスを選び、注文するボタンを押す	受注情報編集画面（M05-11）	L0322-L0330
+```
+
+- 処理IDは P1 からの連番。根拠は design.txt の行（`L0037`、`L0037-L0040`、カンマ区切り）。他の機能は `M10-04:L0012`、共通シートは `_common/<ファイル名>:L0012`。
+
+### `{FID}_factors.tsv`（7列）
+
+```
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1,P2	閲覧店舗	本店｜支店	本店: 支払方法はEC用の6種／支店: 支払方法は店頭支払だけ	L0236,L0249-L0252	この機能
+F05	P2	支払方法の利用条件に対する注文金額	範囲内｜上限を超える	範囲内: 選択肢に出る／上限を超える: 選択肢に出ない	M10-04:L0101	M10-04（設定）
+```
+
+- 要因IDは F01 からの連番（処理をまたいで通し番号）。処理IDはその要因が効く処理（カンマ区切り）。
+- 値は全角の縦棒 `｜` で区切る。2つ以上。1つの値は30字まで。`=` `&` `｜` `＋` `×` を値の中に使わない。
+- 値ごとの結果は `値: 結果` を `／` でつなぐ。全部の値について書く。
+- 出所は `この機能`、`<機能ID>（設定）`、`<機能ID>（データ）` のどれか。
+
+### `{FID}_interactions.tsv`（5列）
+
+```
+処理ID	要因	判定	根拠	理由
+P1	F03+F04	効き合う	L0204	配送方法が同梱のときは支払方法が郵便振替・銀行振込だけになる
+P1	F04+F06	関係しない		手数料は支払方法で決まり、ポイントは値引きとして合計から引くだけ
+P1	F06+F07	設計書が決めていない	M10-05:L0040	送料無料の判定に使う金額がポイント値引きの前か後か書かれていない
+```
+
+- 処理ごとに、その処理の要因の2つの組を全部判定する（3つ以上の効き合うにまとめた組は除く）。
+- 効き合う・設計書が決めていない は根拠が必須。関係しない・設計書が決めていない は理由が必須。
+
+### `{FID}_constraints.tsv`（5列）
+
+```
+処理ID	組	種別	根拠	理由
+P1	F01=支店&F04=代金引換	作れない	L0251-L0252	支店の支払方法は店頭支払だけ
+P1	F06=ポイントを使う&F07=送料無料の条件に届く	正解未定	M10-05:L0040	送料無料の判定に使う金額が決まらない
+P2	F02=キャンセル日あり	打ち切り	L0412	キャンセル日が既に入っていると、在庫・ポイントの戻しを行わない
+```
+
+- 組は `要因ID=値` を `&` でつなぐ。値は factors.tsv の値と一字一句同じ。値1つだけの組（`F16=店頭受取のみのスマレジ決済`）も書ける: その値でこの処理を動かすこと自体が作れない・結果が決まらないとき（設計書の記述どうしが食い違い、共通する部分が無いときなど）。
+- 種別は `作れない`・`正解未定`・`打ち切り` のどれか。根拠が必須。制約が無ければヘッダだけ書く。
+
+### `{FID}_existing.tsv`（4列）
+
+```
+テストID	処理ID	値	理由
+IT-F04-02-081	P1	F01=本店&F03=ゆうパック&F04=郵便振替	事前準備で本店・ゆうパック・郵便振替を選び、受注情報編集画面で支払方法と配送方法を確かめる
+```
+
+- 値は `要因ID=値` を `&` でつなぐ。ケースに書かれている要因だけ。1つ以上。
+- 1つのケースが2つの処理を通しているときは2行に書く。該当するケースが無ければヘッダだけ書く。
+
+書いたら次を実行し、エラーが無くなるまで直す。組の数（全組と2要因の組で、既存ケースが通していない組を埋めるのに要る行の数）も出る。
+
+```
+python3 integration_test/casegen/combination/gate_factors.py {FID}
+```
+
+作業用の一時ファイルを作るときは、名前に {FID} を入れてスクラッチパッドに作る。他の機能の factors/ のファイルは読まない・書かない。
+ファイルの書き込みを拒否されたときは、回避せず、書くはずだった本文を返答に載せる（依頼元が保存する）。
+
+## 返答
+
+3行以内: 処理の数・要因の数・効き合う組の数・設計書が決めていない組の数、gate の結果と出た行の数、判断に迷った点（あれば1つ）。
+
+exec
+/bin/bash -lc 'git diff eddb12cb -- integration_test/casegen/combination/factors/A15-10_{processes,factors,interactions,constraints,existing}.tsv integration_test/casegen/combination/factors/A15-11_{processes,factors,interactions,constraints,existing}.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+diff --git a/integration_test/casegen/combination/factors/A15-10_factors.tsv b/integration_test/casegen/combination/factors/A15-10_factors.tsv
+index 3247f99e..b2af464e 100644
+--- a/integration_test/casegen/combination/factors/A15-10_factors.tsv
++++ b/integration_test/casegen/combination/factors/A15-10_factors.tsv
+@@ -2,4 +2,3 @@
+ F01	P1	即時保存の指定	真｜偽または指定なし	真: 整合性を検証して確定保存し、当該デッキの一時保存を削除する／偽または指定なし: 整合性を検証して内容を一時保存（Redis）へ書き、確定保存はしない	L0011,L0033-L0035	この機能
+ F02	P1	当該デッキの一時保存	あり｜なし	あり: 確定保存すると削除される／なし: 確定保存しても削除するものが無い	L0013,L0034	この機能
+ F03	P1	採用カードの指定	指定あり｜指定なし	指定あり: 更新内容に含まれ確定保存の対象になる／指定なし: 扱わず更新前の採用カードは変わらない	L0027,L0030	この機能
+-F04	P1	公開範囲	限定公開｜公開または非公開	限定公開: 成功応答に閲覧用トークンを含める／公開または非公開: 閲覧用トークンを含めない	L0015,L0028	この機能
+diff --git a/integration_test/casegen/combination/factors/A15-10_interactions.tsv b/integration_test/casegen/combination/factors/A15-10_interactions.tsv
+index f310e5e7..83973583 100644
+--- a/integration_test/casegen/combination/factors/A15-10_interactions.tsv
++++ b/integration_test/casegen/combination/factors/A15-10_interactions.tsv
+@@ -2,6 +2,3 @@
+ P1	F01+F02	効き合う	L0013,L0034-L0035	確定保存のときだけ一時保存を削除し、一時保存のときは一時保存を書く（あれば上書き、なければ追加）
+ P1	F01+F03	効き合う	L0011,L0027,L0033	採用カードの指定は確定保存のときデッキ本体と採用カードへ反映され、一時保存のときは下書きにしか入らない
+ P1	F02+F03	関係しない		一時保存の有無は削除と上書きの対象を決めるだけで、採用カードの扱いはその有無で変わらない
+-P1	F01+F04	関係しない		閲覧用トークンを応答に含めるかは公開範囲だけで決まり、確定保存か一時保存かで変わらない
+-P1	F02+F04	関係しない		閲覧用トークンを応答に含めるかは公開範囲だけで決まり、一時保存の有無で変わらない
+-P1	F03+F04	関係しない		閲覧用トークンを応答に含めるかは公開範囲だけで決まり、採用カードの指定で変わらない
+diff --git a/integration_test/casegen/combination/factors/A15-10_processes.tsv b/integration_test/casegen/combination/factors/A15-10_processes.tsv
+index a7e5b2c5..b489dbe4 100644
+--- a/integration_test/casegen/combination/factors/A15-10_processes.tsv
++++ b/integration_test/casegen/combination/factors/A15-10_processes.tsv
+@@ -1,2 +1,2 @@
+ 処理ID	処理	契機	確かめる所	根拠
+-P1	デッキ情報を更新し確定保存か一時保存かへ振り分ける	所有者が有効なjwt-tokenでデッキ情報更新APIへ公開範囲と更新内容を送る	DB（デッキ本体と採用カード）・Redis（deck_デッキIDの一時保存）・成功応答の閲覧用トークン	L0010-L0015,L0033-L0035
++P1	デッキ情報を更新し確定保存か一時保存かへ振り分ける	所有者が有効なjwt-tokenでデッキ情報更新APIへ公開範囲と更新内容を送る	DB（デッキ本体と採用カード）・Redis（deck_デッキIDの一時保存）	L0010-L0015,L0033-L0035
+diff --git a/integration_test/casegen/combination/factors/A15-11_constraints.tsv b/integration_test/casegen/combination/factors/A15-11_constraints.tsv
+index d21fecee..d2df80a5 100644
+--- a/integration_test/casegen/combination/factors/A15-11_constraints.tsv
++++ b/integration_test/casegen/combination/factors/A15-11_constraints.tsv
+@@ -1 +1,3 @@
+ 処理ID	組	種別	根拠	理由
++P1	F01=認証または所有者違いで外れる	打ち切り	L0007,L0009	認証拒否(401)で終わり、一時保存の有無は結果に効かない
++P1	F01=存在しないまたは論理削除済みで外れる	打ち切り	L0008,L0011	該当なし(404)で終わり、一時保存の有無は結果に効かない
+diff --git a/integration_test/casegen/combination/factors/A15-11_existing.tsv b/integration_test/casegen/combination/factors/A15-11_existing.tsv
+index 10141b12..722ab6d0 100644
+--- a/integration_test/casegen/combination/factors/A15-11_existing.tsv
++++ b/integration_test/casegen/combination/factors/A15-11_existing.tsv
+@@ -1,15 +1,15 @@
+ テストID	処理ID	値	理由
+ IT-A15-11-001	P1	F01=すべて通過&F02=なし	所有者本人の有効トークンで一時保存なしのデッキを削除し応答200を確かめる
+ IT-A15-11-002	P1	F01=すべて通過&F02=なし	同条件で削除しDBの削除日時を確かめる
+-IT-A15-11-003	P1	F01=認証で外れる&F02=なし	トークンヘッダ無しで401を確かめる
+-IT-A15-11-004	P1	F01=認証で外れる&F02=なし	署名不正トークンで401を確かめる
+-IT-A15-11-005	P1	F01=認証で外れる&F02=なし	該当プレイヤーなしのトークンで401を確かめる
+-IT-A15-11-006	P1	F01=認証で外れる&F02=なし	無効トークン3種でDBの削除日時が値なしのままを確かめる
+-IT-A15-11-007	P1	F01=存在しないデッキで外れる	存在しないデッキIDで404を確かめる
+-IT-A15-11-008	P1	F01=所有者違いで外れる&F02=なし	他人のデッキで401を確かめる
+-IT-A15-11-009	P1	F01=所有者違いで外れる&F02=なし	他人のデッキの削除日時が値なしのままをDBで確かめる
+-IT-A15-11-010	P1	F01=認証で外れる	署名不正かつ存在しないデッキで認証判定が先に行われ401を確かめる
++IT-A15-11-003	P1	F01=認証または所有者違いで外れる&F02=なし	トークンヘッダ無しで401を確かめる
++IT-A15-11-004	P1	F01=認証または所有者違いで外れる&F02=なし	署名不正トークンで401を確かめる
++IT-A15-11-005	P1	F01=認証または所有者違いで外れる&F02=なし	該当プレイヤーなしのトークンで401を確かめる
++IT-A15-11-006	P1	F01=認証または所有者違いで外れる&F02=なし	無効トークン3種でDBの削除日時が値なしのままを確かめる
++IT-A15-11-007	P1	F01=存在しないまたは論理削除済みで外れる	存在しないデッキIDで404を確かめる
++IT-A15-11-008	P1	F01=認証または所有者違いで外れる&F02=なし	他人のデッキで401を確かめる
++IT-A15-11-009	P1	F01=認証または所有者違いで外れる&F02=なし	他人のデッキの削除日時が値なしのままをDBで確かめる
++IT-A15-11-010	P1	F01=認証または所有者違いで外れる	署名不正かつ存在しないデッキで認証判定が先に行われ401を確かめる
+ IT-A15-11-011	P1	F01=すべて通過&F02=なし	削除の前後で金額・税・ポイント・在庫が変わらないことをDBで確かめる
+ IT-A15-11-012	P1	F01=すべて通過&F02=あり	一時保存ありのデッキを削除しRedisのキーが無くなることを確かめる
+-IT-A15-11-017	P1	F01=論理削除済みデッキで外れる	削除済みデッキの再指定で404と削除日時不変を確かめる
++IT-A15-11-017	P1	F01=存在しないまたは論理削除済みで外れる	削除済みデッキの再指定で404と削除日時不変を確かめる
+ IT-A15-11-018	P1	F01=すべて通過&F02=あり	一時保存ありの対象デッキだけが削除されることを確かめる
+diff --git a/integration_test/casegen/combination/factors/A15-11_factors.tsv b/integration_test/casegen/combination/factors/A15-11_factors.tsv
+index c241b657..b10d0102 100644
+--- a/integration_test/casegen/combination/factors/A15-11_factors.tsv
++++ b/integration_test/casegen/combination/factors/A15-11_factors.tsv
+@@ -1,3 +1,3 @@
+ 要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+-F01	P1	判定のどの段で決まるか	認証で外れる｜存在しないデッキで外れる｜論理削除済みデッキで外れる｜所有者違いで外れる｜すべて通過	認証で外れる: トークン欠落・署名不正・該当プレイヤーなしはいずれも認証拒否HTTP 401で削除しない／存在しないデッキで外れる: 該当なしHTTP 404で削除しない／論理削除済みデッキで外れる: 該当なしHTTP 404で削除日時を設定し直さない／所有者違いで外れる: 認証拒否HTTP 401で削除しない／すべて通過: 削除日時を設定して論理削除しHTTP 200	L0006-L0011,L0019-L0021,L0043-L0046	この機能
++F01	P1	判定のどの段で決まるか	認証または所有者違いで外れる｜存在しないまたは論理削除済みで外れる｜すべて通過	認証または所有者違いで外れる: トークン欠落・署名不正・該当プレイヤーなし・所有者違いはいずれも認証拒否HTTP 401で削除しない／存在しないまたは論理削除済みで外れる: 該当なしHTTP 404で削除しない（論理削除済みは削除日時を設定し直さない）／すべて通過: 削除日時を設定して論理削除しHTTP 200	L0006-L0011,L0019-L0021,L0043-L0046	この機能
+ F02	P1	デッキの一時保存	あり｜なし	あり: 論理削除と併せて一時保存も削除する／なし: 論理削除のみ	L0015,L0039	この機能
+
+exec
+/bin/bash -lc "for f in integration_test/casegen/combination/review/A15-{07,09,10,11,12,13,14,15,16,17}_factors_s_dispositions.tsv; do printf '\\n%s\\n' \""'$f"; cat "$f"; done' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+
+integration_test/casegen/combination/review/A15-07_factors_s_dispositions.tsv
+決定	処置	理由	直した所
+1	直し	存在しないフォーマットは404で打ち切られF02が効かないため	constraints.tsvにF01=フォーマットが存在しないを打ち切りで追加
+2	直しなし	当たる所なし	
+3	直しなし	当たる所なし	
+
+integration_test/casegen/combination/review/A15-09_factors_s_dispositions.tsv
+決定	処置	理由	直した所
+1	直しなし	登録は拒否せず違反フラグを保存する処理で、打ち切る値は無い	
+2	直しなし	当たる所なし	
+3	直し	禁止制限なしと制限カード1枚はどちらも違反にならず、禁止カードありと制限カード2枚以上はどちらも違反になるため（L0023）	F07を2値にまとめ、existingのF07の値を合わせた
+
+integration_test/casegen/combination/review/A15-10_factors_s_dispositions.tsv
+決定	処置	理由	直した所
+1	直しなし	当たる所なし	
+2	直し	公開範囲は応答の閲覧用トークンを含めるかを決めるだけで、ほかの要因と効き合わない（interactionsも全て関係しない）	F04と関係しない3行を外し、確かめる所から閲覧用トークンを外した
+3	直しなし	当たる所なし	
+
+integration_test/casegen/combination/review/A15-11_factors_s_dispositions.tsv
+決定	処置	理由	直した所
+1	直し	判定で外れる2値は途中で打ち切られ一時保存の有無が効かないため	constraintsに打ち切り2行
+2	直しなし	当たる所なし	
+3	直し	認証拒否401になる認証で外れると所有者違い、該当なし404になる存在しないと論理削除済みは結果が同じため	F01を3値にまとめ、existingの値を合わせた
+
+integration_test/casegen/combination/review/A15-12_factors_s_dispositions.tsv
+決定	処置	理由	直した所
+1	直し	下書きも保存済みも無い404、非公開で本人確認できない404、限定公開でトークン不一致かつ本人確認できない404で終わり、ほかの要因が効かないため（L0024-L0025）	「作れない」3行（F01=なし&F02=*&F05=存在しない）を外し、打ち切り3行に置き換え
+2	直しなし	当たる所なし	
+3	直しなし	当たる所なし	
+
+integration_test/casegen/combination/review/A15-13_factors_s_dispositions.tsv
+決定	処置	理由	直した所
+1	直し	認証拒否・公開デッキ以外・他人のデッキは結果に出ず、ほかの要因が効かないため（P1のみ。P2は認証拒否とキャッシュ返却の先後が未定なので打ち切りにしない）	constraintsに打ち切り3行
+2	直しなし	当たる所なし	
+3	直し	非公開と限定公開はどちらも公開検索の対象外で自分のデッキ検索では対象のため結果が同じ（L0008-L0009,L0088）	F03を「公開｜非公開または限定公開」の2値にまとめた
+
+integration_test/casegen/combination/review/A15-14_factors_s_dispositions.tsv
+決定	処置	理由	直した所
+1	直し	非公開と集計範囲外・大会デッキでないデッキは集計対象に入らず他の値が効かない（L0007,L0011）	constraints に打ち切り2行（F01=非公開、F02=日付が範囲外またはユーザーデッキ）
+2	直しなし	当たる所なし	
+3	直し	日付が範囲外の大会デッキとユーザーデッキはどちらも集計対象外で結果が同じ	F02の3値を2値にまとめ、existingの値は変更不要
+
+integration_test/casegen/combination/review/A15-15_factors_s_dispositions.tsv
+決定	処置	理由	直した所
+1	直し	非公開デッキとユーザーデッキは集計対象に入らず他の値が効かない（L0006,L0012）	constraints に打ち切り2行（F01=非公開、F02=ユーザーデッキ）
+2	直しなし	当たる所なし	
+3	直しなし	同じ結果の値は既に無い（公開範囲と種別は別の要因）	
+
+integration_test/casegen/combination/review/A15-16_factors_s_dispositions.tsv
+決定	処置	理由	直した所
+1	直し	大会日未設定・大会名（日本語）が空・大会名（英語）が空のどれでも行は抽出されず他の値が効かない（L0006）	constraints に打ち切り3行（F01=未設定、F02=空、F03=空）
+2	直しなし	当たる所なし	
+3	直しなし	同じ要因の中でまとめる値なし（日本語名と英語名は別の列の条件で、機能の仕様どおり別要因のまま）	
+
+integration_test/casegen/combination/review/A15-17_factors_s_dispositions.tsv
+決定	処置	理由	直した所
+1	直し	無効なフォーマットでCommander見出しを使うと400で登録されず他の値が効かない（L0010）	constraints に打ち切り1行（F01=統率者使用設定が無効&F02=Commander見出し）
+2	直し	表示用トークンの有無は公開区分だけで決まる出力項目で、ほかの要因と効き合わない（旧F05は全ての組が関係しない）	F05と、F05を含む interactions 4行を外し、existing の F05 を外した
+3	直しなし	同じ結果の値なし	
+
+codex
+差分の中心は、打ち切り条件の追加、同結果の値の統合、A15-10 と A15-17 の要因削除です。特に削除された値が応答項目だけでなく保存内容も変えるか、設計書本文で確認します。
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/A15-07/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+##### 0515 a15-07 A15-07 アーキタイプ検索 ／ API デッキビルダー — アーキタイプ検索
+L0001	Source:
+L0002	functions/pf-api/a15-07_api_deck_builder_deck_archetype_search.md
+L0003	A15-07 アーキタイプ検索 ／ API デッキビルダー — アーキタイプ検索
+L0004	業務ロジック
+L0005	取得対象
+L0006	パスで指定したフォーマットに紐づくアーキタイプを返す。返す値は識別子・日本語名・英語名である。指定したフォーマットがフォーマットマスタに存在しないときは、該当なし（HTTP 404）とする。
+L0007	フォーマットが存在し、紐づくアーキタイプが無いときは、HTTP 200・処理結果コード200で、アーキタイプの配列を空の配列として返す。
+L0008	認証
+L0009	本APIは認証を行わない。認証用トークンのヘッダを参照せず、利用者の照合もしない。認証起因の拒否（HTTP 401）は返さない。呼び出し可能なクライアントはデッキビルダーアプリで、利用者の状態によらず参照できる。
+L0010	エラー時の扱い
+L0011	エラー内容	処理
+L0012	指定フォーマットが存在しない	コード404・メッセージ「The format does not exist」を返す
+L0013	取得処理中の例外	共通例外処理に委ねる（HTTP 500相当）
+L0014	入出力
+L0015	種類	内容
+L0016	入力	パスのフォーマット識別子（必須、整数）。フォーマットマスタに存在する識別子を指定する
+L0017	成功時出力	HTTP 200。処理結果コードとアーキタイプ配列を含むラッパオブジェクト
+L0018	失敗時出力	該当フォーマットが無いときはHTTP 404でコードとメッセージ。取得中の例外は共通例外処理に委ねる
+L0019	出力: フィールド
+L0020	フィールド	型	説明
+L0021	code	integer	処理結果コード。成功時は200。
+L0022	archetypes	array	アーキタイプ行の配列。
+L0023	archetypes[].id	integer	アーキタイプの識別子。
+L0024	archetypes[].name_jp	string	アーキタイプの日本語名。
+L0025	archetypes[].name_en	string	アーキタイプの英語名。
+L0026	配列要素のキーは id・name_jp・name_en であり、取得時のまま区切り記号付きの小文字で返す。
+L0027	成功時の応答例（実装確認値に基づく代表値）。
+L0028	{
+L0029	"code": 200,
+L0030	"archetypes": [
+L0031	{
+L0032	"id": 1,
+L0033	"name_jp": "白単アグロ",
+L0034	"name_en": "Mono White Aggro"
+L0035	},
+L0036	{
+L0037	"id": 2,
+L0038	"name_jp": "青黒コントロール",
+L0039	"name_en": "Dimir Control"
+L0040	}
+L0041	]
+L0042	}
+L0043	リニューアル後の仕様
+L0044	表示メッセージ
+L0045	本APIは画面メッセージを扱わない。
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/A15-09/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/A15-10/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 2ms:
+##### 0515 a15-09 A15-09 デッキ情報登録 ／ API デッキビルダー — デッキ情報登録
+L0001	Source:
+L0002	functions/pf-api/a15-09_api_deck_builder_deck_register.md
+L0003	A15-09 デッキ情報登録 ／ API デッキビルダー — デッキ情報登録
+L0004	業務ロジック
+L0005	認証と所有者
+L0006	認証用トークンを検証し、トークンが持つ顧客IDからプレイヤーを特定する。トークン欠落・署名不正・該当プレイヤーなしのいずれの場合も認証拒否とする。認証したプレイヤーが登録したデッキの所有者になる。呼び出せるクライアントはデッキビルダーアプリに限る。トークン原値・署名シークレットは本書に記載しない。
+L0007	保存の判定順序
+L0008	順序	判定	結果
+L0009	1	認証できるか	認証できないときは登録せず認証拒否とする
+L0010	2	採用カードの整合性	満たさないときは登録せず入力不正とする
+L0011	3	フォーマット・アーキタイプ・公開範囲・代表カード画像・キャンペーンタグの解決	解決した内容からレギュレーション違反を判定する
+L0012	4	デッキ本体の整合性	満たさないときは登録せず入力不正とする
+L0013	5	デッキ本体と採用カードの保存	1 件のまとまりとして保存し、途中で例外が起きたときはすべて取り消す
+L0014	採用カードの整合性は、採用カード1件ごとに判定する。 採用枚数が無いとき、または1未満か2147483647を超えるときは、整合性を満たさない。 カードの識別子に一致するカードが無いときは、整合性を満たさない。 配置ボードがメイビー 4・アトラクション 5・ステッカー 6 以外で、配置ボードの識別子に一致する配置ボードが無いときは、整合性を満たさない。
+L0015	レギュレーション違反
+L0016	レギュレーション違反の有無は、デッキのレギュレーション違反フラグとして保存する。 違反があっても登録は拒否せず、応答は違反が無いときと同じとする。 次のいずれかに当たるときは、レギュレーション違反とする。
+L0017	判定	違反となる条件
+L0018	アーキタイプ	指定したアーキタイプのフォーマットが、指定したフォーマットと異なる
+L0019	統率領域の枚数	フォーマットが統率者を使うとき、統率領域の枚数が1未満または2を超える
+L0020	メインボードの枚数	メインボードの枚数（統率者を使うフォーマットでは統率領域の枚数を含む）が、フォーマットのメインボード下限枚数未満または上限枚数超過
+L0021	サイドボードの枚数	サイドボードの枚数が、フォーマットのサイドボード下限枚数未満または上限枚数超過
+L0022	フォーマット適合	メイン・サイド・統率領域のカードに、指定したフォーマットで使えないカードがある
+L0023	禁止・制限	指定したフォーマットで禁止のカードがある、または制限のカードが2枚以上ある
+L0024	枚数制限	枚数制限を受けないカード以外で、同じカードの枚数が上限を超える。上限は特殊制限の枚数、特殊制限が無いときはハイランダーのフォーマットで1枚、それ以外で4枚
+L0025	統率領域の伝説	統率領域のカードが特殊タイプ「伝説」を持たない
+L0026	採用カードの扱い
+L0027	採用カードは配置ボードごとに、採用カード・メイビー・アトラクション・ステッカーとして組み立てる。配置ボードはメイン 1・サイド 2・統率領域 3・メイビー 4・アトラクション 5・ステッカー 6 のいずれかとする。
+L0028	代表カード画像と限定公開トークン
+L0029	代表カード画像の指定が無いときは、アーキタイプの画像などで補う。
+L0030	代表カード画像は次の順で決める。
+L0031	順序	条件	保存する代表カード画像
+L0032	1	代表カード画像のカードを指定したとき	指定したカードの最新のカード画像。カード画像が無いときは値なし
+L0033	2	1に当たらず、アーキタイプを解決できたとき	アーキタイプの画像。アーキタイプに画像が無いときは値なし
+L0034	3	1・2に当たらず、統率領域の採用カードがあるとき	統率領域の採用カードの最新のカード画像。統率領域の採用カードが複数あるときは、入力で最後の採用カード
+L0035	4	上記のいずれにも当たらないとき	値なし。エラーにはしない
+L0036	限定公開トークンが未設定のときは、発番したデッキIDから閲覧用トークンを作って保存する。公開範囲が限定公開のときだけ、閲覧用トークンを応答に含める。
+L0037	値の取り方
+L0038	金額・税・ポイント・在庫数量の再計算と丸めは行わない。デッキ名の指定が無いときは値なしで保存する。
+L0039	入出力
+L0040	種類	内容
+L0041	入力	認証用トークンと、デッキ名・フォーマット・アーキタイプ・公開範囲・代表カード画像・キャンペーンタグ・採用カード
+L0042	成功時出力	HTTP 200。処理結果コード 200、処理結果メッセージ「Deck register success」、発番したデッキID。公開範囲が限定公開のときは閲覧用トークンも返す
+L0043	失敗時出力	認証できないときは HTTP 401、整合性を満たさないときは HTTP 400、保存中に例外が起きたときは HTTP 500。いずれも処理結果コードとメッセージを返す
+L0044	入出力: 登録内容
+L0045	パラメータ	位置	型	必須／任意	説明
+L0046	jwt-token	ヘッダ	string	必須	認証用トークン
+L0047	deck_name	ボディ	string	任意	デッキ名。指定が無いときは値なしで保存する
+L0048	format_id	ボディ	integer	任意	フォーマットの識別子。空でないときだけ解決し、レギュレーション判定に使う
+L0049	archetype_id	ボディ	integer	任意	アーキタイプの識別子。空でないときだけ解決する
+L0050	scope_id	ボディ	integer	任意	公開範囲。公開 1・非公開 2・限定公開 3
+L0051	image_card_id	ボディ	integer	任意	代表カード画像のカード。指定が無いときはアーキタイプの画像などで補う
+L0052	campaign_tag_ids	ボディ	integer または array	任意	キャンペーンタグの識別子。単一値と配列のどちらでも受け付ける
+L0053	cards	ボディ	array	任意	採用カードの配列
+L0054	cards[].card_id	ボディ	integer	任意	採用カード
+L0055	cards[].board_id	ボディ	integer	採用カードを指定したときは必須	配置ボード
+L0056	cards[].count	ボディ	integer	採用カードを指定したときは必須	採用枚数
+L0057	入出力: 永続化
+L0058	操作	契機
+L0059	追加	デッキ本体と採用カードを、整合性の検証をすべて満たしたとき
+L0060	追加	限定公開トークンが未設定のときの閲覧用トークン
+L0061	リニューアル後の仕様
+L0062	表示メッセージ
+L0063	本APIは画面へ文言を表示しない。応答に含める処理結果メッセージは入出力の節に示す。
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/A15-11/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/A15-12/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/A15-13/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/A15-14/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/A15-15/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/A15-16/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/A15-17/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 55ms:
+##### 0515 a15-14 A15-14 メタゲーム情報参照 ／ API デッキビルダー — メタゲーム情報参照
+L0001	Source:
+L0002	functions/pf-api/a15-14_api_deck_builder_deck_metagame.md
+L0003	A15-14 メタゲーム情報参照 ／ API デッキビルダー — メタゲーム情報参照
+L0004	業務ロジック
+L0005	集計対象
+L0006	format_id に一致するフォーマットを取得する。単一値・複数値のいずれも指定できる。各フォーマットについて、フォーマットのメタ範囲で区切った集計範囲内の公開・大会デッキを、アーキタイプ別に件数集計する。count を指定したときは、件数上位から最大 count 件のアーキタイプに絞る。アーキタイプ別集計は件数降順で返す。
+L0007	メタ範囲の単位は日数とする。 集計範囲は、実行日からメタ範囲の日数だけ前の日の0時0分0秒から、実行日の23時59分59秒までとする。 集計範囲の両端の日時は集計範囲に含める。 集計対象は、大会日付が集計範囲内にある公開・大会デッキとする。
+L0008	占有率の算出
+L0009	フォーマットごとに全アーキタイプの件数合計を求め、各アーキタイプの件数を合計で割って占有率を算出する。占有率は百分率で小数第2位までとする。
+L0010	認証と公開範囲
+L0011	本APIは認証を行わない。認証用のトークンヘッダの検証とプレイヤーの特定をいずれも行わず、誰でも呼び出せる参照系である。認証起因のHTTP 401は返さない。公開デッキのみを集計対象とし、利用者状態によらず同一の集計結果を返す。呼び出し可能なクライアントはデッキビルダーアプリ。
+L0012	値の扱い
+L0013	件数・ページ番号・表示順は既定と上限に従う。条件に一致しない、または非公開のデータは空結果または既定のエラー形式で返す。
+L0014	フォーマットが存在し集計対象のデッキが0件のときは、HTTP 200・処理結果コード200で、そのフォーマットのアーキタイプ別集計を空の配列で返す。 アーキタイプ別集計の項目に、金額・ポイント・ステータスに当たる項目は無い。 デッキ件数は保存された値ではなく、集計対象のデッキを数えて求める。 占有率は保存された値ではなく、デッキ件数から算出する。
+L0015	エラー時の扱い
+L0016	エラー内容	処理
+L0017	format_id 未指定	入力不正（HTTP 400）とし、「invalid request parameter」を返す
+L0018	該当フォーマットなし	該当なし（HTTP 404）とし、「format not found」を返す
+L0019	集計処理中の異常	共通の異常処理に委ねる（HTTP 500相当）
+L0020	入出力
+L0021	種類	内容
+L0022	入力	クエリの format_id（整数または配列、必須）と count（整数、任意）。count 未指定のときは全件を返す
+L0023	成功時出力	HTTP 200。処理結果コードとフォーマットごとの集計結果を持つJSON。JSONキーはsnake_caseで組み立てる
+L0024	失敗時出力	HTTP 400（format_id 未指定）、HTTP 404（該当フォーマットなし）。いずれも {code, message} の形。HTTP 500 は共通の異常処理に委ねる
+L0025	出力: 応答フィールド
+L0026	フィールド	型	説明
+L0027	code	integer	処理結果コード。成功時は200。
+L0028	formats	array	フォーマットごとの集計結果の配列。
+L0029	formats[].id	integer	フォーマット識別子。
+L0030	formats[].name_jp	string	フォーマットの日本語名。
+L0031	formats[].name_en	string	フォーマットの英語名。
+L0032	formats[].from_date	string	集計範囲の開始日時。Y/m/d h:m:s書式の文字列。
+L0033	formats[].archetypes	array	アーキタイプ別の集計結果の配列。件数降順。
+L0034	formats[].archetypes[].id	integer	アーキタイプ識別子。
+L0035	formats[].archetypes[].name_jp	string	アーキタイプの日本語名。
+L0036	formats[].archetypes[].name_en	string	アーキタイプの英語名。
+L0037	formats[].archetypes[].card_image	string	アーキタイプを代表するカード画像のURL。未設定のときはnull。
+L0038	formats[].archetypes[].deck_count	integer	集計範囲内のデッキ件数。
+L0039	formats[].archetypes[].rate	number	フォーマット内での占有率（百分率、小数第2位まで）。
+L0040	成功時の応答例（実装確認値に基づく代表値）。
+L0041	{
+L0042	"code": 200,
+L0043	"formats": [
+L0044	{
+L0045	"id": 1,
+L0046	"name_jp": "スタンダード",
+L0047	"name_en": "Standard",
+L0048	"from_date": "2026/05/04 00:05:00",
+L0049	"archetypes": [
+L0050	{
+L0051	"id": 101,
+L0052	"name_jp": "白単アグロ",
+L0053	"name_en": "Mono White Aggro",
+L0054	"card_image": "https://example.invalid/images/101.jpg",
+L0055	"deck_count": 42,
+L0056	"rate": 35.0
+L0057	},
+L0058	{
+L0059	"id": 102,
+L0060	"name_jp": "青赤コントロール",
+L0061	"name_en": "Izzet Control",
+L0062	"card_image": null,
+L0063	"deck_count": 18,
+L0064	"rate": 15.0
+L0065	}
+L0066	]
+L0067	}
+L0068	]
+L0069	}
+L0070	リニューアル後の仕様
+L0071	表示メッセージ
+L0072	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0073	—	API応答JSON	invalid request parameter	format_id が未指定のとき	HTTP 400 を返す
+L0074	—	API応答JSON	format not found	format_id に一致するフォーマットが1件も無いとき	HTTP 404 を返す
+
+ succeeded in 107ms:
+##### 0515 a15-11 A15-11 デッキ情報削除 ／ API デッキビルダー — デッキ情報削除
+L0001	Source:
+L0002	functions/pf-api/a15-11_api_deck_builder_deck_delete.md
+L0003	A15-11 デッキ情報削除 ／ API デッキビルダー — デッキ情報削除
+L0004	業務ロジック
+L0005	削除の判定順序
+L0006	順序	判定	結果
+L0007	1	トークンからプレイヤーを特定できるか	できないなら認証拒否（HTTP 401）
+L0008	2	デッキIDに該当するデッキがあるか	無ければ該当なし（HTTP 404）
+L0009	3	対象デッキの所有者が認証したプレイヤーと一致するか	一致しないなら認証拒否（HTTP 401）
+L0010	4	上記を通過	削除日時を設定して論理削除し、処理結果コード200を返す
+L0011	論理削除済みのデッキは、デッキIDに該当するデッキとして扱わない。 論理削除済みのデッキIDを再び指定したときは、該当なし（HTTP 404）とし、削除日時を設定し直さない。
+L0012	認証と認可
+L0013	トークンを検証し、その内容に含まれる顧客IDからプレイヤーを特定する。トークンの欠落・署名不正・該当するプレイヤーなしのいずれのときも認証拒否とする。削除できるのは対象デッキの所有者本人だけで、所有者でないときも認証拒否とする。呼び出し元はデッキビルダーアプリで、トークンの原値と署名の秘密値は本書に記載しない。
+L0014	削除の内容
+L0015	対象デッキに削除日時を設定して論理削除し、当該デッキの一時保存があれば併せて削除する。この一連の処理は1つのまとまりとして行い、例外が起きたときはすべて取り消して処理失敗（HTTP 500）とする。金額・税・ポイント・在庫数量の再計算は行わない。応答は本APIで集計せず、処理結果をそのまま返す。
+L0016	一時保存の保存先は Redis とする。 一時保存のキーは、「deck_」にデッキIDを付けた値（例: deck_123）とする。
+L0017	エラー時の扱い
+L0018	事象	扱い
+L0019	認証できない	認証拒否（HTTP 401）とし、コードとメッセージを返す
+L0020	デッキが存在しない	該当なし（HTTP 404）とする
+L0021	他人のデッキ	認証拒否（HTTP 401）とする
+L0022	削除処理中の例外	処理失敗（HTTP 500）とし、例外の内容をメッセージに含めて返す
+L0023	入出力
+L0024	種類	内容
+L0025	入力	削除対象のデッキID、認証用トークン。ボディの値は持たない
+L0026	成功時出力	HTTP 200。処理結果コードとメッセージ
+L0027	失敗時出力	HTTP 401（認証不可・所有者不一致）、HTTP 404（デッキなし）、HTTP 500（削除処理中の例外）
+L0028	入出力: リクエスト
+L0029	パラメータ	位置	型	必須／任意	説明
+L0030	id	パス	integer	必須	削除対象のデッキID
+L0031	認証トークン	ヘッダ	string	必須	プレイヤーを特定するためのトークン
+L0032	入出力: 応答フィールド
+L0033	フィールド	型	説明
+L0034	code	integer	処理結果コード。成功時は200
+L0035	message	string	処理結果メッセージ。成功時は「Deck delete success」
+L0036	入出力: 永続化
+L0037	操作	契機
+L0038	更新	判定をすべて通過したとき、対象デッキに削除日時を設定して論理削除する
+L0039	削除	同じ契機で、当該デッキの一時保存があれば削除する
+L0040	リニューアル後の仕様
+L0041	表示メッセージ
+L0042	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0043	—	APIレスポンス（JSON body・message）	Deck delete success	デッキの削除に成功したとき	HTTP 200を返す
+L0044	—	APIレスポンス（JSON body・message）	The deck does not exist	デッキIDに該当するデッキが無いとき	HTTP 404を返し、削除しない
+L0045	—	APIレスポンス（JSON body・message）	Access Token is incorrect	トークンの欠落・署名不正・該当するプレイヤーが無いとき	HTTP 401を返し、削除しない
+L0046	—	APIレスポンス（JSON body・message）	Authentication failed	対象デッキの所有者でないとき	HTTP 401を返し、削除しない
+
+ succeeded in 123ms:
+##### 0515 a15-12 A15-12 デッキ情報参照 ／ API デッキビルダー — デッキ情報参照
+L0001	Source:
+L0002	functions/pf-api/a15-12_api_deck_builder_deck_get.md
+L0003	A15-12 デッキ情報参照 ／ API デッキビルダー — デッキ情報参照
+L0004	業務ロジック
+L0005	参照元の優先順位
+L0006	順序	参照元	扱い
+L0007	1	一時保存された下書き	デッキIDに対応する下書きがあれば、それを参照対象とする
+L0008	2	保存済みのデッキ情報	下書きが無いときに、デッキIDで取得する
+L0009	下書きから返すときは、フォーマット名・アーキタイプ名・代表カード画像をマスタから補完する。
+L0010	参照できる条件
+L0011	公開範囲ごとに参照の可否を判定する。判定は下書き・保存済みのどちらでも同じである。
+L0012	公開範囲	参照できる条件
+L0013	公開	誰でも参照できる
+L0014	非公開	所有者本人と確認できるときだけ参照できる
+L0015	限定公開	限定公開トークンが一致するとき、または所有者本人のときだけ参照できる
+L0016	所有者の判定は、認証トークンの検証で得た顧客IDからプレイヤーを引いて行う。トークンが無い、または有効でないときは所有者扱いにしない。トークンが無くても公開デッキは参照できるため、トークン欠落だけを理由に認証拒否を返すことはない。
+L0017	トークン原値・署名シークレット・限定公開トークン原値は本書に記載しない。
+L0018	件数
+L0019	1件のデッキを参照する機能であり、ページングの指定と件数の応答を持たない。
+L0020	値の取り方
+L0021	金額・ポイント・数量・ステータス・日時は永続化済みの値をそのまま返し、応答生成時の丸め・補正を行わない。
+L0022	エラー時の扱い
+L0023	エラー内容	処理
+L0024	デッキが存在しない	該当なし（HTTP 404、「Deck is not found」）とする
+L0025	公開範囲の判定で参照不可	該当なし（HTTP 404、「Deck is not found」）とし、存在の有無を区別しない
+L0026	入出力
+L0027	種類	内容
+L0028	入力	デッキID（パス・必須）、限定公開デッキの閲覧用トークン（任意）、認証トークン（任意。非公開・限定公開デッキを所有者として参照するときに必要）
+L0029	成功時出力	HTTP 200。処理結果コード200と「Get deck success」、デッキ情報
+L0030	失敗時出力	HTTP 404。処理結果コードとメッセージ「Deck is not found」
+L0031	出力: デッキ情報の項目
+L0032	フィールド	型	説明
+L0033	デッキ名	string	デッキ名。
+L0034	フォーマット	integer/string	識別子、日本語名、英語名。
+L0035	アーキタイプ	integer/string	識別子、日本語名、英語名。
+L0036	代表カード	integer/string	カードIDと画像URL。
+L0037	デッキ種別	string	デッキ種別。
+L0038	公開範囲	integer	1・2・3。
+L0039	非公開フラグ	boolean	非公開フラグ。
+L0040	大会情報	string	大会名（日本語・英語）・大会日付・プレイヤー名・成績・順位・出典URL。大会デッキのときに値を持つ。
+L0041	作成日時・更新日時	string	作成日時と更新日時。
+L0042	限定公開トークン	string	限定公開トークン。
+L0043	所有プレイヤー	string	デッキ利用者IDと、ユーザーデッキのときのニックネーム。
+L0044	デッキタグ	array	識別子・日本語名・英語名。タグがあるときに含める。
+L0045	キャンペーンタグ	array	識別子・日本語名・英語名・開催状態（開催前0・開催中1・開催後2）。
+L0046	採用カード	array	識別子・日本語名・英語名・日本語画像・英語画像・カードタイプ・色・マナ総量・枚数・ボード区分・ステッカー可否・アトラクション可否・不明カード可否。
+L0047	リニューアル後の仕様
+L0048	表示メッセージ
+L0049	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0050	—	API応答JSON	Get deck success	参照できる条件を満たしてデッキ情報を返すとき	処理結果コード200で応答する
+L0051	—	API応答JSON	Deck is not found	デッキが存在しない、または公開範囲の判定で参照不可のとき	HTTP 404で応答する
+
+ succeeded in 105ms:
+##### 0515 a15-16 A15-16 直近大会情報取得 ／ API デッキビルダー — 直近大会情報取得
+L0001	Source:
+L0002	functions/pf-api/a15-16_api_deck_builder_deck_recent_event.md
+L0003	A15-16 直近大会情報取得 ／ API デッキビルダー — 直近大会情報取得
+L0004	業務ロジック
+L0005	取得対象
+L0006	最新大会デッキのマスタから、大会日が設定済みで、かつ大会名（日本語・英語）が空でない行を抽出する。条件に合致する大会が無いときも失敗とせず、空の一覧を返す。
+L0007	並び順
+L0008	識別子の昇順に並べる。
+L0009	値の取り方
+L0010	数量・日時は永続化済みの値を返し、応答生成時の丸め・補正を行わない。
+L0011	呼び出しの条件
+L0012	リクエストのパラメータを受け取らない。認証も行わないため、認証を理由とするHTTP 401は返さない。公開向けの一覧であり、呼び出し元の状態によらず同一の結果を返す。呼び出し元はデッキビルダーアプリである。
+L0013	エラー時の扱い
+L0014	エラー内容	処理
+L0015	該当大会なし	エラーとせず、空の一覧で処理結果コード200を返す
+L0016	取得処理中の例外	共通の例外処理に委ねる（HTTP 500相当）
+L0017	入出力
+L0018	種類	内容
+L0019	入力	なし
+L0020	成功時出力	HTTP 200。処理結果コードと直近大会の一覧
+L0021	失敗時出力	取得処理中の例外は共通の例外処理に委ねる（HTTP 500相当）
+L0022	出力: 直近大会の項目
+L0023	フィールド	型	説明
+L0024	大会日	string	日時の文字列。
+L0025	フォーマット識別子	integer	フォーマット識別子。
+L0026	フォーマット名（日本語）	string	フォーマットの日本語名。
+L0027	フォーマット名（英語）	string	フォーマットの英語名。
+L0028	大会名（日本語）	string	大会の日本語名。
+L0029	大会名（英語）	string	大会の英語名。
+L0030	参加者数	integer	参加者数。
+L0031	リニューアル後の仕様
+L0032	表示メッセージ
+L0033	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0034	—	—	本機能は利用者向けの文言を持たない	—	—
+
+ succeeded in 125ms:
+##### 0515 a15-15 A15-15 採用枚数情報参照 ／ API デッキビルダー — 採用枚数情報参照
+L0001	Source:
+L0002	functions/pf-api/a15-15_api_deck_builder_deck_usage_card.md
+L0003	A15-15 採用枚数情報参照 ／ API デッキビルダー — 採用枚数情報参照
+L0004	業務ロジック
+L0005	集計対象
+L0006	指定したフォーマットの、公開・大会デッキを集計対象とする。フォーマットが指定されていない、または一致するフォーマットが無いときは該当なし（HTTP 404）とし、「format not found」を返す。
+L0007	指定	絞り込み
+L0008	種別が土地	土地カードのみを対象とする
+L0009	種別が土地以外	土地以外のカードを対象とする
+L0010	アーキタイプ	指定したアーキタイプのデッキに限定する
+L0011	ボード	指定したボードのカードに限定する
+L0012	公開デッキだけを集計対象とするため、呼び出し元の状態によらず同じ集計結果を返す。認証は行わず、認証を理由とするHTTP 401は返さない。
+L0013	平均採用枚数の算出
+L0014	カードごとの採用枚数合計を、カード種別数と特殊タイプ数で除した値を平均採用枚数とし、整数にして返す。
+L0015	平均採用枚数は、集計対象デッキでの採用枚数の合計と等しく、デッキ数では割らない。 採用カード1件は、カード種別数と特殊タイプ数（特殊タイプが無いときは1）を掛けた行数に増えて合計される。 カード種別数と特殊タイプ数で除すと、増えた行数の分が戻る。 除した値に端数は生じない。
+L0016	並び順と件数
+L0017	平均採用枚数の降順に並べ、上位から最大で指定件数までを返す。件数が未指定のときは20件とする。
+L0018	値の取り方
+L0019	条件に一致しないデータは空の結果として返す。
+L0020	カード別集計の項目に日時は無い。 平均採用枚数は保存された値ではなく、集計対象デッキの採用カードから集計して求める。
+L0021	エラー時の扱い
+L0022	エラー内容	処理
+L0023	該当フォーマットなし	該当なし（HTTP 404）とし、「format not found」を返す
+L0024	集計処理中の例外	共通の例外処理に委ねる（HTTP 500相当）
+L0025	入出力
+L0026	種類	内容
+L0027	入力	フォーマット識別子（パス・必須）、種別・件数・アーキタイプ識別子・ボード識別子（いずれも任意）
+L0028	成功時出力	HTTP 200。処理結果コードとカード別の採用枚数集計の配列
+L0029	失敗時出力	HTTP 404。処理結果コードとメッセージ「format not found」
+L0030	出力: カード別集計の項目
+L0031	フィールド	型	説明
+L0032	カード識別子	integer	カード識別子。
+L0033	カード名（日本語）	string	カードの日本語名。
+L0034	カード名（英語）	string	カードの英語名。
+L0035	画像（日本語）	string	日本語版画像のURL。該当が無いときはnull。
+L0036	画像（英語）	string	英語版画像のURL。該当が無いときはnull。
+L0037	平均採用枚数	integer	採用枚数合計をカード種別数・特殊タイプ数で除した値を整数にしたもの。
+L0038	リニューアル後の仕様
+L0039	表示メッセージ
+L0040	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0041	—	API応答JSON	format not found	フォーマットが指定されていない、または一致するフォーマットが無いとき	HTTP 404で応答する
+
+ succeeded in 162ms:
+##### 0515 a15-10 A15-10 デッキ情報登更新 ／ API デッキビルダー — デッキ情報更新
+L0001	Source:
+L0002	functions/pf-api/a15-10_api_deck_builder_deck_update.md
+L0003	A15-10 デッキ情報登更新 ／ API デッキビルダー — デッキ情報更新
+L0004	業務ロジック
+L0005	更新対象の特定
+L0006	順序	判定	結果
+L0007	1	認証用トークンを検証できないとき	認証拒否（HTTP 401）とする
+L0008	2	指定したデッキIDに該当するデッキが無いとき	該当なし（HTTP 404、「The deck does not exist」）とする
+L0009	3	対象デッキの所有者が認証したプレイヤーと一致しないとき	認証拒否（HTTP 401、「Authentication failed」）とする
+L0010	保存先の切り替え
+L0011	即時保存の指定が真のときは、整合性を検証したうえで確定保存し、当該デッキの一時保存を削除する。偽または指定が無いときは、整合性を検証したうえで内容を下書きとして一時保存する。
+L0012	デッキ本体と採用カードの整合性を検証できないときは入力不正（HTTP 400）とする。
+L0013	一時保存の保存先は Redis とする。 一時保存のキーは、「deck_」にデッキIDを付けた値（例: deck_123）とする。 確定保存したときは、当該デッキIDのキーが存在すれば Redis から削除する。
+L0014	応答の内容
+L0015	処理結果コードと処理結果メッセージ（「Deck update success」）を返す。公開範囲が限定公開のときだけ、閲覧用トークンをあわせて返す。
+L0016	他機能との境界
+L0017	認証用トークンを検証し、トークンに含まれる顧客IDからプレイヤーを引く。署名方式はHS256とする。トークンが無い、署名が不正、該当するプレイヤーが無いときは、いずれも認証拒否（HTTP 401）とする。更新できるのは対象デッキの所有者だけとする。呼び出し可能なクライアントはデッキビルダーアプリとする。トークンの原値と署名シークレットは本書に記載しない。
+L0018	エラー時の扱い
+L0019	エラー内容	処理
+L0020	トークンが無い、署名が不正、該当するプレイヤーが無い	認証拒否（HTTP 401、「Access Token is incorrect」または「Authentication failed」）とする
+L0021	デッキIDに該当するデッキが無い	該当なし（HTTP 404、「The deck does not exist」）とする
+L0022	対象デッキの所有者でない	認証拒否（HTTP 401、「Authentication failed」）とする
+L0023	採用カードまたはデッキ本体の整合性検証に失敗した	入力不正（HTTP 400）とし、処理結果コードと検証エラー内容を返す
+L0024	保存処理中の例外	処理失敗（HTTP 500）とし、処理結果コードと例外メッセージを返す
+L0025	入出力
+L0026	種類	内容
+L0027	入力	デッキID（パス・必須）、認証用トークン（ヘッダ・必須）、公開範囲（必須。公開1・非公開2・限定公開3）。即時保存の指定・デッキ名・フォーマットの識別子・アーキタイプの識別子・代表カード画像に用いるカードID・キャンペーンタグの識別子・採用カードは、いずれも指定が無いときは扱わない
+L0028	成功時出力	HTTP 200。処理結果コードと処理結果メッセージ。公開範囲が限定公開のときだけ閲覧用トークン
+L0029	失敗時出力	認証できないときはHTTP 401、デッキが無いときはHTTP 404、整合性検証に失敗したときはHTTP 400、その他の例外のときはHTTP 500
+L0030	採用カードの各要素はカードID・区画の識別子・枚数を持つ。キャンペーンタグの識別子は、単一値と配列のどちらのときも受け付ける。デッキ本体と採用カードの入力項目はデッキ登録と共通とする。
+L0031	入出力: 永続化
+L0032	操作	契機
+L0033	更新	即時保存の指定が真で、整合性の検証を通過したとき。デッキ本体と採用カードを確定保存する
+L0034	削除	確定保存したとき。当該デッキの一時保存を削除する
+L0035	追加・更新	即時保存の指定が偽または無いとき。内容を一時保存へ書き込む
+L0036	リニューアル後の仕様
+L0037	表示メッセージ
+L0038	本APIは画面を持たない。応答本文の処理結果メッセージは入出力の節を正とする。
+
+ succeeded in 102ms:
+##### 0515 a15-17 A15-17 デッキ登録インポート ／ API デッキビルダー — デッキ登録インポート
+L0001	Source:
+L0002	functions/pf-api/a15-17_api_deck_builder_deck_import_register.md
+L0003	A15-17 デッキ登録インポート ／ API デッキビルダー — デッキ登録インポート
+L0004	業務ロジック
+L0005	登録対象
+L0006	パスにデッキ識別子を持たないときは新規デッキを対象とする。既存デッキの取得と所有者の照合は行わない。認証したプレイヤーを新規デッキの所有者として登録する。
+L0007	カードリストの解読
+L0008	フォーマットの識別子からフォーマットを取得し、そのフォーマットの統率者使用設定に応じてカードリストを解読する。カードリストは枚数とカード名の行を並べた形式とする。未指定または空のときは空のカード配列として扱う。
+L0009	カードリストの行数が500行を超えるときは入力不正（HTTP 400）とする。
+L0010	カードリストの行の保存先は、統率者使用設定が有効なフォーマットでは統率領域から、無効なフォーマットではメインボードから始める。 「Deck」「デッキ」だけの行より後の行は、メインボードに保存する。 「Sideboard」「サイドボード」「相棒」「Companion」だけの行より後の行は、サイドボードに保存する。 「Commander」「統率者」だけの行より後の行は、統率領域に保存する。 カードリストに「Deck」「デッキ」だけの行が無いときは、統率領域への保存中に空行があると、以降の行をメインボードに保存する。 カードリストにサイドボードの見出しの行が無いときは、メインボードへの保存中に空行があると、以降の行をサイドボードに保存する。 統率者使用設定が無効なフォーマットで統率領域に保存する行があるときは、入力不正（HTTP 400）とする。
+L0011	カード名が一致せず解読できない行があるときは、登録は完了させたうえで処理結果コードを206に切り替え、該当行の行番号を返す。行番号は1から数える。
+L0012	登録の可否
+L0013	解読したカードとデッキ名・公開区分・アーキタイプ等で新規デッキを組み立て、検証を通過したときだけ保存する。検証エラーは入力不正（HTTP 400）、その他の例外は処理失敗（HTTP 500）とする。
+L0014	保存したときは、当該デッキの下書きとして保持している一時保存も削除する。
+L0015	一時保存の保存先は Redis とする。 一時保存のキーは、「deck_」に登録したデッキのデッキIDを付けた値とする。
+L0016	応答の内容
+L0017	新規デッキの識別子を返す。公開区分が限定公開のときだけ、表示用トークンをあわせて返す。限定公開以外のときは表示用トークンを返さない。
+L0018	他機能との境界
+L0019	認証用トークンを検証し、トークンに含まれる顧客IDからプレイヤーを引く。署名方式はHS256とする。トークンが無い、署名が不正、該当するプレイヤーが無いときは、いずれも認証拒否（HTTP 401）とする。トークンの原値と署名シークレットは本書に記載しない。
+L0020	デッキビルダーアプリを識別する要求項目は無い。 有効な認証用トークンがあれば、呼び出し元のクライアントによらず登録を受け付ける。
+L0021	エラー時の扱い
+L0022	エラー内容	処理
+L0023	トークンが無い、署名が不正、該当するプレイヤーが無い	認証拒否（HTTP 401）とし、処理結果コードとメッセージ（「Access Token is incorrect」または「Authentication failed」）を返す
+L0024	必須項目不足・不正値、またはカードリストが500行を超える	入力不正（HTTP 400）とし、処理結果コードと検証エラーメッセージを返す
+L0025	解読できない行がある	登録は完了させ、処理結果コード206として該当行の行番号を返す
+L0026	保存処理中のその他の例外	処理失敗（HTTP 500）とし、処理結果コードと例外メッセージを返す
+L0027	入出力
+L0028	種類	内容
+L0029	入力	認証用トークン（ヘッダ・必須）とフォーマットの識別子（必須）。カードリスト・デッキ名・公開区分・アーキタイプの識別子・デッキ画像に用いるカードの識別子・キャンペーンタグの識別子は、いずれも指定が無いときは扱わない
+L0030	成功時出力	全行を解読できたときはHTTP 200、解読できない行があるときはHTTP 206。処理結果コード・処理結果メッセージ（「Deck registration success by import」）・登録したデッキの識別子。限定公開のときだけ表示用トークン、解読できない行があるときだけ該当行の行番号
+L0031	失敗時出力	認証できないときはHTTP 401、入力が不正なときはHTTP 400、その他の例外のときはHTTP 500。処理結果コードとメッセージ
+L0032	キャンペーンタグの識別子は、単一値と配列のどちらのときも受け取る。
+L0033	入出力: 永続化
+L0034	操作	契機
+L0035	追加	検証を通過したとき。新規デッキと採用カードを登録する
+L0036	削除	登録したとき。当該デッキの下書きの一時保存を削除する
+L0037	リニューアル後の仕様
+L0038	表示メッセージ
+L0039	本APIは画面を持たない。応答本文の処理結果メッセージは入出力の節を正とする。
+
+ succeeded in 143ms:
+##### 0515 a15-13 A15-13 デッキ情報検索 ／ API デッキビルダー — デッキ情報検索
+L0001	Source:
+L0002	functions/pf-api/a15-13_api_deck_builder_deck_search.md
+L0003	A15-13 デッキ情報検索 ／ API デッキビルダー — デッキ情報検索
+L0004	業務ロジック
+L0005	検索モードと対象範囲
+L0006	検索モードは公開検索と自分のデッキ検索の 2 種類で、既定は公開検索とする。
+L0007	モード	認証	対象
+L0008	公開検索	不要。認証なしで成功する	公開デッキ
+L0009	自分のデッキ検索	必須。認証できないときは認証拒否とする	認証したプレイヤーが所有するデッキだけ
+L0010	自分のデッキ検索のときだけ認証用トークンを検証し、トークンが持つ顧客IDからプレイヤーを特定する。トークン欠落・署名不正・該当プレイヤーなしのいずれの場合も認証拒否とする。呼び出せるクライアントはデッキビルダーアプリに限る。トークン原値・署名シークレットは本書に記載しない。
+L0011	絞り込み
+L0012	大会デッキを含めるかとユーザーデッキを含めるかは個別に指定でき、どちらも対象外にしたときは空の一覧と総件数 0 を返す。
+L0013	条件	絞り込み方
+L0014	フォーマット・アーキタイプ・デッキタグ・キャンペーンタグ	配列を指定したときだけ、その識別子のいずれかに一致する行に限る
+L0015	デッキ利用者ID	完全一致
+L0016	大会デッキのプレイヤー名	部分一致
+L0017	大会名	日本語名・英語名のいずれかへの部分一致
+L0018	作成日時・更新日時・大会日付	下限は以上、上限は以下
+L0019	参加人数	下限は以上、上限は以下
+L0020	優勝	指定が真かつ上位 8 の指定が偽のときだけ、順位 1 位に限る
+L0021	上位 8	指定が真のとき、順位 8 位以内に限る
+L0022	レギュレーション違反	指定が偽のとき、違反デッキを除く
+L0023	直近デッキの件数	指定した件数ぶんのデッキID範囲に限る
+L0024	採用カード	カードと配置ボードの組をすべて満たす行に限る
+L0025	優勝と上位 8 の指定は、空文字と 0 のときだけ偽とする。 優勝と上位 8 の指定は、空文字と 0 以外の文字列（false を含む）を真とする。
+L0026	並び順と件数
+L0027	作成日時の降順に並べ、指定されたページ番号と 1 ページあたりの件数で 1 ページ分だけを返す。ページ番号の既定は 1、1 ページあたりの件数の既定は 20 で、100 を超える指定は 100 に丸める。どちらも数字だけを受け付ける。
+L0028	総件数は条件に一致するデッキを重複排除した件数であり、ページ番号と 1 ページあたりの件数の指定によって変わらない。
+L0029	値の取り方
+L0030	条件に一致した行の値をそのまま返し、金額・ポイント・数量・ステータス・日時の再計算と丸めは行わない。限定公開トークンは自分のデッキ検索のときだけ応答に含める。キャンペーンタグの開催状況は開催前 0・開催中 1・開催後 2 のいずれかで返す。
+L0031	デッキ一覧の応答に、金額・ポイントの項目は無い。 参加人数・公開範囲・非公開フラグは、デッキに保存された値をそのまま返す。
+L0032	入出力
+L0033	種類	内容
+L0034	入力	検索条件・検索モード・ページ番号・1 ページあたりの件数・キャッシュキー。自分のデッキ検索のときは認証用トークンを伴う
+L0035	成功時出力	HTTP 200。処理結果コード 200、処理結果メッセージ「Deck search success」、総件数、1 ページ分のデッキ一覧
+L0036	失敗時出力	自分のデッキ検索で認証できないときは HTTP 401。本文は処理結果コードとメッセージで、メッセージは「Access Token is incorrect」または「Authentication failed」。公開検索は条件に一致しないときも HTTP 200 で空の一覧と総件数 0 を返す
+L0037	入出力: 検索条件
+L0038	パラメータ	位置	型	必須／任意	説明
+L0039	jwt-token	ヘッダ	string	条件付き必須	認証用トークン。自分のデッキ検索のときだけ必須
+L0040	mode	クエリ	string	任意（既定 public）	public は公開検索、private は自分のデッキ検索
+L0041	format	クエリ	array	任意	フォーマットIDの配列
+L0042	archetype	クエリ	array	任意	アーキタイプIDの配列
+L0043	event_deck_flag	クエリ	string	任意（既定 1）	0・false のときは大会デッキを除く
+L0044	user_deck_flag	クエリ	string	任意（既定 1）	0・false のときはユーザーデッキを除く
+L0045	create_from	クエリ	string	任意	作成日時の下限。指定した日時以上
+L0046	create_to	クエリ	string	任意	作成日時の上限。指定した日時以下
+L0047	update_from	クエリ	string	任意	更新日時の下限。指定した日時以上
+L0048	update_to	クエリ	string	任意	更新日時の上限。指定した日時以下
+L0049	tag	クエリ	array	任意	デッキタグIDの配列
+L0050	campaign_tag_ids	クエリ	array	任意	キャンペーンタグIDの配列
+L0051	user_id	クエリ	string	任意	デッキ利用者IDの完全一致
+L0052	user_name	クエリ	string	任意	大会デッキのプレイヤー名の部分一致
+L0053	event_name	クエリ	string	任意	大会名の部分一致。日本語名と英語名の両方が対象
+L0054	event_date_from	クエリ	string	任意	大会日付の下限。指定した日付以上
+L0055	event_date_to	クエリ	string	任意	大会日付の上限。指定した日付以下
+L0056	participants_from	クエリ	integer	任意	参加人数の下限。指定した人数以上
+L0057	participants_to	クエリ	integer	任意	参加人数の上限。指定した人数以下
+L0058	champion_flag	クエリ	string	任意（既定 0）	真かつ上位 8 の指定が偽のときだけ順位 1 位に限る
+L0059	top8_flag	クエリ	string	任意（既定 0）	真のときは順位 8 位以内に限る
+L0060	regulation_violation_flag	クエリ	string	任意（既定 0）	偽のときはレギュレーション違反デッキを除く
+L0061	search_decks_count	クエリ	integer	任意	直近のデッキID範囲に限るときの件数
+L0062	per_page	クエリ	integer	任意（既定 20）	1 ページあたりの件数。数字だけを受け付け、100 を超えるときは 100 とする
+L0063	page	クエリ	integer	任意（既定 1）	ページ番号。数字だけを受け付ける
+L0064	cards	クエリ	array	任意	採用カード条件の配列。各要素は card_id・board_id
+L0065	cache_key	クエリ	string	任意	指定があるときだけ一覧と総件数をキャッシュに保存する
+L0066	入出力: デッキ一覧の項目
+L0067	フィールド	型	説明
+L0068	id	integer	デッキID
+L0069	deck_name	string	デッキ名
+L0070	format_id	integer	フォーマットの識別子
+L0071	format_name_jp	string	フォーマット名（日本語）
+L0072	format_name_en	string	フォーマット名（英語）
+L0073	archetype_id	integer	アーキタイプの識別子
+L0074	archetype_name_jp	string	アーキタイプ名（日本語）
+L0075	archetype_name_en	string	アーキタイプ名（英語）
+L0076	card_id	integer	代表カード画像の識別子
+L0077	card_image	string	代表カード画像のURL
+L0078	deck_type	string	デッキ種別
+L0079	event_name_jp	string	大会名（日本語）
+L0080	event_name_en	string	大会名（英語）
+L0081	event_date	string	大会日付
+L0082	player_name	string	プレイヤー名。大会デッキのときに入る
+L0083	result	string	成績
+L0084	ranking	integer	順位
+L0085	participants	integer	参加人数
+L0086	deck_user_id	string	デッキ利用者ID
+L0087	nickname	string	ニックネーム。ユーザーデッキのときに入る
+L0088	scope_id	integer	公開範囲
+L0089	deck_private_flag	boolean	非公開フラグ
+L0090	create_date	string	作成日時
+L0091	update_date	string	更新日時
+L0092	display_token	string	限定公開トークン。自分のデッキ検索のときだけ含める
+L0093	deck_tags	array	デッキタグの配列。各要素は id・name_jp・name_en
+L0094	campaign_tags	array	キャンペーンタグの配列。各要素は id・name_jp・name_en・is_during
+L0095	入出力: 永続化
+L0096	操作	契機
+L0097	キャッシュへの保存	キャッシュキーの指定があるとき、一覧と総件数を保存する
+L0098	キャッシュの保存先は Redis とする。 キャッシュの識別名は、一覧が deck_search_result_<キャッシュキー>、総件数が deck_search_count_<キャッシュキー> とする。 キャッシュの有効期間は1800秒とする。 有効期間内に同じキャッシュキーで検索したときは、保存した一覧と総件数を返す。
+L0099	デッキ情報は更新しない。
+L0100	リニューアル後の仕様
+L0101	表示メッセージ
+L0102	本APIは画面へ文言を表示しない。応答に含める処理結果メッセージは入出力の節に示す。
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/A15-13/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+##### 0515 a15-13 A15-13 デッキ情報検索 ／ API デッキビルダー — デッキ情報検索
+L0001	Source:
+L0002	functions/pf-api/a15-13_api_deck_builder_deck_search.md
+L0003	A15-13 デッキ情報検索 ／ API デッキビルダー — デッキ情報検索
+L0004	業務ロジック
+L0005	検索モードと対象範囲
+L0006	検索モードは公開検索と自分のデッキ検索の 2 種類で、既定は公開検索とする。
+L0007	モード	認証	対象
+L0008	公開検索	不要。認証なしで成功する	公開デッキ
+L0009	自分のデッキ検索	必須。認証できないときは認証拒否とする	認証したプレイヤーが所有するデッキだけ
+L0010	自分のデッキ検索のときだけ認証用トークンを検証し、トークンが持つ顧客IDからプレイヤーを特定する。トークン欠落・署名不正・該当プレイヤーなしのいずれの場合も認証拒否とする。呼び出せるクライアントはデッキビルダーアプリに限る。トークン原値・署名シークレットは本書に記載しない。
+L0011	絞り込み
+L0012	大会デッキを含めるかとユーザーデッキを含めるかは個別に指定でき、どちらも対象外にしたときは空の一覧と総件数 0 を返す。
+L0013	条件	絞り込み方
+L0014	フォーマット・アーキタイプ・デッキタグ・キャンペーンタグ	配列を指定したときだけ、その識別子のいずれかに一致する行に限る
+L0015	デッキ利用者ID	完全一致
+L0016	大会デッキのプレイヤー名	部分一致
+L0017	大会名	日本語名・英語名のいずれかへの部分一致
+L0018	作成日時・更新日時・大会日付	下限は以上、上限は以下
+L0019	参加人数	下限は以上、上限は以下
+L0020	優勝	指定が真かつ上位 8 の指定が偽のときだけ、順位 1 位に限る
+L0021	上位 8	指定が真のとき、順位 8 位以内に限る
+L0022	レギュレーション違反	指定が偽のとき、違反デッキを除く
+L0023	直近デッキの件数	指定した件数ぶんのデッキID範囲に限る
+L0024	採用カード	カードと配置ボードの組をすべて満たす行に限る
+L0025	優勝と上位 8 の指定は、空文字と 0 のときだけ偽とする。 優勝と上位 8 の指定は、空文字と 0 以外の文字列（false を含む）を真とする。
+L0026	並び順と件数
+L0027	作成日時の降順に並べ、指定されたページ番号と 1 ページあたりの件数で 1 ページ分だけを返す。ページ番号の既定は 1、1 ページあたりの件数の既定は 20 で、100 を超える指定は 100 に丸める。どちらも数字だけを受け付ける。
+L0028	総件数は条件に一致するデッキを重複排除した件数であり、ページ番号と 1 ページあたりの件数の指定によって変わらない。
+L0029	値の取り方
+L0030	条件に一致した行の値をそのまま返し、金額・ポイント・数量・ステータス・日時の再計算と丸めは行わない。限定公開トークンは自分のデッキ検索のときだけ応答に含める。キャンペーンタグの開催状況は開催前 0・開催中 1・開催後 2 のいずれかで返す。
+L0031	デッキ一覧の応答に、金額・ポイントの項目は無い。 参加人数・公開範囲・非公開フラグは、デッキに保存された値をそのまま返す。
+L0032	入出力
+L0033	種類	内容
+L0034	入力	検索条件・検索モード・ページ番号・1 ページあたりの件数・キャッシュキー。自分のデッキ検索のときは認証用トークンを伴う
+L0035	成功時出力	HTTP 200。処理結果コード 200、処理結果メッセージ「Deck search success」、総件数、1 ページ分のデッキ一覧
+L0036	失敗時出力	自分のデッキ検索で認証できないときは HTTP 401。本文は処理結果コードとメッセージで、メッセージは「Access Token is incorrect」または「Authentication failed」。公開検索は条件に一致しないときも HTTP 200 で空の一覧と総件数 0 を返す
+L0037	入出力: 検索条件
+L0038	パラメータ	位置	型	必須／任意	説明
+L0039	jwt-token	ヘッダ	string	条件付き必須	認証用トークン。自分のデッキ検索のときだけ必須
+L0040	mode	クエリ	string	任意（既定 public）	public は公開検索、private は自分のデッキ検索
+L0041	format	クエリ	array	任意	フォーマットIDの配列
+L0042	archetype	クエリ	array	任意	アーキタイプIDの配列
+L0043	event_deck_flag	クエリ	string	任意（既定 1）	0・false のときは大会デッキを除く
+L0044	user_deck_flag	クエリ	string	任意（既定 1）	0・false のときはユーザーデッキを除く
+L0045	create_from	クエリ	string	任意	作成日時の下限。指定した日時以上
+L0046	create_to	クエリ	string	任意	作成日時の上限。指定した日時以下
+L0047	update_from	クエリ	string	任意	更新日時の下限。指定した日時以上
+L0048	update_to	クエリ	string	任意	更新日時の上限。指定した日時以下
+L0049	tag	クエリ	array	任意	デッキタグIDの配列
+L0050	campaign_tag_ids	クエリ	array	任意	キャンペーンタグIDの配列
+L0051	user_id	クエリ	string	任意	デッキ利用者IDの完全一致
+L0052	user_name	クエリ	string	任意	大会デッキのプレイヤー名の部分一致
+L0053	event_name	クエリ	string	任意	大会名の部分一致。日本語名と英語名の両方が対象
+L0054	event_date_from	クエリ	string	任意	大会日付の下限。指定した日付以上
+L0055	event_date_to	クエリ	string	任意	大会日付の上限。指定した日付以下
+L0056	participants_from	クエリ	integer	任意	参加人数の下限。指定した人数以上
+L0057	participants_to	クエリ	integer	任意	参加人数の上限。指定した人数以下
+L0058	champion_flag	クエリ	string	任意（既定 0）	真かつ上位 8 の指定が偽のときだけ順位 1 位に限る
+L0059	top8_flag	クエリ	string	任意（既定 0）	真のときは順位 8 位以内に限る
+L0060	regulation_violation_flag	クエリ	string	任意（既定 0）	偽のときはレギュレーション違反デッキを除く
+L0061	search_decks_count	クエリ	integer	任意	直近のデッキID範囲に限るときの件数
+L0062	per_page	クエリ	integer	任意（既定 20）	1 ページあたりの件数。数字だけを受け付け、100 を超えるときは 100 とする
+L0063	page	クエリ	integer	任意（既定 1）	ページ番号。数字だけを受け付ける
+L0064	cards	クエリ	array	任意	採用カード条件の配列。各要素は card_id・board_id
+L0065	cache_key	クエリ	string	任意	指定があるときだけ一覧と総件数をキャッシュに保存する
+L0066	入出力: デッキ一覧の項目
+L0067	フィールド	型	説明
+L0068	id	integer	デッキID
+L0069	deck_name	string	デッキ名
+L0070	format_id	integer	フォーマットの識別子
+L0071	format_name_jp	string	フォーマット名（日本語）
+L0072	format_name_en	string	フォーマット名（英語）
+L0073	archetype_id	integer	アーキタイプの識別子
+L0074	archetype_name_jp	string	アーキタイプ名（日本語）
+L0075	archetype_name_en	string	アーキタイプ名（英語）
+L0076	card_id	integer	代表カード画像の識別子
+L0077	card_image	string	代表カード画像のURL
+L0078	deck_type	string	デッキ種別
+L0079	event_name_jp	string	大会名（日本語）
+L0080	event_name_en	string	大会名（英語）
+L0081	event_date	string	大会日付
+L0082	player_name	string	プレイヤー名。大会デッキのときに入る
+L0083	result	string	成績
+L0084	ranking	integer	順位
+L0085	participants	integer	参加人数
+L0086	deck_user_id	string	デッキ利用者ID
+L0087	nickname	string	ニックネーム。ユーザーデッキのときに入る
+L0088	scope_id	integer	公開範囲
+L0089	deck_private_flag	boolean	非公開フラグ
+L0090	create_date	string	作成日時
+L0091	update_date	string	更新日時
+L0092	display_token	string	限定公開トークン。自分のデッキ検索のときだけ含める
+L0093	deck_tags	array	デッキタグの配列。各要素は id・name_jp・name_en
+L0094	campaign_tags	array	キャンペーンタグの配列。各要素は id・name_jp・name_en・is_during
+L0095	入出力: 永続化
+L0096	操作	契機
+L0097	キャッシュへの保存	キャッシュキーの指定があるとき、一覧と総件数を保存する
+L0098	キャッシュの保存先は Redis とする。 キャッシュの識別名は、一覧が deck_search_result_<キャッシュキー>、総件数が deck_search_count_<キャッシュキー> とする。 キャッシュの有効期間は1800秒とする。 有効期間内に同じキャッシュキーで検索したときは、保存した一覧と総件数を返す。
+L0099	デッキ情報は更新しない。
+L0100	リニューアル後の仕様
+L0101	表示メッセージ
+L0102	本APIは画面へ文言を表示しない。応答に含める処理結果メッセージは入出力の節に示す。
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/A15-12/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+##### 0515 a15-12 A15-12 デッキ情報参照 ／ API デッキビルダー — デッキ情報参照
+L0001	Source:
+L0002	functions/pf-api/a15-12_api_deck_builder_deck_get.md
+L0003	A15-12 デッキ情報参照 ／ API デッキビルダー — デッキ情報参照
+L0004	業務ロジック
+L0005	参照元の優先順位
+L0006	順序	参照元	扱い
+L0007	1	一時保存された下書き	デッキIDに対応する下書きがあれば、それを参照対象とする
+L0008	2	保存済みのデッキ情報	下書きが無いときに、デッキIDで取得する
+L0009	下書きから返すときは、フォーマット名・アーキタイプ名・代表カード画像をマスタから補完する。
+L0010	参照できる条件
+L0011	公開範囲ごとに参照の可否を判定する。判定は下書き・保存済みのどちらでも同じである。
+L0012	公開範囲	参照できる条件
+L0013	公開	誰でも参照できる
+L0014	非公開	所有者本人と確認できるときだけ参照できる
+L0015	限定公開	限定公開トークンが一致するとき、または所有者本人のときだけ参照できる
+L0016	所有者の判定は、認証トークンの検証で得た顧客IDからプレイヤーを引いて行う。トークンが無い、または有効でないときは所有者扱いにしない。トークンが無くても公開デッキは参照できるため、トークン欠落だけを理由に認証拒否を返すことはない。
+L0017	トークン原値・署名シークレット・限定公開トークン原値は本書に記載しない。
+L0018	件数
+L0019	1件のデッキを参照する機能であり、ページングの指定と件数の応答を持たない。
+L0020	値の取り方
+L0021	金額・ポイント・数量・ステータス・日時は永続化済みの値をそのまま返し、応答生成時の丸め・補正を行わない。
+L0022	エラー時の扱い
+L0023	エラー内容	処理
+L0024	デッキが存在しない	該当なし（HTTP 404、「Deck is not found」）とする
+L0025	公開範囲の判定で参照不可	該当なし（HTTP 404、「Deck is not found」）とし、存在の有無を区別しない
+L0026	入出力
+L0027	種類	内容
+L0028	入力	デッキID（パス・必須）、限定公開デッキの閲覧用トークン（任意）、認証トークン（任意。非公開・限定公開デッキを所有者として参照するときに必要）
+L0029	成功時出力	HTTP 200。処理結果コード200と「Get deck success」、デッキ情報
+L0030	失敗時出力	HTTP 404。処理結果コードとメッセージ「Deck is not found」
+L0031	出力: デッキ情報の項目
+L0032	フィールド	型	説明
+L0033	デッキ名	string	デッキ名。
+L0034	フォーマット	integer/string	識別子、日本語名、英語名。
+L0035	アーキタイプ	integer/string	識別子、日本語名、英語名。
+L0036	代表カード	integer/string	カードIDと画像URL。
+L0037	デッキ種別	string	デッキ種別。
+L0038	公開範囲	integer	1・2・3。
+L0039	非公開フラグ	boolean	非公開フラグ。
+L0040	大会情報	string	大会名（日本語・英語）・大会日付・プレイヤー名・成績・順位・出典URL。大会デッキのときに値を持つ。
+L0041	作成日時・更新日時	string	作成日時と更新日時。
+L0042	限定公開トークン	string	限定公開トークン。
+L0043	所有プレイヤー	string	デッキ利用者IDと、ユーザーデッキのときのニックネーム。
+L0044	デッキタグ	array	識別子・日本語名・英語名。タグがあるときに含める。
+L0045	キャンペーンタグ	array	識別子・日本語名・英語名・開催状態（開催前0・開催中1・開催後2）。
+L0046	採用カード	array	識別子・日本語名・英語名・日本語画像・英語画像・カードタイプ・色・マナ総量・枚数・ボード区分・ステッカー可否・アトラクション可否・不明カード可否。
+L0047	リニューアル後の仕様
+L0048	表示メッセージ
+L0049	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0050	—	API応答JSON	Get deck success	参照できる条件を満たしてデッキ情報を返すとき	処理結果コード200で応答する
+L0051	—	API応答JSON	Deck is not found	デッキが存在しない、または公開範囲の判定で参照不可のとき	HTTP 404で応答する
+
+exec
+/bin/bash -lc 'for f in integration_test/casegen/combination/factors/A15-07_{processes,factors,interactions,constraints}.tsv; do cat "$f"; done' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	フォーマットに紐づくアーキタイプを返す	アーキタイプ検索APIをフォーマット識別子（パス）付きで呼ぶ	HTTPステータスと応答JSONのアーキタイプ配列	L0006-L0007,L0012,L0017
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	指定したフォーマットの有無	フォーマットが存在する｜フォーマットが存在しない	フォーマットが存在する: 紐づくアーキタイプの配列を返して200／フォーマットが存在しない: 404「The format does not exist」	L0006,L0012	この機能
+F02	P1	フォーマットに紐づくアーキタイプの有無	紐づくアーキタイプあり｜紐づくアーキタイプなし	紐づくアーキタイプあり: 識別子・日本語名・英語名の配列を返す／紐づくアーキタイプなし: 空の配列を返す	L0006-L0007	この機能
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	効き合う	L0006-L0007	フォーマットが存在するときだけ紐づくアーキタイプの有無で配列の中身が分かれ、存在しないときは紐づきによらず404になる
+処理ID	組	種別	根拠	理由
+P1	F01=フォーマットが存在しない	打ち切り	L0012	存在しないフォーマットは404を返して終わり、アーキタイプの有無は結果に効かない
+
+exec
+/bin/bash -lc 'for f in integration_test/casegen/combination/factors/A15-12_{processes,factors,interactions,constraints}.tsv; do cat "$f"; done' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	デッキ情報を参照する（参照元の選択と公開範囲の判定）	デッキID（パス）に加え、認証トークン・限定公開の閲覧用トークンを任意で付けてデッキ情報参照APIを呼ぶ	API応答（HTTPステータスとデッキ情報）	L0007-L0016,L0024-L0025
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	一時保存の下書き	あり｜なし	あり: 下書きを参照対象とし不足項目をマスタから補完する／なし: 保存済みのデッキ情報を取得する	L0007-L0009	この機能
+F02	P1	参照元の公開範囲	公開｜非公開｜限定公開	公開: 誰でも参照できる／非公開: 所有者本人と確認できるときだけ参照できる／限定公開: 閲覧用トークン一致または所有者本人のときだけ参照できる	L0012-L0015	この機能
+F03	P1	閲覧者が所有者本人か	本人と確認できる｜確認できない	本人と確認できる: 非公開・限定公開も参照できる／確認できない: トークン無し・無効・他人はいずれも所有者扱いにならない	L0014-L0016	この機能
+F04	P1	限定公開の閲覧用トークン	一致する｜一致しない又は指定なし	一致する: 限定公開を参照できる／一致しない又は指定なし: 限定公開は所有者本人のときだけ参照できる	L0015	この機能
+F05	P1	保存済みのデッキ情報	存在する｜存在しない	存在する: 下書きが無ければ参照対象になり公開範囲の判定へ進む／存在しない: 下書きも無ければ該当なしHTTP 404	L0007-L0008,L0024	この機能
+処理ID	要因	判定	根拠	理由
+P1	F02+F03+F04	効き合う	L0012-L0016,L0025	公開範囲ごとに参照できる条件が違い 非公開は本人のみ 限定公開は閲覧用トークン一致または本人 公開は誰でも 参照不可は404
+P1	F01+F02	関係しない	L0011	公開範囲の判定は下書き・保存済みのどちらでも同じ
+P1	F01+F03	関係しない	L0011,L0016	所有者の判定はトークンの検証で行い参照元によらない
+P1	F01+F04	関係しない	L0011	閲覧用トークンの照合は参照元によらず同じ
+P1	F01+F05	効き合う	L0007-L0008,L0024	下書きがあれば下書きを参照対象とし、下書きが無いときだけ保存済みのデッキ情報の有無で参照対象か該当なし（404）かが決まる
+P1	F02+F05	関係しない		参照できない（デッキが無い・公開範囲で不可）はいずれも同じ404で、どれか1つに当たれば返り、一方の値でもう一方の判定は変わらない
+P1	F03+F05	関係しない		参照できない（デッキが無い・公開範囲で不可）はいずれも同じ404で、どれか1つに当たれば返り、一方の値でもう一方の判定は変わらない
+P1	F04+F05	関係しない		参照できない（デッキが無い・公開範囲で不可）はいずれも同じ404で、どれか1つに当たれば返り、一方の値でもう一方の判定は変わらない
+処理ID	組	種別	根拠	理由
+P1	F01=なし&F05=存在しない	打ち切り	L0007-L0008,L0024	下書きも保存済みのデッキも無いと該当なし(404)で終わり、公開範囲などは結果に効かない
+P1	F02=非公開&F03=確認できない	打ち切り	L0014,L0025	非公開は所有者本人と確認できないと参照不可の404で終わり、閲覧用トークンなどは結果に効かない
+P1	F02=限定公開&F03=確認できない&F04=一致しない又は指定なし	打ち切り	L0015,L0025	限定公開はトークン不一致かつ本人と確認できないと参照不可の404で終わる
+
+exec
+/bin/bash -lc 'for f in integration_test/casegen/combination/factors/A15-14_{processes,factors,interactions,constraints}.tsv; do cat "$f"; done' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	フォーマット別にアーキタイプの件数と占有率を集計して返す	format_id（と任意でcount）を指定してメタゲーム情報参照APIを呼ぶ	API応答（formatsごとのarchetypes・deck_count・rate）	L0006-L0011,L0014
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	デッキの公開範囲	公開｜非公開	公開: 集計対象になりうる／非公開: 集計対象外	L0007,L0011	この機能
+F02	P1	デッキの種別と大会日付	大会デッキで日付が範囲内｜日付が範囲外またはユーザーデッキ	大会デッキで日付が範囲内: 集計対象になりうる／日付が範囲外またはユーザーデッキ: 集計対象外（範囲外の大会デッキも大会デッキではないユーザーデッキも同じ）	L0007	この機能
+F03	P1	countの指定	指定なし｜上位件数を指定	指定なし: 全アーキタイプを件数降順で返す／上位件数を指定: 件数上位から最大count件のアーキタイプに絞る	L0006,L0022	この機能
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	関係しない	L0007	公開範囲と種別・日付は、どちらも1件のデッキを集計対象に入れるか外すかの条件で、すべて満たすときだけ入る。外れ方は1つずつ確かめれば足りる
+P1	F01+F03	関係しない	L0006	公開範囲は集計対象に入れるかを決め、countは集計後の件数上位の絞り込み。互いの値で他方の判定は変わらない
+P1	F02+F03	関係しない	L0006-L0007	種別・日付は集計対象に入れるかを決め、countは集計後の件数上位の絞り込み。互いの値で他方の判定は変わらない
+処理ID	組	種別	根拠	理由
+P1	F01=非公開	打ち切り	L0007,L0011	非公開のデッキは集計対象に入らず、ほかの要因の値は結果に効かない
+P1	F02=日付が範囲外またはユーザーデッキ	打ち切り	L0007	大会日付が集計範囲外のデッキと大会デッキでないデッキは集計対象に入らず、ほかの要因の値は結果に効かない
+
+exec
+/bin/bash -lc 'for f in integration_test/casegen/combination/factors/A15-13_{processes,factors,interactions,constraints}.tsv; do cat "$f"; done' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	デッキを検索して一覧を返す（モードごとの対象範囲と認証）	検索モードと認証用トークンを指定してデッキ情報検索APIを呼ぶ	API応答（HTTPステータス・デッキ一覧・総件数・限定公開トークン）	L0005-L0010,L0030
+P2	検索結果をキャッシュへ保存し再利用する	キャッシュキーを指定してデッキ情報検索APIを呼ぶ	Redis（一覧と総件数のキー）・API応答	L0065,L0097-L0098
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1,P2	検索モード	公開検索｜自分のデッキ検索	公開検索: 認証不要で公開デッキが対象／自分のデッキ検索: 認証必須で認証したプレイヤー所有のデッキだけが対象で限定公開トークンも応答に含む	L0006-L0010,L0030	この機能
+F02	P1,P2	認証用トークン	有効｜無効	有効: プレイヤーを特定できる／無効: 欠落・署名不正・該当プレイヤーなしは自分のデッキ検索のとき認証拒否HTTP 401（公開検索では検証しない）	L0008-L0010,L0036	この機能
+F03	P1	デッキの公開範囲	公開｜非公開または限定公開	公開: 公開検索の対象／非公開または限定公開: 公開デッキではないので公開検索の対象外で、所有者の自分のデッキ検索では対象	L0008-L0009,L0088	この機能
+F04	P1	デッキの所有者	認証プレイヤー本人｜他人	認証プレイヤー本人: 自分のデッキ検索の対象／他人: 自分のデッキ検索の対象外（公開デッキなら公開検索の対象）	L0008-L0009	この機能
+F05	P2	キャッシュキー	指定あり｜指定なし	指定あり: 一覧と総件数をRedisに保存する／指定なし: 保存しない	L0065,L0097	この機能
+F06	P2	同じキャッシュキーの保存済み結果	有効期間内にある｜無い	有効期間内にある: 保存した一覧と総件数を返す／無い: 検索し直す	L0098	この機能
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	効き合う	L0008-L0010	自分のデッキ検索のときだけトークンを検証して認証拒否になり、公開検索ではトークンの有効性を見ない
+P1	F01+F03	効き合う	L0008-L0009	公開検索は公開デッキだけが対象、自分のデッキ検索は公開範囲によらず所有デッキが対象
+P1	F01+F04	効き合う	L0008-L0009	自分のデッキ検索は認証したプレイヤー所有のデッキだけが対象、公開検索は所有者を条件にしない
+P1	F02+F03	関係しない		結果に入るのは認証できて対象の範囲に当たるデッキだけで、認証の可否と公開範囲は別々の外れ方であり一方の値でもう一方の判定は変わらない
+P1	F02+F04	関係しない		結果に入るのは認証できて所有者が一致するデッキだけで、認証の可否と所有者は別々の外れ方であり一方の値でもう一方の判定は変わらない
+P1	F03+F04	関係しない		公開範囲は公開検索の対象を、所有者は自分のデッキ検索の対象を決める別々の条件で、互いを照合して対象を決める定めは無い
+P2	F01+F02	効き合う	L0008-L0010	自分のデッキ検索のときだけトークンを検証する
+P2	F05+F06	効き合う	L0097-L0098	キャッシュキーの指定があるときだけ保存し 同じキーの保存済みが有効期間内なら保存結果を返す
+P2	F01+F05	関係しない		保存の有無はキャッシュキーの指定で決まりモードによらない
+P2	F02+F05	関係しない		保存の有無はキャッシュキーの指定で決まりトークンの有効性によらない
+P2	F01+F06	関係しない	L0098	キャッシュの識別名はキャッシュキーだけで決まりモードを含まない
+P2	F02+F06	設計書が決めていない	L0010,L0098	自分のデッキ検索でトークンが無効かつ保存済み結果が有効期間内のとき 認証拒否が先かキャッシュ返却が先か書かれていない
+処理ID	組	種別	根拠	理由
+P2	F05=指定なし&F06=有効期間内にある	作れない	L0065,L0098	キャッシュキーを指定しないので同じキーの保存済み結果は存在しない
+P2	F01=自分のデッキ検索&F02=無効&F06=有効期間内にある	正解未定	L0010,L0098	認証拒否とキャッシュ返却のどちらが先か書かれていない
+P1	F01=自分のデッキ検索&F02=無効	打ち切り	L0009,L0010	自分のデッキ検索でトークンが無効だと認証拒否(401)で終わり、公開範囲・所有者は結果に効かない
+P1	F01=公開検索&F03=非公開または限定公開	打ち切り	L0008	公開検索は公開デッキだけが対象で、公開デッキでなければ一覧に出さず、所有者は結果に効かない
+P1	F01=自分のデッキ検索&F04=他人	打ち切り	L0009	自分のデッキ検索は認証したプレイヤーが所有するデッキだけが対象で、他人のデッキは一覧に出さず、公開範囲は結果に効かない
+
+exec
+/bin/bash -lc 'for f in integration_test/casegen/combination/factors/A15-16_{processes,factors,interactions,constraints}.tsv; do cat "$f"; done' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	最新大会デッキのマスタから直近大会の一覧を抽出して返す	パラメータ無しで直近大会情報取得APIを呼ぶ	API応答（直近大会の一覧）	L0006,L0008,L0015
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	大会日	設定済み｜未設定	設定済み: 抽出の条件を満たす／未設定: 抽出されない	L0006	この機能
+F02	P1	大会名（日本語）	値あり｜空	値あり: 抽出の条件を満たす／空: 抽出されない	L0006	この機能
+F03	P1	大会名（英語）	値あり｜空	値あり: 抽出の条件を満たす／空: 抽出されない	L0006	この機能
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	関係しない	L0006	大会日・大会名（日本語）・大会名（英語）は、どれも1行を一覧に出すかの条件で、すべて満たすときだけ出る。外れ方は1つずつ確かめれば足りる
+P1	F01+F03	関係しない	L0006	同上
+P1	F02+F03	関係しない	L0006	同上
+処理ID	組	種別	根拠	理由
+P1	F01=未設定	打ち切り	L0006	大会日が未設定の行は抽出されず、ほかの要因の値は結果に効かない
+P1	F02=空	打ち切り	L0006	大会名（日本語）が空の行は抽出されず、ほかの要因の値は結果に効かない
+P1	F03=空	打ち切り	L0006	大会名（英語）が空の行は抽出されず、ほかの要因の値は結果に効かない
+
+exec
+/bin/bash -lc 'for f in integration_test/casegen/combination/factors/A15-15_{processes,factors,interactions,constraints}.tsv; do cat "$f"; done' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	指定フォーマットの公開・大会デッキからカード別の平均採用枚数を集計して返す	フォーマット識別子（パス）を指定して採用枚数情報参照APIを呼ぶ	API応答（カード別採用枚数集計）	L0006,L0012-L0014,L0017
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	デッキの公開範囲	公開｜非公開	公開: 集計対象になりうる／非公開: 集計対象外	L0006,L0012	この機能
+F02	P1	デッキの種別	大会デッキ｜ユーザーデッキ	大会デッキ: 集計対象になりうる／ユーザーデッキ: 集計対象外	L0006	この機能
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	関係しない	L0006	公開範囲と種別は、どちらも1件のデッキを集計対象に入れるか外すかの条件で、すべて満たすときだけ入る。外れ方は1つずつ確かめれば足りる
+処理ID	組	種別	根拠	理由
+P1	F01=非公開	打ち切り	L0006,L0012	非公開のデッキは集計対象に入らず、ほかの要因の値は結果に効かない
+P1	F02=ユーザーデッキ	打ち切り	L0006	ユーザーデッキは集計対象に入らず、ほかの要因の値は結果に効かない
+
+exec
+/bin/bash -lc 'for f in integration_test/casegen/combination/factors/A15-17_{processes,factors,interactions,constraints}.tsv; do cat "$f"; done' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	カードリストを解読してデッキを新規登録する	認証用トークンとフォーマットの識別子つきでデッキ登録インポートAPIへ要求を送る	応答本文とDB（デッキと採用カード）	L0006-L0011,L0013,L0017,L0030
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	フォーマットの統率者使用設定	統率者使用設定が有効｜統率者使用設定が無効	統率者使用設定が有効: 行の保存先は統率領域から始まる／統率者使用設定が無効: 保存先はメインボードから始まり統率領域に保存する行があると入力不正（HTTP 400）	L0008,L0010	この機能
+F02	P1	カードリストの見出しの行	見出しなし｜Deck見出し｜Sideboard見出し｜Commander見出し	見出しなし: 開始の保存先のまま空行で切り替わる／Deck見出し: 以降はメインボード／Sideboard見出し: 以降はサイドボード／Commander見出し: 以降は統率領域	L0010	この機能
+F03	P1	カードリスト中の空行	空行あり｜空行なし	空行あり: Deck見出しが無いとき統率領域から以降はメインボード・サイドボード見出しが無いときメインボードから以降はサイドボード／空行なし: 切り替わらない	L0010	この機能
+F04	P1	カード名が一致せず解読できない行	解読できない行あり｜解読できない行なし	解読できない行あり: 登録は完了しHTTP 206で該当行の行番号を返す／解読できない行なし: HTTP 200	L0011,L0030	この機能
+処理ID	要因	判定	根拠	理由
+P1	F01+F02+F03	効き合う	L0010	保存先の開始（統率領域かメインボード）は統率者使用設定で決まり、見出しと空行がそこから以降の保存先を切り替える。無効で統率領域に保存する行があると400
+P1	F01+F04	効き合う	L0010,L0011	無効で統率領域に保存する行があると400で登録されず、解読できない行があっても206にならない
+P1	F02+F04	設計書が決めていない	L0011	行番号を数えるとき見出しの行を含むか書かれていない
+P1	F03+F04	設計書が決めていない	L0011	行番号を数えるとき空行を含むか書かれていない
+処理ID	組	種別	根拠	理由
+P1	F02=Deck見出し&F04=解読できない行あり	正解未定	L0011	行番号に見出しの行を数えるか決まらない
+P1	F02=Sideboard見出し&F04=解読できない行あり	正解未定	L0011	行番号に見出しの行を数えるか決まらない
+P1	F02=Commander見出し&F04=解読できない行あり	正解未定	L0011	行番号に見出しの行を数えるか決まらない
+P1	F03=空行あり&F04=解読できない行あり	正解未定	L0011	行番号に空行を数えるか決まらない
+P1	F01=統率者使用設定が無効&F02=Commander見出し	打ち切り	L0010	統率者使用設定が無効で統率領域に保存する行があると入力不正（HTTP 400）で登録されず、F03・F04の値は結果に効かない
+
+codex
+設計書との照合で、A15-11 の統合値には異なる応答メッセージが含まれ、A15-17 の打ち切り条件は見出しだけで 400 と判定する点に差があります。削除要因については、保存内容と他機能での参照条件まで確認してから指摘を確定します。
+exec
+/bin/bash -lc "rg -n '公開範囲|公開区分|限定公開|scope_id' integration_test/casegen/cases/A15-10_test_cases.tsv | head -35" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+2:IT-A15-10-001	REQ-0515-sheet-10-R008	—	ITA-04,ITB-06	P1	ブラウザのみ	S-A15-10-ENV,S-A15-10-PLAYERS,S-A15-10-MASTERS,S-A15-10-TARGET-001,S-A15-10-FULL-001	① デッキ情報更新APIへ要求でき、認証設定がテスト用認証データ作成機構と一致している（S-A15-10-ENV）／② 顧客ID 〔顧客ID-A1510-共有A〕とプレイヤーID 〔プレイヤーID-A1510-共有A〕が対応し、所有者Aの正規署名済み認証用トークンがある。〔顧客ID-A1510-共有A〕・〔プレイヤーID-A1510-共有A〕は登録時に振られた番号を控えてある（S-A15-10-PLAYERS）／③ フォーマットID 〔フォーマットID-A1510-共有A〕・〔フォーマットID-A1510-共有B〕、アーキタイプID 〔アーキタイプID-A1510-共有A〕・〔アーキタイプID-A1510-共有B〕、カードID 〔カードID-A1510-共有A〕・〔カードID-A1510-共有B〕・〔カードID-A1510-共有C〕・〔カードID-A1510-共有D〕・〔カードID-A1510-共有E〕・〔カードID-A1510-共有F〕、キャンペーンタグID 〔キャンペーンタグID-A1510-共有A〕・〔キャンペーンタグID-A1510-共有B〕、公開範囲1・2および区画1〜6が登録されている。〔フォーマットID-A1510-共有A〕・〔フォーマットID-A1510-共有B〕・〔アーキタイプID-A1510-共有A〕・〔アーキタイプID-A1510-共有B〕・〔カードID-A1510-共有A〕・〔カードID-A1510-共有B〕・〔カードID-A1510-共有C〕・〔カードID-A1510-共有D〕・〔カードID-A1510-共有E〕・〔カードID-A1510-共有F〕・〔キャンペーンタグID-A1510-共有A〕・〔キャンペーンタグID-A1510-共有B〕は登録時に振られた番号を控えてある（S-A15-10-MASTERS）／④ デッキID 〔デッキID-A1510-001〕はプレイヤーID 〔プレイヤーID-A1510-共有A〕が所有し、デッキ名「更新前デッキ」、フォーマットID 〔フォーマットID-A1510-共有A〕、アーキタイプID 〔アーキタイプID-A1510-共有A〕、公開範囲2、代表カード画像用カードID 〔カードID-A1510-共有A〕、キャンペーンタグID 〔キャンペーンタグID-A1510-共有A〕、採用カードはカードID 〔カードID-A1510-共有B〕・区画1・枚数1であり、一時保存はない。〔デッキID-A1510-001〕は登録時に振られたデッキIDを控えてある（S-A15-10-TARGET-001）／⑤ デッキ名「更新後デッキ」、フォーマットID 〔フォーマットID-A1510-共有B〕、アーキタイプID 〔アーキタイプID-A1510-共有B〕、公開範囲1、代表カード画像用カードID 〔カードID-A1510-共有C〕、キャンペーンタグID [〔キャンペーンタグID-A1510-共有A〕,〔キャンペーンタグID-A1510-共有B〕]、カードID 〔カードID-A1510-共有A〕・〔カードID-A1510-共有B〕・〔カードID-A1510-共有C〕・〔カードID-A1510-共有D〕・〔カードID-A1510-共有E〕・〔カードID-A1510-共有F〕を区画1〜6へ枚数2・1・1・3・1・1で指定する更新内容を用意する（S-A15-10-FULL-001）	1. ブラウザの開発者ツールを開く／2. 所有者Aの有効な認証用トークン、デッキID 〔デッキID-A1510-001〕、即時保存=真およびS-A15-10-FULL-001の更新内容を指定してデッキ情報更新APIへ要求を送信する／3. Networkで応答を確認する	HTTPステータス200となり、応答本文に処理結果コードと処理結果メッセージ「Deck update success」が返ること	0515 A15-10 デッキ情報登更新 / 業務ロジック 応答の内容、入出力 成功時出力
+3:IT-A15-10-002	REQ-0515-sheet-10-R004,REQ-0515-sheet-10-R013,REQ-0515-sheet-10-R015	—	ITA-05,ITA-07,ITA-11	P1	ブラウザ+DB確認	S-A15-10-ENV,S-A15-10-PLAYERS,S-A15-10-MASTERS,S-A15-10-TARGET-002,S-A15-10-FULL-002	① デッキ情報更新APIへ要求でき、DBで保存内容を確認できる（S-A15-10-ENV）／② 顧客ID 〔顧客ID-A1510-共有A〕とプレイヤーID 〔プレイヤーID-A1510-共有A〕が対応し、所有者Aの正規署名済み認証用トークンがある。〔顧客ID-A1510-共有A〕・〔プレイヤーID-A1510-共有A〕は登録時に振られた番号を控えてある（S-A15-10-PLAYERS）／③ フォーマットID 〔フォーマットID-A1510-共有A〕・〔フォーマットID-A1510-共有B〕、アーキタイプID 〔アーキタイプID-A1510-共有A〕・〔アーキタイプID-A1510-共有B〕、カードID 〔カードID-A1510-共有A〕・〔カードID-A1510-共有B〕・〔カードID-A1510-共有C〕・〔カードID-A1510-共有D〕・〔カードID-A1510-共有E〕・〔カードID-A1510-共有F〕、キャンペーンタグID 〔キャンペーンタグID-A1510-共有A〕・〔キャンペーンタグID-A1510-共有B〕、公開範囲1・2および区画1〜6が登録されている。〔フォーマットID-A1510-共有A〕・〔フォーマットID-A1510-共有B〕・〔アーキタイプID-A1510-共有A〕・〔アーキタイプID-A1510-共有B〕・〔カードID-A1510-共有A〕・〔カードID-A1510-共有B〕・〔カードID-A1510-共有C〕・〔カードID-A1510-共有D〕・〔カードID-A1510-共有E〕・〔カードID-A1510-共有F〕・〔キャンペーンタグID-A1510-共有A〕・〔キャンペーンタグID-A1510-共有B〕は登録時に振られた番号を控えてある（S-A15-10-MASTERS）／④ デッキID 〔デッキID-A1510-002〕はプレイヤーID 〔プレイヤーID-A1510-共有A〕が所有し、デッキ名「更新前デッキ」、フォーマットID 〔フォーマットID-A1510-共有A〕、アーキタイプID 〔アーキタイプID-A1510-共有A〕、公開範囲2、代表カード画像用カードID 〔カードID-A1510-共有A〕、キャンペーンタグID 〔キャンペーンタグID-A1510-共有A〕、採用カードはカードID 〔カードID-A1510-共有B〕・区画1・枚数1であり、一時保存はない。〔デッキID-A1510-002〕は登録時に振られたデッキIDを控えてある（S-A15-10-TARGET-002）／⑤ デッキ名「更新後デッキ」、フォーマットID 〔フォーマットID-A1510-共有B〕、アーキタイプID 〔アーキタイプID-A1510-共有B〕、公開範囲1、代表カード画像用カードID 〔カードID-A1510-共有C〕、キャンペーンタグID [〔キャンペーンタグID-A1510-共有A〕,〔キャンペーンタグID-A1510-共有B〕]、カードID 〔カードID-A1510-共有A〕・〔カードID-A1510-共有B〕・〔カードID-A1510-共有C〕・〔カードID-A1510-共有D〕・〔カードID-A1510-共有E〕・〔カードID-A1510-共有F〕を区画1〜6へ枚数2・1・1・3・1・1で指定する更新内容を用意する（S-A15-10-FULL-002）	1. 所有者Aの有効な認証用トークン、デッキID 〔デッキID-A1510-002〕、即時保存=真およびS-A15-10-FULL-002の更新内容を指定してデッキ情報更新APIへ要求を送信する／2. DBでデッキID 〔デッキID-A1510-002〕のデッキ本体と採用カードを確認する	デッキID 〔デッキID-A1510-002〕のデッキ名・フォーマット・アーキタイプ・公開範囲・代表カード画像・キャンペーンタグが指定値で確定保存され、カードID 〔カードID-A1510-共有A〕・〔カードID-A1510-共有B〕・〔カードID-A1510-共有C〕・〔カードID-A1510-共有D〕・〔カードID-A1510-共有E〕・〔カードID-A1510-共有F〕が指定した区画の識別子と枚数で確定保存されること	0515 A15-10 デッキ情報登更新 / 業務ロジック 保存先の切り替え、入出力・入出力: 永続化
+4:IT-A15-10-003	REQ-0515-sheet-10-R012	—	ITA-08,ITA-24	P1	ブラウザ+DB確認	S-A15-10-ENV,S-A15-10-PLAYERS,S-A15-10-MASTERS,S-A15-10-OMIT-003	① デッキ情報更新APIへ要求でき、DBで保存内容を確認できる（S-A15-10-ENV）／② 顧客ID 〔顧客ID-A1510-共有A〕とプレイヤーID 〔プレイヤーID-A1510-共有A〕が対応し、所有者Aの正規署名済み認証用トークンがある。〔顧客ID-A1510-共有A〕・〔プレイヤーID-A1510-共有A〕は登録時に振られた番号を控えてある（S-A15-10-PLAYERS）／③ フォーマットID 〔フォーマットID-A1510-共有A〕、アーキタイプID 〔アーキタイプID-A1510-共有A〕、カードID 〔カードID-A1510-共有A〕・〔カードID-A1510-共有B〕、キャンペーンタグID 〔キャンペーンタグID-A1510-共有A〕、公開範囲1および区画1が登録されている。〔フォーマットID-A1510-共有A〕・〔アーキタイプID-A1510-共有A〕・〔カードID-A1510-共有A〕・〔カードID-A1510-共有B〕・〔キャンペーンタグID-A1510-共有A〕は登録時に振られた番号を控えてある（S-A15-10-MASTERS）／④ デッキID 〔デッキID-A1510-003〕はプレイヤーID 〔プレイヤーID-A1510-共有A〕が所有し、デッキ名「省略前デッキ」、フォーマットID 〔フォーマットID-A1510-共有A〕、アーキタイプID 〔アーキタイプID-A1510-共有A〕、公開範囲1、代表カード画像用カードID 〔カードID-A1510-共有A〕、キャンペーンタグID 〔キャンペーンタグID-A1510-共有A〕、採用カードはカードID 〔カードID-A1510-共有B〕・区画1・枚数2であり、一時保存はない。〔デッキID-A1510-003〕は登録時に振られたデッキIDを控えてある（S-A15-10-OMIT-003）	1. 所有者Aの有効な認証用トークン、デッキID 〔デッキID-A1510-003〕、即時保存=真および公開範囲=1を指定する／2. デッキ名・フォーマット・アーキタイプ・代表カード画像・キャンペーンタグ・採用カードを指定せずデッキ情報更新APIへ要求を送信する／3. DBでデッキID 〔デッキID-A1510-003〕を確認する	デッキID 〔デッキID-A1510-003〕のデッキ名・フォーマット・アーキタイプ・代表カード画像・キャンペーンタグおよび採用カードが更新前の値から変更されないこと	0515 A15-10 デッキ情報登更新 / 入出力 入力
+5:IT-A15-10-004	REQ-0515-sheet-10-R014	—	ITA-05,ITA-06,ITB-06	P1	ブラウザ+DB確認	S-A15-10-ENV,S-A15-10-PLAYERS,S-A15-10-MASTERS,S-A15-10-TARGET-004	① デッキ情報更新APIへ要求でき、DBで保存内容を確認できる（S-A15-10-ENV）／② 顧客ID 〔顧客ID-A1510-共有A〕とプレイヤーID 〔プレイヤーID-A1510-共有A〕が対応し、所有者Aの正規署名済み認証用トークンがある。〔顧客ID-A1510-共有A〕・〔プレイヤーID-A1510-共有A〕は登録時に振られた番号を控えてある（S-A15-10-PLAYERS）／③ キャンペーンタグID 〔キャンペーンタグID-A1510-共有A〕と公開範囲1・2が登録されている。〔キャンペーンタグID-A1510-共有A〕は登録時に振られたキャンペーンタグIDを控えてある（S-A15-10-MASTERS）／④ デッキID 〔デッキID-A1510-004〕はプレイヤーID 〔プレイヤーID-A1510-共有A〕が所有し、デッキ名「更新前デッキ」、公開範囲2、キャンペーンタグID 〔キャンペーンタグID-A1510-共有A〕であり、一時保存はない。〔デッキID-A1510-004〕は登録時に振られたデッキIDを控えてある（S-A15-10-TARGET-004）	1. 所有者Aの有効な認証用トークン、デッキID 〔デッキID-A1510-004〕、即時保存=真、公開範囲=1およびキャンペーンタグの識別子=〔キャンペーンタグID-A1510-共有A〕を単一値で指定して要求を送信する／2. DBでデッキID 〔デッキID-A1510-004〕のキャンペーンタグを確認する	単一値で指定したキャンペーンタグID 〔キャンペーンタグID-A1510-共有A〕がデッキID 〔デッキID-A1510-004〕に保存されること	0515 A15-10 デッキ情報登更新 / 入出力 入力、入出力: 永続化
+6:IT-A15-10-005	REQ-0515-sheet-10-R014	—	ITA-05,ITA-06,ITB-06	P1	ブラウザ+DB確認	S-A15-10-ENV,S-A15-10-PLAYERS,S-A15-10-MASTERS,S-A15-10-TARGET-005	① デッキ情報更新APIへ要求でき、DBで保存内容を確認できる（S-A15-10-ENV）／② 顧客ID 〔顧客ID-A1510-共有A〕とプレイヤーID 〔プレイヤーID-A1510-共有A〕が対応し、所有者Aの正規署名済み認証用トークンがある。〔顧客ID-A1510-共有A〕・〔プレイヤーID-A1510-共有A〕は登録時に振られた番号を控えてある（S-A15-10-PLAYERS）／③ キャンペーンタグID 〔キャンペーンタグID-A1510-共有A〕・〔キャンペーンタグID-A1510-共有B〕と公開範囲1・2が登録されている。〔キャンペーンタグID-A1510-共有A〕・〔キャンペーンタグID-A1510-共有B〕は登録時に振られた番号を控えてある（S-A15-10-MASTERS）／④ デッキID 〔デッキID-A1510-005〕はプレイヤーID 〔プレイヤーID-A1510-共有A〕が所有し、デッキ名「更新前デッキ」、公開範囲2、キャンペーンタグID 〔キャンペーンタグID-A1510-共有A〕であり、一時保存はない。〔デッキID-A1510-005〕は登録時に振られたデッキIDを控えてある（S-A15-10-TARGET-005）	1. 所有者Aの有効な認証用トークン、デッキID 〔デッキID-A1510-005〕、即時保存=真、公開範囲=1およびキャンペーンタグの識別子=[〔キャンペーンタグID-A1510-共有A〕,〔キャンペーンタグID-A1510-共有B〕]を配列で指定して要求を送信する／2. DBでデッキID 〔デッキID-A1510-005〕のキャンペーンタグを確認する	配列で指定したキャンペーンタグID 〔キャンペーンタグID-A1510-共有A〕・〔キャンペーンタグID-A1510-共有B〕がデッキID 〔デッキID-A1510-005〕に保存されること	0515 A15-10 デッキ情報登更新 / 入出力 入力、入出力: 永続化
+7:IT-A15-10-006	REQ-0515-sheet-10-R008,REQ-0515-sheet-10-R009	—	ITA-11,ITB-06	P1	ブラウザのみ	S-A15-10-ENV,S-A15-10-PLAYERS,S-A15-10-MASTERS,S-A15-10-TARGET-006	① デッキ情報更新APIへ要求でき、Networkで応答を確認できる（S-A15-10-ENV）／② 顧客ID 〔顧客ID-A1510-共有A〕とプレイヤーID 〔プレイヤーID-A1510-共有A〕が対応し、所有者Aの正規署名済み認証用トークンがある。〔顧客ID-A1510-共有A〕・〔プレイヤーID-A1510-共有A〕は登録時に振られた番号を控えてある（S-A15-10-PLAYERS）／③ 公開範囲ID 1が公開、ID 2が非公開として登録されている（S-A15-10-MASTERS）／④ デッキID 〔デッキID-A1510-006〕はプレイヤーID 〔プレイヤーID-A1510-共有A〕が所有し、デッキ名「更新前デッキ」、公開範囲2であり、一時保存はない。〔デッキID-A1510-006〕は登録時に振られたデッキIDを控えてある（S-A15-10-TARGET-006）	1. ブラウザの開発者ツールを開く／2. 所有者Aの有効な認証用トークン、デッキID 〔デッキID-A1510-006〕、即時保存=真および公開範囲=1を指定して要求を送信する／3. 公開範囲=2へ変更して要求を送信する／4. Networkで2回の応答を確認する	公開範囲が公開1および非公開2の応答には閲覧用トークンが含まれないこと	0515 A15-10 デッキ情報登更新 / 業務ロジック 応答の内容、入出力 成功時出力
+8:IT-A15-10-007	REQ-0515-sheet-10-R008,REQ-0515-sheet-10-R009	—	ITA-11,ITB-06	P1	ブラウザのみ	S-A15-10-ENV,S-A15-10-PLAYERS,S-A15-10-MASTERS,S-A15-10-TARGET-007	① デッキ情報更新APIへ要求でき、Networkで応答を確認できる（S-A15-10-ENV）／② 顧客ID 〔顧客ID-A1510-共有A〕とプレイヤーID 〔プレイヤーID-A1510-共有A〕が対応し、所有者Aの正規署名済み認証用トークンがある。〔顧客ID-A1510-共有A〕・〔プレイヤーID-A1510-共有A〕は登録時に振られた番号を控えてある（S-A15-10-PLAYERS）／③ 公開範囲ID 3が限定公開として登録されている（S-A15-10-MASTERS）／④ デッキID 〔デッキID-A1510-007〕はプレイヤーID 〔プレイヤーID-A1510-共有A〕が所有し、デッキ名「更新前デッキ」、公開範囲2であり、一時保存はない。〔デッキID-A1510-007〕は登録時に振られたデッキIDを控えてある（S-A15-10-TARGET-007）	1. ブラウザの開発者ツールを開く／2. 所有者Aの有効な認証用トークン、デッキID 〔デッキID-A1510-007〕、即時保存=真および公開範囲=3を指定して要求を送信する／3. Networkで応答を確認する	HTTPステータス200の応答に処理結果コード、処理結果メッセージ「Deck update success」および閲覧用トークンが含まれること	0515 A15-10 デッキ情報登更新 / 業務ロジック 応答の内容、入出力 成功時出力
+9:IT-A15-10-008	REQ-0515-sheet-10-R001,REQ-0515-sheet-10-R010,REQ-0515-sheet-10-R011	—	ITB-04,ITA-14	P1	ブラウザのみ	S-A15-10-ENV,S-A15-10-PLAYERS,S-A15-10-MASTERS,S-A15-10-TARGET-008	① デッキ情報更新APIへ要求でき、Networkで応答を確認できる（S-A15-10-ENV）／② 顧客ID 〔顧客ID-A1510-共有A〕とプレイヤーID 〔プレイヤーID-A1510-共有A〕が対応している。〔顧客ID-A1510-共有A〕・〔プレイヤーID-A1510-共有A〕は登録時に振られた番号を控えてある（S-A15-10-PLAYERS）／③ 公開範囲ID 1・2およびデッキの参照マスタが登録されている（S-A15-10-MASTERS）／④ デッキID 〔デッキID-A1510-008〕はプレイヤーID 〔プレイヤーID-A1510-共有A〕が所有し、デッキ名「更新前デッキ」、公開範囲2であり、一時保存はない。〔デッキID-A1510-008〕は登録時に振られたデッキIDを控えてある（S-A15-10-TARGET-008）	1. ブラウザの開発者ツールを開く／2. 認証用トークンヘッダを付けず、デッキID 〔デッキID-A1510-008〕、即時保存=真および公開範囲=1を指定して要求を送信する／3. Networkで応答を確認する	HTTPステータス401となり、応答に処理結果コードと「Access Token is incorrect」または「Authentication failed」のメッセージが返ること	0515 A15-10 デッキ情報登更新 / 業務ロジック 更新対象の特定・他機能との境界・エラー時の扱い、入出力 失敗時出力
+10:IT-A15-10-009	REQ-0515-sheet-10-R001,REQ-0515-sheet-10-R010,REQ-0515-sheet-10-R011	—	ITB-04,ITA-14	P1	ブラウザのみ	S-A15-10-ENV,S-A15-10-PLAYERS,S-A15-10-MASTERS,S-A15-10-TARGET-009	① デッキ情報更新APIへ要求でき、認証設定がテスト用認証データ作成機構と一致している（S-A15-10-ENV）／② 顧客ID 〔顧客ID-A1510-共有A〕とプレイヤーID 〔プレイヤーID-A1510-共有A〕が対応し、所有者Aの正規署名済み認証用トークンがある。〔顧客ID-A1510-共有A〕・〔プレイヤーID-A1510-共有A〕は登録時に振られた番号を控えてある（S-A15-10-PLAYERS）／③ 公開範囲ID 1・2およびデッキの参照マスタが登録されている（S-A15-10-MASTERS）／④ デッキID 〔デッキID-A1510-009〕はプレイヤーID 〔プレイヤーID-A1510-共有A〕が所有し、デッキ名「更新前デッキ」、公開範囲2であり、一時保存はない。〔デッキID-A1510-009〕は登録時に振られたデッキIDを控えてある（S-A15-10-TARGET-009）	1. 所有者Aの有効な認証用トークンの末尾1文字を変更する／2. 変更した認証用トークン、デッキID 〔デッキID-A1510-009〕、即時保存=真および公開範囲=1を指定して要求を送信する／3. Networkで応答を確認する	HTTPステータス401となり、応答に処理結果コードと「Access Token is incorrect」または「Authentication failed」のメッセージが返ること	0515 A15-10 デッキ情報登更新 / 業務ロジック 更新対象の特定・他機能との境界・エラー時の扱い、入出力 失敗時出力
+11:IT-A15-10-010	REQ-0515-sheet-10-R001,REQ-0515-sheet-10-R010,REQ-0515-sheet-10-R011	—	ITB-04,ITA-14	P1	ブラウザのみ	S-A15-10-ENV,S-A15-10-PLAYERS,S-A15-10-MASTERS,S-A15-10-NO-PLAYER-010,S-A15-10-TARGET-010	① デッキ情報更新APIへ要求でき、認証設定がテスト用認証データ作成機構と一致している（S-A15-10-ENV）／② 顧客ID 〔顧客ID-A1510-共有A〕とプレイヤーID 〔プレイヤーID-A1510-共有A〕が対応している。〔顧客ID-A1510-共有A〕・〔プレイヤーID-A1510-共有A〕は登録時に振られた番号を控えてある（S-A15-10-PLAYERS）／③ 公開範囲ID 1・2およびデッキの参照マスタが登録されている（S-A15-10-MASTERS）／④ 顧客ID 151099010を含む正規署名済み認証用トークンがあり、顧客ID 151099010に対応するプレイヤーは存在しない（S-A15-10-NO-PLAYER-010）／⑤ デッキID 〔デッキID-A1510-010〕はプレイヤーID 〔プレイヤーID-A1510-共有A〕が所有し、デッキ名「更新前デッキ」、公開範囲2であり、一時保存はない。〔デッキID-A1510-010〕は登録時に振られたデッキIDを控えてある（S-A15-10-TARGET-010）	1. ブラウザの開発者ツールを開く／2. プレイヤーが存在しない顧客IDを含む正規署名済み認証用トークン、デッキID 〔デッキID-A1510-010〕、即時保存=真および公開範囲=1を指定して要求を送信する／3. Networkで応答を確認する	HTTPステータス401となり、応答に処理結果コードと「Access Token is incorrect」または「Authentication failed」のメッセージが返ること	0515 A15-10 デッキ情報登更新 / 業務ロジック 更新対象の特定・他機能との境界・エラー時の扱い、入出力 失敗時出力
+12:IT-A15-10-011	REQ-0515-sheet-10-R002,REQ-0515-sheet-10-R011	—	ITA-11,ITA-14,ITB-06	P1	ブラウザのみ	S-A15-10-ENV,S-A15-10-PLAYERS,S-A15-10-ABSENT,S-A15-10-REQUEST-011	① デッキ情報更新APIへ要求でき、Networkで応答を確認できる（S-A15-10-ENV）／② 顧客ID 〔顧客ID-A1510-共有A〕とプレイヤーID 〔プレイヤーID-A1510-共有A〕が対応し、所有者Aの正規署名済み認証用トークンがある。〔顧客ID-A1510-共有A〕・〔プレイヤーID-A1510-共有A〕は登録時に振られた番号を控えてある（S-A15-10-PLAYERS）／③ デッキID 159999は登録されていない（S-A15-10-ABSENT）／④ 即時保存=真、公開範囲=1の要求本文を用意する（S-A15-10-REQUEST-011）	1. ブラウザの開発者ツールを開く／2. 所有者Aの有効な認証用トークン、デッキID 159999、即時保存=真および公開範囲=1を指定して要求を送信する／3. Networkで応答を確認する	HTTPステータス404となり、応答のメッセージに「The deck does not exist」が返ること	0515 A15-10 デッキ情報登更新 / 業務ロジック 更新対象の特定・エラー時の扱い、入出力 失敗時出力
+13:IT-A15-10-012	REQ-0515-sheet-10-R003,REQ-0515-sheet-10-R010,REQ-0515-sheet-10-R011	—	ITB-04,ITA-19,ITA-14	P1	ブラウザのみ	S-A15-10-ENV,S-A15-10-PLAYERS,S-A15-10-MASTERS,S-A15-10-OTHER-012	① デッキ情報更新APIへ要求でき、Networkで応答を確認できる（S-A15-10-ENV）／② 顧客ID 〔顧客ID-A1510-共有A〕・プレイヤーID 〔プレイヤーID-A1510-共有A〕の所有者Aと、顧客ID 〔顧客ID-A1510-共有B〕・プレイヤーID 〔プレイヤーID-A1510-共有B〕の所有者Bが登録され、所有者Aの正規署名済み認証用トークンがある。〔顧客ID-A1510-共有A〕・〔顧客ID-A1510-共有B〕・〔プレイヤーID-A1510-共有A〕・〔プレイヤーID-A1510-共有B〕は登録時に振られた番号を控えてある（S-A15-10-PLAYERS）／③ 公開範囲ID 1とユーザー作成デッキの種別が登録されている（S-A15-10-MASTERS）／④ デッキID 〔デッキID-A1510-012〕はプレイヤーID 〔プレイヤーID-A1510-共有B〕が所有し、デッキ名「他者所有デッキ」、公開範囲1であり、一時保存はない。〔デッキID-A1510-012〕は登録時に振られたデッキIDを控えてある（S-A15-10-OTHER-012）	1. ブラウザの開発者ツールを開く／2. 所有者Aの有効な認証用トークンと、所有者Bが所有するデッキID 〔デッキID-A1510-012〕を指定する／3. 即時保存=真、公開範囲=1およびデッキ名「所有者外更新」を指定して要求を送信する／4. Networkで応答を確認する	HTTPステータス401となり、応答のメッセージに「Authentication failed」が返ること	0515 A15-10 デッキ情報登更新 / 業務ロジック 更新対象の特定・他機能との境界・エラー時の扱い、入出力 失敗時出力
+14:IT-A15-10-013	REQ-0515-sheet-10-R003,REQ-0515-sheet-10-R010	—	ITA-19,ITA-24	P1	ブラウザ+DB確認	S-A15-10-ENV,S-A15-10-PLAYERS,S-A15-10-MASTERS,S-A15-10-OTHER-013	① デッキ情報更新APIへ要求でき、DBで保存内容を確認できる（S-A15-10-ENV）／② 顧客ID 〔顧客ID-A1510-共有A〕・プレイヤーID 〔プレイヤーID-A1510-共有A〕の所有者Aと、顧客ID 〔顧客ID-A1510-共有B〕・プレイヤーID 〔プレイヤーID-A1510-共有B〕の所有者Bが登録され、所有者Aの正規署名済み認証用トークンがある。〔顧客ID-A1510-共有A〕・〔顧客ID-A1510-共有B〕・〔プレイヤーID-A1510-共有A〕・〔プレイヤーID-A1510-共有B〕は登録時に振られた番号を控えてある（S-A15-10-PLAYERS）／③ 公開範囲ID 1とユーザー作成デッキの種別が登録されている（S-A15-10-MASTERS）／④ デッキID 〔デッキID-A1510-013〕はプレイヤーID 〔プレイヤーID-A1510-共有B〕が所有し、デッキ名「他者所有デッキ」、公開範囲1であり、一時保存はない。〔デッキID-A1510-013〕は登録時に振られたデッキIDを控えてある（S-A15-10-OTHER-013）	1. 所有者Aの有効な認証用トークンと、所有者Bが所有するデッキID 〔デッキID-A1510-013〕を指定する／2. 即時保存=真、公開範囲=1およびデッキ名「所有者外更新」を指定して要求を送信する／3. DBでデッキID 〔デッキID-A1510-013〕を確認する	デッキID 〔デッキID-A1510-013〕のデッキ名が「他者所有デッキ」から変更されないこと	0515 A15-10 デッキ情報登更新 / 業務ロジック 更新対象の特定・他機能との境界
+15:IT-A15-10-014	REQ-0515-sheet-10-R001,REQ-0515-sheet-10-R002,REQ-0515-sheet-10-R020	—	ITA-11,ITB-04	P1	ブラウザのみ	S-A15-10-ENV,S-A15-10-PLAYERS,S-A15-10-ABSENT,S-A15-10-REQUEST-014	① デッキ情報更新APIへ要求でき、認証設定がテスト用認証データ作成機構と一致している（S-A15-10-ENV）／② 顧客ID 〔顧客ID-A1510-共有A〕とプレイヤーID 〔プレイヤーID-A1510-共有A〕が対応し、所有者Aの正規署名済み認証用トークンがある。〔顧客ID-A1510-共有A〕・〔プレイヤーID-A1510-共有A〕は登録時に振られた番号を控えてある（S-A15-10-PLAYERS）／③ デッキID 159999は登録されていない（S-A15-10-ABSENT）／④ 即時保存=真、公開範囲=1の要求本文を用意する（S-A15-10-REQUEST-014）	1. 所有者Aの有効な認証用トークンの末尾1文字を変更する／2. 変更した認証用トークン、デッキID 159999、即時保存=真および公開範囲=1を指定して要求を送信する／3. Networkで応答を確認する	デッキの存在判定より先に認証判定が行われ、HTTPステータス401となること	0515 A15-10 デッキ情報登更新 / 業務ロジック 更新対象の特定
+16:IT-A15-10-015	REQ-0515-sheet-10-R007,REQ-0515-sheet-10-R012	—	ITA-10,ITA-14,ITB-06	P1	ブラウザ+DB確認	S-A15-10-ENV,S-A15-10-PLAYERS,S-A15-10-MASTERS,S-A15-10-TARGET-015	① デッキ情報更新APIへ要求でき、DBとNetworkで結果を確認できる（S-A15-10-ENV）／② 顧客ID 〔顧客ID-A1510-共有A〕とプレイヤーID 〔プレイヤーID-A1510-共有A〕が対応し、所有者Aの正規署名済み認証用トークンがある。〔顧客ID-A1510-共有A〕・〔プレイヤーID-A1510-共有A〕は登録時に振られた番号を控えてある（S-A15-10-PLAYERS）／③ 公開範囲ID 1・2およびデッキの参照マスタが登録されている（S-A15-10-MASTERS）／④ デッキID 〔デッキID-A1510-015〕はプレイヤーID 〔プレイヤーID-A1510-共有A〕が所有し、デッキ名「更新前デッキ」、フォーマットID 〔フォーマットID-A1510-共有A〕、アーキタイプID 〔アーキタイプID-A1510-共有A〕、公開範囲2、代表カード画像用カードID 〔カードID-A1510-共有A〕、キャンペーンタグID 〔キャンペーンタグID-A1510-共有A〕、採用カードはカードID 〔カードID-A1510-共有B〕・区画1・枚数1であり、一時保存はない。〔デッキID-A1510-015〕は登録時に振られたデッキIDを控えてある（S-A15-10-TARGET-015）	1. 所有者Aの有効な認証用トークン、デッキID 〔デッキID-A1510-015〕、即時保存=真およびデッキ名「公開範囲欠落更新」を指定する／2. 必須の公開範囲を指定せず要求を送信する／3. Networkで応答を確認する／4. DBでデッキID 〔デッキID-A1510-015〕を確認する	HTTPステータス400となって処理結果コードと検証エラー内容が返り、デッキ名が「更新前デッキ」から変更されないこと	0515 A15-10 デッキ情報登更新 / 業務ロジック 保存先の切り替え・エラー時の扱い、入出力 入力・失敗時出力
+17:IT-A15-10-016	REQ-0515-sheet-10-R007,REQ-0515-sheet-10-R012	—	ITA-10,ITA-14,ITB-06	P1	ブラウザ+DB確認	S-A15-10-ENV,S-A15-10-PLAYERS,S-A15-10-MASTERS,S-A15-10-TARGET-016	① デッキ情報更新APIへ要求でき、DBとNetworkで結果を確認できる（S-A15-10-ENV）／② 顧客ID 〔顧客ID-A1510-共有A〕とプレイヤーID 〔プレイヤーID-A1510-共有A〕が対応し、所有者Aの正規署名済み認証用トークンがある。〔顧客ID-A1510-共有A〕・〔プレイヤーID-A1510-共有A〕は登録時に振られた番号を控えてある（S-A15-10-PLAYERS）／③ 公開範囲ID 1・2・3が登録され、公開範囲ID 4は未登録である。開始時に公開範囲ID 4が登録されていれば削除し、未登録であることを確認する（S-A15-10-MASTERS）／④ デッキID 〔デッキID-A1510-016〕はプレイヤーID 〔プレイヤーID-A1510-共有A〕が所有し、デッキ名「更新前デッキ」、フォーマットID 〔フォーマットID-A1510-共有A〕、アーキタイプID 〔アーキタイプID-A1510-共有A〕、公開範囲2、代表カード画像用カードID 〔カードID-A1510-共有A〕、キャンペーンタグID 〔キャンペーンタグID-A1510-共有A〕、採用カードはカードID 〔カードID-A1510-共有B〕・区画1・枚数1であり、一時保存はない。〔デッキID-A1510-016〕は登録時に振られたデッキIDを控えてある（S-A15-10-TARGET-016）	1. 所有者Aの有効な認証用トークン、デッキID 〔デッキID-A1510-016〕、即時保存=真、デッキ名「公開範囲不正更新」および公開範囲=4を指定して要求を送信する／2. Networkで応答を確認する／3. DBでデッキID 〔デッキID-A1510-016〕を確認する	HTTPステータス400となって処理結果コードと検証エラー内容が返り、デッキ名が「更新前デッキ」から変更されないこと	0515 A15-10 デッキ情報登更新 / 業務ロジック 保存先の切り替え・エラー時の扱い、入出力 入力・失敗時出力
+18:IT-A15-10-017	REQ-0515-sheet-10-R007,REQ-0515-sheet-10-R013,REQ-0515-sheet-10-R018	—	ITA-10,ITA-14,ITB-06	P1	ブラウザ+DB確認	S-A15-10-ENV,S-A15-10-PLAYERS,S-A15-10-MASTERS,S-A15-10-TARGET-017	① デッキ情報更新APIへ要求でき、DBとNetworkで結果を確認できる（S-A15-10-ENV）／② 顧客ID 〔顧客ID-A1510-共有A〕とプレイヤーID 〔プレイヤーID-A1510-共有A〕が対応し、所有者Aの正規署名済み認証用トークンがある。〔顧客ID-A1510-共有A〕・〔プレイヤーID-A1510-共有A〕は登録時に振られた番号を控えてある（S-A15-10-PLAYERS）／③ カードID 〔カードID-A1510-共有A〕・〔カードID-A1510-共有B〕、区画の識別子1および公開範囲1・2が登録されている。〔カードID-A1510-共有A〕・〔カードID-A1510-共有B〕は登録時に振られた番号を控えてある（S-A15-10-MASTERS）／④ デッキID 〔デッキID-A1510-017〕はプレイヤーID 〔プレイヤーID-A1510-共有A〕が所有し、デッキ名「更新前デッキ」、公開範囲2、採用カードはカードID 〔カードID-A1510-共有B〕・区画の識別子1・枚数1であり、一時保存はない。〔デッキID-A1510-017〕は登録時に振られたデッキIDを控えてある（S-A15-10-TARGET-017）	1. 所有者Aの有効な認証用トークン、デッキID 〔デッキID-A1510-017〕、即時保存=真および公開範囲=1を指定する／2. 採用カードにカードID 〔カードID-A1510-共有A〕と枚数1を指定し、区画の識別子を指定せず要求を送信する／3. Networkで応答を確認する／4. DBでデッキID 〔デッキID-A1510-017〕の採用カードを確認する	HTTPステータス400となって処理結果コードと検証エラー内容が返り、更新前の採用カードが変更されないこと	0515 A15-10 デッキ情報登更新 / 業務ロジック 保存先の切り替え・エラー時の扱い、入出力 入力（デッキ登録と共通） / 0515 A15-09 デッキ情報登録 入出力: 登録内容
+19:IT-A15-10-018	REQ-0515-sheet-10-R007,REQ-0515-sheet-10-R013,REQ-0515-sheet-10-R018	—	ITA-10,ITA-14,ITB-06	P1	ブラウザ+DB確認	S-A15-10-ENV,S-A15-10-PLAYERS,S-A15-10-MASTERS,S-A15-10-TARGET-018	① デッキ情報更新APIへ要求でき、DBとNetworkで結果を確認できる（S-A15-10-ENV）／② 顧客ID 〔顧客ID-A1510-共有A〕とプレイヤーID 〔プレイヤーID-A1510-共有A〕が対応し、所有者Aの正規署名済み認証用トークンがある。〔顧客ID-A1510-共有A〕・〔プレイヤーID-A1510-共有A〕は登録時に振られた番号を控えてある（S-A15-10-PLAYERS）／③ カードID 〔カードID-A1510-共有A〕・〔カードID-A1510-共有B〕、区画の識別子1および公開範囲1・2が登録されている。〔カードID-A1510-共有A〕・〔カードID-A1510-共有B〕は登録時に振られた番号を控えてある（S-A15-10-MASTERS）／④ デッキID 〔デッキID-A1510-018〕はプレイヤーID 〔プレイヤーID-A1510-共有A〕が所有し、デッキ名「更新前デッキ」、公開範囲2、採用カードはカードID 〔カードID-A1510-共有B〕・区画の識別子1・枚数1であり、一時保存はない。〔デッキID-A1510-018〕は登録時に振られたデッキIDを控えてある（S-A15-10-TARGET-018）	1. 所有者Aの有効な認証用トークン、デッキID 〔デッキID-A1510-018〕、即時保存=真および公開範囲=1を指定する／2. 採用カードにカードID 〔カードID-A1510-共有A〕と区画の識別子1を指定し、枚数を指定せず要求を送信する／3. Networkで応答を確認する／4. DBでデッキID 〔デッキID-A1510-018〕の採用カードを確認する	HTTPステータス400となって処理結果コードと検証エラー内容が返り、更新前の採用カードが変更されないこと	0515 A15-10 デッキ情報登更新 / 業務ロジック 保存先の切り替え・エラー時の扱い、入出力 入力（デッキ登録と共通） / 0515 A15-09 デッキ情報登録 入出力: 登録内容
+20:IT-A15-10-019	REQ-0515-sheet-10-R004,REQ-0515-sheet-10-R015		ITA-07,ITA-12	P1	ブラウザ+DB確認	S-A15-10-ENV,S-A15-10-PLAYERS,S-A15-10-MASTERS,S-A15-10-TARGET-019	① デッキ情報更新APIへ要求でき、DBの保存内容とRedisの一時保存を確認できる（S-A15-10-ENV）／② 顧客ID 〔顧客ID-A1510-共有A〕とプレイヤーID 〔プレイヤーID-A1510-共有A〕が対応し、所有者Aの正規署名済み認証用トークンがある。〔顧客ID-A1510-共有A〕・〔プレイヤーID-A1510-共有A〕は登録時に振られた番号を控えてある（S-A15-10-PLAYERS）／③ フォーマットID 〔フォーマットID-A1510-共有A〕、公開範囲ID 2およびデッキの参照マスタが登録されている。〔フォーマットID-A1510-共有A〕は登録時に振られたフォーマットIDを控えてある（S-A15-10-MASTERS）／④ デッキID 〔デッキID-A1510-019〕はプレイヤーID 〔プレイヤーID-A1510-共有A〕が所有し、デッキ名「更新前デッキ」、フォーマットID 〔フォーマットID-A1510-共有A〕、公開範囲2であり、当該デッキの一時保存は存在しない。開始時にRedisからデッキID 〔デッキID-A1510-019〕の一時保存を削除し、存在しないことを確認する。〔デッキID-A1510-019〕は登録時に振られたデッキIDを控えてある（S-A15-10-TARGET-019）	1. 所有者Aの有効な認証用トークン、デッキID 〔デッキID-A1510-019〕、公開範囲=2、フォーマットID 〔フォーマットID-A1510-共有A〕、デッキ名「下書き確認デッキ」を指定し、即時保存を指定せずデッキ情報更新APIへ要求を送信する／2. Redisでキー「deck_〔デッキID-A1510-019〕」があることを確認する／3. 手順1と同じ内容に即時保存=真を加えて要求を送信する／4. Redisでキー「deck_〔デッキID-A1510-019〕」を確認する	即時保存=真の要求の後に、Redisからキー「deck_〔デッキID-A1510-019〕」の一時保存が無くなること	0515 A15-10 デッキ情報登更新 / 機能設計書 functions/pf-api/a15-10_api_deck_builder_deck_update.md 業務ロジック 保存先の切り替え
+21:IT-A15-10-027			ITB-06	P2	ブラウザのみ	S-A15-10-ENV,S-A15-10-PLAYERS,S-A15-10-MASTERS,S-A15-10-DRAFT-027	① デッキ情報更新APIへ要求でき、DBの保存内容とRedisの一時保存を確認できる（S-A15-10-ENV）／② 顧客ID 〔顧客ID-A1510-共有A〕とプレイヤーID 〔プレイヤーID-A1510-共有A〕が対応し、所有者Aの正規署名済み認証用トークンがある。〔顧客ID-A1510-共有A〕・〔プレイヤーID-A1510-共有A〕は登録時に振られた番号を控えてある（S-A15-10-PLAYERS）／③ 公開範囲ID 1・2およびデッキの参照マスタが登録されている（S-A15-10-MASTERS）／④ デッキID 〔デッキID-A1510-027〕はプレイヤーID 〔プレイヤーID-A1510-共有A〕が所有し、デッキ名「A1510-027-更新前」、フォーマットID 〔フォーマットID-A1510-共有A〕、アーキタイプID 〔アーキタイプID-A1510-共有A〕、公開範囲2、代表カード画像用カードID 〔カードID-A1510-共有A〕、キャンペーンタグID 〔キャンペーンタグID-A1510-共有A〕、採用カードはカードID 〔カードID-A1510-共有B〕・区画1・枚数1であり、当該デッキの一時保存は存在しない。開始時にRedisからデッキID 〔デッキID-A1510-027〕の一時保存を削除し、存在しないことを確認する。〔デッキID-A1510-027〕は登録時に振られたデッキIDを控えてある（S-A15-10-DRAFT-027）	1. 所有者Aの有効な認証用トークン、デッキID 〔デッキID-A1510-027〕、デッキ名「A1510-027-下書き」を指定し、必須の公開範囲を指定せずデッキ情報更新APIへ要求を送信する／2. Networkで応答のHTTPステータスを確認する	応答のHTTPステータスが400であること	0515 A15-10 デッキ情報登更新 / 業務ロジック 保存先の切り替え、入出力 入力
+22:IT-A15-10-028			ITA-02	P2	ブラウザ+DB確認	S-A15-10-ENV,S-A15-10-PLAYERS,S-A15-10-MASTERS,S-A15-10-DRAFT-028	① デッキ情報更新APIへ要求でき、DBの保存内容とRedisの一時保存を確認できる（S-A15-10-ENV）／② 顧客ID 〔顧客ID-A1510-共有A〕とプレイヤーID 〔プレイヤーID-A1510-共有A〕が対応し、所有者Aの正規署名済み認証用トークンがある。〔顧客ID-A1510-共有A〕・〔プレイヤーID-A1510-共有A〕は登録時に振られた番号を控えてある（S-A15-10-PLAYERS）／③ 公開範囲ID 1・2およびデッキの参照マスタが登録されている（S-A15-10-MASTERS）／④ デッキID 〔デッキID-A1510-028〕はプレイヤーID 〔プレイヤーID-A1510-共有A〕が所有し、デッキ名「A1510-028-更新前」、フォーマットID 〔フォーマットID-A1510-共有A〕、アーキタイプID 〔アーキタイプID-A1510-共有A〕、公開範囲2、代表カード画像用カードID 〔カードID-A1510-共有A〕、キャンペーンタグID 〔キャンペーンタグID-A1510-共有A〕、採用カードはカードID 〔カードID-A1510-共有B〕・区画1・枚数1であり、当該デッキの一時保存は存在しない。開始時にRedisからデッキID 〔デッキID-A1510-028〕の一時保存を削除し、存在しないことを確認する。〔デッキID-A1510-028〕は登録時に振られたデッキIDを控えてある（S-A15-10-DRAFT-028）	1. 所有者Aの有効な認証用トークン、デッキID 〔デッキID-A1510-028〕、デッキ名「A1510-028-下書き」を指定し、必須の公開範囲を指定せずデッキ情報更新APIへ要求を送信する／2. RedisにデッキID 〔デッキID-A1510-028〕の一時保存があるか確認する	RedisにデッキID 〔デッキID-A1510-028〕の一時保存が作られないこと	0515 A15-10 デッキ情報登更新 / 業務ロジック 保存先の切り替え、入出力 入力
+23:IT-A15-10-029			ITB-06	P2	ブラウザのみ	S-A15-10-ENV,S-A15-10-PLAYERS,S-A15-10-MASTERS,S-A15-10-DRAFT-029	① デッキ情報更新APIへ要求でき、DBの保存内容とRedisの一時保存を確認できる（S-A15-10-ENV）／② 顧客ID 〔顧客ID-A1510-共有A〕とプレイヤーID 〔プレイヤーID-A1510-共有A〕が対応し、所有者Aの正規署名済み認証用トークンがある。〔顧客ID-A1510-共有A〕・〔プレイヤーID-A1510-共有A〕は登録時に振られた番号を控えてある（S-A15-10-PLAYERS）／③ 公開範囲ID 1・2およびデッキの参照マスタが登録されている（S-A15-10-MASTERS）／④ デッキID 〔デッキID-A1510-029〕はプレイヤーID 〔プレイヤーID-A1510-共有A〕が所有し、デッキ名「A1510-029-更新前」、フォーマットID 〔フォーマットID-A1510-共有A〕、アーキタイプID 〔アーキタイプID-A1510-共有A〕、公開範囲2、代表カード画像用カードID 〔カードID-A1510-共有A〕、キャンペーンタグID 〔キャンペーンタグID-A1510-共有A〕、採用カードはカードID 〔カードID-A1510-共有B〕・区画1・枚数1であり、当該デッキの一時保存は存在しない。開始時にRedisからデッキID 〔デッキID-A1510-029〕の一時保存を削除し、存在しないことを確認する。〔デッキID-A1510-029〕は登録時に振られたデッキIDを控えてある（S-A15-10-DRAFT-029）	1. 所有者Aの有効な認証用トークン、デッキID 〔デッキID-A1510-029〕、デッキ名「A1510-029-下書き」を指定し、即時保存を偽にし、必須の公開範囲を指定せずデッキ情報更新APIへ要求を送信する／2. Networkで応答のHTTPステータスを確認する	応答のHTTPステータスが400であること	0515 A15-10 デッキ情報登更新 / 業務ロジック 保存先の切り替え、入出力 入力
+24:IT-A15-10-030			ITA-02	P2	ブラウザ+DB確認	S-A15-10-ENV,S-A15-10-PLAYERS,S-A15-10-MASTERS,S-A15-10-DRAFT-030	① デッキ情報更新APIへ要求でき、DBの保存内容とRedisの一時保存を確認できる（S-A15-10-ENV）／② 顧客ID 〔顧客ID-A1510-共有A〕とプレイヤーID 〔プレイヤーID-A1510-共有A〕が対応し、所有者Aの正規署名済み認証用トークンがある。〔顧客ID-A1510-共有A〕・〔プレイヤーID-A1510-共有A〕は登録時に振られた番号を控えてある（S-A15-10-PLAYERS）／③ 公開範囲ID 1・2およびデッキの参照マスタが登録されている（S-A15-10-MASTERS）／④ デッキID 〔デッキID-A1510-030〕はプレイヤーID 〔プレイヤーID-A1510-共有A〕が所有し、デッキ名「A1510-030-更新前」、フォーマットID 〔フォーマットID-A1510-共有A〕、アーキタイプID 〔アーキタイプID-A1510-共有A〕、公開範囲2、代表カード画像用カードID 〔カードID-A1510-共有A〕、キャンペーンタグID 〔キャンペーンタグID-A1510-共有A〕、採用カードはカードID 〔カードID-A1510-共有B〕・区画1・枚数1であり、当該デッキの一時保存は存在しない。開始時にRedisからデッキID 〔デッキID-A1510-030〕の一時保存を削除し、存在しないことを確認する。〔デッキID-A1510-030〕は登録時に振られたデッキIDを控えてある（S-A15-10-DRAFT-030）	1. 所有者Aの有効な認証用トークン、デッキID 〔デッキID-A1510-030〕、デッキ名「A1510-030-下書き」を指定し、即時保存を偽にし、必須の公開範囲を指定せずデッキ情報更新APIへ要求を送信する／2. RedisにデッキID 〔デッキID-A1510-030〕の一時保存があるか確認する	RedisにデッキID 〔デッキID-A1510-030〕の一時保存が作られないこと	0515 A15-10 デッキ情報登更新 / 業務ロジック 保存先の切り替え、入出力 入力
+25:IT-A15-10-031	REQ-0515-sheet-10-R013,REQ-0515-sheet-10-R025		ITA-07	P1	ブラウザ+DB確認	S-A15-10-ENV,S-A15-10-PLAYERS,S-A15-10-MASTERS,S-A15-10-TARGET-031,S-A15-10-ONECARD-031	① デッキ情報更新APIへ要求でき、DBの保存内容とRedisの一時保存を確認できる（S-A15-10-ENV）／② 顧客ID 〔顧客ID-A1510-共有A〕とプレイヤーID 〔プレイヤーID-A1510-共有A〕が対応し、所有者Aの正規署名済み認証用トークンがある。〔顧客ID-A1510-共有A〕・〔プレイヤーID-A1510-共有A〕は登録時に振られた番号を控えてある（S-A15-10-PLAYERS）／③ フォーマットID 〔フォーマットID-A1510-共有A〕、カードID 〔カードID-A1510-共有B〕・〔カードID-A1510-共有C〕、公開範囲1・2および区画1・2が登録されている。〔フォーマットID-A1510-共有A〕・〔カードID-A1510-共有B〕・〔カードID-A1510-共有C〕は登録時に振られた番号を控えてある（S-A15-10-MASTERS）／④ デッキID 〔デッキID-A1510-031〕はプレイヤーID 〔プレイヤーID-A1510-共有A〕が所有し、デッキ名「更新前デッキ」、公開範囲2、採用カードなしであり、一時保存はない。〔デッキID-A1510-031〕は登録時に振られたデッキIDを控えてある（S-A15-10-TARGET-031）／⑤ 公開範囲=1、デッキ名「採用カード1件デッキ」、採用カードはカードID 〔カードID-A1510-共有C〕・区画の識別子2・枚数3の1件だけである更新内容を用意する（S-A15-10-ONECARD-031）	1. 所有者Aの有効な認証用トークン、デッキID 〔デッキID-A1510-031〕、即時保存=真、公開範囲=1、デッキ名「採用カード1件デッキ」を指定する／2. 採用カードにカードID 〔カードID-A1510-共有C〕、区画の識別子2、枚数3の1件だけを指定してデッキ情報更新APIへ要求を送信する／3. Networkで応答を確認する／4. DBでデッキID 〔デッキID-A1510-031〕のデッキ本体と採用カードを確認する	HTTPステータス200となり、デッキID 〔デッキID-A1510-031〕のデッキ名が「採用カード1件デッキ」で確定保存され、採用カードがカードID 〔カードID-A1510-共有C〕・区画の識別子2・枚数3の1件だけで確定保存されること	0515 A15-10 デッキ情報登更新 ／ API デッキビルダー — デッキ情報更新 / 業務ロジック 保存先の切り替え、入出力: 永続化
+26:IT-A15-10-032	REQ-0515-sheet-10-R013,REQ-0515-sheet-10-R025		ITA-07	P1	ブラウザ+DB確認	S-A15-10-ENV,S-A15-10-PLAYERS,S-A15-10-MASTERS,S-A15-10-TARGET-032,S-A15-10-REPEAT-032	① デッキ情報更新APIへ要求でき、DBの保存内容とRedisの一時保存を確認できる（S-A15-10-ENV）／② 顧客ID 〔顧客ID-A1510-共有A〕とプレイヤーID 〔プレイヤーID-A1510-共有A〕が対応し、所有者Aの正規署名済み認証用トークンがある。〔顧客ID-A1510-共有A〕・〔プレイヤーID-A1510-共有A〕は登録時に振られた番号を控えてある（S-A15-10-PLAYERS）／③ フォーマットID 〔フォーマットID-A1510-共有A〕、カードID 〔カードID-A1510-共有B〕・〔カードID-A1510-共有C〕、公開範囲1・2および区画1・2が登録されている。〔フォーマットID-A1510-共有A〕・〔カードID-A1510-共有B〕・〔カードID-A1510-共有C〕は登録時に振られた番号を控えてある（S-A15-10-MASTERS）／④ デッキID 〔デッキID-A1510-032〕はプレイヤーID 〔プレイヤーID-A1510-共有A〕が所有し、デッキ名「更新前デッキ」、公開範囲2、採用カードなしであり、一時保存はない。〔デッキID-A1510-032〕は登録時に振られたデッキIDを控えてある（S-A15-10-TARGET-032）／⑤ 即時保存=真、公開範囲=1、デッキ名「重ね更新デッキ」、採用カードはカードID 〔カードID-A1510-共有B〕・区画の識別子1・枚数2の1件である同一内容の更新内容を用意する（S-A15-10-REPEAT-032）	1. 所有者Aの有効な認証用トークン、デッキID 〔デッキID-A1510-032〕、即時保存=真、公開範囲=1、デッキ名「重ね更新デッキ」、採用カードにカードID 〔カードID-A1510-共有B〕・区画の識別子1・枚数2を指定してデッキ情報更新APIへ要求を送信する／2. 手順1と同じ内容の要求をもう一度送信する／3. Networkで2回の応答を確認する／4. DBでデッキID 〔デッキID-A1510-032〕のデッキ本体と採用カードを確認する	2回ともHTTPステータス200となり、デッキID 〔デッキID-A1510-032〕のデッキ名が「重ね更新デッキ」、採用カードがカードID 〔カードID-A1510-共有B〕・区画の識別子1・枚数2の1件だけで確定保存されていること	0515 A15-10 デッキ情報登更新 ／ API デッキビルダー — デッキ情報更新 / 業務ロジック 保存先の切り替え、入出力: 永続化
+27:IT-A15-10-033			ITA-05	P2	ブラウザのみ	S-A15-10-AE-ENV,S-A15-10-AE-REF,S-A15-10-AE-CASE-033,S-A15-10-AE-REQ-033	① 管理画面にログインID「ae1510admin」でログインできる、およびデッキ情報更新APIへ試験ブラウザから要求できる（S-A15-10-AE-ENV）／② フォーマット「A15-10連携形式甲」「A15-10連携形式乙」、アーキタイプ「A15-10連携型甲」「A15-10連携型乙」、カード「A15-10連携カードA」「A15-10連携カードB」が登録されている。呼び名で示した番号は、登録時に控えた番号である（S-A15-10-AE-REF）／③ 会員「ae1510-001@example.test」（顧客ID 〔顧客ID-A1510-AE001〕）が所有するデッキは、デッキ名「A15-10旧デッキ-001」（フォーマット「A15-10連携形式甲」・メインボード・サイドボード・統率は空）の1件で、この会員のjwt-tokenがある。デッキID 〔デッキID-A1510-AE001〕。イベント「A15-10連携大会-001」（フォーマットは「A15-10連携形式甲」だけ・デッキ登録あり・登録締切2099-12-19 23:59）がある（S-A15-10-AE-CASE-033）／④ 即時保存=真・公開範囲1・デッキ名「A15-10新デッキ-001」・メインにカードA 2枚・サイドにカードB 1枚（フォーマットは指定しない）の更新内容を用意する（S-A15-10-AE-REQ-033）	1. フロントの会員ログイン画面でメールアドレス「ae1510-001@example.test」と登録したパスワードでログインし、〔イベント詳細ID-A1510-AE001〕の大会デッキ登録編集画面を開く／2. 「マイデッキを取得」ボタンを押し、ポップアップ内のフォーマット選択で「A15-10連携形式甲」を選び、マイデッキ取得用ポップアップ画面にフォーマット「A15-10連携形式甲」・デッキ名「A15-10旧デッキ-001」のデッキが表示されることを確認して、ポップアップ画面外の領域を押して閉じる／3. ブラウザの開発者ツールを開く／4. 顧客ID 〔顧客ID-A1510-AE001〕のjwt-tokenと S-A15-10-AE-REQ-033 の更新内容を指定してデッキ情報更新APIへ要求を送信する／5. Networkで応答の処理結果コード200と処理結果メッセージ「Deck update success」を確認する／6. 大会デッキ登録編集画面を開き直し、「マイデッキを取得」ボタンを押し、ポップアップ内のフォーマット選択で「A15-10連携形式甲」を選ぶ／7. マイデッキ取得用ポップアップ画面に表示されたデッキのフォーマットとデッキ名を確認し、更新後のデッキ名のデッキを選ぶ／8. メインボードとサイドボードの入力欄を読む	マイデッキ取得用ポップアップ画面に、フォーマット「A15-10連携形式甲」・デッキ名「A15-10新デッキ-001」のデッキが表示されて「A15-10旧デッキ-001」は表示されず、そのデッキを選ぶとメインボードが「2 A15-10連携カードA」、サイドボードが「1 A15-10連携カードB」になること	上流: A15-10 機能設計書 / 保存先の切り替え、入出力、入出力: 永続化｜下流: 0306 大会デッキ登録編集 / マイデッキを取得ポップアップ画面、F06-16 機能設計書 / マイデッキの取り込み
+28:IT-A15-10-034			ITA-05	P2	ブラウザのみ	S-A15-10-AE-ENV,S-A15-10-AE-REF,S-A15-10-AE-CASE-034,S-A15-10-AE-REQ-034	① 管理画面にログインID「ae1510admin」でログインできる、およびデッキ情報更新APIへ試験ブラウザから要求できる（S-A15-10-AE-ENV）／② フォーマット「A15-10連携形式甲」「A15-10連携形式乙」、アーキタイプ「A15-10連携型甲」「A15-10連携型乙」、カード「A15-10連携カードA」「A15-10連携カードB」が登録されている。呼び名で示した番号は、登録時に控えた番号である（S-A15-10-AE-REF）／③ 会員「ae1510-002@example.test」（顧客ID 〔顧客ID-A1510-AE002〕）が所有するデッキは、デッキ名「A15-10旧デッキ-002」（フォーマット「A15-10連携形式甲」・アーキタイプ「A15-10連携型甲」・公開状態「非公開」・メインボード・サイドボード・統率は空）の1件で、この会員のjwt-tokenがある。デッキID 〔デッキID-A1510-AE002〕（S-A15-10-AE-CASE-034）／④ 即時保存=真・公開範囲3・デッキ名「A15-10新デッキ-002」・フォーマット「A15-10連携形式乙」・アーキタイプ「A15-10連携型乙」・メインにカードA 2枚・サイドにカードB 1枚の更新内容を用意する（S-A15-10-AE-REQ-034）	1. 管理画面にログインID「ae1510admin」でログインする／2. 管理画面のデッキ編集画面のアドレスのデッキIDの部分を〔デッキID-A1510-AE002〕にして開き、デッキ名・フォーマット・アーキタイプ・公開状態と、メインボード・サイドボードの入力欄を読む／3. ブラウザの開発者ツールを開く／4. 顧客ID 〔顧客ID-A1510-AE002〕のjwt-tokenと S-A15-10-AE-REQ-034 の更新内容を指定してデッキ情報更新APIへ要求を送信する／5. Networkで応答の処理結果コード200と処理結果メッセージ「Deck update success」、および限定公開のときに返る閲覧用トークンを確認する／6. 同じデッキ編集画面を開き直し、デッキ名・フォーマット・アーキタイプ・公開状態と、メインボード・サイドボードの入力欄を読む	デッキ編集画面が、デッキ名「A15-10旧デッキ-002」・フォーマット「A15-10連携形式甲」・アーキタイプ「A15-10連携型甲」・公開状態「非公開」・メインボードとサイドボードが空の表示から、デッキ名「A15-10新デッキ-002」・フォーマット「A15-10連携形式乙」・アーキタイプ「A15-10連携型乙」・公開状態「限定公開」・メインボード「2 A15-10連携カードA」・サイドボード「1 A15-10連携カードB」の表示に変わること	上流: A15-10 機能設計書 / 保存先の切り替え、入出力、入出力: 永続化｜下流: 0212 デッキ編集 / 識別ID 1・4・5・10・32〜34、M15-05 機能設計書 / 画面の表示
+
+exec
+/bin/bash -lc "rg -n '公開範囲|公開区分|限定公開|scope_id' integration_test/casegen/cases/A15-17_test_cases.tsv | head -35" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+2:IT-A15-17-001	業務ロジック カードリストの解読,業務ロジック 応答の内容,入出力 成功時出力	—	ITB-06	P1	ブラウザのみ	S-A15-17-AUTH-A-001,S-A15-17-AUTH-CONFIG,S-A15-17-FORMAT,S-A15-17-CARDS,S-A15-17-RELATED,S-A15-17-SCOPES,S-A15-17-DECK-MASTERS	① 顧客ID 〔顧客ID-A1517-001〕（登録時に振られた番号を控えてある）とプレイヤーID 〔プレイヤーID-A1517-001〕（登録時に振られた番号を控えてある）が対応付けられ、稼働中で有効な認証トークンを取得済みであり、「正常登録デッキ」は0件である（S-A15-17-AUTH-A-001）／② 開始時に署名方式をHS256、署名シークレットをテスト環境で保管するA15-17試験値に設定し、発行側と検証側で一致させる（S-A15-17-AUTH-CONFIG）／③ フォーマットID 〔フォーマットID-A1517-共有A〕（登録時に振られた番号を控えてある）の「結合試験フォーマット」が統率者使用設定無効である（S-A15-17-FORMAT）／④ カードID 〔カードID-A1517-共有A〕（登録時に振られた番号を控えてある）の結合試験カードAとカードID 〔カードID-A1517-共有B〕（登録時に振られた番号を控えてある）の結合試験カードBが利用可能である（S-A15-17-CARDS）／⑤ フォーマットID 〔フォーマットID-A1517-共有A〕の結合試験アーキタイプ、結合試験カードAの画像、結合試験キャンペーンA・Bが登録済みである（S-A15-17-RELATED）／⑥ 公開・非公開・限定公開の各公開区分を識別子で指定できる（S-A15-17-SCOPES）／⑦ ユーザーデッキ種別とメインボード・サイドボード・統率領域が登録済みである（S-A15-17-DECK-MASTERS）	1. ブラウザの開発者ツールを開く／2. S-A15-17-AUTH-A-001の有効な認証トークンをヘッダへ設定する／3. フォーマットに「結合試験フォーマット」、カードリストに「2 結合試験カードA」と「1 結合試験カードB」、デッキ名に「正常登録デッキ」、公開区分に「公開」、アーキタイプに「結合試験アーキタイプ」、デッキ画像用カードに「結合試験カードA」、キャンペーンタグに「結合試験キャンペーンA」の各識別子を指定してデッキ登録インポートAPIへ要求を送信する／4. Networkで応答を確認する	HTTPステータス200となり、応答本文に処理結果コード200、処理結果メッセージ「Deck registration success by import」および登録したデッキの識別子が含まれること	A15-17 デッキ登録インポート / 業務ロジック カードリストの解読・応答の内容、入出力 成功時出力
+3:IT-A15-17-002	業務ロジック 登録対象,業務ロジック 登録の可否,入出力 入力,入出力 永続化	—	ITA-05,ITA-07,ITA-11	P1	ブラウザ+DB確認	S-A15-17-AUTH-B-002,S-A15-17-AUTH-CONFIG,S-A15-17-FORMAT,S-A15-17-CARDS,S-A15-17-RELATED,S-A15-17-SCOPES,S-A15-17-EXISTING-002,S-A15-17-DECK-MASTERS	① 顧客ID 〔顧客ID-A1517-002A〕（登録時に振られた番号を控えてある）とプレイヤーID 〔プレイヤーID-A1517-002A〕（登録時に振られた番号を控えてある）が対応付けられ、稼働中で有効な認証トークンを取得済みであり、このプレイヤーが所有する「既存同名デッキ」は0件である（S-A15-17-AUTH-B-002）／② 開始時に署名方式をHS256、署名シークレットをテスト環境で保管するA15-17試験値に設定し、発行側と検証側で一致させる（S-A15-17-AUTH-CONFIG）／③ フォーマットID 〔フォーマットID-A1517-共有A〕（登録時に振られた番号を控えてある）の「結合試験フォーマット」が統率者使用設定無効である（S-A15-17-FORMAT）／④ カードID 〔カードID-A1517-共有A〕（登録時に振られた番号を控えてある）の結合試験カードAとカードID 〔カードID-A1517-共有B〕（登録時に振られた番号を控えてある）の結合試験カードBが利用可能である（S-A15-17-CARDS）／⑤ フォーマットID 〔フォーマットID-A1517-共有A〕の結合試験アーキタイプ、結合試験カードAの画像、結合試験キャンペーンA・Bが登録済みである（S-A15-17-RELATED）／⑥ 公開・非公開・限定公開の各公開区分を識別子で指定できる（S-A15-17-SCOPES）／⑦ デッキID 〔デッキID-A1517-002〕（登録時に振られた番号を控えてある）の「既存同名デッキ」がプレイヤーID 〔プレイヤーID-A1517-002B〕（登録時に振られた番号を控えてある）の所有、非公開、結合試験カードAを1枚採用した状態で存在し、同名デッキはこの1件だけである（S-A15-17-EXISTING-002）／⑧ ユーザーデッキ種別とメインボード・サイドボード・統率領域が登録済みである（S-A15-17-DECK-MASTERS）	1. ブラウザの開発者ツールを開く／2. S-A15-17-AUTH-B-002の有効な認証トークンをヘッダへ設定する／3. パスにデッキ識別子を付けず、フォーマットに「結合試験フォーマット」、カードリストに「2 結合試験カードA」と「1 結合試験カードB」、デッキ名に「既存同名デッキ」、公開区分に「公開」、アーキタイプに「結合試験アーキタイプ」、デッキ画像用カードに「結合試験カードA」、キャンペーンタグに「結合試験キャンペーンA」の各識別子を指定して要求を送信する／4. DBでデッキと採用カードを確認する	ID 〔デッキID-A1517-002〕の既存デッキが変更されず、別の識別子を持つ新規デッキがプレイヤーID 〔プレイヤーID-A1517-002A〕の所有として登録され、指定したデッキ名・公開区分・フォーマット・アーキタイプ・デッキ画像用カード・キャンペーンタグおよび採用カード2件が保存されること	A15-17 デッキ登録インポート / 業務ロジック 登録対象・登録の可否、入出力 入力・永続化
+4:IT-A15-17-003	入出力 キャンペーンタグの識別子,入出力 永続化	—	ITA-05,ITA-07,ITB-06	P1	ブラウザ+DB確認	S-A15-17-AUTH-A-003,S-A15-17-AUTH-CONFIG,S-A15-17-FORMAT,S-A15-17-CARDS,S-A15-17-RELATED,S-A15-17-SCOPES,S-A15-17-DECK-MASTERS	① 顧客ID 〔顧客ID-A1517-003〕（登録時に振られた番号を控えてある）とプレイヤーID 〔プレイヤーID-A1517-003〕（登録時に振られた番号を控えてある）が対応付けられ、稼働中で有効な認証トークンを取得済みであり、「タグ配列登録デッキ」は0件である（S-A15-17-AUTH-A-003）／② 開始時に署名方式をHS256、署名シークレットをテスト環境で保管するA15-17試験値に設定し、発行側と検証側で一致させる（S-A15-17-AUTH-CONFIG）／③ フォーマットID 〔フォーマットID-A1517-共有A〕（登録時に振られた番号を控えてある）の「結合試験フォーマット」が統率者使用設定無効である（S-A15-17-FORMAT）／④ カードID 〔カードID-A1517-共有A〕（登録時に振られた番号を控えてある）の結合試験カードAとカードID 〔カードID-A1517-共有B〕（登録時に振られた番号を控えてある）の結合試験カードBが利用可能である（S-A15-17-CARDS）／⑤ キャンペーンタグID 〔キャンペーンタグID-A1517-共有A〕（登録時に振られた番号を控えてある）の結合試験キャンペーンAとID 〔キャンペーンタグID-A1517-共有B〕（登録時に振られた番号を控えてある）の結合試験キャンペーンBが登録済みである（S-A15-17-RELATED）／⑥ 公開・非公開・限定公開の各公開区分を識別子で指定できる（S-A15-17-SCOPES）／⑦ ユーザーデッキ種別とメインボード・サイドボード・統率領域が登録済みである（S-A15-17-DECK-MASTERS）	1. ブラウザの開発者ツールを開く／2. 有効な認証トークンをヘッダへ設定する／3. フォーマットに「結合試験フォーマット」、カードリストに「1 結合試験カードA」、デッキ名に「タグ配列登録デッキ」、公開区分に「公開」、キャンペーンタグに「結合試験キャンペーンA」と「結合試験キャンペーンB」の識別子を配列で指定して要求を送信する／4. DBで登録されたデッキを確認する	「タグ配列登録デッキ」に「結合試験キャンペーンA」と「結合試験キャンペーンB」の2件が紐付いて保存されること	A15-17 デッキ登録インポート / 入出力 キャンペーンタグの識別子、入出力 永続化
+5:IT-A15-17-004	業務ロジック カードリストの解読,入出力 入力,入出力 永続化	—	ITA-08,ITB-10	P1	ブラウザ+DB確認	S-A15-17-AUTH-A-004,S-A15-17-AUTH-CONFIG,S-A15-17-FORMAT,S-A15-17-SCOPES,S-A15-17-DECK-MASTERS	① 顧客ID 〔顧客ID-A1517-004〕（登録時に振られた番号を控えてある）とプレイヤーID 〔プレイヤーID-A1517-004〕（登録時に振られた番号を控えてある）が対応付けられ、稼働中で有効な認証トークンを取得済みであり、「カードリスト未指定」「カードリスト空」は各0件である（S-A15-17-AUTH-A-004）／② 開始時に署名方式をHS256、署名シークレットをテスト環境で保管するA15-17試験値に設定し、発行側と検証側で一致させる（S-A15-17-AUTH-CONFIG）／③ フォーマットID 〔フォーマットID-A1517-共有A〕（登録時に振られた番号を控えてある）の「結合試験フォーマット」が統率者使用設定無効である（S-A15-17-FORMAT）／④ 公開・非公開・限定公開の各公開区分を識別子で指定できる（S-A15-17-SCOPES）／⑤ ユーザーデッキ種別とメインボード・サイドボード・統率領域が登録済みである（S-A15-17-DECK-MASTERS）	1. ブラウザの開発者ツールを開く／2. 有効な認証トークン、フォーマット「結合試験フォーマット」、デッキ名「カードリスト未指定」、公開区分「公開」を指定し、カードリストを指定せず要求を送信する／3. デッキ名を「カードリスト空」に変更し、カードリストに空文字を指定して要求を送信する／4. DBで2件のデッキと採用カードを確認する	「カードリスト未指定」と「カードリスト空」の2件が新規デッキとして保存され、各デッキの採用カードが0件であること	A15-17 デッキ登録インポート / 業務ロジック カードリストの解読、入出力 入力・永続化
+6:IT-A15-17-005	業務ロジック カードリストの解読,業務ロジック 登録の可否,入出力 成功時出力	—	ITA-09,ITB-11	P1	ブラウザ+DB確認	S-A15-17-AUTH-A-005,S-A15-17-AUTH-CONFIG,S-A15-17-FORMAT,S-A15-17-SCOPES,S-A15-17-LIMIT-500,S-A15-17-DECK-MASTERS	① 顧客ID 〔顧客ID-A1517-005〕（登録時に振られた番号を控えてある）とプレイヤーID 〔プレイヤーID-A1517-005〕（登録時に振られた番号を控えてある）が対応付けられ、稼働中で有効な認証トークンを取得済みであり、「500行デッキ」は0件である（S-A15-17-AUTH-A-005）／② 開始時に署名方式をHS256、署名シークレットをテスト環境で保管するA15-17試験値に設定し、発行側と検証側で一致させる（S-A15-17-AUTH-CONFIG）／③ フォーマットID 〔フォーマットID-A1517-共有A〕（登録時に振られた番号を控えてある）の「結合試験フォーマット」が統率者使用設定無効である（S-A15-17-FORMAT）／④ 公開・非公開・限定公開の各公開区分を識別子で指定できる（S-A15-17-SCOPES）／⑤ 上限試験カード001〜上限試験カード500が利用可能で、各カード1枚を記載した500行のカードリストが用意されている（S-A15-17-LIMIT-500）／⑥ ユーザーデッキ種別とメインボード・サイドボード・統率領域が登録済みである（S-A15-17-DECK-MASTERS）	1. ブラウザの開発者ツールを開く／2. 有効な認証トークン、フォーマット「結合試験フォーマット」、デッキ名「500行デッキ」、公開区分「公開」およびS-A15-17-LIMIT-500のカードリストを指定して要求を送信する／3. NetworkとDBで処理結果を確認する	500行のカードリストがHTTPステータス200で受理され、「500行デッキ」と採用カード500件が保存されること	A15-17 デッキ登録インポート / 業務ロジック カードリストの解読・登録の可否、入出力 成功時出力
+7:IT-A15-17-006	業務ロジック カードリストの解読,業務ロジック エラー時の扱い,入出力 失敗時出力	—	ITA-09,ITA-14,ITB-11	P1	ブラウザのみ	S-A15-17-AUTH-A-006,S-A15-17-AUTH-CONFIG,S-A15-17-FORMAT,S-A15-17-SCOPES,S-A15-17-LIMIT-501	① 顧客ID 〔顧客ID-A1517-006〕（登録時に振られた番号を控えてある）とプレイヤーID 〔プレイヤーID-A1517-006〕（登録時に振られた番号を控えてある）が対応付けられ、稼働中で有効な認証トークンを取得済みであり、「501行デッキ」は0件である（S-A15-17-AUTH-A-006）／② 開始時に署名方式をHS256、署名シークレットをテスト環境で保管するA15-17試験値に設定し、発行側と検証側で一致させる（S-A15-17-AUTH-CONFIG）／③ フォーマットID 〔フォーマットID-A1517-共有A〕（登録時に振られた番号を控えてある）の「結合試験フォーマット」が統率者使用設定無効である（S-A15-17-FORMAT）／④ 公開・非公開・限定公開の各公開区分を識別子で指定できる（S-A15-17-SCOPES）／⑤ 「1 結合試験カードA」を改行区切りで501行記載したカードリストが用意されている（S-A15-17-LIMIT-501）	1. ブラウザの開発者ツールを開く／2. 有効な認証トークン、フォーマット「結合試験フォーマット」、デッキ名「501行デッキ」、公開区分「公開」およびS-A15-17-LIMIT-501のカードリストを指定して要求を送信する／3. Networkで応答を確認する	HTTPステータス400となり、応答本文に処理結果コードと検証エラーメッセージが含まれること	A15-17 デッキ登録インポート / 業務ロジック カードリストの解読・エラー時の扱い、入出力 失敗時出力
+8:IT-A15-17-007	業務ロジック 登録の可否,入出力 永続化	—	ITA-10,ITA-13	P1	ブラウザ+DB確認	S-A15-17-AUTH-A-007,S-A15-17-AUTH-CONFIG,S-A15-17-FORMAT,S-A15-17-SCOPES,S-A15-17-LIMIT-501	① 顧客ID 〔顧客ID-A1517-007〕（登録時に振られた番号を控えてある）とプレイヤーID 〔プレイヤーID-A1517-007〕（登録時に振られた番号を控えてある）が対応付けられ、稼働中で有効な認証トークンを取得済みであり、「501行保存確認」は0件である（S-A15-17-AUTH-A-007）／② 開始時に署名方式をHS256、署名シークレットをテスト環境で保管するA15-17試験値に設定し、発行側と検証側で一致させる（S-A15-17-AUTH-CONFIG）／③ フォーマットID 〔フォーマットID-A1517-共有A〕（登録時に振られた番号を控えてある）の「結合試験フォーマット」が統率者使用設定無効である（S-A15-17-FORMAT）／④ 公開・非公開・限定公開の各公開区分を識別子で指定できる（S-A15-17-SCOPES）／⑤ 「1 結合試験カードA」を改行区切りで501行記載したカードリストが用意されている（S-A15-17-LIMIT-501）	1. DBでデッキ名「501行保存確認」の件数を記録する／2. ブラウザの開発者ツールから有効な認証トークン、フォーマット「結合試験フォーマット」、デッキ名「501行保存確認」、公開区分「公開」およびS-A15-17-LIMIT-501のカードリストを指定して要求を送信する／3. DBでデッキ名「501行保存確認」の件数を確認する	デッキ名「501行保存確認」の件数が要求送信前から増加しないこと	A15-17 デッキ登録インポート / 業務ロジック 登録の可否、入出力 永続化
+9:IT-A15-17-008	業務ロジック カードリストの解読,業務ロジック 応答の内容,入出力 成功時出力	—	ITA-11,ITA-14,ITB-06	P1	ブラウザのみ	S-A15-17-AUTH-A-008,S-A15-17-AUTH-CONFIG,S-A15-17-FORMAT,S-A15-17-CARDS,S-A15-17-SCOPES,S-A15-17-PARTIAL,S-A15-17-DECK-MASTERS	① 顧客ID 〔顧客ID-A1517-008〕（登録時に振られた番号を控えてある）とプレイヤーID 〔プレイヤーID-A1517-008〕（登録時に振られた番号を控えてある）が対応付けられ、稼働中で有効な認証トークンを取得済みであり、「部分解読デッキ」は0件である（S-A15-17-AUTH-A-008）／② 開始時に署名方式をHS256、署名シークレットをテスト環境で保管するA15-17試験値に設定し、発行側と検証側で一致させる（S-A15-17-AUTH-CONFIG）／③ フォーマットID 〔フォーマットID-A1517-共有A〕（登録時に振られた番号を控えてある）の「結合試験フォーマット」が統率者使用設定無効である（S-A15-17-FORMAT）／④ カードID 〔カードID-A1517-共有A〕（登録時に振られた番号を控えてある）の結合試験カードAとカードID 〔カードID-A1517-共有B〕（登録時に振られた番号を控えてある）の結合試験カードBが利用可能である（S-A15-17-CARDS）／⑤ 公開・非公開・限定公開の各公開区分を識別子で指定できる（S-A15-17-SCOPES）／⑥ 開始時に存在しないカードX・Yを未登録にし、1行目が存在しないカードX、2行目が結合試験カードAを2枚、3行目が存在しないカードYのカードリストを用意する（S-A15-17-PARTIAL）／⑦ ユーザーデッキ種別とメインボード・サイドボード・統率領域が登録済みである（S-A15-17-DECK-MASTERS）	1. ブラウザの開発者ツールを開く／2. 有効な認証トークン、フォーマット「結合試験フォーマット」、デッキ名「部分解読デッキ」、公開区分「公開」およびS-A15-17-PARTIALのカードリストを指定して要求を送信する／3. Networkで応答を確認する	HTTPステータス206となり、応答本文に処理結果コード206、処理結果メッセージ「Deck registration success by import」、登録したデッキの識別子および解読できない行の行番号1・3が含まれること	A15-17 デッキ登録インポート / 業務ロジック カードリストの解読・応答の内容、入出力 成功時出力
+10:IT-A15-17-009	業務ロジック カードリストの解読,業務ロジック 登録の可否,入出力 永続化	—	ITA-07,ITA-11,ITA-13	P1	ブラウザ+DB確認	S-A15-17-AUTH-A-009,S-A15-17-AUTH-CONFIG,S-A15-17-FORMAT,S-A15-17-CARDS,S-A15-17-SCOPES,S-A15-17-PARTIAL,S-A15-17-DECK-MASTERS	① 顧客ID 〔顧客ID-A1517-009〕（登録時に振られた番号を控えてある）とプレイヤーID 〔プレイヤーID-A1517-009〕（登録時に振られた番号を控えてある）が対応付けられ、稼働中で有効な認証トークンを取得済みであり、「部分保存確認デッキ」は0件である（S-A15-17-AUTH-A-009）／② 開始時に署名方式をHS256、署名シークレットをテスト環境で保管するA15-17試験値に設定し、発行側と検証側で一致させる（S-A15-17-AUTH-CONFIG）／③ フォーマットID 〔フォーマットID-A1517-共有A〕（登録時に振られた番号を控えてある）の「結合試験フォーマット」が統率者使用設定無効である（S-A15-17-FORMAT）／④ カードID 〔カードID-A1517-共有A〕（登録時に振られた番号を控えてある）の結合試験カードAとカードID 〔カードID-A1517-共有B〕（登録時に振られた番号を控えてある）の結合試験カードBが利用可能である（S-A15-17-CARDS）／⑤ 公開・非公開・限定公開の各公開区分を識別子で指定できる（S-A15-17-SCOPES）／⑥ 開始時に存在しないカードX・Yを未登録にし、1行目が存在しないカードX、2行目が結合試験カードAを2枚、3行目が存在しないカードYのカードリストを用意する（S-A15-17-PARTIAL）／⑦ ユーザーデッキ種別とメインボード・サイドボード・統率領域が登録済みである（S-A15-17-DECK-MASTERS）	1. ブラウザの開発者ツールから有効な認証トークン、フォーマット「結合試験フォーマット」、デッキ名「部分保存確認デッキ」、公開区分「公開」およびS-A15-17-PARTIALのカードリストを指定して要求を送信する／2. DBで登録されたデッキと採用カードを確認する	「部分保存確認デッキ」が登録され、解読できた「結合試験カードA」だけが枚数2の採用カードとして保存されること	A15-17 デッキ登録インポート / 業務ロジック カードリストの解読・登録の可否、入出力 永続化
+11:IT-A15-17-010	業務ロジック 応答の内容,入出力 成功時出力	—	ITA-11,ITB-06	P1	ブラウザのみ	S-A15-17-AUTH-A-010,S-A15-17-AUTH-CONFIG,S-A15-17-FORMAT,S-A15-17-CARDS,S-A15-17-SCOPES,S-A15-17-DECK-MASTERS	① 顧客ID 〔顧客ID-A1517-010〕（登録時に振られた番号を控えてある）とプレイヤーID 〔プレイヤーID-A1517-010〕（登録時に振られた番号を控えてある）が対応付けられ、稼働中で有効な認証トークンを取得済みであり、「限定公開デッキ」は0件である（S-A15-17-AUTH-A-010）／② 開始時に署名方式をHS256、署名シークレットをテスト環境で保管するA15-17試験値に設定し、発行側と検証側で一致させる（S-A15-17-AUTH-CONFIG）／③ フォーマットID 〔フォーマットID-A1517-共有A〕（登録時に振られた番号を控えてある）の「結合試験フォーマット」が統率者使用設定無効である（S-A15-17-FORMAT）／④ カードID 〔カードID-A1517-共有A〕（登録時に振られた番号を控えてある）の結合試験カードAとカードID 〔カードID-A1517-共有B〕（登録時に振られた番号を控えてある）の結合試験カードBが利用可能である（S-A15-17-CARDS）／⑤ 公開・非公開・限定公開の各公開区分を識別子で指定できる（S-A15-17-SCOPES）／⑥ ユーザーデッキ種別とメインボード・サイドボード・統率領域が登録済みである（S-A15-17-DECK-MASTERS）	1. ブラウザの開発者ツールを開く／2. 有効な認証トークン、フォーマット「結合試験フォーマット」、カードリスト「1 結合試験カードA」、デッキ名「限定公開デッキ」および公開区分「限定公開」を指定して要求を送信する／3. Networkで応答を確認する	HTTPステータス200の応答本文に、登録したデッキの識別子と表示用トークンが含まれること	A15-17 デッキ登録インポート / 業務ロジック 応答の内容、入出力 成功時出力
+12:IT-A15-17-011	業務ロジック 応答の内容,入出力 成功時出力	—	ITA-11,ITB-06	P1	ブラウザのみ	S-A15-17-AUTH-A-011,S-A15-17-AUTH-CONFIG,S-A15-17-FORMAT,S-A15-17-CARDS,S-A15-17-SCOPES,S-A15-17-DECK-MASTERS	① 顧客ID 〔顧客ID-A1517-011〕（登録時に振られた番号を控えてある）とプレイヤーID 〔プレイヤーID-A1517-011〕（登録時に振られた番号を控えてある）が対応付けられ、稼働中で有効な認証トークンを取得済みであり、「公開デッキ」「非公開デッキ」は各0件である（S-A15-17-AUTH-A-011）／② 開始時に署名方式をHS256、署名シークレットをテスト環境で保管するA15-17試験値に設定し、発行側と検証側で一致させる（S-A15-17-AUTH-CONFIG）／③ フォーマットID 〔フォーマットID-A1517-共有A〕（登録時に振られた番号を控えてある）の「結合試験フォーマット」が統率者使用設定無効である（S-A15-17-FORMAT）／④ カードID 〔カードID-A1517-共有A〕（登録時に振られた番号を控えてある）の結合試験カードAとカードID 〔カードID-A1517-共有B〕（登録時に振られた番号を控えてある）の結合試験カードBが利用可能である（S-A15-17-CARDS）／⑤ 公開・非公開・限定公開の各公開区分を識別子で指定できる（S-A15-17-SCOPES）／⑥ ユーザーデッキ種別とメインボード・サイドボード・統率領域が登録済みである（S-A15-17-DECK-MASTERS）	1. ブラウザの開発者ツールを開く／2. 有効な認証トークン、フォーマット「結合試験フォーマット」、カードリスト「1 結合試験カードA」、デッキ名「公開デッキ」および公開区分「公開」を指定して要求を送信する／3. デッキ名を「非公開デッキ」、公開区分を「非公開」に変更して要求を送信する／4. Networkで2回の応答を確認する	「公開デッキ」と「非公開デッキ」の応答本文に表示用トークンが含まれないこと	A15-17 デッキ登録インポート / 業務ロジック 応答の内容、入出力 成功時出力
+13:IT-A15-17-012	業務ロジック 他機能との境界,業務ロジック エラー時の扱い,入出力 失敗時出力	—	ITB-04	P1	ブラウザ+DB確認	S-A15-17-NOAUTH-012,S-A15-17-FORMAT,S-A15-17-CARDS,S-A15-17-SCOPES	① 認証トークンを付けない要求データが用意され、デッキ名「トークン欠落デッキ」は0件である（S-A15-17-NOAUTH-012）／② フォーマットID 〔フォーマットID-A1517-共有A〕（登録時に振られた番号を控えてある）の「結合試験フォーマット」が統率者使用設定無効である（S-A15-17-FORMAT）／③ カードID 〔カードID-A1517-共有A〕（登録時に振られた番号を控えてある）の結合試験カードAとカードID 〔カードID-A1517-共有B〕（登録時に振られた番号を控えてある）の結合試験カードBが利用可能である（S-A15-17-CARDS）／④ 公開・非公開・限定公開の各公開区分を識別子で指定できる（S-A15-17-SCOPES）	1. DBでデッキ名「トークン欠落デッキ」の件数を記録する／2. ブラウザの開発者ツールから認証用トークンを付けず、フォーマット「結合試験フォーマット」、カードリスト「1 結合試験カードA」、デッキ名「トークン欠落デッキ」および公開区分「公開」を指定して要求を送信する／3. NetworkとDBで処理結果を確認する	HTTPステータス401、処理結果コードおよび「Access Token is incorrect」または「Authentication failed」が返り、「トークン欠落デッキ」の件数が増加しないこと	A15-17 デッキ登録インポート / 業務ロジック 他機能との境界・エラー時の扱い、入出力 失敗時出力
+14:IT-A15-17-013	業務ロジック 他機能との境界,業務ロジック エラー時の扱い,入出力 失敗時出力	—	ITB-04	P1	ブラウザ+DB確認	S-A15-17-AUTH-A-013,S-A15-17-AUTH-CONFIG,S-A15-17-FORMAT,S-A15-17-CARDS,S-A15-17-SCOPES	① 顧客ID 〔顧客ID-A1517-013〕（登録時に振られた番号を控えてある）とプレイヤーID 〔プレイヤーID-A1517-013〕（登録時に振られた番号を控えてある）が対応付けられ、稼働中で有効な認証トークンを取得済みであり、「署名不正デッキ」は0件である（S-A15-17-AUTH-A-013）／② 開始時に署名方式をHS256、署名シークレットをテスト環境で保管するA15-17試験値に設定し、発行側と検証側で一致させる（S-A15-17-AUTH-CONFIG）／③ フォーマットID 〔フォーマットID-A1517-共有A〕（登録時に振られた番号を控えてある）の「結合試験フォーマット」が統率者使用設定無効である（S-A15-17-FORMAT）／④ カードID 〔カードID-A1517-共有A〕（登録時に振られた番号を控えてある）の結合試験カードAとカードID 〔カードID-A1517-共有B〕（登録時に振られた番号を控えてある）の結合試験カードBが利用可能である（S-A15-17-CARDS）／⑤ 公開・非公開・限定公開の各公開区分を識別子で指定できる（S-A15-17-SCOPES）	1. DBでデッキ名「署名不正デッキ」の件数を記録する／2. ブラウザの開発者ツールでS-A15-17-AUTH-A-013の認証トークンの署名部を1文字変更する／3. 変更したトークン、フォーマット「結合試験フォーマット」、カードリスト「1 結合試験カードA」、デッキ名「署名不正デッキ」および公開区分「公開」を指定して要求を送信する／4. NetworkとDBで処理結果を確認する	HTTPステータス401、処理結果コードおよび「Access Token is incorrect」または「Authentication failed」が返り、「署名不正デッキ」の件数が増加しないこと	A15-17 デッキ登録インポート / 業務ロジック 他機能との境界・エラー時の扱い、入出力 失敗時出力
+15:IT-A15-17-014	業務ロジック 他機能との境界,業務ロジック エラー時の扱い,入出力 失敗時出力	—	ITA-11,ITB-04	P1	ブラウザ+DB確認	S-A15-17-TOKEN-NOPLAYER-014,S-A15-17-AUTH-CONFIG,S-A15-17-FORMAT,S-A15-17-CARDS,S-A15-17-SCOPES	① 顧客ID 151710014は稼働中で、その顧客に対応するプレイヤーが0件であり、顧客ID 151710014を含む有効な認証トークンを取得済みで、「プレイヤー不在デッキ」は0件である（S-A15-17-TOKEN-NOPLAYER-014）／② 開始時に署名方式をHS256、署名シークレットをテスト環境で保管するA15-17試験値に設定し、発行側と検証側で一致させる（S-A15-17-AUTH-CONFIG）／③ フォーマットID 〔フォーマットID-A1517-共有A〕（登録時に振られた番号を控えてある）の「結合試験フォーマット」が統率者使用設定無効である（S-A15-17-FORMAT）／④ カードID 〔カードID-A1517-共有A〕（登録時に振られた番号を控えてある）の結合試験カードAとカードID 〔カードID-A1517-共有B〕（登録時に振られた番号を控えてある）の結合試験カードBが利用可能である（S-A15-17-CARDS）／⑤ 公開・非公開・限定公開の各公開区分を識別子で指定できる（S-A15-17-SCOPES）	1. DBでデッキ名「プレイヤー不在デッキ」の件数を記録する／2. ブラウザの開発者ツールからS-A15-17-TOKEN-NOPLAYER-014の認証トークン、フォーマット「結合試験フォーマット」、カードリスト「1 結合試験カードA」、デッキ名「プレイヤー不在デッキ」および公開区分「公開」を指定して要求を送信する／3. NetworkとDBで処理結果を確認する	HTTPステータス401、処理結果コードおよび「Access Token is incorrect」または「Authentication failed」が返り、「プレイヤー不在デッキ」の件数が増加しないこと	A15-17 デッキ登録インポート / 業務ロジック 他機能との境界・エラー時の扱い、入出力 失敗時出力
+16:IT-A15-17-015	入出力 入力,業務ロジック エラー時の扱い,入出力 失敗時出力	—	ITA-10,ITA-14,ITB-06	P1	ブラウザのみ	S-A15-17-AUTH-A-015,S-A15-17-AUTH-CONFIG,S-A15-17-CARDS,S-A15-17-SCOPES	① 顧客ID 〔顧客ID-A1517-015〕（登録時に振られた番号を控えてある）とプレイヤーID 〔プレイヤーID-A1517-015〕（登録時に振られた番号を控えてある）が対応付けられ、稼働中で有効な認証トークンを取得済みであり、「フォーマット未指定デッキ」は0件である（S-A15-17-AUTH-A-015）／② 開始時に署名方式をHS256、署名シークレットをテスト環境で保管するA15-17試験値に設定し、発行側と検証側で一致させる（S-A15-17-AUTH-CONFIG）／③ カードID 〔カードID-A1517-共有A〕（登録時に振られた番号を控えてある）の結合試験カードAとカードID 〔カードID-A1517-共有B〕（登録時に振られた番号を控えてある）の結合試験カードBが利用可能である（S-A15-17-CARDS）／④ 公開・非公開・限定公開の各公開区分を識別子で指定できる（S-A15-17-SCOPES）	1. ブラウザの開発者ツールを開く／2. 有効な認証トークン、カードリスト「1 結合試験カードA」、デッキ名「フォーマット未指定デッキ」および公開区分「公開」を指定し、フォーマットの識別子を指定せず要求を送信する／3. Networkで応答を確認する	HTTPステータス400となり、応答本文に処理結果コードと検証エラーメッセージが含まれること	A15-17 デッキ登録インポート / 入出力 入力、業務ロジック エラー時の扱い、入出力 失敗時出力
+17:IT-A15-17-016	業務ロジック 登録の可否,入出力 永続化	—	ITA-10,ITA-13	P1	ブラウザ+DB確認	S-A15-17-AUTH-A-016,S-A15-17-AUTH-CONFIG,S-A15-17-CARDS,S-A15-17-SCOPES	① 顧客ID 〔顧客ID-A1517-016〕（登録時に振られた番号を控えてある）とプレイヤーID 〔プレイヤーID-A1517-016〕（登録時に振られた番号を控えてある）が対応付けられ、稼働中で有効な認証トークンを取得済みであり、「必須不足保存確認」は0件である（S-A15-17-AUTH-A-016）／② 開始時に署名方式をHS256、署名シークレットをテスト環境で保管するA15-17試験値に設定し、発行側と検証側で一致させる（S-A15-17-AUTH-CONFIG）／③ カードID 〔カードID-A1517-共有A〕（登録時に振られた番号を控えてある）の結合試験カードAとカードID 〔カードID-A1517-共有B〕（登録時に振られた番号を控えてある）の結合試験カードBが利用可能である（S-A15-17-CARDS）／④ 公開・非公開・限定公開の各公開区分を識別子で指定できる（S-A15-17-SCOPES）	1. DBでデッキ名「必須不足保存確認」の件数を記録する／2. ブラウザの開発者ツールから有効な認証トークン、カードリスト「1 結合試験カードA」、デッキ名「必須不足保存確認」および公開区分「公開」を指定し、フォーマットの識別子を指定せず要求を送信する／3. DBでデッキ名「必須不足保存確認」の件数を確認する	デッキ名「必須不足保存確認」の件数が要求送信前から増加しないこと	A15-17 デッキ登録インポート / 業務ロジック 登録の可否、入出力 永続化
+18:IT-A15-17-017	業務ロジック カードリストの解読		ITA-05,ITA-11	P1	ブラウザ+DB確認	S-A15-17-AUTH-A-017,S-A15-17-AUTH-CONFIG,S-A15-17-FORMAT,S-A15-17-CARDS,S-A15-17-SCOPES,S-A15-17-COMMANDER,S-A15-17-DECK-MASTERS	① 顧客ID 〔顧客ID-A1517-017〕（登録時に振られた番号を控えてある）とプレイヤーID 〔プレイヤーID-A1517-017〕（登録時に振られた番号を控えてある）が対応付けられ、稼働中で有効な認証トークンを取得済みであり、「統率者有効解読」「統率者無効解読」は各0件である（S-A15-17-AUTH-A-017）／② 開始時に署名方式をHS256、署名シークレットをテスト環境で保管するA15-17試験値に設定し、発行側と検証側で一致させる（S-A15-17-AUTH-CONFIG）／③ フォーマットID 〔フォーマットID-A1517-共有A〕（登録時に振られた番号を控えてある）の「結合試験フォーマット」が統率者使用設定無効である（S-A15-17-FORMAT）／④ カードID 〔カードID-A1517-共有A〕（登録時に振られた番号を控えてある）の結合試験カードAとカードID 〔カードID-A1517-共有B〕（登録時に振られた番号を控えてある）の結合試験カードBが利用可能である（S-A15-17-CARDS）／⑤ 公開・非公開・限定公開の各公開区分を識別子で指定できる（S-A15-17-SCOPES）／⑥ フォーマットID 〔フォーマットID-A1517-共有B〕（登録時に振られた番号を控えてある）の「統率者試験フォーマット」が統率者使用設定有効で、カードID 〔カードID-A1517-共有C〕（登録時に振られた番号を控えてある）の結合試験カードCが利用可能である（S-A15-17-COMMANDER）／⑦ ユーザーデッキ種別とメインボード・サイドボード・統率領域が登録済みである（S-A15-17-DECK-MASTERS）	1. S-A15-17-AUTH-A-017の有効な認証トークンを付け、フォーマットに「統率者試験フォーマット」、デッキ名「統率者有効解読」、公開区分「公開」、カードリストに「1 結合試験カードC」・空行・「2 結合試験カードA」・空行・「1 結合試験カードB」の5行を指定してデッキ登録インポートAPIへ要求を送信する／2. フォーマットを「結合試験フォーマット」、デッキ名を「統率者無効解読」、カードリストを「2 結合試験カードA」・空行・「1 結合試験カードB」の3行に変えて要求を送信する／3. DBで登録された2件のデッキの採用カードを確認する	「統率者有効解読」では結合試験カードCが統率領域・結合試験カードAがメインボード・結合試験カードBがサイドボードとして保存され、「統率者無効解読」では結合試験カードAがメインボード・結合試験カードBがサイドボードとして保存されること	0515 A15-17 デッキ登録インポート / 機能設計書 functions/pf-api/a15-17_api_deck_builder_deck_import_register.md 業務ロジック カードリストの解読
+19:IT-A15-17-023	業務ロジック 他機能との境界		ITB-04,ITB-08	P2	ブラウザ+DB確認	S-A15-17-UI-023,S-A15-17-AUTH-CONFIG,S-A15-17-FORMAT,S-A15-17-CARDS,S-A15-17-SCOPES,S-A15-17-DECK-MASTERS	① 顧客ID 〔顧客ID-A1517-023〕（登録時に振られた番号を控えてある）はメールアドレスui.a1517-023@example.test、パスワードUiA1517!、本会員かつ未削除で、プレイヤーID 〔プレイヤーID-A1517-023〕（登録時に振られた番号を控えてある）・デッキユーザーID 〔デッキユーザーID-A1517-023〕（登録時に振られた値を控えてある）に対応付けられている。「画面インポート」「開発者ツールインポート」は各0件で、使用ブラウザはログアウト状態である（S-A15-17-UI-023）／② 開始時に署名方式をHS256、署名シークレットをテスト環境で保管するA15-17試験値に設定し、発行側と検証側で一致させる（S-A15-17-AUTH-CONFIG）／③ フォーマットID 〔フォーマットID-A1517-共有A〕（登録時に振られた番号を控えてある）の「結合試験フォーマット」が統率者使用設定無効である（S-A15-17-FORMAT）／④ カードID 〔カードID-A1517-共有A〕（登録時に振られた番号を控えてある）の結合試験カードAとカードID 〔カードID-A1517-共有B〕（登録時に振られた番号を控えてある）の結合試験カードBが利用可能である（S-A15-17-CARDS）／⑤ 公開・非公開・限定公開の各公開区分を識別子で指定できる（S-A15-17-SCOPES）／⑥ ユーザーデッキ種別とメインボード・サイドボード・統率領域が登録済みである（S-A15-17-DECK-MASTERS）	1. デッキビルダーのログインフォームでメールアドレス「ui.a1517-023@example.test」、パスワード「UiA1517!」を入力してログインする／2. 自分のユーザーページ「/user/〔デッキユーザーID-A1517-023〕」で「デッキを作成する」を押す／3. デッキ作成のモーダルでデッキ名に「画面インポート」を入力し、フォーマットに「結合試験フォーマット」、公開範囲に「公開」を選び、「デッキをインポートする」にチェックを付けてカードリストに「1 結合試験カードA」を入力し、「作成を開始する」を押す／4. NetworkでPOST /deck/importの要求ヘッダjwt-tokenと応答を確認する／5. ブラウザの開発者ツールから、手順4と同じ認証トークンを要求ヘッダjwt-tokenに付け、デッキ名「開発者ツールインポート」でほかは手順3と同じ内容の要求をPOSTで「/deck/import」へ送信する／6. DBでデッキ名「画面インポート」「開発者ツールインポート」のデッキを確認する	画面から送った要求と開発者ツールから送った要求のどちらもHTTPステータス200となり、2件のデッキがプレイヤーID 〔プレイヤーID-A1517-023〕の所有として登録されること	0515 A15-17 デッキ登録インポート / 機能設計書 functions/pf-api/a15-17_api_deck_builder_deck_import_register.md 業務ロジック 他機能との境界
+20:IT-A15-17-024	REQ-0515-sheet-17-R007		ITA-07	P1	ブラウザ+DB確認	S-A15-17-AUTH-A-024,S-A15-17-AUTH-CONFIG,S-A15-17-COMMANDER,S-A15-17-CARDS,S-A15-17-SCOPES,S-A15-17-DECK-MASTERS	① 顧客ID 〔顧客ID-A1517-024〕（登録時に振られた番号を控えてある）とプレイヤーID 〔プレイヤーID-A1517-024〕（登録時に振られた番号を控えてある）が対応付けられ、稼働中で有効な認証トークンを取得済みであり、デッキ名「A1517-024-Deck」「A1517-024-デッキ」は各0件である（S-A15-17-AUTH-A-024）／② 開始時に署名方式をHS256、署名シークレットをテスト環境で保管するA15-17試験値に設定し、発行側と検証側で一致させる（S-A15-17-AUTH-CONFIG）／③ フォーマットID 〔フォーマットID-A1517-共有B〕（登録時に振られた番号を控えてある）の「統率者試験フォーマット」が統率者使用設定有効で、カードID 〔カードID-A1517-共有C〕（登録時に振られた番号を控えてある）の結合試験カードCが利用可能である（S-A15-17-COMMANDER）／④ カードID 〔カードID-A1517-共有A〕（登録時に振られた番号を控えてある）の結合試験カードAとカードID 〔カードID-A1517-共有B〕（登録時に振られた番号を控えてある）の結合試験カードBが利用可能である（S-A15-17-CARDS）／⑤ 公開・非公開・限定公開の各公開区分を識別子で指定できる（S-A15-17-SCOPES）／⑥ ユーザーデッキ種別とメインボード・サイドボード・統率領域が登録済みである（S-A15-17-DECK-MASTERS）	1. S-A15-17-AUTH-A-024の有効な認証トークンをヘッダへ設定する／2. フォーマットに「統率者試験フォーマット」、デッキ名「A1517-024-Deck」、公開区分「公開」、カードリストに「1 結合試験カードC」・「Deck」・「2 結合試験カードA」の3行を指定してデッキ登録インポートAPIへ要求を送信する／3. フォーマットに「統率者試験フォーマット」、デッキ名「A1517-024-デッキ」、公開区分「公開」、カードリストに「1 結合試験カードC」・「デッキ」・「2 結合試験カードA」の3行を指定して要求を送信する／4. DBで登録された2件のデッキの採用カードを確認する	「A1517-024-Deck」「A1517-024-デッキ」のどちらでも、結合試験カードCが統率領域、結合試験カードAがメインボード（枚数2）として保存されること	0515 A15-17 デッキ登録インポート / 機能設計書 functions/pf-api/a15-17_api_deck_builder_deck_import_register.md 業務ロジック カードリストの解読
+21:IT-A15-17-025	REQ-0515-sheet-17-R007		ITA-07	P1	ブラウザ+DB確認	S-A15-17-AUTH-A-025,S-A15-17-AUTH-CONFIG,S-A15-17-FORMAT,S-A15-17-CARDS,S-A15-17-SCOPES,S-A15-17-DECK-MASTERS	① 顧客ID 〔顧客ID-A1517-025〕（登録時に振られた番号を控えてある）とプレイヤーID 〔プレイヤーID-A1517-025〕（登録時に振られた番号を控えてある）が対応付けられ、稼働中で有効な認証トークンを取得済みであり、デッキ名「A1517-025-Sideboard」「A1517-025-サイドボード」「A1517-025-相棒」「A1517-025-Companion」は各0件である（S-A15-17-AUTH-A-025）／② 開始時に署名方式をHS256、署名シークレットをテスト環境で保管するA15-17試験値に設定し、発行側と検証側で一致させる（S-A15-17-AUTH-CONFIG）／③ フォーマットID 〔フォーマットID-A1517-共有A〕（登録時に振られた番号を控えてある）の「結合試験フォーマット」が統率者使用設定無効である（S-A15-17-FORMAT）／④ カードID 〔カードID-A1517-共有A〕（登録時に振られた番号を控えてある）の結合試験カードAとカードID 〔カードID-A1517-共有B〕（登録時に振られた番号を控えてある）の結合試験カードBが利用可能である（S-A15-17-CARDS）／⑤ 公開・非公開・限定公開の各公開区分を識別子で指定できる（S-A15-17-SCOPES）／⑥ ユーザーデッキ種別とメインボード・サイドボード・統率領域が登録済みである（S-A15-17-DECK-MASTERS）	1. S-A15-17-AUTH-A-025の有効な認証トークンをヘッダへ設定する／2. フォーマットに「結合試験フォーマット」、デッキ名「A1517-025-Sideboard」、公開区分「公開」、カードリストに「1 結合試験カードA」・「Sideboard」・「1 結合試験カードB」の3行を指定してデッキ登録インポートAPIへ要求を送信する／3. フォーマットに「結合試験フォーマット」、デッキ名「A1517-025-サイドボード」、公開区分「公開」、カードリストに「1 結合試験カードA」・「サイドボード」・「1 結合試験カードB」の3行を指定して要求を送信する／4. フォーマットに「結合試験フォーマット」、デッキ名「A1517-025-相棒」、公開区分「公開」、カードリストに「1 結合試験カードA」・「相棒」・「1 結合試験カードB」の3行を指定して要求を送信する／5. フォーマットに「結合試験フォーマット」、デッキ名「A1517-025-Companion」、公開区分「公開」、カードリストに「1 結合試験カードA」・「Companion」・「1 結合試験カードB」の3行を指定して要求を送信する／6. DBで登録された4件のデッキの採用カードを確認する	4件のデッキのいずれでも、結合試験カードAがメインボード、結合試験カードBがサイドボードとして保存されること	0515 A15-17 デッキ登録インポート / 機能設計書 functions/pf-api/a15-17_api_deck_builder_deck_import_register.md 業務ロジック カードリストの解読
+22:IT-A15-17-026	REQ-0515-sheet-17-R007		ITA-07	P1	ブラウザ+DB確認	S-A15-17-AUTH-A-026,S-A15-17-AUTH-CONFIG,S-A15-17-COMMANDER,S-A15-17-CARDS,S-A15-17-SCOPES,S-A15-17-DECK-MASTERS	① 顧客ID 〔顧客ID-A1517-026〕（登録時に振られた番号を控えてある）とプレイヤーID 〔プレイヤーID-A1517-026〕（登録時に振られた番号を控えてある）が対応付けられ、稼働中で有効な認証トークンを取得済みであり、デッキ名「A1517-026-Commander」「A1517-026-統率者」は各0件である（S-A15-17-AUTH-A-026）／② 開始時に署名方式をHS256、署名シークレットをテスト環境で保管するA15-17試験値に設定し、発行側と検証側で一致させる（S-A15-17-AUTH-CONFIG）／③ フォーマットID 〔フォーマットID-A1517-共有B〕（登録時に振られた番号を控えてある）の「統率者試験フォーマット」が統率者使用設定有効で、カードID 〔カードID-A1517-共有C〕（登録時に振られた番号を控えてある）の結合試験カードCが利用可能である（S-A15-17-COMMANDER）／④ カードID 〔カードID-A1517-共有A〕（登録時に振られた番号を控えてある）の結合試験カードAとカードID 〔カードID-A1517-共有B〕（登録時に振られた番号を控えてある）の結合試験カードBが利用可能である（S-A15-17-CARDS）／⑤ 公開・非公開・限定公開の各公開区分を識別子で指定できる（S-A15-17-SCOPES）／⑥ ユーザーデッキ種別とメインボード・サイドボード・統率領域が登録済みである（S-A15-17-DECK-MASTERS）	1. S-A15-17-AUTH-A-026の有効な認証トークンをヘッダへ設定する／2. フォーマットに「統率者試験フォーマット」、デッキ名「A1517-026-Commander」、公開区分「公開」、カードリストに「Deck」・「2 結合試験カードA」・「Commander」・「1 結合試験カードC」の4行を指定してデッキ登録インポートAPIへ要求を送信する／3. フォーマットに「統率者試験フォーマット」、デッキ名「A1517-026-統率者」、公開区分「公開」、カードリストに「Deck」・「2 結合試験カードA」・「統率者」・「1 結合試験カードC」の4行を指定して要求を送信する／4. DBで登録された2件のデッキの採用カードを確認する	「A1517-026-Commander」「A1517-026-統率者」のどちらでも、結合試験カードAがメインボード（枚数2）、結合試験カードCが統率領域として保存されること	0515 A15-17 デッキ登録インポート / 機能設計書 functions/pf-api/a15-17_api_deck_builder_deck_import_register.md 業務ロジック カードリストの解読
+23:IT-A15-17-027	REQ-0515-sheet-17-R007		ITA-02	P1	ブラウザのみ	S-A15-17-AUTH-A-027,S-A15-17-AUTH-CONFIG,S-A15-17-FORMAT,S-A15-17-CARDS,S-A15-17-SCOPES,S-A15-17-DECK-MASTERS	① 顧客ID 〔顧客ID-A1517-027〕（登録時に振られた番号を控えてある）とプレイヤーID 〔プレイヤーID-A1517-027〕（登録時に振られた番号を控えてある）が対応付けられ、稼働中で有効な認証トークンを取得済みであり、デッキ名「A1517-027-Commander」「A1517-027-統率者」は各0件である（S-A15-17-AUTH-A-027）／② 開始時に署名方式をHS256、署名シークレットをテスト環境で保管するA15-17試験値に設定し、発行側と検証側で一致させる（S-A15-17-AUTH-CONFIG）／③ フォーマットID 〔フォーマットID-A1517-共有A〕（登録時に振られた番号を控えてある）の「結合試験フォーマット」が統率者使用設定無効である（S-A15-17-FORMAT）／④ カードID 〔カードID-A1517-共有A〕（登録時に振られた番号を控えてある）の結合試験カードAとカードID 〔カードID-A1517-共有B〕（登録時に振られた番号を控えてある）の結合試験カードBが利用可能である（S-A15-17-CARDS）／⑤ 公開・非公開・限定公開の各公開区分を識別子で指定できる（S-A15-17-SCOPES）／⑥ ユーザーデッキ種別とメインボード・サイドボード・統率領域が登録済みである（S-A15-17-DECK-MASTERS）	1. S-A15-17-AUTH-A-027の有効な認証トークンをヘッダへ設定する／2. フォーマットに「結合試験フォーマット」、デッキ名「A1517-027-Commander」、公開区分「公開」、カードリストに「Commander」・「1 結合試験カードA」の2行を指定してデッキ登録インポートAPIへ要求を送信する／3. フォーマットに「結合試験フォーマット」、デッキ名「A1517-027-統率者」、公開区分「公開」、カードリストに「統率者」・「1 結合試験カードA」の2行を指定して要求を送信する／4. Networkで2回の応答を確認する	2回の応答のどちらもHTTPステータス400となり、応答本文に処理結果コードと検証エラーメッセージが含まれること	0515 A15-17 デッキ登録インポート / 機能設計書 functions/pf-api/a15-17_api_deck_builder_deck_import_register.md 業務ロジック カードリストの解読
+24:IT-A15-17-028	REQ-0515-sheet-17-R007		ITA-10	P1	ブラウザ+DB確認	S-A15-17-AUTH-A-028,S-A15-17-AUTH-CONFIG,S-A15-17-FORMAT,S-A15-17-CARDS,S-A15-17-SCOPES,S-A15-17-DECK-MASTERS	① 顧客ID 〔顧客ID-A1517-028〕（登録時に振られた番号を控えてある）とプレイヤーID 〔プレイヤーID-A1517-028〕（登録時に振られた番号を控えてある）が対応付けられ、稼働中で有効な認証トークンを取得済みであり、デッキ名「A1517-028-Commander」「A1517-028-統率者」は各0件である（S-A15-17-AUTH-A-028）／② 開始時に署名方式をHS256、署名シークレットをテスト環境で保管するA15-17試験値に設定し、発行側と検証側で一致させる（S-A15-17-AUTH-CONFIG）／③ フォーマットID 〔フォーマットID-A1517-共有A〕（登録時に振られた番号を控えてある）の「結合試験フォーマット」が統率者使用設定無効である（S-A15-17-FORMAT）／④ カードID 〔カードID-A1517-共有A〕（登録時に振られた番号を控えてある）の結合試験カードAとカードID 〔カードID-A1517-共有B〕（登録時に振られた番号を控えてある）の結合試験カードBが利用可能である（S-A15-17-CARDS）／⑤ 公開・非公開・限定公開の各公開区分を識別子で指定できる（S-A15-17-SCOPES）／⑥ ユーザーデッキ種別とメインボード・サイドボード・統率領域が登録済みである（S-A15-17-DECK-MASTERS）	1. DBでデッキ名「A1517-028-Commander」「A1517-028-統率者」の件数を記録する／2. S-A15-17-AUTH-A-028の有効な認証トークンをヘッダへ設定する／3. フォーマットに「結合試験フォーマット」、デッキ名「A1517-028-Commander」、公開区分「公開」、カードリストに「Commander」・「1 結合試験カードA」の2行を指定してデッキ登録インポートAPIへ要求を送信する／4. フォーマットに「結合試験フォーマット」、デッキ名「A1517-028-統率者」、公開区分「公開」、カードリストに「統率者」・「1 結合試験カードA」の2行を指定して要求を送信する／5. DBでデッキ名「A1517-028-Commander」「A1517-028-統率者」の件数を確認する	デッキ名「A1517-028-Commander」「A1517-028-統率者」の件数がどちらも要求送信前から増加しないこと	0515 A15-17 デッキ登録インポート / 機能設計書 functions/pf-api/a15-17_api_deck_builder_deck_import_register.md 業務ロジック カードリストの解読
+25:IT-A15-17-029	REQ-0515-sheet-17-R003,REQ-0515-sheet-17-R009		ITA-07	P1	ブラウザ+DB確認	S-A15-17-AUTH-A-029,S-A15-17-AUTH-CONFIG,S-A15-17-FORMAT,S-A15-17-CARDS,S-A15-17-SCOPES,S-A15-17-DECK-MASTERS	① 顧客ID 〔顧客ID-A1517-029〕（登録時に振られた番号を控えてある）とプレイヤーID 〔プレイヤーID-A1517-029〕（登録時に振られた番号を控えてある）が対応付けられ、稼働中で有効な認証トークンを取得済みであり、「同内容再登録デッキ」は0件である（S-A15-17-AUTH-A-029）／② 開始時に署名方式をHS256、署名シークレットをテスト環境で保管するA15-17試験値に設定し、発行側と検証側で一致させる（S-A15-17-AUTH-CONFIG）／③ フォーマットID 〔フォーマットID-A1517-共有A〕（登録時に振られた番号を控えてある）の「結合試験フォーマット」が統率者使用設定無効である（S-A15-17-FORMAT）／④ カードID 〔カードID-A1517-共有A〕（登録時に振られた番号を控えてある）の結合試験カードAとカードID 〔カードID-A1517-共有B〕（登録時に振られた番号を控えてある）の結合試験カードBが利用可能である（S-A15-17-CARDS）／⑤ 公開・非公開・限定公開の各公開区分を識別子で指定できる（S-A15-17-SCOPES）／⑥ ユーザーデッキ種別とメインボード・サイドボード・統率領域が登録済みである（S-A15-17-DECK-MASTERS）	1. ブラウザの開発者ツールを開く／2. S-A15-17-AUTH-A-029の有効な認証トークンをヘッダへ設定する／3. フォーマットに「結合試験フォーマット」、カードリストに「2 結合試験カードA」と「1 結合試験カードB」、デッキ名に「同内容再登録デッキ」、公開区分に「公開」を指定してデッキ登録インポートAPIへ要求を送信し、応答のデッキの識別子を控える／4. 手順3と同じ認証トークン・同じ内容で、もう一度デッキ登録インポートAPIへ要求を送信し、応答のデッキの識別子を控える／5. DBでデッキ名「同内容再登録デッキ」のデッキと採用カードを確認する	手順3と手順4の応答のデッキの識別子が互いに異なり、DBにデッキ名「同内容再登録デッキ」のデッキが2件、どちらもプレイヤーID 〔プレイヤーID-A1517-029〕の所有として登録され、各デッキの採用カードが結合試験カードA 2枚・結合試験カードB 1枚のまま保存されること	0515 A15-17 デッキ登録インポート / 業務ロジック 登録対象・登録の可否、入出力 永続化
+26:IT-A15-17-030	REQ-0515-sheet-17-R007		ITA-07	P1	ブラウザ+DB確認	S-A15-17-AUTH-A-030,S-A15-17-ONEBAD-030,S-A15-17-AUTH-CONFIG,S-A15-17-FORMAT,S-A15-17-CARDS,S-A15-17-SCOPES,S-A15-17-DECK-MASTERS	① 顧客ID 〔顧客ID-A1517-030〕（登録時に振られた番号を控えてある）とプレイヤーID 〔プレイヤーID-A1517-030〕（登録時に振られた番号を控えてある）が対応付けられ、稼働中で有効な認証トークンを取得済みであり、「一行不明デッキ」は0件である（S-A15-17-AUTH-A-030）／② 開始時に署名方式をHS256、署名シークレットをテスト環境で保管するA15-17試験値に設定し、発行側と検証側で一致させる（S-A15-17-AUTH-CONFIG）／③ フォーマットID 〔フォーマットID-A1517-共有A〕（登録時に振られた番号を控えてある）の「結合試験フォーマット」が統率者使用設定無効である（S-A15-17-FORMAT）／④ カードID 〔カードID-A1517-共有A〕（登録時に振られた番号を控えてある）の結合試験カードAとカードID 〔カードID-A1517-共有B〕（登録時に振られた番号を控えてある）の結合試験カードBが利用可能である（S-A15-17-CARDS）／⑤ 公開・非公開・限定公開の各公開区分を識別子で指定できる（S-A15-17-SCOPES）／⑥ 開始時に存在しないカード「存在しないカードA1517-030Z」を未登録にし、1行目が「2 結合試験カードA」、2行目が「1 存在しないカードA1517-030Z」、3行目が「1 結合試験カードB」のカードリストを用意する（S-A15-17-ONEBAD-030）／⑦ ユーザーデッキ種別とメインボード・サイドボード・統率領域が登録済みである（S-A15-17-DECK-MASTERS）	1. ブラウザの開発者ツールを開く／2. S-A15-17-AUTH-A-030の有効な認証トークンをヘッダへ設定する／3. フォーマットに「結合試験フォーマット」、デッキ名に「一行不明デッキ」、公開区分に「公開」およびS-A15-17-ONEBAD-030のカードリストを指定してデッキ登録インポートAPIへ要求を送信する／4. Networkで応答を確認する／5. DBでデッキ名「一行不明デッキ」のデッキと採用カードを確認する	HTTPステータス206となり、応答本文に処理結果コード206、登録したデッキの識別子および解読できない行の行番号2だけが含まれ、DBにデッキ名「一行不明デッキ」のデッキが登録されて採用カードが結合試験カードA 2枚・結合試験カードB 1枚だけ保存されること	0515 A15-17 デッキ登録インポート / 業務ロジック カードリストの解読、入出力 成功時出力・永続化
+
+exec
+/bin/bash -lc 'git diff --stat eddb12cb -- integration_test/casegen/combination/factors/A15-{07,09,10,11,12,13,14,15,16,17}_{processes,factors,interactions,constraints,existing}.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+ .../combination/factors/A15-07_constraints.tsv     |  1 +
+ .../combination/factors/A15-09_existing.tsv        | 46 +++++++++++-----------
+ .../casegen/combination/factors/A15-09_factors.tsv |  2 +-
+ .../casegen/combination/factors/A15-10_factors.tsv |  1 -
+ .../combination/factors/A15-10_interactions.tsv    |  3 --
+ .../combination/factors/A15-10_processes.tsv       |  2 +-
+ .../combination/factors/A15-11_constraints.tsv     |  2 +
+ .../combination/factors/A15-11_existing.tsv        | 18 ++++-----
+ .../casegen/combination/factors/A15-11_factors.tsv |  2 +-
+ .../combination/factors/A15-12_constraints.tsv     |  6 +--
+ .../combination/factors/A15-13_constraints.tsv     |  3 ++
+ .../casegen/combination/factors/A15-13_factors.tsv |  2 +-
+ .../combination/factors/A15-14_constraints.tsv     |  2 +
+ .../casegen/combination/factors/A15-14_factors.tsv |  2 +-
+ .../combination/factors/A15-15_constraints.tsv     |  2 +
+ .../combination/factors/A15-16_constraints.tsv     |  3 ++
+ .../combination/factors/A15-17_constraints.tsv     |  1 +
+ .../combination/factors/A15-17_existing.tsv        | 30 +++++++-------
+ .../casegen/combination/factors/A15-17_factors.tsv |  1 -
+ .../combination/factors/A15-17_interactions.tsv    |  4 --
+ 20 files changed, 69 insertions(+), 64 deletions(-)
+
+codex
+### 1
+- 機能: A15-10
+- 種類: H
+- 対象: A15-10_factors.tsv F04
+- 主張: 公開範囲は閲覧用トークンの応答項目だけを決めるとして、要因から外した。
+- 実際: 公開範囲は更新時の必須入力であり、即時保存が真ならデッキ本体を確定保存し、偽なら更新内容を一時保存する。公開範囲は保存内容で、その保存先は即時保存の指定で変わる（units/A15-10/design.txt:L0011、L0027、L0033-L0035）。
+- 修正案: 公開範囲を要因に戻し、即時保存の指定との関係を判定し直す。
+
+### 2
+- 機能: A15-11
+- 種類: I
+- 対象: A15-11_factors.tsv F01「認証または所有者違いで外れる」
+- 主張: 認証失敗と所有者違いを、同じ HTTP 401 の結果として1値にまとめた。
+- 実際: 認証トークンの欠落・署名不正・該当プレイヤーなしでは「Access Token is incorrect」、所有者違いでは「Authentication failed」を返すと定める（units/A15-11/design.txt:L0045-L0046）。
+- 修正案: 応答メッセージが異なる認証失敗と所有者違いを別の値に戻す。
+
+### 3
+- 機能: A15-17
+- 種類: G
+- 対象: A15-17_constraints.tsv P1「F01=統率者使用設定が無効&F02=Commander見出し」
+- 主張: 統率者使用設定が無効で Commander 見出しがあれば、常に HTTP 400 で打ち切る。
+- 実際: HTTP 400 となる条件は、統率領域に**保存する行がある**こと。Commander 見出しだけでは、その行があるとは限らない（units/A15-17/design.txt:L0010）。
+- 修正案: 見出しの有無だけで打ち切らず、統率領域に保存する行がある条件に限定する。
+
+### 4
+- 機能: A15-17
+- 種類: H
+- 対象: A15-17_factors.tsv F05
+- 主張: 公開区分は表示用トークンの応答項目だけを決めるとして、要因から外した。
+- 実際: 公開区分は新規デッキを組み立てる入力であり、組み立てたデッキを保存する。保存されるデッキの内容を変える値である（units/A15-17/design.txt:L0013、L0029、L0033-L0035）。
+- 修正案: 公開区分を要因に戻し、保存内容への影響を値ごとの結果に記す。
+tokens used
+81,762
+### 1
+- 機能: A15-10
+- 種類: H
+- 対象: A15-10_factors.tsv F04
+- 主張: 公開範囲は閲覧用トークンの応答項目だけを決めるとして、要因から外した。
+- 実際: 公開範囲は更新時の必須入力であり、即時保存が真ならデッキ本体を確定保存し、偽なら更新内容を一時保存する。公開範囲は保存内容で、その保存先は即時保存の指定で変わる（units/A15-10/design.txt:L0011、L0027、L0033-L0035）。
+- 修正案: 公開範囲を要因に戻し、即時保存の指定との関係を判定し直す。
+
+### 2
+- 機能: A15-11
+- 種類: I
+- 対象: A15-11_factors.tsv F01「認証または所有者違いで外れる」
+- 主張: 認証失敗と所有者違いを、同じ HTTP 401 の結果として1値にまとめた。
+- 実際: 認証トークンの欠落・署名不正・該当プレイヤーなしでは「Access Token is incorrect」、所有者違いでは「Authentication failed」を返すと定める（units/A15-11/design.txt:L0045-L0046）。
+- 修正案: 応答メッセージが異なる認証失敗と所有者違いを別の値に戻す。
+
+### 3
+- 機能: A15-17
+- 種類: G
+- 対象: A15-17_constraints.tsv P1「F01=統率者使用設定が無効&F02=Commander見出し」
+- 主張: 統率者使用設定が無効で Commander 見出しがあれば、常に HTTP 400 で打ち切る。
+- 実際: HTTP 400 となる条件は、統率領域に**保存する行がある**こと。Commander 見出しだけでは、その行があるとは限らない（units/A15-17/design.txt:L0010）。
+- 修正案: 見出しの有無だけで打ち切らず、統率領域に保存する行がある条件に限定する。
+
+### 4
+- 機能: A15-17
+- 種類: H
+- 対象: A15-17_factors.tsv F05
+- 主張: 公開区分は表示用トークンの応答項目だけを決めるとして、要因から外した。
+- 実際: 公開区分は新規デッキを組み立てる入力であり、組み立てたデッキを保存する。保存されるデッキの内容を変える値である（units/A15-17/design.txt:L0013、L0029、L0033-L0035）。
+- 修正案: 公開区分を要因に戻し、保存内容への影響を値ごとの結果に記す。

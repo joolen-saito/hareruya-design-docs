@@ -1,0 +1,2238 @@
+Reading additional input from stdin...
+OpenAI Codex v0.162.1
+--------
+workdir: /home/y-saito/Developments/hareruya-design-docs
+model: gpt-6-sol
+provider: openai
+approval: never
+sandbox: read-only
+reasoning effort: high
+reasoning summaries: none
+session id: 01a1583f-87d0-7f72-96fe-fff82443eac7
+--------
+user
+# 反証の依頼: 機能 M12-01・M12-02・M12-03・M12-07・M12-08・M12-09・M12-10・M13-02・M13-03・M13-04・M13-08・M13-10 の要因表の見直し（3つの決定の当て方）
+
+あなたは独立したレビュアーである。別の担当が、依頼者の3つの決定に合わせて**要因表を直した**。その直しが設計書と食い違っていないかを確かめる。直さない。読むだけ。
+リポジトリは `/home/y-saito/Developments/hareruya-design-docs/`。出力は日本語。
+
+## 背景
+
+結合テストで、1回の処理の結果を左右する要因が2つ以上あるとき、効き合う要因は値の組合せを全部、関係しない要因はどの2つの要因の値の組もどこかで1回試すケースを足す。
+要因表（`integration_test/casegen/combination/factors/<機能ID>_*.tsv`）から機械が組を並べる。要因表はすでに codex の反証を1巡受けて直してある。
+そのあと依頼者が次の3つを決め（2026-10-20）、担当が要因表を直した。今回確かめるのは**この直しだけ**。
+
+| 決定 | 中身 |
+| --- | --- |
+| 1 打ち切り側は1回でよい | その値（または値の組）になると処理がそこで打ち切られ、ほかの要因の値が結果に効かないとき、constraints.tsv に種別 `打ち切り` で書く。機械はその条件を1回だけ通し、ほかの要因との組は埋めない。打ち切られても一部の要因の値がまだ結果に効くときは、その要因の値も組に入れて書く |
+| 2 列ごとに独立して決まる値は組にしない | 出力の列・表示項目ごとに独立して決まる値（CSV の空欄・書式・文言の変換 など）は要因にしない。ほかの要因と効き合う（その値で、ほかの要因の結果や、行を出す・出さないが変わる）ときだけ残す。外して要因が1つになった処理は処理ごと外す |
+| 3 結果が同じ値はまとめる | 設計書が別々の条件として書いていても、結果が同じ値は1つにまとめる |
+
+## 読むもの
+
+- 直した所: 機能ごとに `git -C /home/y-saito/Developments/hareruya-design-docs diff eddb12cb -- integration_test/casegen/combination/factors/<機能ID>_processes.tsv integration_test/casegen/combination/factors/<機能ID>_factors.tsv integration_test/casegen/combination/factors/<機能ID>_interactions.tsv integration_test/casegen/combination/factors/<機能ID>_constraints.tsv integration_test/casegen/combination/factors/<機能ID>_existing.tsv`（eddb12cb が直す前）
+- 担当の処置: `integration_test/casegen/combination/review/<機能ID>_factors_s_dispositions.tsv`
+- 設計書: `integration_test/casegen/combination/units/<機能ID>/design.txt`（行頭の `L0001` は行番号）、他の機能は `units/<機能ID>/design.txt`
+- 作り方の決まり: `integration_test/casegen/combination/FACTOR_PROMPT.md`
+
+設計書の中で記述が食い違うときは、Excel 由来の本文 ＞ 埋め込みの「表示メッセージ」節 ＞ 埋め込みの「現行仕様」節・機能設計書 の順に採る。
+
+## 確かめること（事実だけ。差分に出ている所だけ）
+
+| 種類 | 何を見るか |
+| --- | --- |
+| G 打ち切りの誤り | 打ち切りとした値で、設計書は処理を打ち切っていない。または打ち切ったあとも「効かない」とされた要因の値で結果が変わると設計書が定める（その要因の値も組に入れるべき） |
+| H 外しすぎ | 決定2で外した要因・処理が、列・表示項目ごとに独立して決まるだけではない（ほかの要因の結果、行や対象を出す・出さない、更新先・更新内容を変えると設計書が定める） |
+| I まとめすぎ | 決定3でまとめた値どうしで、結果が違うと設計書が定める |
+| J 付け替えの誤り | 要因ID・値の振り直しで、interactions・constraints・existing の値が合っていない、既存ケースの値を取り違えた |
+
+次は指摘しない: 書き方・言い回し、差分に出ていない所（1巡目で済み）、決定そのものへの異論、境界値・数量1/複数。
+
+## 出力
+
+指摘が無ければ `NONE` の1語だけ。あれば1件ずつ、次の形で。
+
+```
+### <番号>
+- 機能: <機能ID>
+- 種類: <G〜J>
+- 対象: <ファイル名> <要因ID・処理ID・組>
+- 主張: <直した後の表に書かれていること>
+- 実際: <設計書の記述（ファイル:行 を必ず添える）>
+- 修正案: <どう直すか。1文>
+```
+warning: Codex could not find bubblewrap on PATH. Install bubblewrap with your OS package manager. See the sandbox prerequisites: https://developers.openai.com/codex/concepts/sandboxing#prerequisites. Codex will use the bundled bubblewrap in the meantime.
+2026-10-20T07:38:42.348847Z ERROR rmcp::transport::worker: worker quit with fatal: Transport channel closed, when AuthRequired(AuthRequiredError { www_authenticate_header: "Bearer resource_metadata=\"https://mcp.firecrawl.dev/.well-known/oauth-protected-resource/v2/mcp-oauth\", error=\"invalid_token\", error_description=\"Firecrawl credentials required: OAuth access token (Authorization: Bearer fco_...) or API key (x-firecrawl-api-key)\"" })
+codex
+指定された12機能について、eddb12cb からの差分と処置表を確認し、変更箇所だけを設計書に照らして調べます。
+exec
+/bin/bash -lc "sed -n '1,240p' integration_test/casegen/combination/FACTOR_PROMPT.md" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+# 依頼: 機能 {FID}（{FNAME}）の要因表づくり
+
+これは分析である。ケースも設計書も直さない。事実は自分でファイルを読んで確かめ、推測で書かない。
+リポジトリは `/home/y-saito/Developments/hareruya-design-docs/`。パスはここからの相対。出力はすべて日本語で書く。
+git の変更操作（add・commit など）をしない。
+
+## 背景（依頼者決定 2026-10-20）
+
+結合テストケースは設計書の定め1件ごとに作られ、10/15 には定めごとに「数量1と複数」「有無」「状態・区分ごと」などのデータを足した。
+それでも、**1回の処理の結果を左右する要因が2つ以上あるとき、その値を同時に変えて通すケースが無い**。
+例: 公開側で注文を確定するケース33件は、支払方法がほぼ郵便振替か銀行振込で、配送方法もゆうパック・EMS が大半。クレジットカード・代金引換・店頭支払、店頭受取・同梱で注文を通すケースは無い。
+
+依頼者の決定:
+- **効き合う要因**（一方の値で、もう一方の値の結果が変わると設計書が定める）は、値の組合せを全部試す。
+- **関係しない要因**は、どの2つの要因の値の組も、どこかのケースで1回は出るように並べる（2要因の組）。
+- **他の機能の設定値**（送料・手数料・支払方法の利用条件・送料無料の条件・配送方法に紐づく支払方法など）も、それを読む処理の要因に入れる。
+
+あなたの仕事は、機能 {FID} について、組合せの元になる**要因表**を作ること。組合せの行（どの値の組を何件試すか）は、この表から別の道具が機械で作る。
+だから、表の要因・値・判定の誤りは、そのままケースの誤りになる。
+
+## 読むもの
+
+| 何 | パス |
+| --- | --- |
+| 設計書（この機能のシートを文字に起こしたもの。行頭の `L0001` とタブは行番号。`#####` の行はシートの境目） | `integration_test/casegen/combination/units/{FID}/design.txt` |
+| 他の機能の設計書（設定値を読む処理のとき、設定する機能の定めを引く） | `integration_test/casegen/combination/units/<機能ID>/design.txt`（機能名は `combination/units.tsv`） |
+| 同じ冊子の共通シート（必要なときだけ） | {COMMON} |
+| この機能のケースとシード | `integration_test/casegen/cases/{FID}_test_cases.tsv`・`{FID}_seed_data.tsv` |
+| この機能の、テストから外したケース | `integration_test/casegen/combination/units/{FID}/excluded.tsv` |
+| 全機能のケース（他の機能のケースがこの機能の処理を通しているかの検索用） | `integration_test/casegen/all_test_cases.tsv`（列: テストID・観点ID・基本設計書・検証方法・テストデータ・事前準備・手順・期待結果。セル内改行があるので csv として読む） |
+| 結合テストの範囲 | `integration_test/SCOPE.md` |
+| 不機能仕様・フェーズ2見送り（ここに載るものは要因にしない） | `functions/dead-spec-register.tsv`・`functions/phase2_candidates.tsv` |
+| 設計書の中で記述が食い違うときの優先順位 | Excel 由来の本文 ＞ 埋め込みの「表示メッセージ」節（リニューアル後の仕様）＞ 埋め込みの「現行仕様」節。同じ出所では改訂後が優先。**Excel が触れていない条件を埋め込みが足しているだけのときは食い違いではなく、両方を当てる**（例: Excel が選択肢を並べ、埋め込みが「ポイントで全額払うときは全額ポイント支払いだけ」と条件を足す → 両方）。既存ケースは正解の根拠にしない（既存ケースと設計書の食い違いは返答に書く） |
+
+検索は `grep` を使う（`rg` は同じ入力で0件を返すことがあるので使わない）。
+
+## やること
+
+### 1. 処理を決める
+
+design.txt を**全部**読み、この機能の中で「操作やデータを受けて結果を出す処理」のうち、**結果を左右する要因が2つ以上ある処理**を挙げる。
+
+- 処理の単位は「1回の操作で動き、結果を1つの所で確かめられるまとまり」。例: 注文を確定して受注を作る／お支払い方法の選択肢を出す／受注の対応状況をキャンセルへ変えて保存する。
+- 結果は、データを作った所とは**別のコンポーネントで確かめる**もの（DB、別の画面、別の機能の画面、CSV・帳票、メール、連携先）。DBにあるデータで画面の表示・選択肢が変わるものも入る（例: 既存の受注の有無で配送方法の選択肢が変わる）。同じ画面の中だけで閉じる表示の計算（保存しない）と、計算式そのものの正しさは単体テストなので挙げない。
+- 要因が1つだけの処理は挙げない（10/15 の監査で済んでいる）。
+- **要因が2つ以上の処理が1つも無い機能**（一覧を出すだけ、1つの設定を保存するだけ、など）は、5つのファイルをヘッダだけで書き、返答の1行目に「対象の処理なし」と理由を書く。無理に処理を作らない。
+- 入力値の検証（必須・桁数・形式）、検索条件・削除条件の組合せ、権限、二重送信、排他は、ほかの観点の持ち分なので処理にも要因にもしない。
+
+### 2. 要因と値を挙げる
+
+処理ごとに、**その処理の結果を変えると設計書が定める要因**を挙げる。
+
+- 要因は「区分・状態・設定・関連データ」の値。例: 閲覧店舗、配送方法、支払方法、ポイントの使い方、受注の種類（通常・店頭受取・ついで買い）、会員か非会員か、変更前の対応状況、既存の受注の状態。
+- 他の機能で設定する値で、この処理が読むものも要因にする（出所に機能IDを書く）。例: 支払方法の利用条件（M10-04）に対する注文金額、都道府県別の送料（M10-06）。その機能の design.txt で定めを確かめ、根拠に `M10-04:L0123` の形で書く。**この処理の結果への効き方が設計書のどこにも書かれていない設定値は要因にしない**（値ごとの結果が書けないため）。そういう設定値は返答の「判断に迷った点」に挙げる（依頼元が論点として控える）。
+- **値は、結果の分かれ目ごとに代表を1つ**。結果が同じになる値は1つにまとめる（例: ゆうパックとゆうパケットで結果が変わらないならどちらか1つ）。設計書が別々の条件として書いていても、結果が同じならまとめる（例: 仮会員と退会済み会員がどちらも対象外なら「仮会員または退会済み」の1値。条件を1つずつ通すのは 10/15 のデータパターンのケースの持ち分。依頼者決定 2026-10-20）。結果が値ごとに違うなら全部挙げる（例: 支払方法ごとに手数料・ボタンの文言・ポイントを使う時点が違うなら、支払方法は全部）。
+- 境界値（ちょうどの値・上限）と数量1/複数は、10/15 に済んでいるので値にしない。値は「範囲内」「範囲外」「あり」「なし」のような分かれ目で書く。
+- 不正な入力、作れない値（画面の選択肢に無い値）は値にしない。
+- **出力の列・表示項目ごとに独立して決まる値は要因にしない**（例: CSV の列が「値が無ければ空欄」、日付の書式、区分の文言への変換）。列どうしは互いの結果を変えないので組にしない（依頼者決定 2026-10-20）。ほかの要因と効き合う（その値で、ほかの要因の結果や、行を出す・出さないが変わる）ときだけ要因にする。
+- 値ごとの結果を、設計書の語で短く書く（「支店: 支払方法は店頭支払だけ」）。
+
+### 3. 要因どうしを判定する
+
+処理ごとに、その処理の要因の**すべての2つの組**を判定する（要因が5つなら10組）。判定は次のどれか。
+
+| 判定 | いつ | 根拠 |
+| --- | --- | --- |
+| 効き合う | 一方の値で、もう一方の値の結果（可否、選択肢、金額、更新先、更新内容）が変わると設計書が定める。または、一方の結果がもう一方の判定の入力になる（例: 使用ポイントで支払う金額が変わり、支払方法の選択肢が変わる） | 両方を結ぶ設計書の行が必須 |
+| 関係しない | それぞれの要因の結果が、もう一方の値によって変わらない（例: 送料は配送方法で、手数料は支払方法で決まり、合計は足し算） | 理由を書く |
+| 設計書が決めていない | 同時に効いたときの結果が設計書から決まらない（例: 送料無料の判定に使う金額が、ポイントを引く前か後か書かれていない） | 決まらない理由。下の「組の制約」に、決まらない値の組を「正解未定」で必ず書く |
+
+3つ以上の要因がまとめて効き合うとき（例: 配送方法・既存の受注の状態・既存の受注の支払方法で同梱を出すか決まる）は、1行に `F01+F03+F05` と書いて「効き合う」にしてよい。その中の2つの組は、別の行に書かない。**まとめるのは、その全部が同時に互いの結果を変えるときだけ**。2つずつで効き合うだけなら2要因の行に分ける（まとめると値の組合せが全部ケースになり、件数が膨らむ）。
+**選べるものの集まりを2つの定めが別々に絞り、結果がその共通部分になるとき**（例: 支店は支払方法が店頭支払だけ、同梱は郵便振替・銀行振込だけ → 選択肢の中身が組ごとに変わる）は「効き合う」にする。「設計書が決めていない」にするのは、両方を当てると選択肢が1つも残らないなど、結果が設計書から決まらない組だけ。
+**1件の対象を出す・出さない（対象にする・しない）を、複数の条件の「すべて満たす」または「どれか1つで外れる」で決めるとき**（例: 公開・在庫あり・セール期間内・表示フラグ のすべてを満たす商品だけ出す）は、条件どうしは「関係しない」にする。結果は出る・出ないの2つだけで、条件ごとの外れ方は1つずつ確かめれば足り、全組合せは要らない（7条件を効き合うにすると128行になる）。外れる側の値（非公開・在庫なし・期間外など）は下の「打ち切り」に書く（2026-10-20 の見直しで全機能をこの書き方にそろえた）。機械は外れる値を1回ずつ通し、全部を満たす1行を必ず作る。
+**優先順位で順に比べて決めるとき**（例: 複数一致したら、言語→特殊版→発売日→フォイル→プロモの順に比べて先に差が付いたもので選ぶ）は、比べる項目を別々の要因にして全組合せにしない。「どの段で決まるか」を1つの要因にまとめる（値: 1段目で決まる｜2段目で決まる｜…｜全段が同じ）。上の段の差が下の段を隠すので、各段で決まる組を1つずつ試せば足りる（6段を効き合うにすると64行になる）。
+「一方の値で、もう一方の処理そのものが行われない」型（例: キャンセル日が既に入っていると、在庫・ポイントの戻しを行わない）は、その値を下の「打ち切り」に書く（依頼者決定 2026-10-20「打ち切り側は1回でよい」）。打ち切られない側の値どうしの判定は、ほかの組と同じに決める。
+**推測で値の組を「作れない」にしない**。設計書の語がどの値を指すか決まらないとき（例: 支店の「店舗受取」が店頭受取とスムーズ店頭受取のどちらか）は「正解未定」にする。
+**効き合う組の値の組合せは全部ケースになる**。値が多い要因どうし（7×7 など）を効き合うにするときは、設計書の行で本当に互いの結果を変えるかを確かめる。足し算で合計に入るだけなら「関係しない」。
+
+### 4. 組の制約を書く
+
+- **作れない**: 設計上その値の組が成り立たない（例: 支店では支払方法が店頭支払だけなので、支店×代金引換は作れない）。根拠の行が必須。
+- **正解未定**: その値の組で結果が設計書から決まらない。決まらない理由を書く。これはケースにせず、報告書に論点として残す。
+- **打ち切り**: その値（または値の組）になると処理がそこで打ち切られ、ほかの要因の値は結果に効かない（例: 非公開なら出さない、エラーで元の画面へ戻る、廃止済みなら何も変えない、トークンが無効なら拒否）。機械はこの条件を1回だけ通し、ほかの要因との組は埋めない。打ち切られても一部の要因の値がまだ結果に効く（例: エラーの文言が支払方法で変わる）ときは、その要因の値も組に入れて書く（`F01=非公開&F03=英語` のように値ごとに1行）。根拠の行が必須。
+
+### 5. 既存のケースが通している組を書く
+
+この機能のケース（と、`all_test_cases.tsv` を語で検索して見つかった他の機能のケース）のうち、**その処理を動かして、確かめる所で結果を確かめている**ケースを1件ずつ書き、そのケースで値が決まっている要因の値を書く。
+
+- 値は、事前準備・手順に**書かれている**ものだけ。書かれていない要因は書かない（流れの中でたまたまそうなるだけのものは数えない）。
+- 1つのケースが同じ処理を別の値で2回以上通しているときは、通した値ごとに1行ずつ書く（同じテストIDの行が2つになる）。1回の処理で2つのデータを別の値で扱う（混在）ケースは書かない。
+- 期待結果が設計書と食い違う既存ケースは、値が合っていても書かない（返答に食い違いとして書く）。
+- 処理を動かしていない（画面を開いて別のことを見るだけ）ケース、結果を確かめていないケースは書かない。
+- テストから外したケース（excluded.tsv）は書かない。
+
+## 出力（この5つだけを書く。ほかのファイルは変更しない）
+
+すべて `integration_test/casegen/combination/factors/` に、タブ区切り・ヘッダつきで書く。セル内に改行・タブ・ダブルクォートを入れない。
+
+### `{FID}_processes.tsv`（5列）
+
+```
+処理ID	処理	契機	確かめる所	根拠
+P1	注文を確定して受注を作る	ご注文方法指定画面で確定チェックボックスを選び、注文するボタンを押す	受注情報編集画面（M05-11）	L0322-L0330
+```
+
+- 処理IDは P1 からの連番。根拠は design.txt の行（`L0037`、`L0037-L0040`、カンマ区切り）。他の機能は `M10-04:L0012`、共通シートは `_common/<ファイル名>:L0012`。
+
+### `{FID}_factors.tsv`（7列）
+
+```
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1,P2	閲覧店舗	本店｜支店	本店: 支払方法はEC用の6種／支店: 支払方法は店頭支払だけ	L0236,L0249-L0252	この機能
+F05	P2	支払方法の利用条件に対する注文金額	範囲内｜上限を超える	範囲内: 選択肢に出る／上限を超える: 選択肢に出ない	M10-04:L0101	M10-04（設定）
+```
+
+- 要因IDは F01 からの連番（処理をまたいで通し番号）。処理IDはその要因が効く処理（カンマ区切り）。
+- 値は全角の縦棒 `｜` で区切る。2つ以上。1つの値は30字まで。`=` `&` `｜` `＋` `×` を値の中に使わない。
+- 値ごとの結果は `値: 結果` を `／` でつなぐ。全部の値について書く。
+- 出所は `この機能`、`<機能ID>（設定）`、`<機能ID>（データ）` のどれか。
+
+### `{FID}_interactions.tsv`（5列）
+
+```
+処理ID	要因	判定	根拠	理由
+P1	F03+F04	効き合う	L0204	配送方法が同梱のときは支払方法が郵便振替・銀行振込だけになる
+P1	F04+F06	関係しない		手数料は支払方法で決まり、ポイントは値引きとして合計から引くだけ
+P1	F06+F07	設計書が決めていない	M10-05:L0040	送料無料の判定に使う金額がポイント値引きの前か後か書かれていない
+```
+
+- 処理ごとに、その処理の要因の2つの組を全部判定する（3つ以上の効き合うにまとめた組は除く）。
+- 効き合う・設計書が決めていない は根拠が必須。関係しない・設計書が決めていない は理由が必須。
+
+### `{FID}_constraints.tsv`（5列）
+
+```
+処理ID	組	種別	根拠	理由
+P1	F01=支店&F04=代金引換	作れない	L0251-L0252	支店の支払方法は店頭支払だけ
+P1	F06=ポイントを使う&F07=送料無料の条件に届く	正解未定	M10-05:L0040	送料無料の判定に使う金額が決まらない
+P2	F02=キャンセル日あり	打ち切り	L0412	キャンセル日が既に入っていると、在庫・ポイントの戻しを行わない
+```
+
+- 組は `要因ID=値` を `&` でつなぐ。値は factors.tsv の値と一字一句同じ。値1つだけの組（`F16=店頭受取のみのスマレジ決済`）も書ける: その値でこの処理を動かすこと自体が作れない・結果が決まらないとき（設計書の記述どうしが食い違い、共通する部分が無いときなど）。
+- 種別は `作れない`・`正解未定`・`打ち切り` のどれか。根拠が必須。制約が無ければヘッダだけ書く。
+
+### `{FID}_existing.tsv`（4列）
+
+```
+テストID	処理ID	値	理由
+IT-F04-02-081	P1	F01=本店&F03=ゆうパック&F04=郵便振替	事前準備で本店・ゆうパック・郵便振替を選び、受注情報編集画面で支払方法と配送方法を確かめる
+```
+
+- 値は `要因ID=値` を `&` でつなぐ。ケースに書かれている要因だけ。1つ以上。
+- 1つのケースが2つの処理を通しているときは2行に書く。該当するケースが無ければヘッダだけ書く。
+
+書いたら次を実行し、エラーが無くなるまで直す。組の数（全組と2要因の組で、既存ケースが通していない組を埋めるのに要る行の数）も出る。
+
+```
+python3 integration_test/casegen/combination/gate_factors.py {FID}
+```
+
+作業用の一時ファイルを作るときは、名前に {FID} を入れてスクラッチパッドに作る。他の機能の factors/ のファイルは読まない・書かない。
+ファイルの書き込みを拒否されたときは、回避せず、書くはずだった本文を返答に載せる（依頼元が保存する）。
+
+## 返答
+
+3行以内: 処理の数・要因の数・効き合う組の数・設計書が決めていない組の数、gate の結果と出た行の数、判断に迷った点（あれば1つ）。
+
+exec
+/bin/bash -lc "rg --files integration_test/casegen/combination/review integration_test/casegen/combination/units | rg '(factors_s_dispositions.tsv|design.txt)"'$'"' | rg 'M12-(01|02|03|07|08|09|10)|M13-(02|03|04|08|10)'" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+integration_test/casegen/combination/units/M13-10/design.txt
+integration_test/casegen/combination/units/M12-09/design.txt
+integration_test/casegen/combination/units/M12-02/design.txt
+integration_test/casegen/combination/units/M13-02/design.txt
+integration_test/casegen/combination/units/M12-01/design.txt
+integration_test/casegen/combination/units/M13-08/design.txt
+integration_test/casegen/combination/units/M12-08/design.txt
+integration_test/casegen/combination/units/M12-07/design.txt
+integration_test/casegen/combination/units/M13-04/design.txt
+integration_test/casegen/combination/units/M12-10/design.txt
+integration_test/casegen/combination/units/M12-03/design.txt
+integration_test/casegen/combination/units/M13-03/design.txt
+integration_test/casegen/combination/review/M12-10_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M12-09_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M12-01_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M12-03_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M13-04_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M12-07_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M13-10_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M13-03_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M12-02_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M13-08_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M13-02_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M12-08_factors_s_dispositions.tsv
+
+exec
+/bin/bash -lc 'git diff --stat eddb12cb -- integration_test/casegen/combination/factors' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+ .../combination/factors/A01-01_constraints.tsv     |   3 +
+ .../combination/factors/A01-01_existing.tsv        |   6 +-
+ .../casegen/combination/factors/A01-01_factors.tsv |   2 +-
+ .../combination/factors/A02-01_constraints.tsv     |   5 +-
+ .../combination/factors/A02-01_existing.tsv        |  28 ++---
+ .../casegen/combination/factors/A02-01_factors.tsv |   9 +-
+ .../combination/factors/A02-01_interactions.tsv    |  11 +-
+ .../combination/factors/A02-02_constraints.tsv     |   2 +
+ .../combination/factors/A02-02_existing.tsv        |   4 +-
+ .../casegen/combination/factors/A02-02_factors.tsv |   5 +-
+ .../combination/factors/A02-02_interactions.tsv    |   6 +-
+ .../combination/factors/A02-03_constraints.tsv     |   4 +
+ .../combination/factors/A02-03_existing.tsv        |  18 +--
+ .../casegen/combination/factors/A02-03_factors.tsv |   9 +-
+ .../combination/factors/A02-03_interactions.tsv    |   8 +-
+ .../combination/factors/A02-04_constraints.tsv     |   5 +
+ .../combination/factors/A02-05_constraints.tsv     |   3 +
+ .../combination/factors/A05-01_constraints.tsv     |   7 ++
+ .../combination/factors/A05-01_existing.tsv        |  11 +-
+ .../casegen/combination/factors/A05-01_factors.tsv |  10 +-
+ .../combination/factors/A05-01_interactions.tsv    |  30 ++---
+ .../combination/factors/A05-01_processes.tsv       |   3 +-
+ .../combination/factors/A05-03_constraints.tsv     |   3 +
+ .../combination/factors/A05-04_constraints.tsv     |   6 +
+ .../casegen/combination/factors/A05-04_factors.tsv |   7 +-
+ .../combination/factors/A05-04_interactions.tsv    |  14 +--
+ .../combination/factors/A05-04_processes.tsv       |   2 +-
+ .../combination/factors/A06-01_existing.tsv        |   5 -
+ .../casegen/combination/factors/A06-01_factors.tsv |   2 -
+ .../combination/factors/A06-01_interactions.tsv    |   1 -
+ .../combination/factors/A06-01_processes.tsv       |   1 -
+ .../combination/factors/A06-02_constraints.tsv     |   3 +
+ .../combination/factors/A06-03_constraints.tsv     |   2 +-
+ .../combination/factors/A06-03_existing.tsv        |   9 +-
+ .../casegen/combination/factors/A06-03_factors.tsv |   4 +-
+ .../combination/factors/A06-03_interactions.tsv    |  19 +--
+ .../combination/factors/A06-05_constraints.tsv     |   4 +
+ .../combination/factors/A06-05_existing.tsv        |   3 +-
+ .../casegen/combination/factors/A06-05_factors.tsv |   2 +-
+ .../combination/factors/A06-06_constraints.tsv     |   6 +-
+ .../combination/factors/A06-06_existing.tsv        |  15 ++-
+ .../casegen/combination/factors/A06-06_factors.tsv |   7 +-
+ .../combination/factors/A06-06_interactions.tsv    |  23 +---
+ .../combination/factors/A06-07_constraints.tsv     |   7 ++
+ .../combination/factors/A06-07_existing.tsv        |  15 ++-
+ .../casegen/combination/factors/A06-07_factors.tsv |   5 +-
+ .../combination/factors/A06-07_interactions.tsv    |  27 -----
+ .../combination/factors/A06-08_constraints.tsv     |   6 +-
+ .../combination/factors/A06-08_existing.tsv        |  17 ++-
+ .../casegen/combination/factors/A06-08_factors.tsv |   9 +-
+ .../combination/factors/A06-08_interactions.tsv    |  66 ++++-------
+ .../combination/factors/A07-02_constraints.tsv     |   1 -
+ .../combination/factors/A07-02_existing.tsv        |   4 -
+ .../casegen/combination/factors/A07-02_factors.tsv |   3 -
+ .../combination/factors/A07-02_interactions.tsv    |   3 -
+ .../combination/factors/A07-02_processes.tsv       |   1 -
+ .../combination/factors/A07-04_constraints.tsv     |   5 +
+ .../casegen/combination/factors/A07-06_factors.tsv |   2 -
+ .../combination/factors/A07-06_interactions.tsv    |   1 -
+ .../combination/factors/A07-06_processes.tsv       |   1 -
+ .../combination/factors/A07-07_existing.tsv        |   3 -
+ .../casegen/combination/factors/A07-07_factors.tsv |   3 -
+ .../combination/factors/A07-07_interactions.tsv    |   3 -
+ .../combination/factors/A07-07_processes.tsv       |   1 -
+ .../combination/factors/A14-01_existing.tsv        |   8 --
+ .../casegen/combination/factors/A14-01_factors.tsv |   9 --
+ .../combination/factors/A14-01_interactions.tsv    |  36 ------
+ .../combination/factors/A14-01_processes.tsv       |   1 -
+ .../combination/factors/A14-02_constraints.tsv     |   5 +
+ .../combination/factors/A14-02_existing.tsv        |   5 +-
+ .../casegen/combination/factors/A14-02_factors.tsv |   1 -
+ .../combination/factors/A14-02_interactions.tsv    |   5 -
+ .../combination/factors/A14-03_constraints.tsv     |   1 +
+ .../casegen/combination/factors/A14-03_factors.tsv |   2 +-
+ .../combination/factors/A15-01_constraints.tsv     |   3 +
+ .../combination/factors/A15-01_existing.tsv        |   4 +-
+ .../casegen/combination/factors/A15-01_factors.tsv |   2 +-
+ .../combination/factors/A15-01_interactions.tsv    |   4 +-
+ .../combination/factors/A15-02_constraints.tsv     |   1 +
+ .../combination/factors/A15-03_constraints.tsv     |   1 +
+ .../combination/factors/A15-03_existing.tsv        |   5 -
+ .../casegen/combination/factors/A15-03_factors.tsv |   3 -
+ .../combination/factors/A15-03_interactions.tsv    |   3 -
+ .../combination/factors/A15-03_processes.tsv       |   1 -
+ .../combination/factors/A15-05_constraints.tsv     |   3 +
+ .../combination/factors/A15-06_constraints.tsv     |   1 +
+ .../combination/factors/A15-07_constraints.tsv     |   1 +
+ .../combination/factors/A15-09_existing.tsv        |  46 ++++----
+ .../casegen/combination/factors/A15-09_factors.tsv |   2 +-
+ .../casegen/combination/factors/A15-10_factors.tsv |   1 -
+ .../combination/factors/A15-10_interactions.tsv    |   3 -
+ .../combination/factors/A15-10_processes.tsv       |   2 +-
+ .../combination/factors/A15-11_constraints.tsv     |   2 +
+ .../combination/factors/A15-11_existing.tsv        |  18 +--
+ .../casegen/combination/factors/A15-11_factors.tsv |   2 +-
+ .../combination/factors/A15-12_constraints.tsv     |   6 +-
+ .../combination/factors/A15-13_constraints.tsv     |   3 +
+ .../casegen/combination/factors/A15-13_factors.tsv |   2 +-
+ .../combination/factors/A15-14_constraints.tsv     |   2 +
+ .../casegen/combination/factors/A15-14_factors.tsv |   2 +-
+ .../combination/factors/A15-15_constraints.tsv     |   2 +
+ .../combination/factors/A15-16_constraints.tsv     |   3 +
+ .../combination/factors/A15-17_constraints.tsv     |   1 +
+ .../combination/factors/A15-17_existing.tsv        |  30 ++---
+ .../casegen/combination/factors/A15-17_factors.tsv |   1 -
+ .../combination/factors/A15-17_interactions.tsv    |   4 -
+ .../combination/factors/A15-18_constraints.tsv     |   2 +
+ .../combination/factors/A15-18_existing.tsv        |  44 +++----
+ .../casegen/combination/factors/A15-18_factors.tsv |   5 +-
+ .../combination/factors/A15-18_interactions.tsv    |  22 +---
+ .../combination/factors/A16-02_constraints.tsv     |   3 +
+ .../combination/factors/A17-02_constraints.tsv     |   3 +
+ .../casegen/combination/factors/A17-02_factors.tsv |   2 +-
+ .../combination/factors/A17-03_constraints.tsv     |   1 +
+ .../combination/factors/A17-03_interactions.tsv    |   2 +-
+ .../combination/factors/A17-04_constraints.tsv     |   5 +-
+ .../combination/factors/A17-04_existing.tsv        |  12 +-
+ .../casegen/combination/factors/A17-04_factors.tsv |  11 +-
+ .../combination/factors/A17-04_interactions.tsv    |  39 ++-----
+ .../combination/factors/A17-05_constraints.tsv     |   6 +
+ .../combination/factors/A17-05_existing.tsv        |   3 +-
+ .../casegen/combination/factors/A17-05_factors.tsv |   1 -
+ .../combination/factors/A17-05_interactions.tsv    |   8 +-
+ .../combination/factors/B02-01_constraints.tsv     |  12 +-
+ .../combination/factors/B02-02_constraints.tsv     |   3 +
+ .../combination/factors/B02-02_existing.tsv        |   6 +-
+ .../casegen/combination/factors/B02-02_factors.tsv |   4 +-
+ .../combination/factors/B02-02_interactions.tsv    |   4 +-
+ .../combination/factors/B02-03_constraints.tsv     |   6 +
+ .../combination/factors/B02-03_interactions.tsv    |   2 +-
+ .../combination/factors/B02-04_constraints.tsv     |   5 +
+ .../combination/factors/B02-05_constraints.tsv     |   3 +
+ .../combination/factors/B02-05_existing.tsv        |  18 +--
+ .../casegen/combination/factors/B02-05_factors.tsv |   3 +-
+ .../combination/factors/B02-05_interactions.tsv    |   4 -
+ .../combination/factors/B05-01_constraints.tsv     |   8 ++
+ .../casegen/combination/factors/B05-01_factors.tsv |   4 +-
+ .../combination/factors/B05-01_interactions.tsv    |  27 +----
+ .../combination/factors/B05-05_constraints.tsv     |   3 +
+ .../casegen/combination/factors/B05-05_factors.tsv |   2 -
+ .../combination/factors/B05-05_interactions.tsv    |   1 -
+ .../combination/factors/B05-05_processes.tsv       |   1 -
+ .../combination/factors/B05-06_constraints.tsv     |   3 +
+ .../combination/factors/B05-07_constraints.tsv     |   3 +
+ .../combination/factors/B05-08_constraints.tsv     |   3 +-
+ .../combination/factors/B06-01_constraints.tsv     |   5 +
+ .../casegen/combination/factors/B06-01_factors.tsv |   8 +-
+ .../combination/factors/B06-02_constraints.tsv     |   8 +-
+ .../combination/factors/B08-01_constraints.tsv     |   1 +
+ .../combination/factors/B08-02_constraints.tsv     |   7 +-
+ .../casegen/combination/factors/B08-02_factors.tsv |   2 +-
+ .../combination/factors/B08-03_constraints.tsv     |   5 +
+ .../combination/factors/B08-04_constraints.tsv     |   2 +
+ .../combination/factors/B08-05_constraints.tsv     |   2 +
+ .../combination/factors/B08-06_constraints.tsv     |   3 +-
+ .../combination/factors/B08-07_constraints.tsv     |   1 +
+ .../combination/factors/B16-11_constraints.tsv     |   1 +
+ .../combination/factors/B16-11_interactions.tsv    |   2 +-
+ .../combination/factors/B16-11_processes.tsv       |   2 +-
+ .../combination/factors/F01-01_constraints.tsv     |  31 ++++-
+ .../combination/factors/F01-01_existing.tsv        |  18 +--
+ .../casegen/combination/factors/F01-01_factors.tsv |  27 ++---
+ .../combination/factors/F01-01_interactions.tsv    | 127 +++++----------------
+ .../combination/factors/F01-01_processes.tsv       |   1 -
+ .../combination/factors/F01-02_constraints.tsv     |  18 ++-
+ .../combination/factors/F01-02_existing.tsv        |   4 +-
+ .../casegen/combination/factors/F01-02_factors.tsv |   4 +-
+ .../combination/factors/F01-02_interactions.tsv    |  11 --
+ .../combination/factors/F02-01_constraints.tsv     |  15 ++-
+ .../combination/factors/F02-01_existing.tsv        |  33 +++---
+ .../casegen/combination/factors/F02-01_factors.tsv |  20 ++--
+ .../combination/factors/F02-01_interactions.tsv    |  17 +--
+ .../combination/factors/F02-01_processes.tsv       |   8 +-
+ .../combination/factors/F02-02_constraints.tsv     |   2 +-
+ .../combination/factors/F02-02_existing.tsv        |  14 +--
+ .../casegen/combination/factors/F02-02_factors.tsv |   6 +-
+ .../combination/factors/F02-02_interactions.tsv    |   7 +-
+ .../combination/factors/F02-02_processes.tsv       |   2 +-
+ .../combination/factors/F02-03_existing.tsv        |  19 ++-
+ .../casegen/combination/factors/F02-03_factors.tsv |   8 +-
+ .../combination/factors/F02-03_interactions.tsv    |   9 +-
+ .../combination/factors/F02-03_processes.tsv       |   2 +-
+ .../combination/factors/F03-01_constraints.tsv     |  18 ++-
+ .../combination/factors/F03-01_existing.tsv        |  20 ++--
+ .../casegen/combination/factors/F03-01_factors.tsv |  15 +--
+ .../combination/factors/F03-01_interactions.tsv    |  35 +-----
+ .../combination/factors/F03-01_processes.tsv       |   6 +-
+ .../combination/factors/F03-02_constraints.tsv     |  17 ++-
+ .../combination/factors/F03-02_existing.tsv        |  77 ++++++-------
+ .../casegen/combination/factors/F03-02_factors.tsv |  38 +++---
+ .../combination/factors/F03-02_interactions.tsv    |  58 +++-------
+ .../combination/factors/F03-04_constraints.tsv     |   2 +
+ .../combination/factors/F03-04_existing.tsv        |   4 +-
+ .../casegen/combination/factors/F03-04_factors.tsv |   1 -
+ .../combination/factors/F03-04_interactions.tsv    |   3 -
+ .../combination/factors/F03-05_constraints.tsv     |   9 ++
+ .../combination/factors/F03-06_constraints.tsv     |   4 +
+ .../combination/factors/F03-07_constraints.tsv     |   5 +
+ .../combination/factors/F03-08_constraints.tsv     |   3 +
+ .../combination/factors/F04-01_constraints.tsv     |   4 +-
+ .../combination/factors/F04-03_constraints.tsv     |   3 +-
+ .../combination/factors/F04-03_existing.tsv        |  14 +--
+ .../casegen/combination/factors/F04-03_factors.tsv |   5 +-
+ .../combination/factors/F04-03_interactions.tsv    |  14 +--
+ .../combination/factors/F04-04_constraints.tsv     |   9 +-
+ .../combination/factors/F04-04_existing.tsv        |  22 ++--
+ .../casegen/combination/factors/F04-04_factors.tsv |  12 +-
+ .../combination/factors/F04-04_interactions.tsv    |  23 ++--
+ .../combination/factors/F05-01_constraints.tsv     |  15 +++
+ .../combination/factors/F05-03_constraints.tsv     |  57 +++------
+ .../combination/factors/F05-03_existing.tsv        |   4 +-
+ .../casegen/combination/factors/F05-03_factors.tsv |  11 +-
+ .../combination/factors/F05-03_interactions.tsv    |  30 ++---
+ .../combination/factors/F05-04_constraints.tsv     |   2 +-
+ .../combination/factors/F05-04_existing.tsv        |   4 +-
+ .../casegen/combination/factors/F05-04_factors.tsv |   4 +-
+ .../combination/factors/F05-04_interactions.tsv    |  14 +--
+ .../combination/factors/F05-05_constraints.tsv     |   8 +-
+ .../combination/factors/F05-05_existing.tsv        |   3 -
+ .../casegen/combination/factors/F05-05_factors.tsv |   3 -
+ .../combination/factors/F05-05_interactions.tsv    |   3 -
+ .../combination/factors/F05-05_processes.tsv       |   1 -
+ .../combination/factors/F05-06_constraints.tsv     |   2 +
+ .../combination/factors/F05-06_existing.tsv        |  10 +-
+ .../casegen/combination/factors/F05-06_factors.tsv |  10 +-
+ .../combination/factors/F05-06_interactions.tsv    |   5 +-
+ .../combination/factors/F05-06_processes.tsv       |   5 +-
+ .../combination/factors/F06-01_constraints.tsv     |   1 +
+ .../combination/factors/F06-01_existing.tsv        |  30 ++---
+ .../casegen/combination/factors/F06-01_factors.tsv |   1 -
+ .../combination/factors/F06-01_interactions.tsv    |   2 -
+ .../combination/factors/F06-02_constraints.tsv     |   3 +
+ .../combination/factors/F06-03_constraints.tsv     |   2 +
+ .../combination/factors/F06-04_constraints.tsv     |   4 +-
+ .../combination/factors/F06-04_existing.tsv        |  16 +--
+ .../casegen/combination/factors/F06-04_factors.tsv |   5 +-
+ .../combination/factors/F06-04_interactions.tsv    |   3 +-
+ .../combination/factors/F06-04_processes.tsv       |   3 +-
+ .../combination/factors/F06-05_constraints.tsv     |   1 +
+ .../combination/factors/F06-06_constraints.tsv     |   1 +
+ .../combination/factors/F06-07_constraints.tsv     |   6 +
+ .../combination/factors/F06-07_existing.tsv        |  12 +-
+ .../casegen/combination/factors/F06-07_factors.tsv |   2 +-
+ .../combination/factors/F06-08_constraints.tsv     |   1 +
+ .../combination/factors/F06-09_constraints.tsv     |   4 +
+ .../combination/factors/F06-10_existing.tsv        |   6 +-
+ .../casegen/combination/factors/F06-10_factors.tsv |   5 +-
+ .../combination/factors/F06-10_interactions.tsv    |   4 +-
+ .../combination/factors/F06-11_existing.tsv        |   4 +-
+ .../casegen/combination/factors/F06-11_factors.tsv |  10 +-
+ .../combination/factors/F06-11_interactions.tsv    |  23 ++--
+ .../combination/factors/F06-13_constraints.tsv     |   3 +
+ .../combination/factors/F06-14_constraints.tsv     |   7 +-
+ .../combination/factors/F06-14_existing.tsv        |  21 ++--
+ .../casegen/combination/factors/F06-14_factors.tsv |  10 +-
+ .../combination/factors/F06-14_interactions.tsv    |  12 +-
+ .../combination/factors/F06-15_constraints.tsv     |   3 +-
+ .../combination/factors/F06-15_existing.tsv        |  26 ++---
+ .../casegen/combination/factors/F06-15_factors.tsv |  12 +-
+ .../combination/factors/F06-15_interactions.tsv    |  21 ++--
+ .../combination/factors/F06-15_processes.tsv       |   1 -
+ .../combination/factors/F06-16_constraints.tsv     |   4 +
+ .../combination/factors/F06-16_existing.tsv        |  14 +--
+ .../casegen/combination/factors/F06-16_factors.tsv |   9 +-
+ .../combination/factors/F06-16_interactions.tsv    |  10 +-
+ .../combination/factors/F06-16_processes.tsv       |   3 +-
+ .../combination/factors/F06-17_constraints.tsv     |   5 +-
+ .../combination/factors/F06-17_existing.tsv        |   3 -
+ .../casegen/combination/factors/F06-17_factors.tsv |   6 -
+ .../combination/factors/F06-17_interactions.tsv    |  15 ---
+ .../combination/factors/F06-17_processes.tsv       |   1 -
+ .../combination/factors/F06-18_constraints.tsv     |   2 +
+ .../combination/factors/F06-20_constraints.tsv     |   2 +
+ .../combination/factors/F06-21_constraints.tsv     |   3 +
+ .../combination/factors/F06-22_existing.tsv        |  14 +--
+ .../casegen/combination/factors/F06-22_factors.tsv |   6 +-
+ .../combination/factors/F06-22_interactions.tsv    |   3 +-
+ .../combination/factors/F06-22_processes.tsv       |   3 +-
+ .../combination/factors/F06-24_existing.tsv        |   3 -
+ .../casegen/combination/factors/F06-24_factors.tsv |   2 -
+ .../combination/factors/F06-24_interactions.tsv    |   1 -
+ .../combination/factors/F06-24_processes.tsv       |   1 -
+ .../combination/factors/F06-26_constraints.tsv     |   3 +
+ .../casegen/combination/factors/F06-26_factors.tsv |   2 +-
+ .../combination/factors/F07-01_constraints.tsv     |   8 ++
+ .../combination/factors/F07-01_existing.tsv        |   4 +-
+ .../casegen/combination/factors/F07-01_factors.tsv |  10 +-
+ .../combination/factors/F07-01_interactions.tsv    |  13 +--
+ .../combination/factors/F07-01_processes.tsv       |   2 +-
+ .../combination/factors/F07-03_constraints.tsv     |   7 ++
+ .../combination/factors/F07-04_constraints.tsv     |   6 +
+ .../combination/factors/F07-04_existing.tsv        |   6 +-
+ .../casegen/combination/factors/F07-04_factors.tsv |   4 +-
+ .../combination/factors/F08-02_constraints.tsv     |  10 +-
+ .../combination/factors/F08-02_existing.tsv        |  30 ++---
+ .../casegen/combination/factors/F08-02_factors.tsv |  15 ++-
+ .../combination/factors/F08-02_interactions.tsv    |  13 +--
+ .../combination/factors/F08-03_constraints.tsv     |   6 +-
+ .../combination/factors/F08-03_existing.tsv        |  23 +---
+ .../casegen/combination/factors/F08-03_factors.tsv |  11 +-
+ .../combination/factors/F08-03_interactions.tsv    |  12 +-
+ .../combination/factors/F08-03_processes.tsv       |   5 +-
+ .../combination/factors/F08-04_constraints.tsv     |   3 +-
+ .../combination/factors/F08-05_constraints.tsv     |   7 +-
+ .../combination/factors/F08-05_existing.tsv        | 122 ++++++++++----------
+ .../casegen/combination/factors/F08-05_factors.tsv |  11 +-
+ .../combination/factors/F08-05_interactions.tsv    |  34 +-----
+ .../combination/factors/F09-01_constraints.tsv     |   7 ++
+ .../combination/factors/F09-01_existing.tsv        |  12 +-
+ .../casegen/combination/factors/F09-01_factors.tsv |   7 +-
+ .../combination/factors/F09-01_interactions.tsv    |  25 +---
+ .../combination/factors/F09-01_processes.tsv       |   3 +-
+ .../combination/factors/F09-02_constraints.tsv     |   6 +-
+ .../combination/factors/F09-03_constraints.tsv     |   8 +-
+ .../combination/factors/F09-04_constraints.tsv     |   6 +
+ .../combination/factors/F09-04_existing.tsv        |   8 +-
+ .../casegen/combination/factors/F09-04_factors.tsv |   3 +-
+ .../combination/factors/F09-04_interactions.tsv    |  16 +--
+ .../combination/factors/F09-05_constraints.tsv     |   9 ++
+ .../combination/factors/F09-06_constraints.tsv     |   5 +
+ .../combination/factors/F09-07_constraints.tsv     |   5 +-
+ .../combination/factors/F09-07_existing.tsv        |  28 ++---
+ .../casegen/combination/factors/F09-07_factors.tsv |  11 +-
+ .../combination/factors/F09-07_interactions.tsv    |  28 ++---
+ .../combination/factors/F09-08_constraints.tsv     |   5 +-
+ .../combination/factors/F09-08_existing.tsv        |  20 ++--
+ .../casegen/combination/factors/F09-08_factors.tsv |   6 +-
+ .../combination/factors/F10-01_constraints.tsv     |   2 +
+ .../combination/factors/F10-02_existing.tsv        |   4 -
+ .../casegen/combination/factors/F10-02_factors.tsv |   3 -
+ .../combination/factors/F10-02_interactions.tsv    |   3 -
+ .../combination/factors/F10-02_processes.tsv       |   1 -
+ .../combination/factors/F10-03_constraints.tsv     |   4 +-
+ .../combination/factors/M03-02_constraints.tsv     |   4 +
+ .../combination/factors/M03-02_existing.tsv        |   9 +-
+ .../casegen/combination/factors/M03-02_factors.tsv |   5 +-
+ .../combination/factors/M03-02_interactions.tsv    |  12 --
+ .../casegen/combination/factors/M03-05_factors.tsv |   1 -
+ .../combination/factors/M03-05_interactions.tsv    |   2 -
+ .../combination/factors/M03-06_constraints.tsv     |   1 -
+ .../combination/factors/M03-06_existing.tsv        |  14 +--
+ .../casegen/combination/factors/M03-06_factors.tsv |   1 -
+ .../combination/factors/M03-06_interactions.tsv    |   2 -
+ .../combination/factors/M03-08_constraints.tsv     |   4 +
+ .../combination/factors/M03-09_constraints.tsv     |  11 +-
+ .../casegen/combination/factors/M03-09_factors.tsv |   2 +-
+ .../combination/factors/M03-09_interactions.tsv    |   4 +-
+ .../combination/factors/M03-10_constraints.tsv     |   9 +-
+ .../combination/factors/M03-10_existing.tsv        |  16 ++-
+ .../casegen/combination/factors/M03-10_factors.tsv |  13 +--
+ .../combination/factors/M03-10_interactions.tsv    |  27 ++---
+ .../combination/factors/M03-11_constraints.tsv     |   2 +
+ .../casegen/combination/factors/M03-11_factors.tsv |   2 -
+ .../combination/factors/M03-11_interactions.tsv    |   1 -
+ .../combination/factors/M03-11_processes.tsv       |   1 -
+ .../combination/factors/M03-12_existing.tsv        |  14 ---
+ .../casegen/combination/factors/M03-12_factors.tsv |   2 -
+ .../combination/factors/M03-12_interactions.tsv    |   1 -
+ .../combination/factors/M03-12_processes.tsv       |   1 -
+ .../combination/factors/M03-13_constraints.tsv     |   1 +
+ .../combination/factors/M03-14_constraints.tsv     |   1 +
+ .../combination/factors/M03-14_existing.tsv        |   6 +-
+ .../casegen/combination/factors/M03-14_factors.tsv |   1 -
+ .../combination/factors/M03-14_interactions.tsv    |   2 -
+ .../combination/factors/M03-16_constraints.tsv     |   2 +
+ .../combination/factors/M03-17_constraints.tsv     |   3 +
+ .../combination/factors/M03-18_constraints.tsv     |   6 +
+ .../combination/factors/M03-18_existing.tsv        |  16 +--
+ .../casegen/combination/factors/M03-18_factors.tsv |   2 -
+ .../combination/factors/M03-18_interactions.tsv    |   7 --
+ .../combination/factors/M03-20_constraints.tsv     |   6 +-
+ .../combination/factors/M03-20_existing.tsv        |  18 +--
+ .../casegen/combination/factors/M03-20_factors.tsv |   4 +-
+ .../combination/factors/M03-20_interactions.tsv    |  13 ---
+ .../combination/factors/M03-21_constraints.tsv     |   2 +
+ .../combination/factors/M03-22_constraints.tsv     |   3 +-
+ .../combination/factors/M03-22_existing.tsv        |   5 -
+ .../casegen/combination/factors/M03-22_factors.tsv |   4 -
+ .../combination/factors/M03-22_interactions.tsv    |   6 -
+ .../combination/factors/M03-22_processes.tsv       |   1 -
+ .../combination/factors/M03-26_constraints.tsv     |   5 +
+ .../combination/factors/M03-27_constraints.tsv     |   5 +-
+ .../combination/factors/M03-27_existing.tsv        |   2 -
+ .../casegen/combination/factors/M03-27_factors.tsv |   6 +-
+ .../combination/factors/M03-27_interactions.tsv    |  33 ++----
+ .../combination/factors/M03-29_existing.tsv        |  14 +--
+ .../casegen/combination/factors/M03-29_factors.tsv |   2 +-
+ .../combination/factors/M03-31_constraints.tsv     |   1 +
+ .../combination/factors/M03-33_existing.tsv        |   1 -
+ .../casegen/combination/factors/M03-33_factors.tsv |   2 -
+ .../combination/factors/M03-33_interactions.tsv    |   9 --
+ .../combination/factors/M03-35_constraints.tsv     |   1 +
+ .../combination/factors/M03-38_existing.tsv        |   9 --
+ .../casegen/combination/factors/M03-38_factors.tsv |   3 -
+ .../combination/factors/M03-38_interactions.tsv    |   3 -
+ .../combination/factors/M03-38_processes.tsv       |   1 -
+ .../combination/factors/M03-40_constraints.tsv     |   3 +
+ .../combination/factors/M03-41_constraints.tsv     |   2 +
+ .../combination/factors/M03-45_constraints.tsv     |   6 +
+ .../combination/factors/M04-01_constraints.tsv     |  11 +-
+ .../combination/factors/M04-02_existing.tsv        |   4 -
+ .../casegen/combination/factors/M04-02_factors.tsv |   2 -
+ .../combination/factors/M04-02_interactions.tsv    |   1 -
+ .../combination/factors/M04-02_processes.tsv       |   1 -
+ .../combination/factors/M04-08_constraints.tsv     |  10 +-
+ .../combination/factors/M04-09_constraints.tsv     |   8 ++
+ .../combination/factors/M04-10_constraints.tsv     |   3 +-
+ .../combination/factors/M04-10_existing.tsv        |   8 +-
+ .../casegen/combination/factors/M04-10_factors.tsv |   6 +-
+ .../combination/factors/M04-10_interactions.tsv    |   7 +-
+ .../combination/factors/M04-19_constraints.tsv     |   2 +
+ .../combination/factors/M04-19_existing.tsv        |   3 +-
+ .../casegen/combination/factors/M04-19_factors.tsv |   4 +-
+ .../combination/factors/M04-19_interactions.tsv    |   7 +-
+ .../combination/factors/M04-20_existing.tsv        |   1 -
+ .../casegen/combination/factors/M04-20_factors.tsv |   3 -
+ .../combination/factors/M04-20_interactions.tsv    |   3 -
+ .../combination/factors/M04-20_processes.tsv       |   1 -
+ .../combination/factors/M04-21_constraints.tsv     |   5 +-
+ .../combination/factors/M04-21_existing.tsv        |   6 +-
+ .../casegen/combination/factors/M04-21_factors.tsv |   2 +-
+ .../combination/factors/M04-30_constraints.tsv     |   8 +-
+ .../casegen/combination/factors/M04-30_factors.tsv |   6 -
+ .../combination/factors/M04-30_interactions.tsv    |   9 --
+ .../combination/factors/M04-30_processes.tsv       |   2 -
+ .../combination/factors/M04-31_constraints.tsv     |  13 ++-
+ .../combination/factors/M04-31_existing.tsv        |   9 +-
+ .../casegen/combination/factors/M04-31_factors.tsv |   8 +-
+ .../combination/factors/M04-31_interactions.tsv    |   4 -
+ .../combination/factors/M04-31_processes.tsv       |   2 -
+ .../combination/factors/M04-32_constraints.tsv     |   7 ++
+ .../combination/factors/M04-33_constraints.tsv     |   3 +-
+ .../combination/factors/M04-33_existing.tsv        |  47 ++++----
+ .../casegen/combination/factors/M04-33_factors.tsv |   9 +-
+ .../combination/factors/M04-33_interactions.tsv    |   9 +-
+ .../combination/factors/M04-34_constraints.tsv     |   4 +-
+ .../combination/factors/M04-34_existing.tsv        |  26 ++---
+ .../casegen/combination/factors/M04-34_factors.tsv |   9 +-
+ .../combination/factors/M04-34_interactions.tsv    |   9 +-
+ .../combination/factors/M05-01_constraints.tsv     |   9 +-
+ .../combination/factors/M05-01_interactions.tsv    |   4 +-
+ .../combination/factors/M05-02_constraints.tsv     |   3 +-
+ .../combination/factors/M05-02_existing.tsv        |   8 +-
+ .../casegen/combination/factors/M05-02_factors.tsv |   8 +-
+ .../combination/factors/M05-02_interactions.tsv    |   7 +-
+ .../combination/factors/M05-02_processes.tsv       |   3 +-
+ .../combination/factors/M05-03_constraints.tsv     |   1 +
+ .../combination/factors/M05-03_existing.tsv        |   8 +-
+ .../casegen/combination/factors/M05-03_factors.tsv |  13 +--
+ .../combination/factors/M05-03_interactions.tsv    |  56 +--------
+ .../combination/factors/M05-04_constraints.tsv     |   1 -
+ .../combination/factors/M05-04_existing.tsv        |   6 -
+ .../casegen/combination/factors/M05-04_factors.tsv |   8 --
+ .../combination/factors/M05-04_interactions.tsv    |  28 -----
+ .../combination/factors/M05-04_processes.tsv       |   1 -
+ .../combination/factors/M05-05_constraints.tsv     |   1 +
+ .../combination/factors/M05-05_existing.tsv        |   7 +-
+ .../casegen/combination/factors/M05-05_factors.tsv |  11 +-
+ .../combination/factors/M05-05_interactions.tsv    |  37 +-----
+ .../casegen/combination/factors/M05-07_factors.tsv |   4 -
+ .../combination/factors/M05-07_interactions.tsv    |   6 -
+ .../combination/factors/M05-07_processes.tsv       |   1 -
+ .../combination/factors/M05-08_constraints.tsv     |   1 +
+ .../combination/factors/M05-09_constraints.tsv     |   5 +-
+ .../combination/factors/M05-09_existing.tsv        |  30 ++---
+ .../casegen/combination/factors/M05-09_factors.tsv |  13 +--
+ .../combination/factors/M05-09_interactions.tsv    |   8 +-
+ .../combination/factors/M05-09_processes.tsv       |   6 +-
+ .../combination/factors/M05-10_constraints.tsv     |   6 +-
+ .../combination/factors/M05-10_existing.tsv        |  23 ++--
+ .../casegen/combination/factors/M05-10_factors.tsv |   6 +-
+ .../combination/factors/M05-10_interactions.tsv    |   3 +-
+ .../combination/factors/M05-10_processes.tsv       |   3 +-
+ .../combination/factors/M05-18_constraints.tsv     |   4 +
+ .../combination/factors/M05-20_existing.tsv        |   5 -
+ .../casegen/combination/factors/M05-20_factors.tsv |   4 -
+ .../combination/factors/M05-20_interactions.tsv    |   6 -
+ .../combination/factors/M05-20_processes.tsv       |   1 -
+ .../combination/factors/M05-21_constraints.tsv     |   2 +
+ .../combination/factors/M05-22_constraints.tsv     |  25 +---
+ .../combination/factors/M05-22_existing.tsv        |  14 +--
+ .../casegen/combination/factors/M05-22_factors.tsv |   8 +-
+ .../combination/factors/M05-22_interactions.tsv    |  22 ----
+ .../combination/factors/M05-23_constraints.tsv     |   3 +
+ .../combination/factors/M05-23_existing.tsv        |  16 +--
+ .../casegen/combination/factors/M05-23_factors.tsv |   5 +-
+ .../combination/factors/M05-23_interactions.tsv    |  12 --
+ .../combination/factors/M05-24_existing.tsv        |   1 -
+ .../casegen/combination/factors/M05-24_factors.tsv |   3 -
+ .../combination/factors/M05-24_interactions.tsv    |   3 -
+ .../combination/factors/M05-24_processes.tsv       |   1 -
+ .../combination/factors/M05-26_constraints.tsv     |   4 +
+ .../combination/factors/M05-26_existing.tsv        |   4 +-
+ .../casegen/combination/factors/M05-26_factors.tsv |   1 -
+ .../combination/factors/M05-26_interactions.tsv    |   5 -
+ .../combination/factors/M06-01_constraints.tsv     |   2 +
+ .../combination/factors/M06-02_constraints.tsv     |   2 +
+ .../combination/factors/M06-02_existing.tsv        |   2 -
+ .../casegen/combination/factors/M06-02_factors.tsv |   2 -
+ .../combination/factors/M06-02_interactions.tsv    |   1 -
+ .../combination/factors/M06-02_processes.tsv       |   1 -
+ .../combination/factors/M06-03_constraints.tsv     |   3 +-
+ .../combination/factors/M06-03_existing.tsv        |   2 +-
+ .../casegen/combination/factors/M06-03_factors.tsv |   2 +-
+ .../combination/factors/M06-04_constraints.tsv     |   7 ++
+ .../combination/factors/M06-05_constraints.tsv     |   2 +
+ .../casegen/combination/factors/M06-06_factors.tsv |   2 -
+ .../combination/factors/M06-06_interactions.tsv    |   1 -
+ .../combination/factors/M06-06_processes.tsv       |   1 -
+ .../combination/factors/M06-08_constraints.tsv     |   1 +
+ .../combination/factors/M06-09_constraints.tsv     |   2 +
+ .../combination/factors/M06-09_existing.tsv        |  20 ++--
+ .../casegen/combination/factors/M06-09_factors.tsv |   1 -
+ .../combination/factors/M06-09_interactions.tsv    |   2 -
+ .../combination/factors/M06-10_constraints.tsv     |   4 +-
+ .../casegen/combination/factors/M06-10_factors.tsv |   2 +-
+ .../combination/factors/M06-11_constraints.tsv     |   3 +-
+ .../combination/factors/M06-11_existing.tsv        |   2 +-
+ .../casegen/combination/factors/M06-11_factors.tsv |   2 +-
+ .../combination/factors/M06-12_constraints.tsv     |   1 +
+ .../combination/factors/M07-01_constraints.tsv     |   6 +-
+ .../combination/factors/M07-01_existing.tsv        |  19 +--
+ .../casegen/combination/factors/M07-01_factors.tsv |  16 +--
+ .../combination/factors/M07-01_interactions.tsv    |  15 +--
+ .../combination/factors/M07-01_processes.tsv       |   3 +-
+ .../combination/factors/M07-02_existing.tsv        |   4 -
+ .../casegen/combination/factors/M07-02_factors.tsv |   8 --
+ .../combination/factors/M07-02_interactions.tsv    |  28 -----
+ .../combination/factors/M07-02_processes.tsv       |   1 -
+ .../combination/factors/M07-03_constraints.tsv     |   6 +
+ .../combination/factors/M07-05_existing.tsv        |   1 -
+ .../casegen/combination/factors/M07-05_factors.tsv |   2 -
+ .../combination/factors/M07-05_interactions.tsv    |   1 -
+ .../combination/factors/M07-05_processes.tsv       |   1 -
+ .../combination/factors/M07-06_constraints.tsv     |   3 +
+ .../combination/factors/M07-06_existing.tsv        |  22 ++--
+ .../casegen/combination/factors/M07-06_factors.tsv |   1 -
+ .../combination/factors/M07-06_interactions.tsv    |   3 -
+ .../combination/factors/M07-08_constraints.tsv     |   1 +
+ .../combination/factors/M07-09_constraints.tsv     |   1 +
+ .../combination/factors/M08-04_constraints.tsv     |  14 +--
+ .../combination/factors/M08-04_existing.tsv        |  30 ++---
+ .../casegen/combination/factors/M08-04_factors.tsv |   6 +-
+ .../combination/factors/M08-05_constraints.tsv     |   4 +
+ .../casegen/combination/factors/M08-07_factors.tsv |   2 +-
+ .../combination/factors/M08-08_constraints.tsv     |   1 +
+ .../combination/factors/M08-09_existing.tsv        |   5 -
+ .../casegen/combination/factors/M08-09_factors.tsv |   3 -
+ .../combination/factors/M08-09_interactions.tsv    |   3 -
+ .../combination/factors/M08-09_processes.tsv       |   1 -
+ .../combination/factors/M08-10_constraints.tsv     |   3 +-
+ .../combination/factors/M08-10_existing.tsv        |  13 +--
+ .../casegen/combination/factors/M08-10_factors.tsv |   9 +-
+ .../combination/factors/M08-10_interactions.tsv    |  13 +--
+ .../combination/factors/M08-10_processes.tsv       |   3 +-
+ .../combination/factors/M08-12_constraints.tsv     |   2 +
+ .../combination/factors/M08-13_constraints.tsv     |   5 +-
+ .../combination/factors/M08-13_interactions.tsv    |   4 +-
+ .../combination/factors/M08-14_constraints.tsv     |   2 +
+ .../combination/factors/M08-14_existing.tsv        |  26 ++---
+ .../casegen/combination/factors/M08-14_factors.tsv |   2 +-
+ .../combination/factors/M09-04_constraints.tsv     |   9 +-
+ .../combination/factors/M09-07_constraints.tsv     |   6 +-
+ .../combination/factors/M09-10_constraints.tsv     |   2 +
+ .../combination/factors/M10-04_constraints.tsv     |   2 +
+ .../combination/factors/M10-04_existing.tsv        |   9 --
+ .../casegen/combination/factors/M10-04_factors.tsv |   8 +-
+ .../combination/factors/M10-04_interactions.tsv    |   4 +-
+ .../combination/factors/M10-04_processes.tsv       |   4 +-
+ .../combination/factors/M10-08_existing.tsv        |   5 -
+ .../casegen/combination/factors/M10-08_factors.tsv |   2 -
+ .../combination/factors/M10-08_interactions.tsv    |   1 -
+ .../combination/factors/M10-08_processes.tsv       |   1 -
+ .../combination/factors/M10-15_constraints.tsv     |   4 +-
+ .../combination/factors/M10-15_existing.tsv        |  36 +++---
+ .../casegen/combination/factors/M10-15_factors.tsv |  14 +--
+ .../combination/factors/M10-15_interactions.tsv    |  10 +-
+ .../combination/factors/M11-01_constraints.tsv     |   2 +
+ .../combination/factors/M11-02_constraints.tsv     |   1 +
+ .../combination/factors/M11-03_existing.tsv        |   8 --
+ .../casegen/combination/factors/M11-03_factors.tsv |   2 -
+ .../combination/factors/M11-03_interactions.tsv    |   1 -
+ .../combination/factors/M11-03_processes.tsv       |   1 -
+ .../combination/factors/M12-01_constraints.tsv     |   2 +
+ .../casegen/combination/factors/M12-01_factors.tsv |   2 +-
+ .../combination/factors/M12-02_constraints.tsv     |   3 +-
+ .../combination/factors/M12-02_existing.tsv        |  27 +++--
+ .../casegen/combination/factors/M12-02_factors.tsv |   5 +-
+ .../combination/factors/M12-02_interactions.tsv    |   9 +-
+ .../combination/factors/M12-03_constraints.tsv     |   3 +
+ .../combination/factors/M12-07_constraints.tsv     |   2 +
+ .../combination/factors/M12-08_constraints.tsv     |   2 +
+ .../combination/factors/M12-09_constraints.tsv     |   4 +
+ .../combination/factors/M12-10_constraints.tsv     |   3 +
+ .../combination/factors/M13-02_constraints.tsv     |   2 +
+ .../combination/factors/M13-03_constraints.tsv     |   8 ++
+ .../combination/factors/M13-04_constraints.tsv     |  10 ++
+ .../combination/factors/M13-08_existing.tsv        |   7 +-
+ .../casegen/combination/factors/M13-08_factors.tsv |   5 +-
+ .../combination/factors/M13-08_interactions.tsv    |   4 +-
+ .../combination/factors/M13-10_constraints.tsv     |   1 +
+ .../combination/factors/M13-13_constraints.tsv     |   3 +
+ .../combination/factors/M13-15_constraints.tsv     |   1 +
+ .../combination/factors/M13-15_existing.tsv        |   5 -
+ .../casegen/combination/factors/M13-15_factors.tsv |   2 -
+ .../combination/factors/M13-15_interactions.tsv    |   1 -
+ .../combination/factors/M13-15_processes.tsv       |   1 -
+ .../combination/factors/M14-01_constraints.tsv     |   5 +-
+ .../combination/factors/M14-01_existing.tsv        |   4 +-
+ .../casegen/combination/factors/M14-01_factors.tsv |   1 -
+ .../combination/factors/M14-01_interactions.tsv    |   3 -
+ .../combination/factors/M14-04_constraints.tsv     |   2 +
+ .../combination/factors/M14-05_existing.tsv        |   5 -
+ .../casegen/combination/factors/M14-05_factors.tsv |   5 -
+ .../combination/factors/M14-05_interactions.tsv    |  75 ------------
+ .../combination/factors/M14-07_constraints.tsv     |   3 +
+ .../combination/factors/M14-07_existing.tsv        |  12 +-
+ .../casegen/combination/factors/M14-07_factors.tsv |   1 -
+ .../combination/factors/M14-07_interactions.tsv    |   8 --
+ .../combination/factors/M14-09_constraints.tsv     |   3 +
+ .../combination/factors/M14-10_constraints.tsv     |   3 +
+ .../combination/factors/M14-10_existing.tsv        |   4 +-
+ .../casegen/combination/factors/M14-10_factors.tsv |   2 +-
+ .../combination/factors/M15-01_constraints.tsv     |   2 +
+ .../combination/factors/M15-01_existing.tsv        |   5 +-
+ .../casegen/combination/factors/M15-01_factors.tsv |  14 +--
+ .../combination/factors/M15-01_interactions.tsv    |  66 -----------
+ .../combination/factors/M15-01_processes.tsv       |   1 -
+ .../combination/factors/M15-02_constraints.tsv     |   1 +
+ .../combination/factors/M15-02_existing.tsv        |   9 +-
+ .../casegen/combination/factors/M15-02_factors.tsv |  10 +-
+ .../combination/factors/M15-02_interactions.tsv    |  29 +----
+ .../combination/factors/M15-04_existing.tsv        |  16 +--
+ .../casegen/combination/factors/M15-04_factors.tsv |  15 +--
+ .../combination/factors/M15-04_interactions.tsv    |  79 +------------
+ .../combination/factors/M15-05_constraints.tsv     |   5 +-
+ .../combination/factors/M15-05_existing.tsv        |  72 ++++++------
+ .../casegen/combination/factors/M15-05_factors.tsv |  11 +-
+ .../combination/factors/M15-05_interactions.tsv    |  32 +++---
+ .../combination/factors/M15-07_constraints.tsv     |   2 +
+ .../combination/factors/M15-08_existing.tsv        |   3 +-
+ .../casegen/combination/factors/M15-08_factors.tsv |   1 -
+ .../combination/factors/M15-08_interactions.tsv    |   4 -
+ .../combination/factors/M15-10_constraints.tsv     |   5 +-
+ .../combination/factors/M16-01_constraints.tsv     |   5 +
+ .../combination/factors/M16-02_constraints.tsv     |   1 +
+ .../combination/factors/M16-03_constraints.tsv     |   3 +
+ 647 files changed, 2111 insertions(+), 3249 deletions(-)
+
+exec
+/bin/bash -lc 'git diff eddb12cb -- integration_test/casegen/combination/factors/M12-02_processes.tsv integration_test/casegen/combination/factors/M12-02_factors.tsv integration_test/casegen/combination/factors/M12-02_interactions.tsv integration_test/casegen/combination/factors/M12-02_constraints.tsv integration_test/casegen/combination/factors/M12-02_existing.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'git diff eddb12cb -- integration_test/casegen/combination/factors/M12-01_processes.tsv integration_test/casegen/combination/factors/M12-01_factors.tsv integration_test/casegen/combination/factors/M12-01_interactions.tsv integration_test/casegen/combination/factors/M12-01_constraints.tsv integration_test/casegen/combination/factors/M12-01_existing.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'git diff eddb12cb -- integration_test/casegen/combination/factors/M12-03_processes.tsv integration_test/casegen/combination/factors/M12-03_factors.tsv integration_test/casegen/combination/factors/M12-03_interactions.tsv integration_test/casegen/combination/factors/M12-03_constraints.tsv integration_test/casegen/combination/factors/M12-03_existing.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'git diff eddb12cb -- integration_test/casegen/combination/factors/M12-08_processes.tsv integration_test/casegen/combination/factors/M12-08_factors.tsv integration_test/casegen/combination/factors/M12-08_interactions.tsv integration_test/casegen/combination/factors/M12-08_constraints.tsv integration_test/casegen/combination/factors/M12-08_existing.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'git diff eddb12cb -- integration_test/casegen/combination/factors/M12-09_processes.tsv integration_test/casegen/combination/factors/M12-09_factors.tsv integration_test/casegen/combination/factors/M12-09_interactions.tsv integration_test/casegen/combination/factors/M12-09_constraints.tsv integration_test/casegen/combination/factors/M12-09_existing.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'git diff eddb12cb -- integration_test/casegen/combination/factors/M12-07_processes.tsv integration_test/casegen/combination/factors/M12-07_factors.tsv integration_test/casegen/combination/factors/M12-07_interactions.tsv integration_test/casegen/combination/factors/M12-07_constraints.tsv integration_test/casegen/combination/factors/M12-07_existing.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'git diff eddb12cb -- integration_test/casegen/combination/factors/M12-10_processes.tsv integration_test/casegen/combination/factors/M12-10_factors.tsv integration_test/casegen/combination/factors/M12-10_interactions.tsv integration_test/casegen/combination/factors/M12-10_constraints.tsv integration_test/casegen/combination/factors/M12-10_existing.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'git diff eddb12cb -- integration_test/casegen/combination/factors/M13-02_processes.tsv integration_test/casegen/combination/factors/M13-02_factors.tsv integration_test/casegen/combination/factors/M13-02_interactions.tsv integration_test/casegen/combination/factors/M13-02_constraints.tsv integration_test/casegen/combination/factors/M13-02_existing.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'git diff eddb12cb -- integration_test/casegen/combination/factors/M13-03_processes.tsv integration_test/casegen/combination/factors/M13-03_factors.tsv integration_test/casegen/combination/factors/M13-03_interactions.tsv integration_test/casegen/combination/factors/M13-03_constraints.tsv integration_test/casegen/combination/factors/M13-03_existing.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'git diff eddb12cb -- integration_test/casegen/combination/factors/M13-08_processes.tsv integration_test/casegen/combination/factors/M13-08_factors.tsv integration_test/casegen/combination/factors/M13-08_interactions.tsv integration_test/casegen/combination/factors/M13-08_constraints.tsv integration_test/casegen/combination/factors/M13-08_existing.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'git diff eddb12cb -- integration_test/casegen/combination/factors/M13-04_processes.tsv integration_test/casegen/combination/factors/M13-04_factors.tsv integration_test/casegen/combination/factors/M13-04_interactions.tsv integration_test/casegen/combination/factors/M13-04_constraints.tsv integration_test/casegen/combination/factors/M13-04_existing.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'git diff eddb12cb -- integration_test/casegen/combination/factors/M13-10_processes.tsv integration_test/casegen/combination/factors/M13-10_factors.tsv integration_test/casegen/combination/factors/M13-10_interactions.tsv integration_test/casegen/combination/factors/M13-10_constraints.tsv integration_test/casegen/combination/factors/M13-10_existing.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 350ms:
+diff --git a/integration_test/casegen/combination/factors/M12-02_constraints.tsv b/integration_test/casegen/combination/factors/M12-02_constraints.tsv
+index 9fd9809d..a369bbc1 100644
+--- a/integration_test/casegen/combination/factors/M12-02_constraints.tsv
++++ b/integration_test/casegen/combination/factors/M12-02_constraints.tsv
+@@ -1,2 +1,3 @@
+ 処理ID	組	種別	根拠	理由
+-P1	F04=あり	正解未定	L0037-L0038,M12-01:L0206,M12-01:L0248-L0249	店舗名の列に「その他」を出力すると定める行と、M12-01の項目説明の「その他は不要」が食い違い、同じ出所のため優先順位でも決まらない
++P1	F03=あり	正解未定	L0037-L0038,M12-01:L0206,M12-01:L0248-L0249	店舗名の列に「その他」を出力すると定める行と、M12-01の項目説明の「その他は不要」が食い違い、同じ出所のため優先順位でも決まらない
++P1	F01=保持なし	打ち切り	L0060,L0068	検索条件が保持されていないとCSVは出力されず、メッセージを出して集計一覧へ遷移するだけで、ほかの要因の値は結果に効かない
+diff --git a/integration_test/casegen/combination/factors/M12-02_existing.tsv b/integration_test/casegen/combination/factors/M12-02_existing.tsv
+index 390d7367..6371a492 100644
+--- a/integration_test/casegen/combination/factors/M12-02_existing.tsv
++++ b/integration_test/casegen/combination/factors/M12-02_existing.tsv
+@@ -1,15 +1,14 @@
+ テストID	処理ID	値	理由
+-IT-M12-02-001	P1	F01=保持あり&F02=日別&F03=店舗のみ	手順で検索条件を指定して検索し、CSVの内容を確かめる
+-IT-M12-02-004	P1	F01=保持あり&F02=日別&F03=店舗のみ	手順で検索条件を指定して検索し、CSVの内容を確かめる
+-IT-M12-02-005	P1	F01=保持あり&F02=日別&F03=店舗のみ	手順で検索条件を指定して検索し、CSVの内容を確かめる
+-IT-M12-02-008	P1	F01=保持あり&F02=日別&F03=店舗のみ	手順で検索条件を指定して検索し、CSVの内容を確かめる
+-IT-M12-02-009	P1	F01=保持あり&F02=日別&F03=店舗のみ	手順で検索条件を指定して検索し、CSVの内容を確かめる
+-IT-M12-02-010	P1	F01=保持あり&F02=日別&F03=店舗のみ	手順で検索条件を指定して検索し、CSVの内容を確かめる
+-IT-M12-02-011	P1	F01=保持あり&F02=日別&F03=店舗のみ	手順で検索条件を指定して検索し、CSVの内容を確かめる
+-IT-M12-02-012	P1	F01=保持あり&F02=日別&F03=店舗のみ	手順で検索条件を指定して検索し、CSVの内容を確かめる
+-IT-M12-02-002	P1	F01=保持あり&F02=月別&F03=店舗のみ	手順で検索条件を指定して検索し、CSVの内容を確かめる
+-IT-M12-02-006	P1	F01=保持あり&F02=月別&F03=店舗のみ	手順で検索条件を指定して検索し、CSVの内容を確かめる
+-IT-M12-02-003	P1	F01=保持あり&F02=日別&F03=店舗のみ	日別の検索後にCSVの先頭列ヘッダを確かめる
+-IT-M12-02-003	P1	F01=保持あり&F02=月別&F03=店舗のみ	月別の検索後にCSVの先頭列ヘッダを確かめる
+-IT-M12-02-007	P1	F01=保持あり&F02=日別&F03=通販を含む	通販と店舗をチェックONにして検索し、CSVの2列目を確かめる
+-IT-M12-02-013	P1	F01=保持なし&F02=日別	検索後に一覧を開き直して条件を破棄し、CSVのURLを開いて遷移を確かめる
++IT-M12-02-001	P1	F01=保持あり&F02=店舗のみ	手順で検索条件を指定して検索し、CSVの内容を確かめる
++IT-M12-02-004	P1	F01=保持あり&F02=店舗のみ	手順で検索条件を指定して検索し、CSVの内容を確かめる
++IT-M12-02-005	P1	F01=保持あり&F02=店舗のみ	手順で検索条件を指定して検索し、CSVの内容を確かめる
++IT-M12-02-008	P1	F01=保持あり&F02=店舗のみ	手順で検索条件を指定して検索し、CSVの内容を確かめる
++IT-M12-02-009	P1	F01=保持あり&F02=店舗のみ	手順で検索条件を指定して検索し、CSVの内容を確かめる
++IT-M12-02-010	P1	F01=保持あり&F02=店舗のみ	手順で検索条件を指定して検索し、CSVの内容を確かめる
++IT-M12-02-011	P1	F01=保持あり&F02=店舗のみ	手順で検索条件を指定して検索し、CSVの内容を確かめる
++IT-M12-02-012	P1	F01=保持あり&F02=店舗のみ	手順で検索条件を指定して検索し、CSVの内容を確かめる
++IT-M12-02-002	P1	F01=保持あり&F02=店舗のみ	手順で検索条件を指定して検索し、CSVの内容を確かめる
++IT-M12-02-006	P1	F01=保持あり&F02=店舗のみ	手順で検索条件を指定して検索し、CSVの内容を確かめる
++IT-M12-02-003	P1	F01=保持あり&F02=店舗のみ	日別の検索後にCSVの先頭列ヘッダを確かめる
++IT-M12-02-007	P1	F01=保持あり&F02=通販を含む	通販と店舗をチェックONにして検索し、CSVの2列目を確かめる
++IT-M12-02-013	P1	F01=保持なし	検索後に一覧を開き直して条件を破棄し、CSVのURLを開いて遷移を確かめる
+diff --git a/integration_test/casegen/combination/factors/M12-02_factors.tsv b/integration_test/casegen/combination/factors/M12-02_factors.tsv
+index e15c136e..c1c3efdb 100644
+--- a/integration_test/casegen/combination/factors/M12-02_factors.tsv
++++ b/integration_test/casegen/combination/factors/M12-02_factors.tsv
+@@ -1,5 +1,4 @@
+ 要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+ F01	P1	保持された検索条件	保持あり｜保持なし	保持あり: 集計結果のCSVが出力される／保持なし: CSVは出力されず、メッセージ（M12-02-MSG-001）を出して集計一覧へ遷移する	L0060,L0068	この機能
+-F02	P1	集計タイプ	日別｜月別	日別: 先頭列ヘッダが集計日／月別: 先頭列ヘッダが集計月	L0015	この機能
+-F03	P1	集計対象の種類	通販を含む｜店舗のみ	通販を含む: 店舗名の列に通販の行が出る／店舗のみ: 店舗名の列に指定した店舗の行だけが出る	L0037,L0016	この機能
+-F04	P1	通販・各店舗のどれにも該当しない売上	あり｜なし	あり: 店舗名の列に「その他」の行が出る（M12-02:L0037-L0038。M12-01:L0206は「その他は不要」で食い違う）／なし: 「その他」の行は出ない	L0037-L0038,M12-01:L0206,M12-01:L0248-L0249	この機能
++F02	P1	集計対象の種類	通販を含む｜店舗のみ	通販を含む: 店舗名の列に通販の行が出る／店舗のみ: 店舗名の列に指定した店舗の行だけが出る	L0037,L0016	この機能
++F03	P1	通販・各店舗のどれにも該当しない売上	あり｜なし	あり: 店舗名の列に「その他」の行が出る（M12-02:L0037-L0038。M12-01:L0206は「その他は不要」で食い違う）／なし: 「その他」の行は出ない	L0037-L0038,M12-01:L0206,M12-01:L0248-L0249	この機能
+diff --git a/integration_test/casegen/combination/factors/M12-02_interactions.tsv b/integration_test/casegen/combination/factors/M12-02_interactions.tsv
+index 06cfaf8b..ae463017 100644
+--- a/integration_test/casegen/combination/factors/M12-02_interactions.tsv
++++ b/integration_test/casegen/combination/factors/M12-02_interactions.tsv
+@@ -1,7 +1,4 @@
+ 処理ID	要因	判定	根拠	理由
+-P1	F01+F02	効き合う	L0060,L0068	検索条件が保持されていないとCSVが出力されず、集計タイプによるヘッダの差し替えも行われない
+-P1	F01+F03	効き合う	L0060,L0068	検索条件が保持されていないとCSVが出力されず、通販・店舗の行も出ない
+-P1	F02+F03	関係しない		ヘッダ名は集計タイプで、店舗名の列の内容は集計対象で決まり、互いに影響しない
+-P1	F01+F04	効き合う	L0060,L0068	検索条件が保持されていないとCSVが出力されず、「その他」の行も出ない
+-P1	F02+F04	関係しない		ヘッダ名は集計タイプで決まり、「その他」の行の有無は集計タイプで変わらない
+-P1	F03+F04	関係しない		「その他」の行は通販・各店舗に該当しない売上かどうかで決まり、集計対象の種類で変わらない
++P1	F01+F02	効き合う	L0060,L0068	検索条件が保持されていないとCSVが出力されず、通販・店舗の行も出ない
++P1	F01+F03	効き合う	L0060,L0068	検索条件が保持されていないとCSVが出力されず、「その他」の行も出ない
++P1	F02+F03	関係しない		「その他」の行は通販・各店舗に該当しない売上かどうかで決まり、集計対象の種類で変わらない
+
+ succeeded in 384ms:
+diff --git a/integration_test/casegen/combination/factors/M12-08_constraints.tsv b/integration_test/casegen/combination/factors/M12-08_constraints.tsv
+index 5207460a..975a11a4 100644
+--- a/integration_test/casegen/combination/factors/M12-08_constraints.tsv
++++ b/integration_test/casegen/combination/factors/M12-08_constraints.tsv
+@@ -3,3 +3,5 @@ P1	F01=通販のみ	正解未定	L0067	CSVの入力は集計月だけと書か
+ P1	F01=店舗のみ	正解未定	L0067	CSVの入力は集計月だけと書かれていて、通販・店舗の指定がダウンロードに引き継がれるか決まらない
+ P1	F01=通販のみ&F05=ある	正解未定	M12-07:L0033-L0038	スマレジ由来の受注の配送方法が書かれておらず、通販のみの集計に入るか決まらない
+ P1	F01=店舗のみ&F05=ある	正解未定	M12-07:L0033-L0038	スマレジ由来の受注の配送方法が書かれておらず、店舗のみの集計に入るか決まらない
++P1	F03=キャンセル	打ち切り	M12-07:L0053	キャンセルの受注は集計しない。ほかの要因の値は結果に効かない
++P1	F06=集計月の外	打ち切り	M12-07:L0053	受注日が集計月に属さない受注は集計しない。ほかの要因の値は結果に効かない
+
+ succeeded in 408ms:
+diff --git a/integration_test/casegen/combination/factors/M12-03_constraints.tsv b/integration_test/casegen/combination/factors/M12-03_constraints.tsv
+index d21fecee..814f8fec 100644
+--- a/integration_test/casegen/combination/factors/M12-03_constraints.tsv
++++ b/integration_test/casegen/combination/factors/M12-03_constraints.tsv
+@@ -1 +1,4 @@
+ 処理ID	組	種別	根拠	理由
++P1	F12=注文日なし	打ち切り	L0114	注文日が入っていない受注は集計日対象項目にかかわらず集計から除かれ、ほかの要因の値は結果に効かない
++P1	F05=注文日&F06=キャンセル済み	打ち切り	L0113	使用日付が注文日（キャンセル日以外）のときキャンセル済みの受注は集計から除かれ、ほかの要因の値は結果に効かない
++P1	F01=カテゴリ&F11=カテゴリなし	打ち切り	L0122	どのカテゴリにも属さない商品はカテゴリ集計に計上されず、ほかの要因の値は結果に効かない
+
+ succeeded in 395ms:
+diff --git a/integration_test/casegen/combination/factors/M12-09_constraints.tsv b/integration_test/casegen/combination/factors/M12-09_constraints.tsv
+index d21fecee..39a6e4d2 100644
+--- a/integration_test/casegen/combination/factors/M12-09_constraints.tsv
++++ b/integration_test/casegen/combination/factors/M12-09_constraints.tsv
+@@ -1 +1,5 @@
+ 処理ID	組	種別	根拠	理由
++P1	F04=公開中ではない	打ち切り	L0056	公開中ではないデッキは集計の対象にならない。ほかの要因の値は結果に効かない
++P1	F05=イベント以外のデッキ	打ち切り	L0058	特集タグ編集用の集計はイベントのデッキだけを対象にする。ほかの要因の値は結果に効かない
++P1	F06=集計期間の外	打ち切り	L0056	イベント日付が集計期間の外のデッキは集計の対象にならない。ほかの要因の値は結果に効かない
++P1	F07=代表の商品が無い	打ち切り	L0058	代表の商品が無いカードは出力しない。ほかの要因の値は結果に効かない
+
+ succeeded in 476ms:
+diff --git a/integration_test/casegen/combination/factors/M12-07_constraints.tsv b/integration_test/casegen/combination/factors/M12-07_constraints.tsv
+index 2abc176d..b75b2119 100644
+--- a/integration_test/casegen/combination/factors/M12-07_constraints.tsv
++++ b/integration_test/casegen/combination/factors/M12-07_constraints.tsv
+@@ -1,3 +1,5 @@
+ 処理ID	組	種別	根拠	理由
+ P1	F01=通販のみ&F05=ある	正解未定	L0033-L0038	スマレジ由来の受注の配送方法が書かれておらず、通販のみの集計に入るか決まらない
+ P1	F01=店舗のみ&F05=ある	正解未定	L0033-L0038	スマレジ由来の受注の配送方法が書かれておらず、店舗のみの集計に入るか決まらない
++P1	F03=キャンセル	打ち切り	L0053	キャンセルの受注は集計しない。ほかの要因の値は結果に効かない
++P1	F06=集計月の外	打ち切り	L0053	受注日が集計月に属さない受注は集計しない。ほかの要因の値は結果に効かない
+
+ succeeded in 556ms:
+diff --git a/integration_test/casegen/combination/factors/M12-01_constraints.tsv b/integration_test/casegen/combination/factors/M12-01_constraints.tsv
+index 437bed87..250a83aa 100644
+--- a/integration_test/casegen/combination/factors/M12-01_constraints.tsv
++++ b/integration_test/casegen/combination/factors/M12-01_constraints.tsv
+@@ -1,2 +1,4 @@
+ 処理ID	組	種別	根拠	理由
+ P1	F02=チェックなし&F03=店舗を選択しない	正解未定	L0060-L0065	通販も店舗も選ばずに検索したときの結果が設計書に書かれていない
++P1	F08=公開でない	打ち切り	L0029-L0031	公開でない店舗は店舗一覧に出ず集計対象にならない
++P1	F09=廃棄・欠品に計上しない区分	打ち切り	L0227-L0228,L0233-L0234	廃棄・欠品の列に計上されず、在庫種別などの値は結果に効かない
+diff --git a/integration_test/casegen/combination/factors/M12-01_factors.tsv b/integration_test/casegen/combination/factors/M12-01_factors.tsv
+index 6455ce69..60ed6d7f 100644
+--- a/integration_test/casegen/combination/factors/M12-01_factors.tsv
++++ b/integration_test/casegen/combination/factors/M12-01_factors.tsv
+@@ -7,4 +7,4 @@ F05	P1	受注の対応状況	出荷完了｜出荷完了以外	出荷完了: 売
+ F06	P1	買取の成立状況	成立｜成立以外	成立: 買取件数・買取金額に計上（通販は査定承諾日あり・キャンセルでない／店舗は買取成立日あり・管理者取消でない）／成立以外: 計上しない	L0217-L0223,L0245	この機能
+ F07	P1	廃棄・欠品の在庫種別	EC在庫｜スマレジ在庫	EC在庫: 通販は集計／TC東京は集計しない／その他の店舗は集計／スマレジ在庫: 通販は集計しない／TC東京は集計／その他の店舗は集計	L0224-L0226,L0230-L0232	この機能
+ F08	P1	店舗一覧に載る店舗の公開状態	公開｜公開でない	公開: 店舗一覧に出て集計対象に選べる／公開でない: 店舗一覧に出ず集計対象にならない	L0029-L0031	この機能
+-F09	P1	在庫変動の区分と詳細区分	廃棄(除外以外の詳細区分)｜廃棄(イベント商品・他事業移動)｜欠品(欠品減算3種)｜欠品(それ以外の詳細区分)｜廃棄・欠品以外の区分	廃棄(除外以外の詳細区分): 廃棄に計上（符号を反転）／廃棄(イベント商品・他事業移動): 廃棄に計上しない／欠品(欠品減算3種): 欠品に計上（欠品減算の受注・移動・結合、符号を反転）／欠品(それ以外の詳細区分): 欠品に計上しない／廃棄・欠品以外の区分: 廃棄にも欠品にも計上しない	L0227-L0229,L0233-L0235,L0259-L0261	この機能
++F09	P1	在庫変動の区分と詳細区分	廃棄(除外以外の詳細区分)｜欠品(欠品減算3種)｜廃棄・欠品に計上しない区分	廃棄(除外以外の詳細区分): 廃棄に計上（符号を反転）／欠品(欠品減算3種): 欠品に計上（欠品減算の受注・移動・結合、符号を反転）／廃棄・欠品に計上しない区分: 廃棄にも欠品にも計上しない（廃棄のイベント商品・他事業移動、欠品の欠品減算3種以外、廃棄・欠品以外の区分）	L0227-L0229,L0233-L0235,L0259-L0261	この機能
+
+ succeeded in 451ms:
+diff --git a/integration_test/casegen/combination/factors/M13-02_constraints.tsv b/integration_test/casegen/combination/factors/M13-02_constraints.tsv
+index 08b387ef..d00df4d2 100644
+--- a/integration_test/casegen/combination/factors/M13-02_constraints.tsv
++++ b/integration_test/casegen/combination/factors/M13-02_constraints.tsv
+@@ -1,2 +1,4 @@
+ 処理ID	組	種別	根拠	理由
+ P2	F04=あり&F05=あり	正解未定	L0276-L0277,L0287-L0288	デッキ登録と申込が両方ある日程の個別削除でどちらのエラーメッセージが出るか決まらない
++P3	F04=あり	打ち切り	L0281	デッキ登録のある日程を含めると一括削除せず中止し、同じ1つのメッセージを出す。申込の有無は結果に効かない
++P3	F05=あり	打ち切り	L0281	申込のある日程を含めると一括削除せず中止し、同じ1つのメッセージを出す。デッキ登録の有無は結果に効かない
+
+ succeeded in 477ms:
+diff --git a/integration_test/casegen/combination/factors/M12-10_constraints.tsv b/integration_test/casegen/combination/factors/M12-10_constraints.tsv
+index d21fecee..0551272b 100644
+--- a/integration_test/casegen/combination/factors/M12-10_constraints.tsv
++++ b/integration_test/casegen/combination/factors/M12-10_constraints.tsv
+@@ -1 +1,4 @@
+ 処理ID	組	種別	根拠	理由
++P1	F01=非公開	打ち切り	L0049	公開中ではないデッキは集計の対象にならない。ほかの要因の値は結果に効かない
++P1	F02=利用者作成デッキ	打ち切り	L0051	特集タグ編集用の集計はイベントのデッキだけを対象にする。ほかの要因の値は結果に効かない
++P1	F05=無い	打ち切り	L0051	代表の商品が無いカードは出力しない。ほかの要因の値は結果に効かない
+
+ succeeded in 414ms:
+diff --git a/integration_test/casegen/combination/factors/M13-08_existing.tsv b/integration_test/casegen/combination/factors/M13-08_existing.tsv
+index 47487a4e..b205c576 100644
+--- a/integration_test/casegen/combination/factors/M13-08_existing.tsv
++++ b/integration_test/casegen/combination/factors/M13-08_existing.tsv
+@@ -1,5 +1,4 @@
+ テストID	処理ID	値	理由
+-IT-M13-08-006	P1	F01=登録あり&F03=あり	事前準備で名前（前後空白付き）とサイド3枚を用意しNameを確かめる
+-IT-M13-08-007	P1	F01=空	事前準備でプレイヤー名を空にしカナから補うNameを確かめる
+-IT-M13-08-012	P1	F01=登録あり&F02=1ページ&F03=あり	事前準備でメイン40枚・サイド1枚・名前ありを用意しページ構成を確かめる
+-IT-M13-08-013	P1	F01=登録あり&F02=2ページ以上&F03=あり	事前準備でメイン41枚・サイド2枚・名前ありを用意しページごとの表示を確かめる
++IT-M13-08-006	P1	F02=あり	事前準備で名前（前後空白付き）とサイド3枚を用意しNameを確かめる
++IT-M13-08-012	P1	F01=1ページ&F02=あり	事前準備でメイン40枚・サイド1枚・名前ありを用意しページ構成を確かめる
++IT-M13-08-013	P1	F01=2ページ以上&F02=あり	事前準備でメイン41枚・サイド2枚・名前ありを用意しページごとの表示を確かめる
+diff --git a/integration_test/casegen/combination/factors/M13-08_factors.tsv b/integration_test/casegen/combination/factors/M13-08_factors.tsv
+index 405bd64e..02704c96 100644
+--- a/integration_test/casegen/combination/factors/M13-08_factors.tsv
++++ b/integration_test/casegen/combination/factors/M13-08_factors.tsv
+@@ -1,4 +1,3 @@
+ 要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+-F01	P1	デッキのプレイヤー名	登録あり｜空	登録あり: 前後の空白を除いたプレイヤー名を表示／空: 会員のカナ姓とカナ名を半角空白で連結して表示	L0069	この機能
+-F02	P1	メインカードのページ数	1ページ｜2ページ以上	1ページ: 1ページでプレイヤー名の後ろに1と総ページ数1を表示／2ページ以上: 40枚ごとに分割し各ページに現在ページと総ページ数を表示	L0073	この機能
+-F03	P1	サイドボードのカード	あり｜なし	あり: 先頭ページにだけサイドを載せ2ページ目以降は空／なし: サイドは空でサイド枚数0	L0071,L0073	この機能
++F01	P1	メインカードのページ数	1ページ｜2ページ以上	1ページ: 1ページでプレイヤー名の後ろに1と総ページ数1を表示／2ページ以上: 40枚ごとに分割し各ページに現在ページと総ページ数を表示	L0073	この機能
++F02	P1	サイドボードのカード	あり｜なし	あり: 先頭ページにだけサイドを載せ2ページ目以降は空／なし: サイドは空でサイド枚数0	L0071,L0073	この機能
+diff --git a/integration_test/casegen/combination/factors/M13-08_interactions.tsv b/integration_test/casegen/combination/factors/M13-08_interactions.tsv
+index be2850bb..ff01f377 100644
+--- a/integration_test/casegen/combination/factors/M13-08_interactions.tsv
++++ b/integration_test/casegen/combination/factors/M13-08_interactions.tsv
+@@ -1,4 +1,2 @@
+ 処理ID	要因	判定	根拠	理由
+-P1	F02+F03	効き合う	L0073	サイドは先頭ページにだけ載り、メインが複数ページのときは2ページ目以降のサイドが空になる
+-P1	F01+F02	関係しない		プレイヤー名の決め方はページ分割と無関係（名前の後ろにページ番号を付けるだけ）
+-P1	F01+F03	関係しない		プレイヤー名の決め方とサイドの有無は互いの結果を変えない
++P1	F01+F02	効き合う	L0073	サイドは先頭ページにだけ載り、メインが複数ページのときは2ページ目以降のサイドが空になる
+
+ succeeded in 447ms:
+diff --git a/integration_test/casegen/combination/factors/M13-03_constraints.tsv b/integration_test/casegen/combination/factors/M13-03_constraints.tsv
+index d21fecee..9c51cd99 100644
+--- a/integration_test/casegen/combination/factors/M13-03_constraints.tsv
++++ b/integration_test/casegen/combination/factors/M13-03_constraints.tsv
+@@ -1 +1,9 @@
+ 処理ID	組	種別	根拠	理由
++P1	F02=なし&F01=新規登録	打ち切り	L0056-L0057	オンライン受付ありでなければ親イベントの支払方法を調べず、参加費・支払方法は結果に効かない（新規登録か更新かは結果が違うので組に残す）
++P1	F02=なし&F01=既存日程の更新	打ち切り	L0056-L0057	オンライン受付ありでなければ親イベントの支払方法を調べず、参加費・支払方法は結果に効かない
++P1	F03=無料&F01=新規登録	打ち切り	L0056-L0057	参加費が無料なら親イベントの支払方法を調べず、オンライン受付・支払方法は結果に効かない
++P1	F03=無料&F01=既存日程の更新	打ち切り	L0056-L0057	参加費が無料なら親イベントの支払方法を調べず、オンライン受付・支払方法は結果に効かない
++P1	F04=クレジットカード決済あり&F01=新規登録	打ち切り	L0057	支払方法の確認が通るので、オンライン受付・参加費によらず登録できる
++P1	F04=クレジットカード決済あり&F01=既存日程の更新	打ち切り	L0057	支払方法の確認が通るので、オンライン受付・参加費によらず更新できる
++P2	F05=あり	打ち切り	L0055	デッキ登録があれば削除できず、申込の有無は結果に効かない
++P2	F06=あり	打ち切り	L0055	申込があれば削除できず、デッキ登録の有無は結果に効かない
+
+ succeeded in 476ms:
+diff --git a/integration_test/casegen/combination/factors/M13-04_constraints.tsv b/integration_test/casegen/combination/factors/M13-04_constraints.tsv
+index d21fecee..48de8fbe 100644
+--- a/integration_test/casegen/combination/factors/M13-04_constraints.tsv
++++ b/integration_test/casegen/combination/factors/M13-04_constraints.tsv
+@@ -1 +1,11 @@
+ 処理ID	組	種別	根拠	理由
++P1	F01=あり&F02=有料&F03=未設定	打ち切り	L0122	オンライン受付あり・有料・支払方法未設定のすべてを満たすとエラーで日程を作らず、作成される日の内訳は結果に効かない
++P1	F01=なし&F04=該当日なし	打ち切り	L0122	オンライン受付ありでなければ親イベントの支払方法を調べず、参加費・支払方法は結果に効かない（日の内訳は結果が違うので組に残す）
++P1	F02=無料&F04=該当日なし	打ち切り	L0122	参加費が無料なら親イベントの支払方法を調べず、オンライン受付・支払方法は結果に効かない
++P1	F03=クレジットカード決済あり&F04=該当日なし	打ち切り	L0122	支払方法の確認が通るので、オンライン受付・参加費によらず登録できる
++P1	F01=なし&F04=平日のみ	打ち切り	L0122	オンライン受付ありでなければ親イベントの支払方法を調べず、参加費・支払方法は結果に効かない（日の内訳は結果が違うので組に残す）
++P1	F02=無料&F04=平日のみ	打ち切り	L0122	参加費が無料なら親イベントの支払方法を調べず、オンライン受付・支払方法は結果に効かない
++P1	F03=クレジットカード決済あり&F04=平日のみ	打ち切り	L0122	支払方法の確認が通るので、オンライン受付・参加費によらず登録できる
++P1	F01=なし&F04=土曜日曜か休日マスタの日を含む	打ち切り	L0122	オンライン受付ありでなければ親イベントの支払方法を調べず、参加費・支払方法は結果に効かない（日の内訳は結果が違うので組に残す）
++P1	F02=無料&F04=土曜日曜か休日マスタの日を含む	打ち切り	L0122	参加費が無料なら親イベントの支払方法を調べず、オンライン受付・支払方法は結果に効かない
++P1	F03=クレジットカード決済あり&F04=土曜日曜か休日マスタの日を含む	打ち切り	L0122	支払方法の確認が通るので、オンライン受付・参加費によらず登録できる
+
+ succeeded in 449ms:
+diff --git a/integration_test/casegen/combination/factors/M13-10_constraints.tsv b/integration_test/casegen/combination/factors/M13-10_constraints.tsv
+index d21fecee..73e68231 100644
+--- a/integration_test/casegen/combination/factors/M13-10_constraints.tsv
++++ b/integration_test/casegen/combination/factors/M13-10_constraints.tsv
+@@ -1 +1,2 @@
+ 処理ID	組	種別	根拠	理由
++P1	F01=実在しないか同日程の他申込と重複	打ち切り	L0144,L0146	検証を通過しないと申込重複のメッセージを出して更新せず、参加者の変更内容は結果に効かない
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/review/M12-01_factors_s_dispositions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/review/M12-02_factors_s_dispositions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/review/M12-03_factors_s_dispositions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/review/M12-08_factors_s_dispositions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/review/M12-07_factors_s_dispositions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/review/M12-09_factors_s_dispositions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/review/M12-10_factors_s_dispositions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 76ms:
+決定	処置	理由	直した所
+1	直し	F08の公開でない店舗は集計対象にならず（L0029-L0031）、F09の廃棄・欠品に計上しない区分は廃棄・欠品の列に入らない（L0227-L0228,L0233-L0234）ため、ほかの要因の値は効かない	constraints に F08=公開でない・F09=廃棄・欠品に計上しない区分 を打ち切りで2行追加
+2	直しなし	列ごとに独立なだけの要因は無い（F01は行の単位、F09は行の計上可否）	
+3	直し	廃棄のイベント商品・他事業移動、欠品の欠品減算3種以外、廃棄・欠品以外の区分は、どれも廃棄にも欠品にも計上しない同じ結果	F09の5値を3値に（廃棄・欠品に計上しない区分に統合）。existing・interactionsはF09の値に触れていないので変更なし
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/review/M13-02_factors_s_dispositions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/review/M13-03_factors_s_dispositions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/review/M13-04_factors_s_dispositions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 100ms:
+決定	処置	理由	直した所
+1	直し	注文日なし（L0114）・使用日付が注文日でのキャンセル済み（L0113）・カテゴリ集計でカテゴリなし（L0122）は受注または商品が集計から除かれ、ほかの要因の値は結果に効かない	constraints に3行を打ち切りで追加。効き合うの判定はそのまま。F04（配送区分）と通販・店舗の選択の組は、両方外すと作れない組が1つ出るため打ち切りにしなかった
+2	直しなし	出力の列に当たる要因は無い	
+3	直しなし	同じ結果の値は無い（並び替え項目の注文数・金額・販売数は並ぶ順が違う）	
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/review/M13-08_factors_s_dispositions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 131ms:
+決定	処置	理由	直した所
+1	直し	保持された検索条件が無いとCSVは出力されずメッセージと遷移だけになり、ほかの要因の値は効かない（L0060,L0068）	constraints に F01=保持なし を打ち切りで追加。F01との効き合う3行は残した
+2	直し	集計タイプ（旧F02）は先頭列ヘッダ名が変わるだけで、列ごとに独立して決まる値でほかの要因の結果を変えない（L0015）	旧F02と関係するinteractions3行・existingの値を外し、同じ内容になった行を統合。旧F03・F04を F02・F03 に振り直し、constraintsも合わせた
+3	直しなし	同じ結果の値は無い	
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/review/M13-10_factors_s_dispositions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 138ms:
+決定	処置	理由	直した所
+1	直し	キャンセルと受注日が集計月の外は、ほかの要因の値が結果に効かない打ち切り	constraints.tsv に F03=キャンセル・F06=集計月の外 を打ち切りで2行追加
+2	直しなし	明細のタグは計上先の列を決めるが、ほかの要因と独立の分類で、列ごとの表示ではなく集計結果そのものなので残した	
+3	直しなし	結果が同じ値の別立ては無い	
+
+ succeeded in 143ms:
+決定	処置	理由	直した所
+1	直し	キャンセルと受注日が集計月の外は、ほかの要因の値が結果に効かない打ち切り	constraints.tsv に F03=キャンセル・F06=集計月の外 を打ち切りで2行追加
+2	直しなし	明細のタグは計上先の列を決めるが、ほかの要因と独立の分類で、列ごとの表示ではなく集計結果そのものなので残した	
+3	直しなし	結果が同じ値の別立ては無い	
+
+ succeeded in 172ms:
+決定	処置	理由	直した所
+1	直し	公開中ではない・イベント以外・集計期間の外・代表の商品が無いは、ほかの要因の値が結果に効かない打ち切り	constraints.tsv に F04・F05・F06・F07 の各1値を打ち切りで4行追加
+2	直しなし	出力の列ごとに独立な要因は無い	
+3	直しなし	結果が同じ値の別立ては無い	
+
+ succeeded in 164ms:
+決定	処置	理由	直した所
+1	直し	非公開・利用者作成デッキ・代表の商品が無いは、ほかの要因の値が結果に効かない打ち切り	constraints.tsv に F01・F02・F05 の各1値を打ち切りで3行追加
+2	直しなし	出力の列ごとに独立な要因は無い	
+3	直しなし	結果が同じ値の別立ては無い	
+
+ succeeded in 148ms:
+決定	処置	理由	直した所
+1	直し	P3は削除できない日程（デッキ登録または申込）を含むと中止し同じ1つのメッセージになる。P2は要因ごとにメッセージが違うので打ち切りにしない	P3にF04=あり・F05=ありの打ち切り2行を追加
+2	直しなし	当たる所なし	
+3	直しなし	当たる所なし	
+
+ succeeded in 184ms:
+決定	処置	理由	直した所
+1	直し	P1はオンライン受付なし・参加費無料・支払方法あり（クレジットカード決済）のどれでも親イベントの支払方法の確認が効かない。操作（新規か更新か）は結果が違うので組に残した。P2はデッキ登録・申込のどちらか1つで削除できない	P1に打ち切り6行（F02=なし・F03=無料・F04=クレジットカード決済ありのそれぞれ×操作2値）、P2に2行
+2	直しなし	当たる所なし	
+3	直しなし	当たる所なし	
+
+ succeeded in 116ms:
+決定	処置	理由	直した所
+1	直し	参加者情報リストが検証を通らないとメッセージを出して更新せず、参加者の変更内容は効かない	F01=実在しないか同日程の他申込と重複の打ち切り1行を追加
+2	直しなし	当たる所なし	
+3	直しなし	当たる所なし	
+
+ succeeded in 179ms:
+決定	処置	理由	直した所
+1	直し	オンライン受付あり・有料・支払方法未設定のすべてを満たすとエラーで日程を作らない。受付なし・無料・支払方法ありでは支払方法の確認が効かず、日の内訳だけが結果を変える	打ち切り10行（エラーの組1、受付なし・無料・支払方法ありのそれぞれ×日の内訳3値）
+2	直しなし	当たる所なし	
+3	直しなし	当たる所なし	
+
+ succeeded in 128ms:
+決定	処置	理由	直した所
+1	直しなし	当たる所なし	
+2	直し	デッキのプレイヤー名（空ならカナ姓名で補う）は表示項目ごとに独立して決まり、ページ数・サイドの結果を変えない	F01（プレイヤー名）と関わる判定2行・既存1行（IT-M13-08-007）を外し、要因IDを振り直し（旧F02→F01・旧F03→F02）、IT-M13-08-006の値からF01を外した
+3	直しなし	当たる所なし	
+
+codex
+差分では、主に「打ち切り」の追加と、M12-02・M13-08 の要因削除が見られます。各条件で本当に他の要因が結果に効かなくなるか、関連する設計行と要因表全体を確認します。
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/M12-01_processes.tsv integration_test/casegen/combination/factors/M12-01_factors.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 2ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	日別・月別の集計結果を検索して一覧に出す	日別または月別の検索枠で集計対象を選び、検索ボタンを押す	集計一覧の検索結果画面（受注・買取・在庫変動履歴・日次集計データから作られた行）	L0023-L0031,L0044-L0045,L0060-L0063,L0186-L0235,L0243-L0245
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	集計タイプ	日別｜月別	日別: 集計日ごとの行（受注日で判定）／月別: 集計月ごとの行	L0057-L0059,L0089-L0092,L0186	この機能
+F02	P1	集計対象(通販)	チェックあり｜チェックなし	チェックあり: 通販の行が出る／チェックなし: 通販の行が出ない	L0060,L0023-L0025	この機能
+F03	P1	集計対象の店舗の選び方	TC東京のみ選択｜TC東京以外の店舗を選択｜店舗を選択しない	TC東京のみ選択: その店舗の行が出る（廃棄・欠品はスマレジ在庫のみ）／TC東京以外の店舗を選択: その店舗の行が出る（廃棄・欠品はEC在庫とスマレジ在庫）／店舗を選択しない: 店舗の行は出ない	L0061-L0065,L0224-L0226,L0230-L0232	この機能
+F04	P1	受注の配送方法の区分	配送あり｜店頭受取またはなし	配送あり: 通販売上に計上／店頭受取またはなし: 店舗売上に計上	L0023-L0028	この機能
+F05	P1	受注の対応状況	出荷完了｜出荷完了以外	出荷完了: 売上に計上／出荷完了以外: 計上しない	L0025,L0028,L0044-L0045,L0243-L0244	この機能
+F06	P1	買取の成立状況	成立｜成立以外	成立: 買取件数・買取金額に計上（通販は査定承諾日あり・キャンセルでない／店舗は買取成立日あり・管理者取消でない）／成立以外: 計上しない	L0217-L0223,L0245	この機能
+F07	P1	廃棄・欠品の在庫種別	EC在庫｜スマレジ在庫	EC在庫: 通販は集計／TC東京は集計しない／その他の店舗は集計／スマレジ在庫: 通販は集計しない／TC東京は集計／その他の店舗は集計	L0224-L0226,L0230-L0232	この機能
+F08	P1	店舗一覧に載る店舗の公開状態	公開｜公開でない	公開: 店舗一覧に出て集計対象に選べる／公開でない: 店舗一覧に出ず集計対象にならない	L0029-L0031	この機能
+F09	P1	在庫変動の区分と詳細区分	廃棄(除外以外の詳細区分)｜欠品(欠品減算3種)｜廃棄・欠品に計上しない区分	廃棄(除外以外の詳細区分): 廃棄に計上（符号を反転）／欠品(欠品減算3種): 欠品に計上（欠品減算の受注・移動・結合、符号を反転）／廃棄・欠品に計上しない区分: 廃棄にも欠品にも計上しない（廃棄のイベント商品・他事業移動、欠品の欠品減算3種以外、廃棄・欠品以外の区分）	L0227-L0229,L0233-L0235,L0259-L0261	この機能
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/M12-02_processes.tsv integration_test/casegen/combination/factors/M12-02_factors.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/M12-03_processes.tsv integration_test/casegen/combination/factors/M12-03_factors.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/M12-07_processes.tsv integration_test/casegen/combination/factors/M12-07_factors.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/M12-09_processes.tsv integration_test/casegen/combination/factors/M12-09_factors.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/M12-08_processes.tsv integration_test/casegen/combination/factors/M12-08_factors.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/M12-10_processes.tsv integration_test/casegen/combination/factors/M12-10_factors.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/M13-02_processes.tsv integration_test/casegen/combination/factors/M13-02_factors.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/M13-03_processes.tsv integration_test/casegen/combination/factors/M13-03_factors.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/M13-04_processes.tsv integration_test/casegen/combination/factors/M13-04_factors.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/M13-08_processes.tsv integration_test/casegen/combination/factors/M13-08_factors.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/M13-10_processes.tsv integration_test/casegen/combination/factors/M13-10_factors.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 94ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	集計月で売上分析タグ別の日別売上を再集計してCSVに出力する	集計結果を表示した状態でCSVダウンロードのボタンを押す	ダウンロードされたCSVファイル	L0050-L0057,L0067,M12-07:L0029-L0038,M12-07:L0052-L0055
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	集計対象の指定	通販のみ｜店舗のみ｜通販と店舗の両方	通販のみ: 通販の受注だけ集計／店舗のみ: 店舗の受注だけ集計／通販と店舗の両方: 両方の受注を集計	M12-07:L0030-L0032,L0051	M12-07（設定）
+F02	P1	受注の配送方法	店頭受取かなし｜それ以外の配送方法	店頭受取かなし: 店舗の受注として扱う／それ以外の配送方法: 通販の受注として扱う	M12-07:L0033-L0034,L0051	M12-07（設定）
+F03	P1	受注の状態	キャンセル｜キャンセル以外	キャンセル: 集計しない／キャンセル以外: 集計する	M12-07:L0053,L0051	M12-07（設定）
+F04	P1	明細の売上分析タグ	タグあり｜タグ無しのカード商品｜タグ無しのカード以外	タグあり: そのタグの列に計上／タグ無しのカード商品: その他(カード)の列に計上／タグ無しのカード以外: その他の列に計上	M12-07:L0053,L0056	M12-07（設定）
+F05	P1	スマレジ由来の受注と引き渡し済みの元EC受注	ある｜ない	ある: 元EC受注を集計から外しスマレジ由来受注1件を計上する／ない: 通常どおり集計する	M12-07:L0038,L0051	M12-07（設定）
+F06	P1	受注日	集計月の中｜集計月の外	集計月の中: 集計する／集計月の外: 集計しない	L0051,M12-07:L0053	この機能
+
+ succeeded in 97ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	日程を登録または更新する	日程登録画面で登録ボタン、または日程編集画面で更新ボタンを押す	DBの日程、日程編集画面とイベント編集画面	L0053,L0056-L0057,L0089-L0090
+P2	日程を削除する	日程編集画面で削除ボタンを押し、確認画面で削除する	DBの日程、イベント編集画面	L0054-L0055,L0091
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	操作	新規登録｜既存日程の更新	新規登録: 日程が1件増える／既存日程の更新: 既存の日程が書き換わる	L0053,L0089-L0090	この機能
+F02	P1	オンライン受付あり	あり｜なし	あり: 参加費が有料のとき親イベントの支払方法を調べる／なし: 支払方法は調べない	L0056-L0057,L0076	この機能
+F03	P1	参加費	有料｜無料	有料: オンライン受付ありのとき親イベントの支払方法を調べる／無料: 支払方法は調べない	L0056-L0057,L0085	この機能
+F04	P1	親イベントの支払方法	クレジットカード決済あり｜未設定	クレジットカード決済あり: 登録・更新できる／未設定: オンライン受付ありかつ有料のときエラー	L0057,M13-02:L0131	M13-02（データ）
+F05	P2	日程のデッキ登録	なし｜あり	なし: 削除できる／あり: 削除できない	L0055	この機能
+F06	P2	日程の申込	なし｜あり	なし: 削除できる／あり: 削除できない	L0055	この機能
+
+ succeeded in 136ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	イベントを更新して保存する	イベント編集画面で支払方法などを変えて更新ボタンを押す	DB、イベント編集画面のメッセージ	L0089,L0093-L0094,L0263,L0269-L0270,L0285
+P2	日程を個別に削除する	日程の編集ボタンのポップアップメニューで削除を選び、確定する	DB、イベント編集画面のメッセージ	L0091-L0092,L0203,L0276-L0278
+P3	チェックした日程を一括削除する	チェックした日程削除ボタンを押して確定する	DB、イベント編集画面のメッセージ	L0091-L0092,L0238,L0281-L0282,L0287-L0288
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	更新するイベントへの申込	なし｜あり	なし: 支払方法を変えられる／あり: 支払方法に差分があると保存されず申込済みのエラー	L0089,L0263	この機能
+F02	P1	支払方法の更新内容	現状のまま｜カード決済をオフにする	現状のまま: 支払方法の判定に掛からない／カード決済をオフにする: 申込済みまたは有料のオンライン受付日程があると保存されない	L0089,L0093-L0094,L0285	この機能
+F03	P1	有料かつオンライン受付ありの日程	なし｜あり	なし: カード決済オフでも保存できる／あり: カード決済オフでは保存されずエラー	L0093-L0094,L0285	この機能
+F04	P2,P3	削除対象の日程のデッキ登録	なし｜あり	なし: デッキの理由では止まらない／あり: 削除されない（個別削除はデッキ登録済みのエラー、一括削除は一括削除できませんでしたのエラー）	L0091,L0276,L0281,L0287	この機能
+F05	P2,P3	削除対象の日程への申込	なし｜あり	なし: 申込の理由では止まらない／あり: 削除されない（個別削除は申込済みのエラー、一括削除は一括削除できませんでしたのエラー）	L0092,L0277,L0281,L0288	この機能
+
+ succeeded in 177ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	受注・売上の集計を検索して一覧と合計行に出す	検索枠で集計対象・集計日・集計単位などを指定し、検索ボタンを押す	集計結果一覧と合計行（受注・受注明細・商品・カテゴリから作られた行）	L0052-L0054,L0067,L0111-L0129,L0182-L0186
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	集計単位	商品｜カテゴリ	商品: 受注明細の商品コードでまとめる／カテゴリ: カテゴリ名でまとめる	L0119-L0122	この機能
+F02	P1	集計対象(通販)	チェックあり｜チェックなし	チェックあり: 通販の受注を集計する／チェックなし: 通販の受注を集計しない	L0052-L0053	この機能
+F03	P1	集計対象の店舗の選択	店舗を選択する｜店舗を選択しない	店舗を選択する: 選んだ店舗の受注を合算して集計する／店舗を選択しない: 店舗の受注を集計しない	L0054-L0055,L0182-L0186	この機能
+F04	P1	受注の配送方法の区分	配送あり｜店頭受取またはなし	配送あり: 通販の受注／店頭受取またはなし: 店舗の受注	L0053-L0054	この機能
+F05	P1	集計日対象項目	注文日｜キャンセル日	注文日: 注文日を期間の判定に使う／キャンセル日: キャンセル日を期間の判定に使う	L0113,L0173	この機能
+F06	P1	受注のキャンセル状態	キャンセル済み｜キャンセルでない	キャンセル済み: 集計日対象項目がキャンセル日以外なら集計から除く／キャンセルでない: 集計に含む	L0113	この機能
+F07	P1	スマレジ受注に対応する元EC受注	引き渡し済みの元EC受注あり｜元EC受注なし	引き渡し済みの元EC受注あり: 元EC受注を集計から外しスマレジ受注1件を計上する／元EC受注なし: スマレジ受注をそのまま計上する	L0067	この機能
+F08	P1	集計後の行数と表示件数	表示件数以内｜表示件数を超える	表示件数以内: 全行を表示し合計行は全行の合算／表示件数を超える: 打ち切った行だけを表示し合計行は表示中の行の合算	L0128-L0129	この機能
+F09	P1	並び替え項目	集計単位のキー｜注文数｜金額｜販売数	集計単位のキー: 商品コードまたはカテゴリ名の順／注文数: 注文数の順／金額: 金額の順／販売数: 販売数の順	L0127	この機能
+F10	P1	並び順	昇順｜降順	昇順: 小さい順／降順: 大きい順	L0127	この機能
+F11	P1	商品のカテゴリ所属	カテゴリが1つ｜複数のカテゴリ｜カテゴリなし	カテゴリが1つ: カテゴリ集計で1行に計上／複数のカテゴリ: カテゴリごとに重複して計上／カテゴリなし: カテゴリ集計には計上されない	L0122	この機能
+F12	P1	受注の注文日の有無	注文日あり｜注文日なし	注文日あり: 集計日対象項目に従って集計に含まれる／注文日なし: 集計日対象項目にかかわらず集計から除く	L0114	この機能
+
+ succeeded in 190ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	保持された検索条件で集計結果のCSVをダウンロードする	集計一覧のCSVダウンロードリンクを押す	ダウンロードされたCSVファイル（検索条件がないときは集計一覧画面のメッセージ）	L0015-L0016,L0037,L0050,L0060,L0064,L0068
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	保持された検索条件	保持あり｜保持なし	保持あり: 集計結果のCSVが出力される／保持なし: CSVは出力されず、メッセージ（M12-02-MSG-001）を出して集計一覧へ遷移する	L0060,L0068	この機能
+F02	P1	集計対象の種類	通販を含む｜店舗のみ	通販を含む: 店舗名の列に通販の行が出る／店舗のみ: 店舗名の列に指定した店舗の行だけが出る	L0037,L0016	この機能
+F03	P1	通販・各店舗のどれにも該当しない売上	あり｜なし	あり: 店舗名の列に「その他」の行が出る（M12-02:L0037-L0038。M12-01:L0206は「その他は不要」で食い違う）／なし: 「その他」の行は出ない	L0037-L0038,M12-01:L0206,M12-01:L0248-L0249	この機能
+
+ succeeded in 163ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	集計対象のデッキとカードを決めて特集タグ編集用CSVに行を出す	特集タグ編集CSVダウンロード画面で出力条件を指定し、表示されたボタンでCSVを出力する	ダウンロードしたCSVの行	L0049,L0051,L0053
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	デッキの公開状態	公開中｜非公開	公開中: 集計の対象になる／非公開: 集計の対象にならない	L0049	この機能
+F02	P1	デッキの種類	イベントのデッキ｜利用者作成デッキ	イベントのデッキ: 特集タグ編集用の集計の対象になる／利用者作成デッキ: 特集タグ編集用の集計の対象にならない	L0051	この機能
+F03	P1	カードの特殊タイプ	基本だけが紐付く｜基本だけではない	基本だけが紐付く: 基本土地を含めない指定のとき集計から除かれる／基本だけではない: 指定にかかわらず集計の対象になる	L0053	この機能
+F04	P1	基本土地項目追加の指定	含める｜含めない	含める: 基本だけが紐付くカードも集計に入る／含めない: 基本だけが紐付くカードを集計から除く	L0053	この機能
+F05	P1	カードの代表の商品	ある｜無い	ある: 商品ごとに1行出力する／無い: そのカードの行を出力しない	L0051	この機能
+
+ succeeded in 194ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	集計月と集計対象を指定して売上分析タグ別の日別売上を集計し表示する	集計月を選ぶ、または検索ボタンを押す	フォーマット売上分析 集計一覧(検索結果)画面の日別売上表・合計表・平均表	L0029-L0038,L0051-L0055
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	集計対象の指定	通販のみ｜店舗のみ｜通販と店舗の両方	通販のみ: 通販の受注だけ集計／店舗のみ: 店舗の受注だけ集計／通販と店舗の両方: 両方の受注を集計	L0030-L0032	この機能
+F02	P1	受注の配送方法	店頭受取かなし｜それ以外の配送方法	店頭受取かなし: 店舗の受注として扱う／それ以外の配送方法: 通販の受注として扱う	L0033-L0034	この機能
+F03	P1	受注の状態	キャンセル｜キャンセル以外	キャンセル: 集計しない／キャンセル以外: 集計する	L0053	この機能
+F04	P1	明細の売上分析タグ	タグあり｜タグ無しのカード商品｜タグ無しのカード以外	タグあり: そのタグの列に計上／タグ無しのカード商品: その他(カード)に計上／タグ無しのカード以外: その他に計上	L0053	この機能
+F05	P1	スマレジ由来の受注と引き渡し済みの元EC受注	ある｜ない	ある: 元EC受注を集計から外しスマレジ由来受注1件を計上する／ない: 通常どおり集計する	L0038	この機能
+F06	P1	受注日	集計月の中｜集計月の外	集計月の中: 集計する／集計月の外: 集計しない	L0053	この機能
+
+ succeeded in 182ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	保持した出力条件でデッキ採用枚数を集計し特集タグ編集用CSVを出力する	出力条件を指定したあと、特集タグ編集CSVダウンロードのボタンを押す	ダウンロードされたCSVファイル(used_card_product_)	L0030-L0032,L0045-L0061
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	指定したフォーマットの数	1つのフォーマット｜複数のフォーマット	1つのフォーマット: そのフォーマットのデッキを集計する／複数のフォーマット: 指定したフォーマットのデッキをまとめて集計する	L0046,L0056	この機能
+F02	P1	集計日(To)	集計日(To)を指定｜集計日(To)が空	集計日(To)を指定: 指定日の23時59分59秒まで集計する／集計日(To)が空: 出力した日を集計日(To)にして集計する	L0056	この機能
+F03	P1	基本土地項目追加	基本土地を含める｜基本土地を含めない	基本土地を含める: 基本土地のカードも集計する／基本土地を含めない: 特殊タイプとして基本だけが紐付くカードを集計から除く	L0060	この機能
+F04	P1	デッキの公開状態	公開中｜公開中ではない	公開中: 集計の対象になる／公開中ではない: 集計の対象にならない	L0056	この機能
+F05	P1	デッキの種類	イベントのデッキ｜イベント以外のデッキ	イベントのデッキ: 特集タグ編集用の集計に含める／イベント以外のデッキ: 特集タグ編集用の集計に含めない	L0058	この機能
+F06	P1	デッキのイベント日付	集計期間の中｜集計期間の外	集計期間の中: 集計の対象になる／集計期間の外: 集計の対象にならない	L0056	この機能
+F07	P1	カードの代表商品	代表の商品がある｜代表の商品が無い	代表の商品がある: 商品ごとの行として出力する／代表の商品が無い: 出力しない	L0058	この機能
+F08	P1	カードの特殊タイプ	基本だけが紐付くカード｜基本だけではないカード	基本だけが紐付くカード: 基本土地を含めない指定のとき集計から除く／基本だけではないカード: 指定にかかわらず集計する	L0060	この機能
+
+ succeeded in 150ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	繰り返し日程を一括登録する	繰返日程追加画面で期間・曜日・時刻を入れ、登録ボタンを押す	DBの日程、イベント編集画面、繰返日程追加画面	L0052-L0053,L0102-L0111,L0122
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	オンライン受付あり	あり｜なし	あり: 参加費が有料のとき親イベントの支払方法を調べる／なし: 支払方法は調べない	L0122	この機能
+F02	P1	親イベントの参加費	有料｜無料	有料: オンライン受付ありのとき親イベントの支払方法を調べる／無料: 支払方法は調べない	L0054,L0108,L0122,M13-02:L0132	M13-02（データ）
+F03	P1	親イベントの支払方法	クレジットカード決済あり｜未設定	クレジットカード決済あり: 登録できる／未設定: オンライン受付ありかつ有料のときエラー	L0122,M13-02:L0131	M13-02（データ）
+F04	P1	作成される日の内訳	該当日なし｜平日のみ｜土曜日曜か休日マスタの日を含む	該当日なし: 日程を作らず登録完了／平日のみ: 休日でない日程ができる／土曜日曜か休日マスタの日を含む: 休日の日程ができる	L0053,L0106,L0111	この機能
+
+ succeeded in 145ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	デッキリストを印刷向けに組み立てて表示する	申込一覧でデッキ表示ボタンを押す	デッキ表示画面	L0067-L0073
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	メインカードのページ数	1ページ｜2ページ以上	1ページ: 1ページでプレイヤー名の後ろに1と総ページ数1を表示／2ページ以上: 40枚ごとに分割し各ページに現在ページと総ページ数を表示	L0073	この機能
+F02	P1	サイドボードのカード	あり｜なし	あり: 先頭ページにだけサイドを載せ2ページ目以降は空／なし: サイドは空でサイド枚数0	L0071,L0073	この機能
+
+ succeeded in 158ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	イベント申込を更新する	イベント申込詳細・編集画面で内容を変えて登録ボタンを押す	DB（申込・参加者・申込履歴）、編集画面	L0057,L0140-L0148,L0165-L0167
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	参加者情報リストの検証結果	通過｜実在しないか同日程の他申込と重複	通過: 申込を更新し成功を表示する／実在しないか同日程の他申込と重複: 申込重複のメッセージを表示し更新しない	L0144,L0146,L0156,L0172	この機能
+F02	P1	参加者情報リストの変更内容	変更なし｜追加のみ｜外れのみ｜追加と外れの両方	変更なし: 参加者の追加も削除もしない／追加のみ: 追加分を新規に登録する／外れのみ: 外れた参加者を削除する／追加と外れの両方: 外れた参加者の削除と追加分の登録を同じ更新で行う	L0148,L0165,L0167	この機能
+
+exec
+/bin/bash -lc "python3 - 'M12-07' '26-57' <<'PY'
+import sys,re
+id=sys.argv[1]; ranges=[tuple(map(int,x.split('-'))) for x in sys.argv[2].split(',')]
+for line in open(f'integration_test/casegen/combination/units/{id}/design.txt'):
+ m=re.match(r'L(\\d+)',line)
+ if m and any(a<=int(m[1])<=b for a,b in ranges): print(line,end='')
+PY" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "python3 - 'M12-02' '8-19,34-42,55-70' <<'PY'
+import sys,re
+id=sys.argv[1]; ranges=[tuple(map(int,x.split('-'))) for x in sys.argv[2].split(',')]
+for line in open(f'integration_test/casegen/combination/units/{id}/design.txt'):
+ m=re.match(r'L(\\d+)',line)
+ if m and any(a<=int(m[1])<=b for a,b in ranges): print(line,end='')
+PY" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+L0026	受注データを使って受注データに紐づく売上分析タグ別に集計を行うことが可能
+L0027	機能
+L0028	現行機能をベースに下記のカスタマイズを行う
+L0029	売上分析の集計対象を指定
+L0030	識別ID 2:集計対象(通販)を追加。「通販」を集計対象として含める場合、チェックを入れる
+L0031	識別ID 3:集計対象(店舗)を追加。「全店舗」を集計対象として含める場合、チェックを入れる
+L0032	上記両方チェックを入れた場合は、「通販」「全店舗」両方集計対象とする。
+L0033	★通販の定義：配送方法が①店頭受取(スムーズ店頭受取含む）以外、②なし以外 2026/8/25木村：追記ECCUBE_HARERUYA-2409
+L0034	★店舗の定義：配送方法が店頭受取(スムーズ店頭受取含む）またはなし 2026/8/25木村：追記ECCUBE_HARERUYA-2409
+L0035	スマレジについて
+L0036	・スマレジの取引データは基本的にリアルタイムに送信される
+L0037	・本店のほか、支店やスマレジの取引情報も集計対象として取り扱う
+L0038	スマレジの受注は、引き渡し済みの元EC受注を集計対象から外し、スマレジ由来受注1件を計上元とする（二重計上の防止） 2026/8/25木村：追記ECCUBE_HARERUYA-2409
+L0039	識別ID	ラベル	書式・制限	必須	最大値	初期値	画面部品の説明
+L0040	1	集計月	年月(yyyy-mm)	〇	-	-
+L0041	2	集計対象(通販)	チェックボックス	※		チェックON	集計対象に「通販」を含める
+L0042	3	集計対象(店舗)	チェックボックス	※		チェックON	集計対象に「全店舗」を含める
+L0043	4	検索ボタン	ボタン	-	-	-
+L0044	※識別ID2:集計対象(通販)・識別ID3 :集計対象(店舗)は必ず1つ以上はチェックを入れる必要があります
+L0045	Source:
+L0046	functions/pf-eccube3/m12-07_admin_analytics_sales_format_analysis_summary.md
+L0047	現行仕様
+L0048	M12-07 フォーマット売上分析 集計一覧表示 / M12-07（フォーマット売上分析 集計一覧表示）
+L0049	業務ロジック
+L0050	初期表示
+L0051	初期表示では集計結果を表示しない。集計月を選んだ時点で、検索ボタンを押さなくても集計を実行する。
+L0052	集計の対象
+L0053	集計月をもとに、売上分析タグごと、および売上分析タグに紐づかない区分ごとの日別売上を集計する。集計するのは受注日が集計月に属する受注で、キャンセルの受注は集計しない。各日の売上は、その日に受注した明細の単価と数量を掛けた金額の合計とする。売上分析タグが紐づかない売上は、カード商品によるものを「その他(カード)」、それ以外を「その他」として2区分に分けて集計する。売上の無い日は 0 で補完する。日別の売上表・日別合計・フォーマットごとの合計と平均を算出し、グラフと表を同一画面に表示する。
+L0054	フォーマットの並び
+L0055	売上分析タグを表示順の昇順で並べ、その後に「その他(カード)」「その他」を加える。
+L0056	集計値の算出
+L0057	値	算出方法
+
+ succeeded in 0ms:
+L0008	更新日2025-10-28
+L0009	機能NoM12-02
+L0010	機能名日別・月別集計 CSV出力
+L0011	概要受注データを使って日別・月別の集計のCSVダウンロードを行うことが可能
+L0012	処理概要（★はカスタマイズ項目）
+L0013	M12-02 日別・月別集計 CSV出力
+L0014	識別ID	項目名	備考
+L0015	1	集計日 または 集計月	※集計タイプ(日別・月別)によってヘッダー項目名が差し替わる
+L0016	2	店舗名	※カスタマイズ対応、カラム情報は固定
+L0017	3	総売上	※カスタマイズ対応、カラム情報は固定
+L0018	4	原価	※カスタマイズ対応、カラム情報は固定
+L0019	5	粗利益高	※カスタマイズ対応、カラム情報は固定
+L0034	受注データを使って日別・月別の集計のCSVダウンロードを行うことが可能
+L0035	★集計項目の固定
+L0036	今回のカスタマイズで、結果出力時の項目を固定とする
+L0037	・識別ID 2: 「支店名」を追加。「通販」もしくは指定された「店舗名」または「その他」を出力
+L0038	※「その他」は通販・各店舗に該当しない売上を計上
+L0039	・識別ID 3: 「総売上」を追加。通販・店舗毎の売上総件数を出力
+L0040	・識別ID 4: 「原価」を追加。通販・店舗毎の原価合計を出力
+L0041	・識別ID 5: 「粗利益高」を追加。通販・店舗毎の粗利益高を出力
+L0042	計算式 : 粗利益高=総売上 - 原価
+L0055	functions/pf-eccube3/m12-02_admin_analytics_sales_daily_monthly_csv_export.md
+L0056	現行仕様
+L0057	M12-02 日別/月別集計 CSVダウンロード / 分析 — 日別/月別集計CSVダウンロード
+L0058	業務ロジック
+L0059	出力対象の確定
+L0060	本機能は画面上の入力フォームを持たない。日別/月別集計 集計一覧で検索を実行したときに保持された検索条件だけを入力として出力する。保持された検索条件は集計一覧の画面を開き直すと破棄される。集計の内容は日別/月別集計 集計一覧（M12-01）と同一である。検索条件が保持されていない状態でダウンロードすると、集計期間が定まらないため集計結果は出力されない。ダウンロードの応答は集計より先に確定するため、この場合もエラー画面へは遷移しない。
+L0061	入出力
+L0062	種類	内容
+L0063	入力	保持された検索条件
+L0064	成功時出力	集計結果のCSVファイル。ファイル名は report_summary_ に出力日時（YmdHis）を付けた .csv。文字コード判別用のBOMを付与する
+L0065	リニューアル後の仕様
+L0066	表示メッセージ
+L0067	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0068	M12-02-MSG-001	管理画面上部	検索条件がありません。先に検索を実行してください。	検索を行わずにCSVをダウンロードしようとしたとき	日別/月別集計 集計一覧表示画面に遷移する
+L0069	M12-02-MSG-002	管理画面上部	日付の形式が不正です。再度検索を実行してください。	検索後にCSVをダウンロードしようとした際、検索期間の日付を正しく読み取れないとき	日別/月別集計 集計一覧表示画面に遷移する
+
+exec
+/bin/bash -lc "python3 - 'M12-01' '20-34,180-235,243-263' <<'PY'
+import sys,re
+id=sys.argv[1]; ranges=[tuple(map(int,x.split('-'))) for x in sys.argv[2].split(',')]
+for line in open(f'integration_test/casegen/combination/units/{id}/design.txt'):
+ m=re.match(r'L(\\d+)',line)
+ if m and any(a<=int(m[1])<=b for a,b in ranges): print(line,end='')
+PY" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "python3 - 'M12-03' '105-130,170-190' <<'PY'
+import sys,re
+id=sys.argv[1]; ranges=[tuple(map(int,x.split('-'))) for x in sys.argv[2].split(',')]
+for line in open(f'integration_test/casegen/combination/units/{id}/design.txt'):
+ m=re.match(r'L(\\d+)',line)
+ if m and any(a<=int(m[1])<=b for a,b in ranges): print(line,end='')
+PY" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+L0020	6
+L0021	5
+L0022	日別・月別集計 集計一覧(検索項目-日別) / D7 / image 1
+L0023	・通販売上
+L0024	配送方法が①店頭受取(スムーズ店頭受取含む）以外、②なし以外
+L0025	対応状況が出荷完了
+L0026	・店舗売上
+L0027	配送方法が店頭受取(スムーズ店頭受取含む）またはなし
+L0028	対応状況が出荷完了
+L0029	・対象店舗
+L0030	店舗登録画面の公開状態が公開であり、集計対象の店舗とする
+L0031	開店状態は見ない
+L0032	カスタマイズ説明
+L0033	・カスタマイズ要件
+L0034	・集計方式の変更
+L0180	更新日2025-10-28
+L0181	機能NoM12-01
+L0182	機能名日別・月別集計 集計一覧表示
+L0183	概要受注データを使って日別・月別の集計を行うことが可能
+L0184	処理概要（★はカスタマイズ項目）
+L0185	レイアウト図 各項目の詳細説明
+L0186	(1)集計日 [受注の場合]: 受注日
+L0187	1
+L0188	2
+L0189	3
+L0190	4
+L0191	8
+L0192	9
+L0193	7
+L0194	11
+L0195	5
+L0196	6
+L0197	10
+L0198	12
+L0199	13
+L0200	14
+L0201	日別・月別集計 集計一覧(検索結果-日別) / C7 / image 1
+L0202	[店頭買取の場合]： 買取申込日
+L0203	[ネット買取の場合]： 買取申込日
+L0204	[廃棄、欠品の場合]： 在庫変動履歴の登録日
+L0205	(2)店舗名 集計対象の店舗
+L0206	その他は不要
+L0207	(3)総売上 商品合計金額
+L0208	送料・手数料は含む
+L0209	ポイント・クーポンによる値引きは考慮しない（値引き前金額）
+L0210	(4)原価 受注に保存されている受注時原価の合計
+L0211	(5)粗利益高 (3)総売上 - (4)原価
+L0212	(6)販売点数 注文明細の数量を足しあげた数
+L0213	(7)取引数 注文件数（dtb_orderのレコード数）
+L0214	(8)取引単価 日別の切り上げ済み平均値
+L0215	総売上÷取引数（小数点第一位を切り上げ）
+L0216	2026/9/10木村：四捨五入ではなく切り上げ
+L0217	(9)買取件数 通販の場合はネット買取の件数、それ以外は店頭買取の件数
+L0218	ネット買取は査定承諾日が入っているものを集計対象とする
+L0219	※キャンセルは含まない
+L0220	店頭買取の場合は買取成立日が入っている者を集計対象とする
+L0221	※管理者取消は含まない
+L0222	(10)買取金額 ネット買取は査定承諾金額合計（査定金額合計ではない）、送料は含まない
+L0223	店頭買取は査定金額合計
+L0224	(11)廃棄 通販は本店EC在庫を集計、集計日は在庫変動履歴の登録日
+L0225	店舗はTC東京のみスマレジ在庫のみ集計
+L0226	その他の店舗はEC在庫とスマレジ在庫を集計
+L0227	在庫変動履歴の在庫変動区分が「廃棄」となっているものを集計、在庫変動区分の詳細区分が以下のもの以外が対象
+L0228	[廃棄(イベント商品)、廃棄(他事業移動)]以外
+L0229	在庫変動履歴にはマイナスの値が入るが、集計結果はプラスに反転させる
+L0230	(12)欠品 通販は本店EC在庫を集計、集計日は在庫変動履歴の登録日
+L0231	店舗はTC東京のみスマレジ在庫のみ集計
+L0232	その他の店舗はEC在庫とスマレジ在庫を集計
+L0233	カスタマイズ説明 在庫変動履歴の在庫変動区分の詳細区分が以下のものが対象
+L0234	・カスタマイズ要件 欠品減算（受注）、欠品減算（移動）、欠品減算（結合）
+L0235	・集計方式の変更 在庫変動履歴にはマイナスの値が入るが、集計結果はプラスに反転させる
+L0243	★集計方式の変更
+L0244	・販売関連の集計は注文データの注文ステータスが「出荷完了」のみ計上し、それ以外の注文ステータスは計上しない
+L0245	・買取関連の集計は買取データの買取ステータスが「買取成立」のみ計上し、それ以外の買取ステータスは計上しない
+L0246	★集計項目の固定
+L0247	今回のカスタマイズで、結果出力時の項目を固定とする
+L0248	・識別ID 2: 「支店名」を追加。「通販」もしくは指定された「店舗名」または「その他」を出力
+L0249	※「その他」は通販・各店舗に該当しない売上を計上
+L0250	・識別ID 3: 「総売上」を追加。通販・店舗毎の売上総件数を出力
+L0251	・識別ID 4: 「原価」を追加。通販・店舗毎の原価合計を出力
+L0252	・識別ID 5: 「粗利益高」を追加。通販・店舗毎の粗利益高を出力
+L0253	計算式 : 粗利益高=総売上 - 原価
+L0254	・識別ID 6 : 「販売点数」を追加。通販・店舗毎の販売点数を出力
+L0255	・識別ID 7: 「取引数」を追加。通販・店舗毎の取引数を出力
+L0256	・識別ID 8: 「取引単価(平均)」を追加。通販・店舗毎に1回の取引に対しての購入金額平均を出力
+L0257	・識別ID 9: 「買取件数」を追加。通販・店舗毎に買取が行われた取引件数
+L0258	・識別ID 10: 「買取金額」を追加。通販・店舗毎の買取合計を出力
+L0259	・識別ID 11: 「廃棄」を追加。在庫変動区分が「廃棄」となっているものを集計し廃棄コスト合計を出力
+L0260	※在庫変動区分の子区分が廃棄(イベント商品)、廃棄(他事業移動)となっているものは廃棄の集計に含めない
+L0261	・識別ID 12: 「欠品」を追加。在庫変動区分が「欠品」となっているものを集計しコスト合計を出力
+L0262	・識別ID 14: 「総合計」を追加。識別ID3～12各列のそれぞれの総合計を出力
+L0263	★スマレジについて
+
+ succeeded in 0ms:
+L0105	初期表示
+L0106	保持していた検索条件を破棄し、使用日付に注文日、集計単位に商品、並び順に昇順を設定した検索フォームを表示する。集計結果は表示しない。
+L0107	検索条件の保持
+L0108	検索を実行すると、指定した検索条件をそのまま保持する。初期表示に戻ると保持していた条件は破棄される。
+L0109	集計の対象範囲
+L0110	条件	内容
+L0111	集計日From	指定した日時ちょうどを含めて、それ以降を集計する
+L0112	集計日To	指定した日時ちょうどは含めず、その手前までを集計する
+L0113	キャンセル済みの受注	使用日付にキャンセル日以外を選んだときは集計対象から除く。キャンセル日を選んだときは除かない
+L0114	注文日が入っていない受注	使用日付の選択にかかわらず集計対象から除く
+L0115	カテゴリ	指定したカテゴリだけでなく、その配下のカテゴリに属する商品も集計対象に含める
+L0116	キーワード検索	半角スペース・全角スペース・カンマで区切って複数語を指定できる。すべての語を満たすものだけを対象とし、1語は検索対象のいずれかに部分一致すればよい
+L0117	絞り込みの適用単位
+L0118	平均単価と数量による絞り込みは、集計後の行の値に対して判定する。明細1件ごとの値では判定しない。平均単価の判定は、表示時に切り捨てる前の値で行う。
+L0119	集計のまとめ方
+L0120	集計単位	内容
+L0121	商品	受注明細に記録された商品コードでまとめる。商品名も受注時点で受注明細へ記録された名称を表示するため、その後に商品名を変更しても集計結果には反映されない
+L0122	カテゴリ	カテゴリ名でまとめる。1つの商品が複数のカテゴリに属するときはカテゴリごとに重複して計上し、どのカテゴリにも属さない商品は集計されない
+L0123	集計値の算出
+L0124	項目	内容
+L0125	平均単価	金額合計を数量合計で割る。表示時に小数点以下を切り捨てる
+L0126	件数	同じ受注を重複して数えず、受注の数を数える
+L0127	並べ替え	並べ替えに集計単位を選んだ場合は集計単位のキーで、注文数・金額・販売数を選んだ場合はその値で並べる
+L0128	表示件数	一覧は選んだ表示件数までで打ち切る。ページ送りは行わず、打ち切られた残りは表示されない
+L0129	合計行	打ち切ったあとの表示中の行だけを合算する。検索条件に該当する全行の合計ではない
+L0130	入出力
+L0170	機能仕様処理概要（★はカスタマイズ項目）
+L0171	概要
+L0172	受注データを使って集計単位を指定して集計を行うことが可能
+L0173	(集計日期間内の集計日対象項目の商品ごとの統計を行う)
+L0174	機能
+L0175	現行機能をベースに下記のカスタマイズを行う
+L0176	出力結果項目について
+L0177	・下記の項目を削除
+L0178	・数量割合
+L0179	・合計割合
+L0180	・件数割合
+L0181	集計データについて
+L0182	選択された店舗の数値を合算とする
+L0183	例えば、以下の場合、店舗AとBを選択していると、数量：30、合計：5000となる
+L0184	店舗Aが数量：10、合計：1000
+L0185	店舗Bが数量：20、合計：4000
+L0186	店舗Cが数量：40、合計：6000
+L0187	スマレジについて
+L0188	・スマレジの取引データは基本的にリアルタイムに送信される
+L0189	・本店のほか、支店やスマレジの取引情報も集計対象として取り扱う
+L0190	識別ID	ラベル	書式・制限	必須	最大値	初期値	画面部品の説明
+
+exec
+/bin/bash -lc "python3 - 'M12-08' '46-70' <<'PY'
+import sys,re
+id=sys.argv[1]; ranges=[tuple(map(int,x.split('-'))) for x in sys.argv[2].split(',')]
+for line in open(f'integration_test/casegen/combination/units/{id}/design.txt'):
+ m=re.match(r'L(\\d+)',line)
+ if m and any(a<=int(m[1])<=b for a,b in ranges): print(line,end='')
+PY" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+L0046	functions/pf-eccube3/m12-08_admin_analytics_sales_format_analysis_csv_export.md
+L0047	現行仕様
+L0048	M12-08 フォーマット売上分析 CSVダウンロード / 分析 — フォーマット売上分析CSVダウンロード
+L0049	業務ロジック
+L0050	出力対象
+L0051	ダウンロードするときは、送信された集計月をもとに、その月の1日から末日までの日別売上を集計する。集計はM12-07と同一とする。
+L0052	画面に表示済みの集計結果を保存して出すのではなく、ダウンロードを受け付けたときに集計をやり直す。検索してから時間が空くと、画面の表とCSVの値が食い違うことがある。
+L0053	出力する列
+L0054	行	内容
+L0055	データ行	日ごとに1行とし、日に続けて各フォーマットの売上、末尾に当日の日別合計を出力する。行は集計月の日ごとに並ぶ
+L0056	フォーマットの並びは、M12-07と同じく売上分析タグの順位の昇順とする。日別売上と日別合計を算出するときの規則は、M12-07の集計と同一とする。
+L0057	画面に表示するフォーマット別の合計・平均の表は出力しない。CSVに出るのはヘッダ行と日別の行だけとする。
+L0058	出力の形式
+L0059	文字コードの判別用にBOMを付ける。ファイル名は format_sales_report_ に、出力したときの日時（YmdHis）を付けた .csv とする。売上の金額は、画面の表と違い桁区切りを付けず数値のまま出力する。
+L0060	エラー時の扱い
+L0061	CSVダウンロードの操作は、集計結果を表示しているときだけ行える。集計結果が無い状態では操作の入口を出さない。
+L0062	エラー内容	処理
+L0063	集計月が未入力のとき	集計月は必須であり、未入力のときは送信できない。出力もしない
+L0064	データベース読み取りの障害	アプリケーションの共通例外処理に委ねる
+L0065	入出力
+L0066	種類	内容
+L0067	入力	送信された集計月。集計月は必須とする
+L0068	成功時出力	日別の売上表のCSVファイル
+L0069	失敗時出力	データ取得に失敗したときはアプリケーションの共通例外処理に委ねる
+L0070	本機能は参照だけを行い、CSVを出力するときもデータを更新しない。
+
+exec
+/bin/bash -lc "python3 - 'M12-09' '27-64' <<'PY'
+import sys,re
+id=sys.argv[1]; ranges=[tuple(map(int,x.split('-'))) for x in sys.argv[2].split(',')]
+for line in open(f'integration_test/casegen/combination/units/{id}/design.txt'):
+ m=re.match(r'L(\\d+)',line)
+ if m and any(a<=int(m[1])<=b for a,b in ranges): print(line,end='')
+PY" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "python3 - 'M12-10' '45-55' <<'PY'
+import sys,re
+id=sys.argv[1]; ranges=[tuple(map(int,x.split('-'))) for x in sys.argv[2].split(',')]
+for line in open(f'integration_test/casegen/combination/units/{id}/design.txt'):
+ m=re.match(r'L(\\d+)',line)
+ if m and any(a<=int(m[1])<=b for a,b in ranges): print(line,end='')
+PY" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "python3 - 'M13-02' '83-97,261-292' <<'PY'
+import sys,re
+id=sys.argv[1]; ranges=[tuple(map(int,x.split('-'))) for x in sys.argv[2].split(',')]
+for line in open(f'integration_test/casegen/combination/units/{id}/design.txt'):
+ m=re.match(r'L(\\d+)',line)
+ if m and any(a<=int(m[1])<=b for a,b in ranges): print(line,end='')
+PY" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "python3 - 'M13-03' '48-60,72-94' <<'PY'
+import sys,re
+id=sys.argv[1]; ranges=[tuple(map(int,x.split('-'))) for x in sys.argv[2].split(',')]
+for line in open(f'integration_test/casegen/combination/units/{id}/design.txt'):
+ m=re.match(r'L(\\d+)',line)
+ if m and any(a<=int(m[1])<=b for a,b in ranges): print(line,end='')
+PY" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "python3 - 'M13-04' '48-57,100-124' <<'PY'
+import sys,re
+id=sys.argv[1]; ranges=[tuple(map(int,x.split('-'))) for x in sys.argv[2].split(',')]
+for line in open(f'integration_test/casegen/combination/units/{id}/design.txt'):
+ m=re.match(r'L(\\d+)',line)
+ if m and any(a<=int(m[1])<=b for a,b in ranges): print(line,end='')
+PY" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "python3 - 'M13-10' '135-175' <<'PY'
+import sys,re
+id=sys.argv[1]; ranges=[tuple(map(int,x.split('-'))) for x in sys.argv[2].split(',')]
+for line in open(f'integration_test/casegen/combination/units/{id}/design.txt'):
+ m=re.match(r'L(\\d+)',line)
+ if m and any(a<=int(m[1])<=b for a,b in ranges): print(line,end='')
+PY" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "python3 - 'M13-08' '60-76' <<'PY'
+import sys,re
+id=sys.argv[1]; ranges=[tuple(map(int,x.split('-'))) for x in sys.argv[2].split(',')]
+for line in open(f'integration_test/casegen/combination/units/{id}/design.txt'):
+ m=re.match(r'L(\\d+)',line)
+ if m and any(a<=int(m[1])<=b for a,b in ranges): print(line,end='')
+PY" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 98ms:
+L0027	特集タグ編集CSVをダウンロードすることができる
+L0028	機能
+L0029	現行機能をベースに下記のカスタマイズを行う
+L0030	採用枚数略式CSVダウンロードの廃止
+L0031	・採用枚数略式CSVダウンロードは利用頻度が少ないため、今回のカスタマイズで廃止する
+L0032	・特集タグ編集用CSVダウンロードは現行踏襲
+L0033	識別ID	ラベル	書式・制限	必須	最大値	初期値	画面部品の説明
+L0034	1	集計日(From)	日付(yyyy/mm/dd)	〇	-	2週間前の日付	集計開始日付を指定する
+L0035	2	集計日(To)	日付(yyyy/mm/dd)	-	-	-	集計終了日付を指定する
+L0036	3	フォーマット	リスト	〇	-	-	商品カードのフォーマットから選択
+L0037	4	基本土地項目追加	チェックボックス	-	-	-
+L0038	5	特集タグ編集CSVダウンロード	ボタン	-	-	-
+L0039	6	検索条件をクリア	リンク	-	-	-	検索条件入力項目を初期状態に戻す
+L0040	Source:
+L0041	functions/pf-eccube3/m12-09_admin_analysis_used_card.md
+L0042	現行仕様
+L0043	M12-09 デッキ採用枚数集計 出力条件変更 / 分析集計 — デッキ採用枚数集計（出力条件変更・特集タグ編集用CSVダウンロード）
+L0044	業務ロジック
+L0045	出力条件の指定
+L0046	集計対象のフォーマットは複数選択できる。
+L0047	出力条件の保持
+L0048	指定した出力条件は画面をまたいで保持し、CSVダウンロードはそのとき保持している出力条件で集計する。出力条件の指定画面を開き直すと、保持していた出力条件は破棄される。
+L0049	出力条件を指定した後の画面
+L0050	出力条件を指定した状態では、出力条件の入力欄は編集できない状態で表示され、CSVダウンロードの操作はこの状態でだけ行える。条件を入れ直すには出力条件の指定に戻す操作が必要で、戻した時点で保持していた条件は破棄される。
+L0051	ダウンロードするファイル
+L0052	CSVは先頭にヘッダ行を1行出力し、続けて集計結果を1行ずつ出力する。文字コードの判別用に、先頭へUTF-8のバイト順マークを付ける。ファイル名には出力の種別と出力日時（年月日と時分秒）を含む。
+L0053	ファイル名は「used_card_」、出力の種別、「_」、出力日時を区切りなしで並べた年月日時分秒の14桁、「.csv」をつないだものとする。出力の種別は、特集タグ編集用がproduct、採用枚数略式がsimpleである。
+L0054	CSVの集計
+L0055	出力条件そのもの（集計日・フォーマット・基本土地を含めるか）はCSVの列に出さない。
+L0056	集計の対象は、指定したフォーマットの公開中のデッキのうち、イベント日付が集計日(From)の0時0分0秒から集計日(To)の23時59分59秒までのものとする。集計日(To)が空のときは出力した日を集計日(To)とする。
+L0057	採用枚数は、対象のデッキに入っているそのカードの枚数の合計とする。
+L0058	特集タグ編集用の形式は、イベントのデッキだけを対象にする。カードごとに代表の商品を1件選んで商品の情報を結び付け、商品ごとに1行を出力する。代表の商品が無いカードは出力しない。
+L0059	採用枚数略式の形式は、デッキの種類で絞り込まず、カード名と採用枚数の2列をカードごとに1行出力する。
+L0060	基本土地を含めない指定のときは、特殊タイプとして基本だけが紐付くカードを集計から除く。
+L0061	行は採用枚数の多い順に並べる。
+L0062	入出力
+L0063	種類	内容
+L0064	入力	保持している出力条件
+
+ succeeded in 119ms:
+L0045	| 検索 | 受け取った出力条件を保持し、集計結果を表示する |
+L0046	| CSV出力 | 保持した出力条件を取り出し、検索したときと同じ条件で集計する |
+L0047	### CSVの出力
+L0048	指定された出力形式に応じて、集計方法と出力する列を切り替える。特集タグ編集用などの形式ごとに、その形式のヘッダと各行を出力する。出力したときのファイル名には出力形式と日時を含める。
+L0049	集計の対象は、指定したフォーマットの公開中のデッキのうち、イベント日付が集計日(From)の0時0分0秒から集計日(To)の23時59分59秒までのものとする。集計日(To)が空のときは出力した日を集計日(To)とする。
+L0050	採用枚数は、対象のデッキに入っているそのカードの枚数の合計とする。
+L0051	特集タグ編集用の形式は、イベントのデッキだけを対象にする。カードごとに代表の商品を1件選んで商品の情報を結び付け、商品ごとに1行を出力する。代表の商品が無いカードは出力しない。
+L0052	採用枚数略式の形式は、デッキの種類で絞り込まず、カード名と採用枚数の2列をカードごとに1行出力する。
+L0053	基本土地を含めない指定のときは、特殊タイプとして基本だけが紐付くカードを集計から除く。
+L0054	行は採用枚数の多い順に並べる。
+L0055	集計結果が0件のときも、ヘッダ行だけのCSVファイルを出力する。
+
+ succeeded in 86ms:
+L0135	Excel基本設計 0214 識別ID:4-1 により廃止。刷新後は実装しない。現行実装のふるまいは本書に残すが、刷新後の実装・テストの対象外とする
+L0136	Excel基本設計 0214 識別ID:4-2 により廃止。刷新後は実装しない。現行実装のふるまいは本書に残すが、刷新後の実装・テストの対象外とする
+L0137	Excel基本設計 0214 識別ID:4-3 により廃止。刷新後は実装しない。現行実装のふるまいは本書に残すが、刷新後の実装・テストの対象外とする
+L0138	申込詳細の初期表示
+L0139	削除済みの会員も、削除済みのプレイヤーも表示の対象から外さない。指定された申込が存在しないときは404とする。参加プレイヤーの行は、チーム人数と既存の参加者数の大きい方の行数で用意する。
+L0140	更新の判定順序
+L0141	順序	判定	結果
+L0142	1	指定された申込が存在するか	存在しなければ404とする
+L0143	2	更新の送信であるか	送信によらない到達は更新失敗を表示し、編集画面へ戻す
+L0144	3	参加者が実在し、同じ日程の他の申込に登録されていないか	実在しないか重複するときは申込重複のメッセージを表示し、編集画面を再描画する
+L0145	4	その他の入力内容が妥当か	妥当でなければ更新失敗を表示し、編集画面を再描画する
+L0146	5	上記を通過	申込を更新し、成功を表示して同じ申込の編集画面へ戻る
+L0147	参加者の反映
+L0148	参加者情報リストから外れた参加者は削除し、追加された参加者は新規に登録する。更新が成功するたびに申込履歴を1件記録する。
+L0149	プレイヤー検索の絞り込みと選択可否
+L0150	検索語は空白・カンマで区切り、区切ったすべての語に一致するものだけを表示する。語ごとの一致対象には会員の姓カナ・名カナも含む。
+L0151	表示中の申込と同じ日程に、別の申込で既に登録されているプレイヤーは「登録済」と表示し、決定できない。編集中の申込ですでに選んだプレイヤーは「選択済」と表示し、決定できない。
+L0152	エラー時の扱い
+L0153	エラー内容	処理
+L0154	申込が存在しない	404とする。画面のメッセージは表示しない
+L0155	更新の送信でない	更新失敗を表示し編集画面へ戻す
+L0156	参加者が実在しない・参加者重複	申込重複のメッセージを表示し編集画面を再描画する
+L0157	その他の検証不備	更新失敗を表示し編集画面を再描画する
+L0158	入出力
+L0159	種類	内容
+L0160	入力	パスの申込ID、なりすまし対策トークン、参加者情報リスト
+L0161	成功時出力	申込の更新と成功表示、編集画面への遷移
+L0162	失敗時出力	更新の送信でないとき・検証不備はエラー表示のうえ編集画面の再描画または遷移。申込不在は404
+L0163	入出力: 永続化
+L0164	操作	契機
+L0165	追加	更新成功時の申込履歴、参加者情報リストに追加された参加者
+L0166	更新	更新成功時の申込
+L0167	削除	参加者情報リストから外れた参加者
+L0168	リニューアル後の仕様
+L0169	表示メッセージ
+L0170	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0171	M13-10-MSG-001	管理画面上部	保存しました	イベント申込内容を編集して保存したとき	イベント申込詳細・編集画面に遷移する
+L0172	M13-10-MSG-002	管理画面上部	プレイヤーID %player_id% が見つかりません。 ／ admin.event.entry.paying_member_customer_not_registered	イベント申込の編集で、存在しないプレイヤーIDを指定して更新したとき	編集画面に留まる
+L0173	M13-10-MSG-003	管理画面上部	保存に失敗しました	イベント申込内容の保存中にエラーが起きたとき	イベント申込詳細・編集画面に留まる
+L0174	—	画面上部	登録が完了しました。	申込の更新が成功したとき	編集画面へ戻る
+L0175	—	画面上部	登録できませんでした。	更新の送信でないとき、またはその他の検証失敗で更新できなかったとき	編集画面に留まる
+
+ succeeded in 102ms:
+L0048	・カスタマイズ要件に記載の内容以外は現行踏襲とする。
+L0049	機能仕様処理概要（★はカスタマイズ項目）
+L0050	★権限による制御
+L0051	・メンバーが権限を保持している店舗のイベントのみ日程追加が可能にする
+L0052	・イベントに対して期間を指定して複数の日程の一括登録を行う。
+L0053	・指定した期間のうち、選択した曜日に該当する日に日程登録する。
+L0054	・定員、参加費、公開状態、商品（日・英）は、親イベントのものがセットされる。
+L0055	識別ID	ラベル	書式・制限	必須	最大値	初期値	画面部品の説明
+L0056	1	イベントID	ラベル	-	-	-
+L0057	2	イベント詳細ID	ラベル	-	-	-
+L0100	登録の判定順序
+L0101	順序	判定	結果
+L0102	1	パスのイベントIDに一致するイベントが存在しないとき（入力画面の表示時・登録時とも）	ページが見つからない扱い（404）とする
+L0103	2	入力の検証に失敗したとき	保存に失敗した旨を表示し、入力画面を再表示する
+L0104	3	「受付あり」を有効にした指定で、対象イベントに支払方法が設定されていないとき	申込受付ができない旨を表示し、入力画面を再表示する
+L0105	作成した日程に設定される値
+L0106	作成した日程が土曜・日曜に当たるとき、または休日マスタに登録された日に当たるときは、その日程を休日として扱う。
+L0107	作成した日程の登録者には、操作した担当者を記録する。
+L0108	作成した日程の定員・参加費・公開状態・賞品（日）・賞品（英）には、親イベントの値をそのまま設定する。繰り返し日程登録の入力項目には、これらの項目は無い。
+L0109	オンライン受付の開始・終了とデッキ登録締切の日時は、その日程の日付から指定の前日数を引いた日に、指定の時刻を組み合わせたものとする。
+L0110	該当する日が無いとき
+L0111	指定期間内に、選択した曜日に該当する日が1日も無いときは、日程を1件も作成しないまま登録完了として扱う。
+L0112	入出力
+L0113	入力
+L0114	種類	内容
+L0115	入力	なりすまし対策トークン。値が一致しないときは日程を作成せず、アクセス拒否として扱う
+L0116	リニューアル後の仕様
+L0117	表示メッセージ
+L0118	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0119	M13-04-MSG-001	管理画面上部	不正なリクエストです。	対象イベントの店舗情報がない、またはその店舗を編集できないとき	繰り返し日程登録画面に遷移する
+L0120	M13-04-MSG-002	管理画面上部	保存しました	繰り返し日程を登録したとき	イベント編集画面に遷移する
+L0121	M13-04-MSG-003	管理画面上部	保存に失敗しました	繰り返し日程の登録中にエラーが起きたとき	繰り返し日程登録画面に留まる
+L0122	M13-04-MSG-004	入力項目直下	オンライン受付ありかつ参加費が有料の場合は、イベント編集画面で支払方法を設定してください。	オンライン受付を有効にして繰り返し日程を登録する際、参加費が有料で支払方法が未設定のとき	エラーを表示して、繰り返し日程登録画面に留まる
+
+ succeeded in 122ms:
+L0048	・編集権限を保持している店舗のイベントのみ編集を可能とする
+L0049	・カスタマイズ要件に記載の内容以外は現行踏襲とする。
+L0050	機能仕様処理概要（★はカスタマイズ項目）
+L0051	★権限による制御
+L0052	・メンバーが権限を保持している店舗のイベントのみ日程追加が可能にする
+L0053	・イベントに対して日程の新規登録、または既存の日程の更新を行う。
+L0054	・削除した場合はイベント編集画面に遷移する。
+L0055	・対象の日程にデッキ登録、申込がある場合、削除はできない。
+L0056	・オンライン受付あり（識別ID:9）をオン、かつ参加費（識別ID:16）を有料で登録・更新をしようとした時は、
+L0057	親イベントで支払方法（クレジットカード決済）の設定をチェックし、設定されていない場合はエラーとする。
+L0058	★識別ID:15「定員」の接尾辞は、 親イベントの「チーム戦」設定がオフの時は「人」、オンの時は「組」に切り替える
+L0059	識別ID	ラベル	書式・制限	必須	最大値	初期値	画面部品の説明
+L0060	1	イベントID	ラベル	-	-	-
+L0072	9	デッキ登録あり	チェックボックス	-	-	オン
+L0073	10	デッキ登録締め切り	日付時刻	△	-	-	デッキ登録ありの値に応じて表示/非表示を切り替える
+L0074	デッキ登録ありの場合必須
+L0075	11	デッキ登録を終了する	チェックボックス	-	-	-
+L0076	12	オンライン受付あり	チェックボックス	-	-	-
+L0077	13	オンライン受付開始時間	日付時刻	△	-	-	オンライン受付ありの値に応じて表示/非表示を切り替える
+L0078	オンライン受付ありの場合必須
+L0079	オンライン受付開始時間 < オンライン受付終了時間であること
+L0080	14	オンライン受付終了時間	日付時刻	△	-	-	オンライン受付ありの値に応じて表示/非表示を切り替える
+L0081	オンライン受付ありの場合必須
+L0082	オンライン受付終了時間 < 開始時間であること
+L0083	15	定員	数値(整数)	〇	8	親イベントを引き継ぐ	1以上であること
+L0084	接尾辞は、親イベントの設定でチーム戦オフの時「人」、オンの時「組」 2026/7/7木村：ECCUBE_HARERUYA-1626：カスタマイズ要件がないため初期値は現行に合わせる。2026/8/31木村：int範囲超過のため50文字からイベント編集側と同様の8桁に修正ECCUBE_HARERUYA-2218
+L0085	16	参加費	数値(整数)	〇	8	親イベントを引き継ぐ	2026/7/7木村：ECCUBE_HARERUYA-1626：カスタマイズ要件がないため初期値は現行に合わせる。2026/8/31木村：int範囲超過のため50文字からイベント編集側と同様の8桁に修正ECCUBE_HARERUYA-2218
+L0086	17	公開状態	単一選択	〇	-	親イベントを引き継ぐ	2026/7/7木村：ECCUBE_HARERUYA-1626：カスタマイズ要件がないため初期値は現行に合わせる
+L0087	18	賞品（日）	全角・半角	-	4096文字	親イベントを引き継ぐ	2026/7/7木村：ECCUBE_HARERUYA-1626：カスタマイズ要件がないため初期値は現行に合わせる
+L0088	19	賞品（英）	全角・半角	-	4096文字	親イベントを引き継ぐ	2026/7/7木村：ECCUBE_HARERUYA-1626：カスタマイズ要件がないため初期値は現行に合わせる
+L0089	20	登録	ボタン	-	-	-	新規日程登録時のみ表示
+L0090	21	更新	ボタン	-	-	-	既存の日程更新時のみ表示
+L0091	22	削除	ボタン	-	-	-	既存の日程更新時のみ表示
+L0092	23	イベント編集	ボタン	-	-	-	イベント編集画面へ遷移する
+L0093	Source:
+L0094	functions/pf-eccube3/m13-03_admin_event_event_schedule_add.md
+
+ succeeded in 140ms:
+L0083	・イベント規模
+L0084	・フリー入力エリア
+L0085	・カスタマイズ要件に記載の内容以外は現行踏襲とする。
+L0086	機能仕様処理概要（★はカスタマイズ項目）
+L0087	・新規イベントの登録、既存イベントの編集ができる。
+L0088	・イベントに紐づく日程の追加、一覧表示、削除ができる。
+L0089	・すでに申込がある場合、支払方法は変更できない。
+L0090	・日程情報がある場合、イベントの削除はできない。
+L0091	・デッキ登録されている日程の削除はできない。
+L0092	・申込されている日程の削除はできない。
+L0093	・支払方法（識別ID:1-13）でクレジットカード決済をオフで更新しようとした時は、紐づく日程データをチェックし、
+L0094	参加費が有料かつオンライン受付がありの日程が存在する場合はエラーとする。
+L0095	★権限による制御
+L0096	・メンバーが権限を保持している店舗のイベントのみ、登録、編集、削除が可能
+L0097	・識別ID:1-3 「店舗」は編集権限のない店舗が選択された場合エラーとする
+L0261	—	フラッシュ	日程情報を削除しました。	日程の一括削除に成功したとき	—
+L0262	—	フラッシュ	イベント情報を登録できませんでした。	入力の検証に失敗したとき	—
+L0263	—	フラッシュ	申込済みの場合、支払方法を変更できません。	申込済みで支払方法に差分があるとき	—
+L0264	—	フラッシュ	日程情報が存在する場合、イベント情報を削除することができません。	日程が残るイベントを削除しようとしたとき	—
+L0265	—	フラッシュ	デッキ登録済みの場合、イベント情報を削除することができません。	デッキ登録済みの日程を一括削除しようとしたとき	—
+L0266	—	フラッシュ	申込済みの場合、イベント情報を削除することができません。	申込済みの日程を一括削除しようとしたとき	—
+L0267	M13-02-MSG-001	管理画面上部	保存しました	イベントを新規登録して保存したとき	イベント編集画面に遷移する
+L0268	M13-02-MSG-002	管理画面上部	保存に失敗しました	イベントの新規登録の保存に失敗したとき	イベント登録画面に留まる
+L0269	M13-02-MSG-003	管理画面上部	保存しました	イベントを編集して保存したとき	イベント編集画面に留まる
+L0270	M13-02-MSG-004	管理画面上部	保存に失敗しました	イベント編集の保存に失敗したとき	イベント編集画面に留まる
+L0271	M13-02-MSG-005	管理画面上部	不正なリクエストです。	イベントを削除しようとしたが、対象店舗を編集する権限がないとき	イベント編集画面に遷移する
+L0272	M13-02-MSG-006	管理画面上部	admin.event.delete.schedule_exists	日程情報が登録されているイベントを削除しようとしたとき	イベント編集画面に遷移する
+L0273	M13-02-MSG-007	管理画面上部	削除しました	日程が登録されていないイベントを削除したとき	イベント一覧検索画面に遷移する
+L0274	M13-02-MSG-008	管理画面上部	不正なリクエストです。	対象イベントの店舗を編集する権限がないとき	イベント編集画面に遷移する
+L0275	M13-02-MSG-009	管理画面上部	不正なリクエストです。	別のイベントに属する日程を操作しようとしたとき	イベント編集画面に遷移する
+L0276	M13-02-MSG-010	管理画面上部	admin.event.delete.deckerror	デッキ登録がある日程を削除しようとしたとき	イベント編集画面に遷移する
+L0277	M13-02-MSG-011	管理画面上部	admin.event.delete.entryerror	申込がある日程を削除しようとしたとき	イベント編集画面に遷移する
+L0278	M13-02-MSG-012	管理画面上部	削除しました	イベントの日程を削除したとき	イベント編集画面に遷移する
+L0279	M13-02-MSG-013	管理画面上部	不正なリクエストです。	対象イベントの店舗を編集する権限がないとき	イベント編集画面に遷移する
+L0280	M13-02-MSG-014	管理画面上部	削除する日程を選択してください	日程を選択せずに一括削除を実行したとき	イベント編集画面に遷移する
+L0281	M13-02-MSG-015	管理画面上部	デッキ登録または申込がある日程が含まれていたため、一括削除できませんでした。	デッキ登録または申込がある日程を含めて一括削除しようとしたとき	イベント編集画面に遷移する
+L0282	M13-02-MSG-016	管理画面上部	%count%件の日程を削除しました	選択した日程を一括削除したとき	イベント編集画面に遷移する
+L0283	M13-02-MSG-017	入力項目直下	admin.banner.regex_error	バナーURLに「admin.hareruyamtg.com」を含む値を入力して保存したとき	入力画面に留まる
+L0284	M13-02-MSG-018	入力項目直下	admin.banner.regex_error	英語用バナーURLに「admin.hareruyamtg.com」を含む値を入力して保存したとき	入力画面に留まる
+L0285	M13-02-MSG-019	入力項目直下/フォーム上部	参加費が有料かつオンライン受付ありの日程が存在するため、支払方法をオフにできません。	有料のオンライン受付日程があるイベントで、支払方法をすべてオフにして保存しようとしたとき	イベント編集画面に留まる
+L0286	M13-02-MSG-020	入力項目直下/フォーム上部	ユーザーの編集可能店舗を選択してください。	編集できない店舗を選択したとき	イベント登録・編集画面に留まる
+L0287	M13-02-MSG-021	イベント編集画面の日程一覧にある一括削除用チェックボックスのツールチップ	デッキ登録があるため削除できません	編集可能なイベントで、デッキ登録がある日程の一括削除用チェックボックスにカーソルを合わせたとき	対象日程のチェックボックスは選択できず、一括削除の対象にできない
+L0288	M13-02-MSG-022	イベント編集画面の日程一覧にある一括削除用チェックボックスのツールチップ	申込があるため削除できません	編集可能なイベントで、デッキ登録がなく申込がある日程の一括削除用チェックボックスにカーソルを合わせたとき	対象日程のチェックボックスは選択できず、一括削除の対象にできない
+L0289	イベント削除
+L0290	ドキュメント名イベント管理 基本設計仕様書
+L0291	セクション—
+L0292	プロジェクト名イベント管理機能
+
+ succeeded in 126ms:
+L0060	DCIナンバー（デッキ表示） は削除（0214 デッキ表示 識別ID:5）
+L0061	デッキチェック記入欄（Deck Check Rd・Status・Judge） は削除（0214 デッキ表示 識別ID:9-11）
+L0062	業務ロジック
+L0063	刷新後は実装しない（廃止）
+L0064	Excel基本設計 0214 識別ID:5 により廃止。刷新後は実装しない。
+L0065	Excel基本設計 0214 識別ID:9-11 により廃止。刷新後は実装しない。
+L0066	表示の対象
+L0067	本画面では検索条件を入力させない。申込一覧側の検索条件が保持されていないときは、空の条件として扱い、登録デッキの取得結果に従う。並び順は既定の並びとする。表示は印刷向けのデッキリストとして、申込一覧とは別の画面に開く。
+L0068	プレイヤー名の決め方
+L0069	デッキに登録されたプレイヤー名から前後の空白を除いて用いる。プレイヤー名が空のときは、会員のカナ姓とカナ名を半角空白で連結して表示する。
+L0070	カードリストの組み立て
+L0071	カード一覧はカードごとに枚数とカード名を並べる。メインとサイドそれぞれの枚数を合計し、各見出しに枚数を表示する。
+L0072	ページの分割
+L0073	メインのカード一覧を1ページ40枚で分割し、デッキ単位でページを構成する。サイドボードは先頭ページにだけ載せ、2ページ目以降のサイドは空とする。ページごとにプレイヤー名・日程・メインカード・メイン枚数・サイド枚数を並べる。プレイヤー名の後ろに、そのデッキの中での現在ページ番号と総ページ数を表示する。表番号の欄は値を出さず空欄とする。日程は開催日を年/月/日の書式で表示する。
+L0074	エラー時の扱い
+L0075	事象	扱い
+L0076	申込の検索条件が保持されていない	空の条件として扱い、登録デッキの取得結果に従う
+
+exec
+/bin/bash -lc "python3 - 'M13-04' '1-48,55-100,125-145' <<'PY'
+import sys,re
+id=sys.argv[1]; ranges=[tuple(map(int,x.split('-'))) for x in sys.argv[2].split(',')]
+for line in open(f'integration_test/casegen/combination/units/{id}/design.txt'):
+ m=re.match(r'L(\\d+)',line)
+ if m and any(a<=int(m[1])<=b for a,b in ranges): print(line,end='')
+PY" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+L0001	繰返日程追加
+L0002	ドキュメント名イベント管理 基本設計仕様書
+L0003	セクション—
+L0004	プロジェクト名イベント管理機能
+L0005	作成者佐藤
+L0006	作成日2025/5/29
+L0007	更新者畠山
+L0008	更新日2025-09-19
+L0009	機能NoM13-04
+L0010	機能名繰返日程追加
+L0011	概要—
+L0012	処理概要（★はカスタマイズ項目）
+L0013	レイアウト図
+L0014	1
+L0015	2
+L0016	3
+L0017	4
+L0018	5
+L0019	6
+L0020	7
+L0021	8
+L0022	9
+L0023	10
+L0024	11
+L0025	12
+L0026	13
+L0027	14
+L0028	15
+L0029	16
+L0030	17
+L0031	18
+L0032	19
+L0033	20
+L0034	21
+L0035	繰返日程追加 / C7 / image 1
+L0036	イベント編集
+L0037	登録
+L0038	ボタンの位置を画面下部に移動する
+L0039	「戻る」は、前の画面名を表示する
+L0040	登録
+L0041	画面遷移図をExcel図形座標で再構成（画面 2件 / 遷移 1件 / 元コネクタ 1件）
+L0042	遷移一覧（1件）
+L0043	遷移元	遷移先	connector
+L0044	登録	イベント編集	39（0214:繰返日程追加!BF13）
+L0045	カスタマイズ説明
+L0046	・カスタマイズ要件
+L0047	・編集権限を保持している店舗のイベントのみ編集を可能とする
+L0048	・カスタマイズ要件に記載の内容以外は現行踏襲とする。
+L0055	識別ID	ラベル	書式・制限	必須	最大値	初期値	画面部品の説明
+L0056	1	イベントID	ラベル	-	-	-
+L0057	2	イベント詳細ID	ラベル	-	-	-
+L0058	3	イベント名（日）	ラベル	-	-	-
+L0059	4	イベントページURL	リンク	-	-	-	フロントの当該イベントページへのリンク
+L0060	5	期間From	日付	〇	-	-	期間From < 期間To であること
+L0061	6	期間To	日付	〇	-	-	期間From < 期間To であること
+L0062	7	曜日選択	複数選択	〇	-	-	2026/9/3木村：現行バグのため必須に変更ECCUBE_HARERUYA-2221
+L0063	8	開始時間	時刻	〇	-	-
+L0064	9	受付あり	チェックボックス	-	-	オン
+L0065	10	受付開始時間	時刻	△	-	00:00	受付ありの値に応じて表示/非表示を切り替える
+L0066	受付ありの場合必須
+L0067	受付開始時間 < 受付終了時間であること
+L0068	11	受付終了時間	時刻	△	-	00:00	受付ありの値に応じて表示/非表示を切り替える
+L0069	受付ありの場合必須
+L0070	受付終了時間 <= 開始時間であること
+L0071	12	デッキ登録あり	チェックボックス	-	-	オン
+L0072	13	デッキ登録締切
+L0073	開始日前日数	数値(整数)	△	-	0	デッキ登録ありの値に応じて表示/非表示を切り替える
+L0074	デッキ登録ありの場合必須
+L0075	14	デッキ登録締切
+L0076	時刻	時刻	△	-	23:59	デッキ登録ありの値に応じて表示/非表示を切り替える
+L0077	デッキ登録ありの場合必須
+L0078	15	オンライン受付あり	チェックボックス	-	-	-
+L0079	16	オンライン受付開始時間
+L0080	開始日前日数	数値(整数)	△	-	0	オンライン受付ありの値に応じて表示/非表示を切り替える
+L0081	オンライン受付ありの場合必須
+L0082	17	オンライン受付開始時間
+L0083	時刻	時刻	△	-	00:00	オンライン受付ありの値に応じて表示/非表示を切り替える
+L0084	オンライン受付ありの場合必須
+L0085	18	オンライン受付終了時間
+L0086	開始日前日数	数値(整数)	△	-	0	オンライン受付ありの値に応じて表示/非表示を切り替える
+L0087	オンライン受付ありの場合必須
+L0088	オンライン受付開始時間 < オンライン受付終了時間であること
+L0089	19	オンライン受付終了時間
+L0090	時刻	時刻	△	-	00:00	オンライン受付ありの値に応じて表示/非表示を切り替える
+L0091	オンライン受付ありの場合必須
+L0092	オンライン受付開始時間 < オンライン受付終了時間であること
+L0093	20	登録	ボタン	-	-	-	新規日程登録時のみ表示
+L0094	21	イベント編集	ボタン	-	-	-	イベント編集画面へ遷移する
+L0095	Source:
+L0096	functions/pf-eccube3/m13-04_admin_event_event_repeat_schedule.md
+L0097	現行仕様
+L0098	M13-04 繰り返し日程登録 / イベント管理 — 繰り返し日程登録
+L0099	業務ロジック
+L0100	登録の判定順序
+
+exec
+/bin/bash -lc "python3 - 'M13-03' '1-48,94-135' <<'PY'
+import sys,re
+id=sys.argv[1]; ranges=[tuple(map(int,x.split('-'))) for x in sys.argv[2].split(',')]
+for line in open(f'integration_test/casegen/combination/units/{id}/design.txt'):
+ m=re.match(r'L(\\d+)',line)
+ if m and any(a<=int(m[1])<=b for a,b in ranges): print(line,end='')
+PY" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+L0001	日程登録
+L0002	ドキュメント名イベント管理 基本設計仕様書
+L0003	セクション—
+L0004	プロジェクト名イベント管理機能
+L0005	作成者佐藤
+L0006	作成日2025/5/29
+L0007	更新者畠山
+L0008	更新日2025-09-19
+L0009	機能NoM13-03
+L0010	機能名日程登録
+L0011	概要—
+L0012	処理概要（★はカスタマイズ項目）
+L0013	レイアウト図
+L0014	1
+L0015	2
+L0016	3
+L0017	4
+L0018	5
+L0019	6
+L0020	7
+L0021	8
+L0022	9
+L0023	10
+L0024	11
+L0025	12
+L0026	13
+L0027	14
+L0028	17
+L0029	18
+L0030	19
+L0031	20
+L0032	21
+L0033	22
+L0034	23
+L0035	15
+L0036	16
+L0037	画像レイヤー（3枚）: 日程登録 / B7 / image 1 + 日程登録 / B7 / image 2 + 日程登録 / B7 / image 3
+L0038	ボタンの位置を画面下部に移動する
+L0039	「戻る」は、前の画面名を表示する
+L0040	更新
+L0041	更新
+L0042	画面遷移図をExcel図形座標で再構成（画面 2件 / 遷移 1件 / 元コネクタ 1件）
+L0043	遷移一覧（1件）
+L0044	遷移元	遷移先	connector
+L0045	更新	イベント編集	36（0214:日程登録!BF14）
+L0046	カスタマイズ説明
+L0047	・カスタマイズ要件
+L0048	・編集権限を保持している店舗のイベントのみ編集を可能とする
+L0094	functions/pf-eccube3/m13-03_admin_event_event_schedule_add.md
+L0095	現行仕様
+L0096	M13-03 日程追加 / イベント管理 — 日程追加
+L0097	業務ロジック
+L0098	追加の判定順序
+L0099	順序	判定	結果
+L0100	1	パスのイベントIDに一致するイベントが存在しないとき	ページが見つからない扱い（404）とする
+L0101	2	なりすまし対策トークンが一致しないとき	アクセス拒否として処理を打ち切り、登録しない
+L0102	3	日程の入力検証に失敗したとき	日程入力画面を、入力した値を保った状態で再表示する
+L0103	4	上記以外のとき	追加した日程の日程編集画面を開く
+L0104	登録時に記録する値
+L0105	入力欄では指定しないが、登録時に日程へ記録される。
+L0106	記録する値	決め方
+L0107	受付開始時間・受付終了時間の日付	開始時間の日付と、入力された時刻を組み合わせて記録する
+L0108	祝日かどうか	開始時間の日付が祝日にあたるときは、祝日として記録する
+L0109	登録者	操作した管理ユーザを登録者として記録する
+L0110	入出力
+L0111	受け取るものと返すもの
+L0112	種類	内容
+L0113	入力	追加先のイベントIDはパスで受け取る。日程の各項目となりすまし対策トークンは送信内容で受け取る
+L0114	成功時出力	追加した日程の日程編集画面
+L0115	失敗時出力	イベントが無いときは404。トークンが一致しないときはアクセス拒否。検証に失敗したときは日程入力画面の再表示
+L0116	リニューアル後の仕様
+L0117	表示メッセージ
+L0118	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0119	M13-03-MSG-001	管理画面上部	保存しました	日程追加の内容を保存したとき	日程編集画面に遷移する
+L0120	M13-03-MSG-002	管理画面上部	保存に失敗しました	日程追加の保存中にエラーが起きたとき	日程入力画面に留まる
+
+exec
+/bin/bash -lc "sed -n '119,175p' integration_test/casegen/combination/units/M13-03/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+L0118	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0119	M13-03-MSG-001	管理画面上部	保存しました	日程追加の内容を保存したとき	日程編集画面に遷移する
+L0120	M13-03-MSG-002	管理画面上部	保存に失敗しました	日程追加の保存中にエラーが起きたとき	日程入力画面に留まる
+
+codex
+### 1
+- 機能: M13-03
+- 種類: G
+- 対象: M13-03_constraints.tsv P1の打ち切り6行
+- 主張: オンライン受付なし・参加費無料・クレジットカード決済ありのいずれかなら、組に書かれていない要因の値は結果に効かない。
+- 実際: 日程は新規登録または更新され、オンライン受付と参加費は日程の項目である。打ち切り行が省いた値によって保存内容が変わる（`units/M13-03/design.txt:L0053`、`L0076`、`L0085`）。
+- 修正案: 登録・更新後の保存内容が変わる要因の値も組に残す。
+
+### 2
+- 機能: M13-04
+- 種類: G
+- 対象: M13-04_constraints.tsv P1の打ち切り行のうち、F04=平日のみ・土曜日曜か休日マスタの日を含む各行
+- 主張: 受付なし・参加費無料・クレジットカード決済ありのいずれかなら、組に書かれていない要因の値は結果に効かない。
+- 実際: 作成した日程の参加費には親イベントの値を設定するため、F02の有料・無料で保存内容が変わる。オンライン受付も登録する日程の入力項目である（`units/M13-04/design.txt:L0052-L0054`、`L0078`、`L0108`）。
+- 修正案: 日程が作成される打ち切り行では、保存内容を変える参加費とオンライン受付の値を組に残す。
+tokens used
+63,196
+### 1
+- 機能: M13-03
+- 種類: G
+- 対象: M13-03_constraints.tsv P1の打ち切り6行
+- 主張: オンライン受付なし・参加費無料・クレジットカード決済ありのいずれかなら、組に書かれていない要因の値は結果に効かない。
+- 実際: 日程は新規登録または更新され、オンライン受付と参加費は日程の項目である。打ち切り行が省いた値によって保存内容が変わる（`units/M13-03/design.txt:L0053`、`L0076`、`L0085`）。
+- 修正案: 登録・更新後の保存内容が変わる要因の値も組に残す。
+
+### 2
+- 機能: M13-04
+- 種類: G
+- 対象: M13-04_constraints.tsv P1の打ち切り行のうち、F04=平日のみ・土曜日曜か休日マスタの日を含む各行
+- 主張: 受付なし・参加費無料・クレジットカード決済ありのいずれかなら、組に書かれていない要因の値は結果に効かない。
+- 実際: 作成した日程の参加費には親イベントの値を設定するため、F02の有料・無料で保存内容が変わる。オンライン受付も登録する日程の入力項目である（`units/M13-04/design.txt:L0052-L0054`、`L0078`、`L0108`）。
+- 修正案: 日程が作成される打ち切り行では、保存内容を変える参加費とオンライン受付の値を組に残す。

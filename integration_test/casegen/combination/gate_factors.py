@@ -191,8 +191,10 @@ def main(fids):
                     err.append((w, f"{k} はこの処理の要因でない"))
                 elif v not in vals[k]:
                     err.append((w, f"{k} の値「{v}」が factors に無い"))
-            if r["種別"] not in ("作れない", "正解未定"):
+            if r["種別"] not in ("作れない", "正解未定", "打ち切り"):
                 err.append((w, f"種別が不正: {r['種別']}"))
+            if r["種別"] == "打ち切り" and len(s) >= len(inproc.get(pid, ())):
+                err.append((w, "打ち切りの条件がこの処理の要因を全部持っている（効かなくなる要因が無い）"))
             check_ref(fid, r["根拠"], err, w)
             if not r["理由"].strip():
                 err.append((w, "理由が空"))
@@ -231,7 +233,7 @@ def main(fids):
         for r in res:
             print(f"   {r['pid']}: 要因{len(r['factors'])} 埋める組{r['need_all']}（制約で除外{len(r['excluded'])}）"
                   f" 既存で済み{r['existing']}" + (f" 残した行{len(r['kept'])}（うち制約に当たる{len(r['kept']) - r['kept_live']}）で済み{r['by_kept']}" if r['kept'] else "")
-                  + f" 作れない{len(r['infeasible'])} → 足す行{len(r['rows'])}")
+                  + (f" 打ち切りで済む{r['cut_only']}" if r.get('cut_only') else "") + f" 作れない{len(r['infeasible'])} → 足す行{len(r['rows'])}")
             for t in r["infeasible"][:10]:
                 print("      作れない組（制約の組合せで行にできない）:", gen_combos.fmt(fac, t))
         print(f"   計 {n}行（combos/{fid}.tsv。組IDの最大の番号）")
